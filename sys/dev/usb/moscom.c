@@ -1,4 +1,4 @@
-/*	$OpenBSD: moscom.c,v 1.1 2006/10/26 04:14:09 jsg Exp $	*/
+/*	$OpenBSD: moscom.c,v 1.2 2006/10/26 06:02:43 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -130,19 +130,7 @@
 #define MOSCOM_MSR_RI		0x40
 #define MOSCOM_MSR_CD		0x80
 
-#define MOSCOM_BAUD_150		768
-#define MOSCOM_BAUD_300		384
-#define MOSCOM_BAUD_600		192
-#define MOSCOM_BAUD_1200	96
-#define MOSCOM_BAUD_1800	64
-#define MOSCOM_BAUD_2400	48
-#define MOSCOM_BAUD_4800	24
-#define MOSCOM_BAUD_9600	12
-#define MOSCOM_BAUD_19200	6
-#define MOSCOM_BAUD_38400	3
-#define MOSCOM_BAUD_57600	2
-#define MOSCOM_BAUD_115200	1
-
+#define MOSCOM_BAUD_REF		115200
 
 struct moscom_softc {
 	USBBASEDEVICE		sc_dev;
@@ -367,22 +355,13 @@ moscom_param(void *vsc, int portno, struct termios *t)
 	struct moscom_softc *sc = (struct moscom_softc *)vsc;
 	int data;
 
-	switch (t->c_ospeed) {
-	case 150:	data = MOSCOM_BAUD_150; break;
-	case 300:	data = MOSCOM_BAUD_300; break;
-	case 600:	data = MOSCOM_BAUD_600; break;
-	case 1200:	data = MOSCOM_BAUD_1200; break;
-	case 1800:	data = MOSCOM_BAUD_1800; break;
-	case 2400:	data = MOSCOM_BAUD_2400; break;
-	case 4800:	data = MOSCOM_BAUD_4800; break;
-	case 9600:	data = MOSCOM_BAUD_9600; break;
-	case 19200:	data = MOSCOM_BAUD_19200; break;
-	case 38400:	data = MOSCOM_BAUD_38400; break;
-	case 57600:	data = MOSCOM_BAUD_57600; break;
-	case 115200:	data = MOSCOM_BAUD_115200; break;
-	default:
+	if (t->c_ospeed <= 0 || t->c_ospeed > 115200)
 		return (EINVAL);
-	}
+
+	data = MOSCOM_BAUD_REF / t->c_ospeed;
+
+	if (data == 0 || data > 0xffff)
+		return (EINVAL);
 
 	moscom_cmd(sc, MOSCOM_LCR, MOSCOM_LCR_DIVLATCH_EN);
 	moscom_cmd(sc, MOSCOM_BAUDLO, data & 0xFF);
