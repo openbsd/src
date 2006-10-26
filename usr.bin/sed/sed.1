@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.24 2006/10/24 11:46:53 jmc Exp $
+.\"	$OpenBSD: sed.1,v 1.25 2006/10/26 20:19:12 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,7 +57,9 @@ The input is then written to the standard output.
 .Pp
 A single command may be specified as the first argument to
 .Nm sed .
-Multiple commands may be specified by using the
+Multiple commands may be specified
+separated by newlines or semicolons,
+or by using the
 .Fl e
 or
 .Fl f
@@ -502,11 +504,29 @@ option on the command line.
 .Sh STANDARDS
 The
 .Nm
-function is expected to be a superset of the
-.St -p1003.2
+utility is compliant with the
+.St -p1003.1-2004
 specification.
+.Pp
+The flag
+.Op Fl a
+is an extension to the specification.
+.Pp
+The use of newlines to separate multiple commands on the command line
+is non-portable;
+the use of newlines to separate multiple commands within a command file
+.Pq Fl f Ar command_file
+is portable.
 .Sh HISTORY
 A
 .Nm
 command appeared in
 .At v7 .
+.Sh CAVEATS
+The use of semicolons to separate multiple commands
+is not permitted for the following commands:
+.Cm a , b , c ,
+.Cm i , r , t ,
+.Cm w , \&: ,
+and
+.Cm # .
