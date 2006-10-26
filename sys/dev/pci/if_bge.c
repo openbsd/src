@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.193 2006/10/26 22:41:10 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.194 2006/10/26 22:57:17 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2683,7 +2683,7 @@ int
 bge_encap(struct bge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 {
 	struct bge_tx_bd	*f = NULL;
-	u_int32_t		frag, cur, cnt = 0;
+	u_int32_t		frag, cur;
 	u_int16_t		csum_flags = 0;
 	struct txdmamap_pool_entry *dma;
 	bus_dmamap_t dmamap;
@@ -2739,6 +2739,13 @@ doit:
 	    BUS_DMA_NOWAIT))
 		return (ENOBUFS);
 
+	/*
+	 * Sanity check: avoid coming within 16 descriptors
+	 * of the end of the ring.
+	 */
+	if (dmamap->dm_nsegs > (BGE_TX_RING_CNT - sc->bge_txcnt - 16))
+		goto fail_unload;
+
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
 		f = &sc->bge_rdata->bge_tx_ring[frag];
 		if (sc->bge_cdata.bge_tx_chain[frag] != NULL)
@@ -2754,15 +2761,8 @@ doit:
 			f->bge_vlan_tag = 0;
 		}
 #endif
-		/*
-		 * Sanity check: avoid coming within 16 descriptors
-		 * of the end of the ring.
-		 */
-		if ((BGE_TX_RING_CNT - (sc->bge_txcnt + cnt)) < 16)
-			goto fail_unload;
 		cur = frag;
 		BGE_INC(frag, BGE_TX_RING_CNT);
-		cnt++;
 	}
 
 	if (i < dmamap->dm_nsegs)
@@ -2778,7 +2778,7 @@ doit:
 	sc->bge_cdata.bge_tx_chain[cur] = m_head;
 	SLIST_REMOVE_HEAD(&sc->txdma_list, link);
 	sc->txdma[cur] = dma;
-	sc->bge_txcnt += cnt;
+	sc->bge_txcnt += dmamap->dm_nsegs;
 
 	*txidx = frag;
 
