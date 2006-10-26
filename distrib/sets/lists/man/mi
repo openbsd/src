@@ -1135,7 +1135,6 @@
 ./usr/share/man/cat4/gentbi.0
 ./usr/share/man/cat4/gif.0
 ./usr/share/man/cat4/glenv.0
-./usr/share/man/cat4/glxsb.0
 ./usr/share/man/cat4/gpio.0
 ./usr/share/man/cat4/gpioiic.0
 ./usr/share/man/cat4/gpioow.0
@@ -1207,6 +1206,7 @@
 ./usr/share/man/cat4/i386/elansc.0
 ./usr/share/man/cat4/i386/esm.0
 ./usr/share/man/cat4/i386/geodesc.0
+./usr/share/man/cat4/i386/glxsb.0
 ./usr/share/man/cat4/i386/gscpcib.0
 ./usr/share/man/cat4/i386/gscpm.0
 ./usr/share/man/cat4/i386/gus.0
