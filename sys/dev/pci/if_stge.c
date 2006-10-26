@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.33 2006/10/23 02:29:20 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.34 2006/10/26 23:15:16 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -743,8 +743,8 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
-			    ((ifp->if_flags ^ sc->stge_if_flags) &
-			     IFF_PROMISC)) {
+			    (ifp->if_flags ^ sc->stge_if_flags) &
+			     IFF_PROMISC) {
 				stge_set_filter(sc);
 			} else {
 				if (!(ifp->if_flags & IFF_RUNNING))
@@ -1282,6 +1282,13 @@ stge_init(struct ifnet *ifp)
 	/* RX DMA thresholds, from linux */
 	CSR_WRITE_1(sc, STGE_RxDMABurstThresh, 0x30);
 	CSR_WRITE_1(sc, STGE_RxDMAUrgentThresh, 0x30);
+
+	/* Rx early threhold, from Linux */
+	CSR_WRITE_2(sc, STGE_RxEarlyThresh, 0x7ff);
+
+	/* Tx DMA thresholds, from Linux */
+	CSR_WRITE_1(sc, STGE_TxDMABurstThresh, 0x30);
+	CSR_WRITE_1(sc, STGE_TxDMAUrgentThresh, 0x04);
 
 	/*
 	 * Initialize the Rx DMA interrupt control register.  We
