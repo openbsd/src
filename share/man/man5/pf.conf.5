@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.364 2006/10/25 11:36:08 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.365 2006/10/26 10:26:03 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -461,6 +461,19 @@ States can match packets on any interfaces (the default).
 For example:
 .Bd -literal -offset indent
 set state-policy if-bound
+.Ed
+.It Ar set hostid
+The 32 bit
+.Ar hostid
+identifies this firewall's state table entries to other firewalls
+in a pfsync failover cluster.
+By default the hostid is set to a pseudo-random value, however it may be
+desireable to manually configure it, for example to more easily identify the
+source of state table entries.
+.Pp
+.Dl set hostid 1
+.Pp
+The hostid may be specified in either decimal or hexadecimal.
 .Ed
 .It Ar set require-order
 By default
