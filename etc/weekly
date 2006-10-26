@@ -1,7 +1,8 @@
 #!/bin/sh -
 #
-#	$OpenBSD: weekly,v 1.17 2006/10/06 04:50:31 hugh Exp $
+#	$OpenBSD: weekly,v 1.18 2006/10/26 12:20:55 ajacoutot Exp $
 #
+umask 022
 
 PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec
 export PATH

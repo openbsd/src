@@ -1,8 +1,10 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.55 2006/10/04 17:46:34 deraadt Exp $
+#	$OpenBSD: daily,v 1.56 2006/10/26 12:20:55 ajacoutot Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
+umask 022
+
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
 bak=/var/backups
 
