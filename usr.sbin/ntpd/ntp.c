@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.93 2006/10/24 12:23:39 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.94 2006/10/27 12:22:41 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -201,7 +201,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 
 		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
 		bzero(idx2peer, sizeof(void *) * idx2peer_elms);
-		nextaction = time(NULL) + 3600;
+		nextaction = getmonotime() + 3600;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main->fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		pfd[PFD_HOTPLUG].fd = hotplugfd;
@@ -217,7 +217,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		idx_peers = i;
 		sent_cnt = trial_cnt = 0;
 		TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
-			if (p->next > 0 && p->next <= time(NULL)) {
+			if (p->next > 0 && p->next <= getmonotime()) {
 				if (p->state > STATE_DNS_INPROGRESS)
 					trial_cnt++;
 				if (client_query(p) == 0)
@@ -228,7 +228,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 
 			if (p->deadline > 0 && p->deadline < nextaction)
 				nextaction = p->deadline;
-			if (p->deadline > 0 && p->deadline <= time(NULL)) {
+			if (p->deadline > 0 && p->deadline <= getmonotime()) {
 				timeout = error_interval();
 				log_debug("no reply from %s received in time, "
 				    "next query %ds", log_sockaddr(
@@ -251,9 +251,9 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 			}
 		}
 
-		if (last_sensor_scan + SENSOR_SCAN_INTERVAL < time(NULL)) {
+		if (last_sensor_scan + SENSOR_SCAN_INTERVAL < getmonotime()) {
 			sensor_scan();
-			last_sensor_scan = time(NULL);
+			last_sensor_scan = getmonotime();
 		}
 		sensors_cnt = 0;
 		TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
@@ -270,7 +270,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		if (ibuf_main->w.queued > 0)
 			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
 
-		timeout = nextaction - time(NULL);
+		timeout = nextaction - getmonotime();
 		if (timeout < 0)
 			timeout = 0;
 
@@ -315,7 +315,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		for (s = TAILQ_FIRST(&conf->ntp_sensors); s != NULL;
 		    s = next_s) {
 			next_s = TAILQ_NEXT(s, entry);
-			if (s->next <= time(NULL))
+			if (s->next <= getmonotime())
 				sensor_query(s);
 		}
 	}

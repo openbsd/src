@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.11 2006/06/07 06:29:03 otto Exp $ */
+/*	$OpenBSD: util.c,v 1.12 2006/10/27 12:22:41 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -45,6 +45,17 @@ gettime(void)
 		fatal("gettimeofday");
 
 	return (tv.tv_sec + JAN_1970 + 1.0e-6 * tv.tv_usec);
+}
+
+time_t
+getmonotime(void)
+{
+	struct timespec	ts;
+
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+		fatal("clock_gettime");
+
+	return (ts.tv_sec);
 }
 
 

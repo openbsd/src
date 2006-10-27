@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.24 2006/10/24 12:23:39 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.25 2006/10/27 12:22:41 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -101,7 +101,7 @@ sensor_add(struct sensor *sensor)
 	if ((s = calloc(1, sizeof(*s))) == NULL)
 		fatal("sensor_add calloc");
 
-	s->next = time(NULL);
+	s->next = getmonotime();
 	s->weight = cs->weight;
 	if ((s->device = strdup(sensor->device)) == NULL)
 		fatal("sensor_add strdup");
@@ -128,7 +128,9 @@ sensor_query(struct ntp_sensor *s)
 	int		 mib[3];
 	size_t		 len;
 
-	s->next = time(NULL) + SENSOR_QUERY_INTERVAL;
+	s->next = getmonotime() + SENSOR_QUERY_INTERVAL;
+
+	/* rcvd is walltime here, monotime in client.c. not used elsewhere */
 	if (s->update.rcvd < time(NULL) - SENSOR_DATA_MAXAGE)
 		s->update.good = 0;
 
