@@ -1,4 +1,4 @@
-.\" $OpenBSD: udcf.4,v 1.12 2006/10/11 13:23:45 mbalmer Exp $
+.\" $OpenBSD: udcf.4,v 1.13 2006/10/27 11:29:06 mbalmer Exp $
 .\"
 .\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -54,16 +54,16 @@ The quality of the timedelta is reported as the sensor status:
 .It UNKNOWN
 No valid time information has been received yet.
 .It OK
-The time information is valid and the receiver is fully synchronized to the
-time signal station.
-The timedelta is safe to use for applications like
+The time information is valid and the timedelta is safe to use for
+applications like
 .Xr ntpd 8 .
 .It WARN
-The time information is valid, but there has been a reception or parity error.
-The sensor value is adjusted using the local clock for at most 15 minutes.
+The time information is still valid, but no new time information has been
+decoded for at least 5 minutes due to a reception or parity error.
 The timedelta should be used with care.
 .It CRITICAL
-No valid time information has been received for more than 15 minutes.
+No valid time information has been received for more than 15 minutes since
+the sensor state degraded from OK to WARN.
 This is an indication that hardware should be checked
 to see if it is still functional.
 The timedelta will eventually degrade to a lie
