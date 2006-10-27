@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.239 2006/10/25 11:26:47 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.240 2006/10/27 13:56:51 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1427,8 +1427,6 @@ RB_PROTOTYPE(pf_state_tree_id, pf_state,
 extern struct pf_state_tree_id tree_id;
 extern struct pf_state_queue state_list;
 
-extern struct pf_anchor_global		  pf_anchors;
-extern struct pf_ruleset		  pf_main_ruleset;
 TAILQ_HEAD(pf_poolqueue, pf_pool);
 extern struct pf_poolqueue		  pf_pools[2];
 TAILQ_HEAD(pf_altqqueue, pf_altq);
@@ -1467,11 +1465,6 @@ extern struct pf_state		*pf_find_state_all(struct pf_state_cmp *key,
 				    u_int8_t tree, int *more);
 extern void			 pf_print_state(struct pf_state *);
 extern void			 pf_print_flags(u_int8_t);
-extern struct pf_anchor		*pf_find_anchor(const char *);
-extern struct pf_ruleset	*pf_find_ruleset(const char *);
-extern struct pf_ruleset	*pf_find_or_create_ruleset(const char *);
-extern void			 pf_remove_if_empty_ruleset(
-				    struct pf_ruleset *);
 extern u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t,
 				    u_int8_t);
 
@@ -1606,6 +1599,31 @@ struct pf_pool_limit {
 	unsigned	 limit;
 };
 extern struct pf_pool_limit	pf_pool_limits[PF_LIMIT_MAX];
+
+#endif /* _KERNEL */
+
+extern struct pf_anchor_global  pf_anchors;
+extern struct pf_anchor        pf_main_anchor;
+#define pf_main_ruleset	pf_main_anchor.ruleset
+
+/* these ruleset functions can be linked into userland programs (pfctl) */
+int			 pf_get_ruleset_number(u_int8_t);
+void			 pf_init_ruleset(struct pf_ruleset *);
+int			 pf_anchor_setup(struct pf_rule *,
+			    const struct pf_ruleset *, const char *);
+int			 pf_anchor_copyout(const struct pf_ruleset *,
+			    const struct pf_rule *, struct pfioc_rule *);
+void			 pf_anchor_remove(struct pf_rule *);
+void			 pf_remove_if_empty_ruleset(struct pf_ruleset *);
+struct pf_anchor	*pf_find_anchor(const char *);
+struct pf_ruleset	*pf_find_ruleset(const char *);
+struct pf_ruleset	*pf_find_or_create_ruleset(const char *);
+void			 pf_rs_initialize(void);
+
+#ifdef _KERNEL
+int			 pf_anchor_copyout(const struct pf_ruleset *,
+			    const struct pf_rule *, struct pfioc_rule *);
+void			 pf_anchor_remove(struct pf_rule *);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.516 2006/10/11 08:42:31 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.517 2006/10/27 13:56:51 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -94,8 +94,6 @@
  * Global variables
  */
 
-struct pf_anchor_global	 pf_anchors;
-struct pf_ruleset	 pf_main_ruleset;
 struct pf_altqqueue	 pf_altqs[2];
 struct pf_palist	 pf_pabuf;
 struct pf_altqqueue	*pf_altqs_active;
@@ -289,7 +287,6 @@ static __inline int pf_state_compare_ext_gwy(struct pf_state *,
 	struct pf_state *);
 static __inline int pf_state_compare_id(struct pf_state *,
 	struct pf_state *);
-static __inline int pf_anchor_compare(struct pf_anchor *, struct pf_anchor *);
 
 struct pf_src_tree tree_src_tracking;
 
@@ -303,8 +300,6 @@ RB_GENERATE(pf_state_tree_ext_gwy, pf_state,
     u.s.entry_ext_gwy, pf_state_compare_ext_gwy);
 RB_GENERATE(pf_state_tree_id, pf_state,
     u.s.entry_id, pf_state_compare_id);
-RB_GENERATE(pf_anchor_global, pf_anchor, entry_global, pf_anchor_compare);
-RB_GENERATE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare);
 
 static __inline int
 pf_src_compare(struct pf_src_node *a, struct pf_src_node *b)
@@ -499,14 +494,6 @@ pf_state_compare_id(struct pf_state *a, struct pf_state *b)
 		return (-1);
 
 	return (0);
-}
-
-static __inline int
-pf_anchor_compare(struct pf_anchor *a, struct pf_anchor *b)
-{
-	int c = strcmp(a->path, b->path);
-
-	return (c ? (c < 0 ? -1 : 1) : 0);
 }
 
 #ifdef INET6
