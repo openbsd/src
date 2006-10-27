@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_stack.c,v 1.2 2006/01/05 08:15:16 otto Exp $ */
+/* $OpenBSD: rthread_stack.c,v 1.3 2006/10/27 02:41:24 tedu Exp $ */
 /* $snafu: rthread_stack.c,v 1.12 2005/01/11 02:45:28 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -36,7 +36,7 @@ _rthread_alloc_stack(pthread_t thread)
 	size &= ~(pgsz - 1);
 
 	/*
-	 * Allocate some stack space unless and address was provided.
+	 * Allocate some stack space unless an address was provided.
 	 * A provided address is ASSUMED to be correct with respect to
 	 * alignment constraints.
 	 */

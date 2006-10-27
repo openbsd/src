@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.2 2006/01/05 04:24:30 tedu Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.3 2006/10/27 02:41:24 tedu Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -96,7 +96,7 @@ _thread_tag_unlock(void **tag)
 
 /*
  * return the thread specific data for the given tag.   If there
- * is no date for this thread initialize it from 'storage'.
+ * is no data for this thread initialize it from 'storage'.
  * On any error return 'err'.
  */
 void *
@@ -147,3 +147,193 @@ void
 _thread_malloc_init(void)
 {
 }
+
+#if 0
+/*
+ * miscellaneous libc exported symbols we want to override
+ */
+int
+close(int fd)
+{
+	int rv;
+
+	pthread_testcancel();
+	rv = _thread_sys_close(fd);
+	pthread_testcancel();
+	return (rv);
+}
+
+#if 0
+/* libc calls open */
+int
+creat(const char *path, mode_t mode)
+{
+
+}
+#endif
+
+#if 0
+int
+fcntl(int fd, int cmd, ...)
+{
+	va_list ap;
+	int rv;
+
+	pthread_testcancel();
+	va_start(ap, cmd);
+	rv = _thread_sys_fcntl(fd, cmd, va_arg(cmd, void *));
+	va_end(ap);
+	pthread_testcancel();
+	return (rv);
+}
+#endif
+
+int
+fsync(int fd)
+{
+	int rv;
+
+	pthread_testcancel();
+	rv = _thread_sys_fsync(fd);
+	pthread_testcancel();
+	return (rv);
+}
+
+int
+msync(void *addr, size_t len, int flags)
+{
+	int rv;
+
+	pthread_testcancel();
+	rv =  _thread_sys_msync(addr, len, flags);
+	pthread_testcancel();
+	return (rv);
+}
+
+int
+nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
+{
+	int rv;
+
+	pthread_testcancel();
+	rv = _thread_sys_nanosleep(rqtp, rmtp);
+	pthread_testcancel();
+	return (rv);
+}
+
+#if 0
+int
+open(const char *path, int flags, ...)
+{
+
+	va_list ap;
+	int rv;
+
+	pthread_testcancel();
+	va_start(ap, cmd);
+	rv = _thread_sys_open(fd, cmd, va_arg(cmd, mode_t));
+	va_end(ap);
+	pthread_testcancel();
+	return (rv);
+}
+#endif
+
+#if 0
+int
+pause(void)
+{
+
+}
+#endif
+
+ssize_t
+read(int fd, void *buf, size_t nbytes)
+{
+	ssize_t rv;
+
+	pthread_testcancel();
+	rv = read(fd, buf, nbytes);
+	pthread_testcancel();
+	return (rv);
+}
+
+#if 0
+int
+sigwaitinfo()
+{
+
+}
+#endif
+
+int
+sigsuspend(const sigset_t *sigmask)
+{
+	int rv;
+
+	pthread_testcancel();
+	rv = sigsuspend(sigmask);
+	pthread_testcancel();
+	return (rv);
+}
+
+#if 0
+/* libc sleep(3) calls nanosleep(2), so we'll catch it there */
+unsigned int
+sleep(unsigned int seconds)
+{
+
+}
+#endif
+
+#if 0
+int system(const char *string)
+{
+
+}
+#endif
+
+#if 0
+int
+tcdrain(int fd)
+{
+
+}
+#endif
+
+#if 0
+/* wait and waitpid will be handled by libc calling wait4 */
+pid_t
+wait(int *status)
+{
+
+}
+
+pid_t
+waitpid(pid_t wpid, int *status, int options)
+{
+
+}
+#endif
+
+pid_t
+wait4(pid_t wpid, int *status, int options, struct rusage *rusage)
+{
+	pid_t rv;
+
+	pthread_testcancel();
+	rv = _thread_sys_wait4(wpid, status, options, rusage);
+	pthread_testcancel();
+	return (rv);
+}
+
+ssize_t
+write(int fd, const void *buf, size_t nbytes)
+{
+	ssize_t rv;
+
+	pthread_testcancel();
+	rv = _thread_sys_write(fd, buf, nbytes);
+	pthread_testcancel();
+	return (rv);
+}
+#endif
