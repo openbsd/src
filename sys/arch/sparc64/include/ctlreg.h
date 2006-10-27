@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.9 2003/05/16 22:14:13 henric Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.10 2006/10/27 19:59:14 kettenis Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -106,6 +106,10 @@
 #define	ASI_FLUSH_D_PAGE_SECONDARY	0x39	/* [4u] flush D-cache page using secondary context */
 #define	ASI_FLUSH_D_CTX_PRIMARY		0x3a	/* [4u] flush D-cache context using primary context */
 #define	ASI_FLUSH_D_CTX_SECONDARY	0x3b	/* [4u] flush D-cache context using secondary context */
+
+#define ASI_DCACHE_INVALIDATE		0x42	/* [III] invalidate D-cache */
+#define ASI_DCACHE_UTAG			0x43	/* [III] diagnostic access to D-cache micro tag */
+#define ASI_DCACHE_SNOOP_TAG		0x44	/* [III] diagnostic access to D-cache snoop tag RAM */
 
 #define	ASI_LSU_CONTROL_REGISTER	0x45	/* [4u] load/store unit control register */
 
