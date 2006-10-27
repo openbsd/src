@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.11 2006/10/22 18:36:52 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.12 2006/10/27 20:02:48 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -111,7 +111,7 @@
 
 #define	GPX_ADDER_OFFSET	0x0000
 #define	GPX_VDAC_OFFSET		0x0300
-#define	GPX_CURSOR_OFFSET	0x0400
+#define	GPX_CURSOR_OFFSET	0x0400	/* DC503 */
 #define	GPX_READBACK_OFFSET	0x0500
 
 #define	GPX_WIDTH	1024
@@ -121,7 +121,9 @@
 /* 4 plane option RAMDAC */
 struct	ramdac4 {
 	u_int16_t	colormap[16];
-	u_int8_t	unknown[0x40];
+	u_int8_t	unknown[0x20];
+	u_int16_t	cursormap[4];
+	u_int8_t	unknown2[0x18];
 	u_int16_t	control;
 #define	RAMDAC4_INIT	0x0047
 #define	RAMDAC4_ENABLE	0x0002
@@ -1172,6 +1174,16 @@ gpx_resetcmap(struct gpx_screen *ss)
 		bcopy(rasops_cmap + 0xf8 * 3, ss->ss_cmap + 8 * 3, 8 * 3);
 	}
 	gpx_loadcmap(ss, 0, 1 << ss->ss_depth);
+
+	/*
+	 * On the 4bit RAMDAC, make the hardware cursor black on black
+	 */
+	if (ss->ss_depth != 8) {
+		struct ramdac4 *rd = ss->ss_vdac;
+
+		rd->cursormap[0] = rd->cursormap[1] =
+		    rd->cursormap[2] = rd->cursormap[3] = 0x0000;
+	}
 }
 
 /*
