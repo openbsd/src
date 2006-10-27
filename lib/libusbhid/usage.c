@@ -1,4 +1,4 @@
-/*	$OpenBSD: usage.c,v 1.10 2006/03/30 06:39:36 pat Exp $	*/
+/*	$OpenBSD: usage.c,v 1.11 2006/10/27 15:26:25 deraadt Exp $	*/
 /*	$NetBSD: usage.c,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -234,7 +234,7 @@ hid_usage_in_page(unsigned int u)
 	for (j = 0; j < pages[k].pagesize; j++) {
 		us = pages[k].page_contents[j].usage;
 		if (us == -1) {
-			snprintf(b, sizeof b, "%s %d",
+			snprintf(b, sizeof b,
 			    pages[k].page_contents[j].name, i);
 			return b;
 		}
