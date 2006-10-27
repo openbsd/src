@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.17 2006/09/17 22:26:37 miod Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.18 2006/10/27 17:52:38 miod Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -107,7 +107,7 @@
 #define SCFLAG_PCTPRINT	0x0004000
 #define SCFLAG_PRINT	(SCFLAG_NOPRINT|SCFLAG_PCTPRINT)
 
-const char *tctrl_ext_statuses[16] = {
+const char *tctrl_ext_status[16] = {
 	"main power available",
 	"internal battery attached",
 	"external battery attached",
@@ -274,7 +274,7 @@ tctrl_attach(parent, self, aux)
 				continue;
 			/* wrap to next line if necessary */
 			if (len != 0 && len + strlen(sep) +
-			    strlen(tctrl_ext_statuses[i]) > 80) {
+			    strlen(tctrl_ext_status[i]) > 80) {
 				printf("\n");
 				len = 0;
 			}
@@ -283,8 +283,8 @@ tctrl_attach(parent, self, aux)
 				len = 2 + strlen(sc->sc_dev.dv_xname);
 				sep = "";
 			}
-			printf("%s%s", sep, tctrl_ext_statuses[i]);
-			len += strlen(sep) + strlen(tctrl_ext_statuses[i]);
+			printf("%s%s", sep, tctrl_ext_status[i]);
+			len += strlen(sep) + strlen(tctrl_ext_status[i]);
 			sep = ", ";
 		}
 		if (len != 0)
@@ -294,6 +294,10 @@ tctrl_attach(parent, self, aux)
 	/* Get a few status values */
 	tctrl_bell(sc, 0xff, 0);
 	tctrl_brightness(sc, 0xff, 0);
+
+	/* Blank video if lid is closed during boot */
+	if (sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN)
+		tctrl_tft(sc);
 
 	sc->sc_regs->intr = TS102_UCTRL_INT_RXNE_REQ|TS102_UCTRL_INT_RXNE_MSK;
 
