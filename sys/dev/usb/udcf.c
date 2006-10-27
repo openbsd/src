@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.18 2006/10/14 22:41:21 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.19 2006/10/27 11:28:40 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -49,7 +49,8 @@ int udcfdebug = 0;
 #define UDCF_CTRL_IDX	0x33
 #define UDCF_CTRL_VAL	0x98
 
-#define DPERIOD		((long) 15 * 60)	/* degrade period, 15 min */
+#define DPERIOD1	((long) 5 * 60)		/* degrade OK -> WARN */
+#define DPERIOD2	((long) 15 * 60)	/* degrade WARN -> CRIT */
 
 #define CLOCK_DCF77	0
 #define CLOCK_HBG	1
@@ -95,7 +96,7 @@ struct udcf_softc {
 	struct sensor		sc_sensor;
 };
 
-static int	t1, t2, t3, t4, t5, t6, t7, t8, t9;	/* timeouts in hz */
+static int t1, t2, t3, t4, t5, t6, t7, t8, t9, t10;	/* timeouts in hz */
 
 void	udcf_intr(void *);
 void	udcf_probe(void *);
@@ -254,8 +255,11 @@ USB_ATTACH(udcf)
 	t.tv_sec = 8L;
 	t6 = tvtohz(&t);
 
-	t.tv_sec = DPERIOD;
+	t.tv_sec = DPERIOD1;
 	t8 = tvtohz(&t);
+
+	t.tv_sec = DPERIOD2;
+	t10 = tvtohz(&t);
 
 	t.tv_sec = 0L;
 	t.tv_usec = 250000L;
@@ -345,7 +349,7 @@ udcf_it_intr(void *xsc)
 	usb_add_task(sc->sc_udev, &sc->sc_it_task);
 }
 
-/* detect the cloc type (DCF77 or HBG) */
+/* detect the clock type (DCF77 or HBG) */
 void
 udcf_ct_intr(void *xsc)
 {
@@ -403,7 +407,12 @@ udcf_probe(void *xsc)
 				}
 				sc->sc_sensor.status = SENSOR_S_OK;
 
-				timeout_del(&sc->sc_it_to);
+				/*
+				 * if no valid time information is received
+				 * during the next 5 minutes, the sensor state
+				 * will be degraded to SENSOR_S_WARN
+				 */
+				timeout_add(&sc->sc_it_to, t8);
 			}
 			sc->sc_tbits = 0LL;
 			sc->sc_mask = 1LL;
@@ -474,10 +483,6 @@ udcf_mg_probe(void *xsc)
 		if (time_second - sc->sc_last_mg < 57) {
 			DPRINTF(("unexpected gap, resync\n"));
 			sc->sc_sync = 1;
-			if (sc->sc_sensor.status == SENSOR_S_OK) {
-				sc->sc_sensor.status = SENSOR_S_WARN;
-				timeout_add(&sc->sc_it_to, t8);
-			}
 			timeout_add(&sc->sc_to, t5);
 			timeout_add(&sc->sc_sl_to, t6);
 			sc->sc_last_mg = 0;
@@ -545,11 +550,6 @@ udcf_mg_probe(void *xsc)
 				DPRINTF(("\n"));
 			} else {
 				DPRINTF(("parity error, resync\n"));
-				
-				if (sc->sc_sensor.status == SENSOR_S_OK) {
-					sc->sc_sensor.status = SENSOR_S_WARN;
-					timeout_add(&sc->sc_it_to, t8);
-				}
 				sc->sc_sync = 1;
 			}
 			timeout_add(&sc->sc_to, t4);	/* re-sync in 450 ms */
@@ -570,10 +570,6 @@ udcf_sl_probe(void *xsc)
 
 	DPRINTF(("no signal\n"));
 	sc->sc_sync = 1;
-	if (sc->sc_sensor.status == SENSOR_S_OK) {
-		sc->sc_sensor.status = SENSOR_S_WARN;
-		timeout_add(&sc->sc_it_to, t8);
-	}
 	timeout_add(&sc->sc_to, t5);
 	timeout_add(&sc->sc_sl_to, t6);
 }
@@ -587,9 +583,17 @@ udcf_it_probe(void *xsc)
 	if (sc->sc_dying)
 		return;
 
-	DPRINTF(("\ndegrading sensor to state critical"));
+	DPRINTF(("\ndegrading sensor state"));
 
-	sc->sc_sensor.status = SENSOR_S_CRIT;
+	if (sc->sc_sensor.status == SENSOR_S_OK) {
+		sc->sc_sensor.status = SENSOR_S_WARN;
+		/*
+		 * further degrade in 15 minutes if we dont receive and new
+		 * time information
+		 */
+		timeout_add(&sc->sc_it_to, t10);
+	} else
+		sc->sc_sensor.status = SENSOR_S_CRIT;
 }
 
 /* detect clock type */
