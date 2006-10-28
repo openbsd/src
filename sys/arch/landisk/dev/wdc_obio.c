@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.1 2006/10/07 20:52:40 miod Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.2 2006/10/28 15:51:33 kettenis Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -71,6 +71,20 @@ struct cfattach wdc_obio_ca = {
 #define	WDC_OBIO_AUXREG_SIZE	(WDC_OBIO_AUXREG_NPORTS * 2)
 #define	WDC_OBIO_AUXREG_OFFSET	0x2c
 
+u_int8_t wdc_obio_read_reg(struct channel_softc *chp,  enum wdc_regs reg);
+void wdc_obio_write_reg(struct channel_softc *chp,  enum wdc_regs reg,
+    u_int8_t val);
+
+struct channel_softc_vtbl wdc_obio_vtbl = {
+	wdc_obio_read_reg,
+	wdc_obio_write_reg,
+	wdc_default_lba48_write_reg,
+	wdc_default_read_raw_multi_2,
+	wdc_default_write_raw_multi_2,
+	wdc_default_read_raw_multi_4,
+	wdc_default_write_raw_multi_4
+};
+
 int
 wdc_obio_match(struct device *parent, void *vcf, void *aux)
 {
@@ -105,6 +119,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	chp->cmd_iot = chp->ctl_iot = oa->oa_iot;
+	chp->_vtbl = &wdc_obio_vtbl;
 
 	if (bus_space_map(chp->cmd_iot, oa->oa_io[0].or_addr,
 	    WDC_OBIO_REG_SIZE, 0, &chp->cmd_ioh)
@@ -114,8 +129,6 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 		printf(": couldn't map registers\n");
 		return;
 	}
-	chp->data32iot = chp->cmd_iot;
-	chp->data32ioh = chp->cmd_ioh;
 
 	sc->sc_ih = obio_intr_establish(oa->oa_irq[0].or_irq, IPL_BIO, wdcintr,
 	    chp, self->dv_xname);
@@ -139,4 +152,26 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 
 	wdcattach(chp);
 	wdc_print_current_modes(chp);
+}
+
+u_int8_t
+wdc_obio_read_reg(struct channel_softc *chp,  enum wdc_regs reg)
+{
+	if (reg & _WDC_AUX) 
+		return (bus_space_read_1(chp->ctl_iot, chp->ctl_ioh,
+		    (reg & _WDC_REGMASK) << 1));
+	else
+		return (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+		    (reg & _WDC_REGMASK) << 1));
+}
+
+void
+wdc_obio_write_reg(struct channel_softc *chp,  enum wdc_regs reg, u_int8_t val)
+{
+	if (reg & _WDC_AUX) 
+		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh,
+		    (reg & _WDC_REGMASK) << 1, val);
+	else
+		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
+		    (reg & _WDC_REGMASK) << 1, val);
 }
