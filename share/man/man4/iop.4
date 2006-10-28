@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iop.4,v 1.12 2005/09/30 20:34:24 jaredy Exp $
+.\"	$OpenBSD: iop.4,v 1.13 2006/10/28 10:26:26 jmc Exp $
 .\"	$NetBSD: iop.4,v 1.7 2001/03/20 13:09:19 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ Request that the
 driver scan all bus ports, retrieve the latest version of the LCT, and
 attach or detach devices as necessary.
 Note that higher-level reconfiguration tasks (such as logically re-scanning
-SCSI busses) will not be performed by this ioctl.
+SCSI buses) will not be performed by this ioctl.
 .It Dv IOPIOCGTIDMAP (struct iovec)
 Retrieve the TID to device map.
 This map indicates which targets are configured, and what the corresponding

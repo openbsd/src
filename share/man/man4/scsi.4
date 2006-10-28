@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.27 2006/08/13 07:56:37 steven Exp $
+.\"	$OpenBSD: scsi.4,v 1.28 2006/10/28 10:26:26 jmc Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -50,7 +50,7 @@ of drivers to control various scsi devices, and to utilize different
 scsi host adapters through host adapter drivers.
 When the system probes the
 .Em SCSI
-busses, it attaches any devices it finds to the appropriate
+buses, it attaches any devices it finds to the appropriate
 drivers.
 If no driver seems appropriate, then it attaches the device to the
 uk (unknown) driver so that user level scsi ioctls may
@@ -58,7 +58,7 @@ still be performed against the device.
 .Sh KERNEL CONFIGURATION
 The option SCSIDEBUG enables the debug ioctl.
 .Pp
-All devices and the SCSI busses support boot time allocation so that
+All devices and the SCSI buses support boot time allocation so that
 an upper number of devices and controllers does not need to be configured;
 .Cd "sd* at scsibus?"
 will suffice for any number of disk drivers.

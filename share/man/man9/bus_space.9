@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_space.9,v 1.16 2005/08/23 08:25:06 jmc Exp $
+.\"	$OpenBSD: bus_space.9,v 1.17 2006/10/28 10:26:26 jmc Exp $
 .\" $NetBSD: bus_space.9,v 1.15 2000/08/09 03:11:00 tv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -359,7 +359,7 @@ devices on different system architectures, and to allow a single driver
 object file to manipulate a set of devices on multiple bus types on a
 single architecture.
 .Pp
-Not all busses have to implement all functions described in this
+Not all buses have to implement all functions described in this
 document, though that is encouraged if the operations are logically
 supported by the bus.
 Unimplemented functions should cause compile-time errors if possible.
@@ -382,7 +382,7 @@ machine-dependent code.
 A given machine may have several different types of bus space (e.g.\&
 memory space and I/O space), and thus may provide multiple different bus
 space tags.
-Individual busses or devices on a machine may use more than one bus
+Individual buses or devices on a machine may use more than one bus
 space tag.
 For instance, ISA devices are given an ISA memory space tag and an ISA
 I/O space tag.
@@ -393,7 +393,7 @@ interface chipsets.
 A range in bus space is described by a bus address and a bus size.
 The bus address describes the start of the range in bus space.
 The bus size describes the size of the range in bytes.
-Busses which are not byte addressable may require use of bus space
+Buses which are not byte addressable may require use of bus space
 ranges with appropriately aligned addresses and properly rounded sizes.
 .Pp
 Access to regions of bus space is facilitated by use of bus space
@@ -409,7 +409,7 @@ argument, at least one handle argument, and at least one offset argument
 The bus space tag specifies the space, each handle specifies a region in
 the space, and each offset specifies the offset into the region of the
 actual location(s) to be accessed.
-Offsets are given in bytes, though busses may impose alignment constraints.
+Offsets are given in bytes, though buses may impose alignment constraints.
 The offset used to access data relative to a given handle must be such
 that all of the data being accessed is in the mapped region that the
 handle describes.
@@ -816,7 +816,7 @@ The
 and
 .Fn bus_space_write_N
 families of functions provide the ability to read and write 1, 2, 4, and
-8 byte data items on busses which support those access sizes.
+8 byte data items on buses which support those access sizes.
 .Pp
 .Bl -ohang -compact
 .It Fn bus_space_read_1 "space" "handle" "offset"
