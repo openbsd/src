@@ -1021,6 +1021,7 @@
 ./usr/share/man/cat4/amd64
 ./usr/share/man/cat4/amd64/autoconf.0
 ./usr/share/man/cat4/amd64/intro.0
+./usr/share/man/cat4/amd64/ioapic.0
 ./usr/share/man/cat4/amd64/kmem.0
 ./usr/share/man/cat4/amd64/mem.0
 ./usr/share/man/cat4/amdiic.0
@@ -1213,6 +1214,7 @@
 ./usr/share/man/cat4/i386/ichpcib.0
 ./usr/share/man/cat4/i386/ie.0
 ./usr/share/man/cat4/i386/intro.0
+./usr/share/man/cat4/i386/ioapic.0
 ./usr/share/man/cat4/i386/joy.0
 ./usr/share/man/cat4/i386/kmem.0
 ./usr/share/man/cat4/i386/le.0
