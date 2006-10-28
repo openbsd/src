@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.194 2006/10/26 22:57:17 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.195 2006/10/28 22:14:47 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2604,8 +2604,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 		 */
 
 		/* Internal frag. If fits in prev, copy it there. */
-		if (prev && !M_READONLY(prev) &&
-		    M_TRAILINGSPACE(prev) >= m->m_len) {
+		if (prev && M_TRAILINGSPACE(prev) >= m->m_len) {
 			bcopy(m->m_data,
 			      prev->m_data+prev->m_len,
 			      mlen);
@@ -2615,7 +2614,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			prev->m_next = m_free(m);
 			m = prev;
 			continue;
-		} else if (m->m_next != NULL && !M_READONLY(m) &&
+		} else if (m->m_next != NULL &&
 			   M_TRAILINGSPACE(m) >= shortfall &&
 			   m->m_next->m_len >= (8 + shortfall)) {
 			/* m is writable and have enough data in next, pull up. */
