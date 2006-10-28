@@ -12510,6 +12510,13 @@ rs6000_initialize_trampoline (addr, fnaddr, cxt)
       break;
     }
 
+  /* Call __enable_execute_stack after writing onto the stack to make sure
+     the stack address is accessible.  */
+#ifdef TRANSFER_FROM_TRAMPOLINE
+  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__enable_execute_stack"),
+                     LCT_NORMAL, VOIDmode, 1, addr, Pmode);
+#endif
+
   return;
 }
 
