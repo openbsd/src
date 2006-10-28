@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.368 2006/10/26 13:15:16 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.369 2006/10/28 14:31:00 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2457,6 +2457,22 @@ anchor, if any, before finally evaluating the
 .Ar pass
 rule.
 .Pp
+Filter rule
+.Ar anchors
+can also be loaded inline in the ruleset within a brace ('{' '}') delimited
+block.
+Brace delimited blocks may contain rules or other brace-delimited blocks.
+When anchors are loaded this way the anchor name becomes optional.
+.Bd -literal -offset indent
+anchor "external" on egress {
+	block
+	anchor out {
+		pass proto tcp from any to port { 25, 80, 443 }
+	}
+	pass in proto tcp to any port 22
+}
+.Ed
+.Pp
 Since the parser specification for anchor names is a string, any
 reference to an anchor name containing solidus
 .Pq Sq /
@@ -2680,8 +2696,8 @@ Syntax for
 in BNF:
 .Bd -literal
 line           = ( option | pf-rule | nat-rule | binat-rule | rdr-rule |
-                 antispoof-rule | altq-rule | queue-rule | anchor-rule |
-                 trans-anchors | load-anchor | table-rule )
+                 antispoof-rule | altq-rule | queue-rule | trans-anchors |
+		 anchor-rule | anchor-close | load-anchor | table-rule | )
 
 option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                  [ "optimization" [ "default" | "normal" |
@@ -2752,8 +2768,10 @@ altq-rule      = "altq on" interface-name queueopts-list
 queue-rule     = "queue" string [ "on" interface-name ] queueopts-list
                  subqueue
 
-anchor-rule    = "anchor" string [ ( "in" | "out" ) ] [ "on" ifspec ]
-                 [ af ] [ protospec ] [ hosts ]
+anchor-rule    = "anchor" [ string ] [ ( "in" | "out" ) ] [ "on" ifspec ]
+                 [ af ] [ protospec ] [ hosts ] [ "{" ]
+
+anchor-close   = "}"
 
 trans-anchors  = ( "nat-anchor" | "rdr-anchor" | "binat-anchor" ) string
                  [ "on" ifspec ] [ af ] [ "proto" ] [ protospec ] [ hosts ]
