@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.26 2006/10/21 20:10:39 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.27 2006/10/28 23:26:05 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -264,7 +264,7 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 		}
 		bcopy(bp->b_data + DOSPARTOFF, dp, sizeof(dp));
 
-		if (ourpart == -1) {
+		if (ourpart == -1 && part_blkno == DOSBBSECTOR) {
 			/* Search for our MBR partition */
 			for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
 			    i++, dp2++)
