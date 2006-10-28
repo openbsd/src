@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.17 2006/02/27 14:32:49 otto Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.18 2006/10/28 06:34:19 otto Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -94,6 +94,7 @@ bpf_m_xword(m, k, err)
 	u_char *cp, *np;
 	struct mbuf *m0;
 
+	*err = 1;
 	MINDEX(len, m, k);
 	cp = mtod(m, u_char *) + k;
 	if (len >= k + 4) {
@@ -102,7 +103,7 @@ bpf_m_xword(m, k, err)
 	}
 	m0 = m->m_next;
 	if (m0 == 0 || m0->m_len + len - k < 4)
-		goto bad;
+		return 0;
 	*err = 0;
 	np = mtod(m0, u_char *);
 	switch (len - k) {
@@ -116,9 +117,6 @@ bpf_m_xword(m, k, err)
 	default:
 		return (cp[0] << 24) | (cp[1] << 16) | (cp[2] << 8) | np[0];
 	}
-    bad:
-	*err = 1;
-	return 0;
 }
 
 int
@@ -131,6 +129,7 @@ bpf_m_xhalf(m, k, err)
 	u_char *cp;
 	struct mbuf *m0;
 
+	*err = 1;
 	MINDEX(len, m, k);
 	cp = mtod(m, u_char *) + k;
 	if (len >= k + 2) {
@@ -139,12 +138,9 @@ bpf_m_xhalf(m, k, err)
 	}
 	m0 = m->m_next;
 	if (m0 == 0)
-		goto bad;
+		return 0;
 	*err = 0;
 	return (cp[0] << 8) | mtod(m0, u_char *)[0];
- bad:
-	*err = 1;
-	return 0;
 }
 #endif
 
@@ -216,6 +212,8 @@ bpf_filter(pc, p, wirelen, buflen)
 				if (buflen != 0)
 					return 0;
 				A = bpf_m_xhalf((struct mbuf *)p, k, &merr);
+				if (merr != 0)
+					return 0;
 				continue;
 #else
 				return 0;
