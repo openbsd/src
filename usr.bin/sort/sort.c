@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.29 2006/10/18 23:30:43 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.30 2006/10/28 21:14:29 naddy Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.29 2006/10/18 23:30:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.30 2006/10/28 21:14:29 naddy Exp $";
 #endif
 #endif /* not lint */
 
@@ -253,13 +253,6 @@ main(int argc, char *argv[])
 		get = makeline;
 	else
 		get = makekey;
-
-	if ((buffer = malloc(bufsize)) == NULL)
-		err(2, NULL);
-	 if (!SINGL_FLD) {
-		if ((linebuf = malloc(linebuf_size)) == NULL)
-			err(2, NULL);
-	}
 
 	if (cflag) {
 		order(filelist, get, fldtab);

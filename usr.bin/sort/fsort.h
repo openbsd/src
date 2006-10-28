@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsort.h,v 1.5 2006/10/18 23:30:43 millert Exp $	*/
+/*	$OpenBSD: fsort.h,v 1.6 2006/10/28 21:14:29 naddy Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@
 #define MAXFCT 1000
 #define MAXLLEN ((1 << min(POW-4, 16)) - 14)
 
-extern u_char *buffer, *linebuf;
+extern u_char **keylist, *buffer, *linebuf;
 extern size_t bufsize, linebuf_size;
 
 /* temp files in the stack have a file descriptor, a largest bin (maxb)
