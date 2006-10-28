@@ -1,3 +1,1 @@
 stdin:5: Rules must be in order: options, normalization, queueing, translation, filtering
-scrub in on lo0 all fragment reassemble
-pass in on lo1000000 all flags S/SA keep state

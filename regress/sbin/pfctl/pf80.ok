@@ -1,9 +1,9 @@
 nat pass on lo0 inet from 10.0.0.0/8 to 172.16.0.0/16 -> 172.16.0.1
-rdr pass on lo0 inet proto tcp from any to 1.2.3.4 port = www -> 127.0.0.1 port 8080
-binat pass on lo0 inet from 10.0.0.0/8 to 11.0.0.0/8 -> 12.0.0.0/8
 nat pass log on lo0 inet from 10.0.0.0/8 to 172.16.0.0/16 -> 172.16.0.1
-rdr pass log on lo0 inet proto tcp from any to 1.2.3.4 port = www -> 127.0.0.1 port 8080
-binat pass log on lo0 inet from 10.0.0.0/8 to 11.0.0.0/8 -> 12.0.0.0/8
 nat pass log (all) on lo0 inet from 10.0.0.0/8 to 172.16.0.0/16 -> 172.16.0.1
+rdr pass on lo0 inet proto tcp from any to 1.2.3.4 port = www -> 127.0.0.1 port 8080
+rdr pass log on lo0 inet proto tcp from any to 1.2.3.4 port = www -> 127.0.0.1 port 8080
 rdr pass log (all) on lo0 inet proto tcp from any to 1.2.3.4 port = www -> 127.0.0.1 port 8080
+binat pass on lo0 inet from 10.0.0.0/8 to 11.0.0.0/8 -> 12.0.0.0/8
+binat pass log on lo0 inet from 10.0.0.0/8 to 11.0.0.0/8 -> 12.0.0.0/8
 binat pass log (all) on lo0 inet from 10.0.0.0/8 to 11.0.0.0/8 -> 12.0.0.0/8

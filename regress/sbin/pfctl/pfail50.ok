@@ -3,15 +3,3 @@ stdin:19: syntax error
 stdin:20: flags always false
 stdin:21: flags always false
 stdin:22: flags always false
-pass proto tcp all flags F/F keep state
-pass proto tcp all flags S/S keep state
-pass proto tcp all flags R/R keep state
-pass proto tcp all flags P/P keep state
-pass proto tcp all flags A/A keep state
-pass proto tcp all flags U/U keep state
-pass proto tcp all flags E/E keep state
-pass proto tcp all flags W/W keep state
-pass proto tcp all flags FSRPAUEW/FSRPAUEW keep state
-pass proto tcp all flags /FSRPAUEW keep state
-pass proto tcp all flags S/FSRA keep state
-pass proto tcp all flags /SA keep state

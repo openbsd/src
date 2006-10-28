@@ -1,3 +1,1 @@
 stdin:5: rule expands to no valid combination
-rdr on lo0 all -> (lo0) round-robin
-nat on lo0 from (lo0) to any -> (lo0) round-robin

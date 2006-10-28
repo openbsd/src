@@ -1,7 +1,2 @@
 stdin:4: invalid use of table <sometable> as the redirect address of a binat rule
 stdin:5: invalid use of table <sometable> as the source address of a binat rule
-rdr on lo0 all -> <sometable> round-robin
-nat on lo0 all -> <sometable> round-robin
-pass in dup-to (lo0 <sometable>) round-robin all flags S/SA keep state
-pass in route-to (lo0 <sometable>) round-robin all flags S/SA keep state
-pass in reply-to (lo0 <sometable>) round-robin all flags S/SA keep state

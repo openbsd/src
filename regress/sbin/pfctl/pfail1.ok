@@ -7,5 +7,3 @@ stdin:4: rule expands to no valid combination
 stdin:5: port only applies to tcp/udp
 stdin:5: skipping rule due to errors
 stdin:5: rule expands to no valid combination
-pass in all flags S/SA keep state
-pass in all flags S/SA keep state

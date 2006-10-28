@@ -8,4 +8,3 @@ stdin:8: fragcache cannot be respecified
 stdin:9: fragcache cannot be respecified
 stdin:10: fragcache cannot be respecified
 stdin:11: random-id cannot be respecified
-scrub in on ! lo0 all fragment reassemble
