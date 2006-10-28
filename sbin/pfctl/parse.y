@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.512 2006/10/25 14:50:30 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.513 2006/10/28 14:29:05 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -310,6 +310,7 @@ struct sym {
 int	 symset(const char *, const char *, int);
 char	*symget(const char *);
 
+void	 mv_rules(struct pf_ruleset *, struct pf_ruleset *);
 void	 decide_address_family(struct node_host *, sa_family_t *);
 void	 remove_invalid_hosts(struct node_host **, sa_family_t *);
 int	 invalid_redirect(struct node_host *, sa_family_t);
@@ -443,7 +444,7 @@ typedef struct {
 %type	<v.gid>			gids gid_list gid_item
 %type	<v.route>		route
 %type	<v.redirection>		redirection redirpool
-%type	<v.string>		label string tag
+%type	<v.string>		label string tag anchorname
 %type	<v.keep_state>		keep
 %type	<v.state_opt>		state_opt_spec state_opt_list state_opt_item
 %type	<v.logquick>		logquick quick log logopts logopt
@@ -479,7 +480,20 @@ ruleset		: /* empty */
 		| ruleset varset '\n'
 		| ruleset antispoof '\n'
 		| ruleset tabledef '\n'
+		| '{' fakeanchor '}' '\n';
 		| ruleset error '\n'		{ errors++; }
+		;
+
+/*
+ * apply to previouslys specified rule: must be careful to note
+ * what that is: pf or nat or binat or rdr
+ */
+fakeanchor	: fakeanchor '\n'
+		| fakeanchor anchorrule '\n'
+		| fakeanchor binatrule '\n'
+		| fakeanchor natrule '\n'
+		| fakeanchor pfrule '\n'
+		| fakeanchor error '\n'
 		;
 
 option		: SET OPTIMIZATION STRING		{
@@ -547,7 +561,7 @@ option		: SET OPTIMIZATION STRING		{
 				free($3);
 				YYERROR;
 			}
-			if (!pf->anchor[0]) {
+			if (!pf->anchor->name[0]) {
 				if (pfctl_file_fingerprints(pf->dev,
 				    pf->opts, $3)) {
 					yyerror("error loading "
@@ -609,15 +623,84 @@ varset		: STRING '=' string		{
 		}
 		;
 
-anchorrule	: ANCHOR string	dir quick interface af proto fromto filter_opts {
+anchorname	: STRING			{ $$ = $1; }
+		| /* empty */			{ $$ = NULL; }
+		;
+
+optnl		: optnl '\n'
+		|
+		;
+
+pfa_anchorlist	: pfrule optnl
+		| anchorrule optnl
+		| pfa_anchorlist pfrule optnl
+		| pfa_anchorlist anchorrule optnl
+		;
+
+pfa_anchor	: '{'
+		{
+			char tmp_anchorname[PF_ANCHOR_NAME_SIZE];
+			struct pf_ruleset *rs;
+
+			pf->asd++;
+			pf->bn++;
+			pf->brace = 1;
+			snprintf(tmp_anchorname, PF_ANCHOR_NAME_SIZE,
+			    "_%d", pf->bn);
+			rs = pf_find_or_create_ruleset(tmp_anchorname);
+			if (rs == NULL)
+				err(1, "pfa_anchor: pf_find_or_create_ruleset");
+			pf->astack[pf->asd] = rs->anchor;
+			pf->anchor = rs->anchor;
+		} '\n' pfa_anchorlist '}'
+		{
+			pf->alast = pf->anchor;
+			pf->asd--;
+			pf->anchor = pf->astack[pf->asd];
+		}
+		| /* empty */
+		;
+
+anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
+		    filter_opts pfa_anchor
+		{
 			struct pf_rule	r;
 
 			if (check_rulestate(PFCTL_STATE_FILTER)) {
-				free($2);
+				if ($2)
+					free($2);
 				YYERROR;
 			}
 
 			memset(&r, 0, sizeof(r));
+			if (pf->astack[pf->asd + 1]) {
+				if ($2) {
+					struct pf_ruleset *src =
+						&pf->alast->ruleset;
+					struct pf_ruleset *dst =
+					    pf_find_or_create_ruleset($2);
+
+					if (!dst)
+						err(1, "anchorrule: unable to "
+						    "create ruleset");
+					if (dst->anchor->refcnt) {
+						yyerror("inline anchor "
+						    "already exists\n");
+						YYERROR;
+					}
+
+					mv_rules(src, dst);
+					pf_remove_if_empty_ruleset(src);
+					pf->alast = dst->anchor;
+				}
+				r.anchor = pf->alast;
+			} else {
+				if (!$2) {
+					yyerror("anchors without explicit "
+					    "rules must specify a name\n");
+					YYERROR;
+				}
+			}
 			r.direction = $3;
 			r.quick = $4.quick;
 			r.af = $6;
@@ -638,8 +721,10 @@ anchorrule	: ANCHOR string	dir quick interface af proto fromto filter_opts {
 
 			expand_rule(&r, $5, NULL, $7, $8.src_os,
 			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
-			    0, 0, 0, $2);
+			    0, 0, 0, pf->astack[pf->asd + 1] ?
+			    pf->alast->name : $2);
 			free($2);
+			pf->astack[pf->asd + 1] = NULL;
 		}
 		| NATANCHOR string interface af proto fromto rtable {
 			struct pf_rule	r;
@@ -744,7 +829,8 @@ anchorrule	: ANCHOR string	dir quick interface af proto fromto filter_opts {
 loadrule	: LOAD ANCHOR string FROM string	{
 			struct loadanchors	*loadanchor;
 
-			if (strlen(pf->anchor) + 1 + strlen($3) >= MAXPATHLEN) {
+			if (strlen(pf->anchor->name) + 1 +
+			    strlen($3) >= MAXPATHLEN) {
 				yyerror("anchorname %s too long, max %u\n",
 				    $3, MAXPATHLEN - 1);
 				free($3);
@@ -756,9 +842,9 @@ loadrule	: LOAD ANCHOR string FROM string	{
 			if ((loadanchor->anchorname = malloc(MAXPATHLEN)) ==
 			    NULL)
 				err(1, "loadrule: malloc");
-			if (pf->anchor[0])
+			if (pf->anchor->name[0])
 				snprintf(loadanchor->anchorname, MAXPATHLEN,
-				    "%s/%s", pf->anchor, $3);
+				    "%s/%s", pf->anchor->name, $3);
 			else
 				strlcpy(loadanchor->anchorname, $3, MAXPATHLEN);
 			if ((loadanchor->filename = strdup($5)) == NULL)
@@ -1630,7 +1716,7 @@ pfrule		: action dir logquick interface route af proto fromto
 			if (!r.keep_state && !r.action &&
 			    !($9.marker & FOM_KEEP))
 				r.keep_state = PF_STATE_NORMAL;
-		
+
 			o = $9.keep.options;
 			while (o) {
 				struct node_state_opt	*p = o;
@@ -2962,7 +3048,7 @@ statelock	: IFBOUND {
 
 keep		: NO STATE			{
 			$$.action = 0;
-			$$.options = NULL; 
+			$$.options = NULL;
 		}
 		| KEEP STATE state_opt_spec	{
 			$$.action = PF_STATE_NORMAL;
@@ -4029,7 +4115,7 @@ process_tabledef(char *name, struct table_opts *opts)
 		    &opts->init_nodes);
 	if (!(pf->opts & PF_OPT_NOACTION) &&
 	    pfctl_define_table(name, opts->flags, opts->init_addr,
-	    pf->anchor, &ab, pf->tticket)) {
+	    pf->anchor->name, &ab, pf->anchor->ruleset.tticket)) {
 		yyerror("cannot define table %s: %s", name,
 		    pfr_strerror(errno));
 		goto _error;
@@ -4221,7 +4307,7 @@ expand_label_nr(const char *name, char *label, size_t len)
 	char n[11];
 
 	if (strstr(label, name) != NULL) {
-		snprintf(n, sizeof(n), "%u", pf->rule_nr);
+		snprintf(n, sizeof(n), "%u", pf->anchor->refcnt);
 		expand_label_str(label, len, name, n);
 	}
 }
@@ -4651,7 +4737,7 @@ expand_rule(struct pf_rule *r,
 		if (rule_consistent(r, anchor_call[0]) < 0 || error)
 			yyerror("skipping rule due to errors");
 		else {
-			r->nr = pf->rule_nr++;
+			r->nr = pf->anchor->refcnt++;
 			pfctl_add_rule(pf, r, anchor_call);
 			added++;
 		}
@@ -5181,6 +5267,29 @@ symget(const char *nam)
 }
 
 void
+mv_rules(struct pf_ruleset *src, struct pf_ruleset *dst)
+{
+	int i;
+	struct pf_rule *r;
+
+	for (i = 0; i < PF_RULESET_MAX; ++i) {
+		while ((r = TAILQ_FIRST(src->rules[i].active.ptr))
+		    != NULL) {
+			TAILQ_REMOVE(src->rules[i].active.ptr, r, entries);
+			TAILQ_INSERT_TAIL(dst->rules[i].active.ptr, r, entries);
+		}
+		while ((r = TAILQ_FIRST(src->rules[i].inactive.ptr))
+		    != NULL) {
+			TAILQ_REMOVE(src->rules[i].inactive.ptr, r, entries);
+			TAILQ_INSERT_TAIL(dst->rules[i].inactive.ptr,
+				r, entries);
+		}
+	}
+	dst->anchor->refcnt = src->anchor->refcnt;
+	src->anchor->refcnt = 0;
+}
+
+void
 decide_address_family(struct node_host *n, sa_family_t *af)
 {
 	sa_family_t	target_af = 0;
@@ -5356,4 +5465,3 @@ pfctl_load_anchors(int dev, int opts, struct pfr_buffer *trans)
 
 	return (0);
 }
-

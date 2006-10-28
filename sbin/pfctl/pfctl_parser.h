@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.83 2005/11/17 20:52:39 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.84 2006/10/28 14:29:05 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -63,24 +63,24 @@
 }
 
 struct pfr_buffer;	/* forward definition */
-struct pf_opt_rule;
-TAILQ_HEAD(pf_opt_queue, pf_opt_rule);
 
 
 struct pfctl {
 	int dev;
 	int opts;
 	int loadopt;
-	u_int32_t tticket;		/* table ticket */
+	int asd;			/* anchor stack depth */
+	int bn;				/* brace number */
+	int brace;
 	int tdirty;			/* kernel dirty */
-	u_int32_t rule_nr;
+#define PFCTL_ANCHOR_STACK_DEPTH 64
+	struct pf_anchor *astack[PFCTL_ANCHOR_STACK_DEPTH];
 	struct pfioc_pooladdr paddr;
 	struct pfioc_altq *paltq;
 	struct pfioc_queue *pqueue;
 	struct pfr_buffer *trans;
-	const char *anchor;
+	struct pf_anchor *anchor, *alast;
 	const char *ruleset;
-	struct pf_opt_queue opt_queue;
 
 	/* 'set foo' options */
 	u_int32_t	 timeout[PFTM_MAX];
@@ -176,19 +176,20 @@ struct pf_opt_rule {
 	struct pf_rule		 por_rule;
 	struct pf_opt_tbl	*por_src_tbl;
 	struct pf_opt_tbl	*por_dst_tbl;
-	char			 por_anchor[MAXPATHLEN];
 	u_int64_t		 por_profile_count;
 	TAILQ_ENTRY(pf_opt_rule) por_entry;
 	TAILQ_ENTRY(pf_opt_rule) por_skip_entry[PF_SKIP_COUNT];
 };
 
+TAILQ_HEAD(pf_opt_queue, pf_opt_rule);
 
 int	pfctl_rules(int, char *, FILE *, int, char *, struct pfr_buffer *);
-int	pfctl_optimize_rules(struct pfctl *);
+int	pfctl_optimize_ruleset(struct pfctl *, struct pf_ruleset *);
 
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *, const char *);
 int	pfctl_add_altq(struct pfctl *, struct pf_altq *);
 int	pfctl_add_pool(struct pfctl *, struct pf_pool *, sa_family_t);
+void	pfctl_move_pool(struct pf_pool *, struct pf_pool *);
 void	pfctl_clear_pool(struct pf_pool *);
 
 int	pfctl_set_timeout(struct pfctl *, const char *, int, int);

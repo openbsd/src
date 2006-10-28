@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.232 2006/10/25 11:28:36 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.233 2006/10/28 14:29:05 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -668,15 +668,21 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	    "anchor", "nat-anchor", "nat-anchor", "binat-anchor",
 	    "binat-anchor", "rdr-anchor", "rdr-anchor" };
 	int	i, opts;
+	int	brace = 0;
 
 	if (verbose)
 		printf("@%d ", r->nr);
 	if (r->action > PF_NORDR)
 		printf("action(%d)", r->action);
-	else if (anchor_call[0])
-		printf("%s \"%s\"", anchortypes[r->action],
-		    anchor_call);
-	else {
+	else if (anchor_call[0]) {
+		if (anchor_call[0] == '_') {
+			brace++;
+			printf("%s", anchortypes[r->action]);
+		} else
+			printf("%s \"%s\"", anchortypes[r->action],
+			    anchor_call);
+
+	} else {
 		printf("%s", actiontypes[r->action]);
 		if (r->natpass)
 			printf(" pass");
@@ -984,6 +990,8 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		print_pool(&r->rpool, r->rpool.proxy_port[0],
 		    r->rpool.proxy_port[1], r->af, r->action);
 	}
+	if (brace)
+		printf(" {");
 	printf("\n");
 }
 
