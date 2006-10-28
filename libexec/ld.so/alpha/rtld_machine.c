@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.37 2006/08/06 21:45:46 kettenis Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.38 2006/10/28 16:06:05 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -65,7 +65,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	 * XXX - we unprotect way to much. only the text can have cow
 	 * relocations.
 	 */
-	if ((rel == DT_REL || rel == DT_RELA)) {
+	if ((object->dyn.textrel == 1) && (rel == DT_REL || rel == DT_RELA)) {
 		for (llist = object->load_list; llist != NULL; llist = llist->next) {
 			if (!(llist->prot & PROT_WRITE)) {
 				_dl_mprotect(llist->start, llist->size,
@@ -152,7 +152,7 @@ resolve_failed:
 	__asm __volatile("imb" : : : "memory");
 
 	/* reprotect the unprotected segments */
-	if ((rel == DT_REL || rel == DT_RELA)) {
+	if ((object->dyn.textrel == 1) && (rel == DT_REL || rel == DT_RELA)) {
 		for (llist = object->load_list; llist != NULL; llist = llist->next) {
 			if (!(llist->prot & PROT_WRITE))
 				_dl_mprotect(llist->start, llist->size,

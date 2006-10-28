@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.41 2006/05/08 20:37:01 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.42 2006/10/28 16:06:05 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -78,7 +78,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	int	i;
 	int	numrela;
 	int	fails = 0;
-	struct load_list *load_list;
+	struct load_list *llist;
 	Elf32_Addr loff;
 	Elf32_Rela  *relas;
 	/* for jmp table relocations */
@@ -159,12 +159,13 @@ _dl_printf("object relocation size %x, numrela %x\n",
 	 * so we can do relocations such as REL24, REL16 etc. After
 	 * relocation restore protection.
 	 */
-	load_list = object->load_list;
-	while (load_list != NULL) {
-		if ((load_list->prot & PROT_WRITE) == 0)
-			_dl_mprotect(load_list->start, load_list->size,
-			    load_list->prot|PROT_WRITE);
-		load_list = load_list->next;
+	if ((object->dyn.textrel == 1) && (rel == DT_REL || rel == DT_RELA)) {
+		for (llist = object->load_list; llist != NULL; llist = llist->next) {
+			if (!(llist->prot & PROT_WRITE)) {
+				_dl_mprotect(llist->start, llist->size,
+				    llist->prot|PROT_WRITE);
+			}
+		}
 	}
 
 
@@ -409,12 +410,14 @@ _dl_printf(" found other symbol at %x size %d\n",
 			_dl_exit(1);
 		}
 	}
-	load_list = object->load_list;
-	while (load_list != NULL) {
-		if ((load_list->prot & PROT_WRITE) == 0)
-			_dl_mprotect(load_list->start, load_list->size,
-			    load_list->prot);
-		load_list = load_list->next;
+
+	/* reprotect the unprotected segments */
+	if ((object->dyn.textrel == 1) && (rel == DT_REL || rel == DT_RELA)) {
+		for (llist = object->load_list; llist != NULL; llist = llist->next) {
+			if (!(llist->prot & PROT_WRITE))
+				_dl_mprotect(llist->start, llist->size,
+				    llist->prot);
+		}
 	}
 	return(fails);
 }
