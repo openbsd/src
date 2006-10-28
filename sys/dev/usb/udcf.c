@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.19 2006/10/27 11:28:40 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.20 2006/10/28 09:26:46 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -83,7 +83,7 @@ struct udcf_softc {
 	usb_device_request_t	sc_req;
 
 	int			sc_clocktype;	/* DCF77 or HBG */
-	int			sc_sync;	/* 1 during sync to DCF77 */
+	int			sc_sync;	/* 1 during sync */
 	u_int64_t		sc_mask;	/* 64 bit mask */
 	u_int64_t		sc_tbits;	/* Time bits */
 	int			sc_minute;
@@ -96,7 +96,19 @@ struct udcf_softc {
 	struct sensor		sc_sensor;
 };
 
-static int t1, t2, t3, t4, t5, t6, t7, t8, t9, t10;	/* timeouts in hz */
+/*
+ * timeouts being used in hz:
+ * t_bv		bit value detection (150ms)
+ * t_ct		detect clocktype (250ms)
+ * t_sync	sync (950ms)
+ * t_mg		minute gap detection (1500ms)
+ * t_mgsync	resync after a minute gap (450ms)
+ * t_sl		detect signal loss (3sec)
+ * t_wait	wait (5sec)
+ * t_warn	degrade sensor status to warning (5min)
+ * t_crit	degrade sensor status to critical (15min)
+ */
+static int t_bv, t_ct, t_sync, t_mg, t_sl, t_mgsync, t_wait, t_warn, t_crit;
 
 void	udcf_intr(void *);
 void	udcf_probe(void *);
@@ -134,9 +146,6 @@ USB_ATTACH(udcf)
 	struct timeval			 t;
 	char				*devinfop;
 	usb_interface_descriptor_t	*id;
-#ifdef UDCF_DEBUG
-	char 				*devname = USBDEVNAME(sc->sc_dev);
-#endif
 	usbd_status			 err;
 	usb_device_request_t		 req;
 	uWord				 result;
@@ -144,13 +153,13 @@ USB_ATTACH(udcf)
 
 	if ((err = usbd_set_config_index(dev, 0, 1))) {
 		DPRINTF(("\n%s: failed to set configuration, err=%s\n",
-		    devname, usbd_errstr(err)));
+		    USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
 		goto fishy;
 	}
 
 	if ((err = usbd_device2interface_handle(dev, 0, &iface))) {
 		DPRINTF(("\n%s: failed to get interface, err=%s\n",
-		    devname, usbd_errstr(err)));
+		    USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
 		goto fishy;
 	}
 
@@ -230,46 +239,42 @@ USB_ATTACH(udcf)
 	timeout_set(&sc->sc_ct_to, udcf_ct_intr, sc);
 
 	/* convert timevals to hz */
-
 	t.tv_sec = 0L;
 	t.tv_usec = 150000L;
-	t1 = tvtohz(&t);
+	t_bv = tvtohz(&t);
 
 	t.tv_usec = 450000L;
-	t4 = tvtohz(&t);
+	t_mgsync = tvtohz(&t);
 
-	t.tv_usec = 900000L;
-	t7 = tvtohz(&t);
+	t.tv_usec = 950000L;
+	t_sync = tvtohz(&t);
 
 	t.tv_sec = 1L;
 	t.tv_usec = 500000L;
-	t2 = tvtohz(&t);
+	t_mg = tvtohz(&t);
 
 	t.tv_sec = 3L;
 	t.tv_usec = 0L;
-	t3 = tvtohz(&t);
+	t_sl = tvtohz(&t);
 	
 	t.tv_sec = 5L;
-	t5 = tvtohz(&t);
-
-	t.tv_sec = 8L;
-	t6 = tvtohz(&t);
+	t_wait = tvtohz(&t);
 
 	t.tv_sec = DPERIOD1;
-	t8 = tvtohz(&t);
+	t_warn = tvtohz(&t);
 
 	t.tv_sec = DPERIOD2;
-	t10 = tvtohz(&t);
+	t_crit = tvtohz(&t);
 
 	t.tv_sec = 0L;
 	t.tv_usec = 250000L;
-	t9 = tvtohz(&t);
+	t_ct = tvtohz(&t);
 
 	/* Give the receiver some slack to stabilize */
-	timeout_add(&sc->sc_to, t3);
+	timeout_add(&sc->sc_to, t_wait);
 
-	/* Detect signal loss in 5 sec */
-	timeout_add(&sc->sc_sl_to, t5);
+	/* Detect signal loss */
+	timeout_add(&sc->sc_sl_to, t_wait + t_sl);
 
 	DPRINTF(("synchronizing\n"));
 	USB_ATTACH_SUCCESS_RETURN;
@@ -294,7 +299,6 @@ USB_DETACH(udcf)
 	timeout_del(&sc->sc_ct_to);
 
 	/* Unregister the clock with the kernel */
-
 	sensor_del(&sc->sc_sensor);
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
@@ -341,7 +345,7 @@ udcf_sl_intr(void *xsc)
 	usb_add_task(sc->sc_udev, &sc->sc_sl_task);
 }
 
-/* degrade the sensor if no new time received for >= DPERIOD seconds. */
+/* degrade the sensor */
 void
 udcf_it_intr(void *xsc)
 {
@@ -358,7 +362,7 @@ udcf_ct_intr(void *xsc)
 }
 
 /*
- * udcf_probe runs in a process context.  If Bit 0 is set, the transmitter
+ * udcf_probe runs in a process context.  If bit 0 is set, the transmitter
  * emits at full power.  During the low-power emission we decode a zero bit.
  */
 void
@@ -380,59 +384,62 @@ udcf_probe(void *xsc)
 	if (data & 0x01) {
 		sc->sc_level = 1;
 		timeout_add(&sc->sc_to, 1);
-	} else if (sc->sc_level == 1)	{ /* Begin of a second */
-		sc->sc_level = 0;
-		if (sc->sc_minute == 1) {
-			if (sc->sc_sync) {
-				DPRINTF(("synchronized, collecting bits\n"));
-				sc->sc_sync = 0;
-				if (sc->sc_sensor.status == SENSOR_S_UNKNOWN)
-					sc->sc_clocktype = -1;
-			} else {
-				/* provide the timedelta */
-				microtime(&sc->sc_sensor.tv);
-				nanotime(&now);
-				sc->sc_current = sc->sc_next;
-				sc->sc_sensor.value =
-				    (now.tv_sec - sc->sc_current)
-				    * 1000000000 + now.tv_nsec;
-
-				/* set the clocktype and make sensor valid */
-				if (sc->sc_sensor.status == SENSOR_S_UNKNOWN) {
-					strlcpy(sc->sc_sensor.desc,
-					    sc->sc_clocktype ?
-					    clockname[CLOCK_HBG] :
-					    clockname[CLOCK_DCF77],
-					    sizeof(sc->sc_sensor.desc));
-				}
-				sc->sc_sensor.status = SENSOR_S_OK;
-
-				/*
-				 * if no valid time information is received
-				 * during the next 5 minutes, the sensor state
-				 * will be degraded to SENSOR_S_WARN
-				 */
-				timeout_add(&sc->sc_it_to, t8);
-			}
-			sc->sc_tbits = 0LL;
-			sc->sc_mask = 1LL;
-			sc->sc_minute = 0;
-		}
-
-		timeout_add(&sc->sc_to, t7);	/* Begin resync in 900 ms */
-
-		/* No clock and bit detection during sync */
-		if (!sc->sc_sync) {
-			timeout_add(&sc->sc_bv_to, t1);	/* bit in 150 ms */
-
-			/* detect clocktype in 250 ms if not known yet */
-
-			if (sc->sc_clocktype == -1)
-				timeout_add(&sc->sc_ct_to, t9);
-		}
-		timeout_add(&sc->sc_mg_to, t2);	/* minute gap in 1500 ms */
-		timeout_add(&sc->sc_sl_to, t3);	/* signal loss in 3 sec */
+		return;
 	}
+
+	if (sc->sc_level == 0)
+		return;
+
+	/* Begin of a second */
+	sc->sc_level = 0;
+	if (sc->sc_minute == 1) {
+		if (sc->sc_sync) {
+			DPRINTF(("synchronized, collecting bits\n"));
+			sc->sc_sync = 0;
+			if (sc->sc_sensor.status == SENSOR_S_UNKNOWN)
+				sc->sc_clocktype = -1;
+		} else {
+			/* provide the timedelta */
+			microtime(&sc->sc_sensor.tv);
+			nanotime(&now);
+			sc->sc_current = sc->sc_next;
+			sc->sc_sensor.value = (now.tv_sec - sc->sc_current)
+			    * 1000000000 + now.tv_nsec;
+
+			/* set the clocktype and make sensor valid */
+			if (sc->sc_sensor.status == SENSOR_S_UNKNOWN) {
+				strlcpy(sc->sc_sensor.desc, sc->sc_clocktype ?
+				    clockname[CLOCK_HBG] :
+				    clockname[CLOCK_DCF77],
+				    sizeof(sc->sc_sensor.desc));
+			}
+			sc->sc_sensor.status = SENSOR_S_OK;
+
+			/*
+			 * if no valid time information is received
+			 * during the next 5 minutes, the sensor state
+			 * will be degraded to SENSOR_S_WARN
+			 */
+			timeout_add(&sc->sc_it_to, t_warn);
+		}
+		sc->sc_tbits = 0LL;
+		sc->sc_mask = 1LL;
+		sc->sc_minute = 0;
+	}
+
+	timeout_add(&sc->sc_to, t_sync);	/* resync in 950 ms */
+
+	/* No clock and bit detection during sync */
+	if (!sc->sc_sync) {
+		/* detect bit value */
+		timeout_add(&sc->sc_bv_to, t_bv);
+
+		/* detect clocktype */
+		if (sc->sc_clocktype == -1)
+			timeout_add(&sc->sc_ct_to, t_ct);
+	}
+	timeout_add(&sc->sc_mg_to, t_mg);	/* detect minute gap */
+	timeout_add(&sc->sc_sl_to, t_sl);	/* detect signal loss */
 }
 
 /* detect the bit value */
@@ -476,87 +483,84 @@ udcf_mg_probe(void *xsc)
 	u_int32_t		 parity = 0x6996;
 
 	if (sc->sc_sync) {
-		timeout_add(&sc->sc_to, t4);	/* re-sync in 450 ms */
+		timeout_add(&sc->sc_to, t_mgsync);	/* re-sync in 450 ms */
 		sc->sc_minute = 1;
 		sc->sc_last_mg = time_second;
-	} else {
-		if (time_second - sc->sc_last_mg < 57) {
-			DPRINTF(("unexpected gap, resync\n"));
-			sc->sc_sync = 1;
-			timeout_add(&sc->sc_to, t5);
-			timeout_add(&sc->sc_sl_to, t6);
-			sc->sc_last_mg = 0;
-		} else {
-			/* Extract bits w/o parity */
-			m_bit = sc->sc_tbits & 1;
-			r_bit = sc->sc_tbits >> 15 & 1;
-			a1_bit = sc->sc_tbits >> 16 & 1;
-			z1_bit = sc->sc_tbits >> 17 & 1;
-			z2_bit = sc->sc_tbits >> 18 & 1;
-			a2_bit = sc->sc_tbits >> 19 & 1;
-			s_bit = sc->sc_tbits >> 20 & 1;
-			p1_bit = sc->sc_tbits >> 28 & 1;
-			p2_bit = sc->sc_tbits >> 35 & 1;
-			p3_bit = sc->sc_tbits >> 58 & 1;
-
-			minute_bits = sc->sc_tbits >> 21 & 0x7f;	
-			hour_bits = sc->sc_tbits >> 29 & 0x3f;
-			day_bits = sc->sc_tbits >> 36 & 0x3f;
-			wday = (sc->sc_tbits >> 42) & 0x07;
-			month_bits = sc->sc_tbits >> 45 & 0x1f;
-			year_bits = sc->sc_tbits >> 50 & 0xff;
-
-			/* Validate time information */
-
-			p1 = (parity >> (minute_bits & 0x0f) & 1) ^
-			    (parity >> (minute_bits >> 4) & 1);
-
-			p2 = (parity >> (hour_bits & 0x0f) & 1) ^
-			    (parity >> (hour_bits >> 4) & 1);
-
-			p3 = (parity >> (day_bits & 0x0f) & 1) ^
-			    (parity >> (day_bits >> 4) & 1) ^
-			    ((parity >> wday) & 1) ^
-			    (parity >> (month_bits & 0x0f) & 1) ^
-			    (parity >> (month_bits >> 4) & 1) ^
-			    (parity >> (year_bits & 0x0f) & 1) ^
-			    (parity >> (year_bits >> 4) & 1);
-
-			if (m_bit == 0 && s_bit == 1 &&
-			    p1 == p1_bit && p2 == p2_bit &&
-			    p3 == p3_bit &&
-			    (z1_bit ^ z2_bit)) {
-
-				/* Decode valid time */
-				ymdhm.dt_min = FROMBCD(minute_bits);
-				ymdhm.dt_hour = FROMBCD(hour_bits);
-				ymdhm.dt_day = FROMBCD(day_bits);
-				ymdhm.dt_mon = FROMBCD(month_bits);
-				ymdhm.dt_year = 2000 + FROMBCD(year_bits);
-				ymdhm.dt_sec = 0;
-
-				sc->sc_next = clock_ymdhms_to_secs(&ymdhm);
-
-				/* convert to coordinated universal time */
-				sc->sc_next -= z1_bit ? 7200 : 3600;
-
-				DPRINTF(("\n%02d.%02d.%04d %02d:%02d:00 %s",
-				    ymdhm.dt_day, ymdhm.dt_mon + 1,
-				    ymdhm.dt_year, ymdhm.dt_hour,
-				    ymdhm.dt_min, z1_bit ? "CEST" : "CET"));
-				DPRINTF((r_bit ? ", reserve antenna" : ""));
-				DPRINTF((a1_bit ? ", dst chg ann." : ""));
-				DPRINTF((a2_bit ? ", leap sec ann." : ""));
-				DPRINTF(("\n"));
-			} else {
-				DPRINTF(("parity error, resync\n"));
-				sc->sc_sync = 1;
-			}
-			timeout_add(&sc->sc_to, t4);	/* re-sync in 450 ms */
-			sc->sc_minute = 1;
-			sc->sc_last_mg = time_second;
-		}
+		return;
 	}
+
+	if (time_second - sc->sc_last_mg < 57) {
+		DPRINTF(("unexpected gap, resync\n"));
+		sc->sc_sync = 1;
+		timeout_add(&sc->sc_to, t_wait);
+		timeout_add(&sc->sc_sl_to, t_wait + t_sl);
+		sc->sc_last_mg = 0;
+		return;
+	}
+
+	/* Extract bits w/o parity */
+	m_bit = sc->sc_tbits & 1;
+	r_bit = sc->sc_tbits >> 15 & 1;
+	a1_bit = sc->sc_tbits >> 16 & 1;
+	z1_bit = sc->sc_tbits >> 17 & 1;
+	z2_bit = sc->sc_tbits >> 18 & 1;
+	a2_bit = sc->sc_tbits >> 19 & 1;
+	s_bit = sc->sc_tbits >> 20 & 1;
+	p1_bit = sc->sc_tbits >> 28 & 1;
+	p2_bit = sc->sc_tbits >> 35 & 1;
+	p3_bit = sc->sc_tbits >> 58 & 1;
+
+	minute_bits = sc->sc_tbits >> 21 & 0x7f;	
+	hour_bits = sc->sc_tbits >> 29 & 0x3f;
+	day_bits = sc->sc_tbits >> 36 & 0x3f;
+	wday = (sc->sc_tbits >> 42) & 0x07;
+	month_bits = sc->sc_tbits >> 45 & 0x1f;
+	year_bits = sc->sc_tbits >> 50 & 0xff;
+
+	/* Validate time information */
+	p1 = (parity >> (minute_bits & 0x0f) & 1) ^
+	    (parity >> (minute_bits >> 4) & 1);
+
+	p2 = (parity >> (hour_bits & 0x0f) & 1) ^
+	    (parity >> (hour_bits >> 4) & 1);
+
+	p3 = (parity >> (day_bits & 0x0f) & 1) ^
+	    (parity >> (day_bits >> 4) & 1) ^
+	    ((parity >> wday) & 1) ^ (parity >> (month_bits & 0x0f) & 1) ^
+	    (parity >> (month_bits >> 4) & 1) ^
+	    (parity >> (year_bits & 0x0f) & 1) ^
+	    (parity >> (year_bits >> 4) & 1);
+
+	if (m_bit == 0 && s_bit == 1 && p1 == p1_bit && p2 == p2_bit &&
+	    p3 == p3_bit && (z1_bit ^ z2_bit)) {
+
+		/* Decode valid time */
+		ymdhm.dt_min = FROMBCD(minute_bits);
+		ymdhm.dt_hour = FROMBCD(hour_bits);
+		ymdhm.dt_day = FROMBCD(day_bits);
+		ymdhm.dt_mon = FROMBCD(month_bits);
+		ymdhm.dt_year = 2000 + FROMBCD(year_bits);
+		ymdhm.dt_sec = 0;
+
+		sc->sc_next = clock_ymdhms_to_secs(&ymdhm);
+
+		/* convert to coordinated universal time */
+		sc->sc_next -= z1_bit ? 7200 : 3600;
+
+		DPRINTF(("\n%02d.%02d.%04d %02d:%02d:00 %s",
+		    ymdhm.dt_day, ymdhm.dt_mon + 1, ymdhm.dt_year,
+		    ymdhm.dt_hour, ymdhm.dt_min, z1_bit ? "CEST" : "CET"));
+		DPRINTF((r_bit ? ", reserve antenna" : ""));
+		DPRINTF((a1_bit ? ", dst chg ann." : ""));
+		DPRINTF((a2_bit ? ", leap sec ann." : ""));
+		DPRINTF(("\n"));
+	} else {
+		DPRINTF(("parity error, resync\n"));
+		sc->sc_sync = 1;
+	}
+	timeout_add(&sc->sc_to, t_mgsync);	/* re-sync in 450 ms */
+	sc->sc_minute = 1;
+	sc->sc_last_mg = time_second;
 }
 
 /* detect signal loss */
@@ -570,8 +574,8 @@ udcf_sl_probe(void *xsc)
 
 	DPRINTF(("no signal\n"));
 	sc->sc_sync = 1;
-	timeout_add(&sc->sc_to, t5);
-	timeout_add(&sc->sc_sl_to, t6);
+	timeout_add(&sc->sc_to, t_wait);
+	timeout_add(&sc->sc_sl_to, t_wait + t_sl);
 }
 
 /* invalidate timedelta */
@@ -588,10 +592,10 @@ udcf_it_probe(void *xsc)
 	if (sc->sc_sensor.status == SENSOR_S_OK) {
 		sc->sc_sensor.status = SENSOR_S_WARN;
 		/*
-		 * further degrade in 15 minutes if we dont receive and new
+		 * further degrade in 15 minutes if we dont receive any new
 		 * time information
 		 */
-		timeout_add(&sc->sc_it_to, t10);
+		timeout_add(&sc->sc_it_to, t_crit);
 	} else
 		sc->sc_sensor.status = SENSOR_S_CRIT;
 }
@@ -627,7 +631,6 @@ udcf_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;
