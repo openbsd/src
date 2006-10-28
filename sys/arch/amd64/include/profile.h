@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.2 2004/05/13 03:27:33 drahn Exp $	*/
+/*	$OpenBSD: profile.h,v 1.3 2006/10/28 16:20:04 kettenis Exp $	*/
 /*	$NetBSD: profile.h,v 1.3 2003/11/28 23:22:45 fvdl Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ __asm(" .globl __mcount		\n"			\
 "	movq	0(%rbp),%r11	\n"			\
 "	movq	8(%r11),%rdi	\n"			\
 "	movq	8(%rbp),%rsi	\n"			\
-"	call	_mcount		\n"			\
+"	call	_mcount"__MCPLT"\n"			\
 "	movq	0(%rsp),%rdi	\n"			\
 "	movq	8(%rsp),%rsi	\n"			\
 "	movq	16(%rsp),%rdx	\n"			\
