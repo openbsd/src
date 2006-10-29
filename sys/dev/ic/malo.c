@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.15 2006/10/29 16:41:35 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.16 2006/10/29 16:43:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -222,9 +222,13 @@ malo_intr(void *arg)
 		/* not for us */
 		return (0);
 
+	if (status & 0x1)
+		malo_tx_intr(sc);
+	if (status & 0x2)
+		malo_rx_intr(sc);
 	if (status & 0x4) {
-#ifdef MALO_DEBUG
 		struct malo_cmdheader	*hdr = sc->sc_cmd_mem;
+#ifdef MALO_DEBUG
 		int			 i;
 
 		printf("%s: command answer", sc->sc_dev.dv_xname);
@@ -237,15 +241,26 @@ malo_intr(void *arg)
 		}
 		printf("\n");
 #endif
-		/* wakeup caller */
-		wakeup(sc);
-	}
+		switch (hdr->cmd & ~MALO_CMD_RESPONSE) {
+		case MALO_CMD_SET_CHANNEL:
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0,
+			    PAGE_SIZE, BUS_DMASYNC_POSTWRITE |
+			    BUS_DMASYNC_POSTREAD);
+			if (hdr->result != 0)
+				DPRINTF(("%s: command failed: %x\n",
+				    sc->sc_dev.dv_xname, hdr->result));
+			break;
+		case MALO_CMD_GET_HW_SPEC:
+		case MALO_CMD_SET_PRESCAN:
+		case MALO_CMD_SET_POSTSCAN:
+			/* wakeup caller */
+			wakeup(sc);
+			break;
+		}
+	} 
 
-	if (status & 0x1)
-		malo_tx_intr(sc);
-
-	if (status & 0x2)
-		malo_rx_intr(sc);
+	if (status & ~0x7)
+		DPRINTF(("%s: unkown interrupt %x\n", status));
 
 	/* just ack the interrupt */
 	malo_ctl_write4(sc, 0x0c30, 0);
