@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.14 2006/10/13 07:19:28 jmc Exp $
+.\"	$OpenBSD: acpi.4,v 1.15 2006/10/29 12:18:45 mk Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -21,6 +21,7 @@
 .Nm acpi ,
 .Nm acpiac ,
 .Nm acpibat ,
+.Nm acpibtn ,
 .Nm acpiec ,
 .Nm acpihpet ,
 .Nm acpitimer ,
@@ -30,6 +31,7 @@
 .Cd "acpi0 at mainbus?"
 .Cd "acpiac* at acpi?"
 .Cd "acpibat* at acpi?"
+.Cd "acpibtn* at acpi?"
 .Cd "acpiec* at acpi?"
 .Cd "acpihpet* at acpi?"
 .Cd "acpitimer* at acpi?"
@@ -62,6 +64,12 @@ and serial number, is available through this driver.
 Battery status is updated every 10 seconds or,
 if the implementation supports it,
 via an event.
+.Pp
+The
+.Nm acpibtn
+driver is used to power down the system safely when the user presses
+an ACPI power button
+.Pq usually the main system power button .
 .Pp
 The
 .Nm acpiec
@@ -154,9 +162,10 @@ and
 .An Jordan Hargrave Aq jordan@openbsd.org .
 .Pp
 The
-.Nm acpiac
+.Nm acpiac ,
+.Nm acpibat ,
 and
-.Nm acpibat
+.Nm acpibtn
 drivers were written by
 .An Marco Peereboom Aq marco@openbsd.org .
 .Pp
