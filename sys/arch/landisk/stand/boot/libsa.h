@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.2 2006/10/11 23:06:46 drahn Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.3 2006/10/29 14:47:59 drahn Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -33,3 +33,4 @@ void scif_init(unsigned int);
 int scif_getc(void);
 void scif_putc(int);
 void cache_flush(void);
+void cache_disable(void);

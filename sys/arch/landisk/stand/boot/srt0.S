@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.2 2006/10/11 23:06:46 drahn Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.3 2006/10/29 14:47:59 drahn Exp $	*/
 /*	$NetBSD: boot.S,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -137,6 +137,16 @@ ENTRY(cache_flush)
 	mov	#0, r4
 	mov	#6, r0
 	trapa	#0x3f
+	rts
+	 nop
+
+/*
+ * void cache_disable(void);
+ */
+ENTRY(cache_disable)
+	mov     #1, r4
+	mov     #6, r0
+	trapa   #0x3f
 	rts
 	 nop
 

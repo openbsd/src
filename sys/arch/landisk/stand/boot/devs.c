@@ -1,4 +1,4 @@
-/*	$OpenBSD: devs.c,v 1.3 2006/10/16 21:22:59 drahn Exp $	*/
+/*	$OpenBSD: devs.c,v 1.4 2006/10/29 14:47:59 drahn Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -76,6 +76,7 @@ run_loadfile(u_long *marks, int howto)
 
 	entry = marks[MARK_ENTRY];
 	cache_flush();
+	cache_disable();
 
 	printf("entry point at 0x%x\n", (int)entry);
 	printf("start at  0x%x\n", (int)marks[MARK_START]);
