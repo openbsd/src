@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.83 2006/05/15 16:47:48 jcs Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.84 2006/10/29 22:06:28 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -1169,13 +1169,11 @@ jail:
 		exit(1);
 	}
 
-	if (pw) {
-		setgroups(1, &pw->pw_gid);
-		setegid(pw->pw_gid);
-		setgid(pw->pw_gid);
-		seteuid(pw->pw_uid);
-		setuid(pw->pw_uid);
-	}
+	if (pw)
+		if (setgroups(1, &pw->pw_gid) ||
+		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+			err(1, "failed to drop privs");
 
 	if (listen(s, 10) == -1)
 		err(1, "listen");
