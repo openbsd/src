@@ -1,4 +1,4 @@
-# $OpenBSD: northamerica,v 1.22 2006/10/05 18:09:03 millert Exp $
+# $OpenBSD: northamerica,v 1.23 2006/10/29 22:21:33 millert Exp $
 # @(#)northamerica	8.8
 # <pre>
 
@@ -125,18 +125,14 @@ Rule	US	1918	1919	-	Oct	lastSun	2:00	0	S
 Rule	US	1942	only	-	Feb	9	2:00	1:00	W # War
 Rule	US	1945	only	-	Aug	14	23:00u	1:00	P # Peace
 Rule	US	1945	only	-	Sep	30	2:00	0	S
-# The Energy Policy Act of 2005 changed the end month of DST from Oct to Nov
-Rule	US	1967	max	-	Oct	lastSun	2:00	0	S
-#Rule	US	1967	2006	-	Oct	lastSun	2:00	0	S
+Rule	US	1967	2006	-	Oct	lastSun	2:00	0	S
 Rule	US	1967	1973	-	Apr	lastSun	2:00	1:00	D
 Rule	US	1974	only	-	Jan	6	2:00	1:00	D
 Rule	US	1975	only	-	Feb	23	2:00	1:00	D
 Rule	US	1976	1986	-	Apr	lastSun	2:00	1:00	D
-# The Energy Policy Act of 2005 changed the start month of DST from Apr to Mar
-Rule	US	1987	max	-	Apr	Sun>=1	2:00	1:00	D
-#Rule	US	1987	2006	-	Apr	Sun>=1	2:00	1:00	D
-#Rule	US	2007	max	-	Mar	Sun>=8	2:00	1:00	D
-#Rule	US	2007	max	-	Nov	Sun>=1	2:00	0	S
+Rule	US	1987	2006	-	Apr	Sun>=1	2:00	1:00	D
+Rule	US	2007	max	-	Mar	Sun>=8	2:00	1:00	D
+Rule	US	2007	max	-	Nov	Sun>=1	2:00	0	S
 
 # From Arthur David Olson, 2005-12-19
 # We generate the files specified below to guard against old files with
