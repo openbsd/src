@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_names.c,v 1.15 2004/03/02 21:04:42 tedu Exp $	*/
+/*	$OpenBSD: get_names.c,v 1.16 2006/10/29 22:18:32 otto Exp $	*/
 /*	$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: get_names.c,v 1.15 2004/03/02 21:04:42 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: get_names.c,v 1.16 2006/10/29 22:18:32 otto Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -131,4 +131,5 @@ get_names(argc, argv)
 	msg.r_name[NAME_SIZE - 1] = '\0';
 	strncpy(msg.r_tty, his_tty, TTY_SIZE);
 	msg.r_tty[TTY_SIZE - 1] = '\0';
+	free(names);
 }
