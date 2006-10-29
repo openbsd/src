@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.36 2006/10/25 12:26:49 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.37 2006/10/29 19:29:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -404,12 +404,12 @@ area		: AREA STRING {
 		}
 		;
 
-areaopts_l	: areaopts_l areaoptsl
-		| areaoptsl
+areaopts_l	: areaopts_l areaoptsl nl
+		| areaoptsl optnl
 		;
 
-areaoptsl	: interface nl
-		| defaults nl
+areaoptsl	: interface
+		| defaults
 		;
 
 interface	: INTERFACE STRING	{
@@ -455,12 +455,12 @@ interface_block	: '{' optnl interfaceopts_l '}'
 		|
 		;
 
-interfaceopts_l	: interfaceopts_l interfaceoptsl
-		| interfaceoptsl
+interfaceopts_l	: interfaceopts_l interfaceoptsl nl
+		| interfaceoptsl optnl
 		;
 
-interfaceoptsl	: PASSIVE nl		{ iface->passive = 1; }
-		| defaults nl
+interfaceoptsl	: PASSIVE		{ iface->passive = 1; }
+		| defaults
 		;
 
 %%
