@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.14 2006/10/29 16:14:56 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.15 2006/10/29 16:41:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -785,6 +785,9 @@ malo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ieee80211_ioctl(ifp, cmd, data);
 		break;
 	}
+
+	if (error == ENETRESET)
+		error = malo_reset(ifp);
 
 	splx(s);
 
