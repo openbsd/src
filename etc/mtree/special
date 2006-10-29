@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.71 2006/09/19 19:33:04 aanriot Exp $
+#	$OpenBSD: special,v 1.72 2006/10/29 18:58:57 norby Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -74,6 +74,7 @@ rc.securelevel	type=file mode=0644 uname=root gname=wheel
 rc.shutdown	type=file mode=0644 uname=root gname=wheel
 resolv.conf	type=file mode=0644 uname=root gname=wheel optional
 resolv.conf.tail type=file mode=0644 uname=root gname=wheel optional
+ripd.conf	type=file mode=0600 uname=root gname=wheel
 security	type=file mode=0644 uname=root gname=wheel
 sensorsd.conf	type=file mode=0644 uname=root gname=wheel
 shells		type=file mode=0644 uname=root gname=wheel

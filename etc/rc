@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.291 2006/09/27 19:54:36 mpf Exp $
+#	$OpenBSD: rc,v 1.292 2006/10/29 18:58:57 norby Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -556,6 +556,10 @@ echo -n starting network daemons:
 
 if [ X"${routed_flags}" != X"NO" ]; then
 	echo -n ' routed';		routed $routed_flags
+fi
+
+if [ X"${ripd_flags}" != X"NO" ]; then
+	echo -n ' ripd';		/usr/sbin/ripd $ripd_flags
 fi
 
 if [ X"${mrouted_flags}" != X"NO" ]; then
