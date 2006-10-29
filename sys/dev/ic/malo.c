@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.13 2006/10/29 16:00:49 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.14 2006/10/29 16:14:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -113,10 +113,10 @@ struct malo_tx_desc {
 
 /* firmware commands as found in a document describing the Libertas FW */
 #define MALO_CMD_GET_HW_SPEC	0x0003
-#define MALO_CMD_RESPONSE	0x8000
 #define MALO_CMD_SET_PRESCAN	0x0107
 #define MALO_CMD_SET_POSTSCAN	0x0108
 #define MALO_CMD_SET_CHANNEL	0x010a
+#define MALO_CMD_RESPONSE	0x8000
 
 struct malo_cmdheader {
 	uint16_t	cmd;
