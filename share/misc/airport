@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.13 2003/10/20 06:06:31 jmc Exp $
+#	$OpenBSD: airport,v 1.14 2006/10/29 13:19:32 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -1701,7 +1701,6 @@ VAR:Varna, Bulgaria
 VAS:Sivas, Turkey
 VBY:Visby, Gotland, Sweden
 VCE:Marco Polo, Venice, Italy
-VCE:Venezia, Italy
 VCT:Victoria, TX, USA
 VDA:Ovda, Israel
 VDS:Vadso, Norway
