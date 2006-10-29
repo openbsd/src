@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecvt.c,v 1.5 2006/01/10 16:18:37 millert Exp $	*/
+/*	$OpenBSD: ecvt.c,v 1.6 2006/10/29 18:45:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -25,13 +25,14 @@
 #include <string.h>
 
 extern char *__dtoa(double, int, int, int *, int *, char **);
+extern void  __freedtoa(char *);
 static char *__cvt(double, int, int *, int *, int, int);
 
 static char *
 __cvt(double value, int ndigit, int *decpt, int *sign, int fmode, int pad)
 {
 	static char *s;
-	char *p, *rve;
+	char *p, *rve, c;
 	size_t siz;
 
 	if (ndigit == 0) {
@@ -64,15 +65,20 @@ __cvt(double value, int ndigit, int *decpt, int *sign, int fmode, int pad)
 		if (*decpt == 9999) {
 			/* Infinity or Nan, convert to inf or nan like printf */
 			*decpt = 0;
-			return(*p == 'I' ? "inf" : "nan");
+			c = *p;
+			__freedtoa(p);
+			return(c == 'I' ? "inf" : "nan");
 		}
 		/* Make a local copy and adjust rve to be in terms of s */
 		if (pad && fmode)
 			siz += *decpt;
-		if ((s = (char *)malloc(siz)) == NULL)
+		if ((s = (char *)malloc(siz)) == NULL) {
+			__freedtoa(p);
 			return(NULL);
+		}
 		(void) strlcpy(s, p, siz);
 		rve = s + (rve - p);
+		__freedtoa(p);
 	}
 
 	/* Add trailing zeros */

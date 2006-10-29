@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.38 2006/04/29 23:00:23 tedu Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.39 2006/10/29 18:45:55 deraadt Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -117,6 +117,8 @@ __sbprintf(FILE *fp, const char *fmt, va_list ap)
 #define	BUF		(MAXEXP+MAXFRACT+1)	/* + decimal point */
 #define	DEFPREC		6
 
+extern char *__dtoa(double, int, int, int *, int *, char **);
+extern void  __freedtoa(char *);
 static char *cvt(double, int, int, char *, int *, int, int *);
 static int exponent(char *, int, int);
 
@@ -174,6 +176,7 @@ vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 	int expsize;		/* character count for expstr */
 	int ndig;		/* actual number of digits returned by cvt */
 	char expstr[7];		/* buffer for exponent string */
+	char *dtoaresult = NULL;
 #endif
 
 	uintmax_t _umax;	/* integer arguments %[diouxX] */
@@ -497,7 +500,9 @@ reswitch:	switch (ch) {
 			}
 
 			flags |= FPT;
-			cp = cvt(_double, prec, flags, &softsign,
+			if (dtoaresult)
+				__freedtoa(dtoaresult);
+			dtoaresult = cp = cvt(_double, prec, flags, &softsign,
 				&expt, ch, &ndig);
 			if (ch == 'g' || ch == 'G') {
 				if (expt <= -4 || expt > prec)
@@ -782,6 +787,10 @@ number:			if ((dprec = prec) >= 0)
 done:
 	FLUSH();
 error:
+#ifdef FLOATING_POINT
+	if (dtoaresult)
+		__freedtoa(dtoaresult);
+#endif
 	if (argtable != NULL && argtable != statargtable) {
 		munmap(argtable, argtablesiz);
 		argtable = NULL;
@@ -1172,8 +1181,6 @@ __grow_type_table(unsigned char **typetable, int *tablesize)
 
  
 #ifdef FLOATING_POINT
-
-extern char *__dtoa(double, int, int, int *, int *, char **);
 
 static char *
 cvt(double value, int ndigits, int flags, char *sign, int *decpt, int ch, 

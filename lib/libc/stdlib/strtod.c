@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtod.c,v 1.28 2006/10/13 03:50:14 deraadt Exp $ */
+/*	$OpenBSD: strtod.c,v 1.29 2006/10/29 18:45:56 deraadt Exp $ */
 /****************************************************************
  *
  * The author of this software is David M. Gay.
@@ -124,6 +124,11 @@
 #include "stdio.h"
 #define Bug(x) {fprintf(stderr, "%s\n", x); exit(1);}
 #endif
+
+#include "thread_private.h"
+
+_THREAD_PRIVATE_KEY(dtoa);
+_THREAD_PRIVATE_KEY(pow5mult);
 
 #ifdef __cplusplus
 #include "malloc.h"
@@ -365,21 +370,35 @@ Bigint {
 
  static Bigint *freelist[Kmax+1];
 
+#define PRIVATE_MEM 2304
+#define PRIVATE_mem ((PRIVATE_MEM+sizeof(double)-1)/sizeof(double))
+ static double private_mem[PRIVATE_mem], *pmem_next = private_mem;
+
  static Bigint *
 Balloc(int k)
 {
 	int x;
+	unsigned int len;
 	Bigint *rv;
 
+	_THREAD_PRIVATE_MUTEX_LOCK(dtoa);
 	if ((rv = freelist[k])) {
 		freelist[k] = rv->next;
 		}
 	else {
 		x = 1 << k;
-		rv = (Bigint *)MALLOC(sizeof(Bigint) + (x-1)*sizeof(Long));
+		len = (sizeof(Bigint) + (x-1)*sizeof(Long) + sizeof(double) - 1)
+			/sizeof(double);
+		if (pmem_next - private_mem + len <= PRIVATE_mem) {
+			rv = (Bigint *)pmem_next;
+			pmem_next += len;
+			}
+		else
+			rv = (Bigint *)MALLOC(len *sizeof(double));
 		rv->k = k;
 		rv->maxwds = x;
 		}
+	_THREAD_PRIVATE_MUTEX_UNLOCK(dtoa);
 	rv->sign = rv->wds = 0;
 	return rv;
 	}
@@ -388,13 +407,54 @@ Balloc(int k)
 Bfree(Bigint *v)
 {
 	if (v) {
+		_THREAD_PRIVATE_MUTEX_LOCK(dtoa);
 		v->next = freelist[v->k];
 		freelist[v->k] = v;
+		_THREAD_PRIVATE_MUTEX_UNLOCK(dtoa);
 		}
 	}
 
 #define Bcopy(x,y) memcpy((char *)&x->sign, (char *)&y->sign, \
 y->wds*sizeof(Long) + 2*sizeof(int))
+
+/* return value is only used as a simple string, so mis-aligned parts
+ * inside the Bigint are not at risk on strict align architectures
+ */
+ static char *
+rv_alloc(int i)
+{
+	int j, k, *r;
+
+	j = sizeof(ULong);
+	for(k = 0;
+		sizeof(Bigint) - sizeof(ULong) - sizeof(int) + j <= i;
+		j <<= 1)
+			k++;
+	r = (int*)Balloc(k);
+	*r = k;
+	return (char *)(r+1);
+	}
+
+ static char *
+nrv_alloc(char *s, char **rve, int n)
+{
+	char *rv, *t;
+
+	t = rv = rv_alloc(n);
+	while((*t = *s++) !=0)
+		t++;
+	if (rve)
+		*rve = t;
+	return rv;
+	}
+
+ void
+__freedtoa(char *s)
+{
+	Bigint *b = (Bigint *)((int *)s - 1);
+	b->maxwds = 1 << (b->k = *(int*)b);
+	Bfree(b);
+	}
 
  static Bigint *
 multadd(Bigint *b, int m, int a)	/* multiply by m and add a */
@@ -651,8 +711,10 @@ pow5mult(Bigint *b, int k)
 		return b;
 	if (!(p5 = p5s)) {
 		/* first time */
+		_THREAD_PRIVATE_MUTEX_LOCK(pow5mult);
 		p5 = p5s = i2b(625);
 		p5->next = 0;
+		_THREAD_PRIVATE_MUTEX_UNLOCK(pow5mult);
 		}
 	for(;;) {
 		if (k & 1) {
@@ -663,8 +725,12 @@ pow5mult(Bigint *b, int k)
 		if (!(k >>= 1))
 			break;
 		if (!(p51 = p5->next)) {
-			p51 = p5->next = mult(p5,p5);
-			p51->next = 0;
+			_THREAD_PRIVATE_MUTEX_LOCK(pow5mult);
+			if (!(p51 = p5->next)) {
+				p51 = p5->next = mult(p5,p5);
+				p51->next = 0;
+				}
+			_THREAD_PRIVATE_MUTEX_UNLOCK(pow5mult);
 			}
 		p5 = p51;
 		}
@@ -1848,17 +1914,9 @@ __dtoa(double _d, int mode, int ndigits, int *decpt, int *sign, char **rve)
 	Bigint *b, *b1, *delta, *mlo, *mhi, *S;
 	double ds;
 	char *s, *s0;
-	static Bigint *result;
-	static int result_k;
 	_double d, d2, eps;
 
 	value(d) = _d;
-	if (result) {
-		result->k = result_k;
-		result->maxwds = 1 << result_k;
-		Bfree(result);
-		result = 0;
-		}
 
 	if (word0(d) & Sign_bit) {
 		/* set sign for everything, including 0's and NaNs */
@@ -1877,18 +1935,11 @@ __dtoa(double _d, int mode, int ndigits, int *decpt, int *sign, char **rve)
 		{
 		/* Infinity or NaN */
 		*decpt = 9999;
-		s =
 #ifdef IEEE_Arith
-			!word1(d) && !(word0(d) & 0xfffff) ? ndigits < 8 ? "Inf" : "Infinity" :
+		if (!word1(d) && !(word0(d) & 0xfffff))
+			return nrv_alloc("Infinity", rve, 8);
 #endif
-				"NaN";
-		if (rve)
-			*rve =
-#ifdef IEEE_Arith
-				s[3] ? s + 8 :
-#endif
-						s + 3;
-		return s;
+		return nrv_alloc("NaN", rve, 3);
 		}
 #endif
 #ifdef IBM
@@ -1896,10 +1947,7 @@ __dtoa(double _d, int mode, int ndigits, int *decpt, int *sign, char **rve)
 #endif
 	if (!value(d)) {
 		*decpt = 1;
-		s = "0";
-		if (rve)
-			*rve = s + 1;
-		return s;
+		return nrv_alloc("0", rve, 1);
 		}
 
 	b = d2b(value(d), &be, &bbits);
@@ -2021,11 +2069,7 @@ __dtoa(double _d, int mode, int ndigits, int *decpt, int *sign, char **rve)
 			if (i <= 0)
 				i = 1;
 		}
-	j = sizeof(ULong);
-	for(result_k = 0; sizeof(Bigint) - sizeof(ULong) + j <= i;
-		j <<= 1) result_k++;
-	result = Balloc(result_k);
-	s = s0 = (char *)result;
+	s = s0 = rv_alloc(i);
 
 	if (ilim >= 0 && ilim <= Quick_max && try_quick) {
 

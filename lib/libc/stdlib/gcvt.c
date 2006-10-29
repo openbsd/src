@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcvt.c,v 1.9 2006/01/10 16:18:37 millert Exp $	*/
+/*	$OpenBSD: gcvt.c,v 1.10 2006/10/29 18:45:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -26,6 +26,7 @@
 #include <string.h>
 
 extern char *__dtoa(double, int, int, int *, int *, char **);
+extern void  __freedtoa(char *);
 
 char *
 gcvt(double value, int ndigit, char *buf)
@@ -48,6 +49,7 @@ gcvt(double value, int ndigit, char *buf)
 		 */
 		snprintf(buf, ndigit + 1, "%s%s", sign ? "-" : "",
 		    *digits == 'I' ? "inf" : "nan");
+		__freedtoa(digits);
 		return (buf);
 	}
 
@@ -104,5 +106,6 @@ gcvt(double value, int ndigit, char *buf)
 		}
 		*dst = '\0';
 	}
+	__freedtoa(digits);
 	return (buf);
 }
