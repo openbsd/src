@@ -1020,6 +1020,8 @@
 ./usr/share/man/cat4/alpha/tsp.0
 ./usr/share/man/cat4/amd64
 ./usr/share/man/cat4/amd64/autoconf.0
+./usr/share/man/cat4/amd64/bios.0
+./usr/share/man/cat4/amd64/cpu.0
 ./usr/share/man/cat4/amd64/intro.0
 ./usr/share/man/cat4/amd64/ioapic.0
 ./usr/share/man/cat4/amd64/kmem.0
@@ -1339,6 +1341,7 @@
 ./usr/share/man/cat4/macppc/zsc.0
 ./usr/share/man/cat4/macppc/zstty.0
 ./usr/share/man/cat4/maestro.0
+./usr/share/man/cat4/mainbus.0
 ./usr/share/man/cat4/malo.0
 ./usr/share/man/cat4/maxds.0
 ./usr/share/man/cat4/maxtmp.0
