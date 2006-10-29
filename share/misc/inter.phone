@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.35 2006/03/07 15:04:47 grange Exp $
+#	$OpenBSD: inter.phone,v 1.36 2006/10/29 13:41:10 mbalmer Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -646,12 +646,13 @@
 39:95:Catania:Italy
 39:99:Taranto:Italy
 40:0:Bucharest:Romania
-41:1:Zuerich:Switzerland
 41:21:Lausanne:Switzerland
-41:21:Montreaux:Switzerland
+41:21:Montreux:Switzerland
 41:22:Geneva:Switzerland
 41:31:Berne:Switzerland
 41:41:Lucerne:Switzerland
+41:43:Zurich:Switzerland
+41:44:Zurich:Switzerland
 41:52:Winterthur:Switzerland
 41:61:Basel:Switzerland
 41:71:St. Gallen:Switzerland
