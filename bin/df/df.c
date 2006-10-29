@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.45 2006/09/21 20:06:33 pedro Exp $	*/
+/*	$OpenBSD: df.c,v 1.46 2006/10/29 19:20:01 otto Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.45 2006/09/21 20:06:33 pedro Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.46 2006/10/29 19:20:01 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,8 +127,8 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (iflag && Pflag) {
-		warnx("-i is incompatible with -P");
+	if ((iflag || hflag) && Pflag) {
+		warnx("-h and -i are incompatible with -P");
 		usage();
 	}
 
