@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.12 2006/10/29 11:41:34 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.13 2006/10/29 16:00:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -965,17 +965,19 @@ malo_reset(struct ifnet *ifp)
 {
 	struct malo_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	int chan;
+	u_int chan;
 
 	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
 
 	/* set channel */
 	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
-	if (malo_cmd_set_channel(sc, chan) == 0)
-		DPRINTF(("%s: setting channel to %d\n", chan));
-	else
-		DPRINTF(("%s: setting channel to %d failed!\n", chan));
+	if (malo_cmd_set_channel(sc, chan) != 0) {
+		DPRINTF(("%s: setting channel to %u failed!\n",
+		    sc->sc_dev.dv_xname, chan));
+		return (EIO);
+	}
 
+	DPRINTF(("%s: setting channel to %u\n", sc->sc_dev.dv_xname, chan));
 	return (0);
 }
 
@@ -1497,19 +1499,12 @@ malo_cmd_set_channel(struct malo_softc *sc, uint8_t channel)
 	hdr->seqnum = 1;
 	hdr->result = 0;
 
-	bcopy(&channel, (void *)hdr + 1, sizeof(channel));
+	*(uint8_t *)(hdr + 1) = channel;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
-	//tsleep(sc, 0, "malochn", hz);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
-	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-
-	if (hdr->cmd & MALO_CMD_RESPONSE)
-		return (0);
-	else
-		return (ETIMEDOUT);
+	return (0);
 }
