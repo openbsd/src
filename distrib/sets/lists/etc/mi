@@ -106,6 +106,7 @@
 ./etc/rc.securelevel
 ./etc/rc.shutdown
 ./etc/remote
+./etc/ripd.conf
 ./etc/rmt
 ./etc/rpc
 ./etc/security

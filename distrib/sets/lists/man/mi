@@ -978,6 +978,7 @@
 ./usr/share/man/cat4/acpi.0
 ./usr/share/man/cat4/acpiac.0
 ./usr/share/man/cat4/acpibat.0
+./usr/share/man/cat4/acpibtn.0
 ./usr/share/man/cat4/acpiec.0
 ./usr/share/man/cat4/acpihpet.0
 ./usr/share/man/cat4/acpitimer.0
@@ -1871,6 +1872,7 @@
 ./usr/share/man/cat5/resolv.conf.0
 ./usr/share/man/cat5/resolv.conf.tail.0
 ./usr/share/man/cat5/resolver.0
+./usr/share/man/cat5/ripd.conf.0
 ./usr/share/man/cat5/rndc.conf.0
 ./usr/share/man/cat5/rpc.0
 ./usr/share/man/cat5/rtadvd.conf.0
@@ -2293,6 +2295,8 @@
 ./usr/share/man/cat8/restore.0
 ./usr/share/man/cat8/revnetgroup.0
 ./usr/share/man/cat8/rip6query.0
+./usr/share/man/cat8/ripctl.0
+./usr/share/man/cat8/ripd.0
 ./usr/share/man/cat8/rmail.0
 ./usr/share/man/cat8/rmgroup.0
 ./usr/share/man/cat8/rmt.0

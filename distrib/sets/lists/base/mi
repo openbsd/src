@@ -1869,6 +1869,8 @@
 ./usr/sbin/repquota
 ./usr/sbin/revnetgroup
 ./usr/sbin/rip6query
+./usr/sbin/ripctl
+./usr/sbin/ripd
 ./usr/sbin/rmgroup
 ./usr/sbin/rmt
 ./usr/sbin/rmuser
