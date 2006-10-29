@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.7 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: move.c,v 1.8 2006/10/29 20:02:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move.c,v 1.7 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.8 2006/10/29 20:02:41 martin Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ domove(okay)
 	int     l = 0;		/* last man */
 
 	bestmove = -9999999.;
-	if (okay) {	 /* see if comp should double */
+	if (okay && dflag != 0) {	 /* see if comp should double */
 		if (gvalue < 64 && dlast != cturn && dblgood()) {
 			addstr(*Colorptr);
 			dble();	/* double */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2004/04/05 14:24:45 aaron Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2006/10/29 20:02:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.14 2004/04/05 14:24:45 aaron Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.15 2006/10/29 20:02:41 martin Exp $";
 #endif
 #endif /* not lint */
 
@@ -302,7 +302,8 @@ main (argc,argv)
 					break;
 
 				case 'D':		/* double */
-					dble();
+					if (dflag != 0)
+						dble();
 					break;
 
 				case ' ':		/* roll */

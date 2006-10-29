@@ -1,4 +1,4 @@
-/*	$OpenBSD: back.h,v 1.9 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: back.h,v 1.10 2006/10/29 20:02:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -83,6 +83,7 @@ extern	int	hflag;		/* flag for cleaning screen */
 extern	int	mflag;		/* backgammon flag */
 extern	int	raflag;		/* 'roll again' flag for recovered game */
 extern	int	rflag;		/* recovered game flag */
+extern	int	dflag;		/* disable doubling flag */
 extern	int	rfl;		/* saved value of rflag */
 extern	int	iroll;		/* special flag for inputting rolls */
 extern	int	board[26];	/* board:  negative values are white,
