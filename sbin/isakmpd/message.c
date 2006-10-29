@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.120 2006/07/02 13:19:00 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.121 2006/10/29 18:42:05 pedro Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -176,6 +176,7 @@ message_free(struct message *msg)
 {
 	u_int32_t       i;
 	struct payload *payload;
+	struct post_send *node;
 
 	LOG_DBG((LOG_MESSAGE, 20, "message_free: freeing %p", msg));
 	if (!msg)
@@ -198,10 +199,8 @@ message_free(struct message *msg)
 			}
 		free(msg->payload);
 	}
-	while (TAILQ_FIRST(&msg->post_send) != 0)
-		TAILQ_REMOVE(&msg->post_send, TAILQ_FIRST(&msg->post_send),
-		    link);
-
+	while ((node = TAILQ_FIRST(&msg->post_send)))
+		TAILQ_REMOVE(&msg->post_send, node, link);
 	if (msg->transport) {
 		/* If we are on the send queue, remove us from there.  */
 		if (msg->flags & MSG_IN_TRANSIT)
@@ -2182,9 +2181,8 @@ retry_transform:
 				 * Remove potentially succeeded choices from
 				 * the SA.
 				 */
-				while (TAILQ_FIRST(&sa->protos))
-					TAILQ_REMOVE(&sa->protos,
-					    TAILQ_FIRST(&sa->protos), link);
+				while ((proto = TAILQ_FIRST(&sa->protos)))
+					TAILQ_REMOVE(&sa->protos, proto, link);
 
 				/*
 				 * Skip to the last transform of this
@@ -2242,10 +2240,10 @@ retry_transform:
 					 * Remove potentially succeeded
 					 * choices from the SA.
 					 */
-					while (TAILQ_FIRST(&sa->protos))
+					while ((proto =
+					    TAILQ_FIRST(&sa->protos)))
 						TAILQ_REMOVE(&sa->protos,
-						    TAILQ_FIRST(&sa->protos),
-						    link);
+						    proto, link);
 					goto retry_transform;
 				}
 			}
@@ -2274,8 +2272,8 @@ cleanup:
 	 * Remove potentially succeeded choices from the SA.
 	 * XXX Do we leak struct protos and related data here?
 	 */
-	while (TAILQ_FIRST(&sa->protos))
-		TAILQ_REMOVE(&sa->protos, TAILQ_FIRST(&sa->protos), link);
+	while ((proto = TAILQ_FIRST(&sa->protos)))
+		TAILQ_REMOVE(&sa->protos, proto, link);
 	return -1;
 }
 
