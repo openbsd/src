@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.33 2006/06/14 20:01:50 sturm Exp $	*/
+/*	$OpenBSD: inode.h,v 1.34 2006/10/29 00:53:37 thib Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -73,13 +73,11 @@ struct inode {
 
 	union {			/* Associated filesystem. */
 		struct	fs *fs;			/* FFS */
-		struct	lfs *lfs;		/* LFS */
 		struct  m_ext2fs *e2fs;		/* EXT2FS */
 	} inode_u;
 
 #define	i_fs	inode_u.fs
-#define	i_lfs	inode_u.lfs
-#define i_e2fs  inode_u.e2fs
+#define	i_e2fs	inode_u.e2fs
 
 	struct   cluster_info i_ci;
 	struct	 dquot *i_dquot[MAXQUOTAS]; /* Dquot structures. */

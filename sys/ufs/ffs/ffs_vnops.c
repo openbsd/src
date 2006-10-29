@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.38 2006/06/21 10:01:10 mickey Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.39 2006/10/29 00:53:37 thib Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
 #include <sys/pool.h>
+#include <sys/event.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -161,7 +162,254 @@ struct vnodeopv_desc ffs_fifoop_opv_desc =
 int doclusterread = 1;
 int doclusterwrite = 1;
 
-#include <ufs/ufs/ufs_readwrite.c>
+#define VN_KNOTE(vp, b) \
+	KNOTE((struct klist *)&vp->v_selectinfo.vsi_selinfo.si_note, (b))
+
+/*
+ * Vnode op for reading.
+ */
+/* ARGSUSED */
+int
+ffs_read(void *v)
+{
+	struct vop_read_args /* {
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		int a_ioflag;
+		struct ucred *a_cred;
+	} */ *ap = v;
+	struct vnode *vp;
+	struct inode *ip;
+	struct uio *uio;
+	struct fs *fs;
+	struct buf *bp;
+	daddr64_t lbn, nextlbn;
+	off_t bytesinfile;
+	long size, xfersize, blkoffset;
+	mode_t mode;
+	int error;
+
+	vp = ap->a_vp;
+	ip = VTOI(vp);
+	mode = DIP(ip, mode);
+	uio = ap->a_uio;
+
+#ifdef DIAGNOSTIC
+	if (uio->uio_rw != UIO_READ)
+		panic("%s: mode", "ffs_read");
+
+	if (vp->v_type == VLNK) {
+		if ((int)DIP(ip, size) < vp->v_mount->mnt_maxsymlinklen ||
+		    (vp->v_mount->mnt_maxsymlinklen == 0 &&
+		     DIP(ip, blocks) == 0))
+			panic("%s: short symlink", "ffs_read");
+	} else if (vp->v_type != VREG && vp->v_type != VDIR)
+		panic("%s: type %d", "ffs_read", vp->v_type);
+#endif
+	fs = ip->i_fs;
+	if ((u_int64_t)uio->uio_offset > fs->fs_maxfilesize)
+		return (EFBIG);
+
+	if (uio->uio_resid == 0)
+		return (0);
+
+	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
+		if ((bytesinfile = DIP(ip, size) - uio->uio_offset) <= 0)
+			break;
+		lbn = lblkno(fs, uio->uio_offset);
+		nextlbn = lbn + 1;
+		size = blksize(fs, ip, lbn);
+		blkoffset = blkoff(fs, uio->uio_offset);
+		xfersize = fs->fs_bsize - blkoffset;
+		if (uio->uio_resid < xfersize)
+			xfersize = uio->uio_resid;
+		if (bytesinfile < xfersize)
+			xfersize = bytesinfile;
+
+		if (lblktosize(fs, nextlbn) >= DIP(ip, size))
+			error = bread(vp, lbn, size, NOCRED, &bp);
+		else if (doclusterread)
+			error = cluster_read(vp, &ip->i_ci,
+			    DIP(ip, size), lbn, size, NOCRED, &bp);
+		else if (lbn - 1 == ip->i_ci.ci_lastr) {
+			int nextsize = blksize(fs, ip, nextlbn);
+			error = breadn(vp, lbn,
+			    size, &nextlbn, &nextsize, 1, NOCRED, &bp);
+		} else
+			error = bread(vp, lbn, size, NOCRED, &bp);
+
+		if (error)
+			break;
+		ip->i_ci.ci_lastr = lbn;
+
+		/*
+		 * We should only get non-zero b_resid when an I/O error
+		 * has occurred, which should cause us to break above.
+		 * However, if the short read did not cause an error,
+		 * then we want to ensure that we do not uiomove bad
+		 * or uninitialized data.
+		 */
+		size -= bp->b_resid;
+		if (size < xfersize) {
+			if (size == 0)
+				break;
+			xfersize = size;
+		}
+		error = uiomove((char *)bp->b_data + blkoffset, (int)xfersize,
+				uio);
+		if (error)
+			break;
+		brelse(bp);
+	}
+	if (bp != NULL)
+		brelse(bp);
+	ip->i_flag |= IN_ACCESS;
+	return (error);
+}
+
+/*
+ * Vnode op for writing.
+ */
+int
+ffs_write(void *v)
+{
+	struct vop_write_args /* {
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		int a_ioflag;
+		struct ucred *a_cred;
+	} */ *ap = v;
+	struct vnode *vp;
+	struct uio *uio;
+	struct inode *ip;
+	struct fs *fs;
+	struct buf *bp;
+	struct proc *p;
+	daddr_t lbn;
+	off_t osize;
+	int blkoffset, error, extended, flags, ioflag, resid, size, xfersize;
+
+	extended = 0;
+	ioflag = ap->a_ioflag;
+	uio = ap->a_uio;
+	vp = ap->a_vp;
+	ip = VTOI(vp);
+
+#ifdef DIAGNOSTIC
+	if (uio->uio_rw != UIO_WRITE)
+		panic("%s: mode", "ffs_write");
+#endif
+
+	/*
+	 * If writing 0 bytes, succeed and do not change
+	 * update time or file offset (standards compliance)
+	 */
+	if (uio->uio_resid == 0)
+		return (0);
+
+	switch (vp->v_type) {
+	case VREG:
+		if (ioflag & IO_APPEND)
+			uio->uio_offset = DIP(ip, size);
+		if ((DIP(ip, flags) & APPEND) && uio->uio_offset != DIP(ip, size))
+			return (EPERM);
+		/* FALLTHROUGH */
+	case VLNK:
+		break;
+	case VDIR:
+		if ((ioflag & IO_SYNC) == 0)
+			panic("%s: nonsync dir write", "ffs_write");
+		break;
+	default:
+		panic("%s: type", "ffs_write");
+	}
+
+	fs = ip->i_fs;
+	if (uio->uio_offset < 0 ||
+	    (u_int64_t)uio->uio_offset + uio->uio_resid > fs->fs_maxfilesize)
+		return (EFBIG);
+	/*
+	 * Maybe this should be above the vnode op call, but so long as
+	 * file servers have no limits, I don't think it matters.
+	 */
+	p = uio->uio_procp;
+	if (vp->v_type == VREG && p &&
+	    uio->uio_offset + uio->uio_resid >
+	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
+		psignal(p, SIGXFSZ);
+		return (EFBIG);
+	}
+
+	resid = uio->uio_resid;
+	osize = DIP(ip, size);
+	flags = ioflag & IO_SYNC ? B_SYNC : 0;
+
+	for (error = 0; uio->uio_resid > 0;) {
+		lbn = lblkno(fs, uio->uio_offset);
+		blkoffset = blkoff(fs, uio->uio_offset);
+		xfersize = fs->fs_bsize - blkoffset;
+		if (uio->uio_resid < xfersize)
+			xfersize = uio->uio_resid;
+		if (fs->fs_bsize > xfersize)
+			flags |= B_CLRBUF;
+		else
+			flags &= ~B_CLRBUF;
+
+		if ((error = UFS_BUF_ALLOC(ip, uio->uio_offset, xfersize,
+			 ap->a_cred, flags, &bp)) != 0)
+			break;
+		if (uio->uio_offset + xfersize > DIP(ip, size)) {
+			DIP_ASSIGN(ip, size, uio->uio_offset + xfersize);
+			uvm_vnp_setsize(vp, DIP(ip, size));
+			extended = 1;
+		}
+		(void)uvm_vnp_uncache(vp);
+
+		size = blksize(fs, ip, lbn) - bp->b_resid;
+		if (size < xfersize)
+			xfersize = size;
+
+		error =
+		    uiomove((char *)bp->b_data + blkoffset, xfersize, uio);
+
+		if (error != 0)
+			bzero((char *)bp->b_data + blkoffset, xfersize);
+
+		if (ioflag & IO_SYNC)
+			(void)bwrite(bp);
+		else if (xfersize + blkoffset == fs->fs_bsize) {
+			if (doclusterwrite)
+				cluster_write(bp, &ip->i_ci, DIP(ip, size));
+			else
+				bawrite(bp);
+		} else
+			bdwrite(bp);
+
+		if (error || xfersize == 0)
+			break;
+		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+	}
+	/*
+	 * If we successfully wrote any data, and we are not the superuser
+	 * we clear the setuid and setgid bits as a precaution against
+	 * tampering.
+	 */
+	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
+		DIP(ip, mode) &= ~(ISUID | ISGID);
+	if (resid > uio->uio_resid)
+		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
+	if (error) {
+		if (ioflag & IO_UNIT) {
+			(void)UFS_TRUNCATE(ip, osize,
+			    ioflag & IO_SYNC, ap->a_cred);
+			uio->uio_offset -= resid - uio->uio_resid;
+			uio->uio_resid = resid;
+		}
+	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC)) {
+		error = UFS_UPDATE(ip, MNT_WAIT);
+	}
+	return (error);
+}
 
 /*
  * Synch an open file.

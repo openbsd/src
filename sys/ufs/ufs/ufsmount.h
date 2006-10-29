@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufsmount.h,v 1.11 2005/07/03 20:14:03 drahn Exp $	*/
+/*	$OpenBSD: ufsmount.h,v 1.12 2006/10/29 00:53:37 thib Exp $	*/
 /*	$NetBSD: ufsmount.h,v 1.4 1994/12/21 20:00:23 mycroft Exp $	*/
 
 /*
@@ -50,13 +50,11 @@ struct ufsmount {
 
 	union {					/* pointer to superblock */
 		struct	fs *fs;			/* FFS */
-		struct	lfs *lfs;		/* LFS */
 		struct  m_ext2fs *e2fs;		/* EXT2FS */
 	} ufsmount_u;
-#define	um_fs	ufsmount_u.fs
-#define	um_lfs	ufsmount_u.lfs
-#define um_e2fs    ufsmount_u.e2fs
-#define um_e2fsb ufsmount_u.e2fs->s_es
+#define	um_fs		ufsmount_u.fs
+#define	um_e2fs		ufsmount_u.e2fs
+#define	um_e2fsb	ufsmount_u.e2fs->s_es
 
 	struct	vnode *um_quotas[MAXQUOTAS];	/* pointer to quota files */
 	struct	ucred *um_cred[MAXQUOTAS];	/* quota file access cred */
@@ -76,7 +74,6 @@ struct ufsmount {
 #define	UM_UFS1	1
 #define	UM_UFS2	2
 #define	UM_EXT2FS	3
-#define	UM_LFS	4
 
 /*
  * Flags describing the state of quotas.
