@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsort.c,v 1.14 2006/10/28 21:14:29 naddy Exp $	*/
+/*	$OpenBSD: fsort.c,v 1.15 2006/10/29 18:40:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)fsort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fsort.c,v 1.14 2006/10/28 21:14:29 naddy Exp $";
+static char rcsid[] = "$OpenBSD: fsort.c,v 1.15 2006/10/29 18:40:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,8 @@ static char rcsid[] = "$OpenBSD: fsort.c,v 1.14 2006/10/28 21:14:29 naddy Exp $"
 #include <stdlib.h>
 #include <string.h>
 
-u_char **keylist = 0, *buffer = 0, *linebuf = 0;
-size_t bufsize, linebuf_size;
+u_char *buffer = NULL, *bufend = NULL, *linebuf = NULL;
+size_t bufsize = BUFSIZE, linebuf_size = MAXLLEN;
 struct tempfile fstack[MAXFCT];
 extern char toutpath[];
 #define FSORTMAX 4
@@ -64,8 +64,8 @@ void
 fsort(int binno, int depth, union f_handle infiles, int nfiles, FILE *outfp,
     struct field *ftbl)
 {
-	u_char *bufend, **keypos, *tmpbuf;
-	u_char *weights;
+	u_char *weights, **keypos, *tmpbuf;
+	static u_char **keylist;
 	int ntfiles, mfct = 0, total, i, maxb, lastb, panic = 0;
 	int c, nelem;
 	long sizes[NBINS+1];
@@ -85,18 +85,10 @@ fsort(int binno, int depth, union f_handle infiles, int nfiles, FILE *outfp,
 		tfield[0].weights = ascii;
 	tfield[0].icol.num = 1;
 	weights = ftbl[0].weights;
-	if (!buffer) {
-		bufsize = BUFSIZE;
-		if ((buffer = malloc(bufsize + 1)) == NULL ||
-		    (keylist = calloc(MAXNUM, sizeof(u_char *))) == NULL)
-			errx(2, "cannot allocate memory");
-		if (!SINGL_FLD) {
-			linebuf_size = MAXLLEN;
-			if ((linebuf = malloc(linebuf_size)) == NULL)
-				errx(2, "cannot allocate memory");
-		}
+	if (keylist == NULL) {
+		if ((keylist = calloc(MAXNUM, sizeof(u_char *))) == NULL)
+			err(2, NULL);
 	}
-	bufend = buffer + bufsize;
 	if (binno >= 0) {
 		tfiles.top = infiles.top + nfiles;
 		get = getnext;
@@ -140,10 +132,13 @@ fsort(int binno, int depth, union f_handle infiles, int nfiles, FILE *outfp,
 			 */
 			if (c == BUFFEND && nelem == 0) {
 				bufsize *= 2;
-				buffer = realloc(buffer, bufsize);
-				if (!buffer)
+				tmpbuf = realloc(buffer, bufsize);
+				if (!tmpbuf)
 					err(2, "failed to realloc buffer");
-				bufend = buffer + bufsize;
+				crec = (RECHEADER *)
+				    (tmpbuf + ((u_char *)crec - buffer));
+				buffer = tmpbuf;
+				bufend = buffer + bufsize - 1;
 				continue;
 			}
 			if (c == BUFFEND || ntfiles || mfct) {	/* push */
@@ -157,27 +152,6 @@ fsort(int binno, int depth, union f_handle infiles, int nfiles, FILE *outfp,
 					mfct++;
 					/* reduce number of open files */
 					if (mfct == 16 ||(c == EOF && ntfiles)) {
-						/*
-						 * Only copy extra incomplete
-						 * crec data if there is any.
-						 */
-						int nodata = (bufend
-						    >= (u_char *)crec
-						    && bufend <= crec->data);
-						size_t sz = 0;
-
-						if (!nodata) {
-							sz = bufend
-							    - crec->data;
-							tmpbuf = malloc(sz);
-							if (tmpbuf == NULL)
-								errx(2, "cannot"
-								    " allocate"
-								    " memory");
-							memmove(tmpbuf,
-							    crec->data, sz);
-						}
-
 						fstack[tfiles.top + ntfiles].fp
 						    = ftmp();
 						fmerge(0, mstart, mfct, geteasy,
@@ -185,12 +159,6 @@ fsort(int binno, int depth, union f_handle infiles, int nfiles, FILE *outfp,
 						  putrec, ftbl);
 						ntfiles++;
 						mfct = 0;
-
-						if (!nodata) {
-							memmove(crec->data,
-							    tmpbuf, sz);
-							free(tmpbuf);
-						}
 					}
 				} else {
 					fstack[tfiles.top + ntfiles].fp= ftmp();
@@ -216,7 +184,6 @@ fsort(int binno, int depth, union f_handle infiles, int nfiles, FILE *outfp,
 				fmerge(0, tfiles, ntfiles, geteasy,
 				    outfp, putline, ftbl);
 			break;
-				
 		}
 		total = maxb = lastb = 0;	/* find if one bin dominates */
 		for (i = 0; i < NBINS; i++)
