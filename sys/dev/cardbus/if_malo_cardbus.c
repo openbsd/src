@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malo_cardbus.c,v 1.3 2006/10/25 13:57:21 mglocker Exp $ */
+/*	$OpenBSD: if_malo_cardbus.c,v 1.4 2006/10/29 11:41:34 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

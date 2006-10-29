@@ -1,7 +1,8 @@
-/*	$OpenBSD: malo.c,v 1.11 2006/10/25 20:42:57 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.12 2006/10/29 11:41:34 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
+ * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -72,8 +73,9 @@ struct malo_rx_data {
 struct malo_tx_data {
 	bus_dmamap_t			map;
 	struct mbuf			*m;
+	uint32_t			softstat;
 	/* additional info for rate adaption */
-//	struct ieee80211_node		*ni;
+	struct ieee80211_node		*ni;
 //	struct ieee80211_rssdesc	id;
 };
 
@@ -112,6 +114,9 @@ struct malo_tx_desc {
 /* firmware commands as found in a document describing the Libertas FW */
 #define MALO_CMD_GET_HW_SPEC	0x0003
 #define MALO_CMD_RESPONSE	0x8000
+#define MALO_CMD_SET_PRESCAN	0x0107
+#define MALO_CMD_SET_POSTSCAN	0x0108
+#define MALO_CMD_SET_CHANNEL	0x010a
 
 struct malo_cmdheader {
 	uint16_t	cmd;
@@ -182,11 +187,23 @@ void	malo_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    int isnew);
 struct ieee80211_node *
 	malo_node_alloc(struct ieee80211com *ic);
+int	malo_media_change(struct ifnet *ifp);
+int	malo_reset(struct ifnet *ifp);
+void	malo_next_scan(void *arg);
+void	malo_tx_intr(struct malo_softc *sc);
+int	malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0,
+	    struct ieee80211_node *ni);
+void	malo_tx_setup_desc(struct malo_softc *sc, struct malo_tx_desc *desc,
+	    uint32_t flags, uint16_t xflags, int len, int rate,
+	    const bus_dma_segment_t *segs, int nsegs, int ac);
 void	malo_rx_intr(struct malo_softc *sc);
 int	malo_load_bootimg(struct malo_softc *sc);
 int	malo_load_firmware(struct malo_softc *sc);
 int	malo_cmd_get_spec(struct malo_softc *sc);
 int	malo_cmd_reset(struct malo_softc *sc);
+int	malo_cmd_set_prescan(struct malo_softc *sc);
+int	malo_cmd_set_postscan(struct malo_softc *sc);
+int	malo_cmd_set_channel(struct malo_softc *sc, uint8_t channel);
 
 /* supported rates */
 const struct ieee80211_rateset  malo_rates_11b =
@@ -204,8 +221,6 @@ malo_intr(void *arg)
 	if (status == 0xffffffff || status == 0)
 		/* not for us */
 		return (0);
-
-	DPRINTF(("%s: INTERRUPT %08x\n", sc->sc_dev.dv_xname, status));
 
 	if (status & 0x4) {
 #ifdef MALO_DEBUG
@@ -226,6 +241,9 @@ malo_intr(void *arg)
 		wakeup(sc);
 	}
 
+	if (status & 0x1)
+		malo_tx_intr(sc);
+
 	if (status & 0x2)
 		malo_rx_intr(sc);
 
@@ -241,6 +259,10 @@ malo_attach(struct malo_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int i;
+
+	/* initialize channel scanning timer */
+	timeout_set(&sc->sc_scan_to, malo_next_scan, sc);
+
 #if 0
 	/* ???, what is this for, seems unnecessary */
 	/* malo_ctl_write4(sc, 0x0c38, 0x1f); */
@@ -297,8 +319,7 @@ malo_attach(struct malo_softc *sc)
 	ic->ic_newassoc = malo_newassoc;
 	ic->ic_node_alloc = malo_node_alloc;
 
-	ieee80211_media_init(ifp, ieee80211_media_change,
-	    ieee80211_media_status);
+	ieee80211_media_init(ifp, malo_media_change, ieee80211_media_status);
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
@@ -322,6 +343,9 @@ malo_detach(void *arg)
 	struct malo_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
+
+	/* remove channel scanning timer */
+	timeout_del(&sc->sc_scan_to);
 
 	malo_stop(sc);
 	ieee80211_ifdetach(ifp);
@@ -770,7 +794,58 @@ malo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 void
 malo_start(struct ifnet *ifp)
 {
+	struct malo_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct mbuf *m0;
+	struct ieee80211_node *ni;
 
+	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
+
+	for (;;) {
+		IF_POLL(&ic->ic_mgtq, m0);
+		if (m0 != NULL) {
+			if (sc->sc_txring.queued >= MALO_TX_RING_COUNT) {
+				ifp->if_flags |= IFF_OACTIVE;
+				break;
+			}
+			IF_DEQUEUE(&ic->ic_mgtq, m0);
+
+			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
+			m0->m_pkthdr.rcvif = NULL;
+#if NBPFILTER > 0
+			if (ic->ic_rawbpf != NULL)
+				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
+#endif
+			if (malo_tx_mgt(sc, m0, ni) != 0)
+				break;
+		} else {
+			if (ic->ic_state != IEEE80211_S_RUN)
+				break;
+			IFQ_POLL(&ifp->if_snd, m0);
+			if (m0 == NULL)
+				break;
+			if (sc->sc_txring.queued >= MALO_TX_RING_COUNT - 1) {
+				ifp->if_flags |= IFF_OACTIVE;
+				break;
+			}
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
+#if NBPFILTER > 0
+			if (ifp->if_bpf != NULL)
+				bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
+#endif
+			m0 = ieee80211_encap(ifp, m0, &ni);
+			if (m0 == NULL)
+				continue;
+#if NBPFILTER > 0
+			if (ic->ic_rawbpf != NULL)
+				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
+#endif
+			/* TODO malo_tx_data() */
+		}
+	}
 }
 
 int
@@ -784,6 +859,8 @@ malo_stop(struct malo_softc *sc)
 		malo_cmd_reset(sc);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
 	malo_reset_rx_ring(sc, &sc->sc_rxring);
 
@@ -803,7 +880,47 @@ malo_watchdog(struct ifnet *ifp)
 int
 malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
-	return (0);
+	struct malo_softc *sc = ic->ic_if.if_softc;
+	enum ieee80211_state ostate;
+	uint8_t chan;
+
+	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+
+	ostate = ic->ic_state;
+	timeout_del(&sc->sc_scan_to);
+
+	switch (nstate) {
+	case IEEE80211_S_INIT:
+		if (ostate == IEEE80211_S_SCAN) {
+			if (malo_cmd_set_postscan(sc) != 0)
+				DPRINTF(("%s: can't set postscan\n",
+				    sc->sc_dev.dv_xname));
+			else
+				DPRINTF(("%s: postscan done\n",
+				    sc->sc_dev.dv_xname));
+		}
+		break;
+	case IEEE80211_S_SCAN:
+		if (ostate == IEEE80211_S_INIT) {
+			if (malo_cmd_set_prescan(sc) != 0)
+				DPRINTF(("%s: can't set prescan\n",
+				    sc->sc_dev.dv_xname));
+			else
+				DPRINTF(("%s: prescan done\n",
+				    sc->sc_dev.dv_xname));
+		}
+
+		chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+
+		malo_cmd_set_channel(sc, chan);
+
+		timeout_add(&sc->sc_scan_to, hz / 2);
+		break;
+	default:
+		break;
+	}
+
+	return (sc->sc_newstate(ic, nstate, arg));
 }
 
 void
@@ -824,6 +941,164 @@ malo_node_alloc(struct ieee80211com *ic)
 	bzero(wn, sizeof(struct malo_node));
 
 	return ((struct ieee80211_node *)wn);
+}
+
+int
+malo_media_change(struct ifnet *ifp)
+{
+	int error;
+
+	DPRINTF(("%s: %s\n", ifp->if_xname, __func__));
+
+	error = ieee80211_media_change(ifp);
+	if (error != ENETRESET)
+		return (error);
+
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
+		malo_reset(ifp);
+
+	return (0);
+}
+
+int
+malo_reset(struct ifnet *ifp)
+{
+	struct malo_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	int chan;
+
+	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+
+	/* set channel */
+	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+	if (malo_cmd_set_channel(sc, chan) == 0)
+		DPRINTF(("%s: setting channel to %d\n", chan));
+	else
+		DPRINTF(("%s: setting channel to %d failed!\n", chan));
+
+	return (0);
+}
+
+void
+malo_next_scan(void *arg)
+{
+	struct malo_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+
+	DPRINTF(("%s: %s\n", ifp->if_xname, __func__));
+
+	if (ic->ic_state == IEEE80211_S_SCAN)
+		ieee80211_next_scan(ifp);
+}
+
+void
+malo_tx_intr(struct malo_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+
+	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+
+	malo_start(ifp);
+}
+
+int
+malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	struct malo_tx_desc *desc;
+	struct malo_tx_data *data;
+	struct ieee80211_frame *wh;
+	uint32_t flags = 0;
+	int rate, error;
+
+	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+
+	desc = &sc->sc_txring.desc[sc->sc_txring.cur];
+	data = &sc->sc_txring.data[sc->sc_txring.cur];
+
+	if (data->softstat & 0x80)
+		return (EAGAIN);
+
+	/* send mgt frames at the lowest available rate */
+	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
+
+	wh = mtod(m0, struct ieee80211_frame *);
+
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		m0 = ieee80211_wep_crypt(ifp, m0, 1);
+		if (m0 == NULL)
+			return (ENOBUFS);
+
+		wh = mtod(m0, struct ieee80211_frame *);
+	}
+
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
+	    BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s: could not map mbuf (error %d)\n",
+		    sc->sc_dev.dv_xname, error);
+		m_freem(m0);
+		return (error);
+	}
+
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct mbuf mb;
+		struct malo_tx_radiotap_hdr *tap = &sc->sc_txtap;
+
+		tap->wt_flags = 0;
+		tap->wt_rate = rate;
+		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
+
+		M_DUP_PKTHDR(&mb, m0);
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = sc->sc_txtap_len;
+		mb.m_next = m0;
+		mb.m_pkthdr.len += mb.m_len;
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+	}
+#endif
+
+	data->m = m0;
+	data->ni = ni;
+	data->softstat |= 0x80;
+
+	malo_tx_setup_desc(sc, desc, flags, 0, m0->m_pkthdr.len, rate,
+	    data->map->dm_segs, data->map->dm_nsegs, 0);
+
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_txring.map,
+	    sc->sc_txring.cur * sizeof(struct malo_tx_desc),
+	    sizeof(struct malo_tx_desc), BUS_DMASYNC_PREWRITE);
+
+	DPRINTF(("%s: sending mgmt frame, len=%u idx=%u rate=%u\n",
+	    sc->sc_dev.dv_xname, m0->m_pkthdr.len, sc->sc_txring.cur, rate));
+
+	sc->sc_txring.queued++;
+	sc->sc_txring.cur = (sc->sc_txring.cur + 1) %
+	    sizeof(struct malo_tx_desc);
+
+	/* kick mgmt TX */
+	malo_ctl_write4(sc, 0x0c18, 1);
+	malo_ctl_read4(sc, 0x0c14);
+
+	return (0);
+}
+
+void
+malo_tx_setup_desc(struct malo_softc *sc, struct malo_tx_desc *desc,
+    uint32_t flags, uint16_t xflags, int len, int rate,
+    const bus_dma_segment_t *segs, int nsegs, int ac)
+{
+	desc->len = htole16(segs[0].ds_len);
+	desc->datarate = rate;
+	desc->physdata = htole32(segs[0].ds_addr);
+	desc->status = htole32(0x00000001 | 0x80000000);
 }
 
 void
@@ -850,7 +1125,7 @@ malo_rx_intr(struct malo_softc *sc)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxring.map,
 		    sc->sc_rxring.cur * sizeof(struct malo_rx_desc),
 		    sizeof(struct malo_rx_desc), BUS_DMASYNC_POSTREAD);
-
+#if 0
 		DPRINTF(("rx intr idx=%d, rxctrl=0x%02x, rssi=%d, "
 		    "status=0x%02x, channel=%d, len=%d, res1=%02x, rate=%d, "
 		    "physdata=0x%04x, physnext=0x%04x, qosctrl=%02x, res2=%d\n",
@@ -858,7 +1133,7 @@ malo_rx_intr(struct malo_softc *sc)
 		    desc->channel, letoh16(desc->len), desc->reserved1,
 		    desc->datarate, desc->physdata, desc->physnext,
 		    desc->qosctrl, desc->reserved2));
-
+#endif
 		if ((letoh32(desc->rxctrl) & 0x80) == 0)
 			break;
 
@@ -926,7 +1201,7 @@ malo_rx_intr(struct malo_softc *sc)
 			    htole16(ic->ic_bss->ni_chan->ic_flags);
 			*/
 			tap->wr_rssi = desc->rssi;
-			tap->wr_max_rssi = 100; /* XXX find out correct max */
+			tap->wr_max_rssi = 75;
 
 			M_DUP_PKTHDR(&mb, m);
 			mb.m_data = (caddr_t)tap;
@@ -1152,6 +1427,83 @@ malo_cmd_reset(struct malo_softc *sc)
 
 	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
 	tsleep(sc, 0, "malorst", hz);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+
+	if (hdr->cmd & MALO_CMD_RESPONSE)
+		return (0);
+	else
+		return (ETIMEDOUT);
+}
+
+int
+malo_cmd_set_prescan(struct malo_softc *sc)
+{
+	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+
+	hdr->cmd = MALO_CMD_SET_PRESCAN;
+	hdr->size = htole16(sizeof(*hdr));
+	hdr->seqnum = 1;
+	hdr->result = 0;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
+	tsleep(sc, 0, "malosca", hz);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+
+	if (hdr->cmd & MALO_CMD_RESPONSE)
+		return (0);
+	else
+		return (ETIMEDOUT);
+}
+
+int
+malo_cmd_set_postscan(struct malo_softc *sc)
+{
+	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+
+	hdr->cmd = MALO_CMD_SET_POSTSCAN;
+	hdr->size = htole16(sizeof(*hdr));
+	hdr->seqnum = 1;
+	hdr->result = 0;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
+	tsleep(sc, 0, "malosca", hz);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+
+	if (hdr->cmd & MALO_CMD_RESPONSE)
+		return (0);
+	else
+		return (ETIMEDOUT);
+}
+
+int
+malo_cmd_set_channel(struct malo_softc *sc, uint8_t channel)
+{
+	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+
+	hdr->cmd = htole16(MALO_CMD_SET_CHANNEL);
+	hdr->size = htole16(sizeof(*hdr) + sizeof(channel));
+	hdr->seqnum = 1;
+	hdr->result = 0;
+
+	bcopy(&channel, (void *)hdr + 1, sizeof(channel));
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
+	//tsleep(sc, 0, "malochn", hz);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
