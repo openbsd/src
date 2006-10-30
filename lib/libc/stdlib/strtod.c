@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtod.c,v 1.29 2006/10/29 18:45:56 deraadt Exp $ */
+/*	$OpenBSD: strtod.c,v 1.30 2006/10/30 18:30:52 deraadt Exp $ */
 /****************************************************************
  *
  * The author of this software is David M. Gay.
@@ -89,6 +89,7 @@
  *	directly -- and assumed always to succeed.
  */
 
+#include <sys/types.h>
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
     defined(__mips__) || defined(__mips64__) || defined(__ns32k__) || \
     defined(__alpha__) || defined(__powerpc__) || defined(__m88k__) || \
@@ -96,7 +97,6 @@
     defined(__sparc64__) || \
     (defined(__arm__) && defined(__VFP_FP__))
 
-#include <sys/types.h>
 #if BYTE_ORDER == BIG_ENDIAN
 #define IEEE_BIG_ENDIAN
 #else
