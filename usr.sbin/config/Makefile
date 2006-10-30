@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2003/07/22 17:15:13 brad Exp $
+#	$OpenBSD: Makefile,v 1.14 2006/10/30 20:25:48 otto Exp $
 
 .include <bsd.own.mk>
 
@@ -19,9 +19,6 @@ CFLAGS+=-I${.CURDIR} -I.
 LDADD=	-lkvm
 DPADD=	${LIBKVM}
 
-CLEANFILES=gram.c scan.c y.tab.h
 MAN=	config.8
 
 .include <bsd.prog.mk>
-
-.depend: gram.c scan.c
