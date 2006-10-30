@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 2005/04/01 10:40:48 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 2006/10/30 18:28:57 jmc Exp $
 
 MAN=	boot.8
 MANSUBDIR=hppa64
-MLINKS=	boot.8 boot.conf.8
+MLINKS=	boot.8 boot.conf.5
 S	=${.CURDIR}/../../../..
 CLEANFILES+=	boot.gdb boot.map boot.lif
 

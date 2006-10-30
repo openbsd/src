@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.32 2005/07/30 14:32:46 millert Exp $
+#	$OpenBSD: Makefile,v 1.33 2006/10/30 18:28:57 jmc Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
 MAN=	boot.8
-MLINKS=	boot.8 boot.conf.8
+MLINKS=	boot.8 boot.conf.5
 
 .if ${MACHINE} == "i386"
 PROG=	boot

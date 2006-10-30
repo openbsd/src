@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.5 2006/09/18 21:15:33 mpf Exp $
+#	$OpenBSD: Makefile,v 1.6 2006/10/30 18:28:57 jmc Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
 MAN=	boot.8
-MLINKS=	boot.8 boot.conf.8
+MLINKS=	boot.8 boot.conf.5
 
 .if ${MACHINE} == "amd64"
 S	=${.CURDIR}/../../../..
