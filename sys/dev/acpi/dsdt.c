@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.60 2006/10/25 21:23:19 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.61 2006/10/30 18:37:07 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1706,6 +1706,7 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
 	     struct aml_value *res)
 {
 	static int lastck;
+	struct aml_node *ref;
 
 	if (res)
 		memset(res, 0, sizeof(struct aml_value));
@@ -1737,6 +1738,14 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
 		if (res)
 			aml_copyvalue(res, node->value);
 		break;
+	case AML_OBJTYPE_NAMEREF:
+		if (res == NULL)
+			break;
+		if ((ref = aml_searchname(node, node->value->v_nameref)) != NULL)
+			_aml_setvalue(res, AML_OBJTYPE_OBJREF, -1, ref);
+		else
+			aml_copyvalue(res, node->value);
+		break;
 	default:
 		break;
 	}
@@ -1753,6 +1762,24 @@ aml_evalname(struct acpi_softc *sc, struct aml_node *parent, const char *name,
 	     struct aml_value *res)
 {
 	return aml_evalnode(sc, aml_searchname(parent, name), argc, argv, res);
+}
+
+int
+aml_evalinteger(struct acpi_softc *sc, struct aml_node *parent, const char *name,
+		int argc, struct aml_value *argv,
+		int64_t *ival)
+{
+	struct aml_value res;
+	
+	if (name != NULL) {
+		parent = aml_searchname(parent, name);
+	}
+	if (aml_evalnode(sc, parent, argc, argv, &res) == 0) {
+		*ival = aml_val2int(&res);
+		aml_freevalue(&res);
+		return 0;
+	}
+	return 1;
 }
 
 void
