@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.29 2006/10/22 12:14:44 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.30 2006/10/30 20:15:22 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1147,13 +1147,14 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 		ni = ieee80211_find_rxnode(ic, wh);
 
 		/* send the frame to the 802.11 layer */
-		ieee80211_input(ifp, m, ni, rssi, 0);
+		ieee80211_input(ifp, m, ni, desc->rssi, 0);
 
 		/*-
 		 * Keep track of the average RSSI using an Exponential Moving
 		 * Average (EMA) of 8 Wilder's days:
 		 *     avg = (1 / N) x rssi + ((N - 1) / N) x avg
 		 */
+		rssi = rt2661_get_rssi(sc, desc->rssi);
 		sc->avg_rssi = (rssi + 7 * sc->avg_rssi) / 8;
 
 		/* node is no longer needed */
