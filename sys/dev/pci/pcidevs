@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1171 2006/10/27 03:58:11 brad Exp $
+$OpenBSD: pcidevs,v 1.1172 2006/10/30 02:00:56 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -476,6 +476,7 @@ product ALI M1535		0x1535	M1535 PCI
 product ALI M1541		0x1541	M1541 PCI
 product ALI M1543		0x1543	M1543 ISA
 product ALI M1563		0x1563	M1563 ISA
+product ALI M1573		0x1573	M1573 ISA
 product ALI M1575		0x1575	M1575 ISA
 product ALI M1621		0x1621	M1621 PCI
 product ALI M1631		0x1631	M1631 PCI
@@ -2482,6 +2483,7 @@ product NEC MARTH		0x0074	I/O
 product NEC PKUG		0x007d	I/O
 product NEC uPD72874		0x00f2	Firewire
 product NEC USB2		0x00e0	USB
+product NEC uPD720400		0x0125	PCIE-PCIX
 product NEC VERSAMAESTRO	0x8058	Versa Maestro
 product NEC VERSAPRONXVA26D	0x803c	Versa Va26D Maestro
 
