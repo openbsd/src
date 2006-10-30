@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1172 2006/10/30 02:00:56 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1173 2006/10/30 20:50:59 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3379,7 +3379,7 @@
 #define	PCI_PRODUCT_SMSC_VICTORY66_USB	0x9462		/* Victory66 USB */
 #define	PCI_PRODUCT_SMSC_VICTORY66_PM	0x9463		/* Victory66 Power */
 
-/* SNC products */
+/* SNI products */
 #define	PCI_PRODUCT_SNI_PIRAHNA	0x0002		/* Pirahna 2-port */
 #define	PCI_PRODUCT_SNI_TCPMSE	0x0005		/* Tulip, power, switch extender */
 #define	PCI_PRODUCT_SNI_FPGAIBUS	0x4942		/* FPGA I-Bus Tracer for MBD */
