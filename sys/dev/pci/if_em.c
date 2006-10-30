@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.150 2006/09/29 16:59:59 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.151 2006/10/30 08:34:14 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2112,10 +2112,7 @@ em_get_buf(struct em_softc *sc, int i)
 	struct mbuf    *m;
 	bus_dmamap_t	map;
 	struct em_buffer *rx_buffer;
-	struct ifnet   *ifp;
 	int error;
-
-	ifp = &sc->interface_data.ac_if;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
