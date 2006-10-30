@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.133 2006/07/11 21:17:58 mickey Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.134 2006/10/30 00:34:01 thib Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2304,8 +2304,8 @@ vfs_vnode_print(struct vnode *vp, int full, int (*pr)(const char *, ...))
 #define	NENTS(n)	(sizeof n / sizeof(n[0]))
 	(*pr)("tag %s(%d) type %s(%d) mount %p typedata %p\n",
 	      vp->v_tag > NENTS(vtags)? "<unk>":vtags[vp->v_tag], vp->v_tag,
-	      vp->v_type > NENTS(vtypes)? "<unk>":vtypes[vp->v_tag],vp->v_type,
-	      vp->v_mount, vp->v_mountedhere);
+	      vp->v_type > NENTS(vtypes)? "<unk>":vtypes[vp->v_type],
+	      vp->v_type, vp->v_mount, vp->v_mountedhere);
 
 	(*pr)("data %p usecount %d writecount %ld holdcnt %ld numoutput %d\n",
 	      vp->v_data, vp->v_usecount, vp->v_writecount,
