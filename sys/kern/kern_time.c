@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.59 2006/06/29 19:52:47 kettenis Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.60 2006/10/30 20:19:33 otto Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -389,9 +389,17 @@ sys_adjfreq(struct proc *p, void *v, register_t *retval)
 	}
 #else
 	if (SCARG(uap, oldfreq)) {
-		f = 0;
-		if ((error = copyout((void *)&f, (void *)SCARG(uap, oldfreq),
-		    sizeof(int64_t))))
+		if ((error = tc_adjfreq(&f, NULL)) != 0)
+			return (error);
+		if ((error = copyout(&f, SCARG(uap, oldfreq), sizeof(f))) != 0)
+			return (error);
+	}
+	if (SCARG(uap, freq)) {
+		if ((error = suser(p, 0)))
+			return (error);
+		if ((error = copyin(SCARG(uap, freq), &f, sizeof(f))) != 0)
+			return (error);
+		if ((error = tc_adjfreq(NULL, &f)) != 0)
 			return (error);
 	}
 #endif
