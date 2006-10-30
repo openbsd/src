@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1171 2006/10/27 03:58:11 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1172 2006/10/30 02:00:56 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -561,6 +561,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1563,
 	    "M1563 ISA",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1573,
+	    "M1573 ISA",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1575,
@@ -7497,6 +7501,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_USB2,
 	    "USB",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_uPD720400,
+	    "PCIE-PCIX",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSAMAESTRO,

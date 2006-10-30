@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1171 2006/10/27 03:58:11 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1172 2006/10/30 02:00:56 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -481,6 +481,7 @@
 #define	PCI_PRODUCT_ALI_M1541	0x1541		/* M1541 PCI */
 #define	PCI_PRODUCT_ALI_M1543	0x1543		/* M1543 ISA */
 #define	PCI_PRODUCT_ALI_M1563	0x1563		/* M1563 ISA */
+#define	PCI_PRODUCT_ALI_M1573	0x1573		/* M1573 ISA */
 #define	PCI_PRODUCT_ALI_M1575	0x1575		/* M1575 ISA */
 #define	PCI_PRODUCT_ALI_M1621	0x1621		/* M1621 PCI */
 #define	PCI_PRODUCT_ALI_M1631	0x1631		/* M1631 PCI */
@@ -2487,6 +2488,7 @@
 #define	PCI_PRODUCT_NEC_PKUG	0x007d		/* I/O */
 #define	PCI_PRODUCT_NEC_uPD72874	0x00f2		/* Firewire */
 #define	PCI_PRODUCT_NEC_USB2	0x00e0		/* USB */
+#define	PCI_PRODUCT_NEC_uPD720400	0x0125		/* PCIE-PCIX */
 #define	PCI_PRODUCT_NEC_VERSAMAESTRO	0x8058		/* Versa Maestro */
 #define	PCI_PRODUCT_NEC_VERSAPRONXVA26D	0x803c		/* Versa Va26D Maestro */
 
