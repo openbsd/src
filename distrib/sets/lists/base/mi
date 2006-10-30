@@ -3188,6 +3188,7 @@
 ./usr/share/zoneinfo/Europe/Nicosia
 ./usr/share/zoneinfo/Europe/Oslo
 ./usr/share/zoneinfo/Europe/Paris
+./usr/share/zoneinfo/Europe/Podgorica
 ./usr/share/zoneinfo/Europe/Prague
 ./usr/share/zoneinfo/Europe/Riga
 ./usr/share/zoneinfo/Europe/Rome
@@ -3761,6 +3762,7 @@
 ./usr/share/zoneinfo/posix/Europe/Nicosia
 ./usr/share/zoneinfo/posix/Europe/Oslo
 ./usr/share/zoneinfo/posix/Europe/Paris
+./usr/share/zoneinfo/posix/Europe/Podgorica
 ./usr/share/zoneinfo/posix/Europe/Prague
 ./usr/share/zoneinfo/posix/Europe/Riga
 ./usr/share/zoneinfo/posix/Europe/Rome
@@ -4335,6 +4337,7 @@
 ./usr/share/zoneinfo/right/Europe/Nicosia
 ./usr/share/zoneinfo/right/Europe/Oslo
 ./usr/share/zoneinfo/right/Europe/Paris
+./usr/share/zoneinfo/right/Europe/Podgorica
 ./usr/share/zoneinfo/right/Europe/Prague
 ./usr/share/zoneinfo/right/Europe/Riga
 ./usr/share/zoneinfo/right/Europe/Rome
