@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.33 2006/05/15 21:40:04 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.34 2006/10/30 14:46:35 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1071,6 +1071,8 @@ luna88k_bootstrap()
 #ifndef MULTIPROCESSOR
 	cpuid_t master_cpu;
 #endif
+	cpuid_t cpu;
+	extern void m8820x_initialize_cpu(cpuid_t);
 
 	cmmu = &cmmu8820x;
 
@@ -1093,6 +1095,20 @@ luna88k_bootstrap()
 	setup_board_config();
 	master_cpu = cmmu_init();
 	set_cpu_number(master_cpu);
+
+	/*
+	 * On the luna88k, secondary processors are not disabled while the
+	 * kernel is initializing. We just initialized the CMMUs tied to the
+	 * currently-running CPU; initialize the others with similar settings
+	 * here as well.
+	 */
+	for (cpu = 0; cpu < max_cpus; cpu++) {
+		if (cpu == master_cpu)
+			continue;
+		if (m88k_cpus[cpu].ci_alive == 0)
+			continue;
+		m8820x_initialize_cpu(cpu);
+	}
 
 	/*
 	 * Now that set_cpu_number() set us with a valid cpu_info pointer,
