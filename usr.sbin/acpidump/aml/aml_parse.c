@@ -1,4 +1,4 @@
-/*	$OpenBSD: aml_parse.c,v 1.3 2005/06/12 20:08:58 sturm Exp $	*/
+/*	$OpenBSD: aml_parse.c,v 1.4 2006/10/31 01:15:13 millert Exp $	*/
 /*-
  * Copyright (c) 1999 Doug Rabson
  * Copyright (c) 1999, 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: aml_parse.c,v 1.3 2005/06/12 20:08:58 sturm Exp $
+ *	$Id: aml_parse.c,v 1.4 2006/10/31 01:15:13 millert Exp $
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_parse.c,v 1.7 2001/10/23 14:54:15 takawata Exp $
  */
 
@@ -481,17 +481,13 @@ aml_parse_concat_string(struct aml_environ *env, union aml_object *obj,
 	resobj->type = aml_t_buffer;
 	resobj->str.needfree = 1;
 	len = strlen(obj->str.string) + strlen(tmpobj2->str.string) + 1;
-	if (len > 0) {
-		resobj->str.string = memman_alloc_flexsize(aml_memman, len);
-		if (resobj->str.string == NULL) {
-			env->stat = aml_stat_panic;
-			return (NULL);
-		}
-		strncpy(resobj->str.string, obj->str.string, len);
-		strlcat(resobj->str.string, tmpobj->str.string, len);
-	} else {
-		resobj->str.string = NULL;
+	resobj->str.string = memman_alloc_flexsize(aml_memman, len);
+	if (resobj->str.string == NULL) {
+		env->stat = aml_stat_panic;
+		return (NULL);
 	}
+	strlcpy(resobj->str.string, obj->str.string, len);
+	strlcat(resobj->str.string, tmpobj->str.string, len);
 	aml_free_object(&tmpobj2);
 	aml_store_to_name(env, resobj, destname);
 	return (&env->tempname);
