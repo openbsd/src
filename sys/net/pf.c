@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.517 2006/10/27 13:56:51 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.518 2006/10/31 14:49:01 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1006,8 +1006,9 @@ void
 pf_free_state(struct pf_state *cur)
 {
 #if NPFSYNC
-	if (pfsyncif.sc_bulk_send_next == cur ||
-	    pfsyncif.sc_bulk_terminator == cur)
+	if (pfsyncif != NULL &&
+	    (pfsyncif->sc_bulk_send_next == cur ||
+	    pfsyncif->sc_bulk_terminator == cur))
 		return;
 #endif
 	KASSERT(cur->timeout == PFTM_UNLINKED);

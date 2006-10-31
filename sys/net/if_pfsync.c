@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.66 2006/06/02 19:53:12 mpf Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.67 2006/10/31 14:49:01 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -78,10 +78,12 @@ int pfsyncdebug;
 #define DPRINTF(x)
 #endif
 
-struct pfsync_softc	pfsyncif;
-struct pfsyncstats	pfsyncstats;
+struct pfsync_softc	*pfsyncif = NULL;
+struct pfsyncstats	 pfsyncstats;
 
 void	pfsyncattach(int);
+int	pfsync_clone_create(struct if_clone *, int);
+int	pfsync_clone_destroy(struct ifnet *);
 void	pfsync_setmtu(struct pfsync_softc *, int);
 int	pfsync_alloc_scrub_memory(struct pfsync_state_peer *,
 	    struct pf_state_peer *);
@@ -106,40 +108,53 @@ void	pfsync_bulkfail(void *);
 int	pfsync_sync_ok;
 extern int ifqmaxlen;
 
+struct if_clone	pfsync_cloner =
+    IF_CLONE_INITIALIZER("pfsync", pfsync_clone_create, pfsync_clone_destroy);
+
 void
 pfsyncattach(int npfsync)
 {
+	if_clone_attach(&pfsync_cloner);
+}
+int
+pfsync_clone_create(struct if_clone *ifc, int unit)
+{
 	struct ifnet *ifp;
 
+	if (unit != 0)
+		return (EINVAL);
+
 	pfsync_sync_ok = 1;
-	bzero(&pfsyncif, sizeof(pfsyncif));
-	pfsyncif.sc_mbuf = NULL;
-	pfsyncif.sc_mbuf_net = NULL;
-	pfsyncif.sc_mbuf_tdb = NULL;
-	pfsyncif.sc_statep.s = NULL;
-	pfsyncif.sc_statep_net.s = NULL;
-	pfsyncif.sc_statep_tdb.t = NULL;
-	pfsyncif.sc_maxupdates = 128;
-	pfsyncif.sc_sync_peer.s_addr = INADDR_PFSYNC_GROUP;
-	pfsyncif.sc_sendaddr.s_addr = INADDR_PFSYNC_GROUP;
-	pfsyncif.sc_ureq_received = 0;
-	pfsyncif.sc_ureq_sent = 0;
-	pfsyncif.sc_bulk_send_next = NULL;
-	pfsyncif.sc_bulk_terminator = NULL;
-	ifp = &pfsyncif.sc_if;
-	strlcpy(ifp->if_xname, "pfsync0", sizeof ifp->if_xname);
-	ifp->if_softc = &pfsyncif;
+	if ((pfsyncif = malloc(sizeof(*pfsyncif), M_DEVBUF, M_NOWAIT)) == NULL)
+		return (ENOMEM);
+	bzero(pfsyncif, sizeof(*pfsyncif));
+	pfsyncif->sc_mbuf = NULL;
+	pfsyncif->sc_mbuf_net = NULL;
+	pfsyncif->sc_mbuf_tdb = NULL;
+	pfsyncif->sc_statep.s = NULL;
+	pfsyncif->sc_statep_net.s = NULL;
+	pfsyncif->sc_statep_tdb.t = NULL;
+	pfsyncif->sc_maxupdates = 128;
+	pfsyncif->sc_sync_peer.s_addr = INADDR_PFSYNC_GROUP;
+	pfsyncif->sc_sendaddr.s_addr = INADDR_PFSYNC_GROUP;
+	pfsyncif->sc_ureq_received = 0;
+	pfsyncif->sc_ureq_sent = 0;
+	pfsyncif->sc_bulk_send_next = NULL;
+	pfsyncif->sc_bulk_terminator = NULL;
+	ifp = &pfsyncif->sc_if;
+	snprintf(ifp->if_xname, sizeof ifp->if_xname, "pfsync%d", unit);
+	ifp->if_softc = pfsyncif;
 	ifp->if_ioctl = pfsyncioctl;
 	ifp->if_output = pfsyncoutput;
 	ifp->if_start = pfsyncstart;
 	ifp->if_type = IFT_PFSYNC;
 	ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	ifp->if_hdrlen = PFSYNC_HDRLEN;
-	pfsync_setmtu(&pfsyncif, ETHERMTU);
-	timeout_set(&pfsyncif.sc_tmo, pfsync_timeout, &pfsyncif);
-	timeout_set(&pfsyncif.sc_tdb_tmo, pfsync_tdb_timeout, &pfsyncif);
-	timeout_set(&pfsyncif.sc_bulk_tmo, pfsync_bulk_update, &pfsyncif);
-	timeout_set(&pfsyncif.sc_bulkfail_tmo, pfsync_bulkfail, &pfsyncif);
+	pfsync_setmtu(pfsyncif, ETHERMTU);
+	timeout_set(&pfsyncif->sc_tmo, pfsync_timeout, pfsyncif);
+	timeout_set(&pfsyncif->sc_tdb_tmo, pfsync_tdb_timeout, pfsyncif);
+	timeout_set(&pfsyncif->sc_bulk_tmo, pfsync_bulk_update, pfsyncif);
+	timeout_set(&pfsyncif->sc_bulkfail_tmo, pfsync_bulkfail, pfsyncif);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
@@ -148,8 +163,22 @@ pfsyncattach(int npfsync)
 #endif
 
 #if NBPFILTER > 0
-	bpfattach(&pfsyncif.sc_if.if_bpf, ifp, DLT_PFSYNC, PFSYNC_HDRLEN);
+	bpfattach(&pfsyncif->sc_if.if_bpf, ifp, DLT_PFSYNC, PFSYNC_HDRLEN);
 #endif
+
+	return (0);
+}
+
+int
+pfsync_clone_destroy(struct ifnet *ifp)
+{
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	if_detach(ifp);
+	free(pfsyncif, M_DEVBUF);
+	pfsyncif = NULL;
+	return (0);
 }
 
 /*
@@ -287,7 +316,7 @@ pfsync_input(struct mbuf *m, ...)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct pfsync_header *ph;
-	struct pfsync_softc *sc = &pfsyncif;
+	struct pfsync_softc *sc = pfsyncif;
 	struct pf_state *st;
 	struct pf_state_cmp key;
 	struct pfsync_state *sp;
@@ -305,7 +334,7 @@ pfsync_input(struct mbuf *m, ...)
 	pfsyncstats.pfsyncs_ipackets++;
 
 	/* verify that we have a sync interface configured */
-	if (!sc->sc_sync_ifp || !pf_status.running)
+	if (!sc || !sc->sc_sync_ifp || !pf_status.running)
 		goto done;
 
 	/* verify that the packet came in on the right interface */
@@ -1045,8 +1074,8 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 int
 pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 {
-	struct ifnet *ifp = &pfsyncif.sc_if;
-	struct pfsync_softc *sc = ifp->if_softc;
+	struct ifnet *ifp = NULL;
+	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_header *h, *h_net;
 	struct pfsync_state *sp = NULL;
 	struct pfsync_state_upd *up = NULL;
@@ -1055,6 +1084,11 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 	u_long secs;
 	int s, ret = 0;
 	u_int8_t i = 255, newaction = 0;
+
+	if (sc == NULL)
+		return (0)
+	else
+		ifp = &sc->sc_if;
 
 	/*
 	 * If a packet falls in the forest and there's nobody around to
@@ -1241,11 +1275,16 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 int
 pfsync_request_update(struct pfsync_state_upd *up, struct in_addr *src)
 {
-	struct ifnet *ifp = &pfsyncif.sc_if;
+	struct ifnet *ifp = NULL;
 	struct pfsync_header *h;
-	struct pfsync_softc *sc = ifp->if_softc;
+	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_state_upd_req *rup;
 	int ret = 0;
+
+	if (sc == NULL)
+		return (0);
+	else
+		ifp = &sc->sc_if;
 
 	if (sc->sc_mbuf == NULL) {
 		if ((sc->sc_mbuf = pfsync_get_mbuf(sc, PFSYNC_ACT_UREQ,
@@ -1283,10 +1322,15 @@ pfsync_request_update(struct pfsync_state_upd *up, struct in_addr *src)
 int
 pfsync_clear_states(u_int32_t creatorid, char *ifname)
 {
-	struct ifnet *ifp = &pfsyncif.sc_if;
-	struct pfsync_softc *sc = ifp->if_softc;
+	struct ifnet *ifp = NULL;
+	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_state_clr *cp;
 	int s, ret;
+
+	if (sc == NULL)
+		return (0);
+	else
+		ifp = &sc->sc_if;
 
 	s = splnet();
 	if (sc->sc_mbuf != NULL)
@@ -1580,14 +1624,17 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 int
 pfsync_update_tdb(struct tdb *tdb, int output)
 {
-	struct ifnet *ifp = &pfsyncif.sc_if;
-	struct pfsync_softc *sc = ifp->if_softc;
+	struct ifnet *ifp = NULL;
+	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_header *h;
 	struct pfsync_tdb *pt = NULL;
 	int s, i, ret;
 
-	if (ifp->if_bpf == NULL && sc->sc_sync_ifp == NULL &&
-	    sc->sc_sync_peer.s_addr == INADDR_PFSYNC_GROUP) {
+	if (sc != NULL)
+		ifp = &sc->sc_if;
+
+	if (sc == NULL || (ifp->if_bpf == NULL && sc->sc_sync_ifp == NULL &&
+	    sc->sc_sync_peer.s_addr == INADDR_PFSYNC_GROUP)) {
 		/* Don't leave any stale pfsync packets hanging around. */
 		if (sc->sc_mbuf_tdb != NULL) {
 			m_freem(sc->sc_mbuf_tdb);
