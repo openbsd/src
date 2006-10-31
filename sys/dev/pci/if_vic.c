@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.10 2006/10/31 06:04:15 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.11 2006/10/31 07:01:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -810,8 +810,10 @@ vic_encap(struct vic_softc *sc, struct mbuf *m)
 
 	/* XXX nsegs are cool */
 	txd->tx_flags = VIC_TX_FLAGS_KEEP;
+	txd->tx_sa.sa_addr_type = VIC_SG_ADDR_PHYS;
 	txd->tx_sa.sa_length = 1;
 	txd->tx_sa.sa_sg[0].sg_length = m->m_len;
+	txd->tx_sa.sa_sg[0].sg_addr_low = 0;
 	txd->tx_sa.sa_sg[0].sg_addr_low = txb->txb_dmamap->dm_segs[0].ds_addr;
 	txd->tx_owner = VIC_OWNER_NIC;
 
@@ -827,10 +829,13 @@ vic_encap(struct vic_softc *sc, struct mbuf *m)
 	ifp->if_opackets++;
 	sc->sc_txpending++;
 
+	sc->sc_data->vd_tx_stopped = 1;
 	VIC_INC(sc->sc_data->vd_tx_nextidx, sc->sc_data->vd_tx_length);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	vic_read(sc, VIC_Tx_ADDR);
 
 	return (0);
 }
