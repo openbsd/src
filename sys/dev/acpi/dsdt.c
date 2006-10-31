@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.61 2006/10/30 18:37:07 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.62 2006/10/31 13:49:44 thib Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -76,6 +76,8 @@ int                     aml_tstbit(const u_int8_t *, int);
 void                    aml_setbit(u_int8_t *, int, int);
 
 void                    aml_bufcpy(void *, int, const void *, int, int);
+int aml_evalinteger(struct acpi_softc *, struct aml_node *, const char *,
+		    int, struct aml_value *, int64_t *);
 
 void _aml_delref(struct aml_value **val, const char *, int);
 
