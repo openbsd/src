@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.c,v 1.14 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: mille.c,v 1.15 2006/10/31 15:16:46 martin Exp $	*/
 /*	$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: mille.c,v 1.14 2003/06/03 03:01:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: mille.c,v 1.15 2006/10/31 15:16:46 martin Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ main(ac, av)
 	  case 1:
 		break;
 	  default:
-		printf("usage: milles [ restore_file ]\n");
+		fprintf(stderr, "usage: milles [ restore_file ]\n");
 		exit(1);
 		/* NOTREACHED */
 	}
