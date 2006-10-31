@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.54 2006/06/19 05:05:17 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.55 2006/10/31 15:23:40 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -19,10 +19,10 @@
 
 #include "cvs.h"
 #include "log.h"
+#include "remote.h"
 
 extern char *__progname;
 
-int		cvs_remove(int, char **);
 void		cvs_remove_local(struct cvs_file *);
 
 static int	force_remove = 0;
@@ -68,7 +68,19 @@ cvs_remove(int argc, char **argv)
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
-	cr.fileproc = cvs_remove_local;
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cr.fileproc = cvs_client_sendfile;
+
+		if (force_remove == 1)
+			cvs_client_send_request("Argument -f");
+
+		if (!(flags & CR_RECURSE_DIRS))
+			cvs_client_send_request("Argument -l");
+	} else {
+		cr.fileproc = cvs_remove_local;
+	}
+
 	cr.flags = flags;
 
 	if (argc > 0)
@@ -76,16 +88,25 @@ cvs_remove(int argc, char **argv)
 	else
 		cvs_file_run(1, &arg, &cr);
 
-	if (existing != 0) {
-		cvs_log(LP_ERR, "%d file(s) exist, remove them first",
-		    existing);
-	}
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_send_files(argv, argc);
+		cvs_client_senddir(".");
+		cvs_client_send_request("remove");
+		cvs_client_get_responses();
+	} else {
+		if (existing != 0) {
+			cvs_log(LP_ERR, "%d file(s) exist, remove them first",
+			    existing);
+		}
 
-	if (removed != 0) {
-		if (verbosity > 1)
-			cvs_log(LP_NOTICE, "use '%s commit' to remove %s "
-			    "permanently", __progname, (removed > 1) ?
-			    "these files" : "this file");
+		if (removed != 0) {
+			if (verbosity > 1) {
+				cvs_log(LP_NOTICE,
+				    "use '%s commit' to remove %s "
+				    "permanently", __progname, (removed > 1) ?
+				    "these files" : "this file");
+			}
+		}
 	}
 
 	return (0);

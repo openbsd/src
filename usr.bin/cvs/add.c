@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.60 2006/07/01 12:02:06 reyk Exp $	*/
+/*	$OpenBSD: add.c,v 1.61 2006/10/31 15:23:40 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -21,10 +21,10 @@
 #include "cvs.h"
 #include "diff.h"
 #include "log.h"
+#include "remote.h"
 
 extern char *__progname;
 
-int	cvs_add(int, char **);
 void	cvs_add_local(struct cvs_file *);
 
 static void add_directory(struct cvs_file *);
@@ -70,10 +70,27 @@ cvs_add(int argc, char **argv)
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
-	cr.fileproc = cvs_add_local;
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cr.fileproc = cvs_client_sendfile;
+
+		if (logmsg != NULL)
+			cvs_client_send_request("Argument -m%s", logmsg);
+	} else {
+		cr.fileproc = cvs_add_local;
+	}
+
 	cr.flags = flags;
 
 	cvs_file_run(argc, argv, &cr);
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_send_files(argv, argc);
+		cvs_client_senddir(".");
+		cvs_client_send_request("add");
+		cvs_client_get_responses();
+	}
+
 	return (0);
 }
 

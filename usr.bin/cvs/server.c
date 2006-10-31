@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.30 2006/07/09 01:47:20 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.31 2006/10/31 15:23:40 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -378,6 +378,17 @@ cvs_server_argument(char *data)
 }
 
 void
+cvs_server_add(char *data)
+{
+	if (chdir(server_currentdir) == -1)
+		fatal("cvs_server_add: %s", strerror(errno));
+
+	cvs_cmdop = CVS_OP_ADD;
+	cvs_add(server_argc, server_argv);
+	cvs_server_send_response("ok");
+}
+
+void
 cvs_server_commit(char *data)
 {
 	if (chdir(server_currentdir) == -1)
@@ -396,6 +407,17 @@ cvs_server_diff(char *data)
 
 	cvs_cmdop = CVS_OP_DIFF;
 	cvs_diff(server_argc, server_argv);
+	cvs_server_send_response("ok");
+}
+
+void
+cvs_server_remove(char *data)
+{
+	if (chdir(server_currentdir) == -1)
+		fatal("cvs_server_remove: %s", strerror(errno));
+
+	cvs_cmdop = CVS_OP_REMOVE;
+	cvs_remove(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
 
