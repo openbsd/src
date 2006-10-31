@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.9 2006/05/31 06:46:12 brad Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.10 2006/10/31 06:04:15 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -23,11 +23,11 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
-#include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
@@ -54,42 +54,133 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_vicreg.h>
-#include <dev/pci/if_vicvar.h>
 
-int	vic_match(struct device *, void *, void *);
-void	vic_attach(struct device *, struct device *, void *);
-void	vic_link_state(struct vic_softc *);
-void	vic_shutdown(void *);
-int	vic_intr(void *);
-void	vic_rx_proc(struct vic_softc *);
-void	vic_tx_proc(struct vic_softc *);
-void	vic_iff(struct vic_softc *, u_int);
-void	vic_getlladdr(struct vic_softc *);
-void	vic_setlladdr(struct vic_softc *);
-int	vic_media_change(struct ifnet *);
-void	vic_media_status(struct ifnet *, struct ifmediareq *);
-void	vic_start(struct ifnet *);
-int	vic_tx_start(struct vic_softc *, struct mbuf *);
-void	vic_watchdog(struct ifnet *);
-int	vic_ioctl(struct ifnet *, u_long, caddr_t);
-void	vic_init(struct ifnet *);
-void	vic_stop(struct ifnet *);
-void	vic_printb(unsigned short, char *);
-void	vic_timer(void *);
-void	vic_poll(void *); /* XXX poll */
+#ifdef VIC_DEBUG
+int vic_debug = 0;
+#define DPRINTF(x...)		do { if (vic_debug) printf(x); } while (0)
+#else
+#define DPRINTF(x...)
+#endif
 
-struct mbuf *vic_alloc_mbuf(struct vic_softc *, bus_dmamap_t);
-int	vic_alloc_data(struct vic_softc *);
-void	vic_reset_data(struct vic_softc *);
-void	vic_free_data(struct vic_softc *);
+#define VIC_PCI_BAR		PCI_MAPREG_START /* Base Address Register */
 
-struct cfattach vic_ca = {
-	sizeof(struct vic_softc), vic_match, vic_attach
+#define VIC_NBUF		100
+#define VIC_NBUF_MAX		128
+#define VIC_MAX_SCATTER		1	/* 8? */
+#define VIC_QUEUE_SIZE		VIC_NBUF_MAX
+#define VIC_QUEUE2_SIZE		1
+#define VIC_INC(_x, _y)		(_x) = ((_x) + 1) % (_y)
+#define VIC_INC_POS(_x, _y)	(_x) = (++(_x)) % (_y) ? (_x) : 1
+#define VIC_TX_TIMEOUT		5
+#define VIC_TIMER_DELAY		2
+#define VIC_TIMER_MS(_ms)	(_ms * hz / 1000)
+
+#define VIC_TXURN_WARN(_sc)	((_sc)->sc_txpending >= ((_sc)->sc_ntxbuf - 5))
+#define VIC_TXURN(_sc)		((_sc)->sc_txpending >= (_sc)->sc_ntxbuf)
+#define VIC_OFF_TXDESC(_n) \
+	(sizeof(struct vic_data) + \
+	((sc->sc_nrxbuf + VIC_QUEUE2_SIZE) * sizeof(struct vic_rxdesc)) + \
+	((_n) * sizeof(struct vic_txdesc)))
+
+struct vic_rxbuf {
+	bus_dmamap_t		rxb_dmamap;
+	struct mbuf		*rxb_m;
+};
+
+struct vic_txbuf {
+	bus_dmamap_t		txb_dmamap;
+	struct mbuf		*txb_m;
+};
+
+struct vic_softc {
+	struct device		sc_dev;
+
+	pci_chipset_tag_t	sc_pc;
+	pcitag_t		sc_tag;
+
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+	bus_size_t		sc_ios;
+	bus_dma_tag_t		sc_dmat;
+
+	void			*sc_ih;
+
+	struct arpcom		sc_ac;
+	struct ifmedia		sc_media;
+
+	u_int32_t		sc_nrxbuf;
+	u_int32_t		sc_ntxbuf;
+	u_int32_t		sc_cap;
+	u_int32_t		sc_feature;
+	u_int8_t		sc_lladdr[ETHER_ADDR_LEN];
+
+	bus_dmamap_t		sc_dma_map;
+	bus_dma_segment_t	sc_dma_seg;
+	size_t			sc_dma_size;
+	caddr_t			sc_dma_kva;
+#define VIC_DMA_DVA(_sc)	((_sc)->sc_dma_map->dm_segs[0].ds_addr)
+#define VIC_DMA_KVA(_sc)	((void *)(_sc)->sc_dma_kva)
+
+	struct vic_data		*sc_data;
+
+	struct vic_rxbuf	*sc_rxbuf;
+	struct vic_rxdesc	*sc_rxq;
+	struct vic_rxdesc	*sc_rxq2;
+
+	struct vic_txbuf	*sc_txbuf;
+	struct vic_txdesc	*sc_txq;
+	volatile u_int		sc_txpending;
 };
 
 struct cfdriver vic_cd = {
 	0, "vic", DV_IFNET
 };
+
+int		vic_match(struct device *, void *, void *);
+void		vic_attach(struct device *, struct device *, void *);
+
+struct cfattach vic_ca = {
+	sizeof(struct vic_softc), vic_match, vic_attach
+};
+
+int		vic_intr(void *);
+void		vic_shutdown(void *);
+
+int		vic_map_pci(struct vic_softc *, struct pci_attach_args *);
+int		vic_query(struct vic_softc *);
+int		vic_alloc_data(struct vic_softc *);
+int		vic_init_data(struct vic_softc *sc);
+
+u_int32_t	vic_read(struct vic_softc *, bus_size_t);
+void		vic_write(struct vic_softc *, bus_size_t, u_int32_t);
+
+u_int32_t	vic_read_cmd(struct vic_softc *, u_int32_t);
+
+int 		vic_alloc_dmamem(struct vic_softc *);
+void		vic_free_dmamem(struct vic_softc *);
+
+void		vic_link_state(struct vic_softc *);
+void		vic_rx_proc(struct vic_softc *);
+void		vic_tx_proc(struct vic_softc *);
+void		vic_iff(struct vic_softc *, u_int);
+void		vic_getlladdr(struct vic_softc *);
+void		vic_setlladdr(struct vic_softc *);
+int		vic_media_change(struct ifnet *);
+void		vic_media_status(struct ifnet *, struct ifmediareq *);
+void		vic_start(struct ifnet *);
+int		vic_encap(struct vic_softc *, struct mbuf *);
+void		vic_watchdog(struct ifnet *);
+int		vic_ioctl(struct ifnet *, u_long, caddr_t);
+void		vic_init(struct ifnet *);
+void		vic_stop(struct ifnet *);
+void		vic_timer(void *);
+
+#define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
+
+struct mbuf *vic_alloc_mbuf(struct vic_softc *, bus_dmamap_t);
+int	vic_alloc_data(struct vic_softc *);
+void	vic_reset_data(struct vic_softc *);
+void	vic_free_data(struct vic_softc *);
 
 const struct pci_matchid vic_devices[] = {
 	{ PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET }
@@ -107,81 +198,29 @@ vic_match(struct device *parent, void *match, void *aux)
 void
 vic_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct vic_softc *sc = (struct vic_softc *)self;
-	struct pci_attach_args *pa = aux;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pci_intr_handle_t ih;
-	const char *intrstr = NULL;
-	bus_size_t size;
-	struct ifnet *ifp;
+	struct vic_softc		*sc = (struct vic_softc *)self;
+	struct pci_attach_args		*pa = aux;
+	struct ifnet			*ifp;
 
-	/* Enable I/O mapping */
-	if (pci_mapreg_map(pa, VIC_BAR0, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_st, &sc->sc_sh, NULL, &size, 0)) {
-		printf(": I/O mapping of register space failed\n");
+	if (vic_map_pci(sc, pa) != 0) {
+		/* error printed by vic_map_pci */
 		return;
 	}
 
-	/* Map and enable the interrupt line */
-	if (pci_intr_map(pa, &ih)) {
-		printf(": interrupt mapping failed\n");
-		goto fail_1;
+	if (vic_query(sc) != 0) {
+		/* error printed by vic_query */
+		return;
 	}
 
-	intrstr = pci_intr_string(pc, ih);
-
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, vic_intr, sc,
-	    sc->sc_dev.dv_xname);
-	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		goto fail_1;
+	if (vic_alloc_data(sc) != 0) {
+		/* error printed by vic_alloc */
+		return;
 	}
 
-	printf(": %s\n", intrstr);
-
-	sc->sc_dmat = pa->pa_dmat;
-
-	sc->sc_ver_major = VIC_READ(VIC_VERSION_MAJOR);
-	sc->sc_ver_minor = VIC_READ(VIC_VERSION_MINOR);
-
-	printf("%s: vmxnet %X", sc->sc_dev.dv_xname,
-	    sc->sc_ver_major & ~VIC_VERSION_MAJOR_M);
-
-	/* Check for a supported version */
-	if (((sc->sc_ver_major & VIC_VERSION_MAJOR_M) !=
-	    (VIC_MAGIC & VIC_VERSION_MAJOR_M)) ||
-	    VIC_MAGIC > sc->sc_ver_major ||
-	    VIC_MAGIC < sc->sc_ver_minor) {
-		printf(" unsupported device\n");
-		goto fail_2;
+	if (vic_init_data(sc) != 0) {
+		/* error printed by vic_alloc */
+		return;
 	}
-
-	VIC_WRITE(VIC_CMD, VIC_CMD_NUM_Rx_BUF);
-	sc->sc_nrxbuf = VIC_READ(VIC_CMD);
-	if (sc->sc_nrxbuf > VIC_NBUF_MAX || sc->sc_nrxbuf == 0)
-		sc->sc_nrxbuf = VIC_NBUF;
-
-	VIC_WRITE(VIC_CMD, VIC_CMD_NUM_Tx_BUF);
-	sc->sc_ntxbuf = VIC_READ(VIC_CMD);
-	if (sc->sc_ntxbuf > VIC_NBUF_MAX || sc->sc_ntxbuf == 0)
-		sc->sc_ntxbuf = VIC_NBUF;
-
-	VIC_WRITE(VIC_CMD, VIC_CMD_FEATURE);
-	sc->sc_feature = VIC_READ(VIC_CMD);
-
-	VIC_WRITE(VIC_CMD, VIC_CMD_HWCAP);
-	sc->sc_cap = VIC_READ(VIC_CMD);
-	if (sc->sc_cap) {
-		printf(", ");
-		vic_printb(sc->sc_cap, VIC_CMD_HWCAP_BITS);
-	}
-
-	printf("\n");
-
-	vic_getlladdr(sc);
 
 	bcopy(sc->sc_lladdr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
 
@@ -192,7 +231,7 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = vic_start;
 	ifp->if_watchdog = vic_watchdog;
 	ifp->if_hardmtu = VIC_JUMBO_MTU;
-	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -207,14 +246,6 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 		    IFCAP_CSUM_UDPv4;
 #endif
 
-	/* Allocate Rx and Tx queues */
-	if (vic_alloc_data(sc) != 0) {
-		printf(": could not allocate queues\n");
-		goto fail_2;
-	}
-
-	printf(", address %s\n", ether_sprintf(sc->sc_lladdr));
-
 	/* Initialise pseudo media types */
 	ifmedia_init(&sc->sc_media, 0, vic_media_change, vic_media_status);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
@@ -224,20 +255,233 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	sc->sc_sdhook = shutdownhook_establish(vic_shutdown, sc);
-
-	/* Initialize timeout for link state update. */
-	timeout_set(&sc->sc_timer, vic_timer, sc);
-
-	/* XXX poll */
-	timeout_set(&sc->sc_poll, vic_poll, sc);
 	return;
+}
 
-fail_2:
-	pci_intr_disestablish(pc, sc->sc_ih);
+int
+vic_map_pci(struct vic_softc *sc, struct pci_attach_args *pa)
+{
+	pcireg_t			memtype;
+	pci_intr_handle_t		ih;
+	const char			*intrstr;
 
-fail_1:
-	bus_space_unmap(sc->sc_st, sc->sc_sh, size);
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_tag = pa->pa_tag;
+	sc->sc_dmat = pa->pa_dmat;
+
+        memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, VIC_PCI_BAR);
+	if (pci_mapreg_map(pa, VIC_PCI_BAR, memtype, 0, &sc->sc_iot,
+	    &sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
+		printf(": unable to map system interface register\n");
+		return(1);
+        }
+
+        if (pci_intr_map(pa, &ih) != 0) {
+                printf(": unable to map interrupt\n");
+                goto unmap;
+        }
+        intrstr = pci_intr_string(pa->pa_pc, ih);
+        sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
+            vic_intr, sc, DEVNAME(sc));
+        if (sc->sc_ih == NULL) {
+                printf(": unable to map interrupt%s%s\n",
+                    intrstr == NULL ? "" : " at ",
+                    intrstr == NULL ? "" : intrstr);
+                goto unmap;
+        }
+        printf(": %s\n", intrstr);
+
+        return (0);
+
+unmap:
+        bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+        sc->sc_ios = 0;
+        return (1);
+}
+
+int
+vic_query(struct vic_softc *sc)
+{
+	u_int32_t			major, minor;
+
+	major = vic_read(sc, VIC_VERSION_MAJOR);
+	minor = vic_read(sc, VIC_VERSION_MINOR);
+
+	/* Check for a supported version */
+	if ((major & VIC_VERSION_MAJOR_M) !=
+	    (VIC_MAGIC & VIC_VERSION_MAJOR_M)) {
+		printf("%s: magic mismatch\n", DEVNAME(sc));
+		return (1);
+	}
+
+	if (VIC_MAGIC > major || VIC_MAGIC < minor) {
+		printf("%s: unsupported version (%X)\n", DEVNAME(sc),
+		    major & ~VIC_VERSION_MAJOR_M);
+		return (1);
+	}
+
+	sc->sc_nrxbuf = vic_read_cmd(sc, VIC_CMD_NUM_Rx_BUF);
+	if (sc->sc_nrxbuf > VIC_NBUF_MAX || sc->sc_nrxbuf == 0)
+		sc->sc_nrxbuf = VIC_NBUF;
+
+	sc->sc_ntxbuf = vic_read_cmd(sc, VIC_CMD_NUM_Tx_BUF);
+	if (sc->sc_ntxbuf > VIC_NBUF_MAX || sc->sc_ntxbuf == 0)
+		sc->sc_ntxbuf = VIC_NBUF;
+
+	sc->sc_feature = vic_read_cmd(sc, VIC_CMD_FEATURE);
+	sc->sc_cap = vic_read_cmd(sc, VIC_CMD_HWCAP);
+
+	vic_getlladdr(sc);
+
+	printf("%s: VMXnet %04X, address %s\n", DEVNAME(sc),
+	    major & ~VIC_VERSION_MAJOR_M, ether_sprintf(sc->sc_lladdr));
+
+	return (0);
+}
+
+int
+vic_alloc_data(struct vic_softc *sc)
+{
+	sc->sc_rxbuf = malloc(sizeof(struct vic_rxbuf) * sc->sc_nrxbuf,
+	    M_NOWAIT, M_DEVBUF);
+	if (sc->sc_rxbuf == NULL) {
+		printf("%s: unable to allocate rxbuf\n", DEVNAME(sc));
+		goto err;
+	}
+
+	sc->sc_txbuf = malloc(sizeof(struct vic_txbuf) * sc->sc_ntxbuf,
+	    M_NOWAIT, M_DEVBUF);
+	if (sc->sc_txbuf == NULL) {
+		printf("%s: unable to allocate txbuf\n", DEVNAME(sc));
+		goto freerx;
+	}
+
+	sc->sc_dma_size = sizeof(struct vic_data) +
+	    (sc->sc_nrxbuf + VIC_QUEUE2_SIZE) * sizeof(struct vic_rxdesc) +
+	    sc->sc_ntxbuf * sizeof(struct vic_txdesc);
+
+	if (vic_alloc_dmamem(sc) != 0) {
+		printf("%s: unable to allocate dma region\n", DEVNAME(sc));
+		goto freetx;
+	}
+
+	return (0);
+freetx:
+	free(sc->sc_txbuf, M_DEVBUF);
+freerx:
+	free(sc->sc_rxbuf, M_DEVBUF);
+err:
+	return (1);
+}
+
+int
+vic_init_data(struct vic_softc *sc)
+{
+	u_int8_t			*kva = VIC_DMA_KVA(sc);
+	u_int				offset;
+
+	struct vic_rxbuf		*rxb;
+	struct vic_rxdesc		*rxd;
+	struct vic_txbuf		*txb;
+
+	int				i;
+
+	/* set up basic vic data */
+	sc->sc_data = VIC_DMA_KVA(sc);
+
+	sc->sc_data->vd_magic = VIC_MAGIC;
+	sc->sc_data->vd_length = sc->sc_dma_size;
+
+	offset = sizeof(struct vic_data);
+
+	/* set up the rx ring */
+	sc->sc_rxq = (struct vic_rxdesc *)&kva[offset];
+
+	sc->sc_data->vd_rx_offset = offset;
+	sc->sc_data->vd_rx_length = sc->sc_nrxbuf;
+
+	for (i = 0; i < sc->sc_nrxbuf; i++) {
+		rxb = &sc->sc_rxbuf[i];
+		rxd = &sc->sc_rxq[i];
+
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT, &rxb->rxb_dmamap) != 0) {
+			printf("%s: unable to create dmamap for rxb %d\n",
+			    DEVNAME(sc), i);
+			goto freerxbs;
+		}
+
+		rxb->rxb_m = vic_alloc_mbuf(sc, rxb->rxb_dmamap);
+		if (rxb->rxb_m == NULL) {
+			/* error already printed */
+			bus_dmamap_destroy(sc->sc_dmat, rxb->rxb_dmamap);
+			goto freerxbs;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, rxb->rxb_dmamap, 0,
+		    rxb->rxb_m->m_pkthdr.len, BUS_DMASYNC_PREREAD);
+
+		rxd->rx_physaddr = rxb->rxb_dmamap->dm_segs[0].ds_addr;
+		rxd->rx_buflength = rxb->rxb_m->m_pkthdr.len; /* XXX? */
+		rxd->rx_length = 0;
+		rxd->rx_owner = VIC_OWNER_NIC;
+
+		offset += sizeof(struct vic_rxdesc);
+	}
+
+	/* set up the dummy rx ring 2 with an unusable entry */
+	sc->sc_rxq2 = (struct vic_rxdesc *)&kva[offset];
+
+	sc->sc_data->vd_rx_offset2 = offset;
+	sc->sc_data->vd_rx_length2 = VIC_QUEUE2_SIZE;
+
+	for (i = 0; i < VIC_QUEUE2_SIZE; i++) {
+		rxd = &sc->sc_rxq2[i];
+
+		rxd->rx_physaddr = 0;
+		rxd->rx_buflength = 0;
+		rxd->rx_length = 0;
+		rxd->rx_owner = VIC_OWNER_DRIVER;
+
+		offset += sizeof(struct vic_rxdesc);
+	}
+
+	/* set up the tx ring */
+	sc->sc_txq = (struct vic_txdesc *)&kva[offset];
+
+	sc->sc_data->vd_tx_offset = offset;
+	sc->sc_data->vd_tx_length = sc->sc_ntxbuf;
+
+	for (i = 0; i < sc->sc_ntxbuf; i++) {
+		txb = &sc->sc_txbuf[i];
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1 /* XXX 6 */,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT, &txb->txb_dmamap) != 0) {
+			printf("%s: unable to create dmamap for tx %d\n",
+			    DEVNAME(sc), i);
+			goto freetxbs;
+		}
+		txb->txb_m = NULL;
+	}
+
+	return (0);
+
+freetxbs:
+	while (i--) {
+		txb = &sc->sc_txbuf[i];
+		bus_dmamap_destroy(sc->sc_dmat, txb->txb_dmamap);
+	}
+
+	i = sc->sc_nrxbuf;
+freerxbs:
+	while (i--) {
+		rxb = &sc->sc_rxbuf[i];
+		bus_dmamap_sync(sc->sc_dmat, rxb->rxb_dmamap, 0,
+		    rxb->rxb_m->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, rxb->rxb_dmamap);
+		bus_dmamap_destroy(sc->sc_dmat, rxb->rxb_dmamap);
+	}
+
+	return (1);
 }
 
 void
@@ -247,7 +491,7 @@ vic_link_state(struct vic_softc *sc)
 	u_int32_t status;
 	int link_state = LINK_STATE_DOWN;
 
-	status = VIC_READ(VIC_STATUS);
+	status = vic_read(sc, VIC_STATUS);
 	if (status & VIC_STATUS_CONNECTED)
 		link_state = LINK_STATE_UP;
 	if (ifp->if_link_state != link_state) {
@@ -268,14 +512,8 @@ int
 vic_intr(void *arg)
 {
 	struct vic_softc *sc = (struct vic_softc *)arg;
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
-	VIC_WRITE(VIC_CMD, VIC_CMD_INTR_ACK);
-
-#ifdef VIC_DEBUG
-	if (ifp->if_flags & IFF_DEBUG)
-		printf("%s: %s\n", sc->sc_dev.dv_xname, __func__);
-#endif
+	vic_write(sc, VIC_CMD, VIC_CMD_INTR_ACK);
 
 	vic_rx_proc(sc);
 	vic_tx_proc(sc);
@@ -286,18 +524,17 @@ vic_intr(void *arg)
 void
 vic_rx_proc(struct vic_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	struct vic_rxdesc *desc;
-	struct vic_rxbuf *rxb;
-	struct mbuf *m;
-	int len, idx;
+	struct ifnet			*ifp = &sc->sc_ac.ac_if;
+	struct vic_rxdesc		*rxd;
+	struct vic_rxbuf		*rxb;
+	struct mbuf			*m;
+	int				len, idx;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	for (;;) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_map, 0,
-		    sizeof(struct vic_data),
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-
-		idx = letoh32(sc->sc_data->vd_rx_nextidx);
+		idx = sc->sc_data->vd_rx_nextidx;
 		if (idx >= sc->sc_data->vd_rx_length) {
 			ifp->if_ierrors++;
 			if (ifp->if_flags & IFF_DEBUG)
@@ -306,46 +543,43 @@ vic_rx_proc(struct vic_softc *sc)
 			break;
 		}
 
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_map,
-		    VIC_OFF_RXDESC(idx), sizeof(struct vic_rxdesc),
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		desc = &sc->sc_rxq[idx];
-
-		if (desc->rx_owner != VIC_OWNER_DRIVER)
+		rxd = &sc->sc_rxq[idx];
+		if (rxd->rx_owner != VIC_OWNER_DRIVER)
 			break;
 
-		len = letoh32(desc->rx_length);
+		rxb = &sc->sc_rxbuf[idx];
+
+		len = rxd->rx_length;
 		if (len < ETHER_MIN_LEN) {
 			ifp->if_iqdrops++;
 			goto nextp;
 		}
 
-		if ((rxb = (struct vic_rxbuf *)desc->rx_priv) == NULL ||
-		    rxb->rxb_m == NULL) {
+		if (rxb->rxb_m == NULL) {
 			ifp->if_ierrors++;
-			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: receive buffer error\n",
-				    sc->sc_dev.dv_xname);
+			printf("%s: rxb %d has no mbuf\n", DEVNAME(sc), idx);
 			break;
 		}
 
-		bus_dmamap_sync(sc->sc_dmat, rxb->rxb_map, 0,
-		    rxb->rxb_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->sc_dmat, rxb->rxb_map);
+		bus_dmamap_sync(sc->sc_dmat, rxb->rxb_dmamap, 0,
+		    rxb->rxb_m->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, rxb->rxb_dmamap);
+
 		m = rxb->rxb_m;
 		rxb->rxb_m = NULL;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
 		/* Get new mbuf for the Rx queue */
-		if ((rxb->rxb_m = vic_alloc_mbuf(sc, rxb->rxb_map)) == NULL) {
+		rxb->rxb_m = vic_alloc_mbuf(sc, rxb->rxb_dmamap);
+		if (rxb->rxb_m == NULL) {
 			ifp->if_ierrors++;
-			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: receive buffer failed\n",
-				    sc->sc_dev.dv_xname);
+			printf("%s: mbuf alloc failed\n", DEVNAME(sc));
 			break;
 		}
-		desc->rx_physaddr = rxb->rxb_map->dm_segs->ds_addr;
+		rxd->rx_physaddr = rxb->rxb_dmamap->dm_segs[0].ds_addr;
+		rxd->rx_buflength = rxb->rxb_m->m_pkthdr.len;
+		rxd->rx_length = 0;
 
 		ifp->if_ipackets++;
 
@@ -356,26 +590,28 @@ vic_rx_proc(struct vic_softc *sc)
 
 		ether_input_mbuf(ifp, m);
 
- nextp:
-		desc->rx_owner = VIC_OWNER_NIC;
+nextp:
+		rxd->rx_owner = VIC_OWNER_NIC;
 		VIC_INC(sc->sc_data->vd_rx_nextidx, sc->sc_data->vd_rx_length);
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 void
 vic_tx_proc(struct vic_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	struct vic_txdesc *desc;
-	struct vic_txbuf *txb;
-	int idx;
+	struct ifnet			*ifp = &sc->sc_ac.ac_if;
+	struct vic_txdesc		*txd;
+	struct vic_txbuf		*txb;
+	int				idx;
 
-	for (; sc->sc_txpending;) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_map, 0,
-		    sizeof(struct vic_data),
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-		idx = letoh32(sc->sc_data->vd_tx_curidx);
+	while (sc->sc_txpending > 0) {
+		idx = sc->sc_data->vd_tx_curidx;
 		if (idx >= sc->sc_data->vd_tx_length) {
 			ifp->if_oerrors++;
 			if (ifp->if_flags & IFF_DEBUG)
@@ -384,31 +620,26 @@ vic_tx_proc(struct vic_softc *sc)
 			break;
 		}
 
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_map,
-		    VIC_OFF_TXDESC(idx), sizeof(struct vic_rxdesc),
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		desc = &sc->sc_txq[idx];
-
-		if (desc->tx_owner != VIC_OWNER_DRIVER)
+		txd = &sc->sc_txq[idx];
+		if (txd->tx_owner != VIC_OWNER_DRIVER)
 			break;
 
-		if ((txb = (struct vic_txbuf *)desc->tx_priv) == NULL ||
-		    txb->txb_m == NULL) {
+		txb = &sc->sc_txbuf[idx];
+
+		if (txb->txb_m == NULL) {
 			ifp->if_oerrors++;
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: transmit buffer error\n",
-				    sc->sc_dev.dv_xname);
+				    DEVNAME(sc));
 			break;
 		}
 
-		bus_dmamap_sync(sc->sc_dmat, txb->txb_map, 0,
-		    txb->txb_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->sc_dmat, txb->txb_map);
-		if (txb->txb_m != NULL) {
-			m_freem(txb->txb_m);
-			txb->txb_m = NULL;
-			ifp->if_flags &= ~IFF_OACTIVE;
-		}
+		/* XXX bus dma sync */
+		bus_dmamap_unload(sc->sc_dmat, txb->txb_dmamap);
+
+		m_freem(txb->txb_m);
+		txb->txb_m = NULL;
+		ifp->if_flags &= ~IFF_OACTIVE;
 
 		sc->sc_txpending--;
 		sc->sc_data->vd_tx_stopped = 0;
@@ -416,8 +647,8 @@ vic_tx_proc(struct vic_softc *sc)
 		VIC_INC(sc->sc_data->vd_tx_curidx, sc->sc_data->vd_tx_length);
 	}
 
-	sc->sc_txtimeout = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		vic_start(ifp);
@@ -431,23 +662,27 @@ vic_iff(struct vic_softc *sc, u_int flags)
 	    sizeof(sc->sc_data->vd_mcastfil));
 	sc->sc_data->vd_iff = flags;
 
+/*
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_map, 0,
 	    sizeof(struct vic_data), BUS_DMASYNC_POSTWRITE);
+*/
 
-	VIC_WRITE(VIC_CMD, VIC_CMD_MCASTFIL);
-	VIC_WRITE(VIC_CMD, VIC_CMD_IFF);
+	vic_write(sc, VIC_CMD, VIC_CMD_MCASTFIL);
+	vic_write(sc, VIC_CMD, VIC_CMD_IFF);
 }
 
 void
 vic_getlladdr(struct vic_softc *sc)
 {
 	u_int32_t reg;
-	int i;
 
 	/* Get MAC address */
-	reg = sc->sc_cap & VIC_CMD_HWCAP_VPROM ? VIC_VPROM : VIC_LLADDR;
-	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		sc->sc_lladdr[i] = VIC_READ8(reg + i);
+	reg = (sc->sc_cap & VIC_CMD_HWCAP_VPROM) ? VIC_VPROM : VIC_LLADDR;
+
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, reg, ETHER_ADDR_LEN,
+	    BUS_SPACE_BARRIER_READ);
+	bus_space_read_region_1(sc->sc_iot, sc->sc_ioh, reg, sc->sc_lladdr,
+	    ETHER_ADDR_LEN);
 
 	/* Update the MAC address register */
 	if (reg == VIC_VPROM)
@@ -457,10 +692,10 @@ vic_getlladdr(struct vic_softc *sc)
 void
 vic_setlladdr(struct vic_softc *sc)
 {
-	int i;
-
-	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		VIC_WRITE8(VIC_LLADDR + i, sc->sc_lladdr[i]);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, VIC_LLADDR, ETHER_ADDR_LEN,
+	    BUS_SPACE_BARRIER_READ);
+	bus_space_write_region_1(sc->sc_iot, sc->sc_ioh, VIC_LLADDR,
+	    sc->sc_lladdr, ETHER_ADDR_LEN);
 }
 
 int
@@ -488,65 +723,49 @@ vic_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 void
 vic_start(struct ifnet *ifp)
 {
-	struct vic_softc *sc = (struct vic_softc *)ifp->if_softc;
-	struct mbuf *m;
-	int error;
+	struct vic_softc	*sc = (struct vic_softc *)ifp->if_softc;
+	struct mbuf		*m;
 
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	for (;; error = 0) {
+	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-#endif
-
-		if ((error = vic_tx_start(sc, m)) != 0)
-			ifp->if_oerrors++;
+		if (vic_encap(sc, m) != 0) {
+			printf("%s: encap err\n", DEVNAME(sc));
+			break;
+		}
 	}
 }
 
 int
-vic_tx_start(struct vic_softc *sc, struct mbuf *m)
+vic_encap(struct vic_softc *sc, struct mbuf *m)
 {
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	struct vic_txbuf *txb;
-	struct vic_txdesc *desc;
-	struct mbuf *m0 = NULL;
-	int idx;
+	struct ifnet			*ifp = &sc->sc_ac.ac_if;
+	struct vic_txbuf		*txb;
+	struct vic_txdesc		*txd;
+	struct mbuf			*m0 = NULL;
+	int				idx;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_map, 0,
-	    sizeof(struct vic_data),
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	idx = letoh32(sc->sc_data->vd_tx_nextidx);
+	idx = sc->sc_data->vd_tx_nextidx;
 	if (idx >= sc->sc_data->vd_tx_length) {
 		ifp->if_oerrors++;
 		if (ifp->if_flags & IFF_DEBUG)
-			printf("%s: transmit index error\n",
-			    sc->sc_dev.dv_xname);
+			printf("%s: transmit index error\n", DEVNAME(sc));
 		return (EINVAL);
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_map,
-	    VIC_OFF_TXDESC(idx), sizeof(struct vic_txdesc),
-	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-
-	desc = &sc->sc_txq[idx];
-	txb = (struct vic_txbuf *)desc->tx_priv;
+	txd = &sc->sc_txq[idx];
+	txb = &sc->sc_txbuf[idx];
 
 	if (VIC_TXURN(sc)) {
 		ifp->if_flags |= IFF_OACTIVE;
-		return (ENOBUFS);
-	} else if (txb == NULL) {
-		ifp->if_oerrors++;
-		if (ifp->if_flags & IFF_DEBUG)
-			printf("%s: transmit buffer error\n",
-			    sc->sc_dev.dv_xname);
 		return (ENOBUFS);
 	} else if (txb->txb_m != NULL) {
 		sc->sc_data->vd_tx_stopped = 1;
@@ -554,8 +773,9 @@ vic_tx_start(struct vic_softc *sc, struct mbuf *m)
 		return (ENOMEM);
 	}
 
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, txb->txb_map,
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, txb->txb_dmamap,
 	    m, BUS_DMA_NOWAIT) != 0) {
+		/* XXX this is bollocks */
 		MGETHDR(m0, M_DONTWAIT, MT_DATA);
 		if (m0 == NULL)
 			return (ENOBUFS);
@@ -568,13 +788,19 @@ vic_tx_start(struct vic_softc *sc, struct mbuf *m)
 		}
 		m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, caddr_t));
 		m0->m_pkthdr.len = m0->m_len = m->m_pkthdr.len;
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, txb->txb_map,
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, txb->txb_dmamap,
 		    m0, BUS_DMA_NOWAIT) != 0) {
 			m_freem(m0);
 			return (ENOBUFS);
 		}
 	}
 
+#if NBPFILTER > 0
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+
+	/* m0 means this has to be done here, more bollocks */
 	IFQ_DEQUEUE(&ifp->if_snd, m);
 	if (m0 != NULL) {
 		m_freem(m);
@@ -582,26 +808,29 @@ vic_tx_start(struct vic_softc *sc, struct mbuf *m)
 		m0 = NULL;
 	}
 
-	desc->tx_flags = VIC_TX_FLAGS_KEEP;
-	desc->tx_sa.sa_length = 1;
-	desc->tx_sa.sa_sg[0].sg_length = htole16(m->m_len);
-	desc->tx_sa.sa_sg[0].sg_addr_low = txb->txb_map->dm_segs->ds_addr;
-	desc->tx_owner = VIC_OWNER_NIC;
+	/* XXX nsegs are cool */
+	txd->tx_flags = VIC_TX_FLAGS_KEEP;
+	txd->tx_sa.sa_length = 1;
+	txd->tx_sa.sa_sg[0].sg_length = m->m_len;
+	txd->tx_sa.sa_sg[0].sg_addr_low = txb->txb_dmamap->dm_segs[0].ds_addr;
+	txd->tx_owner = VIC_OWNER_NIC;
+
+	/* XXX bus dma sync */
 
 	if (VIC_TXURN_WARN(sc)) {
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: running out of tx descriptors\n",
-			    sc->sc_dev.dv_xname);
-		desc->tx_flags |= VIC_TX_FLAGS_TXURN;
+			    DEVNAME(sc));
+		txd->tx_flags |= VIC_TX_FLAGS_TXURN;
 	}
 
 	ifp->if_opackets++;
-
 	sc->sc_txpending++;
-	sc->sc_txtimeout = VIC_TX_TIMEOUT;
-	ifp->if_timer = 1;
 
 	VIC_INC(sc->sc_data->vd_tx_nextidx, sc->sc_data->vd_tx_length);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return (0);
 }
@@ -609,9 +838,8 @@ vic_tx_start(struct vic_softc *sc, struct mbuf *m)
 void
 vic_watchdog(struct ifnet *ifp)
 {
+#if 0
 	struct vic_softc *sc = (struct vic_softc *)ifp->if_softc;
-
-	ifp->if_timer = 0;
 
 	if (sc->sc_txpending && sc->sc_txtimeout > 0) {
 		if (--sc->sc_txtimeout == 0) {
@@ -621,11 +849,11 @@ vic_watchdog(struct ifnet *ifp)
 			ifp->if_oerrors++;
 			return;
 		}
-		ifp->if_timer = 1;
 	}
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		vic_start(ifp);
+#endif 
 }
 
 int
@@ -704,43 +932,27 @@ vic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 void
 vic_init(struct ifnet *ifp)
 {
-	struct vic_softc *sc = (struct vic_softc *)ifp->if_softc;
-	int s;
+	struct vic_softc	*sc = (struct vic_softc *)ifp->if_softc;
+	int			s;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	s = splnet();
 
-	timeout_add(&sc->sc_timer, hz * VIC_TIMER_DELAY);
-
-	vic_reset_data(sc);
-
-#ifdef notyet
-	VIC_WRITE(VIC_CMD, VIC_CMD_INTR_ENABLE);
-#endif
-
-	VIC_WRITE(VIC_DATA_ADDR, sc->sc_physaddr);
-	VIC_WRITE(VIC_DATA_LENGTH, htole32(sc->sc_size));
+	vic_write(sc, VIC_DATA_ADDR, VIC_DMA_DVA(sc));
+	vic_write(sc, VIC_DATA_LENGTH, sc->sc_dma_size);
 	if (ifp->if_flags & IFF_PROMISC)
 		vic_iff(sc, VIC_CMD_IFF_PROMISC);
 	else
 		vic_iff(sc, VIC_CMD_IFF_BROADCAST | VIC_CMD_IFF_MULTICAST);
-
-#ifdef VIC_DEBUG
-	if (ifp->if_flags & IFF_DEBUG)
-		printf("%s: physaddr 0x%08x length 0x%08x\n",
-		    sc->sc_dev.dv_xname, sc->sc_physaddr, sc->sc_size);
-#endif
 
 	sc->sc_data->vd_tx_stopped = sc->sc_data->vd_tx_queued = 0;
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	/* XXX poll */
-	if (ifp->if_flags & IFF_LINK0) {
-		sc->sc_polling = 1;
-		timeout_add(&sc->sc_poll, VIC_TIMER_MS(100));
-	} else
-		sc->sc_polling = 0;
+	vic_write(sc, VIC_CMD, VIC_CMD_INTR_ENABLE);
 
 	splx(s);
 }
@@ -748,57 +960,27 @@ vic_init(struct ifnet *ifp)
 void
 vic_stop(struct ifnet *ifp)
 {
+#if 0
 	struct vic_softc *sc = (struct vic_softc *)ifp->if_softc;
 	int s;
 
 	s = splnet();
 
 	sc->sc_txtimeout = 0;
-	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 #ifdef notyet
-	VIC_WRITE(VIC_CMD, VIC_CMD_INTR_DISABLE);
+	vic_write(sc, VIC_CMD, VIC_CMD_INTR_DISABLE);
 #endif
 
-	VIC_WRITE(VIC_DATA_ADDR, 0);
+	vic_write(sc, VIC_DATA_ADDR, 0);
 	vic_iff(sc, 0);
 
 	sc->sc_data->vd_tx_stopped = 1;
 	timeout_del(&sc->sc_timer);
 
-	/* XXX poll */
-	if (sc->sc_polling) {
-		sc->sc_polling = 0;
-		timeout_del(&sc->sc_poll);
-	}
-
 	splx(s);
-}
-
-void
-vic_printb(unsigned short v, char *bits)
-{
-	int i, any = 0;
-	char c;
-
-	/*
-	 * Used to print capability bits on startup
-	 */
-	bits++;
-	if (bits) {
-		while ((i = *bits++)) {
-			if (v & (1 << (i-1))) {
-				if (any)
-					printf(" ");
-				any = 1;
-				for (; (c = *bits) > 32; bits++)
-					printf("%c", c);
-			} else
-				for (; *bits > 32; bits++)
-					;
-		}
-	}
+#endif
 }
 
 struct mbuf *
@@ -809,14 +991,16 @@ vic_alloc_mbuf(struct vic_softc *sc, bus_dmamap_t map)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (NULL);
+
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
 		return (NULL);
 	}
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
+
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT) != 0) {
-		printf("%s: could not load mbuf DMA map",
-		    sc->sc_dev.dv_xname);
+		printf("%s: could not load mbuf DMA map", DEVNAME(sc));
 		m_freem(m);
 		return (NULL);
 	}
@@ -824,118 +1008,11 @@ vic_alloc_mbuf(struct vic_softc *sc, bus_dmamap_t map)
 	return (m);
 }
 
-int
-vic_alloc_data(struct vic_softc *sc)
-{
-	struct vic_rxbuf *rxb;
-	struct vic_txbuf *txb;
-	u_int32_t offset;
-	int i, error;
-
-	sc->sc_size = sizeof(struct vic_data) +
-	    (sc->sc_nrxbuf + VIC_QUEUE2_SIZE) * sizeof(struct vic_rxdesc) +
-	    sc->sc_ntxbuf * sizeof(struct vic_txdesc);
-
-	if ((error = bus_dmamap_create(sc->sc_dmat, sc->sc_size, 1,
-	    sc->sc_size, 0, BUS_DMA_NOWAIT, &sc->sc_map)) != 0) {
-		printf("%s: could not create DMA material\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_size, PAGE_SIZE, 0,
-	    &sc->sc_seg, 1, &sc->sc_nsegs, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: could not allocate DMA memory\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_seg,
-	    sc->sc_nsegs, sc->sc_size, (caddr_t *)&sc->sc_data,
-	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		printf("%s: could not map DMA memory\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_map,
-	    sc->sc_data, sc->sc_size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: could not load DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	bzero(sc->sc_data, sc->sc_size);
-	sc->sc_physaddr = sc->sc_map->dm_segs->ds_addr;
-	sc->sc_data->vd_magic = VIC_MAGIC;
-	sc->sc_data->vd_length = htole32(sc->sc_size);
-	offset = (u_int32_t)sc->sc_data + sizeof(struct vic_data);
-
-#ifdef VIC_DEBUG
-	printf("%s: (rxbuf %d * %d) (txbuf %d * %d) (size %d)\n",
-	    sc->sc_dev.dv_xname,
-	    sc->sc_nrxbuf, sizeof(struct vic_rxdesc),
-	    sc->sc_ntxbuf, sizeof(struct vic_txdesc),
-	    sc->sc_size);
-#endif
-
-	/* Setup the Rx queue */
-	sc->sc_rxq = (struct vic_rxdesc *)offset;
-	sc->sc_data->vd_rx_offset = htole32(offset);
-	sc->sc_data->vd_rx_length = htole32(sc->sc_nrxbuf);
-	offset += sc->sc_nrxbuf + sizeof(struct vic_rxdesc);
-	for (i = 0; i < sc->sc_nrxbuf; i++) {
-		rxb = &sc->sc_rxbuf[i];
-		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    VIC_MAX_SCATTER, MCLBYTES, 0, BUS_DMA_NOWAIT,
-		    &rxb->rxb_map)) != 0) {
-			printf("%s: could not create rx DMA map\n",
-			    sc->sc_dev.dv_xname);
-			goto fail;
-		}
-
-		/* Preallocate the Rx mbuf */
-		if ((rxb->rxb_m = vic_alloc_mbuf(sc, rxb->rxb_map)) == NULL) {
-			error = ENOMEM;
-			goto fail;
-		}
-		sc->sc_rxq[i].rx_physaddr = rxb->rxb_map->dm_segs->ds_addr;
-	}
-
-	/* Setup Rx queue 2 (unused gap) */
-	sc->sc_rxq2 = (struct vic_rxdesc *)offset;
-	sc->sc_data->vd_rx_offset = htole32(offset);
-	sc->sc_data->vd_rx_length = htole32(1);
-	sc->sc_rxq2[0].rx_owner = VIC_OWNER_DRIVER;
-	offset += sizeof(struct vic_rxdesc);
-
-	/* Setup the Tx queue */
-	sc->sc_txq = (struct vic_txdesc *)offset;
-	sc->sc_data->vd_tx_offset = htole32(offset);
-	sc->sc_data->vd_tx_length = htole32(sc->sc_ntxbuf);
-	offset += sc->sc_ntxbuf + sizeof(struct vic_txdesc);
-	for (i = 0; i < sc->sc_ntxbuf; i++) {
-		txb = &sc->sc_txbuf[i];
-		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    VIC_MAX_SCATTER, MCLBYTES, 0, BUS_DMA_NOWAIT,
-		    &txb->txb_map)) != 0) {
-			printf("%s: could not create tx DMA map\n",
-			    sc->sc_dev.dv_xname);
-			goto fail;
-		}
-	}
-
-	return (0);
-
- fail:
-	vic_free_data(sc);
-
-	return (error);
-}
-
 void
 vic_reset_data(struct vic_softc *sc)
 {
+
+#if 0
 	struct vic_rxbuf *rxb;
 	struct vic_txbuf *txb;
 	int i;
@@ -972,11 +1049,14 @@ vic_reset_data(struct vic_softc *sc)
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_map, 0,
 	    sc->sc_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+#endif
 }
 
 void
 vic_free_data(struct vic_softc *sc)
 {
+#if 0
+
 	bus_dmamap_t map;
 	int i;
 
@@ -1008,53 +1088,86 @@ vic_free_data(struct vic_softc *sc)
 		}
 		bus_dmamap_destroy(sc->sc_dmat, map);
 	}
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_map, 0,
-	    sc->sc_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_unload(sc->sc_dmat, sc->sc_map);
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_data, sc->sc_size);
-	bus_dmamem_free(sc->sc_dmat, &sc->sc_seg, sc->sc_nsegs);
+#endif
 }
 
 void
 vic_timer(void *arg)
 {
-	struct vic_softc *sc = (struct vic_softc *)arg;
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
-
-#ifdef VIC_DEBUG
-	if (ifp->if_flags & IFF_DEBUG) {
-		if (sc->sc_polling)
-			printf("%s: %s (polling #%u)\n",
-			    ifp->if_xname, __func__, sc->sc_polling);
-		else
-			printf("%s: %s\n",
-			    ifp->if_xname, __func__);
-	}
-#endif
+	struct vic_softc		*sc = (struct vic_softc *)arg;
+//	struct ifnet			*ifp = &sc->sc_ac.ac_if;
 
 	/* Update link state (if changed) */
 	vic_link_state(sc);
 
 	/* Re-schedule another timeout. */
-	timeout_add(&sc->sc_timer, hz * VIC_TIMER_DELAY);
+//	timeout_add(&sc->sc_timer, hz * VIC_TIMER_DELAY);
 }
 
- /* XXX poll */
-void
-vic_poll(void *arg)
+u_int32_t
+vic_read(struct vic_softc *sc, bus_size_t r)
 {
-	struct vic_softc *sc = (struct vic_softc *)arg;
-	int s;
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(sc->sc_iot, sc->sc_ioh, r));
+}
 
-	s = splnet();
+void
+vic_write(struct vic_softc *sc, bus_size_t r, u_int32_t v)
+{
+        bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
+        bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
+            BUS_SPACE_BARRIER_WRITE);
+}
 
-	vic_rx_proc(sc);
-	vic_tx_proc(sc);
+u_int32_t
+vic_read_cmd(struct vic_softc *sc, u_int32_t cmd)
+{
+	vic_write(sc, VIC_CMD, cmd);
+	return (vic_read(sc, VIC_CMD));
+}
 
-	VIC_INC_POS(sc->sc_polling, UINT_MAX);
+int
+vic_alloc_dmamem(struct vic_softc *sc)
+{
+	int nsegs;
 
-	timeout_add(&sc->sc_poll, VIC_TIMER_MS(100));
+	if (bus_dmamap_create(sc->sc_dmat, sc->sc_dma_size, 1,
+	    sc->sc_dma_size, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+	    &sc->sc_dma_map) != 0)
+		goto err;
 
-	splx(s);
+	if (bus_dmamem_alloc(sc->sc_dmat, sc->sc_dma_size, 16, 0,
+	    &sc->sc_dma_seg, 1, &nsegs, BUS_DMA_NOWAIT) != 0)
+		goto destroy;
+
+	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dma_seg, nsegs,
+	    sc->sc_dma_size, &sc->sc_dma_kva, BUS_DMA_NOWAIT) != 0)
+		goto free;
+
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dma_map, sc->sc_dma_kva,
+	    sc->sc_dma_size, NULL, BUS_DMA_NOWAIT) != 0)
+		goto unmap;
+
+	bzero(sc->sc_dma_kva, sc->sc_dma_size);
+
+	return (0);
+
+unmap:
+	bus_dmamem_unmap(sc->sc_dmat, sc->sc_dma_kva, sc->sc_dma_size);
+free:
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_seg, 1);
+destroy:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dma_map);
+err:
+	return (1);
+}
+
+void
+vic_free_dmamem(struct vic_softc *sc)
+{
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_dma_map);
+	bus_dmamem_unmap(sc->sc_dmat, sc->sc_dma_kva, sc->sc_dma_size);
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_seg, 1);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dma_map);
 }

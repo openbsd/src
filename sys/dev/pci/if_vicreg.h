@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vicreg.h,v 1.2 2006/05/28 00:20:21 brad Exp $	*/
+/*	$OpenBSD: if_vicreg.h,v 1.3 2006/10/31 06:04:15 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -31,44 +31,42 @@
 
 /* Command register */
 #define VIC_CMD			0x000c		/* Command register */
-#define VIC_CMD_INTR_ACK	0x00000001	/* Acknowledge interrupt */
-#define VIC_CMD_MCASTFIL	0x00000002	/* Multicast address filter */
-#define VIC_CMD_MCASTFIL_LENGTH	2
-#define VIC_CMD_IFF		0x00000004	/* Interface flags */
-#define VIC_CMD_IFF_PROMISC	0x0001		/* Promiscous enabled */
-#define VIC_CMD_IFF_BROADCAST	0x0002		/* Broadcast enabled */
-#define VIC_CMD_IFF_MULTICAST	0x0004		/* Multicast enabled */
-#define VIC_CMD_RESERVED_8	0x00000008
-#define VIC_CMD_RESERVED_10	0x00000010
-#define VIC_CMD_INTR_DISABLE	0x00000020	/* Enable interrupts */
-#define VIC_CMD_INTR_ENABLE	0x00000040	/* Disable interrupts */
-#define VIC_CMD_RESERVED_80	0x00000080
-#define VIC_CMD_Tx_DONE		0x00000100	/* Tx done register */
-#define VIC_CMD_NUM_Rx_BUF	0x00000200	/* Number of Rx buffers */
-#define VIC_CMD_NUM_Tx_BUF	0x00000400	/* Number of Tx buffers */
-#define VIC_CMD_NUM_PINNED_BUF	0x00000800	/* Number of pinned buffers */
-#define VIC_CMD_HWCAP		0x00001000	/* Capability register */
-#define VIC_CMD_HWCAP_SG	0x0001		/* Scatter-gather transmits */
-#define VIC_CMD_HWCAP_CSUM_IPv4	0x0002		/* Hardware checksum of TCP/UDP */
-#define VIC_CMD_HWCAP_CSUM_ALL	0x0004		/* Hardware checksum support */
-#define VIC_CMD_HWCAP_CSUM							\
+#define  VIC_CMD_INTR_ACK	0x0001	/* Acknowledge interrupt */
+#define  VIC_CMD_MCASTFIL	0x0002	/* Multicast address filter */
+#define   VIC_CMD_MCASTFIL_LENGTH	2
+#define  VIC_CMD_IFF		0x0004	/* Interface flags */
+#define   VIC_CMD_IFF_PROMISC	0x0001		/* Promiscous enabled */
+#define   VIC_CMD_IFF_BROADCAST	0x0002		/* Broadcast enabled */
+#define   VIC_CMD_IFF_MULTICAST	0x0004		/* Multicast enabled */
+#define  VIC_CMD_INTR_DISABLE	0x0020	/* Enable interrupts */
+#define  VIC_CMD_INTR_ENABLE	0x0040	/* Disable interrupts */
+#define  VIC_CMD_Tx_DONE	0x0100	/* Tx done register */
+#define  VIC_CMD_NUM_Rx_BUF	0x0200	/* Number of Rx buffers */
+#define  VIC_CMD_NUM_Tx_BUF	0x0400	/* Number of Tx buffers */
+#define  VIC_CMD_NUM_PINNED_BUF	0x0800	/* Number of pinned buffers */
+#define  VIC_CMD_HWCAP		0x1000	/* Capability register */
+#define   VIC_CMD_HWCAP_SG		(1<<0) /* Scatter-gather transmits */
+#define   VIC_CMD_HWCAP_CSUM_IPv4	(1<<1) /* TCP/UDP cksum */
+#define   VIC_CMD_HWCAP_CSUM_ALL	(1<<3) /* Hardware cksum */
+#define   VIC_CMD_HWCAP_CSUM \
 	(VIC_CMD_HWCAP_CSUM_IPv4 | VIC_CMD_HWCAP_CSUM_ALL)
-#define VIC_CMD_HWCAP_DMA_HIGH	0x0008		/* High DMA mapping possible */
-#define VIC_CMD_HWCAP_TOE	0x0010		/* TCP offload engine available */
-#define VIC_CMD_HWCAP_TSO	0x0020		/* TCP segmentation offload */
-#define VIC_CMD_HWCAP_TSO_SW	0x0040		/* Software TCP segmentation */
-#define VIC_CMD_HWCAP_VPROM	0x0080		/* Virtual PROM available */
-#define VIC_CMD_HWCAP_VLAN_Tx	0x0100		/* Hardware VLAN MTU Rx */
-#define VIC_CMD_HWCAP_VLAN_Rx	0x0200		/* Hardware VLAN MTU Tx */
-#define VIC_CMD_HWCAP_VLAN_SW	0x0400		/* Software VLAN MTU */
-#define VIC_CMD_HWCAP_VLAN							\
-	(VIC_CMD_HWCAP_VLAN_Tx | VIC_CMD_HWCAP_VLAN_Rx | VIC_CMD_HWCAP_VLAN_SW)
-#define VIC_CMD_HWCAP_BITS							\
-	"\20\01SG\02CSUM4\03CSUM\04HDMA\05TOE"					\
-	"\06TSO\07TSOSW\10VPROM\13VLANTx\14VLANRx\15VLANSW"
-#define VIC_CMD_FEATURE		0x00002000	/* Additional feature register */
-#define VIC_CMD_FEATURE_0_Tx	0x0001
-#define VIC_CMD_FEATURE_TSO	0x0002
+#define   VIC_CMD_HWCAP_DMA_HIGH		(1<<4) /* High DMA mapping */
+#define   VIC_CMD_HWCAP_TOE		(1<<5) /* TCP offload engine */
+#define   VIC_CMD_HWCAP_TSO		(1<<6) /* TCP segmentation offload */
+#define   VIC_CMD_HWCAP_TSO_SW		(1<<7) /* Software TCP segmentation */
+#define   VIC_CMD_HWCAP_VPROM		(1<<8) /* Virtual PROM available */
+#define   VIC_CMD_HWCAP_VLAN_Tx		(1<<9) /* Hardware VLAN MTU Rx */
+#define   VIC_CMD_HWCAP_VLAN_Rx		(1<<10) /* Hardware VLAN MTU Tx */
+#define   VIC_CMD_HWCAP_VLAN_SW		(1<<11)	/* Software VLAN MTU */
+#define   VIC_CMD_HWCAP_VLAN \
+	(VIC_CMD_HWCAP_VLAN_Tx | VIC_CMD_HWCAP_VLAN_Rx | \
+	VIC_CMD_HWCAP_VLAN_SW)
+#define  VIC_CMD_HWCAP_BITS \
+	"\20\01SG\02CSUM4\03CSUM\04HDMA\05TOE\06TSO" \
+	"\07TSOSW\10VPROM\13VLANTx\14VLANRx\15VLANSW"
+#define  VIC_CMD_FEATURE	0x2000	/* Additional feature register */
+#define   VIC_CMD_FEATURE_0_Tx		(1<<0)
+#define   VIC_CMD_FEATURE_TSO		(1<<1)
 
 #define VIC_LLADDR		0x0010		/* MAC address register */
 #define VIC_VERSION_MINOR	0x0018		/* Minor version register */
@@ -77,8 +75,8 @@
 
 /* Status register */
 #define VIC_STATUS		0x0020
-#define VIC_STATUS_CONNECTED	0x00000001
-#define VIC_STATUS_ENABLED	0x00000002
+#define  VIC_STATUS_CONNECTED		(1<<0)
+#define  VIC_STATUS_ENABLED		(1<<1)
 
 #define VIC_TOE_ADDR		0x0024		/* TCP offload address */
 
@@ -105,7 +103,7 @@ struct vic_sgarray {
 	u_int16_t	sa_addr_type;
 	u_int16_t	sa_length;
 	struct vic_sg	sa_sg[VIC_SG_MAX];
-};
+} __packed;
 
 struct vic_rxdesc {
 	u_int64_t	rx_physaddr;
