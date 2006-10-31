@@ -1,7 +1,7 @@
 /*
  * Space
  *
- * $OpenBSD: calendar.space,v 1.2 2006/07/04 16:02:37 mickey Exp $
+ * $OpenBSD: calendar.space,v 1.3 2006/10/31 18:11:54 jasper Exp $
  */
 
 #ifndef _calendar_space_
@@ -50,5 +50,6 @@
 12/13	Apollo 17 leaves the moon, with "last" men to walk on moon aboard, 1972
 12/13	Geminid meteor shower (look south)
 12/24	Apollo 8 first manned lunar orbit, 1968
+12/30	Edwin Hubble announces the existence of other galaxies, 1924
 
 #endif /* !_calendar_space_ */
