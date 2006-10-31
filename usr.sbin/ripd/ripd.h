@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.2 2006/10/31 07:16:45 mcbride Exp $ */
+/*	$OpenBSD: ripd.h,v 1.3 2006/10/31 23:43:11 michele Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -180,6 +180,7 @@ enum iface_type {
 
 /* neighbor states */
 #define NBR_STA_DOWN		0x01
+#define	NBR_STA_REQ_RCVD	0x02
 #define NBR_STA_ACTIVE		(~NBR_STA_DOWN)
 #define NBR_STA_ANY		0xff
 

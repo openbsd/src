@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.1 2006/10/18 16:11:58 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.2 2006/10/31 23:43:11 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -61,11 +61,13 @@ struct {
 	int		new_state;
 } nbr_fsm_tbl[] = {
     /* current state	event that happened	action to take		resulting state */
-    {NBR_STA_DOWN,	NBR_EVT_REQUEST_RCVD,	NBR_ACT_STRT_TIMER,	NBR_STA_ACTIVE},
+    {NBR_STA_DOWN,	NBR_EVT_REQUEST_RCVD,	NBR_ACT_NOTHING,	NBR_STA_REQ_RCVD},
     {NBR_STA_DOWN,	NBR_EVT_RESPONSE_RCVD,	NBR_ACT_STRT_TIMER,	NBR_STA_ACTIVE},
     {NBR_STA_ACTIVE,	NBR_EVT_RESPONSE_RCVD,	NBR_ACT_RST_TIMER,	NBR_STA_ACTIVE},
     {NBR_STA_ACTIVE,	NBR_EVT_REQUEST_RCVD,	NBR_ACT_NOTHING,	NBR_STA_ACTIVE},
     {NBR_STA_ACTIVE,	NBR_EVT_TIMEOUT,	NBR_ACT_DEL,		NBR_STA_DOWN},
+    {NBR_STA_REQ_RCVD,	NBR_EVT_RESPONSE_SENT,	NBR_ACT_DEL,		NBR_STA_DOWN},
+    {NBR_STA_ACTIVE,	NBR_EVT_RESPONSE_SENT,	NBR_ACT_NOTHING,	NBR_STA_ACTIVE},	
     {NBR_STA_ANY,	NBR_EVT_KILL_NBR,	NBR_ACT_DEL,		NBR_STA_DOWN},
     {-1,		NBR_EVT_NOTHING,	NBR_ACT_NOTHING,	0},
 };
@@ -73,6 +75,7 @@ struct {
 const char * const nbr_event_names[] = {
 	"RESPONSE RCVD",
 	"REQUEST RCVD",
+	"RESPONSE SENT",
 	"NBR TIMEOUT",
 	"NBR KILL",
 	"NOTHING"
@@ -202,7 +205,10 @@ nbr_act_del(struct nbr *nbr)
 	struct nbr_failed	*nbr_failed;
 	struct iface		*iface;
 
-	if (nbr->iface->auth_type == AUTH_CRYPT) {
+	/* If there is no authentication or it is just a route request
+	 * there is no need to keep track of the failed neighbors */
+	if (nbr->iface->auth_type == AUTH_CRYPT &&
+	    nbr->state != NBR_STA_REQ_RCVD) {
 		if ((nbr_failed = calloc(1, sizeof(*nbr_failed))) == NULL)
 			fatal("nbr_act_del");
 

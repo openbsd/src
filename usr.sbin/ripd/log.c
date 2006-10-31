@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.1 2006/10/18 16:11:58 norby Exp $ */
+/*	$OpenBSD: log.c,v 1.2 2006/10/31 23:43:11 michele Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -169,6 +169,8 @@ nbr_state_name(int state)
 	switch (state) {
 	case NBR_STA_DOWN:
 		return ("DOWN");
+	case NBR_STA_REQ_RCVD:
+		return ("REQUEST RCVD");
 	case NBR_STA_ACTIVE:
 		return ("ACTIVE");
 	default:

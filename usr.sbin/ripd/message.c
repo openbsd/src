@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.2 2006/10/24 16:37:48 david Exp $ */
+/*	$OpenBSD: message.c,v 1.3 2006/10/31 23:43:11 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -172,7 +172,7 @@ send_request(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 		if (TAILQ_FIRST(r_list) == TAILQ_LAST(r_list, packet_head))
 			single_entry = 1;
 		while (((entry = TAILQ_FIRST(r_list)) != NULL) &&
-		    nentries < 25) {
+		    nentries < MAX_RIP_ENTRIES) {
 			afi = htons(AF_INET);
 
 			address = entry->rr->address.s_addr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.2 2006/10/19 12:29:58 mcbride Exp $ */
+/*	$OpenBSD: ripe.c,v 1.3 2006/10/31 23:43:11 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -411,6 +411,7 @@ ripe_dispatch_rde(int fd, short event, void *bula)
 				break;
 			}
 			send_response(&nbr->rp_list, NULL, nbr);
+			nbr_fsm(nbr, NBR_EVT_RESPONSE_SENT);
 			break;
 		case IMSG_SEND_TRIGGERED_UPDATE:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(struct

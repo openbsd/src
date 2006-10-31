@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.3 2006/10/24 16:37:48 david Exp $ */
+/*	$OpenBSD: packet.c,v 1.4 2006/10/31 23:43:11 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -165,19 +165,14 @@ recv_packet(int fd, short event, void *bula)
 	/* switch RIP command */
 	switch (rip_hdr->command) {
 	case COMMAND_REQUEST:
+		/* Requests don't create a real neighbor, just a temporary
+		 * one to build the response.
+		 */
 		if ((msg.msg_flags & MSG_MCAST) == 0 && srcport == RIP_PORT)
 			return;
 
-		/* XXX: it would be better to not create a nbr on request
-		 * because this could lead to DoS even on a authenticated
-		 * environment.
-		 */
 		if (nbr == NULL) {
 			nbr = nbr_new(src.sin_addr.s_addr, iface, 0);
-			if (nbr_failed != NULL) {
-				nbr->auth_seq_num = nbr_failed->auth_seq_num;
-				nbr_failed_delete(iface, nbr_failed);
-			}
 			nbr->addr = src.sin_addr;
 		}
 		nbr->port = srcport;
