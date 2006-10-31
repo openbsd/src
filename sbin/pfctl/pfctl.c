@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.250 2006/10/31 14:17:45 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.251 2006/10/31 23:46:24 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -652,6 +652,7 @@ pfctl_show_rules(int dev, char *path, int opts, int format,
 	u_int32_t nr, mnr, header = 0;
 	int rule_numbers = opts & (PF_OPT_VERBOSE2 | PF_OPT_DEBUG);
 	int len = strlen(path);
+	int brace;
 
 	if (path[0])
 		snprintf(&path[len], MAXPATHLEN - len, "/%s", anchorname);
@@ -711,6 +712,7 @@ pfctl_show_rules(int dev, char *path, int opts, int format,
 			if (pr.rule.label[0] && (opts & PF_OPT_SHOWALL))
 				labels = 1;
 			print_rule(&pr.rule, pr.anchor_call, rule_numbers);
+			printf("\n");
 			pfctl_print_rule_counters(&pr.rule, opts);
 		}
 		pfctl_clear_pool(&pr.rule.rpool);
@@ -749,12 +751,20 @@ pfctl_show_rules(int dev, char *path, int opts, int format,
 			}
 			break;
 		default:
+			brace = 0;
 			if (pr.rule.label[0] && (opts & PF_OPT_SHOWALL))
 				labels = 1;
 			INDENT(depth, !(opts & PF_OPT_VERBOSE));
 			print_rule(&pr.rule, pr.anchor_call, rule_numbers);
+			if (strlen(pr.anchor_call) &&
+			    (pr.anchor_call[0] == '_' ||
+			     opts & PF_OPT_RECURSE)) {
+				brace++;
+				printf(" {\n");
+			} else
+				printf("\n");
 			pfctl_print_rule_counters(&pr.rule, opts);
-			if (pr.anchor_call[0] == '_') {
+			if (brace) {
 				pfctl_show_rules(dev, path, opts, format,
 				    pr.anchor_call, depth + 1);
 				INDENT(depth, !(opts & PF_OPT_VERBOSE));
@@ -803,6 +813,7 @@ pfctl_show_nat(int dev, int opts, char *anchorname)
 			}
 			print_rule(&pr.rule, pr.anchor_call,
 			    opts & PF_OPT_VERBOSE2);
+			printf("\n");
 			pfctl_print_rule_counters(&pr.rule, opts);
 			pfctl_clear_pool(&pr.rule.rpool);
 		}
@@ -1050,6 +1061,7 @@ pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
 {
 	struct pf_rule *r;
 	int		error, len = strlen(path);
+	int		brace = 0;
 
 	pf->anchor = rs->anchor;
 
@@ -1070,19 +1082,29 @@ pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
 	if (pf->optimize && rs_num == PF_RULESET_FILTER)
 		pfctl_optimize_ruleset(pf, rs);
 
+	if (pf->opts & PF_OPT_VERBOSE && depth) {
+		if (TAILQ_FIRST(rs->rules[rs_num].active.ptr) != NULL) {
+			brace++;
+			printf(" {\n");
+		} else
+			printf("\n");
+	}
+
 	while ((r = TAILQ_FIRST(rs->rules[rs_num].active.ptr)) != NULL) {
 		TAILQ_REMOVE(rs->rules[rs_num].active.ptr, r, entries);
 		if ((error = pfctl_load_rule(pf, path, r, depth)))
 			goto error;
-		if (r->anchor && r->anchor->name[0] == '_') {
+		if (r->anchor) {
 			if ((error = pfctl_load_ruleset(pf, path,
 			    &r->anchor->ruleset, rs_num, depth + 1)))
 				goto error;
-			INDENT(depth, (pf->opts & PF_OPT_VERBOSE));
-			if (pf->opts & PF_OPT_VERBOSE)
-				printf("}\n");
-		}
+		} else if (pf->opts & PF_OPT_VERBOSE)
+			printf("\n");
 		free(r);
+	}
+	if (brace) {
+		INDENT(depth - 1, (pf->opts & PF_OPT_VERBOSE));
+		printf("}\n");
 	}
 	path[len] = '\0';
 	return (0);
@@ -1912,6 +1934,15 @@ main(int argc, char *argv[])
 
 	memset(anchorname, 0, sizeof(anchorname));
 	if (anchoropt != NULL) {
+		int len = strlen(anchoropt);
+
+		if (anchoropt[len - 1] == '*') {
+			if (len >= 2 && anchoropt[len - 2] == '/')
+				anchoropt[len - 2] = '\0';
+			else
+				anchoropt[len - 1] = '\0';
+		}
+		opts |= PF_OPT_RECURSE;
 		if (strlcpy(anchorname, anchoropt,
 		    sizeof(anchorname)) >= sizeof(anchorname))
 			errx(1, "anchor name '%s' too long",

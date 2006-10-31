@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.85 2006/10/31 14:17:45 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.86 2006/10/31 23:46:25 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -48,6 +48,7 @@
 #define PF_OPT_SHOWALL		0x0400
 #define PF_OPT_OPTIMIZE		0x0800
 #define PF_OPT_MERGE		0x2000
+#define PF_OPT_RECURSE		0x4000
 
 #define PF_TH_ALL		0xFF
 
