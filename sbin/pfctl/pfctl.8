@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.122 2006/10/23 07:05:49 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.123 2006/10/31 14:41:25 mcbride Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -41,6 +41,10 @@
 .Op Fl f Ar file
 .Op Fl i Ar interface
 .Op Fl k Ar host | network
+.Oo
+.Fl o
+.Op level
+.Oc
 .Op Fl p Ar device
 .Op Fl s Ar modifier
 .Oo
@@ -262,11 +266,21 @@ Do not actually load rules, just parse them.
 .It Fl O
 Load only the options present in the rule file.
 Other rules and options are ignored.
-.It Fl o
-Enable the ruleset optimizer.
+.It Fl o Ar level
+Control the ruleset optimizer.
 The ruleset optimizer attempts to improve rulesets by removing rule
 duplication and making better use of rule ordering.
-Specifically, it does four things:
+.Pp
+.Bl -tag -width xxxxxxxxxxxx -compact
+.It Fl o Cm none
+Disable the ruleset optimizer.
+.It Fl o Cm basic
+Enable basic ruleset optimizations.
+.It Fl o Cm profile
+Enable basic ruleset optimizations with profiling.
+.El
+.Ar basic
+optimization does does four things:
 .Pp
 .Bl -enum -compact
 .It
@@ -279,10 +293,10 @@ combine multiple rules into a table when advantageous
 re-order the rules to improve evaluation performance
 .El
 .Pp
-A second
-.Fl o
-may be specified to use the currently loaded ruleset as a feedback profile
-to tailor the optimization of the
+If
+.Ar profile
+is specified the currently loaded ruleset will be examined as a feedback
+profile to tailor the optimization of the
 .Ar quick
 rules to the actual network behavior.
 .Pp
@@ -295,6 +309,14 @@ the ruleset optimizer should not be used or a
 .Ar label
 field should be added to all of the accounting rules to act as optimization
 barriers.
+.Pp
+To retain compatibility with previous behaviour, a single
+.Fl o
+without any options will enable
+.Ar basic
+optimizations, and a second
+.Fl o
+will enable profiling.
 .It Fl p Ar device
 Use the device file
 .Ar device
