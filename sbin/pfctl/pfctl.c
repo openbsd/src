@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.248 2006/10/28 14:29:05 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.249 2006/10/31 07:02:35 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1720,7 +1720,8 @@ pfctl_show_anchors(int dev, int opts, char *anchorname)
 			strlcat(sub, "/", sizeof(sub));
 		}
 		strlcat(sub, pr.name, sizeof(sub));
-		printf("  %s\n", sub);
+		if (sub[0] != '_' || opts & PF_OPT_VERBOSE)
+			printf("  %s\n", sub);
 		if (opts & PF_OPT_VERBOSE && pfctl_show_anchors(dev, opts, sub))
 			return (-1);
 	}
@@ -1987,6 +1988,10 @@ main(int argc, char *argv[])
 	}
 
 	if (clearopt != NULL) {
+		if (anchorname[0] == '_' || strstr(anchorname, "/_") != NULL)
+			errx(1, "anchor names beginning with '_' cannot "
+			    "be modified from the command line");
+
 		switch (*clearopt) {
 		case 'r':
 			pfctl_clear_rules(dev, opts, anchorname);
@@ -2055,6 +2060,9 @@ main(int argc, char *argv[])
 			error = 1;
 
 	if (rulesopt != NULL) {
+		if (anchorname[0] == '_' || strstr(anchorname, "/_") != NULL)
+			errx(1, "anchor names beginning with '_' cannot "
+			    "be modified from the command line");
 		if (pfctl_rules(dev, rulesopt, fin, opts, anchorname, NULL))
 			error = 1;
 		else if (!(opts & PF_OPT_NOACTION) &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.513 2006/10/28 14:29:05 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.514 2006/10/31 07:02:35 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -669,6 +669,13 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 			if (check_rulestate(PFCTL_STATE_FILTER)) {
 				if ($2)
 					free($2);
+				YYERROR;
+			}
+
+			if ($2 && ($2[0] == '_' || strstr($2, "/_") != NULL)) {
+				free($2);
+				yyerror("anchor names beginning with '_' "
+				    "are reserved for internal use");
 				YYERROR;
 			}
 
