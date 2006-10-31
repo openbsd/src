@@ -1,4 +1,4 @@
-.\" $OpenBSD: security.8,v 1.10 2005/01/06 00:00:38 jmc Exp $
+.\" $OpenBSD: security.8,v 1.11 2006/10/31 10:27:55 jmc Exp $
 .\"
 .\" David Leonard, 2001. Public Domain.
 .\"
@@ -97,8 +97,11 @@ the miscreant can modify the tree specification to match the replaced binary.
 For details on really protecting yourself against modified binaries, see
 .Xr mtree 8 .
 .It
-Check for content changes in those files specified by
+Check for changes in files listed in
 .Pa /etc/changelist .
+Files being created or deleted,
+as well as content change in the files themselves,
+are reported.
 See
 .Xr changelist 5
 for further details.
