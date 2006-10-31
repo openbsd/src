@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.12 2006/10/28 14:29:05 mcbride Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.13 2006/10/31 14:17:45 mcbride Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -300,7 +300,7 @@ pfctl_optimize_ruleset(struct pfctl *pf, struct pf_ruleset *rs)
 	if (construct_superblocks(pf, &opt_queue, &superblocks))
 		goto error;
 
-	if (pf->opts & PF_OPT_OPTIMIZE_PROFILE) {
+	if (pf->optimize & PF_OPTIMIZE_PROFILE) {
 		if (load_feedback_profile(pf, &superblocks))
 			goto error;
 	}
@@ -413,7 +413,7 @@ optimize_superblock(struct pfctl *pf, struct superblock *block)
 		return (1);
 	if (combine_rules(pf, block))
 		return (1);
-	if ((pf->opts & PF_OPT_OPTIMIZE_PROFILE) &&
+	if ((pf->optimize & PF_OPTIMIZE_PROFILE) &&
 	    TAILQ_FIRST(&block->sb_rules)->por_rule.quick &&
 	    block->sb_profiled_block) {
 		if (block_feedback(pf, block))

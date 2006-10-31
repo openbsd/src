@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.514 2006/10/31 07:02:35 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.515 2006/10/31 14:17:44 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -414,7 +414,7 @@ typedef struct {
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT PROBABILITY
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
 %token	QUEUE PRIORITY QLIMIT RTABLE
-%token	LOAD
+%token	LOAD RULESET_OPTIMIZATION
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH
 %token	TAGGED TAG IFBOUND FLOATING STATEPOLICY ROUTE
@@ -423,7 +423,7 @@ typedef struct {
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		number icmptype icmp6type uid gid
 %type	<v.number>		tos not yesno
-%type	<v.i>			no dir af fragcache
+%type	<v.i>			no dir af fragcache optimizer
 %type	<v.i>			sourcetrack flush unaryop statelock
 %type	<v.b>			action nataction natpass scrubaction
 %type	<v.b>			flags flag blockspec
@@ -496,6 +496,20 @@ fakeanchor	: fakeanchor '\n'
 		| fakeanchor error '\n'
 		;
 
+optimizer	: string	{
+			if (!strcmp($1, "none"))
+				$$ = 0;
+			else if (!strcmp($1, "basic"))
+				$$ = PF_OPTIMIZE_BASIC;
+			else if (!strcmp($1, "profile"))
+				$$ = PF_OPTIMIZE_BASIC | PF_OPTIMIZE_PROFILE;
+			else {
+				yyerror("unknown ruleset-optimization %s", $$);
+				YYERROR;
+			}
+		}
+		;
+
 option		: SET OPTIMIZATION STRING		{
 			if (check_rulestate(PFCTL_STATE_OPTION)) {
 				free($3);
@@ -507,6 +521,12 @@ option		: SET OPTIMIZATION STRING		{
 				YYERROR;
 			}
 			free($3);
+		}
+		| SET RULESET_OPTIMIZATION optimizer {
+			if (!(pf->opts & PF_OPT_OPTIMIZE)) {
+				pf->opts |= PF_OPT_OPTIMIZE;
+				pf->optimize = $3;
+			}
 		}
 		| SET TIMEOUT timeout_spec
 		| SET TIMEOUT '{' timeout_list '}'
@@ -4919,6 +4939,7 @@ lookup(char *s)
 		{ "route-to",		ROUTETO},
 		{ "rtable",		RTABLE},
 		{ "rule",		RULE},
+		{ "ruleset-optimization",	RULESET_OPTIMIZATION},
 		{ "scrub",		SCRUB},
 		{ "set",		SET},
 		{ "skip",		SKIP},
@@ -5452,21 +5473,21 @@ parseicmpspec(char *w, sa_family_t af)
 }
 
 int
-pfctl_load_anchors(int dev, int opts, struct pfr_buffer *trans)
+pfctl_load_anchors(int dev, struct pfctl *pf, struct pfr_buffer *trans)
 {
 	struct loadanchors	*la;
 	FILE			*fin;
 
 	TAILQ_FOREACH(la, &loadanchorshead, entries) {
-		if (opts & PF_OPT_VERBOSE)
+		if (pf->opts & PF_OPT_VERBOSE)
 			fprintf(stderr, "\nLoading anchor %s from %s\n",
 			    la->anchorname, la->filename);
 		if ((fin = pfctl_fopen(la->filename, "r")) == NULL) {
 			warn("%s", la->filename);
 			continue;
 		}
-		if (pfctl_rules(dev, la->filename, fin, opts, la->anchorname,
-		    trans) == -1)
+		if (pfctl_rules(dev, la->filename, fin, pf->opts, pf->optimize,
+		    la->anchorname, trans) == -1)
 			return (-1);
 	}
 

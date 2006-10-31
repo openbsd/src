@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.249 2006/10/31 07:02:35 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.250 2006/10/31 14:17:45 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -102,6 +102,7 @@ char		*rulesopt;
 const char	*showopt;
 const char	*debugopt;
 char		*anchoropt;
+const char	*optiopt = NULL;
 char		*pf_device = "/dev/pf";
 char		*ifaceopt;
 char		*tableopt;
@@ -215,6 +216,9 @@ static const char *debugopt_list[] = {
 	"none", "urgent", "misc", "loud", NULL
 };
 
+static const char *optiopt_list[] = {
+	"o", "none", "basic", "profile", NULL
+};
 
 void
 usage(void)
@@ -1063,7 +1067,7 @@ pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
 		}
 	}
 
-	if ((pf->opts & PF_OPT_OPTIMIZE) && rs_num == PF_RULESET_FILTER)
+	if (pf->optimize && rs_num == PF_RULESET_FILTER)
 		pfctl_optimize_ruleset(pf, rs);
 
 	while ((r = TAILQ_FIRST(rs->rules[rs_num].active.ptr)) != NULL) {
@@ -1142,8 +1146,8 @@ pfctl_add_altq(struct pfctl *pf, struct pf_altq *a)
 }
 
 int
-pfctl_rules(int dev, char *filename, FILE *fin, int opts, char *anchorname,
-    struct pfr_buffer *trans)
+pfctl_rules(int dev, char *filename, FILE *fin, int opts, int optimize,
+    char *anchorname, struct pfr_buffer *trans)
 {
 #define ERR(x) do { warn(x); goto _error; } while(0)
 #define ERRX(x) do { warnx(x); goto _error; } while(0)
@@ -1181,6 +1185,7 @@ pfctl_rules(int dev, char *filename, FILE *fin, int opts, char *anchorname,
 	infile = filename;
 	pf.dev = dev;
 	pf.opts = opts;
+	pf.optimize = optimize;
 	pf.loadopt = loadopt;
 	pf.anchor = pf_find_or_create_ruleset(anchorname)->anchor;
 	rs = &pf.anchor->ruleset;
@@ -1241,7 +1246,7 @@ pfctl_rules(int dev, char *filename, FILE *fin, int opts, char *anchorname,
 
 	/* process "load anchor" directives */
 	if (!anchorname[0])
-		if (pfctl_load_anchors(dev, opts, t) == -1)
+		if (pfctl_load_anchors(dev, &pf, t) == -1)
 			ERRX("load anchors");
 
 	if (trans == NULL && (opts & PF_OPT_NOACTION) == 0) {
@@ -1480,7 +1485,7 @@ pfctl_set_optimization(struct pfctl *pf, const char *opt)
 
 	hint = pf_hints[i].hint;
 	if (hint == NULL) {
-		warnx("Bad hint name.");
+		warnx("invalid state timeouts optimization");
 		return (1);
 	}
 
@@ -1745,6 +1750,7 @@ main(int argc, char *argv[])
 	int	 ch;
 	int	 mode = O_RDONLY;
 	int	 opts = 0;
+	int	 optimize = 0;
 	char	 anchorname[MAXPATHLEN];
 	FILE	*fin = NULL;
 
@@ -1752,7 +1758,7 @@ main(int argc, char *argv[])
 		usage();
 
 	while ((ch = getopt(argc, argv,
-	    "a:AdD:eqf:F:ghi:k:mnNOop:rRs:t:T:vx:z")) != -1) {
+	    "a:AdD:eqf:F:ghi:k:mnNOo::p:rRs:t:T:vx:z")) != -1) {
 		switch (ch) {
 		case 'a':
 			anchoropt = optarg;
@@ -1819,10 +1825,25 @@ main(int argc, char *argv[])
 			loadopt |= PFCTL_FLAG_FILTER;
 			break;
 		case 'o':
-			if (opts & PF_OPT_OPTIMIZE)
-				opts |= PF_OPT_OPTIMIZE_PROFILE;
-			else
-				opts |= PF_OPT_OPTIMIZE;
+			if (optarg) {
+				optiopt = pfctl_lookup_option(optarg,
+				    optiopt_list);
+					if (optiopt == NULL) {
+					warnx("Unknown optimization '%s'",
+					    optarg);
+					usage();
+				}
+			}
+			if (opts & PF_OPT_OPTIMIZE) {
+				if (optiopt != NULL) {
+					warnx("Cannot specify -o multiple times"
+					    "with optimizer level");
+					usage();
+				}
+				optimize |= PF_OPTIMIZE_PROFILE;
+			}
+			optimize |= PF_OPTIMIZE_BASIC;
+			opts |= PF_OPT_OPTIMIZE;
 			break;
 		case 'O':
 			loadopt |= PFCTL_FLAG_OPTION;
@@ -2040,7 +2061,22 @@ main(int argc, char *argv[])
 		    tblcmdopt, rulesopt, anchorname, opts);
 		rulesopt = NULL;
 	}
-	if (rulesopt != NULL) {
+	if (optiopt != NULL) {
+		switch (*optiopt) {
+		case 'n':
+			optimize = 0;
+			break;
+		case 'b':
+			optimize |= PF_OPTIMIZE_BASIC;
+			break;
+		case 'o':
+		case 'p':
+			optimize |= PF_OPTIMIZE_PROFILE;
+			break;
+		}
+	}
+
+ 	if (rulesopt != NULL) {
 		if (strcmp(rulesopt, "-") == 0) {
 			fin = stdin;
 			rulesopt = "stdin";
@@ -2063,7 +2099,8 @@ main(int argc, char *argv[])
 		if (anchorname[0] == '_' || strstr(anchorname, "/_") != NULL)
 			errx(1, "anchor names beginning with '_' cannot "
 			    "be modified from the command line");
-		if (pfctl_rules(dev, rulesopt, fin, opts, anchorname, NULL))
+		if (pfctl_rules(dev, rulesopt, fin, opts, optimize,
+		    anchorname, NULL))
 			error = 1;
 		else if (!(opts & PF_OPT_NOACTION) &&
 		    (loadopt & PFCTL_FLAG_TABLE))

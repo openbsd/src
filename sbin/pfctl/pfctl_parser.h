@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.84 2006/10/28 14:29:05 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.85 2006/10/31 14:17:45 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -47,13 +47,15 @@
 #define PF_OPT_DEBUG		0x0200
 #define PF_OPT_SHOWALL		0x0400
 #define PF_OPT_OPTIMIZE		0x0800
-#define PF_OPT_OPTIMIZE_PROFILE	0x1000
 #define PF_OPT_MERGE		0x2000
 
 #define PF_TH_ALL		0xFF
 
 #define PF_NAT_PROXY_PORT_LOW	50001
 #define PF_NAT_PROXY_PORT_HIGH	65535
+
+#define PF_OPTIMIZE_BASIC	0x0001
+#define PF_OPTIMIZE_PROFILE	0x0002
 
 #define FCNT_NAMES { \
 	"searches", \
@@ -68,6 +70,7 @@ struct pfr_buffer;	/* forward definition */
 struct pfctl {
 	int dev;
 	int opts;
+	int optimize;
 	int loadopt;
 	int asd;			/* anchor stack depth */
 	int bn;				/* brace number */
@@ -183,7 +186,7 @@ struct pf_opt_rule {
 
 TAILQ_HEAD(pf_opt_queue, pf_opt_rule);
 
-int	pfctl_rules(int, char *, FILE *, int, char *, struct pfr_buffer *);
+int	pfctl_rules(int, char *, FILE *, int, int, char *, struct pfr_buffer *);
 int	pfctl_optimize_ruleset(struct pfctl *, struct pf_ruleset *);
 
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *, const char *);
@@ -202,7 +205,7 @@ int	pfctl_set_interface_flags(struct pfctl *, char *, int, int);
 
 int	parse_rules(FILE *, struct pfctl *);
 int	parse_flags(char *);
-int	pfctl_load_anchors(int, int, struct pfr_buffer *);
+int	pfctl_load_anchors(int, struct pfctl *, struct pfr_buffer *);
 
 void	print_pool(struct pf_pool *, u_int16_t, u_int16_t, sa_family_t, int);
 void	print_src_node(struct pf_src_node *, int);
