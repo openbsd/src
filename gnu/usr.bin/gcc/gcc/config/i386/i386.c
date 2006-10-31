@@ -1756,11 +1756,11 @@ classify_argument (mode, type, classes, bit_offset)
 	    {
 	      tree bases = TYPE_BINFO_BASETYPES (type);
 	      int n_bases = TREE_VEC_LENGTH (bases);
-	      int i;
+	      int basenum;
 
-	      for (i = 0; i < n_bases; ++i)
+	      for (basenum = 0; basenum < n_bases; ++basenum)
 		{
-		   tree binfo = TREE_VEC_ELT (bases, i);
+		   tree binfo = TREE_VEC_ELT (bases, basenum);
 		   int num;
 		   int offset = tree_low_cst (BINFO_OFFSET (binfo), 0) * 8;
 		   tree type = BINFO_TYPE (binfo);
@@ -1844,11 +1844,11 @@ classify_argument (mode, type, classes, bit_offset)
 	    {
 	      tree bases = TYPE_BINFO_BASETYPES (type);
 	      int n_bases = TREE_VEC_LENGTH (bases);
-	      int i;
+	      int basenum;
 
-	      for (i = 0; i < n_bases; ++i)
+	      for (basenum = 0; basenum < n_bases; ++basenum)
 		{
-		   tree binfo = TREE_VEC_ELT (bases, i);
+		   tree binfo = TREE_VEC_ELT (bases, basenum);
 		   int num;
 		   int offset = tree_low_cst (BINFO_OFFSET (binfo), 0) * 8;
 		   tree type = BINFO_TYPE (binfo);
