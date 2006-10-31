@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.1 2006/10/18 16:11:58 norby Exp $ */
+/*	$OpenBSD: ripd.h,v 1.2 2006/10/31 07:16:45 mcbride Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -185,6 +185,7 @@ enum iface_type {
 
 struct auth_md {
 	TAILQ_ENTRY(auth_md)	 entry;
+	u_int32_t		 seq_modulator;
 	char			 key[MD5_DIGEST_LENGTH];
 	u_int8_t		 keyid;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.2 2006/10/19 12:29:58 mcbride Exp $ */
+/*	$OpenBSD: auth.c,v 1.3 2006/10/31 07:16:45 mcbride Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -29,14 +29,32 @@
 #include "log.h"
 #include "ripe.h"
 
+u_int32_t	 auth_calc_modulator(struct auth_md  *md);
 struct auth_md	*md_list_find(struct auth_md_head *, u_int8_t);
 void		 auth_trailer_header_gen(struct buf *);
-u_int32_t	 auth_get_seq_num(void);
+u_int32_t	 auth_get_seq_num(struct auth_md*);
 
 u_int32_t
-auth_get_seq_num()
+auth_calc_modulator(struct auth_md  *md)
 {
-	return time(NULL);
+	u_int32_t		r;
+	MD5_CTX			md5ctx;
+	char			digest[MD5_DIGEST_LENGTH];
+
+	MD5Init(&md5ctx);
+	MD5Update(&md5ctx, (void *)&md->keyid, sizeof(md->keyid));
+	MD5Update(&md5ctx, (void *)&md->key, MD5_DIGEST_LENGTH);
+	MD5Final(digest, &md5ctx);
+	
+	bcopy(&digest, &r, sizeof(r));
+
+	return ((r >> 1) - time(NULL));
+}
+
+u_int32_t
+auth_get_seq_num(struct auth_md *md)
+{
+	return (time(NULL) + md->seq_modulator);
 }
 
 void
@@ -171,6 +189,7 @@ auth_gen(struct buf *buf, struct iface *iface)
 {
 	struct rip_auth		 auth_head;
 	struct md5_auth		 a;
+	struct auth_md		 *md;
 
 	auth_head.auth_fixed = AUTH;
 	auth_head.auth_type = htons(iface->auth_type);
@@ -182,9 +201,15 @@ auth_gen(struct buf *buf, struct iface *iface)
 		return (buf_add(buf, &iface->auth_key, MAX_SIMPLE_AUTH_LEN));
 		break;
 	case AUTH_CRYPT:
+		if ((md = md_list_find(&iface->auth_md_list,
+		    iface->auth_keyid)) == NULL) {
+			log_debug("auth_gen: keyid %d not configured, "
+			    "interface %s", iface->auth_keyid, iface->name);
+			return (-1);
+		}
 		bzero(&a, sizeof(a));
 		a.auth_keyid = iface->auth_keyid;
-		a.auth_seq = htonl(auth_get_seq_num());
+		a.auth_seq = htonl(auth_get_seq_num(md));
 		a.auth_length = MD5_DIGEST_LENGTH + AUTH_TRLR_HDR_LEN;
 
 		return (buf_add(buf, &a, sizeof(a)));
@@ -251,6 +276,7 @@ md_list_add(struct auth_md_head *head, u_int8_t keyid, char *key)
 
 	md->keyid = keyid;
 	strncpy(md->key, key, sizeof(md->key));
+	md->seq_modulator = auth_calc_modulator(md);
 	TAILQ_INSERT_TAIL(head, md, entry);
 }
 
@@ -267,6 +293,7 @@ md_list_copy(struct auth_md_head *to, struct auth_md_head *from)
 
 		md->keyid = m->keyid;
 		strncpy(md->key, m->key, sizeof(md->key));
+		md->seq_modulator = m->seq_modulator;
 		TAILQ_INSERT_TAIL(to, md, entry);
 	}
 }
