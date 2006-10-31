@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.369 2006/10/28 14:31:00 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.370 2006/10/31 14:53:44 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -398,8 +398,42 @@ Various limits can be combined on a single line:
 set limit { states 20000, frags 20000, src-nodes 2000 }
 .Ed
 .Pp
+.It Ar set ruleset-optimization
+.Bl -tag -width xxxxxxxx -compact
+.It Ar none
+Disable the ruleset optimizer. This is the default behaviour.
+.It Ar basic
+Enable basic ruleset optimization, which does four things to improve the
+performance of ruleset evaluations:
+.Bl -enum -compact
+.It
+remove duplicate rules
+.It
+remove rules that are a subset of another rule
+.It
+combine multiple rules into a table when advantageous
+.It
+re-order the rules to improve evaluation performance
+.El
+.It Ar profile
+Uses the currently loaded ruleset as a feedback profile to tailor the
+ordering of quick rules to actual network traffic.
+.El
+.Pp
+It is important to note that the ruleset optimizer will modify the ruleset
+to improve performance.
+A side effect of the ruleset modification is that per-rule accounting
+statistics will have different meanings than before.
+If per-rule accounting is important for billing purposes or whatnot,
+either the ruleset optimizer should not be used or a label field should
+be added to all of the accounting rules to act as optimization barriers.
+.Pp
+Optimization can also be set as a command-line argument to
+.Xr pfctl , 
+overriding the settings in
+.Nm pf.conf .
 .It Ar set optimization
-Optimize the engine for one of the following network environments:
+Optimize state timeouts for one of the following network environments:
 .Pp
 .Bl -tag -width xxxx -compact
 .It Ar normal
@@ -2700,6 +2734,7 @@ line           = ( option | pf-rule | nat-rule | binat-rule | rdr-rule |
 		 anchor-rule | anchor-close | load-anchor | table-rule | )
 
 option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
+		 [ "ruleset-optimization" [ "none" | "basic" | "profile" ]] |
                  [ "optimization" [ "default" | "normal" |
                  "high-latency" | "satellite" |
                  "aggressive" | "conservative" ] ]
