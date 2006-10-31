@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.103 2006/06/16 16:49:39 henning Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.104 2006/10/31 14:28:29 jason Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -480,22 +480,6 @@ bad:
 }
 
 /*
- * Temporary function to migrate while
- * removing ether_header * from ether_input().
- */
-void
-ether_input_mbuf(ifp, m)
-	struct ifnet *ifp;
-	struct mbuf *m;
-{
-	struct ether_header *eh;
-
-	eh = mtod(m, struct ether_header *);
-	m_adj(m, ETHER_HDR_LEN);
-	ether_input(ifp, eh, m);
-}
-
-/*
  * Process a received Ethernet packet;
  * the packet is in the mbuf chain m without
  * the ether header, which is provided separately.
@@ -517,6 +501,11 @@ ether_input(ifp, eh, m)
 #if NPPPOE > 0
 	struct ether_header *eh_tmp;
 #endif
+
+	if (eh == NULL) {
+		eh = mtod(m, struct ether_header *);
+		m_adj(m, ETHER_HDR_LEN);
+	}
 
 #if NTRUNK > 0
 	/* Handle input from a trunk port */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.82 2006/06/02 19:53:12 mpf Exp $	*/
+/*	$OpenBSD: if.h,v 1.83 2006/10/31 14:28:29 jason Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -676,10 +676,11 @@ extern struct ifnet **ifindex2ifnet;
 extern struct ifnet *lo0ifp;
 extern int if_indexlim;
 
+#define	ether_input_mbuf(ifp, m)        ether_input((ifp), NULL, (m))
+
 void	ether_ifattach(struct ifnet *);
 void	ether_ifdetach(struct ifnet *);
 int	ether_ioctl(struct ifnet *, struct arpcom *, u_long, caddr_t);
-void	ether_input_mbuf(struct ifnet *, struct mbuf *);
 void	ether_input(struct ifnet *, struct ether_header *, struct mbuf *);
 int	ether_output(struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *);
