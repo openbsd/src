@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.28 2006/08/16 19:38:34 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.29 2006/10/31 07:04:25 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -482,10 +482,10 @@ struct rl_chain_data {
  */
 
 struct rl_desc {
-	u_int32_t		rl_cmdstat;
-	u_int32_t		rl_vlanctl;
-	u_int32_t		rl_bufaddr_lo;
-	u_int32_t		rl_bufaddr_hi;
+	volatile u_int32_t	rl_cmdstat;
+	volatile u_int32_t	rl_vlanctl;
+	volatile u_int32_t	rl_bufaddr_lo;
+	volatile u_int32_t	rl_bufaddr_hi;
 };
 
 #define RL_TDESC_CMD_FRAGLEN	0x0000FFFF
@@ -589,14 +589,12 @@ struct rl_stats {
 
 #define RL_RX_LIST_SZ		(RL_RX_DESC_CNT * sizeof(struct rl_desc))
 #define RL_RING_ALIGN		256
-#define RL_OWN(x)		(letoh32((x)->rl_cmdstat) & RL_RDESC_STAT_OWN)
-#define RL_RXBYTES(x)		(letoh32((x)->rl_cmdstat) & sc->rl_rxlenmask)
 #define RL_PKTSZ(x)		((x)/* >> 3*/)
 #ifdef __STRICT_ALIGNMENT
-#define RE_ETHER_ALIGN	sizeof(uint64_t)
+#define RE_ETHER_ALIGN		2
 #define RE_RX_DESC_BUFLEN	(MCLBYTES - RE_ETHER_ALIGN)
 #else
-#define RE_ETHER_ALIGN	0
+#define RE_ETHER_ALIGN		0
 #define RE_RX_DESC_BUFLEN	MCLBYTES
 #endif
 
@@ -608,6 +606,19 @@ struct rl_stats {
 	((x) = ((x) + 1) % RL_TX_DESC_CNT(sc))
 #define RL_RX_DESC_INC(sc, x)	\
 	((x) = ((x) + 1) % RL_RX_DESC_CNT)
+
+#define RL_TXDESCSYNC(sc, idx, ops)		\
+	bus_dmamap_sync((sc)->sc_dmat,		\
+	    (sc)->rl_ldata.rl_tx_list_map,	\
+	    sizeof(struct rl_desc) * (idx),	\
+	    sizeof(struct rl_desc),		\
+	    (ops))
+#define RL_RXDESCSYNC(sc, idx, ops)		\
+	bus_dmamap_sync((sc)->sc_dmat,		\
+	    (sc)->rl_ldata.rl_rx_list_map,	\
+	    sizeof(struct rl_desc) * (idx),	\
+	    sizeof(struct rl_desc),		\
+	    (ops))
 
 #define RL_ADDR_LO(y)	((u_int64_t) (y) & 0xFFFFFFFF)
 #define RL_ADDR_HI(y)	((u_int64_t) (y) >> 32)
