@@ -1,4 +1,4 @@
-/*	$OpenBSD: subs.c,v 1.14 2006/10/29 20:02:41 martin Exp $	*/
+/*	$OpenBSD: subs.c,v 1.15 2006/10/31 18:15:15 ray Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,13 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: subs.c,v 1.14 2006/10/29 20:02:41 martin Exp $";
+static char rcsid[] = "$OpenBSD: subs.c,v 1.15 2006/10/31 18:15:15 ray Exp $";
 #endif
 #endif /* not lint */
 
 #include "back.h"
+
+__dead void	usage(void);
 
 int     buffnum;
 char    outbuff[BUFSIZ];
@@ -45,15 +47,6 @@ char    outbuff[BUFSIZ];
 static const char plred[] = "Player is red, computer is white.";
 static const char plwhite[] = "Player is white, computer is red.";
 static const char nocomp[] = "(No computer play.)";
-
-const char   *const descr[] = {
-	"Usage:  backgammon [-] [-nrwb] [-s <file>]\n",
-	"\t-h\tget this list\n\t-n\tdon't ask for rules or instructions",
-	"\t-r\tplayer is red (implies n)\n\t-w\tplayer is white (implies n)",
-	"\t-b\ttwo players, red and white (implies n)",
-	"\t-s file\trecover previously saved game from file",
-	0
-};
 
 void
 errexit(s)
@@ -210,7 +203,7 @@ getarg(argc,argv)
 	int     ch;
 	int     j;
 
-	while ((ch = getopt(argc, argv, "bdhnrs:w")) != -1)
+	while ((ch = getopt(argc, argv, "bdnrs:w")) != -1)
 		switch((char)ch) {
 		case 'n':	/* don't ask if rules or instructions needed */
 			if (rflag)
@@ -252,12 +245,17 @@ getarg(argc,argv)
 			break;
 
 		default:	/* print cmdline options */
-		case 'h':
-			for (j = 0; descr[j] != NULL; j++)
-				printf("%s\n", descr[j]);
-			exit(0);
-			break;
+			usage();
 	} /* end switch */
+}
+
+void
+usage(void)
+{
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s [-bdnrw] [-s <file>]\n", __progname);
+	exit(1);
 }
 
 void
