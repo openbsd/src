@@ -1770,6 +1770,7 @@
 ./usr/share/man/cat5/aliases.0
 ./usr/share/man/cat5/alpha
 ./usr/share/man/cat5/amd64
+./usr/share/man/cat5/amd64/boot.conf.0
 ./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/armish
 ./usr/share/man/cat5/aviion
@@ -1818,8 +1819,11 @@
 ./usr/share/man/cat5/hosts_options.0
 ./usr/share/man/cat5/hp300
 ./usr/share/man/cat5/hppa
+./usr/share/man/cat5/hppa/boot.conf.0
 ./usr/share/man/cat5/hppa64
+./usr/share/man/cat5/hppa64/boot.conf.0
 ./usr/share/man/cat5/i386
+./usr/share/man/cat5/i386/boot.conf.0
 ./usr/share/man/cat5/ifstated.conf.0
 ./usr/share/man/cat5/inetd.conf.0
 ./usr/share/man/cat5/info.0
@@ -1908,6 +1912,7 @@
 ./usr/share/man/cat5/wtmp.0
 ./usr/share/man/cat5/ypserv.acl.0
 ./usr/share/man/cat5/zaurus
+./usr/share/man/cat5/zaurus/boot.conf.0
 ./usr/share/man/cat6
 ./usr/share/man/cat7/ascii.0
 ./usr/share/man/cat7/des_modes.0
@@ -1970,7 +1975,6 @@
 ./usr/share/man/cat8/amd64/apmd.0
 ./usr/share/man/cat8/amd64/biosboot.0
 ./usr/share/man/cat8/amd64/boot.0
-./usr/share/man/cat8/amd64/boot.conf.0
 ./usr/share/man/cat8/amd64/boot_amd64.0
 ./usr/share/man/cat8/amd64/cdboot.0
 ./usr/share/man/cat8/amd64/fdisk.0
@@ -2082,7 +2086,6 @@
 ./usr/share/man/cat8/hppa
 ./usr/share/man/cat8/hppa/MAKEDEV.0
 ./usr/share/man/cat8/hppa/boot.0
-./usr/share/man/cat8/hppa/boot.conf.0
 ./usr/share/man/cat8/hppa/boot_hppa.0
 ./usr/share/man/cat8/hppa/hotplugd.0
 ./usr/share/man/cat8/hppa/kbd.0
@@ -2093,7 +2096,6 @@
 ./usr/share/man/cat8/hppa64
 ./usr/share/man/cat8/hppa64/MAKEDEV.0
 ./usr/share/man/cat8/hppa64/boot.0
-./usr/share/man/cat8/hppa64/boot.conf.0
 ./usr/share/man/cat8/hppa64/boot_hppa64.0
 ./usr/share/man/cat8/hppa64/mkboot.0
 ./usr/share/man/cat8/hprop.0
@@ -2106,7 +2108,6 @@
 ./usr/share/man/cat8/i386/apmd.0
 ./usr/share/man/cat8/i386/biosboot.0
 ./usr/share/man/cat8/i386/boot.0
-./usr/share/man/cat8/i386/boot.conf.0
 ./usr/share/man/cat8/i386/boot_i386.0
 ./usr/share/man/cat8/i386/cdboot.0
 ./usr/share/man/cat8/i386/fdisk.0
@@ -2451,7 +2452,6 @@
 ./usr/share/man/cat8/zaurus/apm.0
 ./usr/share/man/cat8/zaurus/apmd.0
 ./usr/share/man/cat8/zaurus/boot.0
-./usr/share/man/cat8/zaurus/boot.conf.0
 ./usr/share/man/cat8/zaurus/boot_zaurus.0
 ./usr/share/man/cat8/zaurus/fdisk.0
 ./usr/share/man/cat8/zaurus/hotplugd.0
