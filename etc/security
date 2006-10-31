@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.76 2006/10/13 20:12:16 otto Exp $
+#	$OpenBSD: security,v 1.77 2006/10/31 01:38:22 dlg Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -659,9 +659,18 @@ if [ -s /etc/changelist ] ; then
 					chown root:wheel $CUR $BACK
 				fi
 			else
+		echo "\n======\n${file} diffs (-OLD  +NEW)\n======"
+				diff -u /dev/null $file
 				cp -p $file $CUR
 				chown root:wheel $CUR
 			fi
+		fi
+		if [ ! -s $file -a -s $CUR ]; then
+		echo "\n======\n${file} diffs (-OLD  +NEW)\n======"
+			diff -u $CUR /dev/null
+			cp -p $CUR $BACK
+			rm -f $CUR
+			chown root:wheel $BACK
 		fi
 	done
 	for file in `egrep "^\+" /etc/changelist`; do
@@ -682,10 +691,20 @@ if [ -s /etc/changelist ] ; then
 					chmod 600 $CUR
 				fi
 			else
+			echo "\n======\n${file} new MD5 checksum\n======"
+				echo "NEW: $MD5_NEW"
 				echo $MD5_NEW > $CUR
 				chown root:wheel $CUR
 				chmod 600 $CUR
 			fi
+		fi
+		if [ ! -s $file -a -s $CUR ]; then
+			MD5_OLD="`cat $CUR`"
+		echo "\n======\n${file} removed MD5 checksum\n======"
+			echo "OLD: $MD5_OLD"
+			cp -p $CUR $BACK
+			rm $CUR
+			chown root:wheel $BACK
 		fi
 	done
 fi
