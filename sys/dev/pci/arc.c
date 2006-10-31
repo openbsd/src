@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.50 2006/09/25 22:49:28 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.51 2006/10/31 15:23:21 jolan Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -38,6 +38,7 @@
 
 #if NBIO > 0
 #include <sys/ioctl.h>
+#include <sys/sensors.h>
 #include <dev/biovar.h>
 #endif
 
@@ -372,6 +373,7 @@ struct arc_softc {
 
 	void			*sc_shutdownhook;
 
+	int			sc_disk_count;
 	int			sc_req_count;
 
 	struct arc_dmamem	*sc_requests;
@@ -382,6 +384,8 @@ struct arc_softc {
 
 	struct rwlock		sc_lock;
 	volatile int		sc_talking;
+
+	struct sensor		*sc_sensors;
 };
 #define DEVNAME(_s)		((_s)->sc_dev.dv_xname)
 
@@ -486,6 +490,10 @@ int			arc_bio_alarm_state(struct arc_softc *,
 
 int			arc_bio_getvol(struct arc_softc *, int,
 			    struct arc_fw_volinfo *);
+
+/* sensors */
+int			arc_create_sensors(struct arc_softc *);
+void			arc_refresh_sensors(void *);
 #endif
 
 int
@@ -541,6 +549,9 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 #if NBIO > 0
 	if (bio_register(self, arc_bioctl) != 0)
 		panic("%s: bioctl registration failed\n", DEVNAME(sc));
+	
+	if (arc_create_sensors(sc) != 0)
+		printf("%s: unable to create sensors\n", DEVNAME(sc));
 #endif
 
 	return;
@@ -884,6 +895,7 @@ arc_query_firmware(struct arc_softc *sc)
 {
 	struct arc_msg_firmware_info	fwinfo;
 	char				string[81]; /* sizeof(vendor)*2+1 */
+	int				i, j;
 
 	if (arc_wait_eq(sc, ARC_REG_OUTB_ADDR1, ARC_REG_OUTB_ADDR1_FIRMWARE_OK,
 	    ARC_REG_OUTB_ADDR1_FIRMWARE_OK) != 0) {
@@ -925,7 +937,11 @@ arc_query_firmware(struct arc_softc *sc)
 	scsi_strvis(string, fwinfo.fw_version, sizeof(fwinfo.fw_version));
 	DNPRINTF(ARC_D_INIT, "%s: model: \"%s\"\n", DEVNAME(sc), string);
 
-	/* device map? */
+	/* iterate through the device map and get a physical disk count */
+	for (i = 0; i < 16; i++)
+		for (j = 0; j < 8; j++)
+			if (fwinfo.device_map[i] & (1 << j))
+				sc->sc_disk_count++;
 
 	if (letoh32(fwinfo.request_len) != ARC_MAX_IOCMDLEN) {
 		printf("%s: unexpected request frame size (%d != %d)\n",
@@ -1524,6 +1540,104 @@ arc_wait(struct arc_softc *sc)
 	if (tsleep(sc, PWAIT, "arcdb", hz) == EWOULDBLOCK)
 		arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
 	splx(s);
+}
+
+int
+arc_create_sensors(struct arc_softc *sc)
+{
+	struct device		*dev;
+	struct scsibus_softc	*ssc;
+	int			i;
+
+	TAILQ_FOREACH(dev, &alldevs, dv_list) {
+		if (dev->dv_parent != &sc->sc_dev)
+			continue;
+
+		/* check if this is the scsibus for the logical disks */
+		ssc = (struct scsibus_softc *)dev;
+		if (ssc->adapter_link == &sc->sc_link)
+			break;
+	}
+
+	if (ssc == NULL)
+		return (1);
+
+	sc->sc_sensors = malloc(sizeof(struct sensor) * sc->sc_disk_count,
+	    M_DEVBUF, M_WAITOK);
+	if (sc->sc_sensors == NULL)
+		return (1);
+	bzero(sc->sc_sensors, sizeof(struct sensor) * sc->sc_disk_count);	
+
+	for (i = 0; i < sc->sc_disk_count; i++) {
+		if (ssc->sc_link[i][0] == NULL)
+			goto bad;
+
+		dev = ssc->sc_link[i][0]->device_softc;
+
+		sc->sc_sensors[i].type = SENSOR_DRIVE;
+		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+
+		strlcpy(sc->sc_sensors[i].device, DEVNAME(sc),
+		    sizeof(sc->sc_sensors[i].device));
+		strlcpy(sc->sc_sensors[i].desc, dev->dv_xname,
+		    sizeof(sc->sc_sensors[i].desc));
+
+		sensor_add(&sc->sc_sensors[i]);
+	}
+
+	if (sensor_task_register(sc, arc_refresh_sensors, 10) != 0)
+		goto bad;
+
+	return (0);
+
+bad:
+	while (--i >= 0)
+		sensor_del(&sc->sc_sensors[i]);
+	free(sc->sc_sensors, M_DEVBUF);
+
+	return (1);
+}
+
+void
+arc_refresh_sensors(void *arg)
+{
+	struct arc_softc	*sc = arg;
+	struct bioc_vol		bv;
+	int			i;
+
+	for (i = 0; i < sc->sc_disk_count; i++) {
+		bzero(&bv, sizeof(bv));
+		bv.bv_volid = i;
+		if (arc_bio_vol(sc, &bv)) {
+			sc->sc_sensors[i].flags = SENSOR_FINVALID;
+			return;
+		}
+
+		switch(bv.bv_status) {
+		case BIOC_SVOFFLINE:
+			sc->sc_sensors[i].value = SENSOR_DRIVE_FAIL;
+			sc->sc_sensors[i].status = SENSOR_S_CRIT;
+			break;
+
+		case BIOC_SVDEGRADED:
+			sc->sc_sensors[i].value = SENSOR_DRIVE_PFAIL;
+			sc->sc_sensors[i].status = SENSOR_S_WARN;
+			break;
+
+		case BIOC_SVSCRUB:
+		case BIOC_SVONLINE:
+			sc->sc_sensors[i].value = SENSOR_DRIVE_ONLINE;
+			sc->sc_sensors[i].status = SENSOR_S_OK;
+			break;
+
+		case BIOC_SVINVALID:
+			/* FALLTRHOUGH */
+		default:
+			sc->sc_sensors[i].value = 0; /* unknown */
+			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+		}
+
+	}
 }
 #endif /* NBIO > 0 */
 
