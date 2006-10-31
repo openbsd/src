@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.29 2006/10/31 07:04:25 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.30 2006/10/31 22:45:15 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -602,10 +602,12 @@ struct rl_stats {
 	((sc)->rl_ldata.rl_tx_desc_cnt)
 #define RL_TX_LIST_SZ(sc)	\
 	(RL_TX_DESC_CNT(sc) * sizeof(struct rl_desc))
-#define RL_TX_DESC_INC(sc, x)	\
-	((x) = ((x) + 1) % RL_TX_DESC_CNT(sc))
-#define RL_RX_DESC_INC(sc, x)	\
-	((x) = ((x) + 1) % RL_RX_DESC_CNT)
+#define RL_NEXT_TX_DESC(sc, x)	\
+	(((x) + 1) % RL_TX_DESC_CNT(sc))
+#define RL_NEXT_RX_DESC(sc, x)	\
+	(((x) + 1) % RL_RX_DESC_CNT)
+#define RL_NEXT_TXQ(sc, x)	\
+	(((x) + 1) % RL_TX_QLEN)
 
 #define RL_TXDESCSYNC(sc, idx, ops)		\
 	bus_dmamap_sync((sc)->sc_dmat,		\

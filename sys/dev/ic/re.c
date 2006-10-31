@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.50 2006/10/31 07:04:25 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.51 2006/10/31 22:45:15 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1193,7 +1193,7 @@ re_rxeof(struct rl_softc *sc)
 
 	ifp = &sc->sc_arpcom.ac_if;
 
-	for (i = sc->rl_ldata.rl_rx_prodidx;; RL_RX_DESC_INC(sc, i)) {
+	for (i = sc->rl_ldata.rl_rx_prodidx;; i = RL_NEXT_RX_DESC(sc, i)) {
 		cur_rx = &sc->rl_ldata.rl_rx_list[i];
 		RL_RXDESCSYNC(sc, i,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1379,7 +1379,7 @@ re_txeof(struct rl_softc *sc)
 		else
 			ifp->if_opackets++;
 
-		idx = (idx + 1) % RL_TX_QLEN;
+		idx = RL_NEXT_TXQ(sc, idx);
 	}
 
 	/* No changes made to the TX ring, so no flush needed */
@@ -1501,7 +1501,7 @@ int
 re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 {
 	bus_dmamap_t	map;
-	int		error, i, uidx, startidx, curidx;
+	int		error, seg, uidx, startidx, curidx, lastidx;
 #ifdef RE_VLAN
 	struct m_tag	*mtag;
 #endif
@@ -1570,9 +1570,10 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 	 * set this descriptor later when it start transmission or
 	 * reception.)
 	 */
-	i = 0;
 	curidx = startidx = sc->rl_ldata.rl_tx_nextfree;
-	for (;;) {
+	lastidx = -1;
+	for (seg = 0; seg < map->dm_nsegs;
+	    seg++, curidx = RL_NEXT_TX_DESC(sc, curidx)) {
 		d = &sc->rl_ldata.rl_tx_list[curidx];
 		RL_TXDESCSYNC(sc, curidx,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1581,42 +1582,37 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 		if (cmdstat & RL_TDESC_STAT_OWN) {
 			printf("%s: tried to map busy TX descriptor\n",
 			    sc->sc_dev.dv_xname);
-			while (i > 0) {
-				uidx = (curidx + RL_TX_DESC_CNT(sc) - i) %
+			for (; seg > 0; seg --) {
+				uidx = (curidx + RL_TX_DESC_CNT(sc) - seg) %
 				    RL_TX_DESC_CNT(sc);
 				sc->rl_ldata.rl_tx_list[uidx].rl_cmdstat = 0;
 				RL_TXDESCSYNC(sc, uidx,
 				    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-				i--;
 			}
 			error = ENOBUFS;
 			goto fail_unload;
 		}
 
-		cmdstat = map->dm_segs[i].ds_len;
-		if (i == 0)
+		cmdstat = map->dm_segs[seg].ds_len;
+		if (seg == 0)
 			cmdstat |= RL_TDESC_CMD_SOF;
 		else
 			cmdstat |= RL_TDESC_CMD_OWN;
-		if (i == map->dm_nsegs - 1)
+		if (seg == map->dm_nsegs - 1) {
 			cmdstat |= RL_TDESC_CMD_EOF;
+			lastidx = curidx;
+		}
 		if (curidx == (RL_TX_DESC_CNT(sc) - 1))
 			cmdstat |= RL_TDESC_CMD_EOR;
 		d->rl_cmdstat = htole32(cmdstat | rl_flags);
 		d->rl_bufaddr_lo =
-		    htole32(RL_ADDR_LO(map->dm_segs[i].ds_addr));
+		    htole32(RL_ADDR_LO(map->dm_segs[seg].ds_addr));
 		d->rl_bufaddr_hi =
-		    htole32(RL_ADDR_HI(map->dm_segs[i].ds_addr));
+		    htole32(RL_ADDR_HI(map->dm_segs[seg].ds_addr));
 		RL_TXDESCSYNC(sc, curidx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-		i++;
-		if (i == map->dm_nsegs)
-			break;
-		RL_TX_DESC_INC(sc, curidx);
 	}
-
-	txq->txq_mbuf = m;
-	sc->rl_ldata.rl_tx_free -= map->dm_nsegs;
+	KASSERT(lastidx != -1);
 
 	/*
 	 * Set up hardware VLAN tagging. Note: vlan tag info must
@@ -1638,10 +1634,14 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 	    htole32(RL_TDESC_CMD_OWN);
 	RL_TXDESCSYNC(sc, startidx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-	txq->txq_descidx = curidx;
-	RL_TX_DESC_INC(sc, curidx);
+	/* update info of TX queue and descriptors */
+	txq->txq_mbuf = m;
+	txq->txq_descidx = lastidx;
+
+	sc->rl_ldata.rl_tx_free -= map->dm_nsegs;
 	sc->rl_ldata.rl_tx_nextfree = curidx;
-	*idx = (*idx + 1) % RL_TX_QLEN;
+
+	*idx = RL_NEXT_TXQ(sc, *idx);
 
 	return (0);
 
