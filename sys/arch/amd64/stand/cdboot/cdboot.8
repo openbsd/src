@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cdboot.8,v 1.4 2005/11/27 13:11:59 jmc Exp $
+.\"	$OpenBSD: cdboot.8,v 1.5 2006/10/31 11:29:54 tom Exp $
 .\" Copyright (c) 2004 Tom Cosgrove
 .\" Copyright (c) 2003 Matthias Drochner
 .\" Copyright (c) 1999 Doug White
@@ -86,7 +86,8 @@ Boot the install kernel:
 .Dl boot> bsd.rd
 .Sh SEE ALSO
 .Xr boot 8 ,
-.Xr boot_amd64 8
+.Xr boot_amd64 8 ,
+.Xr mkhybrid 8
 .Rs
 .%T "El Torito" Bootable CD-ROM Format Specification
 .%N Version 1.0
@@ -99,6 +100,19 @@ The
 .Nm
 program first appeared in
 .Ox 3.6 .
+.Sh CAVEATS
+By default, many CD creation programs restrict filenames to
+the MS-DOS 8.3 format.
+Unless this is changed,
+.Nm
+will not be able to read its
+.Xr boot.conf 5
+file.
+For example, with
+.Xr mkhybrid 8
+the
+.Fl l
+option should be specified.
 .Sh BUGS
 The
 .Ic ls
