@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.51 2006/10/31 15:23:21 jolan Exp $ */
+/*	$OpenBSD: arc.c,v 1.52 2006/11/01 12:12:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -232,11 +232,11 @@ struct arc_fw_comminfo {
 
 struct arc_fw_scsiattr {
 	u_int8_t		channel;// channel for SCSI target (0/1)
-        u_int8_t		target;
-        u_int8_t		lun;
-        u_int8_t		tagged;
-        u_int8_t		cache;
-        u_int8_t		speed;
+	u_int8_t		target;
+	u_int8_t		lun;
+	u_int8_t		tagged;
+	u_int8_t		cache;
+	u_int8_t		speed;
 } __packed;
 
 struct arc_fw_raidinfo {
@@ -324,12 +324,12 @@ struct arc_fw_sysinfo {
 	u_int32_t		icache;
 	u_int32_t		dcache;
 	u_int32_t		scache;
-        u_int32_t		memory_size;
-        u_int32_t		memory_speed;
-        u_int32_t		events;
+	u_int32_t		memory_size;
+	u_int32_t		memory_speed;
+	u_int32_t		events;
 
-        u_int8_t		gsiMacAddress[6];
-        u_int8_t		gsiDhcp;
+	u_int8_t		gsiMacAddress[6];
+	u_int8_t		gsiDhcp;
 
 	u_int8_t		alarm;
 	u_int8_t		channel_usage;
@@ -549,7 +549,7 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 #if NBIO > 0
 	if (bio_register(self, arc_bioctl) != 0)
 		panic("%s: bioctl registration failed\n", DEVNAME(sc));
-	
+
 	if (arc_create_sensors(sc) != 0)
 		printf("%s: unable to create sensors\n", DEVNAME(sc));
 #endif
@@ -1566,7 +1566,7 @@ arc_create_sensors(struct arc_softc *sc)
 	    M_DEVBUF, M_WAITOK);
 	if (sc->sc_sensors == NULL)
 		return (1);
-	bzero(sc->sc_sensors, sizeof(struct sensor) * sc->sc_disk_count);	
+	bzero(sc->sc_sensors, sizeof(struct sensor) * sc->sc_disk_count);
 
 	for (i = 0; i < sc->sc_disk_count; i++) {
 		if (ssc->sc_link[i][0] == NULL)
