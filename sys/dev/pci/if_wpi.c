@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.34 2006/10/23 18:19:26 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.35 2006/11/01 11:25:01 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -790,6 +790,10 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		ic->ic_state = nstate;
 		return 0;
 
+	case IEEE80211_S_ASSOC:
+		if (ic->ic_state != IEEE80211_S_RUN)
+			break;
+		/* FALLTHROUGH */
 	case IEEE80211_S_AUTH:
 		/* reset state to handle reassociations correctly */
 		sc->config.state = 0;
@@ -845,7 +849,6 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		wpi_set_led(sc, WPI_LED_LINK, 0, 1);
 		break;
 
-	case IEEE80211_S_ASSOC:
 	case IEEE80211_S_INIT:
 		break;
 	}
