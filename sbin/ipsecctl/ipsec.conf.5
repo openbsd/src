@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.102 2006/10/19 08:41:18 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.103 2006/11/01 03:10:02 mcbride Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -274,12 +274,17 @@ is identical to
 .Ar remote ,
 this option is generally not needed.
 .It Xo
-.Ic main auth Ar algorithm
+.Ar mode auth Ar algorithm
 .Ic enc Ar algorithm
 .Ic group Ar group
 .Xc
-These parameters define the cryptographic transforms to be used for
-main mode.
+These parameters define the mode and cryptographic transforms to be
+used for the phase 1 negotiation.
+The mode can be either
+.Ar main ,
+which specifies main mode, or
+.Ar aggressive ,
+which specifies aggressive mode.
 Possible values for
 .Ic auth ,
 .Ic enc ,
@@ -291,6 +296,7 @@ are described below in
 If omitted,
 .Xr ipsecctl 8
 will use the default values
+.Ar main ,
 .Ar hmac-sha1 ,
 .Ar aes ,
 and
@@ -301,7 +307,7 @@ and
 .Ic group Ar group
 .Xc
 These parameters define the cryptographic transforms to be used for
-quick mode.
+the phase 2 negotiation.
 Possible values for
 .Ic auth ,
 .Ic enc ,

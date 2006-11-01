@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.60 2006/09/19 21:29:47 markus Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.61 2006/11/01 03:10:02 mcbride Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -242,14 +242,14 @@ ipsecctl_free_rule(struct ipsec_rule *rp)
 	}
 	if (rp->xfs)
 		free(rp->xfs);
-	if (rp->mmxfs)
-		free(rp->mmxfs);
-	if (rp->qmxfs)
-		free(rp->qmxfs);
-	if (rp->mmlife)
-		free(rp->mmlife);
-	if (rp->qmlife)
-		free(rp->qmlife);
+	if (rp->p1xfs)
+		free(rp->p1xfs);
+	if (rp->p2xfs)
+		free(rp->p2xfs);
+	if (rp->p1life)
+		free(rp->p1life);
+	if (rp->p2life)
+		free(rp->p2life);
 	if (rp->authkey) {
 		free(rp->authkey->data);
 		free(rp->authkey);

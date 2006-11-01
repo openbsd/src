@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.109 2006/09/22 10:22:49 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.110 2006/11/01 03:10:02 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -219,8 +219,7 @@ typedef struct {
 		} keys;
 		struct ipsec_transforms *transforms;
 		struct ipsec_life	*life;
-		struct ike_mode		*mainmode;
-		struct ike_mode		*quickmode;
+		struct ike_mode		*mode;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -228,8 +227,8 @@ typedef struct {
 %}
 
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
-%token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK PASSIVE
-%token	ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC LIFE
+%token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK AGGRESSIVE
+%token	PASSIVE ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC LIFE
 %token	TYPE DENY BYPASS LOCAL PROTO USE ACQUIRE REQUIRE DONTACQ GROUP PORT
 %token	<v.string>		STRING
 %type	<v.string>		string
@@ -254,8 +253,7 @@ typedef struct {
 %type	<v.ikeauth>		ikeauth
 %type	<v.type>		type
 %type	<v.life>		life
-%type	<v.mainmode>		mainmode
-%type	<v.quickmode>		quickmode
+%type	<v.mode>		phase1mode phase2mode
 %%
 
 grammar		: /* empty */
@@ -332,8 +330,8 @@ flowrule	: FLOW satype dir proto hosts peers ids type {
 		}
 		;
 
-ikerule		: IKE ikemode satype tmode proto hosts peers mainmode quickmode
-		    ids ikeauth {
+ikerule		: IKE ikemode satype tmode proto hosts peers
+		    phase1mode phase2mode ids ikeauth {
 			struct ipsec_rule	*r;
 
 			r = create_ike($5, &$6, &$7, $8, $9, $3, $4, $2,
@@ -643,41 +641,55 @@ transform	: AUTHXF STRING			{
 		}
 		;
 
-mainmode	: /* empty */			{
-			struct ike_mode		*mm;
+phase1mode	: /* empty */	{
+			struct ike_mode		*p1;
 
-			/* We create just an empty mode */
-			if ((mm = calloc(1, sizeof(struct ike_mode))) == NULL)
-				err(1, "mainmode: calloc");
-			$$ = mm;
+			/* We create just an empty main mode */
+			if ((p1 = calloc(1, sizeof(struct ike_mode))) == NULL)
+				err(1, "phase1mode: calloc");
+			p1->ike_exch = IKE_MM;
+			$$ = p1;
 		}
 		| MAIN transforms life		{
-			struct ike_mode	*mm;
+			struct ike_mode	*p1;
 
-			if ((mm = calloc(1, sizeof(struct ike_mode))) == NULL)
-				err(1, "mainmode: calloc");
-			mm->xfs = $2;
-			mm->life = $3;
-			$$ = mm;
+			if ((p1 = calloc(1, sizeof(struct ike_mode))) == NULL)
+				err(1, "phase1mode: calloc");
+			p1->xfs = $2;
+			p1->life = $3;
+			p1->ike_exch = IKE_MM;
+			$$ = p1;
+		}
+		| AGGRESSIVE transforms life		{
+			struct ike_mode	*p1;
+
+			if ((p1 = calloc(1, sizeof(struct ike_mode))) == NULL)
+				err(1, "phase1mode: calloc");
+			p1->xfs = $2;
+			p1->life = $3;
+			p1->ike_exch = IKE_AM;
+			$$ = p1;
 		}
 		;
 
-quickmode	: /* empty */			{
-			struct ike_mode		*qm;
+phase2mode	: /* empty */	{
+			struct ike_mode		*p2;
 
-			/* We create just an empty mode */
-			if ((qm = calloc(1, sizeof(struct ike_mode))) == NULL)
-				err(1, "quickmode: calloc");
-			$$ = qm;
+			/* We create just an empty quick mode */
+			if ((p2 = calloc(1, sizeof(struct ike_mode))) == NULL)
+				err(1, "phase1mode: calloc");
+			p2->ike_exch = IKE_QM;
+			$$ = p2;
 		}
 		| QUICK transforms life		{
-			struct ike_mode	*qm;
+			struct ike_mode	*p2;
 
-			if ((qm = calloc(1, sizeof(struct ike_mode))) == NULL)
-				err(1, "quickmode: calloc");
-			qm->xfs = $2;
-			qm->life = $3;
-			$$ = qm;
+			if ((p2 = calloc(1, sizeof(struct ike_mode))) == NULL)
+				err(1, "phase1mode: calloc");
+			p2->xfs = $2;
+			p2->life = $3;
+			p2->ike_exch = IKE_QM;
+			$$ = p2;
 		}
 		;
 
@@ -831,6 +843,7 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "acquire",		ACQUIRE },
 		{ "active",		ACTIVE },
+		{ "aggressive",		AGGRESSIVE },
 		{ "ah",			AH },
 		{ "any",		ANY },
 		{ "auth",		AUTHXF },
@@ -1814,13 +1827,15 @@ copyrule(struct ipsec_rule *rule)
 	r->auth = copyipsecauth(rule->auth);
 	r->ikeauth = copyikeauth(rule->ikeauth);
 	r->xfs = copytransforms(rule->xfs);
-	r->mmxfs = copytransforms(rule->mmxfs);
-	r->qmxfs = copytransforms(rule->qmxfs);
-	r->mmlife = copylife(rule->mmlife);
-	r->qmlife = copylife(rule->qmlife);
+	r->p1xfs = copytransforms(rule->p1xfs);
+	r->p2xfs = copytransforms(rule->p2xfs);
+	r->p1life = copylife(rule->p1life);
+	r->p2life = copylife(rule->p2life);
 	r->authkey = copykey(rule->authkey);
 	r->enckey = copykey(rule->enckey);
 
+	r->p1ie = rule->p1ie;
+	r->p2ie = rule->p2ie;
 	r->type = rule->type;
 	r->satype = rule->satype;
 	r->proto = rule->proto;
@@ -2228,8 +2243,8 @@ reverse_rule(struct ipsec_rule *rule)
 
 struct ipsec_rule *
 create_ike(u_int8_t proto, struct ipsec_hosts *hosts, struct ipsec_hosts *peers,
-    struct ike_mode *mainmode, struct ike_mode *quickmode,
-    u_int8_t satype, u_int8_t tmode, u_int8_t mode, char *srcid, char *dstid,
+    struct ike_mode *phase1mode, struct ike_mode *phase2mode, u_int8_t satype,
+    u_int8_t tmode, u_int8_t mode, char *srcid, char *dstid,
     struct ike_auth *authtype)
 {
 	struct ipsec_rule *r;
@@ -2253,17 +2268,17 @@ create_ike(u_int8_t proto, struct ipsec_hosts *hosts, struct ipsec_hosts *peers,
 		hosts->src = NULL;
 		free(hosts->dst);
 		hosts->dst = NULL;
-		if (mainmode) {
-			free(mainmode->xfs);
-			mainmode->xfs = NULL;
-			free(mainmode->life);
-			mainmode->life = NULL;
+		if (phase1mode) {
+			free(phase1mode->xfs);
+			phase1mode->xfs = NULL;
+			free(phase1mode->life);
+			phase1mode->life = NULL;
 		}
-		if (quickmode) {
-			free(quickmode->xfs);
-			quickmode->xfs = NULL;
-			free(quickmode->life);
-			quickmode->life = NULL;
+		if (phase2mode) {
+			free(phase2mode->xfs);
+			phase2mode->xfs = NULL;
+			free(phase2mode->life);
+			phase2mode->life = NULL;
 		}
 		if (srcid)
 			free(srcid);
@@ -2294,14 +2309,21 @@ create_ike(u_int8_t proto, struct ipsec_hosts *hosts, struct ipsec_hosts *peers,
 	r->satype = satype;
 	r->tmode = tmode;
 	r->ikemode = mode;
-	if (mainmode) {
-		r->mmxfs = mainmode->xfs;
-		r->mmlife = mainmode->life;
+	if (phase1mode) {
+		r->p1xfs = phase1mode->xfs;
+		r->p1life = phase1mode->life;
+		r->p1ie = phase1mode->ike_exch;
+	} else {
+		r->p1ie = IKE_MM;
 	}
-	if (quickmode) {
-		r->qmxfs = quickmode->xfs;
-		r->qmlife = quickmode->life;
+	if (phase2mode) {
+		r->p2xfs = phase2mode->xfs;
+		r->p2life = phase2mode->life;
+		r->p2ie = phase2mode->ike_exch;
+	} else {
+		r->p2ie = IKE_QM;
 	}
+
 	r->auth = calloc(1, sizeof(struct ipsec_auth));
 	if (r->auth == NULL)
 		err(1, "create_ike: calloc");

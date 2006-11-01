@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.50 2006/09/18 13:45:45 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.51 2006/11/01 03:10:02 mcbride Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -40,12 +40,12 @@ static void	ike_section_ids(struct ipsec_addr_wrap *, struct ipsec_auth *,
 static int	ike_get_id_type(char *);
 static void	ike_section_ipsec(struct ipsec_addr_wrap *, struct
 		    ipsec_addr_wrap *, struct ipsec_addr_wrap *, FILE *);
-static int	ike_section_qm(struct ipsec_addr_wrap *, struct
+static int	ike_section_p1(struct ipsec_addr_wrap *, struct
+		    ipsec_transforms *, FILE *, struct ike_auth *, u_int8_t);
+static int	ike_section_p2(struct ipsec_addr_wrap *, struct
 		    ipsec_addr_wrap *, u_int8_t, u_int8_t, struct
-		    ipsec_transforms *, FILE *);
-static int	ike_section_mm(struct ipsec_addr_wrap *, struct
-		    ipsec_transforms *, FILE *, struct ike_auth *);
-static void	ike_section_qmids(u_int8_t, struct ipsec_addr_wrap *,
+		    ipsec_transforms *, FILE *, u_int8_t);
+static void	ike_section_p2ids(u_int8_t, struct ipsec_addr_wrap *,
 		    u_int16_t, struct ipsec_addr_wrap *, u_int16_t, FILE *);
 static int	ike_connect(u_int8_t, struct ipsec_addr_wrap *, struct
 		    ipsec_addr_wrap *, FILE *);
@@ -75,12 +75,12 @@ ike_section_general(struct ipsec_rule *r, FILE *fd)
 		fprintf(fd, SET "[General]:DPD-check-interval=%d force\n",
 		    CONF_DFLT_DYNAMIC_DPD_CHECK_INTERVAL);
 	}
-	if (r->mmlife && r->mmlife->lifetime != -1)
+	if (r->p1life && r->p1life->lifetime != -1)
 		fprintf(fd, SET "[General]:Default-phase-1-lifetime=%d force\n",
-		    r->mmlife->lifetime);
-	if (r->qmlife && r->qmlife->lifetime != -1)
+		    r->p1life->lifetime);
+	if (r->p2life && r->p2life->lifetime != -1)
 		fprintf(fd, SET "[General]:Default-phase-2-lifetime=%d force\n",
-		    r->qmlife->lifetime);
+		    r->p2life->lifetime);
 }
 
 static void
@@ -196,12 +196,27 @@ ike_section_ipsec(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 }
 
 static int
-ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
-    u_int8_t satype, u_int8_t tmode, struct ipsec_transforms *qmxfs, FILE *fd)
+ike_section_p2(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
+    u_int8_t satype, u_int8_t tmode, struct ipsec_transforms *qmxfs, FILE *fd,
+    u_int8_t ike_exch)
 {
-	fprintf(fd, SET "[qm-%s-%s]:EXCHANGE_TYPE=QUICK_MODE force\n",
-	    src->name, dst->name);
-	fprintf(fd, SET "[qm-%s-%s]:Suites=QM-", src->name, dst->name);
+	char *tag, *exchange_type, *sprefix;
+
+	switch (ike_exch) {
+	case IKE_QM:
+		tag = "qm";
+		exchange_type = "QUICK_MODE";
+		sprefix = "QM";
+		break;
+	default:
+		warnx("illegal phase 2 ike mode %d", ike_exch);
+		return (-1);
+	}
+
+	fprintf(fd, SET "[%s-%s-%s]:EXCHANGE_TYPE=%s force\n",
+	    tag, src->name, dst->name, exchange_type);
+	fprintf(fd, SET "[%s-%s-%s]:Suites=%s-", tag, src->name,
+	    dst->name, sprefix);
 
 	switch (satype) {
 	case IPSEC_ESP:
@@ -328,24 +343,41 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 }
 
 static int
-ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
-    FILE *fd, struct ike_auth *auth)
+ike_section_p1(struct ipsec_addr_wrap *peer, struct ipsec_transforms *p1xfs,
+    FILE *fd, struct ike_auth *auth, u_int8_t ike_exch)
 {
-	if (peer) {
-		fprintf(fd, SET "[peer-%s]:Configuration=mm-%s force\n",
-		    peer->name, peer->name);
-		fprintf(fd, SET "[mm-%s]:EXCHANGE_TYPE=ID_PROT force\n",
-		    peer->name);
-		fprintf(fd, ADD "[mm-%s]:Transforms=", peer->name);
-	} else {
-		fprintf(fd, SET
-		    "[peer-default]:Configuration=mm-default force\n");
-		fprintf(fd, SET "[mm-default]:EXCHANGE_TYPE=ID_PROT force\n");
-		fprintf(fd, ADD "[mm-default]:Transforms=");
+	char *tag, *exchange_type;
+
+	switch (ike_exch) {
+	case IKE_MM:
+		tag = "mm";
+		exchange_type = "ID_PROT";
+		break;
+	case IKE_AM:
+		tag = "am";
+		exchange_type = "AGGRESSIVE";
+		break;
+	default:
+		warnx("illegal phase 2 ike mode %d", ike_exch);
+		return (-1);
 	}
 
-	if (mmxfs && mmxfs->encxf) {
-		switch (mmxfs->encxf->id) {
+	if (peer) {
+		fprintf(fd, SET "[peer-%s]:Configuration=%s-%s force\n",
+		    peer->name, tag, peer->name);
+		fprintf(fd, SET "[%s-%s]:EXCHANGE_TYPE=%s force\n",
+		    tag, peer->name, exchange_type);
+		fprintf(fd, ADD "[%s-%s]:Transforms=", tag, peer->name);
+	} else {
+		fprintf(fd, SET
+		    "[peer-default]:Configuration=%s-default force\n", tag);
+		fprintf(fd, SET "[%s-default]:EXCHANGE_TYPE=%s force\n",
+		    tag, exchange_type);
+		fprintf(fd, ADD "[%s-default]:Transforms=", tag);
+	}
+
+	if (p1xfs && p1xfs->encxf) {
+		switch (p1xfs->encxf->id) {
 		case ENCXF_3DES_CBC:
 			fprintf(fd, "3DES");
 			break;
@@ -362,15 +394,15 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 			fprintf(fd, "CAST");
 			break;
 		default:
-			warnx("illegal transform %s", mmxfs->encxf->name);
+			warnx("illegal transform %s", p1xfs->encxf->name);
 			return (-1);
 		}
 	} else
 		fprintf(fd, "AES");
 	fprintf(fd, "-");
 
-	if (mmxfs && mmxfs->authxf) {
-		switch (mmxfs->authxf->id) {
+	if (p1xfs && p1xfs->authxf) {
+		switch (p1xfs->authxf->id) {
 		case AUTHXF_HMAC_MD5:
 			fprintf(fd, "MD5");
 			break;
@@ -387,14 +419,14 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 			fprintf(fd, "SHA2-512");
 			break;
 		default:
-			warnx("illegal transform %s", mmxfs->authxf->name);
+			warnx("illegal transform %s", p1xfs->authxf->name);
 			return (-1);
 		}
 	} else
 		fprintf(fd, "SHA");
 
-	if (mmxfs && mmxfs->groupxf) {
-		switch (mmxfs->groupxf->id) {
+	if (p1xfs && p1xfs->groupxf) {
+		switch (p1xfs->groupxf->id) {
 		case GROUPXF_768:
 			fprintf(fd, "-GRP1");
 			break;
@@ -420,7 +452,7 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 			fprintf(fd, "-GRP18");
 			break;
 		default:
-			warnx("illegal group %s", mmxfs->groupxf->name);
+			warnx("illegal group %s", p1xfs->groupxf->name);
 			return (-1);
 		};
 	}
@@ -433,7 +465,7 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 }
 
 static void
-ike_section_qmids(u_int8_t proto, struct ipsec_addr_wrap *src,
+ike_section_p2ids(u_int8_t proto, struct ipsec_addr_wrap *src,
     u_int16_t sport, struct ipsec_addr_wrap *dst, u_int16_t dport, FILE *fd)
 {
 	char mask[NI_MAXHOST], *network, *p;
@@ -463,7 +495,7 @@ ike_section_qmids(u_int8_t proto, struct ipsec_addr_wrap *src,
 			errx(1, "could not get a numeric mask");
 
 		if ((network = strdup(src->name)) == NULL)
-			err(1, "ike_section_qmids: strdup");
+			err(1, "ike_section_p2ids: strdup");
 		if ((p = strrchr(network, '/')) != NULL)
 			*p = '\0';
 
@@ -503,7 +535,7 @@ ike_section_qmids(u_int8_t proto, struct ipsec_addr_wrap *src,
 			errx(1, "could not get a numeric mask");
 
 		if ((network = strdup(dst->name)) == NULL)
-			err(1, "ike_section_qmids: strdup");
+			err(1, "ike_section_p2ids: strdup");
 		if ((p = strrchr(network, '/')) != NULL)
 			*p = '\0';
 
@@ -557,14 +589,15 @@ ike_gen_config(struct ipsec_rule *r, FILE *fd)
 {
 	ike_section_general(r, fd);
 	ike_section_peer(r->peer, r->local, fd, r->ikeauth);
-	if (ike_section_mm(r->peer, r->mmxfs, fd, r->ikeauth) == -1)
+	if (ike_section_p1(r->peer, r->p1xfs,
+	    fd, r->ikeauth, r->p1ie) == -1)
 		return (-1);
 	ike_section_ids(r->peer, r->auth, fd, r->ikemode);
 	ike_section_ipsec(r->src, r->dst, r->peer, fd);
-	if (ike_section_qm(r->src, r->dst, r->satype, r->tmode, r->qmxfs, fd)
-	    == -1)
+	if (ike_section_p2(r->src, r->dst, r->satype, r->tmode, r->p2xfs,
+	    fd, r->p2ie) == -1)
 		return (-1);
-	ike_section_qmids(r->proto, r->src, r->sport, r->dst, r->dport, fd);
+	ike_section_p2ids(r->proto, r->src, r->sport, r->dst, r->dport, fd);
 
 	if (ike_connect(r->ikemode, r->src, r->dst, fd) == -1)
 		return (-1);
@@ -591,6 +624,7 @@ ike_delete_config(struct ipsec_rule *r, FILE *fd)
 	if (r->peer) {
 		fprintf(fd, DELETE "[peer-%s]\n", r->peer->name);
 		fprintf(fd, DELETE "[mm-%s]\n", r->peer->name);
+		fprintf(fd, DELETE "[am-%s]\n", r->peer->name);
 	}
 	if (r->auth) {
 		if (r->auth->srcid)

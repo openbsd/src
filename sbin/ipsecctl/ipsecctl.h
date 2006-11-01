@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.49 2006/06/18 18:18:01 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.50 2006/11/01 03:10:02 mcbride Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -77,6 +77,10 @@ enum {
 enum {
 	IKE_AUTH_RSA, IKE_AUTH_PSK
 };
+enum {
+	IKE_MM=0, IKE_AM, IKE_QM
+};
+
 
 struct ipsec_addr {
 	union {
@@ -149,6 +153,7 @@ struct ipsec_life {
 struct ike_mode {
 	struct ipsec_transforms	*xfs;
 	struct ipsec_life	*life;
+	u_int8_t		 ike_exch;
 };
 
 extern const struct ipsec_xf authxfs[];
@@ -169,10 +174,10 @@ struct ipsec_rule {
 	struct ipsec_auth *auth;
 	struct ike_auth *ikeauth;
 	struct ipsec_transforms *xfs;
-	struct ipsec_transforms *mmxfs;
-	struct ipsec_life *mmlife;
-	struct ipsec_transforms *qmxfs;
-	struct ipsec_life *qmlife;
+	struct ipsec_transforms *p1xfs;
+	struct ipsec_life *p1life;
+	struct ipsec_transforms *p2xfs;
+	struct ipsec_life *p2life;
 	struct ipsec_key  *authkey;
 	struct ipsec_key  *enckey;
 
@@ -183,6 +188,8 @@ struct ipsec_rule {
 	u_int8_t	 direction;
 	u_int8_t	 flowtype;
 	u_int8_t	 ikemode;
+	u_int8_t	 p1ie;
+	u_int8_t	 p2ie;
 	u_int16_t	 sport;
 	u_int16_t	 dport;
 	u_int32_t	 spi;
