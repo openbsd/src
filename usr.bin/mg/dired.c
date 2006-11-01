@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.41 2006/07/25 08:27:09 kjell Exp $	*/
+/*	$OpenBSD: dired.c,v 1.42 2006/11/01 06:02:29 ray Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -622,7 +622,10 @@ dired_(char *dname)
 	}
 	line[0] = line[1] = ' ';
 	while (fgets(&line[2], sizeof(line) - 2, dirpipe) != NULL) {
-		line[strlen(line) - 1] = '\0';	/* remove ^J	 */
+		char *p;
+
+		if ((p = strchr(line, '\n')) != NULL)
+			*p = '\0';	/* remove ^J	 */
 		(void) addline(bp, line);
 	}
 	if (pclose(dirpipe) == -1) {
