@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.35 2006/08/06 12:35:44 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.36 2006/11/01 13:20:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -221,7 +221,7 @@ main(int argc, char *argv[])
 	/* setup signal handler */
 	signal_set(&ev_sigint, SIGINT, main_sig_handler, NULL);
 	signal_set(&ev_sigterm, SIGTERM, main_sig_handler, NULL);
-	signal_set(&ev_sigchld, SIGINT, main_sig_handler, NULL);
+	signal_set(&ev_sigchld, SIGCHLD, main_sig_handler, NULL);
 	signal_set(&ev_sighup, SIGHUP, main_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
