@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.251 2006/10/31 23:46:24 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.252 2006/11/01 03:39:24 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1941,8 +1941,8 @@ main(int argc, char *argv[])
 				anchoropt[len - 2] = '\0';
 			else
 				anchoropt[len - 1] = '\0';
+			opts |= PF_OPT_RECURSE;
 		}
-		opts |= PF_OPT_RECURSE;
 		if (strlcpy(anchorname, anchoropt,
 		    sizeof(anchorname)) >= sizeof(anchorname))
 			errx(1, "anchor name '%s' too long",
