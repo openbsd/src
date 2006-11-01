@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.11 2006/10/31 07:01:08 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.12 2006/11/01 04:34:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -692,10 +692,10 @@ vic_getlladdr(struct vic_softc *sc)
 void
 vic_setlladdr(struct vic_softc *sc)
 {
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh, VIC_LLADDR, ETHER_ADDR_LEN,
-	    BUS_SPACE_BARRIER_READ);
 	bus_space_write_region_1(sc->sc_iot, sc->sc_ioh, VIC_LLADDR,
 	    sc->sc_lladdr, ETHER_ADDR_LEN);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, VIC_LLADDR, ETHER_ADDR_LEN,
+	    BUS_SPACE_BARRIER_WRITE);
 }
 
 int
