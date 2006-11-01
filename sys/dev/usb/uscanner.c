@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.21 2006/07/01 10:33:12 miod Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.22 2006/11/01 03:37:24 tedu Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -693,7 +693,7 @@ uscannerpoll(dev_t dev, int events, usb_proc_ptr p)
 	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
 
 	if (sc->sc_dying)
-		return (EIO);
+		return (POLLERR);
 
 	/*
 	 * We have no easy way of determining if a read will

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.35 2006/06/23 06:27:11 miod Exp $ */
+/*	$OpenBSD: ugen.c,v 1.36 2006/11/01 03:37:23 tedu Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1347,20 +1347,20 @@ ugenpoll(dev_t dev, int events, usb_proc_ptr p)
 	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 
 	if (sc->sc_dying)
-		return (EIO);
+		return (POLLERR);
 
 	/* XXX always IN */
 	sce = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
 	if (sce == NULL)
-		return (EINVAL);
+		return (POLLERR);
 #ifdef DIAGNOSTIC
 	if (!sce->edesc) {
 		printf("ugenpoll: no edesc\n");
-		return (EIO);
+		return (POLLERR);
 	}
 	if (!sce->pipeh) {
 		printf("ugenpoll: no pipe\n");
-		return (EIO);
+		return (POLLERR);
 	}
 #endif
 	s = splusb();

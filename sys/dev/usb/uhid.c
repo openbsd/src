@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.29 2006/06/23 06:27:11 miod Exp $ */
+/*	$OpenBSD: uhid.c,v 1.30 2006/11/01 03:37:24 tedu Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -549,7 +549,7 @@ uhidpoll(dev_t dev, int events, usb_proc_ptr p)
 	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
 
 	if (sc->sc_dying)
-		return (EIO);
+		return (POLLERR);
 
 	s = splusb();
 	if (events & (POLLOUT | POLLWRNORM))

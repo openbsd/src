@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.79 2006/03/25 22:41:48 djm Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.80 2006/11/01 03:37:24 tedu Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -947,7 +947,7 @@ tunpoll(dev_t dev, int events, struct proc *p)
 	struct mbuf		*m;
 
 	if ((tp = tun_lookup(minor(dev))) == NULL)
-		return (ENXIO);
+		return (POLLERR);
 
 	ifp = &tp->tun_if;
 	revents = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.18 2006/08/05 19:08:41 miod Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.19 2006/11/01 03:37:24 tedu Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -61,6 +61,7 @@
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/device.h>
+#include <sys/poll.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsksymdef.h>
@@ -547,7 +548,7 @@ wsmuxpoll(dev_t dev, int events, struct proc *p)
 #ifdef DIAGNOSTIC
 		printf("wsmuxpoll: not open\n");
 #endif
-		return (EACCES);
+		return (POLLERR);
 	}
 
 	return (wsevent_poll(sc->sc_base.me_evp, events, p));

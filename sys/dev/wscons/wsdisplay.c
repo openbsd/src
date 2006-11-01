@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.69 2006/08/05 16:59:57 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.70 2006/11/01 03:37:24 tedu Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/timeout.h>
+#include <sys/poll.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -1343,10 +1344,10 @@ wsdisplaypoll(dev_t dev, int events, struct proc *p)
 		return (0);
 
 	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(dev)]) == NULL)
-		return (ENXIO);
+		return (POLLERR);
 
 	if (!WSSCREEN_HAS_TTY(scr))
-		return (ENODEV);
+		return (POLLERR);
 
 	return (ttpoll(dev, events, p));
 }

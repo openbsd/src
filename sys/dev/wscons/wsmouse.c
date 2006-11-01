@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.17 2005/08/14 11:00:15 miod Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.18 2006/11/01 03:37:24 tedu Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -91,6 +91,7 @@
 #include <sys/signalvar.h>
 #include <sys/device.h>
 #include <sys/vnode.h>
+#include <sys/poll.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
@@ -640,7 +641,7 @@ wsmousepoll(dev_t dev, int events, struct proc *p)
 	struct wsmouse_softc *sc = wsmouse_cd.cd_devs[minor(dev)];
 
 	if (sc->sc_base.me_evp == NULL)
-		return (EINVAL);
+		return (POLLERR);
 	return (wsevent_poll(sc->sc_base.me_evp, events, p));
 }
 

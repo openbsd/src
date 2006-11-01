@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.51 2006/06/23 06:27:11 miod Exp $	*/
+/*	$OpenBSD: audio.c,v 1.52 2006/11/01 03:37:23 tedu Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -769,10 +769,10 @@ audiopoll(dev, events, p)
 
 	if (unit >= audio_cd.cd_ndevs ||
 	    (sc = audio_cd.cd_devs[unit]) == NULL)
-		return ENXIO;
+		return POLLERR;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return POLLERR;
 
 	sc->sc_refcnt ++;
 	switch (AUDIODEV(dev)) {

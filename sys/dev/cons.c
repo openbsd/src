@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.16 2005/12/31 21:22:34 miod Exp $	*/
+/*	$OpenBSD: cons.c,v 1.17 2006/11/01 03:37:23 tedu Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/file.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
+#include <sys/poll.h>
 
 #include <dev/cons.h>
 
@@ -217,7 +218,7 @@ cnpoll(dev, rw, p)
 	if (constty != NULL)
 		dev = constty->t_dev;
 	else if (cn_tab == NULL)
-		return ENXIO;
+		return POLLERR;
 	else
 		dev = cn_tab->cn_dev;
 	return (ttpoll(cn_tab->cn_dev, rw, p));
