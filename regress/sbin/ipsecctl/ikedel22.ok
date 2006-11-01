@@ -1,6 +1,7 @@
 t IPsec-10.1.1.0/24-10.1.2.0/24
 C rms [peer-3ffe::1]
 C rms [mm-3ffe::1]
+C rms [am-3ffe::1]
 C rms [IPsec-10.1.1.0/24-10.1.2.0/24]
 C rms [qm-10.1.1.0/24-10.1.2.0/24]
 C rms [lid-10.1.1.0/24]
