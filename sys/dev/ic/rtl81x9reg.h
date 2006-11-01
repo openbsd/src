@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.30 2006/10/31 22:45:15 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.31 2006/11/01 23:25:18 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -672,6 +672,11 @@ struct rl_mii_frame {
 #define RL_ISCPLUS(x)	((x)->rl_type == RL_8139CPLUS || \
 			 (x)->rl_type == RL_8169)
 
+struct rl_rxsoft {
+	struct mbuf		*rxs_mbuf;
+	bus_dmamap_t		rxs_dmamap;
+};
+
 struct rl_list_data {
 	struct rl_txq {
 		struct mbuf *txq_mbuf;
@@ -688,8 +693,7 @@ struct rl_list_data {
 	int			rl_tx_desc_cnt; /* # of descriptors */
 	int			rl_tx_listnseg;
 
-	struct mbuf		*rl_rx_mbuf[RL_RX_DESC_CNT];
-	bus_dmamap_t		rl_rx_dmamap[RL_RX_DESC_CNT];
+	struct rl_rxsoft	rl_rxsoft[RL_RX_DESC_CNT];
 	bus_dmamap_t		rl_rx_list_map;
 	struct rl_desc		*rl_rx_list;
 	bus_dma_segment_t	rl_rx_listseg;
