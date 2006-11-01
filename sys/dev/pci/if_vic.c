@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.13 2006/11/01 05:06:26 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.14 2006/11/01 05:45:15 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -820,6 +820,7 @@ vic_encap(struct vic_softc *sc, struct mbuf *m)
 	txd->tx_owner = VIC_OWNER_NIC;
 
 	/* XXX bus dma sync */
+	txb->txb_m = m;
 
 	if (VIC_TXURN_WARN(sc)) {
 		if (ifp->if_flags & IFF_DEBUG)
@@ -954,6 +955,8 @@ vic_init(struct ifnet *ifp)
 	else
 		vic_iff(sc, VIC_CMD_IFF_BROADCAST | VIC_CMD_IFF_MULTICAST);
 
+	sc->sc_data->vd_tx_curidx = 0;
+	sc->sc_data->vd_tx_nextidx = 0;
 	sc->sc_data->vd_tx_stopped = sc->sc_data->vd_tx_queued = 0;
 
 	ifp->if_flags |= IFF_RUNNING;
