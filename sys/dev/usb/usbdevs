@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.227 2006/10/26 03:39:09 jsg Exp $
+$OpenBSD: usbdevs,v 1.228 2006/11/01 07:08:50 jolan Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -58,6 +58,7 @@ $OpenBSD: usbdevs,v 1.227 2006/10/26 03:39:09 jsg Exp $
  */
 
 vendor EGALAX2		0x0123	eGalax
+vendor BWCT		0x03da	Bernd Walter Computer Technology
 vendor AOX		0x03e8	AOX
 vendor ATMEL		0x03eb	Atmel
 vendor MITSUMI		0x03ee	Mitsumi
@@ -786,6 +787,9 @@ product BROTHER HL1050		0x0002	HL-1050 laser printer
 
 /* Behavior Technology Computer products */
 product BTC BTC7932		0x6782	Keyboard/Mouse
+
+/* Bernd Walter Computer Technology products */
+product BWCT 6CHCONSER		0x0001	6ch ConSer
 
 /* Canon, Inc. products */
 product CANON N656U		0x2206	CANOSCAN N656U
