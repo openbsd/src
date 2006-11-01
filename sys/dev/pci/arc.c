@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.52 2006/11/01 12:12:32 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.53 2006/11/01 12:21:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1546,21 +1546,7 @@ int
 arc_create_sensors(struct arc_softc *sc)
 {
 	struct device		*dev;
-	struct scsibus_softc	*ssc;
 	int			i;
-
-	TAILQ_FOREACH(dev, &alldevs, dv_list) {
-		if (dev->dv_parent != &sc->sc_dev)
-			continue;
-
-		/* check if this is the scsibus for the logical disks */
-		ssc = (struct scsibus_softc *)dev;
-		if (ssc->adapter_link == &sc->sc_link)
-			break;
-	}
-
-	if (ssc == NULL)
-		return (1);
 
 	sc->sc_sensors = malloc(sizeof(struct sensor) * sc->sc_disk_count,
 	    M_DEVBUF, M_WAITOK);
@@ -1569,10 +1555,10 @@ arc_create_sensors(struct arc_softc *sc)
 	bzero(sc->sc_sensors, sizeof(struct sensor) * sc->sc_disk_count);
 
 	for (i = 0; i < sc->sc_disk_count; i++) {
-		if (ssc->sc_link[i][0] == NULL)
+		if (sc->sc_scsibus->sc_link[i][0] == NULL)
 			goto bad;
 
-		dev = ssc->sc_link[i][0]->device_softc;
+		dev = sc->sc_scsibus->sc_link[i][0]->device_softc;
 
 		sc->sc_sensors[i].type = SENSOR_DRIVE;
 		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
