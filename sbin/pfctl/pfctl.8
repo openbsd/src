@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.123 2006/10/31 14:41:25 mcbride Exp $
+.\" $OpenBSD: pfctl.8,v 1.124 2006/11/01 00:23:48 mcbride Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -165,6 +165,27 @@ This is similar to C rules for variable scope.
 It is possible to create distinct tables with the same name in the global
 ruleset and in an anchor, but this is often bad design and a warning will be
 issued in that case.
+.Pp
+By default, recursive inline printing of anchors applies only to unnamed
+anchors specified inline in the ruleset.
+If the anchor name is terminated with a
+.Sq *
+character, the
+.Fl s
+flag will recursively print all anchors in brace delimited block.
+For example the following will print the
+.Dq authpf
+ruleset recursively:
+.Bd -literal -offset indent
+# pfctl -a 'authpf/*' -sr
+.Ed
+.Pp
+To print the main ruleset recursively, specify only
+.Sq *
+as the anchor name.
+.Bd -literal -offset indent
+# pfctl -a '*' -sr
+.Ed
 .It Fl D Ar macro Ns = Ns Ar value
 Define
 .Ar macro
