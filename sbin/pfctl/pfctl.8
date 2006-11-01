@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.124 2006/11/01 00:23:48 mcbride Exp $
+.\" $OpenBSD: pfctl.8,v 1.125 2006/11/01 09:03:00 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -33,7 +33,7 @@
 .Sh SYNOPSIS
 .Nm pfctl
 .Bk -words
-.Op Fl AdeghmNnOoqRrvz
+.Op Fl AdeghmNnOqRrvz
 .Op Fl a Ar anchor
 .Oo Fl D Ar macro Ns =
 .Ar value Oc
@@ -41,10 +41,7 @@
 .Op Fl f Ar file
 .Op Fl i Ar interface
 .Op Fl k Ar host | network
-.Oo
-.Fl o
-.Op level
-.Oc
+.Op Fl o Op Ar level
 .Op Fl p Ar device
 .Op Fl s Ar modifier
 .Oo
@@ -172,7 +169,7 @@ If the anchor name is terminated with a
 .Sq *
 character, the
 .Fl s
-flag will recursively print all anchors in brace delimited block.
+flag will recursively print all anchors in a brace delimited block.
 For example the following will print the
 .Dq authpf
 ruleset recursively:
@@ -182,7 +179,7 @@ ruleset recursively:
 .Pp
 To print the main ruleset recursively, specify only
 .Sq *
-as the anchor name.
+as the anchor name:
 .Bd -literal -offset indent
 # pfctl -a '*' -sr
 .Ed
@@ -287,7 +284,7 @@ Do not actually load rules, just parse them.
 .It Fl O
 Load only the options present in the rule file.
 Other rules and options are ignored.
-.It Fl o Ar level
+.It Fl o Op Ar level
 Control the ruleset optimizer.
 The ruleset optimizer attempts to improve rulesets by removing rule
 duplication and making better use of rule ordering.
@@ -300,7 +297,8 @@ Enable basic ruleset optimizations.
 .It Fl o Cm profile
 Enable basic ruleset optimizations with profiling.
 .El
-.Ar basic
+.Pp
+.Cm basic
 optimization does does four things:
 .Pp
 .Bl -enum -compact
@@ -315,8 +313,8 @@ re-order the rules to improve evaluation performance
 .El
 .Pp
 If
-.Ar profile
-is specified the currently loaded ruleset will be examined as a feedback
+.Cm profile
+is specified, the currently loaded ruleset will be examined as a feedback
 profile to tailor the optimization of the
 .Ar quick
 rules to the actual network behavior.
@@ -334,7 +332,7 @@ barriers.
 To retain compatibility with previous behaviour, a single
 .Fl o
 without any options will enable
-.Ar basic
+.Cm basic
 optimizations, and a second
 .Fl o
 will enable profiling.
