@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_lk201.c,v 1.5 2006/08/03 20:19:29 miod Exp $	*/
+/*	$OpenBSD: wskbdmap_lk201.c,v 1.6 2006/11/01 19:53:40 miod Exp $	*/
 /* $NetBSD: wskbdmap_lk201.c,v 1.4 2000/12/02 16:57:41 ragge Exp $ */
 
 #include <sys/types.h>
@@ -122,13 +122,49 @@ static const keysym_t lkkbd_keydesc_us[] = {
     KC(252),	KS_Cmd2,	KS_Alt_L,	KS_Multi_key
 };
 
+static const keysym_t lkkbd_keydesc_de[] = {
+/*  pos		command		normal		shifted		XXXXXXX */
+    KC(178),    KS_Cmd2,        KS_Mode_switch,
+    KC(191),			KS_dead_tilde,	KS_dead_circumflex,
+    KC(195),			KS_y,
+    KC(197),			KS_2,		KS_quotedbl,
+    KC(203),			KS_3,		KS_section,
+    KC(219),			KS_6,		KS_ampersand,
+    KC(220),			KS_z,
+    KC(224),			KS_7,		KS_slash,
+    KC(229),			KS_8,		KS_parenleft,
+    KC(232),			KS_comma,	KS_semicolon,
+    KC(234),			KS_9,		KS_parenright,
+    KC(237),			KS_period,	KS_colon,
+    KC(239),			KS_0,		KS_equal,
+    KC(242),			KS_odiaeresis,	KS_Odiaeresis,
+				KS_braceright,	KS_braceleft,
+    KC(243),			KS_minus,	KS_underscore,
+    KC(245),			KS_dead_acute,	KS_dead_grave,
+    KC(246),			KS_plus,	KS_asterisk,
+    KC(247),			KS_numbersign,	KS_apostrophe,
+    KC(249),			KS_ssharp,	KS_question,	KS_bar,
+    KC(250),			KS_udiaeresis,	KS_Udiaeresis,
+				KS_at,		KS_backslash,
+    KC(251),			KS_adiaeresis,	KS_Adiaeresis,
+				KS_bracketright,KS_bracketleft,
+    /* remapped Compose key (177) for LK 201 */
+    KC(252),	KS_Cmd2,	KS_Mode_switch,	KS_Multi_key
+};
+
+static const keysym_t lkkbd_keydesc_de_nodead[] = {
+/*  pos		command		normal		shifted		XXXXXXX */
+    KC(191),			KS_asciitilde,	KS_asciicircum,
+    KC(245),			KS_apostrophe,	KS_grave,
+};
+
 static const keysym_t lkkbd_keydesc_fr[] = {
     KC(178),	KS_Cmd2,	KS_Mode_switch,
     KC(192),			KS_ampersand,	KS_1,
     KC(193),			KS_a,
     KC(194),			KS_q,
     KC(195),			KS_w,
-    KC(197),			KS_eacute,	KS_2,
+    KC(197),			KS_eacute,	KS_2,		KS_bar,
     KC(198),			KS_z,
     KC(203),			KS_quotedbl,	KS_3,
     KC(208),			KS_apostrophe,	KS_4,
@@ -149,6 +185,8 @@ static const keysym_t lkkbd_keydesc_fr[] = {
     KC(249),			KS_parenright,	KS_degree,
     KC(250),			KS_dead_circumflex, KS_dead_diaeresis,
     KC(251),			KS_ugrave,	KS_percent,	KS_backslash,
+    /* remapped Compose key (177) for LK 201 */
+    KC(252),	KS_Cmd2,	KS_Mode_switch,	KS_Multi_key
 };
 
 #define KBD_MAP(name, base, map) \
@@ -156,6 +194,8 @@ static const keysym_t lkkbd_keydesc_fr[] = {
 
 const struct wscons_keydesc lkkbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	lkkbd_keydesc_us),
+	KBD_MAP(KB_DE,			KB_US,	lkkbd_keydesc_de),
+	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	lkkbd_keydesc_de_nodead),
 	KBD_MAP(KB_FR,			KB_US,	lkkbd_keydesc_fr),
 	{0, 0, 0, 0}
 };

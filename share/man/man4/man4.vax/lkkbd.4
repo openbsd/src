@@ -1,4 +1,4 @@
-.\"     $OpenBSD: lkkbd.4,v 1.7 2006/08/27 17:32:58 miod Exp $
+.\"     $OpenBSD: lkkbd.4,v 1.8 2006/11/01 19:53:38 miod Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -48,7 +48,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 27, 2006
+.Dd November 1, 2006
 .Dt LKKBD 4 vax
 .Os
 .Sh NAME
@@ -92,11 +92,11 @@ The built-in mappings are at this time:
 .\" (
 .\" .Dq cf
 .\" ) Canadian French.
-.\" .It KB_DE
-.\" (
-.\" .Dq de
-.\" ) German with
-.\" .Dq dead accents .
+.It KB_DE
+(
+.Dq de
+) German with
+.Dq dead accents .
 .\" .It KB_DK
 .\" (
 .\" .Dq dk
@@ -149,11 +149,12 @@ The built-in mappings are at this time:
 .El
 .Pp
 .\" The KB_DE, KB_DK, KB_NO, KB_SF, KB_SG and KB_SV mappings can be used in
-.\" the KB_NODEAD (
-.\" .Dq .nodead
-.\" ) variant.
-.\" This switches off the
-.\" .Dq dead accents .
+The KB_DE mapping can be used in
+the KB_NODEAD (
+.Dq .nodead
+) variant.
+This switches off the
+.Dq dead accents .
 .Sh EXAMPLES
 To set a French keyboard layout, use
 .Ic wsconsctl -w keyboard.encoding=fr .
