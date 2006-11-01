@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.70 2006/10/31 22:01:56 henning Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.71 2006/11/01 00:02:14 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1631,8 +1631,8 @@ pfsync_update_tdb(struct tdb *tdb, int output)
 		return (0);
 
 	ifp = &sc->sc_if;
-	if (sc == NULL || (ifp->if_bpf == NULL && sc->sc_sync_ifp == NULL &&
-	    sc->sc_sync_peer.s_addr == INADDR_PFSYNC_GROUP)) {
+	if (ifp->if_bpf == NULL && sc->sc_sync_ifp == NULL &&
+	    sc->sc_sync_peer.s_addr == INADDR_PFSYNC_GROUP) {
 		/* Don't leave any stale pfsync packets hanging around. */
 		if (sc->sc_mbuf_tdb != NULL) {
 			m_freem(sc->sc_mbuf_tdb);
