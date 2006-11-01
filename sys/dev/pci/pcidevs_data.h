@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1174 2006/10/30 21:51:06 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1175 2006/11/01 06:07:12 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1227,12 +1227,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "8111 PCI-PCI",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_ETHER,
+	    "8111 Ether",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_USB,
 	    "8111 USB",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_LPC,
-	    "AMD8111 LPC",
+	    "8111 LPC",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_IDE,
