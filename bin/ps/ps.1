@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.59 2006/11/01 21:25:52 jmc Exp $
+.\"	$OpenBSD: ps.1,v 1.60 2006/11/01 21:34:41 jmc Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -98,10 +98,10 @@ user, pid, ppid, pgid, sess, jobc, state, tt, time, and command.
 Also display information about kernel threads.
 .It Fl L
 List the set of available keywords.
-This option may not be specified with other options.
+This option should not be specified with other options.
 .It Fl l
 Display information associated with the following keywords:
-uid, pid, ppid, cpu, pri, nice, vsz, rss, wchan, state, tt, time
+uid, pid, ppid, cpu, pri, nice, vsz, rss, wchan, state, tt, time,
 and command.
 .It Fl M Ar core
 Extract values associated with the name list from the specified core
@@ -159,7 +159,7 @@ option.
 .It Fl v
 Display information associated with the following keywords:
 pid, state, time, sl, re, pagein, vsz, rss, lim, tsiz,
-%cpu, %mem and command.
+%cpu, %mem, and command.
 The
 .Fl v
 option implies the
@@ -171,12 +171,12 @@ default
 .Dq /dev/drum .
 .It Fl w
 Use 132 columns to display information, instead of the default, which
-is your window size.
+is the window size.
 If the
 .Fl w
 option is specified more than once,
 .Nm
-will use as many columns as necessary without regard for your window size.
+will use as many columns as necessary without regard for window size.
 .It Fl x
 Display information about processes without controlling terminals.
 .El
