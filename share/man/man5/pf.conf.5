@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.370 2006/10/31 14:53:44 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.371 2006/11/01 09:19:48 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -401,10 +401,12 @@ set limit { states 20000, frags 20000, src-nodes 2000 }
 .It Ar set ruleset-optimization
 .Bl -tag -width xxxxxxxx -compact
 .It Ar none
-Disable the ruleset optimizer. This is the default behaviour.
+Disable the ruleset optimizer.
+This is the default behaviour.
 .It Ar basic
 Enable basic ruleset optimization, which does four things to improve the
 performance of ruleset evaluations:
+.Pp
 .Bl -enum -compact
 .It
 remove duplicate rules
@@ -415,6 +417,7 @@ combine multiple rules into a table when advantageous
 .It
 re-order the rules to improve evaluation performance
 .El
+.Pp
 .It Ar profile
 Uses the currently loaded ruleset as a feedback profile to tailor the
 ordering of quick rules to actual network traffic.
@@ -429,9 +432,9 @@ either the ruleset optimizer should not be used or a label field should
 be added to all of the accounting rules to act as optimization barriers.
 .Pp
 Optimization can also be set as a command-line argument to
-.Xr pfctl , 
+.Xr pfctl 8 ,
 overriding the settings in
-.Nm pf.conf .
+.Nm .
 .It Ar set optimization
 Optimize state timeouts for one of the following network environments:
 .Pp
