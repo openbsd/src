@@ -1,4 +1,4 @@
-.\"	$OpenBSD: backgammon.6,v 1.17 2006/11/01 08:58:56 ray Exp $
+.\"	$OpenBSD: backgammon.6,v 1.18 2006/11/01 09:26:37 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -83,8 +83,10 @@ Player is white (implies
 .El
 .Sh QUICK REFERENCE
 When the program prompts by typing only your color,
-type a space or carriage return to roll, or
-.Bl -tag -width indent
+type a space or carriage return to roll,
+or one of the following:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .It Ic d
 to double
 .It Ic q
@@ -95,8 +97,10 @@ to redraw the board
 to save the game for later
 .El
 .Pp
-When the program prompts with 'Move:', type
-.Bl -tag -width indent
+When the program prompts with 'Move:',
+type one of the following:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .It Ic q
 to quit
 .It Ic r
@@ -105,10 +109,11 @@ to redraw the board
 to save the game
 .El
 .Pp
-or a
+Or a
 .Em move ,
-which is a sequence of
-.Bl -tag -width indent
+which is a sequence of one of the following:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .It Ic s-f
 move from
 .Ic s
@@ -120,8 +125,9 @@ move one man on
 the roll
 .Ic r
 separated by commas or spaces and ending with a newline.
-Available abbreviations are
-.Bl -tag -width XXXXXXX
+Available abbreviations are as follows:
+.Pp
+.Bl -tag -width "s-f1-f2XXX" -offset indent -compact
 .It Ic s-f1-f2
 means
 .Ic s-f1,f1-f2
