@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.12 2006/11/01 04:34:23 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.13 2006/11/01 05:06:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -74,6 +74,8 @@ int vic_debug = 0;
 #define VIC_TX_TIMEOUT		5
 #define VIC_TIMER_DELAY		2
 #define VIC_TIMER_MS(_ms)	(_ms * hz / 1000)
+
+#define VIC_MIN_FRAMELEN	(ETHER_MIN_LEN - ETHER_CRC_LEN)
 
 #define VIC_TXURN_WARN(_sc)	((_sc)->sc_txpending >= ((_sc)->sc_ntxbuf - 5))
 #define VIC_TXURN(_sc)		((_sc)->sc_txpending >= (_sc)->sc_ntxbuf)
@@ -550,7 +552,7 @@ vic_rx_proc(struct vic_softc *sc)
 		rxb = &sc->sc_rxbuf[idx];
 
 		len = rxd->rx_length;
-		if (len < ETHER_MIN_LEN) {
+		if (len < VIC_MIN_FRAMELEN) {
 			ifp->if_iqdrops++;
 			goto nextp;
 		}
