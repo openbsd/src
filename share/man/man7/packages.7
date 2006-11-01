@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.24 2005/11/11 09:16:18 jmc Exp $
+.\" $OpenBSD: packages.7,v 1.25 2006/11/01 13:06:48 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -33,10 +33,11 @@
 .Sh DESCRIPTION
 The
 .Ox
-ports collection features a vast array of third-party software ready
-to be compiled and installed on a new machine.
-As an alternative, most of these ports are also available as binary
-packages.
+binary packages feature a vast array of third-party software ready
+to be installed on a new machine.
+They are built through the
+.Xr ports 7
+infrastructure.
 Adding a new package is as simple as
 .Pp
 .Dl pkg_add foo-1.0-vanilla.tgz
@@ -45,12 +46,22 @@ In appearance, packages seem to be .tgz archives, and as such, can be
 examined on almost any computer system, but there is a bit more to it,
 as described in
 .Xr package 5 .
+.Pp
+Even though the names are similar, 
+note that the basic
+.Ox
+distribution
+.Po
+.Pa baseXX.tgz ,
+.Pa compXX.tgz ...
+.Pc
+is not composed of such packages, but of plain tarballs.
 .Sh SECURITY CAVEAT
 The packages are not as thoroughly audited as the main
 .Ox
 source tree (in many cases, they have not been audited at all).
-This is in part a scale issue: the source tree is under 100MB, compressed,
-whereas source to the ports tree approaches 3GB.
+This is in part a scale issue: the source tree weighs in at 100MB, compressed,
+whereas source to the ports tree exceeds 3GB.
 Also, most
 .Ox
 developers concentrate on making the release as safe as possible and,
@@ -182,7 +193,7 @@ are supported:  pointing
 .Ev PKG_PATH
 to a distant package repository, e.g.,
 .Pp
-.Dl setenv PKG_PATH ftp://ftp.openbsd.org/pub/OpenBSD/2.9/packages/i386
+.Dl setenv PKG_PATH ftp://ftp.openbsd.org/pub/OpenBSD/2.9/packages/i386/
 .Pp
 will let
 .Xr pkg_add 1

@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.58 2006/09/26 18:49:48 jmc Exp $
+.\" $OpenBSD: ports.7,v 1.59 2006/11/01 13:06:48 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -36,10 +36,14 @@
 The
 .Ox
 Ports Collection
-(shamelessly stolen from the
-.Fx
-Ports Collection) offers a simple way
-for users and administrators to install applications.
+is the infrastructure used to create binary packages for third party
+applications.
+.Pp
+For normal usage, refer to
+.Xr packages 7 ,
+as most ports produce binary packages which are available from 
+the official CD-Rom, or on a neighborly ftp mirror.
+.Pp
 Each port contains any patches necessary to make the original
 application source code compile and run on
 .Ox .
@@ -195,11 +199,11 @@ by
 .Ar install ,
 and so on all the way to
 .Ar fetch .
-Typical use only runs
+In typical use, one will only run
 .Ar install
-explicitly (if root or
+explicitly (as normal user, with
 .Ev SUDO
-is defined in
+defined in
 .Pa /etc/mk.conf ) ,
 or
 .Ar build
