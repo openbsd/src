@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.14 2006/11/01 05:45:15 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.15 2006/11/01 10:21:57 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -456,7 +456,7 @@ vic_init_data(struct vic_softc *sc)
 
 	for (i = 0; i < sc->sc_ntxbuf; i++) {
 		txb = &sc->sc_txbuf[i];
-		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1 /* XXX 6 */,
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, VIC_SG_MAX,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT, &txb->txb_dmamap) != 0) {
 			printf("%s: unable to create dmamap for tx %d\n",
 			    DEVNAME(sc), i);
@@ -636,7 +636,8 @@ vic_tx_proc(struct vic_softc *sc)
 			break;
 		}
 
-		/* XXX bus dma sync */
+		bus_dmamap_sync(sc->sc_dmat, txb->txb_dmamap, 0,
+		    txb->txb_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, txb->txb_dmamap);
 
 		m_freem(txb->txb_m);
@@ -749,8 +750,11 @@ vic_encap(struct vic_softc *sc, struct mbuf *m)
 	struct ifnet			*ifp = &sc->sc_ac.ac_if;
 	struct vic_txbuf		*txb;
 	struct vic_txdesc		*txd;
+	struct vic_sg			*sge;
 	struct mbuf			*m0 = NULL;
-	int				idx;
+	bus_dmamap_t			dmap;
+	int				error;
+	int				i, idx;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
@@ -775,8 +779,12 @@ vic_encap(struct vic_softc *sc, struct mbuf *m)
 		return (ENOMEM);
 	}
 
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, txb->txb_dmamap,
-	    m, BUS_DMA_NOWAIT) != 0) {
+	dmap = txb->txb_dmamap;
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, dmap, m, BUS_DMA_NOWAIT);
+	switch (error) {
+	case 0:
+		break;
+	case EFBIG:
 		/* XXX this is bollocks */
 		MGETHDR(m0, M_DONTWAIT, MT_DATA);
 		if (m0 == NULL)
@@ -790,11 +798,15 @@ vic_encap(struct vic_softc *sc, struct mbuf *m)
 		}
 		m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, caddr_t));
 		m0->m_pkthdr.len = m0->m_len = m->m_pkthdr.len;
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, txb->txb_dmamap,
-		    m0, BUS_DMA_NOWAIT) != 0) {
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmap, m0,
+		    BUS_DMA_NOWAIT) != 0) {
 			m_freem(m0);
 			return (ENOBUFS);
 		}
+		break;
+	default:
+		printf("%s: tx dmamap load error %d\n", DEVNAME(sc), error);
+		return (ENOBUFS);
 	}
 
 #if NBPFILTER > 0
@@ -802,35 +814,32 @@ vic_encap(struct vic_softc *sc, struct mbuf *m)
 		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
-	/* m0 means this has to be done here, more bollocks */
 	IFQ_DEQUEUE(&ifp->if_snd, m);
 	if (m0 != NULL) {
 		m_freem(m);
 		m = m0;
 		m0 = NULL;
 	}
-
-	/* XXX nsegs are cool */
-	txd->tx_flags = VIC_TX_FLAGS_KEEP;
-	txd->tx_sa.sa_addr_type = VIC_SG_ADDR_PHYS;
-	txd->tx_sa.sa_length = 1;
-	txd->tx_sa.sa_sg[0].sg_length = m->m_len;
-	txd->tx_sa.sa_sg[0].sg_addr_low = 0;
-	txd->tx_sa.sa_sg[0].sg_addr_low = txb->txb_dmamap->dm_segs[0].ds_addr;
-	txd->tx_owner = VIC_OWNER_NIC;
-
-	/* XXX bus dma sync */
 	txb->txb_m = m;
 
-	if (VIC_TXURN_WARN(sc)) {
-		if (ifp->if_flags & IFF_DEBUG)
-			printf("%s: running out of tx descriptors\n",
-			    DEVNAME(sc));
-		txd->tx_flags |= VIC_TX_FLAGS_TXURN;
+	txd->tx_flags = VIC_TX_FLAGS_KEEP;
+	txd->tx_owner = VIC_OWNER_NIC;
+	txd->tx_sa.sa_addr_type = VIC_SG_ADDR_PHYS;
+	txd->tx_sa.sa_length = dmap->dm_nsegs;
+	for (i = 0; i < dmap->dm_nsegs; i++) {
+		sge = &txd->tx_sa.sa_sg[i];
+		sge->sg_length = dmap->dm_segs[i].ds_len;
+		sge->sg_addr_low = dmap->dm_segs[i].ds_addr;
 	}
+
+	if (VIC_TXURN_WARN(sc))
+		txd->tx_flags |= VIC_TX_FLAGS_TXURN;
 
 	ifp->if_opackets++;
 	sc->sc_txpending++;
+
+	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
 
 	sc->sc_data->vd_tx_stopped = 1;
 	VIC_INC(sc->sc_data->vd_tx_nextidx, sc->sc_data->vd_tx_length);
