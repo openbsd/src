@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.57 2006/11/01 19:11:24 jmc Exp $
+.\"	$OpenBSD: ps.1,v 1.58 2006/11/01 19:14:48 jmc Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -168,7 +168,7 @@ option.
 .It Fl W Ar swap
 Extract swap information from the specified file instead of the
 default
-.Dq Pa /dev/drum .
+.Dq /dev/drum .
 .It Fl w
 Use 132 columns to display information, instead of the default, which
 is your window size.
@@ -338,11 +338,11 @@ On multiprocessor machines, specifies processor number
 .It tt
 An abbreviation for the pathname of the controlling terminal, if any.
 The abbreviation consists of the two letters following
-.Dq Pa /dev/tty ,
+.Dq /dev/tty ,
 or, for the console,
 .Dq co .
 This is followed by a
-.Dq \-
+.Sq -
 if the process can no longer reach that
 controlling terminal (i.e., it has been revoked).
 .It wchan
