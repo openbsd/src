@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.90 2006/09/26 23:48:56 jsg Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.91 2006/11/01 22:24:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -319,9 +319,9 @@ lm75probe(void)
 	case 3:
 		return ("lm75a");
 	default:
-#if defined(I2C_DEBUG) || defined(I2C_VERBOSE)
+#if defined(I2C_DEBUG)
 		printf("lm75probe: unknown chip, scored %d\n", score);
-#endif /* defined(I2C_DEBUG) || defined(I2C_VERBOSE) */
+#endif /* defined(I2C_DEBUG) */
 		return (NULL);
 	}
 }
