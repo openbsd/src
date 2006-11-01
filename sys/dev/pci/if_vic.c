@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.15 2006/11/01 10:21:57 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.16 2006/11/01 13:23:06 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -793,7 +793,7 @@ vic_encap(struct vic_softc *sc, struct mbuf *m)
 			MCLGET(m0, M_DONTWAIT);
 			if (!(m0->m_flags & M_EXT)) {
 				m_freem(m0);
-				return (E2BIG);
+				return (ENOBUFS);
 			}
 		}
 		m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, caddr_t));
