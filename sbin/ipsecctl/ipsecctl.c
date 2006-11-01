@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.61 2006/11/01 03:10:02 mcbride Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.62 2006/11/01 03:12:14 mcbride Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -87,7 +87,7 @@ int
 sacompare(const void *va, const void *vb)
 {
 	const struct sad *a = va, *b = vb;
-	
+
 	if (a->sad_spi < b->sad_spi)
 		return (-1);
 	if (a->sad_spi > b->sad_spi)

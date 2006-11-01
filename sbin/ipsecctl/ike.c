@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.51 2006/11/01 03:10:02 mcbride Exp $	*/
+/*	$OpenBSD: ike.c,v 1.52 2006/11/01 03:12:14 mcbride Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -553,8 +553,10 @@ ike_section_p2ids(u_int8_t proto, struct ipsec_addr_wrap *src,
 		    dst->name);
 	}
 	if (proto) {
-		fprintf(fd, SET "[lid-%s]:Protocol=%d force\n", src->name, proto);
-		fprintf(fd, SET "[rid-%s]:Protocol=%d force\n", dst->name, proto);
+		fprintf(fd, SET "[lid-%s]:Protocol=%d force\n",
+		    src->name, proto);
+		fprintf(fd, SET "[rid-%s]:Protocol=%d force\n",
+		    dst->name, proto);
 	}
 	if (sport)
 		fprintf(fd, SET "[lid-%s]:Port=%d force\n", src->name,
