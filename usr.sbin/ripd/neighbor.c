@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.2 2006/10/31 23:43:11 michele Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.3 2006/11/01 20:55:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -39,8 +39,8 @@
 #include "log.h"
 #include "rde.h"
 
-void		 nbr_start_timer(struct nbr *);
-void		 nbr_reset_timer(struct nbr *);
+void	nbr_set_timer(struct nbr *);
+void	nbr_stop_timer(struct nbr *);
 
 LIST_HEAD(nbr_head, nbr);
 
@@ -115,10 +115,10 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 
 	switch (nbr_fsm_tbl[i].action) {
 	case NBR_ACT_RST_TIMER:
-		nbr_reset_timer(nbr);
+		nbr_set_timer(nbr);
 		break;
 	case NBR_ACT_STRT_TIMER:
-		nbr_start_timer(nbr);
+		nbr_set_timer(nbr);
 		break;
 	case NBR_ACT_DEL:
 		nbr_act_del(nbr);
@@ -222,6 +222,9 @@ nbr_act_del(struct nbr *nbr)
 	log_debug("nbr_del: neighbor ID %s, peerid %lu", inet_ntoa(nbr->id),
 	    nbr->peerid);
 
+	/* stop timer */
+	nbr_stop_timer(nbr);
+
 	/* clear lists */
 	//response_list_clr(&nbr->rr_list);
 
@@ -295,7 +298,7 @@ nbr_timeout_timer(int fd, short event, void *arg)
 
 /* actions */
 void
-nbr_reset_timer(struct nbr *nbr)
+nbr_set_timer(struct nbr *nbr)
 {
 	struct timeval	tv;
 
@@ -303,19 +306,14 @@ nbr_reset_timer(struct nbr *nbr)
 	tv.tv_sec = NBR_TIMEOUT;
 
 	if (evtimer_add(&nbr->timeout_timer, &tv) == -1)
-		fatal("nbr_reset_timer");
+		fatal("nbr_ret_timer");
 }
 
 void
-nbr_start_timer(struct nbr *nbr)
+nbr_stop_timer(struct nbr *nbr)
 {
-	struct timeval  tv;
-
-	timerclear(&tv);
-	tv.tv_sec = NBR_TIMEOUT;
-
-	if (evtimer_add(&nbr->timeout_timer, &tv) == -1)
-		fatal("nbr_start_timer");
+	if (evtimer_del(&nbr->timeout_timer) == -1)
+		fatal("nbr_stop_timer");
 }
 
 /* names */
