@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.33 2006/10/23 18:08:34 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.34 2006/11/01 11:52:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1906,6 +1906,9 @@ zyd_stop(struct ifnet *ifp, int disable)
 
 	/* disable interrupts */
 	(void)zyd_write32(sc, ZYD_CR_INTERRUPT, 0);
+
+	usbd_abort_pipe(sc->zyd_ep[ZYD_ENDPT_BIN]);
+	usbd_abort_pipe(sc->zyd_ep[ZYD_ENDPT_BOUT]);
 
 	zyd_free_rx_list(sc);
 	zyd_free_tx_list(sc);
