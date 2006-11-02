@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2006/04/10 14:38:59 jaredy Exp $	*/
+/*	$OpenBSD: main.c,v 1.42 2006/11/02 18:21:20 ray Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -175,8 +175,9 @@ main(int argc, char *argv[])
 #endif /* POSIXLY_CORRECT */
 
 	/* Check to see if we're /bin/sh. */
-	if (!strcmp(&kshname[strlen(kshname) - 3], "/sh") ||
-	    !strcmp(kshname, "sh") || !strcmp(kshname, "-sh")) {
+	if (!strcmp(kshname, "sh") || !strcmp(kshname, "-sh") ||
+	    (strlen(kshname) >= 3 &&
+	    !strcmp(&kshname[strlen(kshname) - 3], "/sh"))) {
 		Flag(FSH) = 1;
 		version_param = "SH_VERSION";
 	}
