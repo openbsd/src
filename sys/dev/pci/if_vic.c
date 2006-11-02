@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.19 2006/11/02 02:01:36 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.20 2006/11/02 02:08:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -54,13 +54,6 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_vicreg.h>
-
-#ifdef VIC_DEBUG
-int vic_debug = 0;
-#define DPRINTF(x...)		do { if (vic_debug) printf(x); } while (0)
-#else
-#define DPRINTF(x...)
-#endif
 
 #define VIC_PCI_BAR		PCI_MAPREG_START /* Base Address Register */
 
