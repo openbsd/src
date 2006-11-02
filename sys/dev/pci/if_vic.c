@@ -1,7 +1,8 @@
-/*	$OpenBSD: if_vic.c,v 1.26 2006/11/02 23:28:04 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.27 2006/11/02 23:29:04 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
