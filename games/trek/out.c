@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.5 2003/06/03 03:01:42 millert Exp $	*/
+/*	$OpenBSD: out.c,v 1.6 2006/11/02 18:13:03 ray Exp $	*/
 /*	$NetBSD: out.c,v 1.3 1995/04/22 10:59:16 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)out.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: out.c,v 1.5 2003/06/03 03:01:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: out.c,v 1.6 2006/11/02 18:13:03 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ out(dev)
 
 	d = &Device[dev];
 	printf("%s reports %s ", d->person, d->name);
-	if (d->name[strlen(d->name) - 1] == 's')
+	if (d->name[0] != '\0' && d->name[strlen(d->name) - 1] == 's')
 		printf("are");
 	else
 		printf("is");
