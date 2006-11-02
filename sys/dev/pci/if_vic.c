@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.20 2006/11/02 02:08:18 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.21 2006/11/02 02:10:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -72,10 +72,6 @@
 
 #define VIC_TXURN_WARN(_sc)	((_sc)->sc_txpending >= ((_sc)->sc_ntxbuf - 5))
 #define VIC_TXURN(_sc)		((_sc)->sc_txpending >= (_sc)->sc_ntxbuf)
-#define VIC_OFF_TXDESC(_n) \
-	(sizeof(struct vic_data) + \
-	((sc->sc_nrxbuf + VIC_QUEUE2_SIZE) * sizeof(struct vic_rxdesc)) + \
-	((_n) * sizeof(struct vic_txdesc)))
 
 struct vic_rxbuf {
 	bus_dmamap_t		rxb_dmamap;
