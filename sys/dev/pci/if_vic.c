@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.17 2006/11/02 00:38:34 fkr Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.18 2006/11/02 01:54:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -170,7 +170,8 @@ void		vic_setlladdr(struct vic_softc *);
 int		vic_media_change(struct ifnet *);
 void		vic_media_status(struct ifnet *, struct ifmediareq *);
 void		vic_start(struct ifnet *);
-int		vic_encap(struct vic_softc *, struct mbuf *);
+int		vic_load_txb(struct vic_softc *, struct vic_txbuf *,
+		    struct mbuf *);
 void		vic_watchdog(struct ifnet *);
 int		vic_ioctl(struct ifnet *, u_long, caddr_t);
 void		vic_init(struct ifnet *);
@@ -516,10 +517,10 @@ vic_intr(void *arg)
 {
 	struct vic_softc *sc = (struct vic_softc *)arg;
 
-	vic_write(sc, VIC_CMD, VIC_CMD_INTR_ACK);
-
 	vic_rx_proc(sc);
 	vic_tx_proc(sc);
+
+	vic_write(sc, VIC_CMD, VIC_CMD_INTR_ACK);
 
 	return (1);
 }
@@ -617,9 +618,6 @@ vic_tx_proc(struct vic_softc *sc)
 		idx = sc->sc_data->vd_tx_curidx;
 		if (idx >= sc->sc_data->vd_tx_length) {
 			ifp->if_oerrors++;
-			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: transmit index error\n",
-				    sc->sc_dev.dv_xname);
 			break;
 		}
 
@@ -628,12 +626,9 @@ vic_tx_proc(struct vic_softc *sc)
 			break;
 
 		txb = &sc->sc_txbuf[idx];
-
 		if (txb->txb_m == NULL) {
+			printf("%s: tx ring is corrupt\n", DEVNAME(sc));
 			ifp->if_oerrors++;
-			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: transmit buffer error\n",
-				    DEVNAME(sc));
 			break;
 		}
 
@@ -654,8 +649,7 @@ vic_tx_proc(struct vic_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		vic_start(ifp);
+	vic_start(ifp);
 }
 
 void
@@ -727,66 +721,118 @@ vic_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 void
 vic_start(struct ifnet *ifp)
 {
-	struct vic_softc	*sc = (struct vic_softc *)ifp->if_softc;
-	struct mbuf		*m;
+	struct vic_softc		*sc;
+	struct mbuf			*m;
+	struct vic_txbuf		*txb;
+	struct vic_txdesc		*txd;
+	struct vic_sg			*sge;
+	bus_dmamap_t			dmap;
+	int				i, idx;
+	int				tx = 0;
 
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m);
-		if (m == NULL)
-			break;
+	if (IFQ_IS_EMPTY(&ifp->if_snd))
+		return;
 
-		if (vic_encap(sc, m) != 0) {
-			printf("%s: encap err\n", DEVNAME(sc));
-			break;
-		}
-	}
-}
-
-int
-vic_encap(struct vic_softc *sc, struct mbuf *m)
-{
-	struct ifnet			*ifp = &sc->sc_ac.ac_if;
-	struct vic_txbuf		*txb;
-	struct vic_txdesc		*txd;
-	struct vic_sg			*sge;
-	struct mbuf			*m0 = NULL;
-	bus_dmamap_t			dmap;
-	int				error;
-	int				i, idx;
+	sc = (struct vic_softc *)ifp->if_softc;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	idx = sc->sc_data->vd_tx_nextidx;
-	if (idx >= sc->sc_data->vd_tx_length) {
-		ifp->if_oerrors++;
-		if (ifp->if_flags & IFF_DEBUG)
-			printf("%s: transmit index error\n", DEVNAME(sc));
-		return (EINVAL);
-	}
+	for (;;) {
+		if (VIC_TXURN(sc)) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 
-	txd = &sc->sc_txq[idx];
-	txb = &sc->sc_txbuf[idx];
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
 
-	if (VIC_TXURN(sc)) {
-		ifp->if_flags |= IFF_OACTIVE;
-		return (ENOBUFS);
-	} else if (txb->txb_m != NULL) {
+		idx = sc->sc_data->vd_tx_nextidx;
+		if (idx >= sc->sc_data->vd_tx_length) {
+			printf("%s: tx idx is corrupt\n", DEVNAME(sc));
+			ifp->if_oerrors++;
+			break;
+		}
+
+		txd = &sc->sc_txq[idx];
+		txb = &sc->sc_txbuf[idx];
+
+		if (txb->txb_m != NULL) {
+			printf("%s: tx ring is corrupt\n", DEVNAME(sc));
+			sc->sc_data->vd_tx_stopped = 1;
+			ifp->if_oerrors++;
+			break;
+		}
+
+		/*
+		 * we're committed to sending it now. if we cant map it into
+		 * dma memory then we drop it.
+		 */
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (vic_load_txb(sc, txb, m) != 0) {
+			m_freem(m);
+			ifp->if_oerrors++;
+			/* continue? */
+			break;
+		}
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, txb->txb_m, BPF_DIRECTION_OUT);
+#endif
+
+		dmap = txb->txb_dmamap;
+		txd->tx_flags = VIC_TX_FLAGS_KEEP;
+		txd->tx_owner = VIC_OWNER_NIC;
+		txd->tx_sa.sa_addr_type = VIC_SG_ADDR_PHYS;
+		txd->tx_sa.sa_length = dmap->dm_nsegs;
+		for (i = 0; i < dmap->dm_nsegs; i++) {
+			sge = &txd->tx_sa.sa_sg[i];
+			sge->sg_length = dmap->dm_segs[i].ds_len;
+			sge->sg_addr_low = dmap->dm_segs[i].ds_addr;
+		}
+
+		if (VIC_TXURN_WARN(sc)) {
+			txd->tx_flags |= VIC_TX_FLAGS_TXURN;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+
+		ifp->if_opackets++;
+		sc->sc_txpending++;
+
 		sc->sc_data->vd_tx_stopped = 1;
-		ifp->if_oerrors++;
-		return (ENOMEM);
+		VIC_INC(sc->sc_data->vd_tx_nextidx, sc->sc_data->vd_tx_length);
+
+		tx = 1;
 	}
 
-	dmap = txb->txb_dmamap;
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	if (tx)
+		vic_read(sc, VIC_Tx_ADDR);
+}
+
+int
+vic_load_txb(struct vic_softc *sc, struct vic_txbuf *txb, struct mbuf *m)
+{
+	bus_dmamap_t			dmap = txb->txb_dmamap;
+	struct mbuf			*m0 = NULL;
+	int				error;
+
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, dmap, m, BUS_DMA_NOWAIT);
 	switch (error) {
 	case 0:
+		txb->txb_m = m;
 		break;
-	case EFBIG:
-		/* XXX this is bollocks */
+
+	case EFBIG: /* mbuf chain is too fragmented */
 		MGETHDR(m0, M_DONTWAIT, MT_DATA);
 		if (m0 == NULL)
 			return (ENOBUFS);
@@ -799,56 +845,22 @@ vic_encap(struct vic_softc *sc, struct mbuf *m)
 		}
 		m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, caddr_t));
 		m0->m_pkthdr.len = m0->m_len = m->m_pkthdr.len;
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmap, m0,
-		    BUS_DMA_NOWAIT) != 0) {
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmap, m0,
+		    BUS_DMA_NOWAIT);
+		if (error != 0) {
 			m_freem(m0);
+			printf("%s: tx dmamap load error %d\n", DEVNAME(sc),
+			    error);
 			return (ENOBUFS);
 		}
+		m_freem(m);
+		txb->txb_m = m0;
 		break;
+
 	default:
 		printf("%s: tx dmamap load error %d\n", DEVNAME(sc), error);
 		return (ENOBUFS);
 	}
-
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-#endif
-
-	IFQ_DEQUEUE(&ifp->if_snd, m);
-	if (m0 != NULL) {
-		m_freem(m);
-		m = m0;
-		m0 = NULL;
-	}
-	txb->txb_m = m;
-
-	txd->tx_flags = VIC_TX_FLAGS_KEEP;
-	txd->tx_owner = VIC_OWNER_NIC;
-	txd->tx_sa.sa_addr_type = VIC_SG_ADDR_PHYS;
-	txd->tx_sa.sa_length = dmap->dm_nsegs;
-	for (i = 0; i < dmap->dm_nsegs; i++) {
-		sge = &txd->tx_sa.sa_sg[i];
-		sge->sg_length = dmap->dm_segs[i].ds_len;
-		sge->sg_addr_low = dmap->dm_segs[i].ds_addr;
-	}
-
-	if (VIC_TXURN_WARN(sc))
-		txd->tx_flags |= VIC_TX_FLAGS_TXURN;
-
-	ifp->if_opackets++;
-	sc->sc_txpending++;
-
-	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
-
-	sc->sc_data->vd_tx_stopped = 1;
-	VIC_INC(sc->sc_data->vd_tx_nextidx, sc->sc_data->vd_tx_length);
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-	vic_read(sc, VIC_Tx_ADDR);
 
 	return (0);
 }
