@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.27 2006/11/02 23:29:04 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.28 2006/11/02 23:32:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -143,7 +143,7 @@ struct vic_rxdesc {
 	u_int32_t	rx_length;
 	u_int16_t	rx_owner;
 	u_int16_t	rx_flags;
-	void 		*rx_priv;
+	u_int32_t	rx_priv;
 } __packed;
 
 #define VIC_RX_FLAGS_CSUMHW_OK	0x0001
@@ -151,7 +151,7 @@ struct vic_rxdesc {
 struct vic_txdesc {
 	u_int16_t		tx_flags;
 	u_int16_t		tx_owner;
-	void			*tx_priv;
+	u_int32_t		tx_priv;
 	u_int32_t		tx_tsomss;
 	struct vic_sgarray	tx_sa;
 } __packed;
