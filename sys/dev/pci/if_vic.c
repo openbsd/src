@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.29 2006/11/02 23:35:16 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.30 2006/11/02 23:39:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -401,12 +401,10 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 		    IFCAP_CSUM_UDPv4;
 #endif
 
-	/* Initialise pseudo media types */
 	ifmedia_init(&sc->sc_media, 0, vic_media_change, vic_media_status);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
-	/* Attach the device structures */
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -1256,10 +1254,8 @@ vic_tick(void *arg)
 {
 	struct vic_softc		*sc = (struct vic_softc *)arg;
 
-	/* Update link state (if changed) */
 	vic_link_state(sc);
 
-	/* Re-schedule another timeout. */
 	timeout_add(&sc->sc_tick, hz);
 }
 
