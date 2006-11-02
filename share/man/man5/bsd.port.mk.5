@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.175 2006/11/02 09:57:04 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.176 2006/11/02 10:12:17 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -197,6 +197,9 @@ See
 and
 .Ev PATCH_CASES
 for details.
+.It Ar dump-vars
+Dumps the values of all relevant variables in a port, prepended with the
+port's FULLPKGPATH.
 .It Ar extract
 Extract the distribution files under
 .Pa ${WRKDIR}
@@ -275,6 +278,8 @@ See the description of THE FAKE FRAMEWORK
 for the non-intuitive details of the way
 .Ar {pre,do,post}-install
 hooks are actually used by the ports tree.
+.It Ar install-all
+Install all packages in a multi-packages port.
 .It Ar lib-depends
 Verify that the library dependencies a port needs are actually there,
 by checking the library specifications.
@@ -284,6 +289,7 @@ Verify that the
 and
 .Ev WANTLIB
 hold all shared libraries used for the port.
+Applies to all packages in a multi-packages port.
 See
 .Xr library-specs 7 .
 .It Ar license-check
@@ -962,9 +968,15 @@ If set to
 the
 .Ar update
 target will always update an installed package,
-even if it is the same version,
+as soon as its signature differs,
 and all dependencies that install packages will
 also force an update.
+If set to
+.Sq hard ,
+the
+.Ar update
+target will also update installed packages even when the signature
+did not change.
 .It Ev FULLDISTDIR
 Complete path to directory where ${DISTFILES} and ${PATCHFILES} will be
 located, to be used in hand-crafted extraction targets (read-only).
@@ -2214,18 +2226,18 @@ describe step, since a MULTI_PACKAGES port will produce several
 descriptions).
 .Pp
 If MULTI_PACKAGES is set, each element of MULTI_PACKAGES triggers a
-recursive make package, with SUBPACKAGE set to the right value, and
+recursive package build, with SUBPACKAGE set to the right value, and
 PACKAGING defined.
 For instance, if MULTI_PACKAGES=-lib -server,
 make package will work as follows:
 .Pp
 .Bl -bullet -compact
 .It
-Run env SUBPACKAGE= PACKAGING= make package,
+Run env SUBPACKAGE= PACKAGING= make subpackage,
 .It
-Run env SUBPACKAGE=-lib PACKAGING=-lib make package,
+Run env SUBPACKAGE=-lib PACKAGING=-lib make subpackage,
 .It
-Run env SUBPACKAGE=-server PACKAGING=-server make package,
+Run env SUBPACKAGE=-server PACKAGING=-server make subpackage,
 .El
 .Pp
 The port's Makefile can test the value of SUBPACKAGE to specialize
@@ -2237,6 +2249,31 @@ All packing information is derived from
 templates with SUBPACKAGE appended.
 In the preceding example, the packing-list template for pkgname-foo
 must be in PLIST-foo.
+.Pp
+In terms of implementation, quite a few targets will recurse to take
+multi-packages into account:
+.Ar package
+will invoke
+.Ar subpackage ,
+.Ar install-all
+will invoke
+.Ar install ,
+.Ar update
+will invoke
+subupdate ,
+.Ar lib-depends-check
+will invoke
+.Ar sublib-depends-check,
+.Ar readme
+will invoke
+.Ar subreadme ,
+.Ar describe
+will invoke
+.Ar subdescribe ,
+and
+.Ar dump-vars
+will invoke
+.Ar subdump-vars .
 .Sh THE GENERATION OF PACKING INFORMATION
 Starting after
 .Ox 2.7
