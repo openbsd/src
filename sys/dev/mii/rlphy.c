@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.24 2006/07/23 06:40:05 brad Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.25 2006/11/02 01:27:34 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -83,6 +83,9 @@ int
 rlphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
+	char *devname;
+
+	devname = parent->dv_cfdata->cf_driver->cd_name;
 
 	if (mii_phy_match(ma, rlphys) != NULL)
 		return (10);
@@ -91,8 +94,8 @@ rlphymatch(struct device *parent, void *match, void *aux)
 	    MII_MODEL(ma->mii_id2) != 0)
 		return (0);
 
-	if ((strcmp(parent->dv_cfdata->cf_driver->cd_name, "re") != 0) &&
-	    (strcmp(parent->dv_cfdata->cf_driver->cd_name, "rl") != 0))
+	if ((strcmp(devname, "re") != 0) &&
+	    (strcmp(devname, "rl") != 0))
 		return (0);
 
 	/*
@@ -220,6 +223,9 @@ rlphy_status(struct mii_softc *sc)
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int bmsr, bmcr, anlpar;
+	char *devname;
+
+	devname = sc->mii_dev.dv_parent->dv_cfdata->cf_driver->cd_name;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -294,9 +300,7 @@ rlphy_status(struct mii_softc *sc)
 		 *   can test the 'SPEED10' bit of the MAC's media status
 		 *   register.
 		 */
-		if (strcmp("rl",
-		    sc->mii_dev.dv_parent->dv_cfdata->cf_driver->cd_name)
-		    == 0) {
+		if (strcmp("rl", devname) == 0) {
 			if (PHY_READ(sc, RL_MEDIASTAT) & RL_MEDIASTAT_SPEED10)
 				mii->mii_media_active |= IFM_10_T;
 			else
