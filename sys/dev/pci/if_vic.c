@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.18 2006/11/02 01:54:13 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.19 2006/11/02 02:01:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -283,14 +283,14 @@ vic_map_pci(struct vic_softc *sc, struct pci_attach_args *pa)
 		printf(": unable to map interrupt\n");
 		goto unmap;
 	}
-	
+
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 	vic_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
 		printf(": unable to map interrupt%s%s\n",
-		       intrstr == NULL ? "" : " at ",
-		       intrstr == NULL ? "" : intrstr);
+		    intrstr == NULL ? "" : " at ",
+		    intrstr == NULL ? "" : intrstr);
 		goto unmap;
 	}
 	printf(": %s\n", intrstr);
@@ -490,7 +490,7 @@ freerxbs:
 
 void
 vic_link_state(struct vic_softc *sc)
-{       
+{
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	u_int32_t status;
 	int link_state = LINK_STATE_DOWN;
@@ -883,7 +883,7 @@ vic_watchdog(struct ifnet *ifp)
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		vic_start(ifp);
-#endif 
+#endif
 }
 
 int
@@ -1147,9 +1147,9 @@ vic_read(struct vic_softc *sc, bus_size_t r)
 void
 vic_write(struct vic_softc *sc, bus_size_t r, u_int32_t v)
 {
-        bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
-        bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
-            BUS_SPACE_BARRIER_WRITE);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
+	    BUS_SPACE_BARRIER_WRITE);
 }
 
 u_int32_t
