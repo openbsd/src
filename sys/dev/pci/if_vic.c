@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.24 2006/11/02 04:56:04 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.25 2006/11/02 05:10:10 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -65,8 +65,6 @@
 #define VIC_INC(_x, _y)		(_x) = ((_x) + 1) % (_y)
 #define VIC_INC_POS(_x, _y)	(_x) = (++(_x)) % (_y) ? (_x) : 1
 #define VIC_TX_TIMEOUT		5
-#define VIC_TIMER_DELAY		2
-#define VIC_TIMER_MS(_ms)	(_ms * hz / 1000)
 
 #define VIC_MIN_FRAMELEN	(ETHER_MIN_LEN - ETHER_CRC_LEN)
 
@@ -95,6 +93,8 @@ struct vic_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	void			*sc_ih;
+
+	struct timeout		sc_tick;
 
 	struct arpcom		sc_ac;
 	struct ifmedia		sc_media;
@@ -166,7 +166,7 @@ void		vic_watchdog(struct ifnet *);
 int		vic_ioctl(struct ifnet *, u_long, caddr_t);
 void		vic_init(struct ifnet *);
 void		vic_stop(struct ifnet *);
-void		vic_timer(void *);
+void		vic_tick(void *);
 
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
 
@@ -206,6 +206,8 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 		/* error printed by vic_alloc */
 		return;
 	}
+
+	timeout_set(&sc->sc_tick, vic_tick, sc);
 
 	bcopy(sc->sc_lladdr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
 
@@ -502,6 +504,7 @@ vic_uninit_data(struct vic_softc *sc)
 
 	return (0);
 }
+
 void
 vic_link_state(struct vic_softc *sc)
 {
@@ -1018,6 +1021,8 @@ vic_init(struct ifnet *ifp)
 	vic_write(sc, VIC_CMD, VIC_CMD_INTR_ENABLE);
 
 	splx(s);
+
+	timeout_add(&sc->sc_tick, hz);
 }
 
 void
@@ -1027,6 +1032,8 @@ vic_stop(struct ifnet *ifp)
 	int s;
 
 	s = splnet();
+
+	timeout_del(&sc->sc_tick);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
@@ -1078,16 +1085,15 @@ vic_alloc_mbuf(struct vic_softc *sc, bus_dmamap_t map)
 }
 
 void
-vic_timer(void *arg)
+vic_tick(void *arg)
 {
 	struct vic_softc		*sc = (struct vic_softc *)arg;
-//	struct ifnet			*ifp = &sc->sc_ac.ac_if;
 
 	/* Update link state (if changed) */
 	vic_link_state(sc);
 
 	/* Re-schedule another timeout. */
-//	timeout_add(&sc->sc_timer, hz * VIC_TIMER_DELAY);
+	timeout_add(&sc->sc_tick, hz);
 }
 
 u_int32_t
