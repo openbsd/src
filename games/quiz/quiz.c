@@ -1,4 +1,4 @@
-/*	$OpenBSD: quiz.c,v 1.16 2004/07/10 07:26:23 deraadt Exp $	*/
+/*	$OpenBSD: quiz.c,v 1.17 2006/11/02 18:19:30 ray Exp $	*/
 /*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: quiz.c,v 1.16 2004/07/10 07:26:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: quiz.c,v 1.17 2006/11/02 18:19:30 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,8 @@ get_file(const char *file)
 	while ((lp = fgetln(fp, &len)) != NULL) {
 		if (lp[len - 1] == '\n')
 			--len;
-		if (qp->q_text && qp->q_text[strlen(qp->q_text) - 1] == '\\')
+		if (qp->q_text && qp->q_text[0] != '\0' &&
+		    qp->q_text[strlen(qp->q_text) - 1] == '\\')
 			qp->q_text = appdstr(qp->q_text, lp, len);
 		else {
 			if ((qp->q_next = malloc(sizeof(QE))) == NULL)
