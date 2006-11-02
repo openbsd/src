@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.28 2006/11/02 23:32:16 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.29 2006/11/02 23:35:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -997,7 +997,6 @@ vic_start(struct ifnet *ifp)
 		ifp->if_opackets++;
 		sc->sc_txpending++;
 
-		sc->sc_data->vd_tx_stopped = 1;
 		VIC_INC(sc->sc_data->vd_tx_nextidx, sc->sc_data->vd_tx_length);
 
 		tx = 1;
