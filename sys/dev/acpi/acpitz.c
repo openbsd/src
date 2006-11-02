@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.7 2006/11/02 04:56:13 marco Exp $ */
+/* $OpenBSD: acpitz.c,v 1.8 2006/11/02 04:58:20 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -187,7 +187,7 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 	char			name[8];
 	int			rv = 1, x, y;
 
-	printf("%s: acpitz_setfan(%d, %s)\n", DEVNAME(sc), i, method);
+	dnprintf(20, "%s: acpitz_setfan(%d, %s)\n", DEVNAME(sc), i, method);
 
 	snprintf(name, sizeof name, "_AL%d", i);
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, name, 0, NULL, &res0)) {
