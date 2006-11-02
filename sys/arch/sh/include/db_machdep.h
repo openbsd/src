@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.2 2006/10/06 21:16:57 mickey Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.3 2006/11/02 22:16:22 mickey Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2006/05/10 06:24:03 skrll Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ extern db_regs_t	ddb_regs;	/* register state */
 
 #define	FIXUP_PC_AFTER_BREAK(regs)	((regs)->tf_spc -= BKPT_SIZE)
 
-#define	IS_BREAKPOINT_TRAP(type, code)	((type) == EXPEVT_BREAK)
+#define	IS_BREAKPOINT_TRAP(type, code)	((type) == EXPEVT_TRAPA)
 #define	IS_WATCHPOINT_TRAP(type, code)	(0) /* XXX (msaitoh) */
 
 #define	inst_load(ins)		0
