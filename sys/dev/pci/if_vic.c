@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.30 2006/11/02 23:39:22 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.31 2006/11/02 23:43:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -611,7 +611,8 @@ vic_init_data(struct vic_softc *sc)
 
 	for (i = 0; i < sc->sc_ntxbuf; i++) {
 		txb = &sc->sc_txbuf[i];
-		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, VIC_SG_MAX,
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+		    (sc->sc_cap & VIC_CMD_HWCAP_SG) ? VIC_SG_MAX : 1,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT, &txb->txb_dmamap) != 0) {
 			printf("%s: unable to create dmamap for tx %d\n",
 			    DEVNAME(sc), i);
