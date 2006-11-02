@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.36 2006/09/26 15:55:17 jaredy Exp $	*/
+/*	$OpenBSD: grep.c,v 1.37 2006/11/02 18:00:03 ray Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -176,7 +176,7 @@ add_pattern(char *pat, size_t len)
 		pattern_sz *= 2;
 		pattern = grep_realloc(pattern, ++pattern_sz * sizeof(*pattern));
 	}
-	if (pat[len - 1] == '\n')
+	if (len > 0 && pat[len - 1] == '\n')
 		--len;
 	/* pat may not be NUL-terminated */
 	if (wflag && !Fflag) {
