@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.23 2006/11/02 04:32:59 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.24 2006/11/02 04:56:04 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -171,9 +171,6 @@ void		vic_timer(void *);
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
 
 struct mbuf *vic_alloc_mbuf(struct vic_softc *, bus_dmamap_t);
-int	vic_alloc_data(struct vic_softc *);
-void	vic_reset_data(struct vic_softc *);
-void	vic_free_data(struct vic_softc *);
 
 const struct pci_matchid vic_devices[] = {
 	{ PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET }
@@ -1078,89 +1075,6 @@ vic_alloc_mbuf(struct vic_softc *sc, bus_dmamap_t map)
 	}
 
 	return (m);
-}
-
-void
-vic_reset_data(struct vic_softc *sc)
-{
-
-#if 0
-	struct vic_rxbuf *rxb;
-	struct vic_txbuf *txb;
-	int i;
-
-	for (i = 0; i < sc->sc_nrxbuf; i++) {
-		rxb = &sc->sc_rxbuf[i];
-
-		bzero(&sc->sc_rxq[i], sizeof(struct vic_rxdesc));
-		sc->sc_rxq[i].rx_physaddr =
-		    rxb->rxb_map->dm_segs->ds_addr;
-		sc->sc_rxq[i].rx_buflength = htole32(MCLBYTES);
-		sc->sc_rxq[i].rx_owner = VIC_OWNER_NIC;
-		sc->sc_rxq[i].rx_priv = rxb;
-
-		bus_dmamap_sync(sc->sc_dmat, rxb->rxb_map, 0,
-		    rxb->rxb_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
-	}
-
-	for (i = 0; i < sc->sc_ntxbuf; i++) {
-		txb = &sc->sc_txbuf[i];
-
-		bzero(&sc->sc_txq[i], sizeof(struct vic_txdesc));
-		sc->sc_txq[i].tx_owner = VIC_OWNER_DRIVER;
-		sc->sc_txq[i].tx_priv = txb;
-
-		if (sc->sc_txbuf[i].txb_m != NULL) {
-			bus_dmamap_sync(sc->sc_dmat, txb->txb_map, 0,
-			    txb->txb_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmat, txb->txb_map);
-			m_freem(sc->sc_txbuf[i].txb_m);
-			sc->sc_txbuf[i].txb_m = NULL;
-		}
-	}
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_map, 0,
-	    sc->sc_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
-#endif
-}
-
-void
-vic_free_data(struct vic_softc *sc)
-{
-#if 0
-
-	bus_dmamap_t map;
-	int i;
-
-	if (sc->sc_data == NULL)
-		return;
-
-	/* Free Rx queue */
-	for (i = 0; i < sc->sc_nrxbuf; i++) {
-		if ((map = sc->sc_rxbuf[i].rxb_map) == NULL)
-			continue;
-		if (sc->sc_rxbuf[i].rxb_m != NULL) {
-			bus_dmamap_sync(sc->sc_dmat, map, 0,
-			    map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmat, map);
-			m_freem(sc->sc_rxbuf[i].rxb_m);
-		}
-		bus_dmamap_destroy(sc->sc_dmat, map);
-	}
-
-	/* Free Tx queue */
-	for (i = 0; i < sc->sc_ntxbuf; i++) {
-		if ((map = sc->sc_txbuf[i].txb_map) == NULL)
-			continue;
-		if (sc->sc_txbuf[i].txb_m != NULL) {
-			bus_dmamap_sync(sc->sc_dmat, map, 0,
-			    map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmat, map);
-			m_freem(sc->sc_txbuf[i].txb_m);
-		}
-		bus_dmamap_destroy(sc->sc_dmat, map);
-	}
-#endif
 }
 
 void
