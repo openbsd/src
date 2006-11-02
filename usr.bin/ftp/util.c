@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.44 2006/11/02 01:43:01 ray Exp $	*/
+/*	$OpenBSD: util.c,v 1.45 2006/11/02 01:51:33 ray Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: util.c,v 1.44 2006/11/02 01:43:01 ray Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.45 2006/11/02 01:51:33 ray Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -309,7 +309,7 @@ tryagain:
 		else
 			fprintf(ttyout, "Name (%s): ", host);
 		user = myname;
-		if (fgets(tmp, sizeof(tmp) - 1, stdin) != NULL) {
+		if (fgets(tmp, sizeof(tmp), stdin) != NULL) {
 			char *p;
 
 			if ((p = strchr(tmp, '\n')) != NULL)
