@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_main.c,v 1.10 2003/07/06 02:03:13 avsm Exp $	*/
+/*	$OpenBSD: pl_main.c,v 1.11 2006/11/02 18:15:02 ray Exp $	*/
 /*	$NetBSD: pl_main.c,v 1.5 1995/04/24 12:25:25 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pl_main.c,v 1.10 2003/07/06 02:03:13 avsm Exp $";
+static char rcsid[] = "$OpenBSD: pl_main.c,v 1.11 2006/11/02 18:15:02 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -197,8 +197,8 @@ reprint:
 	else {
 		(void) printf("Your name, Captain? ");
 		(void) fflush(stdout);
-		(void) fgets(captain, sizeof captain, stdin);
-		if (!*captain || *captain == '\n')
+		if (fgets(captain, sizeof captain, stdin) == NULL ||
+		    captain[0] == '\0' || captain[0] == '\n')
 			(void) strlcpy(captain, "no name", sizeof captain);
 		else if (captain[strlen(captain) - 1] == '\n')
 		    captain[strlen(captain) - 1] = '\0';
