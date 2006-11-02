@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.177 2006/11/02 10:18:07 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.178 2006/11/02 16:54:16 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1228,7 +1228,8 @@ Defined while building packages, read-only.
 See the description of FLAVORS AND MULTI_PACKAGES for a detailed explanation.
 .It Ev PACKAGE_REPOSITORY
 User settings.
-Default location for built packages. Defaults to
+Default location for built packages.
+Defaults to
 .Pa ${PORTSDIR}/packages .
 See
 .Ar package
@@ -1329,7 +1330,7 @@ Defaults to -p0 .
 .It Ev PERMIT_{DISTFILES,PACKAGE}_{CDROM,FTP}
 Set to
 .Sq Yes
-if package or distribution files can be allowed on ftp sites or CD-ROM without
+if package or distribution files can be allowed on FTP sites or CD-ROM without
 legal issues.
 Set to reason not to otherwise.
 PERMIT_* lines in the Makefile should be preceded with a comment explaining
@@ -1776,7 +1777,7 @@ Location of packages retrieved through the network.
 .It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cdrom
 Location of packages suitable for the CD.
 .It Pa ${PORTSDIR}/packages/${MACHINE_ARCH}/ftp
-Location of packages suitable for ftp.
+Location of packages suitable for FTP.
 .It Pa ${PORTSDIR}/bulk/${MACHINE_ARCH}
 Default setup of ${BULK_COOKIES_DIR}.
 .It Pa ${PORTSDIR}/update/${MACHINE_ARCH}
@@ -1837,7 +1838,7 @@ Renamed into
 .Bl -tag -width MASTER_SITES
 .It Ev BIN_PACKAGES
 Old user settings.
-The infrastructure always trust the repository to contain correct packages.
+The infrastructure always trusts the repository to contain correct packages.
 So, if the package name did not change and if it exists in the repository,
 it will not be rebuilt without manual user action.
 .It Ev CATn
@@ -1850,7 +1851,7 @@ Derived directly from
 Old user settings.
 Base location where packages suitable for a CD-ROM (see
 PERMIT_PACKAGE_CDROM) will be placed.
-Now hardwired to 
+Now hardwired to
 .Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cdrom .
 .It Ev COMMENT
 Used to be the name of the comment file for a package.
@@ -1886,9 +1887,9 @@ Used to specify dependencies that were needed to fetch files.
 It is much easier to mirror locally weird distribution files.
 .It Ev FTP_PACKAGES
 User settings.
-Base location where packages suitable for ftp (see
+Base location where packages suitable for FTP (see
 PERMIT_PACKAGE_FTP) will be placed.
-Now hardwired to 
+Now hardwired to
 .Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/ftp .
 (default: ${PKGREPOSITORYBASE}/ftp)
 .It Ev GNU_CONFIGURE
@@ -2278,7 +2279,7 @@ will invoke
 subupdate ,
 .Ar lib-depends-check
 will invoke
-.Ar sublib-depends-check,
+.Ar sublib-depends-check ,
 .Ar readme
 will invoke
 .Ar subreadme ,
