@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.25 2006/04/02 21:38:56 djm Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.26 2006/11/02 18:07:03 ray Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -1147,6 +1147,8 @@ open_device(fdidpair **devfd, char *name)
 			/* they've (apparently) given a full path... */
 			strlcpy(devname[0], name, PATH_MAX);
 		} else {
+			if (name[0] == '\0')
+				errx(1, "invalid device");
 			if (isdigit(name[strlen(name) - 1])) {
 				snprintf(devname[0], PATH_MAX, "%s%s%c",
 				    _PATH_DEV, name, 'a' + getrawpartition());		
