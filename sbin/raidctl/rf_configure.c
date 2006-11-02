@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_configure.c,v 1.12 2004/07/17 02:14:33 deraadt Exp $	*/
+/*	$OpenBSD: rf_configure.c,v 1.13 2006/11/02 18:07:56 ray Exp $	*/
 /*	$NetBSD: rf_configure.c,v 1.14 2001/02/04 21:05:42 christos Exp $	*/
 
 /*
@@ -332,9 +332,9 @@ rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 	    "Can't find block design file name in config file\n"))
     return(EINVAL);
   bdfile = rf_find_non_white(buf);
-  if (bdfile[strlen(bdfile)-1] == '\n') {
+  if ((p = strchr(bdfile, '\n')) != NULL) {
     /* strip newline char */
-    bdfile[strlen(bdfile)-1] = '\0';
+    *p = '\0';
   }
   /* open bd file, check validity of configuration */
   if ((fp = fopen(bdfile,"r"))==NULL) {
@@ -359,9 +359,9 @@ rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 		    "Can't find sparemap file name in config file\n"))
       return(EINVAL);
     smname = rf_find_non_white(smbuf);
-    if (smname[strlen(smname)-1] == '\n') {
+    if ((p = strchr(smname, '\n')) != NULL) {
       /* strip newline char */
-      smname[strlen(smname)-1] = '\0';
+      *p = '\0';
     }
 	} else {
     smbuf[0] = '\0';
@@ -493,7 +493,7 @@ rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
 {
 	int i, j, numFound, linecount, tableNum, tupleNum,
 	    spareDisk, spareBlkOffset;
-  char buf[1024], targString[100], errString[100];
+  char buf[1024], targString[100], errString[100], *p;
   RF_SpareTableEntry_t **table;
   FILE *fp;
 
@@ -519,8 +519,8 @@ rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
 	if (rf_get_next_nonblank_line(buf, 1024, fp,
 	    "Invalid sparemap file:  can't find header line\n"))
     return(NULL);
-  if (buf[strlen(buf)-1] == '\n')
-    buf[strlen(buf)-1] = '\0';
+  if ((p = strchr(buf, '\n')) != NULL)
+    *p = '\0';
 
 	snprintf(targString, sizeof targString, "fdisk %d\n", req->fcol);
 	snprintf(errString, sizeof errString,
