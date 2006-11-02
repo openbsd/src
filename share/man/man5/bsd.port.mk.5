@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.174 2006/08/02 09:09:38 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.175 2006/11/02 09:57:04 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -156,7 +156,7 @@ Clean distribution files.
 .It Va install
 Uninstall package.
 .It Va package
-Remove package file (and copies in ${CDROM_PACKAGES} and ${FTP_PACKAGES}).
+Remove all copies of package file.
 .It Va readmes
 Clean files generated through the
 .Ar readme
@@ -323,13 +323,16 @@ among others) and invoking
 for each package in the
 .Ev MULTI_PACKAGES
 list.
+If the repository already contains up-to-date packages, they are not rebuilt.
+Arch-independent packages are created in ${PACKAGE_REPOSITORY}/no-arch,
+and copied into ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/all as needed.
 If ${PERMIT_PACKAGE_FTP} is set to
 .Sq Yes ,
-copies built packages into ${FTP_PACKAGES}, using
+copies built packages into ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/ftp, using
 hard links if possible.
 If ${PERMIT_PACKAGE_CDROM} is set to
 .Sq Yes ,
-copies built packages into ${CDROM_PACKAGES}, using
+copies built packages into ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cdrom}, using
 hard links if possible.
 .It Ar patch
 Apply distribution and
@@ -428,6 +431,11 @@ port's variables without guessing wrongly.
 Prints the list of pkgpaths for all ports that will be affected by the
 current port changing.
 Works by walking the list of dependencies, in reverse.
+.It Ar subupdate
+Update an existing installation to a newer package, exactly
+like
+.Ar update ,
+but affects only one single subpackage in multi-packages ports.
 .It Ar unlink-categories
 Remove symbolic links in other directories that correspond to the port's
 .Ev CATEGORIES .
@@ -461,6 +469,7 @@ scan the installation for a package with the same
 and update it using
 .Sq pkg_add -r
 if a newer package is available.
+In multi-packages ports, all relevant packages are updated.
 See
 .Ev UPDATE_COOKIES_DIR
 and
@@ -550,17 +559,6 @@ Use in conjunction with
 .Ev INTERACTIVE
 to simplify bulk-package builds.
 .Pq See IGNORE .
-.It Ev BIN_PACKAGES
-User settings.
-If set to
-.Sq Yes ,
-the
-.Ar package
-target will trust a package built in the repository to be up-to-date,
-and will not rebuild it if the work directory is absent.
-See also
-.Ev BULK ,
-.Ev TRUST_PACKAGES .
 .It Ev BROKEN
 Define only for broken ports, set to reason the port is broken.
 See also
@@ -609,7 +607,6 @@ For instance, setting BULK_misc/screen=No
 will override any BULK=Yes passed on the command line.
 See
 .Ev BULK_COOKIES_DIR ,
-.Ev BIN_PACKAGES ,
 .Ev TRUST_PACKAGES .
 .It Ev BULK_COOKIES_DIR
 User settings.
@@ -638,11 +635,6 @@ Flags appended to
 if
 .Ev WARNINGS
 is set.
-.It Ev CDROM_PACKAGES
-User settings.
-Base location where packages suitable for a CD-ROM (see
-PERMIT_PACKAGE_CDROM) will be placed
-(default: ${PKGREPOSITORYBASE}/cdrom)
 .It Ev CDROM_SITE
 Path to a local database that holds distribution files (usually a CD-ROM
 or other similar media), used to retrieve distribution files before going
@@ -937,7 +929,8 @@ If set to
 the
 .Ar package
 target will download packages missing from the repository from locations in
-${PKG_PATH}.
+${PKG_PATH} and place them into
+.Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cache/
 It will only build them if no suitable packages are found.
 .It Ev FETCH_SYMLINK_DISTFILES
 User settings.
@@ -972,11 +965,6 @@ target will always update an installed package,
 even if it is the same version,
 and all dependencies that install packages will
 also force an update.
-.It Ev FTP_PACKAGES
-User settings.
-Base location where packages suitable for ftp (see
-PERMIT_PACKAGE_FTP) will be placed
-(default: ${PKGREPOSITORYBASE}/ftp)
 .It Ev FULLDISTDIR
 Complete path to directory where ${DISTFILES} and ${PATCHFILES} will be
 located, to be used in hand-crafted extraction targets (read-only).
@@ -1211,6 +1199,13 @@ Revision number of
 .It Ev PACKAGING
 Defined while building packages, read-only.
 See the description of FLAVORS AND MULTI_PACKAGES for a detailed explanation.
+.It Ev PACKAGE_REPOSITORY
+User settings.
+Default location for built packages. Defaults to
+.Pa ${PORTSDIR}/packages .
+See
+.Ar package
+for details.
 .It Ev PATCH
 Command to use to apply all patches.
 Defaults to
@@ -1304,6 +1299,16 @@ PATCH_LIST=${PORTSDIR}/x11/kde/libs2/patches/p-* patch-*
 .It Ev PATCH_STRIP
 Patch option used to strip directory levels while applying port's patches.
 Defaults to -p0 .
+.It Ev PERMIT_{DISTFILES,PACKAGE}_{CDROM,FTP}
+Set to
+.Sq Yes
+if package or distribution files can be allowed on ftp sites or CD-ROM without
+legal issues.
+Set to reason not to otherwise.
+PERMIT_* lines in the Makefile should be preceded with a comment explaining
+details about licensing and patents issues the port may have.
+Porters must be very thorough in their checks.
+In case of doubt, ask.
 .It Ev PKG_ARCH
 Comma-separated list of architectures on which this package may install.
 Defaults to ${MACHINE_ARCH},${ARCH}.
@@ -1313,12 +1318,6 @@ Path to package installation records.
 Defaults to
 .Pa /var/db/pkg .
 User settings.
-.It Ev PKGREPOSITORY
-User settings.
-Location for packages built (default ${PKGREPOSITORYBASE}/all)
-.It Ev PKGREPOSITORYBASE
-User settings.
-Base location for packages built (default ${PORTSDIR}/packages/${ARCH}).
 .It Ev PORTHOME
 Setting of env variable
 .Ev HOME
@@ -1575,7 +1574,6 @@ If set to
 dependency mechanisms will assume the database of installed packages is
 correct.
 See also
-.Ev BIN_PACKAGES ,
 .Ev BULK .
 .It Ev UNLOCK_CMD
 User settings.
@@ -1741,11 +1739,17 @@ Use
 .Ar pre-fake
 if this is incomplete.
 .It Pa ${PORTSDIR}/packages/${MACHINE_ARCH}/cdrom
-Default setup of ${CDROM_PACKAGES}.
+Default setup of ${PACKAGE_REPOSITORY}.
+.It Pa ${PACKAGE_REPOSITORY}/no-arch
+Location of arch-independent packages.
+.It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/all
+Location of all built packages.
+.It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cache
+Location of packages retrieved through the network.
+.It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cdrom
+Location of packages suitable for the CD.
 .It Pa ${PORTSDIR}/packages/${MACHINE_ARCH}/ftp
-Default setup of ${FTP_PACKAGES}.
-.It Pa ${PORTSDIR}/packages/${MACHINE_ARCH}/all
-Default setup of ${PKGREPOSITORY}.
+Location of packages suitable for ftp.
 .It Pa ${PORTSDIR}/bulk/${MACHINE_ARCH}
 Default setup of ${BULK_COOKIES_DIR}.
 .It Pa ${PORTSDIR}/update/${MACHINE_ARCH}
@@ -1804,12 +1808,23 @@ Renamed into
 .El
 .Sh OBSOLETE VARIABLES
 .Bl -tag -width MASTER_SITES
+.It Ev BIN_PACKAGES
+Old user settings.
+The infrastructure always trust the repository to contain correct packages.
+So, if the package name did not change and if it exists in the repository,
+it will not be rebuilt without manual user action.
 .It Ev CATn
 List of formatted manpages, per section.
 .It Ev CATPREFIX
 Location for storing formatted manpages.
 Derived directly from
 .Ev PREFIX .
+.It Ev CDROM_PACKAGES
+Old user settings.
+Base location where packages suitable for a CD-ROM (see
+PERMIT_PACKAGE_CDROM) will be placed.
+Now hardwired to 
+.Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cdrom .
 .It Ev COMMENT
 Used to be the name of the comment file for a package.
 It now holds the comment itself.
@@ -1842,6 +1857,13 @@ to point to a script that does any required special treatment instead.
 .It Ev FETCH_DEPENDS
 Used to specify dependencies that were needed to fetch files.
 It is much easier to mirror locally weird distribution files.
+.It Ev FTP_PACKAGES
+User settings.
+Base location where packages suitable for ftp (see
+PERMIT_PACKAGE_FTP) will be placed.
+Now hardwired to 
+.Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/ftp .
+(default: ${PKGREPOSITORYBASE}/ftp)
 .It Ev GNU_CONFIGURE
 Use
 .Ev CONFIGURE_STYLE
@@ -1978,16 +2000,14 @@ becomes
 PATCH_FILES=foo.diff.gz:0
 MASTER_SITES0=ftp://ftp.zoinx.org/pub/
 .Ed
-.It Ev PERMIT_{DISTFILES,PACKAGE}_{CDROM,FTP}
-Set to
-.Sq Yes
-if package or distribution files can be allowed on ftp sites or CD-ROM without
-legal issues.
-Set to reason not to otherwise.
-PERMIT_* lines in the Makefile should be preceded with a comment explaining
-details about licensing and patents issues the port may have.
-Porters must be very thorough in their checks.
-In case of doubt, ask.
+.It Ev PKGREPOSITORY
+Old user settings.
+See
+.Ev PACKAGE_REPOSITORY .
+.It Ev PKGREPOSITORYBASE
+Old user settings.
+See
+.Ev PACKAGE_REPOSITORY .
 .It Ev PLIST_SRC
 From
 .Nx .
