@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.59 2006/10/19 08:56:46 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.60 2006/11/02 05:52:24 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -878,17 +878,19 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	acpi_softc = sc;
 
-	/* attach devices found in dsdt */
+	/* initialize runtime environment */
 	aml_find_node(aml_root.child, "_INI", acpi_inidev, sc);
 
-	/* attach devices found in dsdt */
+	/* attach embedded controller devices */
 	aml_find_node(aml_root.child, "_HID", acpi_foundec, sc);
+
+	/* attach battery, power supply and button devices */
 	aml_find_node(aml_root.child, "_HID", acpi_foundhid, sc);
 
-	/* attach devices found in dsdt */
+	/* attach cpu devices */
 	aml_find_node(aml_root.child, "_PSS", acpi_foundpss, sc);
 
-	/* attach devices found in dsdt */
+	/* attach thermal zone devices, XXX MUST be last entry */
 	aml_find_node(aml_root.child, "_TMP", acpi_foundtmp, sc);
 
 	/* create list of devices we want to query when APM come in */
