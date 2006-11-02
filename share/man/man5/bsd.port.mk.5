@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.176 2006/11/02 10:12:17 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.177 2006/11/02 10:18:07 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -391,6 +391,18 @@ in the right directory, and leaves user at ftp prompt.
 Print the package signature, in the same format used for
 .Xr pkg_info 1
 .Fl S .
+.It Ar print-plist
+Generate and print a package packing-list from the static information
+present in the port.
+.It Ar print-plist-contents
+Generate and print a package contents from the static information
+present in the port.
+In contrast with
+.Ar print-plist ,
+the package contents only consists of files, all tagged with category
+markers such as @file.
+See
+.Xr pkg_create 1 .
 .It Ar readmes
 Create an html description of packages, including comments, description,
 and dependencies.
@@ -418,6 +430,9 @@ Only invoked when regression tests are run, or explicitly through
 .Ar depends .
 .It Ar reinstall
 Force reinstallation of a port, by first cleaning the old installation.
+Seldom needed, as
+.Ar update
+will often do the right thing.
 .It Ar repackage
 For rebuilding of the packages of a port, by first removing the old packages.
 .It Ar run-depends
