@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_subr.S,v 1.2 2006/10/06 21:16:57 mickey Exp $	*/
+/*	$OpenBSD: locore_subr.S,v 1.3 2006/11/02 23:00:28 miod Exp $	*/
 /*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
 /*-
@@ -49,29 +49,33 @@
  * LINTSTUB: include <sh/locore.h>
  */
 
+#define	SAVEPCB(reg,branch) \
+	add	#SF_SIZE, reg ; \
+	stc.l	r7_bank,@-/**/reg ; \
+	stc.l	sr,	@-/**/reg ; \
+	stc.l	r6_bank,@-/**/reg ; \
+	sts.l	pr,	@-/**/reg ; \
+	mov.l	r8,	@-/**/reg ; \
+	mov.l	r9,	@-/**/reg ; \
+	mov.l	r10,	@-/**/reg ; \
+	mov.l	r11,	@-/**/reg ; \
+	mov.l	r12,	@-/**/reg ; \
+	mov.l	r13,	@-/**/reg ; \
+	mov.l	r14,	@-/**/reg ; \
+	branch ; \
+	 mov.l	r15,	@-/**/reg
+
 	.text
 	.align 5	/* align cache line size (32B) */
 /*
- * LINTSTUB: Func: int cpu_switch(struct proc *p, struct proc *XXX_IGNORED)
+ * LINTSTUB: Func: void cpu_switch(struct proc *p, struct proc *XXX_IGNORED)
  *	Find a runnable proc and switch to it.  Wait if necessary.
  */
 ENTRY(cpu_switch)
 	/* Save current proc's context to switchframe */
 	mov.l	.L_SF,	r0
 	mov.l	@(r0, r4), r1
-	add	#SF_SIZE, r1
-	stc.l	r7_bank,@-r1
-	stc.l	sr,	@-r1
-	stc.l	r6_bank,@-r1
-	sts.l	pr,	@-r1
-	mov.l	r8,	@-r1
-	mov.l	r9,	@-r1
-	mov.l	r10,	@-r1
-	mov.l	r11,	@-r1
-	mov.l	r12,	@-r1
-	mov.l	r13,	@-r1
-	mov.l	r14,	@-r1
-	mov.l	r15,	@-r1
+	SAVEPCB(r1,)
 
 .L_find_and_switch:
 	/* Search next proc. cpu_switch_search may or may not sleep. */
@@ -84,7 +88,6 @@ ENTRY(cpu_switch)
 	bt/s	1f
 	 mov	r0,	r4	/* new proc */
 
-.L_doswitch:
 	/* Setup kernel stack */
 	mov.l	.L_SF,	r0
 	mov.l	@(r0, r4), r1		/* switch frame */
@@ -106,16 +109,8 @@ ENTRY(cpu_switch)
 	__EXCEPTION_UNBLOCK(r0, r1)
 	/* Now OK to use kernel stack. */
 
-	/* Return 1 indicating "we switched". */
-	bra	2f
-	 mov	#1, r2
-
-1:	/* Return 0 indicating "didn't switch". */
-	mov	#0, r2
-
 	/* Restore new proc's context from switchframe */
-	/* NOTE: r2 has return value! */
-2:	mov.l	.L_SF,	r0
+1:	mov.l	.L_SF,	r0
 	mov.l	@(r0, r4), r1
 	add	#4,	r1		/* r15 already restored */
 	mov.l	@r1+,	r14
@@ -129,63 +124,13 @@ ENTRY(cpu_switch)
 	add	#4,	r1		/* r6_bank already restored */
 	ldc.l	@r1+,	sr
 
-	/* r2 has the return value; stuff it into r0 now. */
 	rts
-	 mov	r2, r0
+	 nop
 	.align	2
 .L_SF:			.long	(P_MD_PCB)
 .L_cpu_switch_search:	.long	_C_LABEL(cpu_switch_search)
 FUNC_SYMBOL(switch_resume)
 
-
-
-/*
- * LINTSTUB: Func: void cpu_switchto(struct proc *current, struct proc *next)
- *	Switch to the specified next LWP.
- */
-ENTRY(cpu_switchto)
-	/* Save current proc's context to switchframe. */
-	mov.l	.L_SFp,	r0
-	mov.l	@(r0, r4), r1
-	add	#SF_SIZE, r1
-	stc.l	r7_bank,@-r1
-	stc.l	sr,	@-r1
-	stc.l	r6_bank,@-r1
-	sts.l	pr,	@-r1
-	mov.l	r8,	@-r1
-	mov.l	r9,	@-r1
-	mov.l	r10,	@-r1
-	mov.l	r11,	@-r1
-	mov.l	r12,	@-r1
-	mov.l	r13,	@-r1
-	mov.l	r14,	@-r1
-	mov.l	r15,	@-r1
-
-	/*
-	 * curproc = NULL;
-	 * XXX Is this necessary?  We know we won't go idle.
-	 */
-	mov.l	.L_curproc, r0
-	mov	#0, r1
-	mov.l	r1, @r0
-
-	/* old and new procs are already in r4, r5 */
-	mov.l	.L_cpu_switch_prepare, r0
-	jsr	@r0
-	 nop
-
-	/*
-	 * Put the incoming LWP in r4 and jump into the middle
-	 * of cpu_switch(), and let it do the work to restore the
-	 * incoming LWP's context.
-	 */
-	bra	.L_doswitch
-	 mov	r0, r4
-
-	.align	2
-.L_SFp:			.long	(P_MD_PCB)
-.L_curproc:		.long	_C_LABEL(curproc)
-.L_cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
 
 
 /*
@@ -505,22 +450,8 @@ _C_LABEL(esigcode):
  *	save struct switchframe.
  */
 ENTRY(savectx)
-	add	#SF_SIZE, r4
-	stc.l	r7_bank,@-r4
-	stc.l	sr,	@-r4
-	stc.l	r6_bank,@-r4
-	sts.l	pr,	@-r4
-	mov.l	r8,	@-r4
-	mov.l	r9,	@-r4
-	mov.l	r10,	@-r4
-	mov.l	r11,	@-r4
-	mov.l	r12,	@-r4
-	mov.l	r13,	@-r4
-	mov.l	r14,	@-r4
-	rts
-	 mov.l	r15,	@-r4
+	SAVEPCB(r4, rts)
 	SET_ENTRY_SIZE(savectx)
-
 
 /*
  * LINTSTUB: Func: int copyout(const void *ksrc, void *udst, size_t len)
