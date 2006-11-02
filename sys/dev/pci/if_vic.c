@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.22 2006/11/02 02:17:22 brad Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.23 2006/11/02 04:32:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -141,6 +141,7 @@ int		vic_map_pci(struct vic_softc *, struct pci_attach_args *);
 int		vic_query(struct vic_softc *);
 int		vic_alloc_data(struct vic_softc *);
 int		vic_init_data(struct vic_softc *sc);
+int		vic_uninit_data(struct vic_softc *sc);
 
 u_int32_t	vic_read(struct vic_softc *, bus_size_t);
 void		vic_write(struct vic_softc *, bus_size_t, u_int32_t);
@@ -205,11 +206,6 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (vic_alloc_data(sc) != 0) {
-		/* error printed by vic_alloc */
-		return;
-	}
-
-	if (vic_init_data(sc) != 0) {
 		/* error printed by vic_alloc */
 		return;
 	}
@@ -335,6 +331,11 @@ vic_query(struct vic_softc *sc)
 int
 vic_alloc_data(struct vic_softc *sc)
 {
+	u_int8_t			*kva;
+	u_int				offset;
+	struct vic_rxdesc		*rxd;
+	int				i;
+
 	sc->sc_rxbuf = malloc(sizeof(struct vic_rxbuf) * sc->sc_nrxbuf,
 	    M_NOWAIT, M_DEVBUF);
 	if (sc->sc_rxbuf == NULL) {
@@ -357,27 +358,7 @@ vic_alloc_data(struct vic_softc *sc)
 		printf("%s: unable to allocate dma region\n", DEVNAME(sc));
 		goto freetx;
 	}
-
-	return (0);
-freetx:
-	free(sc->sc_txbuf, M_DEVBUF);
-freerx:
-	free(sc->sc_rxbuf, M_DEVBUF);
-err:
-	return (1);
-}
-
-int
-vic_init_data(struct vic_softc *sc)
-{
-	u_int8_t			*kva = VIC_DMA_KVA(sc);
-	u_int				offset;
-
-	struct vic_rxbuf		*rxb;
-	struct vic_rxdesc		*rxd;
-	struct vic_txbuf		*txb;
-
-	int				i;
+	kva = VIC_DMA_KVA(sc);
 
 	/* set up basic vic data */
 	sc->sc_data = VIC_DMA_KVA(sc);
@@ -392,6 +373,49 @@ vic_init_data(struct vic_softc *sc)
 
 	sc->sc_data->vd_rx_offset = offset;
 	sc->sc_data->vd_rx_length = sc->sc_nrxbuf;
+
+	offset += sizeof(struct vic_rxdesc) * sc->sc_nrxbuf;
+
+	/* set up the dummy rx ring 2 with an unusable entry */
+	sc->sc_rxq2 = (struct vic_rxdesc *)&kva[offset];
+
+	sc->sc_data->vd_rx_offset2 = offset;
+	sc->sc_data->vd_rx_length2 = VIC_QUEUE2_SIZE;
+
+	for (i = 0; i < VIC_QUEUE2_SIZE; i++) {
+		rxd = &sc->sc_rxq2[i];
+
+		rxd->rx_physaddr = 0;
+		rxd->rx_buflength = 0;
+		rxd->rx_length = 0;
+		rxd->rx_owner = VIC_OWNER_DRIVER;
+
+		offset += sizeof(struct vic_rxdesc);
+	}
+
+	/* set up the tx ring */
+	sc->sc_txq = (struct vic_txdesc *)&kva[offset];
+
+	sc->sc_data->vd_tx_offset = offset;
+	sc->sc_data->vd_tx_length = sc->sc_ntxbuf;
+
+	return (0);
+freetx:
+	free(sc->sc_txbuf, M_DEVBUF);
+freerx:
+	free(sc->sc_rxbuf, M_DEVBUF);
+err:
+	return (1);
+}
+
+int
+vic_init_data(struct vic_softc *sc)
+{
+	struct vic_rxbuf		*rxb;
+	struct vic_rxdesc		*rxd;
+	struct vic_txbuf		*txb;
+
+	int				i;
 
 	for (i = 0; i < sc->sc_nrxbuf; i++) {
 		rxb = &sc->sc_rxbuf[i];
@@ -418,32 +442,7 @@ vic_init_data(struct vic_softc *sc)
 		rxd->rx_buflength = rxb->rxb_m->m_pkthdr.len; /* XXX? */
 		rxd->rx_length = 0;
 		rxd->rx_owner = VIC_OWNER_NIC;
-
-		offset += sizeof(struct vic_rxdesc);
 	}
-
-	/* set up the dummy rx ring 2 with an unusable entry */
-	sc->sc_rxq2 = (struct vic_rxdesc *)&kva[offset];
-
-	sc->sc_data->vd_rx_offset2 = offset;
-	sc->sc_data->vd_rx_length2 = VIC_QUEUE2_SIZE;
-
-	for (i = 0; i < VIC_QUEUE2_SIZE; i++) {
-		rxd = &sc->sc_rxq2[i];
-
-		rxd->rx_physaddr = 0;
-		rxd->rx_buflength = 0;
-		rxd->rx_length = 0;
-		rxd->rx_owner = VIC_OWNER_DRIVER;
-
-		offset += sizeof(struct vic_rxdesc);
-	}
-
-	/* set up the tx ring */
-	sc->sc_txq = (struct vic_txdesc *)&kva[offset];
-
-	sc->sc_data->vd_tx_offset = offset;
-	sc->sc_data->vd_tx_length = sc->sc_ntxbuf;
 
 	for (i = 0; i < sc->sc_ntxbuf; i++) {
 		txb = &sc->sc_txbuf[i];
@@ -477,6 +476,35 @@ freerxbs:
 	return (1);
 }
 
+int
+vic_uninit_data(struct vic_softc *sc)
+{
+	struct vic_rxbuf		*rxb;
+	struct vic_rxdesc		*rxd;
+	struct vic_txbuf		*txb;
+
+	int				i;
+
+	for (i = 0; i < sc->sc_nrxbuf; i++) {
+		rxb = &sc->sc_rxbuf[i];
+		rxd = &sc->sc_rxq[i];
+
+		bus_dmamap_sync(sc->sc_dmat, rxb->rxb_dmamap, 0,
+		    rxb->rxb_m->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, rxb->rxb_dmamap);
+		bus_dmamap_destroy(sc->sc_dmat, rxb->rxb_dmamap);
+
+		m_freem(rxb->rxb_m);
+		rxb->rxb_m = NULL;
+	}
+
+	for (i = 0; i < sc->sc_ntxbuf; i++) {
+		txb = &sc->sc_txbuf[i];
+		bus_dmamap_destroy(sc->sc_dmat, txb->txb_dmamap);
+	}
+
+	return (0);
+}
 void
 vic_link_state(struct vic_softc *sc)
 {
@@ -522,6 +550,9 @@ vic_rx_proc(struct vic_softc *sc)
 	struct vic_rxbuf		*rxb;
 	struct mbuf			*m;
 	int				len, idx;
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
@@ -718,6 +749,9 @@ vic_start(struct ifnet *ifp)
 	bus_dmamap_t			dmap;
 	int				i, idx;
 	int				tx = 0;
+
+	if (!(ifp->if_flags & IFF_RUNNING))
+		return;
 
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
@@ -954,21 +988,32 @@ vic_init(struct ifnet *ifp)
 	struct vic_softc	*sc = (struct vic_softc *)ifp->if_softc;
 	int			s;
 
+	if (vic_init_data(sc) != 0)
+		return;
+
+	sc->sc_data->vd_tx_curidx = 0;
+	sc->sc_data->vd_tx_nextidx = 0;
+	sc->sc_data->vd_tx_stopped = sc->sc_data->vd_tx_queued = 0;
+
+	sc->sc_data->vd_rx_nextidx = 0;
+	sc->sc_data->vd_rx_nextidx2 = 0;
+
+        sc->sc_data->vd_rx_saved_nextidx = 0;
+        sc->sc_data->vd_rx_saved_nextidx2 = 0;
+        sc->sc_data->vd_tx_saved_nextidx = 0;
+
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	s = splnet();
 
-	vic_write(sc, VIC_DATA_ADDR, VIC_DMA_DVA(sc));
-	vic_write(sc, VIC_DATA_LENGTH, sc->sc_dma_size);
 	if (ifp->if_flags & IFF_PROMISC)
 		vic_iff(sc, VIC_CMD_IFF_PROMISC);
 	else
 		vic_iff(sc, VIC_CMD_IFF_BROADCAST | VIC_CMD_IFF_MULTICAST);
 
-	sc->sc_data->vd_tx_curidx = 0;
-	sc->sc_data->vd_tx_nextidx = 0;
-	sc->sc_data->vd_tx_stopped = sc->sc_data->vd_tx_queued = 0;
+	vic_write(sc, VIC_DATA_ADDR, VIC_DMA_DVA(sc));
+	vic_write(sc, VIC_DATA_LENGTH, sc->sc_dma_size);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -981,27 +1026,33 @@ vic_init(struct ifnet *ifp)
 void
 vic_stop(struct ifnet *ifp)
 {
-#if 0
 	struct vic_softc *sc = (struct vic_softc *)ifp->if_softc;
 	int s;
 
 	s = splnet();
 
-	sc->sc_txtimeout = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
-#ifdef notyet
-	vic_write(sc, VIC_CMD, VIC_CMD_INTR_DISABLE);
-#endif
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	vic_write(sc, VIC_DATA_ADDR, 0);
-	vic_iff(sc, 0);
+	/* XXX wait for tx to complete */
+	while (sc->sc_txpending > 0) {
+		splx(s);
+		delay(1000);
+		s = splnet();
+	}
 
 	sc->sc_data->vd_tx_stopped = 1;
-	timeout_del(&sc->sc_timer);
+
+	vic_write(sc, VIC_CMD, VIC_CMD_INTR_DISABLE);
+
+	vic_iff(sc, 0);
+	vic_write(sc, VIC_DATA_ADDR, 0);
+
+	vic_uninit_data(sc);
 
 	splx(s);
-#endif
 }
 
 struct mbuf *
