@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.52 2006/05/19 04:05:35 ray Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.53 2006/11/02 01:43:01 ray Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.52 2006/05/19 04:05:35 ray Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.53 2006/11/02 01:43:01 ray Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -1271,10 +1271,14 @@ user(int argc, char *argv[])
 	}
 	if (n == CONTINUE) {
 		if (argc < 4) {
+			char *p;
+
 			(void)fputs("Account: ", ttyout);
 			(void)fflush(ttyout);
-			(void)fgets(acctname, sizeof(acctname) - 1, stdin);
-			acctname[strlen(acctname) - 1] = '\0';
+			if (fgets(acctname, sizeof(acctname) - 1, stdin) == NULL)
+				goto fail;
+			if ((p = strchr(acctname, '\n')) != NULL)
+				*p = '\0';
 			argv[3] = acctname;
 			argc++;
 		}
@@ -1282,6 +1286,7 @@ user(int argc, char *argv[])
 		aflag++;
 	}
 	if (n != COMPLETE) {
+ fail:
 		fputs("Login failed.\n", ttyout);
 		return;
 	}
