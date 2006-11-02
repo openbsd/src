@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2006/03/27 00:10:14 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2006/11/02 02:06:05 ray Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.14 2006/03/27 00:10:14 tedu Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.15 2006/11/02 02:06:05 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -141,10 +141,13 @@ main(int ac, char *av[])
 	if (f_list)
 		list_games();
 	if (f_printpath) {
+		size_t	len;
 		char	buf[256];
 
 		strlcpy(buf, _PATH_GAMES, sizeof buf);
-		buf[strlen(buf) - 1] = '\0';
+		len = strlen(buf);
+		if (len != 0 && buf[len - 1] == '/')
+			buf[len - 1] = '\0';
 		puts(buf);
 	}
 		
@@ -254,7 +257,7 @@ default_game(void)
 {
 	FILE		*fp;
 	static char	file[256];
-	char		line[256], games[256];
+	char		line[256], games[256], *p;
 
 	strlcpy(games, _PATH_GAMES, sizeof games);
 	strlcat(games, GAMES, sizeof games);
@@ -269,7 +272,8 @@ default_game(void)
 		return (NULL);
 	}
 	fclose(fp);
-	line[strlen(line) - 1] = '\0';
+	if ((p = strchr(line, '\n')) != NULL)
+		*p = '\0';
 	if (strlen(line) + strlen(_PATH_GAMES) >= sizeof(file)) {
 		warnx("default game name too long");
 		return (NULL);
@@ -295,7 +299,10 @@ okay_game(const char *s)
 		return (NULL);
 	}
 	while (fgets(line, sizeof(line), fp) != NULL) {
-		line[strlen(line) - 1] = '\0';
+		char *p;
+
+		if ((p = strchr(line, '\n')) != NULL)
+			*p = '\0';
 		if (strcmp(s, line) == 0) {
 			if (strlen(line) + strlen(_PATH_GAMES) >= sizeof(file)) {
 				warnx("game name too long");
