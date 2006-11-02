@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.25 2006/11/02 05:10:10 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.26 2006/11/02 23:28:04 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -53,9 +53,176 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/pci/if_vicreg.h>
-
 #define VIC_PCI_BAR		PCI_MAPREG_START /* Base Address Register */
+
+#define VIC_MAGIC		0xbabe864f
+
+/* Register address offsets */
+#define VIC_DATA_ADDR		0x0000		/* Shared data address */
+#define VIC_DATA_LENGTH		0x0004		/* Shared data length */
+#define VIC_Tx_ADDR		0x0008		/* Tx pointer address */
+
+/* Command register */
+#define VIC_CMD			0x000c		/* Command register */
+#define  VIC_CMD_INTR_ACK	0x0001	/* Acknowledge interrupt */
+#define  VIC_CMD_MCASTFIL	0x0002	/* Multicast address filter */
+#define   VIC_CMD_MCASTFIL_LENGTH	2
+#define  VIC_CMD_IFF		0x0004	/* Interface flags */
+#define   VIC_CMD_IFF_PROMISC	0x0001		/* Promiscous enabled */
+#define   VIC_CMD_IFF_BROADCAST	0x0002		/* Broadcast enabled */
+#define   VIC_CMD_IFF_MULTICAST	0x0004		/* Multicast enabled */
+#define  VIC_CMD_INTR_DISABLE	0x0020	/* Enable interrupts */
+#define  VIC_CMD_INTR_ENABLE	0x0040	/* Disable interrupts */
+#define  VIC_CMD_Tx_DONE	0x0100	/* Tx done register */
+#define  VIC_CMD_NUM_Rx_BUF	0x0200	/* Number of Rx buffers */
+#define  VIC_CMD_NUM_Tx_BUF	0x0400	/* Number of Tx buffers */
+#define  VIC_CMD_NUM_PINNED_BUF	0x0800	/* Number of pinned buffers */
+#define  VIC_CMD_HWCAP		0x1000	/* Capability register */
+#define   VIC_CMD_HWCAP_SG		(1<<0) /* Scatter-gather transmits */
+#define   VIC_CMD_HWCAP_CSUM_IPv4	(1<<1) /* TCP/UDP cksum */
+#define   VIC_CMD_HWCAP_CSUM_ALL	(1<<3) /* Hardware cksum */
+#define   VIC_CMD_HWCAP_CSUM \
+	(VIC_CMD_HWCAP_CSUM_IPv4 | VIC_CMD_HWCAP_CSUM_ALL)
+#define   VIC_CMD_HWCAP_DMA_HIGH		(1<<4) /* High DMA mapping */
+#define   VIC_CMD_HWCAP_TOE		(1<<5) /* TCP offload engine */
+#define   VIC_CMD_HWCAP_TSO		(1<<6) /* TCP segmentation offload */
+#define   VIC_CMD_HWCAP_TSO_SW		(1<<7) /* Software TCP segmentation */
+#define   VIC_CMD_HWCAP_VPROM		(1<<8) /* Virtual PROM available */
+#define   VIC_CMD_HWCAP_VLAN_Tx		(1<<9) /* Hardware VLAN MTU Rx */
+#define   VIC_CMD_HWCAP_VLAN_Rx		(1<<10) /* Hardware VLAN MTU Tx */
+#define   VIC_CMD_HWCAP_VLAN_SW		(1<<11)	/* Software VLAN MTU */
+#define   VIC_CMD_HWCAP_VLAN \
+	(VIC_CMD_HWCAP_VLAN_Tx | VIC_CMD_HWCAP_VLAN_Rx | \
+	VIC_CMD_HWCAP_VLAN_SW)
+#define  VIC_CMD_HWCAP_BITS \
+	"\20\01SG\02CSUM4\03CSUM\04HDMA\05TOE\06TSO" \
+	"\07TSOSW\10VPROM\13VLANTx\14VLANRx\15VLANSW"
+#define  VIC_CMD_FEATURE	0x2000	/* Additional feature register */
+#define   VIC_CMD_FEATURE_0_Tx		(1<<0)
+#define   VIC_CMD_FEATURE_TSO		(1<<1)
+
+#define VIC_LLADDR		0x0010		/* MAC address register */
+#define VIC_VERSION_MINOR	0x0018		/* Minor version register */
+#define VIC_VERSION_MAJOR	0x001c		/* Major version register */
+#define VIC_VERSION_MAJOR_M	0xffff0000
+
+/* Status register */
+#define VIC_STATUS		0x0020
+#define  VIC_STATUS_CONNECTED		(1<<0)
+#define  VIC_STATUS_ENABLED		(1<<1)
+
+#define VIC_TOE_ADDR		0x0024		/* TCP offload address */
+
+/* Virtual PROM address */
+#define VIC_VPROM		0x0028
+#define VIC_VPROM_LENGTH	6
+
+/* Shared DMA data structures */
+
+struct vic_sg {
+	u_int32_t	sg_addr_low;
+	u_int16_t	sg_addr_high;
+	u_int16_t	sg_length;
+} __packed;
+
+#define VIC_SG_MAX		6
+#define VIC_SG_ADDR_MACH	0
+#define VIC_SG_ADDR_PHYS	1
+#define VIC_SG_ADDR_VIRT	3
+
+struct vic_sgarray {
+	u_int16_t	sa_addr_type;
+	u_int16_t	sa_length;
+	struct vic_sg	sa_sg[VIC_SG_MAX];
+} __packed;
+
+struct vic_rxdesc {
+	u_int64_t	rx_physaddr;
+	u_int32_t	rx_buflength;
+	u_int32_t	rx_length;
+	u_int16_t	rx_owner;
+	u_int16_t	rx_flags;
+	void 		*rx_priv;
+} __packed;
+
+#define VIC_RX_FLAGS_CSUMHW_OK	0x0001
+
+struct vic_txdesc {
+	u_int16_t		tx_flags;
+	u_int16_t		tx_owner;
+	void			*tx_priv;
+	u_int32_t		tx_tsomss;
+	struct vic_sgarray	tx_sa;
+} __packed;
+
+#define VIC_TX_FLAGS_KEEP	0x0001
+#define VIC_TX_FLAGS_TXURN	0x0002
+#define VIC_TX_FLAGS_CSUMHW	0x0004
+#define VIC_TX_FLAGS_TSO	0x0008
+#define VIC_TX_FLAGS_PINNED	0x0010
+#define VIC_TX_FLAGS_QRETRY	0x1000
+
+struct vic_stats {
+	u_int32_t		vs_tx_count;
+	u_int32_t		vs_tx_packets;
+	u_int32_t		vs_tx_0copy;
+	u_int32_t		vs_tx_copy;
+	u_int32_t		vs_tx_maxpending;
+	u_int32_t		vs_tx_stopped;
+	u_int32_t		vs_tx_overrun;
+	u_int32_t		vs_intr;
+	u_int32_t		vs_rx_packets;
+	u_int32_t		vs_rx_underrun;
+} __packed;
+
+struct vic_data {
+	u_int32_t		vd_magic;
+
+	u_int32_t		vd_rx_length;
+	u_int32_t		vd_rx_nextidx;
+	u_int32_t		vd_rx_length2;
+	u_int32_t		vd_rx_nextidx2;
+
+	u_int32_t		vd_irq;
+	u_int32_t		vd_iff;
+
+	u_int32_t		vd_mcastfil[VIC_CMD_MCASTFIL_LENGTH];
+
+	u_int32_t		vd_reserved1[1];
+
+	u_int32_t		vd_tx_length;
+	u_int32_t		vd_tx_curidx;
+	u_int32_t		vd_tx_nextidx;
+	u_int32_t		vd_tx_stopped;
+	u_int32_t		vd_tx_triggerlvl;
+	u_int32_t		vd_tx_queued;
+	u_int32_t		vd_tx_minlength;
+
+	u_int32_t		vd_reserved2[6];
+
+	u_int32_t		vd_rx_saved_nextidx;
+	u_int32_t		vd_rx_saved_nextidx2;
+	u_int32_t		vd_tx_saved_nextidx;
+
+	u_int32_t		vd_length;
+	u_int32_t		vd_rx_offset;
+	u_int32_t		vd_rx_offset2;
+	u_int32_t		vd_tx_offset;
+	u_int32_t		vd_debug;
+	u_int32_t		vd_tx_physaddr;
+	u_int32_t		vd_tx_physaddr_length;
+	u_int32_t		vd_tx_maxlength;
+
+	struct vic_stats	vd_stats;
+} __packed;
+
+#define VIC_OWNER_DRIVER	0
+#define VIC_OWNER_DRIVER_PEND	1
+#define VIC_OWNER_NIC		2
+#define VIC_OWNER_NIC_PEND	3
+
+#define VIC_JUMBO_FRAMELEN	9018
+#define VIC_JUMBO_MTU		(VIC_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 
 #define VIC_NBUF		100
 #define VIC_NBUF_MAX		128
