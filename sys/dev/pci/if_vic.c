@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.21 2006/11/02 02:10:12 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.22 2006/11/02 02:17:22 brad Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -224,7 +224,7 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = vic_watchdog;
 	ifp->if_hardmtu = VIC_JUMBO_MTU;
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
-	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
+	IFQ_SET_MAXLEN(&ifp->if_snd, sc->sc_ntxbuf - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
