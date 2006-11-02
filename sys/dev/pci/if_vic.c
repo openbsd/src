@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.16 2006/11/01 13:23:06 claudio Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.17 2006/11/02 00:38:34 fkr Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -271,34 +271,35 @@ vic_map_pci(struct vic_softc *sc, struct pci_attach_args *pa)
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
 
-        memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, VIC_PCI_BAR);
+	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, VIC_PCI_BAR);
 	if (pci_mapreg_map(pa, VIC_PCI_BAR, memtype, 0, &sc->sc_iot,
 	    &sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
 		printf(": unable to map system interface register\n");
 		return(1);
-        }
+	}
 
-        if (pci_intr_map(pa, &ih) != 0) {
-                printf(": unable to map interrupt\n");
-                goto unmap;
-        }
-        intrstr = pci_intr_string(pa->pa_pc, ih);
-        sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
-            vic_intr, sc, DEVNAME(sc));
-        if (sc->sc_ih == NULL) {
-                printf(": unable to map interrupt%s%s\n",
-                    intrstr == NULL ? "" : " at ",
-                    intrstr == NULL ? "" : intrstr);
-                goto unmap;
-        }
-        printf(": %s\n", intrstr);
+	if (pci_intr_map(pa, &ih) != 0) {
+		printf(": unable to map interrupt\n");
+		goto unmap;
+	}
+	
+	intrstr = pci_intr_string(pa->pa_pc, ih);
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
+	vic_intr, sc, DEVNAME(sc));
+	if (sc->sc_ih == NULL) {
+		printf(": unable to map interrupt%s%s\n",
+		       intrstr == NULL ? "" : " at ",
+		       intrstr == NULL ? "" : intrstr);
+		goto unmap;
+	}
+	printf(": %s\n", intrstr);
 
-        return (0);
+	return (0);
 
 unmap:
-        bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
-        sc->sc_ios = 0;
-        return (1);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+	sc->sc_ios = 0;
+	return (1);
 }
 
 int
