@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vic.4,v 1.10 2006/11/03 02:23:23 dlg Exp $
+.\"	$OpenBSD: vic.4,v 1.11 2006/11/03 08:47:12 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm vic
-.Nd VMware vmxnet Virtual Interface Controller device
+.Nd VMware VMXnet Virtual Interface Controller device
 .Sh SYNOPSIS
 .Cd vic* at pci?
 .Sh DESCRIPTION
@@ -71,7 +71,7 @@ VMware Server
 .El
 .Sh EXAMPLES
 For VMware to add a virtual NIC to a virtual machine, the virtualDev parameter
-on an ethernet device must be specified as "vmxnet":
+on an Ethernet device must be specified as "vmxnet":
 .Bd -literal -offset indent
 ethernet0.present = "TRUE"
 ethernet0.virtualDev = "vmxnet"
