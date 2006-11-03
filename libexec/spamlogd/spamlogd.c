@@ -1,7 +1,12 @@
-/*	$OpenBSD: spamlogd.c,v 1.13 2006/10/26 13:27:57 jmc Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.14 2006/11/03 19:39:33 henning Exp $	*/
 
 /*
- * Copyright (c) 2004 Bob Beck.  All rights reserved.
+ * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2006 Berk D. Demir.
+ * Copyright (c) 2004 Bob Beck.
+ * Copyright (c) 2001 Theo de Raadt.
+ * Copyright (c) 2001 Can Erkin Acar.
+ * All rights reserved
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,24 +25,164 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
+
+#include <net/if.h>
+#include <net/if_pflog.h>
+
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
 #include <arpa/inet.h>
+
+#include <net/pfvar.h>
+
 #include <db.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <syslog.h>
 #include <string.h>
 #include <unistd.h>
+#include <pcap.h>
 
 #include "grey.h"
-#define PATH_TCPDUMP "/usr/sbin/tcpdump"
 
-struct syslog_data sdata = SYSLOG_DATA_INIT;
-int inbound; /* do we only whitelist inbound smtp? */
+#define MIN_PFLOG_HDRLEN	45
+#define PCAPSNAP		512
+#define PCAPTIMO		500	/* ms */
+#define PCAPOPTZ		1	/* optimize filter */
+#define PCAPFSIZ		512	/* pcap filter string size */
 
-extern char *__progname;
+u_int8_t		 flag_debug = 0;
+u_int8_t		 flag_inbound = 0;
+char			*networkif = NULL;
+char			*pflogif = "pflog0";
+char			 errbuf[PCAP_ERRBUF_SIZE];
+pcap_t			*hpcap = NULL;
+struct syslog_data	 sdata	= SYSLOG_DATA_INIT;
+extern char		*__progname;
+
+void	logmsg(int , const char *, ...);
+void	sighandler_close(int);
+int	init_pcap(void);
+void	logpkt_handler(u_char *, const struct pcap_pkthdr *, const u_char *);
+int	dbupdate(char *, char *);
+void	usage(void);
+
+void
+logmsg(int pri, const char *msg, ...)
+{
+	va_list	ap;
+	va_start(ap, msg);
+
+	if (flag_debug) {
+		vfprintf(stderr, msg, ap);
+		fprintf(stderr, "\n");
+	} else
+		vsyslog_r(pri, &sdata, msg, ap);
+
+	va_end(ap);
+}
+
+/* ARGSUSED */
+void
+sighandler_close(int signal)
+{
+	if (hpcap != NULL)
+		pcap_breakloop(hpcap);	/* sighdlr safe */
+}
+
+int
+init_pcap(void)
+{
+	struct bpf_program	bpfp;
+	char	filter[PCAPFSIZ] = "ip and port 25 and action pass "
+		    "and tcp[13]&0x12=0x2";
+
+	if ((hpcap = pcap_open_live(pflogif, PCAPSNAP, 1, PCAPTIMO,
+	    errbuf)) == NULL) {
+		logmsg(LOG_ERR, "Failed to initialize: %s", errbuf);
+		return (-1);
+	}
+
+	if (pcap_datalink(hpcap) != DLT_PFLOG) {
+		logmsg(LOG_ERR, "Invalid datalink type");
+		pcap_close(hpcap);
+		hpcap = NULL;
+		return (-1);
+	}
+
+	if (networkif != NULL) {
+		strlcat(filter, " and on ", PCAPFSIZ);
+		strlcat(filter, networkif, PCAPFSIZ);
+	}
+
+	if (pcap_compile(hpcap, &bpfp, filter, PCAPOPTZ, 0) == -1 ||
+	    pcap_setfilter(hpcap, &bpfp) == -1) {
+		logmsg(LOG_ERR, "%s", pcap_geterr(hpcap));
+		return (-1);
+	}
+
+	pcap_freecode(&bpfp);
+
+	if (ioctl(pcap_fileno(hpcap), BIOCLOCK) < 0) {
+		logmsg(LOG_ERR, "BIOCLOCK: %s", strerror(errno));
+		return (-1);
+	}
+
+	return (0);
+}
+
+/* ARGSUSED */
+void
+logpkt_handler(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
+{
+	sa_family_t		 af;
+	u_int8_t		 hdrlen;
+	u_int32_t		 caplen = h->caplen;
+	const struct ip		*ip = NULL;
+	const struct pfloghdr	*hdr;
+	char			 ipstraddr[40] = { '\0' };
+
+	hdr = (const struct pfloghdr *)sp;
+	if (hdr->length < MIN_PFLOG_HDRLEN) {
+		logmsg(LOG_WARNING, "invalid pflog header length (%u/%u). "
+		    "packet dropped.", hdr->length, MIN_PFLOG_HDRLEN);
+		return;
+	}
+	hdrlen = BPF_WORDALIGN(hdr->length);
+
+	if (caplen < hdrlen) {
+		logmsg(LOG_WARNING, "pflog header larger than caplen (%u/%u). "
+		    "packet dropped.", hdrlen, caplen);
+		return;
+	}
+
+	/* We're interested in passed packets */
+	if (hdr->action != PF_PASS)
+		return;
+
+	af = hdr->af;
+	if (af == AF_INET) {
+		ip = (const struct ip *)(sp + hdrlen);
+		if (hdr->dir == PF_IN)
+			inet_ntop(af, &ip->ip_src, ipstraddr,
+			    sizeof(ipstraddr));
+		else if (hdr->dir == PF_OUT && !flag_inbound)
+			inet_ntop(af, &ip->ip_dst, ipstraddr,
+			    sizeof(ipstraddr));
+	}
+
+	if (ipstraddr[0] != '\0') {
+		logmsg(LOG_DEBUG,"add %s to db", ipstraddr);
+		dbupdate(PATH_SPAMD_DB, ipstraddr);
+	}
+}
 
 int
 dbupdate(char *dbname, char *ip)
@@ -53,22 +198,27 @@ dbupdate(char *dbname, char *ip)
 	now = time(NULL);
 	memset(&btreeinfo, 0, sizeof(btreeinfo));
 	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_BTREE, &btreeinfo);
-	if (db == NULL)
-		return(-1);
+	if (db == NULL) {
+		logmsg(LOG_ERR, "Can not open db %s: %s", dbname,
+		    strerror(errno));
+		return (-1);
+	}
 	if (inet_pton(AF_INET, ip, &ia) != 1) {
-		syslog_r(LOG_NOTICE, &sdata, "invalid ip address %s", ip);
+		logmsg(LOG_NOTICE, "Invalid IP address %s", ip);
 		goto bad;
 	}
 	memset(&dbk, 0, sizeof(dbk));
 	dbk.size = strlen(ip);
 	dbk.data = ip;
 	memset(&dbd, 0, sizeof(dbd));
+
 	/* add or update whitelist entry */
 	r = db->get(db, &dbk, &dbd, 0);
 	if (r == -1) {
-		syslog_r(LOG_NOTICE, &sdata, "db->get failed (%m)");
+		logmsg(LOG_NOTICE, "db->get failed (%m)");
 		goto bad;
 	}
+
 	if (r) {
 		/* new entry */
 		memset(&gd, 0, sizeof(gd));
@@ -84,7 +234,7 @@ dbupdate(char *dbname, char *ip)
 		dbd.data = &gd;
 		r = db->put(db, &dbk, &dbd, 0);
 		if (r) {
-			syslog_r(LOG_NOTICE, &sdata, "db->put failed (%m)");
+			logmsg(LOG_NOTICE, "db->put failed (%m)");
 			goto bad;
 		}
 	} else {
@@ -104,7 +254,7 @@ dbupdate(char *dbname, char *ip)
 		dbd.data = &gd;
 		r = db->put(db, &dbk, &dbd, 0);
 		if (r) {
-			syslog_r(LOG_NOTICE, &sdata, "db->put failed (%m)");
+			logmsg(LOG_NOTICE, "db->put failed (%m)");
 			goto bad;
 		}
 	}
@@ -117,147 +267,74 @@ dbupdate(char *dbname, char *ip)
 	return (-1);
 }
 
-static void
+void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-I] [-i interface] [-l pflog_interface]\n",
+	fprintf(stderr, "usage: %s [-DI] [-i interface] [-l pflog_interface]\n",
 	    __progname);
 	exit(1);
 }
 
-char *targv[19] = {
-	"tcpdump", "-l",  "-n", "-e", "-i", "pflog0", "-q",
-	"-t", "port", "25", "and", "action", "pass",
-	"and", "tcp[13]&0x12=0x2",
-	NULL, NULL, NULL, NULL
-};
-
 int
 main(int argc, char **argv)
 {
-	int ch, p[2];
-	char *buf, *lbuf;
-	size_t len;
-	FILE *f;
+	int		 ch;
+	struct passwd	*pw;
+	pcap_handler	 phandler = logpkt_handler;
 
-
-	while ((ch = getopt(argc, argv, "l:i:I")) != -1) {
+	while ((ch = getopt(argc, argv, "DIi:l:")) != -1) {
 		switch (ch) {
-		case 'i':
-			if (targv[17])	/* may only set once */
-				usage();
-			targv[15] = "and";
-			targv[16] = "on";
-			targv[17] = optarg;
+		case 'D':
+			flag_debug = 1;
 			break;
 		case 'I':
-			inbound = 1;
+			flag_inbound = 1;
+			break;
+		case 'i':
+			networkif = optarg;
 			break;
 		case 'l':
-			targv[5] = optarg;
+			pflogif = optarg;
 			break;
 		default:
 			usage();
-			break;
+			/* NOTREACHED */
 		}
 	}
 
-	if (daemon(1, 1) == -1)
-		err(1, "daemon");
-	if (pipe(p) == -1)
-		err(1, "pipe");
-	switch (fork()) {
-	case -1:
-		err(1, "fork");
-	case 0:
-		/* child */
-		close(p[0]);
-		close(STDERR_FILENO);
-		if (dup2(p[1], STDOUT_FILENO) == -1) {
-			warn("dup2");
-			_exit(1);
-		}
-		close(p[1]);
-		execvp(PATH_TCPDUMP, targv);
-		warn("exec of %s failed", PATH_TCPDUMP);
-		_exit(1);
+	signal(SIGINT , sighandler_close);
+	signal(SIGQUIT, sighandler_close);
+	signal(SIGTERM, sighandler_close);
+
+	logmsg(LOG_DEBUG, "Listening on %s for %s %s", pflogif,
+	    (networkif == NULL) ? "all interfaces." : networkif,
+	    (flag_inbound) ? "Inbound direction only." : "");
+
+	if (init_pcap() == -1)
+		err(1, "couldn't initialize pcap");
+
+	/* privdrop */
+	pw = getpwnam("_spamd");
+	if (pw == NULL)
+		errx(1, "User '_spamd' not found! ");
+
+	if (setgroups(1, &pw->pw_gid) ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		err(1, "failed to drop privs");
+
+	if (!flag_debug) {
+		if (daemon(0, 0) == -1)
+			err(1, "daemon");
+		tzset();
+		openlog_r("spamlogd", LOG_PID | LOG_NDELAY, LOG_DAEMON, &sdata);
 	}
 
-	/* parent */
-	close(p[1]);
-	f = fdopen(p[0], "r");
-	if (f == NULL)
-		err(1, "fdopen");
-	tzset();
-	openlog_r("spamlogd", LOG_PID | LOG_NDELAY, LOG_DAEMON, &sdata);
+	pcap_loop(hpcap, -1, phandler, NULL);
 
-	lbuf = NULL;
-	while ((buf = fgetln(f, &len))) {
-		char *cp = NULL;
-		char *buf2;
+	logmsg(LOG_NOTICE, "exiting");
+	if (!flag_debug)
+		closelog_r(&sdata);
 
-		if ((buf2 = malloc(len + 1)) == NULL) {
-			syslog_r(LOG_ERR, &sdata, "malloc failed");
-			exit(1);
-		}
-
-		if (buf[len - 1] == '\n')
-			buf[len - 1] = '\0';
-		else {
-			if ((lbuf = (char *)malloc(len + 1)) == NULL) {
-				syslog_r(LOG_ERR, &sdata, "malloc failed");
-				exit(1);
-			}
-			memcpy(lbuf, buf, len);
-			lbuf[len] = '\0';
-			buf = lbuf;
-		}
-
-		if (strstr(buf, "pass out") != NULL) {
-			/*
-			 * this is outbound traffic - we whitelist
-			 * the destination address, because we assume
-			 * that a reply may come to this outgoing mail
-			 * we are sending.
-			 */
-			if (!inbound && (cp = (strchr(buf, '>'))) != NULL) {
-				if (sscanf(cp, "> %s", buf2) == 1) {
-					cp = strrchr(buf2, '.');
-					if (cp != NULL) {
-						*cp = '\0';
-						cp = buf2;
-						syslog_r(LOG_DEBUG, &sdata,
-						    "outbound %s\n", cp);
-					}
-				} else
-					cp = NULL;
-			}
-
-		} else {
-			/*
-			 * this is inbound traffic - we whitelist
-			 * the source address, because this is
-			 * traffic presumably to our real MTA
-			 */
-			if ((cp = (strchr(buf, '>'))) != NULL) {
-				while (*cp != '.' && cp >= buf) {
-					*cp = '\0';
-					cp--;
-				}
-				*cp ='\0';
-				while (*cp != ' ' && cp >= buf)
-					cp--;
-				cp++;
-				syslog_r(LOG_DEBUG, &sdata,
-				    "inbound %s\n", cp);
-			}
-		}
-		if (cp != NULL)
-			dbupdate(PATH_SPAMD_DB, cp);
-
-		free(lbuf);
-		lbuf = NULL;
-		free(buf2);
-	}
 	exit(0);
 }
