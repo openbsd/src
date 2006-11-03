@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2006/10/25 04:04:16 drahn Exp $
+#	$OpenBSD: Makefile,v 1.2 2006/11/03 21:28:15 drahn Exp $
 
 REV=	${OSrev}
 
@@ -52,10 +52,10 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 bsd:
-	cd ${TOP}/../../sys/arch/armish/conf && config RAMDISK
-	cd ${TOP}/../../sys/arch/armish/compile/RAMDISK && \
+	cd ${TOP}/../../sys/arch/landisk/conf && config RAMDISK
+	cd ${TOP}/../../sys/arch/landisk/compile/RAMDISK && \
 	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
-	cp ${TOP}/../../sys/arch/armish/compile/RAMDISK/bsd bsd
+	cp ${TOP}/../../sys/arch/landisk/compile/RAMDISK/bsd bsd
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
