@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork.S,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $	*/
+/*	$OpenBSD: fork.S,v 1.2 2006/11/03 21:23:22 drahn Exp $	*/
 /*	$NetBSD: fork.S,v 1.10 2006/01/06 05:11:29 uwe Exp $	*/
 
 /*-
@@ -45,11 +45,7 @@
  *
  */
 _SYSCALL(fork,fork)
-	mov	#SYS_fork, r0
-	trapa	#0x80
-	bf	err
-
-	add	#0xff, r1	/* from 1 to 0 in child, 0 to -1 in parent */
+	add	#-1, r1	/* from 1 to 0 in child, 0 to -1 in parent */
 	rts
 	 and	r1, r0		/* 0 in child, child pid in parent */
 
