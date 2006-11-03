@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.66 2006/11/03 22:32:27 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.67 2006/11/03 23:45:26 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -949,6 +949,7 @@ vr_rxeof(struct vr_softc *sc)
 		 */
 		if (rxstat & VR_RXSTAT_RXERR) {
 			ifp->if_ierrors++;
+#ifdef VR_DEBUG
 			printf("%s: rx error (%02x):",
 			    sc->sc_dev.dv_xname, rxstat & 0x000000ff);
 			if (rxstat & VR_RXSTAT_CRCERR)
@@ -966,6 +967,7 @@ vr_rxeof(struct vr_softc *sc)
 			if (rxstat & VR_RXSTAT_BUFFERR)
 				printf(" rx buffer error");
 			printf("\n");
+#endif
 
 			/* Reinitialize descriptor */
 			cur_rx->vr_ptr->vr_status = htole32(VR_RXSTAT);
@@ -1211,6 +1213,14 @@ vr_intr(void *arg)
 		}
 
 		if ((status & VR_ISR_BUSERR) || (status & VR_ISR_TX_UNDERRUN)) {
+#ifdef VR_DEBUG
+			if (status & VR_ISR_BUSERR)
+				printf("%s: PCI bus error\n",
+				    sc->sc_dev.dv_xname);
+			if (status & VR_ISR_TX_UNDERRUN)
+				printf("%s: transmit underrun\n",
+				    sc->sc_dev.dv_xname);
+#endif
 			vr_reset(sc);
 			vr_init(sc);
 			break;
@@ -1222,6 +1232,14 @@ vr_intr(void *arg)
 			if ((status & VR_ISR_UDFI) ||
 			    (status & VR_ISR_TX_ABRT2) ||
 			    (status & VR_ISR_TX_ABRT)) {
+#ifdef VR_DEBUG
+				if (status & (VR_ISR_TX_ABRT | VR_ISR_TX_ABRT2))
+					printf("%s: transmit aborted\n",
+					    sc->sc_dev.dv_xname);
+				if (status & VR_ISR_UDFI)
+					printf("%s: transmit underflow\n",
+					    sc->sc_dev.dv_xname);
+#endif
 				ifp->if_oerrors++;
 				if (sc->vr_cdata.vr_tx_cons->vr_mbuf != NULL) {
 					VR_SETBIT16(sc, VR_COMMAND,
@@ -1330,11 +1348,10 @@ vr_start(struct ifnet *ifp)
 		/* Pack the data into the descriptor. */
 		if (vr_encap(sc, cur_tx, m_head)) {
 			/* Rollback, send what we were able to encap. */
-			if (ALTQ_IS_ENABLED(&ifp->if_snd)) {
+			if (ALTQ_IS_ENABLED(&ifp->if_snd))
 				m_freem(m_head);
-			} else {
+			else
 				IF_PREPEND(&ifp->if_snd, m_head);
-			}
 			break;
 		}
 
