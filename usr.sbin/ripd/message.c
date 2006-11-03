@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.3 2006/10/31 23:43:11 michele Exp $ */
+/*	$OpenBSD: message.c,v 1.4 2006/11/03 15:21:25 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -251,7 +251,7 @@ send_response(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 		}
 
 		while ((entry = TAILQ_FIRST(r_list)) != NULL &&
-		    nentries < 25) {
+		    nentries < MAX_RIP_ENTRIES) {
 			address = entry->rr->address.s_addr;
 			netmask = entry->rr->mask.s_addr;
 			nexthop = entry->rr->nexthop.s_addr;
@@ -263,6 +263,12 @@ send_response(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 				else if (oeconf->options & OPT_SPLIT_POISONED)
 					metric = htonl(INFINITY);
 			}
+
+			/* If the nexthop is not reachable through the
+			 * outgoing interface set it to INADDR_ANY */
+			if ((nexthop & iface->mask.s_addr) !=
+			    (iface->addr.s_addr & iface->mask.s_addr))
+				nexthop = INADDR_ANY;
 
 			buf_add(buf, &afi, sizeof(afi));
 			buf_add(buf, &route_tag, sizeof(route_tag));
