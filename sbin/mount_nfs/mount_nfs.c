@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.45 2006/07/28 20:02:49 sturm Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.46 2006/11/03 15:38:38 grunk Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -179,7 +179,8 @@ main(int argc, char *argv[])
 	struct nfs_args *nfsargsp;
 	struct nfs_args nfsargs;
 	int mntflags, num;
-	char name[MAXPATHLEN], *options = NULL, *p, *spec;
+	char name[MAXPATHLEN], *options = NULL, *spec;
+	const char *p;
 	union mntval value;
 
 	retrycnt = DEF_RETRY;
@@ -202,9 +203,9 @@ main(int argc, char *argv[])
 			nfsargsp->flags &= ~NFSMNT_NFSV3;
 			break;
 		case 'a':
-			num = strtol(optarg, &p, 10);
-			if (*p || num < 0)
-				errx(1, "illegal -a value -- %s", optarg);
+			num = (int) strtonum(optarg, 0, 4, &p);
+			if (p)
+				errx(1, "illegal -a value %s: %s", optarg, p);
 			nfsargsp->readahead = num;
 			nfsargsp->flags |= NFSMNT_READAHEAD;
 			break;
@@ -222,18 +223,18 @@ main(int argc, char *argv[])
 			break;
 #if 0 /* XXXX */
 		case 'g':
-			num = strtol(optarg, &p, 10);
-			if (*p || num <= 0)
-				errx(1, "illegal -g value -- %s", optarg);
+			num = (int) strtonum(optarg, 1, NGROUPS_MAX, &p);
+			if (p)
+				errx(1, "illegal -g value %s: %s", optarg, p);
 			set_rpc_maxgrouplist(num);
 			nfsargsp->maxgrouplist = num;
 			nfsargsp->flags |= NFSMNT_MAXGRPS;
 			break;
 #endif
 		case 'I':
-			num = strtol(optarg, &p, 10);
-			if (*p || num <= 0)
-				errx(1, "illegal -I value -- %s", optarg);
+			num = (int) strtonum(optarg, 1, INT_MAX, &p);
+			if (p)
+				errx(1, "illegal -I value %s: %s", optarg, p);
 			nfsargsp->readdirsize = num;
 			nfsargsp->flags |= NFSMNT_READDIRSIZE;
 			break;
@@ -327,15 +328,15 @@ main(int argc, char *argv[])
 			/* backward compatibility */
 			break;
 		case 'R':
-			num = strtol(optarg, &p, 10);
-			if (*p || num <= 0)
-				errx(1, "illegal -R value -- %s", optarg);
+			num = (int) strtonum(optarg, 1, INT_MAX, &p);
+			if (p)
+				errx(1, "illegal -R value %s: %s", optarg, p);
 			retrycnt = num;
 			break;
 		case 'r':
-			num = strtol(optarg, &p, 10);
-			if (*p || num <= 0)
-				errx(1, "illegal -r value -- %s", optarg);
+			num = (int) strtonum(optarg, 1, INT_MAX, &p);
+			if (p)
+				errx(1, "illegal -r value %s: %s", optarg, p);
 			nfsargsp->rsize = num;
 			nfsargsp->flags |= NFSMNT_RSIZE;
 			break;
@@ -347,23 +348,23 @@ main(int argc, char *argv[])
 			nfsproto = IPPROTO_TCP;
 			break;
 		case 't':
-			num = strtol(optarg, &p, 10);
-			if (*p || num <= 0)
-				errx(1, "illegal -t value -- %s", optarg);
+			num = (int) strtonum(optarg, 1, INT_MAX, &p);
+			if (p)
+				errx(1, "illegal -t value %s: %s", optarg, p);
 			nfsargsp->timeo = num;
 			nfsargsp->flags |= NFSMNT_TIMEO;
 			break;
 		case 'w':
-			num = strtol(optarg, &p, 10);
-			if (*p || num <= 0)
-				errx(1, "illegal -w value -- %s", optarg);
+			num = (int) strtonum(optarg, 1, INT_MAX, &p);
+			if (p)
+				errx(1, "illegal -w value %s: %s", optarg, p);
 			nfsargsp->wsize = num;
 			nfsargsp->flags |= NFSMNT_WSIZE;
 			break;
 		case 'x':
-			num = strtol(optarg, &p, 10);
-			if (*p || num <= 0)
-				errx(1, "illegal -x value -- %s", optarg);
+			num = (int) strtonum(optarg, 1, INT_MAX, &p);
+			if (p)
+				errx(1, "illegal -x value %s: %s", optarg, p);
 			nfsargsp->retrans = num;
 			nfsargsp->flags |= NFSMNT_RETRANS;
 			break;
