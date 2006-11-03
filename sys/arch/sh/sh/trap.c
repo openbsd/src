@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.3 2006/10/23 19:56:53 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.4 2006/11/03 02:52:02 mickey Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -158,12 +158,19 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 	}
 
 	switch (expevt) {
+	case EXPEVT_BREAK:
+		if (kdb_trap(EXPEVT_BREAK, 0, tf))
+			return;
+		else
+			goto do_panic;
+		break;
 	case EXPEVT_TRAPA:
 		/* Check for ddb request */
 		tra = _reg_read_4(SH_(TRA));
-		if (tra == (_SH_TRA_BREAK << 2)) {
-			kdb_trap(expevt, tra, tf);
-		} else
+		if (tra == (_SH_TRA_BREAK << 2) &&
+		    kdb_trap(expevt, tra, tf))
+			return;
+		else
 			goto do_panic;
 		break;
 	case EXPEVT_TRAPA | EXP_USER:
