@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2006/10/06 21:48:50 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.2 2006/11/03 19:54:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -276,6 +276,7 @@ cdev_decl(xfs_dev);
 #include "systrace.h"
 
 #include "hotplug.h"
+#include "scif.h"
 
 #ifdef CONF_HAVE_GPIO
 #include "gpio.h"
@@ -295,7 +296,7 @@ struct cdevsw cdevsw[] = {
 	cdev_ksyms_init(NKSYMS,ksyms),		/*  8: Kernel symbols device */
 	cdev_lpt_init(NLPT,lpt),		/*  9: parallel printer */
 	cdev_lkm_dummy(),			/* 10: */
-	cdev_lkm_dummy(),			/* 11: */
+	cdev_tty_init(NSCIF,scif),		/* 11: scif */
 	cdev_tty_init(NCOM,com),		/* 12: serial port */
 	cdev_gpio_init(NGPIO,gpio),     	/* 13: GPIO interface */
 	cdev_lkm_dummy(),			/* 14: */
