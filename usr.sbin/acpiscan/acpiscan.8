@@ -1,0 +1,65 @@
+.\"	$OpenBSD: acpiscan.8,v 1.1 2006/11/03 19:33:56 marco Exp $
+.\"
+.\" Copyright (c) 2006 Marco Peereboom
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHORS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE FOR
+.\" ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd November 3, 2006
+.Dt ACPISCAN 8
+.Os
+.Sh NAME
+.Nm acpiscan
+.Nd ACPI table dump utility
+.Sh SYNOPSIS
+.Nm acpiscan
+.Bk -words
+.Op Fl D filename
+.Op Fl f filename
+.Ek
+.Sh DESCRIPTION
+Dump relevant ACPI tables.  For example: APIC, RSDT, DSDT etc
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It -D filename
+Dump the tables to human readable format from the supplied filename.
+The input file has to be a raw dump from the BIOS region.
+.It Fl f filename
+Dump BIOS memory region that contains ACPI tables and AML into multiple
+files where the name starts with the supplied filename.  This dump can be
+dumped in human readable format with the -D command.
+.El
+.Pp
+Omitting these options will cause the program to dump the ACPI tables drectly
+from the BIOS memory region as human readable format.
+.Sh SEE ALSO
+.Xr acpi 4
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Ox 4.1 .
+.Sh AUTHORS
+This
+.Nm
+utility was written by
+.An Jordan Hargrave Aq jordan@openbsd.org .
