@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.2 2006/11/03 17:28:01 drahn Exp $	*/
 /*	$NetBSD: param.h,v 1.15 2006/08/28 13:43:35 yamt Exp $	*/
 
 /*-
@@ -89,7 +89,7 @@
 /*
  * u-space.
  */
-#define	UPAGES		2		/* pages of u-area */
+#define	UPAGES		3		/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 #define	USPACE_ALIGN	(0)
 #if UPAGES == 1
