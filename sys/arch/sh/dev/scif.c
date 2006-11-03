@@ -1,4 +1,4 @@
-/*	$OpenBSD: scif.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: scif.c,v 1.2 2006/11/03 20:21:23 mickey Exp $	*/
 /*	$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $ */
 
 /*-
@@ -117,6 +117,7 @@
 #include <sh/clock.h>
 #include <sh/trap.h>
 #include <machine/intr.h>
+#include <machine/conf.h>
 
 #include <sh/dev/scifreg.h>
 
@@ -245,8 +246,6 @@ struct cfdriver scif_cd = {
 };
 
 static int scif_attached;
-
-cdev_decl(scif);
 
 void InitializeScif(unsigned int);
 

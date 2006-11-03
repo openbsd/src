@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 2006/11/03 19:54:02 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.3 2006/11/03 20:21:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -152,12 +152,6 @@ cdev_decl(wskbd);
 cdev_decl(wsmouse);
 
 #include "lpt.h"
-#ifdef CONF_HAVE_FCOM
-#include "fcom.h"
-#else
-#define NFCOM	0
-#endif
-
 #include "radio.h"
 cdev_decl(radio);
 
@@ -294,7 +288,7 @@ struct cdevsw cdevsw[] = {
 	cdev_log_init(1,log),			/*  6: /dev/klog */
 	cdev_fd_init(1,filedesc),		/*  7: file descriptor pseudo-device */
 	cdev_ksyms_init(NKSYMS,ksyms),		/*  8: Kernel symbols device */
-	cdev_lpt_init(NLPT,lpt),		/*  9: parallel printer */
+	cdev_lkm_dummy(),			/*  9: */
 	cdev_lkm_dummy(),			/* 10: */
 	cdev_tty_init(NSCIF,scif),		/* 11: scif */
 	cdev_tty_init(NCOM,com),		/* 12: serial port */
@@ -343,7 +337,7 @@ struct cdevsw cdevsw[] = {
 #endif
 	cdev_notdef(),				/* 52: reserved */
 	cdev_notdef(),				/* 53: reserved */
-	cdev_tty_init(NFCOM,fcom),		/* 54: FOOTBRIDGE console */
+	cdev_notdef(),				/* 54: reserved */
 	cdev_lkm_dummy(),			/* 55: Reserved for bypass device */	
 	cdev_notdef(),				/* 56: reserved */
 	cdev_midi_init(NMIDI,midi),		/* 57: MIDI I/O */
