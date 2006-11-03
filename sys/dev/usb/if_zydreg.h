@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.13 2006/10/22 12:52:03 damien Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.14 2006/11/03 19:34:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -599,6 +599,76 @@
 	{ 0x03e7b0, 0x0b3331, 0x00000d },	\
 	{ 0x03f7c0, 0x033331, 0x00000d },	\
 	{ 0x03e7c0, 0x066661, 0x00000d }	\
+}
+
+#define ZYD_AL7230B_PHY_1							\
+{									\
+	{ ZYD_CR240, 0x57 }, { ZYD_CR15,  0x20 }, { ZYD_CR23,  0x40 },	\
+	{ ZYD_CR24,  0x20 }, { ZYD_CR26,  0x11 }, { ZYD_CR28,  0x3e },	\
+	{ ZYD_CR29,  0x00 }, { ZYD_CR44,  0x33 }, { ZYD_CR106, 0x22 },	\
+	{ ZYD_CR107, 0x1a }, { ZYD_CR109, 0x09 }, { ZYD_CR110, 0x27 },	\
+	{ ZYD_CR111, 0x2b }, { ZYD_CR112, 0x2b }, { ZYD_CR119, 0x0a },	\
+	{ ZYD_CR122, 0xfc }, { ZYD_CR10,  0x89 }, { ZYD_CR17,  0x28 },	\
+	{ ZYD_CR26,  0x93 }, { ZYD_CR34,  0x30 }, { ZYD_CR35,  0x3e },	\
+	{ ZYD_CR41,  0x24 }, { ZYD_CR44,  0x32 }, { ZYD_CR46,  0x96 },	\
+	{ ZYD_CR47,  0x1e }, { ZYD_CR79,  0x58 }, { ZYD_CR80,  0x30 },	\
+	{ ZYD_CR81,  0x30 }, { ZYD_CR87,  0x0a }, { ZYD_CR89,  0x04 },	\
+	{ ZYD_CR92,  0x0a }, { ZYD_CR99,  0x28 }, { ZYD_CR100, 0x02 },	\
+	{ ZYD_CR101, 0x13 }, { ZYD_CR102, 0x27 }, { ZYD_CR106, 0x22 },	\
+	{ ZYD_CR107, 0x3f }, { ZYD_CR109, 0x09 }, { ZYD_CR110, 0x1f },	\
+	{ ZYD_CR111, 0x1f }, { ZYD_CR112, 0x1f }, { ZYD_CR113, 0x27 },	\
+	{ ZYD_CR114, 0x27 }, { ZYD_CR115, 0x24 }, { ZYD_CR116, 0x3f },	\
+	{ ZYD_CR117, 0xfa }, { ZYD_CR118, 0xfc }, { ZYD_CR119, 0x10 },	\
+	{ ZYD_CR120, 0x4f }, { ZYD_CR121, 0x77 }, { ZYD_CR137, 0x88 },	\
+	{ ZYD_CR138, 0xa8 }, { ZYD_CR252, 0x34 }, { ZYD_CR253, 0x34 },	\
+	{ ZYD_CR251, 0x2f }						\
+}
+
+#define ZYD_AL7230B_PHY_2						\
+{									\
+	{ ZYD_CR251, 0x3f }, { ZYD_CR128, 0x14 }, { ZYD_CR129, 0x12 },	\
+	{ ZYD_CR130, 0x10 }, { ZYD_CR38,  0x38 }, { ZYD_CR136, 0xdf }	\
+}
+
+#define ZYD_AL7230B_PHY_3						\
+{									\
+	{ ZYD_CR203, 0x06 }, { ZYD_CR240, 0x80 }			\
+}
+
+#define ZYD_AL7230B_RF_1						\
+{									\
+	0x09ec04, 0x8cccc8, 0x4ff821, 0xc5fbfc, 0x21ebfe, 0xafd401,	\
+	0x6cf56a, 0xe04073, 0x193d76, 0x9dd844, 0x500007, 0xd8c010,	\
+	0x3c9000, 0xbfffff, 0x700000, 0xf15d58				\
+}
+
+#define ZYD_AL7230B_RF_2						\
+{									\
+	0xf15d59, 0xf15d5c, 0xf15d58					\
+}
+
+#define ZYD_AL7230B_RF_SETCHANNEL					\
+{									\
+	0x4ff821, 0xc5fbfc, 0x21ebfe, 0xafd401, 0x6cf56a, 0xe04073,	\
+	0x193d76, 0x9dd844, 0x500007, 0xd8c010, 0x3c9000, 0xf15d58	\
+}
+
+#define ZYD_AL7230B_CHANTABLE						\
+{									\
+	{ 0x09ec00, 0x8cccc8 },						\
+	{ 0x09ec00, 0x8cccd8 },						\
+	{ 0x09ec00, 0x8cccc0 },						\
+	{ 0x09ec00, 0x8cccd0 },						\
+	{ 0x05ec00, 0x8cccc8 },						\
+	{ 0x05ec00, 0x8cccd8 },						\
+	{ 0x05ec00, 0x8cccc0 },						\
+	{ 0x05ec00, 0x8cccd0 },						\
+	{ 0x0dec00, 0x8cccc8 },						\
+	{ 0x0dec00, 0x8cccd8 },						\
+	{ 0x0dec00, 0x8cccc0 },						\
+	{ 0x0dec00, 0x8cccd0 },						\
+	{ 0x03ec00, 0x8cccc8 },						\
+	{ 0x03ec00, 0x866660 }						\
 }
 
 /*

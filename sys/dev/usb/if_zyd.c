@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.34 2006/11/01 11:52:24 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.35 2006/11/03 19:34:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -143,6 +143,9 @@ int		zyd_rfmd_set_channel(struct zyd_rf *, uint8_t);
 int		zyd_al2230_init(struct zyd_rf *);
 int		zyd_al2230_switch_radio(struct zyd_rf *, int);
 int		zyd_al2230_set_channel(struct zyd_rf *, uint8_t);
+int		zyd_al7230B_init(struct zyd_rf *);
+int		zyd_al7230B_switch_radio(struct zyd_rf *, int);
+int		zyd_al7230B_set_channel(struct zyd_rf *, uint8_t);
 int		zyd_rf_attach(struct zyd_softc *, uint8_t);
 const char	*zyd_rf_name(uint8_t);
 int		zyd_hw_init(struct zyd_softc *);
@@ -963,6 +966,104 @@ zyd_al2230_set_channel(struct zyd_rf *rf, uint8_t chan)
 	return 0;
 }
 
+/*
+ * AL7230B RF methods.
+ */
+int
+zyd_al7230B_init(struct zyd_rf *rf)
+{
+#define N(a)	(sizeof (a) / sizeof ((a)[0]))
+	struct zyd_softc *sc = rf->rf_sc;
+	static const struct zyd_phy_pair phyini_1[] = ZYD_AL7230B_PHY_1;
+	static const struct zyd_phy_pair phyini_2[] = ZYD_AL7230B_PHY_2;
+	static const struct zyd_phy_pair phyini_3[] = ZYD_AL7230B_PHY_3;
+	static const uint32_t rfini_1[] = ZYD_AL7230B_RF_1;
+	static const uint32_t rfini_2[] = ZYD_AL7230B_RF_2;
+	int i, error;
+
+	/* for AL7230B, PHY and RF need to be initialized in "phases" */
+
+	/* init RF-dependent PHY registers, part one */
+	for (i = 0; i < N(phyini_1); i++) {
+		error = zyd_write16(sc, phyini_1[i].reg, phyini_1[i].val);
+		if (error != 0)
+			return error;
+	}
+	/* init AL7230B radio, part one */
+	for (i = 0; i < N(rfini_1); i++) {
+		if ((error = zyd_rfwrite(sc, rfini_1[i])) != 0)
+			return error;
+	}
+	/* init RF-dependent PHY registers, part two */
+	for (i = 0; i < N(phyini_2); i++) {
+		error = zyd_write16(sc, phyini_2[i].reg, phyini_2[i].val);
+		if (error != 0)
+			return error;
+	}
+	/* init AL7230B radio, part two */
+	for (i = 0; i < N(rfini_2); i++) {
+		if ((error = zyd_rfwrite(sc, rfini_2[i])) != 0)
+			return error;
+	}
+	/* init RF-dependent PHY registers, part three */
+	for (i = 0; i < N(phyini_3); i++) {
+		error = zyd_write16(sc, phyini_3[i].reg, phyini_3[i].val);
+		if (error != 0)
+			return error;
+	}
+
+	return 0;
+#undef N
+}
+
+int
+zyd_al7230B_switch_radio(struct zyd_rf *rf, int on)
+{
+	struct zyd_softc *sc = rf->rf_sc;
+
+	(void)zyd_write16(sc, ZYD_CR11,  on ? 0x00 : 0x04);
+	(void)zyd_write16(sc, ZYD_CR251, on ? 0x3f : 0x2f);
+
+	return 0;
+}
+
+int
+zyd_al7230B_set_channel(struct zyd_rf *rf, uint8_t chan)
+{
+#define N(a)	(sizeof (a) / sizeof ((a)[0]))
+	struct zyd_softc *sc = rf->rf_sc;
+	static const struct {
+		uint32_t	r1, r2;
+	} rfprog[] = ZYD_AL7230B_CHANTABLE;
+	static const uint32_t rfsc[] = ZYD_AL7230B_RF_SETCHANNEL;
+	int i, error;
+
+	(void)zyd_write16(sc, ZYD_CR240, 0x57);
+	(void)zyd_write16(sc, ZYD_CR251, 0x2f);
+
+	for (i = 0; i < N(rfsc); i++) {
+		if ((error = zyd_rfwrite(sc, rfsc[i])) != 0)
+			return error;
+	}
+
+	(void)zyd_write16(sc, ZYD_CR128, 0x14);
+	(void)zyd_write16(sc, ZYD_CR129, 0x12);
+	(void)zyd_write16(sc, ZYD_CR130, 0x10);
+	(void)zyd_write16(sc, ZYD_CR38,  0x38);
+	(void)zyd_write16(sc, ZYD_CR136, 0xdf);
+
+	(void)zyd_rfwrite(sc, rfprog[chan - 1].r1);
+	(void)zyd_rfwrite(sc, rfprog[chan - 1].r2);
+	(void)zyd_rfwrite(sc, 0x3c9000);
+
+	(void)zyd_write16(sc, ZYD_CR251, 0x3f);
+	(void)zyd_write16(sc, ZYD_CR203, 0x06);
+	(void)zyd_write16(sc, ZYD_CR240, 0x08);
+
+	return 0;
+#undef N
+}
+
 int
 zyd_rf_attach(struct zyd_softc *sc, uint8_t type)
 {
@@ -983,6 +1084,11 @@ zyd_rf_attach(struct zyd_softc *sc, uint8_t type)
 		rf->set_channel  = zyd_al2230_set_channel;
 		rf->width        = 24;	/* 24-bit RF values */
 		break;
+	case ZYD_RF_AL7230B:
+		rf->init         = zyd_al7230B_init;
+		rf->switch_radio = zyd_al7230B_switch_radio;
+		rf->set_channel  = zyd_al7230B_set_channel;
+		rf->width        = 24;	/* 24-bit RF values */		
 	default:
 		printf("%s: sorry, radio \"%s\" is not supported yet\n",
 		    USBDEVNAME(sc->sc_dev), zyd_rf_name(type));
