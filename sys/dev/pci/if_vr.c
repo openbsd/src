@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.65 2006/09/22 03:18:57 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.66 2006/11/03 22:32:27 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1197,7 +1197,7 @@ vr_intr(void *arg)
 		}       
 
 		if ((status & VR_ISR_RX_ERR) || (status & VR_ISR_RX_NOBUF) ||
-		    (status & VR_ISR_RX_NOBUF) || (status & VR_ISR_RX_OFLOW)) {
+		    (status & VR_ISR_RX_OFLOW)) {
 #ifdef VR_DEBUG
 			printf("%s: receive error (%04x)",
 			    sc->sc_dev.dv_xname, status);
@@ -1205,8 +1205,6 @@ vr_intr(void *arg)
 				printf(" no buffers");
 			if (status & VR_ISR_RX_OFLOW)
 				printf(" overflow");
-			if (status & VR_ISR_RX_DROPPED)
-				printf(" packet lost");
 			printf("\n");
 #endif
 			vr_rxeoc(sc);
@@ -1238,9 +1236,8 @@ vr_intr(void *arg)
 	/* Re-enable interrupts. */
 	CSR_WRITE_2(sc, VR_IMR, VR_INTRS);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		vr_start(ifp);
-	}
 
 	return (claimed);
 }
