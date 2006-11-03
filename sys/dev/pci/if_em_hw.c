@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.22 2006/08/09 04:44:06 brad Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.23 2006/11/03 06:39:10 brad Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -379,7 +379,6 @@ em_set_mac_type(struct em_hw *hw)
         break;
     case E1000_DEV_ID_82573E:
     case E1000_DEV_ID_82573E_IAMT:
-    case E1000_DEV_ID_82573E_KCS:
     case E1000_DEV_ID_82573E_PM:
     case E1000_DEV_ID_82573L:
     case E1000_DEV_ID_82573L_PL_1:

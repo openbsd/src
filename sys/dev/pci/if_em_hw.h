@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.18 2006/08/09 04:44:06 brad Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.19 2006/11/03 06:39:10 brad Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -545,7 +545,6 @@ int32_t em_ife_enable_dynamic_power_down(struct em_hw *hw);
 #define E1000_DEV_ID_82572EI             0x10B9
 #define E1000_DEV_ID_82573E              0x108B
 #define E1000_DEV_ID_82573E_IAMT         0x108C
-#define E1000_DEV_ID_82573E_KCS          0x108E
 #define E1000_DEV_ID_82573L              0x109A
 #define E1000_DEV_ID_82546GB_2           0x109B
 #define E1000_DEV_ID_82571EB_AT          0x10A0
