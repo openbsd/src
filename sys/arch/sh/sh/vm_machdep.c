@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.2 2006/11/03 03:35:42 mickey Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.53 2006/08/31 16:49:21 matt Exp $	*/
 
 /*-
@@ -132,6 +132,8 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 #define	P1ADDR(x)	(SH3_PHYS_TO_P1SEG(*__pmap_kpte_lookup(x) & PG_PPN))
 
 	KDASSERT(p1 == curproc || p1 == &proc0);
+
+	bzero(&p2->p_md, sizeof(p2->p_md));
 
 	/* Copy flags */
 	p2->p_md.md_flags = p1->p_md.md_flags;
