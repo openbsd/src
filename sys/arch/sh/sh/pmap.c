@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.2 2006/10/06 21:16:57 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.3 2006/11/03 03:38:08 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -141,9 +141,9 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstart, vaddr_t *vend)
 	KDASSERT(i != vm_nphysseg);
 
 	/* Steal pages */
-	pa = ptoa(bank->avail_start);
-	bank->avail_start += npage;
-	bank->start += npage;
+	bank->avail_end -= npage;
+	bank->end -= npage;
+	pa = ptoa(bank->avail_end);
 
 	/* GC memory bank */
 	if (bank->avail_start == bank->end) {
