@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.1 2006/10/06 22:30:26 mickey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.2 2006/11/03 20:08:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -121,5 +121,6 @@ cdev_decl(mly);
 cdev_decl(plcom);
 cdev_decl(apm);
 cdev_decl(spkr);
+cdev_decl(scif);
 
 #endif	/* _LANDISK_CONF_H_ */
