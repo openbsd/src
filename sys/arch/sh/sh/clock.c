@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.2 2006/10/07 20:52:40 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.3 2006/11/04 02:08:25 mickey Exp $	*/
 /*	$NetBSD: clock.c,v 1.32 2006/09/05 11:09:36 uwe Exp $	*/
 
 /*-
@@ -352,9 +352,9 @@ resettodr()
 
 	sh_clock.rtc.set(sh_clock.rtc._cookie, &dt);
 #ifdef DEBUG
-        printf("%s: %d/%d/%d/%d/%d/%d(%d) rtc_offset %d\n", __FUNCTION__,
+        printf("%s: %d/%d/%d/%d/%d/%d(%d)\n", __FUNCTION__,
 	    dt.dt_year, dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec,
-	    dt.dt_wday, rtc_offset);
+	    dt.dt_wday);
 #endif
 }
 
