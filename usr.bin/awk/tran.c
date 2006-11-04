@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.13 2005/04/15 15:54:26 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.14 2006/11/04 19:10:15 jmc Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -333,10 +333,10 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 		donerec = 1;
 	}
 	t = tostring(s);	/* in case it's self-assign */
-	vp->tval &= ~NUM;
-	vp->tval |= STR;
 	if (freeable(vp))
 		xfree(vp->sval);
+	vp->tval &= ~NUM;
+	vp->tval |= STR;
 	vp->tval &= ~DONTFREE;
 	   dprintf( ("setsval %p: %s = \"%s (%p) \", t=%o r,f=%d,%d\n", 
 		vp, NN(vp->nval), t,t, vp->tval, donerec, donefld) );
