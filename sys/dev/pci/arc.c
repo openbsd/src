@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.53 2006/11/01 12:21:51 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.54 2006/11/04 23:11:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -373,7 +373,6 @@ struct arc_softc {
 
 	void			*sc_shutdownhook;
 
-	int			sc_disk_count;
 	int			sc_req_count;
 
 	struct arc_dmamem	*sc_requests;
@@ -386,6 +385,7 @@ struct arc_softc {
 	volatile int		sc_talking;
 
 	struct sensor		*sc_sensors;
+	int			sc_nsensors;
 };
 #define DEVNAME(_s)		((_s)->sc_dev.dv_xname)
 
@@ -492,7 +492,7 @@ int			arc_bio_getvol(struct arc_softc *, int,
 			    struct arc_fw_volinfo *);
 
 /* sensors */
-int			arc_create_sensors(struct arc_softc *);
+void			arc_create_sensors(void *, void *);
 void			arc_refresh_sensors(void *);
 #endif
 
@@ -550,8 +550,14 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	if (bio_register(self, arc_bioctl) != 0)
 		panic("%s: bioctl registration failed\n", DEVNAME(sc));
 
-	if (arc_create_sensors(sc) != 0)
-		printf("%s: unable to create sensors\n", DEVNAME(sc));
+	/*
+	 * you need to talk to the firmware to get volume info. our firmware
+	 * interface relies on being able to sleep, so we need to use a thread
+	 * to do the work.
+	 */
+	if (scsi_task(arc_create_sensors, sc, NULL, 1) != 0)
+		printf("%s: unable to schedule arc_create_sensors as a "
+		    "scsi task", DEVNAME(sc));
 #endif
 
 	return;
@@ -895,7 +901,6 @@ arc_query_firmware(struct arc_softc *sc)
 {
 	struct arc_msg_firmware_info	fwinfo;
 	char				string[81]; /* sizeof(vendor)*2+1 */
-	int				i, j;
 
 	if (arc_wait_eq(sc, ARC_REG_OUTB_ADDR1, ARC_REG_OUTB_ADDR1_FIRMWARE_OK,
 	    ARC_REG_OUTB_ADDR1_FIRMWARE_OK) != 0) {
@@ -936,12 +941,6 @@ arc_query_firmware(struct arc_softc *sc)
 
 	scsi_strvis(string, fwinfo.fw_version, sizeof(fwinfo.fw_version));
 	DNPRINTF(ARC_D_INIT, "%s: model: \"%s\"\n", DEVNAME(sc), string);
-
-	/* iterate through the device map and get a physical disk count */
-	for (i = 0; i < 16; i++)
-		for (j = 0; j < 8; j++)
-			if (fwinfo.device_map[i] & (1 << j))
-				sc->sc_disk_count++;
 
 	if (letoh32(fwinfo.request_len) != ARC_MAX_IOCMDLEN) {
 		printf("%s: unexpected request frame size (%d != %d)\n",
@@ -1542,46 +1541,60 @@ arc_wait(struct arc_softc *sc)
 	splx(s);
 }
 
-int
-arc_create_sensors(struct arc_softc *sc)
+void
+arc_create_sensors(void *xsc, void *arg)
 {
-	struct device		*dev;
+	struct arc_softc	*sc = xsc;
+	struct bioc_inq		bi;
+	struct bioc_vol		bv;
 	int			i;
 
-	sc->sc_sensors = malloc(sizeof(struct sensor) * sc->sc_disk_count,
+	/*
+	 * XXX * this is bollocks. the firmware has garbage coming out of it
+	 * so we have to wait a bit for it to finish spewing.
+	 */
+	tsleep(sc, PWAIT, "arcspew", 2 * hz);
+
+	bzero(&bi, sizeof(bi));
+	if (arc_bio_inq(sc, &bi) != 0) {
+		printf("%s: unable to query firmware for sensor info\n",
+		    DEVNAME(sc));
+		return;
+	}
+	sc->sc_nsensors = bi.bi_novol;
+
+	sc->sc_sensors = malloc(sizeof(struct sensor) * sc->sc_nsensors,
 	    M_DEVBUF, M_WAITOK);
 	if (sc->sc_sensors == NULL)
-		return (1);
-	bzero(sc->sc_sensors, sizeof(struct sensor) * sc->sc_disk_count);
+		return;
+	bzero(sc->sc_sensors, sizeof(struct sensor) * sc->sc_nsensors);
 
-	for (i = 0; i < sc->sc_disk_count; i++) {
-		if (sc->sc_scsibus->sc_link[i][0] == NULL)
+	for (i = 0; i < sc->sc_nsensors; i++) {
+		bzero(&bv, sizeof(bv));
+		bv.bv_volid = i;
+		if (arc_bio_vol(sc, &bv) != 0)
 			goto bad;
-
-		dev = sc->sc_scsibus->sc_link[i][0]->device_softc;
 
 		sc->sc_sensors[i].type = SENSOR_DRIVE;
 		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
 
 		strlcpy(sc->sc_sensors[i].device, DEVNAME(sc),
 		    sizeof(sc->sc_sensors[i].device));
-		strlcpy(sc->sc_sensors[i].desc, dev->dv_xname,
+		strlcpy(sc->sc_sensors[i].desc, bv.bv_dev,
 		    sizeof(sc->sc_sensors[i].desc));
 
 		sensor_add(&sc->sc_sensors[i]);
 	}
 
-	if (sensor_task_register(sc, arc_refresh_sensors, 10) != 0)
+	if (sensor_task_register(sc, arc_refresh_sensors, 120) != 0)
 		goto bad;
 
-	return (0);
+	return;
 
 bad:
 	while (--i >= 0)
 		sensor_del(&sc->sc_sensors[i]);
 	free(sc->sc_sensors, M_DEVBUF);
-
-	return (1);
 }
 
 void
@@ -1591,7 +1604,7 @@ arc_refresh_sensors(void *arg)
 	struct bioc_vol		bv;
 	int			i;
 
-	for (i = 0; i < sc->sc_disk_count; i++) {
+	for (i = 0; i < sc->sc_nsensors; i++) {
 		bzero(&bv, sizeof(bv));
 		bv.bv_volid = i;
 		if (arc_bio_vol(sc, &bv)) {
