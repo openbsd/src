@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.179 2006/11/03 17:14:12 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.180 2006/11/04 00:14:12 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -2076,7 +2076,7 @@ There is no reason for the semantic distinction, use
 .Ev FILESDIR
 for those.
 .It Ev SCRIPTS_ENV
-Used to contain the Environment for invoking various scripts.
+Used to contain the environment for invoking various scripts.
 .Ev CONFIGURE_ENV
 and
 .Ev MAKE_ENV
@@ -2110,7 +2110,8 @@ to match other BSD, and save directories.
 Identical functionality can be obtained through a {pre,do,post}-* target,
 invoking the script manually if necessary.
 .It Pa ${SCRIPTDIR}/configure
-No longer invoked automatically. Just inline the instructions in
+No longer invoked automatically.
+Just inline the instructions in
 .Ar do-configure 
 in the Makefile, or put the script in ${FILESDIR} and
 invoke it.
