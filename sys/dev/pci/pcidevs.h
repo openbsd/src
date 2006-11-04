@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1179 2006/11/04 19:41:59 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1180 2006/11/04 23:10:06 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2963,6 +2963,7 @@
 #define	PCI_PRODUCT_NVIDIA_MCP65_SATA2	0x045d		/* MCP65 SATA */
 #define	PCI_PRODUCT_NVIDIA_MCP65_SATA3	0x045e		/* MCP65 SATA */
 #define	PCI_PRODUCT_NVIDIA_MCP65_SATA4	0x045f		/* MCP65 SATA */
+#define	PCI_PRODUCT_NVIDIA_MCP67_IDE	0x0560		/* MCP67 IDE */
 
 /* Oak Technologies products */
 #define	PCI_PRODUCT_OAKTECH_OTI1007	0x0107		/* OTI107 */
