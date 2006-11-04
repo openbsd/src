@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1176 2006/11/03 06:32:39 brad Exp $
+$OpenBSD: pcidevs,v 1.1177 2006/11/04 08:47:34 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1115,6 +1115,7 @@ product BROADCOM 5820		0x5820	5820
 product BROADCOM 5821		0x5821	5821
 product BROADCOM 5822		0x5822	5822
 product BROADCOM 5823		0x5823	5823
+product BROADCOM 5825		0x5825	5825
 
 /* Brooktree products */
 product BROOKTREE BT848		0x0350	BT848
