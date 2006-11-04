@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamlogd.8,v 1.8 2006/11/03 19:39:33 henning Exp $
+.\"	$OpenBSD: spamlogd.8,v 1.9 2006/11/04 00:19:44 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -63,12 +63,6 @@ The options are as follows:
 Debugging mode.
 .Nm
 does not disassociate from the controlling terminal.
-.It Fl l Ar log_interface
-Specify a
-.Xr pflog 4
-interface to listen for connection notifications.
-The default is to watch for connections logged on
-.Dq pflog0 .
 .It Fl I
 Specify that
 .Nm
