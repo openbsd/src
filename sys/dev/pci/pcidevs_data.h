@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1178 2006/11/04 12:46:48 mk Exp 
+ *	OpenBSD: pcidevs,v 1.1179 2006/11/04 19:41:59 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -81,6 +81,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ7114,
 	    "OZ711M1 CardBus",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ7120,
+	    "OZ711MP1 SDHC",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ7130,
+	    "OZ711MP1 XDHC",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ7134,
+	    "OZ711MP1 CardBus",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ7223,
@@ -10933,6 +10945,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515SC,
 	    "PCI6515 CardBus (Smart Card mode)",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCIXX12,
+	    "PCIXX12 CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCIXX12_MCR,
+	    "PCIXX12 Multimedia Card Reader",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCIXX12_SD,
+	    "PCIXX12 Secure Data",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1620_MISC,
