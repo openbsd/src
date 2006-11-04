@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.180 2006/11/04 00:14:12 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.181 2006/11/04 00:15:26 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -176,7 +176,7 @@ Short hand for make clean=depends.
 Configure the port.
 Might be a void operation.
 Unless overridden, configure creates the ${WRKBUILD}
-directory (see SEPARATE_BUILD), 
+directory (see SEPARATE_BUILD),
 and runs whatever configuration methods are recorded in
 .Ev CONFIGURE_STYLE .
 .It Ar depends
@@ -2112,7 +2112,7 @@ invoking the script manually if necessary.
 .It Pa ${SCRIPTDIR}/configure
 No longer invoked automatically.
 Just inline the instructions in
-.Ar do-configure 
+.Ar do-configure
 in the Makefile, or put the script in ${FILESDIR} and
 invoke it.
 .It Pa ${PKGDIR}/COMMENT
