@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.13 2006/07/31 11:06:36 mickey Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.14 2006/11/05 17:18:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -121,7 +121,6 @@ com_puc_attach(parent, self, aux)
 
 	if (pa->flags)
 		sc->sc_frequency = pa->flags & PUC_COM_CLOCKMASK;
-printf(" %x ", pa->hwtype);
 	if (pa->hwtype)
 		sc->sc_uarttype = pa->hwtype;
 
