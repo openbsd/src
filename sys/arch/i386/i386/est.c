@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.21 2006/10/19 10:55:56 tom Exp $ */
+/*	$OpenBSD: est.c,v 1.22 2006/11/05 15:10:46 dim Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -838,6 +838,14 @@ static const u_int16_t C7M_795[] = {
 	ID16( 533,  844, BUS133),
 };
 
+/* 1.00GHz VIA Eden 90nm 'Esther' */
+static const u_int16_t eden90_1000[] = {
+	ID16(1000,  844, BUS100),
+	ID16( 800,  844, BUS100),
+	ID16( 600,  844, BUS100),
+	ID16( 400,  844, BUS100),
+};
+
 struct fqlist {
 	int vendor : 5;
 	unsigned bus_clk : 1;
@@ -931,6 +939,8 @@ static const struct fqlist est_cpus[] = {
 	ENTRY(VIA,   BUS133, C7M_785),
 	ENTRY(VIA,   BUS100, C7M_794),
 	ENTRY(VIA,   BUS133, C7M_795),
+
+	ENTRY(VIA,   BUS100, eden90_1000),
 };
 
 
