@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.21 2005/12/22 07:09:52 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.22 2006/11/05 14:39:32 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * All rights reserved.
@@ -72,6 +72,7 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/kthread.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -98,14 +99,16 @@ void	hilconfig(struct hil_softc *, u_int);
 void	hilempty(struct hil_softc *);
 int	hilsubmatch(struct device *, void *, void *);
 void	hil_process_int(struct hil_softc *, u_int8_t, u_int8_t);
-void	hil_process_pending(struct hil_softc *);
 int	hil_process_poll(struct hil_softc *, u_int8_t, u_int8_t);
+void	hil_thread(void *);
 int	send_device_cmd(struct hil_softc *sc, u_int device, u_int cmd);
 void	polloff(struct hil_softc *);
 void	pollon(struct hil_softc *);
 
 static int hilwait(struct hil_softc *);
 static int hildatawait(struct hil_softc *);
+
+#define	hil_process_pending(sc)	wakeup(&(sc)->sc_pending)
 
 static __inline int
 hilwait(struct hil_softc *sc)
@@ -243,6 +246,16 @@ hil_attach_deferred(void *v)
 		sc->sc_pending = 0;
 		if (tries == 0)
 			return;
+	}
+
+	/*
+	 * Create asynchronous loop event handler thread.
+	 */
+	if (kthread_create(hil_thread, sc, &sc->sc_thread,
+	    "%s", sc->sc_dev.dv_xname) != 0) {
+		printf("%s: unable to create event thread\n",
+		    sc->sc_dev.dv_xname);
+		return;
 	}
 
 	/*
@@ -420,17 +433,29 @@ hil_process_poll(struct hil_softc *sc, u_int8_t stat, u_int8_t c)
 }
 
 void
-hil_process_pending(struct hil_softc *sc)
+hil_thread(void *arg)
 {
-	switch (sc->sc_pending) {
-	case HIL_PENDING_RECONFIG:
-		sc->sc_pending = 0;
-		hilconfig(sc, sc->sc_maxdev);
-		break;
-	case HIL_PENDING_UNPLUGGED:
-		sc->sc_pending = 0;
-		hilempty(sc);
-		break;
+	struct hil_softc *sc = arg;
+	int s;
+
+	for (;;) {
+		s = splhil();
+		if (sc->sc_pending == 0) {
+			splx(s);
+			(void)tsleep(&sc->sc_pending, PWAIT, "hil_event", 0);
+			continue;
+		}
+
+		switch (sc->sc_pending) {
+		case HIL_PENDING_RECONFIG:
+			sc->sc_pending = 0;
+			hilconfig(sc, sc->sc_maxdev);
+			break;
+		case HIL_PENDING_UNPLUGGED:
+			sc->sc_pending = 0;
+			hilempty(sc);
+			break;
+		}
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilvar.h,v 1.9 2005/12/22 07:09:52 miod Exp $	*/
+/*	$OpenBSD: hilvar.h,v 1.10 2006/11/05 14:39:32 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -73,6 +73,8 @@ struct hil_softc {
 	bus_space_handle_t sc_bsh;
 	bus_space_tag_t	sc_bst;
 	int		*sc_console;	/* console path set to hil */
+
+	struct proc	*sc_thread;	/* event handling thread */
 
 	int		sc_cmddone;
 	int		sc_cmdending;
