@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.2 2006/11/03 03:35:42 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.3 2006/11/05 18:57:45 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.53 2006/08/31 16:49:21 matt Exp $	*/
 
 /*-
@@ -203,8 +203,8 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 
 	/* Setup switch frame */
 	sf = &pcb->pcb_sf;
-	sf->sf_r11 = (int)arg;		/* proc_trampoline hook func */
-	sf->sf_r12 = (int)func;		/* proc_trampoline hook func's arg */
+	sf->sf_r11 = (int)arg;		/* proc_trampoline hook func's arg */
+	sf->sf_r12 = (int)func;		/* proc_trampoline hook func */
 	sf->sf_r15 = spbase + USPACE - PAGE_SIZE;/* current stack pointer */
 	sf->sf_r7_bank = sf->sf_r15;	/* stack top */
 	sf->sf_r6_bank = (vaddr_t)tf;	/* current frame pointer */
