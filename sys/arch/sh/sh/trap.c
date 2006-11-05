@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.5 2006/11/03 17:52:27 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.6 2006/11/05 18:57:22 miod Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -104,28 +104,45 @@
 #include <sh/mmu.h>
 #include <sh/trap.h>
 #include <sh/userret.h>
+#ifdef SH4
+#include <sh/fpu.h>
+#endif
 
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
 
 const char * const exp_type[] = {
-	"--",					/* 0x000 (reset vector) */
-	"--",					/* 0x020 (reset vector) */
-	"TLB miss/invalid (load)",		/* 0x040 EXPEVT_TLB_MISS_LD */
-	"TLB miss/invalid (store)",		/* 0x060 EXPEVT_TLB_MISS_ST */
-	"initial page write",			/* 0x080 EXPEVT_TLB_MOD */
-	"TLB protection violation (load)",	/* 0x0a0 EXPEVT_TLB_PROT_LD */
-	"TLB protection violation (store)",	/* 0x0c0 EXPEVT_TLB_PROT_ST */
-	"address error (load)",			/* 0x0e0 EXPEVT_ADDR_ERR_LD */
-	"address error (store)",		/* 0x100 EXPEVT_ADDR_ERR_ST */
-	"FPU",					/* 0x120 EXPEVT_FPU */
-	"--",					/* 0x140 (reset vector) */
-	"unconditional trap (TRAPA)",		/* 0x160 EXPEVT_TRAPA */
-	"reserved instruction code exception",	/* 0x180 EXPEVT_RES_INST */
-	"illegal slot instruction exception",	/* 0x1a0 EXPEVT_SLOT_INST */
-	"--",					/* 0x1c0 (external interrupt) */
-	"user break point trap",		/* 0x1e0 EXPEVT_BREAK */
+	NULL,					/* 000 (reset vector) */
+	NULL,					/* 020 (reset vector) */
+	"TLB miss/invalid (load)",		/* 040 EXPEVT_TLB_MISS_LD */
+	"TLB miss/invalid (store)",		/* 060 EXPEVT_TLB_MISS_ST */
+	"initial page write",			/* 080 EXPEVT_TLB_MOD */
+	"TLB protection violation (load)",	/* 0a0 EXPEVT_TLB_PROT_LD */
+	"TLB protection violation (store)",	/* 0c0 EXPEVT_TLB_PROT_ST */
+	"address error (load)",			/* 0e0 EXPEVT_ADDR_ERR_LD */
+	"address error (store)",		/* 100 EXPEVT_ADDR_ERR_ST */
+	"FPU",					/* 120 EXPEVT_FPU */
+	NULL,					/* 140 (reset vector) */
+	"unconditional trap (TRAPA)",		/* 160 EXPEVT_TRAPA */
+	"reserved instruction code exception",	/* 180 EXPEVT_RES_INST */
+	"illegal slot instruction exception",	/* 1a0 EXPEVT_SLOT_INST */
+	NULL,					/* 1c0 (external interrupt) */
+	"user break point trap",		/* 1e0 EXPEVT_BREAK */
+	NULL, NULL, NULL, NULL,			/* 200-260 */
+	NULL, NULL, NULL, NULL,			/* 280-2e0 */
+	NULL, NULL, NULL, NULL,			/* 300-360 */
+	NULL, NULL, NULL, NULL,			/* 380-3e0 */
+	NULL, NULL, NULL, NULL,			/* 400-460 */
+	NULL, NULL, NULL, NULL,			/* 480-4e0 */
+	NULL, NULL, NULL, NULL,			/* 500-560 */
+	NULL, NULL, NULL, NULL,			/* 580-5e0 */
+	NULL, NULL, NULL, NULL,			/* 600-660 */
+	NULL, NULL, NULL, NULL,			/* 680-6e0 */
+	NULL, NULL, NULL, NULL,			/* 700-760 */
+	NULL, NULL, NULL, NULL,			/* 780-7e0 */
+	"FPU disabled",				/* 800 EXPEVT_FPU_DISABLE */
+	"slot FPU disabled"			/* 820 EXPEVT_FPU_SLOT_DISABLE */
 };
 const int exp_types = sizeof exp_type / sizeof exp_type[0];
 
@@ -224,6 +241,40 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 		trapsignal(p, SIGTRAP, expevt & ~EXP_USER, TRAP_TRACE, sv);
 		goto out;
 
+#ifdef SH4
+	case EXPEVT_FPU_DISABLE | EXP_USER: /* FALLTHROUGH */
+	case EXPEVT_FPU_SLOT_DISABLE | EXP_USER:
+		sv.sival_ptr = (void *)tf->tf_spc;
+		trapsignal(p, SIGILL, expevt & ~EXP_USER, ILL_COPROC, sv);
+		goto out;
+
+	case EXPEVT_FPU | EXP_USER:
+	    {
+		int fpscr, sigi;
+
+		/* XXX worth putting in the trapframe? */
+		__asm__ __volatile__ ("sts fpscr, %0" : "=r" (fpscr));
+		fpscr = (fpscr & FPSCR_CAUSE_MASK) >> FPSCR_CAUSE_SHIFT;
+		if (fpscr & FPEXC_E)
+			sigi = FPE_FLTINV;	/* XXX any better value? */
+		else if (fpscr & FPEXC_V)
+			sigi = FPE_FLTINV;
+		else if (fpscr & FPEXC_Z)
+			sigi = FPE_FLTDIV;
+		else if (fpscr & FPEXC_O)
+			sigi = FPE_FLTOVF;
+		else if (fpscr & FPEXC_U)
+			sigi = FPE_FLTUND;
+		else if (fpscr & FPEXC_I)
+			sigi = FPE_FLTRES;
+		else
+			sigi = 0;	/* shouldn't happen */
+		sv.sival_ptr = (void *)tf->tf_spc;
+		trapsignal(p, SIGFPE, expevt & ~EXP_USER, sigi, sv);
+	    }
+		goto out;
+#endif
+
 	default:
 		goto do_panic;
 	}
@@ -235,7 +286,7 @@ out:
 	return;
 
 do_panic:
-	if ((expevt >> 5) < exp_types)
+	if ((expevt >> 5) < exp_types && exp_type[expevt >> 5] != NULL)
 		printf("fatal %s", exp_type[expevt >> 5]);
 	else
 		printf("EXPEVT 0x%03x", expevt);
