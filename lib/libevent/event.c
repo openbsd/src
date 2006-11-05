@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.13 2006/03/30 06:32:36 brad Exp $	*/
+/*	$OpenBSD: event.c,v 1.14 2006/11/05 03:39:40 brad Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -458,6 +458,7 @@ event_once(int fd, short events,
 {
 	struct event_once *eonce;
 	struct timeval etv;
+	int res;
 
 	/* We cannot support signals that just fire once */
 	if (events & EV_SIGNAL)
@@ -486,7 +487,11 @@ event_once(int fd, short events,
 		return (-1);
 	}
 
-	event_add(&eonce->ev, tv);
+	res = event_add(&eonce->ev, tv);
+	if (res != 0) {
+		free(eonce);
+		return (res);
+	}
 
 	return (0);
 }
