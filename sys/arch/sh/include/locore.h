@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.2 2006/11/05 18:59:58 miod Exp $	*/
 /*	$NetBSD: locore.h,v 1.11 2006/01/23 22:32:50 uwe Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
 	sts.l	macl,	@-r14	/* tf_macl*/				;\
 	mov.l	r2,	@-r14	/* tf_ssr */				;\
 	stc.l	spc,	@-r14	/* tf_spc */				;\
-	add	#-8,	r14	/* skip tf_ubc, tf_expevt */		;\
+	add	#-TF_SPC, r14	/* skip tf_ubc, tf_expevt */		;\
 	mov	r14,	r6	/* store frame pointer */		;\
 	/* Change register bank to 0 */					;\
 	shlr	r3		/* r3 = 0x20000000 */			;\
@@ -127,7 +127,7 @@
 	mov	r0,	r14						;\
 	add	#TF_SIZE, r0						;\
 	ldc	r0,	r6_bank	/* roll up frame pointer */		;\
-	add	#8,	r14	/* skip tf_expevt, tf_ubc */		;\
+	add	#TF_SPC, r14	/* skip tf_expevt, tf_ubc */		;\
 	mov.l	@r14+,	r0	/* tf_spc */				;\
 	ldc	r0,	spc						;\
 	mov.l	@r14+,	r0	/* tf_ssr */				;\
