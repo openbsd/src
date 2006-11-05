@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.47 2006/10/15 15:37:28 jmc Exp $
+# $OpenBSD: pkg_create,v 1.48 2006/11/05 11:41:45 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -37,6 +37,8 @@ sub anything { ${$_[1]}++; }
 
 sub print_file {}
 package OpenBSD::PackingElement::FileBase;
+use POSIX;
+
 sub archive
 {
 	my ($self, $arc, $base, $verbose) = @_;
@@ -44,6 +46,25 @@ sub archive
 	if (defined $arc) {
 	    my $o = $arc->prepare_long($self);
 	    $o->write();
+	    if (!defined $self->{owner}) {
+		if ($o->{uname} ne 'root' && $o->{uname} ne 'bin') {
+			print STDERR "Warning: no \@owner for ",
+			$self->fullname(), " (", $o->{uname}, ")\n";
+		}
+	    }
+	    if (!defined $self->{group}) {
+		if ($o->{gname} ne 'bin' && $o->{gname} ne 'wheel') {
+			print STDERR "Warning: no \@group for ",
+			$self->fullname(), " (", $o->{gname}, ")\n";
+		}
+	    }
+	    if (!defined $self->{mode} && $o->isFile()) {
+		if (($o->{mode} & (S_ISUID | S_ISGID | S_IWOTH)) != 0) {
+			print STDERR "Warning: weird mode for ", 
+			    $self->fullname(), ": ", 
+			    sprintf("%4o", $o->{mode}), "\n";
+		}
+	    }
 	}
 	if ($verbose) {
 		print "Adding ", $self->{name}, "\n";
