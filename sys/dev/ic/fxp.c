@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.80 2006/10/26 19:25:34 brad Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.81 2006/11/05 02:47:01 brad Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -100,9 +100,9 @@
  */
 static __inline void fxp_lwcopy(volatile u_int32_t *,
 	volatile u_int32_t *);
+
 static __inline void
-fxp_lwcopy(src, dst)
-	volatile u_int32_t *src, *dst;
+fxp_lwcopy(volatile u_int32_t *src, volatile u_int32_t *dst)
 {
 	volatile u_int16_t *a = (u_int16_t *)src;
 	volatile u_int16_t *b = (u_int16_t *)dst;
@@ -199,8 +199,7 @@ int fxp_min_size_mask = FXP_MIN_SIZE_MASK;
  * completed).
  */
 void
-fxp_scb_wait(sc)
-	struct fxp_softc *sc;
+fxp_scb_wait(struct fxp_softc *sc)
 {
 	int i = 10000;
 
@@ -303,8 +302,7 @@ struct cfdriver fxp_cd = {
  * kernel memory doesn't get clobbered during warmboot.
  */
 void
-fxp_shutdown(sc)
-	void *sc;
+fxp_shutdown(void *sc)
 {
 	fxp_stop((struct fxp_softc *) sc, 0);
 }
@@ -316,9 +314,7 @@ fxp_shutdown(sc)
  * clobber kernel memory at the wrong time.
  */
 void
-fxp_power(why, arg)
-	int why;
-	void *arg;
+fxp_power(int why, void *arg)
 {
 	struct fxp_softc *sc = arg;
 	struct ifnet *ifp;
@@ -343,9 +339,7 @@ fxp_power(why, arg)
  * Do generic parts of attach.
  */
 int
-fxp_attach(sc, intrstr)
-	struct fxp_softc *sc;
-	const char *intrstr;
+fxp_attach(struct fxp_softc *sc, const char *intrstr)
 {
 	struct ifnet *ifp;
 	struct mbuf *m;
@@ -485,9 +479,8 @@ fxp_attach(sc, intrstr)
 
 	/* Receiver lock-up workaround detection. */
 	fxp_read_eeprom(sc, &data, 3, 1);
-	if ((data & 0x03) != 0x03) {
+	if ((data & 0x03) != 0x03)
 		sc->sc_flags |= FXPF_RECV_WORKAROUND;
-	}
 
 	/*
 	 * Initialize our media structures and probe the MII.
@@ -560,8 +553,7 @@ fxp_attach(sc, intrstr)
 }
 
 int
-fxp_detach(sc)
-	struct fxp_softc *sc;
+fxp_detach(struct fxp_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
@@ -615,8 +607,7 @@ fxp_detach(sc)
  * value of this checksum is not very well documented.
  */
 void
-fxp_autosize_eeprom(sc)
-	struct fxp_softc *sc;
+fxp_autosize_eeprom(struct fxp_softc *sc)
 {
 	u_int16_t reg;
 	int x;
@@ -665,11 +656,8 @@ fxp_autosize_eeprom(sc)
  * every 16 bits of data.
  */
 void
-fxp_read_eeprom(sc, data, offset, words)
-	struct fxp_softc *sc;
-	u_short *data;
-	int offset;
-	int words;
+fxp_read_eeprom(struct fxp_softc *sc, u_short *data, int offset,
+    int words)
 {
 	u_int16_t reg;
 	int i, x;
@@ -733,8 +721,7 @@ fxp_read_eeprom(sc, data, offset, words)
  * Start packet transmission on the interface.
  */
 void
-fxp_start(ifp)
-	struct ifnet *ifp;
+fxp_start(struct ifnet *ifp)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 	struct fxp_txsw *txs = sc->sc_cbt_prod;
@@ -844,8 +831,7 @@ fxp_start(ifp)
  * Process interface interrupts.
  */
 int
-fxp_intr(arg)
-	void *arg;
+fxp_intr(void *arg)
 {
 	struct fxp_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -1009,8 +995,7 @@ rcvloop:
  * them again next time.
  */
 void
-fxp_stats_update(arg)
-	void *arg;
+fxp_stats_update(void *arg)
 {
 	struct fxp_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -1023,9 +1008,8 @@ fxp_stats_update(arg)
 	if (sp->rx_good) {
 		ifp->if_ipackets += letoh32(sp->rx_good);
 		sc->rx_idle_secs = 0;
-	} else if (sc->sc_flags & FXPF_RECV_WORKAROUND) {
+	} else if (sc->sc_flags & FXPF_RECV_WORKAROUND)
 		sc->rx_idle_secs++;
-	}
 	ifp->if_ierrors +=
 	    letoh32(sp->rx_crc_errors) +
 	    letoh32(sp->rx_alignment_errors) +
@@ -1099,9 +1083,7 @@ fxp_stats_update(arg)
  * the interface.
  */
 void
-fxp_stop(sc, drain)
-	struct fxp_softc *sc;
-	int drain;
+fxp_stop(struct fxp_softc *sc, int drain)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int i;
@@ -1175,8 +1157,7 @@ fxp_stop(sc, drain)
  * card has wedged for some reason.
  */
 void
-fxp_watchdog(ifp)
-	struct ifnet *ifp;
+fxp_watchdog(struct ifnet *ifp)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 
@@ -1190,16 +1171,13 @@ fxp_watchdog(ifp)
  * Submit a command to the i82557.
  */
 void
-fxp_scb_cmd(sc, cmd)
-	struct fxp_softc *sc;
-	u_int8_t cmd;
+fxp_scb_cmd(struct fxp_softc *sc, u_int8_t cmd)
 {
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, cmd);
 }
 
 void
-fxp_init(xsc)
-	void *xsc;
+fxp_init(void *xsc)
 {
 	struct fxp_softc *sc = xsc;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -1476,8 +1454,7 @@ fxp_init(xsc)
  * Change media according to request.
  */
 int
-fxp_mediachange(ifp)
-	struct ifnet *ifp;
+fxp_mediachange(struct ifnet *ifp)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
@@ -1495,9 +1472,7 @@ fxp_mediachange(ifp)
  * Notify the world which media we're using.
  */
 void
-fxp_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+fxp_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 
@@ -1515,9 +1490,7 @@ fxp_mediastatus(ifp, ifmr)
  * data pointer is fixed up to point just past it.
  */
 int
-fxp_add_rfabuf(sc, oldm)
-	struct fxp_softc *sc;
-	struct mbuf *oldm;
+fxp_add_rfabuf(struct fxp_softc *sc, struct mbuf *oldm)
 {
 	u_int32_t v;
 	struct mbuf *m;
@@ -1617,10 +1590,7 @@ fxp_add_rfabuf(sc, oldm)
 }
 
 int
-fxp_mdi_read(self, phy, reg)
-	struct device *self;
-	int phy;
-	int reg;
+fxp_mdi_read(struct device *self, int phy, int reg)
 {
 	struct fxp_softc *sc = (struct fxp_softc *)self;
 	int count = 10000;
@@ -1640,18 +1610,13 @@ fxp_mdi_read(self, phy, reg)
 }
 
 void
-fxp_statchg(self)
-	struct device *self;
+fxp_statchg(struct device *self)
 {
 	/* Nothing to do. */
 }
 
 void
-fxp_mdi_write(self, phy, reg, value)
-	struct device *self;
-	int phy;
-	int reg;
-	int value;
+fxp_mdi_write(struct device *self, int phy, int reg, int value)
 {
 	struct fxp_softc *sc = (struct fxp_softc *)self;
 	int count = 10000;
@@ -1669,10 +1634,7 @@ fxp_mdi_write(self, phy, reg, value)
 }
 
 int
-fxp_ioctl(ifp, command, data)
-	struct ifnet *ifp;
-	u_long command;
-	caddr_t data;
+fxp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1704,11 +1666,10 @@ fxp_ioctl(ifp, command, data)
 		break;
 
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
+		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN)
 			error = EINVAL;
-		} else if (ifp->if_mtu != ifr->ifr_mtu) {
+		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
-		}
 		break;
 
 	case SIOCSIFFLAGS:
@@ -1767,9 +1728,7 @@ fxp_ioctl(ifp, command, data)
  * This function must be called at splnet.
  */
 void
-fxp_mc_setup(sc, doit)
-	struct fxp_softc *sc;
-	int doit;
+fxp_mc_setup(struct fxp_softc *sc, int doit)
 {
 	struct fxp_cb_mcs *mcsp = &sc->sc_ctrl->u.mcs;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;

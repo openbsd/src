@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.48 2006/07/01 21:48:08 brad Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.49 2006/11/05 02:47:01 brad Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -135,19 +135,14 @@ const struct pci_matchid fxp_pci_devices[] = {
 };
 
 int
-fxp_pci_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+fxp_pci_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, fxp_pci_devices,
 	    sizeof(fxp_pci_devices)/sizeof(fxp_pci_devices[0])));
 }
 
 void
-fxp_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fxp_softc *sc = (struct fxp_softc *)self;
 	struct pci_attach_args *pa = aux;
