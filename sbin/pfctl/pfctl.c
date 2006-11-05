@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.253 2006/11/01 12:27:26 jmc Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.254 2006/11/05 07:19:30 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1069,25 +1069,25 @@ pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
 	else
 		snprintf(&path[len], MAXPATHLEN - len, "%s", pf->anchor->name);
 
-	if (rs != &pf->astack[0]->ruleset &&
-	    ((pf->opts & PF_OPT_NOACTION) == 0)) {
-		if ((error = pfctl_ruleset_trans(pf, path, rs->anchor))) {
-			printf("pfctl_load_rulesets: "
-			    "pfctl_ruleset_trans %d\n", error);
-				goto error;
-		}
+	if (pf->opts & PF_OPT_VERBOSE && depth) {
+		if (TAILQ_FIRST(rs->rules[rs_num].active.ptr) != NULL) {
+			brace++;
+			printf(" {\n");
+			if ((pf->opts & PF_OPT_NOACTION) == 0) {
+				if ((error = pfctl_ruleset_trans(pf,
+				    path, rs->anchor))) {
+					printf("pfctl_load_rulesets: "
+					    "pfctl_ruleset_trans %d\n", error);
+					goto error;
+				}
+			}
+		} else
+			printf("\n");
 	}
 
 	if (pf->optimize && rs_num == PF_RULESET_FILTER)
 		pfctl_optimize_ruleset(pf, rs);
 
-	if (pf->opts & PF_OPT_VERBOSE && depth) {
-		if (TAILQ_FIRST(rs->rules[rs_num].active.ptr) != NULL) {
-			brace++;
-			printf(" {\n");
-		} else
-			printf("\n");
-	}
 
 	while ((r = TAILQ_FIRST(rs->rules[rs_num].active.ptr)) != NULL) {
 		TAILQ_REMOVE(rs->rules[rs_num].active.ptr, r, entries);
