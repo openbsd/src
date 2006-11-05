@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.13 2006/10/29 20:34:56 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.14 2006/11/05 14:41:18 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -477,7 +477,7 @@ gpx_burner(void *v, u_int on, u_int flags)
 		rd->address = BT_CR;
 		if (on)
 			rd->control = BTCR_RAMENA | BTCR_BLINK_1648 |
-			    BTCR_MPLX_4 | BTCR_DISPENA_OV0 | BTCR_DISPENA_OV1;
+			    BTCR_MPLX_4;
 		else
 			/* fade colormap to black as well? */
 			rd->control = BTCR_BLINK_1648 | BTCR_MPLX_4;
@@ -904,8 +904,7 @@ gpx_setup_screen(struct gpx_screen *ss)
 	if (ss->ss_depth == 8) {
 		struct ramdac8 *rd = ss->ss_vdac;
 		rd->address = BT_CR;
-		rd->control = BTCR_RAMENA | BTCR_BLINK_1648 | BTCR_MPLX_4 |
-		    BTCR_DISPENA_OV0 | BTCR_DISPENA_OV1;
+		rd->control = BTCR_RAMENA | BTCR_BLINK_1648 | BTCR_MPLX_4;
 	} else {
 		struct ramdac4 *rd = ss->ss_vdac;
 		rd->control = RAMDAC4_INIT;
