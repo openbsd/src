@@ -1,4 +1,4 @@
-/*	$OpenBSD: trek.h,v 1.9 2005/11/15 07:02:35 miod Exp $	*/
+/*	$OpenBSD: trek.h,v 1.10 2006/11/06 21:32:15 deraadt Exp $	*/
 /*	$NetBSD: trek.h,v 1.3 1995/04/22 10:59:36 cgd Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ struct quad		/* definition for each quadrant */
 {
 	unsigned char	bases;	/* number of bases in this quadrant */
 	char	klings;		/* number of Klingons in this quadrant */
-	char	holes;		/* number of black holes in this quadrant */
+	signed   char	holes;	/* number of black holes in this quadrant */
 	int	scanned;	/* star chart entry (see below) */
 	short	stars;		/* number of stars in this quadrant */
 	char	qsystemname;	/* starsystem name (see below) */

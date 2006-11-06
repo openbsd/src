@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.6 2003/07/10 00:03:01 david Exp $	*/
+/*	$OpenBSD: setup.c,v 1.7 2006/11/06 21:32:15 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:26:06 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.6 2003/07/10 00:03:01 david Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.7 2006/11/06 21:32:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -239,6 +239,8 @@ setup()
 			q->scanned = -1;
 			q->stars = ranf(9) + 1;
 			q->holes = ranf(3) - q->stars / 5;
+			if (q->holes < 0)
+				q->holes = 0;
 			q->qsystemname = 0;
 		}
 
