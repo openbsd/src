@@ -1,1 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2006/11/06 15:14:50 drahn Exp $
+
+CPPFLAGS += -DSOFTFLOAT
+
+SOFTFLOAT_BITS=32
+.include <arch/arm/softfloat/Makefile.inc>
