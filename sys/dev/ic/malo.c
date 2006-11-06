@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.16 2006/10/29 16:43:34 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.17 2006/11/06 19:00:49 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -73,13 +73,12 @@ struct malo_rx_data {
 struct malo_tx_data {
 	bus_dmamap_t			map;
 	struct mbuf			*m;
-	uint32_t			softstat;
 	/* additional info for rate adaption */
 	struct ieee80211_node		*ni;
 //	struct ieee80211_rssdesc	id;
 };
 
-/* Rx descriptor used by HW */
+/* RX descriptor used by HW */
 struct malo_rx_desc {
 	uint8_t		rxctrl;
 	uint8_t		rssi;
@@ -94,6 +93,7 @@ struct malo_rx_desc {
 	uint16_t	reserved2;
 } __packed;
 
+/* TX descriptor used by HW */
 struct malo_tx_desc {
 	uint32_t	status;
 	uint8_t		datarate;
@@ -111,11 +111,17 @@ struct malo_tx_desc {
 #define MALO_TX_RING_COUNT	256
 #define MALO_MAX_SCATTER	8	/* XXX unknown, wild guess */
 
-/* firmware commands as found in a document describing the Libertas FW */
+/*
+ * Firmware commands
+ */
 #define MALO_CMD_GET_HW_SPEC	0x0003
+#define MALO_CMD_SET_RADIO	0x001c
+#define MALO_CMD_SET_TXPOWER	0x001e
+#define MALO_CMD_SET_ANTENNA	0x0020
 #define MALO_CMD_SET_PRESCAN	0x0107
 #define MALO_CMD_SET_POSTSCAN	0x0108
 #define MALO_CMD_SET_CHANNEL	0x010a
+#define MALO_CMD_SET_RTS	0x0113
 #define MALO_CMD_RESPONSE	0x8000
 
 struct malo_cmdheader {
@@ -141,6 +147,30 @@ struct malo_hw_spec {
 	uint32_t	WcbBase1;
 	uint32_t	WcbBase2;
 	uint32_t	WcbBase3;
+} __packed;
+
+struct malo_cmd_radio {
+	uint16_t	action;
+	uint16_t	preamble_mode;
+	uint16_t	enable;
+} __packed;
+
+struct malo_cmd_txpower {
+	uint16_t	action;
+	uint16_t	supportpowerlvl;
+	uint16_t	currentpowerlvl;
+	uint16_t	reserved;
+	uint16_t	powerlvllist[8];
+} __packed;
+
+struct malo_cmd_antenna {
+	uint16_t	action;
+	uint16_t	mode;
+} __packed;
+
+struct malo_cmd_channel {
+	uint16_t	action;
+	uint8_t		channel;
 } __packed;
 
 #define malo_mem_write4(sc, off, x) \
@@ -199,11 +229,17 @@ void	malo_tx_setup_desc(struct malo_softc *sc, struct malo_tx_desc *desc,
 void	malo_rx_intr(struct malo_softc *sc);
 int	malo_load_bootimg(struct malo_softc *sc);
 int	malo_load_firmware(struct malo_softc *sc);
+
 int	malo_cmd_get_spec(struct malo_softc *sc);
 int	malo_cmd_reset(struct malo_softc *sc);
 int	malo_cmd_set_prescan(struct malo_softc *sc);
 int	malo_cmd_set_postscan(struct malo_softc *sc);
 int	malo_cmd_set_channel(struct malo_softc *sc, uint8_t channel);
+int	malo_cmd_set_antenna(struct malo_softc *sc, uint16_t antenna_type);
+int	malo_cmd_set_radio(struct malo_softc *sc, uint16_t mode,
+	    uint16_t preamble);
+int	malo_cmd_set_txpower(struct malo_softc *sc, unsigned int powerlevel);
+int	malo_cmd_set_rts(struct malo_softc *sc, uint32_t threshold);
 
 /* supported rates */
 const struct ieee80211_rateset  malo_rates_11b =
@@ -227,11 +263,54 @@ malo_intr(void *arg)
 	if (status & 0x2)
 		malo_rx_intr(sc);
 	if (status & 0x4) {
-		struct malo_cmdheader	*hdr = sc->sc_cmd_mem;
-#ifdef MALO_DEBUG
-		int			 i;
+		struct malo_cmdheader *hdr = sc->sc_cmd_mem;
 
-		printf("%s: command answer", sc->sc_dev.dv_xname);
+		switch (hdr->cmd & ~MALO_CMD_RESPONSE) {
+		case MALO_CMD_GET_HW_SPEC:
+			DPRINTF(("%s: cmd answer for MALO_CMD_GET_SPEC=%x",
+			    sc->sc_dev.dv_xname, hdr->result));
+			break;
+		case MALO_CMD_SET_RADIO:
+			DPRINTF(("%s: cmd answer for MALO_CMD_SET_RADIO=%x",
+			    sc->sc_dev.dv_xname, hdr->result));
+			break;
+		case MALO_CMD_SET_TXPOWER:
+			DPRINTF(("%s: cmd answer for MALO_CMD_SET_TXPOWER=%x",
+			    sc->sc_dev.dv_xname, hdr->result));
+			break;
+		case MALO_CMD_SET_ANTENNA:
+			DPRINTF(("%s: cmd answer for MALO_CMD_SET_ANTENNA=%x",
+			    sc->sc_dev.dv_xname, hdr->result));
+			break;
+		case MALO_CMD_SET_PRESCAN:
+			DPRINTF(("%s: cmd answer for MALO_CMD_SET_PRESCAN=%x",
+			    sc->sc_dev.dv_xname, hdr->result));
+			break;
+		case MALO_CMD_SET_POSTSCAN:
+			DPRINTF(("%s: cmd answer for MALO_CMD_SET_POSTSCAN=%x",
+			    sc->sc_dev.dv_xname, hdr->result));
+			/* wakeup caller */
+			wakeup(sc);
+			break;
+		case MALO_CMD_SET_CHANNEL:
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0,
+			    PAGE_SIZE, BUS_DMASYNC_POSTWRITE |
+			    BUS_DMASYNC_POSTREAD);
+			DPRINTF(("%s: cmd answer for MALO_CMD_SET_CHANNEL=%x",
+			   sc->sc_dev.dv_xname, hdr->result));
+			break;
+		case MALO_CMD_SET_RTS:
+			DPRINTF(("%s: cmd answer for MALO_CMD_SET_RTS=%x",
+			    sc->sc_dev.dv_xname, hdr->result));
+			break;
+		default:
+			DPRINTF(("%s: cmd answer for UNKNOWN=%x",
+			    sc->sc_dev.dv_xname, hdr->result));
+			break;
+		}
+#if MALO_DEBUG
+		int i;
+
 		for (i = 0; i < hdr->size; i++) {
 			if (i % 16 == 0) 
 				printf("\n%4i:", i);
@@ -241,23 +320,7 @@ malo_intr(void *arg)
 		}
 		printf("\n");
 #endif
-		switch (hdr->cmd & ~MALO_CMD_RESPONSE) {
-		case MALO_CMD_SET_CHANNEL:
-			bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0,
-			    PAGE_SIZE, BUS_DMASYNC_POSTWRITE |
-			    BUS_DMASYNC_POSTREAD);
-			if (hdr->result != 0)
-				DPRINTF(("%s: command failed: %x\n",
-				    sc->sc_dev.dv_xname, hdr->result));
-			break;
-		case MALO_CMD_GET_HW_SPEC:
-		case MALO_CMD_SET_PRESCAN:
-		case MALO_CMD_SET_POSTSCAN:
-			/* wakeup caller */
-			wakeup(sc);
-			break;
-		}
-	} 
+	}
 
 	if (status & ~0x7)
 		DPRINTF(("%s: unkown interrupt %x\n", status));
@@ -311,13 +374,17 @@ malo_attach(struct malo_softc *sc)
 	for (i = 1; i <= 14; i++) {
 		ic->ic_channels[i].ic_freq =
 		    ieee80211_ieee2mhz(i, IEEE80211_CHAN_2GHZ);
-		ic->ic_channels[i].ic_flags = IEEE80211_CHAN_PUREG;
+		ic->ic_channels[i].ic_flags =
+		    IEEE80211_CHAN_PUREG |
+		    IEEE80211_CHAN_B |
+		    IEEE80211_CHAN_G;
 	}
 
 	/* set the rest */
 	ic->ic_caps = IEEE80211_C_IBSS;
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
+	ic->ic_max_rssi = 75;
 	for (i = 0; i < 6; i++)
 		ic->ic_myaddr[i] = malo_ctl_read1(sc, 0xa528 + i);
 
@@ -661,7 +728,7 @@ malo_alloc_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring,
 	memset(ring->desc, 0, count * sizeof(struct malo_tx_desc));
 	ring->physaddr = ring->map->dm_segs->ds_addr;
 
-	ring->data = malloc(count * sizeof (struct malo_tx_data), M_DEVBUF,
+	ring->data = malloc(count * sizeof(struct malo_tx_data), M_DEVBUF,
 	    M_NOWAIT);
 	if (ring->data == NULL) {
 		printf("%s: could not allocate soft data\n",
@@ -670,7 +737,7 @@ malo_alloc_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring,
 		goto fail;
 	}
 
-	memset(ring->data, 0, count * sizeof (struct malo_tx_data));
+	memset(ring->data, 0, count * sizeof(struct malo_tx_data));
 	for (i = 0; i < count; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    MALO_MAX_SCATTER, MCLBYTES, 0, BUS_DMA_NOWAIT,
@@ -684,10 +751,10 @@ malo_alloc_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring,
 		    (i + 1) % count * sizeof(struct malo_tx_desc));
 	}
 
-	return 0;
+	return (0);
 
 fail:	malo_free_tx_ring(sc, ring);
-	return error;
+	return (error);
 }
 
 void
@@ -736,6 +803,7 @@ int
 malo_init(struct ifnet *ifp)
 {
 	struct malo_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 	int error;
 
 	DPRINTF(("%s: malo_init\n", ifp->if_xname));
@@ -762,6 +830,34 @@ malo_init(struct ifnet *ifp)
 
 	if ((error = malo_cmd_get_spec(sc)))
 		return (error);
+
+	/* select default channel */
+	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
+
+	/* initialize hardware */
+	if ((error = malo_cmd_set_antenna(sc, 1))) {
+		printf("%s: setting RX antenna failed!\n",
+		    sc->sc_dev.dv_xname);
+		return (error);
+	}
+	if ((error = malo_cmd_set_antenna(sc, 2))) {
+		printf("%s: setting TX antenna failed!\n",
+		    sc->sc_dev.dv_xname);
+		return (error);
+	}
+	if ((error = malo_cmd_set_radio(sc, 1, 5))) {
+		printf("%s: turn radio on failed!\n",
+		    sc->sc_dev.dv_xname);
+		return (error);
+	}
+	if ((error = malo_cmd_set_txpower(sc, 100))) {
+		printf("%s: setting TX power failed!\n",
+		    sc->sc_dev.dv_xname);
+	}
+	if ((error = malo_cmd_set_rts(sc, IEEE80211_RTS_MAX))) {
+		printf("%s: setting RTS failed!\n",
+		    sc->sc_dev.dv_xname);
+	}
 
 	ifp->if_flags |= IFF_RUNNING;
 
@@ -873,8 +969,10 @@ malo_stop(struct malo_softc *sc)
 	struct ifnet *ifp = &ic->ic_if;
 
 	/* try to reset card, if the firmware is loaded */
+#if 0
 	if (ifp->if_flags & IFF_RUNNING)
-		malo_cmd_reset(sc);
+		malo_cmd_reset(sc); /* returns a command error */
+#endif
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
@@ -926,12 +1024,11 @@ malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			else
 				DPRINTF(("%s: prescan done\n",
 				    sc->sc_dev.dv_xname));
+		} else {
+			chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+
+			malo_cmd_set_channel(sc, chan);
 		}
-
-		chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
-
-		malo_cmd_set_channel(sc, chan);
-
 		timeout_add(&sc->sc_scan_to, hz / 2);
 		break;
 	default:
@@ -987,15 +1084,46 @@ malo_reset(struct ifnet *ifp)
 
 	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
 
-	/* set channel */
-	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
-	if (malo_cmd_set_channel(sc, chan) != 0) {
-		DPRINTF(("%s: setting channel to %u failed!\n",
-		    sc->sc_dev.dv_xname, chan));
-		return (EIO);
+	if (ic->ic_state == IEEE80211_S_RUN) {
+		if (malo_cmd_set_antenna(sc, 1) != 0) {
+			DPRINTF(("%s: can't set RX antenna\n",
+			    sc->sc_dev.dv_xname));
+			return (EIO);
+		}
+
+		if (malo_cmd_set_antenna(sc, 2) != 0) {
+			DPRINTF(("%s: can't set TX antenna\n",
+			    sc->sc_dev.dv_xname));
+			return (EIO);
+		}
 	}
 
-	DPRINTF(("%s: setting channel to %u\n", sc->sc_dev.dv_xname, chan));
+	if (ic->ic_state == IEEE80211_S_RUN &&
+	    ic->ic_opmode != IEEE80211_M_HOSTAP) {
+		/*
+		 * The prescan and postscan commands are mandatory
+		 * required.  Otherwise FW will not be able to send or
+		 * receive any frame.
+		 */
+		if (malo_cmd_set_prescan(sc) != 0) {
+			DPRINTF(("%s: can't prescan\n", sc->sc_dev.dv_xname));
+			return (EIO);
+		}
+
+		if (malo_cmd_set_postscan(sc) != 0) {
+			DPRINTF(("%s: can't postscan\n", sc->sc_dev.dv_xname));
+			return (EIO);
+		}
+
+		chan = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
+		if (malo_cmd_set_channel(sc, chan) != 0) {
+			DPRINTF(("%s: can't set channel\n",
+			    sc->sc_dev.dv_xname));
+			return (EIO);
+		} else
+			DPRINTF(("%s: set channel to %u\n", chan));
+	}
+
 	return (0);
 }
 
@@ -1020,6 +1148,9 @@ malo_tx_intr(struct malo_softc *sc)
 
 	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
 
+	/* TODO */
+
+	ifp->if_flags &= ~IFF_OACTIVE;
 	malo_start(ifp);
 }
 
@@ -1039,9 +1170,6 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	desc = &sc->sc_txring.desc[sc->sc_txring.cur];
 	data = &sc->sc_txring.data[sc->sc_txring.cur];
 
-	if (data->softstat & 0x80)
-		return (EAGAIN);
-
 	/* send mgt frames at the lowest available rate */
 	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
 
@@ -1052,16 +1180,8 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		if (m0 == NULL)
 			return (ENOBUFS);
 
+		/* packet header may have moved, reset our local pointer */
 		wh = mtod(m0, struct ieee80211_frame *);
-	}
-
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
-	    BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: could not map mbuf (error %d)\n",
-		    sc->sc_dev.dv_xname, error);
-		m_freem(m0);
-		return (error);
 	}
 
 #if NBPFILTER > 0
@@ -1083,9 +1203,33 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	}
 #endif
 
+	/*
+	 * inject FW specific fields into the 802.11 frame
+	 *
+	 *  2 bytes FW len (inject)
+	 * 24 bytes 802.11 frame header
+	 *  6 bytes addr4 (inject)
+	 *  n bytes 802.11 frame body
+	 */
+	if (M_TRAILINGSPACE(m0) < 8)
+		return (1);
+	bcopy(m0->m_data + 24, m0->m_data + 32, m0->m_len - 24);
+	bcopy(m0->m_data, m0->m_data + 2, 24);
+	m0->m_len += 8;
+	m0->m_pkthdr.len += 8;
+	*(uint16_t *)m0->m_data = htole16(m0->m_len - 32); /* FW len */
+
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
+	    BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s: could not map mbuf (error %d)\n",
+		    sc->sc_dev.dv_xname, error);
+		m_freem(m0);
+		return (error);
+	}
+
 	data->m = m0;
 	data->ni = ni;
-	data->softstat |= 0x80;
 
 	malo_tx_setup_desc(sc, desc, flags, 0, m0->m_pkthdr.len, rate,
 	    data->map->dm_segs, data->map->dm_nsegs, 0);
@@ -1096,7 +1240,7 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	    sc->sc_txring.cur * sizeof(struct malo_tx_desc),
 	    sizeof(struct malo_tx_desc), BUS_DMASYNC_PREWRITE);
 
-	DPRINTF(("%s: sending mgmt frame, len=%u idx=%u rate=%u\n",
+	DPRINTF(("%s: sending mgmt frame, pktlen=%u, idx=%u, rate=%u\n",
 	    sc->sc_dev.dv_xname, m0->m_pkthdr.len, sc->sc_txring.cur, rate));
 
 	sc->sc_txring.queued++;
@@ -1175,7 +1319,7 @@ malo_rx_intr(struct malo_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, data->map);
 
 		error = bus_dmamap_load(sc->sc_dmat, data->map,
-		   mtod(mnew, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
+		    mtod(mnew, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
 		if (error != 0) {
 			m_freem(mnew);
 
@@ -1202,8 +1346,12 @@ malo_rx_intr(struct malo_softc *sc)
 		m->m_pkthdr.len = m->m_len = letoh32(desc->len);
 
 		/*
-		 * cut out chip specific control blocks from the 802.11 frame:
-		 * 2 bytes ctrl, 24 bytes header, 6 byte ctrl, n bytes data
+		 * cut out FW specific fields from the 802.11 frame
+		 *
+		 *  2 bytes FW len (cut out)
+		 * 24 bytes 802.11 frame header
+		 *  6 bytes addr4 (cut out)
+		 *  n bytes 802.11 frame data
 		 */
 		bcopy(m->m_data, m->m_data + 6, 26);
 		m_adj(m, 8);
@@ -1214,14 +1362,12 @@ malo_rx_intr(struct malo_softc *sc)
 			struct malo_rx_radiotap_hdr *tap = &sc->sc_rxtap;
 
 			tap->wr_flags = 0;
-			/*
 			tap->wr_chan_freq =
 			    htole16(ic->ic_bss->ni_chan->ic_freq);
 			tap->wr_chan_flags =
 			    htole16(ic->ic_bss->ni_chan->ic_flags);
-			*/
 			tap->wr_rssi = desc->rssi;
-			tap->wr_max_rssi = 75;
+			tap->wr_max_rssi = ic->ic_max_rssi;
 
 			M_DUP_PKTHDR(&mb, m);
 			mb.m_data = (caddr_t)tap;
@@ -1391,9 +1537,6 @@ malo_cmd_get_spec(struct malo_softc *sc)
 	hdr->result = 0;
 	spec = (struct malo_hw_spec *)(hdr + 1);
 
-	DPRINTF(("%s: fw cmd %04x size %d\n", sc->sc_dev.dv_xname,
-	    hdr->cmd, hdr->size));
-
 	bzero(spec, sizeof(*spec));
 	memset(spec->PermanentAddress, 0xff, ETHER_ADDR_LEN);
 	spec->CookiePtr = htole32(sc->sc_cookie_dmaaddr);
@@ -1402,7 +1545,7 @@ malo_cmd_get_spec(struct malo_softc *sc)
 	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
-	tsleep(sc, 0, "malospc", hz);
+	tsleep(sc, 0, "malocmd", hz);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 	    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
@@ -1410,7 +1553,7 @@ malo_cmd_get_spec(struct malo_softc *sc)
 	if ((hdr->cmd & MALO_CMD_RESPONSE) == 0)
 		return (ETIMEDOUT);
 
-	/* XXX get the data form the buffer and feed it to ieee80211 */
+	/* XXX get the data from the buffer and feed it to ieee80211 */
 	DPRINTF(("%s: get_hw_spec: V%x R%x, #WCB %d, #Mcast %d, Regcode %d, "
 	    "#Ant %d\n", sc->sc_dev.dv_xname, htole16(spec->HwVersion),
 	    htole32(spec->FWReleaseNumber), htole16(spec->NumOfWCB),
@@ -1446,7 +1589,7 @@ malo_cmd_reset(struct malo_softc *sc)
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
-	tsleep(sc, 0, "malorst", hz);
+	tsleep(sc, 0, "malocmd", hz);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
@@ -1462,7 +1605,7 @@ malo_cmd_set_prescan(struct malo_softc *sc)
 {
 	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
 
-	hdr->cmd = MALO_CMD_SET_PRESCAN;
+	hdr->cmd = htole16(MALO_CMD_SET_PRESCAN);
 	hdr->size = htole16(sizeof(*hdr));
 	hdr->seqnum = 1;
 	hdr->result = 0;
@@ -1471,7 +1614,7 @@ malo_cmd_set_prescan(struct malo_softc *sc)
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
-	tsleep(sc, 0, "malosca", hz);
+	tsleep(sc, 0, "malocmd", hz);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
@@ -1487,7 +1630,7 @@ malo_cmd_set_postscan(struct malo_softc *sc)
 {
 	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
 
-	hdr->cmd = MALO_CMD_SET_POSTSCAN;
+	hdr->cmd = htole16(MALO_CMD_SET_POSTSCAN);
 	hdr->size = htole16(sizeof(*hdr));
 	hdr->seqnum = 1;
 	hdr->result = 0;
@@ -1496,7 +1639,7 @@ malo_cmd_set_postscan(struct malo_softc *sc)
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
-	tsleep(sc, 0, "malosca", hz);
+	tsleep(sc, 0, "malocmd", hz);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
@@ -1511,13 +1654,17 @@ int
 malo_cmd_set_channel(struct malo_softc *sc, uint8_t channel)
 {
 	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+	struct malo_cmd_channel *body;
 
 	hdr->cmd = htole16(MALO_CMD_SET_CHANNEL);
-	hdr->size = htole16(sizeof(*hdr) + sizeof(channel));
+	hdr->size = htole16(sizeof(*hdr) + sizeof(*body));
 	hdr->seqnum = 1;
 	hdr->result = 0;
+	body = (struct malo_cmd_channel *)(hdr + 1);
 
-	*(uint8_t *)(hdr + 1) = channel;
+	bzero(body, sizeof(*body));
+	body->action = 0;	/* seems this is needed */
+	body->channel = channel;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
@@ -1525,4 +1672,134 @@ malo_cmd_set_channel(struct malo_softc *sc, uint8_t channel)
 	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
 
 	return (0);
+}
+
+int
+malo_cmd_set_antenna(struct malo_softc *sc, uint16_t antenna)
+{
+	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+	struct malo_cmd_antenna *body;
+
+	hdr->cmd = htole16(MALO_CMD_SET_ANTENNA);
+	hdr->size = htole16(sizeof(*hdr) + sizeof(*body));
+	hdr->seqnum = 1;
+	hdr->result = 0;
+	body = (struct malo_cmd_antenna *)(hdr + 1);
+
+	bzero(body, sizeof(*body));
+	body->action = htole16(antenna);
+	if (antenna == 1)
+		body->mode = htole16(0xffff);
+	else
+		body->mode = htole16(2);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
+	tsleep(sc, 0, "malocmd", hz);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+
+	if (hdr->cmd & MALO_CMD_RESPONSE)
+		return (0);
+	else
+		return (ETIMEDOUT);
+}
+
+int
+malo_cmd_set_radio(struct malo_softc *sc, uint16_t enable,
+    uint16_t preamble_mode)
+{
+	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+	struct malo_cmd_radio *body;
+
+	hdr->cmd = htole16(MALO_CMD_SET_RADIO);
+	hdr->size = htole16(sizeof(*hdr) + sizeof(*body));
+	hdr->seqnum = 1;
+	hdr->result = 0;
+	body = (struct malo_cmd_radio *)(hdr + 1);
+
+	bzero(body, sizeof(*body));
+	body->action = htole16(1);
+	body->preamble_mode = htole16(preamble_mode);
+	body->enable = htole16(enable);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
+	tsleep(sc, 0, "malocmd", hz);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+
+	if (hdr->cmd & MALO_CMD_RESPONSE)
+		return (0);
+	else
+		return (ETIMEDOUT);
+}
+
+int
+malo_cmd_set_txpower(struct malo_softc *sc, unsigned int powerlevel)
+{
+	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+	struct malo_cmd_txpower *body;
+
+	hdr->cmd = htole16(MALO_CMD_SET_TXPOWER);
+	hdr->size = htole16(sizeof(*hdr) + sizeof(*body));
+	hdr->seqnum = 1;
+	hdr->result = 0;
+	body = (struct malo_cmd_txpower *)(hdr + 1);
+
+	bzero(body, sizeof(*body));
+	body->action = htole16(1);
+	if (powerlevel >= 0 && powerlevel < 30)
+		body->supportpowerlvl = htole16(5);	/* LOW */
+	else if (powerlevel >= 30 && powerlevel < 60)
+		body->supportpowerlvl = htole16(10);	/* MEDIUM */
+	else
+		body->supportpowerlvl = htole16(15);	/* HIGH */
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
+	tsleep(sc, 0, "malocmd", hz);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+
+	if (hdr->cmd & MALO_CMD_RESPONSE)
+		return (0);
+	else
+		return (ETIMEDOUT);
+}
+
+int
+malo_cmd_set_rts(struct malo_softc *sc, uint32_t threshold)
+{
+	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+
+	hdr->cmd = htole16(MALO_CMD_SET_RTS);
+	hdr->size = htole16(sizeof(*hdr) + sizeof(threshold));
+	hdr->seqnum = 1;
+	hdr->result = 0;
+
+	*(uint32_t *)(hdr + 1) = htole32(threshold);	
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
+	tsleep(sc, 0, "malocmd", hz);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+
+	if (hdr->cmd & MALO_CMD_RESPONSE)
+		return (0);
+	else
+		return (ETIMEDOUT);
 }
