@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.5 2006/10/25 03:59:59 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.6 2006/11/06 19:12:13 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -94,7 +94,6 @@
 #include <sh/cache_sh4.h>
 #include <sh/mmu_sh4.h>
 
-#include <machine/bootinfo.h>
 #include <machine/cpu.h>
 
 #include <landisk/landisk/landiskreg.h>
@@ -108,10 +107,7 @@
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* landisk */
 
-struct bootinfo _bootinfo;
-struct bootinfo *bootinfo;
-
-__dead void landisk_startup(int, char *, void *);
+__dead void landisk_startup(int, char *);
 __dead void main(void);
 
 void
@@ -129,17 +125,12 @@ vaddr_t kernend;	/* used by /dev/mem too */
 char *esym;
 
 __dead void
-landisk_startup(int howto, char *_esym, void *bi)
+landisk_startup(int howto, char *_esym)
 {
 	/* Start to determine heap area */
 	esym = _esym;
 	kernend = (vaddr_t)round_page((vaddr_t)esym);
 
-	/* Copy bootinfo */
-	if (bi) {
-		bootinfo = &_bootinfo;
-		memcpy(bootinfo, bi, sizeof(struct bootinfo));
-	}
 	boothowto = howto;
 
 	/* Initialize CPU ops. */
@@ -187,21 +178,6 @@ landisk_startup(int howto, char *_esym, void *bi)
 		:: "r" (main), "r" (proc0.p_md.md_pcb->pcb_sf.sf_r7_bank));
 	/* NOTREACHED */
 	for (;;) ;
-}
-
-void *
-lookup_bootinfo(int type)
-{
-	struct btinfo_common *help;
-	int n = bootinfo->nentries;
-
-	help = (struct btinfo_common *)(bootinfo->info);
-	while (n--) {
-		if (help->type == type)
-			return (help);
-		help = (struct btinfo_common *)((char *)help + help->len);
-	}
-	return (NULL);
 }
 
 void
