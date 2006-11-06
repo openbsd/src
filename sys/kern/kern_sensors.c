@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.14 2006/05/28 16:43:50 mk Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.15 2006/11/06 11:35:15 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -121,7 +121,8 @@ sensor_task_register(void *arg, void (*func)(void *), int period)
 	if (TAILQ_EMPTY(&tasklist))
 		kthread_create_deferred(sensor_task_create, NULL);
 
-	sensor_task_schedule(st);
+	st->nextrun = 0;
+	TAILQ_INSERT_HEAD(&tasklist, st, entry);
 	wakeup(&tasklist);
 
 	return (0);
