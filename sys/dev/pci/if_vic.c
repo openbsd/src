@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.31 2006/11/02 23:43:35 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.32 2006/11/06 07:31:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1173,13 +1173,13 @@ vic_init(struct ifnet *ifp)
 
 	s = splnet();
 
+	vic_write(sc, VIC_DATA_ADDR, VIC_DMA_DVA(sc));
+	vic_write(sc, VIC_DATA_LENGTH, sc->sc_dma_size);
+
 	if (ifp->if_flags & IFF_PROMISC)
 		vic_iff(sc, VIC_CMD_IFF_PROMISC);
 	else
 		vic_iff(sc, VIC_CMD_IFF_BROADCAST | VIC_CMD_IFF_MULTICAST);
-
-	vic_write(sc, VIC_DATA_ADDR, VIC_DMA_DVA(sc));
-	vic_write(sc, VIC_DATA_LENGTH, sc->sc_dma_size);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
