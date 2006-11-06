@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.19 2006/05/25 08:41:52 jmc Exp $	*/
+/*	$OpenBSD: cu.c,v 1.20 2006/11/06 19:37:21 millert Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cu.c,v 1.19 2006/05/25 08:41:52 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: cu.c,v 1.20 2006/11/06 19:37:21 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -48,8 +48,7 @@ void
 cumain(int argc, char *argv[])
 {
 	int ch, i, parity;
-	long l;
-	char *cp;
+	const char *errstr;
 	static char sbuf[12];
 
 	if (argc < 2)
@@ -57,7 +56,35 @@ cumain(int argc, char *argv[])
 	CU = DV = NOSTR;
 	BR = DEFBR;
 	parity = 0;	/* none */
-	while ((ch = getopt(argc, argv, "a:l:s:htoe0123456789")) != -1) {
+
+	/*
+	 * Convert obsolecent -### speed to modern -s### syntax which
+	 * getopt() can handle.
+	 */
+	for (i = 1; i < argc; i++) {
+		if (argv[i][0] == '-') {
+			switch (argv[i][1]) {
+			case '0': case '1': case '2': case '3': case '4':
+			case '5': case '6': case '7': case '8': case '9':
+				ch = snprintf(sbuf, sizeof(sbuf), "-s%s",
+				    &argv[i][1]);
+				if (ch <= 0 || ch >= sizeof(sbuf)) {
+					errx(3, "invalid speed: %s",
+					    &argv[i][1]);
+				}
+				argv[i] = sbuf;
+				break;
+			case '-':
+				/* if we get "--" stop processing args */
+				if (argv[i][2] == '\0')
+					goto getopt;
+				break;
+			}
+		}
+	}
+
+getopt:
+	while ((ch = getopt(argc, argv, "a:l:s:htoe")) != -1) {
 		switch (ch) {
 		case 'a':
 			CU = optarg;
@@ -75,13 +102,9 @@ cumain(int argc, char *argv[])
 				asprintf(&DV, "/dev/%s", optarg);
 			break;
 		case 's':
-			l = strtol(optarg, &cp, 10);
-			if (*cp != '\0' || l < 0 || l >= INT_MAX) {
-				fprintf(stderr, "%s: unsupported speed %s\n",
-				    __progname, optarg);
-				exit(3);
-			}
-			BR = (int)l;
+			BR = (int)strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(3, "speed is %s: %s", errstr, optarg);
 			break;
 		case 'h':
 			setboolean(value(LECHO), TRUE);
@@ -101,13 +124,6 @@ cumain(int argc, char *argv[])
 				parity = 0;	/* -o -e */
 			else
 				parity = -1;	/* even */
-			break;
-		case '0': case '1': case '2': case '3': case '4':
-		case '5': case '6': case '7': case '8': case '9':
-			if (CU)
-				CU[strlen(CU)-1] = ch;
-			if (DV)
-				DV[strlen(DV)-1] = ch;
 			break;
 		default:
 			cuusage();

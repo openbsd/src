@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.27 2006/08/18 03:06:18 jason Exp $	*/
+/*	$OpenBSD: tip.h,v 1.28 2006/11/06 19:37:21 millert Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <setjmp.h>
 #include <unistd.h>
 #include <errno.h>
+#include <err.h>
 #include <limits.h>
 
 /*
