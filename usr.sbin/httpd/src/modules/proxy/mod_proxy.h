@@ -258,7 +258,7 @@ typedef struct {
 
 struct per_thread_data {
     struct hostent hpbuf;
-    u_long ipaddr;
+    in_addr_t ipaddr;
     char *charpbuf[2];
 };
 /* Function prototypes */
