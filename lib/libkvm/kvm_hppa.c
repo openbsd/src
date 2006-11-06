@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_hppa.c,v 1.5 2006/03/20 15:11:48 mickey Exp $	*/
+/*	$OpenBSD: kvm_hppa.c,v 1.6 2006/11/06 21:16:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, Miodrag Vallat.
@@ -53,15 +53,14 @@ _kvm_initvtop(kvm_t *kd)
 int
 _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 {
-	int offset;
-
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
 		return (0);
 	}
 
-	/* TODO */
-	return (0);
+	/* XXX this only really works for the kernel image only */
+	*pa = va;
+	return (PAGE_SIZE - (va & PAGE_MASK));
 }
 
 /*
@@ -70,7 +69,5 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 off_t
 _kvm_pa2off(kvm_t *kd, paddr_t pa)
 {
-	/* TODO */
-	return (0);
+	return (kd->dump_off + pa);
 }
-
