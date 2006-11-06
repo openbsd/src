@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.4 2006/10/16 21:55:18 drahn Exp $
+# $OpenBSD: GENERIC,v 1.5 2006/11/06 19:43:05 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -27,8 +27,8 @@ option		USBVERBOSE
 # Cache options.
 option	 	SH4_CACHE_DISABLE_EMODE	# disable extended (2x larger) mode
 
-config		bsd	swap generic
-#config		bsd	root on wd0a
+#config		bsd	swap generic
+config		bsd	root on wd0a
 
 mainbus0 at root
 cpu0	at mainbus?
