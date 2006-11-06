@@ -1,6 +1,5 @@
-/*	$NetBSD: hdc9224.h,v 1.1 1996/07/20 18:55:12 ragge Exp $ */
-/*	$OpenBSD: hdc9224.h,v 1.5 2003/11/07 10:16:45 jmc Exp $ */
-
+/*	$OpenBSD: hdc9224.h,v 1.6 2006/11/06 20:28:23 miod Exp $	*/
+/*	$NetBSD: hdc9224.h,v 1.5 2003/11/10 08:51:52 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,14 +33,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-
+#if 0
 struct hdc9224_DKCreg {
 	unsigned char dkc_reg;	/* Disk Register Data Access Port (rw)*/
 	unsigned char fill[3];	/* bytes are longword aligned */
 	unsigned char dkc_cmd;	/* Disk Controller Command Port (wo) */
 #define dkc_stat dkc_cmd	/* Interrupt Status Port (ro) */
 };
+#endif
 
 /*
  * definition of some commands (constant bits only, incomplete!)
@@ -103,8 +102,8 @@ struct hdc9224_DKCreg {
  * the Disk-Register-Data-Access-Port DKC_REG
  */
 struct hdc9224_UDCreg { /* internal disk controller registers */
-	u_char udc_dma7;	/*  0: DMA address bits	0 -  7 */
-	u_char udc_dma15;	/*  1: DMA address bits	8 - 15 */
+	u_char udc_dma7;	/*  0: DMA address bits  0 -  7 */
+	u_char udc_dma15;	/*  1: DMA address bits  8 - 15 */
 	u_char udc_dma23;	/*  2: DMA address bits 16 - 23 */
 	u_char udc_dsect;	/*  3: desired/starting sector number */
 #define udc_csect udc_dsect	/*     current sector number */
@@ -120,6 +119,9 @@ struct hdc9224_UDCreg { /* internal disk controller registers */
 #define udc_dstat udc_term	/*     drive status register */
 	u_char udc_data;	/* 10: data */
 };
+
+/* UDC regs */
+#define	UDC_TERM	9
 
 /*
  * Definition of bits in the Current-Head register

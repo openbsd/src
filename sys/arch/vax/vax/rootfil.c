@@ -1,4 +1,4 @@
-/*	$OpenBSD: rootfil.c,v 1.18 2005/12/27 18:31:11 miod Exp $	*/
+/*	$OpenBSD: rootfil.c,v 1.19 2006/11/06 20:28:23 miod Exp $	*/
 /*	$NetBSD: rootfil.c,v 1.14 1996/10/13 03:35:58 christos Exp $	*/
 
 /*
@@ -289,6 +289,7 @@ struct nam2blk {
         { "ra",          9 },
         { "rx",         12 },
         { "rl",         14 },
+	{ "hd",		19 },
         { "sd",         20 },
         { "rd",         23 },
         { "raid",       25 },

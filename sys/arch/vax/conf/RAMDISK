@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.27 2006/08/30 19:29:20 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.28 2006/11/06 20:28:20 miod Exp $
 
 machine		vax			# machine type
 
@@ -69,7 +69,7 @@ le0		at vsbus0 csr 0x200e0000 # LANCE ethernet
 ze0		at vsbus0 csr 0x20008000 # SGEC ethernet
 dz0		at vsbus0 csr 0x200a0000 # DC-367 DZ-11 lookalike ctlr
 dz0		at vsbus0 csr 0x25000000 # VS4000/90 4000/10X MV3100/9X serial
-#hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
+hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
 ncr0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-ctlr
 ncr1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-ctlr
 asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
@@ -79,7 +79,7 @@ gpx0		at vsbus0 csr 0x3c000000 # VS3100 GPX display option
 lcg0		at vsbus0 csr 0x20100000 # VS4000/60 (or VLC) frame buffer
 lcspx0		at vsbus0 csr 0x39302000 # VS4000/90 frame buffer
 
-#hd*		at hdc0 drive?		# RD5x disks
+hd*		at hdc0 drive?		# RD5x disks
 #ry*		at hdc0 drive?		# RX floppies
 
 # Ibus, the internal bus on most Microvaxen
@@ -137,9 +137,6 @@ mscpbus*	at mtc?
 ra*		at mscpbus? drive?	# MSCP disk
 rx*		at mscpbus? drive?	# MSCP floppy
 mt*		at mscpbus? drive?	# MSCP tape
-
-# VS2000 builtin MFM controller (HDC9224)
-#hdc0		at vsbus0		# The strange builtin MFM controller
 
 # SCSI devices
 scsibus*	at asc?
