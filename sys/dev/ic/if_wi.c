@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.134 2006/08/17 20:36:35 deraadt Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.135 2006/11/06 10:49:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -127,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.134 2006/08/17 20:36:35 deraadt Exp $";
+	"$OpenBSD: if_wi.c,v 1.135 2006/11/06 10:49:01 jsg Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -305,7 +305,12 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 			sc->wi_cmd_count = 2000;
 		if (sc->sc_sta_firmware_ver >= 800) {
 #ifndef SMALL_KERNEL
-			if (sc->sc_sta_firmware_ver != 10402)
+			/*
+			 * USB hostap is more pain than it is worth
+			 * for now, things would have to be overhauled
+			 */
+			if ((sc->sc_sta_firmware_ver != 10402) &&
+			    (!(sc->wi_flags & WI_FLAGS_BUS_USB)))
 				sc->wi_flags |= WI_FLAGS_HAS_HOSTAP;
 #endif
 			sc->wi_flags |= WI_FLAGS_HAS_IBSS;
