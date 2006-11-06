@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.55 2006/10/31 15:23:40 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.56 2006/11/06 11:12:56 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -95,8 +95,9 @@ cvs_remove(int argc, char **argv)
 		cvs_client_get_responses();
 	} else {
 		if (existing != 0) {
-			cvs_log(LP_ERR, "%d file(s) exist, remove them first",
-			    existing);
+			cvs_log(LP_ERR, (existing == 1) ?
+			    "%d file exists; remove it first" :
+			    "%d files exist; remove them first", existing);
 		}
 
 		if (removed != 0) {
@@ -136,7 +137,7 @@ cvs_remove_local(struct cvs_file *cf)
 		return;
 	}
 
-	if (force_remove == 1) {
+	if (force_remove == 1 && cvs_noexec == 0) {
 		if (unlink(cf->file_path) == -1)
 			fatal("cvs_remove_local: %s", strerror(errno));
 		(void)close(cf->fd);
