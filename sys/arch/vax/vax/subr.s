@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.23 2006/07/19 20:38:33 miod Exp $     */
+/*	$OpenBSD: subr.s,v 1.24 2006/11/06 21:31:37 miod Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -399,7 +399,7 @@ ENTRY(kcopy,R2|R3|R4|R5|R6)
 	/* 
 	 * If there is a failure, trap.c will set r1 to -1, and jump
 	 * to the following 2.  If not, we return 0.  We duplicate a 
-	 * miniscule amount of code in the interest of speed; movc3
+	 * minuscule amount of code in the interest of speed; movc3
 	 * sets r0 to 0 anyway.
 	 */
 1:
@@ -502,29 +502,17 @@ pcbtrap:	.long 0x800001fc; .globl pcbtrap	# Safe place
 _bootdev:	.long 0; .globl _bootdev
 
 /*
- * Copy/zero more than 64k of memory (as opposite of bcopy/bzero).
+ * Fill more than 64k of memory (used by bzero and memset).
  */
-ENTRY(blkcpy,R2|R3|R4|R5|R6)
-	movl	4(ap),r1
-	movl	8(ap),r3
-	movl	12(ap),r6
-	jbr 2f
-1:	subl2	r0,r6
-	movc3	r0,(r1),(r3)
-2:	movzwl	$65535,r0
-	cmpl	r6,r0
-	jgtr	1b
-	movc3	r6,(r1),(r3)
-	ret
-
-ENTRY(blkclr,R2|R3|R4|R5|R6)
+ENTRY(blkfill,R2|R3|R4|R5|R6|R7)
 	movl	4(ap), r3
-	movl	8(ap), r6
+	movl	8(ap), r7
+	movl	12(ap), r6
 	jbr	2f
 1:	subl2	r0, r6
-	movc5	$0,(r3),$0,r0,(r3)
+	movc5	$0,(r3),r7,r0,(r3)
 2:	movzwl	$65535,r0
 	cmpl	r6, r0
 	jgtr	1b
-	movc5	$0,(r3),$0,r6,(r3)
+	movc5	$0,(r3),r7,r6,(r3)
 	ret

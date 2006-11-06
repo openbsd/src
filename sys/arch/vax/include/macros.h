@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.13 2006/02/22 22:16:07 miod Exp $ */
+/*	$OpenBSD: macros.h,v 1.14 2006/11/06 21:31:36 miod Exp $ */
 /*	$NetBSD: macros.h,v 1.20 2000/07/19 01:02:52 matt Exp $	*/
 
 /*
@@ -82,13 +82,13 @@ bcopy(const void *from, void *toe, size_t len)
 }
 #endif
 
-void	blkclr(void *, size_t);
+void	blkfill(void *, int, size_t);
 
 static __inline__ void *
 memset(void *block, int c, size_t len)
 {
 	if (len > 65535)
-		blkclr(block, len);
+		blkfill(block, c, len);
 	else {
 		__asm__ __volatile ("movc5 $0,(%0),%2,%1,(%0)"
 			:
@@ -102,7 +102,7 @@ static __inline__ void
 bzero(void *block, size_t len)
 {
 	if (len > 65535)
-		blkclr(block, len);
+		blkfill(block, 0, len);
 	else {
 		__asm__ __volatile ("movc5 $0,(%0),$0,%1,(%0)"
 			:
