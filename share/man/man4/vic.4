@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vic.4,v 1.14 2006/11/03 10:08:05 jmc Exp $
+.\"	$OpenBSD: vic.4,v 1.15 2006/11/06 08:35:58 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -95,3 +95,8 @@ driver was written by
 .An Reyk Floeter Aq reyk@openbsd.org
 and
 .An David Gwynne Aq dlg@openbsd.org .
+.Sh BUGS
+There are tons bugs in VMware and the underlying host operating systems.
+Please consider that the security of the
+.Ox
+guest can be circumvented by attacking the host environment.
