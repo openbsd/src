@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.263 2006/09/19 13:04:01 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.264 2006/11/06 14:07:35 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1317,7 +1317,7 @@ session_open(struct peer *p)
 		errs += session_capa_add(p, opb, CAPA_REFRESH, 0, &optparamlen);
 
 	/* End-of-RIB marker, draft-ietf-idr-restart */
-	if (p->capa.ann.refresh) {	/* 4 bytes data */
+	if (p->capa.ann.restart) {	/* 4 bytes data */
 		u_char	c[4];
 
 		bzero(&c, 4);
