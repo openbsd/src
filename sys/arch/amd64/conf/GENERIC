@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.163 2006/10/26 04:14:09 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.164 2006/11/06 03:34:59 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -367,6 +367,7 @@ nfe*	at pci?				# NVIDIA nForce Ethernet
 musycc*	at pci?				# Conexant HDLC controller
 art*	at musycc?			# Accoom Artery E1/T1 cards
 xge*	at pci?				# Neterion Xframe-I/II 10Gb ethernet
+gem*	at pci?				# Sun 'gem' ethernet
 bce*	at pci?				# Broadcom BCM4401
 
 # Wireless network cards
@@ -416,6 +417,7 @@ nsgphy*	at mii?				# NS gigabit PHYs
 rgephy*	at mii?				# Realtek 8169S/8110S PHY
 urlphy*	at mii?				# Realtek RTL8150L internal PHY
 ciphy*	at mii?				# Cicada CS8201 10/100/1000 copper PHY
+gentbi*	at mii?				# Generic 1000BASE-X ten-bit PHY
 ukphy*	at mii?				# "unknown" PHYs
 
 eap*	at pci?				# Ensoniq AudioPCI S5016
