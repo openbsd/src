@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.17 2006/11/06 19:00:49 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.18 2006/11/06 23:03:44 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -205,6 +205,7 @@ void	malo_reset_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring);
 void	malo_free_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring);
 int	malo_alloc_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring,
 	    int count);
+void	malo_reset_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring);
 void	malo_free_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring);
 int	malo_init(struct ifnet *ifp);
 int	malo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
@@ -758,6 +759,41 @@ fail:	malo_free_tx_ring(sc, ring);
 }
 
 void
+malo_reset_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring)
+{
+	struct malo_tx_desc *desc;
+	struct malo_tx_data *data;
+	int i;
+
+	for (i = 0; i < ring->count; i++) {
+		desc = &ring->desc[i];
+		data = &ring->data[i];
+
+		if (data->m != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+			    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, data->map);
+			m_freem(data->m);
+			data->m = NULL;
+		}
+
+		/*
+		 * The node has already been freed at that point so don't call
+		 * ieee80211_release_node() here.
+		 */
+		data->ni = NULL;
+
+		desc->status = 0;
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, ring->map, 0, ring->map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+
+	ring->queued = 0;
+	ring->cur = ring->next = ring->stat = 0;
+}
+
+void
 malo_free_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring)
 {
 	struct malo_tx_data *data;
@@ -784,13 +820,11 @@ malo_free_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring)
 				m_freem(data->m);
 			}
 
-#if 0
 			/*
 			 * The node has already been freed at that point so
 			 * don't call ieee80211_release_node() here.
 			 */
 			data->ni = NULL;
-#endif
 
 			if (data->map != NULL)
 				bus_dmamap_destroy(sc->sc_dmat, data->map);
@@ -978,6 +1012,7 @@ malo_stop(struct malo_softc *sc)
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
+	malo_reset_tx_ring(sc, &sc->sc_txring);
 	malo_reset_rx_ring(sc, &sc->sc_rxring);
 
 	DPRINTF(("%s: malo_stop\n", ifp->if_xname));
