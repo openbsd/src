@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em_osdep.h,v 1.9 2006/07/07 02:56:18 brad Exp $ */
+/* $OpenBSD: if_em_osdep.h,v 1.10 2006/11/06 03:52:37 brad Exp $ */
 /* $FreeBSD: if_em_osdep.h,v 1.11 2003/05/02 21:17:08 pdeuskar Exp $ */
 
 #ifndef _EM_OPENBSD_OS_H_
@@ -45,7 +45,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define MSGOUT(S, A, B)		printf(S "\n", A, B)
 #define DEBUGFUNC(F)		DEBUGOUT(F);
-#if DBG
+#ifdef DBG
 	#define DEBUGOUT(S)			printf(S "\n")
 	#define DEBUGOUT1(S,A)			printf(S "\n",A)
 	#define DEBUGOUT2(S,A,B)		printf(S "\n",A,B)
@@ -139,20 +139,20 @@ struct em_osdep
 			   ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg \
 			   + (index << 1)), value)
 
-#define E1000_READ_ICH8_REG(hw, reg) \
+#define E1000_READ_ICH_FLASH_REG(hw, reg) \
 	bus_space_read_4(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \
 			 ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, reg)
 
-#define E1000_READ_ICH8_REG16(hw, reg) \
+#define E1000_READ_ICH_FLASH_REG16(hw, reg) \
 	bus_space_read_2(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \
 			 ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, reg)
 
-#define E1000_WRITE_ICH8_REG(hw, reg, value) \
+#define E1000_WRITE_ICH_FLASH_REG(hw, reg, value) \
 	bus_space_write_4(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \
 			  ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, \
 			   reg, value)
 
-#define E1000_WRITE_ICH8_REG16(hw, reg, value) \
+#define E1000_WRITE_ICH_FLASH_REG16(hw, reg, value) \
 	bus_space_write_2(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \
 			  ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, \
 			   reg, value)

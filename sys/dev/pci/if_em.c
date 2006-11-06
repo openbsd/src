@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.152 2006/11/03 06:39:10 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.153 2006/11/06 03:52:37 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -45,7 +45,7 @@ int             em_display_debug_stats = 0;
  *  Driver version
  *********************************************************************/
 
-char em_driver_version[] = "6.1.4";
+char em_driver_version[] = "6.2.9";
 
 /*********************************************************************
  *  PCI Device ID Table
@@ -97,6 +97,7 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_COPPER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_FIBER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_QUAD_CPR },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_QUAD_CPR_LP },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_SERDES },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_COPPER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_FIBER },
@@ -113,6 +114,8 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IGP_AMT },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IGP_C },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IFE },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IFE_G },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IFE_GT },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IGP_M }
 };
 
@@ -553,6 +556,12 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 	case SIOCSIFMEDIA:
+		/* Check SOL/IDER usage */
+		if (em_check_phy_reset_block(&sc->hw)) {
+			printf("%s: Media change is blocked due to SOL/IDER session.\n",
+			    sc->sc_dv.dv_xname);
+			break;
+		}
 	case SIOCGIFMEDIA:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCxIFMEDIA (Get/Set Interface Media)");
 		error = ifmedia_ioctl(ifp, ifr, &sc->media, command);
@@ -638,7 +647,8 @@ em_init(void *arg)
 	}
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->num_tx_desc - 1);
 
-	/* Packet Buffer Allocation (PBA)
+	/*
+	 * Packet Buffer Allocation (PBA)
 	 * Writing PBA sets the receive portion of the buffer
 	 * the remainder is used for the transmit buffer.
 	 *
@@ -659,9 +669,10 @@ em_init(void *arg)
 		sc->tx_head_addr = pba << EM_TX_HEAD_ADDR_SHIFT;
 		sc->tx_fifo_size = (E1000_PBA_40K - pba) << EM_PBA_BYTES_SHIFT;
 		break;
-	case em_80003es2lan: /* 80003es2lan: Total Packet Buffer is 48K */
-	case em_82571: /* 82571: Total Packet Buffer is 48K */
-	case em_82572: /* 82572: Total Packet Buffer is 48K */
+	/* Total Packet Buffer on these is 48k */
+	case em_82571:
+	case em_82572:
+	case em_80003es2lan:
 		pba = E1000_PBA_32K; /* 32K for Rx, 16K for Tx */
 		break;
 	case em_82573: /* 82573: Total Packet Buffer is 32K */
@@ -1277,8 +1288,6 @@ em_local_timer(void *arg)
 	splx(s);
 }
 
-#define SPEED_MODE_BIT	(1<<21)		/* On PCI-E MACs only */
-
 void
 em_update_link_status(struct em_softc *sc)
 {
@@ -1294,6 +1303,7 @@ em_update_link_status(struct em_softc *sc)
 			    ((sc->hw.mac_type == em_82571) ||
 			    (sc->hw.mac_type == em_82572))) {
 				int tarc0;
+
 				tarc0 = E1000_READ_REG(&sc->hw, TARC0);
 				tarc0 |= SPEED_MODE_BIT;
 				E1000_WRITE_REG(&sc->hw, TARC0, tarc0);
@@ -1526,7 +1536,8 @@ em_hardware_init(struct em_softc *sc)
 	     (sc->hw.mac_type == em_82571 ||
 	      sc->hw.mac_type == em_82572)) {
 		uint16_t phy_tmp = 0;
-		/* speed up time to link by disabling smart power down */
+
+		/* Speed up time to link by disabling smart power down */
 		em_read_phy_reg(&sc->hw, IGP02E1000_PHY_POWER_MGMT, &phy_tmp);
 		phy_tmp &= ~IGP02E1000_PM_SPD;
 		em_write_phy_reg(&sc->hw, IGP02E1000_PHY_POWER_MGMT, phy_tmp);
@@ -1538,11 +1549,12 @@ em_hardware_init(struct em_softc *sc)
 	 * - High water mark should allow for at least two frames to be
 	 *   received after sending an XOFF.
 	 * - Low water mark works best when it is very near the high water mark.
-	 *   This allows the receiver to restart by sending XON when it has drained
-	 *   a bit.  Here we use an arbitary value of 1500 which will restart after
-	 *   one full frame is pulled from the buffer.  There could be several smaller
-	 *   frames in the buffer and if so they will not trigger the XON until their
-	 *   total number reduces the buffer by 1500.
+	 *   This allows the receiver to restart by sending XON when it has
+	 *   drained a bit.  Here we use an arbitary value of 1500 which will
+	 *   restart after one full frame is pulled from the buffer.  There
+	 *   could be several smaller frames in the buffer and if so they will
+	 *   not trigger the XON until their total number reduces the buffer
+	 *   by 1500.
 	 * - The pause time is fairly large at 1000 x 512ns = 512 usec.
 	 */
 	rx_buffer_size = ((E1000_READ_REG(&sc->hw, PBA) & 0xffff) << 10 );
@@ -1555,7 +1567,7 @@ em_hardware_init(struct em_softc *sc)
 	else
 		sc->hw.fc_pause_time = 0x1000;
 	sc->hw.fc_send_xon = TRUE;
-	sc->hw.fc = em_fc_full;
+	sc->hw.fc = E1000_FC_FULL;
 
 	if (em_init_hw(&sc->hw) < 0) {
 		printf("%s: Hardware Initialization Failed",
@@ -1578,6 +1590,7 @@ em_setup_interface(struct em_softc *sc)
 {
 	struct ifnet   *ifp;
 	u_char fiber_type = IFM_1000_SX;
+
 	INIT_DEBUGOUT("em_setup_interface: begin");
 
 	ifp = &sc->interface_data.ac_if;
@@ -1835,8 +1848,7 @@ em_setup_transmit_structures(struct em_softc *sc)
 void
 em_initialize_transmit_unit(struct em_softc *sc)
 {
-	u_int32_t	reg_tctl, reg_tarc;
-	u_int32_t	reg_tipg = 0;
+	u_int32_t	reg_tctl, reg_tipg = 0;
 	u_int64_t	bus_addr;
 
 	INIT_DEBUGOUT("em_initialize_transmit_unit: begin");
@@ -1882,24 +1894,6 @@ em_initialize_transmit_unit(struct em_softc *sc)
 	E1000_WRITE_REG(&sc->hw, TIDV, sc->tx_int_delay);
 	if (sc->hw.mac_type >= em_82540)
 		E1000_WRITE_REG(&sc->hw, TADV, sc->tx_abs_int_delay);
-
-	/* Do adapter specific tweaks before we enable the transmitter */
-	if (sc->hw.mac_type == em_82571 || sc->hw.mac_type == em_82572) {
-		reg_tarc = E1000_READ_REG(&sc->hw, TARC0);
-		reg_tarc |= (1 << 25);
-		E1000_WRITE_REG(&sc->hw, TARC0, reg_tarc);
-		reg_tarc = E1000_READ_REG(&sc->hw, TARC1);
-		reg_tarc |= (1 << 25);
-		reg_tarc &= ~(1 << 28);
-		E1000_WRITE_REG(&sc->hw, TARC1, reg_tarc);
-	} else if (sc->hw.mac_type == em_80003es2lan) {
-		reg_tarc = E1000_READ_REG(&sc->hw, TARC0);
-		reg_tarc |= 1;
-		E1000_WRITE_REG(&sc->hw, TARC0, reg_tarc);
-		reg_tarc = E1000_READ_REG(&sc->hw, TARC1);
-		reg_tarc |= 1;
-		E1000_WRITE_REG(&sc->hw, TARC1, reg_tarc);
-	}
 
 	/* Program the Transmit Control Register */
 	reg_tctl = E1000_TCTL_PSP | E1000_TCTL_EN |
@@ -2289,10 +2283,6 @@ em_initialize_receive_unit(struct em_softc *sc)
 	E1000_WRITE_REG(&sc->hw, RDBAH, (u_int32_t)(bus_addr >> 32));
 	E1000_WRITE_REG(&sc->hw, RDBAL, (u_int32_t)bus_addr);
 
-	/* Setup the HW Rx Head and Tail Descriptor Pointers */
-	E1000_WRITE_REG(&sc->hw, RDT, sc->num_rx_desc - 1);
-	E1000_WRITE_REG(&sc->hw, RDH, 0);
-
 	/* Setup the Receive Control Register */
 	reg_rctl = E1000_RCTL_EN | E1000_RCTL_BAM | E1000_RCTL_LBM_NO |
 	    E1000_RCTL_RDMTS_HALF |
@@ -2329,6 +2319,10 @@ em_initialize_receive_unit(struct em_softc *sc)
 
 	/* Enable Receives */
 	E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
+
+	/* Setup the HW Rx Head and Tail Descriptor Pointers */
+	E1000_WRITE_REG(&sc->hw, RDH, 0);
+	E1000_WRITE_REG(&sc->hw, RDT, sc->num_rx_desc - 1);
 }
 
 /*********************************************************************
@@ -2701,6 +2695,16 @@ em_pci_clear_mwi(struct em_hw *hw)
 		(hw->pci_cmd_word & ~CMD_MEM_WRT_INVALIDATE));
 }
 
+/*
+ * We may eventually really do this, but its unnecessary
+ * for now so we just return unsupported.
+ */
+int32_t
+em_read_pcie_cap_reg(struct em_hw *hw, uint32_t reg, uint16_t *value)
+{
+	return (0);
+}
+
 /*********************************************************************
 * 82544 Coexistence issue workaround.
 *    There are 2 issues.
@@ -2895,6 +2899,7 @@ em_print_hw_stats(struct em_softc *sc)
 		(long long)sc->stats.algnerrc);
 	printf("%s: Carrier extension errors = %lld\n", unit,
 		(long long)sc->stats.cexterr);
+
 	printf("%s: RX overruns = %ld\n", unit,
 		sc->rx_overruns);
 	printf("%s: watchdog timeouts = %ld\n", unit,

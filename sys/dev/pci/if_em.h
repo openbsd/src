@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.29 2006/09/17 20:26:14 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.30 2006/11/06 03:52:37 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -127,7 +127,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #define EM_TIDV				64
 
 /*
- * EM_TADV - Transmit Absolute Interrupt Delay Value (Not valid for 82542/82543/82544)
+ * EM_TADV - Transmit Absolute Interrupt Delay Value
+ * (Not valid for 82542/82543/82544)
  * Valid Range: 0-65535 (0=off)
  * Default Value: 64
  *   This value, in units of 1.024 microseconds, limits the delay in which a
@@ -153,10 +154,10 @@ POSSIBILITY OF SUCH DAMAGE.
  *
  *   CAUTION: When setting EM_RDTR to a value other than 0, adapters
  *            may hang (stop transmitting) under certain network conditions.
- *            If this occurs a WATCHDOG message is logged in the system event log.
- *            In addition, the controller is automatically reset, restoring the
- *            network connection. To eliminate the potential for the hang
- *            ensure that EM_RDTR is set to 0.
+ *            If this occurs a WATCHDOG message is logged in the system
+ *            event log. In addition, the controller is automatically reset,
+ *            restoring the network connection. To eliminate the potential
+ *            for the hang ensure that EM_RDTR is set to 0.
  */
 #define EM_RDTR				0
 
@@ -200,9 +201,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #define WAIT_FOR_AUTO_NEG_DEFAULT	0
 
 /*
- * EM_MASTER_SLAVE is only defined to enable a workaround for a known compatibility issue
- * with 82541/82547 devices and some switches.  See the "Known Limitations" section of
- * the README file for a complete description and a list of affected switches.
+ * EM_MASTER_SLAVE is only defined to enable a workaround for a known
+ * compatibility issue with 82541/82547 devices and some switches.
+ * See the "Known Limitations" section of the README file for a complete
+ * description and a list of affected switches.
  *
  *              0 = Hardware default
  *              1 = Master mode
@@ -213,9 +215,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /* Tunables -- End */
 
-#define AUTONEG_ADV_DEFAULT		(ADVERTISE_10_HALF | ADVERTISE_10_FULL | \
-					 ADVERTISE_100_HALF | ADVERTISE_100_FULL | \
-					 ADVERTISE_1000_FULL)
+#define AUTONEG_ADV_DEFAULT	(ADVERTISE_10_HALF | ADVERTISE_10_FULL | \
+				 ADVERTISE_100_HALF | ADVERTISE_100_FULL | \
+				 ADVERTISE_1000_FULL)
 
 #define EM_MMBA				0x0010 /* Mem base address */
 #define EM_FLASH			0x0014 /* Flash memory on ICH8 */
@@ -225,6 +227,15 @@ POSSIBILITY OF SUCH DAMAGE.
 #define EM_SMARTSPEED_MAX		15
 
 #define MAX_NUM_MULTICAST_ADDRESSES	128
+
+/*
+ * TDBA/RDBA should be aligned on 16 byte boundary. But TDLEN/RDLEN should be
+ * multiple of 128 bytes. So we align TDBA/RDBA on 128 byte boundary. This will
+ * also optimize cache line size effect. H/W supports up to cache line size 128.
+ */
+#define EM_DBA_ALIGN			128
+
+#define SPEED_MODE_BIT (1<<21)		/* On PCI-E MACs only */
 
 /* Defines for printing debug information */
 #define DEBUG_INIT	0
@@ -248,6 +259,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define EM_RXBUFFER_16384	16384
 
 #define EM_MAX_SCATTER		64
+#define EM_TSO_SIZE		65535
 
 struct em_buffer {
 	struct mbuf	*m_head;
@@ -347,7 +359,6 @@ struct em_softc {
 	u_int32_t		txd_cmd;
 	struct em_buffer	*tx_buffer_area;
 	bus_dma_tag_t		txtag;		/* dma tag for tx */
-	bus_dmamap_t		rx_sparemap;
 
 	/*
 	 * Receive definitions
@@ -360,12 +371,16 @@ struct em_softc {
 	struct em_dma_alloc	rxdma;		/* bus_dma glue for rx desc */
 	struct em_rx_desc	*rx_desc_base;
 	u_int32_t		next_rx_desc_to_check;
-	u_int16_t		num_rx_desc;
 	u_int32_t		rx_buffer_len;
+	u_int16_t		num_rx_desc;
 	struct em_buffer	*rx_buffer_area;
 	bus_dma_tag_t		rxtag;
+	bus_dmamap_t		rx_sparemap;
 
-	/* Jumbo frame */
+	/*
+	 * First/last mbuf pointers, for
+	 * collecting multisegment RX packets.
+	 */
 	struct mbuf		*fmp;
 	struct mbuf		*lmp;
 
