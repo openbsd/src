@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.h,v 1.6 2006/11/06 20:28:23 miod Exp $	*/
+/*	$OpenBSD: hdc9224.h,v 1.7 2006/11/06 22:16:28 miod Exp $	*/
 /*	$NetBSD: hdc9224.h,v 1.5 2003/11/10 08:51:52 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -33,14 +33,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if 0
 struct hdc9224_DKCreg {
 	unsigned char dkc_reg;	/* Disk Register Data Access Port (rw)*/
 	unsigned char fill[3];	/* bytes are longword aligned */
 	unsigned char dkc_cmd;	/* Disk Controller Command Port (wo) */
 #define dkc_stat dkc_cmd	/* Interrupt Status Port (ro) */
 };
-#endif
 
 /*
  * definition of some commands (constant bits only, incomplete!)
