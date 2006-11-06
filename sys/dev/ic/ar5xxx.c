@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.35 2006/09/19 17:08:01 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.36 2006/11/06 08:48:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -203,6 +203,23 @@ ath_hal_attach(u_int16_t device, void *sc, bus_space_tag_t st,
 	hal->ah_limit_tx_retries = AR5K_INIT_TX_RETRY;
 	hal->ah_software_retry = AH_FALSE;
 	hal->ah_ant_diversity = AR5K_TUNE_ANT_DIVERSITY;
+
+	switch (device) {
+	case PCI_PRODUCT_ATHEROS_AR2413:
+	case PCI_PRODUCT_ATHEROS_AR5413:
+	case PCI_PRODUCT_ATHEROS_AR5424:
+		/*
+		 * Known single chip solutions
+		 */
+		hal->ah_single_chip = AH_TRUE;
+		break;
+	default:
+		/*
+		 * Multi chip solutions
+		 */
+		hal->ah_single_chip = AH_FALSE;
+		break;
+	}
 
 	if ((attach)(device, hal, st, sh, status) == NULL)
 		goto failed;

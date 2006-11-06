@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.58 2006/10/19 10:55:56 tom Exp $  */
+/*      $OpenBSD: ath.c,v 1.59 2006/11/06 08:48:49 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -220,23 +220,6 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	sc->sc_flags &= ~ATH_ATTACHED;	/* make sure that it's not attached */
-
-	switch (devid) {
-	case PCI_PRODUCT_ATHEROS_AR2413:
-	case PCI_PRODUCT_ATHEROS_AR5413:
-	case PCI_PRODUCT_ATHEROS_AR5424:
-		/*
-		 * Known single chip solutions
-		 */
-		ah->ah_single_chip = AH_TRUE;
-		break;
-	default:
-		/*
-		 * Multi chip solutions
-		 */
-		ah->ah_single_chip = AH_FALSE;
-		break;
-	}
 
 	ah = ath_hal_attach(devid, sc, sc->sc_st, sc->sc_sh, &status);
 	if (ah == NULL) {
