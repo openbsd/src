@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.3 2006/11/06 19:05:31 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.4 2006/11/06 19:42:52 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -212,7 +212,7 @@ setroot()
 	if (boothowto & RB_DFLTROOT)
 		return;		/* Boot compiled in */
 
-	if (booted_device == NULL) {
+	if (booted_device == NULL && rootdev == NULL) {
 		boothowto |= RB_ASKNAME; /* Don't Panic :-) */
 		/* boothowto |= RB_SINGLE; */
 	}
