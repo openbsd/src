@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fxp.4,v 1.37 2006/08/30 22:56:05 jmc Exp $
+.\"	$OpenBSD: fxp.4,v 1.38 2006/11/07 02:31:14 brad Exp $
 .\"
 .\" Copyright (c) 1997 David E. O'Brien
 .\"
@@ -90,13 +90,6 @@ Set 10Mbps operation and force half-duplex.
 If no media options are present, the
 .Nm
 driver places the card into autoselect mode.
-.Pp
-These cards also come with a variety of PHYs.
-Models exist with PHYs supported by both the
-.Xr inphy 4
-and
-.Xr nsphy 4
-drivers.
 .Sh FILES
 Some devices are able to do interrupt coalescing but it requires firmware
 updating.
