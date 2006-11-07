@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.18 2006/11/06 23:03:44 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.19 2006/11/07 21:39:32 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -73,6 +73,7 @@ struct malo_rx_data {
 struct malo_tx_data {
 	bus_dmamap_t			map;
 	struct mbuf			*m;
+	uint32_t			softstat;
 	/* additional info for rate adaption */
 	struct ieee80211_node		*ni;
 //	struct ieee80211_rssdesc	id;
@@ -1180,11 +1181,49 @@ malo_tx_intr(struct malo_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
+	struct malo_tx_desc *desc;
+	struct malo_tx_data *data;
+	struct malo_node *rn;
 
 	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
 
-	/* TODO */
+	for (;;) {
+		desc = &sc->sc_txring.desc[sc->sc_txring.stat];
+		data = &sc->sc_txring.data[sc->sc_txring.stat];
+		rn = (struct malo_node *)data->ni;
 
+		/* check if TX descriptor is not owned by FW anymore */
+		if ((desc->status & 0x80000000) || !(data->softstat & 0x80))
+			break;
+
+		/* if no frame has been sent, ignore */
+		if (rn == NULL)
+			continue;
+
+		/* check TX state */
+		switch (desc->status & 0x00000001) {
+		case 0x00000001:
+			DPRINTF(("data frame was sent successfully\n"));
+			ifp->if_opackets++;
+			break;
+		default:
+			DPRINTF(("data frame sending error\n"));
+			ifp->if_oerrors++;
+			break;
+		}
+
+		ieee80211_release_node(ic, data->ni);
+		data->ni = NULL;
+		data->softstat &= ~ 0x80;
+
+		DPRINTF(("tx done idx=%u\n", sc->sc_txring.stat));
+
+		sc->sc_txring.queued--;
+		if (++sc->sc_txring.stat >= sc->sc_txring.count)
+			sc->sc_txring.stat = 0;
+	}
+
+	sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	malo_start(ifp);
 }
@@ -1265,6 +1304,7 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	data->m = m0;
 	data->ni = ni;
+	data->softstat |= 0x80;
 
 	malo_tx_setup_desc(sc, desc, flags, 0, m0->m_pkthdr.len, rate,
 	    data->map->dm_segs, data->map->dm_nsegs, 0);
