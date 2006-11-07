@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ef.4,v 1.13 2006/08/30 22:56:05 jmc Exp $
+.\"	$OpenBSD: ef.4,v 1.14 2006/11/07 02:17:49 brad Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -32,6 +32,7 @@
 .Nd 3Com Fast EtherLink ISA (3c515) 10/100 Ethernet device
 .Sh SYNOPSIS
 .Cd "ef* at isapnp?"
+.Cd "nsphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -39,10 +40,6 @@ device driver supports the 3Com Fast EtherLink ISA family
 of Ethernet cards, and embedded controllers based on the 3Com
 .Dq corkscrew
 EtherLink chips.
-This includes the 3C515 adapter(s) with National Semiconductor
-.Tn DP83840
-PHYs, see
-.Xr nsphy 4 .
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
