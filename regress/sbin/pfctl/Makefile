@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.193 2006/11/07 05:31:26 mcbride Exp $
+# $OpenBSD: Makefile,v 1.194 2006/11/07 06:18:10 mcbride Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -119,16 +119,16 @@ PFLOAD_UPDATES+=pfload${n}-update
 
 pfload${n}:
 	${SUDO} pfctl -a regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} pfctl -a regress -gvvsn; \
-	${SUDO} pfctl -a regress -gvvsr) | \
+	(${SUDO} pfctl -a 'regress/*' -gvvsn; \
+	${SUDO} pfctl -a 'regress/*' -gvvsr) | \
 	    diff -u ${.CURDIR}/pf${n}.loaded /dev/stdin
 	${SUDO} pfctl -a regress -Fn >/dev/null 2>&1
 	${SUDO} pfctl -a regress -Fr >/dev/null 2>&1
 
 pfload${n}-update:
 	${SUDO} pfctl -a regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} pfctl -a regress -gvvsn; \
-	${SUDO} pfctl -a regress -gvvsr) > ${.CURDIR}/pf${n}.loaded
+	(${SUDO} pfctl -a 'regress/*' -gvvsn; \
+	${SUDO} pfctl -a 'regress/*' -gvvsr) > ${.CURDIR}/pf${n}.loaded
 	${SUDO} pfctl -a regress -Fn >/dev/null 2>&1
 	${SUDO} pfctl -a regress -Fr >/dev/null 2>&1
 
