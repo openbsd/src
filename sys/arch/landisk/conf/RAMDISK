@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.1 2006/10/25 01:42:10 drahn Exp $
+# $OpenBSD: RAMDISK,v 1.2 2006/11/07 14:32:37 drahn Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -59,7 +59,6 @@ scif0	at shb?
 
 rsclock0 at shb?
 
-option WDCDEBUG,WDCDEBUG_MASK=0xff,WDCDEBUG_WD_MASK=0xff  
 wdc0	at obio? port 0x14000000 irq 10		# CF
 wd*	at wdc? flags 0x0000
 
