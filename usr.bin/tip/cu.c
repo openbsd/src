@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.20 2006/11/06 19:37:21 millert Exp $	*/
+/*	$OpenBSD: cu.c,v 1.21 2006/11/07 07:16:15 ray Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -34,8 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cu.c,v 1.20 2006/11/06 19:37:21 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cu.c,v 1.21 2006/11/07 07:16:15 ray Exp $";
 #endif /* not lint */
+
+#include <err.h>
+#include <paths.h>
 
 #include "tip.h"
 
@@ -87,6 +90,8 @@ getopt:
 	while ((ch = getopt(argc, argv, "a:l:s:htoe")) != -1) {
 		switch (ch) {
 		case 'a':
+			if (optarg[0] == '\0')
+				errx(3, "invalid acu: \"\"");
 			CU = optarg;
 			break;
 		case 'l':
@@ -99,7 +104,8 @@ getopt:
 			if (strchr(optarg, '/'))
 				DV = optarg;
 			else
-				asprintf(&DV, "/dev/%s", optarg);
+				if (asprintf(&DV, "%s%s", _PATH_DEV, optarg) == -1)
+					err(3, "asprintf");
 			break;
 		case 's':
 			BR = (int)strtonum(optarg, 0, INT_MAX, &errstr);
