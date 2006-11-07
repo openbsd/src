@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.38 2005/10/28 08:06:39 jmc Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.39 2006/11/07 07:20:16 ray Exp $	*/
 /*	$KAME: rtsold.c,v 1.75 2004/01/03 00:00:07 itojun Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ main(int argc, char *argv[])
 	argv0 = argv[0];
 
 	/* get option */
-	if (argv0 && argv0[strlen(argv0) - 1] != 'd') {
+	if (argv0 && argv0[0] != '\0' && argv0[strlen(argv0) - 1] != 'd') {
 		fflag = 1;
 		once = 1;
 		opts = "adDF";
@@ -654,7 +654,7 @@ rtsold_set_dump_file(int sig)
 static void
 usage(char *progname)
 {
-	if (progname && progname[strlen(progname) - 1] != 'd') {
+	if (progname && progname[0] != '\0' && progname[strlen(progname) - 1] != 'd') {
 		fprintf(stderr, "usage: rtsol [-DdF] interface ...\n");
 		fprintf(stderr, "usage: rtsol [-DdF] -a\n");
 	} else {
