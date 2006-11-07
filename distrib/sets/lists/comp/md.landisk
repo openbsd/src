@@ -1,6 +1,5 @@
 ./usr/bin/objcopy
 ./usr/bin/readelf
-./usr/include/altivec.h
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/dis-asm.h
@@ -259,7 +258,6 @@
 ./usr/lib/gcc-lib/sh-unknown-openbsd4.0/3.3.5/cc1plus
 ./usr/lib/gcc-lib/sh-unknown-openbsd4.0/3.3.5/crtsavres.o
 ./usr/lib/gcc-lib/sh-unknown-openbsd4.0/3.3.5/f771
-./usr/lib/gcc-lib/sh-unknown-openbsd4.0/3.3.5/include/altivec.h
 ./usr/lib/gcc-lib/sh-unknown-openbsd4.0/3.3.5/include/unwind.h
 ./usr/lib/gcc-lib/sh-unknown-openbsd4.0/3.3.5/libgcc.a
 ./usr/lib/gcc-lib/sh-unknown-openbsd4.0/3.3.5/nof
@@ -271,15 +269,4 @@
 ./usr/lib/libopcodes.la
 ./usr/lib/libsupc++.a
 ./usr/libdata/ldscripts
-./usr/libdata/ldscripts/elf32ppc_obsd.x
-./usr/libdata/ldscripts/elf32ppc_obsd.xbn
-./usr/libdata/ldscripts/elf32ppc_obsd.xc
-./usr/libdata/ldscripts/elf32ppc_obsd.xd
-./usr/libdata/ldscripts/elf32ppc_obsd.xdc
-./usr/libdata/ldscripts/elf32ppc_obsd.xn
-./usr/libdata/ldscripts/elf32ppc_obsd.xr
-./usr/libdata/ldscripts/elf32ppc_obsd.xs
-./usr/libdata/ldscripts/elf32ppc_obsd.xsc
-./usr/libdata/ldscripts/elf32ppc_obsd.xu
-./usr/libdata/ldscripts/elf32ppc_obsd.xz
 ./usr/share/man/cat1/objcopy.0
