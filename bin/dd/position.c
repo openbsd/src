@@ -1,4 +1,4 @@
-/*	$OpenBSD: position.c,v 1.7 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: position.c,v 1.8 2006/11/07 07:10:24 otto Exp $	*/
 /*	$NetBSD: position.c,v 1.4 1995/03/21 09:04:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)position.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: position.c,v 1.7 2003/06/11 23:42:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: position.c,v 1.8 2006/11/07 07:10:24 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,8 +70,8 @@ pos_in(void)
 	off_t cnt;
 	int warned;
 
-	/* If not a pipe or tape device, try to seek on it. */
-	if (!(in.flags & (ISPIPE|ISTAPE))) {
+	/* If not a pipe, tape or char device, try to seek on it. */
+	if (!(in.flags & (ISPIPE|ISTAPE|ISCHR))) {
 		if (lseek(in.fd, in.offset * in.dbsz, SEEK_CUR) == -1)
 			err(1, "%s", in.name);
 		return;
