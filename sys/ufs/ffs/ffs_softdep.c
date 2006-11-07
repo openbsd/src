@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.78 2006/10/20 13:02:55 mickey Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.79 2006/11/07 12:29:45 mickey Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -5085,6 +5085,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 	struct diraddhd *diraddhdp;
 {
 	struct proc *p = CURPROC;	/* XXX */
+	struct worklist *wk;
 	struct inodedep *inodedep;
 	struct ufsmount *ump;
 	struct diradd *dap;
@@ -5139,7 +5140,34 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 				break;
 			}
 			drain_output(vp, 0);
+			/*
+			 * If first block is still dirty with a D_MKDIR
+			 * dependency then it needs to be written now.
+			 */
+			for (;;) {
+				error = 0;
+				ACQUIRE_LOCK(&lk);
+				bp = incore(vp, 0);
+				if (bp == NULL) {
+					FREE_LOCK(&lk);
+					break;
+				}
+				LIST_FOREACH(wk, &bp->b_dep, wk_list)
+					if (wk->wk_type == D_MKDIR)
+						break;
+				if (wk) {
+					gotit = getdirtybuf(bp, MNT_WAIT);
+					FREE_LOCK(&lk);
+					if (gotit && (error = bwrite(bp)) != 0)
+						break;
+				} else
+					FREE_LOCK(&lk);
+				break;
+			}
 			vput(vp);
+			/* Flushing of first block failed */
+			if (error)
+				break;
 			ACQUIRE_LOCK(&lk);
 			/*
 			 * If that cleared dependencies, go on to next.
