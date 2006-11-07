@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2004/10/16 22:21:33 brad Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 2006/11/07 18:39:51 espie Exp $
 
 .include "${.CURDIR}/shlib_version"
 SHLIB_MAJOR=${major}
@@ -73,8 +73,8 @@ prereq: config.status
 	cd ${.OBJDIR}/include && exec ${MAKE} ${MAKE_FLAGS} all
 	
 includes:
-	cd ${.OBJDIR}/include && exec ${SUDO} ${MAKE} ${MAKE_FLAGS} install DESTDIR=${DESTDIR}
-	cd ${.OBJDIR}/libsupc++ && exec ${SUDO} ${MAKE} ${MAKE_FLAGS} install-data DESTDIR=${DESTDIR}
+	cd ${.OBJDIR}/include && exec ${MAKE} ${MAKE_FLAGS} install DESTDIR=${DESTDIR}
+	cd ${.OBJDIR}/libsupc++ && exec ${MAKE} ${MAKE_FLAGS} install-data DESTDIR=${DESTDIR}
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
