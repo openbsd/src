@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ef.4,v 1.14 2006/11/07 02:17:49 brad Exp $
+.\"	$OpenBSD: ef.4,v 1.15 2006/11/07 03:00:31 brad Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -40,6 +40,26 @@ device driver supports the 3Com Fast EtherLink ISA family
 of Ethernet cards, and embedded controllers based on the 3Com
 .Dq corkscrew
 EtherLink chips.
+.Pp
+The following media types and options (as given to
+.Xr ifconfig 8 )
+are supported:
+.Bl -tag -width xxx -offset indent
+.It Cm media No autoselect
+Enable autoselection of the media type and options (default).
+.It Cm media No 100baseTX Cm mediaopt No full-duplex
+Set 100Mbps (Fast Ethernet) operation and force full-duplex mode.
+.It Cm media No 100baseTX Cm mediaopt No half-duplex
+Set 100Mbps (Fast Ethernet) operation and force half-duplex mode.
+.It Cm media No 10baseT Cm mediaopt No full-duplex
+Set 10Mbps operation and force full-duplex.
+.It Cm media No 10baseT Cm mediaopt No half-duplex
+Set 10Mbps operation and force half-duplex.
+.El
+.Pp
+If no media options are present, the
+.Nm
+driver places the card into autoselect mode.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
