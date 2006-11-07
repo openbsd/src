@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.22 2006/10/20 18:27:25 brad Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.23 2006/11/07 01:46:59 brad Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -113,18 +113,36 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 	 * Detect it again unless caller specified it; this gives us
 	 * the memory size.
 	 */
-	if (nsc->sc_type == 0) {
+	if (nsc->sc_type == NE2000_TYPE_UNKNOWN)
 		nsc->sc_type = ne2000_detect(nsc);
-		if (nsc->sc_type == 0) {
-			printf(": where did the card go?\n");
-			return (1);
-		}
-	}
 
-	useword = NE2000_USE_WORD(nsc);
+	/*
+	 * 8k of memory for NE1000, 16k otherwise.
+	 */
+	switch (nsc->sc_type) {
+	case NE2000_TYPE_UNKNOWN:
+	default:
+		printf(": where did the card go?\n");
+		return (1);
+	case NE2000_TYPE_NE1000:
+		memsize = 8192;
+		useword = 0;
+		break;
+	case NE2000_TYPE_NE2000:
+	case NE2000_TYPE_AX88190:		/* XXX really? */
+	case NE2000_TYPE_AX88790:
+	case NE2000_TYPE_DL10019:
+	case NE2000_TYPE_DL10022:
+		memsize = 8192 * 2;
+		useword = 1;
+		break;
+ 	}
+
+	nsc->sc_useword = useword;
 
 	dsc->cr_proto = ED_CR_RD2;
-	if (nsc->sc_type == NE2000_TYPE_AX88190) {
+	if (nsc->sc_type == NE2000_TYPE_AX88190 ||
+	    nsc->sc_type == NE2000_TYPE_AX88790) {
 		dsc->rcr_proto = ED_RCR_INTT;
 		dsc->sc_flags |= DP8390_DO_AX88190_WORKAROUND;
 	} else
@@ -148,21 +166,6 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 	/* Registers are linear. */
 	for (i = 0; i < 16; i++)
 		dsc->sc_reg_map[i] = i;
-
-	/*
-	 * 8k of memory for NE1000, 16k otherwise.
-	 */
-	switch (nsc->sc_type) {
-	case NE2000_TYPE_NE1000:
-		memsize = 8192;
-		break;
-	case NE2000_TYPE_NE2000:
-	case NE2000_TYPE_AX88190:		/* XXX really? */
-	case NE2000_TYPE_DL10019:
-	case NE2000_TYPE_DL10022:
-		memsize = 8192 * 2;
-		break;
-	}
 
 	/*
 	 * NIC memory doens't start at zero on an NE board.
@@ -242,7 +245,8 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 
 	if (myea == NULL) {
 		/* Read the station address. */
-		if (nsc->sc_type == NE2000_TYPE_AX88190) {
+		if (nsc->sc_type == NE2000_TYPE_AX88190 ||
+		    nsc->sc_type == NE2000_TYPE_AX88790) {
 			/* Select page 0 registers. */
 			NIC_BARRIER(nict, nich);
 			bus_space_write_1(nict, nich, ED_P0_CR,
@@ -252,8 +256,8 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 			bus_space_write_1(nict, nich, ED_P0_DCR, ED_DCR_WTS);
 			NIC_BARRIER(nict, nich);
 			ne2000_readmem(nict, nich, asict, asich,
-			    AX88190_NODEID_OFFSET,
-			    dsc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN, useword);
+			    AX88190_NODEID_OFFSET, dsc->sc_arpcom.ac_enaddr,
+			    ETHER_ADDR_LEN, useword);
 		} else {
 			ne2000_readmem(nict, nich, asict, asich, 0, romdata,
 			    sizeof(romdata), useword);
@@ -584,6 +588,10 @@ ne2000_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 	}
 	NIC_BARRIER(nict, nich);
 
+	/* AX88796 doesn't seem to have remote DMA complete */
+	if (sc->sc_flags & DP8390_NO_REMOTE_DMA_COMPLETE)
+		return (savelen);
+
 	/*
 	 * Wait for remote DMA to complete.  This is necessary because on the
 	 * transmit side, data is handled internally by the NIC in bursts, and
@@ -624,7 +632,7 @@ ne2000_ring_copy(struct dp8390_softc *sc, int src, caddr_t dst,
 	bus_space_tag_t asict = nsc->sc_asict;
 	bus_space_handle_t asich = nsc->sc_asich;
 	u_short tmp_amount;
-	int useword = NE2000_USE_WORD(nsc);
+	int useword = nsc->sc_useword;
 
 	/* Does copy wrap to lower addr in ring buffer? */
 	if (src + amount > sc->mem_end) {
@@ -652,7 +660,7 @@ ne2000_read_hdr(struct dp8390_softc *sc, int buf, struct dp8390_ring *hdr)
 
 	ne2000_readmem(sc->sc_regt, sc->sc_regh, nsc->sc_asict, nsc->sc_asich,
 	    buf, (u_int8_t *)hdr, sizeof(struct dp8390_ring),
-	    NE2000_USE_WORD(nsc));
+	    nsc->sc_useword);
 #if BYTE_ORDER == BIG_ENDIAN
 	hdr->count = swap16(hdr->count);
 #endif
