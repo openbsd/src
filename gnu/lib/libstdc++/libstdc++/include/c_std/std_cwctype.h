@@ -97,10 +97,8 @@ namespace std
   using ::iswctype;
   using ::towlower;
   using ::towupper;
-#if defined(_GLIBCPP_USE_WCHAR_T)
   using ::towctrans;
   using ::wctrans;
-#endif
   using ::wctype;
 }
 #endif //_GLIBCPP_USE_WCHAR_T
