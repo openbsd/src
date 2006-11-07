@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.254 2006/11/05 07:19:30 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.255 2006/11/07 01:12:01 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -652,6 +652,7 @@ pfctl_show_rules(int dev, char *path, int opts, int format,
 	int rule_numbers = opts & (PF_OPT_VERBOSE2 | PF_OPT_DEBUG);
 	int len = strlen(path);
 	int brace;
+	char *p;
 
 	if (path[0])
 		snprintf(&path[len], MAXPATHLEN - len, "/%s", anchorname);
@@ -754,18 +755,27 @@ pfctl_show_rules(int dev, char *path, int opts, int format,
 			if (pr.rule.label[0] && (opts & PF_OPT_SHOWALL))
 				labels = 1;
 			INDENT(depth, !(opts & PF_OPT_VERBOSE));
-			print_rule(&pr.rule, pr.anchor_call, rule_numbers);
-			if (strlen(pr.anchor_call) &&
-			    (pr.anchor_call[0] == '_' ||
-			     opts & PF_OPT_RECURSE)) {
+			if ((((p = strrchr(pr.anchor_call, '_')) != NULL) &&
+			   ((void *)p == (void *)pr.anchor_call ||
+			   *(--p) == '/')) || opts & PF_OPT_RECURSE) {
 				brace++;
-				printf(" {\n");
+				if ((p = strrchr(pr.anchor_call, '/')) !=
+				    NULL)
+					p++;
+				else
+					p = &pr.anchor_call[0];
 			} else
+				p = &pr.anchor_call[0];
+		
+			print_rule(&pr.rule, p, rule_numbers);
+			if (brace)
+				printf(" {\n");
+			else
 				printf("\n");
 			pfctl_print_rule_counters(&pr.rule, opts);
-			if (brace) {
+			if (brace) { 
 				pfctl_show_rules(dev, path, opts, format,
-				    pr.anchor_call, depth + 1);
+				    p, depth + 1);
 				INDENT(depth, !(opts & PF_OPT_VERBOSE));
 				printf("}\n");
 			}
@@ -1003,6 +1013,7 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call)
 	u_int8_t		rs_num;
 	struct pf_rule		*rule;
 	struct pf_ruleset	*rs;
+	char 			*p;
 
 	rs_num = pf_get_ruleset_number(r->action);
 	if (rs_num == PF_RULESET_MAX)
@@ -1010,9 +1021,28 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call)
 
 	rs = &pf->anchor->ruleset;
 
-
-	if (anchor_call[0] && r->anchor == NULL)
-		r->anchor = pf_find_or_create_ruleset(anchor_call)->anchor;
+	if (anchor_call[0] && r->anchor == NULL) {
+		/* 
+		 * Don't make non-brace anchors part of the main anchor pool.
+		 */
+		if ((r->anchor = calloc(1, sizeof(*r->anchor))) == NULL)
+			err(1, "pfctl_add_rule: calloc");
+		
+		pf_init_ruleset(&r->anchor->ruleset);
+		r->anchor->ruleset.anchor = r->anchor;
+		if (strlcpy(r->anchor->path, anchor_call,
+		    sizeof(rule->anchor->path)) >= sizeof(rule->anchor->path))
+                        errx(1, "pfctl_add_rule: strlcpy");
+		if ((p = strrchr(anchor_call, '/')) != NULL) {
+			if (!strlen(p))
+				err(1, "pfctl_add_rule: bad anchor name %s",
+				    anchor_call);
+		} else
+			p = (char *)anchor_call;
+		if (strlcpy(r->anchor->name, p,
+		    sizeof(rule->anchor->name)) >= sizeof(rule->anchor->name))
+                        errx(1, "pfctl_add_rule: strlcpy");
+	}
 
 	if ((rule = calloc(1, sizeof(*rule))) == NULL)
 		err(1, "calloc");
@@ -1069,25 +1099,25 @@ pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
 	else
 		snprintf(&path[len], MAXPATHLEN - len, "%s", pf->anchor->name);
 
-	if (pf->opts & PF_OPT_VERBOSE && depth) {
+	if (depth) {
 		if (TAILQ_FIRST(rs->rules[rs_num].active.ptr) != NULL) {
 			brace++;
-			printf(" {\n");
-			if ((pf->opts & PF_OPT_NOACTION) == 0) {
-				if ((error = pfctl_ruleset_trans(pf,
-				    path, rs->anchor))) {
-					printf("pfctl_load_rulesets: "
-					    "pfctl_ruleset_trans %d\n", error);
-					goto error;
-				}
+			if (pf->opts & PF_OPT_VERBOSE)
+				printf(" {\n");
+			if ((pf->opts & PF_OPT_NOACTION) == 0 &&
+			    (error = pfctl_ruleset_trans(pf,
+			    path, rs->anchor))) {
+				printf("pfctl_load_rulesets: "
+				    "pfctl_ruleset_trans %d\n", error);
+				goto error;
 			}
-		} else
+		} else if (pf->opts & PF_OPT_VERBOSE)
 			printf("\n");
+
 	}
 
 	if (pf->optimize && rs_num == PF_RULESET_FILTER)
 		pfctl_optimize_ruleset(pf, rs);
-
 
 	while ((r = TAILQ_FIRST(rs->rules[rs_num].active.ptr)) != NULL) {
 		TAILQ_REMOVE(rs->rules[rs_num].active.ptr, r, entries);
@@ -1101,7 +1131,7 @@ pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
 			printf("\n");
 		free(r);
 	}
-	if (brace) {
+	if (brace && pf->opts & PF_OPT_VERBOSE) {
 		INDENT(depth - 1, (pf->opts & PF_OPT_VERBOSE));
 		printf("}\n");
 	}
@@ -1118,28 +1148,49 @@ int
 pfctl_load_rule(struct pfctl *pf, char *path, struct pf_rule *r, int depth)
 {
 	u_int8_t		rs_num = pf_get_ruleset_number(r->action);
+	char			*name;
 	struct pfioc_rule	pr;
+	int			len = strlen(path);
+
+	bzero(&pr, sizeof(pr));
+	/* set up anchor before adding to path for anchor_call */
+	if ((pf->opts & PF_OPT_NOACTION) == 0)
+		pr.ticket = pfctl_get_ticket(pf->trans, rs_num, path);
+	if (strlcpy(pr.anchor, path, sizeof(pr.anchor)) >= sizeof(pr.anchor))
+		errx(1, "pfctl_load_rule: strlcpy");
+
+	if (r->anchor) {
+		if (r->anchor->match) {
+			if (path[0])
+				snprintf(&path[len], MAXPATHLEN - len,
+				    "/%s", r->anchor->name);
+			else
+				snprintf(&path[len], MAXPATHLEN - len,
+				    "%s", r->anchor->name);
+			name = path;
+		} else
+			name = r->anchor->path;
+	} else
+		name = "";
 
 	if ((pf->opts & PF_OPT_NOACTION) == 0) {
-		bzero(&pr, sizeof(pr));
-		if (strlcpy(pr.anchor, path, sizeof(pr.anchor)) >=
-		    sizeof(pr.anchor))
-			errx(1, "pfctl_load_rule: strlcpy");
 		if (pfctl_add_pool(pf, &r->rpool, r->af))
 			return (1);
-		pr.ticket = pfctl_get_ticket(pf->trans, rs_num, path);
 		pr.pool_ticket = pf->paddr.ticket;
 		memcpy(&pr.rule, r, sizeof(pr.rule));
-		if (r->anchor && strlcpy(pr.anchor_call, r->anchor->name,
-		    sizeof(pr.anchor_call)));
+		if (r->anchor && strlcpy(pr.anchor_call, name,
+		    sizeof(pr.anchor_call)) >= sizeof(pr.anchor_call))
+			errx(1, "pfctl_load_rule: strlcpy");
 		if (ioctl(pf->dev, DIOCADDRULE, &pr))
 			err(1, "DIOCADDRULE");
 	}
+
 	if (pf->opts & PF_OPT_VERBOSE) {
 		INDENT(depth, !(pf->opts & PF_OPT_VERBOSE2));
 		print_rule(r, r->anchor ? r->anchor->name : "",
 		    pf->opts & PF_OPT_VERBOSE2);
 	}
+	path[len] = '\0';
 	pfctl_clear_pool(&r->rpool);
 	return (0);
 }
@@ -1208,8 +1259,21 @@ pfctl_rules(int dev, char *filename, FILE *fin, int opts, int optimize,
 	pf.opts = opts;
 	pf.optimize = optimize;
 	pf.loadopt = loadopt;
-	pf.anchor = pf_find_or_create_ruleset(anchorname)->anchor;
+
+	/* non-brace anchor, create without resolving the path */
+	if ((pf.anchor = calloc(1, sizeof(*pf.anchor))) == NULL)
+		ERRX("pfctl_rules: calloc");
 	rs = &pf.anchor->ruleset;
+	pf_init_ruleset(rs);
+	rs->anchor = pf.anchor;
+	if (strlcpy(pf.anchor->path, anchorname,
+	    sizeof(pf.anchor->path)) >= sizeof(pf.anchor->path))
+		errx(1, "pfctl_add_rule: strlcpy");
+	if (strlcpy(pf.anchor->name, anchorname,
+	    sizeof(pf.anchor->name)) >= sizeof(pf.anchor->name))
+		errx(1, "pfctl_add_rule: strlcpy");
+
+
 	pf.astack[0] = pf.anchor;
 	pf.asd = 0;
 	if (anchorname[0])

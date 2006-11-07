@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.515 2006/10/31 14:17:44 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.516 2006/11/07 01:12:01 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -659,15 +659,17 @@ pfa_anchorlist	: pfrule optnl
 
 pfa_anchor	: '{'
 		{
-			char tmp_anchorname[PF_ANCHOR_NAME_SIZE];
+			char ta[PF_ANCHOR_NAME_SIZE];
 			struct pf_ruleset *rs;
 
+			/* steping into a brace anchor */
 			pf->asd++;
 			pf->bn++;
 			pf->brace = 1;
-			snprintf(tmp_anchorname, PF_ANCHOR_NAME_SIZE,
-			    "_%d", pf->bn);
-			rs = pf_find_or_create_ruleset(tmp_anchorname);
+
+			/* create a holding ruleset in the root */
+			snprintf(ta, PF_ANCHOR_NAME_SIZE, "_%d", pf->bn);
+			rs = pf_find_or_create_ruleset(ta);
 			if (rs == NULL)
 				err(1, "pfa_anchor: pf_find_or_create_ruleset");
 			pf->astack[pf->asd] = rs->anchor;
@@ -701,30 +703,31 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 
 			memset(&r, 0, sizeof(r));
 			if (pf->astack[pf->asd + 1]) {
-				if ($2) {
-					struct pf_ruleset *src =
-						&pf->alast->ruleset;
-					struct pf_ruleset *dst =
-					    pf_find_or_create_ruleset($2);
+				/* move inline rules into relative location */
+				pf_anchor_setup(&r,
+				    &pf->astack[pf->asd]->ruleset,
+				    $2 ? $2 : pf->alast->name);
+		
+				if (r.anchor == NULL)
+					err(1, "anchorrule: unable to "
+					    "create ruleset");
 
-					if (!dst)
-						err(1, "anchorrule: unable to "
-						    "create ruleset");
-					if (dst->anchor->refcnt) {
-						yyerror("inline anchor "
-						    "already exists\n");
+				if (pf->alast != r.anchor) {
+					if (r.anchor->match) {
+						yyerror("inline anchor '%s' "
+						    "already exists",
+						    r.anchor->name);
 						YYERROR;
 					}
-
-					mv_rules(src, dst);
-					pf_remove_if_empty_ruleset(src);
-					pf->alast = dst->anchor;
+					mv_rules(&pf->alast->ruleset,
+					    &r.anchor->ruleset);
 				}
-				r.anchor = pf->alast;
+				pf_remove_if_empty_ruleset(&pf->alast->ruleset);
+				pf->alast = r.anchor;
 			} else {
 				if (!$2) {
 					yyerror("anchors without explicit "
-					    "rules must specify a name\n");
+					    "rules must specify a name");
 					YYERROR;
 				}
 			}
@@ -4334,7 +4337,7 @@ expand_label_nr(const char *name, char *label, size_t len)
 	char n[11];
 
 	if (strstr(label, name) != NULL) {
-		snprintf(n, sizeof(n), "%u", pf->anchor->refcnt);
+		snprintf(n, sizeof(n), "%u", pf->anchor->match);
 		expand_label_str(label, len, name, n);
 	}
 }
@@ -4764,7 +4767,7 @@ expand_rule(struct pf_rule *r,
 		if (rule_consistent(r, anchor_call[0]) < 0 || error)
 			yyerror("skipping rule due to errors");
 		else {
-			r->nr = pf->anchor->refcnt++;
+			r->nr = pf->astack[pf->asd]->match++;
 			pfctl_add_rule(pf, r, anchor_call);
 			added++;
 		}
@@ -5305,7 +5308,9 @@ mv_rules(struct pf_ruleset *src, struct pf_ruleset *dst)
 		    != NULL) {
 			TAILQ_REMOVE(src->rules[i].active.ptr, r, entries);
 			TAILQ_INSERT_TAIL(dst->rules[i].active.ptr, r, entries);
+			dst->anchor->match++;
 		}
+		src->anchor->match = 0;
 		while ((r = TAILQ_FIRST(src->rules[i].inactive.ptr))
 		    != NULL) {
 			TAILQ_REMOVE(src->rules[i].inactive.ptr, r, entries);
@@ -5313,8 +5318,6 @@ mv_rules(struct pf_ruleset *src, struct pf_ruleset *dst)
 				r, entries);
 		}
 	}
-	dst->anchor->refcnt = src->anchor->refcnt;
-	src->anchor->refcnt = 0;
 }
 
 void
