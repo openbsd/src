@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.9 2006/07/27 05:58:11 miod Exp $
+#	$OpenBSD: Makefile.amd64,v 1.10 2006/11/07 09:09:42 otto Exp $
 
 # Makefile for OpenBSD
 #
@@ -99,7 +99,7 @@ HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ=	locore.o vector.o copy.o microtime.o spl.o \
+SYSTEM_OBJ=	locore.o vector.o copy.o spl.o \
 		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	rm -f $@
@@ -161,7 +161,7 @@ links:
 	sh makelinks && rm -f dontlink makelinks
 
 AFILES=	${AMD64}/amd64/locore.S ${AMD64}/amd64/vector.S ${AMD64}/amd64/copy.S \
-	${AMD64}/amd64/microtime.S ${AMD64}/amd64/spl.S
+	${AMD64}/amd64/spl.S
 SRCS=	param.c ioconf.c ${AFILES} ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${APMINC}
@@ -194,9 +194,6 @@ vector.o: ${AMD64}/amd64/vector.S assym.h
 	${NORMAL_S}
 
 copy.o: ${AMD64}/amd64/copy.S assym.h
-	${NORMAL_S}
-
-microtime.o: ${AMD64}/amd64/microtime.S assym.h
 	${NORMAL_S}
 
 spl.o: ${AMD64}/amd64/spl.S assym.h

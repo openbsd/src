@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.51 2006/10/01 10:52:10 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.52 2006/11/07 09:09:42 otto Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -204,7 +204,6 @@ pid_t sigpid = 0;
 extern	paddr_t avail_start, avail_end;
 
 void (*delay_func)(int) = i8254_delay;
-void (*microtime_func)(struct timeval *) = i8254_microtime;
 void (*initclock_func)(void) = i8254_initclocks;
 
 struct mtrr_funcs *mtrr_funcs;
@@ -1808,6 +1807,11 @@ void
 cpu_initclocks(void)
 {
 	(*initclock_func)();
+
+	if (initclock_func == i8254_initclocks)
+		i8254_inittimecounter();
+	else
+		i8254_inittimecounter_simple();
 }
 
 void

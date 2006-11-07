@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.18 2006/03/08 03:33:21 uwe Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.19 2006/11/07 09:09:42 otto Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -230,11 +230,9 @@ extern u_int32_t cpus_attached;
  */
 extern void (*delay_func)(int);
 struct timeval;
-extern void (*microtime_func)(struct timeval *);
 
 #define DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
-#define microtime(tv)		(*microtime_func)(tv)
 
 
 /*
@@ -250,12 +248,6 @@ extern int cpu_ecxfeature;
 extern int cpu_id;
 extern char cpu_vendor[];
 extern int cpuid_level;
-
-/* kern_microtime.c */
-
-extern struct timeval cc_microset_time;
-void	cc_microtime(struct timeval *);
-void	cc_microset(struct cpu_info *);
 
 /* identcpu.c */
 
@@ -286,8 +278,10 @@ void	child_trampoline(void);
 void	initrtclock(void);
 void	startrtclock(void);
 void	i8254_delay(int);
-void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
+void	i8254_inittimecounter(void);
+void	i8254_inittimecounter_simple(void);
+
 
 void cpu_init_msrs(struct cpu_info *);
 

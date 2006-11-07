@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.9 2006/02/12 19:55:38 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.10 2006/11/07 09:09:43 otto Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -95,6 +95,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
+#include <sys/timetc.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -109,7 +110,18 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <dev/clock_subr.h>
 #include <machine/specialreg.h> 
 
-void	spinwait(int);
+/* Timecounter on the i8254 */
+u_int32_t i8254_lastcount;
+u_int32_t i8254_offset;
+int i8254_ticked;
+u_int i8254_get_timecount(struct timecounter *tc);
+
+u_int i8254_simple_get_timecount(struct timecounter *tc);
+
+static struct timecounter i8254_timecounter = {
+	i8254_get_timecount, NULL, ~0u, TIMER_FREQ, "i8254", 0, NULL
+};
+
 int	clockintr(void *);
 int	rtcintr(void *);
 int	gettick(void);
@@ -118,7 +130,6 @@ int	rtcget(mc_todregs *);
 void	rtcput(mc_todregs *);
 int 	bcdtobin(int);
 int	bintobcd(int);
-void	findcpuspeed(void);
 
 __inline u_int mc146818_read(void *, u_int);
 __inline void mc146818_write(void *, u_int, u_int);
@@ -146,11 +157,14 @@ mc146818_write(sc, reg, datum)
 	DELAY(1);
 }
 
+struct mutex timer_mutex = MUTEX_INITIALIZER(IPL_HIGH);
+
 u_long rtclock_tval;
+int rtclock_init;
 
 /* minimal initialization, enough for delay() */
 void
-initrtclock()
+initrtclock(void)
 {
 	u_long tval;
 
@@ -162,6 +176,7 @@ initrtclock()
 	tval = (TIMER_FREQ * 2) / (u_long) hz;
 	tval = (tval / 2) + (tval & 0x1);
 
+	mtx_enter(&timer_mutex);
 	/* initialize 8253 clock */
 	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
 
@@ -170,111 +185,36 @@ initrtclock()
 	outb(IO_TIMER1+TIMER_CNTR0, tval / 256);
 
 	rtclock_tval = tval;
+	rtclock_init = 1;
+	mtx_leave(&timer_mutex);
 }
-
-/*
- * microtime() makes use of the following globals.  Note that isa_timer_tick
- * may be redundant to the `tick' variable, but is kept here for stability.
- * isa_timer_count is the countdown count for the timer.  timer_msb_table[]
- * and timer_lsb_table[] are used to compute the microsecond increment
- * for time.tv_usec in the follow fashion:
- *
- * time.tv_usec += isa_timer_msb_table[cnt_msb] - isa_timer_lsb_table[cnt_lsb];
- */
-#define	ISA_TIMER_MSB_TABLE_SIZE	128
-
-u_long	isa_timer_tick;		/* the number of microseconds in a tick */
-u_short	isa_timer_count;	/* the countdown count for the timer */
-u_short	isa_timer_msb_table[ISA_TIMER_MSB_TABLE_SIZE];	/* timer->usec MSB */
-u_short	isa_timer_lsb_table[256];	/* timer->usec conversion for LSB */
 
 void
 startrtclock()
 {
 	int s;
-	u_long tval;
-	u_long t, msb, lsb, quotient, remainder;
 
-	findcpuspeed();		/* use the clock (while it's free)
-				   to find the cpu speed */
-	initrtclock();
+	if (!rtclock_init)
+		initrtclock();
 
 	/* Check diagnostic status */
 	if ((s = mc146818_read(NULL, NVRAM_DIAG)) != 0)	/* XXX softc */
 		printf("RTC BIOS diagnostic error %b\n", s, NVRAM_DIAG_BITS);
-
-	/*
-	 * Compute timer_tick from hz.  We truncate this value (i.e.
-	 * round down) to minimize the possibility of a backward clock
-	 * step if hz is not a nice number.
-	 */
-	isa_timer_tick = 1000000 / (u_long) hz;
-
-	/*
-	 * We can't stand any number with an MSB larger than
-	 * TIMER_MSB_TABLE_SIZE will accomodate.
-	 */
-	tval = rtclock_tval;
-	if ((tval / 256) >= ISA_TIMER_MSB_TABLE_SIZE
-	    || TIMER_FREQ > (8*1024*1024)) {
-		panic("startrtclock: TIMER_FREQ/HZ unsupportable");
-	}
-	isa_timer_count = (u_short) tval;
-
-	/*
-	 * Now compute the translation tables from timer ticks to
-	 * microseconds.  We go to some length to ensure all values
-	 * are rounded-to-nearest (i.e. +-0.5 of the exact values)
-	 * as this will ensure the computation
-	 *
-	 * isa_timer_msb_table[msb] - isa_timer_lsb_table[lsb]
-	 *
-	 * will produce a result which is +-1 usec away from the
-	 * correctly rounded conversion (in fact, it'll be exact about
-	 * 75% of the time, 1 too large 12.5% of the time, and 1 too
-	 * small 12.5% of the time).
-	 */
-	for (s = 0; s < 256; s++) {
-		/* LSB table is easy, just divide and round */
-		t = ((u_long) s * 1000000 * 2) / TIMER_FREQ;
-		isa_timer_lsb_table[s] = (u_short) ((t / 2) + (t & 0x1));
-
-		/* MSB table is zero unless the MSB is <= isa_timer_count */
-		if (s < ISA_TIMER_MSB_TABLE_SIZE) {
-			msb = ((u_long) s) * 256;
-			if (msb > tval) {
-				isa_timer_msb_table[s] = 0;
-			} else {
-				/*
-				 * Harder computation here, since multiplying
-				 * the value by 1000000 can overflow a long.
-				 * To avoid 64-bit computations we divide
-				 * the high order byte and the low order
-				 * byte of the numerator separately, adding
-				 * the remainder of the first computation
-				 * into the second.  The constraint on
-				 * TIMER_FREQ above should prevent overflow
-				 * here.
-				 */
-				msb = tval - msb;
-				lsb = msb % 256;
-				msb = (msb / 256) * 1000000;
-				quotient = msb / TIMER_FREQ;
-				remainder = msb % TIMER_FREQ;
-				t = ((remainder * 256 * 2)
-				    + (lsb * 1000000 * 2)) / TIMER_FREQ;
-				isa_timer_msb_table[s] = (u_short)((t / 2)
-				    + (t & 0x1) + (quotient * 256));
-			}
-		}
-	}
-
 }
 
 int
 clockintr(void *arg)
 {
 	struct clockframe *frame = arg;
+
+	if (timecounter->tc_get_timecount == i8254_get_timecount) {
+		if (i8254_ticked) {
+			i8254_ticked = 0;
+		} else {
+			i8254_offset += rtclock_tval;
+			i8254_lastcount = 0;
+		}
+	}
 
 	hardclock(frame);
 
@@ -306,6 +246,7 @@ gettick()
 	u_char lo, hi;
 
 	/* Don't want someone screwing with the counter while we're here. */
+	mtx_enter(&timer_mutex);
 	ef = read_rflags();
 	disable_intr();
 	/* Select counter 0 and latch it. */
@@ -313,6 +254,7 @@ gettick()
 	lo = inb(IO_TIMER1+TIMER_CNTR0);
 	hi = inb(IO_TIMER1+TIMER_CNTR0);
 	write_rflags(ef);
+	mtx_leave(&timer_mutex);
 	return ((hi << 8) | lo);
 }
 
@@ -334,7 +276,7 @@ i8254_delay(int n)
 	};
 
 	/* allow DELAY() to be used before startrtclock() */
-	if (!rtclock_tval)
+	if (!rtclock_init)
 		initrtclock();
 
 	/*
@@ -385,31 +327,6 @@ i8254_delay(int n)
 	}
 }
 
-unsigned int delaycount;        /* calibrated loop variable (1 millisecond) */
-
-#define FIRST_GUESS   0x2000
-
-void
-findcpuspeed()
-{
-	int i;
-	int remainder;
-
-	/* Put counter in count down mode */
-	outb(TIMER_MODE, TIMER_SEL0 | TIMER_16BIT | TIMER_RATEGEN);
-	outb(TIMER_CNTR0, 0xff);
-	outb(TIMER_CNTR0, 0xff);
-	for (i = FIRST_GUESS; i; i--)
-		;
-	/* Read the value left in the counter */
-	remainder = gettick();
-	/*
-	 * Formula for delaycount is:
-	 *  (loopcount * timer clock speed) / (counter ticks * 1000)
-	 */
-	delaycount = (FIRST_GUESS * TIMER_DIV(1000)) / (0xffff-remainder);
-}
-
 void
 rtcdrain(void *v)
 {
@@ -434,10 +351,6 @@ i8254_initclocks()
 	stathz = 128;
 	profhz = 1024;
 
-	/*
-	 * XXX If you're doing strange things with multiple clocks, you might
-	 * want to keep track of clock handlers.
-	 */
 	isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK, clockintr,
 	    0, "clock");
 	isa_intr_establish(NULL, 8, IST_PULSE, IPL_CLOCK, rtcintr, 0, "rtc");
@@ -606,15 +519,15 @@ clock_expandyear(clockyear)
  * from a filesystem.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
+	struct timespec ts;
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
 	int s;
-#if defined(I586_CPU) || defined(I686_CPU)
-	struct cpu_info *ci = curcpu();
-#endif
+
+	ts.tv_nsec = 0;
+
 	/*
 	 * We mostly ignore the suggested time (which comes from the
 	 * file system) and go for the RTC clock time stored in the
@@ -673,33 +586,26 @@ inittodr(base)
 		}
 	}
 
-	time.tv_sec = clock_ymdhms_to_secs(&dt) + tz.tz_minuteswest * 60;
+	ts.tv_sec = clock_ymdhms_to_secs(&dt) + tz.tz_minuteswest * 60;
 	if (tz.tz_dsttime)
-		time.tv_sec -= 3600;
-#ifdef DEBUG_CLOCK
-	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
-#endif
-#if defined(I586_CPU) || defined(I686_CPU)
-	if (ci->ci_feature_flags & CPUID_TSC) {
-		cc_microset_time = time;
-		cc_microset(ci);
-	}
-#endif
+		ts.tv_sec -= 3600;
 
-	if (base != 0 && base < time.tv_sec - 5*SECYR)
+	if (base != 0 && base < ts.tv_sec - 5*SECYR)
 		printf("WARNING: file system time much less than clock time\n");
-	else if (base > time.tv_sec + 5*SECYR) {
+	else if (base > ts.tv_sec + 5*SECYR) {
 		printf("WARNING: clock time much less than file system time\n");
 		printf("WARNING: using file system time\n");
 		goto fstime;
 	}
 
+	tc_setclock(&ts);
 	timeset = 1;
 	return;
 
 fstime:
+	ts.tv_sec = base;
+	tc_setclock(&ts);
 	timeset = 1;
-	time.tv_sec = base;
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
@@ -728,7 +634,7 @@ resettodr()
 	diff = tz.tz_minuteswest * 60;
 	if (tz.tz_dsttime)
 		diff -= 3600;
-	clock_secs_to_ymdhms(time.tv_sec - diff, &dt);
+	clock_secs_to_ymdhms(time_second - diff, &dt);
 
 	rtclk[MC_SEC] = bintobcd(dt.dt_sec);
 	rtclk[MC_MIN] = bintobcd(dt.dt_min);
@@ -759,4 +665,69 @@ setstatclockrate(arg)
 		mc146818_write(NULL, MC_REGA, MC_BASE_32_KHz | MC_RATE_128_Hz);
 	else
 		mc146818_write(NULL, MC_REGA, MC_BASE_32_KHz | MC_RATE_1024_Hz);
+}
+
+void
+i8254_inittimecounter(void)
+{
+	tc_init(&i8254_timecounter);
+}
+
+/*
+ * If we're using lapic to drive hardclock, we can use a simpler
+ * algorithm for the i8254 timecounters.
+ */
+void
+i8254_inittimecounter_simple(void)
+{
+	u_long tval = 0x8000;
+
+	i8254_timecounter.tc_get_timecount = i8254_simple_get_timecount;
+	i8254_timecounter.tc_counter_mask = 0x7fff;
+
+        i8254_timecounter.tc_frequency = TIMER_FREQ;
+
+	mtx_enter(&timer_mutex);
+	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_RATEGEN | TIMER_16BIT);
+	outb(IO_TIMER1 + TIMER_CNTR0, tval & 0xff);
+	outb(IO_TIMER1 + TIMER_CNTR0, tval >> 8);
+
+	rtclock_tval = tval;
+	rtclock_init = 1;
+	mtx_leave(&timer_mutex);
+
+	tc_init(&i8254_timecounter);
+}
+
+u_int
+i8254_simple_get_timecount(struct timecounter *tc)
+{
+	return (rtclock_tval - gettick());
+}
+
+u_int
+i8254_get_timecount(struct timecounter *tc)
+{
+	u_char hi, lo;
+	u_int count;
+	u_long ef;
+
+	ef = read_rflags();
+	disable_intr();
+
+	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
+	lo = inb(IO_TIMER1+TIMER_CNTR0);
+	hi = inb(IO_TIMER1+TIMER_CNTR0);
+
+	count = rtclock_tval - ((hi << 8) | lo);
+
+	if (count < i8254_lastcount) {
+		i8254_ticked = 1;
+		i8254_offset += rtclock_tval;
+	}
+	i8254_lastcount = count;
+	count += i8254_offset;
+	write_rflags(ef);
+
+	return (count);
 }

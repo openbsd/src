@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.1 2006/01/06 18:50:08 millert Exp $	*/
+/*	$OpenBSD: _types.h,v 1.2 2006/11/07 09:09:42 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -118,5 +118,6 @@ typedef	void *			__wctype_t;
 #define __HAVE_GENERIC_SOFT_INTERRUPTS
 #define __HAVE_CPUINFO
 #define __HAVE_MUTEX
+#define __HAVE_TIMECOUNTER
 
 #endif	/* _AMD64__TYPES_H_ */
