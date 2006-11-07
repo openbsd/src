@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.10 2004/11/29 08:52:28 jsg Exp $	*/
+/*	$OpenBSD: input.c,v 1.11 2006/11/07 03:52:59 deraadt Exp $	*/
 /*	$NetBSD: input.c,v 1.4 1995/04/27 21:22:24 mycroft Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: input.c,v 1.10 2004/11/29 08:52:28 jsg Exp $";
+static char rcsid[] = "$OpenBSD: input.c,v 1.11 2006/11/07 03:52:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -462,6 +462,8 @@ setalt(char c)
 {
 	if ((p.altitude == c - '0') && (p.new_altitude == p.altitude))
 		return ("Already at that altitude");
+	if (p.new_altitude == c - '0')
+		return ("Already going to that altitude");
 	p.new_altitude = c - '0';
 	return (NULL);
 }
@@ -469,24 +471,30 @@ setalt(char c)
 const char	*
 setrelalt(char c)
 {
+	int new_altitude;
+
 	if (c == 0)
 		return ("altitude not changed");
 
 	switch (dir) {
 	case D_UP:
-		p.new_altitude = p.altitude + c - '0';
+		new_altitude = p.altitude + c - '0';
 		break;
 	case D_DOWN:
-		p.new_altitude = p.altitude - (c - '0');
+		new_altitude = p.altitude - (c - '0');
 		break;
 	default:
 		return ("Unknown case in setrelalt!  Get help!");
 		break;
 	}
-	if (p.new_altitude < 0)
+	if (new_altitude < 0)
 		return ("Altitude would be too low");
-	else if (p.new_altitude > 9)
+	else if (new_altitude > 9)
 		return ("Altitude would be too high");
+	else if (new_altitude == p.new_altitude)
+		return ("Already going to that altitude");
+
+	p.new_altitude = new_altitude;
 	return (NULL);
 }
 
