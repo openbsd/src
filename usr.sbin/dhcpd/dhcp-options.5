@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.6 2006/02/01 09:59:29 jmc Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.7 2006/11/07 16:46:45 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -190,7 +190,7 @@ Servers should be listed in order of preference.
 .Xc
 The
 .Ic domain-name-servers
-option specifies a list of Domain Name System (STD 13, RFC 1035) name servers
+option specifies a list of Domain Name System name servers
 available to the client.
 Servers should be listed in order of preference.
 .It Xo
@@ -271,8 +271,7 @@ A value of 0 means disable IP forwarding, and a value of 1 means enable
 IP forwarding.
 .It Ic option non-local-source-routing Ar flag ;
 This option specifies whether the client should configure its IP
-layer to allow forwarding of datagrams with non-local source routes
-(see Section 3.3.5 of [4] for a discussion of this topic).
+layer to allow forwarding of datagrams with non-local source routes.
 A value of 0 means disallow forwarding of such datagrams, and a value of 1
 means allow forwarding.
 .It Xo
@@ -286,7 +285,7 @@ destination/mask pairs with which to filter incoming source routes.
 Any source-routed datagram whose next-hop address does not match one
 of the filters should be discarded by the client.
 .Pp
-See STD 3 (RFC 1122) for further information.
+See RFC 1122 for further information.
 .It Ic option max-dgram-reassembly Ar uint16 ;
 This option specifies the maximum size datagram that the client should be
 prepared to reassemble.
@@ -322,7 +321,7 @@ directly connected network may have smaller MTUs.
 .It Ic option broadcast-address Ar ip-address ;
 This option specifies the broadcast address in use on the client's subnet.
 Legal values for broadcast addresses are specified in section 3.2.1.3 of
-STD 3 (RFC 1122).
+RFC 1122.
 .It Ic option perform-mask-discovery Ar flag ;
 This option specifies whether or not the client should perform subnet mask
 discovery using ICMP.
