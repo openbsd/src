@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dnkbd.4,v 1.6 2006/04/16 07:42:51 jmc Exp $
+.\"	$OpenBSD: dnkbd.4,v 1.7 2006/11/07 16:01:36 jmc Exp $
 .\"
 .\" Copyright (c) 2005, Miodrag Vallat
 .\"
@@ -59,53 +59,45 @@ The
 driver supports all the keyboard layouts, which can be selected with
 .Xr wsconsctl 8
 (variable:
-.Dq keyboard.encoding
-).
+.Dq keyboard.encoding ) .
 The layouts are:
-.Bl -hang
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .It KB_DE
-(
-.Dq de
-) German with
+.Pq de
+German with
 .Dq dead accents .
 .It KB_DK
-(
-.Dq dk
-) Norwegian / Danish with
+.Pq dk
+Norwegian/Danish with
 .Dq dead accents .
 .It KB_FR
-(
-.Dq fr
-) French.
+.Pq fr
+French.
 .It KB_JP
-(
-.Dq jp
-) Japanese.
+.Pq jp
+Japanese.
 .It KB_SG
-(
-.Dq sg
-) Swiss German with
+.Pq sg
+Swiss German with
 .Dq dead accents .
 .It KB_SV
-(
-.Dq sv
-) Swedish / Finnish with
+.Pq sv
+Swedish/Finnish with
 .Dq dead accents .
 .It KB_UK
-(
-.Dq uk
-) UK English.
+.Pq uk
+UK English.
 .It KB_US
-(
-.Dq us
-) US English (this is the default mapping).
+.Pq us
+US English (this is the default mapping).
 .El
 .Pp
 All layouts with
 .Dq dead accents
-can be used in the KB_NODEAD (
-.Dq .nodead
-) variant.
+can be used in the KB_NODEAD
+.Pq .nodead
+variant.
 This switches off the
 .Dq dead accents .
 .Sh SEE ALSO

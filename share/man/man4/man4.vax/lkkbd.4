@@ -1,4 +1,4 @@
-.\"     $OpenBSD: lkkbd.4,v 1.8 2006/11/01 19:53:38 miod Exp $
+.\"     $OpenBSD: lkkbd.4,v 1.9 2006/11/07 16:01:36 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -78,12 +78,13 @@ can be chosen from with the kernel option
 at compile time or with the utility
 .Xr wsconsctl 8
 (variable:
-.Dq keyboard.encoding
-) at runtime.
+.Dq keyboard.encoding )
+at runtime.
 Other mappings can be used if the whole keymap is replaced by means of
 .Xr wsconsctl 8 .
 The built-in mappings are at this time:
-.Bl -hang
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .\" .It KB_BE
 .\" (
 .\" .Dq be
@@ -93,9 +94,8 @@ The built-in mappings are at this time:
 .\" .Dq cf
 .\" ) Canadian French.
 .It KB_DE
-(
-.Dq de
-) German with
+.Pq de
+German with
 .Dq dead accents .
 .\" .It KB_DK
 .\" (
@@ -107,9 +107,8 @@ The built-in mappings are at this time:
 .\" .Dq es
 .\" ) Spanish.
 .It KB_FR
-(
-.Dq fr
-) French.
+.Pq fr
+French.
 .\" .It KB_IT
 .\" (
 .\" .Dq it
@@ -143,16 +142,15 @@ The built-in mappings are at this time:
 .\" .Dq uk
 .\" ) British.
 .It KB_US
-(
-.Dq us
-) English / US keyboard mapping (default).
+.Pq us
+English/US keyboard mapping (default).
 .El
 .Pp
 .\" The KB_DE, KB_DK, KB_NO, KB_SF, KB_SG and KB_SV mappings can be used in
 The KB_DE mapping can be used in
-the KB_NODEAD (
-.Dq .nodead
-) variant.
+the KB_NODEAD
+.Pq .nodead
+variant.
 This switches off the
 .Dq dead accents .
 .Sh EXAMPLES

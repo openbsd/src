@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: akbd.4,v 1.1 2006/01/18 23:27:05 miod Exp $
+.\"	$OpenBSD: akbd.4,v 1.2 2006/11/07 16:01:36 jmc Exp $
 .\"	$NetBSD: adb.4,v 1.1 1997/07/18 02:13:42 ender Exp $
 .\"
 .Dd January 18, 2006
@@ -86,61 +86,52 @@ can be chosen from with the kernel option
 at compile time or with the utility
 .Xr wsconsctl 8
 (variable:
-.Dq keyboard.encoding
-) at runtime.
+.Dq keyboard.encoding )
+at runtime.
 Other mappings can be used if the whole keymap is replaced by means of
 .Xr wsconsctl 8 .
 The built-in mappings are at this time:
-.Bl -hang
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .It KB_DE
-(
-.Dq de
-) German with
+.Pq de
+German with
 .Dq dead accents .
 .It KB_ES
-(
-.Dq es
-) Spanish.
+.Pq es
+Spanish.
 .It KB_FR
-(
-.Dq fr
-) French.
+.Pq fr
+French.
 .It KB_JP
-(
-.Dq jp
-) Japanese.
+.Pq jp
+Japanese.
 .It KB_PT
-(
-.Dq pt
-) Portuguese.
+.Pq pt
+Portuguese.
 .It KB_SF
-(
-.Dq sf
-) Swiss French with
+.Pq sf
+Swiss French with
 .Dq dead accents .
 .It KB_SG
-(
-.Dq sg
-) Swiss German with
+.Pq sg
+Swiss German with
 .Dq dead accents .
 .It KB_SV
-(
-.Dq sv
-) Swedish with
+.Pq sv
+Swedish with
 .Dq dead accents .
 .It KB_UK
-(
-.Dq uk
-) British.
+.Pq uk
+British.
 .It KB_US
-(
-.Dq us
-) English / US keyboard mapping (default).
+.Pq us
+English/US keyboard mapping (default).
 .El
 .Pp
-The KB_DE, KB_FR, KB_SG and KB_SV mappings can be used in the KB_NODEAD (
-.Dq .nodead
-) variant.
+The KB_DE, KB_FR, KB_SG and KB_SV mappings can be used in the KB_NODEAD
+.Pq .nodead
+variant.
 This switches off the
 .Dq dead accents .
 .Sh EXAMPLES

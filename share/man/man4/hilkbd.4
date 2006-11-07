@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hilkbd.4,v 1.10 2006/09/07 15:05:21 jmc Exp $
+.\"	$OpenBSD: hilkbd.4,v 1.11 2006/11/07 16:01:36 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Miodrag Vallat.
 .\" All rights reserved.
@@ -55,38 +55,34 @@ A different layout can be chosen either with the kernel option
 at compile time, or with the
 .Xr wsconsctl 8
 utility (variable:
-.Dq keyboard.encoding
-) at runtime.
+.Dq keyboard.encoding )
+at runtime.
 .Pp
 The supported key mappings are at this time:
-.Bl -hang
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .It KB_DE
-(
-.Dq de
-) German with
+.Pq de
+German with
 .Dq dead accents .
 .It KB_FR
-(
-.Dq fr
-) French with
+.Pq fr
+French with
 .Dq dead accents .
 .It KB_SV
-(
-.Dq sv
-) Swedish.
+.Pq sv
+Swedish.
 .It KB_UK
-(
-.Dq uk
-) British.
+.Pq uk
+British.
 .It KB_US
-(
-.Dq us
-) English / US keyboard mapping.
+.Pq us
+English/US keyboard mapping.
 .El
 .Pp
-The KB_DE mapping can be used in the KB_NODEAD (
-.Dq .nodead
-) variant.
+The KB_DE mapping can be used in the KB_NODEAD
+.Pq .nodead
+variant.
 This switches off the
 .Dq dead accents .
 .Sh EXAMPLES

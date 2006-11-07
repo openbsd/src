@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.12 2005/05/20 08:58:43 jmc Exp $
+.\"	$OpenBSD: zs.4,v 1.13 2006/11/07 16:01:36 jmc Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The OpenBSD Project
 .\" All rights reserved.
@@ -67,80 +67,66 @@ and
 at compile time or with the utility
 .Xr wsconsctl 8
 (variable:
-.Dq keyboard.encoding
-) at runtime.
+.Dq keyboard.encoding )
+at runtime.
 .Pp
 Other mappings can be used if the whole keymap is replaced by means of
 .Xr wsconsctl 8 .
 The built-in mappings are at this time:
-.Bl -hang
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .It KB_BE
-(
-.Dq be
-) Belgium French (type 4 only).
+.Pq be
+Belgium French (type 4 only).
 .It KB_DE
-(
-.Dq de
-) German.
+.Pq de
+German.
 .It KB_DK
-(
-.Dq dk
-) Danish.
+.Pq dk
+Danish.
 .It KB_ES
-(
-.Dq es
-) Spanish.
+.Pq es
+Spanish.
 .It KB_FR
-(
-.Dq fr
-) French (type 5 only).
+.Pq fr
+French (type 5 only).
 .It KB_IT
-(
-.Dq it
-) Italian.
+.Pq it
+Italian.
 .It KB_JP
-(
-.Dq jp
-) Japanese (type 5 only).
+.Pq jp
+Japanese (type 5 only).
 .It KB_NL
-(
-.Dq \&nl
-) Dutch.
+.Pq \&nl
+Dutch.
 .It KB_NO
-(
-.Dq no
-) Norwegian.
+.Pq no
+Norwegian.
 .It KB_PT
-(
-.Dq pt
-) Portuguese.
+.Pq pt
+Portuguese.
 .It KB_SF
-(
-.Dq sf
-) Swiss French.
+.Pq sf
+Swiss French.
 .It KB_SG
-(
-.Dq sg
-) Swiss German.
+.Pq sg
+Swiss German.
 .It KB_SV
-(
-.Dq sv
-) Swedish with
+.Pq sv
+Swedish with
 .Dq dead accents .
 .It KB_UK
-(
-.Dq uk
-) British.
+.Pq uk
+British.
 .It KB_US
-(
-.Dq us
-) English / US keyboard mapping.
+.Pq us
+English/US keyboard mapping.
 .El
 .Pp
 The KB_SV mapping can be used in
-the KB_NODEAD (
-.Dq .nodead
-) variant.
+the KB_NODEAD
+.Pq .nodead
+variant.
 This switches off the
 .Dq dead accents .
 .Sh EXAMPLES
