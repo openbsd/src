@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.153 2006/11/06 03:52:37 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.154 2006/11/07 21:05:56 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2127,8 +2127,8 @@ em_get_buf(struct em_softc *sc, int i)
 	 * Using memory from the mbuf cluster pool, invoke the
 	 * bus_dma machinery to arrange the memory mapping.
 	 */
-	error = bus_dmamap_load(sc->rxtag, sc->rx_sparemap,
-	    mtod(m, void *), m->m_len, NULL, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->rxtag, sc->rx_sparemap,
+	    m, BUS_DMA_NOWAIT);
 	if (error) {
 		m_free(m);
 		return (error);
@@ -2143,8 +2143,7 @@ em_get_buf(struct em_softc *sc, int i)
 	sc->rx_sparemap = map;
 
 	bus_dmamap_sync(sc->rxtag, rx_buffer->map, 0,
-	    rx_buffer->map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	    rx_buffer->map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	rx_buffer->m_head = m;
 
@@ -2205,11 +2204,8 @@ em_allocate_receive_structures(struct em_softc *sc)
 
 	for (i = 0; i < sc->num_rx_desc; i++) {
 		error = em_get_buf(sc, i);
-		if (error != 0) {
-			sc->rx_buffer_area[i].m_head = NULL;
-			sc->rx_desc_base[i].buffer_addr = 0;
-			return (error);
-                }
+		if (error != 0)
+			goto fail;
         }
 	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map, 0,
 	    sc->rxdma.dma_map->dm_mapsize,
@@ -2218,9 +2214,7 @@ em_allocate_receive_structures(struct em_softc *sc)
         return (0);
 
 fail:
-	sc->rxtag = NULL;
-	free(sc->rx_buffer_area, M_DEVBUF);
-	sc->rx_buffer_area = NULL;
+	em_free_receive_structures(sc);
 	return (error);
 }
 
@@ -2345,13 +2339,23 @@ em_free_receive_structures(struct em_softc *sc)
 	if (sc->rx_buffer_area != NULL) {
 		rx_buffer = sc->rx_buffer_area;
 		for (i = 0; i < sc->num_rx_desc; i++, rx_buffer++) {
-			if (rx_buffer->map != NULL) {
-				bus_dmamap_unload(sc->rxtag, rx_buffer->map);
-				bus_dmamap_destroy(sc->rxtag, rx_buffer->map);
+			if (rx_buffer->map != NULL &&
+			    rx_buffer->map->dm_nsegs > 0) {
+				bus_dmamap_sync(sc->rxtag, rx_buffer->map,
+				    0, rx_buffer->map->dm_mapsize,
+				    BUS_DMASYNC_POSTREAD);
+				bus_dmamap_unload(sc->rxtag,
+				    rx_buffer->map);
 			}
-			if (rx_buffer->m_head != NULL)
+			if (rx_buffer->m_head != NULL) {
 				m_freem(rx_buffer->m_head);
-			rx_buffer->m_head = NULL;
+				rx_buffer->m_head = NULL;
+			}
+			if (rx_buffer->map != NULL) {
+				bus_dmamap_destroy(sc->rxtag,
+				    rx_buffer->map);
+				rx_buffer->map = NULL;
+			}
 		}
 	}
 	if (sc->rx_buffer_area != NULL) {
