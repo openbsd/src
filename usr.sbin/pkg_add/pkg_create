@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.48 2006/11/05 11:41:45 espie Exp $
+# $OpenBSD: pkg_create,v 1.49 2006/11/07 09:28:55 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -62,7 +62,7 @@ sub archive
 		if (($o->{mode} & (S_ISUID | S_ISGID | S_IWOTH)) != 0) {
 			print STDERR "Warning: weird mode for ", 
 			    $self->fullname(), ": ", 
-			    sprintf("%4o", $o->{mode}), "\n";
+			    sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)), "\n";
 		}
 	    }
 	}
