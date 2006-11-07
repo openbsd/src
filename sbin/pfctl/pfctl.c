@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.255 2006/11/07 01:12:01 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.256 2006/11/07 06:16:56 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -755,9 +755,10 @@ pfctl_show_rules(int dev, char *path, int opts, int format,
 			if (pr.rule.label[0] && (opts & PF_OPT_SHOWALL))
 				labels = 1;
 			INDENT(depth, !(opts & PF_OPT_VERBOSE));
-			if ((((p = strrchr(pr.anchor_call, '_')) != NULL) &&
+			if (pr.anchor_call[0] &&
+			   ((((p = strrchr(pr.anchor_call, '_')) != NULL) &&
 			   ((void *)p == (void *)pr.anchor_call ||
-			   *(--p) == '/')) || opts & PF_OPT_RECURSE) {
+			   *(--p) == '/')) || opts & PF_OPT_RECURSE)) {
 				brace++;
 				if ((p = strrchr(pr.anchor_call, '/')) !=
 				    NULL)
