@@ -1,0 +1,62 @@
+
+REV=	${OSrev}
+BSD_RD=		bsd.rd
+
+IMAGE=	miniroot40.fs
+
+MOUNT_POINT=	/mnt
+
+VND?=		svnd0
+VND_DEV=	/dev/${VND}a
+VND_RDEV=	/dev/r${VND}a
+VND_CRDEV=	/dev/r${VND}c
+PID!=		echo $$$$
+
+DISKTYPE=       rdroot2.5M
+#NBLKS=		8192
+NBLKS=		5120
+# minfree, opt, b/i  trks, sects, cpg
+NEWFSARGS= -m 0 -o space -c 16 -i 4096
+
+
+.ifndef DESTDIR
+all ${IMAGE}:
+	@echo setenv DESTDIR before making a ramdisk!
+	@false
+.else
+
+${IMAGE}: rd_setup do_files rd_teardown
+
+.endif
+
+do_files:
+	cp ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}/boot
+	gzip -c < ${.OBJDIR}/../ramdisk/bsd.rd > ${MOUNT_POINT}/bsd.rd
+
+rd_setup:
+	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
+	vnconfig -v -c ${VND} ${IMAGE}
+	fdisk -i ${VND}
+	disklabel -w -r ${VND} ${DISKTYPE}
+	disklabel -B -b ${DESTDIR}/usr/mdec/xxboot ${VND} 
+	newfs ${NEWFSARGS} ${VND_RDEV}
+	fsck ${VND_RDEV}
+	mount ${VND_DEV} ${MOUNT_POINT}
+
+rd_teardown:
+	@df -i ${MOUNT_POINT}
+	-umount ${MOUNT_POINT}
+	-vnconfig -u ${VND}
+
+
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-vnconfig -u ${VND}
+
+.PRECIOUS:	${IMAGE}
+
+install:
+	cp ${IMAGE} ${DESTDIR}/snapshot/
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
