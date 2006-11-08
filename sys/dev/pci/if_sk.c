@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.129 2006/10/16 12:30:08 tom Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.130 2006/11/08 21:04:41 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -423,9 +423,9 @@ sk_setfilt(struct sk_if_softc *sc_if, caddr_t addr, int slot)
 {
 	int base = XM_RXFILT_ENTRY(slot);
 
-	SK_XM_WRITE_2(sc_if, base, *(u_int16_t *)(&addr[0]));
-	SK_XM_WRITE_2(sc_if, base + 2, *(u_int16_t *)(&addr[2]));
-	SK_XM_WRITE_2(sc_if, base + 4, *(u_int16_t *)(&addr[4]));
+	SK_XM_WRITE_2(sc_if, base, letoh16(*(u_int16_t *)(&addr[0])));
+	SK_XM_WRITE_2(sc_if, base + 2, letoh16(*(u_int16_t *)(&addr[2])));
+	SK_XM_WRITE_2(sc_if, base + 4, letoh16(*(u_int16_t *)(&addr[4])));
 }
 
 void
@@ -2370,11 +2370,11 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 
 	/* Set station address */
 	SK_XM_WRITE_2(sc_if, XM_PAR0,
-	    *(u_int16_t *)(&sc_if->arpcom.ac_enaddr[0]));
+	    letoh16(*(u_int16_t *)(&sc_if->arpcom.ac_enaddr[0])));
 	SK_XM_WRITE_2(sc_if, XM_PAR1,
-	    *(u_int16_t *)(&sc_if->arpcom.ac_enaddr[2]));
+	    letoh16(*(u_int16_t *)(&sc_if->arpcom.ac_enaddr[2])));
 	SK_XM_WRITE_2(sc_if, XM_PAR2,
-	    *(u_int16_t *)(&sc_if->arpcom.ac_enaddr[4]));
+	    letoh16(*(u_int16_t *)(&sc_if->arpcom.ac_enaddr[4])));
 	SK_XM_SETBIT_4(sc_if, XM_MODE, XM_MODE_RX_USE_STATION);
 
 	if (ifp->if_flags & IFF_BROADCAST)
