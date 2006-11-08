@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.43 2006/06/15 15:29:25 jason Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.44 2006/11/08 17:46:54 mcbride Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -92,6 +92,47 @@ const struct puc_device_description puc_devices[] = {
 	 * XXX Dolphin Peripherals 4078 (dual serial and single parallel)
 	 */
 
+	/*
+	 * Decision PCCOM PCI series. PLX 9052 with 1 or 2 16554 UARTS
+	 */
+
+	/* Decision Computer Inc PCCOM 2 Port RS232/422/485: 2S */
+	{   /* "Decision Computer Inc PCCOM 2 Port RS232/422/485", */ 
+	    {	PCI_VENDOR_DCI,	PCI_PRODUCT_DCI_APCI2,		0, 0	},
+	    {	0xffff,	0xffff,					0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x08, COM_FREQ },
+	    },
+	},
+
+	/* Decision Computer Inc PCCOM 4 Port RS232/422/485: 4S */
+	{   /* "Decision Computer Inc PCCOM 4 Port RS232/422/485", */ 
+	    {	PCI_VENDOR_DCI,	PCI_PRODUCT_DCI_APCI4,		0, 0	},
+	    {	0xffff,	0xffff,					0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x18, COM_FREQ },
+	    },
+	},
+
+	/* Decision Computer Inc PCCOM 8 Port RS232/422/485: 8S */
+	{   /* "Decision Computer Inc PCCOM 8 Port RS232/422/485", */ 
+	    {	PCI_VENDOR_DCI, PCI_PRODUCT_DCI_APCI8,		0, 0	},
+	    {	0xffff,	0xffff,					0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x18, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x20, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x28, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x30, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x38, COM_FREQ },
+	    },
+	},
 
 	/*
 	 * SIIG Boards.
