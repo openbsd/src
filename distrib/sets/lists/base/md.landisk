@@ -1,5 +1,3 @@
-./etc/firmware/uyap
-./etc/firmware/uyap-license
 ./etc/firmware/atu-at76c503-i3863-ext
 ./etc/firmware/atu-at76c503-i3863-int
 ./etc/firmware/atu-at76c503-rfmd-acc-ext
@@ -19,6 +17,8 @@
 ./etc/firmware/kue-license
 ./etc/firmware/rum-license
 ./etc/firmware/rum-rt2573
+./etc/firmware/uyap
+./etc/firmware/uyap-license
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-licence
 ./sbin/fdisk
@@ -2170,6 +2170,8 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/zlib.ph
 ./usr/local/libdata/perl5/site_perl/sh-openbsd
 ./usr/mdec/boot
+./usr/mdec/sdboot
+./usr/mdec/wdboot
 ./usr/mdec/xxboot
 ./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg
