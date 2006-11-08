@@ -1,4 +1,4 @@
-.\"     $OpenBSD: qe.4,v 1.8 2006/08/30 22:56:05 jmc Exp $
+.\"     $OpenBSD: qe.4,v 1.9 2006/11/08 03:56:52 brad Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -43,17 +43,6 @@ The
 .Nm
 is found on the Sun QuadEthernet boards
 (Sun part number SUNW,501-2062).
-.Pp
-Each of the host's network addresses
-is specified at boot time with an
-.Dv SIOCSIFADDR
-.Xr ioctl 2 .
-The
-.Nm
-interface employs the address resolution protocol described in
-.Xr arp 4
-to dynamically map between Internet and Ethernet addresses on the local
-network.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr be 4 ,

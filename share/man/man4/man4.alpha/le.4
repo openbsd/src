@@ -1,4 +1,4 @@
-.\"     $OpenBSD: le.4,v 1.11 2006/08/30 22:56:05 jmc Exp $
+.\"     $OpenBSD: le.4,v 1.12 2006/11/08 03:56:52 brad Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -19,17 +19,6 @@ interface provides access to the Ethernet network via the
 .Tn AMD
 .Tn LANCE
 Ethernet chip set.
-.Pp
-Each of the host's network addresses
-is specified at boot time with an
-.Dv SIOCSIFADDR
-.Xr ioctl 2 .
-The
-.Nm
-interface employs the address resolution protocol described in
-.Xr arp 4
-to dynamically map between Internet and Ethernet addresses on the local
-network.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,

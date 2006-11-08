@@ -1,4 +1,4 @@
-.\"	$OpenBSD: de.4,v 1.10 2006/08/30 22:56:05 jmc Exp $
+.\"	$OpenBSD: de.4,v 1.11 2006/11/08 03:56:52 brad Exp $
 .\"	$NetBSD: de.4,v 1.3 1996/03/03 17:13:19 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -46,17 +46,6 @@ a Digital Equipment
 .Tn UNIBUS
 Network Adapter
 .Pq Tn DEUNA .
-.Pp
-Each of the host's network addresses
-is specified at boot time with an
-.Dv SIOCSIFADDR
-.Xr ioctl 2 .
-The
-.Nm
-interface employs the address resolution protocol described in
-.Xr arp 4
-to dynamically map between Internet and Ethernet addresses on the local
-network.
 .Pp
 The interface normally tries to use a
 .Dq trailer

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: qe.4,v 1.10 2006/08/30 22:56:05 jmc Exp $
+.\"	$OpenBSD: qe.4,v 1.11 2006/11/08 03:56:52 brad Exp $
 .\"	$NetBSD: qe.4,v 1.3 1996/03/03 17:14:01 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
@@ -46,17 +46,6 @@ the
 .Tn DEC DEQNA
 .Tn Q-bus
 controller.
-.Pp
-Each of the host's network addresses
-is specified at boot time with an
-.Dv SIOCSIFADDR
-.Xr ioctl 2 .
-The
-.Nm qe
-interface employs the address resolution protocol described in
-.Xr arp 4
-to map dynamically between Internet and Ethernet addresses on the local
-network.
 .Pp
 The interface normally tries to use a
 .Dq trailer

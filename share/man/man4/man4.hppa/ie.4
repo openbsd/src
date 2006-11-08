@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ie.4,v 1.14 2006/08/30 22:56:05 jmc Exp $
+.\"	$OpenBSD: ie.4,v 1.15 2006/11/08 03:56:52 brad Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -42,18 +42,6 @@ network via the
 .Tn Intel
 i82596 DX/CA 32-bit
 Local Area Network Coprocessor for Ethernet.
-.Pp
-Each of the host's network addresses
-is specified at boot time with an
-.Dv SIOCSIFADDR
-.Xr ioctl 2 .
-The
-.Nm
-interface employs the address resolution protocol described in
-.Xr arp 4
-to dynamically map between Internet and
-.Tn Ethernet
-addresses on the local network.
 .Pp
 The i82596 comes basically in two different flavors:
 .Bl -tag -width i82596DXxxx
