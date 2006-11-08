@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bootxx.8,v 1.1 2006/10/06 21:48:50 mickey Exp $
+.\"	$OpenBSD: xxboot.8,v 1.1 2006/11/08 17:46:56 deraadt Exp $
 .\"
 .\" Copyright (c) 2006 Michael Shalayeff
 .\" All rights reserved.
@@ -16,10 +16,10 @@
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd October 5, 2006
-.Dt BOOTXX 8 landisk
+.Dt XXBOOT 8 landisk
 .Os
 .Sh NAME
-.Nm bootxx
+.Nm xxboot
 .Nd
 LANDISK-specific primary boot loader
 .Sh DESCRIPTION
@@ -46,10 +46,10 @@ followed by a little twiddler while reading the second-stage boot.
 .Nm
 will print messages indicating errors as returned from the firmware.
 .Sh FILES
-.Bl -tag -width /usr/mdec/bootxx -compact
+.Bl -tag -width /usr/mdec/xxboot -compact
 .It Pa /usr/mdec/mbr
 Master Boot Record block
-.It Pa /usr/mdec/bootxx
+.It Pa /usr/mdec/xxboot
 primary bootstrap
 .It Pa /boot
 secondary bootstrap

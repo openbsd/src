@@ -1,5 +1,5 @@
-/*	$OpenBSD: bootxx.S,v 1.1 2006/10/06 21:48:50 mickey Exp $	*/
-/*	$NetBSD: bootxx.S,v 1.1 2006/09/01 21:26:19 uwe Exp $	*/
+/*	$OpenBSD: xxboot.S,v 1.1 2006/11/08 17:46:56 deraadt Exp $	*/
+/*	$NetBSD: xxboot.S,v 1.1 2006/09/01 21:26:19 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -29,17 +29,17 @@
 
 #include <machine/asm.h>
 
-ENTRY(bootxx_start)
-	bra	bootxx_start1
+ENTRY(xxboot_start)
+	bra	xxboot_start1
 	 nop
 	.balign 4
-ENTRY(bootxx_magic)
+ENTRY(xxboot_magic)
 	.long	0x20031125
 boot_params:
 	.long	1f - boot_params
 
-	. = bootxx_start + 0x80
-bootxx_start1:
+	. = xxboot_start + 0x80
+xxboot_start1:
 	mov.l	.L._end, r0		/* zero bss */
 	mov.l	.L.__bss_start, r1
 	sub	r1, r0

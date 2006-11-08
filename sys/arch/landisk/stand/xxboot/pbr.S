@@ -1,4 +1,4 @@
-/*	$OpenBSD: pbr.S,v 1.2 2006/10/10 05:26:54 miod Exp $	*/
+/*	$OpenBSD: pbr.S,v 1.1 2006/11/08 17:46:56 deraadt Exp $	*/
 /*	$NetBSD: pbr.S,v 1.1 2006/09/01 21:26:19 uwe Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@ start0:
 	mov	#0, r5			/* LBA #0 */
 	mov	r10, r6			/* buffer address */
 	bsr	read_sectors_lba
-	 mov	#BOOTXX_SECTORS, r7	/* number of sectors */
+	 mov	#XXBOOT_SECTORS, r7	/* number of sectors */
 
 	mov.l	@r11, r1
 	mov.l	@r10, r2
@@ -130,7 +130,7 @@ read_error:
 
 magic_error:
 	bra	error
-	 mova	ERR_NO_BOOTXX, r0
+	 mova	ERR_NO_XXBOOT, r0
 
 message_crlf:
 	mov	#32, r0
@@ -155,11 +155,11 @@ boot_lba:
 	mov	r9, r5			/* LBA # */
 	mov	r10, r6			/* buffer address */
 	bsr	read_sectors_lba
-	 mov	#BOOTXX_SECTORS, r7	/* number of sectors */
+	 mov	#XXBOOT_SECTORS, r7	/* number of sectors */
 
 pbr_read_ok:
-	mov.l	.L.bootxx_magic1, r1
-	mov.l	.L.bootxx_magic, r2
+	mov.l	.L.xxboot_magic1, r1
+	mov.l	.L.xxboot_magic, r2
 	mov.l	@r2, r2
 	cmp/eq	r1, r2
 	bf	magic_error
@@ -169,9 +169,9 @@ pbr_read_ok:
 	mov	#6, r0
 	trapa	#0x3f
 
-	mov.l	.L.bootxx_start, r13
-	jmp	@r13			/* jump to bootxx */
-	 mov	r9, r4			/* pass sector address to bootxx */
+	mov.l	.L.xxboot_start, r13
+	jmp	@r13			/* jump to xxboot */
+	 mov	r9, r4			/* pass sector address to xxboot */
 
 
 	.align	1
@@ -184,12 +184,12 @@ part_offset:	.word	0x1be
 magic_offset:	.word	0x1fe
 
 	.align	2
-.L.bootxx_magic1:
+.L.xxboot_magic1:
 	.long	0x20031125
-.L.bootxx_magic:
-	.long	_C_LABEL(bootxx_magic)
-.L.bootxx_start:
-	.long	_C_LABEL(bootxx_start)
+.L.xxboot_magic:
+	.long	_C_LABEL(xxboot_magic)
+.L.xxboot_start:
+	.long	_C_LABEL(xxboot_start)
 
 	.align	2
 crlf:		.asciz	"\r\n"
@@ -197,7 +197,7 @@ crlf:		.asciz	"\r\n"
 	.align	2
 ERR_READ:	.asciz  "Disk read"
 	.align	2
-ERR_NO_BOOTXX:	.asciz  "Not a bootxx image"
+ERR_NO_XXBOOT:	.asciz  "Not a xxboot image"
 	.align	2
 ERR_PTN:	.asciz  "No OpenBSD partition"
 

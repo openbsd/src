@@ -1,20 +1,21 @@
-#	$OpenBSD: Makefile,v 1.3 2006/10/11 17:19:06 drahn Exp $
+#	$OpenBSD: Makefile,v 1.1 2006/11/08 17:46:56 deraadt Exp $
 
-MAN=	bootxx.8
+MAN=	xxboot.8
 
 .if ${MACHINE} == "landisk"
-PROG=	bootxx
-SRCS=	pbr.S bootxx.S boot1.c
+PROG=	xxboot
+LINKS=	sdboot wdboot
+SRCS=	pbr.S xxboot.S boot1.c
 LDFLAGS=-nostdlib -Ttext 0x8c201000 -N -x -Bstatic -e start
 
 INSTALL_STRIP=
 
-BOOTXX_SECTORS?= 15
-BOOTXX_MAXSIZE?= (( ${BOOTXX_SECTORS} * 512 ))
+XXBOOT_SECTORS?= 15
+XXBOOT_MAXSIZE?= (( ${XXBOOT_SECTORS} * 512 ))
 
 CPPFLAGS+=-D_STANDALONE
 CPPFLAGS+=-nostdinc -I${.OBJDIR} -I${.CURDIR}/.. -I${.CURDIR}/../../../..
-CPPFLAGS+=-DLOADADDRESS=0x8ff00000 -DBOOTXX_SECTORS=${BOOTXX_SECTORS}
+CPPFLAGS+=-DLOADADDRESS=0x8ff00000 -DXXBOOT_SECTORS=${XXBOOT_SECTORS}
 CFLAGS+=-m4-nofpu
 
 S=	${.CURDIR}/../../../..
@@ -36,8 +37,8 @@ ${PROG}: ${OBJS} ${DPADD}
 		-Map ${PROG}.map -cref ${OBJS} ${LDADD}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
 	@ sz=$$(ls -ln ${PROG} | tr -s ' ' | cut -d' ' -f5); \
-	if [ "$$sz" -gt "$$${BOOTXX_MAXSIZE}" ]; then \
-		echo "### ${PROG} size $$sz is larger than ${BOOTXX_MAXSIZE}" >&2 \
+	if [ "$$sz" -gt "$$${XXBOOT_MAXSIZE}" ]; then \
+		echo "### ${PROG} size $$sz is larger than ${XXBOOT_MAXSIZE}" >&2 \
 		rm -f ${PROG}; \
 		! :; \
 	else \
@@ -45,10 +46,11 @@ ${PROG}: ${OBJS} ${DPADD}
 		pad=$$(( 512 - ( $$sz & 511 ) )); \
 		[ $$pad = 512 ] || \
 		    dd if=/dev/zero bs=1 count=$$pad >>${PROG} 2>/dev/null; \
-		echo "${PROG} size $$sz, $$((${BOOTXX_MAXSIZE} - $$sz)) free"; \
+		echo "${PROG} size $$sz, $$((${XXBOOT_MAXSIZE} - $$sz)) free"; \
 	fi
 .else
 NOPROG=
 .endif
+
 
 .include <bsd.prog.mk>
