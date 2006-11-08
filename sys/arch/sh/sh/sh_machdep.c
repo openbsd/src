@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.4 2006/10/07 20:52:40 miod Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.5 2006/11/08 10:53:58 otto Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*-
@@ -481,7 +481,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	frame.sf_uc.sc_onstack = onstack;
 	frame.sf_uc.sc_expevt = tf->tf_expevt;
 	/* frame.sf_uc.sc_err = 0; */
-	frame.sf_uc.sc_mask = p->p_sigmask;
+	frame.sf_uc.sc_mask = mask;
 	/* XXX tf_macl, tf_mach not saved */
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
