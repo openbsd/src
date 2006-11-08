@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 2006/10/25 04:04:16 drahn Exp $
+#	$OpenBSD: install.md,v 1.2 2006/11/08 18:08:16 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,20 @@ MDFSTYPE=msdos
 ARCH=ARCH
 
 md_installboot() {
+	# $1 is the root disk
+
+	echo -n "Installing boot block..."
+	disklabel -W ${1}
+	disklabel -B ${1}
+
+	# use extracted mdec if it exists (may be newer)
+	if [ -d /mnt/usr/mdec ]; then
+		cp /mnt/usr/mdec/boot /mnt/boot
+	elif [ -d /usr/mdec ]; then
+		cp /usr/mdec/boot /mnt/boot
+	fi
+
+	echo "done."
 }
 
 # $1 is the disk to check
