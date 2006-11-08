@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.17 2006/10/24 17:30:45 moritz Exp $	*/
+/*	$OpenBSD: misc.c,v 1.18 2006/11/08 23:22:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -139,6 +139,10 @@ int
 ask_yn(const char *str)
 {
 	int ch, first;
+	extern int y_flag;
+
+	if (y_flag)
+		return (1);
 
 	printf("%s [n] ", str);
 	fflush(stdout);

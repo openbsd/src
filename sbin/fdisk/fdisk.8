@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.52 2006/10/20 03:54:24 dhill Exp $
+.\"	$OpenBSD: fdisk.8,v 1.53 2006/11/08 23:22:26 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Nd MBR partition maintenance program
 .Sh SYNOPSIS
 .Nm fdisk
-.Op Fl ieu
+.Op Fl ieuy
 .Oo
 .Fl c Ar cylinders
 .Fl h Ar heads
@@ -227,6 +227,8 @@ This is useful for writing new MBR bootcode onto an existing drive, and is
 equivalent to the DOS command
 .Dq FDISK /MBR .
 Note that this option will overwrite the NT disk signature, if present.
+.It Fl y
+Avoid asking yes/no questions when not desireable.
 .El
 .Sh COMMAND MODE
 The
