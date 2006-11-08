@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1185 2006/11/07 02:40:52 jsg Exp $
+$OpenBSD: pcidevs,v 1.1186 2006/11/08 17:39:23 mcbride Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -301,6 +301,7 @@ vendor	GEMTEK		0x5046	Gemtek
 vendor	TURTLEBEACH	0x5053	Turtle Beach
 vendor	S3		0x5333	S3
 vendor	C4T		0x6374	c't Magazin
+vendor	DCI		0x6666  Decision Computer Inc
 vendor	INTEL		0x8086	Intel
 vendor	WINBOND2	0x8c4a	Winbond
 vendor	KTI		0x8e2e	KTI
@@ -1335,6 +1336,11 @@ product DAVICOM DM9009		0x9009	DM9009
 product DAVICOM DM9100		0x9100	DM9100
 product DAVICOM DM9102		0x9102	DM9102
 product DAVICOM DM9132		0x9132	DM9132
+
+/* Decision Computer Inc */
+product DCI APCI2			0x0004	PCCOM 2-port
+product DCI APCI4			0x0001	PCCOM 4-port
+product DCI APCI8			0x0002	PCCOM 8-port
 
 /* DEC products */
 product DEC 21050		0x0001	21050 PCI-PCI
