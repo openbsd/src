@@ -1,3 +1,5 @@
+./etc/firmware/uyap
+./etc/firmware/uyap-license
 ./etc/firmware/atu-at76c503-i3863-ext
 ./etc/firmware/atu-at76c503-i3863-int
 ./etc/firmware/atu-at76c503-rfmd-acc-ext
@@ -22,12 +24,12 @@
 ./sbin/fdisk
 ./sbin/kbd
 ./usr/lib/gcc-lib/sh-unknown-openbsd4.0
-./usr/lib/gcc-lib/sh-unknown-openbsd4.0/2.95.3
-./usr/lib/gcc-lib/sh-unknown-openbsd4.0/2.95.3/cc1
-./usr/lib/gcc-lib/sh-unknown-openbsd4.0/2.95.3/collect2
-./usr/lib/gcc-lib/sh-unknown-openbsd4.0/2.95.3/cpp0
-./usr/lib/gcc-lib/sh-unknown-openbsd4.0/2.95.3/include
-./usr/lib/gcc-lib/sh-unknown-openbsd4.0/2.95.3/specs
+./usr/lib/gcc-lib/sh-unknown-openbsd4.0/3.3.5
+./usr/lib/gcc-lib/sh-unknown-openbsd4.0/3.3.5/cc1
+./usr/lib/gcc-lib/sh-unknown-openbsd4.0/3.3.5/collect2
+./usr/lib/gcc-lib/sh-unknown-openbsd4.0/3.3.5/cpp0
+./usr/lib/gcc-lib/sh-unknown-openbsd4.0/3.3.5/include
+./usr/lib/gcc-lib/sh-unknown-openbsd4.0/3.3.5/specs
 ./usr/libdata/perl5/sh-openbsd
 ./usr/libdata/perl5/sh-openbsd/5.8.8
 ./usr/libdata/perl5/sh-openbsd/5.8.8/.packlist
