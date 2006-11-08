@@ -36,7 +36,8 @@ do_files:
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
 	vnconfig -v -c ${VND} ${IMAGE}
-	fdisk -i -u -y ${VND}
+	fdisk -i -y ${VND}
+	fdisk -u -y ${VND}
 	disklabel -w -r ${VND} ${DISKTYPE}
 	disklabel -v -B -b ${DESTDIR}/usr/mdec/xxboot ${VND} 
 	newfs ${NEWFSARGS} ${VND_RDEV}
