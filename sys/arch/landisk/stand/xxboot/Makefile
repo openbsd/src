@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.1 2006/11/08 17:46:56 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2006/11/08 18:05:30 deraadt Exp $
 
 MAN=	xxboot.8
 
 .if ${MACHINE} == "landisk"
 PROG=	xxboot
-LINKS=	sdboot wdboot
+LINKS=	${BINDIR}/xxboot ${BINDIR}/sdboot 
+LINKS+=	${BINDIR}/xxboot ${BINDIR}/wdboot 
 SRCS=	pbr.S xxboot.S boot1.c
 LDFLAGS=-nostdlib -Ttext 0x8c201000 -N -x -Bstatic -e start
 
