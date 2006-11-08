@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1185 2006/11/07 02:40:52 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1186 2006/11/08 17:39:23 mcbride Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3545,6 +3545,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9132,
 	    "DM9132",
+	},
+	{
+	    PCI_VENDOR_DCI, PCI_PRODUCT_DCI_APCI2,
+	    "PCCOM 2-port",
+	},
+	{
+	    PCI_VENDOR_DCI, PCI_PRODUCT_DCI_APCI4,
+	    "PCCOM 4-port",
+	},
+	{
+	    PCI_VENDOR_DCI, PCI_PRODUCT_DCI_APCI8,
+	    "PCCOM 8-port",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21050,
@@ -13765,6 +13777,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_C4T,
 	    "c't Magazin",
+	},
+	{
+	    PCI_VENDOR_DCI,
+	    "Decision Computer Inc",
 	},
 	{
 	    PCI_VENDOR_INTEL,

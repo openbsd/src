@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1185 2006/11/07 02:40:52 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1186 2006/11/08 17:39:23 mcbride Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -306,6 +306,7 @@
 #define	PCI_VENDOR_TURTLEBEACH	0x5053		/* Turtle Beach */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
+#define	PCI_VENDOR_DCI	0x6666		/* Decision Computer Inc */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
 #define	PCI_VENDOR_WINBOND2	0x8c4a		/* Winbond */
 #define	PCI_VENDOR_KTI	0x8e2e		/* KTI */
@@ -1340,6 +1341,11 @@
 #define	PCI_PRODUCT_DAVICOM_DM9100	0x9100		/* DM9100 */
 #define	PCI_PRODUCT_DAVICOM_DM9102	0x9102		/* DM9102 */
 #define	PCI_PRODUCT_DAVICOM_DM9132	0x9132		/* DM9132 */
+
+/* Decision Computer Inc */
+#define	PCI_PRODUCT_DCI_APCI2	0x0004		/* PCCOM 2-port */
+#define	PCI_PRODUCT_DCI_APCI4	0x0001		/* PCCOM 4-port */
+#define	PCI_PRODUCT_DCI_APCI8	0x0002		/* PCCOM 8-port */
 
 /* DEC products */
 #define	PCI_PRODUCT_DEC_21050	0x0001		/* 21050 PCI-PCI */
