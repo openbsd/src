@@ -1,4 +1,4 @@
-.\"     $OpenBSD: file.9,v 1.7 2004/02/05 14:25:52 jmc Exp $
+.\"     $OpenBSD: file.9,v 1.8 2006/11/08 08:23:33 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -42,9 +42,12 @@
 .Ft struct file *
 .Fn fd_getfile "struct filedesc *fdp" "int fd"
 .Ft int
-.Fn getvnode "struct filedesc *fdp" "int fd" "struct file **fpp"
-.Ft int
 .Fn getsock "struct filedesc *fdp" "int fd" "struct file **fpp"
+.Fd #include <sys/file.h>
+.Fd #include <sys/filedesc.h>
+.Fd #include <sys/vnode.h>
+.Ft int
+.Fn getvnode "struct filedesc *fdp" "int fd" "struct file **fpp"
 .Sh DESCRIPTION
 These functions provide the interface for the UNIX file descriptors.
 File descriptors can be used to access vnodes (see
