@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.66 2006/10/24 13:15:34 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.67 2006/11/08 22:05:52 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -33,18 +33,24 @@
 #define L_HEAD_DESCR	0x02
 #define L_NAME		0x04
 #define L_NOTAGS	0x08
+#define L_LOGINS	0x10
+#define L_STATES	0x20
 
 void	cvs_log_local(struct cvs_file *);
 
+static void	log_rev_print(struct rcs_delta *);
+
 int	 runflags = 0;
 char 	*logrev = NULL;
+char	*slist = NULL;
+char	*wlist = NULL;
 
 struct cvs_cmd cvs_cmd_log = {
 	CVS_OP_LOG, 0, "log",
 	{ "lo" },
 	"Print out history information for files",
 	"[-bhlNRt] [-d dates] [-r revisions] [-s states] [-w logins]",
-	"bd:hlNRr:s:tw:",
+	"bd:hlNRr:s:tw::",
 	NULL,
 	cvs_getlog
 };
@@ -76,8 +82,16 @@ cvs_getlog(int argc, char **argv)
 		case 'r':
 			logrev = optarg;
 			break;
+		case 's':
+			runflags |= L_STATES;
+			slist = optarg;
+			break;
 		case 't':
 			runflags |= L_HEAD_DESCR;
+			break;
+		case 'w':
+			runflags |= L_LOGINS;
+			wlist = optarg;
 			break;
 		default:
 			fatal("%s", cvs_cmd_log.cmd_synopsis);
@@ -108,8 +122,14 @@ cvs_getlog(int argc, char **argv)
 		if (logrev != NULL)
 			cvs_client_send_request("Argument -r%s", logrev);
 
+		if (runflags & L_STATES)
+			cvs_client_send_request("Argument -s%s", slist);
+
 		if (runflags & L_HEAD_DESCR)
 			cvs_client_send_request("Argument -t");
+
+		if (runflags & L_LOGINS)
+			cvs_client_send_request("Argument -w%s", wlist);
 	} else {
 		cr.fileproc = cvs_log_local;
 	}
@@ -139,7 +159,7 @@ cvs_log_local(struct cvs_file *cf)
 	struct rcs_lock *lkp;
 	struct rcs_delta *rdp;
 	struct rcs_access *acp;
-	char numb[32], timeb[32];
+	char numb[32];
 
 	cvs_log(LP_TRACE, "cvs_log_local(%s)", cf->file_path);
 
@@ -220,22 +240,64 @@ cvs_log_local(struct cvs_file *cf)
 
 	if (!(runflags & L_HEAD) && !(runflags & L_HEAD_DESCR)) {
 		TAILQ_FOREACH(rdp, &(cf->file_rcs->rf_delta), rd_list) {
-			if (logrev != NULL &&
-			    !(rdp->rd_flags & RCS_RD_SELECT))
-				continue;
-
-			cvs_printf("%s\n", LOG_REVSEP);
-
-			rcsnum_tostr(rdp->rd_num, numb, sizeof(numb));
-			cvs_printf("revision %s", numb);
-
-			strftime(timeb, sizeof(timeb), "%Y/%m/%d %H:%M:%S",
-			    &rdp->rd_date);
-			cvs_printf("\ndate: %s;  author: %s;  state: %s;\n",
-			    timeb, rdp->rd_author, rdp->rd_state);
-			cvs_printf("%s", rdp->rd_log);
+			/*
+			 * if selections are enabled verify that entry is
+			 * selected.
+			 */
+			if (logrev == NULL || (rdp->rd_flags & RCS_RD_SELECT))
+				log_rev_print(rdp);
 		}
 	}
 
 	cvs_printf("%s\n", LOG_REVEND);
+}
+
+static void
+log_rev_print(struct rcs_delta *rdp)
+{
+	int i, found;
+	char numb[32], timeb[32];
+	struct cvs_argvector *sargv, *wargv;
+
+	i = found = 0;
+
+	/* -s states */
+	if (runflags & L_STATES) {
+		sargv = cvs_strsplit(slist, ",");
+		for (i = 0; sargv->argv[i] != NULL; i++) {
+			if (strcmp(rdp->rd_state, sargv->argv[i]) == 0) {
+				found++;
+				break;
+			}
+			found = 0;
+		}
+		cvs_argv_destroy(sargv);
+	}
+
+	/* -w[logins] */
+	if (runflags & L_LOGINS) {
+		wargv = cvs_strsplit(wlist, ",");
+		for (i = 0; wargv->argv[i] != NULL; i++) {
+			if (strcmp(rdp->rd_author, wargv->argv[i]) == 0) {
+				found++;
+				break;
+			}
+			found = 0;
+		}
+		cvs_argv_destroy(wargv);
+	}
+
+	if ((((runflags & L_STATES) && (runflags & L_LOGINS)) ||
+	    (runflags & (L_STATES | L_LOGINS))) && found == 0)
+		return;
+
+	cvs_printf("%s\n", LOG_REVSEP);
+
+	rcsnum_tostr(rdp->rd_num, numb, sizeof(numb));
+	cvs_printf("revision %s", numb);
+
+	strftime(timeb, sizeof(timeb), "%Y/%m/%d %H:%M:%S", &rdp->rd_date);
+	cvs_printf("\ndate: %s;  author: %s;  state: %s;\n",
+	    timeb, rdp->rd_author, rdp->rd_state);
+	cvs_printf("%s", rdp->rd_log);
 }
