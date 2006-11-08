@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.15 2006/10/31 15:23:40 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.16 2006/11/08 20:20:42 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -90,10 +90,21 @@ struct cvs_req cvs_requests[] = {
 	{ "",				-1,	NULL, 0 }
 };
 
-static void client_check_directory(char *);
-static char *client_get_supported_responses(void);
-static char *lastdir = NULL;
-static int end_of_response = 0;
+static void	 client_check_directory(char *);
+static char	*client_get_supported_responses(void);
+static char	*lastdir = NULL;
+static int	 end_of_response = 0;
+
+static void	cvs_client_initlog(void);
+
+/*
+ * File descriptors for protocol logging when the CVS_CLIENT_LOG environment
+ * variable is set.
+ */
+static int	cvs_client_logon = 0;
+static int	cvs_client_inlog_fd = -1;
+static int	cvs_client_outlog_fd = -1;
+
 
 static char *
 client_get_supported_responses(void)
@@ -223,6 +234,8 @@ cvs_client_connect_to_server(void)
 	setvbuf(current_cvsroot->cr_srvin, NULL,_IOLBF, 0);
 	setvbuf(current_cvsroot->cr_srvout, NULL, _IOLBF, 0);
 
+	cvs_client_initlog();
+
 	cvs_client_send_request("Root %s", current_cvsroot->cr_dir);
 
 	resp = client_get_supported_responses();
@@ -266,6 +279,23 @@ cvs_client_send_request(char *fmt, ...)
 		*s = ' ';
 
 	cvs_log(LP_TRACE, "%s", data);
+
+	if (cvs_client_inlog_fd != -1) {
+		BUF *bp;
+
+		bp = cvs_buf_alloc(strlen(data), BUF_AUTOEXT);
+
+		if (cvs_buf_append(bp, data, strlen(data)) < 0)
+			fatal("cvs_client_send_request: cvs_buf_append");
+
+		cvs_buf_putc(bp, '\n');
+
+		if (cvs_buf_write_fd(bp, cvs_client_inlog_fd) < 0)
+			fatal("cvs_client_send_request: cvs_buf_write_fd");
+
+		cvs_buf_free(bp);
+	}
+
 	cvs_remote_output(data);
 	xfree(data);
 }
@@ -287,7 +317,36 @@ cvs_client_read_response(void)
 	if (resp->hdlr == NULL)
 		fatal("opencvs client does not support '%s'", cmd);
 
+	if (cvs_client_outlog_fd != -1) {
+		BUF *bp;
+
+		bp = cvs_buf_alloc(strlen(cmd), BUF_AUTOEXT);
+
+		if (cvs_buf_append(bp, cmd, strlen(cmd)) < 0)
+			fatal("cvs_client_read_response: cvs_buf_append");
+
+		if (cvs_buf_append(bp,
+		    (data == NULL) ? "" : " ",
+		    (data == NULL) ? 0 : 1) < 0) {
+			fatal("cvs_client_read_response: cvs_buf_append");
+		}
+
+		if (cvs_buf_append(bp,
+		    (data == NULL) ? "" : data,
+		    (data == NULL) ? 0 : strlen(data)) < 0) {
+			fatal("cvs_client_read_response: cvs_buf_append");
+		}
+
+		cvs_buf_putc(bp, '\n');
+
+		if (cvs_buf_write_fd(bp, cvs_client_outlog_fd) < 0)
+			fatal("cvs_client_read_response: cvs_buf_write_fd");
+
+		cvs_buf_free(bp);
+	}
+
 	(*resp->hdlr)(data);
+
 	xfree(cmd);
 }
 
@@ -611,4 +670,129 @@ cvs_client_remove_entry(char *data)
 
 	dir = cvs_remote_input();
 	xfree(dir);
+}
+/*
+ * cvs_client_initlog()
+ *
+ * Initialize protocol logging if the CVS_CLIENT_LOG environment variable is
+ * set.  In this case, the variable's value is used as a path to which the
+ * appropriate suffix is added (".in" for client input and ".out" for server
+ * output).
+ */
+static void
+cvs_client_initlog(void)
+{
+	int l;
+	u_int i;
+	char *env, *envdup, buf[MAXPATHLEN], fpath[MAXPATHLEN];
+	char rpath[MAXPATHLEN], *s;
+	struct stat st;
+	time_t now;
+	struct passwd *pwd;
+
+	/* avoid doing it more than once */
+	if (cvs_client_logon)
+		return;
+
+	if ((env = getenv("CVS_CLIENT_LOG")) == NULL)
+		return;
+
+	envdup = xstrdup(env);
+	if ((s = strchr(envdup, '%')) != NULL)
+		*s = '\0';
+
+	if (strlcpy(buf, env, sizeof(buf)) >= sizeof(buf))
+		fatal("cvs_client_initlog: truncation");
+
+	if (strlcpy(rpath, envdup, sizeof(rpath)) >= sizeof(rpath))
+		fatal("cvs_client_initlog: truncation");
+
+	xfree(envdup);
+
+	s = buf;
+	while ((s = strchr(s, '%')) != NULL) {
+		s++;
+		switch (*s) {
+		case 'c':
+			if (strlcpy(fpath, cvs_command, sizeof(fpath)) >=
+			    sizeof(fpath))
+				fatal("cvs_client_initlog: truncation");
+			break;
+		case 'd':
+			time(&now);
+			if (strlcpy(fpath, ctime(&now), sizeof(fpath)) >=
+			    sizeof(fpath))
+				fatal("cvs_client_initlog: truncation");
+			break;
+		case 'p':
+			snprintf(fpath, sizeof(fpath), "%d", getpid());
+			break;
+		case 'u':
+			if ((pwd = getpwuid(getuid())) != NULL) {
+				if (strlcpy(fpath, pwd->pw_name,
+				    sizeof(fpath)) >= sizeof(fpath))
+					fatal("cvs_client_initlog: truncation");
+			} else {
+				fpath[0] = '\0';
+			}
+			endpwent();
+			break;
+		default:
+			fpath[0] = '\0';
+			break;
+		}
+
+		if (fpath[0] != '\0') {
+			if (strlcat(rpath, "-", sizeof(rpath)) >= sizeof(rpath))
+				fatal("cvs_client_initlog: truncation");
+
+			if (strlcat(rpath, fpath, sizeof(rpath))
+			    >= sizeof(rpath))
+				fatal("cvs_client_initlog: truncation");
+		}
+	}
+
+	for (i = 0; i < UINT_MAX; i++) {
+		l = snprintf(fpath, sizeof(fpath), "%s-%d.in", rpath, i);
+		if (l == -1 || l >= (int)sizeof(fpath))
+			fatal("cvs_client_initlog: overflow");
+
+		if (stat(fpath, &st) != -1)
+			continue;
+
+		if (errno != ENOENT)
+			fatal("cvs_client_initlog() stat failed '%s'",
+			    strerror(errno));
+
+		break;
+	}
+
+	if ((cvs_client_inlog_fd = open(fpath,
+	    O_RDWR | O_CREAT | O_TRUNC, 0644)) == NULL) {
+		fatal("cvs_client_initlog: open `%s': %s",
+		    fpath, strerror(errno));
+	}
+
+	for (i = 0; i < UINT_MAX; i++) {
+		l = snprintf(fpath, sizeof(fpath), "%s-%d.out", rpath, i);
+		if (l == -1 || l >= (int)sizeof(fpath))
+			fatal("cvs_client_initlog: overflow");
+
+		if (stat(fpath, &st) != -1)
+			continue;
+
+		if (errno != ENOENT)
+			fatal("cvs_client_initlog() stat failed '%s'",
+			    strerror(errno));
+
+		break;
+	}
+
+	if ((cvs_client_outlog_fd = open(fpath, 
+	    O_RDWR | O_CREAT | O_TRUNC, 0644)) == NULL) {
+		fatal("cvs_client_initlog: open `%s': %s",
+		    fpath, strerror(errno));
+	}
+
+	cvs_client_logon = 1;
 }
