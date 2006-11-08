@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 2006/11/08 18:08:16 deraadt Exp $
+#	$OpenBSD: install.md,v 1.3 2006/11/08 23:55:05 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ md_prep_fdisk() {
 	ask_yn "Do you want to use *all* of $_disk for OpenBSD?"
 	if [[ $resp == y ]]; then
 		echo -n "Putting all of $_disk into an active OpenBSD MBR partition (type 'A6')..."
-		fdisk -e ${_disk} <<__EOT >/dev/null
+		fdisk -f /usr/mdec/mbr -e ${_disk} <<__EOT >/dev/null
 reinit
 update
 write
@@ -100,7 +100,7 @@ The 'manual' command describes all the fdisk commands in detail.
 
 $(fdisk ${_disk})
 __EOT
-	fdisk -e ${_disk}
+	fdisk -f /usr/mdec/mbr -e ${_disk}
 
 	cat <<__EOT
 Here is the partition information you chose:
