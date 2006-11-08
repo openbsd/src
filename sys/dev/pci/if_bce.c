@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.13 2006/05/28 00:04:24 jason Exp $ */
+/* $OpenBSD: if_bce.c,v 1.14 2006/11/08 01:32:00 brad Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -95,6 +95,8 @@ struct rx_pph {
 	u_int16_t flags;
 	u_int16_t pad[12];
 };
+
+#define	BCE_PREPKT_HEADER_SIZE		30
 
 /* packet status flags bits */
 #define RXF_NO				0x8	/* odd number of nibbles */
@@ -401,17 +403,17 @@ bce_attach(parent, self, aux)
 
 	/* MAC address */
 	sc->bce_ac.ac_enaddr[0] =
-	    bus_space_read_1(sc->bce_btag, sc->bce_bhandle, BCE_MAGIC_ENET0);
+	    bus_space_read_1(sc->bce_btag, sc->bce_bhandle, BCE_ENET0);
 	sc->bce_ac.ac_enaddr[1] =
-	    bus_space_read_1(sc->bce_btag, sc->bce_bhandle, BCE_MAGIC_ENET1);
+	    bus_space_read_1(sc->bce_btag, sc->bce_bhandle, BCE_ENET1);
 	sc->bce_ac.ac_enaddr[2] =
-	    bus_space_read_1(sc->bce_btag, sc->bce_bhandle, BCE_MAGIC_ENET2);
+	    bus_space_read_1(sc->bce_btag, sc->bce_bhandle, BCE_ENET2);
 	sc->bce_ac.ac_enaddr[3] =
-	    bus_space_read_1(sc->bce_btag, sc->bce_bhandle, BCE_MAGIC_ENET3);
+	    bus_space_read_1(sc->bce_btag, sc->bce_bhandle, BCE_ENET3);
 	sc->bce_ac.ac_enaddr[4] =
-	    bus_space_read_1(sc->bce_btag, sc->bce_bhandle, BCE_MAGIC_ENET4);
+	    bus_space_read_1(sc->bce_btag, sc->bce_bhandle, BCE_ENET4);
 	sc->bce_ac.ac_enaddr[5] =
-	    bus_space_read_1(sc->bce_btag, sc->bce_bhandle, BCE_MAGIC_ENET5);
+	    bus_space_read_1(sc->bce_btag, sc->bce_bhandle, BCE_ENET5);
 	printf(": %s, address %s\n", intrstr,
 	    ether_sprintf(sc->bce_ac.ac_enaddr));
 
@@ -432,7 +434,7 @@ bce_attach(parent, self, aux)
 		ifmedia_set(&sc->bce_mii.mii_media, IFM_ETHER | IFM_AUTO);
 	/* get the phy */
 	sc->bce_phy = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
-	    BCE_MAGIC_PHY) & 0x1f;
+	    BCE_PHY) & 0x1f;
 	/*
 	 * Enable activity led.
 	 * XXX This should be in a phy driver, but not currently.
@@ -801,7 +803,8 @@ bce_rxintr(sc)
 		pph->len = 0;
 		pph->flags = 0;
 		/* bump past pre header to packet */
-		sc->bce_cdata.bce_rx_chain[i]->m_data += 30;	/* MAGIC */
+		sc->bce_cdata.bce_rx_chain[i]->m_data +=
+			BCE_PREPKT_HEADER_SIZE;
 
  		/*
 		 * The chip includes the CRC with every packet.  Trim
@@ -827,14 +830,16 @@ bce_rxintr(sc)
 			m->m_data += 2;
 			memcpy(mtod(m, caddr_t),
 			 mtod(sc->bce_cdata.bce_rx_chain[i], caddr_t), len);
-			sc->bce_cdata.bce_rx_chain[i]->m_data -= 30;	/* MAGIC */
+			sc->bce_cdata.bce_rx_chain[i]->m_data -=
+				BCE_PREPKT_HEADER_SIZE;
 		} else {
 			m = sc->bce_cdata.bce_rx_chain[i];
 			if (bce_add_rxbuf(sc, i) != 0) {
 		dropit:
 				ifp->if_ierrors++;
 				/* continue to use old buffer */
-				sc->bce_cdata.bce_rx_chain[i]->m_data -= 30;
+				sc->bce_cdata.bce_rx_chain[i]->m_data -=
+					BCE_PREPKT_HEADER_SIZE;
 				bus_dmamap_sync(sc->bce_dmatag,
 				    sc->bce_cdata.bce_rx_map[i], 0,
 				    sc->bce_cdata.bce_rx_map[i]->dm_mapsize,
@@ -999,7 +1004,7 @@ bce_init(ifp)
 	memset(sc->bce_rx_ring, 0, BCE_NRXDESC * sizeof(struct bce_dma_slot));
 	/* enable receive */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXCTL,
-	    30 << 1 | 1);	/* MAGIC */
+	    BCE_PREPKT_HEADER_SIZE << 1 | XC_XE);
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXADDR,
 	    sc->bce_ring_map->dm_segs[0].ds_addr + 0x40000000);		/* MAGIC */
 
@@ -1327,9 +1332,9 @@ bce_reset(sc)
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATEHI,
 		    0);
 	val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_SBIMSTATE);
-	if (val & SBIM_MAGIC_ERRORBITS)
+	if (val & SBIM_ERRORBITS)
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBIMSTATE,
-		    val & ~SBIM_MAGIC_ERRORBITS);
+		    val & ~SBIM_ERRORBITS);
 
 	/* clear reset and allow it to propagate throughout the core */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATELOW,
