@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.14 2006/06/14 19:30:44 brad Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.15 2006/11/09 14:25:23 reyk Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -115,7 +115,41 @@ __KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/pci/if_pcnreg.h>
+/*
+ * Register definitions for the AMD PCnet-PCI series of Ethernet
+ * chips.
+ *
+ * These are only the registers that we access directly from PCI
+ * space.  Everything else (accessed via the RAP + RDP/BDP) is
+ * defined in <dev/ic/lancereg.h>.
+ */
+
+/*
+ * PCI configuration space.
+ */
+
+#define	PCN_PCI_CBIO	(PCI_MAPREG_START + 0x00)
+#define	PCN_PCI_CBMEM	(PCI_MAPREG_START + 0x04)
+
+/*
+ * I/O map in Word I/O mode.
+ */
+
+#define	PCN16_APROM	0x00
+#define	PCN16_RDP	0x10
+#define	PCN16_RAP	0x12
+#define	PCN16_RESET	0x14
+#define	PCN16_BDP	0x16
+
+/*
+ * I/O map in DWord I/O mode.
+ */
+
+#define	PCN32_APROM	0x00
+#define	PCN32_RDP	0x10
+#define	PCN32_RAP	0x14
+#define	PCN32_RESET	0x18
+#define	PCN32_BDP	0x1c
 
 /*
  * Transmit descriptor list size.  This is arbitrary, but allocate
