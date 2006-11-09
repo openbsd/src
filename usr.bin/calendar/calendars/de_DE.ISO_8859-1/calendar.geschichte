@@ -13,7 +13,7 @@
  *
  * ISBN 3-924521-59-X
  *
- * $OpenBSD: calendar.geschichte,v 1.5 2006/06/27 11:32:22 mickey Exp $
+ * $OpenBSD: calendar.geschichte,v 1.6 2006/11/09 14:59:35 mickey Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_geschichte_
@@ -165,6 +165,7 @@ LANG=de_DE.ISO_8859-1
 07/29	Mussolini geboren, 1883
 
 /* Sozialismus */
+01/19	Markus Johannes Wolf geboren, 1923
 01/21	Lenin gestorben, 1924
 06	Gründung des Bundes der Kommunisten in London durch Marx+Engels, 1847
 05/23	Gründung des Allgemeinen Deutschen Arbeitervereins in Leipzig
@@ -184,13 +185,14 @@ LANG=de_DE.ISO_8859-1
 06/25	Beginn des Korea-Krieges, 1950
 08/13	Bau der Berliner Mauer, 1961
 08/21	Einmarsch des Warschauer Pakts in die Tschechoslowakei, 1968
+09/09	Mao Tse-Tung gestorben im Alter von 82 Jahren, 1976
 10/03	Offizielles Ende der DDR, 1990 :-)
 10/07	Gründung der DDR 1949
 10/09	Massendemonstration in Leipzig, 1989
+10/09	Markus "Mischa" Wolf died, 2006
 10/14	Kuba-Krise, 1962
 10/18	Ablösung von Erich Honecker als SED-Generalsekretär, 1989
 11/09	Fall der Berliner Mauer, 1989
-09/09	Mao Tse-Tung gestorben im Alter von 82 Jahren, 1976
 11/10	Sowjetischer Präsident Leonid Breschnew gestorben, Alter 75, 1982
 03/27	Chruschtschow wird sowjetischer Präsident, 1958
 10/12	Chruschtschow schlägt während einer Rede in der UNO mit den
