@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.31 2006/10/31 15:23:40 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.32 2006/11/09 09:24:28 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -439,6 +439,17 @@ cvs_server_log(char *data)
 		fatal("cvs_server_log: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_LOG;
+	cvs_getlog(server_argc, server_argv);
+	cvs_server_send_response("ok");
+}
+
+void
+cvs_server_tag(char *data)
+{
+	if (chdir(server_currentdir) == -1)
+		fatal("cvs_server_tag: %s", strerror(errno));
+
+	cvs_cmdop = CVS_OP_TAG;
 	cvs_getlog(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }

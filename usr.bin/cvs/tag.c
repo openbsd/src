@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.49 2006/07/02 21:11:54 reyk Exp $	*/
+/*	$OpenBSD: tag.c,v 1.50 2006/11/09 09:24:28 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -19,6 +19,7 @@
 
 #include "cvs.h"
 #include "log.h"
+#include "remote.h"
 
 int	cvs_tag(int, char **);
 void	cvs_tag_local(struct cvs_file *);
@@ -26,8 +27,8 @@ void	cvs_tag_local(struct cvs_file *);
 static int tag_del(struct cvs_file *);
 static int tag_add(struct cvs_file *);
 
-static int	tag_delete = 0;
-static int	tag_force_move = 0;
+static int	 tag_delete = 0;
+static int	 tag_force_move = 0;
 static char	*tag = NULL;
 static char	*tag_date = NULL;
 static char	*tag_name = NULL;
@@ -109,13 +110,40 @@ cvs_tag(int argc, char **argv)
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
-	cr.fileproc = cvs_tag_local;
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cr.fileproc = cvs_client_sendfile;
+
+		if (tag_delete == 1)
+			cvs_client_send_request("Argument -d");
+
+		if (tag_force_move == 1)
+			cvs_client_send_request("Argument -F");
+
+		if (!(flags & CR_RECURSE_DIRS))
+			cvs_client_send_request("Argument -l");
+
+		if (tag_oldname != NULL)
+			cvs_client_send_request("Argument -r%s", tag_oldname);
+
+		cvs_client_send_request("Argument %s", tag_name);
+	} else {
+		cr.fileproc = cvs_tag_local;
+	}
+
 	cr.flags = flags;
 
 	if (argc > 0)
 		cvs_file_run(argc, argv, &cr);
 	else
 		cvs_file_run(1, &arg, &cr);
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_send_files(argv, argc);
+		cvs_client_senddir(".");
+		cvs_client_send_request("tag");
+		cvs_client_get_responses();
+	}
 
 	return (0);
 }
