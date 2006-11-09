@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.6 2006/11/09 22:31:41 deraadt Exp $
+#	$OpenBSD: install.md,v 1.7 2006/11/09 23:00:29 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -79,8 +79,8 @@ md_prep_fdisk() {
 	ask_yn "Do you want to use *all* of $_disk for OpenBSD?"
 	if [[ $resp == y ]]; then
 		echo -n "Putting all of $_disk into an active OpenBSD MBR partition (type 'A6')..."
-		dd if=/dev/zero bs=32k count=1 of=/dev/r${_disk}c
-		disklabel -c ${_disk}
+		dd if=/dev/zero bs=32k count=1 of=/dev/r${_disk}c >/dev/null 2&1
+		disklabel -c ${_disk} >/dev/null 2&1
 		fdisk -e ${_disk} <<__EOT >/dev/null
 reinit
 update
