@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.17 2006/11/09 09:24:28 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.18 2006/11/09 14:00:14 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -236,7 +236,8 @@ cvs_client_connect_to_server(void)
 
 	cvs_client_initlog();
 
-	cvs_client_send_request("Root %s", current_cvsroot->cr_dir);
+	if (cvs_cmdop != CVS_OP_INIT)
+		cvs_client_send_request("Root %s", current_cvsroot->cr_dir);
 
 	resp = client_get_supported_responses();
 	cvs_client_send_request("Valid-responses %s", resp);
