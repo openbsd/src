@@ -1,10 +1,13 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.70 2006/03/28 19:22:56 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.71 2006/11/09 21:31:12 millert Exp $
 #
 # Build wrapper for Perl 5.8.6
 #
 
 # For ``NOMAN'' and ``USE_GCC3''
 .include <bsd.own.mk>
+
+# There is no point in building a profiled libperl that is never used.
+NOPROFILE=
 
 # To build a threaded perl, uncomment this.  Not stable on all platforms...
 #THREADED_PERL=true
