@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.33 2006/11/09 18:29:19 reyk Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.34 2006/11/09 18:31:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -316,7 +316,7 @@ void		vic_write(struct vic_softc *, bus_size_t, u_int32_t);
 
 u_int32_t	vic_read_cmd(struct vic_softc *, u_int32_t);
 
-int 		vic_alloc_dmamem(struct vic_softc *);
+int		vic_alloc_dmamem(struct vic_softc *);
 void		vic_free_dmamem(struct vic_softc *);
 
 void		vic_link_state(struct vic_softc *);
@@ -426,7 +426,7 @@ vic_map_pci(struct vic_softc *sc, struct pci_attach_args *pa)
 	if (pci_mapreg_map(pa, VIC_PCI_BAR, memtype, 0, &sc->sc_iot,
 	    &sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
 		printf(": unable to map system interface register\n");
-		return(1);
+		return (1);
 	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
@@ -1201,9 +1201,9 @@ vic_init(struct ifnet *ifp)
 	sc->sc_data->vd_rx_nextidx = 0;
 	sc->sc_data->vd_rx_nextidx2 = 0;
 
-        sc->sc_data->vd_rx_saved_nextidx = 0;
-        sc->sc_data->vd_rx_saved_nextidx2 = 0;
-        sc->sc_data->vd_tx_saved_nextidx = 0;
+	sc->sc_data->vd_rx_saved_nextidx = 0;
+	sc->sc_data->vd_rx_saved_nextidx2 = 0;
+	sc->sc_data->vd_tx_saved_nextidx = 0;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
