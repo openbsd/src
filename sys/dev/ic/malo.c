@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.19 2006/11/07 21:39:32 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.20 2006/11/09 10:25:12 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -511,7 +511,7 @@ malo_send_cmd(struct malo_softc *sc, bus_addr_t addr, uint32_t waitfor)
 	/* wait for the DMA engine to finish the transfer */
 	for (i = 0; i < 100; i++) {
 		delay(50);
-		if (malo_ctl_read4(sc, 0x0c14) == waitfor);
+		if (malo_ctl_read4(sc, 0x0c14) == waitfor)
 			break;
 	}
 
@@ -1543,7 +1543,7 @@ malo_load_firmware(struct malo_softc *sc)
 	void *data;
 	uint8_t *ucode;
 	size_t size, count, bsize;
-	int sn, error;
+	int i, sn, error;
 
 	/* load real firmware now */
 	if ((error = loadfirmware(name, &ucode, &size)) != 0) {
@@ -1552,7 +1552,8 @@ malo_load_firmware(struct malo_softc *sc)
 		return (EIO);
 	}
 
-	DPRINTF(("%s: loading firmware\n", sc->sc_dev.dv_xname));
+	DPRINTF(("%s: uploading firmware\n", sc->sc_dev.dv_xname));
+
 	hdr = sc->sc_cmd_mem;
 	data = hdr + 1;
 	sn = 1;
@@ -1580,7 +1581,11 @@ malo_load_firmware(struct malo_softc *sc)
 	free(ucode, M_DEVBUF);
 
 	DPRINTF(("%s: firmware upload finished\n", sc->sc_dev.dv_xname));
-	
+
+	/*
+	 * send a command with size 0 to tell that the firmware has been
+	 * uploaded
+	 */
 	hdr->cmd = htole16(0x0001);
 	hdr->size = 0;
 	hdr->seqnum = htole16(sn++);
@@ -1588,13 +1593,25 @@ malo_load_firmware(struct malo_softc *sc)
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
-	if (malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0xf0f1f2f4) != 0) {
+	if (malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 5) != 0) {
+		printf("%s: timeout at sending firmware upload ACK\n");
+		return (ETIMEDOUT);
+	}
+
+	DPRINTF(("%s: loading firmware\n", sc->sc_dev.dv_xname));
+
+	/* wait until firmware has been loaded */
+	for (i = 0; i < 200; i++) {
+		malo_ctl_write4(sc, 0x0c10, 0x5a);
+		delay(500);
+		if (malo_ctl_read4(sc, 0x0c14) == 0xf0f1f2f4)
+			break;
+	}
+	if (i == 200) {
 		printf("%s: timeout at firmware load!\n", sc->sc_dev.dv_xname);
 		return (ETIMEDOUT);
 	}
 
-	/* give card a bit time to load firmware */
-	delay(20000);
 	DPRINTF(("%s: firmware loaded\n", sc->sc_dev.dv_xname));
 
 	return (0);
