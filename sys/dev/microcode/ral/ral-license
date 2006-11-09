@@ -16,3 +16,5 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 The following files are under the above license:
 
 	ral-rt2561 ral-rt2561s ral-rt2661
+
+These files are required for second generation PCI/CardBus devices.
