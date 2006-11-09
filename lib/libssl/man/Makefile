@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2006/05/12 11:16:58 fkr Exp $
+# $OpenBSD: Makefile,v 1.11 2006/11/09 09:45:17 markus Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -65,6 +65,7 @@ MANALL=	\
 	MD5.cat3 \
 	OPENSSL_VERSION_NUMBER.cat3 \
 	OpenSSL_add_all_algorithms.cat3 \
+	PEM_read_bio_PrivateKey.cat3 \
 	RAND_add.cat3 \
 	RAND_bytes.cat3 \
 	RAND_cleanup.cat3 \
@@ -231,15 +232,16 @@ PSALL=	${MANALL:S/.cat1/.ps1/g:S/.cat2/.ps2/g:S/.cat3/.ps3/g:S/.cat4/.ps4/g:S/.c
 # des_enc_read, des_enc_write
 
 .for page src in \
+	BF_set_key blowfish \
 	BUF_MEM_new buffer \
-	RC4 rc4 \
 	CRYPTO_set_locking_callback threads \
+	HMAC hmac \
+	MD5 md5 \
+	PEM_read_bio_PrivateKey pem \
+	RC4 rc4 \
 	RIPEMD160 ripemd \
 	SHA1 sha \
-	MD5 md5 \
-	HMAC hmac \
-	des_random_key des \
-	BF_set_key blowfish
+	des_random_key des
 
 ${page}.cat3: ${src}.pod
 	${POD2MAN} --section=3 --name=${page:U} ${.ALLSRC} | \
@@ -464,6 +466,71 @@ MLINKS+=\
 	OpenSSL_add_all_algorithms.3 EVP_cleanup.3 \
 	OpenSSL_add_all_algorithms.3 OpenSSL_add_all_ciphers.3 \
 	OpenSSL_add_all_algorithms.3 OpenSSL_add_all_digests.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_DHparams.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_DSAPrivateKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_DSA_PUBKEY.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_DSAparams.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_NETSCAPE_CERT_SEQUENCE.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_PKCS7.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_PUBKEY.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_PrivateKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_RSAPrivateKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_RSAPublicKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_RSA_PUBKEY.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_X509.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_X509_AUX.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_X509_CRL.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_X509_REQ.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_bio_DHparams.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_bio_DSAPrivateKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_bio_DSA_PUBKEY.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_bio_DSAparams.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_bio_NETSCAPE_CERT_SEQUENCE.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_bio_PKCS7.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_bio_PUBKEY.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_bio_RSAPrivateKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_bio_RSAPublicKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_bio_RSA_PUBKEY.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_bio_X509.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_bio_X509_AUX.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_bio_X509_CRL.3 \
+	PEM_read_bio_PrivateKey.3 PEM_read_bio_X509_REQ.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_DHparams.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_DSAPrivateKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_DSA_PUBKEY.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_DSAparams.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_NETSCAPE_CERT_SEQUENCE.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_PKCS7.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_PKCS8PrivateKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_PKCS8PrivateKey_nid.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_PUBKEY.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_PrivateKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_RSAPrivateKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_RSAPublicKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_RSA_PUBKEY.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_X509.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_X509_AUX.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_X509_CRL.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_X509_REQ.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_X509_REQ_NEW.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_DHparams.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_DSAPrivateKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_DSA_PUBKEY.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_DSAparams.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_NETSCAPE_CERT_SEQUENCE.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_PKCS7.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_PKCS8PrivateKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_PKCS8PrivateKey_nid.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_PUBKEY.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_PrivateKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_RSAPrivateKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_RSAPublicKey.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_RSA_PUBKEY.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_X509.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_X509_AUX.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_X509_CRL.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_X509_REQ.3 \
+	PEM_read_bio_PrivateKey.3 PEM_write_bio_X509_REQ_NEW.3 \
 	RAND_add.3 RAND_event.3 \
 	RAND_add.3 RAND_screen.3 \
 	RAND_add.3 RAND_seed.3 \
