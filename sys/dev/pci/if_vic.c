@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.34 2006/11/09 18:31:25 reyk Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.35 2006/11/09 18:50:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -854,7 +854,7 @@ vic_iff(struct vic_softc *sc)
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		goto domulti;
-	if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC))
+	if (ifp->if_flags & IFF_PROMISC)
 		goto allmulti;
 
 	ETHER_FIRST_MULTI(step, ac, enm);
