@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.50 2006/11/09 09:24:28 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.51 2006/11/09 10:08:33 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -21,7 +21,6 @@
 #include "log.h"
 #include "remote.h"
 
-int	cvs_tag(int, char **);
 void	cvs_tag_local(struct cvs_file *);
 
 static int tag_del(struct cvs_file *);
