@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.5 2006/11/09 17:16:22 deraadt Exp $
+#	$OpenBSD: install.md,v 1.6 2006/11/09 22:31:41 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ md_installboot() {
 
 	echo -n "Installing boot block..."
 	disklabel -W ${1}
-	disklabel -B ${1}
+	disklabel -B -b /mnt/usr/mdec/xxboot ${1}
 
 	# use extracted mdec if it exists (may be newer)
 	if [ -d /mnt/usr/mdec ]; then
