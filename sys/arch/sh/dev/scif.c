@@ -1,4 +1,4 @@
-/*	$OpenBSD: scif.c,v 1.2 2006/11/03 20:21:23 mickey Exp $	*/
+/*	$OpenBSD: scif.c,v 1.3 2006/11/09 04:25:38 deraadt Exp $	*/
 /*	$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $ */
 
 /*-
@@ -746,6 +746,13 @@ scifopen(dev_t dev, int flag, int mode, struct proc *p)
 		/* Make sure scifparam() will do something. */
 		tp->t_ospeed = 0;
 		(void) scifparam(tp, &t);
+
+		/*
+		 * XXX landisk has no hardware flow control!
+		 * When porting to another platform, fix this somehow
+		 */
+		SET(tp->t_state, TS_CARR_ON);
+
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_lflag = TTYDEF_LFLAG;
