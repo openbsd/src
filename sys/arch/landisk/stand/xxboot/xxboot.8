@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xxboot.8,v 1.1 2006/11/08 17:46:56 deraadt Exp $
+.\"	$OpenBSD: xxboot.8,v 1.2 2006/11/09 13:08:34 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Michael Shalayeff
 .\" All rights reserved.
@@ -29,11 +29,13 @@ the second-stage
 .Xr boot 8
 program (typically /boot), which in turn will load the kernel.
 .Pp
-To install (or update) your
+To install (or update) the
 .Nm
-program use
+program, use
 .Xr disklabel 8
-utility using -B switch.
+with the
+.Fl B
+switch.
 .Pp
 When
 .Nm
@@ -42,9 +44,6 @@ receives control from the master boot record (MBR) it will print a banner:
 .Dl OpenBSD MBR
 .Pp
 followed by a little twiddler while reading the second-stage boot.
-.Sh DIAGNOSTIC
-.Nm
-will print messages indicating errors as returned from the firmware.
 .Sh FILES
 .Bl -tag -width /usr/mdec/xxboot -compact
 .It Pa /usr/mdec/mbr
@@ -60,6 +59,9 @@ kernel
 .Ox
 kernel for installation/recovery
 .El
+.Sh DIAGNOSTICS
+.Nm
+will print messages indicating errors as returned from the firmware.
 .Sh SEE ALSO
 .Xr boot 8 ,
 .Xr boot_landisk 8 ,
