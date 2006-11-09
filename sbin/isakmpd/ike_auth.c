@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.107 2006/06/10 21:09:45 msf Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.108 2006/11/09 09:43:35 markus Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -1146,6 +1146,10 @@ get_raw_key_from_file(int type, u_int8_t *id, size_t id_len, RSA **rsa)
 	keyfp = monitor_fopen(filename, "r");
 	if (keyfp) {
 		*rsa = PEM_read_RSA_PUBKEY(keyfp, NULL, NULL, NULL);
+		if (!*rsa) {
+			rewind(keyfp);
+			*rsa = PEM_read_RSAPublicKey(keyfp, NULL, NULL, NULL);
+		}
 		if (!*rsa)
 			log_print("get_raw_key_from_file: failed to get "
 			    "public key %s", filename);
