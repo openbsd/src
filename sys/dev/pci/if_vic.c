@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.32 2006/11/06 07:31:54 reyk Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.33 2006/11/09 18:29:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -322,7 +322,7 @@ void		vic_free_dmamem(struct vic_softc *);
 void		vic_link_state(struct vic_softc *);
 void		vic_rx_proc(struct vic_softc *);
 void		vic_tx_proc(struct vic_softc *);
-void		vic_iff(struct vic_softc *, u_int);
+void		vic_iff(struct vic_softc *);
 void		vic_getlladdr(struct vic_softc *);
 void		vic_setlladdr(struct vic_softc *);
 int		vic_media_change(struct ifnet *);
@@ -840,19 +840,51 @@ vic_tx_proc(struct vic_softc *sc)
 }
 
 void
-vic_iff(struct vic_softc *sc, u_int flags)
+vic_iff(struct vic_softc *sc)
 {
-	/* XXX ALLMULTI */
+	struct arpcom *ac = &sc->sc_ac;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	u_int32_t crc;
+	u_int flags = 0;
+
+	bzero(&sc->sc_data->vd_mcastfil, sizeof(sc->sc_data->vd_mcastfil));
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		goto domulti;
+	if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC))
+		goto allmulti;
+
+	ETHER_FIRST_MULTI(step, ac, enm);
+	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN))
+			goto allmulti;
+
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+		crc >>= 26;
+		sc->sc_data->vd_mcastfil[crc >> 4] |= htole16(1 << (crc & 0xf));
+
+		ETHER_NEXT_MULTI(step, enm);
+	}
+
+	goto domulti;
+
+ allmulti:
+	ifp->if_flags |= IFF_ALLMULTI;
 	memset(&sc->sc_data->vd_mcastfil, 0xff,
 	    sizeof(sc->sc_data->vd_mcastfil));
-	sc->sc_data->vd_iff = flags;
 
-/*
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_map, 0,
-	    sizeof(struct vic_data), BUS_DMASYNC_POSTWRITE);
-*/
-
+ domulti:
 	vic_write(sc, VIC_CMD, VIC_CMD_MCASTFIL);
+
+	if (ifp->if_flags & IFF_RUNNING) {
+		flags = (ifp->if_flags & IFF_PROMISC) ?
+		    VIC_CMD_IFF_PROMISC :
+		    (VIC_CMD_IFF_BROADCAST | VIC_CMD_IFF_MULTICAST);
+	}
+	sc->sc_data->vd_iff = flags;
 	vic_write(sc, VIC_CMD, VIC_CMD_IFF);
 }
 
@@ -1101,7 +1133,9 @@ vic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if ((ifp->if_flags & IFF_RUNNING) == 0)
+			if (ifp->if_flags & IFF_RUNNING)
+				vic_iff(sc);
+			else
 				vic_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
@@ -1123,8 +1157,11 @@ vic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    ether_addmulti(ifr, &sc->sc_ac) :
 		    ether_delmulti(ifr, &sc->sc_ac);
 
-		if (error == ENETRESET)
+		if (error == ENETRESET) {
+			if (ifp->if_flags & IFF_RUNNING)
+				vic_iff(sc);
 			error = 0;
+		}
 		break;
 
 	case SIOCGIFMEDIA:
@@ -1176,14 +1213,10 @@ vic_init(struct ifnet *ifp)
 	vic_write(sc, VIC_DATA_ADDR, VIC_DMA_DVA(sc));
 	vic_write(sc, VIC_DATA_LENGTH, sc->sc_dma_size);
 
-	if (ifp->if_flags & IFF_PROMISC)
-		vic_iff(sc, VIC_CMD_IFF_PROMISC);
-	else
-		vic_iff(sc, VIC_CMD_IFF_BROADCAST | VIC_CMD_IFF_MULTICAST);
-
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
+	vic_iff(sc);
 	vic_write(sc, VIC_CMD, VIC_CMD_INTR_ENABLE);
 
 	splx(s);
@@ -1217,7 +1250,7 @@ vic_stop(struct ifnet *ifp)
 
 	vic_write(sc, VIC_CMD, VIC_CMD_INTR_DISABLE);
 
-	vic_iff(sc, 0);
+	vic_iff(sc);
 	vic_write(sc, VIC_DATA_ADDR, 0);
 
 	vic_uninit_data(sc);
