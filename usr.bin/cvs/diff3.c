@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.27 2006/10/24 06:22:53 ray Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.28 2006/11/09 11:14:56 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.27 2006/10/24 06:22:53 ray Exp $";
+    "$OpenBSD: diff3.c,v 1.28 2006/11/09 11:14:56 xsa Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -161,8 +161,7 @@ cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
 	int argc;
 	char *data, *patch;
 	char *argv[5], r1[16], r2[16];
-	char path1[MAXPATHLEN], path2[MAXPATHLEN], path3[MAXPATHLEN];
-	char dp13[MAXPATHLEN], dp23[MAXPATHLEN];
+	char *dp13, *dp23, *path1, *path2, *path3;
 	BUF *b1, *b2, *b3, *d1, *d2, *diffb;
 
 	b1 = b2 = b3 = d1 = d2 = diffb = NULL;
@@ -187,13 +186,12 @@ cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
 	d2 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
 	diffb = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
 
-	strlcpy(path1, "/tmp/diff1.XXXXXXXXXX", sizeof(path1));
+	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
+	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
+	(void)xasprintf(&path3, "%s/diff3.XXXXXXXXXX", cvs_tmpdir);
+
 	cvs_buf_write_stmp(b1, path1, NULL);
-
-	strlcpy(path2, "/tmp/diff2.XXXXXXXXXX", sizeof(path2));
 	cvs_buf_write_stmp(b2, path2, NULL);
-
-	strlcpy(path3, "/tmp/diff3.XXXXXXXXXX", sizeof(path3));
 	cvs_buf_write_stmp(b3, path3, NULL);
 
 	cvs_buf_free(b2);
@@ -202,13 +200,13 @@ cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
 	cvs_diffreg(path1, path3, d1);
 	cvs_diffreg(path2, path3, d2);
 
-	strlcpy(dp13, "/tmp/d13.XXXXXXXXXX", sizeof(dp13));
+	(void)xasprintf(&dp13, "%s/d13.XXXXXXXXXX", cvs_tmpdir);
 	cvs_buf_write_stmp(d1, dp13, NULL);
 
 	cvs_buf_free(d1);
 	d1 = NULL;
 
-	strlcpy(dp23, "/tmp/d23.XXXXXXXXXX", sizeof(dp23));
+	(void)xasprintf(&dp23, "%s/d23.XXXXXXXXXX", cvs_tmpdir);
 	cvs_buf_write_stmp(d2, dp23, NULL);
 
 	cvs_buf_free(d2);
@@ -265,6 +263,17 @@ out:
 	(void)unlink(path3);
 	(void)unlink(dp13);
 	(void)unlink(dp23);
+
+	if (path1 != NULL)
+		xfree(path1);
+	if (path2 != NULL)
+		xfree(path2);
+	if (path3 != NULL)
+		xfree(path3);
+	if (dp13 != NULL)
+		xfree(dp13);
+	if (dp23 != NULL)
+		xfree(dp23);
 
 	return (diffb);
 }
