@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2006/11/07 18:07:23 drahn Exp $
+#	$OpenBSD: Makefile,v 1.4 2006/11/09 22:34:07 drahn Exp $
 
 REV=	${OSrev}
 
@@ -19,7 +19,6 @@ VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
-PID!=		echo $$$$
 
 
 DISKTYPE=       rdroot2.5M
