@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.51 2006/11/09 10:08:33 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.52 2006/11/09 12:51:23 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -21,13 +21,16 @@
 #include "log.h"
 #include "remote.h"
 
+#define T_CHECK_UPTODATE	0x01
+#define T_DELETE		0x02
+#define T_FORCE_MOVE		0x04
+
 void	cvs_tag_local(struct cvs_file *);
 
 static int tag_del(struct cvs_file *);
 static int tag_add(struct cvs_file *);
 
-static int	 tag_delete = 0;
-static int	 tag_force_move = 0;
+static int	 runflags = 0;
 static char	*tag = NULL;
 static char	*tag_date = NULL;
 static char	*tag_name = NULL;
@@ -54,14 +57,17 @@ cvs_tag(int argc, char **argv)
 
 	while ((ch = getopt(argc, argv, cvs_cmd_tag.cmd_opts)) != -1) {
 		switch (ch) {
+		case 'c':
+			runflags |= T_CHECK_UPTODATE;
+			break;
 		case 'D':
 			tag_date = optarg;
 			break;
 		case 'd':
-			tag_delete = 1;
+			runflags |= T_DELETE;
 			break;
 		case 'F':
-			tag_force_move = 1;
+			runflags |= T_FORCE_MOVE;
 			break;
 		case 'l':
 			flags &= ~CR_RECURSE_DIRS;
@@ -91,14 +97,14 @@ cvs_tag(int argc, char **argv)
 		    tag_name, RCS_SYM_INVALCHAR);
 
 	if (tag_oldname != NULL) {
-		if (tag_delete == 1)
+		if (runflags & T_DELETE)
 			tag_oldname = NULL;
 		else
 			tag = tag_oldname;
 	}
 
 	if (tag_date != NULL) {
-		if (tag_delete == 1)
+		if (runflags & T_DELETE)
 			tag_date = NULL;
 		else
 			tag = tag_date;
@@ -113,10 +119,13 @@ cvs_tag(int argc, char **argv)
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cr.fileproc = cvs_client_sendfile;
 
-		if (tag_delete == 1)
+		if (runflags & T_CHECK_UPTODATE)
+			cvs_client_send_request("Argument -c");
+
+		if (runflags & T_DELETE)
 			cvs_client_send_request("Argument -d");
 
-		if (tag_force_move == 1)
+		if (runflags & T_FORCE_MOVE)
 			cvs_client_send_request("Argument -F");
 
 		if (!(flags & CR_RECURSE_DIRS))
@@ -155,7 +164,7 @@ cvs_tag_local(struct cvs_file *cf)
 	if (cf->file_type == CVS_DIR) {
 		if (verbosity > 1) {
 			cvs_log(LP_NOTICE, "%s %s",
-			    (tag_delete == 1) ? "Untagging" : "Tagging",
+			    (runflags & T_DELETE) ? "Untagging" : "Tagging",
 			    cf->file_path);
 		}
 		return;
@@ -163,7 +172,17 @@ cvs_tag_local(struct cvs_file *cf)
 
 	cvs_file_classify(cf, tag, 0);
 
-	if (tag_delete == 1) {
+	if (runflags & T_CHECK_UPTODATE) {
+		if (cf->file_status != FILE_UPTODATE &&
+		    cf->file_status != FILE_CHECKOUT &&
+		    cf->file_status != FILE_PATCH) {
+			cvs_log(LP_NOTICE,
+			    "%s is locally modified", cf->file_path);
+			return;
+		}
+	}
+
+	if (runflags & T_DELETE) {
 		if (tag_del(cf) == 0) {
 			if (verbosity > 0)
 				cvs_printf("D %s\n", cf->file_path);
@@ -240,13 +259,13 @@ tag_add(struct cvs_file *cf)
 		}
 		(void)rcsnum_tostr(trev, trevbuf, sizeof(trevbuf));
 
-		if (tag_force_move == 0) {
+		if (!(runflags & T_FORCE_MOVE)) {
 			cvs_printf("W %s : %s ", cf->file_path, tag_name);
 			cvs_printf("already exists on version %s", trevbuf);
 			cvs_printf(" : NOT MOVING tag to version %s\n", revbuf);
 
 			return (-1);
-		} else if (tag_force_move == 1) {
+		} else if (runflags & T_FORCE_MOVE) {
 			sym = rcs_sym_get(cf->file_rcs, tag_name);
 			rcsnum_cpy(cf->file_rcsrev, sym->rs_num, 0);
 			cf->file_rcs->rf_flags &= ~RCS_SYNCED;
