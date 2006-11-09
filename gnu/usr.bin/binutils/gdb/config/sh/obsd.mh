@@ -1,0 +1,3 @@
+# Host: OpenBSD/sh
+NATDEPFILES= fork-child.o inf-ptrace.o shnbsd-nat.o
+NAT_FILE= config/nm-bsd.h

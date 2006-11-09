@@ -181,6 +181,7 @@ sh-*-linux*)		gdb_target=linux
 sh*-*-netbsdelf* | sh*-*-knetbsd*-gnu | sh*-*-openbsd*)
 			gdb_target=nbsd ;;
 sh-*-nto*)		gdb_target=nto ;;
+sh*-*-openbsd*)		gdb_target=obsd ;;
 sh*)			gdb_target=embed ;;
 
 sparc-*-linux*)		gdb_target=linux ;;
