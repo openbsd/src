@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1186 2006/11/08 17:39:23 mcbride Exp 
+ *	OpenBSD: pcidevs,v 1.1187 2006/11/09 05:00:09 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4267,6 +4267,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HB6 PCI-PCI",
 	},
 	{
+	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_HB4,
+	    "HB4 PCI-PCI",
+	},
+	{
 	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_VXPRO_II_HOST,
 	    "Host",
 	},
@@ -7203,12 +7207,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "88SX5081 SATA",
 	},
 	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX6040,
+	    "88SX6040 SATA",
+	},
+	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX6041,
 	    "88SX6041 SATA",
 	},
 	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX6080,
+	    "88SX6080 SATA",
+	},
+	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX6081,
-	    "88SX6041 SATA",
+	    "88SX6081 SATA",
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SATA,
