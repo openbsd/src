@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.188 2006/09/27 06:26:35 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.189 2006/11/09 21:47:52 millert Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -499,9 +499,19 @@ checkin_update(struct checkin_params *pb)
 	}
 
 	/* If no log message specified, get it interactively. */
-	if (pb->flags & INTERACTIVE)
-		pb->rcs_msg = checkin_getlogmsg(pb->frev, pb->newrev,
-		    pb->flags);
+	if (pb->flags & INTERACTIVE) {
+		if (pb->rcs_msg != NULL) {
+			fprintf(stderr,
+			    "reuse log message of previous file? [yn](y): ");
+			if (rcs_yesno('y') != 'y') {
+				xfree(pb->rcs_msg);
+				pb->rcs_msg = NULL;
+			}
+		}
+		if (pb->rcs_msg == NULL)
+			pb->rcs_msg = checkin_getlogmsg(pb->frev, pb->newrev,
+			    pb->flags);
+	}
 
 	if (rcs_lock_remove(pb->file, pb->username, pb->frev) < 0) {
 		if (rcs_errno != RCS_ERR_NOENT)
@@ -551,8 +561,7 @@ checkin_update(struct checkin_params *pb)
 		err(1, "%s", pb->filename);
 
 	/* Strip all the write bits */
-	pb->file->rf_mode = st.st_mode &
-	    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
+	pb->file->rf_mode = st.st_mode & ~(S_IWUSR|S_IWGRP|S_IWOTH);
 
 	(void)close(workfile_fd);
 	(void)unlink(pb->filename);
@@ -565,12 +574,6 @@ checkin_update(struct checkin_params *pb)
 	    !(pb->flags & CI_DEFAULT))
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
 		    pb->username, pb->author, NULL, NULL);
-
-	if (pb->flags & INTERACTIVE) {
-		xfree(pb->rcs_msg);
-		pb->rcs_msg = NULL;
-	}
-
 out:
 	return (0);
 
@@ -676,8 +679,7 @@ skipdesc:
 		err(1, "%s", pb->filename);
 
 	/* Strip all the write bits */
-	pb->file->rf_mode = st.st_mode &
-	    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
+	pb->file->rf_mode = st.st_mode & ~(S_IWUSR|S_IWGRP|S_IWOTH);
 
 	(void)close(workfile_fd);
 	(void)unlink(pb->filename);

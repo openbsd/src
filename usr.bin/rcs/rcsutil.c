@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.22 2006/10/12 17:20:12 niallo Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.23 2006/11/09 21:47:52 millert Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -562,24 +562,27 @@ rcs_patchfile(BUF *data, BUF *patch,
 /*
  * rcs_yesno()
  *
- * Read from standart input for `y' or `Y' character.
- * Returns 0 on success, or -1 on failure.
+ * Read a char from standard input, returns defc if the
+ * user enters an equivalent to defc, else whatever char
+ * was entered.  Converts input to lower case.
  */
 int
-rcs_yesno(void)
+rcs_yesno(int defc)
 {
 	int c, ret;
-
-	ret = 0;
 
 	fflush(stderr);
 	fflush(stdout);
 
-	if ((c = getchar()) != 'y' && c != 'Y')
-		ret = -1;
+	if (isalpha(c = getchar()))
+		c = tolower(c);
+	if (c == defc || c == '\n' || (c == EOF && feof(stdin)))
+		ret = defc;
 	else
-		while (c != EOF && c != '\n')
-			c = getchar();
+		ret = c;
+
+	while (c != EOF && c != '\n')
+		c = getchar();
 
 	return (ret);
 }

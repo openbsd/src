@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.98 2006/10/12 17:20:12 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.99 2006/11/09 21:47:52 millert Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -235,7 +235,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	u_int i;
 	int fd, lcount;
 	char buf[16];
-	mode_t mode = 0444;
+	mode_t mode = DEFFILEMODE;
 	struct stat st;
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkp;
@@ -363,12 +363,8 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 			}
 		}
 
-		/* Strip all write bits from mode */
-		if (file->rf_fd != -1) {
-			mode = st.st_mode &
-			    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
-		}
-
+		/* File should only be writable by owner. */
+		mode &= ~(S_IWGRP|S_IWOTH);
 		mode |= S_IWUSR;
 
 		if (file->rf_ndelta != 0) {
@@ -385,10 +381,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		}
 
 		/* Strip all write bits from mode */
-		if (file->rf_fd != -1) {
-			mode = st.st_mode &
-			    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
-		}
+		mode &= ~(S_IWUSR|S_IWGRP|S_IWOTH);
 
 		if (file->rf_ndelta != 0) {
 			if (!(flags & QUIET) && !(flags & NEWFILE) &&
@@ -435,11 +428,11 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		    (getuid() == st.st_uid) ? "" :
 		    ", and you do not own it");
 		(void)fprintf(stderr, "remove it? [ny](n): ");
-		/* default is n */
-		if (rcs_yesno() == -1) {
+		if (rcs_yesno('n') == 'n') {
 			if (!(flags & QUIET) && isatty(STDIN_FILENO))
-				warnx("writable %s exists; "
-				    "checkout aborted", dst);
+				warnx("%s%s exists; checkout aborted",
+				    (st.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH)) ?
+				    "writable " : "", dst);
 			else
 				warnx("checkout aborted");
 			return (-1);
