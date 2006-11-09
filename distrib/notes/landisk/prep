@@ -1,0 +1,6 @@
+dnl	$OpenBSD: prep,v 1.1 2006/11/09 00:45:37 deraadt Exp $
+To be able to boot the OpenBSD/MACHINE installation program, you will
+need to copy a miniroot image onto the CF or harddrive that the machine
+uses.
+dnl
+dnl XXX bootable partitions

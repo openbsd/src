@@ -1,0 +1,4 @@
+dnl	$OpenBSD: whatis,v 1.1 2006/11/09 00:45:37 deraadt Exp $
+
+OpenBSD/MACHINE runs on the Thecus N2100, IODATA HDL-G, and perhaps
+Thecus N4100.
