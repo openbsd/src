@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.53 2006/10/10 20:45:38 mbalmer Exp $ */
+/*	$OpenBSD: acx.c,v 1.54 2006/11/09 23:15:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -984,7 +984,7 @@ acx_start(struct ifnet *ifp)
 			mb.m_data = (caddr_t)tap;
 			mb.m_len = sc->sc_txtap_len;
 			mb.m_next = m;
-			mb.m_pkthdr.len = mb.m_len;
+			mb.m_pkthdr.len += mb.m_len;
 			bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
 		}
 #endif
