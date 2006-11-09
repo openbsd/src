@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1187 2006/11/09 05:00:09 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1188 2006/11/09 14:35:55 robert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -972,6 +972,8 @@
 #define	PCI_PRODUCT_ATI_RADEON_RV280_SE	0x5d44		/* Radeon 9200 SE */
 #define	PCI_PRODUCT_ATI_RADEON_X800_GTO	0x5d4f		/* Radeon X800 GTO */
 #define	PCI_PRODUCT_ATI_RADEON_X800_GTO_S	0x5d6f		/* Radeon X800 GTO Sec */
+#define	PCI_PRODUCT_ATI_RADEON_X700_SE	0x5e4f		/* Radeon X700 SE */
+#define	PCI_PRODUCT_ATI_RADEON_X700_SE_S	0x5e6f		/* Radeon X700 SE Sec */
 #define	PCI_PRODUCT_ATI_RS100_PCI	0x700f		/* RS100 PCI */
 #define	PCI_PRODUCT_ATI_RS200_PCI	0x7010		/* RS200 PCI */
 #define	PCI_PRODUCT_ATI_RADEON_X1800	0x7109		/* Radeon X1800 */
