@@ -1,4 +1,6 @@
-dnl	$OpenBSD: whatis,v 1.1 2006/11/09 00:45:37 deraadt Exp $
+dnl	$OpenBSD: whatis,v 1.2 2006/11/09 01:10:56 deraadt Exp $
 
-OpenBSD/MACHINE runs on the Thecus N2100, IODATA HDL-G, and perhaps
-Thecus N4100.
+OpenBSD/MACHINE runs on the IO-DATA USL-5P, HDL-U, HDL-AV,
+HDL-W HDLM-U, UHDL-160U and UHDL-300U.  These are also rebadged
+as the SuperTank LAN Tank, and the Plextor PX-EH16L, PX-EH25L
+and PX-EH40L.
