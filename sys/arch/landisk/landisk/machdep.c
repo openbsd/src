@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.6 2006/11/06 19:12:13 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.7 2006/11/09 00:12:12 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -116,7 +116,7 @@ cpu_startup(void)
 	extern char cpu_model[120];
 
 	/* XXX: show model (LANDISK/USL-5P) */
-	strlcpy(cpu_model, "I-O DATA USL-5P\n", sizeof cpu_model);
+	strlcpy(cpu_model, "I-O DATA USL-5P", sizeof cpu_model);
 
         sh_startup();
 }
