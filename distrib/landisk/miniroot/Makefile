@@ -24,6 +24,7 @@ all ${IMAGE}:
 	@echo setenv DESTDIR before making a ramdisk!
 	@false
 .else
+all:	${IMAGE}
 
 ${IMAGE}: rd_setup do_files rd_teardown
 
