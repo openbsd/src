@@ -13,7 +13,7 @@
  *
  * ISBN 3-924521-59-X
  *
- * $OpenBSD: calendar.geschichte,v 1.6 2006/11/09 14:59:35 mickey Exp $
+ * $OpenBSD: calendar.geschichte,v 1.7 2006/11/09 15:00:43 mickey Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_geschichte_
@@ -189,7 +189,7 @@ LANG=de_DE.ISO_8859-1
 10/03	Offizielles Ende der DDR, 1990 :-)
 10/07	Gründung der DDR 1949
 10/09	Massendemonstration in Leipzig, 1989
-10/09	Markus "Mischa" Wolf died, 2006
+10/09	Markus "Mischa" Wolf gestorben, 2006
 10/14	Kuba-Krise, 1962
 10/18	Ablösung von Erich Honecker als SED-Generalsekretär, 1989
 11/09	Fall der Berliner Mauer, 1989
