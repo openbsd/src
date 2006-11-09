@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1187 2006/11/09 05:00:09 brad Exp $
+$OpenBSD: pcidevs,v 1.1188 2006/11/09 14:35:55 robert Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -967,6 +967,8 @@ product ATI RADEON_M9PLUS	0x5c63	Radeon Mobility 9200 (M9+)
 product ATI RADEON_RV280_SE	0x5d44	Radeon 9200 SE
 product ATI RADEON_X800_GTO	0x5d4f	Radeon X800 GTO
 product ATI RADEON_X800_GTO_S	0x5d6f	Radeon X800 GTO Sec
+product ATI RADEON_X700_SE	0x5e4f  Radeon X700 SE
+product ATI RADEON_X700_SE_S	0x5e6f  Radeon X700 SE Sec
 product ATI RS100_PCI		0x700f	RS100 PCI
 product ATI RS200_PCI		0x7010	RS200 PCI
 product ATI RADEON_X1800	0x7109	Radeon X1800
