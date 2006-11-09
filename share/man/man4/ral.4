@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.60 2006/10/22 12:14:43 damien Exp $
+.\" $OpenBSD: ral.4,v 1.61 2006/11/09 23:36:41 jsg Exp $
 .\"
 .\" Copyright (c) 2005, 2006
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -228,8 +228,8 @@ Disable WEP encryption.
 This is the default mode of operation.
 .El
 .Sh FILES
-The following firmware files are potentially loaded when an interface is
-brought up:
+Second generation PCI/CardBus chips require the following firmware
+files to be loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It /etc/firmware/ral-rt2561
