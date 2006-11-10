@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.2 2006/11/10 21:19:54 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.3 2006/11/10 22:26:40 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn
@@ -31,7 +31,8 @@
  * bug that I couldn't find.
  */
 
-#define DL_DATA_SIZE	(4096 + 16 * 4)	/* XXX */
+#define DL_DATA_SIZE	(8192 + 16 * 4)	/* XXX */
+#define DATA_OFFSET	(48)	/* XXX */
 #include <machine/asm.h>
 #include <sys/syscall.h>
 #include <SYS.h>
@@ -42,7 +43,9 @@ ENTRY(_dl_start)
 	mov	r15, r4			// boot_bind(sp, dl_data) (sp)
 	mov.l	.L_datasize, r0
 	sub	r0, r15
+	mov.l	.L_offset, r0
 	mov	r15, r5
+	add	r0, r5
 	mov	r5, r13
 	// not trusting register to store the data, push it on the stack.
 	// callee/caller save questions
@@ -111,6 +114,8 @@ ENTRY(_dl_start)
 	.long _dl_boot-.L_call_boot
 .L_datasize:
 	.long 4+4+DL_DATA_SIZE
+.L_offset:
+	.long DATA_OFFSET
 .L_dynamic:
 	.long _DYNAMIC-.L_offbase
 .L_loff:
