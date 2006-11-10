@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.110 2006/11/01 03:10:02 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.111 2006/11/10 14:42:19 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -295,7 +295,6 @@ tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 			    $3.spiout, NULL, $4.keyout, NULL);
 			if (r == NULL)
 				YYERROR;
-			r->nr = ipsec->rule_nr++;
 
 			if (expand_rule(r, 0, $3.spiin, $4.keyin, NULL, 0))
 				errx(1, "tcpmd5rule: expand_rule");
@@ -310,7 +309,6 @@ sarule		: satype tmode hosts spispec transforms authkeyspec
 			    $7.keyout);
 			if (r == NULL)
 				YYERROR;
-			r->nr = ipsec->rule_nr++;
 
 			if (expand_rule(r, 0, $4.spiin, $6.keyin, $7.keyin, 1))
 				errx(1, "sarule: expand_rule");
@@ -338,7 +336,6 @@ ikerule		: IKE ikemode satype tmode proto hosts peers
 			    $10.srcid, $10.dstid, &$11);
 			if (r == NULL)
 				YYERROR;
-			r->nr = ipsec->rule_nr++;
 
 			if (expand_rule(r, 0, 0, NULL, NULL, 0))
 				errx(1, "ikerule: expand_rule");
