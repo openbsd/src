@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.46 2006/11/03 15:38:38 grunk Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.47 2006/11/10 17:30:34 grunk Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -221,7 +221,6 @@ main(int argc, char *argv[])
 		case 'd':
 			nfsargsp->flags |= NFSMNT_DUMBTIMR;
 			break;
-#if 0 /* XXXX */
 		case 'g':
 			num = (int) strtonum(optarg, 1, NGROUPS_MAX, &p);
 			if (p)
@@ -230,7 +229,6 @@ main(int argc, char *argv[])
 			nfsargsp->maxgrouplist = num;
 			nfsargsp->flags |= NFSMNT_MAXGRPS;
 			break;
-#endif
 		case 'I':
 			num = (int) strtonum(optarg, 1, INT_MAX, &p);
 			if (p)
