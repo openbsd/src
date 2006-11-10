@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.h,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: dvmrpe.h,v 1.2 2006/11/10 11:09:56 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -75,6 +75,7 @@ struct route_report {
 	struct in_addr		 mask;
 	struct in_addr		 nexthop;
 	struct in_addr		 adv_rtr;
+	int			 refcount;
 	u_short			 ifindex;
 	u_int8_t		 metric;
 

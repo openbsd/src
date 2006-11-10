@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.2 2006/06/01 18:18:25 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.3 2006/11/10 11:09:56 michele Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -382,8 +382,7 @@ int
 nbr_act_clear_lists(struct nbr *nbr)
 {
 	log_debug("nbr_act_clear_lists: neighbor ID %s", inet_ntoa(nbr->id));
-
-	/* XXX clear lists */
+	rr_list_clr(&nbr->rr_list);
 
 	return (0);
 }
