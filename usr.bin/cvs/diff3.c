@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.28 2006/11/09 11:14:56 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.29 2006/11/10 08:32:37 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.28 2006/11/09 11:14:56 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.29 2006/11/10 08:32:37 xsa Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -291,11 +291,13 @@ diff3_internal(int argc, char **argv, const char *fmark, const char *rmark)
 	if (argc < 5)
 		return (-1);
 
-	strlcpy(f1mark, "<<<<<<< ", sizeof(f1mark));
-	strlcat(f1mark, fmark, sizeof(f1mark));
+	i = snprintf(f1mark, sizeof(f1mark), "<<<<<<< %s", fmark);
+	if (i < 0 ||i >= (int)sizeof(f1mark))
+		fatal("diff3_internal: truncation");
 
-	strlcpy(f3mark, ">>>>>>> ", sizeof(f3mark));
-	strlcat(f3mark, rmark, sizeof(f3mark));
+	i = snprintf(f3mark, sizeof(f3mark), ">>>>>>> %s", rmark);
+	if (i < 0 ||i >= (int)sizeof(f3mark))
+		fatal("diff3_internal: truncation");
 
 	increase();
 	m = readin(argv[0], &d13);
@@ -315,7 +317,7 @@ int
 ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 {
 	char op, *ep;
-	struct cvs_line *sort, *lp, *dlp, *ndlp;
+	struct cvs_line *sort, *lp, *dlp, *ndlp, *insert_after;
 	int start, end, i, lineno;
 
 	dlp = TAILQ_FIRST(&(dlines->l_lines));
@@ -368,12 +370,13 @@ ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 
 
 		if (op == 'c') {
+			insert_after = TAILQ_PREV(dlp, cvs_tqh, l_list);
 			for (i = 0; i <= (end - start); i++) {
 				ndlp = TAILQ_NEXT(dlp, l_list);
 				TAILQ_REMOVE(&(dlines->l_lines), dlp, l_list);
 				dlp = ndlp;
 			}
-			dlp = TAILQ_PREV(dlp, cvs_tqh, l_list);
+			dlp = insert_after;
 		}
 
 		if (op == 'a' || op == 'c') {
