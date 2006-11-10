@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.61 2006/11/10 23:56:36 kettenis Exp $	*/
+/*	$OpenBSD: gem.c,v 1.62 2006/11/10 23:58:47 kettenis Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1093,7 +1093,7 @@ gem_pint(sc)
 	status = bus_space_read_4(t, seb, GEM_MII_INTERRUP_STATUS);
 	status |= bus_space_read_4(t, seb, GEM_MII_INTERRUP_STATUS);
 	if (status)
-		printf("%s: link status changedn", sc->sc_dev.dv_xname);
+		printf("%s: link status changed\n", sc->sc_dev.dv_xname);
 
 	return (1);
 }
