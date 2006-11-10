@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.46 2006/08/30 18:02:20 henning Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.47 2006/11/10 14:47:52 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -50,9 +50,9 @@ static int	pfkey_sa(int, u_int8_t, u_int8_t, u_int32_t,
 		    struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 		    struct ipsec_transforms *, struct ipsec_key *,
 		    struct ipsec_key *, u_int8_t);
-static int	pfkey_sagroup(int, u_int8_t, u_int8_t,
-		    struct ipsec_addr_wrap *, u_int32_t, u_int32_t,
-		    struct ipsec_addr_wrap *, u_int32_t, u_int32_t);
+static int	pfkey_sagroup(int, u_int8_t, u_int8_t, u_int8_t,
+		    struct ipsec_addr_wrap *, u_int32_t,
+		    struct ipsec_addr_wrap *, u_int32_t);
 static int	pfkey_reply(int, u_int8_t **, ssize_t *);
 int		pfkey_parse(struct sadb_msg *, struct ipsec_rule *);
 int		pfkey_ipsec_flush(void);
@@ -617,9 +617,9 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 }
 
 static int
-pfkey_sagroup(int sd, u_int8_t satype, u_int8_t action,
-    struct ipsec_addr_wrap *dst, u_int32_t proto, u_int32_t spi,
-    struct ipsec_addr_wrap *dst2, u_int32_t proto2, u_int32_t spi2)
+pfkey_sagroup(int sd, u_int8_t satype, u_int8_t satype2, u_int8_t action,
+    struct ipsec_addr_wrap *dst, u_int32_t spi, struct ipsec_addr_wrap *dst2,
+    u_int32_t spi2)
 {
 	struct sadb_msg		smsg;
 	struct sadb_sa		sa1, sa2;
@@ -695,7 +695,7 @@ pfkey_sagroup(int sd, u_int8_t satype, u_int8_t action,
 	sa_proto.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
 	sa_proto.sadb_protocol_len = sizeof(sa_proto) / 8;
 	sa_proto.sadb_protocol_direction = 0;
-	sa_proto.sadb_protocol_proto = proto;
+	sa_proto.sadb_protocol_proto = satype2;
 
 	/* header */
 	iov[iov_cnt].iov_base = &smsg;
@@ -1092,7 +1092,7 @@ int
 pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 {
 	int		ret;
-	u_int8_t	satype, direction;
+	u_int8_t	satype, satype2, direction;
 
 	if (r->type == RULE_FLOW) {
 		switch (r->satype) {
@@ -1191,10 +1191,29 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		default:
 			return -1;
 		}
+		switch (r->proto2) {
+		case IPSEC_AH:
+			satype2 = SADB_SATYPE_AH;
+			break;
+		case IPSEC_ESP:
+			satype2 = SADB_SATYPE_ESP;
+			break;
+		case IPSEC_IPCOMP:
+			satype2 = SADB_X_SATYPE_IPCOMP;
+			break;
+		case IPSEC_TCPMD5:
+			satype2 = SADB_X_SATYPE_TCPSIGNATURE;
+			break;
+		case IPSEC_IPIP:
+			satype2 = SADB_X_SATYPE_IPIP;
+			break;
+		default:
+			return -1;
+		}
 		switch (action) {
 		case ACTION_ADD:
-			ret = pfkey_sagroup(fd, satype, SADB_X_GRPSPIS, r->dst,
-			    r->proto, r->spi, r->dst2, r->proto2, r->spi2);
+			ret = pfkey_sagroup(fd, satype, satype2,
+			    SADB_X_GRPSPIS, r->dst, r->spi, r->dst2, r->spi2);
 			break;
 		case ACTION_DELETE:
 			return 0;
