@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_pci.c,v 1.7 2006/10/02 18:06:55 mglocker Exp $  */
+/*	$OpenBSD: if_pgt_pci.c,v 1.8 2006/11/10 20:20:04 damien Exp $  */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -43,8 +43,6 @@
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_amrr.h>
-#include <net80211/ieee80211_rssadapt.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/pgtreg.h>
