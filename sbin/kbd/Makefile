@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.29 2006/05/09 21:17:13 miod Exp $
+#	$OpenBSD: Makefile,v 1.30 2006/11/10 21:22:44 deraadt Exp $
 
 #
 # Be sure to change src/distrib/special/kbd/Makefile as well if you add or
 # remove architectures on this list!
 #
 .if ${MACHINE} != "aviion" && ${MACHINE} != "mvme68k" && \
-    ${MACHINE} != "mvme88k"
+    ${MACHINE} != "mvme88k" && ${MACHINE} != "landisk"
     
 PROG=	kbd
 
