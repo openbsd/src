@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acx.4,v 1.22 2006/10/21 14:45:51 damien Exp $
+.\"	$OpenBSD: acx.4,v 1.23 2006/11/10 20:06:58 mk Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt.
 .\" Copyright (c) 2006 The DragonFly Project.  All rights reserved.
@@ -193,6 +193,9 @@ By default the
 .Nm
 driver uses an empty string.
 Note that network ID is synonymous with Extended Service Set ID (ESSID).
+.It Fl nwid
+Set the network ID to the empty string to allow the interface to connect
+to any available access point.
 .It Cm nwkey Ar key
 Enable WEP encryption using the specified
 .Ar key .

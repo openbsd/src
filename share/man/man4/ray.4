@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ray.4,v 1.21 2006/08/30 23:14:30 jmc Exp $
+.\"	$OpenBSD: ray.4,v 1.22 2006/11/10 20:06:58 mk Exp $
 .\"	$NetBSD: ray.4,v 1.5 2000/02/28 13:54:55 enami Exp $
 .\"
 .\" Copyright (c) 2000 Christian E. Hopps
@@ -145,6 +145,9 @@ By default the
 .Nm
 driver uses an empty string.
 Note that network ID is synonymous with Extended Service Set ID (ESSID).
+.It Fl nwid
+Set the network ID to the empty string to allow the interface to connect
+to any available access point.
 .El
 .Sh HARDWARE
 Cards supported by the

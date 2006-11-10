@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.61 2006/11/09 23:36:41 jsg Exp $
+.\" $OpenBSD: ral.4,v 1.62 2006/11/10 20:06:58 mk Exp $
 .\"
 .\" Copyright (c) 2005, 2006
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -198,6 +198,9 @@ By default the
 .Nm
 driver uses an empty string.
 Note that network ID is synonymous with Extended Service Set ID (ESSID).
+.It Fl nwid
+Set the network ID to the empty string to allow the interface to connect
+to any available access point.
 .It Cm nwkey Ar key
 Enable WEP encryption using the specified
 .Ar key .
