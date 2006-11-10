@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1188 2006/11/09 14:35:55 robert Exp 
+ *	OpenBSD: pcidevs,v 1.1189 2006/11/10 19:34:26 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -13621,6 +13621,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_AGILENT,
 	    "Agilent",
+	},
+	{
+	    PCI_VENDOR_QUICKNET,
+	    "Quicknet Technologies",
 	},
 	{
 	    PCI_VENDOR_NDC,

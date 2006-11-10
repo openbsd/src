@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1188 2006/11/09 14:35:55 robert Exp 
+ *	OpenBSD: pcidevs,v 1.1189 2006/11/10 19:34:26 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -262,6 +262,7 @@
 #define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
 #define	PCI_VENDOR_ZOLTRIX	0x15b0		/* Zoltrix */
 #define	PCI_VENDOR_AGILENT	0x15bc		/* Agilent */
+#define	PCI_VENDOR_QUICKNET	0x15e2		/* Quicknet Technologies */
 #define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm */
 #define	PCI_VENDOR_PDC	0x15e9		/* Pacific Data */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
