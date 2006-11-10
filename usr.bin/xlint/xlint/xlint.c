@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlint.c,v 1.31 2006/05/06 20:47:58 espie Exp $	*/
+/*	$OpenBSD: xlint.c,v 1.32 2006/11/10 00:54:59 deraadt Exp $	*/
 /*	$NetBSD: xlint.c,v 1.3 1995/10/23 14:29:30 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: xlint.c,v 1.31 2006/05/06 20:47:58 espie Exp $";
+static char rcsid[] = "$OpenBSD: xlint.c,v 1.32 2006/11/10 00:54:59 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -265,11 +265,10 @@ appdef(char ***lstp, const char *def)
 static void
 usage()
 {
-	(void)printf("lint [-abceghprvxzHF] [-s|-t] [-i|-nu] [-Dname[=def]] [-Uname]\n");
-	(void)printf("     [-Idirectory] [-Ldirectory] [-llibrary] [-ooutputfile] file ...\n");
-	(void)printf("\n");
-	(void)printf("lint [-abceghprvzHF] [-s|-t] -Clibrary [-Dname[=def]]\n");
-	(void)printf("     [-Idirectory] [-Uname] file ...\n");
+	(void)printf("usage: lint [-abceghprvxzHF] [-s|-t] [-i|-nu] [-Dname[=def]] [-Uname]\n");
+	(void)printf("            [-Idirectory] [-Ldirectory] [-llibrary] [-ooutputfile] file ...\n");
+	(void)printf("       lint [-abceghprvzHF] [-s|-t] -Clibrary [-Dname[=def]]\n");
+	(void)printf("            [-Idirectory] [-Uname] file ...\n");
 	terminate(-1);
 }
 
