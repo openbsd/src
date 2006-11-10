@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.19 2006/11/10 10:53:06 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.20 2006/11/10 11:02:05 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -246,11 +246,17 @@ cvs_client_connect_to_server(void)
 	cvs_client_send_request("valid-requests");
 	cvs_client_get_responses();
 
+	if (cvs_nolog == 1)
+		cvs_client_send_request("Global_option -l");
+
 	if (cvs_noexec == 1)
 		cvs_client_send_request("Global_option -n");
 
 	if (verbosity == 0)
 		cvs_client_send_request("Global_option -Q");
+
+	/* Be quiet. This is the default in OpenCVS. */
+	cvs_client_send_request("Global_option -q");
 
 	if (cvs_readonly == 1)
 		cvs_client_send_request("Global_option -r");
