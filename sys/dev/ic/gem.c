@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.60 2006/10/17 22:22:49 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.61 2006/11/10 23:56:36 kettenis Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -105,6 +105,8 @@ int		gem_encap(struct gem_softc *, struct mbuf *, u_int32_t *);
 int		gem_mii_readreg(struct device *, int, int);
 void		gem_mii_writereg(struct device *, int, int, int);
 void		gem_mii_statchg(struct device *);
+int		gem_pcs_readreg(struct device *, int, int);
+void		gem_pcs_writereg(struct device *, int, int, int);
 
 int		gem_mediachange(struct ifnet *);
 void		gem_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -113,6 +115,7 @@ struct mbuf	*gem_get(struct gem_softc *, int, int);
 int		gem_eint(struct gem_softc *, u_int);
 int		gem_rint(struct gem_softc *);
 int		gem_tint(struct gem_softc *, u_int32_t);
+int		gem_pint(struct gem_softc *);
 
 #ifdef GEM_DEBUG
 #define	DPRINTF(sc, x)	if ((sc)->sc_arpcom.ac_if.if_flags & IFF_DEBUG) \
@@ -248,6 +251,30 @@ gem_config(sc)
 	else
 		mii_attach(&sc->sc_dev, mii, 0xffffffff, sc->sc_tcvr,
 				MII_OFFSET_ANY, 0);
+
+	child = LIST_FIRST(&mii->mii_phys);
+	if (child == NULL &&
+	    sc->sc_mif_config & (GEM_MIF_CONFIG_MDI0|GEM_MIF_CONFIG_MDI1)) {
+		/* 
+		 * Try the external PCS SERDES if we didn't find any
+		 * MII devices.
+		 */
+		bus_space_write_4(sc->sc_bustag, sc->sc_h,
+		    GEM_MII_DATAPATH_MODE, GEM_MII_DATAPATH_SERDES);
+
+		bus_space_write_4(sc->sc_bustag, sc->sc_h,
+		    GEM_MII_SLINK_CONTROL,
+		    GEM_MII_SLINK_LOOPBACK|GEM_MII_SLINK_EN_SYNC_D);
+
+		bus_space_write_4(sc->sc_bustag, sc->sc_h,
+		     GEM_MII_CONFIG, GEM_MII_CONFIG_ENABLE);
+
+		mii->mii_readreg = gem_pcs_readreg;
+		mii->mii_writereg = gem_pcs_writereg;
+
+		mii_attach(&sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
+		    MII_OFFSET_ANY, MIIF_NOISOLATE);
+	}
 
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {
@@ -1055,6 +1082,21 @@ gem_eint(sc, status)
 	return (1);
 }
 
+int
+gem_pint(sc)
+	struct gem_softc *sc;
+{
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t seb = sc->sc_h;
+	u_int32_t status;
+
+	status = bus_space_read_4(t, seb, GEM_MII_INTERRUP_STATUS);
+	status |= bus_space_read_4(t, seb, GEM_MII_INTERRUP_STATUS);
+	if (status)
+		printf("%s: link status changedn", sc->sc_dev.dv_xname);
+
+	return (1);
+}
 
 int
 gem_intr(v)
@@ -1070,6 +1112,9 @@ gem_intr(v)
 	status = bus_space_read_4(t, seb, GEM_STATUS);
 	DPRINTF(sc, ("%s: gem_intr: cplt %xstatus %b\n",
 		sc->sc_dev.dv_xname, (status>>19), status, GEM_INTR_BITS));
+
+	if ((status & GEM_INTR_PCS) != 0)
+		r |= gem_pint(sc);
 
 	if ((status & (GEM_INTR_RX_TAG_ERR | GEM_INTR_BERR)) != 0)
 		r |= gem_eint(sc, status);
@@ -1297,6 +1342,7 @@ gem_mii_statchg(dev)
 
 		switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
 		case IFM_1000_T:  /* Gigabit using GMII interface */
+		case IFM_1000_SX:
 			v |= GEM_MAC_XIF_GMII_MODE;
 			break;
 		default:
@@ -1306,6 +1352,90 @@ gem_mii_statchg(dev)
 		/* Internal MII needs buf enable */
 		v |= GEM_MAC_XIF_MII_BUF_ENA;
 	bus_space_write_4(t, mac, GEM_MAC_XIF_CONFIG, v);
+}
+
+int
+gem_pcs_readreg(self, phy, reg)
+	struct device *self;
+	int phy, reg;
+{
+	struct gem_softc *sc = (void *)self;
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t pcs = sc->sc_h;
+
+#ifdef GEM_DEBUG
+	if (sc->sc_debug)
+		printf("gem_pcs_readreg: phy %d reg %d\n", phy, reg);
+#endif
+
+	if (phy != GEM_PHYAD_EXTERNAL)
+		return (0);
+
+	switch (reg) {
+	case MII_BMCR:
+		reg = GEM_MII_CONTROL;
+		break;
+	case MII_BMSR:
+		reg = GEM_MII_STATUS;
+		break;
+	case MII_ANAR:
+		reg = GEM_MII_ANAR;
+		break;
+	case MII_ANLPAR:
+		reg = GEM_MII_ANLPAR;
+		break;
+	case MII_EXTSR:
+		return (EXTSR_1000XFDX|EXTSR_1000XHDX);
+	default:
+		return (0);
+	}
+
+	return bus_space_read_4(t, pcs, reg);
+}
+
+void
+gem_pcs_writereg(self, phy, reg, val)
+	struct device *self;
+	int phy, reg, val;
+{
+	struct gem_softc *sc = (void *)self;
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t pcs = sc->sc_h;
+
+#ifdef GEM_DEBUG
+	if (sc->sc_debug)
+		printf("gem_pcs_writereg: phy %d reg %d val %x\n",
+			phy, reg, val);
+#endif
+
+	if (phy != GEM_PHYAD_EXTERNAL)
+		return;
+
+	switch (reg) {
+	case MII_BMCR:
+		reg = GEM_MII_CONTROL;
+		break;
+	case MII_BMSR:
+		reg = GEM_MII_STATUS;
+		break;
+	case MII_ANAR:
+		reg = GEM_MII_ANAR;
+		break;
+	case MII_ANLPAR:
+		reg = GEM_MII_ANLPAR;
+		break;
+	default:
+		return;
+	}
+
+	bus_space_write_4(t, pcs, reg, val);
+
+	if (reg == GEM_MII_ANAR) {
+		bus_space_write_4(t, pcs, GEM_MII_SLINK_CONTROL,
+		    GEM_MII_SLINK_LOOPBACK|GEM_MII_SLINK_EN_SYNC_D);
+		bus_space_write_4(t, pcs, GEM_MII_CONFIG,
+		    GEM_MII_CONFIG_ENABLE);
+	}
 }
 
 int
