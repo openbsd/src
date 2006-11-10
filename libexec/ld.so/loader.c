@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.104 2006/09/24 21:52:49 kettenis Exp $ */
+/*	$OpenBSD: loader.c,v 1.105 2006/11/10 07:44:58 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -375,6 +375,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	 * now that GOT and PLT has been relocated, and we know
 	 * page size, protect it from modification
 	 */
+#ifndef  RTLD_NO_WXORX
 	{
 		extern char *__got_start;
 		extern char *__got_end;
@@ -396,6 +397,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		    PROT_READ|PROT_EXEC);
 #endif
 	}
+#endif
 
 	DL_DEB(("rtld loading: '%s'\n", _dl_progname));
 
