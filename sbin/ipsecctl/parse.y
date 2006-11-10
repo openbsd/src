@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.111 2006/11/10 14:42:19 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.112 2006/11/10 15:01:31 msf Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1957,7 +1957,8 @@ add_sagroup(struct ipsec_rule *r)
 	int			 found = 0;
 
 	TAILQ_FOREACH(rp, &ipsec->group_queue, group_entry) {
-		if (strcmp(rp->dst->name, r->dst->name) == 0) {
+		if ((strcmp(rp->src->name, r->src->name) == 0) &&
+		    (strcmp(rp->dst->name, r->dst->name) == 0)) {
 			found = 1;
 			break;
 		}
