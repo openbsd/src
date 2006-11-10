@@ -1,7 +1,7 @@
-/*	$OpenBSD: ldasm.S,v 1.1 2006/11/10 07:44:58 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.2 2006/11/10 21:19:54 drahn Exp $ */
 
 /*
- * Copyright (c) 2004 Dale Rahn
+ * Copyright (c) 2006 Dale Rahn
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,43 +26,82 @@
  *
  */
 
-#define DL_DATA_SIZE	(16 * 4)	/* XXX */
+/*
+ * correct size is 16 * 4 but the 4096 is because of a stack corruption
+ * bug that I couldn't find.
+ */
+
+#define DL_DATA_SIZE	(4096 + 16 * 4)	/* XXX */
 #include <machine/asm.h>
 #include <sys/syscall.h>
 #include <SYS.h>
 
 ENTRY(_dl_start)
-	mov	r15, r8			// save for later 
-	mov	r15,r14
-	sts	pr, r10
+	mov	r15, r12			// save for later 
+	sts	pr, r11
 	mov	r15, r4			// boot_bind(sp, dl_data) (sp)
 	mov.l	.L_datasize, r0
 	sub	r0, r15
 	mov	r15, r5
-	add	#4, r5
-	mov	r5, r9
+	mov	r5, r13
+	// not trusting register to store the data, push it on the stack.
+	// callee/caller save questions
+//	mov.l	r13,@-r15		// save dl_data
+//	mov.l	r12,@-r15		// save original sp
+//	mov.l	r11,@-r15		// save pr
+
+	mov	r15, r14
+
+	mova	.L_call_boot_bind, r0
+	mov	#0, r0
+	bsrf	r0
+	 nop
+.L_offbase:
+	sts	pr, r0
+	mov.l	.L_dynamic, r6
+	add	r0, r6
+	mov	 r14, r15
+	mov	r15, r14
 	mov.l	.L_boot_bind, r0
 	bsrf	r0
 	 nop
 .L_call_boot_bind:
-	mov	r8, r4
+//	mov.l	@r15+, r11
+//	mov.l	@r15+, r12
+//	mov.l	@r15+, r13
+	mov	r12, r4
 	add	#4, r4
-	mov.l	@r8, r5		//loads argc
+	mov.l	@r12, r5		//loads argc
 	add	#2, r5
 	shll2	r5
-	add	r8, r5
-	mov	r9, r6
+	add	r12, r5			// calc argv 
+
+#if 0
+	mov	r13, r7
+	mov	#24, r0			// WTF? 
+	sub	r0, r7
+#else
+	mov	r13, r7
+#endif
+	mov	r7, r6
 	mov.l	.L_loff, r0
 	add	r0, r6
+	mov.l	@r6, r6
+
 	mov.l	.L_boot, r0
-	mov	r9, r7
-	mov	r8, r15
+//	mov.l	r13,@-r15		// save dl_data
+//	mov.l	r12,@-r15		// save original sp
+//	mov.l	r11,@-r15		// save pr
+	mov	r12, r15
 	bsrf	r0
 	 nop
 .L_call_boot:
 
 	mov	r14, r15
-	lds	r10, pr
+//	mov.l	@r15+, r11
+//	mov.l	@r15+, r12
+//	mov.l	@r15+, r13
+	lds	r11, pr
 	jmp	@r0
 
 	.align 2
@@ -72,6 +111,8 @@ ENTRY(_dl_start)
 	.long _dl_boot-.L_call_boot
 .L_datasize:
 	.long 4+4+DL_DATA_SIZE
+.L_dynamic:
+	.long _DYNAMIC-.L_offbase
 .L_loff:
 	.long 7*4
 	.size _dl_start, .-dl_start

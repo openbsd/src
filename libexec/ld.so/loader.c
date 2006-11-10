@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.105 2006/11/10 07:44:58 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.106 2006/11/10 21:19:54 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -623,7 +623,7 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 #if defined(__alpha__)
 	dynp = (Elf_Dyn *)((long)_DYNAMIC);
 #elif defined(__sparc__) || defined(__sparc64__) || defined(__powerpc__) || \
-    defined(__hppa__)
+    defined(__hppa__) || defined(__sh__)
 	dynp = dynamicp;
 #else
 	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);
