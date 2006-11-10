@@ -20,15 +20,16 @@
    Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
+#include "defs.h"
+#include "inferior.h"
+
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 
-#include "defs.h"
-#include "inferior.h"
-
 #include "sh-tdep.h"
 #include "shnbsd-tdep.h"
+#include "inf-ptrace.h"
 
 /* Determine if PT_GETREGS fetches this register. */
 #define GETREGS_SUPPLIES(regno) \
@@ -37,8 +38,8 @@
 || (regno) == MACH_REGNUM || (regno) == MACL_REGNUM \
 || (regno) == SR_REGNUM)
 
-void
-fetch_inferior_registers (int regno)
+static void
+shnbsd_fetch_inferior_registers (int regno)
 {
   if (regno == -1 || GETREGS_SUPPLIES (regno))
     {
@@ -55,8 +56,8 @@ fetch_inferior_registers (int regno)
     }
 }
 
-void
-store_inferior_registers (int regno)
+static void
+shnbsd_store_inferior_registers (int regno)
 {
   if (regno == -1 || GETREGS_SUPPLIES (regno))
     {
@@ -75,4 +76,18 @@ store_inferior_registers (int regno)
       if (regno != -1)
 	return;
     }
+}
+
+/* Provide a prototype to silence -Wmissing-prototypes.  */
+void _initialize_shnbsd_nat (void);
+
+void
+_initialize_shnbsd_nat (void)
+{
+  struct target_ops *t;
+
+  t = inf_ptrace_target ();
+  t->to_fetch_registers = shnbsd_fetch_inferior_registers;
+  t->to_store_registers = shnbsd_store_inferior_registers;
+  add_target (t);
 }
