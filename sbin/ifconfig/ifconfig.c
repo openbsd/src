@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.175 2006/09/30 23:44:17 ray Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.176 2006/11/10 20:04:24 mk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -281,6 +281,7 @@ const struct	cmd {
 	{ "metric",	NEXTARG,	0,		setifmetric },
 	{ "mtu",	NEXTARG,	0,		setifmtu },
 	{ "nwid",	NEXTARG,	0,		setifnwid },
+	{ "-nwid",	-1,		0,		setifnwid },
 	{ "bssid",	NEXTARG,	0,		setifbssid },
 	{ "-bssid",	-1,		0,		setifbssid },
 	{ "nwkey",	NEXTARG,	0,		setifnwkey },
@@ -1307,9 +1308,15 @@ setifnwid(const char *val, int d)
 	struct ieee80211_nwid nwid;
 	int len;
 
-	len = sizeof(nwid.i_nwid);
-	if (get_string(val, NULL, nwid.i_nwid, &len) == NULL)
-		return;
+	if (d != 0) {
+		/* no network id is especially desired */
+		memset(&nwid, 0, sizeof(nwid));
+		len = 0;
+	} else {
+		len = sizeof(nwid.i_nwid);
+		if (get_string(val, NULL, nwid.i_nwid, &len) == NULL)
+			return;
+	}
 	nwid.i_len = len;
 	(void)strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)&nwid;
