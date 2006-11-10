@@ -1,4 +1,4 @@
-/*	$OpenBSD: rc.c,v 1.6 2006/04/17 13:17:07 maja Exp $ */
+/*	$OpenBSD: rc.c,v 1.7 2006/11/10 23:02:08 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: rc.c,v 1.6 2006/04/17 13:17:07 maja Exp $";
+    "$OpenBSD: rc.c,v 1.7 2006/11/10 23:02:08 maja Exp $";
 #endif
 
 #include "os.h"
@@ -81,17 +81,17 @@ mopDumpRC(FILE *fd, u_char *pkt, int trans)
 
 			control = mopGetChar(pkt, &idx);	/* Control */
 			fprintf(fd, "Control    :   %02x ", control);
-			if ((control & (1>>MOP_K_BOT_CNTL_SERVER)))
+			if ((control & (1<<MOP_K_BOT_CNTL_SERVER)))
 				fprintf(fd, "Bootserver Requesting system ");
 			else
 				fprintf(fd, "Bootserver System default ");
-			if ((control & (1>>MOP_K_BOT_CNTL_DEVICE)))
+			if ((control & (1<<MOP_K_BOT_CNTL_DEVICE)))
 				fprintf(fd, "Bootdevice Specified device");
 			else
 				fprintf(fd, "Bootdevice System default");
 			fprintf(fd, "\n");
 
-			if ((control & (1>>MOP_K_BOT_CNTL_DEVICE))) {
+			if ((control & (1<<MOP_K_BOT_CNTL_DEVICE))) {
 				tmpc = mopGetChar(pkt, &idx);/* Device ID */
 				fprintf(fd, "Device ID    :   %02x '", tmpc);
 				for (i = 0; i < ((int) tmpc); i++)
