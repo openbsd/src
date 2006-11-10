@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.2 2006/11/10 21:19:54 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.3 2006/11/10 22:02:33 drahn Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -263,7 +263,7 @@ static int reloc_target_flags[] = {
 	_RF_S|			_RF_SZ(32) | _RF_RS(0),	/* 162	COPY */
 	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),	/* 163	GLOB_DAT */
 	_RF_S|			_RF_SZ(32) | _RF_RS(0),	/* 164	JMP_SLOT */
-	_RF_P|_RF_A|      _RF_SZ(32) | _RF_RS(0), 	/* 165  REL32 */
+	      _RF_A|	_RF_B|	_RF_SZ(32) | _RF_RS(0),	/* 165 RELATIVE */
 	_RF_E,						/* 166	R_SH_GOTOFF */
 	_RF_E,						/* 167	R_SH_GOTPC */
 	_RF_E,						/* 168	R_SH_GOTPLT32 */
@@ -383,7 +383,7 @@ static int reloc_target_bitmask[] = {
 	_BM(0),		/* 12	Unused */
 	_BM(0),		/* 13	Unused */
 	_BM(0),		/* 14	Unused */
-	_BM(0),		/* 14	Unused */
+	_BM(0),		/* 15	Unused */
 	_BM(0),		/* 16	Unused */
 	_BM(0),		/* 17	Unused */
 	_BM(0),		/* 18	Unused */
@@ -420,6 +420,7 @@ static int reloc_target_bitmask[] = {
 	_BM(0),		/* 49	R_SH_DIR10SW */
 	_BM(0),		/* 50	R_SH_DIR10SL */
 	_BM(0),		/* 51	R_SH_DIR10SQ */
+	_BM(0),		/* 52	xxx */
 	_BM(0),		/* 53	R_SH_DIR16S */
 	_BM(0),		/* 54	Unused */
 	_BM(0),		/* 55	Unused */
@@ -519,6 +520,14 @@ static int reloc_target_bitmask[] = {
 	_BM(0),		/* 149	R_SH_TLS_DTPMOD32 */
 	_BM(0),		/* 150	R_SH_TLS_DTPOFF32 */
 	_BM(0),		/* 151	R_SH_TLS_TPOFF32 */
+	_BM(0),		/* 152  xxx */
+	_BM(0),		/* 153  xxx */
+	_BM(0),		/* 154  xxx */
+	_BM(0),		/* 155  xxx */
+	_BM(0),		/* 156  xxx */
+	_BM(0),		/* 157  xxx */
+	_BM(0),		/* 158  xxx */
+	_BM(0),		/* 159  xxx */
 	_BM(0),		/* 160	R_SH_GOT32 */
 	_BM(0),		/* 161	R_SH_PLT32 */
 	_BM(0),		/* 162	R_SH_COPY */
@@ -557,6 +566,51 @@ static int reloc_target_bitmask[] = {
 	_BM(0),		/* 194	R_SH_GLOB_DAT64 */
 	_BM(0),		/* 195	R_SH_JMP_SLOT64 */
 	_BM(0),		/* 196	R_SH_RELATIVE64 */
+	_BM(0),		/* 197 xxx */
+	_BM(0),		/* 198 xxx */
+	_BM(0),		/* 199 xxx */
+	_BM(0),		/* 200 xxx */
+	_BM(0),		/* 201 xxx */
+	_BM(0),		/* 202 xxx */
+	_BM(0),		/* 203 xxx */
+	_BM(0),		/* 204 xxx */
+	_BM(0),		/* 205 xxx */
+	_BM(0),		/* 206 xxx */
+	_BM(0),		/* 207 xxx */
+	_BM(0),		/* 208 xxx */
+	_BM(0),		/* 209 xxx */
+	_BM(0),		/* 210 xxx */
+	_BM(0),		/* 211 xxx */
+	_BM(0),		/* 212 xxx */
+	_BM(0),		/* 213 xxx */
+	_BM(0),		/* 214 xxx */
+	_BM(0),		/* 215 xxx */
+	_BM(0),		/* 216 xxx */
+	_BM(0),		/* 217 xxx */
+	_BM(0),		/* 218 xxx */
+	_BM(0),		/* 219 xxx */
+	_BM(0),		/* 220 xxx */
+	_BM(0),		/* 221 xxx */
+	_BM(0),		/* 222 xxx */
+	_BM(0),		/* 223 xxx */
+	_BM(0),		/* 224 xxx */
+	_BM(0),		/* 225 xxx */
+	_BM(0),		/* 226 xxx */
+	_BM(0),		/* 227 xxx */
+	_BM(0),		/* 228 xxx */
+	_BM(0),		/* 229  xxx */
+	_BM(0),		/* 230 xxx */
+	_BM(0),		/* 231 xxx */
+	_BM(0),		/* 232 xxx */
+	_BM(0),		/* 233 xxx */
+	_BM(0),		/* 234 xxx */
+	_BM(0),		/* 235 xxx */
+	_BM(0),		/* 236 xxx */
+	_BM(0),		/* 237 xxx */
+	_BM(0),		/* 238 xxx */
+	_BM(0),		/* 239 xxx */
+	_BM(0),		/* 240 xxx */
+	_BM(0),		/* 241 xxx */
 	_BM(0),		/* 242	R_SH_SHMEDIA_CODE */
 	_BM(0),		/* 243	R_SH_PT_16 */
 	_BM(0),		/* 244	R_SH_IMMS16 */
@@ -583,7 +637,7 @@ void _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rel);
 void
 _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rel)
 {
-			*where = value + rel->r_addend;
+	*where = value + rel->r_addend;
 }
 
 int
@@ -611,7 +665,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		    llist != NULL;
 		    llist = llist->next) {
 			if (!(llist->prot & PROT_WRITE))
-	_dl_printf("protecting %x %x\n", llist->start, llist->size);
 				_dl_mprotect(llist->start, llist->size,
 				    llist->prot|PROT_WRITE);
 		}
@@ -645,6 +698,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 #endif
 		else
 			value = 0;
+
 
 		sym = NULL;
 		symn = NULL;
