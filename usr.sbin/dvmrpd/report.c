@@ -1,4 +1,4 @@
-/*	$OpenBSD: report.c,v 1.4 2006/11/10 11:09:56 michele Exp $ */
+/*	$OpenBSD: report.c,v 1.5 2006/11/10 11:15:32 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -102,8 +102,6 @@ recv_report(struct nbr *nbr, char *buf, u_int16_t len)
 		 * The most significant part of the mask is always 255.
 		 */
 
-		/* XXX handle special case 0.0.0.0/0 */
-
 		/* read four bytes */
 		memcpy(&netmask, buf, sizeof(netmask));
 		/* ditch one byte, since we only need three */
@@ -111,7 +109,7 @@ recv_report(struct nbr *nbr, char *buf, u_int16_t len)
 		netmask = htonl(netmask);
 
 		/* set the highest byte to 255 */
-		netmask = netmask | htonl(0xff000000);
+		netmask |= htonl(0xff000000);
 		buf += 3;
 		len -= 3;
 
@@ -128,7 +126,12 @@ recv_report(struct nbr *nbr, char *buf, u_int16_t len)
 			 * determine the netid.
 			 */
 			memcpy(&netid, buf, sizeof(netid));
-			netid = netid & netmask;
+			netid &= netmask;
+
+			/* Interpret special case 0.0.0.0/8 as 0.0.0.0/0 */
+			if (netid == 0)
+				netmask = 0;
+
 			buf += netid_len;
 			len -= netid_len;
 
