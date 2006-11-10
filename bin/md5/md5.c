@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.35 2006/03/15 03:15:07 dhill Exp $	*/
+/*	$OpenBSD: md5.c,v 1.36 2006/11/10 15:03:44 tom Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2005 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -437,7 +437,7 @@ digest_filelist(const char *file, struct hash_functions *defhash)
 			 * Check that the algorithm is one we recognize.
 			 */
 			for (hf = functions; hf->name != NULL; hf++) {
-				if (strcmp(algorithm, hf->name) == 0)
+				if (strcasecmp(algorithm, hf->name) == 0)
 					break;
 			}
 			if (hf->name == NULL ||
@@ -486,7 +486,7 @@ digest_filelist(const char *file, struct hash_functions *defhash)
 		close(fd);
 		(void)hf->end(&context, digest);
 
-		if (strcmp(checksum, digest) == 0)
+		if (strcasecmp(checksum, digest) == 0)
 			(void)printf("(%s) %s: OK\n", algorithm, filename);
 		else {
 			(void)printf("(%s) %s: FAILED\n", algorithm, filename);
