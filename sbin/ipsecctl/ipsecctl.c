@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.62 2006/11/01 03:12:14 mcbride Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.63 2006/11/10 14:49:49 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -51,6 +51,7 @@ void		 ipsecctl_print_port(u_int16_t, const char *);
 void		 ipsecctl_print_key(struct ipsec_key *);
 void		 ipsecctl_print_flow(struct ipsec_rule *, int);
 void		 ipsecctl_print_sa(struct ipsec_rule *, int);
+void		 ipsecctl_print_sagroup(struct ipsec_rule *, int);
 int		 ipsecctl_flush(int);
 void		 ipsecctl_get_rules(struct ipsecctl *);
 void		 ipsecctl_print_title(char *);
@@ -397,6 +398,21 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 }
 
 void
+ipsecctl_print_sagroup(struct ipsec_rule *r, int opts)
+{
+	if (!(opts & IPSECCTL_OPT_VERBOSE2))
+		return;
+
+	printf("[group %s to ", satype[r->proto]);
+	ipsecctl_print_addr(r->dst);
+	printf(" spi 0x%08x with %s to ", r->spi, satype[r->proto2]);
+	ipsecctl_print_addr(r->dst2);
+	printf(" spi 0x%08x", r->spi2);
+
+	printf("]\n");
+}
+
+void
 ipsecctl_print_rule(struct ipsec_rule *r, int opts)
 {
 	if (opts & IPSECCTL_OPT_VERBOSE2)
@@ -408,6 +424,8 @@ ipsecctl_print_rule(struct ipsec_rule *r, int opts)
 		ipsecctl_print_sa(r, opts);
 	if (r->type & RULE_IKE)
 		ike_print_config(r, opts);
+	if (r->type & RULE_GROUP)
+		ipsecctl_print_sagroup(r, opts);
 }
 
 int
