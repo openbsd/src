@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.4 2006/06/14 12:35:09 joris Exp $	*/
+/*	$OpenBSD: repository.c,v 1.5 2006/11/10 14:32:44 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -100,7 +100,7 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 	while ((dp = readdir(dirp)) != NULL) {
 		if (!strcmp(dp->d_name, ".") ||
 		    !strcmp(dp->d_name, "..") ||
-		    !strcmp(dp->d_name, "Attic") ||
+		    !strcmp(dp->d_name, CVS_PATH_ATTIC) ||
 		    !strcmp(dp->d_name, CVS_LOCK))
 			continue;
 
