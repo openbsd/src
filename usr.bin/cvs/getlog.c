@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.67 2006/11/08 22:05:52 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.68 2006/11/10 15:49:03 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -50,7 +50,7 @@ struct cvs_cmd cvs_cmd_log = {
 	{ "lo" },
 	"Print out history information for files",
 	"[-bhlNRt] [-d dates] [-r revisions] [-s states] [-w logins]",
-	"bd:hlNRr:s:tw::",
+	"bd:hlNRr:s:tw:",
 	NULL,
 	cvs_getlog
 };
@@ -287,8 +287,7 @@ log_rev_print(struct rcs_delta *rdp)
 		cvs_argv_destroy(wargv);
 	}
 
-	if ((((runflags & L_STATES) && (runflags & L_LOGINS)) ||
-	    (runflags & (L_STATES | L_LOGINS))) && found == 0)
+	if ((runflags & (L_STATES|L_LOGINS)) && found == 0)
 		return;
 
 	cvs_printf("%s\n", LOG_REVSEP);
