@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.242 2006/10/29 18:58:57 norby Exp $
+#	$OpenBSD: Makefile,v 1.243 2006/11/10 21:22:30 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -22,7 +22,7 @@ BIN1=	changelist ccd.conf csh.cshrc csh.login csh.logout daily dhcpd.conf \
 	moduli pf.os sensorsd.conf ifstated.conf
 
 .if ${MACHINE} != "aviion" && ${MACHINE} != "mvme68k" && \
-    ${MACHINE} != "mvme88k"
+    ${MACHINE} != "mvme88k" && ${MACHINE} != "landisk"
 BIN1+=	wsconsctl.conf
 .endif
 
@@ -338,7 +338,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.242 2006/10/29 18:58:57 norby Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.243 2006/11/10 21:22:30 deraadt Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
