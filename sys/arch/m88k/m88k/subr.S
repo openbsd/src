@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.11 2006/01/02 19:46:12 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.12 2006/11/10 19:20:29 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -200,14 +200,12 @@ ENTRY(copyin)
 	or	r5,   r5,   lo16(_ASM_LABEL(Lciflt))
 	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = Lciflt */
 
-#if 0
-	bcnd	ne0,  LEN,  1f		/* XXX optimize len = 0 case */
-	or	r2,   r0,   0
-	br	_ASM_LABEL(Lcidone)
-1:	bcnd	lt0,  LEN,  _ASM_LABEL(Lciflt)	/* EFAULT if len < 0 */
-#endif
-
-	/* If it's a small length (less than 8), then do byte-by-byte */
+	/*
+	 * If it's a small length (less than 8), then do byte-by-byte.
+	 * Despite not being optimal if len is 4, and from and to
+	 * are word-aligned, this is still faster than doing more tests
+	 * to save an hyperthetical fraction of cycle.
+	 */
 	cmp	r9,   LEN,  8
 	bb1	lt,   r9,   _ASM_LABEL(copyin_byte_only)
 
@@ -230,8 +228,11 @@ ASLOCAL(copyin_right_aligned_to_halfword)
 	bb1	1,    LEN,  _ASM_LABEL(copyin_right_align_to_word)
 ASLOCAL(copyin_right_aligned_to_word)
 
-	/* At this point, both SRC and DEST are aligned to a word */
-	/* boundary, and LEN is an even multiple of 4.             */
+	/*
+	 * At this point, both SRC and DEST are aligned to a word
+	 * boundary, and LEN is a multiple of 4. We want it an even
+	 * multiple of 4.
+	 */
 	bb1.n	2,    LEN,  _ASM_LABEL(copyin_right_align_to_doubleword)
 	 or	r7,   r0,   4
 
@@ -258,8 +259,6 @@ ASLOCAL(copyin_right_aligned_to_doubleword)
 	 addu	DEST, DEST, 8
 	br.n	_ASM_LABEL(Lcidone)
 	 or	r2, r0, r0	/* successful return */
-
-	/***************************************************/
 
 ASLOCAL(copyin_left_align_to_halfword)
 #ifdef ERRATA__XXX_USR
@@ -353,8 +352,8 @@ ASLOCAL(copyin_byte_only)
 	bcnd.n	ne0, LEN, 1b
 	 st.b	r5, DEST, LEN
 2:
-	br.n	_ASM_LABEL(Lcidone)
-	 or	r2, r0, r0	/* successful return */
+	or	r2, r0, r0	/* successful return */
+	/* FALLTHROUGH */
 
 ASLOCAL(Lcidone)
 	ldcr	r5,   CPU
@@ -369,6 +368,7 @@ ASLOCAL(Lciflt)
 #undef	SRC
 #undef	DEST
 #undef	LEN
+
 /*######################################################################*/
 /*######################################################################*/
 
@@ -465,13 +465,13 @@ ENTRY(copyout)
 	or.u	r5,   r0,   hi16(_ASM_LABEL(Lcoflt))
 	or	r5,   r5,   lo16(_ASM_LABEL(Lcoflt))
 	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = Lcoflt */
-#if 0
-	bcnd	ne0,  LEN,  1f		/* XXX optimize len = 0 case */
-	or	r2,   r0,   0
-	br	_ASM_LABEL(Lcodone)
-1:	bcnd	lt0,  LEN,  _ASM_LABEL(Lcoflt)	/* EFAULT if len < 0 */
-#endif
-	/* If it's a small length (less than 8), then do byte-by-byte */
+
+	/*
+	 * If it's a small length (less than 8), then do byte-by-byte.
+	 * Despite not being optimal if len is 4, and from and to
+	 * are word-aligned, this is still faster than doing more tests
+	 * to save an hyperthetical fraction of cycle.
+	 */
 	cmp	r9,   LEN,  8
 	bb1	lt,   r9,   _ASM_LABEL(copyout_byte_only)
 
@@ -496,7 +496,8 @@ ASLOCAL(copyout_right_aligned_to_word)
 
 	/*
 	 * At this point, both SRC and DEST are aligned to a word
-	 * boundary, and LEN is an even multiple of 4.
+	 * boundary, and LEN is a multiple of 4. We want it an even
+	 * multiple of 4.
 	 */
 	bb1.n	2,    LEN,  _ASM_LABEL(copyout_right_align_to_doubleword)
 	 or	r7,   r0,   4
@@ -627,8 +628,8 @@ ASLOCAL(copyout_byte_only)
 #endif
 
 2:
-	br.n	_ASM_LABEL(Lcodone)
-	 or	r2, r0, r0	/* successful return */
+	or	r2, r0, r0	/* successful return */
+	/* FALLTHROUGH */
 
 ASLOCAL(Lcodone)
 	ldcr	r5,   CPU
