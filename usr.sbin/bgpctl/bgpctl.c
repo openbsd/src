@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.110 2006/08/28 05:28:49 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.111 2006/11/10 14:46:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1153,7 +1153,7 @@ fmt_mem(int64_t num)
 	static char	buf[16];
 
 	if (fmt_scaled(num, buf) == -1)
-		snprintf(buf, sizeof(buf), "%lldB", num);
+		snprintf(buf, sizeof(buf), "%lldB", (long long)num);
 
 	return (buf);
 }
@@ -1168,28 +1168,29 @@ show_rib_memory_msg(struct imsg *imsg)
 		memcpy(&stats, imsg->data, sizeof(stats));
 		printf("RDE memory statistics\n");
 		printf("%10lld IPv4 network entries using %s of memory\n",
-		    stats.pt4_cnt, fmt_mem(stats.pt4_cnt *
+		    (long long)stats.pt4_cnt, fmt_mem(stats.pt4_cnt *
 		    sizeof(struct pt_entry4)));
 		if (stats.pt6_cnt != 0)
 			printf("%10lld IPv6 network entries using "
-			    "%s of memory\n", stats.pt6_cnt,
+			    "%s of memory\n", (long long)stats.pt6_cnt,
 			    fmt_mem(stats.pt6_cnt * sizeof(struct pt_entry6)));
 		printf("%10lld prefix entries using %s of memory\n",
-		    stats.prefix_cnt, fmt_mem(stats.prefix_cnt *
+		    (long long)stats.prefix_cnt, fmt_mem(stats.prefix_cnt *
 		    sizeof(struct prefix)));
 		printf("%10lld BGP path attribute entries using %s of memory\n",
-		    stats.path_cnt, fmt_mem(stats.path_cnt *
+		    (long long)stats.path_cnt, fmt_mem(stats.path_cnt *
 		    sizeof(struct rde_aspath)));
 		printf("%10lld BGP AS-PATH attribute entries using "
 		    "%s of memory,\n\t   and holding %lld references\n",
-		    stats.aspath_cnt, fmt_mem(stats.aspath_size),
-		    stats.aspath_refs);
+		    (long long)stats.aspath_cnt, fmt_mem(stats.aspath_size),
+		    (long long)stats.aspath_refs);
 		printf("%10lld BGP attributes entries using %s of memory\n",
-		    stats.attr_cnt, fmt_mem(stats.attr_cnt *
+		    (long long)stats.attr_cnt, fmt_mem(stats.attr_cnt *
 		    sizeof(struct attr)));
-		printf("\t   and holding %lld references\n", stats.attr_refs);
+		printf("\t   and holding %lld references\n",
+		    (long long)stats.attr_refs);
 		printf("%10lld BGP attributes using %s of memory\n",
-		    stats.attr_dcnt, fmt_mem(stats.attr_data));
+		    (long long)stats.attr_dcnt, fmt_mem(stats.attr_data));
 		printf("RIB using %s of memory\n", fmt_mem(
 		    stats.pt4_cnt * sizeof(struct pt_entry4) +
 		    stats.pt6_cnt * sizeof(struct pt_entry6) +
