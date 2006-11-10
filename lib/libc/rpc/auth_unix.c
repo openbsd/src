@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_unix.c,v 1.19 2005/08/08 08:05:35 espie Exp $ */
+/*	$OpenBSD: auth_unix.c,v 1.20 2006/11/10 17:29:31 grunk Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -160,6 +160,21 @@ authunix_create(char *machname, int uid, int gid, int len, int *aup_gids)
 	return (auth);
 }
 
+
+/*
+ * Some servers will refuse mounts if the group list is larger
+ * than it expects (like 8). This allows the application to set
+ * the maximum size of the group list that will be sent.
+ */
+static int maxgrplist = NGRPS;
+
+void
+set_rpc_maxgrouplist(int num)
+{
+	if (num < NGRPS)
+		maxgrplist = num;
+}
+
 /*
  * Returns an auth handle with parameters determined by doing lots of
  * syscalls.
@@ -181,6 +196,8 @@ authunix_create_default(void)
 	gid = getegid();
 	if ((len = getgroups(NGRPS, gids)) < 0)
 		return (NULL);
+	if (len > maxgrplist)
+		len = maxgrplist;
 	for (i = 0; i < len; i++)
 		gids2[i] = gids[i];
 	return (authunix_create(machname, uid, gid, len, gids2));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.h,v 1.5 2004/01/22 21:48:02 espie Exp $	*/
+/*	$OpenBSD: auth.h,v 1.6 2006/11/10 17:29:31 grunk Exp $	*/
 /*	$NetBSD: auth.h,v 1.7 1995/04/29 05:27:55 cgd Exp $	*/
 
 /*
@@ -174,6 +174,7 @@ extern AUTH *authunix_create_default(void);
 extern AUTH *authnone_create(void);
 extern AUTH *authdes_create(char *, unsigned int, struct sockaddr_in *, 
     des_block *);
+extern void set_rpc_maxgrouplist(int);
 __END_DECLS
 
 #define AUTH_NONE	0		/* no authentication */

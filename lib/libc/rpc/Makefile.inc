@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2003/12/31 03:27:23 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2006/11/10 17:29:31 grunk Exp $
 
 # librpc sources
 .PATH:	${LIBCSRCDIR}/arch/${MACHINE}/rpc ${LIBCSRCDIR}/rpc
@@ -22,6 +22,7 @@ MLINKS+=	bindresvport.3 bindresvport_sa.3 \
 		rpcauth.3 authnone_create.3 \
 		rpcauth.3 authunix_create.3 \
 		rpcauth.3 authunix_create_default.3 \
+		rpcauth.3 set_rpc_maxgrouplist.3 \
 		rpc.3 callrpc.3 \
 		rpc.3 clnt_broadcast.3 \
 		rpc.3 clnt_call.3 \
