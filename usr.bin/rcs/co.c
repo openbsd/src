@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.99 2006/11/09 21:47:52 millert Exp $	*/
+/*	$OpenBSD: co.c,v 1.100 2006/11/10 16:31:29 millert Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -27,11 +27,13 @@
 #include "includes.h"
 
 #include "rcsprog.h"
+#include "diff.h"
 
 #define CO_OPTSTRING	"d:f::I::k:l::M::p::q::r::s:Tu::Vw::x::z::"
 
 static void	checkout_err_nobranch(RCSFILE *, const char *, const char *,
     const char *, int);
+static int	checkout_file_has_diffs(RCSFILE *, RCSNUM *, const char *);
 
 int
 checkout_main(int argc, char **argv)
@@ -240,6 +242,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkp;
 	char *fdate;
+	const char *fstatus;
 	time_t rcsdate, givendate;
 	RCSNUM *rev;
 
@@ -409,33 +412,33 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 			    file->rf_path, lcount);
 	}
 
-	if (!(flags & PIPEOUT) && stat(dst, &st) != -1 && !(flags & FORCE)) {
+	if ((flags & (PIPEOUT|FORCE)) == 0 && stat(dst, &st) != -1) {
 		/*
-		 * XXX - Not sure what is "right".  If we go according
-		 * to GNU's behavior, an existing file with no writable
-		 * bits is overwritten without prompting the user.
-		 *
-		 * This is dangerous, so we always prompt.
-		 * Unfortunately this interferes with an unlocked
-		 * checkout followed by a locked checkout, which should
-		 * not prompt.  One (unimplemented) solution is to check
-		 * if the existing file is the same as the checked out
-		 * revision, and prompt if there are differences.
+		 * Prompt the user if the file is writable or the file is
+		 * not writable but is different from the RCS head version.
+		 * This is different from GNU which will silently overwrite
+		 * the file regardless of its contents so long as it is
+		 * read-only.
 		 */
 		if (st.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH))
-			(void)fprintf(stderr, "writable ");
-		(void)fprintf(stderr, "%s exists%s; ", dst,
-		    (getuid() == st.st_uid) ? "" :
-		    ", and you do not own it");
-		(void)fprintf(stderr, "remove it? [ny](n): ");
-		if (rcs_yesno('n') == 'n') {
-			if (!(flags & QUIET) && isatty(STDIN_FILENO))
-				warnx("%s%s exists; checkout aborted",
-				    (st.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH)) ?
-				    "writable " : "", dst);
-			else
-				warnx("checkout aborted");
-			return (-1);
+			fstatus = "writable";
+		else if (checkout_file_has_diffs(file, frev, dst) != D_SAME)
+			fstatus = "modified";
+		else
+			fstatus = NULL;
+		if (fstatus) {
+			(void)fprintf(stderr, "%s %s exists%s; ", fstatus, dst,
+			    (getuid() == st.st_uid) ? "" :
+			    ", and you do not own it");
+			(void)fprintf(stderr, "remove it? [ny](n): ");
+			if (rcs_yesno('n') == 'n') {
+				if (!(flags & QUIET) && isatty(STDIN_FILENO))
+					warnx("%s %s exists; checkout aborted",
+					    fstatus, dst);
+				else
+					warnx("checkout aborted");
+				return (-1);
+			}
 		}
 	}
 
@@ -496,4 +499,38 @@ checkout_err_nobranch(RCSFILE *file, const char *author, const char *date,
 	    author ? author : "",
 	    state  ? " and state " + (date || author ? 0:4) : "",
 	    state  ? state : "");
+}
+
+/*
+ * checkout_file_has_diffs()
+ *
+ * Check for diffs between the working file and its current revision.
+ * Same return values as rcs_diffreg()
+ */
+static int
+checkout_file_has_diffs(RCSFILE *rfp, RCSNUM *frev, const char *dst)
+{
+	char *tempfile;
+	BUF *bp;
+	int ret;
+
+	tempfile = NULL;
+
+	if ((bp = rcs_getrev(rfp, frev)) == NULL) {
+		warnx("failed to load revision");
+		return (D_ERROR);
+	}
+
+	(void)xasprintf(&tempfile, "%s/diff.XXXXXXXXXX", rcs_tmpdir);
+	rcs_buf_write_stmp(bp, tempfile);
+	rcs_buf_empty(bp);
+
+	diff_format = D_RCSDIFF;
+	ret = rcs_diffreg(dst, tempfile, bp, 0);
+
+	rcs_buf_free(bp);
+	unlink(tempfile);
+	xfree(tempfile);
+
+	return (ret);
 }
