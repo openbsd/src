@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.S,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: in_cksum.S,v 1.2 2006/11/10 19:23:35 miod Exp $	*/
 /*	$NetBSD: in_cksum.S,v 1.10 2006/04/11 23:45:13 uwe Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@ ENTRY(in_cksum)
 	bt/s	mbuf_loop_done
 mbuf_loop:
 	tst	reg_m,reg_m
-	bt	out_of_mbufs
+	bt	mbuf_loop_done
 
 	mov.l	@(M_LEN,reg_m),reg_mlen
 	tst	reg_mlen,reg_mlen
@@ -195,26 +195,6 @@ in_cksum_return:
 	rts
 	 extu.w	r0,r0
 
-
-out_of_mbufs:
-	mova	.L_message_out_of_data,reg_tmp0
-	mov.l	.L_printf,reg_tmp3
-
-	mov.l	reg_sum,@-sp	/* save: call clobbered register */
-
-	jsr	@reg_tmp3
-	 mov	reg_tmp0,r4
-
-	bra	in_cksum_return
-	 mov.l	@sp+,reg_sum	/* restore */
-
-	.align 2
-.L_printf:
-	.long	_C_LABEL(printf)
-
-	.align 2	/* mova target */
-.L_message_out_of_data:
-	.asciz "cksum: out of data (%d byte short)\n"
 
 	SET_ENTRY_SIZE(in_cksum)
 
