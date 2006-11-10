@@ -22,7 +22,6 @@
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-licence
 ./sbin/fdisk
-./sbin/kbd
 ./usr/lib/gcc-lib/sh-unknown-openbsd4.0
 ./usr/lib/gcc-lib/sh-unknown-openbsd4.0/3.3.5
 ./usr/lib/gcc-lib/sh-unknown-openbsd4.0/3.3.5/cc1
@@ -2169,8 +2168,8 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/zlib.ph
 ./usr/local/libdata/perl5/site_perl/sh-openbsd
 ./usr/mdec/boot
+./usr/mdec/mbr
 ./usr/mdec/sdboot
 ./usr/mdec/wdboot
 ./usr/mdec/xxboot
 ./usr/sbin/hotplugd
-./usr/sbin/wsconscfg
