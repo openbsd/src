@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.4 2006/11/03 15:21:25 michele Exp $ */
+/*	$OpenBSD: message.c,v 1.5 2006/11/10 10:28:18 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -60,6 +60,7 @@ start_report_timer(void)
 	return (evtimer_add(&oeconf->report_timer, &tv));
 }
 
+/* list handlers */
 void
 add_entry(struct packet_head *r_list, struct rip_route *rr)
 {
@@ -83,6 +84,19 @@ delete_entry(struct rip_route *rr)
 		free(rr);
 }
 
+void
+clear_list(struct packet_head *r_list)
+{
+	struct packet_entry	*re;
+ 
+	while ((re = TAILQ_FIRST(r_list)) != NULL) {
+		TAILQ_REMOVE(r_list, re, entry);
+		delete_entry(re->rr);
+		free(re);
+	}
+}
+
+/* communications */
 int
 send_triggered_update(struct iface *iface, struct rip_route *rr)
 {
