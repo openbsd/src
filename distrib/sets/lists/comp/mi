@@ -4990,6 +4990,7 @@
 ./usr/share/man/cat3/set_menu_win.0
 ./usr/share/man/cat3/set_new_page.0
 ./usr/share/man/cat3/set_panel_userptr.0
+./usr/share/man/cat3/set_rpc_maxgrouplist.0
 ./usr/share/man/cat3/set_term.0
 ./usr/share/man/cat3/set_top_row.0
 ./usr/share/man/cat3/setbuf.0
