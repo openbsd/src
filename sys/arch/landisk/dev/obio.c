@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.4 2006/10/31 23:25:57 miod Exp $	*/
+/*	$OpenBSD: obio.c,v 1.5 2006/11/10 19:23:15 miod Exp $	*/
 /*	$NetBSD: obio.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -249,10 +249,8 @@ obio_iomem_add_mapping(bus_addr_t bpa, bus_size_t size, int type,
 #endif
 
 	va = uvm_km_valloc(kernel_map, endpa - pa);
-	if (va == 0){
-		printf("obio_iomem_add_mapping: nomem\n");
+	if (va == 0)
 		return (ENOMEM);
-	}
 
 	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
