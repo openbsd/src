@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.30 2006/11/06 03:52:37 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.31 2006/11/10 21:15:56 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -263,10 +263,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 struct em_buffer {
 	struct mbuf	*m_head;
-	bus_dmamap_t	map;		/* bus_dma map for packet */
-};
-
-struct em_q {
 	bus_dmamap_t	map;		/* bus_dma map for packet */
 };
 
