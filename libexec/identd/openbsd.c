@@ -1,4 +1,4 @@
-/* $OpenBSD: openbsd.c,v 1.20 2005/12/06 22:05:22 deraadt Exp $ */
+/* $OpenBSD: openbsd.c,v 1.21 2006/11/10 20:44:07 mk Exp $ */
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -6,7 +6,7 @@
  *
  * Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
  *
- * This version elminates the kmem search in favour of a kernel sysctl to
+ * This version eliminates the kmem search in favour of a kernel sysctl to
  * get the user id associated with a connection - Bob Beck <beck@obtuse.com>
  */
 

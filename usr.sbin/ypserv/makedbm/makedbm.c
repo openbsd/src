@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.26 2006/04/03 05:01:22 deraadt Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.27 2006/11/10 20:44:07 mk Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: makedbm.c,v 1.26 2006/04/03 05:01:22 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: makedbm.c,v 1.27 2006/11/10 20:44:07 mk Exp $";
 #endif
 
 #include <stdio.h>
@@ -194,7 +194,7 @@ create_database(char *infile, char *database, char *yp_input_file,
 	if (slash != NULL)
 		slash[1] = 0;			/* truncate to dir */
 	else
-		*database = 0;			/* elminate */
+		*database = 0;			/* eliminate */
 
 	/* note: database is now directory where map goes ! */
 
