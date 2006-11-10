@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.51 2006/04/21 08:49:29 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.52 2006/11/10 14:47:32 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -835,7 +835,7 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 	return (wpos);
 }
 
-char *
+u_char *
 up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 {
 	int		wpos = 8;	/* reserve some space for header */
@@ -886,7 +886,7 @@ up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 	return (buf);
 }
 
-char *
+u_char *
 up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 {
 	struct update_attr	*upa;
