@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee.h,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: ieee.h,v 1.2 2006/11/10 20:29:36 otto Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,16 +84,16 @@
 #define	EXT_FRACBITS	112
 
 struct ieee_single {
-	u_int	sng_sign:1;
-	u_int	sng_exp:8;
 	u_int	sng_frac:23;
+	u_int	sng_exp:8;
+	u_int	sng_sign:1;
 };
 
 struct ieee_double {
-	u_int	dbl_sign:1;
-	u_int	dbl_exp:11;
-	u_int	dbl_frach:20;
 	u_int	dbl_fracl;
+	u_int	dbl_frach:20;
+	u_int	dbl_exp:11;
+	u_int	dbl_sign:1;
 };
 
 struct ieee_ext {
