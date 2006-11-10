@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_subr.S,v 1.3 2006/11/02 23:00:28 miod Exp $	*/
+/*	$OpenBSD: locore_subr.S,v 1.4 2006/11/10 07:02:55 miod Exp $	*/
 /*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
 /*-
@@ -582,6 +582,8 @@ ENTRY(copyoutstr)
 	mov.l	.L_copyoutstr_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 	mov.l	.L_copyoutstr_VM_MAXUSER_ADDRESS, r1
+	cmp/hi	r1,	r5		/* bomb if udst isn't in user space */
+	bt	4f
 	mov	r1,	r0
 	sub	r5,	r0
 	cmp/hi	r6,	r0		/* don't beyond user space */
@@ -656,8 +658,10 @@ ENTRY(copyinstr)
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 
 	mov.l	.L_copyinstr_VM_MAXUSER_ADDRESS, r1
+	cmp/hi	r1,	r4		/* bomb if src isn't in user space */
+	bt	4f
 	mov	r1,	r0
-	sub	r5,	r0
+	sub	r4,	r0
 	cmp/hi	r6,	r0		/* don't beyond user space */
 	bf	2f
 	bra	2f
