@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.55 2006/09/19 11:06:33 jsg Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.56 2006/11/11 21:47:52 kettenis Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -520,19 +520,21 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 
  	if (mp_busses != NULL) {
  		int mpspec_pin = irq;
- 		int bus = mp_isa_bus;
  		int airq;
 
- 		for (mip = mp_busses[bus].mb_intrs; mip != NULL; 
+		if (mp_isa_bus == NULL)
+			panic("no isa bus");
+
+ 		for (mip = mp_isa_bus->mb_intrs; mip != NULL;
  		    mip = mip->next) {
  			if (mip->bus_pin == mpspec_pin) {
  				airq = mip->ioapic_ih | irq;
  				break;
  			}
  		}
-		if (mip == NULL && mp_eisa_bus != -1) {
-			for (mip = mp_busses[mp_eisa_bus].mb_intrs;
-			    mip != NULL; mip=mip->next) {
+		if (mip == NULL && mp_eisa_bus) {
+			for (mip = mp_eisa_bus->mb_intrs; mip != NULL;
+			    mip = mip->next) {
 				if (mip->bus_pin == mpspec_pin) {
 					airq = mip->ioapic_ih | irq;
 					break;
@@ -542,7 +544,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 
 		/* no MP mapping found -- invent! */
  		if (mip == NULL)
-			airq = mpbios_invent(irq, type, mp_isa_bus);
+			airq = mpbios_invent(irq, type, mp_isa_bus->mb_idx);
 
 		return (apic_intr_establish(airq, type, level, ih_fun,
 		    ih_arg, ih_what));

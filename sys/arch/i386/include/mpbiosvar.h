@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbiosvar.h,v 1.5 2006/05/01 17:01:14 kettenis Exp $	*/
+/*	$OpenBSD: mpbiosvar.h,v 1.6 2006/11/11 21:47:52 kettenis Exp $	*/
 /* $NetBSD: mpbiosvar.h,v 1.1.2.3 2000/02/29 13:17:20 sommerfeld Exp $ */
 
 /*-
@@ -76,8 +76,8 @@ struct mp_intr_map
 extern int mp_verbose;
 extern struct mp_bus *mp_busses;
 extern struct mp_intr_map *mp_intrs;
-extern int mp_isa_bus;
-extern int mp_eisa_bus;
+extern struct mp_bus *mp_isa_bus;
+extern struct mp_bus *mp_eisa_bus;
 
 void mpbios_scan(struct device *);
 int mpbios_probe(struct device *);

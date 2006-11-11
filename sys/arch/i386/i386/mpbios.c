@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.17 2006/10/03 22:35:01 gwk Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.18 2006/11/11 21:47:52 kettenis Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -277,6 +277,13 @@ mpbios_probe(struct device *self)
 
 	struct		mp_map t;
 
+	/*
+	 * Skip probe if someone else (e.g. acpi) already provided the
+	 * necessary details.
+	 */
+	if (mp_busses)
+		return (0);
+
 	/* see if EBDA exists */
 
 	mpbios_page = mpbios_map(0, NBPG, &t);
@@ -448,8 +455,8 @@ struct mp_intr_map *mp_intrs;
 int mp_nintrs;
 
 struct mp_intr_map *lapic_ints[2]; /* XXX */
-int mp_isa_bus = -1;		/* XXX */
-int mp_eisa_bus = -1;		/* XXX */
+struct mp_bus *mp_isa_bus;
+struct mp_bus *mp_eisa_bus;
 
 static struct mp_bus extint_bus = {
 	"ExtINT",
@@ -984,21 +991,21 @@ mpbios_bus(const u_int8_t *ent, struct device *self)
 
 		mp_busses[bus_id].mb_data = inb(ELCR0) | (inb(ELCR1) << 8);
 
-		if (mp_eisa_bus != -1)
+		if (mp_eisa_bus)
 			printf("%s: multiple eisa busses?\n",
 			    self->dv_xname);
 		else
-			mp_eisa_bus = bus_id;
+			mp_eisa_bus = &mp_busses[bus_id];
 	} else if (memcmp(entry->bus_type, "ISA   ", 6) == 0) {
 		mp_busses[bus_id].mb_name = "isa";
-		mp_busses[bus_id].mb_idx = 0; /* XXX */
+		mp_busses[bus_id].mb_idx = bus_id;
 		mp_busses[bus_id].mb_intr_print = mp_print_isa_intr;
 		mp_busses[bus_id].mb_intr_cfg = mp_cfg_isa_intr;
-		if (mp_isa_bus != -1)
+		if (mp_isa_bus)
 			printf("%s: multiple isa busses?\n",
 			    self->dv_xname);
 		else
-			mp_isa_bus = bus_id;
+			mp_isa_bus = &mp_busses[bus_id];
 	} else {
 		printf("%s: unsupported bus type %6.6s\n", self->dv_xname,
 		    entry->bus_type);

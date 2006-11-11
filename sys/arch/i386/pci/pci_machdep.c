@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.34 2006/09/19 11:06:34 jsg Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.35 2006/11/11 21:47:52 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -480,18 +480,18 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 				return 0;
 			}
 		}
-		if (mip == NULL && mp_isa_bus != -1) {
-			for (mip = mp_busses[mp_isa_bus].mb_intrs; mip != NULL;
-			    mip=mip->next) {
+		if (mip == NULL && mp_isa_bus) {
+			for (mip = mp_isa_bus->mb_intrs; mip != NULL;
+			    mip = mip->next) {
 				if (mip->bus_pin == line) {
 					ihp->line = mip->ioapic_ih | line;
 					return 0;
 				}
 			}
 		}
-		if (mip == NULL && mp_eisa_bus != -1) {
-			for (mip = mp_busses[mp_eisa_bus].mb_intrs;
-			    mip != NULL; mip=mip->next) {
+		if (mip == NULL && mp_eisa_bus) {
+			for (mip = mp_eisa_bus->mb_intrs;  mip != NULL;
+			    mip = mip->next) {
 				if (mip->bus_pin == line) {
 					ihp->line = mip->ioapic_ih | line;
 					return 0;
