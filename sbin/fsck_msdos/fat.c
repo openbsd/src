@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.c,v 1.15 2006/05/27 22:30:09 thib Exp $	*/
+/*	$OpenBSD: fat.c,v 1.16 2006/11/11 11:34:32 pedro Exp $	*/
 /*	$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fat.c,v 1.15 2006/05/27 22:30:09 thib Exp $";
+static char rcsid[] = "$OpenBSD: fat.c,v 1.16 2006/11/11 11:34:32 pedro Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -98,8 +98,10 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 	buffer = malloc(boot->FATsecs * boot->BytesPerSec);
 	if (fat == NULL || buffer == NULL) {
 		xperror("No space for FAT");
-		if (fat)
+		if (fat != NULL)
 			free(fat);
+		if (buffer != NULL)
+			free(buffer);
 		return (FSFATAL);
 	}
 
