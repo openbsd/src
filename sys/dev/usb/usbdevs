@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.229 2006/11/11 14:38:13 jolan Exp $
+$OpenBSD: usbdevs,v 1.230 2006/11/11 18:17:21 maja Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2148,6 +2148,9 @@ product USR HEINEKEN_B		0x00f7	USR9000	SureConnect ADSL
 product USR HEINEKEN_B_NF	0x00f8	USR9000	SureConnect ADSL
 product USR MILLER_B		0x00f9	USR9000	SureConnect ADSL
 product USR MILLER_B_NF		0x00fa	USR9000	SureConnect ADSL
+product USR USR5422		0x0118	USR5422 WLAN
+product USR USR5421A		0x011b	USR5421A WLAN
+product	USR USR5423		0x0121	USR5423 WLAN
 
 /* USI products */
 product USI MC60		0x10c5	MC60 Serial
