@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.3 2006/11/10 22:26:40 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.4 2006/11/11 02:38:31 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn
@@ -49,9 +49,6 @@ ENTRY(_dl_start)
 	mov	r5, r13
 	// not trusting register to store the data, push it on the stack.
 	// callee/caller save questions
-//	mov.l	r13,@-r15		// save dl_data
-//	mov.l	r12,@-r15		// save original sp
-//	mov.l	r11,@-r15		// save pr
 
 	mov	r15, r14
 
@@ -69,9 +66,6 @@ ENTRY(_dl_start)
 	bsrf	r0
 	 nop
 .L_call_boot_bind:
-//	mov.l	@r15+, r11
-//	mov.l	@r15+, r12
-//	mov.l	@r15+, r13
 	mov	r12, r4
 	add	#4, r4
 	mov.l	@r12, r5		//loads argc
@@ -79,33 +73,28 @@ ENTRY(_dl_start)
 	shll2	r5
 	add	r12, r5			// calc argv 
 
-#if 0
 	mov	r13, r7
-	mov	#24, r0			// WTF? 
-	sub	r0, r7
-#else
-	mov	r13, r7
-#endif
 	mov	r7, r6
 	mov.l	.L_loff, r0
 	add	r0, r6
 	mov.l	@r6, r6
 
 	mov.l	.L_boot, r0
-//	mov.l	r13,@-r15		// save dl_data
-//	mov.l	r12,@-r15		// save original sp
-//	mov.l	r11,@-r15		// save pr
-	mov	r12, r15
 	bsrf	r0
 	 nop
 .L_call_boot:
 
-	mov	r14, r15
-//	mov.l	@r15+, r11
-//	mov.l	@r15+, r12
-//	mov.l	@r15+, r13
+	mov	r12, r15
 	lds	r11, pr
+	mov.l	@r15, r4
+	mov	r15, r5
+	add	#4, r5
+
+	mov	r4, r6
+	shll2	r6
+	add	r5, r6			// calc envp
 	jmp	@r0
+	 nop
 
 	.align 2
 .L_boot_bind:
