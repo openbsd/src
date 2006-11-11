@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.228 2006/11/01 07:08:50 jolan Exp $
+$OpenBSD: usbdevs,v 1.229 2006/11/11 14:38:13 jolan Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -419,6 +419,7 @@ vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
 vendor SILABS		0x10c4	Silicon Labs
 vendor ANALOG		0x1110	Analog Devices
+vendor TENX		0x1130	Ten X Technology, Inc.
 vendor JRC		0x1145	Japan Radio Company
 vendor SPHAIRON		0x114b	Sphairon Access Systems GmbH
 vendor DELORME		0x1163	DeLorme
@@ -2081,6 +2082,9 @@ product TEKRAM ZD1211		0x5630	ZD1211
 
 /* Telex Communications products */
 product TELEX MIC1		0x0001	Microphone
+
+/* Ten X Technology, Inc. */
+product TENX MISSILE		0x0202	Missile Launcher
 
 /* Texas Intel products */
 product TI UTUSB41		0x1446	UT-USB41 hub
