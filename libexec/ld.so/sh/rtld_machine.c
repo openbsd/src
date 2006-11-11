@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.3 2006/11/10 22:02:33 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.4 2006/11/11 23:04:50 drahn Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -52,52 +52,6 @@ Elf_Addr _dl_bind(elf_object_t *object, int reloff);
 #define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
 #define _RF_RS(s)	((s) & 0xff)		/* right shift */
 static int reloc_target_flags[] = {
-#if 0
-	0,						/*  0 NONE */
-	_RF_S|_RF_P|_RF_A|	_RF_SZ(32) | _RF_RS(0),	/*  1 PC24 */
-	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),	/*  2 ABS32 */
-	_RF_S|_RF_P|_RF_A|	_RF_SZ(32) | _RF_RS(0),	/*  3 REL32 */
-	_RF_S|_RF_P|_RF_A|	_RF_E,			/*  4 REL13 */
-	_RF_S|_RF_A|		_RF_E,			/*  5 ABS16 */
-	_RF_S|_RF_A|		_RF_E,			/*  6 ABS12 */
-	_RF_S|_RF_A|		_RF_E,			/*  7 T_ABS5 */
-	_RF_S|_RF_A|		_RF_E,			/*  8 ABS8 */
-	_RF_S|_RF_B|_RF_A|	_RF_E,			/*  9 SBREL32 */
-	_RF_S|_RF_P|_RF_A|	_RF_E,			/* 10 T_PC22 */
-	_RF_S|_RF_P|_RF_A|	_RF_E,			/* 11 T_PC8 */
-	_RF_E,						/* 12 Reserved */
-	_RF_S|_RF_A|		_RF_E,			/* 13 SWI24 */
-	_RF_S|_RF_A|		_RF_E,			/* 14 T_SWI8 */
-	_RF_E,						/* 15 OBSL */
-	_RF_E,						/* 16 OBSL */
-	_RF_E,						/* 17 UNUSED */
-	_RF_E,						/* 18 UNUSED */
-	_RF_E,						/* 19 UNUSED */
-	_RF_S|			_RF_SZ(32) | _RF_RS(0),	/* 20 COPY */
-	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),	/* 21 GLOB_DAT */
-	_RF_S|			_RF_SZ(32) | _RF_RS(0),	/* 22 JMP_SLOT */
-	      _RF_A|	_RF_B|	_RF_SZ(32) | _RF_RS(0),	/* 23 RELATIVE */
-	_RF_E,						/* 24 GOTOFF */
-	_RF_E,						/* 25 GOTPC */
-	_RF_E,						/* 26 GOT32 */
-	_RF_E,						/* 27 PLT32 */
-	_RF_E,						/* 28 UNUSED */
-	_RF_E,						/* 29 UNUSED */
-	_RF_E,						/* 30 UNUSED */
-	_RF_E,						/* 31 UNUSED */
-	_RF_E,						/* 32 A_PCR 0 */
-	_RF_E,						/* 33 A_PCR 8 */
-	_RF_E,						/* 34 A_PCR 16 */
-	_RF_E,						/* 35 B_PCR 0 */
-	_RF_E,						/* 36 B_PCR 12 */
-	_RF_E,						/* 37 B_PCR 20 */
-	_RF_E,						/* 38 RELAB32 */
-	_RF_E,						/* 39 ROSGREL32 */
-	_RF_E,						/* 40 V4BX */
-	_RF_E,						/* 41 STKCHK */
-	_RF_E						/* 42 TSTKCHK */
-
-#endif
 	0,						/* 0	R_SH_NONE */
 	_RF_S|_RF_A|            _RF_SZ(32) | _RF_RS(0), /* 1	R_SH_DIR32 */
 	_RF_S|_RF_P|_RF_A|      _RF_SZ(32) | _RF_RS(0), /* 2  REL32 */
