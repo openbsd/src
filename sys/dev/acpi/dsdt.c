@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.62 2006/10/31 13:49:44 thib Exp $ */
+/* $OpenBSD: dsdt.c,v 1.63 2006/11/11 19:26:01 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -103,6 +103,8 @@ struct aml_opcode      *aml_findopcode(int);
 
 void *_acpi_os_malloc(size_t, const char *, int);
 void  _acpi_os_free(void *, const char *, int);
+void acpi_sleep(int);
+void acpi_stall(int);
 
 struct aml_value *aml_evalmethod(struct aml_scope *,struct aml_node *, int, struct aml_value *, struct aml_value *);
 
@@ -405,6 +407,24 @@ _acpi_os_free(void *ptr, const char *fn, int line)
 		dnprintf(99,"free: %x %s:%d\n", sptr, fn, line);
 		free(sptr, M_DEVBUF);
 	}
+}
+
+void
+acpi_sleep(int ms)
+{
+	extern int hz;
+
+	if (cold)
+		delay(ms * 1000);
+	else 
+		while (tsleep(dsdt_softc, PWAIT, "asleep", ms / hz) !=
+		    EWOULDBLOCK);
+}
+
+void
+acpi_stall(int us)
+{
+	delay(us);
 }
 
 /*
@@ -2584,6 +2604,7 @@ aml_parsemisc2(struct aml_scope *scope, int opcode, struct aml_value *res)
 	int i1, i2, i3;
 
 	AML_CHECKSTACK();
+
 	switch (opcode) {
 	case AMLOP_NOTIFY:
 		/* Assert: tmparg is nameref or objref */
@@ -2600,11 +2621,21 @@ aml_parsemisc2(struct aml_scope *scope, int opcode, struct aml_value *res)
 		break;
 	case AMLOP_SLEEP:
 		i1 = aml_parseint(scope, AML_ANYINT);
-		dnprintf(10,"SLEEP: %x\n", i1);
+		dnprintf(50,"SLEEP: %x\n", i1);
+		if (i1)
+			acpi_sleep(i1);
+		else {
+			dnprintf(10, "acpi_sleep(0)\n");
+		}
 		break;
 	case AMLOP_STALL:
 		i1 = aml_parseint(scope, AML_ANYINT);
-		dnprintf(10,"STALL: %x\n", i1);
+		dnprintf(50,"STALL: %x\n", i1);
+		if (i1)
+			acpi_stall(i1);
+		else {
+			dnprintf(10, "acpi_stall(0)\n");
+		}
 		break;
 	case AMLOP_FATAL:
 		i1 = aml_parseint(scope, AMLOP_BYTEPREFIX);
