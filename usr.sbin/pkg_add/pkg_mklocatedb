@@ -33,12 +33,22 @@ sub print_name
 
 package main;
 
-set_usage('pkg_mklocatedb -nq [-r release] [-s src] [-x X11src] [pkg-name [...]]');
+set_usage('pkg_mklocatedb [-nPq] [-r release] [-p portstree ] [-s src] [-x X11src] [pkg-name [...]]');
 
-our ($opt_n, $opt_q, $opt_s, $opt_x, $opt_r);
+our ($opt_n, $opt_q, $opt_s, $opt_x, $opt_r, $opt_p, $opt_P);
+
+sub info
+{
+	my $plist = shift;
+	if ($opt_P) {
+		return $plist->{extrainfo}->{subdir};
+	} else {
+		return $plist->pkgname();
+	}
+}
 
 try {
-	getopts('nqs:x:r:');
+	getopts('nqs:x:r:p:P');
 } catchall {
 	Usage($_);
 };
@@ -102,20 +112,41 @@ if ($opt_r) {
 	}
 	closedir($dir);
 }
-			
-		
 
-if (@ARGV==0) {
+if ($opt_p) {
+	my $make = $ENV{MAKE} || 'make';
+	open my $in, "cd $opt_p && $make print-plist-all |";
+	my $done = 0;
+	while (!$done) {
+		my $plist = OpenBSD::PackingList->read($in,
+		    sub {
+			my ($fh, $cont) = @_;
+			local $_;
+			while (<$fh>) {
+				return if m/^\=\=\=\> /o;
+				next unless m/^\@(?:cwd|name|info|man|file|lib|shell|comment\s+subdir\=)\b/o || !m/^\@/o;
+				&$cont($_);
+			}
+			$done = 1;
+		    });
+		if (defined $plist && defined $plist->pkgname()) {
+			$plist->visit('print_name', $fh, info($plist));
+		}
+	}
+	close($in);
+}
+
+elsif (@ARGV==0) {
 	for my $pkgname (installed_packages()) {
 		print STDERR "$pkgname\n" unless $opt_q;
 		my $plist = OpenBSD::PackingList->from_installation($pkgname);
-		$plist->visit('print_name', $fh, $plist->pkgname());
+		$plist->visit('print_name', $fh, info($plist));
 	}
 } else {
 	for my $pkgname (@ARGV) {
 		print STDERR "$pkgname\n" unless $opt_q;
 		my $plist = OpenBSD::PackageLocator->grabPlist($pkgname);
 		next unless $plist;
-		$plist->visit('print_name', $fh, $plist->pkgname());
+		$plist->visit('print_name', $fh, info($plist));
 	}
 }
