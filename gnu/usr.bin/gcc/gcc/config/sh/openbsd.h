@@ -55,7 +55,7 @@ Boston, MA 02111-1307, USA.  */
   "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!nostdlib:%{!r*:%{!e*:-e __start}}} -dc -dp %{assert*}"
 #else
 #define SUBTARGET_LINK_SPEC \
-  "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!shared:%{!nostdlib:%{!r*:%{!e*:-e __start}}}} %{shared:-Bshareable -x} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
+  "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!shared:%{!nostdlib:%{!r*:%{!e*:-e __start}}}} %{shared:-Bshareable -x} -dc -dp %{R*} %{static:-Bstatic} %{assert*} %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}"
 #endif
 
 
