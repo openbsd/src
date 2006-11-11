@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.37 2006/08/29 10:13:10 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.38 2006/11/11 09:40:16 mk Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -206,11 +206,15 @@ Show a list of all neighbors, including information about the session state
 and message counters.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/bgpd.conf" -compact
+.Bl -tag -width "/var/run/bgpd.sockXXX" -compact
 .It Pa /etc/bgpd.conf
 default
 .Xr bgpd 8
 configuration file
+.It Pa /var/run/bgpd.sock
+default
+.Xr bgpd 8
+control socket
 .El
 .Sh SEE ALSO
 .Xr bgpd.conf 5 ,
