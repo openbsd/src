@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.5 2006/11/10 10:28:18 michele Exp $ */
+/*	$OpenBSD: message.c,v 1.6 2006/11/11 15:55:52 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -421,7 +421,7 @@ recv_response(struct iface *i, struct nbr *nbr, char *buf, u_int16_t len)
 		r.ifindex = i->ifindex;
 
 		ripe_imsg_compose_rde(IMSG_ROUTE_FEED, 0, 0, (void *)&r,
-		    sizeof(*e));
+		    sizeof(r));
 
 		e++;
 	}
