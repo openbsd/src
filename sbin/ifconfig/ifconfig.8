@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.137 2006/11/10 20:04:24 mk Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.138 2006/11/11 08:08:10 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -992,26 +992,10 @@ vlan header for packets sent from the vlan interface.
 .El
 .Sh EXAMPLES
 Assign the
-.Xr inet 3
 address of 192.168.1.10 with a network mask of
 255.255.255.0 to interface fxp0:
 .Pp
 .Dl # ifconfig fxp0 inet 192.168.1.10 netmask 255.255.255.0
-.Pp
-Assign the
-.Xr ipx 3
-address of 12625920 specified in decimal to interface fxp0:
-.Pp
-.Dl # ifconfig fxp0 ipx 12625920
-.Pp
-Assign the AppleTalk network 39108 and server node 128 with a network
-range of 39107\-39109 to interface fxp0 on a phase 2 AppleTalk network:
-.Pp
-.Dl # ifconfig fxp0 atalk 39108.128 range 39107-39109 phase 2
-.Pp
-Configure the xl0 interface to use 10baseT:
-.Pp
-.Dl # ifconfig xl0 media 10baseT
 .Pp
 Configure the xl0 interface to use 100baseTX, full duplex:
 .Pp
@@ -1021,16 +1005,6 @@ Label the em0 interface as an uplink:
 .Pp
 .Dl # ifconfig em0 description \&"Uplink to Gigabit Switch 2\&"
 .Pp
-Configure the vlan0 interface for IP address 192.168.254.1, vlan tag 4,
-and vlan parent device fxp0:
-.Pp
-.Dl # ifconfig vlan0 192.168.254.1 vlan 4 vlandev fxp0
-.Pp
-Configure the carp0 interface for IP address 192.168.10.1, virtual host ID 1,
-attached to the vlan0 interface:
-.Pp
-.Dl # ifconfig carp0 vhid 1 carpdev vlan0 192.168.10.1
-.Pp
 Create the gif1 network interface:
 .Pp
 .Dl # ifconfig gif1 create
@@ -1038,11 +1012,6 @@ Create the gif1 network interface:
 Destroy the gif1 network interface:
 .Pp
 .Dl # ifconfig gif1 destroy
-.Pp
-Create and configure the trunk0 interface for IP address 192.168.23.1,
-with the em0 and em1 trunk port interfaces:
-.Pp
-.Dl # ifconfig trunk0 create 192.168.23.1 trunkport em0 trunkport em1
 .Sh DIAGNOSTICS
 Messages indicating the specified interface does not exist, the
 requested address is unknown, or the user is not privileged and
