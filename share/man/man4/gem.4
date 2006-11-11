@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gem.4,v 1.13 2006/08/30 22:56:05 jmc Exp $
+.\"	$OpenBSD: gem.4,v 1.14 2006/11/11 06:16:27 brad Exp $
 .\"
 .\" Copyright (c) 2001 Miodrag Vallat.
 .\" All rights reserved.
@@ -35,25 +35,26 @@
 .Cd "bmtphy* at mii?"
 .Cd "brgphy* at mii?"
 .Cd "eephy* at mii?"
+.Cd "gentbi* at mii?"
 .Cd "lxtphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
-interface provides access to the 10Mb/s, 100Mb/s and 1Gb/s Ethernet networks.
-The
-.Nm
-is found on the
-.Tn Sun
-GEM and ERI 10/100 boards, as well as the
-.Tn Apple
-internal GMAC Ethernet.
+driver provides support for various NICs based on the GEM Ethernet controller
+chips, including the following:
 .Pp
-When a
-.Nm
-interface is brought up, by default, it will attempt to auto-negotiate the
-link speed and duplex.
-The speeds are tried in descending order; first in full duplex mode, then
-half duplex.
+.Bl -bullet -compact
+.It
+Apple GMAC (10/100/1000baseT)
+.It
+Sun ERI (10/100baseT)
+.It
+Sun GEM (10/100/1000baseT)
+.It
+Sun GEM (1000baseSX)
+.El
+.Pp
+It uses an external PHY or an external 10-bit interface.
 .Pp
 The
 .Nm
@@ -64,8 +65,6 @@ The supported media types are:
 .Bl -tag -width "media" -offset indent
 .It media autoselect
 Attempt to autoselect the media type (default)
-.\" Check and correct the gigabit modes. Are both copper and fiber supported?
-.\" And in both duplex modes as well?
 .It media 1000baseT mediaopt full-duplex
 Use 1000baseT on copper, full duplex
 .It media 1000baseT Op mediaopt half-duplex
@@ -88,6 +87,7 @@ Use 10baseT, half duplex
 .Xr bmtphy 4 ,
 .Xr brgphy 4 ,
 .Xr eephy 4 ,
+.Xr gentbi 4 ,
 .Xr ifmedia 4 ,
 .Xr inet 4 ,
 .Xr intro 4 ,
