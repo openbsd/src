@@ -40,11 +40,14 @@ our ($opt_n, $opt_q, $opt_s, $opt_x, $opt_r, $opt_p, $opt_P);
 sub info
 {
 	my $plist = shift;
+	my $r;
 	if ($opt_P) {
-		return $plist->{extrainfo}->{subdir};
+		$r = $plist->{extrainfo}->{subdir};
 	} else {
-		return $plist->pkgname();
+		$r = $plist->pkgname();
 	}
+	print STDERR "$r\n" unless $opt_q;
+	return $r;
 }
 
 try {
@@ -138,13 +141,11 @@ if ($opt_p) {
 
 elsif (@ARGV==0) {
 	for my $pkgname (installed_packages()) {
-		print STDERR "$pkgname\n" unless $opt_q;
 		my $plist = OpenBSD::PackingList->from_installation($pkgname);
 		$plist->visit('print_name', $fh, info($plist));
 	}
 } else {
 	for my $pkgname (@ARGV) {
-		print STDERR "$pkgname\n" unless $opt_q;
 		my $plist = OpenBSD::PackageLocator->grabPlist($pkgname);
 		next unless $plist;
 		$plist->visit('print_name', $fh, info($plist));
