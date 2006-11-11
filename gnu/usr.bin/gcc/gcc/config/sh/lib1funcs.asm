@@ -715,6 +715,7 @@ GLOBAL(movstrSI0):
 	.align	4
 
 	.global	GLOBAL(movstr)
+	.type	GLOBAL(movstr),function
 GLOBAL(movstr):
 	mov.l	@(60,r5),r0
 	mov.l	r0,@(60,r4)
@@ -771,6 +772,7 @@ GLOBAL(movstr):
 	add	#64,r5
 	bra	GLOBAL(movstr)
 	add	#64,r4
+	.size	GLOBAL(movstr),.-GLOBAL(movstr)
 #endif
 
 #ifdef L_movstr_i4
@@ -923,6 +925,7 @@ GLOBAL(sdivsi3_i4):
 !! args in r4 and r5, result in r0 clobber r1,r2,r3
 
 	.global	GLOBAL(sdivsi3)
+	.type	GLOBAL(sdivsi3), function
 #if __SHMEDIA__
 #if __SH5__ == 32
 	.section	.text..SHmedia32,"ax"
@@ -1165,6 +1168,7 @@ GLOBAL(sdivsi3):
 
 div0:	rts
 	mov	#0,r0
+	.size GLOBAL(sdivsi3),.-GLOBAL(sdivsi3)
 
 #endif /* ! __SHMEDIA__ */
 #endif /* ! __SH4__ */
@@ -1297,6 +1301,7 @@ L1:
 
 !! args in r4 and r5, result in r0, clobbers r4, pr, and t bit
 	.global	GLOBAL(udivsi3)
+	.type	GLOBAL(udivsi3),function
 
 #if __SHMEDIA__
 #if __SH5__ == 32
@@ -1465,6 +1470,7 @@ GLOBAL(udivsi3):
  rotcl r0
  rts
  shlr16 r5
+ .size GLOBAL(udivsi3),.-GLOBAL(udivsi3)
 
 LOCAL(large_divisor):
 #ifdef __sh1__
