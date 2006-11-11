@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.4 2006/11/11 02:38:31 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.5 2006/11/11 23:05:23 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn
@@ -91,6 +91,7 @@ ENTRY(_dl_start)
 	add	#4, r5
 
 	mov	r4, r6
+	add	#1, r6
 	shll2	r6
 	add	r5, r6			// calc envp
 	jmp	@r0
