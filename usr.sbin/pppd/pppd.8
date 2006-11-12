@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.30 2005/01/31 09:50:29 jmc Exp $
+.\" $OpenBSD: pppd.8,v 1.31 2006/11/12 15:13:24 stevesk Exp $
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\"
 .\" Copyright (c) 1993-2003 Paul Mackerras <paulus@samba.org>
@@ -91,13 +91,6 @@ and
 are not permitted.
 Generally the filter expression should be enclosed in single quotes to
 prevent whitespace in the expression from being interpreted by the shell.
-This option is currently only available under
-.Ox ,
-and then only if both the kernel and
-.Nm
-were compiled with
-.Dv PPP_FILTER
-defined.
 .It Cm asyncmap Ar map
 This option sets the Async-Control-Character-Map (ACCM) for this end
 of the link.
@@ -857,13 +850,6 @@ outgoing packets using the
 and
 .Cm outbound
 qualifiers.
-This option is currently only available under
-.Ox ,
-and then only if both the kernel and
-.Nm
-were compiled with
-.Dv PPP_FILTER
-defined.
 .It Cm persist
 Do not exit after a connection is terminated; instead try to reopen
 the connection.
