@@ -76,7 +76,7 @@ if ($opt_s || $opt_x) {
 				while (my $e = <$l>) {
 					chomp $e;
 					$e =~ s/^\.//;
-					print "$set$rev:$e\n";
+					print $fh "$set$rev:$e\n";
 				}
 			}
 		}
@@ -89,7 +89,7 @@ if ($opt_s || $opt_x) {
 				while (my $e = <$l>) {
 					chomp $e;
 					$e =~ s/^\.//;
-					print "$set$rev:$e\n";
+					print $fh "$set$rev:$e\n";
 				}
 			}
 		}
@@ -108,7 +108,7 @@ if ($opt_r) {
 			while (my $f = $u->next()) {
 				my $name = $f->{name};
 				$name =~ s/^\.//;
-				print "$set:$name\n";
+				print $fh "$set:$name\n";
 			}
 			close $arc;
 		}
