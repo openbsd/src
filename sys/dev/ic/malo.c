@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.21 2006/11/10 22:29:44 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.22 2006/11/12 14:18:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1257,8 +1257,8 @@ malo_tx_intr(struct malo_softc *sc)
 			continue;
 
 		/* check TX state */
-		switch (desc->status & 0x00000001) {
-		case 0x00000001:
+		switch (desc->status & 0x1) {
+		case 0x1:
 			DPRINTF(("data frame was sent successfully\n"));
 			ifp->if_opackets++;
 			break;
@@ -1610,10 +1610,8 @@ malo_load_bootimg(struct malo_softc *sc)
 	malo_mem_write2(sc, 0xbef8, 0x001);
 	malo_mem_write2(sc, 0xbefa, 0);
 	malo_mem_write4(sc, 0xbefc, 0);
-	malo_send_cmd(sc, 0xc000bef8, 0);
+	malo_send_cmd(sc, 0xc000bef8, 5);
 
-	/* give card a bit time to init */
-	delay(50);
 	DPRINTF(("%s: boot firmware loaded\n", sc->sc_dev.dv_xname));
 
 	return (0);
