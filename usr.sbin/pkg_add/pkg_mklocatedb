@@ -50,6 +50,19 @@ sub info
 	return $r;
 }
 
+sub tag
+{
+	my ($dir, $set, $rev) = @_;
+	my $r;
+	if ($opt_P) {
+		$r = "$dir/$set";
+	} else {
+		$r = "$set$rev";
+	}
+	print STDERR "$r\n" unless $opt_q;
+	return $r;
+}
+
 try {
 	getopts('nqs:x:r:p:P');
 } catchall {
@@ -71,12 +84,13 @@ if ($opt_s || $opt_x) {
 	if ($opt_s) {
 		my $dir = "$opt_s/distrib/sets/lists";
 		for my $set (qw(base comp etc game man misc)) {
+			my $tag = tag('src', $set, $rev);
 			for my $f ("$dir/$set/mi", "$dir/$set/md.$arch") {
 				open my $l, '<', $f or next;
 				while (my $e = <$l>) {
 					chomp $e;
 					$e =~ s/^\.//;
-					print $fh "$set$rev:$e\n";
+					print $fh "$tag:$e\n";
 				}
 			}
 		}
@@ -84,12 +98,13 @@ if ($opt_s || $opt_x) {
 	if ($opt_x) {
 		my $dir = "$opt_x/distrib/sets/lists";
 		for my $set (qw(xbase xetc xfont xserv xshare)) {
+			my $tag = tag('XF4', $set, $rev);
 			for my $f ("$dir/$set/mi", "$dir/$set/md.$arch") {
 				open my $l, '<', $f or next;
 				while (my $e = <$l>) {
 					chomp $e;
 					$e =~ s/^\.//;
-					print $fh "$set$rev:$e\n";
+					print $fh "$tag:$e\n";
 				}
 			}
 		}
