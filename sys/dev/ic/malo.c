@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.23 2006/11/12 14:26:04 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.24 2006/11/12 14:54:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -547,15 +547,15 @@ malo_send_cmd_dma(struct malo_softc *sc, bus_addr_t addr)
 	malo_ctl_write4(sc, 0x0c18, 2); /* CPU_TRANSFER_CMD */
 	malo_ctl_read4(sc, 0x0c14);
 
-	for (i = 0; i < 100; i++) {
-		delay(50);
+	for (i = 0; i < 10; i++) {
+		delay(100);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 		if (hdr->cmd & 0x8000)
 			break;
 	}
 
-	if (i == 100)
+	if (i == 10)
 		return (ETIMEDOUT);
 
 	return (0);
