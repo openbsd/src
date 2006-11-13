@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.60 2006/04/14 01:14:56 dlg Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.61 2006/11/13 19:03:51 otto Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.60 2006/04/14 01:14:56 dlg Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.61 2006/11/13 19:03:51 otto Exp $";
 #endif /* not lint */
 
 /*
@@ -299,8 +299,10 @@ labelkre(void)
 #define Z(fld)	{t = s.nchstats.fld; s.nchstats.fld -= s1.nchstats.fld; \
 	if (state == TIME) s1.nchstats.fld = t;}
 #define PUTRATE(fld, l, c, w) \
-	Y(fld); \
-	putint((int)((float)s.fld/etime + 0.5), l, c, w)
+	do { \
+		Y(fld); \
+		putint((int)((float)s.fld/etime + 0.5), l, c, w); \
+	} while (0)
 #define MAXFAIL 5
 
 static	char cpuchar[CPUSTATES] = { '|', '=', '>', '-', ' ' };
