@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2006/11/13 05:08:42 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2006/11/13 08:42:06 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -38,6 +38,7 @@ all:	${BSD_RD}
 
 ${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
 	cp bsd ${BSD_RD}
+	${.OBJDIR}/rdsetroot ${BSD_RD} < ${IMAGE}
 
 ${IMAGE}: rd_setup do_files rd_teardown
 
