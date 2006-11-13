@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.36 2006/11/13 10:42:28 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.37 2006/11/13 11:04:19 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -249,6 +249,8 @@ cvs_admin_local(struct cvs_file *cf)
 
 	if (lkmode != RCS_LOCK_INVAL)
 		(void)rcs_lock_setmode(cf->file_rcs, lkmode);
+
+	rcs_write(cf->file_rcs);
 
 	if (verbosity > 0)
 		cvs_printf("done\n");
