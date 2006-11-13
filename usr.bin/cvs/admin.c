@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.35 2006/11/13 10:24:30 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.36 2006/11/13 10:42:28 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -43,8 +43,10 @@ struct cvs_cmd cvs_cmd_admin = {
 
 static int	 runflags = 0;
 static int	 lkmode = RCS_LOCK_INVAL;
+static char	*alist = NULL;
 static char	*comment = NULL;
 static char	*elist = NULL;
+static char	*orange = NULL;
 
 int
 cvs_admin(int argc, char **argv)
@@ -60,6 +62,7 @@ cvs_admin(int argc, char **argv)
 		case 'A':
 			break;
 		case 'a':
+			alist = optarg;
 			break;
 		case 'b':
 			break;
@@ -90,6 +93,7 @@ cvs_admin(int argc, char **argv)
 		case 'n':
 			break;
 		case 'o':
+			orange = optarg;
 			break;
 		case 'q':
 			verbosity = 0;
@@ -124,13 +128,23 @@ cvs_admin(int argc, char **argv)
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cr.fileproc = cvs_client_sendfile;
 
+		if (alist != NULL)
+			cvs_client_send_request("Argument -a%s", alist);
+
 		if (comment != NULL)
 			cvs_client_send_request("Argument -c%s", comment);
+
+		if (runflags & ADM_EFLAG)
+			cvs_client_send_request("Argument -e%s",
+			    (elist != NULL) ? elist : "");
 
 		if (lkmode == RCS_LOCK_STRICT)
 			cvs_client_send_request("Argument -L");
 		else if (lkmode == RCS_LOCK_LOOSE)
 			cvs_client_send_request("Argument -U");
+
+		if (orange != NULL)
+			cvs_client_send_request("Argument -o%s", orange);
 
 		if (verbosity == 0)
 			cvs_client_send_request("Argument -q");
@@ -177,6 +191,16 @@ cvs_admin_local(struct cvs_file *cf)
 	if (verbosity > 0)
 		cvs_printf("RCS file: %s\n", cf->file_path);
 
+	if (alist != NULL) {
+		struct cvs_argvector *aargv;
+
+		aargv = cvs_strsplit(alist, ",");
+		for (i = 0; aargv->argv[i] != NULL; i++)
+			rcs_access_add(cf->file_rcs, aargv->argv[i]);
+
+		cvs_argv_destroy(aargv);
+	}
+
 	if (comment != NULL)
 		rcs_comment_set(cf->file_rcs, comment);
 
@@ -199,6 +223,28 @@ cvs_admin_local(struct cvs_file *cf)
 		}
 		/* no synced anymore */
 		cf->file_rcs->rf_flags &= ~RCS_SYNCED;
+	}
+
+	if (orange != NULL) {
+		struct rcs_delta *rdp, *nrdp;
+		char b[16];
+
+		cvs_revision_select(cf->file_rcs, orange);
+		for (rdp = TAILQ_FIRST(&(cf->file_rcs->rf_delta));
+		    rdp != NULL; rdp = nrdp) {
+			nrdp = TAILQ_NEXT(rdp, rd_list);
+
+			/*
+			 * Delete selected revisions.
+			 */
+			if (rdp->rd_flags & RCS_RD_SELECT) {
+				rcsnum_tostr(rdp->rd_num, b, sizeof(b));
+				if (verbosity > 0)
+					cvs_printf("deleting revision %s\n", b);
+
+				(void)rcs_rev_remove(cf->file_rcs, rdp->rd_num);
+			}
+		}
 	}
 
 	if (lkmode != RCS_LOCK_INVAL)
