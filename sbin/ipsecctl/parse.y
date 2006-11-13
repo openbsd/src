@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.112 2006/11/10 15:01:31 msf Exp $	*/
+/*	$OpenBSD: parse.y,v 1.113 2006/11/13 11:04:05 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -155,6 +155,8 @@ struct ike_auth		*copyikeauth(const struct ike_auth *);
 struct ipsec_key	*copykey(struct ipsec_key *);
 struct ipsec_addr_wrap	*copyhost(const struct ipsec_addr_wrap *);
 struct ipsec_rule	*copyrule(struct ipsec_rule *);
+int			 validate_af(struct ipsec_addr_wrap *,
+			    struct ipsec_addr_wrap *);
 int			 validate_sa(u_int32_t, u_int8_t,
 			     struct ipsec_transforms *, struct ipsec_key *,
 			     struct ipsec_key *, u_int8_t);
@@ -169,6 +171,7 @@ struct ipsec_rule	*create_sagroup(struct ipsec_addr_wrap *, u_int8_t,
 struct ipsec_rule	*create_flow(u_int8_t, u_int8_t, struct ipsec_hosts *,
 			     struct ipsec_hosts *, u_int8_t, char *, char *,
 			     u_int8_t);
+void			 expand_any(struct ipsec_addr_wrap *);
 int			 expand_rule(struct ipsec_rule *, u_int8_t, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *, int);
 struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
@@ -487,21 +490,8 @@ host		: STRING			{
 			ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 			if (ipa == NULL)
 				err(1, "host: calloc");
-
-			ipa->af = AF_INET;
+			ipa->af = AF_UNSPEC;
 			ipa->netaddress = 1;
-			if ((ipa->name = strdup("0.0.0.0/0")) == NULL)
-				err(1, "host: strdup");
-
-			ipa->next = calloc(1, sizeof(struct ipsec_addr_wrap));
-			if (ipa->next == NULL)
-				err(1, "host: calloc");
-
-			ipa->next->af = AF_INET6;
-			ipa->next->netaddress = 1;
-			if ((ipa->next->name = strdup("::/0")) == NULL)
-				err(1, "host: strdup");
-
 			$$ = ipa;
 		}
 		| '{' host_list '}'		{ $$ = $2; }
@@ -1803,7 +1793,7 @@ copyhost(const struct ipsec_addr_wrap *src)
 
 	memcpy(dst, src, sizeof(struct ipsec_addr_wrap));
 
-	if ((dst->name = strdup(src->name)) == NULL)
+	if (src->name != NULL && (dst->name = strdup(src->name)) == NULL)
 		err(1, "copyhost: strdup");
 
 	return dst;
@@ -1847,6 +1837,42 @@ copyrule(struct ipsec_rule *rule)
 
 	return (r);
 }
+
+int
+validate_af(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst)
+{
+	struct ipsec_addr_wrap *ta;
+	u_int8_t src_v4 = 0;
+	u_int8_t dst_v4 = 0;
+	u_int8_t src_v6 = 0;
+	u_int8_t dst_v6 = 0;
+
+	for (ta = src; ta; ta = ta->next) {
+		if (ta->af == AF_INET)
+			src_v4 = 1;
+		if (ta->af == AF_INET6)
+			src_v6 = 1;
+		if (ta->af == AF_UNSPEC)
+			return 0;
+		if (src_v4 && src_v6)
+			break;
+	}
+	for (ta = dst; ta; ta = ta->next) {
+		if (ta->af == AF_INET)
+			dst_v4 = 1;
+		if (ta->af == AF_INET6)
+			dst_v6 = 1;
+		if (ta->af == AF_UNSPEC)
+			return 0;
+		if (dst_v4 && dst_v6)
+			break;
+	}
+	if (src_v4 != dst_v4 || src_v6 != dst_v6)
+		return (1);
+
+	return (0);
+}
+
 
 int
 validate_sa(u_int32_t spi, u_int8_t satype, struct ipsec_transforms *xfs,
@@ -2138,6 +2164,33 @@ errout:
 	return NULL;
 }
 
+void
+expand_any(struct ipsec_addr_wrap *ipa_in)
+{
+	struct ipsec_addr_wrap *oldnext, *ipa;
+
+	for (ipa = ipa_in; ipa; ipa = ipa->next) {
+		if (ipa->af != AF_UNSPEC)
+			continue;
+		oldnext = ipa->next;
+
+		ipa->af = AF_INET;
+		ipa->netaddress = 1;
+		if ((ipa->name = strdup("0.0.0.0/0")) == NULL)
+			err(1, "expand_any: strdup");
+
+		ipa->next = calloc(1, sizeof(struct ipsec_addr_wrap));
+		if (ipa->next == NULL)
+			err(1, "expand_any: calloc");
+		ipa->next->af = AF_INET6;
+		ipa->next->netaddress = 1;
+		if ((ipa->next->name = strdup("::/0")) == NULL)
+			err(1, "expand_any: strdup");
+
+		ipa->next->next = oldnext;
+	}
+}
+
 int
 expand_rule(struct ipsec_rule *rule, u_int8_t direction, u_int32_t spi,
     struct ipsec_key *authkey, struct ipsec_key *enckey, int group)
@@ -2146,6 +2199,13 @@ expand_rule(struct ipsec_rule *rule, u_int8_t direction, u_int32_t spi,
 	struct ipsec_addr_wrap	*src, *dst;
 	int added = 0;
 
+	if (validate_af(rule->src, rule->dst)) {
+		yyerror("source/destination address families do not match");
+		goto errout;
+	}
+	expand_any(rule->src);
+	expand_any(rule->dst);
+	expand_any(rule->peer);
 	for (src = rule->src; src; src = src->next) {
 		for (dst = rule->dst; dst; dst = dst->next) {
 			if (src->af != dst->af)
@@ -2189,6 +2249,7 @@ expand_rule(struct ipsec_rule *rule, u_int8_t direction, u_int32_t spi,
 	}
 	if (!added)
 		yyerror("rule expands to no valid combination");
+ errout:
 	ipsecctl_free_rule(rule);
 	return (0);
 }
