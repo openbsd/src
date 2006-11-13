@@ -33,6 +33,7 @@ ${IMAGE}: rd_setup do_files rd_teardown
 do_files:
 	cp ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}/boot
 	gzip -c < ${.OBJDIR}/../ramdisk/bsd.rd > ${MOUNT_POINT}/bsd.rd
+	ln ${MOUNT_POINT}/bsd.rd ${MOUNT_POINT}/bsd
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
