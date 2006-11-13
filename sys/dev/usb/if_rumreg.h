@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rumreg.h,v 1.12 2006/08/09 08:21:08 damien Exp $	*/
+/*	$OpenBSD: if_rumreg.h,v 1.13 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -168,7 +168,7 @@ struct rum_tx_desc {
 #define RT2573_TX_BURST			(1 << 0)
 #define RT2573_TX_VALID			(1 << 1)
 #define RT2573_TX_MORE_FRAG		(1 << 2)
-#define RT2573_TX_ACK			(1 << 3)
+#define RT2573_TX_NEED_ACK		(1 << 3)
 #define RT2573_TX_TIMESTAMP		(1 << 4)
 #define RT2573_TX_OFDM			(1 << 5)
 #define RT2573_TX_IFS_SIFS		(1 << 6)

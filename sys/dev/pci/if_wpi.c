@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.35 2006/11/01 11:25:01 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.36 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1457,17 +1457,16 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	}
 
 	/* pickup a rate */
-	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
-	    IEEE80211_FC0_TYPE_MGT) {
-		/* mgmt frames are sent at the lowest available bit-rate */
+	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
+	    ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	     IEEE80211_FC0_TYPE_MGT)) {
+		/* mgmt/multicast frames are sent at the lowest avail. rate */
 		rate = ni->ni_rates.rs_rates[0];
-	} else {
-		if (ic->ic_fixed_rate != -1) {
-			rate = ic->ic_sup_rates[ic->ic_curmode].
-			    rs_rates[ic->ic_fixed_rate];
-		} else
-			rate = ni->ni_rates.rs_rates[ni->ni_txrate];
-	}
+	} else if (ic->ic_fixed_rate != -1) {
+		rate = ic->ic_sup_rates[ic->ic_curmode].
+		    rs_rates[ic->ic_fixed_rate];
+	} else
+		rate = ni->ni_rates.rs_rates[ni->ni_txrate];
 	rate &= IEEE80211_RATE_VAL;
 
 #if NBPFILTER > 0
@@ -1504,15 +1503,27 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		tx->id = WPI_ID_BSS;
 		tx->flags |= htole32(WPI_TX_NEED_ACK);
-
-		if (m0->m_pkthdr.len + IEEE80211_CRC_LEN >
-		    ic->ic_rtsthreshold || (WPI_RATE_IS_OFDM(rate) &&
-		    (ic->ic_flags & IEEE80211_F_USEPROT))) {
-			tx->flags |= htole32(WPI_TX_NEED_RTS |
-			    WPI_TX_FULL_TXOP);
-		}
 	} else
 		tx->id = WPI_ID_BROADCAST;
+
+	/* check if RTS/CTS or CTS-to-self protection must be used */
+	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+		/* multicast frames are not sent at OFDM rates in 802.11b/g */
+		if (m0->m_pkthdr.len + IEEE80211_CRC_LEN >
+		    ic->ic_rtsthreshold) {
+			tx->flags |= htole32(WPI_TX_NEED_RTS |
+			    WPI_TX_FULL_TXOP);
+		} else if ((ic->ic_flags & IEEE80211_F_USEPROT) &&
+		    WPI_RATE_IS_OFDM(rate)) {
+			if (ic->ic_protmode == IEEE80211_PROT_CTSONLY) {
+				tx->flags |= htole32(WPI_TX_NEED_CTS |
+				    WPI_TX_FULL_TXOP);
+			} else if (ic->ic_protmode == IEEE80211_PROT_RTSCTS) {
+				tx->flags |= htole32(WPI_TX_NEED_RTS |
+				    WPI_TX_FULL_TXOP);
+			}
+		}
+	}
 
 	tx->flags |= htole32(WPI_TX_AUTO_SEQ);
 

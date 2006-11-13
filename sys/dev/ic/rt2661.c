@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.30 2006/10/30 20:15:22 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.31 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -106,7 +106,7 @@ void		rt2661_mcu_wakeup(struct rt2661_softc *);
 void		rt2661_mcu_cmd_intr(struct rt2661_softc *);
 int		rt2661_intr(void *);
 #if NBPFILTER > 0
-uint8_t		rt2661_rxrate(struct rt2661_rx_desc *);
+uint8_t		rt2661_rxrate(const struct rt2661_rx_desc *);
 #endif
 int		rt2661_ack_rate(struct ieee80211com *, int);
 uint16_t	rt2661_txtime(int, int, uint32_t);
@@ -116,8 +116,6 @@ void		rt2661_setup_tx_desc(struct rt2661_softc *,
 		    const bus_dma_segment_t *, int, int);
 int		rt2661_tx_mgt(struct rt2661_softc *, struct mbuf *,
 		    struct ieee80211_node *);
-struct		mbuf *rt2661_get_rts(struct rt2661_softc *,
-		    struct ieee80211_frame *, uint16_t);
 int		rt2661_tx_data(struct rt2661_softc *, struct mbuf *,
 		    struct ieee80211_node *, int);
 void		rt2661_start(struct ifnet *);
@@ -345,7 +343,6 @@ rt2661_attach(void *xsc, int id)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 	}
-
 	sc->sc_powerhook = powerhook_establish(rt2661_power, sc);
 	if (sc->sc_powerhook == NULL) {
 		printf("%s: WARNING: unable to establish power hook\n",
@@ -462,13 +459,11 @@ fail:	rt2661_free_tx_ring(sc, ring);
 void
 rt2661_reset_tx_ring(struct rt2661_softc *sc, struct rt2661_tx_ring *ring)
 {
-	struct rt2661_tx_desc *desc;
-	struct rt2661_tx_data *data;
 	int i;
 
 	for (i = 0; i < ring->count; i++) {
-		desc = &ring->desc[i];
-		data = &ring->data[i];
+		struct rt2661_tx_desc *desc = &ring->desc[i];
+		struct rt2661_tx_data *data = &ring->data[i];
 
 		if (data->m != NULL) {
 			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
@@ -497,7 +492,6 @@ rt2661_reset_tx_ring(struct rt2661_softc *sc, struct rt2661_tx_ring *ring)
 void
 rt2661_free_tx_ring(struct rt2661_softc *sc, struct rt2661_tx_ring *ring)
 {
-	struct rt2661_tx_data *data;
 	int i;
 
 	if (ring->desc != NULL) {
@@ -511,7 +505,7 @@ rt2661_free_tx_ring(struct rt2661_softc *sc, struct rt2661_tx_ring *ring)
 
 	if (ring->data != NULL) {
 		for (i = 0; i < ring->count; i++) {
-			data = &ring->data[i];
+			struct rt2661_tx_data *data = &ring->data[i];
 
 			if (data->m != NULL) {
 				bus_dmamap_sync(sc->sc_dmat, data->map, 0,
@@ -520,7 +514,6 @@ rt2661_free_tx_ring(struct rt2661_softc *sc, struct rt2661_tx_ring *ring)
 				bus_dmamap_unload(sc->sc_dmat, data->map);
 				m_freem(data->m);
 			}
-
 			/*
 			 * The node has already been freed at that point so
 			 * don't call ieee80211_release_node() here.
@@ -538,8 +531,6 @@ int
 rt2661_alloc_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring,
     int count)
 {
-	struct rt2661_rx_desc *desc;
-	struct rt2661_rx_data *data;
 	int i, nsegs, error;
 
 	ring->count = count;
@@ -595,8 +586,8 @@ rt2661_alloc_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring,
 	 */
 	memset(ring->data, 0, count * sizeof (struct rt2661_rx_data));
 	for (i = 0; i < count; i++) {
-		desc = &sc->rxq.desc[i];
-		data = &sc->rxq.data[i];
+		struct rt2661_rx_desc *desc = &sc->rxq.desc[i];
+		struct rt2661_rx_data *data = &sc->rxq.data[i];
 
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
 		    0, BUS_DMA_NOWAIT, &data->map);
@@ -613,7 +604,6 @@ rt2661_alloc_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring,
 			error = ENOMEM;
 			goto fail;
 		}
-
 		MCLGET(data->m, M_DONTWAIT);
 		if (!(data->m->m_flags & M_EXT)) {
 			printf("%s: could not allocate rx mbuf cluster\n",
@@ -660,7 +650,6 @@ rt2661_reset_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring)
 void
 rt2661_free_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring)
 {
-	struct rt2661_rx_data *data;
 	int i;
 
 	if (ring->desc != NULL) {
@@ -674,7 +663,7 @@ rt2661_free_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring)
 
 	if (ring->data != NULL) {
 		for (i = 0; i < ring->count; i++) {
-			data = &ring->data[i];
+			struct rt2661_rx_data *data = &ring->data[i];
 
 			if (data->m != NULL) {
 				bus_dmamap_sync(sc->sc_dmat, data->map, 0,
@@ -798,11 +787,10 @@ rt2661_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	ostate = ic->ic_state;
 	timeout_del(&sc->scan_to);
+	timeout_del(&sc->amrr_to);
 
 	switch (nstate) {
 	case IEEE80211_S_INIT:
-		timeout_del(&sc->amrr_to);
-
 		if (ostate == IEEE80211_S_RUN) {
 			/* abort TSF synchronization */
 			tmp = RAL_READ(sc, RT2661_TXRX_CSR9);
@@ -920,11 +908,10 @@ rt2661_tx_intr(struct rt2661_softc *sc)
 	struct rt2661_tx_ring *txq;
 	struct rt2661_tx_data *data;
 	struct rt2661_node *rn;
-	uint32_t val;
 	int qid, retrycnt;
 
 	for (;;) {
-		val = RAL_READ(sc, RT2661_STA_CSR4);
+		const uint32_t val = RAL_READ(sc, RT2661_STA_CSR4);
 		if (!(val & RT2661_TX_STAT_VALID))
 			break;
 
@@ -985,12 +972,9 @@ rt2661_tx_intr(struct rt2661_softc *sc)
 void
 rt2661_tx_dma_intr(struct rt2661_softc *sc, struct rt2661_tx_ring *txq)
 {
-	struct rt2661_tx_desc *desc;
-	struct rt2661_tx_data *data;
-
 	for (;;) {
-		desc = &txq->desc[txq->next];
-		data = &txq->data[txq->next];
+		struct rt2661_tx_desc *desc = &txq->desc[txq->next];
+		struct rt2661_tx_data *data = &txq->data[txq->next];
 
 		bus_dmamap_sync(sc->sc_dmat, txq->map,
 		    txq->next * RT2661_TX_DESC_SIZE, RT2661_TX_DESC_SIZE,
@@ -1026,16 +1010,14 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	struct rt2661_rx_desc *desc;
-	struct rt2661_rx_data *data;
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *mnew, *m;
 	int error, rssi;
 
 	for (;;) {
-		desc = &sc->rxq.desc[sc->rxq.cur];
-		data = &sc->rxq.data[sc->rxq.cur];
+		struct rt2661_rx_desc *desc = &sc->rxq.desc[sc->rxq.cur];
+		struct rt2661_rx_data *data = &sc->rxq.data[sc->rxq.cur];
 
 		bus_dmamap_sync(sc->sc_dmat, sc->rxq.map,
 		    sc->rxq.cur * RT2661_RX_DESC_SIZE, RT2661_RX_DESC_SIZE,
@@ -1073,7 +1055,6 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 			ifp->if_ierrors++;
 			goto skip;
 		}
-
 		MCLGET(mnew, M_DONTWAIT);
 		if (!(mnew->m_flags & M_EXT)) {
 			m_freem(mnew);
@@ -1298,7 +1279,7 @@ rt2661_intr(void *arg)
  */
 #if NBPFILTER > 0
 uint8_t
-rt2661_rxrate(struct rt2661_rx_desc *desc)
+rt2661_rxrate(const struct rt2661_rx_desc *desc)
 {
 	if (letoh32(desc->flags) & RT2661_RX_OFDM) {
 		/* reverse function of rt2661_plcp_signal */
@@ -1328,7 +1309,6 @@ rt2661_rxrate(struct rt2661_rx_desc *desc)
 
 /*
  * Return the expected ack rate for a frame transmitted at rate `rate'.
- * XXX: this should depend on the destination node basic rate set.
  */
 int
 rt2661_ack_rate(struct ieee80211com *ic, int rate)
@@ -1567,38 +1547,6 @@ rt2661_tx_mgt(struct rt2661_softc *sc, struct mbuf *m0,
 	return 0;
 }
 
-/*
- * Build a RTS control frame.
- */
-struct mbuf *
-rt2661_get_rts(struct rt2661_softc *sc, struct ieee80211_frame *wh,
-    uint16_t dur)
-{
-	struct ieee80211_frame_rts *rts;
-	struct mbuf *m;
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL) {
-		sc->sc_ic.ic_stats.is_tx_nombuf++;
-		printf("%s: could not allocate RTS frame\n",
-		    sc->sc_dev.dv_xname);
-		return NULL;
-	}
-
-	rts = mtod(m, struct ieee80211_frame_rts *);
-
-	rts->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_CTL |
-	    IEEE80211_FC0_SUBTYPE_RTS;
-	rts->i_fc[1] = IEEE80211_FC1_DIR_NODS;
-	*(uint16_t *)rts->i_dur = htole16(dur);
-	IEEE80211_ADDR_COPY(rts->i_ra, wh->i_addr1);
-	IEEE80211_ADDR_COPY(rts->i_ta, wh->i_addr2);
-
-	m->m_pkthdr.len = m->m_len = sizeof (struct ieee80211_frame_rts);
-
-	return m;
-}
-
 int
 rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
     struct ieee80211_node *ni, int ac)
@@ -1612,16 +1560,9 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 	struct mbuf *mnew;
 	uint16_t dur;
 	uint32_t flags = 0;
-	int rate, useprot, error;
+	int pktlen, rate, needcts = 0, needrts = 0, error;
 
 	wh = mtod(m0, struct ieee80211_frame *);
-
-	if (ic->ic_fixed_rate != -1) {
-		rate = ic->ic_sup_rates[ic->ic_curmode].
-		    rs_rates[ic->ic_fixed_rate];
-	} else
-		rate = ni->ni_rates.rs_rates[ni->ni_txrate];
-	rate &= IEEE80211_RATE_VAL;
 
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		m0 = ieee80211_wep_crypt(ifp, m0, 1);
@@ -1632,6 +1573,20 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		wh = mtod(m0, struct ieee80211_frame *);
 	}
 
+	/* compute actual packet length (including CRC and crypto overhead) */
+	pktlen = m0->m_pkthdr.len + IEEE80211_CRC_LEN;
+
+	/* pickup a rate */
+	if (IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+		/* multicast frames are sent at the lowest avail. rate */
+		rate = ni->ni_rates.rs_rates[0];
+	} else if (ic->ic_fixed_rate != -1) {
+		rate = ic->ic_sup_rates[ic->ic_curmode].
+		    rs_rates[ic->ic_fixed_rate];
+	} else
+		rate = ni->ni_rates.rs_rates[ni->ni_txrate];
+	rate &= IEEE80211_RATE_VAL;
+
 	/*
 	 * Packet Bursting: backoff after ppb=8 frames to give other STAs a
 	 * chance to contend for the wireless medium.
@@ -1639,34 +1594,39 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 	if (ic->ic_opmode == IEEE80211_M_STA && (ni->ni_txseq & 7))
 		flags |= RT2661_TX_IFS_SIFS;
 
-	/*-
-	 * IEEE Std 802.11-1999, pp 82: "A STA shall use an RTS/CTS exchange
-	 * for directed frames only when the length of the MPDU is greater
-	 * than the length threshold indicated by" ic_rtsthreshold.
-	 *
-	 * IEEE Std 802.11-2003g, pp 13: "ERP STAs shall use protection
-	 * mechanism (such as RTS/CTS or CTS-to-self) for ERP-OFDM MPDUs of
-	 * type Data or an MMPDU".
-	 */
-	useprot = !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
-	    (m0->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold ||
-	     ((ic->ic_flags & IEEE80211_F_USEPROT) && RAL_RATE_IS_OFDM(rate)));
-	if (useprot) {
-		struct mbuf *m;
+	/* check if RTS/CTS or CTS-to-self protection must be used */
+	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+		/* multicast frames are not sent at OFDM rates in 802.11b/g */
+		if (pktlen > ic->ic_rtsthreshold) {
+			needrts = 1;	/* RTS/CTS based on frame length */
+		} else if ((ic->ic_flags & IEEE80211_F_USEPROT) &&
+		    RAL_RATE_IS_OFDM(rate)) {
+			if (ic->ic_protmode == IEEE80211_PROT_CTSONLY)
+				needcts = 1;	/* CTS-to-self */
+			else if (ic->ic_protmode == IEEE80211_PROT_RTSCTS)
+				needrts = 1;	/* RTS/CTS */
+		}
+	}
+	if (needrts || needcts) {
+		struct mbuf *mprot;
+		int protrate, ackrate;
 		uint16_t dur;
-		int rtsrate, ackrate;
 
-		rtsrate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
-		ackrate = rt2661_ack_rate(ic, rate);
+		protrate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
+		ackrate  = rt2661_ack_rate(ic, rate);
 
-		dur = rt2661_txtime(m0->m_pkthdr.len + 4, rate, ic->ic_flags) +
-		      rt2661_txtime(RAL_CTS_SIZE, rtsrate, ic->ic_flags) +
+		dur = rt2661_txtime(pktlen, rate, ic->ic_flags) +
 		      rt2661_txtime(RAL_ACK_SIZE, ackrate, ic->ic_flags) +
-		      3 * sc->sifs;
-
-		m = rt2661_get_rts(sc, wh, dur);
-		if (m == NULL) {
-			printf("%s: could not allocate RTS frame\n",
+		      2 * sc->sifs;
+		if (needrts) {
+			dur += rt2661_txtime(RAL_CTS_SIZE, rt2661_ack_rate(ic,
+			    protrate), ic->ic_flags) + sc->sifs;
+			mprot = ieee80211_get_rts(ic, wh, dur);
+		} else {
+			mprot = ieee80211_get_cts_to_self(ic, dur);
+		}
+		if (mprot == NULL) {
+			printf("%s: could not allocate protection frame\n",
 			    sc->sc_dev.dv_xname);
 			m_freem(m0);
 			return ENOBUFS;
@@ -1675,25 +1635,26 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		desc = &txq->desc[txq->cur];
 		data = &txq->data[txq->cur];
 
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, mprot,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
 			printf("%s: could not map mbuf (error %d)\n",
 			    sc->sc_dev.dv_xname, error);
-			m_freem(m);
+			m_freem(mprot);
 			m_freem(m0);
 			return error;
 		}
 
+		data->m = mprot;
 		/* avoid multiple free() of the same node for each fragment */
-		ieee80211_ref_node(ni);
+		data->ni = ieee80211_ref_node(ni);
 
-		data->m = m;
-		data->ni = ni;
+		/* XXX may want to pass the protection frame to BPF */
 
-		rt2661_setup_tx_desc(sc, desc, RT2661_TX_NEED_ACK |
-		    RT2661_TX_MORE_FRAG, 0, m->m_pkthdr.len, rtsrate,
-		    data->map->dm_segs, data->map->dm_nsegs, ac);
+		rt2661_setup_tx_desc(sc, desc,
+		    (needrts ? RT2661_TX_NEED_ACK : 0) | RT2661_TX_MORE_FRAG,
+		    0, mprot->m_pkthdr.len, protrate, data->map->dm_segs,
+		    data->map->dm_nsegs, ac);
 
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
 		    data->map->dm_mapsize, BUS_DMASYNC_PREWRITE);
@@ -1726,7 +1687,6 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 			m_freem(m0);
 			return ENOMEM;
 		}
-
 		M_DUP_PKTHDR(mnew, m0);
 		if (m0->m_pkthdr.len > MHLEN) {
 			MCLGET(mnew, M_DONTWAIT);
@@ -2124,12 +2084,12 @@ rt2661_set_basicrates(struct rt2661_softc *sc)
 	if (ic->ic_curmode == IEEE80211_MODE_11B) {
 		/* 11b basic rates: 1, 2Mbps */
 		RAL_WRITE(sc, RT2661_TXRX_CSR5, 0x3);
-	} else if (IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan)) {
+	} else if (ic->ic_curmode == IEEE80211_MODE_11A) {
 		/* 11a basic rates: 6, 12, 24Mbps */
 		RAL_WRITE(sc, RT2661_TXRX_CSR5, 0x150);
 	} else {
-		/* 11g basic rates: 1, 2, 5.5, 11, 6, 12, 24Mbps */
-		RAL_WRITE(sc, RT2661_TXRX_CSR5, 0x15f);
+		/* 11b/g basic rates: 1, 2, 5.5, 11Mbps */
+		RAL_WRITE(sc, RT2661_TXRX_CSR5, 0xf);
 	}
 }
 
@@ -2433,11 +2393,10 @@ rt2661_bbp_init(struct rt2661_softc *sc)
 {
 #define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	int i, ntries;
-	uint8_t val;
 
 	/* wait for BBP to be ready */
 	for (ntries = 0; ntries < 100; ntries++) {
-		val = rt2661_bbp_read(sc, 0);
+		const uint8_t val = rt2661_bbp_read(sc, 0);
 		if (val != 0 && val != 0xff)
 			break;
 		DELAY(100);

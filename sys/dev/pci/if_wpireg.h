@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.11 2006/08/28 19:47:43 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.12 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -355,6 +355,7 @@ struct wpi_cmd_data {
 	uint16_t	lnext;
 	uint32_t	flags;
 #define WPI_TX_NEED_RTS		(1 <<  1)
+#define WPI_TX_NEED_CTS		(1 <<  2)
 #define WPI_TX_NEED_ACK		(1 <<  3)
 #define WPI_TX_FULL_TXOP	(1 <<  7)
 #define WPI_TX_AUTO_SEQ		(1 << 13)

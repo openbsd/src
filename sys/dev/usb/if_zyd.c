@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.35 2006/11/03 19:34:56 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.36 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1088,7 +1088,7 @@ zyd_rf_attach(struct zyd_softc *sc, uint8_t type)
 		rf->init         = zyd_al7230B_init;
 		rf->switch_radio = zyd_al7230B_switch_radio;
 		rf->set_channel  = zyd_al7230B_set_channel;
-		rf->width        = 24;	/* 24-bit RF values */		
+		rf->width        = 24;	/* 24-bit RF values */
 	default:
 		printf("%s: sorry, radio \"%s\" is not supported yet\n",
 		    USBDEVNAME(sc->sc_dev), zyd_rf_name(type));
@@ -1639,17 +1639,16 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	}
 
 	/* pickup a rate */
-	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
-	    IEEE80211_FC0_TYPE_MGT) {
-		/* mgmt frames are sent at the lowest available bit-rate */
+	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
+	    ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	     IEEE80211_FC0_TYPE_MGT)) {
+		/* mgmt/multicast frames are sent at the lowest avail. rate */
 		rate = ni->ni_rates.rs_rates[0];
-	} else {
-		if (ic->ic_fixed_rate != -1) {
-			rate = ic->ic_sup_rates[ic->ic_curmode].
-			    rs_rates[ic->ic_fixed_rate];
-		} else
-			rate = ni->ni_rates.rs_rates[ni->ni_txrate];
-	}
+	} else if (ic->ic_fixed_rate != -1) {
+		rate = ic->ic_sup_rates[ic->ic_curmode].
+		    rs_rates[ic->ic_fixed_rate];
+	} else
+		rate = ni->ni_rates.rs_rates[ni->ni_txrate];
 	rate &= IEEE80211_RATE_VAL;
 
 	data = &sc->tx_data[0];
@@ -1665,10 +1664,16 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	desc->flags = ZYD_TX_FLAG_BACKOFF;
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		if (totlen > ic->ic_rtsthreshold ||
-		    (ZYD_RATE_IS_OFDM(rate) &&
-		    (ic->ic_flags & IEEE80211_F_USEPROT)))
+		/* multicast frames are not sent at OFDM rates in 802.11b/g */
+		if (totlen > ic->ic_rtsthreshold) {
 			desc->flags |= ZYD_TX_FLAG_RTS;
+		} else if (ZYD_RATE_IS_OFDM(rate) &&
+		    (ic->ic_flags & IEEE80211_F_USEPROT)) {
+			if (ic->ic_protmode == IEEE80211_PROT_CTSONLY)
+				desc->flags |= ZYD_TX_FLAG_CTS_TO_SELF;
+			else if (ic->ic_protmode == IEEE80211_PROT_RTSCTS)
+				desc->flags |= ZYD_TX_FLAG_RTS;
+		}
 	} else
 		desc->flags |= ZYD_TX_FLAG_MULTICAST;
 
@@ -1926,15 +1931,15 @@ zyd_init(struct ifnet *ifp)
 
 	/* set basic rates */
 	if (ic->ic_curmode == IEEE80211_MODE_11B)
-		(void)zyd_write32(sc, ZYD_MAC_BAS_RATE, 0x3);
+		(void)zyd_write32(sc, ZYD_MAC_BAS_RATE, 0x0003);
 	else if (ic->ic_curmode == IEEE80211_MODE_11A)
 		(void)zyd_write32(sc, ZYD_MAC_BAS_RATE, 0x1500);
 	else	/* assumes 802.11b/g */
-		(void)zyd_write32(sc, ZYD_MAC_BAS_RATE, 0x150f);
+		(void)zyd_write32(sc, ZYD_MAC_BAS_RATE, 0x000f);
 
 	/* set mandatory rates */
 	if (ic->ic_curmode == IEEE80211_MODE_11B)
-		(void)zyd_write32(sc, ZYD_MAC_MAN_RATE, 0x0f);
+		(void)zyd_write32(sc, ZYD_MAC_MAN_RATE, 0x000f);
 	else if (ic->ic_curmode == IEEE80211_MODE_11A)
 		(void)zyd_write32(sc, ZYD_MAC_MAN_RATE, 0x1500);
 	else	/* assumes 802.11b/g */

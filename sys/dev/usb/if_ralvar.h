@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ralvar.h,v 1.7 2006/08/18 15:18:24 damien Exp $  */
+/*	$OpenBSD: if_ralvar.h,v 1.8 2006/11/13 20:06:38 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -18,7 +18,7 @@
  */
 
 #define RAL_RX_LIST_COUNT	1
-#define RAL_TX_LIST_COUNT	1
+#define RAL_TX_LIST_COUNT	8
 
 struct ural_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
@@ -58,7 +58,6 @@ struct ural_tx_data {
 	struct ural_softc	*sc;
 	usbd_xfer_handle	xfer;
 	uint8_t			*buf;
-	struct mbuf		*m;
 	struct ieee80211_node	*ni;
 };
 
@@ -100,9 +99,10 @@ struct ural_softc {
 	struct ural_rx_data		rx_data[RAL_RX_LIST_COUNT];
 	struct ural_tx_data		tx_data[RAL_TX_LIST_COUNT];
 	int				tx_queued;
+	int				tx_cur;
 
-	struct timeout			scan_ch;
-	struct timeout			amrr_ch;
+	struct timeout			scan_to;
+	struct timeout			amrr_to;
 
 	int				sc_tx_timer;
 
