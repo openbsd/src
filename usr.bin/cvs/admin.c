@@ -1,0 +1,209 @@
+/*	$OpenBSD: admin.c,v 1.35 2006/11/13 10:24:30 xsa Exp $	*/
+/*
+ * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
+ * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
+ * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include "includes.h"
+
+#include "cvs.h"
+#include "log.h"
+#include "remote.h"
+
+#define ADM_EFLAG	0x01
+
+void	cvs_admin_local(struct cvs_file *);
+
+struct cvs_cmd cvs_cmd_admin = {
+	CVS_OP_ADMIN, 0, "admin",
+	{ "adm", "rcs" },
+	"Administrative front-end for RCS",
+	"[-ILqU] [A oldfile] [-a users] [-b branch]\n"
+	"[-c string] [-e [users]] [-k mode] [-l [rev]] [-m rev:msg]\n"
+	"[-N tag[:rev]] [-n tag[:rev]] [-o rev] [-s state[:rev]]"
+	"[-t file | str]\n"
+	"[-u [rev]] file ...",
+	"A:a:b::c:e::Ik:l::Lm:N:n:o:qs:t:Uu::",
+	NULL,
+	cvs_admin
+};
+
+static int	 runflags = 0;
+static int	 lkmode = RCS_LOCK_INVAL;
+static char	*comment = NULL;
+static char	*elist = NULL;
+
+int
+cvs_admin(int argc, char **argv)
+{
+	int ch;
+	int flags;
+	struct cvs_recursion cr;
+
+	flags = CR_RECURSE_DIRS;
+
+	while ((ch = getopt(argc, argv, cvs_cmd_admin.cmd_opts)) != -1) {
+		switch (ch) {
+		case 'A':
+			break;
+		case 'a':
+			break;
+		case 'b':
+			break;
+		case 'c':
+			comment = optarg;
+			break;
+		case 'e':
+			elist = optarg;
+			runflags |= ADM_EFLAG;
+			break;
+		case 'I':
+			break;
+		case 'k':
+			break;
+		case 'L':
+			if (lkmode == RCS_LOCK_LOOSE) {
+				cvs_log(LP_ERR, "-L and -U are incompatible");
+				fatal("%s", cvs_cmd_admin.cmd_synopsis);
+			}
+			lkmode = RCS_LOCK_STRICT;
+			break;
+		case 'l':
+			break;
+		case 'm':
+			break;
+		case 'N':
+			break;
+		case 'n':
+			break;
+		case 'o':
+			break;
+		case 'q':
+			verbosity = 0;
+			break;
+		case 's':
+			break;
+		case 't':
+			break;
+		case 'U':
+			if (lkmode == RCS_LOCK_STRICT) {
+				cvs_log(LP_ERR, "-U and -L are incompatible");
+				fatal("%s", cvs_cmd_admin.cmd_synopsis);
+			}
+			lkmode = RCS_LOCK_LOOSE;
+			break;
+		case 'u':
+			break;
+		default:
+			fatal("%s", cvs_cmd_admin.cmd_synopsis);
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc <= 1)
+		fatal("%s", cvs_cmd_admin.cmd_synopsis);
+
+	cr.enterdir = NULL;
+	cr.leavedir = NULL;
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cr.fileproc = cvs_client_sendfile;
+
+		if (comment != NULL)
+			cvs_client_send_request("Argument -c%s", comment);
+
+		if (lkmode == RCS_LOCK_STRICT)
+			cvs_client_send_request("Argument -L");
+		else if (lkmode == RCS_LOCK_LOOSE)
+			cvs_client_send_request("Argument -U");
+
+		if (verbosity == 0)
+			cvs_client_send_request("Argument -q");
+
+	} else {
+		cr.fileproc = cvs_admin_local;
+	}
+
+	cr.flags = flags;
+
+	cvs_file_run(argc, argv, &cr);
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_send_files(argv, argc);
+		cvs_client_senddir(".");
+		cvs_client_send_request("admin");
+		cvs_client_get_responses();
+	}
+
+	return (0);
+}
+
+void
+cvs_admin_local(struct cvs_file *cf)
+{
+	int i;
+
+	cvs_log(LP_TRACE, "cvs_admin_local(%s)", cf->file_path);
+
+	if (cf->file_type == CVS_DIR) {
+		if (verbosity > 1)
+			cvs_log(LP_NOTICE, "Administrating %s", cf->file_name);
+		return;
+	}
+
+	if (cf->file_status == FILE_UNKNOWN)
+		return;
+	else if (cf->file_status == FILE_ADDED) {
+		cvs_log(LP_ERR, "cannot admin newly added file `%s'",
+		    cf->file_name);
+		return;
+	}
+
+	if (verbosity > 0)
+		cvs_printf("RCS file: %s\n", cf->file_path);
+
+	if (comment != NULL)
+		rcs_comment_set(cf->file_rcs, comment);
+
+	if (elist != NULL) {
+		struct cvs_argvector *eargv;
+
+		eargv = cvs_strsplit(elist, ",");
+		for (i = 0; eargv->argv[i] != NULL; i++)
+			rcs_access_remove(cf->file_rcs, eargv->argv[i]);
+
+		cvs_argv_destroy(eargv);
+	} else if (runflags & ADM_EFLAG) {
+		struct rcs_access *rap;
+
+		while (!TAILQ_EMPTY(&(cf->file_rcs->rf_access))) {
+			rap = TAILQ_FIRST(&(cf->file_rcs->rf_access));
+			TAILQ_REMOVE(&(cf->file_rcs->rf_access), rap, ra_list);
+			xfree(rap->ra_name);
+			xfree(rap);
+		}
+		/* no synced anymore */
+		cf->file_rcs->rf_flags &= ~RCS_SYNCED;
+	}
+
+	if (lkmode != RCS_LOCK_INVAL)
+		(void)rcs_lock_setmode(cf->file_rcs, lkmode);
+
+	if (verbosity > 0)
+		cvs_printf("done\n");
+}
