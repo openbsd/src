@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile,v 1.30 2006/07/07 17:37:17 joris Exp $
+#	$OpenBSD: Makefile,v 1.31 2006/11/13 12:06:27 xsa Exp $
 
 PROG=	opencvs
 MAN=   cvs.1 cvsignore.5 cvsrc.5 cvswrappers.5 cvsintro.7
 CPPFLAGS+=-I${.CURDIR}
 
-SRCS=	cvs.c add.c commit.c config.c checkout.c client.c buf.c cmd.c date.y \
-	diff.c diff3.c diff_internals.c entries.c fatal.c file.c getlog.c \
-	log.c import.c init.c remove.c repository.c rcs.c rcsnum.c rcstime.c \
-	remote.c root.c server.c status.c tag.c worklist.c util.c \
+SRCS=	cvs.c admin.c add.c commit.c config.c checkout.c client.c buf.c cmd.c \
+	date.y diff.c diff3.c diff_internals.c entries.c fatal.c file.c \
+	getlog.c log.c import.c init.c remove.c repository.c rcs.c rcsnum.c \
+	rcstime.c remote.c root.c server.c status.c tag.c worklist.c util.c \
 	update.c xmalloc.c
 
 CFLAGS+=-Wall
