@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.16 2006/06/19 12:17:56 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.17 2006/11/13 20:32:45 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -118,8 +118,8 @@ ieee80211_node_attach(struct ifnet *ifp)
 		/* XXX no way to recover */
 		printf("%s: no memory for AID bitmap!\n", __func__);
 		ic->ic_max_aid = 0;
-	}
-	memset(ic->ic_aid_bitmap, 0, size);
+	} else
+		memset(ic->ic_aid_bitmap, 0, size);
 }
 
 static struct ieee80211_node *
