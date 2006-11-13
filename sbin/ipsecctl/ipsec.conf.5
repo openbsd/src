@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.105 2006/11/13 13:46:32 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.106 2006/11/13 14:42:28 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -281,6 +281,9 @@ this option is generally not needed.
 .Xc
 These parameters define the mode and cryptographic transforms to be
 used for the phase 1 negotiation.
+During phase 1
+the machines authenticate and set up an encrypted channel.
+.Pp
 The mode can be either
 .Ar main ,
 which specifies main mode, or
@@ -309,6 +312,9 @@ and
 .Xc
 These parameters define the cryptographic transforms to be used for
 the phase 2 negotiation.
+During phase 2
+the actual IPsec negotiations happen.
+.Pp
 Possible values for
 .Ic auth ,
 .Ic enc ,
@@ -457,7 +463,7 @@ keyword:
 .Bl -column "authenticationXX" "Key Length" -offset indent -compact
 .It Em Authentication	Key Length
 .It Li hmac-md5 Ta "128 bits"
-.It Li hmac-ripemd160 Ta "160 bits" Ta "[quick mode only]"
+.It Li hmac-ripemd160 Ta "160 bits" Ta "[phase 2 only]"
 .It Li hmac-sha1 Ta "160 bits"
 .It Li hmac-sha2-256 Ta "256 bits"
 .It Li hmac-sha2-384 Ta "384 bits"
@@ -473,7 +479,7 @@ keyword:
 .It Li des Ta "56 bits"
 .It Li 3des Ta "168 bits"
 .It Li aes Ta "128 bits"
-.It Li aesctr Ta "160 bits" Ta "[quick mode only]"
+.It Li aesctr Ta "160 bits" Ta "[phase 2 only]"
 .It Li blowfish Ta "160 bits"
 .It Li cast Ta "128 bits"
 .It Li skipjack Ta "80 bits"
@@ -502,7 +508,7 @@ keyword:
 .It Li modp4096 Ta 4096
 .It Li modp6144 Ta 6144
 .It Li modp8192 Ta 8192
-.It Li none Ta 0 Ta [quick mode only]
+.It Li none Ta 0 Ta [phase 2 only]
 .El
 .Sh MANUAL FLOWS
 In this scenario,
