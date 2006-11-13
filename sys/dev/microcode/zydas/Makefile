@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2006/11/07 23:52:45 deraadt Exp $
+# $OpenBSD: Makefile,v 1.4 2006/11/13 02:52:46 jsg Exp $
 
 NOPROG=
 NOMAN=
@@ -11,7 +11,7 @@ NOMAN=
     (${MACHINE} == "sgi") || (${MACHINE} == "sparc64") || \
     (${MACHINE} == "zaurus") || (${MACHINE} == "landisk")
 
-FIRM=	zd1211
+FIRM=	zd1211 zd1211b
 
 PROG=	build
 

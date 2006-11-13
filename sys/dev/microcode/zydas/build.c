@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.1 2006/06/26 14:24:26 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.2 2006/11/13 02:52:46 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -51,6 +51,7 @@ int
 main(void)
 {
 	output("zd1211",  zd1211_firmware,  sizeof zd1211_firmware);
+	output("zd1211b",  zd1211b_firmware,  sizeof zd1211b_firmware);
 
 	return 0;
 }
