@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.39 2006/07/27 03:28:36 ray Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.40 2006/11/13 18:42:40 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -101,23 +101,21 @@ rcsnum_tostr(const RCSNUM *nump, char *buf, size_t blen)
 {
 	u_int i;
 	char tmp[8];
-	size_t len;
 
 	if (nump == NULL || nump->rn_len == 0) {
 		buf[0] = '\0';
 		return (buf);
 	}
 
-	strlcpy(buf, rcsnum_itoa(nump->rn_id[0], buf, blen), blen);
+	if (strlcpy(buf, rcsnum_itoa(nump->rn_id[0], buf, blen), blen) >= blen)
+		fatal("rcsnum_tostr: truncation");
 	for (i = 1; i < nump->rn_len; i++) {
-		len = strlcat(buf, ".", blen);
-		if (len >= blen)
-			fatal("rcsnum_tostr: overflow 1");
+		const char *str;
 
-		len = strlcat(buf,
-		    rcsnum_itoa(nump->rn_id[i], tmp, sizeof(tmp)), blen);
-		if (len >= blen)
-			fatal("rcsnum_tostr: overflow 2");
+		str = rcsnum_itoa(nump->rn_id[i], tmp, sizeof(tmp));
+		if (strlcat(buf, ".", blen) >= blen ||
+		    strlcat(buf, str, blen) >= blen)
+			fatal("rcsnum_tostr: truncation");
 	}
 
 	return (buf);
