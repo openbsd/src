@@ -22,4 +22,5 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Applies to the Zydas zd1211 firmware.
+The following files are under the above license:
+	zd1211 zd1211b
