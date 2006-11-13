@@ -23,6 +23,7 @@
 ./etc/firmware/rum-rt2573
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-licence
+./etc/firmware/zd1211b
 ./sbin/fdisk
 ./sbin/kbd
 ./usr/lib/apache/modules/libproxy.so

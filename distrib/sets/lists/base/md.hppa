@@ -42,6 +42,7 @@
 ./etc/firmware/yds-license
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-licence
+./etc/firmware/zd1211b
 ./sbin/kbd
 ./sbin/wsconsctl
 ./usr/bin/gccbug

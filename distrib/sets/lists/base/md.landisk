@@ -21,6 +21,7 @@
 ./etc/firmware/uyap-license
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-licence
+./etc/firmware/zd1211b
 ./sbin/fdisk
 ./usr/libdata/perl5/sh-openbsd
 ./usr/libdata/perl5/sh-openbsd/5.8.8
