@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.52 2006/07/07 17:37:17 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.53 2006/11/13 12:57:03 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -33,6 +33,7 @@ extern char *cvs_rootstr;
 
 struct cvs_cmd *cvs_cdt[] = {
 	&cvs_cmd_add,
+	&cvs_cmd_admin,
 	&cvs_cmd_commit,
 	&cvs_cmd_checkout,
 	&cvs_cmd_diff,
@@ -41,12 +42,11 @@ struct cvs_cmd *cvs_cdt[] = {
 	&cvs_cmd_init,
 	&cvs_cmd_log,
 	&cvs_cmd_remove,
+	&cvs_cmd_server,
 	&cvs_cmd_status,
 	&cvs_cmd_tag,
 	&cvs_cmd_update,
-	&cvs_cmd_server,
 #if 0
-	&cvs_cmd_admin,
 	&cvs_cmd_annotate,
 	&cvs_cmd_checkout,
 	&cvs_cmd_edit,
