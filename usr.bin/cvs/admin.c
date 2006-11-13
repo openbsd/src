@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.38 2006/11/13 11:50:11 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.39 2006/11/13 12:51:58 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -150,6 +150,7 @@ cvs_admin(int argc, char **argv)
 			cvs_client_send_request("Argument -q");
 
 	} else {
+		flags |= CR_REPO;
 		cr.fileproc = cvs_admin_local;
 	}
 
@@ -174,6 +175,8 @@ cvs_admin_local(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "cvs_admin_local(%s)", cf->file_path);
 
+	cvs_file_classify(cf, NULL, 0);
+
 	if (cf->file_type == CVS_DIR) {
 		if (verbosity > 1)
 			cvs_log(LP_NOTICE, "Administrating %s", cf->file_name);
@@ -189,7 +192,7 @@ cvs_admin_local(struct cvs_file *cf)
 	}
 
 	if (verbosity > 0)
-		cvs_printf("RCS file: %s\n", cf->file_path);
+		cvs_printf("RCS file: %s\n", cf->file_rcs->rf_path);
 
 	if (alist != NULL) {
 		struct cvs_argvector *aargv;
