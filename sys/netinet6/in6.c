@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.69 2006/10/31 12:49:45 mpf Exp $	*/
+/*	$OpenBSD: in6.c,v 1.70 2006/11/14 04:44:22 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -96,7 +96,7 @@
 #define COMPAT_IN6IFIOCTL
 
 /*
- * Definitions of some costant IP6 addresses.
+ * Definitions of some constant IP6 addresses.
  */
 const struct in6_addr in6addr_any = IN6ADDR_ANY_INIT;
 const struct in6_addr in6addr_loopback = IN6ADDR_LOOPBACK_INIT;
