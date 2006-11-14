@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.35 2006/11/13 12:57:03 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.36 2006/11/14 09:47:52 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -485,5 +485,13 @@ cvs_server_update(char *data)
 
 	cvs_cmdop = CVS_OP_UPDATE;
 	cvs_update(server_argc, server_argv);
+	cvs_server_send_response("ok");
+}
+
+void
+cvs_server_version(char *data)
+{
+	cvs_cmdop = CVS_OP_VERSION;
+	cvs_version(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }

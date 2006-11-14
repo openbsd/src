@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.53 2006/11/13 12:57:03 xsa Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.54 2006/11/14 09:47:52 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -46,6 +46,7 @@ struct cvs_cmd *cvs_cdt[] = {
 	&cvs_cmd_status,
 	&cvs_cmd_tag,
 	&cvs_cmd_update,
+	&cvs_cmd_version,
 #if 0
 	&cvs_cmd_annotate,
 	&cvs_cmd_checkout,
@@ -62,7 +63,6 @@ struct cvs_cmd *cvs_cdt[] = {
 	&cvs_cmd_rtag,
 	&cvs_cmd_unedit,
 	&cvs_cmd_update,
-	&cvs_cmd_version,
 	&cvs_cmd_watch,
 	&cvs_cmd_watchers,
 #endif
