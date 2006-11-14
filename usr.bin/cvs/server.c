@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.37 2006/11/14 09:59:54 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.38 2006/11/14 14:45:31 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -219,11 +219,20 @@ cvs_server_validreq(char *data)
 void
 cvs_server_globalopt(char *data)
 {
-	if (!strcmp(data, "-t"))
-		cvs_trace = 1;
+	if (!strcmp(data, "-l"))
+		cvs_nolog = 1;
 
 	if (!strcmp(data, "-n"))
 		cvs_noexec = 1;
+
+	if (!strcmp(data, "-Q"))
+		verbosity = 0;
+
+	if (!strcmp(data, "-r"))
+		cvs_readonly = 1;
+
+	if (!strcmp(data, "-t"))
+		cvs_trace = 1;
 
 	if (!strcmp(data, "-V"))
 		verbosity = 2;
