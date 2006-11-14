@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.62 2006/10/25 20:15:59 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.63 2006/11/14 20:18:51 jasper Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -9592,7 +9592,7 @@ ENTRY(longjmp)
 	mov	CTX_SECONDARY, %o4
 	stxa	%o3, [%o3] ASI_IMMU_DEMAP
 	membar	#Sync
-	stxa	%o0, [%o4] ASI_DMMU		! Maybe we should invali
+	stxa	%o0, [%o4] ASI_DMMU		! Maybe we should invalidate the old context?
 	membar	#Sync				! No real reason for this XXXX
 	sethi	%hi(KERNBASE), %o2
 	flush	%o2
