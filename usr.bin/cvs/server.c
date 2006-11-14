@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.38 2006/11/14 14:45:31 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.39 2006/11/14 15:39:42 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -236,6 +236,20 @@ cvs_server_globalopt(char *data)
 
 	if (!strcmp(data, "-V"))
 		verbosity = 2;
+}
+
+void
+cvs_server_set(char *data)
+{
+	char *ep;
+
+	ep = strchr(data, '=');
+	if (ep == NULL)
+		fatal("no = in variable assignment");
+
+	*(ep++) = '\0';
+	if (cvs_var_set(data, ep) < 0)
+		fatal("cvs_server_set: cvs_var_set failed");
 }
 
 void

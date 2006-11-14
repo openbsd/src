@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.108 2006/11/14 15:23:50 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.109 2006/11/14 15:39:41 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -62,8 +62,6 @@ char	*cvs_msg = NULL;
 char	*cvs_tmpdir = CVS_TMPDIR_DEFAULT;
 
 struct cvsroot *current_cvsroot = NULL;
-
-static TAILQ_HEAD(, cvs_var) cvs_variables;
 
 int		cvs_getopt(int, char **);
 void		usage(void);

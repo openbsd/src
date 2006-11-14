@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.25 2006/11/14 10:10:19 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.26 2006/11/14 15:39:41 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -36,6 +36,7 @@ struct cvs_req cvs_requests[] = {
 	{ "Argument",		0,	cvs_server_argument, REQ_NEEDED },
 	{ "Argumentx",		0,	cvs_server_argumentx, REQ_NEEDED },
 	{ "Global_option",	0,	cvs_server_globalopt, REQ_NEEDED },
+	{ "Set",		0,	cvs_server_set, REQ_NEEDED },
 
 	/*
 	 * used to tell the server what is going on in our
@@ -56,7 +57,6 @@ struct cvs_req cvs_requests[] = {
 	{ "Kerberos-encrypt",		0,	NULL, 0 },
 	{ "Gssapi-encrypt",		0,	NULL, 0 },
 	{ "Gssapi-authenticate",	0,	NULL, 0 },
-	{ "Set",			0,	NULL, 0 },
 	{ "expand-modules",		0,	NULL, 0 },
 
 	/* commands that might be supported */
@@ -170,6 +170,7 @@ client_check_directory(char *data)
 void
 cvs_client_connect_to_server(void)
 {
+	struct cvs_var *vp;
 	char *cmd, *argv[9], *resp;
 	int ifd[2], ofd[2], argc;
 
@@ -271,6 +272,10 @@ cvs_client_connect_to_server(void)
 		cvs_client_send_request("Global_option -V");
 
 	cvs_client_send_request("UseUnchanged");
+
+	/* XXX: If 'Set' is supported? */
+	TAILQ_FOREACH(vp, &cvs_variables, cv_link)
+		cvs_client_send_request("Set %s=%s", vp->cv_name, vp->cv_val);
 }
 
 void
