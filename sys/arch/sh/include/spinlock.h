@@ -1,4 +1,4 @@
-/*	$OpenBSD: spinlock.h,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: spinlock.h,v 1.2 2006/11/14 19:32:53 deraadt Exp $	*/
 /*	$NetBSD: lock.h,v 1.10 2006/01/03 01:29:46 uwe Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@
 #ifndef _SH_SPINLOCK_H_
 #define	_SH_SPINLOCK_H_
 
-typedef volatile u_int8_t _spinlock_lock_t;
+typedef u_int8_t _spinlock_lock_t;
 
 #define	_SPINLOCK_LOCKED	0x80
 #define	_SPINLOCK_UNLOCKED	0x00
