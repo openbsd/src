@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.3 2006/11/05 18:57:45 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.4 2006/11/14 19:49:48 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.53 2006/08/31 16:49:21 matt Exp $	*/
 
 /*-
@@ -271,29 +271,26 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 void
 pagemove(caddr_t from, caddr_t to, size_t size)
 {
-	paddr_t pa;
-	boolean_t rv;
+	pt_entry_t *fpte, *tpte;
 
 #ifdef DEBUG
-	if (size % PAGE_SIZE)
+	if (size & PAGE_MASK)
 		panic("pagemove: size=%08lx", (u_long) size);
 #endif
 
+	if (SH_HAS_VIRTUAL_ALIAS)
+		sh_dcache_wbinv_range((vaddr_t)from, size);
+
+	fpte = __pmap_kpte_lookup((vaddr_t)from);
+	tpte = __pmap_kpte_lookup((vaddr_t)to);
 	while (size > 0) {
-		rv = pmap_extract(pmap_kernel(), (vaddr_t) from, &pa);
-#ifdef DEBUG
-		if (rv == FALSE)
-			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vaddr_t) to, NULL) == TRUE)
-			panic("pagemove 3");
-#endif
-		pmap_kremove((vaddr_t) from, PAGE_SIZE);
-		pmap_kenter_pa((vaddr_t) to, pa, VM_PROT_READ|VM_PROT_WRITE);
+		*tpte++ = *fpte;
+		sh_tlb_invalidate_addr(0, (vaddr_t)from);
+		sh_tlb_invalidate_addr(0, (vaddr_t)to);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-	pmap_update(pmap_kernel());
 }
 
 /*
