@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.5 2006/11/11 23:05:23 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.6 2006/11/14 17:00:25 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn
@@ -52,10 +52,9 @@ ENTRY(_dl_start)
 
 	mov	r15, r14
 
-	mova	.L_call_boot_bind, r0
-	mov	#0, r0
-	bsrf	r0
+	bsr	1f
 	 nop
+1:
 .L_offbase:
 	sts	pr, r0
 	mov.l	.L_dynamic, r6
