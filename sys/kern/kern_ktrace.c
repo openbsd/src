@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.40 2006/05/17 02:11:25 tedu Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.41 2006/11/14 09:16:55 deraadt Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -99,9 +99,12 @@ ktrsyscall(struct proc *p, register_t code, size_t argsize, register_t args[])
 	register_t *argp;
 	u_int nargs = 0;
 	int i;
-	extern struct emul emul_native;
 
-	if (p->p_emul == &emul_native && code == SYS___sysctl) {
+	if (code == SYS___sysctl && (p->p_emul->e_flags & EMUL_NATIVE)) {
+		/*
+		 * The native sysctl encoding stores the mib[]
+		 * array because it is interesting.
+		 */
 		if (args[1] > 0)
 			nargs = min(args[1], CTL_MAXNAME);
 		len += nargs * sizeof(int);
@@ -114,7 +117,8 @@ ktrsyscall(struct proc *p, register_t code, size_t argsize, register_t args[])
 	argp = (register_t *)((char *)ktp + sizeof(struct ktr_syscall));
 	for (i = 0; i < (argsize / sizeof *argp); i++)
 		*argp++ = args[i];
-	if (p->p_emul == &emul_native && code == SYS___sysctl && nargs &&
+	if (code == SYS___sysctl && (p->p_emul->e_flags & EMUL_NATIVE) &&
+	    nargs &&
 	    copyin((void *)args[0], argp, nargs * sizeof(int)))
 		bzero(argp, nargs * sizeof(int));
 	kth.ktr_buf = (caddr_t)ktp;
