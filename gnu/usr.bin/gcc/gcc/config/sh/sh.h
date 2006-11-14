@@ -401,6 +401,10 @@ do {									\
 
 extern int assembler_dialect;
 
+#ifndef SH_PREFERRED_ALIGN_JUMPS
+#define SH_PREFERRED_ALIGN_JUMPS (1 << CACHE_LOG)
+#endif
+
 #define OVERRIDE_OPTIONS 						\
 do {									\
   int regno;								\
@@ -481,7 +485,7 @@ do {									\
   if (align_loops == 0)							\
     align_loops =  1 << (TARGET_SH5 ? 3 : 2);				\
   if (align_jumps == 0)							\
-    align_jumps = 1 << CACHE_LOG;					\
+    align_jumps = SH_PREFERRED_ALIGN_JUMPS;				\
   else if (align_jumps < (TARGET_SHMEDIA ? 4 : 2))			\
     align_jumps = TARGET_SHMEDIA ? 4 : 2;				\
 									\
