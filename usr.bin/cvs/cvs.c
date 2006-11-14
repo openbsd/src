@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.107 2006/07/09 01:57:51 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.108 2006/11/14 15:23:50 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -396,11 +396,9 @@ cvs_read_rcfile(void)
 	struct cvs_cmd *cmdp;
 	FILE *fp;
 
-	if (strlcpy(rcpath, cvs_homedir, sizeof(rcpath)) >= sizeof(rcpath) ||
-	    strlcat(rcpath, "/", sizeof(rcpath)) >= sizeof(rcpath) ||
-	    strlcat(rcpath, CVS_PATH_RC, sizeof(rcpath)) >= sizeof(rcpath)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERR, "%s", rcpath);
+	if (cvs_path_cat(cvs_homedir, CVS_PATH_RC, rcpath, sizeof(rcpath))
+	    >= sizeof(rcpath)) {
+		cvs_log(LP_ERRNO, "%s", rcpath);
 		return;
 	}
 
