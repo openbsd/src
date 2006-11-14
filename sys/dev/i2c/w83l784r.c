@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83l784r.c,v 1.8 2006/06/19 14:33:10 kettenis Exp $	*/
+/*	$OpenBSD: w83l784r.c,v 1.9 2006/11/14 20:26:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -186,13 +186,13 @@ wbenv_attach(struct device *parent, struct device *self, void *aux)
 		wbenv_setup_sensors(sc, w83l784r_sensors);
 		break;
 	case WBENV_CHIPID_W83L785R:
-		printf(": W83L784R\n");
+		printf(": W83L785R\n");
 		wbenv_setup_sensors(sc, w83l785r_sensors);
-		goto start;;
+		goto start;
 	case WBENV_CHIPID_W83L785TS_L:
-		printf(": W83L784TS-L\n");
+		printf(": W83L785TS-L\n");
 		wbenv_setup_sensors(sc, w83l785ts_l_sensors);
-		goto start;;
+		goto start;
 	default:
 		printf(": unknown Winbond chip (ID 0x%x)\n", sc->sc_chip_id);
 		return;
