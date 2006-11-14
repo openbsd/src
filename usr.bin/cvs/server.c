@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.36 2006/11/14 09:47:52 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.37 2006/11/14 09:59:54 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -375,6 +375,11 @@ cvs_server_argument(char *data)
 		fatal("cvs_server_argument: too many arguments sent");
 
 	server_argv[server_argc++] = xstrdup(data);
+}
+
+void
+cvs_server_argumentx(char *data)
+{
 }
 
 void

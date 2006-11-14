@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.23 2006/11/14 09:47:52 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.24 2006/11/14 09:59:54 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -27,7 +27,6 @@ struct cvs_req cvs_requests[] = {
 	{ "Root",		1,	cvs_server_root, REQ_NEEDED },
 	{ "Valid-responses",	1,	cvs_server_validresp, REQ_NEEDED },
 	{ "valid-requests",	1,	cvs_server_validreq, REQ_NEEDED },
-	{ "Global_option",	0,	cvs_server_globalopt, REQ_NEEDED },
 	{ "Directory",		0,	cvs_server_directory, REQ_NEEDED },
 	{ "Entry",		0,	cvs_server_entry, REQ_NEEDED },
 	{ "Modified",		0,	cvs_server_modified, REQ_NEEDED },
@@ -35,6 +34,8 @@ struct cvs_req cvs_requests[] = {
 	{ "Unchanged",		0,	cvs_server_unchanged, REQ_NEEDED },
 	{ "Questionable",	0,	cvs_server_questionable, REQ_NEEDED },
 	{ "Argument",		0,	cvs_server_argument, REQ_NEEDED },
+	{ "Argumentx",		0,	cvs_server_argumentx, REQ_NEEDED },
+	{ "Global_option",	0,	cvs_server_globalopt, REQ_NEEDED },
 
 	/*
 	 * used to tell the server what is going on in our
@@ -50,7 +51,6 @@ struct cvs_req cvs_requests[] = {
 	{ "Is-modified",		0,	NULL, 0 },
 	{ "Notify",			0,	NULL, 0 },
 	{ "Case",			0,	NULL, 0 },
-	{ "Argumentx",			0,	NULL, 0 },
 	{ "Gzip-stream",		0,	NULL, 0 },
 	{ "Kerberos-encrypt",		0,	NULL, 0 },
 	{ "Gssapi-encrypt",		0,	NULL, 0 },
