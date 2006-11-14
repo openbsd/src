@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.31 2006/11/10 21:15:56 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.32 2006/11/14 03:59:00 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -262,6 +262,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define EM_TSO_SIZE		65535
 
 struct em_buffer {
+	int		next_eop;	/* Index of the desc to watch */
 	struct mbuf	*m_head;
 	bus_dmamap_t	map;		/* bus_dma map for packet */
 };
@@ -349,7 +350,7 @@ struct em_softc {
 	struct em_dma_alloc	txdma;		/* bus_dma glue for tx desc */
 	struct em_tx_desc	*tx_desc_base;
 	u_int32_t		next_avail_tx_desc;
-	u_int32_t		oldest_used_tx_desc;
+	u_int32_t		next_tx_to_clean;
 	volatile u_int16_t	num_tx_desc_avail;
 	u_int16_t		num_tx_desc;
 	u_int32_t		txd_cmd;
