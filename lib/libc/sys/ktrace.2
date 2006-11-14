@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.16 2006/04/12 08:26:56 jmc Exp $
+.\"	$OpenBSD: ktrace.2,v 1.17 2006/11/14 11:28:05 moritz Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -101,10 +101,10 @@ followed by a trace point specific structure.
 The generic header is:
 .Bd -literal
 struct ktr_header {
-	int	ktr_len;		/* length of buf */
-	short	ktr_type;		/* trace record type */
+	size_t	ktr_len;		/* length of buf */
 	pid_t	ktr_pid;		/* process id */
 	char	ktr_comm[MAXCOMLEN+1];	/* command name */
+	short	ktr_type;		/* trace record type */
 	struct	timeval ktr_time;	/* timestamp */
 	caddr_t	ktr_buf;
 };
