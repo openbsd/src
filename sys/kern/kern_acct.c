@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.18 2006/01/05 03:18:46 tedu Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.19 2006/11/14 18:00:27 jmc Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -109,7 +109,7 @@ sys_acct(struct proc *p, void *v, register_t *retval)
 
 	/*
 	 * If accounting is to be started to a file, open that file for
-	 * writing and make sure it's a 'normal'.
+	 * writing and make sure it's 'normal'.
 	 */
 	if (SCARG(uap, path) != NULL) {
 		NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.27 2006/07/26 19:11:01 sturm Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.28 2006/11/14 18:00:27 jmc Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ vmcmd_map_pagedvn(p, cmd)
 	struct exec_vmcmd *cmd;
 {
 	/*
-	 * note that if you're going to map part of an process as being
+	 * note that if you're going to map part of a process as being
 	 * paged from a vnode, that vnode had damn well better be marked as
 	 * VTEXT.  that's handled in the routine which sets up the vmcmd to
 	 * call this routine.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.74 2006/05/07 20:12:41 tedu Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.75 2006/11/14 18:00:27 jmc Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -609,8 +609,10 @@ sys_fstat(struct proc *p, void *v, register_t *retval)
 	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
 	FRELE(fp);
 	if (error == 0) {
-		/* Don't let non-root see generation numbers
-		   (for NFS security) */
+		/* 
+		 * Don't let non-root see generation numbers
+		 * (for NFS security)
+		 */
 		if (suser(p, 0))
 			ub.st_gen = 0;
 		error = copyout((caddr_t)&ub, (caddr_t)SCARG(uap, sb),

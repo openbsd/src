@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_subr.c,v 1.1 2006/06/19 15:13:35 deraadt Exp $	*/
+/*	$OpenBSD: clock_subr.c,v 1.2 2006/11/14 18:00:27 jmc Exp $	*/
 /*	$NetBSD: clock_subr.c,v 1.3 1997/03/15 18:11:16 is Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ clock_ymdhms_to_secs(struct clock_ymdhms *dt)
 	year = dt->dt_year;
 
 	/*
-	 * Compute days since start of time
+	 * Compute days since start of time.
 	 * First from years, then from months.
 	 */
 	days = 0;

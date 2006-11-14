@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.23 2005/11/12 04:31:24 jsg Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.24 2006/11/14 18:00:27 jmc Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  * exec_script_makecmds(): Check if it's an executable shell script.
  *
  * Given a proc pointer and an exec package pointer, see if the referent
- * of the epp is in shell script.  If it is, then set thing up so that
+ * of the epp is in shell script.  If it is, then set things up so that
  * the script can be run.  This involves preparing the address space
  * and arguments for the shell which will run the script.
  *
@@ -125,7 +125,7 @@ exec_script_makecmds(struct proc *p, struct exec_package *epp)
 	    cp++)
 		;
 
-	/* collect the shell name; remember it's length for later */
+	/* collect the shell name; remember its length for later */
 	shellname = cp;
 	shellnamelen = 0;
 	if (*cp == '\0')
@@ -169,7 +169,7 @@ check_shell:
 	 * if the script isn't readable, or it's set-id, then we've
 	 * gotta supply a "/dev/fd/..." for the shell to read.
 	 * Note that stupid shells (csh) do the wrong thing, and
-	 * close all open fd's when the start.  That kills this
+	 * close all open fd's when they start.  That kills this
 	 * method of implementing "safe" set-id and x-only scripts.
 	 */
 	vn_lock(scriptvp, LK_EXCLUSIVE|LK_RETRY, p);
@@ -274,7 +274,7 @@ check_shell:
 		epp->ep_fa = shellargp;
 #ifdef SETUIDSCRIPTS
 		/*
-		 * set thing up so that set-id scripts will be
+		 * set things up so that set-id scripts will be
 		 * handled appropriately
 		 */
 		epp->ep_vap->va_mode |= script_sbits;
