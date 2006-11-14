@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.29 2006/10/19 10:55:56 tom Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.30 2006/11/14 17:08:24 damien Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1281,9 +1281,11 @@ vge_intr(void *arg)
 int
 vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 {
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	bus_dmamap_t		txmap;
 	struct vge_tx_desc	*d = NULL;
 	struct vge_tx_frag	*f;
+	struct mbuf		*mnew = NULL;
 	int			error, frag;
 	u_int32_t		vge_flags;
 
@@ -1326,26 +1328,23 @@ repack:
 	 * copy the data into a mbuf cluster and map that.
 	 */
 	if (frag == VGE_TX_FRAGS) {
-		struct mbuf *m = NULL;
-
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL) {
-			m_freem(m_head);
+		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
+		if (mnew == NULL)
 			return (ENOBUFS);
-		}
+
 		if (m_head->m_pkthdr.len > MHLEN) {
-			MCLGET(m, M_DONTWAIT);
-			if (!(m->m_flags & M_EXT)) {
-				m_freem(m);
-				m_freem(m_head);
+			MCLGET(mnew, M_DONTWAIT);
+			if (!(mnew->m_flags & M_EXT)) {
+				m_freem(mnew);
 				return (ENOBUFS);
 			}
 		}
 		m_copydata(m_head, 0, m_head->m_pkthdr.len,
-		    mtod(m, caddr_t));
-		m->m_pkthdr.len = m->m_len = m_head->m_pkthdr.len;
+		    mtod(mnew, caddr_t));
+		mnew->m_pkthdr.len = mnew->m_len = m_head->m_pkthdr.len;
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		m_freem(m_head);
-		m_head = m;
+		m_head = mnew;
 		goto repack;
 	}
 
@@ -1388,7 +1387,10 @@ repack:
 #endif
 
 	idx++;
-
+	if (mnew == NULL) {
+		/* if mbuf is coalesced, it is already dequeued */
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+	}
 	return (0);
 }
 
@@ -1434,7 +1436,6 @@ vge_start(struct ifnet *ifp)
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
 		sc->vge_ldata.vge_tx_list[pidx].vge_frag[0].vge_buflen |=
 		    htole16(VGE_TXDESC_Q);
