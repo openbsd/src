@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.20 2006/10/28 09:26:46 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.21 2006/11/15 07:10:14 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -403,8 +403,8 @@ udcf_probe(void *xsc)
 			microtime(&sc->sc_sensor.tv);
 			nanotime(&now);
 			sc->sc_current = sc->sc_next;
-			sc->sc_sensor.value = (now.tv_sec - sc->sc_current)
-			    * 1000000000 + now.tv_nsec;
+			sc->sc_sensor.value = (int64_t)(now.tv_sec -
+			    sc->sc_current) * 1000000000LL + now.tv_nsec;
 
 			/* set the clocktype and make sensor valid */
 			if (sc->sc_sensor.status == SENSOR_S_UNKNOWN) {
