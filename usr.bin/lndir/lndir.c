@@ -1,4 +1,4 @@
-/*	$OpenBSD: lndir.c,v 1.17 2005/10/04 19:30:00 jmc Exp $	*/
+/*	$OpenBSD: lndir.c,v 1.18 2006/11/15 22:23:11 miod Exp $	*/
 /* $XConsortium: lndir.c /main/15 1995/08/30 10:56:18 gildea $ */
 
 /*
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 	if (stat(fn, &fs) < 0)
 		err(1, "%s", fn);
 	if (!(S_ISDIR(fs.st_mode)))
-		err(2, "%s: %s", fn, strerror(ENOTDIR));
+		errx(2, "%s: %s", fn, strerror(ENOTDIR));
 
 	exit(dodir(fn, &fs, &ts, 0));
 }

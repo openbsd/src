@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.20 2005/11/12 13:27:59 deraadt Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.21 2006/11/15 22:23:09 miod Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: rmail.c,v 1.20 2005/11/12 13:27:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rmail.c,v 1.21 2006/11/15 22:23:09 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,7 @@ static char rcsid[] = "$OpenBSD: rmail.c,v 1.20 2005/11/12 13:27:59 deraadt Exp 
 #include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
+#include <err.h>
 #include <errno.h>
 
 #ifndef MAX
@@ -85,7 +86,6 @@ static char rcsid[] = "$OpenBSD: rmail.c,v 1.20 2005/11/12 13:27:59 deraadt Exp 
 
 extern	char *__progname;
 
-void err(int, const char *, ...);
 void usage(void);
 
 #define TAYLOR_ENV /* use UU_MACHINE if present */
@@ -336,7 +336,7 @@ main(int argc, char *argv[])
 	} while (fgets(lbuf, sizeof(lbuf), stdin) != NULL);
 
 	if (ferror(stdin))
-		err(EX_TEMPFAIL, "stdin: %s", strerror(errno));
+		err(EX_TEMPFAIL, "stdin");
 
 	if (fclose(fp))
 		err(EX_OSERR, NULL);
