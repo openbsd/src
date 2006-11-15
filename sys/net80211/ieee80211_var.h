@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.17 2006/10/19 10:55:56 tom Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.18 2006/11/15 18:59:37 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -160,9 +160,9 @@ struct ieee80211com {
 	u_int8_t		ic_myaddr[IEEE80211_ADDR_LEN];
 	struct ieee80211_rateset ic_sup_rates[IEEE80211_MODE_MAX];
 	struct ieee80211_channel ic_channels[IEEE80211_CHAN_MAX+1];
-	u_char			ic_chan_avail[roundup(IEEE80211_CHAN_MAX,NBBY)];
-	u_char			ic_chan_active[roundup(IEEE80211_CHAN_MAX, NBBY)];
-	u_char			ic_chan_scan[roundup(IEEE80211_CHAN_MAX,NBBY)];
+	u_char			ic_chan_avail[howmany(IEEE80211_CHAN_MAX,NBBY)];
+	u_char			ic_chan_active[howmany(IEEE80211_CHAN_MAX, NBBY)];
+	u_char			ic_chan_scan[howmany(IEEE80211_CHAN_MAX,NBBY)];
 	struct ifqueue		ic_mgtq;
 	struct ifqueue		ic_pwrsaveq;
 	u_int			ic_scan_lock;	/* user-initiated scan */

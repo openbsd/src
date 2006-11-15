@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.17 2006/11/13 20:32:45 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.18 2006/11/15 18:59:37 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -390,7 +390,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 		/* XXX off stack? */
-		u_char occupied[roundup(IEEE80211_CHAN_MAX, NBBY)];
+		u_char occupied[howmany(IEEE80211_CHAN_MAX, NBBY)];
 		/*
 		 * The passive scan to look for existing AP's completed,
 		 * select a channel to camp on.  Identify the channels
