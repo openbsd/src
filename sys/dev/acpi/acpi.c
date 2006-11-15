@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.61 2006/11/02 05:58:49 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.62 2006/11/15 21:41:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -38,6 +38,8 @@
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/dsdt.h>
 
+#include "ioapic.h"
+
 #include <machine/apmvar.h>
 
 #ifdef ACPI_DEBUG
@@ -70,6 +72,9 @@ void	acpi_load_dsdt(paddr_t, struct acpi_q **);
 void	acpi_init_states(struct acpi_softc *);
 void	acpi_init_gpes(struct acpi_softc *);
 void	acpi_init_pm(struct acpi_softc *);
+
+void	acpi_init_pic(struct acpi_softc *);
+void	acpi_foundprt(struct aml_node *, void *);
 
 void	acpi_filtdetach(struct knote *);
 int	acpi_filtread(struct knote *, long);
@@ -621,6 +626,45 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	aml_freevalue(&res);
 }
 
+void
+acpi_init_pic(struct acpi_softc *sc)
+{
+	struct aml_node		*node;
+	struct aml_value	arg;
+
+	node = aml_searchname(&aml_root, "\\_PIC");
+	if (node == 0)
+		return;
+
+	arg.type = AML_OBJTYPE_INTEGER;
+#if NIOAPIC > 0
+	arg.v_integer = 1;
+#else
+	arg.v_integer = 0;
+#endif
+	aml_evalnode(sc, node, 1, &arg, NULL);
+}
+
+void
+acpi_foundprt(struct aml_node *node, void *arg)
+{
+	struct acpi_softc	*sc = (struct acpi_softc *)arg;
+	struct device		*self = (struct device *)arg;
+	const char		*dev;
+	struct acpi_attach_args	aaa;
+
+	dnprintf(10, "found prt entry: %s\n", node->parent->name);
+
+	memset(&aaa, 0, sizeof(aaa));
+	aaa.aaa_iot = sc->sc_iot;
+	aaa.aaa_memt = sc->sc_memt;
+	aaa.aaa_node = node->parent;
+	aaa.aaa_dev = dev;
+	aaa.aaa_name = "acpiprt";
+
+	config_found(self, &aaa, acpi_print);
+}
+
 int
 acpi_match(struct device *parent, void *match, void *aux)
 {
@@ -788,6 +832,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	} while (!(acpi_read_pmreg(sc, ACPIREG_PM1_CNT, 0) & ACPI_PM1_SCI_EN));
 #endif
 
+	acpi_init_pic(sc);
+
 	acpi_attach_machdep(sc);
 
 	printf("\n");
@@ -819,26 +865,26 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	 * Attach table-defined devices
 	 */
 	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
-		if (memcmp(entry->q_table, HPET_SIG,
-		    sizeof(HPET_SIG) - 1) == 0) {
-			struct acpi_attach_args aaa;
+		struct acpi_attach_args aaa;
 
-			memset(&aaa, 0, sizeof(aaa));
-			aaa.aaa_iot = sc->sc_iot;
-			aaa.aaa_memt = sc->sc_memt;
+		memset(&aaa, 0, sizeof(aaa));
+		aaa.aaa_iot = sc->sc_iot;
+		aaa.aaa_memt = sc->sc_memt;
 	#if 0
-			aaa.aaa_pcit = sc->sc_pcit;
-			aaa.aaa_smbust = sc->sc_smbust;
+		aaa.aaa_pcit = sc->sc_pcit;
+		aaa.aaa_smbust = sc->sc_smbust;
 	#endif
-			aaa.aaa_table = entry->q_table;
-			config_found_sm(self, &aaa, acpi_print, acpi_submatch);
-		}
+		aaa.aaa_table = entry->q_table;
+		config_found_sm(self, &aaa, acpi_print, acpi_submatch);
 	}
 
 	acpi_softc = sc;
 
 	/* initialize runtime environment */
 	aml_find_node(aml_root.child, "_INI", acpi_inidev, sc);
+
+	/* attach pci interrupt routing tables */
+	aml_find_node(aml_root.child, "_PRT", acpi_foundprt, sc);
 
 	/*
 	 * attach embedded controller, battery, power supply and button
