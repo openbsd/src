@@ -1,4 +1,4 @@
-/*	$OpenBSD: copystr.S,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: copystr.S,v 1.2 2006/11/15 19:48:29 miod Exp $	*/
 /*	$NetBSD: copystr.S,v 1.8 2002/10/13 14:54:48 bjh21 Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ ENTRY(copyinstr)
 	ldr	r4, [r4]
 #endif
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	teq	r4, #0x00000000
 	beq	.Lcopystrpcbfault
 #endif
@@ -180,7 +180,7 @@ ENTRY(copyoutstr)
 	ldr	r4, [r4]
 #endif
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	teq	r4, #0x00000000
 	beq	.Lcopystrpcbfault
 #endif
@@ -215,7 +215,7 @@ ENTRY(copyoutstr)
 	RESTORE_REGS
 	mov	pc, lr
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 .Lcopystrpcbfault:
 	mov	r2, r1
 	mov	r1, r0
