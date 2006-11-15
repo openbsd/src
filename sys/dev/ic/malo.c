@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.24 2006/11/12 14:54:58 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.25 2006/11/15 13:18:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1240,9 +1240,11 @@ malo_tx_intr(struct malo_softc *sc)
 	struct malo_tx_desc *desc;
 	struct malo_tx_data *data;
 	struct malo_node *rn;
+	int stat;
 
 	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
 
+	stat = sc->sc_txring.stat;
 	for (;;) {
 		desc = &sc->sc_txring.desc[sc->sc_txring.stat];
 		data = &sc->sc_txring.data[sc->sc_txring.stat];
@@ -1254,7 +1256,7 @@ malo_tx_intr(struct malo_softc *sc)
 
 		/* if no frame has been sent, ignore */
 		if (rn == NULL)
-			continue;
+			goto next;
 
 		/* check TX state */
 		switch (desc->status & 0x1) {
@@ -1275,8 +1277,11 @@ malo_tx_intr(struct malo_softc *sc)
 		DPRINTF(("tx done idx=%u\n", sc->sc_txring.stat));
 
 		sc->sc_txring.queued--;
+next:
 		if (++sc->sc_txring.stat >= sc->sc_txring.count)
 			sc->sc_txring.stat = 0;
+		if (sc->sc_txring.stat == stat)
+			break;
 	}
 
 	sc->sc_tx_timer = 0;
