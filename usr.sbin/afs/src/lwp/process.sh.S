@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.sh.S,v 1.1 2006/11/15 00:22:39 deraadt Exp $	*/
+/*	$OpenBSD: process.sh.S,v 1.2 2006/11/15 14:58:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Theo de Raadt
@@ -37,7 +37,7 @@
 #	r4             r5                      r6
 */
 
-ENTRY(_savecontext)
+ENTRY(savecontext)
 	mov.l	r4, @-sp
 	mov.l	r0, @-sp		/* save on stack */
 	mov.l	r15, @-sp
@@ -62,13 +62,13 @@ ENTRY(_savecontext)
 	 nop
 
 	.align	2
-.L_PRE_Block:	.long _C_LABEL(PRE_Block) - _C_LABEL(_savecontext)
-	SET_ENTRY_SIZE(_savecontext)
+.L_PRE_Block:	.long _C_LABEL(PRE_Block)
+	SET_ENTRY_SIZE(savecontext)
 
 /*
  * returnto(struct savearea *a2)
 */
-ENTRY(_returnto)
+ENTRY(returnto)
 	mov	r4, sp
 
 	lds.l	@r4+, pr
@@ -92,5 +92,5 @@ ENTRY(_returnto)
 	 nop
 
 	.align	2
-.L_PRE_Block2:	.long _C_LABEL(PRE_Block) - _C_LABEL(_returnto)
-	SET_ENTRY_SIZE(_savecontext)
+.L_PRE_Block2:	.long _C_LABEL(PRE_Block)
+	SET_ENTRY_SIZE(returnto)
