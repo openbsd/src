@@ -31,6 +31,7 @@ process.S:
 		hppa*)   PROCESS_S="process.hpux.S" ;; \
 		powerpc) PROCESS_S="process.ppc.S" ;; \
 		rs6000)  PROCESS_S="process.rios.S" ;; \
+		sh)	 PROCESS_S="process.sh.S" ;; \
                 vax)     PROCESS_S="process.vax.S" ;; \
 		*)  echo "Unknown host_cpu, good luck" ;; \
 	esac; \
