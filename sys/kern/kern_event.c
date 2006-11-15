@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.26 2005/11/21 18:16:45 millert Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.27 2006/11/15 17:25:40 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -423,7 +423,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 	if (fops == NULL) {
 		/*
 		 * XXX
-		 * filter attach routine is responsible for insuring that
+		 * filter attach routine is responsible for ensuring that
 		 * the identifier can be attached to it.
 		 */
 		return (EINVAL);
@@ -499,7 +499,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 			/*
 			 * The user may change some filter values after the
 			 * initial EV_ADD, but doing so will not reset any
-			 * filter which have already been triggered.
+			 * filters which have already been triggered.
 			 */
 			kn->kn_sfflags = kev->fflags;
 			kn->kn_sdata = kev->data;

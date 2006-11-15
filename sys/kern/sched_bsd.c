@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.7 2006/10/21 02:18:00 tedu Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.8 2006/11/15 17:25:40 jmc Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -243,7 +243,7 @@ fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
  * To estimate CCPU_SHIFT for exp(-1/20), the following formula was used:
  *	1 - exp(-1/20) ~= 0.0487 ~= 0.0488 == 1 (fixed pt, *11* bits).
  *
- * If you dont want to bother with the faster/more-accurate formula, you
+ * If you don't want to bother with the faster/more-accurate formula, you
  * can set CCPU_SHIFT to (FSHIFT + 1) which will use a slower/less-accurate
  * (more general) method of calculating the %age of CPU used by a process.
  */

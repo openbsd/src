@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.24 2005/12/08 14:02:47 krw Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.25 2006/11/15 17:25:40 jmc Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -116,7 +116,7 @@ physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev, int flags,
 			/*
 			 * [mark the buffer busy for physical I/O]
 			 * (i.e. set B_PHYS (because it's an I/O to user
-			 * memory, and B_RAW, because B_RAW is to be
+			 * memory), and B_RAW, because B_RAW is to be
 			 * "Set by physio for raw transfers.", in addition
 			 * to the "busy" and read/write flag.)
 			 */
@@ -242,7 +242,7 @@ done:
 	else {
 		/*
 		 * [if another process is waiting for the raw I/O buffer,
-		 *    wake up processes waiting to do physical I/O;
+		 *    wake up processes waiting to do physical I/O]
 		 */
 		if (bp->b_flags & B_WANTED) {
 			bp->b_flags &= ~B_WANTED;

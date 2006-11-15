@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.99 2006/01/19 17:54:47 mickey Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.100 2006/11/15 17:25:40 jmc Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -517,7 +517,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 			/*
 			 * NOTE - This will never return NULL because of
-			 * unmature fds. The file descriptor table is not
+			 * immature fds. The file descriptor table is not
 			 * shared because we're suid.
 			 */
 			fp = fd_getfile(p->p_fd, i);

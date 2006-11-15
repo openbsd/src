@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.42 2005/11/28 00:14:28 jsg Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.43 2006/11/15 17:25:40 jmc Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ lkmalloc(void)
 	ret->sym_id = -1;
 	/* 
 	 * walk the list finding the first free id. as long as the list is
-	 * kept sorted this is not too ineffcient, which is why we insert in
+	 * kept sorted this is not too inefficient, which is why we insert in
 	 * order below.
  	 */
 	TAILQ_FOREACH(p, &lkmods, list) {
