@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.3 2006/10/31 23:43:11 michele Exp $ */
+/*	$OpenBSD: ripd.h,v 1.4 2006/11/15 20:21:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -31,7 +31,6 @@
 #define	CONF_FILE		"/etc/ripd.conf"
 #define	RIPD_SOCKET		"/var/run/ripd.sock"
 #define	RIPD_USER		"_ripd"
-#define	READ_BUF_SIZE		65535
 
 #define	NBR_HASHSIZE		128
 #define	NBR_IDSELF		1
