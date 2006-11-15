@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.40 2006/06/16 16:49:40 henning Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.41 2006/11/15 03:07:44 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -451,9 +451,7 @@ defrouter_addreq(new)
 	    sizeof(struct sockaddr_in6);
 	def.sin6_family = mask.sin6_family = gate.sin6_family = AF_INET6;
 	gate.sin6_addr = new->rtaddr;
-#ifndef SCOPEDROUTING
 	gate.sin6_scope_id = 0;	/* XXX */
-#endif
 
 	s = splsoftnet();
 	error = rtrequest(RTM_ADD, (struct sockaddr *)&def,
@@ -552,9 +550,7 @@ defrouter_delreq(dr)
 	    sizeof(struct sockaddr_in6);
 	def.sin6_family = mask.sin6_family = gw.sin6_family = AF_INET6;
 	gw.sin6_addr = dr->rtaddr;
-#ifndef SCOPEDROUTING
 	gw.sin6_scope_id = 0;	/* XXX */
-#endif
 
 	rtrequest(RTM_DELETE, (struct sockaddr *)&def,
 	    (struct sockaddr *)&gw,

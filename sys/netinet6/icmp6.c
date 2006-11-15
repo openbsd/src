@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.87 2006/06/16 16:49:40 henning Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.88 2006/11/15 03:07:44 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1027,7 +1027,6 @@ icmp6_notify_error(m, off, icmp6len, code)
 			icmp6dst.sin6_addr = *finaldst;
 		icmp6dst.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.rcvif,
 							  &icmp6dst.sin6_addr);
-#ifndef SCOPEDROUTING
 		if (in6_embedscope(&icmp6dst.sin6_addr, &icmp6dst,
 				   NULL, NULL)) {
 			/* should be impossbile */
@@ -1035,7 +1034,6 @@ icmp6_notify_error(m, off, icmp6len, code)
 			    "icmp6_notify_error: in6_embedscope failed\n"));
 			goto freeit;
 		}
-#endif
 
 		/*
 		 * retrieve parameters from the inner IPv6 header, and convert
@@ -1047,7 +1045,6 @@ icmp6_notify_error(m, off, icmp6len, code)
 		icmp6src.sin6_addr = eip6->ip6_src;
 		icmp6src.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.rcvif,
 							  &icmp6src.sin6_addr);
-#ifndef SCOPEDROUTING
 		if (in6_embedscope(&icmp6src.sin6_addr, &icmp6src,
 				   NULL, NULL)) {
 			/* should be impossbile */
@@ -1055,7 +1052,6 @@ icmp6_notify_error(m, off, icmp6len, code)
 			    "icmp6_notify_error: in6_embedscope failed\n"));
 			goto freeit;
 		}
-#endif
 		icmp6src.sin6_flowinfo =
 		    (eip6->ip6_flow & IPV6_FLOWLABEL_MASK);
 

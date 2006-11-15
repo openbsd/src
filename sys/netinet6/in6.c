@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.70 2006/11/14 04:44:22 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.71 2006/11/15 03:07:44 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1037,9 +1037,7 @@ in6_update_ifa(ifp, ifra, ia)
 	/* join necessary multiast groups */
 	if ((ifp->if_flags & IFF_MULTICAST) != 0) {
 		struct sockaddr_in6 mltaddr, mltmask;
-#ifndef SCOPEDROUTING
 		u_int32_t zoneid = 0;
-#endif
 
 		/* join solicited multicast addr for new host id */
 		struct sockaddr_in6 llsol;
@@ -1088,7 +1086,6 @@ in6_update_ifa(ifp, ifra, ia)
 		if (rt) {
 			/*
 			 * 32bit came from "mltmask"
-			 * XXX: only works in !SCOPEDROUTING case.
 			 */
 			if (memcmp(&mltaddr.sin6_addr,
 			    &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
@@ -1116,9 +1113,7 @@ in6_update_ifa(ifp, ifra, ia)
 		} else {
 			RTFREE(rt);
 		}
-#ifndef SCOPEDROUTING
 		mltaddr.sin6_scope_id = zoneid;	/* XXX */
-#endif
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
 		if (!imm) {
 			nd6log((LOG_WARNING,
@@ -2121,9 +2116,6 @@ in6_is_addr_deprecated(sa6)
 	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
 		if (IN6_ARE_ADDR_EQUAL(&ia->ia_addr.sin6_addr,
 		    &sa6->sin6_addr) &&
-#ifdef SCOPEDROUTING
-		    ia->ia_addr.sin6_scope_id == sa6->sin6_scope_id &&
-#endif
 		    (ia->ia6_flags & IN6_IFF_DEPRECATED) != 0)
 			return (1); /* true */
 
