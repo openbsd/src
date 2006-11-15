@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.176 2006/11/10 20:04:24 mk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.177 2006/11/15 01:53:00 itojun Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2478,13 +2478,13 @@ setifprefixlen(const char *addr, int d)
 void
 in6_fillscopeid(struct sockaddr_in6 *sin6)
 {
-#if defined(__KAME__) && defined(KAME_SCOPEID)
+#ifdef __KAME__
 	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
 		sin6->sin6_scope_id =
 			ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
 		sin6->sin6_addr.s6_addr[2] = sin6->sin6_addr.s6_addr[3] = 0;
 	}
-#endif /* __KAME__ && KAME_SCOPEID */
+#endif /* __KAME__ */
 }
 
 /* XXX not really an alias */
@@ -3812,16 +3812,6 @@ SIN6(in6_addreq.ifra_prefixmask), SIN6(in6_addreq.ifra_dstaddr)};
 void
 in6_getaddr(const char *s, int which)
 {
-#ifndef KAME_SCOPEID
-	struct sockaddr_in6 *sin6 = sin6tab[which];
-
-	sin6->sin6_len = sizeof(*sin6);
-	if (which != MASK)
-		sin6->sin6_family = AF_INET6;
-
-	if (inet_pton(AF_INET6, s, &sin6->sin6_addr) != 1)
-		errx(1, "%s: bad value", s);
-#else /* KAME_SCOPEID */
 	struct sockaddr_in6 *sin6 = sin6tab[which];
 	struct addrinfo hints, *res;
 	int error;
@@ -3845,7 +3835,6 @@ in6_getaddr(const char *s, int which)
 	}
 #endif /* __KAME__ */
 	freeaddrinfo(res);
-#endif /* KAME_SCOPEID */
 }
 
 void
