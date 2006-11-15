@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.26 2006/11/15 16:27:37 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.27 2006/11/15 21:44:04 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -54,9 +54,12 @@
 #include <dev/ic/malo.h>
 
 #ifdef MALO_DEBUG
-#define DPRINTF(x)	do { printf x; } while (0)
+#define DPRINTF(x)	do { if (malo_debug > 0) printf x; } while (0)
+#define DPRINTFN(n, x)	do { if (malo_debug >= (n)) printf x; } while (0)
+int malo_debug = 1;
 #else
 #define DPRINTF(x)
+#define DPRINTFN(n, x)
 #endif
 
 /* internal structures and defines */
@@ -116,16 +119,23 @@ struct malo_tx_desc {
 /*
  * Firmware commands
  */
-#define MALO_CMD_GET_HW_SPEC	0x0003
-#define MALO_CMD_SET_RADIO	0x001c
-#define MALO_CMD_SET_AID	0x010d
-#define MALO_CMD_SET_TXPOWER	0x001e
-#define MALO_CMD_SET_ANTENNA	0x0020
-#define MALO_CMD_SET_PRESCAN	0x0107
-#define MALO_CMD_SET_POSTSCAN	0x0108
-#define MALO_CMD_SET_CHANNEL	0x010a
-#define MALO_CMD_SET_RTS	0x0113
-#define MALO_CMD_RESPONSE	0x8000
+#define MALO_CMD_GET_HW_SPEC		0x0003
+#define MALO_CMD_SET_RADIO		0x001c
+#define MALO_CMD_SET_AID		0x010d
+#define MALO_CMD_SET_TXPOWER		0x001e
+#define MALO_CMD_SET_ANTENNA		0x0020
+#define MALO_CMD_SET_PRESCAN		0x0107
+#define MALO_CMD_SET_POSTSCAN		0x0108
+#define MALO_CMD_SET_CHANNEL		0x010a
+#define MALO_CMD_SET_RTS		0x0113
+#define MALO_CMD_RESPONSE		0x8000
+
+#define MALO_CMD_RESULT_OK		0x0000	/* everything is fine */
+#define MALO_CMD_RESULT_ERROR		0x0001	/* general error */
+#define MALO_CMD_RESULT_NOSUPPORT	0x0002	/* command not valid */
+#define MALO_CMD_RESULT_PENDING		0x0003	/* will be processed */
+#define MALO_CMD_RESULT_BUSY		0x0004	/* command ignored */
+#define MALO_CMD_RESULT_PARTIALDATA	0x0005	/* buffer too small */
 
 struct malo_cmdheader {
 	uint16_t	cmd;
@@ -251,6 +261,11 @@ void	malo_rx_intr(struct malo_softc *sc);
 int	malo_load_bootimg(struct malo_softc *sc);
 int	malo_load_firmware(struct malo_softc *sc);
 
+void	malo_hexdump(void *buf, int len);
+static char *
+	malo_cmd_string(uint16_t cmd);
+static char *
+	malo_cmd_string_result(uint16_t result);
 int	malo_cmd_get_spec(struct malo_softc *sc);
 int	malo_cmd_reset(struct malo_softc *sc);
 int	malo_cmd_set_prescan(struct malo_softc *sc);
@@ -289,55 +304,19 @@ malo_intr(void *arg)
 	if (status & 0x4) {
 		struct malo_cmdheader *hdr = sc->sc_cmd_mem;
 
-		switch (hdr->cmd & ~MALO_CMD_RESPONSE) {
-		case MALO_CMD_GET_HW_SPEC:
-			DPRINTF(("%s: cmd answer for MALO_CMD_GET_SPEC=%x",
-			    sc->sc_dev.dv_xname, hdr->result));
-			break;
-		case MALO_CMD_SET_RADIO:
-			DPRINTF(("%s: cmd answer for MALO_CMD_SET_RADIO=%x",
-			    sc->sc_dev.dv_xname, hdr->result));
-			break;
-		case MALO_CMD_SET_TXPOWER:
-			DPRINTF(("%s: cmd answer for MALO_CMD_SET_TXPOWER=%x",
-			    sc->sc_dev.dv_xname, hdr->result));
-			break;
-		case MALO_CMD_SET_ANTENNA:
-			DPRINTF(("%s: cmd answer for MALO_CMD_SET_ANTENNA=%x",
-			    sc->sc_dev.dv_xname, hdr->result));
-			break;
-		case MALO_CMD_SET_PRESCAN:
-			DPRINTF(("%s: cmd answer for MALO_CMD_SET_PRESCAN=%x",
-			    sc->sc_dev.dv_xname, hdr->result));
-			break;
-		case MALO_CMD_SET_POSTSCAN:
-			DPRINTF(("%s: cmd answer for MALO_CMD_SET_POSTSCAN=%x",
-			    sc->sc_dev.dv_xname, hdr->result));
-			break;
-		case MALO_CMD_SET_CHANNEL:
-			DPRINTF(("%s: cmd answer for MALO_CMD_SET_CHANNEL=%x",
-			   sc->sc_dev.dv_xname, hdr->result));
-			break;
-		case MALO_CMD_SET_RTS:
-			DPRINTF(("%s: cmd answer for MALO_CMD_SET_RTS=%x",
-			    sc->sc_dev.dv_xname, hdr->result));
-			break;
-		default:
-			DPRINTF(("%s: cmd answer for UNKNOWN=%x",
-			    sc->sc_dev.dv_xname, hdr->result));
-			break;
+		if (hdr->result != MALO_CMD_RESULT_OK) {
+			printf("%s: firmware cmd %s failed with %s\n",
+			    sc->sc_dev.dv_xname,
+			    malo_cmd_string(hdr->cmd),
+			    malo_cmd_string_result(hdr->result));
 		}
 #if MALO_DEBUG
-		int i;
-
-		for (i = 0; i < hdr->size; i++) {
-			if (i % 16 == 0) 
-				printf("\n%4i:", i);
-			if (i % 4 == 0)
-				printf(" ");
-			printf("%02x", (int)*((u_char *)hdr + i));
-		}
-		printf("\n");
+		printf("%s: cmd answer for %s=%s\n",
+		    sc->sc_dev.dv_xname,
+		    malo_cmd_string(hdr->cmd),
+		    malo_cmd_string_result(hdr->result));
+		if (malo_debug > 2)
+			malo_hexdump(hdr, hdr->size);
 #endif
 	}
 
@@ -993,7 +972,7 @@ malo_start(struct ifnet *ifp)
 	struct mbuf *m0;
 	struct ieee80211_node *ni;
 
-	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+	DPRINTFN(2, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1099,9 +1078,6 @@ malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			if (malo_cmd_set_prescan(sc) != 0)
 				DPRINTF(("%s: can't set prescan\n",
 				    sc->sc_dev.dv_xname));
-			else
-				DPRINTF(("%s: prescan done\n",
-				    sc->sc_dev.dv_xname));
 		} else {
 			chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 
@@ -1110,13 +1086,13 @@ malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		timeout_add(&sc->sc_scan_to, hz / 2);
 		break;
 	case IEEE80211_S_AUTH:
-		DPRINTF(("AUTH\n"));
+		DPRINTF(("newstate AUTH\n"));
 		malo_cmd_set_postscan(sc, ic->ic_myaddr, 1);
 		chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 		malo_cmd_set_channel(sc, chan);
 		break;
 	case IEEE80211_S_ASSOC:
-		DPRINTF(("ASSOC\n"));
+		DPRINTF(("newstate ASSOC\n"));
 #if 0
 		if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 			malo_cmd_set_radio(sc, 1, 3); /* short preamble */
@@ -1128,7 +1104,7 @@ malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 #endif
 		break;
 	case IEEE80211_S_RUN:
-		DPRINTF(("RUN\n"));
+		DPRINTF(("newstate RUN\n"));
 		break;
 	default:
 		break;
@@ -1249,7 +1225,7 @@ malo_tx_intr(struct malo_softc *sc)
 	struct malo_node *rn;
 	int stat;
 
-	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+	DPRINTFN(2, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
 
 	stat = sc->sc_txring.stat;
 	for (;;) {
@@ -1268,7 +1244,7 @@ malo_tx_intr(struct malo_softc *sc)
 		/* check TX state */
 		switch (desc->status & 0x1) {
 		case 0x1:
-			DPRINTF(("data frame was sent successfully\n"));
+			DPRINTFN(2, ("data frame was sent successfully\n"));
 			ifp->if_opackets++;
 			break;
 		default:
@@ -1281,7 +1257,7 @@ malo_tx_intr(struct malo_softc *sc)
 		data->ni = NULL;
 		data->softstat &= ~ 0x80;
 
-		DPRINTF(("tx done idx=%u\n", sc->sc_txring.stat));
+		DPRINTFN(2, ("tx done idx=%u\n", sc->sc_txring.stat));
 
 		sc->sc_txring.queued--;
 next:
@@ -1308,7 +1284,7 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	uint32_t flags = 0;
 	int rate, error;
 
-	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+	DPRINTFN(2, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
 
 	desc = &sc->sc_txring.desc[sc->sc_txring.cur];
 	data = &sc->sc_txring.data[sc->sc_txring.cur];
@@ -1403,7 +1379,7 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	    sc->sc_txring.cur * sizeof(struct malo_tx_desc),
 	    sizeof(struct malo_tx_desc), BUS_DMASYNC_PREWRITE);
 
-	DPRINTF(("%s: sending mgmt frame, pktlen=%u, idx=%u, rate=%u\n",
+	DPRINTFN(2, ("%s: sending mgmt frame, pktlen=%u, idx=%u, rate=%u\n",
 	    sc->sc_dev.dv_xname, m0->m_pkthdr.len, sc->sc_txring.cur, rate));
 
 	sc->sc_txring.queued++;
@@ -1429,7 +1405,7 @@ malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 	uint32_t flags = 0;
 	int rate, error;
 
-	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+	DPRINTFN(2, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
 
 	desc = &sc->sc_txring.desc[sc->sc_txring.cur];
 	data = &sc->sc_txring.data[sc->sc_txring.cur];
@@ -1524,7 +1500,7 @@ malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 	    sc->sc_txring.cur * sizeof(struct malo_tx_desc),
 	    sizeof(struct malo_tx_desc), BUS_DMASYNC_PREWRITE);
 
-	DPRINTF(("%s: sending data frame, pktlen=%u, idx=%u, rate=%u\n",
+	DPRINTFN(2, ("%s: sending data frame, pktlen=%u, idx=%u, rate=%u\n",
 	    sc->sc_dev.dv_xname, m0->m_pkthdr.len, sc->sc_txring.cur, rate));
 
 	sc->sc_txring.queued++;
@@ -1593,15 +1569,15 @@ malo_rx_intr(struct malo_softc *sc)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxring.map,
 		    sc->sc_rxring.cur * sizeof(struct malo_rx_desc),
 		    sizeof(struct malo_rx_desc), BUS_DMASYNC_POSTREAD);
-#if 0
-		DPRINTF(("rx intr idx=%d, rxctrl=0x%02x, rssi=%d, "
+
+		DPRINTFN(3, ("rx intr idx=%d, rxctrl=0x%02x, rssi=%d, "
 		    "status=0x%02x, channel=%d, len=%d, res1=%02x, rate=%d, "
 		    "physdata=0x%04x, physnext=0x%04x, qosctrl=%02x, res2=%d\n",
 		    sc->sc_rxring.cur, desc->rxctrl, desc->rssi, desc->status,
 		    desc->channel, letoh16(desc->len), desc->reserved1,
 		    desc->datarate, desc->physdata, desc->physnext,
 		    desc->qosctrl, desc->reserved2));
-#endif
+
 		if ((letoh32(desc->rxctrl) & 0x80) == 0)
 			break;
 
@@ -1720,8 +1696,8 @@ malo_load_bootimg(struct malo_softc *sc)
 
 	/* load boot firmware */
 	if ((error = loadfirmware(name, &ucode, &size)) != 0) {
-		DPRINTF(("%s: error %d, could not read microcode %s!\n",
-		    sc->sc_dev.dv_xname, error, name));
+		printf("%s: error %d, could not read microcode %s!\n",
+		    sc->sc_dev.dv_xname, error, name);
 		return (EIO);
 	}
 
@@ -1774,8 +1750,8 @@ malo_load_firmware(struct malo_softc *sc)
 
 	/* load real firmware now */
 	if ((error = loadfirmware(name, &ucode, &size)) != 0) {
-		DPRINTF(("%s: error %d, could not read microcode %s!\n",
-		    sc->sc_dev.dv_xname, error, name));
+		printf("%s: error %d, could not read microcode %s!\n",
+		    sc->sc_dev.dv_xname, error, name);
 		return (EIO);
 	}
 
@@ -1842,6 +1818,69 @@ malo_load_firmware(struct malo_softc *sc)
 	DPRINTF(("%s: firmware loaded\n", sc->sc_dev.dv_xname));
 
 	return (0);
+}
+
+void
+malo_hexdump(void *buf, int len)
+{
+	int i;
+
+	for (i = 0; i < len; i++) {
+		if (i % 16 == 0) 
+			printf("\n%4i:", i);
+		if (i % 4 == 0)
+			printf(" ");
+		printf("%02x", (int)*((u_char *)buf + i));
+	}
+	printf("\n");
+}
+
+static char *
+malo_cmd_string(uint16_t cmd)
+{
+	int i;
+	static const struct {
+		uint16_t	 cmd_code;
+		char		*cmd_string;
+	} cmds[] = {
+		{ MALO_CMD_GET_HW_SPEC, 	"GetHwSpecifications"	},
+		{ MALO_CMD_SET_RADIO,		"SetRadio"		},
+		{ MALO_CMD_SET_TXPOWER,		"SetTxPower"		},
+		{ MALO_CMD_SET_ANTENNA,		"SetAntenna"		},
+		{ MALO_CMD_SET_PRESCAN,		"SetPrescan"		},
+		{ MALO_CMD_SET_POSTSCAN,	"SetPostscan"		},
+		{ MALO_CMD_SET_CHANNEL,		"SetChannel"		},
+		{ MALO_CMD_SET_RTS,		"SetRTS"		},
+	};
+
+	for (i = 0; i < sizeof(cmds) / sizeof(cmds[0]); i++)
+		if ((cmd & 0x7fff) == cmds[i].cmd_code)
+			return (cmds[i].cmd_string);
+
+	return ("unknown");
+}
+
+static char *
+malo_cmd_string_result(uint16_t result)
+{
+	int i;
+	static const struct {
+		uint16_t	 result_code;
+		char		*result_string;
+	} results[] = {
+		{ MALO_CMD_RESULT_OK,		"OK"		},
+		{ MALO_CMD_RESULT_ERROR,	"general error"	},
+		{ MALO_CMD_RESULT_NOSUPPORT,	"not supported" },
+		{ MALO_CMD_RESULT_PENDING,	"pending"	},
+		{ MALO_CMD_RESULT_BUSY,		"ignored"	},
+		{ MALO_CMD_RESULT_PARTIALDATA,	"incomplete"	},
+	};
+
+	for (i = 0; i < sizeof(results) / sizeof(results[0]); i++)
+		if (result == results[i].result_code)
+			return (results[i].result_string);
+
+	return ("unknown");
 }
 
 int
