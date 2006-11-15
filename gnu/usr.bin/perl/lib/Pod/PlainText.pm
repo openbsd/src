@@ -1,5 +1,5 @@
 # Pod::PlainText -- Convert POD data to formatted ASCII text.
-# $Id: PlainText.pm,v 1.3 2004/04/07 21:33:06 millert Exp $
+# $Id: PlainText.pm,v 1.4 2006/11/15 16:43:43 espie Exp $
 #
 # Copyright 1999-2000 by Russ Allbery <rra@stanford.edu>
 #
@@ -558,6 +558,11 @@ sub pod2text {
     }
 }
 
+sub begin_pod {
+    my $self = shift;
+    $$self{EXCLUDE} = 0;
+    $$self{VERBATIM} = 0;
+}
 
 ############################################################################
 # Module return value and documentation

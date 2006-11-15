@@ -1,5 +1,5 @@
 # Pod::Man -- Convert POD data to formatted *roff input.
-# $Id: Man.pm,v 1.8 2003/12/03 03:02:40 millert Exp $
+# $Id: Man.pm,v 1.9 2006/11/15 16:43:43 espie Exp $
 #
 # Copyright 1999, 2000, 2001, 2002, 2003 by Russ Allbery <rra@stanford.edu>
 #
@@ -474,6 +474,8 @@ $_
     $$self{ITEMTYPES} = [];     # Stack of =item types, one per list.
     $$self{SHIFTWAIT} = 0;      # Whether there is a shift waiting.
     $$self{SHIFTS}    = [];     # Stack of .RS shifts.
+    $$self{EXCLUDE}   = 0;
+    $$self{VERBATIM}  = 0;
 }
 
 
