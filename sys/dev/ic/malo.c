@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.25 2006/11/15 13:18:26 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.26 2006/11/15 16:27:37 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -239,6 +239,8 @@ int	malo_reset(struct ifnet *ifp);
 void	malo_next_scan(void *arg);
 void	malo_tx_intr(struct malo_softc *sc);
 int	malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0,
+	    struct ieee80211_node *ni);
+int	malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 	    struct ieee80211_node *ni);
 void	malo_tx_setup_desc(struct malo_softc *sc, struct malo_tx_desc *desc,
 	    uint32_t flags, uint16_t xflags, int len, int rate,
@@ -1035,7 +1037,12 @@ malo_start(struct ifnet *ifp)
 			if (ic->ic_rawbpf != NULL)
 				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
 #endif
-			/* TODO malo_tx_data() */
+			if (malo_tx_data(sc, m0, ni) != 0) {
+				if (ni != NULL)
+					ieee80211_release_node(ic, ni);
+				ifp->if_oerrors++;
+				break;
+			}
 		}
 	}
 }
@@ -1400,10 +1407,130 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	    sc->sc_dev.dv_xname, m0->m_pkthdr.len, sc->sc_txring.cur, rate));
 
 	sc->sc_txring.queued++;
-	sc->sc_txring.cur = (sc->sc_txring.cur + 1) %
-	    sizeof(struct malo_tx_desc);
+	sc->sc_txring.cur = (sc->sc_txring.cur + 1) % MALO_TX_RING_COUNT;
 
 	/* kick mgmt TX */
+	malo_ctl_write4(sc, 0x0c18, 1);
+	malo_ctl_read4(sc, 0x0c14);
+
+	return (0);
+}
+
+int
+malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
+    struct ieee80211_node *ni)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	struct malo_tx_desc *desc;
+	struct malo_tx_data *data;
+	struct ieee80211_frame *wh;
+	struct mbuf *mnew;
+	uint32_t flags = 0;
+	int rate, error;
+
+	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+
+	desc = &sc->sc_txring.desc[sc->sc_txring.cur];
+	data = &sc->sc_txring.data[sc->sc_txring.cur];
+
+	/* XXX we care later about rate control */
+	rate = 2;
+
+	if (m0->m_len < sizeof(struct ieee80211_frame *)) {
+		m0 = m_pullup(m0, sizeof(struct ieee80211_frame *));
+		if (m0 == NULL) {
+			ifp->if_ierrors++;
+			return (ENOBUFS);
+		}
+	}
+	wh = mtod(m0, struct ieee80211_frame *);
+
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		m0 = ieee80211_wep_crypt(ifp, m0, 1);
+		if (m0 == NULL)
+			return (ENOBUFS);
+
+		/* packet header may have moved, reset our local pointer */
+		wh = mtod(m0, struct ieee80211_frame *);
+	}
+
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct mbuf mb;
+		struct malo_tx_radiotap_hdr *tap = &sc->sc_txtap;
+
+		tap->wt_flags = 0;
+		tap->wt_rate = rate;
+		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
+
+		M_DUP_PKTHDR(&mb, m0);
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = sc->sc_txtap_len;
+		mb.m_next = m0;
+		mb.m_pkthdr.len += mb.m_len;
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+	}
+#endif
+
+	/*
+	 * inject FW specific fields into the 802.11 frame
+	 *
+	 *  2 bytes FW len (inject)
+	 * 24 bytes 802.11 frame header
+	 *  6 bytes addr4 (inject)
+	 *  n bytes 802.11 frame body
+	 *
+	 * For now copy all into a new mcluster.
+	 */
+	MGETHDR(mnew, M_DONTWAIT, MT_DATA);
+	if (mnew == NULL)
+		return (ENOBUFS);
+	MCLGET(mnew, M_DONTWAIT);
+	if (!(mnew->m_flags & M_EXT)) {
+		m_free(mnew);
+		return (ENOBUFS);
+	}
+
+	*mtod(mnew, uint16_t *) = htole16(m0->m_pkthdr.len - 24); /* FW len */
+	bcopy(wh, mtod(mnew, caddr_t) + 2, sizeof(*wh));
+	bzero(mtod(mnew, caddr_t) + 26, 6);
+	m_copydata(m0, sizeof(*wh), m0->m_pkthdr.len - sizeof(*wh),
+	    mtod(mnew, caddr_t) + 32);
+	mnew->m_pkthdr.len = mnew->m_len = m0->m_pkthdr.len + 8;
+	m_freem(m0);
+	m0 = mnew;
+
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
+	    BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s: could not map mbuf (error %d)\n",
+		    sc->sc_dev.dv_xname, error);
+		m_freem(m0);
+		return (error);
+	}
+
+	data->m = m0;
+	data->ni = ni;
+	data->softstat |= 0x80;
+
+	malo_tx_setup_desc(sc, desc, flags, 0, m0->m_pkthdr.len, rate,
+	    data->map->dm_segs, data->map->dm_nsegs, 0);
+
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_txring.map,
+	    sc->sc_txring.cur * sizeof(struct malo_tx_desc),
+	    sizeof(struct malo_tx_desc), BUS_DMASYNC_PREWRITE);
+
+	DPRINTF(("%s: sending data frame, pktlen=%u, idx=%u, rate=%u\n",
+	    sc->sc_dev.dv_xname, m0->m_pkthdr.len, sc->sc_txring.cur, rate));
+
+	sc->sc_txring.queued++;
+	sc->sc_txring.cur = (sc->sc_txring.cur + 1) % MALO_TX_RING_COUNT;
+
+	/* kick data TX */
 	malo_ctl_write4(sc, 0x0c18, 1);
 	malo_ctl_read4(sc, 0x0c14);
 
