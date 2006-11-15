@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.12 2006/05/29 00:54:23 canacar Exp $
+#	$OpenBSD: files.acpi,v 1.13 2006/11/15 21:39:06 kettenis Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -50,3 +50,13 @@ file	dev/acpi/acpiec.c		acpiec
 device	acpitz
 attach	acpitz at acpi
 file	dev/acpi/acpitz.c		acpitz
+
+# Multiple APIC Description Table
+device	acpimadt
+attach	acpimadt at acpi
+file	dev/acpi/acpimadt.c		acpimadt
+
+# PCI Routing Table
+device	acpiprt
+attach	acpiprt at acpi
+file	dev/acpi/acpiprt.c		acpiprt needs-flag
