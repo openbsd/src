@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.114 2006/06/29 17:23:28 todd Exp $
+#	$OpenBSD: netstart,v 1.115 2006/11/15 06:28:33 itojun Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -260,6 +260,10 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	route -qn add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject > /dev/null
 	route -qn add -inet6 2002:0000:: -prefixlen 24 ::1 -reject > /dev/null
 	route -qn add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject > /dev/null
+
+	# Disallow packets without scope identifier.
+	route -qn add -inet6 ff01:: -prefixlen 16 ::1 -reject > /dev/null
+	route -qn add -inet6 ff02:: -prefixlen 16 ::1 -reject > /dev/null
 
 	# Completely disallow packets to IPv4 compatible prefix.
 	# This may conflict with RFC1933 under following circumstances:
