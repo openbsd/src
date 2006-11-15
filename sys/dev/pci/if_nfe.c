@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.66 2006/11/10 20:46:58 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.67 2006/11/15 02:24:37 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -1127,7 +1127,7 @@ nfe_init(struct ifnet *ifp)
 	NFE_WRITE(sc, NFE_STATUS, sc->mii_phyaddr << 24 | NFE_STATUS_MAGIC);
 
 	NFE_WRITE(sc, NFE_SETUP_R4, NFE_R4_MAGIC);
-	NFE_WRITE(sc, NFE_WOL_CTL, NFE_WOL_MAGIC);
+	NFE_WRITE(sc, NFE_WOL_CTL, NFE_WOL_ENABLE);
 
 	sc->rxtxctl &= ~NFE_RXTX_BIT2;
 	NFE_WRITE(sc, NFE_RXTX_CTL, sc->rxtxctl);
