@@ -1,5 +1,6 @@
-# $OpenBSD: Makefile,v 1.43 2006/10/31 14:39:53 hshoexer Exp $
+# $OpenBSD: Makefile,v 1.44 2006/11/16 11:33:58 markus Exp $
 
+# you can update the *.ok files with: make -i | patch
 # TARGETS
 # ipsec: feed ipsecNN.in through ipsecctl and check wether the output matches
 # 	 ipsecNN.ok
