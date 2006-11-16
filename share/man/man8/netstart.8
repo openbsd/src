@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstart.8,v 1.12 2006/11/16 11:24:20 jmc Exp $
+.\"	$OpenBSD: netstart.8,v 1.13 2006/11/16 12:22:21 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -94,11 +94,20 @@ is the interface or bridge name:
 .Pp
 .D1 # sh /etc/netstart foo0
 .Sh MULTICAST ROUTING
+To enable
+.Xr multicast 4
+routing, the
+.Va net.inet.ip.mforwarding
+and/or
+.Va net.inet.ip6.mforwarding
+.Xr sysctl 8
+variables should be set to 1.
 Routing to the 224.0.0.0/4 net is set up using values from
 .Pa /etc/rc.conf
 according to these rules:
 .Bl -bullet
 .It
+The default.
 If the multicast settings are as follows
 then multicast routing will not be enabled.
 .Bd -literal -offset indent
@@ -140,6 +149,7 @@ enabled.
 .Xr carp 4 ,
 .Xr gif 4 ,
 .Xr gre 4 ,
+.Xr multicast 4 ,
 .Xr pfsync 4 ,
 .Xr pppoe 4 ,
 .Xr trunk 4 ,
