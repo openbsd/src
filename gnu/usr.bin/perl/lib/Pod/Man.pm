@@ -1,5 +1,5 @@
 # Pod::Man -- Convert POD data to formatted *roff input.
-# $Id: Man.pm,v 1.9 2006/11/15 16:43:43 espie Exp $
+# $Id: Man.pm,v 1.10 2006/11/16 21:56:24 espie Exp $
 #
 # Copyright 1999, 2000, 2001, 2002, 2003 by Russ Allbery <rra@stanford.edu>
 #
@@ -257,6 +257,7 @@ $PREAMBLE = <<'----END OF PREAMBLE----';
 
     'nbsp'      =>    '\\ ',    # non-breaking space
     'shy'       =>    '',       # soft (discretionary) hyphen
+    'copy'	=>    '\(co',	# copyright
 );
 
 
