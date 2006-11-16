@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.150 2006/10/21 14:02:11 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.151 2006/11/16 13:09:27 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1560,6 +1560,30 @@ if_detached_watchdog(struct ifnet *ifp)
 }
 
 /*
+ * Create interface group without members
+ */
+struct ifg_group *
+if_creategroup(const char *groupname)
+{
+	struct ifg_group	*ifg = NULL;
+
+	if ((ifg = (struct ifg_group *)malloc(sizeof(struct ifg_group),
+	    M_TEMP, M_NOWAIT)) == NULL)
+		return (NULL);
+
+	strlcpy(ifg->ifg_group, groupname, sizeof(ifg->ifg_group));
+	ifg->ifg_refcnt = 0;
+	ifg->ifg_carp_demoted = 0;
+	TAILQ_INIT(&ifg->ifg_members);
+#if NPF > 0
+	pfi_attach_ifgroup(ifg);
+#endif
+	TAILQ_INSERT_TAIL(&ifg_head, ifg, ifg_next);
+
+	return (ifg);
+}
+
+/*
  * Add a group to an interface
  */
 int
@@ -1591,21 +1615,10 @@ if_addgroup(struct ifnet *ifp, const char *groupname)
 		if (!strcmp(ifg->ifg_group, groupname))
 			break;
 
-	if (ifg == NULL) {
-		if ((ifg = (struct ifg_group *)malloc(sizeof(struct ifg_group),
-		    M_TEMP, M_NOWAIT)) == NULL) {
-			free(ifgl, M_TEMP);
-			free(ifgm, M_TEMP);
-			return (ENOMEM);
-		}
-		strlcpy(ifg->ifg_group, groupname, sizeof(ifg->ifg_group));
-		ifg->ifg_refcnt = 0;
-		ifg->ifg_carp_demoted = 0;
-		TAILQ_INIT(&ifg->ifg_members);
-#if NPF > 0
-		pfi_attach_ifgroup(ifg);
-#endif
-		TAILQ_INSERT_TAIL(&ifg_head, ifg, ifg_next);
+	if (ifg == NULL && (ifg = if_creategroup(groupname)) == NULL) {
+		free(ifgl, M_TEMP);
+		free(ifgm, M_TEMP);
+		return (ENOMEM);
 	}
 
 	ifg->ifg_refcnt++;
