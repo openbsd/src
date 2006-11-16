@@ -1,6 +1,6 @@
-.\"	$OpenBSD: rmd160.1,v 1.17 2004/05/04 18:32:51 jmc Exp $
+.\"	$OpenBSD: rmd160.1,v 1.18 2006/11/16 23:53:41 millert Exp $
 .\"
-.\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +26,7 @@
 .Nd calculate a message-digest fingerprint (checksum) for a file
 .Sh SYNOPSIS
 .Nm rmd160
+.Op Fl q | r
 .Oo
 .Fl p | t | x |
 .Fl c Oo Ar checklist ... Oc |
@@ -66,6 +67,12 @@ If no file is given, stdin is used.
 Echoes stdin to stdout and appends the
 .Em RMD-160
 sum to stdout.
+.It Fl q
+Only print the checksum (quiet mode).
+.It Fl r
+Reverse the format of the hash algorithm output, making
+it match the output format used by
+.Xr cksum 1 .
 .It Fl s Ar string
 Prints a checksum of the given
 .Ar string .

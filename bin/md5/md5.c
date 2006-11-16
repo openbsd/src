@@ -1,7 +1,7 @@
-/*	$OpenBSD: md5.c,v 1.36 2006/11/10 15:03:44 tom Exp $	*/
+/*	$OpenBSD: md5.c,v 1.37 2006/11/16 23:53:41 millert Exp $	*/
 
 /*
- * Copyright (c) 2001, 2003, 2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -37,8 +37,9 @@
 #include <sha2.h>
 #include <crc.h>
 
+#define STYLE_HASH	0
 #define STYLE_CKSUM	1
-#define STYLE_HASH	2
+#define STYLE_TERSE	2
 
 #define MAX_DIGEST_LEN	128
 
@@ -55,11 +56,15 @@ union ANY_CTX {
 	SYSVSUM_CTX sysvsum;
 };
 
+/* Default print style for hash and chksum functions. */
+int style_hash = STYLE_HASH;
+int style_cksum = STYLE_CKSUM;
+
 #define NHASHES	10
 struct hash_functions {
 	const char *name;
 	size_t digestlen;
-	int style;
+	int *style;
 	void *ctx;	/* XXX - only used by digest_file() */
 	void (*init)(void *);
 	void (*update)(void *, const unsigned char *, unsigned int);
@@ -68,7 +73,7 @@ struct hash_functions {
 	{
 		"CKSUM",
 		CKSUM_DIGEST_LENGTH * 2,
-		STYLE_CKSUM,
+		&style_cksum,
 		NULL,
 		(void (*)(void *))CKSUM_Init,
 		(void (*)(void *, const unsigned char *, unsigned int))CKSUM_Update,
@@ -76,7 +81,7 @@ struct hash_functions {
 	}, {
 		"SUM",
 		SUM_DIGEST_LENGTH * 2,
-		STYLE_CKSUM,
+		&style_cksum,
 		NULL,
 		(void (*)(void *))SUM_Init,
 		(void (*)(void *, const unsigned char *, unsigned int))SUM_Update,
@@ -84,7 +89,7 @@ struct hash_functions {
 	}, {
 		"SYSVSUM",
 		SYSVSUM_DIGEST_LENGTH * 2,
-		STYLE_CKSUM,
+		&style_cksum,
 		NULL,
 		(void (*)(void *))SYSVSUM_Init,
 		(void (*)(void *, const unsigned char *, unsigned int))SYSVSUM_Update,
@@ -92,7 +97,7 @@ struct hash_functions {
 	}, {
 		"MD4",
 		MD5_DIGEST_LENGTH * 2,
-		STYLE_HASH,
+		&style_hash,
 		NULL,
 		(void (*)(void *))MD4Init,
 		(void (*)(void *, const unsigned char *, unsigned int))MD4Update,
@@ -100,7 +105,7 @@ struct hash_functions {
 	}, {
 		"MD5",
 		MD5_DIGEST_LENGTH * 2,
-		STYLE_HASH,
+		&style_hash,
 		NULL,
 		(void (*)(void *))MD5Init,
 		(void (*)(void *, const unsigned char *, unsigned int))MD5Update,
@@ -108,7 +113,7 @@ struct hash_functions {
 	}, {
 		"RMD160",
 		RMD160_DIGEST_LENGTH * 2,
-		STYLE_HASH,
+		&style_hash,
 		NULL,
 		(void (*)(void *))RMD160Init,
 		(void (*)(void *, const unsigned char *, unsigned int))RMD160Update,
@@ -116,7 +121,7 @@ struct hash_functions {
 	}, {
 		"SHA1",
 		SHA1_DIGEST_LENGTH * 2,
-		STYLE_HASH,
+		&style_hash,
 		NULL,
 		(void (*)(void *))SHA1Init,
 		(void (*)(void *, const unsigned char *, unsigned int))SHA1Update,
@@ -124,7 +129,7 @@ struct hash_functions {
 	}, {
 		"SHA256",
 		SHA256_DIGEST_LENGTH * 2,
-		STYLE_HASH,
+		&style_hash,
 		NULL,
 		(void (*)(void *))SHA256_Init,
 		(void (*)(void *, const unsigned char *, unsigned int))SHA256_Update,
@@ -132,7 +137,7 @@ struct hash_functions {
 	}, {
 		"SHA384",
 		SHA384_DIGEST_LENGTH * 2,
-		STYLE_HASH,
+		&style_hash,
 		NULL,
 		(void (*)(void *))SHA384_Init,
 		(void (*)(void *, const unsigned char *, unsigned int))SHA384_Update,
@@ -140,7 +145,7 @@ struct hash_functions {
 	}, {
 		"SHA512",
 		SHA512_DIGEST_LENGTH * 2,
-		STYLE_HASH,
+		&style_hash,
 		NULL,
 		(void (*)(void *))SHA512_Init,
 		(void (*)(void *, const unsigned char *, unsigned int))SHA512_Update,
@@ -166,13 +171,13 @@ main(int argc, char **argv)
 {
 	struct hash_functions *hf, *hashes[NHASHES + 1];
 	int fl, i, error;
-	int cflag, pflag, tflag, xflag;
+	int cflag, pflag, qflag, rflag, tflag, xflag;
 	char *cp, *input_string;
 
 	input_string = NULL;
-	error = cflag = pflag = tflag = xflag = 0;
+	error = cflag = pflag = qflag = rflag = tflag = xflag = 0;
 	memset(hashes, 0, sizeof(hashes));
-	while ((fl = getopt(argc, argv, "a:co:ps:tx")) != -1) {
+	while ((fl = getopt(argc, argv, "a:co:pqrs:tx")) != -1) {
 		switch (fl) {
 		case 'a':
 			while ((cp = strsep(&optarg, " \t,")) != NULL) {
@@ -214,6 +219,12 @@ main(int argc, char **argv)
 		case 'p':
 			pflag = 1;
 			break;
+		case 'q':
+			qflag = 1;
+			break;
+		case 'r':
+			rflag = 1;
+			break;
 		case 's':
 			input_string = optarg;
 			break;
@@ -232,10 +243,15 @@ main(int argc, char **argv)
 
 	/* Most arguments are mutually exclusive */
 	fl = pflag + tflag + xflag + cflag + (input_string != NULL);
-	if (fl > 1 || (fl && argc && cflag == 0))
+	if (fl > 1 || (fl && argc && cflag == 0) || (rflag && qflag))
 		usage();
-	if (cflag != 0 && hashes[1] != NULL)
-		errx(1, "only a single algorithm may be specified in -c mode");
+	if (cflag != 0) {
+		if (hashes[1] != NULL)
+			errx(1, "only a single algorithm may be specified "
+			    "in -c mode");
+		if (qflag)
+			errx(1, "the -q and -c flags are mutually exclusive");
+	}
 
 	/* No algorithm specified, check the name we were called as. */
 	if (hashes[0] == NULL) {
@@ -247,6 +263,13 @@ main(int argc, char **argv)
 		}
 		if (hashes[0] == NULL)
 			hashes[0] = &functions[0];	/* default to cksum */
+	}
+
+	if (rflag)
+		style_hash = STYLE_CKSUM;		/* reverse print */
+	if (qflag) {
+		style_hash = STYLE_TERSE;
+		style_cksum = STYLE_TERSE;
 	}
 
 	if (tflag)
@@ -290,20 +313,34 @@ void
 digest_print(const struct hash_functions *hf, const char *what,
     const char *digest)
 {
-	if (hf->style == STYLE_CKSUM)
-		(void)printf("%s %s\n", digest, what);
-	else
+	switch (*hf->style) {
+	case STYLE_HASH:
 		(void)printf("%s (%s) = %s\n", hf->name, what, digest);
+		break;
+	case STYLE_CKSUM:
+		(void)printf("%s %s\n", digest, what);
+		break;
+	case STYLE_TERSE:
+		(void)printf("%s\n", digest);
+		break;
+	}
 }
 
 void
 digest_printstr(const struct hash_functions *hf, const char *what,
     const char *digest)
 {
-	if (hf->style == STYLE_CKSUM)
-		(void)printf("%s %s\n", digest, what);
-	else
+	switch (*hf->style) {
+	case STYLE_HASH:
 		(void)printf("%s (\"%s\") = %s\n", hf->name, what, digest);
+		break;
+	case STYLE_CKSUM:
+		(void)printf("%s %s\n", digest, what);
+		break;
+	case STYLE_TERSE:
+		(void)printf("%s\n", digest);
+		break;
+	}
 }
 
 void
@@ -451,7 +488,7 @@ digest_filelist(const char *file, struct hash_functions *defhash)
 			checksum = buf;
 			if ((p = strchr(checksum, ' ')) == NULL)
 				continue;
-			if (hf->style == STYLE_CKSUM) {
+			if (*hf->style == STYLE_CKSUM) {
 				if ((p = strchr(p + 1, ' ')) == NULL)
 					continue;
 			}
@@ -593,7 +630,7 @@ usage(void)
 	fprintf(stderr, "usage: %s [-p | -t | -x | -c [checklist ...] | "
 	    "-s string | file ...]\n", __progname);
 	if (strcmp(__progname, "cksum") == 0)
-		fprintf(stderr, "             [-a algorithms]] [-o 1 | 2]\n");
+		fprintf(stderr, "             [-a algorithms]] [-o 1 | 2] [-q | -r]\n");
 
 	exit(EXIT_FAILURE);
 }

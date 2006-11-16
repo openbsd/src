@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.5 2005/03/07 23:41:53 jmc Exp $
+.\"	$OpenBSD: cksum.1,v 1.6 2006/11/16 23:53:41 millert Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,6 +50,7 @@
 .Oc
 .Op Fl a Ar algorithms
 .Op Fl o Ar 1 | 2
+.Op Fl q | r
 .Ek
 .Nm sum
 .Op Ar file ...
@@ -134,6 +135,11 @@ option.
 .It Fl o Ar 1 | 2
 Use historic algorithms instead of the (superior) default one
 (see below).
+.It Fl q
+Only print the checksum (quiet mode).
+.It Fl r
+Reverse the format of the hash algorithm output, making
+it match the checksum output format.
 .It Fl p
 Echoes stdin to stdout and appends the
 checksum to stdout.

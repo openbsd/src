@@ -1,6 +1,6 @@
-.\"	$OpenBSD: md5.1,v 1.20 2004/08/24 21:22:25 tom Exp $
+.\"	$OpenBSD: md5.1,v 1.21 2006/11/16 23:53:41 millert Exp $
 .\"
-.\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +26,7 @@
 .Nd calculate a message-digest fingerprint (checksum) for a file
 .Sh SYNOPSIS
 .Nm md5
+.Op Fl q | r
 .Oo
 .Fl p | t | x |
 .Fl c Oo Ar checklist ... Oc |
@@ -71,6 +72,12 @@ If no file is given, stdin is used.
 Echoes stdin to stdout and appends the
 .Em MD5
 sum to stdout.
+.It Fl q
+Only print the checksum (quiet mode).
+.It Fl r
+Reverse the format of the hash algorithm output, making
+it match the output format used by
+.Xr cksum 1 .
 .It Fl s Ar string
 Prints a checksum of the given
 .Ar string .
