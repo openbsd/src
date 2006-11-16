@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.28 2006/11/16 15:11:01 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.29 2006/11/16 21:18:42 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -244,7 +244,6 @@ void	malo_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
 struct ieee80211_node *
 	malo_node_alloc(struct ieee80211com *ic);
 int	malo_media_change(struct ifnet *ifp);
-int	malo_reset(struct ifnet *ifp);
 void	malo_next_scan(void *arg);
 void	malo_tx_intr(struct malo_softc *sc);
 int	malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0,
@@ -852,7 +851,13 @@ malo_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int error;
 
-	DPRINTF(("%s: malo_init\n", ifp->if_xname));
+	DPRINTF(("%s: %s\n", ifp->if_xname, __func__));
+
+	/* if interface already runs stop it first */
+	if (ifp->if_flags & IFF_RUNNING)
+		malo_stop(sc);
+
+	/* power on cardbus socket */
 	if (sc->sc_enable)
 		sc->sc_enable(sc);
 
@@ -947,7 +952,7 @@ malo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	if (error == ENETRESET)
-		error = malo_reset(ifp);
+		error = malo_init(ifp);
 
 	splx(s);
 
@@ -1022,6 +1027,8 @@ malo_stop(struct malo_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 
+	DPRINTF(("%s: %s\n", ifp->if_xname, __func__));
+
 	/* try to reset card, if the firmware is loaded */
 	if (ifp->if_flags & IFF_RUNNING)
 		malo_cmd_reset(sc);
@@ -1033,7 +1040,7 @@ malo_stop(struct malo_softc *sc)
 	malo_reset_tx_ring(sc, &sc->sc_txring);
 	malo_reset_rx_ring(sc, &sc->sc_rxring);
 
-	DPRINTF(("%s: malo_stop\n", ifp->if_xname));
+	/* power off cardbus socket */
 	if (sc->sc_disable)
 		sc->sc_disable(sc);
 
@@ -1133,59 +1140,7 @@ malo_media_change(struct ifnet *ifp)
 		return (error);
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
-		malo_reset(ifp);
-
-	return (0);
-}
-
-int
-malo_reset(struct ifnet *ifp)
-{
-	struct malo_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
-	u_int chan;
-
-	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
-
-	if (ic->ic_state == IEEE80211_S_RUN) {
-		if (malo_cmd_set_antenna(sc, 1) != 0) {
-			DPRINTF(("%s: can't set RX antenna\n",
-			    sc->sc_dev.dv_xname));
-			return (EIO);
-		}
-
-		if (malo_cmd_set_antenna(sc, 2) != 0) {
-			DPRINTF(("%s: can't set TX antenna\n",
-			    sc->sc_dev.dv_xname));
-			return (EIO);
-		}
-	}
-
-	if (ic->ic_state == IEEE80211_S_RUN &&
-	    ic->ic_opmode != IEEE80211_M_HOSTAP) {
-		/*
-		 * The prescan and postscan commands are mandatory
-		 * required.  Otherwise FW will not be able to send or
-		 * receive any frame.
-		 */
-		if (malo_cmd_set_prescan(sc) != 0) {
-			DPRINTF(("%s: can't prescan\n", sc->sc_dev.dv_xname));
-			return (EIO);
-		}
-
-		if (malo_cmd_set_postscan(sc, ic->ic_myaddr, 1) != 0) {
-			DPRINTF(("%s: can't postscan\n", sc->sc_dev.dv_xname));
-			return (EIO);
-		}
-
-		chan = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
-		if (malo_cmd_set_channel(sc, chan) != 0) {
-			DPRINTF(("%s: can't set channel\n",
-			    sc->sc_dev.dv_xname));
-			return (EIO);
-		} else
-			DPRINTF(("%s: set channel to %u\n", chan));
-	}
+		malo_init(ifp);
 
 	return (0);
 }
