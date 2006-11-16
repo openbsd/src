@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.16 2003/09/23 18:18:09 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.17 2006/11/16 16:08:15 henning Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -255,6 +255,9 @@ get_next_msg(char *buf, char *lim, int ifindex, size_t *lenp, int filter)
 		case RTM_GET:
 		case RTM_ADD:
 		case RTM_DELETE:
+			if (rtm->rtm_tableid != 0)
+				continue;
+
 			/* address related checks */
 			sa = (struct sockaddr *)(rtm + 1);
 			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
