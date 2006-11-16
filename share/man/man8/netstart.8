@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstart.8,v 1.11 2005/11/10 10:36:59 jmc Exp $
+.\"	$OpenBSD: netstart.8,v 1.12 2006/11/16 11:24:20 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -99,26 +99,29 @@ Routing to the 224.0.0.0/4 net is set up using values from
 according to these rules:
 .Bl -bullet
 .It
-If the multicast settings are as follows:
+If the multicast settings are as follows
+then multicast routing will not be enabled.
 .Bd -literal -offset indent
 multicast_host=NO
 multicast_router=NO
 .Ed
-.Pp
-then multicast routing will not be enabled.
 .It
-If the multicast settings are as follows:
+If the multicast settings are as follows
+then multicast routing will be enabled,
+but no multicast route will be set up.
+It is expected that a routing daemon, such as
+.Xr mrouted 8 ,
+will be started as well.
 .Bd -literal -offset indent
 multicast_host=NO
 multicast_router=YES
 .Ed
-.Pp
-then multicast routing will be enabled, but no multicast route will be set up.
-It is expected that a routing daemon, such as
-.Xr mrouted 8 ,
-will be started as well.
 .It
-If the multicast settings are as follows:
+If the multicast settings are as follows
+then multicast routing will be enabled,
+using the default interface,
+or the interface name specified by
+.Va multicast_host .
 .Bd -literal -offset indent
 multicast_host=YES
 multicast_router=NO
@@ -128,10 +131,6 @@ or:
 multicast_host=foo0	# interface name
 multicast_router=NO
 .Ed
-.Pp
-then multicast routing will be enabled, using the default interface,
-or the interface name specified by
-.Va multicast_host .
 .It
 Other cases are configuration errors and will cause multicast routing not to be
 enabled.
