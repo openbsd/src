@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2006/10/06 21:48:50 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.2 2006/11/16 23:27:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -29,7 +29,7 @@
 #endif
 #include <dev/cons.h>
 
-const char version[] = "0.99";
+const char version[] = "1.00";
 int	debug = 1;
 
 struct fs_ops file_system[] = {
