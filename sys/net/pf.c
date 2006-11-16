@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.518 2006/10/31 14:49:01 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.519 2006/11/16 13:17:15 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6082,8 +6082,8 @@ done:
 		    ("pf: dropping packet with ip options\n"));
 	}
 
-	if (s && s->tag)
-		pf_tag_packet(m, pd.pf_mtag, s->tag, r->rtableid);
+	if ((s && s->tag) || r->rtableid)
+		pf_tag_packet(m, pd.pf_mtag, s ? s->tag : 0, r->rtableid);
 
 #ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
@@ -6428,8 +6428,8 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 done:
 	/* XXX handle IPv6 options, if not allowed. not implemented. */
 
-	if (s && s->tag)
-		pf_tag_packet(m, pd.pf_mtag, s->tag, r->rtableid);
+	if ((s && s->tag) || r->rtableid)
+		pf_tag_packet(m, pd.pf_mtag, s ? s->tag : 0, r->rtableid);
 
 #ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
