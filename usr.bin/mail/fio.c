@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.26 2006/04/02 00:51:37 deraadt Exp $	*/
+/*	$OpenBSD: fio.c,v 1.27 2006/11/16 00:16:29 ray Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: fio.c,v 1.26 2006/04/02 00:51:37 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: fio.c,v 1.27 2006/11/16 00:16:29 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,8 +123,11 @@ setptr(FILE *ibuf, off_t offset)
 		 * that reside on a DOS partition.
 		 */
 		if (count >= 2 && linebuf[count-1] == '\n' &&
-		    linebuf[count - 2] == '\r')
-			linebuf[count - 2] = linebuf[--count];
+		    linebuf[count - 2] == '\r') {
+			linebuf[count - 2] = '\n';
+			linebuf[count - 1] = '\0';
+			count--;
+		}
 
 		(void)fwrite(linebuf, sizeof(*linebuf), count, otf);
 		if (ferror(otf))
