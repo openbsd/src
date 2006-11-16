@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.2 2006/10/24 16:37:48 david Exp $ */
+/*	$OpenBSD: kroute.c,v 1.3 2006/11/16 15:56:26 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -773,7 +773,7 @@ int
 fetchtable(void)
 {
 	size_t			 len;
-	int			 mib[6];
+	int			 mib[7];
 	char			*buf, *next, *lim;
 	struct rt_msghdr	*rtm;
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
@@ -787,6 +787,7 @@ fetchtable(void)
 	mib[3] = AF_INET;
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
+	mib[6] = 0;	/* rtableid */
 
 	if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1) {
 		log_warn("sysctl");
@@ -995,6 +996,9 @@ dispatch_rtmsg(void)
 		netmask.s_addr = 0;
 		flags = F_KERNEL;
 		nexthop.s_addr = 0;
+
+		if (rtm->rtm_tableid != 0)
+			continue;
 
 		if (rtm->rtm_type == RTM_ADD || rtm->rtm_type == RTM_CHANGE ||
 		    rtm->rtm_type == RTM_DELETE) {
