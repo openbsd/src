@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.51 2006/09/21 15:39:50 jmc Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.52 2006/11/16 22:18:18 deraadt Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -87,7 +87,20 @@ GemPlus GPR400 smartcard reader
 .It Xr com 4 , Xr pccom 4
 serial communications interface
 .El
-.Ss Network interfaces
+.Ss Wired network interfaces
+.Bl -tag -width 12n -offset ind -compact
+.It Xr ep 4
+3Com EtherLink III and Fast EtherLink III 10/100 Ethernet device
+.It Xr ne 4
+NE2000 and compatible 10/100 Ethernet device
+.It Xr rln 4
+Proxim RangeLAN2 wireless network device
+.It Xr sm 4
+SMC91C9x and SMC91C1xx-based 10/100 Ethernet device
+.It Xr xe 4
+Xircom-based 16-bit PCMCIA 10/100 Ethernet device
+.El
+.Ss Wireless network interfaces
 .Bl -tag -width 12n -offset ind -compact
 .It Xr an 4
 Aironet Communications 4500/4800 IEEE 802.11FH/b wireless network device
@@ -95,20 +108,10 @@ Aironet Communications 4500/4800 IEEE 802.11FH/b wireless network device
 BayStack 650 IEEE 802.11FH PCMCIA wireless network device
 .It Xr cnw 4
 Xircom CreditCard Netwave wireless network device
-.It Xr ep 4
-3Com EtherLink III and Fast EtherLink III 10/100 Ethernet device
-.It Xr ne 4
-NE2000 and compatible 10/100 Ethernet device
 .It Xr ray 4
 Raytheon Raylink/WebGear Aviator IEEE 802.11FH wireless network device
-.It Xr rln 4
-Proxim RangeLAN2 wireless network device
-.It Xr sm 4
-SMC91C9x and SMC91C1xx-based 10/100 Ethernet device
 .It Xr wi 4
 WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b wireless network device
-.It Xr xe 4
-Xircom-based 16-bit PCMCIA 10/100 Ethernet device
 .El
 .Ss SCSI controllers
 .Bl -tag -width 12n -offset ind -compact

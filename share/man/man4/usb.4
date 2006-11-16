@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.80 2006/10/26 20:13:13 jmc Exp $
+.\"	$OpenBSD: usb.4,v 1.81 2006/11/16 22:18:18 deraadt Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,10 +122,8 @@ Note that not all architectures support all devices.
 .Tn USB
 Mass Storage Devices, e.g., external disk drives
 .El
-.Ss Network adapters
+.Ss Wired network interfaces
 .Bl -tag -width 12n -offset ind -compact
-.It Xr atu 4
-Atmel AT76C50x IEEE 802.11b wireless network device
 .It Xr aue 4
 ADMtek AN986/ADM8511 Pegasus family 10/100 USB Ethernet device
 .It Xr axe 4
@@ -136,20 +134,25 @@ USB Communication Device Class Ethernet device
 CATC USB-EL1201A USB Ethernet device
 .It Xr kue 4
 Kawasaki LSI KL5KUSB101B USB Ethernet device
+.It Xr udav 4
+Davicom DM9601 USB Ethernet device
+.It Xr ueagle 4
+Analog Devices Eagle ADSL modems
+.It Xr url 4
+Realtek RTL8150L USB Ethernet device
+.El
+.Ss Wireless network interfaces
+.Bl -tag -width 12n -offset ind -compact
+.It Xr atu 4
+Atmel AT76C50x IEEE 802.11b wireless network device
 .It Xr rum 4
 Ralink Technology USB IEEE 802.11a/b/g wireless network device
 .It Xr uath 4
 Atheros USB IEEE 802.11a/b/g wireless network device
 .It Xr ubt 4
 Bluetooth adapters
-.It Xr udav 4
-Davicom DM9601 USB Ethernet device
-.It Xr ueagle 4
-Analog Devices Eagle ADSL modems
 .It Xr ural 4
 Ralink Technology RT2500 IEEE 802.11a/b/g wireless network device
-.It Xr url 4
-Realtek RTL8150L USB Ethernet device
 .It Xr wi 4
 Intersil PRISM 2-3 IEEE 802.11b wireless network device
 .It Xr zyd 4
