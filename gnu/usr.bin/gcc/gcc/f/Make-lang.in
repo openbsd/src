@@ -150,7 +150,7 @@ f77.generated-manpages: f/g77.1
 # g77 documentation.
 f/g77.info: $(srcdir)/f/g77.texi $(srcdir)/f/bugs.texi \
 		$(srcdir)/f/ffe.texi $(srcdir)/f/invoke.texi \
-		$(srcdir)/f/news.texi  $(srcdir)/f/intdoc.texi \
+		$(srcdir)/f/news.texi  f/intdoc.texi \
 		$(srcdir)/f/root.texi $(srcdir)/doc/include/fdl.texi \
 		$(srcdir)/doc/include/gpl.texi \
 		$(srcdir)/doc/include/funding.texi \
@@ -163,7 +163,7 @@ f/g77.info: $(srcdir)/f/g77.texi $(srcdir)/f/bugs.texi \
 
 f/g77.dvi: $(srcdir)/f/g77.texi $(srcdir)/f/bugs.texi \
 		$(srcdir)/f/ffe.texi $(srcdir)/f/invoke.texi \
-		$(srcdir)/f/news.texi  $(srcdir)/f/intdoc.texi \
+		$(srcdir)/f/news.texi  f/intdoc.texi \
 		$(srcdir)/f/root.texi $(srcdir)/doc/include/fdl.texi \
 		$(srcdir)/doc/include/gpl.texi \
 		$(srcdir)/doc/include/funding.texi \
@@ -208,9 +208,9 @@ f/g77.1: $(srcdir)/f/invoke.texi
 
 INTDOC_DEPS = $(srcdir)/f/intdoc.c $(srcdir)/f/intrin.h $(srcdir)/f/intrin.def
 
-$(srcdir)/f/intdoc.texi: $(INTDOC_DEPS) $(srcdir)/f/intdoc.in
+f/intdoc.texi: $(INTDOC_DEPS) $(srcdir)/f/intdoc.in
 	$(MAKE) f/intdoc$(build_exeext)
-	f/intdoc$(build_exeext) > $(srcdir)/f/intdoc.texi
+	f/intdoc$(build_exeext) > $@
 
 f/intdoc$(build_exeext): $(INTDOC_DEPS) f/intdoc.h0 hconfig.h $(SYSTEM_H) \
 	$(HOST_LIBDEPS)
@@ -225,16 +225,15 @@ f/ansify$(build_exeext): f/ansify.c hconfig.h $(SYSTEM_H)
 	  $(HOST_CC) $(HOST_CFLAGS) $(HOST_LDFLAGS) $(INCLUDES) \
 	  	$(srcdir)/f/ansify.c -o f/ansify$(build_exeext)
 
-$(srcdir)/f/BUGS: f/bugs0.texi f/bugs.texi f/root.texi
+f/BUGS: f/bugs0.texi f/bugs.texi f/root.texi
 	cd $(srcdir)/f; $(MAKEINFO) -D BUGSONLY --no-header --no-split \
 	  --no-validate -I../doc/include -o BUGS bugs0.texi
 
-$(srcdir)/f/NEWS: f/news0.texi f/news.texi f/root.texi
+f/NEWS: f/news0.texi f/news.texi f/root.texi
 	cd $(srcdir)/f; $(MAKEINFO) -D NEWSONLY --no-header --no-split \
 	  --no-validate -I../doc/include -o NEWS news0.texi
 
-f77.rebuilt: f/g77.info $(srcdir)/f/BUGS \
-  $(srcdir)/f/NEWS 
+f77.rebuilt: f/g77.info f/BUGS f/NEWS 
 
 #
 # Install hooks:
