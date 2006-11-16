@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.3 2006/11/09 21:11:31 deraadt Exp $
+# $OpenBSD: RAMDISK,v 1.4 2006/11/16 01:27:52 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -69,10 +69,13 @@ re*	at pci? 			# Realtek 8139C+/8169/8169S/8110S
 rl*	at pci?				# Realtek 8129/8139
 
 # MII/PHY support
-rgephy*	at mii? phy ?
-rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
-urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
-ukphy*	at mii? phy ?			# generic unknown PHYs
+acphy*	at mii?				# Altima AC101 PHYs
+amphy*	at mii?				# AMD 79C873 PHYs
+eephy*	at mii?				# Marvell 88E1000 series PHY
+rgephy*	at mii?				# Realtek 8169S/8110S PHY
+rlphy*	at mii?				# Realtek 8139/8201L PHYs
+urlphy*	at mii?				# Realtek RTL8150L internal PHYs
+ukphy*	at mii?				# generic unknown PHYs
 
 # PCIIDE 
 pciide*		at pci?
