@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.21 2006/09/27 02:27:04 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.22 2006/11/16 03:25:45 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1178,7 +1178,7 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sk_rev = (sk_win_read_1(sc, SK_CONFIG) >> 4);
 
 	/* bail out here if chip is not recognized */
-	if (!(SK_IS_YUKON(sc))) {
+	if (!(SK_IS_YUKON2(sc))) {
 		printf(": unknown chip type: %d\n", sc->sk_type);
 		goto fail_1;
 	}
