@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.27 2006/11/15 21:44:04 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.28 2006/11/16 15:11:01 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -34,7 +34,7 @@
 
 #include <machine/bus.h>
 #include <machine/endian.h>
-//#include <machine/intr.h>
+#include <machine/intr.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -65,7 +65,7 @@ int malo_debug = 1;
 /* internal structures and defines */
 struct malo_node {
 	struct ieee80211_node		ni;
-	struct ieee80211_rssadapt	rssadapt;
+	struct ieee80211_rssadapt	rssadapt; /* XXX maybe no need */
 };
 
 struct malo_rx_data {
@@ -74,12 +74,10 @@ struct malo_rx_data {
 };
 
 struct malo_tx_data {
-	bus_dmamap_t			map;
-	struct mbuf			*m;
-	uint32_t			softstat;
-	/* additional info for rate adaption */
-	struct ieee80211_node		*ni;
-//	struct ieee80211_rssdesc	id;
+	bus_dmamap_t		map;
+	struct mbuf		*m;
+	uint32_t		softstat;
+	struct ieee80211_node	*ni;
 };
 
 /* RX descriptor used by HW */
@@ -120,6 +118,7 @@ struct malo_tx_desc {
  * Firmware commands
  */
 #define MALO_CMD_GET_HW_SPEC		0x0003
+#define MALO_CMD_SET_RESET		0x0005
 #define MALO_CMD_SET_RADIO		0x001c
 #define MALO_CMD_SET_AID		0x010d
 #define MALO_CMD_SET_TXPOWER		0x001e
@@ -339,15 +338,6 @@ malo_attach(struct malo_softc *sc)
 	/* initialize channel scanning timer */
 	timeout_set(&sc->sc_scan_to, malo_next_scan, sc);
 
-#if 0
-	/* ???, what is this for, seems unnecessary */
-	/* malo_ctl_write4(sc, 0x0c38, 0x1f); */
-	/* disable interrupts */
-	malo_ctl_read4(sc, 0x0c30);
-	malo_ctl_write4(sc, 0x0c30, 0);
-	malo_ctl_write4(sc, 0x0c34, 0);
-	malo_ctl_write4(sc, 0x0c3c, 0);
-#endif
 	/* allocate DMA structures */
 	malo_alloc_cmd(sc);
 	malo_alloc_rx_ring(sc, &sc->sc_rxring, MALO_RX_RING_COUNT);
@@ -1033,10 +1023,8 @@ malo_stop(struct malo_softc *sc)
 	struct ifnet *ifp = &ic->ic_if;
 
 	/* try to reset card, if the firmware is loaded */
-#if 0
 	if (ifp->if_flags & IFF_RUNNING)
-		malo_cmd_reset(sc); /* returns a command error */
-#endif
+		malo_cmd_reset(sc);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
@@ -1208,11 +1196,16 @@ malo_next_scan(void *arg)
 	struct malo_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
+	int s;
 
 	DPRINTF(("%s: %s\n", ifp->if_xname, __func__));
 
+	s = splnet();
+
 	if (ic->ic_state == IEEE80211_S_SCAN)
 		ieee80211_next_scan(ifp);
+
+	splx(s);
 }
 
 void
@@ -1932,7 +1925,7 @@ malo_cmd_reset(struct malo_softc *sc)
 {
 	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
 
-	hdr->cmd = htole16(5);
+	hdr->cmd = htole16(MALO_CMD_SET_RESET);
 	hdr->size = htole16(sizeof(*hdr));
 	hdr->seqnum = 1;
 	hdr->result = 0;
@@ -1994,7 +1987,7 @@ malo_cmd_set_channel(struct malo_softc *sc, uint8_t channel)
 	body = (struct malo_cmd_channel *)(hdr + 1);
 
 	bzero(body, sizeof(*body));
-	body->action = htole16(1); /* seems this is needed */
+	body->action = htole16(1);
 	body->channel = channel;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
