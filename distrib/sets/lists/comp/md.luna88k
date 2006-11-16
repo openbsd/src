@@ -125,7 +125,6 @@
 ./usr/include/luna88k/endian.h
 ./usr/include/luna88k/exec.h
 ./usr/include/luna88k/float.h
-./usr/include/luna88k/frame.h
 ./usr/include/luna88k/ieee.h
 ./usr/include/luna88k/ieeefp.h
 ./usr/include/luna88k/internal_types.h
@@ -165,7 +164,6 @@
 ./usr/include/m88k/endian.h
 ./usr/include/m88k/exec.h
 ./usr/include/m88k/float.h
-./usr/include/m88k/frame.h
 ./usr/include/m88k/ieee.h
 ./usr/include/m88k/ieeefp.h
 ./usr/include/m88k/internal_types.h

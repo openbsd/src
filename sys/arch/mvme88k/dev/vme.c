@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.44 2006/05/08 14:36:10 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.45 2006/11/16 23:21:56 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -37,7 +37,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/frame.h>
 
 #include "pcctwo.h"
 #include "syscon.h"
@@ -616,8 +615,6 @@ int
 vme2abort(eframe)
 	void *eframe;
 {
-	struct frame *frame = eframe;
-
 	struct vmesoftc *sc = (struct vmesoftc *)vme_cd.cd_devs[0];
 
 	if ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, VME2_IRQSTAT) &
@@ -627,7 +624,7 @@ vme2abort(eframe)
 	}
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VME2_IRQCLR, VME2_IRQ_AB);
-	nmihand(frame);
+	nmihand(eframe);
 	return (1);
 }
 #endif
