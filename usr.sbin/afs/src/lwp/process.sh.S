@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.sh.S,v 1.2 2006/11/15 14:58:14 deraadt Exp $	*/
+/*	$OpenBSD: process.sh.S,v 1.3 2006/11/16 04:00:51 drahn Exp $	*/
 
 /*
  * Copyright (c) 2006 Theo de Raadt
@@ -38,9 +38,12 @@
 */
 
 ENTRY(savecontext)
-	mov.l	r4, @-sp
-	mov.l	r0, @-sp		/* save on stack */
-	mov.l	r15, @-sp
+
+	mov.l	.L_PRE_Block, r0	/* PRE_Block = 1 */
+	mov	#1, r1
+	mov.b	r1, @r0
+
+	/* sp == r15 - automatically handled */
 	mov.l	r14, @-sp
 	mov.l	r13, @-sp
 	mov.l	r12, @-sp
@@ -50,15 +53,19 @@ ENTRY(savecontext)
 	mov.l	r8, @-sp
 	sts.l	pr, @-sp
 
-	mov.l	.L_PRE_Block, r0	/* PRE_Block = 1 */
-	mov	#1, r4
-	mov.l	r4, @r0
+#if defined(__SH4__) && !defined(__SH4_NOFPU__)
+	/* float point registers */
+	fmov.s	fr15, @-sp
+	fmov.s	fr14, @-sp
+	fmov.s	fr13, @-sp
+	fmov.s	fr12, @-sp
+#endif
 
 	mov.l	sp,@r5			/* store top of stack */
-	mov.l	@r6,sp			/* swap to new sp */
+	mov	r6,sp			/* swap to new sp */
 
-	mov.l	r4,@-sp			/* call function */
-	rts
+	mov	sp, r14			/* frame pointer */
+	jmp	@r4
 	 nop
 
 	.align	2
@@ -66,28 +73,33 @@ ENTRY(savecontext)
 	SET_ENTRY_SIZE(savecontext)
 
 /*
- * returnto(struct savearea *a2)
+ * returnto(struct savearea *r4)
 */
 ENTRY(returnto)
-	mov	r4, sp
+	mov.l	@r4, sp
 
-	lds.l	@r4+, pr
-	mov.l	@r4+, r8
-	mov.l	@r4+, r9
-	mov.l	@r4+, r10
-	mov.l	@r4+, r11
-	mov.l	@r4+, r12
-	mov.l	@r4+, r13
-	mov.l	@r4+, r14
-	mov.l	@r4+, r15
+#if defined(__SH4__) && !defined(__SH4_NOFPU__)
+	/* float point registers */
+	fmov.s	@sp+, fr12
+	fmov.s	@sp+, fr13
+	fmov.s	@sp+, fr14
+	fmov.s	@sp+, fr15
+#endif
 
-	mov.l	.L_PRE_Block2, r0	/* PRE_Block = 1 */
+	lds.l   @sp+, pr
+	mov.l	@sp+, r8
+	mov.l	@sp+, r9
+	mov.l	@sp+, r10
+	mov.l	@sp+, r11
+	mov.l	@sp+, r12
+	mov.l	@sp+, r13
+	mov.l	@sp+, r14
+	/* sp == r15 - automatically handled */
+
+	mov.l	.L_PRE_Block2, r0	/* PRE_Block = 0 */
 	mov	#0, r4
-	mov.l	r4, @r0
+	mov.b	r4, @r0
 
-	mov.l	@sp+, r0
-	mov.l	@sp+, r4
-	
 	rts
 	 nop
 
