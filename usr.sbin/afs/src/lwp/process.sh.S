@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.sh.S,v 1.3 2006/11/16 04:00:51 drahn Exp $	*/
+/*	$OpenBSD: process.sh.S,v 1.4 2006/11/16 05:19:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Theo de Raadt
@@ -62,9 +62,12 @@ ENTRY(savecontext)
 #endif
 
 	mov.l	sp,@r5			/* store top of stack */
-	mov	r6,sp			/* swap to new sp */
+	tst	r6,r6
+	bt	1f
 
+	mov	r6,sp			/* swap to new sp */
 	mov	sp, r14			/* frame pointer */
+1:
 	jmp	@r4
 	 nop
 
