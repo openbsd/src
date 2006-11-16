@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.40 2006/08/10 20:11:02 jmc Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.41 2006/11/16 02:20:50 itojun Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -332,7 +332,7 @@ u_long datalen;			/* How much data */
 #define	ICMP6ECHOLEN	8
 /* XXX: 2064 = 127(max hops in type 0 rthdr) * sizeof(ip6_hdr) + 16(margin) */
 char rtbuf[2064];
-#ifdef USE_RFC2292BIS
+#ifdef IPV6_RECVPKTINFO
 struct ip6_rthdr *rth;
 #endif
 struct cmsghdr *cmsg;
@@ -388,7 +388,7 @@ main(int argc, char *argv[])
 	if (setsockopt(rcvsock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
 	    sizeof(on)) < 0)
 		err(1, "setsockopt(IPV6_RECVPKTINFO)");
-#else  /* old adv. API */
+#else
 	if (setsockopt(rcvsock, IPPROTO_IPV6, IPV6_PKTINFO, &on,
 	    sizeof(on)) < 0)
 		err(1, "setsockopt(IPV6_PKTINFO)");
@@ -429,7 +429,7 @@ main(int argc, char *argv[])
 				    "traceroute6: unknown host %s\n", optarg);
 				exit(1);
 			}
-#ifdef USE_RFC2292BIS
+#ifdef IPV6_RECVPKTINFO
 			if (rth == NULL) {
 				/*
 				 * XXX: We can't detect the number of
@@ -450,7 +450,7 @@ main(int argc, char *argv[])
 				    optarg);
 				exit(1);
 			}
-#else  /* old advanced API */
+#else
 			if (cmsg == NULL)
 				cmsg = inet6_rthdr_init(rtbuf, IPV6_RTHDR_TYPE_0);
 			inet6_rthdr_add(cmsg, (struct in6_addr *)hp->h_addr,
@@ -696,7 +696,7 @@ main(int argc, char *argv[])
 	if (options & SO_DONTROUTE)
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DONTROUTE,
 		    (char *)&on, sizeof(on));
-#ifdef USE_RFC2292BIS
+#ifdef IPV6_RECVPKTINFO
 	if (rth) {/* XXX: there is no library to finalize the header... */
 		rth->ip6r_len = rth->ip6r_segleft * 2;
 		if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_RTHDR,
@@ -706,7 +706,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 	}
-#else  /* old advanced API */
+#else
 	if (cmsg != NULL) {
 		inet6_rthdr_lasthop(cmsg, IPV6_RTHDR_LOOSE);
 		if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_PKTOPTIONS,
@@ -716,7 +716,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 	}
-#endif /* USE_RFC2292BIS */
+#endif
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
 	/*
