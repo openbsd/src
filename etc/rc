@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.293 2006/11/06 21:55:52 deraadt Exp $
+#	$OpenBSD: rc,v 1.294 2006/11/16 13:07:11 henning Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -301,6 +301,7 @@ fi
 syslogd ${syslogd_flags}
 
 if [ X"${pf}" != X"NO" -a X"${pflogd_flags}" != X"NO" ]; then
+	ifconfig pflog0 create >/dev/null 2>&1
 	if ifconfig pflog0 >/dev/null 2>&1; then
 		ifconfig pflog0 up
 		pflogd ${pflogd_flags}
