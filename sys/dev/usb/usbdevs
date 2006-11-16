@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.230 2006/11/11 18:17:21 maja Exp $
+$OpenBSD: usbdevs,v 1.231 2006/11/16 23:50:16 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -849,6 +849,7 @@ product COMPAQ IPAQWLAN		0x0032	iPAQ WLAN
 product COMPAQ W100		0x0033	W100
 product COMPAQ W200		0x0076	WLAN MultiPort W200
 product COMPAQ PJB100		0x504a	Personal Jukebox PJB100
+product COMPAQ IPAQLINUX	0x505a	iPAQ Linux
 
 /* Billionton products */
 product BILLIONTON SNAPPORT	0x90ff	SnapPort Ethernet
