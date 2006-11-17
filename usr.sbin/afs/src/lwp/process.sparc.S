@@ -67,7 +67,7 @@
 #define STACK_ALIGN	4
 #endif
 #ifndef MINFRAME
-#define MINFRAME	96
+#define MINFRAME	92
 #endif
 	
 #endif /* __sparcv9 */
