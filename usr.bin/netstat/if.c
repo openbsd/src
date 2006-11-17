@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.48 2006/05/27 19:24:01 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.49 2006/11/17 01:11:23 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.48 2006/05/27 19:24:01 claudio Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.49 2006/11/17 01:11:23 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -252,7 +252,8 @@ intpr(int interval, u_long ifnetaddr)
 						m6.sin6_family = AF_INET6;
 						m6.sin6_addr = inm.in6m_addr;
 #ifdef __KAME__
-						if (IN6_IS_ADDR_MC_LINKLOCAL(&m6.sin6_addr)) {
+						if (IN6_IS_ADDR_MC_LINKLOCAL(&m6.sin6_addr) ||
+						    IN6_IS_ADDR_MC_INTFACELOCAL(&m6.sin6_addr)) {
 							m6.sin6_scope_id =
 							    ntohs(*(u_int16_t *)
 							    &m6.sin6_addr.s6_addr[2]);

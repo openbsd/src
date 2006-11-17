@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.101 2006/10/15 09:44:25 mcbride Exp $	*/
+/*	$OpenBSD: route.c,v 1.102 2006/11/17 01:11:23 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -761,7 +761,8 @@ getaddr(int which, char *s, struct hostent **hpp)
 		memcpy(&su->sin6, res->ai_addr, sizeof(su->sin6));
 		freeaddrinfo(res);
 		if ((IN6_IS_ADDR_LINKLOCAL(&su->sin6.sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&su->sin6.sin6_addr)) &&
+		     IN6_IS_ADDR_MC_LINKLOCAL(&su->sin6.sin6_addr) ||
+		     IN6_IS_ADDR_MC_INTFACELOCAL(&su->sin6.sin6_addr)) &&
 		    su->sin6.sin6_scope_id) {
 			*(u_int16_t *)&su->sin6.sin6_addr.s6_addr[2] =
 				htons(su->sin6.sin6_scope_id);

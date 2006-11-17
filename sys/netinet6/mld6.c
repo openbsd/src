@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.21 2006/05/27 23:40:27 claudio Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.22 2006/11/17 01:11:23 itojun Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ mld6_stop_listening(in6m)
 
 	if (in6m->in6m_state == MLD_IREPORTEDLAST &&
 	    (!IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr, &mld_all_nodes_linklocal)) &&
-	    IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) > IPV6_ADDR_SCOPE_NODELOCAL)
+	    IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) > IPV6_ADDR_SCOPE_INTFACELOCAL)
 		mld6_sendpkt(in6m, MLD_LISTENER_DONE,
 		    &mld_all_routers_linklocal);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.39 2006/06/18 11:47:46 pascoe Exp $	*/
+/*	$OpenBSD: in6.h,v 1.40 2006/11/17 01:11:23 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -208,6 +208,9 @@ extern const struct in6_addr in6mask128;
 #define IN6ADDR_NODELOCAL_ALLNODES_INIT \
 	{{{ 0xff, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
 	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 }}}
+#define IN6ADDR_INTFACELOCAL_ALLNODES_INIT \
+	{{{ 0xff, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 }}}
 #define IN6ADDR_LINKLOCAL_ALLNODES_INIT \
 	{{{ 0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
 	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 }}}
@@ -219,7 +222,7 @@ extern const struct in6_addr in6mask128;
 extern const struct in6_addr in6addr_any;
 extern const struct in6_addr in6addr_loopback;
 #if __BSD_VISIBLE
-extern const struct in6_addr in6addr_nodelocal_allnodes;
+extern const struct in6_addr in6addr_intfacelocal_allnodes;
 extern const struct in6_addr in6addr_linklocal_allnodes;
 extern const struct in6_addr in6addr_linklocal_allrouters;
 #endif
@@ -282,12 +285,14 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 
 #ifdef _KERNEL	/* XXX nonstandard */
 #define IPV6_ADDR_SCOPE_NODELOCAL	0x01
+#define IPV6_ADDR_SCOPE_INTFACELOCAL	0x01
 #define IPV6_ADDR_SCOPE_LINKLOCAL	0x02
 #define IPV6_ADDR_SCOPE_SITELOCAL	0x05
 #define IPV6_ADDR_SCOPE_ORGLOCAL	0x08	/* just used in this file */
 #define IPV6_ADDR_SCOPE_GLOBAL		0x0e
 #else
 #define __IPV6_ADDR_SCOPE_NODELOCAL	0x01
+#define __IPV6_ADDR_SCOPE_INTFACELOCAL	0x01
 #define __IPV6_ADDR_SCOPE_LINKLOCAL	0x02
 #define __IPV6_ADDR_SCOPE_SITELOCAL	0x05
 #define __IPV6_ADDR_SCOPE_ORGLOCAL	0x08	/* just used in this file */
@@ -321,6 +326,9 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #define IN6_IS_ADDR_MC_NODELOCAL(a)	\
 	(IN6_IS_ADDR_MULTICAST(a) &&	\
 	 (IPV6_ADDR_MC_SCOPE(a) == IPV6_ADDR_SCOPE_NODELOCAL))
+#define IN6_IS_ADDR_MC_INTFACELOCAL(a)	\
+	(IN6_IS_ADDR_MULTICAST(a) &&	\
+	 (IPV6_ADDR_MC_SCOPE(a) == IPV6_ADDR_SCOPE_INTFACELOCAL))
 #define IN6_IS_ADDR_MC_LINKLOCAL(a)	\
 	(IN6_IS_ADDR_MULTICAST(a) &&	\
 	 (IPV6_ADDR_MC_SCOPE(a) == IPV6_ADDR_SCOPE_LINKLOCAL))
@@ -337,6 +345,9 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #define IN6_IS_ADDR_MC_NODELOCAL(a)	\
 	(IN6_IS_ADDR_MULTICAST(a) &&	\
 	 (__IPV6_ADDR_MC_SCOPE(a) == __IPV6_ADDR_SCOPE_NODELOCAL))
+#define IN6_IS_ADDR_MC_INTFACELOCAL(a)	\
+	(IN6_IS_ADDR_MULTICAST(a) &&	\
+	 (__IPV6_ADDR_MC_SCOPE(a) == __IPV6_ADDR_SCOPE_INTFACELOCAL))
 #define IN6_IS_ADDR_MC_LINKLOCAL(a)	\
 	(IN6_IS_ADDR_MULTICAST(a) &&	\
 	 (__IPV6_ADDR_MC_SCOPE(a) == __IPV6_ADDR_SCOPE_LINKLOCAL))
@@ -358,6 +369,10 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #define IN6_IS_SCOPE_LINKLOCAL(a)	\
 	((IN6_IS_ADDR_LINKLOCAL(a)) ||	\
 	 (IN6_IS_ADDR_MC_LINKLOCAL(a)))
+#define IN6_IS_SCOPE_EMBED(a)	\
+	((IN6_IS_ADDR_LINKLOCAL(a)) ||	\
+	 (IN6_IS_ADDR_MC_LINKLOCAL(a)) || \
+	 (IN6_IS_ADDR_MC_INTFACELOCAL(a)))
 
 #define IFA6_IS_DEPRECATED(a) \
 	((a)->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME && \

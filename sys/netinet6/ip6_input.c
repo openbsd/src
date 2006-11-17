@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.68 2006/06/18 11:47:46 pascoe Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.69 2006/11/17 01:11:23 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -321,24 +321,22 @@ ip6_input(m)
 
 	/* drop packets if interface ID portion is already filled */
 	if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src) &&
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src) &&
 		    ip6->ip6_src.s6_addr16[1]) {
 			ip6stat.ip6s_badscope++;
 			goto bad;
 		}
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst) &&
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst) &&
 		    ip6->ip6_dst.s6_addr16[1]) {
 			ip6stat.ip6s_badscope++;
 			goto bad;
 		}
 	}
 
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
-		ip6->ip6_src.s6_addr16[1]
-			= htons(m->m_pkthdr.rcvif->if_index);
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
-		ip6->ip6_dst.s6_addr16[1]
-			= htons(m->m_pkthdr.rcvif->if_index);
+	if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src))
+		ip6->ip6_src.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+	if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
+		ip6->ip6_dst.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 
 	/*
 	 * We use rt->rt_ifp to determine if the address is ours or not.
@@ -939,7 +937,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 	if ((in6p->in6p_flags & IN6P_PKTINFO) != 0) {
 		struct in6_pktinfo pi6;
 		bcopy(&ip6->ip6_dst, &pi6.ipi6_addr, sizeof(struct in6_addr));
-		if (IN6_IS_SCOPE_LINKLOCAL(&pi6.ipi6_addr))
+		if (IN6_IS_SCOPE_EMBED(&pi6.ipi6_addr))
 			pi6.ipi6_addr.s6_addr16[1] = 0;
 		pi6.ipi6_ifindex = (m && m->m_pkthdr.rcvif)
 					? m->m_pkthdr.rcvif->if_index

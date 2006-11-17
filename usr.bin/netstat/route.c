@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.73 2006/08/29 21:51:13 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.74 2006/11/17 01:11:23 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.73 2006/08/29 21:51:13 claudio Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.74 2006/11/17 01:11:23 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -388,7 +388,8 @@ encap_print(struct rtentry *rt)
 		bcopy(&sen1.sen_ip6_src, &s61.sin6_addr, sizeof(struct in6_addr));
 #ifdef __KAME__
 		if (IN6_IS_ADDR_LINKLOCAL(&s61.sin6_addr) ||
-		    IN6_IS_ADDR_MC_LINKLOCAL(&s61.sin6_addr)) {
+		    IN6_IS_ADDR_MC_LINKLOCAL(&s61.sin6_addr) ||
+		    IN6_IS_ADDR_MC_INTFACELOCAL(&s61.sin6_addr)) {
 			s61.sin6_scope_id =
 			    ((u_int16_t)s61.sin6_addr.s6_addr[2] << 8) |
 			    s61.sin6_addr.s6_addr[3];
@@ -398,7 +399,8 @@ encap_print(struct rtentry *rt)
 		bcopy(&sen2.sen_ip6_src, &s62.sin6_addr, sizeof(struct in6_addr));
 #ifdef __KAME__
 		if (IN6_IS_ADDR_LINKLOCAL(&s62.sin6_addr) ||
-		    IN6_IS_ADDR_MC_LINKLOCAL(&s62.sin6_addr)) {
+		    IN6_IS_ADDR_MC_LINKLOCAL(&s62.sin6_addr) ||
+		    IN6_IS_ADDR_MC_INTFACELOCAL(&s62.sin6_addr)) {
 			s62.sin6_scope_id =
 			    ((u_int16_t)s62.sin6_addr.s6_addr[2] << 8) |
 			    s62.sin6_addr.s6_addr[3];
@@ -416,7 +418,8 @@ encap_print(struct rtentry *rt)
 		bcopy(&sen1.sen_ip6_dst, &s61.sin6_addr, sizeof(struct in6_addr));
 #ifdef __KAME__
 		if (IN6_IS_ADDR_LINKLOCAL(&s61.sin6_addr) ||
-		    IN6_IS_ADDR_MC_LINKLOCAL(&s61.sin6_addr)) {
+		    IN6_IS_ADDR_MC_LINKLOCAL(&s61.sin6_addr) ||
+		    IN6_IS_ADDR_MC_INTFACELOCAL(&s61.sin6_addr)) {
 			s61.sin6_scope_id =
 			    ((u_int16_t)s61.sin6_addr.s6_addr[2] << 8) |
 			    s61.sin6_addr.s6_addr[3];
@@ -426,7 +429,8 @@ encap_print(struct rtentry *rt)
 		bcopy(&sen2.sen_ip6_dst, &s62.sin6_addr, sizeof(struct in6_addr));
 #ifdef __KAME__
 		if (IN6_IS_ADDR_LINKLOCAL(&s62.sin6_addr) ||
-		    IN6_IS_ADDR_MC_LINKLOCAL(&s62.sin6_addr)) {
+		    IN6_IS_ADDR_MC_LINKLOCAL(&s62.sin6_addr) ||
+		    IN6_IS_ADDR_MC_INTFACELOCAL(&s62.sin6_addr)) {
 			s62.sin6_scope_id =
 			    ((u_int16_t)s62.sin6_addr.s6_addr[2] << 8) |
 			    s62.sin6_addr.s6_addr[3];

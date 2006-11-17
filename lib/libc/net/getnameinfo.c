@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.31 2005/06/19 04:44:34 marcm Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.32 2006/11/17 01:11:23 itojun Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -335,8 +335,8 @@ ip6_sa2str(const struct sockaddr_in6 *sa6, char *buf, size_t bufsiz, int flags)
 #endif
 
 	/* if_indextoname() does not take buffer size.  not a good api... */
-	if ((IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6)) &&
-	    bufsiz >= IF_NAMESIZE) {
+	if ((IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6) ||
+	    IN6_IS_ADDR_MC_INTFACELOCAL(a6)) && bufsiz >= IF_NAMESIZE) {
 		char *p = if_indextoname(ifindex, buf);
 		if (p) {
 			return(strlen(p));

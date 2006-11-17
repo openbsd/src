@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.32 2005/03/25 17:01:03 jaredy Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.33 2006/11/17 01:11:23 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.32 2005/03/25 17:01:03 jaredy Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.33 2006/11/17 01:11:23 itojun Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -1111,7 +1111,8 @@ inet6name(struct in6_addr *in6p)
 		sin6.sin6_addr = *in6p;
 #ifdef __KAME__
 		if (IN6_IS_ADDR_LINKLOCAL(in6p) ||
-		    IN6_IS_ADDR_MC_LINKLOCAL(in6p)) {
+		    IN6_IS_ADDR_MC_LINKLOCAL(in6p) ||
+		    IN6_IS_ADDR_MC_INTFACELOCAL(in6p)) {
 			sin6.sin6_scope_id =
 			    ntohs(*(u_int16_t *)&in6p->s6_addr[2]);
 			sin6.sin6_addr.s6_addr[2] = 0;

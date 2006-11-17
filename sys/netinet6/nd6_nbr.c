@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.41 2006/06/16 16:49:40 henning Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.42 2006/11/17 01:11:23 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ nd6_ns_input(m, off, icmp6len)
 		goto bad;
 	}
 
-	if (IN6_IS_SCOPE_LINKLOCAL(&taddr6))
+	if (IN6_IS_SCOPE_EMBED(&taddr6))
 		taddr6.s6_addr16[1] = htons(ifp->if_index);
 
 	icmp6len -= sizeof(*nd_ns);
@@ -470,7 +470,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	nd_ns->nd_ns_reserved = 0;
 	nd_ns->nd_ns_target = *taddr6;
 
-	if (IN6_IS_SCOPE_LINKLOCAL(&nd_ns->nd_ns_target))
+	if (IN6_IS_SCOPE_EMBED(&nd_ns->nd_ns_target))
 		nd_ns->nd_ns_target.s6_addr16[1] = 0;
 
 	/*
@@ -577,7 +577,7 @@ nd6_na_input(m, off, icmp6len)
 	is_solicited = ((flags & ND_NA_FLAG_SOLICITED) != 0);
 	is_override = ((flags & ND_NA_FLAG_OVERRIDE) != 0);
 
-	if (IN6_IS_SCOPE_LINKLOCAL(&taddr6))
+	if (IN6_IS_SCOPE_EMBED(&taddr6))
 		taddr6.s6_addr16[1] = htons(ifp->if_index);
 
 	if (IN6_IS_ADDR_MULTICAST(&taddr6)) {
@@ -922,7 +922,7 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 	nd_na->nd_na_type = ND_NEIGHBOR_ADVERT;
 	nd_na->nd_na_code = 0;
 	nd_na->nd_na_target = *taddr6;
-	if (IN6_IS_SCOPE_LINKLOCAL(&nd_na->nd_na_target))
+	if (IN6_IS_SCOPE_EMBED(&nd_na->nd_na_target))
 		nd_na->nd_na_target.s6_addr16[1] = 0;
 
 	/*

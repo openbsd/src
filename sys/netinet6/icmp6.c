@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.88 2006/11/15 03:07:44 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.89 2006/11/17 01:11:23 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -377,9 +377,9 @@ icmp6_error(m, type, code, param)
 	nip6->ip6_src  = oip6->ip6_src;
 	nip6->ip6_dst  = oip6->ip6_dst;
 
-	if (IN6_IS_SCOPE_LINKLOCAL(&oip6->ip6_src))
+	if (IN6_IS_SCOPE_EMBED(&oip6->ip6_src))
 		oip6->ip6_src.s6_addr16[1] = 0;
-	if (IN6_IS_SCOPE_LINKLOCAL(&oip6->ip6_dst))
+	if (IN6_IS_SCOPE_EMBED(&oip6->ip6_dst))
 		oip6->ip6_dst.s6_addr16[1] = 0;
 
 	icmp6 = (struct icmp6_hdr *)(nip6 + 1);
@@ -1261,7 +1261,7 @@ ni6_input(m, off)
 			m_copydata(m, off + sizeof(struct icmp6_nodeinfo),
 			    subjlen, (caddr_t)&sin6.sin6_addr);
 			/* XXX kame scope hack */
-			if (IN6_IS_SCOPE_LINKLOCAL(&sin6.sin6_addr)) {
+			if (IN6_IS_SCOPE_EMBED(&sin6.sin6_addr)) {
 				if ((m->m_flags & M_PKTHDR) != 0 &&
 				    m->m_pkthdr.rcvif) {
 					sin6.sin6_addr.s6_addr16[1] =

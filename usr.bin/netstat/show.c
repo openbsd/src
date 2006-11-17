@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.2 2006/05/30 19:42:58 todd Exp $	*/
+/*	$OpenBSD: show.c,v 1.3 2006/11/17 01:11:23 itojun Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -472,7 +472,8 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags, int width)
 		 * sin6_scope_id field of SA should be set in the future.
 		 */
 		if (IN6_IS_ADDR_LINKLOCAL(in6) ||
-		    IN6_IS_ADDR_MC_LINKLOCAL(in6)) {
+		    IN6_IS_ADDR_MC_LINKLOCAL(in6) ||
+		    IN6_IS_ADDR_MC_INTFACELOCAL(in6)) {
 			/* XXX: override is ok? */
 			sa6->sin6_scope_id = (u_int32_t)ntohs(*(u_short *)
 			    &in6->s6_addr[2]);
@@ -553,7 +554,8 @@ routename(struct sockaddr *sa)
 		sin6.sin6_family = AF_INET6;
 		if (sa->sa_len == sizeof(struct sockaddr_in6) &&
 		    (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr)) &&
+		     IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr) ||
+		     IN6_IS_ADDR_MC_INTFACELOCAL(&sin6.sin6_addr)) &&
 		    sin6.sin6_scope_id == 0) {
 			sin6.sin6_scope_id =
 			    ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);

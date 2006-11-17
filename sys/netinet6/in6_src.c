@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.19 2006/06/18 11:47:46 pascoe Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.20 2006/11/17 01:11:23 itojun Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -141,15 +141,15 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 
 	/*
 	 * If the destination address is a link-local unicast address or
-	 * a multicast address, and if the outgoing interface is specified
-	 * by the sin6_scope_id filed, use an address associated with the
-	 * interface.
+	 * a link/interface-local multicast address, and if the outgoing
+	 * interface is specified by the sin6_scope_id filed, use an address
+	 * associated with the interface.
 	 * XXX: We're now trying to define more specific semantics of
 	 *      sin6_scope_id field, so this part will be rewritten in
 	 *      the near future.
 	 */
-	if ((IN6_IS_ADDR_LINKLOCAL(dst) || IN6_IS_ADDR_MC_LINKLOCAL(dst)) &&
-	    dstsock->sin6_scope_id) {
+	if ((IN6_IS_ADDR_LINKLOCAL(dst) || IN6_IS_ADDR_MC_LINKLOCAL(dst) ||
+	     IN6_IS_ADDR_MC_INTFACELOCAL(dst)) && dstsock->sin6_scope_id) {
 		/*
 		 * I'm not sure if boundary check for scope_id is done
 		 * somewhere...
@@ -173,17 +173,14 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 	 * If the destination address is a multicast address and
 	 * the outgoing interface for the address is specified
 	 * by the caller, use an address associated with the interface.
-	 * There is a sanity check here; if the destination has node-local
-	 * scope, the outgoing interfacde should be a loopback address.
 	 * Even if the outgoing interface is not specified, we also
 	 * choose a loopback interface as the outgoing interface.
 	 */
 	if (IN6_IS_ADDR_MULTICAST(dst)) {
 		struct ifnet *ifp = mopts ? mopts->im6o_multicast_ifp : NULL;
 
-		if (ifp == NULL && IN6_IS_ADDR_MC_NODELOCAL(dst)) {
-			ifp = lo0ifp;
-		}
+		if (!ifp && dstsock->sin6_scope_id)
+			ifp = ifindex2ifnet[htons(dstsock->sin6_scope_id)];
 
 		if (ifp) {
 			ia6 = in6_ifawithscope(ifp, dst);
@@ -352,7 +349,7 @@ in6_embedscope(in6, sin6, in6p, ifpp)
 	 * ask us to overwrite existing sockaddr_in6
 	 */
 
-	if (IN6_IS_SCOPE_LINKLOCAL(in6)) {
+	if (IN6_IS_SCOPE_EMBED(in6)) {
 		struct in6_pktinfo *pi;
 
 		/*
@@ -411,7 +408,7 @@ in6_recoverscope(sin6, in6, ifp)
 	 */
 
 	sin6->sin6_scope_id = 0;
-	if (IN6_IS_SCOPE_LINKLOCAL(in6)) {
+	if (IN6_IS_SCOPE_EMBED(in6)) {
 		/*
 		 * KAME assumption: link id == interface id
 		 */
@@ -438,6 +435,6 @@ void
 in6_clearscope(addr)
 	struct in6_addr *addr;
 {
-	if (IN6_IS_SCOPE_LINKLOCAL(addr))
+	if (IN6_IS_SCOPE_EMBED(addr))
 		addr->s6_addr16[1] = 0;
 }

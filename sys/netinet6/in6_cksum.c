@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_cksum.c,v 1.13 2003/11/16 20:30:07 avsm Exp $	*/
+/*	$OpenBSD: in6_cksum.c,v 1.14 2006/11/17 01:11:23 itojun Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.10 2000/12/03 00:53:59 itojun Exp $	*/
 
 /*
@@ -130,13 +130,13 @@ in6_cksum(m, nxt, off, len)
 
 	/* IPv6 source address */
 	sum += w[0];
-	if (!IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
+	if (!IN6_IS_SCOPE_EMBED(&ip6->ip6_src))
 		sum += w[1];
 	sum += w[2]; sum += w[3]; sum += w[4]; sum += w[5];
 	sum += w[6]; sum += w[7];
 	/* IPv6 destination address */
 	sum += w[8];
-	if (!IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
+	if (!IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
 		sum += w[9];
 	sum += w[10]; sum += w[11]; sum += w[12]; sum += w[13];
 	sum += w[14]; sum += w[15];

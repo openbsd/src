@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.71 2006/11/15 03:07:44 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.72 2006/11/17 01:11:23 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -100,8 +100,8 @@
  */
 const struct in6_addr in6addr_any = IN6ADDR_ANY_INIT;
 const struct in6_addr in6addr_loopback = IN6ADDR_LOOPBACK_INIT;
-const struct in6_addr in6addr_nodelocal_allnodes =
-	IN6ADDR_NODELOCAL_ALLNODES_INIT;
+const struct in6_addr in6addr_intfacelocal_allnodes =
+	IN6ADDR_INTFACELOCAL_ALLNODES_INIT;
 const struct in6_addr in6addr_linklocal_allnodes =
 	IN6ADDR_LINKLOCAL_ALLNODES_INIT;
 const struct in6_addr in6addr_linklocal_allrouters =
@@ -1037,7 +1037,6 @@ in6_update_ifa(ifp, ifra, ia)
 	/* join necessary multiast groups */
 	if ((ifp->if_flags & IFF_MULTICAST) != 0) {
 		struct sockaddr_in6 mltaddr, mltmask;
-		u_int32_t zoneid = 0;
 
 		/* join solicited multicast addr for new host id */
 		struct sockaddr_in6 llsol;
@@ -1075,6 +1074,7 @@ in6_update_ifa(ifp, ifra, ia)
 		mltaddr.sin6_family = AF_INET6;
 		mltaddr.sin6_addr = in6addr_linklocal_allnodes;
 		mltaddr.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+		mltaddr.sin6_scope_id = 0;
 
 		/*
 		 * XXX: do we really need this automatic routes?
@@ -1113,7 +1113,6 @@ in6_update_ifa(ifp, ifra, ia)
 		} else {
 			RTFREE(rt);
 		}
-		mltaddr.sin6_scope_id = zoneid;	/* XXX */
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
 		if (!imm) {
 			nd6log((LOG_WARNING,
@@ -1142,52 +1141,55 @@ in6_update_ifa(ifp, ifra, ia)
 			}
 		}
 
-		if (ifp->if_flags & IFF_LOOPBACK) {
-			/*
-			 * join node-local all-nodes address, on loopback.
-			 * (ff01::1%ifN, and ff01::%ifN/32)
-			 */
-			mltaddr.sin6_addr = in6addr_nodelocal_allnodes;
+		/*
+		 * join interface-local all-nodes address.
+		 * (ff01::1%ifN, and ff01::%ifN/32)
+		 */
+		bzero(&mltaddr.sin6_addr, sizeof(mltaddr.sin6_addr));
+		mltaddr.sin6_len = sizeof(struct sockaddr_in6);
+		mltaddr.sin6_family = AF_INET6;
+		mltaddr.sin6_addr = in6addr_intfacelocal_allnodes;
+		mltaddr.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+		mltaddr.sin6_scope_id = 0;
 
-			/* XXX: again, do we really need the route? */
-			rt = rtalloc1((struct sockaddr *)&mltaddr, 0, 0);
-			if (rt) {
-				/* 32bit came from "mltmask" */
-				if (memcmp(&mltaddr.sin6_addr,
-				    &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
-				    32 / 8)) {
-					RTFREE(rt);
-					rt = NULL;
-				}
-			}
-			if (!rt) {
-				struct rt_addrinfo info;
-
-				bzero(&info, sizeof(info));
-				info.rti_info[RTAX_DST] = (struct sockaddr *)&mltaddr;
-				info.rti_info[RTAX_GATEWAY] =
-				    (struct sockaddr *)&ia->ia_addr;
-				info.rti_info[RTAX_NETMASK] =
-				    (struct sockaddr *)&mltmask;
-				info.rti_info[RTAX_IFA] =
-				    (struct sockaddr *)&ia->ia_addr;
-				info.rti_flags = RTF_UP | RTF_CLONING;
-				error = rtrequest1(RTM_ADD, &info, NULL, 0);
-				if (error)
-					goto cleanup;
-			} else {
+		/* XXX: again, do we really need the route? */
+		rt = rtalloc1((struct sockaddr *)&mltaddr, 0, 0);
+		if (rt) {
+			/* 32bit came from "mltmask" */
+			if (memcmp(&mltaddr.sin6_addr,
+			    &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
+			    32 / 8)) {
 				RTFREE(rt);
+				rt = NULL;
 			}
-			imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
-			if (!imm) {
-				nd6log((LOG_WARNING, "in6_update_ifa: "
-				    "addmulti failed for %s on %s (errno=%d)\n",
-				    ip6_sprintf(&mltaddr.sin6_addr),
-				    ifp->if_xname, error));
-				goto cleanup;
-			}
-			LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
 		}
+		if (!rt) {
+			struct rt_addrinfo info;
+
+			bzero(&info, sizeof(info));
+			info.rti_info[RTAX_DST] = (struct sockaddr *)&mltaddr;
+			info.rti_info[RTAX_GATEWAY] =
+			    (struct sockaddr *)&ia->ia_addr;
+			info.rti_info[RTAX_NETMASK] =
+			    (struct sockaddr *)&mltmask;
+			info.rti_info[RTAX_IFA] =
+			    (struct sockaddr *)&ia->ia_addr;
+			info.rti_flags = RTF_UP | RTF_CLONING;
+			error = rtrequest1(RTM_ADD, &info, NULL, 0);
+			if (error)
+				goto cleanup;
+		} else {
+			RTFREE(rt);
+		}
+		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
+		if (!imm) {
+			nd6log((LOG_WARNING, "in6_update_ifa: "
+			    "addmulti failed for %s on %s (errno=%d)\n",
+			    ip6_sprintf(&mltaddr.sin6_addr),
+			    ifp->if_xname, error));
+			goto cleanup;
+		}
+		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
 	}
 
 	/*
@@ -2059,8 +2061,8 @@ struct in6_addr *addr;
 		 * return scope doesn't work.
 		 */
 		switch (scope) {
-		case IPV6_ADDR_SCOPE_NODELOCAL:
-			return IPV6_ADDR_SCOPE_NODELOCAL;
+		case IPV6_ADDR_SCOPE_INTFACELOCAL:
+			return IPV6_ADDR_SCOPE_INTFACELOCAL;
 			break;
 		case IPV6_ADDR_SCOPE_LINKLOCAL:
 			return IPV6_ADDR_SCOPE_LINKLOCAL;
@@ -2076,7 +2078,7 @@ struct in6_addr *addr;
 
 	if (bcmp(&in6addr_loopback, addr, sizeof(*addr) - 1) == 0) {
 		if (addr->s6_addr8[15] == 1) /* loopback */
-			return IPV6_ADDR_SCOPE_NODELOCAL;
+			return IPV6_ADDR_SCOPE_INTFACELOCAL;
 		if (addr->s6_addr8[15] == 0) /* unspecified */
 			return IPV6_ADDR_SCOPE_LINKLOCAL;
 	}
@@ -2092,9 +2094,7 @@ in6_addr2scopeid(ifp, addr)
 	int scope = in6_addrscope(addr);
 
 	switch(scope) {
-	case IPV6_ADDR_SCOPE_NODELOCAL:
-		return (-1);	/* XXX: is this an appropriate value? */
-
+	case IPV6_ADDR_SCOPE_INTFACELOCAL:
 	case IPV6_ADDR_SCOPE_LINKLOCAL:
 		/* XXX: we do not distinguish between a link and an I/F. */
 		return (ifp->if_index);

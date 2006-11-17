@@ -1025,7 +1025,7 @@ ip6_mforward(ip6, ifp, m)
 	 * Don't forward a packet with Hop limit of zero or one,
 	 * or a packet destined to a local-only group.
 	 */
-	if (ip6->ip6_hlim <= 1 || IN6_IS_ADDR_MC_NODELOCAL(&ip6->ip6_dst) ||
+	if (ip6->ip6_hlim <= 1 || IN6_IS_ADDR_MC_INTFACELOCAL(&ip6->ip6_dst) ||
 	    IN6_IS_ADDR_MC_LINKLOCAL(&ip6->ip6_dst))
 		return 0;
 	ip6->ip6_hlim--;
