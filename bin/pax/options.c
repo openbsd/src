@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.64 2006/04/09 03:35:34 jaredy Exp $	*/
+/*	$OpenBSD: options.c,v 1.65 2006/11/17 08:38:04 otto Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: options.c,v 1.64 2006/04/09 03:35:34 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: options.c,v 1.65 2006/11/17 08:38:04 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -142,6 +142,11 @@ FSUB fsub[] = {
  * some formats may be subsets of others....
  */
 int ford[] = {5, 4, 3, 2, 1, 0, -1 };
+
+/*
+ * Do we have -C anywhere?
+ */
+int havechd = 0;
 
 /*
  * options()
@@ -740,6 +745,7 @@ tar_options(int argc, char **argv)
 			 */
 			break;
 		case 'C':
+			havechd++;
 			chdname = optarg;
 			break;
 		case 'H':
@@ -878,6 +884,7 @@ tar_options(int argc, char **argv)
 					if (*++argv == NULL)
 						break;
 					chdname = *argv++;
+					havechd++;
 				} else if (pat_add(*argv++, chdname) < 0)
 					tar_usage();
 				else
@@ -957,6 +964,7 @@ tar_options(int argc, char **argv)
 					break;
 				if (ftree_add(*argv++, 1) < 0)
 					tar_usage();
+				havechd++;
 			} else if (ftree_add(*argv++, 0) < 0)
 				tar_usage();
 		}

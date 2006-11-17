@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.23 2005/04/21 21:47:18 beck Exp $	*/
+/*	$OpenBSD: tables.c,v 1.24 2006/11/17 08:38:04 otto Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: tables.c,v 1.23 2005/04/21 21:47:18 beck Exp $";
+static const char rcsid[] = "$OpenBSD: tables.c,v 1.24 2006/11/17 08:38:04 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ chk_lnk(ARCHD *arcn)
 	indx = ((unsigned)arcn->sb.st_ino) % L_TAB_SZ;
 	if ((pt = ltab[indx]) != NULL) {
 		/*
-		 * it's hash chain in not empty, walk down looking for it
+		 * its hash chain in not empty, walk down looking for it
 		 */
 		ppt = &(ltab[indx]);
 		while (pt != NULL) {
@@ -1126,10 +1126,18 @@ void
 add_dir(char *name, struct stat *psb, int frc_mode)
 {
 	DIRDATA *dblk;
+	char realname[MAXPATHLEN], *rp;
 
 	if (dirp == NULL)
 		return;
 
+	if (havechd && *name != '/') {
+		if ((rp = realpath(name, realname)) == NULL) {
+			paxwarn(1, "Cannot canonicalize %s", name);
+			return;
+		}
+		name = rp;
+	}
 	if (dircnt == dirsize) {
 		dblk = realloc(dirp, 2 * dirsize * sizeof(DIRDATA));
 		if (dblk == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.31 2005/04/28 06:58:07 otto Exp $	*/
+/*	$OpenBSD: extern.h,v 1.32 2006/11/17 08:38:04 otto Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -243,6 +243,7 @@ extern char *argv0;
 extern FILE *listf;
 extern char *tempfile;
 extern char *tempbase;
+extern int havechd;
 
 int main(int, char **);
 void sig_cleanup(int);

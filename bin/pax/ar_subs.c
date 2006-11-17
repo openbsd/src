@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.30 2006/07/21 22:56:58 ray Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.31 2006/11/17 08:38:04 otto Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: ar_subs.c,v 1.30 2006/07/21 22:56:58 ray Exp $";
+static const char rcsid[] = "$OpenBSD: ar_subs.c,v 1.31 2006/11/17 08:38:04 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -327,7 +327,7 @@ extract(void)
 				(void)putc('\n', listf);
 				vfpart = 0;
 			}
-			continue;
+			goto popd;
 		}
 		/*
 		 * we have a file with data here. If we can not create it, skip
@@ -336,7 +336,7 @@ extract(void)
 		if ((fd = file_creat(arcn)) < 0) {
 			(void)rd_skip(arcn->skip + arcn->pad);
 			purg_lnk(arcn);
-			continue;
+			goto popd;
 		}
 		/*
 		 * extract the file from the archive and skip over padding and
@@ -351,6 +351,7 @@ extract(void)
 		if (!res)
 			(void)rd_skip(cnt + arcn->pad);
 
+popd:
 		/*
 		 * if required, chdir around.
 		 */
