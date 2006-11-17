@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.1 2006/11/17 18:58:31 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.2 2006/11/17 20:04:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -84,7 +84,7 @@ void	bcw_stop(struct ifnet *, int);
 void	bcw_watchdog(struct ifnet *);
 void	bcw_rxintr(struct bcw_softc *);
 void	bcw_txintr(struct bcw_softc *);
-//static	void	bcw_add_mac(struct bcw_softc *, u_int8_t *, unsigned long);
+//void	bcw_add_mac(struct bcw_softc *, u_int8_t *, unsigned long);
 int	bcw_add_rxbuf(struct bcw_softc *, int);
 void	bcw_rxdrain(struct bcw_softc *);
 void	bcw_set_filter(struct ifnet *); 
@@ -106,7 +106,6 @@ void		bcw_write16(void *, u_int32_t, u_int16_t);
 void		bcw_write32(void *, u_int32_t, u_int32_t);
 void		bcw_barrier(void *, u_int32_t, u_int32_t, int);
 
-
 struct cfdriver bcw_cd = {
 	NULL, "bcw", DV_IFNET
 };
@@ -117,25 +116,29 @@ bcw_attach(struct bcw_softc *sc)
 	struct ieee80211com *ic = &sc->bcw_ic;
 	struct ifnet   *ifp = &ic->ic_if;
 	struct bcw_regs *regs = &sc->bcw_regs;
-//	struct pci_attach_args *pa = &sc->bcw_pa;
-//	pci_chipset_tag_t pc = pa->pa_pc;
-//	pci_intr_handle_t ih;
-//	const char     *intrstr = NULL;
+#if 0
+	struct pci_attach_args *pa = &sc->bcw_pa;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pci_intr_handle_t ih;
+	const char     *intrstr = NULL;
+#endif
 	caddr_t         kva;
 	bus_dma_segment_t seg;
 	int             rseg;
-//	pcireg_t        memtype;
-//	bus_addr_t      memaddr;
-//	bus_size_t      memsize;
-//	int             pmreg;
-//	pcireg_t        pmode;
+#if 0
+	pcireg_t        memtype;
+	bus_addr_t      memaddr;
+	bus_size_t      memsize;
+	int             pmreg;
+	pcireg_t        pmode;
+#endif
 	int             error;
 	int             i,j;
 	u_int32_t	sbval;
 	u_int16_t	sbval16;
 	
-//	sc->bcw_pa = *pa;
-//	sc->bcw_dmatag = pa->pa_dmat;
+	//sc->bcw_pa = *pa;
+	//sc->bcw_dmatag = pa->pa_dmat;
 
 	if (sc->bcw_regs.r_read8 == NULL) {
 		sc->bcw_regs.r_read8 = bcw_read8;
@@ -146,7 +149,6 @@ bcw_attach(struct bcw_softc *sc)
 		sc->bcw_regs.r_write32 = bcw_write32;
 		sc->bcw_regs.r_barrier = bcw_barrier;
 	}
-
 
 	/*
 	 * Reset the chip
@@ -197,7 +199,7 @@ bcw_attach(struct bcw_softc *sc)
 		if (sbval == BCW_CORE_SELECT(0)) break;
 		delay(10);
 	}
-//	DPRINTF(("\n")); // Pretty print so the debugs start on new lines
+	//DPRINTF(("\n")); /* Pretty print so the debugs start on new lines */
 	
 	/*
 	 * Core ID REG, this is either the default wireless core (0x812) or
@@ -213,7 +215,8 @@ bcw_attach(struct bcw_softc *sc)
 		sc->bcw_havecommon = 1;
 		sbval = BCW_READ32(regs, BCW_CORE_COMMON_CHIPID);
 		sc->bcw_chipid = (sbval & 0x0000ffff);
-		sc->bcw_corerev = ((sbval & 0x00007000) >> 8 | (sbval & 0x0000000f));
+		sc->bcw_corerev =
+		    ((sbval & 0x00007000) >> 8 | (sbval & 0x0000000f));
 		if ((sc->bcw_corerev == 4) || (sc->bcw_corerev >= 6))
 			sc->bcw_numcores = (sbval & 0x0f000000) >> 24;
 		else
@@ -308,7 +311,7 @@ bcw_attach(struct bcw_softc *sc)
 				DPRINTF(("%s: Found core %d of type 0x%x\n",
 				    sc->bcw_dev.dv_xname, i, 
 				    (sbval & 0x00008ff0) >> 4));
-//				sc->bcw_core[i].id = (sbval & 0x00008ff0) >> 4;
+			//sc->bcw_core[i].id = (sbval & 0x00008ff0) >> 4;
 		} /* End of For loop */
 		DPRINTF(("\n")); /* Make pretty debug output */
 	}
@@ -455,7 +458,6 @@ bcw_attach(struct bcw_softc *sc)
 	/*
 	 * Switch the radio off - candidate for seperate function
 	 */
-	
 	switch(sc->bcw_phy_type) {
 		case BCW_PHY_TYPEA:
 			/* Magic unexplained values */
@@ -537,7 +539,7 @@ bcw_attach(struct bcw_softc *sc)
 	
 	
 	/* Init the Microcode Flags Bitfield */
-	// http://bcm-specs.sipsolutions.net/MicrocodeFlagsBitfield
+	/* http://bcm-specs.sipsolutions.net/MicrocodeFlagsBitfield */
 	
 	sbval = 0;
 	if((sc->bcw_phy_type == BCW_PHY_TYPEA) ||
@@ -547,22 +549,26 @@ bcw_attach(struct bcw_softc *sc)
 	if((sc->bcw_phy_type == BCW_PHY_TYPEG) &&
 	    (sc->bcw_phy_rev == 1))
 		sbval |= 0x20;
-	// XXX If this is a G PHY with BoardFlags BFL_PACTRL set, set bit 0x40
+	/*
+	 * XXX If this is a G PHY with BoardFlags BFL_PACTRL set,
+	 * set bit 0x40
+	 */
 	if((sc->bcw_phy_type == BCW_PHY_TYPEG) &&
 	    (sc->bcw_phy_rev < 3))
 		sbval |= 0x8; /* MAGIC */
-	// XXX If BoardFlags BFL_XTAL is set, set bit 0x400
+	/* XXX If BoardFlags BFL_XTAL is set, set bit 0x400 */
 	if(sc->bcw_phy_type == BCW_PHY_TYPEB)
 		sbval |= 0x4;
 	if((sc->bcw_radiotype == 0x2050) &&
 	    (sc->bcw_radiorev <= 5))
 	    	sbval |= 0x40000;
-	/* XXX If the device isn't up and this is a PCI bus with revision 
-	  10 or less set bit 0x80000 */
-
-
-	/* Now, write the value into the regster */
 	/*
+	 * XXX If the device isn't up and this is a PCI bus with revision 
+	 * 10 or less set bit 0x80000
+	 */
+
+	/* Now, write the value into the regster
+	 *
 	 * The MicrocodeBitFlags is an unaligned 32bit value in SHM, so the
 	 * strategy is to select the aligned word for the lower 16 bits,
 	 * but write to the unaligned address. Then, because the SHM
@@ -582,7 +588,6 @@ bcw_attach(struct bcw_softc *sc)
 	 * http://bcm-specs.sipsolutions.net/TSSI_to_DBM_Table
 	 * but I suspect there's a standard way to do it in the 80211 stuff
 	 */
-
 	
 	/* 
 	 * TODO still for the card attach: 
@@ -590,8 +595,6 @@ bcw_attach(struct bcw_softc *sc)
 	 * - Powercontrol Crystal Off (and write a wrapper for on/off)
 	 * - Setup LEDs to blink in whatever fashionable manner
 	 */
-
-
 
 	/*
 	 * Allocate DMA-safe memory for ring descriptors.
@@ -601,7 +604,7 @@ bcw_attach(struct bcw_softc *sc)
 	 */
 	if ((error = bus_dmamem_alloc(sc->bcw_dmatag,
 	    2 * PAGE_SIZE, PAGE_SIZE, 2 * PAGE_SIZE,
-				      &seg, 1, &rseg, BUS_DMA_NOWAIT))) {
+	    &seg, 1, &rseg, BUS_DMA_NOWAIT))) {
 		printf("%s: unable to alloc space for ring descriptors, "
 		       "error = %d\n", sc->bcw_dev.dv_xname, error);
 		return;
@@ -617,7 +620,7 @@ bcw_attach(struct bcw_softc *sc)
 	/* create a dma map for the ring */
 	if ((error = bus_dmamap_create(sc->bcw_dmatag,
 	    2 * PAGE_SIZE, 1, 2 * PAGE_SIZE, 0, BUS_DMA_NOWAIT,
-				       &sc->bcw_ring_map))) {
+	    &sc->bcw_ring_map))) {
 		printf("%s: unable to create ring DMA map, error = %d\n",
 		    sc->bcw_dev.dv_xname, error);
 		bus_dmamem_unmap(sc->bcw_dmatag, kva, 2 * PAGE_SIZE);
@@ -639,7 +642,8 @@ bcw_attach(struct bcw_softc *sc)
 	/* Create the transmit buffer DMA maps. */
 	for (i = 0; i < BCW_NTXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->bcw_dmatag, MCLBYTES,
-		    BCW_NTXFRAGS, MCLBYTES, 0, 0, &sc->bcw_cdata.bcw_tx_map[i])) != 0) {
+		    BCW_NTXFRAGS, MCLBYTES, 0, 0,
+		    &sc->bcw_cdata.bcw_tx_map[i])) != 0) {
 			printf("%s: unable to create tx DMA map, error = %d\n",
 			    sc->bcw_dev.dv_xname, error);
 		}
@@ -658,14 +662,12 @@ bcw_attach(struct bcw_softc *sc)
 
 	/* End of the DMA stuff */
 
-
 	ic->ic_phytype = IEEE80211_T_OFDM;
-	ic->ic_opmode = IEEE80211_M_STA;        /* default to BSS mode */
+	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
 	ic->ic_state = IEEE80211_S_INIT;
 	
 	/* set device capabilities - keep it simple */
-	ic->ic_caps =
-	  IEEE80211_C_IBSS;          /* IBSS mode supported */
+	ic->ic_caps = IEEE80211_C_IBSS; /* IBSS mode supported */
 
 	/* MAC address */
 	if(sc->bcw_phy_type == BCW_PHY_TYPEA) {
@@ -699,11 +701,11 @@ bcw_attach(struct bcw_softc *sc)
 
 	/* Set supported channels */
 	for (i = 1; i <= 14; i++) {
-	  ic->ic_channels[i].ic_freq =
-	    ieee80211_ieee2mhz(i, IEEE80211_CHAN_2GHZ);
-	  ic->ic_channels[i].ic_flags =
-	    IEEE80211_CHAN_CCK | IEEE80211_CHAN_OFDM |
-	    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
+		ic->ic_channels[i].ic_freq =
+		    ieee80211_ieee2mhz(i, IEEE80211_CHAN_2GHZ);
+		ic->ic_channels[i].ic_flags =
+		    IEEE80211_CHAN_CCK | IEEE80211_CHAN_OFDM |
+		    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
 	}
 
 	/* IBSS channel undefined for now */
@@ -735,17 +737,18 @@ bcw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct bcw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->bcw_ic;
-//	struct bcw_regs *regs = &sc->bcw_regs;
+	//struct bcw_regs *regs = &sc->bcw_regs;
 	struct ifreq   *ifr = (struct ifreq *) data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int             s, error = 0;
 
 	s = splnet();
-
-//	if ((error = ether_ioctl(ifp, &sc->bcw_ac, cmd, data)) > 0) {
-//		splx(s);
-//		return (error);
-//	}
+#if 0
+	if ((error = ether_ioctl(ifp, &sc->bcw_ac, cmd, data)) > 0) {
+		splx(s);
+		return (error);
+	}
+#endif
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -883,7 +886,7 @@ bcw_start(struct ifnet *ifp)
 
 		/* Sync the data DMA map. */
 		bus_dmamap_sync(sc->bcw_dmatag, dmamap, 0, dmamap->dm_mapsize,
-				BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREWRITE);
 
 		/* Initialize the transmit descriptor(s). */
 		txstart = sc->bcw_txsnext;
@@ -899,8 +902,9 @@ bcw_start(struct ifnet *ifp)
 				ctrl |= CTRL_EOT;
 			ctrl |= CTRL_IOC;
 			sc->bcw_tx_ring[sc->bcw_txsnext].ctrl = htole32(ctrl);
+			/* MAGIC */
 			sc->bcw_tx_ring[sc->bcw_txsnext].addr =
-			    htole32(dmamap->dm_segs[seg].ds_addr + 0x40000000);	/* MAGIC */
+			    htole32(dmamap->dm_segs[seg].ds_addr + 0x40000000);
 			if (sc->bcw_txsnext + 1 > BCW_NTXDESC - 1)
 				sc->bcw_txsnext = 0;
 			else
@@ -955,15 +959,14 @@ bcw_intr(void *xsc)
 {
 	struct bcw_softc *sc;
 	struct bcw_regs *regs;
-	struct ifnet   *ifp;
+	struct ifnet *ifp;
 	u_int32_t intstatus;
-	int             wantinit;
-	int             handled = 0;
+	int wantinit;
+	int handled = 0;
 
 	sc = xsc;
 	regs = &sc->bcw_regs;
 	ifp = &sc->bcw_ac.ac_if;
-
 
 	for (wantinit = 0; wantinit == 0;) {
 		intstatus = BCW_READ32(regs, BCW_INT_STS);
@@ -1026,13 +1029,13 @@ bcw_intr(void *xsc)
 void
 bcw_rxintr(struct bcw_softc *sc)
 {
-	struct ifnet   *ifp = &sc->bcw_ac.ac_if;
+	struct ifnet *ifp = &sc->bcw_ac.ac_if;
 	struct bcw_regs *regs = &sc->bcw_regs;
-	struct rx_pph  *pph;
-	struct mbuf    *m;
-	int             curr;
-	int             len;
-	int             i;
+	struct rx_pph *pph;
+	struct mbuf *m;
+	int curr;
+	int len;
+	int i;
 
 	/* get pointer to active receive slot */
 	curr = BCW_READ32(regs, BCW_DMA_RXSTATUS) & RS_CD_MASK;
@@ -1141,10 +1144,10 @@ bcw_rxintr(struct bcw_softc *sc)
 void
 bcw_txintr(struct bcw_softc *sc)
 {
-	struct ifnet   *ifp = &sc->bcw_ac.ac_if;
+	struct ifnet *ifp = &sc->bcw_ac.ac_if;
 	struct bcw_regs *regs = &sc->bcw_regs;
-	int             curr;
-	int             i;
+	int curr;
+	int i;
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -1186,8 +1189,8 @@ bcw_init(struct ifnet *ifp)
 	struct bcw_softc *sc = ifp->if_softc;
 	struct bcw_regs *regs = &sc->bcw_regs;
 	u_int32_t reg_win;
-	int             error;
-	int             i;
+	int error;
+	int i;
 
 	/* Cancel any pending I/O. */
 	bcw_stop(ifp, 0);
@@ -1257,8 +1260,9 @@ bcw_init(struct ifnet *ifp)
 
 	/* enable transmit */
 	BCW_WRITE32(regs, BCW_DMA_TXCTL, XC_XE);
+	/* MAGIC */
 	BCW_WRITE32(regs, BCW_DMA_TXADDR,
-	    sc->bcw_ring_map->dm_segs[0].ds_addr + PAGE_SIZE + 0x40000000);	/* MAGIC */
+	    sc->bcw_ring_map->dm_segs[0].ds_addr + PAGE_SIZE + 0x40000000);
 
 	/*
          * Give the receive ring to the chip, and
@@ -1299,12 +1303,14 @@ bcw_init(struct ifnet *ifp)
 	    BCW_NRXDESC * sizeof(struct bcw_dma_slot));
 
 	/* set media */
-//	mii_mediachg(&sc->bcw_mii);
+	//mii_mediachg(&sc->bcw_mii);
 
 	/* turn on the ethernet mac */
-//	bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_ENET_CTL,
-//	    bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle,
-//	    BCW_ENET_CTL) | EC_EE);
+#if 0
+	bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_ENET_CTL,
+	    bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle,
+	    BCW_ENET_CTL) | EC_EE);
+#endif
 
 	/* start timer */
 	timeout_add(&sc->bcw_timeout, hz);
@@ -1313,15 +1319,15 @@ bcw_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	return 0;
+	return (0);
 }
 
 /* Add a receive buffer to the indiciated descriptor. */
 int
 bcw_add_rxbuf(struct bcw_softc *sc, int idx)
 {
-	struct mbuf    *m;
-	int             error;
+	struct mbuf *m;
+	int error;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -1357,7 +1363,7 @@ bcw_add_rxbuf(struct bcw_softc *sc, int idx)
 void
 bcw_rxdrain(struct bcw_softc *sc)
 {
-	int             i;
+	int i;
 
 	for (i = 0; i < BCW_NRXDESC; i++) {
 		if (sc->bcw_cdata.bcw_rx_chain[i] != NULL) {
@@ -1375,7 +1381,7 @@ bcw_stop(struct ifnet *ifp, int disable)
 {
 	struct bcw_softc *sc = ifp->if_softc;
 	struct bcw_regs *regs = &sc->bcw_regs;
-	int             i;
+	int i;
 	//u_int32_t val;
 
 	/* Stop the 1 second timer */
@@ -1390,7 +1396,8 @@ bcw_stop(struct ifnet *ifp, int disable)
 	sc->bcw_intmask = 0;
 	delay(10);
 
-	/* Disable emac
+	/* Disable emac */
+#if 0
 	bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_ENET_CTL, EC_ED);
 	for (i = 0; i < 200; i++) {
 		val = bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle,
@@ -1399,7 +1406,7 @@ bcw_stop(struct ifnet *ifp, int disable)
 			break;
 		delay(10);
 	}
-	*/
+#endif
 	/* Stop the DMA */
 	BCW_WRITE32(regs, BCW_DMA_RXCTL, 0);
 	BCW_WRITE32(regs, BCW_DMA_TXCTL, 0);
@@ -1422,14 +1429,12 @@ bcw_stop(struct ifnet *ifp, int disable)
 
 /* reset the chip */
 void
-bcw_reset(sc)
-	struct bcw_softc *sc;
+bcw_reset(struct bcw_softc *sc)
 {
 	struct bcw_regs *regs = &sc->bcw_regs;
 	u_int32_t val;
 	u_int32_t sbval;
-	int	i;
-
+	int i;
 	
 	/* if SB core is up, only clock of clock,reset,reject will be set */
 	sbval = BCW_READ32(regs, BCW_SBTMSTATELOW);
@@ -1457,7 +1462,8 @@ bcw_reset(sc)
 		}
 		BCW_WRITE32(regs, BCW_DMA_RXSTATUS, 0);
 
-		/* reset ethernet mac 
+		/* reset ethernet mac */
+#if 0
 		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_ENET_CTL,
 		    EC_ES);
 		for (i = 0; i < 200; i++) {
@@ -1470,7 +1476,7 @@ bcw_reset(sc)
 		if (i == 200)
 			printf("%s: timed out resetting ethernet mac\n",
 			       sc->bcw_dev.dv_xname);
-		*/
+#endif
 	} else {
 		u_int32_t reg_win;
 
@@ -1523,13 +1529,14 @@ bcw_reset(sc)
 			    sc->bcw_dev.dv_xname);
 		/* set reset and reject while enabling the clocks */
 		BCW_WRITE32(regs, BCW_SBTMSTATELOW,
-		    SBTML_FGC | SBTML_CLK | SBTML_REJ | SBTML_RESET | SBTML_80211FLAG );
+		    SBTML_FGC | SBTML_CLK | SBTML_REJ | SBTML_RESET |
+		    SBTML_80211FLAG);
 		val = BCW_READ32(regs, BCW_SBTMSTATELOW);
 		delay(10);
 		BCW_WRITE32(regs, BCW_SBTMSTATELOW, SBTML_REJ | SBTML_RESET);
 		delay(1);
 	}
-	// This is enabling/resetting the core
+	/* This is enabling/resetting the core */
 	/* enable clock */
 	BCW_WRITE32(regs, BCW_SBTMSTATELOW,
 	    SBTML_FGC | SBTML_CLK | SBTML_RESET | 
@@ -1565,80 +1572,87 @@ bcw_reset(sc)
 	sbval=BCW_READ32(regs, 0x120);
 	sbval |= 0x400; 
 	BCW_WRITE32(regs, 0x120, sbval);
-
-//	/* initialize MDC preamble, frequency */
-//	bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_MI_CTL, 0x8d);	/* MAGIC */
+#if 0
+	/* initialize MDC preamble, frequency */
+	/* MAGIC */
+	bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_MI_CTL, 0x8d);
 
 	/* enable phy, differs for internal, and external */
-//	val = bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle, BCW_DEVCTL);
-//	if (!(val & BCW_DC_IP)) {
+	val = bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle, BCW_DEVCTL);
+	if (!(val & BCW_DC_IP)) {
 		/* select external phy */
-//		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_ENET_CTL, EC_EP);
-//	} else if (val & BCW_DC_ER) {	/* internal, clear reset bit if on */
-//		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_DEVCTL,
-//		    val & ~BCW_DC_ER);
-//		delay(100);
-//	}
+		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_ENET_CTL,
+		    EC_EP);
+	} else if (val & BCW_DC_ER) {	/* internal, clear reset bit if on */
+		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_DEVCTL,
+		    val & ~BCW_DC_ER);
+		delay(100);
+	}
+#endif
 }
 
 /* Set up the receive filter. */
 void
 bcw_set_filter(struct ifnet *ifp)
 {
-//	struct bcw_softc *sc = ifp->if_softc;
+#if 0
+	struct bcw_softc *sc = ifp->if_softc;
 
-//	if (ifp->if_flags & IFF_PROMISC) {
-//		ifp->if_flags |= IFF_ALLMULTI;
-//		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_RX_CTL,
-//		    bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle, BCW_RX_CTL)
-//		    | ERC_PE);
-//	} else {
-//		ifp->if_flags &= ~IFF_ALLMULTI;
+	if (ifp->if_flags & IFF_PROMISC) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_RX_CTL,
+		    bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle, BCW_RX_CTL)
+		    | ERC_PE);
+	} else {
+		ifp->if_flags &= ~IFF_ALLMULTI;
 
 		/* turn off promiscuous */
-//		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_RX_CTL,
-//		    bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle,
-//		    BCW_RX_CTL) & ~ERC_PE);
+		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_RX_CTL,
+		    bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle,
+		    BCW_RX_CTL) & ~ERC_PE);
 
 		/* enable/disable broadcast */
-//		if (ifp->if_flags & IFF_BROADCAST)
-//			bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle,
-//			    BCW_RX_CTL, bus_space_read_4(sc->bcw_btag,
-//			    sc->bcw_bhandle, BCW_RX_CTL) & ~ERC_DB);
-//		else
-//			bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle,
-//			    BCW_RX_CTL, bus_space_read_4(sc->bcw_btag,
-//			    sc->bcw_bhandle, BCW_RX_CTL) | ERC_DB);
+		if (ifp->if_flags & IFF_BROADCAST)
+			bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle,
+			    BCW_RX_CTL, bus_space_read_4(sc->bcw_btag,
+			    sc->bcw_bhandle, BCW_RX_CTL) & ~ERC_DB);
+		else
+			bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle,
+			    BCW_RX_CTL, bus_space_read_4(sc->bcw_btag,
+			    sc->bcw_bhandle, BCW_RX_CTL) | ERC_DB);
 
 		/* disable the filter */
-//		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_FILT_CTL,
-//		    0);
+		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_FILT_CTL,
+		    0);
 
 		/* add our own address */
-//		bcw_add_mac(sc, sc->bcw_ac.ac_enaddr, 0);
+		bcw_add_mac(sc, sc->bcw_ac.ac_enaddr, 0);
 
 		/* for now accept all multicast */
-//		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_RX_CTL,
-//		bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle, BCW_RX_CTL) |
-//		    ERC_AM);
-//		ifp->if_flags |= IFF_ALLMULTI;
+		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_RX_CTL,
+		bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle, BCW_RX_CTL) |
+		    ERC_AM);
+		ifp->if_flags |= IFF_ALLMULTI;
 
 		/* enable the filter */
-//		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_FILT_CTL,
-//		    bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle,
-//		    BCW_FILT_CTL) | 1);
-//	}
+		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_FILT_CTL,
+		    bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle,
+		    BCW_FILT_CTL) | 1);
+	}
+#endif
 }
 
 int
 bcw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
-//        struct bcw_softc *sc = ic->ic_softc;
-//	enum ieee80211_state ostate;
-//	uint32_t tmp;
+#if 0
+	struct bcw_softc *sc = ic->ic_softc;
+	enum ieee80211_state ostate;
+	uint32_t tmp;
 
-//	ostate = ic->ic_state;
-	return 0;
+	ostate = ic->ic_state;
+#endif
+	return (0);
 }
 
 int
@@ -1653,7 +1667,7 @@ bcw_media_change(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
 		bcw_init(ifp);
 
-	return 0;
+	return (0);
 }
 
 void
@@ -1661,7 +1675,7 @@ bcw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
         struct bcw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->bcw_ic;
-//	uint32_t val;
+	//uint32_t val;
 	int rate;                                                                        
 
         imr->ifm_status = IFM_AVALID;
@@ -1672,9 +1686,9 @@ bcw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
         /*
          * XXX Read current transmission rate from the adapter.
          */
-//	val = CSR_READ_4(sc, IWI_CSR_CURRENT_TX_RATE);
+	//val = CSR_READ_4(sc, IWI_CSR_CURRENT_TX_RATE);
 	/* convert PLCP signal to 802.11 rate */
-//	rate = bcw_rate(val);
+	//rate = bcw_rate(val);
 	rate = 0;
 
         imr->ifm_active |= ieee80211_rate2media(ic, rate, ic->ic_curmode);
@@ -1698,17 +1712,16 @@ bcw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 void
 bcw_tick(void *v)
 {
-//	struct bcw_softc *sc = v;
-//	http://bcm-specs.sipsolutions.net/PeriodicTasks
-//	timeout_add(&sc->bcw_timeout, hz);
-
-
+#if 0
+	struct bcw_softc *sc = v;
+	/* http://bcm-specs.sipsolutions.net/PeriodicTasks */
+	timeout_add(&sc->bcw_timeout, hz);
+#endif
 }
 
 /*
  * Validate Chip Access
  */
-	
 int
 bcw_validatechipaccess(struct bcw_softc *sc)
 {
@@ -1736,10 +1749,9 @@ bcw_validatechipaccess(struct bcw_softc *sc)
 	DPRINTF(("Read test 1, "));
 	if (val != 0xaa5555aa) {
 		DPRINTF(("Failed test 1\n"));
-		return 1;
-	} else {
+		return (1);
+	} else
 		DPRINTF(("Passed test 1\n"));
-	}
 	
 	/* write 2nd test value */
 	BCW_WRITE32(regs, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
@@ -1752,9 +1764,8 @@ bcw_validatechipaccess(struct bcw_softc *sc)
 	if (val != 0x55aaaa55) {
 		DPRINTF(("Failed test 2\n"));
 		return 2;
-	} else {
+	} else
 		DPRINTF(("Passed test 2\n"));
-	}
 
 	/* Restore the saved value now that we're done */
 	BCW_WRITE32(regs, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
@@ -1785,23 +1796,23 @@ bcw_validatechipaccess(struct bcw_softc *sc)
 		printf("%s: Warning, SBF is 0x%x, expected 0x80000400\n",
 		    sc->bcw_dev.dv_xname,val);
 		/* May not be a critical failure, just warn for now */
-		//return 5;
+		//return (5);
 	}
 	/* Verify there are no interrupts active on the core */
 	val = BCW_READ32(regs, BCW_GIR);
 	if (val!=0) {
 		DPRINTF(("Failed Pending Interrupt test with val=0x%x\n",val));
-		return 6;
+		return (6);
 	}
 
 	/* Above G means it's unsupported currently, like N */
 	if (sc->bcw_phy_type > BCW_PHY_TYPEG) {
 		DPRINTF(("PHY type %d greater than supported type %d\n",
 		    sc->bcw_phy_type, BCW_PHY_TYPEG));
-		return 7;
+		return (7);
 	}
 	
-	return 0;
+	return (0);
 }
 
 
