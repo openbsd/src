@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.47 2006/05/20 18:29:23 mickey Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.48 2006/11/17 11:50:09 jmc Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -109,7 +109,7 @@ struct pool_item {
 	((pp)->pr_nitems < (pp)->pr_minitems)
 
 /*
- * Every pool get a unique serial number assigned to it. If this counter
+ * Every pool gets a unique serial number assigned to it. If this counter
  * wraps, we're screwed, but we shouldn't create so many pools anyway.
  */
 unsigned int pool_serial;
@@ -539,7 +539,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 }
 
 /*
- * De-commision a pool resource.
+ * Decommission a pool resource.
  */
 void
 pool_destroy(struct pool *pp)
@@ -1871,7 +1871,7 @@ pool_cache_reclaim(struct pool_cache *pc)
  * We have three different sysctls.
  * kern.pool.npools - the number of pools.
  * kern.pool.pool.<pool#> - the pool struct for the pool#.
- * kern.pool.name.<pool#> - the name for pool#.[6~
+ * kern.pool.name.<pool#> - the name for pool#.
  */
 int
 sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
