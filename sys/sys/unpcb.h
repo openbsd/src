@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpcb.h,v 1.6 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: unpcb.h,v 1.7 2006/11/17 08:33:20 claudio Exp $	*/
 /*	$NetBSD: unpcb.h,v 1.6 1994/06/29 06:46:08 cgd Exp $	*/
 
 /*
@@ -81,5 +81,6 @@ struct	unpcb {
  * flag bits in unp_flags
  */
 #define UNP_FEIDS	1		/* unp_connid contains information */
+#define UNP_FEIDSBIND	2		/* unp_connid was set by a bind */
 
 #define	sotounpcb(so)	((struct unpcb *)((so)->so_pcb))
