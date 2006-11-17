@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.40 2006/11/17 01:11:23 itojun Exp $	*/
+/*	$OpenBSD: in6.h,v 1.41 2006/11/17 02:00:21 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -563,11 +563,11 @@ struct in6_pktinfo {
 #define IPV6CTL_V6ONLY		24
 /* 25 to 40: resrved */
 #define IPV6CTL_MAXFRAGS	41	/* max fragments */
-/* New entries should be added here from current IPV6CTL_MAXID value. */
-/* to define items, should talk with KAME guys first, for *BSD compatibility */
 #define IPV6CTL_MFORWARDING	42
 #define IPV6CTL_MULTIPATH	43
 #define IPV6CTL_MAXID		44
+/* New entries should be added here from current IPV6CTL_MAXID value. */
+/* to define items, should talk with KAME guys first, for *BSD compatibility */
 
 #define IPV6CTL_NAMES { \
 	{ 0, 0 }, \
