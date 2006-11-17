@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.8 2006/11/17 21:13:16 jmc Exp $
+.\"	$OpenBSD: cksum.1,v 1.9 2006/11/17 21:16:54 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,23 +58,20 @@ utility writes to the standard output a single line for each input file.
 The format of this line varies with the algorithm being used as follows:
 .Bl -tag -width Ds
 .It cksum
-The output line consists of three whitespace separated fields: a
-.Tn CRC
-checksum, the number of octets in the input,
+The output line consists of three whitespace separated fields:
+a CRC checksum, the number of octets in the input,
 and name of the file or string.
 If no file name is specified, the standard input is used and no file name
 is written.
 .It sum
-The output line consists of three whitespace separated fields: a
-.Tn CRC
-checksum, the number of kilobytes in the input,
+The output line consists of three whitespace separated fields:
+a CRC checksum, the number of kilobytes in the input,
 and name of the file or string.
 If no file name is specified, the standard input is used and no file name
 is written.
 .It sysvsum
-The output line consists of three whitespace separated fields: a
-.Tn CRC
-checksum, the number of 512-byte blocks in the input,
+The output line consists of three whitespace separated fields:
+a CRC checksum, the number of 512-byte blocks in the input,
 and name of the file or string.
 If no file name is specified, the standard input is used and no file name
 is written.
@@ -187,24 +184,16 @@ For historic reasons, the block size is 1024 for algorithm 1 and 512
 for algorithm 2.
 Partial blocks are rounded up.
 .Pp
-The default
-.Tn CRC
-used is based on the polynomial used for
-.Tn CRC
-error checking
+The default CRC used is based on the polynomial used for CRC error checking
 in the networking standard
 .St -iso8802-3 .
-The
-.Tn CRC
-checksum encoding is defined by the generating polynomial:
+The CRC checksum encoding is defined by the generating polynomial:
 .Bd -unfilled -offset indent
 G(x) = x^32 + x^26 + x^23 + x^22 + x^16 + x^12 +
      x^11 + x^10 + x^8 + x^7 + x^5 + x^4 + x^2 + x + 1
 .Ed
 .Pp
-Mathematically, the
-.Tn CRC
-value corresponding to a given file is defined by
+Mathematically, the CRC value corresponding to a given file is defined by
 the following procedure:
 .Bd -filled -offset indent
 The
@@ -244,9 +233,7 @@ utilities exit 0 on success or \*(Gt0 if an error occurred.
 .Xr sha1 1
 .Pp
 The default calculation is identical to that given in pseudo-code
-in the following
-.Tn ACM
-article:
+in the following ACM article:
 .Rs
 .%T "Computation of Cyclic Redundancy Checks Via Table Lookup"
 .%A Dilip V. Sarwate
