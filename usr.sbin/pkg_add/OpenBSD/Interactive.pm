@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Interactive.pm,v 1.3 2006/03/04 11:31:18 espie Exp $
+# $OpenBSD: Interactive.pm,v 1.4 2006/11/17 09:58:20 bernd Exp $
 #
 # Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 #
@@ -35,6 +35,10 @@ sub ask_list
 LOOP:
 	print STDERR "Your choice: ";
 	my $result = <STDIN>;
+	unless (defined $result) {
+		print STDERR "\n";
+		return $values[0];
+	}
 	chomp $result;
 	if ($result eq '') {
 		return $values[0];
@@ -70,6 +74,10 @@ LOOP2:
 	print STDERR $prompt, $default ? "? [Y/n$a] " : "? [y/N$a] ";
 
 	my $result = <STDIN>;
+	unless(defined $result) {
+		print STDERR "\n";
+		return $default;
+	}
 	chomp $result;
 	$result =~ s/\s*//g;
 	$result =~ tr/A-Z/a-z/;
