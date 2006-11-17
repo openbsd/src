@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.231 2006/11/16 23:50:16 deraadt Exp $
+$OpenBSD: usbdevs,v 1.232 2006/11/17 08:27:07 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1969,7 +1969,8 @@ product SMARTBRIDGES SMARTNIC	0x0003	smartNIC 2 PnP
 product SMC 2102USB		0x0100	10Mbps Ethernet
 product SMC 2202USB		0x0200	10/100 Ethernet
 product SMC 2206USB		0x0201	EZ Connect Ethernet
-product SMC2 2020HUB            0x2020  Hub
+product SMC2 2020HUB		0x2020	Hub
+product SMC2 2504HUB		0x2504	Hub
 product SMC3 2662WV1		0xa001	EZ Connect 11Mbps
 product SMC3 2662WV2		0xa002	EZ Connect 11Mbps v2
 
