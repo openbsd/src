@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.156 2006/11/14 03:59:00 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.157 2006/11/17 02:03:32 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -935,7 +935,8 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	 */
 	if (sc->num_tx_desc_avail <= EM_TX_CLEANUP_THRESHOLD) {
 		em_txeof(sc);
-		if (sc->num_tx_desc_avail <= EM_TX_CLEANUP_THRESHOLD) {
+		/* Now do we at least have a minimal? */
+		if (sc->num_tx_desc_avail <= EM_TX_OP_THRESHOLD) {
 			sc->no_tx_desc_avail1++;
 			return (ENOBUFS);
 		}
@@ -2102,8 +2103,10 @@ em_txeof(struct em_softc *sc)
 	eop_desc = &sc->tx_desc_base[last];
 
 	/*
-	 * Now calculate the terminating index
-	 * for the cleanup loop below.
+	 * What this does is get the index of the
+	 * first descriptor AFTER the EOP of the 
+	 * first packet, that way we can do the
+	 * simple comparison on the inner while loop.
 	 */
 	if (++last == sc->num_tx_desc)
 		last = 0;
@@ -2164,8 +2167,10 @@ em_txeof(struct em_softc *sc)
 	 */
 	if (num_avail > EM_TX_CLEANUP_THRESHOLD) {
 		ifp->if_flags &= ~IFF_OACTIVE;
+		/* All clean, turn off the timer */
 		if (num_avail == sc->num_tx_desc)
 			ifp->if_timer = 0;
+		/* Some cleaned, reset the timer */
 		else if (num_avail != sc->num_tx_desc_avail)
 			ifp->if_timer = EM_TX_TIMEOUT;
 	}
