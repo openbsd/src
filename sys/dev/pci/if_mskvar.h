@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mskvar.h,v 1.1 2006/08/16 21:06:23 kettenis Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.2 2006/11/17 19:34:34 kettenis Exp $	*/
 /*	$NetBSD: if_skvar.h,v 1.6 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*	$OpenBSD: if_mskvar.h,v 1.1 2006/08/16 21:06:23 kettenis Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.2 2006/11/17 19:34:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -220,8 +220,6 @@ struct sk_if_softc {
 	u_int32_t		sk_rx_ramend;
 	u_int32_t		sk_tx_ramstart;
 	u_int32_t		sk_tx_ramend;
-	u_int8_t		sk_phytype;
-	int			sk_phyaddr;
 	int			sk_cnt;
 	int			sk_link;
 	struct timeout		sk_tick_ch;

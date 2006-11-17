@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.22 2006/11/16 03:25:45 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.23 2006/11/17 19:34:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -254,14 +254,6 @@ msk_marv_miibus_readreg(struct device *dev, int phy, int reg)
 	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
 	u_int16_t val;
 	int i;
-
-	if (phy != 0 ||
-	    (sc_if->sk_phytype != SK_PHYTYPE_MARV_COPPER &&
-	     sc_if->sk_phytype != SK_PHYTYPE_MARV_FIBER)) {
-		DPRINTFN(9, ("msk_marv_miibus_readreg (skip) phy=%d, reg=%#x\n",
-			     phy, reg));
-		return (0);
-	}
 
         SK_YU_WRITE_2(sc_if, YUKON_SMICR, YU_SMICR_PHYAD(phy) |
 		      YU_SMICR_REGAD(reg) | YU_SMICR_OP_READ);
@@ -976,23 +968,6 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 		     "           tx_ramstart=%#x tx_ramend=%#x\n",
 		     sc_if->sk_rx_ramstart, sc_if->sk_rx_ramend,
 		     sc_if->sk_tx_ramstart, sc_if->sk_tx_ramend));
-
-	/* Read and save PHY type */
-	sc_if->sk_phytype = sk_win_read_1(sc, SK_EPROM1) & 0xF;
-
-	/* Set PHY address */
-	if ((sc_if->sk_phytype < SK_PHYTYPE_MARV_COPPER &&
-	     sc->sk_pmd != 'L' && sc->sk_pmd != 'S')) {
-		/* not initialized, punt */
-		sc_if->sk_phytype = SK_PHYTYPE_MARV_COPPER;
-
-		sc->sk_coppertype = 1;
-	}
-
-	sc_if->sk_phyaddr = SK_PHYADDR_MARV;
-
-	if (!(sc->sk_coppertype))
-		sc_if->sk_phytype = SK_PHYTYPE_MARV_FIBER;
 
 	/* Allocate the descriptor queues. */
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct msk_ring_data),
