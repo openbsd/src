@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.62 2006/07/25 08:27:09 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.63 2006/11/17 08:45:31 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -283,12 +283,14 @@ insertfile(char *fname, char *newname, int replacebuf)
 	struct line	*lp1, *lp2;
 	struct line	*olp;			/* line we started at */
 	struct mgwin	*wp;
-	int	 nbytes, s, nline = 0, siz, x = -1, x2;
+	int	 nbytes, s, nline = 0, siz, x, x2;
 	int	 opos;			/* offset we started at */
 	int	 oline;			/* original line number */
 
 	if (replacebuf == TRUE)
 		x = undo_enable(FALSE);
+	else
+		x = undo_enabled();
 
 	lp1 = NULL;
 	if (line == NULL) {

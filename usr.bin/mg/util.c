@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.22 2006/07/25 08:27:09 kjell Exp $	*/
+/*	$OpenBSD: util.c,v 1.23 2006/11/17 08:45:31 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -120,7 +120,7 @@ twiddle(int f, int n)
 	dotp = curwp->w_dotp;
 	doto = curwp->w_doto;
 	undo_add_boundary();
-	undo_no_boundary(TRUE);
+	undo_boundary_enable(FALSE);
 	if (doto == llength(dotp)) {
 		if (--doto <= 0)
 			return (FALSE);
@@ -136,7 +136,7 @@ twiddle(int f, int n)
 	linsert(1, cr);
 	if (fudge != TRUE)
 		(void)backchar(FFRAND, 1);
-	undo_no_boundary(FALSE);
+	undo_boundary_enable(TRUE);
 	undo_add_boundary();
 	lchange(WFEDIT);
 	return (TRUE);

@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.41 2006/07/25 08:22:32 kjell Exp $ */
+/* $OpenBSD: undo.c,v 1.42 2006/11/17 08:45:31 kjell Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  * Copyright (c) 2005, 2006 Kjell Wooding <kjell@openbsd.org>
@@ -35,17 +35,8 @@
  */
 static LIST_HEAD(, undo_rec)	 undo_free;
 static int			 undo_free_num;
-static int			 nobound;
-
-/*
- * Global variables
- */
-/*
- * undo_disable_flag: Stop doing undo (useful when we know are
- *	going to deal with huge deletion/insertions
- *	that we don't plan to undo)
- */
-int undo_disable_flag;
+static int			 boundary_flag = TRUE;
+static int 			 undo_enable_flag = TRUE;
 
 /*
  * Local functions
@@ -181,33 +172,43 @@ lastrectype(void)
 }
 
 /*
+ * Returns TRUE if undo is enabled, FALSE otherwise.
+ */
+int
+undo_enabled(void)
+{
+	return (undo_enable_flag);
+}
+
+/*
  * undo_enable(TRUE/FALSE) will enable / disable the undo mechanism.
  * Returns TRUE if previously enabled, FALSE otherwise.
  */
 int
 undo_enable(int on)
 {
-	int pon = undo_disable_flag;
+	int pon = undo_enable_flag;
 
-	undo_disable_flag = (on == TRUE) ? 0 : 1;
-	return ((pon == TRUE) ? FALSE : TRUE);
+	undo_enable_flag = on;
+	return (pon);
 }
 
 /*
  * If undo is enabled, then:
- *   undo_no_boundary(TRUE) stops recording undo boundaries between actions.
- *   undo_no_boundary(FALSE) enables undo boundaries.
+ *   undo_boundary_enable(FALS) stops recording undo boundaries between actions.
+ *   undo_boundary_enable(TRUE) enables undo boundaries.
  * If undo is disabled, this function has no effect.
  */
+
 void
-undo_no_boundary(int flag)
+undo_boundary_enable(int flag)
 {
-	if (undo_disable_flag == FALSE)
-		nobound = flag;
+	if (undo_enable_flag == TRUE)
+		boundary_flag = flag;
 }
 
 /*
- * Record an undo boundary, unless 'nobound' is set via undo_no_boundary.
+ * Record an undo boundary, unless boundary_flag == FALSE.
  * Does nothing if previous undo entry is already a boundary or 'modified' flag.
  */
 void
@@ -216,7 +217,7 @@ undo_add_boundary(void)
 	struct undo_rec *rec;
 	int last;
 
-	if (nobound)
+	if (boundary_flag == FALSE)
 		return;
 
 	last = lastrectype();
@@ -254,7 +255,7 @@ undo_add_insert(struct line *lp, int offset, int size)
 	struct	undo_rec *rec;
 	int	pos;
 
-	if (undo_disable_flag)
+	if (undo_enable_flag == FALSE)
 		return (TRUE);
 	reg.r_linep = lp;
 	reg.r_offset = offset;
@@ -299,7 +300,7 @@ undo_add_delete(struct line *lp, int offset, int size)
 	struct	undo_rec *rec;
 	int	pos;
 
-	if (undo_disable_flag)
+	if (undo_enable_flag == FALSE)
 		return (TRUE);
 
 	reg.r_linep = lp;
@@ -348,13 +349,13 @@ undo_add_delete(struct line *lp, int offset, int size)
 int
 undo_add_change(struct line *lp, int offset, int size)
 {
-	if (undo_disable_flag)
+	if (undo_enable_flag == FALSE)
 		return (TRUE);
 	undo_add_boundary();
-	nobound = TRUE;
+	boundary_flag = FALSE;
 	undo_add_delete(lp, offset, size);
 	undo_add_insert(lp, offset, size);
-	nobound = FALSE;
+	boundary_flag = TRUE;
 	undo_add_boundary();
 
 	return (TRUE);
@@ -503,8 +504,8 @@ undo(int f, int n)
 
 		undo_add_boundary();
 
-		save = nobound;
-		nobound = TRUE;
+		save = boundary_flag;
+		boundary_flag = FALSE;
 
 		done = 0;
 		do {
@@ -553,7 +554,7 @@ undo(int f, int n)
 			ptr = LIST_NEXT(ptr, next);
 		} while (ptr != NULL && !done);
 
-		nobound = save;
+		boundary_flag = save;
 		undo_add_boundary();
 
 		ewprintf("Undo!");
