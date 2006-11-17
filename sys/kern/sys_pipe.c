@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.50 2005/12/13 10:33:14 jsg Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.51 2006/11/17 09:21:52 jmc Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -160,7 +160,7 @@ free1:
 }
 
 /*
- * Allocate kva for pipe circular buffer, the space is pageable
+ * Allocate kva for pipe circular buffer, the space is pageable.
  * This routine will 'realloc' the size of a pipe safely, if it fails
  * it will retain the old buffer.
  * If it fails it will return ENOMEM.
