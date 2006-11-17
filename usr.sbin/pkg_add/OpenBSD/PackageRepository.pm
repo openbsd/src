@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.13 2006/09/16 15:04:23 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.14 2006/11/17 15:34:15 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -142,13 +142,13 @@ sub open
 {
 	my ($self, $object) = @_;
 
-	return undef unless $self->may_exist($object->{name});
+	return unless $self->may_exist($object->{name});
 
 	# kill old files if too many
 	my $already = $self->make_room();
 	my $fh = $self->open_pipe($object);
 	if (!defined $fh) {
-		return undef;
+		return;
 	}
 	$object->{fh} = $fh;
 	if (defined $already) {
@@ -481,7 +481,7 @@ sub _list
 	my ($self, $cmd) = @_;
 	my $l =[];
 	local $_;
-	open(my $fh, '-|', "$cmd") or return undef;
+	open(my $fh, '-|', "$cmd") or return;
 	while(<$fh>) {
 		chomp;
 		next if m/^d.*\s+\S/;
@@ -557,7 +557,7 @@ sub list
 		my $fullname = $self->{baseurl};
 		my $l = $self->{list} = [];
 		local $_;
-		open(my $fh, '-|', "ftp -o - $fullname 2>$error") or return undef;
+		open(my $fh, '-|', "ftp -o - $fullname 2>$error") or return;
 		# XXX assumes a pkg HREF won't cross a line. Is this the case ?
 		while(<$fh>) {
 			chomp;

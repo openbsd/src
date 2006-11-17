@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Interactive.pm,v 1.4 2006/11/17 09:58:20 bernd Exp $
+# $OpenBSD: Interactive.pm,v 1.5 2006/11/17 15:34:15 espie Exp $
 #
 # Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 #
@@ -114,7 +114,7 @@ sub choose1
 		    }
 		}
 	}
-	return undef;
+	return;
 }
 
 1;

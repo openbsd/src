@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.2 2006/03/08 12:10:47 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.3 2006/11/17 15:34:15 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -57,7 +57,7 @@ sub find
 		}
 		return $pkg if defined $pkg;
 	}
-	return undef;
+	return;
 }
 
 sub grabPlist
@@ -82,7 +82,7 @@ sub grabPlist
 		}
 		return $plist if defined $plist;
 	}
-	return undef;
+	return;
 }
 
 sub available

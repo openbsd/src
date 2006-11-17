@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.83 2006/03/19 12:01:13 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.84 2006/11/17 15:34:15 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -443,7 +443,7 @@ sub add
 {
 	my ($class, $plist, @args) = @_;
 	$plist->{state}->{ignore} = 1;
-	return undef;
+	return;
 }
 
 # Comment is very special
@@ -461,12 +461,12 @@ sub add
 		return OpenBSD::PackingElement::CVSTag->add($plist, @args);
 	} elsif ($args[0] =~ m/^MD5:\s*/) {
 		$plist->{state}->{lastfile}->add_md5(pack('H*', $'));
-		return undef;
+		return;
 	} elsif ($args[0] =~ m/^subdir\=(.*?)\s+cdrom\=(.*?)\s+ftp\=(.*?)\s*$/) {
 		return OpenBSD::PackingElement::ExtraInfo->add($plist, $1, $2, $3);
 	} elsif ($args[0] eq 'no checksum') {
 		$plist->{state}->{nochecksum} = 1;
-		return undef;
+		return;
 	} else {
 		return $class->SUPER::add($plist, @args);
 	}
@@ -489,7 +489,7 @@ sub add
 	my ($class, $plist, @args) = @_;
 
 	$plist->{state}->{lastfile}->add_md5(pack('H*', $'));
-	return undef;
+	return;
 }
 
 package OpenBSD::PackingElement::symlink;
@@ -502,7 +502,7 @@ sub add
 	my ($class, $plist, @args) = @_;
 
 	$plist->{state}->{lastfile}->make_symlink(@args);
-	return undef;
+	return;
 }
 
 package OpenBSD::PackingElement::hardlink;
@@ -515,7 +515,7 @@ sub add
 	my ($class, $plist, @args) = @_;
 
 	$plist->{state}->{lastfile}->make_hardlink(@args);
-	return undef;
+	return;
 }
 
 package OpenBSD::PackingElement::temp;
@@ -527,7 +527,7 @@ sub add
 {
 	my ($class, $plist, @args) = @_;
 	$plist->{state}->{lastfile}->set_tempname(@args);
-	return undef;
+	return;
 }
 
 package OpenBSD::PackingElement::size;
@@ -540,7 +540,7 @@ sub add
 	my ($class, $plist, @args) = @_;
 
 	$plist->{state}->{lastfile}->add_size($args[0]);
-	return undef;
+	return;
 }
 
 package OpenBSD::PackingElement::Option;
@@ -825,7 +825,7 @@ sub check
 	my $self = shift;
 	my ($name, $passwd, $uid, $gid, $quota, $class, $gcos, $dir, $shell, 
 	    $expire) = getpwnam($self->{name});
-	return undef unless defined $name;
+	return unless defined $name;
 	if ($self->{uid} =~ m/^\!/) {
 		return 0 unless $uid == $';
 	}
@@ -880,7 +880,7 @@ sub check
 {
 	my $self = shift;
 	my ($name, $passwd, $gid, $members) = getgrnam($self->{name});
-	return undef unless defined $name;
+	return unless defined $name;
 	if ($self->{gid} =~ m/^\!/) {
 		return 0 unless $gid == $';
 	}
@@ -1366,7 +1366,7 @@ sub check
 		}
 		return 1 if $ok eq $arch;
 	}
-	return undef;
+	return;
 }
 
 1;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.42 2006/08/05 08:21:55 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.43 2006/11/17 15:34:15 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -100,7 +100,7 @@ sub next
     $self->skip();
     my $header;
     my $n = read $self->{fh}, $header, 512;
-    return undef if $n == 0;
+    return if $n == 0;
     die "Error while reading header"
 	unless defined $n and $n == 512;
     if ($header eq "\0"x512) {
@@ -541,7 +541,7 @@ sub new
 	my ($class, $fname) = @_;
 	open (my $out, '>', $fname);
 	if (!defined $out) {
-		return undef;
+		return;
 	}
 	my $bs = (stat $out)[11];
 	my $zeroes;

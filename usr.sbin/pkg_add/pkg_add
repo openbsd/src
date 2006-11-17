@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.219 2006/10/17 21:47:22 espie Exp $
+# $OpenBSD: pkg_add,v 1.220 2006/11/17 15:34:15 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -78,7 +78,7 @@ sub can_install($$$)
 			print "Not reinstalling $pkgname\n" if $state->{verbose};
 			OpenBSD::SharedLibs::add_package_libs($plist->pkgname());
 			$state->{installed}->{$pkgname} = 1;
-			return undef;
+			return;
 		}
 		if ($state->{forced}->{conflicts}) {
 			print "Forcing install of $pkgname in the presence of conflicts (",join(',', @conflicts, @libs), ")\n";
@@ -86,13 +86,13 @@ sub can_install($$$)
 		}
 		print "Can't install $pkgname because of conflicts (",join(',', @conflicts, @libs), ")\n";
 		$errors++;
-		return undef;
+		return;
 	}
 
 	if (@conflicts >  5) {
 		print "Can't install $pkgname because of conflicts (",join(',', @conflicts, @libs), ")\n";
 		$errors++;
-		return undef;
+		return;
 	}
 
 	require OpenBSD::Replace;
@@ -103,26 +103,26 @@ sub can_install($$$)
 			    print "Not reinstalling $pkgname\n" if $state->{verbose};
 			    OpenBSD::SharedLibs::add_package_libs($plist->pkgname());
 			    $state->{installed}->{$pkgname} = 1;
-			    return undef;
+			    return;
 			}
 	}
 	if (!OpenBSD::Replace::is_safe($plist, $state)) {
 		print "Can't safely update to $pkgname (use -F update to force it)\n";
 		$errors++;
-		return undef;
+		return;
 	}
 
 	if (!OpenBSD::Replace::figure_out_libs($plist, $state, @libs)) {
 		print "Can't update to $pkgname because of collision with old libs\n";
 		$errors++;
-		return undef;
+		return;
 	}
 
 	for my $toreplace (@conflicts) {
 		if (defined $state->{installed}->{$toreplace}) {
 			Warn "Cannot replace $toreplace with $pkgname: just got installed\n";
 			$errors++;
-			return undef;
+			return;
 		}
 
 		my $rplist = OpenBSD::Replace::can_do($toreplace, $pkgname, 
@@ -130,7 +130,7 @@ sub can_install($$$)
 		if (!$rplist) {
 			print "Can't update $toreplace into $pkgname\n";
 			$errors++;
-			return undef;
+			return;
 		}
 		$rplist->{dir} = installed_info($toreplace);
 		push(@{$plist->{replacing}}, $rplist);
@@ -154,21 +154,21 @@ sub pre_add($$)
 		if (!$state->{forced}->{kitchensink}) {
 			$errors++;
 		}
-		return undef;
+		return;
 	}
 	if ($handle->{finished}) {
-		return undef;
+		return;
 	}
     	my $plist = $handle->{plist} = $handle->plist();
 	unless (defined $plist) {
 		print "Can't find CONTENTS from $pkg\n";
 		$errors++;
-		return undef;
+		return;
 	}
 	if ($plist->pkgbase() ne $state->{localbase}) {
 		print "Localbase mismatch: package has: ", $plist->pkgbase(), " , user wants: ", $state->{localbase}, "\n";
 		$errors++;
-		return undef;
+		return;
 	}
 	my $pkgname = $handle->{pkgname} = $plist->pkgname();
 	if ($pkg ne '-') {
@@ -176,7 +176,7 @@ sub pre_add($$)
 		    OpenBSD::PackageName::url2pkgname($pkg) ne $pkgname) {
 			print "Package name is not consistent ???\n";
 			$errors++;
-			return undef;
+			return;
 		}
 	}
 	if ($state->{verbose}) {
@@ -195,7 +195,7 @@ sub pre_add($$)
 		if ($state->{forced}->{kitchensink}) {
 			$errors = 0;
 		}
-		return undef;
+		return;
 	}
 }
 

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.4 2006/03/13 16:08:12 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.5 2006/11/17 15:34:15 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -43,7 +43,7 @@ sub openArchive
 		$self->{repository}->parse_problems($self->{errors}) 
 		    if defined $self->{errors};
 		undef $self->{errors};
-		return undef;
+		return;
 	}
 	require OpenBSD::Ustar;
 
@@ -119,7 +119,7 @@ sub grabPlist
 		$pkg->close_now();
 		return $plist;
 	} else {
-		return undef;
+		return;
 	}
 }
 
@@ -128,7 +128,7 @@ sub openPackage
 	my $self = shift;
 	my $arch = $self->{arch};
 	if (!$self->openArchive()) {
-		return undef;
+		return;
 	}
 	$self->scanPackage();
 
@@ -162,7 +162,7 @@ sub openPackage
 	# hopeless
 	$self->close_with_client_error();
 	$self->wipe_info();
-	return undef;
+	return;
 }
 
 sub wipe_info
@@ -196,7 +196,7 @@ sub plist
 	# hopeless
 	$self->close_with_client_error();
 
-	return undef;
+	return;
 }
 
 sub close
@@ -242,7 +242,7 @@ sub reopen
 {
 	my $self = shift;
 	if (!$self->openArchive()) {
-		return undef;
+		return;
 	}
 	while (my $e = $self->{_archive}->next()) {
 		if ($e->{name} eq $self->{_current}->{name}) {
@@ -250,7 +250,7 @@ sub reopen
 			return $self;
 		}
 	}
-	return undef;
+	return;
 }
 
 # proxy for archive operations
@@ -270,7 +270,7 @@ sub intNext
 
 	if (!defined $self->{fh}) {
 		if (!$self->reopen()) {
-			return undef;
+			return;
 		}
 	}
 	if (!$self->{_unput}) {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.2 2006/04/22 10:31:44 bernd Exp $
+# $OpenBSD: Replace.pm,v 1.3 2006/11/17 15:34:15 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -119,34 +119,34 @@ sub update_issue($$)
 package OpenBSD::PackingElement::FINSTALL;
 sub update_issue($$) 
 { 
-	return undef if !$_[1];
+	return if !$_[1];
 	return $_[0]->SUPER::update_issue($_[1]);
 }
 
 package OpenBSD::PackingElement::FDEINSTALL;
 sub update_issue($$) 
 { 
-	return undef if $_[1];
+	return if $_[1];
 	return $_[0]->SUPER::update_issue($_[1]);
 }
 
 package OpenBSD::PackingElement::Exec;
 sub update_issue($$) 
 { 
-	return undef if !$_[1];
+	return if !$_[1];
 	return '@exec '.$_[0]->{expanded};
 }
 
 package OpenBSD::PackingElement::Unexec;
 sub update_issue($$) 
 { 
-	return undef if $_[1];
+	return if $_[1];
 	my $self = $_[0];
 
 	# those are deemed innocuous
 	if ($self->{expanded} =~ m|^/sbin/ldconfig\s+\-R\b| or
 	    $self->{expanded} =~ m|^install-info\s+\-\-delete\b|) {
-		return undef;
+		return;
 	} else {
 		return '@unexec '.$self->{expanded};
 	}
