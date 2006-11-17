@@ -1,4 +1,4 @@
-.\"	$OpenBSD: myname.5,v 1.4 2005/10/25 18:24:56 jmc Exp $
+.\"	$OpenBSD: myname.5,v 1.5 2006/11/17 21:27:57 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -53,8 +53,9 @@ See
 .Xr hostname 7
 for a description of hostname resolution.
 .Pp
-.Pa /etc/mygate
-contains the address of the gateway host, if it exists.
+.Pa /etc/mygate ,
+if it exists,
+contains the address of the gateway host.
 The gateway is added to the routing tables by the
 .Xr route 8
 utility.
