@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.21 2006/09/27 14:37:38 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.22 2006/11/17 08:55:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -61,6 +61,36 @@ gen_ospf_hdr(struct buf *buf, struct iface *iface, u_int8_t type)
 int
 send_packet(struct iface *iface, void *pkt, size_t len, struct sockaddr_in *dst)
 {
+	struct msghdr		 msg;
+	struct iovec		 iov[2];
+	struct ip		 ip_hdr;
+
+	/* setup IP hdr */
+	bzero(&ip_hdr, sizeof(ip_hdr));
+	ip_hdr.ip_v = IPVERSION;
+	ip_hdr.ip_hl = sizeof(ip_hdr) >> 2;
+	ip_hdr.ip_tos = IPTOS_PREC_INTERNETCONTROL;
+	ip_hdr.ip_len = htons(len + sizeof(ip_hdr));
+	ip_hdr.ip_id = 0;  /* 0 means kernel set appropriate value */
+	ip_hdr.ip_off = 0;
+	ip_hdr.ip_ttl = iface->type != IF_TYPE_VIRTUALLINK ?
+	    IP_DEFAULT_MULTICAST_TTL : MAXTTL;
+	ip_hdr.ip_p = IPPROTO_OSPF;
+	ip_hdr.ip_sum = 0;
+	ip_hdr.ip_src = iface->addr;
+	ip_hdr.ip_dst = dst->sin_addr;
+
+	/* setup buffer */
+	bzero(&msg, sizeof(msg));
+	iov[0].iov_base = &ip_hdr;
+	iov[0].iov_len = sizeof(ip_hdr);
+	iov[1].iov_base = pkt;
+	iov[1].iov_len = len;
+	msg.msg_name = dst;
+	msg.msg_namelen = sizeof(*dst);
+	msg.msg_iov = iov;
+	msg.msg_iovlen = 2;
+
 	/* set outgoing interface for multicast traffic */
 	if (IN_MULTICAST(ntohl(dst->sin_addr.s_addr)))
 		if (if_set_mcast(iface) == -1) {
@@ -69,8 +99,7 @@ send_packet(struct iface *iface, void *pkt, size_t len, struct sockaddr_in *dst)
 			return (-1);
 		}
 
-	if (sendto(iface->fd, pkt, len, 0,
-	    (struct sockaddr *)dst, sizeof(*dst)) == -1 ) {
+	if (sendmsg(iface->fd, &msg, 0) == -1) {
 		log_warn("send_packet: error sending packet on interface %s",
 		    iface->name);
 		return (-1);
@@ -105,8 +134,6 @@ recv_packet(int fd, short event, void *bula)
 	bzero(&msg, sizeof(msg));
 	iov.iov_base = buf = pkt_ptr;
 	iov.iov_len = READ_BUF_SIZE;
-	msg.msg_name = NULL;
-	msg.msg_namelen = 0;
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 	msg.msg_control = cbuf;
@@ -143,7 +170,7 @@ recv_packet(int fd, short event, void *bula)
 
 	/* find a matching interface */
 	if ((iface = find_iface(xconf, ifindex, ip_hdr.ip_src)) == NULL) {
-		log_debug("recv_packet: cannot find valid interface");
+		/* XXX add a counter here */
 		return;
 	}
 

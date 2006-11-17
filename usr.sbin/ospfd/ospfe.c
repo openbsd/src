@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.48 2006/09/27 14:37:38 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.49 2006/11/17 08:55:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -97,15 +97,10 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 		fatal("error creating raw socket");
 
 	/* set some defaults */
-	if (if_set_mcast_ttl(xconf->ospf_socket,
-	    IP_DEFAULT_MULTICAST_TTL) == -1)
-		fatal("if_set_mcast_ttl");
-
 	if (if_set_mcast_loop(xconf->ospf_socket) == -1)
 		fatal("if_set_mcast_loop");
-
-	if (if_set_tos(xconf->ospf_socket, IPTOS_PREC_INTERNETCONTROL) == -1)
-		fatal("if_set_tos");
+	if (if_set_ip_hdrincl(xconf->ospf_socket) == -1)
+		fatal("if_set_ip_hdrincl");
 	if (if_set_recvif(xconf->ospf_socket, 1) == -1)
 		fatal("if_set_recvif");
 	if_set_recvbuf(xconf->ospf_socket);

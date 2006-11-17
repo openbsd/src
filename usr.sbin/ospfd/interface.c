@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.53 2006/09/27 14:37:38 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.54 2006/11/17 08:55:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -148,12 +148,9 @@ if_fsm(struct iface *iface, enum iface_event event)
 }
 
 struct iface *
-if_new(struct kif *kif)
+if_new(struct kif *kif, struct kif_addr *ka)
 {
-	struct sockaddr_in	*sain;
 	struct iface		*iface;
-	struct ifreq		*ifr;
-	int			 s;
 
 	if ((iface = calloc(1, sizeof(*iface))) == NULL)
 		err(1, "if_new: calloc");
@@ -177,14 +174,6 @@ if_new(struct kif *kif)
 
 	strlcpy(iface->name, kif->ifname, sizeof(iface->name));
 
-	if ((ifr = calloc(1, sizeof(*ifr))) == NULL)
-		err(1, "if_new: calloc");
-
-	/* set up ifreq */
-	strlcpy(ifr->ifr_name, kif->ifname, sizeof(ifr->ifr_name));
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-		err(1, "if_new: socket");
-
 	/* get type */
 	if (kif->flags & IFF_POINTOPOINT)
 		iface->type = IF_TYPE_POINTOPOINT;
@@ -203,28 +192,12 @@ if_new(struct kif *kif)
 	iface->linkstate = kif->link_state;
 	iface->media_type = kif->media_type;
 
-	/* get address */
-	if (ioctl(s, SIOCGIFADDR, ifr) < 0)
-		err(1, "if_new: cannot get address");
-	sain = (struct sockaddr_in *)&ifr->ifr_addr;
-	iface->addr = sain->sin_addr;
-
-	/* get mask */
-	if (ioctl(s, SIOCGIFNETMASK, ifr) < 0)
-		err(1, "if_new: cannot get mask");
-	sain = (struct sockaddr_in *)&ifr->ifr_addr;
-	iface->mask = sain->sin_addr;
-
-	/* get p2p dst address */
+	/* set address, mask and p2p addr */
+	iface->addr = ka->addr;
+	iface->mask = ka->mask;
 	if (kif->flags & IFF_POINTOPOINT) {
-		if (ioctl(s, SIOCGIFDSTADDR, ifr) < 0)
-			err(1, "if_new: cannot get dst addr");
-		sain = (struct sockaddr_in *)&ifr->ifr_addr;
-		iface->dst = sain->sin_addr;
+		iface->dst = ka->dstbrd;
 	}
-
-	free(ifr);
-	close(s);
 
 	return (iface);
 }
@@ -355,11 +328,8 @@ if_act_start(struct iface *iface)
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
 		inet_aton(AllSPFRouters, &addr);
-		if (if_join_group(iface, &addr)) {
-			log_warnx("if_act_start: error joining group %s, "
-			    "interface %s", inet_ntoa(addr), iface->name);
+		if (if_join_group(iface, &addr))
 			return (-1);
-		}
 		iface->state = IF_STA_POINTTOPOINT;
 		break;
 	case IF_TYPE_VIRTUALLINK:
@@ -372,11 +342,8 @@ if_act_start(struct iface *iface)
 		return (-1);
 	case IF_TYPE_BROADCAST:
 		inet_aton(AllSPFRouters, &addr);
-		if (if_join_group(iface, &addr)) {
-			log_warnx("if_act_start: error joining group %s, "
-			    "interface %s", inet_ntoa(addr), iface->name);
+		if (if_join_group(iface, &addr))
 			return (-1);
-		}
 		if (iface->priority == 0) {
 			iface->state = IF_STA_DROTHER;
 		} else {
@@ -513,20 +480,12 @@ start:
 		inet_aton(AllDRouters, &addr);
 		if (old_state & IF_STA_DRORBDR &&
 		    (iface->state & IF_STA_DRORBDR) == 0) {
-			if (if_leave_group(iface, &addr)) {
-				log_warnx("if_act_elect: "
-				    "error leaving group %s, interface %s",
-				    inet_ntoa(addr), iface->name);
+			if (if_leave_group(iface, &addr))
 				return (-1);
-			}
 		} else if ((old_state & IF_STA_DRORBDR) == 0 &&
 		    iface->state & IF_STA_DRORBDR) {
-			if (if_join_group(iface, &addr)) {
-				log_warnx("if_act_elect: "
-				    "error joining group %s, interface %s",
-				    inet_ntoa(addr), iface->name);
+			if (if_join_group(iface, &addr))
 				return (-1);
-			}
 		}
 
 		LIST_FOREACH(nbr, &iface->nbr_list, entry) {
@@ -674,31 +633,6 @@ if_to_ctl(struct iface *iface)
 
 /* misc */
 int
-if_set_mcast_ttl(int fd, u_int8_t ttl)
-{
-	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL,
-	    (char *)&ttl, sizeof(ttl)) < 0) {
-		log_warn("if_set_mcast_ttl: error setting "
-		    "IP_MULTICAST_TTL to %d", ttl);
-		return (-1);
-	}
-
-	return (0);
-}
-
-int
-if_set_tos(int fd, int tos)
-{
-	if (setsockopt(fd, IPPROTO_IP, IP_TOS,
-	    (int *)&tos, sizeof(tos)) < 0) {
-		log_warn("if_set_tos: error setting IP_TOS to 0x%x", tos);
-		return (-1);
-	}
-
-	return (0);
-}
-
-int
 if_set_recvif(int fd, int enable)
 {
 	if (setsockopt(fd, IPPROTO_IP, IP_RECVIF, &enable,
@@ -720,21 +654,52 @@ if_set_recvbuf(int fd)
 		bsize /= 2;
 }
 
+/*
+ * only one JOIN or DROP per interface and address is allowed so we need
+ * to keep track of what is added and removed.
+ */
+struct if_group_count {
+	LIST_ENTRY(if_group_count)	entry;
+	struct in_addr			addr;
+	unsigned int			ifindex;
+	int				count;
+};
+
+LIST_HEAD(,if_group_count) ifglist = LIST_HEAD_INITIALIZER(ifglist);
+
 int
 if_join_group(struct iface *iface, struct in_addr *addr)
 {
-	struct ip_mreq	 mreq;
+	struct ip_mreq	 	 mreq;
+	struct if_group_count	*ifg;
 
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
+		LIST_FOREACH(ifg, &ifglist, entry)
+			if (iface->ifindex == ifg->ifindex &&
+			    addr->s_addr == ifg->addr.s_addr)
+				break;
+		if (ifg == NULL) {
+			if ((ifg = calloc(1, sizeof(*ifg))) == NULL)
+				fatal("if_join_group");
+			ifg->addr.s_addr = addr->s_addr;
+			ifg->ifindex = iface->ifindex;
+			LIST_INSERT_HEAD(&ifglist, ifg, entry);
+		}
+
+		if (ifg->count++ != 0)
+			/* already joined */
+			return (0);
+
 		mreq.imr_multiaddr.s_addr = addr->s_addr;
 		mreq.imr_interface.s_addr = iface->addr.s_addr;
 
 		if (setsockopt(iface->fd, IPPROTO_IP, IP_ADD_MEMBERSHIP,
 		    (void *)&mreq, sizeof(mreq)) < 0) {
-			log_debug("if_join_group: error IP_ADD_MEMBERSHIP, "
-			    "interface %s", iface->name);
+			log_warn("if_join_group: error IP_ADD_MEMBERSHIP, "
+			    "interface %s address %s", iface->name,
+			    inet_ntoa(*addr));
 			return (-1);
 		}
 		break;
@@ -754,19 +719,36 @@ if_join_group(struct iface *iface, struct in_addr *addr)
 int
 if_leave_group(struct iface *iface, struct in_addr *addr)
 {
-	struct ip_mreq	 mreq;
+	struct ip_mreq	 	 mreq;
+	struct if_group_count	*ifg;
 
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
+		LIST_FOREACH(ifg, &ifglist, entry)
+			if (iface->ifindex == ifg->ifindex &&
+			    addr->s_addr == ifg->addr.s_addr)
+				break;
+
+		/* if interface is not found just try to drop membership */
+		if (ifg && --ifg->count != 0)
+			/* others still joined */
+			return (0);
+
 		mreq.imr_multiaddr.s_addr = addr->s_addr;
 		mreq.imr_interface.s_addr = iface->addr.s_addr;
 
 		if (setsockopt(iface->fd, IPPROTO_IP, IP_DROP_MEMBERSHIP,
 		    (void *)&mreq, sizeof(mreq)) < 0) {
-			log_debug("if_leave_group: error IP_DROP_MEMBERSHIP, "
-			    "interface %s", iface->name);
+			log_warn("if_leave_group: error IP_DROP_MEMBERSHIP, "
+			    "interface %s address %s", iface->name,
+			    inet_ntoa(*addr));
 			return (-1);
+		}
+
+		if (ifg) {
+			LIST_REMOVE(ifg, entry);
+			free(ifg);
 		}
 		break;
 	case IF_TYPE_POINTOMULTIPOINT:
@@ -816,6 +798,19 @@ if_set_mcast_loop(int fd)
 	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP,
 	    (char *)&loop, sizeof(loop)) < 0) {
 		log_warn("if_set_mcast_loop: error setting IP_MULTICAST_LOOP");
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+if_set_ip_hdrincl(int fd)
+{
+	int	hincl = 1;
+
+	if (setsockopt(fd, IPPROTO_IP, IP_HDRINCL, &hincl, sizeof(hincl)) < 0) {
+		log_warn("if_set_ip_hdrincl: error setting IP_HDRINCL");
 		return (-1);
 	}
 

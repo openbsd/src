@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.37 2006/10/29 19:29:09 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.38 2006/11/17 08:55:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -93,7 +93,7 @@ struct sym {
 int			 symset(const char *, const char *, int);
 char			*symget(const char *);
 struct area		*conf_get_area(struct in_addr);
-struct iface		*conf_get_if(struct kif *);
+struct iface		*conf_get_if(struct kif *, struct kif_addr *);
 
 typedef struct {
 	union {
@@ -413,15 +413,39 @@ areaoptsl	: interface
 		;
 
 interface	: INTERFACE STRING	{
-			struct kif *kif;
+			struct kif	*kif;
+			struct kif_addr	*ka = NULL;
+			char		*s;
+			struct in_addr	 addr;
 
-			if ((kif = kif_findname($2)) == NULL) {
+			s = strchr($2, ':');
+			if (s) {
+				*s++ = '\0';
+				if (inet_aton(s, &addr) == 0) {
+					yyerror(
+					    "error parsing interface address");
+					free($2);
+					YYERROR;
+				}
+			} else
+				addr.s_addr = 0;
+
+			if ((kif = kif_findname($2, addr, &ka)) == NULL) {
 				yyerror("unknown interface %s", $2);
 				free($2);
 				YYERROR;
 			}
+			if (ka == NULL) {
+				if (s)
+					yyerror("address %s not configured on "
+					    "interface %s", s, $2);
+				else
+					yyerror("unnumbered interface %s", $2);
+				free($2);
+				YYERROR;
+			}
 			free($2);
-			iface = conf_get_if(kif);
+			iface = conf_get_if(kif, ka);
 			if (iface == NULL)
 				YYERROR;
 			iface->area = area;
@@ -880,20 +904,21 @@ conf_get_area(struct in_addr id)
 }
 
 struct iface *
-conf_get_if(struct kif *kif)
+conf_get_if(struct kif *kif, struct kif_addr *ka)
 {
 	struct area	*a;
 	struct iface	*i;
 
 	LIST_FOREACH(a, &conf->area_list, entry)
 		LIST_FOREACH(i, &a->iface_list, entry)
-			if (i->ifindex == kif->ifindex) {
+			if (i->ifindex == kif->ifindex &&
+			    i->addr.s_addr == ka->addr.s_addr) {
 				yyerror("interface %s already configured",
 				    kif->ifname);
 				return (NULL);
 			}
 
-	i = if_new(kif);
+	i = if_new(kif, ka);
 	i->auth_keyid = 1;
 
 	return (i);

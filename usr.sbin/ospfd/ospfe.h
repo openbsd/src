@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.32 2006/09/27 14:37:38 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.33 2006/11/17 08:55:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -132,7 +132,7 @@ void		 orig_net_lsa(struct iface *);
 /* interface.c */
 int		 if_fsm(struct iface *, enum iface_event);
 
-struct iface	*if_new(struct kif *);
+struct iface	*if_new(struct kif *, struct kif_addr *);
 void		 if_del(struct iface *);
 void		 if_init(struct ospfd_conf *, struct iface *);
 
@@ -145,11 +145,10 @@ struct ctl_iface	*if_to_ctl(struct iface *);
 int	 if_join_group(struct iface *, struct in_addr *);
 int	 if_leave_group(struct iface *, struct in_addr *);
 int	 if_set_mcast(struct iface *);
-int	 if_set_mcast_ttl(int, u_int8_t);
-int	 if_set_tos(int, int);
 int	 if_set_recvif(int, int);
 void	 if_set_recvbuf(int);
 int	 if_set_mcast_loop(int);
+int	 if_set_ip_hdrincl(int);
 
 /* lsack.c */
 int	 delay_lsa_ack(struct iface *, struct lsa_hdr *);

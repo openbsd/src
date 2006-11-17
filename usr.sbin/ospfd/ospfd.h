@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.60 2006/06/28 10:53:39 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.61 2006/11/17 08:55:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -408,6 +408,13 @@ struct kroute {
 	u_int8_t	prefixlen;
 };
 
+struct kif_addr {
+	TAILQ_ENTRY(kif_addr)	 entry;
+	struct in_addr		 addr;
+	struct in_addr		 mask;
+	struct in_addr		 dstbrd;
+};
+
 struct kif {
 	char			 ifname[IF_NAMESIZE];
 	u_long			 baudrate;
@@ -557,7 +564,7 @@ void		 kr_fib_decouple(void);
 void		 kr_dispatch_msg(int, short, void *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *, pid_t);
-struct kif	*kif_findname(char *);
+struct kif	*kif_findname(char *, struct in_addr, struct kif_addr **);
 
 u_int8_t	mask2prefixlen(in_addr_t);
 in_addr_t	prefixlen2mask(u_int8_t);
