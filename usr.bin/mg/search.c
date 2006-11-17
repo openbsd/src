@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.32 2006/07/25 08:27:09 kjell Exp $	*/
+/*	$OpenBSD: search.c,v 1.33 2006/11/17 03:24:31 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -305,9 +305,13 @@ isearch(int dir)
 
 			while (cbo < llength(clp)) {
 				c = lgetc(clp, cbo++);
-				if ((!firstc && !isalnum(c)) || pptr == NPAT)
+				if ((!firstc && !isalnum(c)))
 					break;
 
+				if (pptr == NPAT - 1) {
+					ttbeep();
+					break;
+				}
 				firstc = 0;
 				if (!xcase && ISUPPER(c))
 					c = TOLOWER(c);
@@ -354,12 +358,12 @@ isearch(int dir)
 				pptr = 0;
 			if (pptr == 0)
 				success = TRUE;
-			pat[pptr++] = c;
-			if (pptr == NPAT) {
-				ewprintf("Pattern too long");
-				return (FALSE);
+			if (pptr == NPAT - 1)
+				ttbeep();
+			else {
+				pat[pptr++] = c;
+				pat[pptr] = '\0';
 			}
-			pat[pptr] = '\0';
 			is_lpush();
 			if (success != FALSE) {
 				if (is_find(dir) != FALSE)
