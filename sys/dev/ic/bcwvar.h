@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.1 2006/11/17 18:58:31 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.2 2006/11/17 20:49:27 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -35,7 +35,6 @@
  * Cliff Wright cliff@snipe444.org
  */
 
-
 #define BCW_MAX_RADIOS		2
 struct bcw_radio {
 	u_int16_t	id;
@@ -53,14 +52,15 @@ struct bcw_core {
 /* number of descriptors used in a ring */
 #define BCW_NRXDESC             128
 #define BCW_NTXDESC             128
+
 /*
-* Mbuf pointers. We need these to keep track of the virtual addresses   
-* of our mbuf chains since we can only convert from physical to virtual,
-* not the other way around.
-*
-* The chip has 6 DMA engines, looks like we only need to use one each
-* for TX and RX, the others stay disabled.
-*/
+ * Mbuf pointers. We need these to keep track of the virtual addresses   
+ * of our mbuf chains since we can only convert from physical to virtual,
+ * not the other way around.
+ *
+ * The chip has 6 DMA engines, looks like we only need to use one each
+ * for TX and RX, the others stay disabled.
+ */
 struct bcw_chain_data {
 	struct mbuf    *bcw_tx_chain[BCW_NTXDESC];
 	struct mbuf    *bcw_rx_chain[BCW_NRXDESC];
@@ -83,12 +83,14 @@ struct bcw_regs {
 	void			(*r_write32)(void *, u_int32_t, u_int32_t);
 	void			(*r_barrier)(void *, u_int32_t, u_int32_t, int);
 };
+
 /* Needs to have garbage removed */
 struct bcw_softc {
 	struct device		bcw_dev;
 	struct ieee80211com	bcw_ic;
 	struct bcw_regs		bcw_regs;
-	int			(*sc_newstate)(struct ieee80211com *, enum ieee80211_state, int);
+	int			(*sc_newstate)(struct ieee80211com *,
+				    enum ieee80211_state, int);
 	int			(*sc_enable)(struct bcw_softc *);
 	void			(*sc_disable)(struct bcw_softc *);
 	bus_space_tag_t		bcw_btag;
@@ -113,8 +115,8 @@ struct bcw_softc {
 	u_int16_t		bcw_chipid;	/* Chip ID */
 	u_int16_t		bcw_chiprev;	/* Chip Revision */
 	u_int16_t		bcw_prodid;	/* Product ID */
-//	struct 	bcw_core core[BCW_MAX_CORES];
-//	struct 	bcw_radio radio[BCW_MAX_RADIOS];
+//	struct bcw_core		core[BCW_MAX_CORES];
+//	struct bcw_radio	radio[BCW_MAX_RADIOS];
 	u_int16_t		bcw_phy_version;
 	u_int16_t		bcw_phy_type;
 	u_int16_t		bcw_phy_rev;
@@ -154,19 +156,19 @@ int	bcw_intr(void *);
  * Some legacy stuff from bce and iwi to make this compile
  */
 /* transmit buffer max frags allowed */
-#define BCW_NTXFRAGS    16
+#define BCW_NTXFRAGS	16
 
 /* ring descriptor */
 struct bcw_dma_slot {
-        u_int32_t ctrl;
+	u_int32_t ctrl;
 	u_int32_t addr;
 };
-                
-#define CTRL_BC_MASK    0x1fff  /* buffer byte count */
-#define CTRL_EOT        0x10000000      /* end of descriptor table */
-#define CTRL_IOC        0x20000000      /* interrupt on completion */
-#define CTRL_EOF        0x40000000      /* end of frame */
-#define CTRL_SOF        0x80000000      /* start of frame */
+
+#define CTRL_BC_MASK	0x1fff		/* buffer byte count */
+#define CTRL_EOT	0x10000000	/* end of descriptor table */
+#define CTRL_IOC	0x20000000	/* interrupt on completion */
+#define CTRL_EOF	0x40000000	/* end of frame */
+#define CTRL_SOF	0x80000000	/* start of frame */
                 
 /* Packet status is returned in a pre-packet header */
 struct rx_pph {
@@ -213,4 +215,3 @@ static const struct ieee80211_rateset bcw_rateset_11b =
 	{ 4, { 2, 4, 11, 22 } };
 static const struct ieee80211_rateset bcw_rateset_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
-

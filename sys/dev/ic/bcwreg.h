@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.1 2006/11/17 18:58:31 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.2 2006/11/17 20:49:27 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -78,10 +78,9 @@
 #define SBIV_ENET0			0x02	/* enable for enet 0 */
 #define SBIV_ENET1			0x40	/* enable for enet 1 */
 
-
 /* Host Interface Registers */
 
-#define BCW_DEVCTL			0x0000	/* device control */
+#define BCW_DEVCTL			0x0000		/* device control */
 /* device control bits */
 #define BCW_DC_IP			0x00000400	/* internal phy present */
 #define BCW_DC_ER			0x00008000	/* ephy reset */
@@ -128,13 +127,13 @@
 #define RS_ERROR			0xf0000	/* had an error */
 
 /* Ethernet MAC control registers */
-#define BCW_RX_CTL			0x0400	/* receive config */
+#define BCW_RX_CTL			0x0400		/* receive config */
 /* config bits */
 #define ERC_DB				0x00000001	/* disable broadcast */
 #define ERC_AM				0x00000002	/* rx all multicast */
 #define ERC_PE				0x00000008	/* promiscuous enable */
 
-#define BCW_RX_MAX			0x0404	/* max packet length */
+#define BCW_RX_MAX			0x0404		/* max packet length */
 #define BCW_TX_MAX			0x0408
 #define BCW_MI_CTL			0x0410
 #define BCW_MI_COMM			0x0414
@@ -142,9 +141,9 @@
 /* mii status bits */
 #define BCW_MIINTR			0x00000001	/* mii mdio interrupt */
 
-#define BCW_FILT_LOW			0x0420	/* mac low 4 bytes */
-#define BCW_FILT_HI			0x0424	/* mac hi 2 bytes */
-#define BCW_FILT_CTL			0x0428	/* packet filter ctrl */
+#define BCW_FILT_LOW			0x0420		/* mac low 4 bytes */
+#define BCW_FILT_HI			0x0424		/* mac hi 2 bytes */
+#define BCW_FILT_CTL			0x0428		/* packet filter ctrl */
 #define BCW_ENET_CTL			0x042C
 /* bits for mac control */
 #define EC_EE				0x00000001	/* emac enable */
@@ -154,7 +153,7 @@
 #define BCW_TX_CTL			0x0430
 /* bits for transmit control */
 #define EXC_FD				0x00000001	/* full duplex */
-#define BCW_TX_WATER			0x0434	/* tx watermark */
+#define BCW_TX_WATER			0x0434		/* tx watermark */
 
 /* statistics counters */
 #define BCW_RX_PKTS			0x058C
@@ -163,12 +162,12 @@
 #define BCW_SBIMSTATE			0x0f90
 #define BCW_SBTMSTATELOW		0x0f98
 #define BCW_SBTMSTATEHI			0x0f9C
-#define SBTML_RESET			0x1	/* reset */
-#define SBTML_REJ			0x6	/* reject */
-#define SBTML_CLK			0x10000	/* clock enable */
+#define SBTML_RESET			0x1		/* reset */
+#define SBTML_REJ			0x6		/* reject */
+#define SBTML_CLK			0x10000		/* clock enable */
 #define SBTML_FGC			0x20000	/* force gated clocks on */
-#define SBTML_80211FLAG			0x40000 /* core specific flag */
-#define SBTML_80211PHY			0x20000000 /* Attach PHY */
+#define SBTML_80211FLAG			0x40000		/* core specific flag */
+#define SBTML_80211PHY			0x20000000	/* Attach PHY */
 #define SBTMH_BUSY			0x4
 
 #define SBIM_MAGIC_ERRORBITS		0x60000
@@ -200,17 +199,17 @@
 #define BCW_SHM_DATA			0x164	/* Data - 32bit */
 #define BCW_SHM_DATALOW			0x164	/* Data Low - 16bit */
 #define BCW_SHM_DATAHIGH		0x166	/* Data High - 16 bit */
-#define  BCW_SHM_CONTROL_SHARED		0x0001	/* Select SHM Routing shared memory */
-#define  BCW_SHM_CONTROL_80211		0x0002	/* Select 80211 settings */
-#define  BCW_SHM_CONTROL_PCM		0x0003	/* Select PCM data */
-#define  BCW_SHM_CONTROL_HWMAC		0x0004	/* Security Hardware MAC Address list */
-#define  BCW_SHM_CONTROL_MCODE		0x0300	/* Microcode */
-#define  BCW_SHM_CONTROL_INIMCODE	0x0301	/* Initial Value Microcode? */
+#define BCW_SHM_CONTROL_SHARED		0x0001	/* Select SHM Routing shared memory */
+#define BCW_SHM_CONTROL_80211		0x0002	/* Select 80211 settings */
+#define BCW_SHM_CONTROL_PCM		0x0003	/* Select PCM data */
+#define BCW_SHM_CONTROL_HWMAC		0x0004	/* Security Hardware MAC Address list */
+#define BCW_SHM_CONTROL_MCODE		0x0300	/* Microcode */
+#define BCW_SHM_CONTROL_INIMCODE	0x0301	/* Initial Value Microcode? */
 /* SHM Addresses */
 #define BCW_SHM_MICROCODEFLAGSLOW	0x005e	/* Flags for Microcode ops */
 #define BCW_SHM_MICROCODEFLAGSHIGH	0x0060	/* Flags for Microcode ops */
-/*    http://bcm-specs.sipsolutions.net/MicrocodeFlagsBitfield */
-#define  BCW_SHM_MICROCODEFLAGS
+/* http://bcm-specs.sipsolutions.net/MicrocodeFlagsBitfield */
+#define BCW_SHM_MICROCODEFLAGS
 
 /* 0x200 DMA Register space */
 /* 0x300 PIO Register space */
@@ -231,7 +230,6 @@
 #define BCW_SPROM_ET0MACADDR		0x104e	/* ethernet MAC */
 #define BCW_SPROM_ET1MACADDR		0x1054	/* 802.11a MAC */
 
-
 #define BCW_SPROM_PA0B0			0x105e
 #define BCW_SPROM_PA0B1			0x1060
 #define BCW_SPROM_PA0B2			0x1062
@@ -242,9 +240,6 @@
 #define BCW_SPROM_IDLETSSI		0x1070  /* As below */
 #define BCW_SPROM_ANTGAIN		0x1074	/* bits 7-0 for an A PHY
 						   bits 15-8 for B/G PHYs */
-
-
-
 
 #define BCW_PHY_TYPEA			0x0	/* 802.11a PHY */
 #define BCW_PHY_TYPEB			0x1	/* 802.11b PHY */
@@ -274,4 +269,3 @@
 
 #define	BCW_CLR(regs, reg, mask)					\
 	BCW_WRITE32((regs), (reg), BCW_READ32((regs), (reg)) & ~(mask))
-
