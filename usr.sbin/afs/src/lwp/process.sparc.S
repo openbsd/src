@@ -104,7 +104,7 @@ ENTRY(savecontext)
 	or	%l0,%lo(_C_LABEL(PRE_Block)),%l0
 #endif
 	mov	1,%l1
-	stb	%l1, [%l0]
+	st	%l1, [%l0]
 
 #ifdef	__sparcv9
 	
@@ -537,7 +537,7 @@ ENTRY(returnto)
 	or	%l0,%lo(_C_LABEL(PRE_Block)),%l0
 #endif
 	mov	0,%l1
-	stb	%l1, [%l0]
+	st	%l1, [%l0]
 
 	restore					
 	restore

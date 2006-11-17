@@ -114,7 +114,7 @@
 
 	l	r7,  PRE_Block.S(toc)	# r7 <- &PRE_Block
 	cal	r6, 1(r0)		# r6 <- #1
-	stb	r6, 0(r7)		# r6 -> PRE_Block
+	st	r6, 0(r7)		# r6 -> PRE_Block
 
 	st	r1, topstack(a_area1)	# save old SP
 	
@@ -145,7 +145,7 @@ L1:	brl				# pc <- lr	-- (*a_f)()
 	lm	12,  -8*nfprs-4*ngprs(r1)
 	cal	r6, 0(r0)		# r6 <- #0
 	mtcrf	0x38, 12		# put back cr
-	stb	r6, 0(r7)		# r6 -> PRE_Block
+	st	r6, 0(r7)		# r6 -> PRE_Block
 
 /*
  * restore FPRs here!

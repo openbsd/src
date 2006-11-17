@@ -114,13 +114,13 @@
 _savecontext:
       lis     r9,ha16(_PRE_Block)     /* Disable interrupt fiddling */
       li      r8,1
-      stb     r8,lo16(_PRE_Block)(r9)
+      stw     r8,lo16(_PRE_Block)(r9)
 #else	
       .globl  savecontext
 savecontext:
       lis     r9,PRE_Block@ha         /* Disable interrupt fiddling */
       li      r8,1
-      stb     r8,PRE_Block@l(r9)
+      stw     r8,PRE_Block@l(r9)
 #endif /* NeXT || __APPLE__ */
       subi    r1,r1,FRAME_SIZE
       mfcr    r9
@@ -197,11 +197,11 @@ returnto:
 #if defined(NeXT) || defined(__APPLE__)
       lis     r9,ha16(_PRE_Block)         /* Re-enable interrupt fiddling */
       li      r8,0
-      stb     r8,lo16(_PRE_Block)(r9)
+      stw     r8,lo16(_PRE_Block)(r9)
 #else	
       lis     r9,PRE_Block@ha         /* Re-enable interrupt fiddling */
       li      r8,0
-      stb     r8,PRE_Block@l(r9)
+      stw     r8,PRE_Block@l(r9)
 #endif /* NeXT || __APPLE__ */
       addi    r1,r1,FRAME_SIZE
       blr

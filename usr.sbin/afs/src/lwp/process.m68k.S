@@ -84,7 +84,7 @@ area1	=	12
 newsp	=	16
 
 ENTRY(savecontext)
-	movb	#1,_C_LABEL(PRE_Block)	| Dont allow any interrupt finagling
+	movl	#1,_C_LABEL(PRE_Block)	| Dont allow any interrupt finagling
 	link	reg(a6),#-(nregs*4)	| Save frame pointer & ...
 					| ... allocate space for nregs registers
 /* Save registers */
@@ -121,5 +121,5 @@ ENTRY(returnto)
 	addl	#(nregs*4),reg(sp)
 	movl	reg(sp),reg(a6)			| Argghh...be careful here
 	unlk	reg(a6)
-	clrb	_C_LABEL(PRE_Block)
+	clrl	_C_LABEL(PRE_Block)
 	rts					| Return to previous process

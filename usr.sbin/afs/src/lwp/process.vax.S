@@ -70,7 +70,7 @@
 
 _savecontext:
 	.word 0x0ffc	# Save regs R2-R11
-	movb	$1,_PRE_Block		# Critical section for preemption code
+	movl	$1,_PRE_Block		# Critical section for preemption code
    	pushl	ap			# save old ap
 	pushl	fp			# save old fp    
 	movl	area1(ap),r0		# r0 = base of savearea
@@ -101,7 +101,7 @@ _returnto:
 	movl	topstack(r0),sp		# Restore sp
 	movl	(sp)+,fp		# Restore fp
 	movl	(sp)+,ap		# ,,,,
-	clrb	_PRE_Block		# End of preemption critical section
+	clrl	_PRE_Block		# End of preemption critical section
 	ret
 
 	pushl	$1234			# I will gloat, Kazar

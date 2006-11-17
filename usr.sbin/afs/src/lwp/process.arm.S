@@ -1,4 +1,4 @@
-/* $OpenBSD: process.arm.S,v 1.1 2004/02/11 21:52:49 drahn Exp $ */
+/* $OpenBSD: process.arm.S,v 1.2 2006/11/17 20:54:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn. All rights reserved.
@@ -42,7 +42,7 @@ savecontext:
 	str	r2, [r1]
 	ldr	r3, .LPRE_Block
 	mov	r2, #1
-	strb	r2, [r3]
+	str	r2, [r3]
 	ldr	r2, [r1]
 
 	sub	sp, sp, #FRAME_SIZE
@@ -93,7 +93,7 @@ returnto:
 
 	ldr	r3, .LPRE_Block
 	mov	r2, #0
-	strb	r2, [r3]
+	str	r2, [r3]
 
 	add	sp, sp, #FRAME_SIZE
 #ifdef __ARM_26__

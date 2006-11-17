@@ -73,7 +73,7 @@
 /*# Set preemption semaphore*/
 	lis	6,1
 	l	7,4(14)
-	stc	6,0(7)
+	sts	6,0(7)
 /*# r3 = base of savearea*/
 	st	1,topstack(3)		# area1->topstack = sp
 /*# New sp is in r4.*/
@@ -109,7 +109,7 @@ _savecontext:
 	lr	14,0
 	lis	6,0
 	l	7,4(14)
-	stc	6,0(7)
+	sts	6,0(7)
 	lm	0,0(1)		# Change if saving fewer regs.
 	brx	15		# Return to previous process
 	ai	1,1,regspace

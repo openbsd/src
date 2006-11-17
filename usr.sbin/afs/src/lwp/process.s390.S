@@ -69,7 +69,7 @@ savecontext:
 	        .long   PRE_Block
 	.L0:
 	        l       %r5,0(%r5)              /* Get A(PRE_Block) */
-	        mvi     0(%r5),1                /* Set it */
+	        mvi     0(%r5),1                /* Set it */			/* XXX should be a word */
 	        st      %r15,0(%r3)             /* Save stack pointer */
 	        ltr     %r4,%r4                 /* If new sp is 0 */
 	        jz      .L1                     /* ... don't change sp */
@@ -107,7 +107,7 @@ returnto:
 	        .long   PRE_Block
 	.L3:
 	        l       %r5,0(%r5)              /* Get A(PRE_Block) */
-	        mvi     0(%r5),0                /* Clear it */
+	        mvi     0(%r5),0                /* Clear it */				/* XXX should be a word */
 	        l       %r15,0(%r15)            /* Point to next stack frame */
 	        lm      %r7,%r15,28(%r15)       /* Restore registers */
 	        br      %r14                    /* Return */

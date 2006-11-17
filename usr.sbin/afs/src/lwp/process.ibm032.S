@@ -76,7 +76,7 @@ _.savecontext:
 | Set preemption semaphore
 	get	r6,$1
 	get	r7,$_PRE_Block
-	putc	r6,0(r7)			| PRE_Block = 1
+	put	r6,0(r7)			| PRE_Block = 1
 | r3 = base of savearea
 	put	sp,topstack(r3)		| area1->topstack = sp
 | New sp is in r4.
@@ -101,7 +101,7 @@ _.returnto:
 | Clear preemption semaphore
 	get	r6,$0
 	get	r7,$_PRE_Block
-	putc	r6,0(r7)			| PRE_Block = 0
+	put	r6,0(r7)			| PRE_Block = 0
 	lm	r0,0(sp)		| Change if saving fewer regs.
 	brx	r15		| Return to previous process
 	ai	sp,sp,regspace

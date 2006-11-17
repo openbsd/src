@@ -36,7 +36,7 @@
 
 	global	_savecontext
 _savecontext:
-	mov.b	&1,_PRE_Block		# Dont allow any interrupt finagling
+	mov.l	&1,_PRE_Block		# Dont allow any interrupt finagling
 	link	%a6,&-(NREGS*4)		# Save frame pointer & ...
 					# ... allocate space for nregs registers
 /* Save registers */
@@ -74,7 +74,7 @@ _returnto:
 	add.l	&(NREGS*4),%sp
 	mov.l	%sp,%a6			# Argghh...be careful here
 	unlk	%a6
-	clr.b	_PRE_Block
+	clr.l	_PRE_Block
 	rts				# Return to previous process
 #else
 
@@ -105,7 +105,7 @@ savecontext
 
 	LDI   1,%r1				/* Store a (char) 1 in */
 	LDW   T%PRE_Block(0,%r19),%r31    	/* global variable */
-	STB   %r1,0(0,%r31)			/* PRE_Block. */
+	STW   %r1,0(0,%r31)			/* PRE_Block. */
 
 
 	COPY  %arg0,%r22	/* Copy arg0 (f) to dyncall's input register */
@@ -138,7 +138,7 @@ returnto
 	LDWS  0(0,%arg0),%r30	/* Load the stack pointer from area2 */
 
 	LDW   T%PRE_Block(0,%r19),%r31   /* set PRE_Block = 0; */
-	STB   %r0,0(0,%r31)
+	STW   %r0,0(0,%r31)
 	.LEAVE
 	.PROCEND
 
@@ -173,7 +173,7 @@ savecontext
 
 	LDI   1,%r31				/* Store a (char) 1 in */
 	ADDIL L%PRE_Block-$global$,%r27		/* global variable */
-	STB   %r31,R%PRE_Block-$global$(0,%r1)	/* PRE_Block. */
+	STW   %r31,R%PRE_Block-$global$(0,%r1)	/* PRE_Block. */
 
 	COPY  %r26,%r22		/* Copy arg0 (f) to dyncall's input register. */
 
@@ -203,7 +203,7 @@ returnto
 	.CALLINFO CALLER,FRAME=0,SAVE_RP,ENTRY_GR=18,ENTRY_FR=21
 	/*  No ENTRY is used since this is a magic routine. */
 	ADDIL L%PRE_Block-$global$,%r27		/* PRE_Block = 0 */
-	STB   %r0,R%PRE_Block-$global$(0,%r1)
+	STW   %r0,R%PRE_Block-$global$(0,%r1)
 
 	LDWS  0(0,%r26),%r30	/* Load the stack pointer from area2 */
 	.LEAVE
@@ -248,7 +248,7 @@ savecontext
 
 	LDI   1,%r1				/* Store a (char) 1 in */
 	LDW   T%PRE_Block(0,%r19),%r31    	/* global variable */
-	STB   %r1,0(0,%r31)			/* PRE_Block. */
+	STW   %r1,0(0,%r31)			/* PRE_Block. */
 
 
 	COPY  %arg0,%r22	/* Copy arg0 (f) to dyncall's input register */
@@ -281,7 +281,7 @@ returnto
 	LDWS  0(0,%arg0),%r30	/* Load the stack pointer from area2 */
 
 	LDW   T%PRE_Block(0,%r19),%r31   /* set PRE_Block = 0; */
-	STB   %r0,0(0,%r31)
+	STW   %r0,0(0,%r31)
 	.LEAVE
 	.PROCEND
 
@@ -322,7 +322,7 @@ savecontext
 
 	LDI   1,%r31				/* Store a (char) 1 in */
 	ADDIL L%PRE_Block-$global$,%r27		/* global variable */
-	STB   %r31,R%PRE_Block-$global$(0,%r1)	/* PRE_Block. */
+	STW   %r31,R%PRE_Block-$global$(0,%r1)	/* PRE_Block. */
 
 	COPY  %r26,%r22		/* Copy arg0 (f) to dyncall's input register. */
 
@@ -355,7 +355,7 @@ returnto
 	.CALLINFO CALLER,FRAME=0,SAVE_RP,ENTRY_GR=18,ENTRY_FR=21
 	.ENTRY
 	ADDIL L%PRE_Block-$global$,%r27		/* PRE_Block = 0 */
-	STB   %r0,R%PRE_Block-$global$(0,%r1)
+	STW   %r0,R%PRE_Block-$global$(0,%r1)
 
 	LDWS  0(0,%r26),%r30	/* Load the stack pointer from area2 */
 	.EXIT

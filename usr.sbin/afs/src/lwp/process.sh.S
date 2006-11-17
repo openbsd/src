@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.sh.S,v 1.4 2006/11/16 05:19:52 deraadt Exp $	*/
+/*	$OpenBSD: process.sh.S,v 1.5 2006/11/17 20:54:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Theo de Raadt
@@ -41,7 +41,7 @@ ENTRY(savecontext)
 
 	mov.l	.L_PRE_Block, r0	/* PRE_Block = 1 */
 	mov	#1, r1
-	mov.b	r1, @r0
+	mov.l	r1, @r0
 
 	/* sp == r15 - automatically handled */
 	mov.l	r14, @-sp
@@ -101,7 +101,7 @@ ENTRY(returnto)
 
 	mov.l	.L_PRE_Block2, r0	/* PRE_Block = 0 */
 	mov	#0, r4
-	mov.b	r4, @r0
+	mov.l	r4, @r0
 
 	rts
 	 nop

@@ -52,7 +52,7 @@ savecontext:
 	.set	noreorder
 	li	t0, 1
 	.extern	PRE_Block
-	sb	t0, PRE_Block
+	sw	t0, PRE_Block
         .set    reorder
 	.frame	sp, regspace, ra
 /* Save registers. */
@@ -112,9 +112,9 @@ returnto:
 	l.d	$f30, floats + 40(sp)
 	.set	noreorder
 	addu	sp, regspace
-	la	t0, PRE_Block
+	sw	zero, PRE_Block
 	j	ra
-	sb	zero, 0(t0)
+	 nop
 	.set	reorder
 	.end	returnto
 
@@ -153,7 +153,7 @@ returnto:
 savecontext:
 	li	t0, 1
 	.extern	PRE_Block
-	sb	t0, PRE_Block
+	sw	t0, PRE_Block
 	subu	sp, regspace
 	.frame	sp, regspace, ra
 /* Save registers. */
@@ -207,7 +207,7 @@ returnto:
 	l.d	$f28, floats + 32(sp)
 	l.d	$f30, floats + 40(sp)
 	addu	sp, regspace
-	sb	$0, PRE_Block
+	sw	$0, PRE_Block
 	j	ra
 	.end	returnto
 #endif	/* HAVE_PIC */

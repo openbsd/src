@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.m88k.S,v 1.4 2004/09/15 05:55:46 miod Exp $	*/
+/*	$OpenBSD: process.m88k.S,v 1.5 2006/11/17 20:54:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -60,7 +60,7 @@ ENTRY(savecontext)
 	/* set preemption lock */
 	or.u	r4,  r0,  hi16(_C_LABEL(PRE_Block))
 	set	r1,  r0,  1<0>
-	st.b	r1,  r4,  lo16(_C_LABEL(PRE_Block))
+	st	r1,  r4,  lo16(_C_LABEL(PRE_Block))
 	ld.d	r4,  r31, 4 * 0
 
 	/* save stack pointer, and fetch the new one if non NULL */
@@ -107,4 +107,4 @@ ENTRY(returnto)
 	/* clear preemption lock and return */
 	or.u	r2,  r0,  hi16(_C_LABEL(PRE_Block))
 	jmp.n	r1
-	 st.b	r0,  r2,  lo16(_C_LABEL(PRE_Block))
+	 st	r0,  r2,  lo16(_C_LABEL(PRE_Block))

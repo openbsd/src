@@ -44,5 +44,5 @@ static char *rcsidpreempt = "$arla: /afs/stacken.kth.se/src/SourceRepository/arl
 int PRE_InitPreempt(struct timeval *);
 int PRE_EndPreempt(void);
 
-extern char PRE_Block;
+extern sig_atomic_t PRE_Block;
 
