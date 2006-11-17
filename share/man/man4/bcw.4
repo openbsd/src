@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bcw.4,v 1.1 2006/11/17 18:58:31 mglocker Exp $
+.\"	$OpenBSD: bcw.4,v 1.2 2006/11/17 20:49:16 deraadt Exp $
 .\"
 .\" Copyright (c) 2006 Marcus Glocker.
 .\"
@@ -33,7 +33,6 @@
 .Nm bcw
 .Nd Broadcom IEEE 802.11b/g wireless network device
 .Sh SYNOPSIS
-.\".Cd "malo* at cardbus?"
 .Cd "bcw* at pci?"
 .Sh DESCRIPTION
 The
@@ -254,7 +253,7 @@ driver:
 .Sh EXAMPLES
 The following
 .Xr hostname.if 5
-example configures malo0 to join whatever network is available on boot,
+example configures bcw0 to join whatever network is available on boot,
 using WEP key
 .Dq 0x1deadbeef1 ,
 channel 11, obtaining an IP address using DHCP:
@@ -270,22 +269,22 @@ inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
 	mediaopt hostap nwid my_net chan 11
 .Ed
 .Pp
-Configure malo0 for WEP, using hex key
+Configure bcw0 for WEP, using hex key
 .Dq 0x1deadbeef1 :
 .Bd -literal -offset indent
-# ifconfig malo0 nwkey 0x1deadbeef1
+# ifconfig bcw0 nwkey 0x1deadbeef1
 .Ed
 .Pp
-Return malo0 to its default settings:
+Return bcw0 to its default settings:
 .Bd -literal -offset indent
-# ifconfig malo0 -bssid -chan media autoselect \e
+# ifconfig bcw0 -bssid -chan media autoselect \e
 	nwid "" -nwkey
 .Ed
 .Pp
 Join an existing BSS network,
 .Dq my_net :
 .Bd -literal -offset indent
-# ifconfig malo0 192.168.1.1 netmask 0xffffff00 nwid my_net
+# ifconfig bcw0 192.168.1.1 netmask 0xffffff00 nwid my_net
 .Ed
 .Sh SEE ALSO
 .Xr arp 4 ,
