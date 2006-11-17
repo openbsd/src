@@ -870,6 +870,8 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/awivar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/ax88190reg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/ax88190var.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/bcwreg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/bcwvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/bhareg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/bhavar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/bt458reg.ph

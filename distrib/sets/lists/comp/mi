@@ -204,6 +204,8 @@
 ./usr/include/dev/ic/awivar.h
 ./usr/include/dev/ic/ax88190reg.h
 ./usr/include/dev/ic/ax88190var.h
+./usr/include/dev/ic/bcwreg.h
+./usr/include/dev/ic/bcwvar.h
 ./usr/include/dev/ic/bhareg.h
 ./usr/include/dev/ic/bhavar.h
 ./usr/include/dev/ic/bt458reg.h
