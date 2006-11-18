@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_machdep.c,v 1.1 2004/08/01 17:18:05 miod Exp $	*/
+/*	$OpenBSD: m88100_machdep.c,v 1.2 2006/11/18 22:58:28 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -31,10 +31,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <machine/asm_macro.h>
 #include <m88k/m88100.h>
 
 /*
- *  data access emulation for M88100 exceptions
+ *  Data Access Emulation for M88100 exceptions
  */
 
 #define DMT_BYTE	1
@@ -259,4 +260,35 @@ data_access_emulation(unsigned *eframe)
 		}
 	}
 	eframe[EF_DMT0] = 0;
+}
+
+/*
+ * Routines to patch the kernel code on 88100 systems not affected by
+ * the xxx.usr bug.
+ */
+
+void
+m88100_apply_patches()
+{
+#ifdef ERRATA__XXX_USR
+	if (((get_cpu_pid() & PID_VN) >> VN_SHIFT) >= 2) {
+		/*
+		 * Patch DAE helpers.
+		 *	    before		    after
+		 *	branch			branch
+		 *	NOP			jmp.n r1
+		 *	xxx.usr			xxx.usr
+		 *	NOP; NOP; NOP
+		 *	jmp r1
+		 */
+		((u_int32_t *)(do_load_word))[1] = 0xf400c401;
+		((u_int32_t *)(do_load_half))[1] = 0xf400c401;
+		((u_int32_t *)(do_load_byte))[1] = 0xf400c401;
+		((u_int32_t *)(do_store_word))[1] = 0xf400c401;
+		((u_int32_t *)(do_store_half))[1] = 0xf400c401;
+		((u_int32_t *)(do_store_byte))[1] = 0xf400c401;
+		((u_int32_t *)(do_xmem_word))[1] = 0xf400c401;
+		((u_int32_t *)(do_xmem_byte))[1] = 0xf400c401;
+	}
+#endif
 }

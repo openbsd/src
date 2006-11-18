@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100.h,v 1.2 2004/08/01 17:18:05 miod Exp $ */
+/*	$OpenBSD: m88100.h,v 1.3 2006/11/18 22:58:28 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -57,19 +57,21 @@
 #define	DMT_ENBITS(x)	(((x) & DMT_EN) >> DMT_ENSHIFT)
 
 #if defined(_KERNEL) && !defined(_LOCORE)
-void dae_print(unsigned *eframe);
-void data_access_emulation(unsigned *eframe);
+
+void	dae_print(unsigned *);
+void	data_access_emulation(unsigned *);
 
 u_int32_t do_load_word(vaddr_t, int);
 u_int16_t do_load_half(vaddr_t, int);
-u_int8_t do_load_byte(vaddr_t, int);
-
-void do_store_word(vaddr_t, u_int32_t, int);
-void do_store_half(vaddr_t, u_int16_t, int);
-void do_store_byte(vaddr_t, u_int8_t, int);
-
+u_int8_t  do_load_byte(vaddr_t, int);
+void      do_store_word(vaddr_t, u_int32_t, int);
+void      do_store_half(vaddr_t, u_int16_t, int);
+void      do_store_byte(vaddr_t, u_int8_t, int);
 u_int32_t do_xmem_word(vaddr_t, u_int32_t, int);
-u_int8_t do_xmem_byte(vaddr_t, u_int8_t, int);
+u_int8_t  do_xmem_byte(vaddr_t, u_int8_t, int);
+
+void	m88100_apply_patches(void);
+
 #endif
 
 #endif /* __M88K_M88100_H__ */

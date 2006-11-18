@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.184 2006/07/07 19:36:56 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.185 2006/11/18 22:58:28 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -74,6 +74,9 @@
 #include <machine/cpu.h>
 #include <machine/kcore.h>
 #include <machine/reg.h>
+#ifdef M88100
+#include <machine/m88100.h>
+#endif
 
 #include <dev/cons.h>
 
@@ -1042,6 +1045,12 @@ mvme_bootstrap()
 	setup_board_config();
 	master_cpu = cmmu_init();
 	set_cpu_number(master_cpu);
+
+#ifdef M88100
+	if (CPU_IS88100) {
+		m88100_apply_patches();
+	}
+#endif
 
 	/*
 	 * Now that set_cpu_number() set us with a valid cpu_info pointer,
