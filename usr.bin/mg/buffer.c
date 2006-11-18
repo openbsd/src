@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.63 2006/07/25 08:27:09 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.64 2006/11/18 19:27:27 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -615,6 +615,7 @@ showbuffer(struct buffer *bp, struct mgwin *wp, int flags)
 				wp->w_markp = owp->w_markp;
 				wp->w_marko = owp->w_marko;
 				wp->w_dotline = owp->w_dotline;
+				wp->w_markline = owp->w_markline;
 				break;
 			}
 	wp->w_flag |= WFMODE | flags;
