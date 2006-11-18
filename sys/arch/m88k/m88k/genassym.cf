@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 2006/04/17 16:08:01 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.7 2006/11/18 22:49:43 miod Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -28,7 +28,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
-#	$Id: genassym.cf,v 1.6 2006/04/17 16:08:01 miod Exp $
+#	$Id: genassym.cf,v 1.7 2006/11/18 22:49:43 miod Exp $
 #
 
 include <sys/param.h>
@@ -140,7 +140,6 @@ define	SIZEOF_EF	sizeof(struct trapframe)
 # more (machine-dependent) pcb fields
 struct	m88100_pcb
 member	pcb_pc
-member	pcb_ipl
 member	pcb_r14
 member	pcb_r15
 member	pcb_r16

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.2 2005/12/03 14:30:05 miod Exp $ */
+/*	$OpenBSD: pcb.h,v 1.3 2006/11/18 22:49:40 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Mach Operating System
@@ -49,7 +49,7 @@
 
 struct m88100_pcb {
 	unsigned pcb_pc;	/* address to return */
-	unsigned pcb_ipl;
+	unsigned :32;
 	unsigned pcb_r14;
 	unsigned pcb_r15;
 	unsigned pcb_r16;

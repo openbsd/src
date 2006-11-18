@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.13 2005/12/11 21:45:30 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.14 2006/11/18 22:49:43 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -87,7 +87,7 @@ ENTRY(switch_exit)
 	 * cpu_switch(), after the context save since we do not need
 	 * to save anything.
 	 */
-	bsr	_ASM_LABEL(cpu_switch_search)
+	br	_ASM_LABEL(cpu_switch_search)
 
 /*
  * void cpu_switch(struct proc *p)
@@ -256,18 +256,16 @@ ASLOCAL(cpu_switch_found)
 	ld	r27, r10, PCB_R27
 	ld	r28, r10, PCB_R28
 	ld	r29, r10, PCB_R29
-	or	r14, r10, r0		/* preserve curpcb in a register... */
-	bsr.n	_C_LABEL(setipl)
-	 ld	r2,  r10, PCB_IPL	/* restore interrupt mask */
-	ld	r1,  r14, PCB_PC
-	ld	r30, r14, PCB_R30	/* restore frame pointer & stack */
-	ld	r31, r14, PCB_SP
+	ld	r1,  r10, PCB_PC
+	ld	r30, r10, PCB_R30	/* restore frame pointer & stack */
+	ld	r31, r10, PCB_SP
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	br.n	_C_LABEL(sched_unlock_idle)
+	 ld	r14, r10, PCB_R14
 #else
 	jmp.n	r1
+	 ld	r14, r10, PCB_R14
 #endif
-	 ld	r14, r14, PCB_R14
 
 /*
  * savectx(pcb)
@@ -299,24 +297,10 @@ ASLOCAL(__savectx)
 	st	r31, r2,  PCB_SP
 
 	/*
-	 * Get the current spl.
-	 * We need to save r1 on the stack because we don't know if we were
-	 * called as savectx or __savectx.
-	 */
-	subu	r31, r31, 16		/* allocate stack for r1 and args */
-	st	r1,  r31, 0
-	bsr.n	_C_LABEL(getipl)	/* get the current interrupt mask */
-	 or	r14, r0,  r2
-	st	r2,  r14, PCB_IPL	/* save interrupt mask */
-	ld	r1,  r31, 0		/* recover return address */
-	addu	r31, r31, 16		/* put stack pointer back */
-
-	/*
 	 * Save FP state.
 	 */
-	fldcr	r2,  fcr62
-	fldcr	r3,  fcr63
-	st	r2,  r14, PCB_FCR62
-	st	r3,  r14, PCB_FCR63
+	fldcr	r4,  fcr62
+	fldcr	r5,  fcr63
+	st	r4,  r2, PCB_FCR62
 	jmp.n	r1
-	 ld	r14, r14, PCB_R14	/* preserve r14 */
+	 st	r5,  r2, PCB_FCR63
