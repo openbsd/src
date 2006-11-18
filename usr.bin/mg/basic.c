@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.26 2006/07/25 08:27:09 kjell Exp $	*/
+/*	$OpenBSD: basic.c,v 1.27 2006/11/18 20:36:50 kjell Exp $	*/
 
 /* This file is in the public domain */
 
@@ -273,7 +273,6 @@ forwpage(int f, int n)
 	lp = curwp->w_linep;
 	while (n-- && lforw(lp) != curbp->b_headp) {
 		lp = lforw(lp);
-		curwp->w_dotline++;
 	}
 	curwp->w_linep = lp;
 	curwp->w_flag |= WFFULL;
@@ -281,7 +280,11 @@ forwpage(int f, int n)
 	for (n = curwp->w_ntrows; n-- && lp != curbp->b_headp; lp = lforw(lp))
 		if (lp == curwp->w_dotp)
 			return (TRUE);
-	curwp->w_dotp = curwp->w_linep;
+	/* Advance the dot the slow way, for line nos */
+	while (curwp->w_dotp != curwp->w_linep) {
+		curwp->w_dotp = lforw(curwp->w_dotp);
+		curwp->w_dotline++;
+	}
 	curwp->w_doto = 0;
 	return (TRUE);
 }
@@ -313,7 +316,6 @@ backpage(int f, int n)
 	lp = curwp->w_linep;
 	while (n-- && lback(lp) != curbp->b_headp) {
 		lp = lback(lp);
-		curwp->w_dotline--;
 	}
 	curwp->w_linep = lp;
 	curwp->w_flag |= WFFULL;
@@ -321,7 +323,11 @@ backpage(int f, int n)
 	for (n = curwp->w_ntrows; n-- && lp != curbp->b_headp; lp = lforw(lp))
 		if (lp == curwp->w_dotp)
 			return (TRUE);
-	curwp->w_dotp = curwp->w_linep;
+	/* Move the dot the slow way, for line nos */
+	while (curwp->w_dotp != curwp->w_linep) {
+		curwp->w_dotp = lback(curwp->w_dotp);
+		curwp->w_dotline--;
+	}
 	curwp->w_doto = 0;
 	return (TRUE);
 }
