@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.52 2006/11/01 23:25:18 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.53 2006/11/18 15:54:29 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1339,15 +1339,14 @@ void
 re_txeof(struct rl_softc *sc)
 {
 	struct ifnet	*ifp;
-	int		idx;
+	struct rl_txq	*txq;
+	uint32_t	txstat;
+	int		idx, descidx;
 
 	ifp = &sc->sc_arpcom.ac_if;
-	idx = sc->rl_ldata.rl_txq_considx;
 
-	for (;;) {
-		struct rl_txq *txq = &sc->rl_ldata.rl_txq[idx];
-		int descidx;
-		u_int32_t txstat;
+	for (idx = sc->rl_ldata.rl_txq_considx;; idx = RL_NEXT_TXQ(sc, idx)) {
+		txq = &sc->rl_ldata.rl_txq[idx];
 
 		if (txq->txq_mbuf == NULL) {
 			KASSERT(idx == sc->rl_ldata.rl_txq_prodidx);
@@ -1378,16 +1377,11 @@ re_txeof(struct rl_softc *sc)
 			ifp->if_oerrors++;
 		else
 			ifp->if_opackets++;
-
-		idx = RL_NEXT_TXQ(sc, idx);
 	}
-
-	/* No changes made to the TX ring, so no flush needed */
 
 	if (sc->rl_ldata.rl_tx_free) {
 		sc->rl_ldata.rl_txq_considx = idx;
 		ifp->if_flags &= ~IFF_OACTIVE;
-		ifp->if_timer = 0;
 	}
 
 	/*
@@ -1406,8 +1400,10 @@ re_txeof(struct rl_softc *sc)
 	 * interrupt that will cause us to re-enter this routine.
 	 * This is done in case the transmitter has gone idle.
 	 */
-	if (sc->rl_ldata.rl_tx_free != RL_TX_DESC_CNT(sc))
+	if (sc->rl_ldata.rl_tx_free < RL_TX_DESC_CNT(sc))
                 CSR_WRITE_4(sc, RL_TIMERCNT, 1);
+	else
+		ifp->if_timer = 0;
 }
 
 void
@@ -1465,15 +1461,13 @@ re_intr(void *arg)
 		if ((status & RL_INTRS_CPLUS) == 0)
 			break;
 
-		if ((status & RL_ISR_RX_OK) ||
-		    (status & RL_ISR_RX_ERR)) {
+		if (status & (RL_ISR_RX_OK | RL_ISR_RX_ERR)) {
 			re_rxeof(sc);
 			claimed = 1;
 		}
 
-		if ((status & RL_ISR_TIMEOUT_EXPIRED) ||
-		    (status & RL_ISR_TX_ERR) ||
-		    (status & RL_ISR_TX_DESC_UNAVAIL)) {
+		if (status & (RL_ISR_TIMEOUT_EXPIRED | RL_ISR_TX_ERR |
+		    RL_ISR_TX_DESC_UNAVAIL)) {
 			re_txeof(sc);
 			claimed = 1;
 		}
@@ -1491,7 +1485,7 @@ re_intr(void *arg)
 		}
 	}
 
-	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
+	if (claimed && !IFQ_IS_EMPTY(&ifp->if_snd))
 		re_start(ifp);
 
 	return (claimed);
@@ -1779,6 +1773,19 @@ re_init(struct ifnet *ifp)
 	re_tx_list_init(sc);
 
 	/*
+	 * Load the addresses of the RX and TX lists into the chip.
+	 */
+	CSR_WRITE_4(sc, RL_RXLIST_ADDR_HI,
+	    RL_ADDR_HI(sc->rl_ldata.rl_rx_list_map->dm_segs[0].ds_addr));
+	CSR_WRITE_4(sc, RL_RXLIST_ADDR_LO,
+	    RL_ADDR_LO(sc->rl_ldata.rl_rx_list_map->dm_segs[0].ds_addr));
+
+	CSR_WRITE_4(sc, RL_TXLIST_ADDR_HI,
+	    RL_ADDR_HI(sc->rl_ldata.rl_tx_list_map->dm_segs[0].ds_addr));
+	CSR_WRITE_4(sc, RL_TXLIST_ADDR_LO,
+	    RL_ADDR_LO(sc->rl_ldata.rl_tx_list_map->dm_segs[0].ds_addr));
+
+	/*
 	 * Enable transmit and receive.
 	 */
 	CSR_WRITE_1(sc, RL_COMMAND, RL_CMD_TX_ENB|RL_CMD_RX_ENB);
@@ -1795,6 +1802,9 @@ re_init(struct ifnet *ifp)
 			    RL_TXCFG_CONFIG|RL_LOOPTEST_ON_CPLUS);
 	} else
 		CSR_WRITE_4(sc, RL_TXCFG, RL_TXCFG_CONFIG);
+
+	CSR_WRITE_1(sc, RL_EARLY_TX_THRESH, 16);
+
 	CSR_WRITE_4(sc, RL_RXCFG, RL_RXCFG_CONFIG);
 
 	/* Set the individual bit to receive frames for this host only. */
@@ -1834,21 +1844,6 @@ re_init(struct ifnet *ifp)
 	/* Enable receiver and transmitter. */
 	CSR_WRITE_1(sc, RL_COMMAND, RL_CMD_TX_ENB|RL_CMD_RX_ENB);
 #endif
-	/*
-	 * Load the addresses of the RX and TX lists into the chip.
-	 */
-
-	CSR_WRITE_4(sc, RL_RXLIST_ADDR_HI,
-	    RL_ADDR_HI(sc->rl_ldata.rl_rx_list_map->dm_segs[0].ds_addr));
-	CSR_WRITE_4(sc, RL_RXLIST_ADDR_LO,
-	    RL_ADDR_LO(sc->rl_ldata.rl_rx_list_map->dm_segs[0].ds_addr));
-
-	CSR_WRITE_4(sc, RL_TXLIST_ADDR_HI,
-	    RL_ADDR_HI(sc->rl_ldata.rl_tx_list_map->dm_segs[0].ds_addr));
-	CSR_WRITE_4(sc, RL_TXLIST_ADDR_LO,
-	    RL_ADDR_LO(sc->rl_ldata.rl_tx_list_map->dm_segs[0].ds_addr));
-
-	CSR_WRITE_1(sc, RL_EARLY_TX_THRESH, 16);
 
 	/*
 	 * Initialize the timer interrupt register so that

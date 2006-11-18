@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.31 2006/11/01 23:25:18 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.32 2006/11/18 15:54:29 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -677,27 +677,30 @@ struct rl_rxsoft {
 	bus_dmamap_t		rxs_dmamap;
 };
 
+struct rl_txq {
+	struct mbuf *txq_mbuf;
+	bus_dmamap_t txq_dmamap;
+	int txq_descidx;
+};
+
 struct rl_list_data {
-	struct rl_txq {
-		struct mbuf *txq_mbuf;
-		bus_dmamap_t txq_dmamap;
-		int txq_descidx;
-	} rl_txq[RL_TX_QLEN];
+	struct rl_txq		rl_txq[RL_TX_QLEN];
 	int			rl_txq_considx;
 	int			rl_txq_prodidx;
+
 	bus_dmamap_t		rl_tx_list_map;
 	struct rl_desc		*rl_tx_list;
-	bus_dma_segment_t 	rl_tx_listseg;
 	int			rl_tx_free;	/* # of free descriptors */
 	int			rl_tx_nextfree; /* next descriptor to use */
 	int			rl_tx_desc_cnt; /* # of descriptors */
+	bus_dma_segment_t	rl_tx_listseg;
 	int			rl_tx_listnseg;
 
 	struct rl_rxsoft	rl_rxsoft[RL_RX_DESC_CNT];
 	bus_dmamap_t		rl_rx_list_map;
 	struct rl_desc		*rl_rx_list;
-	bus_dma_segment_t	rl_rx_listseg;
 	int			rl_rx_prodidx;
+	bus_dma_segment_t	rl_rx_listseg;
 	int			rl_rx_listnseg;
 };
 
