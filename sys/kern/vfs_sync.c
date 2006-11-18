@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.41 2006/06/25 15:01:54 sturm Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.42 2006/11/18 10:19:59 jmc Exp $  */
 
 /*
  *  Portions of this code are:
@@ -82,8 +82,8 @@ struct proc *syncerproc;
  * not waste disk bandwidth being created and removed. To realize this,
  * we append vnodes to a "workitem" queue. When running with a soft
  * updates implementation, most pending metadata dependencies should
- * not wait for more than a few seconds. Thus, mounted on block devices
- * are delayed only about a half the time that file data is delayed.
+ * not wait for more than a few seconds. Thus, mounted block devices
+ * are delayed only about half the time that file data is delayed.
  * Similarly, directory updates are more critical, so are only delayed
  * about a third the time that file data is delayed. Thus, there are
  * SYNCER_MAXDELAY queues that are processed round-robin at a rate of
