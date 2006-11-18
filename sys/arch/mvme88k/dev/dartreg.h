@@ -1,4 +1,4 @@
-/*	$OpenBSD: dartreg.h,v 1.6 2006/04/15 22:32:42 miod Exp $	*/
+/*	$OpenBSD: dartreg.h,v 1.7 2006/11/18 22:45:41 miod Exp $	*/
 
 #define MAXPORTS	2		/* max count of PORTS/DUART */
 
@@ -7,7 +7,7 @@
 
 /* the access to the same command register must be delayed,
    because the chip has some hardware problems in this case */
-#define DELAY_CR   do { volatile int i; for (i = 0; i < 250; ++i); } while (0)
+#define DELAY_CR   DELAY(2)
 
 /*********************** MC68681 DEFINITIONS ************************/
 
