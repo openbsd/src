@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.33 2006/11/17 02:03:32 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.34 2006/11/18 18:39:14 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -180,7 +180,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define EM_TX_TIMEOUT			5	/* set to 5 seconds */
 
 /*
- * These parameter controls when the driver calls the routine to reclaim
+ * These parameters control when the driver calls the routine to reclaim
  * transmit descriptors.
  */
 #define EM_TX_CLEANUP_THRESHOLD		(sc->num_tx_desc / 8)

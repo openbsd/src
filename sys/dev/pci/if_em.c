@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.157 2006/11/17 02:03:32 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.158 2006/11/18 18:39:14 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -669,9 +669,8 @@ em_init(void *arg)
 		sc->tx_head_addr = pba << EM_TX_HEAD_ADDR_SHIFT;
 		sc->tx_fifo_size = (E1000_PBA_40K - pba) << EM_PBA_BYTES_SHIFT;
 		break;
-	/* Total Packet Buffer on these is 48k */
 	case em_82571:
-	case em_82572:
+	case em_82572: /* Total Packet Buffer on these is 48k */
 	case em_80003es2lan:
 		pba = E1000_PBA_32K; /* 32K for Rx, 16K for Tx */
 		break;
