@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.1 2005/12/03 19:01:14 miod Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.2 2006/11/18 22:48:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -106,13 +106,12 @@ enter_panic:
 	 ld	r2,  r2,  MTX_WANTIPL
 
 	ld	r4,  r31, 0
-	or	r3,  r0,  1
+	ldcr	r3,  CPU
 	st	r3,  r4,  MTX_LOCK	/* locked! */
 
 	st	r2,  r4,  MTX_OLDIPL	/* save into mtx_oldipl */
 
 #ifdef DIAGNOSTIC	/* necessary for MUTEX_ASSERT_LOCKED */
-	ldcr	r3,  CPU
 	st	r3,  r4,  MTX_CPU	/* mtx->mtx_cpu = curcpu() */
 #endif
 
@@ -126,9 +125,6 @@ enter_panic:
  * void mtx_leave(struct mutex *mtx)
  */
 ENTRY(mtx_leave)
-	subu	r31, r31, 8
-	st	r1,  r31, 0
-
 	ld	r3,  r2,  MTX_OLDIPL
 	st	r0,  r2,  MTX_CPU		/* mtx->mtx_cpu = NULL */
 #ifdef DEBUG
@@ -137,12 +133,7 @@ ENTRY(mtx_leave)
 
 	bcnd.n	ne0, r3,  1f			/* splx(mtx->mtx_oldipl) */
 	 st	r0,  r2,  MTX_LOCK		/* mtx->mtx_lock = 0 */
-	bsr.n	_C_LABEL(spl0)
-	 addu	r1,  r1,  2f - . - 4
+	br	_C_LABEL(spl0)
 1:
-	bsr.n	_C_LABEL(setipl)
+	br.n	_C_LABEL(setipl)
 	 or	r2,  r3,  r0
-2:
-	ld	r1,  r31, 0
-	jmp.n	r1
-	 addu	r31, r31, 8
