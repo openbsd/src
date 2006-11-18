@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.189 2006/11/09 21:47:52 millert Exp $	*/
+/*	$OpenBSD: ci.c,v 1.190 2006/11/18 20:18:28 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -319,7 +319,7 @@ checkin_main(int argc, char **argv)
  * checkin_diff_file()
  *
  * Generate the diff between the working file and a revision.
- * Returns pointer to a char array on success, NULL on failure.
+ * Returns pointer to a BUF on success, NULL on failure.
  */
 static BUF *
 checkin_diff_file(struct checkin_params *pb)
