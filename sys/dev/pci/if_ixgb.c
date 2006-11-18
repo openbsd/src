@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.30 2006/10/02 00:28:09 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.31 2006/11/18 18:46:20 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -668,6 +668,7 @@ ixgb_encap(struct ixgb_softc *sc, struct mbuf *m_head)
 	 */
 	if (sc->num_tx_desc_avail <= IXGB_TX_CLEANUP_THRESHOLD) {
 		ixgb_txeof(sc);
+		/* Now do we at least have a minimal? */
 		if (sc->num_tx_desc_avail <= IXGB_TX_CLEANUP_THRESHOLD) {
 			sc->no_tx_desc_avail1++;
 			return (ENOBUFS);
@@ -1399,8 +1400,10 @@ ixgb_txeof(struct ixgb_softc *sc)
 	 */
 	if (num_avail > IXGB_TX_CLEANUP_THRESHOLD) {
 		ifp->if_flags &= ~IFF_OACTIVE;
+		/* All clean, turn off the timer */
 		if (num_avail == sc->num_tx_desc)
 			ifp->if_timer = 0;
+		/* Some cleaned, reset the timer */
 		else if (num_avail != sc->num_tx_desc_avail)
 			ifp->if_timer = IXGB_TX_TIMEOUT;
 	}
