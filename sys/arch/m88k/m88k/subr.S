@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.13 2006/11/17 22:32:35 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.14 2006/11/18 22:48:44 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -972,12 +972,12 @@ ASLOCAL(kcopy_out)
 ASLOCAL(kcopy_out_fault)
 	ldcr	r5,   CPU
 	ld	r6,   r5,   CI_CURPCB
-	st	r0,r6,PCB_ONFAULT	/* clear the handler */
-	jmp	r1		/* all done, return to caller */
+	jmp.n	r1		/* all done, return to caller */
+	 st	r0,   r6,   PCB_ONFAULT	/* clear the handler */
 
 ASLOCAL(kcopy_fault)
-	or	r2,   r0,   EFAULT	/* return fault */
-	br	_ASM_LABEL(kcopy_out_fault)
+	br.n	_ASM_LABEL(kcopy_out_fault)
+	 or	r2,   r0,   EFAULT	/* return fault */
 
 	data
 	align	4
