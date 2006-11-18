@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.10 2006/06/21 06:24:50 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.11 2006/11/18 08:20:51 jmc Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -121,9 +121,9 @@ nmeainput(int c, struct tty *tp)
 	switch (c) {
 	case '$':
 		/*
-		 * capture the moment, take a soft timestamp in any case,
+		 * Capture the moment, take a soft timestamp in any case,
 		 * it is possible that tty timestamping has been requested
-		 * but device device does not privide a PPS signal.  In this
+		 * but device does not provide a PPS signal.  In this
 		 * case we use the soft timestamp later.
 		 */
 		nanotime(&np->ts);

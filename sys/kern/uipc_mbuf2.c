@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.24 2006/03/17 04:15:51 brad Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.25 2006/11/18 08:20:51 jmc Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -72,7 +72,7 @@
 static struct mbuf *m_dup1(struct mbuf *, int, int, int);
 
 /*
- * ensure that [off, off + len) is contiguous on the mbuf chain "m".
+ * ensure that [off, off + len] is contiguous on the mbuf chain "m".
  * packet chain before "off" is kept untouched.
  * if offp == NULL, the target will start at <retval, 0> on resulting chain.
  * if offp != NULL, the target will start at <retval, *offp> on resulting chain.
@@ -188,7 +188,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 
 	/*
 	 * now, we need to do the hard way.  don't m_copy as there's no room
-	 * on both end.
+	 * on both ends.
 	 */
 	MGET(o, M_DONTWAIT, m->m_type);
 	if (o && len > MLEN) {

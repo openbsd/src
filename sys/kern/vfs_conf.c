@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.30 2006/09/22 14:23:04 pedro Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.31 2006/11/18 08:20:51 jmc Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -199,7 +199,7 @@ struct vfsconf *vfsconf = vfsconflist;
 
 
 /*
- * vfs_opv_descs enumerates the list of vnode classes, each with it's own
+ * vfs_opv_descs enumerates the list of vnode classes, each with its own
  * vnode operation vector.  It is consulted at system boot to build operation
  * vectors.  It is NULL terminated.
  */
