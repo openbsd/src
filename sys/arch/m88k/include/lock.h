@@ -1,6 +1,6 @@
 #ifndef	_M88K_LOCK_H_
 #define	_M88K_LOCK_H_
-/*	$OpenBSD: lock.h,v 1.1 2005/12/03 19:04:06 miod Exp $	*/
+/*	$OpenBSD: lock.h,v 1.2 2006/11/18 22:47:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -67,8 +67,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *l)
 static __inline__ void
 __cpu_simple_unlock(__cpu_simple_lock_t *l)
 {
-	__asm__ __volatile__
-	    ("xmem r0, %0, r0" : : "r" (l));
+	*l = __SIMPLELOCK_UNLOCKED;
 }
 
 #endif	/* _M88K_LOCK_H_ */
