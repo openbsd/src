@@ -1,4 +1,4 @@
-/*	$OpenBSD: eh.S,v 1.64 2006/04/17 16:08:01 miod Exp $	*/
+/*	$OpenBSD: eh.S,v 1.65 2006/11/18 22:53:11 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -29,73 +29,41 @@
 /*
  * Save Pbus fault status register from data and inst CMMU.
  *
- * PFSR_SAVE is invoked with TMP, TMP2 and TMP3 available, and TMP contains
+ * Handlers are invoked with TMP, TMP2 and TMP3 available, and TMP contains
  * curcpu().
  */
 
+#define	PFSR_SAVE \
+	NOP;	/* will be changed to	br.n pfsr_handler + 4*/ \
+	NOP	/* will be changed to	 first instruction of pfsr_handler */
+
+#include <m88k/m88k/eh_common.S>
+
+#ifdef MVME187
 /*
  * Single-processor SBC version (MVME187, MVME8120)
  */
 
-#ifdef MVME187
 #include <machine/mvme187.h>
-#define	PFSR_SAVE_187 \
-	ld	TMP2, TMP,  CI_PFSR_I0; \
-	ld	TMP3, TMP2, r0; \
-	st	TMP3, r31,  REG_OFF(EF_IPFSR); \
-	ld	TMP2, TMP,  CI_PFSR_D0; \
-	ld	TMP3, TMP2, r0; \
-	st	TMP3, r31,  REG_OFF(EF_DPFSR);
-#else
-#define	PFSR_SAVE_187
+
+ENTRY(pfsr_save_187)
+	ld	TMP2, TMP,  CI_PFSR_I0
+	ld	TMP3, TMP2, r0
+	st	TMP3, r31,  REG_OFF(EF_IPFSR)
+	ld	TMP2, TMP,  CI_PFSR_D0
+	ld	TMP3, TMP2, r0
+	br.n	_ASM_LABEL(pfsr_done)
+	 st	TMP3, r31,  REG_OFF(EF_DPFSR)
 #endif
 
+#ifdef MVME188
 /*
- * MVME188 version (see pfsr188 below)
+ * MVME188 versions
  */
-#ifdef MVME188
-#define	PFSR_SAVE_188 \
-	br	_ASM_LABEL(pfsr188);
-#else
-#define	PFSR_SAVE_188
-#endif
 
-
-#if defined(MVME187) && defined(MVME188)
-#define	PFSR_SAVE \
-	/* check if it's a mvme188 */ \
-	or.u	TMP3, r0,   hi16(_C_LABEL(brdtyp)); \
-	ld	TMP2, TMP3, lo16(_C_LABEL(brdtyp)); \
-	cmp	TMP3, TMP2, BRD_188; \
-	bb1	eq,   TMP3, _ASM_LABEL(pfsr188); \
-	PFSR_SAVE_187
-#else
-#define	PFSR_SAVE \
-	PFSR_SAVE_188 \
-	PFSR_SAVE_187
-#endif
-
-#include <m88k/m88k/eh_common.S>
-
-#ifdef MVME188
 #include <machine/mvme188.h>
-/*
- * Handling faults can be very tricky, as it is necessary to check all
- * the CMMUs of the faulting processor.
- *
- * This implementation tries to favor, speedwise, simple (2 CMMUs per CPU)
- * configurations over any other configuration.
- */
-	text
 
-ASLOCAL(pfsr188)
-	or.u	TMP2, r0,   hi16(_C_LABEL(cmmu_shift))
-	ld	TMP2, TMP2, lo16(_C_LABEL(cmmu_shift))
-	cmp	TMP3, TMP2, 2
-	bb1	lt,   TMP3, _ASM_LABEL(pfsr188_straight)
-	bb1	eq,   TMP2, _ASM_LABEL(pfsr188_double)
-
-ASLOCAL(pfsr188_quad)
+ENTRY(pfsr_save_188_quad)
 	/*
 	 * We're in configuration 2 (1 CPU, 8 CMMU).
 	 *
@@ -157,7 +125,7 @@ ASLOCAL(pfsr188_quad)
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP2, r31,  REG_OFF(EF_DPFSR)
 
-ASLOCAL(pfsr188_double)
+ENTRY(pfsr_save_188_double)
 	/*
 	 * 4 CMMUs per CPU. Almost as simple as the 2 CMMUs per CPU
 	 * situation...
@@ -166,7 +134,6 @@ ASLOCAL(pfsr188_double)
 	 * exceptions, we have to reset the fault status registers
 	 * after reading them.
 	 */
-
 	ld	TMP2, TMP,  CI_PFSR_I0
 	ld	TMP2, TMP2, r0
 	extu	TMP3, TMP2, 3<16>
@@ -190,7 +157,7 @@ ASLOCAL(pfsr188_double)
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP2, r31,  REG_OFF(EF_DPFSR)
 
-ASLOCAL(pfsr188_straight)
+ENTRY(pfsr_save_188_straight)
 	/*
 	 * We have the simple 2 CMMUs per CPU mapping. Pick our couple;
 	 * no need to reset fault status registers in this case.
@@ -203,4 +170,5 @@ ASLOCAL(pfsr188_straight)
 	ld	TMP3, TMP2, r0
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP3, r31,  REG_OFF(EF_DPFSR)
-#endif
+
+#endif	/* MVME188 */

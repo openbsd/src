@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.19 2006/05/14 08:37:39 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.20 2006/11/18 22:53:07 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1076,7 +1076,7 @@ ASLOCAL(m88100_have_pcb)
 	 * Save Pbus fault status register from data and inst CMMU.
 	 * We can afford calling a function since r1 is safe to use here.
 	 */
-ASLOCAL(pfsr_save)
+GLOBAL(pfsr_save)
 	PFSR_SAVE
 ASLOCAL(pfsr_done)
 	

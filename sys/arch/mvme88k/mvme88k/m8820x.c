@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.46 2006/05/08 14:36:10 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.47 2006/11/18 22:53:11 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -55,23 +55,24 @@
 const struct board_config {
 	int ncpus;
 	int ncmmus;
+	u_int32_t *pfsr;
 } bd_config[16] = {
-	{ 4, 8 },	/* 4P128 - 4P512 */
-	{ 2, 8 },	/* 2P128 - 2P512 */
-	{ 1, 8 },	/* 1P128 - 1P512 */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 2, 4 },	/* 2P64  - 2P256 */
-	{ 1, 4 },	/* 1P64  - 1P256 */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 1, 2 },	/* 1P32  - 1P128 */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 }
+	{ 4, 8, pfsr_save_188_straight },	/* 4P128 - 4P512 */
+	{ 2, 8, pfsr_save_188_double },		/* 2P128 - 2P512 */
+	{ 1, 8, pfsr_save_188_quad },		/* 1P128 - 1P512 */
+	{ 0, 0, NULL },
+	{ 0, 0, NULL },
+	{ 2, 4, pfsr_save_188_straight },	/* 2P64  - 2P256 */
+	{ 1, 4, pfsr_save_188_double },		/* 1P64  - 1P256 */
+	{ 0, 0, NULL },
+	{ 0, 0, NULL },
+	{ 0, 0, NULL },
+	{ 1, 2, pfsr_save_188_straight },	/* 1P32  - 1P128 */
+	{ 0, 0, NULL },
+	{ 0, 0, NULL },
+	{ 0, 0, NULL },
+	{ 0, 0, NULL },
+	{ 0, 0, NULL }
 };
 #endif
 
@@ -81,9 +82,11 @@ const struct board_config {
 void
 m8820x_setup_board_config()
 {
+	extern u_int32_t pfsr_save[];
 	struct m8820x_cmmu *cmmu;
 	int num, cmmu_num;
 	int vme188_config;
+	u_int32_t *m8820x_pfsr;
 #ifdef MVME188
 	u_int32_t whoami;
 #endif
@@ -99,6 +102,7 @@ m8820x_setup_board_config()
 		max_cpus = 1;
 		max_cmmus = 2;
 		cmmu_shift = 1;
+		m8820x_pfsr = pfsr_save_187;
 		break;
 #endif /* MVME187 */
 #ifdef MVME188
@@ -115,6 +119,7 @@ m8820x_setup_board_config()
 		m8820x_cmmu[7].cmmu_regs = (void *)VME_CMMU_D3;
 		max_cpus = bd_config[vme188_config].ncpus;
 		max_cmmus = bd_config[vme188_config].ncmmus;
+		m8820x_pfsr = bd_config[vme188_config].pfsr;
 		cmmu_shift = ff1(max_cmmus / max_cpus);
 		break;
 #endif /* MVME188 */
@@ -133,6 +138,14 @@ m8820x_setup_board_config()
 		    brdtyp, vme188_config);
 	}
 #endif
+
+	/*
+	 * Patch the exception handling code to invoke the correct pfsr
+	 * analysis chunk.
+	 */
+	pfsr_save[0] = 0xc4000000 |
+	    (((vaddr_t)m8820x_pfsr + 4 - (vaddr_t)pfsr_save) >> 2);
+	pfsr_save[1] = m8820x_pfsr[0];
 
 #ifdef DEBUG
 	/*

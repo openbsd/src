@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.27 2006/06/11 13:30:44 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.28 2006/11/18 22:53:11 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -285,5 +285,11 @@
 #define VME_CMMU_D1	0xfff5f000
 #define VME_CMMU_D2	0xfff3f000
 #define VME_CMMU_D3	0xfff7f000
+
+#if defined(_KERNEL) && !defined(_LOCORE)
+extern u_int32_t pfsr_save_188_straight[];
+extern u_int32_t pfsr_save_188_double[];
+extern u_int32_t pfsr_save_188_quad[];
+#endif
 
 #endif	/* __MACHINE_MVME188_H__ */
