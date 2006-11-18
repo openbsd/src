@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_pci.c,v 1.5 2006/11/10 20:20:04 damien Exp $  */
+/*	$OpenBSD: if_acx_pci.c,v 1.6 2006/11/18 20:44:40 grange Exp $  */
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -64,9 +64,6 @@ struct acx_pci_softc {
 	void			*sc_ih;
 	bus_size_t		sc_mapsize1;
 	bus_size_t		sc_mapsize2;
-	pcireg_t		sc_iobar_val; /* acx100 only */
-	pcireg_t		sc_bar1_val;
-	pcireg_t		sc_bar2_val;
 	int			sc_intrline;
 
 	/* hack for ACX100A */
@@ -109,7 +106,6 @@ acx_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct acx_softc *sc = &psc->sc_acx;
 	struct pci_attach_args *pa = aux;
 	const char *intrstr = NULL;
-	bus_addr_t base;
 	pci_intr_handle_t ih;
 	int error, b1 = ACX_PCI_BAR0, b2 = ACX_PCI_BAR1;
 
@@ -120,35 +116,30 @@ acx_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TI_ACX100A) {
 		error = pci_mapreg_map(pa, ACX_PCI_BAR0,
 		    PCI_MAPREG_TYPE_IO, 0, &psc->sc_io_bt,
-		    &psc->sc_io_bh, &base, &psc->sc_iomapsize, 0);
+		    &psc->sc_io_bh, NULL, &psc->sc_iomapsize, 0);
 		if (error != 0) {
 			printf(": could not map i/o space\n");
 			return;
 		}
-		psc->sc_iobar_val = base | PCI_MAPREG_TYPE_IO;
 		b1 = ACX_PCI_BAR1;
 		b2 = ACX_PCI_BAR2;
 	}
 
 	error = pci_mapreg_map(pa, b1, PCI_MAPREG_TYPE_MEM |
 	    PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_mem1_bt,
-	    &sc->sc_mem1_bh, &base, &psc->sc_mapsize1, 0);
+	    &sc->sc_mem1_bh, NULL, &psc->sc_mapsize1, 0);
 	if (error != 0) {
 		printf(": could not map memory1 space\n");
 		return;
 	}
 
-	psc->sc_bar1_val = base | PCI_MAPREG_TYPE_MEM;
-
 	error = pci_mapreg_map(pa, b2, PCI_MAPREG_TYPE_MEM |
 	    PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_mem2_bt,
-	    &sc->sc_mem2_bh, &base, &psc->sc_mapsize2, 0);
+	    &sc->sc_mem2_bh, NULL, &psc->sc_mapsize2, 0);
 	if (error != 0) {
 		printf(": could not map memory2 space\n");
 		return;
 	}
-
-	psc->sc_bar2_val = base | PCI_MAPREG_TYPE_MEM;
 
 	if (pci_intr_map(pa, &ih) != 0) {
 		printf(": could not map interrupt\n");

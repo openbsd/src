@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_pci.c,v 1.8 2006/11/10 20:20:04 damien Exp $  */
+/*	$OpenBSD: if_pgt_pci.c,v 1.9 2006/11/18 20:44:40 grange Exp $  */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -65,7 +65,6 @@ struct pgt_pci_softc {
 	pci_chipset_tag_t       sc_pc;
 	void 			*sc_ih;
 	bus_size_t		sc_mapsize;
-	pcireg_t		sc_bar0_val;
 };
 
 struct cfattach pgt_pci_ca = {
@@ -92,7 +91,6 @@ pgt_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pgt_softc *sc = &psc->sc_pgt;
 	struct pci_attach_args *pa = aux;
 	const char *intrstr = NULL;
-	bus_addr_t base;
 	pci_intr_handle_t ih;
 	int error;
 
@@ -106,12 +104,11 @@ pgt_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* map control / status registers */
 	error = pci_mapreg_map(pa, PGT_PCI_BAR0,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &sc->sc_iotag, &sc->sc_iohandle, &base, &psc->sc_mapsize, 0);
+	    &sc->sc_iotag, &sc->sc_iohandle, NULL, &psc->sc_mapsize, 0);
 	if (error != 0) {
 		printf(": could not map memory space\n");
 		return;
 	}
-	psc->sc_bar0_val = base | PCI_MAPREG_TYPE_MEM;
 
 	/* map interrupt */
 	if (pci_intr_map(pa, &ih) != 0) {
