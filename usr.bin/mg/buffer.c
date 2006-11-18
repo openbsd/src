@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.64 2006/11/18 19:27:27 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.65 2006/11/18 23:05:24 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -13,7 +13,7 @@
 #include "kbd.h"		/* needed for modes */
 
 static struct buffer  *makelist(void);
-static struct buffer *bnew(void);
+static struct buffer *bnew(const char *);
 
 /* ARGSUSED */
 int
@@ -477,13 +477,7 @@ bfind(const char *bname, int cflag)
 	if (cflag != TRUE)
 		return (NULL);
 
-	bp = bnew();
-
-	if ((bp->b_bname = strdup(bname)) == NULL) {
-		ewprintf("Can't get %d bytes", strlen(bname) + 1);
-		free(bp);
-		return (NULL);
-	}
+	bp = bnew(bname);
 
 	return (bp);
 }
@@ -493,9 +487,9 @@ bfind(const char *bname, int cflag)
  * all buffers. 
  */
 static struct buffer *
-bnew()
+bnew(const char *bname)
 {
-	struct buffer *bp;
+	struct buffer 	*bp;
 	struct line	*lp;
 	int		 i;
 
@@ -533,6 +527,10 @@ bnew()
 	bheadp = bp;
 	bp->b_dotline = bp->b_markline = 1;
 	bp->b_lines = 1;
+	if ((bp->b_bname = strdup(bname)) == NULL) {
+		ewprintf("Can't get %d bytes", strlen(bname) + 1);
+		return (NULL);
+	}
 
 	return (bp);
 }
