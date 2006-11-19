@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.92 2006/11/19 16:16:22 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.93 2006/11/19 16:40:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -566,10 +566,14 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	switch (iicprobe(0xfe)) {
 	case 0x01:		/* National Semiconductor */
 		if (addr == 0x4c &&
+		    iicprobe(0xff) == 0x41 && (iicprobe(0x03) & 0x18) == 0 &&
+		    iicprobe(0x04) <= 0x0f && (iicprobe(0xbf) & 0xf8) == 0)
+			name = "lm63";
+		else if (addr == 0x4c &&
 		    iicprobe(0xff) == 0x11 && (iicprobe(0x03) & 0x2a) == 0 &&
 		    iicprobe(0x04) <= 0x09 && (iicprobe(0xbf) & 0xf8) == 0)
 			name = "lm86";
-		if (addr == 0x4c &&
+		else if (addr == 0x4c &&
 		    iicprobe(0xff) == 0x31 && (iicprobe(0x03) & 0x2a) == 0 &&
 		    iicprobe(0x04) <= 0x09 && (iicprobe(0xbf) & 0xf8) == 0)
 			name = "lm89";		/* or lm99 */
