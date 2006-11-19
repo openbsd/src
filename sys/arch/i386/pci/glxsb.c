@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.3 2006/11/19 02:08:10 tom Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.4 2006/11/19 13:41:27 tom Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -125,6 +125,7 @@
 
 #define SB_AES_ALIGN		0x0010		/* Source and dest buffers */
 						/* must be 16-byte aligned */
+#define SB_AES_BLOCK_SIZE	0x0010
 
 /*
  * The Geode LX security block AES acceleration doesn't perform scatter-
@@ -135,7 +136,7 @@
  * buffer (buffer is twice the size of the max length, as it has both input
  * and output) then we have to perform multiple encryptions/decryptions.
  */
-#define GLXSB_MAX_AES_LEN	8192
+#define GLXSB_MAX_AES_LEN	16384
 
 #ifdef CRYPTO
 struct glxsb_dma_map {
@@ -148,7 +149,7 @@ struct glxsb_dma_map {
 };
 struct glxsb_session {
 	uint32_t	ses_key[4];
-	uint8_t		ses_iv[16];
+	uint8_t		ses_iv[SB_AES_BLOCK_SIZE];
 	int		ses_klen;
 	int		ses_used;
 };
@@ -486,8 +487,10 @@ glxsb_crypto_process(struct cryptop *crp)
 	struct cryptodesc *crd;
 	char *op_src, *op_dst;
 	uint32_t op_psrc, op_pdst;
-	uint8_t op_iv[16];
+	uint8_t op_iv[SB_AES_BLOCK_SIZE], *piv;
 	int sesn, err = 0;
+	int len, tlen, xlen;
+	int offset;
 	uint32_t control;
 	int s;
 
@@ -500,16 +503,8 @@ glxsb_crypto_process(struct cryptop *crp)
 	crd = crp->crp_desc;
 	if (crd == NULL || crd->crd_next != NULL ||
 	    crd->crd_alg != CRYPTO_AES_CBC ||
-	    (crd->crd_len % 16) != 0) {
+	    (crd->crd_len % SB_AES_BLOCK_SIZE) != 0) {
 		err = EINVAL;
-		goto out;
-	}
-
-	/* XXX TEMP TEMP TEMP need to handle this properly */
-	if (crd->crd_len > GLXSB_MAX_AES_LEN) {
-		printf("%s: operation too big: %d > %d\n",
-		    sc->sc_dev.dv_xname, crd->crd_len, GLXSB_MAX_AES_LEN);
-		err = ENOMEM;
 		goto out;
 	}
 
@@ -520,91 +515,119 @@ glxsb_crypto_process(struct cryptop *crp)
 	}
 	ses = &sc->sc_sessions[sesn];
 
+	/* How much of our buffer will we need to use? */
+	xlen = crd->crd_len > GLXSB_MAX_AES_LEN ?
+	    GLXSB_MAX_AES_LEN : crd->crd_len;
+
 	/*
 	 * XXX Check if we can have input == output on Geode LX.
 	 * XXX In the meantime, use two separate (adjacent) buffers.
 	 */
 	op_src = sc->sc_dma.dma_vaddr;
-	op_dst = sc->sc_dma.dma_vaddr + crd->crd_len;
+	op_dst = sc->sc_dma.dma_vaddr + xlen;
 
 	op_psrc = sc->sc_dma.dma_paddr;
-	op_pdst = sc->sc_dma.dma_paddr + crd->crd_len;
+	op_pdst = sc->sc_dma.dma_paddr + xlen;
 
 	if (crd->crd_flags & CRD_F_ENCRYPT) {
 		control = SB_CTL_ENC;
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
-			bcopy(crd->crd_iv, op_iv, 16);
+			bcopy(crd->crd_iv, op_iv, sizeof(op_iv));
 		else
-			bcopy(ses->ses_iv, op_iv, 16);
+			bcopy(ses->ses_iv, op_iv, sizeof(op_iv));
 
 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copyback((struct mbuf *)crp->crp_buf,
-				    crd->crd_inject, 16, op_iv);
+				    crd->crd_inject, sizeof(op_iv), op_iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV)
 				cuio_copyback((struct uio *)crp->crp_buf,
-				    crd->crd_inject, 16, op_iv);
+				    crd->crd_inject, sizeof(op_iv), op_iv);
 			else
 				bcopy(op_iv,
-				    crp->crp_buf + crd->crd_inject, 16);
+				    crp->crp_buf + crd->crd_inject, sizeof(op_iv));
 		}
 	} else {
 		control = SB_CTL_DEC;
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
-			bcopy(crd->crd_iv, op_iv, 16);
+			bcopy(crd->crd_iv, op_iv, sizeof(op_iv));
 		else {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata((struct mbuf *)crp->crp_buf,
-				    crd->crd_inject, 16, op_iv);
+				    crd->crd_inject, sizeof(op_iv), op_iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV)
 				cuio_copydata((struct uio *)crp->crp_buf,
-				    crd->crd_inject, 16, op_iv);
+				    crd->crd_inject, sizeof(op_iv), op_iv);
 			else
 				bcopy(crp->crp_buf + crd->crd_inject,
-				    op_iv, 16);
+				    op_iv, sizeof(op_iv));
 		}
 	}
 
-	if (crp->crp_flags & CRYPTO_F_IMBUF)
-		m_copydata((struct mbuf *)crp->crp_buf,
-		    crd->crd_skip, crd->crd_len, op_src);
-	else if (crp->crp_flags & CRYPTO_F_IOV)
-		cuio_copydata((struct uio *)crp->crp_buf,
-		    crd->crd_skip, crd->crd_len, op_src);
-	else
-		bcopy(crp->crp_buf + crd->crd_skip, op_src, crd->crd_len);
+	offset = 0;
+	tlen = crd->crd_len;
+	piv = op_iv;
 
-	glxsb_dma_pre_op(sc, &sc->sc_dma);
+	/* Process the data in GLXSB_MAX_AES_LEN chunks */
+	while (tlen > 0) {
+		len = (tlen > GLXSB_MAX_AES_LEN) ? GLXSB_MAX_AES_LEN : tlen;
 
-	glxsb_aes(sc, control, op_psrc, op_pdst, ses->ses_key,
-	    crd->crd_len, op_iv);
-
-	glxsb_dma_post_op(sc, &sc->sc_dma);
-
-	if (crp->crp_flags & CRYPTO_F_IMBUF)
-		m_copyback((struct mbuf *)crp->crp_buf,
-		    crd->crd_skip, crd->crd_len, op_dst);
-	else if (crp->crp_flags & CRYPTO_F_IOV)
-		cuio_copyback((struct uio *)crp->crp_buf,
-		    crd->crd_skip, crd->crd_len, op_dst);
-	else
-		bcopy(op_dst, crp->crp_buf + crd->crd_skip, crd->crd_len);
-
-	/* copy out last block for use as next session IV */
-	if (crd->crd_flags & CRD_F_ENCRYPT) {
 		if (crp->crp_flags & CRYPTO_F_IMBUF)
 			m_copydata((struct mbuf *)crp->crp_buf,
-			    crd->crd_skip + crd->crd_len - 16, 16, ses->ses_iv);
+			    crd->crd_skip + offset, len, op_src);
 		else if (crp->crp_flags & CRYPTO_F_IOV)
 			cuio_copydata((struct uio *)crp->crp_buf,
-			    crd->crd_skip + crd->crd_len - 16, 16, ses->ses_iv);
+			    crd->crd_skip + offset, len, op_src);
 		else
-			bcopy(crp->crp_buf + crd->crd_skip + crd->crd_len - 16,
-			    ses->ses_iv, 16);
+			bcopy(crp->crp_buf + crd->crd_skip + offset, op_src,
+			    len);
+
+		glxsb_dma_pre_op(sc, &sc->sc_dma);
+
+		glxsb_aes(sc, control, op_psrc, op_pdst, ses->ses_key,
+		    len, op_iv);
+
+		glxsb_dma_post_op(sc, &sc->sc_dma);
+
+		if (crp->crp_flags & CRYPTO_F_IMBUF)
+			m_copyback((struct mbuf *)crp->crp_buf,
+			    crd->crd_skip + offset, len, op_dst);
+		else if (crp->crp_flags & CRYPTO_F_IOV)
+			cuio_copyback((struct uio *)crp->crp_buf,
+			    crd->crd_skip + offset, len, op_dst);
+		else
+			bcopy(op_dst, crp->crp_buf + crd->crd_skip + offset,
+			    len);
+
+		offset += len;
+		tlen -= len;
+
+		if (tlen <= 0) {	/* Ideally, just == 0 */
+			/* Finished - put the IV in session IV */
+			piv = ses->ses_iv;
+		}
+
+		/*
+		 * Copy out last block for use as next iteration/session IV.
+		 *
+		 * piv is set to op_iv[] before the loop starts, but is
+		 * set to ses->ses_iv if we're going to exit the loop this
+		 * time.
+		 */
+		if (crd->crd_flags & CRD_F_ENCRYPT) {
+			bcopy(op_dst + len - sizeof(op_iv), piv, sizeof(op_iv));
+		} else {
+			/* Decryption, only need this if another iteration */
+			if (tlen > 0) {
+				bcopy(op_src + len - sizeof(op_iv), piv,
+				    sizeof(op_iv));
+			}
+		}
 	}
 
-	bzero(sc->sc_dma.dma_vaddr, crd->crd_len * 2);
+	/* All AES processing has now been done. */
 
+	bzero(sc->sc_dma.dma_vaddr, xlen * 2);
 out:
 	crp->crp_etype = err;
 	crypto_done(crp);
