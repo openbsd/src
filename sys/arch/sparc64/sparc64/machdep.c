@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.84 2006/09/22 19:16:07 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.85 2006/11/19 16:49:22 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -700,7 +700,7 @@ sys_sigreturn(p, v, retval)
 	}
 	scp = SCARG(uap, sigcntxp);
  	if ((vaddr_t)scp & 3 ||
-	    (error = copyin((caddr_t)scp, &sc, sizeof sc) != 0)) {
+	    (error = copyin((caddr_t)scp, &sc, sizeof sc)) != 0) {
 #ifdef DEBUG
 		printf("sigreturn: copyin failed: scp=%p\n", scp);
 #endif
