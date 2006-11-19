@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k.c,v 1.2 2004/01/14 07:24:12 miod Exp $	*/
+/*	$OpenBSD: m88k.c,v 1.3 2006/11/19 09:27:21 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -29,8 +29,7 @@
 #include <sys/param.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>
-#include <machine/pcb.h>	/* XXX temp until frame.h is standalone */
-#include <machine/frame.h>
+#include <machine/pcb.h>
 #include "pmdb.h"
 
 static const char *md_reg_names[] = {
@@ -59,26 +58,26 @@ md_def_init(void)
 int
 md_getframe(struct pstate *ps, int framenum, struct md_frame *fram)
 {
-	struct frame fr;
+	struct trapframe fr;
 	struct reg r;
 	int count;
 
 	if (process_getregs(ps, &r) != 0)
 		return (-1);
 
-	fr.F_t.tf_sp = r.r[31];
-	fr.F_t.tf_sxip = r.sxip;
+	fr.tf_sp = r.r[31];
+	fr.tf_sxip = r.sxip;
 
 	for (count = 0; count < framenum; count++) {
-		if (process_read(ps, fr.F_t.tf_sp, &fr, sizeof(fr)) < 0)
+		if (process_read(ps, fr.tf_sp, &fr, sizeof(fr)) < 0)
 			return (-1);
 
-		if (fr.F_t.tf_sxip < 0x1000)
+		if (fr.tf_sxip < 0x1000)
 			return (-1);
 	}
 
-	fram->pc = fr.F_t.tf_sxip;
-	fram->fp = fr.F_t.tf_sp;
+	fram->pc = fr.tf_sxip;
+	fram->fp = fr.tf_sp;
 
 	return (0);
 }
