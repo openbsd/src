@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.32 2006/10/26 00:05:07 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.33 2006/11/19 17:35:46 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4395,17 +4395,14 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 		__FUNCTION__, prod, chain_prod, prod_bseq);
 
 	/*
-	 * Ensure that the map for this transmission
-	 * is placed at the array index of the last
-	 * descriptor in this chain.  This is done
-	 * because a single map is used for all 
-	 * segments of the mbuf and we don't want to
-	 * delete the map before all of the segments
-	 * have been freed.
+	 * Ensure that the mbuf pointer for this
+	 * transmission is placed at the array
+	 * index of the last descriptor in this
+	 * chain.  This is done because a single
+	 * map is used for all segments of the mbuf
+	 * and we don't want to unload the map before
+	 * all of the segments have been freed.
 	 */
-	sc->tx_mbuf_map[TX_CHAIN_IDX(sc->tx_prod)] =
-		sc->tx_mbuf_map[chain_prod];
-	sc->tx_mbuf_map[chain_prod] = map;
 	sc->tx_mbuf_ptr[chain_prod] = m0;
 	sc->used_tx_bd += map->dm_nsegs;
 
@@ -4417,7 +4414,7 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 	DBRUN(BNX_VERBOSE_SEND, bnx_dump_tx_mbuf_chain(sc, chain_prod, 
 	    map_arg.maxsegs));
 
-	/* prod still points the last used tx_bd at this point. */
+	/* prod points to the next free tx_bd at this point. */
 	sc->tx_prod = prod;
 	sc->tx_prod_bseq = prod_bseq;
 
@@ -4453,8 +4450,11 @@ bnx_start(struct ifnet *ifp)
 	    "tx_chain_prod = %04X, tx_prod_bseq = 0x%08X\n",
 	    __FUNCTION__, tx_prod, tx_chain_prod, sc->tx_prod_bseq);
 
-	/* Keep adding entries while there is space in the ring. */
-	while (sc->tx_mbuf_ptr[tx_chain_prod] == NULL) {
+	/*
+	 * Keep adding entries while there is space in the ring.  We keep
+	 * BNX_TX_SLACK_SPACE entries unused at all times.
+	 */
+	while (sc->used_tx_bd < USABLE_TX_BD - BNX_TX_SLACK_SPACE) {
 		/* Check for any frames to send. */
 		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
