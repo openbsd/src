@@ -184,6 +184,7 @@
 ./usr/include/landisk/pte.h
 ./usr/include/landisk/ptrace.h
 ./usr/include/landisk/reg.h
+./usr/include/landisk/reloc.h
 ./usr/include/landisk/setjmp.h
 ./usr/include/landisk/signal.h
 ./usr/include/landisk/spinlock.h
