@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.82 2006/11/13 20:06:38 damien Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.83 2006/11/19 16:44:36 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1074,6 +1074,8 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		    rs_rates[ic->ic_fixed_rate];
 	} else
 			rate = ni->ni_rates.rs_rates[ni->ni_txrate];
+	if (rate == 0)
+		rate = 2;	/* XXX should not happen */
 	rate &= IEEE80211_RATE_VAL;
 
 	/* check if RTS/CTS or CTS-to-self protection must be used */
