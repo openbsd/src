@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-stp.c,v 1.4 2004/12/20 08:30:40 pascoe Exp $	*/
+/*	$OpenBSD: print-stp.c,v 1.5 2006/11/19 17:54:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -63,10 +63,30 @@ struct rtentry;
 #include "llc.h"
 
 #define	STP_MSGTYPE_CBPDU	0x00
+#define	STP_MSGTYPE_RSTP	0x02
 #define	STP_MSGTYPE_TBPDU	0x80
 
-#define	STP_FLAGS_TC		0x01            /* Topology change */
-#define	STP_FLAGS_TCA		0x80            /* Topology change ack */
+#define	STP_FLAGS_STPMASK	0x81		/* strip unused STP flags */
+#define	STP_FLAGS_RSTPMASK	0x7f		/* strip unused RSTP flags */
+#define	STP_FLAGS_TC		0x01		/* Topology change */
+#define	STP_FLAGS_P		0x02		/* Proposal flag */
+#define	STP_FLAGS_ROLE		0x0c		/* Port Role */
+#define	STP_FLAGS_ROLE_S	2		/* Port Role offset */
+#define	STP_FLAGS_ROLE_ALT	1		/* Alt/Backup port */
+#define	STP_FLAGS_ROLE_ROOT	2		/* Root port */
+#define	STP_FLAGS_ROLE_DESG	3		/* Designated port */
+#define	STP_FLAGS_L		0x10		/* Learning flag */
+#define	STP_FLAGS_F		0x20		/* Forwarding flag */
+#define	STP_FLAGS_A		0x40		/* Agreement flag */
+#define	STP_FLAGS_TCA		0x80		/* Topology change ack */
+#define STP_FLAGS_BITS								\
+	"\20\1TC\2PROPOSAL\5LEARNING\6FORWARDING\7AGREED\8TCACK"
+
+enum {
+	STP_PROTO_STP	= 0x00,
+	STP_PROTO_RSTP	= 0x02,
+	STP_PROTO_SSTP	= 0x10	/* Cizzco-Eeeh */
+};
 
 static void stp_print_cbpdu(const u_char *, u_int, int);
 static void stp_print_tbpdu(const u_char *, u_int);
@@ -77,14 +97,14 @@ stp_print(p, len)
 	u_int len;
 {
 	u_int16_t id;
-	int cisco_sstp = 0;
+	int proto = STP_PROTO_STP;
 
 	if (len < 3)
 		goto truncated;
 	if (p[0] == LLCSAP_8021D && p[1] == LLCSAP_8021D && p[2] == LLC_UI)
 		printf("802.1d");
 	else if (p[0] == LLCSAP_SNAP && p[1] == LLCSAP_SNAP && p[2] == LLC_UI) {
-		cisco_sstp = 1;
+		proto = STP_PROTO_SSTP;
 		printf("SSTP");
 		p += 5;
 		len -= 5;
@@ -102,7 +122,14 @@ stp_print(p, len)
 		printf(" unknown protocol id(0x%x)", id);
 		return;
 	}
-	if (p[2] != 0) {
+	switch (p[2]) {
+	case STP_PROTO_STP:
+		printf(" STP");
+		break;
+	case STP_PROTO_RSTP:
+		printf(" RSTP");
+		break;
+	default:
 		printf(" unknown protocol ver(0x%x)", p[2]);
 		return;
 	}
@@ -113,7 +140,10 @@ stp_print(p, len)
 		goto truncated;
 	switch (*p) {
 	case STP_MSGTYPE_CBPDU:
-		stp_print_cbpdu(p, len, cisco_sstp);
+		stp_print_cbpdu(p, len, proto);
+		break;
+	case STP_MSGTYPE_RSTP:
+		stp_print_cbpdu(p, len, STP_PROTO_RSTP);
 		break;
 	case STP_MSGTYPE_TBPDU:
 		stp_print_tbpdu(p, len);
@@ -130,13 +160,14 @@ truncated:
 }
 
 static void
-stp_print_cbpdu(p, len, cisco_sstp)
+stp_print_cbpdu(p, len, proto)
 	const u_char *p;
 	u_int len;
-	int cisco_sstp;
+	int proto;
 {
 	u_int32_t cost;
 	u_int16_t t;
+	u_int8_t flags, role;
 	int x;
 
 	p += 1;
@@ -147,14 +178,31 @@ stp_print_cbpdu(p, len, cisco_sstp)
 	if (len < 1)
 		goto truncated;
 	if (*p) {
-		x = 0;
+		switch (proto) {
+		case STP_PROTO_STP:
+		case STP_PROTO_SSTP:
+			flags = *p & STP_FLAGS_STPMASK;
+			role = STP_FLAGS_ROLE_DESG;
+			break;
+		case STP_PROTO_RSTP:
+		default:
+			flags = *p & STP_FLAGS_RSTPMASK;
+			role = (flags & STP_FLAGS_ROLE) >> STP_FLAGS_ROLE_S;
+			break;
+		}
 
-		printf(" flags=0x%x<", *p);
-		if ((*p) & STP_FLAGS_TC)
-			printf("%stc", (x++ != 0) ? "," : "");
-		if ((*p) & STP_FLAGS_TCA)
-			printf("%stcack", (x++ != 0) ? "," : "");
-		putchar('>');
+		printb(" flags", flags, STP_FLAGS_BITS);
+		switch (role) {
+		case STP_FLAGS_ROLE_ALT:
+			printf(" role=ALT/BACKUP");
+			break;
+		case STP_FLAGS_ROLE_ROOT:
+			printf(" role=ROOT");
+			break;
+		case STP_FLAGS_ROLE_DESG:
+			printf(" role=DESIGNATED");
+			break;
+		}
 	}
 	p += 1;
 	len -= 1;
@@ -174,7 +222,7 @@ stp_print_cbpdu(p, len, cisco_sstp)
 	if (len < 4)
 		goto truncated;
 	cost = EXTRACT_32BITS(p);
-	printf(" rootcost=0x%x", cost);
+	printf(" rootcost=%u", cost);
 	p += 4;
 	len -= 4;
 
@@ -193,7 +241,18 @@ stp_print_cbpdu(p, len, cisco_sstp)
 	if (len < 2)
 		goto truncated;
 	t = EXTRACT_16BITS(p);
-	printf(" port=0x%x", t);
+	switch (proto) {
+	case STP_PROTO_STP:
+	case STP_PROTO_SSTP:
+		printf(" port=%u", t & 0xff);
+		printf(" ifcost=%u", t >> 8);
+		break;
+	case STP_PROTO_RSTP:
+	default:
+		printf(" port=%u", t & 0xfff);
+		printf(" ifcost=%u", t >> 8);
+		break;
+	}
 	p += 2;
 	len -= 2;
 
@@ -221,7 +280,7 @@ stp_print_cbpdu(p, len, cisco_sstp)
 	p += 2;
 	len -= 2;
 
-	if (cisco_sstp) {
+	if (proto == STP_PROTO_SSTP) {
 		if (len < 7)
 			goto truncated;
 		p += 1;
