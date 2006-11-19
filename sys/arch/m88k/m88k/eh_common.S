@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.20 2006/11/18 22:53:07 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.21 2006/11/19 19:36:40 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1698,9 +1698,9 @@ ASLOCAL(no_softint)
 
 	ldcr	r2,  CPU
 	ld	r3,  r2, CI_CURPROC
-	bcnd.n	eq0, r3, _ASM_LABEL(no_ast)	/* no AST if no process! */
-	 ld	r2,  r3, P_ASTPENDING
-	bcnd.n	eq0, r3, _ASM_LABEL(no_ast)	/* .n safe since the first
+	bcnd	eq0, r3, _ASM_LABEL(no_ast)	/* no AST if no process! */
+	ld	r2,  r3, P_ASTPENDING
+	bcnd.n	eq0, r2, _ASM_LABEL(no_ast)	/* .n safe since the first
 						   instruction of CALL() is
 						   safe in a delay slot. */
 	/*
