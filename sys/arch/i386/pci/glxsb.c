@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.2 2006/11/17 16:06:16 tom Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.3 2006/11/19 02:08:10 tom Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -39,7 +39,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#undef CRYPTO
+#undef CRYPTO			/* XXX AES support not yet ready XXX */
 #ifdef CRYPTO
 #include <crypto/cryptodev.h>
 #include <crypto/rijndael.h>
@@ -123,7 +123,29 @@
 
 #define SB_MEM_SIZE		0x0810		/* Size of memory block */
 
+#define SB_AES_ALIGN		0x0010		/* Source and dest buffers */
+						/* must be 16-byte aligned */
+
+/*
+ * The Geode LX security block AES acceleration doesn't perform scatter-
+ * gather: it just takes source and destination addresses.  Therefore the
+ * plain- and ciphertexts need to be contiguous.  To this end, we allocate
+ * a buffer for both, and accept the overhead of copying in and out.  If
+ * the number of bytes in one operation is bigger than allowed for by the
+ * buffer (buffer is twice the size of the max length, as it has both input
+ * and output) then we have to perform multiple encryptions/decryptions.
+ */
+#define GLXSB_MAX_AES_LEN	8192
+
 #ifdef CRYPTO
+struct glxsb_dma_map {
+	bus_dmamap_t		dma_map;
+	bus_dma_segment_t	dma_seg;
+	int			dma_nsegs;
+	int			dma_size;
+	caddr_t			dma_vaddr;
+	uint32_t		dma_paddr;
+};
 struct glxsb_session {
 	uint32_t	ses_key[4];
 	uint8_t		ses_iv[16];
@@ -139,6 +161,8 @@ struct glxsb_softc {
 	struct timeout		sc_to;
 
 #ifdef CRYPTO
+	bus_dma_tag_t		sc_dmat;
+	struct glxsb_dma_map	sc_dma;
 	int32_t			sc_cid;
 	int			sc_nsessions;
 	struct glxsb_session	*sc_sessions;
@@ -174,8 +198,13 @@ int glxsb_crypto_process(struct cryptop *);
 int glxsb_crypto_freesession(uint64_t);
 static void glxsb_bus_space_write_consec_16(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, uint32_t *);
-static __inline void glxsb_aes(struct glxsb_softc *, uint32_t, void *, void *,
-    void *, int, void *);
+static __inline void glxsb_aes(struct glxsb_softc *, uint32_t, uint32_t,
+    uint32_t, void *, int, void *);
+
+int glxsb_dma_alloc(struct glxsb_softc *, int, struct glxsb_dma_map *);
+void glxsb_dma_pre_op(struct glxsb_softc *, struct glxsb_dma_map *);
+void glxsb_dma_post_op(struct glxsb_softc *, struct glxsb_dma_map *);
+void glxsb_dma_free(struct glxsb_softc *, struct glxsb_dma_map *);
 
 #endif /* CRYPTO */
 
@@ -248,6 +277,8 @@ glxsb_attach(struct device *parent, struct device *self, void *aux)
 	    SB_AI_AES_B_COMPLETE | SB_AI_EEPROM_COMPLETE;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SB_AES_INT, intr);
 
+	sc->sc_dmat = pa->pa_dmat;
+
 	if (glxsb_crypto_setup(sc))
 		printf(" AES");
 #endif
@@ -276,6 +307,10 @@ int
 glxsb_crypto_setup(struct glxsb_softc *sc)
 {
 	int algs[CRYPTO_ALGORITHM_MAX + 1];
+
+	/* Allocate a contiguous DMA-able buffer to work in */
+	if (glxsb_dma_alloc(sc, GLXSB_MAX_AES_LEN * 2, &sc->sc_dma) != 0)
+		return 0;
 
 	bzero(algs, sizeof(algs));
 	algs[CRYPTO_AES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
@@ -371,33 +406,23 @@ glxsb_bus_space_write_consec_16(bus_space_tag_t iot, bus_space_handle_t ioh,
  * Must be called at splnet() or higher
  */
 static __inline void
-glxsb_aes(struct glxsb_softc *sc, uint32_t control, void *src, void *dst,
-    void *key, int len, void *iv)
+glxsb_aes(struct glxsb_softc *sc, uint32_t control, uint32_t psrc,
+    uint32_t pdst, void *key, int len, void *iv)
 {
-	uint32_t intr;
+	uint32_t status;
 	int i;
-	extern paddr_t vtophys(vaddr_t);
-	static int re_check = 0;
-
-	if (re_check) {
-		panic("glxsb: call again :(\n");
-	} else {
-		re_check = 1;
-	}
 
 	if (len & 0xF) {
-		printf("glxsb: len must be a multiple of 16 (not %d)\n", len);
-		re_check = 0;
+		printf("%s: len must be a multiple of 16 (not %d)\n",
+		    sc->sc_dev.dv_xname, len);
 		return;
 	}
 
 	/* Set the source */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SB_SOURCE_A,
-	    (uint32_t) vtophys((vaddr_t) src));
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SB_SOURCE_A, psrc);
 
 	/* Set the destination address */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SB_DEST_A,
-	    (uint32_t) vtophys((vaddr_t) dst));
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SB_DEST_A, pdst);
 
 	/* Set the data length */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SB_LENGTH_A, len);
@@ -419,26 +444,38 @@ glxsb_aes(struct glxsb_softc *sc, uint32_t control, void *src, void *dst,
 	/*
 	 * Now wait until it is done.
 	 *
-	 * We do a busy wait: typically the SB completes after 7 or 8
-	 * iterations (yet to see more than 9).  Wait up to a hundred
-	 * just in case.
+	 * We do a busy wait.  Obviously the number of iterations of
+	 * the loop required to perform the AES operation depends upon
+	 * the number of bytes to process.
+	 *
+	 * On a 500 MHz Geode LX we see
+	 *
+	 *	length (bytes)	typical max iterations
+	 *	    16		   12
+	 *	    64		   22
+	 *	   256		   59
+	 *	  1024		  212
+	 *	  8192		1,537
+	 *
+	 * Since we have a maximum size of operation defined in
+	 * GLXSB_MAX_AES_LEN, we use this constant to decide how long
+	 * to wait.  Allow a couple of orders of magnitude longer than
+	 * it should really take, just in case.
 	 */
-	for (i = 0; i < 100; i++) {
-		intr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SB_AES_INT);
+	for (i = 0; i < GLXSB_MAX_AES_LEN * 10; i++) {
+		status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SB_CTL_A);
 
-		if (intr & SB_AI_AES_A_COMPLETE) {	/* Done */
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, SB_AES_INT,
-			    intr);
-
-			if (i > sc->maxpolls)	/* XXX */
+		if ((status & SB_CTL_ST) == 0) {	/* Done */
+			if (i > sc->maxpolls) {	/* XXX */
 				sc->maxpolls = i;
-			re_check = 0;
+				printf("%s: maxpolls now %d (len = %d)\n",
+				    sc->sc_dev.dv_xname, i, len);
+			}
 			return;
 		}
 	}
 
-	re_check = 0;
-	printf("glxsb: operation failed to complete\n");
+	printf("%s: operation failed to complete\n", sc->sc_dev.dv_xname);
 }
 
 int
@@ -447,9 +484,8 @@ glxsb_crypto_process(struct cryptop *crp)
 	struct glxsb_softc *sc = glxsb_sc;
 	struct glxsb_session *ses;
 	struct cryptodesc *crd;
-	char *op_buf = NULL;
-	char *op_src;			/* Source and dest buffers must */
-	char *op_dst;			/* be 16-byte aligned */
+	char *op_src, *op_dst;
+	uint32_t op_psrc, op_pdst;
 	uint8_t op_iv[16];
 	int sesn, err = 0;
 	uint32_t control;
@@ -469,6 +505,14 @@ glxsb_crypto_process(struct cryptop *crp)
 		goto out;
 	}
 
+	/* XXX TEMP TEMP TEMP need to handle this properly */
+	if (crd->crd_len > GLXSB_MAX_AES_LEN) {
+		printf("%s: operation too big: %d > %d\n",
+		    sc->sc_dev.dv_xname, crd->crd_len, GLXSB_MAX_AES_LEN);
+		err = ENOMEM;
+		goto out;
+	}
+
 	sesn = GLXSB_SESSION(crp->crp_sid);
 	if (sesn >= sc->sc_nsessions) {
 		err = EINVAL;
@@ -478,16 +522,13 @@ glxsb_crypto_process(struct cryptop *crp)
 
 	/*
 	 * XXX Check if we can have input == output on Geode LX.
-	 * XXX In the meantime, allocate space for two separate 
-	 *     (adjacent) buffers
+	 * XXX In the meantime, use two separate (adjacent) buffers.
 	 */
-	op_buf = malloc(crd->crd_len * 2, M_DEVBUF, M_NOWAIT);
-	if (op_buf == NULL) {
-		err = ENOMEM;
-		goto out;
-	}
-	op_src = op_buf;
-	op_dst = op_buf + crd->crd_len;
+	op_src = sc->sc_dma.dma_vaddr;
+	op_dst = sc->sc_dma.dma_vaddr + crd->crd_len;
+
+	op_psrc = sc->sc_dma.dma_paddr;
+	op_pdst = sc->sc_dma.dma_paddr + crd->crd_len;
 
 	if (crd->crd_flags & CRD_F_ENCRYPT) {
 		control = SB_CTL_ENC;
@@ -533,8 +574,12 @@ glxsb_crypto_process(struct cryptop *crp)
 	else
 		bcopy(crp->crp_buf + crd->crd_skip, op_src, crd->crd_len);
 
-	glxsb_aes(sc, control, op_src, op_dst, ses->ses_key,
+	glxsb_dma_pre_op(sc, &sc->sc_dma);
+
+	glxsb_aes(sc, control, op_psrc, op_pdst, ses->ses_key,
 	    crd->crd_len, op_iv);
+
+	glxsb_dma_post_op(sc, &sc->sc_dma);
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF)
 		m_copyback((struct mbuf *)crp->crp_buf,
@@ -558,15 +603,94 @@ glxsb_crypto_process(struct cryptop *crp)
 			    ses->ses_iv, 16);
 	}
 
+	bzero(sc->sc_dma.dma_vaddr, crd->crd_len * 2);
+
 out:
-	if (op_buf != NULL) {
-		bzero(op_buf, crd->crd_len * 2);
-		free(op_buf, M_DEVBUF);
-	}
 	crp->crp_etype = err;
 	crypto_done(crp);
 	splx(s);
 	return (err);
+}
+
+int
+glxsb_dma_alloc(struct glxsb_softc *sc, int size, struct glxsb_dma_map *dma)
+{
+	int rc;
+
+	dma->dma_nsegs = 1;
+	dma->dma_size = size;
+
+	rc = bus_dmamap_create(sc->sc_dmat, size, dma->dma_nsegs, size,
+	    0, BUS_DMA_NOWAIT, &dma->dma_map);
+	if (rc != 0) {
+		printf("%s: couldn't create DMA map for %d bytes (%d)\n",
+		    sc->sc_dev.dv_xname, size, rc);
+
+		goto fail0;
+	}
+
+	rc = bus_dmamem_alloc(sc->sc_dmat, size, SB_AES_ALIGN, 0,
+	    &dma->dma_seg, dma->dma_nsegs, &dma->dma_nsegs, BUS_DMA_NOWAIT);
+	if (rc != 0) {
+		printf("%s: couldn't allocate DMA memory of %d bytes (%d)\n",
+		    sc->sc_dev.dv_xname, size, rc);
+
+		goto fail1;
+	}
+
+	rc = bus_dmamem_map(sc->sc_dmat, &dma->dma_seg, 1, size,
+	    &dma->dma_vaddr, BUS_DMA_NOWAIT);
+	if (rc != 0) {
+		printf("%s: couldn't map DMA memory for %d bytes (%d)\n",
+		    sc->sc_dev.dv_xname, size, rc);
+
+		goto fail2;
+	}
+
+	rc = bus_dmamap_load(sc->sc_dmat, dma->dma_map, dma->dma_vaddr,
+	    size, NULL, BUS_DMA_NOWAIT);
+	if (rc != 0) {
+		printf("%s: couldn't load DMA memory for %d bytes (%d)\n",
+		    sc->sc_dev.dv_xname, size, rc);
+
+		goto fail3;
+	}
+
+	dma->dma_paddr = dma->dma_map->dm_segs[0].ds_addr;
+
+	return 0;
+
+fail3:
+	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, size);
+fail2:
+	bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nsegs);
+fail1:
+	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
+fail0:
+	return rc;
+}
+
+void
+glxsb_dma_pre_op(struct glxsb_softc *sc, struct glxsb_dma_map *dma)
+{
+	bus_dmamap_sync(sc->sc_dmat, dma->dma_map, 0, dma->dma_size,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+}
+
+void
+glxsb_dma_post_op(struct glxsb_softc *sc, struct glxsb_dma_map *dma)
+{
+	bus_dmamap_sync(sc->sc_dmat, dma->dma_map, 0, dma->dma_size,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+}
+
+void
+glxsb_dma_free(struct glxsb_softc *sc, struct glxsb_dma_map *dma)
+{
+	bus_dmamap_unload(sc->sc_dmat, dma->dma_map);
+	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, dma->dma_size);
+	bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nsegs);
+	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
 }
 
 #endif /* CRYPTO */
