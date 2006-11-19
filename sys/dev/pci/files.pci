@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.217 2006/11/17 18:58:30 mglocker Exp $
+#	$OpenBSD: files.pci,v 1.218 2006/11/19 14:20:55 mglocker Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -584,6 +584,12 @@ file	dev/pci/if_acx_pci.c		acx_pci
 #
 attach	pgt at pci with pgt_pci
 file	dev/pci/if_pgt_pci.c		pgt_pci
+
+#
+# Marvel Libertas Open
+#
+attach	malo at pci with malo_pci
+file	dev/pci/if_malo_pci.c		malo_pci
 
 #
 # Broadcom BC43xx
