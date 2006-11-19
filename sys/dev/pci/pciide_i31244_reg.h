@@ -1,5 +1,5 @@
-/*	$OpenBSD: pciide_i31244_reg.h,v 1.1 2003/06/07 20:00:32 grange Exp $	*/
-/*	$NetBSD: pciide_i31244_reg.h,v 1.1 2003/03/18 01:41:54 thorpej Exp $	*/
+/*	$OpenBSD: pciide_i31244_reg.h,v 1.2 2006/11/19 20:09:59 brad Exp $	*/
+/*	$NetBSD: pciide_i31244_reg.h,v 1.2 2005/02/11 21:12:32 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -51,10 +51,14 @@
 /*
  * Extended Control and Status Register 0
  */
-#define	ARTISEA_PCI_SUECR0	0x98
-#define	SUECR0_LED0_ONLY	(1U << 28)	/* activity on LED0 only */
-#define	SUECR0_SFSS		(1U << 16)	/* Superset Features
+#define	ARTISEA_PCI_SUECSR0	0x98
+#define	SUECSR0_LED0_ONLY	(1U << 28)	/* activity on LED0 only */
+#define	SUECSR0_SFSS		(1U << 16)	/* Superset Features
 						   Secondary Select */
+
+#define ARTISEA_PCI_SUDCSCR	0xa0
+#define SUDCSCR_DMA_WCAE	0x02		/* Write cache align enable */
+#define SUDCSCR_DMA_RCAE	0x01		/* Read cache align enable */
 
 /*
  * DPA mode shared registers.
@@ -165,16 +169,16 @@
 #define	SUPDSSER_ERR_M		(1U << 1)	/* recovered comm. */
 #define	SUPDSSER_ERR_I		(1U << 0)	/* not implemented */
 
-#define	ARTISEA_SUPDDSCR	0x008	/* DPA SATA SControl register */
-#define	SUPDDSCR_IPM_ANY	(0 << 8)	/* no IPM mode restrictions */
-#define	SUPDDSCR_IPM_NO_PARTIAL	(1U << 8)	/* no PARTIAL mode */
-#define	SUPDDSCR_IPM_NO_SLUMBER	(2U << 8)	/* no SLUMBER mode */
-#define	SUPDDSCR_IPM_NONE	(3U << 8)	/* no PM allowed */
-#define	SUPDDSCR_SPD_ANY	(0 << 4)	/* no speed restrictions */
-#define	SUPDDSCR_SPD_G1		(1U << 4)	/* <= Generation 1 */
-#define	SUPDDSCR_DET_NORM	(0 << 0)	/* normal operation */
-#define	SUPDDSCR_DET_INIT	(1U << 0)	/* comm. init */
-#define	SUPDDSCR_DET_DISABLE	(4U << 0)	/* disable interface */
+#define	ARTISEA_SUPDSSCR	0x008	/* DPA SATA SControl register */
+#define	SUPDSSCR_IPM_ANY	(0 << 8)	/* no IPM mode restrictions */
+#define	SUPDSSCR_IPM_NO_PARTIAL	(1U << 8)	/* no PARTIAL mode */
+#define	SUPDSSCR_IPM_NO_SLUMBER	(2U << 8)	/* no SLUMBER mode */
+#define	SUPDSSCR_IPM_NONE	(3U << 8)	/* no PM allowed */
+#define	SUPDSSCR_SPD_ANY	(0 << 4)	/* no speed restrictions */
+#define	SUPDSSCR_SPD_G1		(1U << 4)	/* <= Generation 1 */
+#define	SUPDSSCR_DET_NORM	(0 << 0)	/* normal operation */
+#define	SUPDSSCR_DET_INIT	(1U << 0)	/* comm. init */
+#define	SUPDSSCR_DET_DISABLE	(4U << 0)	/* disable interface */
 
 #define	ARTISEA_SUPDSDBR	0x00c	/* DPA Set Device Bits register */
 
