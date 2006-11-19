@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.260 2006/11/05 20:27:42 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.261 2006/11/19 21:45:49 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -316,6 +316,10 @@ const struct pciide_product_desc default_product_desc = {
 };
 
 const struct pciide_product_desc pciide_intel_products[] =  {
+	{ PCI_PRODUCT_INTEL_31244,	/* Intel 31244 SATA */
+	  0,
+	  artisea_chip_map
+	},
 	{ PCI_PRODUCT_INTEL_82092AA,	/* Intel 82092AA IDE */
 	  0,
 	  default_chip_map
@@ -400,12 +404,6 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  IDE_PCI_CLASS_OVERRIDE,
 	  piixsata_chip_map
 	},
-#ifdef notyet
-	{ PCI_PRODUCT_INTEL_31244,	 /* Intel 31244 SATA */
-	  0,
-	  artisea_chip_map
-	},
-#endif
 	{ PCI_PRODUCT_INTEL_6300ESB_IDE, /* Intel 6300ESB IDE */
 	  IDE_PCI_CLASS_OVERRIDE,
 	  piix_chip_map
@@ -7957,7 +7955,6 @@ nforce_pci_intr(void *arg)
 	return (rv);
 }
 
-#ifdef notyet
 void
 artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
@@ -7968,7 +7965,7 @@ artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	printf("%s: DMA",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
-#ifndef PCIIDE_I31244_ENABLEDMA
+#ifdef PCIIDE_I31244_DISABLEDMA
 	if (sc->sc_rev == 0) {
 		printf(" disabled due to rev. 0");
 		sc->sc_dma_ok = 0;
@@ -8010,7 +8007,6 @@ artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		sata_setup_channel(&cp->wdc_channel);
 	}
 }
-#endif
 
 void
 ite_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
