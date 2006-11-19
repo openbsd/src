@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.30 2006/07/25 08:22:32 kjell Exp $	*/
+/*	$OpenBSD: display.c,v 1.31 2006/11/19 16:51:19 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -104,7 +104,7 @@ struct score *score;			/* [NROW * NROW] */
 #ifndef LINENOMODE
 #define LINENOMODE TRUE
 #endif /* !LINENOMODE */ 
-static int      linenos = LINENOMODE;
+static int	 linenos = LINENOMODE;
 
 /*
  * Since we don't have variables (we probably should) this is a command
@@ -119,7 +119,7 @@ linenotoggle(int f, int n)
 	else
 		linenos = !linenos;
 
-	sgarbf = TRUE;	
+	sgarbf = TRUE;
 
 	return (TRUE);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yank.c,v 1.5 2006/11/17 08:45:31 kjell Exp $	*/
+/*	$OpenBSD: yank.c,v 1.6 2006/11/19 16:51:19 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -42,7 +42,7 @@ kdelete(void)
  * that if you put something in the kill buffer you are going to put more
  * stuff there too later. Return TRUE if all is well, and FALSE on errors.
  * Print a message on errors.  Dir says whether to put it at back or front.
- * This call is ignored if  KNONE is set. 
+ * This call is ignored if  KNONE is set.
  */
 int
 kinsert(int c, int dir)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.32 2006/07/25 08:27:09 kjell Exp $	*/
+/*	$OpenBSD: grep.c,v 1.33 2006/11/19 16:51:19 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.
  * Copyright (c) 2005 Kjell Wooding <kjell@openbsd.org>.
@@ -303,7 +303,7 @@ compile_goto_error(int f, int n)
 	/* last line is compilation result */
 	if (curwp->w_dotp == last)
 		return (FALSE);
-	
+
 	if ((line = linetostr(curwp->w_dotp)) == NULL)
 		return (FALSE);
 	lp = line;
@@ -314,7 +314,7 @@ compile_goto_error(int f, int n)
 	lineno = (int)strtonum(ln, INT_MIN, INT_MAX, &errstr);
 	if (errstr)
 		goto fail;
-	
+
 	if (fname && fname[0] != '/') {
 		(void)strlcpy(path, curbp->b_cwd, sizeof(path));
 		if (strlcat(path, fname, sizeof(path)) >= sizeof(path))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.97 2006/11/17 08:45:31 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.98 2006/11/19 16:51:19 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -43,7 +43,7 @@ typedef int	(*PF)(int, int);	/* generally useful type */
 #define TRUE	1		/* True, yes, good, etc.	 */
 #define ABORT	2		/* Death, ^G, abort, etc.	 */
 
-#define KCLEAR	2		/* clear echo area 		 */
+#define KCLEAR	2		/* clear echo area		 */
 
 /*
  * These flag bits keep track of
