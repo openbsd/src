@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.2 2006/11/19 14:28:38 miod Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.13 2006/01/21 02:09:06 uwe Exp $	*/
 
 /*
@@ -36,64 +36,66 @@
 
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
+#include <ddb/db_sym.h>
 
-static void	get_opcode(uint16_t *, char *, size_t);
+static void	disasm_branch(char *, size_t, const char *, db_addr_t);
 static void	get_ascii(unsigned char *, char *);
-static void	f_02(uint16_t *, char *, size_t);
-static void	f_03(uint16_t *, char *, size_t);
-static void	f_04(uint16_t *, char *, size_t);
-static void	f_08(uint16_t *, char *, size_t);
-static void	f_09(uint16_t *, char *, size_t);
-static void	f_0a(uint16_t *, char *, size_t);
-static void	f_0b(uint16_t *, char *, size_t);
-static void	f_0c(uint16_t *, char *, size_t);
-static void	f_10(uint16_t *, char *, size_t);
-static void	f_20(uint16_t *, char *, size_t);
-static void	f_24(uint16_t *, char *, size_t);
-static void	f_28(uint16_t *, char *, size_t);
-static void	f_2c(uint16_t *, char *, size_t);
-static void	f_30(uint16_t *, char *, size_t);
-static void	f_34(uint16_t *, char *, size_t);
-static void	f_38(uint16_t *, char *, size_t);
-static void	f_3c(uint16_t *, char *, size_t);
-static void	f_40(uint16_t *, char *, size_t);
-static void	f_41(uint16_t *, char *, size_t);
-static void	f_42(uint16_t *, char *, size_t);
-static void	f_43(uint16_t *, char *, size_t);
-static void	f_44(uint16_t *, char *, size_t);
-static void	f_45(uint16_t *, char *, size_t);
-static void	f_46(uint16_t *, char *, size_t);
-static void	f_47(uint16_t *, char *, size_t);
-static void	f_48(uint16_t *, char *, size_t);
-static void	f_49(uint16_t *, char *, size_t);
-static void	f_4a(uint16_t *, char *, size_t);
-static void	f_4b(uint16_t *, char *, size_t);
-static void	f_4c(uint16_t *, char *, size_t);
-static void	f_4d(uint16_t *, char *, size_t);
-static void	f_4e(uint16_t *, char *, size_t);
-static void	f_4f(uint16_t *, char *, size_t);
-static void	f_50(uint16_t *, char *, size_t);
-static void	f_60(uint16_t *, char *, size_t);
-static void	f_64(uint16_t *, char *, size_t);
-static void	f_68(uint16_t *, char *, size_t);
-static void	f_6c(uint16_t *, char *, size_t);
-static void	f_70(uint16_t *, char *, size_t);
-static void	f_80(uint16_t *, char *, size_t);
-static void	f_90(uint16_t *, char *, size_t);
-static void	f_a0(uint16_t *, char *, size_t);
-static void	f_b0(uint16_t *, char *, size_t);
-static void	f_c0(uint16_t *, char *, size_t);
-static void	f_d0(uint16_t *, char *, size_t);
-static void	f_e0(uint16_t *, char *, size_t);
-static void	f_f0(uint16_t *, char *, size_t);
-static void	f_f4(uint16_t *, char *, size_t);
-static void	f_f8(uint16_t *, char *, size_t);
-static void	f_fc(uint16_t *, char *, size_t);
-static void	f_fd(uint16_t *, char *, size_t);
-static void	f_fe(uint16_t *, char *, size_t);
+static void	get_opcode(db_addr_t, char *, size_t);
+static void	f_02(db_addr_t, u_int, char *, size_t);
+static void	f_03(db_addr_t, u_int, char *, size_t);
+static void	f_04(db_addr_t, u_int, char *, size_t);
+static void	f_08(db_addr_t, u_int, char *, size_t);
+static void	f_09(db_addr_t, u_int, char *, size_t);
+static void	f_0a(db_addr_t, u_int, char *, size_t);
+static void	f_0b(db_addr_t, u_int, char *, size_t);
+static void	f_0c(db_addr_t, u_int, char *, size_t);
+static void	f_10(db_addr_t, u_int, char *, size_t);
+static void	f_20(db_addr_t, u_int, char *, size_t);
+static void	f_24(db_addr_t, u_int, char *, size_t);
+static void	f_28(db_addr_t, u_int, char *, size_t);
+static void	f_2c(db_addr_t, u_int, char *, size_t);
+static void	f_30(db_addr_t, u_int, char *, size_t);
+static void	f_34(db_addr_t, u_int, char *, size_t);
+static void	f_38(db_addr_t, u_int, char *, size_t);
+static void	f_3c(db_addr_t, u_int, char *, size_t);
+static void	f_40(db_addr_t, u_int, char *, size_t);
+static void	f_41(db_addr_t, u_int, char *, size_t);
+static void	f_42(db_addr_t, u_int, char *, size_t);
+static void	f_43(db_addr_t, u_int, char *, size_t);
+static void	f_44(db_addr_t, u_int, char *, size_t);
+static void	f_45(db_addr_t, u_int, char *, size_t);
+static void	f_46(db_addr_t, u_int, char *, size_t);
+static void	f_47(db_addr_t, u_int, char *, size_t);
+static void	f_48(db_addr_t, u_int, char *, size_t);
+static void	f_49(db_addr_t, u_int, char *, size_t);
+static void	f_4a(db_addr_t, u_int, char *, size_t);
+static void	f_4b(db_addr_t, u_int, char *, size_t);
+static void	f_4c(db_addr_t, u_int, char *, size_t);
+static void	f_4d(db_addr_t, u_int, char *, size_t);
+static void	f_4e(db_addr_t, u_int, char *, size_t);
+static void	f_4f(db_addr_t, u_int, char *, size_t);
+static void	f_50(db_addr_t, u_int, char *, size_t);
+static void	f_60(db_addr_t, u_int, char *, size_t);
+static void	f_64(db_addr_t, u_int, char *, size_t);
+static void	f_68(db_addr_t, u_int, char *, size_t);
+static void	f_6c(db_addr_t, u_int, char *, size_t);
+static void	f_70(db_addr_t, u_int, char *, size_t);
+static void	f_80(db_addr_t, u_int, char *, size_t);
+static void	f_90(db_addr_t, u_int, char *, size_t);
+static void	f_a0(db_addr_t, u_int, char *, size_t);
+static void	f_b0(db_addr_t, u_int, char *, size_t);
+static void	f_c0(db_addr_t, u_int, char *, size_t);
+static void	f_d0(db_addr_t, u_int, char *, size_t);
+static void	f_e0(db_addr_t, u_int, char *, size_t);
+static void	f_f0(db_addr_t, u_int, char *, size_t);
+static void	f_f4(db_addr_t, u_int, char *, size_t);
+static void	f_f8(db_addr_t, u_int, char *, size_t);
+static void	f_fc(db_addr_t, u_int, char *, size_t);
+static void	f_fd(db_addr_t, u_int, char *, size_t);
+static void	f_fe(db_addr_t, u_int, char *, size_t);
 
-typedef	void (*rasm_t)(uint16_t *, char *, size_t);
-static	rasm_t	f[16][16] = {
+typedef	void (*rasm_t)(db_addr_t, u_int, char *, size_t);
+static const rasm_t f[16][16] = {
 	{ /* [0][0-7] */	NULL, NULL, f_02, f_03, f_04, f_04, f_04, f_04,
 	  /* [0][8-f] */	f_08, f_09, f_0a, f_0b, f_0c, f_0c, f_0c, f_0c },
 	{ /* [1][0-7] */	f_10, f_10, f_10, f_10, f_10, f_10, f_10, f_10,
@@ -134,7 +136,7 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 	char line[40], ascii[4];
 	void *pc = (void *)loc;
 
-	get_opcode(pc, line, sizeof line);
+	get_opcode(loc, line, sizeof line);
 	if (altfmt) {
 		get_ascii(pc, ascii);
 		db_printf("%-32s ! %s\n", line, ascii);
@@ -145,9 +147,43 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 }
 
 static void
+disasm_branch(char *buf, size_t bufsiz, const char *opstr, db_addr_t addr)
+{
+	size_t len;
+	db_expr_t d, value;
+	char *name;
+	db_sym_t cursym;
+	extern unsigned long db_lastsym;
+	extern unsigned int db_maxoff;
+
+	snprintf(buf, bufsiz, "%-8s", opstr);
+	len = strlen(buf);
+	buf += len;
+	bufsiz -= len;
+
+	if (addr <= db_lastsym) {
+		cursym = db_search_symbol(addr, DB_STGY_PROC, &d);
+		db_symbol_values(cursym, &name, &value);
+		if (name && d < db_maxoff && value) {
+			if (d == 0)
+				snprintf(buf, bufsiz, "%s", name);
+			else {
+				snprintf(buf, bufsiz, "%s+", name);
+				len = strlen(buf);
+				buf += len;
+				bufsiz -= len;
+				db_format(buf, bufsiz, d, DB_FORMAT_R, 1, 0);
+			}
+			return;
+		}
+	}
+
+	db_format(buf, bufsiz, addr, DB_FORMAT_N, 1, 0);
+}
+
+static void
 get_ascii(unsigned char *cp, char *str)
 {
-
 	*str++ = (0x20 <= *cp && *cp < 0x7f) ? *cp : '.';
 	cp++;
 	*str++ = (0x20 <= *cp && *cp < 0x7f) ? *cp : '.';
@@ -155,28 +191,30 @@ get_ascii(unsigned char *cp, char *str)
 }
 
 static void
-get_opcode(uint16_t *sp, char *buf, size_t bufsiz)
+get_opcode(db_addr_t loc, char *buf, size_t bufsiz)
 {
-	int	n0, n3;
+	int n0, n3;
+	u_int insn = *(u_int16_t *)loc;
 
 	strlcpy(buf, "unknown opcode", bufsiz);
 
-	n0 = (*sp & 0xf000) >> 12;
-	n3 = (*sp & 0x000f);
+	n0 = (insn & 0xf000) >> 12;
+	n3 = (insn & 0x000f);
 
-	if (f[n0][n3] != NULL) {
-		(*f[n0][n3])(sp, buf, bufsiz);
-	}
+	if (f[n0][n3] != NULL)
+		(*f[n0][n3])(loc, insn, buf, bufsiz);
+	else
+		snprintf(buf, bufsiz, ".word 0x%x", insn);
 }
 
 static void
-f_02(uint16_t *code, char *buf, size_t bufsiz)
+f_02(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, type, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -184,22 +222,17 @@ f_02(uint16_t *code, char *buf, size_t bufsiz)
 		case 0:
 			snprintf(buf, bufsiz, "stc     sr, r%d", rn);
 			break;
-
 		case 1:
 			snprintf(buf, bufsiz, "stc     gbr, r%d", rn);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "stc     vbr, r%d", rn);
 			break;
-
 		case 3:
 			snprintf(buf, bufsiz, "stc     ssr, r%d", rn);
 			break;
-
 		}
 		break;
-
 	case 1:
 		switch (md) {
 		case 0:
@@ -207,11 +240,9 @@ f_02(uint16_t *code, char *buf, size_t bufsiz)
 			break;
 		}
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "stc     r%d_bank, r%d", md, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "stc     r%d_bank, r%d", md+4, rn);
 		break;
@@ -219,13 +250,13 @@ f_02(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_03(uint16_t *code, char *buf, size_t bufsiz)
+f_03(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, type, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -233,13 +264,11 @@ f_03(uint16_t *code, char *buf, size_t bufsiz)
 		case 0:
 			snprintf(buf, bufsiz, "bsrf    r%d", rn);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "braf    r%d", rn);
 			break;
 		}
 		break;
-
 	case 2:
 		switch (md) {
 		case 0:
@@ -250,29 +279,25 @@ f_03(uint16_t *code, char *buf, size_t bufsiz)
 	} /* end of switch (type) */
 }
 
-
 static void
-f_04(uint16_t *code, char *buf, size_t bufsiz)
+f_04(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "mov.b   r%d, @(r0, r%d)", rm, rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "mov.w   r%d, @(r0, r%d)", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "mov.l   r%d, @(r0, r%d)", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "mul.l   r%d, r%d)", rm, rn);
 		break;
@@ -280,13 +305,13 @@ f_04(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_08(uint16_t *code, char *buf, size_t bufsiz)
+f_08(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	n1, type, md;
 
-	n1   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	n1   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	if (n1 != 0)
 		return;
@@ -297,27 +322,22 @@ f_08(uint16_t *code, char *buf, size_t bufsiz)
 		case 0:
 			strlcpy(buf, "clrt", bufsiz);
 			break;
-
 		case 1:
 			strlcpy(buf, "sett", bufsiz);
 			break;
-
 		case 2:
 			strlcpy(buf, "clrmac", bufsiz);
 			break;
-
 		case 3:
 			strlcpy(buf, "ldtlb", bufsiz);
 			break;
 		}
 		break;
-
 	case 1:
 		switch (md) {
 		case 0:
 			strlcpy(buf, "clrs", bufsiz);
 			break;
-
 		case 1:
 			strlcpy(buf, "sets", bufsiz);
 			break;
@@ -327,12 +347,12 @@ f_08(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_09(uint16_t *code, char *buf, size_t bufsiz)
+f_09(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, fx;
 
-	rn = (*code & 0x0f00) >> 8;
-	fx = (*code & 0x00f0) >> 4;
+	rn = (insn & 0x0f00) >> 8;
+	fx = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
@@ -340,13 +360,11 @@ f_09(uint16_t *code, char *buf, size_t bufsiz)
 			return;
 		strlcpy(buf, "nop", bufsiz);
 		break;
-
 	case 1:
 		if (rn != 0)
 			return;
 		strlcpy(buf, "div0u", bufsiz);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "movt    r%d", rn);
 		break;
@@ -354,13 +372,13 @@ f_09(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_0a(uint16_t *code, char *buf, size_t bufsiz)
+f_0a(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, type, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -368,23 +386,19 @@ f_0a(uint16_t *code, char *buf, size_t bufsiz)
 		case 0:
 			snprintf(buf, bufsiz, "sts     mach, r%d", rn);
 			break;
-
 		case 1:
 			snprintf(buf, bufsiz, "sts     macl, r%d", rn);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "sts     pr, r%d", rn);
 			break;
 		}
 		break;
-
 	case 1:
 		switch (md) {
 		case 1:
 			snprintf(buf, bufsiz, "sts     fpul, r%d", rn);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "sts     fpscr, r%d", rn);
 			break;
@@ -394,24 +408,22 @@ f_0a(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_0b(uint16_t *code, char *buf, size_t bufsiz)
+f_0b(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	n1, fx;
 
-	n1 = (*code & 0x0f00) >> 8;
+	n1 = (insn & 0x0f00) >> 8;
 	if (n1 != 0)
 		return;
 
-	fx = (*code & 0x00f0) >> 4;
+	fx = (insn & 0x00f0) >> 4;
 	switch (fx) {
 	case 0:
 		strlcpy(buf, "rts", bufsiz);
 		break;
-
 	case 1:
 		strlcpy(buf, "sleep", bufsiz);
 		break;
-
 	case 2:
 		strlcpy(buf, "rte", bufsiz);
 		break;
@@ -419,27 +431,24 @@ f_0b(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_0c(uint16_t *code, char *buf, size_t bufsiz)
+f_0c(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "mov.b   @(r0, r%d), r%d", rm, rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "mov.w   @(r0, r%d), r%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "mov.l   @(r0, r%d), r%d", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "mac.l   @r%d+, r%d+", rm, rn);
 		break;
@@ -447,65 +456,59 @@ f_0c(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_10(uint16_t *code, char *buf, size_t bufsiz)
+f_10(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, disp;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	disp = (*code & 0x000f);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	disp = (insn & 0x000f);
 	disp *= 4;
 
 	snprintf(buf, bufsiz, "mov.l   r%d, @(%d, r%d)", rm, disp, rn);
 }
 
 static void
-f_20(uint16_t *code, char *buf, size_t bufsiz)
+f_20(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "mov.b   r%d, @r%d", rm, rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "mov.w   r%d, @r%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "mov.l   r%d, @r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
 
-
 static void
-f_24(uint16_t *code, char *buf, size_t bufsiz)
+f_24(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "mov.b   r%d, @-r%d", rm, rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "mov.w   r%d, @-r%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "mov.l   r%d, @-r%d", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "div0s   r%d, r%d)", rm, rn);
 		break;
@@ -513,56 +516,49 @@ f_24(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_28(uint16_t *code, char *buf, size_t bufsiz)
+f_28(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "tst     r%d, r%d", rm, rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "and     r%d, r%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "xor     r%d, r%d", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "or      r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
 
-
 static void
-f_2c(uint16_t *code, char *buf, size_t bufsiz)
+f_2c(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "cmp/str r%d, r%d", rm, rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "xtrct   r%d, r%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "mulu.w  r%d, r%d", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "muls.w  r%d, r%d", rm, rn);
 		break;
@@ -570,52 +566,46 @@ f_2c(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_30(uint16_t *code, char *buf, size_t bufsiz)
+f_30(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "cmp/eq  r%d, r%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "cmp/hs  r%d, r%d", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "cmp/ge  r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
 
-
 static void
-f_34(uint16_t *code, char *buf, size_t bufsiz)
+f_34(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "div1    r%d, r%d", rm, rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "dmulu.l r%d, r%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "cmp/hi  r%d, r%d", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "cmp/gt  r%d, r%d", rm, rn);
 		break;
@@ -623,76 +613,67 @@ f_34(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_38(uint16_t *code, char *buf, size_t bufsiz)
+f_38(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "sub     r%d, r%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "subc    r%d, r%d", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "subv    r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
 
-
 static void
-f_3c(uint16_t *code, char *buf, size_t bufsiz)
+f_3c(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "add     r%d, r%d", rm, rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "dmulu.l r%d, r%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "addc    r%d, r%d", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "addv    r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
 
-
 static void
-f_40(uint16_t *code, char *buf, size_t bufsiz)
+f_40(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, fx;
 
-	rn   = (*code & 0x0f00) >> 8;
-	fx   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	fx   = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
 		snprintf(buf, bufsiz, "shll    r%d", rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "dt      r%d", rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "shal    r%d", rn);
 		break;
@@ -700,37 +681,34 @@ f_40(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_41(uint16_t *code, char *buf, size_t bufsiz)
+f_41(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, fx;
 
-	rn   = (*code & 0x0f00) >> 8;
-	fx   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	fx   = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
 		snprintf(buf, bufsiz, "shlr    r%d", rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "cmp/pz  r%d", rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "shar    r%d", rn);
 		break;
 	} /* end of switch (fx) */
 }
 
-
 static void
-f_42(uint16_t *code, char *buf, size_t bufsiz)
+f_42(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, type, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -738,23 +716,19 @@ f_42(uint16_t *code, char *buf, size_t bufsiz)
 		case 0:
 			snprintf(buf, bufsiz, "sts.l   mach, @-r%d", rn);
 			break;
-
 		case 1:
 			snprintf(buf, bufsiz, "sts.l   macl, @-r%d", rn);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "sts.l   pr, @-r%d", rn);
 			break;
 		}
 		break;
-
 	case 1:
 		switch (md) {
 		case 1:
 			snprintf(buf, bufsiz, "sts.l   fpul, @-r%d", rn);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "sts.l   fpscr, @-r%d", rn);
 			break;
@@ -764,13 +738,13 @@ f_42(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_43(uint16_t *code, char *buf, size_t bufsiz)
+f_43(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, type, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -778,21 +752,17 @@ f_43(uint16_t *code, char *buf, size_t bufsiz)
 		case 0:
 			snprintf(buf, bufsiz, "stc.l   sr, @-r%d", rn);
 			break;
-
 		case 1:
 			snprintf(buf, bufsiz, "stc.l   gbr, @-r%d", rn);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "stc.l   vbr, @-r%d", rn);
 			break;
-
 		case 3:
 			snprintf(buf, bufsiz, "stc.l   ssr, @-r%d", rn);
 			break;
 		}
 		break;
-
 	case 1:
 		switch (md) {
 		case 0:
@@ -800,11 +770,9 @@ f_43(uint16_t *code, char *buf, size_t bufsiz)
 			break;
 		}
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "stc.l   r%d_bank, @-r%d", md, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "stc.l   r%d_bank, @-r%d", md+4, rn);
 		break;
@@ -812,18 +780,17 @@ f_43(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_44(uint16_t *code, char *buf, size_t bufsiz)
+f_44(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, fx;
 
-	rn   = (*code & 0x0f00) >> 8;
-	fx   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	fx   = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
 		snprintf(buf, bufsiz, "rotl    r%d", rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "rotcl   r%d", rn);
 		break;
@@ -831,22 +798,20 @@ f_44(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_45(uint16_t *code, char *buf, size_t bufsiz)
+f_45(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, fx;
 
-	rn   = (*code & 0x0f00) >> 8;
-	fx   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	fx   = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
 		snprintf(buf, bufsiz, "rotr    r%d", rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "cmp/pl  r%d", rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "rotcr   r%d", rn);
 		break;
@@ -854,13 +819,13 @@ f_45(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_46(uint16_t *code, char *buf, size_t bufsiz)
+f_46(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rm, type, md;
 
-	rm   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rm   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -868,23 +833,19 @@ f_46(uint16_t *code, char *buf, size_t bufsiz)
 		case 0:
 			snprintf(buf, bufsiz, "lds.l   @r%d+, mach", rm);
 			break;
-
 		case 1:
 			snprintf(buf, bufsiz, "lds.l   @r%d+, macl", rm);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "lds.l   @r%d+, pr", rm);
 			break;
 		}
 		break;
-
 	case 1:
 		switch (md) {
 		case 1:
 			snprintf(buf, bufsiz, "lds.l   @r%d+, fpul", rm);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "lds.l   @r%d+, fpscr", rm);
 			break;
@@ -894,13 +855,13 @@ f_46(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_47(uint16_t *code, char *buf, size_t bufsiz)
+f_47(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rm, type, md;
 
-	rm   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rm   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -908,21 +869,17 @@ f_47(uint16_t *code, char *buf, size_t bufsiz)
 		case 0:
 			snprintf(buf, bufsiz, "ldc.l   @r%d+, sr", rm);
 			break;
-
 		case 1:
 			snprintf(buf, bufsiz, "ldc.l   @r%d+, gbr", rm);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "ldc.l   @r%d+, vbr", rm);
 			break;
-
 		case 3:
 			snprintf(buf, bufsiz, "ldc.l   @r%d+, ssr", rm);
 			break;
 		}
 		break;
-
 	case 1:
 		switch (md) {
 		case 0:
@@ -930,11 +887,9 @@ f_47(uint16_t *code, char *buf, size_t bufsiz)
 			break;
 		}
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "ldc.l   @r%d+, r%d_bank", rm, md);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "ldc.l   @r%d+, r%d_bank", rm, md+4);
 		break;
@@ -942,22 +897,20 @@ f_47(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_48(uint16_t *code, char *buf, size_t bufsiz)
+f_48(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, fx;
 
-	rn   = (*code & 0x0f00) >> 8;
-	fx   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	fx   = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
 		snprintf(buf, bufsiz, "shll2   r%d", rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "shll8   r%d", rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "shll16  r%d", rn);
 		break;
@@ -965,22 +918,20 @@ f_48(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_49(uint16_t *code, char *buf, size_t bufsiz)
+f_49(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, fx;
 
-	rn   = (*code & 0x0f00) >> 8;
-	fx   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	fx   = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
 		snprintf(buf, bufsiz, "shlr2   r%d", rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "shlr8   r%d", rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "shlr16  r%d", rn);
 		break;
@@ -988,13 +939,13 @@ f_49(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_4a(uint16_t *code, char *buf, size_t bufsiz)
+f_4a(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rm, type, md;
 
-	rm   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rm   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -1002,23 +953,19 @@ f_4a(uint16_t *code, char *buf, size_t bufsiz)
 		case 0:
 			snprintf(buf, bufsiz, "lds     r%d, mach", rm);
 			break;
-
 		case 1:
 			snprintf(buf, bufsiz, "lds     r%d, macl", rm);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "lds     r%d, pr", rm);
 			break;
 		}
 		break;
-
 	case 1:
 		switch (md) {
 		case 1:
 			snprintf(buf, bufsiz, "lds     r%d, fpul", rm);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "lds     r%d, fpscr", rm);
 			break;
@@ -1028,22 +975,20 @@ f_4a(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_4b(uint16_t *code, char *buf, size_t bufsiz)
+f_4b(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rm, fx;
 
-	rm   = (*code & 0x0f00) >> 8;
-	fx   = (*code & 0x00f0) >> 4;
+	rm   = (insn & 0x0f00) >> 8;
+	fx   = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
 		snprintf(buf, bufsiz, "jsr     @r%d", rm);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "tas.b   @r%d", rm);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "jmp     @r%d", rm);
 		break;
@@ -1051,33 +996,33 @@ f_4b(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_4c(uint16_t *code, char *buf, size_t bufsiz)
+f_4c(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
 	snprintf(buf, bufsiz, "shad    r%d, r%d", rm, rn);
 }
 
 static void
-f_4d(uint16_t *code, char *buf, size_t bufsiz)
+f_4d(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
 	snprintf(buf, bufsiz, "shld    r%d, r%d", rm, rn);
 }
 
 static void
-f_4e(uint16_t *code, char *buf, size_t bufsiz)
+f_4e(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rm, type, md;
 
-	rm   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rm   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -1085,21 +1030,17 @@ f_4e(uint16_t *code, char *buf, size_t bufsiz)
 		case 0:
 			snprintf(buf, bufsiz, "ldc     r%d, sr", rm);
 			break;
-
 		case 1:
 			snprintf(buf, bufsiz, "ldc     r%d, gbr", rm);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "ldc     r%d, vbr", rm);
 			break;
-
 		case 3:
 			snprintf(buf, bufsiz, "ldc     r%d, ssr", rm);
 			break;
 		}
 		break;
-
 	case 1:
 		switch (md) {
 		case 0:
@@ -1107,11 +1048,9 @@ f_4e(uint16_t *code, char *buf, size_t bufsiz)
 			break;
 		}
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "ldc     r%d, r%d_bank", rm, md);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "ldc     r%d, r%d_bank", rm, md+4);
 		break;
@@ -1119,50 +1058,47 @@ f_4e(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_4f(uint16_t *code, char *buf, size_t bufsiz)
+f_4f(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
 	snprintf(buf, bufsiz, "mac.w   @r%d+, @r%d+", rm, rn);
 }
 
 static void
-f_50(uint16_t *code, char *buf, size_t bufsiz)
+f_50(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, disp;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	disp = (*code & 0x000f);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	disp = (insn & 0x000f);
 	disp *= 4;
 
 	snprintf(buf, bufsiz, "mov.l   @(%d, r%d), r%d", disp, rm, rn);
 }
 
 static void
-f_60(uint16_t *code, char *buf, size_t bufsiz)
+f_60(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "mov.b   @r%d, r%d", rm, rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "mov.w   @r%d, r%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "mov.l   @r%d, r%d", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "mov     r%d, r%d", rm, rn);
 		break;
@@ -1170,27 +1106,24 @@ f_60(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_64(uint16_t *code, char *buf, size_t bufsiz)
+f_64(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "mov.b   @r%d+, r%d", rm, rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "mov.w   @r%d+, r%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "mov.l   @r%d+, r%d", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "not     r%d, r%d", rm, rn);
 		break;
@@ -1198,27 +1131,24 @@ f_64(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_68(uint16_t *code, char *buf, size_t bufsiz)
+f_68(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "swap.b  r%d, r%d", rm, rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "swap.w  r%d, r%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "negc    r%d, r%d", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "neg     r%d, r%d", rm, rn);
 		break;
@@ -1226,27 +1156,24 @@ f_68(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_6c(uint16_t *code, char *buf, size_t bufsiz)
+f_6c(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "extu.b  r%d, r%d", rm, rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "extu.w  r%d, r%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "exts.b  r%d, r%d", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "exts.w  r%d, r%d", rm, rn);
 		break;
@@ -1254,35 +1181,34 @@ f_6c(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_70(uint16_t *code, char *buf, size_t bufsiz)
+f_70(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, imm;
 
-	rn   = (*code & 0x0f00) >> 8;
-	imm  = (int) ((char) (*code & 0x00ff));
+	rn   = (insn & 0x0f00) >> 8;
+	imm  = (int) ((char) (insn & 0x00ff));
 
 	snprintf(buf, bufsiz, "add     #0x%x, r%d", imm, rn);
 }
 
 static void
-f_80(uint16_t *code, char *buf, size_t bufsiz)
+f_80(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	type, md, rn, disp;
 
-	type = (*code & 0x0c00) >> 10;
-	md   = (*code & 0x0300) >> 8;
+	type = (insn & 0x0c00) >> 10;
+	md   = (insn & 0x0300) >> 8;
 
 	switch (type) {
 	case 0:
-		rn   = (*code & 0x00f0) >> 4;
-		disp = (*code & 0x000f);
+		rn   = (insn & 0x00f0) >> 4;
+		disp = (insn & 0x000f);
 
 		switch (md) {
 		case 0:
 			snprintf(buf, bufsiz, "mov.b   r0, @(%d, r%d)",
 			    disp, rn);
 			break;
-
 		case 1:
 			disp *= 2;
 			snprintf(buf, bufsiz, "mov.w   r0, @(%d, r%d)",
@@ -1290,17 +1216,15 @@ f_80(uint16_t *code, char *buf, size_t bufsiz)
 			break;
 		}
 		break;
-
 	case 1:
-		rn   = (*code & 0x00f0) >> 4;
-		disp = (*code & 0x000f);
+		rn   = (insn & 0x00f0) >> 4;
+		disp = (insn & 0x000f);
 
 		switch (md) {
 		case 0:
 			snprintf(buf, bufsiz, "mov.b   @(%d, r%d), r0",
 			    disp, rn);
 			break;
-
 		case 1:
 			disp *= 2;
 			snprintf(buf, bufsiz, "mov.w   @(%d, r%d), r0",
@@ -1308,40 +1232,35 @@ f_80(uint16_t *code, char *buf, size_t bufsiz)
 			break;
 		}
 		break;
-
 	case 2:
-		disp = (*code & 0x00ff);
+		disp = (insn & 0x00ff);
 
 		switch (md) {
 		case 0:
 			snprintf(buf, bufsiz, "cmp/eq  #%d, r0", disp);
 			break;
-
 		case 1:
 			disp = (int) ((char) disp);
 			disp *= 2;
-			snprintf(buf, bufsiz, "bt      0x%x", disp);
+			disasm_branch(buf, bufsiz, "bt", loc + 4 + disp);
 			break;
-
 		case 3:
 			disp = (int) ((char) disp);
 			disp *= 2;
-			snprintf(buf, bufsiz, "bf      0x%x", disp);
+			disasm_branch(buf, bufsiz, "bf", loc + 4 + disp);
 			break;
 		}
 		break;
-
 	case 3:
-		disp = (int) ((char) (*code & 0x00ff));
+		disp = (int) ((char) (insn & 0x00ff));
 		disp *= 2;
 
 		switch (md) {
 		case 1:
-			snprintf(buf, bufsiz, "bt/s    0x%x", disp);
+			disasm_branch(buf, bufsiz, "bt/s", loc + 4 + disp);
 			break;
-
 		case 3:
-			snprintf(buf, bufsiz, "bf/s    0x%x", disp);
+			disasm_branch(buf, bufsiz, "bf/s", loc + 4 + disp);
 			break;
 		}
 		break;
@@ -1349,51 +1268,51 @@ f_80(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_90(uint16_t *code, char *buf, size_t bufsiz)
+f_90(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, disp;
 
-	rn   = (*code & 0x0f00) >> 8;
-	disp = (*code & 0x00ff);
+	rn   = (insn & 0x0f00) >> 8;
+	disp = (insn & 0x00ff);
 	disp *= 2;
 
 	snprintf(buf, bufsiz, "mov.w   @(%d, pc), r%d", disp, rn);
 }
 
 static void
-f_a0(uint16_t *code, char *buf, size_t bufsiz)
+f_a0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	disp;
 
-	disp = (*code & 0x0fff);
+	disp = (insn & 0x0fff);
 	if (disp & 0x0800)	/* negative displacement? */
 		disp |= 0xfffff000; /* sign extend */
 	disp *= 2;
 
-	snprintf(buf, bufsiz, "bra     %d(0x%x)", disp, disp);
+	disasm_branch(buf, bufsiz, "bra", loc + 4 + disp);
 }
 
 static void
-f_b0(uint16_t *code, char *buf, size_t bufsiz)
+f_b0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	disp;
 
-	disp = (*code & 0x0fff);
+	disp = (insn & 0x0fff);
 	if (disp & 0x0800)	/* negative displacement? */
 		disp |= 0xfffff000; /* sign extend */
 	disp *= 2;
 
-	snprintf(buf, bufsiz, "bsr     %d(0x%x)", disp, disp);
+	disasm_branch(buf, bufsiz, "bsr", loc + 4 + disp);
 }
 
 static void
-f_c0(uint16_t *code, char *buf, size_t bufsiz)
+f_c0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	type, md, imm;
 
-	type = (*code & 0x0c00) >> 10;
-	md   = (*code & 0x0300) >> 8;
-	imm  = (*code & 0x00ff);
+	type = (insn & 0x0c00) >> 10;
+	md   = (insn & 0x0300) >> 8;
+	imm  = (insn & 0x00ff);
 
 	switch (type) {
 	case 0:
@@ -1401,80 +1320,65 @@ f_c0(uint16_t *code, char *buf, size_t bufsiz)
 		case 0:
 			snprintf(buf, bufsiz, "mov.b   r0, @(%d, gbr)", imm);
 			break;
-
 		case 1:
 			imm *= 2;
 			snprintf(buf, bufsiz, "mov.w   r0, @(%d, gbr)", imm);
 			break;
-
 		case 2:
 			imm *= 4;
 			snprintf(buf, bufsiz, "mov.l   r0, @(%d, gbr)", imm);
 			break;
-
 		case 3:
 			snprintf(buf, bufsiz, "trapa   #%d", imm);
 			break;
 		}
 		break;
-
 	case 1:
 		switch (md) {
 		case 0:
 			snprintf(buf, bufsiz, "mov.b   @(%d, gbr), r0", imm);
 			break;
-
 		case 1:
 			imm *= 2;
 			snprintf(buf, bufsiz, "mov.w   @(%d, gbr), r0", imm);
 			break;
-
 		case 2:
 			imm *= 4;
 			snprintf(buf, bufsiz, "mov.l   @(%d, gbr), r0", imm);
 			break;
-
 		case 3:
 			imm *= 4;
 			snprintf(buf, bufsiz, "mova    @(%d, pc), r0", imm);
 			break;
 		}
 		break;
-
 	case 2:
 		switch (md) {
 		case 0:
 			snprintf(buf, bufsiz, "tst     #%d, r0", imm);
 			break;
-
 		case 1:
 			snprintf(buf, bufsiz, "and     #%d, r0", imm);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "xor     #%d, r0", imm);
 			break;
-
 		case 3:
 			snprintf(buf, bufsiz, "or      #%d, r0", imm);
 			break;
 		}
 		break;
-
 	case 3:
 		switch (md) {
 		case 0:
 			snprintf(buf, bufsiz, "tst.b   #%d, @(r0, gbr)", imm);
 			break;
-
 		case 1:
 			snprintf(buf, bufsiz, "and.b   #%d, @(r0, gbr)", imm);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "xor.b   #%d, @(r0, gbr)", imm);
 			break;
-
 		case 3:
 			snprintf(buf, bufsiz, "or.b    #%d, @(r0, gbr)", imm);
 			break;
@@ -1483,52 +1387,48 @@ f_c0(uint16_t *code, char *buf, size_t bufsiz)
 	} /* end of switch (type) */
 }
 
-
 static void
-f_d0(uint16_t *code, char *buf, size_t bufsiz)
+f_d0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, disp;
 
-	rn   = (*code & 0x0f00) >> 8;
-	disp = (*code & 0x00ff);
+	rn   = (insn & 0x0f00) >> 8;
+	disp = (insn & 0x00ff);
 	disp *= 4;
 
 	snprintf(buf, bufsiz, "mov.l   @(%d, pc), r%d", disp, rn);
 }
 
 static void
-f_e0(uint16_t *code, char *buf, size_t bufsiz)
+f_e0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, imm;
 
-	rn   = (*code & 0x0f00) >> 8;
-	imm  = (int) ((char) (*code & 0x00ff));
+	rn   = (insn & 0x0f00) >> 8;
+	imm  = (int) ((char) (insn & 0x00ff));
 
 	snprintf(buf, bufsiz, "mov     #0x%x, r%d", imm, rn);
 }
 
 static void
-f_f0(uint16_t *code, char *buf, size_t bufsiz)
+f_f0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "fadd    fr%d, fr%d", rm, rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "fsub    fr%d, fr%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "fmul    fr%d, fr%d", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "fdiv    fr%d, fr%d", rm, rn);
 		break;
@@ -1536,27 +1436,24 @@ f_f0(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_f4(uint16_t *code, char *buf, size_t bufsiz)
+f_f4(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "fcmp/eq fr%d, fr%d", rm, rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "fcmp/gt fr%d, fr%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "fmov.s  @(r0, r%d), fr%d", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "fmov.s  fr%d, @(r0, r%d)", rm, rn);
 		break;
@@ -1564,27 +1461,24 @@ f_f4(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_f8(uint16_t *code, char *buf, size_t bufsiz)
+f_f8(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
 		snprintf(buf, bufsiz, "fmov.s  @r%d, fr%d", rm, rn);
 		break;
-
 	case 1:
 		snprintf(buf, bufsiz, "fmov.s  @r%d+, fr%d", rm, rn);
 		break;
-
 	case 2:
 		snprintf(buf, bufsiz, "fmov.s  fr%d, @r%d", rm, rn);
 		break;
-
 	case 3:
 		snprintf(buf, bufsiz, "fmov.s  fr%d, @-r%d", rm, rn);
 		break;
@@ -1592,24 +1486,24 @@ f_f8(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_fc(uint16_t *code, char *buf, size_t bufsiz)
+f_fc(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
 
 	snprintf(buf, bufsiz, "fmov    fr%d, fr%d", rm, rn);
 }
 
 static void
-f_fd(uint16_t *code, char *buf, size_t bufsiz)
+f_fd(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, type, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -1617,37 +1511,30 @@ f_fd(uint16_t *code, char *buf, size_t bufsiz)
 		case 0:
 			snprintf(buf, bufsiz, "fsts    fpul, fr%d", rn);
 			break;
-
 		case 1:
 			snprintf(buf, bufsiz, "flds    fr%d, fpul", rn);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "float   fpul, fr%d", rn);
 			break;
-
 		case 3:
 			snprintf(buf, bufsiz, "ftrc    fr%d, fpul", rn);
 			break;
 		}
 		break;
-
 	case 1:
 		switch (md) {
 		case 0:
 			snprintf(buf, bufsiz, "fneg    fr%d", rn);
 			break;
-
 		case 1:
 			snprintf(buf, bufsiz, "fabs    fr%d", rn);
 			break;
-
 		case 2:
 			snprintf(buf, bufsiz, "fsqrt   fr%d", rn);
 			break;
 		}
 		break;
-
 	case 2:
 		switch (md) {
 		case 0:
@@ -1660,12 +1547,12 @@ f_fd(uint16_t *code, char *buf, size_t bufsiz)
 }
 
 static void
-f_fe(uint16_t *code, char *buf, size_t bufsiz)
+f_fe(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
 
 	snprintf(buf, bufsiz, "fmac    fr0, fr%d, fr%d", rm, rn);
 }
