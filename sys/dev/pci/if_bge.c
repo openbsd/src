@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.195 2006/10/28 22:14:47 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.196 2006/11/20 22:40:39 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1932,6 +1932,10 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	bcopy(sc->bge_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
 
 	if (BGE_IS_JUMBO_CAPABLE(sc))
 		ifp->if_hardmtu = BGE_JUMBO_MTU;
