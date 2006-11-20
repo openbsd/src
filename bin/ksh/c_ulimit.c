@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ulimit.c,v 1.15 2006/03/12 00:26:58 deraadt Exp $	*/
+/*	$OpenBSD: c_ulimit.c,v 1.16 2006/11/20 21:53:39 miod Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -118,7 +118,7 @@ c_ulimit(char **wp)
 				bi_errorf("invalid limit: %s", wp[0]);
 				return 1;
 			}
-			val = rval * l->factor;
+			val = (rlim_t)rval * l->factor;
 		}
 	}
 	if (all) {
