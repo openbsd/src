@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.256 2006/11/07 06:16:56 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.257 2006/11/20 14:31:17 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -66,6 +66,7 @@ int	 pfctl_clear_altq(int, int);
 int	 pfctl_clear_src_nodes(int, int);
 int	 pfctl_clear_states(int, const char *, int);
 void	 pfctl_addrprefix(char *, struct pf_addr *);
+int	 pfctl_kill_src_nodes(int, const char *, int);
 int	 pfctl_kill_states(int, const char *, int);
 void	 pfctl_init_options(struct pfctl *);
 int	 pfctl_load_options(struct pfctl *);
@@ -107,6 +108,8 @@ char		*pf_device = "/dev/pf";
 char		*ifaceopt;
 char		*tableopt;
 const char	*tblcmdopt;
+int		 src_node_killers;
+char		*src_node_kill[2];
 int		 state_killers;
 char		*state_kill[2];
 int		 loadopt;
@@ -227,11 +230,10 @@ usage(void)
 
 	fprintf(stderr, "usage: %s [-AdeghmNnOqRrvz] ", __progname);
 	fprintf(stderr, "[-a anchor] [-D macro=value] [-F modifier]\n");
-	fprintf(stderr, "\t[-f file] [-i interface] [-k host | network] ");
-	fprintf(stderr, "[-o [level]]\n");
-	fprintf(stderr, "\t[-p device] [-s modifier] ");
-	fprintf(stderr, "[-t table -T command [address ...]]\n");
-	fprintf(stderr, "\t[-x level]\n");
+	fprintf(stderr, "\t[-f file] [-i interface] [-K host | network] ");
+	fprintf(stderr, "[-k host | network ]\n");
+	fprintf(stderr, "\t[-o [level]] [-p device] [-s modifier ]\n");
+	fprintf(stderr, "\t[-t table -T command [address ...]] [-x level]\n");
 	exit(1);
 }
 
@@ -428,6 +430,113 @@ pfctl_addrprefix(char *addr, struct pf_addr *mask)
 		break;
 	}
 	freeaddrinfo(res);
+}
+
+int
+pfctl_kill_src_nodes(int dev, const char *iface, int opts)
+{
+	struct pfioc_src_node_kill psnk;
+	struct addrinfo *res[2], *resp[2];
+	struct sockaddr last_src, last_dst;
+	int killed, sources, dests;
+	int ret_ga;
+
+	killed = sources = dests = 0;
+
+	memset(&psnk, 0, sizeof(psnk));
+	memset(&psnk.psnk_src.addr.v.a.mask, 0xff,
+	    sizeof(psnk.psnk_src.addr.v.a.mask));
+	memset(&last_src, 0xff, sizeof(last_src));
+	memset(&last_dst, 0xff, sizeof(last_dst));
+
+	pfctl_addrprefix(src_node_kill[0], &psnk.psnk_src.addr.v.a.mask);
+
+	if ((ret_ga = getaddrinfo(src_node_kill[0], NULL, NULL, &res[0]))) {
+		errx(1, "getaddrinfo: %s", gai_strerror(ret_ga));
+		/* NOTREACHED */
+	}
+	for (resp[0] = res[0]; resp[0]; resp[0] = resp[0]->ai_next) {
+		if (resp[0]->ai_addr == NULL)
+			continue;
+		/* We get lots of duplicates.  Catch the easy ones */
+		if (memcmp(&last_src, resp[0]->ai_addr, sizeof(last_src)) == 0)
+			continue;
+		last_src = *(struct sockaddr *)resp[0]->ai_addr;
+
+		psnk.psnk_af = resp[0]->ai_family;
+		sources++;
+
+		if (psnk.psnk_af == AF_INET)
+			psnk.psnk_src.addr.v.a.addr.v4 =
+			    ((struct sockaddr_in *)resp[0]->ai_addr)->sin_addr;
+		else if (psnk.psnk_af == AF_INET6)
+			psnk.psnk_src.addr.v.a.addr.v6 =
+			    ((struct sockaddr_in6 *)resp[0]->ai_addr)->
+			    sin6_addr;
+		else
+			errx(1, "Unknown address family %d", psnk.psnk_af);
+
+		if (src_node_killers > 1) {
+			dests = 0;
+			memset(&psnk.psnk_dst.addr.v.a.mask, 0xff,
+			    sizeof(psnk.psnk_dst.addr.v.a.mask));
+			memset(&last_dst, 0xff, sizeof(last_dst));
+			pfctl_addrprefix(src_node_kill[1],
+			    &psnk.psnk_dst.addr.v.a.mask);
+			if ((ret_ga = getaddrinfo(src_node_kill[1], NULL, NULL,
+			    &res[1]))) {
+				errx(1, "getaddrinfo: %s",
+				    gai_strerror(ret_ga));
+				/* NOTREACHED */
+			}
+			for (resp[1] = res[1]; resp[1];
+			    resp[1] = resp[1]->ai_next) {
+				if (resp[1]->ai_addr == NULL)
+					continue;
+				if (psnk.psnk_af != resp[1]->ai_family)
+					continue;
+
+				if (memcmp(&last_dst, resp[1]->ai_addr,
+				    sizeof(last_dst)) == 0)
+					continue;
+				last_dst = *(struct sockaddr *)resp[1]->ai_addr;
+
+				dests++;
+
+				if (psnk.psnk_af == AF_INET)
+					psnk.psnk_dst.addr.v.a.addr.v4 =
+					    ((struct sockaddr_in *)resp[1]->
+					    ai_addr)->sin_addr;
+				else if (psnk.psnk_af == AF_INET6)
+					psnk.psnk_dst.addr.v.a.addr.v6 =
+					    ((struct sockaddr_in6 *)resp[1]->
+					    ai_addr)->sin6_addr;
+				else
+					errx(1, "Unknown address family %d",
+					    psnk.psnk_af);
+
+				if (ioctl(dev, DIOCKILLSRCNODES, &psnk))
+					err(1, "DIOCKILLSRCNODES");
+				killed += psnk.psnk_af;
+				/* fixup psnk.psnk_af */
+				psnk.psnk_af = resp[1]->ai_family;
+			}
+			freeaddrinfo(res[1]);
+		} else {
+			if (ioctl(dev, DIOCKILLSRCNODES, &psnk))
+				err(1, "DIOCKILLSRCNODES");
+			killed += psnk.psnk_af;
+			/* fixup psnk.psnk_af */
+			psnk.psnk_af = res[0]->ai_family;
+		}
+	}
+
+	freeaddrinfo(res[0]);
+
+	if ((opts & PF_OPT_QUIET) == 0)
+		fprintf(stderr, "killed %d src nodes from %d sources and %d "
+		    "destinations\n", killed, sources, dests);
+	return (0);
 }
 
 int
@@ -1844,7 +1953,7 @@ main(int argc, char *argv[])
 		usage();
 
 	while ((ch = getopt(argc, argv,
-	    "a:AdD:eqf:F:ghi:k:mnNOo::p:rRs:t:T:vx:z")) != -1) {
+	    "a:AdD:eqf:F:ghi:k:K:mnNOo::p:rRs:t:T:vx:z")) != -1) {
 		switch (ch) {
 		case 'a':
 			anchoropt = optarg;
@@ -1883,6 +1992,15 @@ main(int argc, char *argv[])
 				/* NOTREACHED */
 			}
 			state_kill[state_killers++] = optarg;
+			mode = O_RDWR;
+			break;
+		case 'K':
+			if (src_node_killers >= 2) {
+				warnx("can only specify -K twice");
+				usage();
+				/* NOTREACHED */
+			}
+			src_node_kill[src_node_killers++] = optarg;
 			mode = O_RDWR;
 			break;
 		case 'm':
@@ -2150,6 +2268,9 @@ main(int argc, char *argv[])
 	}
 	if (state_killers)
 		pfctl_kill_states(dev, ifaceopt, opts);
+
+	if (src_node_killers)
+		pfctl_kill_src_nodes(dev, ifaceopt, opts);
 
 	if (tblcmdopt != NULL) {
 		error = pfctl_command_tables(argc, argv, tableopt,

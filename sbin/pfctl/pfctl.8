@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.125 2006/11/01 09:03:00 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.126 2006/11/20 14:31:17 mcbride Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -40,6 +40,7 @@
 .Op Fl F Ar modifier
 .Op Fl f Ar file
 .Op Fl i Ar interface
+.Op Fl K Ar host | network
 .Op Fl k Ar host | network
 .Op Fl o Op Ar level
 .Op Fl p Ar device
@@ -237,6 +238,17 @@ Help.
 .It Fl i Ar interface
 Restrict the operation to the given
 .Ar interface .
+.It Fl K Ar host | network
+Kill all of the source tracking entries originating from the specified
+.Ar host
+or
+.Ar network .
+A second
+.Fl K Ar host
+or
+.Fl K Ar network
+option may be specified, which will kill all the source tracking
+entries from the first host/network to the second.
 .It Fl k Ar host | network
 Kill all of the state entries originating from the specified
 .Ar host
