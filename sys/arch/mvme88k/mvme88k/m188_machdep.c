@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.23 2006/11/20 21:25:15 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.24 2006/11/20 21:51:33 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -379,6 +379,11 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	old_spl = m188_curspl[cpu];
 	eframe->tf_mask = old_spl;
 
+#ifdef MULTIPROCESSOR
+	if (eframe->tf_mask < IPL_SCHED)
+		__mp_lock(&kernel_lock);
+#endif
+
 	if (cur_mask == 0) {
 		/*
 		 * Spurious interrupts - may be caused by debug output clearing
@@ -548,6 +553,11 @@ out:
 	 * was taken.
 	 */
 	m188_setipl(eframe->tf_mask);
+
+#ifdef MULTIPROCESSOR
+	if (eframe->tf_mask < IPL_SCHED)
+		__mp_unlock(&kernel_lock);
+#endif
 }
 
 /*
