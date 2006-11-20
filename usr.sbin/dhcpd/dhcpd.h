@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.21 2006/06/14 14:58:52 ckuethe Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.22 2006/11/20 19:14:23 stevesk Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -102,7 +102,7 @@ extern int h_errno;
 
 struct iaddr {
 	int len;
-	unsigned char iabuf [16];
+	unsigned char iabuf[16];
 };
 
 struct iaddrlist {
@@ -121,7 +121,7 @@ struct hash_bucket {
 
 struct hash_table {
 	int hash_count;
-	struct hash_bucket *buckets [DEFAULT_HASH_SIZE];
+	struct hash_bucket *buckets[DEFAULT_HASH_SIZE];
 };
 
 struct option_data {
@@ -161,7 +161,7 @@ struct packet {
 	struct hardware *haddr;		/* Physical link address
 					   of local sender (maybe gateway). */
 	struct shared_network *shared_network;
-	struct option_data options [256];
+	struct option_data options[256];
 	int got_requested_address;	/* True if client sent the
 					   dhcp-requested-address option. */
 };
@@ -169,7 +169,7 @@ struct packet {
 struct hardware {
 	u_int8_t htype;
 	u_int8_t hlen;
-	u_int8_t haddr [16];
+	u_int8_t haddr[16];
 };
 
 /* A dhcp lease declaration structure. */
@@ -184,7 +184,7 @@ struct lease {
 	unsigned char *uid;
 	int uid_len;
 	int uid_max;
-	unsigned char uid_buf [32];
+	unsigned char uid_buf[32];
 	char *hostname;
 	char *client_hostname;
 	struct host_decl *host;
@@ -212,9 +212,9 @@ struct lease_state {
 
 	time_t offered_expiry;
 
-	struct tree_cache *options [256];
+	struct tree_cache *options[256];
 	u_int32_t expiry, renewal, rebind;
-	char filename [DHCP_FILE_LEN];
+	char filename[DHCP_FILE_LEN];
 	char *server_name;
 
 	struct iaddr from;
@@ -273,7 +273,7 @@ struct group {
 	int authoritative;
 	int always_reply_rfc1048;
 
-	struct tree_cache *options [256];
+	struct tree_cache *options[256];
 };
 
 /* A dhcp host declaration structure. */
@@ -327,7 +327,7 @@ struct client_lease {
 	unsigned int is_static : 1;	/* If set, lease is from config file. */
 	unsigned int is_bootp: 1;	/* If set, lease was aquired with BOOTP. */
 
-	struct option_data options [256];	/* Options supplied with lease. */
+	struct option_data options[256];	/* Options supplied with lease. */
 };
 
 /* privsep message. fixed length for easy parsing */
@@ -349,18 +349,18 @@ enum dhcp_state {
 
 /* Configuration information from the config file... */
 struct client_config {
-	struct option_data defaults [256]; /* Default values for options. */
+	struct option_data defaults[256]; /* Default values for options. */
 	enum {
 		ACTION_DEFAULT,		/* Use server value if present,
 					   otherwise default. */
 		ACTION_SUPERSEDE,	/* Always use default. */
 		ACTION_PREPEND,		/* Prepend default to server. */
 		ACTION_APPEND		/* Append default to server. */
-	} default_actions [256];
+	} default_actions[256];
 
-	struct option_data send_options [256]; /* Send these to server. */
-	u_int8_t required_options [256]; /* Options server must supply. */
-	u_int8_t requested_options [256]; /* Options to request from server. */
+	struct option_data send_options[256]; /* Send these to server. */
+	u_int8_t required_options[256]; /* Options server must supply. */
+	u_int8_t requested_options[256]; /* Options to request from server. */
 	int requested_option_count;	/* Number of requested options. */
 	time_t timeout;			/* Start to panic if we don't get a
 					   lease in this time period when
@@ -428,7 +428,7 @@ struct interface_info {
 				/* Networks connected to this interface. */
 	struct hardware hw_address;	/* Its physical address. */
 	struct in_addr primary_address;	/* Primary interface address. */
-	char name [IFNAMSIZ];		/* Its name... */
+	char name[IFNAMSIZ];		/* Its name... */
 	int rfdesc;			/* Its read file descriptor. */
 	int wfdesc;			/* Its write file descriptor, if
 					   different. */
@@ -449,7 +449,7 @@ struct interface_info {
 
 struct hardware_link {
 	struct hardware_link *next;
-	char name [IFNAMSIZ];
+	char name[IFNAMSIZ];
 	struct hardware address;
 };
 
@@ -468,13 +468,13 @@ struct protocol {
 };
 
 /* Bitmask of dhcp option codes. */
-typedef unsigned char option_mask [16];
+typedef unsigned char option_mask[16];
 
 /* DHCP Option mask manipulation macros... */
 #define OPTION_ZERO(mask)	(memset (mask, 0, 16))
-#define OPTION_SET(mask, bit)	(mask [bit >> 8] |= (1 << (bit & 7)))
-#define OPTION_CLR(mask, bit)	(mask [bit >> 8] &= ~(1 << (bit & 7)))
-#define OPTION_ISSET(mask, bit)	(mask [bit >> 8] & (1 << (bit & 7)))
+#define OPTION_SET(mask, bit)	(mask[bit >> 8] |= (1 << (bit & 7)))
+#define OPTION_CLR(mask, bit)	(mask[bit >> 8] &= ~(1 << (bit & 7)))
+#define OPTION_ISSET(mask, bit)	(mask[bit >> 8] & (1 << (bit & 7)))
 #define OPTION_ISCLR(mask, bit)	(!OPTION_ISSET (mask, bit))
 
 /* An option occupies its length plus two header bytes (code and
@@ -571,7 +571,7 @@ void	periodic_scan(void *);
 /* conflex.c */
 extern int	 lexline, lexchar;
 extern char	*token_line, *tlname;
-extern char	 comments [4096];
+extern char	 comments[4096];
 extern int	 comment_index;
 extern int	 eol_token;
 
@@ -739,10 +739,10 @@ void delete_hash_entry(struct hash_table *, unsigned char *, int);
 unsigned char *hash_lookup(struct hash_table *, unsigned char *, int);
 
 /* tables.c */
-extern struct option dhcp_options [256];
-extern unsigned char dhcp_option_default_priority_list [];
+extern struct option dhcp_options[256];
+extern unsigned char dhcp_option_default_priority_list[];
 extern int sizeof_dhcp_option_default_priority_list;
-extern char *hardware_types [256];
+extern char *hardware_types[256];
 extern struct hash_table universe_hash;
 extern struct universe dhcp_universe;
 void initialize_universes(void);
