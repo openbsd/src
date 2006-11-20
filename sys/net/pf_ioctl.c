@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.171 2006/10/27 13:56:51 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.172 2006/11/20 14:25:11 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2768,6 +2768,45 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		pf_purge_expired_src_nodes(1);
 		pf_status.src_nodes = 0;
+		break;
+	}
+
+	case DIOCKILLSRCNODES: {
+		struct pf_src_node	*sn;
+		struct pf_state		*s;
+		struct pfioc_src_node_kill *psnk = \
+			(struct pfioc_src_node_kill *) addr;
+		int			killed = 0;
+
+		RB_FOREACH(sn, pf_src_tree, &tree_src_tracking) {
+        		if (PF_MATCHA(psnk->psnk_src.neg, \
+				      &psnk->psnk_src.addr.v.a.addr, \
+				      &psnk->psnk_src.addr.v.a.mask, \
+				      &sn->addr, sn->af) &&
+			    PF_MATCHA(psnk->psnk_dst.neg, \
+				      &psnk->psnk_dst.addr.v.a.addr, \
+				      &psnk->psnk_dst.addr.v.a.mask, \
+				      &sn->raddr, sn->af)) {
+				/* Handle state to src_node linkage */
+				if (sn->states != 0) {
+					RB_FOREACH(s, pf_state_tree_id, 
+					    &tree_id) {
+						if (s->src_node == sn)
+							s->src_node = NULL;
+						if (s->nat_src_node == sn)
+							s->nat_src_node = NULL;
+					}
+					sn->states = 0;
+				}
+				sn->expire = 1;
+				killed++;
+			}
+		}
+
+		if (killed > 0)
+			pf_purge_expired_src_nodes(1);
+
+		psnk->psnk_af = killed;
 		break;
 	}
 

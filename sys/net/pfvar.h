@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.240 2006/10/27 13:56:51 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.241 2006/11/20 14:25:11 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1228,6 +1228,13 @@ struct pfioc_state {
 	struct pf_state	 state;
 };
 
+struct pfioc_src_node_kill {
+	/* XXX returns the number of src nodes killed in psnk_af */
+	sa_family_t psnk_af;
+	struct pf_rule_addr psnk_src;
+	struct pf_rule_addr psnk_dst;
+};
+
 struct pfioc_state_kill {
 	/* XXX returns the number of states killed in psk_af */
 	sa_family_t		psk_af;
@@ -1415,6 +1422,7 @@ struct pfioc_iface {
 #define DIOCIGETIFACES	_IOWR('D', 87, struct pfioc_iface)
 #define DIOCSETIFFLAG	_IOWR('D', 89, struct pfioc_iface)
 #define DIOCCLRIFFLAG	_IOWR('D', 90, struct pfioc_iface)
+#define DIOCKILLSRCNODES	_IOWR('D', 91, struct pfioc_src_node_kill)
 
 #ifdef _KERNEL
 RB_HEAD(pf_src_tree, pf_src_node);
