@@ -1,4 +1,4 @@
-/*	$OpenBSD: maxim6690.c,v 1.10 2006/04/30 22:30:17 djm Exp $	*/
+/*	$OpenBSD: maxim6690.c,v 1.11 2006/11/20 18:51:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -80,6 +80,7 @@ maxtmp_match(struct device *parent, void *match, void *aux)
 	    strcmp(ia->ia_name, "max6657") == 0 ||
 	    strcmp(ia->ia_name, "max6658") == 0 ||
 	    strcmp(ia->ia_name, "max6659") == 0 ||
+	    strcmp(ia->ia_name, "lm63") == 0 ||
 	    strcmp(ia->ia_name, "lm86") == 0 ||
 	    strcmp(ia->ia_name, "lm89") == 0 ||
 	    strcmp(ia->ia_name, "lm89-1") == 0 ||
