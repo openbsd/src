@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.34 2006/11/10 19:19:50 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.35 2006/11/20 21:48:31 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1178,9 +1178,9 @@ m88100_syscall(register_t code, struct trapframe *tf)
 		error = 0;
 	}
 
-	KERNEL_PROC_LOCK(p);
 	if (error != 0)
 		goto bad;
+	KERNEL_PROC_LOCK(p);
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
 #endif
@@ -1331,9 +1331,9 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		error = 0;
 	}
 
-	KERNEL_PROC_LOCK(p);
 	if (error != 0)
 		goto bad;
+	KERNEL_PROC_LOCK(p);
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
 #endif
