@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.34 2006/11/20 21:26:27 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.35 2006/11/20 21:52:15 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -838,7 +838,7 @@ bnx_attachhook(void *xsc)
         else
                 ifp->if_baudrate = IF_Gbps(1);
 	ifp->if_hardmtu = BNX_MAX_JUMBO_MTU;
-	IFQ_SET_MAXLEN(&ifp->if_snd, USABLE_TX_BD);
+	IFQ_SET_MAXLEN(&ifp->if_snd, USABLE_TX_BD - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->eaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	bcopy(sc->bnx_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -846,8 +846,7 @@ bnx_attachhook(void *xsc)
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 #ifdef BNX_CSUM
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
-				IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 #endif
 
 #if NVLAN > 0
@@ -4299,7 +4298,6 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 	int			i, error, rc = 0;
 
 	m0 = *m_head;
-#ifdef BNX_CSUM
 	/* Transfer any checksum offload flags to the bd. */
 	if (m0->m_pkthdr.csum_flags) {
 		if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
@@ -4308,7 +4306,6 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 		    (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT))
 			flags |= TX_BD_FLAGS_TCP_UDP_CKSUM;
 	}
-#endif
 
 #if NVLAN > 0
 	/* Transfer any VLAN tags to the bd. */
