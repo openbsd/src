@@ -1,4 +1,4 @@
-/*	$OpenBSD: scif.c,v 1.3 2006/11/09 04:25:38 deraadt Exp $	*/
+/*	$OpenBSD: scif.c,v 1.4 2006/11/20 17:53:16 drahn Exp $	*/
 /*	$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $ */
 
 /*-
@@ -440,22 +440,22 @@ scif_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->sc_diag_tmo, scifdiag, sc);
 #ifdef SH4
-	intc_intr_establish(SH4_INTEVT_SCIF_ERI, IST_LEVEL, IPL_SERIAL,
+	intc_intr_establish(SH4_INTEVT_SCIF_ERI, IST_LEVEL, IPL_TTY,
 	    scifintr, sc, self->dv_xname);
-	intc_intr_establish(SH4_INTEVT_SCIF_RXI, IST_LEVEL, IPL_SERIAL,
+	intc_intr_establish(SH4_INTEVT_SCIF_RXI, IST_LEVEL, IPL_TTY,
 	    scifintr, sc, self->dv_xname);
-	intc_intr_establish(SH4_INTEVT_SCIF_BRI, IST_LEVEL, IPL_SERIAL,
+	intc_intr_establish(SH4_INTEVT_SCIF_BRI, IST_LEVEL, IPL_TTY,
 	    scifintr, sc, self->dv_xname);
-	intc_intr_establish(SH4_INTEVT_SCIF_TXI, IST_LEVEL, IPL_SERIAL,
+	intc_intr_establish(SH4_INTEVT_SCIF_TXI, IST_LEVEL, IPL_TTY,
 	    scifintr, sc, self->dv_xname);
 #else
-	intc_intr_establish(SH7709_INTEVT2_SCIF_ERI, IST_LEVEL, IPL_SERIAL,
+	intc_intr_establish(SH7709_INTEVT2_SCIF_ERI, IST_LEVEL, IPL_TTY,
 	    scifintr, sc, self->dv_xname);
-	intc_intr_establish(SH7709_INTEVT2_SCIF_RXI, IST_LEVEL, IPL_SERIAL,
+	intc_intr_establish(SH7709_INTEVT2_SCIF_RXI, IST_LEVEL, IPL_TTY,
 	    scifintr, sc, self->dv_xname);
-	intc_intr_establish(SH7709_INTEVT2_SCIF_BRI, IST_LEVEL, IPL_SERIAL,
+	intc_intr_establish(SH7709_INTEVT2_SCIF_BRI, IST_LEVEL, IPL_TTY,
 	    scifintr, sc, self->dv_xname);
-	intc_intr_establish(SH7709_INTEVT2_SCIF_TXI, IST_LEVEL, IPL_SERIAL,
+	intc_intr_establish(SH7709_INTEVT2_SCIF_TXI, IST_LEVEL, IPL_TTY,
 	    scifintr, sc, self->dv_xname);
 #endif
 
@@ -510,7 +510,6 @@ scifstart(struct tty *tp)
 		tba = tp->t_outq.c_cf;
 		tbc = ndqb(&tp->t_outq, 0);
 
-		(void)splserial();
 
 		sc->sc_tba = tba;
 		sc->sc_tbc = tbc;
@@ -587,7 +586,7 @@ scifparam(struct tty *tp, struct termios *t)
 	lcr = ISSET(sc->sc_lcr, LCR_SBREAK) | cflag2lcr(t->c_cflag);
 #endif
 
-	s = splserial();
+	s = spltty();
 
 	/*
 	 * Set the flow control pins depending on the current flow control
@@ -691,7 +690,7 @@ scifopen(dev_t dev, int flag, int mode, struct proc *p)
 	int unit = SCIFUNIT(dev);
 	struct scif_softc *sc;
 	struct tty *tp;
-	int s, s2;
+	int s;
 	int error;
 
 	if (unit >= scif_cd.cd_ndevs)
@@ -718,12 +717,9 @@ scifopen(dev_t dev, int flag, int mode, struct proc *p)
 
 		tp->t_dev = dev;
 
-		s2 = splserial();
 
 		/* Turn on interrupts. */
 		scif_scr_write(scif_scr_read() | SCSCR2_TIE | SCSCR2_RIE);
-
-		splx(s2);
 
 		/*
 		 * Initialize the termios status to the defaults.  Add in the
@@ -759,8 +755,6 @@ scifopen(dev_t dev, int flag, int mode, struct proc *p)
 		ttychars(tp);
 		ttsetwater(tp);
 
-		s2 = splserial();
-
 		/* Clear the input ring, and unblock. */
 		sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 		sc->sc_rbavail = scif_rbuf_size;
@@ -776,7 +770,6 @@ scifopen(dev_t dev, int flag, int mode, struct proc *p)
 			scifstatus(sc, "scifopen  ");
 #endif
 
-		splx(s2);
 	}
 
 	splx(s);
@@ -868,7 +861,7 @@ scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	error = 0;
 
-	s = splserial();
+	s = spltty();
 
 	switch (cmd) {
 	case TIOCSBRK:
@@ -938,7 +931,7 @@ scifstop(struct tty *tp, int flag)
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(tp->t_dev)];
 	int s;
 
-	s = splserial();
+	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY)) {
 		/* Stop transmitting at the next chunk. */
 		sc->sc_tbc = 0;
@@ -963,7 +956,7 @@ scifdiag(void *arg)
 	int overflows, floods;
 	int s;
 
-	s = splserial();
+	s = spltty();
 	overflows = sc->sc_overflows;
 	sc->sc_overflows = 0;
 	floods = sc->sc_floods;
@@ -1042,7 +1035,7 @@ scif_rxsoft(struct scif_softc *sc, struct tty *tp)
 
 	if (cc != scc) {
 		sc->sc_rbget = get;
-		s = splserial();
+		s = spltty();
 		cc = sc->sc_rbavail += scc - cc;
 		/* Buffers should be ok again, release possible block. */
 		if (cc >= sc->sc_r_lowat) {
@@ -1080,7 +1073,7 @@ scif_stsoft(struct scif_softc *sc, struct tty *tp)
 	u_char msr, delta;
 	int s;
 
-	s = splserial();
+	s = spltty();
 	msr = sc->sc_msr;
 	delta = sc->sc_msr_delta;
 	sc->sc_msr_delta = 0;
@@ -1386,7 +1379,7 @@ scifcngetc(dev_t dev)
 	int c;
 	int s;
 
-	s = splserial();
+	s = spltty();
 	c = scif_getc();
 	splx(s);
 
@@ -1398,7 +1391,7 @@ scifcnputc(dev_t dev, int c)
 {
 	int s;
 
-	s = splserial();
+	s = spltty();
 	scif_putc((u_char)c);
 	splx(s);
 }
