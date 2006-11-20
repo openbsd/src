@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.33 2006/11/19 17:35:46 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.34 2006/11/20 21:26:27 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -850,10 +850,8 @@ bnx_attachhook(void *xsc)
 				IFCAP_CSUM_UDPv4;
 #endif
 
-#ifdef BNX_VLAN
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
-#endif
 #endif
 
 	sc->mbuf_alloc_size = BNX_MAX_MRU;
@@ -3942,7 +3940,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 				}
 				m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&vh);
 				vh.evl_proto = vh.evl_encap_proto;
-				vh.evl_tag = l2fhdr->l2_fhdr_vlan_tag >> 16;
+				vh.evl_tag = l2fhdr->l2_fhdr_vlan_tag;
 				vh.evl_encap_proto = htons(ETHERTYPE_VLAN);
 				m_adj(m, ETHER_HDR_LEN);
 				if ((m = m_prepend(m, sizeof(vh), M_DONTWAIT)) == NULL)
@@ -4076,8 +4074,7 @@ bnx_tx_intr(struct bnx_softc *sc)
 		 */
 		if (sc->tx_mbuf_ptr[sw_tx_chain_cons] != NULL) {
 			/* Validate that this is the last tx_bd. */
-			DBRUNIF((!(txbd->tx_bd_vlan_tag_flags &
-			    TX_BD_FLAGS_END)),
+			DBRUNIF((!(txbd->tx_bd_flags & TX_BD_FLAGS_END)),
 			    printf("%s: tx_bd END flag not set but "
 			    "txmbuf == NULL!\n");
 			    bnx_breakpoint(sc));
@@ -4293,12 +4290,12 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 	bus_dmamap_t		map;
 	struct tx_bd 		*txbd = NULL;
 	struct mbuf		*m0;
-	u_int32_t		vlan_tag_flags = 0;
-	u_int32_t		addr, prod_bseq;
+	u_int16_t		vlan_tag = 0, flags = 0;
 	u_int16_t		chain_prod, prod;
 #ifdef BNX_DEBUG
 	u_int16_t		debug_prod;
 #endif
+	u_int32_t		addr, prod_bseq;
 	int			i, error, rc = 0;
 
 	m0 = *m_head;
@@ -4306,23 +4303,21 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 	/* Transfer any checksum offload flags to the bd. */
 	if (m0->m_pkthdr.csum_flags) {
 		if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
-			vlan_tag_flags |= TX_BD_FLAGS_IP_CKSUM;
+			flags |= TX_BD_FLAGS_IP_CKSUM;
 		if (m0->m_pkthdr.csum_flags &
 		    (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT))
-			vlan_tag_flags |= TX_BD_FLAGS_TCP_UDP_CKSUM;
+			flags |= TX_BD_FLAGS_TCP_UDP_CKSUM;
 	}
 #endif
 
-#ifdef BNX_VLAN
 #if NVLAN > 0
 	/* Transfer any VLAN tags to the bd. */
 	if ((m0->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
 	    m0->m_pkthdr.rcvif != NULL) {
 		struct ifvlan *ifv = m0->m_pkthdr.rcvif->if_softc;
-		vlan_tag_flags |= (TX_BD_FLAGS_VLAN_TAG |
-		    (htons(ifv->ifv_tag) << 16));
+		flags |= TX_BD_FLAGS_VLAN_TAG;
+		vlan_tag = ifv->ifv_tag;
 	}
-#endif
 #endif
 
 	/* Map the mbuf into DMAable memory. */
@@ -4377,15 +4372,16 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 		addr = (u_int32_t)((u_int64_t)map->dm_segs[i].ds_addr >> 32);
 		txbd->tx_bd_haddr_hi = htole32(addr);
 		txbd->tx_bd_mss_nbytes = htole16(map->dm_segs[i].ds_len);
-		txbd->tx_bd_vlan_tag_flags = htole16(vlan_tag_flags);
+		txbd->tx_bd_vlan_tag = htole16(vlan_tag);
+		txbd->tx_bd_flags = htole16(flags);
 		prod_bseq += map->dm_segs[i].ds_len;
 		if (i == 0)
-			txbd->tx_bd_vlan_tag_flags |=htole16(TX_BD_FLAGS_START);
+			txbd->tx_bd_flags |= htole16(TX_BD_FLAGS_START);
 		prod = NEXT_TX_BD(prod);
  	}
  
 	/* Set the END flag on the last TX buffer descriptor. */
-	txbd->tx_bd_vlan_tag_flags |= htole16(TX_BD_FLAGS_END);
+	txbd->tx_bd_flags |= htole16(TX_BD_FLAGS_END);
 
 	DBRUN(BNX_INFO_SEND, bnx_dump_tx_chain(sc, debug_prod, nseg));
 
@@ -5190,9 +5186,10 @@ bnx_dump_txbd(struct bnx_softc *sc, int idx, struct tx_bd *txbd)
 	else
 		/* Normal tx_bd entry. */
 		BNX_PRINTF(sc, "tx_bd[0x%04X]: haddr = 0x%08X:%08X, nbytes = "
-		    "0x%08X, flags = 0x%08X\n", idx, 
+		    "0x%08X, vlan tag = 0x%4X, flags = 0x%08X\n", idx, 
 		    txbd->tx_bd_haddr_hi, txbd->tx_bd_haddr_lo,
-		    txbd->tx_bd_mss_nbytes, txbd->tx_bd_vlan_tag_flags);
+		    txbd->tx_bd_mss_nbytes, txbd->tx_bd_vlan_tag,
+		    txbd->tx_bd_flags);
 }
 
 void
