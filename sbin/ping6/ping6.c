@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.67 2006/11/16 02:19:12 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.68 2006/11/20 08:07:00 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1332,7 +1332,7 @@ pinger(void)
 			(void)gettimeofday(&tv, NULL);
 			tv32.tv32_sec = htonl(tv.tv_sec);
 			tv32.tv32_usec = htonl(tv.tv_usec);
-			bcopy(&tv32, &outpack[ICMP6ECHOLEN], sizeof tv32);
+			bcopy(&tv32, &outpack[ICMP6ECHOLEN], sizeof(tv32));
 		}
 		cc = ICMP6ECHOLEN + datalen;
 	}
@@ -1505,7 +1505,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 		seq = ntohs(icp->icmp6_seq);
 		++nreceived;
 		if (timing) {
-			bcopy(icp + 1, &tv32, sizeof tv32);
+			bcopy(icp + 1, &tv32, sizeof(tv32));
 			tp.tv_sec = ntohl(tv32.tv32_sec);
 			tp.tv_usec = ntohl(tv32.tv32_usec);
 			tvsub(&tv, &tp);
@@ -2178,40 +2178,40 @@ summary(int signo)
 
 	buf[0] = '\0';
 
-	snprintf(buft, sizeof buft, "\n--- %s ping6 statistics ---\n",
+	snprintf(buft, sizeof(buft), "\n--- %s ping6 statistics ---\n",
 	    hostname);
-	strlcat(buf, buft, sizeof buf);
-	snprintf(buft, sizeof buft, "%ld packets transmitted, ",
+	strlcat(buf, buft, sizeof(buf));
+	snprintf(buft, sizeof(buft), "%ld packets transmitted, ",
 	    ntransmitted);
-	strlcat(buf, buft, sizeof buf);
-	snprintf(buft, sizeof buft, "%ld packets received, ",
+	strlcat(buf, buft, sizeof(buf));
+	snprintf(buft, sizeof(buft), "%ld packets received, ",
 	    nreceived);
-	strlcat(buf, buft, sizeof buf);
+	strlcat(buf, buft, sizeof(buf));
 	if (nrepeats) {
-		snprintf(buft, sizeof buft, "+%ld duplicates, ",
+		snprintf(buft, sizeof(buft), "+%ld duplicates, ",
 		    nrepeats);
-		strlcat(buf, buft, sizeof buf);
+		strlcat(buf, buft, sizeof(buf));
 	}
 	if (ntransmitted) {
 		if (nreceived > ntransmitted)
-			snprintf(buft, sizeof buft,
+			snprintf(buft, sizeof(buft),
 			    "-- somebody's duplicating packets!");
 		else
-			snprintf(buft, sizeof buft, "%.1lf%% packet loss",
+			snprintf(buft, sizeof(buft), "%.1lf%% packet loss",
 			    ((((double)ntransmitted - nreceived) * 100) /
 			    ntransmitted));
-		strlcat(buf, buft, sizeof buf);
+		strlcat(buf, buft, sizeof(buf));
 	}
-	strlcat(buf, "\n", sizeof buf);
+	strlcat(buf, "\n", sizeof(buf));
 	if (nreceived && timing) {
 		/* Only display average to microseconds */
 		double num = nreceived + nrepeats;
 		double avg = tsum / num;
 		double dev = sqrt(tsumsq / num - avg * avg);
-		snprintf(buft, sizeof buft,
+		snprintf(buft, sizeof(buft),
 		    "round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
 		    tmin, avg, tmax, dev);
-		strlcat(buf, buft, sizeof buf);
+		strlcat(buf, buft, sizeof(buf));
 	}
 	write(STDOUT_FILENO, buf, strlen(buf));
 	if (signo == 0)
