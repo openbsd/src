@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.71 2006/08/02 21:55:27 thib Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.72 2006/11/20 12:52:54 tom Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -448,9 +448,7 @@ void	vwakeup(struct vnode *);
 void	vput(struct vnode *);
 int	vrecycle(struct vnode *, struct simplelock *, struct proc *);
 void	vrele(struct vnode *);
-#ifdef DIAGNOSTIC
 void	vprint(char *, struct vnode *);
-#endif
 
 /* vfs_getcwd.c */
 int vfs_getcwd_scandir(struct vnode **, struct vnode **, char **, char *,

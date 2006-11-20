@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.134 2006/10/30 00:34:01 thib Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.135 2006/11/20 12:52:54 tom Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1267,7 +1267,7 @@ loop:
 	return (count);
 }
 
-#ifdef DIAGNOSTIC
+#if defined(DEBUG) || defined(DIAGNOSTIC)
 /*
  * Print out a description of a vnode.
  */
@@ -1312,7 +1312,7 @@ vprint(char *label, struct vnode *vp)
 		VOP_PRINT(vp);
 	}
 }
-#endif /* DIAGNOSTIC */
+#endif /* DEBUG || DIAGNOSTIC */
 
 #ifdef DEBUG
 /*
