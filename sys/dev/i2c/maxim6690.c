@@ -1,4 +1,4 @@
-/*	$OpenBSD: maxim6690.c,v 1.11 2006/11/20 18:51:07 kettenis Exp $	*/
+/*	$OpenBSD: maxim6690.c,v 1.12 2006/11/20 21:53:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -26,8 +26,8 @@
 /* Maxim MAX6642/90 registers */
 #define MAX6690_INT_TEMP	0x00
 #define MAX6690_EXT_TEMP	0x01
-#define MAX6690_INT_TEMP2	0x10
-#define MAX6690_EXT_TEMP2	0x11
+#define MAX6690_INT_TEMP2	0x11
+#define MAX6690_EXT_TEMP2	0x10
 #define MAX6690_STATUS		0x02
 #define MAX6690_DEVID		0xfe
 #define MAX6690_REVISION	0xff	/* absent on MAX6642 */
