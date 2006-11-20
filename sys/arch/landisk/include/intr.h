@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.1.1.1 2006/10/06 21:16:15 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.2 2006/11/20 17:54:05 drahn Exp $	*/
 /*	$NetBSD: intr.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 #define	IPL_BIO		10	/* block I/O */
 #define	IPL_NET		11	/* network */
 #define	IPL_TTY		12	/* terminal */
-#define	IPL_SERIAL	13	/* serial */
+#define	IPL_AUDIO	13	/* serial */
 #define	IPL_CLOCK	14	/* clock */
 #define	IPL_HIGH	15	/* everything */
 
@@ -57,7 +57,7 @@
 #define	splnet()		_cpu_intr_raise(IPL_NET << 4)
 #define	spltty()		_cpu_intr_raise(IPL_TTY << 4)
 #define	splvm()			spltty()
-#define	splserial()		_cpu_intr_raise(IPL_SERIAL << 4)
+#define	splaudio()		_cpu_intr_raise(IPL_AUDIO << 4)
 #define	splclock()		_cpu_intr_raise(IPL_CLOCK << 4)
 #define	splstatclock()		splclock()
 #define	splsched()		splclock()
