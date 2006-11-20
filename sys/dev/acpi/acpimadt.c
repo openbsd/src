@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.1 2006/11/15 21:39:06 kettenis Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.2 2006/11/20 21:55:23 jordan Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -130,6 +130,7 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 
 	lapic_boot_init(madt->local_apic_address);
 
+	/* 1st pass, get CPUs and IOAPICs */
 	while (addr < (caddr_t)madt + madt->hdr.length) {
 		union acpi_madt_entry *entry = (union acpi_madt_entry *)addr;
 
@@ -178,6 +179,19 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 				config_found(mainbus, &aaa, acpimadt_print);
 			}
 			break;
+		}
+		addr += entry->madt_lapic.length;
+	}
+
+	/* 2nd pass, get interrupt overrides */
+	addr = (caddr_t)(madt + 1);
+	while (addr < (caddr_t)madt + madt->hdr.length) {
+		union acpi_madt_entry *entry = (union acpi_madt_entry *)addr;
+
+		switch(entry->madt_lapic.apic_type) {
+		case ACPI_MADT_LAPIC:
+		case ACPI_MADT_IOAPIC:
+		  	break;
 
 		case ACPI_MADT_OVERRIDE:
 			printf("OVERRIDE: bus %x, source %x, global_int %x, flags %x\n",
