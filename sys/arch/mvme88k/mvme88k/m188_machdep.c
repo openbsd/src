@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.22 2006/05/08 14:36:10 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.23 2006/11/20 21:25:15 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -413,12 +413,12 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 			for (i = 0; i < INT_LEVEL; i++)
 				printf("int_mask[%d] = 0x%08x\n", i, int_mask_val[i]);
 			printf("--CPU %d halted--\n", cpu_number());
-			setipl(IPL_ABORT);
+			m188_setipl(IPL_ABORT);
 			for(;;) ;
 		}
 #endif
 
-		setipl(level);
+		m188_setipl(level);
 
 		/*
 		 * Do not enable interrupts yet if we know, from cur_mask,
