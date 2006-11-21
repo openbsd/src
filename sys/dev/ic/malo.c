@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.29 2006/11/16 21:18:42 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.30 2006/11/21 22:06:26 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1201,9 +1201,17 @@ malo_tx_intr(struct malo_softc *sc)
 			break;
 		}
 
+		/* cleanup TX data and TX descritpor */
+		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+		    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, data->map);
+		m_freem(data->m);
 		ieee80211_release_node(ic, data->ni);
+		data->m = NULL;
 		data->ni = NULL;
 		data->softstat &= ~ 0x80;
+		desc->status = 0;
+		desc->len = 0;
 
 		DPRINTFN(2, ("tx done idx=%u\n", sc->sc_txring.stat));
 
