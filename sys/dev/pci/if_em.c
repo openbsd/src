@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.158 2006/11/18 18:39:14 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.159 2006/11/21 02:30:37 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -585,8 +585,7 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 void
 em_watchdog(struct ifnet *ifp)
 {
-	struct em_softc *sc;
-	sc = ifp->if_softc;
+	struct em_softc *sc = ifp->if_softc;
 
 	/* If we are in this routine because of pause frames, then
 	 * don't reset the hardware.
@@ -785,8 +784,7 @@ em_intr(void *arg)
 			sc->rx_overruns++;
 	}
 
-	if (ifp->if_flags & IFF_RUNNING &&
-	    IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
 		em_start(ifp);
 
 	return (claimed);
@@ -803,7 +801,7 @@ em_intr(void *arg)
 void
 em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-	struct em_softc *sc= ifp->if_softc;
+	struct em_softc *sc = ifp->if_softc;
 	u_char fiber_type = IFM_1000_SX;
 
 	INIT_DEBUGOUT("em_media_status: begin");
