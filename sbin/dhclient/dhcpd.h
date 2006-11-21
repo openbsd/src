@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.50 2006/11/21 00:10:06 stevesk Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.51 2006/11/21 15:04:59 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -225,9 +225,6 @@ struct protocol {
 #define	_PATH_DHCLIENT_CONF	"/etc/dhclient.conf"
 #define	_PATH_DHCLIENT_DB	"/var/db/dhclient.leases"
 #define	DHCPD_LOG_FACILITY	LOG_DAEMON
-
-#define	MAX_TIME 0x7fffffff
-#define	MIN_TIME 0
 
 /* External definitions... */
 
