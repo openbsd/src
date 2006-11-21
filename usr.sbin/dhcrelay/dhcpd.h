@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.6 2004/05/04 21:23:10 deraadt Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.7 2006/11/21 04:39:08 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -40,7 +40,6 @@
  */
 
 #include <sys/types.h>
-
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/stat.h>
@@ -62,7 +61,6 @@
 #include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
-#include <unistd.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
