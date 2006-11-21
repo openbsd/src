@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.135 2006/11/06 10:49:01 jsg Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.136 2006/11/21 23:00:16 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -127,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.135 2006/11/06 10:49:01 jsg Exp $";
+	"$OpenBSD: if_wi.c,v 1.136 2006/11/21 23:00:16 miod Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -3178,6 +3178,9 @@ wi_get_txpower(struct wi_softc *sc, struct ieee80211_txpower *txpower)
 	u_int16_t	power;
 	int8_t		tmp;
 	int		error;
+
+	if (sc->wi_flags & WI_FLAGS_BUS_USB)
+		return (EOPNOTSUPP);
 
 	/* Get manual TX power */
 	cmd = WI_CMD_READ_MIF;
