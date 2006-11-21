@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.22 2006/11/20 19:14:23 stevesk Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.23 2006/11/21 00:10:06 stevesk Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -39,43 +39,39 @@
  */
 
 #include <sys/types.h>
-#include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
 #include <sys/stat.h>
-#include <ctype.h>
-#include <time.h>
-
-#include <syslog.h>
-#include <sys/types.h>
-#include <string.h>
-#include <paths.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <setjmp.h>
-#include <limits.h>
-
 #include <sys/wait.h>
-#include <signal.h>
-
-extern int h_errno;
+#include <sys/sockio.h>
+#include <sys/time.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
-#include <sys/sockio.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <netdb.h>
+#include <paths.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <time.h>
+#include <unistd.h>
+
+extern int h_errno;
 
 #define ifr_netmask ifr_addr
-
-#include <stdarg.h>
 
 #ifndef _PATH_DHCPD_PID
 #define _PATH_DHCPD_PID	"/var/run/dhcpd.pid"
@@ -87,9 +83,6 @@ extern int h_errno;
 #ifndef _PATH_DEV_PF
 #define _PATH_DEV_PF "/dev/pf"
 #endif
-
-/* Time stuff... */
-#include <sys/time.h>
 
 #define HAVE_SA_LEN
 #define HAVE_MKSTEMP
