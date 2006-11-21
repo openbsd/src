@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.2 2006/11/17 20:49:27 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.3 2006/11/21 11:41:14 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -116,11 +116,11 @@
 #define XC_LE				0x4	/* loopback enable */
 #define BCW_DMA_TXADDR			0x0204	/* tx ring base address */
 #define BCW_DMA_DPTR			0x0208	/* last tx descriptor */
-#define BCW_DMA_TXSTATUS		0x020C	/* active desc, etc */
+//#define BCW_DMA_TXSTATUS		0x020C	/* active desc, etc */
 #define BCW_DMA_RXCTL			0x0210	/* enable, etc */
 #define BCW_DMA_RXADDR			0x0214	/* rx ring base address */
 #define BCW_DMA_RXDPTR			0x0218	/* last descriptor */
-#define BCW_DMA_RXSTATUS		0x021C	/* active desc, etc */
+//#define BCW_DMA_RXSTATUS		0x021C	/* active desc, etc */
 /* receive status bits */
 #define RS_CD_MASK			0x0fff	/* current descriptor pointer */
 #define RS_DMA_IDLE			0x2000	/* DMA is idle */
@@ -209,9 +209,58 @@
 #define BCW_SHM_MICROCODEFLAGSLOW	0x005e	/* Flags for Microcode ops */
 #define BCW_SHM_MICROCODEFLAGSHIGH	0x0060	/* Flags for Microcode ops */
 /* http://bcm-specs.sipsolutions.net/MicrocodeFlagsBitfield */
-#define BCW_SHM_MICROCODEFLAGS
 
-/* 0x200 DMA Register space */
+/* 0x200 DMA Register space, there are 6 controllers */
+/* 32 bit DMA controllers */
+#define BCW_DMA_TXCONTROL(x)		(0x200 + (x * 0x20))
+						/* DMA Control Word*/
+#define BCW_DMA_TXRINGADDR(x)		(0x204 + (x * 0x20))
+						/* Ring Address */
+#define BCW_DMA_TXSTOPADDR(x)		(0x208 + (x * 0x20))
+						/* Last Descriptor */
+#define BCW_DMA_TXSTATUS(x)		(0x20c + (x * 0x20))
+						/* Transmit Status Word */
+#define BCW_DMA_RXCONTROL(x)		(0x200 + (x * 0x20))
+						/* DMA Control Word*/
+#define BCW_DMA_RXRINGADDR(x)		(0x204 + (x * 0x20))
+						/* Ring Address */
+#define BCW_DMA_RXSTOPADDR(x)		(0x208 + (x * 0x20))
+						/* Last descriptor */
+#define BCW_DMA_RXSTATUS(x)		(0x20c + (x * 0x20))
+						/* Receive Status Word */
+/* 64 bit DMA controllers */
+#define BCW_DMA64_TXCONTROL(x)		(0x200 + (x * 0x40))
+						/* DMA control Word */
+#define BCW_DMA64_TXSTOPADDR(x)		(0x204 + (x * 0x40))
+						/* Last Descriptor */
+#define BCW_DMA64_TXRINGADDRLOW(x)	(0x208 + (x * 0x40))
+						/* Low 32 bits Ring Address */
+#define BCW_DMA64_TXRINGADDRHIGH(x)	(0x20c + (x * 0x40))
+						/* High 32 bits Ring Address */
+#define BCW_DMA64_TXSTATUS(x)		(0x210 + (x * 0x40))
+						/* Transmit Status State */
+#define BCW_DMA64_TXERROR(x)		(0x214 + (x * 0x40))
+						/* Transmit Status Error */
+#define BCW_DMA64_RXCONTROL(x)		(0x220 + (x * 0x40))
+						/* DMA control Word */
+#define BCW_DMA64_RXSTOPADDR(x)		(0x224 + (x * 0x40))
+						/* Last Descriptor */
+#define BCW_DMA64_RXRINGADDRLOW(x)	(0x228 + (x * 0x40))
+						/* Low 32 bits Ring Address */
+#define BCW_DMA64_RXRINGADDRHIGH(x)	(0x22c + (x * 0x40))
+						/* High 32 bits Ring Address */
+#define BCW_DMA64_RXSTATUS(x)		(0x230 + (x * 0x40))
+						/* Transmit Status State */
+#define BCW_DMA64_RXERROR(x)		(0x234 + (x * 0x40))
+						/* Transmit Status Error */
+
+#define BCW_DMA_CONTROL_ENABLE		0x1	/* Enable */
+#define BCW_DMA_CONTROL_SUSPEND		0x2	/* Suspend Request */
+#define BCW_DMA_CONTROL_LOOPBACK	0x4	/* Loopback Enable */
+#define BCW_DMA_CONTROL_FLUSH		0x10	/* Flush Request */
+#define BCW_DMA_CONTROL_ADDREXT		0x30000	/* Address Extension */
+
+
 /* 0x300 PIO Register space */
 
 #define BCW_RADIO_CONTROL		0x3f6	/* Control - 16bit */
@@ -225,19 +274,36 @@
 
 /* SPROM registers are 16 bit and based at MMIO offset 0x1000 */
 #define BCW_MMIO_BASE			0x1000
-
-#define	BCW_SPROM_IL0MACADDR		0x1048	/* 802.11b/g MAC */
+#define BCW_SPROM_IL0MACADDR		0x1048	/* 802.11b/g MAC */
 #define BCW_SPROM_ET0MACADDR		0x104e	/* ethernet MAC */
 #define BCW_SPROM_ET1MACADDR		0x1054	/* 802.11a MAC */
 
 #define BCW_SPROM_PA0B0			0x105e
 #define BCW_SPROM_PA0B1			0x1060
 #define BCW_SPROM_PA0B2			0x1062
-#define BCW_SPROM_PAMAXPOWER		0x1066 /* 7-0 for A, 15-8 for B/G */
+#define BCW_SPROM_PAMAXPOWER		0x1066	/* 7-0 for A, 15-8 for B/G */
 #define BCW_SPROM_PA1B0			0x106a
 #define BCW_SPROM_PA1B1			0x106c
 #define BCW_SPROM_PA1B2			0x106e
 #define BCW_SPROM_IDLETSSI		0x1070  /* As below */
+#define BCW_SPROM_BOARDFLAGS		0x1072	/* lower 16 bits */
+#define  BCW_BF_BTCOEXIST		0x0001	/* Bluetooth Co-existance */
+#define  BCW_BF_PACTRL			0x0002	/* GPIO 9 controls PA */
+#define  BCW_BF_AIRLINEMODE		0x0004	/* GPIO13 -> radio off LED */
+#define  BCW_BF_RSSI			0x0008	/* "something RSSI related */
+#define  BCW_BF_ENETSPI			0x0010	/* EPHY Roboswitch SPI */
+#define  BCW_BF_XTAL			0x0020	/* XTAL doesn't slow clock */
+#define  BCW_BF_CCKHIPWR		0x0040	/* HiPower CCK xmission */
+#define  BCW_BF_ENETADM			0x0080	/* has ADMtek Switch */
+#define  BCW_BF_ENETVLAN		0x0100	/* VLAN capable - huh? */
+#define  BCW_BF_AFTERBURNER		0x0200	/* Afterburner capable */
+#define  BCW_BF_NOPCI			0x0400	/* Board leaves PCI floating */
+#define  BCW_BF_FEM			0x0800	/* Front End Module support */
+#define  BCW_BF_EXTLNA			0x1000	/* has external LNA */
+#define  BCW_BF_HGPA			0x2000	/* has High Gain PA */
+#define  BCW_BF_BTCMOD			0x4000	/* BTCOEXIST in alt GPIOs */
+#define  BCW_BF_ALTIQ			0x8000	/* Alternate I/Q settings */
+
 #define BCW_SPROM_ANTGAIN		0x1074	/* bits 7-0 for an A PHY
 						   bits 15-8 for B/G PHYs */
 
@@ -246,26 +312,3 @@
 #define BCW_PHY_TYPEG			0x2	/* 802.11g PHY */
 #define BCW_PHY_TYPEN			0x4	/* 802.11n PHY */
 
-#define BCW_READ8(regs, ofs)						\
-	((*(regs)->r_read8)(regs, ofs))
-
-#define BCW_READ16(regs, ofs)						\
-	((*(regs)->r_read16)(regs, ofs))
-
-#define BCW_READ32(regs, ofs)						\
-	((*(regs)->r_read32)(regs, ofs))
-
-#define BCW_WRITE8(regs, ofs, val)					\
-	((*(regs)->r_write8)(regs, ofs, val))
-
-#define BCW_WRITE16(regs, ofs, val)					\
-	((*(regs)->r_write16)(regs, ofs, val))
-
-#define BCW_WRITE32(regs, ofs, val)					\
-	((*(regs)->r_write32)(regs, ofs, val))
-
-#define	BCW_ISSET(regs, reg, mask)					\
-	(BCW_READ32((regs), (reg)) & (mask))
-
-#define	BCW_CLR(regs, reg, mask)					\
-	BCW_WRITE32((regs), (reg), BCW_READ32((regs), (reg)) & ~(mask))

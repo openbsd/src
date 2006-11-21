@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.2 2006/11/17 20:49:27 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.3 2006/11/21 11:41:14 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -50,9 +50,65 @@ struct bcw_core {
 };
 
 /* number of descriptors used in a ring */
-#define BCW_NRXDESC             128
-#define BCW_NTXDESC             128
+#define BCW_RX_RING_COUNT	128
+#define BCW_TX_RING_COUNT	128
+#define BCW_MAX_SCATTER		8	/* XXX unknown, wild guess */
 
+struct bcw_rx_data {
+	bus_dmamap_t		map;
+	struct mbuf		*m;
+};
+
+struct bcw_tx_data {
+	bus_dmamap_t		map;
+	struct mbuf		*m;
+	uint32_t		softstat;
+	struct ieee80211_node	*ni;
+};
+
+struct bcw_rx_ring {
+	bus_dmamap_t		map;
+	bus_dma_segment_t	seg;
+	bus_addr_t		physaddr;
+	struct bcw_desc		*desc;
+	struct bcw_rx_data	*data;
+	int			count;
+	int			cur;
+	int			next;
+};
+
+struct bcw_tx_ring {
+	bus_dmamap_t		map;
+	bus_dma_segment_t	seg;
+	bus_addr_t		physaddr;
+	struct bcw_desc		*desc;
+	struct bcw_tx_data	*data;
+	int			count;
+	int			queued;
+	int			cur;
+	int			next;
+	int			stat;
+};
+
+struct bcw_desc {
+	u_int32_t ctrl;
+	u_int32_t addr;
+};
+
+/* ring descriptor */
+struct bcw_dma_slot {
+	u_int32_t ctrl;
+	u_int32_t addr;
+};
+
+#define CTRL_BC_MASK	0x1fff		/* buffer byte count */
+#define CTRL_EOT	0x10000000	/* end of descriptor table */
+#define CTRL_IOC	0x20000000	/* interrupt on completion */
+#define CTRL_EOF	0x40000000	/* end of frame */
+#define CTRL_SOF	0x80000000	/* start of frame */
+                
+
+#if 0
 /*
  * Mbuf pointers. We need these to keep track of the virtual addresses   
  * of our mbuf chains since we can only convert from physical to virtual,
@@ -67,77 +123,72 @@ struct bcw_chain_data {
 	bus_dmamap_t    bcw_tx_map[BCW_NTXDESC];  
 	bus_dmamap_t    bcw_rx_map[BCW_NRXDESC];
 };
+#endif
 
-struct bcw_regs {
-	bus_space_tag_t		r_bt;
-	bus_space_handle_t	r_bh;
-//	enum bcw_access		r_access;
-	void			*r_priv;
-	
-	/* bus independent I/O callbacks */
-	u_int8_t		(*r_read8)(void *, u_int32_t);
-	u_int16_t		(*r_read16)(void *, u_int32_t);
-	u_int32_t		(*r_read32)(void *, u_int32_t);
-	void			(*r_write8)(void *, u_int32_t, u_int8_t);
-	void			(*r_write16)(void *, u_int32_t, u_int16_t);
-	void			(*r_write32)(void *, u_int32_t, u_int32_t);
-	void			(*r_barrier)(void *, u_int32_t, u_int32_t, int);
-};
+struct bcw_rx_ring;
+struct bcw_tx_ring;
 
 /* Needs to have garbage removed */
 struct bcw_softc {
-	struct device		bcw_dev;
-	struct ieee80211com	bcw_ic;
-	struct bcw_regs		bcw_regs;
+	struct device		sc_dev;
+	struct ieee80211com	sc_ic;
+	struct bcw_rx_ring	sc_rxring;
+	struct bcw_tx_ring	sc_txring;
+
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
 	int			(*sc_enable)(struct bcw_softc *);
 	void			(*sc_disable)(struct bcw_softc *);
-	bus_space_tag_t		bcw_btag;
-	bus_space_handle_t	bcw_bhandle;
-	bus_dma_tag_t		bcw_dmatag;
-	struct arpcom		bcw_ac;		/* interface info */
+	struct timeout		sc_scan_to;
+
+	bus_dma_tag_t		sc_dmat;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+
 	void			*bcw_intrhand;
 	const char		*bcw_intrstr;	/* interrupt description */
-	struct pci_attach_args	bcw_pa;
-	u_int32_t		bcw_phy;	/* eeprom indicated phy */
+	struct pci_attach_args	sc_pa;
+	u_int32_t		sc_phy;	/* eeprom indicated phy */
 	struct bcw_dma_slot	*bcw_rx_ring;	/* receive ring */
 	struct bcw_dma_slot	*bcw_tx_ring;	/* transmit ring */
-	struct bcw_chain_data	bcw_cdata;	/* mbufs */
-	bus_dmamap_t		bcw_ring_map;
-	u_int32_t		bcw_intmask;	/* current intr mask */
-	u_int32_t		bcw_rxin;	/* last rx descriptor seen */
-	u_int32_t		bcw_txin;	/* last tx descriptor seen */
-	int			bcw_txsfree;	/* no. tx slots available */
-	int			bcw_txsnext;	/* next available tx slot */
-	struct timeout		bcw_timeout;
+//	struct bcw_chain_data	sc_cdata;	/* mbufs */
+	bus_dmamap_t		sc_ring_map;
+	u_int32_t		sc_intmask;	/* current intr mask */
+	u_int32_t		sc_rxin;	/* last rx descriptor seen */
+	u_int32_t		sc_txin;	/* last tx descriptor seen */
+	int			sc_txsfree;	/* no. tx slots available */
+	int			sc_txsnext;	/* next available tx slot */
+	struct timeout		sc_timeout;
 	/* Break these out into seperate structs */
-	u_int16_t		bcw_chipid;	/* Chip ID */
-	u_int16_t		bcw_chiprev;	/* Chip Revision */
-	u_int16_t		bcw_prodid;	/* Product ID */
+	u_int16_t		sc_chipid;	/* Chip ID */
+	u_int16_t		sc_chiprev;	/* Chip Revision */
+	u_int16_t		sc_prodid;	/* Product ID */
 //	struct bcw_core		core[BCW_MAX_CORES];
 //	struct bcw_radio	radio[BCW_MAX_RADIOS];
-	u_int16_t		bcw_phy_version;
-	u_int16_t		bcw_phy_type;
-	u_int16_t		bcw_phy_rev;
-	u_int16_t		bcw_corerev;
-	u_int32_t		bcw_radioid;
-	u_int16_t		bcw_radiorev;
-	u_int16_t		bcw_radiotype;
-	u_int32_t		bcw_phyinfo;
-	u_int16_t		bcw_numcores;
-	u_int16_t		bcw_havecommon;
-	u_int8_t		bcw_radio_gain;
-	u_int16_t		bcw_radio_pa0b0;
-	u_int16_t		bcw_radio_pa0b1;
-	u_int16_t		bcw_radio_pa0b2;
-	u_int16_t		bcw_radio_pa1b0;
-	u_int16_t		bcw_radio_pa1b1;
-	u_int16_t		bcw_radio_pa1b2;
-	u_int8_t		bcw_idletssi;
+	u_int16_t		sc_phy_version;
+	u_int16_t		sc_phy_type;
+	u_int16_t		sc_phy_rev;
+	u_int16_t		sc_corerev;
+	u_int32_t		sc_radioid;
+	u_int16_t		sc_radiorev;
+	u_int16_t		sc_radiotype;
+	u_int32_t		sc_phyinfo;
+	u_int16_t		sc_numcores;
+	u_int16_t		sc_havecommon;
+	u_int8_t		sc_radio_gain;
+	u_int16_t		sc_radio_pa0b0;
+	u_int16_t		sc_radio_pa0b1;
+	u_int16_t		sc_radio_pa0b2;
+	u_int16_t		sc_radio_pa1b0;
+	u_int16_t		sc_radio_pa1b1;
+	u_int16_t		sc_radio_pa1b2;
+	u_int8_t		sc_idletssi;
+	u_int8_t		sc_spromrev;
+	u_int16_t		sc_boardflags;
 };
 
 void	bcw_attach(struct bcw_softc *);
+int	bcw_detach(void *arg);
 int	bcw_intr(void *);
 
 #define BCW_DEBUG
@@ -158,18 +209,6 @@ int	bcw_intr(void *);
 /* transmit buffer max frags allowed */
 #define BCW_NTXFRAGS	16
 
-/* ring descriptor */
-struct bcw_dma_slot {
-	u_int32_t ctrl;
-	u_int32_t addr;
-};
-
-#define CTRL_BC_MASK	0x1fff		/* buffer byte count */
-#define CTRL_EOT	0x10000000	/* end of descriptor table */
-#define CTRL_IOC	0x20000000	/* interrupt on completion */
-#define CTRL_EOF	0x40000000	/* end of frame */
-#define CTRL_SOF	0x80000000	/* start of frame */
-                
 /* Packet status is returned in a pre-packet header */
 struct rx_pph {
 	u_int16_t len;

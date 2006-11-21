@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_pci.c,v 1.1 2006/11/17 18:58:30 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_pci.c,v 1.2 2006/11/21 11:41:14 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -126,10 +126,10 @@ bcw_pci_enable(struct bcw_softc *sc)
 	
 	/* Establish PCI interrupt */
 	psc->psc_intrcookie = pci_intr_establish(psc->psc_pc, psc->psc_ih,
-	    IPL_NET, bcw_intr, sc, sc->bcw_dev.dv_xname);
+	    IPL_NET, bcw_intr, sc, sc->sc_dev.dv_xname);
 	if(psc->psc_intrcookie == NULL) {
 		printf("%s: unable to establish interrupt\n",
-		    sc->bcw_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		return (1);
 	}
 	
@@ -153,7 +153,6 @@ bcw_pci_attach(parent, self, aux)
 {
 	struct bcw_pci_softc *psc = (void *) self;
 	struct bcw_softc *sc = &psc->psc_bcw;
-	struct bcw_regs *regs = &sc->bcw_regs;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 //	const char     *intrstr = NULL;
@@ -185,12 +184,12 @@ bcw_pci_attach(parent, self, aux)
 			 * this state, so punt.
 			 */
 			printf("%s: unable to wake up from power state D3\n",
-			       sc->bcw_dev.dv_xname);
+			       sc->sc_dev.dv_xname);
 			return;
 		}
 		if (pmode != 0) {
 			printf("%s: waking up from power state D%d\n",
-			       sc->bcw_dev.dv_xname, pmode);
+			       sc->sc_dev.dv_xname, pmode);
 			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
 		}
 	}
@@ -204,35 +203,33 @@ bcw_pci_attach(parent, self, aux)
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		if (pci_mapreg_map(pa, BCW_PCI_BAR0, memtype, 0, &sc->bcw_btag,
-		    &sc->bcw_bhandle, &memaddr, &memsize, 0) == 0)
+		if (pci_mapreg_map(pa, BCW_PCI_BAR0, memtype, 0, &sc->sc_iot,
+		    &sc->sc_ioh, &memaddr, &memsize, 0) == 0)
 			break;
 	default:
 		printf("%s: unable to find mem space\n",
-		    sc->bcw_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		return;
 	}
-	regs->r_bt = sc->bcw_btag;
-	regs->r_bh = sc->bcw_bhandle;
 
-	sc->bcw_dmatag = pa->pa_dmat;
+	sc->sc_dmat = pa->pa_dmat;
 
 
 	/* Map the PCI interrupt */
 	if (pci_intr_map(pa, &psc->psc_ih)) {
 		printf("%s: couldn't map interrupt\n",
-		    sc->bcw_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	sc->bcw_intrstr = pci_intr_string(pc, psc->psc_ih);
 
 	psc->psc_intrcookie = pci_intr_establish(pc, psc->psc_ih, IPL_NET, 
-	    bcw_intr, sc, sc->bcw_dev.dv_xname);
+	    bcw_intr, sc, sc->sc_dev.dv_xname);
 
 	if (psc->psc_intrcookie == NULL) {
 		printf("%s: couldn't establish interrupt",
-		    sc->bcw_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		if (sc->bcw_intrstr != NULL)
 			printf(" at %s", sc->bcw_intrstr);
 		printf("\n");
@@ -247,23 +244,23 @@ bcw_pci_attach(parent, self, aux)
 	/*
 	 * Get some PCI based info into the softc
 	 */
-	sc->bcw_chiprev=PCI_REVISION(pa->pa_class);
-	sc->bcw_prodid=PCI_PRODUCT(pa->pa_id);
+	sc->sc_chiprev=PCI_REVISION(pa->pa_class);
+	sc->sc_prodid=PCI_PRODUCT(pa->pa_id);
 
 	/*
 	 * Start the card up while we're in PCI land
 	 */
 
 	/* Turn the Crystal On */
-	sbval = bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle, BCW_GPIOI);
+	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOI);
 	if ((sbval & BCW_XTALPOWERUP) != BCW_XTALPOWERUP) {
-	    sbval = bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle, BCW_GPIOO);
+	    sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO);
 	    sbval |= (BCW_XTALPOWERUP & BCW_PLLPOWERDOWN);
-	    bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_GPIOO, sbval);
+	    bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO, sbval);
 	    delay(1000);
-	    sbval = bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle, BCW_GPIOO);
+	    sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO);
 	    sbval &= ~BCW_PLLPOWERDOWN;
-	    bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_GPIOO, sbval);
+	    bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO, sbval);
 	    delay(5000);
 	}
 	
@@ -271,9 +268,9 @@ bcw_pci_attach(parent, self, aux)
 	 * Clear PCI_STATUS_TARGET_TARGET_ABORT, Docs and Linux call it 
 	 * PCI_STATUS_SIG_TARGET_ABORT - should use pci_conf_read/write?
 	 */
-	bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle,
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 	    PCI_COMMAND_STATUS_REG,
-	    bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle,
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 	        PCI_COMMAND_STATUS_REG)
 	    & ~PCI_STATUS_TARGET_TARGET_ABORT);
 	
