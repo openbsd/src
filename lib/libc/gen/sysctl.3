@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.161 2006/10/16 04:55:21 mcbride Exp $
+.\"	$OpenBSD: sysctl.3,v 1.162 2006/11/21 05:37:32 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1556,6 +1556,7 @@ The currently defined protocols and names are:
 .It ip6	maxfragpackets	integer	yes
 .It ip6	maxfrags	integer	yes
 .It ip6	mforwarding	integer	yes
+.It ip6	multicast_mtudisc	integer	yes
 .It ip6	multipath	integer	yes
 .It ip6	redirect	integer	yes
 .It ip6	rr_prune	integer	yes
@@ -1739,6 +1740,13 @@ The flag is provided basically for avoiding possible DoS attacks.
 .It Li ip6.mforwarding
 If set to 1, then multicast forwarding is enabled for the host.
 The default is 0.
+.Pp
+.It Li ip6.multicast_mtudisc
+This variable controls generation of ICMPv6 Too Big messages
+when the machine is performing as an IPv6 multicast router.
+If set to 1, an ICMPv6 Too Big message will be generated for multicast packets
+which were too big to be forwarded.
+If set to 0, the ICMPv6 Too Big message will be suppressed.
 .Pp
 .It Li ip6.multipath
 This variable enables multipath routing for IPv6 addresses.

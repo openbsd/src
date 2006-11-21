@@ -106,9 +106,7 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#ifdef MULTICAST_PMTUD
 #include <netinet/icmp6.h>
-#endif
 
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
@@ -1595,21 +1593,21 @@ phyint_send(ip6, mifp, m)
 			    mifp - mif6table, error);
 #endif
 	} else {
-#ifdef MULTICAST_PMTUD
-		icmp6_error(mb_copy, ICMP6_PACKET_TOO_BIG, 0, linkmtu);
-#else
+		if (ip6_mcast_pmtu)
+			icmp6_error(mb_copy, ICMP6_PACKET_TOO_BIG, 0, linkmtu);
+		else {
 #ifdef MRT6DEBUG
-		if (mrt6debug & DEBUG_XMIT)
-			log(LOG_DEBUG,
-			    "phyint_send: packet too big on %s o %s g %s"
-			    " size %d(discarded)\n",
-			    ifp->if_xname,
-			    ip6_sprintf(&ip6->ip6_src),
-			    ip6_sprintf(&ip6->ip6_dst),
-			    mb_copy->m_pkthdr.len);
+			if (mrt6debug & DEBUG_XMIT)
+				log(LOG_DEBUG,
+				    "phyint_send: packet too big on %s o %s g %s"
+				    " size %d(discarded)\n",
+				    ifp->if_xname,
+				    ip6_sprintf(&ip6->ip6_src),
+				    ip6_sprintf(&ip6->ip6_dst),
+				    mb_copy->m_pkthdr.len);
 #endif /* MRT6DEBUG */
-		m_freem(mb_copy); /* simply discard the packet */
-#endif
+			m_freem(mb_copy); /* simply discard the packet */
+		}
 	}
 
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.28 2006/07/06 02:56:58 brad Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.29 2006/11/21 05:37:32 itojun Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -213,6 +213,7 @@ extern int	ip6_forward_srcrt;	/* forward src-routed? */
 extern int	ip6_use_deprecated;	/* allow deprecated addr as source */
 extern int	ip6_rr_prune;		/* router renumbering prefix
 					 * walk list every 5 sec.    */
+extern int	ip6_mcast_pmtu;		/* path MTU discovery for multicast */
 extern const int	ip6_v6only;
 
 extern struct socket *ip6_mrouter; 	/* multicast routing daemon */

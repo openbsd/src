@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.50 2006/06/18 11:47:46 pascoe Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.51 2006/11/21 05:37:32 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -269,6 +269,7 @@ int	ip6_auto_flowlabel = 1;
 int	ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
 int	ip6_rr_prune = 5;	/* router renumbering prefix
 				 * walk list every 5 sec.    */
+int	ip6_mcast_pmtu = 0;	/* enable pMTU discovery for multicast? */
 const int ip6_v6only = 1;
 u_int32_t ip6_id = 0UL;
 int	ip6_keepfaith = 0;

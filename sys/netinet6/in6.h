@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.41 2006/11/17 02:00:21 itojun Exp $	*/
+/*	$OpenBSD: in6.h,v 1.42 2006/11/21 05:37:32 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -565,7 +565,8 @@ struct in6_pktinfo {
 #define IPV6CTL_MAXFRAGS	41	/* max fragments */
 #define IPV6CTL_MFORWARDING	42
 #define IPV6CTL_MULTIPATH	43
-#define IPV6CTL_MAXID		44
+#define IPV6CTL_MCAST_PMTU	44	/* path MTU discovery for multicast */
+#define IPV6CTL_MAXID		45
 /* New entries should be added here from current IPV6CTL_MAXID value. */
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
 
@@ -614,6 +615,7 @@ struct in6_pktinfo {
 	{ "maxfrags", CTLTYPE_INT }, \
 	{ "mforwarding", CTLTYPE_INT }, \
 	{ "multipath", CTLTYPE_INT }, \
+	{ "multicast_mtudisc", CTLTYPE_INT }, \
 }
 
 #define IPV6CTL_VARS { \
@@ -661,6 +663,7 @@ struct in6_pktinfo {
 	&ip6_maxfrags, \
 	&ip6_mforwarding, \
 	&ip6_multipath, \
+	&ip6_mcast_pmtu, \
 }
 
 #endif /* __BSD_VISIBLE */
