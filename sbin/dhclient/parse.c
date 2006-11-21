@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.14 2006/04/18 19:17:54 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.15 2006/11/21 17:29:27 stevesk Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -227,7 +227,7 @@ parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int max, int separator,
 			convert_num(buf, val, base, 8);
 		else
 			break;
-	};
+	}
 
 	if (count < max) {
 		parse_warn("numeric aggregate too short.");
