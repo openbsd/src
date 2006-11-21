@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.2 2006/11/08 21:06:57 drahn Exp $	*/
+/*	$OpenBSD: intr.c,v 1.3 2006/11/21 21:00:57 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -202,7 +202,7 @@ extintr_establish(int irq, int level, int (*ih_fun)(void *), void *ih_arg,
 		_reg_bset_1(LANDISK_INTEN, (1 << (irq - 5)));
 	}
 
-	splx(s);
+	_cpu_intr_resume(s);
 
 	return (ih);
 }
@@ -248,7 +248,7 @@ extintr_disestablish(void *aux)
 		_reg_bclr_1(LANDISK_INTEN, (1 << irq));
 	}
 
-	splx(s);
+	_cpu_intr_resume(s);
 }
 
 void
@@ -284,7 +284,7 @@ extintr_enable(void *aux)
 		_reg_bset_1(LANDISK_INTEN, (1 << irq));
 	}
 
-	splx(s);
+	_cpu_intr_resume(s);
 }
 
 void
@@ -320,7 +320,7 @@ extintr_disable(void *aux)
 		_reg_bclr_1(LANDISK_INTEN, (1 << irq));
 	}
 
-	splx(s);
+	_cpu_intr_resume(s);
 }
 
 void
@@ -339,7 +339,7 @@ extintr_disable_by_num(int irq)
 	}
 	/* Mask interrupt */
 	_reg_bclr_1(LANDISK_INTEN, (1 << irq));
-	splx(s);
+	_cpu_intr_resume(s);
 }
 
 static int
