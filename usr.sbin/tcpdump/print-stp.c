@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-stp.c,v 1.5 2006/11/19 17:54:44 reyk Exp $	*/
+/*	$OpenBSD: print-stp.c,v 1.6 2006/11/21 12:43:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -80,7 +80,7 @@ struct rtentry;
 #define	STP_FLAGS_A		0x40		/* Agreement flag */
 #define	STP_FLAGS_TCA		0x80		/* Topology change ack */
 #define STP_FLAGS_BITS								\
-	"\20\1TC\2PROPOSAL\5LEARNING\6FORWARDING\7AGREED\8TCACK"
+	"\20\1TC\2PROPOSAL\5LEARNING\6FORWARDING\7AGREED\10TCACK"
 
 enum {
 	STP_PROTO_STP	= 0x00,
