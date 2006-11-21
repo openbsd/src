@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.28 2006/05/31 01:49:17 stevesk Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.29 2006/11/21 13:41:03 markus Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.28 2006/05/31 01:49:17 stevesk Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.29 2006/11/21 13:41:03 markus Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -591,10 +591,10 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 			krb_print((const void *)(up + 1), length);
 		else if (ISPORT(L2TP_PORT))
 			l2tp_print((const u_char *)(up + 1), length);
-		else if (ISPORT(ISAKMP_PORT))
-			ike_print((const u_char *)(up + 1), length);
 		else if (ISPORT(UDPENCAP_PORT))
 			udpencap_print((const u_char *)(up + 1), length, bp2);
+		else if (ISPORT(ISAKMP_PORT))
+			ike_print((const u_char *)(up + 1), length);
 #if 0
 		else if (ISPORT(NETBIOS_NS_PORT))
 			nbt_udp137_print((const u_char *)(up + 1), length);
