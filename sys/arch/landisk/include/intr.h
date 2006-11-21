@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.2 2006/11/20 17:54:05 drahn Exp $	*/
+/*	$OpenBSD: intr.h,v 1.3 2006/11/21 21:01:35 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -61,7 +61,7 @@
 #define	splclock()		_cpu_intr_raise(IPL_CLOCK << 4)
 #define	splstatclock()		splclock()
 #define	splsched()		splclock()
-#define	splhigh()		_cpu_intr_raise(IPL_HIGH << 4)
+#define	splhigh()		_cpu_intr_suspend()
 #define	spllock()		splhigh()
 
 #define	spl0()			_cpu_intr_resume(IPL_NONE << 4)
