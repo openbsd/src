@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.261 2006/11/19 21:45:49 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.262 2006/11/21 21:48:54 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -7963,8 +7963,7 @@ artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t interface;
 	int channel;
 
-	printf("%s: DMA",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	printf(": DMA");
 #ifdef PCIIDE_I31244_DISABLEDMA
 	if (sc->sc_rev == 0) {
 		printf(" disabled due to rev. 0");
