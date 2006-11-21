@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.23 2006/11/21 00:10:06 stevesk Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.24 2006/11/21 16:26:56 stevesk Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -72,17 +72,6 @@
 extern int h_errno;
 
 #define ifr_netmask ifr_addr
-
-#ifndef _PATH_DHCPD_PID
-#define _PATH_DHCPD_PID	"/var/run/dhcpd.pid"
-#endif
-#ifndef _PATH_DHCPD_DB
-#define _PATH_DHCPD_DB "/var/db/dhcpd.leases"
-#endif
-
-#ifndef _PATH_DEV_PF
-#define _PATH_DEV_PF "/dev/pf"
-#endif
 
 #define HAVE_SA_LEN
 #define HAVE_MKSTEMP
@@ -474,49 +463,10 @@ typedef unsigned char option_mask[16];
     length) for every 255 bytes that must be stored. */
 #define OPTION_SPACE(x)		((x) + 2 * ((x) / 255 + 1))
 
-/* Default path to dhcpd config file. */
-#ifdef DEBUG
-#undef _PATH_DHCPD_CONF
-#define _PATH_DHCPD_CONF	"dhcpd.conf"
-#undef _PATH_DHCPD_DB
-#define _PATH_DHCPD_DB		"dhcpd.leases"
-#else
-#ifndef _PATH_DHCPD_CONF
 #define _PATH_DHCPD_CONF	"/etc/dhcpd.conf"
-#endif
-
-#ifndef _PATH_DHCPD_DB
-#define _PATH_DHCPD_DB		"/etc/dhcpd.leases"
-#endif
-
-#ifndef _PATH_DHCPD_PID
-#define _PATH_DHCPD_PID		"/var/run/dhcpd.pid"
-#endif
-#endif
-
-#ifndef _PATH_DHCLIENT_CONF
-#define _PATH_DHCLIENT_CONF	"/etc/dhclient.conf"
-#endif
-
-#ifndef _PATH_DHCLIENT_PID
-#define _PATH_DHCLIENT_PID	"/var/run/dhclient.pid"
-#endif
-
-#ifndef _PATH_DHCLIENT_DB
-#define _PATH_DHCLIENT_DB	"/etc/dhclient.leases"
-#endif
-
-#ifndef _PATH_RESOLV_CONF
-#define _PATH_RESOLV_CONF	"/etc/resolv.conf"
-#endif
-
-#ifndef _PATH_DHCRELAY_PID
-#define _PATH_DHCRELAY_PID	"/var/run/dhcrelay.pid"
-#endif
-
-#ifndef DHCPD_LOG_FACILITY
+#define _PATH_DHCPD_DB		"/var/db/dhcpd.leases"
+#define _PATH_DEV_PF		"/dev/pf"
 #define DHCPD_LOG_FACILITY	LOG_DAEMON
-#endif
 
 #define MAX_TIME 0x7fffffff
 #define MIN_TIME 0
