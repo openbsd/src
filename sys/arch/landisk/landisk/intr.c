@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.3 2006/11/21 21:00:57 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.4 2006/11/21 21:01:52 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -368,3 +368,24 @@ extintr_intr_handler(void *arg)
 	}
 	return 0;
 }
+
+#ifdef DIAGNOSTIC
+void
+splassert_check(int wantipl, const char *func)
+{
+	register_t sr;
+        int oldipl;
+
+	__asm__ __volatile__ ("stc sr,%0" : "=r" (sr));
+
+	oldipl = (sr & 0xf0) >> 4;
+        if (oldipl < wantipl) {
+                splassert_fail(wantipl, oldipl, func);
+                /*
+                 * If the splassert_ctl is set to not panic, raise the ipl
+                 * in a feeble attempt to reduce damage.
+                 */
+		_cpu_intr_raise(wantipl << 4);
+        }
+}
+#endif

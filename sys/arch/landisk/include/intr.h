@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 2006/11/21 21:01:35 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 2006/11/21 21:01:51 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -67,7 +67,23 @@
 #define	spl0()			_cpu_intr_resume(IPL_NONE << 4)
 #define	splx(x)			_cpu_intr_resume(x)
 
+#ifdef DIAGNOSTIC
+/*
+ * Although this function is implemented in MI code, it must be in this MD
+ * header because we don't want this header to include MI includes.
+ */
+void splassert_fail(int, int, const char *);
+extern int splassert_ctl;
+void splassert_check(int, const char *);
+#define	splassert(__wantipl) \
+do {									\
+	if (__predict_false(splassert_ctl > 0)) {			\
+		splassert_check(__wantipl, __func__);			\
+	}								\
+} while (0)
+#else
 #define	splassert(wantipl)	do { /* nothing yet */ } while (0)
+#endif
 
 void intr_init(void);
 void *extintr_establish(int, int, int (*)(void *), void *, const char *);
