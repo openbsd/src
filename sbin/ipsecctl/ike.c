@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.52 2006/11/01 03:12:14 mcbride Exp $	*/
+/*	$OpenBSD: ike.c,v 1.53 2006/11/21 13:51:17 markus Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -610,6 +610,7 @@ ike_gen_config(struct ipsec_rule *r, FILE *fd)
 static int
 ike_delete_config(struct ipsec_rule *r, FILE *fd)
 {
+#if 0
 	switch (r->ikemode) {
 	case IKE_ACTIVE:
 	case IKE_DYNAMIC:
@@ -638,6 +639,11 @@ ike_delete_config(struct ipsec_rule *r, FILE *fd)
 	fprintf(fd, DELETE "[qm-%s-%s]\n", r->src->name, r->dst->name);
 	fprintf(fd, DELETE "[lid-%s]\n", r->src->name);
 	fprintf(fd, DELETE "[rid-%s]\n", r->dst->name);
+#else
+	fprintf(fd, "t IPsec-%s-%s\n", r->src->name, r->dst->name);
+	fprintf(fd, DELETE "[IPsec-%s-%s]\n", r->src->name, r->dst->name);
+	fprintf(fd, DELETE "[qm-%s-%s]\n", r->src->name, r->dst->name);
+#endif
 
 	return (0);
 }
