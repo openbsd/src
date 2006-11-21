@@ -1664,3 +1664,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define realloc(X, Y) isoc_realloc((X), (Y))
 #define isoc_realloc(X, Y) ((X) ? realloc((X), (Y)) : malloc(Y))
 #endif
+
+#ifdef __hppa__
+#define	__hp9000s800
+#endif
