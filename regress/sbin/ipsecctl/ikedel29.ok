@@ -1,9 +1,3 @@
 t IPsec-3ffe:3::/64-3ffe:4::/64
-C rms [peer-3ffe:2::1]
-C rms [mm-3ffe:2::1]
-C rms [am-3ffe:2::1]
-C rms [noname.my.domain-ID]
 C rms [IPsec-3ffe:3::/64-3ffe:4::/64]
 C rms [qm-3ffe:3::/64-3ffe:4::/64]
-C rms [lid-3ffe:3::/64]
-C rms [rid-3ffe:4::/64]

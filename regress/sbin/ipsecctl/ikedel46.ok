@@ -1,16 +1,6 @@
 t IPsec-1.1.1.1-2.2.2.2
-C rms [peer-2.2.2.2]
-C rms [mm-2.2.2.2]
-C rms [am-2.2.2.2]
 C rms [IPsec-1.1.1.1-2.2.2.2]
 C rms [qm-1.1.1.1-2.2.2.2]
-C rms [lid-1.1.1.1]
-C rms [rid-2.2.2.2]
 t IPsec-1.1.1.1-2.2.2.2
-C rms [peer-2.2.2.2]
-C rms [mm-2.2.2.2]
-C rms [am-2.2.2.2]
 C rms [IPsec-1.1.1.1-2.2.2.2]
 C rms [qm-1.1.1.1-2.2.2.2]
-C rms [lid-1.1.1.1]
-C rms [rid-2.2.2.2]
