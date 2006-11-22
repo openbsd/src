@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.8 2006/04/18 19:18:32 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.9 2006/11/22 18:07:52 stevesk Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -522,7 +522,7 @@ parse_date(FILE * cfile)
 			skip_to_semi(cfile);
 		return (NULL);
 	}
-	/* Month... */
+	/* Day... */
 	token = next_token(&val, cfile);
 	if (token != TOK_NUMBER) {
 		parse_warn("numeric day of month expected.");
@@ -563,15 +563,15 @@ parse_date(FILE * cfile)
 	/* Colon separating minute from second... */
 	token = next_token(&val, cfile);
 	if (token != ':') {
-		parse_warn("expected colon separating hour from minute.");
+		parse_warn("expected colon separating minute from second.");
 		if (token != ';')
 			skip_to_semi(cfile);
 		return (NULL);
 	}
-	/* Minute... */
+	/* second... */
 	token = next_token(&val, cfile);
 	if (token != TOK_NUMBER) {
-		parse_warn("numeric minute expected.");
+		parse_warn("numeric second expected.");
 		if (token != ';')
 			skip_to_semi(cfile);
 		return (NULL);
