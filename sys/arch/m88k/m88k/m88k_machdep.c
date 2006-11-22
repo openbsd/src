@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.16 2006/05/08 14:36:09 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.17 2006/11/22 22:47:46 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -53,6 +53,9 @@
 #include <sys/exec.h>
 #include <sys/errno.h>
 #include <sys/lock.h>
+#ifdef MULTIPROCESSOR
+#include <sys/mplock.h>
+#endif
 
 #include <machine/asm.h>
 #include <machine/asm_macro.h>
@@ -90,6 +93,7 @@ void	vector_init(m88k_exception_vector_area *, u_int32_t *);
 #ifdef MULTIPROCESSOR
 __cpu_simple_lock_t cmmu_cpu_lock = __SIMPLELOCK_UNLOCKED;
 cpuid_t	master_cpu;
+struct __mp_lock sir_lock;
 #endif
 
 struct cpu_info m88k_cpus[MAX_CPUS];
@@ -333,6 +337,13 @@ set_cpu_number(cpuid_t number)
 	{
 		ci->ci_primary = 1;
 		ci->ci_idle_pcb = &idle_u;
+
+#ifdef MULTIPROCESSOR
+		/*
+		 * Specific initialization for the master processor.
+		 */
+		__mp_lock_init(&sir_lock);
+#endif
 	}
 
 	ci->ci_alive = 1;
@@ -346,16 +357,13 @@ int ssir;
 int netisr;
 
 #ifdef MULTIPROCESSOR
-#include <sys/lock.h>
-
-__cpu_simple_lock_t sir_lock = __SIMPLELOCK_UNLOCKED;
 
 void
 setsoftint(int sir)
 {
-	__cpu_simple_lock(&sir_lock);
+	__mp_lock(&sir_lock);
 	ssir |= sir;
-	__cpu_simple_unlock(&sir_lock);
+	__mp_unlock(&sir_lock);
 }
 
 int
@@ -363,10 +371,10 @@ clrsoftint(int sir)
 {
 	int tmpsir;
 
-	__cpu_simple_lock(&sir_lock);
+	__mp_lock(&sir_lock);
 	tmpsir = ssir & sir;
 	ssir ^= tmpsir;
-	__cpu_simple_unlock(&sir_lock);
+	__mp_unlock(&sir_lock);
 
 	return (tmpsir);
 }
