@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.3 2006/11/21 11:41:14 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.4 2006/11/22 15:12:50 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -116,22 +116,6 @@ bcw_attach(struct bcw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet   *ifp = &ic->ic_if;
-#if 0
-	struct pci_attach_args *pa = &sc->sc_pa;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pci_intr_handle_t ih;
-	const char     *intrstr = NULL;
-#endif
-#if 0
-	caddr_t         kva;
-	bus_dma_segment_t seg;
-	int             rseg;
-	pcireg_t        memtype;
-	bus_addr_t      memaddr;
-	bus_size_t      memsize;
-	int             pmreg;
-	pcireg_t        pmode;
-#endif
 	int             error;
 	int             i,j;
 	u_int32_t	sbval;
@@ -170,10 +154,12 @@ bcw_attach(struct bcw_softc *sc)
 
 	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_ADDR_SPACE0);
 	if ((sbval & 0xffff0000) != 0x18000000) {
-		DPRINTF(("%s: Trial Core read was 0x%x, single core only?\n",
+		DPRINTF(("\n%s: Trial Core read was 0x%x, single core only?\n",
 		    sc->sc_dev.dv_xname, sbval));
 	 	//sc->sc_singlecore=1;
-	}
+	} else
+		DPRINTF(("\n%s: Trial Core read was 0x%x\n",
+		    sc->sc_dev.dv_xname, sbval));
 
 	/* 
 	 * Try and change to the ChipCommon Core
@@ -184,32 +170,16 @@ bcw_attach(struct bcw_softc *sc)
 		delay(10);
 		sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 		    BCW_ADDR_SPACE0);
-		DPRINTF(("%s: Core change read %d = 0x%x\n",
-		    sc->sc_dev.dv_xname,i,sbval));
-		if (sbval == BCW_CORE_SELECT(0)) break;
+		if (sbval == BCW_CORE_SELECT(0)) {
+			DPRINTF(("%s: Selected ChipCommon Core\n"));
+			break;
+		}
 		delay(10);
 	}
-	/* 
-	 * Try and change to random cores
-	 */
-	for (j = 1; j < 10; j++) {
-		for (i = 0; i < 10; i++) {
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_ADDR_SPACE0, BCW_CORE_SELECT(j));
-			delay(10);
-			sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_ADDR_SPACE0);
-			DPRINTF(("%s: Core change read %d = 0x%x\n",
-			    sc->sc_dev.dv_xname,i,sbval));
-			if (sbval == BCW_CORE_SELECT(j)) break;
-			delay(10);
-		}
-	}
-	//DPRINTF(("\n")); /* Pretty print so the debugs start on new lines */
 	
 	/*
 	 * Core ID REG, this is either the default wireless core (0x812) or
-	 * a ChipCommon core
+	 * a ChipCommon core that was successfully selected above
 	 */
 	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_CIR_SBID_HI);
 	DPRINTF(("%s: Got Core ID Reg 0x%x, type is 0x%x\n",
@@ -303,7 +273,7 @@ bcw_attach(struct bcw_softc *sc)
 	/* Identify each core */
 	if (sc->sc_numcores >= 2) { /* Exclude single core chips */
  		for (i = 0; i <= sc->sc_numcores; i++) {
- 			DPRINTF(("%s: Trying core %d - ", 
+ 			DPRINTF(("%s: Trying core %d -\n",
  			    sc->sc_dev.dv_xname, i));
  			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			    BCW_ADDR_SPACE0, BCW_CORE_SELECT(i));
@@ -311,7 +281,7 @@ bcw_attach(struct bcw_softc *sc)
 			for (j = 0; j < 10; j++) {
 				sbval=bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 				    BCW_ADDR_SPACE0);
-				DPRINTF(("%s: read %d for core %d = 0x%x ",
+				DPRINTF(("%s: read %d for core %d = 0x%x\n",
 				    sc->sc_dev.dv_xname, j, i, sbval));
 				if (sbval == BCW_CORE_SELECT(i)) break;
 				delay(10);
@@ -322,11 +292,10 @@ bcw_attach(struct bcw_softc *sc)
 				    (sbval & 0x00008ff0) >> 4));
 			//sc->sc_core[i].id = (sbval & 0x00008ff0) >> 4;
 		} /* End of For loop */
-		DPRINTF(("\n")); /* Make pretty debug output */
 	}
 
 	/*
-	 * Attach cores to the backplane, if we have more than one
+	 * XXX Attach cores to the backplane, if we have more than one
 	 */
 	// ??? if (!sc->sc_singlecore) {
 	if (sc->sc_havecommon == 1) {
@@ -639,7 +608,7 @@ bcw_attach(struct bcw_softc *sc)
 	 */
 	
 	/* 
-	 * TODO still for the card attach: 
+	 * XXX TODO still for the card attach: 
 	 * - Disable the 80211 Core (and wrapper for on/off)
 	 * - Powercontrol Crystal Off (and write a wrapper for on/off)
 	 * - Setup LEDs to blink in whatever fashionable manner
@@ -688,8 +657,7 @@ bcw_attach(struct bcw_softc *sc)
 		ic->ic_myaddr[5] = i & 0xff;
 	}
 	
-	printf(": %s, address %s\n", sc->bcw_intrstr,
-	    ether_sprintf(ic->ic_myaddr));
+	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	/* Set supported rates */
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = bcw_rateset_11b;
@@ -799,13 +767,15 @@ bcw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 void
 bcw_start(struct ifnet *ifp)
 {
-//	struct bcw_softc *sc = ifp->if_softc;
-//	struct mbuf    *m0;
-//	bus_dmamap_t    dmamap;
-//	int             txstart;
-//	int             txsfree;
+#if 0
+	struct bcw_softc *sc = ifp->if_softc;
+	struct mbuf    *m0;
+	bus_dmamap_t    dmamap;
+	int             txstart;
+	int             txsfree;
+	int		error;
+#endif
 	int             newpkts = 0;
-//	int             error;
 
 	/*
          * do not start another if currently transmitting, and more
@@ -827,7 +797,7 @@ bcw_start(struct ifnet *ifp)
          * descriptors.
          */
 	while (txsfree > 0) {
-		int             seg;
+		int	seg;
 
 		/* Grab a packet off the queue. */
 		IFQ_POLL(&ifp->if_snd, m0);
@@ -1018,11 +988,13 @@ bcw_intr(void *xsc)
 void
 bcw_rxintr(struct bcw_softc *sc)
 {
-//	struct rx_pph *pph;
-//	struct mbuf *m;
+#if 0
+	struct rx_pph *pph;
+	struct mbuf *m;
+	int len;
+	int i;
+#endif
 	int curr;
-//	int len;
-//	int i;
 
 	/* get pointer to active receive slot */
 	curr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_DMA_RXSTATUS(0)) & 
@@ -1277,8 +1249,8 @@ bcw_init(struct ifnet *ifp)
 	/* set media */
 	//mii_mediachg(&sc->bcw_mii);
 
-	/* turn on the ethernet mac */
 #if 0
+	/* turn on the ethernet mac */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_ENET_CTL,
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 	    BCW_ENET_CTL) | EC_EE);
@@ -1408,66 +1380,30 @@ bcw_stop(struct ifnet *ifp, int disable)
 void
 bcw_reset(struct bcw_softc *sc)
 {
-	u_int32_t val;
-	u_int32_t sbval;
 	int i;
-	
+	u_int32_t sbval;
+	u_int32_t val;
+
 	/* if SB core is up, only clock of clock,reset,reject will be set */
 	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
-
+#if 0
 	/* The core isn't running if the if the clock isn't enabled */
 	if ((sbval & (SBTML_RESET | SBTML_REJ | SBTML_CLK)) == SBTML_CLK) {
 
-#if 0
-		// Stop all DMA
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_DMAI_CTL, 0);
-
+		/* Stop all DMA */
 		/* reset the dma engines */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_DMA_TXCTL, 0);
-		val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    BCW_DMA_RXSTATUS);
-		/* if error on receive, wait to go idle */
-		if (val & RS_ERROR) {
-			for (i = 0; i < 100; i++) {
-				val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				    BCW_DMA_RXSTATUS);
-				if (val & RS_DMA_IDLE)
-					break;
-				delay(10);
-			}
-			if (i == 100)
-				printf("%s: receive dma did not go idle after"
-				    " error\n", sc->sc_dev.dv_xname);
-		}
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_DMA_RXSTATUS, 0);
-
-		/* reset ethernet mac */
-
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_ENET_CTL,
-		    EC_ES);
-		for (i = 0; i < 200; i++) {
-			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_ENET_CTL);
-			if (!(val & EC_ES))
-				break;
-			delay(10);
-		}
-		if (i == 200)
-			printf("%s: timed out resetting ethernet mac\n",
-			       sc->sc_dev.dv_xname);
-#endif
 	} else {
-		u_int32_t reg_win;
+		//u_int32_t reg_win;
 
 		/* remap the pci registers to the Sonics config registers */
-#if 0
+
 		/* save the current map, so it can be restored */
 		reg_win = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 		    BCW_REG0_WIN);
 		/* set register window to Sonics registers */
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_REG0_WIN,
 		    BCW_SONICS_WIN);
-#endif
+
 		/* enable SB to PCI interrupt */
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBINTVEC,
 		    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
@@ -1483,7 +1419,7 @@ bcw_reset(struct bcw_softc *sc)
 		/* restore to ethernet register space */
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_REG0_WIN, reg_win);
 	}
-
+#endif
 	/* disable SB core if not in reset */
 	if (!(sbval & SBTML_RESET)) {
 
@@ -1550,31 +1486,11 @@ bcw_reset(struct bcw_softc *sc)
 	    SBTML_CLK | SBTML_80211FLAG | SBTML_80211PHY);
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
 	delay(1);
-#if 0
-	/* Write a 0 to MMIO reg 0x3e6, Baseband attenuation */
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, 0x3e6,0);
-#endif
+
 	/* Set 0x400 in the MMIO StatusBitField reg */
 	sbval=bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBF);
 	sbval |= 0x400; 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBF, sbval);
-#if 0
-	/* initialize MDC preamble, frequency */
-	/* MAGIC */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_MI_CTL, 0x8d);
-
-	/* enable phy, differs for internal, and external */
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_DEVCTL);
-	if (!(val & BCW_DC_IP)) {
-		/* select external phy */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_ENET_CTL,
-		    EC_EP);
-	} else if (val & BCW_DC_ER) {	/* internal, clear reset bit if on */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_DEVCTL,
-		    val & ~BCW_DC_ER);
-		delay(100);
-	}
-#endif
 }
 
 /* Set up the receive filter. */
@@ -1728,33 +1644,23 @@ bcw_validatechipaccess(struct bcw_softc *sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_CONTROL,
 	    (BCW_SHM_CONTROL_SHARED << 16) + 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_DATA, 0xaa5555aa);
-	DPRINTF(("Write test 1, "));	
 	/* Read it back */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_CONTROL,
 	    (BCW_SHM_CONTROL_SHARED << 16) + 0);
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_DATA);
-	DPRINTF(("Read test 1, "));
-	if (val != 0xaa5555aa) {
-		DPRINTF(("Failed test 1\n"));
+	if (val != 0xaa5555aa)
 		return (1);
-	} else
-		DPRINTF(("Passed test 1\n"));
 	
 	/* write 2nd test value */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_CONTROL,
 	    (BCW_SHM_CONTROL_SHARED << 16) + 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_DATA, 0x55aaaa55);
-	DPRINTF(("Write test 2, "));
 	/* Read it back */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_CONTROL,
 	    (BCW_SHM_CONTROL_SHARED << 16) + 0);
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_DATA);
-	DPRINTF(("Read test 2, "));
-	if (val != 0x55aaaa55) {
-		DPRINTF(("Failed test 2\n"));
+	if (val != 0x55aaaa55)
 		return 2;
-	} else
-		DPRINTF(("Passed test 2\n"));
 
 	/* Restore the saved value now that we're done */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_CONTROL,
@@ -1762,7 +1668,6 @@ bcw_validatechipaccess(struct bcw_softc *sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_DATA, save);
 	
 	if (sc->sc_corerev >= 3) {
-		DPRINTF(("Doing corerev >= 3 tests\n"));
 		/* do some test writes and reads against the TSF */
 		/* 
 		 * This works during the attach, but the spec at
@@ -1835,7 +1740,7 @@ bcw_free_ring(struct bcw_softc *sc, struct bcw_dma_slot *ring)
 	int i;
 
 	if (sc->bcw_rx_chain != NULL) {
-		if (i = 0; i < BCW_NRXDESC; i++) {
+		for (i = 0; i < BCW_NRXDESC; i++) {
 			bcwd = &sc->bcw_rx_ring[i];
 
 			if (sc->bcw_rx_chain[i] != NULL) {

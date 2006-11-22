@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.3 2006/11/21 11:41:14 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.4 2006/11/22 15:12:50 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -139,6 +139,7 @@ struct bcw_softc {
 				    enum ieee80211_state, int);
 	int			(*sc_enable)(struct bcw_softc *);
 	void			(*sc_disable)(struct bcw_softc *);
+	void			(*sc_power)(struct bcw_softc *, int);
 	struct timeout		sc_scan_to;
 
 	bus_dma_tag_t		sc_dmat;
