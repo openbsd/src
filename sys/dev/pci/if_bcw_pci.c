@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_pci.c,v 1.2 2006/11/21 11:41:14 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_pci.c,v 1.3 2006/11/22 15:20:07 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -155,21 +155,11 @@ bcw_pci_attach(parent, self, aux)
 	struct bcw_softc *sc = &psc->psc_bcw;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-//	const char     *intrstr = NULL;
-//	caddr_t         kva;
-//	bus_dma_segment_t seg;
-//	int             rseg;
 	pcireg_t        memtype;
 	bus_addr_t      memaddr;
 	bus_size_t      memsize;
-//	bus_space_tag_t	memt;
-//	bus_space_handle_t	memh;
-//	int		ioh_valid, memh_valid;
 	int             pmreg;
 	pcireg_t        pmode;
-
-//	int             error;
-//	int             i,j;
 	u_int32_t	sbval;
 
 	psc->psc_pc = pa->pa_pc;
