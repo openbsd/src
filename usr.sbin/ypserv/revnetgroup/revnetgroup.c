@@ -1,4 +1,4 @@
-/* $OpenBSD: revnetgroup.c,v 1.6 2006/04/03 05:01:23 deraadt Exp $ */
+/* $OpenBSD: revnetgroup.c,v 1.7 2006/11/22 07:36:01 ray Exp $ */
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -42,12 +42,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 #include <errno.h>
 #include <err.h>
 #include "hash.h"
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: revnetgroup.c,v 1.6 2006/04/03 05:01:23 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: revnetgroup.c,v 1.7 2006/11/22 07:36:01 ray Exp $";
 #endif
 
 /* Default location of netgroup file. */
@@ -73,7 +74,7 @@ int
 main(int argc, char *argv[])
 {
 	FILE *fp;
-	char readbuf[LINSIZ];
+	char *readbuf;
 	struct group_entry *gcur;
 	struct member_entry *mcur;
 	char *host, *user, *domain;
@@ -122,20 +123,17 @@ main(int argc, char *argv[])
 	}
 
 	/* Stuff all the netgroup names and members into a hash table. */
-	while (fgets(readbuf, LINSIZ, fp)) {
-		if (readbuf[0] == '#')
+	while ((readbuf = fparseln(fp, NULL, NULL, NULL, 0)) != NULL) {
+		data = strpbrk(readbuf, " \t");
+		if (data == NULL) {
+			free(readbuf);
 			continue;
-		/* handle backslash line continuations */
-		while (readbuf[strlen(readbuf) - 2] == '\\') {
-			fgets((char *)&readbuf[strlen(readbuf) - 2],
-			    sizeof(readbuf) - strlen(readbuf), fp);
 		}
-		data = NULL;
-		if ((data = (char *)(strpbrk(readbuf, " \t") + 1)) < (char *)2)
-			continue;
-		key = (char *)&readbuf;
-		*(data - 1) = '\0';
+		*data = '\0';
+		++data;
+		key = readbuf;
 		ngstore(gtable, key, data);
+		free(readbuf);
 	}
 
 	fclose(fp);
