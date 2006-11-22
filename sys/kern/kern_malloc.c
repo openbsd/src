@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.63 2006/09/30 14:31:28 mickey Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.64 2006/11/22 18:59:50 thib Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -151,8 +151,13 @@ malloc(unsigned long size, int type, int flags)
 		return ((void *) va);
 #endif
 
-	if (size > 65535 * PAGE_SIZE)
-		panic("malloc: allocation too large");
+	if (size > 65535 * PAGE_SIZE) {
+		if (flags & M_CANFAIL)
+			return (NULL);
+		else
+			panic("malloc: allocation too large");
+	}
+
 	indx = BUCKETINDX(size);
 	kbp = &bucket[indx];
 	s = splvm();
