@@ -1,4 +1,4 @@
-/*	$OpenBSD: banner.c,v 1.12 2004/07/09 15:59:26 deraadt Exp $	*/
+/*	$OpenBSD: banner.c,v 1.13 2006/11/22 19:31:39 otto Exp $	*/
 /*	$NetBSD: banner.c,v 1.4 1995/04/22 11:55:15 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)banner.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: banner.c,v 1.12 2004/07/09 15:59:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: banner.c,v 1.13 2006/11/22 19:31:39 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -1041,7 +1041,7 @@ main(int argc, char *argv[])
 			break;
 		case 'w':
 			width = atoi(optarg);
-			if (width <= 0)
+			if (width <= 0 || width > DWIDTH)
 				errx(1, "illegal argument for -w option");
 			break;
 		case '?': case 'h':
@@ -1053,7 +1053,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	for (i = 0; i < width; i++) {
-		j = i * 132 / width;
+		j = i * DWIDTH / width;
 		print[j] = 1;
 	}
 
