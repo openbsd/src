@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.9 2006/11/22 18:07:52 stevesk Exp $	*/
+/*	$OpenBSD: parse.c,v 1.10 2006/11/22 21:35:56 stevesk Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -362,13 +362,14 @@ void
 convert_num(unsigned char *buf, char *str, int base, int size)
 {
 	int negative = 0, tval, max;
-	char *ptr = str;
 	u_int32_t val = 0;
+	char *ptr = str;
 
 	if (*ptr == '-') {
 		negative = 1;
 		ptr++;
 	}
+
 	/* If base wasn't specified, figure it out from the data. */
 	if (!base) {
 		if (ptr[0] == '0') {
@@ -383,6 +384,7 @@ convert_num(unsigned char *buf, char *str, int base, int size)
 		} else
 			base = 10;
 	}
+
 	do {
 		tval = *ptr++;
 		/* XXX assumes ASCII... */
@@ -424,6 +426,7 @@ convert_num(unsigned char *buf, char *str, int base, int size)
 			break;
 		}
 	}
+
 	if (negative) {
 		switch (size) {
 		case 8:
@@ -466,13 +469,13 @@ convert_num(unsigned char *buf, char *str, int base, int size)
  * clock.
  */
 time_t
-parse_date(FILE * cfile)
+parse_date(FILE *cfile)
 {
-	struct tm tm;
+	static int months[11] = { 31, 59, 90, 120, 151, 181,
+	    212, 243, 273, 304, 334 };
 	int guess, token;
+	struct tm tm;
 	char *val;
-	static int months[11] = {31, 59, 90, 120, 151, 181,
-	    212, 243, 273, 304, 334};
 
 	/* Day of week... */
 	token = next_token(&val, cfile);
@@ -480,7 +483,7 @@ parse_date(FILE * cfile)
 		parse_warn("numeric day of week expected.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return (NULL);
+		return (0);
 	}
 	tm.tm_wday = atoi(val);
 
@@ -490,7 +493,7 @@ parse_date(FILE * cfile)
 		parse_warn("numeric year expected.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return (NULL);
+		return (0);
 	}
 	tm.tm_year = atoi(val);
 	if (tm.tm_year > 1900)
@@ -502,15 +505,16 @@ parse_date(FILE * cfile)
 		parse_warn("expected slash separating year from month.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return (NULL);
+		return (0);
 	}
+
 	/* Month... */
 	token = next_token(&val, cfile);
 	if (token != TOK_NUMBER) {
 		parse_warn("numeric month expected.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return (NULL);
+		return (0);
 	}
 	tm.tm_mon = atoi(val) - 1;
 
@@ -520,15 +524,16 @@ parse_date(FILE * cfile)
 		parse_warn("expected slash separating month from day.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return (NULL);
+		return (0);
 	}
+
 	/* Day... */
 	token = next_token(&val, cfile);
 	if (token != TOK_NUMBER) {
 		parse_warn("numeric day of month expected.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return (NULL);
+		return (0);
 	}
 	tm.tm_mday = atoi(val);
 
@@ -538,7 +543,7 @@ parse_date(FILE * cfile)
 		parse_warn("numeric hour expected.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return (NULL);
+		return (0);
 	}
 	tm.tm_hour = atoi(val);
 
@@ -548,15 +553,16 @@ parse_date(FILE * cfile)
 		parse_warn("expected colon separating hour from minute.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return (NULL);
+		return (0);
 	}
+
 	/* Minute... */
 	token = next_token(&val, cfile);
 	if (token != TOK_NUMBER) {
 		parse_warn("numeric minute expected.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return (NULL);
+		return (0);
 	}
 	tm.tm_min = atoi(val);
 
@@ -566,15 +572,16 @@ parse_date(FILE * cfile)
 		parse_warn("expected colon separating minute from second.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return (NULL);
+		return (0);
 	}
-	/* second... */
+
+	/* Second... */
 	token = next_token(&val, cfile);
 	if (token != TOK_NUMBER) {
 		parse_warn("numeric second expected.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return (NULL);
+		return (0);
 	}
 	tm.tm_sec = atoi(val);
 	tm.tm_isdst = 0;
@@ -587,8 +594,9 @@ parse_date(FILE * cfile)
 	if (token != ';') {
 		parse_warn("semicolon expected.");
 		skip_to_semi(cfile);
-		return (NULL);
+		return (0);
 	}
+
 	/* Guess the time value... */
 	guess = ((((((365 * (tm.tm_year - 70) +	/* Days in years since '70 */
 	    (tm.tm_year - 69) / 4 +	/* Leap days since '70 */

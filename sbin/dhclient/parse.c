@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.16 2006/11/22 18:07:52 stevesk Exp $	*/
+/*	$OpenBSD: parse.c,v 1.17 2006/11/22 21:35:56 stevesk Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -43,7 +43,8 @@
 #include "dhcpd.h"
 #include "dhctoken.h"
 
-/* Skip to the semicolon ending the current statement.   If we encounter
+/*
+ * Skip to the semicolon ending the current statement.   If we encounter
  * braces, the matching closing brace terminates the statement.   If we
  * encounter a right brace but haven't encountered a left brace, return
  * leaving the brace in the token buffer for the caller.   If we see a
@@ -60,8 +61,9 @@
 void
 skip_to_semi(FILE *cfile)
 {
-	int brace_count = 0, token;
-	char *val;
+	int		 token;
+	char		*val;
+	int		 brace_count = 0;
 
 	do {
 		token = peek_token(&val, cfile);
@@ -197,7 +199,7 @@ parse_lease_time(FILE *cfile, time_t *timep)
 	}
 	convert_num((unsigned char *)timep, val, 10, 32);
 	/* Unswap the number - convert_num returns stuff in NBO. */
-	*timep = ntohl(*timep); /* XXX */
+	*timep = ntohl(*timep);	/* XXX */
 
 	parse_semi(cfile);
 }
@@ -477,15 +479,13 @@ parse_date(FILE *cfile)
 
 	/* Guess the time value... */
 	guess = ((((((365 * (tm.tm_year - 70) +	/* Days in years since '70 */
-		    (tm.tm_year - 69) / 4 +	/* Leap days since '70 */
-		    (tm.tm_mon			/* Days in months this year */
-		    ? months[tm.tm_mon - 1]
-		    : 0) +
-		    (tm.tm_mon > 1 &&		/* Leap day this year */
-		    !((tm.tm_year - 72) & 3)) +
-		    tm.tm_mday - 1) * 24) +	/* Day of month */
-		    tm.tm_hour) * 60) +
-		    tm.tm_min) * 60) + tm.tm_sec;
+	    (tm.tm_year - 69) / 4 +	/* Leap days since '70 */
+	    (tm.tm_mon			/* Days in months this year */
+	    ? months[tm.tm_mon - 1] : 0) +
+	    (tm.tm_mon > 1 &&		/* Leap day this year */
+	    !((tm.tm_year - 72) & 3)) +
+	    tm.tm_mday - 1) * 24) +	/* Day of month */
+	    tm.tm_hour) * 60) + tm.tm_min) * 60) + tm.tm_sec;
 
 	/*
 	 * This guess could be wrong because of leap seconds or other
