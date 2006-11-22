@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.30 2006/11/21 22:06:26 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.31 2006/11/22 22:06:48 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -48,7 +48,6 @@
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_rssadapt.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/malo.h>
@@ -65,7 +64,6 @@ int malo_debug = 1;
 /* internal structures and defines */
 struct malo_node {
 	struct ieee80211_node		ni;
-	struct ieee80211_rssadapt	rssadapt; /* XXX maybe no need */
 };
 
 struct malo_rx_data {
@@ -251,8 +249,7 @@ int	malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0,
 int	malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 	    struct ieee80211_node *ni);
 void	malo_tx_setup_desc(struct malo_softc *sc, struct malo_tx_desc *desc,
-	    uint32_t flags, uint16_t xflags, int len, int rate,
-	    const bus_dma_segment_t *segs, int nsegs, int ac);
+	    int len, int rate, const bus_dma_segment_t *segs, int nsegs);
 uint16_t
 	malo_txtime(int len, int rate, uint32_t flags);
 void	malo_rx_intr(struct malo_softc *sc);
@@ -1237,7 +1234,6 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct malo_tx_data *data;
 	struct ieee80211_frame *wh;
 	uint16_t dur;
-	uint32_t flags = 0;
 	int rate, error;
 
 	DPRINTFN(2, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
@@ -1326,8 +1322,8 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	data->ni = ni;
 	data->softstat |= 0x80;
 
-	malo_tx_setup_desc(sc, desc, flags, 0, m0->m_pkthdr.len, rate,
-	    data->map->dm_segs, data->map->dm_nsegs, 0);
+	malo_tx_setup_desc(sc, desc, m0->m_pkthdr.len, rate,
+	    data->map->dm_segs, data->map->dm_nsegs);
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
@@ -1358,7 +1354,6 @@ malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 	struct malo_tx_data *data;
 	struct ieee80211_frame *wh;
 	struct mbuf *mnew;
-	uint32_t flags = 0;
 	int rate, error;
 
 	DPRINTFN(2, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
@@ -1447,8 +1442,8 @@ malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 	data->ni = ni;
 	data->softstat |= 0x80;
 
-	malo_tx_setup_desc(sc, desc, flags, 0, m0->m_pkthdr.len, rate,
-	    data->map->dm_segs, data->map->dm_nsegs, 0);
+	malo_tx_setup_desc(sc, desc, m0->m_pkthdr.len, rate,
+	    data->map->dm_segs, data->map->dm_nsegs);
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
@@ -1471,8 +1466,7 @@ malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 
 void
 malo_tx_setup_desc(struct malo_softc *sc, struct malo_tx_desc *desc,
-    uint32_t flags, uint16_t xflags, int len, int rate,
-    const bus_dma_segment_t *segs, int nsegs, int ac)
+    int len, int rate, const bus_dma_segment_t *segs, int nsegs)
 {
 	desc->len = htole16(segs[0].ds_len);
 	desc->datarate = rate;
@@ -1508,7 +1502,6 @@ malo_rx_intr(struct malo_softc *sc)
 	struct ifnet *ifp = &ic->ic_if;
 	struct malo_rx_desc *desc;
 	struct malo_rx_data *data;
-	struct malo_node *rn;
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *mnew, *m;
@@ -1619,10 +1612,6 @@ malo_rx_intr(struct malo_softc *sc)
 
 		/* send the frame to the 802.11 layer */
 		ieee80211_input(ifp, m, ni, desc->rssi, 0);
-
-		/* give rssi to the rate adaption algorithm */
-		rn = (struct malo_node *)ni;
-		ieee80211_rssadapt_input(ic, ni, &rn->rssadapt, desc->rssi);
 
 		/* node is no longer needed */
 		ieee80211_release_node(ic, ni);
