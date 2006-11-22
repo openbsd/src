@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.54 2006/11/02 01:51:33 ray Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.55 2006/11/22 04:08:35 ray Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.54 2006/11/02 01:51:33 ray Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.55 2006/11/22 04:08:35 ray Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -531,6 +531,7 @@ freegetit:
 	return (rval);
 }
 
+/* XXX - Signal race. */
 /* ARGSUSED */
 void
 mabort(int signo)
