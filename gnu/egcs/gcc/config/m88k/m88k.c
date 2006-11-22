@@ -657,12 +657,22 @@ block_move_no_loop (dest, dest_mem, src, src_mem, size, align)
   MEM_COPY_ATTRIBUTES (value_rtx, src_mem);
 
   value_reg = ((((most - (size - remainder)) / align) & 1) == 0
-	       ? (align == 8 ? 6 : 5) : 4);
+	       ? (mode == DImode ? 6 : 5) : 4);
 
-  emit_insn (gen_call_block_move
-	     (gen_rtx (SYMBOL_REF, Pmode, IDENTIFIER_POINTER (entry_name)),
-	      dest, src, offset_rtx, value_rtx,
-	      gen_rtx_REG (mode, value_reg)));
+  if (mode == DImode)
+    {
+      emit_insn (gen_call_block_move_DI
+		 (gen_rtx (SYMBOL_REF, Pmode, IDENTIFIER_POINTER (entry_name)),
+		  dest, src, offset_rtx, value_rtx,
+		  gen_rtx_REG (mode, value_reg)));
+    }
+  else
+    {
+      emit_insn (gen_call_block_move
+		 (gen_rtx (SYMBOL_REF, Pmode, IDENTIFIER_POINTER (entry_name)),
+		  dest, src, offset_rtx, value_rtx,
+		  gen_rtx_REG (mode, value_reg)));
+    }
 
   if (remainder)
     block_move_sequence (gen_rtx_REG (Pmode, 2), dest_mem,
