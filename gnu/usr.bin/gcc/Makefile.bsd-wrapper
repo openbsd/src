@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.54 2006/07/12 23:00:07 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.55 2006/11/22 19:18:48 drahn Exp $
 
 MAN=		gcc.1 cpp.1 gcov.1 protoize.1
 MLINKS+=	protoize.1 unprotoize.1
@@ -51,13 +51,24 @@ GCCARCH=	${MACHINE_ARCH}-unknown-openbsd${OSREV}
 GCCINC=	/usr/lib/gcc-lib/${GCCARCH}/$V/include
 
 # cross-compilation
-.if defined(TARGET_ARCH) && defined(CROSSDIR)
+.if defined(CROSS_HOST) && defined(TARGET_ARCH) && defined(CROSSDIR)
+CONFIGTARGET=	--build=${CROSS_HOST}-unknown-openbsd${OSREV} \
+    --target=${TARGET_ARCH}-unknown-openbsd${OSREV}
+
+CONFIGPREFIX=	${CROSSDIR}/usr
+PATH=		/bin:/usr/bin:/sbin:/usr/sbin:${CROSSDIR}/usr/bin
+GXX_INCDIR=	${CROSSDIR}/usr/include/g++
+GNUCFLAGS=	${CFLAGS} ${COPTS} -DOPENBSD_CROSS -I${LIBIBERTY_INCLUDES}
+HOSTCFLAGS=	${CFLAGS} ${COPTS} -DOPENBSD_CROSS -I${LIBIBERTY_INCLUDES}
+HOST_CC=cc
+MAKE_FLAGS+= 	CFLAGS_FOR_BUILD="${HOSTCFLAGS}" HOST_CC=cc
+.elif defined(TARGET_ARCH) && defined(CROSSDIR)
 CONFIGTARGET=	--target=${TARGET_ARCH}-unknown-openbsd${OSREV}
 CONFIGPREFIX=	${CROSSDIR}/usr
 MAKE_FLAGS+=	GCC_FOR_TARGET="./xgcc -B./ -I${CROSSDIR}/usr/include"
 PATH=		/bin:/usr/bin:/sbin:/usr/sbin:${CROSSDIR}/usr/bin
 GXX_INCDIR=	${CROSSDIR}/usr/include/g++
-GNUCFLAGS=	${CFLAGS} ${COPTS} -I${LIBIBERTY_INCLUDES}
+GNUCFLAGS=	${CFLAGS} ${COPTS} -DOPENBSD_CROSS -I${LIBIBERTY_INCLUDES}
 VAXHOST_CFLAGS=	-DIN_GCC -DHAVE_CONFIG_H -O0
 .else
 CONFIGTARGET=

@@ -804,7 +804,7 @@ int flag_gnu_linker = 1;
 #endif
 
 /* Nonzero means put zero initialized data in the bss section.  */
-#ifdef OPENBSD_NATIVE
+#if defined(OPENBSD_NATIVE) || defined(OPENBSD_CROSS)
 int flag_zero_initialized_in_bss = 0;
 #else
 int flag_zero_initialized_in_bss = 1;
@@ -856,7 +856,7 @@ int flag_instrument_function_entry_exit = 0;
    On SVR4 targets, it also controls whether or not to emit a
    string identifying the compiler.  */
 
-#ifdef OPENBSD_NATIVE
+#if defined(OPENBSD_NATIVE) || defined(OPENBSD_CROSS)
 int flag_no_ident = 1;
 #else
 int flag_no_ident = 0;
@@ -4957,7 +4957,7 @@ parse_options_and_default_flags (argc, argv)
       flag_schedule_insns_after_reload = 1;
 #endif
       flag_regmove = 1;
-#ifndef OPENBSD_NATIVE
+#if !defined(OPENBSD_NATIVE) && !defined(OPENBSD_CROSS)
       flag_delete_null_pointer_checks = 1;
 #endif
       flag_reorder_blocks = 1;

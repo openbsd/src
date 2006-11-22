@@ -935,6 +935,9 @@ auto-host.h: cstamp-h ; @true
 cstamp-h: config.in config.status
 	CONFIG_HEADERS=auto-host.h:config.in LANGUAGES="$(CONFIG_LANGUAGES)" $(SHELL) config.status
 
+auto-build.h: config.in config.status
+	CONFIG_HEADERS=auto-build.h:config.in LANGUAGES="$(CONFIG_LANGUAGES)" $(SHELL) config.status
+
 # Really, really stupid make features, such as SUN's KEEP_STATE, may force
 # a target to build even if it is up-to-date.  So we must verify that
 # config.status does not exist before failing.
