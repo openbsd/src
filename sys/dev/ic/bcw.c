@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.4 2006/11/22 15:12:50 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.5 2006/11/22 22:20:34 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -91,21 +91,19 @@ void	bcw_set_filter(struct ifnet *);
 void	bcw_tick(void *);
 int	bcw_ioctl(struct ifnet *, u_long, caddr_t);
 
-int	bcw_alloc_rx_ring(struct bcw_softc *sc, struct bcw_rx_ring *ring,
-	    int count);
-void	bcw_reset_rx_ring(struct bcw_softc *sc, struct bcw_rx_ring *ring);
-void	bcw_free_rx_ring(struct bcw_softc *sc, struct bcw_rx_ring *ring);
-int	bcw_alloc_tx_ring(struct bcw_softc *sc, struct bcw_tx_ring *ring,
-	    int count);
-void	bcw_reset_tx_ring(struct bcw_softc *sc, struct bcw_tx_ring *ring);
-void	bcw_free_tx_ring(struct bcw_softc *sc, struct bcw_tx_ring *ring);
+int	bcw_alloc_rx_ring(struct bcw_softc *, struct bcw_rx_ring *, int);
+void	bcw_reset_rx_ring(struct bcw_softc *, struct bcw_rx_ring *);
+void	bcw_free_rx_ring(struct bcw_softc *, struct bcw_rx_ring *);
+int	bcw_alloc_tx_ring(struct bcw_softc *, struct bcw_tx_ring *, int);
+void	bcw_reset_tx_ring(struct bcw_softc *, struct bcw_tx_ring *);
+void	bcw_free_tx_ring(struct bcw_softc *, struct bcw_tx_ring *);
 
 /* 80211 functions copied from iwi */
 int	bcw_newstate(struct ieee80211com *, enum ieee80211_state, int);
 int	bcw_media_change(struct ifnet *);
 void	bcw_media_status(struct ifnet *, struct ifmediareq *);
 /* fashionably new functions */
-int	bcw_validatechipaccess(struct bcw_softc *ifp);
+int	bcw_validatechipaccess(struct bcw_softc *);
 
 struct cfdriver bcw_cd = {
 	NULL, "bcw", DV_IFNET

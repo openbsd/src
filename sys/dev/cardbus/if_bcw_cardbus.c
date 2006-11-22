@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_cardbus.c,v 1.1 2006/11/22 15:12:50 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_cardbus.c,v 1.2 2006/11/22 22:20:34 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -57,14 +57,13 @@ struct bcw_cardbus_softc {
 	int			sc_intrline;
 };
 
-int	bcw_cardbus_match(struct device *parent, void *match, void *aux);
-void	bcw_cardbus_attach(struct device *parent, struct device *self,
-	    void *aux);
-int	bcw_cardbus_detach(struct device *self, int flags);
-void	bcw_cardbus_power(struct bcw_softc *sc, int);
-void	bcw_cardbus_setup(struct bcw_cardbus_softc *csc);
-int	bcw_cardbus_enable(struct bcw_softc *sc);
-void	bcw_cardbus_disable(struct bcw_softc *sc);
+int	bcw_cardbus_match(struct device *, void *, void *);
+void	bcw_cardbus_attach(struct device *, struct device *, void *);
+int	bcw_cardbus_detach(struct device *, int);
+void	bcw_cardbus_power(struct bcw_softc *, int);
+void	bcw_cardbus_setup(struct bcw_cardbus_softc *);
+int	bcw_cardbus_enable(struct bcw_softc *);
+void	bcw_cardbus_disable(struct bcw_softc *);
 
 struct cfattach bcw_cardbus_ca = {
 	sizeof (struct bcw_cardbus_softc), bcw_cardbus_match,
