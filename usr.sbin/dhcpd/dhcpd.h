@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.24 2006/11/21 16:26:56 stevesk Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.25 2006/11/22 19:10:39 stevesk Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -59,7 +59,6 @@
 #include <limits.h>
 #include <netdb.h>
 #include <paths.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>

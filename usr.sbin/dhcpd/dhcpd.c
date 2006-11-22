@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.29 2006/06/14 20:19:20 jmc Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.30 2006/11/22 19:10:39 stevesk Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -40,7 +40,8 @@
  */
 
 #include "dhcpd.h"
-#include "pwd.h"
+
+#include <pwd.h>
 
 void usage(void);
 
