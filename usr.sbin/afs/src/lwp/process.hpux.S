@@ -258,6 +258,7 @@ savecontext
 	stw   %r16, -0x10(%r30)
 	stw   %r17, -0x0c(%r30)
 	stw   %r18, -0x08(%r30)
+	stw   %r19, -0x04(%r30)
 
 	LDI   1,%r1				/* Store a (char) 1 in */
 	LDW   T%PRE_Block(%sr0,%r19),%r31    	/* global variable */
@@ -294,6 +295,7 @@ returnto
 	/*  No ENTRY is used since this is a magic routine. */
 	LDWS  0(0,%arg0),%r30	/* Load the stack pointer from area2 */
 
+	ldw   -0x04(%r30), %r19
 	ldw   -0x08(%r30), %r18
 	ldw   -0x0c(%r30), %r17
 	ldw   -0x10(%r30), %r16
@@ -366,6 +368,7 @@ savecontext
 	stw   %r16, -0x10(%r30)
 	stw   %r17, -0x0c(%r30)
 	stw   %r18, -0x08(%r30)
+	stw   %r19, -0x04(%r30)
 
 	LDI   1,%r31				/* Store a (char) 1 in */
 	ADDIL L%PRE_Block-$global$,%r27		/* global variable */
@@ -405,6 +408,7 @@ returnto
 	LDWS  0(0,%r26),%r30	/* Load the stack pointer from area2 */
 	ADDIL L%PRE_Block-$global$,%r27		/* PRE_Block = 0 */
 
+	ldw   -0x04(%r30), %r19
 	ldw   -0x08(%r30), %r18
 	ldw   -0x0c(%r30), %r17
 	ldw   -0x10(%r30), %r16
