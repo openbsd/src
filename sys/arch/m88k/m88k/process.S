@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.14 2006/11/18 22:49:43 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.15 2006/11/22 22:49:02 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -69,6 +69,15 @@ ASLOCAL(Lswsrunpanic)
 
 ENTRY(switch_exit)
 	/*
+	 * Disable interrupts since we are about to change the kernel
+	 * stack.
+	 */
+	ldcr	r3, PSR
+	set	r3, r3, 1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	r3, PSR
+	FLUSH_PIPELINE
+
+	/*
 	 * Change pcb to idle u. area, i.e., set r31 to top of stack
 	 * and set curpcb to point to the cpu's idle stack.
 	 * r2 contains proc *p.
@@ -101,6 +110,15 @@ ENTRY(switch_exit)
  */
 ENTRY(cpu_switch)
 	/*
+	 * Disable interrupts, we do not want to be disturbed while
+	 * saving context.
+	 */
+	ldcr	r2, PSR
+	set	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	r2, PSR
+	FLUSH_PIPELINE
+
+	/*
 	 * Save state of previous process in its pcb, and pmap_deactivate()
 	 * the process.
 	 */
@@ -121,6 +139,18 @@ ENTRY(cpu_switch)
 	bsr.n	_C_LABEL(pmap_deactivate)
 	 st	r0,  r11, CI_CURPROC		/* curproc = NULL */
 
+#ifdef MULTIPROCESSOR
+	/*
+	 * We need to switch to the processor's idle stack now (in case the
+	 * process we are using the stack of gets scheduled on another
+	 * processor).
+	 */
+	ldcr	r10, CPU
+	ld	r30, r10, CI_IDLE_PCB
+	addu	r31, r30, USIZE				/* now on idle stack */
+	st	r30, r10, CI_CURPCB			/* curpcb = idle_pcb */
+#endif
+
 ASLOCAL(cpu_switch_search)
 	/*
 	 * This is the start of the idle loop. Find the highest-priority
@@ -136,6 +166,8 @@ ASLOCAL(cpu_switch_search)
 
 #ifdef MULTIPROCESSOR
 ASGLOBAL(cpu_switch_idle)
+#else
+ASLOCAL(cpu_switch_idle)
 #endif
 	/*
 	 * There were no runnable processes. Enable all interrupts and
@@ -145,17 +177,16 @@ ASGLOBAL(cpu_switch_idle)
 	 * relies upon this.
 	 */
 	ldcr	r2, PSR
-	bb0	PSR_INTERRUPT_DISABLE_BIT, r2, 2f
 	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r2, PSR
 	FLUSH_PIPELINE
-2:
+
 	bsr.n	_C_LABEL(setipl)
 	 or	r2, r0, IPL_NONE
 
 	or.u	r7, r0, hi16(_C_LABEL(whichqs))
 	ld	r7, r7, lo16(_C_LABEL(whichqs))
-	bcnd	eq0, r7, 2b
+	bcnd	eq0, r7, _ASM_LABEL(cpu_switch_idle)
 	/* XXX run fancy things here, such as page zeroing... */
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -163,8 +194,13 @@ ASGLOBAL(cpu_switch_idle)
 #endif
 
 ASLOCAL(cpu_switch_found)
-	bsr.n	_C_LABEL(setipl)		/* disable interrupts */
-	 or	r2, r0, IPL_HIGH
+	/*
+	 * Disable interrupts.
+	 */
+	ldcr	r2, PSR
+	set	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	r2, PSR
+	FLUSH_PIPELINE
 
 	/*
 	 * An interrupt could have occured between the last whichqs check
@@ -256,16 +292,27 @@ ASLOCAL(cpu_switch_found)
 	ld	r27, r10, PCB_R27
 	ld	r28, r10, PCB_R28
 	ld	r29, r10, PCB_R29
-	ld	r1,  r10, PCB_PC
 	ld	r30, r10, PCB_R30	/* restore frame pointer & stack */
 	ld	r31, r10, PCB_SP
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	br.n	_C_LABEL(sched_unlock_idle)
-	 ld	r14, r10, PCB_R14
+	bsr.n	_C_LABEL(sched_unlock_idle)
+	 or	r14, r10, r0
+	ld	r1,  r14, PCB_PC
+	ld	r14, r14, PCB_R14
 #else
-	jmp.n	r1
-	 ld	r14, r10, PCB_R14
+	ld	r1,  r10, PCB_PC
+	ld	r14, r10, PCB_R14
 #endif
+
+	/*
+	 * Enable interrupts again.
+	 */
+	ldcr	r2, PSR
+	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	r2, PSR
+	FLUSH_PIPELINE
+
+	jmp	r1
 
 /*
  * savectx(pcb)
