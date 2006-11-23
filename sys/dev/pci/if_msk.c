@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.24 2006/11/23 21:56:32 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.25 2006/11/23 22:02:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1331,11 +1331,13 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sk_macs = 1;
 
 	hw = sk_win_read_1(sc, SK_Y2_HWRES);
+#if notyet
 	if ((hw & SK_Y2_HWRES_LINK_MASK) == SK_Y2_HWRES_LINK_DUAL) {
 		if ((sk_win_read_1(sc, SK_Y2_CLKGATE) &
 		    SK_Y2_CLKGATE_LINK2_INACTIVE) == 0)
 			sc->sk_macs++;
 	}
+#endif
 
 	skca.skc_port = SK_PORT_A;
 	skca.skc_type = sc->sk_type;
