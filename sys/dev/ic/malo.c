@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.31 2006/11/22 22:06:48 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.32 2006/11/23 20:19:19 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -250,8 +250,6 @@ int	malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 	    struct ieee80211_node *ni);
 void	malo_tx_setup_desc(struct malo_softc *sc, struct malo_tx_desc *desc,
 	    int len, int rate, const bus_dma_segment_t *segs, int nsegs);
-uint16_t
-	malo_txtime(int len, int rate, uint32_t flags);
 void	malo_rx_intr(struct malo_softc *sc);
 int	malo_load_bootimg(struct malo_softc *sc);
 int	malo_load_firmware(struct malo_softc *sc);
@@ -1233,7 +1231,6 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct malo_tx_desc *desc;
 	struct malo_tx_data *data;
 	struct ieee80211_frame *wh;
-	uint16_t dur;
 	int rate, error;
 
 	DPRINTFN(2, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
@@ -1280,12 +1277,6 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
 	}
 #endif
-
-	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		dur = malo_txtime(14, rate, ic->ic_flags);
-		*(uint16_t *)wh->i_dur = htole16(dur);
-	}
-
 	/*
 	 * inject FW specific fields into the 802.11 frame
 	 *
@@ -1472,27 +1463,6 @@ malo_tx_setup_desc(struct malo_softc *sc, struct malo_tx_desc *desc,
 	desc->datarate = rate;
 	desc->physdata = htole32(segs[0].ds_addr);
 	desc->status = htole32(0x00000001 | 0x80000000);
-}
-
-uint16_t
-malo_txtime(int len, int rate, uint32_t flags)
-{
-	uint16_t txtime;
-
-	if (MALO_RATE_IS_OFDM(rate)) {
-		/* IEEE Std 802.11g-2003, pp. 44 */
-		txtime = (8 + 4 * len + 3 + rate - 1) / rate;
-		txtime = 16 + 4 + 4 * txtime + 6;
-	} else {
-		/* IEEE Std 802.11b-1999, pp. 28 */
-		txtime = (16 * len + rate - 1) / rate;
-		if (rate != 2 && (flags & IEEE80211_F_SHPREAMBLE))
-			txtime +=  72 + 24;
-		else
-			txtime += 144 + 48;
-	}
-
-	return (txtime);
 }
 
 void
