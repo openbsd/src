@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.32 2006/11/23 20:19:19 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.33 2006/11/23 22:03:07 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -110,7 +110,6 @@ struct malo_tx_desc {
 #define MALO_RX_RING_COUNT	256
 #define MALO_TX_RING_COUNT	256
 #define MALO_MAX_SCATTER	8	/* XXX unknown, wild guess */
-#define MALO_RATE_IS_OFDM(rate)	((rate) >= 12 && (rate) != 22)
 
 /*
  * Firmware commands
@@ -1239,7 +1238,7 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	data = &sc->sc_txring.data[sc->sc_txring.cur];
 
 	/* send mgt frames at the lowest available rate */
-	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
+	rate = 2;
 
 	if (m0->m_len < sizeof(struct ieee80211_frame *)) {
 		m0 = m_pullup(m0, sizeof(struct ieee80211_frame *));
