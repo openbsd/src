@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malo.4,v 1.8 2006/11/22 22:26:06 damien Exp $
+.\"	$OpenBSD: malo.4,v 1.9 2006/11/23 21:16:08 mglocker Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt.
 .\"
@@ -38,9 +38,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Marvell Libertas 88W8335 based
+driver provides support for Marvell Libertas 88W8335/88W8310 based
 PCI/Cardbus network adapters.
-The 88W8335 is a second generation device which supports 802.11b/g.
+The 88W8335/88W3510 is a second generation device which supports 802.11b/g.
 .Pp
 These are the modes the
 .Nm
@@ -241,7 +241,7 @@ driver:
 .Pp
 .Bl -column -compact "Microcom Travelcard" "MALO111" "CardBus" "a/b/g" -offset 6n
 .Em "Card	Chip	Bus	Standard"
-Netgear WG511v2	88W8335	Cardbus	b/g
+Netgear WG511v2	88W8310	Cardbus	b/g
 Netgear WG311v3	88W8335	PCI	b/g
 .El
 .Sh EXAMPLES
