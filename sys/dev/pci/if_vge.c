@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.30 2006/11/14 17:08:24 damien Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.31 2006/11/23 02:00:54 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1288,6 +1288,13 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	struct mbuf		*mnew = NULL;
 	int			error, frag;
 	u_int32_t		vge_flags;
+#if NVLAN > 0
+	struct ifvlan		*ifv = NULL;
+
+	if ((m_head->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
+	    m_head->m_pkthdr.rcvif != NULL)
+		ifv = m_head->m_pkthdr.rcvif->if_softc;
+#endif
 
 	vge_flags = 0;
 
@@ -1379,11 +1386,11 @@ repack:
 	/*
 	 * Set up hardware VLAN tagging.
 	 */
-#ifdef VGE_VLAN
-	mtag = VLAN_OUTPUT_TAG(&sc->arpcom.ac_if, m_head);
-	if (mtag != NULL)
+#if NVLAN > 0
+	if (ifv != NULL) {
 		sc->vge_ldata.vge_tx_list[idx].vge_ctl |=
-		    htole32(htons(VLAN_TAG_VALUE(mtag)) | VGE_TDCTL_VTAG);
+		    htole32(htons(ifv->ifv_tag) | VGE_TDCTL_VTAG);
+	}
 #endif
 
 	idx++;
