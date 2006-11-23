@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ratecheck.9,v 1.6 2003/06/06 20:56:32 jmc Exp $
+.\"	$OpenBSD: ratecheck.9,v 1.7 2006/11/23 23:37:05 pedro Exp $
 .\"	$NetBSD: ratecheck.9,v 1.1.2.1 2000/02/18 20:26:43 he Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ long drv_err2count;                /* # of err2 errs since last msg */
  * patched.  Allowing it to be set via an option might be nice,
  * but could lead to an insane proliferation of options.
  */
-struct timeval drv_errintvl = { 5, 0 };         /* 5 seconds */
+struct timeval drv_errinterval = { 5, 0 };         /* 5 seconds */
 
 /* error handling/reporting function */
 void
