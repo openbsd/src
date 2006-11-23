@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.40 2006/11/16 03:27:46 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.41 2006/11/23 21:56:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1329,7 +1329,15 @@
 /* Block 32-33 -- Pattern Ram */
 #define SK_WOL_PRAM		0x1000
 
-/* Block 0x22 - 0x3f -- reserved */
+/* Block 0x22 - 0x37 -- reserved */
+
+/* Block 0x38 -- Y2 PCI config registers */
+#define SK_Y2_PCI_BASE		0x1c00
+
+/* Compute offset of mirrored PCI register */
+#define SK_Y2_PCI_REG(reg)	((reg) + SK_Y2_PCI_BASE)
+
+/* Block 0x39 - 0x3f -- reserved */
 
 /* Block 0x40 to 0x4F -- XMAC 1 registers */
 #define SK_XMAC1_BASE	0x2000
@@ -1448,6 +1456,9 @@
 #define SK_PCI_PWRMGMTCAP	0x004A /* 16 bits */
 #define SK_PCI_PWRMGMTCTRL	0x004C /* 16 bits */
 #define SK_PCI_PME_EVENT	0x004F
+
+#define SK_Y2_REG1_PHY1_COMA	0x10000000
+#define SK_Y2_REG1_PHY2_COMA	0x20000000
 
 #define SK_PSTATE_MASK		0x0003
 #define SK_PSTATE_D0		0x0000

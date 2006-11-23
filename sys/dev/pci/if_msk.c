@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.23 2006/11/17 19:34:34 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.24 2006/11/23 21:56:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -792,20 +792,45 @@ mskc_probe(struct device *parent, void *match, void *aux)
  */
 void msk_reset(struct sk_softc *sc)
 {
-	u_int32_t imtimer_ticks;
+	u_int32_t imtimer_ticks, reg1;
 	int reg;
 
 	DPRINTFN(2, ("msk_reset\n"));
 
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_SW_RESET);
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_MASTER_RESET);
-	CSR_WRITE_2(sc, SK_LINK_CTRL, SK_LINK_RESET_SET);
 
 	DELAY(1000);
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_SW_UNRESET);
 	DELAY(2);
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_MASTER_UNRESET);
+
+	sk_win_write_1(sc, SK_TESTCTL1, 2);
+
+	reg1 = sk_win_read_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG1));
+	if (sc->sk_type == SK_YUKON_XL && sc->sk_rev > SK_YUKON_XL_REV_A1)
+		reg1 |= (SK_Y2_REG1_PHY1_COMA | SK_Y2_REG1_PHY2_COMA);
+	else
+		reg1 &= ~(SK_Y2_REG1_PHY1_COMA | SK_Y2_REG1_PHY2_COMA);
+	sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG1), reg1);
+
+	if (sc->sk_type == SK_YUKON_XL && sc->sk_rev > SK_YUKON_XL_REV_A1)
+		sk_win_write_1(sc, SK_Y2_CLKGATE,
+		    SK_Y2_CLKGATE_LINK1_GATE_DIS |
+		    SK_Y2_CLKGATE_LINK2_GATE_DIS |
+		    SK_Y2_CLKGATE_LINK1_CORE_DIS |
+		    SK_Y2_CLKGATE_LINK2_CORE_DIS |
+		    SK_Y2_CLKGATE_LINK1_PCI_DIS | SK_Y2_CLKGATE_LINK2_PCI_DIS);
+	else
+		sk_win_write_1(sc, SK_Y2_CLKGATE, 0);
+
+	CSR_WRITE_2(sc, SK_LINK_CTRL, SK_LINK_RESET_SET);
+	CSR_WRITE_2(sc, SK_LINK_CTRL + SK_WIN_LEN, SK_LINK_RESET_SET);
+	DELAY(1000);
 	CSR_WRITE_2(sc, SK_LINK_CTRL, SK_LINK_RESET_CLEAR);
+	CSR_WRITE_2(sc, SK_LINK_CTRL + SK_WIN_LEN, SK_LINK_RESET_CLEAR);
+
+	sk_win_write_1(sc, SK_TESTCTL1, 1);
 
 	DPRINTFN(2, ("sk_reset: sk_csr=%x\n", CSR_READ_1(sc, SK_CSR)));
 	DPRINTFN(2, ("msk_reset: sk_link_ctrl=%x\n",
