@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.151 2006/11/16 13:09:27 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.152 2006/11/24 20:57:46 canacar Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -568,10 +568,8 @@ do { \
 
 	/*
 	 * Deallocate private resources.
-	 * XXX should consult refcnt and use IFAFREE
 	 */
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa;
-	    ifa = TAILQ_FIRST(&ifp->if_addrlist)) {
+	while ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) != NULL) {
 		TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
@@ -582,7 +580,7 @@ do { \
 		if (ifa == ifnet_addrs[ifp->if_index])
 			continue;
 
-		free(ifa, M_IFADDR);
+		IFAFREE(ifa);
 	}
 
 	for (ifg = TAILQ_FIRST(&ifp->if_groups); ifg;
@@ -591,7 +589,7 @@ do { \
 
 	if_free_sadl(ifp);
 
-	free(ifnet_addrs[ifp->if_index], M_IFADDR);
+	IFAFREE(ifnet_addrs[ifp->if_index]);
 	ifnet_addrs[ifp->if_index] = NULL;
 
 	free(ifp->if_addrhooks, M_TEMP);
@@ -1001,9 +999,9 @@ link_rtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	    ((ifp = ifa->ifa_ifp) == 0) || ((dst = rt_key(rt)) == 0))
 		return;
 	if ((ifa = ifaof_ifpforaddr(dst, ifp)) != NULL) {
+		ifa->ifa_refcnt++;
 		IFAFREE(rt->rt_ifa);
 		rt->rt_ifa = ifa;
-		ifa->ifa_refcnt++;
 		if (ifa->ifa_rtrequest && ifa->ifa_rtrequest != link_rtrequest)
 			ifa->ifa_rtrequest(cmd, rt, info);
 	}
