@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.137 2006/06/25 15:01:54 sturm Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.138 2006/11/24 17:04:20 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -63,6 +63,8 @@ int	usermount = 0;		/* sysctl: by default, users may not mount */
 static int change_dir(struct nameidata *, struct proc *);
 
 void checkdirs(struct vnode *);
+
+int copyout_statfs(struct statfs *, void *, struct proc *);
 
 /*
  * Virtual File System System Calls
@@ -520,6 +522,34 @@ sys_quotactl(struct proc *p, void *v, register_t *retval)
 	    SCARG(uap, arg), p));
 }
 
+int
+copyout_statfs(struct statfs *sp, void *uaddr, struct proc *p)
+{
+	size_t co_sz1 = offsetof(struct statfs, f_fsid);
+	size_t co_off2 = co_sz1 + sizeof(fsid_t);
+	size_t co_sz2 = sizeof(struct statfs) - co_off2;
+	char *s, *d;
+	int error;
+
+	/* Don't let non-root see filesystem id (for NFS security) */
+	if (suser(p, 0)) {
+		fsid_t fsid;
+
+		s = (char *)sp;
+		d = (char *)uaddr;
+
+		memset(&fsid, 0, sizeof(fsid));
+
+		if ((error = copyout(s, d, co_sz1)) != 0)
+			return (error);
+		if ((error = copyout(&fsid, d + co_sz1, sizeof(fsid))) != 0)
+			return (error);
+		return (copyout(s + co_off2, d + co_off2, co_sz2));
+	}
+
+	return (copyout(sp, uaddr, sizeof(*sp)));
+}
+
 /*
  * Get filesystem statistics.
  */
@@ -535,7 +565,6 @@ sys_statfs(struct proc *p, void *v, register_t *retval)
 	struct statfs *sp;
 	int error;
 	struct nameidata nd;
-	struct statfs sb;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
@@ -550,13 +579,7 @@ sys_statfs(struct proc *p, void *v, register_t *retval)
 	if (mp->mnt_flag & MNT_SOFTDEP)
 		sp->f_eflags = STATFS_SOFTUPD;
 #endif
-	/* Don't let non-root see filesystem id (for NFS security) */
-	if (suser(p, 0)) {
-		bcopy(sp, &sb, sizeof(sb));
-		sb.f_fsid.val[0] = sb.f_fsid.val[1] = 0;
-		sp = &sb;
-	}
-	return (copyout(sp, SCARG(uap, buf), sizeof(*sp)));
+	return (copyout_statfs(sp, SCARG(uap, buf), p));
 }
 
 /*
@@ -574,7 +597,6 @@ sys_fstatfs(struct proc *p, void *v, register_t *retval)
 	struct mount *mp;
 	struct statfs *sp;
 	int error;
-	struct statfs sb;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
@@ -593,13 +615,7 @@ sys_fstatfs(struct proc *p, void *v, register_t *retval)
 	if (mp->mnt_flag & MNT_SOFTDEP)
 		sp->f_eflags = STATFS_SOFTUPD;
 #endif
-	/* Don't let non-root see filesystem id (for NFS security) */
-	if (suser(p, 0)) {
-		bcopy(sp, &sb, sizeof(sb));
-		sb.f_fsid.val[0] = sb.f_fsid.val[1] = 0;
-		sp = &sb;
-	}
-	return (copyout(sp, SCARG(uap, buf), sizeof(*sp)));
+	return (copyout_statfs(sp, SCARG(uap, buf), p));
 }
 
 /*
@@ -615,7 +631,6 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct mount *mp, *nmp;
 	struct statfs *sp;
-	struct statfs sb;
 	struct statfs *sfsp;
 	size_t count, maxcount;
 	int error, flags = SCARG(uap, flags);
@@ -649,12 +664,7 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 			if (mp->mnt_flag & MNT_SOFTDEP)
 				sp->f_eflags = STATFS_SOFTUPD;
 #endif
-			if (suser(p, 0)) {
-				bcopy(sp, &sb, sizeof(sb));
-				sb.f_fsid.val[0] = sb.f_fsid.val[1] = 0;
-				sp = &sb;
-			}
-			error = copyout(sp, sfsp, sizeof(*sp));
+			error = (copyout_statfs(sp, sfsp, p));
 			if (error) {
 				vfs_unbusy(mp);
 				return (error);
@@ -1121,7 +1131,7 @@ sys_fhstatfs(struct proc *p, void *v, register_t *retval)
 		syscallarg(const fhandle_t *) fhp;
 		syscallarg(struct statfs *) buf;
 	} */ *uap = v;
-	struct statfs sp;
+	struct statfs *sp;
 	fhandle_t fh;
 	struct mount *mp;
 	struct vnode *vp;
@@ -1141,11 +1151,12 @@ sys_fhstatfs(struct proc *p, void *v, register_t *retval)
 	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
 		return (error);
 	mp = vp->v_mount;
+	sp = &mp->mnt_stat;
 	vput(vp);
-	if ((error = VFS_STATFS(mp, &sp, p)) != 0)
+	if ((error = VFS_STATFS(mp, sp, p)) != 0)
 		return (error);
-	sp.f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	return (copyout(&sp, SCARG(uap, buf), sizeof(sp)));
+	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	return (copyout(sp, SCARG(uap, buf), sizeof(sp)));
 }
 
 /*
