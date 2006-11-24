@@ -1,38 +1,24 @@
-/*	$OpenBSD: bcw.c,v 1.5 2006/11/22 22:20:34 damien Exp $ */
+/*	$OpenBSD: bcw.c,v 1.6 2006/11/24 20:27:41 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
- * Copyright (c) 2003 Clifford Wright. All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
  * Broadcom BCM43xx Wireless network chipsets (broadcom.com)
  * SiliconBackplane is technology from Sonics, Inc.(sonicsinc.com)
- *
- * Cliff Wright cliff@snipe444.org
  */
  
 /* standard includes, probably some extras */
@@ -130,6 +116,20 @@ bcw_attach(struct bcw_softc *sc)
 	 */
 
 	/*
+	 * Get a copy of the BoardFlags and fix for broken boards 
+	 * This needs to be done as soon as possible to determine if the
+	 * board supports power control settings. If so, the board has to
+	 * be powered on and the clock started. This may even need to go
+	 * before the initial chip reset above.
+	 */
+	sc->sc_boardflags = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+	    BCW_SPROM_BOARDFLAGS);
+	/*
+	 * Dell, Product ID 0x4301 Revision 0x74, set BCW_BF_BTCOEXIST
+	 * Apple Board Type 0x4e Revision > 0x40, set BCW_BF_PACTRL
+	 */
+
+	/*
 	 * Should just about everything below here be moved to external files
 	 * to keep this file sane? The BCM43xx chips have so many exceptions
 	 * based on the version of the chip, the radio, cores and phys that
@@ -137,7 +137,7 @@ bcw_attach(struct bcw_softc *sc)
 	 * below for an example of just figuring out what the chip id is and
 	 * how many cores it has.
 	 */
-	 
+
 	/*
 	 * XXX Can we read BCW_ADDR_SPACE0 and see if it returns a likely
 	 * Core? On the 4318 that only has an 802.11 core, it always reads as
@@ -174,7 +174,7 @@ bcw_attach(struct bcw_softc *sc)
 		}
 		delay(10);
 	}
-	
+
 	/*
 	 * Core ID REG, this is either the default wireless core (0x812) or
 	 * a ChipCommon core that was successfully selected above
@@ -374,14 +374,6 @@ bcw_attach(struct bcw_softc *sc)
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
-
-	/* Get a copy of the BoardFlags and fix for broken boards */
-	sc->sc_boardflags = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-	    BCW_SPROM_BOARDFLAGS);
-	/*
-	 * Dell, Product ID 0x4301 Revision 0x74, set BCW_BF_BTCOEXIST
-	 * Apple Board Type 0x4e Revision > 0x40, set BCW_BF_PACTRL
-	 */
 
 	/* Test for valid PHY/revision combinations, probably a simpler way */
 	if (sc->sc_phy_type == BCW_PHY_TYPEA) {
@@ -1381,81 +1373,132 @@ bcw_reset(struct bcw_softc *sc)
 	int i;
 	u_int32_t sbval;
 	u_int32_t val;
+	u_int32_t reject;
 
-	/* if SB core is up, only clock of clock,reset,reject will be set */
+	/*
+	 * Figure out what revision the Sonic Backplane is, as the position
+	 * of the Reject bit changed. Save the revision in the softc, and
+	 * use the local variable 'reject' in all the bit banging.
+	 */
+	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_CIR_SBID_LO);
+	sc->sc_sbrev = (sbval & SBREV_MASK) >> SBREV_MASK_SHIFT;
+	switch (sc->sc_sbrev) {
+		case 0:
+			reject = SBTML_REJ22;
+			break;
+		case 1:
+			reject = SBTML_REJ23;
+			break;
+		default:
+			reject = SBTML_REJ22 | SBTML_REJ23;
+	}
+
 	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
-#if 0
-	/* The core isn't running if the if the clock isn't enabled */
-	if ((sbval & (SBTML_RESET | SBTML_REJ | SBTML_CLK)) == SBTML_CLK) {
 
+	/*
+	 * If the 802.11 core is enabled, only clock of clock,reset,reject
+	 * will be set, and we need to reset all the DMA engines first.
+	 */
+#if 0
+	if ((sbval & (SBTML_RESET | reject | SBTML_CLK)) == SBTML_CLK) {
 		/* Stop all DMA */
 		/* reset the dma engines */
-	} else {
-		//u_int32_t reg_win;
-
-		/* remap the pci registers to the Sonics config registers */
-
-		/* save the current map, so it can be restored */
-		reg_win = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    BCW_REG0_WIN);
-		/* set register window to Sonics registers */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_REG0_WIN,
-		    BCW_SONICS_WIN);
-
-		/* enable SB to PCI interrupt */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBINTVEC,
-		    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		        BCW_SBINTVEC) |
-		    SBIV_ENET0);
-
-		/* enable prefetch and bursts for sonics-to-pci translation 2 */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SPCI_TR2,
-		    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			BCW_SPCI_TR2) |
-		    SBTOPCI_PREF | SBTOPCI_BURST);
-
-		/* restore to ethernet register space */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_REG0_WIN, reg_win);
 	}
 #endif
-	/* disable SB core if not in reset */
+	/* disable 802.11 core if not in reset */
 	if (!(sbval & SBTML_RESET)) {
+		/* if the core is not enabled, the clock won't be enabled */
+		if (!(sbval & SBTML_CLK)) {
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    BCW_SBTMSTATELOW, SBTML_RESET | reject |
+			    SBTML_80211FLAG | SBTML_80211PHY );
+			delay(1);
+			sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+			    BCW_SBTMSTATELOW);
+			goto disabled;
 
-		/* set the reject bit */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW,
-		    SBTML_REJ | SBTML_CLK);
-		for (i = 0; i < 200; i++) {
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    BCW_SBTMSTATELOW, reject);
+			delay(1);
+			/* wait until busy is clear */
+			for (i = 0; i < 10000; i++) {
+				val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				    BCW_SBTMSTATEHI);
+				if (!(val & SBTMH_BUSY))
+					break;
+				delay(10);
+			}
+			if (i == 10000)
+				printf("%s: while resetting core, busy did "
+				    "not clear\n", sc->sc_dev.dv_xname);
+
+			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+			    BCW_CIR_SBID_LO);
+			if (val & BCW_CIR_SBID_LO_INITIATOR) {
+				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				    BCW_SBIMSTATE);
+				bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+				    BCW_SBIMSTATE, sbval | SBIM_REJECT);
+				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				    BCW_SBIMSTATE);
+				delay(1);
+
+				/* wait until busy is clear */
+				for (i = 0; i < 10000; i++) {
+					val = bus_space_read_4(sc->sc_iot,
+					sc->sc_ioh, BCW_SBTMSTATEHI);
+					if (!(val & SBTMH_BUSY))
+						break;
+					delay(10);
+				}
+				if (i == 10000)
+					printf("%s: while resetting core, busy "
+					    "did not clear\n",
+					    sc->sc_dev.dv_xname);
+			} /* end initiator check */
+
+			/* set reset and reject while enabling the clocks */
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh, 
+			    BCW_SBTMSTATELOW, SBTML_FGC | SBTML_CLK | 
+			    SBTML_RESET | SBTML_80211FLAG | SBTML_80211PHY);
 			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 			    BCW_SBTMSTATELOW);
-			if (val & SBTML_REJ)
-				break;
-			delay(1);
-		}
-		if (i == 200)
-			printf("%s: while resetting core, reject did not set\n",
-			    sc->sc_dev.dv_xname);
-		/* wait until busy is clear */
-		for (i = 0; i < 200; i++) {
+			delay(10);
+
 			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_SBTMSTATEHI);
-			if (!(val & 0x4))
-				break;
+			    BCW_CIR_SBID_LO);
+			if (val & BCW_CIR_SBID_LO_INITIATOR) {
+				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				    BCW_SBIMSTATE);
+				bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+				    BCW_SBIMSTATE, sbval & ~SBIM_REJECT);
+				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				    BCW_SBIMSTATE);
+				delay(1);
+
+				/* wait until busy is clear */
+				for (i = 0; i < 10000; i++) {
+					val = bus_space_read_4(sc->sc_iot,
+					sc->sc_ioh, BCW_SBTMSTATEHI);
+					if (!(val & SBTMH_BUSY))
+						break;
+					delay(10);
+				}
+				if (i == 10000)
+					printf("%s: while resetting core, busy "
+					    "did not clear\n",
+					    sc->sc_dev.dv_xname);
+			} /* end initiator check */
+
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    BCW_SBTMSTATELOW, SBTML_RESET | reject |
+			    SBTML_80211FLAG | SBTML_80211PHY);
 			delay(1);
 		}
-		if (i == 200)
-			printf("%s: while resetting core, busy did not clear\n",
-			    sc->sc_dev.dv_xname);
-		/* set reset and reject while enabling the clocks */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW,
-		    SBTML_FGC | SBTML_CLK | SBTML_REJ | SBTML_RESET |
-		    SBTML_80211FLAG);
-		val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    BCW_SBTMSTATELOW);
-		delay(10);
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW,
-		    SBTML_REJ | SBTML_RESET);
-		delay(1);
 	}
+
+disabled:
+
 	/* This is enabling/resetting the core */
 	/* enable clock */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW,
@@ -1466,12 +1509,12 @@ bcw_reset(struct bcw_softc *sc)
 
 	/* clear any error bits that may be on */
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATEHI);
-	if (val & 1)
+	if (val & SBTMH_SERR)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATEHI, 0);
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBIMSTATE);
-	if (val & SBIM_MAGIC_ERRORBITS)
+	if (val & (SBIM_INBANDERR | SBIM_TIMEOUT))
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBIMSTATE,
-		    val & ~SBIM_MAGIC_ERRORBITS);
+		    val & ~(SBIM_INBANDERR | SBIM_TIMEOUT));
 
 	/* clear reset and allow it to propagate throughout the core */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW,
@@ -1485,10 +1528,18 @@ bcw_reset(struct bcw_softc *sc)
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
 	delay(1);
 
+	/* XXX update PHYConnected to requested value */
+
+	/* Clear Baseband Attenuation, might only work for B/G rev < 0 */
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, BCW_RADIO_BASEBAND, 0);
+
 	/* Set 0x400 in the MMIO StatusBitField reg */
 	sbval=bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBF);
-	sbval |= 0x400; 
+	sbval |= BCW_SBF_400_MAGIC;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBF, sbval);
+
+	/* XXX Clear saved interrupt status for DMA controllers */
+
 }
 
 /* Set up the receive filter. */

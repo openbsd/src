@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.3 2006/11/21 11:41:14 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.4 2006/11/24 20:27:41 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -57,13 +57,6 @@
 #define BCW_CORE_MIMOPHY		0x821
 
 #define BCW_CORE_COMMON_CHIPID		0x0
-
-/* Core Info Registers */
-#define BCW_CIR_SBID_HI			0xffc
-#define BCW_CIR_SBID_LO			0xff8
-
-#define BCW_SBTMSTATELOW                0x0f98
-#define BCW_SBTMSTATEHI                 0x0f9C
 
 #define BCW_SONICS_WIN			0x18002000
 
@@ -158,19 +151,30 @@
 /* statistics counters */
 #define BCW_RX_PKTS			0x058C
 
-/* SiliconBackplane registers */
+/* SiliconBackplane registers 0xea8 through 0xffc */
 #define BCW_SBIMSTATE			0x0f90
+#define  SBIM_REJECT			0x0200000
+#define  SBIM_INBANDERR			0x20000		/* Inband Error */
+#define  SBIM_TIMEOUT			0x40000		/* Timeout */
 #define BCW_SBTMSTATELOW		0x0f98
+#define  SBTML_RESET			0x1		/* reset */
+#define  SBTML_REJ			0x6		/* reject */
+#define  SBTML_REJ22			0x2		/* v2.2 Reject bit */
+#define  SBTML_REJ23			0x4		/* v2.3 Reject bit */
+#define  SBTML_CLK			0x10000		/* clock enable */
+#define  SBTML_FGC			0x20000		/* force gated clocks on */
+#define  SBTML_80211FLAG		0x40000		/* core specific flag */
+#define  SBTML_80211PHY			0x20000000	/* Attach PHY */
 #define BCW_SBTMSTATEHI			0x0f9C
-#define SBTML_RESET			0x1		/* reset */
-#define SBTML_REJ			0x6		/* reject */
-#define SBTML_CLK			0x10000		/* clock enable */
-#define SBTML_FGC			0x20000	/* force gated clocks on */
-#define SBTML_80211FLAG			0x40000		/* core specific flag */
-#define SBTML_80211PHY			0x20000000	/* Attach PHY */
-#define SBTMH_BUSY			0x4
+#define  SBTMH_SERR			0x1		/* S Error */
+#define  SBTMH_INT			0x2
+#define  SBTMH_BUSY			0x4
 
-#define SBIM_MAGIC_ERRORBITS		0x60000
+#define BCW_CIR_SBID_LO			0xff8
+#define  BCW_CIR_SBID_LO_INITIATOR	0x80
+#define  SBREV_MASK			0xf0000000	/* 1 = v2.3, 0 <= v2.2 */
+#define  SBREV_MASK_SHIFT		28
+#define BCW_CIR_SBID_HI			0xffc
 
 /*
  * MMIO Registers by offset, followed by indented bitmasks
@@ -180,6 +184,7 @@
 #define BCW_SBF				0x120		/* MIMO - Status Bit Field */
 #define  BCW_SBF_MAC_ENABLED		0x00000001	/* Set when mac enabled */
 #define  BCW_SBF_CORE_READY		0x00000004	/* set after core reset/enabled */
+#define  BCW_SBF_400_MAGIC		0x00000400	/* MAGIC */
 #define  BCW_SBF_REGISTER_BYTESWAP	0x00010000	/* xfer regs are byteswapped in hw */
 #define  BCW_SBF_ADHOC			0x00020000	/* Operating mode is not adhoc */
 #define  BCW_SBF_AP			0x00040000	/* Device is in AP mode */
@@ -263,6 +268,7 @@
 
 /* 0x300 PIO Register space */
 
+#define BCW_RADIO_BASEBAND		0x3e6	/* Baseband Attenuation */
 #define BCW_RADIO_CONTROL		0x3f6	/* Control - 16bit */
 #define BCW_RADIO_DATA			0x3fa	/* Data - 16bit */
 #define BCW_RADIO_DATALOW		0x3fa	/* Data Low - 16bit */
@@ -274,6 +280,9 @@
 
 /* SPROM registers are 16 bit and based at MMIO offset 0x1000 */
 #define BCW_MMIO_BASE			0x1000
+#define BCW_SPROM_SUBPRODID		0x1004	/* Subsystem Product ID */
+#define BCW_SPROM_SUBVENID		0x1006	/* Subsystem Vendor ID */
+#define BCW_SPROM_PRODID		0x1008	/* Product ID */
 #define BCW_SPROM_IL0MACADDR		0x1048	/* 802.11b/g MAC */
 #define BCW_SPROM_ET0MACADDR		0x104e	/* ethernet MAC */
 #define BCW_SPROM_ET1MACADDR		0x1054	/* 802.11a MAC */
