@@ -18,5 +18,5 @@ C set [rid-3ffe::2]:Address=3ffe::2 force
 C set [lid-3ffe::1]:Protocol=6 force
 C set [rid-3ffe::2]:Protocol=6 force
 C set [lid-3ffe::1]:Port=2022 force
-C set [rid-3ffe::1]:Port=22 force
+C set [rid-3ffe::2]:Port=22 force
 C add [Phase 2]:Connections=IPsec-3ffe::1-3ffe::2

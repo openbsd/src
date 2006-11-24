@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.53 2006/11/21 13:51:17 markus Exp $	*/
+/*	$OpenBSD: ike.c,v 1.54 2006/11/24 08:07:18 markus Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -562,7 +562,7 @@ ike_section_p2ids(u_int8_t proto, struct ipsec_addr_wrap *src,
 		fprintf(fd, SET "[lid-%s]:Port=%d force\n", src->name,
 		    ntohs(sport));
 	if (dport)
-		fprintf(fd, SET "[rid-%s]:Port=%d force\n", src->name,
+		fprintf(fd, SET "[rid-%s]:Port=%d force\n", dst->name,
 		    ntohs(dport));
 }
 
