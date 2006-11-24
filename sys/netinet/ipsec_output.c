@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.33 2005/04/12 09:39:54 markus Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.34 2006/11/24 13:52:14 reyk Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -20,6 +20,8 @@
  * PURPOSE.
  */
 
+#include "pf.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -28,6 +30,10 @@
 
 #include <net/if.h>
 #include <net/route.h>
+
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -427,6 +433,12 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	if (tdb->tdb_onext)
 		return ipsp_process_packet(m, tdb->tdb_onext,
 		    tdb->tdb_dst.sa.sa_family, 0);
+
+#if NPF > 0
+	/* Add pf tag if requested. */
+	if (pf_tag_packet(m, NULL, tdb->tdb_tag, -1))
+		DPRINTF(("failed to tag ipsec packet\n"));
+#endif
 
 	/*
 	 * We're done with IPsec processing, transmit the packet using the

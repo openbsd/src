@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.28 2006/06/01 07:06:09 todd Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.29 2006/11/24 13:52:14 reyk Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -91,6 +91,8 @@
  * SUCH DAMAGE.
  */
 
+#include "pf.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +101,11 @@
 #include <sys/socket.h>
 #include <net/route.h>
 #include <net/if.h>
+
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
+
 #include <netinet/ip_ipsp.h>
 #ifdef INET6
 #include <netinet6/in6_var.h>
@@ -973,3 +980,31 @@ export_udpencap(void **p, struct tdb *tdb)
 	    sizeof(struct sadb_x_udpencap) / sizeof(uint64_t);
 	*p += sizeof(struct sadb_x_udpencap);
 }
+
+#if NPF > 0
+/* Import PF tag information for SA */
+void
+import_tag(struct tdb *tdb, struct sadb_x_tag *stag)
+{
+	char *s;
+
+	if (stag) {
+		s = (char *)(stag + 1);
+		tdb->tdb_tag = pf_tagname2tag(s);
+	}
+}
+
+/* Export PF tag information for SA */
+void
+export_tag(void **p, struct tdb *tdb)
+{
+	struct sadb_x_tag *stag = (struct sadb_x_tag *)*p;
+	char *s = (char *)(stag + 1);
+
+	pf_tag2tagname(tdb->tdb_tag, s);
+	stag->sadb_x_tag_taglen = strlen(s) + 1;
+	stag->sadb_x_tag_len = (sizeof(struct sadb_x_tag) +
+	    PADUP(stag->sadb_x_tag_taglen)) / sizeof(uint64_t);
+	*p += PADUP(stag->sadb_x_tag_taglen) + sizeof(struct sadb_x_tag);
+}
+#endif

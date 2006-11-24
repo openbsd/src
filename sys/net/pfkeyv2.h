@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.55 2005/05/27 15:29:55 hshoexer Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.56 2006/11/24 13:52:14 reyk Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -213,6 +213,12 @@ struct sadb_x_udpencap {
 	uint16_t sadb_x_udpencap_reserved;
 };
 
+struct sadb_x_tag {
+	uint16_t  sadb_x_tag_len;
+	uint16_t  sadb_x_tag_exttype;
+	u_int32_t sadb_x_tag_taglen;
+};
+
 #ifdef _KERNEL
 #define SADB_X_GETSPROTO(x) \
 	( (x) == SADB_SATYPE_AH ? IPPROTO_AH :\
@@ -254,7 +260,8 @@ struct sadb_x_udpencap {
 #define SADB_X_EXT_SUPPORTED_COMP     30
 #define SADB_X_EXT_UDPENCAP           31
 #define SADB_X_EXT_LIFETIME_LASTUSE   32
-#define SADB_EXT_MAX                  32
+#define SADB_X_EXT_TAG                33
+#define SADB_EXT_MAX                  33
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC		 0
@@ -445,6 +452,7 @@ void export_flow(void **, u_int8_t, struct sockaddr_encap *,
 void export_key(void **, struct tdb *, int);
 void export_auth(void **, struct tdb *, int);
 void export_udpencap(void **, struct tdb *);
+void export_tag(void **, struct tdb *);
 
 void import_auth(struct tdb *, struct sadb_x_cred *, int);
 void import_address(struct sockaddr *, struct sadb_address *);
@@ -457,5 +465,6 @@ void import_flow(struct sockaddr_encap *, struct sockaddr_encap *,
     struct sadb_address *, struct sadb_address *, struct sadb_address *,
     struct sadb_address *, struct sadb_protocol *, struct sadb_protocol *);
 void import_udpencap(struct tdb *, struct sadb_x_udpencap *);
+void import_tag(struct tdb *, struct sadb_x_tag *);
 #endif /* _KERNEL */
 #endif /* _NET_PFKEY_V2_H_ */

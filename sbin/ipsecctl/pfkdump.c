@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.22 2006/09/19 21:29:47 markus Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.23 2006/11/24 13:52:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -55,6 +55,7 @@ static void	print_ident(struct sadb_ext *, struct sadb_msg *);
 static void	print_auth(struct sadb_ext *, struct sadb_msg *);
 static void	print_cred(struct sadb_ext *, struct sadb_msg *);
 static void	print_udpenc(struct sadb_ext *, struct sadb_msg *);
+static void	print_tag(struct sadb_ext *, struct sadb_msg *);
 
 static struct idname *lookup(struct idname [], u_int8_t);
 static char    *lookup_name(struct idname [], u_int8_t);
@@ -104,6 +105,7 @@ struct idname ext_types[] = {
 	{ SADB_X_EXT_REMOTE_CREDENTIALS,"remote_cred",		print_cred },
 	{ SADB_X_EXT_UDPENCAP,		"udpencap",		print_udpenc },
 	{ SADB_X_EXT_LIFETIME_LASTUSE,	"lifetime_lastuse",	print_life },
+	{ SADB_X_EXT_TAG,		"tag",			print_tag },
 	{ 0,				NULL,			NULL }
 };
 
@@ -372,6 +374,16 @@ print_flow(struct sadb_ext *ext, struct sadb_msg *msg)
 	}
 	printf("type %s direction %s",
 	    lookup_name(flow_types, proto->sadb_protocol_proto), dir);
+}
+
+static void
+print_tag(struct sadb_ext *ext, struct sadb_msg *msg)
+{
+	struct sadb_x_tag *stag = (struct sadb_x_tag *)ext;
+	char *p;
+
+	p = (char *)(stag + 1);
+	printf("%s", p);
 }
 
 static char *

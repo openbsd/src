@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.79 2006/03/25 22:41:48 djm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.80 2006/11/24 13:52:14 reyk Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -35,6 +35,8 @@
  * PURPOSE.
  */
 
+#include "pf.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/protosw.h>
@@ -46,6 +48,10 @@
 #include <net/if.h>
 #include <net/netisr.h>
 #include <net/bpf.h>
+
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -553,6 +559,12 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 			m->m_flags |= M_AUTH;
 	} else if (sproto == IPPROTO_AH)
 		m->m_flags |= M_AUTH | M_AUTH_AH;
+
+#if NPF > 0
+	/* Add pf tag if requested. */
+	if (pf_tag_packet(m, NULL, tdbp->tdb_tag, -1))
+		DPRINTF(("failed to tag ipsec packet\n"));
+#endif
 
 	if (tdbp->tdb_flags & TDBF_TUNNELING)
 		m->m_flags |= M_TUNNEL;

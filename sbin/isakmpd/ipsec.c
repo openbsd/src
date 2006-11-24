@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.126 2006/06/10 20:10:02 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.127 2006/11/24 13:52:14 reyk Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -38,6 +38,9 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <net/if.h>
+#include <net/pfvar.h>
 
 #include "sysdep.h"
 
@@ -129,6 +132,7 @@ static int      ipsec_validate_notification(u_int16_t);
 static int      ipsec_validate_proto(u_int8_t);
 static int      ipsec_validate_situation(u_int8_t *, size_t *, size_t);
 static int      ipsec_validate_transform_id(u_int8_t, u_int8_t);
+static int      ipsec_sa_tag(struct exchange *, struct sa *, struct sa *);
 
 static struct doi ipsec_doi = {
 	{0}, IPSEC_DOI_IPSEC,
@@ -277,6 +281,90 @@ ipsec_sa_check_flow(struct sa *sa, void *v_arg)
 }
 
 /*
+ * Construct a PF tag if specified in the configuration.
+ * It is possible to use variables to expand the tag:
+ * $id		The string representation of the remote ID
+ * $domain	The stripped domain part of the ID (for FQDN and UFQDN)
+ */
+static int
+ipsec_sa_tag(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
+{
+	char *format, *section;
+	char *id_string = NULL, *domain = NULL;
+	int error = -1;
+	size_t len;
+
+	sa->tag = NULL;
+
+	if (exchange->name == NULL ||
+	    (section = exchange->name) == NULL ||
+	    (format = conf_get_str(section, "PF-Tag")) == NULL)
+		return (0);	/* ignore if not present */
+
+	len = PF_TAG_NAME_SIZE;
+	if ((sa->tag = calloc(1, len)) == NULL) {
+		log_error("ipsec_sa_tag: calloc");
+		goto fail;
+	}
+	if (strlcpy(sa->tag, format, len) >= len) {
+		log_print("ipsec_sa_tag: tag too long");
+		goto fail;
+	}
+	if (isakmp_sa->initiator)
+		id_string = ipsec_id_string(isakmp_sa->id_r,
+		    isakmp_sa->id_r_len);
+	else
+		id_string = ipsec_id_string(isakmp_sa->id_i,
+		    isakmp_sa->id_i_len);
+
+	if (strstr(format, "$id") != NULL) {
+		if (id_string == NULL) {
+			log_print("ipsec_sa_tag: cannot get ID");
+			goto fail;
+		}
+		if (expand_string(sa->tag, len, "$id", id_string) != 0) {
+			log_print("ipsec_sa_tag: failed to expand tag");
+			goto fail;
+		}
+	}
+
+	if (strstr(format, "$domain") != NULL) {
+		if (id_string == NULL) {
+			log_print("ipsec_sa_tag: cannot get ID");
+			goto fail;
+		}
+		if (strncmp(id_string, "fqdn/", strlen("fqdn/")) == 0)
+			domain = strchr(id_string, '.');
+		else if (strncmp(id_string, "ufqdn/", strlen("ufqdn/")) == 0)
+			domain = strchr(id_string, '@');
+		if (domain == NULL || strlen(domain) < 2) {
+			log_print("ipsec_sa_tag: no valid domain in ID %s",
+			    id_string);
+			goto fail;
+		}
+		domain++;
+		if (expand_string(sa->tag, len, "$domain", domain) != 0) {
+			log_print("ipsec_sa_tag: failed to expand tag");
+			goto fail;
+		}
+	}
+
+	LOG_DBG((LOG_SA, 10, "ipsec_sa_tag: tag_len %ld tag \"%s\"",
+	    strlen(sa->tag), sa->tag));
+
+	error = 0;
+ fail:
+	if (id_string != NULL)
+		free(id_string);
+	if (error != 0 && sa->tag != NULL) {
+		free(sa->tag);
+		sa->tag = NULL;
+	}
+
+	return (error);
+}
+
+/*
  * Do IPsec DOI specific finalizations task for the exchange where MSG was
  * the final message.
  */
@@ -356,6 +444,9 @@ ipsec_finalize_exchange(struct message *msg)
 						return;
 					}
 				}
+
+				if (ipsec_sa_tag(exchange, sa, isakmp_sa) == -1)
+					return;
 
 				for (proto = TAILQ_FIRST(&sa->protos),
 				    last_proto = 0; proto;

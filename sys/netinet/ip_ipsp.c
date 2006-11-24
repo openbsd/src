@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.165 2006/01/13 10:11:23 mpf Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.166 2006/11/24 13:52:14 reyk Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -37,6 +37,8 @@
  * PURPOSE.
  */
 
+#include "pf.h"
+
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -45,6 +47,10 @@
 
 #include <net/if.h>
 #include <net/route.h>
+
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -857,6 +863,13 @@ tdb_free(struct tdb *tdbp)
 		ipsp_reffree(tdbp->tdb_remote_cred);
 		tdbp->tdb_remote_cred = NULL;
 	}
+
+#if NPF > 0
+	if (tdbp->tdb_tag) {
+		pf_tag_unref(tdbp->tdb_tag);
+		tdbp->tdb_tag = 0;
+	}
+#endif
 
 	if ((tdbp->tdb_onext) && (tdbp->tdb_onext->tdb_inext == tdbp))
 		tdbp->tdb_onext->tdb_inext = NULL;

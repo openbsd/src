@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.176 2006/09/01 00:24:06 mpf Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.177 2006/11/24 13:52:14 reyk Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -902,6 +902,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 {
 	struct sadb_msg msg;
 	struct sadb_sa  ssa;
+	struct sadb_x_tag *stag = NULL;
 	struct sadb_lifetime *life = 0;
 	struct sadb_address *addr = 0;
 	struct sadb_key *key = 0;
@@ -917,7 +918,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 	struct sadb_x_cred *cred;
 	struct sadb_protocol flowtype, tprotocol;
 	struct sadb_x_udpencap udpencap;
-	char           *addr_str;
+	char           *addr_str, *s;
 
 	msg.sadb_msg_type = incoming ? SADB_UPDATE : SADB_ADD;
 	switch (proto->proto) {
@@ -1549,14 +1550,31 @@ doneauth:
 		goto cleanup;
 	addr = 0;
 
+	/* Add a pf tag to matching packets of this SA. */
+	if (sa->tag != NULL) {
+		len = sizeof(*stag) + PF_KEY_V2_ROUND(strlen(sa->tag) + 1);
+		if ((stag = (struct sadb_x_tag *)calloc(1, len)) == NULL)
+			goto cleanup;
+		stag->sadb_x_tag_exttype = SADB_X_EXT_TAG;
+		stag->sadb_x_tag_len = len / PF_KEY_V2_CHUNK;
+		stag->sadb_x_tag_taglen = strlen(sa->tag) + 1;
+		s = (char *)(stag + 1);
+		strlcpy(s, sa->tag, stag->sadb_x_tag_taglen);
+		if (pf_key_v2_msg_add(update, (struct sadb_ext *)stag,
+		    PF_KEY_V2_NODE_MALLOCED) == -1)
+			goto cleanup;
+	}
+
 	/* XXX Here can sensitivity extensions be setup.  */
 
 	if (sockaddr2text(dst, &addr_str, 0))
 		addr_str = 0;
 
 	LOG_DBG((LOG_SYSDEP, 10, "pf_key_v2_set_spi: "
-	    "satype %d dst %s SPI 0x%x", msg.sadb_msg_satype,
-	    addr_str ? addr_str : "unknown", ntohl(ssa.sadb_sa_spi)));
+	    "satype %d dst %s SPI 0x%x%s%s", msg.sadb_msg_satype,
+	    addr_str ? addr_str : "unknown",
+	    ntohl(ssa.sadb_sa_spi), sa->tag ? " tag " : "",
+	    sa->tag ? sa->tag : ""));
 
 	if (addr_str)
 		free(addr_str);

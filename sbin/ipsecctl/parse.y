@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.113 2006/11/13 11:04:05 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.114 2006/11/24 13:52:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -154,6 +154,7 @@ struct ipsec_auth	*copyipsecauth(const struct ipsec_auth *);
 struct ike_auth		*copyikeauth(const struct ike_auth *);
 struct ipsec_key	*copykey(struct ipsec_key *);
 struct ipsec_addr_wrap	*copyhost(const struct ipsec_addr_wrap *);
+char			*copytag(const char *);
 struct ipsec_rule	*copyrule(struct ipsec_rule *);
 int			 validate_af(struct ipsec_addr_wrap *,
 			    struct ipsec_addr_wrap *);
@@ -178,7 +179,7 @@ struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
 struct ipsec_rule	*create_ike(u_int8_t, struct ipsec_hosts *,
 			     struct ipsec_hosts *, struct ike_mode *,
 			     struct ike_mode *, u_int8_t, u_int8_t, u_int8_t,
-			     char *, char *, struct ike_auth *);
+			     char *, char *, struct ike_auth *, char *);
 int			 add_sagroup(struct ipsec_rule *);
 
 struct ipsec_transforms *ipsec_transforms;
@@ -232,7 +233,7 @@ typedef struct {
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK AGGRESSIVE
 %token	PASSIVE ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC LIFE
-%token	TYPE DENY BYPASS LOCAL PROTO USE ACQUIRE REQUIRE DONTACQ GROUP PORT
+%token	TYPE DENY BYPASS LOCAL PROTO USE ACQUIRE REQUIRE DONTACQ GROUP PORT TAG
 %token	<v.string>		STRING
 %type	<v.string>		string
 %type	<v.dir>			dir
@@ -257,6 +258,7 @@ typedef struct {
 %type	<v.type>		type
 %type	<v.life>		life
 %type	<v.mode>		phase1mode phase2mode
+%type	<v.string>		tag
 %%
 
 grammar		: /* empty */
@@ -332,11 +334,11 @@ flowrule	: FLOW satype dir proto hosts peers ids type {
 		;
 
 ikerule		: IKE ikemode satype tmode proto hosts peers
-		    phase1mode phase2mode ids ikeauth {
+		    phase1mode phase2mode ids ikeauth tag {
 			struct ipsec_rule	*r;
 
 			r = create_ike($5, &$6, &$7, $8, $9, $3, $4, $2,
-			    $10.srcid, $10.dstid, &$11);
+			    $10.srcid, $10.dstid, &$11, $12);
 			if (r == NULL)
 				YYERROR;
 
@@ -774,6 +776,16 @@ ikeauth		: /* empty */			{
 		}
 		;
 
+tag		: /* empty */
+		{
+			$$ = NULL;
+		}
+		| TAG STRING
+		{
+			$$ = $2;
+		}
+		;
+
 string		: string STRING
 		{
 			if (asprintf(&$$, "%s %s", $1, $2) == -1)
@@ -866,6 +878,7 @@ lookup(char *s)
 		{ "rsa",		RSA },
 		{ "spi",		SPI },
 		{ "srcid",		SRCID },
+		{ "tag",		TAG },
 		{ "tcpmd5",		TCPMD5 },
 		{ "to",			TO },
 		{ "transport",		TRANSPORT },
@@ -1799,6 +1812,19 @@ copyhost(const struct ipsec_addr_wrap *src)
 	return dst;
 }
 
+char *
+copytag(const char *src)
+{
+	char *tag;
+
+	if (src == NULL)
+		return (NULL);
+	if ((tag = strdup(src)) == NULL)
+		err(1, "copytag: strdup");
+
+	return (tag);
+}
+
 struct ipsec_rule *
 copyrule(struct ipsec_rule *rule)
 {
@@ -1820,6 +1846,7 @@ copyrule(struct ipsec_rule *rule)
 	r->p2life = copylife(rule->p2life);
 	r->authkey = copykey(rule->authkey);
 	r->enckey = copykey(rule->enckey);
+	r->tag = copytag(rule->tag);
 
 	r->p1ie = rule->p1ie;
 	r->p2ie = rule->p2ie;
@@ -2304,7 +2331,7 @@ struct ipsec_rule *
 create_ike(u_int8_t proto, struct ipsec_hosts *hosts, struct ipsec_hosts *peers,
     struct ike_mode *phase1mode, struct ike_mode *phase2mode, u_int8_t satype,
     u_int8_t tmode, u_int8_t mode, char *srcid, char *dstid,
-    struct ike_auth *authtype)
+    struct ike_auth *authtype, char *tag)
 {
 	struct ipsec_rule *r;
 
@@ -2394,6 +2421,7 @@ create_ike(u_int8_t proto, struct ipsec_hosts *hosts, struct ipsec_hosts *peers,
 		err(1, "create_ike: calloc");
 	r->ikeauth->type = authtype->type;
 	r->ikeauth->string = authtype->string;
+	r->tag = tag;
 
 	return (r);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.106 2006/11/13 14:42:28 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.107 2006/11/24 13:52:13 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -367,6 +367,41 @@ for authentication.
 If this option is not specified,
 public key authentication is used (see
 .Xr isakmpd 8 ) .
+.It Ic tag Ar string
+Add a
+.Xr pf 4
+tag to all packets of phase 2 SAs created for this connection.
+This will allow matching packets for this connection by defining
+rules in
+.Xr pf.conf 5
+using the
+.Cm tagged
+keyword.
+.Pp
+The following variables can be used in tags to include information
+from the remote peer on runtime:
+.Pp
+.Bl -tag -width $domain -compact -offset indent
+.It Ar $id
+The remote phase 1 ID.
+It will be expanded to
+.Ar id-type/id-value ,
+e.g.\&
+.Ar fqdn/foo.bar.org .
+.It Ar $domain
+Extract the domain from IDs of type FQDN or UFQDN.
+.El
+.Pp
+For example, if the ID is
+.Ar fqdn/foo.bar.org
+or
+.Ar ufqdn/user@bar.org ,
+.Dq ipsec-$domain
+expands to
+.Dq ipsec-bar.org .
+The variable expansion for the
+.Ar tag
+directive occurs only at runtime, not during configuration file parse time.
 .El
 .Sh PACKET FILTERING
 IPsec traffic appears unencrypted on the
@@ -397,6 +432,10 @@ and incoming traffic after it's been decapsulated.
 [tunnel mode only]
 IP-in-IP traffic flowing between gateways
 on the enc0 interface.
+.It tagged ipsec-example.org
+Match traffic of phase 2 SAs using the
+.Ic tag
+keyword.
 .El
 .Pp
 If the filtering rules specify to block everything by default,
@@ -447,6 +486,45 @@ to avoid permitting unencrypted traffic should
 exit.
 Therefore all rules on the enc0 interface should explicitly set
 .Dq keep state (if-bound) .
+.Pp
+.Xr pf 4
+has the ability to filter IPsec-related packets
+based on an arbitrary
+.Em tag
+specified within a ruleset.
+The tag is used as an internal marker
+which can be used to identify the packets later on.
+This could be helpful,
+for example,
+in scenarios where users are connecting in from differing IP addresses,
+or to support queue-based bandwidth control,
+since the enc0 interface does not support it.
+.Pp
+The following
+.Xr pf.conf 5
+fragment uses queues for all IPsec traffic with special
+handling for developers and employees:
+.Bd -literal -offset indent
+altq on sk0 cbq bandwidth 1000Mb \e
+	queue { deflt, developers, employees, ipsec }
+    queue deflt bandwidth 10% priority 0 cbq(default ecn)
+    queue developers bandwidth 75% priority 7 cbq(borrow red)
+    queue employees bandwidth 5% cbq(red)
+    queue ipsec bandwidth 10% cbq(red)
+
+pass out on sk0 proto esp queue ipsec
+
+pass out on sk0 tagged ipsec-developers.bar.org queue developers
+pass out on sk0 tagged ipsec-employees.bar.org queue employees
+.Ed
+.Pp
+The tags will be assigned by the following
+.Nm
+example:
+.Bd -literal -offset indent
+ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2 \e
+	tag ipsec-$domain
+.Ed
 .Sh CRYPTO TRANSFORMS
 It is very important that keys are not guessable.
 One practical way of generating keys is to use

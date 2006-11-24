@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.40 2005/05/28 15:10:07 ho Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.41 2006/11/24 13:52:14 reyk Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -68,6 +68,8 @@
  * SUCH DAMAGE.
  */
 
+#include "pf.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
@@ -75,6 +77,11 @@
 #include <sys/proc.h>
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
+
+#if NPF > 0
+#include <net/if.h>
+#include <net/pfvar.h>
+#endif
 
 extern int encdebug;
 
@@ -123,6 +130,7 @@ extern int encdebug;
 #define BITMAP_X_SUPPORTED_COMP        (1LL << SADB_X_EXT_SUPPORTED_COMP)
 #define BITMAP_X_UDPENCAP              (1LL << SADB_X_EXT_UDPENCAP)
 #define BITMAP_X_LIFETIME_LASTUSE      (1LL << SADB_X_EXT_LIFETIME_LASTUSE)
+#define BITMAP_X_TAG                   (1LL << SADB_X_EXT_TAG)
 
 uint64_t sadb_exts_allowed_in[SADB_MAX+1] =
 {
@@ -131,9 +139,9 @@ uint64_t sadb_exts_allowed_in[SADB_MAX+1] =
 	/* GETSPI */
 	BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_SPIRANGE,
 	/* UPDATE */
-	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW | BITMAP_X_UDPENCAP,
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW | BITMAP_X_UDPENCAP | BITMAP_X_TAG,
 	/* ADD */
-	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW | BITMAP_X_UDPENCAP | BITMAP_X_LIFETIME_LASTUSE,
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW | BITMAP_X_UDPENCAP | BITMAP_X_LIFETIME_LASTUSE | BITMAP_X_TAG,
 	/* DELETE */
 	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
 	/* GET */
@@ -203,9 +211,9 @@ uint64_t sadb_exts_allowed_out[SADB_MAX+1] =
 	/* GETSPI */
 	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
 	/* UPDATE */
-	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW | BITMAP_X_UDPENCAP,
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW | BITMAP_X_UDPENCAP | BITMAP_X_TAG,
 	/* ADD */
-	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW | BITMAP_X_UDPENCAP,
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW | BITMAP_X_UDPENCAP | BITMAP_X_TAG,
 	/* DELETE */
 	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
 	/* GET */
@@ -933,6 +941,21 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				return (EINVAL);
 			}
 			break;
+#if NPF > 0
+		case SADB_X_EXT_TAG:
+			if (i < sizeof(struct sadb_x_tag)) {
+				DPRINTF(("pfkeyv2_parsemessage: "
+				    "TAG extension header too small"));
+				return (EINVAL);
+			}
+			if (i > (sizeof(struct sadb_x_tag) +
+			    PF_TAG_NAME_SIZE)) {
+				DPRINTF(("pfkeyv2_parsemessage: "
+				    "TAG extension header too long"));
+				return (EINVAL);
+			}
+			break;
+#endif
 		default:
 			DPRINTF(("pfkeyv2_parsemessage: unknown extension "
 			    "header type %d\n",

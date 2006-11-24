@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.54 2006/11/24 08:07:18 markus Exp $	*/
+/*	$OpenBSD: ike.c,v 1.55 2006/11/24 13:52:13 reyk Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -39,7 +39,7 @@ static void	ike_section_ids(struct ipsec_addr_wrap *, struct ipsec_auth *,
 		    FILE *, u_int8_t);
 static int	ike_get_id_type(char *);
 static void	ike_section_ipsec(struct ipsec_addr_wrap *, struct
-		    ipsec_addr_wrap *, struct ipsec_addr_wrap *, FILE *);
+		    ipsec_addr_wrap *, struct ipsec_addr_wrap *, char *, FILE *);
 static int	ike_section_p1(struct ipsec_addr_wrap *, struct
 		    ipsec_transforms *, FILE *, struct ike_auth *, u_int8_t);
 static int	ike_section_p2(struct ipsec_addr_wrap *, struct
@@ -175,7 +175,7 @@ ike_get_id_type(char *string)
 
 static void
 ike_section_ipsec(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
-    struct ipsec_addr_wrap *peer, FILE *fd)
+    struct ipsec_addr_wrap *peer, char *tag, FILE *fd)
 {
 	fprintf(fd, SET "[IPsec-%s-%s]:Phase=2 force\n", src->name, dst->name);
 
@@ -193,6 +193,10 @@ ike_section_ipsec(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 	    dst->name, src->name);
 	fprintf(fd, SET "[IPsec-%s-%s]:Remote-ID=rid-%s force\n", src->name,
 	    dst->name, dst->name);
+
+	if (tag)
+		fprintf(fd, SET "[IPsec-%s-%s]:PF-Tag=%s force\n",
+		    src->name, dst->name, tag);
 }
 
 static int
@@ -595,7 +599,7 @@ ike_gen_config(struct ipsec_rule *r, FILE *fd)
 	    fd, r->ikeauth, r->p1ie) == -1)
 		return (-1);
 	ike_section_ids(r->peer, r->auth, fd, r->ikemode);
-	ike_section_ipsec(r->src, r->dst, r->peer, fd);
+	ike_section_ipsec(r->src, r->dst, r->peer, r->tag, fd);
 	if (ike_section_p2(r->src, r->dst, r->satype, r->tmode, r->p2xfs,
 	    fd, r->p2ie) == -1)
 		return (-1);

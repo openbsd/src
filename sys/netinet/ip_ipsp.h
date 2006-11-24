@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.134 2006/06/30 21:41:12 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.135 2006/11/24 13:52:14 reyk Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -270,7 +270,7 @@ struct tdb {				/* tunnel descriptor block */
 	 * Each TDB is on three hash tables: one keyed on dst/spi/sproto,
 	 * one keyed on dst/sproto, and one keyed on src/sproto. The first
 	 * is used for finding a specific TDB, the second for finding TDBs
-	 * TDBs for outgoing policy matching, and the third for incoming
+	 * for outgoing policy matching, and the third for incoming
 	 * policy matching. The following three fields maintain the hash
 	 * queues in those three tables.
 	 */
@@ -366,6 +366,8 @@ struct tdb {				/* tunnel descriptor block */
 	u_int64_t	tdb_mtutimeout;	/* When to ignore this entry */
 
 	u_int16_t	tdb_udpencap_port;	/* Peer UDP port */
+
+	u_int16_t	tdb_tag;		/* Packet filter tag */
 
 	struct sockaddr_encap   tdb_filter; /* What traffic is acceptable */
 	struct sockaddr_encap   tdb_filtermask; /* And the mask */

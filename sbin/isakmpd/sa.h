@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.h,v 1.48 2006/06/02 19:35:55 hshoexer Exp $	 */
+/* $OpenBSD: sa.h,v 1.49 2006/11/24 13:52:14 reyk Exp $	 */
 /* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
@@ -209,6 +209,9 @@ struct sa {
 	u_int32_t	dpd_failcount;	/* # of subsequent failures */
 	u_int32_t	dpd_rdupcount;	/* # of subsequent duplicates */
 	struct event   *dpd_event;	/* time of next event */
+
+	/* The add a pf tag to packets matching the established SA. */
+	char           *tag;
 };
 
 /* This SA is alive.  */

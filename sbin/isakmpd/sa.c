@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.109 2006/08/30 16:33:31 cloder Exp $	 */
+/* $OpenBSD: sa.c,v 1.110 2006/11/24 13:52:14 reyk Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -868,6 +868,8 @@ sa_release(struct sa *sa)
 		timer_remove_event(sa->dpd_event);
 	if (sa->transport)
 		transport_release(sa->transport);
+	if (sa->tag)
+		free(sa->tag);
 	free(sa);
 }
 

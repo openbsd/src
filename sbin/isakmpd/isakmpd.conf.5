@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.118 2006/09/15 09:49:07 hshoexer Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.119 2006/11/24 13:52:14 reyk Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -647,6 +647,41 @@ we are dealing with.
 Look at
 .Aq Sy IPsec-ID
 below.
+.It Em PF-Tag
+Add a
+.Xr pf 4
+tag to all packets of phase 2 SAs created for this connection.
+This will allow matching packets for this connection by defining
+rules in
+.Xr pf.conf 5
+using the
+.Em tagged
+keyword.
+.Pp
+The following variables can be used in tags to include information
+from the remote peer on runtime:
+.Pp
+.Bl -tag -width $domain -compact -offset indent
+.It Ar $id
+The remote phase 1 ID.
+It will be expanded to
+.Ar id-type/id-value ,
+e.g.\&
+.Ar fqdn/foo.bar.org .
+.It Ar $domain
+Extract the domain from IDs of type FQDN or UFQDN.
+.El
+.Pp
+For example, if the ID is
+.Ar fqdn/foo.bar.org
+or
+.Ar ufqdn/user@bar.org ,
+.Dq PF-Tag=ipsec-$domain
+expands to
+.Dq ipsec-bar.org .
+The variable expansion for the
+.Ar PF-Tag
+directive occurs only at runtime, not during configuration file parse time.
 .El
 .It Aq Sy IPsec-configuration
 Parameters for IPsec configuration

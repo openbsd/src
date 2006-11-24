@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.62 2006/07/24 11:45:44 ho Exp $	 */
+/* $OpenBSD: util.c,v 1.63 2006/11/24 13:52:14 reyk Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -621,3 +621,34 @@ gc_strdup(const char *x)
 	return strcpy(y,x);
 }
 #endif
+
+int
+expand_string(char *label, size_t len, const char *srch, const char *repl)
+{
+	char *tmp;
+	char *p, *q;
+
+	if ((tmp = calloc(1, len)) == NULL) {
+		log_error("expand_string: calloc");
+		return (-1);
+	}
+	p = q = label;
+	while ((q = strstr(p, srch)) != NULL) {
+		*q = '\0';
+		if ((strlcat(tmp, p, len) >= len) ||
+		    (strlcat(tmp, repl, len) >= len)) {
+			log_print("expand_string: string too long");
+			return (-1);
+		}
+		q += strlen(srch);
+		p = q;
+	}
+	if (strlcat(tmp, p, len) >= len) {
+		log_print("expand_string: string too long");
+		return (-1);
+	}
+	strlcpy(label, tmp, len);	/* always fits */
+	free(tmp);
+
+	return (0);
+}
