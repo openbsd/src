@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.53 2006/11/18 15:54:29 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.54 2006/11/24 04:27:17 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -869,9 +869,8 @@ re_attach(struct rl_softc *sc)
 	for (i = 0; i < RL_TX_QLEN; i++) {
 		error = bus_dmamap_create(sc->sc_dmat,
 		    RL_JUMBO_FRAMELEN,
-		    RL_TX_DESC_CNT(sc) - 4, RL_TDESC_CMD_FRAGLEN,
-		    0, 0,
-		    &sc->rl_ldata.rl_txq[i].txq_dmamap);
+		    RL_TX_DESC_CNT(sc) - RL_NTXDESC_RSVD, RL_TDESC_CMD_FRAGLEN,
+		    0, 0, &sc->rl_ldata.rl_txq[i].txq_dmamap);
 		if (error) {
 			printf("%s: can't create DMA map for TX\n",
 			    sc->sc_dev.dv_xname);
@@ -1503,7 +1502,7 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 	u_int32_t	cmdstat, rl_flags = 0;
 	struct rl_txq	*txq;
 
-	if (sc->rl_ldata.rl_tx_free <= 4)
+	if (sc->rl_ldata.rl_tx_free <= RL_NTXDESC_RSVD)
 		return (EFBIG);
 
 #ifdef RE_CSUM_OFFLOAD
@@ -1541,7 +1540,7 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 		return (error);
 	}
 
-	if (map->dm_nsegs > sc->rl_ldata.rl_tx_free - 4) {
+	if (map->dm_nsegs > sc->rl_ldata.rl_tx_free - RL_NTXDESC_RSVD) {
 		error = EFBIG;
 		goto fail_unload;
 	}

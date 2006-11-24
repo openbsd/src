@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.32 2006/11/18 15:54:29 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.33 2006/11/24 04:27:17 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -586,6 +586,8 @@ struct rl_stats {
 #define RL_TX_DESC_CNT_8169	1024
 
 #define RL_TX_QLEN		64
+
+#define RL_NTXDESC_RSVD		4
 
 #define RL_RX_LIST_SZ		(RL_RX_DESC_CNT * sizeof(struct rl_desc))
 #define RL_RING_ALIGN		256
