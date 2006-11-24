@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.33 2006/11/23 22:03:07 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.34 2006/11/24 20:45:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -122,6 +122,7 @@ struct malo_tx_desc {
 #define MALO_CMD_SET_ANTENNA		0x0020
 #define MALO_CMD_SET_PRESCAN		0x0107
 #define MALO_CMD_SET_POSTSCAN		0x0108
+#define MALO_CMD_SET_RATE		0x0110
 #define MALO_CMD_SET_CHANNEL		0x010a
 #define MALO_CMD_SET_RTS		0x0113
 #define MALO_CMD_RESPONSE		0x8000
@@ -194,6 +195,12 @@ struct malo_cmd_channel {
 	uint8_t		channel;
 } __packed;
 
+struct malo_cmd_rate {
+	uint8_t		dataratetype;
+	uint8_t		rateindex;
+	uint8_t		aprates[14];
+} __packed;
+
 #define malo_mem_write4(sc, off, x) \
 	bus_space_write_4((sc)->sc_mem1_bt, (sc)->sc_mem1_bh, (off), (x))
 #define malo_mem_write2(sc, off, x) \
@@ -241,6 +248,8 @@ void	malo_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
 struct ieee80211_node *
 	malo_node_alloc(struct ieee80211com *ic);
 int	malo_media_change(struct ifnet *ifp);
+void	malo_media_status(struct ifnet *ifp, struct ifmediareq *imr);
+int	malo_chip2rate(int chip_rate);
 void	malo_next_scan(void *arg);
 void	malo_tx_intr(struct malo_softc *sc);
 int	malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0,
@@ -271,6 +280,7 @@ int	malo_cmd_set_aid(struct malo_softc *sc, uint8_t *bssid,
 	    uint16_t associd);
 int	malo_cmd_set_txpower(struct malo_softc *sc, unsigned int powerlevel);
 int	malo_cmd_set_rts(struct malo_softc *sc, uint32_t threshold);
+int	malo_cmd_set_rate(struct malo_softc *sc, uint8_t rate);
 
 /* supported rates */
 const struct ieee80211_rateset  malo_rates_11b =
@@ -382,7 +392,7 @@ malo_attach(struct malo_softc *sc)
 	ic->ic_newassoc = malo_newassoc;
 	ic->ic_node_alloc = malo_node_alloc;
 
-	ieee80211_media_init(ifp, malo_media_change, ieee80211_media_status);
+	ieee80211_media_init(ifp, malo_media_change, malo_media_status);
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
@@ -1027,12 +1037,18 @@ malo_stop(struct malo_softc *sc)
 	if (ifp->if_flags & IFF_RUNNING)
 		malo_cmd_reset(sc);
 
+	/* device is not running anymore */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
+	/* change back to initial state */
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
+	/* reset RX / TX rings */
 	malo_reset_tx_ring(sc, &sc->sc_txring);
 	malo_reset_rx_ring(sc, &sc->sc_rxring);
+
+	/* set initial rate */
+	sc->sc_last_txrate = 0;
 
 	/* power off cardbus socket */
 	if (sc->sc_disable)
@@ -1082,7 +1098,6 @@ malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 	case IEEE80211_S_ASSOC:
 		DPRINTF(("newstate ASSOC\n"));
-#if 0
 		if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 			malo_cmd_set_radio(sc, 1, 3); /* short preamble */
 		else
@@ -1090,7 +1105,13 @@ malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		malo_cmd_set_aid(sc, ic->ic_bss->ni_bssid,
 		    ic->ic_bss->ni_associd);
-#endif
+
+		if (ic->ic_fixed_rate == -1)
+			/* automatic rate adaption */
+			malo_cmd_set_rate(sc, 0);
+		else
+			/* fixed rate */
+			malo_cmd_set_rate(sc, 0); /* XXX */
 		break;
 	case IEEE80211_S_RUN:
 		DPRINTF(("newstate RUN\n"));
@@ -1137,6 +1158,63 @@ malo_media_change(struct ifnet *ifp)
 		malo_init(ifp);
 
 	return (0);
+}
+
+void
+malo_media_status(struct ifnet *ifp, struct ifmediareq *imr)
+{
+	struct malo_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	int rate;
+
+	imr->ifm_status = IFM_AVALID;
+	imr->ifm_active = IFM_IEEE80211;
+	if (ic->ic_state == IEEE80211_S_RUN)
+		imr->ifm_status |= IFM_ACTIVE;
+
+	/* convert chip bitmap rate to 802.11 rate */
+	rate = malo_chip2rate(sc->sc_last_txrate);
+	imr->ifm_active |= ieee80211_rate2media(ic, rate, ic->ic_curmode);
+
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_STA:
+		break;
+	case IEEE80211_M_IBSS:
+		imr->ifm_active |= IFM_IEEE80211_ADHOC;
+		break;
+	case IEEE80211_M_MONITOR:
+		imr->ifm_active |= IFM_IEEE80211_MONITOR;
+		break;
+	case IEEE80211_M_AHDEMO:
+		break;
+	case IEEE80211_M_HOSTAP:
+		break;
+	}
+}
+
+int
+malo_chip2rate(int chip_rate)
+{
+	switch (chip_rate) {
+		/* CCK rates */
+		case  0:	return 2;
+		case  1:	return 4;
+		case  2:	return 11;
+		case  3:	return 22;
+
+		/* OFDM rates */
+		case  5:	return 12;
+		case  6:	return 18;
+		case  7:	return 24;
+		case  8:	return 36;
+		case  9:	return 48;
+		case 10:	return 72;
+		case 11:	return 96;
+		case 12:	return 108;
+
+		/* unknown rate: should not happen */
+		default:	return 0;
+	}
 }
 
 void
@@ -1194,6 +1272,9 @@ malo_tx_intr(struct malo_softc *sc)
 			ifp->if_oerrors++;
 			break;
 		}
+
+		/* save last used TX rate */
+		sc->sc_last_txrate = desc->datarate;
 
 		/* cleanup TX data and TX descritpor */
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
@@ -2026,6 +2107,51 @@ malo_cmd_set_rts(struct malo_softc *sc, uint32_t threshold)
 	hdr->result = 0;
 
 	*(uint32_t *)(hdr + 1) = htole32(threshold);	
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	return (malo_send_cmd_dma(sc, sc->sc_cmd_dmaaddr));
+}
+
+int
+malo_cmd_set_rate(struct malo_softc *sc, uint8_t rate)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+	struct malo_cmd_rate *body;
+
+	hdr->cmd = htole16(MALO_CMD_SET_RATE);
+	hdr->size = htole16(sizeof(*hdr) + sizeof(*body));
+	hdr->seqnum = 1;
+	hdr->result = 0;
+	body = (struct malo_cmd_rate *)(hdr + 1);
+
+	bzero(body, sizeof(*body));
+
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+		/* TODO */
+	} else {
+		body->aprates[0] = 2;
+		body->aprates[1] = 4;
+		body->aprates[2] = 11;
+		body->aprates[3] = 22;
+		if (ic->ic_curmode == IEEE80211_MODE_11G) {
+			body->aprates[4] = 0;
+			body->aprates[5] = 12;
+			body->aprates[6] = 18;
+			body->aprates[7] = 24;
+			body->aprates[8] = 36;
+			body->aprates[9] = 48;
+			body->aprates[10] = 72;
+			body->aprates[11] = 96;
+			body->aprates[12] = 108;
+		}
+	}
+
+	if (rate != 0) {
+		/* TODO */
+	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);

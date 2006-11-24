@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.h,v 1.8 2006/11/07 21:39:32 mglocker Exp $ */
+/*	$OpenBSD: malo.h,v 1.9 2006/11/24 20:45:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -105,6 +105,7 @@ struct malo_softc {
 
 	struct timeout		sc_scan_to;
 	int			sc_tx_timer;
+	int			sc_last_txrate;
 
 #if NBPFILTER > 0
 	caddr_t		sc_drvbpf;
