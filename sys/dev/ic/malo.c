@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.34 2006/11/24 20:45:33 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.35 2006/11/24 23:28:24 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -250,6 +250,7 @@ struct ieee80211_node *
 int	malo_media_change(struct ifnet *ifp);
 void	malo_media_status(struct ifnet *ifp, struct ifmediareq *imr);
 int	malo_chip2rate(int chip_rate);
+int	malo_fix2rate(int fix_rate);
 void	malo_next_scan(void *arg);
 void	malo_tx_intr(struct malo_softc *sc);
 int	malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0,
@@ -1069,6 +1070,7 @@ malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct malo_softc *sc = ic->ic_if.if_softc;
 	enum ieee80211_state ostate;
 	uint8_t chan;
+	int rate;
 
 	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
 
@@ -1109,9 +1111,11 @@ malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		if (ic->ic_fixed_rate == -1)
 			/* automatic rate adaption */
 			malo_cmd_set_rate(sc, 0);
-		else
+		else {
 			/* fixed rate */
-			malo_cmd_set_rate(sc, 0); /* XXX */
+			rate = malo_fix2rate(ic->ic_fixed_rate);
+			malo_cmd_set_rate(sc, rate);
+		}
 		break;
 	case IEEE80211_S_RUN:
 		DPRINTF(("newstate RUN\n"));
@@ -1217,6 +1221,31 @@ malo_chip2rate(int chip_rate)
 	}
 }
 
+int
+malo_fix2rate(int fix_rate)
+{
+	switch (fix_rate) {
+	/* CCK rates */
+	case  0:	return 2;
+	case  1:	return 4;
+	case  2:	return 11;
+	case  3:	return 22;
+
+	/* OFDM rates */
+	case  4:	return 12;
+	case  5:	return 18;
+	case  6:	return 24;
+	case  7:	return 36;
+	case  8:	return 48;
+	case  9:	return 72;
+	case 10:	return 96;
+	case 11:	return 108;
+
+	/* unknown rate: should not happen */
+	default:	return 0;
+	}
+}
+
 void
 malo_next_scan(void *arg)
 {
@@ -1275,6 +1304,8 @@ malo_tx_intr(struct malo_softc *sc)
 
 		/* save last used TX rate */
 		sc->sc_last_txrate = desc->datarate;
+		DPRINTFN(2, ("%s: datarate=%d\n",
+		    sc->sc_dev.dv_xname, sc->sc_last_txrate));
 
 		/* cleanup TX data and TX descritpor */
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
@@ -2120,6 +2151,7 @@ malo_cmd_set_rate(struct malo_softc *sc, uint8_t rate)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
 	struct malo_cmd_rate *body;
+	int i;
 
 	hdr->cmd = htole16(MALO_CMD_SET_RATE);
 	hdr->size = htole16(sizeof(*hdr) + sizeof(*body));
@@ -2150,7 +2182,14 @@ malo_cmd_set_rate(struct malo_softc *sc, uint8_t rate)
 	}
 
 	if (rate != 0) {
-		/* TODO */
+		/* fixed rate */
+		for (i = 0; i < 13; i++) {
+			if (body->aprates[i] == rate) {
+				body->rateindex = i;
+				body->dataratetype = 1;
+				break;
+			}
+		}
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
