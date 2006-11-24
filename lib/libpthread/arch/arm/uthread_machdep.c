@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep.c,v 1.4 2005/11/25 06:53:22 deraadt Exp $	*/
+/*	$OpenBSD: uthread_machdep.c,v 1.5 2006/11/24 04:58:59 drahn Exp $	*/
 
 /*
  * Copyright (c) 2004 Dale Rahn. All rights reserved.
@@ -75,7 +75,7 @@ _thread_machdep_init(statep, base, len, entry)
 
 	__asm__ volatile ("stmia %0, {r4-r12}":: "r"(&f->r[0]));
 
-#ifndef __VFP_FP__
+#ifndef __SOFTFP__
 	__asm__ volatile ("sfm f4, 4, [%0], #0":: "r"(&f->fpr[0]));
 
 	__asm__ volatile ("rfs 0; stfd 0, %0" : "=m"(f->fs));
@@ -94,10 +94,8 @@ void
 _thread_machdep_save_float_state(statep)
 	struct _machdep_state* statep;
 {
-#if 0
-#ifndef __VFP_FP__
+#if !defined(__SOFTFP__) && !defined (__lint__)
 #error finish FP save
-#endif
 #endif
 }
 
@@ -105,9 +103,7 @@ void
 _thread_machdep_restore_float_state(statep)
 	struct _machdep_state* statep;
 {
-#if 0
-#ifndef __VFP_FP__
+#if !defined(__SOFTFP__) && !defined (__lint__)
 #error finish FP save
-#endif
 #endif
 }
