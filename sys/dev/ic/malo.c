@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.35 2006/11/24 23:28:24 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.36 2006/11/24 23:29:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1200,24 +1200,24 @@ int
 malo_chip2rate(int chip_rate)
 {
 	switch (chip_rate) {
-		/* CCK rates */
-		case  0:	return 2;
-		case  1:	return 4;
-		case  2:	return 11;
-		case  3:	return 22;
+	/* CCK rates */
+	case  0:	return 2;
+	case  1:	return 4;
+	case  2:	return 11;
+	case  3:	return 22;
 
-		/* OFDM rates */
-		case  5:	return 12;
-		case  6:	return 18;
-		case  7:	return 24;
-		case  8:	return 36;
-		case  9:	return 48;
-		case 10:	return 72;
-		case 11:	return 96;
-		case 12:	return 108;
+	/* OFDM rates */
+	case  5:	return 12;
+	case  6:	return 18;
+	case  7:	return 24;
+	case  8:	return 36;
+	case  9:	return 48;
+	case 10:	return 72;
+	case 11:	return 96;
+	case 12:	return 108;
 
-		/* unknown rate: should not happen */
-		default:	return 0;
+	/* unknown rate: should not happen */
+	default:	return 0;
 	}
 }
 
