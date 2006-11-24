@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.21 2006/03/07 18:21:10 brad Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.22 2006/11/24 11:50:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1088,38 +1088,15 @@ bstp_ifupdstatus(sc, bif)
 	struct bridge_iflist *bif;
 {
 	struct ifnet *ifp = bif->ifp;
-	struct ifmediareq ifmr;
-	int err;
 
-	if (ifp->if_flags & IFF_UP) {
-		ifmr.ifm_count = 0;
-		err = (*ifp->if_ioctl)(ifp, SIOCGIFMEDIA, (caddr_t)&ifmr);
-		if (err) {
-			if (bif->bif_state == BSTP_IFSTATE_DISABLED)
-				bstp_enable_port(sc, bif);
-			return;
-		}
-
-		if (!(ifmr.ifm_status & IFM_AVALID)) {
-			if (bif->bif_state == BSTP_IFSTATE_DISABLED)
-				bstp_enable_port(sc, bif);
-			return;
-		}
-
-		if (ifmr.ifm_status & IFM_ACTIVE) {
-			if (bif->bif_state == BSTP_IFSTATE_DISABLED)
-				bstp_enable_port(sc, bif);
-			return;
-		}
-
+	if ((ifp->if_flags & IFF_UP) &&
+	    ifp->if_link_state != LINK_STATE_DOWN) {
+		if (bif->bif_state == BSTP_IFSTATE_DISABLED)
+			bstp_enable_port(sc, bif);
+	} else {
 		if (bif->bif_state != BSTP_IFSTATE_DISABLED)
 			bstp_disable_port(sc, bif);
-
-		return;
 	}
-
-	if (bif->bif_state != BSTP_IFSTATE_DISABLED)
-		bstp_disable_port(sc, bif);
 }
 
 void
