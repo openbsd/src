@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.233 2006/11/24 01:14:08 brad Exp $
+$OpenBSD: usbdevs,v 1.234 2006/11/25 17:30:43 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1622,6 +1622,7 @@ product NETGEAR WG111U		0x4300	WG111U
 product NETGEAR WG111U_NF	0x4301	WG111U
 product NETGEAR3 WPN111		0x5f00	WPN111
 product NETGEAR3 WPN111_NF	0x5f01	WPN111
+product NETGEAR WG111V2		0x6a00	WG111v2
 
 /* Nikon products */
 product NIKON E990		0x0102	E990
