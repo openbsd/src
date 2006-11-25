@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.13 2006/07/09 21:44:06 mk Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.14 2006/11/25 20:47:17 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -75,6 +75,10 @@ struct cfdriver wdt_cd = {
 	NULL, "wdt", DV_DULL
 };
 
+const struct pci_matchid wdt_devices[] = {
+	{ PCI_VENDOR_INDCOMPSRC, PCI_PRODUCT_INDCOMPSRC_WDT50x }
+};
+
 /*
  *	8254 counter mappings
  */
@@ -103,13 +107,8 @@ struct cfdriver wdt_cd = {
 int
 wdtprobe(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
-
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INDCOMPSRC ||
-	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INDCOMPSRC_WDT50x)
-		return(0);
-
-	return(1);
+	return (pci_matchbyid((struct pci_attach_args *)aux, wdt_devices,
+	    sizeof(wdt_devices)/sizeof(wdt_devices[0])));
 }
 
 void
