@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.25 2006/11/25 02:12:04 brad Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.26 2006/11/25 17:47:40 brad Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -106,10 +106,7 @@ const struct pci_matchid gem_pci_devices[] = {
 };
 
 int
-gem_match_pci(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+gem_match_pci(struct device *parent, void *cf, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, gem_pci_devices,
 	    sizeof(gem_pci_devices)/sizeof(gem_pci_devices[0])));
@@ -204,9 +201,7 @@ gem_pci_enaddr(struct gem_softc *sc, struct pci_attach_args *pa)
 }
 
 void
-gem_attach_pci(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+gem_attach_pci(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct gem_pci_softc *gsc = (void *)self;
