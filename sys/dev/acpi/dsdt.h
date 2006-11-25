@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.18 2006/10/24 19:01:48 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.19 2006/11/25 18:24:54 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -85,6 +85,9 @@ int aml_evalname(struct acpi_softc *, struct aml_node *,
 
 void aml_fixup_dsdt(u_int8_t *, u_int8_t *, int);
 void aml_create_defaultobjects(void);
+
+int acpi_mutex_acquire(struct aml_value *, int);
+void acpi_mutex_release(struct aml_value *);
 
 #define ACPI_E_NOERROR   0x00
 #define ACPI_E_BADVALUE  0x01

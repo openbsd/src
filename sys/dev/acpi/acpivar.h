@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.28 2006/10/19 08:56:46 marco Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.29 2006/11/25 18:24:54 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -19,6 +19,7 @@
 #define _DEV_ACPI_ACPIVAR_H_
 
 #include <sys/timeout.h>
+#include <sys/rwlock.h>
 
 /* #define ACPI_DEBUG */
 #ifdef ACPI_DEBUG
@@ -97,6 +98,15 @@ struct acpi_reg_map {
 struct acpi_thread {
 	struct acpi_softc   *sc;
 	volatile int	    running;
+};
+
+struct acpi_mutex {
+	struct rwlock		amt_lock;
+#define ACPI_MTX_MAXNAME	5
+	char			amt_name[ACPI_MTX_MAXNAME + 3]; /* only 4 used */
+	int			amt_ref_count;
+	int			amt_timeout;
+	int			amt_synclevel;
 };
 
 struct gpe_block {

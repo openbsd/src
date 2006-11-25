@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.19 2006/10/24 19:45:06 marco Exp $ */
+/* $OpenBSD: amltypes.h,v 1.20 2006/11/25 18:24:54 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -282,6 +282,7 @@ struct aml_value
 			u_int8_t      	pwr_level;
 			u_int16_t     	pwr_order;
 		} vpowerrsrc;
+		struct acpi_mutex	*vmutex;
 	} _;
 };
 
@@ -296,6 +297,7 @@ struct aml_value
 #define v_method    _.vmethod
 #define v_processor _.vprocessor
 #define v_powerrsrc _.vpowerrsrc
+#define v_mutex     _.vmutex
 
 #define xaml_intval(v)   ((v)->v_integer)
 #define aml_strlen(v)   ((v)->length)

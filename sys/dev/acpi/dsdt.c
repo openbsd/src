@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.63 2006/11/11 19:26:01 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.64 2006/11/25 18:24:54 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -50,10 +50,9 @@
 
 #define aml_valid(pv)	 ((pv) != NULL)
 
-#define acpi_mutex_acquire(ctx,lock,iv)	 dnprintf(60,"ACQUIRE: %x" #lock "\n", (short)iv)
-#define acpi_mutex_release(ctx,lock)	 dnprintf(60,"RELEASE: " #lock "\n")
-
 #define aml_ipaddr(n) ((n)-aml_root.start)
+
+extern int hz;
 
 struct aml_scope;
 
@@ -412,8 +411,6 @@ _acpi_os_free(void *ptr, const char *fn, int line)
 void
 acpi_sleep(int ms)
 {
-	extern int hz;
-
 	if (cold)
 		delay(ms * 1000);
 	else 
@@ -425,6 +422,64 @@ void
 acpi_stall(int us)
 {
 	delay(us);
+}
+
+int
+acpi_mutex_acquire(struct aml_value *val, int timeout)
+{
+	struct acpi_mutex *mtx = val->v_mutex;
+	int rv = 0, ts, tries = 0;
+
+	if (val->type != AML_OBJTYPE_MUTEX) {
+		printf("acpi_mutex_acquire: invalid mutex\n");
+		return (1);
+	}
+
+	if (timeout == 0xffff)
+		timeout = 0;
+
+	/* lock recursion be damned, panic if that happens */
+	rw_enter_write(&mtx->amt_lock);
+	while (mtx->amt_ref_count) {
+		rw_exit_write(&mtx->amt_lock);
+		/* block access */
+		ts = tsleep(mtx, PWAIT, mtx->amt_name, timeout / hz);
+		if (ts == EWOULDBLOCK) {
+			rv = 1; /* mutex not acquired */
+			goto done;
+		}
+		tries++;
+		rw_enter_write(&mtx->amt_lock);
+	}
+
+	mtx->amt_ref_count++;
+	rw_exit_write(&mtx->amt_lock);
+done:
+	return (rv);
+}
+
+void
+acpi_mutex_release(struct aml_value *val)
+{
+	struct acpi_mutex *mtx = val->v_mutex;
+
+	/* sanity */
+	if (val->type != AML_OBJTYPE_MUTEX) {
+		printf("acpi_mutex_acquire: invalid mutex\n");
+		return;
+	}
+
+	rw_enter_write(&mtx->amt_lock);
+
+	if (mtx->amt_ref_count == 0) {
+		printf("acpi_mutex_release underflow %s\n", mtx->amt_name);
+		goto done;
+	}
+
+	mtx->amt_ref_count--;
+	wakeup(mtx); /* wake all of them up */
+done:
+	rw_exit_write(&mtx->amt_lock);
 }
 
 /*
@@ -1089,7 +1144,9 @@ aml_showvalue(struct aml_value *val, int lvl)
 		aml_showvalue(val->v_field.ref2, lvl);
 		break;
 	case AML_OBJTYPE_MUTEX:
-		printf(" mutex: %llx\n", val->v_integer);
+		printf(" mutex: %s ref: %d\n",
+		    val->v_mutex ?  val->v_mutex->amt_name : "",
+		    val->v_mutex ?  val->v_mutex->amt_ref_count : 0);
 		break;
 	case AML_OBJTYPE_EVENT:
 		printf(" event:\n");
@@ -2125,6 +2182,7 @@ aml_parsenamed(struct aml_scope *scope, int opcode, struct aml_value *res)
 {
 	uint8_t *name;
 	u_int64_t pci_addr;
+	int s, offs = 0;
 
 	AML_CHECKSTACK();
 	name = aml_parsename(scope);
@@ -2143,7 +2201,16 @@ aml_parsenamed(struct aml_scope *scope, int opcode, struct aml_value *res)
 		break;
 	case AMLOP_MUTEX:
 		_aml_setvalue(res, AML_OBJTYPE_MUTEX, 0, NULL);
-		res->v_integer = aml_parseint(scope, AMLOP_BYTEPREFIX);
+		res->v_mutex = (struct acpi_mutex *)acpi_os_malloc(
+		    sizeof(struct acpi_mutex));
+		res->v_mutex->amt_synclevel = aml_parseint(scope,
+		    AMLOP_BYTEPREFIX);
+		s = strlen(aml_getname(name));
+		if (s > 4)
+			offs = s - 4;
+		strlcpy(res->v_mutex->amt_name, aml_getname(name) + offs,
+		    ACPI_MTX_MAXNAME);
+		rw_init(&res->v_mutex->amt_lock, res->v_mutex->amt_name);
 		break;
 	case AMLOP_OPREGION:
 		_aml_setvalue(res, AML_OBJTYPE_OPREGION, 0, NULL);
@@ -2564,6 +2631,7 @@ aml_parsemuxaction(struct aml_scope *scope, int opcode, struct aml_value *res)
 {
 	struct aml_value *tmparg;
 	int64_t i1;
+	int rv;
 
 	AML_CHECKSTACK();
 
@@ -2573,11 +2641,13 @@ aml_parsemuxaction(struct aml_scope *scope, int opcode, struct aml_value *res)
 	case AMLOP_ACQUIRE:
 		/* Assert: tmparg is AML_OBJTYPE_MUTEX */
 		i1 = aml_parseint(scope, AMLOP_WORDPREFIX);
+		rv = acpi_mutex_acquire(tmparg->v_objref.ref, i1);
 
 		/* Return true if timed out */
-		aml_setvalue(scope, res, NULL, 0);
+		aml_setvalue(scope, res, NULL, rv);
 		break;
 	case AMLOP_RELEASE:
+		acpi_mutex_release(tmparg->v_objref.ref);
 		break;
 
 	case AMLOP_WAIT:
