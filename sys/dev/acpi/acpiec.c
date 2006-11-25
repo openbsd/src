@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.7 2006/10/15 15:28:32 jordan Exp $ */
+/* $OpenBSD: acpiec.c,v 1.8 2006/11/25 16:25:53 jordan Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -81,7 +81,6 @@ struct aml_node	*aml_find_name(struct acpi_softc *, struct aml_node *,
 #define ACPIEC_MAX_EVENTS	256
 struct acpiec_event {
 	struct aml_node *event;
-	int active;
 };
 
 struct acpiec_softc {
@@ -98,10 +97,9 @@ struct acpiec_softc {
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
 	u_int32_t		sc_gpe;
-	struct acpiec_event	sc_events[ACPIEC_MAX_EVENTS];
+  	struct acpiec_event	sc_events[ACPIEC_MAX_EVENTS];
 	struct rwlock		sc_lock;
 	int			sc_locked;
-	int			sc_pending;
 };
 
 
@@ -129,7 +127,7 @@ acpiec_intr(struct acpiec_softc *sc)
 	if ((stat & EC_STAT_SCI_EVT) != 0 && sc->sc_locked == 0)
 		acpiec_sci_event(sc);
 
-	return (sc->sc_pending);
+	return (0);
 }
 
 void
@@ -209,12 +207,7 @@ acpiec_sci_event(struct acpiec_softc *sc)
 	evt = bus_space_read_1(sc->sc_data_bt, sc->sc_data_bh, 0);
 
 	dnprintf(10, "%s: sci_event: 0x%02x\n", DEVNAME(sc), (int) evt);
-
-	sc->sc_events[evt].active = 1;
-	sc->sc_pending = 1;
-
-	sc->sc_acpi->sc_wakeup = 0;
-	wakeup(sc->sc_acpi);
+	aml_evalnode(sc->sc_acpi, sc->sc_events[evt].event, 0, NULL, NULL);
 }
 
 u_int8_t
@@ -367,27 +360,6 @@ acpiec_gpehandler(struct acpi_softc *acpi_sc, int gpe, void *arg)
 	acpi_write_pmreg(acpi_sc, ACPIREG_GPE_EN,  gpe>>3, mask);
 	return (0);
 }
-
-void
-acpiec_handle_events(struct acpiec_softc *sc)
-{
-	int idx;
-
-	if (sc->sc_pending == 0)
-		return;
-
-	sc->sc_pending = 0;
-
-	for (idx = 0; idx < ACPIEC_MAX_EVENTS; idx++) {
-		if (sc->sc_events[idx].active == 0 ||
-		    sc->sc_events[idx].event == NULL)
-			continue;
-		dnprintf(10, "%s: handling event 0x%02x\n", DEVNAME(sc), idx);
-		aml_evalnode(sc->sc_acpi, sc->sc_events[idx].event, 0, NULL, NULL);
-		sc->sc_events[idx].active = 0;
-	}
-}
-
 
 /* parse the resource buffer to get a 'register' value */
 int
