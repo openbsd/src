@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.39 2006/05/29 20:42:27 claudio Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.40 2006/11/25 18:04:44 claudio Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -151,8 +151,7 @@ rip_input(struct mbuf *m, ...)
 						m_freem(opts);
 				} else
 					sorwakeup(last->inp_socket);
-				if (opts)
-					opts = NULL;
+				opts = NULL;
 			}
 		}
 		last = inp;
