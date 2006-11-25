@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.63 2006/11/11 00:23:21 deraadt Exp $	*/
+/*	$OpenBSD: gem.c,v 1.64 2006/11/25 00:26:07 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -542,7 +542,7 @@ gem_reset_rx(struct gem_softc *sc)
 	gem_disable_rx(sc);
 	bus_space_write_4(t, h, GEM_RX_CONFIG, 0);
 	/* Wait till it finishes */
-	if (!gem_bitwait(sc, GEM_RESET, GEM_RESET_TX, 0))
+	if (!gem_bitwait(sc, GEM_RESET, GEM_RESET_RX, 0))
 		printf("%s: cannot disable rx dma\n", sc->sc_dev.dv_xname);
 	/* Wait 5ms extra. */
 	delay(5000);
@@ -550,7 +550,7 @@ gem_reset_rx(struct gem_softc *sc)
 	/* Finally, reset the ERX */
 	bus_space_write_4(t, h, GEM_RESET, GEM_RESET_RX);
 	/* Wait till it finishes */
-	if (!gem_bitwait(sc, GEM_RESET, GEM_RESET_TX, 0)) {
+	if (!gem_bitwait(sc, GEM_RESET, GEM_RESET_RX, 0)) {
 		printf("%s: cannot reset receiver\n", sc->sc_dev.dv_xname);
 		return (1);
 	}
