@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.62 2006/11/15 21:41:51 kettenis Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.63 2006/11/25 16:26:08 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1654,8 +1654,6 @@ acpi_isr_thread(void *arg)
 			KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_SLPBTN,
 			    acpi_evindex));
 		}
-		if (sc->sc_ec)
-			acpiec_handle_events(sc->sc_ec);
 	}
 	free(thread, M_DEVBUF);
 
