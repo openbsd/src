@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.534 2006/11/25 17:52:33 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.535 2006/11/25 20:44:30 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -348,9 +348,6 @@ arc*	at pci?			# Areca RAID Controllers
 scsibus* at arc?
 mpi*	at pci?			# LSI Logic Fusion MPT Message Passing Interface
 scsibus* at mpi?
-dpt*	at pci?			# DPT SmartCache/SmartRAID PCI
-dpt*	at eisa?		# DPT SmartCache/SmartRAID EISA
-scsibus* at dpt?
 gdt*	at pci?			# ICP Vortex GDT RAID controllers
 scsibus* at gdt?
 twe*	at pci?			# 3ware Escalade RAID controllers

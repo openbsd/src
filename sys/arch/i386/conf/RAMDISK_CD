@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.130 2006/11/02 20:45:17 dlg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.131 2006/11/25 20:44:30 dlg Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -191,9 +191,6 @@ arc*	at pci?			# Areca RAID Controllers
 scsibus* at arc?
 mpi*	at pci?			# LSI Logic Fusion-MPT Message Passing Interface
 scsibus* at mpi?
-dpt*	at pci?			# DPT SmartCache/SmartRAID PCI
-dpt*	at eisa?		# DPT SmartCache/SmartRAID EISA
-scsibus* at dpt?
 gdt*	at pci?			# ICP Vortex GDT RAID controllers
 scsibus* at gdt?
 #aac*	at pci?			# Adaptec FSA RAID controllers

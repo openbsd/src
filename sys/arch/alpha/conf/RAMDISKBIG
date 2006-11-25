@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.69 2006/08/20 12:29:20 martin Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.70 2006/11/25 20:44:30 dlg Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -164,8 +164,6 @@ adw*	at pci?				# AdvanSys ULTRA WIDE SCSI
 scsibus* at adw?
 ciss*	at pci?				# Compaq Smart ARRAY [56]* RAID controllers
 scsibus* at ciss?
-dpt*	at pci?				# DPT SmartCache/SmartRAID PCI
-scsibus* at dpt?
 gdt*	at pci?				# ICP Vortex GDT RAID controllers
 scsibus* at gdt?
 #adv*	at pci?				# AdvanSys 1200A/B and ULTRA SCSI

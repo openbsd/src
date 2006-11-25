@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.92 2006/10/19 01:16:56 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.93 2006/11/25 20:44:30 dlg Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -131,9 +131,6 @@ ahd*	at pci?			# Adaptec 79?? SCSI controllers
 scsibus* at ahd?
 mpi*	at pci?			# LSI Logic Fusion-MPT Message Passing Interface
 scsibus* at mpi?
-dpt*	at pci?			# DPT SmartCache/SmartRAID PCI
-dpt*	at eisa?		# DPT SmartCache/SmartRAID EISA
-scsibus* at dpt?
 gdt*	at pci?			# ICP Vortex GDT RAID controllers
 scsibus* at gdt?
 #aac*	at pci?			# Adaptec FSA RAID controllers

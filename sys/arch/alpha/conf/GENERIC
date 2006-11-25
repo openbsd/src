@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.186 2006/09/28 04:03:07 brad Exp $
+#	$OpenBSD: GENERIC,v 1.187 2006/11/25 20:44:30 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -193,8 +193,6 @@ adw*	at pci?				# AdvanSys ULTRA WIDE SCSI
 scsibus* at adw?
 ciss*	at pci?				# Compaq Smart ARRAY [56]* RAID controllers
 scsibus* at ciss?
-dpt*	at pci?				# DPT SmartCache/SmartRAID PCI
-scsibus* at dpt?
 gdt*	at pci?				# ICP Vortex GDT RAID controllers
 scsibus* at gdt?
 #adv*	at pci?				# AdvanSys 1200A/B and ULTRA SCSI
