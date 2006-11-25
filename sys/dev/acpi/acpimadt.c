@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.2 2006/11/20 21:55:23 jordan Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.3 2006/11/25 16:59:31 niklas Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -154,9 +154,11 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 				caa.caa_name = "cpu";
 				caa.cpu_number = entry->madt_lapic.apic_id;
 				caa.cpu_func = &mp_cpu_funcs;
+#ifdef __i386__
 				extern int cpu_id, cpu_feature;
 				caa.cpu_signature = cpu_id;
 				caa.feature_flags = cpu_feature;
+#endif
 
 				config_found(mainbus, &caa, acpimadt_print);
 			}
@@ -208,8 +210,13 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 				return;
 
 			memset(map, 0, sizeof *map);
+			map->ioapic = apic;
+			map->ioapic_pin = pin - apic->sc_apic_vecbase;
 			map->bus_pin = entry->madt_override.source;
 			map->flags = entry->madt_override.flags;
+#ifdef __amd64__ /* XXX	*/
+			map->global_int = entry->madt_override.global_int;
+#endif
 			acpimadt_cfg_intr(entry->madt_override.flags, &map->redir);
 
 			map->ioapic_ih = APIC_INT_VIA_APIC |
@@ -238,7 +245,12 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			return;
 
 		memset(map, 0, sizeof *map);
+		map->ioapic = apic;
+		map->ioapic_pin = pin;
 		map->bus_pin = pin;
+#ifdef __amd64__ /* XXX */
+		map->global_int = -1;
+#endif
 		map->redir = (IOAPIC_REDLO_DEL_LOPRI << IOAPIC_REDLO_DEL_SHIFT);
 
 		map->ioapic_ih = APIC_INT_VIA_APIC |

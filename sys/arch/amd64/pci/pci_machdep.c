@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.8 2006/05/31 06:13:48 weingart Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.9 2006/11/25 16:59:31 niklas Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -481,12 +481,12 @@ pci_intr_map(pa, ihp)
 	}
 #if NIOAPIC > 0
 	if (mp_busses != NULL) {
-		if (intr_find_mpmapping(mp_isa_bus, line, ihp) == 0) {
+		if (intr_find_mpmapping(mp_isa_bus->mb_idx, line, ihp) == 0) {
 			*ihp |= line;
 			return 0;
 		}
 #if NEISA > 0
-		if (intr_find_mpmapping(mp_eisa_bus, line, ihp) == 0) {
+		if (intr_find_mpmapping(mp_eisa_bus->mb_idx, line, ihp) == 0) {
 			*ihp |= line;
 			return 0;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.9 2006/11/17 20:55:47 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.10 2006/11/25 16:59:31 niklas Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -118,8 +118,8 @@ int mp_nbus;
 struct mp_intr_map *mp_intrs;
 int mp_nintr;
  
-int mp_isa_bus = -1;
-int mp_eisa_bus = -1;
+struct mp_bus *mp_isa_bus;
+struct mp_bus *mp_eisa_bus;
 
 #ifdef MPVERBOSE
 int mp_verbose = 1;

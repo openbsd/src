@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpconfig.h,v 1.3 2006/05/10 01:39:04 krw Exp $	*/
+/*	$OpenBSD: mpconfig.h,v 1.4 2006/11/25 16:59:31 niklas Exp $	*/
 /*	$NetBSD: mpconfig.h,v 1.2 2003/05/11 00:05:52 fvdl Exp $	*/
 
 /*
@@ -59,7 +59,8 @@ extern int mp_verbose;
 extern struct mp_bus *mp_busses;
 extern struct mp_intr_map *mp_intrs;
 extern int mp_nintr;
-extern int mp_isa_bus, mp_eisa_bus;
+extern struct mp_bus *mp_isa_bus;
+extern struct mp_bus *mp_eisa_bus;
 extern int mp_nbus;
 #endif
 #endif

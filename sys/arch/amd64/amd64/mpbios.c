@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.7 2006/10/03 22:39:40 gwk Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.8 2006/11/25 16:59:31 niklas Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -275,6 +275,13 @@ mpbios_probe(self)
 	int 		scan_loc;
 
 	struct		mp_map t;
+
+	/*
+	 * Skip probe if someone else (e.g. acpi) already provided the
+	 * necessary details.
+	 */
+	if (mp_busses)
+		return (0);
 
 	/* see if EBDA exists */
 
@@ -950,21 +957,23 @@ mpbios_bus(ent, self)
 		mp_busses[bus_id].mb_data =
 		    inb(ELCR0) | (inb(ELCR1) << 8);
 
-		if (mp_eisa_bus != -1)
-			printf("oops: multiple isa busses?\n");
+		if (mp_eisa_bus)
+			printf("%s: multiple isa busses?\n",
+			    self->dv_xname);
 		else
-			mp_eisa_bus = bus_id;
+			mp_eisa_bus = &mp_busses[bus_id];
 #endif
 
 	} else if (memcmp(entry->bus_type, "ISA   ", 6) == 0) {
 		mp_busses[bus_id].mb_name = "isa";
-		mp_busses[bus_id].mb_idx = 0; /* XXX */
+		mp_busses[bus_id].mb_idx = bus_id;
 		mp_busses[bus_id].mb_intr_print = mp_print_isa_intr;
 		mp_busses[bus_id].mb_intr_cfg = mp_cfg_isa_intr;
-		if (mp_isa_bus != -1)
-			printf("oops: multiple isa busses?\n");
+		if (mp_isa_bus)
+			printf("%s: multiple isa busses?\n",
+			    self->dv_xname);
 		else
-			mp_isa_bus = bus_id;
+			mp_isa_bus = &mp_busses[bus_id];
 	} else {
 		printf("%s: unsupported bus type %6.6s\n", self->dv_xname,
 		    entry->bus_type);

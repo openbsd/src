@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.1 2006/11/15 21:39:06 kettenis Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.2 2006/11/25 16:59:31 niklas Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -166,14 +166,17 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 #endif
 
 	memset(map, 0, sizeof *map);
+	map->ioapic = apic;
+	map->ioapic_pin = irq - apic->sc_apic_vecbase;
 	map->bus_pin = ((addr >> 14) & 0x7c) | (pin & 0x3);
 	map->redir = IOAPIC_REDLO_ACTLO | IOAPIC_REDLO_LEVEL;
 	map->redir |= (IOAPIC_REDLO_DEL_LOPRI << IOAPIC_REDLO_DEL_SHIFT);
 
 	map->ioapic_ih = APIC_INT_VIA_APIC |
-	    ((apic->sc_apicid << APIC_INT_APIC_SHIFT) | (irq << APIC_INT_PIN_SHIFT));
+	    ((apic->sc_apicid << APIC_INT_APIC_SHIFT) |
+	    (map->ioapic_pin << APIC_INT_PIN_SHIFT));
 
-	apic->sc_pins[irq].ip_map = map;
+	apic->sc_pins[map->ioapic_pin].ip_map = map;
 
 	map->next = mp_busses[sc->sc_bus].mb_intrs;
 	mp_busses[sc->sc_bus].mb_intrs = map;

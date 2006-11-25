@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.9 2006/06/08 03:18:08 weingart Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.10 2006/11/25 16:59:31 niklas Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -372,8 +372,11 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 	struct mp_intr_map *mip;
 
  	if (mp_busses != NULL) {
- 		for (mip = mp_busses[mp_isa_bus].mb_intrs; mip != NULL;
- 		    mip = mip->next) {
+		if (mp_isa_bus == NULL)
+			panic("no isa bus");
+
+		for (mip = mp_isa_bus->mb_intrs; mip != NULL;
+		    mip = mip->next) {
  			if (mip->bus_pin == pin) {
 				pin = APIC_IRQ_PIN(mip->ioapic_ih);
 				pic = &mip->ioapic->sc_pic;
