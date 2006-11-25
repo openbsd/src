@@ -10035,6 +10035,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ISP6312",
 	},
 	{
+	    PCI_VENDOR_QUANCOM, PCI_PRODUCT_QUANCOM_PWDOG1,
+	    "PWDOG1",
+	},
+	{
 	    PCI_VENDOR_QUANTUMDESIGNS, PCI_PRODUCT_QUANTUMDESIGNS_8500,
 	    "8500",
 	},
@@ -13853,6 +13857,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_DCI,
 	    "Decision Computer Inc",
+	},
+	{
+	    PCI_VENDOR_QUANCOM,
+	    "Quancom Informationssysteme",
 	},
 	{
 	    PCI_VENDOR_INTEL,

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.392 2006/11/17 18:58:31 mglocker Exp $
+#	$OpenBSD: Makefile,v 1.393 2006/11/25 17:18:31 mbalmer Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 acpi.4 acx.4 \
 	adc.4 addcom.4 admcts.4 admlc.4 admtemp.4 \
@@ -32,8 +32,8 @@ MAN=	aac.4 ac97.4 acphy.4 acpi.4 acx.4 \
 	pcagpio.4 pcaled.4 pcdisplay.4 pchb.4 pci.4 pcib.4 pcfadc.4 \
 	pcfiic.4 pciide.4 pckbc.4 pckbd.4 pcmcia.4 pcn.4 pcppi.4 pcscp.4 \
 	pf.4 pflog.4 pfsync.4 pgt.4 piixpm.4 pim.4 \
-	pms.4 ppb.4 ppp.4 pppoe.4 pty.4 puc.4 qsphy.4 radio.4 raid.4 ral.4 \
-	random.4 ray.4 rd.4 re.4 rgephy.4 ricohrtc.4 \
+	pms.4 ppb.4 ppp.4 pppoe.4 pty.4 puc.4 pwdog.4 qsphy.4 radio.4 raid.4 \
+	ral.4 random.4 ray.4 rd.4 re.4 rgephy.4 ricohrtc.4 \
 	rl.4 rln.4 rlphy.4 route.4 rt.4 rum.4 \
 	rtfps.4 rtii.4 rtw.4 safe.4 safte.4 san.4 sbus.4 scsi.4 sd.4 \
 	sdmmc.4 sdhc.4 ses.4 \

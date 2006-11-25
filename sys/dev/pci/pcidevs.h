@@ -308,6 +308,7 @@
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
 #define	PCI_VENDOR_DCI	0x6666		/* Decision Computer Inc */
+#define	PCI_VENDOR_QUANCOM	0x8008		/* Quancom Informationssysteme */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
 #define	PCI_VENDOR_WINBOND2	0x8c4a		/* Winbond */
 #define	PCI_VENDOR_KTI	0x8e2e		/* KTI */
@@ -3203,6 +3204,9 @@
 #define	PCI_PRODUCT_QLOGIC_ISP2312	0x2312		/* ISP2312 */
 #define	PCI_PRODUCT_QLOGIC_ISP2322	0x2322		/* ISP2322 */
 #define	PCI_PRODUCT_QLOGIC_ISP6312	0x6312		/* ISP6312 */
+
+/* Quancom products */
+#define	PCI_PRODUCT_QUANCOM_PWDOG1	0x0010		/* PWDOG1 */
 
 /* Quantum Designs products */
 #define	PCI_PRODUCT_QUANTUMDESIGNS_8500	0x0001		/* 8500 */

@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1193 2006/11/24 18:46:23 brad Exp $
+$OpenBSD: pcidevs,v 1.1194 2006/11/25 17:18:31 mbalmer Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -303,6 +303,7 @@ vendor	TURTLEBEACH	0x5053	Turtle Beach
 vendor	S3		0x5333	S3
 vendor	C4T		0x6374	c't Magazin
 vendor	DCI		0x6666  Decision Computer Inc
+vendor	QUANCOM		0x8008	Quancom Informationssysteme
 vendor	INTEL		0x8086	Intel
 vendor	WINBOND2	0x8c4a	Winbond
 vendor	KTI		0x8e2e	KTI
@@ -3198,6 +3199,9 @@ product QLOGIC ISP2300		0x2300	ISP2300
 product QLOGIC ISP2312		0x2312	ISP2312
 product QLOGIC ISP2322		0x2322	ISP2322
 product QLOGIC ISP6312		0x6312	ISP6312
+
+/* Quancom products */
+product QUANCOM PWDOG1		0x0010	PWDOG1
 
 /* Quantum Designs products */
 product QUANTUMDESIGNS 8500	0x0001	8500

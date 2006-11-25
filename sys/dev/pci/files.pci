@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.218 2006/11/19 14:20:55 mglocker Exp $
+#	$OpenBSD: files.pci,v 1.219 2006/11/25 17:18:31 mbalmer Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -411,6 +411,11 @@ file	dev/pci/if_ste.c		ste
 device	wdt: pcibus
 attach	wdt at pci
 file	dev/pci/wdt.c			wdt	needs-flag
+
+# Quancom PWDOG1
+device	pwdog: pcibus
+attach	pwdog at pci
+file	dev/pci/pwdog.c			pwdog
 
 # UHCI USB controller
 attach	uhci at pci with uhci_pci
