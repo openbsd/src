@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.65 2006/11/25 02:12:04 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.66 2006/11/25 04:52:49 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -544,7 +544,7 @@ gem_reset_rx(struct gem_softc *sc)
 	gem_disable_rx(sc);
 	bus_space_write_4(t, h, GEM_RX_CONFIG, 0);
 	/* Wait till it finishes */
-	if (!gem_bitwait(sc, h, GEM_RESET, 1, 0))
+	if (!gem_bitwait(sc, h, GEM_RX_CONFIG, 1, 0))
 		printf("%s: cannot disable rx dma\n", sc->sc_dev.dv_xname);
 	/* Wait 5ms extra. */
 	delay(5000);
