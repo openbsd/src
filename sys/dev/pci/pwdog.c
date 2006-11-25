@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwdog.c,v 1.2 2006/11/25 18:06:01 mbalmer Exp $ */
+/*	$OpenBSD: pwdog.c,v 1.3 2006/11/25 20:04:47 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -53,15 +53,15 @@ struct cfdriver pwdog_cd = {
 	NULL, "pwdog", DV_DULL
 };
 
+const struct pci_matchid pwdog_devices[] = {
+	{ PCI_VENDOR_QUANCOM, PCI_PRODUCT_QUANCOM_PWDOG1 }
+};
+
 int
 pwdog_probe(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
-
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_QUANCOM ||
-	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_QUANCOM_PWDOG1)
-		return 0;
-	return 1;
+	return (pci_matchbyid((struct pci_attach_args *)aux, pwdog_devices,
+	    sizeof(pwdog_devices)/sizeof(pwdog_devices[0])));
 }
 
 void
