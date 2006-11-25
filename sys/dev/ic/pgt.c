@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.37 2006/10/13 22:35:49 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.38 2006/11/25 19:42:41 damien Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2950,9 +2950,6 @@ out:
 	splx(s);
 }
 
-/*
- * Synchronization here is due to the softc lock being held when called.
- */
 int
 pgt_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
