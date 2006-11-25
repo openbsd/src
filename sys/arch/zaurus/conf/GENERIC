@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.57 2006/11/25 18:56:39 uwe Exp $
+#	$OpenBSD: GENERIC,v 1.58 2006/11/25 23:51:00 niallo Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -65,8 +65,8 @@ pxaudc0		at pxaip?		# USB Device Controller
 ohci0		at pxaip?		# Open Host Controller
 
 # USB function support
-usbf*		at pxaudc?		# USB logical device
-cdcef*		at usbf?		# CDC ethernet function
+#usbf*		at pxaudc?		# USB logical device
+#cdcef*		at usbf?		# CDC ethernet function
 
 # USB bus support
 usb*		at ohci?
