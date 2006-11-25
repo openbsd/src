@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwdog.4,v 1.1 2006/11/25 17:18:31 mbalmer Exp $
+.\"	$OpenBSD: pwdog.4,v 1.2 2006/11/25 21:52:37 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -25,7 +25,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Quancom PWDOG1 boards.
+driver provides support for Quancom PWDOG1 boards.
 .Pp
 If the kernel crashes, the watchdog timer is not reset and the system will
 reboot (assuming a proper connection is made between the PWDOG1 and
@@ -39,8 +39,8 @@ and
 .Xr watchdogd 8
 for more information.
 .Pp
-The timeout period of the PWDOG1 card is set using DIP-switches and can
-not be changed by software.
+The timeout period of the PWDOG1 card is set using DIP-switches and cannot
+be changed by software.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4 ,
