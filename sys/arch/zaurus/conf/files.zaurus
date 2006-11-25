@@ -1,4 +1,4 @@
-#	$OpenBSD: files.zaurus,v 1.22 2006/09/27 06:33:03 grange Exp $
+#	$OpenBSD: files.zaurus,v 1.23 2006/11/25 14:31:59 uwe Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -65,6 +65,11 @@ file	arch/zaurus/dev/zaurus_audio.c		zaudio
 device	zrc: wskbddev
 attach	zrc at pxaip
 file	arch/zaurus/dev/zaurus_remote.c		zrc
+
+# NAND flash pseudo-disk device (Xilinx NAND flash controller)
+device	flash: disk
+attach	flash at pxaip with flash_pxaip
+file	arch/zaurus/dev/zaurus_flash.c		flash_pxaip
 
 #
 # Machine-independent ATA drivers
