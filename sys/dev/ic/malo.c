@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.37 2006/11/25 10:52:45 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.38 2006/11/25 14:20:48 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1170,16 +1170,15 @@ malo_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
 	struct malo_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	int rate;
 
 	imr->ifm_status = IFM_AVALID;
 	imr->ifm_active = IFM_IEEE80211;
 	if (ic->ic_state == IEEE80211_S_RUN)
 		imr->ifm_status |= IFM_ACTIVE;
 
-	/* convert chip bitmap rate to 802.11 rate */
-	rate = malo_chip2rate(sc->sc_last_txrate);
-	imr->ifm_active |= ieee80211_rate2media(ic, rate, ic->ic_curmode);
+	/* report last TX rate used by chip */
+	imr->ifm_active |= ieee80211_rate2media(ic, sc->sc_last_txrate,
+	    ic->ic_curmode);
 
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
@@ -1314,9 +1313,7 @@ malo_tx_intr(struct malo_softc *sc)
 		}
 
 		/* save last used TX rate */
-		sc->sc_last_txrate = desc->datarate;
-		DPRINTFN(2, ("%s: datarate=%d\n",
-		    sc->sc_dev.dv_xname, sc->sc_last_txrate));
+		sc->sc_last_txrate = malo_chip2rate(desc->datarate);
 
 		/* cleanup TX data and TX descritpor */
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
@@ -1353,15 +1350,12 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct malo_tx_desc *desc;
 	struct malo_tx_data *data;
 	struct ieee80211_frame *wh;
-	int rate, error;
+	int error;
 
 	DPRINTFN(2, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
 
 	desc = &sc->sc_txring.desc[sc->sc_txring.cur];
 	data = &sc->sc_txring.data[sc->sc_txring.cur];
-
-	/* send mgt frames at the lowest available rate */
-	rate = 2;
 
 	if (m0->m_len < sizeof(struct ieee80211_frame *)) {
 		m0 = m_pullup(m0, sizeof(struct ieee80211_frame *));
@@ -1387,7 +1381,7 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		struct malo_tx_radiotap_hdr *tap = &sc->sc_txtap;
 
 		tap->wt_flags = 0;
-		tap->wt_rate = rate;
+		tap->wt_rate = sc->sc_last_txrate;
 		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 
@@ -1435,7 +1429,7 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	data->ni = ni;
 	data->softstat |= 0x80;
 
-	malo_tx_setup_desc(sc, desc, m0->m_pkthdr.len, rate,
+	malo_tx_setup_desc(sc, desc, m0->m_pkthdr.len, 0,
 	    data->map->dm_segs, data->map->dm_nsegs);
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
@@ -1444,8 +1438,8 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	    sc->sc_txring.cur * sizeof(struct malo_tx_desc),
 	    sizeof(struct malo_tx_desc), BUS_DMASYNC_PREWRITE);
 
-	DPRINTFN(2, ("%s: sending mgmt frame, pktlen=%u, idx=%u, rate=%u\n",
-	    sc->sc_dev.dv_xname, m0->m_pkthdr.len, sc->sc_txring.cur, rate));
+	DPRINTFN(2, ("%s: sending mgmt frame, pktlen=%u, idx=%u\n",
+	    sc->sc_dev.dv_xname, m0->m_pkthdr.len, sc->sc_txring.cur));
 
 	sc->sc_txring.queued++;
 	sc->sc_txring.cur = (sc->sc_txring.cur + 1) % MALO_TX_RING_COUNT;
@@ -1467,15 +1461,12 @@ malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 	struct malo_tx_data *data;
 	struct ieee80211_frame *wh;
 	struct mbuf *mnew;
-	int rate, error;
+	int error;
 
 	DPRINTFN(2, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
 
 	desc = &sc->sc_txring.desc[sc->sc_txring.cur];
 	data = &sc->sc_txring.data[sc->sc_txring.cur];
-
-	/* XXX we care later about rate control */
-	rate = 2;
 
 	if (m0->m_len < sizeof(struct ieee80211_frame *)) {
 		m0 = m_pullup(m0, sizeof(struct ieee80211_frame *));
@@ -1501,7 +1492,7 @@ malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 		struct malo_tx_radiotap_hdr *tap = &sc->sc_txtap;
 
 		tap->wt_flags = 0;
-		tap->wt_rate = rate;
+		tap->wt_rate = sc->sc_last_txrate;
 		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 
@@ -1555,7 +1546,7 @@ malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 	data->ni = ni;
 	data->softstat |= 0x80;
 
-	malo_tx_setup_desc(sc, desc, m0->m_pkthdr.len, rate,
+	malo_tx_setup_desc(sc, desc, m0->m_pkthdr.len, 1,
 	    data->map->dm_segs, data->map->dm_nsegs);
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
@@ -1564,8 +1555,8 @@ malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 	    sc->sc_txring.cur * sizeof(struct malo_tx_desc),
 	    sizeof(struct malo_tx_desc), BUS_DMASYNC_PREWRITE);
 
-	DPRINTFN(2, ("%s: sending data frame, pktlen=%u, idx=%u, rate=%u\n",
-	    sc->sc_dev.dv_xname, m0->m_pkthdr.len, sc->sc_txring.cur, rate));
+	DPRINTFN(2, ("%s: sending data frame, pktlen=%u, idx=%u\n",
+	    sc->sc_dev.dv_xname, m0->m_pkthdr.len, sc->sc_txring.cur));
 
 	sc->sc_txring.queued++;
 	sc->sc_txring.cur = (sc->sc_txring.cur + 1) % MALO_TX_RING_COUNT;
@@ -1582,7 +1573,7 @@ malo_tx_setup_desc(struct malo_softc *sc, struct malo_tx_desc *desc,
     int len, int rate, const bus_dma_segment_t *segs, int nsegs)
 {
 	desc->len = htole16(segs[0].ds_len);
-	desc->datarate = rate;
+	desc->datarate = rate; /* 0 = mgmt frame, 1 = data frame */
 	desc->physdata = htole32(segs[0].ds_addr);
 	desc->status = htole32(0x00000001 | 0x80000000);
 }
