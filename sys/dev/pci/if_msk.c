@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.25 2006/11/23 22:02:57 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.26 2006/11/25 16:26:17 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1249,9 +1249,7 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	/* Read and save physical media type */
 	sc->sk_pmd = sk_win_read_1(sc, SK_PMDTYPE);
 
-	if (sc->sk_pmd == 'T' || sc->sk_pmd == '1' ||
-	    (SK_IS_YUKON2(sc) && !(sc->sk_pmd == 'L' ||
-	    sc->sk_pmd == 'S')))
+	if (!(sc->sk_pmd == 'L' || sc->sk_pmd == 'S'))
 		sc->sk_coppertype = 1;
 	else
 		sc->sk_coppertype = 0;
