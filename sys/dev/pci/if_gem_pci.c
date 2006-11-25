@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.24 2006/10/15 17:20:55 kettenis Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.25 2006/11/25 02:12:04 brad Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -252,12 +252,19 @@ gem_attach_pci(parent, self, aux)
 #define PCI_GEM_BASEADDR	0x10
 	if (pci_mapreg_map(pa, PCI_GEM_BASEADDR, type, 0,
 	    &gsc->gsc_memt, &gsc->gsc_memh, NULL, &size, 0) != 0) {
-		printf(": could not map gem registers\n");
+		printf(": could not map registers\n");
 		return;
 	}
 
 	sc->sc_bustag = gsc->gsc_memt;
-	sc->sc_h = gsc->gsc_memh;
+	sc->sc_h1 = gsc->gsc_memh;
+
+	if (bus_space_subregion(sc->sc_bustag, sc->sc_h1,
+	    GEM_PCI_BANK2_OFFSET, GEM_PCI_BANK2_SIZE, &sc->sc_h2)) {
+		printf(": unable to create bank 2 subregion\n");
+		bus_space_unmap(gsc->gsc_memt, gsc->gsc_memh, size);
+		return;
+	}
 
 	if (gem_pci_enaddr(sc, pa) == 0)
 		gotenaddr = 1;

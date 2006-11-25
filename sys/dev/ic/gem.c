@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.64 2006/11/25 00:26:07 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.65 2006/11/25 02:12:04 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -90,7 +90,8 @@ void		gem_init_regs(struct gem_softc *);
 int		gem_ringsize(int);
 int		gem_meminit(struct gem_softc *);
 void		gem_mifinit(struct gem_softc *);
-int		gem_bitwait(struct gem_softc *, int, u_int32_t, u_int32_t);
+int		gem_bitwait(struct gem_softc *, bus_space_handle_t, int,
+		    u_int32_t, u_int32_t);
 void		gem_reset(struct gem_softc *);
 int		gem_reset_rx(struct gem_softc *);
 int		gem_reset_tx(struct gem_softc *);
@@ -220,7 +221,7 @@ gem_config(sc)
 
 	/* Get RX FIFO size */
 	sc->sc_rxfifosize = 64 *
-	    bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_RX_FIFO_SIZE);
+	    bus_space_read_4(sc->sc_bustag, sc->sc_h1, GEM_RX_FIFO_SIZE);
 
 	/* Initialize ifnet structure. */
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof ifp->if_xname);
@@ -259,14 +260,14 @@ gem_config(sc)
 		 * Try the external PCS SERDES if we didn't find any
 		 * MII devices.
 		 */
-		bus_space_write_4(sc->sc_bustag, sc->sc_h,
+		bus_space_write_4(sc->sc_bustag, sc->sc_h1,
 		    GEM_MII_DATAPATH_MODE, GEM_MII_DATAPATH_SERDES);
 
-		bus_space_write_4(sc->sc_bustag, sc->sc_h,
+		bus_space_write_4(sc->sc_bustag, sc->sc_h1,
 		    GEM_MII_SLINK_CONTROL,
 		    GEM_MII_SLINK_LOOPBACK|GEM_MII_SLINK_EN_SYNC_D);
 
-		bus_space_write_4(sc->sc_bustag, sc->sc_h,
+		bus_space_write_4(sc->sc_bustag, sc->sc_h1,
 		     GEM_MII_CONFIG, GEM_MII_CONFIG_ENABLE);
 
 		mii->mii_readreg = gem_pcs_readreg;
@@ -324,7 +325,7 @@ gem_config(sc)
 #endif
 			sc->sc_mif_config &= ~GEM_MIF_CONFIG_PHY_SEL;
 		}
-		bus_space_write_4(sc->sc_bustag, sc->sc_h, GEM_MIF_CONFIG, 
+		bus_space_write_4(sc->sc_bustag, sc->sc_h1, GEM_MIF_CONFIG, 
 			sc->sc_mif_config);
 
 		/*
@@ -395,7 +396,7 @@ gem_tick(arg)
 	struct gem_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t mac = sc->sc_h;
+	bus_space_handle_t mac = sc->sc_h1;
 	int s;
 
 	/* unload collisions counters */
@@ -419,8 +420,9 @@ gem_tick(arg)
 }
 
 int
-gem_bitwait(sc, r, clr, set)
+gem_bitwait(sc, h, r, clr, set)
 	struct gem_softc *sc;
+	bus_space_handle_t h;
 	int r;
 	u_int32_t clr;
 	u_int32_t set;
@@ -429,8 +431,8 @@ gem_bitwait(sc, r, clr, set)
 	u_int32_t reg;
 
 	for (i = TRIES; i--; DELAY(100)) {
-		reg = bus_space_read_4(sc->sc_bustag, sc->sc_h, r);
-		if ((r & clr) == 0 && (r & set) == set)
+		reg = bus_space_read_4(sc->sc_bustag, h, r);
+		if ((reg & clr) == 0 && (reg & set) == set)
 			return (1);
 	}
 
@@ -442,7 +444,7 @@ gem_reset(sc)
 	struct gem_softc *sc;
 {
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t h = sc->sc_h;
+	bus_space_handle_t h = sc->sc_h2;
 	int s;
 
 	s = splnet();
@@ -452,7 +454,7 @@ gem_reset(sc)
 
 	/* Do a full reset */
 	bus_space_write_4(t, h, GEM_RESET, GEM_RESET_RX|GEM_RESET_TX);
-	if (!gem_bitwait(sc, GEM_RESET, GEM_RESET_RX | GEM_RESET_TX, 0))
+	if (!gem_bitwait(sc, h, GEM_RESET, GEM_RESET_RX | GEM_RESET_TX, 0))
 		printf("%s: cannot reset device\n", sc->sc_dev.dv_xname);
 	splx(s);
 }
@@ -533,7 +535,7 @@ int
 gem_reset_rx(struct gem_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t h = sc->sc_h;
+	bus_space_handle_t h = sc->sc_h1, h2 = sc->sc_h2;
 
 	/*
 	 * Resetting while DMA is in progress can cause a bus hang, so we
@@ -542,15 +544,15 @@ gem_reset_rx(struct gem_softc *sc)
 	gem_disable_rx(sc);
 	bus_space_write_4(t, h, GEM_RX_CONFIG, 0);
 	/* Wait till it finishes */
-	if (!gem_bitwait(sc, GEM_RESET, GEM_RESET_RX, 0))
+	if (!gem_bitwait(sc, h, GEM_RESET, 1, 0))
 		printf("%s: cannot disable rx dma\n", sc->sc_dev.dv_xname);
 	/* Wait 5ms extra. */
 	delay(5000);
 
 	/* Finally, reset the ERX */
-	bus_space_write_4(t, h, GEM_RESET, GEM_RESET_RX);
+	bus_space_write_4(t, h2, GEM_RESET, GEM_RESET_RX);
 	/* Wait till it finishes */
-	if (!gem_bitwait(sc, GEM_RESET, GEM_RESET_RX, 0)) {
+	if (!gem_bitwait(sc, h2, GEM_RESET, GEM_RESET_RX, 0)) {
 		printf("%s: cannot reset receiver\n", sc->sc_dev.dv_xname);
 		return (1);
 	}
@@ -565,7 +567,7 @@ int
 gem_reset_tx(struct gem_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t h = sc->sc_h;
+	bus_space_handle_t h = sc->sc_h1, h2 = sc->sc_h2;
 
 	/*
 	 * Resetting while DMA is in progress can cause a bus hang, so we
@@ -574,15 +576,15 @@ gem_reset_tx(struct gem_softc *sc)
 	gem_disable_tx(sc);
 	bus_space_write_4(t, h, GEM_TX_CONFIG, 0);
 	/* Wait till it finishes */
-	if (!gem_bitwait(sc, GEM_TX_CONFIG, 1, 0))
+	if (!gem_bitwait(sc, h, GEM_TX_CONFIG, 1, 0))
 		printf("%s: cannot disable tx dma\n", sc->sc_dev.dv_xname);
 	/* Wait 5ms extra. */
 	delay(5000);
 
 	/* Finally, reset the ETX */
-	bus_space_write_4(t, h, GEM_RESET, GEM_RESET_TX);
+	bus_space_write_4(t, h2, GEM_RESET, GEM_RESET_TX);
 	/* Wait till it finishes */
-	if (!gem_bitwait(sc, GEM_RESET, GEM_RESET_TX, 0)) {
+	if (!gem_bitwait(sc, h2, GEM_RESET, GEM_RESET_TX, 0)) {
 		printf("%s: cannot reset transmitter\n",
 			sc->sc_dev.dv_xname);
 		return (1);
@@ -597,7 +599,7 @@ int
 gem_disable_rx(struct gem_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t h = sc->sc_h;
+	bus_space_handle_t h = sc->sc_h1;
 	u_int32_t cfg;
 
 	/* Flip the enable bit */
@@ -606,7 +608,7 @@ gem_disable_rx(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MAC_RX_CONFIG, cfg);
 
 	/* Wait for it to finish */
-	return (gem_bitwait(sc, GEM_MAC_RX_CONFIG, GEM_MAC_RX_ENABLE, 0));
+	return (gem_bitwait(sc, h, GEM_MAC_RX_CONFIG, GEM_MAC_RX_ENABLE, 0));
 }
 
 /*
@@ -616,7 +618,7 @@ int
 gem_disable_tx(struct gem_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t h = sc->sc_h;
+	bus_space_handle_t h = sc->sc_h1;
 	u_int32_t cfg;
 
 	/* Flip the enable bit */
@@ -625,7 +627,7 @@ gem_disable_tx(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MAC_TX_CONFIG, cfg);
 
 	/* Wait for it to finish */
-	return (gem_bitwait(sc, GEM_MAC_TX_CONFIG, GEM_MAC_TX_ENABLE, 0));
+	return (gem_bitwait(sc, h, GEM_MAC_TX_CONFIG, GEM_MAC_TX_ENABLE, 0));
 }
 
 /*
@@ -711,7 +713,7 @@ gem_init(struct ifnet *ifp)
 
 	struct gem_softc *sc = (struct gem_softc *)ifp->if_softc;
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t h = sc->sc_h;
+	bus_space_handle_t h = sc->sc_h1;
 	int s;
 	u_int max_frame_size;
 	u_int32_t v;
@@ -834,7 +836,7 @@ void
 gem_init_regs(struct gem_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t h = sc->sc_h;
+	bus_space_handle_t h = sc->sc_h1;
 	u_int32_t v;
 
 	/* These regs are not cleared on reset */
@@ -928,7 +930,7 @@ gem_rint(sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t h = sc->sc_h;
+	bus_space_handle_t h = sc->sc_h1;
 	struct ether_header *eh;
 	struct gem_rxsoft *rxs;
 	struct mbuf *m;
@@ -1089,7 +1091,7 @@ gem_pint(sc)
 	struct gem_softc *sc;
 {
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t seb = sc->sc_h;
+	bus_space_handle_t seb = sc->sc_h1;
 	u_int32_t status;
 
 	status = bus_space_read_4(t, seb, GEM_MII_INTERRUP_STATUS);
@@ -1108,7 +1110,7 @@ gem_intr(v)
 	struct gem_softc *sc = (struct gem_softc *)v;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t seb = sc->sc_h;
+	bus_space_handle_t seb = sc->sc_h1;
 	u_int32_t status;
 	int r = 0;
 
@@ -1172,9 +1174,9 @@ gem_watchdog(ifp)
 
 	DPRINTF(sc, ("gem_watchdog: GEM_RX_CONFIG %x GEM_MAC_RX_STATUS %x "
 		"GEM_MAC_RX_CONFIG %x\n",
-		bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_RX_CONFIG),
-		bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_MAC_RX_STATUS),
-		bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_MAC_RX_CONFIG)));
+		bus_space_read_4(sc->sc_bustag, sc->sc_h1, GEM_RX_CONFIG),
+		bus_space_read_4(sc->sc_bustag, sc->sc_h1, GEM_MAC_RX_STATUS),
+		bus_space_read_4(sc->sc_bustag, sc->sc_h1, GEM_MAC_RX_CONFIG)));
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++ifp->if_oerrors;
@@ -1191,7 +1193,7 @@ gem_mifinit(sc)
 	struct gem_softc *sc;
 {
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t mif = sc->sc_h;
+	bus_space_handle_t mif = sc->sc_h1;
 
 	if (GEM_IS_APPLE(sc)) {
 		if (sc->sc_variant == GEM_APPLE_K2_GMAC)
@@ -1229,7 +1231,7 @@ gem_mii_readreg(self, phy, reg)
 {
 	struct gem_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t mif = sc->sc_h;
+	bus_space_handle_t mif = sc->sc_h1;
 	int n;
 	u_int32_t v;
 
@@ -1261,7 +1263,7 @@ gem_mii_writereg(self, phy, reg, val)
 {
 	struct gem_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t mif = sc->sc_h;
+	bus_space_handle_t mif = sc->sc_h1;
 	int n;
 	u_int32_t v;
 
@@ -1307,7 +1309,7 @@ gem_mii_statchg(dev)
 	int instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
 #endif
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t mac = sc->sc_h;
+	bus_space_handle_t mac = sc->sc_h1;
 	u_int32_t v;
 
 #ifdef GEM_DEBUG
@@ -1364,7 +1366,7 @@ gem_pcs_readreg(self, phy, reg)
 {
 	struct gem_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t pcs = sc->sc_h;
+	bus_space_handle_t pcs = sc->sc_h1;
 
 #ifdef GEM_DEBUG
 	if (sc->sc_debug)
@@ -1403,7 +1405,7 @@ gem_pcs_writereg(self, phy, reg, val)
 {
 	struct gem_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t pcs = sc->sc_h;
+	bus_space_handle_t pcs = sc->sc_h1;
 
 #ifdef GEM_DEBUG
 	if (sc->sc_debug)
@@ -1585,7 +1587,7 @@ gem_setladrf(sc)
 	struct ether_multistep step;
 	struct arpcom *ac = &sc->sc_arpcom;
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t h = sc->sc_h;
+	bus_space_handle_t h = sc->sc_h1;
 	u_int32_t crc, hash[16], v;
 	int i;
 
@@ -1709,7 +1711,7 @@ gem_encap(sc, mhead, bixp)
 	sc->sc_txd[cur].sd_map = map;
 	sc->sc_txd[cur].sd_mbuf = mhead;
 
-	bus_space_write_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK, frag);
+	bus_space_write_4(sc->sc_bustag, sc->sc_h1, GEM_TX_KICK, frag);
 
 	*bixp = frag;
 

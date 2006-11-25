@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.14 2006/04/10 07:22:42 brad Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.15 2006/11/25 02:12:04 brad Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -129,7 +129,8 @@ struct gem_softc {
 	bus_space_tag_t	sc_bustag;	/* bus tag */
 	bus_dma_tag_t	sc_dmatag;	/* bus dma tag */
 	bus_dmamap_t	sc_dmamap;	/* bus dma handle */
-	bus_space_handle_t sc_h;	/* bus space handle for all regs */
+	bus_space_handle_t sc_h1;	/* bus space handle for bank 1 regs */
+	bus_space_handle_t sc_h2;	/* bus space handle for bank 2 regs */
 #if 0
 	/* The following may be needed for SBus */
 	bus_space_handle_t sc_seb;	/* HME Global registers */
