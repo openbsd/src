@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.389 2006/11/25 14:31:59 uwe Exp $
+#	$OpenBSD: files,v 1.390 2006/11/25 18:10:29 uwe Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -394,6 +394,7 @@ define	eisabus {}			# EISA attachment
 define	pcibus {[bus = -1]}		# PCI attachment
 define	tcbus {}			# TurboChannel attachment
 define	usbus {}			# USB attachment
+define	usbdev {}			# USB function attachment
 define	pcmciabus {[controller = -1], [socket = -1]}	# PCMCIA attachment
 define	cbbus {[slot = -1]}		# CardBus attachment
 define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
