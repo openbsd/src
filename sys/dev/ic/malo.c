@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.36 2006/11/24 23:29:39 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.37 2006/11/25 10:52:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -361,6 +361,7 @@ malo_attach(struct malo_softc *sc)
 	/* set supported rates */
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = malo_rates_11b;
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = malo_rates_11g;
+	sc->sc_last_txrate = -1;
 
 	/* set channels */
 	for (i = 1; i <= 14; i++) {
@@ -1049,7 +1050,7 @@ malo_stop(struct malo_softc *sc)
 	malo_reset_rx_ring(sc, &sc->sc_rxring);
 
 	/* set initial rate */
-	sc->sc_last_txrate = 0;
+	sc->sc_last_txrate = -1;
 
 	/* power off cardbus socket */
 	if (sc->sc_disable)
@@ -1194,6 +1195,15 @@ malo_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	case IEEE80211_M_HOSTAP:
 		break;
 	}
+
+	switch (ic->ic_curmode) {
+		case IEEE80211_MODE_11B:
+			imr->ifm_active |= IFM_IEEE80211_11B;
+			break;
+		case IEEE80211_MODE_11G:
+			imr->ifm_active |= IFM_IEEE80211_11G;
+			break;
+	}
 }
 
 int
@@ -1201,23 +1211,24 @@ malo_chip2rate(int chip_rate)
 {
 	switch (chip_rate) {
 	/* CCK rates */
-	case  0:	return 2;
-	case  1:	return 4;
-	case  2:	return 11;
-	case  3:	return 22;
+	case  0:	return (2);
+	case  1:	return (4);
+	case  2:	return (11);
+	case  3:	return (22);
 
 	/* OFDM rates */
-	case  5:	return 12;
-	case  6:	return 18;
-	case  7:	return 24;
-	case  8:	return 36;
-	case  9:	return 48;
-	case 10:	return 72;
-	case 11:	return 96;
-	case 12:	return 108;
+	case  4:	return (0); /* reserved */
+	case  5:	return (12);
+	case  6:	return (18);
+	case  7:	return (24);
+	case  8:	return (36);
+	case  9:	return (48);
+	case 10:	return (72);
+	case 11:	return (96);
+	case 12:	return (108);
 
-	/* unknown rate: should not happen */
-	default:	return 0;
+	/* no rate select yet or unknown rate */
+	default:	return (-1);
 	}
 }
 
@@ -1226,23 +1237,23 @@ malo_fix2rate(int fix_rate)
 {
 	switch (fix_rate) {
 	/* CCK rates */
-	case  0:	return 2;
-	case  1:	return 4;
-	case  2:	return 11;
-	case  3:	return 22;
+	case  0:	return (2);
+	case  1:	return (4);
+	case  2:	return (11);
+	case  3:	return (22);
 
 	/* OFDM rates */
-	case  4:	return 12;
-	case  5:	return 18;
-	case  6:	return 24;
-	case  7:	return 36;
-	case  8:	return 48;
-	case  9:	return 72;
-	case 10:	return 96;
-	case 11:	return 108;
+	case  4:	return (12);
+	case  5:	return (18);
+	case  6:	return (24);
+	case  7:	return (36);
+	case  8:	return (48);
+	case  9:	return (72);
+	case 10:	return (96);
+	case 11:	return (108);
 
 	/* unknown rate: should not happen */
-	default:	return 0;
+	default:	return (0);
 	}
 }
 
