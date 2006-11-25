@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.55 2006/08/30 22:19:29 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.56 2006/11/25 15:57:16 brad Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -91,7 +91,9 @@ le*		at lebuffer?
 qec*	at sbus?
 qe*	at qec?
 be*	at qec?
+
 hme*	at sbus?
+#gem*	at sbus?
 
 pciide*	at pci? flags 0x0000
 wd*	at pciide? flags 0x0a00
