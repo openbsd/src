@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.77 2006/10/22 06:59:00 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.78 2006/11/25 17:18:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -2024,7 +2024,6 @@ mpi_evt_sas(void *xsc, void *arg)
 	switch (ch->reason) {
 	case MPI_EVT_SASCH_REASON_ADDED:
 	case MPI_EVT_SASCH_REASON_NO_PERSIST_ADDED:
-		/* XXX what an awful interface */
 		scsi_probe_target(sc->sc_scsibus, ch->target);
 		break;
 
