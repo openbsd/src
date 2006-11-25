@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwdog.c,v 1.1 2006/11/25 17:18:31 mbalmer Exp $ */
+/*	$OpenBSD: pwdog.c,v 1.2 2006/11/25 18:06:01 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -20,7 +20,6 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 
@@ -70,14 +69,18 @@ pwdog_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pwdog_softc *pwdog = (struct pwdog_softc *)self;
 	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
+	pcireg_t memtype;
 	bus_size_t iosize;
 
-	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &pwdog->iot,
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
+	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &pwdog->iot,
 	    &pwdog->ioh, NULL, &iosize, 0)) {
-		printf("\n%s: PCI I/O region not found\n",
-		    pwdog->pwdog_dev.dv_xname);
+		printf("\n%s: PCI %s region not found\n",
+		    pwdog->pwdog_dev.dv_xname,
+		    memtype == PCI_MAPREG_TYPE_IO ? "I/O" : "memory");
 		return;
 	}
+	printf("\n");
 	pwdog_disable_timer(pwdog);
 	wdog_register(pwdog, pwdog_set_timeout);
 }
