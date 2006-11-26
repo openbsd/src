@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.239 2006/08/19 10:15:21 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.240 2006/11/26 15:28:00 mbalmer Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -1231,6 +1231,13 @@ Supported hardware {:-include-:}:
 		    VIA VT1211
 		    VIA VT82C686A, VT8231
 		    Winbond W83697HF, W83627HF, W83627THF, W83781D, W83782D
+		Hardware watchdog timer support, including: [G]
+		    AMD Elan SC520 System Controller
+		    ICS PCI-WDT500/501 watchdog timer
+		    Intel 6300ESB ICH
+		    National Semiconductor Geode SC1100 IAOC
+		    Quancom PWDOG1
+		    VIA VT1211
 		General Purpose Input/Output (GPIO) devices, including:
 		    National Semiconductor PC87366 LPC Super I/O GPIO
 		    National Semiconductor Geode SC1100 PCI-ISA bridge GPIO
