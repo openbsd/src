@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.197 2006/11/26 11:14:21 deraadt Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.198 2006/11/26 19:13:39 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -593,10 +593,6 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 	int		i, rseg, state, error;
 	struct bge_jpool_entry   *entry;
 
-	/* Check to see if Jumbo memory is already allocated */
-	if (sc->bge_cdata.bge_jumbo_buf)
-		return (0);
-
 	state = error = 0;
 
 	/* Grab a big chunk o' storage. */
@@ -649,7 +645,6 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 		entry = malloc(sizeof(struct bge_jpool_entry),
 		    M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
-			sc->bge_cdata.bge_jumbo_buf = NULL;
 			printf("%s: no memory for jumbo buffer queue!\n",
 			    sc->bge_dev.dv_xname);
 			error = ENOBUFS;
@@ -1227,7 +1222,6 @@ int
 bge_blockinit(struct bge_softc *sc)
 {
 	volatile struct bge_rcb		*rcb;
-	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	vaddr_t			rcb_addr;
 	int			i;
 	bge_hostaddr		taddr;
@@ -1263,16 +1257,9 @@ bge_blockinit(struct bge_softc *sc)
 	/* Configure mbuf pool watermarks */
 	/* new Broadcom docs strongly recommend these: */
 	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
-		if (ifp->if_mtu > ETHER_MAX_LEN) {
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x50);
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
-		} else {
-			/* Values from Linux driver... */
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 304);
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 152);
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 380);
-		}
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x50);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
 	} else {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x10);
@@ -1907,6 +1894,16 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	sc->bge_rdata = (struct bge_ring_data *)kva;
 
 	bzero(sc->bge_rdata, sizeof(struct bge_ring_data));
+
+	/*
+	 * Try to allocate memory for Jumbo buffers.
+	 */
+	if (BGE_IS_JUMBO_CAPABLE(sc)) {
+		if (bge_alloc_jumbo_mem(sc)) {
+			printf(": jumbo buffer allocation failed\n");
+			goto fail_5;
+		}
+	}
 
 	/* Set default tuneable values. */
 	sc->bge_stat_ticks = BGE_TICKS_PER_SEC;
@@ -2877,17 +2874,6 @@ bge_init(void *xsc)
 	bge_chipinit(sc);
 
 	/*
-	 * Try to allocate memory for Jumbo buffers.
-	 */
-	if (BGE_IS_JUMBO_CAPABLE(sc) && ifp->if_mtu > ETHERMTU &&
-	    bge_alloc_jumbo_mem(sc)) {
-		printf("%s: jumbo buffer allocation failed\n",
-		    sc->bge_dev.dv_xname);
-		splx(s);
-		return;
-	}
-
-	/*
 	 * Init the various state machines, ring
 	 * control blocks and firmware.
 	 */
@@ -2900,8 +2886,12 @@ bge_init(void *xsc)
 	ifp = &sc->arpcom.ac_if;
 
 	/* Specify MRU. */
-	CSR_WRITE_4(sc, BGE_RX_MTU, ifp->if_mtu +
-	    ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN);
+	if (BGE_IS_JUMBO_CAPABLE(sc))
+		CSR_WRITE_4(sc, BGE_RX_MTU,
+			BGE_JUMBO_FRAMELEN + ETHER_VLAN_ENCAP_LEN);
+	else
+		CSR_WRITE_4(sc, BGE_RX_MTU,
+			ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
 
 	/* Load our MAC address. */
 	m = (u_int16_t *)&sc->arpcom.ac_enaddr[0];
@@ -2939,7 +2929,7 @@ bge_init(void *xsc)
 	}
 
 	/* Init Jumbo RX ring. */
-	if (BGE_IS_JUMBO_CAPABLE(sc) && ifp->if_mtu > ETHERMTU)
+	if (BGE_IS_JUMBO_CAPABLE(sc))
 		bge_init_rx_ring_jumbo(sc);
 
 	/* Init our RX return ring index */
@@ -3095,10 +3085,8 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
 			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu) {
+		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
-			bge_init(sc);
-		}
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
