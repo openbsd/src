@@ -1,15 +1,15 @@
-/*	$OpenBSD: cfxga.c,v 1.1 2006/04/16 20:45:00 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.2 2006/11/26 17:04:22 miod Exp $	*/
 
 /*
- * Copyright (c) 2005 Matthieu Herrb and Miodrag Vallat
+ * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
@@ -17,8 +17,8 @@
  */
 
 /*
- * Work-in-progress display driver for the Colorgraphic CompactFlash
- * ``VoyagerVGA'' card.
+ * Display driver for the Colorgraphic CompactFlash ``VoyagerVGA'' card.
+ * based upon the Epson S1D13806 graphics chip.
  *
  * Our goals are:
  * - to provide a somewhat usable emulation mode for extra text display.
@@ -46,7 +46,13 @@
 
 #include <dev/pcmcia/cfxgareg.h>
 
-/* #define CFXGADEBUG */
+/* Old defines, biting the dust soon */
+#define	CROP_SOLIDFILL			0x0c0c
+#define	CROP_EXTCOPY			0x000c
+
+/*
+#define CFXGADEBUG
+*/
 
 #ifdef CFXGADEBUG
 #define	DPRINTF(arg) printf arg
@@ -165,10 +171,16 @@ u_int	cfxga_wait(struct cfxga_softc *, u_int, u_int);
 #define	cfxga_repaint_screen(sc) \
 	cfxga_memory_rop(sc, sc->sc_active, CROP_EXTCOPY, 0, 0, 640, 480)
 
-#define	cfxga_read(sc, addr) \
+#define	cfxga_read_1(sc, addr) \
+	bus_space_read_1((sc)->sc_pmemh.memt, (sc)->sc_pmemh.memh, \
+	    (sc)->sc_offset + (addr))
+#define	cfxga_read_2(sc, addr) \
 	bus_space_read_2((sc)->sc_pmemh.memt, (sc)->sc_pmemh.memh, \
 	    (sc)->sc_offset + (addr))
-#define	cfxga_write(sc, addr, val) \
+#define	cfxga_write_1(sc, addr, val) \
+	bus_space_write_1((sc)->sc_pmemh.memt, (sc)->sc_pmemh.memh, \
+	    (sc)->sc_offset + (addr), (val))
+#define	cfxga_write_2(sc, addr, val) \
 	bus_space_write_2((sc)->sc_pmemh.memt, (sc)->sc_pmemh.memh, \
 	    (sc)->sc_offset + (addr), (val))
 
@@ -279,7 +291,8 @@ cfxga_match(struct device *parent, void *match, void *aux)
 	if (rc != 0)
 		goto out2;
 
-	id = bus_space_read_1(h.memt, h.memh, ptr) & CR_ID_MASK;
+	id = (bus_space_read_1(h.memt, h.memh, ptr + CFREG_REV) &
+	    CR_PRODUCT_MASK) >> CR_PRODUCT_SHIFT;
 
 	pcmcia_mem_unmap(pa->pf, win);
 out2:
@@ -292,7 +305,7 @@ out:
 	 * Be sure to return a value greater than pccom's if we match,
 	 * otherwise it can win due to the way config(8) will order devices...
 	 */
-	return (id == CR_ID ? 10 : 0);
+	return (id == PRODUCT_S1D13806 ? 10 : 0);
 }
 
 int
@@ -424,7 +437,7 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	ri->ri_stride = 640 * 16 / 8;
 	/* ri->ri_flg = RI_FULLCLEAR; */
 
-	/* swap B and R */
+	/* swap B and R at 16 bpp */
 	ri->ri_rnum = 5;
 	ri->ri_rpos = 11;
 	ri->ri_gnum = 6;
@@ -468,14 +481,14 @@ void
 cfxga_burner(void *v, u_int on, u_int flags)
 {
 	struct cfxga_softc *sc = (void *)v;
-	u_int16_t ven;
+	u_int8_t mode;
 
-	ven = cfxga_read(sc, CFREG_VIDEO);
+	mode = cfxga_read_1(sc, CFREG_MODE) & LCD_MODE_SWIVEL_BIT_0;
 
 	if (on)
-		cfxga_write(sc, CFREG_VIDEO, ven | CV_VIDEO_VGA);
+		cfxga_write_1(sc, CFREG_MODE, mode | MODE_CRT);
 	else
-		cfxga_write(sc, CFREG_VIDEO, ven & ~CV_VIDEO_VGA);
+		cfxga_write_1(sc, CFREG_MODE, mode | MODE_NO_DISPLAY);
 }
 
 void
@@ -591,62 +604,58 @@ void
 cfxga_reset_video(struct cfxga_softc *sc)
 {
 	/* reset controller */
-	cfxga_write(sc, CFREG_BLT_CTRL, 0);
-	cfxga_write(sc, CFREG_RESET, CR_RESET);
+	cfxga_write_2(sc, CFREG_REV, 0x8080);
+	/* need to write to both REV and MISC at the same time */
+	cfxga_write_2(sc, CFREG_REV, 0x80 | (CM_REGSEL << 8));
+	delay(25000);	/* maintain reset for a short while */
+	/* need to write to both REV and MISC at the same time */
+	cfxga_write_2(sc, CFREG_REV, 0 | (CM_MEMSEL << 8));
 	delay(25000);
-	cfxga_write(sc, CFREG_RESET, 0);
-	delay(25000);
-	cfxga_write(sc, CFREG_BLT_CTRL, 0);
-	(void)cfxga_read(sc, CFREG_BLT_DATA);
+
+	cfxga_write_2(sc, CFREG_BITBLT_CONTROL, 0);
+	(void)cfxga_read_1(sc, CFREG_BITBLT_DATA);
 
 	/*
-	 * Setup video mode - magic values taken from the linux so-called
-	 * driver source.
+	 * Setup video mode.
 	 */
 
-	/* clock */
-	cfxga_write(sc, 0x10, 2);
-	cfxga_write(sc, 0x14, 0);
-	cfxga_write(sc, 0x1c, 2);
-	/* memory configuration */
-	cfxga_write(sc, 0x20, 0x0380);
-	cfxga_write(sc, 0x2a, 0x100);
-	/* CRT and TV settings */
-	cfxga_write(sc, 0x62, 0);
-	cfxga_write(sc, 0x64, 0);
-	cfxga_write(sc, 0x68, 0);
-	cfxga_write(sc, 0x6a, 0);
-	/* cursor */
-	cfxga_write(sc, 0x80, 0);
-	cfxga_write(sc, 0x82, 0x259);
-	cfxga_write(sc, 0x84, 0x190);
-	cfxga_write(sc, 0x86, 0);
-	cfxga_write(sc, 0x88, 0);
-	cfxga_write(sc, 0x8a, 0x3f1f);
-	cfxga_write(sc, 0x8c, 0x1f);
-	cfxga_write(sc, 0x8e, 0);
-	/* unknown */
-	cfxga_write(sc, 0x1f0, 0x210);
-	cfxga_write(sc, 0x1f4, 0);
+	cfxga_write_2(sc, CFREG_MEMCLK, MEMCLK_SRC_CLK3);
+	cfxga_write_1(sc, CFREG_LCD_PCLK, LCD_PCLK_SRC_CLKI | LCD_PCLK_DIV_1);
+	cfxga_write_1(sc, CFREG_MPLUG_CLK,
+	    MPLUG_PCLK_SRC_CLKI2 | MPLUG_PCLK_DIV_1);
+	/* MEMCNF and DRAM_RFRSH need to be programmed at the same time */
+	cfxga_write_2(sc, CFREG_MEMCNF,
+	    MEMCNF_SDRAM_INIT | (DRAM_RFRSH_50MHZ << 8));
+	cfxga_write_2(sc, CFREG_DRAM_TIMING, DRAM_TIMING_50MHZ);
+
+	cfxga_write_2(sc, CFREG_CRT_START_LOW, 0);
+	cfxga_write_1(sc, CFREG_CRT_START_HIGH, 0);
+	cfxga_write_1(sc, CFREG_CRT_PANNING, PIXEL_PANNING_MASK_15BPP);
+	cfxga_write_1(sc, CFREG_CRT_FIFO_THRESHOLD_HIGH, 0);
+	cfxga_write_1(sc, CFREG_CRT_FIFO_THRESHOLD_LOW, 0);
+
+	cfxga_write_1(sc, CFREG_CRT_CURSOR_CONTROL, CURSOR_INACTIVE);
+
+	cfxga_write_1(sc, CFREG_POWER_CONF, 0);
+	cfxga_write_1(sc, CFREG_WATCHDOG, 0);
 
 	/* 640x480x72x16 specific values */
-	/* gpio */
-	cfxga_write(sc, 0x04, 0x07);
-	cfxga_write(sc, 0x08, 0x1ffe);
-	/* more clock */
-	cfxga_write(sc, 0x18, 0);
-	cfxga_write(sc, 0x1e, 2);
-	/* more CRT and TV settings */
-	cfxga_write(sc, 0x50, 0x4f);
-	cfxga_write(sc, 0x52, 0x217);
-	cfxga_write(sc, 0x54, 0x4);
-	cfxga_write(sc, 0x56, 0x1df);
-	cfxga_write(sc, 0x58, 0x827);
-	cfxga_write(sc, 0x5a, 0x1202);
-	cfxga_write(sc, 0x60, 5);
-	cfxga_write(sc, 0x66, 640);
+	cfxga_write_1(sc, CFREG_CRTTV_PCLK, CRT_PCLK_SRC_CLKI | CRT_PCLK_DIV_1);
+	cfxga_write_1(sc, CFREG_WSTATE, WSTATE_MCLK);
+	cfxga_write_1(sc, CFREG_CRT_HWIDTH, (640 / 8) - 1);
+	/* HNDISP and HSTART need to be programmed at the same time */
+	cfxga_write_2(sc, CFREG_CRT_HNDISP, 23 | (2 << 8));
+	cfxga_write_1(sc, CFREG_CRT_HPULSE, 4);
+	cfxga_write_2(sc, CFREG_CRT_VHEIGHT, 480 - 1);
+	/* VNDISP and VSTART need to be programmed at the same time */
+	cfxga_write_2(sc, CFREG_CRT_VNDISP, 39 | (8 << 8));
+	cfxga_write_1(sc, CFREG_CRT_VPULSE, 2);
+	cfxga_write_1(sc, CFREG_TV_CONTROL,
+	    TV_LUMINANCE_FILTER | TV_SVIDEO_OUTPUT);
+	cfxga_write_1(sc, CFREG_CRT_MODE, CRT_MODE_16BPP);
+	cfxga_write_2(sc, CFREG_CRT_MEMORY, 640);
 
-	cfxga_write(sc, CFREG_VIDEO, CV_VIDEO_VGA);
+	cfxga_write_1(sc, CFREG_MODE, MODE_CRT);
 	delay(25000);
 }
 
@@ -666,8 +675,7 @@ cfxga_wait(struct cfxga_softc *sc, u_int mask, u_int result)
 	u_int tries;
 
 	for (tries = 100000; tries != 0; tries--) {
-		if ((bus_space_read_1(sc->sc_pmemh.memt, sc->sc_pmemh.memh,
-		    sc->sc_offset + CFREG_BLT_CTRL) & mask) == result)
+		if ((cfxga_read_1(sc, CFREG_BITBLT_CONTROL) & mask) == result)
 			break;
 		delay(10);
 	}
@@ -685,7 +693,7 @@ cfxga_memory_rop(struct cfxga_softc *sc, struct cfxga_screen *scr, u_int rop,
 	pos = (y * 640 + x) * (16 / 8);
 	data = (u_int16_t *)(scr->scr_mem + pos);
 
-	if (cfxga_wait(sc, CC_BLT_BUSY, 0) == 0) {
+	if (cfxga_wait(sc, BITBLT_ACTIVE, 0) == 0) {
 		DPRINTF(("%s: not ready\n", __func__));
 		if (ISSET(sc->sc_state, CS_RESET))
 			return (EAGAIN);
@@ -697,31 +705,38 @@ cfxga_memory_rop(struct cfxga_softc *sc, struct cfxga_screen *scr, u_int rop,
 			return (0);
 		}
 	}
-	(void)cfxga_read(sc, CFREG_BLT_DATA);
+	(void)cfxga_read_1(sc, CFREG_BITBLT_DATA);
 
-	cfxga_write(sc, CFREG_BLT_ROP, rop);
-	cfxga_write(sc, CFREG_BLT_UNK1, 0);
-	cfxga_write(sc, CFREG_BLT_UNK2, 0);
-	cfxga_write(sc, CFREG_BLT_SRCLOW, pos);
-	cfxga_write(sc, CFREG_BLT_SRCHIGH, pos >> 16);
-	cfxga_write(sc, CFREG_BLT_STRIDE, 640);
-	cfxga_write(sc, CFREG_BLT_WIDTH, cx - 1);
-	cfxga_write(sc, CFREG_BLT_HEIGHT, cy - 1);
-	cfxga_write(sc, CFREG_BLT_CTRL, CC_BLT_BUSY | CC_BPP_16);
+#if 0
+	cfxga_write_1(sc, CFREG_BITBLT_ROP, rop);
+	cfxga_write_1(sc, CFREG_BITBLT_OPERATION, OP_WRITE_ROP);
+		/* unless we prefer OP_SOLID_FILL */
+#else
+	cfxga_write_2(sc, CFREG_BITBLT_ROP, rop);
+#endif
+	cfxga_write_2(sc, CFREG_BITBLT_SRC_LOW, 0);
+	cfxga_write_2(sc, CFREG_BITBLT_SRC_HIGH, 0);
+	cfxga_write_2(sc, CFREG_BITBLT_DST_LOW, pos);
+	cfxga_write_2(sc, CFREG_BITBLT_DST_HIGH, pos >> 16);
+	cfxga_write_2(sc, CFREG_BITBLT_OFFSET, 640);
+	cfxga_write_2(sc, CFREG_BITBLT_WIDTH, cx - 1);
+	cfxga_write_2(sc, CFREG_BITBLT_HEIGHT, cy - 1);
+	cfxga_write_2(sc, CFREG_BITBLT_CONTROL,
+	    BITBLT_ACTIVE | BITBLT_COLOR_16);
 
-	(void)cfxga_wait(sc, CC_BLT_BUSY, CC_BLT_BUSY);
+	(void)cfxga_wait(sc, BITBLT_ACTIVE, BITBLT_ACTIVE);
 	while (cy-- != 0) {
 		for (x = 0; x < cx; x++) {
-			cfxga_write(sc, CFREG_BLT_DATA, *data++);
+			cfxga_write_2(sc, CFREG_BITBLT_DATA, *data++);
 
 			/*
 			 * Let the cheap breathe.
 			 * If this is not enough to let it recover,
 			 * abort the operation.
 			 */
-			if (cfxga_wait(sc, CC_FIFO_BUSY, 0) == 0) {
+			if (cfxga_wait(sc, BITBLT_FIFO_FULL, 0) == 0) {
 				DPRINTF(("%s: abort\n", __func__));
-				cfxga_write(sc, CFREG_BLT_CTRL, 0);
+				cfxga_write_2(sc, CFREG_BITBLT_CONTROL, 0);
 				return (EINTR);
 			}
 		}
@@ -739,7 +754,7 @@ cfxga_standalone_rop(struct cfxga_softc *sc, u_int rop, int x, int y,
 
 	pos = (y * 640 + x) * (16 / 8);
 
-	if (cfxga_wait(sc, CC_BLT_BUSY, 0) == 0) {
+	if (cfxga_wait(sc, BITBLT_ACTIVE, 0) == 0) {
 		DPRINTF(("%s: not ready\n", __func__));
 		if (ISSET(sc->sc_state, CS_RESET))
 			return (EAGAIN);
@@ -752,16 +767,23 @@ cfxga_standalone_rop(struct cfxga_softc *sc, u_int rop, int x, int y,
 		}
 	}
 
-	cfxga_write(sc, CFREG_BLT_ROP, rop);
-	cfxga_write(sc, CFREG_BLT_UNK1, 0);
-	cfxga_write(sc, CFREG_BLT_UNK2, 0);
-	cfxga_write(sc, CFREG_BLT_SRCLOW, pos);
-	cfxga_write(sc, CFREG_BLT_SRCHIGH, pos >> 16);
-	cfxga_write(sc, CFREG_BLT_STRIDE, 640);
-	cfxga_write(sc, CFREG_BLT_WIDTH, cx - 1);
-	cfxga_write(sc, CFREG_BLT_HEIGHT, cy - 1);
-	cfxga_write(sc, CFREG_BLT_SRCCOLOR, srccolor);
-	cfxga_write(sc, CFREG_BLT_CTRL, CC_BLT_BUSY | CC_BPP_16);
+#if 0
+	cfxga_write_1(sc, CFREG_BITBLT_ROP, rop);
+	cfxga_write_1(sc, CFREG_BITBLT_OPERATION, OP_WRITE_ROP);
+		/* unless we prefer OP_SOLID_FILL */
+#else
+	cfxga_write_2(sc, CFREG_BITBLT_ROP, rop);
+#endif
+	cfxga_write_2(sc, CFREG_BITBLT_SRC_LOW, 0);
+	cfxga_write_2(sc, CFREG_BITBLT_SRC_HIGH, 0);
+	cfxga_write_2(sc, CFREG_BITBLT_DST_LOW, pos);
+	cfxga_write_2(sc, CFREG_BITBLT_DST_HIGH, pos >> 16);
+	cfxga_write_2(sc, CFREG_BITBLT_OFFSET, 640);
+	cfxga_write_2(sc, CFREG_BITBLT_WIDTH, cx - 1);
+	cfxga_write_2(sc, CFREG_BITBLT_HEIGHT, cy - 1);
+	cfxga_write_2(sc, CFREG_BITBLT_FG, srccolor);
+	cfxga_write_2(sc, CFREG_BITBLT_CONTROL,
+	    BITBLT_ACTIVE | BITBLT_COLOR_16);
 
 	return (0);
 }
