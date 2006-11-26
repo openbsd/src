@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.17 2006/06/18 18:39:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.18 2006/11/26 11:14:23 deraadt Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -602,6 +602,15 @@ ieee80211_watchdog(struct ifnet *ifp)
 	if (ic->ic_mgt_timer != 0)
 		ifp->if_timer = 1;
 }
+
+struct ieee80211_rateset ieee80211_std_rateset_11a =
+	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
+
+struct ieee80211_rateset ieee80211_std_rateset_11b =
+	{ 4, { 2, 4, 11, 22 } };
+
+struct ieee80211_rateset ieee80211_std_rateset_11g =
+	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 /*
  * Mark the basic rates for the 11g rate table based on the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.36 2006/11/13 20:06:38 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.37 2006/11/26 11:14:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -68,18 +68,6 @@ const struct pci_matchid wpi_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3945ABG_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3945ABG_2 }
 };
-
-/*
- * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
- */
-static const struct ieee80211_rateset wpi_rateset_11a =
-	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
-
-static const struct ieee80211_rateset wpi_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };
-
-static const struct ieee80211_rateset wpi_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 static const uint8_t wpi_ridx_to_plcp[] = {
 	0xd, 0xf, 0x5, 0x7, 0x9, 0xb, 0x1, 0x3,	/* OFDM R1-R4 */
@@ -290,7 +278,7 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	/* set supported .11a rates */
-	ic->ic_sup_rates[IEEE80211_MODE_11A] = wpi_rateset_11a;
+	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 
 	/* set supported .11a channels */
 	for (i = 36; i <= 64; i += 4) {
@@ -310,8 +298,8 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* set supported .11b and .11g rates */
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = wpi_rateset_11b;
-	ic->ic_sup_rates[IEEE80211_MODE_11G] = wpi_rateset_11g;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
+	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
 	/* set supported .11b and .11g channels (1 through 14) */
 	for (i = 1; i <= 14; i++) {

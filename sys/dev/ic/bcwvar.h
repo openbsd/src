@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.5 2006/11/24 20:27:41 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.6 2006/11/26 11:14:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -237,10 +237,3 @@ do {									\
 } while (/* CONSTCOND */ 0)
 
 #define BCW_NTXFRAGS   16
-
-static const struct ieee80211_rateset bcw_rateset_11a =
-	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
-static const struct ieee80211_rateset bcw_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };
-static const struct ieee80211_rateset bcw_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };

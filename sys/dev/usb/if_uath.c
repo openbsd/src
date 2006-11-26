@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.11 2006/10/03 19:48:21 damien Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.12 2006/11/26 11:14:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -194,15 +194,6 @@ Static void	uath_stop(struct ifnet *, int);
 Static int	uath_loadfirmware(struct uath_softc *, const u_char *, int);
 Static int	uath_activate(device_ptr_t, enum devact);
 
-/*
- * Supported rates for 802.11b/g modes (in 500Kbps unit).
- */
-static const struct ieee80211_rateset uath_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };
-
-static const struct ieee80211_rateset uath_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
-
 USB_DECLARE_DRIVER(uath);
 
 USB_MATCH(uath)
@@ -369,8 +360,8 @@ USB_ATTACH(uath)
 	    IEEE80211_C_WEP;		/* h/w WEP */
 
 	/* set supported .11b and .11g rates */
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = uath_rateset_11b;
-	ic->ic_sup_rates[IEEE80211_MODE_11G] = uath_rateset_11g;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
+	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
 	/* set supported .11b and .11g channels (1 through 14) */
 	for (i = 1; i <= 14; i++) {

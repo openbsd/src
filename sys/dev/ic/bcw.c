@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.6 2006/11/24 20:27:41 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.7 2006/11/26 11:14:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -650,8 +650,8 @@ bcw_attach(struct bcw_softc *sc)
 	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	/* Set supported rates */
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = bcw_rateset_11b;
-	ic->ic_sup_rates[IEEE80211_MODE_11G] = bcw_rateset_11g;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
+	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
 	/* Set supported channels */
 	for (i = 1; i <= 14; i++) {

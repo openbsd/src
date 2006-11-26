@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.64 2006/10/23 18:19:26 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.65 2006/11/26 11:14:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -72,9 +72,6 @@
 
 #include <dev/pci/if_ipwreg.h>
 #include <dev/pci/if_ipwvar.h>
-
-static const struct ieee80211_rateset ipw_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };
 
 int		ipw_match(struct device *, void *, void *);
 void		ipw_attach(struct device *, struct device *, void *);
@@ -253,7 +250,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	/* set supported .11b rates */
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = ipw_rateset_11b;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 
 	/* set supported .11b channels (1 through 14) */
 	for (i = 1; i <= 14; i++) {

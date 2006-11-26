@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.9 2006/06/18 18:39:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.10 2006/11/26 11:14:23 deraadt Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -47,6 +47,10 @@ struct ieee80211_rateset {
 	u_int8_t		rs_nrates;
 	u_int8_t		rs_rates[IEEE80211_RATE_MAXSIZE];
 };
+
+extern struct ieee80211_rateset ieee80211_std_rateset_11a;
+extern struct ieee80211_rateset ieee80211_std_rateset_11b;
+extern struct ieee80211_rateset ieee80211_std_rateset_11g;
 
 enum ieee80211_node_state {
 	IEEE80211_STA_CACHE,	/* cached node */

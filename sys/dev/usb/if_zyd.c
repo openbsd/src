@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.37 2006/11/16 19:43:52 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.38 2006/11/26 11:14:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -187,17 +187,6 @@ void		zyd_amrr_timeout(void *);
 void		zyd_newassoc(struct ieee80211com *, struct ieee80211_node *,
 		    int);
 
-/*
- * Supported rates for 802.11b/g modes (in 500Kbps unit).
- */
-static const struct ieee80211_rateset zyd_rateset_11b = {
-	4, { 2, 4, 11, 22 }
-};
-
-static const struct ieee80211_rateset zyd_rateset_11g =	{
-	8, { 12, 18, 24, 36, 48, 72, 96, 108 }
-};
-
 USB_MATCH(zyd)
 {
 	USB_MATCH_START(zyd, uaa);
@@ -337,8 +326,8 @@ zyd_complete_attach(struct zyd_softc *sc)
 	    IEEE80211_C_WEP;		/* s/w WEP */
 
 	/* set supported .11b and .11g rates */
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = zyd_rateset_11b;
-	ic->ic_sup_rates[IEEE80211_MODE_11G] = zyd_rateset_11g;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
+	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
 	/* set supported .11b and .11g channels (1 through 14) */
 	for (i = 1; i <= 14; i++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.83 2006/11/19 16:44:36 damien Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.84 2006/11/26 11:14:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -173,15 +173,6 @@ Static void		ural_amrr_timeout(void *);
 Static void		ural_amrr_update(usbd_xfer_handle, usbd_private_handle,
 			    usbd_status status);
 
-/*
- * Supported rates for 802.11b/g modes (in 500Kbps unit).
- */
-static const struct ieee80211_rateset ural_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };
-
-static const struct ieee80211_rateset ural_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
-
 static const struct {
 	uint16_t	reg;
 	uint16_t	val;
@@ -309,8 +300,8 @@ USB_ATTACH(ural)
 	    IEEE80211_C_WEP;		/* s/w WEP */
 
 	/* set supported .11b and .11g rates */
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = ural_rateset_11b;
-	ic->ic_sup_rates[IEEE80211_MODE_11G] = ural_rateset_11g;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
+	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
 	/* set supported .11b and .11g channels (1 through 14) */
 	for (i = 1; i <= 14; i++) {

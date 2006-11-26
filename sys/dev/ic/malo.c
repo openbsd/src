@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.38 2006/11/25 14:20:48 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.39 2006/11/26 11:14:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -283,12 +283,6 @@ int	malo_cmd_set_txpower(struct malo_softc *sc, unsigned int powerlevel);
 int	malo_cmd_set_rts(struct malo_softc *sc, uint32_t threshold);
 int	malo_cmd_set_rate(struct malo_softc *sc, uint8_t rate);
 
-/* supported rates */
-const struct ieee80211_rateset  malo_rates_11b =
-    { 4, { 2, 4, 11, 22 } };
-const struct ieee80211_rateset  malo_rates_11g =
-    { 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
-
 int
 malo_intr(void *arg)
 {
@@ -359,8 +353,8 @@ malo_attach(struct malo_softc *sc)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* set supported rates */
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = malo_rates_11b;
-	ic->ic_sup_rates[IEEE80211_MODE_11G] = malo_rates_11g;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
+	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 	sc->sc_last_txrate = -1;
 
 	/* set channels */
