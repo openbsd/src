@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.3 2006/11/26 18:51:10 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.4 2006/11/26 23:31:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -139,7 +139,6 @@ struct cfxga_screen {
 	/* raster op glue */
 	struct rasops_info scr_ri;
 	struct wsdisplay_emulops scr_ops;		/* old ri_ops */
-	void (*scr_do_cursor)(struct rasops_info *);	/* old ri_do_cursor */
 
 	/* backing memory */
 	u_int8_t *scr_mem;
@@ -153,13 +152,17 @@ void	cfxga_eraserows(void *, int, int, long);
 void	cfxga_putchar(void *, int, int, u_int, long);
 
 int	cfxga_install_function(struct pcmcia_function *);
+void	cfxga_remove_function(struct pcmcia_function *);
+
+int	cfxga_expand_char(struct cfxga_softc *, struct cfxga_screen *, u_int,
+	    int, int, long);
 int	cfxga_memory_rop(struct cfxga_softc *, struct cfxga_screen *, u_int,
 	    int, int, int, int);
-void	cfxga_remove_function(struct pcmcia_function *);
 void	cfxga_reset_video(struct cfxga_softc *);
 void	cfxga_reset_and_repaint(struct cfxga_softc *);
 int	cfxga_standalone_rop(struct cfxga_softc *, u_int, u_int,
-	    int, int, int, int, u_int16_t);
+	    int, int, int, int, int32_t);
+int	cfxga_synchronize(struct cfxga_softc *);
 u_int	cfxga_wait(struct cfxga_softc *, u_int, u_int);
 
 #define	cfxga_clear_screen(sc) \
@@ -179,6 +182,9 @@ u_int	cfxga_wait(struct cfxga_softc *, u_int, u_int);
 #define	cfxga_write_2(sc, addr, val) \
 	bus_space_write_2((sc)->sc_pmemh.memt, (sc)->sc_pmemh.memh, \
 	    (sc)->sc_offset + (addr), (val))
+
+#define	cfxga_stop_memory_blt(sc) \
+	(void)cfxga_read_2(sc, CFREG_BITBLT_DATA)
 
 /*
  * This card is very poorly engineered, specificationwise. It does not
@@ -458,7 +464,6 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	ri->ri_ops.erasecols = cfxga_erasecols;
 	ri->ri_ops.eraserows = cfxga_eraserows;
 	ri->ri_ops.putchar = cfxga_putchar;
-	scr->scr_do_cursor = ri->ri_do_cursor;
 	ri->ri_do_cursor = cfxga_do_cursor;
 
 	scr->scr_sc = sc;
@@ -599,17 +604,19 @@ cfxga_show_screen(void *v, void *cookie, int waitok,
 void
 cfxga_reset_video(struct cfxga_softc *sc)
 {
-	/* reset controller */
-	cfxga_write_2(sc, CFREG_REV, 0x8080);
+	/*
+	 * Reset controller
+	 */
+
 	/* need to write to both REV and MISC at the same time */
 	cfxga_write_2(sc, CFREG_REV, 0x80 | (CM_REGSEL << 8));
 	delay(25000);	/* maintain reset for a short while */
 	/* need to write to both REV and MISC at the same time */
 	cfxga_write_2(sc, CFREG_REV, 0 | (CM_MEMSEL << 8));
 	delay(25000);
-
+	/* stop any pending blt operation */
 	cfxga_write_2(sc, CFREG_BITBLT_CONTROL, 0);
-	(void)cfxga_read_1(sc, CFREG_BITBLT_DATA);
+	cfxga_stop_memory_blt(sc);
 
 	/*
 	 * Setup video mode.
@@ -659,12 +666,16 @@ void
 cfxga_reset_and_repaint(struct cfxga_softc *sc)
 {
 	cfxga_reset_video(sc);
+
 	if (sc->sc_active != NULL)
 		cfxga_repaint_screen(sc);
 	else
 		cfxga_clear_screen(sc);
 }
 
+/*
+ * Wait for the blitter to be in a given state.
+ */
 u_int
 cfxga_wait(struct cfxga_softc *sc, u_int mask, u_int result)
 {
@@ -679,18 +690,16 @@ cfxga_wait(struct cfxga_softc *sc, u_int mask, u_int result)
 	return (tries);
 }
 
+/*
+ * Wait for all pending blitter operations to be complete.
+ * Returns non-zero if the blitter got stuck.
+ */
 int
-cfxga_memory_rop(struct cfxga_softc *sc, struct cfxga_screen *scr, u_int rop,
-    int x, int y, int cx, int cy)
+cfxga_synchronize(struct cfxga_softc *sc)
 {
-	u_int pos, sts, fifo_avail;
-	u_int16_t *data;
-
-	pos = (y * 640 + x) * (16 / 8);
-	data = (u_int16_t *)(scr->scr_mem + pos);
-
+	/* Wait for previous operations to complete */
 	if (cfxga_wait(sc, BITBLT_ACTIVE, 0) == 0) {
-		DPRINTF(("%s(%d): not ready\n", __func__, rop));
+		DPRINTF(("%s: not ready\n", __func__));
 		if (ISSET(sc->sc_state, CS_RESET))
 			return (EAGAIN);
 		else {
@@ -698,10 +707,119 @@ cfxga_memory_rop(struct cfxga_softc *sc, struct cfxga_screen *scr, u_int rop,
 			SET(sc->sc_state, CS_RESET);
 			cfxga_reset_and_repaint(sc);
 			CLR(sc->sc_state, CS_RESET);
-			return (0);
 		}
 	}
-	(void)cfxga_read_1(sc, CFREG_BITBLT_DATA);
+	cfxga_stop_memory_blt(sc);
+	return (0);
+}
+
+/*
+ * Display a character.
+ */
+int
+cfxga_expand_char(struct cfxga_softc *sc, struct cfxga_screen *scr, u_int uc,
+    int x, int y, long attr)
+{
+	struct rasops_info *ri = &scr->scr_ri;
+	struct wsdisplay_font *font = ri->ri_font;
+	u_int pos, sts, fifo_avail, chunk;
+	u_int8_t *fontbits;
+	int bg, fg, ul;
+	u_int i;
+	int rc;
+
+	pos = (y * 640 + x) * (16 / 8);
+	fontbits = (u_int8_t *)(font->data + (uc - font->firstchar) *
+	    ri->ri_fontscale);
+	rasops_unpack_attr(attr, &fg, &bg, &ul);
+
+	/* Wait for previous operations to complete */
+	if ((rc = cfxga_synchronize(sc)) != 0)
+		return (rc);
+
+	cfxga_write_2(sc, CFREG_COLOR_EXPANSION,
+	    ((font->fontwidth - 1) & 7) | (OP_COLOR_EXPANSION << 8));
+	cfxga_write_2(sc, CFREG_BITBLT_SRC_LOW, font->fontwidth <= 8 ? 0 : 1);
+	cfxga_write_2(sc, CFREG_BITBLT_SRC_HIGH, 0);
+	cfxga_write_2(sc, CFREG_BITBLT_DST_LOW, pos);
+	cfxga_write_2(sc, CFREG_BITBLT_DST_HIGH, pos >> 16);
+	cfxga_write_2(sc, CFREG_BITBLT_OFFSET, 640);
+	cfxga_write_2(sc, CFREG_BITBLT_WIDTH, font->fontwidth - 1);
+	cfxga_write_2(sc, CFREG_BITBLT_HEIGHT, font->fontheight - 1);
+	cfxga_write_2(sc, CFREG_BITBLT_FG, ri->ri_devcmap[fg]);
+	cfxga_write_2(sc, CFREG_BITBLT_BG, ri->ri_devcmap[bg]);
+	cfxga_write_2(sc, CFREG_BITBLT_CONTROL,
+	    BITBLT_ACTIVE | BITBLT_COLOR_16);
+
+	if (cfxga_wait(sc, BITBLT_ACTIVE, BITBLT_ACTIVE) == 0)
+		goto fail;	/* unlikely */
+	fifo_avail = 0;
+
+	for (i = font->fontheight; i != 0; i--) {
+		/*
+		 * Find out how much words we can feed before
+		 * a FIFO check is needed.
+		 */
+		if (fifo_avail == 0) {
+			sts = cfxga_read_1(sc, CFREG_BITBLT_CONTROL);
+			if ((sts & BITBLT_FIFO_NOT_EMPTY) == 0)
+				fifo_avail = font->fontwidth <= 8 ? 2 : 1;
+			else if ((sts & BITBLT_FIFO_HALF_FULL) == 0)
+				fifo_avail = font->fontwidth <= 8 ? 1 : 0;
+			else {
+				/*
+				 * Let the cheap breathe for a short while.
+				 * If this is not enough to free some FIFO
+				 * entries, abort the operation.
+				 */
+				if (cfxga_wait(sc, BITBLT_FIFO_FULL, 0) == 0)
+					goto fail;
+			}
+		}
+
+		if (font->fontwidth <= 8) {
+			chunk = *fontbits;
+			if (ul && i == 1)
+				chunk = 0xff;
+		} else {
+			chunk = *(u_int16_t *)fontbits;
+			if (ul && i == 1)
+				chunk = 0xffff;
+		}
+		cfxga_write_2(sc, CFREG_BITBLT_DATA, chunk);
+		fontbits += font->stride;
+		fifo_avail--;
+	}
+
+	return (0);
+
+fail:
+	DPRINTF(("%s: abort\n", __func__));
+	cfxga_write_2(sc, CFREG_BITBLT_CONTROL, 0);
+	cfxga_stop_memory_blt(sc);
+	return (EINTR);
+}
+
+/*
+ * Copy a memory bitmap to the frame buffer.
+ *
+ * This is slow - we only use this to repaint the whole frame buffer on
+ * screen switches.
+ */
+int
+cfxga_memory_rop(struct cfxga_softc *sc, struct cfxga_screen *scr, u_int rop,
+    int x, int y, int cx, int cy)
+{
+	u_int pos, sts, fifo_avail;
+	u_int16_t *data;
+	int rc;
+
+	pos = (y * 640 + x) * (16 / 8);
+	data = (u_int16_t *)(scr->scr_mem + pos);
+
+	/* Wait for previous operations to complete */
+	if ((rc = cfxga_synchronize(sc)) != 0)
+		return (rc);
 
 	cfxga_write_2(sc, CFREG_BITBLT_ROP, rop | (OP_WRITE_ROP << 8));
 	cfxga_write_2(sc, CFREG_BITBLT_SRC_LOW, 0);
@@ -714,7 +832,8 @@ cfxga_memory_rop(struct cfxga_softc *sc, struct cfxga_screen *scr, u_int rop,
 	cfxga_write_2(sc, CFREG_BITBLT_CONTROL,
 	    BITBLT_ACTIVE | BITBLT_COLOR_16);
 
-	(void)cfxga_wait(sc, BITBLT_ACTIVE, BITBLT_ACTIVE);
+	if (cfxga_wait(sc, BITBLT_ACTIVE, BITBLT_ACTIVE) == 0)
+		goto fail;	/* unlikely */
 	fifo_avail = 0;
 	while (cy-- != 0) {
 		for (x = 0; x < cx; x++) {
@@ -739,13 +858,8 @@ cfxga_memory_rop(struct cfxga_softc *sc, struct cfxga_screen *scr, u_int rop,
 					 * abort the operation.
 					 */
 					if (cfxga_wait(sc, BITBLT_FIFO_FULL,
-					    0) == 0) {
-						DPRINTF(("%s: abort\n",
-						    __func__));
-						cfxga_write_2(sc,
-						    CFREG_BITBLT_CONTROL, 0);
-						return (EINTR);
-					}
+					    0) == 0)
+						goto fail;
 				}
 			}
 
@@ -756,28 +870,29 @@ cfxga_memory_rop(struct cfxga_softc *sc, struct cfxga_screen *scr, u_int rop,
 	}
 
 	return (0);
+
+fail:
+	DPRINTF(("%s: abort\n", __func__));
+	cfxga_write_2(sc, CFREG_BITBLT_CONTROL, 0);
+	cfxga_stop_memory_blt(sc);
+	return (EINTR);
 }
 
+/*
+ * Perform an internal frame buffer operation.
+ */
 int
 cfxga_standalone_rop(struct cfxga_softc *sc, u_int op, u_int rop, int x, int y,
-    int cx, int cy, u_int16_t srccolor)
+    int cx, int cy, int32_t srccolor)
 {
 	u_int pos;
+	int rc;
 
 	pos = (y * 640 + x) * (16 / 8);
 
-	if (cfxga_wait(sc, BITBLT_ACTIVE, 0) == 0) {
-		DPRINTF(("%s(%d,%d): not ready\n", __func__, op, rop));
-		if (ISSET(sc->sc_state, CS_RESET))
-			return (EAGAIN);
-		else {
-			DPRINTF(("%s: resetting...\n", sc->sc_dev.dv_xname));
-			SET(sc->sc_state, CS_RESET);
-			cfxga_reset_and_repaint(sc);
-			CLR(sc->sc_state, CS_RESET);
-			return (0);
-		}
-	}
+	/* Wait for previous operations to complete */
+	if ((rc = cfxga_synchronize(sc)) != 0)
+		return (rc);
 
 	cfxga_write_2(sc, CFREG_BITBLT_ROP, rop | (op << 8));
 	cfxga_write_2(sc, CFREG_BITBLT_SRC_LOW, pos);
@@ -788,7 +903,7 @@ cfxga_standalone_rop(struct cfxga_softc *sc, u_int op, u_int rop, int x, int y,
 	cfxga_write_2(sc, CFREG_BITBLT_WIDTH, cx - 1);
 	cfxga_write_2(sc, CFREG_BITBLT_HEIGHT, cy - 1);
 	if (op == OP_SOLID_FILL)
-		cfxga_write_2(sc, CFREG_BITBLT_FG, srccolor);
+		cfxga_write_2(sc, CFREG_BITBLT_FG, (u_int16_t)srccolor);
 	cfxga_write_2(sc, CFREG_BITBLT_CONTROL,
 	    BITBLT_ACTIVE | BITBLT_COLOR_16);
 
@@ -796,21 +911,11 @@ cfxga_standalone_rop(struct cfxga_softc *sc, u_int op, u_int rop, int x, int y,
 }
 
 /*
- * Text console raster operations
+ * Text console raster operations.
  *
- * For all operations, we need first to run them on the memory frame buffer
- * (by means of the rasops primitives), then decide what to send to the
- * controller.
- *
- * For now we end up sending every operation to the device. But this could
- * be improved, based on actual knowledge of what sequences of operations
- * the wscons emulations perform. This is far from trivial...
- *
- * Another approach worth trying would be to use a timeout and reblt the
- * whole screen if it has changed, i.e. set a flag in all raster op routines
- * below, and have the timeout callback do a blt if the flag is set.
- * However, since a whole blt takes close to a second (or maybe more) it
- * is probably not a good idea.
+ * We shadow all these operations on a memory copy of the frame buffer.
+ * Since we are running in emulation mode only, this could be optimized
+ * by only storing actual character cell values (a la mda).
  */
 
 void
@@ -855,7 +960,8 @@ cfxga_do_cursor(struct rasops_info *ri)
 	cx = ri->ri_font->fontwidth;
 	cy = ri->ri_font->fontheight;
 	cfxga_standalone_rop(scr->scr_sc, OP_MOVE_POSITIVE_ROP,
-	    ROP_ONES ^ ROP_SRC /* not SRC */, x, y, cx, cy, WSCOL_BLACK);
+	    ROP_ONES ^ ROP_SRC /* i.e. not SRC */,
+	    x, y, cx, cy, /* ri->ri_devcmap[WSCOL_BLACK] */ 0);
 }
 
 void
@@ -863,18 +969,18 @@ cfxga_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct cfxga_screen *scr = ri->ri_hw;
-	int fg, bg, uline;
+	int fg, bg;
 	int x, y, cx, cy;
 
 	(*scr->scr_ops.erasecols)(ri, row, col, num, attr);
 
-	rasops_unpack_attr(attr, &fg, &bg, &uline);
+	rasops_unpack_attr(attr, &fg, &bg, NULL);
 	x = col * ri->ri_font->fontwidth + ri->ri_xorigin;
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = num * ri->ri_font->fontwidth;
 	cy = ri->ri_font->fontheight;
 	cfxga_standalone_rop(scr->scr_sc, OP_SOLID_FILL, 0,
-	    x, y, cx, cy, bg);
+	    x, y, cx, cy, ri->ri_devcmap[bg]);
 }
 
 void
@@ -882,18 +988,18 @@ cfxga_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct cfxga_screen *scr = ri->ri_hw;
-	int fg, bg, uline;
+	int fg, bg;
 	int x, y, cx, cy;
 
 	(*scr->scr_ops.eraserows)(ri, row, num, attr);
 
-	rasops_unpack_attr(attr, &fg, &bg, &uline);
+	rasops_unpack_attr(attr, &fg, &bg, NULL);
 	x = ri->ri_xorigin;
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = ri->ri_emuwidth;
 	cy = num * ri->ri_font->fontheight;
 	cfxga_standalone_rop(scr->scr_sc, OP_SOLID_FILL, 0,
-	    x, y, cx, cy, bg);
+	    x, y, cx, cy, ri->ri_devcmap[bg]);
 }
 
 void
@@ -901,21 +1007,22 @@ cfxga_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct cfxga_screen *scr = ri->ri_hw;
-	int x, y, cx, cy;
+	int x, y;
 
 	(*scr->scr_ops.putchar)(ri, row, col, uc, attr);
 
 	x = col * ri->ri_font->fontwidth + ri->ri_xorigin;
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
-	cx = ri->ri_font->fontwidth;
-	cy = ri->ri_font->fontheight;
 
 	if (uc == ' ') {
-		int fg, bg, uline;
+		int cx, cy, fg, bg;
 
-		rasops_unpack_attr(attr, &fg, &bg, &uline);
+		rasops_unpack_attr(attr, &fg, &bg, NULL);
+		cx = ri->ri_font->fontwidth;
+		cy = ri->ri_font->fontheight;
 		cfxga_standalone_rop(scr->scr_sc, OP_SOLID_FILL, 0,
-		    x, y, cx, cy, bg);
-	} else
-		cfxga_memory_rop(scr->scr_sc, scr, ROP_SRC, x, y, cx, cy);
+		    x, y, cx, cy, ri->ri_devcmap[bg]);
+	} else {
+		cfxga_expand_char(scr->scr_sc, scr, uc, x, y, attr);
+	}
 }
