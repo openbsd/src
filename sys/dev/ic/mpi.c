@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.78 2006/11/25 17:18:46 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.79 2006/11/26 09:30:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -2009,9 +2009,7 @@ mpi_evt_sas(void *xsc, void *arg)
 	struct mpi_rcb				*rcb = arg;
 	struct mpi_msg_event_reply		*enp = rcb->rcb_reply;
 	struct mpi_evt_sas_change		*ch;
-	struct scsi_link			*link;
 	u_int8_t				*data;
-	int					i;
 	int					s;
 
 	data = rcb->rcb_reply;
@@ -2028,15 +2026,7 @@ mpi_evt_sas(void *xsc, void *arg)
 		break;
 
 	case MPI_EVT_SASCH_REASON_NOT_RESPONDING:
-		for (i = 0; i < sc->sc_link.luns; i++) {
-			link = sc->sc_scsibus->sc_link[ch->target][i];
-			if (link == NULL)
-				continue;
-
-			config_detach(link->device_softc, 0x0);
-			free(link, M_DEVBUF); /* XXX bogus */
-			sc->sc_scsibus->sc_link[ch->target][i] = NULL;
-		}
+		scsi_detach_target(sc->sc_scsibus, ch->target, DETACH_FORCE);
 		break;
 
 	case MPI_EVT_SASCH_REASON_SMART_DATA:
