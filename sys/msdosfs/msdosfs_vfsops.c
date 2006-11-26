@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.40 2006/08/22 19:30:48 sturm Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.41 2006/11/26 00:59:32 pedro Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -542,7 +542,11 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	pmp->pm_inusemap = malloc(((pmp->pm_maxcluster + N_INUSEBITS - 1)
 				   / N_INUSEBITS)
 				  * sizeof(*pmp->pm_inusemap),
-				  M_MSDOSFSFAT, M_WAITOK);
+				  M_MSDOSFSFAT, M_WAITOK | M_CANFAIL);
+	if (pmp->pm_inusemap == NULL) {
+		error = EINVAL;
+		goto error_exit;
+	}
 
 	/*
 	 * fillinusemap() needs pm_devvp.
