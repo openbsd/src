@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.13 2006/11/26 17:20:33 jsg Exp $ */
+/*	$OpenBSD: acx100.c,v 1.14 2006/11/26 19:46:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -69,7 +69,6 @@
 #include <netinet/if_ether.h>
 #endif
 
-#include <net80211/ieee80211.h>
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_radiotap.h>

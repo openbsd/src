@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.65 2006/04/20 20:31:13 miod Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.66 2006/11/26 19:46:28 deraadt Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -59,9 +59,8 @@
 #include <netinet/if_ether.h>
 #endif
 
-#include <net80211/ieee80211.h>
-#include <net80211/ieee80211_ioctl.h>
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_ioctl.h>
 
 #include <machine/bus.h>
 

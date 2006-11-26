@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_regdomain.c,v 1.6 2005/12/18 17:59:59 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_regdomain.c,v 1.7 2006/11/26 19:46:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -40,7 +40,6 @@
 #include <netinet/if_ether.h>
 #endif
 
-#include <net80211/ieee80211.h>
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_regdomain.h>
 

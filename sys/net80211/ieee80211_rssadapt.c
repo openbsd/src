@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_rssadapt.c,v 1.4 2005/09/08 13:24:53 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_rssadapt.c,v 1.5 2006/11/26 19:46:28 deraadt Exp $	*/
 /*	$NetBSD: ieee80211_rssadapt.c,v 1.7 2004/05/25 04:33:59 dyoung Exp $	*/
 
 /*-
@@ -45,7 +45,6 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211.h>
 #include <net80211/ieee80211_rssadapt.h>
 
 #ifdef interpolate
