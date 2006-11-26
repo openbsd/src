@@ -721,6 +721,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/eisa/eisadevs_data.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/eisa/eisareg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/eisa/eisavar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/flashvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/gpio
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/gpio/gpiovar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/hil
@@ -1393,6 +1394,8 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbdi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbdi_util.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbdivar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbf.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbfvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbhid.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons

@@ -2446,6 +2446,7 @@
 ./usr/share/mk/bsd.regress.mk
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
+./usr/share/mk/bsd.xorg.mk
 ./usr/share/mk/sys.mk
 ./usr/share/nls
 ./usr/share/nls/C

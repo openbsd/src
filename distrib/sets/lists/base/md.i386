@@ -739,6 +739,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/eisa/eisadevs_data.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/eisa/eisareg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/eisa/eisavar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/flashvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/gpio
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/gpio/gpiovar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/hil
@@ -1414,6 +1415,8 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/usbdi.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/usbdi_util.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/usbdivar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/usbf.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/usbfvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/usbhid.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/wscons

@@ -1438,6 +1438,7 @@
 ./usr/share/man/cat4/ptm.0
 ./usr/share/man/cat4/pty.0
 ./usr/share/man/cat4/puc.0
+./usr/share/man/cat4/pwdog.0
 ./usr/share/man/cat4/qsphy.0
 ./usr/share/man/cat4/radio.0
 ./usr/share/man/cat4/raid.0
