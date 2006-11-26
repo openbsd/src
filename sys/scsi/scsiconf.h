@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.76 2006/10/21 07:36:15 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.77 2006/11/26 09:29:07 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -349,6 +349,10 @@ int	scsi_delay(struct scsi_xfer *, int);
 int	scsi_probe_bus(struct scsibus_softc *);
 int	scsi_probe_target(struct scsibus_softc *, int);
 int	scsi_probe_lun(struct scsibus_softc *, int, int);
+
+int	scsi_detach_bus(struct scsibus_softc *, int);
+int	scsi_detach_target(struct scsibus_softc *, int, int);
+int	scsi_detach_lun(struct scsibus_softc *, int, int, int);
 
 static __inline void _lto2b(u_int32_t val, u_int8_t *bytes);
 static __inline void _lto3b(u_int32_t val, u_int8_t *bytes);

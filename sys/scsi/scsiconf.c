@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.117 2006/10/21 07:36:15 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.118 2006/11/26 09:29:07 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -295,6 +295,82 @@ scsi_probe_lun(struct scsibus_softc *sc, int target, int lun)
 		return (ENXIO);
 
 	return (scsi_probedev(sc, target, lun));
+}
+
+int
+scsi_detach_bus(struct scsibus_softc *sc, int flags)
+{
+	struct scsi_link *alink = sc->adapter_link;
+	int i, err, rv;
+
+	for (i = 0; i < alink->adapter_buswidth; i++) {
+		if (sc->sc_link[i] == NULL)
+			continue;
+
+		err = scsi_detach_target(sc, i, flags);
+		if (err != 0)
+			rv = err;
+	}
+
+	return (rv);
+}
+
+int
+scsi_detach_target(struct scsibus_softc *sc, int target, int flags)
+{
+	struct scsi_link *alink = sc->adapter_link;
+	int i, err, rv;
+
+	if (target < 0 || target >= alink->adapter_buswidth ||
+	    target == alink->adapter_target)
+		return (ENXIO);
+
+	for (i = 0; i < alink->luns; i++) { /* nicer backwards? */
+		if (sc->sc_link[target][i] == NULL)
+			continue;
+
+		err = scsi_detach_lun(sc, target, i, flags);
+		if (err != 0)
+			rv = err;
+	}
+
+	return (rv);
+}
+
+int
+scsi_detach_lun(struct scsibus_softc *sc, int target, int lun, int flags)
+{
+	struct scsi_link *alink = sc->adapter_link;
+	struct scsi_link *link;
+	int rv;
+
+	if (target < 0 || target >= alink->adapter_buswidth ||
+	    target == alink->adapter_target ||
+	    lun < 0 || lun >= alink->luns)
+		return (ENXIO);
+
+	if (sc->sc_link[target] == NULL)
+		return (ENXIO);
+
+	link = sc->sc_link[target][lun];
+	if (link == NULL)
+		return (ENXIO);
+
+	if (((flags & DETACH_FORCE) == 0) && link->flags & SDEV_OPEN)
+		return (EBUSY);
+
+	/* detaching a device from scsibus is a two step process... */
+
+	/* 1. detach the device */
+	rv = config_detach(link->device_softc, flags);
+	if (rv != 0)
+		return (rv);
+
+	/* 2. free up its state in the midlayer */
+	free(link, M_DEVBUF);
+	sc->sc_link[target][lun] = NULL;
+
+	return (0);
 }
 
 void
