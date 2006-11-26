@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.152 2006/11/07 20:47:10 kettenis Exp $g
+#	$OpenBSD: GENERIC,v 1.153 2006/11/26 12:02:49 mbalmer Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -130,6 +130,7 @@ lofn*		at pci?		# Hifn6500
 hifn*		at pci?		# Hifn7751/7811/7951
 ubsec*		at pci?		# Broadcom 58xx
 safe*		at pci?		# SafeNet SafeXcel 1141/1741
+pwdog0		at pci?		# Quancom PWDOG1 watchdog timer
 
 macintr0	at macobio?	# old interrupt controller
 openpic*	at macobio?	# openpic interrupt controller
@@ -145,7 +146,6 @@ wi*		at macobio?	# airport
 macgpio*	at macobio?	# GPIO, PMU interrupt router.
 macgpio*	at macgpio?	# GPIO, PMU interrupt router.
 akbd*		at adb?		# ADB keyboard
-
 wskbd*		at akbd? mux 1
 ams*		at adb?		# ADB mouse
 wsmouse*	at ams?	mux 0
