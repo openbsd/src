@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.18 2006/08/22 21:53:16 marco Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.19 2006/11/26 15:01:01 deraadt Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -445,7 +445,7 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		    rep, scd, scd ? scd->sc_state : 0));
 	if (scd == NULL || !(scd->sc_state & UHIDEV_OPEN))
 		return;
-#ifdef DIAGNOSTIC
+#ifdef UHIDEV_DEBUG
 	if (scd->sc_in_rep_size != cc)
 		printf("%s: bad input length %d != %d\n",USBDEVNAME(sc->sc_dev),
 		       scd->sc_in_rep_size, cc);
