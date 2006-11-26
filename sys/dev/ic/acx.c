@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.54 2006/11/09 23:15:54 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.55 2006/11/26 17:20:33 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -201,11 +201,6 @@ void	 acx_iter_func(void *, struct ieee80211_node *);
 void	 acx_amrr_timeout(void *);
 void	 acx_newassoc(struct ieee80211com *, struct ieee80211_node *, int);
 
-const struct ieee80211_rateset	acx_rates_11b =
-	{ 4, { 2, 4, 11, 22 } };
-const struct ieee80211_rateset	acx_rates_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
-
 static int	acx_chanscan_rate = 5;	/* 5 channels per second */
 int		acx_beacon_intvl = 100;	/* 100 TU */
 
@@ -295,10 +290,6 @@ acx_attach(struct acx_softc *sc)
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
-
-	/* set supported .11b and .11g rates */
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = acx_rates_11b;
-	ic->ic_sup_rates[IEEE80211_MODE_11G] = acx_rates_11g;
 
 	/* Set channels */
 	for (i = 1; i <= 14; ++i) {

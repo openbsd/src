@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.12 2006/09/27 04:34:36 brad Exp $ */
+/*	$OpenBSD: acx100.c,v 1.13 2006/11/26 17:20:33 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -297,7 +297,7 @@ acx100_set_param(struct acx_softc *sc)
 	sc->chip_phymode = IEEE80211_MODE_11B;
 	sc->chip_chan_flags = IEEE80211_CHAN_B;
 	sc->sc_ic.ic_phytype = IEEE80211_T_DS;
-	sc->sc_ic.ic_sup_rates[IEEE80211_MODE_11B] = acx_rates_11b;
+	sc->sc_ic.ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 
 	sc->chip_init = acx100_init;
 	sc->chip_set_wepkey = acx100_set_wepkey;

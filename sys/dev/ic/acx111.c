@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx111.c,v 1.12 2006/09/27 04:34:36 brad Exp $ */
+/*	$OpenBSD: acx111.c,v 1.13 2006/11/26 17:20:33 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -299,8 +299,8 @@ acx111_set_param(struct acx_softc *sc)
 	    IEEE80211_CHAN_2GHZ;
 	sc->sc_ic.ic_caps = IEEE80211_C_WEP;
 	sc->sc_ic.ic_phytype = IEEE80211_T_OFDM;
-	sc->sc_ic.ic_sup_rates[IEEE80211_MODE_11B] = acx_rates_11b;
-	sc->sc_ic.ic_sup_rates[IEEE80211_MODE_11G] = acx_rates_11g;
+	sc->sc_ic.ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
+	sc->sc_ic.ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
 	sc->chip_init = acx111_init;
 	sc->chip_write_config = acx111_write_config;

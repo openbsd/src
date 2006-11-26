@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.76 2006/07/17 11:43:12 mk Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.77 2006/11/26 17:20:33 jsg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1429,12 +1429,7 @@ atu_complete_attach(struct atu_softc *sc)
 	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_WEP | IEEE80211_C_SCANALL;
 	ic->ic_max_rssi = atu_radfirm[sc->atu_radio].max_rssi;
 
-	i = 0;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[i++] = 2;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[i++] = 4;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[i++] = 11;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[i++] = 22;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates = i;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 
 	for (i = 1; i <= 14; i++) {
 		ic->ic_channels[i].ic_flags = IEEE80211_CHAN_B |

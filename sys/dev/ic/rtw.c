@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.55 2006/08/30 11:20:20 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.56 2006/11/26 17:20:33 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -3760,7 +3760,7 @@ rtw_attach(struct rtw_softc *sc)
 	const char *vername;
 	struct ifnet *ifp;
 	char scratch[sizeof("unknown 0xXXXXXXXX")];
-	int pri, rc, nrate;
+	int pri, rc;
 
 
 	/* Use default DMA memory access */
@@ -3929,14 +3929,7 @@ rtw_attach(struct rtw_softc *sc)
 	ic->ic_caps = IEEE80211_C_PMGT | IEEE80211_C_IBSS |
 	    IEEE80211_C_HOSTAP | IEEE80211_C_MONITOR | IEEE80211_C_WEP;
 
-	nrate = 0;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] =
-	    IEEE80211_RATE_BASIC | 2;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] =
-	    IEEE80211_RATE_BASIC | 4;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] = 11;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] = 22;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates = nrate;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 
 	rtw_led_attach(&sc->sc_led_state, (void *)sc);
 
