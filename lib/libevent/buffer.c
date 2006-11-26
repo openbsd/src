@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.10 2006/03/18 20:23:42 brad Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.11 2006/11/26 15:25:14 brad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -134,17 +134,23 @@ evbuffer_add_vprintf(struct evbuffer *buf, const char *fmt, va_list ap)
 	size_t space;
 	size_t oldoff = buf->off;
 	int sz;
+	va_list aq;
 
 	for (;;) {
-		buffer = buf->buffer + buf->off;
+		buffer = (char *)buf->buffer + buf->off;
 		space = buf->totallen - buf->misalign - buf->off;
 
+		va_copy(aq, ap);
+
 #ifdef WIN32
-		sz = vsnprintf(buffer, space - 1, fmt, ap);
+		sz = vsnprintf(buffer, space - 1, fmt, aq);
 		buffer[space - 1] = '\0';
 #else
-		sz = vsnprintf(buffer, space, fmt, ap);
+		sz = vsnprintf(buffer, space, fmt, aq);
 #endif
+
+		va_end(aq);
+
 		if (sz == -1)
 			return (-1);
 		if (sz < space) {
