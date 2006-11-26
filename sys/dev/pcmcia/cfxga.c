@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.2 2006/11/26 17:04:22 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.3 2006/11/26 18:51:10 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -45,10 +45,6 @@
 #include <dev/rasops/rasops.h>
 
 #include <dev/pcmcia/cfxgareg.h>
-
-/* Old defines, biting the dust soon */
-#define	CROP_SOLIDFILL			0x0c0c
-#define	CROP_EXTCOPY			0x000c
 
 /*
 #define CFXGADEBUG
@@ -162,14 +158,14 @@ int	cfxga_memory_rop(struct cfxga_softc *, struct cfxga_screen *, u_int,
 void	cfxga_remove_function(struct pcmcia_function *);
 void	cfxga_reset_video(struct cfxga_softc *);
 void	cfxga_reset_and_repaint(struct cfxga_softc *);
-int	cfxga_standalone_rop(struct cfxga_softc *, u_int, int, int, int, int,
-	    u_int16_t);
+int	cfxga_standalone_rop(struct cfxga_softc *, u_int, u_int,
+	    int, int, int, int, u_int16_t);
 u_int	cfxga_wait(struct cfxga_softc *, u_int, u_int);
 
 #define	cfxga_clear_screen(sc) \
-	cfxga_standalone_rop(sc, CROP_SOLIDFILL, 0, 0, 640, 480, 0)
+	cfxga_standalone_rop(sc, OP_SOLID_FILL, 0, 0, 0, 640, 480, 0)
 #define	cfxga_repaint_screen(sc) \
-	cfxga_memory_rop(sc, sc->sc_active, CROP_EXTCOPY, 0, 0, 640, 480)
+	cfxga_memory_rop(sc, sc->sc_active, ROP_SRC, 0, 0, 640, 480)
 
 #define	cfxga_read_1(sc, addr) \
 	bus_space_read_1((sc)->sc_pmemh.memt, (sc)->sc_pmemh.memh, \
@@ -674,7 +670,7 @@ cfxga_wait(struct cfxga_softc *sc, u_int mask, u_int result)
 {
 	u_int tries;
 
-	for (tries = 100000; tries != 0; tries--) {
+	for (tries = 10000; tries != 0; tries--) {
 		if ((cfxga_read_1(sc, CFREG_BITBLT_CONTROL) & mask) == result)
 			break;
 		delay(10);
@@ -687,14 +683,14 @@ int
 cfxga_memory_rop(struct cfxga_softc *sc, struct cfxga_screen *scr, u_int rop,
     int x, int y, int cx, int cy)
 {
-	u_int pos;
+	u_int pos, sts, fifo_avail;
 	u_int16_t *data;
 
 	pos = (y * 640 + x) * (16 / 8);
 	data = (u_int16_t *)(scr->scr_mem + pos);
 
 	if (cfxga_wait(sc, BITBLT_ACTIVE, 0) == 0) {
-		DPRINTF(("%s: not ready\n", __func__));
+		DPRINTF(("%s(%d): not ready\n", __func__, rop));
 		if (ISSET(sc->sc_state, CS_RESET))
 			return (EAGAIN);
 		else {
@@ -707,13 +703,7 @@ cfxga_memory_rop(struct cfxga_softc *sc, struct cfxga_screen *scr, u_int rop,
 	}
 	(void)cfxga_read_1(sc, CFREG_BITBLT_DATA);
 
-#if 0
-	cfxga_write_1(sc, CFREG_BITBLT_ROP, rop);
-	cfxga_write_1(sc, CFREG_BITBLT_OPERATION, OP_WRITE_ROP);
-		/* unless we prefer OP_SOLID_FILL */
-#else
-	cfxga_write_2(sc, CFREG_BITBLT_ROP, rop);
-#endif
+	cfxga_write_2(sc, CFREG_BITBLT_ROP, rop | (OP_WRITE_ROP << 8));
 	cfxga_write_2(sc, CFREG_BITBLT_SRC_LOW, 0);
 	cfxga_write_2(sc, CFREG_BITBLT_SRC_HIGH, 0);
 	cfxga_write_2(sc, CFREG_BITBLT_DST_LOW, pos);
@@ -725,20 +715,42 @@ cfxga_memory_rop(struct cfxga_softc *sc, struct cfxga_screen *scr, u_int rop,
 	    BITBLT_ACTIVE | BITBLT_COLOR_16);
 
 	(void)cfxga_wait(sc, BITBLT_ACTIVE, BITBLT_ACTIVE);
+	fifo_avail = 0;
 	while (cy-- != 0) {
 		for (x = 0; x < cx; x++) {
-			cfxga_write_2(sc, CFREG_BITBLT_DATA, *data++);
-
 			/*
-			 * Let the cheap breathe.
-			 * If this is not enough to let it recover,
-			 * abort the operation.
+			 * Find out how much words we can feed before
+			 * a FIFO check is needed.
 			 */
-			if (cfxga_wait(sc, BITBLT_FIFO_FULL, 0) == 0) {
-				DPRINTF(("%s: abort\n", __func__));
-				cfxga_write_2(sc, CFREG_BITBLT_CONTROL, 0);
-				return (EINTR);
+			if (fifo_avail == 0) {
+				sts = cfxga_read_1(sc, CFREG_BITBLT_CONTROL);
+				if ((sts & BITBLT_FIFO_NOT_EMPTY) == 0)
+					fifo_avail = 16;
+				else if ((sts & BITBLT_FIFO_HALF_FULL) == 0)
+					fifo_avail = 8;
+				else if ((sts & BITBLT_FIFO_FULL) == 0) {
+					/* pessimistic but safe choice */
+					fifo_avail = 1;
+				} else {
+					/*
+					 * Let the cheap breathe for a short
+					 * while. If this is not enough to
+					 * free some FIFO entries,
+					 * abort the operation.
+					 */
+					if (cfxga_wait(sc, BITBLT_FIFO_FULL,
+					    0) == 0) {
+						DPRINTF(("%s: abort\n",
+						    __func__));
+						cfxga_write_2(sc,
+						    CFREG_BITBLT_CONTROL, 0);
+						return (EINTR);
+					}
+				}
 			}
+
+			cfxga_write_2(sc, CFREG_BITBLT_DATA, *data++);
+			fifo_avail--;
 		}
 		data += (640 - cx);
 	}
@@ -747,7 +759,7 @@ cfxga_memory_rop(struct cfxga_softc *sc, struct cfxga_screen *scr, u_int rop,
 }
 
 int
-cfxga_standalone_rop(struct cfxga_softc *sc, u_int rop, int x, int y,
+cfxga_standalone_rop(struct cfxga_softc *sc, u_int op, u_int rop, int x, int y,
     int cx, int cy, u_int16_t srccolor)
 {
 	u_int pos;
@@ -755,7 +767,7 @@ cfxga_standalone_rop(struct cfxga_softc *sc, u_int rop, int x, int y,
 	pos = (y * 640 + x) * (16 / 8);
 
 	if (cfxga_wait(sc, BITBLT_ACTIVE, 0) == 0) {
-		DPRINTF(("%s: not ready\n", __func__));
+		DPRINTF(("%s(%d,%d): not ready\n", __func__, op, rop));
 		if (ISSET(sc->sc_state, CS_RESET))
 			return (EAGAIN);
 		else {
@@ -767,21 +779,16 @@ cfxga_standalone_rop(struct cfxga_softc *sc, u_int rop, int x, int y,
 		}
 	}
 
-#if 0
-	cfxga_write_1(sc, CFREG_BITBLT_ROP, rop);
-	cfxga_write_1(sc, CFREG_BITBLT_OPERATION, OP_WRITE_ROP);
-		/* unless we prefer OP_SOLID_FILL */
-#else
-	cfxga_write_2(sc, CFREG_BITBLT_ROP, rop);
-#endif
-	cfxga_write_2(sc, CFREG_BITBLT_SRC_LOW, 0);
-	cfxga_write_2(sc, CFREG_BITBLT_SRC_HIGH, 0);
+	cfxga_write_2(sc, CFREG_BITBLT_ROP, rop | (op << 8));
+	cfxga_write_2(sc, CFREG_BITBLT_SRC_LOW, pos);
+	cfxga_write_2(sc, CFREG_BITBLT_SRC_HIGH, pos >> 16);
 	cfxga_write_2(sc, CFREG_BITBLT_DST_LOW, pos);
 	cfxga_write_2(sc, CFREG_BITBLT_DST_HIGH, pos >> 16);
 	cfxga_write_2(sc, CFREG_BITBLT_OFFSET, 640);
 	cfxga_write_2(sc, CFREG_BITBLT_WIDTH, cx - 1);
 	cfxga_write_2(sc, CFREG_BITBLT_HEIGHT, cy - 1);
-	cfxga_write_2(sc, CFREG_BITBLT_FG, srccolor);
+	if (op == OP_SOLID_FILL)
+		cfxga_write_2(sc, CFREG_BITBLT_FG, srccolor);
 	cfxga_write_2(sc, CFREG_BITBLT_CONTROL,
 	    BITBLT_ACTIVE | BITBLT_COLOR_16);
 
@@ -818,7 +825,7 @@ cfxga_copycols(void *cookie, int row, int src, int dst, int num)
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = num * ri->ri_font->fontwidth;
 	cy = ri->ri_font->fontheight;
-	cfxga_memory_rop(scr->scr_sc, scr, CROP_EXTCOPY, x, y, cx, cy);
+	cfxga_memory_rop(scr->scr_sc, scr, ROP_SRC, x, y, cx, cy);
 }
 
 void
@@ -834,7 +841,7 @@ cfxga_copyrows(void *cookie, int src, int dst, int num)
 	y = dst * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = ri->ri_emuwidth;
 	cy = num * ri->ri_font->fontheight;
-	cfxga_memory_rop(scr->scr_sc, scr, CROP_EXTCOPY, x, y, cx, cy);
+	cfxga_memory_rop(scr->scr_sc, scr, ROP_SRC, x, y, cx, cy);
 }
 
 void
@@ -847,12 +854,8 @@ cfxga_do_cursor(struct rasops_info *ri)
 	y = ri->ri_crow * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = ri->ri_font->fontwidth;
 	cy = ri->ri_font->fontheight;
-#if 0
-	cfxga_standalone_rop(scr->scr_sc, CROP_SRCXORDST, x, y, cx, cy, 0);
-#else
-	(*scr->scr_do_cursor)(ri);
-	cfxga_memory_rop(scr->scr_sc, scr, CROP_EXTCOPY, x, y, cx, cy);
-#endif
+	cfxga_standalone_rop(scr->scr_sc, OP_MOVE_POSITIVE_ROP,
+	    ROP_ONES ^ ROP_SRC /* not SRC */, x, y, cx, cy, WSCOL_BLACK);
 }
 
 void
@@ -870,8 +873,8 @@ cfxga_erasecols(void *cookie, int row, int col, int num, long attr)
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = num * ri->ri_font->fontwidth;
 	cy = ri->ri_font->fontheight;
-	cfxga_standalone_rop(scr->scr_sc, CROP_SOLIDFILL, x, y, cx, cy,
-	    ri->ri_devcmap[bg]);
+	cfxga_standalone_rop(scr->scr_sc, OP_SOLID_FILL, 0,
+	    x, y, cx, cy, bg);
 }
 
 void
@@ -889,8 +892,8 @@ cfxga_eraserows(void *cookie, int row, int num, long attr)
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = ri->ri_emuwidth;
 	cy = num * ri->ri_font->fontheight;
-	cfxga_standalone_rop(scr->scr_sc, CROP_SOLIDFILL, x, y, cx, cy,
-	    ri->ri_devcmap[bg]);
+	cfxga_standalone_rop(scr->scr_sc, OP_SOLID_FILL, 0,
+	    x, y, cx, cy, bg);
 }
 
 void
@@ -911,8 +914,8 @@ cfxga_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		int fg, bg, uline;
 
 		rasops_unpack_attr(attr, &fg, &bg, &uline);
-		cfxga_standalone_rop(scr->scr_sc, CROP_SOLIDFILL, x, y, cx, cy,
-		    ri->ri_devcmap[bg]);
+		cfxga_standalone_rop(scr->scr_sc, OP_SOLID_FILL, 0,
+		    x, y, cx, cy, bg);
 	} else
-		cfxga_memory_rop(scr->scr_sc, scr, CROP_EXTCOPY, x, y, cx, cy);
+		cfxga_memory_rop(scr->scr_sc, scr, ROP_SRC, x, y, cx, cy);
 }

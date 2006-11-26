@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxgareg.h,v 1.2 2006/11/26 17:04:22 miod Exp $	*/
+/*	$OpenBSD: cfxgareg.h,v 1.3 2006/11/26 18:51:10 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -399,6 +399,7 @@
 #define	MODE_TV_FLICKER		0x06
 #define	LCD_MODE_SWIVEL_BIT_0	0x40
 
+/* BitBlt aperture */
 #define	CFREG_BITBLT_DATA		0x0400
 
 #ifdef	_KERNEL
