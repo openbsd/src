@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.4 2006/03/10 21:52:02 matthieu Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.5 2006/11/26 18:35:51 dim Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -37,12 +37,9 @@
 
 /* #define	AGP_DEBUG */
 #ifdef AGP_DEBUG
-#define AGP_DPF(x...) do {			\
-    printf("agp: ");				\
-    printf(##x);				\
-} while (0)
+#define AGP_DPF(fmt, arg...) do { printf("agp: " fmt ,##arg); } while (0)
 #else
-#define AGP_DPF(x...) do {} while (0)
+#define AGP_DPF(fmt, arg...) do {} while (0)
 #endif
 
 #define AGPUNIT(x)	minor(x)
