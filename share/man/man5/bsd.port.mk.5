@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.181 2006/11/04 00:15:26 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.182 2006/11/26 18:38:54 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -534,6 +534,11 @@ which means that individual ports should not modify them,
 and that some variables are marked as
 .Sq read-only ,
 which means that they shouldn't ever be changed.
+In a
+.Ev MULTI_PACKAGES
+setup, some variables have settings specific to a given subpackage.
+See
+.Qq Flavors and multi-packages .
 .Bl -tag -width MASTER_SITES
 .It Ev show
 Invoked as make show=name, show the contents of ${name}.
@@ -551,7 +556,7 @@ Default is
 .Sq all .
 Can be set to empty, to yield a package's default target.
 .It Ev ARCH
-Current machine architecture (read-only).
+Current machine architecture. Read-only.
 .It Ev AUTOCONF
 Location of the autoconf binary if needed.
 Defaults to autoconf (though make autoreconf might be more appropriate).
@@ -571,6 +576,8 @@ set to autoconf is the correct way to specify which one to use.
 If autoconf must be run manually,
 .Ev MODGNU_AUTOCONF_DEPENDS
 can be used to specify what packages to depend upon.
+.It Ev BASE_PKGPATH
+Full pkgpath to the current port, taking flavors into account.
 .It Ev BATCH
 User-settings.
 Set to
@@ -616,6 +623,12 @@ or
 .Ar install
 target will be processed in a subdirectory of the working directory,
 specifically, in ${WRKDIR}/directory.
+.It Ev BUILD_PKGPATH
+Full pkgpath to the current port, taking flavors and pseudo-flavors 
+into account.
+Mostly useful to write dependencies for subpackages like this:
+.Li "LIB_DEPENDS-foo=::${BUILD_PKGPATH}"
+and avoid starting to build a package with some other flavor combination.
 .It Ev BULK
 User settings.
 If set to
@@ -994,13 +1007,10 @@ target will also update installed packages even when the signature
 did not change.
 .It Ev FULLDISTDIR
 Complete path to directory where ${DISTFILES} and ${PATCHFILES} will be
-located, to be used in hand-crafted extraction targets (read-only).
+located, to be used in hand-crafted extraction targets. Read-only.
 .It Ev FULLPKGNAME
-Full name of the main created package, taking flavors into account.
+Full name of the created package, taking flavors into account.
 Defaults to ${PKGNAME}${FLAVOR_EXT}.
-.It Ev FULLPKGNAME-foo
-Full package name for sub-package foo, if the default value is not
-appropriate.
 .It Ev FULLPKGPATH
 Path to the current port's directory, relative to ${PORTSDIR},
 including flavors and subpackages.
@@ -1166,6 +1176,11 @@ below.
 List of architectures on which this port does not build.
 See also
 .Ev ONLY_FOR_ARCHS .
+See also
+.Ev SHARED_ONLY .
+Do not use instead of
+.Ev SHARED_ONLY
+without very good reasons.
 .It Ev NO_BUILD
 Port does not need any build stage.
 .It Ev NO_CHECKSUM
@@ -1217,15 +1232,12 @@ Can hold both processor-specific information (e.g., m68k), and more
 specific model information (e.g., hp300).
 .It Ev OPSYS
 Always
-.Ox
-(read-only).
+.Ox .
+Read-only.
 .It Ev OPSYS_VER
 Revision number of
-.Ox
-(read-only).
-.It Ev PACKAGING
-Defined while building packages, read-only.
-See the description of FLAVORS AND MULTI_PACKAGES for a detailed explanation.
+.Ox .
+Read-only.
 .It Ev PACKAGE_REPOSITORY
 User settings.
 Default location for built packages.
@@ -1368,9 +1380,8 @@ Location for packaging information (packing list, port description, port
 short description).
 Default: pkg.${ARCH} or pkg.
 .It Ev PKGNAME
-Name of the main created package.
-Default is ${DISTNAME} for the main package,
-and ${DISTNAME} for multi-package ports.
+Name of the created package.
+Default is ${DISTNAME}.
 This does not take flavors into account.
 See
 .Ev FULLPKGNAME
@@ -1526,6 +1537,7 @@ Make variables whole values get substituted to create the actual package
 information.
 Always holds
 .Ev ARCH ,
+.Ev BASE_PKGPATH ,
 .Ev FLAVOR_EXT ,
 .Ev HOMEPAGE ,
 .Ev MACHINE_ARCH ,
@@ -2003,6 +2015,11 @@ is no longer useful.
 .It Ev PACKAGES
 Base location for packages built, renamed
 .Ev PKGREPOSITORYBASE .
+.It Ev PACKAGING
+Used to be set during package creation, so that the port would test it
+to tweak some settings at this point.
+All its effects are now achieved through
+.Ev MULTI_PACKAGES .
 .It Ev PATCH_SITES
 .Ev PATCHFILES
 used to be retrieved from a separate site list.
@@ -2209,8 +2226,11 @@ Thus, a port that mentions DESTDIR= does not need any patch to work with fake.
 .Sh FLAVORS AND MULTI_PACKAGES
 Starting with
 .Ox 2.7 ,
-each port can generate several packages through two orthogonal mechanisms:
+each port can generate distinct packages through two orthogonal mechanisms:
 FLAVORS and MULTI_PACKAGES.
+.Pp
+The current MULTI_PACKAGES mechanism was introduced after
+.Ox 4.0 .
 .Pp
 If a port can be compiled with several options, set FLAVORS to the list of
 possible options in the Makefile.
@@ -2245,8 +2265,8 @@ extension if they are available: if FLAVOR='option1 option2' and both
 COMMENT and COMMENT-option1-option2 are available, COMMENT-option1-option2 will
 be used.
 .Pp
-If a port can generate several useful packages, set MULTI_PACKAGES
-accordingly.
+If one build of a port can generate several distinct packages, set
+MULTI_PACKAGES accordingly.
 Each extension of a MULTI_PACKAGES name should start with a dash, so that
 they cannot be confused with FLAVORS.
 In dependency checking and recursive builds, a subpackage can be
@@ -2255,33 +2275,67 @@ MULTI_PACKAGES only affects the actual package building step (and the
 describe step, since a MULTI_PACKAGES port will produce several
 descriptions).
 .Pp
-If MULTI_PACKAGES is set, each element of MULTI_PACKAGES triggers a
-recursive package build, with SUBPACKAGE set to the right value, and
-PACKAGING defined.
-For instance, if MULTI_PACKAGES=-lib -server,
-make package will work as follows:
+If MULTI_PACKAGES is set, the packaging stage happens once for every
+subpackage, using subpackage-specific variables.
+For instance, if MULTI_PACKAGES=-main -lib -server,
+.Ev PKG_ARCH-main ,
+.Ev PKG_ARCH-lib
+and
+.Ev PKG_ARCH-server
+will be used for the subpackages respectively called
+.Ev FULLPKGNAME-main ,
+.Ev FULLPKGNAME-lib
+and
+.Ev FULLPKGNAME-server .
 .Pp
-.Bl -bullet -compact
-.It
-Run env SUBPACKAGE= PACKAGING= make subpackage,
-.It
-Run env SUBPACKAGE=-lib PACKAGING=-lib make subpackage,
-.It
-Run env SUBPACKAGE=-server PACKAGING=-server make subpackage,
-.El
-.Pp
-The port's Makefile can test the value of SUBPACKAGE to specialize
-processing for all sub packages.
-Note that SUBPACKAGE can also be set for dependency checking, so be
-careful to also test PACKAGING: the build stage is shared among all
-subpackages, and tests often only make sense during the packaging stage.
-All packing information is derived from
+All packing information is also derived from
 templates with SUBPACKAGE appended.
-In the preceding example, the packing-list template for pkgname-foo
-must be in PLIST-foo.
+In the preceding example, the packing-list template for FULLPKGNAME-lib
+must be in PLIST-lib.
 .Pp
-In terms of implementation, quite a few targets will recurse to take
-multi-packages into account:
+The following variables are subpackage dependent:
+.Ev PKG_ARCH ,
+.Ev PERMIT_PACKAGE_FTP ,
+.Ev PERMIT_PACKAGE_CDROM ,
+.Ev RUN_DEPENDS ,
+.Ev WANTLIB ,
+.Ev LIB_DEPENDS ,
+.Ev PREFIX ,
+.Ev CATEGORIES
+.Ev MESSAGE ,
+.Ev UNMESSAGE ,
+.Ev DESCR
+.Ev PLIST .
+.Pp
+The usual non-MULTI_PACKAGES variables are simply used as default values
+for all subpackages.
+So, if you set 
+.Li "PKG_ARCH=*"
+.Li "PKG_ARCH-main=i386"
+then
+.Ev PKG_ARCH-lib
+and
+.Ev PKG_ARCH-server
+will both be
+.Sq * .
+.Pp
+.Ev WANTLIB
+and
+.Ev LIB_DEPENDS
+are special.
+At the beginning of build,
+all build dependencies will be checked,
+which includes both
+.Ev LIB_DEPENDS ,
+.Ev WANTLIB
+and the subpackage-specific version of these.
+As an exception, any
+.Ev LIB_DEPENDS-sub
+that references the current port will be ignored as a build dependency,
+in order to avoid recursion.
+.Pp
+In terms of implementation, quite a few targets will invoke a subpackage
+specific subtarget:
 .Ar package
 will invoke
 .Ar subpackage ,
@@ -2314,7 +2368,7 @@ generated from templates in ${PKGDIR}.
 .It
 If not overridden by the user, determine which set of templates to use,
 depending on the current SUBPACKAGE and FLAVOR information.
-Set ${PLIST}, ${DESCR}, ${COMMENT}, ${MESSAGE}, ${UNMESSAGE} accordingly.
+Set ${PLIST${SUBPACKAGE}}, ${DESCR${SUBPACKAGE}}, ${COMMENT${SUBPACKAGE}}, ${MESSAGE${SUBPACKAGE}}, ${UNMESSAGE${SUBPACKAGE}} accordingly.
 .It
 Detect the existence of ${PKGDIR}/{REQ,INSTALL,DEINSTALL}${SUBPACKAGE}.
 Modify PKG_ARGS accordingly, to use the generated files, and add
