@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.39 2006/10/29 18:45:55 deraadt Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.40 2006/11/26 06:20:16 deraadt Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -1157,6 +1157,9 @@ __grow_type_table(unsigned char **typetable, int *tablesize)
 {
 	unsigned char *oldtable = *typetable;
 	int newsize = *tablesize * 2;
+
+	if (newsize < getpagesize())
+		newsize = getpagesize();
 
 	if (*tablesize == STATIC_ARG_TBL_SIZE) {
 		*typetable = mmap(NULL, newsize, PROT_WRITE|PROT_READ,
