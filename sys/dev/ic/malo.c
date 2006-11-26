@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.40 2006/11/26 14:50:39 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.41 2006/11/26 23:46:47 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -115,7 +115,6 @@ struct malo_tx_desc {
  * Firmware commands
  */
 #define MALO_CMD_GET_HW_SPEC		0x0003
-#define MALO_CMD_SET_RESET		0x0005
 #define MALO_CMD_SET_RADIO		0x001c
 #define MALO_CMD_SET_AID		0x010d
 #define MALO_CMD_SET_TXPOWER		0x001e
@@ -269,7 +268,6 @@ static char *
 static char *
 	malo_cmd_string_result(uint16_t result);
 int	malo_cmd_get_spec(struct malo_softc *sc);
-int	malo_cmd_reset(struct malo_softc *sc);
 int	malo_cmd_set_prescan(struct malo_softc *sc);
 int	malo_cmd_set_postscan(struct malo_softc *sc, uint8_t *macaddr,
 	    uint8_t ibsson);
@@ -1029,9 +1027,9 @@ malo_stop(struct malo_softc *sc)
 
 	DPRINTF(("%s: %s\n", ifp->if_xname, __func__));
 
-	/* try to reset card, if the firmware is loaded */
+	/* reset adapter */
 	if (ifp->if_flags & IFF_RUNNING)
-		malo_cmd_reset(sc);
+		malo_ctl_write4(sc, 0x0c18, (1 << 15));
 
 	/* device is not running anymore */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -1947,22 +1945,6 @@ malo_cmd_get_spec(struct malo_softc *sc)
 	sc->sc_RxPdWrPtr = letoh32(spec->RxPdWrPtr) & 0xffff;
 
 	return (0);
-}
-
-int
-malo_cmd_reset(struct malo_softc *sc)
-{
-	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
-
-	hdr->cmd = htole16(MALO_CMD_SET_RESET);
-	hdr->size = htole16(sizeof(*hdr));
-	hdr->seqnum = 1;
-	hdr->result = 0;
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
-	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
-	return (malo_send_cmd_dma(sc, sc->sc_cmd_dmaaddr));
 }
 
 int
