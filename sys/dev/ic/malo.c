@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.39 2006/11/26 11:14:18 deraadt Exp $ */
+/*	$OpenBSD: malo.c,v 1.40 2006/11/26 14:50:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1351,8 +1351,8 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	desc = &sc->sc_txring.desc[sc->sc_txring.cur];
 	data = &sc->sc_txring.data[sc->sc_txring.cur];
 
-	if (m0->m_len < sizeof(struct ieee80211_frame *)) {
-		m0 = m_pullup(m0, sizeof(struct ieee80211_frame *));
+	if (m0->m_len < sizeof(struct ieee80211_frame)) {
+		m0 = m_pullup(m0, sizeof(struct ieee80211_frame));
 		if (m0 == NULL) {
 			ifp->if_ierrors++;
 			return (ENOBUFS);
@@ -1462,8 +1462,8 @@ malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 	desc = &sc->sc_txring.desc[sc->sc_txring.cur];
 	data = &sc->sc_txring.data[sc->sc_txring.cur];
 
-	if (m0->m_len < sizeof(struct ieee80211_frame *)) {
-		m0 = m_pullup(m0, sizeof(struct ieee80211_frame *));
+	if (m0->m_len < sizeof(struct ieee80211_frame)) {
+		m0 = m_pullup(m0, sizeof(struct ieee80211_frame));
 		if (m0 == NULL) {
 			ifp->if_ierrors++;
 			return (ENOBUFS);
