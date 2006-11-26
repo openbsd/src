@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.182 2006/11/26 18:38:54 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.183 2006/11/26 22:03:54 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -556,7 +556,8 @@ Default is
 .Sq all .
 Can be set to empty, to yield a package's default target.
 .It Ev ARCH
-Current machine architecture. Read-only.
+Current machine architecture.
+Read-only.
 .It Ev AUTOCONF
 Location of the autoconf binary if needed.
 Defaults to autoconf (though make autoreconf might be more appropriate).
@@ -624,7 +625,7 @@ or
 target will be processed in a subdirectory of the working directory,
 specifically, in ${WRKDIR}/directory.
 .It Ev BUILD_PKGPATH
-Full pkgpath to the current port, taking flavors and pseudo-flavors 
+Full pkgpath to the current port, taking flavors and pseudo-flavors
 into account.
 Mostly useful to write dependencies for subpackages like this:
 .Li "LIB_DEPENDS-foo=::${BUILD_PKGPATH}"
@@ -1007,7 +1008,8 @@ target will also update installed packages even when the signature
 did not change.
 .It Ev FULLDISTDIR
 Complete path to directory where ${DISTFILES} and ${PATCHFILES} will be
-located, to be used in hand-crafted extraction targets. Read-only.
+located, to be used in hand-crafted extraction targets.
+Read-only.
 .It Ev FULLPKGNAME
 Full name of the created package, taking flavors into account.
 Defaults to ${PKGNAME}${FLAVOR_EXT}.
@@ -2309,7 +2311,7 @@ The following variables are subpackage dependent:
 .Pp
 The usual non-MULTI_PACKAGES variables are simply used as default values
 for all subpackages.
-So, if you set 
+So, if you set
 .Li "PKG_ARCH=*"
 .Li "PKG_ARCH-main=i386"
 then
