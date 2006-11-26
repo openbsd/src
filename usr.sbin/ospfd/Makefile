@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2006/05/30 22:06:14 claudio Exp $
+#	$OpenBSD: Makefile,v 1.6 2006/11/26 11:31:13 deraadt Exp $
 
 
 PROG=	ospfd
@@ -16,5 +16,6 @@ CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
 YFLAGS=
 LDADD+=	-levent
+DPADD+= ${LIBEVENT}
 
 .include <bsd.prog.mk>

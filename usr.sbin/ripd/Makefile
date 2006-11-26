@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2006/10/18 16:11:58 norby Exp $
+#	$OpenBSD: Makefile,v 1.2 2006/11/26 11:31:13 deraadt Exp $
 
 PROG=	ripd
 SRCS=	auth.c buffer.c control.c imsg.c interface.c kroute.c \
@@ -14,5 +14,6 @@ CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
 YFLAGS=
 LDADD+=	-levent
+DPADD+= ${LIBEVENT}
 
 .include <bsd.prog.mk>

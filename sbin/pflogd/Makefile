@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.6 2003/11/20 23:23:09 avsm Exp $
+#	$OpenBSD: Makefile,v 1.7 2006/11/26 11:31:08 deraadt Exp $
 
 CFLAGS+=-Wall -Wmissing-prototypes -Wshadow
 LDADD+= -lpcap -lutil
-DPAPP+=	${LIBPCAP} ${LIBUTIL}
+DPADD+=	${LIBPCAP} ${LIBUTIL}
 
 PROG=	pflogd
 SRCS=	pflogd.c privsep.c privsep_fdpass.c
