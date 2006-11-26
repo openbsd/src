@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.103 2006/05/11 13:21:11 mickey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.104 2006/11/26 15:13:21 dim Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -195,6 +195,7 @@
 	.globl	_C_LABEL(cpu), _C_LABEL(cpu_id), _C_LABEL(cpu_vendor)
 	.globl	_C_LABEL(cpu_brandstr)
 	.globl	_C_LABEL(cpuid_level)
+	.globl	_C_LABEL(cpu_miscinfo)
 	.globl	_C_LABEL(cpu_feature), _C_LABEL(cpu_ecxfeature)
 	.globl	_C_LABEL(cpu_cache_eax), _C_LABEL(cpu_cache_ebx)
 	.globl	_C_LABEL(cpu_cache_ecx), _C_LABEL(cpu_cache_edx)
@@ -232,6 +233,7 @@ _C_LABEL(lapic_tpr):
 
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, 486, 586 or 686
 _C_LABEL(cpu_id):	.long	0	# saved from 'cpuid' instruction
+_C_LABEL(cpu_miscinfo):	.long	0	# misc info (apic/brand id) from 'cpuid'
 _C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid' instruction
 _C_LABEL(cpu_ecxfeature):.long	0	# extended feature flags from 'cpuid'
 _C_LABEL(cpuid_level):	.long	-1	# max. lvl accepted by 'cpuid' insn
@@ -466,6 +468,7 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	$1,%eax
 	cpuid
 	movl	%eax,RELOC(_C_LABEL(cpu_id))	# store cpu_id and features
+	movl	%ebx,RELOC(_C_LABEL(cpu_miscinfo))
 	movl	%edx,RELOC(_C_LABEL(cpu_feature))
 	movl	%ecx,RELOC(_C_LABEL(cpu_ecxfeature))
 

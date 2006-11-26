@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.80 2006/07/25 19:16:51 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.81 2006/11/26 15:13:21 dim Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -302,6 +302,7 @@ struct cpu_cpuid_feature {
 #ifdef _KERNEL
 extern int cpu;
 extern int cpu_class;
+extern int cpu_miscinfo;
 extern int cpu_feature;
 extern int cpu_ecxfeature;
 extern int cpu_apmwarn;
