@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.11 2006/09/26 00:00:38 gwk Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.12 2006/11/26 22:31:12 gwk Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -110,7 +110,6 @@ struct mesh_softc {
 
 	int sc_flags;
 	int sc_cfflags;			/* copy of config flags */
-	int sc_meshid;			/* MESH version */
 	int sc_minsync;			/* minimum sync period */
 	int sc_irq;
 	int sc_freq;			/* SCSI bus frequency in MHz */
@@ -231,7 +230,6 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmareg = mapiodev(reg[2], reg[3]);
 
 	sc->sc_cfflags = sc->sc_dev.dv_cfdata->cf_flags;
-	sc->sc_meshid = mesh_read_reg(sc, MESH_MESH_ID) & 0x1f;
 
 	if (OF_getprop(ca->ca_node, "clock-frequency", &sc->sc_freq, 4) != 4) {
 		printf(": cannot get clock-frequency\n");
@@ -263,7 +261,7 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 	mesh_bus_reset(sc);
 
 	printf(" irq %d: %dMHz, SCSI ID %d\n",
-		sc->sc_irq, sc->sc_freq, sc->sc_id);
+	    sc->sc_irq, sc->sc_freq, sc->sc_id);
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_id;
@@ -274,7 +272,7 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 
 	mac_intr_establish(parent, sc->sc_irq, IST_LEVEL, IPL_BIO, mesh_intr,
-	     sc, "mesh");
+	    sc, "mesh");
 
 	/* Reset SCSI bus when halt. */
 	shutdownhook_establish(mesh_shutdownhook, sc);
@@ -373,17 +371,17 @@ mesh_intr(void *arg)
 					char *cp;
 
 					cp = (char *)scb->daddr + scb->dlen
-						- fifocnt;
+					    - fifocnt;
 					DPRINTF("fifocnt = %d, resid = %d\n",
-						fifocnt, scb->resid);
+					    fifocnt, scb->resid);
 					while (fifocnt > 0) {
 						*cp++ = mesh_read_reg(sc,
-								MESH_FIFO);
+						    MESH_FIFO);
 						fifocnt--;
 					}
 				} else {
 					mesh_set_reg(sc, MESH_SEQUENCE,
-							MESH_CMD_FLUSH_FIFO);
+					    MESH_CMD_FLUSH_FIFO);
 				}
 			} else {
 				/* Clear all interrupts */
@@ -394,7 +392,7 @@ mesh_intr(void *arg)
 
 	if (intr & MESH_INTR_ERROR) {
 		printf("%s: error %02x %02x\n",
-			sc->sc_dev.dv_xname, error, exception);
+		    sc->sc_dev.dv_xname, error, exception);
 		mesh_error(sc, scb, error, 0);
 		return 1;
 	}
@@ -409,11 +407,11 @@ mesh_intr(void *arg)
 		/* phase mismatch */
 		if (exception & MESH_EXC_PHASEMM) {
 			DPRINTF("%s: PHASE MISMATCH; nextstate = %d -> ",
-				sc->sc_dev.dv_xname, sc->sc_nextstate);
+			    sc->sc_dev.dv_xname, sc->sc_nextstate);
 			sc->sc_nextstate = status0 & MESH_PHASE_MASK;
 
 			DPRINTF("%d, resid = %d\n",
-				sc->sc_nextstate, scb->resid);
+			    sc->sc_nextstate, scb->resid);
 		}
 	}
 
@@ -430,8 +428,10 @@ mesh_intr(void *arg)
 		break;
 	case MESH_DATAIN:
 	case MESH_DATAOUT:
-		if (mesh_dataio(sc, scb))
-			return(1);
+		if (mesh_dataio(sc, scb)) {
+			scb->xs->error = XS_DRIVER_STUFFUP;
+			mesh_done(sc, scb);
+		}
 		break;
 	case MESH_STATUS:
 		mesh_status(sc, scb);
@@ -586,12 +586,12 @@ mesh_dma_setup(struct mesh_softc *sc, struct mesh_scb *scb)
 		if (i + 1 == sc->sc_dmamap->dm_nsegs)
 			cmd = datain ? DBDMA_CMD_IN_LAST : DBDMA_CMD_OUT_LAST;
 		DBDMA_BUILD(cmdp, cmd, 0, sc->sc_dmamap->dm_segs[i].ds_len,
-			sc->sc_dmamap->dm_segs[i].ds_addr,
-			DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+		    sc->sc_dmamap->dm_segs[i].ds_addr, DBDMA_INT_NEVER,
+		    DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 	}
 
 	DBDMA_BUILD(cmdp, DBDMA_CMD_STOP, 0, 0, 0,
-		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+	    DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 
 	return(0);	
 }
@@ -613,6 +613,7 @@ mesh_dataio(struct mesh_softc *sc, struct mesh_scb *scb)
 		mesh_set_reg(sc, MESH_SEQUENCE, MESH_CMD_DATAIN | MESH_SEQ_DMA);
 	else
 		mesh_set_reg(sc, MESH_SEQUENCE, MESH_CMD_DATAOUT | MESH_SEQ_DMA);
+
 	dbdma_start(sc->sc_dmareg, sc->sc_dbdma);
 	sc->sc_flags |= MESH_DMA_ACTIVE;
 	sc->sc_nextstate = MESH_STATUS;
@@ -713,7 +714,7 @@ gotit:
 	default:
 		sc_print_addr(scb->xs->sc_link);
 		printf("unrecognized MESSAGE(0x%02x); sending REJECT\n",
-			sc->sc_imsg[0]);
+		    sc->sc_imsg[0]);
 
 	reject:
 		mesh_msgout(sc, SEND_REJECT);
@@ -750,7 +751,7 @@ extended_msg:
 	  }
 	default:
 		printf("%s target %d: rejecting extended message 0x%x\n",
-			sc->sc_dev.dv_xname, scb->target, sc->sc_imsg[0]);
+		    sc->sc_dev.dv_xname, scb->target, sc->sc_imsg[0]);
 		goto reject;
 	}
 
@@ -919,13 +920,10 @@ struct mesh_scb *
 mesh_get_scb(struct mesh_softc *sc)
 {
 	struct mesh_scb *scb;
-	int s;
 
-	s = splbio();
 	scb = TAILQ_FIRST(&sc->free_scb);
 	if (scb)
 		TAILQ_REMOVE(&sc->free_scb, scb, chain);
-	splx(s);
 
 	return scb;
 }
@@ -933,11 +931,7 @@ mesh_get_scb(struct mesh_softc *sc)
 void
 mesh_free_scb(struct mesh_softc *sc, struct mesh_scb *scb)
 {
-	int s;
-
-	s = splbio();
 	TAILQ_INSERT_TAIL(&sc->free_scb, scb, chain);
-	splx(s);
 }
 
 int
@@ -951,9 +945,10 @@ mesh_scsi_cmd(struct scsi_xfer *xs)
 	
 	flags = xs->flags;
 	s = splbio();
-	if ((scb = mesh_get_scb(sc)) == NULL)
-		return (TRY_AGAIN_LATER);
+	scb = mesh_get_scb(sc);
 	splx(s);
+	if (scb == NULL)
+		return (TRY_AGAIN_LATER);
 	DPRINTF("cmdlen: %d\n", xs->cmdlen);
 	scb->xs = xs;
 	scb->flags = 0;
@@ -977,19 +972,17 @@ mesh_scsi_cmd(struct scsi_xfer *xs)
 	if (sc->sc_nexus == NULL)
 		mesh_sched(sc);
 	splx(s);
-
 			
-	if ((xs->flags & SCSI_POLL) == 0)
-		return SUCCESSFULLY_QUEUED;
-	
-	if (mesh_poll(xs)) {
-	       	if (mesh_poll(xs)) {
-			printf("timeout\n");
+	if (xs->flags & SCSI_POLL) {
+		if (mesh_poll(xs)) {
+			printf("%s: poll timeout\n",
+			    sc->sc_dev.dv_xname);
+			
 		}
+		return COMPLETE;
 	}
 
-	return COMPLETE;
-
+	return SUCCESSFULLY_QUEUED;
 }
 
 void
