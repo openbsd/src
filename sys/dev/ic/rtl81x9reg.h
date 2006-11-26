@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.33 2006/11/24 04:27:17 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.34 2006/11/26 10:58:16 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -140,7 +140,7 @@
 #define RL_TXCFG_LOOPBKTST	0x00060000	/* loopback test */
 #define RL_TXCFG_IFG2		0x00080000	/* 8169 only */
 #define RL_TXCFG_IFG		0x03000000	/* interframe gap */
-#define RL_TXCFG_HWREV		0x7CC00000
+#define RL_TXCFG_HWREV		0x7C800000
 
 #define RL_LOOPTEST_OFF		0x00000000
 #define RL_LOOPTEST_ON		0x00020000
