@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.166 2006/11/26 15:09:47 mglocker Exp $
+#	$OpenBSD: GENERIC,v 1.167 2006/11/26 16:11:19 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -389,8 +389,8 @@ rtw*	at pci?				# Realtek 8180
 rtw*	at cardbus?			# Realtek 8180
 pgt*	at pci?				# Prism54 (only full-mac varients)
 pgt*	at cardbus?			# Prism54 (only full-mac varients)
-malo*	at pci?				# Marvell Libertas Open
-malo*	at cardbus?			# Marvell Libertas Open
+malo*	at pci?				# Marvell Libertas
+malo*	at cardbus?			# Marvell Libertas
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs
