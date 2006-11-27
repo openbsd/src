@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.119 2006/11/27 11:56:20 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.120 2006/11/27 13:33:15 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -47,6 +47,8 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
 
+#include "bio.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +57,10 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
+#if NBIO > 0
+#include <dev/biovar.h>
+#endif
 
 /*
  * Declarations
@@ -74,6 +80,10 @@ int	scsibusactivate(struct device *, enum devact);
 int	scsibusdetach(struct device *, int);
 
 int	scsibussubmatch(struct device *, void *, void *);
+
+#if NBIO > 0
+int	scsibus_bioctl(struct device *, u_long, caddr_t);
+#endif
 
 struct cfattach scsibus_ca = {
 	sizeof(struct scsibus_softc), scsibusmatch, scsibusattach,
@@ -159,6 +169,11 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 		bzero(sb->sc_link[i], nbytes);
 	}
 
+#if NBIO > 0
+	if (bio_register(&sb->sc_dev, scsibus_bioctl) != 0)
+		printf("%s: unable to register bio\n", sb->sc_dev.dv_xname);
+#endif
+
 	scsi_probe_bus(sb);
 }
 
@@ -173,6 +188,10 @@ scsibusdetach(struct device *dev, int type)
 {
 	struct scsibus_softc		*sb = (struct scsibus_softc *)dev;
 	int				i, j, error;
+
+#if NBIO > 0
+	bio_unregister(&sb->sc_dev);
+#endif
 
 	if ((error = config_detach_children(dev, type)) != 0)
 		return (error);
@@ -209,6 +228,14 @@ scsibussubmatch(struct device *parent, void *match, void *aux)
 
 	return ((*cf->cf_attach->ca_match)(parent, match, aux));
 }
+
+#if NBIO > 0
+int
+scsibus_bioctl(struct device *dev, u_long cmd, caddr_t addr)
+{
+	return (ENOTTY);
+}
+#endif
 
 int
 scsi_probe_bus(struct scsibus_softc *sc)
