@@ -1,4 +1,4 @@
-/* $OpenBSD: kvm86call.S,v 1.1 2006/06/13 03:01:04 gwk Exp $ */
+/* $OpenBSD: kvm86call.S,v 1.2 2006/11/27 15:46:48 gwk Exp $ */
 /* $NetBSD: kvm86call.S,v 1.7 2006/04/11 17:14:07 drochner Exp $ */
 
 /*-
@@ -100,6 +100,7 @@ ENTRY(kvm86_call)
 	movl	CPU_INFO_CURPROC(%ecx),%ecx
 	movl	P_MD_TSS_SEL(%ecx),%edi
 #ifdef	MULTIPROCESSOR
+	GET_CPUINFO(%ecx)	
 	movl	CPU_INFO_GDT(%ecx),%eax
 #else
 	movl	_C_LABEL(gdt),%eax
