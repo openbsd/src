@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.114 2006/11/04 06:03:51 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.115 2006/11/27 18:24:43 beck Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1092,64 +1092,76 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 			return (0);
 		error = EIO;
 		if (xs->retries) {
-			switch (sense->add_sense_code) {
-			case 0x04:	/* LUN not ready */
-				switch (sense->add_sense_code_qual) {
-				case 0x01: /* Becoming Ready */
-				case 0x04: /* Format In Progress */
-				case 0x05: /* Rebuild In Progress */
-				case 0x06: /* Recalculation In Progress */
-				case 0x07: /* Operation In Progress */
-				case 0x08: /* Long Write In Progress */
-				case 0x09: /* Self-Test In Progress */
-					SC_DEBUG(sc_link, SDEV_DB1,
-		    			    ("not ready: busy (%#x)\n",
-					    sense->add_sense_code_qual));
-					return (scsi_delay(xs, 1));
-				}
-				break;
-			case 0x3a:	/* Medium not present */
+			switch (ASC_ASCQ(sense)) {
+			case SENSE_NOT_READY_BECOMING_READY:
+			case SENSE_NOT_READY_FORMAT:
+			case SENSE_NOT_READY_REBUILD:
+			case SENSE_NOT_READY_RECALC:		
+			case SENSE_NOT_READY_INPROGRESS:
+			case SENSE_NOT_READY_LONGWRITE:
+			case SENSE_NOT_READY_SELFTEST:
+				SC_DEBUG(sc_link, SDEV_DB1,
+		    		    ("not ready: busy (%#x)\n",
+				    sense->add_sense_code_qual));
+				return (scsi_delay(xs, 1));
+			case SENSE_NOMEDIUM:
+			case SENSE_NOMEDIUM_TCLOSED:
+			case SENSE_NOMEDIUM_TOPEN:
+			case SENSE_NOMEDIUM_LOADABLE:
+			case SENSE_NOMEDIUM_AUXMEM:
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
 				error = ENOMEDIUM;
+				break;
+			default:
 				break;
 			}
 		}
 		break;
 	case SKEY_MEDIUM_ERROR:
-		switch (sense->add_sense_code) {
-			case 0x3a:	/* Medium not present */
-				sc_link->flags &= ~SDEV_MEDIA_LOADED;
-				error = ENOMEDIUM;
-				break;
-			case 0x30:	/* Medium issues */
-				switch (sense->add_sense_code_qual) {
-				case 0x01: /* (Read) Unknown Format */
-				case 0x02: /* (Read) Incompatible Medium */
-				case 0x04: /* (Write) Unknown Format */
-				case 0x05: /* (Write) Incompatible Medium */
-				case 0x06: /* (Format) Incompatible Medium */
-				case 0x08: /* (Write/CD) Can't Write Media */
-					error = EMEDIUMTYPE;
-				default:
-					error = EIO;
-				}
-				break;
-			default:
-				error = EIO;
-				break;
+		switch (ASC_ASCQ(sense)) {
+		case SENSE_NOMEDIUM:
+		case SENSE_NOMEDIUM_TCLOSED:
+		case SENSE_NOMEDIUM_TOPEN:
+		case SENSE_NOMEDIUM_LOADABLE:
+		case SENSE_NOMEDIUM_AUXMEM:
+			sc_link->flags &= ~SDEV_MEDIA_LOADED;
+			error = ENOMEDIUM;
+			break;
+		case SENSE_BAD_MEDIUM:
+		case SENSE_NR_MEDIUM_UNKNOWN_FORMAT:
+		case SENSE_NR_MEDIUM_INCOMPATIBLE_FORMAT:
+		case SENSE_NW_MEDIUM_UNKNOWN_FORMAT:
+		case SENSE_NW_MEDIUM_INCOMPATIBLE_FORMAT:
+		case SENSE_NF_MEDIUM_INCOMPATIBLE_FORMAT:
+		case SENSE_NW_MEDIUM_AC_MISMATCH:
+			error = EMEDIUMTYPE;
+			break;
+		default:
+			error = EIO;
+			break;
 		}
 		break;
 	case SKEY_ILLEGAL_REQUEST:
 		if ((xs->flags & SCSI_IGNORE_ILLEGAL_REQUEST) != 0)
 			return (0);
-		if (sense->add_sense_code == 0x53 &&
-		    sense->add_sense_code_qual == 0x02)
-			return(EBUSY);	/* Medium Removal Prevented */
+		if (ASC_ASCQ(sense) == SENSE_MEDIUM_REMOVAL_PREVENTED)
+			return(EBUSY);
 		error = EINVAL;
 		break;
 	case SKEY_UNIT_ATTENTION:
-		if (sense->add_sense_code == 0x29) /* device or bus reset */
+		switch (ASC_ASCQ(sense)) {
+		case SENSE_POWER_RESET_OR_BUS:
+		case SENSE_POWER_ON:
+		case SENSE_BUS_RESET:
+		case SENSE_BUS_DEVICE_RESET:
+		case SENSE_DEVICE_INTERNAL_RESET:
+		case SENSE_TSC_CHANGE_SE:
+		case SENSE_TSC_CHANGE_LVD:
+		case SENSE_IT_NEXUS_LOSS:
 			return (scsi_delay(xs, 1));
+		default:
+			break;
+		}
 		if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 			sc_link->flags &= ~SDEV_MEDIA_LOADED;
 		if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) != 0 ||
@@ -1169,9 +1181,8 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 		error = ENOSPC;
 		break;
 	case SKEY_HARDWARE_ERROR:
-		if (sense->add_sense_code == 0x52 &&
-		    sense->add_sense_code_qual == 0x00)
-			return(EMEDIUMTYPE);	/* Cartridge Fault */
+		if (ASC_ASCQ(sense) == SENSE_CARTRIDGE_FAULT)
+			return(EMEDIUMTYPE);
 		error = EIO;
 		break;
 	default:

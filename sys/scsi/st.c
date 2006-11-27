@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.65 2006/10/07 23:40:08 beck Exp $	*/
+/*	$OpenBSD: st.c,v 1.66 2006/11/27 18:24:43 beck Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1739,20 +1739,13 @@ st_interpret_sense(xs)
 	case SKEY_NOT_READY:
 		if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
 			return (0);
-		switch (sense->add_sense_code) {
-		case 0x04:	/* LUN not ready */
-			switch (sense->add_sense_code_qual) {
-				case 0x01: /* Becoming Ready */
-					SC_DEBUG(sc_link, SDEV_DB1,
-		    			    ("not ready: busy (%#x)\n",
-					    sense->add_sense_code_qual));
-					/* don't count this as a retry */
-					xs->retries++;
-					return (scsi_delay(xs, 1));
-				default:
-					return (EJUSTRETURN);
-			}
-			break;
+		switch (ASC_ASCQ(sense)) {
+		case SENSE_NOT_READY_BECOMING_READY:
+			SC_DEBUG(sc_link, SDEV_DB1, ("not ready: busy (%#x)\n",
+			    sense->add_sense_code_qual));
+			/* don't count this as a retry */
+			xs->retries++;
+			return (scsi_delay(xs, 1));
 		default:
 			return (EJUSTRETURN);
 	}
