@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxgareg.h,v 1.3 2006/11/26 18:51:10 miod Exp $	*/
+/*	$OpenBSD: cfxgareg.h,v 1.4 2006/11/27 19:31:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -186,6 +186,7 @@
 #define	PIXEL_PANNING_MASK_4BPP			0x03
 #define	PIXEL_PANNING_MASK_8BPP			0x01
 #define	PIXEL_PANNING_MASK_15BPP		0x00
+#define	PIXEL_PANNING_MASK_16BPP		0x00
 
 /* LCD display FIFO high threshold control register - RW */
 #define	CFREG_LCD_FIFO_THRESHOLD_HIGH	0x004a
@@ -381,6 +382,7 @@
 /* Power save configuration register - RW */
 #define	CFREG_POWER_CONF		0x1f0
 #define	POWERSAVE_ENABLE	0x01
+#define	POWERSAVE_MBO		0x10
 
 /* Power save status register - RW */
 #define	CFREG_POWER_STATUS		0x1f1

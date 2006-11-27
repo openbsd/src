@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.9 2006/11/27 13:48:31 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.10 2006/11/27 19:31:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -58,6 +58,16 @@
 
 struct cfxga_screen;
 
+#define	CFXGA_MODE_640x480x16	0
+#define	CFXGA_MODE_800x600x16	1
+#ifdef notyet
+#define	CFXGA_MODE_640x480x8	2
+#define	CFXGA_MODE_800x600x8	3
+#define	CFXGA_NMODES		4
+#else
+#define	CFXGA_NMODES		2
+#endif
+
 struct cfxga_softc {
 	struct device sc_dev;
 	struct pcmcia_function *sc_pf;
@@ -76,9 +86,9 @@ struct cfxga_softc {
 	struct cfxga_screen *sc_active;
 
 	/* wsdisplay glue */
-	struct wsscreen_descr sc_wsd;
+	struct wsscreen_descr sc_wsd[CFXGA_NMODES];
 	struct wsscreen_list sc_wsl;
-	struct wsscreen_descr *sc_scrlist[1];
+	struct wsscreen_descr *sc_scrlist[CFXGA_NMODES];
 	struct wsdisplay_emulops sc_ops;
 	struct device *sc_wsdisplay;
 };
@@ -134,15 +144,9 @@ struct charcell {
 
 struct cfxga_screen {
 	LIST_ENTRY(cfxga_screen) scr_link;
-
-	/* parent reference */
-	struct cfxga_softc *scr_sc;
-
-	/* raster op glue */
-	struct rasops_info scr_ri;
-
-	/* backing memory */
-	struct charcell *scr_mem;
+	struct cfxga_softc *scr_sc;	/* parent reference */
+	struct rasops_info scr_ri;	/* raster op glue */
+	struct charcell *scr_mem;	/* backing memory */
 };
 	
 void	cfxga_copycols(void *, int, int, int, int);
@@ -159,14 +163,15 @@ int	cfxga_expand_char(struct cfxga_screen *, u_int, int, int, long);
 int	cfxga_repaint_screen(struct cfxga_screen *);
 void	cfxga_reset_video(struct cfxga_softc *);
 void	cfxga_reset_and_repaint(struct cfxga_softc *);
-int	cfxga_solid_fill(struct cfxga_softc *, int, int, int, int, int32_t);
-int	cfxga_standalone_rop(struct cfxga_softc *, u_int,
+int	cfxga_solid_fill(struct cfxga_screen *, int, int, int, int, int32_t);
+int	cfxga_standalone_rop(struct cfxga_screen *, u_int,
 	    int, int, int, int, int, int);
 int	cfxga_synchronize(struct cfxga_softc *);
 u_int	cfxga_wait(struct cfxga_softc *, u_int, u_int);
 
-#define	cfxga_clear_screen(sc) \
-	cfxga_solid_fill(sc, 0, 0, 640, 480, 0)
+#define	cfxga_clear_screen(scr) \
+	cfxga_solid_fill(scr, 0, 0, scr->scr_ri.ri_width, \
+	    scr->scr_ri.ri_height, scr->scr_ri.ri_devcmap[WSCOL_BLACK])
 
 #define	cfxga_read_1(sc, addr) \
 	bus_space_read_1((sc)->sc_pmemh.memt, (sc)->sc_pmemh.memh, \
@@ -183,6 +188,15 @@ u_int	cfxga_wait(struct cfxga_softc *, u_int, u_int);
 
 #define	cfxga_stop_memory_blt(sc) \
 	(void)cfxga_read_2(sc, CFREG_BITBLT_DATA)
+
+const char *cfxga_modenames[CFXGA_NMODES] = {
+	"640x480x16",
+	"800x600x16",
+#ifdef notyet
+	"640x480x8",
+	"800x600x8"
+#endif
+};
 
 /*
  * This card is very poorly engineered, specificationwise. It does not
@@ -336,6 +350,8 @@ cfxga_attach(struct device *parent, struct device *self, void *aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_function *pf = pa->pf;
 	struct wsemuldisplaydev_attach_args waa;
+	struct wsscreen_descr *wsd;
+	u_int i;
 
 	LIST_INIT(&sc->sc_scr);
 	sc->sc_nscreens = 0;
@@ -369,24 +385,36 @@ cfxga_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
-	cfxga_reset_video(sc);
+	/*
+	 * We actually defer real initialization to the creation of the
+	 * first wsdisplay screen, since we do not know which mode to pick
+	 * yet.
+	 */
 
-	strlcpy(sc->sc_wsd.name, "std", sizeof(sc->sc_wsd.name));
-	sc->sc_wsd.textops = &sc->sc_ops;
-
-	sc->sc_scrlist[0] = &sc->sc_wsd;
-	sc->sc_wsl.nscreens = 1;
+	for (wsd = sc->sc_wsd, i = 0; i < CFXGA_NMODES; wsd++, i++) {
+		strlcpy(wsd->name, cfxga_modenames[i], sizeof(wsd->name));
+		wsd->textops = &sc->sc_ops;
+		sc->sc_scrlist[i] = wsd;
+	}
+	sc->sc_wsl.nscreens = CFXGA_NMODES;
 	sc->sc_wsl.screens = (const struct wsscreen_descr **)sc->sc_scrlist;
 
 	waa.console = 0;
 	waa.scrdata = &sc->sc_wsl;
 	waa.accessops = &cfxga_accessops;
 	waa.accesscookie = sc;
+#ifdef notyet
 	waa.defaultscreens = 1;
+#endif
 
 	if ((sc->sc_wsdisplay =
-	    config_found(self, &waa, wsemuldisplaydevprint)) == NULL)
-		cfxga_clear_screen(sc);	/* otherwise wscons will do this */
+	    config_found(self, &waa, wsemuldisplaydevprint)) == NULL) {
+		/* otherwise wscons will do this */
+		if (sc->sc_active != NULL)
+			cfxga_clear_screen(sc->sc_active);
+		else
+			cfxga_burner(sc, 0, 0);
+	}
 }
 
 int
@@ -422,34 +450,67 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	struct cfxga_softc *sc = v;
 	struct cfxga_screen *scr;
 	struct rasops_info *ri;
-	u_int scrsize;
+	u_int mode, width, height, depth, scrsize;
 
 	scr = malloc(sizeof *scr, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (scr == NULL)
 		return (ENOMEM);
 	bzero(scr, sizeof *scr);
 
+	mode = type - sc->sc_wsd;
+#ifdef DIAGNOSTIC
+	if (mode >= CFXGA_NMODES)
+		mode = CFXGA_MODE_640x480x16;
+#endif
+	switch (mode) {
+	default:
+	case CFXGA_MODE_640x480x16:
+		width = 640;
+		height = 480;
+		depth = 16;
+		break;
+	case CFXGA_MODE_800x600x16:
+		width = 800;
+		height = 600;
+		depth = 16;
+		break;
+#ifdef notyet
+	case CFXGA_MODE_640x480x8:
+		width = 640;
+		height = 480;
+		depth = 8;
+		break;
+	case CFXGA_MODE_800x600x8:
+		width = 800;
+		height = 600;
+		depth = 8;
+		break;
+#endif
+	}
+
 	ri = &scr->scr_ri;
 	ri->ri_hw = (void *)scr;
 	ri->ri_bits = NULL;
-	ri->ri_depth = 16;
-	ri->ri_width = 640;
-	ri->ri_height = 480;
-	ri->ri_stride = 640 * 16 / 8;
+	ri->ri_depth = depth;
+	ri->ri_width = width;
+	ri->ri_height = height;
+	ri->ri_stride = width * depth / 8;
 	ri->ri_flg = 0;
 
 	/* swap B and R at 16 bpp */
-	ri->ri_rnum = 5;
-	ri->ri_rpos = 11;
-	ri->ri_gnum = 6;
-	ri->ri_gpos = 5;
-	ri->ri_bnum = 5;
-	ri->ri_bpos = 0;
+	if (depth == 16) {
+		ri->ri_rnum = 5;
+		ri->ri_rpos = 11;
+		ri->ri_gnum = 6;
+		ri->ri_gpos = 5;
+		ri->ri_bnum = 5;
+		ri->ri_bpos = 0;
+	}
 
-	if (sc->sc_wsd.nrows == 0)
+	if (type->nrows == 0)	/* first screen creation */
 		rasops_init(ri, 100, 100);
 	else
-		rasops_init(ri, sc->sc_wsd.nrows, sc->sc_wsd.ncols);
+		rasops_init(ri, type->nrows, type->ncols);
 
 	/*
 	 * Allocate backing store to remember non-visible screen contents in
@@ -470,13 +531,19 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	ri->ri_ops.putchar = cfxga_putchar;
 	ri->ri_do_cursor = cfxga_do_cursor;
 
-	if (sc->sc_wsd.nrows == 0) {
-		sc->sc_wsd.nrows = ri->ri_rows;
-		sc->sc_wsd.ncols = ri->ri_cols;
+	/*
+	 * Finish initializing our screen descriptions, now that we know
+	 * the actual console emulation parameters.
+	 */
+	if (type->nrows == 0) {
+		struct wsscreen_descr *wsd = (struct wsscreen_descr *)type;
+
+		wsd->nrows = ri->ri_rows;
+		wsd->ncols = ri->ri_cols;
 		bcopy(&ri->ri_ops, &sc->sc_ops, sizeof(sc->sc_ops));
-		sc->sc_wsd.fontwidth = ri->ri_font->fontwidth;
-		sc->sc_wsd.fontheight = ri->ri_font->fontheight;
-		sc->sc_wsd.capabilities = ri->ri_caps;
+		wsd->fontwidth = ri->ri_font->fontwidth;
+		wsd->fontheight = ri->ri_font->fontheight;
+		wsd->capabilities = ri->ri_caps;
 	}
 
 	scr->scr_sc = sc;
@@ -528,6 +595,7 @@ int
 cfxga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct cfxga_softc *sc = v;
+	struct cfxga_screen *scr;
 	struct wsdisplay_fbinfo *wdf;
 	int mode;
 
@@ -537,12 +605,18 @@ cfxga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case WSDISPLAYIO_GINFO:
-		/* it's not worth using sc->sc_active->scr_ri fields... */
 		wdf = (struct wsdisplay_fbinfo *)data;
-		wdf->height = 640;
-		wdf->width = 480;
-		wdf->depth = 16;
-		wdf->cmsize = 0;
+		scr = sc->sc_active;
+		if (scr == NULL) {
+			/* try later...after running wsconscfg to add screens */
+			wdf->height = wdf->width = wdf->depth = wdf->cmsize = 0;
+		} else {
+			wdf->height = scr->scr_ri.ri_height;
+			wdf->width = scr->scr_ri.ri_width;
+			wdf->depth = scr->scr_ri.ri_depth;
+			wdf->cmsize = scr->scr_ri.ri_depth <= 8 ?
+			    (1 << scr->scr_ri.ri_depth) : 0;
+		}
 		break;
 
 	case WSDISPLAYIO_SMODE:
@@ -601,11 +675,7 @@ cfxga_show_screen(void *v, void *cookie, int waitok,
 		return (0);
 
 	sc->sc_active = scr;
-	cfxga_repaint_screen(scr);
-
-	/* turn back video on as well if necessary... */
-	if (old == NULL)
-		cfxga_burner(sc, 1, 0);
+	cfxga_reset_and_repaint(sc);	/* will turn video on if scr != NULL */
 
 	return (0);
 }
@@ -617,6 +687,13 @@ cfxga_show_screen(void *v, void *cookie, int waitok,
 void
 cfxga_reset_video(struct cfxga_softc *sc)
 {
+	struct cfxga_screen *scr = sc->sc_active;
+	struct rasops_info *ri;
+#ifdef notyet
+	const u_int8_t *cmap;
+	u_int i;
+#endif
+
 	/*
 	 * Reset controller
 	 */
@@ -632,7 +709,7 @@ cfxga_reset_video(struct cfxga_softc *sc)
 	cfxga_stop_memory_blt(sc);
 
 	/*
-	 * Setup video mode.
+	 * Setup common video mode parameters.
 	 */
 
 	cfxga_write_2(sc, CFREG_MEMCLK, MEMCLK_SRC_CLK3);
@@ -646,30 +723,66 @@ cfxga_reset_video(struct cfxga_softc *sc)
 
 	cfxga_write_2(sc, CFREG_CRT_START_LOW, 0);
 	cfxga_write_1(sc, CFREG_CRT_START_HIGH, 0);
-	cfxga_write_1(sc, CFREG_CRT_PANNING, PIXEL_PANNING_MASK_15BPP);
+	cfxga_write_1(sc, CFREG_CRT_PANNING, 0);
 	cfxga_write_1(sc, CFREG_CRT_FIFO_THRESHOLD_HIGH, 0);
 	cfxga_write_1(sc, CFREG_CRT_FIFO_THRESHOLD_LOW, 0);
 
 	cfxga_write_1(sc, CFREG_CRT_CURSOR_CONTROL, CURSOR_INACTIVE);
 
-	cfxga_write_1(sc, CFREG_POWER_CONF, 0);
+	cfxga_write_1(sc, CFREG_POWER_CONF, POWERSAVE_MBO);
 	cfxga_write_1(sc, CFREG_WATCHDOG, 0);
 
-	/* 640x480x72x16 specific values */
-	cfxga_write_1(sc, CFREG_CRTTV_PCLK, CRT_PCLK_SRC_CLKI | CRT_PCLK_DIV_1);
-	cfxga_write_1(sc, CFREG_WSTATE, WSTATE_MCLK);
-	cfxga_write_1(sc, CFREG_CRT_HWIDTH, (640 / 8) - 1);
-	/* HNDISP and HSTART need to be programmed at the same time */
-	cfxga_write_2(sc, CFREG_CRT_HNDISP, 23 | (2 << 8));
-	cfxga_write_1(sc, CFREG_CRT_HPULSE, 4);
-	cfxga_write_2(sc, CFREG_CRT_VHEIGHT, 480 - 1);
-	/* VNDISP and VSTART need to be programmed at the same time */
-	cfxga_write_2(sc, CFREG_CRT_VNDISP, 39 | (8 << 8));
-	cfxga_write_1(sc, CFREG_CRT_VPULSE, 2);
+	/*
+	 * Setup mode-dependent parameters.
+	 */
+	if (scr == NULL)
+		return;
+
+	cfxga_write_2(sc, CFREG_CRTTV_PCLK, CRT_PCLK_SRC_CLKI | CRT_PCLK_DIV_1);
+	cfxga_write_2(sc, CFREG_WSTATE, WSTATE_MCLK);
+
+	ri = &scr->scr_ri;
+	switch (scr->scr_ri.ri_width) {
+	default:
+	case 640:
+		cfxga_write_1(sc, CFREG_CRT_HWIDTH, (640 / 8) - 1);
+		/* HNDISP and HSTART need to be programmed at the same time */
+		cfxga_write_2(sc, CFREG_CRT_HNDISP, 23 | (2 << 8));
+		cfxga_write_1(sc, CFREG_CRT_HPULSE, 4);
+		cfxga_write_2(sc, CFREG_CRT_VHEIGHT, 480 - 1);
+		/* VNDISP and VSTART need to be programmed at the same time */
+		cfxga_write_2(sc, CFREG_CRT_VNDISP, 39 | (8 << 8));
+		cfxga_write_1(sc, CFREG_CRT_VPULSE, 2);
+		break;
+	case 800:
+		cfxga_write_1(sc, CFREG_CRT_HWIDTH, (800 / 8) - 1);
+		/* HNDISP and HSTART need to be programmed at the same time */
+		cfxga_write_2(sc, CFREG_CRT_HNDISP, 27 | (2 << 8));
+		cfxga_write_1(sc, CFREG_CRT_HPULSE, 4);
+		cfxga_write_2(sc, CFREG_CRT_VHEIGHT, 600 - 1);
+		/* VNDISP and VSTART need to be programmed at the same time */
+		cfxga_write_2(sc, CFREG_CRT_VNDISP, 25 | (8 << 8));
+		cfxga_write_1(sc, CFREG_CRT_VPULSE, 2);
+		break;
+	}
 	cfxga_write_1(sc, CFREG_TV_CONTROL,
 	    TV_LUMINANCE_FILTER | TV_SVIDEO_OUTPUT);
-	cfxga_write_1(sc, CFREG_CRT_MODE, CRT_MODE_16BPP);
-	cfxga_write_2(sc, CFREG_CRT_MEMORY, 640);
+	cfxga_write_1(sc, CFREG_CRT_MODE,
+	    ri->ri_depth == 16 ? CRT_MODE_16BPP : CRT_MODE_8BPP);
+	cfxga_write_2(sc, CFREG_CRT_MEMORY, ri->ri_width * ri->ri_depth / 16);
+
+#ifdef notyet
+	/*
+	 * On 8bpp video modes, program the LUT
+	 */
+	if (ri->ri_depth == 8) {
+		cfxga_write_1(sc, CFREG_LUT_MODE, LUT_CRT);
+		cfxga_write_1(sc, CFREG_LUT_ADDRESS, 0); /* autoincrements */
+		cmap = rasops_cmap;
+		for (i = 256 * 3; i != 0; i--)
+			cfxga_write_1(sc, CFREG_LUT_DATA, *cmap++ & 0xf0);
+	}
+#endif
 
 	cfxga_write_1(sc, CFREG_MODE, MODE_CRT);
 	delay(25000);
@@ -683,7 +796,7 @@ cfxga_reset_and_repaint(struct cfxga_softc *sc)
 	if (sc->sc_active != NULL)
 		cfxga_repaint_screen(sc->sc_active);
 	else
-		cfxga_clear_screen(sc);
+		cfxga_burner(sc, 0, 0);
 }
 
 /*
@@ -741,7 +854,7 @@ cfxga_expand_char(struct cfxga_screen *scr, u_int uc, int x, int y, long attr)
 	u_int i;
 	int rc;
 
-	pos = (y * 640 + x) * (16 / 8);
+	pos = (y * ri->ri_width + x) * ri->ri_depth / 8;
 	fontbits = (u_int8_t *)(font->data + (uc - font->firstchar) *
 	    ri->ri_fontscale);
 	rasops_unpack_attr(attr, &fg, &bg, &ul);
@@ -756,13 +869,14 @@ cfxga_expand_char(struct cfxga_screen *scr, u_int uc, int x, int y, long attr)
 	cfxga_write_2(sc, CFREG_BITBLT_SRC_HIGH, 0);
 	cfxga_write_2(sc, CFREG_BITBLT_DST_LOW, pos);
 	cfxga_write_2(sc, CFREG_BITBLT_DST_HIGH, pos >> 16);
-	cfxga_write_2(sc, CFREG_BITBLT_OFFSET, 640);
+	cfxga_write_2(sc, CFREG_BITBLT_OFFSET,
+	    ri->ri_width * ri->ri_depth / 16);
 	cfxga_write_2(sc, CFREG_BITBLT_WIDTH, font->fontwidth - 1);
 	cfxga_write_2(sc, CFREG_BITBLT_HEIGHT, font->fontheight - 1);
 	cfxga_write_2(sc, CFREG_BITBLT_FG, ri->ri_devcmap[fg]);
 	cfxga_write_2(sc, CFREG_BITBLT_BG, ri->ri_devcmap[bg]);
-	cfxga_write_2(sc, CFREG_BITBLT_CONTROL,
-	    BITBLT_ACTIVE | BITBLT_COLOR_16);
+	cfxga_write_2(sc, CFREG_BITBLT_CONTROL, BITBLT_ACTIVE |
+	    (ri->ri_depth > 8 ? BITBLT_COLOR_16 : BITBLT_COLOR_8));
 
 	if (cfxga_wait(sc, BITBLT_ACTIVE, BITBLT_ACTIVE) == 0)
 		goto fail;	/* unlikely */
@@ -828,7 +942,7 @@ cfxga_repaint_screen(struct cfxga_screen *scr)
 	int fg, bg;
 	int rc;
 
-	cfxga_clear_screen(scr->scr_sc);
+	cfxga_clear_screen(scr);
 
 	cx = ri->ri_font->fontwidth;
 	cy = ri->ri_font->fontheight;
@@ -838,7 +952,7 @@ cfxga_repaint_screen(struct cfxga_screen *scr)
 		    lx++, x += cx) {
 			if (cell->uc == 0 || cell->uc == ' ') {
 				rasops_unpack_attr(cell->attr, &fg, &bg, NULL);
-				rc = cfxga_solid_fill(scr->scr_sc, x, y, cx, cy,
+				rc = cfxga_solid_fill(scr, x, y, cx, cy,
 				    ri->ri_devcmap[bg]);
 			} else {
 				rc = cfxga_expand_char(scr, cell->uc,
@@ -857,13 +971,15 @@ cfxga_repaint_screen(struct cfxga_screen *scr)
  * Perform a solid fill operation.
  */
 int
-cfxga_solid_fill(struct cfxga_softc *sc, int x, int y, int cx, int cy,
+cfxga_solid_fill(struct cfxga_screen *scr, int x, int y, int cx, int cy,
     int32_t srccolor)
 {
+	struct cfxga_softc *sc = scr->scr_sc;
+	struct rasops_info *ri = &scr->scr_ri;
 	u_int pos;
 	int rc;
 
-	pos = (y * 640 + x) * (16 / 8);
+	pos = (y * ri->ri_width + x) * ri->ri_depth / 8;
 
 	/* Wait for previous operations to complete */
 	if ((rc = cfxga_synchronize(sc)) != 0)
@@ -874,12 +990,13 @@ cfxga_solid_fill(struct cfxga_softc *sc, int x, int y, int cx, int cy,
 	cfxga_write_2(sc, CFREG_BITBLT_SRC_HIGH, pos >> 16);
 	cfxga_write_2(sc, CFREG_BITBLT_DST_LOW, pos);
 	cfxga_write_2(sc, CFREG_BITBLT_DST_HIGH, pos >> 16);
-	cfxga_write_2(sc, CFREG_BITBLT_OFFSET, 640);
+	cfxga_write_2(sc, CFREG_BITBLT_OFFSET,
+	    ri->ri_width * ri->ri_depth / 16);
 	cfxga_write_2(sc, CFREG_BITBLT_WIDTH, cx - 1);
 	cfxga_write_2(sc, CFREG_BITBLT_HEIGHT, cy - 1);
 	cfxga_write_2(sc, CFREG_BITBLT_FG, (u_int16_t)srccolor);
-	cfxga_write_2(sc, CFREG_BITBLT_CONTROL,
-	    BITBLT_ACTIVE | BITBLT_COLOR_16);
+	cfxga_write_2(sc, CFREG_BITBLT_CONTROL, BITBLT_ACTIVE |
+	    (ri->ri_depth > 8 ? BITBLT_COLOR_16 : BITBLT_COLOR_8));
 
 	return (0);
 }
@@ -888,15 +1005,17 @@ cfxga_solid_fill(struct cfxga_softc *sc, int x, int y, int cx, int cy,
  * Perform an internal frame buffer operation.
  */
 int
-cfxga_standalone_rop(struct cfxga_softc *sc, u_int rop, int sx, int sy,
+cfxga_standalone_rop(struct cfxga_screen *scr, u_int rop, int sx, int sy,
     int dx, int dy, int cx, int cy)
 {
+	struct cfxga_softc *sc = scr->scr_sc;
+	struct rasops_info *ri = &scr->scr_ri;
 	u_int srcpos, dstpos;
 	u_int opcode;
 	int rc;
 
-	srcpos = (sy * 640 + sx) * (16 / 8);
-	dstpos = (dy * 640 + dx) * (16 / 8);
+	srcpos = (sy * ri->ri_width + sx) * ri->ri_depth / 8;
+	dstpos = (dy * ri->ri_width + dx) * ri->ri_depth / 8;
 
 	if (dstpos <= srcpos)
 		opcode = (OP_MOVE_POSITIVE_ROP << 8) | rop;
@@ -912,11 +1031,12 @@ cfxga_standalone_rop(struct cfxga_softc *sc, u_int rop, int sx, int sy,
 	cfxga_write_2(sc, CFREG_BITBLT_SRC_HIGH, srcpos >> 16);
 	cfxga_write_2(sc, CFREG_BITBLT_DST_LOW, dstpos);
 	cfxga_write_2(sc, CFREG_BITBLT_DST_HIGH, dstpos >> 16);
-	cfxga_write_2(sc, CFREG_BITBLT_OFFSET, 640);
+	cfxga_write_2(sc, CFREG_BITBLT_OFFSET,
+	    ri->ri_width * ri->ri_depth / 16);
 	cfxga_write_2(sc, CFREG_BITBLT_WIDTH, cx - 1);
 	cfxga_write_2(sc, CFREG_BITBLT_HEIGHT, cy - 1);
-	cfxga_write_2(sc, CFREG_BITBLT_CONTROL,
-	    BITBLT_ACTIVE | BITBLT_COLOR_16);
+	cfxga_write_2(sc, CFREG_BITBLT_CONTROL, BITBLT_ACTIVE |
+	    (ri->ri_depth > 8 ? BITBLT_COLOR_16 : BITBLT_COLOR_8));
 
 	return (0);
 }
@@ -949,7 +1069,7 @@ cfxga_copycols(void *cookie, int row, int src, int dst, int num)
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = num * ri->ri_font->fontwidth;
 	cy = ri->ri_font->fontheight;
-	cfxga_standalone_rop(scr->scr_sc, ROP_SRC, sx, y, dx, y, cx, cy);
+	cfxga_standalone_rop(scr, ROP_SRC, sx, y, dx, y, cx, cy);
 }
 
 void
@@ -972,7 +1092,7 @@ cfxga_copyrows(void *cookie, int src, int dst, int num)
 	dy = dst * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = ri->ri_emuwidth;
 	cy = num * ri->ri_font->fontheight;
-	cfxga_standalone_rop(scr->scr_sc, ROP_SRC, x, sy, x, dy, cx, cy);
+	cfxga_standalone_rop(scr, ROP_SRC, x, sy, x, dy, cx, cy);
 }
 
 void
@@ -988,7 +1108,7 @@ cfxga_do_cursor(struct rasops_info *ri)
 	y = ri->ri_crow * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = ri->ri_font->fontwidth;
 	cy = ri->ri_font->fontheight;
-	cfxga_standalone_rop(scr->scr_sc, ROP_ONES ^ ROP_SRC /* i.e. not SRC */,
+	cfxga_standalone_rop(scr, ROP_ONES ^ ROP_SRC /* i.e. not SRC */,
 	    x, y, x, y, cx, cy);
 }
 
@@ -1014,7 +1134,7 @@ cfxga_erasecols(void *cookie, int row, int col, int num, long attr)
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = num * ri->ri_font->fontwidth;
 	cy = ri->ri_font->fontheight;
-	cfxga_solid_fill(scr->scr_sc, x, y, cx, cy, ri->ri_devcmap[bg]);
+	cfxga_solid_fill(scr, x, y, cx, cy, ri->ri_devcmap[bg]);
 }
 
 void
@@ -1043,7 +1163,7 @@ cfxga_eraserows(void *cookie, int row, int num, long attr)
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = ri->ri_emuwidth;
 	cy = num * ri->ri_font->fontheight;
-	cfxga_solid_fill(scr->scr_sc, x, y, cx, cy, ri->ri_devcmap[bg]);
+	cfxga_solid_fill(scr, x, y, cx, cy, ri->ri_devcmap[bg]);
 }
 
 void
@@ -1068,7 +1188,7 @@ cfxga_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		rasops_unpack_attr(attr, &fg, &bg, NULL);
 		cx = ri->ri_font->fontwidth;
 		cy = ri->ri_font->fontheight;
-		cfxga_solid_fill(scr->scr_sc, x, y, cx, cy, ri->ri_devcmap[bg]);
+		cfxga_solid_fill(scr, x, y, cx, cy, ri->ri_devcmap[bg]);
 	} else {
 		cfxga_expand_char(scr, uc, x, y, attr);
 	}
