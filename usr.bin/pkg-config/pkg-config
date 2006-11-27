@@ -18,15 +18,16 @@
 use strict;
 use warnings;
 use Getopt::Long;
+use File::Basename;
 
 my @PKGPATH = qw(/usr/local/lib/pkgconfig /usr/X11R6/lib/pkgconfig );
 
-if (defined($ENV{'PKG_CONFIG_PATH'}) && $ENV{'PKG_CONFIG_PATH'}){
-	push(@PKGPATH, split(/:/,$ENV{'PKG_CONFIG_PATH'}));
+if (defined($ENV{'PKG_CONFIG_PATH'}) && $ENV{'PKG_CONFIG_PATH'}) {
+	push(@PKGPATH, split /:/, $ENV{'PKG_CONFIG_PATH'});
 }
 
 my $logfile = '';
-if (defined($ENV{'PKG_CONFIG_LOGFILE'}) && $ENV{'PKG_CONFIG_LOGFILE'}){
+if (defined($ENV{'PKG_CONFIG_LOGFILE'}) && $ENV{'PKG_CONFIG_LOGFILE'}) {
 	$logfile = $ENV{'PKG_CONFIG_LOGFILE'};
 }
 
@@ -39,10 +40,10 @@ our %mode = ();
 our $D = 0; # debug flag
 
 $/ = undef;
-if ($logfile){
-	open (L, ">>" . $logfile);
-	print L '[' . join('] [', $0, @ARGV) . "]\n";
-	close(L);
+if ($logfile) {
+	open my $L, ">>" . $logfile;
+	print $L '[' . join('] [', $0, @ARGV) . "]\n";
+	close $L;
 }
 
 # combo arg-parsing and dependency resolution loop. Hopefully when the loop
@@ -78,91 +79,91 @@ GetOptions(	'debug' => \$D,
 		'variable=s' => \$mode{'variable'}
 	);
 
-print STDERR "\n[" . join('] [', $0, @ARGV) . "]\n" if ($D);
-self_version($mode{'minvers'}) if ($mode{'minvers'}); #does not return
-do_modversion($mode{'modversion'}) if ($mode{'modversion'}); #does not return
+print STDERR "\n[" . join('] [', $0, @ARGV) . "]\n" if $D;
+self_version($mode{'minvers'}) if $mode{'minvers'}; #does not return
+do_modversion($mode{'modversion'}) if $mode{'modversion'}; #does not return
 
 $p = join(' ', @ARGV);
 $p =~ s/\s+/ /g;
 $p =~ s/^\s//g;
-@ARGV = split(/\s+/, $p);
+@ARGV = split /\s+/, $p;
 
-if (defined($mode{'exists'})){
-	while (@ARGV){
+if (defined $mode{'exists'}) {
+	while (@ARGV) {
 		if ((@ARGV >= 2)  && ($ARGV[1] =~ /[<=>]+/) &&
-		    ($ARGV[2] =~ /[0-9\.]+/)){
-			exit 1 unless (versionmatch(@ARGV));
-			shift(@ARGV); shift(@ARGV); shift(@ARGV);
+		    ($ARGV[2] =~ /[0-9\.]+/)) {
+			exit 1 unless versionmatch(@ARGV);
+			shift @ARGV; shift @ARGV; shift @ARGV;
 		} else {
-			exit 1 unless (pathresolve($ARGV[0]));
-			shift(@ARGV);
+			exit 1 unless pathresolve($ARGV[0]);
+			shift @ARGV;
 		}
 	}
-	exit(0);
+	exit 0;
 }
 
-do_variable($ARGV[0],$mode{'variable'}) if ($mode{'variable'});
+do_variable($ARGV[0], $mode{'variable'}) if $mode{'variable'};
 
 while (@ARGV){
 	$p = $ARGV[0];
 	if ((@ARGV >= 2)  && ($ARGV[1] =~ /[<=>]+/) &&
-	    ($ARGV[2] =~ /[0-9\.]+/)){
-		shift(@ARGV);
-		shift(@ARGV);
+	    ($ARGV[2] =~ /[0-9\.]+/)) {
+		shift @ARGV;
+		shift @ARGV;
 	}
-	shift(@ARGV);
+	shift @ARGV;
 	$p =~ s/,//g;
-	unless ($configs{$p}){ # don't reprocess things we've seen
-		print STDERR "processing $p\n" if ($D);
-		if ($f = pathresolve($p)){ # locate the .pc file
-			exit(0) if (defined($mode{'exists'}));
+	unless ($configs{$p}) { # don't reprocess things we've seen
+		print STDERR "processing $p\n" if $D;
+		if ($f = pathresolve($p)) { # locate the .pc file
+			exit 0 if defined $mode{'exists'};
 	
 			$configs{$p} = slurp($f); # load the config
 			$deps = '';
-			if ($configs{$p} =~ /\bRequires: +(\w.+?)\n/){
+			if ($configs{$p} =~ /\bRequires: +(\w.+?)\n/) {
 				$deps = $1;
 				# XXX how should i handle versions?
 				$deps =~ s/[<>=]+\s*[0-9\.]+\s*//;
 				$deps =~ tr/,/ /;
 			}
 			print STDERR "package $p requires '$deps'\n"
-			    if ($D && $deps);
-			push(@ARGV, split(/\s+/,$deps)) if ($deps);
+			    if $D && $deps;
+			push(@ARGV, split /\s+/, $deps) if $deps;
 
 			$privdeps = '';
-			if ($configs{$p} =~ /\bRequires\.private: +(\w.+?)\n/){
+			if ($configs{$p} =~ /\bRequires\.private: +(\w.+?)\n/) {
 				$privdeps = $1;
 				# XXX how should i handle versions?
 				$privdeps =~ s/[<>=]+\s*[0-9\.]+\s*//;
 			}
 			print STDERR "package $p requires (private) '" .
-			    $privdeps . "'\n" if ($D && $privdeps);
-			push(@ARGV, split(/\s+/,$privdeps)) if ($privdeps);
+			    $privdeps . "'\n" if $D && $privdeps;
+			push(@ARGV, split /\s+/, $privdeps) if $privdeps;
 
 		} else {
-			warn("can't find $p\n");
-			exit(1);
+			warn "can't find $p\n";
+			exit 1;
 		}
 	}
 }
 
-do_cflags() if ($mode{'cflags'});
-do_libs() if ($mode{'libs'});
+do_cflags() if $mode{'cflags'};
+do_libs() if $mode{'libs'};
 
-exit(0);
+exit 0;
 
 ###########################################################################
 
 # look for the .pc file in each of the PKGPATH elements. Return the path or
 # undef if it's not there
-sub pathresolve{
-	my ($p);
+sub pathresolve
+{
+	my ($p) = @_;
 
-	$p = shift;
-	foreach (@PKGPATH){
-		$f = $_ . '/' . ${p} . '.pc';
-		print STDERR "pathresolve($p) looking in $f\n" if ($D);
-		last if (-f $f);
+	foreach my $d (@PKGPATH) {
+		$f = "$d/$p.pc";
+		print STDERR "pathresolve($p) looking in $f\n" if $D;
+		last if -f $f;
 		$f = undef;
 	}
 	return $f;
@@ -170,27 +171,29 @@ sub pathresolve{
 
 
 # Given a filename, return its contents. Also do variable substitutions.
-sub slurp{
-	my ($f);
+sub slurp
+{
+	my ($f) = @_;
 
-	$f = shift;
-	open(F, $f) or return undef;
-	print STDERR "slurp($f) OK\n" if ($D);
-	$f = <F>;
-	close(F);
+	open my $F, '<', $f or return undef;
+	print STDERR "slurp($f) OK\n" if $D;
+	$f = <$F>;
+	close $F;
 	$f = varsub($f);
 	return $f;
 }
 
 # Do variable substitutions, so if "target=x11" is present (for example),
 # any lines referring to $target are filled in properly.
-sub varsub{
+sub varsub
+{
+	my ($buf) = @_;
+
 	my ($var, $val);
 
-	my $buf = shift;
-	while ($buf =~ /\${(\w+)}/gsm){
+	while ($buf =~ /\${(\w+)}/gsm) {
 		$var = $1;
-		if ($buf =~ /${var}=(.+?)\n/s){
+		if ($buf =~ /${var}=(.+?)\n/s) {
 			$val = $1;
 			$buf =~ s/\${$var}/$val/g;
 		}
@@ -199,98 +202,109 @@ sub varsub{
 }
 
 #if the variable option is set, pull out the named variable
-sub do_variable{
+sub do_variable
+{
 	my ($p, $v, undef) = @_;
 	my ($f);
 
-	exit(1) unless ($f = pathresolve($p));
-	exit(1) unless ($f = slurp($f));
+	exit 1 unless $f = pathresolve($p);
+	exit 1 unless $f = slurp($f);
 
-	exit(1) unless ($f =~ /\b${v}=(.+?)\n/);
+	exit 1 unless $f =~ /\b${v}=(.+?)\n/;
 	print "$1\n";
-	exit(0);
+	exit 0;
 }
 
 #if the modversion option is set, pull out the compiler flags
-sub do_modversion{
+sub do_modversion
+{
 	my ($p, undef) = @_;
 	my ($f);
 
-	exit(1) unless ($f = pathresolve($p));
-	exit(1) unless ($f = slurp($f));
+	exit 1 unless $f = pathresolve($p);
+	exit 1 unless $f = slurp($f);
 
-	exit(1) unless ($f =~ /\bVersion:\s+(.+?)\n/);
+	exit 1 unless $f =~ /\bVersion:\s+(.+?)\n/;
 	print "$1\n";
-	exit(0);
+	exit 0;
 }
 
 #if the cflags option is set, pull out the compiler flags
-sub do_cflags{
+sub do_cflags
+{
 	my %words; # store them as a hash to get de-duplicating
 	my @out;
 
-	foreach my $p (keys %configs){
-		if ($configs{$p} =~ /\bCflags:\s+(.+?)\n/){
-			foreach (split(/\s+/, $1)){ $words{$_}=1; }
+	foreach my $p (keys %configs) {
+		if ($configs{$p} =~ /\bCflags:\s+(.+?)\n/) {
+			foreach my $q (split /\s+/, $1) { 
+				$words{$q}=1;
+			}
 		}
 	}
-	foreach (sort keys %words){
-		push(@out, $_) if (/^-I/ && ($mode{'cflags'} & 1));
-		push(@out, $_) if (/^-[^I]/ && ($mode{'cflags'} & 2));
+	foreach my $k (sort keys %words) {
+		push(@out, $k) if $k =~ /^-I/ && ($mode{'cflags'} & 1);
+		push(@out, $k) if $k =~ /^-[^I]/ && ($mode{'cflags'} & 2);
 	}
-	printf("%s\n", join(' ', @out));
+	print join(' ', @out), "\n";
+	return undef;
 }
 
 #if the lib option is set, pull out the linker flags
-sub do_libs{
+sub do_libs
+{
 	my %words; # store them as a hash to get de-duplicating
 	my @out;
 
-	foreach my $p (keys %configs){
-		if ($configs{$p} =~ /\bLibs:\s+(.+?)\n/){
-			foreach (split(/\s+/, $1)){ $words{$_}=1; }
+	foreach my $p (keys %configs) {
+		if ($configs{$p} =~ /\bLibs:\s+(.+?)\n/) {
+			foreach my $q (split /\s+/, $1) { 
+				$words{$q}=1;
+			}
 		}
 	}
-	foreach (sort keys %words){
-		push(@out, $_) if (/^-l/ && ($mode{'libs'} & 1));
-		push(@out, $_) if (/^-L/ && ($mode{'libs'} & 2));
-		push(@out, $_) if (/^-[^lL]/ && ($mode{'libs'} & 4));
+	foreach my $k (sort keys %words) {
+		push(@out, $k) if $k =~ /^-l/ && ($mode{'libs'} & 1);
+		push(@out, $k) if $k =~ /^-L/ && ($mode{'libs'} & 2);
+		push(@out, $k) if $k =~ /^-[^lL]/ && ($mode{'libs'} & 4);
 	}
-	printf("%s\n", join(' ', @out));
+	print join(' ', @out), "\n";
+	return undef;
 }
 
 #list all packages
-sub do_list{
+sub do_list
+{
 	my ($p, $x, $y, @files, $fname, $name);
-	foreach (@PKGPATH){ push(@files, <$_/*.pc>); }
+	foreach my $p (@PKGPATH) { 
+		push(@files, <$p/*.pc>); 
+	}
 
 	# Scan the lengths of the package names so I can make a format
 	# string to line the list up just like the real pkgconfig does.
 	$x = 0;
-	foreach (@files){
-		$fname = (split(/\//, $_))[-1];
-		$fname =~ s/\.pc$//;
-		$y = length($fname);
+	foreach my $f (@files) {
+		$fname = basename($f, '.pc');
+		$y = length $fname;
 		$x = (($y > $x) ? $y : $x);
 	}
 	$x *= -1;
 
-	foreach (@files){
-		$p = slurp($_);
-		$fname = (split(/\//, $_))[-1];
-		$fname =~ s/\.pc$//;
-		if ($p =~ /Name: (\w[^\n]+)\n/gm){
+	foreach my $f (@files) {
+		$p = slurp($f);
+		$fname = basename($f, '.pc');
+		if ($p =~ /Name: (\w[^\n]+)\n/gm) {
 			$name = $1;
-			if ($p =~ /Description:\s+(\w[^\n]+)\n/gm){
+			if ($p =~ /Description:\s+(\w[^\n]+)\n/gm) {
 				printf("%${x}s %s - %s\n", $fname, $name, $1);
 			}
 		}
 	}
-	exit(0);
+	exit 0;
 }
 
-sub help{
-	my ($unused);
+sub help
+{
 	print <<EOF
 Usage: $0 [options]
 --debug	- turn on debugging output
@@ -310,50 +324,53 @@ Usage: $0 [options]
 --uninstalled - allow for uninstalled versions to be used
 EOF
 ;
-	exit(1);
+	exit 1;
 }
 
 # do we meet/beat the version the caller requested?
-sub self_version{
-	my (@a, @b, $v);
-	$v = shift;
-	@a = split(/\./, $v);
-	@b = split(/\./, $version);
+sub self_version
+{
+	my ($v) = @_;
+	my (@a, @b);
 
-	if (($b[0] >= $a[0]) && ($b[1] >= $a[1])){
-		exit(0);
+	@a = split /\./, $v;
+	@b = split /\./, $version;
+
+	if (($b[0] >= $a[0]) && ($b[1] >= $a[1])) {
+		exit 0;
 	} else {
-		exit(1);
+		exit 1;
 	}
 }
 
 # got a package meeting the requested specific version?
-sub versionmatch{
+sub versionmatch
+{
 	my ($pname, $op, $ver, undef) = @_;
 	my (@want, @inst, $m, $f);
 	
-	print STDERR "pname = '$pname'\n" if ($D);
+	print STDERR "pname = '$pname'\n" if  $D;
 	# can't possibly match if we can't find the file
-	return 0 unless ($f = pathresolve($pname));
+	return 0 unless $f = pathresolve($pname);
 	# load the file
 	$configs{$pname} = slurp($f);
 	# can't possibly match if we can't find the version string
-	return 0 unless ($configs{$pname} =~ /Version: ([0-9\.]+)\n/gm);
+	return 0 unless $configs{$pname} =~ /Version: ([0-9\.]+)\n/gm;
 
-	print "comparing $ver (wanted) to $1 (installed)\n" if ($D);
-	@inst = split(/\./, $1);
-	@want = split(/\./, $ver);
+	print "comparing $ver (wanted) to $1 (installed)\n" if $D;
+	@inst = split /\./, $1;
+	@want = split /\./, $ver;
 
-	while (@inst && @want){ #so long as both lists have something
+	while (@inst && @want) { #so long as both lists have something
 		# bail if the requested version element beats existing
-		return 1 if ($inst[0] > $want[0]);
-		return 0 if ($inst[0] < $want[0]);
-		shift(@inst); shift(@want);
+		return 1 if $inst[0] > $want[0];
+		return 0 if $inst[0] < $want[0];
+		shift @inst; shift @want;
 	}
 	# the version at least equals the requested. if the requested
 	# version has some micropatchlevel beyond the existing version,
 	# return failure
-	return 0 if (@want);
+	return 0 if @want;
 	# and after all that, the version is good enough
 	return 1;
 }
