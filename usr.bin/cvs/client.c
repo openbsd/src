@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.27 2006/11/27 16:04:10 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.28 2006/11/27 16:19:59 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -250,6 +250,8 @@ cvs_client_connect_to_server(void)
 	cvs_client_send_request("valid-requests");
 	cvs_client_get_responses();
 
+	cvs_client_send_request("UseUnchanged");
+
 	if (cvs_nolog == 1)
 		cvs_client_send_request("Global_option -l");
 
@@ -270,8 +272,6 @@ cvs_client_connect_to_server(void)
 
 	if (verbosity == 2)
 		cvs_client_send_request("Global_option -V");
-
-	cvs_client_send_request("UseUnchanged");
 
 	/* XXX: If 'Set' is supported? */
 	TAILQ_FOREACH(vp, &cvs_variables, cv_link)
