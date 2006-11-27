@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malo.4,v 1.9 2006/11/23 21:16:08 mglocker Exp $
+.\"	$OpenBSD: malo.4,v 1.10 2006/11/27 17:20:37 mglocker Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt.
 .\"
@@ -72,17 +72,17 @@ This mode is the default.
 .\" or to scan for access points.
 .El
 .Pp
-.\" .Nm
-.\" supports hardware WEP.
-.\" Wired Equivalent Privacy (WEP) is the de facto encryption standard
-.\" for wireless networks.
-.\" It can be typically configured in one of three modes:
-.\" no encryption; 40-bit encryption; or 104-bit encryption.
-.\" Unfortunately, due to serious weaknesses in WEP protocol
-.\" it is strongly recommended that it not be used as the
-.\" sole mechanism to secure wireless communication.
-.\" WEP is not enabled by default.
-.\" .Pp
+.Nm
+supports software WEP.
+Wired Equivalent Privacy (WEP) is the de facto encryption standard
+for wireless networks.
+It can be typically configured in one of three modes:
+no encryption; 40-bit encryption; or 104-bit encryption.
+Unfortunately, due to serious weaknesses in WEP protocol
+it is strongly recommended that it not be used as the
+sole mechanism to secure wireless communication.
+WEP is not enabled by default.
+.Pp
 .Sh CONFIGURATION
 The
 .Nm
