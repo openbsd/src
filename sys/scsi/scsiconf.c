@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.120 2006/11/27 13:33:15 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.121 2006/11/27 18:32:33 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -59,6 +59,8 @@
 #include <scsi/scsiconf.h>
 
 #if NBIO > 0
+#include <sys/ioctl.h>
+#include <sys/scsiio.h>
 #include <dev/biovar.h>
 #endif
 
@@ -233,7 +235,39 @@ scsibussubmatch(struct device *parent, void *match, void *aux)
 int
 scsibus_bioctl(struct device *dev, u_long cmd, caddr_t addr)
 {
-	return (ENOTTY);
+	struct scsibus_softc		*sc = (struct scsibus_softc *)dev;
+	struct sbioc_device		*sdev;
+
+	switch (cmd) {
+	case SBIOCPROBE:
+		sdev = (struct sbioc_device *)addr;
+
+		if (sdev->sd_target == -1 && sdev->sd_lun == -1)
+			return (scsi_probe_bus(sc));
+
+		/* specific lun and wildcard target is bad */
+		if (sdev->sd_target == -1)
+			return (EINVAL);
+
+		if (sdev->sd_lun == -1)
+			return (scsi_probe_target(sc, sdev->sd_target));
+
+		return (scsi_probe_lun(sc, sdev->sd_target, sdev->sd_lun));
+
+	case SBIOCDETACH:
+		sdev = (struct sbioc_device *)addr;
+
+		if (sdev->sd_target == -1)
+			return (EINVAL);
+
+		if (sdev->sd_lun == -1)
+			return (scsi_detach_target(sc, sdev->sd_target, 0));
+
+		return (scsi_detach_lun(sc, sdev->sd_target, sdev->sd_lun, 0));
+
+	default:
+		return (ENOTTY);
+	}
 }
 #endif
 
