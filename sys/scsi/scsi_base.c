@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.115 2006/11/27 18:24:43 beck Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.116 2006/11/27 23:14:22 beck Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1069,7 +1069,7 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 
 	/* Default sense interpretation. */
 	serr = sense->error_code & SSD_ERRCODE;
-	if (serr != 0x70 && serr != 0x71)
+	if (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED)
 		skey = 0xff;	/* Invalid value, since key is 4 bit value. */
 	else
 		skey = sense->flags & SSD_KEY;
@@ -1828,9 +1828,10 @@ scsi_print_sense(struct scsi_xfer *xs)
 
 	/* XXX For error 0x71, current opcode is not the relevant one. */
 	printf("%sCheck Condition (error %#x) on opcode 0x%x\n",
-	    (serr == 0x71) ? "DEFERRED " : "", serr, xs->cmd->opcode);
+	    (serr == SSD_ERRCODE_DEFERRED) ? "DEFERRED " : "", serr,
+	    xs->cmd->opcode);
 
-	if (serr != 0x70 && serr != 0x71) {
+	if (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED) {
 		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
 			struct scsi_sense_data_unextended *usense =
 			    (struct scsi_sense_data_unextended *)sense;

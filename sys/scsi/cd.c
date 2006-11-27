@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.114 2006/11/27 20:15:09 beck Exp $	*/
+/*	$OpenBSD: cd.c,v 1.115 2006/11/27 23:14:22 beck Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -2033,7 +2033,7 @@ cd_interpret_sense(xs)
 	u_int8_t serr = sense->error_code & SSD_ERRCODE;
 
 	if (((sc_link->flags & SDEV_OPEN) == 0) ||
-	    (serr != 0x70 && serr != 0x71))
+	    (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED))
 		return (EJUSTRETURN); /* let the generic code handle it */
 
 	/*

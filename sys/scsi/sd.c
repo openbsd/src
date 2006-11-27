@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.112 2006/11/27 20:15:09 beck Exp $	*/
+/*	$OpenBSD: sd.c,v 1.113 2006/11/27 23:14:22 beck Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1079,7 +1079,7 @@ sd_interpret_sense(xs)
 	 * LUN not ready errors on open devices.
 	 */
 	if (((sc_link->flags & SDEV_OPEN) == 0) ||
-	    (serr != 0x70 && serr != 0x71) ||
+	    (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED) ||
 	    ((sense->flags & SSD_KEY) != SKEY_NOT_READY) ||
 	    (sense->extra_len < 6))
 		return (EJUSTRETURN);

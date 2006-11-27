@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.39 2006/11/27 20:15:09 beck Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.40 2006/11/27 23:14:22 beck Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -271,6 +271,8 @@ struct scsi_sense_data_unextended {
 
 struct scsi_sense_data {
 /* 1*/	u_int8_t error_code;
+#define	SSD_ERRCODE_CURRENT	0x70
+#define	SSD_ERRCODE_DEFERRED	0x71
 #define	SSD_ERRCODE		0x7F
 #define	SSD_ERRCODE_VALID	0x80
 /* 2*/	u_int8_t segment;
