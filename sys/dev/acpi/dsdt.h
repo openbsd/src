@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.20 2006/11/27 15:17:37 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.21 2006/11/27 18:30:38 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -175,7 +175,7 @@ union acpi_resource
 (x)->hdr.typecode >> 3)
 #define AML_CRSLEN(x) ((x)->hdr.typecode & 0x80 ? \
 		       (x)->hdr.length+2 : \
-(x)->hdr.length & 0x7)
+(x)->hdr.typecode & 0x7)
 
 int aml_print_resource(union acpi_resource *, void *);
 int aml_parse_resource(int, uint8_t *, int (*)(union acpi_resource *, void *),
