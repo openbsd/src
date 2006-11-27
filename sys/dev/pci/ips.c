@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.2 2006/11/27 17:31:36 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.3 2006/11/27 23:56:38 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -51,6 +51,8 @@
 /* Commands */
 #define IPS_CMD_READ		0x02
 #define IPS_CMD_WRITE		0x03
+#define IPS_CMD_READ_SG		0x82
+#define IPS_CMD_WRITE_SG	0x83
 #define IPS_CMD_ADAPTERINFO	0x05
 #define IPS_CMD_DRIVEINFO	0x19
 
@@ -62,6 +64,9 @@
 #define IPS_MAXCHANS		4
 #define IPS_MAXTARGETS		15
 #define IPS_MAXCMDS		32
+
+#define IPS_MAXFER		(64 * 1024)
+#define IPS_MAXSGS		32
 
 /* Command frames */
 struct ips_cmd_adapterinfo {
@@ -143,8 +148,8 @@ struct ips_driveinfo {
 	bus_space_write_4((s)->sc_iot, (s)->sc_ioh, (r), (v))
 
 struct ccb {
+	bus_dmamap_t		c_dmam;
 	int			c_run;
-	struct dmamem *		c_dm;
 	struct scsi_xfer *	c_xfer;
 };
 
@@ -170,7 +175,7 @@ struct ips_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	struct dmamem *		sc_cmdm;
-	struct ccb		sc_ccb[IPS_MAXCMDS];
+	struct ccb *		sc_ccb;
 
 	void *			sc_ih;
 
@@ -201,6 +206,9 @@ int	ips_copperhead_intr(void *);
 void	ips_morpheus_exec(struct ips_softc *);
 void	ips_morpheus_inten(struct ips_softc *);
 int	ips_morpheus_intr(void *);
+
+struct ccb *	ips_ccb_alloc(bus_dma_tag_t, int);
+void		ips_ccb_free(struct ccb *, bus_dma_tag_t, int);
 
 struct dmamem *	ips_dmamem_alloc(bus_dma_tag_t, bus_size_t);
 void		ips_dmamem_free(struct dmamem *);
@@ -253,7 +261,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	int i;
+	int maxcmds;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
@@ -295,13 +303,6 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		goto fail1;
 	}
 
-	for (i = 0; i < IPS_MAXCMDS; i++)
-		if ((sc->sc_ccb[i].c_dm = ips_dmamem_alloc(sc->sc_dmat,
-		    IPS_MAXDATASZ)) == NULL) {
-			printf(": can't alloc ccb\n");
-			goto fail2;
-		}
-
 	/* Get adapter info */
 	if (ips_getadapterinfo(sc, &sc->sc_ai)) {
 		printf(": can't get adapter info\n");
@@ -314,10 +315,17 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		goto fail2;
 	}
 
+	/* Allocate command queue */
+	maxcmds = sc->sc_ai.max_concurrent_cmds;
+	if ((sc->sc_ccb = ips_ccb_alloc(sc->sc_dmat, maxcmds)) == NULL) {
+		printf(": can't alloc command queue\n");
+		goto fail2;
+	}
+
 	/* Install interrupt handler */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");
-		goto fail2;
+		goto fail3;
 	}
 	intrstr = pci_intr_string(sc->sc_pc, ih);
 	if ((sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
@@ -326,7 +334,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail2;
+		goto fail3;
 	}
 	printf(", %s\n", intrstr);
 
@@ -345,6 +353,8 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	    &sc->sc_scsi_link, scsiprint);
 
 	return;
+fail3:
+	ips_ccb_free(sc->sc_ccb, sc->sc_dmat, maxcmds);
 fail2:
 	ips_dmamem_free(sc->sc_cmdm);
 fail1:
@@ -427,8 +437,8 @@ ips_scsi_io(struct scsi_xfer *xs)
 			break;
 	}
 	ccb->c_run = 1;
-	if (xs->flags & SCSI_DATA_OUT)
-		memcpy(ccb->c_dm->dm_kva, xs->data, xs->datalen);
+	bus_dmamap_load(sc->sc_dmat, ccb->c_dmam, xs->data, xs->datalen, NULL,
+	    BUS_DMA_NOWAIT);
 	ccb->c_xfer = xs;
 
 	if (xs->cmd->opcode == READ_COMMAND ||
@@ -448,10 +458,24 @@ ips_scsi_io(struct scsi_xfer *xs)
 	    IPS_CMD_WRITE;
 	cmd->id = i;
 	cmd->drivenum = link->target;
-	cmd->segnum = 0;
 	cmd->lba = blkno;
-	cmd->buffaddr = ccb->c_dm->dm_seg.ds_addr;
 	cmd->length = blkcnt;
+	if (ccb->c_dmam->dm_nsegs > 1) {
+		cmd->command = (xs->flags & SCSI_DATA_IN) ? IPS_CMD_READ_SG :
+		    IPS_CMD_WRITE_SG;
+		cmd->segnum = ccb->c_dmam->dm_nsegs;
+
+		for (i = 0; i < ccb->c_dmam->dm_nsegs; i++) {
+			*(u_int32_t *)((u_int8_t *)sc->sc_cmdm->dm_kva + 24 +
+			    i * 8) = ccb->c_dmam->dm_segs[i].ds_addr;
+			*(u_int32_t *)((u_int8_t *)sc->sc_cmdm->dm_kva + 24 +
+			    i * 8 + 4) = ccb->c_dmam->dm_segs[i].ds_len;
+		}
+		cmd->buffaddr = sc->sc_cmdm->dm_seg.ds_addr + 24;
+		cmd->length = 512;
+	} else {
+		cmd->buffaddr = ccb->c_dmam->dm_segs[0].ds_addr;
+	}
 
 	(*sc->sc_exec)(sc);
 	return (SUCCESSFULLY_QUEUED);
@@ -486,7 +510,6 @@ ips_getadapterinfo(struct ips_softc *sc, struct ips_adapterinfo *ai)
 
 	(*sc->sc_exec)(sc);
 	DELAY(1000);
-	(*sc->sc_intr)(sc);
 	bcopy(dm->dm_kva, ai, sizeof(*ai));
 	ips_dmamem_free(dm);
 
@@ -509,7 +532,6 @@ ips_getdriveinfo(struct ips_softc *sc, struct ips_driveinfo *di)
 
 	(*sc->sc_exec)(sc);
 	DELAY(1000);
-	(*sc->sc_intr)(sc);
 	bcopy(dm->dm_kva, di, sizeof(*di));
 	ips_dmamem_free(dm);
 
@@ -567,9 +589,8 @@ ips_morpheus_intr(void *arg)
 		ccb = &sc->sc_ccb[id];
 		if (!ccb->c_run)
 			continue;
+		bus_dmamap_unload(sc->sc_dmat, ccb->c_dmam);
 		xs = ccb->c_xfer;
-		if (xs->flags & SCSI_DATA_IN)
-			memcpy(xs->data, ccb->c_dm->dm_kva, xs->datalen);
 		xs->resid = 0;
 		xs->flags |= ITSDONE;
 		s = splbio();
@@ -579,6 +600,41 @@ ips_morpheus_intr(void *arg)
 	}
 
 	return (1);
+}
+
+struct ccb *
+ips_ccb_alloc(bus_dma_tag_t dmat, int n)
+{
+	struct ccb *ccb;
+	int i;
+
+	if ((ccb = malloc(n * sizeof(*ccb), M_DEVBUF, M_NOWAIT)) == NULL)
+		return (NULL);
+	bzero(ccb, n * sizeof(*ccb));
+
+	for (i = 0; i < n; i++) {
+		if (bus_dmamap_create(dmat, IPS_MAXFER, IPS_MAXSGS,
+		    IPS_MAXFER, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    &ccb[i].c_dmam))
+			goto fail;
+	}
+
+	return (ccb);
+fail:
+	for (; i > 0; i--)
+		bus_dmamap_destroy(dmat, ccb[i - 1].c_dmam);
+	free(ccb, M_DEVBUF);
+	return (NULL);
+}
+
+void
+ips_ccb_free(struct ccb *ccb, bus_dma_tag_t dmat, int n)
+{
+	int i;
+
+	for (i = 0; i < n; i++)
+		bus_dmamap_destroy(dmat, ccb[i - 1].c_dmam);
+	free(ccb, M_DEVBUF);
 }
 
 struct dmamem *
