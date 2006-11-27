@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.36 2006/02/10 21:31:04 kettenis Exp $ */
+/*	$OpenBSD: cpu.c,v 1.37 2006/11/27 18:43:30 gwk Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -96,10 +96,7 @@ int ppc64_setperf(int);
 void config_l2cr(int);
 
 int
-cpumatch(parent, cfdata, aux)
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+cpumatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -173,7 +170,6 @@ ppc64_setperf(int speed)
 		ppc64_scale_frequency(FREQ_HALF);
 		if (ppc64_slew_voltage)
 			ppc64_slew_voltage(FREQ_HALF);
-		perflevel = 50;
 	} else {
 		if (ppc_curfreq == ppc_maxfreq)
 			return (0);
@@ -181,7 +177,6 @@ ppc64_setperf(int speed)
 		if (ppc64_slew_voltage)
 			ppc64_slew_voltage(FREQ_FULL);
 		ppc64_scale_frequency(FREQ_FULL);
-		perflevel = 100;
 	}
 
 	return (0);
