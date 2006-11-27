@@ -1,13 +1,9 @@
-# $OpenBSD: Makefile,v 1.2 2006/11/27 17:01:56 ckuethe Exp $
+# $OpenBSD: Makefile,v 1.3 2006/11/27 23:27:46 deraadt Exp $
 
-SCRIPT=pkg-config
+NOMAN=chris is a lazy slacker
 
-# Nothing to build or clean
-all:
-clean:
-
-install: 
+beforeinstall: 
 	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-		${.CURDIR}/${SCRIPT} ${DESTDIR}${BINDIR}/
+		${.CURDIR}/pkg-config ${DESTDIR}${BINDIR}/pkg-config
 
 .include <bsd.prog.mk>
