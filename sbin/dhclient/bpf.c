@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.15 2005/11/26 17:35:35 reyk Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.16 2006/11/27 19:32:17 stevesk Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -87,11 +87,23 @@ if_register_bpf(struct interface_info *info)
 void
 if_register_send(struct interface_info *info)
 {
+	int sock, on = 1;
+
 	/*
 	 * If we're using the bpf API for sending and receiving, we
 	 * don't need to register this interface twice.
 	 */
 	info->wfdesc = info->rfdesc;
+
+	/*
+	 * Use raw socket for unicast send.
+	 */
+	if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_UDP)) == -1)
+		error("socket(SOCK_RAW): %m");
+	if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &on,
+	    sizeof(on)) == -1)
+		error("setsockopt(IP_HDRINCL): %m");
+	info->ufdesc = sock;
 }
 
 /*
@@ -242,23 +254,36 @@ send_packet(struct interface_info *interface, struct dhcp_packet *raw,
     size_t len, struct in_addr from, struct sockaddr_in *to,
     struct hardware *hto)
 {
+#define IOVCNT		2
 	unsigned char buf[256];
-	struct iovec iov[2];
+	struct iovec iov[IOVCNT];
+	struct msghdr msg;
 	int result, bufp = 0;
 
-	/* Assemble the headers... */
-	assemble_hw_header(interface, buf, &bufp, hto);
+	if (to->sin_addr.s_addr == INADDR_BROADCAST) {
+		assemble_hw_header(interface, buf, &bufp, hto);
+	}
+
 	assemble_udp_ip_header(buf, &bufp, from.s_addr,
 	    to->sin_addr.s_addr, to->sin_port, (unsigned char *)raw, len);
 
-	/* Fire it off */
 	iov[0].iov_base = (char *)buf;
 	iov[0].iov_len = bufp;
 	iov[1].iov_base = (char *)raw;
 	iov[1].iov_len = len;
 
-	result = writev(interface->wfdesc, iov, 2);
-	if (result < 0)
+	if (to->sin_addr.s_addr == INADDR_BROADCAST) {
+		result = writev(interface->wfdesc, iov, IOVCNT);
+	} else {
+		memset(&msg, 0, sizeof(msg));
+		msg.msg_name = (struct sockaddr *)to;
+		msg.msg_namelen = sizeof(*to);
+		msg.msg_iov = iov;
+		msg.msg_iovlen = IOVCNT;
+		result = sendmsg(interface->ufdesc, &msg, 0);
+	}
+
+	if (result == -1)
 		warning("send_packet: %m");
 	return (result);
 }
