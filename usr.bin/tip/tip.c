@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.31 2006/09/22 14:44:27 jason Exp $	*/
+/*	$OpenBSD: tip.c,v 1.32 2006/11/27 23:19:41 mcbride Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tip.c,v 1.31 2006/09/22 14:44:27 jason Exp $";
+static const char rcsid[] = "$OpenBSD: tip.c,v 1.32 2006/11/27 23:19:41 mcbride Exp $";
 #endif /* not lint */
 
 /*
@@ -64,6 +64,9 @@ main(int argc, char *argv[])
 {
 	char *sys = NOSTR, sbuf[12], *p;
 	int i;
+
+	/* XXX preserve previous braindamaged behavior */
+	setboolean(value(DC), TRUE);
 
 	gid = getgid();
 	egid = getegid();
