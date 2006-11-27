@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.41 2006/11/26 23:46:47 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.42 2006/11/27 15:32:12 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -115,6 +115,7 @@ struct malo_tx_desc {
  * Firmware commands
  */
 #define MALO_CMD_GET_HW_SPEC		0x0003
+#define MALO_CMD_SET_WEPKEY		0x0013
 #define MALO_CMD_SET_RADIO		0x001c
 #define MALO_CMD_SET_AID		0x010d
 #define MALO_CMD_SET_TXPOWER		0x001e
@@ -156,6 +157,18 @@ struct malo_hw_spec {
 	uint32_t	WcbBase1;
 	uint32_t	WcbBase2;
 	uint32_t	WcbBase3;
+} __packed;
+
+struct malo_cmd_wepkey {
+	uint16_t	action;
+	uint8_t		len;
+	uint8_t		flags;
+	uint16_t	index;
+	uint8_t		value[IEEE80211_KEYBUF_SIZE];
+	uint8_t		txmickey[IEEE80211_WEP_MICLEN];
+	uint8_t		rxmickey[IEEE80211_WEP_MICLEN];
+	uint64_t	rxseqctr;
+	uint64_t	txseqctr;
 } __packed;
 
 struct malo_cmd_radio {
@@ -262,12 +275,15 @@ void	malo_rx_intr(struct malo_softc *sc);
 int	malo_load_bootimg(struct malo_softc *sc);
 int	malo_load_firmware(struct malo_softc *sc);
 
+int	malo_set_wepkey(struct malo_softc *sc);
 void	malo_hexdump(void *buf, int len);
 static char *
 	malo_cmd_string(uint16_t cmd);
 static char *
 	malo_cmd_string_result(uint16_t result);
 int	malo_cmd_get_spec(struct malo_softc *sc);
+int	malo_cmd_set_wepkey(struct malo_softc *sc, struct ieee80211_wepkey *wk,
+	    uint16_t wk_i);
 int	malo_cmd_set_prescan(struct malo_softc *sc);
 int	malo_cmd_set_postscan(struct malo_softc *sc, uint8_t *macaddr,
 	    uint8_t ibsson);
@@ -366,7 +382,7 @@ malo_attach(struct malo_softc *sc)
 	}
 
 	/* set the rest */
-	ic->ic_caps = IEEE80211_C_IBSS;
+	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_WEP;
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
 	ic->ic_max_rssi = 75;
@@ -908,6 +924,11 @@ malo_init(struct ifnet *ifp)
 		    sc->sc_dev.dv_xname);
 	}
 
+	/* WEP */
+	if (sc->sc_ic.ic_flags & IEEE80211_F_WEPON)
+		/* set key */
+		malo_set_wepkey(sc);
+
 	ifp->if_flags |= IFF_RUNNING;
 
 	/* start background scanning */
@@ -949,8 +970,12 @@ malo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	}
 
-	if (error == ENETRESET)
-		error = malo_init(ifp);
+	if (error == ENETRESET) {
+		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+		    (IFF_UP | IFF_RUNNING))
+			malo_init(ifp);
+		error = 0;
+	}
 
 	splx(s);
 
@@ -1840,6 +1865,25 @@ malo_load_firmware(struct malo_softc *sc)
 	return (0);
 }
 
+int
+malo_set_wepkey(struct malo_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	int i;
+
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		struct ieee80211_wepkey *wk = &ic->ic_nw_keys[i];
+
+		if (wk->wk_len == 0)
+			continue;
+
+		if (malo_cmd_set_wepkey(sc, wk, ic->ic_wep_txkey) == 0)
+			DPRINTF(("WEP key successfully set\n"));
+	}
+
+	return (0);
+}
+
 void
 malo_hexdump(void *buf, int len)
 {
@@ -1945,6 +1989,32 @@ malo_cmd_get_spec(struct malo_softc *sc)
 	sc->sc_RxPdWrPtr = letoh32(spec->RxPdWrPtr) & 0xffff;
 
 	return (0);
+}
+
+int
+malo_cmd_set_wepkey(struct malo_softc *sc, struct ieee80211_wepkey *wk,
+    uint16_t wk_index)
+{
+	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+	struct malo_cmd_wepkey *body;
+
+	hdr->cmd = htole16(MALO_CMD_SET_WEPKEY);
+	hdr->size = htole16(sizeof(*hdr) + sizeof(*body));
+	hdr->seqnum = 1;
+	hdr->result = 0;
+	body = (struct malo_cmd_wepkey *)(hdr + 1);
+
+	bzero(body, sizeof(*body));
+	body->action = htole16(1);
+	body->flags = 0;
+	body->index = wk_index;
+	body->len = wk->wk_len;
+	memcpy(body->value, wk->wk_key, wk->wk_len);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	return (malo_send_cmd_dma(sc, sc->sc_cmd_dmaaddr));
 }
 
 int
