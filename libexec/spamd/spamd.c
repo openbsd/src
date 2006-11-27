@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.84 2006/10/29 22:06:28 henning Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.85 2006/11/27 20:46:03 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -753,9 +753,6 @@ nextstate(struct con *cp)
 					fprintf(grey, "IP:%s\nFR:%s\nTO:%s\n",
 					    cp->addr, cp->mail, cp->rcpt);
 					fflush(grey);
-					cp->laststate = cp->state;
-					cp->state = 98;
-					goto done;
 				}
 			}
 			break;
@@ -792,6 +789,11 @@ nextstate(struct con *cp)
 		cp->op = cp->obuf;
 		cp->ol = strlen(cp->op);
 		cp->w = t + cp->stutter;
+		if (greylist && cp->blacklists == NULL) {
+			cp->laststate = cp->state;
+			cp->state = 98;
+			goto done;
+		}
 		break;
 	case 60:
 		/* sent 354 blah */
