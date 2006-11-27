@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.8 2006/11/27 12:49:40 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.9 2006/11/27 13:48:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -119,6 +119,16 @@ struct wsdisplay_accessops cfxga_accessops = {
 };
 
 /*
+ * Backing memory cells for emulation mode.
+ * We could theoretically hijack 8 bits from the rasops attribute, but this
+ * will not accomodate font with more than 256 characters.
+ */
+struct charcell {
+	u_int		uc;
+	u_int32_t	attr;
+};
+
+/*
  * Per-screen structure
  */
 
@@ -130,10 +140,9 @@ struct cfxga_screen {
 
 	/* raster op glue */
 	struct rasops_info scr_ri;
-	struct wsdisplay_emulops scr_ops;		/* old ri_ops */
 
 	/* backing memory */
-	u_int8_t *scr_mem;
+	struct charcell *scr_mem;
 };
 	
 void	cfxga_copycols(void *, int, int, int, int);
@@ -146,10 +155,8 @@ void	cfxga_putchar(void *, int, int, u_int, long);
 int	cfxga_install_function(struct pcmcia_function *);
 void	cfxga_remove_function(struct pcmcia_function *);
 
-int	cfxga_expand_char(struct cfxga_softc *, struct cfxga_screen *, u_int,
-	    int, int, long);
-int	cfxga_memory_rop(struct cfxga_softc *, struct cfxga_screen *, u_int,
-	    int, int, int, int);
+int	cfxga_expand_char(struct cfxga_screen *, u_int, int, int, long);
+int	cfxga_repaint_screen(struct cfxga_screen *);
 void	cfxga_reset_video(struct cfxga_softc *);
 void	cfxga_reset_and_repaint(struct cfxga_softc *);
 int	cfxga_solid_fill(struct cfxga_softc *, int, int, int, int, int32_t);
@@ -160,8 +167,6 @@ u_int	cfxga_wait(struct cfxga_softc *, u_int, u_int);
 
 #define	cfxga_clear_screen(sc) \
 	cfxga_solid_fill(sc, 0, 0, 640, 480, 0)
-#define	cfxga_repaint_screen(sc) \
-	cfxga_memory_rop(sc, sc->sc_active, ROP_SRC, 0, 0, 640, 480)
 
 #define	cfxga_read_1(sc, addr) \
 	bus_space_read_1((sc)->sc_pmemh.memt, (sc)->sc_pmemh.memh, \
@@ -417,28 +422,21 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	struct cfxga_softc *sc = v;
 	struct cfxga_screen *scr;
 	struct rasops_info *ri;
+	u_int scrsize;
 
 	scr = malloc(sizeof *scr, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (scr == NULL)
 		return (ENOMEM);
 	bzero(scr, sizeof *scr);
 
-	scr->scr_mem = malloc(640 * 480 * 16 / 8, M_DEVBUF,
-	    cold ? M_NOWAIT : M_WAITOK);
-	if (scr->scr_mem == NULL) {
-		free(scr, M_DEVBUF);
-		return (ENOMEM);
-	}
-	bzero(scr->scr_mem, 640 * 480 * 16 / 8);
-
 	ri = &scr->scr_ri;
 	ri->ri_hw = (void *)scr;
-	ri->ri_bits = scr->scr_mem;
+	ri->ri_bits = NULL;
 	ri->ri_depth = 16;
 	ri->ri_width = 640;
 	ri->ri_height = 480;
 	ri->ri_stride = 640 * 16 / 8;
-	/* ri->ri_flg = RI_FULLCLEAR; */
+	ri->ri_flg = 0;
 
 	/* swap B and R at 16 bpp */
 	ri->ri_rnum = 5;
@@ -453,7 +451,18 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	else
 		rasops_init(ri, sc->sc_wsd.nrows, sc->sc_wsd.ncols);
 
-	scr->scr_ops = ri->ri_ops;
+	/*
+	 * Allocate backing store to remember non-visible screen contents in
+	 * emulation mode.
+	 */
+	scrsize = ri->ri_rows * ri->ri_cols * sizeof(struct charcell);
+	scr->scr_mem = malloc(scrsize, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	if (scr->scr_mem == NULL) {
+		free(scr, M_DEVBUF);
+		return (ENOMEM);
+	}
+	bzero(scr->scr_mem, scrsize);
+
 	ri->ri_ops.copycols = cfxga_copycols;
 	ri->ri_ops.copyrows = cfxga_copyrows;
 	ri->ri_ops.erasecols = cfxga_erasecols;
@@ -592,7 +601,7 @@ cfxga_show_screen(void *v, void *cookie, int waitok,
 		return (0);
 
 	sc->sc_active = scr;
-	cfxga_repaint_screen(sc);
+	cfxga_repaint_screen(scr);
 
 	/* turn back video on as well if necessary... */
 	if (old == NULL)
@@ -672,7 +681,7 @@ cfxga_reset_and_repaint(struct cfxga_softc *sc)
 	cfxga_reset_video(sc);
 
 	if (sc->sc_active != NULL)
-		cfxga_repaint_screen(sc);
+		cfxga_repaint_screen(sc->sc_active);
 	else
 		cfxga_clear_screen(sc);
 }
@@ -721,9 +730,9 @@ cfxga_synchronize(struct cfxga_softc *sc)
  * Display a character.
  */
 int
-cfxga_expand_char(struct cfxga_softc *sc, struct cfxga_screen *scr, u_int uc,
-    int x, int y, long attr)
+cfxga_expand_char(struct cfxga_screen *scr, u_int uc, int x, int y, long attr)
 {
+	struct cfxga_softc *sc = scr->scr_sc;
 	struct rasops_info *ri = &scr->scr_ri;
 	struct wsdisplay_font *font = ri->ri_font;
 	u_int pos, sts, fifo_avail, chunk;
@@ -811,75 +820,37 @@ fail:
  * screen switches.
  */
 int
-cfxga_memory_rop(struct cfxga_softc *sc, struct cfxga_screen *scr, u_int rop,
-    int x, int y, int cx, int cy)
+cfxga_repaint_screen(struct cfxga_screen *scr)
 {
-	u_int pos, sts, fifo_avail;
-	u_int16_t *data;
+	struct charcell *cell = scr->scr_mem;
+	struct rasops_info *ri = &scr->scr_ri;
+	int x, y, cx, cy, lx, ly;
+	int fg, bg;
 	int rc;
 
-	pos = (y * 640 + x) * (16 / 8);
-	data = (u_int16_t *)(scr->scr_mem + pos);
+	cfxga_clear_screen(scr->scr_sc);
 
-	/* Wait for previous operations to complete */
-	if ((rc = cfxga_synchronize(sc)) != 0)
-		return (rc);
+	cx = ri->ri_font->fontwidth;
+	cy = ri->ri_font->fontheight;
 
-	cfxga_write_2(sc, CFREG_BITBLT_ROP, rop | (OP_WRITE_ROP << 8));
-	cfxga_write_2(sc, CFREG_BITBLT_SRC_LOW, 0);
-	cfxga_write_2(sc, CFREG_BITBLT_SRC_HIGH, 0);
-	cfxga_write_2(sc, CFREG_BITBLT_DST_LOW, pos);
-	cfxga_write_2(sc, CFREG_BITBLT_DST_HIGH, pos >> 16);
-	cfxga_write_2(sc, CFREG_BITBLT_OFFSET, 640);
-	cfxga_write_2(sc, CFREG_BITBLT_WIDTH, cx - 1);
-	cfxga_write_2(sc, CFREG_BITBLT_HEIGHT, cy - 1);
-	cfxga_write_2(sc, CFREG_BITBLT_CONTROL,
-	    BITBLT_ACTIVE | BITBLT_COLOR_16);
-
-	if (cfxga_wait(sc, BITBLT_ACTIVE, BITBLT_ACTIVE) == 0)
-		goto fail;	/* unlikely */
-	fifo_avail = 0;
-	while (cy-- != 0) {
-		for (x = 0; x < cx; x++) {
-			/*
-			 * Find out how much words we can feed before
-			 * a FIFO check is needed.
-			 */
-			if (fifo_avail == 0) {
-				sts = cfxga_read_1(sc, CFREG_BITBLT_CONTROL);
-				if ((sts & BITBLT_FIFO_NOT_EMPTY) == 0)
-					fifo_avail = 16;
-				else if ((sts & BITBLT_FIFO_HALF_FULL) == 0)
-					fifo_avail = 8;
-				else if ((sts & BITBLT_FIFO_FULL) == 0) {
-					/* pessimistic but safe choice */
-					fifo_avail = 1;
-				} else {
-					/*
-					 * Let the cheap breathe for a short
-					 * while. If this is not enough to
-					 * free some FIFO entries,
-					 * abort the operation.
-					 */
-					if (cfxga_wait(sc, BITBLT_FIFO_FULL,
-					    0) == 0)
-						goto fail;
-				}
+	for (ly = 0, y = ri->ri_yorigin; ly < ri->ri_rows; ly++, y += cy) {
+		for (lx = 0, x = ri->ri_xorigin; lx < ri->ri_cols;
+		    lx++, x += cx) {
+			if (cell->uc == 0 || cell->uc == ' ') {
+				rasops_unpack_attr(cell->attr, &fg, &bg, NULL);
+				rc = cfxga_solid_fill(scr->scr_sc, x, y, cx, cy,
+				    ri->ri_devcmap[bg]);
+			} else {
+				rc = cfxga_expand_char(scr, cell->uc,
+				    x, y, cell->attr);
 			}
-
-			cfxga_write_2(sc, CFREG_BITBLT_DATA, *data++);
-			fifo_avail--;
+			cell++;
+			if (rc != 0)
+				return (rc);
 		}
-		data += (640 - cx);
 	}
 
 	return (0);
-
-fail:
-	DPRINTF(("%s: abort\n", __func__));
-	cfxga_write_2(sc, CFREG_BITBLT_CONTROL, 0);
-	cfxga_stop_memory_blt(sc);
-	return (EINTR);
 }
 
 /*
@@ -965,7 +936,10 @@ cfxga_copycols(void *cookie, int row, int src, int dst, int num)
 	struct cfxga_screen *scr = ri->ri_hw;
 	int sx, dx, y, cx, cy;
 
-	(*scr->scr_ops.copycols)(ri, row, src, dst, num);
+	/* Copy columns in backing store. */
+	ovbcopy(scr->scr_mem + row * ri->ri_cols + src,
+	    scr->scr_mem + row * ri->ri_cols + dst,
+	    num * sizeof(struct charcell));
 
 	if (scr != scr->scr_sc->sc_active)
 		return;
@@ -985,7 +959,10 @@ cfxga_copyrows(void *cookie, int src, int dst, int num)
 	struct cfxga_screen *scr = ri->ri_hw;
 	int x, sy, dy, cx, cy;
 
-	(*scr->scr_ops.copyrows)(ri, src, dst, num);
+	/* Copy rows in backing store. */
+	ovbcopy(scr->scr_mem + src * ri->ri_cols,
+	    scr->scr_mem + dst * ri->ri_cols,
+	    num * ri->ri_cols * sizeof(struct charcell));
 
 	if (scr != scr->scr_sc->sc_active)
 		return;
@@ -1023,7 +1000,11 @@ cfxga_erasecols(void *cookie, int row, int col, int num, long attr)
 	int fg, bg;
 	int x, y, cx, cy;
 
-	(*scr->scr_ops.erasecols)(ri, row, col, num, attr);
+	/* Erase columns in backing store. */
+	for (x = col; x < col + num; x++) {
+		scr->scr_mem[row * ri->ri_cols + x].uc = 0;
+		scr->scr_mem[row * ri->ri_cols + x].attr = attr;
+	}
 
 	if (scr != scr->scr_sc->sc_active)
 		return;
@@ -1044,7 +1025,15 @@ cfxga_eraserows(void *cookie, int row, int num, long attr)
 	int fg, bg;
 	int x, y, cx, cy;
 
-	(*scr->scr_ops.eraserows)(ri, row, num, attr);
+	/* Erase rows in backing store. */
+	for (x = 0; x < ri->ri_cols; x++) {
+		scr->scr_mem[row * ri->ri_cols + x].uc = 0;
+		scr->scr_mem[row * ri->ri_cols + x].attr = attr;
+	}
+	for (y = 1; y < num; y++)
+		ovbcopy(scr->scr_mem + row * ri->ri_cols,
+		    scr->scr_mem + (row + y) * ri->ri_cols,
+		    ri->ri_cols * sizeof(struct charcell));
 
 	if (scr != scr->scr_sc->sc_active)
 		return;
@@ -1064,7 +1053,8 @@ cfxga_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	struct cfxga_screen *scr = ri->ri_hw;
 	int x, y;
 
-	(*scr->scr_ops.putchar)(ri, row, col, uc, attr);
+	scr->scr_mem[row * ri->ri_cols + col].uc = uc;
+	scr->scr_mem[row * ri->ri_cols + col].attr = attr;
 
 	if (scr != scr->scr_sc->sc_active)
 		return;
@@ -1080,6 +1070,6 @@ cfxga_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		cy = ri->ri_font->fontheight;
 		cfxga_solid_fill(scr->scr_sc, x, y, cx, cy, ri->ri_devcmap[bg]);
 	} else {
-		cfxga_expand_char(scr->scr_sc, scr, uc, x, y, attr);
+		cfxga_expand_char(scr, uc, x, y, attr);
 	}
 }
