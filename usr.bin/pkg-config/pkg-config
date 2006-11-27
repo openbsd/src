@@ -20,7 +20,6 @@ use warnings;
 use Getopt::Long;
 
 my @PKGPATH = qw(/usr/local/lib/pkgconfig /usr/X11R6/lib/pkgconfig );
-push(@PKGPATH, '/usr/local/libdata/pkgconfig', '/usr/X11R6/libdata/pkgconfig');
 
 if (defined($ENV{'PKG_CONFIG_PATH'}) && $ENV{'PKG_CONFIG_PATH'}){
 	push(@PKGPATH, split(/:/,$ENV{'PKG_CONFIG_PATH'}));
