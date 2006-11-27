@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.39 2006/11/14 15:39:42 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.40 2006/11/27 16:04:10 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -427,6 +427,16 @@ cvs_server_admin(char *data)
 	cvs_server_send_response("ok");
 }
 
+void
+cvs_server_annotate(char *data)
+{
+	if (chdir(server_currentdir) == -1)
+		fatal("cvs_server_annotate: %s", strerror(errno));
+
+	cvs_cmdop = CVS_OP_ANNOTATE;
+	cvs_annotate(server_argc, server_argv);
+	cvs_server_send_response("ok");
+}
 
 void
 cvs_server_commit(char *data)
