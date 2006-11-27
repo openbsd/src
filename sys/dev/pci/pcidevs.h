@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1195 2006/11/26 18:35:51 dim Exp 
+ *	OpenBSD: pcidevs,v 1.1196 2006/11/27 18:58:02 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2348,6 +2348,8 @@
 #define	PCI_PRODUCT_LUCENT_USBHC2	0x5802		/* USB 2-port */
 #define	PCI_PRODUCT_LUCENT_USBQBUS	0x5803		/* USB QuadraBus */
 #define	PCI_PRODUCT_LUCENT_FW322	0x5811		/* FW322 1394 */
+#define	PCI_PRODUCT_LUCENT_ET1310_GBE	0xed00		/* ET1310 */
+#define	PCI_PRODUCT_LUCENT_ET1310_FE	0xed01		/* ET1310 */
 
 /* LuxSonor */
 #define	PCI_PRODUCT_LUXSONOR_LS242	0x0020		/* LS242 DVD Decoder */
