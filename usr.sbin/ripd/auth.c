@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.3 2006/10/31 07:16:45 mcbride Exp $ */
+/*	$OpenBSD: auth.c,v 1.4 2006/11/27 15:02:34 stevesk Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -289,7 +289,7 @@ md_list_copy(struct auth_md_head *to, struct auth_md_head *from)
 
 	TAILQ_FOREACH(m, from, entry) {
 		if ((md = calloc(1, sizeof(struct auth_md))) == NULL)
-			fatalx("md_list_add");
+			fatalx("md_list_copy");
 
 		md->keyid = m->keyid;
 		strncpy(md->key, m->key, sizeof(md->key));
