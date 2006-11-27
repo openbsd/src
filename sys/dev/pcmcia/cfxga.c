@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.6 2006/11/27 11:25:34 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.7 2006/11/27 11:50:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -929,6 +929,10 @@ cfxga_copycols(void *cookie, int row, int src, int dst, int num)
 	int x, y, cx, cy;
 
 	(*scr->scr_ops.copycols)(ri, row, src, dst, num);
+
+	if (scr != scr->scr_sc->sc_active)
+		return;
+
 	x = dst * ri->ri_font->fontwidth + ri->ri_xorigin;
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = num * ri->ri_font->fontwidth;
@@ -945,6 +949,9 @@ cfxga_copyrows(void *cookie, int src, int dst, int num)
 
 	(*scr->scr_ops.copyrows)(ri, src, dst, num);
 
+	if (scr != scr->scr_sc->sc_active)
+		return;
+
 	x = ri->ri_xorigin;
 	y = dst * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = ri->ri_emuwidth;
@@ -957,6 +964,9 @@ cfxga_do_cursor(struct rasops_info *ri)
 {
 	struct cfxga_screen *scr = ri->ri_hw;
 	int x, y, cx, cy;
+
+	if (scr != scr->scr_sc->sc_active)
+		return;
 
 	x = ri->ri_ccol * ri->ri_font->fontwidth + ri->ri_xorigin;
 	y = ri->ri_crow * ri->ri_font->fontheight + ri->ri_yorigin;
@@ -977,6 +987,9 @@ cfxga_erasecols(void *cookie, int row, int col, int num, long attr)
 
 	(*scr->scr_ops.erasecols)(ri, row, col, num, attr);
 
+	if (scr != scr->scr_sc->sc_active)
+		return;
+
 	rasops_unpack_attr(attr, &fg, &bg, NULL);
 	x = col * ri->ri_font->fontwidth + ri->ri_xorigin;
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
@@ -996,6 +1009,9 @@ cfxga_eraserows(void *cookie, int row, int num, long attr)
 
 	(*scr->scr_ops.eraserows)(ri, row, num, attr);
 
+	if (scr != scr->scr_sc->sc_active)
+		return;
+
 	rasops_unpack_attr(attr, &fg, &bg, NULL);
 	x = ri->ri_xorigin;
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
@@ -1013,6 +1029,9 @@ cfxga_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	int x, y;
 
 	(*scr->scr_ops.putchar)(ri, row, col, uc, attr);
+
+	if (scr != scr->scr_sc->sc_active)
+		return;
 
 	x = col * ri->ri_font->fontwidth + ri->ri_xorigin;
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
