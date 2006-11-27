@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.38 2006/11/26 11:14:22 deraadt Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.39 2006/11/27 15:44:03 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -79,6 +79,9 @@ int zyddebug = 1;
 #define DPRINTFN(n, x)
 #endif
 
+static const struct zyd_phy_pair zyd_def_phy[] = ZYD_DEF_PHY;
+static const struct zyd_phy_pair zyd_def_phyB[] = ZYD_DEF_PHYB;
+
 /* various supported device vendors/products */
 #define ZYD_ZD1211_DEV(v, p)	\
 	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p }, ZYD_ZD1211 }
@@ -109,6 +112,7 @@ static const struct zyd_type {
 	ZYD_ZD1211_DEV(WISTRONNEWEB,	UR055G),
 	ZYD_ZD1211_DEV(ZYDAS,		ZD1211),
 	ZYD_ZD1211_DEV(ZYXEL,		ZYAIRG220),
+/*	ZYD_ZD1211B_DEV(ZYDAS,		ZD1211B), */
 };
 #define zyd_lookup(v, p)	\
 	((const struct zyd_type *)usb_lookup(zyd_devs, v, p))
@@ -942,9 +946,10 @@ int
 zyd_al2230_switch_radio(struct zyd_rf *rf, int on)
 {
 	struct zyd_softc *sc = rf->rf_sc;
+	int on251 = (sc->mac_rev == ZYD_ZD1211) ? 0x3f : 0x7f;
 
 	(void)zyd_write16(sc, ZYD_CR11,  on ? 0x00 : 0x04);
-	(void)zyd_write16(sc, ZYD_CR251, on ? 0x3f : 0x2f);
+	(void)zyd_write16(sc, ZYD_CR251, on ? on251 : 0x2f);
 
 	return 0;
 }
@@ -1426,8 +1431,8 @@ int
 zyd_hw_init(struct zyd_softc *sc)
 {
 #define N(a)	(sizeof (a) / sizeof ((a)[0]))
-	static const struct zyd_phy_pair zyd_def_phy[] = ZYD_DEF_PHY;
-	static const struct zyd_mac_pair zyd_def_mac[] = ZYD_DEF_MAC;
+	const struct zyd_phy_pair *zyd_def_phyp = (sc->mac_rev == ZYD_ZD1211B) ?
+	    zyd_def_phyB : zyd_def_phy;
 	struct zyd_rf *rf = &sc->sc_rf;
 	int i, error;
 
@@ -1449,20 +1454,45 @@ zyd_hw_init(struct zyd_softc *sc)
 	/* PHY init */
 	zyd_lock_phy(sc);
 	for (i = 0; i < N(zyd_def_phy); i++) {
-		error = zyd_write16(sc, zyd_def_phy[i].reg,
-		    zyd_def_phy[i].val);
+		error = zyd_write16(sc, zyd_def_phyp[i].reg,
+		    zyd_def_phyp[i].val);
 		if (error != 0)
 			goto fail;
 	}
 	zyd_unlock_phy(sc);
 
 	/* HMAC init */
-	for (i = 0; i < N(zyd_def_mac); i++) {
-		error = zyd_write32(sc, zyd_def_mac[i].reg,
-		    zyd_def_mac[i].val);
-		if (error != 0)
-			goto fail;
+	zyd_write32(sc, ZYD_MAC_ACK_EXT, 0x00000020);
+	zyd_write32(sc, ZYD_CR_ADDA_MBIAS_WT, 0x30000808);
+	zyd_write32(sc, ZYD_MAC_RETRY, 0x00000002);
+
+	if (sc->mac_rev == ZYD_ZD1211B) {
+		zyd_write32(sc, ZYD_MACB_TXPWR_CTL4, 0x007f003f);
+		zyd_write32(sc, ZYD_MACB_TXPWR_CTL3, 0x007f003f);
+		zyd_write32(sc, ZYD_MACB_TXPWR_CTL2, 0x003f001f);
+		zyd_write32(sc, ZYD_MACB_TXPWR_CTL1, 0x001f000f);
+		zyd_write32(sc, ZYD_MACB_AIFS_CTL1, 0x00280028);
+		zyd_write32(sc, ZYD_MACB_AIFS_CTL2, 0x008C003C);
+		zyd_write32(sc, ZYD_MACB_TXOP, 0x01800824);
 	}
+
+	zyd_write32(sc, ZYD_MAC_SNIFFER, 0x00000000);
+	zyd_write32(sc, ZYD_MAC_RXFILTER, 0x00000000);
+	zyd_write32(sc, ZYD_MAC_GHTBL, 0x00000000);
+	zyd_write32(sc, ZYD_MAC_GHTBH, 0x80000000);
+	zyd_write32(sc, ZYD_MAC_MISC, 0x000000a4);
+	zyd_write32(sc, ZYD_CR_ADDA_PWR_DWN, 0x0000007f);
+	zyd_write32(sc, ZYD_MAC_BCNCFG, 0x00f00401);
+	zyd_write32(sc, ZYD_MAC_PHY_DELAY2, 0x00000000);
+	zyd_write32(sc, ZYD_MAC_ACK_EXT, 0x00000080);
+	zyd_write32(sc, ZYD_CR_ADDA_PWR_DWN, 0x00000000);
+	zyd_write32(sc, ZYD_MAC_SIFS_ACK_TIME, 0x00000100);
+	zyd_write32(sc, ZYD_MAC_DIFS_EIFS_SIFS, 0x0547c032);
+	zyd_write32(sc, ZYD_CR_RX_PE_DELAY, 0x00000070);
+	zyd_write32(sc, ZYD_CR_PS_CTRL, 0x10000000);
+	zyd_write32(sc, ZYD_MAC_RTSCTSRATE, 0x02030203);
+	zyd_write32(sc, ZYD_MAC_RX_THRESHOLD, 0x000c0640);
+	zyd_write32(sc, ZYD_MAC_BACKOFF_PROTECT, 0x00000114);
 
 	/* RF chip init */
 	zyd_lock_phy(sc);
@@ -1628,6 +1658,12 @@ zyd_set_chan(struct zyd_softc *sc, struct ieee80211_channel *c)
 	/* update Tx power */
 	(void)zyd_write32(sc, ZYD_CR31, sc->pwr_int[chan - 1]);
 	(void)zyd_write32(sc, ZYD_CR68, sc->pwr_cal[chan - 1]);
+
+	/* XXX more ZD1211B specific bits? */
+	if (sc->mac_rev == ZYD_ZD1211B) {
+		zyd_write32(sc, ZYD_CR69, 0x28);
+		zyd_write32(sc, ZYD_CR69, 0x2a);
+	}
 
 	zyd_unlock_phy(sc);
 }
