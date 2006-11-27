@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.38 2006/11/27 18:24:43 beck Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.39 2006/11/27 20:15:09 beck Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -318,6 +318,7 @@ struct scsi_sense_data {
 #define ASC_ASCQ(ssd)	((ssd->add_sense_code << 8) | ssd->add_sense_code_qual)
 
 #define SENSE_NOT_READY_BECOMING_READY		0x0401
+#define SENSE_NOT_READY_INIT_REQUIRED		0x0402
 #define SENSE_NOT_READY_FORMAT			0x0404
 #define SENSE_NOT_READY_REBUILD			0x0405
 #define SENSE_NOT_READY_RECALC			0x0406

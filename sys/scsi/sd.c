@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.111 2006/10/07 23:40:07 beck Exp $	*/
+/*	$OpenBSD: sd.c,v 1.112 2006/11/27 20:15:09 beck Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1081,17 +1081,16 @@ sd_interpret_sense(xs)
 	if (((sc_link->flags & SDEV_OPEN) == 0) ||
 	    (serr != 0x70 && serr != 0x71) ||
 	    ((sense->flags & SSD_KEY) != SKEY_NOT_READY) ||
-	    (sense->extra_len < 6) ||
-	    (sense->add_sense_code != 0x04))
+	    (sense->extra_len < 6))
 		return (EJUSTRETURN);
 
-	switch (sense->add_sense_code_qual) {
-	case 0x01: /* In process of becoming ready. */
+	switch (ASC_ASCQ(sense)) {
+	case SENSE_NOT_READY_BECOMING_READY:
 		SC_DEBUG(sc_link, SDEV_DB1, ("becoming ready.\n"));
 		retval = scsi_delay(xs, 5);
 		break;
 
-	case 0x02: /* Initialization command required. */
+	case SENSE_NOT_READY_INIT_REQUIRED:
 		SC_DEBUG(sc_link, SDEV_DB1, ("spinning up\n"));
 		retval = scsi_start(sd->sc_link, SSS_START,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_URGENT | SCSI_NOSLEEP);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.113 2006/10/08 02:29:24 beck Exp $	*/
+/*	$OpenBSD: cd.c,v 1.114 2006/11/27 20:15:09 beck Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -2052,9 +2052,8 @@ cd_interpret_sense(xs)
 	case SKEY_NOT_READY:
 		if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
 			return (0);
-		if (sense->add_sense_code == 0x04 &&   /* Not ready */
-		    sense->add_sense_code_qual == 0x01) { /* Becoming ready */
-			SC_DEBUG(sc_link, SDEV_DB1, ("not ready: busy (%#x)\n",
+		if (ASC_ASCQ(sense) == SENSE_NOT_READY_BECOMING_READY) {
+		    	SC_DEBUG(sc_link, SDEV_DB1, ("not ready: busy (%#x)\n",
 			    sense->add_sense_code_qual));
 			/* don't count this as a retry */
 			xs->retries++;
