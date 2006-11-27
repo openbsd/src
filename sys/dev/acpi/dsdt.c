@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.65 2006/11/27 15:17:37 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.66 2006/11/27 23:43:47 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2088,6 +2088,11 @@ aml_getpciaddr(struct acpi_softc *sc, struct aml_node *root)
 		dnprintf(20,"got _adr [%s]\n", 
 			 aml_nodename(root));
 	}
+	else {
+	  /* Mark invalid */
+	  	pciaddr += (0xFFFF << 16L);
+		return pciaddr;
+	}
 
 	if (!aml_evalname(dsdt_softc, root, "_BBN", 0, NULL, &tmpres)) {
 		/* PCI bus is in bits 48-63 */
@@ -2235,6 +2240,10 @@ aml_parsenamed(struct aml_scope *scope, int opcode, struct aml_value *res)
 		if (res->v_opregion.iospace == GAS_PCI_CFG_SPACE) {
 			res->v_opregion.iobase += aml_getpciaddr(dsdt_softc, 
 								 scope->node);
+			dnprintf(20,"got ioaddr: %s.%s:%llx\n",
+				 aml_nodename(scope->node),
+				 aml_getname(name),
+				 res->v_opregion.iobase);
 		}
 		break;
 	}
@@ -3147,7 +3156,7 @@ aml_parse_resource(int length, uint8_t *buffer,
 	for (off=0; off<length; off += rlen+1) {
 		crs = (union acpi_resource *)(buffer+off);
 		rlen = AML_CRSLEN(crs);
-		if (rlen == 0)
+		if (rlen == 0 || crs->hdr.typecode == 0x79)
 			break;
 		//aml_print_resource(crs, NULL);
 		crs_enum(crs, arg);
@@ -3198,6 +3207,18 @@ int aml_fixup_node(struct aml_node *node, void *arg)
 	else if (val->type == AML_OBJTYPE_PACKAGE) {
 		for (i=0; i<val->length; i++)
 			aml_fixup_node(node, val->v_package[i]);
+	}
+	else if (val->type == AML_OBJTYPE_OPREGION) {
+		if (val->v_opregion.iospace != GAS_PCI_CFG_SPACE) 
+			return (0);
+		if (ACPI_PCI_FN(val->v_opregion.iobase) != 0xFFFF)
+			return (0);
+		val->v_opregion.iobase = 
+			ACPI_PCI_REG(val->v_opregion.iobase) +
+			aml_getpciaddr(dsdt_softc, node);
+			dnprintf(20,"late ioaddr : %s:%llx\n",
+				 aml_nodename(node),
+				 val->v_opregion.iobase);
 	}
 	return (0);
 }

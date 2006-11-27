@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.6 2006/11/27 18:41:23 kettenis Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.7 2006/11/27 23:43:47 jordan Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -137,7 +137,7 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 	struct aml_node	*node;
 	struct aml_value res, *pp;
 	u_int64_t addr;
-	int pin, irq;
+	int pin, irq, sta;
 #if NIOAPIC > 0
 	struct mp_intr_map *map;
 	struct ioapic_softc *apic;
@@ -172,10 +172,11 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 		pp = pp->v_objref.ref;
 	}
 	if (pp->type == AML_OBJTYPE_DEVICE) {
-	  	node = pp->node;
+		node = pp->node;
 		if (aml_evalname(sc->sc_acpi, node, "_STA", 0, NULL, &res)) {
 			printf("no _STA method\n");
 		}
+		sta = aml_val2int(&res);
 
 		if (aml_evalname(sc->sc_acpi, node, "_CRS", 0, NULL, &res)) {
 			printf("no _CRS method\n");
@@ -193,7 +194,8 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 	}
 
 #ifdef ACPI_DEBUG
-	printf("%s: addr 0x%llx pin %d irq %d\n", DEVNAME(sc), addr, pin, irq);
+	printf("%s: %s addr 0x%llx pin %d irq %d sta %x\n", 
+	       DEVNAME(sc), aml_nodename(pp->node), addr, pin, irq, sta);
 #endif
 
 #if NIOAPIC > 0
