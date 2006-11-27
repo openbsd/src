@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC.MP,v 1.5 2005/05/01 07:54:42 david Exp $
+#	$OpenBSD: GENERIC.MP,v 1.6 2006/11/27 18:50:59 marco Exp $
 #
 #	GENERIC.MP - sample multiprocessor kernel
 #
@@ -9,3 +9,4 @@ option		MULTIPROCESSOR	# Multiple processor support
 
 cpu*		at mainbus?
 ioapic*		at mainbus?
+acpimadt*	at acpi?
