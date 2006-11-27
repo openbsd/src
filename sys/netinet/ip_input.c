@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.144 2006/10/11 09:29:20 henning Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.145 2006/11/27 12:27:45 henning Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -239,6 +239,7 @@ ip_init()
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
 struct	route ipforward_rt;
+int	ipforward_rtableid;
 
 void
 ipintr()
@@ -1407,9 +1408,12 @@ ip_forward(m, srcrt)
 	struct ip *ip = mtod(m, struct ip *);
 	struct sockaddr_in *sin;
 	struct rtentry *rt;
-	int error, type = 0, code = 0, destmtu = 0;
+	int error, type = 0, code = 0, destmtu = 0, rtableid = 0;
 	struct mbuf *mcopy;
 	n_long dest;
+#if NPF > 0
+	struct pf_mtag	*pft;
+#endif
 
 	dest = 0;
 #ifdef DIAGNOSTIC
@@ -1427,9 +1431,15 @@ ip_forward(m, srcrt)
 		return;
 	}
 
+#if NPF > 0
+	if ((pft = pf_find_mtag(m)) != NULL)
+		rtableid = pft->rtableid;
+#endif
+
 	sin = satosin(&ipforward_rt.ro_dst);
 	if ((rt = ipforward_rt.ro_rt) == 0 ||
-	    ip->ip_dst.s_addr != sin->sin_addr.s_addr) {
+	    ip->ip_dst.s_addr != sin->sin_addr.s_addr ||
+	    rtableid != ipforward_rtableid) {
 		if (ipforward_rt.ro_rt) {
 			RTFREE(ipforward_rt.ro_rt);
 			ipforward_rt.ro_rt = 0;
@@ -1438,11 +1448,12 @@ ip_forward(m, srcrt)
 		sin->sin_len = sizeof(*sin);
 		sin->sin_addr = ip->ip_dst;
 
-		rtalloc_mpath(&ipforward_rt, &ip->ip_src.s_addr, 0);
+		rtalloc_mpath(&ipforward_rt, &ip->ip_src.s_addr, rtableid);
 		if (ipforward_rt.ro_rt == 0) {
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, dest, 0);
 			return;
 		}
+		ipforward_rtableid = rtableid;
 		rt = ipforward_rt.ro_rt;
 	}
 

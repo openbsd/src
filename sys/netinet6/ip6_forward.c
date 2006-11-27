@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.36 2006/11/17 01:11:23 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.37 2006/11/27 12:27:45 henning Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
 #endif
 
 struct	route_in6 ip6_forward_rt;
+int	ip6_forward_rtableid;
 
 /*
  * Forward a packet.  If some error occurs return the sender
@@ -103,6 +104,10 @@ ip6_forward(m, srcrt)
 	struct tdb *tdb;
 	int s;
 #endif /* IPSEC */
+#if NPF > 0
+	struct pf_mtag *pft;
+#endif
+	int rtableid = 0;
 
 	/*
 	 * Do not forward packets to multicast destination (should be handled
@@ -214,6 +219,11 @@ ip6_forward(m, srcrt)
  done_spd:
 #endif /* IPSEC */
 
+#if NPF > 0
+	if ((pft = pf_find_mtag(m)) != NULL)
+		rtableid = pft->rtableid;
+#endif
+
 	/*
 	 * Save at most ICMPV6_PLD_MAXLEN (= the min IPv6 MTU -
 	 * size of IPv6 + ICMPv6 headers) bytes of the packet in case
@@ -231,14 +241,16 @@ ip6_forward(m, srcrt)
 		 * ip6_forward_rt.ro_dst.sin6_addr is equal to ip6->ip6_dst
 		 */
 		if (ip6_forward_rt.ro_rt == 0 ||
-		    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) == 0) {
+		    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) == 0 ||
+		    ip6_forward_rtableid != rtableid) {
 			if (ip6_forward_rt.ro_rt) {
 				RTFREE(ip6_forward_rt.ro_rt);
 				ip6_forward_rt.ro_rt = 0;
 			}
 			/* this probably fails but give it a try again */
 			rtalloc_mpath((struct route *)&ip6_forward_rt,
-			    &ip6->ip6_src.s6_addr32[0], 0);
+			    &ip6->ip6_src.s6_addr32[0], rtableid);
+			ip6_forward_rtableid = rtableid;
 		}
 
 		if (ip6_forward_rt.ro_rt == 0) {
