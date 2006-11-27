@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.31 2006/11/15 16:18:38 xsa Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.32 2006/11/27 16:02:52 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -118,7 +118,8 @@ cvs_annotate_local(struct cvs_file *cf)
 
 	cvs_file_classify(cf, NULL, 0);
 
-	if (cf->file_status == FILE_UNKNOWN)
+	if (cf->file_status == FILE_UNKNOWN ||
+	    cf->file_status == FILE_UNLINK)
 		return;
 
 	cvs_printf("Annotations for %s", cf->file_name);
@@ -140,6 +141,7 @@ cvs_annotate_local(struct cvs_file *cf)
 
         xfree(content);
 
+	/* XXX */
 	TAILQ_FOREACH(lp, &(lines->l_lines), l_list) {
 		if (lp->l_line == NULL)
 			continue;
