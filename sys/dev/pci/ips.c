@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.1 2006/11/27 16:47:05 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.2 2006/11/27 17:31:36 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -44,6 +44,7 @@
 
 #define IPS_MORPHEUS_OISR	0x0030	/* outbound IRQ status */
 #define	IPS_MORPHEUS_OISR_CMD		(1 << 3)
+#define IPS_MORPHEUS_OIMR	0x0034	/* outbound IRQ mask */
 #define IPS_MORPHEUS_IQPR	0x0040	/* inbound queue port */
 #define IPS_MORPHEUS_OQPR	0x0044	/* outbound queue port */
 
@@ -174,6 +175,7 @@ struct ips_softc {
 	void *			sc_ih;
 
 	void			(*sc_exec)(struct ips_softc *);
+	void			(*sc_inten)(struct ips_softc *);
 	int			(*sc_intr)(void *);
 
 	struct ips_adapterinfo	sc_ai;
@@ -193,9 +195,11 @@ int	ips_getadapterinfo(struct ips_softc *, struct ips_adapterinfo *);
 int	ips_getdriveinfo(struct ips_softc *, struct ips_driveinfo *);
 
 void	ips_copperhead_exec(struct ips_softc *);
+void	ips_copperhead_inten(struct ips_softc *);
 int	ips_copperhead_intr(void *);
 
 void	ips_morpheus_exec(struct ips_softc *);
+void	ips_morpheus_inten(struct ips_softc *);
 int	ips_morpheus_intr(void *);
 
 struct dmamem *	ips_dmamem_alloc(bus_dma_tag_t, bus_size_t);
@@ -260,12 +264,14 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_IBM_SERVERAID:
 		printf(": Copperhead");
 		sc->sc_exec = ips_copperhead_exec;
+		sc->sc_inten = ips_copperhead_inten;
 		sc->sc_intr = ips_copperhead_intr;
 		break;
 	case PCI_PRODUCT_IBM_SERVERAID2:
 	case PCI_PRODUCT_ADP2_SERVERAID:
 		printf(": Morpheus");
 		sc->sc_exec = ips_morpheus_exec;
+		sc->sc_inten = ips_morpheus_inten;
 		sc->sc_intr = ips_morpheus_intr;
 		break;
 	}
@@ -323,6 +329,9 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		goto fail2;
 	}
 	printf(", %s\n", intrstr);
+
+	/* Enable interrupts */
+	(*sc->sc_inten)(sc);
 
 	/* Attach SCSI bus */
 	sc->sc_scsi_link.openings = IPS_MAXCMDS;	/* XXX: for now */
@@ -512,6 +521,11 @@ ips_copperhead_exec(struct ips_softc *sc)
 {
 }
 
+void
+ips_copperhead_inten(struct ips_softc *sc)
+{
+}
+
 int
 ips_copperhead_intr(void *arg)
 {
@@ -522,6 +536,16 @@ void
 ips_morpheus_exec(struct ips_softc *sc)
 {
 	IPS_WRITE_4(sc, IPS_MORPHEUS_IQPR, sc->sc_cmdm->dm_seg.ds_addr);
+}
+
+void
+ips_morpheus_inten(struct ips_softc *sc)
+{
+	u_int32_t reg;
+
+	reg = IPS_READ_4(sc, IPS_MORPHEUS_OIMR);
+	reg &= ~0x08;
+	IPS_WRITE_4(sc, IPS_MORPHEUS_OIMR, reg);
 }
 
 int
