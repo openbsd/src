@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.2 2006/11/25 16:59:31 niklas Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.3 2006/11/27 12:39:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -124,12 +124,12 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 	pin = aml_val2int(v->v_package[1]);
 
 	if (v->v_package[2]->type == AML_OBJTYPE_NAMEREF ||
-	    v->v_package[2]->type == AML_OBJTYPE_DEVICE) {
+	    v->v_package[2]->type == AML_OBJTYPE_OBJREF) {
 		if (v->v_package[2]->type == AML_OBJTYPE_NAMEREF)
 			node = aml_searchname(sc->sc_devnode,
 			    v->v_package[2]->v_nameref);
 		else
-			node = v->v_package[2]->node;
+			node = v->v_package[2]->v_objref.ref->node;
 		if (node == NULL) {
 			printf(" invalid node!\n");
 			return;
@@ -151,6 +151,9 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 		if ((res.v_buffer[0] >> 3) == 0x4) {
 			irq = res.v_buffer[1] + (res.v_buffer[2] << 8);
 			irq = ffs(irq) - 1;
+		} else {
+			printf("unexpected _CSR object\n");
+			return;
 		}
 	} else
 		irq = aml_val2int(v->v_package[3]);
