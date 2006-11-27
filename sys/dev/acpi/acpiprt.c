@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.4 2006/11/27 15:20:26 jordan Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.5 2006/11/27 16:32:43 marco Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -182,6 +182,10 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 		irq = aml_val2int(v->v_package[3]);
 	}
 	apic = ioapic_find_bybase(irq);
+	if (apic == NULL) {
+		printf("%s: no apic found for irq %d\n", DEVNAME(sc), irq);
+		return;
+	}
 
 	map = malloc(sizeof (struct mp_intr_map), M_DEVBUF, M_NOWAIT);
 	if (map == NULL)
