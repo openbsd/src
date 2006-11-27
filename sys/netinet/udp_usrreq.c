@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.110 2006/07/17 12:16:36 claudio Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.111 2006/11/27 11:00:12 claudio Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ udp_input(struct mbuf *m, ...)
 	struct ip *ip;
 	struct udphdr *uh;
 	struct inpcb *inp;
-	struct mbuf *opts = 0;
+	struct mbuf *opts = NULL;
 	struct ip save_ip;
 	int iphlen, len;
 	va_list ap;
@@ -391,7 +391,7 @@ udp_input(struct mbuf *m, ...)
 	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
 	    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif)) {
 #endif /* INET6 */
-		struct socket *last;
+		struct inpcb *last;
 		/*
 		 * Deliver a multicast or broadcast datagram to *all* sockets
 		 * for which the local and remote addresses and ports match
@@ -434,8 +434,7 @@ udp_input(struct mbuf *m, ...)
 			} else
 #endif /* INET6 */
 			if (inp->inp_laddr.s_addr != INADDR_ANY) {
-				if (inp->inp_laddr.s_addr !=
-				    ip->ip_dst.s_addr)
+				if (inp->inp_laddr.s_addr != ip->ip_dst.s_addr)
 					continue;
 			}
 #ifdef INET6
@@ -458,27 +457,31 @@ udp_input(struct mbuf *m, ...)
 				struct mbuf *n;
 
 				if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
-					opts = NULL;
 #ifdef INET6
-					if (ip6 && (inp->inp_flags & IN6P_CONTROLOPTS))
-						ip6_savecontrol(inp, &opts, ip6, n);
+					if (ip6 && (last->inp_flags &
+					    IN6P_CONTROLOPTS))
+						ip6_savecontrol(last, &opts,
+						    ip6, n);
 #endif /* INET6 */
-					if (ip && (inp->inp_flags & INP_CONTROLOPTS))
-						ip_savecontrol(inp, &opts, ip, n);
+					if (ip && (last->inp_flags &
+					    INP_CONTROLOPTS))
+						ip_savecontrol(last, &opts, ip,
+						    n);
 
 					m_adj(n, iphlen);
-					if (sbappendaddr(&last->so_rcv,
+					if (sbappendaddr(
+					    &last->inp_socket->so_rcv,
 					    &srcsa.sa, n, opts) == 0) {
 						m_freem(n);
 						if (opts)
 							m_freem(opts);
 						udpstat.udps_fullsock++;
 					} else
-						sorwakeup(last);
+						sorwakeup(last->inp_socket);
 					opts = NULL;
 				}
 			}
-			last = inp->inp_socket;
+			last = inp;
 			/*
 			 * Don't look for additional matches if this one does
 			 * not have either the SO_REUSEPORT or SO_REUSEADDR
@@ -487,7 +490,8 @@ udp_input(struct mbuf *m, ...)
 			 * port.  It * assumes that an application will never
 			 * clear these options after setting them.
 			 */
-			if ((last->so_options&(SO_REUSEPORT|SO_REUSEADDR)) == 0)
+			if ((last->inp_socket->so_options & (SO_REUSEPORT |
+			    SO_REUSEADDR)) == 0)
 				break;
 		}
 
@@ -501,21 +505,20 @@ udp_input(struct mbuf *m, ...)
 			goto bad;
 		}
 
-		opts = NULL;
 #ifdef INET6
-		if (ip6 && (inp->inp_flags & IN6P_CONTROLOPTS))
-			ip6_savecontrol(inp, &opts, ip6, m);
+		if (ip6 && (last->inp_flags & IN6P_CONTROLOPTS))
+			ip6_savecontrol(last, &opts, ip6, m);
 #endif /* INET6 */
-		if (ip && (inp->inp_flags & INP_CONTROLOPTS))
-			ip_savecontrol(inp, &opts, ip, m);
+		if (ip && (last->inp_flags & INP_CONTROLOPTS))
+			ip_savecontrol(last, &opts, ip, m);
 
 		m_adj(m, iphlen);
-		if (sbappendaddr(&last->so_rcv,
+		if (sbappendaddr(&last->inp_socket->so_rcv,
 		    &srcsa.sa, m, opts) == 0) {
 			udpstat.udps_fullsock++;
 			goto bad;
 		}
-		sorwakeup(last);
+		sorwakeup(last->inp_socket);
 		return;
 	}
 	/*
