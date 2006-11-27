@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.151 2006/10/26 08:37:14 tom Exp $
+#	$OpenBSD: files.i386,v 1.152 2006/11/27 18:04:28 gwk Exp $
 #
 # new style config file for i386 architecture
 #
@@ -423,3 +423,14 @@ attach	ipmi at mainbus
 device	esm
 attach	esm at mainbus
 file	arch/i386/i386/esm.c			esm needs-flag
+
+
+#
+# VESA
+#
+include "dev/vesa/files.vesa"
+
+
+#include "dev/rasops/files.rasops"
+
+

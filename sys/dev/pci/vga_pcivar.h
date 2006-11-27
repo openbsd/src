@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pcivar.h,v 1.6 2006/03/16 21:32:34 matthieu Exp $ */
+/* $OpenBSD: vga_pcivar.h,v 1.7 2006/11/27 18:04:28 gwk Exp $ */
 /* $NetBSD: vga_pcivar.h,v 1.1 1998/03/22 15:16:19 drochner Exp $ */
 
 /*
@@ -67,6 +67,20 @@ struct vga_pci_softc {
 #if 0
 	struct vga_config *sc_vc;	/* VGA configuration */
 #endif
+#ifdef VESAFB
+	int sc_width;
+	int sc_height;
+	int sc_depth;
+	int sc_linebytes;
+	u_int32_t sc_base;
+	int sc_mode;			/* WSDISPLAY_MODE_EMUL or _DUMBFB */
+	int sc_textmode;		/* original VESA text mode */
+	int sc_gfxmode;			/* VESA graphics mode */
+	u_char sc_cmap_red[256];	/* saved color map */
+	u_char sc_cmap_green[256];
+	u_char sc_cmap_blue[256];
+
+#endif
 #ifdef PCIAGP
 	/* agp stuff */
 	bus_space_tag_t sc_bt, sc_memt;
@@ -111,5 +125,12 @@ int agp_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 int vga_pci_cnattach(bus_space_tag_t, bus_space_tag_t,
 			  pci_chipset_tag_t, int, int, int);
+
+#ifdef VESAFB
+int vesafb_find_mode(struct vga_pci_softc *, int, int, int);
+void vesafb_set_mode(struct vga_pci_softc *, int);
+int vesafb_get_mode(struct vga_pci_softc *);
+int vesafb_get_supported_depth(struct vga_pci_softc *);
+#endif
 
 #endif /* _PCI_VGA_PCIVAR_H_ */

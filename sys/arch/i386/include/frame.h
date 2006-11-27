@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.7 2005/07/18 14:55:54 mickey Exp $	*/
+/*	$OpenBSD: frame.h,v 1.8 2006/11/27 18:04:28 gwk Exp $	*/
 /*	$NetBSD: frame.h,v 1.12 1995/10/11 04:20:08 mycroft Exp $	*/
 
 /*-
@@ -36,6 +36,8 @@
  *	@(#)frame.h	5.2 (Berkeley) 1/18/91
  */
 
+#ifndef _MACHINE_FRAME_H
+#define _MACHINE_FRAME_H
 #include <sys/signal.h>
 
 /*
@@ -123,3 +125,4 @@ struct sigframe {
 	siginfo_t sf_si;
 	void	*sf_fpstate;
 };
+#endif

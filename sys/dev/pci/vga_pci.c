@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.24 2006/07/20 20:54:51 kettenis Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.25 2006/11/27 18:04:28 gwk Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -89,9 +89,18 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 
+#ifdef VESAFB
+#include <dev/vesa/vesabiosvar.h>
+#endif
+
 int	vga_pci_match(struct device *, void *, void *);
 void	vga_pci_attach(struct device *, struct device *, void *);
 paddr_t	vga_pci_mmap(void* v, off_t off, int prot);
+
+#ifdef VESAFB
+int vesafb_putcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
+int vesafb_getcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
+#endif
 
 struct cfattach vga_pci_ca = {
 	sizeof(struct vga_pci_softc), vga_pci_match, vga_pci_attach,
@@ -143,6 +152,9 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	pcireg_t reg;
+#ifdef VESAFB
+	struct vga_pci_softc *sc = (struct vga_pci_softc *)self;
+#endif
 
 	/*
 	 * Enable bus master; X might need this for accelerated graphics.
@@ -154,7 +166,16 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 #ifdef PCIAGP
 	agp_attach(parent, self, aux);
 #endif
-	printf("\n");
+#ifdef VESAFB
+	if (vesabios_softc != NULL && vesabios_softc->sc_nmodes > 0) {
+		sc->sc_textmode = vesafb_get_mode(sc);
+		printf(", vesafb\n");
+		vga_extended_attach(self, pa->pa_iot, pa->pa_memt,
+		    WSDISPLAY_TYPE_PCIVGA, vga_pci_mmap);
+		return;
+	}
+#endif
+ 	printf("\n");
 	vga_common_attach(self, pa->pa_iot, pa->pa_memt,
 	    WSDISPLAY_TYPE_PCIVGA);
 }
@@ -162,6 +183,14 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 paddr_t
 vga_pci_mmap(void *v, off_t off, int prot)
 {
+#ifdef VESAFB
+	struct vga_config *vc = (struct vga_config *)v;
+	struct vga_pci_softc *sc = (struct vga_pci_softc *)vc->vc_softc;
+
+	if (sc->sc_mode == WSDISPLAYIO_MODE_DUMBFB) {
+		return atop(sc->sc_base + off);
+	}
+#endif
 #ifdef PCIAGP
 	return agp_mmap(v, off, prot);
 #else
@@ -170,7 +199,7 @@ vga_pci_mmap(void *v, off_t off, int prot)
 }
 
 int
-vga_pci_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, 
+vga_pci_cnattach(bus_space_tag_t iot, bus_space_tag_t memt,
     pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	return (vga_cnattach(iot, memt, WSDISPLAY_TYPE_PCIVGA, 0));
@@ -180,8 +209,78 @@ int
 vga_pci_ioctl(void *v, u_long cmd, caddr_t addr, int flag, struct proc *pb)
 {
 	int error = 0;
+#ifdef VESAFB
+	struct vga_config *vc = (struct vga_config *)v;
+	struct vga_pci_softc *sc = (struct vga_pci_softc *)vc->vc_softc;
+	struct wsdisplay_fbinfo *wdf;
+	struct wsdisplay_gfx_mode *gfxmode;
+	int mode;
+#endif
 
 	switch (cmd) {
+#ifdef VESAFB
+	case WSDISPLAYIO_SMODE:
+		mode = *(u_int *)addr;
+		switch (mode) {
+		case WSDISPLAYIO_MODE_EMUL:
+			/* back to text mode */
+			vesafb_set_mode(sc, sc->sc_textmode);
+			sc->sc_mode = mode;
+			break;
+		case WSDISPLAYIO_MODE_DUMBFB:
+			if (sc->sc_gfxmode == -1)
+				return (-1);
+			vesafb_set_mode(sc, sc->sc_gfxmode);
+			sc->sc_mode = mode;
+			break;
+		default:
+			error = -1;
+		}
+		break;
+	case WSDISPLAYIO_GINFO:
+		if (sc->sc_gfxmode == -1)
+			return (-1);
+		wdf = (void *)addr;
+		wdf->height = sc->sc_height;
+		wdf->width = sc->sc_width;
+		wdf->depth = sc->sc_depth;
+		wdf->cmsize = 256;
+		break;
+
+	case WSDISPLAYIO_LINEBYTES:
+		if (sc->sc_gfxmode == -1)
+			return (-1);
+		*(u_int *)addr = sc->sc_linebytes;
+		break;
+
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
+		break;
+	case WSDISPLAYIO_GETCMAP:
+		if (sc->sc_depth == 8)
+			error = vesafb_getcmap(sc,
+			    (struct wsdisplay_cmap *)addr);
+		break;
+
+	case WSDISPLAYIO_PUTCMAP:
+		if (sc->sc_depth == 8)
+			error = vesafb_putcmap(sc,
+			    (struct wsdisplay_cmap *)addr);
+		break;
+
+	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
+		*(int *)addr = vesafb_get_supported_depth(sc);
+		break;
+		
+	case WSDISPLAYIO_SETGFXMODE:
+		gfxmode = (struct wsdisplay_gfx_mode *)addr;
+		sc->sc_gfxmode = vesafb_find_mode(sc, gfxmode->width,
+		    gfxmode->height, gfxmode->depth);
+		if (sc->sc_gfxmode == -1) 
+			error = -1;
+		break;
+
+#endif
 #ifdef PCIAGP
 	case AGPIOC_INFO:
 	case AGPIOC_ACQUIRE:

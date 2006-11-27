@@ -1,0 +1,11 @@
+# $OpenBSD: files.vesa,v 1.1 2006/11/27 18:04:28 gwk Exp $
+#
+# Config file and device description for VESA BIOS and framebuffer code
+# Included by ports that need it.
+
+define vesabios {}
+device  vesabios
+attach vesabios at mainbus
+file    dev/vesa/vesabios.c		vesabios needs-flag
+
+file	dev/vesa/vesafb.c		vesafb needs-flag

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.27 2006/10/18 20:59:51 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.28 2006/11/27 18:04:28 gwk Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include "acpi.h"
 #include "ipmi.h"
 #include "esm.h"
+#include "vesabios.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
@@ -73,6 +74,10 @@
 
 #if NESM > 0
 #include <arch/i386/i386/esmvar.h>
+#endif
+
+#if NVESABIOS > 0
+#include <dev/vesa/vesabiosvar.h>
 #endif
 
 #if 0
@@ -192,6 +197,13 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 		config_found(self, &caa, mainbus_print);
 	}
+
+#if NVESABIOS > 0
+        if (vbeprobe())	{
+		mba.mba_busname = "vesabios";
+		config_found(self, &mba.mba_busname, NULL);
+	}
+#endif
 
 #if 0
 #ifdef SMP
