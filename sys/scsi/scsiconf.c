@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.118 2006/11/26 09:29:07 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.119 2006/11/27 11:56:20 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -301,28 +301,25 @@ int
 scsi_detach_bus(struct scsibus_softc *sc, int flags)
 {
 	struct scsi_link *alink = sc->adapter_link;
-	int i, err, rv;
+	int i;
 
-	for (i = 0; i < alink->adapter_buswidth; i++) {
-		if (sc->sc_link[i] == NULL)
-			continue;
+	for (i = 0; i < alink->adapter_buswidth; i++)
+		scsi_detach_target(sc, i, flags);
 
-		err = scsi_detach_target(sc, i, flags);
-		if (err != 0)
-			rv = err;
-	}
-
-	return (rv);
+	return (0);
 }
 
 int
 scsi_detach_target(struct scsibus_softc *sc, int target, int flags)
 {
 	struct scsi_link *alink = sc->adapter_link;
-	int i, err, rv;
+	int i, err, rv = 0, detached = 0;
 
 	if (target < 0 || target >= alink->adapter_buswidth ||
 	    target == alink->adapter_target)
+		return (ENXIO);
+
+	if (sc->sc_link[target] == NULL)
 		return (ENXIO);
 
 	for (i = 0; i < alink->luns; i++) { /* nicer backwards? */
@@ -332,9 +329,10 @@ scsi_detach_target(struct scsibus_softc *sc, int target, int flags)
 		err = scsi_detach_lun(sc, target, i, flags);
 		if (err != 0)
 			rv = err;
+		detached = 1;
 	}
 
-	return (rv);
+	return (detached ? rv : ENXIO);
 }
 
 int
@@ -356,7 +354,7 @@ scsi_detach_lun(struct scsibus_softc *sc, int target, int lun, int flags)
 	if (link == NULL)
 		return (ENXIO);
 
-	if (((flags & DETACH_FORCE) == 0) && link->flags & SDEV_OPEN)
+	if (((flags & DETACH_FORCE) == 0) && (link->flags & SDEV_OPEN))
 		return (EBUSY);
 
 	/* detaching a device from scsibus is a two step process... */
