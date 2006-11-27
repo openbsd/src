@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.538 2006/11/27 11:39:26 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.539 2006/11/27 12:35:29 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -227,7 +227,6 @@ ucycom*	at uhidev?		# Cypress serial
 ucom*	at ucycom?
 uhid*	at uhidev?		# USB generic HID support
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
-uberry*	at uhub?		# Research In Motion Blackberry
 atu*	at uhub?		# Atmel AT76c50x based 802.11b
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub?		# CATC USB-EL1201A based Ethernet
@@ -245,6 +244,7 @@ scsibus* at usscanner?
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
 #ubt*	at uhub?		# USB Bluetooth
+uberry*	at uhub?		# Research In Motion Blackberry
 ugen*	at uhub?		# USB Generic driver
 uath*	at uhub?		# Atheros AR5005UG/AR5005UX
 ural*	at uhub?		# Ralink RT2500USB

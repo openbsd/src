@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.167 2006/11/26 16:11:19 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.168 2006/11/27 12:35:30 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -194,6 +194,7 @@ scsibus* at usscanner?
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
 #ubt*	at uhub?		# USB Bluetooth
+uberry*	at uhub?		# Research In Motion Blackberry
 ugen*	at uhub?		# USB Generic driver
 uath*	at uhub?		# Atheros AR5005UG/AR5005UX
 ural*	at uhub?		# Ralink RT2500USB
