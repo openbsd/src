@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.4 2006/11/26 23:31:14 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.5 2006/11/27 00:29:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -453,10 +453,11 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 		cfxga_scr.nrows = ri->ri_rows;
 		cfxga_scr.ncols = ri->ri_cols;
 		cfxga_scr.capabilities = ri->ri_caps;
-		cfxga_scr.textops = &ri->ri_ops;
 	} else {
 		rasops_init(ri, cfxga_scr.nrows, cfxga_scr.ncols);
 	}
+
+	cfxga_scr.textops = &ri->ri_ops;
 
 	scr->scr_ops = ri->ri_ops;
 	ri->ri_ops.copycols = cfxga_copycols;
