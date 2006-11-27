@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.89 2006/09/24 14:54:54 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.90 2006/11/27 20:52:30 stevesk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1075,9 +1075,9 @@ again:
 	/*
 	 * If we're supposed to increase the interval, do so.  If it's
 	 * currently zero (i.e., we haven't sent any packets yet), set
-	 * it to one; otherwise, add to it a random number between zero
-	 * and two times itself.  On average, this means that it will
-	 * double with every transmission.
+	 * it to initial_interval; otherwise, add to it a random
+	 * number between zero and two times itself.  On average, this
+	 * means that it will double with every transmission.
 	 */
 	if (increase) {
 		if (!ip->client->interval)
