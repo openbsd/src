@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.63 2006/11/25 16:26:08 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.64 2006/11/27 15:20:26 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -658,7 +658,7 @@ acpi_foundprt(struct aml_node *node, void *arg)
 	memset(&aaa, 0, sizeof(aaa));
 	aaa.aaa_iot = sc->sc_iot;
 	aaa.aaa_memt = sc->sc_memt;
-	aaa.aaa_node = node->parent;
+	aaa.aaa_node = node;
 	aaa.aaa_dev = dev;
 	aaa.aaa_name = "acpiprt";
 
@@ -781,6 +781,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 			    sizeof(p_dsdt->hdr));
 		}
 	}
+
+	/* Perform post-parsing fixups */
+	aml_postparse();
 
 	/* Walk AML Tree */
 	//aml_walkroot();

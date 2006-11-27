@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.3 2006/11/27 12:39:04 kettenis Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.4 2006/11/27 15:20:26 jordan Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -85,7 +85,7 @@ acpiprt_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
-	sc->sc_devnode = aa->aaa_node->child;
+	sc->sc_devnode = aa->aaa_node;
 	sc->sc_bus = acpiprt_getpcibus(sc, sc->sc_devnode);
 
 	printf(": bus %d (%s)", sc->sc_bus, sc->sc_devnode->parent->name);
@@ -106,11 +106,34 @@ acpiprt_attach(struct device *parent, struct device *self, void *aux)
 		acpiprt_prt_add(sc, res.v_package[i]);
 }
 
+int
+acpiprt_getirq(union acpi_resource *crs, void *arg);
+
+int
+acpiprt_getirq(union acpi_resource *crs, void *arg)
+{
+	int *irq = (int *)arg;
+	int typ;
+
+	typ=AML_CRSTYPE(crs);
+	switch (typ) {
+	case SR_IRQ:
+    		*irq = ffs(aml_letohost16(crs->sr_irq.irq_mask)) - 1;
+    		break;
+	case LR_EXTIRQ:
+    		*irq = aml_letohost32(crs->lr_extirq.irq[0]);
+    		break;
+  	default:
+    		printf("Unknown interrupt : %x\n", typ);
+  	}
+  	return (0);
+}
+
 void
 acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 {
 	struct aml_node	*node;
-	struct aml_value res;
+	struct aml_value res, *pp;
 	int addr, pin, irq;
 	struct mp_intr_map *map;
 	struct ioapic_softc *apic;
@@ -122,20 +145,25 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 
 	addr = aml_val2int(v->v_package[0]);
 	pin = aml_val2int(v->v_package[1]);
+	if (pin > 3) {
+		return;
+	}
 
-	if (v->v_package[2]->type == AML_OBJTYPE_NAMEREF ||
-	    v->v_package[2]->type == AML_OBJTYPE_OBJREF) {
-		if (v->v_package[2]->type == AML_OBJTYPE_NAMEREF)
-			node = aml_searchname(sc->sc_devnode,
-			    v->v_package[2]->v_nameref);
-		else
-			node = v->v_package[2]->v_objref.ref->node;
-		if (node == NULL) {
-			printf(" invalid node!\n");
-			return;
-		}
-
-		if (aml_evalname(sc->sc_acpi, node, "_STA", 0, NULL, NULL)) {
+	pp = v->v_package[2];
+	if (pp->type == AML_OBJTYPE_NAMEREF) {
+	  	node = aml_searchname(sc->sc_devnode, pp->v_nameref);
+	  	if (node == NULL) {
+	    		printf("Invalid device!\n");
+	    		return;
+	  	}
+		pp = node->value;
+	}
+	if (pp->type == AML_OBJTYPE_OBJREF) {
+		pp = pp->v_objref.ref;
+	}
+	if (pp->type == AML_OBJTYPE_DEVICE) {
+	  	node = pp->node;
+		if (aml_evalname(sc->sc_acpi, node, "_STA", 0, NULL, &res)) {
 			printf("no _STA method\n");
 		}
 
@@ -147,24 +175,19 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 			printf("invalid _CRS object\n");
 			return;
 		}
-
-		if ((res.v_buffer[0] >> 3) == 0x4) {
-			irq = res.v_buffer[1] + (res.v_buffer[2] << 8);
-			irq = ffs(irq) - 1;
-		} else {
-			printf("unexpected _CSR object\n");
-			return;
-		}
-	} else
+		aml_parse_resource(res.length, res.v_buffer,
+				   acpiprt_getirq,
+				   &irq);
+	} else {
 		irq = aml_val2int(v->v_package[3]);
-
+	}
 	apic = ioapic_find_bybase(irq);
 
 	map = malloc(sizeof (struct mp_intr_map), M_DEVBUF, M_NOWAIT);
 	if (map == NULL)
 		return;
 
-#if ACPI_DEBUG
+#ifdef ACPI_DEBUG
 	printf("%s: addr 0x%x pin %d irq %d\n", DEVNAME(sc), addr, pin, irq);
 #endif
 
