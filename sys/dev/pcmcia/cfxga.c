@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.7 2006/11/27 11:50:02 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.8 2006/11/27 12:49:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -152,13 +152,14 @@ int	cfxga_memory_rop(struct cfxga_softc *, struct cfxga_screen *, u_int,
 	    int, int, int, int);
 void	cfxga_reset_video(struct cfxga_softc *);
 void	cfxga_reset_and_repaint(struct cfxga_softc *);
-int	cfxga_standalone_rop(struct cfxga_softc *, u_int, u_int,
-	    int, int, int, int, int32_t);
+int	cfxga_solid_fill(struct cfxga_softc *, int, int, int, int, int32_t);
+int	cfxga_standalone_rop(struct cfxga_softc *, u_int,
+	    int, int, int, int, int, int);
 int	cfxga_synchronize(struct cfxga_softc *);
 u_int	cfxga_wait(struct cfxga_softc *, u_int, u_int);
 
 #define	cfxga_clear_screen(sc) \
-	cfxga_standalone_rop(sc, OP_SOLID_FILL, 0, 0, 0, 640, 480, 0)
+	cfxga_solid_fill(sc, 0, 0, 640, 480, 0)
 #define	cfxga_repaint_screen(sc) \
 	cfxga_memory_rop(sc, sc->sc_active, ROP_SRC, 0, 0, 640, 480)
 
@@ -882,11 +883,11 @@ fail:
 }
 
 /*
- * Perform an internal frame buffer operation.
+ * Perform a solid fill operation.
  */
 int
-cfxga_standalone_rop(struct cfxga_softc *sc, u_int op, u_int rop, int x, int y,
-    int cx, int cy, int32_t srccolor)
+cfxga_solid_fill(struct cfxga_softc *sc, int x, int y, int cx, int cy,
+    int32_t srccolor)
 {
 	u_int pos;
 	int rc;
@@ -897,7 +898,7 @@ cfxga_standalone_rop(struct cfxga_softc *sc, u_int op, u_int rop, int x, int y,
 	if ((rc = cfxga_synchronize(sc)) != 0)
 		return (rc);
 
-	cfxga_write_2(sc, CFREG_BITBLT_ROP, rop | (op << 8));
+	cfxga_write_2(sc, CFREG_BITBLT_ROP, 0 | (OP_SOLID_FILL << 8));
 	cfxga_write_2(sc, CFREG_BITBLT_SRC_LOW, pos);
 	cfxga_write_2(sc, CFREG_BITBLT_SRC_HIGH, pos >> 16);
 	cfxga_write_2(sc, CFREG_BITBLT_DST_LOW, pos);
@@ -905,8 +906,44 @@ cfxga_standalone_rop(struct cfxga_softc *sc, u_int op, u_int rop, int x, int y,
 	cfxga_write_2(sc, CFREG_BITBLT_OFFSET, 640);
 	cfxga_write_2(sc, CFREG_BITBLT_WIDTH, cx - 1);
 	cfxga_write_2(sc, CFREG_BITBLT_HEIGHT, cy - 1);
-	if (op == OP_SOLID_FILL)
-		cfxga_write_2(sc, CFREG_BITBLT_FG, (u_int16_t)srccolor);
+	cfxga_write_2(sc, CFREG_BITBLT_FG, (u_int16_t)srccolor);
+	cfxga_write_2(sc, CFREG_BITBLT_CONTROL,
+	    BITBLT_ACTIVE | BITBLT_COLOR_16);
+
+	return (0);
+}
+
+/*
+ * Perform an internal frame buffer operation.
+ */
+int
+cfxga_standalone_rop(struct cfxga_softc *sc, u_int rop, int sx, int sy,
+    int dx, int dy, int cx, int cy)
+{
+	u_int srcpos, dstpos;
+	u_int opcode;
+	int rc;
+
+	srcpos = (sy * 640 + sx) * (16 / 8);
+	dstpos = (dy * 640 + dx) * (16 / 8);
+
+	if (dstpos <= srcpos)
+		opcode = (OP_MOVE_POSITIVE_ROP << 8) | rop;
+	else
+		opcode = (OP_MOVE_NEGATIVE_ROP << 8) | rop;
+
+	/* Wait for previous operations to complete */
+	if ((rc = cfxga_synchronize(sc)) != 0)
+		return (rc);
+
+	cfxga_write_2(sc, CFREG_BITBLT_ROP, opcode);
+	cfxga_write_2(sc, CFREG_BITBLT_SRC_LOW, srcpos);
+	cfxga_write_2(sc, CFREG_BITBLT_SRC_HIGH, srcpos >> 16);
+	cfxga_write_2(sc, CFREG_BITBLT_DST_LOW, dstpos);
+	cfxga_write_2(sc, CFREG_BITBLT_DST_HIGH, dstpos >> 16);
+	cfxga_write_2(sc, CFREG_BITBLT_OFFSET, 640);
+	cfxga_write_2(sc, CFREG_BITBLT_WIDTH, cx - 1);
+	cfxga_write_2(sc, CFREG_BITBLT_HEIGHT, cy - 1);
 	cfxga_write_2(sc, CFREG_BITBLT_CONTROL,
 	    BITBLT_ACTIVE | BITBLT_COLOR_16);
 
@@ -926,18 +963,19 @@ cfxga_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
 	struct cfxga_screen *scr = ri->ri_hw;
-	int x, y, cx, cy;
+	int sx, dx, y, cx, cy;
 
 	(*scr->scr_ops.copycols)(ri, row, src, dst, num);
 
 	if (scr != scr->scr_sc->sc_active)
 		return;
 
-	x = dst * ri->ri_font->fontwidth + ri->ri_xorigin;
+	sx = src * ri->ri_font->fontwidth + ri->ri_xorigin;
+	dx = dst * ri->ri_font->fontwidth + ri->ri_xorigin;
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = num * ri->ri_font->fontwidth;
 	cy = ri->ri_font->fontheight;
-	cfxga_memory_rop(scr->scr_sc, scr, ROP_SRC, x, y, cx, cy);
+	cfxga_standalone_rop(scr->scr_sc, ROP_SRC, sx, y, dx, y, cx, cy);
 }
 
 void
@@ -945,7 +983,7 @@ cfxga_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
 	struct cfxga_screen *scr = ri->ri_hw;
-	int x, y, cx, cy;
+	int x, sy, dy, cx, cy;
 
 	(*scr->scr_ops.copyrows)(ri, src, dst, num);
 
@@ -953,10 +991,11 @@ cfxga_copyrows(void *cookie, int src, int dst, int num)
 		return;
 
 	x = ri->ri_xorigin;
-	y = dst * ri->ri_font->fontheight + ri->ri_yorigin;
+	sy = src * ri->ri_font->fontheight + ri->ri_yorigin;
+	dy = dst * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = ri->ri_emuwidth;
 	cy = num * ri->ri_font->fontheight;
-	cfxga_memory_rop(scr->scr_sc, scr, ROP_SRC, x, y, cx, cy);
+	cfxga_standalone_rop(scr->scr_sc, ROP_SRC, x, sy, x, dy, cx, cy);
 }
 
 void
@@ -972,9 +1011,8 @@ cfxga_do_cursor(struct rasops_info *ri)
 	y = ri->ri_crow * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = ri->ri_font->fontwidth;
 	cy = ri->ri_font->fontheight;
-	cfxga_standalone_rop(scr->scr_sc, OP_MOVE_POSITIVE_ROP,
-	    ROP_ONES ^ ROP_SRC /* i.e. not SRC */,
-	    x, y, cx, cy, /* ri->ri_devcmap[WSCOL_BLACK] */ 0);
+	cfxga_standalone_rop(scr->scr_sc, ROP_ONES ^ ROP_SRC /* i.e. not SRC */,
+	    x, y, x, y, cx, cy);
 }
 
 void
@@ -995,8 +1033,7 @@ cfxga_erasecols(void *cookie, int row, int col, int num, long attr)
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = num * ri->ri_font->fontwidth;
 	cy = ri->ri_font->fontheight;
-	cfxga_standalone_rop(scr->scr_sc, OP_SOLID_FILL, 0,
-	    x, y, cx, cy, ri->ri_devcmap[bg]);
+	cfxga_solid_fill(scr->scr_sc, x, y, cx, cy, ri->ri_devcmap[bg]);
 }
 
 void
@@ -1017,8 +1054,7 @@ cfxga_eraserows(void *cookie, int row, int num, long attr)
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = ri->ri_emuwidth;
 	cy = num * ri->ri_font->fontheight;
-	cfxga_standalone_rop(scr->scr_sc, OP_SOLID_FILL, 0,
-	    x, y, cx, cy, ri->ri_devcmap[bg]);
+	cfxga_solid_fill(scr->scr_sc, x, y, cx, cy, ri->ri_devcmap[bg]);
 }
 
 void
@@ -1042,8 +1078,7 @@ cfxga_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		rasops_unpack_attr(attr, &fg, &bg, NULL);
 		cx = ri->ri_font->fontwidth;
 		cy = ri->ri_font->fontheight;
-		cfxga_standalone_rop(scr->scr_sc, OP_SOLID_FILL, 0,
-		    x, y, cx, cy, ri->ri_devcmap[bg]);
+		cfxga_solid_fill(scr->scr_sc, x, y, cx, cy, ri->ri_devcmap[bg]);
 	} else {
 		cfxga_expand_char(scr->scr_sc, scr, uc, x, y, attr);
 	}
