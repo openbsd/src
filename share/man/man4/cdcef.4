@@ -1,0 +1,50 @@
+.\"	$OpenBSD: cdcef.4,v 1.1 2006/11/27 15:49:31 uwe Exp $
+.\"
+.\" Uwe Stuehler, 2006. Public Domain.
+.\"
+.Dd November 27, 2006
+.Dt CDCEF 4
+.Os
+.Sh NAME
+.Nm cdcef
+.Nd USB Communication Device Class Ethernet function
+.Sh SYNOPSIS
+.Cd "cdcef* at usbf?"
+.Sh DESCRIPTION
+The
+.Nm
+driver implements the USB Communication Device Class (CDC) Ethernet
+Emulation Model (EEM) to provide support for USB Host-to-Host bridges.
+.Pp
+The USB bridge appears as a regular network interface on both sides,
+transporting Ethernet frames.
+.Pp
+For more information on configuring this device, see
+.Xr ifconfig 8 .
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr cdce 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr usbf 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
+.Rs
+.%T "Universal Serial Bus Class Definitions for Communication Devices"
+.%O http://www.usb.org/developers/devclass_docs/usbcdc11.pdf
+.Re
+.Rs
+.%T "CDC Subclass Specification for Ethernet Emulation Model Devices"
+.%O http://www.usb.org/developers/devclass_docs/CDC_EEM10.pdf
+.Re
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.1 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Uwe Stuehler Aq uwe@openbsd.org .
