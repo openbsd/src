@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.5 2006/11/27 16:32:43 marco Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.6 2006/11/27 18:41:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -37,6 +37,8 @@
 #include <machine/i82093var.h>
 
 #include <machine/mpbiosvar.h>
+
+#include "ioapic.h"
 
 int	acpiprt_match(struct device *, void *, void *);
 void	acpiprt_attach(struct device *, struct device *, void *);
@@ -134,9 +136,17 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 {
 	struct aml_node	*node;
 	struct aml_value res, *pp;
-	int addr, pin, irq;
+	u_int64_t addr;
+	int pin, irq;
+#if NIOAPIC > 0
 	struct mp_intr_map *map;
 	struct ioapic_softc *apic;
+#else
+	pci_chipset_tag_t pc = NULL;
+	pcitag_t tag;
+	pcireg_t reg;
+	int bus, dev, func, nfuncs;
+#endif
 
 	if (v->type != AML_OBJTYPE_PACKAGE || v->length != 4) {
 		printf("invalid mapping object\n");
@@ -181,6 +191,12 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 	} else {
 		irq = aml_val2int(v->v_package[3]);
 	}
+
+#ifdef ACPI_DEBUG
+	printf("%s: addr 0x%llx pin %d irq %d\n", DEVNAME(sc), addr, pin, irq);
+#endif
+
+#if NIOAPIC > 0
 	apic = ioapic_find_bybase(irq);
 	if (apic == NULL) {
 		printf("%s: no apic found for irq %d\n", DEVNAME(sc), irq);
@@ -190,10 +206,6 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 	map = malloc(sizeof (struct mp_intr_map), M_DEVBUF, M_NOWAIT);
 	if (map == NULL)
 		return;
-
-#ifdef ACPI_DEBUG
-	printf("%s: addr 0x%x pin %d irq %d\n", DEVNAME(sc), addr, pin, irq);
-#endif
 
 	memset(map, 0, sizeof *map);
 	map->ioapic = apic;
@@ -210,6 +222,27 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 
 	map->next = mp_busses[sc->sc_bus].mb_intrs;
 	mp_busses[sc->sc_bus].mb_intrs = map;
+#else
+	bus = sc->sc_bus;
+	dev = ACPI_PCI_DEV(addr << 16);
+	tag = pci_make_tag(pc, bus, dev, 0);
+
+	reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	if (PCI_HDRTYPE_MULTIFN(reg))
+		nfuncs = 8;
+	else
+		nfuncs = 1;
+
+	for (func = 0; func < nfuncs; func++) {
+		tag = pci_make_tag(pc, bus, dev, func);
+		reg = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+		if (PCI_INTERRUPT_PIN(reg) == pin + 1) {
+			reg &= ~(PCI_INTERRUPT_LINE_MASK << PCI_INTERRUPT_LINE_SHIFT);
+			reg |= irq << PCI_INTERRUPT_LINE_SHIFT;
+			pci_conf_write(pc, tag, PCI_INTERRUPT_REG, reg);
+		}
+	}
+#endif
 }
 
 int
