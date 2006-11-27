@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_lk201.c,v 1.6 2006/11/01 19:53:40 miod Exp $	*/
+/*	$OpenBSD: wskbdmap_lk201.c,v 1.7 2006/11/27 16:10:41 miod Exp $	*/
 /* $NetBSD: wskbdmap_lk201.c,v 1.4 2000/12/02 16:57:41 ragge Exp $ */
 
 #include <sys/types.h>
@@ -189,6 +189,17 @@ static const keysym_t lkkbd_keydesc_fr[] = {
     KC(252),	KS_Cmd2,	KS_Mode_switch,	KS_Multi_key
 };
 
+static const keysym_t lkkbd_keydesc_pt[] = {
+    KC(191),			KS_backslash,	KS_bar,
+    KC(219),			KS_6,		KS_quotedbl,
+    KC(232),			KS_comma,	KS_semicolon,
+    KC(237),			KS_period,	KS_colon,
+    KC(242),			KS_ccedilla,
+    KC(247),			KS_bracketleft,	KS_braceleft,
+    KC(250),			KS_dead_acute,	KS_dead_grave,
+    KC(251),			KS_dead_tilde,	KS_dead_circumflex,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -197,6 +208,7 @@ const struct wscons_keydesc lkkbd_keydesctab[] = {
 	KBD_MAP(KB_DE,			KB_US,	lkkbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	lkkbd_keydesc_de_nodead),
 	KBD_MAP(KB_FR,			KB_US,	lkkbd_keydesc_fr),
+	KBD_MAP(KB_PT,			KB_US,	lkkbd_keydesc_pt),
 	{0, 0, 0, 0}
 };
 
