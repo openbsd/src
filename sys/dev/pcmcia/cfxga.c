@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.5 2006/11/27 00:29:02 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.6 2006/11/27 11:25:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -75,7 +75,12 @@ struct cfxga_softc {
 	LIST_HEAD(, cfxga_screen) sc_scr;
 	struct cfxga_screen *sc_active;
 
-	struct device *sc_wsd;
+	/* wsdisplay glue */
+	struct wsscreen_descr sc_wsd;
+	struct wsscreen_list sc_wsl;
+	struct wsscreen_descr *sc_scrlist[1];
+	struct wsdisplay_emulops sc_ops;
+	struct device *sc_wsdisplay;
 };
 
 int	cfxga_match(struct device *, void *,  void *);
@@ -111,19 +116,6 @@ struct wsdisplay_accessops cfxga_accessops = {
 	NULL,
 	NULL,
 	cfxga_burner
-};
-
-struct wsscreen_descr cfxga_scr = {
-	"std"
-};
-
-const struct wsscreen_descr *cfxga_scr_descr[] = {
-	&cfxga_scr
-};
-
-const struct wsscreen_list cfxga_scr_list = {
-	sizeof cfxga_scr_descr / sizeof cfxga_scr_descr[0],
-	cfxga_scr_descr
 };
 
 /*
@@ -373,13 +365,21 @@ cfxga_attach(struct device *parent, struct device *self, void *aux)
 
 	cfxga_reset_video(sc);
 
+	strlcpy(sc->sc_wsd.name, "std", sizeof(sc->sc_wsd.name));
+	sc->sc_wsd.textops = &sc->sc_ops;
+
+	sc->sc_scrlist[0] = &sc->sc_wsd;
+	sc->sc_wsl.nscreens = 1;
+	sc->sc_wsl.screens = (const struct wsscreen_descr **)sc->sc_scrlist;
+
 	waa.console = 0;
-	waa.scrdata = &cfxga_scr_list;
+	waa.scrdata = &sc->sc_wsl;
 	waa.accessops = &cfxga_accessops;
 	waa.accesscookie = sc;
+	waa.defaultscreens = 1;
 
-	if ((sc->sc_wsd = config_found(self, &waa, wsemuldisplaydevprint)) ==
-	    NULL)
+	if ((sc->sc_wsdisplay =
+	    config_found(self, &waa, wsemuldisplaydevprint)) == NULL)
 		cfxga_clear_screen(sc);	/* otherwise wscons will do this */
 }
 
@@ -391,9 +391,9 @@ cfxga_detach(struct device *dev, int flags)
 	/*
 	 * Detach all children, and hope wsdisplay detach code is correct...
 	 */
-	if (sc->sc_wsd != NULL) {
-		config_detach(sc->sc_wsd, DETACH_FORCE);
-		/* sc->sc_wsd = NULL; */
+	if (sc->sc_wsdisplay != NULL) {
+		config_detach(sc->sc_wsdisplay, DETACH_FORCE);
+		/* sc->sc_wsdisplay = NULL; */
 	}
 
 	if (ISSET(sc->sc_state, CS_MAPPED)) {
@@ -447,17 +447,10 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	ri->ri_bnum = 5;
 	ri->ri_bpos = 0;
 
-	if (cfxga_scr.nrows == 0) {
+	if (sc->sc_wsd.nrows == 0)
 		rasops_init(ri, 100, 100);
-
-		cfxga_scr.nrows = ri->ri_rows;
-		cfxga_scr.ncols = ri->ri_cols;
-		cfxga_scr.capabilities = ri->ri_caps;
-	} else {
-		rasops_init(ri, cfxga_scr.nrows, cfxga_scr.ncols);
-	}
-
-	cfxga_scr.textops = &ri->ri_ops;
+	else
+		rasops_init(ri, sc->sc_wsd.nrows, sc->sc_wsd.ncols);
 
 	scr->scr_ops = ri->ri_ops;
 	ri->ri_ops.copycols = cfxga_copycols;
@@ -466,6 +459,15 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	ri->ri_ops.eraserows = cfxga_eraserows;
 	ri->ri_ops.putchar = cfxga_putchar;
 	ri->ri_do_cursor = cfxga_do_cursor;
+
+	if (sc->sc_wsd.nrows == 0) {
+		sc->sc_wsd.nrows = ri->ri_rows;
+		sc->sc_wsd.ncols = ri->ri_cols;
+		bcopy(&ri->ri_ops, &sc->sc_ops, sizeof(sc->sc_ops));
+		sc->sc_wsd.fontwidth = ri->ri_font->fontwidth;
+		sc->sc_wsd.fontheight = ri->ri_font->fontheight;
+		sc->sc_wsd.capabilities = ri->ri_caps;
+	}
 
 	scr->scr_sc = sc;
 	LIST_INSERT_HEAD(&sc->sc_scr, scr, scr_link);
