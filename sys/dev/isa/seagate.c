@@ -1,4 +1,4 @@
-/*	$OpenBSD: seagate.c,v 1.19 2005/12/03 17:13:22 krw Exp $	*/
+/*	$OpenBSD: seagate.c,v 1.20 2006/11/28 23:59:45 dlg Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -432,6 +432,7 @@ seaattach(parent, self, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct sea_softc *sea = (void *)self;
+	struct scsibus_attach_args saa;
 
 	sea_init(sea);
 
@@ -449,10 +450,13 @@ seaattach(parent, self, aux)
 	sea->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, seaintr, sea, sea->sc_dev.dv_xname);
 
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sea->sc_link;
+
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sea->sc_link, seaprint);
+	config_found(self, &saa, seaprint);
 }
 
 /*

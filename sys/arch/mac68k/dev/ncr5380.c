@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.28 2006/07/11 21:55:46 dlg Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.29 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -231,6 +231,7 @@ struct device	*pdp, *dp;
 void		*auxp;
 {
 	struct ncr_softc	*sc;
+	struct scsibus_attach_args saa;
 	int			i;
 
 	sc = (struct ncr_softc *)dp;
@@ -272,10 +273,13 @@ void		*auxp;
 	SET_5380_REG(NCR5380_IDSTAT, 0);
 	scsi_ienable();
 
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, scsiprint);
+	config_found(dp, &saa, scsiprint);
 }
 
 /*

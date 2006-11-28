@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.36 2006/05/08 19:52:13 deraadt Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.37 2006/11/28 23:59:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -120,6 +120,7 @@ int
 gdt_attach(gdt)
 	struct gdt_softc *gdt;
 {
+	struct scsibus_attach_args saa;
 	u_int16_t cdev_cnt;
 	int i, id, drv_cyls, drv_hds, drv_secs, error, nsegs;
 
@@ -484,7 +485,10 @@ gdt_attach(gdt)
 #endif
 	gdt_cnt++;
 
-	config_found(&gdt->sc_dev, &gdt->sc_link, scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &gdt->sc_link;
+
+	config_found(&gdt->sc_dev, &saa, scsiprint);
 
 	gdt->sc_raw_link = malloc(gdt->sc_bus_cnt * sizeof (struct scsi_link),
 				  M_DEVBUF, M_NOWAIT);
@@ -502,7 +506,10 @@ gdt_attach(gdt)
 		gdt->sc_raw_link[i].adapter_buswidth =
 		    (gdt->sc_class & GDT_FC) ? GDT_MAXID : 16;	/* XXX */
 
-		config_found(&gdt->sc_dev, &gdt->sc_raw_link[i], scsiprint);
+		bzero(&saa, sizeof(saa));
+		saa.saa_sc_link = &gdt->sc_raw_link[i];
+
+		config_found(&gdt->sc_dev, &saa, scsiprint);
 	}
 
 	gdt_polling = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.26 2005/12/03 16:53:16 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.27 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -202,6 +202,7 @@ void
 osiop_attach(sc)
 	struct osiop_softc *sc;
 {
+	struct scsibus_attach_args saa;
 	struct osiop_acb *acb;
 	bus_dma_segment_t seg;
 	int nseg;
@@ -349,10 +350,13 @@ osiop_attach(sc)
 	sc->sc_link.adapter_buswidth = OSIOP_NTGT;
 	sc->sc_link.adapter_target = sc->sc_id;
 
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
 	/*
 	 * Now try to attach all the sub devices.
 	 */
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	config_found(&sc->sc_dev, &saa, scsiprint);
 }
 
 /*

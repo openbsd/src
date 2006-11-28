@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.32 2006/06/26 22:16:23 miod Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.33 2006/11/28 23:59:45 dlg Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -191,6 +191,8 @@ ncr53c9x_attach(sc, adapter, dev)
 	struct scsi_adapter *adapter;
 	struct scsi_device *dev;
 {
+	struct scsibus_attach_args saa;
+
 	timeout_set(&sc->sc_watchdog, ncr53c9x_watch, sc);
 	/*
 	 * Allocate SCSI message buffers.
@@ -268,10 +270,13 @@ ncr53c9x_attach(sc, adapter, dev)
 	sc->sc_link.openings = 2;
 	sc->sc_link.adapter_buswidth = sc->sc_ntarg;
 
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	config_found(&sc->sc_dev, &saa, scsiprint);
 	timeout_add(&sc->sc_watchdog, 60*hz);
 }
 

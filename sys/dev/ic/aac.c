@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.32 2006/07/21 19:11:11 mickey Exp $	*/
+/*	$OpenBSD: aac.c,v 1.33 2006/11/28 23:59:45 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -223,6 +223,7 @@ int	aac_debug = AAC_DEBUG;
 int
 aac_attach(struct aac_softc *sc)
 {
+	struct scsibus_attach_args;
 	int error;
 
 	/*
@@ -274,7 +275,10 @@ aac_attach(struct aac_softc *sc)
 	sc->aac_link.adapter_buswidth = AAC_MAX_CONTAINERS;
 	sc->aac_link.adapter_target = AAC_MAX_CONTAINERS;
 
-	config_found(&sc->aac_dev, &sc->aac_link, scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->aac_link;
+
+	config_found(&sc->aac_dev, &saa, scsiprint);
 
 	/* Create the AIF thread */
 	sc->aifthread = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshdma.c,v 1.13 2006/03/15 20:20:40 miod Exp $ */
+/*	$OpenBSD: sshdma.c,v 1.14 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -102,6 +102,7 @@ void *auxp;
 {
 	struct ssh_softc *sc = (struct ssh_softc *)self;
 	struct confargs *ca = auxp;
+	struct scsibus_attach_args saa;
 	ssh_regmap_p rp;
 	int tmp;
 	extern int cpuspeed;
@@ -176,7 +177,11 @@ void *auxp;
 	tmp = bootpart;
 	if (ca->ca_paddr != bootaddr)
 		bootpart = -1;		/* invalid flag to device_register */
-	config_found(self, &sc->sc_link, scsiprint);
+
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
+	config_found(self, &saa, scsiprint);
 	bootpart = tmp;				 /* restore old value */
 
 }

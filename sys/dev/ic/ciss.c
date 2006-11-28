@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.21 2006/09/15 23:47:52 krw Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.22 2006/11/28 23:59:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -139,6 +139,7 @@ ciss_put_ccb(struct ciss_ccb *ccb)
 int
 ciss_attach(struct ciss_softc *sc)
 {
+	struct scsibus_attach_args saa;
 	struct scsibus_softc *scsibus;
 	struct ciss_ccb *ccb;
 	struct ciss_cmd *cmd;
@@ -382,8 +383,10 @@ ciss_attach(struct ciss_softc *sc)
 	sc->sc_link.adapter = &ciss_switch;
 	sc->sc_link.adapter_target = sc->maxunits;
 	sc->sc_link.adapter_buswidth = sc->maxunits;
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
 	scsibus = (struct scsibus_softc *)config_found_sm(&sc->sc_dev,
-	    &sc->sc_link, scsiprint, NULL);
+	    &saa, scsiprint, NULL);
 
 #if 0
 	sc->sc_link_raw.device = &ciss_raw_dev;
@@ -392,8 +395,10 @@ ciss_attach(struct ciss_softc *sc)
 	sc->sc_link_raw.adapter = &ciss_raw_switch;
 	sc->sc_link_raw.adapter_target = sc->ndrives;
 	sc->sc_link_raw.adapter_buswidth = sc->ndrives;
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link_raw;
 	rawbus = (struct scsibus_softc *)config_found_sm(&sc->sc_dev,
-	    &sc->sc_link_raw, scsiprint, NULL);
+	    &saa, scsiprint, NULL);
 #endif
 
 #if NBIO > 0

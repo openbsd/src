@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.13 2006/04/22 11:37:06 miod Exp $ */
+/*	$OpenBSD: wdsc.c,v 1.14 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -112,6 +112,7 @@ wdscattach(parent, self, aux)
 {
 	struct sbic_softc   *sc = (struct sbic_softc *)self;
 	struct confargs *ca = aux;
+	struct scsibus_attach_args saa;
 	int tmp;
 
 	sc->sc_enintr  = wdsc_enintr;
@@ -171,10 +172,13 @@ wdscattach(parent, self, aux)
 	 * Attach all scsi units on us, watching for boot device
 	 * (see device_register).
 	 */
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
 	tmp = bootpart;
 	if (ca->ca_paddr != bootaddr) 
 		bootpart = -1;
-	config_found(self, &sc->sc_link, scsiprint);
+	config_found(self, &saa, scsiprint);
 	bootpart = tmp;		/* restore old value */
 }
 

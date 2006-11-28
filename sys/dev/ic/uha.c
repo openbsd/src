@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.8 2005/12/03 16:53:16 krw Exp $	*/
+/*	$OpenBSD: uha.c,v 1.9 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -136,6 +136,7 @@ void
 uha_attach(sc)
 	struct uha_softc *sc;
 {
+	struct scsibus_attach_args saa;
 
 	(sc->init)(sc);
 	TAILQ_INIT(&sc->sc_free_mscp);
@@ -143,23 +144,19 @@ uha_attach(sc)
 	/*
 	 * fill in the prototype scsi_link.
 	 */
-#ifndef __OpenBSD__
-	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
-#endif
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_scsi_dev;
 	sc->sc_link.adapter = &uha_switch;
 	sc->sc_link.device = &uha_dev;
 	sc->sc_link.openings = 2;
 
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
 	/*
 	 * ask the adapter what subunits are present
 	 */
-#ifdef __OpenBSD__
-	config_found(&sc->sc_dev, &sc->sc_link, uhaprint);
-#else
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
-#endif
+	config_found(&sc->sc_dev, &saa, uhaprint);
 }
 
 integrate void

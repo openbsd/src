@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.6 2006/10/17 01:26:26 dlg Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.7 2006/11/28 23:59:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -95,6 +95,7 @@ void	sdmmc_scsi_minphys(struct buf *);
 void
 sdmmc_scsi_attach(struct sdmmc_softc *sc)
 {
+	struct scsibus_attach_args saa;
 	struct sdmmc_scsi_softc *scbus;
 	struct sdmmc_function *sf;
 
@@ -137,8 +138,10 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 	scbus->sc_link.openings = 1;
 	scbus->sc_link.adapter = &scbus->sc_adapter;
 
-	scbus->sc_child = config_found(&sc->sc_dev, &scbus->sc_link,
-	    scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &scbus->sc_link;
+
+	scbus->sc_child = config_found(&sc->sc_dev, &saa, scsiprint);
 	if (scbus->sc_child == NULL) {
 		printf("%s: can't attach scsibus\n", sc->sc_dev.dv_xname);
 		goto free_ccbs;

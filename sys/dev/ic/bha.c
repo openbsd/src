@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.8 2005/12/03 16:53:15 krw Exp $	*/
+/*	$OpenBSD: bha.c,v 1.9 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -312,6 +312,7 @@ bha_attach(sc, bpd)
 	struct bha_softc *sc;
 	struct bha_probe_data *bpd;
 {
+	struct scsibus_attach_args saa;
 	int s;
 
 	/*
@@ -347,10 +348,13 @@ bha_attach(sc, bpd)
 
 	splx(s);
 
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	config_found(&sc->sc_dev, &saa, scsiprint);
 }
 
 integrate void

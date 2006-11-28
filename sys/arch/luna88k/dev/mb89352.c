@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.6 2005/12/03 18:09:37 krw Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.7 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -194,7 +194,7 @@ spc_attach(sc, adapter)
 	struct spc_softc *sc;
 	struct scsi_adapter *adapter;
 {
-
+	struct scsibus_attach_args saa;
 	SPC_TRACE(("spc_attach  "));
 	sc->sc_state = SPC_INIT;
 
@@ -225,10 +225,13 @@ spc_attach(sc, adapter)
 	sc->sc_link.device = &spc_dev;
 	sc->sc_link.openings = 2;
 
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	config_found(&sc->sc_dev, &saa, scsiprint);
 }
 
 /*

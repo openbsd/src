@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.12 2006/06/03 01:51:54 martin Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.13 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -264,6 +264,7 @@ void
 aicattach(sc)
 	struct aic_softc *sc;
 {
+	struct scsibus_attach_args saa;
 	AIC_TRACE(("aicattach  "));
 	sc->sc_state = AIC_INIT;
 
@@ -293,7 +294,10 @@ aicattach(sc)
 	sc->sc_link.device = &aic_dev;
 	sc->sc_link.openings = 2;
 
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
+	config_found(&sc->sc_dev, &saa, scsiprint);
 }
 
 int

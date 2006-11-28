@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.32 2006/03/04 14:20:37 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.33 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ static struct scsi_device ahc_dev =
 int
 ahc_attach(struct ahc_softc *ahc)
 {
+	struct scsibus_attach_args saa;
 	char ahc_info[256];
 	int s;
 
@@ -121,18 +122,25 @@ ahc_attach(struct ahc_softc *ahc)
 	if ((ahc->features & AHC_TWIN) && ahc->flags & AHC_RESET_BUS_B)
 		ahc_reset_channel(ahc, 'B', TRUE);
 
+	bzero(&saa, sizeof(saa));
 	if ((ahc->flags & AHC_PRIMARY_CHANNEL) == 0) {
+		saa.saa_sc_link = &ahc->sc_channel;
 		ahc->sc_child = config_found((void *)&ahc->sc_dev,
-		    &ahc->sc_channel, scsiprint);
-		if (ahc->features & AHC_TWIN)
+		    &saa, scsiprint);
+		if (ahc->features & AHC_TWIN) {
+			saa.saa_sc_link = &ahc->sc_channel_b;
 			ahc->sc_child_b = config_found((void *)&ahc->sc_dev,
-			    &ahc->sc_channel_b, scsiprint);
+			    &saa, scsiprint);
+		}
 	} else {
-		if (ahc->features & AHC_TWIN)
+		if (ahc->features & AHC_TWIN) {
+			saa.saa_sc_link = &ahc->sc_channel_b;
 			ahc->sc_child = config_found((void *)&ahc->sc_dev,
-			    &ahc->sc_channel_b, scsiprint);
+			    &saa, scsiprint);
+		}
+		saa.saa_sc_link = &ahc->sc_channel;
 		ahc->sc_child_b = config_found((void *)&ahc->sc_dev,
-		    &ahc->sc_channel, scsiprint);
+		    &saa, scsiprint);
 	}
 
 	ahc_unlock(ahc, &s);

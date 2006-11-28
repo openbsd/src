@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.21 2005/12/03 17:13:22 krw Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.22 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -475,6 +475,7 @@ ahbattach(parent, self, aux)
 {
 	struct eisa_attach_args *ea = aux;
 	struct ahb_softc *sc = (void *)self;
+	struct scsibus_attach_args saa;
 	bus_space_tag_t iot = ea->ea_iot;
 	bus_space_handle_t ioh;
 	eisa_chipset_tag_t ec = ea->ea_ec;
@@ -534,10 +535,13 @@ ahbattach(parent, self, aux)
 	if (intrstr != NULL)
 		printf("%s\n", intrstr);
 
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sc->sc_link, ahbprint);
+	config_found(self, &saa, ahbprint);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.122 2006/11/28 16:56:50 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.123 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -140,7 +140,8 @@ void
 scsibusattach(struct device *parent, struct device *self, void *aux)
 {
 	struct scsibus_softc		*sb = (struct scsibus_softc *)self;
-	struct scsi_link		*sc_link_proto = aux;
+	struct scsibus_attach_args	*saa = aux;
+	struct scsi_link		*sc_link_proto = saa->saa_sc_link;
 	int				nbytes, i;
 
 	if (!cold)

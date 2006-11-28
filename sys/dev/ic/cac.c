@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.22 2006/08/31 12:34:39 marco Exp $	*/
+/*	$OpenBSD: cac.c,v 1.23 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -141,6 +141,7 @@ struct cac_linkage cac_l0 = {
 int
 cac_init(struct cac_softc *sc, int startfw)
 {
+	struct scsibus_attach_args saa;
 	struct cac_controller_info cinfo;
 	int error, rseg, size, i;
 	bus_dma_segment_t seg[1];
@@ -241,7 +242,10 @@ cac_init(struct cac_softc *sc, int startfw)
 	if (sc->sc_link.openings < 4 )
 		sc->sc_link.openings = 4;
 
-	config_found(&sc->sc_dv, &sc->sc_link, scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
+	config_found(&sc->sc_dv, &saa, scsiprint);
 
 	/* Set our `shutdownhook' before we start any device activity. */
 	if (cac_sdh == NULL)

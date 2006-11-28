@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.11 2006/06/23 06:27:12 miod Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.12 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -204,6 +204,7 @@ USB_MATCH(usscanner)
 USB_ATTACH(usscanner)
 {
 	USB_ATTACH_START(usscanner, sc, uaa);
+	struct scsibus_attach_args saa;
 	usbd_device_handle	dev = uaa->device;
 	usbd_interface_handle	iface;
 	char			*devinfop;
@@ -364,7 +365,10 @@ USB_ATTACH(usscanner)
 	sc->sc_link.scsipi_scsi.max_lun = 0;
 #endif
 
-	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
+	sc->sc_child = config_found(&sc->sc_dev, &saa, scsiprint);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));

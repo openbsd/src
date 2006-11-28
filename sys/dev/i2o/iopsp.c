@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopsp.c,v 1.8 2005/11/19 02:18:00 pedro Exp $	*/
+/*	$OpenBSD: iopsp.c,v 1.9 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -136,6 +136,7 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	struct iop_softc *iop = (struct iop_softc *)parent;
 	struct iopsp_softc *sc = (struct iopsp_softc *)self;
 	struct iop_attach_args *ia = (struct iop_attach_args *)aux;
+	struct scsibus_attach_args saa;
 	struct {
 		struct	i2o_param_op_results pr;
 		struct	i2o_param_read_results prr;
@@ -217,7 +218,10 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 		goto bad;
 	}
 
-	config_found(&sc->sc_dv, &sc->sc_link, scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
+	config_found(&sc->sc_dv, &saa, scsiprint);
 	return;
 
  bad:

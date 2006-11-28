@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.80 2006/11/28 16:56:50 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.81 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -188,6 +188,10 @@ struct scsi_inquiry_pattern {
 	char *vendor;
 	char *product;
 	char *revision;
+};
+
+struct scsibus_attach_args {
+	struct scsi_link *saa_sc_link;
 };
 
 /*

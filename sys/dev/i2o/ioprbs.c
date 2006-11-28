@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.10 2005/12/04 04:05:25 krw Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.11 2006/11/28 23:59:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -179,6 +179,7 @@ ioprbs_attach(struct device *parent, struct device *self, void *aux)
 	struct iop_attach_args *ia = aux;
 	struct ioprbs_softc *sc = (struct ioprbs_softc *)self;
 	struct iop_softc *iop = (struct iop_softc *)parent;
+	struct scsibus_attach_args saa;
 	int rv, state = 0;
 	int enable;
 	u_int32_t cachesz;
@@ -357,7 +358,10 @@ ioprbs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter_buswidth = 1;
 	sc->sc_link.adapter_target = 1;
 
-	config_found(&sc->sc_dv, &sc->sc_link, scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
+	config_found(&sc->sc_dv, &saa, scsiprint);
 
 	return;
 

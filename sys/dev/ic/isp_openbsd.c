@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.28 2005/12/03 16:53:16 krw Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.29 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -85,6 +85,7 @@ struct cfdriver isp_cd = {
 void
 isp_attach(struct ispsoftc *isp)
 {
+	struct scsibus_attach_args saa;
 	struct scsi_link *lptr = &isp->isp_osinfo._link[0];
 	isp->isp_osinfo._adapter.scsi_minphys = ispminphys;
 
@@ -158,13 +159,19 @@ isp_attach(struct ispsoftc *isp)
 		ISP_UNLOCK(isp);
 		lptr->adapter_target = defid;
 	}
+
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = lptr;
+
 	/*
 	 * And attach children (if any).
 	 */
-	config_found((void *)isp, lptr, scsiprint);
+	config_found((void *)isp, &saa, scsiprint);
 	if (IS_DUALBUS(isp)) {
 		lptr++;
-		config_found((void *)isp, lptr, scsiprint);
+		bzero(&saa, sizeof(saa));
+		saa.saa_sc_link = lptr;
+		config_found((void *)isp, &saa, scsiprint);
 	}
 }
 

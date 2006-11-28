@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.22 2005/12/03 17:13:22 krw Exp $	*/
+/*	$OpenBSD: wds.c,v 1.23 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -287,6 +287,7 @@ wdsattach(parent, self, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct wds_softc *sc = (void *)self;
+	struct scsibus_attach_args saa;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 
@@ -324,10 +325,13 @@ wdsattach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
 	    IPL_BIO, wdsintr, sc, sc->sc_dev.dv_xname);
 
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sc->sc_link, wdsprint);
+	config_found(self, &saa, wdsprint);
 }
 
 integrate void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.12 2006/11/26 22:31:12 gwk Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.13 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -219,6 +219,7 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mesh_softc *sc = (void *)self;
 	struct confargs *ca = aux;
+	struct scsi_attach_args saa;
 	int i, error;
 	u_int *reg;
 
@@ -269,7 +270,10 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter = &mesh_switch;
 	sc->sc_link.openings = 2;
 
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
+	config_found(&sc->sc_dev, &saa, scsiprint);
 
 	mac_intr_establish(parent, sc->sc_irq, IST_LEVEL, IPL_BIO, mesh_intr,
 	    sc, "mesh");

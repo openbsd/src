@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.15 2005/12/03 16:53:15 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.16 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -549,7 +549,8 @@ void
 adv_attach(sc)
 	ASC_SOFTC      *sc;
 {
-	int             i, error;
+	struct scsibus_attach_args	saa;
+	int				i, error;
 
 	/*
          * Initialize board RISC chip and enable interrupts.
@@ -614,7 +615,10 @@ adv_attach(sc)
 		printf("%s: WARNING: only %d of %d control blocks created\n",
 		       sc->sc_dev.dv_xname, i, ADV_MAX_CCB);
 	}
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+
+	bzero(&saa, sizeof(saa));
+	saa->sa_sc_link = &sc->sc_link;
+	config_found(&sc->sc_dev, &saa, scsiprint);
 }
 
 

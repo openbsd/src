@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.25 2006/05/22 20:35:12 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.26 2006/11/28 23:59:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -110,6 +110,7 @@ static struct scsi_device ahd_dev =
 int
 ahd_attach(struct ahd_softc *ahd)
 {
+	struct scsibus_attach_args saa;
 	char   ahd_info[256];
 	int	s;
 
@@ -138,8 +139,10 @@ ahd_attach(struct ahd_softc *ahd)
 	if (ahd->flags & AHD_RESET_BUS_A)
 		ahd_reset_channel(ahd, 'A', TRUE);
 
-	ahd->sc_child = config_found((void *)&ahd->sc_dev,
-	    &ahd->sc_channel, scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &ahd->sc_channel;
+
+	ahd->sc_child = config_found((void *)&ahd->sc_dev, &saa, scsiprint);
 
 	ahd_unlock(ahd, &s);
 

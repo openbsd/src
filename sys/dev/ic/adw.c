@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.30 2005/12/03 16:53:15 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.31 2006/11/28 23:59:45 dlg Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -517,7 +517,8 @@ void
 adw_attach(sc)
 	ADW_SOFTC      *sc;
 {
-	int             i, error;
+	struct scsibus_attach_args	saa;
+	int				i, error;
 
 
 	TAILQ_INIT(&sc->sc_free_ccb);
@@ -628,7 +629,10 @@ adw_attach(sc)
 	sc->sc_link.openings = 4;
 	sc->sc_link.adapter_buswidth = ADW_MAX_TID+1;
 
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
+	config_found(&sc->sc_dev, &saa, scsiprint);
 }
 
 

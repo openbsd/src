@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsdma.c,v 1.11 2006/03/15 20:20:40 miod Exp $ */
+/*	$OpenBSD: vsdma.c,v 1.12 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -98,6 +98,7 @@ vsattach(parent, self, auxp)
 {
 	struct vs_softc *sc = (struct vs_softc *)self;
 	struct confargs *ca = auxp;
+	struct scsibus_attach_args saa;
 	struct vsreg * rp;
 	int tmp;
 
@@ -133,10 +134,12 @@ vsattach(parent, self, auxp)
 	 * attach all scsi units on us, watching for boot device
 	 * (see device_register).
 	 */
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
 	tmp = bootpart;
 	if (ca->ca_paddr != bootaddr) 
 		bootpart = -1;          /* invalid flag to device_register */
-	config_found(self, &sc->sc_link, scsiprint);
+	config_found(self, &saa, scsiprint);
 	bootpart = tmp;             /* restore old value */
 }
 

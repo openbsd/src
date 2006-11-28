@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.13 2005/05/25 21:12:54 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.14 2006/11/28 23:59:45 dlg Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@ struct scsi_device umass_atapiscsi_dev = { NULL, NULL, NULL, NULL, };
 int
 umass_scsi_attach(struct umass_softc *sc)
 {
+	struct scsibus_attach_args saa;
 	struct umass_scsi_softc *scbus;
 
 	scbus = umass_scsi_setup(sc);
@@ -102,13 +103,14 @@ umass_scsi_attach(struct umass_softc *sc)
 	scbus->sc_link.flags |= SDEV_UMASS;
 	scbus->sc_link.device = &umass_scsi_dev;
 
+
 	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n"
 			     "sc = 0x%x, scbus = 0x%x\n",
 			     USBDEVNAME(sc->sc_dev), sc, scbus));
 
 	sc->sc_refcnt++;
 	scbus->base.sc_child =
-	  config_found((struct device *)sc, &scbus->sc_link, scsiprint);
+	  config_found((struct device *)sc, &saa, scsiprint);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 
@@ -119,6 +121,7 @@ umass_scsi_attach(struct umass_softc *sc)
 int
 umass_atapi_attach(struct umass_softc *sc)
 {
+	struct scsibus_attach_args saa;
 	struct umass_scsi_softc *scbus;
 
 	scbus = umass_scsi_setup(sc);
@@ -128,13 +131,16 @@ umass_atapi_attach(struct umass_softc *sc)
 	scbus->sc_link.flags |= SDEV_ATAPI;
 	scbus->sc_link.device = &umass_atapiscsi_dev;
 
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &scbus->sc_link;
+
 	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n"
 			     "sc = 0x%x, scbus = 0x%x\n",
 			     USBDEVNAME(sc->sc_dev), sc, scbus));
 
 	sc->sc_refcnt++;
-	scbus->base.sc_child =
-	  config_found((struct device *)sc, &scbus->sc_link, scsiprint);
+	scbus->base.sc_child = config_found((struct device *)sc,
+	    &saa, scsiprint);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.54 2006/11/04 23:11:31 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.55 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -508,6 +508,7 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct arc_softc		*sc = (struct arc_softc *)self;
 	struct pci_attach_args		*pa = aux;
+	struct scsibus_attach_args	saa;
 	struct device			*child;
 
 	sc->sc_talking = 0;
@@ -539,7 +540,10 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter_buswidth = ARC_MAX_TARGET;
 	sc->sc_link.openings = sc->sc_req_count / ARC_MAX_TARGET;
 
-	child = config_found(self, &sc->sc_link, scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
+	child = config_found(self, &saa, scsiprint);
 	sc->sc_scsibus = (struct scsibus_softc *)child;
 
 	/* enable interrupts */

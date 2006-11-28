@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.44 2006/05/22 22:22:11 martin Exp $ */
+/*	$OpenBSD: siop.c,v 1.45 2006/11/28 23:59:45 dlg Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -186,6 +186,8 @@ void
 siop_attach(sc)
 	struct siop_softc *sc;
 {
+	struct scsibus_attach_args saa;
+
 	if (siop_common_attach(&sc->sc_c) != 0)
 		return;
 
@@ -218,7 +220,10 @@ siop_attach(sc)
 	siop_dump_script(sc);
 #endif
 
-	config_found((struct device*)sc, &sc->sc_c.sc_link, scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_c.sc_link;
+
+	config_found((struct device*)sc, &saa, scsiprint);
 }
 
 void

@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.75 2006/10/22 22:43:21 dlg Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.76 2006/11/28 23:59:45 dlg Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -228,6 +228,7 @@ atapiscsi_attach(parent, self, aux)
 {
 	struct atapiscsi_softc *as = (struct atapiscsi_softc *)self;
 	struct ata_atapi_attach *aa_link = aux;
+	struct scsibus_attach_args saa;
 	struct ata_drive_datas *drvp = aa_link->aa_drv_data;
 	struct channel_softc *chp = drvp->chnl_softc;
 	struct ataparams *id = &drvp->id;
@@ -286,8 +287,10 @@ atapiscsi_attach(parent, self, aux)
 	WDCDEBUG_PRINT(("driver caps %04x\n", drvp->atapi_cap),
 	    DEBUG_PROBE);
 
-	child = config_found((struct device *)as, &as->sc_adapterlink,
-	    scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &as->sc_adapterlink;
+
+	child = config_found((struct device *)as, &saa, scsiprint);
 
 	if (child != NULL) {
 		struct scsibus_softc *scsi = (struct scsibus_softc *)child;

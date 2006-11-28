@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.4 2004/03/14 19:23:33 miod Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.5 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -145,6 +145,7 @@ struct scsi_device oosiop_dev = {
 void
 oosiop_attach(struct oosiop_softc *sc)
 {
+	struct scsibus_attach_args saa;
 	bus_size_t scrsize;
 	bus_dma_segment_t seg;
 	struct oosiop_cb *cb;
@@ -248,10 +249,13 @@ oosiop_attach(struct oosiop_softc *sc)
 	sc->sc_link.adapter_target = sc->sc_id;
 	sc->sc_link.quirks = ADEV_NODOORLOCK;
 
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
 	/*
 	 * Now try to attach all the sub devices.
 	 */
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	config_found(&sc->sc_dev, &saa, scsiprint);
 }
 
 int

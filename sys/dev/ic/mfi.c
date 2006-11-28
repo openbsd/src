@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.65 2006/08/31 18:13:17 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -576,6 +576,7 @@ mfiminphys(struct buf *bp)
 int
 mfi_attach(struct mfi_softc *sc)
 {
+	struct scsibus_attach_args saa;
 	uint32_t		status, frames;
 	int			i;
 
@@ -667,7 +668,10 @@ mfi_attach(struct mfi_softc *sc)
 	sc->sc_link.adapter_target = MFI_MAX_LD;
 	sc->sc_link.adapter_buswidth = sc->sc_max_ld;
 
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
+	config_found(&sc->sc_dev, &saa, scsiprint);
 
 	/* enable interrupts */
 	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);

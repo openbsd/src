@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.173 2006/08/28 01:34:52 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.174 2006/11/28 23:59:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -364,6 +364,7 @@ free_ccbs:
 int
 ami_attach(struct ami_softc *sc)
 {
+	struct scsibus_attach_args saa;
 	struct ami_rawsoftc *rsc;
 	struct ami_ccb iccb;
 	struct ami_iocmd *cmd;
@@ -539,7 +540,10 @@ ami_attach(struct ami_softc *sc)
 	/* lock around ioctl requests */
 	lockinit(&sc->sc_lock, PZERO, DEVNAME(sc), 0, 0);
 
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
+	config_found(&sc->sc_dev, &saa, scsiprint);
 
 	/* can't do bioctls, sensors, or pass-through on broken devices */
 	if (sc->sc_flags & AMI_BROKEN)
@@ -577,7 +581,10 @@ ami_attach(struct ami_softc *sc)
 		rsc->sc_link.adapter_target = 16;
 		rsc->sc_link.adapter_buswidth = 16;
 
-		config_found(&sc->sc_dev, &rsc->sc_link, scsiprint);
+		bzero(&saa, sizeof(saa));
+		saa.saa_sc_link = &rsc->sc_link;
+
+		config_found(&sc->sc_dev, &saa, scsiprint);
 	}
 
 	return (0);

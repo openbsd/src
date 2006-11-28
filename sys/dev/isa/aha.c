@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.55 2005/12/03 17:13:22 krw Exp $	*/
+/*	$OpenBSD: aha.c,v 1.56 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -377,6 +377,7 @@ ahaattach(parent, self, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct aha_softc *sc = (void *)self;
+	struct scsibus_attach_args saa;
 	int isapnp = !strcmp(parent->dv_cfdata->cf_driver->cd_name, "isapnp");
 
 	if (isapnp) {
@@ -406,13 +407,16 @@ ahaattach(parent, self, aux)
 	sc->sc_link.device = &aha_dev;
 	sc->sc_link.openings = 2;
 
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
 	    IPL_BIO, ahaintr, sc, sc->sc_dev.dv_xname);
 
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sc->sc_link, scsiprint);
+	config_found(self, &saa, scsiprint);
 }
 
 void

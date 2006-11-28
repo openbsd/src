@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.21 2004/11/29 06:20:02 jsg Exp $	*/
+/*	$OpenBSD: si.c,v 1.22 2006/11/28 23:59:45 dlg Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -331,6 +331,7 @@ si_attach(parent, self, args)
 {
 	struct si_softc *sc = (struct si_softc *) self;
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)sc;
+	struct scsibus_attach_args saa;
 	volatile struct si_regs *regs;
 	struct confargs *ca = args;
 	struct romaux *ra = &ca->ca_ra;
@@ -495,8 +496,11 @@ si_attach(parent, self, args)
 	    bp->val[0] == -1 && bp->val[1] == ncr_sc->sc_dev.dv_unit)
 		bootpath_store(1, bp + 1);
 
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &(ncr_sc->sc_link);
+
 	/* Configure sub-devices */
-	config_found(self, &(ncr_sc->sc_link), scsiprint);
+	config_found(self, &saa, scsiprint);
 
 	bootpath_store(1, NULL);
 }
