@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.99 2006/06/28 20:19:05 reyk Exp $
+.\"	$OpenBSD: cvs.1,v 1.100 2006/11/28 08:47:55 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004-2006 Xavier Santolaria <xsa@openbsd.org>
@@ -160,8 +160,6 @@ import,
 init,
 kserver,
 log,
-login,
-logout,
 rdiff,
 release,
 remove,
@@ -1063,12 +1061,6 @@ character.
 .Pp
 Aliases:
 .Ic lo .
-.Ss login
-Prompt for a password for an authenticating server.
-.Ss logout
-Remove an entry in
-.Pa .cvspass
-for a remote repository.
 .Ss rdiff
 The
 .Ic rdiff
