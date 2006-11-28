@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.196 2006/10/25 18:48:29 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.197 2006/11/28 16:39:34 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -150,7 +150,7 @@ typedef struct {
 
 %}
 
-%token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE
+%token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE RTABLE
 %token	RDE EVALUATE IGNORE COMPARE
 %token	GROUP NEIGHBOR NETWORK
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
@@ -469,6 +469,13 @@ conf_main	: AS asnumber		{
 				YYERROR;
 			}
 			free($4);
+		}
+		| RTABLE number {
+			if ($2 > RT_TABLEID_MAX || $2 < 0) {
+				yyerror("invalid rtable id");
+				YYERROR;
+			}
+			conf->rtableid = $2;
 		}
 		;
 
@@ -1664,6 +1671,7 @@ lookup(char *s)
 		{ "route-collector",	ROUTECOLL},
 		{ "route-reflector",	REFLECTOR},
 		{ "router-id",		ROUTERID},
+		{ "rtable",		RTABLE},
 		{ "rtlabel",		RTLABEL},
 		{ "self",		SELF},
 		{ "set",		SET},

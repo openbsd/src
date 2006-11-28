@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.139 2006/06/19 20:48:36 jmc Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.140 2006/11/28 16:39:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -240,7 +240,8 @@ main(int argc, char *argv[])
 	imsg_init(ibuf_se, pipe_m2s[0]);
 	imsg_init(ibuf_rde, pipe_m2r[0]);
 	mrt_init(ibuf_rde, ibuf_se);
-	if ((rfd = kr_init(!(conf.flags & BGPD_FLAG_NO_FIB_UPDATE))) == -1)
+	if ((rfd = kr_init(!(conf.flags & BGPD_FLAG_NO_FIB_UPDATE),
+	    conf.rtableid)) == -1)
 		quit = 1;
 	if (pftable_clear_all() != 0)
 		quit = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.57 2006/08/04 12:01:48 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.58 2006/11/28 16:39:34 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -241,6 +241,8 @@ print_mainconf(struct bgpd_config *conf)
 		print_set(&conf->staticset6);
 		printf("\n");
 	}
+	if (conf->rtableid)
+		printf("rtable %u\n", conf->rtableid);
 }
 
 void

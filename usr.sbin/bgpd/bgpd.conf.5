@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.76 2006/09/12 13:39:37 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.77 2006/11/28 16:39:34 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -303,6 +303,14 @@ router-id 10.0.0.1
 .Pp
 If not given, the BGP ID is determined as the biggest IP address assigned
 to the local machine.
+.Pp
+.It Ic rtable Ar number
+Work with the given kernel routing table
+instead of the default table,
+.Ar 0 .
+Note that this table is used for nexthop verification as well.
+Directly connected networks are always taken into account, even though
+their routes live in table 0.
 .Pp
 .It Xo
 .Ic transparent-as
