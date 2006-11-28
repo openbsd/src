@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.55 2006/11/28 20:04:02 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.56 2006/11/28 23:00:13 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -201,6 +201,27 @@ struct cfdriver re_cd = {
 #define EE_CLR(x)					\
 	CSR_WRITE_1(sc, RL_EECMD,			\
 		CSR_READ_1(sc, RL_EECMD) & ~x)
+
+static const struct re_revision {
+	u_int32_t		re_chipid;
+	const char		*re_name;
+} re_revisions[] = {
+	{ RL_HWREV_8169,	"RTL8169" },
+	{ RL_HWREV_8110S,	"RTL8110S" },
+	{ RL_HWREV_8169S,	"RTL8169S" },
+	{ RL_HWREV_8169_8110SB,	"RTL8169/8110SB" },
+	{ RL_HWREV_8169_8110SC,	"RTL8169/8110SC" },
+	{ RL_HWREV_8168_SPIN1,	"RTL8168 1" },
+	{ RL_HWREV_8100E,	"RTL8100E" },
+	{ RL_HWREV_8101E,	"RTL8101E" },
+	{ RL_HWREV_8168_SPIN2,	"RTL8168 2" },
+	{ RL_HWREV_8139CPLUS,	"RTL8139C+" },
+	{ RL_HWREV_8101,	"RTL8101" },
+	{ RL_HWREV_8100,	"RTL8100" },
+
+	{ 0, NULL }
+};
+
 
 /*
  * Send a read command and address to the EEPROM, check for ACK.
@@ -767,6 +788,9 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	struct ifnet	*ifp;
 	u_int16_t	re_did = 0;
 	int		error = 0, i;
+	u_int32_t	hwrev;
+	const struct re_revision *rr;
+	const char	*re_name = NULL;
 
 	/* Reset the adapter. */
 	re_reset(sc);
@@ -819,6 +843,17 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	}
 
 	bcopy(eaddr, (char *)&sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
+
+	hwrev = CSR_READ_4(sc, RL_TXCFG) & RL_TXCFG_HWREV;
+	for (rr = re_revisions; rr->re_name != NULL; rr++) {
+		if (rr->re_chipid == hwrev)
+			re_name = rr->re_name;
+	}
+
+	if (re_name == NULL)
+		printf(", unknown ASIC (0x%04x)", hwrev >> 16);
+	else
+		printf(", %s (0x%04x)", re_name, hwrev >> 16);
 
 	printf(": %s, address %s\n", intrstr,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
