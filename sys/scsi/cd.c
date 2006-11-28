@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.115 2006/11/27 23:14:22 beck Exp $	*/
+/*	$OpenBSD: cd.c,v 1.116 2006/11/28 16:56:50 dlg Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ cdmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct scsibus_attach_args *sa = aux;
+	struct scsi_attach_args *sa = aux;
 	int priority;
 
 	(void)scsi_inqmatch(sa->sa_inqbuf,
@@ -195,7 +195,7 @@ cdattach(parent, self, aux)
 	void *aux;
 {
 	struct cd_softc *cd = (void *)self;
-	struct scsibus_attach_args *sa = aux;
+	struct scsi_attach_args *sa = aux;
 	struct scsi_link *sc_link = sa->sa_sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdattach:\n"));

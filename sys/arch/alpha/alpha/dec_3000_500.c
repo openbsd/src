@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_3000_500.c,v 1.11 2002/06/25 21:33:19 miod Exp $ */
+/* $OpenBSD: dec_3000_500.c,v 1.12 2006/11/28 16:56:50 dlg Exp $ */
 /* $NetBSD: dec_3000_500.c,v 1.29 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -245,7 +245,7 @@ dec_3000_500_device_register(dev, aux)
 	    (strcmp(cd->cd_name, "sd") == 0 ||
 	     strcmp(cd->cd_name, "st") == 0 ||
 	     strcmp(cd->cd_name, "cd") == 0)) {
-		struct scsibus_attach_args *sa = aux;
+		struct scsi_attach_args *sa = aux;
 
 		if (parent->dv_parent != scsidev)
 			return;

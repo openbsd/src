@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_550.c,v 1.9 2005/05/09 21:55:12 martin Exp $ */
+/* $OpenBSD: dec_550.c,v 1.10 2006/11/28 16:56:50 dlg Exp $ */
 /* $NetBSD: dec_550.c,v 1.10 2000/06/20 03:48:53 matt Exp $ */
 
 /*
@@ -226,7 +226,7 @@ dec_550_device_register(dev, aux)
 
 	if (!strcmp(cd->cd_name, "sd") || !strcmp(cd->cd_name, "st") ||
 	    !strcmp(cd->cd_name, "cd")) {
-		struct scsibus_attach_args *sa = aux;
+		struct scsi_attach_args *sa = aux;
 		struct scsi_link *periph = sa->sa_sc_link;
 		int unit;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.34 2006/05/02 21:43:09 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.35 2006/11/28 16:56:50 dlg Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -385,7 +385,7 @@ device_register(struct device *dev, void *aux)
 	 */
 	if (strncmp("cd", dev->dv_xname, 2) == 0 ||
 	    strncmp("sd", dev->dv_xname, 2) == 0) {
-		struct scsibus_attach_args *sa = aux;
+		struct scsi_attach_args *sa = aux;
 		int target, bus, lun;
 
 		if (get_target(&target, &bus, &lun) != 0)

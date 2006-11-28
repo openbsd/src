@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.67 2006/11/27 23:14:22 beck Exp $	*/
+/*	$OpenBSD: st.c,v 1.68 2006/11/28 16:56:50 dlg Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -285,7 +285,7 @@ stmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct scsibus_attach_args *sa = aux;
+	struct scsi_attach_args *sa = aux;
 	int priority;
 
 	(void)scsi_inqmatch(sa->sa_inqbuf,
@@ -304,7 +304,7 @@ stattach(parent, self, aux)
 	void *aux;
 {
 	struct st_softc *st = (void *)self;
-	struct scsibus_attach_args *sa = aux;
+	struct scsi_attach_args *sa = aux;
 	struct scsi_link *sc_link = sa->sa_sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("stattach:\n"));

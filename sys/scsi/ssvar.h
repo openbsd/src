@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssvar.h,v 1.10 2003/05/18 16:06:35 mickey Exp $	*/
+/*	$OpenBSD: ssvar.h,v 1.11 2006/11/28 16:56:50 dlg Exp $	*/
 /*	$NetBSD: ssvar.h,v 1.2 1996/03/30 21:47:11 christos Exp $	*/
 
 /*
@@ -75,5 +75,5 @@ struct ss_softc {
 /*
  * define the special attach routines if configured
  */
-void mustek_attach(struct ss_softc *, struct scsibus_attach_args *);
-void scanjet_attach(struct ss_softc *, struct scsibus_attach_args *);
+void mustek_attach(struct ss_softc *, struct scsi_attach_args *);
+void scanjet_attach(struct ss_softc *, struct scsi_attach_args *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_kn20aa.c,v 1.16 2005/05/09 21:55:12 martin Exp $ */
+/* $OpenBSD: dec_kn20aa.c,v 1.17 2006/11/28 16:56:50 dlg Exp $ */
 /* $NetBSD: dec_kn20aa.c,v 1.42 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -229,7 +229,7 @@ dec_kn20aa_device_register(dev, aux)
 
 	if (!strcmp(cd->cd_name, "sd") || !strcmp(cd->cd_name, "st") ||
 	    !strcmp(cd->cd_name, "cd")) {
-		struct scsibus_attach_args *sa = aux;
+		struct scsi_attach_args *sa = aux;
 		struct scsi_link *periph = sa->sa_sc_link;
 		int unit;
 

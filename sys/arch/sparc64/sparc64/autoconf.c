@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.57 2006/08/10 01:11:13 gwk Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.58 2006/11/28 16:56:50 dlg Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1685,7 +1685,7 @@ device_register(dev, aux)
 		 * device to determine whether this target is on the
 		 * correct controller in our boot path.
 		 */
-		struct scsibus_attach_args *sa = aux;
+		struct scsi_attach_args *sa = aux;
 		struct scsi_link *sl = sa->sa_sc_link;
 		struct scsibus_softc *sbsc =
 		    (struct scsibus_softc *)dev->dv_parent;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.30 2006/10/01 10:42:18 grange Exp $ */
+/*	$OpenBSD: safte.c,v 1.31 2006/11/28 16:56:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -106,7 +106,7 @@ int64_t	safte_temp2uK(u_int8_t, int);
 int
 safte_match(struct device *parent, void *match, void *aux)
 {
-	struct scsibus_attach_args	*sa = aux;
+	struct scsi_attach_args		*sa = aux;
 	struct scsi_inquiry_data	*inq = sa->sa_inqbuf;
 	struct scsi_inquiry_data	inqbuf;
 	struct scsi_inquiry		cmd;
@@ -157,7 +157,7 @@ void
 safte_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct safte_softc		*sc = (struct safte_softc *)self;
-	struct scsibus_attach_args	*sa = aux;
+	struct scsi_attach_args		*sa = aux;
 	int				i = 0;
 
 	sc->sc_link = sa->sa_sc_link;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.40 2006/10/01 10:42:18 grange Exp $ */
+/*	$OpenBSD: ses.c,v 1.41 2006/11/28 16:56:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -120,7 +120,7 @@ char	*ses_dump_enc_string(u_char *, ssize_t);
 int
 ses_match(struct device *parent, void *match, void *aux)
 {
-	struct scsibus_attach_args	*sa = aux;
+	struct scsi_attach_args		*sa = aux;
 	struct scsi_inquiry_data	*inq = sa->sa_inqbuf;
 
 	if (inq == NULL)
@@ -142,7 +142,7 @@ void
 ses_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ses_softc		*sc = (struct ses_softc *)self;
-	struct scsibus_attach_args	*sa = aux;
+	struct scsi_attach_args		*sa = aux;
 	char				vendor[33];
 	struct ses_sensor		*sensor;
 #if NBIO > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.121 2006/11/27 18:32:33 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.122 2006/11/28 16:56:50 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ int
 scsibussubmatch(struct device *parent, void *match, void *aux)
 {
 	struct cfdata			*cf = match;
-	struct scsibus_attach_args	*sa = aux;
+	struct scsi_attach_args		*sa = aux;
 	struct scsi_link		*sc_link = sa->sa_sc_link;
 
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != sc_link->target)
@@ -581,7 +581,7 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 int
 scsibusprint(void *aux, const char *pnp)
 {
-	struct scsibus_attach_args	*sa = aux;
+	struct scsi_attach_args		*sa = aux;
 	struct scsi_inquiry_data	*inqbuf;
 	u_int8_t			type;
 	int				removable;
@@ -693,7 +693,7 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 {
 	const struct scsi_quirk_inquiry_pattern *finger;
 	static struct scsi_inquiry_data	inqbuf;
-	struct scsibus_attach_args sa;
+	struct scsi_attach_args sa;
 	struct scsi_link *sc_link;
 	struct cfdata *cf;
 	int priority, rslt = 0;

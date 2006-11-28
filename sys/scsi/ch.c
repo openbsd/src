@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.31 2006/11/27 23:14:22 beck Exp $	*/
+/*	$OpenBSD: ch.c,v 1.32 2006/11/28 16:56:50 dlg Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ chmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct scsibus_attach_args *sa = aux;
+	struct scsi_attach_args *sa = aux;
 	int priority;
 
 	(void)scsi_inqmatch(sa->sa_inqbuf,
@@ -163,7 +163,7 @@ chattach(parent, self, aux)
 	void *aux;
 {
 	struct ch_softc *sc = (struct ch_softc *)self;
-	struct scsibus_attach_args *sa = aux;
+	struct scsi_attach_args *sa = aux;
 	struct scsi_link *link = sa->sa_sc_link;
 
 	/* Glue into the SCSI bus */

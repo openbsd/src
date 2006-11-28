@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.73 2006/07/24 18:27:36 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.74 2006/11/28 16:56:50 dlg Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -2175,7 +2175,7 @@ device_register(struct device *dev, void *aux)
 	 */
 	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
 	    strncmp("cd", dev->dv_xname, 2) == 0) {
-		struct scsibus_attach_args *sa = aux;
+		struct scsi_attach_args *sa = aux;
 		struct scsibus_softc *sbsc;
 		int target, lun;
 

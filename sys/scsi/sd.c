@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.113 2006/11/27 23:14:22 beck Exp $	*/
+/*	$OpenBSD: sd.c,v 1.114 2006/11/28 16:56:50 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -149,7 +149,7 @@ sdmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct scsibus_attach_args *sa = aux;
+	struct scsi_attach_args *sa = aux;
 	int priority;
 
 	(void)scsi_inqmatch(sa->sa_inqbuf,
@@ -170,7 +170,7 @@ sdattach(parent, self, aux)
 	int error, result;
 	struct sd_softc *sd = (void *)self;
 	struct disk_parms *dp = &sd->params;
-	struct scsibus_attach_args *sa = aux;
+	struct scsi_attach_args *sa = aux;
 	struct scsi_link *sc_link = sa->sa_sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdattach:\n"));

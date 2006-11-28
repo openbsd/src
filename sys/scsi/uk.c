@@ -1,4 +1,4 @@
-/*	$OpenBSD: uk.c,v 1.11 2006/07/11 21:18:12 dlg Exp $	*/
+/*	$OpenBSD: uk.c,v 1.12 2006/11/28 16:56:50 dlg Exp $	*/
 /*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ void
 ukattach(struct device *parent, struct device *self, void *aux)
 {
 	struct uk_softc			*uk = (void *)self;
-	struct scsibus_attach_args	*sa = aux;
+	struct scsi_attach_args		*sa = aux;
 	struct scsi_link		*sc_link = sa->sa_sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ukattach: "));

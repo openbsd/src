@@ -1,4 +1,4 @@
-/*	$OpenBSD: api_up1000.c,v 1.7 2004/07/18 02:29:11 deraadt Exp $	*/
+/*	$OpenBSD: api_up1000.c,v 1.8 2006/11/28 16:56:50 dlg Exp $	*/
 /* $NetBSD: api_up1000.c,v 1.4 2000/06/20 03:48:53 matt Exp $ */
 
 /*
@@ -220,7 +220,7 @@ api_up1000_device_register(dev, aux)
 	    (!strcmp(cd->cd_name, "sd") ||
 	     !strcmp(cd->cd_name, "st") ||
 	     !strcmp(cd->cd_name, "cd"))) {
-		struct scsibus_attach_args *sa = aux;
+		struct scsi_attach_args *sa = aux;
 
 		if (parent->dv_parent != scsidev)
 			return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.79 2006/11/28 13:40:55 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.80 2006/11/28 16:56:50 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -209,7 +209,7 @@ struct scsibus_softc {
  * This is used to pass information from the high-level configuration code
  * to the device-specific drivers.
  */
-struct scsibus_attach_args {
+struct scsi_attach_args {
 	struct scsi_link *sa_sc_link;
 	struct scsi_inquiry_data *sa_inqbuf;
 };
