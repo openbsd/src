@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxgareg.h,v 1.4 2006/11/27 19:31:46 miod Exp $	*/
+/*	$OpenBSD: cfxgareg.h,v 1.5 2006/11/28 12:01:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -145,7 +145,7 @@
 
 /* LCD vertical non-display period register - RW */
 #define	CFREG_LCD_VNDISP		0x003a
-#define	CFREG_LCD_VNDP_STATUS	0x80			/* read only */
+#define	LCD_VNDISP_STATUS	0x80			/* read only */
 
 /* TFT FPFRAME start position register - RW */
 #define	CFREG_TFT_FPFRAME_START		0x003b
@@ -212,7 +212,7 @@
 
 /* CRT/TV vertical non-display period register - RW */
 #define	CFREG_CRT_VNDISP		0x0058
-#define	CFREG_CRT_VNDP_STATUS	0x80			/* RO */
+#define	CRT_VNDISP_STATUS	0x80			/* RO */
 
 /* CRT/TV VRTC start position register - RW */
 #define	CFREG_CRT_VSTART		0x0059

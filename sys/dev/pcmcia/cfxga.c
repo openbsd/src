@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.10 2006/11/27 19:31:46 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.11 2006/11/28 12:01:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -48,6 +48,7 @@
 
 /*
 #define CFXGADEBUG
+#define ENABLE_8BIT_MODES
 */
 
 #ifdef CFXGADEBUG
@@ -60,7 +61,7 @@ struct cfxga_screen;
 
 #define	CFXGA_MODE_640x480x16	0
 #define	CFXGA_MODE_800x600x16	1
-#ifdef notyet
+#ifdef ENABLE_8BIT_MODES
 #define	CFXGA_MODE_640x480x8	2
 #define	CFXGA_MODE_800x600x8	3
 #define	CFXGA_NMODES		4
@@ -192,7 +193,7 @@ u_int	cfxga_wait(struct cfxga_softc *, u_int, u_int);
 const char *cfxga_modenames[CFXGA_NMODES] = {
 	"640x480x16",
 	"800x600x16",
-#ifdef notyet
+#ifdef ENABLE_8BIT_MODES
 	"640x480x8",
 	"800x600x8"
 #endif
@@ -474,7 +475,7 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 		height = 600;
 		depth = 16;
 		break;
-#ifdef notyet
+#ifdef ENABLE_8BIT_MODES
 	case CFXGA_MODE_640x480x8:
 		width = 640;
 		height = 480;
@@ -689,7 +690,7 @@ cfxga_reset_video(struct cfxga_softc *sc)
 {
 	struct cfxga_screen *scr = sc->sc_active;
 	struct rasops_info *ri;
-#ifdef notyet
+#ifdef ENABLE_8BIT_MODES
 	const u_int8_t *cmap;
 	u_int i;
 #endif
@@ -707,39 +708,32 @@ cfxga_reset_video(struct cfxga_softc *sc)
 	/* stop any pending blt operation */
 	cfxga_write_2(sc, CFREG_BITBLT_CONTROL, 0);
 	cfxga_stop_memory_blt(sc);
+	cfxga_write_1(sc, CFREG_MODE, 0);	/* disable all displays */
 
 	/*
 	 * Setup common video mode parameters.
 	 */
 
 	cfxga_write_2(sc, CFREG_MEMCLK, MEMCLK_SRC_CLK3);
+#if 0
 	cfxga_write_1(sc, CFREG_LCD_PCLK, LCD_PCLK_SRC_CLKI | LCD_PCLK_DIV_1);
 	cfxga_write_1(sc, CFREG_MPLUG_CLK,
 	    MPLUG_PCLK_SRC_CLKI2 | MPLUG_PCLK_DIV_1);
+#endif
+	cfxga_write_2(sc, CFREG_CRTTV_PCLK, CRT_PCLK_SRC_CLKI | CRT_PCLK_DIV_1);
+	cfxga_write_2(sc, CFREG_WSTATE, WSTATE_MCLK);
+
 	/* MEMCNF and DRAM_RFRSH need to be programmed at the same time */
 	cfxga_write_2(sc, CFREG_MEMCNF,
 	    MEMCNF_SDRAM_INIT | (DRAM_RFRSH_50MHZ << 8));
+	delay(250);
 	cfxga_write_2(sc, CFREG_DRAM_TIMING, DRAM_TIMING_50MHZ);
-
-	cfxga_write_2(sc, CFREG_CRT_START_LOW, 0);
-	cfxga_write_1(sc, CFREG_CRT_START_HIGH, 0);
-	cfxga_write_1(sc, CFREG_CRT_PANNING, 0);
-	cfxga_write_1(sc, CFREG_CRT_FIFO_THRESHOLD_HIGH, 0);
-	cfxga_write_1(sc, CFREG_CRT_FIFO_THRESHOLD_LOW, 0);
-
-	cfxga_write_1(sc, CFREG_CRT_CURSOR_CONTROL, CURSOR_INACTIVE);
-
-	cfxga_write_1(sc, CFREG_POWER_CONF, POWERSAVE_MBO);
-	cfxga_write_1(sc, CFREG_WATCHDOG, 0);
 
 	/*
 	 * Setup mode-dependent parameters.
 	 */
 	if (scr == NULL)
 		return;
-
-	cfxga_write_2(sc, CFREG_CRTTV_PCLK, CRT_PCLK_SRC_CLKI | CRT_PCLK_DIV_1);
-	cfxga_write_2(sc, CFREG_WSTATE, WSTATE_MCLK);
 
 	ri = &scr->scr_ri;
 	switch (scr->scr_ri.ri_width) {
@@ -765,17 +759,27 @@ cfxga_reset_video(struct cfxga_softc *sc)
 		cfxga_write_1(sc, CFREG_CRT_VPULSE, 2);
 		break;
 	}
-	cfxga_write_1(sc, CFREG_TV_CONTROL,
-	    TV_LUMINANCE_FILTER | TV_SVIDEO_OUTPUT);
 	cfxga_write_1(sc, CFREG_CRT_MODE,
 	    ri->ri_depth == 16 ? CRT_MODE_16BPP : CRT_MODE_8BPP);
+	cfxga_write_2(sc, CFREG_CRT_START_LOW, 0);
+	cfxga_write_1(sc, CFREG_CRT_START_HIGH, 0);
 	cfxga_write_2(sc, CFREG_CRT_MEMORY, ri->ri_width * ri->ri_depth / 16);
+	cfxga_write_1(sc, CFREG_CRT_PANNING, 0);
+	cfxga_write_1(sc, CFREG_CRT_FIFO_THRESHOLD_HIGH, 0);
+	cfxga_write_1(sc, CFREG_CRT_FIFO_THRESHOLD_LOW, 0);
+	cfxga_write_1(sc, CFREG_CRT_CURSOR_CONTROL, CURSOR_INACTIVE);
 
-#ifdef notyet
+#ifdef ENABLE_8BIT_MODES
 	/*
 	 * On 8bpp video modes, program the LUT
 	 */
 	if (ri->ri_depth == 8) {
+#if 0
+		/* Wait for retrace */
+		while ((cfxga_read_1(sc, CFREG_CRT_VNDISP) &
+		    CRT_VNDISP_STATUS) == 0)
+			delay(1);
+#endif
 		cfxga_write_1(sc, CFREG_LUT_MODE, LUT_CRT);
 		cfxga_write_1(sc, CFREG_LUT_ADDRESS, 0); /* autoincrements */
 		cmap = rasops_cmap;
@@ -783,6 +787,12 @@ cfxga_reset_video(struct cfxga_softc *sc)
 			cfxga_write_1(sc, CFREG_LUT_DATA, *cmap++ & 0xf0);
 	}
 #endif
+
+	cfxga_write_1(sc, CFREG_TV_CONTROL,
+	    TV_LUMINANCE_FILTER | TV_SVIDEO_OUTPUT | TV_NTSC_OUTPUT);
+
+	cfxga_write_1(sc, CFREG_POWER_CONF, POWERSAVE_MBO);
+	cfxga_write_1(sc, CFREG_WATCHDOG, 0);
 
 	cfxga_write_1(sc, CFREG_MODE, MODE_CRT);
 	delay(25000);
