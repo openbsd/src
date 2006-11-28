@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.153 2006/11/26 12:02:49 mbalmer Exp $g
+#	$OpenBSD: GENERIC,v 1.154 2006/11/28 18:53:22 dlg Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -184,7 +184,6 @@ scsibus*	at pcscp?
 scsibus*	at isp?
 scsibus*	at mpi?
 scsibus*	at siop?
-#scsibus*	at fwscsi?
 
 mediabay*	at macobio?
 wdc*		at mediabay?
