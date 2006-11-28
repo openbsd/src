@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.8 2006/11/28 01:59:42 ckuethe Exp $
+# $OpenBSD: pkg-config,v 1.9 2006/11/28 03:30:28 ckuethe Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -232,8 +232,6 @@ sub do_modversion
 {
 	my ($p, undef) = @_;
 	my ($f);
-
-	print "\$p ='$p'\n";
 
 	exit 1 unless $f = pathresolve($p);
 	exit 1 unless $f = slurp($f);
