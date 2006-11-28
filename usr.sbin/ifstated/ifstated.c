@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.29 2006/03/16 06:12:58 mcbride Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.30 2006/11/28 19:28:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -418,7 +418,9 @@ scan_ifstate_single(int ifindex, int s, struct ifsd_state *state)
 				struct ifsd_expression *expression;
 				int truth;
 
-				truth = (ifstate->ifstate == s);
+				truth = (ifstate->ifstate == s) ||
+				    (ifstate->ifstate == IFSD_LINKUP &&
+				    LINK_STATE_IS_UP(s));
 
 				TAILQ_FOREACH(expression,
 				    &ifstate->expressions, entries) {
