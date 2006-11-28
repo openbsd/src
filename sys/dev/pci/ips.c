@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.9 2006/11/28 19:59:14 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.10 2006/11/28 23:49:50 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -529,7 +529,6 @@ ips_scsi_io(struct scsi_xfer *xs)
 			    i * 8 + 4) = ccb->c_dmam->dm_segs[i].ds_len;
 		}
 		cmd->buffaddr = sc->sc_cmdm->dm_seg.ds_addr + 24;
-		cmd->length = 512;
 	} else {
 		cmd->buffaddr = ccb->c_dmam->dm_segs[0].ds_addr;
 	}
