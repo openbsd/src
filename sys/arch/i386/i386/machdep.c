@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.368 2006/11/28 15:24:08 dim Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.369 2006/11/28 16:32:09 dim Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1787,7 +1787,7 @@ identifycpu(struct cpu_info *ci)
 		    "%s %s%s", vendorname, modifier, name);
 	}
 
-	if ((ci->ci_flags & CPUF_BSP) == 0) {
+	if ((ci->ci_flags & CPUF_PRIMARY) == 0) {
 		if (cachesize > -1) {
 			snprintf(cpu_model, sizeof(cpu_model),
 			    "%s (%s%s%s%s-class, %dKB L2 cache)",
@@ -1814,20 +1814,20 @@ identifycpu(struct cpu_info *ci)
 
 			ghz = (pentium_mhz + 9) / 1000;
 			fr = ((pentium_mhz + 9) / 10 ) % 100;
-			if ((ci->ci_flags & CPUF_BSP) == 0) {
+			if ((ci->ci_flags & CPUF_PRIMARY) == 0) {
 				if (fr)
 					printf(" %d.%02d GHz", ghz, fr);
 				else
 					printf(" %d GHz", ghz);
 			}
 		} else {
-			if ((ci->ci_flags & CPUF_BSP) == 0) {
+			if ((ci->ci_flags & CPUF_PRIMARY) == 0) {
 				printf(" %d MHz", pentium_mhz);
 			}
 		}
 	}
 #endif
-	if ((ci->ci_flags & CPUF_BSP) == 0) {
+	if ((ci->ci_flags & CPUF_PRIMARY) == 0) {
 		printf("\n");
 
 		if (ci->ci_feature_flags) {
