@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.33 2006/11/28 02:22:39 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.34 2006/11/28 04:26:50 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1125,17 +1125,25 @@ fail_1:
 	bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
 fail_0: 
 	dma->dma_map = NULL;
-	/* dma->dma_tag = NULL; */
+	dma->dma_tag = NULL;
 	return (r);
 }
 
 void
 ixgb_dma_free(struct ixgb_softc *sc, struct ixgb_dma_alloc *dma)
 {
-	bus_dmamap_unload(dma->dma_tag, dma->dma_map);
-	bus_dmamem_unmap(dma->dma_tag, dma->dma_vaddr, dma->dma_size);
-	bus_dmamem_free(dma->dma_tag, &dma->dma_seg, dma->dma_nseg);
-	bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
+	if (dma->dma_tag == NULL)
+		return;
+
+	if (dma->dma_map != NULL) {
+		bus_dmamap_sync(dma->dma_tag, dma->dma_map, 0,
+		    dma->dma_map->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(dma->dma_tag, dma->dma_map);
+		bus_dmamem_unmap(dma->dma_tag, dma->dma_vaddr, dma->dma_size);
+		bus_dmamem_free(dma->dma_tag, &dma->dma_seg, dma->dma_nseg);
+		bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
+	}
 }
 
 /*********************************************************************
