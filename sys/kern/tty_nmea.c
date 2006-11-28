@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.11 2006/11/18 08:20:51 jmc Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.12 2006/11/28 17:20:25 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -49,6 +49,9 @@ int nmea_count;
 struct nmea {
 	char		cbuf[NMEAMAX];
 	struct sensor	time;
+#ifdef NMEA_DEBUG
+	struct sensor	skew;		/* soft to tty timestamp skew */
+#endif
 	struct timespec	ts;		/* soft timestamp */
 	struct timeval	tv;		/* tty timestamp */
 	int64_t		last;		/* last time rcvd */
@@ -86,9 +89,19 @@ nmeaopen(dev_t dev, struct tty *tp)
 	    nmea_count++);
 	np->time.status = SENSOR_S_UNKNOWN;
 	np->time.type = SENSOR_TIMEDELTA;
-	np->sync = 1;
 	np->time.flags = SENSOR_FINVALID;
 	sensor_add(&np->time);
+#ifdef NMEA_DEBUG
+	snprintf(np->skew.device, sizeof(np->skew.device), "skew%d",
+	    nmea_count - 1);
+	snprintf(np->skew.desc, sizeof(np->skew.desc),
+	    "nmea%d timestamp skew", nmea_count - 1);
+	np->skew.status = SENSOR_S_UNKNOWN;
+	np->skew.type = SENSOR_TIMEDELTA;
+	np->skew.flags = SENSOR_FINVALID;
+	sensor_add(&np->skew);
+#endif
+	np->sync = 1;
 	tp->t_sc = (caddr_t)np;
 
 	error = linesw[TTYDISC].l_open(dev, tp);
@@ -106,6 +119,9 @@ nmeaclose(struct tty *tp, int flags)
 
 	tp->t_line = TTYDISC;	/* switch back to termios */
 	sensor_del(&np->time);
+#ifdef NMEA_DEBUG
+	sensor_del(&np->skew);
+#endif
 	free(np, M_DEVBUF);
 	tp->t_sc = NULL;
 	nmea_count--;
@@ -127,14 +143,12 @@ nmeainput(int c, struct tty *tp)
 		 * case we use the soft timestamp later.
 		 */
 		nanotime(&np->ts);
-#ifdef NMEA_TSTAMP
 		/* if a tty timestamp is available, copy it now */
 		if (tp->t_flags & (TS_TSTAMPDCDSET | TS_TSTAMPDCDCLR |
 		    TS_TSTAMPCTSSET | TS_TSTAMPCTSCLR)) {
 			np->tv.tv_sec = tp->t_tv.tv_sec;
 			np->tv.tv_usec = tp->t_tv.tv_usec;
 		}
-#endif
 		np->pos = 0;
 		np->sync = 0;
 		break;
@@ -206,7 +220,7 @@ nmea_scan(struct nmea *np, struct tty *tp)
 			}
 		}
 		if (msgcksum != cksum) {
-			DPRINTF(("cksum mismatch"));
+			DPRINTF(("cksum mismatch\n"));
 			return;
 		}
 	}
@@ -221,13 +235,6 @@ void
 nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 {
 	int64_t date_nano, time_nano, nmea_now;
-#ifdef NMEA_DEBUG
-	int n;
-
-	for (n = 0; n < fldcnt; n++)
-		DPRINTF(("%s ", fld[n]));
-	DPRINTF(("\n"));
-#endif
 
 	if (fldcnt != 12 && fldcnt != 13) {
 		DPRINTF(("gprmc: field count mismatch, %d\n", fldcnt));
@@ -248,7 +255,6 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	}
 	np->last = nmea_now;
 
-#ifdef NMEA_TSTAMP
 	/*
 	 * if tty timestamping on DCD or CTS is used, take the timestamp
 	 * from the tty, else use the timestamp taken on the initial '$'
@@ -256,19 +262,38 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	 */
 	if (tp->t_flags & (TS_TSTAMPDCDSET | TS_TSTAMPDCDCLR |
 	    TS_TSTAMPCTSSET | TS_TSTAMPCTSCLR)) {
-		np->time.value = np->tv.tv_sec + 1000000000LL +
+		np->time.value = np->tv.tv_sec * 1000000000LL +
 		    np->tv.tv_usec * 1000LL - nmea_now;
 		np->time.tv.tv_sec = np->tv.tv_sec;
 		np->time.tv.tv_usec = np->tv.tv_usec;
-	} else {
+#ifdef NMEA_DEBUG
+		/*
+		 * If we got a tty timestamp, provide the skew to the
+		 * soft timestamp (taken at the '$' character) in a
+		 * second timedelta sensor.
+		 */
+		np->skew.value = (np->ts.tv_sec * 1000000000LL +
+		    np->ts.tv_nsec - nmea_now) - np->time.value;
+		np->skew.tv.tv_sec = np->tv.tv_sec;
+		np->skew.tv.tv_usec = np->tv.tv_usec;
+		if (np->skew.status == SENSOR_S_UNKNOWN) {
+			np->skew.status = SENSOR_S_CRIT;
+			np->skew.flags &= ~SENSOR_FINVALID;
+		}
 #endif
+	} else {
 		np->time.value = np->ts.tv_sec * 1000000000LL +
 		    np->ts.tv_nsec - nmea_now;
 		np->time.tv.tv_sec = np->ts.tv_sec;
 		np->time.tv.tv_usec = np->ts.tv_nsec / 1000L;
-#ifdef NMEA_TSTAMP
-	}
+#ifdef NMEA_DEBUG
+		if (np->skew.status == SENSOR_S_CRIT) {
+			np->skew.value = 0LL;
+			np->skew.value = SENSOR_S_UNKNOWN;
+			np->skew.flags |= SENSOR_FINVALID;
+		}
 #endif
+	}
 	if (np->time.status == SENSOR_S_UNKNOWN) {
 		strlcpy(np->time.desc, "GPS", sizeof(np->time.desc));
 		if (fldcnt == 13) {
