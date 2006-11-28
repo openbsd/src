@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.109 2006/11/14 15:39:41 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.110 2006/11/28 13:31:19 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -255,8 +255,10 @@ main(int argc, char **argv)
 		return (0);
 	}
 
-	i = snprintf(fpath, sizeof(fpath), "%s/%s", current_cvsroot->cr_dir,
-	    CVS_PATH_ROOT);
+	if (cvs_path_cat(current_cvsroot->cr_dir, CVS_PATH_ROOT,
+	    fpath, sizeof(fpath)) >= sizeof(fpath))
+		fatal("main: truncation");
+
 	if (stat(fpath, &st) == -1 && cvs_cmdop != CVS_OP_INIT) {
 		if (errno == ENOENT)
 			fatal("repository '%s' does not exist",
