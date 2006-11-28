@@ -366,6 +366,7 @@
 ./usr/bin/pgrep
 ./usr/bin/pic
 ./usr/bin/piconv
+./usr/bin/pkg-config
 ./usr/bin/pkill
 ./usr/bin/pl2pm
 ./usr/bin/pod2html

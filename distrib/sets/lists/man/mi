@@ -393,6 +393,7 @@
 ./usr/share/man/cat1/pgrep.0
 ./usr/share/man/cat1/pic.0
 ./usr/share/man/cat1/piconv.0
+./usr/share/man/cat1/pkg-config.0
 ./usr/share/man/cat1/pkg.0
 ./usr/share/man/cat1/pkg_create.0
 ./usr/share/man/cat1/pkg_delete.0

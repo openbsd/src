@@ -898,6 +898,10 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/usbf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/usbfvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/usbhid.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/vesa
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/vesa/vesabiosreg.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/vesa/vesabiosvar.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/vesa/vesafbvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/wscons/ascii.ph
@@ -1740,10 +1744,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/uvm/uvm_swap_encrypt.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/uvm/uvm_vnode.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/varargs.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/vesa
-./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/vesa/vesabiosreg.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/vesa/vesabiosvar.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/vesa/vesafbvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/vis.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/wchar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/wctype.ph

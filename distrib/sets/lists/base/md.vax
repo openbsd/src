@@ -797,6 +797,10 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usbf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usbfvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usbhid.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa/vesabiosreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa/vesabiosvar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa/vesafbvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wscons/ascii.ph
@@ -1622,10 +1626,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/varargs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/vmparam.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/vsbus.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa/vesabiosreg.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa/vesabiosvar.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa/vesafbvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vis.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/wchar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/wctype.ph
