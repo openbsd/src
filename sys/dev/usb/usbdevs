@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.235 2006/11/26 19:07:53 deraadt Exp $
+$OpenBSD: usbdevs,v 1.236 2006/11/28 16:22:37 drahn Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1558,6 +1558,7 @@ product MOSCHIP MCS7830		0x7830	MCS7830 Ethernet
 product MOTOROLA MC141555	0x1555	MC141555 hub controller
 product MOTOROLA2 T720C		0x2822	T720c
 product MOTOROLA2 USBLAN	0x600c	USBLAN
+product MOTOROLA2 USBLAN2	0x6027	USBLAN
 product MOTOROLA SB4100		0x4100	SB4100 Cable Modem
 
 /* MultiTech products */
