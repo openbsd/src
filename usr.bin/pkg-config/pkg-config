@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.7 2006/11/28 01:54:14 ckuethe Exp $
+# $OpenBSD: pkg-config,v 1.8 2006/11/28 01:59:42 ckuethe Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -325,8 +325,11 @@ Usage: $0 [options]
 --help - this message
 --usage - this message
 --list-all - show all packages that $0 can find
+--version - print version of pkgconfig
+--errors-to-stdout - direct error messages to stdout rather than stderr
+--print-errors - print error messages in case of error
+--silence-errors - don't print error messages in case of error
 --atleast-pkgconfig-version [version] - require a certain version of pkgconfig
---variable var package - return the definition of <var> in <package>
 --cflags package [versionspec] [package [versionspec]]
 --cflags-only-I - only output -Iincludepath flags
 --cflags-only-other - only output flags that are not -I
@@ -336,6 +339,10 @@ Usage: $0 [options]
 --libs-only-other - only output flags that are not -l or -L
 --exists package [versionspec] [package [versionspec]]
 --uninstalled - allow for uninstalled versions to be used
+--static - adjust output for static linking
+--atleast-version [version] - require a certain version of a package
+--modversion [package] - query the version of a package
+--variable var package - return the definition of <var> in <package>
 EOF
 ;
 	exit 1;
