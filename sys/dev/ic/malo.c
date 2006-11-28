@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.42 2006/11/27 15:32:12 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.43 2006/11/28 09:55:57 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -918,16 +918,23 @@ malo_init(struct ifnet *ifp)
 	if ((error = malo_cmd_set_txpower(sc, 100))) {
 		printf("%s: setting TX power failed!\n",
 		    sc->sc_dev.dv_xname);
+		return (error);
 	}
 	if ((error = malo_cmd_set_rts(sc, IEEE80211_RTS_MAX))) {
 		printf("%s: setting RTS failed!\n",
 		    sc->sc_dev.dv_xname);
+		return (error);
 	}
 
 	/* WEP */
-	if (sc->sc_ic.ic_flags & IEEE80211_F_WEPON)
+	if (sc->sc_ic.ic_flags & IEEE80211_F_WEPON) {
 		/* set key */
-		malo_set_wepkey(sc);
+		if (malo_set_wepkey(sc)) {
+			printf("%s: setting WEP key failed!\n",
+			    sc->sc_dev.dv_xname);
+			return (error);
+		}
+	}
 
 	ifp->if_flags |= IFF_RUNNING;
 
@@ -1877,8 +1884,8 @@ malo_set_wepkey(struct malo_softc *sc)
 		if (wk->wk_len == 0)
 			continue;
 
-		if (malo_cmd_set_wepkey(sc, wk, ic->ic_wep_txkey) == 0)
-			DPRINTF(("WEP key successfully set\n"));
+		if (malo_cmd_set_wepkey(sc, wk, ic->ic_wep_txkey))
+			return (ENXIO);
 	}
 
 	return (0);
