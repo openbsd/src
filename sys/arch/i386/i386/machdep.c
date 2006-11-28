@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.369 2006/11/28 16:32:09 dim Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.370 2006/11/28 18:35:19 dim Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1173,8 +1173,6 @@ winchip_cpu_setup(struct cpu_info *ci)
 void
 cyrix3_setperf_setup(struct cpu_info *ci)
 {
-	cyrix3_get_bus_clock(ci);
-
 	if (cpu_ecxfeature & CPUIDECX_EST) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
 			est_init(ci->ci_dev.dv_xname, CPUVENDOR_VIA);
@@ -1200,6 +1198,8 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 	extern void i686_pagezero(void *, size_t);
 
 	pagezero = i686_pagezero;
+
+	cyrix3_get_bus_clock(ci);
 
 	setperf_setup = cyrix3_setperf_setup;
 #endif
@@ -2096,6 +2096,9 @@ p3_get_bus_clock(struct cpu_info *ci)
 		case 3:
 			bus_clock = 16666;
 			break;
+		case 0:
+			bus_clock = 26666;
+			break;
 		case 4:
 			bus_clock = 33333;
 			break;
@@ -2148,66 +2151,39 @@ void
 p4_update_cpuspeed(void)
 {
 	u_int64_t msr;
-	int bus, mult;
+	int mult;
+
+	if (bus_clock == 0) {
+		printf("p4_update_cpuspeed: unknown bus clock\n");
+		return;
+	}
 
 	msr = rdmsr(MSR_EBC_FREQUENCY_ID);
-	if (p4_model < 2) {
-		bus = (msr >> 21) & 0x7;
-		switch (bus) {
-		case 0:
-			bus = 10000;
-			break;
-		case 1:
-			bus = 13333;
-			break;
-		}
-	} else {
-		bus = (msr >> 16) & 0x7;
-		switch (bus) {
-		case 0:
-			bus = 10000;
-			break;
-		case 1:
-			bus = 13333;
-			break;
-		case 2:
-			bus = 20000;
-			break;
-		}
-	}
 	mult = ((msr >> 24) & 0xff);
 
-	pentium_mhz = bus * mult / 100;
+	pentium_mhz = (bus_clock * mult) / 100;
 }
 
 void
 p3_update_cpuspeed(void)
 {
 	u_int64_t msr;
-	int bus, mult;
+	int mult;
 	const u_int8_t mult_code[] = {
 	    50, 30, 40, 0, 55, 35, 45, 0, 0, 70, 80, 60, 0, 75, 0, 65 };
 
-	msr = rdmsr(MSR_EBL_CR_POWERON);
-	bus = (msr >> 18) & 0x3;
-	switch (bus) {
-	case 0:
-		bus = 6666;
-		break;
-	case 1:
-		bus = 13333;
-		break;
-	case 2:
-		bus = 10000;
-		break;
+	if (bus_clock == 0) {
+		printf("p3_update_cpuspeed: unknown bus clock\n");
+		return;
 	}
 
+	msr = rdmsr(MSR_EBL_CR_POWERON);
 	mult = (msr >> 22) & 0xf;
 	mult = mult_code[mult];
 	if (!p3_early)
 		mult += ((msr >> 27) & 0x1) * 40;
 
-	pentium_mhz = (bus * mult) / 1000;
+	pentium_mhz = (bus_clock * mult) / 1000;
 }
 #endif	/* I686_CPU */
 
