@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1196 2006/11/27 18:58:02 jsg Exp $
+$OpenBSD: pcidevs,v 1.1197 2006/11/28 20:14:00 robert Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3406,6 +3406,7 @@ product SIS 963			0x0963	963 ISA
 product SIS 964			0x0964	964 ISA
 product SIS 965			0x0965	965 ISA
 product SIS 966			0x0966	966 ISA
+product SIS 5315		0x5315	530 VGA
 product SIS 5511		0x5511	5511
 product SIS 5512		0x5512	5512
 product SIS 5513		0x5513	5513 EIDE
@@ -3429,6 +3430,7 @@ product SIS 7012_ACA		0x7012	7012 AC97
 product SIS 7013		0x7013	7013 Modem
 product SIS 7016		0x7016	7016 10/100BaseTX
 product SIS 7018		0x7018	7018 Audio
+product SIS 7019		0x7019	7019 Audio
 product SIS 966_HDA		0x7502	966 HD Audio
 
 /* SMC products */
