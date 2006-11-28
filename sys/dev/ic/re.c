@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.54 2006/11/24 04:27:17 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.55 2006/11/28 20:04:02 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -760,7 +760,7 @@ int boot_eaddr_valid;
  * setup and ethernet/BPF attach.
  */
 int
-re_attach(struct rl_softc *sc)
+re_attach(struct rl_softc *sc, const char *intrstr)
 {
 	u_char		eaddr[ETHER_ADDR_LEN];
 	u_int16_t	as[ETHER_ADDR_LEN / 2];
@@ -820,7 +820,7 @@ re_attach(struct rl_softc *sc)
 
 	bcopy(eaddr, (char *)&sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
-	printf(", address %s\n",
+	printf(": %s, address %s\n", intrstr,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	if (sc->rl_ldata.rl_tx_desc_cnt >

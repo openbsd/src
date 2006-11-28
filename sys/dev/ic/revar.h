@@ -1,4 +1,4 @@
-/*	$OpenBSD: revar.h,v 1.4 2006/09/19 07:23:02 mickey Exp $	*/
+/*	$OpenBSD: revar.h,v 1.5 2006/11/28 20:04:02 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -17,6 +17,6 @@
  */
 
 int	re_intr(void *);
-int	re_attach(struct rl_softc *);
+int	re_attach(struct rl_softc *, const char *);
 int	re_init(struct ifnet *);
 void	re_stop(struct ifnet *, int);

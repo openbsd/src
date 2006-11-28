@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_cardbus.c,v 1.10 2006/10/12 16:35:52 grange Exp $	*/
+/*	$OpenBSD: if_re_cardbus.c,v 1.11 2006/11/28 20:04:02 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -120,8 +120,8 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	cardbus_function_tag_t cf = psc->sc_cf;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	bus_addr_t adr;
+	char intrstr[16];
 
-	
 	sc->sc_dmat = ca->ca_dmat;
 	csc->ct = ct;
 	csc->sc_tag = ca->ca_tag;
@@ -157,7 +157,7 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		Cardbus_function_disable(csc->ct);
 		return;
 	}
-	printf(": irq %d", ca->ca_intrline);
+	snprintf(intrstr, sizeof(intrstr), "irq %d", ca->ca_intrline);
 
 	sc->sc_flags |= RL_ENABLED;
 	sc->rl_type = RL_8169;
@@ -166,7 +166,7 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pwrhook = powerhook_establish(re_cardbus_powerhook, sc);
 
 	/* Call bus-independent (common) attach routine */
-	re_attach(sc);
+	re_attach(sc, intrstr);
 }
 
 /*
