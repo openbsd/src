@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.372 2006/11/09 13:18:56 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.373 2006/11/28 17:11:29 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1784,6 +1784,9 @@ by specifying the
 operator before the
 .Ar tagged
 keyword.
+.It Ar rtable Aq Ar number
+Used to select an alternate routing table for the routing lookup.
+Only effective before the route lookup happened, i. e. when filtering inbound.
 .It Ar probability Aq Ar number
 A probability attribute can be attached to a rule, with a value set between
 0 and 1, bounds not included.
@@ -2767,7 +2770,7 @@ filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
                  fragmentation | "allow-opts" |
                  "label" string | "tag" string | [ ! ] "tagged" string |
                  "queue" ( string | "(" string [ [ "," ] string ] ")" ) |
-                 "probability" number"%"
+                 "rtable" number | "probability" number"%"
 
 nat-rule       = [ "no" ] "nat" [ "pass" [ "log" [ "(" logopts ")" ] ] ]
                  [ "on" ifspec ] [ af ]
