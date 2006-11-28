@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.18 2006/09/28 18:19:14 grange Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.19 2006/11/28 16:17:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -241,9 +241,9 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_PMPTR);
-		if (bus_space_map(sc->sc_iot, AMDPM_PMBASE(reg), AMDPM_PMSIZE, 0, 
-		    &sc->sc_ioh)) {
-			printf(": failed to map PMxx space\n");
+		if (bus_space_map(sc->sc_iot, AMDPM_PMBASE(reg), AMDPM_PMSIZE,
+		    0, &sc->sc_ioh)) {
+			printf("\n");
 			return;
 		}
 		if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, AMDPM_SMB_REGS,
