@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.78 2006/11/26 11:15:22 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.79 2006/11/28 13:40:55 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -126,12 +126,6 @@ struct scsi_device {
 	void	(*start)(void *);
 
 	int	(*async)(void);
-	/*
-	 * When called with `0' as the second argument, we expect status
-	 * back from the upper-level driver.  When called with a `1',
-	 * we're simply notifying the upper-level driver that the command
-	 * is complete and expect no status back.
-	 */
 	void	(*done)(struct scsi_xfer *);
 };
 
