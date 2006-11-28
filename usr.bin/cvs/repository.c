@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.5 2006/11/10 14:32:44 xsa Exp $	*/
+/*	$OpenBSD: repository.c,v 1.6 2006/11/28 14:49:58 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -28,14 +28,12 @@ struct cvs_wklhead repo_locks;
 void
 cvs_repository_unlock(const char *repo)
 {
-	int l;
 	char fpath[MAXPATHLEN];
 
 	cvs_log(LP_TRACE, "cvs_repository_unlock(%s)", repo);
 
-	l = snprintf(fpath, sizeof(fpath), "%s/%s", repo, CVS_LOCK);
-	if (l == -1 || l >= (int)sizeof(fpath))
-		fatal("cvs_repository_unlock: overflow");
+	if (cvs_path_cat(repo, CVS_LOCK, fpath, sizeof(fpath)) >= sizeof(fpath))
+		fatal("cvs_repository_unlock: truncation");
 
 	/* XXX - this ok? */
 	cvs_worklist_run(&repo_locks, cvs_worklist_unlink);
@@ -44,16 +42,15 @@ cvs_repository_unlock(const char *repo)
 void
 cvs_repository_lock(const char *repo)
 {
-	int l, i;
+	int i;
 	struct stat st;
 	char fpath[MAXPATHLEN];
 	struct passwd *pw;
 
 	cvs_log(LP_TRACE, "cvs_repository_lock(%s)", repo);
 
-	l = snprintf(fpath, sizeof(fpath), "%s/%s", repo, CVS_LOCK);
-	if (l == -1 || l >= (int)sizeof(fpath))
-		fatal("cvs_repository_lock: overflow");
+	if (cvs_path_cat(repo, CVS_LOCK, fpath, sizeof(fpath)) >= sizeof(fpath))
+		fatal("cvs_repository_unlock: truncation");
 
 	for (i = 0; i < CVS_LOCK_TRIES; i++) {
 		if (cvs_quit)
@@ -89,7 +86,6 @@ void
 cvs_repository_getdir(const char *dir, const char *wdir,
 	struct cvs_flisthead *fl, struct cvs_flisthead *dl, int dodirs)
 {
-	int l;
 	DIR *dirp;
 	struct dirent *dp;
 	char *s, fpath[MAXPATHLEN];
@@ -110,9 +106,9 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 		if (dodirs == 0 && dp->d_type == DT_DIR)
 			continue;
 
-		l = snprintf(fpath, sizeof(fpath), "%s/%s", wdir, dp->d_name);
-		if (l == -1 || l >= (int)sizeof(fpath))
-			fatal("cvs_repository_getdir: overflow");
+		if (cvs_path_cat(wdir, dp->d_name,
+		    fpath, sizeof(fpath)) >= sizeof(fpath))
+			fatal("cvs_repository_getdir: truncation");
 
 		/*
 		 * Anticipate the file type for sorting, we do not determine

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.91 2006/10/11 22:00:22 thib Exp $	*/
+/*	$OpenBSD: util.c,v 1.92 2006/11/28 14:49:58 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -571,25 +571,22 @@ cvs_hack_time(time_t oldtime, int togmt)
 void
 cvs_get_repository_path(const char *dir, char *dst, size_t len)
 {
-	int l;
 	char buf[MAXPATHLEN];
 
 	cvs_get_repository_name(dir, buf, sizeof(buf));
-	l = snprintf(dst, len, "%s/%s", current_cvsroot->cr_dir, buf);
-	if (l == -1 || l >= (int)len)
-		fatal("cvs_get_repository_path: overflow");
+	if (cvs_path_cat(current_cvsroot->cr_dir, buf, dst, len) >= len)
+		fatal("cvs_get_repository_path: truncation");
 }
 
 void
 cvs_get_repository_name(const char *dir, char *dst, size_t len)
 {
-	int l;
 	FILE *fp;
 	char *s, fpath[MAXPATHLEN];
 
-	l = snprintf(fpath, sizeof(fpath), "%s/%s", dir, CVS_PATH_REPOSITORY);
-	if (l == -1 || l >= (int)sizeof(fpath))
-		fatal("cvs_get_repository_name: overflow");
+	if (cvs_path_cat(dir, CVS_PATH_REPOSITORY,
+	    fpath, sizeof(fpath)) >= sizeof(fpath))
+		fatal("cvs_get_repository_name: truncation");
 
 	if ((fp = fopen(fpath, "r")) != NULL) {
 		fgets(dst, len, fp);
