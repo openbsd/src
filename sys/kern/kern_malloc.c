@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.64 2006/11/22 18:59:50 thib Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.65 2006/11/28 11:14:52 pedro Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
+#include <sys/time.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -122,6 +123,11 @@ struct freelist {
 };
 #endif /* DIAGNOSTIC */
 
+#ifndef SMALL_KERNEL
+struct timeval malloc_errintvl = { 5, 0 };
+struct timeval malloc_lasterr;
+#endif
+
 /*
  * Allocate a block of memory
  */
@@ -152,9 +158,14 @@ malloc(unsigned long size, int type, int flags)
 #endif
 
 	if (size > 65535 * PAGE_SIZE) {
-		if (flags & M_CANFAIL)
+		if (flags & M_CANFAIL) {
+#ifndef SMALL_KERNEL
+			if (ratecheck(&malloc_lasterr, &malloc_errintvl))
+				printf("malloc(): allocation too large, "
+				    "type = %d, size = %lu\n", type, size);
+#endif
 			return (NULL);
-		else
+		} else
 			panic("malloc: allocation too large");
 	}
 
