@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.2 2006/09/16 20:23:33 drahn Exp $
+dnl	$OpenBSD: prep,v 1.3 2006/11/28 18:55:21 robert Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of RedBoot, the low-level
 process that controls the microprocessor after hardware initialization.
@@ -14,19 +14,36 @@ to load from flash are not available and network booting does not appear
 to work.
 
 Booting Thecus N2100 
-Thecus Redboot provides the 'fconfig' command to change the boot
+Thecus RedBoot provides the 'fconfig' command to change the boot
 configuration of the device also 'fis' is provided to perform
 flash operations.
-To enter interactive Redboot, it is necessary to press ^C within one
+To enter interactive RedBoot, it is necessary to press ^C within one
 second of the prompt, it will typically accept it if typed early.
 
 The recommended way to install Thecus is configure networking and
 load bsd.rd from a tftp server or http server. First networking must be
-configured using fconfig,
+configured using the fconfig or ip_address commands.
 
-Update the IP address mask and server address with fconfig to allow
-booting from the network. TFTP and HTTP are supported.
-(BOOTP configuration _may_ not work)
+Update the IP address, netmask and server address with the commands
+listed below to allow booting from the network. TFTP and HTTP are
+supported. (BOOTP configuration _may_ not work)
+
+Using ip_address only allows you to set the local IP address and
+the IP address of the server where bsd.rd is located.
+This command also ensures that the new values  are going to be
+used instantly.
+
+eg:
+---
+RedBoot> ip_address -l 10.0.0.21 -h 10.0.0.7
+IP: 10.0.0.21/255.255.255.0, Gateway: 0.0.0.0
+Default server: 10.0.0.7, DNS server IP: 0.0.0.0
+
+---
+
+If you want to make permanent changes or you have to use 
+a more complicated network setup where you have to use a
+gateway or a nameserver, you have to use fconfig.
 
 eg:
 ---
@@ -37,7 +54,7 @@ Boot script:
 .. fis load kernel
 .. exec
 Enter script, terminate with empty line
->> 
+>>
 Boot script timeout (1000ms resolution): 1
 Use BOOTP for network configuration: false
 Gateway IP address: 10.0.0.1
@@ -54,12 +71,26 @@ MAC address 2: [DO_NOT_MODIFY_MAC]
 Network debug at boot time: false
 Reset default: Normal
 Serial number: N2100 V1.0.3
-Update RedBoot non-volatile configuration - continue (y/n)? n
+Update RedBoot non-volatile configuration - continue (y/n)? y
+... Unlock from 0xf0fc0000-0xf0fc1000: .
+... Erase from 0xf0fc0000-0xf0fc1000: .
+... Program from 0x0ffd2000-0x0ffd3000 at 0xf0fc0000: .
+... Lock from 0xf0fc0000-0xf0fc1000: .
 ---
 
-Once the IP address/mask/gateway is configured it is possible to boot
+Now that you have modified the configuration in the FLASH
+memory, you have to reset the box so the new configuration
+is going to be used upon boot.
+We have also removed the boot script by not re-entering
+it so you will be dropped to the RedBoot shell by default.
+
+Recheck the new values and use the 'reset' command.
+
+---
+
+Now that you have your network configured it is possible to boot
 either from http
-RedBoot> load -m http -h 10.0.0.1 /bsd.rd
+RedBoot> load -m http /bsd.rd
 or tftp (to a configured tftp server, and Default server configured)
 RedBoot> load bsd.rd
 
@@ -128,7 +159,7 @@ Delete image 'user' - continue (y/n)? y
 Load the armish openbsd bootloader 'boot' via tftp or http
 
 ---
-RedBoot> load -m http -h 10.0.0.1 /boot
+RedBoot> load -m http /boot
 Entry point: 0x00100000, address range: 0x00100000-0x001067e0
 ---
 
@@ -171,6 +202,11 @@ Enter script, terminate with empty line
 >>
 Boot script timeout (1000ms resolution): 1
 ...
+Update RedBoot non-volatile configuration - continue (y/n)? y
+... Unlock from 0xf0fc0000-0xf0fc1000: .
+... Erase from 0xf0fc0000-0xf0fc1000: .
+... Program from 0x0ffd2000-0x0ffd3000 at 0xf0fc0000: .
+... Lock from 0xf0fc0000-0xf0fc1000: .
 ----
 
 The important part is that 'Run script' is true and that the commands are
@@ -182,10 +218,10 @@ command driven with timeout like many other OpenBSD architectures.
 How to boot/install IOData HDL-G:
 
 The hda1 partition is the boot partition for linux, it contains
-zImage and initrd. Since Redboot only can boot from the ext2fs partition
+zImage and initrd. Since RedBoot only can boot from the ext2fs partition
 it is very important that this partition be present and not be reformatted.
 If this parition is destroyed, it will be necessary to remove the HD and
-recreate the partition on another machine. Note: Redboot should be able
+recreate the partition on another machine. Note: RedBoot should be able
 to boot from the network, however that has been unsuccessful on IODATA HDL-G
 so far.
 
