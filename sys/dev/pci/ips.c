@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.7 2006/11/28 16:17:29 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.8 2006/11/28 18:27:53 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -24,7 +24,9 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/timeout.h>
 #include <sys/queue.h>
 
 #include <machine/bus.h>
@@ -181,6 +183,7 @@ struct ccb {
 
 	bus_dmamap_t		c_dmam;
 	struct scsi_xfer *	c_xfer;
+	struct timeout		c_timo;
 
 	TAILQ_ENTRY(ccb)	c_link;
 };
@@ -231,6 +234,8 @@ int	ips_scsi_io(struct scsi_xfer *);
 int	ips_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int,
 	    struct proc *);
 void	ips_scsi_minphys(struct buf *);
+
+void	ips_xfer_timeout(void *);
 
 void	ips_flushcache(struct ips_softc *);
 int	ips_getadapterinfo(struct ips_softc *, struct ips_adapterinfo *);
@@ -529,6 +534,8 @@ ips_scsi_io(struct scsi_xfer *xs)
 		cmd->buffaddr = ccb->c_dmam->dm_segs[0].ds_addr;
 	}
 
+	timeout_add(&ccb->c_timo, hz);
+
 	s = splbio();
 	(*sc->sc_exec)(sc);
 	ccb->c_flags |= CCB_F_RUN;
@@ -548,6 +555,26 @@ void
 ips_scsi_minphys(struct buf *bp)
 {
 	minphys(bp);
+}
+
+void
+ips_xfer_timeout(void *arg)
+{
+	struct ccb *ccb = arg;
+	struct scsi_xfer *xs = ccb->c_xfer;
+	struct ips_softc *sc = xs->sc_link->adapter_softc;
+	int s;
+
+	DPRINTF(IPS_D_ERR, ("%s: xfer timeout, ccb id %d\n",
+	    sc->sc_dev.dv_xname, ccb->c_id));
+
+	bus_dmamap_unload(sc->sc_dmat, ccb->c_dmam);
+	xs->error = XS_TIMEOUT;
+	s = splbio();
+	scsi_done(xs);
+	ccb->c_flags &= ~CCB_F_RUN;
+	TAILQ_INSERT_TAIL(&sc->sc_ccbq, ccb, c_link);
+	splx(s);
 }
 
 void
@@ -669,6 +696,7 @@ ips_morpheus_intr(void *arg)
 		}
 
 		rv = 1;
+		timeout_del(&ccb->c_timo);
 		bus_dmamap_unload(sc->sc_dmat, ccb->c_dmam);
 		xs = ccb->c_xfer;
 		xs->resid = 0;
@@ -699,6 +727,7 @@ ips_ccb_alloc(bus_dma_tag_t dmat, int n)
 		    IPS_MAXFER, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &ccb[i].c_dmam))
 			goto fail;
+		timeout_set(&ccb[i].c_timo, ips_xfer_timeout, &ccb[i]);
 	}
 
 	return (ccb);
