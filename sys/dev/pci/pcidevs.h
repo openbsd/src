@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1196 2006/11/27 18:58:02 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1197 2006/11/28 20:14:00 robert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3411,6 +3411,7 @@
 #define	PCI_PRODUCT_SIS_964	0x0964		/* 964 ISA */
 #define	PCI_PRODUCT_SIS_965	0x0965		/* 965 ISA */
 #define	PCI_PRODUCT_SIS_966	0x0966		/* 966 ISA */
+#define	PCI_PRODUCT_SIS_5315	0x5315		/* 530 VGA */
 #define	PCI_PRODUCT_SIS_5511	0x5511		/* 5511 */
 #define	PCI_PRODUCT_SIS_5512	0x5512		/* 5512 */
 #define	PCI_PRODUCT_SIS_5513	0x5513		/* 5513 EIDE */
@@ -3434,6 +3435,7 @@
 #define	PCI_PRODUCT_SIS_7013	0x7013		/* 7013 Modem */
 #define	PCI_PRODUCT_SIS_7016	0x7016		/* 7016 10/100BaseTX */
 #define	PCI_PRODUCT_SIS_7018	0x7018		/* 7018 Audio */
+#define	PCI_PRODUCT_SIS_7019	0x7019		/* 7019 Audio */
 #define	PCI_PRODUCT_SIS_966_HDA	0x7502		/* 966 HD Audio */
 
 /* SMC products */
