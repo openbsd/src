@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.8 2006/11/28 18:27:53 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.9 2006/11/28 19:59:14 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -671,27 +671,34 @@ ips_morpheus_intr(void *arg)
 	struct ips_softc *sc = arg;
 	struct ccb *ccb;
 	struct scsi_xfer *xs;
-	u_int32_t reg;
+	u_int32_t oisr, oqpr;
 	int id, s, rv = 0;
 
-	reg = IPS_READ_4(sc, IPS_MORPHEUS_OISR);
-	if (!(reg & IPS_MORPHEUS_OISR_CMD))
+	oisr = IPS_READ_4(sc, IPS_MORPHEUS_OISR);
+	DPRINTF(IPS_D_INTR, ("%s: intr, OISR 0x%08x\n",
+	    sc->sc_dev.dv_xname, oisr));
+
+	if (!(oisr & IPS_MORPHEUS_OISR_CMD))
 		return (0);
 
-	while ((reg = IPS_READ_4(sc, IPS_MORPHEUS_OQPR)) != 0xffffffff) {
-		id = (reg >> 8) & 0xff;
+	while ((oqpr = IPS_READ_4(sc, IPS_MORPHEUS_OQPR)) != 0xffffffff) {
+		DPRINTF(IPS_D_INTR, ("OQPR 0x%08x\n", oqpr));
+
+		id = (oqpr >> 8) & 0xff;
 		if (id >= sc->sc_ai.max_concurrent_cmds) {
-			DPRINTF(IPS_D_ERR, ("%s: intr, bogus id %d\n",
+			DPRINTF(IPS_D_ERR, ("%s: intr, bogus id %d",
 			    sc->sc_dev.dv_xname, id));
+			DPRINTF(IPS_D_ERR, (", OISR 0x%08x, OQPR 0x%08x\n",
+			    oisr, oqpr));
 			continue;
 		}
-		DPRINTF(IPS_D_INTR, ("%s: intr, id %d\n",
-		    sc->sc_dev.dv_xname, id));
 
 		ccb = &sc->sc_ccb[id];
 		if (!(ccb->c_flags & CCB_F_RUN)) {
-			DPRINTF(IPS_D_ERR, ("%s: intr, ccb id %d not run\n",
+			DPRINTF(IPS_D_ERR, ("%s: intr, ccb id %d not run",
 			    sc->sc_dev.dv_xname, id));
+			DPRINTF(IPS_D_ERR, (", OISR 0x%08x, OQPR 0x%08x\n",
+			    oisr, oqpr));
 			continue;
 		}
 
