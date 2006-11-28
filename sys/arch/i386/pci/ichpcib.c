@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.12 2006/11/27 16:27:52 dim Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.13 2006/11/28 11:31:34 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -136,10 +136,8 @@ ichpcib_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pm_iot = pa->pa_iot;
 	pmbase = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_PMBASE);
 	if (bus_space_map(sc->sc_pm_iot, PCI_MAPREG_IO_ADDR(pmbase),
-	    ICH_PMSIZE, 0, &sc->sc_pm_ioh) != 0) {
-		printf(": failed to map I/O space");
+	    ICH_PMSIZE, 0, &sc->sc_pm_ioh) != 0)
 		goto corepcib;
-	}
 
 #ifdef __HAVE_TIMECOUNTER
 	/* Register new timecounter */
