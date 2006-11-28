@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.65 2006/11/27 19:32:18 kettenis Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.66 2006/11/28 20:25:59 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -636,6 +636,7 @@ acpi_init_pic(struct acpi_softc *sc)
 	if (node == 0)
 		return;
 
+	memset(&arg, 0, sizeof(arg));
 	arg.type = AML_OBJTYPE_INTEGER;
 #if NIOAPIC > 0
 	arg.v_integer = 1;
