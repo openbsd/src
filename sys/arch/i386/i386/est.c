@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.22 2006/11/05 15:10:46 dim Exp $ */
+/*	$OpenBSD: est.c,v 1.23 2006/11/28 19:58:27 dim Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -980,7 +980,14 @@ est_init(const char *cpu_device, int vendor)
 	idhi = (msr >> 32) & 0xffff;
 	idlo = (msr >> 48) & 0xffff;
 	cur = msr & 0xffff;
-	if (idhi == 0 || idlo == 0 || cur == 0 ||
+	if (idlo == 0) {
+		/*
+		 * Don't complain about this case.  It seems to happen
+		 * on all Pentium 4's that report EST.
+		 */
+		return;
+	}
+	if (idhi == 0 || cur == 0 ||
 	    ((cur >> 8) & 0xff) < ((idlo >> 8) & 0xff) ||
 	    ((cur >> 8) & 0xff) > ((idhi >> 8) & 0xff)) {
 		printf("%s: EST: strange msr value 0x%016llx\n",
