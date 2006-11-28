@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.44 2006/08/11 09:41:45 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.45 2006/11/28 21:35:56 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -52,6 +52,7 @@
 01/31	Jackie Robinson born, 1919
 02/03	Gertrude Stein born, 1874
 02/03	Paul Auster born in Newark, N.J., 1947
+02/05	William Seward Burroughs born in St. Louis, MO, 1914
 02/05	Alex Harvey (SAHB) is born in Glasgow, Scotland, 1935
 02/06	Adam Weishaupt was born in Ingoldstadt, 1748
 02/06	King George VI of UK dies; his daughter becomes Elizabeth II, 1952
@@ -113,6 +114,7 @@
 03/16	George Clymer born, 1739
 03/16	James Madison born, 1751
 03/21	Jean Baptiste Joseph Fourier born, 1768, mathematician & physicist
+03/22	Jack Kerouac born in Lowell MA, 1922
 03/23	Pierre Simon de Laplace born, 1749, mathematician & astronomer
 03/24	Harry Houdini born, 1874
 03/26	Benjamin Thompson born, 1753, Count Rumford; physicist
@@ -128,6 +130,8 @@
 04/03	Washington Irving born, 1783
 04/04	Andrey Tarkovsky born, 1932
 04/05	Thomas Hobbes born, 1588, philosopher
+04/05	Allen Ginsberg dies at age 70 in his East Village loft in
+	New York city, 1997
 04/08	Buddha born, 563 BC
 04/08	David Rittenhouse born, 1732, astronomer & mathematician
 04/09	Edward Muybridge born, 1830, motion-picture pioneer
@@ -174,8 +178,9 @@
 06/01	Brigham Young born, 1801
 06/01	Marilyn Monroe born, 1926
 06/02	Edward Elgar (Sir) born in Worcestershire, England, 1857
-06/03	Franz Kafka dies in Praha, 1924
 06/03	Henry James born, 1811
+06/03	Franz Kafka dies in Praha, 1924
+06/03	Allen Ginsberg born in Newark, NJ, 1926
 06/07	(Eugene Henri) Paul Gauguin born, 1848
 06/07	George Bryan "Beau" Brummel born, 1778
 06/07	Alan Mathison Turing died, 1954
@@ -212,6 +217,9 @@
 07/30	Emily Bronte born, 1818
 07/30	Henry Ford born, 1863
 08/01	Herman Melville born, 1819
+08/02	William Seward Burroughs dies of heart attack at age 83,
+	Lawrence KS, 1997
+08/02	Fela Kuti dies of AIDS-related heart failure in Lagos Nigeria, 1997
 08/03	Lenny Bruce dies of a morphine overdose, 1966
 08/06	Edsger Wybe Dijkstra died after a long struggle with cancer, 2002
 08/08	Dustin Hoffman born in Los Angeles, 1937
@@ -268,14 +276,16 @@
 10/09	Comandante Che Guevara "an artist of revolutionary warfare" executed
 	by CIA-supervised forces near Villagrande, Bolivia, 1967
 10/13	Lenny Bruce is born in New York City, 1925
-10/14	Dwight David Eisenhower born, 1890
 10/14	William Penn born in London, 1644
+10/14	Dwight David Eisenhower born, 1890
 10/15	Virgil (Publius Vergilius Maro) born near Mantua, Italy, 70 BC
 10/15	Pelham Grenville Wodehouse born, 1881
+10/15	Fela Kuti born in Abeokuta, Nigeria, 1938
 10/16	Noah Webster born, 1758
 10/16	Oscar (Fingal O'Flahertie Wills) Wilde born in Dublin, 1854
 10/16	Dr. Jonathan B. Postel dies at age 55, 1998
 10/17	Richard Mentor Johnson born, 1780, 9th V.P. of U.S.
+10/20	Jack Kerouac dies at the age of 47 in St. Petersburg, FL, 1969
 10/21	Alfred Nobel born in Stockholm, 1833
 10/27	Gerald M. Weinberg born, 1933
 10/27	James Cook is born, 1728
