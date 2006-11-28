@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.5 2006/11/28 14:28:39 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.6 2006/11/28 16:15:47 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/queue.h>
 
 #include <machine/bus.h>
 
@@ -42,6 +43,7 @@
 #define IPS_D_ERR	0x0001
 #define IPS_D_INFO	0x0002
 #define IPS_D_XFER	0x0004
+#define IPS_D_INTR	0x0008
 
 #ifdef IPS_DEBUG
 #define DPRINTF(a, b)	if (ips_debug & (a)) printf b
@@ -173,10 +175,17 @@ struct ips_driveinfo {
 	bus_space_write_4((s)->sc_iot, (s)->sc_ioh, (r), (v))
 
 struct ccb {
+	int			c_id;
+	int			c_flags;
+#define CCB_F_RUN	0x0001
+
 	bus_dmamap_t		c_dmam;
-	int			c_run;
 	struct scsi_xfer *	c_xfer;
+
+	TAILQ_ENTRY(ccb)	c_link;
 };
+
+TAILQ_HEAD(ccbq, ccb);
 
 struct dmamem {
 	bus_dma_tag_t		dm_tag;
@@ -200,7 +209,9 @@ struct ips_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	struct dmamem *		sc_cmdm;
+
 	struct ccb *		sc_ccb;
+	struct ccbq		sc_ccbq;
 
 	void *			sc_ih;
 
@@ -287,7 +298,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	int maxcmds;
+	int i, maxcmds;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
@@ -347,6 +358,10 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't alloc command queue\n");
 		goto fail2;
 	}
+
+	TAILQ_INIT(&sc->sc_ccbq);
+	for (i = 0; i < maxcmds; i++)
+		TAILQ_INSERT_TAIL(&sc->sc_ccbq, &sc->sc_ccb[i], c_link);
 
 	/* Install interrupt handler */
 	if (pci_intr_map(pa, &ih)) {
@@ -455,17 +470,25 @@ ips_scsi_io(struct scsi_xfer *xs)
 	struct ips_softc *sc = link->adapter_softc;
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
+	struct ccb *ccb;
 	struct ips_cmd_io *cmd;
 	u_int32_t blkno, blkcnt;
-	int i;
-	struct ccb *ccb;
+	int i, s;
 
-	for (i = 0; i < IPS_MAXCMDS; i++) {
-		ccb = &sc->sc_ccb[i];
-		if (!ccb->c_run)
-			break;
+	/* Pick up the first free ccb */
+	s = splbio();
+	ccb = TAILQ_FIRST(&sc->sc_ccbq);
+	if (ccb != NULL)
+		TAILQ_REMOVE(&sc->sc_ccbq, ccb, c_link);
+	splx(s);
+	if (ccb == NULL) {
+		DPRINTF(IPS_D_ERR, ("%s: scsi_io, no free ccb\n",
+		    sc->sc_dev.dv_xname));
+		return (TRY_AGAIN_LATER);
 	}
-	ccb->c_run = 1;
+	DPRINTF(IPS_D_XFER, ("%s: scsi_io, ccb id %d\n", sc->sc_dev.dv_xname,
+	    ccb->c_id));
+
 	bus_dmamap_load(sc->sc_dmat, ccb->c_dmam, xs->data, xs->datalen, NULL,
 	    BUS_DMA_NOWAIT);
 	ccb->c_xfer = xs;
@@ -485,7 +508,7 @@ ips_scsi_io(struct scsi_xfer *xs)
 	bzero(cmd, sizeof(*cmd));
 	cmd->command = (xs->flags & SCSI_DATA_IN) ? IPS_CMD_READ :
 	    IPS_CMD_WRITE;
-	cmd->id = i;
+	cmd->id = ccb->c_id;
 	cmd->drivenum = link->target;
 	cmd->lba = blkno;
 	cmd->length = blkcnt;
@@ -506,7 +529,11 @@ ips_scsi_io(struct scsi_xfer *xs)
 		cmd->buffaddr = ccb->c_dmam->dm_segs[0].ds_addr;
 	}
 
+	s = splbio();
 	(*sc->sc_exec)(sc);
+	ccb->c_flags |= CCB_F_RUN;
+	splx(s);
+
 	return (SUCCESSFULLY_QUEUED);
 }
 
@@ -615,11 +642,10 @@ int
 ips_morpheus_intr(void *arg)
 {
 	struct ips_softc *sc = arg;
-	u_int32_t reg;
-	int id;
-	struct scsi_xfer *xs;
-	int s;
 	struct ccb *ccb;
+	struct scsi_xfer *xs;
+	u_int32_t reg;
+	int id, s, rv = 0;
 
 	reg = IPS_READ_4(sc, IPS_MORPHEUS_OISR);
 	if (!(reg & IPS_MORPHEUS_OISR_CMD))
@@ -627,20 +653,34 @@ ips_morpheus_intr(void *arg)
 
 	while ((reg = IPS_READ_4(sc, IPS_MORPHEUS_OQPR)) != 0xffffffff) {
 		id = (reg >> 8) & 0xff;
-		ccb = &sc->sc_ccb[id];
-		if (!ccb->c_run)
+		if (id >= sc->sc_ai.max_concurrent_cmds) {
+			DPRINTF(IPS_D_ERR, ("%s: intr, bogus id %d\n",
+			    sc->sc_dev.dv_xname, id));
 			continue;
+		}
+		DPRINTF(IPS_D_INTR, ("%s: intr, id %d\n",
+		    sc->sc_dev.dv_xname, id));
+
+		ccb = &sc->sc_ccb[id];
+		if (!(ccb->c_flags & CCB_F_RUN)) {
+			DPRINTF(IPS_D_ERR, ("%s: intr, ccb id %d not run\n",
+			    sc->sc_dev.dv_xname, id));
+			continue;
+		}
+
+		rv = 1;
 		bus_dmamap_unload(sc->sc_dmat, ccb->c_dmam);
 		xs = ccb->c_xfer;
 		xs->resid = 0;
 		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
+		ccb->c_flags &= ~CCB_F_RUN;
+		TAILQ_INSERT_TAIL(&sc->sc_ccbq, ccb, c_link);
 		splx(s);
-		ccb->c_run = 0;
 	}
 
-	return (1);
+	return (rv);
 }
 
 struct ccb *
@@ -654,6 +694,7 @@ ips_ccb_alloc(bus_dma_tag_t dmat, int n)
 	bzero(ccb, n * sizeof(*ccb));
 
 	for (i = 0; i < n; i++) {
+		ccb[i].c_id = i;
 		if (bus_dmamap_create(dmat, IPS_MAXFER, IPS_MAXSGS,
 		    IPS_MAXFER, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &ccb[i].c_dmam))
