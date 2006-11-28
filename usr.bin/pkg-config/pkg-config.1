@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg-config.1,v 1.1 2006/11/28 00:48:08 ckuethe Exp $
+.\"	$OpenBSD: pkg-config.1,v 1.2 2006/11/28 01:20:44 ckuethe Exp $
 .\"
 .\"	Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 .\"
@@ -30,17 +30,32 @@ The
 utility retreives metadata about the installation of software packages.
 This metadata includes version, compiler and linker flags, and dependency
 information.
+It is inspired by, and intended to operate as a drop-in replacement to the
+program of the same name available from freedesktop.org.
 .Pp
 Metadata is stored in files named after the package they describe; the
 Yoyodyne package would likely be described by "yoyodyne.pc".
-Packages controlled by the
+Not all software packages provide
+.Nm
+metadata. Packages controlled by the
 .Xr ports 7
-system store their metadata in
-.Pa ${LOCALBASE}/lib/pkgconfig
-and X stores its metadata in
+system store their metadata, if provided, in
+.Pa ${LOCALBASE}/lib/pkgconfig ;
+the X Window System stores its metadata in
 .Pa ${X11BASE}/lib/pkgconfig.
+The
+.Nm
+utility will search these locations by default.
 .Pp
-
+Because
+.Nm
+attempts to output the full set of compiler or linker flags required to
+use a package, it will also output the flags required for any prerequisite
+packages.
+If the "foo" package depends on the bar package, "pkg-config --cflags foo"
+might output something like "-I/usr/local/include/foo
+-I/usr/local/include/bar", even though the compiler flags for "bar" were not
+explicitly requested.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -106,10 +121,6 @@ package files.
 If given, this list of paths is prepended to the standard search path.
 .El
 .Pp
-The
-.Nm
-utility aims to be a replacement for the program of the same name available
-from freedesktop.org.
 .Sh SEE ALSO
 .Xr pkg_info 1 ,
 .Xr ports 7
