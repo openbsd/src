@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.h,v 1.9 2006/11/18 18:46:20 brad Exp $ */
+/* $OpenBSD: if_ixgb.h,v 1.10 2006/11/28 04:45:08 brad Exp $ */
 
 #ifndef _IXGB_H_DEFINED_
 #define _IXGB_H_DEFINED_
@@ -204,10 +204,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 struct ixgb_buffer {
 	struct mbuf    *m_head;
-	bus_dmamap_t    map;	/* bus_dma map for packet */
-};
-
-struct ixgb_q {
 	bus_dmamap_t    map;	/* bus_dma map for packet */
 };
 
