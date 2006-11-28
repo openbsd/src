@@ -109,7 +109,3 @@ do									\
       }									\
   }									\
 while (0)
-
-/* We do not want jump targets to be aligned on cache line boundaries at -O2 */
-#undef SH_PREFERRED_ALIGN_JUMPS
-#define SH_PREFERRED_ALIGN_JUMPS 2

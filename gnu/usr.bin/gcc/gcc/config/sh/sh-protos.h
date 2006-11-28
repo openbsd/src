@@ -145,4 +145,6 @@ extern void sh_pr_nosave_low_regs PARAMS ((cpp_reader *));
 
 extern rtx sh_get_pr_initial_val PARAMS ((void));
 
+extern void sh_override_options PARAMS ((void));
+
 #endif /* ! GCC_SH_PROTOS_H */

@@ -7992,3 +7992,122 @@ check_use_sfunc_addr (rtx insn, rtx reg)
 }
 
 #include "gt-sh.h"
+
+void
+sh_override_options (void)
+{
+  int regno;
+
+#if defined(OPENBSD_NATIVE) || defined(OPENBSD_CROSS)
+  /* disable stack protection for now */
+  flag_propolice_protection = 0;
+
+  /* -fregmove is known to produce bad code on SuperH */
+  flag_regmove = 0;
+#endif
+
+  sh_cpu = CPU_SH1;
+  assembler_dialect = 0;
+  if (TARGET_SH2)
+    sh_cpu = CPU_SH2;
+  if (TARGET_SH3)
+    sh_cpu = CPU_SH3;
+  if (TARGET_SH3E)
+    sh_cpu = CPU_SH3E;
+  if (TARGET_SH4)
+    {
+      assembler_dialect = 1;
+      sh_cpu = CPU_SH4;
+    }
+  if (TARGET_SH5)
+    {
+      sh_cpu = CPU_SH5;
+      target_flags |= DALIGN_BIT;
+      if (TARGET_FPU_ANY
+	  && ! (TARGET_SHCOMPACT && TARGET_LITTLE_ENDIAN))
+	target_flags |= FMOVD_BIT;
+      if (TARGET_SHMEDIA)
+	{
+	  /* There are no delay slots on SHmedia.  */
+	  flag_delayed_branch = 0;
+	  /* Relaxation isn't yet supported for SHmedia */
+	  target_flags &= ~RELAX_BIT;
+	}
+      if (profile_flag || profile_arc_flag)
+	{
+	  warning ("Profiling is not supported on this target.");
+	  profile_flag = profile_arc_flag = 0;
+	}
+    }
+  else
+    {
+       /* Only the sh64-elf assembler fully supports .quad properly.  */
+       targetm.asm_out.aligned_op.di = NULL;
+       targetm.asm_out.unaligned_op.di = NULL;
+    }
+  if (TARGET_FMOVD)
+    reg_class_from_letter['e'] = NO_REGS;
+
+  for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
+    if (! VALID_REGISTER_P (regno))
+      sh_register_names[regno][0] = '0';				\
+
+  for (regno = 0; regno < ADDREGNAMES_SIZE; regno++)
+    if (! VALID_REGISTER_P (ADDREGNAMES_REGNO (regno)))
+      sh_additional_register_names[regno][0] = '0';			\
+
+  if (flag_omit_frame_pointer < 0)
+   {
+     /* The debugging information is sufficient,
+        but gdb doesn't implement this yet */
+     if (0)
+      flag_omit_frame_pointer
+        = (PREFERRED_DEBUGGING_TYPE == DWARF_DEBUG
+	   || PREFERRED_DEBUGGING_TYPE == DWARF2_DEBUG);
+     else
+      flag_omit_frame_pointer = 0;
+   }
+
+  if (flag_pic && ! TARGET_PREFERGOT)
+    flag_no_function_cse = 1;
+
+  /* Never run scheduling before reload, since that can
+     break global alloc, and generates slower code anyway due
+     to the pressure on R0.  */
+  flag_schedule_insns = 0;
+
+  if (align_loops == 0)
+    align_loops =  1 << (TARGET_SH5 ? 3 : 2);
+#if defined(OPENBSD_NATIVE) || defined(OPENBSD_CROSS)
+  /* Do not align jump targets to cache line boundaries at -O2 */
+  if (align_jumps == 0)
+    align_jumps =  2;
+#else
+  if (align_jumps == 0)
+    align_jumps = 1 << CACHE_LOG;
+#endif
+  else if (align_jumps < (TARGET_SHMEDIA ? 4 : 2))
+    align_jumps = TARGET_SHMEDIA ? 4 : 2;
+
+  /* Allocation boundary (in *bytes*) for the code of a function.
+     SH1: 32 bit alignment is faster, because instructions are always
+     fetched as a pair from a longword boundary.
+     SH2 .. SH5 : align to cache line start.  */
+  if (align_functions == 0)
+    align_functions
+      = TARGET_SMALLCODE ? FUNCTION_BOUNDARY/8 : (1 << CACHE_LOG);
+  /* The linker relaxation code breaks when a function contains
+     alignments that are larger than that at the start of a
+     compilation unit.  */
+  if (TARGET_RELAX)
+    {
+      int min_align
+	= align_loops > align_jumps ? align_loops : align_jumps;
+
+      /* Also take possible .long constants / mova tables int account.	*/
+      if (min_align < 4)
+	min_align = 4;
+      if (align_functions < min_align)
+	align_functions = min_align;
+    }
+}
