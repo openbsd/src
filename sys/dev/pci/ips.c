@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.3 2006/11/27 23:56:38 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.4 2006/11/28 00:11:44 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -51,9 +51,10 @@
 /* Commands */
 #define IPS_CMD_READ		0x02
 #define IPS_CMD_WRITE		0x03
+#define IPS_CMD_ADAPTERINFO	0x05
+#define IPS_CMD_FLUSHCACHE	0x0a
 #define IPS_CMD_READ_SG		0x82
 #define IPS_CMD_WRITE_SG	0x83
-#define IPS_CMD_ADAPTERINFO	0x05
 #define IPS_CMD_DRIVEINFO	0x19
 
 #define IPS_MAXCMDSZ		256	/* XXX: for now */
@@ -85,6 +86,16 @@ struct ips_cmd_driveinfo {
 	u_int8_t	drivenum;
 	u_int8_t	reserve1;
 	u_int32_t	reserve2;
+	u_int32_t	buffaddr;
+	u_int32_t	reserve3;
+} __packed;
+
+struct ips_cmd_generic {
+	u_int8_t	command;
+	u_int8_t	id;
+	u_int8_t	drivenum;
+	u_int8_t	reserve2;
+	u_int32_t	lba;
 	u_int32_t	buffaddr;
 	u_int32_t	reserve3;
 } __packed;
@@ -196,6 +207,7 @@ int	ips_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int,
 	    struct proc *);
 void	ips_scsi_minphys(struct buf *);
 
+void	ips_flushcache(struct ips_softc *);
 int	ips_getadapterinfo(struct ips_softc *, struct ips_adapterinfo *);
 int	ips_getdriveinfo(struct ips_softc *, struct ips_driveinfo *);
 
@@ -404,6 +416,9 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		sns->error_code = 0x70;
 		sns->flags = SKEY_NO_SENSE;
 		goto done;
+	case SYNCHRONIZE_CACHE:
+		ips_flushcache(sc);
+		goto done;
 	case PREVENT_ALLOW:
 	case START_STOP:
 	case TEST_UNIT_READY:
@@ -492,6 +507,18 @@ void
 ips_scsi_minphys(struct buf *bp)
 {
 	minphys(bp);
+}
+
+void
+ips_flushcache(struct ips_softc *sc)
+{
+	struct ips_cmd_generic *cmd;
+
+	cmd = sc->sc_cmdm->dm_kva;
+	cmd->command = IPS_CMD_FLUSHCACHE;
+
+	(*sc->sc_exec)(sc);
+	DELAY(1000);
 }
 
 int
