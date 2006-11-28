@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.32 2006/11/18 19:20:17 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.33 2006/11/28 02:22:39 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -435,8 +435,7 @@ ixgb_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 void
 ixgb_watchdog(struct ifnet * ifp)
 {
-	struct ixgb_softc *sc;
-	sc = ifp->if_softc;
+	struct ixgb_softc *sc = ifp->if_softc;
 
 	/*
 	 * If we are in this routine because of pause frames, then don't
@@ -446,9 +445,9 @@ ixgb_watchdog(struct ifnet * ifp)
 		ifp->if_timer = IXGB_TX_TIMEOUT;
 		return;
 	}
+
 	printf("%s: watchdog timeout -- resetting\n", sc->sc_dv.dv_xname);
 
-	ixgb_stop(sc);
 	ixgb_init(sc);
 
 	sc->watchdog_events++;
@@ -579,8 +578,7 @@ ixgb_intr(void *arg)
 		}
 	}
 
-	if (ifp->if_flags & IFF_RUNNING &&
-	    IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
 		ixgb_start(ifp);
 
 	return (claimed);
@@ -1119,8 +1117,6 @@ ixgb_dma_malloc(struct ixgb_softc *sc, bus_size_t size,
 	dma->dma_size = size;
 	return (0);
 
-/* fail_4: */
-	bus_dmamap_unload(dma->dma_tag, dma->dma_map);
 fail_3: 
 	bus_dmamem_unmap(dma->dma_tag, dma->dma_vaddr, size);
 fail_2: 
