@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.2 2006/11/28 18:52:23 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.12 2006/01/21 04:12:22 uwe Exp $	*/
 
 /*
@@ -192,7 +192,9 @@ int
 process_sstep(struct proc *p, int sstep)
 {
 	if (sstep)
-		return (EINVAL);
+		p->p_md.md_flags |= MDP_STEP;
+	else
+		p->p_md.md_flags &= ~MDP_STEP;
 
 	return (0);
 }

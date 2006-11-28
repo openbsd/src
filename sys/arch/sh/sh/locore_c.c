@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_c.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: locore_c.c,v 1.2 2006/11/28 18:52:23 kettenis Exp $	*/
 /*	$NetBSD: locore_c.c,v 1.13 2006/03/04 01:13:35 uwe Exp $	*/
 
 /*-
@@ -124,6 +124,7 @@
 #include <sh/pmap.h>
 #include <sh/mmu_sh3.h>
 #include <sh/mmu_sh4.h>
+#include <sh/ubcreg.h>
 
 void (*__sh_switch_resume)(struct proc *);
 struct proc *cpu_switch_search(struct proc *);
@@ -149,9 +150,23 @@ cpu_switch_prepare(struct proc *oproc, struct proc *nproc)
 {
 	nproc->p_stat = SONPROC;
 
+	if (oproc && (oproc->p_md.md_flags & MDP_STEP))
+		_reg_write_2(SH_(BBRB), 0);
+
 	if (nproc != oproc) {
 		curpcb = nproc->p_md.md_pcb;
 		pmap_activate(nproc);
+	}
+
+	if (nproc->p_md.md_flags & MDP_STEP) {
+		int pm_asid = nproc->p_vmspace->vm_map.pmap->pm_asid;
+
+		_reg_write_2(SH_(BBRB), 0);
+		_reg_write_4(SH_(BARB), nproc->p_md.md_regs->tf_spc);
+		_reg_write_1(SH_(BASRB), pm_asid);
+		_reg_write_1(SH_(BAMRB), 0);
+		_reg_write_2(SH_(BRCR), 0x0040);
+		_reg_write_2(SH_(BBRB), 0x0014);
 	}
 
 	curproc = nproc;
