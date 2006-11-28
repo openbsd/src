@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg-config.1,v 1.2 2006/11/28 01:20:44 ckuethe Exp $
+.\"	$OpenBSD: pkg-config.1,v 1.3 2006/11/28 01:36:17 ckuethe Exp $
 .\"
 .\"	Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 .\"
@@ -109,7 +109,10 @@ Return the compiler and/or linker flags required for static linking.
 .It Fl -atleast-version Ar version
 Exit with error if the specified package is not new enough
 .It Fl -modversion
-Fetch package version
+Fetch package version.
+If no package is given,
+.Nm
+returns its own version.
 .It Fl -variable Ar name
 Fetch the value of the named variable.
 .El

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.5 2006/11/27 23:57:51 ckuethe Exp $
+# $OpenBSD: pkg-config,v 1.6 2006/11/28 01:36:17 ckuethe Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -76,13 +76,20 @@ GetOptions(	'debug' => \$D,
 		'static' => sub { $mode{'static'} = 1},
 		'uninstalled' => sub { $mode{'uninstalled'} = 1},
 		'atleast-version=s' => \$mode{'atleast-version'},
-		'modversion=s' => \$mode{'modversion'},
+		'modversion:s' => \$mode{'modversion'},
 		'variable=s' => \$mode{'variable'}
 	);
 
 print STDERR "\n[" . join('] [', $0, @ARGV) . "]\n" if $D;
 self_version($mode{'minvers'}) if $mode{'minvers'}; #does not return
-do_modversion($mode{'modversion'}) if $mode{'modversion'}; #does not return
+if (defined $mode{'modversion'}) {
+	if ($mode{'modversion'}) {
+		do_modversion($mode{'modversion'}) ; #does not return
+	} else {
+		print $version . "\n";
+		exit 0;
+	}
+}
 
 $p = join(' ', @ARGV);
 $p =~ s/\s+/ /g;
@@ -221,6 +228,8 @@ sub do_modversion
 {
 	my ($p, undef) = @_;
 	my ($f);
+
+	print "\$p ='$p'\n";
 
 	exit 1 unless $f = pathresolve($p);
 	exit 1 unless $f = slurp($f);
