@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.87 2006/10/20 03:28:06 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.88 2006/11/28 18:20:03 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.84 2006/10/20 03:27:54 brad Exp 
+ *	OpenBSD: miidevs,v 1.85 2006/11/28 18:19:49 brad Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -245,16 +245,16 @@
 #define	MII_STR_MARVELL_E1149	"Marvell 88E1149 Gigabit PHY"
 #define	MII_MODEL_MARVELL_E1111	0x000c
 #define	MII_STR_MARVELL_E1111	"Marvell 88E1111 Gigabit PHY"
-#define	MII_MODEL_MARVELL_E1000_5	0x0021
-#define	MII_STR_MARVELL_E1000_5	"Marvell 88E1000 5 Gigabit PHY"
-#define	MII_MODEL_MARVELL_E1000_6	0x0022
-#define	MII_STR_MARVELL_E1000_6	"Marvell 88E1000 6 Gigabit PHY"
-#define	MII_MODEL_xxMARVELL_E1000_7	0x0002
+#define	MII_MODEL_MARVELL_E1116	0x0021
+#define	MII_STR_MARVELL_E1116	"Marvell 88E1116 Gigabit PHY"
+#define	MII_MODEL_MARVELL_E1118	0x0022
+#define	MII_STR_MARVELL_E1118	"Marvell 88E1118 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1000_5	0x0002
+#define	MII_STR_xxMARVELL_E1000_5	"Marvell 88E1000 5 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1000_6	0x0003
+#define	MII_STR_xxMARVELL_E1000_6	"Marvell 88E1000 6 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1000_7	0x0005
 #define	MII_STR_xxMARVELL_E1000_7	"Marvell 88E1000 7 Gigabit PHY"
-#define	MII_MODEL_xxMARVELL_E1000_8	0x0003
-#define	MII_STR_xxMARVELL_E1000_8	"Marvell 88E1000 8 Gigabit PHY"
-#define	MII_MODEL_xxMARVELL_E1000_9	0x0005
-#define	MII_STR_xxMARVELL_E1000_9	"Marvell 88E1000 9 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1111	0x000c
 #define	MII_STR_xxMARVELL_E1111	"Marvell 88E1111 Gigabit PHY"
 
