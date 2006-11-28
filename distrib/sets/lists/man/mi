@@ -1262,6 +1262,7 @@
 ./usr/share/man/cat4/ipcomp.0
 ./usr/share/man/cat4/ipgphy.0
 ./usr/share/man/cat4/ipmi.0
+./usr/share/man/cat4/ips.0
 ./usr/share/man/cat4/ipsec.0
 ./usr/share/man/cat4/ipw.0
 ./usr/share/man/cat4/isa.0
