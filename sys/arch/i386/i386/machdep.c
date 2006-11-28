@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.367 2006/10/17 21:28:23 tom Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.368 2006/11/28 15:24:08 dim Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -255,6 +255,7 @@ int kbd_reset;
 int p4_model;
 int p3_early;
 int bus_clock;
+void (*setperf_setup)(struct cpu_info *);
 int setperf_prio = 0;		/* for concurrent handlers */
 
 void (*delay_func)(int) = i8254_delay;
@@ -334,12 +335,16 @@ int cpu_pae = 0;
 #endif
 
 void	winchip_cpu_setup(struct cpu_info *);
+void	amd_family5_setperf_setup(struct cpu_info *);
 void	amd_family5_setup(struct cpu_info *);
+void	amd_family6_setperf_setup(struct cpu_info *);
 void	amd_family6_setup(struct cpu_info *);
+void	cyrix3_setperf_setup(struct cpu_info *);
 void	cyrix3_cpu_setup(struct cpu_info *);
 void	cyrix6x86_cpu_setup(struct cpu_info *);
 void	natsem6x86_cpu_setup(struct cpu_info *);
 void	intel586_cpu_setup(struct cpu_info *);
+void	intel686_setperf_setup(struct cpu_info *);
 void	intel686_common_cpu_setup(struct cpu_info *);
 void	intel686_cpu_setup(struct cpu_info *);
 void	intel686_p4_cpu_setup(struct cpu_info *);
@@ -419,9 +424,8 @@ cpu_startup()
 	startrtclock();
 
 	/*
-	 * XXX SMP XXX identifycpu shouldn't need to be called here, but
-	 * mpbios is broken otherwise.  Also, curcpu is not quite fully
-	 * initialized this early either, so some extra work is needed.
+	 * We need to call identifycpu here early, so users have at least some
+	 * basic information, if booting hangs later on.
 	 */
 	strlcpy(curcpu()->ci_dev.dv_xname, "cpu0",
 	    sizeof(curcpu()->ci_dev.dv_xname));
@@ -1165,6 +1169,22 @@ winchip_cpu_setup(struct cpu_info *ci)
 #endif
 }
 
+#if defined(I686_CPU) && !defined(SMALL_KERNEL)
+void
+cyrix3_setperf_setup(struct cpu_info *ci)
+{
+	cyrix3_get_bus_clock(ci);
+
+	if (cpu_ecxfeature & CPUIDECX_EST) {
+		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
+			est_init(ci->ci_dev.dv_xname, CPUVENDOR_VIA);
+		else
+			printf("%s: Enhanced SpeedStep disabled by BIOS\n",
+			    ci->ci_dev.dv_xname);
+	}
+}
+#endif
+
 void
 cyrix3_cpu_setup(struct cpu_info *ci)
 {
@@ -1181,15 +1201,7 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 
 	pagezero = i686_pagezero;
 
-	cyrix3_get_bus_clock(ci);
-
-	if (cpu_ecxfeature & CPUIDECX_EST) {
-		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
-			est_init(ci->ci_dev.dv_xname, CPUVENDOR_VIA);
-		else
-			printf("%s: Enhanced SpeedStep disabled by BIOS\n",
-			    ci->ci_dev.dv_xname);
-	}
+	setperf_setup = cyrix3_setperf_setup;
 #endif
 
 	switch (model) {
@@ -1369,6 +1381,14 @@ intel586_cpu_setup(struct cpu_info *ci)
 #endif
 }
 
+#if !defined(SMALL_KERNEL) && defined(I586_CPU)
+void
+amd_family5_setperf_setup(struct cpu_info *ci)
+{
+	k6_powernow_init();
+}
+#endif
+
 void
 amd_family5_setup(struct cpu_info *ci)
 {
@@ -1392,29 +1412,18 @@ amd_family5_setup(struct cpu_info *ci)
 	case 12:
 	case 13:
 #if !defined(SMALL_KERNEL) && defined(I586_CPU)
-		k6_powernow_init();
+		setperf_setup = amd_family5_setperf_setup;
 #endif
 		break;
 	}
 }
 
+#if !defined(SMALL_KERNEL) && defined(I686_CPU) && !defined(MULTIPROCESSOR)
 void
-amd_family6_setup(struct cpu_info *ci)
+amd_family6_setperf_setup(struct cpu_info *ci)
 {
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
-	extern void (*pagezero)(void *, size_t);
-	extern void sse2_pagezero(void *, size_t);
-	extern void i686_pagezero(void *, size_t);
-#if !defined(MULTIPROCESSOR)
 	int family = (ci->ci_signature >> 8) & 15;
-#endif
 
-	if (cpu_feature & CPUID_SSE2)
-		pagezero = sse2_pagezero;
-	else
-		pagezero = i686_pagezero;
-
-#if !defined(MULTIPROCESSOR)
 	switch (family) {
 	case 6:
 		k7_powernow_init();
@@ -1423,16 +1432,32 @@ amd_family6_setup(struct cpu_info *ci)
 		k8_powernow_init();
 		break;
 	}
+}
+#endif /* !SMALL_KERNEL && I686_CPU && !MULTIPROCESSOR */
+
+void
+amd_family6_setup(struct cpu_info *ci)
+{
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+	extern void (*pagezero)(void *, size_t);
+	extern void sse2_pagezero(void *, size_t);
+	extern void i686_pagezero(void *, size_t);
+
+	if (cpu_feature & CPUID_SSE2)
+		pagezero = sse2_pagezero;
+	else
+		pagezero = i686_pagezero;
+
+#if !defined(MULTIPROCESSOR)
+	setperf_setup = amd_family6_setperf_setup;
 #endif
 #endif
 }
 
+#if !defined(SMALL_KERNEL) && defined(I686_CPU) && !defined(MULTIPROCESSOR)
 void
-intel686_common_cpu_setup(struct cpu_info *ci)
+intel686_setperf_setup(struct cpu_info *ci)
 {
-
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
-#if !defined(MULTIPROCESSOR)
 	int family = (ci->ci_signature >> 8) & 15;
 	int step = ci->ci_signature & 15;
 
@@ -1445,6 +1470,16 @@ intel686_common_cpu_setup(struct cpu_info *ci)
 	} else if ((cpu_feature & (CPUID_ACPI | CPUID_TM)) ==
 	    (CPUID_ACPI | CPUID_TM))
 		p4tcc_init(family, step);
+}
+#endif
+
+void
+intel686_common_cpu_setup(struct cpu_info *ci)
+{
+
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+#if !defined(MULTIPROCESSOR)
+	setperf_setup = intel686_setperf_setup;
 #endif
 	{
 	extern void (*pagezero)(void *, size_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.28 2006/11/27 18:04:28 gwk Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.29 2006/11/28 15:24:08 dim Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -142,6 +142,10 @@ void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	union mainbus_attach_args	mba;
+#if NACPI > 0
+	int				acpi_attached = 0;
+#endif
+	extern void			(*setperf_setup)(struct cpu_info *);
 	extern int			cpu_id, cpu_feature;
 
 	printf("\n");
@@ -164,10 +168,12 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		mba.mba_aaa.aaa_iot = I386_BUS_SPACE_IO;
 		mba.mba_aaa.aaa_memt = I386_BUS_SPACE_MEM;
 
-		if (acpi_probe(self, aux, &mba.mba_aaa))
-			config_found(self, &mba.mba_aaa, mainbus_print);
+		if (acpi_probe(self, aux, &mba.mba_aaa) &&
+		    config_found(self, &mba.mba_aaa, mainbus_print) != NULL)
+			acpi_attached = 1;
 	}
 #endif
+
 #if NIPMI > 0
 	{
 		memset(&mba.mba_iaa, 0, sizeof(mba.mba_iaa));
@@ -196,6 +202,14 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		caa.feature_flags = cpu_feature;
 
 		config_found(self, &caa, mainbus_print);
+	}
+
+#if NACPI > 0
+	if (!acpi_attached)
+#endif
+	{
+		if (setperf_setup != NULL)
+			setperf_setup(&cpu_info_primary);
 	}
 
 #if NVESABIOS > 0
