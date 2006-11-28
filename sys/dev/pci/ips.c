@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.4 2006/11/28 00:11:44 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.5 2006/11/28 14:28:39 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -35,6 +35,20 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+
+#define IPS_DEBUG	/* XXX: remove when the driver becomes stable */
+
+/* Debug levels */
+#define IPS_D_ERR	0x0001
+#define IPS_D_INFO	0x0002
+#define IPS_D_XFER	0x0004
+
+#ifdef IPS_DEBUG
+#define DPRINTF(a, b)	if (ips_debug & (a)) printf b
+int ips_debug = 0;
+#else
+#define DPRINTF(a, b)
+#endif
 
 /*
  * Register definitions.
