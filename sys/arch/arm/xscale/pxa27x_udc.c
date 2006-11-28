@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.6 2006/11/25 18:10:29 uwe Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.7 2006/11/28 15:42:30 uwe Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -41,6 +41,8 @@
 #define PXAUDC_NEP	24	/* total number of endpoints */
 
 #include <machine/zaurus_reg.h>	/* XXX */
+
+#include "usbf.h"
 
 struct pxaudc_xfer {
 	struct usbf_xfer	 xfer;
@@ -123,6 +125,8 @@ struct cfdriver pxaudc_cd = {
 	NULL, "pxaudc", DV_DULL
 };
 
+#if NUSBF > 0
+
 struct usbf_bus_methods pxaudc_bus_methods = {
 	pxaudc_open,
 	pxaudc_softintr,
@@ -147,6 +151,8 @@ struct usbf_pipe_methods pxaudc_bulk_methods = {
 	pxaudc_bulk_done,
 	pxaudc_bulk_close
 };
+
+#endif /* NUSBF > 0 */
 
 #define DEVNAME(sc)	USBDEVNAME((sc)->sc_bus.bdev)
 
@@ -201,6 +207,7 @@ pxaudc_attach(struct device *parent, struct device *self, void *aux)
 	pxaudc_setup(sc);
 	pxaudc_disable(sc);
 
+#if NUSBF > 0
 	/* Establish USB device interrupt. */
 	sc->sc_ih = pxa2x0_intr_establish(PXA2X0_INT_USB, IPL_USB,
 	    pxaudc_intr, sc, DEVNAME(sc));
@@ -242,6 +249,7 @@ pxaudc_attach(struct device *parent, struct device *self, void *aux)
 	/* Enable the controller unless we're now acting as a host. */
 	if (!pxaudc_is_host())
 		pxaudc_enable(sc);
+#endif
 }
 
 int
@@ -412,6 +420,8 @@ pxaudc_disable(struct pxaudc_softc *sc)
 	/* Enable USB host on port 2. */
 	pxa2x0_gpio_set_bit(37); /* USB_P2_8 */
 }
+
+#if NUSBF > 0
 
 /*
  * Endpoint FIFO handling
@@ -879,3 +889,5 @@ pxaudc_bulk_close(usbf_pipe_handle pipe)
 {
 	/* XXX */
 }
+
+#endif /* NUSBF > 0 */

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.67 2006/11/27 11:38:43 deraadt Exp $
+#	$OpenBSD: files.usb,v 1.68 2006/11/28 15:42:30 uwe Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -276,7 +276,7 @@ file	dev/usb/ueagle.c		ueagle
 # USB logical device
 device	usbf {}
 attach	usbf at usbdev
-file	dev/usb/usbf.c			usbf
+file	dev/usb/usbf.c			usbf			needs-flag
 file	dev/usb/usbf_subr.c		usbf
 
 # Communication Device Class Ethernet function
