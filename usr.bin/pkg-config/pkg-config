@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.6 2006/11/28 01:36:17 ckuethe Exp $
+# $OpenBSD: pkg-config,v 1.7 2006/11/28 01:54:14 ckuethe Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -40,6 +40,9 @@ our %configs = ();
 our %mode = ();
 our $D = 0; # debug flag
 
+# defaults
+$mode{'printerr'} = 1;
+
 $/ = undef;
 if ($logfile) {
 	open my $L, ">>" . $logfile;
@@ -63,6 +66,7 @@ GetOptions(	'debug' => \$D,
 		'version' => sub { print "$version\n" ; exit(0);} ,
 		'errors-to-stdout' => sub { $mode{'estdout'} = 1},
 		'print-errors' => sub { $mode{'printerr'} = 1},
+		'silence-errors' => sub { $mode{'printerr'} = 0},
 		'atleast-pkgconfig-version=s' => \$mode{'minvers'},
 
 		'cflags' => sub { $mode{'cflags'} = 3},
@@ -149,7 +153,7 @@ while (@ARGV){
 			push(@ARGV, split /\s+/, $privdeps) if $privdeps;
 
 		} else {
-			warn "can't find $p\n";
+			warn "can't find $p\n" if $mode{'printerr'};
 			exit 1;
 		}
 	}
