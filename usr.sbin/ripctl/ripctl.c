@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripctl.c,v 1.1 2006/10/18 16:15:25 norby Exp $
+/*	$OpenBSD: ripctl.c,v 1.2 2006/11/28 19:21:15 reyk Exp $
  *
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -519,7 +519,9 @@ get_linkstate(int media_type, int link_state)
 			if (p->ifms_type != media_type ||
 			    p->ifms_valid != ifm_status_valid_list[i])
 				continue;
-			return (p->ifms_string[link_state == LINK_STATE_UP]);
+			if (LINK_STATE_IS_UP(link_state))
+				return (p->ifms_string[1]);
+			return (p->ifms_string[0]);
 		}
 
 	return ("unknown link state");

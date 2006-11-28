@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.103 2006/11/28 16:48:13 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.104 2006/11/28 19:21:15 reyk Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1112,7 +1112,9 @@ get_linkstate(int mt, int link_state)
 			if (p->ifms_type != media_type ||
 			    p->ifms_valid != ifm_status_valid_list[i])
 				continue;
-			return (p->ifms_string[link_state == LINK_STATE_UP]);
+			if (LINK_STATE_IS_UP(link_state))
+				return (p->ifms_string[1]);
+			return (p->ifms_string[0]);
 		}
 	}
 

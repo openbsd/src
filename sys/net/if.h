@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.84 2006/11/16 13:09:27 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.85 2006/11/28 19:21:15 reyk Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -150,6 +150,9 @@ struct	ifqueue {
 #define	LINK_STATE_UNKNOWN	0	/* link invalid/unknown */
 #define	LINK_STATE_DOWN		1	/* link is down */
 #define	LINK_STATE_UP		2	/* link is up */
+#define LINK_STATE_HALF_DUPLEX	3	/* link is up and half duplex */
+#define LINK_STATE_FULL_DUPLEX	4	/* link is up and full duplex */
+#define LINK_STATE_IS_UP(_s)	((_s) >= LINK_STATE_UP)
 
 /*
  * Structure defining a queue for a network interface.

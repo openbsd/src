@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.111 2006/11/10 14:46:46 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.112 2006/11/28 19:21:15 reyk Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -905,7 +905,9 @@ get_linkstate(int media_type, int link_state)
 			if (p->ifms_type != media_type ||
 			    p->ifms_valid != ifm_status_valid_list[i])
 				continue;
-			return (p->ifms_string[link_state == LINK_STATE_UP]);
+			if (LINK_STATE_IS_UP(link_state))
+				return (p->ifms_string[1]);
+			return (p->ifms_string[0]);
 		}
 
 	return ("unknown link state");

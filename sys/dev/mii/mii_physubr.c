@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.27 2005/11/06 21:46:18 brad Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.28 2006/11/28 19:21:15 reyk Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -350,9 +350,14 @@ mii_phy_statusmsg(struct mii_softc *sc)
 	int baudrate, link_state, announce = 0;
 
 	if (mii->mii_media_status & IFM_AVALID) {
-		if (mii->mii_media_status & IFM_ACTIVE)
-			link_state = LINK_STATE_UP;
-		else
+		if (mii->mii_media_status & IFM_ACTIVE) {
+			if (mii->mii_media_status & IFM_FDX)
+				link_state = LINK_STATE_FULL_DUPLEX;
+			else if (mii->mii_media_status & IFM_HDX)
+				link_state = LINK_STATE_HALF_DUPLEX;
+			else
+				link_state = LINK_STATE_UP;
+		} else
 			link_state = LINK_STATE_DOWN;
 	} else
 		link_state = LINK_STATE_UNKNOWN;

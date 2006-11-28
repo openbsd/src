@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.49 2006/11/17 08:55:31 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.50 2006/11/28 19:21:15 reyk Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -280,7 +280,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 				fatalx("IFINFO imsg with wrong len");
 			kif = imsg.data;
 			link_ok = (kif->flags & IFF_UP) &&
-			    (kif->link_state == LINK_STATE_UP ||
+			    (LINK_STATE_IS_UP(kif->link_state) ||
 			    (kif->link_state == LINK_STATE_UNKNOWN &&
 			    kif->media_type != IFT_CARP));
 
@@ -735,7 +735,7 @@ orig_rtr_lsa(struct area *area)
 
 			if ((iface->flags & IFF_UP) == 0 ||
 			    iface->linkstate == LINK_STATE_DOWN ||
-			    (iface->linkstate != LINK_STATE_UP &&
+			    (!LINK_STATE_IS_UP(iface->linkstate) &&
 			    iface->media_type == IFT_CARP))
 				continue;
 
