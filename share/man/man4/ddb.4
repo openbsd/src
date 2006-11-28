@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.47 2006/07/06 18:16:19 miod Exp $
+.\"	$OpenBSD: ddb.4,v 1.48 2006/11/28 18:56:17 uwe Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -531,11 +531,20 @@ command is a synonym for
 .\" --------------------
 .It Xo
 .Ic trace
-.Op Cm /u
+.Op Cm /pu
 .Op Ar frameaddr Ns
 .Op Ic \&, Ns Ar count
 .Xc
 Show the stack trace.
+The
+.Cm /p
+modifier interprets the
+.Ar frameaddr
+argument as the PID of a process and shows the stack trace of
+that process.
+The
+.Cm /p
+modifier is not supported on all platforms.
 The
 .Cm /u
 modifier shows the stack trace of user space;

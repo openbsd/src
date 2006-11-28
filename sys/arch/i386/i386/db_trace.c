@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.12 2006/09/19 11:06:33 jsg Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.13 2006/11/28 18:56:17 uwe Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -30,6 +30,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 
 #include <machine/db_machdep.h>
 
@@ -184,6 +185,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	int		is_trap = 0;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
+	boolean_t	trace_proc = FALSE;
 
 #if 0
 	if (!db_trace_symbols_found)
@@ -197,6 +199,8 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		while ((c = *cp++) != 0) {
 			if (c == 't')
 				trace_thread = TRUE;
+			if (c == 'p')
+				trace_proc = TRUE;
 			if (c == 'u')
 				kernel_only = FALSE;
 		}
@@ -210,6 +214,15 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		callpc = (db_addr_t)ddb_regs.tf_eip;
 	} else if (trace_thread) {
 		(*pr) ("db_trace.c: can't trace thread\n");
+	} else if (trace_proc) {
+		struct proc *p = pfind((pid_t)addr);
+		if (p == NULL) {
+			(*pr) ("db_trace.c: process not found\n");
+			return;
+		}
+		frame = (struct i386_frame *)p->p_addr->u_pcb.pcb_ebp;
+		callpc = (db_addr_t)
+		    db_get_value((int)&frame->f_retaddr, 4, FALSE);
 	} else {
 		frame = (struct i386_frame *)addr;
 		callpc = (db_addr_t)
