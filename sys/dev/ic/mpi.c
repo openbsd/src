@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.80 2006/11/28 12:54:12 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.81 2006/11/28 13:22:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1323,7 +1323,7 @@ mpi_minphys(struct buf *bp)
 int
 mpi_scsi_ioctl(struct scsi_link *a, u_long b, caddr_t c, int d, struct proc *e)
 {
-	return (0);
+	return (ENOTTY);
 }
 
 u_int32_t
