@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.294 2006/11/16 13:07:11 henning Exp $
+#	$OpenBSD: rc,v 1.295 2006/11/28 23:44:35 mcbride Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -545,7 +545,7 @@ if [ ! -f /etc/isakmpd/private/local.key ]; then
 	if /usr/sbin/openssl genrsa -out /etc/isakmpd/private/local.key 1024 \
 	    > /dev/null 2>&1; then
 		chmod 600 /etc/isakmpd/private/local.key
-		openssl rsa -out /etc/isakmpd/private/local.pub \
+		openssl rsa -out /etc/isakmpd/local.pub \
 		    -in /etc/isakmpd/private/local.key -pubout > /dev/null 2>&1
 		echo done.
 	else
