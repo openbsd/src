@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.84 2006/10/20 03:27:54 brad Exp $
+$OpenBSD: miidevs,v 1.85 2006/11/28 18:19:49 brad Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -181,11 +181,11 @@ model MARVELL E3082		0x0008 Marvell 88E3082 10/100 PHY
 model MARVELL E1112		0x0009 Marvell 88E1112 Gigabit PHY
 model MARVELL E1149		0x000b Marvell 88E1149 Gigabit PHY
 model MARVELL E1111		0x000c Marvell 88E1111 Gigabit PHY
-model MARVELL E1000_5		0x0021 Marvell 88E1000 5 Gigabit PHY
-model MARVELL E1000_6		0x0022 Marvell 88E1000 6 Gigabit PHY
-model xxMARVELL E1000_7		0x0002 Marvell 88E1000 7 Gigabit PHY
-model xxMARVELL E1000_8		0x0003 Marvell 88E1000 8 Gigabit PHY
-model xxMARVELL E1000_9		0x0005 Marvell 88E1000 9 Gigabit PHY
+model MARVELL E1116		0x0021 Marvell 88E1116 Gigabit PHY
+model MARVELL E1118		0x0022 Marvell 88E1118 Gigabit PHY
+model xxMARVELL E1000_5		0x0002 Marvell 88E1000 5 Gigabit PHY
+model xxMARVELL E1000_6		0x0003 Marvell 88E1000 6 Gigabit PHY
+model xxMARVELL E1000_7		0x0005 Marvell 88E1000 7 Gigabit PHY
 model xxMARVELL E1111		0x000c Marvell 88E1111 Gigabit PHY
 
 /* Contrived vendor/model for dcphy */
