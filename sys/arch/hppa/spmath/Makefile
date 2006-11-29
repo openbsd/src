@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2000/01/11 21:32:57 mickey Exp $
+#	$OpenBSD: Makefile,v 1.5 2006/11/29 10:40:44 mickey Exp $
 
 LIB=	spmath
 NOPIC=
@@ -6,7 +6,7 @@ NOPIC=
 SRCS=	dfadd.c dfcmp.c dfdiv.c dfmpy.c dfrem.c dfsqrt.c dfsub.c divsfm.c \
 	divsfr.c divsim.c divsir.c divu.S divufr.c divuir.c fcnvff.c fcnvfx.c \
 	fcnvfxt.c fcnvxf.c frnd.c impys.S impyu.S mpyaccs.c mpyaccu.c mpys.c \
-	mpyscv.c mpyu.c mpyucv.c setovfl.c sfadd.c sfcmp.c sfdiv.c sfmpy.c \
+	mpyscv.c mpyu.c mpyucv.c sfadd.c sfcmp.c sfdiv.c sfmpy.c \
 	sfrem.c sfsqrt.c sfsub.c
 
 MACHINE=	${XMACHINE}

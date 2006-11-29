@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbl_float.h,v 1.10 2004/01/02 14:39:01 mickey Exp $	*/
+/*	$OpenBSD: dbl_float.h,v 1.11 2006/11/29 10:40:44 mickey Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -533,8 +533,6 @@ int dbl_fmpy(dbl_floating_point *, dbl_floating_point *, dbl_floating_point *, u
 int dbl_frem(dbl_floating_point *, dbl_floating_point *, dbl_floating_point *, unsigned int *);
 int dbl_fsqrt(dbl_floating_point *, dbl_floating_point *, dbl_floating_point *, unsigned int *);
 int dbl_fsub(dbl_floating_point *, dbl_floating_point *, dbl_floating_point *, unsigned int *);
-
-dbl_floating_point dbl_setoverflow(unsigned int);
 
 int sgl_to_dbl_fcnvff(sgl_floating_point *, sgl_floating_point *, dbl_floating_point *, unsigned int *);
 int dbl_to_sgl_fcnvff(dbl_floating_point *, dbl_floating_point *, sgl_floating_point *, unsigned int *);
