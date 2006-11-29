@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.16 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: adv.c,v 1.17 2006/11/29 01:00:47 grange Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -617,7 +617,7 @@ adv_attach(sc)
 	}
 
 	bzero(&saa, sizeof(saa));
-	saa->sa_sc_link = &sc->sc_link;
+	saa.saa_sc_link = &sc->sc_link;
 	config_found(&sc->sc_dev, &saa, scsiprint);
 }
 
