@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.6 2006/11/26 11:14:17 deraadt Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.7 2006/11/29 21:34:06 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -178,8 +178,9 @@ struct bcw_softc {
 };
 
 void	bcw_attach(struct bcw_softc *);
-int	bcw_detach(void *arg);
+int	bcw_detach(void *);
 int	bcw_intr(void *);
+void	bcw_powercontrol_crystal_on(struct bcw_softc *);
 
 #define BCW_DEBUG
 #ifdef BCW_DEBUG

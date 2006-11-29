@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.7 2006/11/26 11:14:17 deraadt Exp $ */
+/*	$OpenBSD: bcw.c,v 1.8 2006/11/29 21:34:06 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -2124,3 +2124,20 @@ bcw_free_tx_ring(struct bcw_softc *sc, struct bcw_tx_ring *ring)
 	}
 }
 
+void
+bcw_powercontrol_crystal_on(struct bcw_softc *sc)
+{
+	u_int32_t sbval;
+
+	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOI);
+	if ((sbval & BCW_XTALPOWERUP) != BCW_XTALPOWERUP) {
+		sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO);
+		sbval |= (BCW_XTALPOWERUP & BCW_PLLPOWERDOWN);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO, sbval);
+		delay(1000);
+		sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO);
+		sbval &= ~BCW_PLLPOWERDOWN;
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO, sbval);
+		delay(5000);
+	}
+}

@@ -1,31 +1,19 @@
-/*	$OpenBSD: if_bcw_pci.c,v 1.4 2006/11/22 23:46:49 brad Exp $ */
+/*	$OpenBSD: if_bcw_pci.c,v 1.5 2006/11/29 21:34:06 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
- * Copyright (c) 2003 Clifford Wright. All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
@@ -148,9 +136,7 @@ bcw_pci_disable(struct bcw_softc *sc)
 }
 
 void
-bcw_pci_attach(parent, self, aux)
-	struct device  *parent, *self;
-	void           *aux;
+bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bcw_pci_softc *psc = (void *) self;
 	struct bcw_softc *sc = &psc->psc_bcw;
@@ -161,7 +147,6 @@ bcw_pci_attach(parent, self, aux)
 	bus_size_t      memsize;
 	int             pmreg;
 	pcireg_t        pmode;
-	u_int32_t	sbval;
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
@@ -243,18 +228,8 @@ bcw_pci_attach(parent, self, aux)
 	 */
 
 	/* Turn the Crystal On */
-	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOI);
-	if ((sbval & BCW_XTALPOWERUP) != BCW_XTALPOWERUP) {
-	    sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO);
-	    sbval |= (BCW_XTALPOWERUP & BCW_PLLPOWERDOWN);
-	    bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO, sbval);
-	    delay(1000);
-	    sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO);
-	    sbval &= ~BCW_PLLPOWERDOWN;
-	    bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO, sbval);
-	    delay(5000);
-	}
-	
+	bcw_powercontrol_crystal_on(sc);
+
 	/*
 	 * Clear PCI_STATUS_TARGET_TARGET_ABORT, Docs and Linux call it 
 	 * PCI_STATUS_SIG_TARGET_ABORT - should use pci_conf_read/write?
