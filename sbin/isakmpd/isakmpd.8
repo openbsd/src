@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.95 2006/11/28 09:27:09 markus Exp $
+.\" $OpenBSD: isakmpd.8,v 1.96 2006/11/29 07:27:55 mcbride Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -551,12 +551,10 @@ and named and stored after this easy formula:
 .Pp
 By default, the system startup script
 .Xr rc 8
-generates a key-pair when starting, if one does not already exist.
-The private and public keys are named
+generates a key-pair in
 .Pa local.key
-and
-.Pa local.pub ,
-respectively.
+if it does not already exist, and the public key is extracted into 
+.Pa local.pub .
 Depending on the
 .Dv ID-type
 field of
@@ -617,12 +615,10 @@ Create Certificate Signing Requests (CSRs) for IKE peers.
 The CSRs are signed with a pre-generated private key.
 By default, the system startup script
 .Xr rc 8
-generates a key-pair when starting, if one does not already exist.
-The private and public keys are named
+generates a key-pair in
 .Pa local.key
-and
-.Pa local.pub ,
-respectively.
+if it does not already exist, and the public key is extracted into 
+.Pa local.pub .
 .Pp
 This step, as well as the next one, needs to be done for every peer.
 Furthermore the last step will need to be done once for each ID you
@@ -722,16 +718,16 @@ The same mode requirements as
 .It /etc/isakmpd/keynote/
 The directory where KeyNote credentials are kept.
 .It /etc/isakmpd/private/
-The directory where local private keys for certificate-based authentication,
-and their public key counterparts, are kept.
+The directory where local private keys used for public key authentication
+are kept.
 By default, the system startup script
 .Xr rc 8
 generates a key-pair when starting, if one does not already exist.
-The private and public keys are named
-.Pa local.key
-and
-.Pa local.pub ,
-respectively.
+The entire keypair is in
+.Pa local.key ,
+and a copy of the public key suitable for transferring to other hosts 
+is extracted into
+.Pa /etc/isakmpd/local.pub .
 There has to be a certificate for
 .Pa local.key
 in the certificate directory,
