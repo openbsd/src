@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 2006/03/07 20:20:28 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 2006/11/29 13:28:45 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 2003/10/16 12:02:58 jdolecek Exp $	*/
 
 /*
@@ -258,7 +258,7 @@ mmmmap(dev, off, prot)
 
 	/* minor device 0 is physical memory */
 
-	if (off >= ctob(physmem) &&
+	if ((paddr_t)off >= ctob((paddr_t)physmem) &&
 	    suser(p, 0) != 0)
 		return -1;
 	return atop(off);
