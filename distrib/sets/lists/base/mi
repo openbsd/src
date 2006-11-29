@@ -820,6 +820,7 @@
 ./usr/libdata/perl5/OpenBSD/PackingList.pm
 ./usr/libdata/perl5/OpenBSD/PackingOld.pm
 ./usr/libdata/perl5/OpenBSD/PkgCfl.pm
+./usr/libdata/perl5/OpenBSD/PkgConfig.pm
 ./usr/libdata/perl5/OpenBSD/PkgSpec.pm
 ./usr/libdata/perl5/OpenBSD/ProgressMeter.pm
 ./usr/libdata/perl5/OpenBSD/Replace.pm
