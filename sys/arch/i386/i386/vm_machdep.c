@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.46 2006/09/19 11:06:33 jsg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.47 2006/11/29 12:26:13 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -131,18 +131,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	sf->sf_ebx = (int)arg;
 	sf->sf_eip = (int)proc_trampoline;
 	pcb->pcb_esp = (int)sf;
-}
-
-void
-cpu_swapout(struct proc *p)
-{
-
-#if NNPX > 0
-	/*
-	 * Make sure we save the FP state before the user area vanishes.
-	 */
-	npxsave_proc(p, 1);
-#endif
 }
 
 /*

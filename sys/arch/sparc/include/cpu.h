@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.25 2005/08/14 10:58:36 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.26 2006/11/29 12:26:14 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -74,8 +74,6 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_swapin(p)	/* nothing */
-#define	cpu_swapout(p)	/* nothing */
 #define cpu_wait(p)	/* nothing */
 
 /*

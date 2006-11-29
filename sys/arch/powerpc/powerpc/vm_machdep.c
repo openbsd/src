@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.40 2005/12/17 07:31:27 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.41 2006/11/29 12:26:14 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -123,15 +123,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	sf->user_sr = pmap_kernel()->pm_sr[PPC_USER_SR]; /* just in case */
 	pcb->pcb_sp = (int)stktop2;
 	pcb->pcb_spl = 0;
-}
-
-void
-cpu_swapin(struct proc *p)
-{
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	
-	pmap_extract(pmap_kernel(),
-	    (vaddr_t)pcb->pcb_pm, (paddr_t *)&pcb->pcb_pmreal);
 }
 
 /*

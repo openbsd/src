@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.7 2005/01/31 21:35:50 grange Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.8 2006/11/29 12:26:13 miod Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -102,15 +102,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcb->pcb_context.val[8] = (register_t)(caddr_t)pcb + USPACE - 64;
 	pcb->pcb_context.val[0] = (register_t)func;
 	pcb->pcb_context.val[1] = (register_t)arg;
-}
-
-/*
- * Finish a swapin operation. Nothing to do.
- */
-void
-cpu_swapin(p)
-	struct proc *p;
-{
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.7 2006/06/23 13:46:05 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.8 2006/11/29 12:26:13 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -149,22 +149,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 		sf->sf_rip = (u_int64_t)child_trampoline;
 	pcb->pcb_rsp = (u_int64_t)sf;
 	pcb->pcb_rbp = 0;
-}
-
-void
-cpu_swapin(struct proc *p)
-{
-	setredzone(p);
-}
-
-void
-cpu_swapout(struct proc *p)
-{
-
-	/*
-	 * Make sure we save the FP state before the user area vanishes.
-	 */
-	fpusave_proc(p, 1);
 }
 
 /*

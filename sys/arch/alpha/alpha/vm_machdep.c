@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.31 2006/04/13 14:41:08 brad Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.32 2006/11/29 12:26:11 miod Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -233,39 +233,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		    (u_int64_t)switch_trampoline;	/* ra: assembly magic */
 		up->u_pcb.pcb_context[8] = ALPHA_PSL_IPL_0; /* ps: IPL */
 	}
-}
-/*
- * Finish a swapin operation.
- * We needed to update the cached PTEs for the user area in the
- * machine dependent part of the proc structure.
- */
-void
-cpu_swapin(p)
-	register struct proc *p;
-{
-	struct user *up = p->p_addr;
-
-	/*
-	 * Cache the physical address of the pcb, so we can swap to
-	 * it easily.
-	 */
-	p->p_md.md_pcbpaddr = (void *)vtophys((vaddr_t)&up->u_pcb);
-}
-
-/*
- * cpu_swapout is called immediately before a process's 'struct user'
- * and kernel stack are unwired, and after the process' P_INMEM flag
- * is cleared).  If the process is the current owner of the floating
- * point unit, the FP state has to be saved, so that it goes out with
- * the pcb, which is in the user area.
- */
-void
-cpu_swapout(p)
-	struct proc *p;
-{
-
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(p, 1);
 }
 
 /*

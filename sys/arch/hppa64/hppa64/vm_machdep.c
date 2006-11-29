@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.2 2005/05/01 19:29:56 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.3 2006/11/29 12:26:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -104,9 +104,10 @@ pagemove(from, to, size)
 	pmap_update(pmap_kernel());
 }
 
+void cpu_swapin(struct proc *p);
+
 void
-cpu_swapin(p)
-	struct proc *p;
+cpu_swapin(struct proc *p)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	paddr_t pa;
@@ -118,22 +119,6 @@ cpu_swapin(p)
 		panic("pmap_extract(%p) failed", p->p_addr);
 
 	tf->tf_cr30 = pa;
-}
-
-void
-cpu_swapout(p)
-	struct proc *p;
-{
-	extern paddr_t fpu_curpcb;	/* from locore.S */
-	extern u_int fpu_enable;
-	struct trapframe *tf = p->p_md.md_regs;
-
-	if (tf->tf_cr30 == fpu_curpcb) {
-		mtctl(fpu_enable, CR_CCR);
-		fpu_save(fpu_curpcb);
-		fpu_curpcb = 0;
-		mtctl(0, CR_CCR);
-	}
 }
 
 void

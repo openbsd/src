@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.27 2006/02/10 21:27:22 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.28 2006/11/29 12:26:13 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #define	CLKF_PC(frame)		((frame)->srr0)
 #define	CLKF_INTR(frame)	((frame)->depth != 0)
 
-#define	cpu_swapout(p)
 #define	cpu_wait(p)
 
 void	delay(unsigned);

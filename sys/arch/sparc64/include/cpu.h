@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.35 2006/06/21 21:53:32 jason Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.36 2006/11/29 12:26:14 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -128,8 +128,6 @@ extern struct cpu_info cpu_info_store;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_swapin(p)	/* nothing */
-#define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
 #if 1
 #define cpu_number()	0

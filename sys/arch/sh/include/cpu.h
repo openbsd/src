@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.2 2006/10/06 22:30:26 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.3 2006/11/29 12:26:14 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -49,13 +49,6 @@
 #include <sh/frame.h>
 
 #ifdef _KERNEL
-
-/*
- * Can't swapout u-area, (__SWAP_BROKEN)
- * since we use P1 converted address for trapframe.
- */
-#define	cpu_swapin(p)			/* nothing */
-#define	cpu_swapout(p)			/* nothing */
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous

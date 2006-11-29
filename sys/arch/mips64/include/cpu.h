@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.12 2006/01/02 18:09:25 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.13 2006/11/29 12:26:13 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -319,7 +319,6 @@
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
 #define	cpu_wait(p)		/* nothing */
-#define cpu_swapout(p)		panic("cpu_swapout: can't get here");
 
 #ifndef _LOCORE
 #include <machine/frame.h>

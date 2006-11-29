@@ -1,4 +1,4 @@
-/*      $OpenBSD: cpu.h,v 1.20 2006/07/20 19:15:34 miod Exp $      */
+/*      $OpenBSD: cpu.h,v 1.21 2006/11/29 12:26:14 miod Exp $      */
 /*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
 
 /*
@@ -46,7 +46,6 @@
 #include <machine/psl.h>
 
 #define	cpu_wait(p)
-#define	cpu_swapout(p)
 #define	cpu_number()			0
 
 /*
@@ -120,7 +119,6 @@ extern char cpu_model[100];
 
 /* Some low-level prototypes */
 int	badaddr(caddr_t, int);
-void	cpu_swapin(struct proc *);
 void	dumpconf(void);
 void	dumpsys(void);
 void	swapconf(void);

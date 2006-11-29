@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.4 2005/05/23 23:26:55 tedu Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.5 2006/11/29 12:26:13 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -223,56 +223,6 @@ cpu_exit(struct proc *p)
 	pmap_update(p->p_vmspace->vm_map.pmap); /* XXX DSR help stability */
 	switch_exit(p, &proc0, exit2);
 }
-
-void
-cpu_swapin(p)
-	struct proc *p;
-{
-#if 0
-
-	/* Don't do this.  See the comment in cpu_swapout().  */
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("cpu_swapin(%p, %d, %s, %p)\n", l, l->l_lid,
-		    p->p_comm, p->p_vmspace->vm_map.pmap);
-#endif	/* PMAP_DEBUG */
-
-	if (vector_page < KERNEL_BASE) {
-		/* Map the vector page */
-		pmap_enter(p->p_vmspace->vm_map.pmap, vector_page,
-		    systempage.pv_pa, VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
-		pmap_update(p->p_vmspace->vm_map.pmap);
-	}
-#endif
-}
-
-
-void
-cpu_swapout(l)
-	struct proc *l;
-{
-#if 0
-	struct proc *p = l->l_proc;
-
-	/* 
-	 * Don't do this!  If the pmap is shared with another process,
-	 * it will lose its page0 entry.  That's bad news indeed.
-	 */
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("cpu_swapout(%p, %d, %s, %p)\n", l, l->l_lid,
-		    p->p_comm, &p->p_vmspace->vm_map.pmap);
-#endif	/* PMAP_DEBUG */
-
-	if (vector_page < KERNEL_BASE) {
-		/* Free the system page mapping */
-		pmap_remove(p->p_vmspace->vm_map.pmap, vector_page,
-		    vector_page + PAGE_SIZE);
-		pmap_update(p->p_vmspace->vm_map.pmap);
-	}
-#endif
-}
-
 
 /*
  * Move pages from one kernel virtual address to another.

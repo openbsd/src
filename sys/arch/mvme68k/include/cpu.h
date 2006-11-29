@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.24 2006/06/24 14:04:02 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.25 2006/11/29 12:26:13 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -85,9 +85,7 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
-#define cpu_swapout(p)			/* nothing */
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous

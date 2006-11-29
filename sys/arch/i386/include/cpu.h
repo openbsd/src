@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.81 2006/11/26 15:13:21 dim Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.82 2006/11/29 12:26:13 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -54,12 +54,6 @@
 #define NLAPIC 1
 
 #endif
-
-/*
- * definitions of cpu-dependent requirements
- * referenced in generic code
- */
-#define	cpu_swapin(p)			/* nothing */
 
 /*
  * Arguments to hardclock, softclock and statclock
@@ -202,12 +196,6 @@ extern void cpu_init_idle_pcbs(void);
 #define	curcpu()		(&cpu_info_primary)
 
 #define CPU_IS_PRIMARY(ci)	1
-
-/*
- * definitions of cpu-dependent requirements
- * referenced in generic code
- */
-#define	cpu_swapin(p)			/* nothing */
 
 #endif
 
