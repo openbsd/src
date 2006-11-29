@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.10 2006/11/28 23:49:50 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.11 2006/11/29 00:04:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -298,6 +298,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ips_softc *sc = (struct ips_softc *)self;
 	struct pci_attach_args *pa = aux;
+	struct scsibus_attach_args saa;
 	int bar;
 	pcireg_t maptype;
 	bus_size_t iosize;
@@ -395,8 +396,11 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_scsi_link.adapter = &ips_scsi_adapter;
 	sc->sc_scsi_link.adapter_softc = sc;
 
-	sc->sc_scsi_bus = (struct scsibus_softc *)config_found(self,
-	    &sc->sc_scsi_link, scsiprint);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_scsi_link;
+
+	sc->sc_scsi_bus = (struct scsibus_softc *)config_found(self, &saa,
+	    scsiprint);
 
 	return;
 fail3:
