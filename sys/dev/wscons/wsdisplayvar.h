@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.20 2006/11/29 19:08:23 miod Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.21 2006/11/29 19:11:17 miod Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -102,6 +102,14 @@ struct wsscreen_descr {
 #define WSSCREEN_UNDERLINE	16	/* can underline */
 };
 
+/*
+ * Character cell description (for emulation mode).
+ */
+struct wsdisplay_charcell {
+	u_int	uc;
+	long	attr;
+};
+
 struct wsdisplay_font;
 /*
  * Display access functions, invoked by user-land programs which require
@@ -121,7 +129,7 @@ struct wsdisplay_accessops {
 			       void (*) (void *, int, int), void *);
 	int	(*load_font)(void *, void *, struct wsdisplay_font *);
 	void	(*scrollback)(void *, void *, int);
-	u_int16_t (*getchar)(void *, int, int);
+	int	(*getchar)(void *, int, int, struct wsdisplay_charcell *);
 	void	(*burn_screen)(void *, u_int, u_int);
 	void	(*pollc)(void *, int);
 };

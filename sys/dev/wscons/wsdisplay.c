@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.71 2006/11/29 12:13:55 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.72 2006/11/29 19:11:17 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -2403,18 +2403,16 @@ mouse_moverel(char dx, char dy)
 void
 inverse_char(unsigned short pos)
 {
-	u_int16_t uc;
-	u_int16_t attr;
+	struct wsdisplay_charcell cell;
+	int fg, bg, ul;
 
-	uc = GET_FULLCHAR(pos);
-	attr = uc;
+	GETCHAR(pos, &cell);
+	UNPACKATTR(cell.attr, &fg, &bg, &ul);
 
-	if ((attr >> 8) == 0)
-		attr = (FG_LIGHTGREY << 8);
+	ALLOCATTR(bg, fg, WSATTR_WSCOLORS | (ul ? WSATTR_UNDERLINE : 0),
+	    &cell.attr);
 
-	attr = (((attr >> 8) & 0x88) | ((((attr >> 8) >> 4) |
-		((attr >> 8) << 4)) & 0x77)) ;
-	PUTCHAR(pos, (u_int) (uc & 0x00FF), (long) attr);
+	PUTCHAR(pos, cell.uc, cell.attr);
 }
 
 void
@@ -2440,12 +2438,14 @@ inverse_region(unsigned short start, unsigned short end)
 unsigned char
 skip_spc_right(char border)
 {
+	struct wsdisplay_charcell cell;
 	unsigned short current = CPY_END;
 	unsigned short mouse_col = (CPY_END % N_COLS);
 	unsigned short limit = current + (N_COLS - mouse_col - 1);
 	unsigned char res = 0;
 
-	while ((GETCHAR(current) == ' ') && (current <= limit)) {
+	while (GETCHAR(current, &cell) == 0 && cell.uc == ' ' &&
+	    current <= limit) {
 		current++;
 		res++;
 	}
@@ -2469,12 +2469,14 @@ skip_spc_right(char border)
 unsigned char
 skip_spc_left(void)
 {
+	struct wsdisplay_charcell cell;
 	short current = CPY_START;
 	unsigned short mouse_col = (MOUSE % N_COLS);
 	unsigned short limit = current - mouse_col;
 	unsigned char res = 0;
 
-	while ((GETCHAR(current) == ' ') && (current >= limit)) {
+	while (GETCHAR(current, &cell) == 0 && cell.uc == ' ' &&
+	    current >= limit) {
 		current--;
 		res++;
 	}
@@ -2561,13 +2563,16 @@ static const int charClass[256] = {
 unsigned char
 skip_char_right(unsigned short offset)
 {
+	struct wsdisplay_charcell cell;
 	unsigned short current = offset;
 	unsigned short limit = current + (N_COLS - (MOUSE % N_COLS) - 1);
-	unsigned char class = charClass[GETCHAR(current)];
+	unsigned char class;
 	unsigned char res = 0;
 
-	while ((charClass[GETCHAR(current)] == class)
-		&& (current <= limit)) {
+	GETCHAR(current, &cell);
+	class = charClass[cell.uc & 0xff];
+	while (GETCHAR(current, &cell) == 0 &&
+	    charClass[cell.uc & 0xff] == class && current <= limit) {
 		current++;
 		res++;
 	}
@@ -2582,12 +2587,16 @@ skip_char_right(unsigned short offset)
 unsigned char
 skip_char_left(unsigned short offset)
 {
+	struct wsdisplay_charcell cell;
 	short current = offset;
 	unsigned short limit = current - (MOUSE % N_COLS);
-	unsigned char class = charClass[GETCHAR(current)];
+	unsigned char class;
 	unsigned char res = 0;
 
-	while ((charClass[GETCHAR(current)] == class) && (current >= limit)) {
+	GETCHAR(current, &cell);
+	class = charClass[cell.uc & 0xff];
+	while (GETCHAR(current, &cell) == 0 &&
+	    charClass[cell.uc & 0xff] == class && current >= limit) {
 		current--;
 		res++;
 	}
@@ -2602,11 +2611,16 @@ skip_char_left(unsigned short offset)
 unsigned char
 class_cmp(unsigned short first, unsigned short second)
 {
+	struct wsdisplay_charcell cell;
 	unsigned char first_class;
 	unsigned char second_class;
 
-	first_class = charClass[GETCHAR(first)];
-	second_class = charClass[GETCHAR(second)];
+	if (GETCHAR(first, &cell) != 0)
+		return (1);
+	first_class = charClass[cell.uc & 0xff];
+	if (GETCHAR(second, &cell) != 0)
+		return (1);
+	second_class = charClass[cell.uc & 0xff];
 
 	if (first_class != second_class)
 		return (1);
@@ -2659,6 +2673,7 @@ mouse_copy_start(void)
 void
 mouse_copy_word()
 {
+	struct wsdisplay_charcell cell;
 	unsigned char right;
 	unsigned char left;
 
@@ -2671,7 +2686,7 @@ mouse_copy_word()
 	CPY_START = MOUSE;
 	CPY_END = MOUSE;
 
-	if (IS_ALPHANUM(MOUSE)) {
+	if (GETCHAR(MOUSE, &cell) == 0 && IS_ALPHANUM(cell.uc)) {
 		right = skip_char_right(CPY_END);
 		left = skip_char_left(CPY_START);
 	} else {
@@ -3074,6 +3089,7 @@ remove_selection(struct wsdisplay_softc *sc)
 void
 mouse_copy_selection(void)
 {
+	struct wsdisplay_charcell cell;
 	unsigned short current = 0;
 	unsigned short blank = current;
 	unsigned short buf_end = ((N_COLS + 1) * N_ROWS);
@@ -3084,7 +3100,9 @@ mouse_copy_selection(void)
 	sel_end = CPY_END;
 
 	while (sel_cur <= sel_end && current < buf_end - 1) {
-		Copybuffer[current] = (GETCHAR(sel_cur));
+		if (GETCHAR(sel_cur, &cell) != 0)
+			break;
+		Copybuffer[current] = cell.uc;
 		if (!IS_SPACE(Copybuffer[current]))
 			blank = current + 1; /* first blank after non-blank */
 		current++;

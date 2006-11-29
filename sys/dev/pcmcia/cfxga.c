@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.13 2006/11/29 19:08:22 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.14 2006/11/29 19:11:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -130,16 +130,6 @@ struct wsdisplay_accessops cfxga_accessops = {
 };
 
 /*
- * Backing memory cells for emulation mode.
- * We could theoretically hijack 8 bits from the rasops attribute, but this
- * will not accomodate font with more than 256 characters.
- */
-struct charcell {
-	u_int		uc;
-	u_int32_t	attr;
-};
-
-/*
  * Per-screen structure
  */
 
@@ -147,7 +137,7 @@ struct cfxga_screen {
 	LIST_ENTRY(cfxga_screen) scr_link;
 	struct cfxga_softc *scr_sc;	/* parent reference */
 	struct rasops_info scr_ri;	/* raster op glue */
-	struct charcell *scr_mem;	/* backing memory */
+	struct wsdisplay_charcell *scr_mem;	/* backing memory */
 };
 	
 void	cfxga_copycols(void *, int, int, int, int);
@@ -515,7 +505,7 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	 * Allocate backing store to remember non-visible screen contents in
 	 * emulation mode.
 	 */
-	scrsize = ri->ri_rows * ri->ri_cols * sizeof(struct charcell);
+	scrsize = ri->ri_rows * ri->ri_cols * sizeof(struct wsdisplay_charcell);
 	scr->scr_mem = malloc(scrsize, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (scr->scr_mem == NULL) {
 		free(scr, M_DEVBUF);
@@ -944,7 +934,7 @@ fail:
 int
 cfxga_repaint_screen(struct cfxga_screen *scr)
 {
-	struct charcell *cell = scr->scr_mem;
+	struct wsdisplay_charcell *cell = scr->scr_mem;
 	struct rasops_info *ri = &scr->scr_ri;
 	int x, y, cx, cy, lx, ly;
 	int fg, bg;
@@ -1068,7 +1058,7 @@ cfxga_copycols(void *cookie, int row, int src, int dst, int num)
 	/* Copy columns in backing store. */
 	ovbcopy(scr->scr_mem + row * ri->ri_cols + src,
 	    scr->scr_mem + row * ri->ri_cols + dst,
-	    num * sizeof(struct charcell));
+	    num * sizeof(struct wsdisplay_charcell));
 
 	if (scr != scr->scr_sc->sc_active)
 		return;
@@ -1091,7 +1081,7 @@ cfxga_copyrows(void *cookie, int src, int dst, int num)
 	/* Copy rows in backing store. */
 	ovbcopy(scr->scr_mem + src * ri->ri_cols,
 	    scr->scr_mem + dst * ri->ri_cols,
-	    num * ri->ri_cols * sizeof(struct charcell));
+	    num * ri->ri_cols * sizeof(struct wsdisplay_charcell));
 
 	if (scr != scr->scr_sc->sc_active)
 		return;
@@ -1162,7 +1152,7 @@ cfxga_eraserows(void *cookie, int row, int num, long attr)
 	for (y = 1; y < num; y++)
 		ovbcopy(scr->scr_mem + row * ri->ri_cols,
 		    scr->scr_mem + (row + y) * ri->ri_cols,
-		    ri->ri_cols * sizeof(struct charcell));
+		    ri->ri_cols * sizeof(struct wsdisplay_charcell));
 
 	if (scr != scr->scr_sc->sc_active)
 		return;

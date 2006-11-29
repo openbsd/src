@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.h,v 1.5 2006/02/12 19:55:39 miod Exp $ */
+/* $OpenBSD: wsmoused.h,v 1.6 2006/11/29 19:11:17 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -105,25 +105,24 @@ extern char Paste_avail; /* flag, to indicate whether a selection is in the
 #define POS_TO_X(pos) ((pos) % (N_COLS))
 #define POS_TO_Y(pos) ((pos) / (N_COLS))
 
-#define GET_FULLCHAR(pos)\
-((*sc->sc_accessops->getchar)\
- (sc->sc_accesscookie,\
- ((pos) / N_COLS), ((pos) % N_COLS)))
- 
-#define GETCHAR(pos)\
-(((*sc->sc_accessops->getchar)\
- (sc->sc_accesscookie,\
- ((pos) / N_COLS), ((pos) % N_COLS)))\
- & 0x000000FF)
- 
-#define PUTCHAR(pos, uc, attr)\
-((*sc->sc_focus->scr_dconf->emulops->putchar)\
-(sc->sc_focus->scr_dconf->emulcookie, ((pos) / N_COLS),\
- ((pos) % N_COLS), (uc), (attr))); 
+/* Shortcuts to the various display operations */
+#define	GETCHAR(pos, cellp) \
+	((*sc->sc_accessops->getchar) \
+	    (sc->sc_accesscookie, (pos) / N_COLS, (pos) % N_COLS, cellp))
+#define PUTCHAR(pos, uc, attr) \
+	((*sc->sc_focus->scr_dconf->emulops->putchar) \
+	    (sc->sc_focus->scr_dconf->emulcookie, ((pos) / N_COLS), \
+	    ((pos) % N_COLS), (uc), (attr)))
+#define	UNPACKATTR(attr, fgp, bgp, ulp) \
+	((*sc->sc_focus->scr_dconf->emulops->unpack_attr) \
+	    (sc->sc_focus->scr_dconf->emulcookie, attr, fgp, bgp, ulp))
+#define	ALLOCATTR(fg, bg, flags, attrp) \
+	((*sc->sc_focus->scr_dconf->emulops->alloc_attr) \
+	    (sc->sc_focus->scr_dconf->emulcookie, fg, bg, flags, attrp))
 
 #define MOUSE_COPY_BUTTON 	0
-#define MOUSE_PASTE_BUTTON 	1	
+#define MOUSE_PASTE_BUTTON 	1
 #define MOUSE_EXTEND_BUTTON	2
 
-#define IS_ALPHANUM(pos) (GETCHAR((pos)) != ' ')
+#define IS_ALPHANUM(c) ((c) != ' ')
 #define IS_SPACE(c) ((c) == ' ')

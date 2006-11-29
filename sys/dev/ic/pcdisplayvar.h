@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplayvar.h,v 1.7 2006/09/29 19:46:02 miod Exp $ */
+/* $OpenBSD: pcdisplayvar.h,v 1.8 2006/11/29 19:11:15 miod Exp $ */
 /* $NetBSD: pcdisplayvar.h,v 1.8 2000/01/25 02:44:03 ad Exp $ */
 
 /*
@@ -89,7 +89,8 @@ unsigned int pcdisplay_mapchar_simple(void *, int);
 #endif
 int pcdisplay_mapchar(void *, int, unsigned int *);
 void	pcdisplay_putchar(void *, int, int, u_int, long);
-u_int16_t pcdisplay_getchar(void *, int, int);
+struct wsdisplay_charcell;
+int	pcdisplay_getchar(void *, int, int, struct wsdisplay_charcell *);
 void	pcdisplay_copycols(void *, int, int, int,int);
 void	pcdisplay_erasecols(void *, int, int, int, long);
 void	pcdisplay_copyrows(void *, int, int, int);

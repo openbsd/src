@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.41 2006/11/29 19:08:22 miod Exp $ */
+/* $OpenBSD: vga.c,v 1.42 2006/11/29 19:11:15 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -238,7 +238,7 @@ int	vga_show_screen(void *, void *, int,
 int	vga_load_font(void *, void *, struct wsdisplay_font *);
 void	vga_scrollback(void *, void *, int);
 void	vga_burner(void *v, u_int on, u_int flags);
-u_int16_t vga_getchar(void *, int, int);
+int	vga_getchar(void *, int, int, struct wsdisplay_charcell *);
 
 void vga_doswitch(struct vga_config *);
 
@@ -1319,14 +1319,15 @@ vga_burner(v, on, flags)
 	splx(s);
 }
 
-u_int16_t
-vga_getchar(c, row, col)
+int
+vga_getchar(c, row, col, cell)
 	void *c;
 	int row, col;
+	struct wsdisplay_charcell *cell;
 {
 	struct vga_config *vc = c;
 	
-	return (pcdisplay_getchar(vc->active, row, col));
+	return (pcdisplay_getchar(vc->active, row, col, cell));
 }	
 
 struct cfdriver vga_cd = {

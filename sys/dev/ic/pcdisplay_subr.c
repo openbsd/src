@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay_subr.c,v 1.6 2006/09/29 19:46:02 miod Exp $ */
+/* $OpenBSD: pcdisplay_subr.c,v 1.7 2006/11/29 19:11:15 miod Exp $ */
 /* $NetBSD: pcdisplay_subr.c,v 1.16 2000/06/08 07:01:19 cgd Exp $ */
 
 /*
@@ -174,23 +174,31 @@ pcdisplay_putchar(id, row, col, c, attr)
 		scr->mem[off] = c | (attr << 8);
 }
 
-u_int16_t
-pcdisplay_getchar(id, row, col)
+int
+pcdisplay_getchar(id, row, col, cell)
 	void *id;
 	int row, col;
+	struct wsdisplay_charcell *cell;
 {
 	struct pcdisplayscreen *scr = id;
 	bus_space_tag_t memt = scr->hdl->ph_memt;
 	bus_space_handle_t memh = scr->hdl->ph_memh;
 	int off;
+	u_int16_t data;
 	
 	off = row * scr->type->ncols + col;
+	/* XXX bounds check? */
 	
 	if (scr->active)
-		return (bus_space_read_2(memt, memh, 
+		data = (bus_space_read_2(memt, memh, 
 					scr->dispoffset + off * 2));
 	else
-		return (scr->mem[off]);
+		data = (scr->mem[off]);
+
+	cell->uc = data & 0xff;
+	cell->attr = data >> 8;
+
+	return (0);
 }
 
 void
