@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.12 2006/09/27 08:54:44 grange Exp $ 
+# $OpenBSD: GENERIC,v 1.13 2006/11/29 14:26:40 deraadt Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -39,7 +39,7 @@ com0		at obio? addr 0xfe800000 xint 3
 
 # i80321 I/O Processor peripheral support
 iopxs0	at mainbus?
-gpio*		at iopxs0
+#gpio*		at iopxs0
 
 #iopaau*	at iopxs?		# Application Accelerator Unit
 iopiic*		at iopxs?		# I2C Controller Unit(s)
