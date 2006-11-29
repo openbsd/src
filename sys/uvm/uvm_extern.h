@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.59 2005/11/04 21:48:07 miod Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.60 2006/11/29 12:17:33 miod Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -421,8 +421,8 @@ extern struct vm_map *phys_map;
  */
 
 /* zalloc zeros memory, alloc does not */
-#define uvm_km_zalloc(MAP,SIZE) uvm_km_alloc1(MAP,SIZE,TRUE)
-#define uvm_km_alloc(MAP,SIZE)  uvm_km_alloc1(MAP,SIZE,FALSE)
+#define uvm_km_zalloc(MAP,SIZE) uvm_km_alloc1(MAP,SIZE,0,TRUE)
+#define uvm_km_alloc(MAP,SIZE)  uvm_km_alloc1(MAP,SIZE,0,FALSE)
 
 #endif /* _KERNEL */
 
@@ -496,7 +496,7 @@ int			uvm_io(vm_map_t, struct uio *, int);
 #define	UVM_IO_FIXPROT	0x01
 
 /* uvm_km.c */
-vaddr_t			uvm_km_alloc1(vm_map_t, vsize_t, boolean_t);
+vaddr_t			uvm_km_alloc1(vm_map_t, vsize_t, vsize_t, boolean_t);
 void			uvm_km_free(vm_map_t, vaddr_t, vsize_t);
 void			uvm_km_free_wakeup(vm_map_t, vaddr_t,
 						vsize_t);
