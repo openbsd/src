@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nmeaattach.8,v 1.4 2006/10/27 18:46:52 mbalmer Exp $
+.\"	$OpenBSD: nmeaattach.8,v 1.5 2006/11/29 00:16:35 mbalmer Exp $
 .\"
 .\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -45,8 +45,9 @@ Specifically, this disables HUPCL.
 Specifies the speed of the connection.
 If not specified, the default of 4800 baud is used.
 .It Fl t Ar cond
-Chooses the condition which will cause the current system
-time to be immediately copied to the terminal timestamp storage.
+Chooses the condition which will cause the current system time to be
+immediately copied to the terminal timestamp storage for subsequent use by
+.Xr nmea 4 .
 Only one can be used.
 .Pp
 .Bl -tag -width DCDXX -offset indent -compact
@@ -65,6 +66,9 @@ If no condition is specified, the
 line discipline will timestamp on receiving the leading
 .Sq $
 character of each GPRMC sentence.
+.Pp
+Configuring the NMEA device to issue a PPS signal is device specific and
+should be done by device specific applications.
 .It Ar device
 Specifies the name of the serial line.
 .Ar device
