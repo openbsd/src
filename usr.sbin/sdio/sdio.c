@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdio.c,v 1.1 2006/11/28 20:26:31 uwe Exp $	*/
+/*	$OpenBSD: sdio.c,v 1.2 2006/11/29 01:03:45 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -24,69 +24,12 @@
 #include <unistd.h>
 
 #include <sys/ioctl.h>
+#include <sys/limits.h>
+
 #include <dev/biovar.h>
 
-#include <sys/limits.h>
-#include <dev/sdmmc/sdmmcreg.h>
-#include <dev/sdmmc/sdmmc_ioreg.h>
-#if 0
 #include <dev/sdmmc/sdmmcvar.h>
-#else
-/* XXX */
-#include <sys/queue.h>
-struct sdmmc_softc;
-typedef u_int32_t sdmmc_response[4];
-struct sdmmc_task {
-	void (*func)(void *arg);
-	void *arg;
-	int onqueue;
-	struct sdmmc_softc *sc;
-	TAILQ_ENTRY(sdmmc_task) next;
-};
-struct sdmmc_command {
-	struct sdmmc_task c_task;	/* task queue entry */
-	u_int16_t	 c_opcode;	/* SD or MMC command index */
-	u_int32_t	 c_arg;		/* SD/MMC command argument */
-	sdmmc_response	 c_resp;	/* response buffer */
-	void		*c_data;	/* buffer to send or read into */
-	int		 c_datalen;	/* length of data buffer */
-	int		 c_blklen;	/* block length */
-	int		 c_flags;	/* see below */
-#define SCF_ITSDONE	 0x0001		/* command is complete */
-#define SCF_CMD_AC	 0x0000
-#define SCF_CMD_ADTC	 0x0010
-#define SCF_CMD_BC	 0x0020
-#define SCF_CMD_BCR	 0x0030
-#define SCF_CMD_READ	 0x0040		/* read command (data expected) */
-#define SCF_RSP_BSY	 0x0100
-#define SCF_RSP_136	 0x0200
-#define SCF_RSP_CRC	 0x0400
-#define SCF_RSP_IDX	 0x0800
-#define SCF_RSP_PRESENT	 0x1000
-/* response types */
-#define SCF_RSP_R0	 0 /* none */
-#define SCF_RSP_R1	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
-#define SCF_RSP_R2	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_136)
-#define SCF_RSP_R3	 (SCF_RSP_PRESENT)
-#define SCF_RSP_R4	 (SCF_RSP_PRESENT)
-#define SCF_RSP_R5	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
-#define SCF_RSP_R5B	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX|SCF_RSP_BSY)
-#define SCF_RSP_R6	 (SCF_RSP_PRESENT|SCF_RSP_CRC)
-	int		 c_error;	/* errno value on completion */
-};
-struct bio_sdmmc_command {
-	void *cookie;
-	struct sdmmc_command cmd;
-};
-
-struct bio_sdmmc_debug {
-	void *cookie;
-	int debug;
-};
-#define SDIOCEXECMMC	_IOWR('S',0, struct bio_sdmmc_command)
-#define SDIOCEXECAPP	_IOWR('S',1, struct bio_sdmmc_command)
-#define SDIOCSETDEBUG	_IOWR('S',2, struct bio_sdmmc_debug)
-#endif
+#include <dev/sdmmc/sdmmc_ioreg.h>
 
 #define DEV_BIO "/dev/bio"
 #define DEVNAME "sdmmc0"
