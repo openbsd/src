@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.44 2006/11/29 12:51:29 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.45 2006/11/29 21:39:46 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -125,6 +125,7 @@ struct malo_tx_desc {
 #define MALO_CMD_SET_RATE		0x0110
 #define MALO_CMD_SET_CHANNEL		0x010a
 #define MALO_CMD_SET_RTS		0x0113
+#define MALO_CMD_SET_SLOT		0x0114
 #define MALO_CMD_RESPONSE		0x8000
 
 #define MALO_CMD_RESULT_OK		0x0000	/* everything is fine */
@@ -213,6 +214,11 @@ struct malo_cmd_rate {
 	uint8_t		aprates[14];
 } __packed;
 
+struct malo_cmd_slot {
+	uint16_t	action;
+	uint8_t		slot;
+} __packed;
+
 #define malo_mem_write4(sc, off, x) \
 	bus_space_write_4((sc)->sc_mem1_bt, (sc)->sc_mem1_bh, (off), (x))
 #define malo_mem_write2(sc, off, x) \
@@ -276,6 +282,8 @@ int	malo_load_bootimg(struct malo_softc *sc);
 int	malo_load_firmware(struct malo_softc *sc);
 
 int	malo_set_wepkey(struct malo_softc *sc);
+int	malo_set_slot(struct malo_softc *sc);
+void	malo_update_slot(struct ieee80211com *ic);
 void	malo_hexdump(void *buf, int len);
 static char *
 	malo_cmd_string(uint16_t cmd);
@@ -295,6 +303,7 @@ int	malo_cmd_set_aid(struct malo_softc *sc, uint8_t *bssid,
 	    uint16_t associd);
 int	malo_cmd_set_txpower(struct malo_softc *sc, unsigned int powerlevel);
 int	malo_cmd_set_rts(struct malo_softc *sc, uint32_t threshold);
+int	malo_cmd_set_slot(struct malo_softc *sc, uint8_t slot);
 int	malo_cmd_set_rate(struct malo_softc *sc, uint8_t rate);
 
 int
@@ -404,6 +413,7 @@ malo_attach(struct malo_softc *sc)
 	ic->ic_newstate = malo_newstate;
 	ic->ic_newassoc = malo_newassoc;
 	ic->ic_node_alloc = malo_node_alloc;
+	ic->ic_updateslot = malo_update_slot;
 
 	ieee80211_media_init(ifp, malo_media_change, malo_media_status);
 
@@ -1155,6 +1165,8 @@ malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			rate = malo_fix2rate(ic->ic_fixed_rate);
 			malo_cmd_set_rate(sc, rate);
 		}
+
+		malo_set_slot(sc);
 		break;
 	case IEEE80211_S_RUN:
 		DPRINTF(("newstate RUN\n"));
@@ -1905,6 +1917,42 @@ malo_set_wepkey(struct malo_softc *sc)
 	return (0);
 }
 
+int
+malo_set_slot(struct malo_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	if (ic->ic_flags & IEEE80211_F_SHSLOT) {
+		/* set short slot */
+		if (malo_cmd_set_slot(sc, 1)) {
+			printf("%s: setting short slot failed\n",
+			    sc->sc_dev.dv_xname);
+			return (ENXIO);
+		}
+	} else {
+		/* set long slot */
+		if (malo_cmd_set_slot(sc, 0)) {
+			printf("%s: setting long slot failed\n",
+			    sc->sc_dev.dv_xname);
+			return (ENXIO);
+		}
+	}
+
+	return (0);
+}
+
+void
+malo_update_slot(struct ieee80211com *ic)
+{
+	struct malo_softc *sc = ic->ic_if.if_softc;
+
+	malo_set_slot(sc);
+
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+		/* TODO */
+	}
+}
+
 void
 malo_hexdump(void *buf, int len)
 {
@@ -2207,6 +2255,28 @@ malo_cmd_set_rts(struct malo_softc *sc, uint32_t threshold)
 	hdr->result = 0;
 
 	*(uint32_t *)(hdr + 1) = htole32(threshold);	
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	return (malo_send_cmd_dma(sc, sc->sc_cmd_dmaaddr));
+}
+
+int
+malo_cmd_set_slot(struct malo_softc *sc, uint8_t slot)
+{
+	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+	struct malo_cmd_slot *body;
+
+	hdr->cmd = htole16(MALO_CMD_SET_SLOT);
+	hdr->size = htole16(sizeof(*hdr) + sizeof(*body));
+	hdr->seqnum = 1;
+	hdr->result = 0;
+	body = (struct malo_cmd_slot *)(hdr + 1);
+
+	bzero(body, sizeof(*body));
+	body->action = htole16(1);
+	body->slot = slot;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
