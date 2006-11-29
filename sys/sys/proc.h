@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.88 2006/06/28 14:17:07 mickey Exp $	*/
+/*	$OpenBSD: proc.h,v 1.89 2006/11/29 12:24:18 miod Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -202,7 +202,6 @@ struct	proc {
 
 	struct	vnode *p_textvp;	/* Vnode of executable. */
 
-	int	p_holdcnt;		/* If non-zero, don't swap. */
 	struct	emul *p_emul;		/* Emulation information */
 	void	*p_emuldata;		/* Per-process emulation data, or */
 					/* NULL. Malloc type M_EMULDATA */
@@ -258,7 +257,7 @@ struct	proc {
 /* These flags are kept in p_flag. */
 #define	P_ADVLOCK	0x000001	/* Proc may hold a POSIX adv. lock. */
 #define	P_CONTROLT	0x000002	/* Has a controlling terminal. */
-#define	P_INMEM		0x000004	/* Loaded into memory. */
+#define	P_INMEM		0x000004	/* Loaded into memory. UNUSED */
 #define	P_NOCLDSTOP	0x000008	/* No SIGCHLD when children stop. */
 #define	P_PPWAIT	0x000010	/* Parent waits for child exec/exit. */
 #define	P_PROFIL	0x000020	/* Has started profiling. */
@@ -285,17 +284,16 @@ struct	proc {
 #define P_INEXEC	0x200000	/* Process is doing an exec right now */
 #define P_SYSTRACE	0x400000	/* Process system call tracing active*/
 #define P_CONTINUED	0x800000	/* Proc has continued from a stopped state. */
-#define P_SWAPIN	0x1000000	/* Swapping in right now */
 #define P_BIGLOCK	0x2000000	/* Process needs kernel "big lock" to run */
 #define	P_THREAD	0x4000000	/* Only a thread, not a real process */
 #define	P_IGNEXITRV	0x8000000	/* For thread kills */
 #define	P_SOFTDEP	0x10000000	/* Stuck processing softdep worklist */
 
 #define	P_BITS \
-    ("\20\01ADVLOCK\02CTTY\03INMEM\04NOCLDSTOP\05PPWAIT\06PROFIL\07SELECT" \
+    ("\20\01ADVLOCK\02CTTY\04NOCLDSTOP\05PPWAIT\06PROFIL\07SELECT" \
      "\010SINTR\011SUGID\012SYSTEM\013TIMEOUT\014TRACED\015WAITED\016WEXIT" \
      "\017EXEC\020PWEUPC\022SSTEP\023SUGIDEXEC\024NOCLDWAIT" \
-     "\025NOZOMBIE\026INEXEC\027SYSTRACE\030CONTINUED\031SWAPIN\032BIGLOCK" \
+     "\025NOZOMBIE\026INEXEC\027SYSTRACE\030CONTINUED\032BIGLOCK" \
      "\033THREAD\034IGNEXITRV\035SOFTDEP")
 
 /* Macro to compute the exit signal to be delivered. */
@@ -354,12 +352,6 @@ struct uidinfo *uid_find(uid_t);
 	if (--(s)->s_count == 0)					\
 		pool_put(&session_pool, s);				\
 }
-
-#define	PHOLD(p) {							\
-	if ((p)->p_holdcnt++ == 0 && ((p)->p_flag & P_INMEM) == 0)	\
-		uvm_swapin(p);						\
-}
-#define	PRELE(p)	(--(p)->p_holdcnt)
 
 /*
  * Flags to fork1().
@@ -440,7 +432,6 @@ void	setrunnable(struct proc *);
 #if !defined(setrunqueue)
 void	setrunqueue(struct proc *);
 #endif
-void	uvm_swapin(struct proc *);  /* XXX: uvm_extern.h? */
 int	ltsleep(void *chan, int pri, const char *wmesg, int timo,
 	    volatile struct simplelock *);
 #define tsleep(chan, pri, wmesg, timo) ltsleep(chan, pri, wmesg, timo, NULL)
@@ -476,3 +467,4 @@ int proc_isunder(struct proc *, struct proc *);
 
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */
+

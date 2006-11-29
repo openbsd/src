@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.7 2006/09/26 23:33:04 krw Exp $	*/
+/*	$OpenBSD: fd.c,v 1.8 2006/11/29 12:24:17 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -1944,7 +1944,6 @@ fdformat(dev, finfo, p)
 	if (bp == NULL)
 		return (ENOBUFS);
 
-	PHOLD(p);
 	bzero((void *)bp, sizeof(struct buf));
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = p;
@@ -1991,7 +1990,6 @@ fdformat(dev, finfo, p)
 
 	/* ...and wait for it to complete */
 	rv = biowait(bp);
-	PRELE(p);
 	free(bp, M_TEMP);
 	return (rv);
 }

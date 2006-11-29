@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_ctl.c,v 1.18 2006/08/28 20:53:18 tsi Exp $	*/
+/*	$OpenBSD: procfs_ctl.c,v 1.19 2006/11/29 12:24:18 miod Exp $	*/
 /*	$NetBSD: procfs_ctl.c,v 1.14 1996/02/09 22:40:48 christos Exp $	*/
 
 /*
@@ -208,9 +208,7 @@ procfs_control(curp, p, op)
 	 */
 	case PROCFS_CTL_STEP:
 #ifdef PT_STEP
-		PHOLD(p);
 		error = process_sstep(p, 1);
-		PRELE(p);
 		if (error)
 			return (error);
 		break;

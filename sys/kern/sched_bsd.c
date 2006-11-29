@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.8 2006/11/15 17:25:40 jmc Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.9 2006/11/29 12:24:18 miod Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -310,7 +310,6 @@ schedcpu(void *arg)
 		if (p->p_priority >= PUSER) {
 			if ((p != curproc) &&
 			    p->p_stat == SRUN &&
-			    (p->p_flag & P_INMEM) &&
 			    (p->p_priority / PPQ) != (p->p_usrpri / PPQ)) {
 				remrunqueue(p);
 				p->p_priority = p->p_usrpri;
@@ -618,15 +617,11 @@ setrunnable(struct proc *p)
 		break;
 	}
 	p->p_stat = SRUN;
-	if (p->p_flag & P_INMEM)
-		setrunqueue(p);
+	setrunqueue(p);
 	if (p->p_slptime > 1)
 		updatepri(p);
 	p->p_slptime = 0;
-	if ((p->p_flag & P_INMEM) == 0)
-		wakeup(&proc0);
-	else
-		resched_proc(p, p->p_priority);
+	resched_proc(p, p->p_priority);
 }
 
 /*

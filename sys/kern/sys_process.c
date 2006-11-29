@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.36 2006/07/19 18:38:42 grunk Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.37 2006/11/29 12:24:18 miod Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -322,7 +322,6 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (SCARG(uap, data) < 0 || SCARG(uap, data) >= NSIG)
 			return (EINVAL);
 
-		PHOLD(t);
 		/* If the address parameter is not (int *)1, set the pc. */
 		if ((int *)SCARG(uap, addr) != (int *)1)
 			if ((error = process_set_pc(t, SCARG(uap, addr))) != 0)
@@ -336,7 +335,6 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (error)
 			goto relebad;
 #endif
-		PRELE(t);
 		goto sendsig;
 
 	case  PT_DETACH:
@@ -356,7 +354,6 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (SCARG(uap, data) < 0 || SCARG(uap, data) >= NSIG)
 			return (EINVAL);
 
-		PHOLD(t);
 #ifdef PT_STEP
 		/*
 		 * Arrange for a single-step, if that's requested and possible.
@@ -365,7 +362,6 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (error)
 			goto relebad;
 #endif
-		PRELE(t);
 
 		/* give process back to original parent or init */
 		if (t->p_oppid != t->p_pptr->p_pid) {
@@ -395,7 +391,6 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		return (0);
 
 	relebad:
-		PRELE(t);
 		return (error);
 
 	case  PT_KILL:
@@ -451,9 +446,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		regs = malloc(sizeof(*regs), M_TEMP, M_WAITOK);
 		error = copyin(SCARG(uap, addr), regs, sizeof(*regs));
 		if (error == 0) {
-			PHOLD(p);
 			error = process_write_regs(t, regs);
-			PRELE(p);
 		}
 		free(regs, M_TEMP);
 		return (error);
@@ -463,9 +456,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 			return (error);
 
 		regs = malloc(sizeof(*regs), M_TEMP, M_WAITOK);
-		PHOLD(p);
 		error = process_read_regs(t, regs);
-		PRELE(p);
 		if (error == 0)
 			error = copyout(regs,
 			    SCARG(uap, addr), sizeof (*regs));
@@ -480,9 +471,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		fpregs = malloc(sizeof(*fpregs), M_TEMP, M_WAITOK);
 		error = copyin(SCARG(uap, addr), fpregs, sizeof(*fpregs));
 		if (error == 0) {
-			PHOLD(p);
 			error = process_write_fpregs(t, fpregs);
-			PRELE(p);
 		}
 		free(fpregs, M_TEMP);
 		return (error);
@@ -494,9 +483,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 			return (error);
 
 		fpregs = malloc(sizeof(*fpregs), M_TEMP, M_WAITOK);
-		PHOLD(p);
 		error = process_read_fpregs(t, fpregs);
-		PRELE(p);
 		if (error == 0)
 			error = copyout(fpregs,
 			    SCARG(uap, addr), sizeof(*fpregs));
@@ -512,9 +499,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		xmmregs = malloc(sizeof(*xmmregs), M_TEMP, M_WAITOK);
 		error = copyin(SCARG(uap, addr), xmmregs, sizeof(*xmmregs));
 		if (error == 0) {
-			PHOLD(p);
 			error = process_write_xmmregs(t, xmmregs);
-			PRELE(p);
 		}
 		free(xmmregs, M_TEMP);
 		return (error);
@@ -526,9 +511,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 			return (error);
 
 		xmmregs = malloc(sizeof(*xmmregs), M_TEMP, M_WAITOK);
-		PHOLD(p);
 		error = process_read_xmmregs(t, xmmregs);
-		PRELE(p);
 		if (error == 0)
 			error = copyout(xmmregs,
 			    SCARG(uap, addr), sizeof(*xmmregs));

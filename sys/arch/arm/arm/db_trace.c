@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.3 2006/11/29 12:24:17 miod Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /* 
@@ -113,10 +113,6 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				(*pr)("not found\n");
 				return;
 			}	
-			if (!(p->p_flag & P_INMEM)) {
-				(*pr)("swapped out\n");
-				return;
-			}
 			u = p->p_addr;
 #ifdef acorn26
 			frame = (u_int32_t *)(u->u_pcb.pcb_sf->sf_r11);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.11 2006/04/19 15:51:22 mickey Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.12 2006/11/29 12:24:17 miod Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -301,7 +301,6 @@ fpusave_proc(struct proc *p, int save)
 	struct cpu_info *oci;
 
 	KDASSERT(p->p_addr != NULL);
-	KDASSERT(p->p_flag & P_INMEM);
 
 	oci = p->p_addr->u_pcb.pcb_fpcpu;
 	if (oci == NULL)

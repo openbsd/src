@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.74 2006/10/21 02:18:00 tedu Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.75 2006/11/29 12:24:17 miod Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -336,17 +336,13 @@ restart:
 				 * XXXSMP See affinity comment in
 				 * resched_proc().
 				 */
-				if ((p->p_flag & P_INMEM) != 0) {
-					setrunqueue(p);
+				setrunqueue(p);
 #ifdef __HAVE_CPUINFO
-					KASSERT(p->p_cpu != NULL);
-					need_resched(p->p_cpu);
+				KASSERT(p->p_cpu != NULL);
+				need_resched(p->p_cpu);
 #else
-					need_resched(NULL);
+				need_resched(NULL);
 #endif
-				} else {
-					wakeup(&proc0);
-				}
 				/* END INLINE EXPANSION */
 
 				if (n != 0)

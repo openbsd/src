@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_cmdline.c,v 1.6 2005/12/11 21:30:31 miod Exp $	*/
+/*	$OpenBSD: procfs_cmdline.c,v 1.7 2006/11/29 12:24:18 miod Exp $	*/
 /*	$NetBSD: procfs_cmdline.c,v 1.3 1999/03/13 22:26:48 thorpej Exp $	*/
 
 /*
@@ -106,7 +106,6 @@ procfs_docmdline(curp, p, pfs, uio)
 		free(arg, M_TEMP);
 		return (EFAULT);
 	}
-	PHOLD(p);
 	p->p_vmspace->vm_refcnt++;	/* XXX */
 
 	/*
@@ -183,7 +182,6 @@ procfs_docmdline(curp, p, pfs, uio)
 
 
  bad:
-	PRELE(p);
 	uvmspace_free(p->p_vmspace);
 	free(arg, M_TEMP);
 	return (error);

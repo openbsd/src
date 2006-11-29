@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.44 2006/05/25 22:42:22 miod Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.45 2006/11/29 12:24:18 miod Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -85,12 +85,6 @@
 #include <uvm/uvm.h>
 
 #include <machine/cpu.h>
-
-/*
- * local prototypes
- */
-
-static void uvm_swapout(struct proc *);
 
 /*
  * XXXCDC: do these really belong here?
@@ -254,27 +248,12 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	void *arg;
 {
 	struct user *up = p2->p_addr;
-	int rv;
 
 	if (shared == TRUE) {
 		p2->p_vmspace = NULL;
 		uvmspace_share(p1, p2);			/* share vmspace */
 	} else
 		p2->p_vmspace = uvmspace_fork(p1->p_vmspace); /* fork vmspace */
-
-	/*
-	 * Wire down the U-area for the process, which contains the PCB
-	 * and the kernel stack.  Wired state is stored in p->p_flag's
-	 * P_INMEM bit rather than in the vm_map_entry's wired count
-	 * to prevent kernel_map fragmentation.
-	 *
-	 * Note the kernel stack gets read/write accesses right off
-	 * the bat.
-	 */
-	rv = uvm_fault_wire(kernel_map, (vaddr_t)up,
-	    (vaddr_t)up + USPACE, VM_PROT_READ | VM_PROT_WRITE);
-	if (rv != KERN_SUCCESS)
-		panic("uvm_fork: uvm_fault_wire failed: %d", rv);
 
 #ifdef PMAP_UAREA
 	/* Tell the pmap this is a u-area mapping */
@@ -312,15 +291,10 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
  *   of the dead process may block.
  */
 void
-uvm_exit(p)
-	struct proc *p;
+uvm_exit(struct proc *p)
 {
-	vaddr_t va = (vaddr_t)p->p_addr;
-
 	uvmspace_free(p->p_vmspace);
-	p->p_flag &= ~P_INMEM;
-	uvm_fault_unwire(kernel_map, va, va + USPACE);
-	uvm_km_free(kernel_map, va, USPACE);
+	uvm_km_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
 	p->p_addr = NULL;
 }
 
@@ -330,8 +304,7 @@ uvm_exit(p)
  * - called for process 0 and then inherited by all others.
  */
 void
-uvm_init_limits(p)
-	struct proc *p;
+uvm_init_limits(struct proc *p)
 {
 
 	/*
@@ -357,123 +330,19 @@ int	swapdebug = 0;
 #endif
 
 /*
- * uvm_swapin: swap in a process's u-area.
- */
-
-void
-uvm_swapin(p)
-	struct proc *p;
-{
-	vaddr_t addr;
-	int rv, s;
-
-	s = splstatclock();
-	if (p->p_flag & P_SWAPIN) {
-		splx(s);
-		return;
-	}
-	p->p_flag |= P_SWAPIN;
-	splx(s);
-
-	addr = (vaddr_t)p->p_addr;
-	/* make P_INMEM true */
-	if ((rv = uvm_fault_wire(kernel_map, addr, addr + USPACE,
-	    VM_PROT_READ | VM_PROT_WRITE)) != KERN_SUCCESS)
-		panic("uvm_swapin: uvm_fault_wire failed: %d", rv);
-
-	/*
-	 * Some architectures need to be notified when the user area has
-	 * moved to new physical page(s) (e.g.  see mips/mips/vm_machdep.c).
-	 */
-	cpu_swapin(p);
-	SCHED_LOCK(s);
-	if (p->p_stat == SRUN)
-		setrunqueue(p);
-	p->p_flag |= P_INMEM;
-	p->p_flag &= ~P_SWAPIN;
-	p->p_swtime = 0;
-	SCHED_UNLOCK(s);
-	++uvmexp.swapins;
-}
-
-/*
  * uvm_scheduler: process zero main loop
  *
- * - attempt to swapin every swaped-out, runnable process in order of
- *	priority.
  * - if not enough memory, wake the pagedaemon and let it clear space.
  */
 
 void
-uvm_scheduler()
+uvm_scheduler(void)
 {
-	struct proc *p;
-	int pri;
-	struct proc *pp;
-	int ppri;
-
-loop:
-#ifdef DEBUG
-	while (!enableswap)
-		tsleep(&proc0, PVM, "noswap", 0);
-#endif
-	pp = NULL;		/* process to choose */
-	ppri = INT_MIN;	/* its priority */
-	LIST_FOREACH(p, &allproc, p_list) {
-
-		/* is it a runnable swapped out process? */
-		if (p->p_stat == SRUN && (p->p_flag & P_INMEM) == 0) {
-			pri = p->p_swtime + p->p_slptime -
-			    (p->p_nice - NZERO) * 8;
-			if (pri > ppri) {   /* higher priority?  remember it. */
-				pp = p;
-				ppri = pri;
-			}
-		}
-	}
-
-#ifdef DEBUG
-	if (swapdebug & SDB_FOLLOW)
-		printf("scheduler: running, procp %p pri %d\n", pp, ppri);
-#endif
 	/*
 	 * Nothing to do, back to sleep
 	 */
-	if ((p = pp) == NULL) {
-		tsleep(&proc0, PVM, "scheduler", 0);
-		goto loop;
-	}
-
-	/*
-	 * we have found swapped out process which we would like to bring
-	 * back in.
-	 *
-	 * XXX: this part is really bogus because we could deadlock on memory
-	 * despite our feeble check
-	 */
-	if (uvmexp.free > atop(USPACE)) {
-#ifdef DEBUG
-		if (swapdebug & SDB_SWAPIN)
-			printf("swapin: pid %d(%s)@%p, pri %d free %d\n",
-	     p->p_pid, p->p_comm, p->p_addr, ppri, uvmexp.free);
-#endif
-		uvm_swapin(p);
-		goto loop;
-	}
-	/*
-	 * not enough memory, jab the pageout daemon and wait til the coast
-	 * is clear
-	 */
-#ifdef DEBUG
-	if (swapdebug & SDB_FOLLOW)
-		printf("scheduler: no room for pid %d(%s), free %d\n",
-	   p->p_pid, p->p_comm, uvmexp.free);
-#endif
-	uvm_wait("schedpwait");
-#ifdef DEBUG
-	if (swapdebug & SDB_FOLLOW)
-		printf("scheduler: room again, free %d\n", uvmexp.free);
-#endif
+loop:
+	tsleep(&proc0, PVM, "scheduler", 0);
 	goto loop;
 }
 
@@ -481,13 +350,10 @@ loop:
  * swappable: is process "p" swappable?
  */
 
-#define	swappable(p)							\
-	(((p)->p_flag & (P_SYSTEM | P_INMEM | P_WEXIT)) == P_INMEM &&	\
-	 (p)->p_holdcnt == 0)
+#define	swappable(p) (((p)->p_flag & (P_SYSTEM | P_WEXIT)) == 0)
 
 /*
- * swapout_threads: find threads that can be swapped and unwire their
- *	u-areas.
+ * swapout_threads: find threads that can be swapped
  *
  * - called by the pagedaemon
  * - try and swap at least one processs
@@ -496,7 +362,7 @@ loop:
  *   is swapped, otherwise the longest resident process...
  */
 void
-uvm_swapout_threads()
+uvm_swapout_threads(void)
 {
 	struct proc *p;
 	struct proc *outp, *outp2;
@@ -530,7 +396,7 @@ uvm_swapout_threads()
 		case SSLEEP:
 		case SSTOP:
 			if (p->p_slptime >= maxslp) {
-				uvm_swapout(p);
+				pmap_collect(p->p_vmspace->vm_map.pmap);
 				didswap++;
 			} else if (p->p_slptime > outpri) {
 				outp = p;
@@ -544,7 +410,7 @@ uvm_swapout_threads()
 	 * If we didn't get rid of any real duds, toss out the next most
 	 * likely sleeping/stopped or running candidate.  We only do this
 	 * if we are real low on memory since we don't gain much by doing
-	 * it (USPACE bytes).
+	 * it.
 	 */
 	if (didswap == 0 && uvmexp.free <= atop(round_page(USPACE))) {
 		if ((p = outp) == NULL)
@@ -554,58 +420,6 @@ uvm_swapout_threads()
 			printf("swapout_threads: no duds, try procp %p\n", p);
 #endif
 		if (p)
-			uvm_swapout(p);
+			pmap_collect(p->p_vmspace->vm_map.pmap);
 	}
 }
-
-/*
- * uvm_swapout: swap out process "p"
- *
- * - currently "swapout" means "unwire U-area" and "pmap_collect()" 
- *   the pmap.
- * - XXXCDC: should deactivate all process' private anonymous memory
- */
-
-static void
-uvm_swapout(p)
-	struct proc *p;
-{
-	vaddr_t addr;
-	int s;
-
-#ifdef DEBUG
-	if (swapdebug & SDB_SWAPOUT)
-		printf("swapout: pid %d(%s)@%p, stat %x pri %d free %d\n",
-		    p->p_pid, p->p_comm, p->p_addr, p->p_stat,
-		    p->p_slptime, uvmexp.free);
-#endif
-
-	/*
-	 * Mark it as (potentially) swapped out.
-	 */
-	SCHED_LOCK(s);
-	if (!(p->p_flag & P_INMEM)) {
-		SCHED_UNLOCK(s);
-		return;
-	}
-	p->p_flag &= ~P_INMEM;
-	if (p->p_stat == SRUN)
-		remrunqueue(p);
-	p->p_swtime = 0;
-	SCHED_UNLOCK(s);
-	++uvmexp.swapouts;
-
-	/*
-	 * Do any machine-specific actions necessary before swapout.
-	 * This can include saving floating point state, etc.
-	 */
-	cpu_swapout(p);
-
-	/*
-	 * Unwire the to-be-swapped process's user struct and kernel stack.
-	 */
-	addr = (vaddr_t)p->p_addr;
-	uvm_fault_unwire(kernel_map, addr, addr + USPACE); /* !P_INMEM */
-	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
-}
-

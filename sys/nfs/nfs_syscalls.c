@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.49 2006/10/04 12:04:40 pedro Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.50 2006/11/29 12:24:18 miod Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -520,7 +520,6 @@ nfssvc_nfsd(nsd, argp, p)
 		TAILQ_INSERT_TAIL(&nfsd_head, nfsd, nfsd_chain);
 		nfs_numnfsd++;
 	}
-	PHOLD(p);
 	/*
 	 * Loop getting rpc requests until SIGKILL.
 	 */
@@ -622,7 +621,6 @@ nfssvc_nfsd(nsd, argp, p)
 			    !copyout(nfsd->nfsd_verfstr, nsd->nsd_verfstr,
 				nfsd->nfsd_verflen) &&
 			    !copyout((caddr_t)nsd, argp, sizeof (*nsd))) {
-			    PRELE(p);
 			    return (ENEEDAUTH);
 			}
 			cacherep = RC_DROPIT;
@@ -747,7 +745,6 @@ nfssvc_nfsd(nsd, argp, p)
 		}
 	}
 done:
-	PRELE(p);
 	TAILQ_REMOVE(&nfsd_head, nfsd, nfsd_chain);
 	splx(s);
 	free((caddr_t)nfsd, M_NFSD);
@@ -934,7 +931,6 @@ nfssvc_iod(p)
 		return (EBUSY);
 	nfs_asyncdaemon[myiod] = p;
 	nfs_numasync++;
-	PHOLD(p);
 	/*
 	 * Just loop around doin our stuff until SIGKILL
 	 */
@@ -982,7 +978,6 @@ nfssvc_iod(p)
 		} while ((bp = nbp) != NULL);
 	    }
 	    if (error) {
-		PRELE(p);
 		nfs_asyncdaemon[myiod] = NULL;
 		nfs_numasync--;
 		return (error);

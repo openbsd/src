@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.142 2006/05/28 19:41:42 dlg Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.143 2006/11/29 12:24:17 miod Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1159,14 +1159,12 @@ fill_eproc(struct proc *p, struct eproc *ep)
 	} else {
 		struct vmspace *vm = p->p_vmspace;
 
-		PHOLD(p);	/* need for pstats */
 		ep->e_vm.vm_rssize = vm_resident_count(vm);
 		ep->e_vm.vm_tsize = vm->vm_tsize;
 		ep->e_vm.vm_dsize = vm->vm_dused;
 		ep->e_vm.vm_ssize = vm->vm_ssize;
 		ep->e_pstats = *p->p_stats;
 		ep->e_pstats_valid = 1;
-		PRELE(p);
 	}
 	if (p->p_pptr)
 		ep->e_ppid = p->p_pptr->p_pid;
@@ -1220,7 +1218,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 
 	ki->p_eflag = 0;
 	ki->p_exitsig = p->p_exitsig;
-	ki->p_flag = p->p_flag;
+	ki->p_flag = p->p_flag | P_INMEM;
 
 	ki->p_pid = p->p_pid;
 	if (p->p_pptr)
@@ -1308,7 +1306,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 #else
 		ki->p_schedflags = p->p_schedflags;
 #endif
-		ki->p_holdcnt = p->p_holdcnt;
+		ki->p_holdcnt = 1;
 		ki->p_priority = p->p_priority;
 		ki->p_usrpri = p->p_usrpri;
 		if (p->p_wmesg)
@@ -1330,7 +1328,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	} else {
 		ki->p_uvalid = 1;
 
-		PHOLD(p);	/* need for pstats */
 		ki->p_ustart_sec = p->p_stats->p_start.tv_sec;
 		ki->p_ustart_usec = p->p_stats->p_start.tv_usec;
 
@@ -1364,7 +1361,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		if (p->p_cpu != NULL)
 			ki->p_cpuid = CPU_INFO_UNIT(p->p_cpu);
 #endif
-		PRELE(p);
 	}
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.47 2006/04/13 14:41:08 brad Exp $ */
+/* $OpenBSD: pmap.c,v 1.48 2006/11/29 12:24:15 miod Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -2867,9 +2867,8 @@ pmap_emulate_reference(struct proc *p, vaddr_t v, int user, int type)
 		panic("pmap_emulate_reference: invalid pte");
 #if 0
 	/*
-	 * Can't do these, because cpu_fork and cpu_swapin call
-	 * pmap_emulate_reference(), and the bits aren't guaranteed,
-	 * for them...
+	 * Can't do these, because cpu_fork call pmap_emulate_reference(),
+	 * and the bits aren't guaranteed, for them...
 	 */
 	if (type == ALPHA_MMCSR_FOW) {
 		if (!(*pte & (user ? PG_UWE : PG_UWE | PG_KWE)))

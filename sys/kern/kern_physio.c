@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.25 2006/11/15 17:25:40 jmc Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.26 2006/11/29 12:24:17 miod Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -157,7 +157,6 @@ physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev, int flags,
 			 * saves it in b_saveaddr.  However, vunmapbuf()
 			 * restores it.
 			 */
-			PHOLD(p);
 			error = uvm_vslock(p, bp->b_data, todo,
 			    (flags & B_READ) ?
 			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ);
@@ -198,7 +197,6 @@ physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev, int flags,
 			vunmapbuf(bp, todo);
 			uvm_vsunlock(p, bp->b_data, todo);
 after_unlock:
-			PRELE(p);
 
 			/* remember error value (save a splbio/splx pair) */
 			if (bp->b_flags & B_ERROR)

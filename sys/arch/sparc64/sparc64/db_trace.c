@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.7 2002/10/09 21:10:48 deraadt Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.8 2006/11/29 12:24:17 miod Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -87,10 +87,6 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				(*pr)("not found\n");
 				return;
 			}	
-			if ((p->p_flag & P_INMEM) == 0) {
-				(*pr)("swapped out\n");
-				return;
-			}
 			u = p->p_addr;
 			frame = (vaddr_t)u->u_pcb.pcb_sp;
 			(*pr)("at %p\n", frame);

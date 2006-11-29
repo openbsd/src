@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.28 2006/03/07 20:46:46 brad Exp $	*/
+/*	$OpenBSD: iop.c,v 1.29 2006/11/29 12:24:17 miod Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -594,9 +594,7 @@ iop_reconf_thread(void *cookie)
 		DPRINTF(("%s: async reconfig: requested 0x%08x\n",
 		    sc->sc_dv.dv_xname, chgind));
 
-		PHOLD(sc->sc_reconf_proc);
 		rv = iop_lct_get0(sc, &lct, sizeof(lct), chgind);
-		PRELE(sc->sc_reconf_proc);
 
 		DPRINTF(("%s: async reconfig: notified (0x%08x, %d)\n",
 		    sc->sc_dv.dv_xname, letoh32(lct.changeindicator), rv));
@@ -1076,9 +1074,7 @@ iop_hrt_get(struct iop_softc *sc)
 	size_t size;
 	int rv;
 
-	PHOLD(curproc);
 	rv = iop_hrt_get0(sc, &hrthdr, sizeof(hrthdr));
-	PRELE(curproc);
 	if (rv != 0)
 		return (rv);
 
@@ -1236,16 +1232,10 @@ iop_param_op(struct iop_softc *sc, int tid, struct iop_initiator *ii,
 	pgop->oat.fieldcount = htole16(0xffff);
 	pgop->oat.group = htole16(group);
 
-	if (ii == NULL)
-		PHOLD(curproc);
-
 	memset(buf, 0, size);
 	iop_msg_map(sc, im, mb, pgop, sizeof(*pgop), 1);
 	iop_msg_map(sc, im, mb, buf, size, write);
 	rv = iop_msg_post(sc, im, mb, (ii == NULL ? 30000 : 0));
-
-	if (ii == NULL)
-		PRELE(curproc);
 
 	/* Detect errors; let partial transfers to count as success. */
 	if (ii == NULL && rv == 0) {
@@ -1350,14 +1340,12 @@ iop_systab_set(struct iop_softc *sc)
 		}
 	}
 
-	PHOLD(curproc);
 	iop_msg_map(sc, im, mb, iop_systab, iop_systab_size, 1);
 	iop_msg_map(sc, im, mb, mema, sizeof(mema), 1);
 	iop_msg_map(sc, im, mb, ioa, sizeof(ioa), 1);
 	rv = iop_msg_post(sc, im, mb, 5000);
 	iop_msg_unmap(sc, im);
 	iop_msg_free(sc, im);
-	PRELE(curproc);
 	return (rv);
 }
 
