@@ -1,4 +1,4 @@
-.\" $OpenBSD: zyd.4,v 1.11 2006/11/13 03:01:55 jsg Exp $
+.\" $OpenBSD: zyd.4,v 1.12 2006/11/29 16:28:05 jsg Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\" Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -35,14 +35,14 @@
 .Os
 .Sh NAME
 .Nm zyd
-.Nd ZyDAS ZD1211 USB IEEE 802.11b/g wireless network device
+.Nd ZyDAS ZD1211/ZD1211B USB IEEE 802.11b/g wireless network device
 .Sh SYNOPSIS
 .Cd "zyd* at uhub? port ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for wireless network adapters based around
-the ZyDAS ZD1211 USB chip.
+the ZyDAS ZD1211 and ZD1211B USB chips.
 .Pp
 These are the modes the
 .Nm
@@ -186,6 +186,7 @@ driver:
 .It Edimax EW-7317UG
 .It Fiberline Networks WL-43OU
 .It iNexQ UR055g
+.It Linksys WUSBF54G
 .It Planet WL-U356
 .It Planex GW-US54GZL
 .It Planex GW-US54Mini
