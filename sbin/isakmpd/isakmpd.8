@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.96 2006/11/29 07:27:55 mcbride Exp $
+.\" $OpenBSD: isakmpd.8,v 1.97 2006/11/29 14:50:06 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -553,7 +553,7 @@ By default, the system startup script
 .Xr rc 8
 generates a key-pair in
 .Pa local.key
-if it does not already exist, and the public key is extracted into 
+if it does not already exist, and the public key is extracted into
 .Pa local.pub .
 Depending on the
 .Dv ID-type
@@ -617,7 +617,7 @@ By default, the system startup script
 .Xr rc 8
 generates a key-pair in
 .Pa local.key
-if it does not already exist, and the public key is extracted into 
+if it does not already exist, and the public key is extracted into
 .Pa local.pub .
 .Pp
 This step, as well as the next one, needs to be done for every peer.
@@ -725,7 +725,7 @@ By default, the system startup script
 generates a key-pair when starting, if one does not already exist.
 The entire keypair is in
 .Pa local.key ,
-and a copy of the public key suitable for transferring to other hosts 
+and a copy of the public key suitable for transferring to other hosts
 is extracted into
 .Pa /etc/isakmpd/local.pub .
 There has to be a certificate for
