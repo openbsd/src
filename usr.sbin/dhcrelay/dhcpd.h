@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.8 2006/11/21 15:04:59 stevesk Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.9 2006/11/29 22:36:43 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -129,7 +129,6 @@ struct protocol {
 	void *local;
 };
 
-/* Default path to dhcpd config file. */
 #define	DHCPD_LOG_FACILITY	LOG_DAEMON
 
 /* External definitions... */
