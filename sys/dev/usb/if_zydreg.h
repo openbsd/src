@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.16 2006/11/27 15:44:03 jsg Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.17 2006/11/29 16:23:20 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -606,7 +606,31 @@
 	{ ZYD_CR119, 0x10 }, { ZYD_CR120, 0x4f }, { ZYD_CR121, 0x77 },	\
 	{ ZYD_CR122, 0xe0 }, { ZYD_CR137, 0x88 }, { ZYD_CR252, 0xff },	\
 	{ ZYD_CR253, 0xff }, { ZYD_CR251, 0x2f }, { ZYD_CR251, 0x3f },	\
-	{ ZYD_CR138, 0x28 }, { ZYD_CR203, 0x06 }			\
+	{ ZYD_CR138, 0x28 }, { ZYD_CR203, 0x06 }, 			\
+}
+
+#define ZYD_AL2230_PHY_B						\
+{									\
+	{ ZYD_CR10,  0x89 }, { ZYD_CR15,  0x20 }, { ZYD_CR17,  0x2b },	\
+	{ ZYD_CR23,  0x40 }, { ZYD_CR24,  0x20 }, { ZYD_CR26,  0x93 },	\
+	{ ZYD_CR28,  0x3e }, { ZYD_CR29,  0x00 }, { ZYD_CR33,  0x28 },	\
+	{ ZYD_CR34,  0x30 }, { ZYD_CR35,  0x3e }, { ZYD_CR41,  0x24 },	\
+	{ ZYD_CR44,  0x32 }, { ZYD_CR46,  0x99 }, { ZYD_CR47,  0x1e },	\
+	{ ZYD_CR48,  0x00 }, { ZYD_CR49,  0x00 }, { ZYD_CR51,  0x01 },	\
+	{ ZYD_CR52,  0x80 }, { ZYD_CR53,  0x7e }, { ZYD_CR65,  0x00 },	\
+	{ ZYD_CR66,  0x00 }, { ZYD_CR67,  0x00 }, { ZYD_CR68,  0x00 },	\
+	{ ZYD_CR69,  0x28 }, { ZYD_CR79,  0x58 }, { ZYD_CR80,  0x30 },	\
+	{ ZYD_CR81,  0x30 }, { ZYD_CR87,  0x0a }, { ZYD_CR89,  0x04 },	\
+	{ ZYD_CR91,  0x00 }, { ZYD_CR92,  0x0a }, { ZYD_CR98,  0x8d },	\
+	{ ZYD_CR99,  0x00 }, { ZYD_CR101, 0x13 }, { ZYD_CR106, 0x24 },	\
+	{ ZYD_CR107, 0x2a }, { ZYD_CR109, 0x13 }, { ZYD_CR110, 0x1f },	\
+	{ ZYD_CR111, 0x1f }, { ZYD_CR114, 0x27 }, { ZYD_CR115, 0x26 },	\
+	{ ZYD_CR116, 0x24 }, { ZYD_CR117, 0xfa }, { ZYD_CR118, 0xfa },	\
+	{ ZYD_CR119, 0x10 }, { ZYD_CR120, 0x4f }, { ZYD_CR121, 0x6c },	\
+	{ ZYD_CR122, 0xfc }, { ZYD_CR123, 0x57 }, { ZYD_CR125, 0xad },	\
+	{ ZYD_CR126, 0x6c }, { ZYD_CR127, 0x03 }, { ZYD_CR137, 0x50 },	\
+	{ ZYD_CR138, 0xa8 }, { ZYD_CR144, 0xac }, { ZYD_CR150, 0x0d },	\
+	{ ZYD_CR252, 0x00 }, { ZYD_CR253, 0x00 },			\
 }
 
 #define ZYD_AL2230_RF							\
@@ -615,6 +639,13 @@
 	0x000da4, 0x0f4dc5, 0x0805b6, 0x011687, 0x000688, 0x0403b9,	\
 	0x00dbba, 0x00099b, 0x0bdffc, 0x00000d, 0x00500f, 0x00d00f,	\
 	0x004c0f, 0x00540f, 0x00700f, 0x00500f				\
+}
+
+#define ZYD_AL2230_RF_B							\
+{									\
+	0x03f790, 0x033331, 0x00000d, 0x0b3331, 0x03b812, 0x00fff3,	\
+	0x0005a4, 0x0f4dc5, 0x0805b6, 0x0146c7, 0x000688, 0x0403b9,	\
+	0x00dbba, 0x00099b, 0x0bdffc, 0x00000d, 0x00580f		\
 }
 
 #define ZYD_AL2230_CHANTABLE			\
@@ -634,6 +665,8 @@
 	{ 0x03f7c0, 0x033331, 0x00000d },	\
 	{ 0x03e7c0, 0x066661, 0x00000d }	\
 }
+
+
 
 #define ZYD_AL7230B_PHY_1							\
 {									\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.40 2006/11/29 13:56:17 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.41 2006/11/29 16:23:19 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -148,6 +148,7 @@ int		zyd_rfmd_set_channel(struct zyd_rf *, uint8_t);
 int		zyd_al2230_init(struct zyd_rf *);
 int		zyd_al2230_switch_radio(struct zyd_rf *, int);
 int		zyd_al2230_set_channel(struct zyd_rf *, uint8_t);
+int		zyd_al2230_init_b(struct zyd_rf *);
 int		zyd_al7230B_init(struct zyd_rf *);
 int		zyd_al7230B_switch_radio(struct zyd_rf *, int);
 int		zyd_al7230B_set_channel(struct zyd_rf *, uint8_t);
@@ -944,6 +945,31 @@ zyd_al2230_init(struct zyd_rf *rf)
 }
 
 int
+zyd_al2230_init_b(struct zyd_rf *rf)
+{
+#define N(a)	(sizeof (a) / sizeof ((a)[0]))
+	struct zyd_softc *sc = rf->rf_sc;
+	static const struct zyd_phy_pair phyini[] = ZYD_AL2230_PHY_B;
+	static const uint32_t rfini[] = ZYD_AL2230_RF_B;
+	int i, error;
+
+	/* init RF-dependent PHY registers */
+	for (i = 0; i < N(phyini); i++) {
+		error = zyd_write16(sc, phyini[i].reg, phyini[i].val);
+		if (error != 0)
+			return error;
+	}
+
+	/* init AL2230 radio */
+	for (i = 0; i < N(rfini); i++) {
+		if ((error = zyd_rfwrite(sc, rfini[i])) != 0)
+			return error;
+	}
+	return 0;
+#undef N
+}
+
+int
 zyd_al2230_switch_radio(struct zyd_rf *rf, int on)
 {
 	struct zyd_softc *sc = rf->rf_sc;
@@ -1374,7 +1400,10 @@ zyd_rf_attach(struct zyd_softc *sc, uint8_t type)
 		rf->width        = 24;	/* 24-bit RF values */
 		break;
 	case ZYD_RF_AL2230:
-		rf->init         = zyd_al2230_init;
+		if (sc->mac_rev == ZYD_ZD1211B)
+			rf->init = zyd_al2230_init_b;
+		else
+			rf->init = zyd_al2230_init;
 		rf->switch_radio = zyd_al2230_switch_radio;
 		rf->set_channel  = zyd_al2230_set_channel;
 		rf->width        = 24;	/* 24-bit RF values */
@@ -1975,6 +2004,7 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct zyd_tx_data *data;
 	struct ieee80211_frame *wh;
 	int xferlen, totlen, rate;
+	u_int16_t hdrlen;
 	usbd_status error;
 
 	wh = mtod(m0, struct ieee80211_frame *);
@@ -2041,7 +2071,14 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		desc->phy |= ZYD_TX_PHY_SHPREAMBLE;
 
 	/* actual transmit length (XXX why +10?) */
-	desc->pktlen = htole16(sizeof (struct zyd_tx_desc) + totlen + 10);
+	hdrlen = sizeof (struct zyd_tx_desc) + 10;
+
+	if (sc->mac_rev == ZYD_ZD1211B) {
+		/* XXX this means no cipher */
+		desc->pktlen = htole16(hdrlen);
+	} else {
+		desc->pktlen = htole16(hdrlen + totlen);
+	}
 
 	desc->plcp_length = (16 * totlen + rate - 1) / rate;
 	desc->plcp_service = 0;
