@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg-config.1,v 1.8 2006/11/29 16:27:49 jmc Exp $
+.\"	$OpenBSD: pkg-config.1,v 1.9 2006/11/29 19:31:17 jmc Exp $
 .\"
 .\"	Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 .\"
@@ -80,8 +80,8 @@ Enable internal development and debugging messages.
 Direct error messages to stdout rather than stderr.
 .It Cm --exists
 Return true if all the specified packages are installed.
-This is the default if no other option is given.
-.It Cm --help
+This is the default operation.
+.It Cm --help \*(Ba --usage
 Print a help message and exit.
 .It Cm --libs
 Return all linker flags required to link against the package.
@@ -103,7 +103,7 @@ If no package is given,
 returns its own version.
 .It Cm --print-errors
 Print error messages and exit with an error when errors occur.
-This is the default.
+This is the default operation.
 .It Cm --silence-errors
 Do not print error messages, just exit with an error.
 .It Cm --static
@@ -112,8 +112,6 @@ Return the compiler and/or linker flags required for static linking.
 Allow packages not controlled by
 .Nm
 to be used.
-.It Cm --usage
-Print a help message and exit.
 .It Cm --variable Ar name
 Fetch the value of the named variable.
 .It Cm --version
@@ -121,6 +119,8 @@ Print version of
 .Nm
 and exit.
 .El
+.Pp
+.Ex -std pkg-config
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_CONFIG_PATH
 .It Ev PKG_CONFIG_PATH
