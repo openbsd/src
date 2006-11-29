@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.39 2006/11/27 15:44:03 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.40 2006/11/29 13:56:17 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -97,6 +97,7 @@ static const struct zyd_type {
 	ZYD_ZD1211_DEV(ABOCOM,		WL54),
 	ZYD_ZD1211_DEV(ASUS,		WL159G),
 	ZYD_ZD1211_DEV(BELKIN,		F5D7050C),
+	ZYD_ZD1211B_DEV(CISCOLINKSYS,	WUSBF54G),
 	ZYD_ZD1211_DEV(CYBERTAN,	TG54USB),
 	ZYD_ZD1211_DEV(DRAYTEK,		VIGOR550),
 	ZYD_ZD1211_DEV(PLANEX2,		GWUS54GZL),
@@ -112,7 +113,7 @@ static const struct zyd_type {
 	ZYD_ZD1211_DEV(WISTRONNEWEB,	UR055G),
 	ZYD_ZD1211_DEV(ZYDAS,		ZD1211),
 	ZYD_ZD1211_DEV(ZYXEL,		ZYAIRG220),
-/*	ZYD_ZD1211B_DEV(ZYDAS,		ZD1211B), */
+	ZYD_ZD1211B_DEV(ZYDAS,		ZD1211B),
 };
 #define zyd_lookup(v, p)	\
 	((const struct zyd_type *)usb_lookup(zyd_devs, v, p))
