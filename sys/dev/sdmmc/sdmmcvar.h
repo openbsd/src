@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.3 2006/07/18 04:10:35 uwe Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.4 2006/11/29 00:46:52 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -220,5 +220,23 @@ void	sdmmc_mem_scan(struct sdmmc_softc *);
 int	sdmmc_mem_init(struct sdmmc_softc *, struct sdmmc_function *);
 int	sdmmc_mem_read_block(struct sdmmc_function *, int, u_char *, size_t);
 int	sdmmc_mem_write_block(struct sdmmc_function *, int, u_char *, size_t);
+
+/* ioctls */
+
+#include <sys/ioccom.h>
+
+struct bio_sdmmc_command {
+	void *cookie;
+	struct sdmmc_command cmd;
+};
+
+struct bio_sdmmc_debug {
+	void *cookie;
+	int debug;
+};
+
+#define SDIOCEXECMMC	_IOWR('S',0, struct bio_sdmmc_command)
+#define SDIOCEXECAPP	_IOWR('S',1, struct bio_sdmmc_command)
+#define SDIOCSETDEBUG	_IOWR('S',2, struct bio_sdmmc_debug)
 
 #endif

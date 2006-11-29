@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.7 2006/07/18 04:10:35 uwe Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.8 2006/11/29 00:46:52 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -39,6 +39,14 @@
 #include <dev/sdmmc/sdmmcreg.h>
 #include <dev/sdmmc/sdmmcvar.h>
 
+#ifdef SDMMC_IOCTL
+#include "bio.h"
+#if NBIO < 1
+#undef SDMMC_IOCTL
+#endif
+#include <dev/biovar.h>
+#endif
+
 int	sdmmc_match(struct device *, void *, void *);
 void	sdmmc_attach(struct device *, struct device *, void *);
 int	sdmmc_detach(struct device *, int);
@@ -52,13 +60,18 @@ void	sdmmc_disable(struct sdmmc_softc *);
 int	sdmmc_scan(struct sdmmc_softc *);
 int	sdmmc_init(struct sdmmc_softc *);
 int	sdmmc_set_bus_width(struct sdmmc_function *);
+#ifdef SDMMC_IOCTL
+int	sdmmc_ioctl(struct device *, u_long, caddr_t);
+#endif
 
 #define DEVNAME(sc)	SDMMCDEVNAME(sc)
 
 #ifdef SDMMC_DEBUG
-#define DPRINTF(s)	printf s
+int sdmmcdebug = 0;
+extern int sdhcdebug;	/* XXX should have a sdmmc_chip_debug() function */
+#define DPRINTF(n,s)	do { if ((n) <= sdmmcdebug) printf s; } while (0)
 #else
-#define DPRINTF(s)	/**/
+#define DPRINTF(n,s)	do {} while (0)
 #endif
 
 struct cfattach sdmmc_ca = {
@@ -93,6 +106,11 @@ sdmmc_attach(struct device *parent, struct device *self, void *aux)
 	TAILQ_INIT(&sc->sc_tskq);
 	sdmmc_init_task(&sc->sc_discover_task, sdmmc_discover_task, sc);
 	lockinit(&sc->sc_lock, PRIBIO, DEVNAME(sc), 0, LK_CANRECURSE);
+
+#ifdef SDMMC_IOCTL
+	if (bio_register(self, sdmmc_ioctl) != 0)
+		printf("%s: unable to register ioctl\n", DEVNAME(sc));
+#endif
 
 	/*
 	 * Create the event thread that will attach and detach cards
@@ -223,7 +241,7 @@ sdmmc_discover_task(void *arg)
 void
 sdmmc_card_attach(struct sdmmc_softc *sc)
 {
-	DPRINTF(("%s: attach card\n", DEVNAME(sc)));
+	DPRINTF(1,("%s: attach card\n", DEVNAME(sc)));
 
 	SDMMC_LOCK(sc);
 	CLR(sc->sc_flags, SMF_CARD_ATTACHED);
@@ -278,7 +296,7 @@ sdmmc_card_detach(struct sdmmc_softc *sc, int flags)
 {
 	struct sdmmc_function *sf, *sfnext;
 
-	DPRINTF(("%s: detach card\n", DEVNAME(sc)));
+	DPRINTF(1,("%s: detach card\n", DEVNAME(sc)));
 
 	if (ISSET(sc->sc_flags, SMF_CARD_ATTACHED)) {
 		/* Detach I/O function drivers. */
@@ -377,7 +395,7 @@ sdmmc_set_bus_power(struct sdmmc_softc *sc, u_int32_t host_ocr,
 	u_int32_t bit;
 
 	/* Mask off unsupported voltage levels and select the lowest. */
-	DPRINTF(("%s: host_ocr=%x ", DEVNAME(sc), host_ocr));
+	DPRINTF(1,("%s: host_ocr=%x ", DEVNAME(sc), host_ocr));
 	host_ocr &= card_ocr;
 	for (bit = 4; bit < 23; bit++) {
 		if (ISSET(host_ocr, 1<<bit)) {
@@ -385,7 +403,7 @@ sdmmc_set_bus_power(struct sdmmc_softc *sc, u_int32_t host_ocr,
 			break;
 		}
 	}
-	DPRINTF(("card_ocr=%x new_ocr=%x\n", card_ocr, host_ocr));
+	DPRINTF(1,("card_ocr=%x new_ocr=%x\n", card_ocr, host_ocr));
 
 	if (host_ocr == 0 ||
 	    sdmmc_chip_bus_power(sc->sct, sc->sch, host_ocr) != 0)
@@ -522,7 +540,7 @@ sdmmc_mmc_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 
 	sdmmc_chip_exec_command(sc->sct, sc->sch, cmd);
 
-	DPRINTF(("%s: mmc cmd=%p opcode=%d proc=\"%s\" (error %d)\n",
+	DPRINTF(2,("%s: mmc cmd=%p opcode=%d proc=\"%s\" (error %d)\n",
 	    DEVNAME(sc), cmd, cmd->c_opcode, curproc ? curproc->p_comm :
 	    "", cmd->c_error));
 
@@ -718,3 +736,79 @@ sdmmc_print_cid(struct sdmmc_cid *cid)
 	    " mdt=%03x\n", cid->mid, cid->oid, cid->pnm, cid->rev, cid->psn,
 	    cid->mdt);
 }
+
+#ifdef SDMMC_IOCTL
+int
+sdmmc_ioctl(struct device *self, u_long request, caddr_t addr)
+{
+	struct sdmmc_softc *sc = (struct sdmmc_softc *)self;
+	struct sdmmc_command *ucmd;
+	struct sdmmc_command cmd;
+	void *data;
+	int error;
+
+	switch (request) {
+#ifdef SDMMC_DEBUG
+	case SDIOCSETDEBUG:
+		sdmmcdebug = (((struct bio_sdmmc_debug *)addr)->debug) & 0xff;
+		sdhcdebug = (((struct bio_sdmmc_debug *)addr)->debug >> 8) & 0xff;
+		break;
+#endif
+
+	case SDIOCEXECMMC:
+	case SDIOCEXECAPP:
+		ucmd = &((struct bio_sdmmc_command *)addr)->cmd;
+
+		/* Refuse to transfer more than 512K per command. */
+		if (ucmd->c_datalen > 524288)
+			return ENOMEM;
+
+		/* Verify that the data buffer is safe to copy. */
+		if ((ucmd->c_datalen > 0 && ucmd->c_data == NULL) ||
+		    (ucmd->c_datalen < 1 && ucmd->c_data != NULL) ||
+		    ucmd->c_datalen < 0)
+			return EINVAL;
+
+		bzero(&cmd, sizeof cmd);
+		cmd.c_opcode = ucmd->c_opcode;
+		cmd.c_arg = ucmd->c_arg;
+		cmd.c_flags = ucmd->c_flags;
+		cmd.c_blklen = ucmd->c_blklen;
+
+		if (ucmd->c_data) {
+			data = malloc(ucmd->c_datalen, M_DEVBUF,
+			    M_WAITOK | M_CANFAIL);
+			if (data == NULL)
+				return ENOMEM;
+			if (copyin(ucmd->c_data, data, ucmd->c_datalen))
+				return EFAULT;
+
+			cmd.c_data = data;
+			cmd.c_datalen = ucmd->c_datalen;
+		}
+
+		if (request == SDIOCEXECMMC)
+			error = sdmmc_mmc_command(sc, &cmd);
+		else
+			error = sdmmc_app_command(sc, &cmd);
+		if (error && !cmd.c_error)
+			cmd.c_error = error;
+
+		bcopy(&cmd.c_resp, ucmd->c_resp, sizeof cmd.c_resp);
+		ucmd->c_flags = cmd.c_flags;
+		ucmd->c_error = cmd.c_error;
+
+		if (ucmd->c_data && copyout(data, ucmd->c_data,
+		    ucmd->c_datalen))
+			return EFAULT;
+
+		if (ucmd->c_data)
+			free(data, M_DEVBUF);
+		break;
+
+	default:
+		return ENOTTY;
+	}
+	return 0;
+}
+#endif
