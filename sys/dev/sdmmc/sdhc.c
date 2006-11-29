@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.14 2006/11/29 01:46:53 uwe Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.15 2006/11/29 14:05:45 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -849,14 +849,15 @@ sdhc_intr(void *arg)
 		if (hp == NULL)
 			continue;
 
-		/* Acknowledge interrupts we are about to handle. */
+		/* Find out which interrupts are pending. */
 		status = HREAD2(hp, SDHC_NINTR_STATUS);
+		if (!ISSET(status, SDHC_NINTR_STATUS_MASK))
+			continue; /* no interrupt for us */
+
+		/* Acknowledge the interrupts we are about to handle. */
 		HWRITE2(hp, SDHC_NINTR_STATUS, status);
 		DPRINTF(2,("%s: interrupt status=%b\n", HDEVNAME(hp),
 		    status, SDHC_NINTR_STATUS_BITS));
-
-		if (!ISSET(status, SDHC_NINTR_STATUS_MASK))
-			continue;
 
 		/* Claim this interrupt. */
 		done = 1;
