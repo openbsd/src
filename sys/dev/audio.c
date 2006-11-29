@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.52 2006/11/01 03:37:23 tedu Exp $	*/
+/*	$OpenBSD: audio.c,v 1.53 2006/11/29 13:34:31 miod Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
 
 #include <machine/endian.h>
 
-#include "wskbd.h"		/* NWSKBD (mixer tuning using keyboard) */
+#include "wskbd.h"	/* NWSKBD_HOTKEY (mixer tuning using keyboard) */
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (audiodebug) printf x
@@ -210,7 +210,7 @@ int filt_audioread(struct knote *kn, long hint);
 struct filterops audioread_filtops =
 	{ 1, NULL, filt_audiordetach, filt_audioread};
 
-#if NWSKBD > 0
+#if NWSKBD_HOTKEY > 0
 /* Mixer manipulation using keyboard */
 int wskbd_get_mixerdev(struct audio_softc *sc, int dir, int *index);
 int wskbd_set_mixervolume(int dir);
@@ -3104,7 +3104,7 @@ filt_audiowrite(struct knote *kn, long hint)
 	return AUDIO_FILTWRITE(sc);
 }
 
-#if NAUDIO > 0 && NWSKBD > 0
+#if NAUDIO > 0 && NWSKBD_HOTKEY > 0
 int
 wskbd_get_mixerdev(struct audio_softc *sc, int dir, int *index)
 {
@@ -3261,4 +3261,4 @@ wskbd_set_mixervolume(int dir)
 
 	return (0);
 }
-#endif /* NAUDIO > 0 && NWSKBD > 0 */
+#endif /* NAUDIO > 0 && NWSKBD_HOTKEY > 0 */
