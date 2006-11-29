@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.45 2006/11/29 12:13:54 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.46 2006/11/29 12:15:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -247,7 +247,7 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 	size = dd->dd_pacode[i] - dd->dd_pacode[STI_BEGIN];
 	if (scr->scr_devtype == STI_DEVTYPE1)
 		size = (size + 3) / 4;
-	if (!(scr->scr_code = uvm_km_alloc1(kernel_map, round_page(size), 0))) {
+	if (!(scr->scr_code = uvm_km_alloc(kernel_map, round_page(size)))) {
 		printf(": cannot allocate %u bytes for code\n", size);
 		return;
 	}
