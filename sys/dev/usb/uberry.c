@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.1 2006/11/27 11:38:43 deraadt Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.2 2006/11/29 19:55:37 miod Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -91,6 +91,11 @@ USB_ATTACH(uberry)
 
 USB_DETACH(uberry)
 {
+	USB_DETACH_START(uberry, sc);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+	    USBDEV(sc->sc_dev));
+
 	return 0;
 }
 
