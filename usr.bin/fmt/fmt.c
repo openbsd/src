@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.23 2005/03/08 23:34:43 cloder Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.24 2006/11/29 20:09:27 jmc Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -170,7 +170,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: fmt.c,v 1.23 2005/03/08 23:34:43 cloder Exp $";
+  "$OpenBSD: fmt.c,v 1.24 2006/11/29 20:09:27 jmc Exp $";
 static const char copyright[] =
   "Copyright (c) 1997 Gareth McCaughan. All rights reserved.\n";
 #endif /* not lint */
@@ -711,8 +711,8 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-		"Usage:   %s [-cmps] [-d chars] [-l num] [-t num]\n"
-		"             [-w width | -width | goal [maximum]] [file ...]\n"
+		"Usage:   %s [-cmnps] [-d chars] [-l number] [-t number]\n"
+		"             [goal [maximum] | -width | -w width] [file ...]\n"
 		"Options: -c     center each line instead of formatting\n"
 		"         -d <chars> double-space after <chars> at line end\n"
 		"         -l <n> turn each <n> spaces at start of line into a tab\n"
