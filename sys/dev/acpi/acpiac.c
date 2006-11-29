@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.9 2006/10/19 08:56:46 marco Exp $ */
+/* $OpenBSD: acpiac.c,v 1.10 2006/11/29 22:17:07 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -69,7 +69,8 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
 
-	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev, acpiac_notify, sc);
+	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev,
+	    acpiac_notify, sc);
 
 	acpiac_getsta(sc); 
 
@@ -89,12 +90,8 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sens[0].type = SENSOR_INDICATOR;
 	sensor_add(&sc->sens[0]);
 	sc->sens[0].value = sc->sc_ac_stat;
-
-	if (sensor_task_register(sc, acpiac_refresh, 10))
-		printf(", unable to register update task\n");
 }
 
-/* XXX this is for debug only, remove later */
 void
 acpiac_refresh(void *arg)
 {
@@ -110,12 +107,12 @@ acpiac_getsta(struct acpiac_softc *sc)
 {
 	struct aml_value res;
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, NULL) != 0) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, NULL)) {
 		dnprintf(10, "%s: no _STA\n",
 		    DEVNAME(sc));
 	}
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PSR", 0, NULL, &res) != 0) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PSR", 0, NULL, &res)) {
 		dnprintf(10, "%s: no _PSR\n",
 		    DEVNAME(sc));
 		return (1);
@@ -136,10 +133,11 @@ acpiac_notify(struct aml_node *node, int notify_type, void *arg)
 
 	switch (notify_type) {
 	case 0x80:
-		acpiac_getsta(sc);
+		acpiac_refresh(sc);
 		dnprintf(10, "A/C status: %d\n", sc->sc_ac_stat);
 		break;
 	}
+
 
 	return (0);
 }

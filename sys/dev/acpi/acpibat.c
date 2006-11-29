@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.29 2006/10/19 18:02:19 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.30 2006/11/29 22:17:07 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -19,7 +19,6 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/rwlock.h>
 #include <sys/malloc.h>
 #include <sys/sensors.h>
 
@@ -73,8 +72,6 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
 
-	rw_init(&sc->sc_lock, "acpibat");
-
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res))
 		dnprintf(10, "%s: no _STA\n",
 		    DEVNAME(sc));
@@ -96,9 +93,6 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_bif.bif_type,
 		    sc->sc_bif.bif_oem);
 
-		if (sensor_task_register(sc, acpibat_refresh, 10))
-			printf(", unable to register update task\n");
-
 		acpibat_monitor(sc);
 
 	}
@@ -108,7 +102,6 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	    acpibat_notify, sc);
 }
 
-/* XXX this is for debug only, remove later */
 void
 acpibat_monitor(struct acpibat_softc *sc)
 {
@@ -183,8 +176,6 @@ acpibat_refresh(void *arg)
 	acpibat_getbif(sc);
 	acpibat_getbst(sc); 
 
-	rw_enter_write(&sc->sc_lock);
-
 	sc->sc_sens[0].value = sc->sc_bif.bif_last_capacity * 1000;
 	sc->sc_sens[1].value = sc->sc_bif.bif_warning * 1000;
 	sc->sc_sens[2].value = sc->sc_bif.bif_low * 1000;
@@ -206,8 +197,6 @@ acpibat_refresh(void *arg)
 	sc->sc_sens[5].value = sc->sc_bst.bst_rate;
 	sc->sc_sens[6].value = sc->sc_bst.bst_capacity * 1000;
 	sc->sc_sens[7].value = sc->sc_bst.bst_voltage * 1000;
-
-	rw_exit_write(&sc->sc_lock);
 }
 
 int
@@ -236,8 +225,6 @@ acpibat_getbif(struct acpibat_softc *sc)
 		goto out;
 	}
 
-	rw_enter_write(&sc->sc_lock);
-
 	memset(&sc->sc_bif, 0, sizeof sc->sc_bif);
 	sc->sc_bif.bif_power_unit = aml_val2int(res.v_package[0]);
 	sc->sc_bif.bif_capacity = aml_val2int(res.v_package[1]);
@@ -257,8 +244,6 @@ acpibat_getbif(struct acpibat_softc *sc)
 		sizeof(sc->sc_bif.bif_type));
 	strlcpy(sc->sc_bif.bif_oem, aml_strval(res.v_package[12]),
 		sizeof(sc->sc_bif.bif_oem));
-
-	rw_exit_write(&sc->sc_lock);
 
 	dnprintf(60, "power_unit: %u capacity: %u last_cap: %u tech: %u "
 	    "volt: %u warn: %u low: %u gran1: %u gran2: %d model: %s "
@@ -303,15 +288,11 @@ acpibat_getbst(struct acpibat_softc *sc)
 		goto out;
 	}
 
-	rw_enter_write(&sc->sc_lock);
-
 	sc->sc_bst.bst_state = aml_val2int(res.v_package[0]);
 	sc->sc_bst.bst_rate = aml_val2int(res.v_package[1]);
 	sc->sc_bst.bst_capacity = aml_val2int(res.v_package[2]);
 	sc->sc_bst.bst_voltage = aml_val2int(res.v_package[3]);
 	aml_freevalue(&res);
-
-	rw_exit_write(&sc->sc_lock);
 
 	dnprintf(60, "state: %u rate: %u cap: %u volt: %u ",
 	    sc->sc_bst.bst_state,

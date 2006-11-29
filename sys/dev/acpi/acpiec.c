@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.8 2006/11/25 16:25:53 jordan Exp $ */
+/* $OpenBSD: acpiec.c,v 1.9 2006/11/29 22:17:07 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -21,7 +21,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 
@@ -98,8 +97,8 @@ struct acpiec_softc {
 	struct aml_node		*sc_devnode;
 	u_int32_t		sc_gpe;
   	struct acpiec_event	sc_events[ACPIEC_MAX_EVENTS];
-	struct rwlock		sc_lock;
 	int			sc_locked;
+	int			sc_handling_events;
 };
 
 
@@ -207,7 +206,14 @@ acpiec_sci_event(struct acpiec_softc *sc)
 	evt = bus_space_read_1(sc->sc_data_bt, sc->sc_data_bh, 0);
 
 	dnprintf(10, "%s: sci_event: 0x%02x\n", DEVNAME(sc), (int) evt);
-	aml_evalnode(sc->sc_acpi, sc->sc_events[evt].event, 0, NULL, NULL);
+
+	/* FIXME this call is recursive, this works around that */
+	if (sc->sc_handling_events == 0) {
+		sc->sc_handling_events = 1;
+		aml_evalnode(sc->sc_acpi, sc->sc_events[evt].event, 0, NULL,
+		    NULL);
+		sc->sc_handling_events = 0;
+	}
 }
 
 u_int8_t
@@ -248,7 +254,12 @@ void
 acpiec_read(struct acpiec_softc *sc, u_int8_t addr, int len, u_int8_t *buffer)
 {
 	int reg;
-	rw_enter_write(&sc->sc_lock);
+
+	/*
+	 * this works because everything runs in the acpi thread context.
+	 * at some point add a lock to deal with concurrency so that a
+	 * transaction does not get interrupted.
+	 */
 	sc->sc_locked = 1;
 
 	acpiec_burst_enable(sc);
@@ -258,14 +269,18 @@ acpiec_read(struct acpiec_softc *sc, u_int8_t addr, int len, u_int8_t *buffer)
 		buffer[reg] = acpiec_read_1(sc, addr + reg);
 
 	sc->sc_locked = 0;
-	rw_exit_write(&sc->sc_lock);
 }
 
 void
 acpiec_write(struct acpiec_softc *sc, u_int8_t addr, int len, u_int8_t *buffer)
 {
 	int reg;
-	rw_enter_write(&sc->sc_lock);
+
+	/*
+	 * this works because everything runs in the acpi thread context.
+	 * at some point add a lock to deal with concurrency so that a
+	 * transaction does not get interrupted.
+	 */
 	sc->sc_locked = 1;
 
 	acpiec_burst_enable(sc);
@@ -274,7 +289,6 @@ acpiec_write(struct acpiec_softc *sc, u_int8_t addr, int len, u_int8_t *buffer)
 		acpiec_write_1(sc, addr + reg, buffer[reg]);
 
 	sc->sc_locked = 0;
-	rw_exit_write(&sc->sc_lock);
 }
 
 int
@@ -301,7 +315,6 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
 
-	rw_init(&sc->sc_lock, "acpi_ec");
 	sc->sc_locked = 0;
 
 	if (sc->sc_acpi->sc_ec != NULL) {
@@ -358,6 +371,7 @@ acpiec_gpehandler(struct acpi_softc *acpi_sc, int gpe, void *arg)
 	mask = (1L << (gpe & 7));
 	acpi_write_pmreg(acpi_sc, ACPIREG_GPE_STS, gpe>>3, mask);
 	acpi_write_pmreg(acpi_sc, ACPIREG_GPE_EN,  gpe>>3, mask);
+
 	return (0);
 }
 

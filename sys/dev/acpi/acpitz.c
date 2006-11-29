@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.8 2006/11/02 04:58:20 marco Exp $ */
+/* $OpenBSD: acpitz.c,v 1.9 2006/11/29 22:17:07 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -21,7 +21,6 @@
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/rwlock.h>
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
@@ -42,7 +41,6 @@ struct acpitz_softc {
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
 
-	struct rwlock		sc_lock;
 	int			sc_tmp;
 	int			sc_crt;
 	int                     sc_hot;
@@ -104,8 +102,6 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
 
-	rw_init(&sc->sc_lock, "acpitz");
-
 	memset(&res, 0, sizeof(res));
 	memset(&env, 0, sizeof(env));
 
@@ -143,9 +139,6 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sens.type = SENSOR_TEMP;
 	sensor_add(&sc->sc_sens);
 	sc->sc_sens.value = 0;
-	
-	if (sensor_task_register(sc, acpitz_refresh, 10))
-		printf(", unable to register update task");
 	
 	printf("\n");
 }
@@ -302,11 +295,7 @@ acpitz_refresh(void *arg)
 		}
 	}
 
-	rw_enter_write(&sc->sc_lock);
-
 	sc->sc_sens.value = sc->sc_tmp * 100000;
-
-	rw_exit_write(&sc->sc_lock);
 }
 
 int
@@ -314,8 +303,6 @@ acpitz_getreading(struct acpitz_softc *sc, char *name)
 {
 	struct aml_value	res;
 	int			rv = -1;
-
-	rw_enter_write(&sc->sc_lock);
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, name, 0, NULL, &res)) {
 		dnprintf(10, "%s: no %s\n", DEVNAME(sc), name);
@@ -325,7 +312,7 @@ acpitz_getreading(struct acpitz_softc *sc, char *name)
 	rv = aml_val2int(&res);
  out:
 	aml_freevalue(&res);
-	rw_exit_write(&sc->sc_lock);
+
 	return (rv);
 }
 

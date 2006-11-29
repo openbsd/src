@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.10 2006/10/19 08:56:46 marco Exp $ */
+/* $OpenBSD: acpidev.h,v 1.11 2006/11/29 22:17:07 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -270,7 +270,6 @@ struct acpibat_softc {
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
 
-	struct rwlock		sc_lock;
 	struct acpibat_bif	sc_bif;
 	struct acpibat_bst	sc_bst;
 	volatile int		sc_bat_present;

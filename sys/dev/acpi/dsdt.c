@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.66 2006/11/27 23:43:47 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.67 2006/11/29 22:17:07 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -420,6 +420,11 @@ acpi_stall(int us)
 int
 acpi_mutex_acquire(struct aml_value *val, int timeout)
 {
+	/* XXX we currently do not have concurrency so assume mutex succeeds */
+	dnprintf(50, "acpi_mutex_acquire\n");
+
+	return (0);
+#if 0
 	struct acpi_mutex *mtx = val->v_mutex;
 	int rv = 0, ts, tries = 0;
 
@@ -449,11 +454,14 @@ acpi_mutex_acquire(struct aml_value *val, int timeout)
 	rw_exit_write(&mtx->amt_lock);
 done:
 	return (rv);
+#endif
 }
 
 void
 acpi_mutex_release(struct aml_value *val)
 {
+	dnprintf(50, "acpi_mutex_release\n");
+#if 0
 	struct acpi_mutex *mtx = val->v_mutex;
 
 	/* sanity */
@@ -473,6 +481,7 @@ acpi_mutex_release(struct aml_value *val)
 	wakeup(mtx); /* wake all of them up */
 done:
 	rw_exit_write(&mtx->amt_lock);
+#endif
 }
 
 /*
@@ -2220,6 +2229,7 @@ aml_parsenamed(struct aml_scope *scope, int opcode, struct aml_value *res)
 		_aml_setvalue(res, AML_OBJTYPE_EVENT, 0, NULL);
 		break;
 	case AMLOP_MUTEX:
+		/* XXX mutex is unused since we don't have concurrency */
 		_aml_setvalue(res, AML_OBJTYPE_MUTEX, 0, NULL);
 		res->v_mutex = (struct acpi_mutex *)acpi_os_malloc(
 		    sizeof(struct acpi_mutex));
@@ -2664,7 +2674,6 @@ aml_parsemuxaction(struct aml_scope *scope, int opcode, struct aml_value *res)
 		/* Assert: tmparg is AML_OBJTYPE_MUTEX */
 		i1 = aml_parseint(scope, AMLOP_WORDPREFIX);
 		rv = acpi_mutex_acquire(tmparg->v_objref.ref, i1);
-
 		/* Return true if timed out */
 		aml_setvalue(scope, res, NULL, rv);
 		break;
