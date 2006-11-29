@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.12 2006/11/29 12:13:55 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.13 2006/11/29 19:08:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -865,7 +865,7 @@ cfxga_expand_char(struct cfxga_screen *scr, u_int uc, int x, int y, long attr)
 	pos = (y * ri->ri_width + x) * ri->ri_depth / 8;
 	fontbits = (u_int8_t *)(font->data + (uc - font->firstchar) *
 	    ri->ri_fontscale);
-	rasops_unpack_attr(attr, &fg, &bg, &ul);
+	ri->ri_ops.unpack_attr(ri, attr, &fg, &bg, &ul);
 
 	/* Wait for previous operations to complete */
 	if ((rc = cfxga_synchronize(sc)) != 0)
@@ -959,7 +959,8 @@ cfxga_repaint_screen(struct cfxga_screen *scr)
 		for (lx = 0, x = ri->ri_xorigin; lx < ri->ri_cols;
 		    lx++, x += cx) {
 			if (cell->uc == 0 || cell->uc == ' ') {
-				rasops_unpack_attr(cell->attr, &fg, &bg, NULL);
+				ri->ri_ops.unpack_attr(ri, cell->attr,
+				    &fg, &bg, NULL);
 				rc = cfxga_solid_fill(scr, x, y, cx, cy,
 				    ri->ri_devcmap[bg]);
 			} else {
@@ -1137,7 +1138,7 @@ cfxga_erasecols(void *cookie, int row, int col, int num, long attr)
 	if (scr != scr->scr_sc->sc_active)
 		return;
 
-	rasops_unpack_attr(attr, &fg, &bg, NULL);
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 	x = col * ri->ri_font->fontwidth + ri->ri_xorigin;
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = num * ri->ri_font->fontwidth;
@@ -1166,7 +1167,7 @@ cfxga_eraserows(void *cookie, int row, int num, long attr)
 	if (scr != scr->scr_sc->sc_active)
 		return;
 
-	rasops_unpack_attr(attr, &fg, &bg, NULL);
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 	x = ri->ri_xorigin;
 	y = row * ri->ri_font->fontheight + ri->ri_yorigin;
 	cx = ri->ri_emuwidth;
@@ -1193,7 +1194,7 @@ cfxga_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	if (uc == ' ') {
 		int cx, cy, fg, bg;
 
-		rasops_unpack_attr(attr, &fg, &bg, NULL);
+		ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 		cx = ri->ri_font->fontwidth;
 		cy = ri->ri_font->fontheight;
 		cfxga_solid_fill(scr, x, y, cx, cy, ri->ri_devcmap[bg]);

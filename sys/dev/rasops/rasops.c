@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.14 2006/03/10 20:03:38 miod Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.15 2006/11/29 19:08:22 miod Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -146,6 +146,7 @@ int	rasops_alloc_cattr(void *, int, int, int, long *);
 int	rasops_alloc_mattr(void *, int, int, int, long *);
 void	rasops_do_cursor(struct rasops_info *);
 void	rasops_init_devcmap(struct rasops_info *);
+void	rasops_unpack_attr(void *, long, int *, int *, int *);
 
 #if NRASOPS_ROTATION > 0
 void	rasops_copychar(void *, int, int, int, int);
@@ -347,6 +348,7 @@ rasops_reconfig(ri, wantrows, wantcols)
 	ri->ri_ops.erasecols = rasops_erasecols;
 	ri->ri_ops.eraserows = rasops_eraserows;
 	ri->ri_ops.cursor = rasops_cursor;
+	ri->ri_ops.unpack_attr = rasops_unpack_attr;
 	ri->ri_do_cursor = rasops_do_cursor;
 	ri->ri_updatecursor = NULL;
 
@@ -808,11 +810,11 @@ rasops_init_devcmap(ri)
  * Unpack a rasops attribute
  */
 void
-rasops_unpack_attr(attr, fg, bg, underline)
+rasops_unpack_attr(cookie, attr, fg, bg, underline)
+	void *cookie;
 	long attr;
 	int *fg, *bg, *underline;
 {
-
 	*fg = ((u_int)attr >> 24) & 0xf;
 	*bg = ((u_int)attr >> 16) & 0xf;
 	if (underline != NULL)

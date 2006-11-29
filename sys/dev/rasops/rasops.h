@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.7 2005/09/15 20:23:10 miod Exp $ */
+/*	$OpenBSD: rasops.h,v 1.8 2006/11/29 19:08:22 miod Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -152,7 +152,6 @@ void	rasops32_init(struct rasops_info *);
 /* rasops.c */
 int	rasops_init(struct rasops_info *, int, int);
 int	rasops_reconfig(struct rasops_info *, int, int);
-void	rasops_unpack_attr(long, int *, int *, int *);
 void	rasops_eraserows(void *, int, int, long);
 void	rasops_erasecols(void *, int, int, int, long);
 

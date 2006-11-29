@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay.c,v 1.8 2006/11/29 12:13:54 miod Exp $ */
+/* $OpenBSD: pcdisplay.c,v 1.9 2006/11/29 19:08:22 miod Exp $ */
 /* $NetBSD: pcdisplay.c,v 1.9.4.1 2000/06/30 16:27:48 simonb Exp $ */
 
 /*
@@ -71,6 +71,7 @@ static void pcdisplay_init(struct pcdisplay_config *,
 			     bus_space_tag_t, bus_space_tag_t,
 			     int);
 static int pcdisplay_alloc_attr(void *, int, int, int, long *);
+static void pcdisplay_unpack_attr(void *, long, int *, int *, int *);
 
 struct cfattach pcdisplay_ca = {
 	sizeof(struct pcdisplay_softc), pcdisplay_match, pcdisplay_attach,
@@ -84,7 +85,8 @@ const struct wsdisplay_emulops pcdisplay_emulops = {
 	pcdisplay_erasecols,
 	pcdisplay_copyrows,
 	pcdisplay_eraserows,
-	pcdisplay_alloc_attr
+	pcdisplay_alloc_attr,
+	pcdisplay_unpack_attr
 };
 
 const struct wsscreen_descr pcdisplay_scr = {
@@ -414,6 +416,23 @@ pcdisplay_alloc_attr(id, fg, bg, flags, attrp)
 	else
 		*attrp = FG_LIGHTGREY | BG_BLACK;
 	return (0);
+}
+
+static void
+pcdisplay_unpack_attr(id, attr, fg, bg, ul)
+	void *id;
+	long attr;
+	int *fg, *bg, *ul;
+{
+	if (attr == (FG_BLACK | BG_LIGHTGREY)) {
+		*fg = WSCOL_BLACK;
+		*bg = WSCOL_WHITE;
+	} else {
+		*fg = WSCOL_WHITE;
+		*bg = WSCOL_BLACK;
+	}
+	if (ul != NULL)
+		*ul = 0;
 }
 
 struct cfdriver pcdisplay_cd = {

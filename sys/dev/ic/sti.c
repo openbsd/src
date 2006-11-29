@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.46 2006/11/29 12:15:27 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.47 2006/11/29 19:08:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -60,7 +60,8 @@ void sti_copycols(void *v, int row, int srccol, int dstcol, int ncols);
 void sti_erasecols(void *v, int row, int startcol, int ncols, long attr);
 void sti_copyrows(void *v, int srcrow, int dstrow, int nrows);
 void sti_eraserows(void *v, int row, int nrows, long attr);
-int  sti_alloc_attr(void *v, int fg, int bg, int flags, long *);
+int  sti_alloc_attr(void *v, int fg, int bg, int flags, long *pattr);
+void sti_unpack_attr(void *v, long attr, int *fg, int *bg, int *ul);
 
 struct wsdisplay_emulops sti_emulops = {
 	sti_cursor,
@@ -70,7 +71,8 @@ struct wsdisplay_emulops sti_emulops = {
 	sti_erasecols,
 	sti_copyrows,
 	sti_eraserows,
-	sti_alloc_attr
+	sti_alloc_attr,
+	sti_unpack_attr
 };
 
 int sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p);
@@ -95,7 +97,7 @@ struct wsscreen_descr sti_default_screen = {
 	"default", 0, 0,
 	&sti_emulops,
 	0, 0,
-	WSSCREEN_REVERSE | WSSCREEN_UNDERLINE
+	0
 };
 
 const struct wsscreen_descr *sti_default_scrlist[] = {
@@ -1033,6 +1035,15 @@ sti_alloc_attr(v, fg, bg, flags, pattr)
 	*pattr = 0;
 
 	return 0;
+}
+
+void
+sti_unpack_attr(void *v, long attr, int *fg, int *bg, int *ul)
+{
+	*fg = WSCOL_WHITE;
+	*bg = WSCOL_BLACK;
+	if (ul != NULL)
+		*ul = 0;
 }
 
 /*

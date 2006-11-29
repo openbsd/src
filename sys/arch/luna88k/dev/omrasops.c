@@ -1,4 +1,4 @@
-/* $OpenBSD: omrasops.c,v 1.3 2006/08/06 13:04:33 miod Exp $ */
+/* $OpenBSD: omrasops.c,v 1.4 2006/11/29 19:08:22 miod Exp $ */
 /* $NetBSD: omrasops.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
 
 /*-
@@ -94,7 +94,7 @@ om_putchar(cookie, row, startcol, uc, attr)
 	height = ri->ri_font->fontheight;
 	fb = ri->ri_font->data +
 	    (uc - ri->ri_font->firstchar) * ri->ri_fontscale;
-	rasops_unpack_attr(attr, &fg, &bg, NULL);
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 	inverse = (bg != 0) ? ALL1BITS : ALL0BITS;
 
 	p = (caddr_t)ri->ri_bits + y * scanspan + ((startx / 32) * 4);

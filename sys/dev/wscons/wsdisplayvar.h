@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.19 2006/11/29 12:13:55 miod Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.20 2006/11/29 19:08:23 miod Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -55,16 +55,14 @@ struct device;
 struct wsdisplay_emulops {
 	void	(*cursor)(void *c, int on, int row, int col);
 	int	(*mapchar)(void *, int, unsigned int *);
-	void	(*putchar)(void *c, int row, int col,
-				u_int uc, long attr);
+	void	(*putchar)(void *c, int row, int col, u_int uc, long attr);
 	void	(*copycols)(void *c, int row, int srccol, int dstcol,
 		    int ncols);
-	void	(*erasecols)(void *c, int row, int startcol,
-		    int ncols, long);
-	void	(*copyrows)(void *c, int srcrow, int dstrow,
-		    int nrows);
-	void	(*eraserows)(void *c, int row, int nrows, long);
-	int	(*alloc_attr)(void *c, int fg, int bg, int flags, long *);
+	void	(*erasecols)(void *c, int row, int startcol, int ncols, long);
+	void	(*copyrows)(void *c, int srcrow, int dstrow, int nrows);
+	void	(*eraserows)(void *c, int row, int nrows, long attr);
+	int	(*alloc_attr)(void *c, int fg, int bg, int flags, long *attrp);
+	void	(*unpack_attr)(void *c, long attr, int *fg, int *bg, int *ul);
 /* fg / bg values. Made identical to ANSI terminal color codes. */
 /* XXX should be #if NWSEMUL_SUN > 1 */
 #if defined(__sparc__) || defined(__sparc64__)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ega.c,v 1.9 2006/11/29 12:13:54 miod Exp $ */
+/* $OpenBSD: ega.c,v 1.10 2006/11/29 19:08:22 miod Exp $ */
 /* $NetBSD: ega.c,v 1.4.4.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -112,6 +112,7 @@ static void ega_init(struct ega_config *,
 			  bus_space_tag_t, bus_space_tag_t, int);
 static void ega_setfont(struct ega_config *, struct egascreen *);
 static int ega_alloc_attr(void *, int, int, int, long *);
+static void ega_unpack_attr(void *, long, int *, int *, int *);
 void ega_copyrows(void *, int, int, int);
 
 struct cfattach ega_ca = {
@@ -130,13 +131,14 @@ const struct wsdisplay_emulops ega_emulops = {
 	pcdisplay_erasecols,
 	ega_copyrows,
 	pcdisplay_eraserows,
-	ega_alloc_attr
+	ega_alloc_attr,
+	ega_unpack_attr
 };
 
 /*
  * translate WS(=ANSI) color codes to standard pc ones
  */
-static unsigned char fgansitopc[] = {
+static const unsigned char fgansitopc[] = {
 	FG_BLACK, FG_RED, FG_GREEN, FG_BROWN, FG_BLUE,
 	FG_MAGENTA, FG_CYAN, FG_LIGHTGREY
 }, bgansitopc[] = {
@@ -144,6 +146,18 @@ static unsigned char fgansitopc[] = {
 	BG_MAGENTA, BG_CYAN, BG_LIGHTGREY
 };
 
+/*
+ * translate standard pc color codes to WS(=ANSI) ones
+ */
+static const u_int8_t pctoansi[] = {
+#ifdef __alpha__
+	WSCOL_BLACK, WSCOL_RED, WSCOL_GREEN, WSCOL_BROWN,
+	WSCOL_BLUE, WSCOL_MAGENTA, WSCOL_CYAN, WSCOL_WHITE
+#else
+	WSCOL_BLACK, WSCOL_BLUE, WSCOL_GREEN, WSCOL_CYAN,
+	WSCOL_RED, WSCOL_MAGENTA, WSCOL_BROWN, WSCOL_WHITE
+#endif
+};
 const struct wsscreen_descr ega_stdscreen = {
 	"80x25", 80, 25,
 	&ega_emulops,
@@ -883,6 +897,30 @@ ega_alloc_attr(id, fg, bg, flags, attrp)
 	if (flags & WSATTR_BLINK)
 		*attrp |= FG_BLINK;
 	return (0);
+}
+
+void
+ega_unpack_attr(id, attr, fg, bg, ul)
+	void *id;
+	long attr;
+	int *fg, *bg, *ul;
+{
+	struct egascreen *scr = id;
+	struct ega_config *vc = scr->cfg;
+
+	if (vc->hdl.vh_mono) {
+		*fg = (attr & 0x07) == 0x07 ? WSCOL_WHITE : WSCOL_BLACK;
+		*bg = attr & 0x70 ? WSCOL_WHITE : WSCOL_BLACK;
+		if (ul != NULL)
+			*ul = *fg != WSCOL_WHITE && (attr & 0x01) ? 1 : 0;
+	} else {
+		*fg = pctoansi[attr & 0x07];
+		*bg = pctoansi[(attr & 0x70) >> 4];
+		if (*ul != NULL)
+			*ul = 0;
+	}
+	if (attr & FG_INTENSE)
+		*fg += 8;
 }
 
 void

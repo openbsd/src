@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.8 2006/06/02 20:00:56 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.9 2006/11/29 19:08:23 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -615,7 +615,7 @@ zx_fillrect(struct rasops_info *ri, int x, int y, int w, int h, long attr,
 	zc = sc->sc_zc;
 	zd = sc->sc_zd_ss0;
 
-	rasops_unpack_attr(attr, &fg, &bg, NULL);
+	ri->ri_ops.unpack_attr(ri, attr, &fg, &bg, NULL);
 	x = x * ri->ri_font->fontwidth + ri->ri_xorigin;
 	y = y * ri->ri_font->fontheight + ri->ri_yorigin;
 	w = ri->ri_font->fontwidth * w - 1;
@@ -703,7 +703,7 @@ zx_eraserows(void *cookie, int row, int num, long attr)
 		zc = sc->sc_zc;
 		zd = sc->sc_zd_ss0;
 
-		rasops_unpack_attr(attr, &fg, &bg, NULL);
+		ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 
 		while ((zc->zc_csr & ZX_CSR_BLT_BUSY) != 0)
 			;
@@ -751,7 +751,7 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 
 	ri = (struct rasops_info *)cookie;
 	font = ri->ri_font;
-	rasops_unpack_attr(attr, &fg, &bg, &ul);
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, &ul);
 
 	dp = (volatile u_int32_t *)ri->ri_bits +
 	    ZX_COORDS(col * font->fontwidth, row * font->fontheight);

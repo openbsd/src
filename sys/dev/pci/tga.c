@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.27 2006/11/29 12:13:55 miod Exp $ */
+/* $OpenBSD: tga.c,v 1.28 2006/11/29 19:08:22 miod Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -132,6 +132,7 @@ struct wsdisplay_emulops tga_emulops = {
 	tga_copyrows,
 	tga_eraserows,
 	NULL,
+	NULL
 };
 
 struct wsscreen_descr tga_stdscreen = {
@@ -1277,7 +1278,7 @@ tga_putchar(c, row, col, uc, attr)
 	 * The rasops code has already expanded the color entry to 32 bits
 	 * for us, even for 8-bit displays, so we don't have to do anything.
 	 */
-	rasops_unpack_attr(attr, &fg, &bg, &ul);
+	ri->ri_ops.unpack_attr(c, attr, &fg, &bg, &ul);
 	TGAWREG(dc, TGA_REG_GFGR, ri->ri_devcmap[fg]);
 	TGAWREG(dc, TGA_REG_GBGR, ri->ri_devcmap[bg]);
 	
@@ -1328,7 +1329,7 @@ tga_eraserows(c, row, num, attr)
 	int fg, bg;
 	int32_t *rp;
 
-	rasops_unpack_attr(attr, &fg, &bg, NULL);
+	ri->ri_ops.unpack_attr(c, attr, &fg, &bg, NULL);
 	color = ri->ri_devcmap[bg];
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale);
 	lines = num * ri->ri_font->fontheight;
@@ -1384,7 +1385,7 @@ tga_erasecols (c, row, col, num, attr)
 	int fg, bg;
 	int32_t *rp;
 
-	rasops_unpack_attr(attr, &fg, &bg, NULL);
+	ri->ri_ops.unpack_attr(c, attr, &fg, &bg, NULL);
 	color = ri->ri_devcmap[bg];
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 	lines = ri->ri_font->fontheight;
