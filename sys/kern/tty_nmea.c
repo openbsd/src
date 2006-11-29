@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.12 2006/11/28 17:20:25 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.13 2006/11/29 13:26:50 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -57,6 +57,7 @@ struct nmea {
 	int64_t		last;		/* last time rcvd */
 	int		sync;
 	int		pos;
+	char		mode;		/* GPS mode */
 };
 
 /* NMEA decoding */
@@ -295,33 +296,39 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 #endif
 	}
 	if (np->time.status == SENSOR_S_UNKNOWN) {
-		strlcpy(np->time.desc, "GPS", sizeof(np->time.desc));
-		if (fldcnt == 13) {
-			switch (*fld[12]) {
-			case 'S':
-				strlcat(np->time.desc, " simulated",
-				    sizeof(np->time.desc));
-				break;
-			case 'E':
-				strlcat(np->time.desc, " estimated",
-				    sizeof(np->time.desc));
-				break;
-			case 'A':
-				strlcat(np->time.desc, " autonomous",
-				    sizeof(np->time.desc));
-				break;
-			case 'D':
-				strlcat(np->time.desc, " differential",
-				    sizeof(np->time.desc));
-				break;
-			case 'N':
-				strlcat(np->time.desc, " not valid",
-				    sizeof(np->time.desc));
-				break;
-			}
-		}
 		np->time.status = SENSOR_S_OK;
 		np->time.flags &= ~SENSOR_FINVALID;
+		if (fldcnt != 13)
+			strlcpy(np->time.desc, "GPS", sizeof(np->time.desc));
+	}
+	if (fldcnt == 13 && *fld[12] != np->mode) {
+		np->mode = *fld[12];
+		switch (np->mode) {
+		case 'S':
+			strlcpy(np->time.desc, "GPS simulated",
+			    sizeof(np->time.desc));
+			break;
+		case 'E':
+			strlcpy(np->time.desc, "GPS estimated",
+			    sizeof(np->time.desc));
+			break;
+		case 'A':
+			strlcpy(np->time.desc, "GPS autonomous",
+			    sizeof(np->time.desc));
+			break;
+		case 'D':
+			strlcpy(np->time.desc, "GPS differential",
+			    sizeof(np->time.desc));
+			break;
+		case 'N':
+			strlcpy(np->time.desc, "GPS not valid",
+			    sizeof(np->time.desc));
+			break;
+		default:
+			strlcpy(np->time.desc, "GPS unknown",
+			    sizeof(np->time.desc));
+			DPRINTF(("gprmc: unknown mode '%c'\n", np->mode));
+		}
 	}
 	switch (*fld[2]) {
 	case 'A':
