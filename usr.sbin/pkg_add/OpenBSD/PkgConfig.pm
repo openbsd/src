@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.1 2006/11/29 11:10:16 espie Exp $
+# $OpenBSD: PkgConfig.pm,v 1.2 2006/11/29 16:54:11 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -93,11 +93,11 @@ sub write_fh
 	my ($self, $fh) = @_;
 
 	foreach my $variable (@{$self->{vlist}}) {
-		print "$variable=", $self->{variables}->{$variable}, "\n";
+		print $fh "$variable=", $self->{variables}->{$variable}, "\n";
 	}
-	print "\n\n";
+	print $fh "\n\n";
 	foreach my $property (@{$self->{proplist}}) {
-		print "$property:", 
+		print $fh "$property:", 
 			(map { " $_" } @{$self->{properties}->{$property}}), 
 			"\n";
 	}
@@ -112,11 +112,12 @@ sub write_file
 
 sub compress
 {
-	my ($class, $l) = @_;
+	my ($class, $l, $keep) = @_;
 	my $h = {};
 	my @r = ();
 	foreach my $i (@$l) {
 		next if defined $h->{$i};
+		next if defined $keep && !&$keep($i);
 		push(@r, $i);
 		$h->{$i} = 1;
 	}
@@ -169,6 +170,27 @@ sub get_variable
 		return $self->expanded($v, $extra);
 	} else {
 		return undef;
+	}
+}
+
+# to be used to make sure a config does not depend on absolute path names,
+# e.g., $cfg->add_bases(X11R6 => '/usr/X11R6');
+
+sub add_bases
+{
+	my ($self, $extra) = @_;
+
+	while (my ($k, $v) = each %$extra) {
+		for my $name (keys %{$self->{variables}}) {
+			$self->{variables}->{$name} =~ s/\Q$v\E\b/\$\{\Q$k\E\}/g;
+		}
+		for my $name (keys %{$self->{properties}}) {
+			for my $e (@{$self->{properties}->{$name}}) {
+				$e =~ s/\Q$v\E\b/\$\{\Q$k\E\}/g;
+			}
+		}
+		$self->{variables}->{$k} = $v;
+		unshift(@{$self->{vlist}}, $k);
 	}
 }
 
