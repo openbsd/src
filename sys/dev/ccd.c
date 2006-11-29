@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.67 2006/08/12 18:08:11 krw Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.68 2006/11/29 15:03:42 krw Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -182,7 +182,6 @@ long	ccdbuffer(struct ccd_softc *, struct buf *, daddr_t, caddr_t,
     long, struct ccdbuf **, int);
 void	ccdgetdisklabel(dev_t, struct ccd_softc *, struct disklabel *,
     struct cpu_disklabel *, int);
-void	ccdmakedisklabel(struct ccd_softc *);
 int	ccdlock(struct ccd_softc *);
 void	ccdunlock(struct ccd_softc *);
 INLINE struct ccdbuf *getccdbuf(void);
@@ -1518,30 +1517,9 @@ ccdgetdisklabel(dev_t dev, struct ccd_softc *cs, struct disklabel *lp,
 	 */
 	errstring = readdisklabel(CCDLABELDEV(dev), ccdstrategy,
 	    cs->sc_dkdev.dk_label, cs->sc_dkdev.dk_cpulabel, spoofonly);
-	if (errstring)
-		ccdmakedisklabel(cs);
-
 	/* It's actually extremely common to have unlabeled ccds. */
 	if (errstring != NULL)
 		CCD_DPRINTF(CCDB_LABEL, ("%s: %s\n", cs->sc_xname, errstring));
-}
-
-/*
- * Take care of things one might want to take care of in the event
- * that a disklabel isn't present.
- */
-void
-ccdmakedisklabel(struct ccd_softc *cs)
-{
-	struct disklabel *lp = cs->sc_dkdev.dk_label;
-
-	/*
-	 * For historical reasons, if there's no disklabel present
-	 * the raw partition must be marked FS_BSDFFS.
-	 */
-	lp->d_partitions[RAW_PART].p_fstype = FS_BSDFFS;
-
-	strncpy(lp->d_packname, "default label", sizeof(lp->d_packname));
 }
 
 /*
