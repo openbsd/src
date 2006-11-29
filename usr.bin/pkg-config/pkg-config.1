@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg-config.1,v 1.6 2006/11/28 08:11:04 jmc Exp $
+.\"	$OpenBSD: pkg-config.1,v 1.7 2006/11/29 14:58:32 jmc Exp $
 .\"
 .\"	Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 .\"
@@ -60,66 +60,66 @@ explicitly requested.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl -debug
-Enable internal development and debugging messages.
-.It Fl -help
-Print a help message and exit.
-.It Fl -usage
-Print a help message and exit.
-.It Fl -list-all
-List all installed packages and exit.
-.It Fl -version
-Print version of
-.Nm
-and exit.
-.It Fl -errors-to-stdout
-Direct error messages to stdout rather than stderr.
-.It Fl -print-errors
-Print error messages and exit with an error when errors occur.
-This is the default.
-.It Fl -silence-errors
-Do not print error messages, just exit with an error.
-.It Fl -atleast-pkgconfig-version Ar version
+.It Cm --atleast-pkgconfig-version Ar version
 Exit with error if the version of
 .Nm
 is greater than or equal to the specified version.
-.It Fl -cflags
-Return all compiler flags required to compile against the package.
-.It Fl -cflags-only-I
-Return only the include path flags required to compile against the package.
-.It Fl -cflags-only-other
-Return all compiler flags, other than the include path flags, required to
-compile against the package.
-.It Fl -libs
-Return all linker flags required to linker against the package.
-.It Fl -libs-only-l
-Return only the library (-lwhatever) flags required to link against
-the package.
-.It Fl -libs-only-L
-Return only the library path (-L/path/to/lib) flags required to link
-against the package.
-.It Fl -libs-only-other
-Return linker flags, other than the library and path flags, required to
-compile against the package.
-.It Fl -exists
-Return true if all the specified packages are installed.
-This is the default if no other option is given.
-.It Fl -uninstalled
-Allow packages not controlled by
-.Nm
-to be used.
-.It Fl -static
-Return the compiler and/or linker flags required for static linking.
-.It Fl -atleast-version Ar version
+.It Cm --atleast-version Ar version
 Exit with error if the specified package's version is not greater than
 or equal to the specified version.
-.It Fl -modversion
+.It Cm --cflags
+Return all compiler flags required to compile against the package.
+.It Cm --cflags-only-I
+Return only the include path flags required to compile against the package.
+.It Cm --cflags-only-other
+Return all compiler flags, other than the include path flags, required to
+compile against the package.
+.It Cm --debug
+Enable internal development and debugging messages.
+.It Cm --errors-to-stdout
+Direct error messages to stdout rather than stderr.
+.It Cm --exists
+Return true if all the specified packages are installed.
+This is the default if no other option is given.
+.It Cm --help
+Print a help message and exit.
+.It Cm --libs
+Return all linker flags required to linker against the package.
+.It Cm --libs-only-l
+Return only the library (-lwhatever) flags required to link against
+the package.
+.It Cm --libs-only-L
+Return only the library path (-L/path/to/lib) flags required to link
+against the package.
+.It Cm --libs-only-other
+Return linker flags, other than the library and path flags, required to
+compile against the package.
+.It Cm --list-all
+List all installed packages and exit.
+.It Cm --modversion
 Fetch package version.
 If no package is given,
 .Nm
 returns its own version.
-.It Fl -variable Ar name
+.It Cm --print-errors
+Print error messages and exit with an error when errors occur.
+This is the default.
+.It Cm --silence-errors
+Do not print error messages, just exit with an error.
+.It Cm --static
+Return the compiler and/or linker flags required for static linking.
+.It Cm --uninstalled
+Allow packages not controlled by
+.Nm
+to be used.
+.It Cm --usage
+Print a help message and exit.
+.It Cm --variable Ar name
 Fetch the value of the named variable.
+.It Cm --version
+Print version of
+.Nm
+and exit.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_CONFIG_PATH
