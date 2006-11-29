@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.14 2006/11/29 14:41:09 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.15 2006/11/29 14:52:19 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -682,7 +682,7 @@ ips_morpheus_intr(void *arg)
 	struct ccb *ccb;
 	struct scsi_xfer *xs;
 	u_int32_t oisr, oqpr;
-	int id, s, rv = 0;
+	int gsc, id, s, rv = 0;
 
 	oisr = IPS_READ_4(sc, IPS_MORPHEUS_OISR);
 	DPRINTF(IPS_D_INTR, ("%s: intr, OISR 0x%08x\n",
@@ -694,7 +694,17 @@ ips_morpheus_intr(void *arg)
 	while ((oqpr = IPS_READ_4(sc, IPS_MORPHEUS_OQPR)) != 0xffffffff) {
 		DPRINTF(IPS_D_INTR, ("OQPR 0x%08x\n", oqpr));
 
+		gsc = IPS_MORPHEUS_OQPR_GSC(oqpr);
 		id = IPS_MORPHEUS_OQPR_ID(oqpr);
+
+		if (gsc != IPS_MORPHEUS_GSC_NOERR &&
+		    gsc != IPS_MORPHEUS_GSC_RECOV) {
+			DPRINTF(IPS_D_ERR, ("%s: intr, error 0x%x",
+			    sc->sc_dev.dv_xname, gsc));
+			DPRINTF(IPS_D_ERR, (", OISR 0x%08x, OQPR 0x%08x\n",
+			    oisr, oqpr));
+		}
+
 		if (id >= sc->sc_ai.max_concurrent_cmds) {
 			DPRINTF(IPS_D_ERR, ("%s: intr, bogus id %d",
 			    sc->sc_dev.dv_xname, id));
