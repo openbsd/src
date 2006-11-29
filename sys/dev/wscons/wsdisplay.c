@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.72 2006/11/29 19:11:17 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.73 2006/11/29 19:12:53 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -61,8 +61,6 @@
 #include <dev/wscons/wsemulvar.h>
 #include <dev/wscons/wscons_callbacks.h>
 #include <dev/cons.h>
-
-#include <dev/ic/pcdisplay.h>
 
 #include "wsdisplay.h"
 #include "wskbd.h"
