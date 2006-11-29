@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.13 2006/11/29 14:38:17 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.14 2006/11/29 14:41:09 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/endian.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/timeout.h>
@@ -178,9 +179,9 @@ struct ips_driveinfo {
 
 /* I/O access helper macros */
 #define IPS_READ_4(s, r) \
-	bus_space_read_4((s)->sc_iot, (s)->sc_ioh, (r))
+	letoh32(bus_space_read_4((s)->sc_iot, (s)->sc_ioh, (r)))
 #define IPS_WRITE_4(s, r, v) \
-	bus_space_write_4((s)->sc_iot, (s)->sc_ioh, (r), (v))
+	bus_space_write_4((s)->sc_iot, (s)->sc_ioh, (r), htole32((v)))
 
 struct ccb {
 	int			c_id;
