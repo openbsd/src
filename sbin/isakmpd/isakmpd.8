@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.97 2006/11/29 14:50:06 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.98 2006/11/29 19:44:50 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -549,12 +549,6 @@ and named and stored after this easy formula:
 /etc/isakmpd/pubkeys/ufqdn/user@foo.bar.org
 .El
 .Pp
-By default, the system startup script
-.Xr rc 8
-generates a key-pair in
-.Pa local.key
-if it does not already exist, and the public key is extracted into
-.Pa local.pub .
 Depending on the
 .Dv ID-type
 field of
@@ -567,7 +561,9 @@ or key ID (KEY_ID).
 .Pp
 For example,
 .Nm
-can authenticate using the pre-generated keys if the local public key
+can authenticate using the pre-generated keys if the local public key,
+by default
+.Pa /etc/isakmpd/local.pub ,
 is copied to the remote gateway as
 .Pa /etc/isakmpd/pubkeys/ipv4/local.gateway.ip.address
 and the remote gateway's public key
@@ -613,12 +609,6 @@ is entered, the field will be left blank.
 .It
 Create Certificate Signing Requests (CSRs) for IKE peers.
 The CSRs are signed with a pre-generated private key.
-By default, the system startup script
-.Xr rc 8
-generates a key-pair in
-.Pa local.key
-if it does not already exist, and the public key is extracted into
-.Pa local.pub .
 .Pp
 This step, as well as the next one, needs to be done for every peer.
 Furthermore the last step will need to be done once for each ID you
