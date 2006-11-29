@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.68 2006/11/29 19:31:37 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.69 2006/11/29 22:40:13 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -240,7 +240,6 @@ findblkname(int maj)
 
 dev_t	argdev = NODEV;
 int	nswap;
-long	dumplo;
 
 /*
  * Attempt to find the device from which we were booted.

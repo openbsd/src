@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibiosvar.h,v 1.15 2005/11/23 09:24:57 mickey Exp $	*/
+/*	$OpenBSD: pcibiosvar.h,v 1.16 2006/11/29 22:40:13 miod Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ extern struct pcibios_pir_header pcibios_pir_header;
 extern struct pcibios_intr_routing *pcibios_pir_table;
 extern int pcibios_pir_table_nentries;
 
-int pcibios_flags;
+extern int pcibios_flags;
 
 typedef void *pciintr_icu_handle_t;
 

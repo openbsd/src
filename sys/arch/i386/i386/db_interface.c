@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.22 2006/10/24 19:03:10 marco Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.23 2006/11/29 22:40:13 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /*
@@ -67,6 +67,7 @@ boolean_t	 db_switch_cpu;
 long		 db_switch_to_cpu;
 #endif
 
+db_regs_t	ddb_regs;
 int	db_active = 0;
 
 void kdbprinttrap(int, int);

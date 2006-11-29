@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.34 2006/09/19 11:06:34 jsg Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.35 2006/11/29 22:40:13 miod Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -107,6 +107,7 @@
 
 #include <machine/biosvar.h>
 
+int pcibios_flags;
 int pcibios_present;
 
 struct pcibios_pir_header pcibios_pir_header;
