@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.15 2006/11/29 14:52:19 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.16 2006/11/29 18:18:39 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -395,7 +395,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	(*sc->sc_inten)(sc);
 
 	/* Attach SCSI bus */
-	sc->sc_scsi_link.openings = IPS_MAXCMDS;	/* XXX: for now */
+	sc->sc_scsi_link.openings = 1; /* XXX: for now */
 	sc->sc_scsi_link.adapter_target = IPS_MAXTARGETS;
 	sc->sc_scsi_link.adapter_buswidth = IPS_MAXTARGETS;
 	sc->sc_scsi_link.device = &ips_scsi_device;
