@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malo_pci.c,v 1.1 2006/11/19 14:20:55 mglocker Exp $ */
+/*	$OpenBSD: if_malo_pci.c,v 1.2 2006/11/29 10:37:11 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -75,6 +75,7 @@ struct cfattach malo_pci_ca = {
 };
 
 const struct pci_matchid malo_pci_devices[] = {
+	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8310 },
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8335_1 },
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8335_2 }
 };

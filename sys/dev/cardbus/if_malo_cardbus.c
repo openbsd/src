@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malo_cardbus.c,v 1.4 2006/10/29 11:41:34 mglocker Exp $ */
+/*	$OpenBSD: if_malo_cardbus.c,v 1.5 2006/11/29 10:37:11 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -70,6 +70,7 @@ struct cfattach malo_cardbus_ca = {
 };
 
 static const struct cardbus_matchid malo_cardbus_devices[] = {
+	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8310 },
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8335_1 },
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8335_2 }
 };
