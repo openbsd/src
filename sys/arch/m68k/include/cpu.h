@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.13 2006/06/11 20:48:13 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.14 2006/11/29 13:22:07 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.3 1997/02/02 06:56:57 thorpej Exp $	*/
 
 /*
@@ -199,11 +199,6 @@ struct trapframe;
 
 void	copypage(void *fromaddr, void *toaddr);
 void	zeropage(void *addr);
-#ifdef MAPPEDCOPY
-int	mappedcopyin(void *fromp, void *top, size_t count);
-int	mappedcopyout(void *fromp, void *top, size_t count);
-extern	u_int mappedcopysize;
-#endif /* MAPPEDCOPY */
 
 /* locore.s */
 void	TBIS(vaddr_t);
