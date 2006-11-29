@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.25 2006/10/16 15:00:10 millert Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.26 2006/11/29 12:34:19 miod Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: keyword.c,v 1.25 2006/10/16 15:00:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: keyword.c,v 1.26 2006/11/29 12:34:19 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,6 @@ VAR var[] = {
 	{"flags", "", "f"},
 	GID("gid", "GID", pvar, POFF(p_gid)),
 	{"group", "GROUP", NULL, LJUST, gname, USERLEN},
-	{"holdcnt", "HOLDCNT", NULL, 0, pvar, 8, 0, POFF(p_holdcnt), INT32, "d"},
 	{"ignored", "", "sigignore"},
 	{"inblk", "INBLK", NULL, USER, pvar, 4, 0, POFF(p_uru_inblock), UINT64, "lld"},
 	{"inblock", "", "inblk"},

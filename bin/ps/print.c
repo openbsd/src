@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.41 2006/05/02 05:25:19 hugh Exp $	*/
+/*	$OpenBSD: print.c,v 1.42 2006/11/29 12:34:19 miod Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.41 2006/05/02 05:25:19 hugh Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.42 2006/11/29 12:34:19 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -243,9 +243,6 @@ state(const struct kinfo_proc2 *kp, VARENT *ve)
 	}
 	cp++;
 
-	if (flag & P_INMEM) {
-	} else
-		*cp++ = 'W';
 	if (kp->p_nice < NZERO)
 		*cp++ = '<';
 	else if (kp->p_nice > NZERO)
@@ -260,9 +257,6 @@ state(const struct kinfo_proc2 *kp, VARENT *ve)
 		*cp++ = 'V';
 	if (flag & P_SYSTEM)
 		*cp++ = 'K';
-	/* XXX Since P_SYSTEM now shows a K, should L just be for holdcnt? */
-	if ((flag & P_SYSTEM) || kp->p_holdcnt)
-		*cp++ = 'L';
 	if ((flag & P_SYSTEM) == 0 &&
 	    kp->p_rlim_rss_cur / 1024 < pgtok(kp->p_vm_rssize))
 		*cp++ = '>';
@@ -541,7 +535,7 @@ getpcpu(const struct kinfo_proc2 *kp)
 #define	fxtofl(fixpt)	((double)(fixpt) / fscale)
 
 	/* XXX - I don't like this */
-	if (kp->p_swtime == 0 || (kp->p_flag & P_INMEM) == 0)
+	if (kp->p_swtime == 0)
 		return (0.0);
 	if (rawcpu)
 		return (100.0 * fxtofl(kp->p_pctcpu));
@@ -578,7 +572,7 @@ getpmem(const struct kinfo_proc2 *kp)
 	if (failure)
 		return (0.0);
 
-	if ((kp->p_flag & P_INMEM) == 0 || (kp->p_flag & P_SYSTEM))
+	if (kp->p_flag & P_SYSTEM)
 		return (0.0);
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = USPACE/getpagesize();

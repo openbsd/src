@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.62 2006/11/02 12:34:19 jmc Exp $
+.\"	$OpenBSD: ps.1,v 1.63 2006/11/29 12:34:19 miod Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -222,7 +222,6 @@ the include file
 .Bd -literal
 P_ADVLOCK 0x0000001  process may hold a POSIX advisory lock
 P_CONTROLT 0x0000002  process has a controlling terminal
-P_INMEM 0x0000004     process is loaded into memory
 P_NOCLDSTOP 0x0000008 no SIGCHLD when children stop
 P_PPWAIT 0x0000010    parent is waiting for child to
 		      exec/exit
@@ -253,8 +252,6 @@ P_SYSTRACE 0x0400000  process system call tracing is active
 Effective group.
 .It Cm group
 Text name of effective group ID.
-.It Cm holdcnt
-Number of holds on the process (if non-zero, process can't be swapped).
 .It Cm inblk
 Alias:
 .Cm inblock .
@@ -427,8 +424,6 @@ swapped.
 The process is trying to exit.
 .It K
 The process is a kernel thread.
-.It L
-The process has pages locked in core (for example, for raw I/O).
 .It N
 The process has a reduced CPU
 scheduling priority.
@@ -445,8 +440,6 @@ The process is a session leader.
 .It V
 The process is suspended during a
 .Xr vfork 2 .
-.It W
-The process is swapped out.
 .It X
 The process is being traced or debugged.
 .It x

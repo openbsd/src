@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.53 2006/09/20 21:26:20 ray Exp $	 */
+/* $OpenBSD: machine.c,v 1.54 2006/11/29 12:34:22 miod Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -475,15 +475,6 @@ format_next_process(caddr_t handle, char *(*get_userid)(uid_t))
 	pp = *(hp->next_proc++);
 	hp->remaining--;
 
-	if ((pp->p_flag & P_INMEM) == 0) {
-		/*
-		 * Print swapped processes as <pname>
-		 */
-		char buf[sizeof(pp->p_comm)];
-
-		(void) strlcpy(buf, pp->p_comm, sizeof(buf));
-		(void) snprintf(pp->p_comm, sizeof(pp->p_comm), "<%s>", buf);
-	}
 	cputime = (pp->p_uticks + pp->p_sticks + pp->p_iticks) / stathz;
 
 	/* calculate the base for cpu percentages */
