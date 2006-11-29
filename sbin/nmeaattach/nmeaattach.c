@@ -1,4 +1,4 @@
-/*	$OpenBSD: nmeaattach.c,v 1.4 2006/10/27 16:05:27 mbalmer Exp $	*/
+/*	$OpenBSD: nmeaattach.c,v 1.5 2006/11/29 12:05:32 mbalmer Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -84,7 +84,6 @@ main(int argc, char *argv[])
 	tcflag_t cflag = HUPCL;
 	int ch;
 	sigset_t sigset;
-	int i;
 	int nmeadisc = NMEADISC;
 	int nodaemon = 0;
 
@@ -169,6 +168,7 @@ main(int argc, char *argv[])
 	}
 }
 
+/* ARGSUSED */
 void
 coroner(int useless)
 {
