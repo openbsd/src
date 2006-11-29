@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.21 2006/09/19 11:06:33 jsg Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.22 2006/11/29 20:03:20 dim Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -23,11 +23,6 @@
 #include <machine/specialreg.h>
 
 pctrval pctr_idlcnt;  /* Gets incremented in locore.s */
-
-/* Pull in the cpuid values from locore.s */
-extern int cpu_id;
-extern int cpu_feature;
-extern char cpu_vendor[];
 
 int pctr_isintel;
 

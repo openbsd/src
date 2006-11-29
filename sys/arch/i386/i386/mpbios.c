@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.18 2006/11/11 21:47:52 kettenis Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.19 2006/11/29 20:03:19 dim Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -746,7 +746,6 @@ mpbios_cpu(const u_int8_t *ent, struct device *self)
 	 * we're running on
 	 */
 	if ((caa.cpu_signature & 0x00000fff) == 0) {
-		extern int cpu_id, cpu_feature;
 		caa.cpu_signature = cpu_id;
 		caa.feature_flags = cpu_feature;
 	}

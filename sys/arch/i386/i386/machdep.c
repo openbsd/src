@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.370 2006/11/28 18:35:19 dim Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.371 2006/11/29 20:03:19 dim Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -404,7 +404,6 @@ cpu_startup()
 	int sz;
 	vaddr_t minaddr, maxaddr, va;
 	paddr_t pa;
-	extern int cpu_id;
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -1565,7 +1564,6 @@ tm86_cpu_setup(struct cpu_info *ci)
 char *
 intel686_cpu_name(int model)
 {
-	extern int cpu_cache_edx;
 	char *ret = NULL;
 
 	switch (model) {
@@ -1636,13 +1634,6 @@ cyrix3_cpu_name(int model, int step)
 void
 identifycpu(struct cpu_info *ci)
 {
-	extern char cpu_vendor[];
-	extern char cpu_brandstr[];
-#ifdef CPUDEBUG
-	extern int cpu_cache_eax, cpu_cache_ebx, cpu_cache_ecx, cpu_cache_edx;
-#else
-	extern int cpu_cache_edx;
-#endif
 	const char *name, *modifier, *vendorname, *token;
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif, cachesize;
@@ -3341,11 +3332,6 @@ int
 cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
-	extern char cpu_vendor[];
-	extern int cpu_id;
-#if NAPM > 0
-	extern int cpu_apmwarn;
-#endif
 	dev_t dev;
 
 	switch (name[0]) {

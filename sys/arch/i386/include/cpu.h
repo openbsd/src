@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.82 2006/11/29 12:26:13 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.83 2006/11/29 20:03:20 dim Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -288,16 +288,27 @@ struct cpu_cpuid_feature {
 };
 
 #ifdef _KERNEL
+/* locore.s */
 extern int cpu;
-extern int cpu_class;
+extern int cpu_id;
+extern char cpu_vendor[]; /* note: NOT nul-terminated */
+extern char cpu_brandstr[];
+extern int cpuid_level;
 extern int cpu_miscinfo;
 extern int cpu_feature;
 extern int cpu_ecxfeature;
-extern int cpu_apmwarn;
+extern int cpu_cache_eax;
+extern int cpu_cache_ebx;
+extern int cpu_cache_ecx;
+extern int cpu_cache_edx;
+/* machdep.c */
 extern int cpu_apmhalt;
-extern int cpuid_level;
+extern int cpu_class;
+extern char cpu_model[];
 extern const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
 extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
+/* apm.c */
+extern int cpu_apmwarn;
 
 #if defined(I586_CPU) || defined(I686_CPU)
 extern int pentium_mhz;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.14 2006/11/29 16:03:00 dim Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.15 2006/11/29 20:03:20 dim Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -81,7 +81,6 @@ struct cfdriver ichpcib_cd = {
 };
 
 #ifndef SMALL_KERNEL
-extern char cpu_model[];
 static const char p4hint[] = "Mobile Intel(R) Pentium(R) 4";
 static void *ichss_cookie;	/* XXX */
 extern int setperf_prio;
