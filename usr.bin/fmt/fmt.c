@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.24 2006/11/29 20:09:27 jmc Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.25 2006/11/29 21:59:04 jmc Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -170,7 +170,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: fmt.c,v 1.24 2006/11/29 20:09:27 jmc Exp $";
+  "$OpenBSD: fmt.c,v 1.25 2006/11/29 21:59:04 jmc Exp $";
 static const char copyright[] =
   "Copyright (c) 1997 Gareth McCaughan. All rights reserved.\n";
 #endif /* not lint */
@@ -711,17 +711,8 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-		"Usage:   %s [-cmnps] [-d chars] [-l number] [-t number]\n"
-		"             [goal [maximum] | -width | -w width] [file ...]\n"
-		"Options: -c     center each line instead of formatting\n"
-		"         -d <chars> double-space after <chars> at line end\n"
-		"         -l <n> turn each <n> spaces at start of line into a tab\n"
-		"         -m     try to make sure mail header lines stay separate\n"
-		"         -n     format lines beginning with a dot\n"
-		"         -p     allow indented paragraphs\n"
-		"         -s     coalesce whitespace inside lines\n"
-		"         -t <n> have tabs every <n> columns\n"
-		"         -w <n> set maximum width to <n>\n"
-		"         goal   set target width to goal\n", __progname);
+		"usage: %s [-cmnps] [-d chars] [-l number] [-t number]\n"
+		"\t[goal [maximum] | -width | -w width] [file ...]\n",
+			__progname);
 	exit (1);
 }
