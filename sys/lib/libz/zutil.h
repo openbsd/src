@@ -1,4 +1,4 @@
-/*	$OpenBSD: zutil.h,v 1.16 2005/07/20 15:56:46 millert Exp $	*/
+/*	$OpenBSD: zutil.h,v 1.17 2006/11/29 10:37:03 mickey Exp $	*/
 /* zutil.h -- internal interface and configuration of the compression library
  * Copyright (C) 1995-2005 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -242,7 +242,7 @@ extern const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #endif
 
 /* Diagnostic functions */
-#ifdef DEBUG
+#ifdef DEBUG_LIBZ
 #  include <stdio.h>
    extern int z_verbose;
    extern void z_error    OF((char *m));
