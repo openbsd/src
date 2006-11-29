@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.4 2006/11/29 00:46:52 uwe Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.5 2006/11/29 14:16:43 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -191,11 +191,6 @@ void	sdmmc_go_idle_state(struct sdmmc_softc *);
 int	sdmmc_select_card(struct sdmmc_softc *, struct sdmmc_function *);
 int	sdmmc_set_relative_addr(struct sdmmc_softc *,
 	    struct sdmmc_function *);
-int	sdmmc_decode_csd(struct sdmmc_softc *, sdmmc_response,
-	    struct sdmmc_function *);
-int	sdmmc_decode_cid(struct sdmmc_softc *, sdmmc_response,
-	    struct sdmmc_function *);
-void	sdmmc_print_cid(struct sdmmc_cid *);
 
 int	sdmmc_io_enable(struct sdmmc_softc *);
 void	sdmmc_io_scan(struct sdmmc_softc *);

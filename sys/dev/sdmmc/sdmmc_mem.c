@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.5 2006/07/18 04:10:35 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.6 2006/11/29 14:16:43 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -26,6 +26,12 @@
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcreg.h>
 #include <dev/sdmmc/sdmmcvar.h>
+
+int	sdmmc_decode_csd(struct sdmmc_softc *, sdmmc_response,
+	    struct sdmmc_function *);
+int	sdmmc_decode_cid(struct sdmmc_softc *, sdmmc_response,
+	    struct sdmmc_function *);
+void	sdmmc_print_cid(struct sdmmc_cid *);
 
 int	sdmmc_mem_send_op_cond(struct sdmmc_softc *, u_int32_t, u_int32_t *);
 int	sdmmc_mem_set_blocklen(struct sdmmc_softc *, struct sdmmc_function *);
@@ -205,6 +211,98 @@ sdmmc_mem_scan(struct sdmmc_softc *sc)
 #endif
 	}
 }
+
+int
+sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
+    struct sdmmc_function *sf)
+{
+	struct sdmmc_csd *csd = &sf->csd;
+
+	if (ISSET(sc->sc_flags, SMF_SD_MODE)) {
+		/*
+		 * CSD version 1.0 corresponds to SD system
+		 * specification version 1.0 - 1.10. (SanDisk, 3.5.3)
+		 */
+		csd->csdver = SD_CSD_CSDVER(resp);
+		if (csd->csdver != SD_CSD_CSDVER_1_0) {
+			printf("%s: unknown SD CSD structure version 0x%x\n",
+			    SDMMCDEVNAME(sc), csd->csdver);
+			return 1;
+		}
+
+		csd->capacity = SD_CSD_CAPACITY(resp);
+		csd->read_bl_len = SD_CSD_READ_BL_LEN(resp);
+	} else {
+		csd->csdver = MMC_CSD_CSDVER(resp);
+		if (csd->csdver != MMC_CSD_CSDVER_1_0 &&
+		    csd->csdver != MMC_CSD_CSDVER_2_0) {
+			printf("%s: unknown MMC CSD structure version 0x%x\n",
+			    SDMMCDEVNAME(sc), csd->csdver);
+			return 1;
+		}
+
+		csd->mmcver = MMC_CSD_MMCVER(resp);
+		csd->capacity = MMC_CSD_CAPACITY(resp);
+		csd->read_bl_len = MMC_CSD_READ_BL_LEN(resp);
+	}
+	csd->sector_size = MIN(1 << csd->read_bl_len,
+	    sdmmc_chip_host_maxblklen(sc->sct, sc->sch));
+	if (csd->sector_size < (1<<csd->read_bl_len))
+		csd->capacity *= (1<<csd->read_bl_len) /
+		    csd->sector_size;
+
+	return 0;
+}
+
+int
+sdmmc_decode_cid(struct sdmmc_softc *sc, sdmmc_response resp,
+    struct sdmmc_function *sf)
+{
+	struct sdmmc_cid *cid = &sf->cid;
+
+	if (ISSET(sc->sc_flags, SMF_SD_MODE)) {
+		cid->mid = SD_CID_MID(resp);
+		cid->oid = SD_CID_OID(resp);
+		SD_CID_PNM_CPY(resp, cid->pnm);
+		cid->rev = SD_CID_REV(resp);
+		cid->psn = SD_CID_PSN(resp);
+		cid->mdt = SD_CID_MDT(resp);
+	} else {
+		switch(sf->csd.mmcver) {
+		case MMC_CSD_MMCVER_1_0:
+		case MMC_CSD_MMCVER_1_4:
+			cid->mid = MMC_CID_MID_V1(resp);
+			MMC_CID_PNM_V1_CPY(resp, cid->pnm);
+			cid->rev = MMC_CID_REV_V1(resp);
+			cid->psn = MMC_CID_PSN_V1(resp);
+			cid->mdt = MMC_CID_MDT_V1(resp);
+			break;
+		case MMC_CSD_MMCVER_2_0:
+		case MMC_CSD_MMCVER_3_1:
+		case MMC_CSD_MMCVER_4_0:
+			cid->mid = MMC_CID_MID_V2(resp);
+			cid->oid = MMC_CID_OID_V2(resp);
+			MMC_CID_PNM_V2_CPY(resp, cid->pnm);
+			cid->psn = MMC_CID_PSN_V2(resp);
+			break;
+		default:
+			printf("%s: unknown MMC version %d\n",
+			    SDMMCDEVNAME(sc), sf->csd.mmcver);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+#ifdef SDMMC_DEBUG
+void
+sdmmc_print_cid(struct sdmmc_cid *cid)
+{
+	printf("mid=0x%02x oid=0x%04x pnm=\"%s\" rev=0x%02x psn=0x%08x"
+	    " mdt=%03x\n", cid->mid, cid->oid, cid->pnm, cid->rev, cid->psn,
+	    cid->mdt);
+}
+#endif
 
 /*
  * Initialize a SD/MMC memory card.
