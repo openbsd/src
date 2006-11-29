@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.30 2006/07/13 22:51:24 deraadt Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.31 2006/11/29 12:32:57 miod Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.30 2006/07/13 22:51:24 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.31 2006/11/29 12:32:57 miod Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -532,7 +532,7 @@ kvm_getproc2(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			kp2p->p_tracep = PTRTOINT64(kp->kp_proc.p_tracep);
 			kp2p->p_traceflag = kp->kp_proc.p_traceflag;
 
-			kp2p->p_holdcnt = kp->kp_proc.p_holdcnt;
+			kp2p->p_holdcnt = 1;
 
 			kp2p->p_siglist = kp->kp_proc.p_siglist;
 			kp2p->p_sigmask = kp->kp_proc.p_sigmask;
