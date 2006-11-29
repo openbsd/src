@@ -1,4 +1,4 @@
-/*	$OpenBSD: nmeaattach.c,v 1.5 2006/11/29 12:05:32 mbalmer Exp $	*/
+/*	$OpenBSD: nmeaattach.c,v 1.6 2006/11/29 12:09:02 mbalmer Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,25 +32,16 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/ttycom.h>
 
-#include <net/if.h>
-#include <netinet/in.h>
-
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
-#include <netdb.h>
 #include <paths.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <termios.h>
 #include <unistd.h>
 
