@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcg.c,v 1.9 2006/08/22 21:05:03 miod Exp $	*/
+/*	$OpenBSD: lcg.c,v 1.10 2006/11/29 12:13:54 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -295,6 +295,7 @@ lcg_attach(struct device *parent, struct device *self, void *aux)
 	aa.scrdata = &lcg_screenlist;
 	aa.accessops = &lcg_accessops;
 	aa.accesscookie = sc;
+	aa.defaultscreens = 0;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
 	return;

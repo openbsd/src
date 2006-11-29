@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.39 2006/09/29 19:46:02 miod Exp $ */
+/* $OpenBSD: vga.c,v 1.40 2006/11/29 12:13:54 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -532,6 +532,7 @@ vga_extended_attach(self, iot, memt, type, map)
 	aa.scrdata = (vc->hdl.vh_mono ? &vga_screenlist_mono : &vga_screenlist);
 	aa.accessops = &vga_accessops;
 	aa.accesscookie = vc;
+	aa.defaultscreens = 0;
 
         config_found(self, &aa, wsemuldisplaydevprint);
 }

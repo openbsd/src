@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfb.c,v 1.17 2006/07/12 15:36:04 martin Exp $	*/
+/*	$OpenBSD: sfb.c,v 1.18 2006/11/29 12:13:51 miod Exp $	*/
 /*	$NetBSD: sfb.c,v 1.7 1996/12/05 01:39:44 cgd Exp $	*/
 
 /*
@@ -272,6 +272,7 @@ sfbattach(parent, self, aux)
         waa.scrdata = &sfb_screenlist;
         waa.accessops = &sfb_accessops;
         waa.accesscookie = sc;
+	waa.defaultscreens = 0;
 
         config_found(self, &waa, wsemuldisplaydevprint);
 }

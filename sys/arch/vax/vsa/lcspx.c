@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.10 2006/08/27 16:55:41 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.11 2006/11/29 12:13:54 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -275,6 +275,7 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 	aa.scrdata = &lcspx_screenlist;
 	aa.accessops = &lcspx_accessops;
 	aa.accesscookie = sc;
+	aa.defaultscreens = 0;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
 	return;

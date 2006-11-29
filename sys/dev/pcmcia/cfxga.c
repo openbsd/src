@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.11 2006/11/28 12:01:27 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.12 2006/11/29 12:13:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -404,9 +404,7 @@ cfxga_attach(struct device *parent, struct device *self, void *aux)
 	waa.scrdata = &sc->sc_wsl;
 	waa.accessops = &cfxga_accessops;
 	waa.accesscookie = sc;
-#ifdef notyet
 	waa.defaultscreens = 1;
-#endif
 
 	if ((sc->sc_wsdisplay =
 	    config_found(self, &waa, wsemuldisplaydevprint)) == NULL) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.7 2006/08/06 13:04:33 miod Exp $ */
+/* $OpenBSD: lunafb.c,v 1.8 2006/11/29 12:13:54 miod Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -216,6 +216,7 @@ omfbattach(parent, self, args)
 	waa.scrdata = &omfb_screenlist;
 	waa.accessops = &omfb_accessops;
 	waa.accesscookie = sc;
+	waa.defaultscreens = 0;
 
 	config_found(self, &waa, wsemuldisplaydevprint);
 }

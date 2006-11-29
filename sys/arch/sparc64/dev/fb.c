@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.13 2006/07/01 16:15:59 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.14 2006/11/29 12:13:54 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -300,6 +300,7 @@ fbwscons_attach(struct sunfb *sf, struct wsdisplay_accessops *op, int isconsole)
 	waa.scrdata = &sf->sf_wsl;
 	waa.accessops = op;
 	waa.accesscookie = sf;
+	waa.defaultscreens = 0;
 	config_found(&sf->sf_dev, &waa, wsemuldisplaydevprint);
 }
 

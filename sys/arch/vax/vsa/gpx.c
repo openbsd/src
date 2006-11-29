@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.14 2006/11/05 14:41:18 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.15 2006/11/29 12:13:54 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -357,6 +357,7 @@ gpx_attach(struct device *parent, struct device *self, void *aux)
 	aa.scrdata = &gpx_screenlist;
 	aa.accessops = &gpx_accessops;
 	aa.accesscookie = sc;
+	aa.defaultscreens = 0;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
 

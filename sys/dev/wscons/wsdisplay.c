@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.70 2006/11/01 03:37:24 tedu Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.71 2006/11/29 12:13:55 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -233,7 +233,7 @@ int	wsdisplayparam(struct tty *, struct termios *);
 void	wsdisplay_common_attach(struct wsdisplay_softc *sc,
 	    int console, int mux, const struct wsscreen_list *,
 	    const struct wsdisplay_accessops *accessops,
-	    void *accesscookie);
+	    void *accesscookie, u_int defaultscreens);
 int	wsdisplay_common_detach(struct wsdisplay_softc *, int);
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -571,7 +571,7 @@ wsdisplay_emul_attach(struct device *parent, struct device *self, void *aux)
 
 	wsdisplay_common_attach(sc, ap->console,
 	    sc->sc_dv.dv_cfdata->wsemuldisplaydevcf_mux, ap->scrdata,
-	    ap->accessops, ap->accesscookie);
+	    ap->accessops, ap->accesscookie, ap->defaultscreens);
 
 	if (ap->console && cn_tab == &wsdisplay_cons) {
 		int maj;
@@ -659,7 +659,8 @@ wsemuldisplaydevprint(void *aux, const char *pnp)
 void
 wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
     const struct wsscreen_list *scrdata,
-    const struct wsdisplay_accessops *accessops, void *accesscookie)
+    const struct wsdisplay_accessops *accessops, void *accesscookie,
+    u_int defaultscreens)
 {
 	static int hookset = 0;
 	int i, start = 0;
@@ -728,9 +729,12 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 	/*
 	 * Set up a number of virtual screens if wanted. The
 	 * WSDISPLAYIO_ADDSCREEN ioctl is more flexible, so this code
-	 * is for special cases like installation kernels.
+	 * is for special cases like installation kernels, as well as
+	 * sane multihead defaults.
 	 */
-	for (i = start; i < wsdisplay_defaultscreens; i++) {
+	if (defaultscreens == 0)
+		defaultscreens = wsdisplay_defaultscreens;
+	for (i = start; i < defaultscreens; i++) {
 		if (wsdisplay_addscreen(sc, i, 0, 0))
 			break;
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay.c,v 1.7 2004/04/02 04:39:51 deraadt Exp $ */
+/* $OpenBSD: pcdisplay.c,v 1.8 2006/11/29 12:13:54 miod Exp $ */
 /* $NetBSD: pcdisplay.c,v 1.9.4.1 2000/06/30 16:27:48 simonb Exp $ */
 
 /*
@@ -287,6 +287,7 @@ pcdisplay_attach(parent, self, aux)
 	aa.scrdata = &pcdisplay_screenlist;
 	aa.accessops = &pcdisplay_accessops;
 	aa.accesscookie = sc;
+	aa.defaultscreens = 0;
 
         config_found(self, &aa, wsemuldisplaydevprint);
 }

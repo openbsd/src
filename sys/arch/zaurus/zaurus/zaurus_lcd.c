@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.21 2006/11/29 12:13:54 miod Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -185,6 +185,7 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 	aa.scrdata = &lcd_screen_list;
 	aa.accessops = &lcd_accessops;
 	aa.accesscookie = sc;
+	aa.defaultscreens = 0;
 
 	(void)config_found(self, &aa, wsemuldisplaydevprint);
 

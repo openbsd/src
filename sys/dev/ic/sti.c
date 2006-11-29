@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.44 2006/08/22 21:04:32 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.45 2006/11/29 12:13:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -467,6 +467,7 @@ sti_end_attach(void *v)
 	waa.scrdata = &sti_default_screenlist;
 	waa.accessops = &sti_accessops;
 	waa.accesscookie = sc;
+	waa.defaultscreens = 0;
 
 	/* attach as console if required */
 	if (waa.console && !ISSET(sc->sc_flags, STI_ATTACHED)) {

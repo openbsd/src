@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.18 2006/06/30 21:38:19 miod Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.19 2006/11/29 12:13:55 miod Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -143,6 +143,7 @@ struct wsemuldisplaydev_attach_args {
 	const struct wsscreen_list *scrdata;		/* screen cfg info */
 	const struct wsdisplay_accessops *accessops;	/* access ops */
 	void	*accesscookie;				/* access cookie */
+	u_int	defaultscreens;				/* screens to create */
 };
 
 #define	WSEMULDISPLAYDEVCF_CONSOLE	0

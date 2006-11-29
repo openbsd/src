@@ -1,4 +1,4 @@
-/* $OpenBSD: ega.c,v 1.8 2006/09/29 19:46:04 miod Exp $ */
+/* $OpenBSD: ega.c,v 1.9 2006/11/29 12:13:54 miod Exp $ */
 /* $NetBSD: ega.c,v 1.4.4.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -520,6 +520,7 @@ ega_attach(parent, self, aux)
 	aa.scrdata = &ega_screenlist;
 	aa.accessops = &ega_accessops;
 	aa.accesscookie = dc;
+	aa.defaultscreens = 0;
 
         config_found(self, &aa, wsemuldisplaydevprint);
 }
