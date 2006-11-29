@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.41 2006/11/26 00:59:32 pedro Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.42 2006/11/29 13:35:07 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -270,7 +270,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	struct byte_bpb710 *b710;
 	extern struct vnode *rootvp;
 	u_int8_t SecPerClust;
-	int	ronly, error;
+	int	ronly, error, bmapsiz;
 	int	bsize = 0, dtype = 0, tmp;
 	uint32_t dirsperblk;
 
@@ -539,10 +539,14 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	 * Allocate memory for the bitmap of allocated clusters, and then
 	 * fill it in.
 	 */
-	pmp->pm_inusemap = malloc(((pmp->pm_maxcluster + N_INUSEBITS - 1)
-				   / N_INUSEBITS)
-				  * sizeof(*pmp->pm_inusemap),
-				  M_MSDOSFSFAT, M_WAITOK | M_CANFAIL);
+	bmapsiz = (pmp->pm_maxcluster + N_INUSEBITS - 1) / N_INUSEBITS;
+	if (bmapsiz == 0 || SIZE_MAX / bmapsiz < sizeof(*pmp->pm_inusemap)) {
+		/* detect multiplicative integer overflow */
+		error = EINVAL;
+		goto error_exit;
+	}
+	pmp->pm_inusemap = malloc(bmapsiz * sizeof(*pmp->pm_inusemap),
+	    M_MSDOSFSFAT, M_WAITOK | M_CANFAIL);
 	if (pmp->pm_inusemap == NULL) {
 		error = EINVAL;
 		goto error_exit;
