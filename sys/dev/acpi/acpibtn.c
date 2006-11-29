@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.11 2006/10/12 16:38:21 jordan Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.12 2006/11/29 19:21:20 miod Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -46,6 +46,7 @@ struct acpibtn_softc {
 	struct aml_node		*sc_devnode;
 
 	int			sc_btn_type;
+#define	ACPIBTN_UNKNOWN	-1
 #define ACPIBTN_LID	0
 #define ACPIBTN_POWER	1
 #define ACPIBTN_SLEEP	2
@@ -87,10 +88,12 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!strcmp(aa->aaa_dev, ACPI_DEV_LD))
 		sc->sc_btn_type = ACPIBTN_LID;
-	if (!strcmp(aa->aaa_dev, ACPI_DEV_PBD))
+	else if (!strcmp(aa->aaa_dev, ACPI_DEV_PBD))
 		sc->sc_btn_type = ACPIBTN_POWER;
-	if (!strcmp(aa->aaa_dev, ACPI_DEV_SBD))
+	else if (!strcmp(aa->aaa_dev, ACPI_DEV_SBD))
 		sc->sc_btn_type = ACPIBTN_SLEEP;
+	else
+		sc->sc_btn_type = ACPIBTN_UNKNOWN;
 
 	acpibtn_getsta(sc); 
 
