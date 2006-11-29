@@ -1,4 +1,4 @@
-.\" $OpenBSD: fmt.1,v 1.18 2006/11/29 20:09:27 jmc Exp $
+.\" $OpenBSD: fmt.1,v 1.19 2006/11/29 20:18:50 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,15 +66,16 @@ to 65 and the
 to 10 more than the
 .Ar goal
 length.
+.Pp
 Alternatively, a single
 .Ar width
 parameter can be specified either by prepending a hyphen to it or by using
 .Fl w .
 For example,
-.Dq Li fmt -w 72 ,
-.Dq Li fmt -72 ,
+.Dq fmt -w 72 ,
+.Dq fmt -72 ,
 and
-.Dq Li fmt 72 72
+.Dq fmt 72 72
 all produce identical output.
 The spacing at the beginning of the input lines is preserved in the output,
 as are blank lines and interword spacing.
@@ -88,18 +89,18 @@ Center the text, line by line.
 In this case, most of the other
 options are ignored; no splitting or joining of lines is done.
 .It Fl d Ar chars
-Treat the
+Treat
 .Ar chars
 (and no others) as sentence-ending characters.
 By default the
 sentence-ending characters are full stop
 .Pq Ql \&. ,
 question mark
-.Pq Ql \&?
+.Pq Ql \&? ,
 and exclamation mark
 .Pq Ql \&! .
 Remember that some characters may need to be
-escaped to protect them from your shell.
+escaped to protect them from the shell.
 .It Fl l Ar number
 Replace multiple spaces with tabs at the start of each output
 line, if possible.
@@ -125,9 +126,9 @@ flag, any change in the amount of whitespace at the start of a line
 results in a new paragraph being begun.
 .It Fl s
 Collapse whitespace inside lines, so that multiple whitespace
-characters are turned into a single space.
-(Or, at the end of a
-sentence, a double space.)
+characters are turned into a single space
+(or, at the end of a
+sentence, a double space).
 .It Fl t Ar number
 Assume that the input files' tabs assume
 .Ar number
@@ -168,7 +169,7 @@ The version described herein is a complete rewrite and appeared in
 .An Gareth McCaughan
 (wrote this version)
 .Sh BUGS
-The program was designed to be simple and fast \- for more complex
+The program was designed to be simple and fast \(en for more complex
 operations, the standard text processors are likely to be more appropriate.
 .Pp
 When the first line of an indented paragraph is very long (more than
