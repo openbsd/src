@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.13 2006/11/29 00:52:37 uwe Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.14 2006/11/29 01:46:53 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -33,8 +33,6 @@
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcreg.h>
 #include <dev/sdmmc/sdmmcvar.h>
-
-#define SDHC_DEBUG
 
 #define SDHC_COMMAND_TIMEOUT	hz
 #define SDHC_BUFFER_TIMEOUT	hz
