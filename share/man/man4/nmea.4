@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nmea.4,v 1.10 2006/10/07 06:53:28 mbalmer Exp $
+.\"	$OpenBSD: nmea.4,v 1.11 2006/11/29 00:08:34 mbalmer Exp $
 .\"
 .\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -51,8 +51,10 @@ Only the time and date information is extracted.
 The warning indication is used to provide the sensor status (see below).
 If the attached device sends the GPRMC message in the 13-field format,
 the operation mode of the GPS device is reported in the sensor description.
-The sensor timestamp is taken when the initial '$' character is received
-from the NMEA device.
+The sensor timestamp is copied from the tty timestamp if a device with PPS
+is being used and tty timestamping has been turned on.  Otherwise the sensor
+timestamp is taken when the initial '$' character is received from the NMEA
+device.
 .El
 .Sh SENSOR STATES
 The quality of the timedelta is reported as the sensor status:
