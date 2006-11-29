@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.77 2006/10/11 22:39:46 mpf Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.78 2006/11/29 12:39:48 miod Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -91,8 +91,6 @@
 struct	mbstat mbstat;		/* mbuf stats */
 struct	pool mbpool;		/* mbuf pool */
 struct	pool mclpool;		/* mbuf cluster pool */
-
-struct vm_map *mb_map;
 
 int max_linkhdr;		/* largest link-level header */
 int max_protohdr;		/* largest protocol header */

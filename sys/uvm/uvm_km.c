@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.53 2006/11/29 12:17:33 miod Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.54 2006/11/29 12:39:50 miod Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -94,7 +94,6 @@
  *		malloc.   *** access to kmem_map must be protected
  *		by splvm() because we are allowed to call malloc()
  *		at interrupt time ***
- *   mb_map => memory for large mbufs,  *** protected by splvm ***
  *   pager_map => used to map "buf" structures into kernel space
  *   exec_map => used during exec to handle exec args
  *   etc...

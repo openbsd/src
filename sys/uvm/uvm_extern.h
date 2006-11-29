@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.62 2006/11/29 12:26:14 miod Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.63 2006/11/29 12:39:50 miod Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -412,7 +412,6 @@ struct vmspace {
 extern struct vm_map *exec_map;
 extern struct vm_map *kernel_map;
 extern struct vm_map *kmem_map;
-extern struct vm_map *mb_map;
 extern struct vm_map *phys_map;
 
 
