@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malo.4,v 1.11 2006/11/27 22:32:15 jmc Exp $
+.\"	$OpenBSD: malo.4,v 1.12 2006/11/29 12:51:29 mglocker Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt.
 .\"
@@ -64,12 +64,12 @@ This mode is the default.
 .\" .It Host AP
 .\" In this mode the driver acts as an access point (base station)
 .\" for other cards.
-.\" .It monitor mode
-.\" In this mode the driver is able to receive packets without
-.\" associating with an access point.
-.\" This disables the internal receive filter and enables the card to
-.\" capture packets from networks which it wouldn't normally have access to,
-.\" or to scan for access points.
+.It monitor mode
+In this mode the driver is able to receive packets without
+associating with an access point.
+This disables the internal receive filter and enables the card to
+capture packets from networks which it wouldn't normally have access to,
+or to scan for access points.
 .El
 .Pp
 .Nm
@@ -146,12 +146,12 @@ The
 driver supports the following media options:
 .Pp
 .Bl -tag -width monitor -compact
-.It Cm hostap
-Select Host AP operation.
-.It Cm ibss
-Select IBSS operation.
-.\".It Cm monitor
-.\"Select monitor mode.
+.\".It Cm hostap
+.\"Select Host AP operation.
+.\".It Cm ibss
+.\"Select IBSS operation.
+.It Cm monitor
+Select monitor mode.
 .El
 .It Fl mediaopt Ar opts
 Disable the specified media options on the driver and return it to the

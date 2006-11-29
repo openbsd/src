@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.43 2006/11/28 09:55:57 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.44 2006/11/29 12:51:29 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -382,7 +382,10 @@ malo_attach(struct malo_softc *sc)
 	}
 
 	/* set the rest */
-	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_WEP;
+	ic->ic_caps =
+	    IEEE80211_C_IBSS |
+	    IEEE80211_C_MONITOR |
+	    IEEE80211_C_WEP;
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
 	ic->ic_max_rssi = 75;
@@ -863,6 +866,7 @@ malo_init(struct ifnet *ifp)
 {
 	struct malo_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	uint8_t chan;
 	int error;
 
 	DPRINTF(("%s: %s\n", ifp->if_xname, __func__));
@@ -898,8 +902,14 @@ malo_init(struct ifnet *ifp)
 
 	/* select default channel */
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
+	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 
 	/* initialize hardware */
+	if ((error = malo_cmd_set_channel(sc, chan))) {
+		printf("%s: setting channel failed!\n",
+		    sc->sc_dev.dv_xname);
+		return (error);
+	}
 	if ((error = malo_cmd_set_antenna(sc, 1))) {
 		printf("%s: setting RX antenna failed!\n",
 		    sc->sc_dev.dv_xname);
@@ -938,8 +948,12 @@ malo_init(struct ifnet *ifp)
 
 	ifp->if_flags |= IFF_RUNNING;
 
-	/* start background scanning */
-	ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+	if (ic->ic_opmode != IEEE80211_M_MONITOR)
+		/* start background scanning */
+		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+	else
+		/* in monitor mode change directly into run state */
+		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
 	return (0);
 }
