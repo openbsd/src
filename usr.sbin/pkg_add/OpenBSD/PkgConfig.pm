@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.2 2006/11/29 16:54:11 espie Exp $
+# $OpenBSD: PkgConfig.pm,v 1.3 2006/11/29 17:10:06 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -65,7 +65,7 @@ sub read_fh
 	$name = '' if !defined $name;
 	while (<$fh>) {
 		chomp;
-		next if m/^$/;
+		next if m/^\s*$/;
 		next if m/^\#/;
 		if (m/^(.*?)\=(.*)$/) {
 			$cfg->add_variable($1, $2);
@@ -110,18 +110,24 @@ sub write_file
 	$cfg->write_fh($fh);
 }
 
-sub compress
+sub compress_list
 {
 	my ($class, $l, $keep) = @_;
 	my $h = {};
-	my @r = ();
+	my $r = [];
 	foreach my $i (@$l) {
 		next if defined $h->{$i};
 		next if defined $keep && !&$keep($i);
-		push(@r, $i);
+		push(@$r, $i);
 		$h->{$i} = 1;
 	}
-	return join(' ', @r);
+	return $r;
+}
+
+sub compress
+{
+	my ($class, $l, $keep) = @_;
+	return join(' ', @{$class->compress_list($l, $keep)});
 }
 
 sub expanded
