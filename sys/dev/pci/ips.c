@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.12 2006/11/29 00:08:00 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.13 2006/11/29 14:38:17 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -65,6 +65,12 @@ int ips_debug = IPS_D_ERR;
 #define IPS_MORPHEUS_OIMR	0x0034	/* outbound IRQ mask */
 #define IPS_MORPHEUS_IQPR	0x0040	/* inbound queue port */
 #define IPS_MORPHEUS_OQPR	0x0044	/* outbound queue port */
+#define IPS_MORPHEUS_OQPR_ID(x)		(((x) >> 8) & 0xff)
+#define IPS_MORPHEUS_OQPR_ST(x)		(((x) >> 16) & 0xff)
+#define IPS_MORPHEUS_OQPR_GSC(x)	(((x) >> 16) & 0x0f)
+#define IPS_MORPHEUS_OQPR_EST(x)	(((x) >> 24) & 0xff)
+#define IPS_MORPHEUS_GSC_NOERR		0x0
+#define IPS_MORPHEUS_GSC_RECOV		0x1
 
 /* Commands */
 #define IPS_CMD_READ		0x02
@@ -687,7 +693,7 @@ ips_morpheus_intr(void *arg)
 	while ((oqpr = IPS_READ_4(sc, IPS_MORPHEUS_OQPR)) != 0xffffffff) {
 		DPRINTF(IPS_D_INTR, ("OQPR 0x%08x\n", oqpr));
 
-		id = (oqpr >> 8) & 0xff;
+		id = IPS_MORPHEUS_OQPR_ID(oqpr);
 		if (id >= sc->sc_ai.max_concurrent_cmds) {
 			DPRINTF(IPS_D_ERR, ("%s: intr, bogus id %d",
 			    sc->sc_dev.dv_xname, id));
