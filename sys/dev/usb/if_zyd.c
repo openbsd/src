@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.44 2006/11/30 17:45:40 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.45 2006/11/30 19:28:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -95,18 +95,13 @@ static const struct zyd_type {
 } zyd_devs[] = {
 	ZYD_ZD1211_DEV(3COM2,		3CRUSB10075),
 	ZYD_ZD1211_DEV(ABOCOM,		WL54),
-	ZYD_ZD1211B_DEV(ACCTON,		SMCWUSBG),
-	ZYD_ZD1211B_DEV(ASUS,		A9T_WIFI),
 	ZYD_ZD1211_DEV(ASUS,		WL159G),
 	ZYD_ZD1211_DEV(BELKIN,		F5D7050C),
-	ZYD_ZD1211B_DEV(CISCOLINKSYS,	WUSBF54G),
 	ZYD_ZD1211_DEV(CYBERTAN,	TG54USB),
 	ZYD_ZD1211_DEV(DRAYTEK,		VIGOR550),
-	ZYD_ZD1211B_DEV(FIBERLINE,	WL430U),
 	ZYD_ZD1211_DEV(PLANEX2,		GWUS54GZL),
 	ZYD_ZD1211_DEV(PLANEX3,		GWUS54MINI),
 	ZYD_ZD1211_DEV(SAGEM,		XG760A),
-	ZYD_ZD1211B_DEV(SAGEM,		XG76NA),
 	ZYD_ZD1211_DEV(SITECOMEU,	WL113),
 	ZYD_ZD1211_DEV(SWEEX,		ZD1211),
 	ZYD_ZD1211_DEV(TEKRAM,		QUICKWLAN),
@@ -114,10 +109,16 @@ static const struct zyd_type {
 	ZYD_ZD1211_DEV(TWINMOS,		G240),
 	ZYD_ZD1211_DEV(UMEDIA,		TEW429UB_A),
 	ZYD_ZD1211_DEV(UMEDIA,		TEW429UB),
-	ZYD_ZD1211B_DEV(UMEDIA,		TEW429UBC1),
 	ZYD_ZD1211_DEV(WISTRONNEWEB,	UR055G),
 	ZYD_ZD1211_DEV(ZYDAS,		ZD1211),
 	ZYD_ZD1211_DEV(ZYXEL,		ZYAIRG220),
+
+	ZYD_ZD1211B_DEV(ACCTON,		SMCWUSBG),
+	ZYD_ZD1211B_DEV(ASUS,		A9T_WIFI),
+	ZYD_ZD1211B_DEV(CISCOLINKSYS,	WUSBF54G),
+	ZYD_ZD1211B_DEV(FIBERLINE,	WL430U),
+	ZYD_ZD1211B_DEV(SAGEM,		XG76NA),
+	ZYD_ZD1211B_DEV(UMEDIA,		TEW429UBC1),
 	ZYD_ZD1211B_DEV(ZYXEL,		M202),
 	ZYD_ZD1211B_DEV(ZYDAS,		ZD1211B),
 };
@@ -1272,8 +1273,9 @@ zyd_maxim_set_channel(struct zyd_rf *rf, uint8_t chan)
 	struct zyd_softc *sc = rf->rf_sc;
 	static const struct zyd_phy_pair phyini[] = ZYD_MAXIM_PHY;
 	static const uint32_t rfini[] = ZYD_MAXIM_RF;
-	static const uint32_t rfprog_f[] = ZYD_MAXIM_CHANTABLE_F;
-	static const uint32_t rfprog_n[] = ZYD_MAXIM_CHANTABLE_N;
+	static const struct {
+		uint32_t	r1, r2;
+	} rfprog[] = ZYD_MAXIM_CHANTABLE;
 	uint16_t tmp;
 	int i, error;
 
@@ -1292,8 +1294,8 @@ zyd_maxim_set_channel(struct zyd_rf *rf, uint8_t chan)
 	(void)zyd_write16(sc, ZYD_CR203, tmp & ~(1 << 4));
 
 	/* first two values taken from the chantables */
-	(void)zyd_rfwrite(sc, rfprog_f[chan - 1]);
-	(void)zyd_rfwrite(sc, rfprog_n[chan - 1]);
+	(void)zyd_rfwrite(sc, rfprog[chan - 1].r1);
+	(void)zyd_rfwrite(sc, rfprog[chan - 1].r2);
 
 	/* init maxim radio - skipping the two first values */
 	for (i = 2; i < N(rfini); i++) {
@@ -1356,8 +1358,9 @@ zyd_maxim2_set_channel(struct zyd_rf *rf, uint8_t chan)
 	struct zyd_softc *sc = rf->rf_sc;
 	static const struct zyd_phy_pair phyini[] = ZYD_MAXIM2_PHY;
 	static const uint32_t rfini[] = ZYD_MAXIM2_RF;
-	static const uint32_t rfprog_f[] = ZYD_MAXIM2_CHANTABLE_F;
-	static const uint32_t rfprog_n[] = ZYD_MAXIM2_CHANTABLE_N;
+	static const struct {
+		uint32_t	r1, r2;
+	} rfprog[] = ZYD_MAXIM2_CHANTABLE;
 	uint16_t tmp;
 	int i, error;
 
@@ -1376,8 +1379,8 @@ zyd_maxim2_set_channel(struct zyd_rf *rf, uint8_t chan)
 	(void)zyd_write16(sc, ZYD_CR203, tmp & ~(1 << 4));
 
 	/* first two values taken from the chantables */
-	(void)zyd_rfwrite(sc, rfprog_f[chan - 1]);
-	(void)zyd_rfwrite(sc, rfprog_n[chan - 1]);
+	(void)zyd_rfwrite(sc, rfprog[chan - 1].r1);
+	(void)zyd_rfwrite(sc, rfprog[chan - 1].r2);
 
 	/* init maxim2 radio - skipping the two first values */
 	for (i = 2; i < N(rfini); i++) {
@@ -1695,8 +1698,8 @@ zyd_set_chan(struct zyd_softc *sc, struct ieee80211_channel *c)
 
 	/* XXX more ZD1211B specific bits? */
 	if (sc->mac_rev == ZYD_ZD1211B) {
-		zyd_write32(sc, ZYD_CR69, 0x28);
-		zyd_write32(sc, ZYD_CR69, 0x2a);
+		(void)zyd_write32(sc, ZYD_CR69, 0x28);
+		(void)zyd_write32(sc, ZYD_CR69, 0x2a);
 	}
 
 	zyd_unlock_phy(sc);
@@ -2008,7 +2011,7 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct zyd_tx_data *data;
 	struct ieee80211_frame *wh;
 	int xferlen, totlen, rate;
-	u_int16_t hdrlen;
+	uint16_t pktlen;
 	usbd_status error;
 
 	wh = mtod(m0, struct ieee80211_frame *);
@@ -2075,14 +2078,10 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		desc->phy |= ZYD_TX_PHY_SHPREAMBLE;
 
 	/* actual transmit length (XXX why +10?) */
-	hdrlen = sizeof (struct zyd_tx_desc) + 10;
-
-	if (sc->mac_rev == ZYD_ZD1211B) {
-		/* XXX this means no cipher */
-		desc->pktlen = htole16(hdrlen);
-	} else {
-		desc->pktlen = htole16(hdrlen + totlen);
-	}
+	pktlen = sizeof (struct zyd_tx_desc) + 10;
+	if (sc->mac_rev == ZYD_ZD1211)
+		pktlen += totlen;
+	desc->pktlen = htole16(pktlen);
 
 	desc->plcp_length = (16 * totlen + rate - 1) / rate;
 	desc->plcp_service = 0;
