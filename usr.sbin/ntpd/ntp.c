@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.94 2006/10/27 12:22:41 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.95 2006/11/30 18:42:41 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -257,6 +257,8 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		}
 		sensors_cnt = 0;
 		TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
+			if (conf->settime && s->offsets[0].offset)
+				priv_settime(s->offsets[0].offset);
 			sensors_cnt++;
 			if (s->next > 0 && s->next < nextaction)
 				nextaction = s->next;
