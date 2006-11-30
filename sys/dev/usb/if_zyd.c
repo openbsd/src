@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.42 2006/11/30 09:27:20 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.43 2006/11/30 17:39:12 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1500,9 +1500,11 @@ zyd_hw_init(struct zyd_softc *sc)
 	/* HMAC init */
 	zyd_write32(sc, ZYD_MAC_ACK_EXT, 0x00000020);
 	zyd_write32(sc, ZYD_CR_ADDA_MBIAS_WT, 0x30000808);
-	zyd_write32(sc, ZYD_MAC_RETRY, 0x00000002);
 
-	if (sc->mac_rev == ZYD_ZD1211B) {
+	if (sc->mac_rev == ZYD_ZD1211) {
+		zyd_write32(sc, ZYD_MAC_RETRY, 0x00000002);
+	} else {
+		zyd_write32(sc, ZYD_MAC_RETRY, 0x02020202);
 		zyd_write32(sc, ZYD_MACB_TXPWR_CTL4, 0x007f003f);
 		zyd_write32(sc, ZYD_MACB_TXPWR_CTL3, 0x007f003f);
 		zyd_write32(sc, ZYD_MACB_TXPWR_CTL2, 0x003f001f);
