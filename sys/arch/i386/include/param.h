@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.37 2006/11/29 20:03:20 dim Exp $	*/
+/*	$OpenBSD: param.h,v 1.38 2006/11/30 21:20:41 dim Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1996/03/04 05:04:26 cgd Exp $	*/
 
 /*-
@@ -95,7 +95,7 @@
 #define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	64*NBPG		/* default message buffer size */
+#define MSGBUFSIZE	4*NBPG		/* default message buffer size */
 #endif
 
 /*
