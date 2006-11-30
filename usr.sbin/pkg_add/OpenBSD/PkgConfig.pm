@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.4 2006/11/30 00:07:50 espie Exp $
+# $OpenBSD: PkgConfig.pm,v 1.5 2006/11/30 01:04:35 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -67,7 +67,7 @@ sub read_fh
 		chomp;
 		next if m/^\s*$/;
 		next if m/^\#/;
-		if (m/^(.*?)\=(.*)$/) {
+		if (m/^(.*?)\=\s*(.*)$/) {
 			$cfg->add_variable($1, $2);
 		} elsif (m/^(.*?)\:\s+(.*)$/) {
 			$cfg->add_property($1, $2);
