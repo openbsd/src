@@ -1,6 +1,8 @@
 t IPsec-3ffe:1::/64-3ffe:2::/64
+C rmv [Phase 2]:Passive-Connections=IPsec-3ffe:1::/64-3ffe:2::/64
 C rms [IPsec-3ffe:1::/64-3ffe:2::/64]
 C rms [qm-3ffe:1::/64-3ffe:2::/64]
 t IPsec-3ffe::29-3ffe::51
+C rmv [Phase 2]:Passive-Connections=IPsec-3ffe::29-3ffe::51
 C rms [IPsec-3ffe::29-3ffe::51]
 C rms [qm-3ffe::29-3ffe::51]

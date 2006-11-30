@@ -1,3 +1,4 @@
 t IPsec-3ffe::1:0-97-3ffe::2:0-97
+C rmv [Phase 2]:Connections=IPsec-3ffe::1:0-97-3ffe::2:0-97
 C rms [IPsec-3ffe::1:0-97-3ffe::2:0-97]
 C rms [qm-3ffe::1:0-97-3ffe::2:0-97]

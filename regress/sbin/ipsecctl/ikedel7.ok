@@ -1,6 +1,8 @@
 t IPsec-10.1.2.0/24-10.1.1.0/24
+C rmv [Phase 2]:Passive-Connections=IPsec-10.1.2.0/24-10.1.1.0/24
 C rms [IPsec-10.1.2.0/24-10.1.1.0/24]
 C rms [qm-10.1.2.0/24-10.1.1.0/24]
 t IPsec-131.188.33.29-131.188.33.51
+C rmv [Phase 2]:Passive-Connections=IPsec-131.188.33.29-131.188.33.51
 C rms [IPsec-131.188.33.29-131.188.33.51]
 C rms [qm-131.188.33.29-131.188.33.51]
