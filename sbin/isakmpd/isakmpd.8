@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.98 2006/11/29 19:44:50 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.99 2006/11/30 11:24:49 markus Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -311,6 +311,14 @@ Available commands are:
 .Sm on
 .Xc
 .It Xo
+.Ic C rmv
+.Sm off
+.Op Ic section
+.No :
+.Ic tag No = Ic value
+.Sm on
+.Xc
+.It Xo
 .Ic C rm
 .Sm off
 .Op Ic section
@@ -355,6 +363,10 @@ unless the value is already in the list.
 removes a tag in a section.
 .Sq rms
 removes an entire section.
+.Sq rmv
+removes an entry from a list, thus reversing an
+.Sq add
+operation.
 .Pp
 NOTE: Sending
 .Nm

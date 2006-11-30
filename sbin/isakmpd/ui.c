@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.51 2006/11/28 09:27:09 markus Exp $	 */
+/* $OpenBSD: ui.c,v 1.52 2006/11/30 11:24:49 markus Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -224,7 +224,7 @@ ui_config(char *cmd)
 	struct conf_list_node *vnode;
 	char	 subcmd[81], section[81], tag[81], value[81], tmp[81];
 	char	*v, *nv;
-	int	 trans = 0, items, skip = 0;
+	int	 trans = 0, items, skip = 0, ret;
 	FILE	*fp;
 
 	if (sscanf(cmd, "C %80s", subcmd) != 1)
@@ -288,6 +288,44 @@ ui_config(char *cmd)
 				}
 				conf_set(trans, section, tag, nv, 1, 0);
 				free(nv);
+			}
+		}
+		if (strcasecmp(section, "Phase 2") == 0 &&
+		    (strcasecmp(tag, "Connections") == 0 ||
+			strcasecmp(tag, "Passive-connections") == 0))
+			ui_conn_reinit();
+	} else if (strcasecmp(subcmd, "rmv") == 0) {
+		items = sscanf(cmd, "C %*s [%80[^]]]:%80[^=]=%80s %80s",
+		    section, tag, value, tmp);
+		if (!(items == 3 || items == 4))
+			goto fail;
+		vlist = conf_get_list(section, tag);
+		if (vlist) {
+			nv = v = NULL;
+			for (vnode = TAILQ_FIRST(&vlist->fields);
+			    vnode;
+			    vnode = TAILQ_NEXT(vnode, link)) {
+				if (strcmp(vnode->field, value) == 0)
+					continue;
+				ret = v ?
+				    asprintf(&nv, "%s,%s", v, vnode->field) :
+				    asprintf(&nv, "%s", vnode->field);
+				if (v)
+					free(v);
+				if (ret == -1) {
+					log_error("ui_config: malloc() failed");
+					if (trans)
+						conf_end(trans, 0);
+					return;
+				}
+				v = nv;
+			}
+			conf_free_list(vlist);
+			if (nv) {
+				conf_set(trans, section, tag, nv, 1, 0);
+				free(nv);
+			} else {
+				conf_remove(trans, section, tag);
 			}
 		}
 		if (strcasecmp(section, "Phase 2") == 0 &&
