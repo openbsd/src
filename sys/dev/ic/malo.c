@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.46 2006/11/30 08:20:25 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.47 2006/11/30 17:23:34 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1912,7 +1912,7 @@ malo_set_wepkey(struct malo_softc *sc)
 		if (wk->wk_len == 0)
 			continue;
 
-		if (malo_cmd_set_wepkey(sc, wk, ic->ic_wep_txkey))
+		if (malo_cmd_set_wepkey(sc, wk, i))
 			return (ENXIO);
 	}
 
