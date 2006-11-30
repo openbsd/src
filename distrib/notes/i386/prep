@@ -12,29 +12,21 @@ wish to keep.  Repartitioning your hard disk is an excellent way to
 destroy important data.
 
 Second, if you are using a disk controller which supports disk geometry
-translation, be sure to use the same parameters for OpenBSD as for DOS
-or the other operating systems installed on your disk.  If you do not,
-it will be much harder to make OpenBSD properly coexist with them.
-Utilities exist which will print out the disk geometry which DOS sees;
-some versions of DOS "fdisk" also do this.  If you have an "EIDE" hard
-disk, DOS and OpenBSD probably won't see the same geometry, and you must
-be careful to find out the DOS geometry and tell OpenBSD about it during
-the installation.
+translation, be sure to use the same parameters for OpenBSD as for any
+other operating systems installed on the disk.  If you do not, it
+will be much harder to make OpenBSD properly coexist with them.  Most
+operating systems have utilities that print out the disk geometry they
+use; often "fdisk" (or its equivalent) will do this.
 
 Third (but related to the second point above), if you are using a hard
-disk with more sectors than DOS or your controller's BIOS supports without
-some kind of software translation utility or other kludge, you MUST
-BE SURE that all partitions which you want to boot from must start and end
-below cylinder 1024 by the BIOS's idea of the disk, and that all DOS
-partitions MUST EXIST ENTIRELY BELOW cylinder 1024, or you will either not
-be able to boot OpenBSD, not be able to boot DOS, or you may experience
-data loss or filesystem corruption.  Be sure you aren't using geometry
-translation that you don't know about, but that the DOS "fdisk" program
-does!
+disk with more cylinders than are supported by the other operating
+systems or the BIOS, you MUST be sure that all boot partitions start and
+end within the area supported by both the BIOS and the OS in question.
 
 The OpenBSD root partition must also reside completely within the BIOS
-supported part of the hard disk -- this would typically be 504MB, 2GB,
-8GB or 128GB, depending upon the age of the machine and its BIOS.
+supported part of the hard disk -- this could typically be 504MB, 2GB,
+8GB or 128GB, depending upon the age of the machine and its BIOS. The
+rest of the OpenBSD partitions can be anywhere that hardware supports.
 
 Fourth, use the other operating system's "fdisk" program or partition
 editor to create at least one of the partitions to be used for that
