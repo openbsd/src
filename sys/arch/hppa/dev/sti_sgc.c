@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.32 2006/04/16 21:03:45 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.33 2006/11/30 11:25:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -54,12 +54,8 @@
 #define	STI_ROMSIZE	(sizeof(struct sti_dd) * 4)
 #define	STI_ID_FDDI	0x280b31af	/* Medusa FDDI ROM id */
 
-/* gecko optional graphics */
-#define	STI_GOPT1_REV	0x17
-#define	STI_GOPT2_REV	0x70
-#define	STI_GOPT3_REV	0xd0
-#define	STI_GOPT4_REV	0x20
-#define	STI_GOPT5_REV	0x40
+/* gecko optional graphics (these share the onboard's prom) */
+char sti_sgc_opt[] = { 0x17, 0x20, 0x30, 0x40, 0x70, 0xc0, 0xd0 };
 
 /* internal EG */
 #define	STI_INEG_REV	0x60
@@ -82,16 +78,15 @@ paddr_t
 sti_sgc_getrom(int unit, struct confargs *ca)
 {
 	paddr_t rom = PAGE0->pd_resv2[1];
+	int i;
 
 	if (unit) {
-		if (ca->ca_type.iodc_sv_model == HPPA_FIO_GSGC &&
-		    (ca->ca_type.iodc_revision == STI_GOPT1_REV ||
-		     ca->ca_type.iodc_revision == STI_GOPT2_REV ||
-		     ca->ca_type.iodc_revision == STI_GOPT3_REV ||
-		     ca->ca_type.iodc_revision == STI_GOPT4_REV ||
-		     ca->ca_type.iodc_revision == STI_GOPT5_REV))
-			/* these share the onboard's prom */ ;
-		else
+		i = -1;
+		if (ca->ca_type.iodc_sv_model == HPPA_FIO_GSGC)
+			for (i = sizeof(sti_sgc_opt); i-- &&
+			    sti_sgc_opt[i] != ca->ca_type.iodc_revision; )
+				;
+		if (i < 0)
 			rom = 0;
 	}
 
