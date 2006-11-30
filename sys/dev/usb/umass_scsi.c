@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.14 2006/11/28 23:59:45 dlg Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.15 2006/11/30 10:05:32 deraadt Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -103,6 +103,8 @@ umass_scsi_attach(struct umass_softc *sc)
 	scbus->sc_link.flags |= SDEV_UMASS;
 	scbus->sc_link.device = &umass_scsi_dev;
 
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &scbus->sc_link;
 
 	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n"
 			     "sc = 0x%x, scbus = 0x%x\n",
