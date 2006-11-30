@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripctl.8,v 1.2 2006/10/24 16:35:19 david Exp $
+.\"	$OpenBSD: ripctl.8,v 1.3 2006/11/30 19:35:20 michele Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -52,9 +52,8 @@ can be any of the following:
 .Bl -tag -width "interfaceXXinterfaceXX" -compact
 .It Cm connected
 Show only connected routes.
-.It Cm interface Op Ar interface
-Show only interfaces or the specified
-.Ar interface .
+.It Cm interface
+Show only interfaces.
 .It Cm rip
 Show only RIP routes.
 .It Cm static
@@ -66,19 +65,12 @@ Show only static routes.
 and
 .Cm static
 may be specified together.
-.It Cm show interfaces Op Ar interface
-Show details for all interfaces or the specified
-.Ar interface .
-.It Cm show neighbor Op Cm detail
+.It Cm show interfaces
+Show details for all interfaces.
+.It Cm show neighbor
 Show neighbors.
-.Cm detail
-can be specified for additional detail.
-.It Cm show rib Op Cm detail
+.It Cm show rib
 Show the Routing Information Base.
-.Cm detail
-can be specified for additional detail.
-.It Cm show summary
-Show summary information.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/ripd.sockXX" -compact
