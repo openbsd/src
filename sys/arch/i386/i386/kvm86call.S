@@ -1,4 +1,4 @@
-/* $OpenBSD: kvm86call.S,v 1.2 2006/11/27 15:46:48 gwk Exp $ */
+/* $OpenBSD: kvm86call.S,v 1.3 2006/11/30 00:05:40 gwk Exp $ */
 /* $NetBSD: kvm86call.S,v 1.7 2006/04/11 17:14:07 drochner Exp $ */
 
 /*-
@@ -56,23 +56,7 @@ SCRTSS1:		.long	0
 
 #if defined MULTIPROCESSOR
 #include <machine/i82489reg.h>
-
-#define GET_CPUINFO(reg)						\
-	movl	_C_LABEL(lapic_id),reg ;				\
-	shrl	$LAPIC_ID_SHIFT,reg	;				\
-	movl	_C_LABEL(cpu_info),reg  
-#else
-#define	GET_CPUINFO(reg) 						\
-	leal	_C_LABEL(cpu_info_primary),reg
 #endif
-
-#define GET_CURPCB(reg)							\
-	GET_CPUINFO(reg) ;						\
-	movl	CPU_INFO_CURPCB(reg),reg	
-
-#define SET_CURPCB(reg, treg)						\
-	GET_CPUINFO(treg) ;						\
-	movl	reg,CPU_INFO_CURPCB(treg)
 
 /* int kvm86_call(struct trapframe *) */
 ENTRY(kvm86_call)
@@ -93,15 +77,25 @@ ENTRY(kvm86_call)
 	cld
 	rep
 	movsl				/* copy frame to new stack */
-	GET_CURPCB(%eax)
+
+#ifdef MULTIPROCESSOR	
+	movl	_C_LABEL(local_apic)+LAPIC_ID,%ecx
+	shrl	$LAPIC_ID_SHIFT,%ecx
+	leal	0(,%ecx,4),%ecx
+	movl	_C_LABEL(cpu_info)(%ecx),%edx
+	movl	%edx,%ecx
+#else
+	leal	_C_LABEL(cpu_info_primary),%ecx
+#endif
+
 	pushl	%eax	
 	movl	vm86pcb,%eax
-	SET_CURPCB(%eax,%ecx)	/* set curpcb to vm86pcb */
+	movl	%eax,CPU_INFO_CURPCB(%ecx)
 	movl	CPU_INFO_CURPROC(%ecx),%ecx
 	movl	P_MD_TSS_SEL(%ecx),%edi
+
 #ifdef	MULTIPROCESSOR
-	GET_CPUINFO(%ecx)	
-	movl	CPU_INFO_GDT(%ecx),%eax
+	movl	CPU_INFO_GDT(%edx),%eax
 #else
 	movl	_C_LABEL(gdt),%eax
 #endif
@@ -173,10 +167,16 @@ ENTRY(kvm86_ret)
 	movl	%eax,%cr3		/* install old page table */
 
 	movl	$0,kvm86_incall		/* reset trapflag */
-	GET_CPUINFO(%ecx)
+
+	
 #ifdef MULTIPROCESSOR
+	movl	_C_LABEL(local_apic)+LAPIC_ID,%ecx
+	shrl	$LAPIC_ID_SHIFT,%ecx
+	leal	0(,%ecx,4),%ecx
+	movl	_C_LABEL(cpu_info)(%ecx),%ecx
 	movl	CPU_INFO_GDT(%ecx),%eax
 #else
+	leal	_C_LABEL(cpu_info_primary),%ecx
 	movl	_C_LABEL(gdt),%eax
 #endif
 	movl	CPU_INFO_CURPROC(%ecx),%ecx
@@ -187,8 +187,17 @@ ENTRY(kvm86_ret)
 	movl	%edx, 4(%eax,%edi,1)	/* restore second word */
 	ltr	%di
 
+
+#ifdef MULTIPROCESSOR	
+	movl	_C_LABEL(local_apic)+LAPIC_ID,%ecx
+	shrl	$LAPIC_ID_SHIFT,%ecx
+	leal	0(,%ecx,4),%ecx
+	movl	_C_LABEL(cpu_info)(%ecx),%ecx
+#else
+	leal	_C_LABEL(cpu_info_primary),%ecx
+#endif
 	popl	%eax			/* restore curpcb */
-	SET_CURPCB(%eax,%ecx)
+	movl	%eax,CPU_INFO_CURPCB(%ecx)
 
 	movl	12(%ebp), %eax		/* will be kvm86_call()'s retval */
 
