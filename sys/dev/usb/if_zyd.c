@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.43 2006/11/30 17:39:12 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.44 2006/11/30 17:45:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1466,11 +1466,9 @@ zyd_rf_name(uint8_t type)
 int
 zyd_hw_init(struct zyd_softc *sc)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
-	const struct zyd_phy_pair *zyd_def_phyp = (sc->mac_rev == ZYD_ZD1211B) ?
-	    zyd_def_phyB : zyd_def_phy;
 	struct zyd_rf *rf = &sc->sc_rf;
-	int i, error;
+	const struct zyd_phy_pair *phyp;
+	int error;
 
 	/* specify that the plug and play is finished */
 	(void)zyd_write32(sc, ZYD_MAC_AFTER_PNP, 1);
@@ -1489,10 +1487,9 @@ zyd_hw_init(struct zyd_softc *sc)
 
 	/* PHY init */
 	zyd_lock_phy(sc);
-	for (i = 0; i < N(zyd_def_phy); i++) {
-		error = zyd_write16(sc, zyd_def_phyp[i].reg,
-		    zyd_def_phyp[i].val);
-		if (error != 0)
+	phyp = (sc->mac_rev == ZYD_ZD1211B) ? zyd_def_phyB : zyd_def_phy;
+	for (; phyp->reg != 0; phyp++) {
+		if ((error = zyd_write16(sc, phyp->reg, phyp->val)) != 0)
 			goto fail;
 	}
 	zyd_unlock_phy(sc);
@@ -1547,7 +1544,6 @@ zyd_hw_init(struct zyd_softc *sc)
 		goto fail;
 
 fail:	return error;
-#undef N
 }
 
 int

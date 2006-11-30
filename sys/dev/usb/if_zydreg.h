@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.17 2006/11/29 16:23:20 jsg Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.18 2006/11/30 17:45:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -479,7 +479,8 @@
 	{ ZYD_CR163, 0xfa }, { ZYD_CR164, 0xfa }, { ZYD_CR165, 0xea },	\
 	{ ZYD_CR166, 0xbe }, { ZYD_CR167, 0xbe }, { ZYD_CR168, 0x6a },	\
 	{ ZYD_CR169, 0xba }, { ZYD_CR170, 0xba }, { ZYD_CR171, 0xba },	\
-	{ ZYD_CR204, 0x7d }, { ZYD_CR203, 0x30 }			\
+	{ ZYD_CR204, 0x7d }, { ZYD_CR203, 0x30 }, 			\
+	{ 0, 0 }							\
 }
 
 #define ZYD_DEF_PHYB							\
@@ -529,7 +530,8 @@
 	{ ZYD_CR163, 0xfa }, { ZYD_CR164, 0xfa }, { ZYD_CR165, 0xea },	\
 	{ ZYD_CR166, 0xbe }, { ZYD_CR167, 0xbe }, { ZYD_CR168, 0x6a },	\
 	{ ZYD_CR169, 0xba }, { ZYD_CR170, 0xba }, { ZYD_CR171, 0xba },	\
-	{ ZYD_CR204, 0x7d }, { ZYD_CR203, 0x30 }			\
+	{ ZYD_CR204, 0x7d }, { ZYD_CR203, 0x30 },			\
+	{ 0, 0 }							\
 }
 
 #define ZYD_RFMD_PHY							\
@@ -630,7 +632,7 @@
 	{ ZYD_CR122, 0xfc }, { ZYD_CR123, 0x57 }, { ZYD_CR125, 0xad },	\
 	{ ZYD_CR126, 0x6c }, { ZYD_CR127, 0x03 }, { ZYD_CR137, 0x50 },	\
 	{ ZYD_CR138, 0xa8 }, { ZYD_CR144, 0xac }, { ZYD_CR150, 0x0d },	\
-	{ ZYD_CR252, 0x00 }, { ZYD_CR253, 0x00 },			\
+	{ ZYD_CR252, 0x00 }, { ZYD_CR253, 0x00 }			\
 }
 
 #define ZYD_AL2230_RF							\
