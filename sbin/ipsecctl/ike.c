@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.55 2006/11/24 13:52:13 reyk Exp $	*/
+/*	$OpenBSD: ike.c,v 1.56 2006/11/30 15:51:28 markus Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -33,24 +33,17 @@
 #include "ipsecctl.h"
 
 static void	ike_section_general(struct ipsec_rule *, FILE *);
-static void	ike_section_peer(struct ipsec_addr_wrap *,
-		    struct ipsec_addr_wrap *, FILE *, struct ike_auth *);
-static void	ike_section_ids(struct ipsec_addr_wrap *, struct ipsec_auth *,
-		    FILE *, u_int8_t);
+static void	ike_section_peer(struct ipsec_rule *, FILE *);
+static void	ike_section_ids(struct ipsec_rule *, FILE *);
 static int	ike_get_id_type(char *);
-static void	ike_section_ipsec(struct ipsec_addr_wrap *, struct
-		    ipsec_addr_wrap *, struct ipsec_addr_wrap *, char *, FILE *);
-static int	ike_section_p1(struct ipsec_addr_wrap *, struct
-		    ipsec_transforms *, FILE *, struct ike_auth *, u_int8_t);
-static int	ike_section_p2(struct ipsec_addr_wrap *, struct
-		    ipsec_addr_wrap *, u_int8_t, u_int8_t, struct
-		    ipsec_transforms *, FILE *, u_int8_t);
-static void	ike_section_p2ids(u_int8_t, struct ipsec_addr_wrap *,
-		    u_int16_t, struct ipsec_addr_wrap *, u_int16_t, FILE *);
-static int	ike_connect(u_int8_t, struct ipsec_addr_wrap *, struct
-		    ipsec_addr_wrap *, FILE *);
+static void	ike_section_ipsec(struct ipsec_rule *, FILE *);
+static int	ike_section_p1(struct ipsec_rule *, FILE *);
+static int	ike_section_p2(struct ipsec_rule *, FILE *);
+static void	ike_section_p2ids(struct ipsec_rule *, FILE *);
+static int	ike_connect(struct ipsec_rule *, FILE *);
 static int	ike_gen_config(struct ipsec_rule *, FILE *);
 static int	ike_delete_config(struct ipsec_rule *, FILE *);
+static void	ike_setup_ids(struct ipsec_rule *);
 
 int		ike_print_config(struct ipsec_rule *, int);
 int		ike_ipsec_establish(int, struct ipsec_rule *);
@@ -84,82 +77,80 @@ ike_section_general(struct ipsec_rule *r, FILE *fd)
 }
 
 static void
-ike_section_peer(struct ipsec_addr_wrap *peer, struct ipsec_addr_wrap *local,
-    FILE *fd, struct ike_auth *auth)
+ike_section_peer(struct ipsec_rule *r, FILE *fd)
 {
-	if (peer) {
-		fprintf(fd, SET "[Phase 1]:%s=peer-%s force\n", peer->name,
-		    peer->name);
-		fprintf(fd, SET "[peer-%s]:Phase=1 force\n", peer->name);
-		fprintf(fd, SET "[peer-%s]:Address=%s force\n", peer->name,
-		    peer->name);
-		if (local)
+	if (r->peer) {
+		fprintf(fd, SET "[Phase 1]:%s=peer-%s force\n", r->peer->name,
+		    r->peer->name);
+		fprintf(fd, SET "[peer-%s]:Phase=1 force\n", r->peer->name);
+		fprintf(fd, SET "[peer-%s]:Address=%s force\n", r->peer->name,
+		    r->peer->name);
+		if (r->local)
 			fprintf(fd, SET "[peer-%s]:Local-address=%s force\n",
-			    peer->name, local->name);
-		if (auth->type == IKE_AUTH_PSK)
+			    r->peer->name, r->local->name);
+		if (r->ikeauth->type == IKE_AUTH_PSK)
 			fprintf(fd, SET "[peer-%s]:Authentication=%s force\n",
-			    peer->name, auth->string);
+			    r->peer->name, r->ikeauth->string);
 	} else {
 		fprintf(fd, SET "[Phase 1]:Default=peer-default force\n");
 		fprintf(fd, SET "[peer-default]:Phase=1 force\n");
-		if (local)
+		if (r->local)
 			fprintf(fd, SET
 			    "[peer-default]:Local-address=%s force\n",
-			    local->name);
-		if (auth->type == IKE_AUTH_PSK)
+			    r->local->name);
+		if (r->ikeauth->type == IKE_AUTH_PSK)
 			fprintf(fd, SET
 			    "[peer-default]:Authentication=%s force\n",
-			    auth->string);
+			    r->ikeauth->string);
 	}
 }
 
 static void
-ike_section_ids(struct ipsec_addr_wrap *peer, struct ipsec_auth *auth, FILE *fd,
-    u_int8_t ikemode)
+ike_section_ids(struct ipsec_rule *r, FILE *fd)
 {
 	char myname[MAXHOSTNAMELEN];
 
-	if (auth == NULL)
+	if (r->auth == NULL)
 		return;
 
-	if (ikemode == IKE_DYNAMIC && auth->srcid == NULL) {
+	if (r->ikemode == IKE_DYNAMIC && r->auth->srcid == NULL) {
 		if (gethostname(myname, sizeof(myname)) == -1)
 			err(1, "ike_section_ids: gethostname");
-		if ((auth->srcid = strdup(myname)) == NULL)
+		if ((r->auth->srcid = strdup(myname)) == NULL)
 			err(1, "ike_section_ids: strdup");
 	}
-	if (auth->srcid) {
-		int idtype = ike_get_id_type(auth->srcid);
+	if (r->auth->srcid) {
+		int idtype = ike_get_id_type(r->auth->srcid);
 
-		if (peer)
+		if (r->peer)
 			fprintf(fd, SET "[peer-%s]:ID=%s-ID force\n",
-			    peer->name, auth->srcid);
+			    r->peer->name, r->auth->srcid);
 		else
 			fprintf(fd, SET "[peer-default]:ID=%s-ID force\n",
-			    auth->srcid);
+			    r->auth->srcid);
 
-		fprintf(fd, SET "[%s-ID]:ID-type=%s force\n", auth->srcid,
+		fprintf(fd, SET "[%s-ID]:ID-type=%s force\n", r->auth->srcid,
 		    ike_id_types[idtype]);
-		fprintf(fd, SET "[%s-ID]:Name=%s force\n", auth->srcid,
-		    auth->srcid);
+		fprintf(fd, SET "[%s-ID]:Name=%s force\n", r->auth->srcid,
+		    r->auth->srcid);
 	}
-	if (auth->dstid) {
-		int idtype = ike_get_id_type(auth->dstid);
+	if (r->auth->dstid) {
+		int idtype = ike_get_id_type(r->auth->dstid);
 
-		if (peer) {
+		if (r->peer) {
 			fprintf(fd, SET "[peer-%s]:Remote-ID=%s-ID force\n",
-			    peer->name, peer->name);
+			    r->peer->name, r->peer->name);
 			fprintf(fd, SET "[%s-ID]:ID-type=%s force\n",
-			    peer->name, ike_id_types[idtype]);
-			fprintf(fd, SET "[%s-ID]:Name=%s force\n", peer->name,
-			    auth->dstid);
+			    r->peer->name, ike_id_types[idtype]);
+			fprintf(fd, SET "[%s-ID]:Name=%s force\n", r->peer->name,
+			    r->auth->dstid);
 		} else {
 			fprintf(fd, SET
 			    "[peer-default]:Remote-ID=default-ID force\n");
 			fprintf(fd, SET "[default-ID]:ID-type=%s force\n",
 			    ike_id_types[idtype]);
 			fprintf(fd, SET "[default-ID]:Name=%s force\n",
-			    auth->dstid);
+			    r->auth->dstid);
 		}
 	}
 }
@@ -174,55 +165,50 @@ ike_get_id_type(char *string)
 }
 
 static void
-ike_section_ipsec(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
-    struct ipsec_addr_wrap *peer, char *tag, FILE *fd)
+ike_section_ipsec(struct ipsec_rule *r, FILE *fd)
 {
-	fprintf(fd, SET "[IPsec-%s-%s]:Phase=2 force\n", src->name, dst->name);
+	fprintf(fd, SET "[IPsec-%s]:Phase=2 force\n", r->p2name);
 
-	if (peer)
-		fprintf(fd, SET "[IPsec-%s-%s]:ISAKMP-peer=peer-%s force\n",
-		    src->name, dst->name, peer->name);
+	if (r->peer)
+		fprintf(fd, SET "[IPsec-%s]:ISAKMP-peer=peer-%s force\n",
+		    r->p2name, r->peer->name);
 	else
 		fprintf(fd, SET
-		    "[IPsec-%s-%s]:ISAKMP-peer=peer-default force\n",
-		    src->name, dst->name);
+		    "[IPsec-%s]:ISAKMP-peer=peer-default force\n", r->p2name);
 
-	fprintf(fd, SET "[IPsec-%s-%s]:Configuration=qm-%s-%s force\n",
-	    src->name, dst->name, src->name, dst->name);
-	fprintf(fd, SET "[IPsec-%s-%s]:Local-ID=lid-%s force\n", src->name,
-	    dst->name, src->name);
-	fprintf(fd, SET "[IPsec-%s-%s]:Remote-ID=rid-%s force\n", src->name,
-	    dst->name, dst->name);
+	fprintf(fd, SET "[IPsec-%s]:Configuration=qm-%s force\n", r->p2name,
+	    r->p2name);
+	fprintf(fd, SET "[IPsec-%s]:Local-ID=lid-%s force\n", r->p2name,
+	    r->p2lid);
+	fprintf(fd, SET "[IPsec-%s]:Remote-ID=rid-%s force\n", r->p2name,
+	    r->p2rid);
 
-	if (tag)
-		fprintf(fd, SET "[IPsec-%s-%s]:PF-Tag=%s force\n",
-		    src->name, dst->name, tag);
+	if (r->tag)
+		fprintf(fd, SET "[IPsec-%s]:PF-Tag=%s force\n", r->p2name,
+		    r->tag);
 }
 
 static int
-ike_section_p2(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
-    u_int8_t satype, u_int8_t tmode, struct ipsec_transforms *qmxfs, FILE *fd,
-    u_int8_t ike_exch)
+ike_section_p2(struct ipsec_rule *r, FILE *fd)
 {
-	char *tag, *exchange_type, *sprefix;
+	char	*tag, *exchange_type, *sprefix;
 
-	switch (ike_exch) {
+	switch (r->p2ie) {
 	case IKE_QM:
 		tag = "qm";
 		exchange_type = "QUICK_MODE";
 		sprefix = "QM";
 		break;
 	default:
-		warnx("illegal phase 2 ike mode %d", ike_exch);
+		warnx("illegal phase 2 ike mode %d", r->p2ie);
 		return (-1);
 	}
 
-	fprintf(fd, SET "[%s-%s-%s]:EXCHANGE_TYPE=%s force\n",
-	    tag, src->name, dst->name, exchange_type);
-	fprintf(fd, SET "[%s-%s-%s]:Suites=%s-", tag, src->name,
-	    dst->name, sprefix);
+	fprintf(fd, SET "[%s-%s]:EXCHANGE_TYPE=%s force\n", tag, r->p2name,
+	    exchange_type);
+	fprintf(fd, SET "[%s-%s]:Suites=%s-", tag, r->p2name, sprefix);
 
-	switch (satype) {
+	switch (r->satype) {
 	case IPSEC_ESP:
 		fprintf(fd, "ESP");
 		break;
@@ -230,25 +216,25 @@ ike_section_p2(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 		fprintf(fd, "AH");
 		break;
 	default:
-		warnx("illegal satype %d", satype);
+		warnx("illegal satype %d", r->satype);
 		return (-1);
 	}
 	fprintf(fd, "-");
 
-	switch (tmode) {
+	switch (r->tmode) {
 	case IPSEC_TUNNEL:
 		break;
 	case IPSEC_TRANSPORT:
 		fprintf(fd, "TRP-");
 		break;
 	default:
-		warnx("illegal encapsulation mode %d", tmode);
+		warnx("illegal encapsulation mode %d", r->tmode);
 		return (-1);
 	}
 
-	if (qmxfs && qmxfs->encxf) {
-		if (satype == IPSEC_ESP) {
-			switch (qmxfs->encxf->id) {
+	if (r->p2xfs && r->p2xfs->encxf) {
+		if (r->satype == IPSEC_ESP) {
+			switch (r->p2xfs->encxf->id) {
 			case ENCXF_3DES_CBC:
 				fprintf(fd, "3DES");
 				break;
@@ -269,19 +255,19 @@ ike_section_p2(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 				break;
 			default:
 				warnx("illegal transform %s",
-				    qmxfs->encxf->name);
+				    r->p2xfs->encxf->name);
 				return (-1);
 			}
 			fprintf(fd, "-");
 		} else {
-			warnx("illegal transform %s", qmxfs->encxf->name);
+			warnx("illegal transform %s", r->p2xfs->encxf->name);
 			return (-1);
 		}
-	} else if (satype == IPSEC_ESP)
+	} else if (r->satype == IPSEC_ESP)
 		fprintf(fd, "AES-");
 
-	if (qmxfs && qmxfs->authxf) {
-		switch (qmxfs->authxf->id) {
+	if (r->p2xfs && r->p2xfs->authxf) {
+		switch (r->p2xfs->authxf->id) {
 		case AUTHXF_HMAC_MD5:
 			fprintf(fd, "MD5");
 			break;
@@ -301,14 +287,14 @@ ike_section_p2(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 			fprintf(fd, "SHA2-512");
 			break;
 		default:
-			warnx("illegal transform %s", qmxfs->authxf->name);
+			warnx("illegal transform %s", r->p2xfs->authxf->name);
 			return (-1);
 		}
 	} else
 		fprintf(fd, "SHA2-256");
 
-	if (qmxfs && qmxfs->groupxf) {
-		switch (qmxfs->groupxf->id) {
+	if (r->p2xfs && r->p2xfs->groupxf) {
+		switch (r->p2xfs->groupxf->id) {
 		case GROUPXF_NONE:
 			break;
 		case GROUPXF_768:
@@ -336,7 +322,7 @@ ike_section_p2(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 			fprintf(fd, "-PFS-GRP18");
 			break;
 		default:
-			warnx("illegal group %s", qmxfs->groupxf->name);
+			warnx("illegal group %s", r->p2xfs->groupxf->name);
 			return (-1);
 		};
 	} else
@@ -347,12 +333,11 @@ ike_section_p2(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 }
 
 static int
-ike_section_p1(struct ipsec_addr_wrap *peer, struct ipsec_transforms *p1xfs,
-    FILE *fd, struct ike_auth *auth, u_int8_t ike_exch)
+ike_section_p1(struct ipsec_rule *r, FILE *fd)
 {
 	char *tag, *exchange_type;
 
-	switch (ike_exch) {
+	switch (r->p1ie) {
 	case IKE_MM:
 		tag = "mm";
 		exchange_type = "ID_PROT";
@@ -362,16 +347,16 @@ ike_section_p1(struct ipsec_addr_wrap *peer, struct ipsec_transforms *p1xfs,
 		exchange_type = "AGGRESSIVE";
 		break;
 	default:
-		warnx("illegal phase 2 ike mode %d", ike_exch);
+		warnx("illegal phase 2 ike mode %d", r->p1ie);
 		return (-1);
 	}
 
-	if (peer) {
+	if (r->peer) {
 		fprintf(fd, SET "[peer-%s]:Configuration=%s-%s force\n",
-		    peer->name, tag, peer->name);
+		    r->peer->name, tag, r->peer->name);
 		fprintf(fd, SET "[%s-%s]:EXCHANGE_TYPE=%s force\n",
-		    tag, peer->name, exchange_type);
-		fprintf(fd, ADD "[%s-%s]:Transforms=", tag, peer->name);
+		    tag, r->peer->name, exchange_type);
+		fprintf(fd, ADD "[%s-%s]:Transforms=", tag, r->peer->name);
 	} else {
 		fprintf(fd, SET
 		    "[peer-default]:Configuration=%s-default force\n", tag);
@@ -380,8 +365,8 @@ ike_section_p1(struct ipsec_addr_wrap *peer, struct ipsec_transforms *p1xfs,
 		fprintf(fd, ADD "[%s-default]:Transforms=", tag);
 	}
 
-	if (p1xfs && p1xfs->encxf) {
-		switch (p1xfs->encxf->id) {
+	if (r->p1xfs && r->p1xfs->encxf) {
+		switch (r->p1xfs->encxf->id) {
 		case ENCXF_3DES_CBC:
 			fprintf(fd, "3DES");
 			break;
@@ -398,15 +383,15 @@ ike_section_p1(struct ipsec_addr_wrap *peer, struct ipsec_transforms *p1xfs,
 			fprintf(fd, "CAST");
 			break;
 		default:
-			warnx("illegal transform %s", p1xfs->encxf->name);
+			warnx("illegal transform %s", r->p1xfs->encxf->name);
 			return (-1);
 		}
 	} else
 		fprintf(fd, "AES");
 	fprintf(fd, "-");
 
-	if (p1xfs && p1xfs->authxf) {
-		switch (p1xfs->authxf->id) {
+	if (r->p1xfs && r->p1xfs->authxf) {
+		switch (r->p1xfs->authxf->id) {
 		case AUTHXF_HMAC_MD5:
 			fprintf(fd, "MD5");
 			break;
@@ -423,14 +408,14 @@ ike_section_p1(struct ipsec_addr_wrap *peer, struct ipsec_transforms *p1xfs,
 			fprintf(fd, "SHA2-512");
 			break;
 		default:
-			warnx("illegal transform %s", p1xfs->authxf->name);
+			warnx("illegal transform %s", r->p1xfs->authxf->name);
 			return (-1);
 		}
 	} else
 		fprintf(fd, "SHA");
 
-	if (p1xfs && p1xfs->groupxf) {
-		switch (p1xfs->groupxf->id) {
+	if (r->p1xfs && r->p1xfs->groupxf) {
+		switch (r->p1xfs->groupxf->id) {
 		case GROUPXF_768:
 			fprintf(fd, "-GRP1");
 			break;
@@ -456,12 +441,12 @@ ike_section_p1(struct ipsec_addr_wrap *peer, struct ipsec_transforms *p1xfs,
 			fprintf(fd, "-GRP18");
 			break;
 		default:
-			warnx("illegal group %s", p1xfs->groupxf->name);
+			warnx("illegal group %s", r->p1xfs->groupxf->name);
 			return (-1);
 		};
 	}
 
-	if (auth->type == IKE_AUTH_RSA)
+	if (r->ikeauth->type == IKE_AUTH_RSA)
 		fprintf(fd, "-RSA_SIG");
 	fprintf(fd, " force\n");
 
@@ -469,12 +454,13 @@ ike_section_p1(struct ipsec_addr_wrap *peer, struct ipsec_transforms *p1xfs,
 }
 
 static void
-ike_section_p2ids(u_int8_t proto, struct ipsec_addr_wrap *src,
-    u_int16_t sport, struct ipsec_addr_wrap *dst, u_int16_t dport, FILE *fd)
+ike_section_p2ids(struct ipsec_rule *r, FILE *fd)
 {
 	char mask[NI_MAXHOST], *network, *p;
 	struct sockaddr_storage sas;
 	struct sockaddr *sa = (struct sockaddr *)&sas;
+	struct ipsec_addr_wrap *src = r->src;
+	struct ipsec_addr_wrap *dst = r->dst;
 
 	if (src->netaddress) {
 		bzero(&sas, sizeof(struct sockaddr_storage));
@@ -504,16 +490,16 @@ ike_section_p2ids(u_int8_t proto, struct ipsec_addr_wrap *src,
 			*p = '\0';
 
 		fprintf(fd, SET "[lid-%s]:ID-type=IPV%d_ADDR_SUBNET force\n",
-		    src->name, ((src->af == AF_INET) ? 4 : 6));
-		fprintf(fd, SET "[lid-%s]:Network=%s force\n", src->name,
+		    r->p2lid, ((src->af == AF_INET) ? 4 : 6));
+		fprintf(fd, SET "[lid-%s]:Network=%s force\n", r->p2lid,
 		    network);
-		fprintf(fd, SET "[lid-%s]:Netmask=%s force\n", src->name, mask);
+		fprintf(fd, SET "[lid-%s]:Netmask=%s force\n", r->p2lid, mask);
 
 		free(network);
 	} else {
 		fprintf(fd, SET "[lid-%s]:ID-type=IPV%d_ADDR force\n",
-		    src->name, ((src->af == AF_INET) ? 4 : 6));
-		fprintf(fd, SET "[lid-%s]:Address=%s force\n", src->name,
+		    r->p2lid, ((src->af == AF_INET) ? 4 : 6));
+		fprintf(fd, SET "[lid-%s]:Address=%s force\n", r->p2lid,
 		    src->name);
 	}
 	if (dst->netaddress) {
@@ -544,45 +530,43 @@ ike_section_p2ids(u_int8_t proto, struct ipsec_addr_wrap *src,
 			*p = '\0';
 
 		fprintf(fd, SET "[rid-%s]:ID-type=IPV%d_ADDR_SUBNET force\n",
-		    dst->name, ((dst->af == AF_INET) ? 4 : 6));
-		fprintf(fd, SET "[rid-%s]:Network=%s force\n", dst->name,
+		    r->p2rid, ((dst->af == AF_INET) ? 4 : 6));
+		fprintf(fd, SET "[rid-%s]:Network=%s force\n", r->p2rid,
 		    network);
-		fprintf(fd, SET "[rid-%s]:Netmask=%s force\n", dst->name, mask);
+		fprintf(fd, SET "[rid-%s]:Netmask=%s force\n", r->p2rid, mask);
 
 		free(network);
 	} else {
 		fprintf(fd, SET "[rid-%s]:ID-type=IPV%d_ADDR force\n",
-		    dst->name, ((dst->af == AF_INET) ? 4 : 6));
-		fprintf(fd, SET "[rid-%s]:Address=%s force\n", dst->name,
+		    r->p2rid, ((dst->af == AF_INET) ? 4 : 6));
+		fprintf(fd, SET "[rid-%s]:Address=%s force\n", r->p2rid,
 		    dst->name);
 	}
-	if (proto) {
+	if (r->proto) {
 		fprintf(fd, SET "[lid-%s]:Protocol=%d force\n",
-		    src->name, proto);
+		    r->p2lid, r->proto);
 		fprintf(fd, SET "[rid-%s]:Protocol=%d force\n",
-		    dst->name, proto);
+		    r->p2lid, r->proto);
 	}
-	if (sport)
-		fprintf(fd, SET "[lid-%s]:Port=%d force\n", src->name,
-		    ntohs(sport));
-	if (dport)
-		fprintf(fd, SET "[rid-%s]:Port=%d force\n", dst->name,
-		    ntohs(dport));
+	if (r->sport)
+		fprintf(fd, SET "[lid-%s]:Port=%d force\n", r->p2lid,
+		    ntohs(r->sport));
+	if (r->dport)
+		fprintf(fd, SET "[rid-%s]:Port=%d force\n", r->p2rid,
+		    ntohs(r->dport));
 }
 
 static int
-ike_connect(u_int8_t mode, struct ipsec_addr_wrap *src,
-    struct ipsec_addr_wrap *dst, FILE *fd)
+ike_connect(struct ipsec_rule *r, FILE *fd)
 {
-	switch (mode) {
+	switch (r->ikemode) {
 	case IKE_ACTIVE:
 	case IKE_DYNAMIC:
-		fprintf(fd, ADD "[Phase 2]:Connections=IPsec-%s-%s\n",
-		    src->name, dst->name);
+		fprintf(fd, ADD "[Phase 2]:Connections=IPsec-%s\n", r->p2name);
 		break;
 	case IKE_PASSIVE:
-		fprintf(fd, ADD "[Phase 2]:Passive-Connections=IPsec-%s-%s\n",
-		    src->name, dst->name);
+		fprintf(fd, ADD "[Phase 2]:Passive-Connections=IPsec-%s\n",
+		    r->p2name);
 		break;
 	default:
 		return (-1);
@@ -594,20 +578,19 @@ static int
 ike_gen_config(struct ipsec_rule *r, FILE *fd)
 {
 	ike_section_general(r, fd);
-	ike_section_peer(r->peer, r->local, fd, r->ikeauth);
-	if (ike_section_p1(r->peer, r->p1xfs,
-	    fd, r->ikeauth, r->p1ie) == -1)
+	ike_section_peer(r, fd);
+	if (ike_section_p1(r, fd) == -1) {
 		return (-1);
-	ike_section_ids(r->peer, r->auth, fd, r->ikemode);
-	ike_section_ipsec(r->src, r->dst, r->peer, r->tag, fd);
-	if (ike_section_p2(r->src, r->dst, r->satype, r->tmode, r->p2xfs,
-	    fd, r->p2ie) == -1)
+	}
+	ike_section_ids(r, fd);
+	ike_section_ipsec(r, fd);
+	if (ike_section_p2(r, fd) == -1) {
 		return (-1);
-	ike_section_p2ids(r->proto, r->src, r->sport, r->dst, r->dport, fd);
+	}
+	ike_section_p2ids(r, fd);
 
-	if (ike_connect(r->ikemode, r->src, r->dst, fd) == -1)
+	if (ike_connect(r, fd) == -1)
 		return (-1);
-
 	return (0);
 }
 
@@ -618,11 +601,11 @@ ike_delete_config(struct ipsec_rule *r, FILE *fd)
 	switch (r->ikemode) {
 	case IKE_ACTIVE:
 	case IKE_DYNAMIC:
-		fprintf(fd, "t IPsec-%s-%s\n", r->src->name, r->dst->name);
+		fprintf(fd, "t IPsec-%s\n", r->p2name);
 		break;
 	case IKE_PASSIVE:
 		fprintf(fd, DELETE "[Phase 2]\n");
-		fprintf(fd, "t IPsec-%s-%s\n", r->src->name, r->dst->name);
+		fprintf(fd, "t IPsec-%s\n", r->p2name);
 		break;
 	default:
 		return (-1);
@@ -639,22 +622,55 @@ ike_delete_config(struct ipsec_rule *r, FILE *fd)
 		if (r->auth->dstid)
 			fprintf(fd, DELETE "[%s-ID]\n", r->auth->dstid);
 	}
-	fprintf(fd, DELETE "[IPsec-%s-%s]\n", r->src->name, r->dst->name);
-	fprintf(fd, DELETE "[qm-%s-%s]\n", r->src->name, r->dst->name);
-	fprintf(fd, DELETE "[lid-%s]\n", r->src->name);
-	fprintf(fd, DELETE "[rid-%s]\n", r->dst->name);
+	fprintf(fd, DELETE "[IPsec-%s]\n", r->p2name);
+	fprintf(fd, DELETE "[qm-%s]\n", r->p2name);
+	fprintf(fd, DELETE "[lid-%s]\n", r->p2lid);
+	fprintf(fd, DELETE "[rid-%s]\n", r->p2rid);
 #else
-	fprintf(fd, "t IPsec-%s-%s\n", r->src->name, r->dst->name);
-	fprintf(fd, DELETE "[IPsec-%s-%s]\n", r->src->name, r->dst->name);
-	fprintf(fd, DELETE "[qm-%s-%s]\n", r->src->name, r->dst->name);
+	fprintf(fd, "t IPsec-%s\n", r->p2name);
+	fprintf(fd, DELETE "[IPsec-%s]\n", r->p2name);
+	fprintf(fd, DELETE "[qm-%s]\n", r->p2name);
 #endif
 
 	return (0);
 }
 
+static void
+ike_setup_ids(struct ipsec_rule *r)
+{
+	if (r->proto) {
+		if (asprintf(&r->p2lid, "%s:%d-%d", r->src->name,
+		     ntohs(r->sport), r->proto) == -1)
+			err(1, "ike_setup_ids");
+		if (asprintf(&r->p2rid, "%s:%d-%d", r->dst->name,
+		     ntohs(r->dport), r->proto) == -1)
+			err(1, "ike_setup_ids");
+	} else {
+		if (r->sport) {
+			if (asprintf(&r->p2lid, "%s:%d", r->src->name,
+			     ntohs(r->sport)) == -1)
+				err(1, "ike_setup_ids");
+		} else {
+			if ((r->p2lid = strdup(r->src->name)) == NULL)
+				err(1, "ike_setup_ids");
+		}
+		if (r->dport) {
+			if (asprintf(&r->p2rid, "%s:%d", r->dst->name,
+			     ntohs(r->dport)) == -1)
+				err(1, "ike_setup_ids");
+		} else {
+			if ((r->p2rid = strdup(r->dst->name)) == NULL)
+				err(1, "ike_setup_ids");
+		}
+	}
+	if (asprintf(&r->p2name, "%s-%s", r->p2lid, r->p2rid) == -1)
+		err(1, "ike_setup_ids");
+}
+
 int
 ike_print_config(struct ipsec_rule *r, int opts)
 {
+	ike_setup_ids(r);
 	if (opts & IPSECCTL_OPT_DELETE)
 		return (ike_delete_config(r, stdout));
 	else
