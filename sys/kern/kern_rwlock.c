@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.8 2006/06/02 05:02:34 tedu Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.9 2006/11/30 20:08:22 mk Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -40,7 +40,7 @@
  * value (that might need some computing in a few cases). If the operation
  * fails, we need to set certain flags while waiting for the lock.
  *
- * RW_WRITE	The lock must be completly empty. We increment it with
+ * RW_WRITE	The lock must be completely empty. We increment it with
  *		RWLOCK_WRLOCK and the proc pointer of the holder.
  *		Sets RWLOCK_WAIT|RWLOCK_WRWANT while waiting.
  * RW_READ	RWLOCK_WRLOCK|RWLOCK_WRWANT may not be set. We increment
