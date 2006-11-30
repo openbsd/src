@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.237 2006/11/29 13:51:41 jsg Exp $
+$OpenBSD: usbdevs,v 1.238 2006/11/30 09:24:39 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -455,6 +455,7 @@ vendor PLANEX3		0x14ea	Planex Communications
 vendor SILICONPORTALS	0x1527	Silicon Portals
 vendor OQO		0x1557	OQO
 vendor UMEDIA		0x157e	U-MEDIA Communications
+vendor FIBERLINE	0x1582	Fiberline
 vendor SOHOWARE		0x15e8	SOHOware
 vendor UMAX		0x1606	UMAX Data Systems
 vendor INSIDEOUT	0x1608	Inside Out Networks
@@ -542,6 +543,7 @@ product ABOCOM RT2573		0xb21d	RT2573
 product ACCTON USB320_EC	0x1046	USB320-EC Ethernet
 product ACCTON 2664W		0x3501	2664W
 product ACCTON 111		0x3503	T-Sinus 111 WLAN
+product ACCTON SMCWUSBG		0x4505	SMCWUSB-G
 product ACCTON SS1001		0x5046	SpeedStream Ethernet
 
 /* Aceeca products */
@@ -700,6 +702,7 @@ product ASUS RT2570_2		0x1707	RT2570
 product ASUS RT2573		0x1723	RT2573
 product ASUS WL159G		0x170c	WL-159g
 product ASUS MYPAL_A730		0x4202	MyPal A730
+product ASUS A9T_WIFI		0x171b	A9T wireless
 
 /* ASUSTeK Computer products */
 product ASUSTEK WL140		0x3300	WL-140
@@ -1061,6 +1064,9 @@ product EXTENDED XTNDACCESS	0x0100	XTNDAccess IrDA
 /* Falcom Wireless Communications GmbH products */
 product FALCOM TWIST		0x0001	Falcom Twist USB
 product FALCOM SAMBA		0x0005	Falcom Samba USB
+
+/* Fiberline */
+product FIBERLINE WL430U	0x6003	WL-430U
 
 /* Freecom products */
 product FREECOM DVD		0xfc01	Connector for DVD drive
@@ -1854,6 +1860,7 @@ product ROCKFIRE GAMEPAD	0x2033	Gamepad 203USB
 /* Sagem products */
 product SAGEM SERIAL		0x0027	Serial
 product SAGEM XG760A		0x004a	XG-760A
+product SAGEM XG76NA		0x0062	XG76NA
 
 /* Saitek products */
 product SAITEK CYBORG_3D_GOLD	0x0006	Cyborg 3D Gold Joystick
@@ -2131,6 +2138,7 @@ product UMEDIA TEW429UB_A	0x300a	TEW-429UB_A
 product UMEDIA TEW429UB		0x300b	TEW-429UB
 product UMEDIA TEW444UBEU	0x3006	TEW-444UB EU
 product UMEDIA TEW444UBEU_NF	0x3007	TEW-444UB EU
+product UMEDIA TEW429UBC1	0x300d	TEW-429UB C1
 product UMEDIA AR5523_2		0x3205	AR5523
 product UMEDIA AR5523_2_NF	0x3206	AR5523
 
@@ -2249,5 +2257,7 @@ product ZYDAS ZD1211B		0x1215	ZD1211B
 product ZYXEL OMNI56K		0x1500	Omni 56K Plus
 product ZYXEL 980N		0x2011	Scorpion-980N
 product ZYXEL ZYAIRG220		0x3401	ZyAIR G-220
+product ZYXEL M202		0x340a	M-202
 product ZYXEL G270S		0x340c	G-270S
+product ZYXEL G220V2		0x340f	G-220 v2
 product ZYXEL PRESTIGE		0x401a	Prestige
