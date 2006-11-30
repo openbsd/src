@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.57 2006/11/30 16:17:58 markus Exp $	*/
+/*	$OpenBSD: ike.c,v 1.58 2006/11/30 21:35:34 markus Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -547,7 +547,7 @@ ike_section_p2ids(struct ipsec_rule *r, FILE *fd)
 		fprintf(fd, SET "[lid-%s]:Protocol=%d force\n",
 		    r->p2lid, r->proto);
 		fprintf(fd, SET "[rid-%s]:Protocol=%d force\n",
-		    r->p2lid, r->proto);
+		    r->p2rid, r->proto);
 	}
 	if (r->sport)
 		fprintf(fd, SET "[lid-%s]:Port=%d force\n", r->p2lid,
