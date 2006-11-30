@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.5 2006/11/30 01:04:35 espie Exp $
+# $OpenBSD: PkgConfig.pm,v 1.6 2006/11/30 13:18:22 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -19,6 +19,16 @@ use warnings;
 
 # this is a 'special' package, interface to the *.pc file format of pkg-config.
 package OpenBSD::PkgConfig;
+
+# specific properties may have specific needs.
+
+my $parse = {
+	Requires => sub { [split /[,\s]\s*/, shift ] }
+};
+
+my $write = {
+	Libs => sub { " ".__PACKAGE__->compress(shift) }
+};
 
 sub new
 {
@@ -49,11 +59,17 @@ sub add_property
 		die "Duplicate property $name";
 	}
 	push(@{$self->{proplist}}, $name);
+	my $v;
 	if (defined $value) {
-		$self->{properties}->{$name} = [split /\s+/, $value] ;
+		if (defined $parse->{$name}) {
+			$v = $parse->{$name}($value);
+		} else {
+			$v = [split /\s+/, $value] ;
+		}
 	} else {
-		$self->{properties}->{$name} = [];
+		$v = [];
 	}
+	$self->{properties}->{$name} = $v;
 }
 
 sub read_fh
@@ -77,6 +93,10 @@ sub read_fh
 			die "Incorrect cfg file $name";
 		}
 	}
+	if (defined $cfg->{properties}->{Libs}) {
+		$cfg->{properties}->{Libs} = 
+		    $cfg->compress_list($cfg->{properties}->{Libs});
+	}
 	return $cfg;
 }
 
@@ -97,9 +117,14 @@ sub write_fh
 	}
 	print $fh "\n\n";
 	foreach my $property (@{$self->{proplist}}) {
-		print $fh "$property:", 
-			(map { " $_" } @{$self->{properties}->{$property}}), 
-			"\n";
+		my $p = $self->{properties}->{$property};
+		print $fh "$property:";
+		if (defined $write->{$property}) {
+			print $fh $write->{$property}($p);
+		} else {
+			print $fh (map { " $_" } @$p); 
+		}
+	    	print $fh "\n";
 	}
 }
 
