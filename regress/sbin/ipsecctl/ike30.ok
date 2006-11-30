@@ -16,5 +16,5 @@ C set [lid-3ffe::1:0-97]:Address=3ffe::1 force
 C set [rid-3ffe::2:0-97]:ID-type=IPV6_ADDR force
 C set [rid-3ffe::2:0-97]:Address=3ffe::2 force
 C set [lid-3ffe::1:0-97]:Protocol=97 force
-C set [rid-3ffe::1:0-97]:Protocol=97 force
+C set [rid-3ffe::2:0-97]:Protocol=97 force
 C add [Phase 2]:Connections=IPsec-3ffe::1:0-97-3ffe::2:0-97

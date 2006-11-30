@@ -16,5 +16,5 @@ C set [lid-192.168.100.1:0-97]:Address=192.168.100.1 force
 C set [rid-192.168.200.1:0-97]:ID-type=IPV4_ADDR force
 C set [rid-192.168.200.1:0-97]:Address=192.168.200.1 force
 C set [lid-192.168.100.1:0-97]:Protocol=97 force
-C set [rid-192.168.100.1:0-97]:Protocol=97 force
+C set [rid-192.168.200.1:0-97]:Protocol=97 force
 C add [Phase 2]:Connections=IPsec-192.168.100.1:0-97-192.168.200.1:0-97

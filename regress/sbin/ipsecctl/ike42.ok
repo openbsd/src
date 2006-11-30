@@ -16,6 +16,6 @@ C set [lid-1.1.1.1:123-17]:Address=1.1.1.1 force
 C set [rid-2.2.2.2:0-17]:ID-type=IPV4_ADDR force
 C set [rid-2.2.2.2:0-17]:Address=2.2.2.2 force
 C set [lid-1.1.1.1:123-17]:Protocol=17 force
-C set [rid-1.1.1.1:123-17]:Protocol=17 force
+C set [rid-2.2.2.2:0-17]:Protocol=17 force
 C set [lid-1.1.1.1:123-17]:Port=123 force
 C add [Phase 2]:Connections=IPsec-1.1.1.1:123-17-2.2.2.2:0-17
