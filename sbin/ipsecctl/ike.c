@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.56 2006/11/30 15:51:28 markus Exp $	*/
+/*	$OpenBSD: ike.c,v 1.57 2006/11/30 16:17:58 markus Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -51,6 +51,7 @@ int		ike_ipsec_establish(int, struct ipsec_rule *);
 #define	SET	"C set "
 #define	ADD	"C add "
 #define	DELETE	"C rms "
+#define	RMV	"C rmv "
 
 #define ISAKMPD_FIFO	"/var/run/isakmpd.fifo"
 
@@ -628,6 +629,18 @@ ike_delete_config(struct ipsec_rule *r, FILE *fd)
 	fprintf(fd, DELETE "[rid-%s]\n", r->p2rid);
 #else
 	fprintf(fd, "t IPsec-%s\n", r->p2name);
+	switch (r->ikemode) {
+	case IKE_ACTIVE:
+	case IKE_DYNAMIC:
+		fprintf(fd, RMV "[Phase 2]:Connections=IPsec-%s\n", r->p2name);
+		break;
+	case IKE_PASSIVE:
+		fprintf(fd, RMV "[Phase 2]:Passive-Connections=IPsec-%s\n",
+		    r->p2name);
+		break;
+	default:
+		return (-1);
+	}
 	fprintf(fd, DELETE "[IPsec-%s]\n", r->p2name);
 	fprintf(fd, DELETE "[qm-%s]\n", r->p2name);
 #endif
