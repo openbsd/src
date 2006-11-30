@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.45 2006/11/29 21:39:46 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.46 2006/11/30 08:20:25 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -394,6 +394,8 @@ malo_attach(struct malo_softc *sc)
 	ic->ic_caps =
 	    IEEE80211_C_IBSS |
 	    IEEE80211_C_MONITOR |
+	    IEEE80211_C_SHPREAMBLE |
+	    IEEE80211_C_SHSLOT |
 	    IEEE80211_C_WEP;
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
