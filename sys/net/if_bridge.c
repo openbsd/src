@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.152 2006/07/06 15:50:59 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.153 2006/11/30 13:25:03 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2421,14 +2421,12 @@ bridge_filter(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 			return (NULL);
 #endif /* IPSEC */
 
-#if NPF > 0
 		/* Finally, we get to filter the packet! */
 		m->m_pkthdr.rcvif = ifp;
 		if (pf_test(dir, ifp, &m, eh) != PF_PASS)
 			goto dropit;
 		if (m == NULL)
 			goto dropit;
-#endif /* NPF */
 
 		/* Rebuild the IP header */
 		if (m->m_len < hlen && ((m = m_pullup(m, hlen)) == NULL))
@@ -2470,12 +2468,10 @@ bridge_filter(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 			return (NULL);
 #endif /* IPSEC */
 
-#if NPF > 0
 		if (pf_test6(dir, ifp, &m, eh) != PF_PASS)
 			goto dropit;
 		if (m == NULL)
 			return (NULL);
-#endif /* NPF */
 
 		break;
 	}
