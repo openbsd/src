@@ -1,4 +1,4 @@
-/*	$OpenBSD: bluetooth.h,v 1.2 2005/01/17 18:12:49 mickey Exp $	*/
+/*	$OpenBSD: bluetooth.h,v 1.3 2006/12/01 07:18:34 camield Exp $	*/
 
 /*
  * bluetooth.h
@@ -83,7 +83,7 @@ SYSCTL_DECL(_net_bluetooth_rfcomm);
 #endif /* SYSCTL_DECL */
 
 /*
- * Mbuf qeueue and useful mbufq macros. We do not use ifqueue because we
+ * Mbuf queue and useful mbufq macros. We do not use ifqueue because we
  * do not need mutex and other locking stuff
  */
 
