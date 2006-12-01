@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.375 2006/11/29 07:03:58 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.376 2006/12/01 07:23:26 camield Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1126,8 +1126,17 @@ Port numbers are never translated with a
 .Ar binat
 rule.
 .Pp
-For each packet processed by the translator, the translation rules are
-evaluated in sequential order, from first to last.
+Evaluation order of the translation rules is dependent on the type
+of the translation rules and of the direction of a packet.
+.Ar binat
+rules are always evaluated first.
+Then either the
+.Ar rdr
+rules are evaluated on an inbound packet or the
+.Ar nat
+rules on an outbound packet.
+Rules of the same type are evaluated in the same order in which they
+appear in the ruleset.
 The first matching rule decides what action is taken.
 .Pp
 The
