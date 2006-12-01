@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.182 2006/10/11 09:34:51 henning Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.183 2006/12/01 12:33:28 henning Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1061,7 +1061,10 @@ ip_ctloutput(op, so, level, optname, mp)
 					break;
 
 				case IP_TTL:
-					inp->inp_ip.ip_ttl = optval;
+					if (optval > 0 && optval <= MAXTTL)
+						inp->inp_ip.ip_ttl = optval;
+					else
+						error = EINVAL;
 					break;
 
 				case IP_MINTTL:
