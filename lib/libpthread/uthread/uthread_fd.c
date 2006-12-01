@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.26 2006/09/26 15:09:59 kurt Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.27 2006/12/01 16:34:41 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -131,7 +131,8 @@ _thread_fs_flags_replace(int fd, struct fs_flags *new_status_flags)
 				 * the parent and child will normally close the file
 				 * descriptor of the end of the pipe that they are not
 				 * using, which would then cause any reads to block
-				 * indefinitely.
+				 * indefinitely. However, stdin/out/err will be reset
+				 * to avoid leaving them as non-blocking indefinitely.
 				 *
 				 * Files that we cannot fstat are probably not regular
 				 * so we don't bother with them.
@@ -140,9 +141,9 @@ _thread_fs_flags_replace(int fd, struct fs_flags *new_status_flags)
 				 * the status flags with a shared version.
 				 */
 				if (new_status_flags == NULL &&
-				    (_thread_sys_fstat(fd, &sb) == 0) && 
-				    ((S_ISREG(sb.st_mode) || S_ISCHR(sb.st_mode)) &&
-				    (old_status_flags->flags & O_NONBLOCK) == 0))
+				    (old_status_flags->flags & O_NONBLOCK) == 0 &&
+				    (fd < 3 || (_thread_sys_fstat(fd, &sb) == 0 &&
+				    (S_ISREG(sb.st_mode) || S_ISCHR(sb.st_mode)))))
 				{
 					/* Get the current flags: */
 					flags = _thread_sys_fcntl(fd, F_GETFL, NULL);
