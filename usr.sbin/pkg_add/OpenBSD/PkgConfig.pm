@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.6 2006/11/30 13:18:22 espie Exp $
+# $OpenBSD: PkgConfig.pm,v 1.7 2006/12/01 16:17:03 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -23,12 +23,21 @@ package OpenBSD::PkgConfig;
 # specific properties may have specific needs.
 
 my $parse = {
-	Requires => sub { [split /[,\s]\s*/, shift ] }
+	Requires => sub { 
+	    [split qr{
+	    	(?<![<=>]) 	# not preceded by <=>
+		[,\s]+ 		#    delimiter
+		(?![<=>])	# not followed by <=>
+		}x, shift ] }
 };
+
 
 my $write = {
 	Libs => sub { " ".__PACKAGE__->compress(shift) }
 };
+
+$parse->{'Requires.private'} = $parse->{Requires};
+$write->{'Libs.private'} = $write->{Libs};
 
 sub new
 {
@@ -83,11 +92,11 @@ sub read_fh
 		chomp;
 		next if m/^\s*$/;
 		next if m/^\#/;
-		if (m/^(.*?)\=\s*(.*)$/) {
+		if (m/^([\w.]*)\=\s*(.*)$/) {
 			$cfg->add_variable($1, $2);
-		} elsif (m/^(.*?)\:\s+(.*)$/) {
+		} elsif (m/^([\w.]*)\:\s+(.*)$/) {
 			$cfg->add_property($1, $2);
-		} elsif (m/^(.*?)\:\s*$/) {
+		} elsif (m/^([\w.]*)\:\s*$/) {
 			$cfg->add_property($1);
 		} else {
 			die "Incorrect cfg file $name";
