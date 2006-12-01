@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.66 2006/03/13 14:49:59 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.67 2006/12/01 08:14:53 otto Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.66 2006/03/13 14:49:59 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.67 2006/12/01 08:14:53 otto Exp $";
 #endif
 
 #include <sys/param.h>
@@ -320,54 +320,59 @@ main(int argc, char *argv[])
 		cat = cflag;
 		pipin = 0;
 		infile = entry->fts_path;
-		switch (entry->fts_info) {
-		case FTS_D:
-			if (!recurse) {
-				warnx("%s is a directory: ignored",
-				    infile);
-				fts_set(ftsp, entry, FTS_SKIP);
-			}
-			continue;
-		case FTS_DP:
-			continue;
-		case FTS_NS:
-			/*
-			 * If file does not exist and has no suffix,
-			 * tack on the default suffix and try that.
-			 */
-			if (entry->fts_errno == ENOENT) {
-				if (infile[0] == '-' && infile[1] == '\0') {
-					infile = "stdin";
-					pipin++;
-					if (!oflag)
-						cat = 1;
-					break;
+		if (infile[0] == '-' && infile[1] == '\0') {
+			infile = "stdin";
+			pipin++;
+			if (!oflag)
+				cat = 1;
+		}
+		else
+			switch (entry->fts_info) {
+			case FTS_D:
+				if (!recurse) {
+					warnx("%s is a directory: ignored",
+					    infile);
+					fts_set(ftsp, entry, FTS_SKIP);
 				}
-				p = strrchr(entry->fts_accpath, '.');
-				if ((p == NULL || strcmp(p, suffix) != 0) &&
-				    snprintf(_infile, sizeof(_infile), "%s%s",
-				    infile, suffix) < sizeof(_infile) &&
-				    stat(_infile, entry->fts_statp) == 0 &&
-				    S_ISREG(entry->fts_statp->st_mode)) {
-					infile = _infile;
-					break;
+				continue;
+			case FTS_DP:
+				continue;
+			case FTS_NS:
+				/*
+				 * If file does not exist and has no suffix,
+				 * tack on the default suffix and try that.
+				 */
+				if (entry->fts_errno == ENOENT) {
+					p = strrchr(entry->fts_accpath, '.');
+					if ((p == NULL ||
+					    strcmp(p, suffix) != 0) &&
+					    snprintf(_infile, sizeof(_infile),
+					    "%s%s", infile, suffix) <
+					    sizeof(_infile) &&
+					    stat(_infile, entry->fts_statp) ==
+					    0 &&
+					    S_ISREG(entry->fts_statp->st_mode)) {
+						infile = _infile;
+						break;
+					}
 				}
-			}
-		case FTS_ERR:
-		case FTS_DNR:
-			warnx("%s: %s", infile, strerror(entry->fts_errno));
-			rc = rc ? rc : WARNING;
-			continue;
-		default:
-			if (!S_ISREG(entry->fts_statp->st_mode) &&
-			    !(S_ISLNK(entry->fts_statp->st_mode) && cat)) {
-				warnx("%s not a regular file%s",
-				    infile, cat ? "" : ": unchanged");
+			case FTS_ERR:
+			case FTS_DNR:
+				warnx("%s: %s", infile,
+				    strerror(entry->fts_errno));
 				rc = rc ? rc : WARNING;
 				continue;
+			default:
+				if (!S_ISREG(entry->fts_statp->st_mode) &&
+				    !(S_ISLNK(entry->fts_statp->st_mode) &&
+				    cat)) {
+					warnx("%s not a regular file%s",
+					    infile, cat ? "" : ": unchanged");
+					rc = rc ? rc : WARNING;
+					continue;
+				}
+				break;
 			}
-			break;
-		}
 
 		if (!decomp && !pipin && (s = check_suffix(infile)) != NULL) {
 			warnx("%s already has %s suffix -- unchanged",
