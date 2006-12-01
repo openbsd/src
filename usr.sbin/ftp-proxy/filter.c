@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.4 2006/12/01 07:25:41 camield Exp $ */
+/*	$OpenBSD: filter.c,v 1.5 2006/12/01 07:31:21 camield Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -281,7 +281,7 @@ prepare_rule(u_int32_t id, int rs_num, struct sockaddr *src,
 	case PF_RULESET_FILTER:
 		/*
 		 * pass quick [log] inet[6] proto tcp \
-		 *     from $src to $dst port = $d_port flags S/SAFR keep state
+		 *     from $src to $dst port = $d_port flags S/SA keep state
 		 *     (max 1) [queue qname]
 		 */
 		pfr.rule.action = PF_PASS;
