@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.7 2006/12/01 16:17:03 espie Exp $
+# $OpenBSD: PkgConfig.pm,v 1.8 2006/12/01 16:36:37 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -90,8 +90,16 @@ sub read_fh
 	$name = '' if !defined $name;
 	while (<$fh>) {
 		chomp;
+		# continuation lines
+		while (m/(?<!\\)\\$/) {
+			s/\\$//;
+			$_.=<$fh>;
+			chomp;
+		}
 		next if m/^\s*$/;
 		next if m/^\#/;
+		# zap comments
+		s/(?<!\\)\#.*//;
 		if (m/^([\w.]*)\=\s*(.*)$/) {
 			$cfg->add_variable($1, $2);
 		} elsif (m/^([\w.]*)\:\s+(.*)$/) {
