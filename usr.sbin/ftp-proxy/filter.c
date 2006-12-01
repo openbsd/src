@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.3 2005/06/07 14:12:07 camield Exp $ */
+/*	$OpenBSD: filter.c,v 1.4 2006/12/01 07:25:41 camield Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -289,7 +289,7 @@ prepare_rule(u_int32_t id, int rs_num, struct sockaddr *src,
 		pfr.rule.log = rule_log;
 		pfr.rule.keep_state = 1;
 		pfr.rule.flags = TH_SYN;
-		pfr.rule.flagset = (TH_SYN|TH_ACK|TH_FIN|TH_RST);
+		pfr.rule.flagset = (TH_SYN|TH_ACK);
 		pfr.rule.max_states = 1;
 		if (qname != NULL)
 			strlcpy(pfr.rule.qname, qname, sizeof pfr.rule.qname);
