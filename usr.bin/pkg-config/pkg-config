@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.9 2006/11/28 03:30:28 ckuethe Exp $
+# $OpenBSD: pkg-config,v 1.10 2006/12/01 19:32:31 espie Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -32,18 +32,15 @@ if (defined($ENV{'PKG_CONFIG_LOGFILE'}) && $ENV{'PKG_CONFIG_LOGFILE'}) {
 	$logfile = $ENV{'PKG_CONFIG_LOGFILE'};
 }
 
-our $version = 0.19; # pretend to be this version of pkgconfig
-my $parse_args = 1;
-my ($deps, $privdeps, $var, $val, $p, $f);
+my $version = 0.19; # pretend to be this version of pkgconfig
 
-our %configs = ();
-our %mode = ();
-our $D = 0; # debug flag
+my %configs = ();
+my %mode = ();
+my $D = 0; # debug flag
 
 # defaults
 $mode{'printerr'} = 1;
 
-$/ = undef;
 if ($logfile) {
 	open my $L, ">>" . $logfile;
 	print $L '[' . join('] [', $0, @ARGV) . "]\n";
@@ -95,10 +92,12 @@ if (defined $mode{'modversion'}) {
 	}
 }
 
-$p = join(' ', @ARGV);
+{
+my $p = join(' ', @ARGV);
 $p =~ s/\s+/ /g;
 $p =~ s/^\s//g;
 @ARGV = split /\s+/, $p;
+}
 
 if (defined $mode{'exists'}) {
 	while (@ARGV) {
@@ -117,7 +116,7 @@ if (defined $mode{'exists'}) {
 do_variable($ARGV[0], $mode{'variable'}) if $mode{'variable'};
 
 while (@ARGV){
-	$p = $ARGV[0];
+	my $p = $ARGV[0];
 	if ((@ARGV >= 2)  && ($ARGV[1] =~ /[<=>]+/) &&
 	    ($ARGV[2] =~ /[0-9\.]+/)) {
 		shift @ARGV;
@@ -127,11 +126,11 @@ while (@ARGV){
 	$p =~ s/,//g;
 	unless ($configs{$p}) { # don't reprocess things we've seen
 		print STDERR "processing $p\n" if $D;
-		if ($f = pathresolve($p)) { # locate the .pc file
+		if (my $f = pathresolve($p)) { # locate the .pc file
 			exit 0 if defined $mode{'exists'};
 	
 			$configs{$p} = slurp($f); # load the config
-			$deps = '';
+			my $deps = '';
 			if ($configs{$p} =~ /\bRequires: +(\w.+?)\n/) {
 				$deps = $1;
 				# XXX how should i handle versions?
@@ -142,7 +141,7 @@ while (@ARGV){
 			    if $D && $deps;
 			push(@ARGV, split /\s+/, $deps) if $deps;
 
-			$privdeps = '';
+			my $privdeps = '';
 			if ($configs{$p} =~ /\bRequires\.private: +(\w.+?)\n/) {
 				$privdeps = $1;
 				# XXX how should i handle versions?
@@ -173,12 +172,11 @@ sub pathresolve
 	my ($p) = @_;
 
 	foreach my $d (@PKGPATH) {
-		$f = "$d/$p.pc";
+		my $f = "$d/$p.pc";
 		print STDERR "pathresolve($p) looking in $f\n" if $D;
-		last if -f $f;
-		$f = undef;
+		return $f if -f $f;
 	}
-	return $f;
+	return undef;
 }
 
 
@@ -187,6 +185,7 @@ sub slurp
 {
 	my ($f) = @_;
 
+	local $/ = undef;
 	open my $F, '<', $f or return undef;
 	print STDERR "slurp($f) OK\n" if $D;
 	$f = <$F>;
