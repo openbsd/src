@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.40 2006/11/29 12:13:54 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.41 2006/12/02 11:25:07 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -90,6 +90,15 @@
 #include "wsdisplay.h"
 
 /*
+ * Sun specific color indexes.
+ * Black is not really 7, but rather ~0; to fit within the 8 ANSI color
+ * palette we are using on console, we pick (~0) & 0x07 instead.
+ * This essentially swaps WSCOL_BLACK and WSCOL_WHITE.
+ */
+#define	WSCOL_SUN_WHITE		0
+#define	WSCOL_SUN_BLACK		7
+
+/*
  * emergency unblank code
  * XXX should be somewhat moved to wscons MI code
  */
@@ -111,7 +120,6 @@ static int a2int(char *, int);
 #endif
 static void fb_initwsd(struct sunfb *);
 static void fb_updatecursor(struct rasops_info *);
-int	fb_alloc_cattr(void *, int, int, int, long *);
 int	fb_alloc_screen(void *, const struct wsscreen_descr *, void **,
 	    int *, int *, long *);
 void	fb_free_screen(void *, void *);
@@ -367,15 +375,12 @@ fbwscons_init(struct sunfb *sf, int flags)
 #endif
 
 	rasops_init(ri, rows, cols);
-	if (ri->ri_caps & WSSCREEN_WSCOLORS)
-		ri->ri_ops.alloc_attr = fb_alloc_cattr;
 }
 
 void
 fbwscons_console_init(struct sunfb *sf, int row)
 {
 	struct rasops_info *ri = &sf->sf_ro;
-	int32_t tmp;
 	long defattr;
 
 	if (CPU_ISSUN4 || romgetcursoraddr(&sf->sf_crowp, &sf->sf_ccolp))
@@ -417,14 +422,20 @@ fbwscons_console_init(struct sunfb *sf, int row)
 	    (sf->sf_ccolp != NULL || sf->sf_crowp != NULL))
 		ri->ri_updatecursor = fb_updatecursor;
 
-	/*
-	 * Select appropriate color settings to mimic a
-	 * black on white Sun console.
-	 */
-	if (sf->sf_depth > 8) {
-		tmp = ri->ri_devcmap[WSCOL_WHITE];
-		ri->ri_devcmap[WSCOL_WHITE] = ri->ri_devcmap[WSCOL_BLACK];
-		ri->ri_devcmap[WSCOL_BLACK] = tmp;
+	if (sf->sf_depth == 8) {
+		/*
+		 * If we are running with an indexed palette, compensate
+		 * the swap of black and white through ri_devcmap.
+		 */
+		ri->ri_devcmap[WSCOL_SUN_BLACK] = 0;
+		ri->ri_devcmap[WSCOL_SUN_WHITE] = 0xffffffff;
+	} else if (sf->sf_depth > 8) {
+		/*
+		 * If we are running on a direct color frame buffer,
+		 * make the ``normal'' white the same as the hilighted
+		 * white.
+		 */
+		ri->ri_devcmap[WSCOL_WHITE] = ri->ri_devcmap[WSCOL_WHITE + 8];
 	}
 
 	if (ISSET(ri->ri_caps, WSSCREEN_WSCOLORS))
@@ -443,22 +454,27 @@ fbwscons_setcolormap(struct sunfb *sf,
     void (*setcolor)(void *, u_int, u_int8_t, u_int8_t, u_int8_t))
 {
 	int i;
-	u_char *color;
+	const u_char *color;
 
 	if (sf->sf_depth <= 8 && setcolor != NULL) {
 		for (i = 0; i < 16; i++) {
-			color = (u_char *)&rasops_cmap[i * 3];
+			color = &rasops_cmap[i * 3];
 			setcolor(sf, i, color[0], color[1], color[2]);
 		}
 		for (i = 240; i < 256; i++) {
-			color = (u_char *)&rasops_cmap[i * 3];
+			color = &rasops_cmap[i * 3];
 			setcolor(sf, i, color[0], color[1], color[2]);
 		}
-		/* compensate for BoW palette */
-		setcolor(sf, WSCOL_BLACK, 0, 0, 0);
-		setcolor(sf, 0xff ^ WSCOL_BLACK, 255, 255, 255);
-		setcolor(sf, WSCOL_WHITE, 255, 255, 255);
-		setcolor(sf, 0xff ^ WSCOL_WHITE, 0, 0, 0);
+		/*
+		 * Compensate for BoW default hardware palette: existing
+		 * output (which we do not want to affect) is black on
+		 * white with color index 0 being white and 0xff being
+		 * black.
+		 */
+		setcolor(sf, WSCOL_SUN_WHITE, 0xff, 0xff, 0xff);
+		setcolor(sf, 0xff ^ WSCOL_SUN_WHITE, 0, 0, 0);
+		setcolor(sf, WSCOL_SUN_BLACK, 0, 0, 0);
+		setcolor(sf, 0xff ^ (WSCOL_SUN_BLACK), 0xff, 0xff, 0xff);
 	}
 }
 
@@ -532,48 +548,6 @@ int
 fb_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int),
     void *cbarg)
 {
-	return (0);
-}
-
-/*
- * A variant of rasops_alloc_cattr() which handles the WSCOL_BLACK and
- * WSCOL_WHITE specific values wrt highlighting.
- */
-int
-fb_alloc_cattr(void *cookie, int fg, int bg, int flg, long *attrp)
-{
-	int swap;
-
-	if ((flg & WSATTR_BLINK) != 0)
-		return (EINVAL);
-
-	if ((flg & WSATTR_WSCOLORS) == 0) {
-		fg = WSCOL_WHITE;
-		bg = WSCOL_BLACK;
-	}
-
-	if ((flg & WSATTR_REVERSE) != 0) {
-		swap = fg;
-		fg = bg;
-		bg = swap;
-	}
-
-	if ((flg & WSATTR_HILIT) != 0) {
-		if (fg == WSCOL_BLACK)
-			fg = 8;	/* ``regular'' dark gray */
-		else if (fg != WSCOL_WHITE) /* white is always highlighted */
-			fg += 8;
-	}
-
-	flg = ((flg & WSATTR_UNDERLINE) ? 1 : 0);
-
-	/* we're lucky we do not need a different isgray table... */
-	if (rasops_isgray[fg])
-		flg |= 2;
-	if (rasops_isgray[bg])
-		flg |= 4;
-
-	*attrp = (bg << 16) | (fg << 24) | flg;
 	return (0);
 }
 

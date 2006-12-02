@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.21 2006/11/29 19:11:17 miod Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.22 2006/12/02 11:25:09 miod Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -64,20 +64,14 @@ struct wsdisplay_emulops {
 	int	(*alloc_attr)(void *c, int fg, int bg, int flags, long *attrp);
 	void	(*unpack_attr)(void *c, long attr, int *fg, int *bg, int *ul);
 /* fg / bg values. Made identical to ANSI terminal color codes. */
-/* XXX should be #if NWSEMUL_SUN > 1 */
-#if defined(__sparc__) || defined(__sparc64__)
-#define WSCOL_WHITE	0
-#define WSCOL_BLACK	15
-#else
 #define WSCOL_BLACK	0
-#define WSCOL_WHITE	7
-#endif
 #define WSCOL_RED	1
 #define WSCOL_GREEN	2
 #define WSCOL_BROWN	3
 #define WSCOL_BLUE	4
 #define WSCOL_MAGENTA	5
 #define WSCOL_CYAN	6
+#define WSCOL_WHITE	7
 /* flag values: */
 #define WSATTR_REVERSE	1
 #define WSATTR_HILIT	2

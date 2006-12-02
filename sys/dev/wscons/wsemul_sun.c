@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.17 2006/08/17 06:27:04 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.18 2006/12/02 11:25:09 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -471,26 +471,14 @@ wsemul_sun_control(edp, c)
 				flags |= WSATTR_REVERSE;
 				break;
 			/* ANSI foreground color */
-			case 30:
-				fgcol = WSCOL_BLACK;
-				break;
-			case 31: case 32: case 33:
-			case 34: case 35: case 36:
+			case 30: case 31: case 32: case 33:
+			case 34: case 35: case 36: case 37:
 				fgcol = ARG(n,edp->nargs) - 30;
 				break;
-			case 37:
-				fgcol = WSCOL_WHITE;
-				break;
 			/* ANSI background color */
-			case 40:
-				bgcol = WSCOL_BLACK;
-				break;
-			case 41: case 42: case 43:
-			case 44: case 45: case 46:
+			case 40: case 41: case 42: case 43:
+			case 44: case 45: case 46: case 47:
 				bgcol = ARG(n,edp->nargs) - 40;
-				break;
-			case 47:
-				bgcol = WSCOL_WHITE;
 				break;
 			}
 		}
