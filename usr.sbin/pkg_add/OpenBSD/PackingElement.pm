@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.84 2006/11/17 15:34:15 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.85 2006/12/02 10:48:03 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -434,6 +434,12 @@ sub ensure_ldconfig
 		&OpenBSD::SharedLibs::ensure_ldconfig;
 	}
 }
+
+package OpenBSD::PackingElement::PkgConfig;
+our @ISA=qw(OpenBSD::PackingElement::FileBase);
+
+__PACKAGE__->setKeyword('pkgconfig');
+sub keyword() { "pkgconfig" }
 
 package OpenBSD::PackingElement::Ignore;
 our @ISA=qw(OpenBSD::PackingElement::Annotation);
