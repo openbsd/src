@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.h,v 1.6 2006/11/29 19:11:17 miod Exp $ */
+/* $OpenBSD: wsmoused.h,v 1.7 2006/12/02 18:16:14 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -113,12 +113,6 @@ extern char Paste_avail; /* flag, to indicate whether a selection is in the
 	((*sc->sc_focus->scr_dconf->emulops->putchar) \
 	    (sc->sc_focus->scr_dconf->emulcookie, ((pos) / N_COLS), \
 	    ((pos) % N_COLS), (uc), (attr)))
-#define	UNPACKATTR(attr, fgp, bgp, ulp) \
-	((*sc->sc_focus->scr_dconf->emulops->unpack_attr) \
-	    (sc->sc_focus->scr_dconf->emulcookie, attr, fgp, bgp, ulp))
-#define	ALLOCATTR(fg, bg, flags, attrp) \
-	((*sc->sc_focus->scr_dconf->emulops->alloc_attr) \
-	    (sc->sc_focus->scr_dconf->emulcookie, fg, bg, flags, attrp))
 
 #define MOUSE_COPY_BUTTON 	0
 #define MOUSE_PASTE_BUTTON 	1

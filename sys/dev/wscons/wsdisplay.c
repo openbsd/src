@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.73 2006/11/29 19:12:53 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.74 2006/12/02 18:16:14 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -2401,16 +2401,39 @@ mouse_moverel(char dx, char dy)
 void
 inverse_char(unsigned short pos)
 {
+	struct wsscreen_internal *dconf;
 	struct wsdisplay_charcell cell;
 	int fg, bg, ul;
+	int flags;
+	int tmp;
+	long attr;
+
+	dconf = sc->sc_focus->scr_dconf;
 
 	GETCHAR(pos, &cell);
-	UNPACKATTR(cell.attr, &fg, &bg, &ul);
 
-	ALLOCATTR(bg, fg, WSATTR_WSCOLORS | (ul ? WSATTR_UNDERLINE : 0),
-	    &cell.attr);
+	(*dconf->emulops->unpack_attr)(dconf->emulcookie, cell.attr, &fg,
+	    &bg, &ul);
 
-	PUTCHAR(pos, cell.uc, cell.attr);
+	/*
+	 * Display the mouse cursor as a color inverted cell whenever
+	 * possible. If this is not possible, ask for the video reverse
+	 * attribute.
+	 */
+	flags = 0;
+	if (dconf->scrdata->capabilities & WSSCREEN_WSCOLORS) {
+		flags |= WSATTR_WSCOLORS;
+		tmp = fg;
+		fg = bg;
+		bg = tmp;
+	} else if (dconf->scrdata->capabilities & WSSCREEN_REVERSE) {
+		flags |= WSATTR_REVERSE;
+	}
+	if ((*dconf->emulops->alloc_attr)(dconf->emulcookie, fg, bg, flags |
+	    (ul ? WSATTR_UNDERLINE : 0), &attr) == 0) {
+		cell.attr = attr;
+		PUTCHAR(pos, cell.uc, cell.attr);
+	}
 }
 
 void
