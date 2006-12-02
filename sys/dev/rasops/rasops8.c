@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops8.c,v 1.6 2002/07/27 22:17:49 miod Exp $	*/
+/*	$OpenBSD: rasops8.c,v 1.7 2006/12/02 15:55:18 miod Exp $	*/
 /*	$NetBSD: rasops8.c,v 1.8 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -195,8 +195,10 @@ rasops8_makestamp(ri, attr)
 		stamp[i] |= ((i & 4 ? fg : bg) << 16);
 		stamp[i] |= ((i & 8 ? fg : bg) << 24);
 #endif
+#if NRASOPS_BSWAP > 0
 		if (ri->ri_flg & RI_BSWAP)
 			stamp[i] = swap32(stamp[i]);
+#endif
 	}
 }
 

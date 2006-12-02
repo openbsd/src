@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.15 2006/11/29 19:08:22 miod Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.16 2006/12/02 15:55:18 miod Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -147,6 +147,7 @@ int	rasops_alloc_mattr(void *, int, int, int, long *);
 void	rasops_do_cursor(struct rasops_info *);
 void	rasops_init_devcmap(struct rasops_info *);
 void	rasops_unpack_attr(void *, long, int *, int *, int *);
+static void slow_ovbcopy(void *, void *, size_t);
 
 #if NRASOPS_ROTATION > 0
 void	rasops_copychar(void *, int, int, int, int);
@@ -663,10 +664,21 @@ rasops_copycols(cookie, row, src, dst, num)
 	sp = ri->ri_bits + row + src * ri->ri_xscale;
 	dp = ri->ri_bits + row + dst * ri->ri_xscale;
 
-	while (height--) {
-		ovbcopy(sp, dp, num);
-		dp += ri->ri_stride;
-		sp += ri->ri_stride;
+#if NRASOPS_BSWAP > 0
+	if (ri->ri_flg & RI_BSWAP) {
+		while (height--) {
+			slow_ovbcopy(sp, dp, num);
+			dp += ri->ri_stride;
+			sp += ri->ri_stride;
+		}
+	} else
+#endif
+	{
+		while (height--) {
+			ovbcopy(sp, dp, num);
+			dp += ri->ri_stride;
+			sp += ri->ri_stride;
+		}
 	}
 }
 
@@ -794,6 +806,7 @@ rasops_init_devcmap(ri)
 			c = c | (c << 16);
 
 		/* 24bpp does bswap on the fly. {32,16,15}bpp do it here. */
+#if NRASOPS_BSWAP > 0
 		if ((ri->ri_flg & RI_BSWAP) == 0)
 			ri->ri_devcmap[i] = c;
 		else if (ri->ri_depth == 32)
@@ -802,6 +815,9 @@ rasops_init_devcmap(ri)
 			ri->ri_devcmap[i] = swap16(c);
 		else
 			ri->ri_devcmap[i] = c;
+#else
+		ri->ri_devcmap[i] = c;
+#endif
 	}
 #endif
 }
@@ -1158,10 +1174,21 @@ rasops_copychar(cookie, srcrow, dstrow, srccol, dstcol)
 	sp = ri->ri_bits + r_srcrow + r_srccol * ri->ri_xscale;
 	dp = ri->ri_bits + r_dstrow + r_dstcol * ri->ri_xscale;
 
-	while (height--) {
-		ovbcopy(sp, dp, ri->ri_xscale);
-		dp += ri->ri_stride;
-		sp += ri->ri_stride;
+#if NRASOPS_BSWAP > 0
+	if (ri->ri_flg & RI_BSWAP) {
+		while (height--) {
+			slow_ovbcopy(sp, dp, ri->ri_xscale);
+			dp += ri->ri_stride;
+			sp += ri->ri_stride;
+		}
+	} else
+#endif
+	{
+		while (height--) {
+			ovbcopy(sp, dp, ri->ri_xscale);
+			dp += ri->ri_stride;
+			sp += ri->ri_stride;
+		}
 	}
 }
 
@@ -1265,3 +1292,29 @@ rasops_eraserows_rotated(cookie, row, num, attr)
 			ri->ri_ops.putchar(cookie, rn, col, ' ', attr);
 }
 #endif	/* NRASOPS_ROTATION */
+
+#if NRASOPS_BSWAP > 0
+/*
+ * Strictly byte-only ovbcopy() version, to be used with RI_BSWAP, as the
+ * regular ovbcopy() may want to optimize things by doing larger-than-byte
+ * reads or write. This may confuse things if src and dst have different
+ * alignments.
+ */
+void
+slow_ovbcopy(void *s, void *d, size_t len)
+{
+	u_int8_t *src = s;
+	u_int8_t *dst = d;
+
+	if ((vaddr_t)dst <= (vaddr_t)src) {
+		while (len-- != 0)
+			*dst++ = *src++;
+	} else {
+		src += len;
+		dst += len;
+		if (len != 0)
+			while (--len != 0)
+				*--dst = *--src;
+	}
+}
+#endif	/* NRASOPS_BSWAP */

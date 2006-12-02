@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.390 2006/11/25 18:10:29 uwe Exp $
+#	$OpenBSD: files,v 1.391 2006/12/02 15:55:18 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -48,6 +48,7 @@ define	rasops15
 define	rasops16
 define	rasops24
 define	rasops32
+define	rasops_bswap
 define	rasops_rotation
 
 # net device attributes - we have generic code for ether(net),
