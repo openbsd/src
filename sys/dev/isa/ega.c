@@ -1,4 +1,4 @@
-/* $OpenBSD: ega.c,v 1.10 2006/11/29 19:08:22 miod Exp $ */
+/* $OpenBSD: ega.c,v 1.11 2006/12/02 19:11:11 miod Exp $ */
 /* $NetBSD: ega.c,v 1.4.4.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -888,10 +888,10 @@ ega_alloc_attr(id, fg, bg, flags, attrp)
 		if (flags & (WSATTR_UNDERLINE | WSATTR_REVERSE))
 			return (EINVAL);
 		if (flags & WSATTR_WSCOLORS)
-			*attrp = fgansitopc[fg] | bgansitopc[bg];
+			*attrp = fgansitopc[fg & 7] | bgansitopc[bg & 7];
 		else
 			*attrp = 7;
-		if (flags & WSATTR_HILIT)
+		if ((flags & WSATTR_HILIT) || (fg & 8) || (bg & 8))
 			*attrp += 8;
 	}
 	if (flags & WSATTR_BLINK)
