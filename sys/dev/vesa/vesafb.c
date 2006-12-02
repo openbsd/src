@@ -1,4 +1,4 @@
-/* $OpenBSD: vesafb.c,v 1.1 2006/11/27 18:04:28 gwk Exp $ */
+/* $OpenBSD: vesafb.c,v 1.2 2006/12/02 20:20:55 matthieu Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -194,8 +194,9 @@ vesafb_find_mode(struct vga_pci_softc *sc, int width, int height, int bpp)
 
 	if (vesabios_softc == NULL || vesabios_softc->sc_nmodes == 0)
 		return -1;
-
+#ifdef VESABIOSVERBOSE
 	printf("vesafb_find_mode %d %d %d\n", width, height, bpp);
+#endif
 	/* Choose a graphics mode */
 	for (i = 0; i < vesabios_softc->sc_nmodes; i++) {
 		vesafb_get_mode_info(sc, vesabios_softc->sc_modes[i], &mi);
