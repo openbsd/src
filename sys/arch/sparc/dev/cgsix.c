@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.35 2006/07/25 21:23:30 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.36 2006/12/02 11:21:35 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -643,6 +643,7 @@ cgsix_ras_erasecols(void *cookie, int row, int col, int n, long attr)
 	struct rasops_info *ri = cookie;
 	struct cgsix_softc *sc = ri->ri_hw;
 	volatile struct cgsix_fbc *fbc = sc->sc_fbc;
+	int fg, bg;
 
 	if ((row < 0) || (row >= ri->ri_rows))
 		return;
@@ -658,6 +659,8 @@ cgsix_ras_erasecols(void *cookie, int row, int col, int n, long attr)
 	col *= ri->ri_font->fontwidth;
 	row *= ri->ri_font->fontheight;
 
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
+
 	fbc->fbc_clip = 0;
 	fbc->fbc_s = 0;
 	fbc->fbc_offx = 0;
@@ -667,7 +670,7 @@ cgsix_ras_erasecols(void *cookie, int row, int col, int n, long attr)
 	fbc->fbc_clipmaxx = ri->ri_width - 1;
 	fbc->fbc_clipmaxy = ri->ri_height - 1;
 	fbc->fbc_alu = FBC_ALU_FILL;
-	fbc->fbc_fg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	fbc->fbc_fg = ri->ri_devcmap[bg];
 	fbc->fbc_arecty = ri->ri_yorigin + row;
 	fbc->fbc_arectx = ri->ri_xorigin + col;
 	fbc->fbc_arecty = ri->ri_yorigin + row + ri->ri_font->fontheight - 1;
@@ -682,6 +685,7 @@ cgsix_ras_eraserows(void *cookie, int row, int n, long attr)
 	struct rasops_info *ri = cookie;
 	struct cgsix_softc *sc = ri->ri_hw;
 	volatile struct cgsix_fbc *fbc = sc->sc_fbc;
+	int fg, bg;
 
 	if (row < 0) {
 		n += row;
@@ -692,6 +696,8 @@ cgsix_ras_eraserows(void *cookie, int row, int n, long attr)
 	if (n <= 0)
 		return;
 
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
+
 	fbc->fbc_clip = 0;
 	fbc->fbc_s = 0;
 	fbc->fbc_offx = 0;
@@ -701,7 +707,7 @@ cgsix_ras_eraserows(void *cookie, int row, int n, long attr)
 	fbc->fbc_clipmaxx = ri->ri_width - 1;
 	fbc->fbc_clipmaxy = ri->ri_height - 1;
 	fbc->fbc_alu = FBC_ALU_FILL;
-	fbc->fbc_fg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	fbc->fbc_fg = ri->ri_devcmap[bg];
 	if ((n == ri->ri_rows) && (ri->ri_flg & RI_FULLCLEAR)) {
 		fbc->fbc_arecty = 0;
 		fbc->fbc_arectx = 0;

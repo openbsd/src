@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.54 2006/07/25 21:23:32 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.55 2006/12/02 11:21:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -938,6 +938,7 @@ cgsix_ras_erasecols(void *cookie, int row, int col, int n, long int attr)
 {
 	struct rasops_info *ri = cookie;
 	struct cgsix_softc *sc = ri->ri_hw;
+	int fg, bg;
 
 	if ((row < 0) || (row >= ri->ri_rows))
 		return;
@@ -953,6 +954,8 @@ cgsix_ras_erasecols(void *cookie, int row, int col, int n, long int attr)
 	col *= ri->ri_font->fontwidth;
 	row *= ri->ri_font->fontheight;
 
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
+
 	FBC_WRITE(sc, CG6_FBC_CLIP, 0);
 	FBC_WRITE(sc, CG6_FBC_S, 0);
 	FBC_WRITE(sc, CG6_FBC_OFFX, 0);
@@ -962,7 +965,7 @@ cgsix_ras_erasecols(void *cookie, int row, int col, int n, long int attr)
 	FBC_WRITE(sc, CG6_FBC_CLIPMAXX, ri->ri_width - 1);
 	FBC_WRITE(sc, CG6_FBC_CLIPMAXY, ri->ri_height - 1);
 	FBC_WRITE(sc, CG6_FBC_ALU, FBC_ALU_FILL);
-	FBC_WRITE(sc, CG6_FBC_FG, ri->ri_devcmap[(attr >> 16) & 0xf]);
+	FBC_WRITE(sc, CG6_FBC_FG, ri->ri_devcmap[bg]);
 	FBC_WRITE(sc, CG6_FBC_ARECTY, ri->ri_yorigin + row);
 	FBC_WRITE(sc, CG6_FBC_ARECTX, ri->ri_xorigin + col);
 	FBC_WRITE(sc, CG6_FBC_ARECTY,
@@ -977,6 +980,7 @@ cgsix_ras_eraserows(void *cookie, int row, int n, long int attr)
 {
 	struct rasops_info *ri = cookie;
 	struct cgsix_softc *sc = ri->ri_hw;
+	int fg, bg;
 
 	if (row < 0) {
 		n += row;
@@ -987,6 +991,8 @@ cgsix_ras_eraserows(void *cookie, int row, int n, long int attr)
 	if (n <= 0)
 		return;
 
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
+
 	FBC_WRITE(sc, CG6_FBC_CLIP, 0);
 	FBC_WRITE(sc, CG6_FBC_S, 0);
 	FBC_WRITE(sc, CG6_FBC_OFFX, 0);
@@ -996,7 +1002,7 @@ cgsix_ras_eraserows(void *cookie, int row, int n, long int attr)
 	FBC_WRITE(sc, CG6_FBC_CLIPMAXX, ri->ri_width - 1);
 	FBC_WRITE(sc, CG6_FBC_CLIPMAXY, ri->ri_height - 1);
 	FBC_WRITE(sc, CG6_FBC_ALU, FBC_ALU_FILL);
-	FBC_WRITE(sc, CG6_FBC_FG, ri->ri_devcmap[(attr >> 16) & 0xf]);
+	FBC_WRITE(sc, CG6_FBC_FG, ri->ri_devcmap[bg]);
 	if ((n == ri->ri_rows) && (ri->ri_flg & RI_FULLCLEAR)) {
 		FBC_WRITE(sc, CG6_FBC_ARECTY, 0);
 		FBC_WRITE(sc, CG6_FBC_ARECTX, 0);

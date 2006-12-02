@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.36 2006/06/30 21:38:19 miod Exp $	*/
+/*	$OpenBSD: creator.c,v 1.37 2006/12/02 11:21:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -620,6 +620,7 @@ creator_ras_eraserows(cookie, row, n, attr)
 {
 	struct rasops_info *ri = cookie;
 	struct creator_softc *sc = ri->ri_hw;
+	int bg, fg;
 
 	if (row < 0) {
 		n += row;
@@ -630,8 +631,9 @@ creator_ras_eraserows(cookie, row, n, attr)
 	if (n <= 0)
 		return;
 
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 	creator_ras_fill(sc);
-	creator_ras_setfg(sc, ri->ri_devcmap[(attr >> 16) & 0xf]);
+	creator_ras_setfg(sc, ri->ri_devcmap[bg]);
 	creator_ras_fifo_wait(sc, 4);
 	if ((n == ri->ri_rows) && (ri->ri_flg & RI_FULLCLEAR)) {
 		FBC_WRITE(sc, FFB_FBC_BY, 0);
@@ -656,6 +658,7 @@ creator_ras_erasecols(cookie, row, col, n, attr)
 {
 	struct rasops_info *ri = cookie;
 	struct creator_softc *sc = ri->ri_hw;
+	int fg, bg;
 
 	if ((row < 0) || (row >= ri->ri_rows))
 		return;
@@ -671,8 +674,9 @@ creator_ras_erasecols(cookie, row, col, n, attr)
 	col *= ri->ri_font->fontwidth;
 	row *= ri->ri_font->fontheight;
 
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 	creator_ras_fill(sc);
-	creator_ras_setfg(sc, ri->ri_devcmap[(attr >> 16) & 0xf]);
+	creator_ras_setfg(sc, ri->ri_devcmap[bg]);
 	creator_ras_fifo_wait(sc, 4);
 	FBC_WRITE(sc, FFB_FBC_BY, ri->ri_yorigin + row);
 	FBC_WRITE(sc, FFB_FBC_BX, ri->ri_xorigin + col);
