@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.10 2006/12/01 19:32:31 espie Exp $
+# $OpenBSD: pkg-config,v 1.11 2006/12/02 18:28:22 espie Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -20,6 +20,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use File::Basename;
+use OpenBSD::PkgConfig;
 
 my @PKGPATH = qw(/usr/local/lib/pkgconfig /usr/X11R6/lib/pkgconfig );
 
@@ -35,11 +36,13 @@ if (defined($ENV{'PKG_CONFIG_LOGFILE'}) && $ENV{'PKG_CONFIG_LOGFILE'}) {
 my $version = 0.19; # pretend to be this version of pkgconfig
 
 my %configs = ();
+my $cfg_list = [];
 my %mode = ();
+my $variables = {};
 my $D = 0; # debug flag
 
 # defaults
-$mode{'printerr'} = 1;
+$mode{printerr} = 1;
 
 if ($logfile) {
 	open my $L, ">>" . $logfile;
@@ -61,31 +64,32 @@ GetOptions(	'debug' => \$D,
 		'usage' => \&help, #does not return
 		'list-all' => \&do_list, #does not return
 		'version' => sub { print "$version\n" ; exit(0);} ,
-		'errors-to-stdout' => sub { $mode{'estdout'} = 1},
-		'print-errors' => sub { $mode{'printerr'} = 1},
-		'silence-errors' => sub { $mode{'printerr'} = 0},
-		'atleast-pkgconfig-version=s' => \$mode{'minvers'},
+		'errors-to-stdout' => sub { $mode{estdout} = 1},
+		'print-errors' => sub { $mode{printerr} = 1},
+		'silence-errors' => sub { $mode{printerr} = 0},
+		'atleast-pkgconfig-version=s' => \$mode{minvers},
 
-		'cflags' => sub { $mode{'cflags'} = 3},
-		'cflags-only-I' => sub { $mode{'cflags'} |= 1},
-		'cflags-only-other' => sub { $mode{'cflags'} |= 2},
-		'libs' => sub { $mode{'libs'} = 7},
-		'libs-only-l' => sub { $mode{'libs'} |= 1},
-		'libs-only-L' => sub { $mode{'libs'} |= 2},
-		'libs-only-other' => sub { $mode{'libs'} |= 4},
-		'exists' => sub { $mode{'exists'} = 1} ,
-		'static' => sub { $mode{'static'} = 1},
-		'uninstalled' => sub { $mode{'uninstalled'} = 1},
+		'cflags' => sub { $mode{cflags} = 3},
+		'cflags-only-I' => sub { $mode{cflags} |= 1},
+		'cflags-only-other' => sub { $mode{cflags} |= 2},
+		'libs' => sub { $mode{libs} = 7},
+		'libs-only-l' => sub { $mode{libs} |= 1},
+		'libs-only-L' => sub { $mode{libs} |= 2},
+		'libs-only-other' => sub { $mode{libs} |= 4},
+		'exists' => sub { $mode{exists} = 1} ,
+		'static' => sub { $mode{static} = 1},
+		'uninstalled' => sub { $mode{uninstalled} = 1},
 		'atleast-version=s' => \$mode{'atleast-version'},
-		'modversion:s' => \$mode{'modversion'},
-		'variable=s' => \$mode{'variable'}
+		'modversion:s' => \$mode{modversion},
+		'variable=s' => \$mode{variable},
+		'define-variable=s' => $variables,
 	);
 
 print STDERR "\n[" . join('] [', $0, @ARGV) . "]\n" if $D;
-self_version($mode{'minvers'}) if $mode{'minvers'}; #does not return
-if (defined $mode{'modversion'}) {
-	if ($mode{'modversion'}) {
-		do_modversion($mode{'modversion'}) ; #does not return
+self_version($mode{minvers}) if $mode{minvers}; #does not return
+if (defined $mode{modversion}) {
+	if ($mode{modversion}) {
+		do_modversion($mode{modversion}) ; #does not return
 	} else {
 		print $version . "\n";
 		exit 0;
@@ -99,7 +103,7 @@ $p =~ s/^\s//g;
 @ARGV = split /\s+/, $p;
 }
 
-if (defined $mode{'exists'}) {
+if (defined $mode{exists}) {
 	while (@ARGV) {
 		if ((@ARGV >= 2)  && ($ARGV[1] =~ /[<=>]+/) &&
 		    ($ARGV[2] =~ /[0-9\.]+/)) {
@@ -113,7 +117,7 @@ if (defined $mode{'exists'}) {
 	exit 0;
 }
 
-do_variable($ARGV[0], $mode{'variable'}) if $mode{'variable'};
+do_variable($ARGV[0], $mode{variable}) if $mode{variable};
 
 while (@ARGV){
 	my $p = $ARGV[0];
@@ -124,46 +128,54 @@ while (@ARGV){
 	}
 	shift @ARGV;
 	$p =~ s/,//g;
-	unless ($configs{$p}) { # don't reprocess things we've seen
-		print STDERR "processing $p\n" if $D;
-		if (my $f = pathresolve($p)) { # locate the .pc file
-			exit 0 if defined $mode{'exists'};
-	
-			$configs{$p} = slurp($f); # load the config
-			my $deps = '';
-			if ($configs{$p} =~ /\bRequires: +(\w.+?)\n/) {
-				$deps = $1;
-				# XXX how should i handle versions?
-				$deps =~ s/[<>=]+\s*[0-9\.]+\s*//;
-				$deps =~ tr/,/ /;
-			}
-			print STDERR "package $p requires '$deps'\n"
-			    if $D && $deps;
-			push(@ARGV, split /\s+/, $deps) if $deps;
-
-			my $privdeps = '';
-			if ($configs{$p} =~ /\bRequires\.private: +(\w.+?)\n/) {
-				$privdeps = $1;
-				# XXX how should i handle versions?
-				$privdeps =~ s/[<>=]+\s*[0-9\.]+\s*//;
-			}
-			print STDERR "package $p requires (private) '" .
-			    $privdeps . "'\n" if $D && $privdeps;
-			push(@ARGV, split /\s+/, $privdeps) if $privdeps;
-
-		} else {
-			warn "can't find $p\n" if $mode{'printerr'};
-			exit 1;
-		}
-	}
+	handle_config($p);
 }
 
-do_cflags() if $mode{'cflags'};
-do_libs() if $mode{'libs'};
+if ($mode{cflags} || $mode{libs}) {
+    my @l = ();
+    push @l, do_cflags() if $mode{cflags};
+    push @l, do_libs() if $mode{libs};
+    print join(' ', @l), "\n";
+}
 
 exit 0;
 
 ###########################################################################
+
+sub handle_config
+{
+	my $p = shift;
+
+	return if $configs{$p};
+
+	print STDERR "processing $p\n" if $D;
+	my $cfg = find_config($p);
+
+	if (!defined $cfg) {
+		warn "can't find $p\n" if $mode{printerr};
+		exit 1;
+	}
+	return undef if defined $mode{exists};
+
+	push(@$cfg_list, $p);
+	$configs{$p} = $cfg;
+
+	my $deps = $cfg->get_property('Requires', $variables);
+	if (defined $deps) {
+		# XXX don't handle version yet
+		map { s/\s*[<=>]+\s*[\d\.]+//; handle_config($_) } @$deps;
+		print STDERR "package $p requires ",
+		    join(',', @$deps), "\n" if $D;
+	}
+
+	$deps = $cfg->get_property('Requires.private', $variables);
+	if (defined $deps) {
+		# XXX don't handle version yet
+		map { s/\s*[<=>]+\s*[\d\.]+//; handle_config($_) } @$deps;
+		print STDERR "package $p requires (private)",
+			join(',', @$deps), "\n" if $D;
+	}
+}
 
 # look for the .pc file in each of the PKGPATH elements. Return the path or
 # undef if it's not there
@@ -179,108 +191,114 @@ sub pathresolve
 	return undef;
 }
 
-
-# Given a filename, return its contents. Also do variable substitutions.
-sub slurp
+sub get_config
 {
 	my ($f) = @_;
 
-	local $/ = undef;
-	open my $F, '<', $f or return undef;
-	print STDERR "slurp($f) OK\n" if $D;
-	$f = <$F>;
-	close $F;
-	$f = varsub($f);
-	return $f;
+	my $cfg;
+	eval { 
+	    $cfg = OpenBSD::PkgConfig->read_file($f);
+	};
+	if (!$@) {
+		return $cfg;
+	} else {
+		print STDERR $@, "\n" if $@;
+	}
+	return undef;
 }
 
-# Do variable substitutions, so if "target=x11" is present (for example),
-# any lines referring to $target are filled in properly.
-sub varsub
+sub find_config
 {
-	my ($buf) = @_;
-
-	my ($var, $val);
-
-	while ($buf =~ /\${(\w+)}/gsm) {
-		$var = $1;
-		if ($buf =~ /${var}=(.+?)\n/s) {
-			$val = $1;
-			$buf =~ s/\${$var}/$val/g;
-		}
+	my ($p) = @_;
+	my $f = pathresolve($p);
+	if (defined $f) {
+		return get_config($f);
 	}
-	return $buf;
+	return undef;
+}
+
+sub stringize
+{
+	my $list = shift;
+
+	if (defined $list) {
+		return join(',', @$list)
+	} else {
+		return '';
+	}
 }
 
 #if the variable option is set, pull out the named variable
 sub do_variable
 {
-	my ($p, $v, undef) = @_;
-	my ($f);
+	my ($p, $v) = @_;
 
-	exit 1 unless $f = pathresolve($p);
-	exit 1 unless $f = slurp($f);
-
-	exit 1 unless $f =~ /\b${v}=(.+?)\n/;
-	print "$1\n";
+	if (my $cfg = find_config($p)) {
+		my $value = $cfg->get_variable($v, $variables);
+		if (defined $value) {
+			print $value, "\n";
+			exit 1;
+		}
+	}
 	exit 0;
 }
 
 #if the modversion option is set, pull out the compiler flags
 sub do_modversion
 {
-	my ($p, undef) = @_;
-	my ($f);
+	my ($p) = @_;
 
-	exit 1 unless $f = pathresolve($p);
-	exit 1 unless $f = slurp($f);
-
-	exit 1 unless $f =~ /\bVersion:\s+(.+?)\n/;
-	print "$1\n";
+	if (my $cfg = find_config($p)) {
+		my $value = $cfg->get_property('Version', $variables);
+		if (defined $value) {
+			print stringize($value), "\n";
+			exit 1;
+		}
+	}
 	exit 0;
 }
 
 #if the cflags option is set, pull out the compiler flags
 sub do_cflags
 {
-	my %words; # store them as a hash to get de-duplicating
-	my @out;
+	my $cflags = [];
 
-	foreach my $p (keys %configs) {
-		if ($configs{$p} =~ /\bCflags:\s+(.+?)\n/) {
-			foreach my $q (split /\s+/, $1) { 
-				$words{$q}=1;
+	foreach my $pkg (@$cfg_list) {
+		my $l = $configs{$pkg}->get_property('Cflags', $variables);
+		push(@$cflags, @$l) if defined $l;
+	}
+	return OpenBSD::PkgConfig->compress($cflags,
+		sub {
+			local $_ = shift;
+			if (($mode{cflags} & 1) && /^-I/ ||
+			    ($mode{cflags} & 2) && !/^-I/) {
+			    return 1;
+			} else {
+			    return 0;
 			}
-		}
-	}
-	foreach my $k (sort keys %words) {
-		push(@out, $k) if $k =~ /^-I/ && ($mode{'cflags'} & 1);
-		push(@out, $k) if $k =~ /^-[^I]/ && ($mode{'cflags'} & 2);
-	}
-	print join(' ', @out), "\n";
-	return undef;
+		});
 }
 
 #if the lib option is set, pull out the linker flags
 sub do_libs
 {
-	my %words; # store them as a hash to get de-duplicating
-	my @out;
+	my $libs = [];
 
-	foreach my $p (keys %configs) {
-		if ($configs{$p} =~ /\bLibs:\s+(.+?)\n/) {
-			foreach my $q (split /\s+/, $1) { 
-				$words{$q}=1;
+	foreach my $pkg (@$cfg_list) {
+		my $l = $configs{$pkg}->get_property('Libs', $variables);
+		push(@$libs, @$l) if defined $l;
+	}
+	return OpenBSD::PkgConfig->compress($libs,
+		sub {
+			local $_ = shift;
+			if (($mode{libs} & 1) && /^-l/ ||
+			    ($mode{libs} & 2) && /^-L/ ||
+			    ($mode{libs} & 4) && !/^-[lL]/) {
+			    return 1;
+			} else {
+			    return 0;
 			}
-		}
-	}
-	foreach my $k (sort keys %words) {
-		push(@out, $k) if $k =~ /^-l/ && ($mode{'libs'} & 1);
-		push(@out, $k) if $k =~ /^-L/ && ($mode{'libs'} & 2);
-		push(@out, $k) if $k =~ /^-[^lL]/ && ($mode{'libs'} & 4);
-	}
-	print join(' ', @out), "\n";
-	return undef;
+		});
 }
 
 #list all packages
@@ -302,14 +320,11 @@ sub do_list
 	$x *= -1;
 
 	foreach my $f (@files) {
-		$p = slurp($f);
+		my $cfg = get_config($f);
 		$fname = basename($f, '.pc');
-		if ($p =~ /Name: (\w[^\n]+)\n/gm) {
-			$name = $1;
-			if ($p =~ /Description:\s+(\w[^\n]+)\n/gm) {
-				printf("%${x}s %s - %s\n", $fname, $name, $1);
-			}
-		}
+		printf("%${x}s %s - %s\n", $fname, 
+		    stringize($cfg->get_property('Name', $variables)), 
+		    stringize($cfg->get_property('Description', $variables)));
 	}
 	exit 0;
 }
@@ -330,6 +345,7 @@ Usage: $0 [options]
 --cflags package [versionspec] [package [versionspec]]
 --cflags-only-I - only output -Iincludepath flags
 --cflags-only-other - only output flags that are not -I
+--define-variable=NAME=VALUE - define variables
 --libs package [versionspec] [package [versionspec]]
 --libs-only-l - only output -llib flags
 --libs-only-L - only output -Llibpath flags
@@ -364,20 +380,23 @@ sub self_version
 # got a package meeting the requested specific version?
 sub versionmatch
 {
-	my ($pname, $op, $ver, undef) = @_;
-	my (@want, @inst, $m, $f);
+	my ($pname, $op, $ver) = @_;
 	
 	print STDERR "pname = '$pname'\n" if  $D;
+	my $cfg = find_config($pname);
 	# can't possibly match if we can't find the file
-	return 0 unless $f = pathresolve($pname);
-	# load the file
-	$configs{$pname} = slurp($f);
-	# can't possibly match if we can't find the version string
-	return 0 unless $configs{$pname} =~ /Version: ([0-9\.]+)\n/gm;
+	return 0 if !defined $cfg;
 
-	print "comparing $ver (wanted) to $1 (installed)\n" if $D;
-	@inst = split /\./, $1;
-	@want = split /\./, $ver;
+	$configs{$pname} = $cfg;
+
+	my $v = stringize($cfg->get_property('Version', $variables));
+
+	# can't possibly match if we can't find the version string
+	return 0 if $v eq '';
+
+	print "comparing $ver (wanted) to $v (installed)\n" if $D;
+	my @inst = split /\./, $v;
+	my @want = split /\./, $ver;
 
 	while (@inst && @want) { #so long as both lists have something
 		# bail if the requested version element beats existing
