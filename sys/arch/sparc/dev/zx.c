@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.16 2006/11/29 19:08:22 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.17 2006/12/02 11:24:02 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -566,7 +566,7 @@ zx_fillrect(struct rasops_info *ri, int x, int y, int w, int h, long attr,
 		;
 
 	SETREG(zd->zd_rop, rop);
-	SETREG(zd->zd_fg, bg << 24);
+	SETREG(zd->zd_fg, ri->ri_devcmap[bg] << 24);
 	SETREG(zc->zc_extent, ZX_COORDS(w, h));
 	SETREG(zc->zc_fill, ZX_COORDS(x, y) | ZX_EXTENT_DIR_BACKWARDS);
 }
@@ -650,7 +650,7 @@ zx_eraserows(void *cookie, int row, int num, long attr)
 			;
 
 		SETREG(zd->zd_rop, ZX_STD_ROP);
-		SETREG(zd->zd_fg, bg << 24);
+		SETREG(zd->zd_fg, ri->ri_devcmap[bg] << 24);
 		SETREG(zc->zc_extent,
 		    ZX_COORDS(ri->ri_width - 1, ri->ri_height - 1));
 		SETREG(zc->zc_fill, ZX_COORDS(0, 0) | ZX_EXTENT_DIR_BACKWARDS);
@@ -693,6 +693,8 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	ri = (struct rasops_info *)cookie;
 	font = ri->ri_font;
 	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, &ul);
+	fg = ri->ri_devcmap[fg];
+	bg = ri->ri_devcmap[bg];
 
 	dp = (volatile u_int32_t *)ri->ri_bits +
 	    ZX_COORDS(col * font->fontwidth, row * font->fontheight);

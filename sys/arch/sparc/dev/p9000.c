@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.17 2006/11/29 19:08:22 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.18 2006/12/02 11:24:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -686,7 +686,7 @@ p9000_ras_do_cursor(struct rasops_info *ri)
 	P9000_SELECT_DE_LOW(sc);
 	P9000_WRITE_CMD(sc, P9000_DE_RASTER,
 	    (P9000_RASTER_PATTERN ^ P9000_RASTER_DST) & P9000_RASTER_MASK);
-	P9000_WRITE_CMD(sc, P9000_DE_FG_COLOR, WSCOL_BLACK);
+	P9000_WRITE_CMD(sc, P9000_DE_FG_COLOR, ri->ri_devcmap[WSCOL_BLACK]);
 
 	P9000_SELECT_COORD(sc, P9000_LC_RECT);
 	P9000_WRITE_CMD(sc, P9000_LC_RECT + P9000_COORD_XY,

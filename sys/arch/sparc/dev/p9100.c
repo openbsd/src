@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.40 2006/11/29 19:08:22 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.41 2006/12/02 11:24:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005, Miodrag Vallat.
@@ -715,6 +715,7 @@ p9100_ras_erasecols(void *v, int row, int col, int n, long int attr)
 	int fg, bg;
 
 	ri->ri_ops.unpack_attr(v, attr, &fg, &bg, NULL);
+	bg = ri->ri_devcmap[bg];
 
 	n *= ri->ri_font->fontwidth;
 	col *= ri->ri_font->fontwidth;
@@ -747,6 +748,7 @@ p9100_ras_eraserows(void *v, int row, int n, long int attr)
 	int fg, bg;
 
 	ri->ri_ops.unpack_attr(v, attr, &fg, &bg, NULL);
+	bg = ri->ri_devcmap[bg];
 
 	p9100_drain(sc);
 	P9100_SELECT_DE_LOW(sc);
@@ -790,7 +792,8 @@ p9100_ras_do_cursor(struct rasops_info *ri)
 	P9100_SELECT_DE_LOW(sc);
 	P9100_WRITE_CMD(sc, P9000_DE_RASTER,
 	    (P9100_RASTER_PATTERN ^ P9100_RASTER_DST) & P9100_RASTER_MASK);
-	P9100_WRITE_CMD(sc, P9100_DE_COLOR0, P9100_COLOR8(WSCOL_BLACK));
+	P9100_WRITE_CMD(sc, P9100_DE_COLOR0,
+	    P9100_COLOR8(ri->ri_devcmap[WSCOL_BLACK]));
 
 	P9100_SELECT_COORD(sc, P9000_LC_RECT);
 	P9100_WRITE_CMD(sc, P9000_LC_RECT + P9000_COORD_XY,
