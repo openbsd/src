@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.33 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.34 2006/12/03 16:38:12 miod Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -128,19 +128,16 @@ bwtwomatch(struct device *parent, void *vcf, void *aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
-
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
+#if 0
 	if (CPU_ISSUN4 && cf->cf_unit != 0)
 		return (0);
+#endif
 
 	if (ca->ca_bustype == BUS_SBUS)
-		return(1);
+		return (1);
 
 	/*
 	 * Make sure there's hardware there.
@@ -148,29 +145,32 @@ bwtwomatch(struct device *parent, void *vcf, void *aux)
 	if (probeget(ra->ra_vaddr, 4) == -1)
 		return (0);
 
+	switch (ca->ca_bustype) {
+	case BUS_VME16:
+	case BUS_VME32:
+		return (1);
+	case BUS_OBIO:
 #if defined(SUN4)
-	if (CPU_ISSUN4 && (ca->ca_bustype == BUS_OBIO)) {
-		/*
-		 * Check for a pfour framebuffer, but do not match the
-		 * overlay planes for color pfour framebuffers.
-		 */
-		switch (fb_pfour_id(ra->ra_vaddr)) {
-		case PFOUR_ID_BW:
-			cf->cf_flags |= FB_PFOUR;
-			/* FALLTHROUGH */
-
-		case PFOUR_NOTPFOUR:
-			return (1);
-
-		case PFOUR_ID_COLOR8P1:		/* bwtwo in ... */
-		case PFOUR_ID_COLOR24:		/* ...overlay plane */
-		default:
-			return (0);
+		if (CPU_ISSUN4) {
+			/*
+			 * Check for a pfour framebuffer, but do not match the
+			 * overlay planes for color pfour framebuffers.
+			 */
+			switch (fb_pfour_id(ra->ra_vaddr)) {
+			case PFOUR_ID_BW:
+			case PFOUR_NOTPFOUR:
+				return (1);
+			case PFOUR_ID_COLOR8P1:		/* bwtwo in ... */
+			case PFOUR_ID_COLOR24:		/* ...overlay plane */
+			default:
+				return (0);
+			}
 		}
-	}
 #endif
-
-	return (0);
+		return (1);
+	default:
+		return (0);
+	}
 }
 
 void
@@ -181,26 +181,25 @@ bwtwoattach(struct device *parent, struct device *self, void *args)
 	int node = ca->ca_ra.ra_node;
 	int isconsole = 0;
 	int sbus = 1;
-	char *nam = NULL;
+	char *nam;
 
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags;
+	printf(": ");
 
 	/*
 	 * Map the control register.
 	 */
 #if defined(SUN4)
 	if (CPU_ISSUN4 && ca->ca_bustype == BUS_OBIO &&
-	    ISSET(sc->sc_sunfb.sf_flags, FB_PFOUR)) {
+	    fb_pfour_id(ca->ca_ra.ra_vaddr) != PFOUR_NOTPFOUR) {
+		SET(sc->sc_sunfb.sf_flags, FB_PFOUR);
 		sc->sc_sunfb.sf_pfour = (volatile u_int32_t *)
 		    mapiodev(ca->ca_ra.ra_reg, 0, sizeof(u_int32_t));
-		sc->sc_reg = NULL;
 	} else
 #endif
 	{
 		sc->sc_reg = (volatile struct fbcontrol *)
 		    mapiodev(ca->ca_ra.ra_reg, BWREG_REG,
 			     sizeof(struct fbcontrol));
-		sc->sc_sunfb.sf_pfour = NULL;
 	}
 
 	/* Set up default pixel offset.  May be changed below. */
@@ -214,17 +213,17 @@ bwtwoattach(struct device *parent, struct device *self, void *args)
 		sbus = node = 0;
 #if defined(SUN4)
 		if (ISSET(sc->sc_sunfb.sf_flags, FB_PFOUR)) {
-			nam = "bwtwo/p4";
+			nam = "p4";
 			sc->sc_pixeloffset = PFOUR_BW_OFF;
 		} else
 #endif
-			nam = "bwtwo";
+			nam = NULL;
 		break;
 
 	case BUS_VME32:
 	case BUS_VME16:
 		sbus = node = 0;
-		nam = "bwtwo";
+		nam = NULL;
 		break;
 
 	case BUS_SBUS:
@@ -235,7 +234,8 @@ obp_name:
 		break;
 	}
 
-	printf(": %s", nam);
+	if (nam != NULL && *nam != '\0')
+		printf("%s, ", nam);
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
@@ -270,7 +270,7 @@ obp_name:
 	bwtwo_burner(sc, 1, 0);
 
 	fb_setsize(&sc->sc_sunfb, 1, 1152, 900, node, ca->ca_bustype);
-	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
+	printf("%dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(ca->ca_ra.ra_reg,
 	    sc->sc_pixeloffset, round_page(sc->sc_sunfb.sf_fbsize));

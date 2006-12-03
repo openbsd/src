@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.31 2006/07/25 21:23:30 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.32 2006/12/03 16:38:13 miod Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -178,11 +178,10 @@ cgthreematch(struct device *parent, void *vcf, void *aux)
 	    strcmp("cgRDI", ra->ra_name))
 		return (0);
 
-	if (ca->ca_bustype == BUS_SBUS)
-		return (1);
+	if (ca->ca_bustype != BUS_SBUS)
+		return (0);
 
-	ra->ra_len = NBPG;
-	return (probeget(ra->ra_vaddr, 4) != -1);
+	return (1);
 }
 
 void
@@ -190,41 +189,23 @@ cgthreeattach(struct device *parent, struct device *self, void *args)
 {
 	struct cgthree_softc *sc = (struct cgthree_softc *)self;
 	struct confargs *ca = args;
-	int node = 0, isrdi = 0, i;
+	int node, isrdi = 0, i;
 	volatile struct bt_regs *bt;
-	int isconsole = 0, sbus = 1;
-	char *nam = NULL;
+	int isconsole = 0;
+	char *nam;
 
-	switch (ca->ca_bustype) {
-	case BUS_OBIO:
-		if (CPU_ISSUN4M) {	/* 4m has framebuffer on obio */
-			sbus = 0;
-			node = ca->ca_ra.ra_node;
-			nam = getpropstring(node, "model");
-			if (*nam == '\0')
-				nam = "cgthree";
-			break;
-		}
-	case BUS_VME32:
-	case BUS_VME16:
-		sbus = node = 0;
-		nam = "cgthree";
-		break;
+	printf(": ");
 
-	case BUS_SBUS:
-		node = ca->ca_ra.ra_node;
-		nam = getpropstring(node, "model");
-		if (*nam == '\0')
-			nam = "cgthree";
-		break;
-	}
+	node = ca->ca_ra.ra_node;
 
-	if (!strcmp(ca->ca_ra.ra_name, "cgRDI")) {
+	if (strcmp(ca->ca_ra.ra_name, "cgRDI") == 0) {
 		isrdi = 1;
 		nam = "cgRDI";
-	}
+	} else
+		nam = getpropstring(node, "model");
 
-	printf(": %s", nam);
+	if (nam != NULL && *nam != '\0')
+		printf("%s, ", nam);
 
 	isconsole = node == fbnode;
 
@@ -269,7 +250,7 @@ cgthreeattach(struct device *parent, struct device *self, void *args)
 	    round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 
-	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
+	printf("%dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	/*
 	 * If the framebuffer width is under 1024x768, which is the case for

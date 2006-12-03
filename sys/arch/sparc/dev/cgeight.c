@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgeight.c,v 1.26 2006/07/25 21:23:30 miod Exp $	*/
+/*	$OpenBSD: cgeight.c,v 1.27 2006/12/03 16:38:12 miod Exp $	*/
 /*	$NetBSD: cgeight.c,v 1.13 1997/05/24 20:16:04 pk Exp $	*/
 
 /*
@@ -121,11 +121,6 @@ cgeightmatch(struct device *parent, void *vcf, void *aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
-
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
@@ -141,10 +136,8 @@ cgeightmatch(struct device *parent, void *vcf, void *aux)
 	/*
 	 * Check the pfour register.
 	 */
-	if (fb_pfour_id(ra->ra_vaddr) == PFOUR_ID_COLOR24) {
-		cf->cf_flags |= FB_PFOUR;
+	if (fb_pfour_id(ra->ra_vaddr) == PFOUR_ID_COLOR24)
 		return (1);
-	}
 
 	return (0);
 }
@@ -158,9 +151,8 @@ cgeightattach(struct device *parent, struct device *self, void *args)
 	volatile struct bt_regs *bt;
 	int isconsole = 0;
 
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags;
-
 	/* Map the pfour register. */
+	SET(sc->sc_sunfb.sf_flags, FB_PFOUR);
 	sc->sc_sunfb.sf_pfour = (volatile u_int32_t *)
 	    mapiodev(ca->ca_ra.ra_reg, 0, sizeof(u_int32_t));
 
@@ -193,7 +185,7 @@ cgeightattach(struct device *parent, struct device *self, void *args)
 	    PFOUR_COLOR_OFF_OVERLAY, round_page(sc->sc_sunfb.sf_fbsize));
 	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 
-	printf(": cgeight/p4, %dx%d", sc->sc_sunfb.sf_width,
+	printf(": p4, %dx%d", sc->sc_sunfb.sf_width,
 	    sc->sc_sunfb.sf_height);
 
 	if (isconsole) {

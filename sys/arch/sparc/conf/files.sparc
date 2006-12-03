@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.72 2006/12/02 11:00:35 miod Exp $
+#	$OpenBSD: files.sparc,v 1.73 2006/12/03 16:38:10 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -191,7 +191,7 @@ attach	cgtwelve at sbus
 file	arch/sparc/dev/cgtwelve.c	cgtwelve
 
 device	cgtwo: wsemuldisplaydev, rasops8, wsemul_sun
-attach	cgtwo at sbus, obio, vmes
+attach	cgtwo at vmes
 file	arch/sparc/dev/cgtwo.c		cgtwo
 
 device	mgx: wsemuldisplaydev, rasops8, wsemul_sun

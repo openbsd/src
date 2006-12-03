@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwo.c,v 1.34 2006/06/29 17:52:21 miod Exp $	*/
+/*	$OpenBSD: cgtwo.c,v 1.35 2006/12/03 16:38:13 miod Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
 
 /*
@@ -172,20 +172,6 @@ cgtwoattach(struct device *parent, struct device *self, void *args)
 	struct confargs *ca = args;
 	int node = 0;
 	int isconsole = 0;
-	char *nam = NULL;
-
-	switch (ca->ca_bustype) {
-	case BUS_VME16:
-		node = 0;
-		nam = "cgtwo";
-		break;
-
-	default:
-		panic("cgtwoattach: impossible bustype");
-		/* NOTREACHED */
-	}
-
-	printf(": %s", nam);
 
 	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
@@ -226,7 +212,7 @@ cgtwoattach(struct device *parent, struct device *self, void *args)
 	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 	fbwscons_setcolormap(&sc->sc_sunfb, cgtwo_setcolor);
 
-	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
+	printf(": %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, -1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.36 2006/12/02 11:21:35 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.37 2006/12/03 16:38:13 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -168,40 +168,37 @@ cgsixmatch(struct device *parent, void *vcf, void *aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
-
 	if (strcmp(ra->ra_name, cf->cf_driver->cd_name) &&
 	    strcmp(ra->ra_name, "SUNW,cgsix"))
 		return (0);
 
-	if (ca->ca_bustype == BUS_SBUS)
+	switch (ca->ca_bustype) {
+	case BUS_SBUS:
 		return (1);
-
+	case BUS_OBIO:
 #if defined(SUN4)
-	if (CPU_ISSUN4 && (ca->ca_bustype == BUS_OBIO)) {
-		void *tmp;
+		if (CPU_ISSUN4) {
+			void *tmp;
 
-		/*
-		 * Check for a pfour framebuffer.  This is done somewhat
-		 * differently on the cgsix than other pfour framebuffers.
-		 */
-		bus_untmp();
-		tmp = (caddr_t)mapdev(ra->ra_reg, TMPMAP_VA, CGSIX_FHC_OFFSET,
-				      NBPG);
-		if (probeget(tmp, 4) == -1)
-			return (0);
+			/*
+			 * Check for a pfour framebuffer.  This is done
+			 * somewhat differently on the cgsix than other
+			 * pfour framebuffers.
+			 */
+			bus_untmp();
+			tmp = (caddr_t)mapdev(ra->ra_reg, TMPMAP_VA,
+			    CGSIX_FHC_OFFSET, NBPG);
+			if (probeget(tmp, 4) == -1)
+				return (0);
 
-		if (fb_pfour_id(tmp) == PFOUR_ID_FASTCOLOR) {
-			cf->cf_flags |= FB_PFOUR;
-			return (1);
+			if (fb_pfour_id(tmp) == PFOUR_ID_FASTCOLOR)
+				return (1);
 		}
-	}
 #endif
-
-	return (0);
+		/* FALLTHROUGH */
+	default:
+		return (0);
+	}
 }
 
 void
@@ -211,10 +208,10 @@ cgsixattach(struct device *parent, struct device *self, void *args)
 	struct confargs *ca = args;
 	int node = 0;
 	int isconsole = 0, sbus = 1;
-	char *nam = NULL;
+	char *nam;
 	u_int fhcrev;
 
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags;
+	printf(": ");
 
 	/*
 	 * Map just BT, FHC, FBC, THC, and video RAM.
@@ -234,37 +231,17 @@ cgsixattach(struct device *parent, struct device *self, void *args)
 	switch (ca->ca_bustype) {
 	case BUS_OBIO:
 		sbus = node = 0;
-		if (ISSET(sc->sc_sunfb.sf_flags, FB_PFOUR))
-			nam = "cgsix/p4";
-		else
-			nam = "cgsix";
-
-#if defined(SUN4M)
-		if (CPU_ISSUN4M) {   /* 4m has framebuffer on obio */
-			node = ca->ca_ra.ra_node;
-			nam = getpropstring(node, "model");
-			break;
-		}
-#endif
+		SET(sc->sc_sunfb.sf_flags, FB_PFOUR);
+		nam = "p4";
 		break;
-
-	case BUS_VME32:
-	case BUS_VME16:
-		sbus = node = 0;
-		nam = "cgsix";
-		break;
-
 	case BUS_SBUS:
 		node = ca->ca_ra.ra_node;
 		nam = getpropstring(node, "model");
 		break;
-
-	case BUS_MAIN:
-		printf("cgsix on mainbus?\n");
-		return;
 	}
 
-	printf(": %s", nam);
+	if (*nam != '\0')
+		printf("%s, ", nam);
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
@@ -332,7 +309,7 @@ cgsixattach(struct device *parent, struct device *self, void *args)
 		cgsix_ras_init(sc);
 	}
 
-	printf(", %dx%d, rev %d\n", sc->sc_sunfb.sf_width,
+	printf("%dx%d, rev %d\n", sc->sc_sunfb.sf_width,
 	    sc->sc_sunfb.sf_height, fhcrev);
 
 	if (isconsole) {

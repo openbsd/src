@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfour.c,v 1.26 2006/07/25 21:23:30 miod Exp $	*/
+/*	$OpenBSD: cgfour.c,v 1.27 2006/12/03 16:38:12 miod Exp $	*/
 /*	$NetBSD: cgfour.c,v 1.13 1997/05/24 20:16:06 pk Exp $	*/
 
 /*
@@ -121,11 +121,6 @@ cgfourmatch(struct device *parent, void *vcf, void *aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
-
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
@@ -138,10 +133,8 @@ cgfourmatch(struct device *parent, void *vcf, void *aux)
 	/*
 	 * Check the pfour register.
 	 */
-	if (fb_pfour_id(ra->ra_vaddr) == PFOUR_ID_COLOR8P1) {
-		cf->cf_flags |= FB_PFOUR;
+	if (fb_pfour_id(ra->ra_vaddr) == PFOUR_ID_COLOR8P1)
 		return (1);
-	}
 
 	return (0);
 }
@@ -155,11 +148,14 @@ cgfourattach(struct device *parent, struct device *self, void *args)
 	volatile struct bt_regs *bt;
 	int isconsole = 0;
 
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags;
+	printf(": p4");
 
-	printf(": cgfour/p4");
+	/* Map the pfour register. */
+	SET(sc->sc_sunfb.sf_flags, FB_PFOUR);
+	sc->sc_sunfb.sf_pfour = (volatile u_int32_t *)
+		mapiodev(ca->ca_ra.ra_reg, 0, sizeof(u_int32_t));
 
-	if (CPU_ISSUN4) {
+	if (cputyp == CPU_SUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
 
 		/*
@@ -169,10 +165,6 @@ cgfourattach(struct device *parent, struct device *self, void *args)
 		if (eep == NULL || eep->eeConsole == EE_CONS_P4OPT)
 			isconsole = 1;
 	}
-
-	/* Map the pfour register. */
-	sc->sc_sunfb.sf_pfour = (volatile u_int32_t *)
-		mapiodev(ca->ca_ra.ra_reg, 0, sizeof(u_int32_t));
 
 	/*
 	 * When the ROM has mapped in a cgfour display, the address

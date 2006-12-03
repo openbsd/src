@@ -1,4 +1,4 @@
-/*	$OpenBSD: fbvar.h,v 1.16 2006/03/12 22:53:01 miod Exp $	*/
+/*	$OpenBSD: fbvar.h,v 1.17 2006/12/03 16:38:13 miod Exp $	*/
 /*	$NetBSD: fbvar.h,v 1.9 1997/07/07 23:31:30 pk Exp $ */
 
 /*
@@ -42,13 +42,6 @@
  */
 
 /*
- * Frame buffer device flags.
- */
-
-#define	FB_PFOUR	0x00010000	/* indicates fb is a pfour fb */
-#define FB_USERMASK	(0)		/* flags that the user can set */
-
-/*
  * Common frame buffer variables.
  * All framebuffer softc structures must start with such a structure.
  */
@@ -65,6 +58,7 @@ struct sunfb {
 	int	*sf_crowp, *sf_ccolp;	/* PROM cursor position */
 
 	int	sf_flags;
+#define	FB_PFOUR	0x00000001	/* indicates a P4 fb */
 	volatile u_int32_t* sf_pfour;	/* P4 register when applicable */
 
 	struct	rasops_info sf_ro;
