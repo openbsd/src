@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.28 2006/03/15 20:20:41 miod Exp $	*/
+/*	$OpenBSD: xy.c,v 1.29 2006/12/03 16:40:43 miod Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -241,8 +241,9 @@ xygetdisklabel(xy, b)
 	/* We already have the label data in `b'; setup for dummy strategy */
 	xy_labeldata = b;
 
-	/* Required parameter for readdisklabel() */
+	/* Required parameters for readdisklabel() */
 	xy->sc_dk.dk_label->d_secsize = XYFM_BPS;
+	xy->sc_dk.dk_label->d_secpercyl = 1;
 
 	err = readdisklabel(MAKEDISKDEV(0, xy->sc_dev.dv_unit, RAW_PART),
 					xydummystrat,
@@ -269,7 +270,8 @@ xygetdisklabel(xy, b)
 	xy->acyl = xy->sc_dk.dk_label->d_acylinders;
 	xy->nhead = xy->sc_dk.dk_label->d_ntracks;
 	xy->nsect = xy->sc_dk.dk_label->d_nsectors;
-	xy->sectpercyl = xy->nhead * xy->nsect;
+	xy->sectpercyl = xy->sc_dk.dk_label->d_secpercyl =
+	    xy->nhead * xy->nsect;
 	xy->sc_dk.dk_label->d_secsize = XYFM_BPS; /* not handled by
                                           	  * sun->bsd */
 	return(XY_ERR_AOK);
