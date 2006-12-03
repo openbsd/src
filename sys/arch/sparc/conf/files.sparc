@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.73 2006/12/03 16:38:10 miod Exp $
+#	$OpenBSD: files.sparc,v 1.74 2006/12/03 22:13:04 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -166,7 +166,7 @@ device	bwtwo: wsemuldisplaydev, rasops1, wsemul_sun
 attach	bwtwo at sbus, obio, vmes, vmel
 file	arch/sparc/dev/bwtwo.c		bwtwo
 
-device	cgeight: wsemuldisplaydev, rasops24, wsemul_sun, bt_dac
+device	cgeight: wsemuldisplaydev, rasops1, wsemul_sun, bt_dac
 attach	cgeight at obio
 file	arch/sparc/dev/cgeight.c	cgeight
 

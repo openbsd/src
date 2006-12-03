@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgeight.c,v 1.27 2006/12/03 16:38:12 miod Exp $	*/
+/*	$OpenBSD: cgeight.c,v 1.28 2006/12/03 22:13:05 miod Exp $	*/
 /*	$NetBSD: cgeight.c,v 1.13 1997/05/24 20:16:04 pk Exp $	*/
 
 /*
@@ -47,9 +47,10 @@
 /*
  * color display (cgeight) driver.
  *
- * Does not handle interrupts, even though they can occur.
+ * For performance reasons, we run the emulation mode in the (monochrome)
+ * overlay plane, but X11 in the 24-bit color plane.
  *
- * XXX should defer colormap updates to vertical retrace interrupts
+ * Does not handle interrupts, even though they can occur.
  */
 
 #include <sys/param.h>
@@ -80,15 +81,15 @@
 
 /* per-display variables */
 struct cgeight_softc {
-	struct	sunfb sc_sunfb;		/* common base part */
-	struct	rom_reg	sc_phys;	/* display RAM (phys addr) */
+	struct	sunfb sc_sunfb;			/* common base device */
+	struct	rom_reg	sc_phys;
 	volatile struct fbcontrol *sc_fbc;	/* Brooktree registers */
-	union	bt_cmap sc_cmap;	/* Brooktree color map */
+	volatile u_char *sc_enable;		/* enable plane */
 };
 
 int	cgeight_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	cgeight_mmap(void *, off_t, int);
-void	cgeight_reset(struct cgeight_softc *);
+void	cgeight_reset(struct cgeight_softc *, int);
 
 struct wsdisplay_accessops cgeight_accessops = {
 	cgeight_ioctl,
@@ -179,12 +180,19 @@ cgeightattach(struct device *parent, struct device *self, void *args)
 	bt = &sc->sc_fbc->fbc_dac;
 	BT_INIT(bt, 0);
 
-	fb_setsize(&sc->sc_sunfb, 24, 1152, 900, node, ca->ca_bustype);
+	fb_setsize(&sc->sc_sunfb, 1, 1152, 900, node, ca->ca_bustype);
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
+
+	/*
+	 * Map the overlay and overlay enable planes.
+	 */
+	sc->sc_enable = (volatile u_char *)mapiodev(ca->ca_ra.ra_reg,
+	    PFOUR_COLOR_OFF_ENABLE, round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_bits =  mapiodev(ca->ca_ra.ra_reg,
 	    PFOUR_COLOR_OFF_OVERLAY, round_page(sc->sc_sunfb.sf_fbsize));
-	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 
+	cgeight_reset(sc, WSDISPLAYIO_MODE_EMUL);
+	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 	printf(": p4, %dx%d", sc->sc_sunfb.sf_width,
 	    sc->sc_sunfb.sf_height);
 
@@ -195,13 +203,48 @@ cgeightattach(struct device *parent, struct device *self, void *args)
 	fbwscons_attach(&sc->sc_sunfb, &cgeight_accessops, isconsole);
 }
 
+void
+cgeight_reset(struct cgeight_softc *sc, int mode)
+{
+	volatile struct bt_regs *bt;
+	union bt_cmap cm;
+	u_int c;
+
+	bt = &sc->sc_fbc->fbc_dac;
+
+	/*
+	 * Depending on the mode requested, disable or enable
+	 * the overlay plane.
+	 */
+	if (mode == WSDISPLAYIO_MODE_EMUL) {
+		memset((void *)sc->sc_enable, 0xff,
+		    round_page(sc->sc_sunfb.sf_fbsize));
+
+		/* Setup a strict mono colormap */
+		cm.cm_map[0][0] = cm.cm_map[0][1] = cm.cm_map[0][2] = 0x00;
+		for (c = 1; c < 256; c++) {
+			cm.cm_map[c][0] = cm.cm_map[c][1] = cm.cm_map[c][2] =
+			    0xff;
+		}
+	} else {
+		memset((void *)sc->sc_enable, 0x00,
+		    round_page(sc->sc_sunfb.sf_fbsize));
+
+		/* Setup a ramp colormap (direct color) */
+		for (c = 0; c < 256; c++) {
+			cm.cm_map[c][0] = cm.cm_map[c][1] = cm.cm_map[c][2] = c;
+		}
+	}
+
+	/* Upload the colormap into the DAC */
+	bt_loadcmap(&cm, bt, 0, 256, 0);
+}
+
 int
 cgeight_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct cgeight_softc *sc = v;
-	struct wsdisplay_cmap *cm;
 	struct wsdisplay_fbinfo *wdf;
-	int error;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -211,36 +254,25 @@ cgeight_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		wdf = (struct wsdisplay_fbinfo *)data;
 		wdf->height = sc->sc_sunfb.sf_height;
 		wdf->width = sc->sc_sunfb.sf_width;
-		wdf->depth = sc->sc_sunfb.sf_depth;
-		wdf->cmsize = 256;
+		wdf->depth = 24;
+		wdf->cmsize = 0;
 		break;
-	case WSDISPLAYIO_GETCMAP:
-		cm = (struct wsdisplay_cmap *)data;
-		error = bt_getcmap(&sc->sc_cmap, cm);
-		if (error)
-			return (error);
+	case WSDISPLAYIO_SMODE:
+		cgeight_reset(sc, *(int *)data);
 		break;
-	case WSDISPLAYIO_PUTCMAP:
-		cm = (struct wsdisplay_cmap *)data;
-		error = bt_putcmap(&sc->sc_cmap, cm);
-		if (error)
-			return (error);
-		bt_loadcmap(&sc->sc_cmap, &sc->sc_fbc->fbc_dac,
-		    cm->index, cm->count, 0);
-		break;
-
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
 		break;
 
-	case WSDISPLAYIO_GCURPOS:
-	case WSDISPLAYIO_SCURPOS:
-	case WSDISPLAYIO_GCURMAX:
-	case WSDISPLAYIO_GCURSOR:
-	case WSDISPLAYIO_SCURSOR:
+	case WSDISPLAYIO_GETCMAP:	/* nothing to do */
+	case WSDISPLAYIO_PUTCMAP:	/* nothing to do */
+	case WSDISPLAYIO_GCURPOS:	/* not supported */
+	case WSDISPLAYIO_SCURPOS:	/* not supported */
+	case WSDISPLAYIO_GCURMAX:	/* not supported */
+	case WSDISPLAYIO_GCURSOR:	/* not supported */
+	case WSDISPLAYIO_SCURSOR:	/* not supported */
 	default:
-		return (-1);	/* not supported yet */
-
+		return (-1);
 	}
 
 	return (0);
@@ -254,10 +286,10 @@ cgeight_mmap(void *v, off_t offset, int prot)
 	if (offset & PGOFSET)
 		return (-1);
 
-	/* Allow mapping as a dumb framebuffer from offset 0 */
-	if (offset >= 0 && offset < sc->sc_sunfb.sf_fbsize) {
-		return (REG2PHYS(&sc->sc_phys, offset +
-		    PFOUR_COLOR_OFF_OVERLAY) | PMAP_NC);
+	/* Allow mapping of the 24-bit color planes */
+	if (offset >= 0 && offset < round_page(24 * sc->sc_sunfb.sf_fbsize)) {
+		return (REG2PHYS(&sc->sc_phys,
+		    offset + PFOUR_COLOR_OFF_COLOR) | PMAP_NC);
 	}
 
 	return (-1);
