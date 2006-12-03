@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.74 2006/10/18 20:00:21 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.75 2006/12/03 16:12:22 grange Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -899,6 +899,8 @@ sis_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet		*ifp;
 	bus_size_t		size;
 
+	sc->sis_stopped = 1;
+
 	/*
 	 * Handle power management nonsense.
 	 */
@@ -1650,7 +1652,6 @@ sis_init(void *xsc)
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
 	sis_stop(sc);
-	sc->sis_stopped = 0;
 
 #if NS_IHR_DELAY > 0
 	/* Configure interrupt holdoff register. */
@@ -1826,6 +1827,7 @@ sis_init(void *xsc)
 	mii_mediachg(mii);
 #endif
 
+	sc->sis_stopped = 0;
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
