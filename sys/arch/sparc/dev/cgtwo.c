@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwo.c,v 1.35 2006/12/03 16:38:13 miod Exp $	*/
+/*	$OpenBSD: cgtwo.c,v 1.36 2006/12/03 16:40:06 miod Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
 
 /*
@@ -105,17 +105,18 @@ struct cgtwo_softc {
 	struct	sunfb sc_sunfb;		/* common base part */
 	struct	rom_reg	sc_phys;	/* display RAM (phys addr) */
 	volatile struct cg2statusreg *sc_reg;	/* CG2 control registers */
+	volatile u_short *sc_ppmask;
 	volatile u_short *sc_cmap;
-#define sc_redmap(cmap)		((u_short *)(cmap))
-#define sc_greenmap(cmap)	((u_short *)(cmap) + CG2_CMSIZE)
-#define sc_bluemap(cmap)	((u_short *)(cmap) + 2 * CG2_CMSIZE)
+#define sc_redmap(cmap)		((cmap))
+#define sc_greenmap(cmap)	((cmap) + CG2_CMSIZE)
+#define sc_bluemap(cmap)	((cmap) + 2 * CG2_CMSIZE)
 };
 
 void	cgtwo_burner(void *, u_int, u_int);
-int	cgtwo_getcmap(volatile u_short *, struct wsdisplay_cmap *);
+int	cgtwo_getcmap(struct cgtwo_softc *, struct wsdisplay_cmap *);
 int	cgtwo_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	cgtwo_mmap(void *, off_t, int);
-int	cgtwo_putcmap(volatile u_short *, struct wsdisplay_cmap *);
+int	cgtwo_putcmap(struct cgtwo_softc *, struct wsdisplay_cmap *);
 void	cgtwo_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops cgtwo_accessops = {
@@ -194,8 +195,13 @@ cgtwoattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_reg = (volatile struct cg2statusreg *)
 	    mapiodev(ca->ca_ra.ra_reg,
-		     CG2_ROPMEM_OFF + offsetof(struct cg2fb, status.reg),
-		     sizeof(struct cg2statusreg));
+		CG2_ROPMEM_OFF + offsetof(struct cg2fb, status.reg),
+		sizeof(struct cg2statusreg));
+
+	sc->sc_ppmask = (volatile u_short *)
+	    mapiodev(ca->ca_ra.ra_reg,
+		CG2_ROPMEM_OFF + offsetof(struct cg2fb, ppmask.reg),
+		sizeof(u_short));
 
 	sc->sc_cmap = (volatile u_short *)
 	    mapiodev(ca->ca_ra.ra_reg,
@@ -203,7 +209,8 @@ cgtwoattach(struct device *parent, struct device *self, void *args)
 		     3 * CG2_CMSIZE * sizeof(u_short));
 
 	/* enable video */
-	cgtwo_burner(sc, 1, 0);
+	*sc->sc_ppmask = 0xffff;	/* enable all color planes... */
+	cgtwo_burner(sc, 1, 0);		/* ... and video signals */
 
 	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, node, ca->ca_bustype);
 	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(&sc->sc_phys, CG2_PIXMAP_OFF,
@@ -246,14 +253,14 @@ cgtwo_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		
 	case WSDISPLAYIO_GETCMAP:
 		cm = (struct wsdisplay_cmap *)data;
-		error = cgtwo_getcmap(sc->sc_cmap, cm);
+		error = cgtwo_getcmap(sc, cm);
 		if (error)
 			return (error);
 		break;
 
 	case WSDISPLAYIO_PUTCMAP:
 		cm = (struct wsdisplay_cmap *)data;
-		error = cgtwo_putcmap(sc->sc_cmap, cm);
+		error = cgtwo_putcmap(sc, cm);
 		if (error)
 			return (error);
 		break;
@@ -305,10 +312,11 @@ cgtwo_burner(void *v, u_int on, u_int flags)
 }
 
 int
-cgtwo_getcmap(volatile u_short *hwcmap, struct wsdisplay_cmap *cmap)
+cgtwo_getcmap(struct cgtwo_softc *sc, struct wsdisplay_cmap *cmap)
 {
 	u_int index = cmap->index, count = cmap->count, i;
 	u_char red[CG2_CMSIZE], green[CG2_CMSIZE], blue[CG2_CMSIZE];
+	volatile u_short *hwcmap = sc->sc_cmap;
 	int error;
 	volatile u_short *p;
 
@@ -316,7 +324,10 @@ cgtwo_getcmap(volatile u_short *hwcmap, struct wsdisplay_cmap *cmap)
 	if (index >= CG2_CMSIZE || count >= CG2_CMSIZE - index)
 		return (EINVAL);
 
-	/* XXX - Wait for retrace? */
+	while (sc->sc_reg->retrace == 0)
+		DELAY(1);
+
+	sc->sc_reg->update_cmap = 0;
 
 	/* Copy hardware to local arrays. */
 	p = &sc_redmap(hwcmap)[index];
@@ -328,6 +339,8 @@ cgtwo_getcmap(volatile u_short *hwcmap, struct wsdisplay_cmap *cmap)
 	p = &sc_bluemap(hwcmap)[index];
 	for (i = 0; i < count; i++)
 		blue[i] = *p++;
+
+	sc->sc_reg->update_cmap = 1;
 
 	/* Copy local arrays to user space. */
 	if ((error = copyout(red, cmap->red, count)) != 0)
@@ -341,10 +354,11 @@ cgtwo_getcmap(volatile u_short *hwcmap, struct wsdisplay_cmap *cmap)
 }
 
 int
-cgtwo_putcmap(volatile u_short *hwcmap, struct wsdisplay_cmap *cmap)
+cgtwo_putcmap(struct cgtwo_softc *sc, struct wsdisplay_cmap *cmap)
 {
 	u_int index = cmap->index, count = cmap->count, i;
 	u_char red[CG2_CMSIZE], green[CG2_CMSIZE], blue[CG2_CMSIZE];
+	volatile u_short *hwcmap = sc->sc_cmap;
 	int error;
 	volatile u_short *p;
 
@@ -359,7 +373,10 @@ cgtwo_putcmap(volatile u_short *hwcmap, struct wsdisplay_cmap *cmap)
 	if ((error = copyin(cmap->blue, blue, count)) != 0)
 		return (error);
 
-	/* XXX - Wait for retrace? */
+	while (sc->sc_reg->retrace == 0)
+		DELAY(1);
+
+	sc->sc_reg->update_cmap = 0;
 
 	/* Copy from local arrays to hardware. */
 	p = &sc_redmap(hwcmap)[index];
@@ -372,6 +389,8 @@ cgtwo_putcmap(volatile u_short *hwcmap, struct wsdisplay_cmap *cmap)
 	for (i = 0; i < count; i++)
 		*p++ = blue[i];
 
+	sc->sc_reg->update_cmap = 1;
+
 	return (0);
 }
 
@@ -380,8 +399,14 @@ cgtwo_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
 	struct cgtwo_softc *sc = v;
 
-	/* XXX - Wait for retrace? */
+	while (sc->sc_reg->retrace == 0)
+		DELAY(1);
+
+	sc->sc_reg->update_cmap = 0;
+
 	sc_redmap(sc->sc_cmap)[index] = r;
 	sc_greenmap(sc->sc_cmap)[index] = g;
 	sc_bluemap(sc->sc_cmap)[index] = b;
+
+	sc->sc_reg->update_cmap = 1;
 }
