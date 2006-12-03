@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.48 2006/12/03 10:14:39 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.49 2006/12/03 10:30:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -324,7 +324,7 @@ malo_intr(void *arg)
 	if (status & 0x4) {
 		struct malo_cmdheader *hdr = sc->sc_cmd_mem;
 
-		if (hdr->result != MALO_CMD_RESULT_OK) {
+		if (letoh16(hdr->result) != MALO_CMD_RESULT_OK) {
 			printf("%s: firmware cmd %s failed with %s\n",
 			    sc->sc_dev.dv_xname,
 			    malo_cmd_string(hdr->cmd),
@@ -336,7 +336,7 @@ malo_intr(void *arg)
 		    malo_cmd_string(hdr->cmd),
 		    malo_cmd_string_result(hdr->result));
 		if (malo_debug > 2)
-			malo_hexdump(hdr, hdr->size);
+			malo_hexdump(hdr, letoh16(hdr->size));
 #endif
 	}
 
@@ -550,7 +550,7 @@ malo_send_cmd_dma(struct malo_softc *sc, bus_addr_t addr)
 		delay(100);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-		if (hdr->cmd & 0x8000)
+		if (hdr->cmd & htole16(0x8000))
 			break;
 	}
 
@@ -2014,7 +2014,7 @@ malo_cmd_string_result(uint16_t result)
 	};
 
 	for (i = 0; i < sizeof(results) / sizeof(results[0]); i++)
-		if (result == results[i].result_code)
+		if (letoh16(result) == results[i].result_code)
 			return (results[i].result_string);
 
 	return ("unknown");
