@@ -1,4 +1,4 @@
-/*	$OpenBSD: report.c,v 1.5 2006/11/10 11:15:32 michele Exp $ */
+/*	$OpenBSD: report.c,v 1.6 2006/12/03 20:14:37 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -128,10 +128,6 @@ recv_report(struct nbr *nbr, char *buf, u_int16_t len)
 			memcpy(&netid, buf, sizeof(netid));
 			netid &= netmask;
 
-			/* Interpret special case 0.0.0.0/8 as 0.0.0.0/0 */
-			if (netid == 0)
-				netmask = 0;
-
 			buf += netid_len;
 			len -= netid_len;
 
@@ -143,8 +139,7 @@ recv_report(struct nbr *nbr, char *buf, u_int16_t len)
 			rr.net.s_addr = netid;
 			rr.mask.s_addr = netmask;
 			rr.nexthop = nbr->id;
-			/* adjusted metric */
-			rr.metric = (metric & METRIC_MASK) + nbr->iface->metric;
+			rr.metric = (metric & METRIC_MASK);
 
 			/* ifindex */
 			rr.ifindex = nbr->iface->ifindex;

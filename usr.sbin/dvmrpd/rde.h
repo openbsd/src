@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: rde.h,v 1.2 2006/12/03 20:14:37 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -71,12 +71,13 @@ void		 mfc_delete(struct mfc *);
 void		 rt_init(void);
 int		 rt_compare(struct rt_node *, struct rt_node *);
 struct rt_node	*rt_find(in_addr_t, u_int8_t);
+struct rt_node	*rr_new_rt(struct route_report *, int, int);
 int		 rt_insert(struct rt_node *);
+void		 rt_update(struct rt_node *);
 int		 rt_remove(struct rt_node *);
 void		 rt_clear(void);
 void		 rt_snap(u_int32_t);
 void		 rt_dump(pid_t);
-void		 rt_update(struct in_addr, u_int8_t, struct in_addr,
-		     u_int32_t, struct in_addr, u_short, u_int8_t, u_int8_t);
+int		 rde_check_route(struct route_report *, int);
 
 #endif	/* _RDE_H_ */

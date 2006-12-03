@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.3 2006/06/02 17:06:50 norby Exp $ */
+/*	$OpenBSD: interface.c,v 1.4 2006/12/03 20:14:37 michele Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -40,6 +40,8 @@
 #include "dvmrp.h"
 #include "log.h"
 #include "dvmrpe.h"
+
+extern struct dvmrpd_conf	*conf;
 
 void	 if_probe_timer(int, short, void *);
 int	 if_start_probe_timer(struct iface *);
@@ -140,6 +142,19 @@ if_fsm(struct iface *iface, enum iface_event event)
 	    iface->name, if_state_name(old_state), if_state_name(iface->state));
 
 	return (ret);
+}
+
+struct iface *
+if_find_index(u_short ifindex)
+{
+	struct iface	*iface;
+
+	LIST_FOREACH(iface, &conf->iface_list, entry) {
+		if (iface->ifindex == ifindex)
+			return (iface);
+	}
+
+	return (NULL);
 }
 
 struct iface *

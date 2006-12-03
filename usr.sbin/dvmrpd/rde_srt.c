@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.2 2006/12/03 20:14:37 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -27,9 +27,9 @@
 #include "igmp.h"
 #include "dvmrp.h"
 #include "dvmrpd.h"
-#include "rde.h"
 #include "log.h"
 #include "dvmrpe.h"
+#include "rde.h"
 
 /* source route tree */
 
@@ -104,6 +104,31 @@ rt_find(in_addr_t prefix, u_int8_t prefixlen)
 	s.prefixlen = prefixlen;
 
 	return (RB_FIND(rt_tree, &rt, &s));
+}
+
+struct rt_node *
+rr_new_rt(struct route_report *rr, int adj_metric, int connected)
+{
+	struct timespec	 now;
+	struct rt_node  *rn;
+
+	clock_gettime(CLOCK_MONOTONIC, &now);
+
+	if ((rn = calloc(1, sizeof(*rn))) == NULL)
+		fatal("rr_new_rt");
+
+	rn->prefix.s_addr = rr->net.s_addr;
+	rn->prefixlen = mask2prefixlen(rr->mask.s_addr);
+	rn->nexthop.s_addr = rr->nexthop.s_addr;
+	rn->cost = adj_metric;
+	rn->ifindex = rr->ifindex;
+	rn->flags = F_DVMRPD_INSERTED;
+	rn->connected = connected;
+	rn->uptime = now.tv_sec;
+
+	evtimer_set(&rn->expiration_timer, rt_expire_timer, rn);
+
+	return (rn);
 }
 
 int
@@ -209,38 +234,35 @@ rt_dump(pid_t pid)
 }
 
 void
-rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
-    u_int32_t cost, struct in_addr adv_rtr, u_short ifindex, u_int8_t flags,
-    u_int8_t connected)
+rt_update(struct rt_node *rn)
 {
-	struct timespec	 now;
-	struct rt_node	*rte;
+	if (!rn->connected)
+		rt_start_expire_timer(rn);
+}
 
-	clock_gettime(CLOCK_MONOTONIC, &now);
+int
+rde_check_route(struct route_report *rr, int connected)
+{
+	struct rt_node		*rn;
+	struct iface		*iface;
+	u_int32_t		 adj_metric;
 
-	if ((rte = rt_find(prefix.s_addr, prefixlen)) == NULL) {
-		if ((rte = calloc(1, sizeof(struct rt_node))) == NULL)
-			fatalx("rt_update");
-		rte->prefix.s_addr = prefix.s_addr;
-		rte->prefixlen = prefixlen;
-		rte->nexthop.s_addr = nexthop.s_addr;
-		rte->adv_rtr.s_addr = adv_rtr.s_addr;
-		rte->cost = cost;
-		rte->ifindex = ifindex;
-		rte->flags = flags;
-		rte->invalid = 0;
-		rte->connected = connected;
-		rte->uptime = now.tv_sec;
+	if ((iface = if_find_index(rr->ifindex)) == NULL)
+		return (-1);
 
-		rt_insert(rte);
+	/* Interpret special case 0.0.0.0/8 as 0.0.0.0/0 */
+	if (rr->net.s_addr == 0)
+		rr->mask.s_addr = 0;
 
-		evtimer_set(&rte->expiration_timer, rt_expire_timer, rte);
+	adj_metric = rr->metric + iface->metric;
 
-		if (!rte->connected)
-			rt_start_expire_timer(rte);
-
-	} else {
-		if (!rte->connected)
-			rt_start_expire_timer(rte);
+	if ((rn = rt_find(rr->net.s_addr, mask2prefixlen(rr->mask.s_addr)))
+	    == NULL) {
+		rn = rr_new_rt(rr, adj_metric, connected);
+		rt_insert(rn);
 	}
+
+	rt_update(rn);
+
+	return (0);
 }

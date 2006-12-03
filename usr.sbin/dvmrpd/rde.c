@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.2 2006/06/01 21:47:27 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.3 2006/12/03 20:14:37 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -188,8 +188,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf = bula;
 	struct imsg		 imsg;
 	struct route_report	 rr;
-	int			 n, connected = 0;
-	int			 i;
+	int			 i, n, connected = 0;
 	struct iface		*iface;
 
 	switch (event) {
@@ -231,12 +230,12 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			memcpy(&rr, imsg.data, sizeof(rr));
 
 			/* directly connected networks from parent */
-			if (imsg.hdr.peerid == 0) {
+			if (imsg.hdr.peerid == 0)
 				connected = 1;
-			}
-			rt_update(rr.net, mask2prefixlen(rr.mask.s_addr),
-			    rr.nexthop, rr.metric, rr.adv_rtr, rr.ifindex, 0,
-			    connected);
+
+			if (rde_check_route(&rr, connected) == -1)
+				log_debug("rde_dispatch_imsg: "
+				    "packet malformed");
 			break;
 		case IMSG_FULL_ROUTE_REPORT:
 			rt_snap(imsg.hdr.peerid);
