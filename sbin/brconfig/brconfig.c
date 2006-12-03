@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.37 2006/07/25 00:26:42 djm Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.38 2006/12/03 13:41:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/stdint.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/param.h>
@@ -58,6 +59,7 @@ int bridge_deladdr(int, char *, char *);
 int bridge_maxaddr(int, char *, char *);
 int bridge_maxage(int, char *, char *);
 int bridge_priority(int, char *, char *);
+int bridge_proto(int, char *, char *);
 int bridge_fwddelay(int, char *, char *);
 int bridge_hellotime(int, char *, char *);
 int bridge_ifprio(int, char *, char *, char *);
@@ -69,6 +71,7 @@ int bridge_add(int, char *, char *);
 int bridge_delete(int, char *, char *);
 int bridge_addspan(int, char *, char *);
 int bridge_delspan(int, char *, char *);
+int bridge_holdcnt(int, char *, char *);
 int bridge_status(int, char *);
 int is_bridge(int, char *);
 int bridge_show_all(int);
@@ -80,13 +83,27 @@ void bridge_badrule(int, char **, int);
 void bridge_showrule(struct ifbrlreq *, char *);
 int bridge_rulefile(int, char *, char *);
 
+int aflag = 0;
+int Aflag = 0;
+
 /* if_flags bits: borrowed from ifconfig.c */
 #define	IFFBITS \
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
 #define	IFBAFBITS	"\020\1STATIC"
-#define	IFBIFBITS	"\020\1LEARNING\2DISCOVER\3BLOCKNONIP\4STP\11SPAN"
+#define	IFBIFBITS	\
+"\020\1LEARNING\2DISCOVER\3BLOCKNONIP\4STP\5EDGE\6AUTOEDGE\7P2P\10AUTOP2P\11SPAN"
+
+#define	PV2ID(pv, epri, eaddr)	do {					\
+	epri	 = pv >> 48;						\
+	eaddr[0] = pv >> 40;						\
+	eaddr[1] = pv >> 32;						\
+	eaddr[2] = pv >> 24;						\
+	eaddr[3] = pv >> 16;						\
+	eaddr[4] = pv >> 8;						\
+	eaddr[5] = pv >> 0;						\
+} while (0)
 
 char *stpstates[] = {
 	"disabled",
@@ -94,6 +111,19 @@ char *stpstates[] = {
 	"learning",
 	"forwarding",
 	"blocking",
+	"discarding"
+};
+char *stpproto[] = {
+	"stp",
+	"(none)",
+	"rstp",
+};
+char *stproles[] = {
+	"disabled",
+	"root",
+	"designated",
+	"alternate",
+	"backup"
 };
 
 void
@@ -108,15 +138,17 @@ int
 main(int argc, char *argv[])
 {
 	int error = 0, ch, sock;
-	int aflag = 0;
 	char *brdg;
 
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0)
 		err(1, "socket");
 
-	while ((ch = getopt(argc, argv, "ah")) != -1) {
+	while ((ch = getopt(argc, argv, "Aah")) != -1) {
 		switch (ch) {
+		case 'A':
+			Aflag = 1;
+			break;
 		case 'a':
 			aflag = 1;
 			break;
@@ -130,7 +162,9 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (aflag || argc < 1)
+	if (argc < 1)
+		aflag = 1;
+	if (aflag || Aflag)
 		return bridge_show_all(sock);
 
 	brdg = argv[0];
@@ -359,6 +393,15 @@ main(int argc, char *argv[])
 			error = bridge_priority(sock, brdg, argv[0]);
 			if (error)
 				return (error);
+		} else if (strcmp("proto", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("proto requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_proto(sock, brdg, argv[0]);
+			if (error)
+				return (error);
 		} else if (strcmp("ifpriority", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc < 2) {
@@ -379,6 +422,15 @@ main(int argc, char *argv[])
 			if (error)
 				return (error);
 			argc--; argv++;
+		} else if (strcmp("-ifcost", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc < 1) {
+				warnx("-ifcost requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifcost(sock, brdg, argv[0], NULL);
+			if (error)
+				return (error);
 		} else if (strcmp("rules", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
@@ -438,6 +490,95 @@ main(int argc, char *argv[])
 			    IFBIF_STP);
 			if (error)
 				return (error);
+		} else if (strcmp("edge", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("edge requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifsetflag(sock, brdg, argv[0],
+			    IFBIF_BSTP_EDGE);
+			if (error)
+				return (error);
+		} else if (strcmp("-edge", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("-edge requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifclrflag(sock, brdg, argv[0],
+			    IFBIF_BSTP_EDGE);
+			if (error)
+				return (error);
+		} else if (strcmp("autoedge", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("autoedge requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifsetflag(sock, brdg, argv[0],
+			    IFBIF_BSTP_AUTOEDGE);
+			if (error)
+				return (error);
+		} else if (strcmp("-autoedge", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("-autoedge requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifclrflag(sock, brdg, argv[0],
+			    IFBIF_BSTP_AUTOEDGE);
+			if (error)
+				return (error);
+		} else if (strcmp("p2p", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("p2p requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifsetflag(sock, brdg, argv[0],
+			    IFBIF_BSTP_P2P);
+			if (error)
+				return (error);
+		} else if (strcmp("-p2p", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("-p2p requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifclrflag(sock, brdg, argv[0],
+			    IFBIF_BSTP_P2P);
+			if (error)
+				return (error);
+		} else if (strcmp("autop2p", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("autop2p requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifsetflag(sock, brdg, argv[0],
+			    IFBIF_BSTP_AUTOP2P);
+			if (error)
+				return (error);
+		} else if (strcmp("-autop2p", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("-autop2p requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifclrflag(sock, brdg, argv[0],
+			    IFBIF_BSTP_P2P);
+			if (error)
+				return (error);
+		} else if (strcmp("holdcnt", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("holdcnt requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_holdcnt(sock, brdg, argv[0]);
+			if (error)
+				return (error);
 		} else {
 			warnx("unrecognized option: %s", argv[0]);
 			return (EX_USAGE);
@@ -459,7 +600,7 @@ bridge_ifsetflag(int s, char *brdg, char *ifsname, u_int32_t flag)
 		return (EX_IOERR);
 	}
 
-	req.ifbr_ifsflags |= flag;
+	req.ifbr_ifsflags |= flag & ~IFBIF_RO_MASK;
 
 	if (ioctl(s, SIOCBRDGSIFFLGS, (caddr_t)&req) < 0) {
 		warn("%s: %s", brdg, ifsname);
@@ -481,7 +622,7 @@ bridge_ifclrflag(int s, char *brdg, char *ifsname, u_int32_t flag)
 		return (EX_IOERR);
 	}
 
-	req.ifbr_ifsflags &= ~flag;
+	req.ifbr_ifsflags &= ~(flag | IFBIF_RO_MASK);
 
 	if (ioctl(s, SIOCBRDGSIFFLGS, (caddr_t)&req) < 0) {
 		warn("%s: %s", brdg, ifsname);
@@ -610,37 +751,42 @@ bridge_flush(int s, char *brdg)
 int
 bridge_cfg(int s, char *brdg, char *delim)
 {
-	struct ifbrparam ifbp;
+	struct ifbropreq ifbp;
 	u_int16_t pri;
-	u_int8_t ht, fd, ma;
+	u_int8_t ht, fd, ma, hc, proto;
+	u_int8_t lladdr[ETHER_ADDR_LEN];
+	u_int16_t bprio;
 
-	strlcpy(ifbp.ifbrp_name, brdg, sizeof(ifbp.ifbrp_name));
-	if (ioctl(s, SIOCBRDGGPRI, (caddr_t)&ifbp)) {
+	strlcpy(ifbp.ifbop_name, brdg, sizeof(ifbp.ifbop_name));
+	if (ioctl(s, SIOCBRDGGPARAM, (caddr_t)&ifbp)) {
 		warn("%s", brdg);
 		return (EX_IOERR);
 	}
-	pri = ifbp.ifbrp_prio;
+	printf("%s", delim);
+	pri = ifbp.ifbop_priority;
+	ht = ifbp.ifbop_hellotime;
+	fd = ifbp.ifbop_fwddelay;
+	ma = ifbp.ifbop_maxage;
+	hc = ifbp.ifbop_holdcount;
+	proto = ifbp.ifbop_protocol;
 
-	if (ioctl(s, SIOCBRDGGHT, (caddr_t)&ifbp)) {
-		warn("%s", brdg);
-		return (EX_IOERR);
-	}
-	ht = ifbp.ifbrp_hellotime;
+	printf("priority %u hellotime %u fwddelay %u maxage %u "
+	    "holdcnt %u proto %s\n", pri, ht, fd, ma, hc, stpproto[proto]);
 
-	if (ioctl(s, SIOCBRDGGFD, (caddr_t)&ifbp)) {
-		warn("%s", brdg);
-		return (EX_IOERR);
-	}
-	fd = ifbp.ifbrp_fwddelay;
+	if (aflag && !Aflag)
+		return (0);
 
-	if (ioctl(s, SIOCBRDGGMA, (caddr_t)&ifbp)) {
-		warn("%s", brdg);
-		return (EX_IOERR);
-	}
-	ma = ifbp.ifbrp_maxage;
+	PV2ID(ifbp.ifbop_desg_bridge, bprio, lladdr);
+	printf("\tdesignated: id %s priority %u\n",
+	    ether_ntoa((struct ether_addr *)lladdr), bprio);
 
-	printf("%spriority %u hellotime %u fwddelay %u maxage %u\n",
-	    delim, pri, ht, fd, ma);
+	if (ifbp.ifbop_root_bridge == ifbp.ifbop_desg_bridge)
+		return (0);
+
+	PV2ID(ifbp.ifbop_root_bridge, bprio, lladdr);
+	printf("\troot: id %s priority %u ifcost %u port %u\n",
+	    ether_ntoa((struct ether_addr *)lladdr), bprio,
+	    ifbp.ifbop_root_path_cost, ifbp.ifbop_root_port & 0xfff);
 
 	return (0);
 }
@@ -674,12 +820,14 @@ bridge_list(int s, char *brdg, char *delim)
 		printf("\n");
 		if (reqp->ifbr_ifsflags & IFBIF_SPAN)
 			continue;
-		printf("\t\t\t");
+		printf("\t\t");
 		printf("port %u ifpriority %u ifcost %u",
 		    reqp->ifbr_portno, reqp->ifbr_priority,
 		    reqp->ifbr_path_cost);
 		if (reqp->ifbr_ifsflags & IFBIF_STP)
-			printf(" %s", stpstates[reqp->ifbr_state]);
+			printf(" %s role %s",
+			    stpstates[reqp->ifbr_state],
+			    stproles[reqp->ifbr_role]);
 		printf("\n");
 		bridge_rules(s, brdg, buf, delim);
 	}
@@ -825,6 +973,31 @@ bridge_priority(int s, char *brdg, char *arg)
 }
 
 int
+bridge_proto(int s, char *brdg, char *arg)
+{
+	struct ifbrparam bp;
+	int i, proto = -1;
+
+	for (i = 0; i <= BSTP_PROTO_MAX; i++)
+		if (strcmp(arg, stpproto[i]) == 0) {
+			proto = i;
+			break;
+		}
+	if (proto == -1) {
+		printf("invalid arg for proto: %s\n", arg);
+		return (EX_USAGE);
+	}
+
+	strlcpy(bp.ifbrp_name, brdg, sizeof(bp.ifbrp_name));
+	bp.ifbrp_prio = proto;
+	if (ioctl(s, SIOCBRDGSPROTO, (caddr_t)&bp) < 0) {
+		warn("%s", brdg);
+		return (EX_IOERR);
+	}
+	return (0);
+}
+
+int
 bridge_fwddelay(int s, char *brdg, char *arg)
 {
 	struct ifbrparam bp;
@@ -954,13 +1127,17 @@ bridge_ifcost(int s, char *brdg, char *ifname, char *val)
 	strlcpy(breq.ifbr_name, brdg, sizeof(breq.ifbr_name));
 	strlcpy(breq.ifbr_ifsname, ifname, sizeof(breq.ifbr_ifsname));
 
-	errno = 0;
-	v = strtoul(val, &endptr, 0);
-	if (val[0] == '\0' || endptr[0] != '\0' ||
-	    v < 1 || v > 0xffffffffUL ||
-	    (errno == ERANGE && v == ULONG_MAX)) {
-		printf("invalid arg for ifcost: %s\n", val);
-		return (EX_USAGE);
+	if (val == NULL)
+		v = 0;
+	else {
+		errno = 0;
+		v = strtoul(val, &endptr, 0);
+		if (val[0] == '\0' || endptr[0] != '\0' ||
+		    v < 0 || v > 0xffffffffUL ||
+		    (errno == ERANGE && v == ULONG_MAX)) {
+			printf("invalid arg for ifcost: %s\n", val);
+			return (EX_USAGE);
+		}
 	}
 	breq.ifbr_path_cost = v;
 
@@ -1033,6 +1210,26 @@ bridge_addrs(int s, char *brdg, char *delim)
 	return (0);
 }
 
+int
+bridge_holdcnt(int s, char *brdg, char *value)
+{
+	struct ifbrparam bp;
+	const char *errstr;
+
+	bp.ifbrp_txhc = strtonum(value, 0, UINT8_MAX, &errstr);
+	if (errstr) {
+		warn("holdcnt %s %s", value, errstr);
+		return (EX_IOERR);
+	}
+
+	strlcpy(bp.ifbrp_name, brdg, sizeof(bp.ifbrp_name));
+	if (ioctl(s, SIOCBRDGSTXHC, (caddr_t)&bp) < 0) {
+		warn("%s", brdg);
+		return (EX_IOERR);
+	}
+	return (0);
+}
+
 /*
  * Check to make sure 'brdg' is really a bridge interface.
  */
@@ -1076,13 +1273,11 @@ bridge_status(int s, char *brdg)
 	printb("flags", ifr.ifr_flags, IFFBITS);
 	printf("\n");
 
-	printf("\tConfiguration:\n");
-	err = bridge_cfg(s, brdg, "\t\t");
+	err = bridge_cfg(s, brdg, "\t");
 	if (err)
 		return (err);
 
-	printf("\tInterfaces:\n");
-	err = bridge_list(s, brdg, "\t\t");
+	err = bridge_list(s, brdg, "\t");
 	if (err)
 		return (err);
 
@@ -1364,7 +1559,7 @@ printb(char *s, unsigned short v, char *bits)
 		printf("%s=%o", s, v);
 	else
 		printf("%s=%x", s, v);
-	
+
 	if (bits) {
 		bits++;
 		putchar('<');

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.37 2006/06/02 19:53:12 mpf Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.38 2006/12/03 13:41:19 reyk Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -122,9 +122,13 @@
 #define	SIOCBRDGGMA	_IOWR('i', 83, struct ifbrparam)/* get max age */
 #define	SIOCBRDGSMA	 _IOW('i', 83, struct ifbrparam)/* set max age */
 #define	SIOCBRDGSIFPRIO	 _IOW('i', 84, struct ifbreq)	/* set if priority */
-#define	SIOCBRDGSIFCOST	 _IOW('i', 85, struct ifbreq)	/* set if cost */
+#define	SIOCBRDGSIFCOST  _IOW('i', 85, struct ifbreq)	/* set if cost */
 
-#define	SIOCBRDGS
+#define SIOCBRDGGPARAM  _IOWR('i', 88, struct ifbropreq)/* get brdg STP parms */
+#define SIOCBRDGSTXHC    _IOW('i', 89, struct ifbrparam)/* set tx hold count */
+#define SIOCBRDGSPROTO	 _IOW('i', 90, struct ifbrparam)/* set protocol */
+#define SIOCBRDGS
+
 #define GRESADDRS        _IOW('i', 101, struct ifreq)
 #define GRESADDRD        _IOW('i', 102, struct ifreq)   
 #define GREGADDRS       _IOWR('i', 103, struct ifreq)

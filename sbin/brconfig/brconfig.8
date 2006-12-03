@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.59 2006/10/23 07:05:49 jmc Exp $
+.\"	$OpenBSD: brconfig.8,v 1.60 2006/12/03 13:41:19 reyk Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Nd manipulate bridge interfaces
 .Sh SYNOPSIS
 .Nm
-.Op Fl a
+.Op Fl Aa
 .Nm
 .Ar bridge-name
 .Op Ar parameters
@@ -63,14 +63,19 @@ In the first synopsis, invoking
 .Nm
 with no arguments, or with the
 .Fl a
+or
+.Fl A
 flag, will list the status of all bridges in the system.
+The
+.Fl A
+flag will also list additional status information.
 In the second, its command line consists
 of the name of a bridge and a set of operations to be
 performed on that bridge.
 The commands are executed in the order they were specified.
 If no command is specified in the second synopsis, the
 .Nm
-will display status information about the bridge.
+will display full status information about the bridge.
 With the third synopsis, rules for filtering Ethernet MAC addresses can
 be added to a bridge.
 .Pp
@@ -230,32 +235,89 @@ Enable spanning tree protocol on
 Disable spanning tree protocol on
 .Ar interface .
 This is the default for interfaces added to the bridge.
+.It Cm proto Ar value
+Force the spanning tree protocol version.
+The available values are
+.Ar rstp
+to operate in the default Rapid Spanning Tree (RSTP) mode
+or
+.Ar stp
+to force operation in Spanning Tree (STP) mode with rapid transitions disabled.
 .It Cm maxage Ar time
 Set the time (in seconds) that a spanning tree protocol configuration is valid.
-Defaults to 20 seconds, minimum of 1, maximum of 255.
+Defaults to 20 seconds, minimum of 6, maximum of 40.
 .It Cm fwddelay Ar time
 Set the time (in seconds) before an interface begins forwarding packets.
-Defaults to 15 seconds, minimum of 1, maximum of 255.
+Defaults to 15 seconds, minimum of 4, maximum of 30.
 .It Cm hellotime Ar time
 Set the time (in seconds) between broadcasting spanning tree protocol
 configuration packets.
-Defaults to 2 seconds, minimum of 1, maximum of 255.
+Defaults to 2 seconds, minimum of 1, maximum of 2.
+.It Cm holdcnt Ar time
+Set the transmit hold count, which is the number of spanning tree protocol
+packets transmitted before being rate limited.
+Defaults to 6, minimum of 1, maximum of 10.
 .It Cm priority Ar num
 Set the spanning priority of this bridge to
 .Ar num .
-Defaults to 32768, minimum of 0, maximum of 65535.
+Defaults to 32768, minimum of 0, maximum of 61440.
 .It Cm ifpriority Ar interface Ar num
 Set the spanning tree priority of
 .Ar interface
 to
 .Ar num .
-Defaults to 128, minimum of 0, maximum of 255.
+Defaults to 128, minimum of 0, maximum of 240.
 .It Cm ifcost Ar interface Ar num
 Set the spanning tree path cost of
 .Ar interface
 to
 .Ar num .
-Defaults to 55, minimum of 1, maximum of 65535.
+Defaults to 55, minimum of 1, maximum of 200000000 in RSTP mode,
+and maximum of 65535 in STP mode.
+.It Cm -ifcost Ar interface
+Automatically calculate the spanning tree priority of
+.Ar interface
+based on the current link speed, interface status, and spanning tree mode.
+This is the default for interfaces added to the bridge.
+.It Cm edge Ar interface
+Set the
+.Ar interface
+as a spanning tree edge port.
+An edge port is a single connection to the network and cannot create
+bridge loops.
+This allows a straight transition to forwarding.
+.It Cm -edge Ar interface
+Disable edge port status on
+.Ar interface .
+.It Cm autoedge Ar interface
+Automatically detect the spanning tree edge port status on
+.Ar interface .
+This is the default for interfaces added to the bridge.
+.It Cm -autoedge Ar interface
+Disable automatic spanning tree edge port detection on
+.Ar interface .
+.It Cm p2p Ar interface
+Set the
+.Ar interface
+as a point to point link.
+This is required for straight transitions to forwarding and
+should be enabled for a full duplex link or a
+.Xr trunk 4
+with at least two physical links to the same network segment.
+.It Cm -p2p Ar interface
+Disable point to point link status on
+.Ar interface .
+This should be disabled for a half duplex link and for an interface
+connected to a shared network segment,
+like a hub or a wireless network.
+.It Cm autop2p Ar interface
+Automatically detect the point to point status on
+.Ar interface
+by checking the full duplex link status.
+This is the default for interfaces added to the bridge.
+.It Cm -autop2p Ar interface
+Disable automatic point to point link detection on
+.Ar interface .
 .El
 .Sh EXAMPLES
 Create a bridge pseudo network device:
@@ -453,8 +515,8 @@ and
 .Xr bridgename.if 5
 files, using the ! operator.
 .Sh SPANNING TREE
-The bridge has support for 802.1D Spanning Tree Protocol (STP), which can
-be used to detect and remove loops in a network topology.
+The bridge has support for 802.1D-2004 Spanning Tree Protocol (STP),
+which can be used to detect and remove loops in a network topology.
 Using the
 .Cm stp
 or
@@ -463,6 +525,17 @@ commands
 to
 .Nm ,
 STP can be enabled or disabled on each port.
+.Pp
+The bridge will use the Rapid Spanning Tree Protocol (RSTP) by default
+to allow rapid transitions to the forwarding state.
+The
+.Cm proto
+command to
+.Nm
+can be used to force operation in the common Spanning Tree Protocol
+without rapid state transitions.
+Note that RSTP will be compatible with remote bridges running common STP.
+.Pp
 STP will not work on
 .Xr gif 4
 members because they lack a hardware MAC address.
@@ -501,6 +574,13 @@ kernel interface were written by
 .An Jason L. Wright Aq jason@thought.net
 as part of an undergraduate independent study at the
 University of North Carolina at Greensboro.
+.Pp
+Support for rapid spanning tree reconfigurations (RSTP) was added by
+.An Andrew Thompson Aq thompsa@freebsd.org
+and ported to
+.Ox
+by
+.An Reyk Floeter Aq reyk@openbsd.org .
 .Sh BUGS
 There are some rather special network interface chipsets which will
 not work in a bridge configuration.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.152 2006/11/24 20:57:46 canacar Exp $	*/
+/*	$OpenBSD: if.c,v 1.153 2006/12/03 13:41:19 reyk Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1029,6 +1029,10 @@ if_down(struct ifnet *ifp)
 	if (ifp->if_carp)
 		carp_carpdev_state(ifp);
 #endif
+#if NBRIDGE > 0
+	if (ifp->if_bridge)
+		bstp_ifstate(ifp);
+#endif
 	rt_ifmsg(ifp);
 }
 
@@ -1057,6 +1061,10 @@ if_up(struct ifnet *ifp)
 #if NCARP > 0
 	if (ifp->if_carp)
 		carp_carpdev_state(ifp);
+#endif
+#if NBRIDGE > 0
+	if (ifp->if_bridge)
+		bstp_ifstate(ifp);
 #endif
 	rt_ifmsg(ifp);
 #ifdef INET6
