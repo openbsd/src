@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.35 2006/11/09 18:50:30 reyk Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.36 2006/12/03 13:58:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -475,13 +475,7 @@ vic_query(struct vic_softc *sc)
 	}
 
 	sc->sc_nrxbuf = vic_read_cmd(sc, VIC_CMD_NUM_Rx_BUF);
-	if (sc->sc_nrxbuf > VIC_NBUF_MAX || sc->sc_nrxbuf == 0)
-		sc->sc_nrxbuf = VIC_NBUF;
-
 	sc->sc_ntxbuf = vic_read_cmd(sc, VIC_CMD_NUM_Tx_BUF);
-	if (sc->sc_ntxbuf > VIC_NBUF_MAX || sc->sc_ntxbuf == 0)
-		sc->sc_ntxbuf = VIC_NBUF;
-
 	sc->sc_feature = vic_read_cmd(sc, VIC_CMD_FEATURE);
 	sc->sc_cap = vic_read_cmd(sc, VIC_CMD_HWCAP);
 
@@ -489,6 +483,16 @@ vic_query(struct vic_softc *sc)
 
 	printf("%s: VMXnet %04X, address %s\n", DEVNAME(sc),
 	    major & ~VIC_VERSION_MAJOR_M, ether_sprintf(sc->sc_lladdr));
+
+#ifdef VIC_DEBUG
+	printf("%s: feature 0x%8x, cap 0x%8x, rx/txbuf %d/%d\n", DEVNAME(sc),
+	    sc->sc_feature, sc->sc_cap, sc->sc_nrxbuf, sc->sc_ntxbuf);
+#endif
+
+	if (sc->sc_nrxbuf > VIC_NBUF_MAX || sc->sc_nrxbuf == 0)
+		sc->sc_nrxbuf = VIC_NBUF;
+	if (sc->sc_ntxbuf > VIC_NBUF_MAX || sc->sc_ntxbuf == 0)
+		sc->sc_ntxbuf = VIC_NBUF;
 
 	return (0);
 }
