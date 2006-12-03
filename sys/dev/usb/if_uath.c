@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.12 2006/11/26 11:14:22 deraadt Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.13 2006/12/03 16:09:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -70,6 +70,7 @@
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h>	/* needs_reattach() */
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
@@ -129,7 +130,7 @@ static const struct uath_type {
 	UATH_DEV_UG(ZCOM,		AR5523)
 };
 #define uath_lookup(v, p)	\
-	((struct uath_type *)usb_lookup(uath_devs, v, p))
+	((const struct uath_type *)usb_lookup(uath_devs, v, p))
 
 Static void	uath_attachhook(void *);
 Static int	uath_open_pipes(struct uath_softc *);
@@ -221,12 +222,23 @@ uath_attachhook(void *xsc)
 		return;
 	}
 
-	if ((error = uath_loadfirmware(sc, fw, size)) != 0) {
+	error = uath_loadfirmware(sc, fw, size);
+	free(fw, M_DEVBUF);
+
+	if (error == 0) {
+		usb_port_status_t status;
+
+		/*
+		 * Hack alert: the device doesn't always gracefully detach
+		 * from the bus after a firmware upload.  We need to force
+		 * a port reset and a re-exploration on the parent hub.
+		 */
+		usbd_reset_port(sc->sc_uhub, sc->sc_port, &status);
+		usb_needs_reattach(sc->sc_udev);
+	} else {
 		printf("%s: could not load firmware (error=%s)\n",
 		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
 	}
-
-	free(fw, M_DEVBUF);
 }
 
 USB_ATTACH(uath)
@@ -239,6 +251,8 @@ USB_ATTACH(uath)
 	int i;
 
 	sc->sc_udev = uaa->device;
+	sc->sc_uhub = uaa->device->myhub;
+	sc->sc_port = uaa->port;
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
@@ -909,11 +923,14 @@ uath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	timeout_del(&sc->scan_to);
 	timeout_del(&sc->stat_to);
 
-	/* do it in a process context */
 	sc->sc_state = nstate;
 	sc->sc_arg = arg;
-	usb_add_task(sc->sc_udev, &sc->sc_task);
-
+	if (curproc != NULL) {
+		uath_task(sc);
+	} else {
+		/* do it in a process context */
+		usb_add_task(sc->sc_udev, &sc->sc_task);
+	}
 	return 0;
 }
 
@@ -982,8 +999,8 @@ uath_cmd(struct uath_softc *sc, uint32_t code, const void *idata, int ilen,
 	if (error != USBD_IN_PROGRESS && error != 0) {
 		if (flags & UATH_CMD_FLAG_READ)
 			splx(s);
-		printf("%s: could not send command (error=%s)\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		printf("%s: could not send command 0x%x (error=%s)\n",
+		    USBDEVNAME(sc->sc_dev), code, usbd_errstr(error));
 		return error;
 	}
 	sc->cmd_idx = (sc->cmd_idx + 1) % UATH_TX_CMD_LIST_COUNT;
@@ -1651,6 +1668,7 @@ uath_reset(struct uath_softc *sc)
 	for (reg = 0x09; reg <= 0x24; reg++) {
 		if (reg == 0x0b || reg == 0x0c)
 			continue;
+		DELAY(100);
 		if ((error = uath_read_reg(sc, reg, &val)) != 0)
 			return error;
 		DPRINTFN(2, ("reg 0x%02x=0x%08x\n", reg, val));
@@ -1991,7 +2009,6 @@ uath_stop(struct ifnet *ifp, int disable)
 	usbd_abort_pipe(sc->data_tx_pipe);
 	usbd_abort_pipe(sc->data_rx_pipe);
 	usbd_abort_pipe(sc->cmd_tx_pipe);
-	usbd_abort_pipe(sc->cmd_rx_pipe);
 
 	splx(s);
 }
