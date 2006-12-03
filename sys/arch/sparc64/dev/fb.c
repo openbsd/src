@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.15 2006/12/02 11:25:09 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.16 2006/12/03 16:41:58 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -192,6 +192,22 @@ fbwscons_init(struct sunfb *sf, int flags)
 	cols = a2int(getpropstring(optionsnode, "screen-#columns"), 80);
 
 	rasops_init(ri, rows, cols);
+
+	if (sf->sf_depth == 8) {
+		/*
+		 * If we are running with an indexed palette, compensate
+		 * the swap of black and white through ri_devcmap.
+		 */
+		ri->ri_devcmap[WSCOL_SUN_BLACK] = 0;
+		ri->ri_devcmap[WSCOL_SUN_WHITE] = 0xffffffff;
+	} else if (sf->sf_depth > 8) {
+		/*
+		 * If we are running on a direct color frame buffer,
+		 * make the ``normal'' white the same as the highlighted
+		 * white.
+		 */
+		ri->ri_devcmap[WSCOL_WHITE] = ri->ri_devcmap[WSCOL_WHITE + 8];
+	}
 }
 
 void
@@ -238,22 +254,6 @@ fbwscons_console_init(struct sunfb *sf, int row)
 	if (ri->ri_updatecursor != NULL &&
 	    (sf->sf_ccolp != NULL || sf->sf_crowp != NULL))
 		ri->ri_updatecursor = fb_updatecursor;
-
-	if (sf->sf_depth == 8) {
-		/*
-		 * If we are running with an indexed palette, compensate
-		 * the swap of black and white through ri_devcmap.
-		 */
-		ri->ri_devcmap[WSCOL_SUN_BLACK] = 0;
-		ri->ri_devcmap[WSCOL_SUN_WHITE] = 0xffffffff;
-	} else if (sf->sf_depth > 8) {
-		/*
-		 * If we are running on a direct color frame buffer,
-		 * make the ``normal'' white the same as the highlighted
-		 * white.
-		 */
-		ri->ri_devcmap[WSCOL_WHITE] = ri->ri_devcmap[WSCOL_WHITE + 8];
-	}
 
 	if (ISSET(ri->ri_caps, WSSCREEN_WSCOLORS))
 		ri->ri_ops.alloc_attr(ri,
