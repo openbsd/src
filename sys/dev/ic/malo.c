@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.47 2006/11/30 17:23:34 damien Exp $ */
+/*	$OpenBSD: malo.c,v 1.48 2006/12/03 10:14:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1962,7 +1962,7 @@ malo_hexdump(void *buf, int len)
 
 	for (i = 0; i < len; i++) {
 		if (i % 16 == 0) 
-			printf("\n%4i:", i);
+			printf("%s%4i:", i ? "\n" : "", i);
 		if (i % 4 == 0)
 			printf(" ");
 		printf("%02x", (int)*((u_char *)buf + i));
@@ -1974,6 +1974,7 @@ static char *
 malo_cmd_string(uint16_t cmd)
 {
 	int i;
+	static char cmd_buf[16];
 	static const struct {
 		uint16_t	 cmd_code;
 		char		*cmd_string;
@@ -1989,10 +1990,11 @@ malo_cmd_string(uint16_t cmd)
 	};
 
 	for (i = 0; i < sizeof(cmds) / sizeof(cmds[0]); i++)
-		if ((cmd & 0x7fff) == cmds[i].cmd_code)
+		if ((letoh16(cmd) & 0x7fff) == cmds[i].cmd_code)
 			return (cmds[i].cmd_string);
 
-	return ("unknown");
+	snprintf(cmd_buf, sizeof(cmd_buf), "unknown %#x", cmd);
+	return (cmd_buf);
 }
 
 static char *
