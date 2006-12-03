@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.45 2006/11/26 11:14:22 deraadt Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.46 2006/12/03 16:16:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -686,11 +686,14 @@ rum_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	timeout_del(&sc->scan_to);
 	timeout_del(&sc->amrr_to);
 
-	/* do it in a process context */
 	sc->sc_state = nstate;
 	sc->sc_arg = arg;
-	usb_add_task(sc->sc_udev, &sc->sc_task);
-
+	if (curproc != NULL) {
+		rum_task(sc);
+	} else {
+		/* do it in a process context */
+		usb_add_task(sc->sc_udev, &sc->sc_task);
+	}
 	return 0;
 }
 
