@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.36 2006/05/27 23:59:07 jason Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.37 2006/12/03 16:35:25 miod Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -1114,7 +1114,7 @@ ieget(sc, mp, ehp, to_bpf)
 {
 	struct mbuf *m, *top, **mymp;
 	int i;
-	int offset = 0;
+	int offset;
 	int totlen, resid;
 	int thismboff;
 	int head;
@@ -1142,6 +1142,7 @@ ieget(sc, mp, ehp, to_bpf)
 		sc->sc_arpcom.ac_if.if_ierrors--; /* just this case, it's not an error */
 		return -1;
 	}
+	totlen -= (offset = sizeof *ehp);
 
 	MGETHDR(*mp, M_DONTWAIT, MT_DATA);
 	if (!*mp) {
@@ -1328,10 +1329,19 @@ ie_readframe(sc, num)
 	}
 
 #if NBPFILTER > 0
-	/* Check for a BPF filter; if so, hand it up. */
-	if (bpf_gets_it)
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m, BPF_DIRECTION_IN);
-
+	/*
+	 * Check for a BPF filter; if so, hand it up.
+	 * Note that we have to stick an extra mbuf up front, because bpf_mtap
+	 * expects to have the ether header at the front.
+	 * It doesn't matter that this results in an ill-formatted mbuf chain,
+	 * since BPF just looks at the data.  (It doesn't try to free the mbuf,
+	 * tho' it will make a copy for tcpdump.)
+	 */
+	if (bpf_gets_it) {
+		/* Pass it up. */
+		bpf_mtap_hdr(sc->sc_arpcom.ac_if.if_bpf, (caddr_t)&eh,
+		    sizeof(eh), m, BPF_DIRECTION_IN);
+	}
 	/*
 	 * A signal passed up from the filtering code indicating that the
 	 * packet is intended for BPF but not for the protocol machinery.
@@ -1354,7 +1364,7 @@ ie_readframe(sc, num)
 	/*
 	 * Finally pass this packet up to higher layers.
 	 */
-	ether_input_mbuf(&sc->sc_arpcom.ac_if, m);
+	ether_input(&sc->sc_arpcom.ac_if, &eh, m);
 }
 
 static void
