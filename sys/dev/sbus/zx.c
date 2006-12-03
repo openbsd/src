@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.10 2006/12/02 11:24:04 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.11 2006/12/03 17:10:41 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -286,18 +286,27 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	ri->ri_bits = bus_space_vaddr(bt, bh);
 	ri->ri_hw = sc;
 
-	/*
-	 * Watch out! rasops_init() invoked via fbwscons_init() would
-	 * not compute ri_bits correctly, if it had been tricked with the
-	 * low depth value. So masquerade as 32 bits for the call. This
-	 * will invoke rasops32_init() instead of rasops8_init(), but this
-	 * doesn't matter as we will override all the rasops functions
-	 * below.
-	 */
-	sc->sc_sunfb.sf_depth = 32;
 	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
-	sc->sc_sunfb.sf_depth = ri->ri_depth = 8;
-	    
+
+ 	/*
+	 * Watch out! rasops_init() invoked via fbwscons_init() did not
+	 * compute ri_bits correctly when centering the display, because
+	 * it has been tricked with the low depth value.
+	 * Recompute now.
+ 	 */
+	ri->ri_emustride = ri->ri_emuwidth * 4;
+	ri->ri_delta = ri->ri_stride - ri->ri_emustride;
+	ri->ri_pelbytes = 4;
+	ri->ri_xscale = ri->ri_font->fontwidth * 4;
+	ri->ri_bits = ri->ri_origbits;
+	ri->ri_bits += (((ri->ri_width * 4) - ri->ri_emustride) >> 1) & ~3;
+	ri->ri_bits += ((ri->ri_height - ri->ri_emuheight) >> 1) *
+	    ri->ri_stride;
+	ri->ri_yorigin = (int)(ri->ri_bits - ri->ri_origbits)
+	    / ri->ri_stride;
+	ri->ri_xorigin = (((int)(ri->ri_bits - ri->ri_origbits)
+	    % ri->ri_stride) / 4);
+
 	ri->ri_ops.copyrows = zx_copyrows;
 	ri->ri_ops.copycols = zx_copycols;
 	ri->ri_ops.eraserows = zx_eraserows;
