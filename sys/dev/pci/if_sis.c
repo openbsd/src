@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.75 2006/12/03 16:12:22 grange Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.76 2006/12/03 16:23:41 grange Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1507,8 +1507,10 @@ sis_intr(void *arg)
 		if (status & (SIS_ISR_RX_ERR | SIS_ISR_RX_OFLOW))
 			sis_rxeoc(sc);
 
+#if 0
 		if (status & (SIS_ISR_RX_IDLE))
 			SIS_SETBIT(sc, SIS_CSR, SIS_CSR_RX_ENABLE);
+#endif
 
 		if (status & SIS_ISR_SYSERR) {
 			sis_reset(sc);
@@ -1518,6 +1520,12 @@ sis_intr(void *arg)
 
 	/* Re-enable interrupts. */
 	CSR_WRITE_4(sc, SIS_IER, 1);
+
+	/*
+	 * XXX: Re-enable RX engine every time otherwise it occasionally
+	 * stops under unknown circumstances.
+	 */
+	SIS_SETBIT(sc, SIS_CSR, SIS_CSR_RX_ENABLE);
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		sis_start(ifp);
