@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.42 2006/12/03 16:41:56 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.43 2006/12/03 22:10:30 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -147,32 +147,17 @@ fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
 		sf->sf_height = def_height;
 		sf->sf_depth = def_depth;
 
+#if defined(SUN4)
 		/*
 		 * This is not particularly useful on Sun 4 VME framebuffers.
 		 * The EEPROM only contains info about the built-in.
 		 */
-		if (CPU_ISSUN4 && (bustype == BUS_VME16 ||
-		    bustype == BUS_VME32))
-			goto donesize;
-
-#if defined(SUN4)
-		if (CPU_ISSUN4) {
+		if (CPU_ISSUN4 && bustype == BUS_OBIO) {
 			struct eeprom *eep = (struct eeprom *)eeprom_va;
 
 			if (ISSET(sf->sf_flags, FB_PFOUR)) {
 				volatile u_int32_t pfour;
-
-				/*
-				 * Some pfour framebuffers, e.g. the
-				 * cgsix, don't encode resolution the
-				 * same, so the driver handles that.
-				 * The driver can let us know that it
-				 * needs to do this by not mapping in
-				 * the pfour register by the time this
-				 * routine is called.
-				 */
-				if (sf->sf_pfour == NULL)
-					goto donesize;
+				u_int size;
 
 				pfour = *sf->sf_pfour;
 
@@ -186,45 +171,34 @@ fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
 				 */
 				if ((PFOUR_ID(pfour) == PFOUR_ID_COLOR24) ||
 				    (PFOUR_ID(pfour) == PFOUR_ID_FASTCOLOR))
-					goto donesize;
+					size = 0x00; /* invalid */
+				else
+					size = PFOUR_SIZE(pfour);
 
-				switch (PFOUR_SIZE(pfour)) {
+				switch (size) {
 				case PFOUR_SIZE_1152X900:
 					sf->sf_width = 1152;
 					sf->sf_height = 900;
 					break;
-
 				case PFOUR_SIZE_1024X1024:
 					sf->sf_width = 1024;
 					sf->sf_height = 1024;
 					break;
-
 				case PFOUR_SIZE_1280X1024:
 					sf->sf_width = 1280;
 					sf->sf_height = 1024;
 					break;
-
 				case PFOUR_SIZE_1600X1280:
 					sf->sf_width = 1600;
 					sf->sf_height = 1280;
 					break;
-
 				case PFOUR_SIZE_1440X1440:
 					sf->sf_width = 1440;
 					sf->sf_height = 1440;
 					break;
-
 				case PFOUR_SIZE_640X480:
 					sf->sf_width = 640;
 					sf->sf_height = 480;
-					break;
-
-				default:
-					/*
-					 * XXX: Do nothing, I guess.
-					 * Should we print a warning about
-					 * an unknown value? --thorpej
-					 */
 					break;
 				}
 			} else if (eep != NULL) {
@@ -233,28 +207,17 @@ fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
 					sf->sf_width = 1152;
 					sf->sf_height = 900;
 					break;
-
 				case EE_SCR_1024X1024:
 					sf->sf_width = 1024;
 					sf->sf_height = 1024;
 					break;
-
 				case EE_SCR_1600X1280:
 					sf->sf_width = 1600;
 					sf->sf_height = 1280;
 					break;
-
 				case EE_SCR_1440X1440:
 					sf->sf_width = 1440;
 					sf->sf_height = 1440;
-					break;
-
-				default:
-					/*
-					 * XXX: Do nothing, I guess.
-					 * Should we print a warning about
-					 * an unknown value? --thorpej
-					 */
 					break;
 				}
 			}
@@ -266,7 +229,6 @@ fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
 		}
 #endif /* SUN4M */
 
-donesize:
 		sf->sf_linebytes = (sf->sf_width * sf->sf_depth) / 8;
 		break;
 
@@ -281,20 +243,17 @@ obpsize:
 		def_linebytes =
 		    roundup(sf->sf_width, sf->sf_depth) * sf->sf_depth / 8;
 		sf->sf_linebytes = getpropint(node, "linebytes", def_linebytes);
+
 		/*
 		 * XXX If we are configuring a board in a wider depth level
 		 * than the mode it is currently operating in, the PROM will
 		 * return a linebytes property tied to the current depth value,
 		 * which is NOT what we are relying upon!
 		 */
-		if (sf->sf_linebytes < (sf->sf_width * sf->sf_depth) / 8) {
+		if (sf->sf_linebytes < (sf->sf_width * sf->sf_depth) / 8)
 			sf->sf_linebytes = def_linebytes;
-		}
-		break;
 
-	default:
-		panic("fb_setsize: inappropriate bustype");
-		/* NOTREACHED */
+		break;
 	}
 
 	sf->sf_fbsize = sf->sf_height * sf->sf_linebytes;
