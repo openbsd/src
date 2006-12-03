@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.85 2006/12/03 16:16:58 damien Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.86 2006/12/03 16:39:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1356,7 +1356,9 @@ ural_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ieee80211_ioctl(ifp, cmd, data);
 		if (error == ENETRESET &&
 		    ic->ic_opmode == IEEE80211_M_MONITOR) {
-			ural_set_chan(sc, ic->ic_ibss_chan);
+			if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+			    (IFF_UP | IFF_RUNNING))
+				ural_set_chan(sc, ic->ic_ibss_chan);
 			error = 0;
 		}
 		break;

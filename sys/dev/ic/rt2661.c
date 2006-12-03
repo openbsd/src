@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.32 2006/11/26 11:14:18 deraadt Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.33 2006/12/03 16:39:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -257,7 +257,8 @@ rt2661_attach(void *xsc, int id)
 
 	if (sc->rf_rev == RT2661_RF_5225 || sc->rf_rev == RT2661_RF_5325) {
 		/* set supported .11a rates */
-		ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
+		ic->ic_sup_rates[IEEE80211_MODE_11A] =
+		    ieee80211_std_rateset_11a;
 
 		/* set supported .11a channels */
 		for (i = 36; i <= 64; i += 4) {
@@ -1894,7 +1895,9 @@ rt2661_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ieee80211_ioctl(ifp, cmd, data);
 		if (error == ENETRESET &&
 		    ic->ic_opmode == IEEE80211_M_MONITOR) {
-			rt2661_set_chan(sc, ic->ic_ibss_chan);
+			if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+			    (IFF_UP | IFF_RUNNING))
+				rt2661_set_chan(sc, ic->ic_ibss_chan);
 			error = 0;
 		}
 		break;
