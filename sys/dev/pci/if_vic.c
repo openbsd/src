@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.36 2006/12/03 13:58:58 reyk Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.37 2006/12/03 14:52:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -685,7 +685,7 @@ vic_link_state(struct vic_softc *sc)
 
 	status = vic_read(sc, VIC_STATUS);
 	if (status & VIC_STATUS_CONNECTED)
-		link_state = LINK_STATE_UP;
+		link_state = LINK_STATE_FULL_DUPLEX;
 	if (ifp->if_link_state != link_state) {
 		ifp->if_link_state = link_state;
 		if_link_state_change(ifp);
