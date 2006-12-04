@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.4,v 1.13 2006/09/18 18:05:04 jmc Exp $
+.\"	$OpenBSD: pppoe.4,v 1.14 2006/12/04 08:53:46 jmc Exp $
 .\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ file looks like this:
 .Bd -literal -offset indent
 inet 0.0.0.0 255.255.255.255 NONE \e
 	pppoedev ne0 authproto pap \e
-	authname testcaller authkey donttell up
+	authname 'testcaller' authkey 'donttell' up
 dest 0.0.0.1
 !/sbin/route add default 0.0.0.1
 .Ed
