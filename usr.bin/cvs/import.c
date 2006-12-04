@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.55 2006/12/04 09:46:27 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.56 2006/12/04 09:51:21 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -54,7 +54,7 @@ struct cvs_cmd cvs_cmd_import = {
 int
 cvs_import(int argc, char **argv)
 {
-	int ch, l;
+	int ch;
 	char repo[MAXPATHLEN], *arg = ".";
 	struct cvs_recursion cr;
 
@@ -88,10 +88,9 @@ cvs_import(int argc, char **argv)
 	vendor_tag = argv[1];
 	release_tag = argv[2];
 
-	l = snprintf(repo, sizeof(repo), "%s/%s", current_cvsroot->cr_dir,
-	    import_repository);
-	if (l == -1 || l >= (int)sizeof(repo))
-		fatal("cvs_import: overflow");
+	if (cvs_path_cat(current_cvsroot->cr_dir, import_repository,
+	    repo, sizeof(repo)) >= sizeof(repo))
+		fatal("cvs_import: truncation");
 
 	if (cvs_noexec != 1) {
 		if (mkdir(repo, 0755) == -1 && errno != EEXIST)

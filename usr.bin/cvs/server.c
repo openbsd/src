@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.40 2006/11/27 16:04:10 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.41 2006/12/04 09:51:21 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -305,7 +305,7 @@ void
 cvs_server_modified(char *data)
 {
 	BUF *bp;
-	int fd, l;
+	int fd;
 	size_t flen;
 	mode_t fmode;
 	const char *errstr;
@@ -325,9 +325,9 @@ cvs_server_modified(char *data)
 	bp = cvs_remote_receive_file(flen);
 
 	fpath = xmalloc(MAXPATHLEN);
-	l = snprintf(fpath, MAXPATHLEN, "%s/%s", server_currentdir, data);
-	if (l == -1 || l >= MAXPATHLEN)
-		fatal("cvs_server_modified: overflow");
+	if (cvs_path_cat(server_currentdir, data, fpath, MAXPATHLEN) >=
+	    MAXPATHLEN)
+		fatal("cvs_server_modified: truncation");
 
 	if ((fd = open(fpath, O_WRONLY | O_CREAT | O_TRUNC)) == -1)
 		fatal("cvs_server_modified: %s: %s", fpath, strerror(errno));
@@ -351,16 +351,16 @@ cvs_server_useunchanged(char *data)
 void
 cvs_server_unchanged(char *data)
 {
-	int l, fd;
+	int fd;
 	char *fpath;
 	CVSENTRIES *entlist;
 	struct cvs_ent *ent;
 	struct timeval tv[2];
 
 	fpath = xmalloc(MAXPATHLEN);
-	l = snprintf(fpath, MAXPATHLEN, "%s/%s", server_currentdir, data);
-	if (l == -1 || l >= MAXPATHLEN)
-		fatal("cvs_server_unchanged: overflow");
+	if (cvs_path_cat(server_currentdir, data, fpath, MAXPATHLEN) >=
+	    MAXPATHLEN)
+		fatal("cvs_server_unchanged: truncation");
 
 	if ((fd = open(fpath, O_RDWR | O_CREAT | O_TRUNC)) == -1)
 		fatal("cvs_server_unchanged: %s: %s", fpath, strerror(errno));
