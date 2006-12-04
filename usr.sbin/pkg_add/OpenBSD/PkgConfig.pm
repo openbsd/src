@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.8 2006/12/01 16:36:37 espie Exp $
+# $OpenBSD: PkgConfig.pm,v 1.9 2006/12/04 11:29:02 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -170,6 +170,13 @@ sub compress
 {
 	my ($class, $l, $keep) = @_;
 	return join(' ', @{$class->compress_list($l, $keep)});
+}
+
+sub rcompress
+{
+	my ($class, $l, $keep) = @_;
+	my @l2 = reverse @$l;
+	return join(' ', reverse @{$class->compress_list(\@l2, $keep)});
 }
 
 sub expanded
