@@ -1,4 +1,4 @@
-/*	$OpenBSD: getconf.c,v 1.9 2003/07/10 00:06:51 david Exp $	*/
+/*	$OpenBSD: getconf.c,v 1.10 2006/12/04 15:05:19 otto Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getconf.c,v 1.9 2003/07/10 00:06:51 david Exp $";
+static char rcsid[] = "$OpenBSD: getconf.c,v 1.10 2006/12/04 15:05:19 otto Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -188,8 +188,15 @@ main(int argc, char *argv[])
 		break;
 
 	case CONFSTR:
+		errno = 0;
 		slen = confstr (cp->value, (char *) 0, (size_t) 0);
-
+		
+		if (slen == 0 || slen == (size_t)-1) {
+			if (errno)
+				err(1, "%s", cp->value);
+			else
+				errx(1, "%s", cp->value);
+		}
 		if ((sval = malloc(slen)) == NULL)
 			err(1, NULL);
 
