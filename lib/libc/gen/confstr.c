@@ -1,4 +1,4 @@
-/*	$OpenBSD: confstr.c,v 1.7 2005/08/08 08:05:33 espie Exp $ */
+/*	$OpenBSD: confstr.c,v 1.8 2006/12/04 15:02:25 otto Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -49,15 +49,15 @@ confstr(int name, char *buf, size_t len)
 		mib[0] = CTL_USER;
 		mib[1] = USER_CS_PATH;
 		if (sysctl(mib, 2, NULL, &tlen, NULL, 0) == -1)
-			return ((size_t) -1);
+			return (0);
 		if (len != 0 && buf != NULL) {
 			if ((p = malloc(tlen)) == NULL)
-				return ((size_t) -1);
+				return (0);
 			if (sysctl(mib, 2, p, &tlen, NULL, 0) == -1) {
 				sverrno = errno;
 				free(p);
 				errno = sverrno;
-				return ((size_t) -1);
+				return (0);
 			}
 			/*
 			 * POSIX 1003.2 requires partial return of
