@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.188 2006/08/23 20:28:00 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.189 2006/12/04 03:53:30 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2595,6 +2595,8 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 	kwstr = NULL;
 
 	len = cvs_buf_len(bp);
+	if (len == 0)
+		return (bp);
 
 	c = cvs_buf_get(bp);
 	found = 0;
