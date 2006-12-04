@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.12 2006/12/02 18:58:46 espie Exp $
+# $OpenBSD: pkg-config,v 1.13 2006/12/04 22:05:41 espie Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -36,7 +36,6 @@ if (defined($ENV{'PKG_CONFIG_LOGFILE'}) && $ENV{'PKG_CONFIG_LOGFILE'}) {
 my $version = 0.19; # pretend to be this version of pkgconfig
 
 my %configs = ();
-my $cfg_list = [];
 my %mode = ();
 my $variables = {};
 my $D = 0; # debug flag
@@ -80,21 +79,15 @@ GetOptions(	'debug' => \$D,
 		'static' => sub { $mode{static} = 1},
 		'uninstalled' => sub { $mode{uninstalled} = 1},
 		'atleast-version=s' => \$mode{'atleast-version'},
-		'modversion:s' => \$mode{modversion},
+		'modversion' => \$mode{modversion},
 		'variable=s' => \$mode{variable},
 		'define-variable=s' => $variables,
 	);
 
 print STDERR "\n[" . join('] [', $0, @ARGV) . "]\n" if $D;
 self_version($mode{minvers}) if $mode{minvers}; #does not return
-if (defined $mode{modversion}) {
-	if ($mode{modversion}) {
-		do_modversion($mode{modversion}) ; #does not return
-	} else {
-		print $version . "\n";
-		exit 0;
-	}
-}
+
+my $rc = 0;
 
 {
 my $p = join(' ', @ARGV);
@@ -105,73 +98,89 @@ $p =~ s/^\s//g;
 
 if (defined $mode{exists}) {
 	while (@ARGV) {
-		if ((@ARGV >= 2)  && ($ARGV[1] =~ /[<=>]+/) &&
-		    ($ARGV[2] =~ /[0-9\.]+/)) {
-			exit 1 unless versionmatch(@ARGV);
-			shift @ARGV; shift @ARGV; shift @ARGV;
-		} else {
-			exit 1 unless pathresolve($ARGV[0]);
-			shift @ARGV;
+		my $p = shift @ARGV;
+		my $cfg = cache_find_config($p);
+		exit 1 if !defined $cfg;
+		if (@ARGV >= 2  && $ARGV[0] =~ /[<=>]+/ &&
+		    $ARGV[1] =~ /[0-9\.]+/) {
+			$rc = 1 unless versionmatch($cfg, @ARGV);
+			shift @ARGV; shift @ARGV;
 		}
 	}
-	exit 0;
+	exit $rc;
 }
 
-do_variable($ARGV[0], $mode{variable}) if $mode{variable};
+my $cfg_full_list = [];
+my @vlist = ();
 
 while (@ARGV){
-	my $p = $ARGV[0];
-	if ((@ARGV >= 2)  && ($ARGV[1] =~ /[<=>]+/) &&
-	    ($ARGV[2] =~ /[0-9\.]+/)) {
-		shift @ARGV;
-		shift @ARGV;
+	my $p = shift @ARGV;
+	my $op = undef;
+	my $v = undef;
+	if (@ARGV >= 2  && $ARGV[0] =~ /[<=>]+/ &&
+	    $ARGV[1] =~ /[0-9\.]+/) {
+	    	$op = shift @ARGV;
+		$v = shift @ARGV;
 	}
-	shift @ARGV;
 	$p =~ s/,//g;
-	handle_config($p);
+	handle_config($p, $op, $v, $cfg_full_list);
+	do_modversion($p) if defined $mode{modversion};
+	do_variable($p, $mode{variable}) if $mode{variable};
 }
 
-if ($mode{cflags} || $mode{libs}) {
-    my @l = ();
-    push @l, do_cflags() if $mode{cflags};
-    push @l, do_libs() if $mode{libs};
-    print join(' ', @l), "\n";
+my $cfg_list = simplify_and_reverse($cfg_full_list);
+
+if ($mode{cflags} || $mode{libs}|| $mode{variable}) {
+    push @vlist, do_cflags() if $mode{cflags};
+    push @vlist, do_libs() if $mode{libs};
+    print join(' ', @vlist), "\n";
 }
 
-exit 0;
+exit $rc;
 
 ###########################################################################
 
 sub handle_config
 {
-	my $p = shift;
+	my ($p, $op, $v, $list) = @_;
 
-	return if $configs{$p};
 
-	print STDERR "processing $p\n" if $D;
-	my $cfg = find_config($p);
+	my $cfg = cache_find_config($p);
 
-	if (!defined $cfg) {
-		warn "can't find $p\n" if $mode{printerr};
-		exit 1;
+	unshift @$list, $p if defined $cfg;
+
+	if (defined $op) {
+		if (!versionmatch($cfg, $op, $v)) {
+			mismatch($p, $cfg, $op, $v) if $mode{printerr};
+			$rc = 1;
+			return undef;
+		}
 	}
-	return undef if defined $mode{exists};
 
-	push(@$cfg_list, $p);
-	$configs{$p} = $cfg;
+	return undef if !defined $cfg;
 
 	my $deps = $cfg->get_property('Requires', $variables);
 	if (defined $deps) {
-		# XXX don't handle version yet
-		map { s/\s*[<=>]+\s*[\d\.]+//; handle_config($_) } @$deps;
+		for my $dep (@$deps) {
+			if ($dep =~ m/^(.*?)\s*([<=>]+)\s*([\d\.]+)$/) {
+				handle_config($1, $2, $3, $list);
+			} else {
+				handle_config($dep, undef, undef, $list);
+			}
+		}
 		print STDERR "package $p requires ",
 		    join(',', @$deps), "\n" if $D;
 	}
 
 	$deps = $cfg->get_property('Requires.private', $variables);
 	if (defined $deps) {
-		# XXX don't handle version yet
-		map { s/\s*[<=>]+\s*[\d\.]+//; handle_config($_) } @$deps;
+		for my $dep (@$deps) {
+			if ($dep =~ m/^(.*?)\s*([<=>]+)\s*([\d\.]+)$/) {
+				handle_config($1, $2, $3, $list);
+			} else {
+				handle_config($dep, undef, undef, $list);
+			}
+		}
 		print STDERR "package $p requires (private)",
 			join(',', @$deps), "\n" if $D;
 	}
@@ -207,12 +216,29 @@ sub get_config
 	return undef;
 }
 
+sub cache_find_config
+{
+	my $name = shift;
+
+	print STDERR "processing $name\n" if $D;
+
+	if (exists $configs{$name}) {
+		return $configs{$name};
+	} else {
+	    	return $configs{$name} = find_config($name);
+	}
+}
+
 sub find_config
 {
 	my ($p) = @_;
 	my $f = pathresolve($p);
 	if (defined $f) {
 		return get_config($f);
+	}
+	if ($mode{printerr}) {
+	    print STDERR 
+	    	"Package $p was not found in the pkg-config search path\n";
 	}
 	return undef;
 }
@@ -233,14 +259,16 @@ sub do_variable
 {
 	my ($p, $v) = @_;
 
-	if (my $cfg = find_config($p)) {
+	my $cfg = cache_find_config($p);
+
+	if (defined $cfg) {
 		my $value = $cfg->get_variable($v, $variables);
 		if (defined $value) {
-			print $value, "\n";
-			exit 1;
+			push(@vlist, $value);
+			return undef;
 		}
 	}
-	exit 0;
+	$rc = 1;
 }
 
 #if the modversion option is set, pull out the compiler flags
@@ -248,14 +276,16 @@ sub do_modversion
 {
 	my ($p) = @_;
 
-	if (my $cfg = find_config($p)) {
+	my $cfg = cache_find_config($p);
+
+	if (defined $cfg) {
 		my $value = $cfg->get_property('Version', $variables);
 		if (defined $value) {
 			print stringize($value), "\n";
-			exit 1;
+			return undef;
 		}
 	}
-	exit 0;
+	$rc = 1;
 }
 
 #if the cflags option is set, pull out the compiler flags
@@ -288,17 +318,23 @@ sub do_libs
 		my $l = $configs{$pkg}->get_property('Libs', $variables);
 		push(@$libs, @$l) if defined $l;
 	}
-	return OpenBSD::PkgConfig->compress($libs,
+	my $a = OpenBSD::PkgConfig->compress($libs,
 		sub {
 			local $_ = shift;
-			if (($mode{libs} & 1) && /^-l/ ||
-			    ($mode{libs} & 2) && /^-L/ ||
+			if (($mode{libs} & 2) && /^-L/ ||
 			    ($mode{libs} & 4) && !/^-[lL]/) {
 			    return 1;
 			} else {
 			    return 0;
 			}
 		});
+	if ($mode{libs} & 1) {
+		my $b = OpenBSD::PkgConfig->rcompress($libs,
+			sub { shift =~ m/^-l/; });
+		return ($a, $b);
+	} else {
+		return $a;
+	}
 }
 
 #list all packages
@@ -380,14 +416,12 @@ sub self_version
 # got a package meeting the requested specific version?
 sub versionmatch
 {
-	my ($pname, $op, $ver) = @_;
+	my ($cfg, $op, $ver) = @_;
 	
-	print STDERR "pname = '$pname'\n" if  $D;
-	my $cfg = find_config($pname);
+	# XXX assumes op is >= for now.
+
 	# can't possibly match if we can't find the file
 	return 0 if !defined $cfg;
-
-	$configs{$pname} = $cfg;
 
 	my $v = stringize($cfg->get_property('Version', $variables));
 
@@ -410,4 +444,27 @@ sub versionmatch
 	return 0 if @want;
 	# and after all that, the version is good enough
 	return 1;
+}
+
+sub mismatch
+{
+	my ($p, $cfg, $op, $v) = @_;
+	print STDERR "Requested '$p $op $v' but version of ",
+	    stringize($cfg->get_property('Name')), " is ",
+	    stringize($cfg->get_property('Version')), "\n";
+}
+
+sub simplify_and_reverse
+{
+	my $reqlist = shift;
+	my $dejavu = {};
+	my $result = [];
+
+	for my $item (@$reqlist) {
+		if (!$dejavu->{$item}) {
+			unshift @$result, $item;
+			$dejavu->{$item} = 1;
+		}
+	}
+	return $result;
 }
