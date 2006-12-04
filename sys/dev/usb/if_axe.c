@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.55 2006/10/03 19:46:08 damien Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.56 2006/12/04 17:12:07 damien Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -1135,8 +1135,8 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 	c->axe_mbuf = m;
 
 	usbd_setup_xfer(c->axe_xfer, sc->axe_ep[AXE_ENDPT_TX],
-	    c, c->axe_buf, length, USBD_FORCE_SHORT_XFER, 10000,
-	    axe_txeof);
+	    c, c->axe_buf, length, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+	    10000, axe_txeof);
 
 	/* Transmit */
 	err = usbd_transfer(c->axe_xfer);
