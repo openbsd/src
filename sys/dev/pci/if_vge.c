@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.31 2006/11/23 02:00:54 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.32 2006/12/04 14:35:20 reyk Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1198,7 +1198,12 @@ vge_tick(void *xsc)
 		if (mii->mii_media_status & IFM_ACTIVE &&
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 			sc->vge_link = 1;
-			ifp->if_link_state = LINK_STATE_UP;
+			if (mii->mii_media_status & IFM_FDX)
+				ifp->if_link_state = LINK_STATE_FULL_DUPLEX;
+			else if (mii->mii_media_status & IFM_HDX)
+				ifp->if_link_state = LINK_STATE_HALF_DUPLEX;
+			else
+				ifp->if_link_state = LINK_STATE_UP;
 			if_link_state_change(ifp);
 			if (!IFQ_IS_EMPTY(&ifp->if_snd))
 				vge_start(ifp);

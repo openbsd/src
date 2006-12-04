@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.198 2006/11/26 19:13:39 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.199 2006/12/04 14:35:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3358,7 +3358,11 @@ bge_link_upd(struct bge_softc *sc)
 					BGE_CLRBIT(sc, BGE_MAC_MODE,
 					    BGE_MACMODE_TBI_SEND_CFGS);
 				CSR_WRITE_4(sc, BGE_MAC_STS, 0xFFFFFFFF);
-				ifp->if_link_state = LINK_STATE_UP;
+				status = CSR_READ_4(sc, BGE_MAC_MODE);
+				ifp->if_link_state =
+				    (status & BGE_MACMODE_HALF_DUPLEX) ?
+				    LINK_STATE_HALF_DUPLEX :
+				    LINK_STATE_FULL_DUPLEX;
 				if_link_state_change(ifp);
 			}
 		} else if (sc->bge_link) {
