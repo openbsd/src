@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.265 2006/11/28 19:21:15 reyk Exp $ */
+/*	$OpenBSD: session.c,v 1.266 2006/12/05 12:08:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -119,6 +119,7 @@ session_sighdlr(int sig)
 int
 setup_listeners(u_int *la_cnt)
 {
+	int			 ttl = 255;
 	int			 opt;
 	struct listen_addr	*la;
 	u_int			 cnt = 0;
@@ -144,6 +145,13 @@ setup_listeners(u_int *la_cnt)
 				sysdep.no_md5sig = 1;
 			} else
 				fatal("setsockopt TCP_MD5SIG");
+		}
+
+		/* set ttl to 255 so that ttl-security works */
+		if (setsockopt(la->fd, IPPROTO_IP, IP_TTL, &ttl,
+		    sizeof(ttl)) == -1) {
+			log_warn("setup_listeners setsockopt TTL");
+			continue;
 		}
 
 		session_socket_blockmode(la->fd, BM_NONBLOCK);
@@ -1104,14 +1112,27 @@ session_setup_socket(struct peer *p)
 	int	nodelay = 1;
 	int	bsize;
 
-	if (p->conf.ebgp && p->conf.remote_addr.af == AF_INET)
-		/* set TTL to foreign router's distance - 1=direct n=multihop */
+	if (p->conf.ebgp && p->conf.remote_addr.af == AF_INET) {
+		/* set TTL to foreign router's distance - 1=direct n=multihop
+		   with ttlsec, we always use 255 */
+		if (p->conf.ttlsec) {
+			ttl = 256 - p->conf.distance;
+			if (setsockopt(p->fd, IPPROTO_IP, IP_MINTTL, &ttl,
+			    sizeof(ttl)) == -1) {
+				log_peer_warn(&p->conf,
+				    "session_setup_socket setsockopt MINTTL");
+				return (-1);
+			}
+			ttl = 255;
+		}
+
 		if (setsockopt(p->fd, IPPROTO_IP, IP_TTL, &ttl,
 		    sizeof(ttl)) == -1) {
 			log_peer_warn(&p->conf,
 			    "session_setup_socket setsockopt TTL");
 			return (-1);
 		}
+	}
 
 	if (p->conf.ebgp && p->conf.remote_addr.af == AF_INET6)
 		/* set hoplimit to foreign router's distance */
@@ -1121,6 +1142,13 @@ session_setup_socket(struct peer *p)
 			    "session_setup_socket setsockopt hoplimit");
 			return (-1);
 		}
+
+	/* if ttlsec is in use, set minttl */
+	if (p->conf.ttlsec) {
+		ttl = 256 - p->conf.distance;
+		setsockopt(p->fd, IPPROTO_IP, IP_MINTTL, &ttl, sizeof(ttl));
+
+	}
 
 	/* set TCP_NODELAY */
 	if (setsockopt(p->fd, IPPROTO_TCP, TCP_NODELAY, &nodelay,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.197 2006/11/28 16:39:34 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.198 2006/12/05 12:08:13 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -158,7 +158,7 @@ typedef struct {
 %token	ENFORCE NEIGHBORAS CAPABILITIES REFLECTOR DEPEND DOWN SOFTRECONFIG
 %token	DUMP IN OUT
 %token	LOG ROUTECOLL TRANSPARENT
-%token	TCP MD5SIG PASSWORD KEY
+%token	TCP MD5SIG PASSWORD KEY TTLSECURITY
 %token	ALLOW DENY MATCH
 %token	QUICK
 %token	FROM TO ANY
@@ -881,6 +881,9 @@ peeropts	: REMOTEAS asnumber	{
 				curpeer->conf.auth.auth_keylen_out = keylen;
 			}
 			free($7);
+		}
+		| TTLSECURITY yesno	{
+			curpeer->conf.ttlsec = $2;
 		}
 		| SET filter_set_opt	{
 			struct filter_rule	*r;
@@ -1683,6 +1686,7 @@ lookup(char *s)
 		{ "to",			TO},
 		{ "transit-as",		TRANSITAS},
 		{ "transparent-as",	TRANSPARENT},
+		{ "ttl-security",	TTLSECURITY},
 		{ "via",		VIA},
 		{ "weight",		WEIGHT}
 	};
