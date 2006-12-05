@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.121 2006/10/29 18:42:05 pedro Exp $	 */
+/* $OpenBSD: message.c,v 1.122 2006/12/05 13:27:12 moritz Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -221,8 +221,9 @@ message_free(struct message *msg)
  * MSG is the ISAKMP message to be parsed.  NEXT is the type of the first
  * payload to be parsed, and it's pointed to by BUF.  ACCEPTED_PAYLOADS
  * tells what payloads are accepted and FUNC is a pointer to a function
- * to be called for each payload found.  Returns the total length of the
- * parsed payloads.
+ * to be called for each payload found, which is also responsible for
+ * freeing the passed ISAKMP message in the failure case.
+ * Returns the total length of the parsed payloads.
  */
 static int
 message_parse_payloads(struct message *msg, struct payload *p, u_int8_t next,
@@ -344,7 +345,8 @@ message_parse_proposal(struct message *msg, struct payload *p,
 	set	payload_set;
 
 	/* Put the proposal into the proposal bucket.  */
-	message_index_payload(msg, p, payload, buf);
+	if (message_index_payload(msg, p, payload, buf) == -1)
+		return -1;
 
 	ZERO(&payload_set);
 	SET(ISAKMP_PAYLOAD_TRANSFORM, &payload_set);
@@ -363,7 +365,8 @@ message_parse_transform(struct message *msg, struct payload *p,
     u_int8_t payload, u_int8_t *buf)
 {
 	/* Put the transform into the transform bucket.  */
-	message_index_payload(msg, p, payload, buf);
+	if (message_index_payload(msg, p, payload, buf) == -1)
+		return -1;
 
 	LOG_DBG((LOG_MESSAGE, 50, "Transform %d's attributes",
 	    GET_ISAKMP_TRANSFORM_NO(buf)));
@@ -471,6 +474,7 @@ message_validate_payload(struct message *m, struct payload *p, u_int8_t payload)
 	default:
 		break;
 	}
+	message_drop(m, ISAKMP_NOTIFY_INVALID_PAYLOAD_TYPE, 0, 1, 1);
 	return -1;
 }
 
@@ -1167,8 +1171,10 @@ message_index_payload(struct message *msg, struct payload *p, u_int8_t payload,
 
 	/* Put the payload pointer into the right bucket.  */
 	payload_node = malloc(sizeof *payload_node);
-	if (!payload_node)
+	if (!payload_node) {
+		message_free(msg);
 		return -1;
+	}
 	payload_node->p = buf;
 	payload_node->context = p;
 	payload_node->flags = 0;
