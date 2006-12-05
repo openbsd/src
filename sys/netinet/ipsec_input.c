@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.80 2006/11/24 13:52:14 reyk Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.81 2006/12/05 09:17:12 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -864,6 +864,10 @@ ipsec_common_ctlinput(int cmd, struct sockaddr *sa, void *v, int proto)
 			tdbp->tdb_mtu = mtu;
 			tdbp->tdb_mtutimeout = time_second +
 			    ip_mtudisc_timeout;
+			DPRINTF(("ipsec_common_ctlinput: "
+			    "spi %08x mtu %d adjust %d\n",
+			    ntohl(tdbp->tdb_spi), tdbp->tdb_mtu,
+			    adjust));
 		}
 		splx(s);
 		return (NULL);
@@ -918,6 +922,10 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, void *v)
 				tdbp->tdb_mtu = mtu - adjust;
 				tdbp->tdb_mtutimeout = time_second +
 				    ip_mtudisc_timeout;
+				DPRINTF(("udpencap_ctlinput: "
+				    "spi %08x mtu %d adjust %d\n",
+				    ntohl(tdbp->tdb_spi), tdbp->tdb_mtu,
+				    adjust));
 			}
 		}
 	}

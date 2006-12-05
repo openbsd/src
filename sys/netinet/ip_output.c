@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.183 2006/12/01 12:33:28 henning Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.184 2006/12/05 09:17:12 markus Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -602,20 +602,29 @@ sendit:
 		    tdb->tdb_mtutimeout > time_second) {
 			struct rtentry *rt = NULL;
 			int rt_mtucloned = 0;
+			int transportmode = 0;
 
+			transportmode = (tdb->tdb_dst.sa.sa_family == AF_INET) &&
+			    (tdb->tdb_dst.sin.sin_addr.s_addr ==
+			    ip->ip_dst.s_addr);
 			icmp_mtu = tdb->tdb_mtu;
 			splx(s);
 
 			/* Find a host route to store the mtu in */
 			if (ro != NULL)
 				rt = ro->ro_rt;
-			if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0) {
+			/* but don't add a PMTU route for transport mode SAs */
+			if (transportmode)
+				rt = NULL;
+			else if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0) {
 				struct sockaddr_in dst = {
 					sizeof(struct sockaddr_in), AF_INET};
 				dst.sin_addr = ip->ip_dst;
 				rt = icmp_mtudisc_clone((struct sockaddr *)&dst);
 				rt_mtucloned = 1;
 			}
+			DPRINTF(("ip_output: spi %08x mtu %d rt %p cloned %d\n",
+			    ntohl(tdb->tdb_spi), icmp_mtu, rt, rt_mtucloned));
 			if (rt != NULL) {
 				rt->rt_rmx.rmx_mtu = icmp_mtu;
 				if (ro && ro->ro_rt != NULL) {
