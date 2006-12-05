@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbdmap.c,v 1.18 2006/07/20 16:45:51 mickey Exp $	*/
+/*	$OpenBSD: gsckbdmap.c,v 1.19 2006/12/05 21:28:02 otto Exp $	*/
 
 /*
  * THIS FILE IS AUTOMAGICALLY GENERATED.  DO NOT EDIT.
@@ -7,7 +7,7 @@
  *	OpenBSD: makemap.awk,v 1.6 2005/05/12 16:21:23 miod Exp 
  * generated from:
  */
-/*	OpenBSD: wskbdmap_mfii.c,v 1.33 2006/07/20 16:45:05 mickey Exp  */
+/*	OpenBSD: wskbdmap_mfii.c,v 1.34 2006/12/05 21:27:07 otto Exp  */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
@@ -942,6 +942,46 @@ static const keysym_t gsckbd_keydesc_lv[] = {
     KC(145),	KS_Mode_switch,	KS_Multi_key,
 };
 
+static const keysym_t gsckbd_keydesc_nl[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(14),	KS_at,		KS_section,	KS_notsign,
+    KC(22),	KS_1,		KS_exclam,	KS_onesuperior,
+    KC(26),	KS_z,		KS_Z,		KS_guillemotleft,
+    KC(27),	KS_s,		KS_S,		KS_ssharp,
+    KC(30),	KS_2,		KS_quotedbl,	KS_twosuperior,
+    KC(33),	KS_c,		KS_C,		KS_cent,
+    KC(34),	KS_x,		KS_X,		KS_guillemotright,
+    KC(37),	KS_4,		KS_dollar,	KS_onequarter,
+    KC(38),	KS_3,		KS_numbersign,	KS_threesuperior,
+    KC(45),	KS_r,		KS_R,		KS_paragraph,
+    KC(46),	KS_5,		KS_percent,	KS_onehalf,
+    KC(54),	KS_6,		KS_ampersand,	KS_threequarters,
+    KC(58),	KS_m,		KS_M,		KS_mu,
+    KC(61),	KS_7,		KS_underscore,	KS_sterling,
+    KC(62),	KS_8,		KS_parenleft,	KS_braceleft,
+    KC(65),	KS_comma,	KS_semicolon,
+    KC(69),	KS_0,		KS_apostrophe,
+    KC(70),	KS_9,		KS_parenright,	KS_braceright,
+    KC(73),	KS_period,	KS_colon,	KS_periodcentered,
+    KC(74),	KS_minus,	KS_equal,
+    KC(76),	KS_plus,	KS_plusminus,
+    KC(78),	KS_slash,	KS_question,	KS_backslash,
+    KC(82),	KS_dead_acute,	KS_dead_grave,
+    KC(84),	KS_dead_diaeresis,KS_dead_circumflex,
+    KC(85),	KS_degree,	KS_dead_tilde,	KS_dead_cedilla,
+    KC(91),	KS_asterisk,	KS_bar,
+    KC(93),	KS_less,	KS_greater,
+    KC(97),	KS_bracketright,KS_bracketleft,	KS_brokenbar,
+    KC(145),	KS_Mode_switch,	KS_Multi_key,
+};
+
+static const keysym_t gsckbd_keydesc_nl_nodead[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(82),	KS_apostrophe,	KS_grave,
+    KC(84),	KS_quotedbl,	KS_asciicircum,
+    KC(85),	KS_degree,	KS_asciitilde,	KS_cedilla,
+};
+
 #endif	/* SMALL_KERNEL */
 
 #define KBD_MAP(name, base, map) \
@@ -992,6 +1032,8 @@ const struct wscons_keydesc gsckbd_keydesctab[] = {
 	KBD_MAP(KB_CF,			KB_US, 	gsckbd_keydesc_cf),
 	KBD_MAP(KB_CF | KB_NODEAD,	KB_CF,	gsckbd_keydesc_cf_nodead),
 	KBD_MAP(KB_LV,			KB_US,	gsckbd_keydesc_lv),
+	KBD_MAP(KB_NL,			KB_US, 	gsckbd_keydesc_nl),
+	KBD_MAP(KB_NL | KB_NODEAD,	KB_NL,	gsckbd_keydesc_nl_nodead),
 #endif	/* SMALL_KERNEL */
 	KBD_MAP(KB_US | KB_MACHDEP,	KB_US,	gsckbd_keydesc_precisionbook),
 	{0, 0, 0, 0}
