@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.65 2006/12/04 08:49:40 jmc Exp $
+.\" $OpenBSD: ports.7,v 1.66 2006/12/05 11:11:36 bernd Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -139,7 +139,7 @@ apply.
 .Sh TARGETS
 Individual ports are controlled through a few documented targets.
 Some of these targets work recursively through subdirectories, so that
-someone can, for examples, install all of the net
+someone can, for example, install all of the net
 ports.
 .Pp
 The variable
@@ -160,6 +160,7 @@ line, e.g., to avoid stopping after each problem.
 .Bd -literal -offset indent
 $ make REPORT_PROBLEM=true
 .Ed
+.Pp
 If
 .Ev REPORT_PROBLEM_LOGFILE
 is non empty, then
@@ -168,6 +169,7 @@ will default to:
 .Bd -literal -offset indent
 echo $$d ($@) >$${REPORT_PROBLEM_LOGFILE}
 .Ed
+.Pp
 That is, any failure will append the faulty directory name together
 with the target that failed to
 .Pa ${REPORT_PROBLEM_LOGFILE}
@@ -369,7 +371,7 @@ even if there is no difference between the old and the new packages.
 .Pp
 Updates use a mechanism similar to bulk cookies and deposit cookies in
 the
-.Ev UPDATE_COOKIE_DIR .
+.Ev UPDATE_COOKIES_DIR .
 See the next section for more details, since most of the fine points of
 bulk package building also apply to updates.
 .Pp
@@ -572,6 +574,11 @@ packages to avoid rebuilding them, since the actual
 working directory will already have been cleaned out.
 Defaults to bulk/${MACHINE_ARCH} under
 .Ev PORTSDIR .
+.It Ev UPDATE_COOKIES_DIR
+Used to store cookies for package updates, defaults to update/${MACHINE_ARCH}
+under
+.Ev PORTSDIR .
+If set to empty, it will revert to a file under ${WRKDIR}.
 .It Ev LOCALBASE
 Where to install things in general
 .Po
@@ -625,8 +632,9 @@ Select read-write partition(s) that can accommodate working directories, the
 distfiles repository, and the built packages.
 Set
 .Ev WRKOBJDIR ,
-.Ev PKGREPOSITORYBASE ,
-.Ev BULK_COOKIES_DIR
+.Ev PACKAGE_REPOSITORY ,
+.Ev BULK_COOKIES_DIR ,
+.Ev UPDATE_COOKIES_DIR
 and
 .Ev DISTDIR
 in
