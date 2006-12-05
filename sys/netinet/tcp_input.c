@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.198 2006/10/31 16:22:25 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.199 2006/12/05 12:04:36 henning Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4328,6 +4328,9 @@ syn_cache_respond(sc, m)
 #endif
 	}
 
+	/* use IPsec policy and ttl from listening socket, on SYN ACK */
+	inp = sc->sc_tp ? sc->sc_tp->t_inpcb : NULL;
+
 	/*
 	 * Fill in some straggling IP bits.  Note the stack expects
 	 * ip_len to be in host order, for convenience.
@@ -4336,7 +4339,7 @@ syn_cache_respond(sc, m)
 #ifdef INET
 	case AF_INET:
 		ip->ip_len = htons(tlen);
-		ip->ip_ttl = ip_defttl;
+		ip->ip_ttl = inp ? inp->inp_ip.ip_ttl : ip_defttl;
 		/* XXX tos? */
 		break;
 #endif
@@ -4350,9 +4353,6 @@ syn_cache_respond(sc, m)
 		break;
 #endif
 	}
-
-	/* use IPsec policy from listening socket, on SYN ACK */
-	inp = sc->sc_tp ? sc->sc_tp->t_inpcb : NULL;
 
 	switch (sc->sc_src.sa.sa_family) {
 #ifdef INET
