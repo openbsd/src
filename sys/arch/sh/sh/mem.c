@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.2 2006/12/05 19:55:43 drahn Exp $	*/
 /*	$NetBSD: mem.c,v 1.21 2006/07/23 22:06:07 ad Exp $	*/
 
 /*
@@ -148,7 +148,6 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		v = uio->uio_offset;
 
 		switch (minor(dev)) {
-kmemphys:
 		case DEV_MEM:
 			/* Physical address */
 			if (__mm_mem_addr(v)) {
@@ -162,23 +161,26 @@ kmemphys:
 			break;
 
 		case DEV_KMEM:
-			/* P0 */
-			if (v < SH3_P1SEG_BASE)
+			if (v < SH3_P1SEG_BASE)			/* P0 */
 				return (EFAULT);
-			/* P1 */
-			if (v < SH3_P2SEG_BASE) {
-				v = SH3_P1SEG_TO_PHYS(v);
-				goto kmemphys;
+			if (v < SH3_P2SEG_BASE) {		/* P1 */
+				/* permitted */
+			/*
+				if (__mm_mem_addr(SH3_P1SEG_TO_PHYS(v))
+				    == FALSE)
+					return (EFAULT);
+			*/
+				c = min(iov->iov_len, MAXPHYS);
+				error = uiomove((caddr_t)v, c, uio);
+			} else if (v < SH3_P3SEG_BASE)		/* P2 */
+				return (EFAULT);
+			else {					/* P3 */
+				c = min(iov->iov_len, MAXPHYS);
+				if (!uvm_kernacc((void *)v, c,
+				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+					return (EFAULT);
+				error = uiomove((caddr_t)v, c, uio);
 			}
-			/* P2 */
-			if (v < SH3_P3SEG_BASE)
-				return (EFAULT);
-			/* P3 */
-			c = min(iov->iov_len, MAXPHYS);
-			if (!uvm_kernacc((void *)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
-			error = uiomove((caddr_t)v, c, uio);
 			break;
 
 		case DEV_NULL:
@@ -236,7 +238,9 @@ mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 boolean_t
 __mm_mem_addr(paddr_t pa)
 {
+#if 0
 	extern vaddr_t kernend; /* from machdep.c */
+#endif
 	struct vm_physseg *seg;
 	unsigned int segno;
 
@@ -244,6 +248,7 @@ __mm_mem_addr(paddr_t pa)
 		if (pa < seg->start || pa >= seg->end)
 			continue;
 
+#if 0
 		/*
 		 * This assumes the kernel image occupies the beginning of a
 		 * memory segment.
@@ -252,6 +257,7 @@ __mm_mem_addr(paddr_t pa)
 			if (pa < kernend)
 				return (FALSE);
 		}
+#endif
 
 		return (TRUE);
 	}
