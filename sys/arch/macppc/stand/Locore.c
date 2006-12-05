@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.10 2006/10/10 20:21:10 mbalmer Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.11 2006/12/05 20:30:26 gwk Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
@@ -43,9 +43,7 @@ static int (*openfirmware)(void *);
 
 static void setup(void);
 
-#ifdef XCOFF_GLUE
 asm (".text; .globl _entry; _entry: .long _start,0,0");
-#endif
 asm("   .text			\n"
 "	.globl	bat_init	\n"
 "bat_init:			\n"
@@ -76,14 +74,25 @@ asm("   .text			\n"
 "	isync			\n"
 "	blr			\n");
 
+#ifdef XCOFF_GLUE
+static int stack[8192/4 + 4] __attribute__((__used__));
+#endif
+
 __dead void
 _start(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 {
 	extern char etext[];
 
-#ifdef	FIRMWORKSBUGS
-	syncicache((void *)RELOC, etext - (char *)RELOC);
+#ifdef XCOFF_GLUE
+	asm(
+	"sync			\n"
+	"isync			\n"
+	"lis	%r1,stack@ha	\n"
+	"addi	%r1,%r1,stack@l	\n"
+	"addi	%r1,%r1,8192	\n");
 #endif
+	syncicache((void *)RELOC, etext - (char *)RELOC);
+
 	bat_init();
 	openfirmware = openfirm;	/* Save entry to Open Firmware */
 #if 0
