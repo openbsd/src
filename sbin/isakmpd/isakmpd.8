@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.99 2006/11/30 11:24:49 markus Exp $
+.\" $OpenBSD: isakmpd.8,v 1.100 2006/12/05 14:29:14 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -83,6 +83,10 @@ socket, and lastly by scheduled events triggered by timers running out.
 Most uses of
 .Nm
 will be to implement so called "virtual private networks" (VPNs).
+The ability to provide redundancy is made available through
+.Xr carp 4
+and
+.Xr sasyncd 8 .
 For other uses, some more knowledge of IKE as a protocol is required.
 The RFCs mentioned below are a possible starting point.
 .Pp
@@ -275,9 +279,19 @@ Note that only paths beginning with
 .Pa /var/run
 are allowed.
 .It Fl S
-When this option is given,
+This option is used for setups using
+.Xr sasyncd 8
+and
+.Xr carp 4
+to provide redundancy.
 .Nm
-will not delete SAs on shutdown by sending delete messages to all peers.
+starts in passive mode and will not initiate any connections
+or process any incoming traffic until
+sasyncd has determined that the host is the carp master.
+Additionally,
+.Nm
+will not delete SAs on shutdown
+by sending delete messages to all peers.
 .It Fl T
 When this option is given, NAT-Traversal will be disabled and
 .Nm
@@ -770,6 +784,7 @@ command is issued in the command FIFO.
 .Xr ipsec.conf 5 ,
 .Xr isakmpd.conf 5 ,
 .Xr isakmpd.policy 5 ,
+.Xr sasyncd 8 ,
 .Xr ssl 8 ,
 .Xr tcpdump 8
 .Sh HISTORY
@@ -792,3 +807,9 @@ unprivileged ports (>1024).
 It is not possible to change the interfaces
 .Nm
 listens on without a restart.
+.Pp
+For redundant setups,
+.Xr sasyncd 8
+must be manually restarted every time
+.Nm
+is restarted.
