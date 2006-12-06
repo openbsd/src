@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.26 2006/11/25 16:26:17 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.27 2006/12/06 23:34:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1325,7 +1325,6 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		printf(" rev. %s", revstr);
 	printf(" (0x%x): %s\n", sc->sk_rev, intrstr);
 
-
 	sc->sk_macs = 1;
 
 	hw = sk_win_read_1(sc, SK_Y2_HWRES);
@@ -1372,7 +1371,7 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct msk_tx_desc		*f = NULL;
-	u_int32_t		frag, cur, cnt = 0;
+	u_int32_t		frag, cur;
 	int			i;
 	struct sk_txmap_entry	*entry;
 	bus_dmamap_t		txmap;
@@ -1404,6 +1403,12 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 		return (ENOBUFS);
 	}
 
+	if (txmap->dm_nsegs > (MSK_TX_RING_CNT - sc_if->sk_cdata.sk_tx_cnt - 2)) {
+		DPRINTFN(2, ("msk_encap: too few descriptors free\n"));
+		bus_dmamap_unload(sc->sc_dmatag, txmap);
+		return (ENOBUFS);
+	}
+
 	DPRINTFN(2, ("msk_encap: dm_nsegs=%d\n", txmap->dm_nsegs));
 
 	/* Sync the DMA map. */
@@ -1411,21 +1416,16 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	    BUS_DMASYNC_PREWRITE);
 
 	for (i = 0; i < txmap->dm_nsegs; i++) {
-		if ((MSK_TX_RING_CNT - (sc_if->sk_cdata.sk_tx_cnt + cnt)) < 2) {
-			DPRINTFN(2, ("msk_encap: too few descriptors free\n"));
-			return (ENOBUFS);
-		}
 		f = &sc_if->sk_rdata->sk_tx_ring[frag];
 		f->sk_addr = htole32(txmap->dm_segs[i].ds_addr);
 		f->sk_len = htole16(txmap->dm_segs[i].ds_len);
 		f->sk_ctl = 0;
-		if (cnt == 0)
+		if (i == 0)
 			f->sk_opcode = SK_Y2_TXOPC_PACKET;
 		else
 			f->sk_opcode = SK_Y2_TXOPC_BUFFER | SK_Y2_TXOPC_OWN;
 		cur = frag;
 		SK_INC(frag, MSK_TX_RING_CNT);
-		cnt++;
 	}
 
 	sc_if->sk_cdata.sk_tx_chain[cur].sk_mbuf = m_head;
@@ -1444,7 +1444,7 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	MSK_CDTXSYNC(sc_if, *txidx, 1,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-	sc_if->sk_cdata.sk_tx_cnt += cnt;
+	sc_if->sk_cdata.sk_tx_cnt += txmap->dm_nsegs;
 
 #ifdef MSK_DEBUG
 	if (mskdebug >= 2) {

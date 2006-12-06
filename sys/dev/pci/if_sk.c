@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.131 2006/11/16 03:05:29 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.132 2006/12/06 23:34:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1516,7 +1516,7 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct sk_tx_desc	*f = NULL;
-	u_int32_t		frag, cur, cnt = 0, sk_ctl;
+	u_int32_t		frag, cur, sk_ctl;
 	int			i;
 	struct sk_txmap_entry	*entry;
 	bus_dmamap_t		txmap;
@@ -1548,6 +1548,12 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 		return (ENOBUFS);
 	}
 
+	if (txmap->dm_nsegs > (SK_TX_RING_CNT - sc_if->sk_cdata.sk_tx_cnt - 2)) {
+		DPRINTFN(2, ("sk_encap: too few descriptors free\n"));
+		bus_dmamap_unload(sc->sc_dmatag, txmap);
+		return (ENOBUFS);
+	}
+
 	DPRINTFN(2, ("sk_encap: dm_nsegs=%d\n", txmap->dm_nsegs));
 
 	/* Sync the DMA map. */
@@ -1555,21 +1561,16 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	    BUS_DMASYNC_PREWRITE);
 
 	for (i = 0; i < txmap->dm_nsegs; i++) {
-		if ((SK_TX_RING_CNT - (sc_if->sk_cdata.sk_tx_cnt + cnt)) < 2) {
-			DPRINTFN(2, ("sk_encap: too few descriptors free\n"));
-			return (ENOBUFS);
-		}
 		f = &sc_if->sk_rdata->sk_tx_ring[frag];
 		f->sk_data_lo = htole32(txmap->dm_segs[i].ds_addr);
 		sk_ctl = txmap->dm_segs[i].ds_len | SK_OPCODE_DEFAULT;
-		if (cnt == 0)
+		if (i == 0)
 			sk_ctl |= SK_TXCTL_FIRSTFRAG;
 		else
 			sk_ctl |= SK_TXCTL_OWN;
 		f->sk_ctl = htole32(sk_ctl);
 		cur = frag;
 		SK_INC(frag, SK_TX_RING_CNT);
-		cnt++;
 	}
 
 	sc_if->sk_cdata.sk_tx_chain[cur].sk_mbuf = m_head;
@@ -1589,7 +1590,7 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	/* Sync first descriptor to hand it off */
 	SK_CDTXSYNC(sc_if, *txidx, 1, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-	sc_if->sk_cdata.sk_tx_cnt += cnt;
+	sc_if->sk_cdata.sk_tx_cnt += txmap->dm_nsegs;
 
 #ifdef SK_DEBUG
 	if (skdebug >= 2) {
