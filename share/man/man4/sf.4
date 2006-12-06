@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sf.4,v 1.18 2006/08/30 22:56:05 jmc Exp $
+.\"	$OpenBSD: sf.4,v 1.19 2006/12/06 20:30:26 martin Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/man4.i386/sf.4,v 1.4 1999/09/26 18:35:30 wpaul Exp $
 .\"
-.Dd July 22, 1999
+.Dd December 6, 2006
 .Dt SF 4
 .Os
 .Sh NAME
@@ -118,34 +118,6 @@ Force half duplex operation.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
-.Sh DIAGNOSTICS
-.Bl -diag
-.It "sf%d: couldn't map memory"
-A fatal initialization error has occurred.
-This may happen if the PCI BIOS did not configure the device, which can occur
-when the BIOS has been configured for a "Plug and Play" operating system.
-The "Plug and Play OS" setting in the BIOS should be set to "no" or
-"off" in order for PCI devices to work properly with
-.Ox .
-.It "sf%d: couldn't map ports"
-A fatal initialization error has occurred.
-This may happen if the PCI BIOS did not configure the device, which can occur
-when the BIOS has been configured for a "Plug and Play" operating system.
-The "Plug and Play OS" setting in the BIOS should be set to "no" or
-"off" in order for PCI devices to work properly with
-.Ox .
-.It "sf%d: couldn't map interrupt"
-A fatal initialization error has occurred.
-.It "sf%d: no memory for softc struct!"
-The driver failed to allocate memory for per-device instance information
-during initialization.
-.It "sf%d: failed to enable I/O ports/memory mapping!"
-The driver failed to initialize PCI I/O port or shared memory access.
-This might happen if the card is not in a bus-master slot.
-.It "sf%d: watchdog timeout"
-The device has stopped responding to the network, or there is a problem with
-the network connection (cable).
-.El
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
@@ -168,4 +140,12 @@ device driver first appeared in
 The
 .Nm
 driver was written by
-.An Bill Paul Aq wpaul@ctr.columbia.edu .
+.An Jason R. Thorpe <thorpej@NetBSD.org>.
+.Sh BUGS
+The
+.Nm
+driver does not support the IPv4/TCP/UDP checksum function of the AIC-6915.
+.Pp
+The
+.Nm
+driver does not support the VLAN function of the AIC-6915.
