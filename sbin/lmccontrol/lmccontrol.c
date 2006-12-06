@@ -1,4 +1,4 @@
-/* $OpenBSD: lmccontrol.c,v 1.8 2006/06/29 00:48:01 deraadt Exp $ */
+/* $OpenBSD: lmccontrol.c,v 1.9 2006/12/06 05:56:03 jcs Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -376,7 +376,7 @@ dumpdata(char *name, lmc_ctl_t *ctl)
 		print_protocol(ctl);
 		break;
 	case LMC_CTL_CARDTYPE_LMC1200:
-		printf("%s: Lan Media Corperation LMC1200 (T1)\n", name);
+		printf("%s: Lan Media Corporation LMC1200 (T1)\n", name);
 		print_clocking(ctl);
 		print_protocol(ctl);
 		break;
