@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.67 2006/04/26 21:37:37 pedro Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.68 2006/12/06 17:49:58 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #include <sys/dirent.h>
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
+#include <sys/hash.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -2401,7 +2402,7 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 					newvp = NFSTOV(np);
 				}
 			    }
-			    if (doit) {
+			    if (doit && bigenough) {
 				dpossav2 = dpos;
 				dpos = dpossav1;
 				mdsav2 = md;
@@ -2411,13 +2412,14 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 				md = mdsav2;
 				dp->d_type =
 				    IFTODT(VTTOIF(np->n_vattr.va_type));
-				ndp->ni_vp = newvp;
-				cnp->cn_hash = 0;
-				for (cp = cnp->cn_nameptr, i = 1; i <= len;
-				    i++, cp++)
-				    cnp->cn_hash += (unsigned char)*cp * i;
-				if (cnp->cn_namelen <= NCHNAMLEN)
-				    cache_enter(ndp->ni_dvp, ndp->ni_vp, cnp);
+				if (cnp->cn_namelen <= NCHNAMLEN) {
+					ndp->ni_vp = newvp;
+					cnp->cn_hash =
+					    hash32_str(cnp->cn_nameptr,
+					        HASHINIT);
+					cache_enter(ndp->ni_dvp, ndp->ni_vp,
+					    cnp);
+				}
 			    }
 			} else {
 			    /* Just skip over the file handle */
