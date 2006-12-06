@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.30 2006/04/14 09:36:49 martin Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.31 2006/12/06 18:40:03 martin Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ aesetup(sc)
 
 	for (i = 0; i < sc->mem_size; ++i) {
 		if (bus_space_read_1(sc->sc_buft, sc->sc_bufh, i)) {
-printf(": failed to clear shared memory - check configuration\n");
+			printf(": failed to clear shared memory\n");
 			return 1;
 		}
 	}
@@ -379,7 +379,8 @@ ae_xmit(sc)
 	NIC_PUT(sc, ED_P0_TBCR1, len >> 8);
 
 	/* Set page 0, remote DMA complete, transmit packet, and *start*. */
-	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_TXP | ED_CR_STA);
+	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_TXP |
+	    ED_CR_STA);
 
 	/* Point to next transmit buffer slot and wrap if necessary. */
 	sc->txb_next_tx++;
@@ -528,8 +529,7 @@ loop:
 		len = (len & ED_PAGE_MASK) | (nlen << ED_PAGE_SHIFT);
 #ifdef DIAGNOSTIC
 		if (len != packet_hdr.count) {
-			printf("%s: length does not match next packet pointer\n",
-			    sc->sc_dev.dv_xname);
+			printf("%s: length does not match next packet pointer\n"			     , sc->sc_dev.dv_xname);
 			printf("%s: len %04x nlen %04x start %02x first %02x curr %02x next %02x stop %02x\n",
 			    sc->sc_dev.dv_xname, packet_hdr.count, len,
 			    sc->rec_page_start, sc->next_packet, current,
@@ -799,14 +799,13 @@ aeioctl(ifp, cmd, data)
 			if ((ifp->if_flags & IFF_UP) != 0 &&
 			    (ifp->if_flags & IFF_RUNNING) == 0) {
 				/*
-				 * If interface is marked up and it is stopped, then
-				 * start it.
+				 * If interface is marked up and it is stopped, 				 * then start it.
 				 */
 				aeinit(sc);
 			} else {
 				/*
-				 * Reset the interface to pick up changes in any other
-				 * flags that affect hardware registers.
+				 * Reset the interface to pick up changes in any
+ 				 * other flags that affect hardware registers.
 				 */
 				aestop(sc);
 				aeinit(sc);
