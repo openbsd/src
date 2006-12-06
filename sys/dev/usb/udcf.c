@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.22 2006/12/05 15:23:16 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.23 2006/12/06 11:44:53 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -481,7 +481,7 @@ udcf_bv_probe(void *xsc)
 		return;
 	}
 
-	DPRINTF((data & 0x01 ? "0" : "1"));
+	DPRINTFN(1, (data & 0x01 ? "0" : "1"));
 	if (!(data & 0x01))
 		sc->sc_tbits |= sc->sc_mask;
 	sc->sc_mask <<= 1;
