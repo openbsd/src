@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.161 2006/12/04 14:35:20 reyk Exp $ */
+/* $OpenBSD: if_em.c,v 1.162 2006/12/06 23:25:58 reyk Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2776,14 +2776,26 @@ em_pci_clear_mwi(struct em_hw *hw)
 		(hw->pci_cmd_word & ~CMD_MEM_WRT_INVALIDATE));
 }
 
-/*
- * We may eventually really do this, but its unnecessary
- * for now so we just return unsupported.
- */
 int32_t
 em_read_pcie_cap_reg(struct em_hw *hw, uint32_t reg, uint16_t *value)
 {
-	return (0);
+	struct pci_attach_args *pa = &((struct em_osdep *)hw->back)->em_pa;
+	int32_t	rc;
+	u_int16_t pectl;
+
+	/* find the PCIe link width and set max read request to 4KB */
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
+	    NULL, NULL) != 0) {
+		em_read_pci_cfg(hw, reg + 0x12, value);
+
+		em_read_pci_cfg(hw, reg + 0x8, &pectl);
+		pectl = (pectl & ~0x7000) | (5 << 12);
+		em_write_pci_cfg(hw, reg + 0x8, &pectl);
+		rc = 0;
+	} else
+		rc = -1;
+
+	return (rc);
 }
 
 /*********************************************************************
