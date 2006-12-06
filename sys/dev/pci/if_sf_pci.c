@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf_pci.c,v 1.1 2006/12/06 20:07:52 martin Exp $	*/
+/*	$OpenBSD: if_sf_pci.c,v 1.2 2006/12/06 22:43:38 martin Exp $	*/
 /*	$NetBSD: if_sf_pci.c,v 1.10 2006/06/17 23:34:27 christos Exp $	*/
 
 /*-
@@ -84,100 +84,25 @@ struct sf_pci_softc {
 	void	*sc_ih;			/* interrupt handle */
 };
 
-static int	sf_pci_match(struct device *, void *, void *);
-static void	sf_pci_attach(struct device *, struct device *, void *);
+int	sf_pci_match(struct device *, void *, void *);
+void	sf_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach sf_pci_ca = {
         sizeof(struct sf_pci_softc), sf_pci_match, sf_pci_attach
 };
 
-struct sf_pci_product {
-	uint32_t	spp_vendor;	/* PCI vendor ID */
-	uint32_t	spp_product;	/* PCI product ID */
-	const char	*spp_name;	/* product name */
-	const struct sf_pci_product *spp_subsys; /* subsystm IDs */
+const struct pci_matchid sf_pci_products[] = {
+	{ PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC6915 },
 };
 
-static const struct sf_pci_product sf_subsys_adaptec[] = {
-	/* ANA-62011 (rev 0) Single port 10/100 64-bit */
-	{ PCI_VENDOR_ADP,			0x0008,
-	  "ANA-62011 (rev 0) 10/100 Ethernet",	NULL },
-
-	/* ANA-62011 (rev 1) Single port 10/100 64-bit */
-	{ PCI_VENDOR_ADP,			0x0009,
-	  "ANA-62011 (rev 1) 10/100 Ethernet",	NULL },
-
-	/* ANA-62022 Dual port 10/100 64-bit */
-	{ PCI_VENDOR_ADP,			0x0010,
-	  "ANA-62022 10/100 Ethernet",		NULL },
-
-	/* ANA-62044 (rev 0) Quad port 10/100 64-bit */
-	{ PCI_VENDOR_ADP,			0x0018,
-	  "ANA-62044 (rev 0) 10/100 Ethernet",	NULL },
-
-	/* ANA-62044 (rev 1) Quad port 10/100 64-bit */
-	{ PCI_VENDOR_ADP,			0x0019,
-	  "ANA-62044 (rev 1) 10/100 Ethernet",	NULL },
-
-	/* ANA-62020 Single port 100baseFX 64-bit */
-	{ PCI_VENDOR_ADP,			0x0020,
-	  "ANA-62020 100baseFX Ethernet",	NULL },
-
-	/* ANA-69011 Single port 10/100 32-bit */
-	{ PCI_VENDOR_ADP,			0x0028,
-	  "ANA-69011 10/100 Ethernet",		NULL },
-
-	{ 0, 					0,
-	  NULL,					NULL },
-};
-
-static const struct sf_pci_product sf_pci_products[] = {
-	{ PCI_VENDOR_ADP,			PCI_PRODUCT_ADP_AIC6915,
-	  "AIC-6915 10/100 Ethernet",		sf_subsys_adaptec },
-
-	{ 0,					0,
-	  NULL,					NULL },
-};
-
-static const struct sf_pci_product *
-sf_pci_lookup(const struct pci_attach_args *pa)
-{
-	const struct sf_pci_product *spp, *subspp;
-	pcireg_t subsysid;
-
-	for (spp = sf_pci_products; spp->spp_name != NULL; spp++) {
-		if (PCI_VENDOR(pa->pa_id) == spp->spp_vendor &&
-		    PCI_PRODUCT(pa->pa_id) == spp->spp_product) {
-			subsysid = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			    PCI_SUBSYS_ID_REG);
-			for (subspp = spp->spp_subsys;
-			     subspp->spp_name != NULL; subspp++) {
-				if (PCI_VENDOR(subsysid) ==
-					subspp->spp_vendor ||
-				    PCI_PRODUCT(subsysid) ==
-					subspp->spp_product) {
-					return (subspp);
-				}
-			}
-			return (spp);
-		}
-	}
-
-	return (NULL);
-}
-
-static int
+int
 sf_pci_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-
-	if (sf_pci_lookup(pa) != NULL)
-		return (1);
-
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, sf_pci_products,
+	    sizeof(sf_pci_products)/sizeof(sf_pci_products[0])));
 }
 
-static void
+void
 sf_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sf_pci_softc *psc = (void *) self;
@@ -185,19 +110,10 @@ sf_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	const struct sf_pci_product *spp;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	pcireg_t reg;
 	int pmreg, ioh_valid, memh_valid;
-
-	spp = sf_pci_lookup(pa);
-	if (spp == NULL) {
-		printf("\n");
-		panic("sf_pci_attach: impossible");
-	}
-
-	printf(": %s, rev. %d", spp->spp_name, PCI_REVISION(pa->pa_class));
 
 	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PWRMGMT,
 	    &pmreg, 0)) {
