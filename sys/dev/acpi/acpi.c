@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.66 2006/11/28 20:25:59 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.67 2006/12/06 17:45:57 mk Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -715,6 +715,11 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sleepbtn = 0;
 
 	sc->sc_note = malloc(sizeof(struct klist), M_DEVBUF, M_NOWAIT);
+	if (sc->sc_note == NULL) {
+		printf(": can't allocate memory\n");
+		acpi_unmap(&handle);
+		return;
+	}
 	memset(sc->sc_note, 0, sizeof(struct klist));
 
 	if (acpi_loadtables(sc, rsdp)) {
