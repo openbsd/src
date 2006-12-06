@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.8 2006/11/29 21:34:06 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.9 2006/12/06 19:21:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -56,6 +56,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/cardbus/cardbusvar.h>
 
 #include <dev/ic/bcwreg.h>
 #include <dev/ic/bcwvar.h>
@@ -90,6 +91,7 @@ int	bcw_media_change(struct ifnet *);
 void	bcw_media_status(struct ifnet *, struct ifmediareq *);
 /* fashionably new functions */
 int	bcw_validatechipaccess(struct bcw_softc *);
+void	bcw_powercontrol_crystal_off(struct bcw_softc *);
 
 struct cfdriver bcw_cd = {
 	NULL, "bcw", DV_IFNET
@@ -137,20 +139,9 @@ bcw_attach(struct bcw_softc *sc)
 	 * below for an example of just figuring out what the chip id is and
 	 * how many cores it has.
 	 */
-
-	/*
-	 * XXX Can we read BCW_ADDR_SPACE0 and see if it returns a likely
-	 * Core? On the 4318 that only has an 802.11 core, it always reads as
-	 * some garbage, so if we do a read first we could set a "singlecore"
-	 * flag instead of thrashing around trying to select non-existant
-	 * cores. Testing requires cards that do have multiple cores. This
-	 * would also simplify identifying cards into 3 classes early:
-	 *   - Multiple Cores without a Chip Common Core
-	 *   - Multiple Cores with a Chip Common Core
-	 *   - Single Core
-	 */
-
-	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_ADDR_SPACE0);
+#if 0
+	sbval = pci_conf_read(sc->sc_pa.pa_pc, sc->sc_pa.pa_tag, 
+	    BCW_ADDR_SPACE0);
 	if ((sbval & 0xffff0000) != 0x18000000) {
 		DPRINTF(("\n%s: Trial Core read was 0x%x, single core only?\n",
 		    sc->sc_dev.dv_xname, sbval));
@@ -158,18 +149,17 @@ bcw_attach(struct bcw_softc *sc)
 	} else
 		DPRINTF(("\n%s: Trial Core read was 0x%x\n",
 		    sc->sc_dev.dv_xname, sbval));
-
+#endif
 	/* 
 	 * Try and change to the ChipCommon Core
 	 */
 	for (i = 0; i < 10; i++) {
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_ADDR_SPACE0,
-		    BCW_CORE_SELECT(0));
+		(sc->sc_conf_write)(sc, BCW_ADDR_SPACE0, BCW_CORE_SELECT(0));
 		delay(10);
-		sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    BCW_ADDR_SPACE0);
+		sbval = (sc->sc_conf_read)(sc, BCW_ADDR_SPACE0);
 		if (sbval == BCW_CORE_SELECT(0)) {
-			DPRINTF(("%s: Selected ChipCommon Core\n"));
+			DPRINTF(("%s: Selected ChipCommon Core\n",
+			    sc->sc_dev.dv_xname));
 			break;
 		}
 		delay(10);
@@ -259,8 +249,8 @@ bcw_attach(struct bcw_softc *sc)
 				break;
 			default:
 				sc->sc_chipid = sc->sc_prodid;
-				/* XXX educated guess */
-				sc->sc_numcores = 1;
+				/* Set to max */
+				sc->sc_numcores = BCW_MAX_CORES;
 		} /* end of switch */
 	} /* End of if/else */
 
@@ -270,25 +260,27 @@ bcw_attach(struct bcw_softc *sc)
 
 	/* Identify each core */
 	if (sc->sc_numcores >= 2) { /* Exclude single core chips */
- 		for (i = 0; i <= sc->sc_numcores; i++) {
- 			DPRINTF(("%s: Trying core %d -\n",
- 			    sc->sc_dev.dv_xname, i));
- 			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_ADDR_SPACE0, BCW_CORE_SELECT(i));
+ 		for (i = 0; i < sc->sc_numcores; i++) {
+// 			DPRINTF(("%s: Trying core %d -\n",
+// 			    sc->sc_dev.dv_xname, i));
+ 			(sc->sc_conf_write)(sc, BCW_ADDR_SPACE0,
+			    BCW_CORE_SELECT(i));
 			/* loop to see if the selected core shows up */
 			for (j = 0; j < 10; j++) {
-				sbval=bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				    BCW_ADDR_SPACE0);
-				DPRINTF(("%s: read %d for core %d = 0x%x\n",
-				    sc->sc_dev.dv_xname, j, i, sbval));
+				sbval = (sc->sc_conf_read)(sc, BCW_ADDR_SPACE0);
+//				DPRINTF(("%s: read %d for core %d = 0x%x\n",
+//				    sc->sc_dev.dv_xname, j, i, sbval));
 				if (sbval == BCW_CORE_SELECT(i)) break;
 				delay(10);
 			}
-			if (j < 10) 
+			if (j < 10) {
+				sbval = bus_space_read_4(sc->sc_iot,
+				    sc->sc_ioh, BCW_CIR_SBID_HI);
 				DPRINTF(("%s: Found core %d of type 0x%x\n",
 				    sc->sc_dev.dv_xname, i, 
 				    (sbval & 0x00008ff0) >> 4));
-			//sc->sc_core[i].id = (sbval & 0x00008ff0) >> 4;
+			}
+			sc->sc_core[i].id = (sbval & 0x00008ff0) >> 4;
 		} /* End of For loop */
 	}
 
@@ -296,15 +288,22 @@ bcw_attach(struct bcw_softc *sc)
 	 * XXX Attach cores to the backplane, if we have more than one
 	 */
 	// ??? if (!sc->sc_singlecore) {
+#if 0
 	if (sc->sc_havecommon == 1) {
 		sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_PCICR);
 		sbval |= 0x1 << 8; /* XXX hardcoded bitmask of single core */
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_PCICR, sbval);
 	}
-
+#endif
 	/*
+	 * XXX Select the 802.11 core, then
 	 * Get and display the PHY info from the MIMO
 	 */
+	for (i=0; i < sc->sc_numcores; i++) {
+		if (sc->sc_core[i].id == BCW_CORE_80211)
+			(sc->sc_conf_write)(sc, BCW_ADDR_SPACE0,
+			    BCW_CORE_SELECT(i));
+	}
 	sbval = bus_space_read_2(sc->sc_iot, sc->sc_ioh, 0x3E0);
 	sc->sc_phy_version = (sbval&0xf000)>>12;
 	sc->sc_phy_rev = sbval&0xf;
@@ -512,8 +511,9 @@ bcw_attach(struct bcw_softc *sc)
 	/* Read antenna gain from SPROM and multiply by 4 */
 	sbval = bus_space_read_2(sc->sc_iot, sc->sc_ioh, BCW_SPROM_ANTGAIN);
 	/* If unset, assume 2 */
-	if((sbval == 0) || (sbval == 0xffff)) sbval = 0x0202;
-	if(sc->sc_phy_type == BCW_PHY_TYPEA)
+	if ((sbval == 0) || (sbval == 0xffff))
+		sbval = 0x0202;
+	if (sc->sc_phy_type == BCW_PHY_TYPEA)
 		sc->sc_radio_gain = (sbval & 0xff);
 	else
 		sc->sc_radio_gain = ((sbval & 0xff00) >> 8);
@@ -600,9 +600,9 @@ bcw_attach(struct bcw_softc *sc)
 	/* 
 	 * XXX TODO still for the card attach: 
 	 * - Disable the 80211 Core (and wrapper for on/off)
-	 * - Powercontrol Crystal Off (and write a wrapper for on/off)
 	 * - Setup LEDs to blink in whatever fashionable manner
 	 */
+	bcw_powercontrol_crystal_off(sc);
 
 	/*
 	 * Allocate DMA-safe memory for ring descriptors.
@@ -916,8 +916,7 @@ bcw_intr(void *xsc)
 	sc = xsc;
 
 	for (wantinit = 0; wantinit == 0;) {
-		intstatus = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    BCW_INT_STS);
+		intstatus = (sc->sc_conf_read)(sc, BCW_INT_STS);
 
 		/* ignore if not ours, or unsolicited interrupts */
 		intstatus &= sc->sc_intmask;
@@ -927,8 +926,7 @@ bcw_intr(void *xsc)
 		handled = 1;
 
 		/* Ack interrupt */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_INT_STS,
-		    intstatus);
+		(sc->sc_conf_write)(sc, BCW_INT_STS, intstatus);
 
 		/* Receive interrupts. */
 		if (intstatus & I_RI)
@@ -1375,12 +1373,22 @@ bcw_reset(struct bcw_softc *sc)
 	u_int32_t val;
 	u_int32_t reject;
 
+	/* Really stupid PCI space dump */
+#if 0
+	for (i=0xe00; i<0x1000; i+=4) {
+		if ((i % 16) == 0) 
+		    DPRINTF(("%s: 0x%04x - ",sc->sc_dev.dv_xname, i));
+		DPRINTF(("0x%08x ",bus_space_read_4(sc->sc_iot, sc->sc_ioh,i)));
+		if ((i % 16) == 12) DPRINTF(("\n"));
+	}
+#endif
 	/*
 	 * Figure out what revision the Sonic Backplane is, as the position
 	 * of the Reject bit changed. Save the revision in the softc, and
 	 * use the local variable 'reject' in all the bit banging.
 	 */
 	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_CIR_SBID_LO);
+
 	sc->sc_sbrev = (sbval & SBREV_MASK) >> SBREV_MASK_SHIFT;
 	switch (sc->sc_sbrev) {
 		case 0:
@@ -2129,15 +2137,37 @@ bcw_powercontrol_crystal_on(struct bcw_softc *sc)
 {
 	u_int32_t sbval;
 
-	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOI);
+	sbval = (sc->sc_conf_read)(sc, BCW_GPIOI);
 	if ((sbval & BCW_XTALPOWERUP) != BCW_XTALPOWERUP) {
-		sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO);
+		sbval = (sc->sc_conf_read)(sc, BCW_GPIOO);
 		sbval |= (BCW_XTALPOWERUP & BCW_PLLPOWERDOWN);
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO, sbval);
+		(sc->sc_conf_write)(sc, BCW_GPIOO, sbval);
 		delay(1000);
-		sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO);
+		sbval = (sc->sc_conf_read)(sc, BCW_GPIOO);
 		sbval &= ~BCW_PLLPOWERDOWN;
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_GPIOO, sbval);
+		(sc->sc_conf_write)(sc, BCW_GPIOO, sbval);
 		delay(5000);
 	}
+}
+
+void
+bcw_powercontrol_crystal_off(struct bcw_softc *sc)
+{
+	u_int32_t sbval;
+
+	/* XXX Return if radio is hardware disabled */
+	if (sc->sc_corerev < 5) 
+		return;
+	if ((sc->sc_boardflags & BCW_BF_XTAL) == BCW_BF_XTAL)
+		return;
+
+	/* XXX bcw_powercontrol_clock_slow() */
+
+	sbval = (sc->sc_conf_read)(sc, BCW_GPIOO);
+	sbval |= BCW_PLLPOWERDOWN;
+	sbval &= ~BCW_XTALPOWERUP;
+	(sc->sc_conf_write)(sc, BCW_GPIOO, sbval);
+	sbval = (sc->sc_conf_read)(sc, BCW_GPIOE);
+	sbval |= BCW_PLLPOWERDOWN | BCW_XTALPOWERUP;
+	(sc->sc_conf_write)(sc, BCW_GPIOE, sbval);
 }

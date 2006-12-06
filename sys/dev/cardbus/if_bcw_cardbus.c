@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_cardbus.c,v 1.3 2006/11/22 23:46:49 brad Exp $ */
+/*	$OpenBSD: if_bcw_cardbus.c,v 1.4 2006/12/06 19:21:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -64,6 +64,8 @@ void	bcw_cardbus_power(struct bcw_softc *, int);
 void	bcw_cardbus_setup(struct bcw_cardbus_softc *);
 int	bcw_cardbus_enable(struct bcw_softc *);
 void	bcw_cardbus_disable(struct bcw_softc *);
+void	bcw_cardbus_conf_write(struct bcw_softc *, u_int32_t, u_int32_t);
+u_int32_t	bcw_cardbus_conf_read(struct bcw_softc *, u_int32_t);
 
 struct cfattach bcw_cardbus_ca = {
 	sizeof (struct bcw_cardbus_softc), bcw_cardbus_match,
@@ -105,11 +107,17 @@ bcw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
 	csc->sc_intrline = ca->ca_intrline;
+	sc->sc_ca.ca_tag = ca->ca_tag;
+	sc->sc_ca.ca_ct = ca->ca_ct;
 
 	/* power management hooks */
 	sc->sc_enable = bcw_cardbus_enable;
 	sc->sc_disable = bcw_cardbus_disable;
 	sc->sc_power = bcw_cardbus_power;
+
+	/* config register read/write functions */
+	sc->sc_conf_read = bcw_cardbus_conf_read;
+	sc->sc_conf_write = bcw_cardbus_conf_write;
 
 	/* map control/status registers */
 	error = Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG,
@@ -246,3 +254,15 @@ bcw_cardbus_disable(struct bcw_softc *sc)
 	/* power down the socket */
 	Cardbus_function_disable(ct);
 }
+
+void      
+bcw_cardbus_conf_write(struct bcw_softc *sc, u_int32_t reg, u_int32_t val)
+{          
+        Cardbus_conf_write(sc->sc_ca.ca_ct, sc->sc_ca.ca_tag, reg, val);
+}       
+                
+u_int32_t
+bcw_cardbus_conf_read(struct bcw_softc *sc, u_int32_t reg)
+{
+        return Cardbus_conf_read(sc->sc_ca.ca_ct, sc->sc_ca.ca_tag, reg);
+}       

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.7 2006/11/29 21:34:06 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.8 2006/12/06 19:21:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -128,6 +128,10 @@ struct bcw_softc {
 	int			(*sc_enable)(struct bcw_softc *);
 	void			(*sc_disable)(struct bcw_softc *);
 	void			(*sc_power)(struct bcw_softc *, int);
+	void			(*sc_conf_write)(struct bcw_softc *,
+				    u_int32_t, u_int32_t);
+	u_int32_t		(*sc_conf_read)(struct bcw_softc *, u_int32_t);
+
 	struct timeout		sc_scan_to;
 
 	bus_dma_tag_t		sc_dmat;
@@ -137,6 +141,7 @@ struct bcw_softc {
 	void			*bcw_intrhand;
 	const char		*bcw_intrstr;	/* interrupt description */
 	struct pci_attach_args	sc_pa;
+	struct cardbus_attach_args	sc_ca;
 	u_int32_t		sc_phy;	/* eeprom indicated phy */
 	struct bcw_dma_slot	*bcw_rx_ring;	/* receive ring */
 	struct bcw_dma_slot	*bcw_tx_ring;	/* transmit ring */
@@ -152,7 +157,7 @@ struct bcw_softc {
 	u_int16_t		sc_chipid;	/* Chip ID */
 	u_int16_t		sc_chiprev;	/* Chip Revision */
 	u_int16_t		sc_prodid;	/* Product ID */
-//	struct bcw_core		core[BCW_MAX_CORES];
+	struct bcw_core		sc_core[BCW_MAX_CORES];
 //	struct bcw_radio	radio[BCW_MAX_RADIOS];
 	u_int16_t		sc_phy_version;
 	u_int16_t		sc_phy_type;

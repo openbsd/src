@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.4 2006/11/24 20:27:41 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.5 2006/12/06 19:21:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -52,9 +52,11 @@
 #define BCW_CORE_COMMON			0x800
 #define BCW_CORE_PCI			0x804
 #define BCW_CORE_ENET			0x806
+#define BCW_CORE_PCMCIA			0x80d
 #define BCW_CORE_80211			0x812
 #define BCW_CORE_PCIE			0x820
 #define BCW_CORE_MIMOPHY		0x821
+#define BCW_CORE_NONEXIST		0x8ff
 
 #define BCW_CORE_COMMON_CHIPID		0x0
 

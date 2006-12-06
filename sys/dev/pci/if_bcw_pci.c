@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_pci.c,v 1.5 2006/11/29 21:34:06 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_pci.c,v 1.6 2006/12/06 19:21:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -60,6 +60,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/cardbus/cardbusvar.h>
 
 #include <dev/ic/bcwreg.h>
 #include <dev/ic/bcwvar.h>
@@ -95,6 +96,8 @@ int		bcw_pci_match(struct device *, void *, void *);
 int		bcw_pci_enable(struct bcw_softc *sc);
 void		bcw_pci_disable(struct bcw_softc *sc);
 void		bcw_pci_attach(struct device *, struct device *, void *);
+void		bcw_pci_conf_write(struct bcw_softc *, u_int32_t, u_int32_t);
+u_int32_t	bcw_pci_conf_read(struct bcw_softc *, u_int32_t);
 
 struct cfattach bcw_pci_ca = {
 	sizeof(struct bcw_pci_softc), bcw_pci_match, bcw_pci_attach
@@ -150,6 +153,8 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
+	sc->sc_pa.pa_pc = pa->pa_pc;
+	sc->sc_pa.pa_tag = pa->pa_tag;
 
 	/* Get it out of power save mode if needed. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
@@ -216,6 +221,8 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_enable = bcw_pci_enable;
 	sc->sc_disable = bcw_pci_disable;
+	sc->sc_conf_write = bcw_pci_conf_write;
+	sc->sc_conf_read = bcw_pci_conf_read;
 
 	/*
 	 * Get some PCI based info into the softc
@@ -234,9 +241,9 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Clear PCI_STATUS_TARGET_TARGET_ABORT, Docs and Linux call it 
 	 * PCI_STATUS_SIG_TARGET_ABORT - should use pci_conf_read/write?
 	 */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+	pci_conf_write(pa->pa_pc, pa->pa_tag,
 	    PCI_COMMAND_STATUS_REG,
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+	    pci_conf_read(pa->pa_pc, pa->pa_tag,
 	        PCI_COMMAND_STATUS_REG)
 	    & ~PCI_STATUS_TARGET_TARGET_ABORT);
 	
@@ -246,4 +253,16 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	bcw_attach(sc);
+}
+
+void
+bcw_pci_conf_write(struct bcw_softc *sc, u_int32_t reg, u_int32_t val)
+{
+	pci_conf_write(sc->sc_pa.pa_pc, sc->sc_pa.pa_tag, reg, val);
+}
+
+u_int32_t
+bcw_pci_conf_read(struct bcw_softc *sc, u_int32_t reg)
+{
+	return pci_conf_read(sc->sc_pa.pa_pc, sc->sc_pa.pa_tag, reg);
 }
