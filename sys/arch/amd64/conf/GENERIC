@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.170 2006/11/29 13:08:49 grange Exp $
+#	$OpenBSD: GENERIC,v 1.171 2006/12/06 23:02:36 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -343,7 +343,7 @@ epic*	at pci?				# SMC EPIC/100 ethernet
 #tl*	at pci?				# Compaq Thunderlan ethernet
 vr*	at pci?				# VIA Rhine ethernet
 #wb*	at pci?				# Winbond W89C840F ethernet
-#sf*	at pci?				# Adaptec AIC-6915 ethernet BORKED
+sf*	at pci?				# Adaptec AIC-6915 ethernet
 sis*	at pci?				# SiS 900/7016 ethernet
 #ste*	at pci?				# Sundance ST201 ethernet BORKED
 pcn*	at pci?				# AMD PCnet-PCI Ethernet
