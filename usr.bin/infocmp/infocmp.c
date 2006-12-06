@@ -1,4 +1,4 @@
-/*	$OpenBSD: infocmp.c,v 1.17 2003/04/08 19:08:58 deraadt Exp $	*/
+/*	$OpenBSD: infocmp.c,v 1.18 2006/12/06 04:59:58 ray Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -630,7 +630,8 @@ analyze_string(const char *name, const char *cap, TERMTYPE * tp)
 		(void) strlcat(buf2, ";", sizeof buf2);
 	    } while
 		((ep = strtok((char *) 0, ";")));
-	    buf2[strlen(buf2) - 1] = '\0';
+	    if (buf2[0] != '\0' && buf2[strlen(buf2) - 1] == ';')
+		    buf2[strlen(buf2) - 1] = '\0';
 	    expansion = buf2;
 	}
 
@@ -666,7 +667,8 @@ analyze_string(const char *name, const char *cap, TERMTYPE * tp)
 	    } while
 		((ep = strtok((char *) 0, ";")));
 
-	    buf2[strlen(buf2) - 1] = '\0';
+	    if (buf2[0] != '\0' && buf2[strlen(buf2) - 1] == ';')
+		    buf2[strlen(buf2) - 1] = '\0';
 	    expansion = buf2;
 	}
 	/* now check for scroll region reset */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan.l,v 1.8 2003/06/04 17:34:44 millert Exp $	*/
+/*	$OpenBSD: scan.l,v 1.9 2006/12/06 05:03:29 ray Exp $	*/
 
 /* scan.l - scanner for flex input */
 
@@ -34,7 +34,7 @@
  * PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/scan.l,v 1.8 2003/06/04 17:34:44 millert Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/scan.l,v 1.9 2006/12/06 05:03:29 ray Exp $ */
 
 #include "flexdef.h"
 #include "parse.h"
@@ -285,7 +285,8 @@ LEXOPT		[aceknopr]
 
 	\"[^"\n]*\"	{
 			strlcpy( nmstr, yytext + 1, sizeof nmstr);
-			nmstr[strlen( nmstr ) - 1] = '\0';
+			if (nmstr[strlen(nmstr) - 1] == '"')
+				nmstr[strlen(nmstr) - 1] = '\0';
 			return NAME;
 			}
 

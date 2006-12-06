@@ -1,4 +1,4 @@
-/*	$OpenBSD: cyberflex.c,v 1.26 2004/03/15 15:03:11 aaron Exp $ */
+/*	$OpenBSD: cyberflex.c,v 1.27 2006/12/06 05:03:29 ray Exp $ */
 
 /*
  * copyright 1999, 2000
@@ -480,6 +480,7 @@ acl(int argc, char *argv[])
 	}
 
 	if (argc - optind < 1) {
+ usage:
 		printf("usage: acl [-x] fid [principal: r1 r2 ...]\n");
 		return -1;
 	}
@@ -511,7 +512,10 @@ acl(int argc, char *argv[])
 	prin = argv[optind++];
 
 	/* strip trailing ':' */
-	prin[strlen(prin) - 1] = '\0';
+	if (prin[0] != '\0' && prin[strlen(prin) - 1] == ':')
+		prin[strlen(prin) - 1] = '\0';
+	else
+		goto usage;
 
 	/* Find principal */
 	for (prno = 0; prno < 8; prno++)

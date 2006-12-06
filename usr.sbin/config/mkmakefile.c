@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.20 2006/05/06 11:31:46 espie Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.21 2006/12/06 05:05:16 ray Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -391,6 +391,10 @@ emitrules1(FILE *fp, const char *suffix, const char *rule_prefix, int ruleindex)
 			return (1);
 		if ((cp = fi->fi_mkrule[ruleindex]) == NULL) {
 			cp = rule_prefix;
+			if (fpath[0] == '\0') {
+				errno = ENOENT;
+				return (1);
+			}
 			ch = fpath[strlen(fpath) - 1];
 			if (islower(ch))
 				ch = toupper(ch);
