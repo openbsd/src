@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.49 2006/09/27 06:33:03 grange Exp $
+#	$OpenBSD: files.macppc,v 1.50 2006/12/06 20:38:14 gwk Exp $
 
 #
 # macppc-specific configuration info
@@ -128,10 +128,9 @@ device	mesh: scsi
 attach	mesh at macobio
 file	arch/macppc/dev/mesh.c				mesh
 
-#device	mc: ifnet, ether
-#attach	mc at macobio
-#file	arch/macppc/dev/if_mc.c				mc
-#file	arch/macppc/dev/am79c950.c			mc
+device	mc: ifnet, ether
+attach	mc at macobio
+file	arch/macppc/dev/if_mc.c				mc
 
 device	bm: ether, ifnet, ifmedia, mii, mii_bitbang
 attach	bm at macobio

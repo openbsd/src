@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.154 2006/11/28 18:53:22 dlg Exp $g
+#	$OpenBSD: GENERIC,v 1.155 2006/12/06 20:38:14 gwk Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -135,9 +135,9 @@ pwdog0		at pci?		# Quancom PWDOG1 watchdog timer
 macintr0	at macobio?	# old interrupt controller
 openpic*	at macobio?	# openpic interrupt controller
 bm*		at macobio?	# BMAC ethernet
-#mc*		at macobio?	# MACE ethernet
+mc*		at macobio?	# MACE ethernet
 #esp*		at macobio? flags 0x0000ffff # 53c9x SCSI
-#mesh*		at macobio? flags 0xffff # MESH SCSI
+mesh*		at macobio? flags 0xffff # MESH SCSI
 #nvram*		at macobio?	# nvram
 adb*		at macobio?	# Apple Desktop Bus
 apm0		at adb?		# APM emulation
@@ -177,7 +177,7 @@ scsibus*	at ahc?
 #scsibus*	at ami?
 #scsibus*	at bha?
 #scsibus*	at esp?
-#scsibus*	at mesh?
+scsibus*	at mesh?
 scsibus*	at ioprbs?
 scsibus*	at iopsp?
 scsibus*	at pcscp?
