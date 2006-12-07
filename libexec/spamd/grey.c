@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.22 2005/05/15 17:11:14 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.23 2006/12/07 21:10:41 otto Exp $	*/
 
 /*
  * Copyright (c) 2004,2005 Bob Beck.  All rights reserved.
@@ -103,7 +103,7 @@ int
 configure_pf(char **addrs, int count)
 {
 	FILE *pf = NULL;
-	int i, pdes[2];
+	int i, pdes[2], status;
 	pid_t pid;
 	char *fdpath;
 	struct sigaction sa;
@@ -162,7 +162,15 @@ configure_pf(char **addrs, int count)
 		if (addrs[i] != NULL)
 			fprintf(pf, "%s/32\n", addrs[i]);
 	fclose(pf);
-	waitpid(pid, NULL, 0);
+
+	waitpid(pid, &status, 0);
+	if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+		syslog_r(LOG_ERR, &sdata, "%s returned status %d", PATH_PFCTL,
+		    WEXITSTATUS(status));
+	else if (WIFSIGNALED(status))
+		syslog_r(LOG_ERR, &sdata, "%s died on signal %d", PATH_PFCTL,
+		    WTERMSIG(status));
+
 	sigaction(SIGCHLD, &sa, NULL);
 	return(0);
 }
