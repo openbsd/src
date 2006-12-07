@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.37 2006/11/28 19:21:15 reyk Exp $ */
+/*	$OpenBSD: kroute.c,v 1.38 2006/12/07 19:14:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -343,8 +343,8 @@ kr_ifinfo(char *ifname, pid_t pid)
 void
 kr_redistribute(int type, struct kroute *kr)
 {
-	u_int32_t	a;
-
+	u_int32_t	a, metric = 0;
+	struct rroute	rr;
 
 	if (type == IMSG_NETWORK_DEL) {
 dont_redistribute:
@@ -385,12 +385,15 @@ dont_redistribute:
 		goto dont_redistribute;
 
 	/* Should we redistrubute this route? */
-	if (!ospf_redistribute(kr))
+	if (!ospf_redistribute(kr, &metric))
 		goto dont_redistribute;
 
 	/* Does not matter if we resend the kr, the RDE will cope. */
 	kr->flags |= F_REDISTRIBUTED;
-	main_imsg_compose_rde(type, 0, kr, sizeof(struct kroute));
+
+	rr.kr = *kr;
+	rr.metric = metric;
+	main_imsg_compose_rde(type, 0, &rr, sizeof(struct rroute));
 }
 
 /* rb-tree compare */

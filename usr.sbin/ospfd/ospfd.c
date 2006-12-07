@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.36 2006/11/01 13:20:18 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.37 2006/12/07 19:14:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -485,7 +485,7 @@ imsg_event_add(struct imsgbuf *ibuf)
 }
 
 int
-ospf_redistribute(struct kroute *kr)
+ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 {
 	struct redistribute	*r;
 
@@ -511,22 +511,28 @@ ospf_redistribute(struct kroute *kr)
 			 */
 			if (kr->flags & F_DYNAMIC)
 				continue;
-			if (kr->flags & F_STATIC)
+			if (kr->flags & F_STATIC) {
+				*metric = r->metric;
 				return (r->type & REDIST_NO ? 0 : 1);
+			}
 			break;
 		case REDIST_CONNECTED:
 			if (kr->flags & F_DYNAMIC)
 				continue;
-			if (kr->flags & F_CONNECTED)
+			if (kr->flags & F_CONNECTED) {
+				*metric = r->metric;
 				return (r->type & REDIST_NO ? 0 : 1);
+			}
 			break;
 		case REDIST_ADDR:
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if ((kr->prefix.s_addr & r->mask.s_addr) ==
 			    (r->addr.s_addr & r->mask.s_addr) &&
-			    kr->prefixlen >= mask2prefixlen(r->mask.s_addr))
+			    kr->prefixlen >= mask2prefixlen(r->mask.s_addr)) {
+				*metric = r->metric;
 				return (r->type & REDIST_NO? 0 : 1);
+			}
 			break;
 		}
 	}

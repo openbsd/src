@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.38 2006/11/17 08:55:31 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.39 2006/12/07 19:14:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -111,10 +111,11 @@ typedef struct {
 %token	METRIC PASSIVE
 %token	HELLOINTERVAL TRANSMITDELAY
 %token	RETRANSMITINTERVAL ROUTERDEADTIME ROUTERPRIORITY
+%token	SET TYPE
 %token	YES NO
 %token	ERROR
 %token	<v.string>	STRING
-%type	<v.number>	number yesno no
+%type	<v.number>	number yesno no optlist, optlist_l option
 %type	<v.string>	string
 
 %%
@@ -186,7 +187,7 @@ conf_main	: ROUTERID STRING {
 			else
 				conf->flags &= ~OSPFD_FLAG_NO_FIB_UPDATE;
 		}
-		| no REDISTRIBUTE STRING {
+		| no REDISTRIBUTE STRING optlist {
 			struct redistribute	*r;
 
 			if (!strcmp($3, "default")) {
@@ -215,15 +216,15 @@ conf_main	: ROUTERID STRING {
 
 				if ($1)
 					r->type |= REDIST_NO;
+				r->metric = $4;
 
 				SIMPLEQ_INSERT_TAIL(&conf->redist_list, r,
 				    entry);
 			}
 			conf->redistribute |= REDISTRIBUTE_ON;
 			free($3);
-
 		}
-		| no REDISTRIBUTE RTLABEL STRING {
+		| no REDISTRIBUTE RTLABEL STRING optlist {
 			struct redistribute	*r;
 
 			if ((r = calloc(1, sizeof(*r))) == NULL)
@@ -232,6 +233,7 @@ conf_main	: ROUTERID STRING {
 			r->label = rtlabel_name2id($4);
 			if ($1)
 				r->type |= REDIST_NO;
+			r->metric = $5;
 			free($4);
 
 			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
@@ -259,6 +261,47 @@ conf_main	: ROUTERID STRING {
 			conf->spf_hold_time = $2;
 		}
 		| defaults
+		;
+
+optlist		: /* empty */ 			{ $$ = DEFAULT_REDIST_METRIC; }
+		| SET option 			{ $$ = $2; }
+		| SET optnl '{' optnl optlist_l optnl '}'	{ $$ = $5; }
+		;
+
+optlist_l	: optlist_l comma option {
+			if ($1 & LSA_ASEXT_E_FLAG && $3 & LSA_ASEXT_E_FLAG) {
+				yyerror("redistribute type already defined");
+				YYERROR;
+			}
+			if ($1 & LSA_METRIC_MASK && $3 & LSA_METRIC_MASK) {
+				yyerror("redistribute metricr already defined");
+				YYERROR;
+			}
+			$$ = $1 | $3;
+		}
+		| option { $$ = $1; }
+		;
+
+option		: METRIC number {
+			if ($2 == 0 || $2 > MAX_METRIC) {
+				yyerror("invalid redistribute metric");
+				YYERROR;
+			}
+			$$ = $2;
+		}
+		| TYPE number {
+			switch ($2) {
+			case 1:
+				$$ = 0;
+				break;
+			case 2:
+				$$ = LSA_ASEXT_E_FLAG;
+				break;
+			default:
+				yyerror("illegal external type %u", $2);
+				YYERROR;
+			}
+		}
 		;
 
 authmd		: AUTHMD number STRING {
@@ -382,6 +425,10 @@ optnl		: '\n' optnl
 		;
 
 nl		: '\n' optnl		/* one newline or more */
+		;
+
+comma		: ','
+		| /*empty*/
 		;
 
 area		: AREA STRING {
@@ -538,9 +585,11 @@ lookup(char *s)
 		{"router-id",		ROUTERID},
 		{"router-priority",	ROUTERPRIORITY},
 		{"rtlabel",		RTLABEL},
+		{"set",			SET},
 		{"spf-delay",		SPFDELAY},
 		{"spf-holdtime",	SPFHOLDTIME},
 		{"transmit-delay",	TRANSMITDELAY},
+		{"type",		TYPE},
 		{"yes",			YES}
 	};
 	const struct keywords	*p;
@@ -985,4 +1034,3 @@ host(const char *s, struct in_addr *addr, struct in_addr *mask)
 
 	return (1);
 }
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.47 2006/06/28 10:53:39 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.48 2006/12/07 19:14:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -56,10 +56,10 @@ int		 rde_req_list_exists(struct rde_nbr *, struct lsa_hdr *);
 void		 rde_req_list_del(struct rde_nbr *, struct lsa_hdr *);
 void		 rde_req_list_free(struct rde_nbr *);
 
-struct lsa	*rde_asext_get(struct kroute *);
-struct lsa	*rde_asext_put(struct kroute *);
+struct lsa	*rde_asext_get(struct rroute *);
+struct lsa	*rde_asext_put(struct rroute *);
 
-struct lsa	*orig_asext_lsa(struct kroute *, u_int16_t);
+struct lsa	*orig_asext_lsa(struct rroute *, u_int16_t);
 struct lsa	*orig_sum_lsa(struct rt_node *, u_int8_t);
 
 struct ospfd_conf	*rdeconf = NULL;
@@ -580,6 +580,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 {
 	struct imsg		 imsg;
 	struct kroute		 kr;
+	struct rroute		 rr;
 	struct imsgbuf		*ibuf = bula;
 	struct lsa		*lsa;
 	struct vertex		*v;
@@ -610,13 +611,13 @@ rde_dispatch_parent(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_NETWORK_ADD:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(kr)) {
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(rr)) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			memcpy(&kr, imsg.data, sizeof(kr));
+			memcpy(&rr, imsg.data, sizeof(rr));
 
-			if ((lsa = rde_asext_get(&kr)) != NULL) {
+			if ((lsa = rde_asext_get(&rr)) != NULL) {
 				v = lsa_find(NULL, lsa->hdr.type,
 				    lsa->hdr.ls_id, lsa->hdr.adv_rtr);
 
@@ -624,13 +625,13 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			}
 			break;
 		case IMSG_NETWORK_DEL:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(kr)) {
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(rr)) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			memcpy(&kr, imsg.data, sizeof(kr));
+			memcpy(&rr, imsg.data, sizeof(rr));
 
-			if ((lsa = rde_asext_put(&kr)) != NULL) {
+			if ((lsa = rde_asext_put(&rr)) != NULL) {
 				v = lsa_find(NULL, lsa->hdr.type,
 				    lsa->hdr.ls_id, lsa->hdr.adv_rtr);
 
@@ -949,7 +950,7 @@ rde_req_list_free(struct rde_nbr *nbr)
  * as-external LSA handling
  */
 struct lsa *
-rde_asext_get(struct kroute *kr)
+rde_asext_get(struct rroute *rr)
 {
 	struct area	*area;
 	struct iface	*iface;
@@ -957,21 +958,21 @@ rde_asext_get(struct kroute *kr)
 	LIST_FOREACH(area, &rdeconf->area_list, entry)
 		LIST_FOREACH(iface, &area->iface_list, entry) {
 			if ((iface->addr.s_addr & iface->mask.s_addr) ==
-			    kr->prefix.s_addr && iface->mask.s_addr ==
-			    prefixlen2mask(kr->prefixlen)) {
+			    rr->kr.prefix.s_addr && iface->mask.s_addr ==
+			    prefixlen2mask(rr->kr.prefixlen)) {
 				/* already announced as (stub) net LSA */
 				log_debug("rde_asext_get: %s/%d is net LSA",
-				    inet_ntoa(kr->prefix), kr->prefixlen);
+				    inet_ntoa(rr->kr.prefix), rr->kr.prefixlen);
 				return (NULL);
 			}
 		}
 
 	/* update of seqnum is done by lsa_merge */
-	return (orig_asext_lsa(kr, DEFAULT_AGE));
+	return (orig_asext_lsa(rr, DEFAULT_AGE));
 }
 
 struct lsa *
-rde_asext_put(struct kroute *kr)
+rde_asext_put(struct rroute *rr)
 {
 	struct area	*area;
 	struct iface	*iface;
@@ -979,17 +980,17 @@ rde_asext_put(struct kroute *kr)
 	LIST_FOREACH(area, &rdeconf->area_list, entry)
 		LIST_FOREACH(iface, &area->iface_list, entry) {
 			if ((iface->addr.s_addr & iface->mask.s_addr) ==
-			    kr->prefix.s_addr && iface->mask.s_addr ==
-			    prefixlen2mask(kr->prefixlen)) {
+			    rr->kr.prefix.s_addr && iface->mask.s_addr ==
+			    prefixlen2mask(rr->kr.prefixlen)) {
 				/* already announced as (stub) net LSA */
 				log_debug("rde_asext_put: %s/%d is net LSA",
-				    inet_ntoa(kr->prefix), kr->prefixlen);
+				    inet_ntoa(rr->kr.prefix), rr->kr.prefixlen);
 				return (NULL);
 			}
 		}
 
 	/* remove by reflooding with MAX_AGE */
-	return (orig_asext_lsa(kr, MAX_AGE));
+	return (orig_asext_lsa(rr, MAX_AGE));
 }
 
 /*
@@ -1047,7 +1048,7 @@ rde_summary_update(struct rt_node *rte, struct area *area)
  * functions for self-originated LSA
  */
 struct lsa *
-orig_asext_lsa(struct kroute *kr, u_int16_t age)
+orig_asext_lsa(struct rroute *rr, u_int16_t age)
 {
 	struct lsa	*lsa;
 	u_int16_t	 len;
@@ -1057,7 +1058,7 @@ orig_asext_lsa(struct kroute *kr, u_int16_t age)
 		fatal("orig_asext_lsa");
 
 	log_debug("orig_asext_lsa: %s/%d age %d",
-	    inet_ntoa(kr->prefix), kr->prefixlen, age);
+	    inet_ntoa(rr->kr.prefix), rr->kr.prefixlen, age);
 
 	/* LSA header */
 	lsa->hdr.age = htons(age);
@@ -1073,8 +1074,8 @@ orig_asext_lsa(struct kroute *kr, u_int16_t age)
 	 * not be true. In this case a hack needs to be done to
 	 * make the ls_id unique.
 	 */
-	lsa->hdr.ls_id = kr->prefix.s_addr;
-	lsa->data.asext.mask = prefixlen2mask(kr->prefixlen);
+	lsa->hdr.ls_id = rr->kr.prefix.s_addr;
+	lsa->data.asext.mask = prefixlen2mask(rr->kr.prefixlen);
 
 	/*
 	 * nexthop -- on connected routes we are the nexthop,
@@ -1085,8 +1086,7 @@ orig_asext_lsa(struct kroute *kr, u_int16_t age)
 	 */
 	lsa->data.asext.fw_addr = 0;
 
-	lsa->data.asext.metric = htonl(/* LSA_ASEXT_E_FLAG | */ 100);
-	/* XXX until now there is no metric */
+	lsa->data.asext.metric = htonl(rr->metric);
 	lsa->data.asext.ext_tag = 0;
 
 	lsa->hdr.ls_chksum = 0;

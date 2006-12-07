@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.61 2006/11/17 08:55:31 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.62 2006/12/07 19:14:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -371,6 +371,7 @@ struct redistribute {
 	SIMPLEQ_ENTRY(redistribute)	entry;
 	struct in_addr			addr;
 	struct in_addr			mask;
+	u_int32_t			metric;
 	u_int16_t			label;
 	u_int16_t			type;
 };
@@ -406,6 +407,11 @@ struct kroute {
 	u_int16_t	rtlabel;
 	u_short		ifindex;
 	u_int8_t	prefixlen;
+};
+
+struct rroute {
+	struct kroute	kr;
+	u_int32_t	metric;
 };
 
 struct kif_addr {
@@ -585,7 +591,7 @@ void		 rtlabel_unref(u_int16_t);
 /* ospfd.c */
 void	main_imsg_compose_ospfe(int, pid_t, void *, u_int16_t);
 void	main_imsg_compose_rde(int, pid_t, void *, u_int16_t);
-int	ospf_redistribute(struct kroute *kr);
+int	ospf_redistribute(struct kroute *, u_int32_t *);
 
 /* printconf.c */
 void	print_config(struct ospfd_conf *);
