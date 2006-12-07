@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.5 2006/12/04 09:51:21 xsa Exp $	*/
+/*	$OpenBSD: config.c,v 1.6 2006/12/07 08:43:12 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -31,11 +31,11 @@ cvs_parse_configfile(void)
 	const char *errstr;
 	char *p, *buf, *lbuf, *opt, *val, fpath[MAXPATHLEN];
 
-	cvs_log(LP_TRACE, "cvs_parse_configfile()");
-
 	if (cvs_path_cat(current_cvsroot->cr_dir, CVS_PATH_CONFIG,
 	    fpath, sizeof(fpath)) >= sizeof(fpath))
 		fatal("cvs_parse_configfile: truncation");
+
+	cvs_log(LP_TRACE, "cvs_parse_configfile(%s)", fpath);
 
 	if ((fp = fopen(fpath, "r")) == NULL)
 		fatal("cvs_config_parse: %s: %s",
