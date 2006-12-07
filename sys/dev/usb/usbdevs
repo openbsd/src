@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.239 2006/12/04 16:52:52 martin Exp $
+$OpenBSD: usbdevs,v 1.240 2006/12/07 12:14:50 fkr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1650,6 +1650,7 @@ product NOVATECH NV902W		0x9020	NV-902W
 
 /* Novatel Wireless products */
 product NOVATEL MERLINV620	0x1110	Merlin V620
+product NOVATEL MERLINU740	0x1400	Merlin U740
 
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1
