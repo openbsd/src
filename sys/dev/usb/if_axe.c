@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.56 2006/12/04 17:12:07 damien Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.57 2006/12/07 18:24:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -1203,9 +1203,6 @@ axe_init(void *xsc)
 	int			rxmode;
 	int			i, s;
 
-	if (ifp->if_flags & IFF_RUNNING)
-		return;
-
 	s = splnet();
 
 	/*
@@ -1312,21 +1309,18 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch(cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		axe_init(sc);
-
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			axe_init(sc);
 #ifdef INET
-		case AF_INET:
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-			break;
-#endif /* INET */
-		}
+#endif
 		break;
 
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
 			error = EINVAL;
-		else
+		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 
@@ -1355,7 +1349,6 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				axe_stop(sc);
 		}
 		sc->axe_if_flags = ifp->if_flags;
-		error = 0;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -1405,7 +1398,7 @@ axe_watchdog(struct ifnet *ifp)
 	usbd_get_xfer_status(c->axe_xfer, NULL, NULL, NULL, &stat);
 	axe_txeof(c->axe_xfer, c, stat);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		axe_start(ifp);
 	splx(s);
 }
