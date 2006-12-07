@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.h,v 1.1 2006/12/06 20:07:52 martin Exp $	*/
+/*	$OpenBSD: aic6915.h,v 1.2 2006/12/07 13:30:24 martin Exp $	*/
 /*	$NetBSD: aic6915reg.h,v 1.4 2005/12/11 12:21:25 christos Exp $	*/
 
 /*-
@@ -772,6 +772,7 @@ struct sf_softc {
 	struct arpcom sc_arpcom;	/* ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
 	int sc_iomapped;		/* are we I/O mapped? */
+	int sc_flags;			/* misc. flags */
 
 	struct mii_data sc_mii;		/* MII/media information */
 	struct timeout sc_mii_timeout;	/* MII callout */

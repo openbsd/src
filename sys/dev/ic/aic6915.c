@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.c,v 1.1 2006/12/06 20:07:52 martin Exp $	*/
+/*	$OpenBSD: aic6915.c,v 1.2 2006/12/07 13:30:24 martin Exp $	*/
 /*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
@@ -304,10 +304,7 @@ sf_attach(struct sf_softc *sc)
 	ifp->if_ioctl = sf_ioctl;
 	ifp->if_start = sf_start;
 	ifp->if_watchdog = sf_watchdog;
-	ifp->if_init = sf_init;
-#ifdef NetBSD
-	ifp->if_stop = sf_stop;
-#endif
+	IFQ_SET_MAXLEN(&ifp->if_snd, SF_NTXDESC_MASK);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
@@ -315,6 +312,7 @@ sf_attach(struct sf_softc *sc)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
+
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
@@ -322,7 +320,7 @@ sf_attach(struct sf_softc *sc)
 	if (sc->sc_sdhook == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
-	 return;
+	return;
 
 	/*
 	 * Free any resources we've allocated during the failed attach
@@ -545,11 +543,12 @@ int
 sf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct sf_softc *sc = (struct sf_softc *)ifp->if_softc;
-	struct ifaddr *ifa;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *) data;
-	int s, error = 1;
+	int s, error = 0;
 
 	s = splnet();
+
 	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
 		splx(s);
 		return (error);
@@ -557,23 +556,30 @@ sf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
+		if (!(ifp->if_flags & IFF_RUNNING))
+			sf_init(ifp);
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
 #endif
-		/* FALLTHROUGH */
+		break;
+
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING)
+			if (ifp->if_flags & IFF_RUNNING &&
+			    ((ifp->if_flags ^ sc->sc_flags) &
+			     IFF_PROMISC)) {
 				sf_set_filter(sc);
-			else
-				sf_init(ifp);
+			} else {
+				if (!(ifp->if_flags & IFF_RUNNING))
+					sf_init(ifp);
+			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				sf_stop(ifp, 1);
 		}
+		sc->sc_flags = ifp->if_flags;
 		break;
 
 	case SIOCSIFMTU:
@@ -606,13 +612,8 @@ sf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ENOTTY;
 	}
 
-	if (error == ENETRESET) {
-		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-		    (IFF_UP | IFF_RUNNING))
-			/* Try to get more packets going. */
-			sf_start(ifp);
-		error = 0;
-	}
+	/* Try to get more packets going. */
+	sf_start(ifp);
 
 	splx(s);
 	return (error);
