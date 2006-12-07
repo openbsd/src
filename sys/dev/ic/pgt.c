@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.38 2006/11/25 19:42:41 damien Exp $  */
+/*	$OpenBSD: pgt.c,v 1.39 2006/12/07 23:50:10 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2525,9 +2525,10 @@ int
 pgt_init(struct ifnet *ifp)
 {
 	struct pgt_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic;
+	struct ieee80211com *ic = &sc->sc_ic;
 
-	ic = &sc->sc_ic;
+	/* set default channel */
+	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 
 	if (!(sc->sc_flags & (SC_DYING | SC_UNINITIALIZED)))
 		pgt_update_hw_from_sw(sc,
@@ -2697,12 +2698,11 @@ badopmode:
 
 	if (ic->ic_des_chan == IEEE80211_CHAN_ANYC) {
 		if (keepassoc)
-			channel = htole32(ieee80211_chan2ieee(ic,
-			    ic->ic_bss->ni_chan));
-		else
 			channel = 0;
+		else
+			channel = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 	} else
-		channel = htole32(ieee80211_chan2ieee(ic, ic->ic_des_chan));
+		channel = ieee80211_chan2ieee(ic, ic->ic_des_chan);
 
 	DPRINTF(("%s: set rates", sc->sc_dev.dv_xname));
 	for (i = 0; i < ic->ic_sup_rates[ic->ic_curmode].rs_nrates; i++) {
@@ -2730,7 +2730,7 @@ badopmode:
 		SETOID(PGT_OID_MODE, &mode, sizeof(mode));
 		SETOID(PGT_OID_BSS_TYPE, &bsstype, sizeof(bsstype));
 
-		if (channel != 0)
+		if (channel != 0 && channel != IEEE80211_CHAN_ANY)
 			SETOID(PGT_OID_CHANNEL, &channel, sizeof(channel));
 
 		if (ic->ic_flags & IEEE80211_F_DESBSSID) {
