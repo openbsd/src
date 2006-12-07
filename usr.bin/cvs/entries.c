@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.62 2006/10/24 06:25:10 ray Exp $	*/
+/*	$OpenBSD: entries.c,v 1.63 2006/12/07 10:44:16 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -204,8 +204,8 @@ cvs_ent_close(CVSENTRIES *ep, int writefile)
 
 	if (writefile) {
 		if ((fp = fopen(ep->cef_bpath, "w")) == NULL)
-			fatal("cvs_ent_close: failed to write %s",
-			    ep->cef_path);
+			fatal("cvs_ent_close: fopen: `%s': %s",
+			    ep->cef_path, strerror(errno));
 	}
 
 	while ((l = TAILQ_FIRST(&(ep->cef_ent))) != NULL) {
@@ -224,8 +224,8 @@ cvs_ent_close(CVSENTRIES *ep, int writefile)
 		(void)fclose(fp);
 
 		if (rename(ep->cef_bpath, ep->cef_path) == -1)
-			fatal("cvs_ent_close: %s: %s", ep->cef_path,
-			     strerror(errno));
+			fatal("cvs_ent_close: rename: `%s'->`%s': %s",
+			    ep->cef_bpath, ep->cef_path, strerror(errno));
 
 		(void)unlink(ep->cef_lpath);
 	}
@@ -256,7 +256,8 @@ cvs_ent_add(CVSENTRIES *ep, const char *line)
 		cvs_log(LP_TRACE, "cvs_ent_add(%s, %s)", ep->cef_path, line);
 
 	if ((fp = fopen(ep->cef_lpath, "a")) == NULL)
-		fatal("cvs_ent_add: failed to open '%s'", ep->cef_lpath);
+		fatal("cvs_ent_add: fopen: `%s': %s",
+		    ep->cef_lpath, strerror(errno));
 
 	fputc('A', fp);
 	fputs(line, fp);
@@ -283,8 +284,8 @@ cvs_ent_remove(CVSENTRIES *ep, const char *name)
 		return;
 
 	if ((fp = fopen(ep->cef_lpath, "a")) == NULL)
-		fatal("cvs_ent_remove: failed to open '%s'",
-		    ep->cef_lpath);
+		fatal("cvs_ent_remove: fopen: `%s': %s", ep->cef_lpath,
+		    strerror(errno));
 
 	fputc('R', fp);
 	fputs(l->buf, fp);
