@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tokensubr.c,v 1.23 2006/09/26 13:11:38 pedro Exp $	*/
+/*	$OpenBSD: if_tokensubr.c,v 1.24 2006/12/07 18:15:29 reyk Exp $	*/
 /*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ token_output(ifp0, m0, dst, rt0)
 		struct ifaddr *ifa;
 
 		/* loop back if this is going to the carp interface */
-		if (dst != NULL && ifp0->if_link_state == LINK_STATE_UP &&
+		if (dst != NULL && LINK_STATE_IS_UP(ifp0->if_link_state) &&
 		    (ifa = ifa_ifwithaddr(dst)) != NULL &&
 		    ifa->ifa_ifp == ifp0)
 			return (looutput(ifp0, m, dst, rt0));

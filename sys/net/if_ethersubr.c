@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.104 2006/10/31 14:28:29 jason Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.105 2006/12/07 18:15:29 reyk Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ ether_output(ifp0, m0, dst, rt0)
 		struct ifaddr *ifa;
 
 		/* loop back if this is going to the carp interface */
-		if (dst != NULL && ifp0->if_link_state == LINK_STATE_UP &&
+		if (dst != NULL && LINK_STATE_IS_UP(ifp0->if_link_state) &&
 		    (ifa = ifa_ifwithaddr(dst)) != NULL &&
 		    ifa->ifa_ifp == ifp0)
 			return (looutput(ifp0, m, dst, rt0));
