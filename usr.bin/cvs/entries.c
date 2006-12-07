@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.63 2006/12/07 10:44:16 xsa Exp $	*/
+/*	$OpenBSD: entries.c,v 1.64 2006/12/07 13:28:21 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -38,13 +38,22 @@ cvs_ent_open(const char *dir)
 	ep = (CVSENTRIES *)xmalloc(sizeof(*ep));
 	memset(ep, 0, sizeof(*ep));
 
-	cvs_path_cat(dir, CVS_PATH_ENTRIES, buf, sizeof(buf));
+	if (cvs_path_cat(dir, CVS_PATH_ENTRIES, buf, sizeof(buf)) >=
+	    sizeof(buf))
+		fatal("cvs_ent_open: truncation");
+
 	ep->cef_path = xstrdup(buf);
 
-	cvs_path_cat(dir, CVS_PATH_BACKUPENTRIES, buf, sizeof(buf));
+	if (cvs_path_cat(dir, CVS_PATH_BACKUPENTRIES, buf, sizeof(buf)) >=
+	    sizeof(buf))
+		fatal("cvs_ent_open: truncation");
+
 	ep->cef_bpath = xstrdup(buf);
 
-	cvs_path_cat(dir, CVS_PATH_LOGENTRIES, buf, sizeof(buf));
+	if (cvs_path_cat(dir, CVS_PATH_LOGENTRIES, buf, sizeof(buf)) >=
+	    sizeof(buf))
+		fatal("cvs_ent_open: truncation");
+
 	ep->cef_lpath = xstrdup(buf);
 
 	TAILQ_INIT(&(ep->cef_ent));
