@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6opt.c,v 1.2 2005/03/25 13:24:12 otto Exp $	*/
+/*	$OpenBSD: ip6opt.c,v 1.3 2006/12/08 21:32:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -55,7 +55,7 @@ int
 inet6_option_space(int nbytes)
 {
 	nbytes += 2;	/* we need space for nxt-hdr and length fields */
-	return(CMSG_SPACE((nbytes + 7) & ~7));
+	return (CMSG_SPACE((nbytes + 7) & ~7));
 }
 
 /*
@@ -70,14 +70,14 @@ inet6_option_init(void *bp, struct cmsghdr **cmsgp, int type)
 
 	/* argument validation */
 	if (type != IPV6_HOPOPTS && type != IPV6_DSTOPTS)
-		return(-1);
+		return (-1);
 	
 	ch->cmsg_level = IPPROTO_IPV6;
 	ch->cmsg_type = type;
 	ch->cmsg_len = CMSG_LEN(0);
 
 	*cmsgp = ch;
-	return(0);
+	return (0);
 }
 
 /*
@@ -100,11 +100,11 @@ inet6_option_append(struct cmsghdr *cmsg, const u_int8_t *typep, int multx,
 
 	/* argument validation */
 	if (multx != 1 && multx != 2 && multx != 4 && multx != 8)
-		return(-1);
+		return (-1);
 	if (plusy < 0 || plusy > 7)
-		return(-1);
+		return (-1);
 	if (typep[0] > 255)
-		return(-1);
+		return (-1);
 
 	/*
 	 * If this is the first option, allocate space for the
@@ -146,7 +146,7 @@ inet6_option_append(struct cmsghdr *cmsg, const u_int8_t *typep, int multx,
 	/* update the length field of the ip6 option header */
 	eh->ip6e_len = ((bp - (u_char *)eh) >> 3) - 1;
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -172,9 +172,9 @@ inet6_option_alloc(struct cmsghdr *cmsg, int datalen, int multx, int plusy)
 
 	/* argument validation */
 	if (multx != 1 && multx != 2 && multx != 4 && multx != 8)
-		return(NULL);
+		return (NULL);
 	if (plusy < 0 || plusy > 7)
-		return(NULL);
+		return (NULL);
 
 	/*
 	 * If this is the first option, allocate space for the
@@ -212,7 +212,7 @@ inet6_option_alloc(struct cmsghdr *cmsg, int datalen, int multx, int plusy)
 	/* update the length field of the ip6 option header */
 	eh->ip6e_len = ((bp - (u_char *)eh) >> 3) - 1;
 
-	return(retval);
+	return (retval);
 }
 
 /*
@@ -235,15 +235,15 @@ inet6_option_next(const struct cmsghdr *cmsg, u_int8_t **tptrp)
 	if (cmsg->cmsg_level != IPPROTO_IPV6 ||
 	    (cmsg->cmsg_type != IPV6_HOPOPTS &&
 	     cmsg->cmsg_type != IPV6_DSTOPTS))
-		return(-1);
+		return (-1);
 
 	/* message length validation */
 	if (cmsg->cmsg_len < CMSG_SPACE(sizeof(struct ip6_ext)))
-		return(-1);
+		return (-1);
 	ip6e = (struct ip6_ext *)CMSG_DATA(cmsg);
 	hdrlen = (ip6e->ip6e_len + 1) << 3;
 	if (cmsg->cmsg_len < CMSG_SPACE(hdrlen))
-		return(-1);
+		return (-1);
 
 	/*
 	 * If the caller does not specify the starting point,
@@ -255,22 +255,22 @@ inet6_option_next(const struct cmsghdr *cmsg, u_int8_t **tptrp)
 		*tptrp = (u_int8_t *)(ip6e + 1);
 	else {
 		if ((optlen = ip6optlen(*tptrp, lim)) == 0)
-			return(-1);
+			return (-1);
 
 		*tptrp = *tptrp + optlen;
 	}
 	if (*tptrp >= lim) {	/* there is no option */
 		*tptrp = NULL;
-		return(-1);
+		return (-1);
 	}
 	/*
 	 * Finally, checks if the next option is safely stored in the
 	 * cmsg data.
 	 */
 	if (ip6optlen(*tptrp, lim) == 0)
-		return(-1);
+		return (-1);
 	else
-		return(0);
+		return (0);
 }
 
 /*
@@ -291,15 +291,15 @@ inet6_option_find(const struct cmsghdr *cmsg, u_int8_t **tptrp, int type)
 	if (cmsg->cmsg_level != IPPROTO_IPV6 ||
 	    (cmsg->cmsg_type != IPV6_HOPOPTS &&
 	     cmsg->cmsg_type != IPV6_DSTOPTS))
-		return(-1);
+		return (-1);
 
 	/* message length validation */
 	if (cmsg->cmsg_len < CMSG_SPACE(sizeof(struct ip6_ext)))
-		return(-1);
+		return (-1);
 	ip6e = (struct ip6_ext *)CMSG_DATA(cmsg);
 	hdrlen = (ip6e->ip6e_len + 1) << 3;
 	if (cmsg->cmsg_len < CMSG_SPACE(hdrlen))
-		return(-1);	
+		return (-1);	
 
 	/*
 	 * If the caller does not specify the starting point,
@@ -311,22 +311,22 @@ inet6_option_find(const struct cmsghdr *cmsg, u_int8_t **tptrp, int type)
 		*tptrp = (u_int8_t *)(ip6e + 1);
 	else {
 		if ((optlen = ip6optlen(*tptrp, lim)) == 0)
-			return(-1);
+			return (-1);
 
 		*tptrp = *tptrp + optlen;
 	}
 	for (optp = *tptrp; optp < lim; optp += optlen) {
 		if (*optp == type) {
 			*tptrp = optp;
-			return(0);
+			return (0);
 		}
 		if ((optlen = ip6optlen(optp, lim)) == 0)
-			return(-1);
+			return (-1);
 	}
 
 	/* search failed */
 	*tptrp = NULL;
-	return(-1);
+	return (-1);
 }
 
 /*
@@ -344,13 +344,13 @@ ip6optlen(u_int8_t *opt, u_int8_t *lim)
 	else {
 		/* is there enough space to store type and len? */
 		if (opt + 2 > lim)
-			return(0);
+			return (0);
 		optlen = *(opt + 1) + 2;
 	}
 	if (opt + optlen <= lim)
-		return(optlen);
+		return (optlen);
 
-	return(0);
+	return (0);
 }
 
 static void
