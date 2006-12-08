@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2006/06/17 14:06:09 henning Exp $
+#	$OpenBSD: Makefile,v 1.26 2006/12/08 22:31:15 itojun Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -14,8 +14,5 @@ CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
 YFLAGS=
 MAN= bgpd.8 bgpd.conf.5
-
-# kame scopeid hack
-CPPFLAGS+=-DKAME_SCOPEID
 
 .include <bsd.prog.mk>

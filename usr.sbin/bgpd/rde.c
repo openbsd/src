@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.213 2006/11/10 14:47:32 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.214 2006/12/08 22:31:16 itojun Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2575,7 +2575,7 @@ sa_cmp(struct bgpd_addr *a, struct sockaddr *b)
 		break;
 	case AF_INET6:
 		in6_b = (struct sockaddr_in6 *)b;
-#if defined(__KAME__) && defined(KAME_SCOPEID)
+#ifdef __KAME__
 		/* directly stolen from sbin/ifconfig/ifconfig.c */
 		if (IN6_IS_ADDR_LINKLOCAL(&in6_b->sin6_addr)) {
 			in6_b->sin6_scope_id =
