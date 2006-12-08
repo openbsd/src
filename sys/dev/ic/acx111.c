@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx111.c,v 1.13 2006/11/26 17:20:33 jsg Exp $ */
+/*	$OpenBSD: acx111.c,v 1.14 2006/12/08 00:04:10 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -456,7 +456,8 @@ acx111_set_fw_txdesc_rate(struct acx_softc *sc, struct acx_txbuf *tx_buf,
 
 	rate = acx111_rate_map[rate0];
 	if (rate == 0)
-		panic("no rate map for %d\n", rate0);
+		/* set rate to 1Mbit/s if rate was zero */
+		rate = acx111_rate_map[2];
 
 	FW_TXDESC_SETFIELD_2(sc, tx_buf, u.r2.rate111, rate);
 }
