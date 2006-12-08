@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1198 2006/12/07 20:03:20 mk Exp 
+ *	OpenBSD: pcidevs,v 1.1199 2006/12/08 02:13:36 gwk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3815,6 +3815,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DGE-530T B1",
 	},
 	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560SX,
+	    "DGE-560SX",
+	},
+	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T_A1,
 	    "DGE-530T A1",
 	},
@@ -7251,6 +7255,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Yukon",
 	},
 	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_2,
+	    "Yukon",
+	},
+	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8052,
 	    "Yukon 88E8052",
 	},
@@ -7271,10 +7279,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Yukon 88E8056",
 	},
 	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_2,
-	    "Yukon",
-	},
-	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_3,
 	    "Yukon",
 	},
@@ -7288,6 +7292,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_6,
+	    "Yukon",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_7,
 	    "Yukon",
 	},
 	{
