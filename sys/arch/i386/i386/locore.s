@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.104 2006/11/26 15:13:21 dim Exp $	*/
+/*	$OpenBSD: locore.s,v 1.105 2006/12/08 21:35:05 dim Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -247,7 +247,6 @@ _C_LABEL(cold):		.long	1	# cold till we are not
 _C_LABEL(esym):		.long	0	# ptr to end of syms
 _C_LABEL(cnvmem):	.long	0	# conventional memory size
 _C_LABEL(extmem):	.long	0	# extended memory size
-_C_LABEL(boothowto):	.long	0	# boot flags
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
 _C_LABEL(bootapiver):	.long	0	# /boot API version
 _C_LABEL(bootargc):	.long	0	# /boot argc
@@ -539,17 +538,6 @@ try586:	/* Use the `cpuid' instruction. */
 #define	PROC0STACK	((4)		* NBPG)
 #define	SYSMAP		((4+UPAGES)	* NBPG)
 #define	TABLESIZE	((4+UPAGES) * NBPG) /* + _C_LABEL(nkpde) * NBPG */
-
-	/* Clear the BSS. */
-	movl	$RELOC(_C_LABEL(edata)),%edi
-	movl	$_C_LABEL(end),%ecx
-	subl	$_C_LABEL(edata),%ecx
-	addl	$3,%ecx
-	shrl	$2,%ecx
-	xorl	%eax,%eax
-	cld
-	rep
-	stosl
 
 	/* Find end of kernel image. */
 	movl	$RELOC(_C_LABEL(end)),%edi
