@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.31 2006/12/06 17:58:29 mk Exp $
+.\"	$OpenBSD: pflogd.8,v 1.32 2006/12/08 10:26:38 joel Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -84,7 +84,9 @@ temporarily uses the old snaplen to keep the log file consistent.
 tries to preserve the integrity of the log file against I/O errors.
 Furthermore, integrity of an existing log file is verified before
 appending.
-If there is an invalid log file or an I/O error, logging is suspended until a
+If there is an invalid log file or an I/O error, the log file is moved
+out of the way and a new one is created.
+If a new file cannot be created, logging is suspended until a
 .Dv SIGHUP
 or a
 .Dv SIGALRM
