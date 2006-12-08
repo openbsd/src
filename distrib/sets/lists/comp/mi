@@ -541,7 +541,6 @@
 ./usr/include/dev/pci/if_san_te1.h
 ./usr/include/dev/pci/if_san_xilinx.h
 ./usr/include/dev/pci/if_sandrv.h
-./usr/include/dev/pci/if_sfreg.h
 ./usr/include/dev/pci/if_sisreg.h
 ./usr/include/dev/pci/if_skreg.h
 ./usr/include/dev/pci/if_skvar.h
@@ -6128,3 +6127,4 @@
 ./usr/share/misc/gprof.flat
 ./usr/share/misc/operator
 ./var/db/libc.tags
+./usr/include/dev/ic/aic6915.h

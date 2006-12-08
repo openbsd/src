@@ -1207,7 +1207,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_san_te1.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_san_xilinx.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_sandrv.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_sfreg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/aic6915.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_sisreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_skreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_skvar.ph
