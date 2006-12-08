@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_cardbus.c,v 1.4 2006/12/06 19:21:45 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_cardbus.c,v 1.5 2006/12/08 01:28:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -90,7 +90,7 @@ int
 bcw_cardbus_match(struct device *parent, void *match, void *aux)
 {
 	return (cardbus_matchbyid(aux, bcw_cardbus_devices,
-	    sizeof (bcw_cardbus_devices) / sizeof (bcw_cardbus_devices[0])));
+	    sizeof(bcw_cardbus_devices) / sizeof(bcw_cardbus_devices[0])));
 }
 
 void
@@ -137,8 +137,8 @@ bcw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Get some cardbus info into the softc
 	 */
-	sc->sc_chiprev=PCI_REVISION(ca->ca_class);
-	sc->sc_prodid=CARDBUS_PRODUCT(ca->ca_id);
+	sc->sc_chiprev = PCI_REVISION(ca->ca_class);
+	sc->sc_prodid = CARDBUS_PRODUCT(ca->ca_id);
 
 #if 0
 	error = bcw_attach(sc);
@@ -255,14 +255,14 @@ bcw_cardbus_disable(struct bcw_softc *sc)
 	Cardbus_function_disable(ct);
 }
 
-void      
+void
 bcw_cardbus_conf_write(struct bcw_softc *sc, u_int32_t reg, u_int32_t val)
-{          
-        Cardbus_conf_write(sc->sc_ca.ca_ct, sc->sc_ca.ca_tag, reg, val);
-}       
-                
+{
+	Cardbus_conf_write(sc->sc_ca.ca_ct, sc->sc_ca.ca_tag, reg, val);
+}
+
 u_int32_t
 bcw_cardbus_conf_read(struct bcw_softc *sc, u_int32_t reg)
 {
-        return Cardbus_conf_read(sc->sc_ca.ca_ct, sc->sc_ca.ca_tag, reg);
-}       
+	return Cardbus_conf_read(sc->sc_ca.ca_ct, sc->sc_ca.ca_tag, reg);
+}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_pci.c,v 1.6 2006/12/06 19:21:45 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_pci.c,v 1.7 2006/12/08 01:28:40 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -84,10 +84,8 @@ const struct pci_matchid bcw_pci_devices[]  = {
 
 struct bcw_pci_softc {
 	struct bcw_softc	psc_bcw;	/* Real softc */
-
 	pci_intr_handle_t	psc_ih;		/* interrupt handle */
 	void			*psc_intrcookie;
-	
 	pci_chipset_tag_t	psc_pc;		/* our PCI chipset */
 	pcitag_t		psc_pcitag;	/* our PCI tag */
 };
@@ -108,7 +106,7 @@ int
 bcw_pci_match(struct device *parent, void *match, void *aux)
 {
 	return pci_matchbyid((struct pci_attach_args *)aux, bcw_pci_devices,
-	    sizeof (bcw_pci_devices) / sizeof (bcw_pci_devices[0]));
+	    sizeof(bcw_pci_devices) / sizeof(bcw_pci_devices[0]));
 }
 
 int
@@ -145,11 +143,11 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct bcw_softc *sc = &psc->psc_bcw;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pcireg_t        memtype;
-	bus_addr_t      memaddr;
-	bus_size_t      memsize;
-	int             pmreg;
-	pcireg_t        pmode;
+	pcireg_t	memtype;
+	bus_addr_t	memaddr;
+	bus_size_t	memsize;
+	int		pmreg;
+	pcireg_t	pmode;
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
@@ -165,16 +163,15 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 			 * this state, so punt.
 			 */
 			printf("%s: unable to wake up from power state D3\n",
-			       sc->sc_dev.dv_xname);
+			    sc->sc_dev.dv_xname);
 			return;
 		}
 		if (pmode != 0) {
 			printf("%s: waking up from power state D%d\n",
-			       sc->sc_dev.dv_xname, pmode);
+			    sc->sc_dev.dv_xname, pmode);
 			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
 		}
 	}
-
 
 	/*
 	 * Map control/status registers.
@@ -194,7 +191,6 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
-
 
 	/* Map the PCI interrupt */
 	if (pci_intr_map(pa, &psc->psc_ih)) {
@@ -227,8 +223,8 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Get some PCI based info into the softc
 	 */
-	sc->sc_chiprev=PCI_REVISION(pa->pa_class);
-	sc->sc_prodid=PCI_PRODUCT(pa->pa_id);
+	sc->sc_chiprev = PCI_REVISION(pa->pa_class);
+	sc->sc_prodid = PCI_PRODUCT(pa->pa_id);
 
 	/*
 	 * Start the card up while we're in PCI land
@@ -244,9 +240,8 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag,
 	    PCI_COMMAND_STATUS_REG,
 	    pci_conf_read(pa->pa_pc, pa->pa_tag,
-	        PCI_COMMAND_STATUS_REG)
+		PCI_COMMAND_STATUS_REG)
 	    & ~PCI_STATUS_TARGET_TARGET_ABORT);
-	
 
 	/*
 	 * Finish the attach
