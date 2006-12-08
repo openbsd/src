@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.70 2006/11/27 12:27:45 henning Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.71 2006/12/08 21:57:54 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1088,7 +1088,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 
 			default:
 				/*
-			 	 * other cases have been filtered in the above.
+				 * other cases have been filtered in the above.
 				 * none will visit this case.  here we supply
 				 * the code just in case (nxt overwritten or
 				 * other cases).
