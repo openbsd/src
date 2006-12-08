@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.94 2006/11/17 01:11:23 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.95 2006/12/08 21:32:12 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1974,9 +1974,9 @@ ip6_setmoptions(optname, im6op, m)
 		}
 		/*
 		 * Put interface index into the multicast address,
-		 * if the address has link-local scope.
+		 * if the address has link/interface-local scope.
 		 */
-		if (IN6_IS_ADDR_MC_LINKLOCAL(&mreq->ipv6mr_multiaddr)) {
+		if (IN6_IS_SCOPE_EMBED(&mreq->ipv6mr_multiaddr)) {
 			mreq->ipv6mr_multiaddr.s6_addr16[1] =
 			    htons(ifp->if_index);
 		}
@@ -2074,7 +2074,8 @@ ip6_setmoptions(optname, im6op, m)
 	}
 
 	/*
-	 * If all options have default values, no need to keep the mbuf.
+	 * If all options have default values, no need to keep the option
+	 * structure.
 	 */
 	if (im6o->im6o_multicast_ifp == NULL &&
 	    im6o->im6o_multicast_hlim == ip6_defmcasthlim &&
@@ -2342,6 +2343,9 @@ ip6_mloopback(ifp, m, dst)
 	struct mbuf *copym;
 	struct ip6_hdr *ip6;
 
+	/*
+	 * Duplicate the packet.
+	 */
 	copym = m_copy(m, 0, M_COPYALL);
 	if (copym == NULL)
 		return;
