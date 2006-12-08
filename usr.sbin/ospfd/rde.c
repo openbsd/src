@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.48 2006/12/07 19:14:27 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.49 2006/12/08 21:28:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1040,7 +1040,9 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 			v = lsa_find(area, type, rte->adv_rtr.s_addr,
 			    rde_router_id());
 	}
-	v->cost = rte->cost;
+	/* suppressed/deleted routes are not found in the second lsa_find */ 
+	if (v)
+		v->cost = rte->cost;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.33 2006/08/30 05:25:33 norby Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.34 2006/12/08 21:28:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -707,7 +707,8 @@ lsa_remove_invalid_sums(struct area *area)
 		nv = RB_NEXT(lsa_tree, tree, v);
 		if ((v->lsa->hdr.type == LSA_TYPE_SUM_NETWORK ||
 		    v->lsa->hdr.type == LSA_TYPE_SUM_ROUTER) &&
-		    v->nbr->self && v->cost == LS_INFINITY) {
+		    v->nbr->self && v->cost == LS_INFINITY &&
+		    v->deleted == 0) {
 			/*
 			 * age the lsa and call lsa_timeout() which will
 			 * actually remove it from the database.
