@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.143 2006/11/29 12:24:17 miod Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.144 2006/12/08 23:08:19 gwk Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -489,7 +489,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return (EINVAL);
 		stackgap_random = stackgap;
 		return (0);
-#if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)  
+#if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 	case KERN_SYSVIPC_INFO:
 		return (sysctl_sysvipc(name + 1, namelen - 1, oldp, oldlenp));
 #endif
@@ -564,8 +564,7 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
 	extern char machine[], cpu_model[];
-	int err;
-	int cpuspeed;
+	int err, cpuspeed;
 
 	/* all sysctl names at this level except sensors are terminal */
 	if (name[0] != HW_SENSORS && namelen != 1)
@@ -627,9 +626,8 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		if (perflevel < 0)
 			perflevel = 0;
 		if (newp)
-			return (cpu_setperf(perflevel));
-		else
-			return (0);
+			cpu_setperf(perflevel);
+		return (0);
 	case HW_VENDOR:
 		if (hw_vendor)
 			return (sysctl_rdstring(oldp, oldlenp, newp,
@@ -1713,7 +1711,7 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 	buf = malloc(min(tsize, buflen), M_TEMP, M_WAITOK);
 	bzero(buf, min(tsize, buflen));
 
-	switch (*name) { 
+	switch (*name) {
 #ifdef SYSVMSG
 	case KERN_SYSVIPC_MSG_INFO:
 		msgsi = (struct msg_sysctl_info *)buf;
@@ -1743,7 +1741,7 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 				ret = ENOMEM;
 				break;
 			}
-			switch (*name) { 
+			switch (*name) {
 #ifdef SYSVMSG
 			case KERN_SYSVIPC_MSG_INFO:
 				bcopy(&msqids[i], &msgsi->msgids[i], dssize);
