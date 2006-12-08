@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.20 2006/12/08 09:19:19 claudio Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.21 2006/12/08 09:21:08 claudio Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -99,14 +99,15 @@ Only routers with just one link to the OSPF cloud may safely set it to
 .Po Ic static Ns \&| Ns Ic connected Ns \&| Ns
 .Ic default Pc
 .Sm on
+.Op Ic set ...\&
 .Xc
 .It Xo
 .Op Ic no
-.Ic redistribute Ar prefix
+.Ic redistribute Ar prefix Op Ic set ...\&
 .Xc
 .It Xo
 .Op Ic no
-.Ic redistribute rtlabel Ar label
+.Ic redistribute rtlabel Ar label Op Ic set ...\&
 .Xc
 If set to
 .Ic connected ,
@@ -137,6 +138,23 @@ The only exception is
 which will be set no matter what, and additionally
 .Ic no
 cannot be used together with it.
+.Pp
+It is possible to set the route
+.Ic metric
+and
+.Ic type
+for each redistribute rule.
+.Ic type
+is either 1 or 2.
+The default value for
+.Ic type
+is 1 and for
+.Ic metric
+is 100.
+Setting more then one option needs curly brackets:
+.Bd -literal -offset indent
+redistribute static set { metric 300 type 2 }
+.Ed
 .Pp
 .It Xo
 .Ic rfc1583compat
