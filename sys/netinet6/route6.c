@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6.c,v 1.10 2003/06/11 02:54:02 itojun Exp $	*/
+/*	$OpenBSD: route6.c,v 1.11 2006/12/08 21:32:27 itojun Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -117,11 +117,7 @@ ip6_rthdr0(m, ip6, rh0)
 	if (rh0->ip6r0_segleft == 0)
 		return (0);
 
-	if (rh0->ip6r0_len % 2
-#ifdef COMPAT_RFC1883
-	    || rh0->ip6r0_len > 46
-#endif
-		) {
+	if (rh0->ip6r0_len % 2) {
 		/*
 		 * Type 0 routing header can't contain more than 23 addresses.
 		 * RFC 2462: this limitation was removed since strict/loose
@@ -175,14 +171,7 @@ ip6_rthdr0(m, ip6, rh0)
 	if (IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_dst))
 		ip6->ip6_dst.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 
-#ifdef COMPAT_RFC1883
-	if (rh0->ip6r0_slmap[index / 8] & (1 << (7 - (index % 8))))
-		ip6_forward(m, IPV6_SRCRT_NEIGHBOR);
-	else
-		ip6_forward(m, IPV6_SRCRT_NOTNEIGHBOR);
-#else
 	ip6_forward(m, 1);
-#endif
 
 	return (-1);			/* m would be freed in ip6_forward() */
 
