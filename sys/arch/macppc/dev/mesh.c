@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.13 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.14 2006/12/08 01:19:44 thib Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -219,7 +219,7 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mesh_softc *sc = (void *)self;
 	struct confargs *ca = aux;
-	struct scsi_attach_args saa;
+	struct scsibus_attach_args saa;
 	int i, error;
 	u_int *reg;
 
