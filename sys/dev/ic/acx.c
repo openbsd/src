@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.55 2006/11/26 17:20:33 jsg Exp $ */
+/*	$OpenBSD: acx.c,v 1.56 2006/12/08 09:17:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -2276,7 +2276,7 @@ acx_set_null_tmplt(struct acx_softc *sc)
 	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr3, etherbroadcastaddr);
 
-	return (_acx_set_null_data_tmplt(sc, &n, sizeof(n)));
+	return (acx_set_tmplt(sc, ACXCMD_TMPLT_NULL_DATA, &n, sizeof(n)));
 }
 
 int
@@ -2304,7 +2304,7 @@ acx_set_probe_req_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len)
 	frm = ieee80211_add_xrates(frm, &ic->ic_sup_rates[sc->chip_phymode]);
 	len = frm - req.data.u_data.var;
 
-	return (_acx_set_probe_req_tmplt(sc, &req,
+	return (acx_set_tmplt(sc, ACXCMD_TMPLT_PROBE_REQ, &req,
 	    ACX_TMPLT_PROBE_REQ_SIZ(len)));
 }
 
@@ -2323,7 +2323,7 @@ acx_set_probe_resp_tmplt(struct acx_softc *sc, struct ieee80211_node *ni)
 	len = m->m_pkthdr.len + sizeof(resp.size);
 	m_freem(m); 
 
-	return (_acx_set_probe_resp_tmplt(sc, &resp, len));
+	return (acx_set_tmplt(sc, ACXCMD_TMPLT_PROBE_RESP, &resp, len));
 }
 
 int
@@ -2341,7 +2341,7 @@ acx_set_beacon_tmplt(struct acx_softc *sc, struct ieee80211_node *ni)
 	len = m->m_pkthdr.len + sizeof(beacon.size);
 	m_freem(m);
 
-	return (_acx_set_beacon_tmplt(sc, &beacon, len));
+	return (acx_set_tmplt(sc, ACXCMD_TMPLT_BEACON, &beacon, len));
 }
 
 void

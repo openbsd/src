@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.14 2006/11/26 19:46:28 deraadt Exp $ */
+/*	$OpenBSD: acx100.c,v 1.15 2006/12/08 09:17:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -408,7 +408,7 @@ acx100_init_tmplt(struct acx_softc *sc)
 	bzero(&tim, sizeof(tim));
 	tim.tim_eid = IEEE80211_ELEMID_TIM;
 	tim.tim_len = ACX_TIM_LEN(ACX_TIM_BITMAP_LEN);
-	if (_acx_set_tim_tmplt(sc, &tim,
+	if (acx_set_tmplt(sc, ACXCMD_TMPLT_TIM, &tim,
 	    ACX_TMPLT_TIM_SIZ(ACX_TIM_BITMAP_LEN)) != 0) {
 		printf("%s: can't set tim tmplt\n", ifp->if_xname);
 		return (1);

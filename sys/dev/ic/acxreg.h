@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxreg.h,v 1.6 2006/08/15 15:43:34 deraadt Exp $ */
+/*	$OpenBSD: acxreg.h,v 1.7 2006/12/08 09:17:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -439,17 +439,6 @@ acx_init_##name##_tmplt(struct acx_softc *_sc)		\
 }							\
 struct __hack
 
-#define ACX_SET_TMPLT_FUNC(name)			\
-static __inline int					\
-_acx_set_##name##_tmplt(struct acx_softc *_sc,		\
-		       struct acx_tmplt_##name *_tmplt,	\
-		       uint16_t _tmplt_len)		\
-{							\
-	return acx_set_tmplt(_sc, ACXCMD_TMPLT_##name,	\
-			     _tmplt, _tmplt_len);	\
-}							\
-struct __hack
-
 #define _ACX_CONF_FUNC(sg, name, chip)			\
 static __inline int					\
 acx##chip##_##sg##_##name##_conf(struct acx_softc *_sc,	\
@@ -475,16 +464,12 @@ struct __hack
 #define ACXCMD_TMPLT_probe_resp	ACXCMD_TMPLT_PROBE_RESP
 #define ACXCMD_TMPLT_null_data	ACXCMD_TMPLT_NULL_DATA
 #define ACXCMD_TMPLT_probe_req	ACXCMD_TMPLT_PROBE_REQ
+
 ACX_INIT_TMPLT_FUNC(tim);
 ACX_INIT_TMPLT_FUNC(null_data);
 ACX_INIT_TMPLT_FUNC(beacon);
 ACX_INIT_TMPLT_FUNC(probe_req);
 ACX_INIT_TMPLT_FUNC(probe_resp);
-ACX_SET_TMPLT_FUNC(tim);
-ACX_SET_TMPLT_FUNC(null_data);
-ACX_SET_TMPLT_FUNC(beacon);
-ACX_SET_TMPLT_FUNC(probe_req);
-ACX_SET_TMPLT_FUNC(probe_resp);
 
 #define ACX_CONF_FUNC(sg, name)	_ACX_CONF_FUNC(sg, name,)
 #define ACX_CONF_wepopt		ACX_CONF_WEPOPT
