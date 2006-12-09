@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_rth_space.3,v 1.1 2006/12/09 01:12:28 itojun Exp $
+.\"	$OpenBSD: inet6_rth_space.3,v 1.2 2006/12/09 14:25:41 jmc Exp $
 .\"	$KAME: inet6_rth_space.3,v 1.7 2005/01/05 03:00:44 itojun Exp $
 .\"
 .\" Copyright (C) 2004 WIDE Project.
@@ -60,31 +60,31 @@
 The IPv6 Advanced API, RFC 3542, defines the functions that an
 application calls to build and examine IPv6 Routing headers.
 Routing headers are used to perform source routing in IPv6 networks.
-The RFC uses the word 
+The RFC uses the word
 .Dq segments
 to describe addresses and that is the term used here as well.
 All of the functions are defined in the header file
-.Aq netinet/in.h .
+.Aq Pa netinet/in.h .
 The functions described in this manual page all operate
 on routing header structures which are defined in
-.Aq netinet/ip6.h
+.Aq Pa netinet/ip6.h
 but which should not need to be modified outside the use of this API.
 The size and shape of the route header structures may change, so using
 the APIs is a more portable, long term, solution.
 .Pp
 The functions in the API are split into two groups, those that build a
 routing header and those that parse a received routing header.
-We will describe the builder functions followed by the parser functions.
+The builder functions are described first, followed by the parser functions.
 .Ss inet6_rth_space
 The
 .Fn inet6_rth_space
 function returns the number of bytes required to hold a Routing Header
 of the type, specified in the
-.Fa type 
+.Fa type
 argument and containing the number of addresses specified in the
 .Fa segments
-argumment.
-When the type is 
+argument.
+When the type is
 .Dv IPV6_RTHDR_TYPE_0
 the number of segments must be from 0 through 127.
 The return value from this function is the number of bytes required to
@@ -162,19 +162,23 @@ The
 .Fa index
 is the location in the routing header from which the application wants
 to retrieve an address.
-The 
-.Fa index 
+The
+.Fa index
 parameter must have a value between 0 and one less than the number of
 segments present in the routing header.
 The
-.Fn inet6_rth_segments 
+.Fn inet6_rth_segments
 function, described in the last section, should be used to determine
 the total number of segments in the routing header.
 The
 .Fn inet6_rth_getaddr
-function returns a pointer to an IPv6 address on success or 
+function returns a pointer to an IPv6 address on success or
 .Dv NULL
 when an error has occurred.
+.\"
+.Sh EXAMPLES
+RFC 3542 gives extensive examples in Section 21, Appendix B.
+KAME also provides examples in the advapitest directory of its kit.
 .\"
 .Sh DIAGNOSTICS
 The
@@ -194,11 +198,6 @@ and
 .Fn inet6_rth_reverse
 functions return 0 on success, or \-1 upon an error.
 .\"
-.Sh EXAMPLES
-RFC 3542 gives extensive examples in Section 21, Appendix B.
-.Pp
-KAME also provides examples in the advapitest directory of its kit.
-.\"
 .Sh SEE ALSO
 .Rs
 .%A W. Stevens
@@ -213,7 +212,7 @@ KAME also provides examples in the advapitest directory of its kit.
 .%A S. Deering
 .%A R. Hinden
 .%T "Internet Protocol, Version 6 (IPv6) Specification"
-.%N RFC2460
+.%N RFC 2460
 .%D December 1998
 .Re
 .Sh HISTORY
