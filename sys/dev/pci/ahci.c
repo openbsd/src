@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.1 2006/12/09 05:10:43 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.2 2006/12/09 05:19:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -31,6 +31,16 @@
 #include <dev/pci/pcidevs.h>
 
 #define AHCI_PCI_BAR			0x24
+
+#define AHCI_REG_CAP			0x000 /* HBA Capabilities */
+#define AHCI_REG_GHC			0x004 /* Global HBA Control */
+#define AHCI_REG_IS			0x008 /* Interrupt Status */
+#define AHCI_REG_PI			0x00c /* Ports Implemented */
+#define AHCI_REG_VS			0x010 /* AHCI Version */
+#define AHCI_REG_CCC_CTL		0x014 /* Coalescing Control */
+#define AHCI_REG_CCC_PORTS		0x018 /* Coalescing Ports */
+#define AHCI_REG_EM_LOC			0x01c /* Enclosure Mgmt Location */
+#define AHCI_REG_EM_CTL			0x020 /* Enclosure Mgmt Control */
 
 static const struct pci_matchid ahci_devices[] = {
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB361 }
