@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_option_space.3,v 1.19 2006/12/09 01:12:28 itojun Exp $
+.\"	$OpenBSD: inet6_option_space.3,v 1.20 2006/12/09 14:40:15 jmc Exp $
 .\"	$KAME: inet6_option_space.3,v 1.11 2005/01/05 03:00:44 itojun Exp $
 .\"
 .\" Copyright (C) 2004 WIDE Project.
@@ -59,6 +59,12 @@
 .\"
 .Sh DESCRIPTION
 .\"
+Note:
+RFC 2292 has been superseded by RFC 3542.
+The use of functions described in this page is deprecated.
+See
+.Xr inet6_opt_init 3 .
+.Pp
 Manipulating and parsing IPv6's Hop-by-Hop and Destination options is
 complicated by the need to properly align and pad data as well as the
 need to manipulate ancillary information that is not part of the data
@@ -70,11 +76,6 @@ All of the prototypes
 for the option functions are defined in the
 .Aq Pa netinet/in.h
 header file.
-.Pp
-RFC 2292 was superseded by RFC 3542.
-Functions described in this document were deprecated.
-See
-.Xr inet6_opt_init 3 .
 .\"
 .Ss inet6_option_space
 In order to determine the amount of space necessary to hold any option
