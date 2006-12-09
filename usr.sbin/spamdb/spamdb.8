@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamdb.8,v 1.8 2005/10/07 21:41:24 jmc Exp $
+.\"	$OpenBSD: spamdb.8,v 1.9 2006/12/09 17:13:07 beck Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -22,9 +22,8 @@
 .Nd spamd database tool
 .Sh SYNOPSIS
 .Nm spamdb
-.Op Fl Tt
-.Op Fl a Ar key
-.Op Fl d Ar key
+.Op Fl adTt
+.Op Ar keys ...
 .Sh DESCRIPTION
 .Nm
 manipulates the spamd database in
@@ -35,22 +34,22 @@ greylisting.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl a Ar key
-Add or update an entry for
-.Ar key .
-This can be used to whitelist an IP address
+.It Fl a
+Add or update the entries for
+.Ar keys .
+This can be used to whitelist one or more IP addresses
 (i.e. circumvent the greylisting process altogether)
-by adding it to the spamd database as a WHITE entry.
-If the
-.Ar key
-specified matches an entry already in the spamd database,
+by adding all IP addresses as keys to the spamd database for WHITE entries.
+If any
+.Ar keys
+specified match entries already in the spamd database,
 .Nm
 updates the entry's time last seen to now.
-.It Fl d Ar key
-Delete an entry for
-.Ar key .
+.It Fl d
+Delete entries for
+.Ar keys .
 .It Fl T
-Add or delete the key as a SPAMTRAP entry.
+Add or delete the keys as SPAMTRAP entries.
 See the
 .Sx GREYTRAPPING
 section of
@@ -62,7 +61,7 @@ or
 .Fl d
 option.
 .It Fl t
-Add or delete the key as a TRAPPED entry.
+Add or delete the keys as TRAPPED entries.
 See the
 .Sx GREYTRAPPING
 section of
@@ -77,14 +76,14 @@ option.
 .Pp
 If adding or deleting a SPAMTRAP address
 .Pq Fl T ,
-.Ar key
-should be specified as an email address:
+.Ar keys
+should be specified as email addresses:
 .Pp
 .Dl <spamtrap@mydomain.org>
 .Pp
 Otherwise
-.Ar key
-should be a numerical IP address.
+.Ar keys
+must be numerical IP addresses.
 .Ss DATABASE OUTPUT FORMAT
 If invoked without any arguments,
 .Nm
@@ -108,25 +107,25 @@ For TRAPPED entries the format is:
 where
 .Em type
 will be TRAPPED,
-.Em ip
+.Em IP
 will be the IP address blacklisted due to hitting a spamtrap, and
 .Em expire
 will be when the IP is due to be removed from the blacklist.
 .Pp
 For GREY or WHITE entries, the format is:
 .Pp
-.Dl type|source ip|from|to|first|pass|expire|block|pass
+.Dl type|source IP|from|to|first|pass|expire|block|pass
 .Pp
 The fields are as follows:
 .Pp
-.Bl -tag -width "source ip" -offset indent -compact
+.Bl -tag -width "source IP" -offset indent -compact
 .It type
 .Em WHITE
 if whitelisted or
 .Em GREY
 if greylisted
-.It source ip
-IP address the connection originated from
+.It source IP
+IP aaddress the connection originated fro
 .It from
 envelope-from address for
 .Em GREY

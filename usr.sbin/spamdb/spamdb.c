@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.16 2006/04/12 12:53:04 dhill Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.17 2006/12/09 17:13:07 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -37,30 +37,24 @@
 #define TRAPHIT 1
 #define SPAMTRAP 2
 
-int	dblist(const char *);
-int	dbupdate(const char *, char *, int, int);
+int	dblist(DB *);
+int	dbupdate(DB *, char *, int, int);
 
 int
-dbupdate(const char *dbname, char *ip, int add, int type)
+dbupdate(DB *db, char *ip, int add, int type)
 {
-	BTREEINFO	btreeinfo;
 	DBT		dbk, dbd;
-	DB		*db;
 	struct gdata	gd;
 	time_t		now;
 	int		r;
 	struct addrinfo hints, *res;
 
 	now = time(NULL);
-	memset(&btreeinfo, 0, sizeof(btreeinfo));
-	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_BTREE, &btreeinfo);
-	if (db == NULL)
-		err(1, "cannot open %s for writing", dbname);
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
-	if (type == TRAPHIT || type == WHITE) {
+	if (add && (type == TRAPHIT || type == WHITE)) {
 		if (getaddrinfo(ip, NULL, &hints, &res) != 0) {
 			warnx("invalid ip address %s", ip);
 			goto bad;
@@ -168,29 +162,19 @@ dbupdate(const char *dbname, char *ip, int add, int type)
 			}
 		}
 	}
-	db->close(db);
-	db = NULL;
 	return (0);
  bad:
-	db->close(db);
-	db = NULL;
 	return (1);
 }
 
 int
-dblist(const char *dbname)
+dblist(DB *db)
 {
-	BTREEINFO	btreeinfo;
 	DBT		dbk, dbd;
-	DB		*db;
 	struct gdata	gd;
 	int		r;
 
 	/* walk db, list in text format */
-	memset(&btreeinfo, 0, sizeof(btreeinfo));
-	db = dbopen(dbname, O_EXLOCK|O_RDONLY, 0600, DB_BTREE, &btreeinfo);
-	if (db == NULL)
-		err(1, "cannot open %s for reading", dbname);
 	memset(&dbk, 0, sizeof(dbk));
 	memset(&dbd, 0, sizeof(dbd));
 	for (r = db->seq(db, &dbk, &dbd, R_FIRST); !r;
@@ -259,7 +243,7 @@ extern char *__progname;
 static int
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-Tt] [-a key] [-d key]\n", __progname);
+	fprintf(stderr, "usage: %s [-Tt] [-ad] key [key ...]\n", __progname);
 	exit(1);
 	/* NOTREACHED */
 }
@@ -267,18 +251,17 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int ch, action = 0, type = WHITE;
-	char *ip = NULL;
+	int i, ch, action = 0, type = WHITE, r = 0;
+	BTREEINFO	btreeinfo;
+	DB		*db;
 
-	while ((ch = getopt(argc, argv, "a:d:tT")) != -1) {
+	while ((ch = getopt(argc, argv, "adtT")) != -1) {
 		switch (ch) {
 		case 'a':
 			action = 1;
-			ip = optarg;
 			break;
 		case 'd':
 			action = 2;
-			ip = optarg;
 			break;
 		case 't':
 			type = TRAPHIT;
@@ -291,17 +274,30 @@ main(int argc, char **argv)
 			break;
 		}
 	}
+	argc -= optind;
+	argv += optind;
+	
+	memset(&btreeinfo, 0, sizeof(btreeinfo));
+	btreeinfo.cachesize = 8192 * 128;
+	db = dbopen(PATH_SPAMD_DB, O_EXLOCK|O_RDWR, 0600, DB_BTREE,
+	    &btreeinfo);
+	if (db == NULL)
+		err(1, "cannot open %s for writing", PATH_SPAMD_DB);
 
 	switch (action) {
 	case 0:
-		return dblist(PATH_SPAMD_DB);
+		return dblist(db);
 	case 1:
-		return dbupdate(PATH_SPAMD_DB, ip, 1, type);
+		for (i=0; i<argc; i++)
+			r += dbupdate(db, argv[i], 1, type);
+		break;
 	case 2:
-		return dbupdate(PATH_SPAMD_DB, ip, 0, type);
+		for (i=0; i<argc; i++)
+			r += dbupdate(db, argv[i], 0, type);
+		break;
 	default:
 		errx(-1, "bad action");
 	}
-	/* NOTREACHED */
-	return (0);
+	db->close(db);
+	return (r);
 }
