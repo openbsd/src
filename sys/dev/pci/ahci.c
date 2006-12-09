@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.7 2006/12/09 06:42:53 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.8 2006/12/09 07:02:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -110,6 +110,8 @@ struct cfdriver ahci_cd = {
 int		ahci_intr(void *);
 
 int		ahci_map_pci(struct ahci_softc *, struct pci_attach_args *);
+void		ahci_unmap_pci(struct ahci_softc *, struct pci_attach_args *);
+int		ahci_init(struct ahci_softc *);
 
 u_int32_t	ahci_read(struct ahci_softc *, bus_size_t);
 void		ahci_write(struct ahci_softc *, bus_size_t, u_int32_t);
@@ -135,39 +137,28 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 		/* error already printed by ahci_map_pci */
 		return;
 	}
+
+	if (ahci_init(sc) != 0) {
+		/* error already printed by ahci_init */
+		goto unmap;
+	}
+
+unmap:
+	ahci_unmap_pci(sc, pa);
 }
 
 int
 ahci_map_pci(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
 	pcireg_t			memtype;
-	u_int32_t			vs;
 	pci_intr_handle_t		ih;
 	const char			*intrstr;
-	const char			*revision;
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AHCI_PCI_BAR);
 	if (pci_mapreg_map(pa, AHCI_PCI_BAR, memtype, 0, &sc->sc_iot,
 	    &sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
 		printf(": unable to map registers\n");
 		return (1);
-	}
-
-	vs = ahci_read(sc, AHCI_REG_VS);
-	switch (vs) {
-	case AHCI_REG_VS_0_95:
-		revision = "0.95";
-		break;
-	case AHCI_REG_VS_1_0:
-		revision = "1.0";
-		break;
-	case AHCI_REG_VS_1_1:
-		revision = "1.1";
-		break;
-
-	default:
-		printf(": unsupported revision (0x%08x)\n", vs);
-		goto unmap;
 	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
@@ -183,8 +174,7 @@ ahci_map_pci(struct ahci_softc *sc, struct pci_attach_args *pa)
 		    intrstr == NULL ? "" : intrstr);
 		goto unmap;
 	}
-
-	printf(": %s, AHCI %s\n", intrstr, revision);
+	printf(": %s", intrstr);
 
 	return (0);
 
@@ -192,6 +182,55 @@ unmap:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 	sc->sc_ios = 0;
 	return (1);
+}
+
+void
+ahci_unmap_pci(struct ahci_softc *sc, struct pci_attach_args *pa)
+{
+	pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
+
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+	sc->sc_ios = 0;
+}
+
+int
+ahci_init(struct ahci_softc *sc)
+{
+	u_int32_t			vs;
+	const char			*revision;
+
+	/* reset the controller */
+	ahci_write(sc, AHCI_REG_GHC, AHCI_REG_GHC_HR);
+	if (ahci_wait_ne(sc, AHCI_REG_GHC, AHCI_REG_GHC_HR,
+	    AHCI_REG_GHC_HR) != 0) {
+		printf(": unable to reset controller\n");
+		return (1);
+	}
+
+	/* enable ahci */
+	ahci_write(sc, AHCI_REG_GHC, AHCI_REG_GHC_AE);
+
+	/* check the revision */
+	vs = ahci_read(sc, AHCI_REG_VS);
+	switch (vs) {
+	case AHCI_REG_VS_0_95:
+		revision = "0.95";
+		break;
+	case AHCI_REG_VS_1_0:
+		revision = "1.0";
+		break;
+	case AHCI_REG_VS_1_1:
+		revision = "1.1";
+		break;
+
+	default:
+		printf(": unsupported AHCI revision 0x%08x\n", vs);
+		return (1);
+	}
+
+	printf(": AHCI %s\n", revision);
+
+	return (0);
 }
 
 int
