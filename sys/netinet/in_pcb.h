@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.57 2006/10/11 09:34:51 henning Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.58 2006/12/09 01:12:28 itojun Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -187,9 +187,6 @@ struct inpcbtable {
  * for compatibility with *bsd*s.
  * XXX: Should IN6P_HIGHPORT and IN6P_LOWPORT be moved as well?
  */
-#define IN6P_RECVOPTS		INP_RECVOPTS	/* recv incoming IP6 options */
-#define IN6P_RECVRETOPTS	INP_RECVRETOPTS /* recv IP6 options for reply */
-#define IN6P_RECVDSTADDR	INP_RECVDSTADDR /* recv IP6 dst address */
 #define IN6P_HIGHPORT		INP_HIGHPORT	/* user wants "high" port */
 #define IN6P_LOWPORT		INP_LOWPORT	/* user wants "low" port */
 #define IN6P_PKTINFO		0x010000 /* receive IP6 dst and I/F */
@@ -198,15 +195,20 @@ struct inpcbtable {
 #define IN6P_DSTOPTS		0x080000 /* receive dst options after rthdr */
 #define IN6P_RTHDR		0x100000 /* receive routing header */
 #define IN6P_RTHDRDSTOPTS	0x200000 /* receive dstoptions before rthdr */
+#define IN6P_TCLASS		0x400000 /* receive traffic class value */
+#define IN6P_AUTOFLOWLABEL	0x800000 /* attach flowlabel automatically */
 
 #define IN6P_ANONPORT		0x4000000 /* port chosen for user */
 #define IN6P_FAITH		0x8000000 /* accept FAITH'ed connections */
+#define IN6P_RFC2292		0x40000000 /* used RFC2292 API on the socket */
+#define IN6P_MTU		0x80000000 /* receive path MTU */
 
 #define IN6P_MINMTU		0x20000000 /* use minimum MTU */
 
 #define IN6P_CONTROLOPTS	(IN6P_PKTINFO|IN6P_HOPLIMIT|IN6P_HOPOPTS|\
 				 IN6P_DSTOPTS|IN6P_RTHDR|IN6P_RTHDRDSTOPTS|\
-				 IN6P_MINMTU)
+				 IN6P_TCLASS|IN6P_AUTOFLOWLABEL|IN6P_RFC2292|\
+				 IN6P_MTU)
 #endif
 
 #define	INPLOOKUP_WILDCARD	1

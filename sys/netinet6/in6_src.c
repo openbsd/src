@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.20 2006/11/17 01:11:23 itojun Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.21 2006/12/09 01:12:28 itojun Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -85,6 +85,10 @@
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
+
+static int selectroute __P((struct sockaddr_in6 *, struct ip6_pktopts *,
+	struct ip6_moptions *, struct route_in6 *, struct ifnet **,
+	struct rtentry **, int));
 
 /*
  * Return an IPv6 address, which is the most appropriate for a given
@@ -286,6 +290,218 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 
 	*errorp = EADDRNOTAVAIL;
 	return (0);
+}
+
+static int
+selectroute(dstsock, opts, mopts, ro, retifp, retrt, norouteok)
+	struct sockaddr_in6 *dstsock;
+	struct ip6_pktopts *opts;
+	struct ip6_moptions *mopts;
+	struct route_in6 *ro;
+	struct ifnet **retifp;
+	struct rtentry **retrt;
+	int norouteok;
+{
+	int error = 0;
+	struct ifnet *ifp = NULL;
+	struct rtentry *rt = NULL;
+	struct sockaddr_in6 *sin6_next;
+	struct in6_pktinfo *pi = NULL;
+	struct in6_addr *dst;
+
+	dst = &dstsock->sin6_addr;
+
+#if 0
+	if (dstsock->sin6_addr.s6_addr32[0] == 0 &&
+	    dstsock->sin6_addr.s6_addr32[1] == 0 &&
+	    !IN6_IS_ADDR_LOOPBACK(&dstsock->sin6_addr)) {
+		printf("in6_selectroute: strange destination %s\n",
+		       ip6_sprintf(&dstsock->sin6_addr));
+	} else {
+		printf("in6_selectroute: destination = %s%%%d\n",
+		       ip6_sprintf(&dstsock->sin6_addr),
+		       dstsock->sin6_scope_id); /* for debug */
+	}
+#endif
+
+	/* If the caller specify the outgoing interface explicitly, use it. */
+	if (opts && (pi = opts->ip6po_pktinfo) != NULL && pi->ipi6_ifindex) {
+		/* XXX boundary check is assumed to be already done. */
+		ifp = ifindex2ifnet[pi->ipi6_ifindex];
+		if (ifp != NULL &&
+		    (norouteok || retrt == NULL ||
+		     IN6_IS_ADDR_MULTICAST(dst))) {
+			/*
+			 * we do not have to check or get the route for
+			 * multicast.
+			 */
+			goto done;
+		} else
+			goto getroute;
+	}
+
+	/*
+	 * If the destination address is a multicast address and the outgoing
+	 * interface for the address is specified by the caller, use it.
+	 */
+	if (IN6_IS_ADDR_MULTICAST(dst) &&
+	    mopts != NULL && (ifp = mopts->im6o_multicast_ifp) != NULL) {
+		goto done; /* we do not need a route for multicast. */
+	}
+
+  getroute:
+	/*
+	 * If the next hop address for the packet is specified by the caller,
+	 * use it as the gateway.
+	 */
+	if (opts && opts->ip6po_nexthop) {
+		struct route_in6 *ron;
+
+		sin6_next = satosin6(opts->ip6po_nexthop);
+
+		/* at this moment, we only support AF_INET6 next hops */
+		if (sin6_next->sin6_family != AF_INET6) {
+			error = EAFNOSUPPORT; /* or should we proceed? */
+			goto done;
+		}
+
+		/*
+		 * If the next hop is an IPv6 address, then the node identified
+		 * by that address must be a neighbor of the sending host.
+		 */
+		ron = &opts->ip6po_nextroute;
+		if ((ron->ro_rt &&
+		    (ron->ro_rt->rt_flags & (RTF_UP | RTF_GATEWAY)) !=
+		    RTF_UP) ||
+		    !IN6_ARE_ADDR_EQUAL(&satosin6(&ron->ro_dst)->sin6_addr,
+		    &sin6_next->sin6_addr)) {
+			if (ron->ro_rt) {
+				RTFREE(ron->ro_rt);
+				ron->ro_rt = NULL;
+			}
+			*satosin6(&ron->ro_dst) = *sin6_next;
+		}
+		if (ron->ro_rt == NULL) {
+			rtalloc((struct route *)ron); /* multi path case? */
+			if (ron->ro_rt == NULL ||
+			    (ron->ro_rt->rt_flags & RTF_GATEWAY)) {
+				if (ron->ro_rt) {
+					RTFREE(ron->ro_rt);
+					ron->ro_rt = NULL;
+				}
+				error = EHOSTUNREACH;
+				goto done;
+			}
+		}
+		if (!nd6_is_addr_neighbor(sin6_next, ron->ro_rt->rt_ifp)) {
+			RTFREE(ron->ro_rt);
+			ron->ro_rt = NULL;
+			error = EHOSTUNREACH;
+			goto done;
+		}
+		rt = ron->ro_rt;
+		ifp = rt->rt_ifp;
+
+		/*
+		 * When cloning is required, try to allocate a route to the
+		 * destination so that the caller can store path MTU
+		 * information.
+		 */
+		goto done;
+	}
+
+	/*
+	 * Use a cached route if it exists and is valid, else try to allocate
+	 * a new one.  Note that we should check the address family of the
+	 * cached destination, in case of sharing the cache with IPv4.
+	 */
+	if (ro) {
+		if (ro->ro_rt &&
+		    (!(ro->ro_rt->rt_flags & RTF_UP) ||
+		     ((struct sockaddr *)(&ro->ro_dst))->sa_family != AF_INET6 ||
+		     !IN6_ARE_ADDR_EQUAL(&satosin6(&ro->ro_dst)->sin6_addr,
+		     dst))) {
+			RTFREE(ro->ro_rt);
+			ro->ro_rt = (struct rtentry *)NULL;
+		}
+		if (ro->ro_rt == (struct rtentry *)NULL) {
+			struct sockaddr_in6 *sa6;
+
+			/* No route yet, so try to acquire one */
+			bzero(&ro->ro_dst, sizeof(struct sockaddr_in6));
+			sa6 = (struct sockaddr_in6 *)&ro->ro_dst;
+			*sa6 = *dstsock;
+			sa6->sin6_scope_id = 0;
+			rtalloc_mpath((struct route *)ro, NULL, 0);
+		}
+
+		/*
+		 * do not care about the result if we have the nexthop
+		 * explicitly specified.
+		 */
+		if (opts && opts->ip6po_nexthop)
+			goto done;
+
+		if (ro->ro_rt) {
+			ifp = ro->ro_rt->rt_ifp;
+
+			if (ifp == NULL) { /* can this really happen? */
+				RTFREE(ro->ro_rt);
+				ro->ro_rt = NULL;
+			}
+		}
+		if (ro->ro_rt == NULL)
+			error = EHOSTUNREACH;
+		rt = ro->ro_rt;
+
+		/*
+		 * Check if the outgoing interface conflicts with
+		 * the interface specified by ipi6_ifindex (if specified).
+		 * Note that loopback interface is always okay.
+		 * (this may happen when we are sending a packet to one of
+		 *  our own addresses.)
+		 */
+		if (opts && opts->ip6po_pktinfo &&
+		    opts->ip6po_pktinfo->ipi6_ifindex) {
+			if (!(ifp->if_flags & IFF_LOOPBACK) &&
+			    ifp->if_index !=
+			    opts->ip6po_pktinfo->ipi6_ifindex) {
+				error = EHOSTUNREACH;
+				goto done;
+			}
+		}
+	}
+
+  done:
+	if (ifp == NULL && rt == NULL) {
+		/*
+		 * This can happen if the caller did not pass a cached route
+		 * nor any other hints.  We treat this case an error.
+		 */
+		error = EHOSTUNREACH;
+	}
+	if (error == EHOSTUNREACH)
+		ip6stat.ip6s_noroute++;
+
+	if (retifp != NULL)
+		*retifp = ifp;
+	if (retrt != NULL)
+		*retrt = rt;	/* rt may be NULL */
+
+	return (error);
+}
+
+int
+in6_selectroute(dstsock, opts, mopts, ro, retifp, retrt)
+	struct sockaddr_in6 *dstsock;
+	struct ip6_pktopts *opts;
+	struct ip6_moptions *mopts;
+	struct route_in6 *ro;
+	struct ifnet **retifp;
+	struct rtentry **retrt;
+{
+
+	return (selectroute(dstsock, opts, mopts, ro, retifp, retrt, 0));
 }
 
 /*

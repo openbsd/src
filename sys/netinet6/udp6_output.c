@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.12 2004/06/12 04:58:48 itojun Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.13 2006/12/09 01:12:28 itojun Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ udp6_output(in6p, m, addr6, control)
 	struct	in6_addr *laddr, *faddr;
 	u_short fport;
 	int error = 0;
-	struct ip6_pktopts opt, *stickyopt;
+	struct ip6_pktopts *optp, opt;
 	int priv;
 	int af, hlen;
 	int flags;
@@ -134,12 +134,13 @@ udp6_output(in6p, m, addr6, control)
 	priv = 0;
 	if ((in6p->in6p_socket->so_state & SS_PRIV) != 0)
 		priv = 1;
-	stickyopt = in6p->in6p_outputopts;
 	if (control) {
-		if ((error = ip6_setpktoptions(control, &opt, priv)) != 0)
+		if ((error = ip6_setpktopts(control, &opt,
+		    in6p->in6p_outputopts, priv, IPPROTO_UDP)) != 0)
 			goto release;
-		in6p->in6p_outputopts = &opt;
-	}
+		optp = &opt;
+	} else
+		optp = in6p->in6p_outputopts;
 
 	if (addr6) {
 		/*
@@ -185,7 +186,7 @@ udp6_output(in6p, m, addr6, control)
 
 		if (1)	/* we don't support IPv4 mapped address */
 		{
-			laddr = in6_selectsrc(sin6, in6p->in6p_outputopts,
+			laddr = in6_selectsrc(sin6, optp,
 					      in6p->in6p_moptions,
 					      &in6p->in6p_route,
 					      &in6p->in6p_laddr, &error);
@@ -266,7 +267,7 @@ udp6_output(in6p, m, addr6, control)
 			flags |= IPV6_MINMTU;
 
 		udp6stat.udp6s_opackets++;
-		error = ip6_output(m, in6p->in6p_outputopts, &in6p->in6p_route,
+		error = ip6_output(m, optp, &in6p->in6p_route,
 			    flags, in6p->in6p_moptions, NULL);
 		break;
 	case AF_INET:
@@ -280,7 +281,7 @@ release:
 
 releaseopt:
 	if (control) {
-		in6p->in6p_outputopts = stickyopt;
+		ip6_clearpktopts(&opt, -1);
 		m_freem(control);
 	}
 	return (error);

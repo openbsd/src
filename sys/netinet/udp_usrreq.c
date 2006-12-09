@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.111 2006/11/27 11:00:12 claudio Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.112 2006/12/09 01:12:28 itojun Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -460,13 +460,12 @@ udp_input(struct mbuf *m, ...)
 #ifdef INET6
 					if (ip6 && (last->inp_flags &
 					    IN6P_CONTROLOPTS))
-						ip6_savecontrol(last, &opts,
-						    ip6, n);
+						ip6_savecontrol(last, n, &opts);
 #endif /* INET6 */
 					if (ip && (last->inp_flags &
 					    INP_CONTROLOPTS))
-						ip_savecontrol(last, &opts, ip,
-						    n);
+						ip_savecontrol(last, &opts,
+						    ip, n);
 
 					m_adj(n, iphlen);
 					if (sbappendaddr(
@@ -507,7 +506,7 @@ udp_input(struct mbuf *m, ...)
 
 #ifdef INET6
 		if (ip6 && (last->inp_flags & IN6P_CONTROLOPTS))
-			ip6_savecontrol(last, &opts, ip6, m);
+			ip6_savecontrol(last, m, &opts);
 #endif /* INET6 */
 		if (ip && (last->inp_flags & INP_CONTROLOPTS))
 			ip_savecontrol(last, &opts, ip, m);
@@ -630,7 +629,7 @@ udp_input(struct mbuf *m, ...)
 	opts = NULL;
 #ifdef INET6
 	if (ip6 && (inp->inp_flags & IN6P_CONTROLOPTS))
-		ip6_savecontrol(inp, &opts, ip6, m);
+		ip6_savecontrol(inp, m, &opts);
 #endif /* INET6 */
 	if (ip && (inp->inp_flags & INP_CONTROLOPTS))
 		ip_savecontrol(inp, &opts, ip, m);

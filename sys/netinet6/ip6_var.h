@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.29 2006/11/21 05:37:32 itojun Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.30 2006/12/09 01:12:28 itojun Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -124,15 +124,47 @@ struct	ip6po_rhinfo {
 #define ip6po_rthdr	ip6po_rhinfo.ip6po_rhi_rthdr
 #define ip6po_route	ip6po_rhinfo.ip6po_rhi_route
 
+/* Nexthop related info */
+struct	ip6po_nhinfo {
+	struct sockaddr *ip6po_nhi_nexthop;
+	struct route_in6 ip6po_nhi_route;
+};
+#define ip6po_nexthop	ip6po_nhinfo.ip6po_nhi_nexthop
+#define ip6po_nextroute	ip6po_nhinfo.ip6po_nhi_route
+
 struct	ip6_pktopts {
-	struct	mbuf *ip6po_m;	/* Pointer to mbuf storing the data */
-	int	ip6po_hlim;		/* Hoplimit for outgoing packets */
-	struct	in6_pktinfo *ip6po_pktinfo; /* Outgoing IF/address information */
-	struct	sockaddr *ip6po_nexthop;	/* Next-hop address */
-	struct	ip6_hbh *ip6po_hbh; /* Hop-by-Hop options header */
-	struct	ip6_dest *ip6po_dest1; /* Destination options header(1st part) */
-	struct	ip6po_rhinfo ip6po_rhinfo; /* Routing header related info. */
-	struct	ip6_dest *ip6po_dest2; /* Destination options header(2nd part) */
+	/* Hoplimit for outgoing packets */
+	int	ip6po_hlim;
+
+	/* Outgoing IF/address information */
+	struct in6_pktinfo *ip6po_pktinfo;
+
+	/* Next-hop address information */
+	struct	ip6po_nhinfo ip6po_nhinfo;
+
+	/* Hop-by-Hop options header */
+	struct	ip6_hbh *ip6po_hbh;
+
+	/* Destination options header (before a routing header) */
+	struct	ip6_dest *ip6po_dest1;
+
+	/* Routing header related info. */
+	struct	ip6po_rhinfo ip6po_rhinfo;
+
+	/* Destination options header (after a routing header) */
+	struct	ip6_dest *ip6po_dest2;
+
+	/* traffic class */
+	int	ip6po_tclass;
+
+	/* fragment vs PMTU discovery policy */
+	int	ip6po_minmtu;
+#define IP6PO_MINMTU_MCASTONLY	-1 /* default: send at min MTU for multicast */
+#define IP6PO_MINMTU_DISABLE	0  /* always perform pmtu disc */
+#define IP6PO_MINMTU_ALL	1  /* always send at min MTU */
+
+	int	ip6po_flags;
+#define	IP6PO_DONTFRAG	0x04	/* disable fragmentation (IPV6_DONTFRAG) */
 };
 
 struct	ip6stat {
@@ -240,6 +272,7 @@ int	icmp6_ctloutput(int, struct socket *, int, int, struct mbuf **);
 void	ip6_init(void);
 void	ip6intr(void);
 void	ip6_input(struct mbuf *);
+void	ip6_freepcbopts(struct ip6_pktopts *);
 void	ip6_freemoptions(struct ip6_moptions *);
 int	ip6_unknown_opt(u_int8_t *, struct mbuf *, int);
 u_int8_t *ip6_get_prevhdr(struct mbuf *, int);
@@ -247,20 +280,22 @@ int	ip6_nexthdr(struct mbuf *, int, int, int *);
 int	ip6_lasthdr(struct mbuf *, int, int, int *);
 int	ip6_mforward(struct ip6_hdr *, struct ifnet *, struct mbuf *);
 int	ip6_process_hopopts(struct mbuf *, u_int8_t *, int, u_int32_t *,
-				 u_int32_t *);
-void	ip6_savecontrol(struct inpcb *, struct mbuf **, struct ip6_hdr *,
-		struct mbuf *);
+	     u_int32_t *);
+void	ip6_savecontrol(struct inpcb *, struct mbuf *, struct mbuf **);
 int	ip6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 void	ip6_forward(struct mbuf *, int);
 
 void	ip6_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in6 *);
-int	ip6_output(struct mbuf *, struct ip6_pktopts *,
-			struct route_in6 *, int,
-			struct ip6_moptions *, struct ifnet **);
+int	ip6_output(struct mbuf *, struct ip6_pktopts *, struct route_in6 *, int,
+	    struct ip6_moptions *, struct ifnet **);
 int	ip6_ctloutput(int, struct socket *, int, int, struct mbuf **);
 int	ip6_raw_ctloutput(int, struct socket *, int, int, struct mbuf **);
-int	ip6_setpktoptions(struct mbuf *, struct ip6_pktopts *, int);
+void	ip6_initpktopts(struct ip6_pktopts *);
+int	ip6_setpktopts(struct mbuf *, struct ip6_pktopts *,
+	    struct ip6_pktopts *, int, int);
+void	ip6_clearpktopts(struct ip6_pktopts *, int);
+struct ip6_pktopts *ip6_copypktopts(struct ip6_pktopts *, int);
 int	ip6_optlen(struct inpcb *);
 
 int	route6_input(struct mbuf **, int *, int);
@@ -281,8 +316,12 @@ int	rip6_usrreq(struct socket *,
 int	dest6_input(struct mbuf **, int *, int);
 int	none_input(struct mbuf **, int *, int);
 
-struct 	in6_addr *in6_selectsrc(struct sockaddr_in6 *, struct ip6_pktopts *,
-	struct ip6_moptions *, struct route_in6 *, struct in6_addr *, int *);
+struct in6_addr *in6_selectsrc(struct sockaddr_in6 *, struct ip6_pktopts *,
+	    struct ip6_moptions *, struct route_in6 *, struct in6_addr *,
+	    int *);
+int	in6_selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
+	    struct ip6_moptions *, struct route_in6 *, struct ifnet **,
+	    struct rtentry **);
 
 u_int32_t ip6_randomid(void);
 u_int32_t ip6_randomflowlabel(void);

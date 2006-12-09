@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.89 2006/11/17 01:11:23 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.90 2006/12/09 01:12:28 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1913,7 +1913,7 @@ icmp6_rip6_input(mp, off)
 			struct	mbuf *n;
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (last->in6p_flags & IN6P_CONTROLOPTS)
-					ip6_savecontrol(last, &opts, ip6, n);
+					ip6_savecontrol(last, n, &opts);
 				/* strip intermediate headers */
 				m_adj(n, off);
 				if (sbappendaddr(&last->in6p_socket->so_rcv,
@@ -1932,7 +1932,7 @@ icmp6_rip6_input(mp, off)
 	}
 	if (last) {
 		if (last->in6p_flags & IN6P_CONTROLOPTS)
-			ip6_savecontrol(last, &opts, ip6, m);
+			ip6_savecontrol(last, m, &opts);
 		/* strip intermediate headers */
 		m_adj(m, off);
 		if (sbappendaddr(&last->in6p_socket->so_rcv,

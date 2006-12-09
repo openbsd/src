@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.30 2006/05/27 23:40:27 claudio Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.31 2006/12/09 01:12:28 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ rip6_input(mp, offp, proto)
 			struct	mbuf *n;
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (last->in6p_flags & IN6P_CONTROLOPTS)
-					ip6_savecontrol(last, &opts, ip6, n);
+					ip6_savecontrol(last, n, &opts);
 				/* strip intermediate headers */
 				m_adj(n, *offp);
 				if (sbappendaddr(&last->in6p_socket->so_rcv,
@@ -221,7 +221,7 @@ rip6_input(mp, offp, proto)
 	}
 	if (last) {
 		if (last->in6p_flags & IN6P_CONTROLOPTS)
-			ip6_savecontrol(last, &opts, ip6, m);
+			ip6_savecontrol(last, m, &opts);
 		/* strip intermediate headers */
 		m_adj(m, *offp);
 		if (sbappendaddr(&last->in6p_socket->so_rcv,
@@ -388,7 +388,9 @@ rip6_output(struct mbuf *m, ...)
 		priv = 1;
 	dst = &dstsock->sin6_addr;
 	if (control) {
-		if ((error = ip6_setpktoptions(control, &opt, priv)) != 0)
+		if ((error = ip6_setpktopts(control, &opt,
+		    in6p->in6p_outputopts,
+		    priv, so->so_proto->pr_protocol)) != 0)
 			goto bad;
 		optp = &opt;
 	} else
@@ -508,10 +510,10 @@ rip6_output(struct mbuf *m, ...)
 		m_freem(m);
 
  freectl:
-	if (optp == &opt && optp->ip6po_rthdr && optp->ip6po_route.ro_rt)
-		RTFREE(optp->ip6po_route.ro_rt);
-	if (control)
+	if (control) {
+		ip6_clearpktopts(&opt, -1);
 		m_freem(control);
+	}
 	return (error);
 }
 

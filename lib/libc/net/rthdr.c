@@ -1,4 +1,5 @@
-/*	$OpenBSD: rthdr.c,v 1.7 2005/03/25 13:24:12 otto Exp $	*/
+/*	$OpenBSD: rthdr.c,v 1.8 2006/12/09 01:12:28 itojun Exp $	*/
+/*	$KAME: rthdr.c,v 1.22 2006/02/09 08:18:58 keiichi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,6 +39,10 @@
 
 #include <string.h>
 #include <stdio.h>
+
+/*
+ * RFC2292 API
+ */
 
 size_t
 inet6_rthdr_space(int type, int seg)
@@ -211,5 +216,163 @@ inet6_rthdr_getflags(const struct cmsghdr *cmsg, int index)
 
 	default:
 		return (-1);
+	}
+}
+
+/*
+ * RFC3542 (2292bis) API
+ */
+
+socklen_t
+inet6_rth_space(int type, int segments)
+{
+	switch (type) {
+	case IPV6_RTHDR_TYPE_0:
+		return (((segments * 2) + 1) << 3);
+	default:
+		return (0);	/* type not suppported */
+	}
+}
+
+void *
+inet6_rth_init(void *bp, socklen_t bp_len, int type, int segments)
+{
+	struct ip6_rthdr *rth = (struct ip6_rthdr *)bp;
+	struct ip6_rthdr0 *rth0;
+
+	switch (type) {
+	case IPV6_RTHDR_TYPE_0:
+		/* length validation */
+		if (bp_len < inet6_rth_space(IPV6_RTHDR_TYPE_0, segments))
+			return (NULL);
+
+		memset(bp, 0, bp_len);
+		rth0 = (struct ip6_rthdr0 *)rth;
+		rth0->ip6r0_len = segments * 2;
+		rth0->ip6r0_type = IPV6_RTHDR_TYPE_0;
+		rth0->ip6r0_segleft = 0;
+		rth0->ip6r0_reserved = 0;
+		break;
+	default:
+		return (NULL);	/* type not supported */
+	}
+
+	return (bp);
+}
+
+int
+inet6_rth_add(void *bp, const struct in6_addr *addr)
+{
+	struct ip6_rthdr *rth = (struct ip6_rthdr *)bp;
+	struct ip6_rthdr0 *rth0;
+	struct in6_addr *nextaddr;
+
+	switch (rth->ip6r_type) {
+	case IPV6_RTHDR_TYPE_0:
+		rth0 = (struct ip6_rthdr0 *)rth;
+		nextaddr = (struct in6_addr *)(rth0 + 1) + rth0->ip6r0_segleft;
+		*nextaddr = *addr;
+		rth0->ip6r0_segleft++;
+		break;
+	default:
+		return (-1);	/* type not supported */
+	}
+
+	return (0);
+}
+
+int
+inet6_rth_reverse(const void *in, void *out)
+{
+	struct ip6_rthdr *rth_in = (struct ip6_rthdr *)in;
+	struct ip6_rthdr0 *rth0_in, *rth0_out;
+	int i, segments;
+
+	switch (rth_in->ip6r_type) {
+	case IPV6_RTHDR_TYPE_0:
+		rth0_in = (struct ip6_rthdr0 *)in;
+		rth0_out = (struct ip6_rthdr0 *)out;
+
+		/* parameter validation XXX too paranoid? */
+		if (rth0_in->ip6r0_len % 2)
+			return (-1);
+		segments = rth0_in->ip6r0_len / 2;
+
+		/* we can't use memcpy here, since in and out may overlap */
+		memmove((void *)rth0_out, (void *)rth0_in,
+			((rth0_in->ip6r0_len) + 1) << 3);
+		rth0_out->ip6r0_segleft = segments;
+
+		/* reverse the addresses */
+		for (i = 0; i < segments / 2; i++) {
+			struct in6_addr addr_tmp, *addr1, *addr2;
+
+			addr1 = (struct in6_addr *)(rth0_out + 1) + i;
+			addr2 = (struct in6_addr *)(rth0_out + 1) +
+			    (segments - i - 1);
+			addr_tmp = *addr1;
+			*addr1 = *addr2;
+			*addr2 = addr_tmp;
+		}
+		
+		break;
+	default:
+		return (-1);	/* type not supported */
+	}
+
+	return (0);
+}
+
+int
+inet6_rth_segments(const void *bp)
+{
+	struct ip6_rthdr *rh = (struct ip6_rthdr *)bp;
+	struct ip6_rthdr0 *rh0;
+	int addrs;
+
+	switch (rh->ip6r_type) {
+	case IPV6_RTHDR_TYPE_0:
+		rh0 = (struct ip6_rthdr0 *)bp;
+
+		/*
+		 * Validation for a type-0 routing header.
+		 * Is this too strict?
+		 */
+		if ((rh0->ip6r0_len % 2) != 0 ||
+		    (addrs = (rh0->ip6r0_len >> 1)) < rh0->ip6r0_segleft)
+			return (-1);
+
+		return (addrs);
+	default:
+		return (-1);	/* unknown type */
+	}
+}
+
+struct in6_addr *
+inet6_rth_getaddr(const void *bp, int idx)
+{
+	struct ip6_rthdr *rh = (struct ip6_rthdr *)bp;
+	struct ip6_rthdr0 *rh0;
+	int addrs;
+
+	switch (rh->ip6r_type) {
+	case IPV6_RTHDR_TYPE_0:
+		 rh0 = (struct ip6_rthdr0 *)bp;
+		 
+		/*
+		 * Validation for a type-0 routing header.
+		 * Is this too strict?
+		 */
+		if ((rh0->ip6r0_len % 2) != 0 ||
+		    (addrs = (rh0->ip6r0_len >> 1)) < rh0->ip6r0_segleft)
+			return (NULL);
+
+		if (idx < 0 || addrs <= idx)
+			return (NULL);
+
+		return (((struct in6_addr *)(rh0 + 1)) + idx);
+	default:
+		return (NULL);	/* unknown type */
+		break;
 	}
 }

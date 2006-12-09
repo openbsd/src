@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6opts.c,v 1.2 2004/04/07 12:07:11 otto Exp $	*/
+/*	$OpenBSD: print-ip6opts.c,v 1.3 2006/12/09 01:12:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -61,7 +61,7 @@ ip6_opt_print(const u_char *bp, int len)
 	    }
 	    optlen = bp[i + 1] + 2;
 	    break;
-	case IP6OPT_RTALERT:
+	case IP6OPT_ROUTER_ALERT:
 	    if (len - i < IP6OPT_RTALERT_LEN) {
 		printf("(rtalert: trunc)");
 		goto trunc;

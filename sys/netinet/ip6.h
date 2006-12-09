@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6.h,v 1.17 2006/04/27 02:19:32 tedu Exp $	*/
+/*	$OpenBSD: ip6.h,v 1.18 2006/12/09 01:12:28 itojun Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -152,8 +152,7 @@ struct ip6_dest {
 #define IP6OPT_JUMBO		0xC2	/* 11 0 00010 = 194 */
 #define IP6OPT_NSAP_ADDR	0xC3	/* 11 0 00011 */
 #define IP6OPT_TUNNEL_LIMIT	0x04	/* 00 0 00100 */
-#define IP6OPT_RTALERT		0x05	/* 00 0 00101 (KAME definition) */
-#define IP6OPT_ROUTER_ALERT	0x05	/* (2292bis def, recommended) */
+#define IP6OPT_ROUTER_ALERT	0x05	/* 00 0 00101 (RFC3542, recommended) */
 
 #define IP6OPT_RTALERT_LEN	4
 #define IP6OPT_RTALERT_MLD	0	/* Datagram contains an MLD message */
@@ -274,8 +273,6 @@ struct ip6_frag {
  * with type "typ".
  * IP6_EXTHDR_GET0 does the same, except that it aligns the structure at the
  * very top of mbuf.  GET0 is likely to make memory copy than GET.
- *
- * XXX we're now testing this, needs m_pulldown()
  */
 #define IP6_EXTHDR_GET(val, typ, m, off, len) \
 do {									\

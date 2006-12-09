@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.71 2006/12/08 21:57:54 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.72 2006/12/09 01:12:28 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -751,7 +751,7 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 			}
 			optlen = *(opt + 1) + 2;
 			break;
-		case IP6OPT_RTALERT:
+		case IP6OPT_ROUTER_ALERT:
 			/* XXX may need check for alignment */
 			if (hbhlen < IP6OPT_RTALERT_LEN) {
 				ip6stat.ip6s_toosmall++;
@@ -907,13 +907,14 @@ ip6_unknown_opt(optp, m, off)
  * you are using IP6_EXTHDR_CHECK() not m_pulldown())
  */
 void
-ip6_savecontrol(in6p, mp, ip6, m)
+ip6_savecontrol(in6p, m, mp)
 	struct inpcb *in6p;
-	struct mbuf **mp;
-	struct ip6_hdr *ip6;
 	struct mbuf *m;
+	struct mbuf **mp;
 {
+#define IS2292(x, y)	((in6p->in6p_flags & IN6P_RFC2292) ? (x) : (y))
 # define in6p_flags	inp_flags
+	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 
 #ifdef SO_TIMESTAMP
 	if (in6p->inp_socket->so_options & SO_TIMESTAMP) {
@@ -926,21 +927,6 @@ ip6_savecontrol(in6p, mp, ip6, m)
 			mp = &(*mp)->m_next;
 	}
 #endif
-	if (in6p->in6p_flags & IN6P_RECVDSTADDR) {
-		*mp = sbcreatecontrol((caddr_t) &ip6->ip6_dst,
-		    sizeof(struct in6_addr), IPV6_RECVDSTADDR, IPPROTO_IPV6);
-		if (*mp)
-			mp = &(*mp)->m_next;
-	}
-
-#ifdef noyet
-	/* options were tossed above */
-	if (in6p->in6p_flags & IN6P_RECVOPTS)
-		/* broken */
-	/* ip6_srcroute doesn't do what we want here, need to fix */
-	if (in6p->in6p_flags & IPV6P_RECVRETOPTS)
-		/* broken */
-#endif
 
 	/* RFC 2292 sec. 5 */
 	if ((in6p->in6p_flags & IN6P_PKTINFO) != 0) {
@@ -948,42 +934,56 @@ ip6_savecontrol(in6p, mp, ip6, m)
 		bcopy(&ip6->ip6_dst, &pi6.ipi6_addr, sizeof(struct in6_addr));
 		if (IN6_IS_SCOPE_EMBED(&pi6.ipi6_addr))
 			pi6.ipi6_addr.s6_addr16[1] = 0;
-		pi6.ipi6_ifindex = (m && m->m_pkthdr.rcvif)
-					? m->m_pkthdr.rcvif->if_index
-					: 0;
+		pi6.ipi6_ifindex =
+		    (m && m->m_pkthdr.rcvif) ? m->m_pkthdr.rcvif->if_index : 0;
 		*mp = sbcreatecontrol((caddr_t) &pi6,
-		    sizeof(struct in6_pktinfo), IPV6_PKTINFO, IPPROTO_IPV6);
+		    sizeof(struct in6_pktinfo),
+		    IS2292(IPV6_2292PKTINFO, IPV6_PKTINFO), IPPROTO_IPV6);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
-	if (in6p->in6p_flags & IN6P_HOPLIMIT) {
+
+	if ((in6p->in6p_flags & IN6P_HOPLIMIT) != 0) {
 		int hlim = ip6->ip6_hlim & 0xff;
 		*mp = sbcreatecontrol((caddr_t) &hlim, sizeof(int),
-		    IPV6_HOPLIMIT, IPPROTO_IPV6);
+		    IS2292(IPV6_2292HOPLIMIT, IPV6_HOPLIMIT), IPPROTO_IPV6);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
-	/* IN6P_NEXTHOP - for outgoing packet only */
+
+	if ((in6p->in6p_flags & IN6P_TCLASS) != 0) {
+		u_int32_t flowinfo;
+		int tclass;
+
+		flowinfo = (u_int32_t)ntohl(ip6->ip6_flow & IPV6_FLOWINFO_MASK);
+		flowinfo >>= 20;
+
+		tclass = flowinfo & 0xff;
+		*mp = sbcreatecontrol((caddr_t)&tclass, sizeof(tclass),
+		    IPV6_TCLASS, IPPROTO_IPV6);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
 
 	/*
 	 * IPV6_HOPOPTS socket option.  Recall that we required super-user
 	 * privilege for the option (see ip6_ctloutput), but it might be too
 	 * strict, since there might be some hop-by-hop options which can be
 	 * returned to normal user.
-	 * See also RFC 2292 section 6.
+	 * See also RFC 2292 section 6 (or RFC 3542 section 8).
 	 */
 	if ((in6p->in6p_flags & IN6P_HOPOPTS) != 0) {
 		/*
 		 * Check if a hop-by-hop options header is contatined in the
 		 * received packet, and if so, store the options as ancillary
 		 * data. Note that a hop-by-hop options header must be
-		 * just after the IPv6 header, which fact is assured through
-		 * the IPv6 input processing.
+		 * just after the IPv6 header, which is assured through the
+		 * IPv6 input processing.
 		 */
 		struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 		if (ip6->ip6_nxt == IPPROTO_HOPOPTS) {
 			struct ip6_hbh *hbh;
-			int hbhlen;
+			int hbhlen = 0;
 			struct mbuf *ext;
 
 			ext = ip6_pullexthdr(m, sizeof(struct ip6_hdr),
@@ -1001,13 +1001,15 @@ ip6_savecontrol(in6p, mp, ip6, m)
 			}
 
 			/*
-			 * XXX: We copy whole the header even if a jumbo
-			 * payload option is included, which option is to
-			 * be removed before returning in the RFC 2292.
-			 * But it's too painful operation...
+			 * XXX: We copy the whole header even if a
+			 * jumbo payload option is included, the option which
+			 * is to be removed before returning according to
+			 * RFC2292.
+			 * Note: this constraint is removed in RFC3542.
 			 */
 			*mp = sbcreatecontrol((caddr_t)hbh, hbhlen,
-			    IPV6_HOPOPTS, IPPROTO_IPV6);
+			    IS2292(IPV6_2292HOPOPTS, IPV6_HOPOPTS),
+			    IPPROTO_IPV6);
 			if (*mp)
 				mp = &(*mp)->m_next;
 			m_freem(ext);
@@ -1015,7 +1017,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 	}
 
 	/* IPV6_DSTOPTS and IPV6_RTHDR socket options */
-	if (in6p->in6p_flags & (IN6P_DSTOPTS | IN6P_RTHDR)) {
+	if ((in6p->in6p_flags & (IN6P_RTHDR | IN6P_DSTOPTS)) != 0) {
 		struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 		int nxt = ip6->ip6_nxt, off = sizeof(struct ip6_hdr);
 
@@ -1067,7 +1069,8 @@ ip6_savecontrol(in6p, mp, ip6, m)
 					break;
 
 				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
-				    IPV6_DSTOPTS, IPPROTO_IPV6);
+				    IS2292(IPV6_2292DSTOPTS, IPV6_DSTOPTS),
+				    IPPROTO_IPV6);
 				if (*mp)
 					mp = &(*mp)->m_next;
 				break;
@@ -1077,7 +1080,8 @@ ip6_savecontrol(in6p, mp, ip6, m)
 					break;
 
 				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
-				    IPV6_RTHDR, IPPROTO_IPV6);
+				    IS2292(IPV6_2292RTHDR, IPV6_RTHDR),
+				    IPPROTO_IPV6);
 				if (*mp)
 					mp = &(*mp)->m_next;
 				break;

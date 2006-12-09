@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.42 2006/11/21 05:37:32 itojun Exp $	*/
+/*	$OpenBSD: in6.h,v 1.43 2006/12/09 01:12:28 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -402,24 +402,31 @@ struct route_in6 {
 /* no hdrincl */
 #define IPV6_SOCKOPT_RESERVED1	3  /* reserved for future use */
 #define IPV6_UNICAST_HOPS	4  /* int; IP6 hops */
+#if 0 /* the followings are relic in IPv4 and hence are disabled */
 #define IPV6_RECVOPTS		5  /* bool; receive all IP6 opts w/dgram */
 #define IPV6_RECVRETOPTS	6  /* bool; receive IP6 opts for response */
 #define IPV6_RECVDSTADDR	7  /* bool; receive IP6 dst addr w/dgram */
 #define IPV6_RETOPTS		8  /* ip6_opts; set/get IP6 options */
-#define IPV6_MULTICAST_IF	9  /* u_char; set/get IP6 multicast i/f  */
+#endif
+#define IPV6_MULTICAST_IF	9  /* u_char; set/get IP6 multicast i/f */
 #define IPV6_MULTICAST_HOPS	10 /* u_char; set/get IP6 multicast hops */
 #define IPV6_MULTICAST_LOOP	11 /* u_char; set/get IP6 multicast loopback */
 #define IPV6_JOIN_GROUP		12 /* ip6_mreq; join a group membership */
 #define IPV6_LEAVE_GROUP	13 /* ip6_mreq; leave a group membership */
 #define IPV6_PORTRANGE		14 /* int; range to choose for unspec port */
 #define ICMP6_FILTER		18 /* icmp6_filter; icmp6 filter */
-#define IPV6_PKTINFO		19 /* bool; send/rcv if, src/dst addr */
-#define IPV6_HOPLIMIT		20 /* bool; hop limit */
-#define IPV6_NEXTHOP		21 /* bool; next hop addr */
-#define IPV6_HOPOPTS		22 /* bool; hop-by-hop option */
-#define IPV6_DSTOPTS		23 /* bool; destination option */
-#define IPV6_RTHDR		24 /* bool; routing header */
-#define IPV6_PKTOPTIONS		25 /* buf/cmsghdr; set/get IPv6 options */
+
+/* RFC2292 options */
+#ifdef _KERNEL
+#define IPV6_2292PKTINFO	19 /* bool; send/rcv if, src/dst addr */
+#define IPV6_2292HOPLIMIT	20 /* bool; hop limit */
+#define IPV6_2292NEXTHOP	21 /* bool; next hop addr */
+#define IPV6_2292HOPOPTS	22 /* bool; hop-by-hop option */
+#define IPV6_2292DSTOPTS	23 /* bool; destination option */
+#define IPV6_2292RTHDR		24 /* bool; routing header */
+#define IPV6_2292PKTOPTIONS	25 /* buf/cmsghdr; set/get IPv6 options */
+#endif
+
 #define IPV6_CHECKSUM		26 /* int; checksum offset for raw socket */
 #define IPV6_V6ONLY		27 /* bool; make AF_INET6 sockets v6 only */
 
@@ -428,15 +435,48 @@ struct route_in6 {
 #endif
 #define IPV6_FAITH		29 /* bool; accept FAITH'ed connections */
 
-/* 30-41: reserved */
-#define IPV6_USE_MIN_MTU	42 /* bool; send packets at the minimum MTU */
+/* 30-34: reserved */
 
-/* 43-52, 57-59: reserved */
+/* new socket options introduced in RFC3542 */
+#define IPV6_RTHDRDSTOPTS	35 /* ip6_dest; send dst option before rthdr */
+
+#define IPV6_RECVPKTINFO	36 /* bool; recv if, dst addr */
+#define IPV6_RECVHOPLIMIT	37 /* bool; recv hop limit */
+#define IPV6_RECVRTHDR		38 /* bool; recv routing header */
+#define IPV6_RECVHOPOPTS	39 /* bool; recv hop-by-hop option */
+#define IPV6_RECVDSTOPTS	40 /* bool; recv dst option after rthdr */
+#ifdef _KERNEL
+#define IPV6_RECVRTHDRDSTOPTS	41 /* bool; recv dst option before rthdr */
+#endif
+
+#define IPV6_USE_MIN_MTU	42 /* bool; send packets at the minimum MTU */
+#define IPV6_RECVPATHMTU	43 /* bool; notify an according MTU */
+
+#define IPV6_PATHMTU		44 /* mtuinfo; get the current path MTU (sopt),
+				      4 bytes int; MTU notification (cmsg) */
+
+/* 45: reserved */
+
+/* more new socket options introduced in RFC3542 */
+#define IPV6_PKTINFO		46 /* in6_pktinfo; send if, src addr */
+#define IPV6_HOPLIMIT		47 /* int; send hop limit */
+#define IPV6_NEXTHOP		48 /* sockaddr; next hop addr */
+#define IPV6_HOPOPTS		49 /* ip6_hbh; send hop-by-hop option */
+#define IPV6_DSTOPTS		50 /* ip6_dest; send dst option befor rthdr */
+#define IPV6_RTHDR		51 /* ip6_rthdr; send routing header */
+
+/* 52: reserved */
 #define IPV6_AUTH_LEVEL		53   /* int; authentication used */
 #define IPV6_ESP_TRANS_LEVEL	54   /* int; transport encryption */
 #define IPV6_ESP_NETWORK_LEVEL	55   /* int; full-packet encryption */
 #define IPSEC6_OUTSA		56   /* set the outbound SA for a socket */
+#define IPV6_RECVTCLASS		57   /* bool; recv traffic class values */
+/* 58: reserved */
+#define IPV6_AUTOFLOWLABEL	59   /* bool; attach flowlabel automagically */
 #define IPV6_IPCOMP_LEVEL	60   /* int; compression */
+
+#define IPV6_TCLASS		61   /* int; send traffic class value */
+#define IPV6_DONTFRAG		62   /* bool; disable IPv6 fragmentation */
 
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
 
@@ -447,8 +487,8 @@ struct route_in6 {
 /*
  * Defaults and limits for options
  */
-#define IPV6_DEFAULT_MULTICAST_HOPS 1	/* normally limit m'casts to 1 hop  */
-#define IPV6_DEFAULT_MULTICAST_LOOP 1	/* normally hear sends if a member  */
+#define IPV6_DEFAULT_MULTICAST_HOPS 1	/* normally limit m'casts to 1 hop */
+#define IPV6_DEFAULT_MULTICAST_LOOP 1	/* normally hear sends if a member */
 
 /*
  * Argument structure for IPV6_JOIN_GROUP and IPV6_LEAVE_GROUP.
@@ -464,6 +504,14 @@ struct ipv6_mreq {
 struct in6_pktinfo {
 	struct in6_addr	ipi6_addr;	/* src/dst IPv6 address */
 	unsigned int	ipi6_ifindex;	/* send/recv interface index */
+};
+
+/*
+ * Control structure for IPV6_RECVPATHMTU socket option.
+ */
+struct ip6_mtuinfo {
+	struct sockaddr_in6 ip6m_addr;	/* or sockaddr_storage? */
+	u_int32_t ip6m_mtu;
 };
 
 /*
@@ -705,6 +753,25 @@ extern int inet6_rthdr_reverse(const struct cmsghdr *, struct cmsghdr *);
 extern int inet6_rthdr_segments(const struct cmsghdr *);
 extern struct in6_addr *inet6_rthdr_getaddr(struct cmsghdr *, int);
 extern int inet6_rthdr_getflags(const struct cmsghdr *, int);
+
+extern int inet6_opt_init(void *, socklen_t);
+extern int inet6_opt_append(void *, socklen_t, int, u_int8_t,
+		socklen_t, u_int8_t, void **);
+extern int inet6_opt_finish(void *, socklen_t, int);
+extern int inet6_opt_set_val(void *, int, void *, socklen_t);
+
+extern int inet6_opt_next(void *, socklen_t, int, u_int8_t *,
+		socklen_t *, void **);
+extern int inet6_opt_find(void *, socklen_t, int, u_int8_t,
+		socklen_t *, void **);
+extern int inet6_opt_get_val(void *, int, void *, socklen_t);
+
+extern socklen_t inet6_rth_space(int, int);
+extern void *inet6_rth_init(void *, socklen_t, int, int);
+extern int inet6_rth_add(void *, const struct in6_addr *);
+extern int inet6_rth_reverse(const void *, void *);
+extern int inet6_rth_segments(const void *);
+extern struct in6_addr *inet6_rth_getaddr(const void *, int);
 __END_DECLS
 
 #endif /* !_NETINET6_IN6_H_ */
