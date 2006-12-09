@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.4 2006/12/09 06:08:09 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.5 2006/12/09 06:15:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -106,6 +106,12 @@ struct cfdriver ahci_cd = {
 
 int		ahci_intr(void *);
 
+u_int32_t	ahci_read(struct ahci_softc *, bus_size_t);
+void		ahci_write(struct ahci_softc *, bus_size_t, u_int32_t);
+int		ahci_wait_eq(struct ahci_softc *, bus_size_t,
+		    u_int32_t, u_int32_t);
+int		ahci_wait_ne(struct ahci_softc *, bus_size_t,
+		    u_int32_t, u_int32_t);
 
 int
 ahci_match(struct device *parent, void *match, void *aux)
@@ -156,4 +162,50 @@ int
 ahci_intr(void *arg)
 {
 	return (0);
+}
+
+u_int32_t
+ahci_read(struct ahci_softc *sc, bus_size_t r)
+{
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(sc->sc_iot, sc->sc_ioh, r));
+}
+
+void
+ahci_write(struct ahci_softc *sc, bus_size_t r, u_int32_t v)
+{
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+int
+ahci_wait_eq(struct ahci_softc *sc, bus_size_t r, u_int32_t mask,
+    u_int32_t target)
+{ 
+	int				i;
+
+	for (i = 0; i < 1000; i++) {
+		if ((ahci_read(sc, r) & mask) == target)
+			return (0);
+		delay(1000);
+	}
+
+	return (1);
+}
+
+int
+ahci_wait_ne(struct ahci_softc *sc, bus_size_t r, u_int32_t mask,
+    u_int32_t target)
+{ 
+	int				i;
+
+	for (i = 0; i < 1000; i++) {
+		if ((ahci_read(sc, r) & mask) != target)
+			return (0);
+		delay(1000);
+	}
+
+	return (1);
 }
