@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.3 2006/12/09 06:03:34 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.4 2006/12/09 06:08:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -29,6 +29,14 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#ifdef AHCI_DEBUG
+#define DPRINTF(m, f...) do { if (ahcidebug & (m)) printf(f); } while (0)
+#define AHCI_D_VERBOSE		0x01
+int ahcidebug = AHCI_D_VERBOSE;
+#else
+#define DPRINTF(m, f...)
+#endif
 
 #define AHCI_PCI_BAR		0x24
 
