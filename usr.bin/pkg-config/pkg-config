@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.13 2006/12/04 22:05:41 espie Exp $
+# $OpenBSD: pkg-config,v 1.14 2006/12/09 17:16:06 espie Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -33,6 +33,10 @@ if (defined($ENV{'PKG_CONFIG_LOGFILE'}) && $ENV{'PKG_CONFIG_LOGFILE'}) {
 	$logfile = $ENV{'PKG_CONFIG_LOGFILE'};
 }
 
+my $allow_uninstalled = 
+	defined $ENV{'PKG_CONFIG_DISABLE_UNINSTALLED'} ? 0 : 1;
+my $found_uninstalled = 0;
+
 my $version = 0.19; # pretend to be this version of pkgconfig
 
 my %configs = ();
@@ -40,8 +44,14 @@ my %mode = ();
 my $variables = {};
 my $D = 0; # debug flag
 
-# defaults
-$mode{printerr} = 1;
+{
+    my $d = $ENV{'PKG_CONFIG_TOP_BUILD_DIR'};
+    if (defined $d) {
+	    $variables->{pc_top_builddir} = $d;
+    } else {
+	    $variables->{pc_top_builddir} = '$(top_builddir)';
+    }
+}
 
 if ($logfile) {
 	open my $L, ">>" . $logfile;
@@ -61,12 +71,12 @@ Getopt::Long::Configure('no_ignore_case');
 GetOptions(	'debug' => \$D,
 		'help' => \&help, #does not return
 		'usage' => \&help, #does not return
-		'list-all' => \&do_list, #does not return
+		'list-all' => \$mode{list},
 		'version' => sub { print "$version\n" ; exit(0);} ,
 		'errors-to-stdout' => sub { $mode{estdout} = 1},
 		'print-errors' => sub { $mode{printerr} = 1},
 		'silence-errors' => sub { $mode{printerr} = 0},
-		'atleast-pkgconfig-version=s' => \$mode{minvers},
+		'atleast-pkgconfig-version=s' => \$mode{myminvers},
 
 		'cflags' => sub { $mode{cflags} = 3},
 		'cflags-only-I' => sub { $mode{cflags} |= 1},
@@ -78,40 +88,45 @@ GetOptions(	'debug' => \$D,
 		'exists' => sub { $mode{exists} = 1} ,
 		'static' => sub { $mode{static} = 1},
 		'uninstalled' => sub { $mode{uninstalled} = 1},
-		'atleast-version=s' => \$mode{'atleast-version'},
+		'atleast-version=s' => \$mode{minversion},
+		'exact-version=s' => \$mode{exactversion},
+		'max-version=s' => \$mode{maxversion},
 		'modversion' => \$mode{modversion},
 		'variable=s' => \$mode{variable},
 		'define-variable=s' => $variables,
 	);
 
+# Initial value of printerr depends on the options...
+if (!defined $mode{printerr}) {
+	if (defined $mode{libs} || defined $mode{cflags} 
+	    || defined $mode{version} || defined $mode{list}) {
+		$mode{printerr} = 1;
+	} else {
+		$mode{printerr} = 0;
+	}
+}
+
 print STDERR "\n[" . join('] [', $0, @ARGV) . "]\n" if $D;
-self_version($mode{minvers}) if $mode{minvers}; #does not return
 
 my $rc = 0;
 
+# XXX pkg-config is a bit weird
 {
 my $p = join(' ', @ARGV);
-$p =~ s/\s+/ /g;
-$p =~ s/^\s//g;
+$p =~ s/^\s+//;
 @ARGV = split /\s+/, $p;
 }
 
-if (defined $mode{exists}) {
-	while (@ARGV) {
-		my $p = shift @ARGV;
-		my $cfg = cache_find_config($p);
-		exit 1 if !defined $cfg;
-		if (@ARGV >= 2  && $ARGV[0] =~ /[<=>]+/ &&
-		    $ARGV[1] =~ /[0-9\.]+/) {
-			$rc = 1 unless versionmatch($cfg, @ARGV);
-			shift @ARGV; shift @ARGV;
-		}
-	}
-	exit $rc;
+if ($mode{myminvers}) {
+	exit self_version($mode{myminvers});
+}
+
+if ($mode{list}) {
+	exit do_list();
 }
 
 my $cfg_full_list = [];
-my @vlist = ();
+my $top_config = [];
 
 while (@ARGV){
 	my $p = shift @ARGV;
@@ -124,15 +139,61 @@ while (@ARGV){
 	}
 	$p =~ s/,//g;
 	handle_config($p, $op, $v, $cfg_full_list);
-	do_modversion($p) if defined $mode{modversion};
-	do_variable($p, $mode{variable}) if $mode{variable};
+	push(@$top_config, $p);
 }
 
-my $cfg_list = simplify_and_reverse($cfg_full_list);
+if ($mode{exists}) {
+	exit $rc;
+}
 
-if ($mode{cflags} || $mode{libs}|| $mode{variable}) {
-    push @vlist, do_cflags() if $mode{cflags};
-    push @vlist, do_libs() if $mode{libs};
+if ($mode{uninstalled}) {
+	$rc = 1 unless $found_uninstalled;
+	exit $rc;
+}
+
+if ($mode{modversion}) {
+	for my $pkg (@$top_config) {
+		do_modversion($pkg);
+	}
+}
+
+if ($mode{minversion}) {
+	my $v = $mode{minversion};
+	for my $pkg (@$top_config) {
+		$rc = 1 unless versionmatch($configs{$pkg}, '>=', $v);
+	}
+	exit $rc;
+}
+
+if ($mode{exactversion}) {
+	my $v = $mode{exactversion};
+	for my $pkg (@$top_config) {
+		$rc = 1 unless versionmatch($configs{$pkg}, '=', $v);
+	}
+	exit $rc;
+}
+
+if ($mode{minversion}) {
+	my $v = $mode{maxversion};
+	for my $pkg (@$top_config) {
+		$rc = 1 unless versionmatch($configs{$pkg}, '<=', $v);
+	}
+	exit $rc;
+}
+
+my @vlist = ();
+
+if ($mode{variable}) {
+	for my $pkg (@$top_config) {
+		do_variable($pkg, $mode{variable});
+	}
+}
+
+my $dep_cfg_list = simplify_and_reverse($cfg_full_list);
+
+if ($mode{cflags} || $mode{libs} || $mode{variable}) {
+    push @vlist, do_cflags($dep_cfg_list) if $mode{cflags};
+    push @vlist, do_libs($dep_cfg_list) if $mode{libs};
     print join(' ', @vlist), "\n";
 }
 
@@ -157,7 +218,10 @@ sub handle_config
 		}
 	}
 
-	return undef if !defined $cfg;
+	if (!defined $cfg) {
+		$rc = 1;
+		return undef;
+	}
 
 	my $deps = $cfg->get_property('Requires', $variables);
 	if (defined $deps) {
@@ -191,6 +255,17 @@ sub handle_config
 sub pathresolve
 {
 	my ($p) = @_;
+
+	if ($allow_uninstalled && $p !~ m/\-uninstalled$/) {
+		foreach my $d (@PKGPATH) {
+			my $f = "$d/$p-uninstalled.pc";
+			print STDERR "pathresolve($p) looking in $f\n" if $D;
+			if (-f $f) {
+				$found_uninstalled = 1;
+				return $f;
+			}
+		}
+	}
 
 	foreach my $d (@PKGPATH) {
 		my $f = "$d/$p.pc";
@@ -291,9 +366,11 @@ sub do_modversion
 #if the cflags option is set, pull out the compiler flags
 sub do_cflags
 {
+	my $list = shift;
+
 	my $cflags = [];
 
-	foreach my $pkg (@$cfg_list) {
+	foreach my $pkg (@$list) {
 		my $l = $configs{$pkg}->get_property('Cflags', $variables);
 		push(@$cflags, @$l) if defined $l;
 	}
@@ -307,14 +384,17 @@ sub do_cflags
 			    return 0;
 			}
 		});
+	return undef;
 }
 
 #if the lib option is set, pull out the linker flags
 sub do_libs
 {
+	my $list = shift;
+
 	my $libs = [];
 
-	foreach my $pkg (@$cfg_list) {
+	foreach my $pkg (@$list) {
 		my $l = $configs{$pkg}->get_property('Libs', $variables);
 		push(@$libs, @$l) if defined $l;
 	}
@@ -362,7 +442,7 @@ sub do_list
 		    stringize($cfg->get_property('Name', $variables)), 
 		    stringize($cfg->get_property('Description', $variables)));
 	}
-	exit 0;
+	return 0;
 }
 
 sub help
@@ -407,43 +487,62 @@ sub self_version
 	@b = split /\./, $version;
 
 	if (($b[0] >= $a[0]) && ($b[1] >= $a[1])) {
-		exit 0;
+		return 0;
 	} else {
-		exit 1;
+		return 1;
 	}
+}
+
+sub compare
+{
+	my ($a, $b) = @_;
+
+	if ($a eq $b) {
+		return 0;
+	}
+
+	my @a = split /\./, $a;
+	my @b = split /\./, $b;
+
+	while (@a && @b) { #so long as both lists have something
+		return 1 if $a[0] > $b[0];
+		return -1 if $a[0] < $b[0];
+		shift @a; shift @b;
+	}
+	return 1 if @a;
+	return -1 if @b;
+	return 0;
 }
 
 # got a package meeting the requested specific version?
 sub versionmatch
 {
-	my ($cfg, $op, $ver) = @_;
+	my ($cfg, $op, $want) = @_;
 	
-	# XXX assumes op is >= for now.
-
 	# can't possibly match if we can't find the file
 	return 0 if !defined $cfg;
 
-	my $v = stringize($cfg->get_property('Version', $variables));
+	my $inst = stringize($cfg->get_property('Version', $variables));
 
 	# can't possibly match if we can't find the version string
-	return 0 if $v eq '';
+	return 0 if $inst eq '';
 
-	print "comparing $ver (wanted) to $v (installed)\n" if $D;
-	my @inst = split /\./, $v;
-	my @want = split /\./, $ver;
-
-	while (@inst && @want) { #so long as both lists have something
-		# bail if the requested version element beats existing
-		return 1 if $inst[0] > $want[0];
-		return 0 if $inst[0] < $want[0];
-		shift @inst; shift @want;
+	print "comparing $want (wanted) to $inst (installed)\n" if $D;
+	my $value = compare($inst, $want);
+	if ($op eq '>=') {
+		return $value >= 0;
 	}
-	# the version at least equals the requested. if the requested
-	# version has some micropatchlevel beyond the existing version,
-	# return failure
-	return 0 if @want;
-	# and after all that, the version is good enough
-	return 1;
+	elsif ($op eq '=') {
+		return $value == 0;
+	} elsif ($op eq '!=') {
+		return $value != 0;
+	} elsif ($op eq '<') {
+		return $value < 0;
+	} elsif ($op eq '>') {
+		return $value > 0;
+	} elsif ($op eq '<=') {
+		return $value <= 0;
+	}
 }
 
 sub mismatch
