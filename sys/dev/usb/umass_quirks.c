@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.23 2006/12/09 21:06:12 pedro Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.24 2006/12/09 21:22:30 pedro Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.67 2004/06/28 07:49:16 mycroft Exp $	*/
 
 /*
@@ -519,6 +519,10 @@ umass_fixup_sony(struct umass_softc *sc)
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 	if (id->bInterfaceSubClass == 0xff) {
 		dd = usbd_get_device_descriptor(sc->sc_udev);
+		/*
+		 * Many Sony DSC cameras share the same product ID, so the
+		 * revision number is used to distinguish between them.
+		 */
 		switch (UGETW(dd->bcdDevice)) {
 		case 0x600: /* Sony DSC-W50, rev 6.00 */
 		case 0x500: /* Sony DSC-P41, rev 5.00 */
