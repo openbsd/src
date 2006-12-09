@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.6 2006/12/09 06:29:43 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.7 2006/12/09 06:42:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -72,6 +72,9 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define AHCI_REG_IS		0x008 /* Interrupt Status */
 #define AHCI_REG_PI		0x00c /* Ports Implemented */
 #define AHCI_REG_VS		0x010 /* AHCI Version */
+#define  AHCI_REG_VS_0_95		0x00000905 /* 0.95 */
+#define  AHCI_REG_VS_1_0		0x00010000 /* 1.0 */
+#define  AHCI_REG_VS_1_1		0x00010100 /* 1.1 */
 #define AHCI_REG_CCC_CTL	0x014 /* Coalescing Control */
 #define AHCI_REG_CCC_PORTS	0x018 /* Coalescing Ports */
 #define AHCI_REG_EM_LOC		0x01c /* Enclosure Mgmt Location */
@@ -138,14 +141,33 @@ int
 ahci_map_pci(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
 	pcireg_t			memtype;
+	u_int32_t			vs;
 	pci_intr_handle_t		ih;
 	const char			*intrstr;
+	const char			*revision;
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AHCI_PCI_BAR);
 	if (pci_mapreg_map(pa, AHCI_PCI_BAR, memtype, 0, &sc->sc_iot,
 	    &sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
 		printf(": unable to map registers\n");
 		return (1);
+	}
+
+	vs = ahci_read(sc, AHCI_REG_VS);
+	switch (vs) {
+	case AHCI_REG_VS_0_95:
+		revision = "0.95";
+		break;
+	case AHCI_REG_VS_1_0:
+		revision = "1.0";
+		break;
+	case AHCI_REG_VS_1_1:
+		revision = "1.1";
+		break;
+
+	default:
+		printf(": unsupported revision (0x%08x)\n", vs);
+		goto unmap;
 	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
@@ -162,7 +184,7 @@ ahci_map_pci(struct ahci_softc *sc, struct pci_attach_args *pa)
 		goto unmap;
 	}
 
-	printf(": %s\n", intrstr);
+	printf(": %s, AHCI %s\n", intrstr, revision);
 
 	return (0);
 
