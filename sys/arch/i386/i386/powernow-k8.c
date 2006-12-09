@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.18 2006/10/19 19:29:04 tom Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.19 2006/12/09 00:16:46 gwk Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -366,11 +366,15 @@ k8_powernow_init(void)
 	cpuid(0x80000007, regs);
 	if (!(regs[3] & AMD_PN_FID_VID))
 		return;
+	
+	/* Extended CPUID signature value */
+	cpuid(0x80000001, regs);
 
 	cstate = malloc(sizeof(struct k8pnow_cpu_state), M_DEVBUF, M_NOWAIT);
 	if (!cstate)
 		return;
 
+	cstate->n_states = 0;
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
 	maxfid = PN8_STA_MFID(status);
 	maxvid = PN8_STA_MVID(status);
@@ -385,20 +389,20 @@ k8_powernow_init(void)
 	else
 		techname = "Cool'n'Quiet K8";
 
-	if (k8pnow_states(cstate, ci->ci_signature, maxfid, maxvid)) {
-		if (cstate->n_states) {
-			printf("%s: %s %d MHz: speeds:",
-			    ci->ci_dev.dv_xname, techname, pentium_mhz);
-			for (i = cstate->n_states; i > 0; i--) {
-				state = &cstate->state_table[i-1];
-				printf(" %d", state->freq);
-			}
-			printf(" MHz\n");
-			k8pnow_current_state = cstate;
-			cpu_setperf = k8_powernow_setperf;
-			setperf_prio = 1;
-			return;
+	if (!k8pnow_states(cstate, ci->ci_signature, maxfid, maxvid))
+		k8pnow_states(cstate, regs[0], maxfid, maxvid);
+	if (cstate->n_states) {
+		printf("%s: %s %d MHz: speeds:",
+		    ci->ci_dev.dv_xname, techname, pentium_mhz);
+		for (i = cstate->n_states; i > 0; i--) {
+			state = &cstate->state_table[i-1];
+			printf(" %d", state->freq);
 		}
+		printf(" MHz\n");
+		k8pnow_current_state = cstate;
+		cpu_setperf = k8_powernow_setperf;
+		setperf_prio = 1;
+		return;
 	}
 	free(cstate, M_DEVBUF);
 }

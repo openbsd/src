@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.12 2006/10/19 10:55:56 tom Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.13 2006/12/09 00:16:46 gwk Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * Copyright (c) 2004-2005 Bruno Ducrot
@@ -341,6 +341,7 @@ k8_powernow_init(void)
 {
 	uint64_t status;
 	u_int maxfid, maxvid, i;
+	u_int32_t extcpuid, dummy;
 	struct k8pnow_cpu_state *cstate;
 	struct k8pnow_state *state;
 	struct cpu_info * ci;
@@ -354,6 +355,7 @@ k8_powernow_init(void)
 	if (!cstate)
 		return;
 
+	cstate->n_states = 0;
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
 	maxfid = PN8_STA_MFID(status);
 	maxvid = PN8_STA_MVID(status);
@@ -368,20 +370,23 @@ k8_powernow_init(void)
 	else
 		techname = "Cool`n'Quiet K8";
 
-	if (k8pnow_states(cstate, ci->ci_signature, maxfid, maxvid)) {
-		if (cstate->n_states) {
-			printf("%s: %s %d MHz: speeds:",
-			    ci->ci_dev->dv_xname, techname, cpuspeed);
-			for(i = cstate->n_states; i > 0; i--) {
-				state = &cstate->state_table[i-1];
-				printf(" %d", state->freq);
-			}
-			printf(" MHz\n");
-			k8pnow_current_state = cstate;
-			cpu_setperf = k8_powernow_setperf;
-			setperf_prio = 1;
-			return;
+	/* Extended CPUID signature value */
+	CPUID(0x80000001, extcpuid, dummy, dummy, dummy);
+
+	if (!k8pnow_states(cstate, ci->ci_signature, maxfid, maxvid))
+		k8pnow_states(cstate, extcpuid, maxfid, maxvid);
+	if (cstate->n_states) {
+		printf("%s: %s %d MHz: speeds:",
+		    ci->ci_dev->dv_xname, techname, cpuspeed);
+		for (i = cstate->n_states; i > 0; i--) {
+			state = &cstate->state_table[i-1];
+			printf(" %d", state->freq);
 		}
+		printf(" MHz\n");
+		k8pnow_current_state = cstate;
+		cpu_setperf = k8_powernow_setperf;
+		setperf_prio = 1;
+		return;
 	}
 	free(cstate, M_DEVBUF);
 }
