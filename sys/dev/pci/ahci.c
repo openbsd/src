@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.2 2006/12/09 05:19:49 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.3 2006/12/09 06:03:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -30,17 +30,44 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#define AHCI_PCI_BAR			0x24
+#define AHCI_PCI_BAR		0x24
 
-#define AHCI_REG_CAP			0x000 /* HBA Capabilities */
-#define AHCI_REG_GHC			0x004 /* Global HBA Control */
-#define AHCI_REG_IS			0x008 /* Interrupt Status */
-#define AHCI_REG_PI			0x00c /* Ports Implemented */
-#define AHCI_REG_VS			0x010 /* AHCI Version */
-#define AHCI_REG_CCC_CTL		0x014 /* Coalescing Control */
-#define AHCI_REG_CCC_PORTS		0x018 /* Coalescing Ports */
-#define AHCI_REG_EM_LOC			0x01c /* Enclosure Mgmt Location */
-#define AHCI_REG_EM_CTL			0x020 /* Enclosure Mgmt Control */
+#define AHCI_REG_CAP		0x000 /* HBA Capabilities */
+#define  AHCI_REG_CAP_NP(_r)		((r) & 0x1f) /* Number of Ports */
+#define  AHCI_REG_CAP_SXS		(1<<5) /* External SATA */
+#define  AHCI_REG_CAP_EMS		(1<<6) /* Enclosure Mgmt */
+#define  AHCI_REG_CAP_CCCS		(1<<7) /* Cmd Coalescing */
+#define  AHCI_REG_CAP_NCS(_r)		(((_r) & 0xf80)>>7) /* No. Cmd Slots */
+#define  AHCI_REG_CAP_PSC		(1<<13) /* Partial State Capable */
+#define  AHCI_REG_CAP_SSC		(1<<14) /* Slumber State Capable */
+#define  AHCI_REG_CAP_PMD		(1<<15) /* PIO Multiple DRQ Block */
+#define  AHCI_REG_CAP_FBSS		(1<<16) /* FIS-Based Switching */
+#define  AHCI_REG_CAP_SPM		(1<<17) /* Port Multiplier */
+#define  AHCI_REG_CAP_SAM		(1<<18) /* AHCI Only mode */
+#define  AHCI_REG_CAP_SNZO		(1<<18) /* Non Zero DMA Offsets */
+#define  AHCI_REG_CAP_ISS		(0xf<<18) /* Interface Speed Support */
+#define  AHCI_REG_CAP_ISS_G1		(0x1<<18) /* Gen 1 (1.5 Gbps) */
+#define  AHCI_REG_CAP_ISS_G1_2		(0x2<<18) /* Gen 1 and 2 (3 Gbps) */
+#define  AHCI_REG_CAP_SCLO		(1<<24) /* Cmd List Override */
+#define  AHCI_REG_CAP_SAL		(1<<25) /* Activity LED */
+#define  AHCI_REG_CAP_SALP		(1<<26) /* Aggresive Link Pwr Mgmt */
+#define  AHCI_REG_CAP_SSS		(1<<27) /* Staggered Spinup */
+#define  AHCI_REG_CAP_SMPS		(1<<28) /* Mech Presence Switch */
+#define  AHCI_REG_CAP_SSNTF		(1<<29) /* SNotification Register */
+#define  AHCI_REG_CAP_SNCQ		(1<<30) /* Native Cmd Queuing */
+#define  AHCI_REG_CAP_S64A		(1<<31) /* 64bit Addressing */
+#define AHCI_REG_GHC		0x004 /* Global HBA Control */
+#define  AHCI_REG_GHC_HR		(1<<0) /* HBA Reset */
+#define  AHCI_REG_GHC_IE		(1<<1) /* Interrupt Enable */
+#define  AHCI_REG_GHC_MRSM		(1<<2) /* MSI Revert to Single Msg */
+#define  AHCI_REG_GHC_AE		(1<<31) /* AHCI Enable */
+#define AHCI_REG_IS		0x008 /* Interrupt Status */
+#define AHCI_REG_PI		0x00c /* Ports Implemented */
+#define AHCI_REG_VS		0x010 /* AHCI Version */
+#define AHCI_REG_CCC_CTL	0x014 /* Coalescing Control */
+#define AHCI_REG_CCC_PORTS	0x018 /* Coalescing Ports */
+#define AHCI_REG_EM_LOC		0x01c /* Enclosure Mgmt Location */
+#define AHCI_REG_EM_CTL		0x020 /* Enclosure Mgmt Control */
 
 static const struct pci_matchid ahci_devices[] = {
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB361 }
