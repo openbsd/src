@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.5 2006/12/09 06:15:32 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.6 2006/12/09 06:29:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -106,6 +106,8 @@ struct cfdriver ahci_cd = {
 
 int		ahci_intr(void *);
 
+int		ahci_map_pci(struct ahci_softc *, struct pci_attach_args *);
+
 u_int32_t	ahci_read(struct ahci_softc *, bus_size_t);
 void		ahci_write(struct ahci_softc *, bus_size_t, u_int32_t);
 int		ahci_wait_eq(struct ahci_softc *, bus_size_t,
@@ -125,6 +127,16 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ahci_softc		*sc = (struct ahci_softc *)self;
 	struct pci_attach_args		*pa = aux;
+
+	if (ahci_map_pci(sc, pa) != 0) {
+		/* error already printed by ahci_map_pci */
+		return;
+	}
+}
+
+int
+ahci_map_pci(struct ahci_softc *sc, struct pci_attach_args *pa)
+{
 	pcireg_t			memtype;
 	pci_intr_handle_t		ih;
 	const char			*intrstr;
@@ -133,7 +145,7 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	if (pci_mapreg_map(pa, AHCI_PCI_BAR, memtype, 0, &sc->sc_iot,
 	    &sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
 		printf(": unable to map registers\n");
-		return;
+		return (1);
 	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
@@ -149,13 +161,15 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 		    intrstr == NULL ? "" : intrstr);
 		goto unmap;
 	}
+
 	printf(": %s\n", intrstr);
 
-	return;
+	return (0);
 
 unmap:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 	sc->sc_ios = 0;
+	return (1);
 }
 
 int
