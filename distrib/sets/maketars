@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: maketars,v 1.18 2006/07/13 02:19:28 nick Exp $
+#	$OpenBSD: maketars,v 1.19 2006/12/09 21:12:54 deraadt Exp $
 #
 # Copyright (c) 2001 Theo de Raadt
 # All rights reserved.
@@ -47,11 +47,19 @@ lists=`pwd`/lists
 tardir=$RELEASEDIR
 fsdir=$DESTDIR
 
+TMP=`mktemp /tmp/_maketars.XXXXXXXXXX` || exit 1
+TMP2=`mktemp /tmp/_maketars2.XXXXXXXXXX` || exit 1
+trap 'rm -f $TMP $TMP2; exit 1' 1 15
+
 cd $fsdir
 
 for i in base comp etc game man misc; do
 	echo -n "$i: "
-	cat ${lists}/$i/mi ${lists}/$i/md.${arch} | sort | \
-	    pax -w -d | gzip > ${tardir}/$i${RELEASE}.tgz
+	sort ${lists}/$i/mi ${lists}/$i/md.${arch} > $TMP
+	cat $TMP | grep '^./usr/lib/lib' > $TMP2
+	cat $TMP | grep -v '^./usr/lib/lib' >> $TMP2
+	cat $TMP2 | pax -w -d | gzip > ${tardir}/$i${RELEASE}.tgz
 	echo    "done."
 done
+rm -f $TMP $TMP2
+exit 0
