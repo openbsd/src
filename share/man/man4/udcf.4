@@ -1,4 +1,4 @@
-.\" $OpenBSD: udcf.4,v 1.14 2006/12/08 21:19:34 deraadt Exp $
+.\" $OpenBSD: udcf.4,v 1.15 2006/12/09 13:10:17 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -32,8 +32,10 @@ implements a timedelta sensor and the delta (in nanoseconds) between the
 received time information and the local time can be accessed through the
 .Xr sysctl 8
 interface.
-.Sh CLOCK TYPE
-The driver automatically detects if it is receiving the German DCF77 timecode
+.Pp
+The
+.Nm
+driver automatically detects if it is receiving the German DCF77 timecode
 or the Swiss HBG timecode and indicates the clock type in the sensor
 description.
 This value will not be changed once set, even when the receiver
@@ -48,7 +50,7 @@ Swiss HBG time signal station
 .It Unknown
 The clock type has not yet been determined.
 .El
-.Sh SENSOR STATES
+.Pp
 The quality of the timedelta is reported as the sensor status:
 .Bl -tag -width "CRITICALXX"
 .It UNKNOWN
@@ -69,22 +71,6 @@ to see if it is still functional.
 The timedelta will eventually degrade to a lie
 as all computer internal clocks have a drift.
 .El
-.Sh NOTES
-DCF uses a 77KHz long wave radio signal transmitted from near Frankfurt, Germany.
-Up to about 900km, the radio signal can travel directly to the receiver,
-providing a linearly increasing time offset based on distance.
-Due to the curvature of the Earth, beyond this distance the signal must
-bounce off the lower ionosphere (residing at approximately 70km elevation
-during the day, and 90km at night), thus causing a non-linearly increasing
-time offset which can only be roughly calculated using trigonometry.
-Since the distance and transmission geometry is not known,
-the clock receivers and
-.Nm
-driver currently make no effort to calculate this offset.
-We simply assume that the offset is small.
-.Pp
-In Germany, the train system uses DCF clocks.
-As the distance from Frankfurt increases, trains can be expected to run late.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr uhub 4 ,
@@ -102,3 +88,21 @@ The
 .Nm
 driver was written by
 .An Marc Balmer Aq mbalmer@openbsd.org .
+.Sh CAVEATS
+DCF uses a 77KHz long wave radio signal transmitted from near Frankfurt,
+Germany.
+Up to about 900km, the radio signal can travel directly to the receiver,
+providing a linearly increasing time offset based on distance.
+Due to the curvature of the Earth, beyond this distance the signal must
+bounce off the lower ionosphere (residing at approximately 70km elevation
+during the day, and 90km at night), thus causing a non-linearly increasing
+time offset which can only be roughly calculated using trigonometry.
+Since the distance and transmission geometry is not known,
+the clock receivers and
+.Nm
+driver currently make no effort to calculate this offset.
+We simply assume that the offset is small.
+.Pp
+In Germany, the train system uses DCF clocks.
+As the distance from Frankfurt increases,
+trains can be expected to run later.
