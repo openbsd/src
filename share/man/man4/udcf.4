@@ -1,4 +1,4 @@
-.\" $OpenBSD: udcf.4,v 1.18 2006/12/09 13:29:12 mbalmer Exp $
+.\" $OpenBSD: udcf.4,v 1.19 2006/12/09 14:47:01 mbalmer Exp $
 .\"
 .\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -19,27 +19,20 @@
 .Os
 .Sh NAME
 .Nm udcf
-.Nd Gude ADS Expert mouseCLOCK DCF77/HBG time signal station receiver
+.Nd Gude ADS Expert mouseCLOCK USB DCF77/HBG time signal station receiver
 .Sh SYNOPSIS
 .Cd "udcf* at uhub?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Gude ADS Expert mouseCLOCK, a receiver for the
-German DCF77 and the Swiss HBG time signal stations.
+driver provides support for the Gude ADS Expert mouseCLOCK USB, a receiver for
+the German DCF77 and the Swiss HBG time signal stations.
 .Nm
 implements a timedelta sensor and the delta (in nanoseconds) between the
 received time information and the local time can be accessed through the
 .Xr sysctl 8
 interface.
-.Pp
-The
-.Nm
-driver automatically detects if it is receiving the German DCF77 timecode
-or the Swiss HBG timecode and indicates the clock type in the sensor
-description.
-This value will not be changed once set, even when the receiver
-module is changed at runtime.
+The clock type (DCF77 or HBG) is indicated in the sensor description:
 .Bl -tag -width "CRITICALXX" -offset indent
 .It DCF77
 German DCF77 time signal station
@@ -48,7 +41,7 @@ German DCF77 time signal station
 Swiss HBG time signal station
 (75 kHz longwave transmitter located in Prangins near Geneva).
 .It Unknown
-The clock type has not yet been determined.
+The clock type has not been determined.
 .El
 .Pp
 The quality of the timedelta is reported as the sensor status:
