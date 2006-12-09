@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.52 2006/07/28 15:14:04 mglocker Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.53 2006/12/09 00:47:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.52 2006/07/28 15:14:04 mglocker Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.53 2006/12/09 00:47:01 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -251,11 +251,19 @@ main(int argc, char *argv[])
 		}
 		break;
 	case AF_INET6:
-		if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVDSTADDR, &on,
+#ifdef IPV6_RECVPKTINFO
+		if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
 		    sizeof(on)) == -1) {
-			syslog(LOG_ERR, "setsockopt(IPV6_RECVDSTADDR): %m");
+			syslog(LOG_ERR, "setsockopt(IPV6_RECVPKTINFO): %m");
 			exit (1);
 		}
+#else
+		if (setsockopt(fd, IPPROTO_IPV6, IPV6_PKTINFO, &on,
+		    sizeof(on)) == -1) {
+			syslog(LOG_ERR, "setsockopt(IPV6_PKTINFO): %m");
+			exit (1);
+		}
+#endif
 		break;
 	}
 
@@ -357,9 +365,17 @@ main(int argc, char *argv[])
 			break;
 		}
 		if (cmsg->cmsg_level == IPPROTO_IPV6 &&
-		    cmsg->cmsg_type == IPV6_RECVDSTADDR) {
+		    cmsg->cmsg_type == IPV6_PKTINFO) {
+			struct in6_pktinfo *ipi;
+
+			ipi = (struct in6_pktinfo *)CMSG_DATA(cmsg);
 			memcpy(&((struct sockaddr_in6 *)&s_in)->sin6_addr,
-			    CMSG_DATA(cmsg), sizeof(struct in6_addr));
+			    &ipi->ipi6_addr, sizeof(struct in6_addr));
+#ifdef __KAME__
+			if (IN6_IS_ADDR_LINKLOCAL(&ipi->ipi6_addr))
+				((struct sockaddr_in6 *)&s_in)->sin6_scope_id =
+				    ipi->ipi6_ifindex;
+#endif
 			break;
 		}
 	}
