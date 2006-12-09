@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.161 2006/11/25 15:57:16 brad Exp $
+#	$OpenBSD: GENERIC,v 1.162 2006/12/09 20:06:48 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -17,6 +17,9 @@ option		PCIVERBOSE
 option		USER_PCICONF		# user-space PCI configuration
 option		APERTURE
 option		USBVERBOSE
+
+option		WSEMUL_SUN	# provide sun terminal emulation; required
+option		WSEMUL_NO_VT100	# do not provide vt100 terminal emulation
 
 config		bsd	swap generic
 
