@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.196 2006/12/01 16:50:16 jsg Exp $
+.\"	$OpenBSD: pci.4,v 1.197 2006/12/09 05:10:43 dlg Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -109,6 +109,8 @@ TRM-S1040 based PCI SCSI interface
 .El
 .Ss IDE disk controllers
 .Bl -tag -width 10n -offset ind -compact
+.It Xr ahci 4
+Advanced Host Controller Interface for Serial ATA
 .It Xr pciide 4
 PCI IDE controller driver
 .El

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.221 2006/12/06 20:07:52 martin Exp $
+#	$OpenBSD: files.pci,v 1.222 2006/12/09 05:10:43 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -78,6 +78,11 @@ file	dev/pci/twe_pci.c		twe_pci
 device	arc: scsi
 attach	arc at pci
 file	dev/pci/arc.c			arc
+
+# Advanced Host Controller Interface for Serial ATA
+device	ahci
+attach	ahci at pci
+file	dev/pci/ahci.c			ahci
 
 # AMI MegaRAID Express x00/Elite 1500/Express 1x00 RAID Controllers
 attach	ami at pci with ami_pci
