@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.25 2006/12/10 15:42:12 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.26 2006/12/10 16:13:32 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -492,7 +492,6 @@ void
 udcf_mg_probe(void *xsc)
 {
 	struct udcf_softc	*sc = xsc;
-
 	struct clock_ymdhms	 ymdhm;
 	struct timeval		 monotime;
 	int			 tdiff_recv, tdiff_local;
@@ -503,7 +502,6 @@ udcf_mg_probe(void *xsc)
 	int			 p1_bit, p2_bit, p3_bit;
 	int			 r_bit, a1_bit, a2_bit, z1_bit, z2_bit;
 	int			 s_bit, m_bit;
-
 	u_int32_t		 parity = 0x6996;
 
 	if (sc->sc_sync) {
@@ -615,7 +613,7 @@ udcf_mg_probe(void *xsc)
 		sc->sc_last_tv.tv_sec = monotime.tv_sec;
 	} else {
 		DPRINTF(("\nparity error, resync\n"));
-		sc->sc_sync = 1;
+		sc->sc_sync = sc->sc_minute = 1;
 	}
 
 cleanbits:
