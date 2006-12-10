@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.49 2006/12/03 10:30:47 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.50 2006/12/10 21:01:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -341,7 +341,8 @@ malo_intr(void *arg)
 	}
 
 	if (status & ~0x7)
-		DPRINTF(("%s: unkown interrupt %x\n", status));
+		DPRINTF(("%s: unkown interrupt %x\n", sc->sc_dev.dv_xname,
+		    status));
 
 	/* just ack the interrupt */
 	malo_ctl_write4(sc, 0x0c30, 0);
