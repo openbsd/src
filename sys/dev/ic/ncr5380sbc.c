@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.18 2005/11/12 20:29:45 brad Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.19 2006/12/10 16:15:37 miod Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -671,9 +671,11 @@ new:
 	}
 
 	if (flags & SCSI_POLL) {
+#ifdef DIAGNOSTIC
 		/* Make sure ncr5380_sched() finished it. */
-		if ((xs->flags & ITSDONE) == 0)
+		if (sc->sc_state != NCR_IDLE)
 			panic("ncr5380_scsi_cmd: poll didn't finish");
+#endif
 		rv = COMPLETE;
 	}
 
@@ -882,7 +884,7 @@ next_job:
 		/* Another hack (Er.. hook!) for the sun3 si: */
 		if (sc->sc_intr_on) {
 			NCR_TRACE("sched: ret, intr ON\n", 0);
-		    sc->sc_intr_on(sc);
+			sc->sc_intr_on(sc);
 		}
 
 		return;		/* No more work to do. */
