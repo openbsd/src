@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.24 2006/12/10 14:39:05 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.25 2006/12/10 15:42:12 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -417,7 +417,7 @@ udcf_probe(void *xsc)
 	sc->sc_level = 0;
 	if (sc->sc_minute == 1) {
 		if (sc->sc_sync) {
-			DPRINTF(("synchronized, collecting bits\n"));
+			DPRINTF(("start collecting bits\n"));
 			sc->sc_sync = 0;
 			if (sc->sc_sensor.status == SENSOR_S_UNKNOWN)
 				sc->sc_clocktype = -1;
@@ -637,7 +637,6 @@ udcf_sl_probe(void *xsc)
 	DPRINTF(("no signal\n"));
 	sc->sc_sync = 1;
 	timeout_add(&sc->sc_to, t_wait);
-	timeout_add(&sc->sc_sl_to, t_wait + t_sl);
 }
 
 /* invalidate timedelta */
