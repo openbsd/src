@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.23 2006/12/10 16:14:22 miod Exp $	*/
+/*	$OpenBSD: si.c,v 1.24 2006/12/10 16:15:03 miod Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -481,6 +481,7 @@ si_attach(parent, self, args)
 	si_reset_adapter(ncr_sc);
 	ncr5380_init(ncr_sc);
 	ncr5380_reset_scsibus(ncr_sc);
+	DELAY(2000000);
 
 	/*
 	 * If the boot path is "sw" or "si" at the moment and it's me, then
