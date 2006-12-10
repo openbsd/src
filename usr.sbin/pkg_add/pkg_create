@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.49 2006/11/07 09:28:55 espie Exp $
+# $OpenBSD: pkg_create,v 1.50 2006/12/10 23:15:00 steven Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -46,13 +46,13 @@ sub archive
 	if (defined $arc) {
 	    my $o = $arc->prepare_long($self);
 	    $o->write();
-	    if (!defined $self->{owner}) {
+	    if (!defined $self->{owner} && !$o->isSymLink()) {
 		if ($o->{uname} ne 'root' && $o->{uname} ne 'bin') {
 			print STDERR "Warning: no \@owner for ",
 			$self->fullname(), " (", $o->{uname}, ")\n";
 		}
 	    }
-	    if (!defined $self->{group}) {
+	    if (!defined $self->{group} && !$o->isSymLink()) {
 		if ($o->{gname} ne 'bin' && $o->{gname} ne 'wheel') {
 			print STDERR "Warning: no \@group for ",
 			$self->fullname(), " (", $o->{gname}, ")\n";
