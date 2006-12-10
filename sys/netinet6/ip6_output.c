@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.96 2006/12/09 01:12:28 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.97 2006/12/10 10:16:12 miod Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -160,7 +160,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	struct rtentry *rt = NULL;
 	struct sockaddr_in6 *dst, dstsock;
 	int error = 0;
-	struct in6_ifaddr *ia;
+	struct in6_ifaddr *ia = NULL;
 	u_long mtu;
 	int alwaysfrag, dontfrag;
 	u_int32_t optlen = 0, plen = 0, unfragpartlen = 0;
