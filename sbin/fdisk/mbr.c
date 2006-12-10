@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.22 2006/05/29 05:09:36 ray Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.23 2006/12/10 19:19:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -30,6 +30,7 @@
 #include <util.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <memory.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
@@ -134,43 +135,81 @@ MBR_print(mbr_t *mbr, char *units)
 int
 MBR_read(int fd, off_t where, char *buf)
 {
-	off_t off;
+	const int secsize = unit_types[SECTORS].conversion;
 	ssize_t len;
+	off_t off;
+	char *secbuf;
 
-	where *= DEV_BSIZE;
+	where *= secsize;
 	off = lseek(fd, where, SEEK_SET);
 	if (off != where)
 		return (-1);
-	len = read(fd, buf, DEV_BSIZE);
+
+	secbuf = malloc(secsize);
+	if (secbuf == NULL)
+		return (-1);
+	bzero(secbuf, secsize);
+
+	len = read(fd, secbuf, secsize);
+	bcopy(secbuf, buf, DEV_BSIZE);
+	free(secbuf);
+
 	if (len == -1)
 		return (-1);
-	if (len != DEV_BSIZE) {
+	if (len != secsize) {
 		/* short read */
 		errno = EIO;
 		return (-1);
 	}
+
 	return (0);
 }
 
 int
 MBR_write(int fd, off_t where, char *buf)
 {
-	off_t off;
+	const int secsize = unit_types[SECTORS].conversion;
 	ssize_t len;
+	off_t off;
+	char *secbuf;
 
-	where *= DEV_BSIZE;
+	/* Read the sector we want to store the MBR in. */
+	where *= secsize;
 	off = lseek(fd, where, SEEK_SET);
 	if (off != where)
 		return (-1);
-	len = write(fd, buf, DEV_BSIZE);
+
+	secbuf = malloc(secsize);
+	if (secbuf == NULL)
+		return (-1);
+	bzero(secbuf, secsize);
+
+	len = read(fd, secbuf, secsize);
+	if (len == -1 || len != secsize)
+		goto done;
+
+	/*
+	 * Place the new MBR in the first DEV_BSIZE bytes of the sector and
+	 * write the sector back to "disk".
+	 */
+	bcopy(buf, secbuf, DEV_BSIZE);
+	off = lseek(fd, where, SEEK_SET);
+	if (off == where)
+		len = write(fd, secbuf, secsize);
+	else
+		len = -1;
+
+done:
+	free(secbuf);
 	if (len == -1)
 		return (-1);
-	if (len != DEV_BSIZE) {
-		/* short write */
+	if (len != secsize) {
+		/* short read or write */
 		errno = EIO;
 		return (-1);
 	}
-	(void) ioctl(fd, DIOCRLDINFO, 0);
+
+	ioctl(fd, DIOCRLDINFO, 0);
 	return (0);
 }
 
