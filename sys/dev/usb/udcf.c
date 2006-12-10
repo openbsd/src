@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.23 2006/12/06 11:44:53 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.24 2006/12/10 14:39:05 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -52,8 +52,8 @@ int udcfdebug = 0;
 #define DPERIOD1	((long) 5 * 60)		/* degrade OK -> WARN */
 #define DPERIOD2	((long) 15 * 60)	/* degrade WARN -> CRIT */
 
-/* skew tolerance of received time diff vs. measured time diff in percent. */
-#define SKEW_TOLERANCE	5
+/* max. skew of received time diff vs. measured time diff in percent. */
+#define MAX_SKEW	5
 
 #define CLOCK_DCF77	0
 #define CLOCK_HBG	1
@@ -513,12 +513,7 @@ udcf_mg_probe(void *xsc)
 
 	if (time_second - sc->sc_last_mg < 57) {
 		DPRINTF(("\nunexpected gap, resync\n"));
-		sc->sc_sync = 1;
-#if 0
-		timeout_add(&sc->sc_to, t_wait);
-		timeout_add(&sc->sc_sl_to, t_wait + t_sl);
-		sc->sc_last_mg = 0;
-#endif
+		sc->sc_sync = sc->sc_minute = 1;
 		goto cleanbits;	
 	}
 
@@ -579,7 +574,7 @@ udcf_mg_probe(void *xsc)
 		DPRINTF(("\n%02d.%02d.%04d %02d:%02d:00 %s",
 		    ymdhm.dt_day, ymdhm.dt_mon, ymdhm.dt_year,
 		    ymdhm.dt_hour, ymdhm.dt_min, z1_bit ? "CEST" : "CET"));
-		DPRINTF((r_bit ? ", reserve antenna" : ""));
+		DPRINTF((r_bit ? ", call bit" : ""));
 		DPRINTF((a1_bit ? ", dst chg ann." : ""));
 		DPRINTF((a2_bit ? ", leap sec ann." : ""));
 		DPRINTF(("\n"));
@@ -597,7 +592,7 @@ udcf_mg_probe(void *xsc)
 			DPRINTF(("local = %d, recv = %d, skew = %d\n",
 			    tdiff_local, tdiff_recv, skew));
 
-			if (skew * 100LL / tdiff_local > SKEW_TOLERANCE) {
+			if (skew && skew * 100LL / tdiff_local > MAX_SKEW) {
 				DPRINTF(("skew out of tolerated range\n"));
 				goto cleanbits;
 			} else {
@@ -654,7 +649,7 @@ udcf_it_probe(void *xsc)
 	if (sc->sc_dying)
 		return;
 
-	DPRINTF(("\ndegrading sensor state"));
+	DPRINTF(("\ndegrading sensor state\n"));
 
 	if (sc->sc_sensor.status == SENSOR_S_OK) {
 		sc->sc_sensor.status = SENSOR_S_WARN;
