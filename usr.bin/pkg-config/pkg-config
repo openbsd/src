@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.14 2006/12/09 17:16:06 espie Exp $
+# $OpenBSD: pkg-config,v 1.15 2006/12/10 10:58:41 espie Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -210,17 +210,17 @@ sub handle_config
 
 	unshift @$list, $p if defined $cfg;
 
+	if (!defined $cfg) {
+		$rc = 1;
+		return undef;
+	}
+
 	if (defined $op) {
 		if (!versionmatch($cfg, $op, $v)) {
 			mismatch($p, $cfg, $op, $v) if $mode{printerr};
 			$rc = 1;
 			return undef;
 		}
-	}
-
-	if (!defined $cfg) {
-		$rc = 1;
-		return undef;
 	}
 
 	my $deps = $cfg->get_property('Requires', $variables);
