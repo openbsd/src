@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.12 2006/12/11 05:10:50 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.13 2006/12/11 05:47:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -88,6 +88,23 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define AHCI_REG_CCC_PORTS	0x018 /* Coalescing Ports */
 #define AHCI_REG_EM_LOC		0x01c /* Enclosure Mgmt Location */
 #define AHCI_REG_EM_CTL		0x020 /* Enclosure Mgmt Control */
+
+#define _PO(_p)			(0x100 + ((_p) * 0x80)) /* port offset */
+
+#define AHCI_PREG_CLB(_p)	(_PO(_p)+0x00) /* Cmd List Base Addr */
+#define AHCI_PREG_CLBU(_p)	(_PO(_p)+0x04) /* Cmd List Base Hi Addr */
+#define AHCI_PREG_FB(_p)	(_PO(_p)+0x08) /* FIS Base Addr */
+#define AHCI_PREG_FBU(_p)	(_PO(_p)+0x0c) /* FIS Base Hi Addr */
+#define AHCI_PREG_IS(_p)	(_PO(_p)+0x10) /* Interrupt Status */
+#define AHCI_PREG_IE(_p)	(_PO(_p)+0x14) /* Interrupt Enable */
+#define AHCI_PREG_CMD(_p)	(_PO(_p)+0x18) /* Command and Status */
+#define AHCI_PREG_TFD(_p)	(_PO(_p)+0x20) /* Task File Data*/
+#define AHCI_PREG_SIG(_p)	(_PO(_p)+0x24) /* Signature */
+#define AHCI_PREG_Status(_p)	(_PO(_p)+0x28) /* SATA Status */
+#define AHCI_PREG_Control(_p)	(_PO(_p)+0x2c) /* SATA Control */
+#define AHCI_PREG_Error(_p)	(_PO(_p)+0x30) /* SATA Error */
+#define AHCI_PREG_Active(_p)	(_PO(_p)+0x34) /* SATA Active */
+#define AHCI_PREG_CI(_p)	(_PO(_p)+0x38) /* Command Issue */
 
 static const struct pci_matchid ahci_devices[] = {
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB361 }
