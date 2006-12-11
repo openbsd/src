@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.19 2006/11/28 16:17:57 kettenis Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.20 2006/12/11 18:16:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -241,7 +241,8 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_PMPTR);
-		if (bus_space_map(sc->sc_iot, AMDPM_PMBASE(reg), AMDPM_PMSIZE,
+		if (AMDPM_PMBASE(reg) == 0 ||
+		    bus_space_map(sc->sc_iot, AMDPM_PMBASE(reg), AMDPM_PMSIZE,
 		    0, &sc->sc_ioh)) {
 			printf("\n");
 			return;
@@ -296,7 +297,8 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		}
 	} else if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NVIDIA) {
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, NFPM_PMPTR);
-		if (bus_space_map(sc->sc_iot, AMDPM_PMBASE(reg), AMDPM_SMB_SIZE, 0,
+		if (AMDPM_PMBASE(reg) == 0 ||
+		    bus_space_map(sc->sc_iot, AMDPM_PMBASE(reg), AMDPM_SMB_SIZE, 0,
 		    &sc->sc_i2c_ioh)) {
 			printf(": failed to map I2C subregion\n");
 			return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: alipm.c,v 1.10 2006/05/09 18:49:56 kettenis Exp $	*/
+/*	$OpenBSD: alipm.c,v 1.11 2006/12/11 18:16:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -151,7 +151,8 @@ alipm_attach(struct device *parent, struct device *self, void *aux)
 		/* Map I/O space */
 		iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_BASE);
 		sc->sc_iot = pa->pa_iot;
-		if (bus_space_map(sc->sc_iot, iobase >> 16,
+		if (iobase == 0 ||
+		    bus_space_map(sc->sc_iot, iobase >> 16,
 		    iosize, 0, &sc->sc_ioh)) {
 			printf(": can't map I/O space\n");
 			return;

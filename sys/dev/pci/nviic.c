@@ -1,4 +1,4 @@
-/*	$OpenBSD: nviic.c,v 1.8 2006/11/06 04:00:15 brad Exp $ */
+/*	$OpenBSD: nviic.c,v 1.9 2006/12/11 18:16:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -167,7 +167,8 @@ nviic_attach(struct device *parent, struct device *self, void *aux)
 		nc = &sc->sc_nc[i];
 
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, baseregs[i]);
-		if (bus_space_map(sc->sc_iot, NVI_SMBASE(reg), NVI_SMBASE_SIZE,
+		if (NVI_SMBASE(reg) == 0 ||
+		    bus_space_map(sc->sc_iot, NVI_SMBASE(reg), NVI_SMBASE_SIZE,
 		    0, &nc->nc_ioh)) {
 			printf("%s: unable to map space for bus %d\n",
 			    DEVNAME(sc), i);
