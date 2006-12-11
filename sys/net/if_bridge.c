@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.154 2006/12/03 13:41:19 reyk Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.155 2006/12/11 22:11:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -503,10 +503,10 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				req->ifbr_ifsflags |= IFBIF_BSTP_EDGE;
 			if (bp->bp_flags & BSTP_PORT_AUTOEDGE)
 				req->ifbr_ifsflags |= IFBIF_BSTP_AUTOEDGE;
-			if (bp->bp_p2p_link)
-				req->ifbr_ifsflags |= IFBIF_BSTP_P2P;
-			if (bp->bp_flags & BSTP_PORT_AUTOP2P)
-				req->ifbr_ifsflags |= IFBIF_BSTP_AUTOP2P;
+			if (bp->bp_ptp_link)
+				req->ifbr_ifsflags |= IFBIF_BSTP_PTP;
+			if (bp->bp_flags & BSTP_PORT_AUTOPTP)
+				req->ifbr_ifsflags |= IFBIF_BSTP_AUTOPTP;
 		}
 		break;
 	case SIOCBRDGSIFFLGS:
@@ -836,10 +836,10 @@ bridge_bifconf(struct bridge_softc *sc, struct ifbifconf *bifc)
 				breq->ifbr_ifsflags |= IFBIF_BSTP_EDGE;
 			if (bp->bp_flags & BSTP_PORT_AUTOEDGE)
 				breq->ifbr_ifsflags |= IFBIF_BSTP_AUTOEDGE;
-			if (bp->bp_p2p_link)
-				breq->ifbr_ifsflags |= IFBIF_BSTP_P2P;
-			if (bp->bp_flags & BSTP_PORT_AUTOP2P)
-				breq->ifbr_ifsflags |= IFBIF_BSTP_AUTOP2P;
+			if (bp->bp_ptp_link)
+				breq->ifbr_ifsflags |= IFBIF_BSTP_PTP;
+			if (bp->bp_flags & BSTP_PORT_AUTOPTP)
+				breq->ifbr_ifsflags |= IFBIF_BSTP_AUTOPTP;
 		}
 		error = copyout((caddr_t)breq,
 		    (caddr_t)(bifc->ifbic_req + i), sizeof(*breq));

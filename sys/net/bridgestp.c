@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.23 2006/12/03 13:41:19 reyk Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.24 2006/12/11 22:11:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -779,7 +779,7 @@ bstp_received_bpdu(struct bstp_state *bs, struct bstp_port *bp,
 		 * only point to point links are allowed fast
 		 * transitions to forwarding.
 		 */
-		if (cu->cu_agree && bp->bp_p2p_link) {
+		if (cu->cu_agree && bp->bp_ptp_link) {
 			bp->bp_agreed = 1;
 			bp->bp_proposing = 0;
 		} else
@@ -1153,7 +1153,7 @@ bstp_update_roles(struct bstp_state *bs, struct bstp_port *bp)
 			bp->bp_proposing = 1;
 			bp->bp_flags |= BSTP_PORT_NEWINFO;
 			bstp_timer_start(&bp->bp_edge_delay_timer,
-			    (bp->bp_p2p_link ? BSTP_DEFAULT_MIGRATE_DELAY :
+			    (bp->bp_ptp_link ? BSTP_DEFAULT_MIGRATE_DELAY :
 			     bp->bp_desg_max_age));
 			DPRINTF("%s -> DESIGNATED_PROPOSE\n",
 			    bp->bp_ifp->if_xname);
@@ -1682,9 +1682,9 @@ bstp_ifupdstatus(struct bstp_state *bs, struct bstp_port *bp)
 
 	if ((ifp->if_flags & IFF_UP) &&
 	    ifp->if_link_state != LINK_STATE_DOWN) {
-		if (bp->bp_flags & BSTP_PORT_AUTOP2P) {
-			/* A full-duplex link is assumed to be p2p */
-			bp->bp_p2p_link = ifp->if_link_state ==
+		if (bp->bp_flags & BSTP_PORT_AUTOPTP) {
+			/* A full-duplex link is assumed to be ptp */
+			bp->bp_ptp_link = ifp->if_link_state ==
 			    LINK_STATE_FULL_DUPLEX ? 1 : 0;
 		}
 
@@ -2017,7 +2017,7 @@ bstp_add(struct bstp_state *bs, struct ifnet *ifp)
 
 	/* Init state */
 	bp->bp_infois = BSTP_INFO_DISABLED;
-	bp->bp_flags = BSTP_PORT_AUTOEDGE | BSTP_PORT_AUTOP2P;
+	bp->bp_flags = BSTP_PORT_AUTOEDGE | BSTP_PORT_AUTOPTP;
 	bstp_set_port_state(bp, BSTP_IFSTATE_DISCARDING);
 	bstp_set_port_proto(bp, bs->bs_protover);
 	bstp_set_port_role(bp, BSTP_ROLE_DISABLED);
@@ -2112,19 +2112,19 @@ bstp_ifsflags(struct bstp_port *bp, u_int flags)
 	/*
 	 * Set point to point status
 	 */
-	if (flags & IFBIF_BSTP_AUTOP2P) {
-		if ((bp->bp_flags & BSTP_PORT_AUTOP2P) == 0) {
-			bp->bp_flags |= BSTP_PORT_AUTOP2P;
+	if (flags & IFBIF_BSTP_AUTOPTP) {
+		if ((bp->bp_flags & BSTP_PORT_AUTOPTP) == 0) {
+			bp->bp_flags |= BSTP_PORT_AUTOPTP;
 
 			bstp_ifupdstatus(bs, bp);
 		}
 	} else
-		bp->bp_flags &= ~BSTP_PORT_AUTOP2P;
+		bp->bp_flags &= ~BSTP_PORT_AUTOPTP;
 
-	if (flags & IFBIF_BSTP_P2P)
-		bp->bp_p2p_link = 1;
+	if (flags & IFBIF_BSTP_PTP)
+		bp->bp_ptp_link = 1;
 	else
-		bp->bp_p2p_link = 0;
+		bp->bp_ptp_link = 0;
 }
 
 int

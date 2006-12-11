@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.38 2006/12/03 13:41:19 reyk Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.39 2006/12/11 22:11:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -93,7 +93,7 @@ int Aflag = 0;
 
 #define	IFBAFBITS	"\020\1STATIC"
 #define	IFBIFBITS	\
-"\020\1LEARNING\2DISCOVER\3BLOCKNONIP\4STP\5EDGE\6AUTOEDGE\7P2P\10AUTOP2P\11SPAN"
+"\020\1LEARNING\2DISCOVER\3BLOCKNONIP\4STP\5EDGE\6AUTOEDGE\7PTP\10AUTOPTP\11SPAN"
 
 #define	PV2ID(pv, epri, eaddr)	do {					\
 	epri	 = pv >> 48;						\
@@ -530,44 +530,44 @@ main(int argc, char *argv[])
 			    IFBIF_BSTP_AUTOEDGE);
 			if (error)
 				return (error);
-		} else if (strcmp("p2p", argv[0]) == 0) {
+		} else if (strcmp("ptp", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
-				warnx("p2p requires an argument");
+				warnx("ptp requires an argument");
 				return (EX_USAGE);
 			}
 			error = bridge_ifsetflag(sock, brdg, argv[0],
-			    IFBIF_BSTP_P2P);
+			    IFBIF_BSTP_PTP);
 			if (error)
 				return (error);
-		} else if (strcmp("-p2p", argv[0]) == 0) {
+		} else if (strcmp("-ptp", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
-				warnx("-p2p requires an argument");
+				warnx("-ptp requires an argument");
 				return (EX_USAGE);
 			}
 			error = bridge_ifclrflag(sock, brdg, argv[0],
-			    IFBIF_BSTP_P2P);
+			    IFBIF_BSTP_PTP);
 			if (error)
 				return (error);
-		} else if (strcmp("autop2p", argv[0]) == 0) {
+		} else if (strcmp("autoptp", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
-				warnx("autop2p requires an argument");
+				warnx("autoptp requires an argument");
 				return (EX_USAGE);
 			}
 			error = bridge_ifsetflag(sock, brdg, argv[0],
-			    IFBIF_BSTP_AUTOP2P);
+			    IFBIF_BSTP_AUTOPTP);
 			if (error)
 				return (error);
-		} else if (strcmp("-autop2p", argv[0]) == 0) {
+		} else if (strcmp("-autoptp", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
-				warnx("-autop2p requires an argument");
+				warnx("-autoptp requires an argument");
 				return (EX_USAGE);
 			}
 			error = bridge_ifclrflag(sock, brdg, argv[0],
-			    IFBIF_BSTP_P2P);
+			    IFBIF_BSTP_PTP);
 			if (error)
 				return (error);
 		} else if (strcmp("holdcnt", argv[0]) == 0) {

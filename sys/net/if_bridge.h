@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.30 2006/12/03 13:41:19 reyk Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.31 2006/12/11 22:11:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -67,8 +67,8 @@ struct ifbreq {
 #define	IFBIF_STP		0x0008	/* ifs participates in spanning tree */
 #define IFBIF_BSTP_EDGE		0x0010	/* member stp edge port */
 #define IFBIF_BSTP_AUTOEDGE	0x0020  /* member stp autoedge enabled */
-#define IFBIF_BSTP_P2P		0x0040  /* member stp p2p */
-#define IFBIF_BSTP_AUTOP2P	0x0080	/* member stp autop2p enabled */
+#define IFBIF_BSTP_PTP		0x0040  /* member stp ptp */
+#define IFBIF_BSTP_AUTOPTP	0x0080	/* member stp autoptp enabled */
 #define	IFBIF_SPAN		0x0100	/* ifs is a span port (ro) */
 #define	IFBIF_RO_MASK		0xff00	/* read only bits */
 
@@ -223,7 +223,7 @@ struct ifbrlconf {
 #define	BSTP_PORT_DISPUTED	0x0004
 #define	BSTP_PORT_ADMCOST	0x0008
 #define	BSTP_PORT_AUTOEDGE	0x0010
-#define	BSTP_PORT_AUTOP2P	0x0020
+#define	BSTP_PORT_AUTOPTP	0x0020
 
 /* BPDU priority */
 #define	BSTP_PDU_SUPERIOR	1
@@ -334,7 +334,7 @@ struct bstp_port {
 	u_int8_t		bp_tc_prop;
 	u_int8_t		bp_fdbflush;
 	u_int8_t		bp_priority;
-	u_int8_t		bp_p2p_link;
+	u_int8_t		bp_ptp_link;
 	u_int8_t		bp_agree;
 	u_int8_t		bp_agreed;
 	u_int8_t		bp_sync;
