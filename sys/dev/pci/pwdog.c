@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwdog.c,v 1.3 2006/11/25 20:04:47 mbalmer Exp $ */
+/*	$OpenBSD: pwdog.c,v 1.4 2006/12/11 08:15:56 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -43,7 +43,6 @@ int pwdog_probe(struct device *, void *, void *);
 void pwdog_attach(struct device *, struct device *, void *);
 void pwdog_init_timer(struct pwdog_softc *);
 int pwdog_set_timeout(void *, int);
-void pwdog_disable_timer(struct pwdog_softc *);
 
 struct cfattach pwdog_ca = {
 	sizeof(struct pwdog_softc), pwdog_probe, pwdog_attach
@@ -60,8 +59,8 @@ const struct pci_matchid pwdog_devices[] = {
 int
 pwdog_probe(struct device *parent, void *match, void *aux)
 {
-	return (pci_matchbyid((struct pci_attach_args *)aux, pwdog_devices,
-	    sizeof(pwdog_devices)/sizeof(pwdog_devices[0])));
+	return pci_matchbyid((struct pci_attach_args *)aux, pwdog_devices,
+	    sizeof(pwdog_devices)/sizeof(pwdog_devices[0]));
 }
 
 void
@@ -81,7 +80,7 @@ pwdog_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	printf("\n");
-	pwdog_disable_timer(pwdog);
+	bus_space_write_1(pwdog->iot, pwdog->ioh, PWDOG_DISABLE, 0);
 	wdog_register(pwdog, pwdog_set_timeout);
 }
 
@@ -93,18 +92,9 @@ pwdog_set_timeout(void *self, int seconds)
 	int s;
 
 	s = splclock();
-	pwdog_disable_timer(pwdog);
-	if (!seconds) {
-		splx(s);
-		return 0;
-	}
-	bus_space_write_1(pwdog->iot, pwdog->ioh, PWDOG_ACTIVATE, 0);
+	bus_space_write_1(pwdog->iot, pwdog->ioh, PWDOG_DISABLE, 0);
+	if (seconds)
+		bus_space_write_1(pwdog->iot, pwdog->ioh, PWDOG_ACTIVATE, 0);
 	splx(s);
 	return seconds;
-}
-
-void
-pwdog_disable_timer(struct pwdog_softc *pwdog)
-{
-	bus_space_write_1(pwdog->iot, pwdog->ioh, PWDOG_DISABLE, 0);
 }
