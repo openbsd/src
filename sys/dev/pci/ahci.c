@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.11 2006/12/11 04:26:16 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.12 2006/12/11 05:10:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -71,7 +71,7 @@ int ahcidebug = AHCI_D_VERBOSE;
 				    "\016PSC" "\017SSC" "\020PMD" "\021FBSS" \
 				    "\x12SPM" "\x13SAM" "\x14SNZO" "\x19SCLO" \
 				    "\x1aSAL" "\x1bSALP" "\x1cSSS" "\x1dSMPS" \
-				    "\036SSNTF" "\037NCQ" "\040 S64A"
+				    "\036SSNTF" "\037NCQ" "\040S64A"
 
 #define AHCI_REG_GHC		0x004 /* Global HBA Control */
 #define  AHCI_REG_GHC_HR		(1<<0) /* HBA Reset */
