@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.35 2006/11/11 21:47:52 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.36 2006/12/11 19:47:37 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -478,6 +478,20 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 			if (mip->bus_pin == mpspec_pin) {
 				ihp->line = mip->ioapic_ih | line;
 				return 0;
+			}
+		}
+		if (mip == NULL && pa->pa_bridgetag) {
+			int bridgebus, bridgedev;
+
+			pci_decompose_tag(pc, *pa->pa_bridgetag,
+			    &bridgebus, &bridgedev, NULL);
+			mpspec_pin = (bridgedev << 2)|((pin + dev - 1) & 0x3);
+			for (mip = mp_busses[bridgebus].mb_intrs; mip != NULL;
+			    mip = mip->next) {
+				if (mip->bus_pin == mpspec_pin) {
+					ihp->line = mip->ioapic_ih | line;
+					return 0;
+				}
 			}
 		}
 		if (mip == NULL && mp_isa_bus) {

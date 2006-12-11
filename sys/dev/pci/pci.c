@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.47 2006/10/04 19:27:44 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.48 2006/12/11 19:47:37 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -271,6 +271,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	pa.pa_tag = tag;
 	pa.pa_id = id;
 	pa.pa_class = class;
+	pa.pa_bridgetag = sc->sc_bridgetag;
 
 	/* This is a simplification of the NetBSD code.
 	   We don't support turning off I/O or memory
