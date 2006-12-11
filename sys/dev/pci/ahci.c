@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.9 2006/12/09 07:17:10 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.10 2006/12/11 04:14:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -30,6 +30,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#define AHCI_DEBUG
+
 #ifdef AHCI_DEBUG
 #define DPRINTF(m, f...) do { if (ahcidebug & (m)) printf(f); } while (0)
 #define AHCI_D_VERBOSE		0x01
@@ -41,21 +43,21 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define AHCI_PCI_BAR		0x24
 
 #define AHCI_REG_CAP		0x000 /* HBA Capabilities */
-#define  AHCI_REG_CAP_NP(_r)		((r) & 0x1f) /* Number of Ports */
+#define  AHCI_REG_CAP_NP(_r)		(((_r) & 0x1f)+1) /* Number of Ports */
 #define  AHCI_REG_CAP_SXS		(1<<5) /* External SATA */
 #define  AHCI_REG_CAP_EMS		(1<<6) /* Enclosure Mgmt */
 #define  AHCI_REG_CAP_CCCS		(1<<7) /* Cmd Coalescing */
-#define  AHCI_REG_CAP_NCS(_r)		(((_r) & 0xf80)>>7) /* No. Cmd Slots */
+#define  AHCI_REG_CAP_NCS(_r)		((((_r) & 0x1f00)>>8)+1) /* NCmds*/
 #define  AHCI_REG_CAP_PSC		(1<<13) /* Partial State Capable */
 #define  AHCI_REG_CAP_SSC		(1<<14) /* Slumber State Capable */
 #define  AHCI_REG_CAP_PMD		(1<<15) /* PIO Multiple DRQ Block */
 #define  AHCI_REG_CAP_FBSS		(1<<16) /* FIS-Based Switching */
 #define  AHCI_REG_CAP_SPM		(1<<17) /* Port Multiplier */
 #define  AHCI_REG_CAP_SAM		(1<<18) /* AHCI Only mode */
-#define  AHCI_REG_CAP_SNZO		(1<<18) /* Non Zero DMA Offsets */
-#define  AHCI_REG_CAP_ISS		(0xf<<18) /* Interface Speed Support */
-#define  AHCI_REG_CAP_ISS_G1		(0x1<<18) /* Gen 1 (1.5 Gbps) */
-#define  AHCI_REG_CAP_ISS_G1_2		(0x2<<18) /* Gen 1 and 2 (3 Gbps) */
+#define  AHCI_REG_CAP_SNZO		(1<<19) /* Non Zero DMA Offsets */
+#define  AHCI_REG_CAP_ISS		(0xf<<20) /* Interface Speed Support */
+#define  AHCI_REG_CAP_ISS_G1		(0x1<<20) /* Gen 1 (1.5 Gbps) */
+#define  AHCI_REG_CAP_ISS_G1_2		(0x2<<20) /* Gen 1 and 2 (3 Gbps) */
 #define  AHCI_REG_CAP_SCLO		(1<<24) /* Cmd List Override */
 #define  AHCI_REG_CAP_SAL		(1<<25) /* Activity LED */
 #define  AHCI_REG_CAP_SALP		(1<<26) /* Aggresive Link Pwr Mgmt */
@@ -64,6 +66,13 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_REG_CAP_SSNTF		(1<<29) /* SNotification Register */
 #define  AHCI_REG_CAP_SNCQ		(1<<30) /* Native Cmd Queuing */
 #define  AHCI_REG_CAP_S64A		(1<<31) /* 64bit Addressing */
+
+#define  AHCI_FMT_CAP		"\020" "\006SXS" "\007EMS" "\010CCCS" \
+				    "\016PSC" "\017SSC" "\020PMD" "\021FBSS" \
+				    "\x12SPM" "\x13SAM" "\x14SNZO" "\x19SCLO" \
+				    "\x1aSAL" "\x1bSALP" "\x1cSSS" "\x1dSMPS" \
+				    "\036SSNTF" "\037NCQ" "\040 S64A"
+
 #define AHCI_REG_GHC		0x004 /* Global HBA Control */
 #define  AHCI_REG_GHC_HR		(1<<0) /* HBA Reset */
 #define  AHCI_REG_GHC_IE		(1<<1) /* Interrupt Enable */
@@ -151,6 +160,29 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+#ifdef AHCI_DEBUG
+	if (ahcidebug & AHCI_D_VERBOSE) {
+		u_int32_t reg = ahci_read(sc, AHCI_REG_CAP);
+		const char *gen;
+
+		switch (reg & AHCI_REG_CAP_ISS) {
+		case AHCI_REG_CAP_ISS_G1:
+			gen = "1 (1.5Gbps)";
+			break;
+		case AHCI_REG_CAP_ISS_G1_2:
+			gen = "1 (1.5Gbps) and 2 (3Gbps)";
+			break;
+		default:
+			gen = "unknown";
+			break;
+		}
+
+		printf("%s: CAP: 0x%b ports: %d ncmds: %d gen: %s\n",
+		    DEVNAME(sc), reg, AHCI_FMT_CAP,
+		    AHCI_REG_CAP_NP(reg), AHCI_REG_CAP_NCS(reg), gen);
+	}
+#endif
 
 unmap:
 	ahci_unmap_regs(sc, pa);
