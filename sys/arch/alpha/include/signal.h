@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.5 2006/01/08 14:20:17 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.6 2006/12/11 20:53:23 deraadt Exp $	*/
 /*	$NetBSD: signal.h,v 1.2 1995/02/16 03:08:08 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-typedef long	sig_atomic_t;
+typedef int	sig_atomic_t;
 
 #if __BSD_VISIBLE || __XPG_VISIBLE >= 420
 /*
