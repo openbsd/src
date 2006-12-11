@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.111 2006/12/11 07:59:18 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.112 2006/12/11 10:53:00 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -319,6 +319,7 @@ cvs_getopt(int argc, char **argv)
 			break;
 		case 'n':
 			cvs_noexec = 1;
+			cvs_nolog = 1;
 			break;
 		case 'Q':
 			verbosity = 0;
