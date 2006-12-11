@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.15 2006/12/11 12:48:01 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.16 2006/12/11 12:54:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -113,6 +113,16 @@ static const struct pci_matchid ahci_devices[] = {
 int			ahci_match(struct device *, void *, void *);
 void			ahci_attach(struct device *, struct device *, void *);
 
+struct ahci_dmamem {
+	bus_dmamap_t		adm_map;
+	bus_dma_segment_t	adm_seg;
+	size_t			adm_size;
+	caddr_t			adm_kva;
+};
+#define AHCI_DMA_MAP(_adm)	((_adm)->adm_map)
+#define AHCI_DMA_DVA(_adm)	((_adm)->adm_map->dm_segs[0].ds_addr)
+#define AHCI_DMA_KVA(_adm)	((void *)(_adm)->adm_kva)
+
 struct ahci_softc {
 	struct device		sc_dev;
 
@@ -146,6 +156,10 @@ int			ahci_map_intr(struct ahci_softc *,
 			    struct pci_attach_args *);
 void			ahci_unmap_intr(struct ahci_softc *,
 			    struct pci_attach_args *);
+
+struct ahci_dmamem	*ahci_dmamem_alloc(struct ahci_softc *, size_t);
+void			ahci_dmamem_free(struct ahci_softc *,
+			    struct ahci_dmamem *);
 
 u_int32_t		ahci_read(struct ahci_softc *, bus_size_t);
 void			ahci_write(struct ahci_softc *, bus_size_t, u_int32_t);
@@ -315,6 +329,61 @@ int
 ahci_intr(void *arg)
 {
 	return (0);
+}
+
+struct ahci_dmamem *
+ahci_dmamem_alloc(struct ahci_softc *sc, size_t size)
+{
+	struct ahci_dmamem		*adm;
+	int				nsegs;
+
+	adm = malloc(sizeof(struct ahci_dmamem), M_DEVBUF, M_NOWAIT);
+	if (adm == NULL)
+		return (NULL);
+
+	bzero(adm, sizeof(struct ahci_dmamem));
+	adm->adm_size = size;
+
+	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &adm->adm_map) != 0)
+		goto admfree;
+
+	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &adm->adm_seg,
+	    1, &nsegs, BUS_DMA_NOWAIT) != 0)
+		goto destroy;
+
+	if (bus_dmamem_map(sc->sc_dmat, &adm->adm_seg, nsegs, size,
+	    &adm->adm_kva, BUS_DMA_NOWAIT) != 0)
+		goto free;
+
+	if (bus_dmamap_load(sc->sc_dmat, adm->adm_map, adm->adm_kva, size,
+	    NULL, BUS_DMA_NOWAIT) != 0)
+		goto unmap;
+
+	bzero(adm->adm_kva, size);
+
+	return (adm);
+
+unmap:
+	bus_dmamem_unmap(sc->sc_dmat, adm->adm_kva, size);
+free:
+	bus_dmamem_free(sc->sc_dmat, &adm->adm_seg, 1);
+destroy:
+	bus_dmamap_destroy(sc->sc_dmat, adm->adm_map);
+admfree:
+	free(adm, M_DEVBUF);
+
+	return (NULL);
+}
+
+void
+ahci_dmamem_free(struct ahci_softc *sc, struct ahci_dmamem *adm)
+{
+	bus_dmamap_unload(sc->sc_dmat, adm->adm_map);
+	bus_dmamem_unmap(sc->sc_dmat, adm->adm_kva, adm->adm_size);
+	bus_dmamem_free(sc->sc_dmat, &adm->adm_seg, 1);
+	bus_dmamap_destroy(sc->sc_dmat, adm->adm_map);
+	free(adm, M_DEVBUF);
 }
 
 u_int32_t
