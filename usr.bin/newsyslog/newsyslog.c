@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.82 2004/09/14 22:25:33 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.83 2006/12/11 20:50:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -72,7 +72,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.82 2004/09/14 22:25:33 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.83 2006/12/11 20:50:54 deraadt Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -1044,6 +1044,7 @@ domonitor(struct conf_entry *ent)
 			warn("openmail");
 			goto cleanup;
 		}
+		fprintf(fp, "Auto-Submitted: auto-generated\n");
 		fprintf(fp, "To: %s\nSubject: LOGFILE NOTIFICATION: %s\n\n\n",
 		    ent->whom, ent->log);
 		fwrite(rb, 1, rd, fp);

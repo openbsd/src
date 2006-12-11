@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.40 2005/04/28 10:14:26 moritz Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.41 2006/12/11 20:50:55 deraadt Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -1121,6 +1121,7 @@ sendmail(char *user, int bombed)
 		_exit(0);
 	} else if (s > 0) {				/* parent */
 		dup2(p[1], 1);
+		printf("Auto-Submitted: auto-generated\n");
 		printf("To: %s@%s\n", user, fromhost);
 		printf("Subject: %s printer job \"%s\"\n", printer,
 			*jobname ? jobname : "<unknown>");

@@ -514,7 +514,8 @@ send_mail(line)
     mail = fdopen(pfd[1], "w");
 
     /* Pipes are all setup, send message via sendmail. */
-    (void) fprintf(mail, "To: %s\nFrom: %s\nSubject: ",
+    (void) fprintf(mail, "Auto-Submitted: auto-generated\n"
+	"To: %s\nFrom: %s\nSubject: ",
 	def_mailto, user_name);
     for (p = def_mailsub; *p; p++) {
 	/* Expand escapes in the subject */

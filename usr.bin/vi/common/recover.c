@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.10 2006/04/28 19:48:15 jaredy Exp $	*/
+/*	$OpenBSD: recover.c,v 1.11 2006/12/11 20:50:55 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -403,14 +403,15 @@ rcv_mailfile(sp, issync, cp_path)
 	(void)time(&now);
 	(void)gethostname(host, sizeof(host));
 	len = snprintf(buf, sizeof(buf),
-	    "%s%s\n%s%s\n%s\n%s\n%s%s\n%s%s\n%s\n\n",
+	    "%s%s\n%s%s\n%s\n%s\n%s%s\n%s%s\n%s\n%s\n\n",
 	    VI_FHEADER, t,			/* Non-standard. */
 	    VI_PHEADER, cp_path,		/* Non-standard. */
 	    "Reply-To: root",
 	    "From: root (Nvi recovery program)",
 	    "To: ", pw->pw_name,
 	    "Subject: Nvi saved the file ", p,
-	    "Precedence: bulk");		/* For vacation(1). */
+	    "Precedence: bulk",			/* For vacation(1). */
+	    "Auto-Submitted: auto-generated");
 	if (len > sizeof(buf) - 1)
 		goto lerr;
 	if (write(fd, buf, len) != len)
