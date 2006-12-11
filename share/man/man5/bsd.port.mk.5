@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.184 2006/12/01 17:49:38 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.185 2006/12/11 21:30:55 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -59,9 +59,9 @@ the system is covered by
 instead.
 .Sh TARGETS
 .Bl -tag -width do-configure
-.It Ar {build,run,all}-dir-depends
-Print all dependencies for a port in order to build it, run it,
-or both.
+.It Ar {build,run,all,regress}-dir-depends
+Print all dependencies for a port in order to build it, run it, build and
+run it, or to run regression tests.
 The output is formatted as package specification pairs, in a form suitable
 for
 .Xr tsort 1 .
