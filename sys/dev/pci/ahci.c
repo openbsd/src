@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.19 2006/12/11 13:17:57 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.20 2006/12/11 13:20:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -265,6 +265,8 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 		    AHCI_REG_CAP_NP(reg), AHCI_REG_CAP_NCS(reg), gen);
 	}
 #endif
+
+	return;
 
 unmap:
 	ahci_unmap_regs(sc, pa);
