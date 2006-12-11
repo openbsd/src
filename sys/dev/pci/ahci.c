@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.16 2006/12/11 12:54:00 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.17 2006/12/11 13:06:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -105,6 +105,52 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define AHCI_PREG_Error(_p)	(_PO(_p)+0x30) /* SATA Error */
 #define AHCI_PREG_Active(_p)	(_PO(_p)+0x34) /* SATA Active */
 #define AHCI_PREG_CI(_p)	(_PO(_p)+0x38) /* Command Issue */
+
+struct ahci_cmd_list {
+	u_int16_t		prdtl; /* sgl len */
+	u_int16_t		flags;
+
+	u_int32_t		prdbc; /* datalen */
+
+	u_int32_t		ctba_lo;
+	u_int32_t		ctba_hi;
+
+	u_int32_t		reserved[4];
+} __packed;
+
+struct ahci_rfis {
+	u_int8_t		dsfis[28];
+	u_int8_t		reserved1[4];
+	u_int8_t		psfis[24];
+	u_int8_t		reserved2[8];
+	u_int8_t		rfis[24];
+	u_int8_t		reserved3[4];
+	u_int8_t		sdbfis[4];
+	u_int8_t		ufis[64];
+	u_int8_t		reserved4[96];
+} __packed;
+
+struct ahci_cmd_table {
+	u_int8_t		cfis[64];
+	u_int8_t		acmd[16];
+	u_int8_t		reserved[48];
+} __packed;
+
+struct ahci_prdt {
+	u_int32_t		dba_lo;
+	u_int32_t		dba_hi;
+	u_int32_t		reserved;
+	u_int32_t		flags;
+} __packed;
+
+#define AHCI_MAX_PRDT		24
+
+struct ahci_cmd {
+	struct ahci_cmd_table	table;
+	struct ahci_prdt		prdt[AHCI_MAX_PRDT];
+} __packed;
+
+#define AHCI_MAX_PORTS		32
 
 static const struct pci_matchid ahci_devices[] = {
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB361 }
@@ -405,7 +451,7 @@ ahci_write(struct ahci_softc *sc, bus_size_t r, u_int32_t v)
 int
 ahci_wait_eq(struct ahci_softc *sc, bus_size_t r, u_int32_t mask,
     u_int32_t target)
-{ 
+{
 	int				i;
 
 	for (i = 0; i < 1000; i++) {
@@ -420,7 +466,7 @@ ahci_wait_eq(struct ahci_softc *sc, bus_size_t r, u_int32_t mask,
 int
 ahci_wait_ne(struct ahci_softc *sc, bus_size_t r, u_int32_t mask,
     u_int32_t target)
-{ 
+{
 	int				i;
 
 	for (i = 0; i < 1000; i++) {
