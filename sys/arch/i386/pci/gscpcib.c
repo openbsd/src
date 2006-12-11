@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscpcib.c,v 1.4 2006/01/05 15:32:46 grange Exp $	*/
+/*	$OpenBSD: gscpcib.c,v 1.5 2006/12/11 20:57:40 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -97,7 +97,8 @@ gscpcib_attach(struct device *parent, struct device *self, void *aux)
 	/* Map GPIO I/O space */
 	gpiobase = pci_conf_read(pa->pa_pc, pa->pa_tag, GSCGPIO_BASE);
 	sc->sc_gpio_iot = pa->pa_iot;
-	if (bus_space_map(sc->sc_gpio_iot, PCI_MAPREG_IO_ADDR(gpiobase),
+	if (PCI_MAPREG_IO_ADDR(gpiobase) == 0 ||
+	    bus_space_map(sc->sc_gpio_iot, PCI_MAPREG_IO_ADDR(gpiobase),
 	    GSCGPIO_SIZE, 0, &sc->sc_gpio_ioh)) {
 		printf(": failed to map GPIO I/O space");
 		goto corepcib;

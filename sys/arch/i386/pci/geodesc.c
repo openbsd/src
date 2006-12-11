@@ -1,4 +1,4 @@
-/*	$OpenBSD: geodesc.c,v 1.8 2006/10/18 19:09:14 deraadt Exp $	*/
+/*	$OpenBSD: geodesc.c,v 1.9 2006/12/11 20:57:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
@@ -97,7 +97,8 @@ geodesc_attach(struct device *parent, struct device *self, void *aux)
 
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, SC1100_F5_SCRATCHPAD);
 	sc->sc_iot = pa->pa_iot;
-	if (bus_space_map(sc->sc_iot, reg, 64, 0, &sc->sc_ioh)) {
+	if (reg == 0 ||
+	    bus_space_map(sc->sc_iot, reg, 64, 0, &sc->sc_ioh)) {
 		printf(": unable to map registers at 0x%x\n", reg);
 		return;
 	}
