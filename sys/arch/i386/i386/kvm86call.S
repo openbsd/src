@@ -1,4 +1,4 @@
-/* $OpenBSD: kvm86call.S,v 1.3 2006/11/30 00:05:40 gwk Exp $ */
+/* $OpenBSD: kvm86call.S,v 1.4 2006/12/11 23:45:13 gwk Exp $ */
 /* $NetBSD: kvm86call.S,v 1.7 2006/04/11 17:14:07 drochner Exp $ */
 
 /*-
@@ -88,9 +88,11 @@ ENTRY(kvm86_call)
 	leal	_C_LABEL(cpu_info_primary),%ecx
 #endif
 
-	pushl	%eax	
-	movl	vm86pcb,%eax
-	movl	%eax,CPU_INFO_CURPCB(%ecx)
+	movl	CPU_INFO_CURPCB(%ecx),%eax
+	pushl	%eax			/* save curpcb */
+	
+	movl	vm86pcb,%eax		
+	movl	%eax,CPU_INFO_CURPCB(%ecx) /* set curpcb to vm86pcb */
 	movl	CPU_INFO_CURPROC(%ecx),%ecx
 	movl	P_MD_TSS_SEL(%ecx),%edi
 
