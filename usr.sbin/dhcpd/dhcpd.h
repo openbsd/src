@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.25 2006/11/22 19:10:39 stevesk Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.26 2006/12/11 23:40:30 stevesk Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -312,7 +312,7 @@ struct client_lease {
 };
 
 /* privsep message. fixed length for easy parsing */
-struct pf_cmd{
+struct pf_cmd {
 	struct in_addr ip;
 	u_int32_t type;
 };
