@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.10 2006/12/11 04:14:37 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.11 2006/12/11 04:26:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -105,6 +105,8 @@ struct ahci_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_ios;
 	bus_dma_tag_t		sc_dmat;
+
+	u_int32_t		sc_portmap;
 };
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
 
@@ -178,9 +180,11 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		}
 
-		printf("%s: CAP: 0x%b ports: %d ncmds: %d gen: %s\n",
+		printf("%s: capabilities: 0x%b ports: %d ncmds: %d gen: %s\n",
 		    DEVNAME(sc), reg, AHCI_FMT_CAP,
 		    AHCI_REG_CAP_NP(reg), AHCI_REG_CAP_NCS(reg), gen);
+		printf("%s: ports implemented: 0x%08x\n", DEVNAME(sc),
+		    sc->sc_portmap);
 	}
 #endif
 
@@ -280,6 +284,8 @@ ahci_init(struct ahci_softc *sc)
 	ahci_write(sc, AHCI_REG_IS, reg);
 
 	printf(": AHCI %s", revision);
+
+	sc->sc_portmap = ahci_read(sc, AHCI_REG_PI);
 
 	return (0);
 }
