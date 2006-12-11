@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.6 2006/11/28 14:49:58 xsa Exp $	*/
+/*	$OpenBSD: repository.c,v 1.7 2006/12/11 07:59:18 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -46,6 +46,9 @@ cvs_repository_lock(const char *repo)
 	struct stat st;
 	char fpath[MAXPATHLEN];
 	struct passwd *pw;
+
+	if (cvs_noexec == 1 || cvs_readonlyfs == 1)
+		return;
 
 	cvs_log(LP_TRACE, "cvs_repository_lock(%s)", repo);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.110 2006/11/28 13:31:19 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.111 2006/12/11 07:59:18 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -44,6 +44,7 @@ int	cvs_readrc = 1;		/* read .cvsrc on startup */
 int	cvs_trace = 0;
 int	cvs_nolog = 0;
 int	cvs_readonly = 0;
+int	cvs_readonlyfs = 0;
 int	cvs_nocase = 0;	/* set to 1 to disable filename case sensitivity */
 int	cvs_noexec = 0;	/* set to 1 to disable disk operations (-n option) */
 int	cvs_error = -1;	/* set to the correct error code on failure */
@@ -111,7 +112,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: %s [-flnQqrtvVw] [-d root] [-e editor] [-s var=val] "
+	    "Usage: %s [-flnQqRrtvVw] [-d root] [-e editor] [-s var=val] "
 	    "[-T tmpdir] [-z level] command [...]\n", __progname);
 }
 
@@ -143,6 +144,11 @@ main(int argc, char **argv)
 
 	if ((envstr = getenv("CVSREAD")) != NULL)
 		cvs_readonly = 1;
+
+	if ((envstr = getenv("CVSREADONLYFS")) != NULL) {
+		cvs_readonlyfs = 1;
+		cvs_nolog = 1;
+	}
 
 	if ((cvs_homedir = getenv("HOME")) == NULL) {
 		if ((pw = getpwuid(getuid())) == NULL)
@@ -289,7 +295,7 @@ cvs_getopt(int argc, char **argv)
 	int ret;
 	char *ep;
 
-	while ((ret = getopt(argc, argv, "b:d:e:fHlnQqrs:T:tvVwz:")) != -1) {
+	while ((ret = getopt(argc, argv, "b:d:e:fHlnQqRrs:T:tvVwz:")) != -1) {
 		switch (ret) {
 		case 'b':
 			/*
@@ -321,6 +327,10 @@ cvs_getopt(int argc, char **argv)
 			/*
 			 * Be quiet. This is the default in OpenCVS.
 			 */
+			break;
+		case 'R':
+			cvs_readonlyfs = 1;
+			cvs_nolog = 1;
 			break;
 		case 'r':
 			cvs_readonly = 1;
