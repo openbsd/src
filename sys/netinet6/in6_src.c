@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.21 2006/12/09 01:12:28 itojun Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.22 2006/12/11 11:26:05 itojun Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -86,9 +86,9 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 
-static int selectroute __P((struct sockaddr_in6 *, struct ip6_pktopts *,
+static int selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
 	struct ip6_moptions *, struct route_in6 *, struct ifnet **,
-	struct rtentry **, int));
+	struct rtentry **, int);
 
 /*
  * Return an IPv6 address, which is the most appropriate for a given
