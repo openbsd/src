@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.20 2006/12/11 13:20:29 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.21 2006/12/11 23:42:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -69,8 +69,8 @@ int ahcidebug = AHCI_D_VERBOSE;
 
 #define  AHCI_FMT_CAP		"\020" "\006SXS" "\007EMS" "\010CCCS" \
 				    "\016PSC" "\017SSC" "\020PMD" "\021FBSS" \
-				    "\x12SPM" "\x13SAM" "\x14SNZO" "\x19SCLO" \
-				    "\x1aSAL" "\x1bSALP" "\x1cSSS" "\x1dSMPS" \
+				    "\022SPM" "\023SAM" "\024SNZO" "\031SCLO" \
+				    "\032SAL" "\033SALP" "\034SSS" "\035SMPS" \
 				    "\036SSNTF" "\037NCQ" "\040S64A"
 
 #define AHCI_REG_GHC		0x004 /* Global HBA Control */
