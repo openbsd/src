@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.13 2006/12/11 05:47:53 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.14 2006/12/11 12:46:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -110,8 +110,9 @@ static const struct pci_matchid ahci_devices[] = {
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB361 }
 };
 
-int		ahci_match(struct device *, void *, void *);
-void		ahci_attach(struct device *, struct device *, void *);
+int				ahci_match(struct device *, void *, void *);
+void				ahci_attach(struct device *, struct device *,
+				    void *);
 
 struct ahci_softc {
 	struct device		sc_dev;
@@ -135,20 +136,24 @@ struct cfdriver ahci_cd = {
 	NULL, "ahci", DV_DULL
 };
 
-int		ahci_intr(void *);
+int			ahci_intr(void *);
 
-int		ahci_map_regs(struct ahci_softc *, struct pci_attach_args *);
-void		ahci_unmap_regs(struct ahci_softc *, struct pci_attach_args *);
-int		ahci_init(struct ahci_softc *);
-int		ahci_map_intr(struct ahci_softc *, struct pci_attach_args *);
-void		ahci_unmap_intr(struct ahci_softc *, struct pci_attach_args *);
+int			ahci_map_regs(struct ahci_softc *,
+			    struct pci_attach_args *);
+void			ahci_unmap_regs(struct ahci_softc *,
+			    struct pci_attach_args *);
+int			ahci_init(struct ahci_softc *);
+int			ahci_map_intr(struct ahci_softc *,
+			    struct pci_attach_args *);
+void			ahci_unmap_intr(struct ahci_softc *,
+			    struct pci_attach_args *);
 
-u_int32_t	ahci_read(struct ahci_softc *, bus_size_t);
-void		ahci_write(struct ahci_softc *, bus_size_t, u_int32_t);
-int		ahci_wait_eq(struct ahci_softc *, bus_size_t,
-		    u_int32_t, u_int32_t);
-int		ahci_wait_ne(struct ahci_softc *, bus_size_t,
-		    u_int32_t, u_int32_t);
+u_int32_t		ahci_read(struct ahci_softc *, bus_size_t);
+void			ahci_write(struct ahci_softc *, bus_size_t, u_int32_t);
+int			ahci_wait_eq(struct ahci_softc *, bus_size_t,
+			    u_int32_t, u_int32_t);
+int			ahci_wait_ne(struct ahci_softc *, bus_size_t,
+			    u_int32_t, u_int32_t);
 
 int
 ahci_match(struct device *parent, void *match, void *aux)
