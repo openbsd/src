@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.14 2006/12/11 12:46:12 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.15 2006/12/11 12:48:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -110,9 +110,8 @@ static const struct pci_matchid ahci_devices[] = {
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB361 }
 };
 
-int				ahci_match(struct device *, void *, void *);
-void				ahci_attach(struct device *, struct device *,
-				    void *);
+int			ahci_match(struct device *, void *, void *);
+void			ahci_attach(struct device *, struct device *, void *);
 
 struct ahci_softc {
 	struct device		sc_dev;
