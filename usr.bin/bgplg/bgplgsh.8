@@ -1,0 +1,100 @@
+.\"	$OpenBSD: bgplgsh.8,v 1.1 2006/12/11 23:10:10 reyk Exp $
+.\"
+.\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd August 12, 2005
+.Dt BGPLG 8
+.Os
+.Sh NAME
+.Nm bgplgsh
+.Nd looking glass shell for the
+.Ox
+Border Gateway Protocol daemon
+.Sh SYNOPSIS
+.Nm bgplgsh
+.Sh DESCRIPTION
+The
+.Nm
+program is a looking glass shell for the
+.Xr bgpd 8
+Border Gateway Protocol daemon.
+The looking glass will provide a simple command line interface
+with read-only access to a restricted set of
+.Xr bgpd 8
+and system status information, which is typically used on route
+servers by Internet Service Providers (ISPs) and Internet eXchange
+points (IXs).
+.Pp
+It requires three steps to enable the looking glass shell:
+.Bl -enum
+.It
+Add
+.Nm
+as a valid login shell.
+See
+.Xr shells 5
+for more information.
+.Bd -literal -offset indent
+# echo /usr/bin/bgplgsh \*(Gt\*(Gt /etc/shells
+.Ed
+.Pp
+.It
+Create a new user for restricted looking glass access.
+See
+.Xr adduser 8
+for more information about system user management.
+.Bd -literal -offset indent
+# adduser -shell /usr/bin/bgplgsh -batch bgplg
+# passwd bgplg
+.Ed
+.It
+Start the Border Gateway Protocol daemon with a second,
+restricted, control socket.
+See
+.Xr bgpd 8
+and
+.Xr bgplg 8
+for more information.
+.Pp
+For example,
+set the following in
+.Pa /etc/rc.conf.local
+to start
+.Xr bgpd 8
+using the second, restricted, control socket:
+.Pp
+.Dl bgpd_flags=\&"-r /var/www/logs/bgpd.rsock\&"
+.El
+.Sh FILES
+.Bl -tag -width "/var/www/conf/bgpd.rsockXX" -compact
+.It Pa /var/www/logs/bgpd.rsock
+Position of the second, restricted, control socket of
+.Xr bgpd 8 .
+.El
+.Sh SEE ALSO
+.Xr bgpd 8 ,
+.Xr bgplg 8
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 4.1 .
+The initial implementation was done in 2005 for DE-CIX, the German
+commercial internet exchange point.
+.Sh AUTHORS
+The
+.Nm
+program was written by
+.An Reyk Floeter Aq reyk@vantronix.net .

@@ -1,0 +1,177 @@
+.\"	$OpenBSD: bgplg.8,v 1.1 2006/12/11 23:10:10 reyk Exp $
+.\"
+.\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd August 12, 2005
+.Dt BGPLG 8
+.Os
+.Sh NAME
+.Nm bgplg
+.Nd looking glass for the
+.Ox
+Border Gateway Protocol daemon
+.Sh SYNOPSIS
+.Nm bgplg
+.Sh DESCRIPTION
+The
+.Nm
+CGI program is a looking glass for the
+.Xr bgpd 8
+Border Gateway Protocol daemon.
+The looking glass will provide a simple web interface with read-only
+access to a restricted set of
+.Xr bgpd 8
+and system status information, which is typically used on route
+servers by Internet Service Providers (ISPs) and Internet eXchange
+points (IXs).
+It is intended to be used in a
+.Xr chroot 2
+environment in
+.Pa /var/www .
+.Pp
+.Nm
+is disabled by default.
+It requires four steps to enable the looking glass:
+.Bl -enum
+.It
+Update the file permission mode to allow the execution of the
+.Nm
+CGI program and the additional statically linked programs that have
+been installed into the
+.Xr chroot 2
+environment.
+See the
+.Sx FILES
+section below for the list of installed programs.
+.Pp
+For example,
+to allow execution of
+.Nm
+and the statically-linked version of
+.Xr bgpctl 8
+(disabled commands like
+.Xr ping 8
+and
+.Xr traceroute 8
+will be hidden from looking glass command list):
+.Bd -literal -offset indent
+# chmod 0655 /var/www/cgi-bin/bgplg
+# chmod 0655 /var/www/bin/bgpctl
+.Ed
+.It
+The programs
+.Xr ping 8
+and
+.Xr traceroute 8
+will require a copy of the resolver configuration file
+.Xr resolv.conf 5
+in the
+.Xr chroot 2
+environment for optional host name lookups.
+.Bd -literal -offset indent
+# mkdir /var/www/etc
+# cp /etc/resolv.conf /var/www/etc
+.Ed
+.It
+Start the Border Gateway Protocol daemon with a second,
+restricted, control socket that can be used
+from within the
+.Xr chroot 2
+environment.
+See
+.Xr bgpd 8
+for more information.
+.Pp
+For example,
+set the following in
+.Pa /etc/rc.conf.local
+to start
+.Xr bgpd 8
+using the second, restricted, control socket:
+.Pp
+.Dl bgpd_flags=\&"-r /var/www/logs/bgpd.rsock\&"
+.Pp
+.It
+Start the Apache Hypertext Transfer Protocol Server.
+See
+.Xr httpd 8
+for more information.
+.El
+.Sh FILES
+.Bl -tag -width "/var/www/conf/bgplg.headXX" -compact
+.It Pa /var/www/conf/bgplg.css
+Optional
+.Nm
+CSS style sheet.
+.It Pa /var/www/conf/bgplg.head
+Optional
+.Nm
+HTML header.
+.It Pa /var/www/conf/bgplg.foot
+Optional
+.Nm
+HTML footer.
+.It Pa /var/www/logs/bgpd.rsock
+Position of the second, restricted, control socket of
+.Xr bgpd 8 .
+.El
+.Pp
+The following statically linked executables have been installed into
+the
+.Xr chroot 2
+environment of the
+.Xr httpd 8
+server.
+To enable the corresponding functionality, use the
+.Xr chmod 1
+utility to manually set the file permission mode to 0655 or anything
+appropriate.
+.Pp
+.Bl -tag -width "/var/www/bin/tracerouteXX" -compact
+.It Pa /var/www/cgi-bin/bgplg
+The
+.Nm
+CGI executable.
+.It Pa /var/www/bin/bgpctl
+The
+.Xr bgpctl 8
+program used to query information from
+.Xr bgpd 8
+.It Pa /var/www/bin/ping
+The
+.Xr ping 8
+program used to send ICMP ECHO_REQUEST packets to network hosts.
+.It Pa /var/www/bin/traceroute
+The
+.Xr traceroute 8
+program used to print the route packets take to network hosts.
+.El
+.Sh SEE ALSO
+.Xr bgpctl 8 ,
+.Xr bgpd 8 ,
+.Xr bgplgsh 8 ,
+.Xr httpd 8
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 4.1 .
+The initial implementation was done in 2005 for DE-CIX, the German
+commercial internet exchange point.
+.Sh AUTHORS
+The
+.Nm
+program was written by
+.An Reyk Floeter Aq reyk@vantronix.net .
