@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwdog.c,v 1.4 2006/12/11 08:15:56 mbalmer Exp $ */
+/*	$OpenBSD: pwdog.c,v 1.5 2006/12/11 08:25:54 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -41,7 +41,6 @@ struct pwdog_softc {
 
 int pwdog_probe(struct device *, void *, void *);
 void pwdog_attach(struct device *, struct device *, void *);
-void pwdog_init_timer(struct pwdog_softc *);
 int pwdog_set_timeout(void *, int);
 
 struct cfattach pwdog_ca = {
@@ -84,7 +83,6 @@ pwdog_attach(struct device *parent, struct device *self, void *aux)
 	wdog_register(pwdog, pwdog_set_timeout);
 }
 
-/* ARGSUSED */
 int
 pwdog_set_timeout(void *self, int seconds)
 {
@@ -92,9 +90,10 @@ pwdog_set_timeout(void *self, int seconds)
 	int s;
 
 	s = splclock();
-	bus_space_write_1(pwdog->iot, pwdog->ioh, PWDOG_DISABLE, 0);
 	if (seconds)
 		bus_space_write_1(pwdog->iot, pwdog->ioh, PWDOG_ACTIVATE, 0);
+	else
+		bus_space_write_1(pwdog->iot, pwdog->ioh, PWDOG_DISABLE, 0);
 	splx(s);
 	return seconds;
 }
