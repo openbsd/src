@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lcp.c,v 1.41 2005/07/17 19:13:24 brad Exp $
+ * $OpenBSD: lcp.c,v 1.42 2006/12/11 16:31:35 claudio Exp $
  */
 
 #include <sys/param.h>
@@ -790,6 +790,9 @@ LcpDecodeConfig(struct fsm *fp, u_char *cp, u_char *end, int mode_type,
         break;
       case MODE_REJ:
         lcp->his_reject |= (1 << opt->hdr.id);
+	/* Set the MRU to what we want anyway - the peer won't care! */
+	if (lcp->his_mru > lcp->want_mru)
+	  lcp->his_mru = lcp->want_mru;
         break;
       }
       break;
