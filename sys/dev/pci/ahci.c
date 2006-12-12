@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.25 2006/12/12 02:22:56 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.26 2006/12/12 02:24:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -252,6 +252,8 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ahci_softc		*sc = (struct ahci_softc *)self;
 	struct pci_attach_args		*pa = aux;
+
+	sc->sc_dmat = pa->pa_dmat;
 
 	if (ahci_map_regs(sc, pa) != 0) {
 		/* error already printed by ahci_map_regs */
