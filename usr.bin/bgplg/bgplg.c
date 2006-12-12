@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.c,v 1.1 2006/12/11 23:10:10 reyk Exp $	*/
+/*	$OpenBSD: bgplg.c,v 1.2 2006/12/12 11:37:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
@@ -251,7 +251,10 @@ main(void)
 
 	printf("Content-Type: text/html\n"
 	    "Cache-Control: no-cache\n\n"
-	    "<html>\n"
+	    "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n"
+	    "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" "
+	    "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
+	    "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
 	    "<head>\n"
 	    "<title>bgplg</title>\n");
 	if (stat(INC_STYLE, &st) == 0) {
@@ -277,7 +280,9 @@ main(void)
 	}
 	if ((query = lg_getenv("QUERY_STRING", &query_length)) != NULL)
 		cmd = lg_getarg("cmd=", query, query_length);
-	printf("<form action='%s'>\n"
+	printf(
+	    "<form action='%s'>\n"
+"<div class=\"command\">\n"
 	    "<select name='cmd'>\n",
 	    self);
 	for (i = 0; cmds[i].name != NULL; i++) {
@@ -295,6 +300,7 @@ main(void)
 	printf("</select>\n"
 	    "<input type='text' name='req'/>\n"
 	    "<input type='submit' value='submit'/>\n"
+	    "</div>\n"
 	    "</form>\n"
 	    "<pre>\n");
 	fflush(stdout);

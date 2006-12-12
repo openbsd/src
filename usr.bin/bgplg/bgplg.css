@@ -2,3 +2,8 @@
 	text-align: left;
 	width: 100%;
 }
+
+img {
+	border: none; 
+	border-width: 0px;
+}
