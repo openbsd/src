@@ -1,87 +1,105 @@
-.\"	$OpenBSD: enc.4,v 1.23 2006/10/19 08:52:25 jmc Exp $
+.\"	$OpenBSD: enc.4,v 1.24 2006/12/12 21:20:02 jmc Exp $
 .\"
-.\" Copyright (c) 1999 Angelos D. Keromytis
-.\" All rights reserved.
+.\" Copyright (c) 2006 Jason McIntyre <jmc@openbsd.org>
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by Angelos D. Keromytis.
-.\" 4. The name of the author may not be used to endorse or promote products
-.\"    derived from this software without specific prior written permission.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.\"
-.Dd October 7, 1999
+.Dd November 26, 2006
 .Dt ENC 4
 .Os
 .Sh NAME
 .Nm enc
-.Nd Encapsulating Interface
+.Nd encapsulating interface
 .Sh SYNOPSIS
-.Cd "pseudo-device enc" Op Ar count
+.Cd "pseudo-device enc 1"
 .Sh DESCRIPTION
 The
 .Nm
-interface is a software loopback mechanism that allows hosts or
-firewalls to filter
+interface is a virtual interface for
 .Xr ipsec 4
-traffic using
-.Xr pf 4 .
-.Pp
-The
-.Nm
-interface allows an administrator
-to see outgoing packets before they have been processed by
-.Xr ipsec 4 ,
-or incoming packets after they have been similarly processed, via
+traffic.
+It allows packet filtering using
+.Xr pf 4 ;
+prior to encapsulation and after decapsulation,
+packets may be monitored using
 .Xr tcpdump 8 .
+Only one
+.Nm
+interface, enc0, is supported.
 .Pp
-The
-.Dq enc0
-interface inherits all IPsec traffic.
-Thus all IPsec traffic can be filtered based on
-.Dq enc0 ,
-and all IPsec traffic could be seen by invoking
-.Xr tcpdump 8
-on the
-.Dq enc0
-interface.
-Filter rules on the enc0 interface should explicitly set
+Packet filtering is documented in greater detail in
+.Xr pf.conf 5 ,
+however some details relevant to filtering on the
+.Nm
+interface are documented below.
+.Pp
+Firstly,
+.Xr pf 4
+is a stateful packet filter,
+which means it can track the state of a connection.
+It does this
+.Em automatically .
+States are normally
+.Em floating ,
+which means they can match packets on any interface.
+However this is a potential problem for filtering IPsec traffic:
+states need to be interface bound,
+to avoid permitting unencrypted traffic
+should the SAs expire and not be replaced.
+Therefore all rules on the
+.Nm
+interface should explicitly set
 .Dq keep state (if-bound) .
-See
-.Xr pf.conf 5
-and
+For example:
+.Bd -literal -offset indent
+pass in on enc0 proto ipencap from 192.168.3.2 to 192.168.3.1 \e
+	keep state (if-bound)
+.Ed
+.Pp
+Secondly, the
+.Nm
+interface does not directly support bandwidth control via
+.Xr pf 4
+queueing.
+Instead, IPsec packets must be tagged and the tagged packets
+are assigned to queues.
 .Xr ipsec.conf 5
-for more information on filtering IPsec traffic.
-.Sh EXAMPLES
-To see all outgoing packets before they have been processed via
-.Xr ipsec 4 ,
-or all incoming packets after they have been similarly processed:
+provides an example of tag-based queueing
+and further information on packet tagging.
+.Pp
+Finally,
+the use of translation rules to map and redirect network traffic
+requires some care.
+Packets destined to be IPsec processed are seen by the
+filer/translation engine twice,
+both before and after being IPsec processed.
+If a packet's translated address
+on the way back fails to match an existing IPsec flow,
+from the translated address to the original source address,
+it will be discarded by the filter.
+It is best to avoid this situation where possible,
+though a flow may be explicitly created to work around it.
+.Pp
+As noted above,
+.Xr tcpdump 8
+may be invoked on the
+.Nm
+interface to see packets prior to encapsulation and after decapsulation.
+For example:
 .Pp
 .Dl # tcpdump -i enc0
 .Sh SEE ALSO
-.Xr bpf 4 ,
-.Xr inet 4 ,
 .Xr ipsec 4 ,
-.Xr netintro 4 ,
 .Xr pf 4 ,
 .Xr ipsec.conf 5 ,
 .Xr pf.conf 5 ,

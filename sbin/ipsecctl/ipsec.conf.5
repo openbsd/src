@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.108 2006/12/06 09:54:15 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.109 2006/12/12 21:20:02 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -428,6 +428,10 @@ on the external interface.
 .It enc0
 Interface for outgoing traffic before it's been encapsulated,
 and incoming traffic after it's been decapsulated.
+State on this interface should be interface bound;
+see
+.Xr enc 4
+for further information.
 .It proto ipencap
 [tunnel mode only]
 IP-in-IP traffic flowing between gateways
@@ -470,22 +474,6 @@ pass  in on enc0 from 10.0.2.0/24 to 10.0.1.0/24 \e
 pass out on enc0 from 10.0.1.0/24 to 10.0.2.0/24 \e
 	keep state (if-bound)
 .Ed
-.Pp
-.Xr pf 4
-is a stateful packet filter,
-which means it can track the state of a connection.
-It does this
-.Em automatically .
-States are normally
-.Em floating ,
-which means they can match packets on any interface.
-However this is a potential problem for filtering IPsec traffic:
-states need to be interface bound,
-to avoid permitting unencrypted traffic should
-.Xr isakmpd 8
-exit.
-Therefore all rules on the enc0 interface should explicitly set
-.Dq keep state (if-bound) .
 .Pp
 .Xr pf 4
 has the ability to filter IPsec-related packets
