@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.26 2006/12/12 02:24:20 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.27 2006/12/12 02:37:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -223,6 +223,8 @@ int			ahci_map_intr(struct ahci_softc *,
 			    struct pci_attach_args *);
 void			ahci_unmap_intr(struct ahci_softc *,
 			    struct pci_attach_args *);
+int			ahci_port_alloc(struct ahci_softc *, u_int);
+void			ahci_port_free(struct ahci_softc *, u_int);
 
 struct ahci_ccb		*ahci_get_ccb(struct ahci_port *);
 void			ahci_put_ccb(struct ahci_port *, struct ahci_ccb *);
@@ -398,6 +400,92 @@ ahci_init(struct ahci_softc *sc)
 	sc->sc_ncmds = AHCI_REG_CAP_NCS(reg);
 
 	return (0);
+}
+
+int
+ahci_port_alloc(struct ahci_softc *sc, u_int port)
+{
+	struct ahci_port		*ap;
+	struct ahci_ccb			*ccb;
+	int				i;
+
+	ap = malloc(sizeof(struct ahci_port), M_DEVBUF, M_NOWAIT);
+	if (ap == NULL) {
+		printf("%s: unable to allocate memory for port %d\n",
+		    DEVNAME(sc), port);
+		return (1);
+	}
+	bzero(ap, sizeof(struct ahci_port));
+
+	ap->ap_sc = sc;
+	TAILQ_INIT(&ap->ap_ccb_free);
+
+	ap->ap_ccbs = malloc(sizeof(struct ahci_ccb) * sc->sc_ncmds, M_DEVBUF,
+	    M_NOWAIT);
+	if (ap->ap_ccbs == NULL) {
+		printf("%s: unable to allocate command list for port %d\n",
+		    DEVNAME(sc), port);
+		goto freeport;
+	}
+	bzero(ap->ap_ccbs, sizeof(struct ahci_ccb) * sc->sc_ncmds);
+
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
+	    AHCI_PORT_REGION(i), AHCI_PORT_SIZE, &ap->ap_ioh) != 0) {
+		printf("%s: unable to create register window for port %d\n",
+		    DEVNAME(sc), port);
+		goto freeccbs;
+	}
+
+	/* XXX alloc dma mem */
+
+	for (i = 0; i < sc->sc_ncmds; i++) {
+		ccb = &ap->ap_ccbs[i];
+
+		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, AHCI_MAX_PRDT,
+		    MAXPHYS, 0, 0, &ccb->ccb_dmamap) != 0) {
+			printf("unable to create dmamap for port %d ccb %d\n",
+			    DEVNAME(sc), port, i);
+			goto freemaps;
+		}
+
+		/* XXX point ccb at its cmd structures in dma mem */
+
+		ahci_put_ccb(ap, ccb);
+	}
+
+	return (0);
+
+freemaps:
+	while ((ccb = ahci_get_ccb(ap)) != NULL)
+		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
+	/* XXX free dma mem */
+freeccbs:
+	free(ap->ap_ccbs, M_DEVBUF);
+freeport:
+	free(ap, M_DEVBUF);
+	return (1);
+}
+
+void
+ahci_port_free(struct ahci_softc *sc, u_int port)
+{
+	struct ahci_port		*ap;
+	struct ahci_ccb			*ccb;
+	int				i;
+
+	ap = sc->sc_ports[i];
+
+	for (i = 0; i < sc->sc_ncmds; i++) {
+		ccb = &ap->ap_ccbs[i];
+
+		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
+	}
+
+	/* XXX free dma mem */
+	/* bus_space(9) says we dont free the subregions handle */
+	free(ap->ap_ccbs, M_DEVBUF);
+	free(ap, M_DEVBUF);
+	sc->sc_ports[i] = NULL;
 }
 
 int
