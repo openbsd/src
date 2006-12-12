@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.81 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.82 2006/12/12 02:44:36 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -114,6 +114,7 @@ struct scsi_adapter {
 #define TRY_AGAIN_LATER		1
 #define	COMPLETE		2
 #define	ESCAPE_NOT_SUPPORTED	3
+#define NO_CCB			4
 
 /*
  * These entry points are called by the low-end drivers to get services from
@@ -306,7 +307,7 @@ void	scsi_deinit(void);
 int	scsi_task(void (*func)(void *, void *), void *, void *, int);
 struct scsi_xfer *
 	scsi_get_xs(struct scsi_link *, int);
-void	scsi_free_xs(struct scsi_xfer *);
+void	scsi_free_xs(struct scsi_xfer *, int);
 int	scsi_execute_xs(struct scsi_xfer *);
 u_long	scsi_size(struct scsi_link *, int, u_int32_t *);
 int	scsi_test_unit_ready(struct scsi_link *, int, int);

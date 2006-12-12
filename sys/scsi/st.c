@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.68 2006/11/28 16:56:50 dlg Exp $	*/
+/*	$OpenBSD: st.c,v 1.69 2006/12/12 02:44:36 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/timeout.h>
 #include <sys/fcntl.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -214,6 +215,7 @@ struct st_softc {
 #define BLKSIZE_SET_BY_QUIRK	0x08
 /*--------------------storage for sense data returned by the drive------------*/
 	struct buf buf_queue;		/* the queue of pending IO operations */
+	struct timeout sc_timeout;
 };
 
 
@@ -225,6 +227,7 @@ int	st_mount_tape(dev_t, int);
 void	st_unmount(struct st_softc *, int, int);
 int	st_decide_mode(struct st_softc *, int);
 void	ststart(void *);
+void	strestart(void *);
 int	st_read(struct st_softc *, char *, int, int);
 int	st_read_block_limits(struct st_softc *, int);
 int	st_mode_sense(struct st_softc *, int);
@@ -322,6 +325,8 @@ stattach(parent, self, aux)
 	 */
 	st_identify_drive(st, sa->sa_inqbuf);
 	printf("\n");
+
+	timeout_set(&st->sc_timeout, strestart, st);
 
 	/*
 	 * Set up the buf queue for this device
@@ -499,6 +504,7 @@ stclose(dev, flags, mode, p)
 		break;
 	}
 	st->sc_link->flags &= ~SDEV_OPEN;
+	timeout_del(&st->sc_timeout);
 
 	return 0;
 }
@@ -834,7 +840,7 @@ done:
  * This routine is also called after other non-queued requests
  * have been made of the scsi driver, to ensure that the queue
  * continues to be drained.
- * ststart() is called at splbio
+ * ststart() is called at splbio from ststrategy, strestart and scsi_done()
  */
 void
 ststart(v)
@@ -844,7 +850,7 @@ ststart(v)
 	struct scsi_link *sc_link = st->sc_link;
 	struct buf *bp, *dp;
 	struct scsi_rw_tape cmd;
-	int flags;
+	int flags, error;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ststart\n"));
 
@@ -958,11 +964,36 @@ ststart(v)
 		/*
 		 * go ask the adapter to do all this for us
 		 */
-		if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
+		error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
 		    sizeof(cmd), (u_char *) bp->b_data, bp->b_bcount, 0,
-		    ST_IO_TIME, bp, flags | SCSI_NOSLEEP))
+		    ST_IO_TIME, bp, flags | SCSI_NOSLEEP);
+		switch (error) {
+		case 0:
+			timeout_del(&st->sc_timeout);
+			break;
+		case EAGAIN:
+			/*
+			 * The device can't start another i/o. Try again later.
+			 */
+			dp->b_actf = bp;
+			timeout_add(&st->sc_timeout, 1);
+			return;
+		default:
 			printf("%s: not queued\n", st->sc_dev.dv_xname);
+			break;
+		}
 	} /* go back and see if we can cram more work in.. */
+}
+
+void
+strestart(v)
+	void *v;
+{
+	int s;
+
+	s = splbio();
+	ststart(v);
+	splx(s);
 }
 
 int

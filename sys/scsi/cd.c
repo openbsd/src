@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.116 2006/11/28 16:56:50 dlg Exp $	*/
+/*	$OpenBSD: cd.c,v 1.117 2006/12/12 02:44:36 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
+#include <sys/timeout.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -102,6 +102,7 @@ int	cdactivate(struct device *, enum devact);
 int	cddetach(struct device *, int);
 
 void	cdstart(void *);
+void	cdrestart(void *);
 void	cdminphys(struct buf *);
 void	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *,
 			    struct cpu_disklabel *, int);
@@ -224,6 +225,8 @@ cdattach(parent, self, aux)
 		cd->flags |= CDF_ANCIENT;
 
 	printf("\n");
+
+	timeout_set(&cd->sc_timeout, cdrestart, cd);
 
 	if ((cd->sc_cdpwrhook = powerhook_establish(cd_powerhook, cd)) == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
@@ -462,6 +465,8 @@ cdclose(dev, flag, fmt, p)
 
 			cd->sc_link->flags &= ~SDEV_EJECTING;
 		}
+
+		timeout_del(&cd->sc_timeout);
 	}
 
 	cdunlock(cd);
@@ -565,7 +570,7 @@ done:
  * continues to be drained.
  *
  * must be called at the correct (highish) spl level
- * cdstart() is called at splbio from cdstrategy and scsi_done
+ * cdstart() is called at splbio from cdstrategy, cdrestart and scsi_done
  */
 void
 cdstart(v)
@@ -578,7 +583,7 @@ cdstart(v)
 	struct scsi_rw_big cmd_big;
 	struct scsi_rw cmd_small;
 	struct scsi_generic *cmdp;
-	int blkno, nblks, cmdlen;
+	int blkno, nblks, cmdlen, error;
 	struct partition *p;
 
 	splassert(IPL_BIO);
@@ -672,14 +677,40 @@ cdstart(v)
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		if (scsi_scsi_cmd(sc_link, cmdp, cmdlen,
-		    (u_char *) bp->b_data, bp->b_bcount,
-		    CDRETRIES, 30000, bp, SCSI_NOSLEEP |
-		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT))) {
+		error = scsi_scsi_cmd(sc_link, cmdp, cmdlen,
+		    (u_char *) bp->b_data, bp->b_bcount, CDRETRIES, 30000, bp,
+		    SCSI_NOSLEEP | ((bp->b_flags & B_READ) ? SCSI_DATA_IN :
+		    SCSI_DATA_OUT));
+		switch (error) {
+		case 0:
+			timeout_del(&cd->sc_timeout);
+			break;
+		case EAGAIN:
+			/*
+			 * The device can't start another i/o. Try again later.
+			 */
+			dp->b_actf = bp;
 			disk_unbusy(&cd->sc_dk, 0, 0);
-			printf("%s: not queued", cd->sc_dev.dv_xname);
+			timeout_add(&cd->sc_timeout, 1);
+			return;
+		default:
+			disk_unbusy(&cd->sc_dk, 0, 0);
+			printf("%s: not queued, error %d\n",
+			    cd->sc_dev.dv_xname, error);
+			break;
 		}
 	}
+}
+
+void
+cdrestart(v)
+	void *v;
+{
+	int s;
+
+	s = splbio();
+	cdstart(v);
+	splx(s);
 }
 
 void

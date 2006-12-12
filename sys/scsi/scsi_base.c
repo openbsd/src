@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.116 2006/11/27 23:14:22 beck Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.117 2006/12/12 02:44:36 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -234,27 +234,25 @@ scsi_get_xs(struct scsi_link *sc_link, int flags)
  * If another process is waiting for an xs, do a wakeup, let it proceed
  */
 void
-scsi_free_xs(struct scsi_xfer *xs)
+scsi_free_xs(struct scsi_xfer *xs, int start)
 {
-	struct scsi_link		*sc_link = xs->sc_link;
+	struct scsi_link *sc_link = xs->sc_link;
 
 	splassert(IPL_BIO);
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("scsi_free_xs\n"));
 
 	pool_put(&scsi_xfer_pool, xs);
-
-	/* if was 0 and someone waits, wake them up */
 	sc_link->openings++;
+
+	/* If someone is waiting for scsi_xfer, wake them up. */
 	if ((sc_link->flags & SDEV_WAITING) != 0) {
 		sc_link->flags &= ~SDEV_WAITING;
 		wakeup(sc_link);
-	} else {
-		if (sc_link->device->start) {
-			SC_DEBUG(sc_link, SDEV_DB2,
-			    ("calling private start()\n"));
-			(*(sc_link->device->start)) (sc_link->device_softc);
-		}
+	} else if (start && sc_link->device->start) {
+		SC_DEBUG(sc_link, SDEV_DB2,
+		    ("calling private start()\n"));
+		(*(sc_link->device->start)) (sc_link->device_softc);
 	}
 }
 
@@ -743,7 +741,7 @@ scsi_done(struct scsi_xfer *xs)
 		scsi_user_done(xs); /* to take a copy of the sense etc. */
 		SC_DEBUG(sc_link, SDEV_DB3, ("returned from user done()\n"));
 
-		scsi_free_xs(xs); /* restarts queue too */
+		scsi_free_xs(xs, 1); /* restarts queue too */
 		SC_DEBUG(sc_link, SDEV_DB3, ("returning to adapter\n"));
 		return;
 	}
@@ -788,6 +786,7 @@ retry:
 			bp->b_resid = xs->resid;
 		}
 	}
+
 	if (sc_link->device->done) {
 		/*
 		 * Tell the device the operation is actually complete.
@@ -797,7 +796,7 @@ retry:
 		 */
 		(*sc_link->device->done)(xs);
 	}
-	scsi_free_xs(xs);
+	scsi_free_xs(xs, 1);
 	if (bp != NULL)
 		biodone(bp);
 }
@@ -880,6 +879,9 @@ retry:
 		xs->error = XS_BUSY;
 		goto doit;
 
+	case NO_CCB:
+		return (EAGAIN);
+
 	default:
 		panic("scsi_execute_xs: invalid return code (%#x)", rslt);
 	}
@@ -920,11 +922,12 @@ scsi_scsi_cmd(struct scsi_link *sc_link, struct scsi_generic *scsi_cmd,
 		return (0);
 
 	s = splbio();
-	/*
-	 * we have finished with the xfer struct, free it and
-	 * check if anyone else needs to be started up.
-	 */
-	scsi_free_xs(xs);
+
+	if (error == EAGAIN)
+		scsi_free_xs(xs, 0); /* Don't restart queue. */
+	else
+		scsi_free_xs(xs, 1);
+
 	splx(s);
 
 	return (error);
