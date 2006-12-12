@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.9 2006/11/29 22:17:07 marco Exp $ */
+/* $OpenBSD: acpiec.c,v 1.10 2006/12/12 17:59:09 mk Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -34,7 +34,6 @@
 
 int	acpiec_match(struct device *, void *, void *);
 void	acpiec_attach(struct device *, struct device *, void *);
-int	acpiec_notify(struct aml_node *, int, void *);
 
 u_int8_t acpiec_status(struct acpiec_softc *);
 u_int8_t acpiec_read_data(struct acpiec_softc *);
@@ -62,7 +61,7 @@ int     acpiec_gpehandler(struct acpi_softc *, int, void *);
 struct aml_node	*aml_find_name(struct acpi_softc *, struct aml_node *,
 		    const char *);
 
-/* EC Staus bits */
+/* EC Status bits */
 #define		EC_STAT_SMI_EVT	0x40	/* SMI event pending */
 #define		EC_STAT_SCI_EVT	0x20	/* SCI event pending */
 #define 	EC_STAT_BURST	0x10	/* Controller in burst mode */
