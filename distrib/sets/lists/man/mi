@@ -2011,6 +2011,8 @@
 ./usr/share/man/cat8/badsect.0
 ./usr/share/man/cat8/bgpctl.0
 ./usr/share/man/cat8/bgpd.0
+./usr/share/man/cat8/bgplg.0
+./usr/share/man/cat8/bgplgsh.0
 ./usr/share/man/cat8/bioctl.0
 ./usr/share/man/cat8/boot_config.0
 ./usr/share/man/cat8/bootparamd.0

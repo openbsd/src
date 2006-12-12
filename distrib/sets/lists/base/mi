@@ -179,6 +179,7 @@
 ./usr/bin/batch
 ./usr/bin/bc
 ./usr/bin/bdes
+./usr/bin/bgplgsh
 ./usr/bin/biff
 ./usr/bin/c2ph
 ./usr/bin/cal
@@ -4522,7 +4523,11 @@
 ./var/tmp/vi.recover
 ./var/www
 ./var/www/bin
+./var/www/bin/bgpctl
+./var/www/bin/ping
+./var/www/bin/traceroute
 ./var/www/cgi-bin
+./var/www/cgi-bin/bgplg
 ./var/www/conf
 ./var/www/htdocs
 ./var/www/htdocs/manual
