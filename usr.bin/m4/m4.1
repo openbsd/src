@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.46 2006/08/29 18:40:49 mbalmer Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.47 2006/12/12 09:24:22 grunk Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,15 +50,24 @@
 .Bk -words
 .Op Fl t Ar macro
 .Op Fl U Ns Ar name
+.Op Ar
 .Ek
 .Sh DESCRIPTION
 The
 .Nm m4
 utility is a macro processor that can be used as a front end to any
 language (e.g., C, ratfor, fortran, lex, and yacc).
+If no input files are given,
 .Nm m4
-reads from the standard input and writes
-the processed text to the standard output.
+reads from the standard input, otherwise the files from command line are
+processed in the given order.
+Input files can be regular files, files in the m4 include paths, or a
+single dash
+.Pq Sq - ,
+denoting standard input.
+.Nm m4
+writes
+the processed text to the standard output, unless told otherwise.
 .Pp
 Macro calls have the form name(argument1[, argument2, ..., argumentN]).
 .Pp
