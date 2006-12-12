@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.22 2006/12/12 02:06:09 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.23 2006/12/12 02:13:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/queue.h>
 
 #include <machine/bus.h>
 
@@ -170,6 +171,21 @@ struct ahci_dmamem {
 #define AHCI_DMA_DVA(_adm)	((_adm)->adm_map->dm_segs[0].ds_addr)
 #define AHCI_DMA_KVA(_adm)	((void *)(_adm)->adm_kva)
 
+struct ahci_softc;
+
+struct ahci_ccb {
+	bus_dmamap_t		ccb_dmamap;
+
+	TAILQ_ENTRY(ahci_ccb)	ccb_entry;
+};
+
+struct ahci_port {
+	struct ahci_ccb		*ap_ccbs;
+	TAILQ_HEAD(, ahci_ccb)	ap_ccb_free;
+
+	struct ahci_dmamem	*ap_dmamem;
+};
+
 struct ahci_softc {
 	struct device		sc_dev;
 
@@ -181,6 +197,7 @@ struct ahci_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	u_int			sc_ncmds;
+	struct ahci_port	*sc_ports[AHCI_MAX_PORTS];
 };
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
 
