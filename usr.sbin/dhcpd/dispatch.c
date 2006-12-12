@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.21 2006/05/30 23:43:46 ckuethe Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.22 2006/12/12 19:38:55 stevesk Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -44,10 +44,6 @@
 #include <poll.h>
 #include <net/if_media.h>
 
-
-/* Most boxes has less than 16 interfaces, so this might be a good guess.  */
-#define INITIAL_IFREQ_COUNT 16
-
 struct interface_info *interfaces;
 struct protocol *protocols;
 struct dhcpd_timeout *timeouts;
@@ -74,9 +70,6 @@ discover_interfaces(void)
 	int ir = 0;
 	struct ifreq *tif;
 	struct ifaddrs *ifap, *ifa;
-#ifdef ALIAS_NAMES_PERMUTED
-	char *s;
-#endif
 
 	if (getifaddrs(&ifap) != 0)
 		error("getifaddrs failed");
