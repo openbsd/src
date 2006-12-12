@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.67 2006/11/29 22:17:07 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.68 2006/12/12 16:59:52 tom Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -19,6 +19,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <machine/bus.h>
 
@@ -800,10 +801,10 @@ struct aml_scope *aml_pushscope(struct aml_scope *, uint8_t *, uint8_t *, struct
 struct aml_scope *aml_popscope(struct aml_scope *);
 int aml_parsenode(struct aml_scope *,struct aml_node *, uint8_t *, uint8_t **, struct aml_value *);
 
-#define LHS  0
-#define RHS  1
-#define DST  2
-#define DST2 3
+#define AML_LHS  0
+#define AML_RHS  1
+#define AML_DST  2
+#define AML_DST2 3
 
 /* Allocate temporary storage in this scope */
 struct aml_value *
@@ -2367,11 +2368,11 @@ aml_parsecompare(struct aml_scope *scope, int opcode, struct aml_value *res)
 
 	AML_CHECKSTACK();
 	tmparg = aml_alloctmp(scope, 2);
-	aml_parseterm(scope, &tmparg[LHS]);
-	aml_parseterm(scope, &tmparg[RHS]);
+	aml_parseterm(scope, &tmparg[AML_LHS]);
+	aml_parseterm(scope, &tmparg[AML_RHS]);
 
 	/* Compare both values */
-	rc = aml_cmpvalue(&tmparg[LHS], &tmparg[RHS], opcode);
+	rc = aml_cmpvalue(&tmparg[AML_LHS], &tmparg[AML_RHS], opcode);
 	aml_setvalue(scope, res, NULL, rc);
 
 	return res;
@@ -2895,22 +2896,22 @@ aml_parsestring(struct aml_scope *scope, int opcode, struct aml_value *res)
 	switch (opcode) {
 	case AMLOP_CONCAT:
 		tmpval = aml_alloctmp(scope, 4);
-		aml_parseterm(scope, &tmpval[LHS]);
-		aml_parseterm(scope, &tmpval[RHS]);
-		aml_parsetarget(scope, &tmpval[DST], NULL);
-		if (tmpval[LHS].type == AML_OBJTYPE_BUFFER &&
-		    tmpval[RHS].type == AML_OBJTYPE_BUFFER) {
-			aml_resize(&tmpval[LHS], tmpval[LHS].length+tmpval[RHS].length);
-			memcpy(&tmpval[LHS].v_buffer+tmpval[LHS].length,
-			    tmpval[RHS].v_buffer, tmpval[RHS].length);
-			aml_setvalue(scope, &tmpval[DST], &tmpval[LHS], 0);
+		aml_parseterm(scope, &tmpval[AML_LHS]);
+		aml_parseterm(scope, &tmpval[AML_RHS]);
+		aml_parsetarget(scope, &tmpval[AML_DST], NULL);
+		if (tmpval[AML_LHS].type == AML_OBJTYPE_BUFFER &&
+		    tmpval[AML_RHS].type == AML_OBJTYPE_BUFFER) {
+			aml_resize(&tmpval[AML_LHS], tmpval[AML_LHS].length+tmpval[AML_RHS].length);
+			memcpy(&tmpval[AML_LHS].v_buffer+tmpval[AML_LHS].length,
+			    tmpval[AML_RHS].v_buffer, tmpval[AML_RHS].length);
+			aml_setvalue(scope, &tmpval[AML_DST], &tmpval[AML_LHS], 0);
 		}
-		if (tmpval[LHS].type == AML_OBJTYPE_STRING &&
-		    tmpval[RHS].type == AML_OBJTYPE_STRING) {
-			aml_resize(&tmpval[LHS], tmpval[LHS].length+tmpval[RHS].length);
-			memcpy(&tmpval[LHS].v_string+tmpval[LHS].length,
-			       tmpval[RHS].v_buffer, tmpval[RHS].length);
-			aml_setvalue(scope, &tmpval[DST], &tmpval[LHS], 0);
+		if (tmpval[AML_LHS].type == AML_OBJTYPE_STRING &&
+		    tmpval[AML_RHS].type == AML_OBJTYPE_STRING) {
+			aml_resize(&tmpval[AML_LHS], tmpval[AML_LHS].length+tmpval[AML_RHS].length);
+			memcpy(&tmpval[AML_LHS].v_string+tmpval[AML_LHS].length,
+			       tmpval[AML_RHS].v_buffer, tmpval[AML_RHS].length);
+			aml_setvalue(scope, &tmpval[AML_DST], &tmpval[AML_LHS], 0);
 		}
 		else {
 			aml_die("concat");
