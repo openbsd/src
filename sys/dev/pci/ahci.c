@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.30 2006/12/12 02:44:00 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.31 2006/12/12 02:45:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -282,7 +282,6 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	if (ahcidebug & AHCI_D_VERBOSE) {
 		const char *gen;
 
-		reg = ahci_read(sc, AHCI_REG_CAP);
 		switch (reg & AHCI_REG_CAP_ISS) {
 		case AHCI_REG_CAP_ISS_G1:
 			gen = "1 (1.5Gbps)";
