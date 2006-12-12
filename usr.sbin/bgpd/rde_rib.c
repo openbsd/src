@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.88 2006/06/01 22:29:47 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.89 2006/12/12 10:26:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -227,8 +227,9 @@ path_remove(struct rde_aspath *asp)
 	while ((p = LIST_FIRST(&asp->prefix_h)) != NULL) {
 		/* Commit is done in peer_down() */
 		pt_getaddr(p->prefix, &addr);
-		rde_send_pftable(p->aspath->pftableid,
-		    &addr, p->prefix->prefixlen, 1);
+		if (p->flags & F_LOCAL)
+			rde_send_pftable(p->aspath->pftableid, &addr,
+			    p->prefix->prefixlen, 1);
 
 		prefix_destroy(p);
 	}
