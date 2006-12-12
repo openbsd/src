@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.23 2006/12/12 02:13:32 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.24 2006/12/12 02:19:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -180,6 +180,9 @@ struct ahci_ccb {
 };
 
 struct ahci_port {
+	struct ahci_softc	*ap_sc;
+	bus_space_handle_t	ap_ioh;
+
 	struct ahci_ccb		*ap_ccbs;
 	TAILQ_HEAD(, ahci_ccb)	ap_ccb_free;
 
@@ -227,6 +230,8 @@ void			ahci_dmamem_free(struct ahci_softc *,
 
 u_int32_t		ahci_read(struct ahci_softc *, bus_size_t);
 void			ahci_write(struct ahci_softc *, bus_size_t, u_int32_t);
+u_int32_t		ahci_pread(struct ahci_port *, bus_size_t);
+void			ahci_pwrite(struct ahci_port *, bus_size_t, u_int32_t);
 int			ahci_wait_eq(struct ahci_softc *, bus_size_t,
 			    u_int32_t, u_int32_t);
 int			ahci_wait_ne(struct ahci_softc *, bus_size_t,
@@ -464,6 +469,22 @@ ahci_write(struct ahci_softc *sc, bus_size_t r, u_int32_t v)
 {
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+u_int32_t
+ahci_pread(struct ahci_port *ap, bus_size_t r)
+{
+	bus_space_barrier(ap->ap_sc->sc_iot, ap->ap_ioh, r, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(ap->ap_sc->sc_iot, ap->ap_ioh, r));
+}
+
+void
+ahci_pwrite(struct ahci_port *ap, bus_size_t r, u_int32_t v)
+{
+	bus_space_write_4(ap->ap_sc->sc_iot, ap->ap_ioh, r, v);
+	bus_space_barrier(ap->ap_sc->sc_iot, ap->ap_ioh, r, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
