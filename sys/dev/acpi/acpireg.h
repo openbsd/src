@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.11 2006/10/12 19:17:26 marco Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.12 2006/12/12 18:07:25 mk Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -462,7 +462,7 @@ struct acpi_facs {
 #define ACPI_DEV_EIOB	"PNP0A06"	/* Extended I/O Bus */
 #define ACPI_DEV_MR	"PNP0C02"	/* Motherboard resources */
 #define ACPI_DEV_NPROC	"PNP0C04"	/* Numeric data processor */
-#define ACPI_DEV_CS	"PNP0C08"	/* ACPI-Complient System */
+#define ACPI_DEV_CS	"PNP0C08"	/* ACPI-Compliant System */
 #define ACPI_DEV_ECD	"PNP0C09"	/* Embedded Controller Device */
 #define ACPI_DEV_CMB	"PNP0C0A"	/* Control Method Battery */
 #define ACPI_DEV_FAN	"PNP0C0B"	/* Fan Device */
