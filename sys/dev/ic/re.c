@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.57 2006/12/01 01:13:01 todd Exp $	*/
+/*	$OpenBSD: re.c,v 1.58 2006/12/12 10:24:37 reyk Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -154,6 +154,8 @@
 int redebug = 0;
 #define DPRINTF(x)	if (redebug) printf x
 
+inline void re_set_bufaddr(struct rl_desc *, bus_addr_t);
+
 int	re_encap(struct rl_softc *, struct mbuf *, int *);
 
 int	re_newbuf(struct rl_softc *, int, struct mbuf *);
@@ -223,6 +225,16 @@ static const struct re_revision {
 	{ 0, NULL }
 };
 
+
+inline void
+re_set_bufaddr(struct rl_desc *d, bus_addr_t addr)
+{
+	d->rl_bufaddr_lo = htole32((uint32_t)addr);
+	if (sizeof(bus_addr_t) == sizeof(uint64_t))
+		d->rl_bufaddr_hi = htole32((uint64_t)addr >> 32);
+	else
+		d->rl_bufaddr_hi = 0;
+}
 
 /*
  * Send a read command and address to the EEPROM, check for ACK.
@@ -915,7 +927,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	}
 
         /* Allocate DMA'able memory for the RX ring */
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, RL_RX_LIST_SZ,
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, RL_RX_DMAMEM_SZ,
 		    RL_RING_ALIGN, 0, &sc->rl_ldata.rl_rx_listseg, 1,
 		    &sc->rl_ldata.rl_rx_listnseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't allocate rx listnseg, error = %d\n",
@@ -925,7 +937,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 
         /* Load the map for the RX ring. */
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->rl_ldata.rl_rx_listseg,
-		    sc->rl_ldata.rl_rx_listnseg, RL_RX_LIST_SZ,
+		    sc->rl_ldata.rl_rx_listnseg, RL_RX_DMAMEM_SZ,
 		    (caddr_t *)&sc->rl_ldata.rl_rx_list,
 		    BUS_DMA_COHERENT | BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't map rx list, error = %d\n",
@@ -933,10 +945,10 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		goto fail_5;
 
 	}
-	memset(sc->rl_ldata.rl_rx_list, 0, RL_RX_LIST_SZ);
+	memset(sc->rl_ldata.rl_rx_list, 0, RL_RX_DMAMEM_SZ);
 
-	if ((error = bus_dmamap_create(sc->sc_dmat, RL_RX_LIST_SZ, 1,
-		    RL_RX_LIST_SZ, 0, 0,
+	if ((error = bus_dmamap_create(sc->sc_dmat, RL_RX_DMAMEM_SZ, 1,
+		    RL_RX_DMAMEM_SZ, 0, 0,
 		    &sc->rl_ldata.rl_rx_list_map)) != 0) {
 		printf("%s: can't create rx list map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -945,7 +957,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 
 	if ((error = bus_dmamap_load(sc->sc_dmat,
 		    sc->rl_ldata.rl_rx_list_map, sc->rl_ldata.rl_rx_list,
-		    RL_RX_LIST_SZ, NULL, BUS_DMA_NOWAIT)) != 0) {
+		    RL_RX_DMAMEM_SZ, NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't load rx list, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_7;
@@ -975,12 +987,8 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	IFQ_SET_MAXLEN(&ifp->if_snd, RL_TX_QLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
-
-#ifdef RE_CSUM_OFFLOAD
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
-				IFCAP_CSUM_UDPv4;
-#endif
+	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
+			       IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
 #ifdef RE_VLAN
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
@@ -1046,7 +1054,7 @@ fail_7:
 	bus_dmamap_destroy(sc->sc_dmat, sc->rl_ldata.rl_rx_list_map);
 fail_6:
 	bus_dmamem_unmap(sc->sc_dmat,
-	    (caddr_t)sc->rl_ldata.rl_rx_list, RL_RX_LIST_SZ);
+	    (caddr_t)sc->rl_ldata.rl_rx_list, RL_RX_DMAMEM_SZ);
 fail_5:
 	bus_dmamem_free(sc->sc_dmat,
 	    &sc->rl_ldata.rl_rx_listseg, sc->rl_ldata.rl_rx_listnseg);
@@ -1140,8 +1148,7 @@ re_newbuf(struct rl_softc *sc, int idx, struct mbuf *m)
 	cmdstat = map->dm_segs[0].ds_len;
 	if (idx == (RL_RX_DESC_CNT - 1))
 		cmdstat |= RL_RDESC_CMD_EOR;
-	d->rl_bufaddr_lo = htole32(RL_ADDR_LO(map->dm_segs[0].ds_addr));
-	d->rl_bufaddr_hi = htole32(RL_ADDR_HI(map->dm_segs[0].ds_addr));
+	re_set_bufaddr(d, map->dm_segs[0].ds_addr);
 	d->rl_cmdstat = htole32(cmdstat);
 	RL_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	cmdstat |= RL_RDESC_CMD_OWN;
@@ -1398,7 +1405,7 @@ re_txeof(struct rl_softc *sc)
 		if (txstat & RL_TDESC_CMD_OWN)
 			break;
 
-		sc->rl_ldata.rl_tx_free += txq->txq_dmamap->dm_nsegs;
+		sc->rl_ldata.rl_tx_free += txq->txq_nsegs;
 		KASSERT(sc->rl_ldata.rl_tx_free <= RL_TX_DESC_CNT(sc));
 		bus_dmamap_sync(sc->sc_dmat, txq->txq_dmamap,
 		    0, txq->txq_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -1530,7 +1537,7 @@ int
 re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 {
 	bus_dmamap_t	map;
-	int		error, seg, uidx, startidx, curidx, lastidx;
+	int		error, seg, nsegs, uidx, startidx, curidx, lastidx, pad;
 #ifdef RE_VLAN
 	struct m_tag	*mtag;
 #endif
@@ -1541,7 +1548,6 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 	if (sc->rl_ldata.rl_tx_free <= RL_NTXDESC_RSVD)
 		return (EFBIG);
 
-#ifdef RE_CSUM_OFFLOAD
 	/*
 	 * Set up checksum offload. Note: checksum offload bits must
 	 * appear in all descriptors of a multi-descriptor transmit
@@ -1563,7 +1569,6 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 		if (m->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
 			rl_flags |= RL_TDESC_CMD_UDPCSUM;
 	}
-#endif
 
 	txq = &sc->rl_ldata.rl_txq[*idx];
 	map = txq->txq_dmamap;
@@ -1576,7 +1581,15 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 		return (error);
 	}
 
-	if (map->dm_nsegs > sc->rl_ldata.rl_tx_free - RL_NTXDESC_RSVD) {
+	nsegs = map->dm_nsegs;
+	pad = 0;
+	if (m->m_pkthdr.len <= RL_IP4CSUMTX_PADLEN &&
+	    (rl_flags & RL_TDESC_CMD_IPCSUM) != 0) {
+		pad = 1;
+		nsegs++;
+	}
+
+	if (nsegs > sc->rl_ldata.rl_tx_free - RL_NTXDESC_RSVD) {
 		error = EFBIG;
 		goto fail_unload;
 	}
@@ -1622,24 +1635,39 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 			goto fail_unload;
 		}
 
-		cmdstat = map->dm_segs[seg].ds_len;
+		re_set_bufaddr(d, map->dm_segs[seg].ds_addr);
+		cmdstat = rl_flags | map->dm_segs[seg].ds_len;
 		if (seg == 0)
 			cmdstat |= RL_TDESC_CMD_SOF;
 		else
 			cmdstat |= RL_TDESC_CMD_OWN;
-		if (seg == map->dm_nsegs - 1) {
+		if (curidx == (RL_TX_DESC_CNT(sc) - 1))
+			cmdstat |= RL_TDESC_CMD_EOR;
+		if (seg == nsegs - 1) {
 			cmdstat |= RL_TDESC_CMD_EOF;
 			lastidx = curidx;
 		}
-		if (curidx == (RL_TX_DESC_CNT(sc) - 1))
-			cmdstat |= RL_TDESC_CMD_EOR;
-		d->rl_cmdstat = htole32(cmdstat | rl_flags);
-		d->rl_bufaddr_lo =
-		    htole32(RL_ADDR_LO(map->dm_segs[seg].ds_addr));
-		d->rl_bufaddr_hi =
-		    htole32(RL_ADDR_HI(map->dm_segs[seg].ds_addr));
+		d->rl_cmdstat = htole32(cmdstat);
 		RL_TXDESCSYNC(sc, curidx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	}
+	if (pad) {
+		bus_addr_t paddaddr;
+
+		printf("%s: re_encap: padding\n", sc->sc_dev.dv_xname);
+		d = &sc->rl_ldata.rl_tx_list[curidx];
+		paddaddr = RL_TXPADDADDR(sc);
+		re_set_bufaddr(d, paddaddr);
+		cmdstat = rl_flags |
+		    RL_TDESC_CMD_OWN | RL_TDESC_CMD_EOF |
+		    (RL_IP4CSUMTX_PADLEN + 1 - m->m_pkthdr.len);
+		if (curidx == (RL_TX_DESC_CNT(sc) - 1))
+			cmdstat |= RL_TDESC_CMD_EOR;
+		d->rl_cmdstat = htole32(cmdstat);
+		RL_TXDESCSYNC(sc, curidx,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		lastidx = curidx;
+		curidx = RL_NEXT_TX_DESC(sc, curidx);
 	}
 	KASSERT(lastidx != -1);
 
@@ -1666,8 +1694,9 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 	/* update info of TX queue and descriptors */
 	txq->txq_mbuf = m;
 	txq->txq_descidx = lastidx;
+	txq->txq_nsegs = nsegs;
 
-	sc->rl_ldata.rl_tx_free -= map->dm_nsegs;
+	sc->rl_ldata.rl_tx_free -= nsegs;
 	sc->rl_ldata.rl_tx_nextfree = curidx;
 
 	*idx = RL_NEXT_TXQ(sc, *idx);

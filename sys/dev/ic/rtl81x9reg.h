@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.35 2006/12/01 01:13:01 todd Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.36 2006/12/12 10:24:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -684,6 +684,7 @@ struct rl_txq {
 	struct mbuf *txq_mbuf;
 	bus_dmamap_t txq_dmamap;
 	int txq_descidx;
+	int txq_nsegs;
 };
 
 struct rl_list_data {
@@ -738,6 +739,23 @@ struct rl_softc {
 	int			rl_txstart;
 	int			rl_link;
 };
+
+/*
+ * re(4) hardware ip4csum-tx could be mangled with 28 byte or less IP packets
+ */
+#define RL_IP4CSUMTX_MINLEN	28
+#define RL_IP4CSUMTX_PADLEN	(ETHER_HDR_LEN + RL_IP4CSUMTX_MINLEN)
+/*
+ * XXX
+ * We are allocating pad DMA buffer after RX DMA descs for now
+ * because RL_TX_LIST_SZ(sc) always occupies whole page but
+ * RL_RX_LIST_SZ is less than PAGE_SIZE so there is some unused region.
+ */
+#define RL_RX_DMAMEM_SZ		(RL_RX_LIST_SZ + RL_IP4CSUMTX_PADLEN)
+#define RL_TXPADOFF		RL_RX_LIST_SZ
+#define RL_TXPADDADDR(sc)	\
+	((sc)->rl_ldata.rl_rx_list_map->dm_segs[0].ds_addr + RL_TXPADOFF)
+
 
 #define RL_ATTACHED	0x00000001	/* attach has succeeded */
 #define RL_ENABLED	0x00000002	/* chip is enabled      */
