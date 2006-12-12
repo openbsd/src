@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.63 2006/11/14 20:18:51 jasper Exp $	*/
+/*	$OpenBSD: locore.s,v 1.64 2006/12/12 20:15:13 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4828,7 +4828,7 @@ _C_LABEL(blast_vcache):
 	 wrpr	%o3, %pstate
 
 /*
- * dcache_flush_page(vaddr_t pa)
+ * dcache_flush_page(paddr_t pa)
  *
  * Clear one page from D$.
  *
