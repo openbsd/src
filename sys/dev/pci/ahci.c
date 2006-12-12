@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.28 2006/12/12 02:39:25 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.29 2006/12/12 02:41:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -257,8 +257,6 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t			reg;
 	int				i;
 
-	sc->sc_dmat = pa->pa_dmat;
-
 	if (ahci_map_regs(sc, pa) != 0) {
 		/* error already printed by ahci_map_regs */
 		return;
@@ -276,6 +274,10 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	sc->sc_dmat = pa->pa_dmat;
+
+	reg = ahci_read(sc, AHCI_REG_CAP);
+	sc->sc_ncmds = AHCI_REG_CAP_NCS(reg);
 #ifdef AHCI_DEBUG
 	if (ahcidebug & AHCI_D_VERBOSE) {
 		const char *gen;
@@ -415,9 +417,6 @@ ahci_init(struct ahci_softc *sc)
 	ahci_write(sc, AHCI_REG_IS, reg);
 
 	printf(": AHCI %s", revision);
-
-	reg = ahci_read(sc, AHCI_REG_CAP);
-	sc->sc_ncmds = AHCI_REG_CAP_NCS(reg);
 
 	return (0);
 }
