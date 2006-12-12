@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.24 2006/12/12 02:19:37 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.25 2006/12/12 02:22:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -224,6 +224,9 @@ int			ahci_map_intr(struct ahci_softc *,
 void			ahci_unmap_intr(struct ahci_softc *,
 			    struct pci_attach_args *);
 
+struct ahci_ccb		*ahci_get_ccb(struct ahci_port *);
+void			ahci_put_ccb(struct ahci_port *, struct ahci_ccb *);
+
 struct ahci_dmamem	*ahci_dmamem_alloc(struct ahci_softc *, size_t);
 void			ahci_dmamem_free(struct ahci_softc *,
 			    struct ahci_dmamem *);
@@ -399,6 +402,25 @@ int
 ahci_intr(void *arg)
 {
 	return (0);
+}
+
+struct ahci_ccb *
+ahci_get_ccb(struct ahci_port *ap)
+{
+	struct ahci_ccb			*ccb;
+
+	ccb = TAILQ_FIRST(&ap->ap_ccb_free);
+	if (ccb != NULL)
+		TAILQ_REMOVE(&ap->ap_ccb_free, ccb, ccb_entry);
+
+	return (ccb);
+}
+
+void
+ahci_put_ccb(struct ahci_port *ap, struct ahci_ccb *ccb)
+{
+	/* scrub bits */
+	TAILQ_INSERT_TAIL(&ap->ap_ccb_free, ccb, ccb_entry);
 }
 
 struct ahci_dmamem *
