@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bgplg.8,v 1.1 2006/12/11 23:10:10 reyk Exp $
+.\"	$OpenBSD: bgplg.8,v 1.2 2006/12/12 13:26:23 reyk Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -67,8 +67,8 @@ and
 .Xr traceroute 8
 will be hidden from looking glass command list):
 .Bd -literal -offset indent
-# chmod 0655 /var/www/cgi-bin/bgplg
-# chmod 0655 /var/www/bin/bgpctl
+# chmod 0555 /var/www/cgi-bin/bgplg
+# chmod 0555 /var/www/bin/bgpctl
 .Ed
 .It
 The programs
@@ -136,7 +136,7 @@ environment of the
 server.
 To enable the corresponding functionality, use the
 .Xr chmod 1
-utility to manually set the file permission mode to 0655 or anything
+utility to manually set the file permission mode to 0555 or anything
 appropriate.
 .Pp
 .Bl -tag -width "/var/www/bin/tracerouteXX" -compact
@@ -153,10 +153,12 @@ program used to query information from
 The
 .Xr ping 8
 program used to send ICMP ECHO_REQUEST packets to network hosts.
+Requires the set-user-ID bit, set the permission mode to 4555.
 .It Pa /var/www/bin/traceroute
 The
 .Xr traceroute 8
 program used to print the route packets take to network hosts.
+Requires the set-user-ID bit, set the permission mode to 4555.
 .El
 .Sh SEE ALSO
 .Xr bgpctl 8 ,
