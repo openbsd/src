@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.c,v 1.3 2006/12/12 11:43:50 reyk Exp $	*/
+/*	$OpenBSD: bgplg.c,v 1.4 2006/12/12 14:18:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
@@ -39,6 +39,7 @@
 #define BGPCTL		"/bin/bgpctl", "-s", BGPDSOCK
 #define PING		"/bin/ping"
 #define TRACEROUTE	"/bin/traceroute"
+#define CONTENT_TYPE	"text/html"
 
 static struct cmd cmds[] = CMDS;
 
@@ -249,14 +250,18 @@ main(void)
 	u_int i;
 	struct cmd *cmdp = NULL;
 
-	printf("Content-Type: text/html\n"
+	if (gethostname(myname, sizeof(myname)) != 0)
+		return (1);
+
+	printf("Content-Type: %s\n"
 	    "Cache-Control: no-cache\n\n"
 	    "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n"
 	    "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" "
 	    "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
 	    "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
 	    "<head>\n"
-	    "<title>bgplg</title>\n");
+	    "<title>%s: %s</title>\n",
+	    CONTENT_TYPE, NAME, myname);
 	if (stat(INC_STYLE, &st) == 0) {
 		printf("<style type='text/css'><!--\n");
 		lg_incl(INC_STYLE);
@@ -266,9 +271,6 @@ main(void)
 		printf("</head>\n"
 		    "<body>\n");
 	}
-
-	if (gethostname(myname, sizeof(myname)) != 0)
-		goto err;
 
 	printf("<h1>%s: %s</h1>\n", NAME, myname);
 	printf("<h2>%s</h2>\n", BRIEF);
