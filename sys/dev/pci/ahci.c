@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.27 2006/12/12 02:37:09 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.28 2006/12/12 02:39:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -254,6 +254,8 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ahci_softc		*sc = (struct ahci_softc *)self;
 	struct pci_attach_args		*pa = aux;
+	u_int32_t			reg;
+	int				i;
 
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -276,9 +278,9 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef AHCI_DEBUG
 	if (ahcidebug & AHCI_D_VERBOSE) {
-		u_int32_t reg = ahci_read(sc, AHCI_REG_CAP);
 		const char *gen;
 
+		reg = ahci_read(sc, AHCI_REG_CAP);
 		switch (reg & AHCI_REG_CAP_ISS) {
 		case AHCI_REG_CAP_ISS_G1:
 			gen = "1 (1.5Gbps)";
@@ -297,8 +299,26 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-	return;
+	reg = ahci_read(sc, AHCI_REG_PI);
+	DPRINTF(AHCI_D_VERBOSE, "%s: ports implemented: 0x%08x\n",
+	    DEVNAME(sc), reg);
+	for (i = 0; i < AHCI_MAX_PORTS; i++) {
+		if (((1 << i) & reg) == 0) {
+			/* dont allocate stuff if the port isnt implemented */
+			continue;
+		}
 
+		if (ahci_port_alloc(sc, i) != 0)
+			goto freeports;
+	}
+
+        return;
+
+freeports:
+	for (i = 0; i < AHCI_MAX_PORTS; i++) {
+		if (sc->sc_ports[i] != NULL)
+			ahci_port_free(sc, i);
+	}
 unmap:
 	ahci_unmap_regs(sc, pa);
 }
