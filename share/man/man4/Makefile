@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.398 2006/12/09 05:10:43 dlg Exp $
+#	$OpenBSD: Makefile,v 1.399 2006/12/12 23:54:44 pedro Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 acpi.4 acx.4 \
 	adc.4 addcom.4 admcts.4 admlc.4 admtemp.4 \
@@ -25,7 +25,7 @@ MAN=	aac.4 ac97.4 acphy.4 acpi.4 acx.4 \
 	ises.4 isp.4 it.4 iwi.4 ixgb.4 ksyms.4 kue.4 lc.4 lge.4 lkm.4 lm.4 \
 	lmc.4 lmenv.4 lmtemp.4 lo.4 lofn.4 lpt.4 lxtphy.4 luphy.4 \
 	maestro.4 mainbus.4 malo.4 maxds.4 maxtmp.4 midi.4 mii.4 mfi.4 \
-	moscom.4 mpi.4 mpu.4 mtd.4 mtdphy.4 multicast.4 mtio.4 ne.4 \
+	moscom.4 mpi.4 mpu.4 msk.4 mtd.4 mtdphy.4 multicast.4 mtio.4 ne.4 \
 	neo.4 netintro.4 nfe.4 nge.4 nmea.4 noct.4 nofn.4 nsclpcsio.4 \
 	nsgphy.4 nsphy.4 nsphyter.4 null.4 nviic.4 ohci.4 opl.4 options.4 \
 	onewire.4 oosiop.4 osiop.4 owid.4 owtemp.4 \
@@ -72,7 +72,7 @@ MLINKS+=random.4 arandom.4
 MLINKS+=random.4 srandom.4 random.4 urandom.4 random.4 prandom.4
 MLINKS+=scsi.4 scsibus.4
 MLINKS+=sequencer.4 music.4
-MLINKS+=sk.4 skc.4 sk.4 msk.4 sk.4 mskc.4
+MLINKS+=sk.4 skc.4 msk.4 mskc.4
 MLINKS+=speaker.4 spkr.4
 MLINKS+=tty.4 cua.4
 MLINKS+=usb.4 uhub.4
