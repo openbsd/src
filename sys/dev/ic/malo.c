@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.50 2006/12/10 21:01:53 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.51 2006/12/12 10:06:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1346,7 +1346,8 @@ malo_tx_intr(struct malo_softc *sc)
 		rn = (struct malo_node *)data->ni;
 
 		/* check if TX descriptor is not owned by FW anymore */
-		if ((desc->status & 0x80000000) || !(data->softstat & 0x80))
+		if ((letoh32(desc->status) & 0x80000000) ||
+		    !(letoh32(data->softstat) & 0x80))
 			break;
 
 		/* if no frame has been sent, ignore */
@@ -1354,7 +1355,7 @@ malo_tx_intr(struct malo_softc *sc)
 			goto next;
 
 		/* check TX state */
-		switch (desc->status & 0x1) {
+		switch (letoh32(desc->status) & 0x1) {
 		case 0x1:
 			DPRINTFN(2, ("data frame was sent successfully\n"));
 			ifp->if_opackets++;
@@ -1376,7 +1377,7 @@ malo_tx_intr(struct malo_softc *sc)
 		ieee80211_release_node(ic, data->ni);
 		data->m = NULL;
 		data->ni = NULL;
-		data->softstat &= ~ 0x80;
+		data->softstat &= htole32(~0x80);
 		desc->status = 0;
 		desc->len = 0;
 
@@ -1480,7 +1481,7 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	data->m = m0;
 	data->ni = ni;
-	data->softstat |= 0x80;
+	data->softstat |= htole32(0x80);
 
 	malo_tx_setup_desc(sc, desc, m0->m_pkthdr.len, 0,
 	    data->map->dm_segs, data->map->dm_nsegs);
@@ -1597,7 +1598,7 @@ malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 
 	data->m = m0;
 	data->ni = ni;
-	data->softstat |= 0x80;
+	data->softstat |= htole32(0x80);
 
 	malo_tx_setup_desc(sc, desc, m0->m_pkthdr.len, 1,
 	    data->map->dm_segs, data->map->dm_nsegs);
@@ -1660,10 +1661,10 @@ malo_rx_intr(struct malo_softc *sc)
 		    "physdata=0x%04x, physnext=0x%04x, qosctrl=%02x, res2=%d\n",
 		    sc->sc_rxring.cur, desc->rxctrl, desc->rssi, desc->status,
 		    desc->channel, letoh16(desc->len), desc->reserved1,
-		    desc->datarate, desc->physdata, desc->physnext,
-		    desc->qosctrl, desc->reserved2));
+		    desc->datarate, letoh32(desc->physdata),
+		    letoh32(desc->physnext), desc->qosctrl, desc->reserved2));
 
-		if ((letoh32(desc->rxctrl) & 0x80) == 0)
+		if ((desc->rxctrl & 0x80) == 0)
 			break;
 
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
@@ -1708,7 +1709,7 @@ malo_rx_intr(struct malo_softc *sc)
 
 		/* finalize mbuf */
 		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = m->m_len = letoh32(desc->len);
+		m->m_pkthdr.len = m->m_len = letoh16(desc->len);
 
 		/*
 		 * cut out FW specific fields from the 802.11 frame
@@ -1754,7 +1755,7 @@ malo_rx_intr(struct malo_softc *sc)
 
 skip:
 		desc->rxctrl = 0;
-		rxRdPtr = desc->physnext;
+		rxRdPtr = letoh32(desc->physnext);
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxring.map,
 		    sc->sc_rxring.cur * sizeof(struct malo_rx_desc),
@@ -2052,11 +2053,11 @@ malo_cmd_get_spec(struct malo_softc *sc)
 
 	/* tell the DMA engine where our rings are */
 	malo_mem_write4(sc, letoh32(spec->RxPdRdPtr) & 0xffff,
-	    htole32(sc->sc_rxring.physaddr));
+	    sc->sc_rxring.physaddr);
 	malo_mem_write4(sc, letoh32(spec->RxPdWrPtr) & 0xffff,
-	    htole32(sc->sc_rxring.physaddr));
+	    sc->sc_rxring.physaddr);
 	malo_mem_write4(sc, letoh32(spec->WcbBase0) & 0xffff,
-	    htole32(sc->sc_txring.physaddr));
+	    sc->sc_txring.physaddr);
 
 	/* save DMA RX pointers for later use */
 	sc->sc_RxPdRdPtr = letoh32(spec->RxPdRdPtr) & 0xffff;
