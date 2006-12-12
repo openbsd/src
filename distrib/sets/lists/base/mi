@@ -4521,6 +4521,7 @@
 ./var/tmp
 ./var/tmp/vi.recover
 ./var/www
+./var/www/bin
 ./var/www/cgi-bin
 ./var/www/conf
 ./var/www/htdocs
