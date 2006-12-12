@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.214 2006/12/08 22:31:16 itojun Exp $ */
+/*	$OpenBSD: rde.c,v 1.215 2006/12/12 10:19:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -78,7 +78,6 @@ void		 peer_init(u_int32_t);
 void		 peer_shutdown(void);
 void		 peer_localaddrs(struct rde_peer *, struct bgpd_addr *);
 struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
-void		 peer_remove(struct rde_peer *);
 struct rde_peer	*peer_get(u_int32_t);
 void		 peer_up(u_int32_t, struct session_up *);
 void		 peer_down(u_int32_t);
@@ -2187,14 +2186,6 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 }
 
 void
-peer_remove(struct rde_peer *peer)
-{
-	LIST_REMOVE(peer, hash_l);
-	LIST_REMOVE(peer, peer_l);
-	free(peer);
-}
-
-void
 peer_localaddrs(struct rde_peer *peer, struct bgpd_addr *laddr)
 {
 	struct ifaddrs	*ifap, *ifa, *match;
@@ -2315,7 +2306,9 @@ peer_down(u_int32_t id)
 	/* Deletions are performed in path_remove() */
 	rde_send_pftable_commit();
 
-	peer_remove(peer);
+	LIST_REMOVE(peer, hash_l);
+	LIST_REMOVE(peer, peer_l);
+	free(peer);
 }
 
 void
