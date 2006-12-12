@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.243 2006/11/10 21:22:30 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.244 2006/12/12 16:37:32 reyk Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -230,6 +230,7 @@ distribution-etc-root-var: distrib-dirs
 	cd ../usr.sbin/httpd && exec ${MAKE} -f Makefile.bsd-wrapper distribution
 	cd ../lib/libssl && exec ${MAKE} distribution
 	cd ../gnu/usr.bin/lynx && exec ${MAKE} -f Makefile.bsd-wrapper distribution
+	cd ../usr.bin/bgplg && exec ${MAKE} distribution
 	cd ../usr.bin/mail && exec ${MAKE} distribution
 	cd mail && exec ${MAKE} distribution
 	${INSTALL} -c -o root -g wheel -m 600 root/root.mail \
@@ -338,7 +339,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.243 2006/11/10 21:22:30 deraadt Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.244 2006/12/12 16:37:32 reyk Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
