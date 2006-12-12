@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplgsh.c,v 1.1 2006/12/11 23:10:10 reyk Exp $	*/
+/*	$OpenBSD: bgplgsh.c,v 1.2 2006/12/12 11:43:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
@@ -59,8 +59,8 @@ lg_checkarg(char *arg)
 		return (0);
 
 #define allowed_in_string(_x)                                           \
-        ((isalnum(_x) || isprint(_x)) &&				\
-        (_x != '%' && _x != '\\' && _x != ';' && _x != '&' && _x != '|'))
+	((isalnum(_x) || isprint(_x)) &&				\
+	(_x != '%' && _x != '\\' && _x != ';' && _x != '&' && _x != '|'))
 
 	for (i = 0; i < len; i++) {
 		if (!allowed_in_string(arg[i])) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.c,v 1.2 2006/12/12 11:37:55 reyk Exp $	*/
+/*	$OpenBSD: bgplg.c,v 1.3 2006/12/12 11:43:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
@@ -61,7 +61,7 @@ lg_urldecode(char *str)
 		i = c = 0;
 		while (i < len) {
 			if (str[i] == '%' && i <= (len - 2)) {
-				if (isxdigit(str[i + 1]) && 
+				if (isxdigit(str[i + 1]) &&
 				    isxdigit(str[i + 2])) {
 					code[0] = str[i + 1];
 					code[1] = str[i + 2];
@@ -108,8 +108,8 @@ lg_getenv(const char *name, int *lenp)
 		*lenp = len;
 
 #define allowed_in_string(_x)                                           \
-        ((isalnum(_x) || isprint(_x)) &&				\
-        (_x != '%' && _x != '\\' && _x != ';' && _x != '|'))
+	((isalnum(_x) || isprint(_x)) &&				\
+	(_x != '%' && _x != '\\' && _x != ';' && _x != '|'))
 
 	for (i = 0; i < len; i++) {
 		if (!allowed_in_string(ptr[i])) {

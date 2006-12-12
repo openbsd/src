@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.1 2006/12/11 23:10:10 reyk Exp $	*/
+/*	$OpenBSD: misc.c,v 1.2 2006/12/12 11:43:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
@@ -42,7 +42,7 @@ lg_show_version(struct cmd *cmds, char **argv)
 	if (uname(&uts) == 0)
 		printf("%s %s (%s)\n\n", uts.sysname, uts.release, uts.machine);
 	printf("%s - %s\n", NAME, BRIEF);
-	return (0);	
+	return (0);
 }
 
 int
@@ -127,7 +127,7 @@ lg_exec(const char *file, char **new_argv)
 		bzero(&it, sizeof(it));
 		it.it_value.tv_sec = BGPLG_TIMEOUT;
 		setitimer(ITIMER_REAL, &it, NULL);
-		
+
 		waitpid(child, &status, 0);
 		break;
 	}
