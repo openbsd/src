@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.29 2006/12/12 02:41:50 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.30 2006/12/12 02:44:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -471,6 +471,8 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 
 		ahci_put_ccb(ap, ccb);
 	}
+
+	sc->sc_ports[port] = ap;
 
 	return (0);
 
