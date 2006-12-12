@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.90 2006/12/12 10:30:33 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.91 2006/12/12 10:34:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -943,19 +943,20 @@ nexthop_unlink(struct rde_aspath *asp)
 int
 nexthop_delete(struct nexthop *nh)
 {
+	/* nexthop still used by some other aspath */
+	if (!LIST_EMPTY(&nh->path_h))
+		return (0);
+
 	/* either pinned or in a state where it may not be deleted */
 	if (nh->refcnt > 0 || nh->state == NEXTHOP_LOOKUP)
 		return (0);
 
-	if (LIST_EMPTY(&nh->path_h)) {
-		LIST_REMOVE(nh, nexthop_l);
-		rde_send_nexthop(&nh->exit_nexthop, 0);
+	LIST_REMOVE(nh, nexthop_l);
+	rde_send_nexthop(&nh->exit_nexthop, 0);
 
-		rdemem.nexthop_cnt--;
-		free(nh);
-		return (1);
-	}
-	return (0);
+	rdemem.nexthop_cnt--;
+	free(nh);
+	return (1);
 }
 
 struct nexthop *
