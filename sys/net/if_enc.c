@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.44 2006/06/28 12:02:26 claudio Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.45 2006/12/12 15:08:36 reyk Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -75,7 +75,7 @@ struct enc_softc encif[NENC];
 
 void	encattach(int);
 int	encoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
-	    	       struct rtentry *);
+	    struct rtentry *);
 int	encioctl(struct ifnet *, u_long, caddr_t);
 void	encstart(struct ifnet *);
 
@@ -84,89 +84,78 @@ extern int ifqmaxlen;
 void
 encattach(int nenc)
 {
-    struct ifnet *ifp;
-    int i;
+	struct ifnet *ifp;
+	int i;
 
-    bzero(encif, sizeof(encif));
+	bzero(encif, sizeof(encif));
 
-    for (i = 0; i < NENC; i++)
-    {
-	ifp = &encif[i].sc_if;
-	snprintf(ifp->if_xname, sizeof ifp->if_xname, "enc%d", i);
-	ifp->if_softc = &encif[i];
-	ifp->if_mtu = ENCMTU;
-	ifp->if_ioctl = encioctl;
-	ifp->if_output = encoutput;
-	ifp->if_start = encstart;
-	ifp->if_type = IFT_ENC;
-	ifp->if_snd.ifq_maxlen = ifqmaxlen;
-	ifp->if_hdrlen = ENC_HDRLEN;
-	if_attach(ifp);
-	if_alloc_sadl(ifp);
+	for (i = 0; i < NENC; i++) {
+		ifp = &encif[i].sc_if;
+		snprintf(ifp->if_xname, sizeof ifp->if_xname, "enc%d", i);
+		ifp->if_softc = &encif[i];
+		ifp->if_mtu = ENCMTU;
+		ifp->if_ioctl = encioctl;
+		ifp->if_output = encoutput;
+		ifp->if_start = encstart;
+		ifp->if_type = IFT_ENC;
+		ifp->if_snd.ifq_maxlen = ifqmaxlen;
+		ifp->if_hdrlen = ENC_HDRLEN;
+		if_attach(ifp);
+		if_alloc_sadl(ifp);
 
 #if NBPFILTER > 0
-	bpfattach(&encif[i].sc_if.if_bpf, ifp, DLT_ENC, ENC_HDRLEN);
+		bpfattach(&encif[i].sc_if.if_bpf, ifp, DLT_ENC, ENC_HDRLEN);
 #endif
-    }
+	}
 }
 
 /*
  * Start output on the enc interface.
  */
 void
-encstart(ifp)
-struct ifnet *ifp;
+encstart(struct ifnet *ifp)
 {
-    struct mbuf *m;
-    int s;
+	struct mbuf *m;
+	int s;
 
-    for (;;)
-    {
-        s = splnet();
-	IF_DROP(&ifp->if_snd);
-        IF_DEQUEUE(&ifp->if_snd, m);
-        splx(s);
+	for (;;) {
+		s = splnet();
+		IF_DROP(&ifp->if_snd);
+		IF_DEQUEUE(&ifp->if_snd, m);
+		splx(s);
 
-        if (m == NULL)
-          return;
-        else
-          m_freem(m);
-    }
+		if (m == NULL)
+			return;
+		else
+			m_freem(m);
+	}
 }
 
 int
-encoutput(ifp, m, dst, rt)
-struct ifnet *ifp;
-register struct mbuf *m;
-struct sockaddr *dst;
-register struct rtentry *rt;
+encoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
 {
-    m_freem(m);
-    return (0);
+	m_freem(m);
+	return (0);
 }
 
 /* ARGSUSED */
 int
-encioctl(ifp, cmd, data)
-register struct ifnet *ifp;
-u_long cmd;
-caddr_t data;
+encioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-    switch (cmd) 
-    {
+	switch (cmd) {
 	case SIOCSIFADDR:
 	case SIOCAIFADDR:
 	case SIOCSIFDSTADDR:
 	case SIOCSIFFLAGS:
-	    if (ifp->if_flags & IFF_UP)
-	      ifp->if_flags |= IFF_RUNNING;
-	    else
-	      ifp->if_flags &= ~IFF_RUNNING;
-	    break;
-
+		if (ifp->if_flags & IFF_UP)
+			ifp->if_flags |= IFF_RUNNING;
+		else
+			ifp->if_flags &= ~IFF_RUNNING;
+		break;
 	default:
-	    return (EINVAL);
-    }
+		return (EINVAL);
+	}
 
-    return 0;
+	return 0;
 }
