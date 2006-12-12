@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.28 2006/10/19 19:29:04 tom Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.29 2006/12/12 23:14:27 dim Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -136,7 +136,7 @@ int k7pnow_decode_pst(struct k7pnow_cpu_state *, uint8_t *, int);
 int k7pnow_states(struct k7pnow_cpu_state *, uint32_t, unsigned int,
     unsigned int);
 
-int
+void
 k7_powernow_setperf(int level)
 {
 	unsigned int i, low, high, freq;
@@ -158,7 +158,7 @@ k7_powernow_setperf(int level)
 	}
 
 	if (fid == 0 || vid == 0)
-		return (0);
+		return;
 
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
 	cfid = PN7_STA_CFID(status);
@@ -168,7 +168,7 @@ k7_powernow_setperf(int level)
 	 * We're already at the requested level.
 	 */
 	if (fid == cfid && vid == cvid)
-		return (0);
+		return;
 
 	ctl = rdmsr(MSR_AMDK7_FIDVID_CTL) & PN7_CTR_FIDCHRATIO;
 
@@ -197,8 +197,6 @@ k7_powernow_setperf(int level)
 	cvid = PN7_STA_CVID(status);
 	if (cfid == fid || cvid == vid)
 		pentium_mhz = cstate->state_table[i].freq;
-
-	return (0);
 }
 
 /*

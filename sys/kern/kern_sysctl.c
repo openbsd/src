@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.144 2006/12/08 23:08:19 gwk Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.145 2006/12/12 23:14:28 dim Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -104,7 +104,7 @@ int sysctl_emul(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_cptime2(int *, u_int, void *, size_t *, void *, size_t);
 
 int (*cpu_cpuspeed)(int *);
-int (*cpu_setperf)(int);
+void (*cpu_setperf)(int);
 int perflevel = 100;
 
 /*

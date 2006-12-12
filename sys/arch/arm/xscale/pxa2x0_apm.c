@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.26 2006/10/19 10:55:56 tom Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.27 2006/12/12 23:14:27 dim Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -94,8 +94,8 @@ void	apm_thread(void *);
 
 extern int perflevel;
 int	freq;
-int pxa2x0_setperf(int speed);
-int pxa2x0_cpuspeed(int *speed);
+void	pxa2x0_setperf(int speed);
+int	pxa2x0_cpuspeed(int *speed);
 
 int	apm_record_event(struct pxa2x0_apm_softc *, u_int);
 void	filt_apmrdetach(struct knote *kn);
@@ -1439,7 +1439,7 @@ speed_to_freq(int speed)
 }
 
 
-int
+void
 pxa2x0_setperf(int speed)
 {
 	struct pxa2x0_apm_softc *sc;
@@ -1524,8 +1524,6 @@ pxa2x0_setperf(int speed)
 	}
 
 	restore_interrupts(s);
-
-	return 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.15 2006/11/29 20:03:20 dim Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.16 2006/12/12 23:14:27 dim Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -52,7 +52,7 @@ int	ichpcib_match(struct device *, void *, void *);
 void	ichpcib_attach(struct device *, struct device *, void *);
 
 int	ichss_present(struct pci_attach_args *);
-int	ichss_setperf(int);
+void	ichss_setperf(int);
 
 /* arch/i386/pci/pcib.c */
 void    pcibattach(struct device *, struct device *, void *);
@@ -229,7 +229,7 @@ ichss_present(struct pci_attach_args *pa)
 	return (0);
 }
 
-int
+void
 ichss_setperf(int level)
 {
 	struct ichpcib_softc *sc = ichss_cookie;
@@ -239,7 +239,7 @@ ichss_setperf(int level)
 #ifdef DIAGNOSTIC
 	if (sc == NULL) {
 		printf("%s: no cookie", __func__);
-		return (EFAULT);
+		return;
 	}
 #endif
 
@@ -278,8 +278,6 @@ ichss_setperf(int level)
 			update_cpuspeed();
 	}
 	splx(s);
-
-	return (0);
 }
 #endif	/* !SMALL_KERNEL */
 

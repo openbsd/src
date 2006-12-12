@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.88 2006/05/08 22:51:18 gwk Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.89 2006/12/12 23:14:28 dim Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -722,7 +722,7 @@ int sysctl_sysvipc(int *, u_int, void *, size_t *);
 int sysctl_wdog(int *, u_int, void *, size_t *, void *, size_t);
 
 extern int (*cpu_cpuspeed)(int *);
-extern int (*cpu_setperf)(int);
+extern void (*cpu_setperf)(int);
 
 int bpf_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 

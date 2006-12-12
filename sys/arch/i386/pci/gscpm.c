@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscpm.c,v 1.5 2006/12/11 20:57:40 deraadt Exp $	*/
+/*	$OpenBSD: gscpm.c,v 1.6 2006/12/12 23:14:27 dim Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -48,7 +48,7 @@ struct gscpm_softc {
 int	gscpm_match(struct device *, void *, void *);
 void	gscpm_attach(struct device *, struct device *, void *);
 
-int	gscpm_setperf(int);
+void	gscpm_setperf(int);
 
 #ifdef __HAVE_TIMECOUNTER
 u_int	gscpm_get_timecount(struct timecounter *tc);
@@ -142,7 +142,7 @@ gscpm_get_timecount(struct timecounter *tc)
 #endif	/* __HAVE_TIMECOUNTER */
 
 #if 0
-int
+void
 gscpm_setperf(int level)
 {
 	struct gscpm_softc *sc = gscpm_cookie;
@@ -164,7 +164,5 @@ gscpm_setperf(int level)
 
 	/* Update processor control register */
 	bus_space_write_4(sc->sc_iot, sc->sc_acpi_ioh, GSCPM_P_CNT, pctl);
-
-	return (0);
 }
 #endif

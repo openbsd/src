@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.20 2006/11/25 16:59:31 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.21 2006/12/12 23:14:27 dim Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -306,7 +306,7 @@ void x86_bus_space_mallocok(void);
 
 /* powernow-k8.c */
 void k8_powernow_init(void);
-int  k8_powernow_setperf(int);
+void k8_powernow_setperf(int);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: elan520.c,v 1.11 2005/10/21 19:34:34 grange Exp $	*/
+/*	$OpenBSD: elan520.c,v 1.12 2006/12/12 23:14:27 dim Exp $	*/
 /*	$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ struct elansc_softc {
 int	elansc_match(struct device *, void *, void *);
 void	elansc_attach(struct device *, struct device *, void *);
 void	elansc_update_cpuspeed(void);
-int	elansc_setperf(int);
+void	elansc_setperf(int);
 int	elansc_cpuspeed(int *);
 
 void	elansc_wdogctl(struct elansc_softc *, int, uint16_t);
@@ -286,7 +286,7 @@ elansc_update_cpuspeed(void)
 #endif
 }
 
-int
+void
 elansc_setperf(int level)
 {
 	uint32_t eflags;
@@ -298,7 +298,7 @@ elansc_setperf(int level)
 	    MMCR_CPUCTL);
 	speed = (level == 100) ? 2 : 1;
 	if ((cpuctl & CPUCTL_CPU_CLK_SPD_MASK) == speed)
-		return (0);
+		return;
 
 	eflags = read_eflags();
 	disable_intr();
@@ -308,8 +308,6 @@ elansc_setperf(int level)
 	write_eflags(eflags);
 
 	elansc_update_cpuspeed();
-
-	return (0);
 }
 
 int

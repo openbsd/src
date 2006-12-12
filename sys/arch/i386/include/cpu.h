@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.83 2006/11/29 20:03:20 dim Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.84 2006/12/12 23:14:27 dim Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -358,33 +358,33 @@ void	i8254_initclocks(void);
 /* est.c */
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
 void	est_init(const char *, int);
-int     est_setperf(int);
+void	est_setperf(int);
 #endif
 
 /* longrun.c */
 #if !defined(SMALL_KERNEL) && defined(I586_CPU)
 void	longrun_init(void);
-int	longrun_setperf(int);
+void	longrun_setperf(int);
 #endif
 
 /* p4tcc.c */
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
 void	p4tcc_init(int, int);
-int     p4tcc_setperf(int);
+void	p4tcc_setperf(int);
 #endif
 
 #if !defined(SMALL_KERNEL) && defined(I586_CPU)
 /* powernow.c */
 void	k6_powernow_init(void);
-int	k6_powernow_setperf(int);
+void	k6_powernow_setperf(int);
 #endif
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
 /* powernow-k7.c */
 void	k7_powernow_init(void);
-int	k7_powernow_setperf(int);
+void	k7_powernow_setperf(int);
 /* powernow-k8.c */
 void 	k8_powernow_init(void);
-int 	k8_powernow_setperf(int);
+void 	k8_powernow_setperf(int);
 #endif
 
 /* npx.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.23 2006/11/28 19:58:27 dim Exp $ */
+/*	$OpenBSD: est.c,v 1.24 2006/12/12 23:14:27 dim Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -1063,14 +1063,14 @@ est_init(const char *cpu_device, int vendor)
 	setperf_prio = 3;
 }
 
-int
+void
 est_setperf(int level)
 {
 	int low, high, i, fq;
 	uint64_t msr;
 
 	if (est_fqlist == NULL)
-		return (EOPNOTSUPP);
+		return;
 
 	low = MSR2MHZ(est_fqlist->table[est_fqlist->n - 1], bus_clock);
 	high = MSR2MHZ(est_fqlist->table[0], bus_clock);
@@ -1084,6 +1084,4 @@ est_setperf(int level)
 	msr |= est_fqlist->table[i];
 	wrmsr(MSR_PERF_CTL, msr);
 	pentium_mhz = MSR2MHZ(est_fqlist->table[i], bus_clock);
-
-	return (0);
 }
