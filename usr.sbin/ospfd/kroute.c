@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.38 2006/12/07 19:14:27 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.39 2006/12/13 13:30:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -352,8 +352,10 @@ dont_redistribute:
 		if (kr->flags & F_REDISTRIBUTED) {
 			/* remove redistributed flag and inform the RDE */
 			kr->flags &= ~F_REDISTRIBUTED;
-			main_imsg_compose_rde(IMSG_NETWORK_DEL, 0, kr,
-			    sizeof(struct kroute));
+			rr.kr = *kr;
+			rr.metric = 0;
+			main_imsg_compose_rde(IMSG_NETWORK_DEL, 0, &rr,
+			    sizeof(struct rroute));
 		}
 		return;
 	}
