@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.241 2006/11/20 14:25:11 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.242 2006/12/13 05:10:15 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -45,6 +45,7 @@
 #include <netinet/tcp_fsm.h>
 
 struct ip;
+struct ip6_hdr;
 
 #define	PF_TCPS_PROXY_SRC	((TCP_NSTATES)+0)
 #define	PF_TCPS_PROXY_DST	((TCP_NSTATES)+1)
@@ -452,6 +453,7 @@ struct pf_os_fingerprint {
 #define PF_OSFP_MSS_DC		0x0800		/* TCP MSS dont-care */
 #define PF_OSFP_DF		0x1000		/* IPv4 don't fragment bit */
 #define PF_OSFP_TS0		0x2000		/* Zero timestamp */
+#define PF_OSFP_INET6		0x4000		/* IPv6 */
 	u_int8_t		fp_optcnt;	/* TCP option count */
 	u_int8_t		fp_wscale;	/* TCP window scaling */
 	u_int8_t		fp_ttl;		/* IPv4 TTL */
@@ -1643,7 +1645,8 @@ struct pf_osfp_enlist *
 	    const struct tcphdr *);
 #endif /* _KERNEL */
 struct pf_osfp_enlist *
-	pf_osfp_fingerprint_hdr(const struct ip *, const struct tcphdr *);
+	pf_osfp_fingerprint_hdr(const struct ip *, const struct ip6_hdr *,
+	    const struct tcphdr *);
 void	pf_osfp_flush(void);
 int	pf_osfp_get(struct pf_osfp_ioctl *);
 void	pf_osfp_initialize(void);

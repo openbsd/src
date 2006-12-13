@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.24 2006/05/28 22:48:16 moritz Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.25 2006/12/13 05:10:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.24 2006/05/28 22:48:16 moritz Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.25 2006/12/13 05:10:15 itojun Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -195,13 +195,24 @@ tcp_print(register const u_char *bp, register u_int length,
 #endif
 
 	tp = (struct tcphdr *)bp;
-	ip = (struct ip *)bp2;
+	switch (((struct ip *)bp2)->ip_v) {
+	case 4:
+		ip = (struct ip *)bp2;
 #ifdef INET6
-	if (ip->ip_v == 6)
-		ip6 = (struct ip6_hdr *)bp2;
-	else
 		ip6 = NULL;
-#endif /*INET6*/
+#endif
+		break;
+#ifdef INET6
+	case 6:
+		ip = NULL;
+		ip6 = (struct ip6_hdr *)bp2;
+		break;
+#endif
+	default:
+		(void)printf("invalid ip version");
+		return;
+	}
+
 	ch = '\0';
 	if (length < sizeof(*tp)) {
 		(void)printf("truncated-tcp %d", length);
@@ -400,7 +411,7 @@ tcp_print(register const u_char *bp, register u_int length,
 		return;
 	}
 
-	if (ip->ip_v == 4 && vflag) {
+	if (ip && ip->ip_v == 4 && vflag) {
 		int sum;
 		if (TTEST2(tp->th_sport, length)) {
 			sum = tcp_cksum(ip, tp, length);
@@ -412,18 +423,14 @@ tcp_print(register const u_char *bp, register u_int length,
 	}
 
 	/* OS Fingerprint */
-	if (oflag &&
-#ifdef INET6
-	    ip6 == NULL &&
-#endif
-	    (flags & (TH_SYN|TH_ACK)) == TH_SYN) {
+	if (oflag && (flags & (TH_SYN|TH_ACK)) == TH_SYN) {
 		struct pf_osfp_enlist *head = NULL;
 		struct pf_osfp_entry *fp;
 		unsigned long left;
 		left = (unsigned long)(snapend - (const u_char *)tp);
 
 		if (left >= hlen)
-			head = pf_osfp_fingerprint_hdr(ip, tp);
+			head = pf_osfp_fingerprint_hdr(ip, ip6, tp);
 		if (head) {
 			int prev = 0;
 			printf(" (src OS:");
