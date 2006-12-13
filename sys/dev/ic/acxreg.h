@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxreg.h,v 1.7 2006/12/08 09:17:34 claudio Exp $ */
+/*	$OpenBSD: acxreg.h,v 1.8 2006/12/13 11:03:54 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -404,7 +404,7 @@ struct tim_head {
 /* For tim_head.len (tim_head - eid - len + bitmap) */
 #define ACX_TIM_LEN(bitmap_len)	\
 	(sizeof(struct tim_head) - (2 * sizeof(uint8_t)) + (bitmap_len))
-#define ACX_TIM_BITMAP_LEN	5
+#define ACX_TIM_BITMAP_LEN	1
 
 struct acx_tmplt_tim {
 	uint16_t	size;

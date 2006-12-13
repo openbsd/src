@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.56 2006/12/08 09:17:34 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.57 2006/12/13 11:03:54 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1792,6 +1792,8 @@ back:
 int
 acx_init_tmplt_ordered(struct acx_softc *sc)
 {
+	struct acx_tmplt_tim tim;
+
 	/*
 	 * NOTE:
 	 * Order of templates initialization:
@@ -1816,6 +1818,16 @@ acx_init_tmplt_ordered(struct acx_softc *sc)
 
 	if (acx_init_probe_resp_tmplt(sc) != 0)
 		return (1);
+
+	/* Setup TIM template */
+	bzero(&tim, sizeof(tim));
+	tim.tim_eid = IEEE80211_ELEMID_TIM;
+	tim.tim_len = ACX_TIM_LEN(ACX_TIM_BITMAP_LEN);
+	if (acx_set_tmplt(sc, ACXCMD_TMPLT_TIM, &tim,
+	    ACX_TMPLT_TIM_SIZ(ACX_TIM_BITMAP_LEN)) != 0) {
+		printf("%s: can't set tim tmplt\n", sc->sc_dev.dv_xname);
+		return (1);
+	}
 
 #undef CALL_SET_TMPLT
 	return (0);
@@ -2334,9 +2346,10 @@ acx_set_beacon_tmplt(struct acx_softc *sc, struct ieee80211_node *ni)
 	struct mbuf *m;
 	int len;
 
-	bzero(&beacon, sizeof(beacon));
-
 	m = ieee80211_beacon_alloc(ic, ni);
+	if (m == NULL)
+		return (1);
+	bzero(&beacon, sizeof(beacon));
 	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)&beacon.data);
 	len = m->m_pkthdr.len + sizeof(beacon.size);
 	m_freem(m);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.15 2006/12/08 09:17:34 claudio Exp $ */
+/*	$OpenBSD: acx100.c,v 1.16 2006/12/13 11:03:54 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -383,7 +383,6 @@ int
 acx100_init_tmplt(struct acx_softc *sc)
 {
 	struct acx_conf_mmap mem_map;
-	struct acx_tmplt_tim tim;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	/* Set templates start address */
@@ -401,16 +400,6 @@ acx100_init_tmplt(struct acx_softc *sc)
 	/* Initialize various packet templates */
 	if (acx_init_tmplt_ordered(sc) != 0) {
 		printf("%s: can't init tmplt\n", ifp->if_xname);
-		return (1);
-	}
-
-	/* Setup TIM template */
-	bzero(&tim, sizeof(tim));
-	tim.tim_eid = IEEE80211_ELEMID_TIM;
-	tim.tim_len = ACX_TIM_LEN(ACX_TIM_BITMAP_LEN);
-	if (acx_set_tmplt(sc, ACXCMD_TMPLT_TIM, &tim,
-	    ACX_TMPLT_TIM_SIZ(ACX_TIM_BITMAP_LEN)) != 0) {
-		printf("%s: can't set tim tmplt\n", ifp->if_xname);
 		return (1);
 	}
 
