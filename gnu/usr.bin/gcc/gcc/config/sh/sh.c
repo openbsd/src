@@ -2023,7 +2023,7 @@ shl_sext_kind (left_rtx, size_rtx, costp)
 	}
     }
   if (costp)
-    *costp = cost;
+    *costp = best_cost;
   return kind;
 }
 
@@ -2607,7 +2607,7 @@ find_barrier (num_mova, mova, from)
   int hi_align = 2;
   int si_align = 2;
   int leading_mova = num_mova;
-  rtx barrier_before_mova, found_barrier = 0, good_barrier = 0;
+  rtx barrier_before_mova = 0, found_barrier = 0, good_barrier = 0;
   int si_limit;
   int hi_limit;
 
@@ -3306,7 +3306,7 @@ barrier_align (barrier_or_label)
      rtx barrier_or_label;
 {
   rtx next = next_real_insn (barrier_or_label), pat, prev;
-  int slot, credit, jump_to_next;
+  int slot, credit, jump_to_next = 0;
  
   if (! next)
     return 0;
@@ -3450,7 +3450,7 @@ void
 machine_dependent_reorg (first)
      rtx first;
 {
-  rtx insn, mova;
+  rtx insn, mova = NULL_RTX;
   int num_mova;
   rtx r0_rtx = gen_rtx_REG (Pmode, 0);
   rtx r0_inc_rtx = gen_rtx_POST_INC (Pmode, r0_rtx);
@@ -3745,7 +3745,7 @@ machine_dependent_reorg (first)
 	  /* Scan ahead looking for a barrier to stick the constant table
 	     behind.  */
 	  rtx barrier = find_barrier (num_mova, mova, insn);
-	  rtx last_float_move, last_float = 0, *last_float_addr;
+	  rtx last_float_move = NULL_RTX, last_float = 0, *last_float_addr = NULL;
 
 	  if (num_mova && ! mova_p (mova))
 	    {
