@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.82 2006/12/13 09:49:59 martin Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.83 2006/12/13 17:13:01 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1651,12 +1651,18 @@ fxp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch (command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		if (!(ifp->if_flags & IFF_RUNNING))
-			fxp_init(sc);
+
+		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
-		if (ifa->ifa_addr->sa_family == AF_INET)
+		case AF_INET:
+			fxp_init(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
+			break;
 #endif
+		default:
+			fxp_init(sc);
+			break;
+		}
 		break;
 
 	case SIOCSIFMTU:
