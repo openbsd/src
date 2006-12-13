@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.c,v 1.17 2006/07/20 19:08:15 miod Exp $ */
+/*	$OpenBSD: vsbus.c,v 1.18 2006/12/13 21:12:06 miod Exp $ */
 /*	$NetBSD: vsbus.c,v 1.29 2000/06/29 07:14:37 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
@@ -61,7 +61,6 @@
 #include <machine/uvax.h>
 #include <machine/ka410.h>
 #include <machine/ka420.h>
-#include <machine/ka43.h>
 
 #include <machine/vsbus.h>
 
@@ -69,9 +68,6 @@ int	vsbus_match(struct device *, struct cfdata *, void *);
 void	vsbus_attach(struct device *, struct device *, void *);
 int	vsbus_print(void *, const char *);
 int	vsbus_search(struct device *, void *, void *);
-
-void	ka410_attach(struct device *, struct device *, void *);
-void	ka43_attach(struct device *, struct device *, void *);
 
 static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 	0,
@@ -165,6 +161,7 @@ vsbus_attach(parent, self, aux)
 		sc->sc_intclr = (char *)sc->sc_vsregs + 15;
 		sc->sc_intmsk = (char *)sc->sc_vsregs + 12;
 		vsbus_dma_init(sc, 32768);
+		break;
 #endif
 
 	default:
