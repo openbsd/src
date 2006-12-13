@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.37 2006/04/25 15:49:35 claudio Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.38 2006/12/13 09:01:59 itojun Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -498,9 +498,9 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 		/* scoped address handling */
 		ip6 = mtod(m, struct ip6_hdr *);
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src))
 			ip6->ip6_src.s6_addr16[1] = 0;
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
 			ip6->ip6_dst.s6_addr16[1] = 0;
 
 		M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);

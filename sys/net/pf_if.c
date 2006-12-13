@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.45 2006/01/30 12:39:13 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.46 2006/12/13 09:01:59 itojun Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -549,7 +549,7 @@ pfi_address_add(struct sockaddr *sa, int af, int net)
 		p->pfra_ip4addr = ((struct sockaddr_in *)sa)->sin_addr;
 	else if (af == AF_INET6) {
 		p->pfra_ip6addr = ((struct sockaddr_in6 *)sa)->sin6_addr;
-		if (IN6_IS_ADDR_LINKLOCAL(&p->pfra_ip6addr))
+		if (IN6_IS_SCOPE_EMBED(&p->pfra_ip6addr))
 			p->pfra_ip6addr.s6_addr16[1] = 0;
 	}
 	/* mask network address bits */

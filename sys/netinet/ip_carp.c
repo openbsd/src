@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.131 2006/11/16 13:12:43 henning Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.132 2006/12/13 09:01:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -296,7 +296,7 @@ carp_hmac_prepare_ctx(struct carp_softc *sc, u_int8_t ctx)
 		memset(&cur6, 0xff, sizeof(cur6));
 		TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
 			in6 = ifatoia6(ifa)->ia_addr.sin6_addr;
-			if (IN6_IS_ADDR_LINKLOCAL(&in6)) {
+			if (IN6_IS_SCOPE_EMBED(&in6)) {
 				if (ctx == HMAC_NOV6LL)
 					continue;
 				in6.s6_addr16[1] = 0;
@@ -644,9 +644,9 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 
 			in6_src = ip6->ip6_src;
 			in6_found = ifatoia6(ifa)->ia_addr.sin6_addr;
-			if (IN6_IS_ADDR_LINKLOCAL(&in6_src))
+			if (IN6_IS_SCOPE_EMBED(&in6_src))
 				in6_src.s6_addr16[1] = 0;
-			if (IN6_IS_ADDR_LINKLOCAL(&in6_found))
+			if (IN6_IS_SCOPE_EMBED(&in6_found))
 				in6_found.s6_addr16[1] = 0;
 			if (IN6_ARE_ADDR_EQUAL(&in6_src, &in6_found)) {
 				m_freem(m);
