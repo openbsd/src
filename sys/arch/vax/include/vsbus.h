@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.h,v 1.8 2004/07/07 23:10:45 deraadt Exp $ */
+/*	$OpenBSD: vsbus.h,v 1.9 2006/12/13 21:11:23 miod Exp $ */
 /*	$NetBSD: vsbus.h,v 1.13 2000/06/25 16:00:46 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -44,52 +44,9 @@
 #include <machine/bus.h>
 #include <machine/sgmap.h>
 
-struct confargs {
-    char    ca_name[16];        /* device name */
-    int ca_intslot;     /* device interrupt-slot */
-    int ca_intpri;      /* device interrupt "priority" */
-    int ca_intvec;      /* interrup-vector offset */
-    int ca_intbit;      /* bit in interrupt-register */
-    int ca_ioaddr;      /* device hardware I/O address */
-
-    int ca_aux1;        /* additional info (DMA, etc.) */
-    int ca_aux2;
-    int ca_aux3;
-    int ca_aux4;
-    int ca_aux5;
-    int ca_aux6;
-    int ca_aux7;
-    int ca_aux8;
-
-#define ca_recvslot ca_intslot  /* DC/DZ: Receiver configuration */
-#define ca_recvpri  ca_intpri
-#define ca_recvvec  ca_intvec
-#define ca_recvbit  ca_intbit
-#define ca_xmitslot ca_aux1     /* DC/DZ: transmitter configuration */
-#define ca_xmitpri  ca_aux2     /* DC/DZ:  */
-#define ca_xmitvec  ca_aux3
-#define ca_xmitbit  ca_aux4
-#define ca_dcflags  ca_aux5
-
-#define ca_dareg    ca_aux1     /* SCSI: DMA address register */
-#define ca_dcreg    ca_aux2     /* SCSI: DMA byte count register */
-#define ca_ddreg    ca_aux3     /* SCSI: DMA transfer direction */
-#define ca_dbase    ca_aux4     /* SCSI: DMA buffer address */
-#define ca_dsize    ca_aux5     /* SCSI: DMA buffer size */
-#define ca_dflag    ca_aux6     /* SCSI: DMA flags (eg. shared) */
-#define ca_idval    ca_aux7     /* SCSI: host-ID to use/set */
-#define ca_idreg    ca_aux8     /* SCSI: host-ID port register */
-
-#define ca_enaddr   ca_aux1     /* LANCE: Ethernet address in ROM */
-#define ca_leflags  ca_aux2
-};
-
 struct	vsbus_attach_args {
 	vaddr_t	va_addr;		/* virtual CSR address */
 	paddr_t	va_paddr;		/* physical CSR address */
-
-	void	(*va_ivec)(void *);	/* Interrupt routine */
-	void	*va_vecarg;		/* Interrupt routine argument */
 
 	short	va_br;			/* Interrupt level */
 	int	va_cvec;		/* Interrupt vector address */
@@ -98,7 +55,6 @@ struct	vsbus_attach_args {
 	vsize_t	va_dmasize;		/* DMA area size */
 	bus_space_tag_t va_iot;
 	bus_dma_tag_t va_dmat;
-	struct 	confargs *confargs;
 };
 
 /*
