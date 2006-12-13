@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380var.h,v 1.10 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: ncr5380var.h,v 1.11 2006/12/13 21:12:58 miod Exp $	*/
 /*	$NetBSD: ncr5380var.h,v 1.6 1996/05/10 18:04:06 gwr Exp $	*/
 
 /*
@@ -103,7 +103,6 @@ struct ncr5380_softc {
 	void		(*sc_dma_setup)(struct ncr5380_softc *);
 	void		(*sc_dma_start)(struct ncr5380_softc *);
 	void		(*sc_dma_poll)(struct ncr5380_softc *);
-	void		(*sc_dma_eop)(struct ncr5380_softc *);
 	void		(*sc_dma_stop)(struct ncr5380_softc *);
 
 	void		(*sc_intr_on)(struct ncr5380_softc *);

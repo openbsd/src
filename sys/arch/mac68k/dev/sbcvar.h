@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbcvar.h,v 1.7 2006/04/14 09:36:49 martin Exp $	*/
+/*	$OpenBSD: sbcvar.h,v 1.8 2006/12/13 21:12:56 miod Exp $	*/
 /*	$NetBSD: sbcvar.h,v 1.1 1997/03/01 20:19:00 scottr Exp $	*/
 
 /*
@@ -117,7 +117,6 @@ void	sbc_dma_free(struct ncr5380_softc *);
 void	sbc_dma_poll(struct ncr5380_softc *);
 void	sbc_dma_setup(struct ncr5380_softc *);
 void	sbc_dma_start(struct ncr5380_softc *);
-void	sbc_dma_eop(struct ncr5380_softc *);
 void	sbc_dma_stop(struct ncr5380_softc *);
 #ifdef SBC_DEBUG
 void	decode_5380_intr(struct ncr5380_softc *);

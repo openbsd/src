@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbc.c,v 1.15 2004/12/02 06:43:25 miod Exp $	*/
+/*	$OpenBSD: sbc.c,v 1.16 2006/12/13 21:12:56 miod Exp $	*/
 /*	$NetBSD: sbc.c,v 1.24 1997/04/18 17:38:08 scottr Exp $	*/
 
 /*
@@ -716,13 +716,6 @@ sbc_dma_start(ncr_sc)
 		printf("%s: PDMA started, va=%p, len=0x%x\n",
 		    ncr_sc->sc_dev.dv_xname, dh->dh_addr, dh->dh_len);
 #endif
-}
-
-void
-sbc_dma_eop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
-{
-	/* Not used; the EOP pin is wired high (GMFH, pp. 389-390) */
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.24 2006/12/10 16:15:03 miod Exp $	*/
+/*	$OpenBSD: si.c,v 1.25 2006/12/13 21:12:58 miod Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -206,7 +206,6 @@ void si_dma_poll(struct ncr5380_softc *);
 
 void si_vme_dma_setup(struct ncr5380_softc *);
 void si_vme_dma_start(struct ncr5380_softc *);
-void si_vme_dma_eop(struct ncr5380_softc *);
 void si_vme_dma_stop(struct ncr5380_softc *);
 
 void si_vme_intr_on(struct ncr5380_softc *);
@@ -214,7 +213,6 @@ void si_vme_intr_off(struct ncr5380_softc *);
 
 void si_obio_dma_setup(struct ncr5380_softc *);
 void si_obio_dma_start(struct ncr5380_softc *);
-void si_obio_dma_eop(struct ncr5380_softc *);
 void si_obio_dma_stop(struct ncr5380_softc *);
 
 void si_obio_intr_on(struct ncr5380_softc *);
@@ -379,7 +377,6 @@ si_attach(parent, self, args)
 		if (sc->sc_options & SI_ENABLE_DMA) {
 			ncr_sc->sc_dma_setup = si_vme_dma_setup;
 			ncr_sc->sc_dma_start = si_vme_dma_start;
-			ncr_sc->sc_dma_eop   = si_vme_dma_stop;
 			ncr_sc->sc_dma_stop  = si_vme_dma_stop;
 			if (sc->sc_options & SI_DO_RESELECT) {
 				/*
@@ -396,7 +393,6 @@ si_attach(parent, self, args)
 		if (sc->sc_options & SI_ENABLE_DMA) {
 			ncr_sc->sc_dma_setup = si_obio_dma_setup;
 			ncr_sc->sc_dma_start = si_obio_dma_start;
-			ncr_sc->sc_dma_eop   = si_obio_dma_stop;
 			ncr_sc->sc_dma_stop  = si_obio_dma_stop;
 		}
 		ncr_sc->sc_intr_on   = si_obio_intr_on;
@@ -958,15 +954,6 @@ si_vme_dma_start(ncr_sc)
 
 
 void
-si_vme_dma_eop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
-{
-
-	/* Not needed - DMA was stopped prior to examining sci_csr */
-}
-
-
-void
 si_vme_dma_stop(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
@@ -1263,14 +1250,6 @@ si_obio_dma_start(ncr_sc)
 #endif
 }
 
-
-void
-si_obio_dma_eop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
-{
-
-	/* Not needed - DMA was stopped prior to examining sci_csr */
-}
 
 #if (defined(DEBUG) || defined(DIAGNOSTIC)) && !defined(COUNT_SW_LEFTOVERS)
 #define COUNT_SW_LEFTOVERS

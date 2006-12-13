@@ -1,4 +1,4 @@
-/* $OpenBSD: ncr.c,v 1.20 2006/11/28 23:59:45 dlg Exp $ */
+/* $OpenBSD: ncr.c,v 1.21 2006/12/13 21:12:58 miod Exp $ */
 /*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
@@ -118,7 +118,6 @@ static	void si_dma_free(struct ncr5380_softc *);
 static	void si_dma_setup(struct ncr5380_softc *);
 static	void si_dma_start(struct ncr5380_softc *);
 static	void si_dma_poll(struct ncr5380_softc *);
-static	void si_dma_eop(struct ncr5380_softc *);
 static	void si_dma_stop(struct ncr5380_softc *);
 static	void si_dma_go(void *);
 
@@ -209,7 +208,6 @@ si_attach(parent, self, aux)
 	ncr_sc->sc_dma_setup = si_dma_setup;
 	ncr_sc->sc_dma_start = si_dma_start;
 	ncr_sc->sc_dma_poll  = si_dma_poll;
-	ncr_sc->sc_dma_eop   = si_dma_eop;
 	ncr_sc->sc_dma_stop  = si_dma_stop;
 
 	/* DMA control register offsets */
@@ -440,16 +438,6 @@ si_dma_poll(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
 	printf("si_dma_poll\n");
-}
-
-/*
- * When?
- */
-void
-si_dma_eop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
-{
-	printf("si_dma_eop\n");
 }
 
 void
