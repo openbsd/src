@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.48 2006/12/12 23:54:44 pedro Exp $
+.\"	$OpenBSD: sk.4,v 1.49 2006/12/13 08:36:55 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -37,7 +37,7 @@
 .Os
 .Sh NAME
 .Nm sk ,
-.Nm skc ,
+.Nm skc
 .Nd "SysKonnect XMAC II and Marvell Yukon based Gigabit Ethernet device"
 .Sh SYNOPSIS
 .Cd "skc* at pci?"
@@ -67,6 +67,8 @@ Linksys EG1032v2, copper adapter
 .It
 Linksys EG1064v2, copper adapter
 .It
+SMC 9452TX, copper adapter
+.It
 SysKonnect SK-9821 single port, copper adapter
 .It
 SysKonnect SK-9822 dual port, copper adapter
@@ -84,8 +86,6 @@ SysKonnect SK-9521 V2.0 single port, copper adapter
 SysKonnect SK-9821 V2.0 single port, copper adapter
 .It
 SysKonnect SK-9843 V2.0 single port, copper adapter
-.It
-SMC 9452TX, copper adapter
 .El
 .Pp
 The SysKonnect based adapters consist of two main components: the
