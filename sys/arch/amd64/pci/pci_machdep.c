@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.9 2006/11/25 16:59:31 niklas Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.10 2006/12/14 17:14:01 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -425,6 +425,7 @@ pci_intr_map(pa, ihp)
 	int rawpin = pa->pa_rawintrpin;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	int bus, dev, func;
+	int mppin;
 #endif
 
 	if (pin == 0) {
@@ -440,9 +441,21 @@ pci_intr_map(pa, ihp)
 #if NIOAPIC > 0
 	pci_decompose_tag(pc, pa->pa_tag, &bus, &dev, &func);
 	if (mp_busses != NULL) {
-		if (intr_find_mpmapping(bus, (dev<<2)|(rawpin-1), ihp) == 0) {
+		mppin = (dev << 2)|(rawpin - 1);
+		if (intr_find_mpmapping(bus, mppin, ihp) == 0) {
 			*ihp |= line;
 			return 0;
+		}
+		if (pa->pa_bridgetag) {
+			int bridgebus, bridgedev;
+
+			pci_decompose_tag(pc, *pa->pa_bridgetag,
+			    &bridgebus, &bridgedev, NULL);
+			mppin = (bridgedev << 2)|((rawpin + dev - 1) & 0x3);
+			if (intr_find_mpmapping(bridgebus, mppin, ihp) == 0) {
+				*ihp |= line;
+				return 0;
+			}
 		}
 		/*
 		 * No explicit PCI mapping found. This is not fatal,
