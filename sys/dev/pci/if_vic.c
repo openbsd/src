@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.37 2006/12/03 14:52:45 reyk Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.38 2006/12/14 10:10:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -231,7 +231,6 @@ struct vic_data {
 #define VIC_QUEUE_SIZE		VIC_NBUF_MAX
 #define VIC_QUEUE2_SIZE		1
 #define VIC_INC(_x, _y)		(_x) = ((_x) + 1) % (_y)
-#define VIC_INC_POS(_x, _y)	(_x) = (++(_x)) % (_y) ? (_x) : 1
 #define VIC_TX_TIMEOUT		5
 
 #define VIC_MIN_FRAMELEN	(ETHER_MIN_LEN - ETHER_CRC_LEN)
