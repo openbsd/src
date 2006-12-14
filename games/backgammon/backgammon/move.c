@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.8 2006/10/29 20:02:41 martin Exp $	*/
+/*	$OpenBSD: move.c,v 1.9 2006/12/14 10:14:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move.c,v 1.8 2006/10/29 20:02:41 martin Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.9 2006/12/14 10:14:05 martin Exp $";
 #endif
 #endif /* not lint */
 
@@ -335,10 +335,10 @@ pickmove()
 	struct BOARD *next;	/* next move */
 
 #ifdef DEBUG
-	if (trace == NULL)
-		trace = fopen("bgtrace", "w");
-	fprintf(trace, "\nRoll:  %d %d%s\n", D0, D1, race ? " (race)" : "");
-	fflush(trace);
+	if (ftrace == NULL)
+		ftrace = fopen("bgtrace", "w");
+	fprintf(ftrace, "\nRoll:  %d %d%s\n", D0, D1, race ? " (race)" : "");
+	fflush(ftrace);
 #endif
 	do {			/* compare moves */
 		boardcopy(checkq);

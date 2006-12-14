@@ -1,4 +1,4 @@
-/*	$OpenBSD: extra.c,v 1.4 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: extra.c,v 1.5 2006/12/14 10:14:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)extra.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: extra.c,v 1.4 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: extra.c,v 1.5 2006/12/14 10:14:05 martin Exp $";
 #endif
 #endif /* not lint */
 
@@ -112,17 +112,18 @@ dblgood()
 
 #ifdef DEBUG
 	int     i;
-	if (trace == NULL)
-		trace = fopen("bgtrace", "w");
+	if (ftrace == NULL)
+		ftrace = fopen("bgtrace", "w");
+		printf ("fopen\n");
 #endif
 
 	/* get real pip value */
 	n = eval() * cturn;
 #ifdef DEBUG
-	fputs("\nDoubles:\nBoard: ", trace);
+	fputs("\nDoubles:\nBoard: ", ftrace);
 	for (i = 0; i < 26; i++)
-		fprintf(trace, " %d", board[i]);
-	fprintf(trace, "\n\tpip = %d, ", n);
+		fprintf(ftrace, " %d", board[i]);
+	fprintf(ftrace, "\n\tpip = %d, ", n);
 #endif
 
 	/* below adjusts pip value according to position judgments */
@@ -156,7 +157,7 @@ dblgood()
 	}
 
 #ifdef DEBUG
-	fprintf(trace, "off = %d, ", n);
+	fprintf(ftrace, "off = %d, ", n);
 #endif
 
 	/* see if men are trapped */
@@ -166,9 +167,9 @@ dblgood()
 	n -= trapped(bar, cturn);
 
 #ifdef DEBUG
-	fprintf(trace, "free = %d\n", n);
-	fprintf(trace, "\tOFFC = %d, OFFO = %d\n", OFFC, OFFO);
-	fflush(trace);
+	fprintf(ftrace, "free = %d\n", n);
+	fprintf(ftrace, "\tOFFC = %d, OFFO = %d\n", OFFC, OFFO);
+	fflush(ftrace);
 #endif
 
 	/* double if 2-3 moves ahead */

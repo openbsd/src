@@ -1,4 +1,4 @@
-/*	$OpenBSD: back.h,v 1.10 2006/10/29 20:02:41 martin Exp $	*/
+/*	$OpenBSD: back.h,v 1.11 2006/12/14 10:14:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -51,7 +51,7 @@
 #define CIN_SIZE 40
 
 #ifdef DEBUG
-extern FILE	*trace;
+extern FILE	*ftrace;
 #endif
 
 /*
