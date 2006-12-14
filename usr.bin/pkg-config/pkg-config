@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.15 2006/12/10 10:58:41 espie Exp $
+# $OpenBSD: pkg-config,v 1.16 2006/12/14 10:23:34 espie Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -24,17 +24,19 @@ use OpenBSD::PkgConfig;
 
 my @PKGPATH = qw(/usr/local/lib/pkgconfig /usr/X11R6/lib/pkgconfig );
 
-if (defined($ENV{'PKG_CONFIG_PATH'}) && $ENV{'PKG_CONFIG_PATH'}) {
-	push(@PKGPATH, split /:/, $ENV{'PKG_CONFIG_PATH'});
+if (defined($ENV{PKG_CONFIG_LIBDIR}) && $ENV{PKG_CONFIG_LIBDIR}) {
+	@PKGPATH = split /:/, $ENV{PKG_CONFIG_LIBDIR};
+} elsif (defined($ENV{PKG_CONFIG_PATH}) && $ENV{PKG_CONFIG_PATH}) {
+	push(@PKGPATH, split /:/, $ENV{PKG_CONFIG_PATH});
 }
 
 my $logfile = '';
-if (defined($ENV{'PKG_CONFIG_LOGFILE'}) && $ENV{'PKG_CONFIG_LOGFILE'}) {
-	$logfile = $ENV{'PKG_CONFIG_LOGFILE'};
+if (defined($ENV{PKG_CONFIG_LOGFILE}) && $ENV{PKG_CONFIG_LOGFILE}) {
+	$logfile = $ENV{PKG_CONFIG_LOGFILE};
 }
 
 my $allow_uninstalled = 
-	defined $ENV{'PKG_CONFIG_DISABLE_UNINSTALLED'} ? 0 : 1;
+	defined $ENV{PKG_CONFIG_DISABLE_UNINSTALLED} ? 0 : 1;
 my $found_uninstalled = 0;
 
 my $version = 0.19; # pretend to be this version of pkgconfig
@@ -45,7 +47,7 @@ my $variables = {};
 my $D = 0; # debug flag
 
 {
-    my $d = $ENV{'PKG_CONFIG_TOP_BUILD_DIR'};
+    my $d = $ENV{PKG_CONFIG_TOP_BUILD_DIR};
     if (defined $d) {
 	    $variables->{pc_top_builddir} = $d;
     } else {
