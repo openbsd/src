@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_subr.S,v 1.4 2006/11/10 07:02:55 miod Exp $	*/
+/*	$OpenBSD: locore_subr.S,v 1.5 2006/12/14 14:56:23 kettenis Exp $	*/
 /*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
 /*-
@@ -132,15 +132,6 @@ ENTRY(cpu_switch)
 FUNC_SYMBOL(switch_resume)
 
 
-
-/*
- * LINTSTUB: Func: void cpu_exit(struct proc *p)
- *	Just fall-through to the switch_exit below.
- */
-ENTRY(cpu_exit)
-	mov.l	.L_switch_exit_proc_exit2, r5	/* exit_func to call */
-	/* FALLTHROUGH */
-
 /*
  * LINTSTUB: Func: void switch_exit(struct proc *p, void (*exit_func)(struct proc *))
  *	Called only from cpu_exit(p).  Before we call exit_func to
@@ -174,8 +165,6 @@ ALTENTRY(switch_exit)
 	 mov	#0, r4		/* no "previous" proc */
 
 	.align 2
-.L_switch_exit_proc_exit2:
-	.long	_C_LABEL(exit2)
 .L_switch_exit_proc0_pcb:
 	.long	_C_LABEL(proc0) + P_MD_PCB
 .L_switch_exit_curpcb:
