@@ -1,4 +1,4 @@
-/*	$OpenBSD: ht.c,v 1.9 2006/03/13 20:10:49 brad Exp $	*/
+/*	$OpenBSD: ht.c,v 1.10 2006/12/14 17:36:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -189,6 +189,7 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = sc->sc_memt;
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_pc = &sc->sc_pc;
+	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 

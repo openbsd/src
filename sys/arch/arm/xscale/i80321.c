@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321.c,v 1.4 2006/06/02 01:33:55 drahn Exp $	*/
+/*	$OpenBSD: i80321.c,v 1.5 2006/12/14 17:36:12 kettenis Exp $	*/
 /*	$NetBSD: i80321.c,v 1.18 2006/02/25 02:28:56 wiz Exp $	*/
 
 /*
@@ -221,6 +221,7 @@ i80321_attach(struct i80321_softc *sc)
 	pba.pba_memt = &sc->sc_pci_memt;
 	pba.pba_dmat = &sc->sc_pci_dmat;
 	pba.pba_pc = &sc->sc_pci_chipset;
+	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = preg;
 	pba.pba_bridgetag = NULL;
 	pba.pba_intrswiz = 0;	/* XXX what if busno != 0? */

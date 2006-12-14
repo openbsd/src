@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcic.c,v 1.5 2006/10/23 20:15:50 miod Exp $	*/
+/*	$OpenBSD: shpcic.c,v 1.6 2006/12/14 17:36:12 kettenis Exp $	*/
 /*	$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
@@ -261,6 +261,7 @@ shpcic_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = shpcic_get_bus_mem_tag();
 	pba.pba_dmat = shpcic_get_bus_dma_tag();
 	pba.pba_pc = NULL;
+	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	config_found(self, &pba, NULL);

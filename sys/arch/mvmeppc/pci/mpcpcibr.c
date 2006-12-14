@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibr.c,v 1.17 2005/11/07 02:19:46 brad Exp $ */
+/*	$OpenBSD: mpcpcibr.c,v 1.18 2006/12/14 17:36:12 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -238,6 +238,7 @@ mpcpcibrattach(parent, self, aux)
 	pba.pba_iot = &sc->sc_iobus_space;
 	pba.pba_memt = &sc->sc_membus_space;
 	pba.pba_pc = &lcp->lc_pc;
+	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0; 
 
 	/*

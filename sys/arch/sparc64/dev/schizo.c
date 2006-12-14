@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.36 2006/12/12 19:18:52 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.37 2006/12/14 17:36:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -213,6 +213,7 @@ schizo_init(struct schizo_softc *sc, int busa)
 	pbm->sp_pc->bushandle = pbm->sp_cfgh;
 
 	pba.pba_busname = "pci";
+	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = busranges[0];
 	pba.pba_bridgetag = NULL;
 	pba.pba_pc = pbm->sp_pc;

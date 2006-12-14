@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.10 2006/11/25 16:59:31 niklas Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.11 2006/12/14 17:36:12 kettenis Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -219,6 +219,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		mba.mba_pba.pba_iot = X86_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = X86_BUS_SPACE_MEM;
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
+		mba.mba_pba.pba_domain = pci_ndomains++;
 		mba.mba_pba.pba_bus = 0;
 		mba.mba_pba.pba_bridgetag = NULL;
 		mba.mba_pba.pba_pc = NULL;

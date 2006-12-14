@@ -1,4 +1,4 @@
-/*	$OpenBSD: elroy.c,v 1.3 2006/03/13 20:10:49 brad Exp $	*/
+/*	$OpenBSD: elroy.c,v 1.4 2006/12/14 17:36:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1180,6 +1180,7 @@ letoh64(r->eio_base), letoh64(r->eio_mask));
 	pba.pba_dmat = &sc->sc_dmatag;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bridgetag = NULL;
+	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0; /* (letoh32(elroy_read32(&r->busnum)) & 0xff) >> 4; */
 	config_found(self, &pba, elroyprint);
 

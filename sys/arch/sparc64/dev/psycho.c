@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.47 2006/07/01 16:41:26 deraadt Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.48 2006/12/14 17:36:12 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -355,6 +355,7 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	/* get the bus-range for the psycho */
 	psycho_get_bus_range(sc->sc_node, psycho_br);
 
+	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = psycho_br[0];
 	pba.pba_bridgetag = NULL;
 

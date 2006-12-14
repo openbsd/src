@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.35 2006/12/05 20:48:23 gwk Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.36 2006/12/14 17:36:12 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -444,6 +444,7 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_iot = &sc->sc_iobus_space;
 	pba.pba_memt = &sc->sc_membus_space;
 	pba.pba_pc = &lcp->lc_pc;
+	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 

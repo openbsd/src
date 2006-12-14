@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.48 2006/12/11 19:47:37 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.49 2006/12/14 17:36:12 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -71,6 +71,8 @@ struct cfattach pci_ca = {
 struct cfdriver pci_cd = {
 	NULL, "pci", DV_DULL
 };
+
+int	pci_ndomains;
 
 int	pciprint(void *, const char *);
 int	pcisubmatch(struct device *, void *, void *);
@@ -150,6 +152,7 @@ pciattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_memt = pba->pba_memt;
 	sc->sc_dmat = pba->pba_dmat;
 	sc->sc_pc = pba->pba_pc;
+	sc->sc_domain = pba->pba_domain;
 	sc->sc_bus = pba->pba_bus;
 	sc->sc_bridgetag = pba->pba_bridgetag;
 	sc->sc_maxndevs = pci_bus_maxdevs(pba->pba_pc, pba->pba_bus);
@@ -265,6 +268,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	pa.pa_memt = sc->sc_memt;
 	pa.pa_dmat = sc->sc_dmat;
 	pa.pa_pc = pc;
+	pa.pa_domain = sc->sc_domain;
 	pa.pa_bus = bus;
 	pa.pa_device = device;
 	pa.pa_function = function;
@@ -496,6 +500,10 @@ pciopen(dev_t dev, int oflags, int devtype, struct proc *p)
 {
 	PCIDEBUG(("pciopen ndevs: %d\n" , pci_cd.cd_ndevs));
 
+	if (minor(dev) >= pci_ndomains) {
+		return ENXIO;
+	}
+
 #ifndef APERTURE
 	if ((oflags & FWRITE) && securelevel > 0) {
 		return EPERM;
@@ -533,7 +541,8 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	for (i = 0; i < pci_cd.cd_ndevs; i++) {
 		pci = pci_cd.cd_devs[i];
-		if (pci != NULL && pci->sc_bus == io->pi_sel.pc_bus)
+		if (pci != NULL && pci->sc_domain == minor(dev) &&
+		    pci->sc_bus == io->pi_sel.pc_bus)
 			break;
 	}
 	if (pci != NULL && pci->sc_bus == io->pi_sel.pc_bus) {

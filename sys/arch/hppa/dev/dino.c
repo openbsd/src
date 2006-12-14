@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.17 2006/03/13 20:10:49 brad Exp $	*/
+/*	$OpenBSD: dino.c,v 1.18 2006/12/14 17:36:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Michael Shalayeff
@@ -1622,6 +1622,7 @@ dinoattach(parent, self, aux)
 	pba.pba_memt = &sc->sc_memt;
 	pba.pba_dmat = &sc->sc_dmatag;
 	pba.pba_pc = &sc->sc_pc;
+	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	config_found(self, &pba, dinoprint);

@@ -1,4 +1,4 @@
-/* $OpenBSD: tsc.c,v 1.12 2006/03/16 22:32:44 miod Exp $ */
+/* $OpenBSD: tsc.c,v 1.13 2006/12/14 17:36:12 kettenis Exp $ */
 /* $NetBSD: tsc.c,v 1.3 2000/06/25 19:17:40 thorpej Exp $ */
 
 /*-
@@ -199,6 +199,7 @@ tspattach(parent, self, aux)
 	pba.pba_dmat =
 	    alphabus_dma_get_tag(&pcp->pc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &pcp->pc_pc;
+	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 #ifdef	notyet

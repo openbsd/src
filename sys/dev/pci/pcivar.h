@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.49 2006/12/11 19:47:37 kettenis Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.50 2006/12/14 17:36:12 kettenis Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -80,6 +80,7 @@ struct pcibus_attach_args {
 	bus_dma_tag_t pba_dmat;		/* DMA tag */
 	pci_chipset_tag_t pba_pc;
 
+	int		pba_domain;	/* PCI domain */
 	int		pba_bus;	/* PCI bus number */
 
 	/*
@@ -106,8 +107,9 @@ struct pci_attach_args {
 	pci_chipset_tag_t pa_pc;
 	int		pa_flags;	/* flags; see below */
 
-	u_int		pa_device;
+	u_int           pa_domain;
 	u_int           pa_bus;
+	u_int		pa_device;
 	u_int		pa_function;
 	pcitag_t	pa_tag;
 	pcireg_t	pa_id, pa_class;
@@ -159,11 +161,13 @@ struct pci_softc {
 	pci_chipset_tag_t sc_pc;
 	void *sc_powerhook;
 	LIST_HEAD(, pci_dev) sc_devs;
-	int sc_bus, sc_maxndevs;
+	int sc_domain, sc_bus, sc_maxndevs;
 	pcitag_t *sc_bridgetag;
 	u_int sc_intrswiz;
 	pcitag_t sc_intrtag;
 };
+
+extern int pci_ndomains;
 
 /*
  * Locators devices that attach to 'pcibus', as specified to config.

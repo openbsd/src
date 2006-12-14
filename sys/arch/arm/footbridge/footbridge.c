@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge.c,v 1.5 2006/03/13 20:10:49 brad Exp $	*/
+/*	$OpenBSD: footbridge.c,v 1.6 2006/12/14 17:36:12 kettenis Exp $	*/
 /*	$NetBSD: footbridge.c,v 1.7 2002/05/16 01:01:33 thorpej Exp $	*/
 
 /*
@@ -221,6 +221,7 @@ footbridge_attach(parent, self, aux)
 	/*
 	fba.fba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	*/
+	fba.fba_pba.pba_domain = pci_ndomains++;
 	fba.fba_pba.pba_bus = 0;
 	fba.fba_pba.pba_bridgetag = NULL;
 	config_found(self, &fba.fba_pba, footbridge_print);

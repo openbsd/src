@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs.c,v 1.19 2006/03/16 22:32:44 miod Exp $	*/
+/*	$OpenBSD: apecs.c,v 1.20 2006/12/14 17:36:12 kettenis Exp $	*/
 /*	$NetBSD: apecs.c,v 1.16 1996/12/05 01:39:34 cgd Exp $	*/
 
 /*-
@@ -243,6 +243,7 @@ apecsattach(parent, self, aux)
 	pba.pba_dmat =
 	    alphabus_dma_get_tag(&acp->ac_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &acp->ac_pc;
+	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 #ifdef notyet
