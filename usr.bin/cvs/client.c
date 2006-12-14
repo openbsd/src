@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.28 2006/11/27 16:19:59 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.29 2006/12/14 15:13:17 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -386,7 +386,10 @@ cvs_client_get_responses(void)
 void
 cvs_client_senddir(const char *dir)
 {
-	char *repo;
+	int nb;
+	char *d, *date, *repo, *tag;
+
+	d = NULL;
 
 	if (lastdir != NULL && !strcmp(dir, lastdir))
 		return;
@@ -397,6 +400,36 @@ cvs_client_senddir(const char *dir)
 	cvs_get_repository_path(dir, repo, MAXPATHLEN);
 	cvs_remote_output(repo);
 	xfree(repo);
+
+	d = xstrdup(dir);
+	cvs_parse_tagfile(d, &tag, &date, &nb);
+
+	if (tag != NULL || date != NULL) {
+		char buf[128];
+
+		if (tag != NULL && nb != NULL) {
+			if (strlcpy(buf, "N", sizeof(buf)) >= sizeof(buf))
+				fatal("cvs_client_senddir: truncation");
+		} else if (tag != NULL) {
+			if (strlcpy(buf, "T", sizeof(buf)) >= sizeof(buf))
+				fatal("cvs_client_senddir: truncation");
+		} else {
+			if (strlcpy(buf, "D", sizeof(buf)) >= sizeof(buf))
+				fatal("cvs_client_senddir: truncation");
+		}
+
+		if (strlcat(buf, tag ? tag : date, sizeof(buf)) >= sizeof(buf))
+			fatal("cvs_client_senddir: truncation");
+
+		cvs_client_send_request("Sticky %s", buf);
+
+		if (tag != NULL)
+			xfree(tag);
+		if (date != NULL)
+			xfree(date);
+	}
+	if (d != NULL)
+		xfree(d);
 
 	if (lastdir != NULL)
 		xfree(lastdir);
