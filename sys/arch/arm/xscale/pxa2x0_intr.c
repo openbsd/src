@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.13 2006/03/07 22:35:57 uwe Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.14 2006/12/14 05:02:29 niallo Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -225,9 +225,9 @@ pxa2x0_irq_handler(void *arg)
 		if (saved_spl_level < extirq_level[irqno])
 			pxa2x0_setipl(extirq_level[irqno]);
 
-#ifdef notyet
 		/* Enable interrupt */
-#endif
+		enable_interrupts(I32_bit);
+
 #ifndef MULTIPLE_HANDLERS_ON_ONE_IRQ
 		(* handler[irqno].func)( 
 			handler[irqno].arg == 0
@@ -241,9 +241,8 @@ pxa2x0_irq_handler(void *arg)
 		}
 #endif
 		
-#ifdef notyet
 		/* Disable interrupt */
-#endif
+		disable_interrupts(I32_bit);
 
 		irqbits &= ~(1<<irqno);
 	}
