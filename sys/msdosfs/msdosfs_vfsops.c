@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.43 2006/12/14 07:37:24 tom Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.44 2006/12/14 10:55:03 tom Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -272,7 +272,6 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	u_int8_t SecPerClust;
 	int	ronly, error, bmapsiz;
 	int	bsize = 0, dtype = 0, tmp;
-	uint32_t dirsperblk;
 	uint32_t fat_max_clusters;
 
 	/*
@@ -370,8 +369,6 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		pmp->pm_HiddenSects = getushort(b33->bpbHiddenSecs);
 		pmp->pm_HugeSectors = pmp->pm_Sectors;
 	}
-
-	dirsperblk = pmp->pm_BytesPerSec / sizeof(struct direntry);
 
 	if (pmp->pm_RootDirEnts == 0) {
 		if (pmp->pm_Sectors || pmp->pm_FATsecs ||
