@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.56 2006/11/06 11:12:56 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.57 2006/12/14 09:31:17 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -71,9 +71,6 @@ cvs_remove(int argc, char **argv)
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cr.fileproc = cvs_client_sendfile;
-
-		if (force_remove == 1)
-			cvs_client_send_request("Argument -f");
 
 		if (!(flags & CR_RECURSE_DIRS))
 			cvs_client_send_request("Argument -l");
