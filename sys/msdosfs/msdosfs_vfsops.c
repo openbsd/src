@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.42 2006/11/29 13:35:07 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.43 2006/12/14 07:37:24 tom Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -273,6 +273,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	int	ronly, error, bmapsiz;
 	int	bsize = 0, dtype = 0, tmp;
 	uint32_t dirsperblk;
+	uint32_t fat_max_clusters;
 
 	/*
 	 * Disallow multiple mounts of the same device.
@@ -484,6 +485,29 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		pmp->pm_fatblocksize = 3 * pmp->pm_BytesPerSec;
 	else
 		pmp->pm_fatblocksize = MAXBSIZE;
+
+	/*
+	 * We now have the number of sectors in each FAT, so can work
+	 * out how many clusters can be represented in a FAT.  Let's
+	 * make sure the file system doesn't claim to have more clusters
+	 * than this.
+	 *
+	 * We perform the calculation like we do to avoid integer overflow.
+	 *
+	 * This will give us a count of clusters.  They are numbered
+	 * from 0, so the max cluster value is one less than the value
+	 * we end up with.
+	 */
+	fat_max_clusters = pmp->pm_fatsize / pmp->pm_fatmult;
+	fat_max_clusters *= pmp->pm_fatdiv;
+	if (pmp->pm_maxcluster >= fat_max_clusters) {
+#ifndef SMALL_KERNEL
+		printf("msdosfs: reducing max cluster to %d from %d "
+		    "due to FAT size\n", fat_max_clusters - 1,
+		    pmp->pm_maxcluster);
+#endif
+		pmp->pm_maxcluster = fat_max_clusters - 1;
+	}
 
 	pmp->pm_fatblocksec = pmp->pm_fatblocksize / pmp->pm_BytesPerSec;
 	pmp->pm_bnshift = ffs(pmp->pm_BytesPerSec) - 1;
