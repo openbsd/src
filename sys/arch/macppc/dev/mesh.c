@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.14 2006/12/08 01:19:44 thib Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.15 2006/12/14 00:58:45 gwk Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -54,13 +54,90 @@
 #include <machine/cpu.h>
 
 #include <macppc/dev/dbdma.h>
-#include <macppc/dev/meshreg.h>
 
 #ifdef MESH_DEBUG
 # define DPRINTF printf
 #else
 # define DPRINTF while (0) printf
 #endif
+
+/* MESH register offsets */
+#define MESH_XFER_COUNT0	0x00	/* transfer count (low)  */
+#define MESH_XFER_COUNT1	0x10	/* transfer count (high) */
+#define MESH_FIFO		0x20	/* FIFO (16byte depth) */
+#define MESH_SEQUENCE		0x30	/* command register */
+#define MESH_BUS_STATUS0	0x40
+#define MESH_BUS_STATUS1	0x50
+#define MESH_FIFO_COUNT		0x60
+#define MESH_EXCEPTION		0x70
+#define MESH_ERROR		0x80
+#define MESH_INTR_MASK		0x90
+#define MESH_INTERRUPT		0xa0
+#define MESH_SOURCE_ID		0xb0
+#define MESH_DEST_ID		0xc0
+#define MESH_SYNC_PARAM		0xd0
+#define MESH_MESH_ID		0xe0	/* MESH version */
+#define MESH_SEL_TIMEOUT	0xf0	/* selection timeout delay */
+
+#define MESH_SIGNATURE		0xe2	/* XXX wrong! */
+
+/* MESH commands */
+#define MESH_CMD_ARBITRATE	0x01
+#define MESH_CMD_SELECT		0x02
+#define MESH_CMD_COMMAND	0x03
+#define MESH_CMD_STATUS		0x04
+#define MESH_CMD_DATAOUT	0x05
+#define MESH_CMD_DATAIN		0x06
+#define MESH_CMD_MSGOUT		0x07
+#define MESH_CMD_MSGIN		0x08
+#define MESH_CMD_BUSFREE	0x09
+#define MESH_CMD_ENABLE_PARITY	0x0A
+#define MESH_CMD_DISABLE_PARITY	0x0B
+#define MESH_CMD_ENABLE_RESEL	0x0C
+#define MESH_CMD_DISABLE_RESEL	0x0D
+#define MESH_CMD_RESET_MESH	0x0E
+#define MESH_CMD_FLUSH_FIFO	0x0F
+#define MESH_SEQ_DMA		0x80
+#define MESH_SEQ_TARGET		0x40
+#define MESH_SEQ_ATN		0x20
+#define MESH_SEQ_ACTNEG		0x10
+
+/* INTERRUPT/INTR_MASK register bits */
+#define MESH_INTR_ERROR		0x04
+#define MESH_INTR_EXCEPTION	0x02
+#define MESH_INTR_CMDDONE	0x01
+
+/* EXCEPTION register bits */
+#define MESH_EXC_SELATN		0x20	/* selected and ATN asserted (T) */
+#define MESH_EXC_SELECTED	0x10	/* selected (T) */
+#define MESH_EXC_RESEL		0x08	/* reselected */
+#define MESH_EXC_ARBLOST	0x04	/* arbitration lost */
+#define MESH_EXC_PHASEMM	0x02	/* phase mismatch */
+#define MESH_EXC_SELTO		0x01	/* selection timeout */
+
+/* ERROR register bits */
+#define MESH_ERR_DISCONNECT	0x40	/* unexpected disconnect */
+#define MESH_ERR_SCSI_RESET	0x20	/* Rst signal asserted */
+#define MESH_ERR_SEQERR		0x10	/* sequence error */
+#define MESH_ERR_PARITY_ERR3	0x08	/* parity error */
+#define MESH_ERR_PARITY_ERR2	0x04
+#define MESH_ERR_PARITY_ERR1	0x02
+#define MESH_ERR_PARITY_ERR0	0x01
+
+/* BUS_STATUS0 status bits */
+#define MESH_STATUS0_REQ32	0x80
+#define MESH_STATUS0_ACK32	0x40
+#define MESH_STATUS0_REQ	0x20
+#define MESH_STATUS0_ACK	0x10
+#define MESH_STATUS0_ATN	0x08
+#define MESH_STATUS0_MSG	0x04
+#define MESH_STATUS0_CD		0x02
+#define MESH_STATUS0_IO		0x01
+
+/* BUS_STATUS1 status bits */
+#define MESH_STATUS1_RST	0x80
+#define MESH_STATUS1_BSY	0x40
+#define MESH_STATUS1_SEL	0x20
 
 #define T_SYNCMODE 0x01		/* target uses sync mode */
 #define T_SYNCNEGO 0x02		/* sync negotiation done */
@@ -72,10 +149,10 @@ struct mesh_tinfo {
 };
 
 /* scb flags */
-#define MESH_POLL	0x01
-#define MESH_CHECK	0x02
-#define MESH_SENSE	0x04
-#define MESH_READ	0x80
+#define MESH_POLL		0x01
+#define MESH_CHECK		0x02
+#define MESH_SENSE		0x04
+#define MESH_READ		0x80
 
 struct mesh_scb {
 	TAILQ_ENTRY(mesh_scb) chain;
