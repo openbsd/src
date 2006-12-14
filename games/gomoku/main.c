@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2004/01/16 00:13:19 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2006/12/14 10:15:09 martin Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.17 2004/01/16 00:13:19 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.18 2006/12/14 10:15:09 martin Exp $";
 #endif
 #endif /* not lint */
 
@@ -500,7 +500,7 @@ top:
 				if (cbp->c_nframes != n)
 					break;
 			}
-			printcombo(cbp, fmtbuf);
+			printcombo(cbp, fmtbuf, sizeof fmtbuf);
 			dlog(fmtbuf);
 		}
 		goto top;

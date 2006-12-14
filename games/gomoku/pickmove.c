@@ -1,4 +1,4 @@
-/*	$OpenBSD: pickmove.c,v 1.9 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: pickmove.c,v 1.10 2006/12/14 10:15:09 martin Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-static char rcsid[] = "$OpenBSD: pickmove.c,v 1.9 2003/06/03 03:01:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: pickmove.c,v 1.10 2006/12/14 10:15:09 martin Exp $";
 #endif
 #endif /* not lint */
 
@@ -1240,7 +1240,7 @@ sortcombo(scbpp, cbpp, fcbp)
 		dlog(fmtbuf);
 		str = fmtbuf;
 		for (cpp = cbpp; cpp < cbpp + curlevel; cpp++) {
-			snprintf(str, fmtbuf + sizeof fmtbut - str,
+			snprintf(str, fmtbuf + sizeof fmtbuf - str,
 				" %s%c", stoc((*cpp)->c_vertex),
 				pdir[(*cpp)->c_dir]);
 			str += strlen(str);
