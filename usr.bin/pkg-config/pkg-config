@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.16 2006/12/14 10:23:34 espie Exp $
+# $OpenBSD: pkg-config,v 1.17 2006/12/14 22:45:21 espie Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -196,7 +196,7 @@ my $dep_cfg_list = simplify_and_reverse($cfg_full_list);
 if ($mode{cflags} || $mode{libs} || $mode{variable}) {
     push @vlist, do_cflags($dep_cfg_list) if $mode{cflags};
     push @vlist, do_libs($dep_cfg_list) if $mode{libs};
-    print join(' ', @vlist), "\n";
+    print join(' ', @vlist), "\n" if $rc == 0;
 }
 
 exit $rc;
