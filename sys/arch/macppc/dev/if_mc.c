@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.4 2006/10/20 13:10:27 xsa Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.5 2006/12/14 00:17:40 gwk Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
@@ -315,7 +315,7 @@ struct cfdriver mc_cd = {
 	NULL, "mc", DV_IFNET
 };
 
-int	mc_init(struct mc_softc *sc);
+void	mc_init(struct mc_softc *sc);
 void	mc_put(struct mc_softc *sc, u_int len);
 int	mc_dmaintr(void *arg);
 void	mc_reset_rxdma(struct mc_softc *sc);
@@ -332,52 +332,8 @@ void	mc_watchdog(struct ifnet *ifp);
 u_int   maceput(struct mc_softc *sc, struct mbuf *);
 void    mace_read(struct mc_softc *, caddr_t, int);
 struct mbuf *mace_get(struct mc_softc *, caddr_t, int);
-static void mace_calcladrf(struct arpcom *, u_int8_t *);
+static void mace_calcladrf(struct mc_softc *, u_int8_t *);
 void	mc_putpacket(struct mc_softc *, u_int);
-
-/*
- * Compare two Ether/802 addresses for equality, inlined and
- * unrolled for speed.  Use this like bcmp().
- *
- * XXX: Add <machine/inlines.h> for stuff like this?
- * XXX: or maybe add it to libkern.h instead?
- *
- * "I'd love to have an inline assembler version of this."
- * XXX: Who wanted that? mycroft?  I wrote one, but this
- * version in C is as good as hand-coded assembly. -gwr
- *
- * Please do NOT tweak this without looking at the actual
- * assembly code generated before and after your tweaks!
- */
-static inline u_int16_t
-ether_cmp(void *one, void *two)
-{
-	u_int16_t *a = (u_short *) one;
-	u_int16_t *b = (u_short *) two;
-	u_int16_t diff;
-
-#ifdef  m68k
-	/*
-	 * The post-increment-pointer form produces the best
-	 * machine code for m68k.  This was carefully tuned
-	 * so it compiles to just 8 short (2-byte) op-codes!
-	 */
-	diff  = *a++ - *b++;
-	diff |= *a++ - *b++;
-	diff |= *a++ - *b++;
-#else
-	/*
-	 * Most modern CPUs do better with a single expresion.
-	 * Note that short-cut evaluation is NOT helpful here,
-	 * because it just makes the code longer, not faster!
-	 */
-	diff = (a[0] - b[0]) | (a[1] - b[1]) | (a[2] - b[2]);
-#endif
-
-	return (diff);
-}
-
-#define ETHER_CMP       ether_cmp
 
 int
 mc_match(struct device *parent, void *arg, void *aux)
@@ -514,7 +470,7 @@ int
 mc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct mc_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr;
 
 	int s = splnet(), err = 0;
@@ -522,19 +478,13 @@ mc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			mc_init(sc);
 #ifdef INET
-		case AF_INET:
-			mc_init(sc);
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
 #endif
-		default:
-			mc_init(sc);
-			break;
-		}
 		break;
 
 	case SIOCSIFFLAGS:
@@ -545,14 +495,13 @@ mc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * then stop it.
 			 */
 			mc_stop(sc);
-			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 		    (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped,
 			 * then start it.
 			 */
-			(void)mc_init(sc);
+			mc_init(sc);
 		} else {
 			/*
 			 * reset the interface to pick up any other changes
@@ -637,15 +586,12 @@ mc_reset(struct mc_softc *sc)
 	mc_init(sc);
 }
 
-int
+void
 mc_init(struct mc_softc *sc)
 {
-	int s, i;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_int8_t maccc, ladrf[8];
-
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_RUNNING)
-		/* already running */
-		return (0);
+	int s, i;
 
 	s = splnet();
 
@@ -666,7 +612,7 @@ mc_init(struct mc_softc *sc)
 		    sc->sc_enaddr[i]);
 
 	/* set logical address filter */
-	mace_calcladrf(&sc->sc_arpcom, ladrf);
+	mace_calcladrf(sc, ladrf);
 
 	NIC_PUT(sc, MACE_IAC, ADDRCHG);
 	while (NIC_GET(sc, MACE_IAC) & ADDRCHG)
@@ -685,7 +631,7 @@ mc_init(struct mc_softc *sc)
 	NIC_PUT(sc, MACE_RCVFC, 0);
 
 	maccc = ENXMT | ENRCV;
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC)
+	if (ifp->if_flags & IFF_PROMISC)
 		maccc |= PROM;
 
 	NIC_PUT(sc, MACE_MACCC, maccc);
@@ -699,11 +645,10 @@ mc_init(struct mc_softc *sc)
 	NIC_PUT(sc, MACE_IMR, RCVINTM);
 
 	/* flag interface as "running" */
-	sc->sc_arpcom.ac_if.if_flags |= IFF_RUNNING;
-	sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	splx(s);
-	return (0);
 }
 
 /*
@@ -714,13 +659,16 @@ mc_init(struct mc_softc *sc)
 int
 mc_stop(struct mc_softc *sc)
 {
-	int	s = splnet();
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int s;
+
+	s = splnet();
 
 	NIC_PUT(sc, MACE_BIUCC, SWRST);
 	DELAY(100);
 
-	sc->sc_arpcom.ac_if.if_timer = 0;
-	sc->sc_arpcom.ac_if.if_flags &= ~IFF_RUNNING;
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	splx(s);
 	return (0);
@@ -1003,10 +951,10 @@ mc_putpacket(struct mc_softc *sc, u_int len)
 	dbdma_command_t *cmd = sc->sc_txdmacmd;
 
 	DBDMA_BUILD(cmd, DBDMA_CMD_OUT_LAST, 0, len, sc->sc_txbuf_pa,
-		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+	   DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 	cmd++;
-	DBDMA_BUILD(cmd, DBDMA_CMD_STOP, 0, 0, 0,
-	   DBDMA_INT_ALWAYS, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+	DBDMA_BUILD(cmd, DBDMA_CMD_STOP, 0, 0, 0, DBDMA_INT_ALWAYS,
+	   DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 	
 	dbdma_start(sc->sc_txdma, sc->sc_txdbdma);
 }
@@ -1048,9 +996,7 @@ mc_dmaintr(void *arg)
 			goto next;
 		}
 		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_STOP, 0, 0, 0, 0);
-		/* XXX: Why? */
-		__asm volatile("eieio");
-
+		
 		offset = i * MACE_BUFLEN;
 		statoff = offset + datalen;
 		sc->sc_rxframe.rx_rcvcnt = sc->sc_rxbuf[statoff + 0];
@@ -1064,8 +1010,6 @@ mc_dmaintr(void *arg)
 next:
 		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_IN_LAST, 0, DBDMA_INT_ALWAYS,
 		    DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
-		/* XXX: Why? */
-		__asm volatile("eieio");
 
 		cmd->d_status = 0;
 		cmd->d_resid = 0;
@@ -1093,13 +1037,13 @@ mc_reset_rxdma(struct mc_softc *sc)
 	bzero(sc->sc_rxdmacmd, 8 * sizeof(dbdma_command_t));
 	for (i = 0; i < MC_RXDMABUFS; i++) {
 		DBDMA_BUILD(cmd, DBDMA_CMD_IN_LAST, 0, MACE_BUFLEN,
-			sc->sc_rxbuf_pa + MACE_BUFLEN * i, DBDMA_INT_ALWAYS,
-			DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+		    sc->sc_rxbuf_pa + MACE_BUFLEN * i, DBDMA_INT_ALWAYS,
+		    DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 		cmd++;
 	}
 
 	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0, 0,
-		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
+	    DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
 	dbdma_st32(&cmd->d_cmddep, sc->sc_rxdbdma->d_paddr);
 	cmd++;
 
@@ -1125,10 +1069,10 @@ mc_reset_txdma(struct mc_softc *sc)
 
 	bzero(sc->sc_txdmacmd, 2 * sizeof(dbdma_command_t));
 	DBDMA_BUILD(cmd, DBDMA_CMD_OUT_LAST, 0, 0, sc->sc_txbuf_pa,
-		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+	    DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 	cmd++;
 	DBDMA_BUILD(cmd, DBDMA_CMD_STOP, 0, 0, 0,
-		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+	    DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 
 	out32rb(&dmareg->d_cmdptrhi, 0);
 	out32rb(&dmareg->d_cmdptrlo, sc->sc_txdbdma->d_paddr);
@@ -1142,13 +1086,13 @@ mc_reset_txdma(struct mc_softc *sc)
  * address filter.
  */
 void
-mace_calcladrf(struct arpcom *ac, u_int8_t *af)
+mace_calcladrf(struct mc_softc *sc, u_int8_t *af)
 {
-	struct ifnet *ifp = &ac->ac_if;
 	struct ether_multi *enm;
 	u_int32_t crc;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct arpcom *ac = &sc->sc_arpcom;
 	struct ether_multistep step;
-
 	/*
 	 * Set up multicast address filter by passing all multicast addresses
 	 * through a crc generator, and then using the high order 6 bits as an
@@ -1160,7 +1104,7 @@ mace_calcladrf(struct arpcom *ac, u_int8_t *af)
 	*((u_int32_t *)af) = *((u_int32_t *)af + 1) = 0;
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (ETHER_CMP(enm->enm_addrlo, enm->enm_addrhi)) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
