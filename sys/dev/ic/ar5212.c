@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.33 2006/09/19 17:49:13 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.34 2006/12/14 09:23:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -945,13 +945,12 @@ ar5k_ar5212_setup_tx_queue(struct ath_hal *hal, HAL_TX_QUEUE queue_type,
 	 * Setup internal queue structure
 	 */
 	bzero(&hal->ah_txq[queue], sizeof(HAL_TXQ_INFO));
-	hal->ah_txq[queue].tqi_type = queue_type;
-
 	if (queue_info != NULL) {
 		if (ar5k_ar5212_setup_tx_queueprops(hal, queue, queue_info)
 		    != AH_TRUE)
 			return (-1);
 	}
+	hal->ah_txq[queue].tqi_type = queue_type;
 
 	AR5K_Q_ENABLE_BITS(hal->ah_txq_interrupts, queue);
 
@@ -964,7 +963,7 @@ ar5k_ar5212_setup_tx_queueprops(struct ath_hal *hal, int queue,
 {
 	AR5K_ASSERT_ENTRY(queue, hal->ah_capabilities.cap_queues.q_tx_num);
 
-	if (hal->ah_txq[queue].tqi_type == HAL_TX_QUEUE_INACTIVE)
+	if (hal->ah_txq[queue].tqi_type != HAL_TX_QUEUE_INACTIVE)
 		return (AH_FALSE);
 
 	bcopy(queue_info, &hal->ah_txq[queue], sizeof(HAL_TXQ_INFO));

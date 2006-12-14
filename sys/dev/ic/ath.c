@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.59 2006/11/06 08:48:49 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.60 2006/12/14 09:23:24 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -322,7 +322,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	 * allocate more tx queues for splitting management
 	 * frames and for QOS support.
 	 */
-	sc->sc_bhalq = ath_hal_setup_tx_queue(ah,HAL_TX_QUEUE_BEACON,NULL);
+	sc->sc_bhalq = ath_hal_setup_tx_queue(ah, HAL_TX_QUEUE_BEACON, NULL);
 	if (sc->sc_bhalq == (u_int) -1) {
 		printf(": unable to setup a beacon xmit queue!\n");
 		goto bad2;
@@ -330,6 +330,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 
 	for (i = 0; i <= HAL_TX_QUEUE_ID_DATA_MAX; i++) {
 		bzero(&qinfo, sizeof(qinfo));
+		qinfo.tqi_type = HAL_TX_QUEUE_DATA;
 		qinfo.tqi_subtype = i; /* should be mapped to WME types */
 		sc->sc_txhalq[i] = ath_hal_setup_tx_queue(ah,
 		    HAL_TX_QUEUE_DATA, &qinfo);
