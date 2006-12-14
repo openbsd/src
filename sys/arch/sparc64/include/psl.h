@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.21 2006/05/20 14:18:35 miod Exp $	*/
+/*	$OpenBSD: psl.h,v 1.22 2006/12/14 15:10:32 kettenis Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -188,6 +188,20 @@
 #define VER_MAXTL	0x000000000000ff00ULL
 #define VER_MAXTL_SHIFT	8
 #define VER_MAXWIN	0x000000000000001fULL
+
+#define IMPL_SPARC64		0x01 /* SPARC64 */
+#define IMPL_SPARC64_II		0x02 /* SPARC64-II */
+#define IMPL_SPARC64_III	0x03 /* SPARC64-III */
+#define IMPL_SPITFIRE		0x10 /* UltraSPARC */
+#define IMPL_BLACKBIRD		0x11 /* UltraSPARC-II */
+#define IMPL_SABRE		0x12 /* UltraSPARC-IIi */
+#define IMPL_HUMMINGBIRD	0x13 /* UltraSPARC-IIe */
+#define IMPL_CHEETAH		0x14 /* UltraSPARC-III */
+#define IMPL_CHEETAH_PLUS	0x15 /* UltraSPARC-III+ */
+#define IMPL_JALAPENO		0x16 /* UltraSPARC-IIIi */
+#define IMPL_JAGUAR		0x18 /* UltraSPARC-IV */
+#define IMPL_PANTHER		0x19 /* UltraSPARC-IV+ */
+#define IMPL_SERRANO		0x22 /* UltraSPARC-IIIi+ */
 
 /*
  * Here are a few things to help us transition between user and kernel mode:
