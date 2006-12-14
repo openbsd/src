@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.31 2005/11/12 00:51:13 deraadt Exp $	*/
+/*	$OpenBSD: man.c,v 1.32 2006/12/14 19:25:58 jasper Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.31 2005/11/12 00:51:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.32 2006/12/14 19:25:58 jasper Exp $";
 #endif
 #endif /* not lint */
 
@@ -624,8 +624,10 @@ how(char *fname)
 			print = 1;
 			continue;
 		} else if (!strncmp(buf, D1, sizeof(D1) - 1) ||
-		    !strncmp(buf, D2, sizeof(D2) - 1))
+		    !strncmp(buf, D2, sizeof(D2) - 1)) {
+		    	(void)fclose(fp);
 			return;
+		}
 		if (!print)
 			continue;
 		if (*buf == '\n')
