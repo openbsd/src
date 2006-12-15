@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_xfs.8,v 1.18 2004/09/15 23:03:16 jmc Exp $
+.\"	$OpenBSD: mount_xfs.8,v 1.19 2006/12/15 13:04:06 jmc Exp $
 .\"	$NetBSD: mount_null.8,v 1.4 1996/04/10 20:57:19 thorpej Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
@@ -46,12 +46,15 @@
 .Sh SYNOPSIS
 .Nm mount_xfs
 .Op Fl o Ar options
-.Ar char-device
-.Ar mount-point
+.Ar special
+.Ar node
 .Sh DESCRIPTION
 The
 .Nm
-command mounts one of the xfs character devices.
+command mounts one of the xfs character devices,
+.Ar special ,
+on mount point
+.Ar node .
 The character device is used
 for communication with a user-land cache manager and file provider.
 .Pp
