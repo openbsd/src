@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.1 2006/10/25 01:47:41 drahn Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.2 2006/12/15 18:59:50 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -25,7 +25,13 @@ dnl OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 dnl ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 dnl
 dnl
-__devitem(apm, apm, Power management device)dnl
+dnl *** landisk specific devices
+dnl
+__devitem(scif, ttya, on-board serial port,scif)dnl
+_mkdev(scif, ttya, {-M ttya major_scif_c 0 660 dialer uucp-})dnl
+dnl
+dnl *** MAKEDEV itself
+dnl
 _TITLE(make)
 _DEV(all)
 _DEV(ramdisk)
@@ -43,9 +49,7 @@ _DEV(wd, 16, 16)
 _TITLE(tap)
 _DEV(st, 25, 25)
 _TITLE(term)
-dnl _DEV(com, 12)
-dnl _DEV(fcom, 54)
-_DEV(com, 12)
+_DEV(scif, 11)
 _TITLE(pty)
 _DEV(ptm, 98)
 _DEV(pty, 5)
@@ -66,14 +70,14 @@ _DEV(urio, 67)
 _DEV(usb, 64)
 _DEV(uscan, 69)
 _TITLE(spec)
-_DEV(apm, 34)
+dnl _DEV(apm, 34)
 _DEV(au, 36)
 _DEV(hotplug, 37)
-#_DEV(bktr, 75)
+dnl _DEV(bktr, 75)
 _DEV(bpf, 22)
 _DEV(cry, 47)
 _DEV(fdesc, 7)
-#_DEV(iop, 73)
+dnl _DEV(iop, 73)
 _DEV(lkm, 35)
 _DEV(pci, 88)
 _DEV(pf, 46)
@@ -96,8 +100,9 @@ ramdisk)
 _std(1, 2, 8, 3, 6)
 	;;
 dnl
-dnl *** armish specific targets
+dnl *** landisk specific targets
 dnl
+twrget(all, scif, tty, a)dnl
 target(all, ch, 0)dnl
 target(all, ss, 0, 1)dnl
 target(all, xfs, 0)dnl
