@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.33 2006/12/15 13:12:14 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.34 2006/12/15 15:40:28 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -386,8 +386,9 @@ cvs_client_get_responses(void)
 void
 cvs_client_senddir(const char *dir)
 {
+	struct stat st;
 	int nb;
-	char *d, *date, *repo, *tag;
+	char *d, *date, *fpath, *repo, *tag;
 
 	d = NULL;
 
@@ -400,6 +401,16 @@ cvs_client_senddir(const char *dir)
 	cvs_client_send_request("Directory %s\n%s", dir, repo);
 
 	xfree(repo);
+
+	fpath = xmalloc(MAXPATHLEN);
+	if (cvs_path_cat(dir, CVS_PATH_STATICENTRIES, fpath, MAXPATHLEN) >=
+	    MAXPATHLEN)
+		fatal("cvs_client_senddir: truncation");
+
+	if (stat(fpath, &st) == 0 && (st.st_mode & (S_IRUSR|S_IRGRP|S_IROTH)))
+		cvs_client_send_request("Static-directory");
+
+	xfree(fpath);
 
 	d = xstrdup(dir);
 	cvs_parse_tagfile(d, &tag, &date, &nb);
