@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1201 2006/12/12 20:48:11 mk Exp $
+$OpenBSD: pcidevs,v 1.1202 2006/12/15 15:57:27 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1573,6 +1573,8 @@ product HP HPSA_9		0x3239	Smart Array
 product HP HPSA_10		0x323a	Smart Array
 product HP HPSA_11		0x323b	Smart Array
 product HP HPSA_12		0x323c	Smart Array
+product HP USB			0x3300	USB
+product HP IPMI			0x3302	IPMI
 
 /* Hifn products */
 product HIFN 7751		0x0005	7751
