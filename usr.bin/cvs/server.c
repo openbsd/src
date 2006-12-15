@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.42 2006/12/15 08:02:53 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.43 2006/12/15 09:50:37 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -217,6 +217,26 @@ cvs_server_validreq(char *data)
 }
 
 void
+cvs_server_static_directory(char *data)
+{
+	FILE *fp;
+	char *fpath;
+
+	fpath = xmalloc(MAXPATHLEN);
+	if (cvs_path_cat(server_currentdir, CVS_PATH_STATICENTRIES, fpath,
+	    MAXPATHLEN) >= MAXPATHLEN)
+		fatal("cvs_server_static_directory: truncation");
+
+	if ((fp = fopen(fpath, "w+")) == NULL) {
+		cvs_log(LP_ERRNO, "%s", fpath);
+		goto out;
+	}
+	(void)fclose(fp);
+out:
+	xfree(fpath);
+}
+
+void
 cvs_server_sticky(char *data)
 {
 	FILE *fp;
@@ -227,7 +247,7 @@ cvs_server_sticky(char *data)
 	    MAXPATHLEN) >= MAXPATHLEN)
 		fatal("cvs_server_sticky: truncation");
 
-	if ((fp = fopen(tagpath ,"w+")) == NULL) {
+	if ((fp = fopen(tagpath, "w+")) == NULL) {
 		cvs_log(LP_ERRNO, "%s", tagpath);
 		goto out;
 	}
