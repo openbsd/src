@@ -1,4 +1,4 @@
-.\" $OpenBSD: mount_ntfs.8,v 1.6 2005/09/30 20:34:23 jaredy Exp $
+.\" $OpenBSD: mount_ntfs.8,v 1.7 2006/12/15 12:53:59 jmc Exp $
 .\" $NetBSD: mount_ntfs.8,v 1.13 2003/02/14 16:21:48 grant Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
@@ -40,11 +40,10 @@
 .Nd mount an NTFS file system
 .Sh SYNOPSIS
 .Nm mount_ntfs
-.Op Fl a
-.Op Fl i
-.Op Fl u Ar uid
+.Op Fl ai
 .Op Fl g Ar gid
 .Op Fl m Ar mask
+.Op Fl u Ar uid
 .Pa special
 .Pa node
 .Sh DESCRIPTION
@@ -75,21 +74,21 @@ The options are as follows:
 .It Fl a
 Force behaviour to return MS-DOS 8.3 names also on
 .Fn readdir .
-.It Fl i
-Make name lookup case insensitive for all names except POSIX names.
-.It Fl u Ar uid
-Set the owner of the files in the file system to
-.Ar uid .
-The default owner is the owner of the directory
-on which the file system is being mounted.
 .It Fl g Ar gid
 Set the group of the files in the file system to
 .Ar gid .
 The default group is the group of the directory
 on which the file system is being mounted.
+.It Fl i
+Make name lookup case insensitive for all names except POSIX names.
 .It Fl m Ar mask
 Specify the maximum file permissions for files
 in the file system.
+.It Fl u Ar uid
+Set the owner of the files in the file system to
+.Ar uid .
+The default owner is the owner of the directory
+on which the file system is being mounted.
 .El
 .Sh FEATURES
 .Ss NTFS file attributes
