@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.armish/MAKEDEV.md,v 1.2 2006/07/28 17:37:09 kettenis Exp 
-#	OpenBSD: MAKEDEV.common,v 1.30 2006/10/10 12:33:41 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.31 2006/12/15 20:42:19 kettenis Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -71,7 +71,7 @@
 #	fd	fd/* nodes
 #	iop*	I2O controller devices
 #	lkm	Loadable kernel modules interface
-#	pci	PCI bus device
+#	pci*	PCI bus devices
 #	pf*	Packet Filter
 #	radio*	FM tuner devices
 #	*random	In-kernel random data source
@@ -272,8 +272,9 @@ pf*)
 	M pf c 46 0 600
 	;;
 
-pci)
-	M pci c 88 0 600
+pci*)
+	M pci$U	c 88 $U 600
+	MKlist[${#MKlist[*]}]=";[ -e pci ] || ln -s pci0 pci"
 	;;
 
 lkm)
@@ -469,9 +470,10 @@ all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ss1 ch0 hotplug ptm
-	R local wscons pci iop0 iop1 uall tuner0 radio0 audio0 uk0
-	R random lkm tty00 tty01 tty02 tty03 apm crypto pf systrace
-	R wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R local wscons pci0 pci1 pci2 pci3 iop0 iop1 uall tuner0
+	R radio0 audio0 uk0 random lkm tty00 tty01 tty02 tty03 apm
+	R crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3
+	R std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)

@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.41 2006/08/28 21:04:04 tsi Exp 
-#	OpenBSD: MAKEDEV.common,v 1.30 2006/10/10 12:33:41 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.31 2006/12/15 20:42:19 kettenis Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -83,7 +83,7 @@
 #	lkm	Loadable kernel modules interface
 #	openprom	PROM settings
 #	magma*	Magma multiport cards
-#	pci	PCI bus device
+#	pci*	PCI bus devices
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
 #	ss*	SCSI scanners
@@ -279,8 +279,9 @@ pf*)
 	M pf c 73 0 600
 	;;
 
-pci)
-	M pci c 52 0 600
+pci*)
+	M pci$U	c 52 $U 600
+	MKlist[${#MKlist[*]}]=";[ -e pci ] || ln -s pci0 pci"
 	;;
 
 magma*)
@@ -584,10 +585,10 @@ all)
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1
 	R fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E
 	R fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ccd0 ccd1 ccd2 ccd3 hotplug
-	R ptm local wscons pci uall audio0 uk0 random lpa0 lpa1 lpa2
-	R lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyh0 ttyh1
-	R crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3
-	R std st0 st1 fd
+	R ptm local wscons pci0 pci1 pci2 pci3 uall audio0 uk0 random
+	R lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03
+	R ttyh0 ttyh1 crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1
+	R raid2 raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)

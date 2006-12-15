@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.amd64/MAKEDEV.md,v 1.16 2006/06/11 10:58:57 mk Exp 
-#	OpenBSD: MAKEDEV.common,v 1.30 2006/10/10 12:33:41 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.31 2006/12/15 20:42:19 kettenis Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -83,7 +83,7 @@
 #	joy*	Joystick driver
 #	lkm	Loadable kernel modules interface
 #	music*	MIDI devices
-#	pci	PCI bus device
+#	pci*	PCI bus devices
 #	pctr*	PC Performance Tuning Register access device
 #	pf*	Packet Filter
 #	radio*	FM tuner devices
@@ -305,8 +305,9 @@ pctr)
 	M pctr c 46 0 644
 	;;
 
-pci)
-	M pci c 72 0 600
+pci*)
+	M pci$U	c 72 $U 600
+	MKlist[${#MKlist[*]}]=";[ -e pci ] || ln -s pci0 pci"
 	;;
 
 music*)
@@ -570,13 +571,13 @@ all)
 	R sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3
 	R bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 bio pty0 fd1 fd1B fd1C fd1D
 	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
-	R xfs0 ss0 ss1 ch0 hotplug ptm gpr0 local wscons pci iop0 iop1
-	R uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
-	R tuner0 radio0 music0 speaker audio0 wt0 uk0 random joy0 joy1
-	R lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03
-	R ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 acpi crypto
-	R pf pctr systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std
-	R st0 st1 fd mcd0
+	R xfs0 ss0 ss1 ch0 hotplug ptm gpr0 local wscons pci0 pci1
+	R pci2 pci3 iop0 iop1 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
+	R rmidi5 rmidi6 rmidi7 tuner0 radio0 music0 speaker audio0 wt0
+	R uk0 random joy0 joy1 lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00
+	R tty01 tty02 tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6
+	R ttyc7 acpi crypto pf pctr systrace wd0 wd1 wd2 wd3 raid0
+	R raid1 raid2 raid3 std st0 st1 fd mcd0
 	;;
 
 wd*|sd*|raid*|ccd*)
