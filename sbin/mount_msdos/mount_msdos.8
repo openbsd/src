@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_msdos.8,v 1.21 2006/12/15 03:04:24 krw Exp $
+.\"	$OpenBSD: mount_msdos.8,v 1.22 2006/12/15 12:48:29 jmc Exp $
 .\"	$NetBSD: mount_msdos.8,v 1.10 1996/01/19 21:14:43 leo Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
@@ -37,14 +37,11 @@
 .Nd mount an MS-DOS file system
 .Sh SYNOPSIS
 .Nm mount_msdos
-.Op Fl o Ar options
-.Op Fl u Ar uid
+.Op Fl 9lsx
 .Op Fl g Ar gid
 .Op Fl m Ar mask
-.Op Fl s
-.Op Fl l
-.Op Fl 9
-.Op Fl x
+.Op Fl o Ar options
+.Op Fl u Ar uid
 .Ar special
 .Ar node
 .Sh DESCRIPTION
@@ -79,40 +76,16 @@ contains the file system).
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl o Ar options
-Use the specified mount
-.Ar options ,
-as described in
-.Xr mount 8 .
-.It Fl u Ar uid
-Set the owner of the files in the file system to
-.Ar uid .
-The default owner is the owner of the directory
-on which the file system is being mounted.
+.It Fl 9
+Ignore the special Windows 95/98 directory entries even
+if deleting or renaming a file.
+This forces
+.Fl s .
 .It Fl g Ar gid
 Set the group of the files in the file system to
 .Ar gid .
 The default group is the group of the directory
 on which the file system is being mounted.
-.It Fl m Ar mask
-Specify the maximum file permissions for files
-in the file system.
-(For example, a mask of
-.Li 755
-specifies that, by default, the owner should have
-read, write, and execute permissions for files, but
-others should only have read and execute permissions.
-See
-.Xr chmod 1
-for more information about octal file modes.)
-Only the nine low-order bits of
-.Ar mask
-are used.
-The default mask is taken from the
-directory on which the file system is being mounted.
-.It Fl s
-Force behaviour to
-ignore and not generate Windows 95/98 long filenames.
 .It Fl l
 Force listing and generation of
 Windows 95/98 long filenames
@@ -132,11 +105,50 @@ is the default.
 Otherwise
 .Fl l
 is assumed.
-.It Fl 9
-Ignore the special Windows 95/98 directory entries even
-if deleting or renaming a file.
-This forces
-.Fl s .
+.It Fl m Ar mask
+Specify the maximum file permissions for files
+in the file system.
+(For example, a mask of
+.Li 755
+specifies that, by default, the owner should have
+read, write, and execute permissions for files, but
+others should only have read and execute permissions.
+See
+.Xr chmod 1
+for more information about octal file modes.)
+Only the nine low-order bits of
+.Ar mask
+are used.
+The default mask is taken from the
+directory on which the file system is being mounted.
+.It Fl o Ar options
+Use the specified mount
+.Ar options ,
+as described in
+.Xr mount 8 .
+.It Fl s
+Force behaviour to
+ignore and not generate Windows 95/98 long filenames.
+.Pp
+If neither
+.Fl s
+nor
+.Fl l
+are given,
+.Nm
+searches the root directory of the filesystem to
+be mounted for any existing Windows 95/98 long filenames.
+If no such entries are found,
+.Fl s
+is the default.
+Otherwise
+.Fl l
+is assumed.
+.It Fl u Ar uid
+Set the owner of the files in the file system to
+.Ar uid .
+The default owner is the owner of the directory
+on which the file system is being mounted.
 .It Fl x
 If a directory is readable, it inherits the x attribute as well.
 .El
