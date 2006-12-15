@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ados.c,v 1.13 2005/04/08 20:09:36 jaredy Exp $	*/
+/*	$OpenBSD: mount_ados.c,v 1.14 2006/12/15 12:38:15 jmc Exp $	*/
 /*	$NetBSD: mount_ados.c,v 1.5 1996/04/13 01:30:59 jtc Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mount_ados.c,v 1.13 2005/04/08 20:09:36 jaredy Exp $";
+static char rcsid[] = "$OpenBSD: mount_ados.c,v 1.14 2006/12/15 12:38:15 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -189,6 +189,6 @@ usage(void)
 {
 
 	fprintf(stderr,
-	    "usage: mount_ados [-o options] [-u user] [-g group] [-m mask] bdev dir\n");
+	    "usage: mount_ados [-g gid] [-m mask] [-o options] [-u uid] special node\n");
 	exit(1);
 }
