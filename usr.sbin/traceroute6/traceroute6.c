@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.41 2006/11/16 02:20:50 itojun Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.42 2006/12/15 06:00:12 itojun Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -258,9 +258,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #include <netdb.h>
 #include <stdio.h>
 #include <err.h>
-#ifdef HAVE_POLL
 #include <poll.h>
-#endif
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -269,11 +267,6 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <netinet/udp.h>
-
-#ifdef IPSEC
-#include <net/route.h>
-#include <netinet6/ipsec.h>
-#endif
 
 #define DUMMY_PORT 10010
 
@@ -304,11 +297,6 @@ struct opacket	*outpacket;	/* last output (udp) packet */
 
 int	main(int, char *[]);
 int	wait_for_reply(int, struct msghdr *);
-#ifdef IPSEC
-#ifdef IPSEC_POLICY_IPSEC
-int	setpolicy(int so, char *policy);
-#endif
-#endif
 void	send_probe(int, u_long);
 struct udphdr *get_udphdr(struct ip6_hdr *, u_char *);
 int	get_hoplim(struct msghdr *);
@@ -332,9 +320,7 @@ u_long datalen;			/* How much data */
 #define	ICMP6ECHOLEN	8
 /* XXX: 2064 = 127(max hops in type 0 rthdr) * sizeof(ip6_hdr) + 16(margin) */
 char rtbuf[2064];
-#ifdef IPV6_RECVPKTINFO
 struct ip6_rthdr *rth;
-#endif
 struct cmsghdr *cmsg;
 
 char *source = 0;
@@ -384,26 +370,14 @@ main(int argc, char *argv[])
 	max_hops = i;
 
 	/* specify to tell receiving interface */
-#ifdef IPV6_RECVPKTINFO
 	if (setsockopt(rcvsock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
 	    sizeof(on)) < 0)
 		err(1, "setsockopt(IPV6_RECVPKTINFO)");
-#else
-	if (setsockopt(rcvsock, IPPROTO_IPV6, IPV6_PKTINFO, &on,
-	    sizeof(on)) < 0)
-		err(1, "setsockopt(IPV6_PKTINFO)");
-#endif
 
 	/* specify to tell value of hoplimit field of received IP6 hdr */
-#ifdef IPV6_RECVHOPLIMIT
 	if (setsockopt(rcvsock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
 	    sizeof(on)) < 0)
 		err(1, "setsockopt(IPV6_RECVHOPLIMIT)");
-#else  /* old adv. API */
-	if (setsockopt(rcvsock, IPPROTO_IPV6, IPV6_HOPLIMIT, &on,
-	    sizeof(on)) < 0)
-		err(1, "setsockopt(IPV6_HOPLIMIT)");
-#endif
 
 	seq = 0;
 
@@ -429,7 +403,6 @@ main(int argc, char *argv[])
 				    "traceroute6: unknown host %s\n", optarg);
 				exit(1);
 			}
-#ifdef IPV6_RECVPKTINFO
 			if (rth == NULL) {
 				/*
 				 * XXX: We can't detect the number of
@@ -450,12 +423,6 @@ main(int argc, char *argv[])
 				    optarg);
 				exit(1);
 			}
-#else
-			if (cmsg == NULL)
-				cmsg = inet6_rthdr_init(rtbuf, IPV6_RTHDR_TYPE_0);
-			inet6_rthdr_add(cmsg, (struct in6_addr *)hp->h_addr,
-			    IPV6_RTHDR_LOOSE);
-#endif
 			freehostent(hp);
 			break;
 		case 'I':
@@ -638,38 +605,6 @@ main(int argc, char *argv[])
 	if (options & SO_DONTROUTE)
 		(void) setsockopt(rcvsock, SOL_SOCKET, SO_DONTROUTE,
 		    (char *)&on, sizeof(on));
-#ifdef IPSEC
-#ifdef IPSEC_POLICY_IPSEC
-	/*
-	 * do not raise error even if setsockopt fails, kernel may have ipsec
-	 * turned off.
-	 */
-	if (setpolicy(rcvsock, "in bypass") < 0)
-		errx(1, "%s", ipsec_strerror());
-	if (setpolicy(rcvsock, "out bypass") < 0)
-		errx(1, "%s", ipsec_strerror());
-#else
-    {
-	int level = IPSEC_LEVEL_NONE;
-
-	(void)setsockopt(rcvsock, IPPROTO_IPV6, IPV6_ESP_TRANS_LEVEL, &level,
-	    sizeof(level));
-	(void)setsockopt(rcvsock, IPPROTO_IPV6, IPV6_ESP_NETWORK_LEVEL, &level,
-	    sizeof(level));
-#ifdef IP_AUTH_TRANS_LEVEL
-	(void)setsockopt(rcvsock, IPPROTO_IPV6, IPV6_AUTH_TRANS_LEVEL, &level,
-	    sizeof(level));
-#else
-	(void)setsockopt(rcvsock, IPPROTO_IPV6, IPV6_AUTH_LEVEL, &level,
-	    sizeof(level));
-#endif
-#ifdef IP_AUTH_NETWORK_LEVEL
-	(void)setsockopt(rcvsock, IPPROTO_IPV6, IPV6_AUTH_NETWORK_LEVEL, &level,
-	    sizeof(level));
-#endif
-    }
-#endif /*IPSEC_POLICY_IPSEC*/
-#endif /*IPSEC*/
 
 	/*
 	 * Send UDP or ICMP
@@ -696,7 +631,6 @@ main(int argc, char *argv[])
 	if (options & SO_DONTROUTE)
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DONTROUTE,
 		    (char *)&on, sizeof(on));
-#ifdef IPV6_RECVPKTINFO
 	if (rth) {/* XXX: there is no library to finalize the header... */
 		rth->ip6r_len = rth->ip6r_segleft * 2;
 		if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_RTHDR,
@@ -706,49 +640,6 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 	}
-#else
-	if (cmsg != NULL) {
-		inet6_rthdr_lasthop(cmsg, IPV6_RTHDR_LOOSE);
-		if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_PKTOPTIONS,
-		    rtbuf, cmsg->cmsg_len) < 0) {
-			fprintf(stderr, "setsockopt(IPV6_PKTOPTIONS): %s\n",
-			    strerror(errno));
-			exit(1);
-		}
-	}
-#endif
-#ifdef IPSEC
-#ifdef IPSEC_POLICY_IPSEC
-	/*
-	 * do not raise error even if setsockopt fails, kernel may have ipsec
-	 * turned off.
-	 */
-	if (setpolicy(sndsock, "in bypass") < 0)
-		errx(1, "%s", ipsec_strerror());
-	if (setpolicy(sndsock, "out bypass") < 0)
-		errx(1, "%s", ipsec_strerror());
-#else
-    {
-	int level = IPSEC_LEVEL_BYPASS;
-
-	(void)setsockopt(sndsock, IPPROTO_IPV6, IPV6_ESP_TRANS_LEVEL, &level,
-	    sizeof(level));
-	(void)setsockopt(sndsock, IPPROTO_IPV6, IPV6_ESP_NETWORK_LEVEL, &level,
-	    sizeof(level));
-#ifdef IP_AUTH_TRANS_LEVEL
-	(void)setsockopt(sndsock, IPPROTO_IPV6, IPV6_AUTH_TRANS_LEVEL, &level,
-	    sizeof(level));
-#else
-	(void)setsockopt(sndsock, IPPROTO_IPV6, IPV6_AUTH_LEVEL, &level,
-	    sizeof(level));
-#endif
-#ifdef IP_AUTH_NETWORK_LEVEL
-	(void)setsockopt(sndsock, IPPROTO_IPV6, IPV6_AUTH_NETWORK_LEVEL, &level,
-	    sizeof(level));
-#endif
-    }
-#endif /*IPSEC_POLICY_IPSEC*/
-#endif /*IPSEC*/
 
 	/*
 	 * Source selection
@@ -910,7 +801,6 @@ main(int argc, char *argv[])
 int
 wait_for_reply(int sock, struct msghdr *mhdr)
 {
-#ifdef HAVE_POLL
 	struct pollfd pfd[1];
 	int cc = 0;
 
@@ -922,47 +812,8 @@ wait_for_reply(int sock, struct msghdr *mhdr)
 		cc = recvmsg(rcvsock, mhdr, 0);
 
 	return(cc);
-#else
-	fd_set *fdsp;
-	struct timeval wait;
-	int cc = 0, fdsn;
-
-	fdsn = howmany(sock + 1, NFDBITS) * sizeof(fd_mask);
-	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
-		err(1, "malloc");
-	memset(fdsp, 0, fdsn);
-	FD_SET(sock, fdsp);
-	wait.tv_sec = waittime; wait.tv_usec = 0;
-
-	if (select(sock+1, fdsp, (fd_set *)0, (fd_set *)0, &wait) > 0)
-		cc = recvmsg(rcvsock, mhdr, 0);
-
-	free(fdsp);
-	return(cc);
-#endif
 }
 
-#ifdef IPSEC
-#ifdef IPSEC_POLICY_IPSEC
-int
-setpolicy(int so, char *policy)
-{
-	char *buf;
-
-	buf = ipsec_set_policy(policy, strlen(policy));
-	if (buf == NULL) {
-		warnx("%s", ipsec_strerror());
-		return -1;
-	}
-	(void)setsockopt(so, IPPROTO_IPV6, IPV6_IPSEC_POLICY,
-	    buf, ipsec_get_policylen(buf));
-
-	free(buf);
-
-	return 0;
-}
-#endif
-#endif
 
 void
 send_probe(int seq, u_long hops)
