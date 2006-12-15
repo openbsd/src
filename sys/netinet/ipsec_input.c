@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.81 2006/12/05 09:17:12 markus Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.82 2006/12/15 09:32:30 otto Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -571,6 +571,9 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 
 #if NBPFILTER > 0
 	bpfif = &encif[0].sc_if;
+	bpfif->if_ipackets++;
+	bpfif->if_ibytes += m->m_pkthdr.len;
+
 	if (bpfif->if_bpf) {
 		struct enchdr hdr;
 
