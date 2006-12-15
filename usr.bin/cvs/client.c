@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.30 2006/12/15 08:02:53 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.31 2006/12/15 08:26:18 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -394,11 +394,11 @@ cvs_client_senddir(const char *dir)
 	if (lastdir != NULL && !strcmp(dir, lastdir))
 		return;
 
-	cvs_client_send_request("Directory %s", dir);
-
 	repo = xmalloc(MAXPATHLEN);
 	cvs_get_repository_path(dir, repo, MAXPATHLEN);
-	cvs_remote_output(repo);
+
+	cvs_client_send_request("Directory %s\n%s", dir, repo);
+
 	xfree(repo);
 
 	d = xstrdup(dir);
