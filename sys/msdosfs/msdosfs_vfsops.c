@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.44 2006/12/14 10:55:03 tom Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.45 2006/12/15 03:04:24 krw Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -214,12 +214,6 @@ msdosfs_mount(mp, path, data, ndp, p)
 	pmp->pm_mask = args.mask;
 	pmp->pm_flags |= args.flags & MSDOSFSMNT_MNTOPT;
 
-	/*
-	 * GEMDOS knows nothing (yet) about win95
-	 */
-	if (pmp->pm_flags & MSDOSFSMNT_GEMDOSFS)
-		pmp->pm_flags |= MSDOSFSMNT_NOWIN95;
-	
 	if (pmp->pm_flags & MSDOSFSMNT_NOWIN95)
 		pmp->pm_flags |= MSDOSFSMNT_SHORTNAME;
 	else if (!(pmp->pm_flags & (MSDOSFSMNT_SHORTNAME | MSDOSFSMNT_LONGNAME))) {
@@ -263,7 +257,6 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	struct msdosfsmount *pmp;
 	struct buf *bp;
 	dev_t dev = devvp->v_rdev;
-	struct partinfo dpart;
 	union bootsector *bsp;
 	struct byte_bpb33 *b33;
 	struct byte_bpb50 *b50;
@@ -271,7 +264,6 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	extern struct vnode *rootvp;
 	u_int8_t SecPerClust;
 	int	ronly, error, bmapsiz;
-	int	bsize = 0, dtype = 0, tmp;
 	uint32_t fat_max_clusters;
 
 	/*
@@ -297,30 +289,6 @@ msdosfs_mountfs(devvp, mp, p, argp)
 
 	bp  = NULL; /* both used in error_exit */
 	pmp = NULL;
-
-	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
-		/*
-	 	 * We need the disklabel to calculate the size of a FAT entry
-		 * later on. Also make sure the partition contains a filesystem
-		 * of type FS_MSDOS. This doesn't work for floppies, so we have
-		 * to check for them too.
-	 	 *
-	 	 * At least some parts of the msdos fs driver seem to assume
-		 * that the size of a disk block will always be 512 bytes.
-		 * Let's check it...
-		 */
-		error = VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart,
-				  FREAD, NOCRED, p);
-		if (error)
-			goto error_exit;
-		tmp   = dpart.part->p_fstype;
-		dtype = dpart.disklab->d_type;
-		bsize = dpart.disklab->d_secsize;
-		if (bsize != 512 || (dtype!=DTYPE_FLOPPY && tmp!=FS_MSDOS)) {
-			error = EFTYPE;
-			goto error_exit;
-		}
-	}
 
 	/*
 	 * Read the boot sector of the filesystem, and then check the
@@ -354,12 +322,9 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	pmp->pm_Heads = getushort(b50->bpbHeads);
 	pmp->pm_Media = b50->bpbMedia;
 
-	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS)) {
-    		if (!pmp->pm_BytesPerSec || !SecPerClust
-	    	    || pmp->pm_SecPerTrack > 63) {
-			error = EFTYPE;
-			goto error_exit;
-		}
+    	if (!pmp->pm_BytesPerSec || !SecPerClust || pmp->pm_SecPerTrack > 63) {
+		error = EFTYPE;
+		goto error_exit;
 	}
 
 	if (pmp->pm_Sectors == 0) {
@@ -387,47 +352,6 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	} else
 	        pmp->pm_flags |= MSDOSFS_FATMIRROR;
 
-	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
-	        if (FAT32(pmp)) {
-		        /*
-			 * GEMDOS doesn't know fat32.
-			 */
-		        error = EINVAL;
-			goto error_exit;
-		}
-
-		/*
-		 * Check a few values (could do some more):
-		 * - logical sector size: power of 2, >= block size
-		 * - sectors per cluster: power of 2, >= 1
-		 * - number of sectors:   >= 1, <= size of partition
-		 */
-		if ( (SecPerClust == 0)
-		  || (SecPerClust & (SecPerClust - 1))
-		  || (pmp->pm_BytesPerSec < bsize)
-		  || (pmp->pm_BytesPerSec & (pmp->pm_BytesPerSec - 1))
-		  || (pmp->pm_HugeSectors == 0)
-		  || (pmp->pm_HugeSectors * (pmp->pm_BytesPerSec / bsize)
-							> dpart.part->p_size)
-		   ) {
-			error = EFTYPE;
-			goto error_exit;
-		}
-		/*
-		 * XXX - Many parts of the msdos fs driver seem to assume that
-		 * the number of bytes per logical sector (BytesPerSec) will
-		 * always be the same as the number of bytes per disk block
-		 * Let's pretend it is.
-		 */
-		tmp = pmp->pm_BytesPerSec / bsize;
-		pmp->pm_BytesPerSec  = bsize;
-		pmp->pm_HugeSectors *= tmp;
-		pmp->pm_HiddenSects *= tmp;
-		pmp->pm_ResSectors  *= tmp;
-		pmp->pm_Sectors     *= tmp;
-		pmp->pm_FATsecs     *= tmp;
-		SecPerClust         *= tmp;
-	}
 	pmp->pm_fatblk = pmp->pm_ResSectors;
 	if (FAT32(pmp)) {
 	        pmp->pm_rootdirblk = getulong(b710->bpbRootClust);
@@ -448,20 +372,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	pmp->pm_maxcluster = pmp->pm_nmbrofclusters + 1;
 	pmp->pm_fatsize = pmp->pm_FATsecs * pmp->pm_BytesPerSec;
 
-	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
-		if ((pmp->pm_nmbrofclusters <= (0xff0 - 2))
-		      && ((dtype == DTYPE_FLOPPY) || ((dtype == DTYPE_VNODE)
-		      && ((pmp->pm_Heads == 1) || (pmp->pm_Heads == 2))))
-		     ) {
-		        pmp->pm_fatmask = FAT12_MASK;
-			pmp->pm_fatmult = 3;
-			pmp->pm_fatdiv = 2;
-		} else {
-		        pmp->pm_fatmask = FAT16_MASK;
-			pmp->pm_fatmult = 2;
-			pmp->pm_fatdiv = 1;
-		}
-	} else if (pmp->pm_fatmask == 0) {
+	if (pmp->pm_fatmask == 0) {
 		if (pmp->pm_maxcluster
 		    <= ((CLUST_RSRVD - CLUST_FIRST) & FAT12_MASK)) {
 			/*

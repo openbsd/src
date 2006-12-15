@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_msdos.8,v 1.20 2005/02/28 16:00:37 tom Exp $
+.\"	$OpenBSD: mount_msdos.8,v 1.21 2006/12/15 03:04:24 krw Exp $
 .\"	$NetBSD: mount_msdos.8,v 1.10 1996/01/19 21:14:43 leo Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
@@ -44,7 +44,6 @@
 .Op Fl s
 .Op Fl l
 .Op Fl 9
-.Op Fl G
 .Op Fl x
 .Ar special
 .Ar node
@@ -137,13 +136,6 @@ is assumed.
 Ignore the special Windows 95/98 directory entries even
 if deleting or renaming a file.
 This forces
-.Fl s .
-.It Fl G
-This option causes the filesystem to be interpreted as an Atari-Gemdos
-filesystem.
-The differences to the MS-DOS filesystem are minimal and
-limited to the boot block.
-This option enforces
 .Fl s .
 .It Fl x
 If a directory is readable, it inherits the x attribute as well.

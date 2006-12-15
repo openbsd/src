@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.19 2005/04/08 20:09:37 jaredy Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.20 2006/12/15 03:04:24 krw Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mount_msdos.c,v 1.19 2005/04/08 20:09:37 jaredy Exp $";
+static char rcsid[] = "$OpenBSD: mount_msdos.c,v 1.20 2006/12/15 03:04:24 krw Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -74,11 +74,8 @@ main(int argc, char **argv)
 	mntflags = set_gid = set_uid = set_mask = 0;
 	(void)memset(&args, '\0', sizeof(args));
 
-	while ((c = getopt(argc, argv, "Gsl9xu:g:m:o:")) != -1) {
+	while ((c = getopt(argc, argv, "sl9xu:g:m:o:")) != -1) {
 		switch (c) {
-		case 'G':
-			args.flags |= MSDOSFSMNT_GEMDOSFS;
-			break;
 		case 's':
 			args.flags |= MSDOSFSMNT_SHORTNAME;
 			break;
