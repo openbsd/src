@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.30 2006/10/10 12:33:41 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.31 2006/12/15 20:42:19 kettenis Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -167,7 +167,7 @@ target(all, rmidi, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 target(all, uall)dnl
 target(all, adb)dnl
 target(all, iop, 0, 1)dnl
-target(all, pci)dnl
+target(all, pci, 0, 1, 2, 3)dnl
 twrget(all, wsmouse, wscons)dnl
 twrget(all, grf_mac, grf, 0, 1, 2, 3)dnl
 target(all, par, 0)dnl
@@ -563,8 +563,9 @@ __devitem(bktr, bktr*, Video frame grabbers)dnl
 _mcdev(bktr, bktr*, bktr, {-major_bktr_c-}, 644)dnl
 __devitem(tuner, tuner*, Tuner devices)dnl
 _mkdev(tuner, tuner*, {-M tuner$U c major_bktr_c Add(Mult($U, 2), 16) 644-}, 644)dnl
-__devitem(pci, pci, PCI bus device)dnl
-_mkdev(pci, pci, {-M pci c major_pci_c 0 600-}, 600)dnl
+__devitem(pci, pci*, PCI bus devices)dnl
+_mkdev(pci, pci*, {-M pci$U	c major_pci_c $U 600
+	MKlist[${#MKlist[*]}]=";[ -e pci ] || ln -s pci0 pci"-})dnl
 __devitem(adb, adb, Apple Desktop bus event interface)dnl
 _mkdev(adb, adb, {-M adb c major_adb_c 0-})dnl
 __devitem(pdc, pdc, PDC device)dnl
