@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.53 2006/12/09 00:47:01 itojun Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.54 2006/12/15 05:52:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.53 2006/12/09 00:47:01 itojun Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.54 2006/12/15 05:52:06 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -251,19 +251,11 @@ main(int argc, char *argv[])
 		}
 		break;
 	case AF_INET6:
-#ifdef IPV6_RECVPKTINFO
 		if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
 		    sizeof(on)) == -1) {
 			syslog(LOG_ERR, "setsockopt(IPV6_RECVPKTINFO): %m");
 			exit (1);
 		}
-#else
-		if (setsockopt(fd, IPPROTO_IPV6, IPV6_PKTINFO, &on,
-		    sizeof(on)) == -1) {
-			syslog(LOG_ERR, "setsockopt(IPV6_PKTINFO): %m");
-			exit (1);
-		}
-#endif
 		break;
 	}
 
