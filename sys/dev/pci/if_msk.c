@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.29 2006/12/12 20:48:11 mk Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.30 2006/12/15 20:37:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1729,7 +1729,6 @@ msk_intr(void *xsc)
 	struct ifnet		*ifp0 = NULL, *ifp1 = NULL;
 	int			claimed = 0;
 	u_int32_t		status;
-	u_int16_t		idx;
 	struct msk_status_desc	*cur_st;
 
 	status = CSR_READ_4(sc, SK_Y2_ISSR2);
@@ -1755,13 +1754,13 @@ msk_intr(void *xsc)
 		msk_intr_yukon(sc_if1);
 	}
 
-	idx = CSR_READ_2(sc, SK_STAT_BMU_PUTIDX);
-	while (sc->sk_status_idx != idx) {
-		MSK_CDSTSYNC(sc, sc->sk_status_idx,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	MSK_CDSTSYNC(sc, sc->sk_status_idx,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	cur_st = &sc->sk_status_ring[sc->sk_status_idx];
 
-		cur_st = &sc->sk_status_ring[sc->sk_status_idx];
-		switch (cur_st->sk_opcode & ~SK_Y2_STOPC_OWN) {
+	while (cur_st->sk_opcode & SK_Y2_STOPC_OWN) {
+		cur_st->sk_opcode &= ~SK_Y2_STOPC_OWN;
+		switch (cur_st->sk_opcode) {
 		case SK_Y2_STOPC_RXSTAT:
 			msk_rxeof(sc->sk_if[cur_st->sk_link],
 			    letoh16(cur_st->sk_len),
@@ -1778,7 +1777,10 @@ msk_intr(void *xsc)
 			break;
 		}
 		SK_INC(sc->sk_status_idx, MSK_STATUS_RING_CNT);
-		idx = CSR_READ_2(sc, SK_STAT_BMU_PUTIDX);
+
+		MSK_CDSTSYNC(sc, sc->sk_status_idx,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		cur_st = &sc->sk_status_ring[sc->sk_status_idx];
 	}
 
 	if (status & SK_Y2_IMR_BMU) {
