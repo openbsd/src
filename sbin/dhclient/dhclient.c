@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.90 2006/11/27 20:52:30 stevesk Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.91 2006/12/15 14:56:38 stevesk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -942,7 +942,7 @@ packet_to_lease(struct packet *packet)
 				lease->options[i].data[lease->options[i].len] =
 				    0;
 			}
-			if (!check_option(lease,i)) {
+			if (!check_option(lease, i)) {
 				/* ignore a bogus lease offer */
 				warning("Invalid lease option - ignoring offer");
 				free_client_lease(lease);
@@ -965,7 +965,7 @@ packet_to_lease(struct packet *packet)
 			return (NULL);
 		}
 		memcpy(lease->server_name, packet->raw->sname, DHCP_SNAME_LEN);
-		lease->server_name[DHCP_SNAME_LEN]='\0';
+		lease->server_name[DHCP_SNAME_LEN] = '\0';
 		if (!res_hnok(lease->server_name)) {
 			warning("Bogus server name %s", lease->server_name);
 			free(lease->server_name);
@@ -985,7 +985,7 @@ packet_to_lease(struct packet *packet)
 			return (NULL);
 		}
 		memcpy(lease->filename, packet->raw->file, DHCP_FILE_LEN);
-		lease->filename[DHCP_FILE_LEN]='\0';
+		lease->filename[DHCP_FILE_LEN] = '\0';
 	}
 	return lease;
 }
