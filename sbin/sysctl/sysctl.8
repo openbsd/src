@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.136 2006/12/04 08:42:15 jmc Exp $
+.\"	$OpenBSD: sysctl.8,v 1.137 2006/12/15 12:28:34 jmc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -515,8 +515,7 @@ It is also possible to add or remove ports from the current list:
 # sysctl net.inet.tcp.baddynamic=-871
 .Ed
 .Pp
-To adjust the number of kernel
-.Nm nfsio
+To adjust the number of kernel nfsio
 threads used to service asynchronous
 I/O requests on an NFS client machine:
 .Pp
@@ -539,6 +538,6 @@ the maximum number of shared memory segments:
 .Xr sysctl 3 ,
 .Xr sysctl.conf 5
 .Sh HISTORY
-.Nm sysctl
+.Nm
 first appeared in
 .Bx 4.4 .
