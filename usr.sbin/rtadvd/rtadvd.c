@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.26 2005/10/27 18:26:13 jmc Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.27 2006/12/15 06:14:07 itojun Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -1333,39 +1333,21 @@ sock_open()
 
 	/* specify to tell receiving interface */
 	on = 1;
-#ifdef IPV6_RECVPKTINFO
 	if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
 		       sizeof(on)) < 0) {
 		syslog(LOG_ERR, "<%s> IPV6_RECVPKTINFO: %s",
 		       __func__, strerror(errno));
 		exit(1);
 	}
-#else  /* old adv. API */
-	if (setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO, &on,
-		       sizeof(on)) < 0) {
-		syslog(LOG_ERR, "<%s> IPV6_PKTINFO: %s",
-		       __func__, strerror(errno));
-		exit(1);
-	}
-#endif 
 
 	on = 1;
 	/* specify to tell value of hoplimit field of received IP6 hdr */
-#ifdef IPV6_RECVHOPLIMIT
 	if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
 		       sizeof(on)) < 0) {
 		syslog(LOG_ERR, "<%s> IPV6_RECVHOPLIMIT: %s",
 		       __func__, strerror(errno));
 		exit(1);
 	}
-#else  /* old adv. API */
-	if (setsockopt(sock, IPPROTO_IPV6, IPV6_HOPLIMIT, &on,
-		       sizeof(on)) < 0) {
-		syslog(LOG_ERR, "<%s> IPV6_HOPLIMIT: %s",
-		       __func__, strerror(errno));
-		exit(1);
-	}
-#endif
 
 	ICMP6_FILTER_SETBLOCKALL(&filt);
 	ICMP6_FILTER_SETPASS(ND_ROUTER_SOLICIT, &filt);

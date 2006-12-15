@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.46 2006/11/15 07:32:44 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.47 2006/12/15 06:16:49 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.46 2006/11/15 07:32:44 itojun Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.47 2006/12/15 06:16:49 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -47,9 +47,7 @@ static char _rcsid[] = "$OpenBSD: route6d.c,v 1.46 2006/11/15 07:32:44 itojun Ex
 #include <errno.h>
 #include <err.h>
 #include <util.h>
-#ifdef HAVE_POLL_H
 #include <poll.h>
-#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,9 +57,6 @@ static char _rcsid[] = "$OpenBSD: route6d.c,v 1.46 2006/11/15 07:32:44 itojun Ex
 #include <sys/sysctl.h>
 #include <sys/uio.h>
 #include <net/if.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <net/if_var.h>
-#endif /* __FreeBSD__ >= 3 */
 #define	KERNEL	1
 #define	_KERNEL	1
 #include <net/route.h>
@@ -138,14 +133,7 @@ int	nifc;		/* number of valid ifc's */
 struct	ifc **index2ifc;
 int	nindex2ifc;
 struct	ifc *loopifcp = NULL;	/* pointing to loopback */
-#ifdef HAVE_POLL_H
 struct	pollfd set[2];
-#else
-fd_set	*sockvecp;	/* vector to select() for receiving */
-fd_set	*recvecp;
-int	fdmasks;
-int	maxfd;		/* maximum fd for select() */
-#endif
 int	rtsock;		/* the routing socket */
 int	ripsock;	/* socket to send/receive RIP datagram */
 
@@ -447,12 +435,7 @@ main(int argc, char *argv[])
 			continue;
 		}
 
-#ifdef HAVE_POLL_H
 		switch (poll(set, 2, INFTIM))
-#else
-		memcpy(recvecp, sockvecp, fdmasks);
-		switch (select(maxfd + 1, recvecp, 0, 0, 0))
-#endif
 		{
 		case -1:
 			if (errno != EINTR) {
@@ -463,22 +446,12 @@ main(int argc, char *argv[])
 		case 0:
 			continue;
 		default:
-#ifdef HAVE_POLL_H
-			if (set[0].revents & POLLIN)
-#else
-			if (FD_ISSET(ripsock, recvecp))
-#endif
-			{
+			if (set[0].revents & POLLIN) {
 				sigprocmask(SIG_BLOCK, &mask, &omask);
 				riprecv();
 				sigprocmask(SIG_SETMASK, &omask, NULL);
 			}
-#ifdef HAVE_POLL_H
-			if (set[1].revents & POLLIN)
-#else
-			if (FD_ISSET(rtsock, recvecp))
-#endif
-			{
+			if (set[1].revents & POLLIN) {
 				sigprocmask(SIG_BLOCK, &mask, &omask);
 				rtrecv();
 				sigprocmask(SIG_SETMASK, &omask, NULL);
@@ -632,33 +605,17 @@ init(void)
 	}
 
 	i = 1;
-#ifdef IPV6_RECVPKTINFO
 	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &i,
 	    sizeof(i)) < 0) {
 		fatal("rip IPV6_RECVPKTINFO");
 		/*NOTREACHED*/
 	}
-#else  /* old adv. API */
-	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_PKTINFO, &i,
-	    sizeof(i)) < 0) {
-		fatal("rip IPV6_PKTINFO");
-		/*NOTREACHED*/
-	}
-#endif
 
-#ifdef IPV6_RECVPKTINFO
 	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT,
 	    &int1, sizeof(int1)) < 0) {
 		fatal("rip IPV6_RECVHOPLIMIT");
 		/*NOTREACHED*/
 	}
-#else  /* old adv. API */
-	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_HOPLIMIT,
-	    &int1, sizeof(int1)) < 0) {
-		fatal("rip IPV6_HOPLIMIT");
-		/*NOTREACHED*/
-	}
-#endif
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET6;
@@ -674,48 +631,19 @@ init(void)
 	}
 	memcpy(&ripsin, res->ai_addr, res->ai_addrlen);
 
-#ifdef HAVE_POLL_H
 	set[0].fd = ripsock;
 	set[0].events = POLLIN;
-#else
-	maxfd = ripsock;
-#endif
 
 	if (nflag == 0) {
 		if ((rtsock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
 			fatal("route socket");
 			/*NOTREACHED*/
 		}
-#ifdef HAVE_POLL_H
 		set[1].fd = rtsock;
 		set[1].events = POLLIN;
-#else
-		if (rtsock > maxfd)
-			maxfd = rtsock;
-#endif
-	} else {
-#ifdef HAVE_POLL_H
+	} else
 		set[1].fd = -1;
-#else
-		rtsock = -1;	/*just for safety */
-#endif
-	}
 
-#ifndef HAVE_POLL_H
-	fdmasks = howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask);
-	if ((sockvecp = malloc(fdmasks)) == NULL) {
-		fatal("malloc");
-		/*NOTREACHED*/
-	}
-	if ((recvecp = malloc(fdmasks)) == NULL) {
-		fatal("malloc");
-		/*NOTREACHED*/
-	}
-	memset(sockvecp, 0, fdmasks);
-	FD_SET(ripsock, sockvecp);
-	if (rtsock >= 0)
-		FD_SET(rtsock, sockvecp);
-#endif
 }
 
 #define	RIPSIZE(n) \
@@ -2363,12 +2291,6 @@ getifmtu(int ifindex)
 	}
 	ifm = (struct if_msghdr *)buf;
 	mtu = ifm->ifm_data.ifi_mtu;
-#ifdef __FreeBSD__
-	if (ifindex != ifm->ifm_index) {
-		fatal("ifindex does not match with ifm_index");
-		/*NOTREACHED*/
-	}
-#endif
 	free(buf);
 	return mtu;
 }
@@ -2695,11 +2617,7 @@ rt_entry(struct rt_msghdr *rtm, int again)
 
 	/* Check gateway */
 	if (!IN6_IS_ADDR_LINKLOCAL(&rrt->rrt_gw) &&
-	    !IN6_IS_ADDR_LOOPBACK(&rrt->rrt_gw)
-#ifdef __FreeBSD__
-	 && (rrt->rrt_flags & RTF_LOCAL) == 0
-#endif
-	    ) {
+	    !IN6_IS_ADDR_LOOPBACK(&rrt->rrt_gw)) {
 		trace(0, "***** Gateway %s is not a link-local address.\n",
 			inet6_n2p(&rrt->rrt_gw));
 		trace(0, "*****     dest(%s) if(%s) -- Not optimized.\n",
