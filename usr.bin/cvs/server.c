@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.43 2006/12/15 09:50:37 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.44 2006/12/15 13:12:14 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -445,6 +445,18 @@ cvs_server_argument(char *data)
 void
 cvs_server_argumentx(char *data)
 {
+}
+
+void
+cvs_server_update_patches(char *data)
+{
+	/*
+	 * This does not actually do anything.
+	 * It is used to tell that the server is able to
+	 * generate patches when given an `update' request.
+	 * The client must issue the -u argument to `update'
+	 * to receive patches.
+	 */
 }
 
 void

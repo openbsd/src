@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.32 2006/12/15 09:50:37 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.33 2006/12/15 13:12:14 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -68,7 +68,7 @@ struct cvs_req cvs_requests[] = {
 	{ "rlog",			0,	NULL, 0 },
 	{ "add",			0,	cvs_server_add, 0 },
 	{ "remove",			0,	cvs_server_remove, 0 },
-	{ "update-patches",		0,	NULL, 0 },
+	{ "update-patches",		0,	cvs_server_update_patches, 0 },
 	{ "gzip-file-contents",		0,	NULL, 0 },
 	{ "status",			0,	cvs_server_status, 0 },
 	{ "rdiff",			0,	NULL, 0 },
