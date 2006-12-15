@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.c,v 1.2 2006/12/07 13:30:24 martin Exp $	*/
+/*	$OpenBSD: aic6915.c,v 1.3 2006/12/15 15:28:27 martin Exp $	*/
 /*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
@@ -45,6 +45,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/systm.h>
 #include <sys/timeout.h>
 #include <sys/mbuf.h>
@@ -818,7 +819,7 @@ sf_rxintr(struct sf_softc *sc)
 		 */
 		len = RCD_W0_Length(word0);
 
-#ifdef __NO_STRICT_ALIGNMENT
+#ifndef __STRICT_ALIGNMENT
 		/*
 		 * Allocate a new mbuf cluster.  If that fails, we are
 		 * out of memory, and must drop the packet and recycle
@@ -867,7 +868,7 @@ sf_rxintr(struct sf_softc *sc)
 		SF_INIT_RXDESC(sc, rxidx);
 		bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
 		    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
-#endif /* __NO_STRICT_ALIGNMENT */
+#endif /* __STRICT_ALIGNMENT */
 
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
