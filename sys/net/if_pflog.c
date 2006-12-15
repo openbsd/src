@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.21 2006/11/01 23:39:34 mcbride Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.22 2006/12/15 09:31:20 otto Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -265,6 +265,8 @@ pflog_packet(struct pfi_kif *kif, struct mbuf *m, sa_family_t af, u_int8_t dir,
 	}
 #endif /* INET */
 
+	ifn->if_opackets++;
+	ifn->if_obytes += m->m_pkthdr.len;
 	bpf_mtap_hdr(ifn->if_bpf, (char *)&hdr, PFLOG_HDRLEN, m,
 	    BPF_DIRECTION_OUT);
 #endif
