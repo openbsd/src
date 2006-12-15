@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.13 2006/11/29 13:26:50 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.14 2006/12/15 16:49:39 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -84,7 +84,7 @@ nmeaopen(dev_t dev, struct tty *tp)
 		return (ENODEV);
 	if ((error = suser(p, 0)) != 0)
 		return (error);
-	np = malloc(sizeof(struct nmea), M_WAITOK, M_DEVBUF);
+	np = malloc(sizeof(struct nmea), M_DEVBUF, M_WAITOK);
 	bzero(np, sizeof(*np));
 	snprintf(np->time.device, sizeof(np->time.device), "nmea%d",
 	    nmea_count++);
