@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1201 2006/12/12 20:48:11 mk Exp 
+ *	OpenBSD: pcidevs,v 1.1202 2006/12/15 15:57:27 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1578,6 +1578,8 @@
 #define	PCI_PRODUCT_HP_HPSA_10	0x323a		/* Smart Array */
 #define	PCI_PRODUCT_HP_HPSA_11	0x323b		/* Smart Array */
 #define	PCI_PRODUCT_HP_HPSA_12	0x323c		/* Smart Array */
+#define	PCI_PRODUCT_HP_USB	0x3300		/* USB */
+#define	PCI_PRODUCT_HP_IPMI	0x3302		/* IPMI */
 
 /* Hifn products */
 #define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */
