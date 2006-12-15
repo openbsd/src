@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.24 2006/06/14 14:49:46 ckuethe Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.25 2006/12/15 16:03:16 stevesk Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -608,7 +608,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 	}
 
 	if (packet->options[DHO_DHCP_CLASS_IDENTIFIER].len) {
-		vendor_class =find_class(0,
+		vendor_class = find_class(0,
 		    packet->options[DHO_DHCP_CLASS_IDENTIFIER].data,
 		    packet->options[DHO_DHCP_CLASS_IDENTIFIER].len);
 	} else
