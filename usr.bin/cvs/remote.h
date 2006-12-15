@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.h,v 1.9 2006/11/27 16:04:10 xsa Exp $	*/
+/*	$OpenBSD: remote.h,v 1.10 2006/12/15 08:02:53 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -72,6 +72,7 @@ void	cvs_server_questionable(char *);
 void	cvs_server_argument(char *);
 void	cvs_server_argumentx(char *);
 void	cvs_server_set(char *);
+void	cvs_server_sticky(char *);
 
 void	cvs_server_add(char *);
 void	cvs_server_admin(char *);

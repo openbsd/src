@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.29 2006/12/14 15:13:17 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.30 2006/12/15 08:02:53 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -28,6 +28,7 @@ struct cvs_req cvs_requests[] = {
 	{ "Valid-responses",	1,	cvs_server_validresp, REQ_NEEDED },
 	{ "valid-requests",	1,	cvs_server_validreq, REQ_NEEDED },
 	{ "Directory",		0,	cvs_server_directory, REQ_NEEDED },
+	{ "Sticky",		0,	cvs_server_sticky, REQ_NEEDED },
 	{ "Entry",		0,	cvs_server_entry, REQ_NEEDED },
 	{ "Modified",		0,	cvs_server_modified, REQ_NEEDED },
 	{ "UseUnchanged",	0,	cvs_server_useunchanged, REQ_NEEDED },
@@ -44,7 +45,6 @@ struct cvs_req cvs_requests[] = {
 	 */
 	{ "Max-dotdot",			0,	NULL, 0 },
 	{ "Static-directory",		0,	NULL, 0 },
-	{ "Sticky",			0,	NULL, 0 },
 	{ "Checkin-prog",		0,	NULL, 0 },
 	{ "Update-prog",		0,	NULL, 0 },
 	{ "Kopt",			0,	NULL, 0 },
