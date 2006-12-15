@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.131 2006/11/25 20:44:30 dlg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.132 2006/12/15 23:53:42 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -40,6 +40,17 @@ option		MINIROOTSIZE=3800
 config		bsd	root on rd0a swap on rd0b and wd0b and sd0b
 
 mainbus0 at root
+
+acpi0		at mainbus?	disable
+#acpitimer*	at acpi?
+#acpihpet*	at acpi?
+#acpiac*	at acpi?
+#acpibat*	at acpi?
+#acpibtn*	at acpi?
+#acpicpu*	at acpi?
+acpiec*		at acpi?	disable
+acpiprt*	at acpi?
+#acpitz*	at acpi?
 
 cpu0	at mainbus?
 bios0	at mainbus0
