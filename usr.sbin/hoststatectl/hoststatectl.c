@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststatectl.c,v 1.2 2006/12/16 12:47:18 reyk Exp $	*/
+/*	$OpenBSD: hoststatectl.c,v 1.3 2006/12/16 14:21:15 bernd Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -57,7 +57,7 @@ usage(void)
 	exit(1);
 }
 
-/* dummy function so that ospfctl does not need libevent */
+/* dummy function so that hostatectl does not need libevent */
 void
 imsg_event_add(struct imsgbuf *i)
 {
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 	if ((res = parse(argc - 1, argv + 1)) == NULL)
 		exit(1);
 
-	/* connect to ospfd control socket */
+	/* connect to hostated control socket */
 	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
 
