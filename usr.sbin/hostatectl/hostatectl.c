@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostatectl.c,v 1.5 2006/12/16 17:52:21 deraadt Exp $	*/
+/*	$OpenBSD: hostatectl.c,v 1.6 2006/12/16 18:50:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -100,7 +100,7 @@ main(int argc, char *argv[])
 		/* not reached */
 	case SHOW_SUM:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_SUM, 0, 0, NULL, 0);
-		printf("type\t%4s\t%-16s\tstatus\n\n", "id", "name");
+		printf("Type\t%4s\t%-24s\tStatus\n", "Id", "Name");
 		break;
 	case SERV_ENABLE:
 		imsg_compose(ibuf, IMSG_CTL_SERVICE_ENABLE, 0, 0,
@@ -185,20 +185,20 @@ show_summary_msg(struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SERVICE:
 		service = imsg->data;
-		printf("service\t%4u\t%-16s\t%s\n",
+		printf("service\t%4u\t%-24s\t%s\n",
 		    service->id, service->name,
 		    print_service_status(service->flags));
 		break;
 	case IMSG_CTL_TABLE:
 		table = imsg->data;
-		printf("table\t%4u\t%-16s\t%s",
+		printf("table\t%4u\t%-24s\t%s",
 		    table->id, table->name,
 		    print_table_status(table->up, table->flags));
 		printf("\n");
 		break;
 	case IMSG_CTL_HOST:
 		host = imsg->data;
-		printf("host\t%4u\t%-16s\t%s\n",
+		printf("host\t%4u\t%-24s\t%s\n",
 		    host->id, host->name,
 		    print_host_status(host->up, host->flags));
 		break;

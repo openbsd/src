@@ -23,9 +23,11 @@
 #define CONNECT_TIMEOUT 200
 #define CHECK_INTERVAL	10
 #define EMPTY_TABLE	UINT_MAX
-#define TABLE_NAME_SIZE	16
-#define	TAG_NAME_SIZE	16
-#define SRV_NAME_SIZE	16
+#define EMPTY_ID	UINT_MAX
+#define TABLE_NAME_SIZE	32
+#define	TAG_NAME_SIZE	64
+#define SRV_NAME_SIZE	64
+#define MAX_NAME_SIZE	64
 #define SRV_MAX_VIRTS	16
 
 #define READ_BUF_SIZE	65535
@@ -111,6 +113,11 @@ typedef u_int32_t objid_t;
 struct ctl_status {
 	objid_t		 id;
 	int		 up;
+};
+
+struct ctl_id {
+	objid_t		 id;
+	char		 name[MAX_NAME_SIZE];
 };
 
 struct address {
@@ -275,12 +282,12 @@ void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
 /* pfe.c */
 pid_t	 pfe(struct hostated *, int [2], int [2], int [2]);
 void	 show(struct ctl_conn *);
-int	 enable_service(struct ctl_conn *, objid_t);
-int	 enable_table(struct ctl_conn *, objid_t);
-int	 enable_host(struct ctl_conn *, objid_t);
-int	 disable_service(struct ctl_conn *, objid_t);
-int	 disable_table(struct ctl_conn *, objid_t);
-int	 disable_host(struct ctl_conn *, objid_t);
+int	 enable_service(struct ctl_conn *, struct ctl_id *);
+int	 enable_table(struct ctl_conn *, struct ctl_id *);
+int	 enable_host(struct ctl_conn *, struct ctl_id *);
+int	 disable_service(struct ctl_conn *, struct ctl_id *);
+int	 disable_table(struct ctl_conn *, struct ctl_id *);
+int	 disable_host(struct ctl_conn *, struct ctl_id *);
 
 /* pfe_filter.c */
 void	 init_filter(struct hostated *);
@@ -308,3 +315,6 @@ int	 check_http_digest(struct host *, struct table *);
 struct host	*host_find(struct hostated *, objid_t);
 struct table	*table_find(struct hostated *, objid_t);
 struct service	*service_find(struct hostated *, objid_t);
+struct host	*host_findbyname(struct hostated *, const char *);
+struct table	*table_findbyname(struct hostated *, const char *);
+struct service	*service_findbyname(struct hostated *, const char *);

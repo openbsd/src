@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.3 2006/12/16 15:25:40 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.4 2006/12/16 18:50:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -190,7 +190,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 {
 	struct ctl_conn		*c;
 	struct imsg		 imsg;
-	objid_t			 id;
+	struct ctl_id		 id;
 	int			 n;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
@@ -233,7 +233,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
-			if (disable_service(c, id))
+			if (disable_service(c, &id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
 				    NULL, 0);
 			else
@@ -244,7 +244,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
-			if (enable_service(c, id))
+			if (enable_service(c, &id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
 				    NULL, 0);
 			else
@@ -255,7 +255,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
-			if (disable_table(c, id))
+			if (disable_table(c, &id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
 				    NULL, 0);
 			else
@@ -266,7 +266,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
-			if (enable_table(c, id))
+			if (enable_table(c, &id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
 				    NULL, 0);
 			else
@@ -277,7 +277,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
-			if (disable_host(c, id))
+			if (disable_host(c, &id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
 				    NULL, 0);
 			else
@@ -288,7 +288,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
-			if (enable_host(c, id))
+			if (enable_host(c, &id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
 				    NULL, 0);
 			else

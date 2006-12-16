@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.2 2006/12/16 12:42:14 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.3 2006/12/16 18:50:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -303,11 +303,15 @@ show(struct ctl_conn *c)
 
 
 int
-disable_service(struct ctl_conn *c, objid_t id)
+disable_service(struct ctl_conn *c, struct ctl_id *id)
 {
 	struct service	*service;
 
-	if ((service = service_find(env, id)) == NULL)
+	if (id->id == EMPTY_ID)
+		service = service_findbyname(env, id->name);
+	else
+		service = service_find(env, id->id);
+	if (service == NULL)
 		return (-1);
 
 	if (service->flags & F_DISABLE)
@@ -323,11 +327,16 @@ disable_service(struct ctl_conn *c, objid_t id)
 }
 
 int
-enable_service(struct ctl_conn *c, objid_t id)
+enable_service(struct ctl_conn *c, struct ctl_id *id)
 {
 	struct service	*service;
+	struct ctl_id	 eid;
 
-	if ((service = service_find(env, id)) == NULL)
+	if (id->id == EMPTY_ID)
+		service = service_findbyname(env, id->name);
+	else
+		service = service_find(env, id->id);
+	if (service == NULL)
 		return (-1);
 
 	if (!(service->flags & F_DISABLE))
@@ -338,24 +347,30 @@ enable_service(struct ctl_conn *c, objid_t id)
 	service->flags |= F_ADD;
 	log_debug("enable_service: enabled service %d", service->id);
 
+	bzero(&eid, sizeof(eid));
+
 	/* XXX: we're syncing twice */
-	if (enable_table(c, service->table->id))
+	eid.id = service->table->id;
+	if (enable_table(c, &eid) == -1)
 		return (-1);
-	if (enable_table(c, service->backup->id))
+	eid.id = service->backup->id;
+	if (enable_table(c, &eid) == -1)
 		return (-1);
 	return (0);
 }
 
 int
-disable_table(struct ctl_conn *c, objid_t id)
+disable_table(struct ctl_conn *c, struct ctl_id *id)
 {
 	struct table	*table;
 	struct service	*service;
 	struct host	*host;
 
-	if (id == EMPTY_TABLE)
-		return (-1);
-	if ((table = table_find(env, id)) == NULL)
+	if (id->id == EMPTY_ID)
+		table = table_findbyname(env, id->name);
+	else
+		table = table_find(env, id->id);
+	if (table == NULL)
 		return (-1);
 	if ((service = service_find(env, table->serviceid)) == NULL)
 		fatalx("disable_table: desynchronised");
@@ -366,23 +381,27 @@ disable_table(struct ctl_conn *c, objid_t id)
 	table->up = 0;
 	TAILQ_FOREACH(host, &table->hosts, entry)
 		host->up = HOST_UNKNOWN;
-	imsg_compose(ibuf_hce, IMSG_TABLE_DISABLE, 0, 0, &id, sizeof(id));
+	imsg_compose(ibuf_hce, IMSG_TABLE_DISABLE, 0, 0,
+	    &table->id, sizeof(table->id));
 	log_debug("disable_table: disabled table %d", table->id);
 	pfe_sync();
 	return (0);
 }
 
 int
-enable_table(struct ctl_conn *c, objid_t id)
+enable_table(struct ctl_conn *c, struct ctl_id *id)
 {
 	struct service	*service;
 	struct table	*table;
 	struct host	*host;
 
-	if (id == EMPTY_TABLE)
+	if (id->id == EMPTY_ID)
+		table = table_findbyname(env, id->name);
+	else
+		table = table_find(env, id->id);
+	if (table == NULL)
 		return (-1);
-	if ((table = table_find(env, id)) == NULL)
-		return (-1);
+
 	if ((service = service_find(env, table->serviceid)) == NULL)
 		fatalx("enable_table: desynchronised");
 
@@ -393,19 +412,24 @@ enable_table(struct ctl_conn *c, objid_t id)
 	table->up = 0;
 	TAILQ_FOREACH(host, &table->hosts, entry)
 		host->up = HOST_UNKNOWN;
-	imsg_compose(ibuf_hce, IMSG_TABLE_ENABLE, 0, 0, &id, sizeof(id));
+	imsg_compose(ibuf_hce, IMSG_TABLE_ENABLE, 0, 0,
+	    &table->id, sizeof(table->id));
 	log_debug("enable_table: enabled table %d", table->id);
 	pfe_sync();
 	return (0);
 }
 
 int
-disable_host(struct ctl_conn *c, objid_t id)
+disable_host(struct ctl_conn *c, struct ctl_id *id)
 {
 	struct host	*host;
 	struct table	*table;
 
-	if ((host = host_find(env, id)) == NULL)
+	if (id->id == EMPTY_ID)
+		host = host_findbyname(env, id->name);
+	else
+		host = host_find(env, id->id);
+	if (host == NULL)
 		return (-1);
 
 	if (host->flags & F_DISABLE)
@@ -423,18 +447,23 @@ disable_host(struct ctl_conn *c, objid_t id)
 	host->flags |= F_DEL;
 	host->flags &= ~(F_ADD);
 
-	imsg_compose(ibuf_hce, IMSG_HOST_DISABLE, 0, 0, &id, sizeof (id));
+	imsg_compose(ibuf_hce, IMSG_HOST_DISABLE, 0, 0,
+	    &host->id, sizeof(host->id));
 	log_debug("disable_host: disabled host %d", host->id);
 	pfe_sync();
 	return (0);
 }
 
 int
-enable_host(struct ctl_conn *c, objid_t id)
+enable_host(struct ctl_conn *c, struct ctl_id *id)
 {
 	struct host	*host;
 
-	if ((host = host_find(env, id)) == NULL)
+	if (id->id == EMPTY_ID)
+		host = host_findbyname(env, id->name);
+	else
+		host = host_find(env, id->id);
+	if (host == NULL)
 		return (-1);
 
 	if (!(host->flags & F_DISABLE))
@@ -445,7 +474,8 @@ enable_host(struct ctl_conn *c, objid_t id)
 	host->flags &= ~(F_DEL);
 	host->flags &= ~(F_ADD);
 
-	imsg_compose(ibuf_hce, IMSG_HOST_ENABLE, 0, 0, &id, sizeof (id));
+	imsg_compose(ibuf_hce, IMSG_HOST_ENABLE, 0, 0,
+	    &host->id, sizeof (host->id));
 	log_debug("enable_host: enabled host %d", host->id);
 	pfe_sync();
 	return (0);

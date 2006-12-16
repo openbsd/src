@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.3 2006/12/16 14:07:29 reyk Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.4 2006/12/16 18:50:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -371,6 +371,41 @@ service_find(struct hostated *env, objid_t id)
 
 	TAILQ_FOREACH(service, &env->services, entry)
 		if (service->id == id)
+			return (service);
+	return (NULL);
+}
+
+struct host *
+host_findbyname(struct hostated *env, const char *name)
+{
+	struct table	*table;
+	struct host	*host;
+
+	TAILQ_FOREACH(table, &env->tables, entry)
+		TAILQ_FOREACH(host, &table->hosts, entry)
+			if (strcmp(host->name, name) == 0)
+				return (host);
+	return (NULL);
+}
+
+struct table *
+table_findbyname(struct hostated *env, const char *name)
+{
+	struct table	*table;
+
+	TAILQ_FOREACH(table, &env->tables, entry)
+		if (strcmp(table->name, name) == 0)
+			return (table);
+	return (NULL);
+}
+
+struct service *
+service_findbyname(struct hostated *env, const char *name)
+{
+	struct service	*service;
+
+	TAILQ_FOREACH(service, &env->services, entry)
+		if (strcmp(service->name, name) == 0)
 			return (service);
 	return (NULL);
 }
