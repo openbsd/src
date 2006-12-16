@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.47 2006/12/09 23:26:02 maja Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.48 2006/12/16 15:35:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1698,8 +1698,11 @@ zyd_set_chan(struct zyd_softc *sc, struct ieee80211_channel *c)
 	(void)zyd_write32(sc, ZYD_CR31, sc->pwr_int[chan - 1]);
 	(void)zyd_write32(sc, ZYD_CR68, sc->pwr_cal[chan - 1]);
 
-	/* XXX more ZD1211B specific bits? */
 	if (sc->mac_rev == ZYD_ZD1211B) {
+		(void)zyd_write32(sc, ZYD_CR67, sc->ofdm36_cal[chan - 1]);
+		(void)zyd_write32(sc, ZYD_CR66, sc->ofdm48_cal[chan - 1]);
+		(void)zyd_write32(sc, ZYD_CR65, sc->ofdm54_cal[chan - 1]);
+
 		(void)zyd_write32(sc, ZYD_CR69, 0x28);
 		(void)zyd_write32(sc, ZYD_CR69, 0x2a);
 	}
@@ -2039,6 +2042,8 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	} else
 		rate = ni->ni_rates.rs_rates[ni->ni_txrate];
 	rate &= IEEE80211_RATE_VAL;
+	if (rate == 0)	/* XXX should not happen */
+		rate = 2;
 
 	data = &sc->tx_data[0];
 	desc = (struct zyd_tx_desc *)data->buf;
