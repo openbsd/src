@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.2 2006/12/16 12:42:14 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.3 2006/12/16 15:25:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -235,10 +235,10 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			memcpy(&id, imsg.data, sizeof(id));
 			if (disable_service(c, id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
-					     NULL, 0);
+				    NULL, 0);
 			else
 				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0,
-					     NULL, 0);
+				    NULL, 0);
 			break;
 		case IMSG_CTL_SERVICE_ENABLE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
@@ -246,10 +246,10 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			memcpy(&id, imsg.data, sizeof(id));
 			if (enable_service(c, id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
-					     NULL, 0);
+				    NULL, 0);
 			else
 				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0,
-					     NULL, 0);
+				    NULL, 0);
 			break;
 		case IMSG_CTL_TABLE_DISABLE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
@@ -257,10 +257,10 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			memcpy(&id, imsg.data, sizeof(id));
 			if (disable_table(c, id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
-					     NULL, 0);
+				    NULL, 0);
 			else
 				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0,
-					     NULL, 0);
+				    NULL, 0);
 			break;
 		case IMSG_CTL_TABLE_ENABLE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
@@ -268,10 +268,10 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			memcpy(&id, imsg.data, sizeof(id));
 			if (enable_table(c, id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
-					     NULL, 0);
+				    NULL, 0);
 			else
 				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0,
-					     NULL, 0);
+				    NULL, 0);
 			break;
 		case IMSG_CTL_HOST_DISABLE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
@@ -279,10 +279,10 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			memcpy(&id, imsg.data, sizeof(id));
 			if (disable_host(c, id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
-					     NULL, 0);
+				    NULL, 0);
 			else
 				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0,
-					     NULL, 0);
+				    NULL, 0);
 			break;
 		case IMSG_CTL_HOST_ENABLE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
@@ -290,10 +290,10 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			memcpy(&id, imsg.data, sizeof(id));
 			if (enable_host(c, id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
-					     NULL, 0);
+				    NULL, 0);
 			else
 				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0,
-					     NULL, 0);
+				    NULL, 0);
 			break;
 		case IMSG_CTL_SHUTDOWN:
 		case IMSG_CTL_RELOAD:
