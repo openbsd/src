@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.2 2006/12/16 12:42:14 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.3 2006/12/16 14:07:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -292,7 +292,7 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 		switch (imsg.hdr.type) {
 		default:
 			log_debug("main_dispatch_pfe: unexpected imsg %d",
-				imsg.hdr.type);
+			    imsg.hdr.type);
 			break;
 		}
 		imsg_free(&imsg);
@@ -333,7 +333,7 @@ main_dispatch_hce(int fd, short event, void * ptr)
 		switch (imsg.hdr.type) {
 		default:
 			log_debug("main_dispatch_hce: unexpected imsg %d",
-				imsg.hdr.type);
+			    imsg.hdr.type);
 			break;
 		}
 		imsg_free(&imsg);
