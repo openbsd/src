@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.85 2006/12/02 10:48:03 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.86 2006/12/16 12:28:15 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -440,6 +440,12 @@ our @ISA=qw(OpenBSD::PackingElement::FileBase);
 
 __PACKAGE__->setKeyword('pkgconfig');
 sub keyword() { "pkgconfig" }
+
+package OpenBSD::PackingElement::LibtoolLib;
+our @ISA=qw(OpenBSD::PackingElement::FileBase);
+
+__PACKAGE__->setKeyword('ltlib');
+sub keyword() { "ltlib" }
 
 package OpenBSD::PackingElement::Ignore;
 our @ISA=qw(OpenBSD::PackingElement::Annotation);
