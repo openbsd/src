@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.30 2006/12/15 20:37:34 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.31 2006/12/16 19:15:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1643,17 +1643,22 @@ msk_txeof(struct sk_if_softc *sc_if)
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct msk_tx_desc	*cur_tx;
 	struct ifnet		*ifp = &sc_if->arpcom.ac_if;
-	u_int32_t		idx, sk_ctl;
+	u_int32_t		idx, reg, sk_ctl;
 	struct sk_txmap_entry	*entry;
 
 	DPRINTFN(2, ("msk_txeof\n"));
+
+	if (sc_if->sk_port == SK_PORT_A)
+		reg = SK_STAT_BMU_TXA1_RIDX;
+	else
+		reg = SK_STAT_BMU_TXA2_RIDX;
 
 	/*
 	 * Go through our tx ring and free mbufs for those
 	 * frames that have been sent.
 	 */
 	idx = sc_if->sk_cdata.sk_tx_cons;
-	while (idx != sk_win_read_2(sc, SK_STAT_BMU_TXA1_RIDX)) {
+	while (idx != sk_win_read_2(sc, reg)) {
 		MSK_CDTXSYNC(sc_if, idx, 1,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
@@ -1770,7 +1775,10 @@ msk_intr(void *xsc)
 			    sc->sk_if[cur_st->sk_link]->sk_cdata.sk_rx_prod);
 			break;
 		case SK_Y2_STOPC_TXSTAT:
-			msk_txeof(sc->sk_if[cur_st->sk_link]);
+			if (sc_if0)
+				msk_txeof(sc_if0);
+			if (sc_if1)
+				msk_txeof(sc_if1);
 			break;
 		default:
 			printf("opcode=0x%x\n", cur_st->sk_opcode);
@@ -1915,7 +1923,7 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 
 	/* Configure RX MAC FIFO */
 	SK_IF_WRITE_1(sc_if, 0, SK_RXMF1_CTRL_TEST, SK_RFCTL_RESET_CLEAR);
-	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_CTRL_TEST, SK_TFCTL_OPERATION_ON |
+	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_CTRL_TEST, SK_RFCTL_OPERATION_ON |
 	    SK_RFCTL_FIFO_FLUSH_ON);
 
 	/* Increase flush threshould to 64 bytes */
@@ -2079,7 +2087,7 @@ msk_stop(struct sk_if_softc *sc_if)
 	SK_IF_WRITE_4(sc_if, 1, SK_TXRBA1_CTLTST, SK_RBCTL_RESET|SK_RBCTL_OFF);
 	SK_IF_WRITE_1(sc_if, 0, SK_TXAR1_COUNTERCTL, SK_TXARCTL_OFF);
 	SK_IF_WRITE_1(sc_if, 0, SK_RXLED1_CTL, SK_RXLEDCTL_COUNTER_STOP);
-	SK_IF_WRITE_1(sc_if, 0, SK_TXLED1_CTL, SK_RXLEDCTL_COUNTER_STOP);
+	SK_IF_WRITE_1(sc_if, 0, SK_TXLED1_CTL, SK_TXLEDCTL_COUNTER_STOP);
 	SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL, SK_LINKLED_OFF);
 	SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL, SK_LINKLED_LINKSYNC_OFF);
 
