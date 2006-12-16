@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.1 2006/12/16 11:45:07 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.2 2006/12/16 17:48:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -24,14 +24,14 @@
 #include <syslog.h>
 
 /* prototypes */
-void             log_init(int);
-void             vlog(int, const char *, va_list);
-void             log_warn(const char *, ...);
-void             log_warnx(const char *, ...);
-void             log_info(const char *, ...);
-void             log_debug(const char *, ...);
-void             fatal(const char *);
-void             fatalx(const char *);
+void		 log_init(int);
+void		 vlog(int, const char *, va_list);
+void		 log_warn(const char *, ...);
+void		 log_warnx(const char *, ...);
+void		 log_info(const char *, ...);
+void		 log_debug(const char *, ...);
+void		 fatal(const char *);
+void		 fatalx(const char *);
 
 int	 debug;
 

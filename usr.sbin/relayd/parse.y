@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2006/12/16 12:42:14 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2006/12/16 17:48:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -123,7 +123,7 @@ number		: STRING	{
 			$$ = strtonum($1, 0, UINT_MAX, &estr);
 			if (estr) {
 				yyerror("cannot parse number %s : %s",
-					$1, estr);
+				    $1, estr);
 				free($1);
 				YYERROR;
 			}
@@ -171,12 +171,12 @@ service		: SERVICE STRING	{
 		} '{' optnl serviceopts_l '}'	{
 			if (service->table == NULL) {
 				yyerror("service %s has no table",
-					service->name);
+				    service->name);
 				YYERROR;
 			}
 			if (TAILQ_EMPTY(&service->virts)) {
 				yyerror("service %s has no virtual ip",
-					service->name);
+				    service->name);
 				YYERROR;
 			}
 			conf->servicecount++;
@@ -353,8 +353,8 @@ tableoptsl	: host			{
 				free($5);
 				YYERROR;
 			}
-			if (strlcpy(table->digest, $5, sizeof (table->digest))
-					>= sizeof (table->digest)) {
+			if (strlcpy(table->digest, $5,
+			    sizeof (table->digest)) >= sizeof (table->digest)) {
 				yyerror("http digest truncated");
 				free($3);
 				free($5);
@@ -373,7 +373,7 @@ tableoptsl	: host			{
 		| DISABLE			{ table->flags |= F_DISABLE; }
 		;
 
-interface	: /*empty*/ 		{ $$ = NULL; }
+interface	: /*empty*/		{ $$ = NULL; }
 		| INTERFACE STRING	{ $$ = $2; }
 		;
 
@@ -452,27 +452,27 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
-		{"backup",		BACKUP},
-		{"check",		CHECK},
-		{"code",		CODE},
-		{"digest",		DIGEST},
-		{"disable",		DISABLE},
-		{"external",		EXTERNAL},
-		{"host",		HOST},
-		{"http",		HTTP},
-		{"https",		HTTPS},
-		{"icmp",		ICMP},
-		{"interface",		INTERFACE},
-		{"interval",		INTERVAL},
-		{"ip",			IP},
-		{"port",		PORT},
-		{"real",		REAL},
-		{"service",		SERVICE},
-		{"table",		TABLE},
-		{"tag",			TAG},
-		{"tcp",			TCP},
-		{"timeout",		TIMEOUT},
-		{"virtual",		VIRTUAL}
+		{ "backup",		BACKUP },
+		{ "check",		CHECK },
+		{ "code",		CODE },
+		{ "digest",		DIGEST },
+		{ "disable",		DISABLE },
+		{ "external",		EXTERNAL },
+		{ "host",		HOST },
+		{ "http",		HTTP },
+		{ "https",		HTTPS },
+		{ "icmp",		ICMP },
+		{ "interface",		INTERFACE },
+		{ "interval",		INTERVAL },
+		{ "ip",			IP },
+		{ "port",		PORT },
+		{ "real",		REAL },
+		{ "service",		SERVICE },
+		{ "table",		TABLE },
+		{ "tag",		TAG },
+		{ "tcp",		TCP },
+		{ "timeout",		TIMEOUT },
+		{ "virtual",		VIRTUA L}
 	};
 	const struct keywords	*p;
 
@@ -861,7 +861,7 @@ host_dns(const char *s, struct addresslist *al, int max,
 	hints.ai_socktype = SOCK_DGRAM; /* DUMMY */
 	error = getaddrinfo(s, NULL, &hints, &res0);
 	if (error == EAI_AGAIN || error == EAI_NODATA || error == EAI_NONAME)
-			return (0);
+		return (0);
 	if (error) {
 		log_warnx("host_dns: could not parse \"%s\": %s", s,
 		    gai_strerror(error));
@@ -900,16 +900,15 @@ host_dns(const char *s, struct addresslist *al, int max,
 	}
 	if (cnt == max && res) {
 		log_warnx("host_dns: %s resolves to more than %d hosts",
-			s, max);
+		    s, max);
 	}
 	freeaddrinfo(res0);
-
 	return (cnt);
 }
 
 int
 host(const char *s, struct addresslist *al, int max,
-     in_port_t port, const char *ifname)
+    in_port_t port, const char *ifname)
 {
 	struct address *h;
 

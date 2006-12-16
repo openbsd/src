@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.2 2006/12/16 12:42:14 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.3 2006/12/16 17:48:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -268,7 +268,7 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 			break;
 		default:
 			log_debug("hce_dispatch_msg: unexpected imsg %d",
-				imsg.hdr.type);
+			    imsg.hdr.type);
 			break;
 		}
 		imsg_free(&imsg);
@@ -288,7 +288,7 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("hce_dispatch_parent: imsg_read error");
-		if (n == 0)     /* connection closed */
+		if (n == 0)	/* connection closed */
 			fatalx("hce_dispatch_parent: pipe closed");
 		break;
 	case EV_WRITE:
