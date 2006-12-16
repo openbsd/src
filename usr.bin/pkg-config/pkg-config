@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.18 2006/12/16 11:14:24 espie Exp $
+# $OpenBSD: pkg-config,v 1.19 2006/12/16 17:14:34 espie Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -343,8 +343,9 @@ sub do_variable
 		if (defined $value) {
 			push(@vlist, $value);
 		}
+		return undef;
 	}
-	return undef;
+	$rc = 1;
 }
 
 #if the modversion option is set, pull out the compiler flags
