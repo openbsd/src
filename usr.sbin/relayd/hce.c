@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.1 2006/12/16 11:45:07 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.2 2006/12/16 12:42:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -98,45 +98,45 @@ hce(struct hostated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	setproctitle("host check engine");
 	hostated_process = PROC_HCE;
 
-        if (setgroups(1, &pw->pw_gid) ||
-            setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-            setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-                fatal("hce: can't drop privileges");
+	if (setgroups(1, &pw->pw_gid) ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		fatal("hce: can't drop privileges");
 
 	event_init();
 
-        signal_set(&ev_sigint, SIGINT, hce_sig_handler, NULL);
-        signal_set(&ev_sigterm, SIGTERM, hce_sig_handler, NULL);
-        signal_add(&ev_sigint, NULL);                           
-        signal_add(&ev_sigterm, NULL);
+	signal_set(&ev_sigint, SIGINT, hce_sig_handler, NULL);
+	signal_set(&ev_sigterm, SIGTERM, hce_sig_handler, NULL);
+	signal_add(&ev_sigint, NULL);
+	signal_add(&ev_sigterm, NULL);
 
-        /* setup pipes */
-        close(pipe_pfe2hce[1]);
-        close(pipe_parent2hce[0]);    
-        close(pipe_parent2pfe[0]);
-        close(pipe_parent2pfe[1]);
+	/* setup pipes */
+	close(pipe_pfe2hce[1]);
+	close(pipe_parent2hce[0]);
+	close(pipe_parent2pfe[0]);
+	close(pipe_parent2pfe[1]);
 
-        if ((ibuf_pfe = calloc(1, sizeof(struct imsgbuf))) == NULL ||
-            (ibuf_main = calloc(1, sizeof(struct imsgbuf))) == NULL)
-                fatal("hce");
-        imsg_init(ibuf_pfe, pipe_pfe2hce[0], hce_dispatch_imsg); 
-        imsg_init(ibuf_main, pipe_parent2hce[1], hce_dispatch_parent);          
-                                                                     
-        ibuf_pfe->events = EV_READ;                                  
-        event_set(&ibuf_pfe->ev, ibuf_pfe->fd, ibuf_pfe->events,
-                ibuf_pfe->handler, ibuf_pfe);
-        event_add(&ibuf_pfe->ev, NULL);
+	if ((ibuf_pfe = calloc(1, sizeof(struct imsgbuf))) == NULL ||
+	    (ibuf_main = calloc(1, sizeof(struct imsgbuf))) == NULL)
+		fatal("hce");
+	imsg_init(ibuf_pfe, pipe_pfe2hce[0], hce_dispatch_imsg);
+	imsg_init(ibuf_main, pipe_parent2hce[1], hce_dispatch_parent);
 
-        ibuf_main->events = EV_READ;
-        event_set(&ibuf_main->ev, ibuf_main->fd, ibuf_main->events,
-                ibuf_main->handler, ibuf_main);
-        event_add(&ibuf_main->ev, NULL);
+	ibuf_pfe->events = EV_READ;
+	event_set(&ibuf_pfe->ev, ibuf_pfe->fd, ibuf_pfe->events,
+	    ibuf_pfe->handler, ibuf_pfe);
+	event_add(&ibuf_pfe->ev, NULL);
 
-        evtimer_set(&env->ev, hce_launch_checks, NULL);
+	ibuf_main->events = EV_READ;
+	event_set(&ibuf_main->ev, ibuf_main->fd, ibuf_main->events,
+	    ibuf_main->handler, ibuf_main);
+	event_add(&ibuf_main->ev, NULL);
+
+	evtimer_set(&env->ev, hce_launch_checks, NULL);
 	tv.tv_sec = env->interval;
 	tv.tv_usec = 0;
 	evtimer_add(&env->ev, &tv);
-                                                 
+
 	hce_launch_checks(0, 0, NULL);
 	event_dispatch();
 
@@ -149,8 +149,8 @@ void
 hce_launch_checks(int fd, short event, void *arg)
 {
 	int			 previous_up;
-	struct host 		*host;
-	struct table 		*table;
+	struct host		*host;
+	struct table		*table;
 	struct ctl_status	 st;
 	struct timeval		 tv;
 
@@ -168,8 +168,7 @@ hce_launch_checks(int fd, short event, void *arg)
 			switch (table->check) {
 			case CHECK_ICMP:
 				host->up = check_icmp(host, env->icmp_sock,
-						      env->icmp6_sock,
-						      table->timeout);
+				    env->icmp6_sock, table->timeout);
 				break;
 			case CHECK_TCP:
 				host->up = check_tcp(host, table);
@@ -188,7 +187,7 @@ hce_launch_checks(int fd, short event, void *arg)
 				st.id = host->id;
 				st.up = host->up;
 				imsg_compose(ibuf_pfe, IMSG_HOST_STATUS, 0, 0,
-					     &st, sizeof(st));
+				    &st, sizeof(st));
 			}
 		}
 	}
@@ -280,39 +279,39 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 void
 hce_dispatch_parent(int fd, short event, void * ptr)
 {
-	struct imsgbuf          *ibuf;
-        struct imsg              imsg;
-        ssize_t                  n;
+	struct imsgbuf	*ibuf;
+	struct imsg	 imsg;
+	ssize_t		 n;
 
 	ibuf = ptr;
 	switch (event) {
-        case EV_READ:
-                if ((n = imsg_read(ibuf)) == -1)
-                        fatal("hce_dispatch_parent: imsg_read error");
-                if (n == 0)     /* connection closed */
-                        fatalx("hce_dispatch_parent: pipe closed");
-                break;
-        case EV_WRITE:
-                if (msgbuf_write(&ibuf->w) == -1)
-                        fatal("hce_dispatch_parent: msgbuf_write");
-                imsg_event_add(ibuf);
-                return;
-        default:
-                fatalx("hce_dispatch_parent: unknown event");
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("hce_dispatch_parent: imsg_read error");
+		if (n == 0)     /* connection closed */
+			fatalx("hce_dispatch_parent: pipe closed");
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("hce_dispatch_parent: msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("hce_dispatch_parent: unknown event");
 	}
 
-        for (;;) {
-                if ((n = imsg_get(ibuf, &imsg)) == -1)
-                        fatal("hce_dispatch_parent: imsg_read error");
-                if (n == 0)
-                        break;
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("hce_dispatch_parent: imsg_read error");
+		if (n == 0)
+			break;
 
-                switch (imsg.hdr.type) {
-                default:
-                        log_debug("hce_dispatch_parent: unexpected imsg %d", 
-                                imsg.hdr.type);
-                        break;
-                }
-                imsg_free(&imsg);
-        }
+		switch (imsg.hdr.type) {
+		default:
+			log_debug("hce_dispatch_parent: unexpected imsg %d",
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.1 2006/12/16 11:45:07 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.2 2006/12/16 12:42:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -94,10 +94,10 @@ pfe(struct hostated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	setproctitle("pf update engine");
 	hostated_process = PROC_PFE;
 
-        if (setgroups(1, &pw->pw_gid) ||
-            setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-            setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-                fatal("pfe: cannot drop privileges");
+	if (setgroups(1, &pw->pw_gid) ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		fatal("pfe: cannot drop privileges");
 
 	event_init();
 
@@ -115,17 +115,17 @@ pfe(struct hostated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	if ((ibuf_hce = calloc(1, sizeof(struct imsgbuf))) == NULL ||
 	    (ibuf_main = calloc(1, sizeof(struct imsgbuf))) == NULL)
 		fatal("pfe");
-	imsg_init(ibuf_hce, pipe_pfe2hce[1], pfe_dispatch_imsg); 
-	imsg_init(ibuf_main, pipe_parent2pfe[1], pfe_dispatch_parent); 
+	imsg_init(ibuf_hce, pipe_pfe2hce[1], pfe_dispatch_imsg);
+	imsg_init(ibuf_main, pipe_parent2pfe[1], pfe_dispatch_parent);
 
 	ibuf_hce->events = EV_READ;
 	event_set(&ibuf_hce->ev, ibuf_hce->fd, ibuf_hce->events,
-		ibuf_hce->handler, ibuf_hce);
+	    ibuf_hce->handler, ibuf_hce);
 	event_add(&ibuf_hce->ev, NULL);
 
 	ibuf_main->events = EV_READ;
 	event_set(&ibuf_main->ev, ibuf_main->fd, ibuf_main->events,
-		ibuf_main->handler, ibuf_main);
+	    ibuf_main->handler, ibuf_main);
 	event_add(&ibuf_main->ev, NULL);
 
 	TAILQ_INIT(&ctl_conns);
@@ -188,7 +188,7 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 				fatalx("pfe_dispatch_imsg: invalid host id");
 			if (host->up == st.up) {
 				log_debug("pfe_dispatch_imsg: host %d => %d",
-					  host->id, host->up);
+				    host->id, host->up);
 				fatalx("pfe_dispatch_imsg: desynchronized");
 			}
 
@@ -196,7 +196,7 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 				fatalx("pfe_dispatch_imsg: invalid table id");
 
 			log_debug("pfe_dispatch_imsg: state %d for host %u %s",
-				  st.up, host->id, host->name);
+			    st.up, host->id, host->name);
 
 			if ((st.up == HOST_UNKNOWN && host->up == HOST_DOWN) ||
 			    (st.up == HOST_DOWN && host->up == HOST_UNKNOWN)) {
@@ -222,7 +222,7 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 			break;
 		default:
 			log_debug("pfe_dispatch_imsg: unexpected imsg %d",
-				  imsg.hdr.type);
+			    imsg.hdr.type);
 			break;
 		}
 		imsg_free(&imsg);
@@ -234,40 +234,40 @@ void
 pfe_dispatch_parent(int fd, short event, void * ptr)
 {
 	struct imsgbuf	*ibuf;
-        struct imsg	 imsg;
-        ssize_t		 n;
+	struct imsg	 imsg;
+	ssize_t		 n;
 
 	ibuf = ptr;
 	switch (event) {
-        case EV_READ:
-                if ((n = imsg_read(ibuf)) == -1)
-                        fatal("imsg_read error");
-                if (n == 0)     /* connection closed */
-                        fatalx("pfe_dispatch_parent: pipe closed");
-                break;
-        case EV_WRITE:
-                if (msgbuf_write(&ibuf->w) == -1)
-                        fatal("msgbuf_write");
-                imsg_event_add(ibuf);
-                return;
-        default:
-                fatalx("pfe_dispatch_parent: unknown event");
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read error");
+		if (n == 0)     /* connection closed */
+			fatalx("pfe_dispatch_parent: pipe closed");
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("pfe_dispatch_parent: unknown event");
 	}
 
-        for (;;) {
-                if ((n = imsg_get(ibuf, &imsg)) == -1)
-                        fatal("pfe_dispatch_parent: imsg_read error");
-                if (n == 0)
-                        break;
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("pfe_dispatch_parent: imsg_read error");
+		if (n == 0)
+			break;
 
-                switch (imsg.hdr.type) {
-                default:
-                        log_debug("pfe_dispatch_parent: unexpected imsg %d", 
-                                imsg.hdr.type);
-                        break;
-                }
-                imsg_free(&imsg);
-        }
+		switch (imsg.hdr.type) {
+		default:
+			log_debug("pfe_dispatch_parent: unexpected imsg %d",
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
 }
 
 void
@@ -278,25 +278,25 @@ show(struct ctl_conn *c)
 
 	TAILQ_FOREACH(service, &env->services, entry) {
 		imsg_compose(&c->ibuf, IMSG_CTL_SERVICE, 0, 0,
-				service, sizeof(*service));
+		    service, sizeof(*service));
 		if (service->flags & F_DISABLE)
 			continue;
 
 		imsg_compose(&c->ibuf, IMSG_CTL_TABLE, 0, 0,
-			     service->table, sizeof(*service->table)); 
+		    service->table, sizeof(*service->table));
 		if (!(service->table->flags & F_DISABLE))
 			TAILQ_FOREACH(host, &service->table->hosts, entry)
 				imsg_compose(&c->ibuf, IMSG_CTL_HOST, 0, 0,
-					     host, sizeof(*host));
+				    host, sizeof(*host));
 
 		if (service->backup->id == EMPTY_TABLE)
 			continue;
 		imsg_compose(&c->ibuf, IMSG_CTL_TABLE, 0, 0,
-			     service->backup, sizeof(*service->backup)); 
+		    service->backup, sizeof(*service->backup));
 		if (!(service->backup->flags & F_DISABLE))
 			TAILQ_FOREACH(host, &service->backup->hosts, entry)
 				imsg_compose(&c->ibuf, IMSG_CTL_HOST, 0, 0,
-					     host, sizeof(*host));
+				    host, sizeof(*host));
 	}
 	imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, NULL, 0);
 }
@@ -480,7 +480,7 @@ pfe_sync(void)
 
 		service->table->flags &= ~(F_CHANGED);
 		service->backup->flags &= ~(F_CHANGED);
-		
+
 		if (service->flags & F_DOWN) {
 			if (service->flags & F_ACTIVE_RULESET) {
 				flush_table(env, service);

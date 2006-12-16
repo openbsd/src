@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.1 2006/12/16 11:45:07 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.2 2006/12/16 12:42:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -83,12 +83,13 @@ tcp_connect(struct host *host, struct table *table)
 	FD_ZERO(&fdset);
 	FD_SET(s, &fdset);
 
-	switch(select(s + 1, NULL, &fdset, NULL, &tv)) {
+	/* XXX This needs to be rewritten */
+	switch (select(s + 1, NULL, &fdset, NULL, &tv)) {
 	case -1:
 		if (errno != EINTR)
 			fatal("check_tcp: select");
 		else
-			return(HOST_UNKNOWN);
+			return (HOST_UNKNOWN);
 	case 0:
 		close(s);
 		return (HOST_DOWN);

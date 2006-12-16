@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_http.c,v 1.1 2006/12/16 11:45:07 reyk Exp $	*/
+/*	$OpenBSD: check_http.c,v 1.2 2006/12/16 12:42:14 reyk Exp $	*/
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
  *
@@ -43,8 +43,8 @@ http_request(struct host *host, struct table *table, int s, const char *req)
 
 	if ((fl = fcntl(s, F_GETFL, 0)) == -1)
 		fatal("http_request: cannot get flags for socket");
-        if (fcntl(s, F_SETFL, fl & ~(O_NONBLOCK)) == -1)
-                fatal("http_request: cannot set blocking socket");
+	if (fcntl(s, F_SETFL, fl & ~(O_NONBLOCK)) == -1)
+		fatal("http_request: cannot set blocking socket");
 	if ((buf = buf_dynamic(sizeof(rbuf), UINT_MAX)) == NULL)
 		fatalx("http_request: cannot create dynamic buffer");
 
@@ -126,7 +126,7 @@ check_http_digest(struct host *host, struct table *table)
 	head = buf->buf;
 	if ((head = strstr(head, "\r\n\r\n")) == NULL) {
 		log_debug("check_http_digest: host %u no end of headers",
-			  host->id);
+		    host->id);
 		close(s);
 		return (HOST_DOWN);
 	}
@@ -137,8 +137,8 @@ check_http_digest(struct host *host, struct table *table)
 
 	if (strcmp(table->digest, digest)) {
 		log_warnx("check_http_digest: wrong digest for host %u",
-			  host->id);
-		return(HOST_DOWN);
+		    host->id);
+		return (HOST_DOWN);
 	}
 	return (HOST_UP);
 }

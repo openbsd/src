@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.1 2006/12/16 11:45:07 reyk Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.2 2006/12/16 12:42:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -89,7 +89,7 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr, "%s [-dnv] [-f file]\n", __progname);
-	exit (1);
+	exit(1);
 }
 
 int main(int argc, char *argv[])
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 	int		 debug;
 	u_int32_t	 opts;
 	struct hostated	 env;
-	const char	*conffile; 
+	const char	*conffile;
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
 	struct event	 ev_sigchld;
@@ -126,7 +126,6 @@ int main(int argc, char *argv[])
 		default:
 			usage();
 		}
-			
 	}
 
 	log_init(debug);
@@ -166,7 +165,7 @@ int main(int argc, char *argv[])
 
 	pfe_pid = pfe(&env, pipe_parent2pfe, pipe_parent2hce, pipe_pfe2hce);
 	hce_pid = hce(&env, pipe_parent2pfe, pipe_parent2hce, pipe_pfe2hce);
-	
+
 	setproctitle("parent");
 
 	event_init();
@@ -179,7 +178,7 @@ int main(int argc, char *argv[])
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigchld, NULL);
 	signal_add(&ev_sighup, NULL);
-	
+
 	close(pipe_parent2pfe[1]);
 	close(pipe_parent2hce[1]);
 	close(pipe_pfe2hce[0]);
@@ -192,15 +191,15 @@ int main(int argc, char *argv[])
 	imsg_init(ibuf_pfe, pipe_parent2pfe[0], main_dispatch_pfe);
 	imsg_init(ibuf_hce, pipe_parent2hce[0], main_dispatch_hce);
 
-        ibuf_pfe->events = EV_READ;
-        event_set(&ibuf_pfe->ev, ibuf_pfe->fd, ibuf_pfe->events,
-            ibuf_pfe->handler, ibuf_pfe);
-        event_add(&ibuf_pfe->ev, NULL);
+	ibuf_pfe->events = EV_READ;
+	event_set(&ibuf_pfe->ev, ibuf_pfe->fd, ibuf_pfe->events,
+	    ibuf_pfe->handler, ibuf_pfe);
+	event_add(&ibuf_pfe->ev, NULL);
 
-        ibuf_hce->events = EV_READ;
-        event_set(&ibuf_hce->ev, ibuf_hce->fd, ibuf_hce->events,
-            ibuf_hce->handler, ibuf_hce);
-        event_add(&ibuf_hce->ev, NULL);
+	ibuf_hce->events = EV_READ;
+	event_set(&ibuf_hce->ev, ibuf_hce->fd, ibuf_hce->events,
+	    ibuf_hce->handler, ibuf_hce);
+	event_add(&ibuf_hce->ev, NULL);
 
 	event_dispatch();
 
@@ -217,11 +216,11 @@ main_shutdown(void)
 	if (hce_pid)
 		kill(hce_pid, SIGTERM);
 
-        do {
-                if ((pid = wait(NULL)) == -1 &&
-                    errno != EINTR && errno != ECHILD)
-                        fatal("wait");
-        } while (pid != -1 || (pid == -1 && errno == EINTR));
+	do {
+		if ((pid = wait(NULL)) == -1 &&
+		    errno != EINTR && errno != ECHILD)
+			fatal("wait");
+	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
 	control_cleanup();
 	log_info("terminating");
@@ -231,21 +230,21 @@ main_shutdown(void)
 int
 check_child(pid_t pid, const char *pname)
 {
-        int     status;
+	int	status;
 
-        if (waitpid(pid, &status, WNOHANG) > 0) {
-                if (WIFEXITED(status)) {
-                        log_warnx("check_child: lost child: %s exited", pname);
-                        return (1);
-                }
-                if (WIFSIGNALED(status)) {
-                        log_warnx("check_child: lost child: %s terminated; signal %d",
-                            pname, WTERMSIG(status));
-                        return (1);
-                }
-        }
+	if (waitpid(pid, &status, WNOHANG) > 0) {
+		if (WIFEXITED(status)) {
+			log_warnx("check_child: lost child: %s exited", pname);
+			return (1);
+		}
+		if (WIFSIGNALED(status)) {
+			log_warnx("check_child: lost child: %s terminated; "
+			    "signal %d", pname, WTERMSIG(status));
+			return (1);
+		}
+	}
 
-        return (0);
+	return (0);
 }
 
 void
@@ -256,8 +255,8 @@ imsg_event_add(struct imsgbuf *ibuf)
 		ibuf->events |= EV_WRITE;
 
 	event_del(&ibuf->ev);
-        event_set(&ibuf->ev, ibuf->fd, ibuf->events, ibuf->handler, ibuf);
-        event_add(&ibuf->ev, NULL);
+	event_set(&ibuf->ev, ibuf->fd, ibuf->events, ibuf->handler, ibuf);
+	event_add(&ibuf->ev, NULL);
 }
 
 void
@@ -305,40 +304,40 @@ void
 main_dispatch_hce(int fd, short event, void * ptr)
 {
 	struct imsgbuf          *ibuf;
-        struct imsg              imsg;
-        ssize_t                  n;
+	struct imsg		 imsg;
+	ssize_t			 n;
 
 	ibuf = ptr;
 	switch (event) {
-        case EV_READ:
-                if ((n = imsg_read(ibuf)) == -1)
-                        fatal("imsg_read error");
-                if (n == 0)     /* connection closed */
-                        fatalx("parent: pipe closed");
-                break;
-        case EV_WRITE:
-                if (msgbuf_write(&ibuf->w) == -1)
-                        fatal("msgbuf_write");
-                imsg_event_add(ibuf);
-                return;
-        default:
-                fatalx("unknown event");
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read error");
+		if (n == 0)     /* connection closed */
+			fatalx("parent: pipe closed");
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("unknown event");
 	}
 
-        for (;;) {
-                if ((n = imsg_get(ibuf, &imsg)) == -1)
-                        fatal("main_dispatch_hce: imsg_read error");
-                if (n == 0)
-                        break;
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("main_dispatch_hce: imsg_read error");
+		if (n == 0)
+			break;
 
-                switch (imsg.hdr.type) {
-                default:
-                        log_debug("main_dispatch_hce: unexpected imsg %d", 
-                                imsg.hdr.type);
-                        break;
-                }
-                imsg_free(&imsg);
-        }
+		switch (imsg.hdr.type) {
+		default:
+			log_debug("main_dispatch_hce: unexpected imsg %d",
+				imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
 }
 
 struct host *

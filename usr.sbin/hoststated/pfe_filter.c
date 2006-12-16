@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.1 2006/12/16 11:45:07 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.2 2006/12/16 12:42:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -52,7 +52,7 @@ void
 init_filter(struct hostated *env)
 {
 	struct pf_status	status;
-	
+
 	if ((env->pf = calloc(1, sizeof(*(env->pf)))) == NULL)
 		fatal("calloc");
 	if ((env->pf->dev = open(PF_SOCKET, O_RDWR)) == -1)
@@ -75,14 +75,14 @@ init_tables(struct hostated *env)
 	if ((tables = calloc(env->servicecount, sizeof(*tables))) == NULL)
 		fatal("calloc");
 	i = 0;
-	
+
 	TAILQ_FOREACH(service, &env->services, entry) {
 		(void)strlcpy(tables[i].pfrt_anchor, HOSTATED_ANCHOR "/",
-			      sizeof(tables[i].pfrt_anchor)); 
+		    sizeof(tables[i].pfrt_anchor));
 		(void)strlcat(tables[i].pfrt_anchor, service->name,
-			      sizeof(tables[i].pfrt_anchor)); 
+		    sizeof(tables[i].pfrt_anchor));
 		(void)strlcpy(tables[i].pfrt_name, service->name,
-			      sizeof(tables[i].pfrt_name)); 
+		    sizeof(tables[i].pfrt_name));
 		tables[i].pfrt_flags |= PFR_TFLAG_PERSIST;
 		i++;
 	}
@@ -116,9 +116,9 @@ kill_tables(struct hostated *env) {
 	memset(&io, 0, sizeof(io));
 	TAILQ_FOREACH(service, &env->services, entry) {
 		(void)strlcpy(io.pfrio_table.pfrt_anchor, HOSTATED_ANCHOR "/",
-			      sizeof(io.pfrio_table.pfrt_anchor));
+		    sizeof(io.pfrio_table.pfrt_anchor));
 		(void)strlcat(io.pfrio_table.pfrt_anchor, service->name,
-			      sizeof(io.pfrio_table.pfrt_anchor));
+		    sizeof(io.pfrio_table.pfrt_anchor));
 		if (ioctl(env->pf->dev, DIOCRCLRTABLES, &io) == -1)
 			fatal("kill_tables: ioctl faile: ioctl failed");
 	}
@@ -152,11 +152,11 @@ sync_table(struct hostated *env, struct service *service, struct table *table)
 	io.pfrio_size2 = 0;
 	io.pfrio_buffer = addlist;
 	(void)strlcpy(io.pfrio_table.pfrt_anchor, HOSTATED_ANCHOR "/",
-		      sizeof(io.pfrio_table.pfrt_anchor));
+	    sizeof(io.pfrio_table.pfrt_anchor));
 	(void)strlcat(io.pfrio_table.pfrt_anchor, service->name,
-		      sizeof(io.pfrio_table.pfrt_anchor));
+	    sizeof(io.pfrio_table.pfrt_anchor));
 	(void)strlcpy(io.pfrio_table.pfrt_name, service->name,
-		      sizeof(io.pfrio_table.pfrt_name));
+	    sizeof(io.pfrio_table.pfrt_name));
 
 	i = 0;
 	TAILQ_FOREACH(host, &table->hosts, entry) {
@@ -168,14 +168,14 @@ sync_table(struct hostated *env, struct service *service, struct table *table)
 			sain = (struct sockaddr_in *)&host->ss;
 			addlist[i].pfra_af = AF_INET;
 			memcpy(&(addlist[i].pfra_ip4addr), &sain->sin_addr,
-			       sizeof(sain->sin_addr));
+			    sizeof(sain->sin_addr));
 			addlist[i].pfra_net = 32;
 			break;
 		case AF_INET6:
 			sain6 = (struct sockaddr_in6 *)&host->ss;
 			addlist[i].pfra_af = AF_INET6;
 			memcpy(&(addlist[i].pfra_ip6addr), &sain6->sin6_addr,
-			       sizeof(sain6->sin6_addr));
+			    sizeof(sain6->sin6_addr));
 			addlist[i].pfra_net = 128;
 			break;
 		default:
@@ -191,8 +191,8 @@ sync_table(struct hostated *env, struct service *service, struct table *table)
 		fatal("sync_table: cannot set address list");
 
 	log_debug("sync_table: table %s: %d added, %d deleted, %d changed",
-		  io.pfrio_table.pfrt_name,
-		  io.pfrio_nadd, io.pfrio_ndel, io.pfrio_nchange);
+	    io.pfrio_table.pfrt_name,
+	    io.pfrio_nadd, io.pfrio_ndel, io.pfrio_nchange);
 }
 
 void
@@ -202,11 +202,11 @@ flush_table(struct hostated *env, struct service *service)
 
 	memset(&io, 0, sizeof(io));
 	(void)strlcpy(io.pfrio_table.pfrt_anchor, HOSTATED_ANCHOR "/",
-		      sizeof(io.pfrio_table.pfrt_anchor));
+	    sizeof(io.pfrio_table.pfrt_anchor));
 	(void)strlcat(io.pfrio_table.pfrt_anchor, service->name,
-		      sizeof(io.pfrio_table.pfrt_anchor));
+	    sizeof(io.pfrio_table.pfrt_anchor));
 	(void)strlcpy(io.pfrio_table.pfrt_name, service->name,
-		      sizeof(io.pfrio_table.pfrt_name));
+	    sizeof(io.pfrio_table.pfrt_name));
 	if (ioctl(env->pf->dev, DIOCRCLRADDRS, &io) == -1)
 		fatal("flush_table: cannot flush table");
 	log_debug("flush_table: flushed table %s", service->name);
@@ -216,17 +216,17 @@ flush_table(struct hostated *env, struct service *service)
 int
 transaction_init(struct hostated *env, const char *anchor)
 {
-        env->pf->pft.size = 1;      
-        env->pf->pft.esize = sizeof env->pf->pfte;
-        env->pf->pft.array = &env->pf->pfte;
+	env->pf->pft.size = 1;
+	env->pf->pft.esize = sizeof env->pf->pfte;
+	env->pf->pft.array = &env->pf->pfte;
 
 	memset(&env->pf->pfte, 0, sizeof env->pf->pfte);
 	strlcpy(env->pf->pfte.anchor, anchor, PF_ANCHOR_NAME_SIZE);
 	env->pf->pfte.rs_num = PF_RULESET_RDR;
 
-        if (ioctl(env->pf->dev, DIOCXBEGIN, &env->pf->pft) == -1)
-                return (-1);
-        return (0);
+	if (ioctl(env->pf->dev, DIOCXBEGIN, &env->pf->pft) == -1)
+		return (-1);
+	return (0);
 }
 
 int
@@ -278,30 +278,30 @@ sync_ruleset(struct hostated *env, struct service *service, int enable)
 		rio.rule.action = PF_RDR;
 		if (strlen(service->tag))
 			(void)strlcpy(rio.rule.tagname, service->tag,
-				      sizeof(rio.rule.tagname));
+			    sizeof(rio.rule.tagname));
 		if (strlen(address->ifname))
 			(void)strlcpy(rio.rule.ifname, address->ifname,
-				      sizeof(rio.rule.ifname));
+			    sizeof(rio.rule.ifname));
 
 		if (address->ss.ss_family == AF_INET) {
 			sain = (struct sockaddr_in *)&address->ss;
-			
-			rio.rule.dst.addr.v.a.addr.addr32[0] = 
-				sain->sin_addr.s_addr; 
+
+			rio.rule.dst.addr.v.a.addr.addr32[0] =
+			    sain->sin_addr.s_addr;
 			rio.rule.dst.addr.v.a.mask.addr32[0] = 0xffffffff;
 
 		} else {
 			sain6 = (struct sockaddr_in6 *)&address->ss;
-			
+
 			memcpy(&rio.rule.dst.addr.v.a.addr.v6,
-			       &sain6->sin6_addr.s6_addr,
-			       sizeof(sain6->sin6_addr.s6_addr));
+			    &sain6->sin6_addr.s6_addr,
+			    sizeof(sain6->sin6_addr.s6_addr));
 			memset(&rio.rule.dst.addr.v.a.mask.addr8, 0xff, 16);
 		}
 
 		pio.addr.addr.type = PF_ADDR_TABLE;
 		(void)strlcpy(pio.addr.addr.v.tblname, service->name,
-			      sizeof(pio.addr.addr.v.tblname));
+		    sizeof(pio.addr.addr.v.tblname));
 		if (ioctl(env->pf->dev, DIOCADDADDR, &pio) == -1)
 			fatal("sync_ruleset: cannot add address to pool");
 
@@ -328,7 +328,7 @@ flush_rulesets(struct hostated *env)
 		strlcat(anchor, service->name, sizeof(anchor));
 		transaction_init(env, anchor);
 		transaction_commit(env);
-	}	
+	}
 	strlcpy(anchor, HOSTATED_ANCHOR, sizeof(anchor));
 	transaction_init(env, anchor);
 	transaction_commit(env);

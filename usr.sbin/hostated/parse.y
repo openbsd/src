@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2006/12/16 11:45:07 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.2 2006/12/16 12:42:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -74,16 +74,16 @@ struct sym {
 	char			*val;
 };
 
-int			 symset(const char *, const char *, int);
-char			*symget(const char *);
-int			 cmdline_symset(char *);
+int		 symset(const char *, const char *, int);
+char		*symget(const char *);
+int		 cmdline_symset(char *);
 
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
 int		 host_dns(const char *, struct addresslist *,
-			  int, in_port_t, const char *);
+		    int, in_port_t, const char *);
 int		 host(const char *, struct addresslist *,
-		      int, in_port_t, const char *);
+		    int, in_port_t, const char *);
 
 typedef struct {
 	union {
@@ -117,7 +117,7 @@ grammar		: /* empty */
 		| grammar error '\n'		{ errors++; }
 		;
 
-number		: STRING 		{
+number		: STRING	{
 			const char	*estr;
 
 			$$ = strtonum($1, 0, UINT_MAX, &estr);
@@ -142,7 +142,7 @@ varset		: STRING '=' STRING	{
 main		: INTERVAL number	{ conf->interval = $2; }
 		;
 
-service		: SERVICE STRING 	{
+service		: SERVICE STRING	{
 			struct service *srv;
 
 			TAILQ_FOREACH(srv, &conf->services, entry)
@@ -156,12 +156,12 @@ service		: SERVICE STRING 	{
 			if ((srv = calloc(1, sizeof (*srv))) == NULL)
 				fatal("out of memory");
 
-			if (strlcpy(srv->name, $2, sizeof (srv->name)) >=
-					sizeof (srv->name)) {
+			if (strlcpy(srv->name, $2, sizeof(srv->name)) >=
+			    sizeof(srv->name)) {
 				yyerror("service name truncated");
 				YYERROR;
 			}
-			free ($2);
+			free($2);
 			srv->id = last_service_id++;
 			if (last_service_id == UINT_MAX) {
 				yyerror("too many services defined");
@@ -183,13 +183,13 @@ service		: SERVICE STRING 	{
 			if (service->backup == NULL)
 				service->backup = &conf->empty_table;
 			else if (service->backup->port !=
-			         service->table->port) {
+			    service->table->port) {
 				yyerror("service %s uses two different ports "
-					"for its table and backup table",
-					service->name);
+				    "for its table and backup table",
+				    service->name);
 				YYERROR;
 			}
-			
+
 			if (!(service->flags & F_DISABLE))
 				service->flags |= F_ADD;
 			TAILQ_INSERT_HEAD(&conf->services, service, entry);
@@ -200,7 +200,7 @@ serviceopts_l	: serviceopts_l serviceoptsl nl
 		| serviceoptsl optnl
 		;
 
-serviceoptsl	: TABLE STRING 			{
+serviceoptsl	: TABLE STRING	{
 			struct table *tb;
 
 			TAILQ_FOREACH(tb, &conf->tables, entry)
@@ -217,7 +217,7 @@ serviceoptsl	: TABLE STRING 			{
 				free($2);
 			}
 		}
-		| BACKUP TABLE STRING 		{
+		| BACKUP TABLE STRING	{
 			struct table *tb;
 
 			if (service->backup) {
@@ -270,7 +270,7 @@ serviceoptsl	: TABLE STRING 			{
 		}
 		;
 
-table		: TABLE STRING 			{
+table		: TABLE STRING	{
 			struct table *tb;
 
 			TAILQ_FOREACH(tb, &conf->tables, entry)
@@ -281,12 +281,12 @@ table		: TABLE STRING 			{
 				free($2);
 				YYERROR;
 			}
-			
+
 			if ((tb = calloc(1, sizeof (*tb))) == NULL)
 				fatal("out of memory");
-			
-			if (strlcpy(tb->name, $2, sizeof (tb->name)) >=
-					sizeof (tb->name)) {
+
+			if (strlcpy(tb->name, $2, sizeof(tb->name)) >=
+			    sizeof(tb->name)) {
 				yyerror("table name truncated");
 				YYERROR;
 			}
@@ -296,9 +296,9 @@ table		: TABLE STRING 			{
 				yyerror("too many tables defined");
 				YYERROR;
 			}
-			free ($2);
+			free($2);
 			table = tb;
-		} '{' optnl tableopts_l '}' 	{
+		} '{' optnl tableopts_l '}'	{
 			if (table->port == 0) {
 				yyerror("table %s has no port", table->name);
 				YYERROR;
@@ -320,25 +320,25 @@ tableopts_l	: tableopts_l tableoptsl nl
 		| tableoptsl optnl
 		;
 
-tableoptsl	: host 				{
+tableoptsl	: host			{
 			$1->tableid = table->id;
 			$1->tablename = table->name;
 			TAILQ_INSERT_HEAD(&table->hosts, $1, entry);
 		}
-		| TIMEOUT number 		{
+		| TIMEOUT number	{
 			table->timeout = $2;
 		}
-		| CHECK ICMP 			{
+		| CHECK ICMP		{
 			table->check = CHECK_ICMP;
 		}
-		| CHECK TCP 			{
+		| CHECK TCP		{
 			table->check = CHECK_TCP;
 		}
 		| CHECK HTTP STRING CODE number {
 			table->check = CHECK_HTTP_CODE;
 			table->retcode = $5;
-			if (strlcpy(table->path, $3, sizeof (table->path)) >=
-					sizeof (table->path)) {
+			if (strlcpy(table->path, $3, sizeof(table->path)) >=
+			    sizeof(table->path)) {
 				yyerror("http path truncated");
 				free($3);
 				YYERROR;
@@ -346,8 +346,8 @@ tableoptsl	: host 				{
 		}
 		| CHECK HTTP STRING DIGEST STRING {
 			table->check = CHECK_HTTP_DIGEST;
-			if (strlcpy(table->path, $3, sizeof (table->path)) >=
-					sizeof (table->path)) {
+			if (strlcpy(table->path, $3, sizeof(table->path)) >=
+			    sizeof(table->path)) {
 				yyerror("http path truncated");
 				free($3);
 				free($5);
@@ -378,12 +378,12 @@ interface	: /*empty*/ 		{ $$ = NULL; }
 		;
 
 host		: HOST STRING {
-                        struct host *r;
+			struct host *r;
 			struct address *a;
 			struct addresslist al;
 
-                        if ((r = calloc(1, sizeof (*r))) == NULL)
-                                fatal("out of memory");
+			if ((r = calloc(1, sizeof(*r))) == NULL)
+				fatal("out of memory");
 
 			TAILQ_INIT(&al);
 			if (host($2, &al, 1, 0, NULL) <= 0) {
@@ -395,8 +395,8 @@ host		: HOST STRING {
 			memcpy(&r->ss, &a->ss, sizeof(r->ss));
 			free(a);
 
-                        if (strlcpy(r->name, $2, sizeof (r->name)) >=
-					sizeof (r->name)) {
+			if (strlcpy(r->name, $2, sizeof(r->name)) >=
+			    sizeof(r->name)) {
 				yyerror("host name truncated");
 				free($2);
 				YYERROR;
@@ -683,7 +683,7 @@ parse_config(struct hostated *x_conf, const char *filename, int opts)
 	conf->empty_table.id = EMPTY_TABLE;
 	conf->empty_table.flags |= F_DISABLE;
 	(void)strlcpy(conf->empty_table.name, "empty",
-		      sizeof(conf->empty_table.name)); 
+	    sizeof(conf->empty_table.name));
 
 	conf->interval = CHECK_INTERVAL;
 	conf->opts = opts;
@@ -835,7 +835,7 @@ host_v6(const char *s)
 	bzero(&ina6, sizeof(ina6));
 	if (inet_pton(AF_INET6, s, &ina6) != 1)
 		return (NULL);
-	
+
 	if ((h = calloc(1, sizeof(*h))) == NULL)
 		fatal(NULL);
 	sin6 = (struct sockaddr_in6 *)&h->ss;
@@ -912,7 +912,7 @@ host(const char *s, struct addresslist *al, int max,
      in_port_t port, const char *ifname)
 {
 	struct address *h;
-		
+
 	h = host_v4(s);
 
 	/* IPv6 address? */
@@ -928,7 +928,7 @@ host(const char *s, struct addresslist *al, int max,
 				return (-1);
 			}
 		}
-		
+
 		TAILQ_INSERT_HEAD(al, h, entry);
 		return (1);
 	}
