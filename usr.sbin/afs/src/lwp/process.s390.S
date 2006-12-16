@@ -1,3 +1,4 @@
+/*	$OpenBSD: process.s390.S,v 1.3 2006/12/16 17:39:19 tsi Exp $ */
 /*
  * Copyright (c) 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -49,27 +50,16 @@
 	 * newsp - r4
 	 */
 
-	 /*
-	  * struct savearea {
-	  *      char    *topstack;
-	  * }
-	  */
-
-P_PRE:	          .long   PRE_Block
-P_ABORT:	        .long   abort
-
 savecontext:
 	        stm     %r7,%r15,28(%r15)       /* Save our registers */
 	        lr      %r1,%r15
 	        ahi     %r15,-96
 	        st      %r1,0(%r15)
 
-	/*        larl    %r5,P_PRE               /* Get A((PRE_Block)) */
-	        bras    %r5,.L0                 /* Get A(A(PRE_Block)) */
-	        .long   PRE_Block
-	.L0:
-	        l       %r5,0(%r5)              /* Get A(PRE_Block) */
-	        mvi     0(%r5),1                /* Set it */			/* XXX should be a word */
+	        l       %r5,P_PRE               /* Get A(PRE_Block) */
+		la	%r7,1
+		st	%r7,0(%r5)		/* Set it */
+	        l	%r7,124(%r15)		/* Restore %r7 */
 	        st      %r15,0(%r3)             /* Save stack pointer */
 	        ltr     %r4,%r4                 /* If new sp is 0 */
 	        jz      .L1                     /* ... don't change sp */
@@ -79,11 +69,7 @@ savecontext:
 
 	        /* Can't get here....*/
 
-	/*        larl    %r5,P_ABORT */
-	        bras    %r5,.L2
-	        .long   abort
-	.L2:
-	        l       %r5,0(%r5)
+	        l       %r5,P_ABORT
 	        basr    %r14,%r5
 
 	.savecontext_end:
@@ -102,12 +88,9 @@ savecontext:
 returnto:
 	        l       %r15,0(%r2)             /* New frame, to get correct pointer
 	*/
-	/*        larl    %r5,P_PRE               /* Get A((PRE_Block)) */
-	        bras    %r5,.L3                 /* Get A(A(PRE_Block)) */
-	        .long   PRE_Block
-	.L3:
-	        l       %r5,0(%r5)              /* Get A(PRE_Block) */
-	        mvi     0(%r5),0                /* Clear it */				/* XXX should be a word */
+	        l       %r5,P_PRE               /* Get A(PRE_Block) */
+		sr	%r7,%r7
+		st	%r7,0(%r5)		/* Clear it */
 	        l       %r15,0(%r15)            /* Point to next stack frame */
 	        lm      %r7,%r15,28(%r15)       /* Restore registers */
 	        br      %r14                    /* Return */
@@ -115,13 +98,18 @@ returnto:
 	        /* Can't happen */
 
 	        la      %r2,1234
-	/*        larl    %r9,P_ABORT */
-	        bras    %r9,.L4
-	        .long   abort
-	.L4:
-	        l       %r9,0(%r9)
+	        l       %r9,P_ABORT
 	        basr    %r14,%r9
 
 	.returnto_end:
 	        .size   returnto,.returnto_end-returnto
 	
+	 /*
+	  * struct savearea {
+	  *      char    *topstack;
+	  * }
+	  */
+
+P_PRE:	        .long   PRE_Block
+P_ABORT:	.long   abort
+
