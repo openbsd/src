@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostatectl.c,v 1.1 2006/12/16 11:45:07 reyk Exp $	*/
+/*	$OpenBSD: hostatectl.c,v 1.2 2006/12/16 12:47:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -186,21 +186,21 @@ show_summary_msg(struct imsg *imsg)
 	case IMSG_CTL_SERVICE:
 		service = imsg->data;
 		printf("service\t%4u\t%-16s\t%s\n",
-		       service->id, service->name,
-		       print_service_status(service->flags));
+		    service->id, service->name,
+		    print_service_status(service->flags));
 		break;
 	case IMSG_CTL_TABLE:
 		table = imsg->data;
 		printf("table\t%4u\t%-16s\t%s",
-		       table->id, table->name,
-		       print_table_status(table->up, table->flags));
+		    table->id, table->name,
+		    print_table_status(table->up, table->flags));
 		printf("\n");
 		break;
 	case IMSG_CTL_HOST:
 		host = imsg->data;
 		printf("host\t%4u\t%-16s\t%s\n",
-		       host->id, host->name,
-		       print_host_status(host->up, host->flags));
+		    host->id, host->name,
+		    print_host_status(host->up, host->flags));
 		break;
 	case IMSG_CTL_END:
 		return (1);
@@ -231,13 +231,13 @@ char *
 print_service_status(int flags)
 {
 	if (flags & F_DISABLE) {
-		return("disabled");
+		return ("disabled");
 	} else if (flags & F_DOWN) {
-		return("down");
+		return ("down");
 	} else if (flags & F_BACKUP) {
-		return("active (using backup table)");
+		return ("active (using backup table)");
 	} else
-		return("active");
+		return ("active");
 }
 
 char *
@@ -261,15 +261,15 @@ char *
 print_host_status(int status, int fl)
 {
 	if (fl & F_DISABLE)
-		return("disabled");
+		return ("disabled");
 
 	switch (status) {
 	case HOST_DOWN:
-		return("down");
+		return ("down");
 	case HOST_UNKNOWN:
-		return("unknown");
+		return ("unknown");
 	case HOST_UP:
-		return("up");
+		return ("up");
 	default:
 		errx(1, "invalid status: %d", status);
 	}
