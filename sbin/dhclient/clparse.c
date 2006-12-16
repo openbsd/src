@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.30 2006/12/15 14:56:38 stevesk Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.31 2006/12/16 15:13:45 stevesk Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -45,8 +45,6 @@
 
 extern struct interface_info *ifi;
 
-char client_script_name[] = "/sbin/dhclient-script";
-
 /*
  * client-conf-file :== client-declarations EOF
  * client-declarations :== <nil>
@@ -72,7 +70,7 @@ read_client_conf(void)
 	config->backoff_cutoff = 15;
 	config->initial_interval = 3;
 	config->bootp_policy = ACCEPT;
-	config->script_name = client_script_name;
+	config->script_name = _PATH_DHCLIENT_SCRIPT;
 	config->requested_options
 	    [config->requested_option_count++] = DHO_SUBNET_MASK;
 	config->requested_options
