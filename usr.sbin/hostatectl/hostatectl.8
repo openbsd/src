@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostatectl.8,v 1.1 2006/12/16 11:45:07 reyk Exp $
+.\" $OpenBSD: hostatectl.8,v 1.2 2006/12/16 11:48:38 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -37,26 +37,33 @@ The following commands are available:
 .It Cm show summary
 Show status of services, tables and hosts.
 .It Cm service disable id
-Disable a service. If it has
+Disable a service.
+If it has
 .Xr pf 4
-redirection rules installed, remove them. Mark the service's main table and -
+redirection rules installed, remove them.
+Mark the service's main table and -
 if applicable - backup table disabled as well.
 .It Cm service enable id
-Enable a service. Mark the service's main table and - if applicable - backup
+Enable a service.
+Mark the service's main table and - if applicable - backup
 table enabled as well.
 .It Cm table disable id
-Disable a table. Consider all hosts disabled. If it is a 
-main table of a service which has a non-empty backup table,
+Disable a table.
+Consider all hosts disabled.
+If it is a main table of a service which has a non-empty backup table,
 swap the contents of the
 .Xr pf 4
 table with those of the backup table.
 .It Cm table enable id
-Enable a table. Start doing checks for all hosts that aren't
-individually disabled again.
+Enable a table.
+Start doing checks for all hosts that aren't individually disabled
+again.
 .It Cm host disable id
-Disable a host. Treat it as though it were always down.
+Disable a host.
+Treat it as though it were always down.
 .It Cm host enable id
-Enable the host. Start checking its health again.
+Enable the host.
+Start checking its health again.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/hostated.sockXX" -compact
