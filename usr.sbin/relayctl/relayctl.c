@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.3 2006/12/16 14:21:15 bernd Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.4 2006/12/16 15:02:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -104,27 +104,27 @@ main(int argc, char *argv[])
 		break;
 	case SERV_ENABLE:
 		imsg_compose(ibuf, IMSG_CTL_SERVICE_ENABLE, 0, 0,
-			     &res->id, sizeof(res->id));
+		     &res->id, sizeof(res->id));
 		break;
 	case SERV_DISABLE:
 		imsg_compose(ibuf, IMSG_CTL_SERVICE_DISABLE, 0, 0,
-			     &res->id, sizeof(res->id));
+		    &res->id, sizeof(res->id));
 		break;
 	case TABLE_ENABLE:
 		imsg_compose(ibuf, IMSG_CTL_TABLE_ENABLE, 0, 0,
-			     &res->id, sizeof(res->id));
+		     &res->id, sizeof(res->id));
 		break;
 	case TABLE_DISABLE:
 		imsg_compose(ibuf, IMSG_CTL_TABLE_DISABLE, 0, 0,
-			     &res->id, sizeof(res->id));
+		     &res->id, sizeof(res->id));
 		break;
 	case HOST_ENABLE:
 		imsg_compose(ibuf, IMSG_CTL_HOST_ENABLE, 0, 0,
-			     &res->id, sizeof(res->id));
+		     &res->id, sizeof(res->id));
 		break;
 	case HOST_DISABLE:
 		imsg_compose(ibuf, IMSG_CTL_HOST_DISABLE, 0, 0,
-			     &res->id, sizeof(res->id));
+		     &res->id, sizeof(res->id));
 		break;
 	case SHUTDOWN:
 		imsg_compose(ibuf, IMSG_CTL_SHUTDOWN, 0, 0, NULL, 0);
@@ -252,8 +252,7 @@ print_table_status(int up, int fl)
 	} else if (!up) {
 		snprintf(buf, sizeof(buf) - 1, "empty");
 	} else
-		snprintf(buf, sizeof(buf) - 1, "active (%d hosts up)",
-			 up);
+		snprintf(buf, sizeof(buf) - 1, "active (%d hosts up)", up);
 	return (buf);
 }
 
