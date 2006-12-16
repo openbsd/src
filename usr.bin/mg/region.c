@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.24 2006/07/25 08:22:32 kjell Exp $	*/
+/*	$OpenBSD: region.c,v 1.25 2006/12/16 17:00:03 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -240,15 +240,6 @@ setsize(struct region *rp, RSIZE size)
 	return (TRUE);
 }
 
-#ifdef PREFIXREGION
-/*
- * Implements one of my favorite keyboard macros; put a string at the
- * beginning of a number of lines in a buffer.	The quote string is
- * settable by using set-prefix-string.	 Great for quoting mail, which
- * is the real reason I wrote it, but also has uses for creating bar
- * comments (like the one you're reading) in C code.
- */
-
 #define PREFIXLENGTH 40
 static char	prefix_string[PREFIXLENGTH] = {'>', '\0'};
 
@@ -298,7 +289,7 @@ prefixregion(int f, int n)
 }
 
 /*
- * Set line prefix string.
+ * Set line prefix string. Used by prefixregion.
  */
 /* ARGSUSED */
 int
@@ -325,7 +316,6 @@ setprefix(int f, int n)
 		retval = FALSE;
 	return (retval);
 }
-#endif /* PREFIXREGION */
 
 int
 region_get_data(struct region *reg, char *buf, int len)
