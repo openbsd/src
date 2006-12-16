@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.14 2006/12/03 17:51:41 damien Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.15 2006/12/16 15:32:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1243,8 +1243,8 @@ uath_data_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
 	m->m_data = data->buf + sizeof (uint32_t);
-	m->m_pkthdr.len = m->m_len =
-	    betoh32(desc->len) - sizeof (struct uath_rx_desc);
+	m->m_pkthdr.len = m->m_len = betoh32(desc->len) -
+	    sizeof (struct uath_rx_desc) - IEEE80211_CRC_LEN;
 
 	data = ndata;
 
