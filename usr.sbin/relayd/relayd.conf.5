@@ -1,0 +1,214 @@
+.\"	$OpenBSD: relayd.conf.5,v 1.1 2006/12/16 11:45:07 reyk Exp $
+.\"
+.\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd November 1, 2006
+.Dt HOSTATED.CONF 5
+.Os
+.Sh NAME
+.Nm hostated.conf
+.Nd Host Status daemon configuration file.
+.Sh DESCRIPTION
+The
+.Xr hostated 8
+daemon maintains 
+.Xr pf 4
+tables up to date.
+.Sh SECTIONS
+The
+.Nm
+configuration file is divided into four main sections.
+.Bl -tag -width xxxx
+.It Sy Macros
+User-defined variables may be defined and used later, simplifying the
+configuration file.
+.It Sy Global Configuration
+Global settings for
+.Xr hostated 8 .
+.It Sy Tables
+Table definitions describe the content of a 
+.Xr pf 4
+table and the method used for checking the health of the hosts
+they contain.
+.It Sy Services
+Services will be translated to
+.Xr pf 4
+rdr rules if their table or backup table have content.
+.El
+.Sh MACROS
+Macros can be defined that will later be expanded in context.
+Macro names must start with a letter, and may contain letters, digits,
+and underscores.
+Macro names may not be reserved words (for example,
+.Ic table ,
+.Ic service ,
+or
+.Ic timeout ) .
+Macros are not expanded inside quotes.
+.Pp
+For example:
+.Bd -literal -offset indent
+www1="10.0.0.1"
+www2="10.0.0.2"
+table webhosts {
+	check tcp
+	timeout 300
+	real port 80
+	host $www1
+	host $www2
+}
+.Ed
+.Sh GLOBAL CONFIGURATION
+Only one global setting can be set.
+.Pp
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic interval Ar number
+.Xc
+Set the interval in seconds at which the hosts will be checked.
+The default interval is 10 seconds.
+.El
+.Sh TABLES
+Tables are used to group a set of hosts that can be checked using the same
+method. Only one health-checking method can be used per table.
+Table specific configuration directives are described below.
+.Bl -tag -width Ds
+.It Ic check tcp
+Use a simple tcp connect to check that hosts are up.
+.It Ic check icmp
+Ping hosts in this table to determine wether they are up or not.
+This method will automatically use icmp or icmpv6 depending on the
+address family of each host.
+.It Ic check http Ar path Ic code Ar number
+For each host in the table, verify that retrieving the URL
+.Ar path
+gives the HTTP return code
+.Ar number
+.It Ic check http Ar path Ic digest Ar string
+For each host in the table, verify that retrieving the URL
+.Ar path
+produces a content whose SHA1 digest is
+.Ar digest
+. The digest does not take the HTTP headers into account. To compute the
+digest you can use this simple command:
+.Bd -literal -offset 2n
+ftp -o - http://host[:port]/path | sha1
+
+.Ed
+This will give you a digest of the form
+.Bd -literal -offset 2n
+a9993e36476816aba3e25717850c26c9cd0d89d
+
+.Ed
+that you can use as-is in your digest statement.
+.It Ic timeout Ar number
+Set the timeout in milliseconds for each host that is checked.
+The default timeout is 200 milliseconds.
+.It Ic real port Ar number
+When using the tcp or http checking methods, use this port to connect
+to hosts. This parameter is mandatory. Main and backup tables need
+to have the same real port.
+.It Ic host Ar address
+Add the host whose address is
+.Ar address
+to the list of hosts to be checked in this table.
+Each table needs at least one host.
+.It Ic disable
+Start the table disabled, no hosts will be checked in this table.
+The table can be later enabled through
+.Xr hostatectl 8 .
+.El
+.Sh SERVICES
+Services represent a
+.Xr pf 4
+rdr rule, they are used to specify which addresses will be redirected 
+to the hosts in the specified tables.
+The configuration directives that are valid in this context are described
+below.
+.Bl -tag -width Ds
+.It Ic virtual ip Ar address Ic port Ar number
+Specify an address and a port that will be used to redirect requests
+to the hosts in the main or backup table. 
+Optionally an interface name can be specified like this
+.Bd -literal -offset indent
+interface ``ifname''
+
+.Ed
+to specify which interface the rdr rule will be enabled on.
+.It Ic table Ar name
+Specify the main table to be used. This is mandatory.
+.It Ic backup table Ar name
+Specify the table to switch to when all hosts in the main table
+are seen as down or disabled.
+.It Ic disable
+Set the service initially disabled. It can be later enabled through
+.It Ic tag Ar name
+Automatically tag packets passing through the
+.Xr pf 4
+rdr rule with the name supplied. This allows for easier filter rules
+in your main
+.Xr pf 4
+configuration.
+.Xr hostatectl 5 .
+.El
+.Sh EXAMPLE
+This configuration file would create a service 'www' which load-balances
+4 hosts and falls back to 1 host containing a ``sorry page'':
+.Bd -literal -offset indent
+##
+##
+www1=front-www1.private.example.com
+www2=front-www2.private.example.com
+www3=front-www3.private.example.com
+www4=front-www4.private.example.com
+
+interval 5
+
+table phphosts {
+	timeout 300
+	real port 8080
+	check http "/" digest 630aa3c2f...
+	host $www1
+	host $www2
+	host $www3
+	host $www4
+}
+
+table sorryhost {
+	check icmp
+	disable
+	timeout 300
+	real port 8080
+	host sorryhost.private.example.com
+}
+
+service www { 
+	virtual ip www.example.com port 8080 interface trunk0
+	virtual ip www6.example.com port 80 interface trunk0
+
+	tag HOSTATED
+	table phphosts
+	backup table sorryhost
+}
+.Ed
+.Sh FILES
+.Bl -tag -width "/etc/hostated.conf" -compact
+.It Pa /etc/hostated.conf
+.Xr hostated 8
+configuration file
+.El
+.Sh SEE ALSO
+.Xr hostated 8 ,
+.Xr hostatectl 8 .
