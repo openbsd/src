@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilms.c,v 1.3 2003/03/28 00:20:32 miod Exp $	*/
+/*	$OpenBSD: hilms.c,v 1.4 2006/12/16 20:08:44 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -46,7 +46,8 @@ struct hilms_softc {
 	struct hildev_softc sc_hildev;
 
 	int		sc_features;
-	int		sc_axes;
+	u_int		sc_buttons;
+	u_int		sc_axes;
 	int		sc_enabled;
 	int		sc_buttonstate;
 
@@ -101,7 +102,7 @@ hilmsattach(struct device *parent, struct device *self, void *aux)
 	struct hilms_softc *sc = (void *)self;
 	struct hil_attach_args *ha = aux;
 	struct wsmousedev_attach_args a;
-	int iob, buttons, rx, ry;
+	int iob, rx, ry;
 
 	sc->hd_code = ha->ha_code;
 	sc->hd_type = ha->ha_type;
@@ -112,7 +113,7 @@ hilmsattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Interpret the identification bytes, if any
 	 */
-	buttons = rx = ry = 0;
+	rx = ry = 0;
 	if (ha->ha_infolen > 1) {
 		sc->sc_features = ha->ha_info[1];
 		sc->sc_axes = sc->sc_features & HIL_AXMASK;
@@ -133,17 +134,17 @@ hilmsattach(struct device *parent, struct device *self, void *aux)
 				sc->sc_features &= ~(HIL_IOB | HILIOB_PIO);
 			} else {
 				iob = ha->ha_info[iob];
-				buttons = iob & HILIOB_BMASK;
+				sc->sc_buttons = iob & HILIOB_BMASK;
 				sc->sc_features |= (iob & HILIOB_PIO);
 			}
 		}
 	}
 
 	printf(", %d axes", sc->sc_axes);
-	if (buttons == 1)
+	if (sc->sc_buttons == 1)
 		printf(", 1 button");
-	else if (buttons > 1)
-		printf(", %d buttons", buttons);
+	else if (sc->sc_buttons > 1)
+		printf(", %d buttons", sc->sc_buttons);
 	if (sc->sc_features & HILIOB_PIO)
 		printf(", pressure sensor");
 	if (sc->sc_features & HIL_ABSOLUTE) {
@@ -294,6 +295,13 @@ hilms_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 				dz = 0;
 		} else
 			dy = dz = 0;
+
+		/*
+		 * Correct Y direction for button boxes.
+		 */
+		if ((sc->sc_features & HIL_ABSOLUTE) == 0 &&
+		    sc->sc_buttons == 0)
+			dy = -dy;
 	} else
 		dx = dy = dz = flags = 0;
 
