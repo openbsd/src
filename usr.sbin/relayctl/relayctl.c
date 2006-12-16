@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.4 2006/12/16 15:02:35 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.5 2006/12/16 17:52:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -100,11 +100,11 @@ main(int argc, char *argv[])
 		/* not reached */
 	case SHOW_SUM:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_SUM, 0, 0, NULL, 0);
-		printf("type\t\%4s\t%-16s\tstatus\n\n", "id", "name");
+		printf("type\t%4s\t%-16s\tstatus\n\n", "id", "name");
 		break;
 	case SERV_ENABLE:
 		imsg_compose(ibuf, IMSG_CTL_SERVICE_ENABLE, 0, 0,
-		     &res->id, sizeof(res->id));
+		    &res->id, sizeof(res->id));
 		break;
 	case SERV_DISABLE:
 		imsg_compose(ibuf, IMSG_CTL_SERVICE_DISABLE, 0, 0,
@@ -112,19 +112,19 @@ main(int argc, char *argv[])
 		break;
 	case TABLE_ENABLE:
 		imsg_compose(ibuf, IMSG_CTL_TABLE_ENABLE, 0, 0,
-		     &res->id, sizeof(res->id));
+		    &res->id, sizeof(res->id));
 		break;
 	case TABLE_DISABLE:
 		imsg_compose(ibuf, IMSG_CTL_TABLE_DISABLE, 0, 0,
-		     &res->id, sizeof(res->id));
+		    &res->id, sizeof(res->id));
 		break;
 	case HOST_ENABLE:
 		imsg_compose(ibuf, IMSG_CTL_HOST_ENABLE, 0, 0,
-		     &res->id, sizeof(res->id));
+		    &res->id, sizeof(res->id));
 		break;
 	case HOST_DISABLE:
 		imsg_compose(ibuf, IMSG_CTL_HOST_DISABLE, 0, 0,
-		     &res->id, sizeof(res->id));
+		    &res->id, sizeof(res->id));
 		break;
 	case SHUTDOWN:
 		imsg_compose(ibuf, IMSG_CTL_SHUTDOWN, 0, 0, NULL, 0);
