@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.2 2006/12/16 12:47:18 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.3 2006/12/16 17:53:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -53,7 +53,6 @@ struct token {
 };
 
 static const struct token t_main[];
-static const struct token t_show[];
 static const struct token t_service[];
 static const struct token t_table[];
 static const struct token t_host[];
