@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.17 2004/06/29 11:35:56 msf Exp $ */
+/* $OpenBSD: signature.c,v 1.18 2006/12/16 06:18:35 ray Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -1150,7 +1150,7 @@ kn_sign_assertion(char *buf, int buflen, char *key, char *sigalg, int vflag)
 	return (char *) NULL;
     }
 
-    if (sigalg[strlen(sigalg) - 1] != ':')
+    if (sigalg[0] == '\0' || sigalg[strlen(sigalg) - 1] != ':')
     {
 	keynote_errno = ERROR_SYNTAX;
 	return (char *) NULL;
