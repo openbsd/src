@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.22 2006/11/05 14:39:32 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.23 2006/12/16 20:07:13 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * All rights reserved.
@@ -284,9 +284,18 @@ hil_intr(void *v)
 		return (0);
 
 	stat = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_STAT);
+
+	/*
+	 * This should never happen if the interrupt comes from the
+	 * loop.
+	 */
+	if ((stat & HIL_DATA_RDY) == 0)
+		return (0);	/* not for us */
+
 	c = bus_space_read_1(sc->sc_bst, sc->sc_bsh,
 	    HILP_DATA);	/* clears interrupt */
 	DELAY(1);
+
 	hil_process_int(sc, stat, c);
 
 	if (sc->sc_status != HIL_STATUS_BUSY)
