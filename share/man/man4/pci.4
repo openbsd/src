@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.198 2006/12/12 23:54:44 pedro Exp $
+.\"	$OpenBSD: pci.4,v 1.199 2006/12/16 22:09:38 grange Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -94,8 +94,6 @@ Adaptec PCI/PCI-X AIC79xx-based Ultra320 SCSI interface
 Buslogic SCSI interface
 .It Xr iha 4
 Initio INIC-940/950 based PCI SCSI interface
-.It Xr ips 4
-IBM ServeRAID controller
 .It Xr isp 4
 Qlogic based SCSI or FibreChannel SCSI interface
 .It Xr mpi 4
@@ -117,7 +115,7 @@ PCI IDE controller driver
 .Ss RAID and cache controllers
 .Bl -tag -width 10n -offset ind -compact
 .It Xr aac 4
-Adaptec SCSI RAID controller
+Adaptec SATA/SCSI RAID controller
 .It Xr ami 4
 American Megatrends Inc. MegaRAID PATA/SATA/SCSI RAID controller
 .It Xr arc 4
@@ -129,13 +127,15 @@ Compaq Smart ARRAY 5/6 SAS/SATA/SCSI RAID controller
 .It Xr dpt 4
 DPT EATA SCSI RAID controller
 .It Xr gdt 4
-ICP-Vortex and Intel GDT SCSI RAID controller
+ICP-Vortex and Intel GDT SATA/SCSI RAID controller
 .It Xr iop 4
 Generic
 .Tn I2O
 specification
 .Tn RAID
 controllers
+.It Xr ips 4
+IBM SATA/SCSI ServeRAID controller
 .It Xr mfi 4
 LSI Logic & Dell MegaRAID SAS RAID controller
 .It Xr twe 4
