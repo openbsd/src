@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.18 2006/10/03 19:49:06 pedro Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.19 2006/12/16 12:44:05 krw Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -104,8 +104,7 @@ fatblock(pmp, ofs, bnp, sizep, bop)
 	uint32_t bn, size;
 
 	bn = ofs / pmp->pm_fatblocksize * pmp->pm_fatblocksec;
-	size = min(pmp->pm_fatblocksec, pmp->pm_FATsecs - bn)
-	    * pmp->pm_BytesPerSec;
+	size = min(pmp->pm_fatblocksec, pmp->pm_FATsecs - bn) * DEV_BSIZE;
 	bn += pmp->pm_fatblk + pmp->pm_curfat * pmp->pm_FATsecs;
 
 	if (bnp)
@@ -365,7 +364,8 @@ updatefats(pmp, bp, fatbn)
 				+ ffs(pmp->pm_inusemap[cn / N_INUSEBITS]
 				      ^ (u_int)-1) - 1;
 		}
-		if (bread(pmp->pm_devvp, pmp->pm_fsinfo, 1024, NOCRED, &bpn) != 0) {
+		if (bread(pmp->pm_devvp, pmp->pm_fsinfo, fsi_size(pmp), NOCRED,
+		    &bpn) != 0) {
 			/*
 			 * Ignore the error, but turn off FSInfo update for the future.
 			 */

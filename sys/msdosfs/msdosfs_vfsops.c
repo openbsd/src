@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.45 2006/12/15 03:04:24 krw Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.46 2006/12/16 12:44:05 krw Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -294,7 +294,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	 * Read the boot sector of the filesystem, and then check the
 	 * boot signature.  If not a dos boot sector then error out.
 	 */
-	if ((error = bread(devvp, 0, 512, NOCRED, &bp)) != 0)
+	if ((error = bread(devvp, 0, 2048, NOCRED, &bp)) != 0)
 		goto error_exit;
 	bp->b_flags |= B_AGE;
 	bsp = (union bootsector *)bp->b_data;
@@ -321,6 +321,9 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	pmp->pm_SecPerTrack = getushort(b50->bpbSecPerTrack);
 	pmp->pm_Heads = getushort(b50->bpbHeads);
 	pmp->pm_Media = b50->bpbMedia;
+
+	/* Determine the number of DEV_BSIZE blocks in a MSDOSFS sector */
+	pmp->pm_BlkPerSec = pmp->pm_BytesPerSec / DEV_BSIZE;
 
     	if (!pmp->pm_BytesPerSec || !SecPerClust || pmp->pm_SecPerTrack > 63) {
 		error = EFTYPE;
@@ -352,25 +355,44 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	} else
 	        pmp->pm_flags |= MSDOSFS_FATMIRROR;
 
-	pmp->pm_fatblk = pmp->pm_ResSectors;
+	/*
+	 * More sanity checks:
+	 *	MSDOSFS sectors per cluster: >0 && power of 2
+	 *	MSDOSFS sector size: >= DEV_BSIZE && power of 2
+	 *	HUGE sector count: >0
+	 * 	FAT sectors: >0
+	 */
+	if ((SecPerClust == 0) || (SecPerClust & (SecPerClust - 1)) ||
+	    (pmp->pm_BytesPerSec < DEV_BSIZE) ||
+	    (pmp->pm_BytesPerSec & (pmp->pm_BytesPerSec - 1)) ||
+	    (pmp->pm_HugeSectors == 0) || (pmp->pm_FATsecs == 0)) {
+		error = EINVAL;
+		goto error_exit;
+	}		
+	
+	pmp->pm_HugeSectors *= pmp->pm_BlkPerSec;
+	pmp->pm_HiddenSects *= pmp->pm_BlkPerSec;
+	pmp->pm_FATsecs *= pmp->pm_BlkPerSec;
+	pmp->pm_fatblk = pmp->pm_ResSectors * pmp->pm_BlkPerSec;
+	SecPerClust *= pmp->pm_BlkPerSec;
+
 	if (FAT32(pmp)) {
 	        pmp->pm_rootdirblk = getulong(b710->bpbRootClust);
 		pmp->pm_firstcluster = pmp->pm_fatblk
 		        + (pmp->pm_FATs * pmp->pm_FATsecs);
-		pmp->pm_fsinfo = getushort(b710->bpbFSInfo);
+		pmp->pm_fsinfo = getushort(b710->bpbFSInfo) * pmp->pm_BlkPerSec;
 	} else {
 	        pmp->pm_rootdirblk = pmp->pm_fatblk +
 		        (pmp->pm_FATs * pmp->pm_FATsecs);
 		pmp->pm_rootdirsize = (pmp->pm_RootDirEnts * sizeof(struct direntry)
-				       + pmp->pm_BytesPerSec - 1)
-		        / pmp->pm_BytesPerSec;/* in sectors */
+				       + DEV_BSIZE - 1) / DEV_BSIZE;
 		pmp->pm_firstcluster = pmp->pm_rootdirblk + pmp->pm_rootdirsize;
 	}
 
 	pmp->pm_nmbrofclusters = (pmp->pm_HugeSectors - pmp->pm_firstcluster) /
 	    SecPerClust;
 	pmp->pm_maxcluster = pmp->pm_nmbrofclusters + 1;
-	pmp->pm_fatsize = pmp->pm_FATsecs * pmp->pm_BytesPerSec;
+	pmp->pm_fatsize = pmp->pm_FATsecs * DEV_BSIZE;
 
 	if (pmp->pm_fatmask == 0) {
 		if (pmp->pm_maxcluster
@@ -417,14 +439,14 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		pmp->pm_maxcluster = fat_max_clusters - 1;
 	}
 
-	pmp->pm_fatblocksec = pmp->pm_fatblocksize / pmp->pm_BytesPerSec;
-	pmp->pm_bnshift = ffs(pmp->pm_BytesPerSec) - 1;
+	pmp->pm_fatblocksec = pmp->pm_fatblocksize / DEV_BSIZE;
+	pmp->pm_bnshift = ffs(DEV_BSIZE) - 1;
 
 	/*
 	 * Compute mask and shift value for isolating cluster relative byte
 	 * offsets and cluster numbers from a file offset.
 	 */
-	pmp->pm_bpcluster = SecPerClust * pmp->pm_BytesPerSec;
+	pmp->pm_bpcluster = SecPerClust * DEV_BSIZE;
 	pmp->pm_crbomask = pmp->pm_bpcluster - 1;
 	pmp->pm_cnshift = ffs(pmp->pm_bpcluster) - 1;
 
@@ -449,7 +471,8 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	if (pmp->pm_fsinfo) {
 	        struct fsinfo *fp;
 
-		if ((error = bread(devvp, pmp->pm_fsinfo, 1024, NOCRED, &bp)) != 0)
+		if ((error = bread(devvp, pmp->pm_fsinfo, fsi_size(pmp),
+		    NOCRED, &bp)) != 0)
 		        goto error_exit;
 		fp = (struct fsinfo *)bp->b_data;
 		if (!bcmp(fp->fsisig1, "RRaA", 4)

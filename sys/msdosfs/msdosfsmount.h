@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfsmount.h,v 1.17 2006/12/15 03:04:24 krw Exp $	*/
+/*	$OpenBSD: msdosfsmount.h,v 1.18 2006/12/16 12:44:05 krw Exp $	*/
 /*	$NetBSD: msdosfsmount.h,v 1.16 1997/10/17 11:24:24 ws Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@ struct msdosfsmount {
 	mode_t pm_mask;		/* mask to and with file protection bits */
 	struct vnode *pm_devvp;	/* vnode for block device mntd */
 	struct bpb50 pm_bpb;	/* BIOS parameter blk for this fs */
+	uint32_t pm_BlkPerSec;	/* # of DEV_BSIZE blocks in MSDOSFS sector */
 	uint32_t pm_FATsecs;	/* actual number of fat sectors */
 	uint32_t pm_fatblk;	/* block # of first FAT */
 	uint32_t pm_rootdirblk;	/* block # (cluster # for FAT32) of root directory number */
@@ -194,6 +195,10 @@ struct msdosfsmount {
 	((dirclu) == MSDOSFSROOT \
 	 ? roottobn((pmp), (dirofs)) \
 	 : cntobn((pmp), (dirclu)))
+
+/* Calculate size of fsinfo block */
+#define fsi_size(pmp) \
+	(1024 << ((pmp)->pm_BlkPerSec >> 2))
 
 /*
  * Prototypes for MSDOSFS virtual filesystem operations
