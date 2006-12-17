@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.222 2006/12/09 05:10:43 dlg Exp $
+#	$OpenBSD: files.pci,v 1.223 2006/12/17 16:32:35 mbalmer Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -425,6 +425,11 @@ file	dev/pci/wdt.c			wdt	needs-flag
 device	pwdog: pcibus
 attach	pwdog at pci
 file	dev/pci/pwdog.c			pwdog
+
+# Meinberg Funkuhren PCI32
+device	mbg: pcibus
+attach	mbg at pci
+file	dev/pci/mbg.c			mbg
 
 # UHCI USB controller
 attach	uhci at pci with uhci_pci
