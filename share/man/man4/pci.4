@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.199 2006/12/16 22:09:38 grange Exp $
+.\"	$OpenBSD: pci.4,v 1.200 2006/12/17 18:57:50 deraadt Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -331,6 +331,11 @@ NeoMagic 256AV/ZX audio device
 S3 SonicVibes audio device
 .It Xr yds 4
 Yamaha DS-XG audio device
+.El
+.Ss Time receiver devices
+.Bl -tag -width 10n -offset ind -compact
+.It Xr mbg 4
+Meinberg Funkuhren time signal station receiver
 .El
 .Ss Radio receiver devices
 .Bl -tag -width 10n -offset ind -compact
