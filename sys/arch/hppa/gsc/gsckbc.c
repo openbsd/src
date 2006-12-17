@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbc.c,v 1.8 2004/02/13 21:28:19 mickey Exp $	*/
+/*	$OpenBSD: gsckbc.c,v 1.9 2006/12/17 21:27:20 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -714,7 +714,6 @@ pckbc_poll_cmd(self, slot, cmd, len, responselen, respbuf, slow)
 	u_char *respbuf;
 	int slow;
 {
-	struct pckbc_internal *t = self;
 	struct pckbc_devcmd nc;
 
 	if ((len > 4) || (responselen > 4))
@@ -726,7 +725,7 @@ pckbc_poll_cmd(self, slot, cmd, len, responselen, respbuf, slow)
 	nc.responselen = responselen;
 	nc.flags = (slow ? KBC_CMDFLAG_SLOW : 0);
 
-	pckbc_poll_cmd1(t, slot, &nc);
+	pckbc_poll_cmd1(self, slot, &nc);
 
 	if (nc.status == 0 && respbuf)
 		bcopy(nc.response, respbuf, responselen);
@@ -826,7 +825,7 @@ pckbc_start(t, slot)
 }
 
 /*
- * Handle command responses coming in asynchonously,
+ * Handle command responses coming in asynchronously,
  * return nonzero if valid response.
  * to be called at spltty()
  */
@@ -852,7 +851,9 @@ pckbc_cmdresponse(t, slot, data)
 				/* try again last command */
 				goto restart;
 			} else {
+#ifdef PCKBCDEBUG
 				printf("pckbc: cmd failed\n");
+#endif
 				cmd->status = EIO;
 				/* dequeue */
 			}
