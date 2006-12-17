@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbd.c,v 1.6 2005/02/22 16:58:12 mickey Exp $	*/
+/*	$OpenBSD: gsckbd.c,v 1.7 2006/12/17 21:26:53 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -341,8 +341,8 @@ gsckbd_enable(v, on)
 		pckbc_slot_enable(sc->id->t_kbctag, sc->id->t_kbcslot, 1);
 
 		cmd[0] = KBC_ENABLE;
-		res = pckbc_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
-					cmd, 1, 0, 1, 0);
+		res = pckbc_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+		    cmd, 1, 0, NULL, 0);
 		if (res) {
 			printf("gsckbd_enable: command error\n");
 			return (res);
