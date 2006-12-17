@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.91 2006/12/15 14:56:38 stevesk Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.92 2006/12/17 18:09:32 stevesk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -76,12 +76,6 @@ int routefd;
 struct iaddr iaddr_broadcast = { 4, { 255, 255, 255, 255 } };
 struct in_addr inaddr_any;
 struct sockaddr_in sockaddr_broadcast;
-
-/*
- * ASSERT_STATE() does nothing now; it used to be
- * assert (state_is == state_shouldbe).
- */
-#define ASSERT_STATE(state_is, state_shouldbe) {}
 
 #define TIME_MAX 2147483647
 
@@ -475,8 +469,6 @@ state_init(void *ipp)
 {
 	struct interface_info *ip = ipp;
 
-	ASSERT_STATE(state, S_INIT);
-
 	/* Make a DHCPDISCOVER packet, and set appropriate per-interface
 	   flags. */
 	make_discover(ip, ip->client->active);
@@ -500,8 +492,6 @@ state_selecting(void *ipp)
 {
 	struct interface_info *ip = ipp;
 	struct client_lease *lp, *next, *picked;
-
-	ASSERT_STATE(state, S_SELECTING);
 
 	/* Cancel state_selecting and send_discover timeouts, since either
 	   one could have got us here. */
@@ -710,8 +700,6 @@ void
 state_bound(void *ipp)
 {
 	struct interface_info *ip = ipp;
-
-	ASSERT_STATE(state, S_BOUND);
 
 	/* T1 has expired. */
 	make_request(ip, ip->client->active);
