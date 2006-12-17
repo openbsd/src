@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.200 2006/12/08 02:13:36 gwk Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.201 2006/12/17 06:04:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2070,6 +2070,7 @@ bge_reset(struct bge_softc *sc)
 	    BGE_PCIMISCCTL_INDIRECT_ACCESS|BGE_PCIMISCCTL_MASK_PCI_INTR|
 	    BGE_PCIMISCCTL_ENDIAN_WORDSWAP|BGE_PCIMISCCTL_PCISTATE_RW);
 
+	/* Disable fastboot on controllers that support it. */
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
@@ -2092,6 +2093,10 @@ bge_reset(struct bge_softc *sc)
 		}
 	}
 
+	/*
+	 * Set GPHY Power Down Override to leave GPHY
+	 * powered up in D0 uninitialized.
+	 */
 	if (BGE_IS_5705_OR_BEYOND(sc))
 		reset |= BGE_MISCCFG_KEEP_GPHY_POWER;
 
@@ -2108,7 +2113,11 @@ bge_reset(struct bge_softc *sc)
 			v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0xc4);
 			pci_conf_write(pa->pa_pc, pa->pa_tag, 0xc4, v | (1<<15));
 		}
-		/* Set PCI Express max payload size and clear error status. */
+
+		/*
+		 * Set PCI Express max payload size to 128 bytes
+		 * and clear error status.
+		 */
 		pci_conf_write(pa->pa_pc, pa->pa_tag,
 		    BGE_PCI_CONF_DEV_CTRL, 0xf5000);
 	}
@@ -2137,8 +2146,7 @@ bge_reset(struct bge_softc *sc)
 	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
 
 	/*
-	 * Poll the value location we just wrote until
-	 * we see the 1's complement of the magic number.
+	 * Poll until we see 1's complement of the magic number.
 	 * This indicates that the firmware initialization
 	 * is complete.  We expect this to fail if no SEEPROM
 	 * is fitted.
