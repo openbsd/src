@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pw_lock.3,v 1.12 2005/07/29 09:08:34 jmc Exp $
+.\"	$OpenBSD: pw_lock.3,v 1.13 2006/12/17 20:50:51 ray Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,6 +70,12 @@ waiting one second between tries.
 In addition to being a lock file,
 .Pa /etc/ptmp
 will also hold the contents of the new passwd file.
+A different lock file can be specified with
+.Xr pw_file 3 .
+.Pp
+.Xr pw_init 3
+must be called before
+.Fn pw_lock .
 .Pp
 The
 .Fn pw_mkdb
@@ -115,9 +121,11 @@ The passwd database remains unchanged.
 .Sh RETURN VALUES
 The
 .Fn pw_lock
-and
+function returns \-1 on error and sets
+.Va errno .
+The
 .Fn pw_mkdb
-functions return \-1 if they are unable to complete properly.
+function returns \-1 if it is unable to complete properly.
 .Sh FILES
 .Bl -tag -width /etc/master.passwd -compact
 .It Pa /etc/master.passwd
@@ -131,7 +139,21 @@ insecure password database file
 .It Pa /etc/spwd.db
 secure password database file
 .El
+.Sh ERRORS
+.Bl -tag -width Er
+.It Bq Er EINVAL
+.Fn pw_lock
+was called before
+.Xr pw_init 3 .
+.El
+.Pp
+.Fn pw_lock
+may also fail and set
+.Va errno
+for any of the errors specified for the routine
+.Xr open 2 .
 .Sh SEE ALSO
 .Xr flock 2 ,
+.Xr pw_file 3 ,
 .Xr pw_init 3 ,
 .Xr pwd_mkdb 8
