@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.28 2006/12/03 16:39:13 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.29 2006/12/17 16:24:00 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1581,10 +1581,12 @@ rt2560_tx_bcn(struct rt2560_softc *sc, struct mbuf *m0,
 		sc->erp =
 		    mtod(m0, uint8_t *) +
 		    sizeof (struct ieee80211_frame) +
-		    8 + 2 + 2 + 2 + ni->ni_esslen + 2 + 1 +
-		    ((ic->ic_opmode == IEEE80211_M_IBSS) ? 3 : 6) +
-		    2 + ni->ni_rates.rs_nrates +
-		    ((ni->ni_rates.rs_nrates > IEEE80211_RATE_SIZE) ? 2 : 0) +
+		    8 + 2 + 2 +
+		    ((ic->ic_flags & IEEE80211_F_HIDENWID) ?
+			1 : 2 + ni->ni_esslen) +
+		    2 + min(ni->ni_rates.rs_nrates, IEEE80211_RATE_SIZE) +
+		    2 + 1 +
+		    ((ic->ic_opmode == IEEE80211_M_IBSS) ? 4 : 6) +
 		    2;
 	}
 

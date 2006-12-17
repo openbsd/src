@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.33 2006/12/03 16:39:13 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.34 2006/12/17 16:24:00 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -2828,10 +2828,12 @@ rt2661_prepare_beacon(struct rt2661_softc *sc)
 		sc->erp_csr =
 		    RT2661_HW_BEACON_BASE0 + 24 +
 		    sizeof (struct ieee80211_frame) +
-		    8 + 2 + 2 + 2 + ni->ni_esslen + 2 + 1 +
-		    ((ic->ic_opmode == IEEE80211_M_IBSS) ? 3 : 6) +
-		    2 + ni->ni_rates.rs_nrates +
-		    ((ni->ni_rates.rs_nrates > IEEE80211_RATE_SIZE) ? 2 : 0) +
+		    8 + 2 + 2 +
+		    ((ic->ic_flags & IEEE80211_F_HIDENWID) ?
+			1 : 2 + ni->ni_esslen) +
+		    2 + min(ni->ni_rates.rs_nrates, IEEE80211_RATE_SIZE) +
+		    2 + 1 +
+		    ((ic->ic_opmode == IEEE80211_M_IBSS) ? 4 : 6) +
 		    2;
 	}
 
