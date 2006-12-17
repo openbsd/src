@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1202 2006/12/15 15:57:27 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1203 2006/12/17 11:47:05 mbalmer Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7435,6 +7435,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MGA Marvel G200 SD",
 	},
 	{
+	    PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI32,
+	    "PCI32",
+	},
+	{
 	    PCI_VENDOR_MENTOR, PCI_PRODUCT_MENTOR_PCI0660,
 	    "PCI",
 	},
@@ -13621,6 +13625,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_PCTEL,
 	    "PCTEL",
+	},
+	{
+	    PCI_VENDOR_MEINBERG,
+	    "Meinberg Funkuhren",
 	},
 	{
 	    PCI_VENDOR_CNET,
