@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdutil.c,v 1.5 2003/12/06 14:46:44 grange Exp $	*/
+/*	$OpenBSD: wskbdutil.c,v 1.6 2006/12/17 22:04:04 miod Exp $	*/
 /*	$NetBSD: wskbdutil.c,v 1.7 1999/12/21 11:59:13 drochner Exp $	*/
 
 /*-
@@ -68,12 +68,12 @@ static struct compose_tab_s {
 	{ { KS_less,			KS_less },		KS_guillemotleft },
 	{ { KS_greater,			KS_greater },		KS_guillemotright },
 	{ { KS_question,		KS_question },		KS_questiondown },
-	{ { KS_dead_acute,		KS_space },		KS_acute },
+	{ { KS_dead_acute,		KS_space },		KS_apostrophe },
 	{ { KS_dead_grave,		KS_space },		KS_grave },
 	{ { KS_dead_tilde,		KS_space },		KS_asciitilde },
 	{ { KS_dead_circumflex,		KS_space },		KS_asciicircum },
 	{ { KS_dead_diaeresis,		KS_space },		KS_quotedbl },
-	{ { KS_dead_cedilla,		KS_space },		KS_cedilla },
+	{ { KS_dead_cedilla,		KS_space },		KS_comma },
 	{ { KS_dead_circumflex,		KS_A },			KS_Acircumflex },
 	{ { KS_dead_diaeresis,		KS_A },			KS_Adiaeresis },
 	{ { KS_dead_grave,		KS_A },			KS_Agrave },
