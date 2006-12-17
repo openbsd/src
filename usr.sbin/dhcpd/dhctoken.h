@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhctoken.h,v 1.3 2006/04/18 19:18:32 deraadt Exp $	*/
+/*	$OpenBSD: dhctoken.h,v 1.4 2006/12/17 18:03:33 stevesk Exp $	*/
 
 /* Tokens for config file lexer and parser. */
 
@@ -74,7 +74,6 @@
 #define TOK_NEXT_SERVER	291
 #define TOK_TOKEN_RING	292
 #define TOK_GROUP		293
-#define TOK_ONE_LEASE_PER_CLIENT 294
 #define TOK_GET_LEASE_HOSTNAMES 295
 #define TOK_USE_HOST_DECL_NAMES 296
 #define TOK_SEND		297

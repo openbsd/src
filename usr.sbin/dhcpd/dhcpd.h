@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.27 2006/12/12 19:32:21 stevesk Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.28 2006/12/17 18:03:33 stevesk Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -246,7 +246,6 @@ struct group {
 	int dynamic_bootp;
 	int allow_bootp;
 	int allow_booting;
-	int one_lease_per_client;
 	int get_lease_hostnames;
 	int use_host_decl_names;
 	int use_lease_addr_for_default_route;

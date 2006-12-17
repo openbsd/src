@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.15 2006/06/13 08:47:57 jmc Exp $ */
+/*	$OpenBSD: confpars.c,v 1.16 2006/12/17 18:03:33 stevesk Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -144,7 +144,6 @@ read_leases(void)
 	     | DYNAMIC_BOOTP_LEASE_CUTOFF date
 	     | DYNAMIC_BOOTP_LEASE_LENGTH lease_time
 	     | BOOT_UNKNOWN_CLIENTS boolean
-	     | ONE_LEASE_PER_CLIENT boolean
 	     | GET_LEASE_HOSTNAMES boolean
 	     | USE_HOST_DECL_NAME boolean
 	     | NEXT_SERVER ip-addr-or-hostname SEMI
@@ -290,12 +289,6 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 		if (type == HOST_DECL)
 			parse_warn("boot-unknown-clients not allowed here.");
 		group->boot_unknown_clients = parse_boolean(cfile);
-		break;
-
-	case TOK_ONE_LEASE_PER_CLIENT:
-		if (type == HOST_DECL)
-			parse_warn("one-lease-per-client not allowed here.");
-		group->one_lease_per_client = parse_boolean(cfile);
 		break;
 
 	case TOK_GET_LEASE_HOSTNAMES:
@@ -746,8 +739,6 @@ void parse_subnet_declaration(cfile, share)
 	   shared_network containing it. */
 	if (subnet->group->dynamic_bootp)
 		share->group->dynamic_bootp = 1;
-	if (subnet->group->one_lease_per_client)
-		share->group->one_lease_per_client = 1;
 
 	/* Add the subnet to the list of subnets in this shared net. */
 	if (!share->subnets)

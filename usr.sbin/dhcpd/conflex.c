@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.8 2006/04/20 19:50:08 deraadt Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.9 2006/12/17 18:03:33 stevesk Exp $	*/
 
 /* Lexical scanner for dhcpd config file... */
 
@@ -342,7 +342,6 @@ static const struct keywords {
 	{ "netmask",				TOK_NETMASK },
 	{ "next-server",			TOK_NEXT_SERVER },
 	{ "not",				TOK_TOKEN_NOT },
-	{ "one-lease-per-client",		TOK_ONE_LEASE_PER_CLIENT },
 	{ "option",				TOK_OPTION },
 	{ "range",				TOK_RANGE },
 	{ "server-identifier",			TOK_SERVER_IDENTIFIER },
