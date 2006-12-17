@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.55 2006/12/02 11:21:37 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.56 2006/12/17 22:18:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -47,7 +47,6 @@
 #include <dev/sbus/sbusvar.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 #include <dev/sbus/cgsixreg.h>

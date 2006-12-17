@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.11 2006/12/03 17:10:41 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.12 2006/12/17 22:18:16 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -89,7 +89,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 

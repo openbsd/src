@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.32 2006/11/29 12:13:54 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.33 2006/12/17 22:18:14 miod Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wsfont/wsfont.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.16 2006/06/02 20:00:56 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.17 2006/12/17 22:18:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -47,7 +47,6 @@
 #include <dev/sbus/sbusvar.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.6 2006/06/02 20:00:56 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.7 2006/12/17 22:18:16 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -54,7 +54,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.17 2006/03/15 20:46:15 matthieu Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.18 2006/12/17 22:18:14 miod Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wsfont/wsfont.h>
 
