@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.57 2006/12/13 11:03:54 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.58 2006/12/17 21:45:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1530,7 +1530,7 @@ acx_load_radio_firmware(struct acx_softc *sc, const char *name)
 	radio_fw_ofs = letoh32(mem_map.code_end);
 
 	/* Put ECPU into sleeping state, before loading radio firmware */
-	if (acx_sleep(sc) != 0)
+	if (acx_exec_command(sc, ACXCMD_SLEEP, NULL, 0, NULL, 0) != 0)
 		return (ENXIO);
 
 	/* Load radio firmware */
@@ -1542,7 +1542,7 @@ acx_load_radio_firmware(struct acx_softc *sc, const char *name)
 	DPRINTF(("%s: radio firmware loaded\n", sc->sc_dev.dv_xname));
 
 	/* Wake up sleeping ECPU, after radio firmware is loaded */
-	if (acx_wakeup(sc) != 0)
+	if (acx_exec_command(sc, ACXCMD_WAKEUP, NULL, 0, NULL, 0) != 0)
 		return (ENXIO);
 
 	/* Initialize radio */
@@ -1792,8 +1792,15 @@ back:
 int
 acx_init_tmplt_ordered(struct acx_softc *sc)
 {
-	struct acx_tmplt_tim tim;
+	union {
+		struct acx_tmplt_beacon		beacon;
+		struct acx_tmplt_null_data	null;
+		struct acx_tmplt_probe_req	preq;
+		struct acx_tmplt_probe_resp	presp;
+		struct acx_tmplt_tim		tim;
+	} data;
 
+	bzero(&data, sizeof(data));
 	/*
 	 * NOTE:
 	 * Order of templates initialization:
@@ -1804,32 +1811,35 @@ acx_init_tmplt_ordered(struct acx_softc *sc)
 	 * 5) Probe response
 	 * Above order is critical to get a correct memory map.
 	 */
-	if (acx_init_probe_req_tmplt(sc) != 0)
+	if (acx_set_tmplt(sc, ACXCMD_TMPLT_PROBE_REQ, &data.preq,
+	    sizeof(data.preq)) != 0)
 		return (1);
 
-	if (acx_init_null_data_tmplt(sc) != 0)
+	if (acx_set_tmplt(sc, ACXCMD_TMPLT_NULL_DATA, &data.null,
+	    sizeof(data.null)) != 0)
 		return (1);
 
-	if (acx_init_beacon_tmplt(sc) != 0)
+	if (acx_set_tmplt(sc, ACXCMD_TMPLT_BEACON, &data.beacon,
+	    sizeof(data.beacon)) != 0)
 		return (1);
 
-	if (acx_init_tim_tmplt(sc) != 0)
+	if (acx_set_tmplt(sc, ACXCMD_TMPLT_TIM, &data.tim,
+	    sizeof(data.tim)) != 0)
 		return (1);
 
-	if (acx_init_probe_resp_tmplt(sc) != 0)
+	if (acx_set_tmplt(sc, ACXCMD_TMPLT_PROBE_RESP, &data.presp,
+	    sizeof(data.presp)) != 0)
 		return (1);
 
 	/* Setup TIM template */
-	bzero(&tim, sizeof(tim));
-	tim.tim_eid = IEEE80211_ELEMID_TIM;
-	tim.tim_len = ACX_TIM_LEN(ACX_TIM_BITMAP_LEN);
-	if (acx_set_tmplt(sc, ACXCMD_TMPLT_TIM, &tim,
+	data.tim.tim_eid = IEEE80211_ELEMID_TIM;
+	data.tim.tim_len = ACX_TIM_LEN(ACX_TIM_BITMAP_LEN);
+	if (acx_set_tmplt(sc, ACXCMD_TMPLT_TIM, &data.tim,
 	    ACX_TMPLT_TIM_SIZ(ACX_TIM_BITMAP_LEN)) != 0) {
 		printf("%s: can't set tim tmplt\n", sc->sc_dev.dv_xname);
 		return (1);
 	}
 
-#undef CALL_SET_TMPLT
 	return (0);
 }
 

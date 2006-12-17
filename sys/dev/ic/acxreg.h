@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxreg.h,v 1.8 2006/12/13 11:03:54 mglocker Exp $ */
+/*	$OpenBSD: acxreg.h,v 1.9 2006/12/17 21:45:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -426,19 +426,6 @@ struct acx_tmplt_tim {
 #define ACX_TMPLT_TIM_SIZ(bitmap_len)	\
 	(sizeof(uint16_t) + sizeof(struct tim_head) + (bitmap_len))
 
-
-#define ACX_INIT_TMPLT_FUNC(name)			\
-static __inline int					\
-acx_init_##name##_tmplt(struct acx_softc *_sc)		\
-{							\
-	struct acx_tmplt_##name _tmplt;			\
-							\
-	bzero(&_tmplt, sizeof(_tmplt));			\
-	return acx_set_tmplt(_sc, ACXCMD_TMPLT_##name,	\
-			     &_tmplt, sizeof(_tmplt));	\
-}							\
-struct __hack
-
 #define _ACX_CONF_FUNC(sg, name, chip)			\
 static __inline int					\
 acx##chip##_##sg##_##name##_conf(struct acx_softc *_sc,	\
@@ -449,27 +436,12 @@ acx##chip##_##sg##_##name##_conf(struct acx_softc *_sc,	\
 }							\
 struct __hack
 
-#define ACX_NOARG_FUNC(name)				\
-static __inline int					\
-acx_##name(struct acx_softc *_sc)			\
-{							\
-	return acx_exec_command(_sc, ACXCMD_##name,	\
-				NULL, 0, NULL, 0);	\
-}							\
-struct __hack
-
 
 #define ACXCMD_TMPLT_tim	ACXCMD_TMPLT_TIM
 #define ACXCMD_TMPLT_beacon	ACXCMD_TMPLT_BEACON
 #define ACXCMD_TMPLT_probe_resp	ACXCMD_TMPLT_PROBE_RESP
 #define ACXCMD_TMPLT_null_data	ACXCMD_TMPLT_NULL_DATA
 #define ACXCMD_TMPLT_probe_req	ACXCMD_TMPLT_PROBE_REQ
-
-ACX_INIT_TMPLT_FUNC(tim);
-ACX_INIT_TMPLT_FUNC(null_data);
-ACX_INIT_TMPLT_FUNC(beacon);
-ACX_INIT_TMPLT_FUNC(probe_req);
-ACX_INIT_TMPLT_FUNC(probe_resp);
 
 #define ACX_CONF_FUNC(sg, name)	_ACX_CONF_FUNC(sg, name,)
 #define ACX_CONF_wepopt		ACX_CONF_WEPOPT
@@ -499,11 +471,6 @@ ACX_CONF_FUNC(set, msdu_lifetime);
 ACX_CONF_FUNC(set, rate_fallback);
 ACX_CONF_FUNC(set, rxopt);
 ACX_CONF_FUNC(set, wep_txkey);
-
-#define ACXCMD_sleep		ACXCMD_SLEEP
-#define ACXCMD_wakeup		ACXCMD_WAKEUP
-ACX_NOARG_FUNC(sleep);
-ACX_NOARG_FUNC(wakeup);
 
 #define CMDPRM_WRITE_REGION_1(sc, r, rlen)		\
 	bus_space_write_region_1((sc)->sc_mem2_bt,	\

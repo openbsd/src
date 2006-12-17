@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.16 2006/12/13 11:03:54 mglocker Exp $ */
+/*	$OpenBSD: acx100.c,v 1.17 2006/12/17 21:45:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -215,9 +215,6 @@ ACX100_CONF_FUNC(set, cca_mode);
 ACX100_CONF_FUNC(get, ed_thresh);
 ACX100_CONF_FUNC(set, ed_thresh);
 ACX100_CONF_FUNC(set, wepkey);
-
-#define ACXCMD_init_mem			ACXCMD_INIT_MEM
-ACX_NOARG_FUNC(init_mem);
 
 static const uint16_t	acx100_reg[ACXREG_MAX] = {
 	ACXREG(SOFT_RESET,		0x0000),
@@ -526,7 +523,7 @@ acx100_init_memory(struct acx_softc *sc)
 	}
 
 	/* Initialize memory */
-	if (acx_init_mem(sc) != 0) {
+	if (acx_exec_command(sc, ACXCMD_INIT_MEM, NULL, 0, NULL, 0) != 0) {
 		printf("%s: can't init mem\n", ifp->if_xname);
 		return (1);
 	}
