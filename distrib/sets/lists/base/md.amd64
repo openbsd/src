@@ -2313,7 +2313,6 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/mdec/pxeboot
-./usr/sbin/acpid
 ./usr/sbin/acpidump
 ./usr/sbin/apm
 ./usr/sbin/apmd

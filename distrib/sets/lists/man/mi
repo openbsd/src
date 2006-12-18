@@ -1979,7 +1979,6 @@
 ./usr/share/man/cat8/amd.0
 ./usr/share/man/cat8/amd64
 ./usr/share/man/cat8/amd64/MAKEDEV.0
-./usr/share/man/cat8/amd64/acpid.0
 ./usr/share/man/cat8/amd64/apm.0
 ./usr/share/man/cat8/amd64/apmd.0
 ./usr/share/man/cat8/amd64/biosboot.0
@@ -2114,7 +2113,6 @@
 ./usr/share/man/cat8/httpd.0
 ./usr/share/man/cat8/i386
 ./usr/share/man/cat8/i386/MAKEDEV.0
-./usr/share/man/cat8/i386/acpid.0
 ./usr/share/man/cat8/i386/apm.0
 ./usr/share/man/cat8/i386/apmd.0
 ./usr/share/man/cat8/i386/biosboot.0
