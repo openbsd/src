@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.24 2006/09/16 10:46:26 mickey Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.25 2006/12/18 14:13:15 mickey Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -34,7 +34,7 @@
 #define	RFBUFSIZ	28	/* buffer size for print_sensor */
 #define	RFBUFCNT	4	/* ring buffers */
 #define REPORT_PERIOD	60	/* report every n seconds */
-#define CHECK_PERIOD	60	/* check every n seconds */
+#define CHECK_PERIOD	20	/* check every n seconds */
 
 void		 usage(void);
 void		 check_sensors(void);
@@ -47,15 +47,17 @@ void		 reparse_cfg(int);
 
 struct limits_t {
 	TAILQ_ENTRY(limits_t)	entries;
-	u_int8_t		watch;
-	int			num;			/* sensor number */
-	enum sensor_type	type;			/* sensor type */
-	int64_t			lower;			/* lower limit */
-	int64_t			upper;			/* upper limit */
-	char			*command;		/* failure command */
-	enum sensor_status	status;			/* last status */
-	time_t			status_changed;
 	int64_t			last_val;
+	int64_t			lower;		/* lower limit */
+	int64_t			upper;		/* upper limit */
+	char			*command;	/* failure command */
+	time_t			status_changed;
+	enum sensor_type	type;		/* sensor type */
+	enum sensor_status	status;		/* last status */
+	enum sensor_status	status2;
+	int			num;		/* sensor number */
+	int			count;		/* stat change counter */
+	u_int8_t		watch;
 };
 
 TAILQ_HEAD(limits, limits_t) limits = TAILQ_HEAD_INITIALIZER(limits);
@@ -201,8 +203,18 @@ check_sensors(void)
 			}
 
 			if (limit->status != newstatus) {
-				limit->status = newstatus;
-				limit->status_changed = time(NULL);
+				if (newstatus == SENSOR_S_OK) {
+					limit->status2 =
+					    limit->status = newstatus;
+					limit->status_changed = time(NULL);
+				} else if (limit->status2 != newstatus) {
+					limit->status2 = newstatus;
+					limit->count = 0;
+				} else if (++limit->count >= 3) {
+					limit->status2 =
+					    limit->status = newstatus;
+					limit->status_changed = time(NULL);
+				}
 			}
 		}
 }
