@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sti.4,v 1.17 2005/01/16 01:34:00 jmc Exp $
+.\"	$OpenBSD: sti.4,v 1.18 2006/12/18 18:59:23 miod Exp $
 .\"
 .\" Copyright (c) 2001 Michael Shalayeff
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Cd "sti*	at mainbus0"
 .Cd "sti*	at phantomas0"
 .Cd "sti*	at sgc?"
-.\" .Cd "sti*	at pci?"
+.Cd "sti*	at pci?"
 .Cd "wsdisplay*	at sti?"
 .Sh DESCRIPTION
 The
@@ -65,9 +65,9 @@ The following models are supported
 .\" .It "Visualize 24" Ta "24" Ta "16" Ta "y" Ta "GSC"
 .\" .It "Visualize 48" Ta "24" Ta "16" Ta "y" Ta "GSC"
 .\" .It "Visualize 48XP" Ta "24" Ta "16" Ta "y" Ta "GSC"
-.\" .It "Visualize FXE" Ta "24" Ta "24" Ta "y" Ta "PCI 32/66"
-.\" .It "Visualize FX2" Ta "24" Ta "24" Ta "y" Ta "PCI 64/66"
-.\" .It "Visualize FX4/FX6" Ta "24" Ta "32" Ta "y" Ta "PCI 64/66"
+.It "Visualize FXE" Ta "24" Ta "24" Ta "y" Ta "PCI 32/66"
+.It "Visualize FX2" Ta "24" Ta "24" Ta "y" Ta "PCI 64/66"
+.It "Visualize FX4/FX6" Ta "24" Ta "32" Ta "y" Ta "PCI 64/66"
 .\" .It "Visualize FX5pro" Ta "24" Ta "64" Ta "y" Ta "PCI 64/66"
 .\" .It "Visualize FX10pro" Ta "24" Ta "128" Ta "y" Ta "PCI 64/66"
 .El

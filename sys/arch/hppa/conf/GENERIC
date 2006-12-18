@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.89 2006/09/27 08:54:44 grange Exp $
+#	$OpenBSD: GENERIC,v 1.90 2006/12/18 18:59:25 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -163,7 +163,7 @@ sti0	at mainbus0 irq 11	# [H]CRX-{8,24,48}[Z] graphics
 sti0	at phantomas0 irq 11	# builtin graphics on BC*
 sti1	at mainbus0 irq 12
 sti1	at phantomas0 irq 12
-#sti*	at pci?			# EG-PCI, FX*
+sti*	at pci?			# EG-PCI, FX*
 
 #medusa* at mainbus? irq 4	# FDDI
 #venus* at mainbus? irq 5	# ATM J2498A/J3420A
