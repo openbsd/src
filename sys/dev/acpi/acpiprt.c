@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.7 2006/11/27 23:43:47 jordan Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.8 2006/12/18 05:47:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -42,6 +42,7 @@
 
 int	acpiprt_match(struct device *, void *, void *);
 void	acpiprt_attach(struct device *, struct device *, void *);
+int	acpiprt_getirq(union acpi_resource *crs, void *arg);
 
 struct acpiprt_softc {
 	struct device		sc_dev;
@@ -107,9 +108,6 @@ acpiprt_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < res.length; i++)
 		acpiprt_prt_add(sc, res.v_package[i]);
 }
-
-int
-acpiprt_getirq(union acpi_resource *crs, void *arg);
 
 int
 acpiprt_getirq(union acpi_resource *crs, void *arg)
