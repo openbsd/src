@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.10 2006/11/29 22:17:07 marco Exp $ */
+/* $OpenBSD: acpiac.c,v 1.11 2006/12/18 17:55:58 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -56,7 +56,6 @@ acpiac_match(struct device *parent, void *match, void *aux)
 	    strcmp(aa->aaa_name, cf->cf_driver->cd_name) != 0 ||
 	    aa->aaa_table != NULL)
 		return (0);
-
 	return (1);
 }
 
@@ -73,17 +72,13 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 	    acpiac_notify, sc);
 
 	acpiac_getsta(sc); 
-
-	printf(": ");
-
+	printf(": AC unit ");
 	if (sc->sc_ac_stat == PSR_ONLINE)
-		printf("AC unit online");
+		printf("online\n");
 	else if (sc->sc_ac_stat == PSR_OFFLINE)
-		printf("AC unit offline");
+		printf("offline");
 	else
-		printf("AC unit in unknown state");
-
-	printf("\n");
+		printf(" in unknown state");
 
 	strlcpy(sc->sens[0].device, DEVNAME(sc), sizeof(sc->sens[0].device));
 	strlcpy(sc->sens[0].desc, "power supply", sizeof(sc->sens[2].desc));
@@ -98,7 +93,6 @@ acpiac_refresh(void *arg)
 	struct acpiac_softc *sc = arg;
 
 	acpiac_getsta(sc); 
-
 	sc->sens[0].value = sc->sc_ac_stat;
 }
 
@@ -119,7 +113,6 @@ acpiac_getsta(struct acpiac_softc *sc)
 	}
 	sc->sc_ac_stat = aml_val2int(&res);
 	aml_freevalue(&res);
-
 	return (0);
 }
 
@@ -137,7 +130,5 @@ acpiac_notify(struct aml_node *node, int notify_type, void *arg)
 		dnprintf(10, "A/C status: %d\n", sc->sc_ac_stat);
 		break;
 	}
-
-
 	return (0);
 }
