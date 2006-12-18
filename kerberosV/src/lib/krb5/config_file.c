@@ -158,8 +158,7 @@ parse_list(struct fileptr *f, unsigned *lineno, krb5_config_binding **parent,
 	char *p;
 
 	++*lineno;
-	if (buf[0] != '\0' && buf[strlen(buf) - 1] == '\n')
-	    buf[strlen(buf) - 1] = '\0';
+	buf[strcspn(buf, "\r\n")] = '\0';
 	p = buf;
 	while(isspace((unsigned char)*p))
 	    ++p;
@@ -255,8 +254,7 @@ krb5_config_parse_debug (struct fileptr *f,
 	char *p;
 
 	++*lineno;
-	if(buf[0] != '\0' && buf[strlen(buf) - 1] == '\n')
-	    buf[strlen(buf) - 1] = '\0';
+	buf[strcspn(buf, "\r\n")] = '\0';
 	p = buf;
 	while(isspace((unsigned char)*p))
 	    ++p;

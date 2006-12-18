@@ -161,16 +161,14 @@ main(int argc, char **argv)
 	printf("Kerberos v5 principal: ");
 	if(fgets(buf, sizeof(buf), stdin) == NULL)
 	    return 1;
-	if(buf[0] != '\0' && buf[strlen(buf) - 1] == '\n')
-	    buf[strlen(buf) - 1] = '\0';
+	buf[strcspn(buf, "\r\n")] = '\0';
 	principal = estrdup(buf);
     }
     if(afs && cell == NULL){
 	printf("AFS cell: ");
 	if(fgets(buf, sizeof(buf), stdin) == NULL)
 	    return 1;
-	if(buf[0] != '\0' && buf[strlen(buf) - 1] == '\n')
-	    buf[strlen(buf) - 1] = '\0';
+	buf[strcspn(buf, "\r\n")] = '\0';
 	cell = estrdup(buf);
     }
     if(argv[0])
