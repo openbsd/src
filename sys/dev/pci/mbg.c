@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.2 2006/12/18 07:58:22 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.3 2006/12/18 17:50:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -135,7 +135,7 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	if (mbg_read(mbg, MBG_GET_FW_ID_1, fw_id, MBG_FIFO_LEN, NULL) ||
 	    mbg_read(mbg, MBG_GET_FW_ID_2, &fw_id[MBG_FIFO_LEN], MBG_FIFO_LEN,
 	    NULL))
-		printf(": firmware unknown, ", mbg->mbg_dev.dv_xname);
+		printf(": firmware unknown, ");
 	else {
 		fw_id[MBG_ID_LEN - 1] = '\0';
 		printf(": firmware %s, ", fw_id);
