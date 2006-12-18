@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.41 2006/03/27 20:16:49 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.42 2006/12/18 12:50:45 mickey Exp 
  */
 
 {HPPA_TYPE_BOARD,	HPPA_BOARD_HP840,	"840/930 (Indigo)" },
