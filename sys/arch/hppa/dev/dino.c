@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.18 2006/12/14 17:36:12 kettenis Exp $	*/
+/*	$OpenBSD: dino.c,v 1.19 2006/12/18 18:49:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Michael Shalayeff
@@ -305,29 +305,51 @@ dino_memmap(void *v, bus_addr_t bpa, bus_size_t size,
 {
 	struct dino_softc *sc = v;
 	volatile struct dino_regs *r = sc->sc_regs;
+	bus_addr_t sbpa;
 	u_int32_t reg;
+	int first = 1;
 	int error;
 
-	reg = r->io_addr_en;
-	reg |= 1 << ((bpa >> 23) & 0x1f);
+	while (size != 0) {
+		sbpa = bpa & 0xff800000;
+		reg = r->io_addr_en;
+		reg |= 1 << ((bpa >> 23) & 0x1f);
 #ifdef DEBUG
-	if (reg & 0x80000001)
-		panic("mapping outside the mem extent range");
+		if (reg & 0x80000001)
+			panic("mapping outside the mem extent range");
 #endif
-	/* map into the upper bus space, if not yet mapped this 8M */
-	if (reg != r->io_addr_en) {
-		bus_addr_t sbpa = bpa & 0xff800000;
+		/* map into the upper bus space, if not yet mapped this 8M */
+		if (reg != r->io_addr_en) {
 
-		if ((error = bus_space_map(sc->sc_bt, sbpa, DINO_MEM_CHUNK,
-		    flags, bshp))) {
-			return (error);
+			if ((error = bus_space_map(sc->sc_bt, sbpa,
+			    DINO_MEM_CHUNK, flags, bshp))) {
+				return (error);
+			}
+			r->io_addr_en = reg;
+
+			if (first) {
+				if (bshp)
+					*bshp += (bpa - sbpa);
+			}
+		} else {
+			if (first) {
+				if (bshp)
+					*bshp = bpa;
+			}
 		}
-		r->io_addr_en = reg;
 
-		if (bshp)
-			*bshp += (bpa - sbpa);
-	} else if (bshp)
-		*bshp = bpa;
+		if (first) {
+			size += (bpa - sbpa);
+			first = 0;
+		}
+		
+		if (size < DINO_MEM_CHUNK)
+			size = 0;
+		else {
+			size -= DINO_MEM_CHUNK;
+			bpa = sbpa + DINO_MEM_CHUNK;
+		}
+	}
 
 	return (0);
 }
