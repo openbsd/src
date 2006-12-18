@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.92 2006/12/17 18:09:32 stevesk Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.93 2006/12/18 18:08:12 stevesk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1488,6 +1488,7 @@ make_request(struct interface_info *ip, struct client_lease * lease)
 	ip->client->packet.hops = 0;
 	ip->client->packet.xid = ip->client->xid;
 	ip->client->packet.secs = 0; /* Filled in by send_request. */
+	ip->client->packet.flags = 0;
 
 	/* If we own the address we're requesting, put it in ciaddr;
 	   otherwise set ciaddr to zero. */
@@ -1496,11 +1497,9 @@ make_request(struct interface_info *ip, struct client_lease * lease)
 	    ip->client->state == S_REBINDING) {
 		memcpy(&ip->client->packet.ciaddr,
 		    lease->address.iabuf, lease->address.len);
-		ip->client->packet.flags = 0;
 	} else {
 		memset(&ip->client->packet.ciaddr, 0,
 		    sizeof(ip->client->packet.ciaddr));
-		ip->client->packet.flags = 0;
 	}
 
 	memset(&ip->client->packet.yiaddr, 0,
