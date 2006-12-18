@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.68 2006/12/12 16:59:52 tom Exp $ */
+/* $OpenBSD: dsdt.c,v 1.69 2006/12/18 18:36:05 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -284,7 +284,6 @@ struct aml_scope *aml_lastscope;
 void _aml_die(const char *fn, int line, const char *fmt, ...)
 {
 	struct aml_scope *root;
-	char tmpbuf[256];
 	va_list ap;
 	int idx;
 
@@ -308,8 +307,7 @@ void _aml_die(const char *fn, int line, const char *fmt, ...)
 	}
 
 	/* XXX: don't panic */
-	snprintf(tmpbuf,sizeof(tmpbuf),"aml_die %s:%d ", fn, line);
-	panic(tmpbuf);
+	panic("aml_die %s:%d", fn, line);
 }
 #define aml_die(x...) _aml_die(__FUNCTION__,__LINE__,x)
 
