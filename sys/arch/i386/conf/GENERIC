@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.543 2006/11/29 19:40:12 grange Exp $
+#	$OpenBSD: GENERIC,v 1.544 2006/12/18 08:24:54 mbalmer Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -544,6 +544,7 @@ pgt*	at pci?				# Prism54 (only full-mac varients)
 pgt*	at cardbus?			# Prism54 (only full-mac varients)
 malo*	at pci?				# Marvell Libertas
 malo*	at cardbus?			# Marvell Libertas
+mbg*	at pci?				# Meinberg Funkuhren time base
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs
