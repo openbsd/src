@@ -1,4 +1,4 @@
-/*	$OpenBSD: stivar.h,v 1.19 2006/08/22 21:04:32 miod Exp $	*/
+/*	$OpenBSD: stivar.h,v 1.20 2006/12/18 18:57:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -34,7 +34,8 @@ struct sti_screen {
 
 	bus_space_tag_t	iot, memt;
 	bus_space_handle_t romh;
-	bus_addr_t	base, fbaddr;
+	bus_addr_t	*bases;
+	bus_addr_t	fbaddr;
 	bus_size_t	fblen;
 
 	int		scr_bpp;
@@ -84,7 +85,7 @@ struct sti_softc {
 
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t romh;
-	bus_addr_t base;
+	bus_addr_t	bases[STI_REGION_MAX];
 
 	struct sti_screen *sc_scr;
 	u_int	sc_wsmode;
@@ -92,7 +93,7 @@ struct sti_softc {
 
 void	sti_attach_common(struct sti_softc *sc, u_int codebase);
 void	sti_clear(struct sti_screen *);
-int	sti_cnattach(struct sti_screen *, bus_space_tag_t, bus_addr_t, u_int);
+int	sti_cnattach(struct sti_screen *, bus_space_tag_t, bus_addr_t *, u_int);
 void	sti_describe(struct sti_softc *);
 void	sti_end_attach(void *);
 u_int	sti_rom_size(bus_space_tag_t, bus_space_handle_t);

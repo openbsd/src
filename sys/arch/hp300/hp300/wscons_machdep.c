@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.7 2006/04/14 21:05:44 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.8 2006/12/18 18:57:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -97,7 +97,6 @@ struct diofb diofb_cn;
 #include <dev/ic/stivar.h>
 extern	int sti_console_scan(int);
 extern	void sticninit(void);
-struct sti_screen stifb_cn;
 #endif
 
 extern caddr_t internalhpib;

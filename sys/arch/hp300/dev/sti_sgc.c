@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.9 2006/08/22 21:04:31 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.10 2006/12/18 18:57:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -54,6 +54,10 @@ struct cfattach sti_sgc_ca = {
 	sizeof(struct sti_softc), sti_sgc_match, sti_sgc_attach
 };
 
+/* Console data */
+struct sti_screen stifb_cn;
+bus_addr_t stifb_cn_bases[STI_REGION_MAX];
+
 int
 sti_sgc_match(struct device *parent, void *match, void *aux)
 {
@@ -77,26 +81,27 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sti_softc *sc = (void *)self;
 	struct sgc_attach_args *saa = aux;
+	bus_addr_t base;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	u_int romend;
+	int i;
 
 	/*
 	 * If we already probed it succesfully as a console device, go ahead,
 	 * since we will not be able to bus_space_map() again.
 	 */
 	if (SGC_SLOT_TO_CONSCODE(saa->saa_slot) == conscode) {
-		extern struct sti_screen stifb_cn;
-
 		sc->sc_flags |= STI_CONSOLE | STI_ATTACHED;
 		sc->sc_scr = &stifb_cn;
+		bcopy(stifb_cn_bases, sc->bases, sizeof(sc->bases));
 
 		sti_describe(sc);
 	} else {
 		iot = HP300_BUS_TAG(HP300_BUS_SGC, saa->saa_slot);
-		sc->base = (bus_addr_t)sgc_slottopa(saa->saa_slot);
+		base = (bus_addr_t)sgc_slottopa(saa->saa_slot);
 
-		if (bus_space_map(iot, sc->base, PAGE_SIZE, 0, &ioh)) {
+		if (bus_space_map(iot, base, PAGE_SIZE, 0, &ioh)) {
 			printf(": can't map frame buffer");
 			return;
 		}
@@ -108,13 +113,16 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 
 		bus_space_unmap(iot, ioh, PAGE_SIZE);
 
-		if (bus_space_map(iot, sc->base, romend, 0, &ioh)) {
+		if (bus_space_map(iot, base, romend, 0, &ioh)) {
 			printf(": can't map frame buffer");
 			return;
 		}
 
 		sc->memt = sc->iot = iot;
 		sc->romh = ioh;
+		sc->bases[0] = sc->romh;
+		for (i = 1; i < STI_REGION_MAX; i++)
+			sc->bases[i] = base;
 
 		sti_attach_common(sc, STI_CODEBASE_M68K);
 	}
@@ -168,9 +176,9 @@ sti_console_scan(int slot)
 void
 sticninit()
 {
-	extern struct sti_screen stifb_cn;
 	bus_space_tag_t iot;
 	bus_addr_t base;
+	int i;
 
 	/*
 	 * We are not interested by the *first* console pass.
@@ -181,7 +189,11 @@ sticninit()
 	iot = HP300_BUS_TAG(HP300_BUS_SGC, CONSCODE_TO_SGC_SLOT(conscode));
 	base = (bus_addr_t)sgc_slottopa(CONSCODE_TO_SGC_SLOT(conscode));
 
-	sti_cnattach(&stifb_cn, iot, base, STI_CODEBASE_M68K);
+	/* stifb_cn_bases[0] will be fixed in sti_cnattach() */
+	for (i = 0; i < STI_REGION_MAX; i++)
+		stifb_cn_bases[i] = base;
+
+	sti_cnattach(&stifb_cn, iot, stifb_cn_bases, STI_CODEBASE_M68K);
 	sti_clear(&stifb_cn);
 
 	/*

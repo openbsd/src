@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.33 2006/11/30 11:25:11 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.34 2006/12/18 18:57:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -63,8 +63,9 @@ char sti_sgc_opt[] = { 0x17, 0x20, 0x30, 0x40, 0x70, 0xc0, 0xd0 };
 
 extern struct cfdriver sti_cd;
 
-int sti_sgc_probe(struct device *, void *, void *);
-void sti_sgc_attach(struct device *, struct device *, void *);
+int	sti_sgc_probe(struct device *, void *, void *);
+void	sti_sgc_attach(struct device *, struct device *, void *);
+paddr_t	sti_sgc_getrom(int, struct confargs *);
 
 struct cfattach sti_gedoens_ca = {
 	sizeof(struct sti_softc), sti_sgc_probe, sti_sgc_attach
@@ -201,9 +202,9 @@ sti_sgc_attach(parent, self, aux)
 	paddr_t rom;
 	u_int32_t romlen;
 	int rv;
+	int i;
 
 	sc->memt = sc->iot = ca->ca_iot;
-	sc->base = ca->ca_hpa;
 
 	/* we stashed rom addr/len into the last slot during probe */
 	rom = ca->ca_addrs[ca->ca_naddrs - 1].addr;
@@ -216,6 +217,10 @@ sti_sgc_attach(parent, self, aux)
 			return;
 		}
 	}
+
+	sc->bases[0] = sc->romh;
+	for (i = 1; i < STI_REGION_MAX; i++)
+		sc->bases[i] = ca->ca_hpa;
 
 #ifdef	HP7300LC_CPU
 	/* PCXL2: enable accel i/o for this space */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.48 2006/12/16 15:52:30 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.49 2006/12/18 18:57:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -121,7 +121,7 @@ int sti_setcment(struct sti_screen *scr, u_int i, u_char r, u_char g, u_char b);
 int sti_fetchfonts(struct sti_screen *scr, struct sti_inqconfout *cfg,
     u_int32_t addr);
 void sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
-    bus_space_tag_t memt, bus_space_handle_t romh, bus_addr_t base,
+    bus_space_tag_t memt, bus_space_handle_t romh, bus_addr_t *bases,
     u_int codebase);
 
 void
@@ -140,14 +140,14 @@ sti_attach_common(sc, codebase)
 	bzero(scr, sizeof(struct sti_screen));
 	sc->sc_scr = scr;
 
-	sti_screen_setup(scr, sc->iot, sc->memt, sc->romh, sc->base,
+	sti_screen_setup(scr, sc->iot, sc->memt, sc->romh, sc->bases,
 	    codebase);
 	sti_describe(sc);
 }
 
 void
 sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
-    bus_space_tag_t memt, bus_space_handle_t romh, bus_addr_t base,
+    bus_space_tag_t memt, bus_space_handle_t romh, bus_addr_t *bases,
     u_int codebase)
 {
 	struct sti_inqconfout cfg;
@@ -161,6 +161,7 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 	scr->iot = iot;
 	scr->memt = memt;
 	scr->romh = romh;
+	scr->bases = bases;
 	scr->scr_devtype = bus_space_read_1(memt, romh, 3);
 
 	/* { extern int pmapdebug; pmapdebug = 0xfffff; } */
@@ -335,10 +336,9 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 			else
 				*(u_int *)&r = bus_space_read_4(memt, romh, i), i += 4;
 
-			*p = (p == cc->regions? romh : base) +
-			    (r.offset << PGSHIFT);
+			*p = bases[p - cc->regions] + (r.offset << PGSHIFT);
 #ifdef STIDEBUG
-			printf("%x @ 0x%x%s%s%s%s\n",
+			printf("%08x @ 0x%08x%s%s%s%s\n",
 			    r.length << PGSHIFT, *p, r.sys_only? " sys" : "",
 			    r.cache? " cache" : "", r.btlb? " btlb" : "",
 			    r.last? " last" : "");
@@ -1105,7 +1105,7 @@ sti_clear(struct sti_screen *scr)
 }
 
 int
-sti_cnattach(struct sti_screen *scr, bus_space_tag_t iot, bus_addr_t base,
+sti_cnattach(struct sti_screen *scr, bus_space_tag_t iot, bus_addr_t *bases,
     u_int codebase)
 {
 	bus_space_handle_t ioh;
@@ -1113,7 +1113,7 @@ sti_cnattach(struct sti_screen *scr, bus_space_tag_t iot, bus_addr_t base,
 	int error;
 	long defattr;
 
-	if ((error = bus_space_map(iot, base, PAGE_SIZE, 0, &ioh)) != 0)
+	if ((error = bus_space_map(iot, bases[0], PAGE_SIZE, 0, &ioh)) != 0)
 		return (error);
 
 	/*
@@ -1123,10 +1123,11 @@ sti_cnattach(struct sti_screen *scr, bus_space_tag_t iot, bus_addr_t base,
 
 	bus_space_unmap(iot, ioh, PAGE_SIZE);
 
-	if ((error = bus_space_map(iot, base, romend, 0, &ioh)) != 0)
+	if ((error = bus_space_map(iot, bases[0], romend, 0, &ioh)) != 0)
 		return (error);
 
-	sti_screen_setup(scr, iot, iot, ioh, base, codebase);
+	bases[0] = ioh;
+	sti_screen_setup(scr, iot, iot, ioh, bases, codebase);
 
 	sti_alloc_attr(scr, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&sti_default_screen, scr, 0, 0, defattr);
