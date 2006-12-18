@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.9 2006/11/29 22:17:07 marco Exp $ */
+/* $OpenBSD: acpitz.c,v 1.10 2006/12/18 20:57:45 canacar Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -263,7 +263,6 @@ acpitz_refresh(void *arg)
 		    DEVNAME(sc));
 		acpi_s5 = 1;
 		psignal(initproc, SIGUSR1);
-		/* NOTREACHED */
 	}
 	if (sc->sc_hot != -1 && sc->sc_hot <= sc->sc_tmp) {
 		printf("%s: _HOT temperature\n", DEVNAME(sc));

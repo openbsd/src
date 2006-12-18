@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.12 2006/11/29 19:21:20 miod Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.13 2006/12/18 20:57:45 canacar Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -130,7 +130,6 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 		if (notify_type == 0x80) {
 			acpi_s5 = 1;
 			psignal(initproc, SIGUSR1);
-			/* NOTREACHED */
 		}
 		break;
 	default:
