@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.162 2006/12/09 20:06:48 miod Exp $
+#	$OpenBSD: GENERIC,v 1.163 2006/12/18 17:52:40 mbalmer Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -339,6 +339,7 @@ pcfiic*	at ebus?
 iic*	at pcfiic?
 #alipm*	at pci?
 #iic*	at alipm?
+mbg*	at pci?				# Meinberg Funkuhren time base
 
 adc*	at iic?				# Analog Devices AD7416/AD7417/7418
 admtemp* at iic?			# Analog Devices ADM1021
