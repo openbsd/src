@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.8 2006/11/20 17:56:03 drahn Exp $
+# $OpenBSD: GENERIC,v 1.9 2006/12/18 00:46:25 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -70,7 +70,7 @@ ukphy*	at mii?				# generic unknown PHYs
 
 # PCIIDE 
 pciide*		at pci?
-wd*		at pciide? flags 0x0000
+wd*		at pciide? flags 0x0ffc
 atapiscsi*	at pciide? flags 0x0000
 scsibus*	at atapiscsi?
 
