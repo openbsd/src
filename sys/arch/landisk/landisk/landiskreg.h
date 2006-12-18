@@ -1,4 +1,4 @@
-/*	$OpenBSD: landiskreg.h,v 1.1.1.1 2006/10/06 21:16:15 miod Exp $	*/
+/*	$OpenBSD: landiskreg.h,v 1.2 2006/12/18 22:11:29 martin Exp $	*/
 /*	$NetBSD: landiskreg.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -49,19 +49,19 @@
 #define	PWRMNG_RTC_CE		0x02
 
 #define	INTEN_ALL_MASK		0x00
-#define	INTEN_PCI0		0x01	/* rtk/ehci */
-#define	INTEN_PCI1		0x02	/* acardide */
-#define	INTEN_PCI2		0x04	/* ochi0 */
-#define	INTEN_PCI3		0x08	/* ochi1 */
+#define	INTEN_PCI0		0x01	/* re/ehci */
+#define	INTEN_PCI1		0x02	/* pciide */
+#define	INTEN_PCI2		0x04	/* ohci0 */
+#define	INTEN_PCI3		0x08	/* ohci1 */
 #define	INTEN_ICONNECT		0x10	/* wdc1 at obio */
 #define	INTEN_CFIDE		0x20	/* wdc0 at obio */
 #define	INTEN_PWRSW		0x40	/* pwrsw at obio */
 #define	INTEN_BTN		0x80	/* btn at obio */
 
-#define	LANDISK_INTR_PCI0	5	/* rtk/ehci */
-#define	LANDISK_INTR_PCI1	6	/* acardide (LANDISK) */
+#define	LANDISK_INTR_PCI0	5	/* re/ehci */
+#define	LANDISK_INTR_PCI1	6	/* pciide (LANDISK) */
 #define	LANDISK_INTR_PCI2	7	/* ohci0 */
-#define	LANDISK_INTR_PCI3	8	/* ochi1 */
+#define	LANDISK_INTR_PCI3	8	/* ohci1 */
 #define	LANDISK_INTR_ICONNECT	9	/* wdc1 (LAN-iCN2 iConnect) */
 #define	LANDISK_INTR_CFIDE	10	/* wdc0 (LAN-iCN2/USL-5P CF) */
 #define	LANDISK_INTR_PWRSW	11	/* pwrsw */
