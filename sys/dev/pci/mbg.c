@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.1 2006/12/17 16:32:35 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.2 2006/12/18 07:58:22 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -88,11 +88,11 @@ struct mbg_time {
 #define MBG_SIG_BIAS		55
 #define MBG_SIG_MAX		68
 
-int mbg_probe(struct device *, void *, void *);
-void mbg_attach(struct device *, struct device *, void *);
-int mbg_read(struct mbg_softc *, int cmd, char *buf, size_t len,
+int	mbg_probe(struct device *, void *, void *);
+void	mbg_attach(struct device *, struct device *, void *);
+int	mbg_read(struct mbg_softc *, int cmd, char *buf, size_t len,
     struct timespec *tstamp);
-void mbg_task(void *);
+void	mbg_task(void *);
 
 struct cfattach mbg_ca = {
 	sizeof(struct mbg_softc), mbg_probe, mbg_attach
@@ -135,23 +135,23 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	if (mbg_read(mbg, MBG_GET_FW_ID_1, fw_id, MBG_FIFO_LEN, NULL) ||
 	    mbg_read(mbg, MBG_GET_FW_ID_2, &fw_id[MBG_FIFO_LEN], MBG_FIFO_LEN,
 	    NULL))
-		printf(" (unknown firmware),",
-		    mbg->mbg_dev.dv_xname);
-	else
-		printf(" (%s),", fw_id);
+		printf(": firmware unknown, ", mbg->mbg_dev.dv_xname);
+	else {
+		fw_id[MBG_ID_LEN - 1] = '\0';
+		printf(": firmware %s, ", fw_id);
+	}
 
 	if (mbg_read(mbg, MBG_GET_TIME, (char *)&tframe,
 	    sizeof(struct mbg_time), NULL)) {
-		printf(" unknown status\n");
+		printf("unknown status\n");
 		mbg->status = 0;
 	} else {
 		if (tframe.status & MBG_FREERUN)
-			printf(" free running on xtal");
+			printf("free running on xtal\n");
 		else if (tframe.status & MBG_SYNC)
-			printf(" synchronised");
+			printf("synchronised\n");
 		else if (tframe.status & MBG_INVALID)
-			printf(" invalid");
-		printf("\n");
+			printf("invalid\n");
 		mbg->status = tframe.status;
 	}
 	strlcpy(mbg->timedelta.device, mbg->mbg_dev.dv_xname,
@@ -260,7 +260,7 @@ mbg_read(struct mbg_softc *mbg, int cmd, char *buf, size_t len,
 		else
 			tsleep(tstamp, 0, "mbg", 1);
 		status = bus_space_read_1(mbg->iot, mbg->ioh, AMCC_IMB4 + 3);
-	} while (status & MBG_BUSY && timer++ < tmax);
+	} while ((status & MBG_BUSY) && timer++ < tmax);
 
 	if (status & MBG_BUSY)
 		return -1;
