@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.49 2006/12/18 18:57:26 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.50 2006/12/18 18:58:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -219,11 +219,11 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 		dd->dd_pacode[0xe] = parseword(codebase + 0x0e0) & ~3;
 		dd->dd_pacode[0xf] = parseword(codebase + 0x0f0) & ~3;
 	} else {	/* STI_DEVTYPE4 */
-		bus_space_read_region_4(memt, romh, 0, (u_int32_t *)dd,
-		    sizeof(*dd) / 4);
+		bus_space_read_raw_region_4(memt, romh, 0, (u_int8_t *)dd,
+		    sizeof(*dd));
 		/* fix pacode... */
-		bus_space_read_region_4(memt, romh, codebase,
-		    (u_int32_t *)dd->dd_pacode, sizeof(dd->dd_pacode) / 4);
+		bus_space_read_raw_region_4(memt, romh, codebase,
+		    (u_int8_t *)dd->dd_pacode, sizeof(dd->dd_pacode));
 	}
 
 #ifdef STIDEBUG
@@ -268,9 +268,9 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 			*p++ = bus_space_read_4(memt, romh, addr) & 0xff;
 
 	} else	/* STI_DEVTYPE4 */
-		bus_space_read_region_4(memt, romh,
-		    dd->dd_pacode[STI_BEGIN], (u_int32_t *)scr->scr_code,
-		    size / 4);
+		bus_space_read_raw_region_4(memt, romh,
+		    dd->dd_pacode[STI_BEGIN], (u_int8_t *)scr->scr_code,
+		    size);
 
 #define	O(i)	(dd->dd_pacode[(i)]? (scr->scr_code + \
 	(dd->dd_pacode[(i)] - dd->dd_pacode[0]) / \
@@ -333,8 +333,11 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 
 			if (scr->scr_devtype == STI_DEVTYPE1)
 				*(u_int *)&r = parseword(i), i+= 16;
-			else
-				*(u_int *)&r = bus_space_read_4(memt, romh, i), i += 4;
+			else {
+				bus_space_read_raw_region_4(memt, romh, i,
+				    (u_int8_t *)&r, 4);
+				i += 4;
+			}
 
 			*p = bases[p - cc->regions] + (r.offset << PGSHIFT);
 #ifdef STIDEBUG
@@ -492,7 +495,8 @@ sti_rom_size(bus_space_tag_t iot, bus_space_handle_t ioh)
 
 	devtype = bus_space_read_1(iot, ioh, 3);
 	if (devtype == STI_DEVTYPE4) {
-		romend = bus_space_read_4(iot, ioh, 0x18);
+		bus_space_read_raw_region_4(iot, ioh, 0x18,
+		    (u_int8_t *)&romend, 4);
 	} else {
 		romend =
 		    (bus_space_read_1(iot, ioh, 0x50 +  3) << 24) |
@@ -545,8 +549,8 @@ sti_fetchfonts(struct sti_screen *scr, struct sti_inqconfout *cfg,
 			fp->uoffset= bus_space_read_1(memt, romh,
 			    addr + 0x37);
 		} else	/* STI_DEVTYPE4 */
-			bus_space_read_region_4(memt, romh, addr,
-			    (u_int32_t *)fp, sizeof(struct sti_font) / 4);
+			bus_space_read_raw_region_4(memt, romh, addr,
+			    (u_int8_t *)fp, sizeof(struct sti_font));
 
 		size = sizeof(struct sti_font) +
 		    (fp->last - fp->first + 1) * fp->bpc;
@@ -556,8 +560,8 @@ sti_fetchfonts(struct sti_screen *scr, struct sti_inqconfout *cfg,
 		if (scr->scr_romfont == NULL)
 			return (ENOMEM);
 
-		bus_space_read_region_4(memt, romh, addr,
-		    (u_int32_t *)scr->scr_romfont, size / 4);
+		bus_space_read_raw_region_4(memt, romh, addr,
+		    (u_int8_t *)scr->scr_romfont, size);
 
 		addr = NULL; /* fp->next */
 	} while (addr);
