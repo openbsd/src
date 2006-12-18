@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.9 2006/11/29 22:36:43 stevesk Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.10 2006/12/18 01:08:58 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -135,7 +135,7 @@ struct protocol {
 
 /* errwarn.c */
 void error(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-int warn(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
+int warning(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 int note(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 int debug(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 

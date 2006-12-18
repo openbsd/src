@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.27 2006/11/21 14:57:00 stevesk Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.28 2006/12/18 01:08:58 stevesk Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -110,7 +110,7 @@ main(int argc, char *argv[])
 		else {
 			he = gethostbyname(argv[0]);
 			if (!he)
-				warn("%s: host unknown", argv[0]);
+				warning("%s: host unknown", argv[0]);
 			else
 				iap = ((struct in_addr *)he->h_addr_list[0]);
 		}
@@ -317,7 +317,7 @@ got_response(struct protocol *l)
 		 * Ignore ECONNREFUSED as to many dhcp server send a bogus
 		 * icmp unreach for every request.
 		 */
-		warn("recv failed for %s: %m",
+		warning("recv failed for %s: %m",
 		    inet_ntoa(sp->to.sin_addr));
 		return;
 	}
