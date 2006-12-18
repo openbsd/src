@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.11 2006/06/02 15:19:24 stevesk Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.12 2006/12/18 19:11:44 stevesk Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -206,10 +206,8 @@ the specified values.
 These are full option declarations as described in
 .Xr dhcp-options 5 .
 Options that are always sent in the DHCP protocol should not be specified
-here, except that the client can specify a
-.Ar dhcp-lease-time
-option other than the default requested lease time, which is two hours.
-The other obvious use for this statement is to send information to the server
+here.
+One use for this statement is to send information to the server
 that will allow it to differentiate between this client and other
 clients or kinds of clients.
 .El
