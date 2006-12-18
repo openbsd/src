@@ -825,8 +825,6 @@
 ./usr/include/dev/wscons/ascii.h
 ./usr/include/dev/wscons/unicode.h
 ./usr/include/dev/wscons/wscons_callbacks.h
-./usr/include/dev/wscons/wscons_raster.h
-./usr/include/dev/wscons/wscons_rfont.h
 ./usr/include/dev/wscons/wsconsio.h
 ./usr/include/dev/wscons/wsdisplay_usl_io.h
 ./usr/include/dev/wscons/wsdisplayvar.h

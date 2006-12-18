@@ -1424,8 +1424,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/wscons/ascii.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/wscons/unicode.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/wscons/wscons_callbacks.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/wscons/wscons_raster.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/wscons/wscons_rfont.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/wscons/wsconsio.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/wscons/wsdisplay_usl_io.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/wscons/wsdisplayvar.ph
