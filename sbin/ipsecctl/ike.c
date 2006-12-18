@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.58 2006/11/30 21:35:34 markus Exp $	*/
+/*	$OpenBSD: ike.c,v 1.59 2006/12/18 00:08:04 msf Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -578,6 +578,7 @@ ike_connect(struct ipsec_rule *r, FILE *fd)
 static int
 ike_gen_config(struct ipsec_rule *r, FILE *fd)
 {
+	ike_setup_ids(r);
 	ike_section_general(r, fd);
 	ike_section_peer(r, fd);
 	if (ike_section_p1(r, fd) == -1) {
@@ -598,6 +599,7 @@ ike_gen_config(struct ipsec_rule *r, FILE *fd)
 static int
 ike_delete_config(struct ipsec_rule *r, FILE *fd)
 {
+	ike_setup_ids(r);
 #if 0
 	switch (r->ikemode) {
 	case IKE_ACTIVE:
@@ -683,7 +685,6 @@ ike_setup_ids(struct ipsec_rule *r)
 int
 ike_print_config(struct ipsec_rule *r, int opts)
 {
-	ike_setup_ids(r);
 	if (opts & IPSECCTL_OPT_DELETE)
 		return (ike_delete_config(r, stdout));
 	else
