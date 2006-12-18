@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.240 2006/11/26 15:28:00 mbalmer Exp $
+dnl	$OpenBSD: hardware,v 1.241 2006/12/18 08:29:33 mbalmer Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -1242,6 +1242,8 @@ Supported hardware {:-include-:}:
 		    National Semiconductor PC87366 LPC Super I/O GPIO
 		    National Semiconductor Geode SC1100 PCI-ISA bridge GPIO
 		    AMD Elan SC520 System Controller PIO function
+		Meinberg Funkuhren time signal station receivers, including:
+		    DCF77 PCI32 time base
 	Many kinds of ISA Plug-and-Play cards
 		Nearly all SB-style audio cards
 		Nearly all joystick ports
