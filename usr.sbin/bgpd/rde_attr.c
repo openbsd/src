@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.66 2006/05/27 15:39:56 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.67 2006/12/18 19:16:59 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -111,6 +111,7 @@ attr_optadd(struct rde_aspath *asp, u_int8_t flags, u_int8_t type,
 {
 	u_int8_t	 l;
 	struct attr	*a, *t;
+	void		*p;
 
 	/* known optional attributes were validated previously */
 	if ((a = attr_lookup(flags, type, data, len)) == NULL)
@@ -143,9 +144,10 @@ attr_optadd(struct rde_aspath *asp, u_int8_t flags, u_int8_t type,
 
 	/* no empty slot found, need to realloc */
 	asp->others_len++;
-	if ((asp->others = realloc(asp->others,
+	if ((p = realloc(asp->others,
 	    asp->others_len * sizeof(struct attr *))) == NULL)
 		fatal("attr_optadd");
+	asp->others = p;
 
 	/* l stores the size of others before resize */
 	asp->others[l] = a;
