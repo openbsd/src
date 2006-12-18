@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.2 2005/02/13 03:37:14 jsg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 2006/12/18 18:51:38 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 2001/12/02 01:20:33 gmcgarry Exp $	*/
 
 /*-
@@ -421,6 +421,16 @@ __HP300_copy_region_N(1)
 __HP300_copy_region_N(2)
 __HP300_copy_region_N(4)
 #undef __HP300_copy_region_N
+
+#define	bus_space_read_raw_region_2(t, h, o, a, c) \
+	bus_space_read_region_2(t, h, o, (u_int16_t *)a, (c) >> 1)
+#define	bus_space_read_raw_region_4(t, h, o, a, c) \
+	bus_space_read_region_4(t, h, o, (u_int32_t *)a, (c) >> 2)
+
+#define	bus_space_write_raw_region_2(t, h, o, a, c) \
+	bus_space_write_region_2(t, h, o, (u_int16_t *)a, (c) >> 1)
+#define	bus_space_write_raw_region_4(t, h, o, a, c) \
+	bus_space_write_region_4(t, h, o, (u_int32_t *)a, (c) >> 2)
 
 /*
  * Note: the 680x0 does not currently require barriers, but we must
