@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.63 2006/12/19 15:12:59 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.64 2006/12/19 15:15:14 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -111,6 +111,9 @@ cvs_add_entry(struct cvs_file *cf)
 		entry = xmalloc(CVS_ENT_MAXLINELEN);
 		l = snprintf(entry, CVS_ENT_MAXLINELEN,
 			    "D/%s/////", cf->file_name);
+		if (l == -1 || l >= CVS_ENT_MAXLINELEN)
+			fatal("cvs_add_entry: overflow");
+
 		entlist = cvs_ent_open(cf->file_wd);
 		cvs_ent_add(entlist, entry);
 		cvs_ent_close(entlist, ENT_SYNC);
