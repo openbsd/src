@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.10 2006/12/18 20:57:45 canacar Exp $ */
+/* $OpenBSD: acpitz.c,v 1.11 2006/12/19 18:17:15 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -43,14 +43,14 @@ struct acpitz_softc {
 
 	int			sc_tmp;
 	int			sc_crt;
-	int                     sc_hot;
+	int			sc_hot;
 	int			sc_ac[ACPITZ_MAX_AC];
 	int			sc_ac_stat[ACPITZ_MAX_AC];
-	int                     sc_pse;
+	int			sc_pse;
 	int			sc_psv;
-	int                     sc_tc1;
-	int                     sc_tc2;
-	int                     sc_lasttmp;
+	int			sc_tc1;
+	int			sc_tc2;
+	int			sc_lasttmp;
 	struct sensor		sc_sens;
 };
 
@@ -70,7 +70,7 @@ void	acpitz_refresh(void *);
 int	acpitz_notify(struct aml_node *, int, void *);
 int	acpitz_getreading(struct acpitz_softc *, char *);
 int	acpitz_setfan(struct acpitz_softc *, int, char *);
-int     acpitz_setcpu(struct acpitz_softc *, int);
+int	acpitz_setcpu(struct acpitz_softc *, int);
 
 int
 acpitz_match(struct device *parent, void *match, void *aux)
@@ -95,27 +95,23 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpitz_softc	*sc = (struct acpitz_softc *)self;
 	struct acpi_attach_args	*aa = aux;
-	struct aml_value	res, env;
 	int			i;
 	char			name[8];
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
 
-	memset(&res, 0, sizeof(res));
-	memset(&env, 0, sizeof(env));
-
 	sc->sc_lasttmp = -1;
-	if (-1 == (sc->sc_tmp = acpitz_getreading(sc, "_TMP"))) {
-		printf(", failed to read _TMP");
+	if ((sc->sc_tmp = acpitz_getreading(sc, "_TMP")) == -1) {
+		printf(", failed to read _TMP\n");
 		return;
 	}
 
-	if (-1 == (sc->sc_crt = acpitz_getreading(sc, "_CRT"))) {
-		printf(", no critical temperature defined!");
+	if ((sc->sc_crt = acpitz_getreading(sc, "_CRT")) == -1) {
+		printf(", no critical temperature defined!\n");
 		sc->sc_crt = 0;
 	} else
-		printf(", critical temperature: %d degC",
+		printf(", critical temperature: %d degC\n",
 		    (sc->sc_crt - 2732) / 10);
 
 	for (i = 0; i < ACPITZ_MAX_AC; i++) {
@@ -135,12 +131,10 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	memset(&sc->sc_sens, 0, sizeof(sc->sc_sens));
 	strlcpy(sc->sc_sens.device, DEVNAME(sc), sizeof(sc->sc_sens.device));
 	strlcpy(sc->sc_sens.desc, "zone temperature",
-		sizeof(sc->sc_sens.desc));
+	    sizeof(sc->sc_sens.desc));
 	sc->sc_sens.type = SENSOR_TEMP;
 	sensor_add(&sc->sc_sens);
 	sc->sc_sens.value = 0;
-	
-	printf("\n");
 }
 
 int
@@ -163,13 +157,11 @@ acpitz_setcpu(struct acpitz_softc *sc, int trend)
 			continue;
 		}
 		ref = res0.v_package[x]->v_objref.ref;
-		if (ref->type != AML_OBJTYPE_PROCESSOR) {
+		if (ref->type != AML_OBJTYPE_PROCESSOR)
 			printf("%s: _PSL[%d] not a CPU\n", DEVNAME(sc), x);
-		}
 	}
  out:
 	aml_freevalue(&res0);
-
 	return (0);
 }
 
@@ -264,36 +256,32 @@ acpitz_refresh(void *arg)
 		acpi_s5 = 1;
 		psignal(initproc, SIGUSR1);
 	}
-	if (sc->sc_hot != -1 && sc->sc_hot <= sc->sc_tmp) {
+	if (sc->sc_hot != -1 && sc->sc_hot <= sc->sc_tmp)
 		printf("%s: _HOT temperature\n", DEVNAME(sc));
-	}
-	if (sc->sc_lasttmp != -1 && sc->sc_tc1 != -1 && sc->sc_tc2 != -1 && sc->sc_psv != -1) {
+
+	if (sc->sc_lasttmp != -1 && sc->sc_tc1 != -1 && sc->sc_tc2 != -1 &&
+	    sc->sc_psv != -1) {
 		if (sc->sc_psv <= sc->sc_tmp) {
 			sc->sc_pse = 1;
 			trend = sc->sc_tc1 * (sc->sc_tmp - sc->sc_lasttmp) +
-				sc->sc_tc2 * (sc->sc_tmp - sc->sc_psv);
+			    sc->sc_tc2 * (sc->sc_tmp - sc->sc_psv);
 			/* printf("_TZ trend = %d\n", trend); */
-		}
-		else if (sc->sc_pse) {
+		} else if (sc->sc_pse)
 			sc->sc_pse = 0;
-		}
 	}
 	sc->sc_lasttmp = sc->sc_tmp;
 
 	for (i = 0; i < ACPITZ_MAX_AC; i++) {
 		if (sc->sc_ac[i] != -1 && sc->sc_ac[i] <= sc->sc_tmp) {
 			/* turn on fan i */
-			if (sc->sc_ac_stat[i] <= 0) {
+			if (sc->sc_ac_stat[i] <= 0)
 				acpitz_setfan(sc, i, "_ON_");
-			}
 		} else if (sc->sc_ac[i] != -1) {
 			/* turn off fan i */
-			if (sc->sc_ac_stat[i] > 0) {
+			if (sc->sc_ac_stat[i] > 0)
 				acpitz_setfan(sc, i, "_OFF");
-			}
 		}
 	}
-
 	sc->sc_sens.value = sc->sc_tmp * 100000;
 }
 
@@ -307,11 +295,9 @@ acpitz_getreading(struct acpitz_softc *sc, char *name)
 		dnprintf(10, "%s: no %s\n", DEVNAME(sc), name);
 		goto out;
 	}
-
 	rv = aml_val2int(&res);
  out:
 	aml_freevalue(&res);
-
 	return (rv);
 }
 
@@ -327,18 +313,15 @@ acpitz_notify(struct aml_node *node, int notify_type, void *arg)
 	switch (notify_type) {
 	case 0x81:	/* Operating Points changed */
 		sc->sc_psv = acpitz_getreading(sc, "_PSV");
-
 		crt = sc->sc_crt;
 		sc->sc_crt = acpitz_getreading(sc, "_CRT");
 		if (crt != sc->sc_crt)
 			printf("%s: critical temperature: %u degC",
-		            DEVNAME(sc), (sc->sc_crt - 2732) / 10);
+			    DEVNAME(sc), (sc->sc_crt - 2732) / 10);
 		break;
 	default:
 		break;
 	}
-
 	acpitz_refresh(sc);
-
 	return (0);
 }
