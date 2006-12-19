@@ -1,4 +1,4 @@
-.\" $OpenBSD: relayctl.8,v 1.4 2006/12/18 19:48:04 jmc Exp $
+.\" $OpenBSD: relayctl.8,v 1.5 2006/12/19 14:44:38 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -33,11 +33,12 @@ daemon.
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
-.It Cm show Op Cm summary
-Show status of services, tables, and hosts.
-The keyword
-.Cm summary
-is optional.
+.It Cm host disable Op Ar name | id
+Disable a host.
+Treat it as though it were always down.
+.It Cm host enable Op Ar name | id
+Enable the host.
+Start checking its health again.
 .It Cm service disable Op Ar name | id
 Disable a service.
 If it has
@@ -49,6 +50,11 @@ if applicable \(en backup table disabled as well.
 Enable a service.
 Mark the service's main table and \(en if applicable \(en backup
 table enabled as well.
+.It Cm show Op Cm summary
+Show status of services, tables, and hosts.
+The keyword
+.Cm summary
+is optional.
 .It Cm table disable Op Ar name | id
 Disable a table.
 Consider all hosts disabled.
@@ -60,12 +66,6 @@ table with those of the backup table.
 Enable a table.
 Start doing checks for all hosts that aren't individually disabled
 again.
-.It Cm host disable Op Ar name | id
-Disable a host.
-Treat it as though it were always down.
-.It Cm host enable Op Ar name | id
-Enable the host.
-Start checking its health again.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/hostated.sockXX" -compact
