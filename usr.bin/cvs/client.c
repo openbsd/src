@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.35 2006/12/19 11:46:39 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.36 2006/12/19 14:11:21 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -738,6 +738,34 @@ cvs_client_remove_entry(char *data)
 
 	dir = cvs_remote_input();
 	xfree(dir);
+}
+
+void
+cvs_client_set_static_directory(char *data)
+{
+	FILE *fp;
+	char *dir, *fpath;
+
+	if (cvs_cmdop == CVS_OP_EXPORT)
+		return;
+
+	STRIP_SLASH(data);
+
+	dir = cvs_remote_input();
+	xfree(dir);
+
+	fpath = xmalloc(MAXPATHLEN);
+	if (cvs_path_cat(data, CVS_PATH_STATICENTRIES, fpath, MAXPATHLEN) >=
+	    MAXPATHLEN)
+		fatal("cvs_client_set_static_directory: truncation");
+
+	if ((fp = fopen(fpath, "w+")) == NULL) {
+		cvs_log(LP_ERRNO, "%s", fpath);
+		goto out;
+	}
+	(void)fclose(fp);
+out:
+	xfree(fpath);
 }
 
 void

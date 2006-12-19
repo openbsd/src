@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.45 2006/12/19 11:46:39 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.46 2006/12/19 14:11:21 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -34,6 +34,7 @@ struct cvs_resp cvs_responses[] = {
 	{ "Merged",		0,	cvs_client_merged, RESP_NEEDED },
 	{ "Removed",		0,	cvs_client_removed, RESP_NEEDED },
 	{ "Remove-entry",	0,	cvs_client_remove_entry, RESP_NEEDED },
+	{ "Set-static-directory",	0,	cvs_client_set_static_directory, RESP_NEEDED },
 	{ "Clear-static-directory",	0,	cvs_client_clear_static_directory, RESP_NEEDED },
 	{ "Set-sticky",		0,	cvs_client_set_sticky, RESP_NEEDED },
 	{ "Clear-sticky",	0,	cvs_client_clear_sticky, RESP_NEEDED },
@@ -48,7 +49,6 @@ struct cvs_resp cvs_responses[] = {
 	{ "Mod-time",			0,	NULL, 0 },
 	{ "Checksum",			0,	NULL, 0 },
 	{ "Copy-file",			0,	NULL, 0 },
-	{ "Set-static-directory",	0,	NULL, 0 },
 	{ "Template",			0,	NULL, 0 },
 	{ "Set-checkin-prog",		0,	NULL, 0 },
 	{ "Set-update-prog",		0,	NULL, 0 },
