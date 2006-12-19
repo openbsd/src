@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.4 2006/12/18 19:48:04 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.5 2006/12/19 14:39:30 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -83,12 +83,6 @@ method.
 Only one health-checking method can be used per table.
 Table specific configuration directives are described below.
 .Bl -tag -width Ds
-.It Ic check tcp
-Use a simple TCP connect to check that hosts are up.
-.It Ic check icmp
-Ping hosts in this table to determine whether they are up or not.
-This method will automatically use ICMP or ICMPV6 depending on the
-address family of each host.
 .It Ic check http Ar path Ic code Ar number
 For each host in the table, verify that retrieving the URL
 .Ar path
@@ -110,23 +104,29 @@ that can be used as is in a digest statement:
 .Bd -literal -offset indent
 a9993e36476816aba3e25717850c26c9cd0d89d
 .Ed
-.It Ic timeout Ar number
-Set the timeout in milliseconds for each host that is checked.
-The default timeout is 200 milliseconds.
-.It Ic real port Ar number
-When using the TCP or HTTP checking methods, use this port to connect
-to hosts.
-This parameter is mandatory.
-Main and backup tables need to have the same real port.
+.It Ic check icmp
+Ping hosts in this table to determine whether they are up or not.
+This method will automatically use ICMP or ICMPV6 depending on the
+address family of each host.
+.It Ic check tcp
+Use a simple TCP connect to check that hosts are up.
+.It Ic disable
+Start the table disabled \(en no hosts will be checked in this table.
+The table can be later enabled through
+.Xr hostatectl 8 .
 .It Ic host Ar address
 Add the host whose address is
 .Ar address
 to the list of hosts to be checked in this table.
 Each table needs at least one host.
-.It Ic disable
-Start the table disabled \(en no hosts will be checked in this table.
-The table can be later enabled through
-.Xr hostatectl 8 .
+.It Ic real port Ar number
+When using the TCP or HTTP checking methods, use this port to connect
+to hosts.
+This parameter is mandatory.
+Main and backup tables need to have the same real port.
+.It Ic timeout Ar number
+Set the timeout in milliseconds for each host that is checked.
+The default timeout is 200 milliseconds.
 .El
 .Sh SERVICES
 Services represent a
@@ -137,6 +137,21 @@ to the hosts in the specified tables.
 The configuration directives that are valid in this context are described
 below.
 .Bl -tag -width Ds
+.It Ic backup table Ar name
+Specify the table to switch to when all hosts in the main table
+are seen as down or disabled.
+.It Ic disable
+Set the service initially disabled.
+It can be later enabled through
+.Xr hostatectl 8 .
+.It Ic table Ar name
+Specify the main table to be used.
+This is mandatory.
+.It Ic tag Ar name
+Automatically tag packets passing through the
+.Xr pf 4
+rdr rule with the name supplied.
+This allows simpler filter rules.
 .It Ic virtual ip Ar address Ic port Ar number
 Specify an address and a port that will be used to redirect requests
 to the hosts in the main or backup table.
@@ -145,21 +160,6 @@ to specify which interface the rdr rule will be enabled on:
 .Bd -literal -offset indent
 interface ``ifname''
 .Ed
-.It Ic table Ar name
-Specify the main table to be used.
-This is mandatory.
-.It Ic backup table Ar name
-Specify the table to switch to when all hosts in the main table
-are seen as down or disabled.
-.It Ic disable
-Set the service initially disabled.
-It can be later enabled through
-.Xr hostatectl 8 .
-.It Ic tag Ar name
-Automatically tag packets passing through the
-.Xr pf 4
-rdr rule with the name supplied.
-This allows simpler filter rules.
 .El
 .Sh EXAMPLE
 This configuration file would create a service
