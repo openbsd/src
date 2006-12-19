@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.h,v 1.12 2006/12/15 13:12:14 xsa Exp $	*/
+/*	$OpenBSD: remote.h,v 1.13 2006/12/19 11:46:39 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -53,6 +53,9 @@ void	cvs_client_updated(char *);
 void	cvs_client_merged(char *);
 void	cvs_client_removed(char *);
 void	cvs_client_remove_entry(char *);
+void	cvs_client_clear_static_directory(char *);
+void	cvs_client_set_sticky(char *);
+void	cvs_client_clear_sticky(char *);
 
 void	cvs_client_senddir(const char *);
 void	cvs_client_sendfile(struct cvs_file *);

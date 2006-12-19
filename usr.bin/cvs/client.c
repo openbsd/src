@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.34 2006/12/15 15:40:28 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.35 2006/12/19 11:46:39 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -739,6 +739,78 @@ cvs_client_remove_entry(char *data)
 	dir = cvs_remote_input();
 	xfree(dir);
 }
+
+void
+cvs_client_clear_static_directory(char *data)
+{
+	char *dir, *fpath;
+
+	if (cvs_cmdop == CVS_OP_EXPORT)
+		return;
+
+	STRIP_SLASH(data);
+
+	dir = cvs_remote_input();
+	xfree(dir);
+
+	fpath = xmalloc(MAXPATHLEN);
+	if (cvs_path_cat(data, CVS_PATH_STATICENTRIES, fpath, MAXPATHLEN) >=
+	    MAXPATHLEN)
+		fatal("cvs_client_clear_static_directory: truncation");
+
+	(void)cvs_unlink(fpath);
+
+	xfree(fpath);
+}
+
+void
+cvs_client_set_sticky(char *data)
+{
+	FILE *fp;
+	char *dir, *tag, *tagpath;
+
+	STRIP_SLASH(data);
+
+	dir = cvs_remote_input();
+	xfree(dir);
+	tag = cvs_remote_input();
+
+	tagpath = xmalloc(MAXPATHLEN);
+	if (cvs_path_cat(data, CVS_PATH_TAG, tagpath, MAXPATHLEN) >= MAXPATHLEN)
+		fatal("cvs_client_clear_sticky: truncation");
+
+	if ((fp = fopen(tagpath, "w+")) == NULL) {
+		cvs_log(LP_ERRNO, "%s", tagpath);
+		goto out;
+	}
+
+	(void)fprintf(fp, "%s\n", tag);
+	(void)fclose(fp);
+out:
+	xfree(tagpath);
+	xfree(tag);
+}
+
+void
+cvs_client_clear_sticky(char *data)
+{
+	char *dir, *tagpath;
+
+	STRIP_SLASH(data);
+
+	dir = cvs_remote_input();
+	xfree(dir);
+
+	tagpath = xmalloc(MAXPATHLEN);
+	if (cvs_path_cat(data, CVS_PATH_TAG, tagpath, MAXPATHLEN) >= MAXPATHLEN)
+		fatal("cvs_client_clear_sticky: truncation");
+
+	(void)cvs_unlink(tagpath);
+
+	xfree(tagpath);
+}
+
+
 /*
  * cvs_client_initlog()
  *
