@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.84 2006/10/24 04:35:30 tedu Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.85 2006/12/19 13:00:50 otto Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -267,7 +267,7 @@ alloc_pgfree()
 
 	if (pgfree_list == NULL) {
 		p = MMAP(malloc_pagesize);
-		if (!p)
+		if (p == MAP_FAILED)
 			return NULL;
 		for (i = 0; i < malloc_pagesize / sizeof(*p); i++) {
 			p[i].next = pgfree_list;
@@ -288,7 +288,7 @@ alloc_pginfo()
 
 	if (pginfo_list == NULL) {
 		p = MMAP(malloc_pagesize);
-		if (!p)
+		if (p == MAP_FAILED)
 			return NULL;
 		for (i = 0; i < malloc_pagesize / sizeof(*p); i++) {
 			p[i].next = pginfo_list;
