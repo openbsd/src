@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.37 2006/12/19 15:12:59 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.38 2006/12/19 16:04:40 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -738,10 +738,26 @@ cvs_client_removed(char *data)
 void
 cvs_client_remove_entry(char *data)
 {
-	char *dir;
+	CVSENTRIES *entlist;
+	struct cvs_ent *ent;
+	char *dir, *entry;
 
 	dir = cvs_remote_input();
+	entry = cvs_remote_input();
 	xfree(dir);
+
+	cvs_log(LP_TRACE, "cvs_client_remove_entry(%s)", entry);
+
+	if ((ent = cvs_ent_parse(entry)) == NULL)
+		fatal("cvs_client_remove_entry: cvs_ent_parse failed");
+
+	entlist = cvs_ent_open(data);
+
+	cvs_ent_remove(entlist, ent->ce_name);
+	cvs_ent_free(ent);
+	cvs_ent_close(entlist, ENT_SYNC);
+
+	xfree(entry);
 }
 
 void
