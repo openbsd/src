@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.36 2006/12/19 14:11:21 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.37 2006/12/19 15:12:59 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -108,6 +108,8 @@ static int	cvs_client_logon = 0;
 static int	cvs_client_inlog_fd = -1;
 static int	cvs_client_outlog_fd = -1;
 
+
+int server_response = SERVER_OK;
 
 static char *
 client_get_supported_responses(void)
@@ -534,12 +536,14 @@ void
 cvs_client_ok(char *data)
 {
 	end_of_response = 1;
+	server_response = SERVER_OK;
 }
 
 void
 cvs_client_error(char *data)
 {
 	end_of_response = 1;
+	server_response = SERVER_ERROR;
 }
 
 void

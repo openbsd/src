@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.62 2006/12/04 09:51:21 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.63 2006/12/19 15:12:59 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -26,6 +26,7 @@
 extern char *__progname;
 
 void	cvs_add_local(struct cvs_file *);
+void	cvs_add_entry(struct cvs_file *);
 
 static void add_directory(struct cvs_file *);
 static void add_file(struct cvs_file *);
@@ -89,9 +90,33 @@ cvs_add(int argc, char **argv)
 		cvs_client_senddir(".");
 		cvs_client_send_request("add");
 		cvs_client_get_responses();
+
+		if (server_response == SERVER_OK) {
+			cr.fileproc = cvs_add_entry;
+			cvs_file_run(argc, argv, &cr);
+		}
 	}
 
 	return (0);
+}
+
+void
+cvs_add_entry(struct cvs_file *cf)
+{
+	int l;
+	char *entry;
+	CVSENTRIES *entlist;
+
+	if (cf->file_type == CVS_DIR) {
+		entry = xmalloc(CVS_ENT_MAXLINELEN);
+		l = snprintf(entry, CVS_ENT_MAXLINELEN,
+			    "D/%s/////", cf->file_name);
+		entlist = cvs_ent_open(cf->file_wd);
+		cvs_ent_add(entlist, entry);
+		cvs_ent_close(entlist, ENT_SYNC);
+	} else {
+		add_entry(cf);
+	}
 }
 
 void

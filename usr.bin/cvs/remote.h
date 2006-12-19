@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.h,v 1.14 2006/12/19 14:11:21 xsa Exp $	*/
+/*	$OpenBSD: remote.h,v 1.15 2006/12/19 15:12:59 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -36,6 +36,11 @@ struct cvs_resp {
 
 #define	REQ_NEEDED	0x01
 #define RESP_NEEDED	0x01
+
+extern int server_response;
+
+#define SERVER_OK	0
+#define SERVER_ERROR	1
 
 void	cvs_client_connect_to_server(void);
 void	cvs_client_disconnect(void);
