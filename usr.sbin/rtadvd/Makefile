@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.4 2003/05/09 00:07:09 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 2006/12/19 14:50:29 itojun Exp $
 
 PROG=	rtadvd
 SRCS=	rtadvd.c rrenum.c advcap.c if.c config.c timer.c dump.c
 
-CPPFLAGS+=-DINET6
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
 MAN=	rtadvd.8 rtadvd.conf.5
