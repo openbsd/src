@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.12 2006/12/19 16:48:16 marco Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.13 2006/12/19 20:28:11 gwk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -81,7 +81,7 @@ acpicpu_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args	*aa = aux;
 	struct cfdata		*cf = match;
-	
+
 	/* sanity */
 	if (aa->aaa_name == NULL ||
 	    strcmp(aa->aaa_name, cf->cf_driver->cd_name) != 0 ||
@@ -131,15 +131,15 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("%d%s", sc->sc_pss[i].pss_core_freq,
 		    i < sc->sc_pss_len - 1 ? ", " : " MHz\n");
 
-	aml_register_notify(sc->sc_devnode->parent, NULL, 
+	aml_register_notify(sc->sc_devnode->parent, NULL,
 	    acpicpu_notify, sc);
-	
+
 	if (setperf_prio < 30) {
 		cpu_setperf = acpicpu_setperf;
 		setperf_prio = 30;
 	}
-	acpicpu_sc[sc->sc_dev.dv_unit] = sc; 
-	  
+	acpicpu_sc[sc->sc_dev.dv_unit] = sc;
+
 }
 
 int
@@ -218,7 +218,7 @@ acpicpu_getpss(struct acpicpu_softc *sc)
 		dnprintf(20, "%s: no _PSS\n", DEVNAME(sc));
 		return (1);
 	}
-	
+
 	if (sc->sc_pss)
 		free(sc->sc_pss, M_DEVBUF);
 
@@ -276,7 +276,7 @@ acpicpu_setperf(int level) {
 	struct acpicpu_pss *pss = NULL;
 	int high, low, freq, i;
 	u_int32_t status;
-	
+
 	sc = acpicpu_sc[cpu_number()];
 	high = sc->sc_pss[0].pss_core_freq;
 	low = sc->sc_pss[sc->sc_pss_len - 1].pss_core_freq;
@@ -300,23 +300,23 @@ acpicpu_setperf(int level) {
 	/* Are we already at the requested frequency? */
 	if (status == pss->pss_status)
 		return;
-	
+
 	acpi_gasio(sc->sc_acpi, ACPI_IOWRITE,
 	    sc->sc_pct.pct_ctrl.grd_gas.address_space_id,
-	    sc->sc_pct.pct_ctrl.grd_gas.address, 1, 4, 
+	    sc->sc_pct.pct_ctrl.grd_gas.address, 1, 4,
 	    &pss->pss_ctrl);
-	
+
 	acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
 	    sc->sc_pct.pct_status.grd_gas.address_space_id,
 	    sc->sc_pct.pct_status.grd_gas.address, 1, 4,
 	    &status);
 
 	/* Did the transition succeed? */
-	 if (status == pss->pss_status) 	
+	 if (status == pss->pss_status)
 #ifdef __i386__
 		pentium_mhz = pss->pss_core_freq;
 #elif __amd64__
 		cpuspeed = pss->pss_core_freq;
-#endif	
+#endif
 	return;
 }
