@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.67 2006/12/06 17:45:57 mk Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.68 2006/12/19 04:09:11 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -80,8 +80,8 @@ void	acpi_filtdetach(struct knote *);
 int	acpi_filtread(struct knote *, long);
 
 void    __acpi_enable_gpe(struct acpi_softc *, int, int);
-int     acpi_gpe_level(struct acpi_softc *, int, void *);
-int     acpi_gpe_edge(struct acpi_softc *, int, void *);
+int	acpi_gpe_level(struct acpi_softc *, int, void *);
+int	acpi_gpe_edge(struct acpi_softc *, int, void *);
 
 #define	ACPI_LOCK(sc)
 #define	ACPI_UNLOCK(sc)
@@ -102,14 +102,14 @@ struct cfdriver acpi_cd = {
 };
 
 struct acpi_softc *acpi_softc;
-int acpi_s5, acpi_evindex, icount;
+int acpi_s5, acpi_evindex;
 
 #ifdef __i386__
-#define acpi_bus_space_map     _bus_space_map
-#define acpi_bus_space_unmap   _bus_space_unmap
+#define acpi_bus_space_map	_bus_space_map
+#define acpi_bus_space_unmap	_bus_space_unmap
 #elif defined(__amd64__)
-#define acpi_bus_space_map     _x86_memio_map
-#define acpi_bus_space_unmap   _x86_memio_unmap
+#define acpi_bus_space_map	_x86_memio_map
+#define acpi_bus_space_unmap	_x86_memio_unmap
 #else
 #error ACPI supported on i386/amd64 only
 #endif
@@ -124,8 +124,8 @@ acpi_delay(struct acpi_softc *sc, int64_t uSecs)
 }
 
 int
-acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address, 
-	   int access_size, int len, void *buffer)
+acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
+    int access_size, int len, void *buffer)
 {
 	u_int8_t *pb;
 	bus_space_handle_t ioh;
@@ -136,14 +136,14 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 	int reg, idx, ival, sval;
 
 	dnprintf(50, "gasio: %.2x 0x%.8llx %s\n",
-		 iospace, address, (iodir == ACPI_IOWRITE) ? "write" : "read");
+	    iospace, address, (iodir == ACPI_IOWRITE) ? "write" : "read");
 
 	pb = (u_int8_t *)buffer;
 	switch (iospace) {
 	case GAS_SYSTEM_MEMORY:
 		/* copy to/from system memory */
 		acpi_map(address, len, &mh);
-		if (iodir == ACPI_IOREAD) 
+		if (iodir == ACPI_IOREAD)
 			memcpy(buffer, mh.va, len);
 		else
 			memcpy(mh.va, buffer, len);
@@ -163,33 +163,36 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 				case 1:
 					*(uint8_t *)(pb+reg) = bus_space_read_1(
 					    sc->sc_iot, ioh, reg);
-					dnprintf(80, "os_in8(%llx) = %x\n", reg+
-					    address, *(uint8_t *)(pb+reg));
+					dnprintf(80, "os_in8(%llx) = %x\n",
+					    reg+address, *(uint8_t *)(pb+reg));
 					break;
 				case 2:
-					*(uint16_t *)(pb+reg) = bus_space_read_2
-					    (sc->sc_iot, ioh, reg);
-					dnprintf(80, "os_in16(%llx) = %x\n", reg					    +address, *(uint16_t *)(pb+reg));
+					*(uint16_t *)(pb+reg) = bus_space_read_2(
+					    sc->sc_iot, ioh, reg);
+					dnprintf(80, "os_in16(%llx) = %x\n",
+					    reg+address, *(uint16_t *)(pb+reg));
 					break;
 				case 4:
-					*(uint32_t *)(pb+reg) = bus_space_read_4					    (sc->sc_iot, ioh, reg);
+					*(uint32_t *)(pb+reg) = bus_space_read_4(
+					    sc->sc_iot, ioh, reg);
 					break;
 				}
-			}
-			else {
+			} else {
 				switch (access_size) {
 				case 1:
-					bus_space_write_1(sc->sc_iot, ioh, reg, 					    *(uint8_t *)(pb+reg));
-					dnprintf(80, "os_out8(%llx,%x)\n", reg+
-					    address, *(uint8_t *)(pb+reg));
+					bus_space_write_1(sc->sc_iot, ioh, reg,
+					    *(uint8_t *)(pb+reg));
+					dnprintf(80, "os_out8(%llx,%x)\n",
+					    reg+address, *(uint8_t *)(pb+reg));
 					break;
 				case 2:
-					bus_space_write_2(sc->sc_iot, ioh, reg, 
+					bus_space_write_2(sc->sc_iot, ioh, reg,
 					    *(uint16_t *)(pb+reg));
-					dnprintf(80, "os_out16(%llx,%x)\n", reg+					    address, *(uint16_t *)(pb+reg));
+					dnprintf(80, "os_out16(%llx,%x)\n",
+					    reg+address, *(uint16_t *)(pb+reg));
 					break;
 				case 4:
-					bus_space_write_4(sc->sc_iot, ioh, reg, 
+					bus_space_write_4(sc->sc_iot, ioh, reg,
 					    *(uint32_t *)(pb+reg));
 					break;
 				}
@@ -207,14 +210,14 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 		break;
 
 	case GAS_PCI_CFG_SPACE:
-		/* format of address: 
+		/* format of address:
 		 *    bits 00..15 = register
 		 *    bits 16..31 = function
 		 *    bits 32..47 = device
 		 *    bits 48..63 = bus
 		 */
 		pc = NULL;
-		tag = pci_make_tag(pc, 
+		tag = pci_make_tag(pc,
 		    ACPI_PCI_BUS(address), ACPI_PCI_DEV(address),
 		    ACPI_PCI_FN(address));
 
@@ -223,41 +226,11 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 		for (idx=reg; idx<reg+len; idx++) {
 			ival = pci_conf_read(pc, tag, idx & ~0x3);
 			if (iodir == ACPI_IOREAD) {
-				switch (idx & 0x3) {
-				case 0:
-					*pb = ival;
-					break;
-				case 1:
-					*pb = (ival >> 8);
-					break;
-				case 2:
-					*pb = (ival >> 16);
-					break;
-				case 3:
-					*pb = (ival >> 24);
-					break;
-				}
-			}
-			else {
+				*pb = ival >> (8 * (idx & 0x3));
+			} else {
 				sval = *pb;
-				switch (idx & 0x3) {
-				case 0:
-					ival &= ~0xFF;
-					ival |= sval;
-					break;
-				case 1:
-					ival &= ~0xFF00;
-					ival |= (sval << 8L);
-					break;
-				case 2:
-					ival &= ~0xFF0000;
-					ival |= (sval << 16L);
-					break;
-				case 3:
-					ival &= ~0xFF000000L;
-					ival |= (sval << 24L);
-					break;
-				}
+				ival &= ~(0xFF << (8* (idx & 0x3)));
+				ival |= sval << (8* (idx & 0x3));
 				pci_conf_write(pc, tag, idx & ~0x3, ival);
 			}
 			pb++;
@@ -358,7 +331,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 
 			dnprintf(20, "gpe1 block len : %x\n",
 			    sc->sc_fadt->gpe1_blk_len >> 1);
-			dnprintf(20, "gpe1 block addr: %x\n",	
+			dnprintf(20, "gpe1 block addr: %x\n",
 			    sc->sc_fadt->gpe1_blk);
 			if (reg == ACPIREG_GPE1_EN && addr) {
 				addr += size;
@@ -416,7 +389,7 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 		    acpi_read_pmreg(sc, ACPIREG_PM1B_CNT, offset));
 	case ACPIREG_GPE_STS:
 		__size = 1;
-		dnprintf(50, "read GPE_STS  offset: %.2x %.2x %.2x\n", offset, 
+		dnprintf(50, "read GPE_STS  offset: %.2x %.2x %.2x\n", offset,
 		    sc->sc_fadt->gpe0_blk_len>>1, sc->sc_fadt->gpe1_blk_len>>1);
 		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
 			reg = ACPIREG_GPE0_STS;
@@ -424,15 +397,15 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 		break;
 	case ACPIREG_GPE_EN:
 		__size = 1;
-		dnprintf(50, "read GPE_EN   offset: %.2x %.2x %.2x\n", 
+		dnprintf(50, "read GPE_EN   offset: %.2x %.2x %.2x\n",
 		    offset, sc->sc_fadt->gpe0_blk_len>>1,
 		    sc->sc_fadt->gpe1_blk_len>>1);
 		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
 			reg = ACPIREG_GPE0_EN;
 		}
-		break;	
+		break;
 	}
-	
+
 	if (reg >= ACPIREG_MAXREG || sc->sc_pmregs[reg].size == 0)
 		return (0);
 
@@ -486,7 +459,7 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 		break;
 	case ACPIREG_GPE_STS:
 		__size = 1;
-		dnprintf(50, "write GPE_STS offset: %.2x %.2x %.2x %.2x\n", 
+		dnprintf(50, "write GPE_STS offset: %.2x %.2x %.2x %.2x\n",
 		    offset, sc->sc_fadt->gpe0_blk_len>>1,
 		    sc->sc_fadt->gpe1_blk_len>>1, regval);
 		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
@@ -495,13 +468,13 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 		break;
 	case ACPIREG_GPE_EN:
 		__size = 1;
-		dnprintf(50, "write GPE_EN  offset: %.2x %.2x %.2x %.2x\n", 
+		dnprintf(50, "write GPE_EN  offset: %.2x %.2x %.2x %.2x\n",
 		    offset, sc->sc_fadt->gpe0_blk_len>>1,
 		    sc->sc_fadt->gpe1_blk_len>>1, regval);
 		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
 			reg = ACPIREG_GPE0_EN;
 		}
-		break;	
+		break;
 	}
 
 	/* All special case return here */
@@ -584,11 +557,11 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
 	struct device		*self = (struct device *)arg;
 	const char		*dev;
-	struct aml_value        res;
+	struct aml_value	 res;
 	struct acpi_attach_args	aaa;
 
 	dnprintf(10, "found hid device: %s ", node->parent->name);
-	if (aml_evalnode(sc, node, 0, NULL, &res) != 0) 
+	if (aml_evalnode(sc, node, 0, NULL, &res) != 0)
 		return;
 
 	switch (res.type) {
@@ -799,7 +772,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Find available sleep/resume related methods. */
 	acpi_init_pm(sc);
-	
+
 	/*
 	 * Set up a pointer to the firmware control structure
 	 */
@@ -846,7 +819,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	acpi_attach_machdep(sc);
 
 	printf("\n");
-	
+
 	printf("%s: tables ", DEVNAME(sc));
 	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
 		printf("%.4s ", entry->q_table);
@@ -969,8 +942,8 @@ acpi_print(void *aux, const char *pnp)
 #ifdef ACPIVERBOSE
 	if (hdr)
 		printf(" table %c%c%c%c",
-		       hdr->signature[0], hdr->signature[1],
-		       hdr->signature[2], hdr->signature[3]);
+		    hdr->signature[0], hdr->signature[1],
+		    hdr->signature[2], hdr->signature[3]);
 #endif
 
 	return (UNCONF);
@@ -1160,7 +1133,7 @@ __acpi_enable_gpe(struct acpi_softc *sc, int gpe, int enable)
 
 	/* Read enabled register */
 	en = acpi_read_pmreg(sc, ACPIREG_GPE_EN, gpe>>3);
-	dnprintf(50, "%sabling GPE %.2x (current: %sabled) %.2x\n", 
+	dnprintf(50, "%sabling GPE %.2x (current: %sabled) %.2x\n",
 	    enable ? "en" : "dis", gpe, (en & mask) ? "en" : "dis", en);
 	if (enable)
 		en |= mask;
@@ -1391,10 +1364,10 @@ void
 acpi_resume(struct acpi_softc *sc)
 {
 	struct aml_value env;
-	
+
 	env.type = AML_OBJTYPE_INTEGER;
 	env.v_integer = sc->sc_state;
-	
+
 	if (sc->sc_bfs) {
 		if (aml_evalnode(sc, sc->sc_pts, 1, &env, NULL) != 0) {
 			dnprintf(10, "%s evaluating method _BFS failed.\n",
@@ -1641,9 +1614,8 @@ acpi_isr_thread(void *arg)
 			if (pgpe->active) {
 				pgpe->active = 0;
 				dnprintf(50, "softgpe: %.2x\n", gpe);
-				if (pgpe->handler) {
+				if (pgpe->handler)
 					pgpe->handler(sc, gpe, pgpe->arg);
-				}
 			}
 		}
 		if (sc->sc_powerbtn) {
