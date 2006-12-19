@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.11 2006/12/19 16:20:01 gwk Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.12 2006/12/19 16:48:16 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -122,11 +122,14 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	}
 	dnprintf(20, "\n");
 #endif
+
+	/* XXX this needs to be moved to probe routine */
+	if (acpicpu_getpct(sc))
+		return;
+
 	for (i = 0; i < sc->sc_pss_len; i++)
 		printf("%d%s", sc->sc_pss[i].pss_core_freq,
 		    i < sc->sc_pss_len - 1 ? ", " : " MHz\n");
-
-	acpicpu_getpct(sc);
 
 	aml_register_notify(sc->sc_devnode->parent, NULL, 
 	    acpicpu_notify, sc);
@@ -143,8 +146,9 @@ int
 acpicpu_getpct(struct acpicpu_softc *sc)
 {
 	struct aml_value	res;
+	int			rv = 1;
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PPC", 0, NULL, &res) != 0) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PPC", 0, NULL, &res)) {
 		dnprintf(20, "%s: no _PPC\n", DEVNAME(sc));
 		printf("%s: no _PPC\n", DEVNAME(sc));
 		return (1);
@@ -153,8 +157,7 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 	dnprintf(10, "_PPC: %d\n", aml_val2int(&res));
 	aml_freevalue(&res);
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PCT", 0, NULL, &res) != 0) {
-		dnprintf(20, "%s: no _PCT\n", DEVNAME(sc));
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PCT", 0, NULL, &res)) {
 		printf("%s: no _PCT\n", DEVNAME(sc));
 		return (1);
 	}
@@ -167,9 +170,19 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 
 	memcpy(&sc->sc_pct.pct_ctrl, res.v_package[0]->v_buffer,
 	    sizeof sc->sc_pct.pct_ctrl);
+	if (sc->sc_pct.pct_ctrl.grd_gas.address_space_id ==
+	    GAS_FUNCTIONAL_FIXED) {
+		printf("CTRL GASIO is CPU manufacturer overridden\n");
+		goto bad;
+	}
+
 	memcpy(&sc->sc_pct.pct_status, res.v_package[1]->v_buffer,
 	    sizeof sc->sc_pct.pct_status);
-	aml_freevalue(&res);
+	if (sc->sc_pct.pct_status.grd_gas.address_space_id ==
+	    GAS_FUNCTIONAL_FIXED) {
+		printf("STATUS GASIO is CPU manufacturer overridden\n");
+		goto bad;
+	}
 
 	dnprintf(10, "_PCT(ctrl)  : %02x %04x %02x %02x %02x %02x %016x\n",
 	    sc->sc_pct.pct_ctrl.grd_descriptor,
@@ -189,7 +202,10 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 	    sc->sc_pct.pct_status.grd_gas.access_size,
 	    sc->sc_pct.pct_status.grd_gas.address);
 
-	return (0);
+	rv = 0;
+bad:
+	aml_freevalue(&res);
+	return (rv);
 }
 
 int
@@ -198,7 +214,7 @@ acpicpu_getpss(struct acpicpu_softc *sc)
 	struct aml_value	res;
 	int			i;
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PSS", 0, NULL, &res) != 0) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PSS", 0, NULL, &res)) {
 		dnprintf(20, "%s: no _PSS\n", DEVNAME(sc));
 		return (1);
 	}
