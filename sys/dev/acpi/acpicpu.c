@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.10 2006/10/12 16:38:21 jordan Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.11 2006/12/19 16:20:01 gwk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -38,6 +39,7 @@
 int	acpicpu_match(struct device *, void *, void *);
 void	acpicpu_attach(struct device *, struct device *, void *);
 int	acpicpu_notify(struct aml_node *, int, void *);
+void	acpicpu_setperf(int);
 
 struct acpicpu_softc {
 	struct device		sc_dev;
@@ -64,6 +66,15 @@ struct cfattach acpicpu_ca = {
 struct cfdriver acpicpu_cd = {
 	NULL, "acpicpu", DV_DULL
 };
+
+extern int setperf_prio;
+
+#ifdef __i386__ 
+struct acpicpu_softc *acpicpu_sc[I386_MAXPROCS];
+#elif __amd64__
+extern int cpuspeed;
+struct acpicpu_softc *acpicpu_sc[X86_MAXPROCS];
+#endif
 
 int
 acpicpu_match(struct device *parent, void *match, void *aux)
@@ -119,6 +130,13 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 
 	aml_register_notify(sc->sc_devnode->parent, NULL, 
 	    acpicpu_notify, sc);
+	
+	if (setperf_prio < 30) {
+		cpu_setperf = acpicpu_setperf;
+		setperf_prio = 30;
+	}
+	acpicpu_sc[sc->sc_dev.dv_unit] = sc; 
+	  
 }
 
 int
@@ -170,35 +188,6 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 	    sc->sc_pct.pct_status.grd_gas.register_bit_offset,
 	    sc->sc_pct.pct_status.grd_gas.access_size,
 	    sc->sc_pct.pct_status.grd_gas.address);
-
-#if 0
-	char			pb[8];
-
-	acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
-	   sc->sc_pct.pct_ctrl.grd_gas.address_space_id,
-	   sc->sc_pct.pct_ctrl.grd_gas.address,
-	   1,
-	   4,
-	   //sc->sc_pct.pct_ctrl.grd_gas.register_bit_width >> 3,
-	   pb);
-
-	acpi_gasio(sc->sc_acpi, ACPI_IOWRITE,
-	   sc->sc_pct.pct_ctrl.grd_gas.address_space_id,
-	   sc->sc_pct.pct_ctrl.grd_gas.address,
-	   1,
-	   4,
-	   //sc->sc_pct.pct_ctrl.grd_gas.register_bit_width >> 3,
-	   &sc->sc_pss[3].pss_ctrl);
-
-	acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
-	   sc->sc_pct.pct_ctrl.grd_gas.address_space_id,
-	   sc->sc_pct.pct_ctrl.grd_gas.address,
-	   1,
-	   4,
-	   //sc->sc_pct.pct_ctrl.grd_gas.register_bit_width >> 3,
-	   pb);
-	printf("acpicpu: %02x %02x %02x %02x\n", pb[0], pb[1], pb[2], pb[3]);
-#endif
 
 	return (0);
 }
@@ -262,6 +251,56 @@ acpicpu_notify(struct aml_node *node, int notify_type, void *arg)
 		break;
 	}
 
-
 	return (0);
+}
+
+void
+acpicpu_setperf(int level) {
+	struct acpicpu_softc *sc;
+	struct acpicpu_pss *pss = NULL;
+	int high, low, freq, i;
+	u_int32_t status;
+	
+	sc = acpicpu_sc[cpu_number()];
+	high = sc->sc_pss[0].pss_core_freq;
+	low = sc->sc_pss[sc->sc_pss_len - 1].pss_core_freq;
+	freq = low + (high - low) * level / 100;
+
+	for (i = 0; i < sc->sc_pss_len; i++) {
+		if (sc->sc_pss[i].pss_core_freq <= freq) {
+			pss = &sc->sc_pss[i];
+			break;
+		}
+	}
+
+	if (pss == NULL)
+		return;
+
+	acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
+	    sc->sc_pct.pct_status.grd_gas.address_space_id,
+	    sc->sc_pct.pct_status.grd_gas.address, 1, 4,
+	    &status);
+
+	/* Are we already at the requested frequency? */
+	if (status == pss->pss_status)
+		return;
+	
+	acpi_gasio(sc->sc_acpi, ACPI_IOWRITE,
+	    sc->sc_pct.pct_ctrl.grd_gas.address_space_id,
+	    sc->sc_pct.pct_ctrl.grd_gas.address, 1, 4, 
+	    &pss->pss_ctrl);
+	
+	acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
+	    sc->sc_pct.pct_status.grd_gas.address_space_id,
+	    sc->sc_pct.pct_status.grd_gas.address, 1, 4,
+	    &status);
+
+	/* Did the transition succeed? */
+	 if (status == pss->pss_status) 	
+#ifdef __i386__
+		pentium_mhz = pss->pss_core_freq;
+#elif __amd64__
+		cpuspeed = pss->pss_core_freq;
+#endif	
+	return;
 }
