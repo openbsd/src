@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.11 2005/01/20 04:21:42 jaredy Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.12 2006/12/20 06:45:10 steven Exp $	*/
 /*
  * Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
  *
@@ -29,7 +29,6 @@
  */
 
 #include <sys/types.h>
-#include <machine/endian.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
