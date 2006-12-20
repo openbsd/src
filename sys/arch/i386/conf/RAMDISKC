@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.70 2006/10/19 01:16:56 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.71 2006/12/20 03:32:20 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -39,6 +39,17 @@ config		bsd	root on rd0a swap on rd0b and wd0b and sd0b
 
 mainbus0 at root
 
+acpi0		at mainbus?	disable
+#acpitimer*	at acpi?
+#acpihpet*	at acpi?
+#acpiac*	at acpi?
+#acpibat*	at acpi?
+#acpibtn*	at acpi?
+#acpicpu*	at acpi?
+acpiec*		at acpi?	disable
+acpiprt*	at acpi?
+#acpitz*	at acpi?
+
 cpu0	at mainbus?
 bios0	at mainbus0
 apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
@@ -49,7 +60,7 @@ isa0	at mainbus0
 isa0	at pcib?
 isa0	at ichpcib?
 isa0	at gscpcib?
-eisa0	at mainbus0
+#eisa0	at mainbus0
 pci*	at mainbus0
 
 option		PCIVERBOSE
@@ -251,7 +262,7 @@ fxp*	at cardbus?			# Intel PRO/100 ethernet
 #ep*	at pci?				# 3C59x ethernet
 ne*	at pci?				# NE2000-compat ethernet
 ne*	at pcmcia?			# PCMCIA based NE2000
-ep*	at pcmcia?			# PCMCIA based 3C5xx
+#ep*	at pcmcia?			# PCMCIA based 3C5xx
 #sm*	at pcmcia?			# PCMCIA based sm
 #xe*	at pcmcia?			# Xircom ethernet
 #fpa*	at pci?				# DEC DEFPA FDDI
@@ -297,8 +308,8 @@ wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
 #ray*	at pcmcia?			# Raylink Aviator2.4/Pro 802.11FH
 ral*	at pci?				# Ralink RT2500/RT2501/RT2600
 ral*	at cardbus?			# Ralink RT2500/RT2501/RT2600
-rtw*	at pci?				# Realtek 8180
-rtw*	at cardbus?			# Realtek 8180
+#rtw*	at pci?				# Realtek 8180
+#rtw*	at cardbus?			# Realtek 8180
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs
@@ -314,7 +325,7 @@ rlphy* at mii?				# RealTek 8139 internal PHYs
 mtdphy*	at mii?				# Myson MTD972 PHYs
 dcphy*	at mii?				# Digital Clone PHYs
 amphy*	at mii?				# AMD 79C873 PHYs
-tqphy*	at mii?				# TDK 78Q212x PHYs
+#tqphy*	at mii?				# TDK 78Q212x PHYs
 bmtphy* at mii?				# Broadcom 10/100 PHYs
 rgephy*	at mii?				# Realtek 8169S/8110S PHY
 ciphy*	at mii?				# Cicada CS8201 10/100/1000 copper PHY
