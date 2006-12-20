@@ -1,4 +1,4 @@
-/* $OpenBSD: i80321_intr.c,v 1.8 2006/07/02 02:51:13 drahn Exp $ */
+/* $OpenBSD: i80321_intr.c,v 1.9 2006/12/20 14:27:58 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -102,8 +102,12 @@ i80321intc_read_intsrc(void)
 static inline void
 i80321intc_setipl(int new)
 {
+	int psw;
+
+	psw = disable_interrupts(I32_bit);
 	current_ipl_level = new;
 	i80321intc_write_intctl(i80321intc_imask[new]);
+	restore_interrupts(psw);
 }
 
 
@@ -376,19 +380,15 @@ i80321_irq_handler(void *arg)
 		if (saved_spl_level < i80321_handler[irq].iq_irq)
 			i80321intc_setipl(i80321_handler[irq].iq_irq);
 
-#ifdef notyet
 		/* Enable interrupt */
-		restore_interrupts(I32_bit);
-#endif
+		enable_interrupts(I32_bit);
 		TAILQ_FOREACH(ih, &i80321_handler[irq].iq_list, ih_list) {
 			if ((ih->ih_func)( ih->ih_arg == 0
 			    ? frame : ih->ih_arg))
 				ih->ih_count.ec_count++;
 		}
-#ifdef notyet
 		/* Disable interrupt */
 		disable_interrupts(I32_bit);
-#endif
 		hwpend &= ~(1<<irq);
 	}
 	uvmexp.intrs++;
