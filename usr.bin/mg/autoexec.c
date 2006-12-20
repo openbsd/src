@@ -1,4 +1,4 @@
-/* $OpenBSD: autoexec.c,v 1.10 2005/10/14 19:46:46 kjell Exp $ */
+/* $OpenBSD: autoexec.c,v 1.11 2006/12/20 20:16:16 kjell Exp $ */
 /* this file is in the public domain */
 /* Author: Vincent Labrecque <vincent@openbsd.org>	April 2002 */
 
@@ -16,6 +16,8 @@ struct autoexec {
 static SLIST_HEAD(, autoexec)	 autos;
 static int			 ready;
 
+
+#define AUTO_GROW 8
 /*
  * Return a NULL terminated array of function pointers to be called
  * when we open a file that matches <fname>.  The list must be free(ed)
@@ -37,19 +39,19 @@ find_autoexec(const char *fname)
 	SLIST_FOREACH(ae, &autos, next) {
 		if (fnmatch(ae->pattern, fname, 0) == 0) {
 			if (used >= have) {
-				npfl = realloc(pfl, (have + 8 + 1) * sizeof(PF));
+				npfl = realloc(pfl, (have + AUTO_GROW + 1) *
+				    sizeof(PF));
 				if (npfl == NULL)
 					panic("out of memory");
 				pfl = npfl;
-				have += 8;
+				have += AUTO_GROW;
 			}
 			pfl[used++] = ae->fp;
 		}
 	}
-	if (used) {
+	if (used) 
 		pfl[used] = NULL;
-		pfl = realloc(pfl, (used + 1) * sizeof(PF));
-	}
+
 	return (pfl);
 }
 
