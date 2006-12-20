@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.14 2006/12/12 23:14:27 dim Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.15 2006/12/20 22:48:29 gwk Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * Copyright (c) 2004-2005 Bruno Ducrot
@@ -42,7 +42,6 @@
 #define BIOS_START			0xe0000
 #define	BIOS_LEN			0x20000
 
-extern int cpuspeed;
 extern int setperf_prio;
 
 /*

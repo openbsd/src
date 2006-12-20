@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.14 2006/12/20 17:50:40 gwk Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.15 2006/12/20 22:48:29 gwk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -72,7 +72,6 @@ extern int setperf_prio;
 #ifdef __i386__ 
 struct acpicpu_softc *acpicpu_sc[I386_MAXPROCS];
 #elif __amd64__
-extern int cpuspeed;
 struct acpicpu_softc *acpicpu_sc[X86_MAXPROCS];
 #endif
 
