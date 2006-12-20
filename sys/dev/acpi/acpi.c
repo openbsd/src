@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.68 2006/12/19 04:09:11 deraadt Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.69 2006/12/20 17:04:00 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -58,7 +58,6 @@ int	acpi_submatch(struct device *, void *, void *);
 int	acpi_print(void *, const char *);
 
 void	acpi_map_pmregs(struct acpi_softc *);
-void	acpi_unmap_pmregs(struct acpi_softc *);
 
 void	acpi_foundpss(struct aml_node *, void *);
 void	acpi_foundhid(struct aml_node *, void *);
@@ -350,19 +349,6 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			sc->sc_pmregs[reg].name = name;
 			sc->sc_pmregs[reg].size = size;
 			sc->sc_pmregs[reg].addr = addr;
-		}
-	}
-}
-
-void
-acpi_unmap_pmregs(struct acpi_softc *sc)
-{
-	int idx;
-
-	for (idx = 0; idx < ACPIREG_MAXREG; idx++) {
-		if (sc->sc_pmregs[idx].size) {
-			bus_space_unmap(sc->sc_iot, sc->sc_pmregs[idx].ioh,
-			    sc->sc_pmregs[idx].size);
 		}
 	}
 }
