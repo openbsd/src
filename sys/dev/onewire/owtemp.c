@@ -1,4 +1,4 @@
-/*	$OpenBSD: owtemp.c,v 1.4 2006/10/01 11:43:40 grange Exp $	*/
+/*	$OpenBSD: owtemp.c,v 1.5 2006/12/20 14:46:59 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -32,8 +32,18 @@
 #include <dev/onewire/onewirereg.h>
 #include <dev/onewire/onewirevar.h>
 
+/* Commands */
 #define DS1920_CMD_CONVERT		0x44
 #define DS1920_CMD_READ_SCRATCHPAD	0xbe
+
+/* Scratchpad layout */
+#define DS1920_SP_TEMP_LSB		0
+#define DS1920_SP_TEMP_MSB		1
+#define DS1920_SP_TH			2
+#define DS1920_SP_TL			3
+#define DS1920_SP_COUNT_REMAIN		6
+#define DS1920_SP_COUNT_PERC		7
+#define DS1920_SP_CRC			8
 
 struct owtemp_softc {
 	struct device		sc_dev;
@@ -124,6 +134,8 @@ owtemp_update(void *arg)
 {
 	struct owtemp_softc *sc = arg;
 	u_int8_t data[9];
+	u_int16_t temp;
+	int count_perc, count_remain, val;
 
 	rw_enter_write(&sc->sc_lock);
 	onewire_lock(sc->sc_onewire, 0);
@@ -151,9 +163,22 @@ owtemp_update(void *arg)
 	 */
 	onewire_write_byte(sc->sc_onewire, DS1920_CMD_READ_SCRATCHPAD);
 	onewire_read_block(sc->sc_onewire, data, 9);
-	if (onewire_crc(data, 8) == data[8]) {
-		sc->sc_sensor.value = 273150000 +
-		    (int)((u_int16_t)data[1] << 8 | data[0]) * 500000;
+	if (onewire_crc(data, 8) == data[DS1920_SP_CRC]) {
+		temp = data[DS1920_SP_TEMP_MSB] << 8 |
+		    data[DS1920_SP_TEMP_LSB];
+		count_perc = data[DS1920_SP_COUNT_PERC];
+		count_remain = data[DS1920_SP_COUNT_REMAIN];
+
+		if (count_perc != 0) {
+			/* High resolution algorithm */
+			temp &= ~0x0001;
+			val = temp * 500000 - 250000 +
+			    ((count_perc - count_remain) * 1000000) /
+			    count_perc;
+		} else {
+			val = temp * 500000;
+		}
+		sc->sc_sensor.value = 273150000 + val;
 	}
 
 done:
