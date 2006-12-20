@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.66 2006/12/15 23:53:42 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.67 2006/12/20 03:29:41 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -117,6 +117,7 @@ upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 #uyap*	at uhub?		# Y@P firmware loader
 #ugen*	at uhub?		# USB Generic driver
 ural*	at uhub?		# Ralink RT2500
+rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 
 pckbc0	at isa?			# PC keyboard controller
 pckbd*	at pckbc?		# PC keyboard
