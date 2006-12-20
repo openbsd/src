@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.69 2006/12/20 17:04:00 deraadt Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.70 2006/12/20 17:25:26 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -78,7 +78,7 @@ void	acpi_foundprt(struct aml_node *, void *);
 void	acpi_filtdetach(struct knote *);
 int	acpi_filtread(struct knote *, long);
 
-void    __acpi_enable_gpe(struct acpi_softc *, int, int);
+void	acpi_enable_gpe(struct acpi_softc *, int, int);
 int	acpi_gpe_level(struct acpi_softc *, int, void *);
 int	acpi_gpe_edge(struct acpi_softc *, int, void *);
 
@@ -1112,7 +1112,7 @@ acpi_interrupt(void *arg)
 }
 
 void
-__acpi_enable_gpe(struct acpi_softc *sc, int gpe, int enable)
+acpi_enable_gpe(struct acpi_softc *sc, int gpe, int enable)
 {
 	uint8_t mask = (1L << (gpe & 7));
 	uint8_t en;
@@ -1578,7 +1578,7 @@ acpi_isr_thread(void *arg)
 		/* Enable handled GPEs here */
 		for (gpe=0; gpe<sc->sc_lastgpe; gpe++) {
 			if (sc->gpe_table[gpe].handler)
-				__acpi_enable_gpe(sc, gpe, 1);
+				acpi_enable_gpe(sc, gpe, 1);
 		}
 #if 0
 		/* Enable EC interrupt */
