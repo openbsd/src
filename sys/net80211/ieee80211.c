@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.18 2006/11/26 11:14:23 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.19 2006/12/20 08:13:56 grange Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -164,6 +164,8 @@ ieee80211_ifattach(struct ifnet *ifp)
 	LIST_INSERT_HEAD(&ieee80211com_head, ic, ic_list);
 	ieee80211_node_attach(ifp);
 	ieee80211_proto_attach(ifp);
+
+	if_addgroup(ifp, "wlan");
 }
 
 void
