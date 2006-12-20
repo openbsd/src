@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.69 2006/12/18 18:36:05 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.70 2006/12/20 17:28:04 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -110,12 +110,7 @@ struct aml_value       *aml_global_lock;
 struct acpi_softc      *dsdt_softc;
 
 /* Perfect hash function for valid AML bytecodes */
-#define HASH_OFF         6904
-#define HASH_SIZE        179
-#define HASH_KEY(k)      (((k) ^ HASH_OFF) % HASH_SIZE)
-
-#define HASH_MAGIC(v)   (0xC0DE0000L + (v))
-#define HTE(v,f...)     [ HASH_KEY(v) ] { HASH_MAGIC(v), f }
+#define HTE(v,a,b...)	{ v,a,b }
 
 struct aml_value *aml_parsenamed(struct aml_scope *, int, struct aml_value *);
 struct aml_value *aml_parsenamedscope(struct aml_scope *, int, struct aml_value *);
@@ -314,11 +309,11 @@ void _aml_die(const char *fn, int line, const char *fmt, ...)
 struct aml_opcode *
 aml_findopcode(int opcode)
 {
-	struct aml_opcode *tab;
+	int i;
 
-	tab = &aml_table[HASH_KEY(opcode)];
-	if (tab->opcode == HASH_MAGIC(opcode))
-		return tab;
+	for (i = 0; i < sizeof(aml_table) / sizeof(aml_table[0]); i++)
+		if (aml_table[i].opcode == opcode)
+			return &aml_table[i];
 	return NULL;
 }
 
