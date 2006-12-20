@@ -1,4 +1,4 @@
-	$OpenBSD: sdmmcdevs,v 1.6 2006/07/18 19:40:05 deraadt Exp $
+	$OpenBSD: sdmmcdevs,v 1.7 2006/12/20 19:33:54 deraadt Exp $
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -23,6 +23,7 @@
 vendor CGUYS			0x0092	C-guys, Inc.
 vendor TOSHIBA			0x0098	Toshiba
 vendor SOCKETCOM		0x0104	Socket Communications, Inc.
+vendor ATHEROS			0x0271	Atheros
 vendor SYCHIP			0x02db	SyChip Inc.
 vendor SPECTEC			0x02fe	Spectec Computer Co., Ltd
 vendor GLOBALSAT		0x0501	Globalsat Technology Co.
@@ -31,6 +32,12 @@ vendor MEDIATEK			0x037a	MediaTek Inc.
 /*
  * List of known products, grouped by vendor
  */
+
+/* Atheros */
+product ATHEROS	AR6001_8	0x0108	AR6001
+product ATHEROS	AR6001_9	0x0109	AR6001
+product ATHEROS	AR6001_a	0x010a	AR6001
+product ATHEROS	AR6001_b	0x010b	AR6001
 
 /* C-guys, Inc. */
 product CGUYS TIACX100		0x0001	TI ACX100 SD-Link11b WiFi Card
