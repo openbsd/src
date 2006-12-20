@@ -1,4 +1,4 @@
-/* $OpenBSD: autoexec.c,v 1.11 2006/12/20 20:16:16 kjell Exp $ */
+/* $OpenBSD: autoexec.c,v 1.12 2006/12/20 20:21:06 kjell Exp $ */
 /* this file is in the public domain */
 /* Author: Vincent Labrecque <vincent@openbsd.org>	April 2002 */
 
@@ -95,7 +95,7 @@ auto_execute(int f, int n)
 	else if (patp[0] == '\0')
 		return (FALSE);
 	if ((funcp = eread("Execute: ", funcbuf, sizeof(funcbuf),
-	    EFNEW | EFCR)) == NULL)
+	    EFNEW | EFCR | EFFUNC)) == NULL)
 		return (ABORT);
 	else if (funcp[0] == '\0')
 		return (FALSE);
