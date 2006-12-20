@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.27 2006/11/18 20:36:50 kjell Exp $	*/
+/*	$OpenBSD: basic.c,v 1.28 2006/12/20 21:21:09 kjell Exp $	*/
 
 /* This file is in the public domain */
 
@@ -266,10 +266,6 @@ forwpage(int f, int n)
 			n = 1;			/* if tiny window.	 */
 	} else if (n < 0)
 		return (backpage(f | FFRAND, -n));
-#ifdef	CVMVAS
-	else					/* Convert from pages	 */
-		n *= curwp->w_ntrows;		/* to lines.		 */
-#endif
 	lp = curwp->w_linep;
 	while (n-- && lforw(lp) != curbp->b_headp) {
 		lp = lforw(lp);
@@ -309,10 +305,6 @@ backpage(int f, int n)
 			n = 1;			/* window is tiny.	 */
 	} else if (n < 0)
 		return (forwpage(f | FFRAND, -n));
-#ifdef	CVMVAS
-	else					/* Convert from pages	 */
-		n *= curwp->w_ntrows;		/* to lines.		 */
-#endif
 	lp = curwp->w_linep;
 	while (n-- && lback(lp) != curbp->b_headp) {
 		lp = lback(lp);
