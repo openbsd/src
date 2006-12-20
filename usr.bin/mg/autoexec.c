@@ -1,4 +1,4 @@
-/* $OpenBSD: autoexec.c,v 1.12 2006/12/20 20:21:06 kjell Exp $ */
+/* $OpenBSD: autoexec.c,v 1.13 2006/12/20 21:31:45 deraadt Exp $ */
 /* this file is in the public domain */
 /* Author: Vincent Labrecque <vincent@openbsd.org>	April 2002 */
 
@@ -49,7 +49,7 @@ find_autoexec(const char *fname)
 			pfl[used++] = ae->fp;
 		}
 	}
-	if (used) 
+	if (used)
 		pfl[used] = NULL;
 
 	return (pfl);

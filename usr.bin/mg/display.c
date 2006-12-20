@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.31 2006/11/19 16:51:19 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.32 2006/12/20 21:31:45 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -103,7 +103,7 @@ struct score *score;			/* [NROW * NROW] */
 
 #ifndef LINENOMODE
 #define LINENOMODE TRUE
-#endif /* !LINENOMODE */ 
+#endif /* !LINENOMODE */
 static int	 linenos = LINENOMODE;
 
 /*
