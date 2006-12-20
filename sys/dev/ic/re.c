@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.58 2006/12/12 10:24:37 reyk Exp $	*/
+/*	$OpenBSD: re.c,v 1.59 2006/12/20 23:26:52 deraadt Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1654,7 +1654,6 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 	if (pad) {
 		bus_addr_t paddaddr;
 
-		printf("%s: re_encap: padding\n", sc->sc_dev.dv_xname);
 		d = &sc->rl_ldata.rl_tx_list[curidx];
 		paddaddr = RL_TXPADDADDR(sc);
 		re_set_bufaddr(d, paddaddr);
