@@ -1,10 +1,10 @@
-/*	$OpenBSD: onewiredevs.h,v 1.1 2006/03/04 16:33:33 grange Exp $	*/
+/*	$OpenBSD: onewiredevs.h,v 1.2 2006/12/20 15:06:21 grange Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * Generated from:
- *	OpenBSD: onewiredevs,v 1.1 2006/03/04 16:27:03 grange Exp 
+ *	OpenBSD: onewiredevs,v 1.2 2006/12/20 15:04:22 grange Exp 
  */
 
 #define ONEWIRE_FAMILY_DS1990	0x01
@@ -16,3 +16,4 @@
 #define ONEWIRE_FAMILY_DS1995	0x0a
 #define ONEWIRE_FAMILY_DS1996	0x0c
 #define ONEWIRE_FAMILY_DS1920	0x10
+#define ONEWIRE_FAMILY_DS195X	0x16
