@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.58 2006/08/28 15:47:28 espie Exp $ */
+/*	$OpenBSD: unistd.h,v 1.59 2006/12/20 08:12:00 espie Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -69,8 +69,7 @@ int	 dup(int);
 int	 dup2(int, int);
 int	 execl(const char *, const char *, ...) 
 	    __attribute__((sentinel));
-int	 execle(const char *, const char *, ...) 
-	    __attribute__((sentinel));
+int	 execle(const char *, const char *, ...);
 int	 execlp(const char *, const char *, ...) 
 	    __attribute__((sentinel));
 int	 execv(const char *, char * const *);
