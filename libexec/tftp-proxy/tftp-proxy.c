@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.1 2005/12/28 19:07:07 jcs Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.2 2006/12/20 03:33:38 joel Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -292,6 +292,13 @@ main(int argc, char *argv[])
 	    ntohs(((struct sockaddr_in *)&from)->sin_port),
 	    IPPROTO_UDP) == -1) {
 		syslog(LOG_ERR, "couldn't add pass in");
+		exit(1);
+	}
+	if (add_filter(1, PF_OUT, (struct sockaddr *)&server,
+	    (struct sockaddr *)&from,
+	    ntohs(((struct sockaddr_in *)&from)->sin_port),
+	    IPPROTO_UDP) == -1) {
+		syslog(LOG_ERR, "couldn't add pass out");
 		exit(1);
 	}
 
