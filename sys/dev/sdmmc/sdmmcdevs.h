@@ -1,10 +1,10 @@
-/*	$OpenBSD: sdmmcdevs.h,v 1.6 2006/07/18 19:40:12 deraadt Exp $	*/
+/*	$OpenBSD: sdmmcdevs.h,v 1.7 2006/12/20 19:33:58 deraadt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: sdmmcdevs,v 1.6 2006/07/18 19:40:05 deraadt Exp 
+ *		OpenBSD: sdmmcdevs,v 1.7 2006/12/20 19:33:54 deraadt Exp 
  */
 
 /*
@@ -30,6 +30,7 @@
 #define	SDMMC_VENDOR_CGUYS	0x0092	/* C-guys, Inc. */
 #define	SDMMC_VENDOR_TOSHIBA	0x0098	/* Toshiba */
 #define	SDMMC_VENDOR_SOCKETCOM	0x0104	/* Socket Communications, Inc. */
+#define	SDMMC_VENDOR_ATHEROS	0x0271	/* Atheros */
 #define	SDMMC_VENDOR_SYCHIP	0x02db	/* SyChip Inc. */
 #define	SDMMC_VENDOR_SPECTEC	0x02fe	/* Spectec Computer Co., Ltd */
 #define	SDMMC_VENDOR_GLOBALSAT	0x0501	/* Globalsat Technology Co. */
@@ -38,6 +39,16 @@
 /*
  * List of known products, grouped by vendor
  */
+
+/* Atheros */
+#define	SDMMC_CIS_ATHEROS_AR6001_8	{ NULL, NULL, NULL, NULL }
+#define	SDMMC_PRODUCT_ATHEROS_AR6001_8	0x0108
+#define	SDMMC_CIS_ATHEROS_AR6001_9	{ NULL, NULL, NULL, NULL }
+#define	SDMMC_PRODUCT_ATHEROS_AR6001_9	0x0109
+#define	SDMMC_CIS_ATHEROS_AR6001_a	{ NULL, NULL, NULL, NULL }
+#define	SDMMC_PRODUCT_ATHEROS_AR6001_a	0x010a
+#define	SDMMC_CIS_ATHEROS_AR6001_b	{ NULL, NULL, NULL, NULL }
+#define	SDMMC_PRODUCT_ATHEROS_AR6001_b	0x010b
 
 /* C-guys, Inc. */
 #define	SDMMC_CIS_CGUYS_TIACX100	{ NULL, NULL, NULL, NULL }
