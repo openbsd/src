@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdchk.c,v 1.8 2003/06/26 07:53:27 deraadt Exp $	*/
+/*	$OpenBSD: tcpdchk.c,v 1.9 2006/12/20 01:50:30 ray Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -20,7 +20,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.8 97/02/12 02:13:25";
 #else
-static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.8 2003/06/26 07:53:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.9 2006/12/20 01:50:30 ray Exp $";
 #endif
 #endif
 
@@ -372,6 +372,8 @@ char   *pat;
 	tcpd_warn("%s: daemon name begins with \"@\"", pat);
     } else if (pat[0] == '.') {
 	tcpd_warn("%s: daemon name begins with dot", pat);
+    } else if (pat[0] == '\0') {
+	tcpd_warn("%s: daemon name begins with NUL", pat);
     } else if (pat[strlen(pat) - 1] == '.') {
 	tcpd_warn("%s: daemon name ends in dot", pat);
     } else if (STR_EQ(pat, "ALL") || STR_EQ(pat, unknown)) {
@@ -404,6 +406,8 @@ char   *pat;
 	tcpd_warn("%s: user name begins with \"@\"", pat);
     } else if (pat[0] == '.') {
 	tcpd_warn("%s: user name begins with dot", pat);
+    } else if (pat[0] == '\0') {
+	tcpd_warn("%s: user name begins with NUL", pat);
     } else if (pat[strlen(pat) - 1] == '.') {
 	tcpd_warn("%s: user name ends in dot", pat);
     } else if (STR_EQ(pat, "ALL") || STR_EQ(pat, unknown)
@@ -477,7 +481,9 @@ char   *pat;
     } else if (reserved_name(pat)) {		/* other reserved */
 	 /* void */ ;
     } else if (NOT_INADDR(pat)) {		/* internet name */
-	if (pat[strlen(pat) - 1] == '.') {
+	if (pat[0] == '\0') {
+	    tcpd_warn("%s: domain or host name begins with NUL", pat);
+	} else if (pat[strlen(pat) - 1] == '.') {
 	    tcpd_warn("%s: domain or host name ends in dot", pat);
 	} else if (pat[0] != '.') {
 	    addr_count = check_dns(pat);
@@ -487,6 +493,8 @@ char   *pat;
 	    /* void */ ;
 	} else if (pat[0] == '.') {
 	    tcpd_warn("%s: network number begins with dot", pat);
+	} else if (pat[0] == '\0') {
+	    tcpd_warn("%s: network number begins with NUL", pat);
 	} else if (pat[strlen(pat) - 1] != '.') {
 	    check_dns(pat);
 	}
