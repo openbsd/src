@@ -1,4 +1,4 @@
-/* $OpenBSD: longrun.c,v 1.11 2006/12/12 23:14:27 dim Exp $ */
+/* $OpenBSD: longrun.c,v 1.12 2006/12/20 17:50:40 gwk Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * Copyright (c) 2001 Tamotsu Hattori
@@ -82,7 +82,7 @@ longrun_update(void *arg)
 	enable_intr();
 	write_eflags(eflags);
 
-	pentium_mhz = regs[0];
+	cpuspeed = regs[0];
 
 	timeout_add(&longrun_timo, hz);
 }

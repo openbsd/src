@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.20 2006/12/12 23:14:27 dim Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.21 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -259,7 +259,7 @@ k8_powernow_setperf(int level)
 	}
 
 	if (cfid == fid || cvid == vid)
-		pentium_mhz = cstate->state_table[i].freq;
+		cpuspeed = cstate->state_table[i].freq;
 }
 
 /*
@@ -391,7 +391,7 @@ k8_powernow_init(void)
 		k8pnow_states(cstate, regs[0], maxfid, maxvid);
 	if (cstate->n_states) {
 		printf("%s: %s %d MHz: speeds:",
-		    ci->ci_dev.dv_xname, techname, pentium_mhz);
+		    ci->ci_dev.dv_xname, techname, cpuspeed);
 		for (i = cstate->n_states; i > 0; i--) {
 			state = &cstate->state_table[i-1];
 			printf(" %d", state->freq);

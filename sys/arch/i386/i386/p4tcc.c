@@ -1,4 +1,4 @@
-/*	$OpenBSD: p4tcc.c,v 1.12 2006/12/12 23:14:27 dim Exp $ */
+/*	$OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * All rights reserved.
@@ -102,7 +102,7 @@ p4tcc_init(int family, int step)
 int
 p4tcc_cpuspeed(int *speed)
 {
-	*speed = pentium_mhz / 100 * (p4tcc_level + 12);
+	*speed = cpuspeed / 100 * (p4tcc_level + 12);
 
 	return 0;
 }

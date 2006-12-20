@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.13 2006/12/19 20:28:11 gwk Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.14 2006/12/20 17:50:40 gwk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -313,10 +313,7 @@ acpicpu_setperf(int level) {
 
 	/* Did the transition succeed? */
 	 if (status == pss->pss_status)
-#ifdef __i386__
-		pentium_mhz = pss->pss_core_freq;
-#elif __amd64__
 		cpuspeed = pss->pss_core_freq;
-#endif
+
 	return;
 }

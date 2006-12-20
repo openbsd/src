@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.24 2006/12/12 23:14:27 dim Exp $ */
+/*	$OpenBSD: est.c,v 1.25 2006/12/20 17:50:40 gwk Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -1083,5 +1083,5 @@ est_setperf(int level)
 	msr &= ~0xffffULL;
 	msr |= est_fqlist->table[i];
 	wrmsr(MSR_PERF_CTL, msr);
-	pentium_mhz = MSR2MHZ(est_fqlist->table[i], bus_clock);
+	cpuspeed = MSR2MHZ(est_fqlist->table[i], bus_clock);
 }

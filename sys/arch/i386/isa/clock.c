@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.37 2006/09/19 11:06:33 jsg Exp $	*/
+/*	$OpenBSD: clock.c,v 1.38 2006/12/20 17:50:40 gwk Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ u_int mc146818_read(void *, u_int);
 void mc146818_write(void *, u_int, u_int);
 
 #if defined(I586_CPU) || defined(I686_CPU)
-int pentium_mhz;
+int cpuspeed;
 #endif
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 int clock_broken_latch;
@@ -384,7 +384,7 @@ calibrate_cyclecounter(void)
 	__asm __volatile("rdtsc" : "=A" (last_count));
 	delay(1000000);
 	__asm __volatile("rdtsc" : "=A" (count));
-	pentium_mhz = ((count - last_count) + 999999) / 1000000;
+	cpuspeed = ((count - last_count) + 999999) / 1000000;
 }
 #endif
 

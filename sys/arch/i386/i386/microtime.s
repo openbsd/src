@@ -1,4 +1,4 @@
-/*	$OpenBSD: microtime.s,v 1.20 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: microtime.s,v 1.21 2006/12/20 17:50:40 gwk Exp $	*/
 /*	$NetBSD: microtime.s,v 1.16 1995/04/17 12:06:47 cgd Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@
 ENTRY(i8254_microtime)
 
 #if defined(I586_CPU) || defined(I686_CPU)
-	movl	_C_LABEL(pentium_mhz), %ecx
+	movl	_C_LABEL(cpuspeed), %ecx
 	testl	%ecx, %ecx
 	jne	pentium_microtime
 #else

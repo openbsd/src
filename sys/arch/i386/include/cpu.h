@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.84 2006/12/12 23:14:27 dim Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.85 2006/12/20 17:50:40 gwk Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -247,7 +247,7 @@ void	calibrate_cyclecounter(void);
 extern u_quad_t pentium_base_tsc;
 #define CPU_CLOCKUPDATE()						\
 	do {								\
-		if (pentium_mhz) {					\
+		if (cpuspeed) {						\
 			__asm __volatile("cli\n"			\
 					 "rdtsc\n"			\
 					 : "=A" (pentium_base_tsc)	\
@@ -311,7 +311,7 @@ extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 extern int cpu_apmwarn;
 
 #if defined(I586_CPU) || defined(I686_CPU)
-extern int pentium_mhz;
+extern int cpuspeed;
 extern int bus_clock;
 #endif
 
