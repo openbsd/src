@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.93 2006/11/25 20:44:30 dlg Exp $
+#	$OpenBSD: RAMDISKB,v 1.94 2006/12/20 03:31:33 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -39,6 +39,17 @@ config		bsd	root on rd0a swap on rd0b and wd0b and sd0b
 
 mainbus0 at root
 
+acpi0		at mainbus?	disable
+#acpitimer*	at acpi?
+#acpihpet*	at acpi?
+#acpiac*	at acpi?
+#acpibat*	at acpi?
+#acpibtn*	at acpi?
+#acpicpu*	at acpi?
+acpiec*		at acpi?	disable
+acpiprt*	at acpi?
+#acpitz*	at acpi?
+
 cpu0	at mainbus?
 bios0	at mainbus0
 apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
@@ -49,7 +60,7 @@ isa0	at mainbus0
 isa0	at pcib?
 isa0	at ichpcib?
 isa0	at gscpcib?
-eisa0	at mainbus0
+#eisa0	at mainbus0
 pci*	at mainbus0
 
 option		PCIVERBOSE
@@ -140,7 +151,7 @@ scsibus* at ami?
 mfi*	at pci?			# LSI MegaRAID SAS controllers
 scsibus* at mfi?
 cac*	at pci?			# Compaq Smart ARRAY [234]* RAID controllers
-cac*	at eisa?
+#cac*	at eisa?
 scsibus* at cac?
 #ciss*	at pci?			# Compaq Smart ARRAY [56]* RAID controllers
 #scsibus* at ciss?
@@ -198,11 +209,11 @@ wd*	at wdc? flags 0x0000
 wd*	at pciide? flags 0x0000
 
 # I2O
-iop*	at pci?			# I2O processor
-ioprbs*	at iop?			# I2O arrays
-scsibus* at ioprbs?
-iopsp*	at iop?			# I2O SCSI pass-through
-scsibus* at iopsp?
+#iop*	at pci?			# I2O processor
+#ioprbs*	at iop?			# I2O arrays
+#scsibus* at ioprbs?
+#iopsp*	at iop?			# I2O SCSI pass-through
+#scsibus* at iopsp?
 
 # ATAPI<->SCSI
 atapiscsi* at wdc?
@@ -265,7 +276,7 @@ vge*	at pci?				# VIA VT612x
 nfe*	at pci?				# NVIDIA nForce Ethernet
 
 # Wireless network cards
-wi*	at pci?				# WaveLAN IEEE 802.11DS
+#wi*	at pci?				# WaveLAN IEEE 802.11DS
 #wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
 #awi*	at pcmcia?			# Bay Networks IEEE 802.11FH
 #an*	at pcmcia?			# Aironet IEEE 802.11DS
