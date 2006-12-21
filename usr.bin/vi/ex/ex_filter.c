@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_filter.c,v 1.8 2006/01/08 21:05:40 miod Exp $	*/
+/*	$OpenBSD: ex_filter.c,v 1.9 2006/12/21 21:38:17 otto Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -15,6 +15,8 @@
 static const char sccsid[] = "@(#)ex_filter.c	10.34 (Berkeley) 10/23/96";
 #endif /* not lint */
 
+#include <sys/param.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -51,8 +53,8 @@ ex_filter(sp, cmdp, fm, tm, rp, cmd, ftype)
 	FILE *ifp, *ofp;
 	pid_t parent_writer_pid, utility_pid;
 	recno_t nread;
-	int input[2], output[2], rval;
-	char *name;
+	int input[2], output[2], fd, rval;
+	char *name, tname[MAXPATHLEN];
 
 	rval = 0;
 
@@ -84,7 +86,45 @@ ex_filter(sp, cmdp, fm, tm, rp, cmd, ftype)
 	 */
 	ofp = NULL;
 	input[0] = input[1] = output[0] = output[1] = -1;
-	if (ftype != FILTER_READ && pipe(input) < 0) {
+
+	if (ftype == FILTER_BANG) {
+		if (opts_empty(sp, O_DIRECTORY, 0))
+			goto err;
+		(void)snprintf(tname, sizeof(tname),
+		    "%s/vi.XXXXXXXXXX", O_STR(sp, O_DIRECTORY));
+		fd = mkstemp(tname);
+		if (fd == -1) {
+			msgq(sp, M_SYSERR,
+			    "237|Unable to create temporary file");
+			if (fd != -1) {
+				(void)close(fd);
+				(void)unlink(tname);
+			}
+			goto err;
+		}
+		if (unlink(tname) == -1)
+			msgq(sp, M_SYSERR, "unlink");
+		if ((ifp = fdopen(fd, "w")) == NULL) {
+			msgq(sp, M_SYSERR, "fdopen");
+			(void)close(fd);
+			goto err;
+		}
+		if ((input[0] = dup(fd)) == -1) {
+			msgq(sp, M_SYSERR, "dup");
+			(void)fclose(ifp);
+			goto err;
+		}
+		/*
+		 * Write the selected lines into the temporary file.
+		 * This instance of ifp is closed by ex_writefp.
+		 */
+		if (ex_writefp(sp, "filter", ifp, fm, tm, NULL, NULL, 1))
+			goto err;
+		if (lseek(input[0], 0, SEEK_SET) == -1) {
+			msgq(sp, M_SYSERR, "lseek");
+			goto err;
+		}
+	} else if (ftype != FILTER_READ && pipe(input) < 0) {
 		msgq(sp, M_SYSERR, "pipe");
 		goto err;
 	}
@@ -187,11 +227,10 @@ err:		if (input[0] != -1)
 			else
 				rp->lno += nread;
 		}
-		goto uwait;
 	}
 
 	/*
-	 * FILTER_BANG, FILTER_WRITE
+	 * FILTER_WRITE
 	 *
 	 * Here we need both a reader and a writer.  Temporary files are
 	 * expensive and we'd like to avoid disk I/O.  Using pipes has the
@@ -202,74 +241,84 @@ err:		if (input[0] != -1)
 	 *		write lines out
 	 *		exit
 	 *	parent
-	 *		FILTER_BANG:
-	 *			read lines into the file
-	 *			delete old lines
-	 *		FILTER_WRITE
-	 *			read and display lines
+	 *		read and display lines
 	 *		wait for child
 	 *
-	 * XXX
 	 * We get away without locking the underlying database because we know
-	 * that none of the records that we're reading will be modified until
-	 * after we've read them.  This depends on the fact that the current
-	 * B+tree implementation doesn't balance pages or similar things when
-	 * it inserts new records.  When the DB code has locking, we should
-	 * treat vi as if it were multiple applications sharing a database, and
-	 * do the required locking.  If necessary a work-around would be to do
-	 * explicit locking in the line.c:db_get() code, based on the flag set
-	 * here.
+	 * that filter_ldisplay() does not modify it.  When the DB code has
+	 * locking, we should treat vi as if it were multiple applications
+	 * sharing a database, and do the required locking.  If necessary a
+	 * work-around would be to do explicit locking in the line.c:db_get()
+	 * code, based on the flag set here.
 	 */
-	F_SET(sp->ep, F_MULTILOCK);
-	switch (parent_writer_pid = fork()) {
-	case -1:			/* Error. */
-		msgq(sp, M_SYSERR, "fork");
-		(void)close(input[1]);
-		(void)close(output[0]);
-		rval = 1;
-		break;
-	case 0:				/* Parent-writer. */
-		/*
-		 * Write the selected lines to the write end of the input
-		 * pipe.  This instance of ifp is closed by ex_writefp.
-		 */
-		(void)close(output[0]);
-		if ((ifp = fdopen(input[1], "w")) == NULL)
-			_exit (1);
-		_exit(ex_writefp(sp, "filter", ifp, fm, tm, NULL, NULL, 1));
-
-		/* NOTREACHED */
-	default:			/* Parent-reader. */
-		(void)close(input[1]);
-		if (ftype == FILTER_WRITE) {
+	if (ftype == FILTER_WRITE) {
+		F_SET(sp->ep, F_MULTILOCK);
+		switch (parent_writer_pid = fork()) {
+		case -1:		/* Error. */
+			msgq(sp, M_SYSERR, "fork");
+			(void)close(input[1]);
+			(void)close(output[0]);
+			rval = 1;
+			break;
+		case 0:			/* Parent-writer. */
+			/*
+			 * Write the selected lines to the write end of the
+			 * input pipe.  This instance of ifp is closed by
+			 * ex_writefp.
+			 */
+			(void)close(output[0]);
+			if ((ifp = fdopen(input[1], "w")) == NULL)
+				_exit (1);
+			_exit(ex_writefp(sp, "filter",
+			    ifp, fm, tm, NULL, NULL, 1));
+			/* NOTREACHED */
+		default:		/* Parent-reader. */
+			(void)close(input[1]);
 			/*
 			 * Read the output from the read end of the output
 			 * pipe and display it.  Filter_ldisplay closes ofp.
 			 */
 			if (filter_ldisplay(sp, ofp))
 				rval = 1;
-		} else {
-			/*
-			 * Read the output from the read end of the output
-			 * pipe.  Ex_readfp appends to the MARK and closes
-			 * ofp.
-			 */
-			if (ex_readfp(sp, "filter", ofp, tm, &nread, 1))
-				rval = 1;
-			sp->rptlines[L_ADDED] += nread;
-		}
 
-		/* Wait for the parent-writer. */
-		if (proc_wait(sp,
-		    parent_writer_pid, "parent-writer", 0, 1))
+			/* Wait for the parent-writer. */
+			if (proc_wait(sp,
+			    parent_writer_pid, "parent-writer", 0, 1))
+				rval = 1;
+			break;
+		}
+		F_CLR(sp->ep, F_MULTILOCK);
+	}
+
+	/*
+	 * FILTER_BANG
+	 *
+	 * Here we need a temporary file because our database lacks locking.
+	 *
+	 * XXX
+	 * Temporary files are expensive and we'd like to avoid disk I/O.
+	 * When the DB code has locking, we should treat vi as if it were
+	 * multiple applications sharing a database, and do the required
+	 * locking.  If necessary a work-around would be to do explicit
+	 * locking in the line.c:db_get() code, based on F_MULTILOCK flag set
+	 * here.
+	 */
+	if (ftype == FILTER_BANG) {
+		/*
+		 * Read the output from the read end of the output
+		 * pipe.  Ex_readfp appends to the MARK and closes
+		 * ofp.
+		 */
+		if (ex_readfp(sp, "filter", ofp, tm, &nread, 1))
 			rval = 1;
+		sp->rptlines[L_ADDED] += nread;
 
 		/* Delete any lines written to the utility. */
-		if (rval == 0 && ftype == FILTER_BANG &&
+		if (rval == 0 &&
 		    (cut(sp, NULL, fm, tm, CUT_LINEMODE) ||
 		    del(sp, fm, tm, 1))) {
 			rval = 1;
-			break;
+			goto uwait;
 		}
 
 		/*
@@ -279,9 +328,7 @@ err:		if (input[0] != -1)
 		 */
 		 if (rp->lno > 1 && !db_exist(sp, rp->lno))
 			--rp->lno;
-		break;
 	}
-	F_CLR(sp->ep, F_MULTILOCK);
 
 	/*
 	 * !!!
