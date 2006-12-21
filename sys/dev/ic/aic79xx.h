@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.20 2005/12/28 02:43:54 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.21 2006/12/21 02:28:47 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -511,7 +511,7 @@ struct hardware_scb {
  * each S/G element is expired, its datacnt field is checked to see
  * if the LAST_SEG flag is set.  If so, SG_LIST_NULL is set in the
  * residual sg ptr and the transfer is considered complete.  If the
- * sequencer determines that there is a residual in the tranfer, or
+ * sequencer determines that there is a residual in the transfer, or
  * there is non-zero status, it will set the SG_STATUS_VALID flag in
  * sgptr and dma the scb back into host memory.  To sumarize:
  *

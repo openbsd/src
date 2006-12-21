@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.26 2006/11/29 12:24:17 miod Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.27 2006/12/21 02:28:47 krw Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -137,7 +137,7 @@ physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev, int flags,
 				bp->b_bcount = iovp->iov_len;
 
 			/*
-			 * [call minphys to bound the tranfer size]
+			 * [call minphys to bound the transfer size]
 			 * and remember the amount of data to transfer,
 			 * for later comparison.
 			 */

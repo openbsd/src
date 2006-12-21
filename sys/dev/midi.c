@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.15 2006/11/01 03:37:23 tedu Exp $	*/
+/*	$OpenBSD: midi.c,v 1.16 2006/12/21 02:28:47 krw Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -241,7 +241,7 @@ midi_out_do(struct midi_softc *sc)
 		 * will not be sent immediately and thus will not 
 		 * generate interrupt, in this case we can send 
 		 * another byte. The flush() method can be called
-		 * to force the tranfer.
+		 * to force the transfer.
 		 *
 		 * EAGAIN means that data cannot be queued or sent;
 		 * because the interface isn't ready. An interrupt 

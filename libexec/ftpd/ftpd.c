@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.173 2006/10/18 21:46:09 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.174 2006/12/21 02:28:47 krw Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.173 2006/10/18 21:46:09 millert Exp $";
+    "$OpenBSD: ftpd.c,v 1.174 2006/12/21 02:28:47 krw Exp $";
 #endif
 #endif /* not lint */
 
@@ -1526,7 +1526,7 @@ dataconn(char *name, off_t size, char *mode)
 }
 
 /*
- * Tranfer the contents of "instr" to "outstr" peer using the appropriate
+ * Transfer the contents of "instr" to "outstr" peer using the appropriate
  * encapsulation of the data subject to Mode, Structure, and Type.
  *
  * NB: Form isn't handled.

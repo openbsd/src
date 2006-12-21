@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.77 2006/11/26 17:20:33 jsg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.78 2006/12/21 02:28:47 krw Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -2249,7 +2249,7 @@ atu_watchdog(struct ifnet *ifp)
 
 	/*
 	 * TODO:
-	 * we should change this since we have multiple TX tranfers...
+	 * we should change this since we have multiple TX transfers...
 	 */
 	for (cnt = 0; cnt < ATU_TX_LIST_CNT; cnt++) {
 		c = &sc->atu_cdata.atu_tx_chain[cnt];

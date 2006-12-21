@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsreg.h,v 1.13 2004/09/06 06:25:28 miod Exp $	*/
+/*	$OpenBSD: vsreg.h,v 1.14 2006/12/21 02:28:47 krw Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -358,8 +358,8 @@
  * Transfer types
  */
 
-#define	TT_NORMAL		0	/* normal mode tranfers */
-#define	TT_BLOCK		1	/* block mode tranfers */
+#define	TT_NORMAL		0	/* normal mode transfers */
+#define	TT_BLOCK		1	/* block mode transfers */
 #define	TT_DISABLE_INC_ADDR	2	/* disable incrementing addresses */
 #define	TT_D64			3	/* D64 mode transfers */
 
