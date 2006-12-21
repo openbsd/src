@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.521 2006/12/14 20:40:54 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.522 2006/12/21 12:26:51 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5475,7 +5475,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 {
 	struct mbuf		*m0, *m1;
 	struct route		 iproute;
-	struct route		*ro;
+	struct route		*ro = NULL;
 	struct sockaddr_in	*dst;
 	struct ip		*ip;
 	struct ifnet		*ifp = NULL;
