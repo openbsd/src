@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.33 2006/12/21 11:23:41 deraadt Exp $ */
+/* $OpenBSD: acpibat.c,v 1.34 2006/12/21 13:10:57 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -72,8 +72,10 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res))
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res)) {
 		dnprintf(10, "%s: no _STA\n", DEVNAME(sc));
+		return;
+	}
 
 	if ((sc->sc_bat_present = res.v_integer & STA_BATTERY) != 0) {
 		acpibat_getbif(sc);
@@ -86,10 +88,14 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_bif.bif_oem);
 	} else
 		printf(": %s: not present\n", sc->sc_devnode->parent->name);
+	
+	aml_freevalue(&res);
 
+	/* create sensors */
 	acpibat_monitor(sc);
 
-	aml_freevalue(&res);
+	/* populate sensors */
+	acpibat_refresh(sc);
 
 	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev,
 	    acpibat_notify, sc);
@@ -195,11 +201,9 @@ acpibat_refresh(void *arg)
 		strlcpy(sc->sc_sens[4].desc, "battery critical",
 		    sizeof(sc->sc_sens[4].desc));
 		sc->sc_sens[4].status = SENSOR_S_CRIT;
-	} else {
-		strlcpy(sc->sc_sens[4].desc, "battery unknown",
+	} else /* whenever there is no status the battery is full */
+		strlcpy(sc->sc_sens[4].desc, "battery full",
 		    sizeof(sc->sc_sens[4].desc));
-		sc->sc_sens[4].status = SENSOR_S_UNKNOWN;
-	}
 
 	sc->sc_sens[4].value = sc->sc_bst.bst_state;
 	sc->sc_sens[5].value = sc->sc_bst.bst_rate;
