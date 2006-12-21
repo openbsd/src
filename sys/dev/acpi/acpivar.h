@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.31 2006/12/21 11:33:21 deraadt Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.32 2006/12/21 19:59:02 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -24,8 +24,8 @@
 /* #define ACPI_DEBUG */
 #ifdef ACPI_DEBUG
 extern int acpi_debug;
-#define dprintf(x...)	  do { if (acpi_debug) printf(x); } while(0)
-#define dnprintf(n,x...)  do { if (acpi_debug > (n)) printf(x); } while(0)
+#define dprintf(x...)	  do { if (acpi_debug) printf(x); } while (0)
+#define dnprintf(n,x...)  do { if (acpi_debug > (n)) printf(x); } while (0)
 #else
 #define dprintf(x...)
 #define dnprintf(n,x...)

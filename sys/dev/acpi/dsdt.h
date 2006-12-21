@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.22 2006/12/21 11:23:41 deraadt Exp $ */
+/* $OpenBSD: dsdt.h,v 1.23 2006/12/21 19:59:02 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -110,7 +110,7 @@ union acpi_resource {
 		uint8_t  typecode;
 		uint16_t length;
 	}  __packed hdr;
-	
+
 	/* Small resource structures
 	 * format of typecode is: tttttlll, t = type, l = length
 	 */

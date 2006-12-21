@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.72 2006/12/21 05:57:17 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.73 2006/12/21 19:59:02 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -156,7 +156,7 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 			printf("Unable to map iospace!\n");
 			return (-1);
 		}
-		for (reg=0; reg < len; reg += access_size) {
+		for (reg = 0; reg < len; reg += access_size) {
 			if (iodir == ACPI_IOREAD) {
 				switch (access_size) {
 				case 1:
@@ -222,7 +222,7 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 
 		/* XXX: This is ugly. read-modify-write does a byte at a time */
 		reg = ACPI_PCI_REG(address);
-		for (idx=reg; idx<reg+len; idx++) {
+		for (idx = reg; idx < reg+len; idx++) {
 			ival = pci_conf_read(pc, tag, idx & ~0x3);
 			if (iodir == ACPI_IOREAD) {
 				*pb = ival >> (8 * (idx & 0x3));
@@ -1058,14 +1058,14 @@ acpi_interrupt(void *arg)
 	processed = 0;
 
 	dnprintf(40, "ACPI Interrupt\n");
-	for (idx=0; idx<sc->sc_lastgpe; idx+=8) {
+	for (idx = 0; idx < sc->sc_lastgpe; idx += 8) {
 		sts = acpi_read_pmreg(sc, ACPIREG_GPE_STS, idx>>3);
 		en  = acpi_read_pmreg(sc, ACPIREG_GPE_EN,  idx>>3);
 		if (en & sts) {
 			dnprintf(10, "GPE block: %.2x %.2x %.2x\n", idx, sts,
 			    en);
 			acpi_write_pmreg(sc, ACPIREG_GPE_EN, idx>>3, en & ~sts);
-			for (jdx=0; jdx<8; jdx++) {
+			for (jdx = 0; jdx < 8; jdx++) {
 				if (en & sts & (1L << jdx)) {
 					/* Signal this GPE */
 					sc->gpe_table[idx+jdx].active = 1;
@@ -1188,24 +1188,24 @@ acpi_init_gpes(struct acpi_softc *sc)
 	ngpe = 0;
 
 	/* Clear GPE status */
-	for (idx=0; idx<sc->sc_lastgpe; idx+=8) {
+	for (idx = 0; idx < sc->sc_lastgpe; idx += 8) {
 		acpi_write_pmreg(sc, ACPIREG_GPE_EN,  idx>>3, 0);
 		acpi_write_pmreg(sc, ACPIREG_GPE_STS, idx>>3, -1);
 	}
-	for (idx=0; idx<sc->sc_lastgpe; idx++) {
+	for (idx = 0; idx < sc->sc_lastgpe; idx++) {
 		/* Search Level-sensitive GPES */
 		snprintf(name, sizeof(name), "\\_GPE._L%.2X", idx);
 		gpe = aml_searchname(&aml_root, name);
 		if (gpe != NULL)
 			acpi_set_gpehandler(sc, idx, acpi_gpe_level, gpe,
-					    "level");
+			    "level");
 		if (gpe == NULL) {
 			/* Search Edge-sensitive GPES */
 			snprintf(name, sizeof(name), "\\_GPE._E%.2X", idx);
 			gpe = aml_searchname(&aml_root, name);
 			if (gpe != NULL)
 				acpi_set_gpehandler(sc, idx, acpi_gpe_edge, gpe,
-						    "edge");
+				    "edge");
 		}
 	}
 	sc->sc_maxgpe = ngpe;
@@ -1562,7 +1562,7 @@ acpi_isr_thread(void *arg)
 		acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, flag);
 
 		/* Enable handled GPEs here */
-		for (gpe=0; gpe<sc->sc_lastgpe; gpe++) {
+		for (gpe = 0; gpe < sc->sc_lastgpe; gpe++) {
 			if (sc->gpe_table[gpe].handler)
 				acpi_enable_onegpe(sc, gpe, 1);
 		}
@@ -1575,7 +1575,7 @@ acpi_isr_thread(void *arg)
 		sc->sc_wakeup = 1;
 		dnprintf(10, "wakeup..\n");
 
-		for (gpe=0; gpe < sc->sc_lastgpe; gpe++) {
+		for (gpe = 0; gpe < sc->sc_lastgpe; gpe++) {
 			struct gpe_block *pgpe = &sc->gpe_table[gpe];
 
 			if (pgpe->active) {

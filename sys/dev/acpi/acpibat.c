@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.34 2006/12/21 13:10:57 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.35 2006/12/21 19:59:02 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -88,7 +88,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_bif.bif_oem);
 	} else
 		printf(": %s: not present\n", sc->sc_devnode->parent->name);
-	
+
 	aml_freevalue(&res);
 
 	/* create sensors */

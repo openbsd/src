@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.10 2006/12/21 11:33:21 deraadt Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.11 2006/12/21 19:59:02 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -115,7 +115,7 @@ acpiprt_getirq(union acpi_resource *crs, void *arg)
 	int *irq = (int *)arg;
 	int typ;
 
-	typ=AML_CRSTYPE(crs);
+	typ = AML_CRSTYPE(crs);
 	switch (typ) {
 	case SR_IRQ:
 		*irq = ffs(aml_letohost16(crs->sr_irq.irq_mask)) - 1;
@@ -171,29 +171,26 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 	}
 	if (pp->type == AML_OBJTYPE_DEVICE) {
 		node = pp->node;
-		if (aml_evalname(sc->sc_acpi, node, "_STA", 0, NULL, &res)) {
+		if (aml_evalname(sc->sc_acpi, node, "_STA", 0, NULL, &res))
 			printf("no _STA method\n");
-		}
 		sta = aml_val2int(&res);
 
-		if (aml_evalname(sc->sc_acpi, node, "_CRS", 0, NULL, &res)) {
+		if (aml_evalname(sc->sc_acpi, node, "_CRS", 0, NULL, &res))
 			printf("no _CRS method\n");
-		}
 
 		if (res.type != AML_OBJTYPE_BUFFER || res.length < 6) {
 			printf("invalid _CRS object\n");
 			return;
 		}
 		aml_parse_resource(res.length, res.v_buffer,
-				   acpiprt_getirq,
-				   &irq);
+		    acpiprt_getirq, &irq);
 	} else {
 		irq = aml_val2int(v->v_package[3]);
 	}
 
 #ifdef ACPI_DEBUG
 	printf("%s: %s addr 0x%llx pin %d irq %d sta %x\n",
-	       DEVNAME(sc), aml_nodename(pp->node), addr, pin, irq, sta);
+	    DEVNAME(sc), aml_nodename(pp->node), addr, pin, irq, sta);
 #endif
 
 #if NIOAPIC > 0

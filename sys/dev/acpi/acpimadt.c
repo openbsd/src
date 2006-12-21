@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.4 2006/12/21 11:33:21 deraadt Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.5 2006/12/21 19:59:02 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -134,12 +134,12 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 	while (addr < (caddr_t)madt + madt->hdr.length) {
 		union acpi_madt_entry *entry = (union acpi_madt_entry *)addr;
 
-		switch(entry->madt_lapic.apic_type) {
+		switch (entry->madt_lapic.apic_type) {
 		case ACPI_MADT_LAPIC:
 			printf("LAPIC: acpi_proc_id %x, apic_id %x, flags 0x%x\n",
-			       entry->madt_lapic.acpi_proc_id,
-			       entry->madt_lapic.apic_id,
-			       entry->madt_lapic.flags);
+			    entry->madt_lapic.acpi_proc_id,
+			    entry->madt_lapic.apic_id,
+			    entry->madt_lapic.flags);
 			{
 				struct cpu_attach_args caa;
 
@@ -165,9 +165,9 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		case ACPI_MADT_IOAPIC:
 			printf("IOAPIC: acpi_ioapic_id %x, address 0x%x, global_int_base 0x%x\n",
-			       entry->madt_ioapic.acpi_ioapic_id,
-			       entry->madt_ioapic.address,
-			       entry->madt_ioapic.global_int_base);
+			    entry->madt_ioapic.acpi_ioapic_id,
+			    entry->madt_ioapic.address,
+			    entry->madt_ioapic.global_int_base);
 
 			{
 				struct apic_attach_args aaa;
@@ -190,17 +190,17 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 	while (addr < (caddr_t)madt + madt->hdr.length) {
 		union acpi_madt_entry *entry = (union acpi_madt_entry *)addr;
 
-		switch(entry->madt_lapic.apic_type) {
+		switch (entry->madt_lapic.apic_type) {
 		case ACPI_MADT_LAPIC:
 		case ACPI_MADT_IOAPIC:
 			break;
 
 		case ACPI_MADT_OVERRIDE:
 			printf("OVERRIDE: bus %x, source %x, global_int %x, flags %x\n",
-			       entry->madt_override.bus,
-			       entry->madt_override.source,
-			       entry->madt_override.global_int,
-			       entry->madt_override.flags);
+			    entry->madt_override.bus,
+			    entry->madt_override.source,
+			    entry->madt_override.global_int,
+			    entry->madt_override.flags);
 
 			pin = entry->madt_override.global_int;
 			apic = ioapic_find_bybase(pin);
@@ -220,7 +220,8 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			acpimadt_cfg_intr(entry->madt_override.flags, &map->redir);
 
 			map->ioapic_ih = APIC_INT_VIA_APIC |
-			    ((apic->sc_apicid << APIC_INT_APIC_SHIFT) | (pin << APIC_INT_PIN_SHIFT));
+			    ((apic->sc_apicid << APIC_INT_APIC_SHIFT) |
+			    (pin << APIC_INT_PIN_SHIFT));
 
 			apic->sc_pins[pin].ip_map = map;
 
@@ -254,7 +255,8 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 		map->redir = (IOAPIC_REDLO_DEL_LOPRI << IOAPIC_REDLO_DEL_SHIFT);
 
 		map->ioapic_ih = APIC_INT_VIA_APIC |
-		    ((apic->sc_apicid << APIC_INT_APIC_SHIFT) | (pin << APIC_INT_PIN_SHIFT));
+		    ((apic->sc_apicid << APIC_INT_APIC_SHIFT) |
+		    (pin << APIC_INT_PIN_SHIFT));
 
 		apic->sc_pins[pin].ip_map = map;
 

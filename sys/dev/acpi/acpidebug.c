@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.13 2006/12/21 11:29:58 deraadt Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.14 2006/12/21 19:59:02 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -485,8 +485,8 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 					break;
 
 				/* Method calls */
-				for (idx=0;
-				     idx<AML_METHOD_ARGCOUNT(node->value->v_method.flags);
+				for (idx = 0;
+				     idx < AML_METHOD_ARGCOUNT(node->value->v_method.flags);
 				     idx++) {
 					scope->pos = db_aml_disasm(node, scope->pos,
 					    scope->end, 1, depth+1);
@@ -510,7 +510,7 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 				break;
 			case 'B':
 				tmpstr = malloc(16 * 6 + 1, M_DEVBUF, M_WAITOK);
-				for (idx=0; idx<min(end-scope->pos, 8); idx++)
+				for (idx = 0; idx < min(end-scope->pos, 8); idx++)
 					snprintf(tmpstr+idx*6, 7, "0x%.2x, ",
 					    scope->pos[idx]);
 				db_aml_disline(pos, depth+1, "ByteList <%s>\n", tmpstr);
