@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.190 2006/12/21 14:58:14 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.191 2006/12/21 14:59:25 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2991,6 +2991,7 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 		fatal("tag %s does not exist (1)", revstr);
 
 	if (RCSNUM_ISBRANCH(rev)) {
+		rcsnum_free(brev);
 		TAILQ_FOREACH(brp, &(rdp->rd_branches), rb_list) {
 			for (i = 0; i < rev->rn_len; i++) {
 				if (brp->rb_num->rn_id[i] != rev->rn_id[i])
