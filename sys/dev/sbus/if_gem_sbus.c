@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_sbus.c,v 1.1 2006/11/25 15:54:35 brad Exp $	*/
+/*	$OpenBSD: if_gem_sbus.c,v 1.2 2006/12/21 22:16:09 jason Exp $	*/
 /*	$NetBSD: if_gem_sbus.c,v 1.1 2006/11/24 13:23:32 martin Exp $	*/
 
 /*-
@@ -140,8 +140,8 @@ gemattach_sbus(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (OF_getprop(sa->sa_node, "local-mac-address",
-	    sc->sc_enaddr, ETHER_ADDR_LEN) <= 0)
-		myetheraddr(sc->sc_enaddr);
+	    sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN) <= 0)
+		myetheraddr(sc->sc_arpcom.ac_enaddr);
 
 	/*
 	 * SBUS config
