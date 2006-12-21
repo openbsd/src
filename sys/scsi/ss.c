@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.57 2006/11/28 16:56:50 dlg Exp $	*/
+/*	$OpenBSD: ss.c,v 1.58 2006/12/21 02:05:46 krw Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -572,7 +572,7 @@ ssstrategy(bp)
 		bp->b_bcount = ss->sio.scan_window_size;
 
 	/*
-	 * If it's a null transfer, return immediatly
+	 * If it's a null transfer, return immediately
 	 */
 	if (bp->b_bcount == 0)
 		goto done;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.69 2006/12/12 02:44:36 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.70 2006/12/21 02:05:46 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1238,7 +1238,7 @@ st_read(st, buf, size, flags)
 	struct scsi_rw_tape cmd;
 
 	/*
-	 * If it's a null transfer, return immediatly
+	 * If it's a null transfer, return immediately
 	 */
 	if (size == 0)
 		return 0;
@@ -1830,7 +1830,7 @@ st_interpret_sense(xs)
 				st->blksize -= 512;
 		}
 		/*
-		 * If no data was tranfered, do it immediatly
+		 * If no data was transferred, return immediately
 		 */
 		if (xs->resid >= xs->datalen) {
 			if (st->flags & ST_EIO_PENDING)

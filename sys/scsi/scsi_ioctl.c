@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.26 2006/07/23 02:50:20 dlg Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.27 2006/12/21 02:05:46 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -304,7 +304,7 @@ scsistrategy(struct buf *bp)
 	    0, /* user must do the retries *//* ignored */
 	    screq->timeout, bp, flags | SCSI_USER | SCSI_NOSLEEP);
 
-	/* because there is a bp, scsi_scsi_cmd will return immediatly */
+	/* because there is a bp, scsi_scsi_cmd will return immediately */
 	if (error)
 		goto bad;
 
