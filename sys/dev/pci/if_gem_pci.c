@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.26 2006/11/25 17:47:40 brad Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.27 2006/12/21 22:13:36 jason Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -186,7 +186,7 @@ gem_pci_enaddr(struct gem_softc *sc, struct pci_attach_args *pa)
 	if (vpd->vpd_key0 != 'N' || vpd->vpd_key1 != 'A')
 		goto fail;
 
-	bcopy(buf + 6, sc->sc_enaddr, ETHER_ADDR_LEN);
+	bcopy(buf + 6, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	rv = 0;
 
  fail:
@@ -267,14 +267,14 @@ gem_attach_pci(struct device *parent, struct device *self, void *aux)
 #ifdef __sparc64__
 	if (!gotenaddr) {
 		if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
-		    sc->sc_enaddr, ETHER_ADDR_LEN) <= 0)
-			myetheraddr(sc->sc_enaddr);
+		    sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN) <= 0)
+			myetheraddr(sc->sc_arpcom.ac_enaddr);
 		gotenaddr = 1;
 	}
 #endif
 #ifdef __powerpc__
 	if (!gotenaddr) {
-		pci_ether_hw_addr(pa->pa_pc, sc->sc_enaddr);
+		pci_ether_hw_addr(pa->pa_pc, sc->sc_arpcom.ac_enaddr);
 		gotenaddr = 1;
 	}
 #endif

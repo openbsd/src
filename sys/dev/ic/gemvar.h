@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.15 2006/11/25 02:12:04 brad Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.16 2006/12/21 22:13:36 jason Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -206,7 +206,6 @@ struct gem_softc {
 	int			sc_inited;
 	int			sc_debug;
 	void			*sc_sh;		/* shutdownhook cookie */
-	u_int8_t		sc_enaddr[ETHER_ADDR_LEN]; /* MAC address */
 
 	/* Special hardware hooks */
 	void	(*sc_hwreset)(struct gem_softc *);

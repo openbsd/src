@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.11 2006/10/15 14:46:13 kettenis Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.12 2006/12/21 22:13:36 jason Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -182,8 +182,8 @@ hme_pci_enaddr(struct hme_softc *sc, struct pci_attach_args *hpa)
 	if (vpd->vpd_key0 != 'N' || vpd->vpd_key1 != 'A')
 		goto fail;
 
-	bcopy(buf + 6, sc->sc_enaddr, ETHER_ADDR_LEN);
-	sc->sc_enaddr[5] += hpa->pa_device;
+	bcopy(buf + 6, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
+	sc->sc_arpcom.ac_enaddr[5] += hpa->pa_device;
 	bus_space_unmap(romt, romh, romsize);
 	return (0);
 
@@ -266,14 +266,14 @@ hmeattach_pci(parent, self, aux)
 #ifdef __sparc64__
 	if (!gotenaddr) {
 		if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
-		    sc->sc_enaddr, ETHER_ADDR_LEN) <= 0)
-			myetheraddr(sc->sc_enaddr);
+		    sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN) <= 0)
+			myetheraddr(sc->sc_arpcom.ac_enaddr);
 		gotenaddr = 1;
 	}
 #endif
 #ifdef __powerpc__
 	if (!gotenaddr) {
-		pci_ether_hw_addr(pa->pa_pc, sc->sc_enaddr);
+		pci_ether_hw_addr(pa->pa_pc, sc->sc_arpcom.ac_enaddr);
 		gotenaddr = 1;
 	}
 #endif

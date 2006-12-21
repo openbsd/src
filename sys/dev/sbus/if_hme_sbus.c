@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_sbus.c,v 1.10 2006/06/02 20:00:56 miod Exp $	*/
+/*	$OpenBSD: if_hme_sbus.c,v 1.11 2006/12/21 22:13:36 jason Exp $	*/
 /*	$NetBSD: if_hme_sbus.c,v 1.6 2001/02/28 14:52:48 mrg Exp $	*/
 
 /*-
@@ -158,8 +158,8 @@ hmeattach_sbus(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (OF_getprop(sa->sa_node, "local-mac-address",
-	    sc->sc_enaddr, ETHER_ADDR_LEN) <= 0)
-		myetheraddr(sc->sc_enaddr);
+	    sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN) <= 0)
+		myetheraddr(sc->sc_arpcom.ac_enaddr);
 
 	/*
 	 * Get transfer burst size from PROM and pass it on

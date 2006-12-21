@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.8 2004/08/08 19:01:20 brad Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.9 2006/12/21 22:13:36 jason Exp $	*/
 /*	$NetBSD: hmevar.h,v 1.6 2000/09/28 10:56:57 tsutsui Exp $	*/
 
 /*-
@@ -88,7 +88,6 @@ struct hme_softc {
 	int			sc_debug;
 	void			*sc_sh;		/* shutdownhook cookie */
 	short			sc_if_flags;
-	u_int8_t		sc_enaddr[ETHER_ADDR_LEN]; /* MAC address */
 
 	/* Special hardware hooks */
 	void	(*sc_hwreset)(struct hme_softc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.67 2006/11/25 17:47:40 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.68 2006/12/21 22:13:36 jason Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -139,8 +139,6 @@ gem_config(struct gem_softc *sc)
 	int i, error;
 	struct ifmedia_entry *ifm;
 
-	bcopy(sc->sc_enaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
-
 	/* Make sure the chip is stopped. */
 	ifp->if_softc = sc;
 	gem_reset(sc);
@@ -215,7 +213,7 @@ gem_config(struct gem_softc *sc)
 	 */
 
 	/* Announce ourselves. */
-	printf(", address %s\n", ether_sprintf(sc->sc_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/* Get RX FIFO size */
 	sc->sc_rxfifosize = 64 *
@@ -736,7 +734,6 @@ gem_init(struct ifnet *ifp)
 	gem_meminit(sc);
 
 	/* step 4. TX MAC registers & counters */
-	bcopy(sc->sc_arpcom.ac_enaddr, sc->sc_enaddr, ETHER_ADDR_LEN);
 	gem_init_regs(sc);
 	max_frame_size = ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN;
 	v = (max_frame_size) | (0x2000 << 16) /* Burst size */;
@@ -851,7 +848,7 @@ gem_init_regs(struct gem_softc *sc)
 		/* Dunno.... */
 		bus_space_write_4(t, h, GEM_MAC_CONTROL_TYPE, 0x8088);
 		bus_space_write_4(t, h, GEM_MAC_RANDOM_SEED,
-		    ((sc->sc_enaddr[5]<<8)|sc->sc_enaddr[4])&0x3ff);
+		    ((sc->sc_arpcom.ac_enaddr[5]<<8)|sc->sc_arpcom.ac_enaddr[4])&0x3ff);
 
 		/* Secondary MAC addr set to 0:0:0:0:0:0 */
 		bus_space_write_4(t, h, GEM_MAC_ADDR3, 0);
@@ -893,11 +890,11 @@ gem_init_regs(struct gem_softc *sc)
 	 * Set the station address.
 	 */
 	bus_space_write_4(t, h, GEM_MAC_ADDR0, 
-		(sc->sc_enaddr[4]<<8) | sc->sc_enaddr[5]);
+		(sc->sc_arpcom.ac_enaddr[4]<<8) | sc->sc_arpcom.ac_enaddr[5]);
 	bus_space_write_4(t, h, GEM_MAC_ADDR1, 
-		(sc->sc_enaddr[2]<<8) | sc->sc_enaddr[3]);
+		(sc->sc_arpcom.ac_enaddr[2]<<8) | sc->sc_arpcom.ac_enaddr[3]);
 	bus_space_write_4(t, h, GEM_MAC_ADDR2, 
-		(sc->sc_enaddr[0]<<8) | sc->sc_enaddr[1]);
+		(sc->sc_arpcom.ac_enaddr[0]<<8) | sc->sc_arpcom.ac_enaddr[1]);
 
 
 	/*

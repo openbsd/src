@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.45 2006/12/21 21:48:11 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.46 2006/12/21 22:13:36 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -151,11 +151,9 @@ hme_config(sc)
 	 *	sc_burst
 	 *
 	 * the local Ethernet address:
-	 *	sc_enaddr
+	 *	sc_arpcom.ac_enaddr
 	 *
 	 */
-
-	bcopy(sc->sc_enaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
 	/* Make sure the chip is stopped. */
 	hme_stop(sc);
