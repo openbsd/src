@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.25 2006/12/20 17:50:40 gwk Exp $ */
+/*	$OpenBSD: est.c,v 1.26 2006/12/21 22:31:07 dim Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -1049,6 +1049,10 @@ est_init(const char *cpu_device, int vendor)
 	}
 	low = MSR2MHZ(est_fqlist->table[est_fqlist->n - 1], bus_clock);
 	high = MSR2MHZ(est_fqlist->table[0], bus_clock);
+	if (low == high) {
+		printf(": high and low speed are the same, disabling EST\n");
+		return;
+	}
 	perflevel = (mhz - low) * 100 / (high - low);
 
 	/*
