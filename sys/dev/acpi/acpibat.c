@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.31 2006/12/21 04:18:48 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.32 2006/12/21 04:54:27 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -167,11 +167,12 @@ acpibat_refresh(void *arg)
 	dnprintf(30, "%s: %s: refresh\n", DEVNAME(sc),
 	    sc->sc_devnode->parent->name);
 
-	if (sc->sc_bat_present == 0) {
+	if (!sc->sc_bat_present) {
 		for (i = 0; i < 8; i++)
 			sc->sc_sens[i].value = 0;
 		strlcpy(sc->sc_sens[4].desc, "battery removed",
 		    sizeof(sc->sc_sens[4].desc));
+		sc->sc_sens[4].status = SENSOR_S_OK;
 		return;
 	}
 
@@ -325,7 +326,7 @@ acpibat_notify(struct aml_node *node, int notify_type, void *arg)
 
 	switch (notify_type) {
 	case 0x80:	/* _BST changed */
-		if (sc->sc_bat_present == 0) {
+		if (!sc->sc_bat_present) {
 			printf("%s: %s: inserted\n", DEVNAME(sc),
 			    sc->sc_devnode->parent->name);
 			sc->sc_bat_present = 1;
@@ -333,7 +334,7 @@ acpibat_notify(struct aml_node *node, int notify_type, void *arg)
 		break;
 	case 0x81:	/* _BIF changed */
 		/* XXX consider this a device removal */
-		if (sc->sc_bat_present == 1) {
+		if (sc->sc_bat_present) {
 			printf("%s: %s: removed\n", DEVNAME(sc),
 			    sc->sc_devnode->parent->name);
 			sc->sc_bat_present = 0;
