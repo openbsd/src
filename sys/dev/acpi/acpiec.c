@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.11 2006/12/21 01:42:49 marco Exp $ */
+/* $OpenBSD: acpiec.c,v 1.12 2006/12/21 05:24:25 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -117,7 +117,7 @@ acpiec_intr(struct acpiec_softc *sc)
 
 	stat = acpiec_status(sc);
 	dnprintf(40, "%s: EC interrupt, stat: %b\n", DEVNAME(sc), (int)stat,
-		 "\20\x8IGN\x7SMI\x6SCI\05BURST\04CMD\03IGN\02IBF\01OBF");
+	    "\20\x8IGN\x7SMI\x6SCI\05BURST\04CMD\03IGN\02IBF\01OBF");
 
 	if (stat & (EC_STAT_IBF | EC_STAT_OBF | EC_STAT_BURST ))
 		wakeup(sc);
@@ -133,7 +133,7 @@ acpiec_wait_nosleep(struct acpiec_softc *sc, u_int8_t mask, u_int8_t val)
 	u_int8_t stat;
 
 	dnprintf(40, "%s: EC wait_ns for: %b == %02x\n", DEVNAME(sc), (int)mask,
-		 "\20\x8IGN\x7SMI\x6SCI\05BURST\04CMD\03IGN\02IBF\01OBF", (int)val);
+	    "\20\x8IGN\x7SMI\x6SCI\05BURST\04CMD\03IGN\02IBF\01OBF", (int)val);
 
 	for (;;) {
 		if (((stat = acpiec_status(sc)) & mask) == val)
@@ -141,7 +141,7 @@ acpiec_wait_nosleep(struct acpiec_softc *sc, u_int8_t mask, u_int8_t val)
 		delay(1);
 	}
 	dnprintf(40, "%s: EC wait_ns, stat: %b\n", DEVNAME(sc), (int)stat,
-		 "\20\x8IGN\x7SMI\x6SCI\05BURST\04CMD\03IGN\02IBF\01OBF");
+	    "\20\x8IGN\x7SMI\x6SCI\05BURST\04CMD\03IGN\02IBF\01OBF");
 }
 
 u_int8_t
@@ -513,7 +513,7 @@ acpiec_reg(struct acpiec_softc *sc)
 	}
 
 	if (aml_evalnode(sc->sc_acpi, root, 2, arg, NULL) != 0) {
-		dnprintf(10, "%s: evaluating method _REG failed.\n", DEVNAME(sc));
+		dnprintf(10, "%s: eval method _REG failed\n", DEVNAME(sc));
 		return (1);
 	}
 
