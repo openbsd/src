@@ -1,4 +1,4 @@
-.\" $OpenBSD: watchdogd.8,v 1.9 2006/08/04 11:08:43 mbalmer Exp $
+.\" $OpenBSD: watchdogd.8,v 1.10 2006/12/21 15:51:54 mbalmer Exp $
 .\"
 .\" Copyright (c) 2005 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -22,7 +22,7 @@
 .Nd watchdog timer retrigger daemon
 .Sh SYNOPSIS
 .Nm watchdogd
-.Op Fl dq
+.Op Fl dnq
 .Op Fl i Ar interval
 .Op Fl p Ar period
 .Sh DESCRIPTION
@@ -64,6 +64,10 @@ the value of
 .Ar period
 (see below)
 divided by three is used.
+.It Fl n
+Do not restore the watchdog to its original values once it has been activated.
+With this set, the system will be rebooted by the watchdog even if you enter
+'halt'.
 .It Fl p Ar period
 Set the hardware timer to expire in
 .Ar period

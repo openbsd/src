@@ -1,4 +1,4 @@
-/*	$OpenBSD: watchdogd.c,v 1.8 2006/08/04 11:04:55 mbalmer Exp $ */
+/*	$OpenBSD: watchdogd.c,v 1.9 2006/12/21 15:51:54 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2005 Marc Balmer <mbalmer@openbsd.org>
@@ -37,7 +37,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dq] [-i interval] [-p period]\n",
+	fprintf(stderr, "usage: %s [-dnq] [-i interval] [-p period]\n",
 	    __progname);
 	exit(1);
 }
@@ -56,10 +56,10 @@ main(int argc, char *argv[])
 	size_t		 len;
 	u_int		 interval = 0, period = 30, nperiod;
 	int		 ch, trigauto, sauto, speriod;
-	int		 quiet = 0, daemonize = 1, retval = 1;
+	int		 quiet = 0, daemonize = 1, retval = 1, restore = 1;
 	int		 mib[3];
 
-	while ((ch = getopt(argc, argv, "di:p:q")) != -1) {
+	while ((ch = getopt(argc, argv, "di:np:q")) != -1) {
 		switch (ch) {
 		case 'd':
 			daemonize = 0;
@@ -69,6 +69,9 @@ main(int argc, char *argv[])
 			    &errstr);
 			if (errstr)
 				errx(1, "interval is %s: %s", errstr, optarg);
+			break;
+		case 'n':
+			restore = 0;
 			break;
 		case 'p':
 			period = (u_int)strtonum(optarg, 2LL, 86400LL, &errstr);
@@ -144,10 +147,11 @@ main(int argc, char *argv[])
 		sleep(interval);
 	}
 
-restore:
-	sysctl(mib, 3, NULL, 0, &speriod, sizeof(speriod));
-	mib[2] = KERN_WATCHDOG_AUTO;
-	sysctl(mib, 3, NULL, 0, &sauto, sizeof(sauto));
+	if (restore) {
+restore:	sysctl(mib, 3, NULL, 0, &speriod, sizeof(speriod));
+		mib[2] = KERN_WATCHDOG_AUTO;
+		sysctl(mib, 3, NULL, 0, &sauto, sizeof(sauto));
+	}
 
 	return (retval);
 }
