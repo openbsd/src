@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1204 2006/12/21 11:55:23 mickey Exp $
+$OpenBSD: pcidevs,v 1.1205 2006/12/21 18:53:26 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1030,6 +1030,7 @@ product AVANCE2 ALG2302		0x2302	ALG2302
 product AVANCE2 ALS4000		0x4000	ALS4000
 
 /* AVlab products */
+product	AVLAB PCI2S		0x2130	PCI 2 Serial
 product	AVLAB LPPCI4S		0x2150	LP-PCI 4 Serial
 
 /* AVM products */
