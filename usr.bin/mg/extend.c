@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.48 2006/07/25 08:27:09 kjell Exp $	*/
+/*	$OpenBSD: extend.c,v 1.49 2006/12/21 18:18:13 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -91,12 +91,14 @@ insert(int f, int n)
  * Structure assignments would come in real handy, but K&R based compilers
  * don't have them.  Care is taken so running out of memory will leave
  * the keymap in a usable state.
+ * Parameters are:
+ * curmap:  	pointer to the map being changed
+ * c:		character being changed
+ * funct: 	function being changed to
+ * pref_map: 	if funct==NULL, map to bind to or NULL for new
  */
 static int
-remap(KEYMAP *curmap,		/* pointer to the map being changed */
-    int c,			/* character being changed */
-    PF funct,			/* function being changed to */
-    KEYMAP *pref_map)		/* if funct==NULL, map to bind to or NULL for new */
+remap(KEYMAP *curmap, int c, PF funct, KEYMAP *pref_map)
 {
 	int		 i, n1, n2, nold;
 	KEYMAP		*mp, *newmap;
@@ -222,9 +224,11 @@ remap(KEYMAP *curmap,		/* pointer to the map being changed */
 			n2 = 1;
 			for (i = 0; n2 && i < n1; i++)
 				n2 &= ele->k_funcp[i] != NULL;
-			if (curmap->map_num >= curmap->map_max &&
-			    (curmap = reallocmap(curmap)) == NULL)
-				return (FALSE);
+			if (curmap->map_num >= curmap->map_max) {
+				if ((newmap = reallocmap(curmap)) == NULL)
+					return (FALSE);
+				curmap = newmap;
+			}
 			if ((pfp = calloc(ele->k_num - c + !n2,
 			    sizeof(PF))) == NULL) {
 				ewprintf("Out of memory");
@@ -266,7 +270,8 @@ remap(KEYMAP *curmap,		/* pointer to the map being changed */
 }
 
 /*
- * Reallocate a keymap, used above.
+ * Reallocate a keymap. Returns NULL (without trashing the current map)
+ * on failure.
  */
 static KEYMAP *
 reallocmap(KEYMAP *curmap)
