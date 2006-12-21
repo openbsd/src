@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.12 2006/11/29 22:39:04 miod Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.13 2006/12/21 11:29:58 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -66,7 +66,7 @@ char			scope[80];
 const char *
 db_opregion(int id)
 {
-	switch(id) {
+	switch (id) {
 	case 0:
 		return "SystemMemory";
 	case 1:
@@ -88,11 +88,10 @@ void
 db_aml_dump(int len, u_int8_t *buf)
 {
 	int		idx;
-	
+
 	db_printf("{ ");
 	for (idx = 0; idx < len; idx++)
 		db_printf("%s0x%.2x", idx ? ", " : "", buf[idx]);
-
 	db_printf(" }\n");
 }
 
@@ -171,13 +170,13 @@ db_aml_showvalue(struct aml_value *value)
 		db_aml_showvalue(value->v_field.ref2);
 		break;
 	case AML_OBJTYPE_BUFFERFIELD:
-		db_printf("%s: pos=%.4x len=%.4x ", 
+		db_printf("%s: pos=%.4x len=%.4x ",
 		    aml_mnem(value->v_field.type),
 		    value->v_field.bitpos,
 		    value->v_field.bitlen);
 
-		db_aml_dump(aml_bytelen(value->v_field.bitlen), 
-		    value->v_field.ref1->v_buffer + 
+		db_aml_dump(aml_bytelen(value->v_field.bitlen),
+		    value->v_field.ref1->v_buffer +
 		    aml_bytepos(value->v_field.bitpos));
 
 		db_aml_showvalue(value->v_field.ref1);
@@ -236,9 +235,9 @@ db_aml_objtype(struct aml_value *val)
 	case AML_OBJTYPE_OBJREF:
 		return "refof";
 	case AML_OBJTYPE_FIELDUNIT:
-	case AML_OBJTYPE_BUFFERFIELD: 
+	case AML_OBJTYPE_BUFFERFIELD:
 		return aml_mnem(val->v_field.type);
-	};
+	}
 
 	return ("");
 }
@@ -246,7 +245,7 @@ db_aml_objtype(struct aml_value *val)
 void
 db_aml_walktree(struct aml_node *node)
 {
-	while(node) {
+	while (node) {
 		db_aml_showvalue(node->value);
 		db_aml_walktree(node->child);
 
@@ -276,8 +275,7 @@ db_parse_name(void)
 					goto error;
 				}
 		}
-	}
-	while (t != tEOL);
+	} while (t != tEOL);
 
 	if (!strlen(scope)) {
 		db_printf("Invalid input\n");
@@ -310,14 +308,15 @@ db_acpi_showval(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 void
 db_acpi_disasm(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
-	struct aml_node 		*node;
+	struct aml_node *node;
 
 	if (db_parse_name())
 		return;
 
 	node = aml_searchname(&aml_root, scope);
 	if (node && node->value && node->value->type == AML_OBJTYPE_METHOD) {
-		db_aml_disasm(node, node->value->v_method.start, node->value->v_method.end, -1, 0);
+		db_aml_disasm(node, node->value->v_method.start,
+		    node->value->v_method.end, -1, 0);
 	} else
 		db_printf("Not a valid method\n");
 }
@@ -356,7 +355,7 @@ db_aml_disline(uint8_t *pos, int depth, const char *fmt, ...)
 {
 	va_list ap;
 	char line[128];
-	
+
 	db_printf("%.6x: ", aml_pc(pos));
 	while (depth--)
 		db_printf("  ");
@@ -370,33 +369,36 @@ db_aml_disline(uint8_t *pos, int depth, const char *fmt, ...)
 void
 db_aml_disint(struct aml_scope *scope, int opcode, int depth)
 {
-	switch(opcode) {
+	switch (opcode) {
 	case AML_ANYINT:
 		db_aml_disasm(scope->node, scope->pos, scope->end, -1, depth);
 		break;
 	case AMLOP_BYTEPREFIX:
-		db_aml_disline(scope->pos, depth, "0x%.2x\n", *(uint8_t *)(scope->pos));
+		db_aml_disline(scope->pos, depth, "0x%.2x\n",
+		    *(uint8_t *)(scope->pos));
 		scope->pos += 1;
 		break;
 	case AMLOP_WORDPREFIX:
-		db_aml_disline(scope->pos, depth, "0x%.4x\n", *(uint16_t *)(scope->pos));
+		db_aml_disline(scope->pos, depth, "0x%.4x\n",
+		    *(uint16_t *)(scope->pos));
 		scope->pos += 2;
 		break;
 	case AMLOP_DWORDPREFIX:
-		
-					    db_aml_disline(scope->pos, depth, "0x%.8x\n", *(uint32_t *)(scope->pos));
+		db_aml_disline(scope->pos, depth, "0x%.8x\n",
+		    *(uint32_t *)(scope->pos));
 		scope->pos += 4;
 		break;
 	case AMLOP_QWORDPREFIX:
-		db_aml_disline(scope->pos, depth, "0x%.4llx\n", *(uint64_t *)(scope->pos));
+		db_aml_disline(scope->pos, depth, "0x%.4llx\n",
+		    *(uint64_t *)(scope->pos));
 		scope->pos += 8;
 		break;
 	}
 }
 
 uint8_t *
-db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end, 
-	       int count, int depth)
+db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
+    int count, int depth)
 {
 	int idx, opcode, len, off=0;
 	struct aml_scope *scope;
@@ -426,12 +428,9 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 			name = aml_parsename(scope);
 			node = aml_searchname(scope->node, name);
 			db_aml_disline(pos, depth, "%s %s (%s)\n",
-				       mnem,
-				       aml_getname(name),
-				       aml_nodename(node));
+			    mnem, aml_getname(name), aml_nodename(node));
 			args++;
-		}
-		else if (mnem[0] != '.') {
+		} else if (mnem[0] != '.') {
 			db_aml_disline(pos, depth, "%s\n", mnem);
 		}
 		while (*args) {
@@ -447,22 +446,26 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 			case 't':
 			case 'S':
 			case 'r':
-				scope->pos = db_aml_disasm(node, scope->pos, scope->end, 1, depth+1);
+				scope->pos = db_aml_disasm(node, scope->pos,
+				    scope->end, 1, depth+1);
 				break;
 			case 'T':
 			case 'M':
-				scope->pos = db_aml_disasm(node, scope->pos, end, -1, depth+1);
+				scope->pos = db_aml_disasm(node, scope->pos,
+				    end, -1, depth+1);
 				break;
 			case 'I':
 				/* Special case: if */
-				scope->pos = db_aml_disasm(node, scope->pos, end, -1, depth+1);
+				scope->pos = db_aml_disasm(node, scope->pos,
+				    end, -1, depth+1);
 				if (scope->pos >= scope->end)
 					break;
 				if (*scope->pos == AMLOP_ELSE) {
 					++scope->pos;
 					end = aml_parseend(scope);
 					db_aml_disline(scope->pos, depth, "Else\n");
-					scope->pos = db_aml_disasm(node, scope->pos, end, -1, depth+1);
+					scope->pos = db_aml_disasm(node, scope->pos,
+					    end, -1, depth+1);
 				}
 				break;
 			case 'N':
@@ -473,18 +476,20 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 				off = (opcode != AMLOP_NAMECHAR);
 				name = aml_parsename(scope);
 				node = aml_searchname(scope->node, name);
-				db_aml_disline(pos, depth+off, "%s <%s>\n", 
-					       aml_getname(name), 
+				db_aml_disline(pos, depth+off, "%s <%s>\n",
+					       aml_getname(name),
 					       aml_nodename(node));
 
-				if (!node || !node->value || node->value->type != AML_OBJTYPE_METHOD)
+				if (!node || !node->value ||
+				    node->value->type != AML_OBJTYPE_METHOD)
 					break;
 
 				/* Method calls */
-				for (idx=0; 
+				for (idx=0;
 				     idx<AML_METHOD_ARGCOUNT(node->value->v_method.flags);
 				     idx++) {
-					scope->pos = db_aml_disasm(node, scope->pos, scope->end, 1, depth+1);
+					scope->pos = db_aml_disasm(node, scope->pos,
+					    scope->end, 1, depth+1);
 				}
 				break;
 			case 'b':
@@ -506,7 +511,8 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 			case 'B':
 				tmpstr = malloc(16 * 6 + 1, M_DEVBUF, M_WAITOK);
 				for (idx=0; idx<min(end-scope->pos, 8); idx++)
-					snprintf(tmpstr+idx*6, 7, "0x%.2x, ", scope->pos[idx]);
+					snprintf(tmpstr+idx*6, 7, "0x%.2x, ",
+					    scope->pos[idx]);
 				db_aml_disline(pos, depth+1, "ByteList <%s>\n", tmpstr);
 			        free(tmpstr, M_DEVBUF);
 				scope->pos = end;
@@ -520,19 +526,22 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 					case 0x00: // reserved
 						scope->pos++;
 						len = aml_parselength(scope);
-						db_aml_disline(pos, depth+1, "Reserved\t%.4x,%.4x\n", 
-							       off, len);
+						db_aml_disline(pos, depth+1,
+						    "Reserved\t%.4x,%.4x\n",
+						     off, len);
 						break;
 					case 0x01: // attr
-						db_aml_disline(pos, depth+1, "Attr:%.2x,%.2x\n", 
-							       scope->pos[1], scope->pos[2]);
+						db_aml_disline(pos, depth+1,
+						    "Attr:%.2x,%.2x\n",
+						     scope->pos[1], scope->pos[2]);
 						scope->pos += 3;
 						break;
 					default:
 						name = aml_parsename(scope);
 						len = aml_parselength(scope);
-						db_aml_disline(pos, depth+1, "NamedField\t%.4x,%.4x %s\n",
-							       off, len, aml_getname(name));
+						db_aml_disline(pos, depth+1,
+						    "NamedField\t%.4x,%.4x %s\n",
+						    off, len, aml_getname(name));
 					}
 					off += len;
 				}
@@ -548,4 +557,3 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 	aml_popscope(scope);
 	return pos;
 }
-
