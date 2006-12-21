@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.59 2006/12/20 23:26:52 deraadt Exp $	*/
+/*	$OpenBSD: re.c,v 1.60 2006/12/21 05:15:06 drahn Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -161,9 +161,6 @@ int	re_encap(struct rl_softc *, struct mbuf *, int *);
 int	re_newbuf(struct rl_softc *, int, struct mbuf *);
 int	re_rx_list_init(struct rl_softc *);
 int	re_tx_list_init(struct rl_softc *);
-#ifdef __STRICT_ALIGNMENT
-void	re_fixup_rx(struct mbuf *);
-#endif
 void	re_rxeof(struct rl_softc *);
 void	re_txeof(struct rl_softc *);
 void	re_tick(void *);
@@ -1162,22 +1159,6 @@ re_newbuf(struct rl_softc *sc, int idx, struct mbuf *m)
 	return (ENOMEM);
 }
 
-#ifdef __STRICT_ALIGNMENT
-void
-re_fixup_rx(struct mbuf *m)
-{
-	int		i;
-	uint16_t	*src, *dst;
-
-	src = mtod(m, uint16_t *);
-	dst = src - (RE_ETHER_ALIGN - ETHER_ALIGN) / sizeof *src;
-
-	for (i = 0; i < (m->m_len / sizeof(uint16_t) + 1); i++)
-		*dst++ = *src++;
-
-	m->m_data -= RE_ETHER_ALIGN - ETHER_ALIGN;
-}
-#endif
 
 int
 re_tx_list_init(struct rl_softc *sc)
@@ -1347,9 +1328,6 @@ re_rxeof(struct rl_softc *sc)
 			m->m_pkthdr.len = m->m_len =
 			    (total_len - ETHER_CRC_LEN);
 
-#ifdef __STRICT_ALIGNMENT
-		re_fixup_rx(m);
-#endif
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
 
