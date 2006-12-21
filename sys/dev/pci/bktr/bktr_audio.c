@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_audio.c,v 1.7 2005/12/07 12:39:23 mickey Exp $	*/
+/*	$OpenBSD: bktr_audio.c,v 1.8 2006/12/21 02:44:55 krw Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp $ */
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -471,7 +471,7 @@ void msp_read_id( bktr_ptr_t bktr ){
  * For the MSP3430G, we use fast autodetect mode
  * For the MSP3410/3415 there are two schemes for this
  *  a) Fast autodetection - the chip is put into autodetect mode, and the function
- *     returns immediatly. This works in most cases and is the Default Mode.
+ *     returns immediately. This works in most cases and is the Default Mode.
  *  b) Slow mode. The function sets the MSP3410/3415 chip, then waits for feedback from 
  *     the chip and re-programs it if needed.
  */

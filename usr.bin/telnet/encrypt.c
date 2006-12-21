@@ -1,4 +1,4 @@
-/*     $OpenBSD: encrypt.c,v 1.2 2006/02/01 19:04:37 otto Exp $     */
+/*     $OpenBSD: encrypt.c,v 1.3 2006/12/21 02:44:55 krw Exp $     */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -437,7 +437,7 @@ encrypt_send_support(void)
     if (str_suplen) {
 	/*
 	 * If the user has requested that decryption start
-	 * immediatly, then send a "REQUEST START" before
+	 * immediately, then send a "REQUEST START" before
 	 * we negotiate the type.
 	 */
 	if (!Server && autodecrypt)

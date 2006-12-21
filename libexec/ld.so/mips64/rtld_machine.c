@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.8 2005/09/22 01:33:08 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.9 2006/12/21 02:44:55 krw Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -251,7 +251,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		} else if (ELF64_ST_TYPE(symp->st_info) == STT_FUNC &&
 			symp->st_value != *gotp) {
 			*gotp += loff;
-		} else {	/* Resolve all others immediatly */
+		} else {	/* Resolve all others immediately */
 			this = 0;
 			ooff = _dl_find_symbol(strt + symp->st_name, &this,
 			    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT,

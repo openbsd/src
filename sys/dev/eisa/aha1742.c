@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.22 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.23 2006/12/21 02:44:55 krw Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ typedef u_long physlen;
 #define	HSCSIID	0x0F		/* our SCSI ID */
 #define	RSTPWR	0x10		/* reset scsi bus on power up or reset */
 /**** bit definitions for BUSDEF ****/
-#define	B0uS	0x00		/* give up bus immediatly */
+#define	B0uS	0x00		/* give up bus immediately */
 #define	B4uS	0x01		/* delay 4uSec. */
 #define	B8uS	0x02
 

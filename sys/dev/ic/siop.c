@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.45 2006/11/28 23:59:45 dlg Exp $ */
+/*	$OpenBSD: siop.c,v 1.46 2006/12/21 02:44:55 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1251,7 +1251,7 @@ siop_handle_qtag_reject(siop_cmd)
 /*
  * handle a bus reset: reset chip, unqueue all active commands, free all
  * target struct and report lossage to upper layer.
- * As the upper layer may requeue immediatly we have to first store
+ * As the upper layer may requeue immediately we have to first store
  * all active commands in a temporary queue.
  */
 void

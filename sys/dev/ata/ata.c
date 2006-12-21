@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.25 2005/11/09 19:05:48 uwe Exp $      */
+/*      $OpenBSD: ata.c,v 1.26 2006/12/21 02:44:55 krw Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -187,7 +187,7 @@ ata_dmaerr(struct ata_drive_datas *drvp)
 	/*
 	 * Downgrade decision: if we get NERRS_MAX in NXFER.
 	 * We start with n_dmaerrs set to NERRS_MAX-1 so that the
-	 * first error within the first NXFER ops will immediatly trigger
+	 * first error within the first NXFER ops will immediately trigger
 	 * a downgrade.
 	 * If we got an error and n_xfers is bigger than NXFER reset counters.
 	 */
