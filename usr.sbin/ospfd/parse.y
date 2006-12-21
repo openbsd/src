@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.39 2006/12/07 19:14:27 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.40 2006/12/21 17:22:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -191,13 +191,13 @@ conf_main	: ROUTERID STRING {
 			struct redistribute	*r;
 
 			if (!strcmp($3, "default")) {
-				conf->redistribute |= REDISTRIBUTE_DEFAULT;
-				if ($1) {
-					yyerror("cannot use 'no' with "
-					    "redistribute default");
-					free($3);
-					YYERROR;
-				}
+				if (!$1)
+					conf->redistribute |=
+					    REDISTRIBUTE_DEFAULT;
+				else
+					conf->redistribute &=
+					    ~REDISTRIBUTE_DEFAULT;
+				conf->defaultmetric = $4;
 			} else {
 				if ((r = calloc(1, sizeof(*r))) == NULL)
 					fatal(NULL);

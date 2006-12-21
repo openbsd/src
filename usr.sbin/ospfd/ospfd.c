@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.37 2006/12/07 19:14:27 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.38 2006/12/21 17:22:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -543,10 +543,13 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 void
 ospf_redistribute_default(int type)
 {
-	struct kroute	kr;
+	struct rroute	rr;
 
-	bzero(&kr, sizeof(kr));
-	if (conf->redistribute & REDISTRIBUTE_DEFAULT)
-		main_imsg_compose_rde(type, 0, &kr, sizeof(struct kroute));
+	if (!(conf->redistribute & REDISTRIBUTE_DEFAULT))
+		return;
+
+	bzero(&rr, sizeof(rr));
+	rr.metric = conf->defaultmetric;
+	main_imsg_compose_rde(type, 0, &rr, sizeof(struct rroute));
 }
 
