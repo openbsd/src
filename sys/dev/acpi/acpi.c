@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.71 2006/12/20 17:33:38 deraadt Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.72 2006/12/21 05:57:17 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1053,9 +1053,8 @@ int
 acpi_interrupt(void *arg)
 {
 	struct acpi_softc *sc = (struct acpi_softc *)arg;
-	u_int32_t ec, processed, sts, en, idx, jdx;
+	u_int32_t processed, sts, en, idx, jdx;
 
-	ec = 0;
 	processed = 0;
 
 	dnprintf(40, "ACPI Interrupt\n");
@@ -1089,26 +1088,13 @@ acpi_interrupt(void *arg)
 			sc->sc_sleepbtn = 1;
 		processed = 1;
 	}
-#if 0
-	if (ec) {
-		if (acpiec_intr(sc->sc_ec))
-			processed = 1;
-
-		sts = sc->sc_ec_gpemask;
-		en  = acpi_read_pmreg(sc, ACPIREG_GPE0_EN, 0);
-
-		/* enable SCI once again */
-		acpi_write_pmreg(sc, ACPIREG_GPE0_STS, 0, sts);
-		acpi_write_pmreg(sc, ACPIREG_GPE0_EN, 0, en | sts);
-	}
-#endif
 
 	if (processed) {
 		sc->sc_wakeup = 0;
 		wakeup(sc);
 	}
 
-	return (processed | ec);
+	return (processed);
 }
 
 void
@@ -1580,11 +1566,6 @@ acpi_isr_thread(void *arg)
 			if (sc->gpe_table[gpe].handler)
 				acpi_enable_onegpe(sc, gpe, 1);
 		}
-#if 0
-		/* Enable EC interrupt */
-		if (sc->sc_ec != NULL)
-			acpi_enable_gpe(sc, sc->sc_ec_gpemask);
-#endif
 	}
 
 	while (thread->running) {
