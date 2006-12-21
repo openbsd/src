@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.43 2006/06/25 21:53:44 brad Exp $	*/
+/*	$OpenBSD: hme.c,v 1.44 2006/12/21 21:43:44 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -519,7 +519,7 @@ hme_init(sc)
 	bus_space_write_4(t, mac, HME_MACI_TXSIZE, ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
 
 	/* Load station MAC address */
-	ea = sc->sc_enaddr;
+	ea = sc->sc_arpcom.ac_enaddr;
 	bus_space_write_4(t, mac, HME_MACI_MACADDR0, (ea[0] << 8) | ea[1]);
 	bus_space_write_4(t, mac, HME_MACI_MACADDR1, (ea[2] << 8) | ea[3]);
 	bus_space_write_4(t, mac, HME_MACI_MACADDR2, (ea[4] << 8) | ea[5]);
