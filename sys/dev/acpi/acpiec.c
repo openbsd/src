@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.10 2006/12/12 17:59:09 mk Exp $ */
+/* $OpenBSD: acpiec.c,v 1.11 2006/12/21 01:42:49 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -50,7 +50,6 @@ void	acpiec_write(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
 int	acpiec_getcrs(struct acpiec_softc *, struct acpi_attach_args *);
 int	acpiec_getregister(const u_int8_t *, int, int *, bus_size_t *);
 
-void	acpiec_wait(struct acpiec_softc *, u_int8_t, u_int8_t);
 void	acpiec_wait_nosleep(struct acpiec_softc *, u_int8_t, u_int8_t);
 void	acpiec_sci_event(struct acpiec_softc *);
 
@@ -129,25 +128,10 @@ acpiec_intr(struct acpiec_softc *sc)
 }
 
 void
-acpiec_wait(struct acpiec_softc *sc, u_int8_t mask, u_int8_t val)
-{
-	u_int8_t stat;
-	dnprintf(40, "%s: EC wait for: %b == %02x\n", DEVNAME(sc), (int)mask,
-		 "\20\x8IGN\x7SMI\x6SCI\05BURST\04CMD\03IGN\02IBF\01OBF", (int)val);
-
-	for (;;) {
-		if (((stat = acpiec_status(sc)) & mask) == val)
-			break;
-		tsleep(sc, PWAIT, "acpiec", 10);
-	}
-	dnprintf(40, "%s: EC wait, stat: %b\n", DEVNAME(sc), (int) stat,
-		 "\20\x8IGN\x7SMI\x6SCI\05BURST\04CMD\03IGN\02IBF\01OBF");
-}
-
-void
 acpiec_wait_nosleep(struct acpiec_softc *sc, u_int8_t mask, u_int8_t val)
 {
 	u_int8_t stat;
+
 	dnprintf(40, "%s: EC wait_ns for: %b == %02x\n", DEVNAME(sc), (int)mask,
 		 "\20\x8IGN\x7SMI\x6SCI\05BURST\04CMD\03IGN\02IBF\01OBF", (int)val);
 
@@ -169,7 +153,7 @@ acpiec_status(struct acpiec_softc *sc)
 void
 acpiec_write_data(struct acpiec_softc *sc, u_int8_t val)
 {
-	acpiec_wait(sc, EC_STAT_IBF, 0);
+	acpiec_wait_nosleep(sc, EC_STAT_IBF, 0);
 	dnprintf(40, "acpiec: write_data -- %d\n", (int) val);
 	bus_space_write_1(sc->sc_data_bt, sc->sc_data_bh, 0, val);
 }
@@ -177,7 +161,7 @@ acpiec_write_data(struct acpiec_softc *sc, u_int8_t val)
 void
 acpiec_write_cmd(struct acpiec_softc *sc, u_int8_t val)
 {
-	acpiec_wait(sc, EC_STAT_IBF, 0);
+	acpiec_wait_nosleep(sc, EC_STAT_IBF, 0);
 	dnprintf(40, "acpiec: write_cmd -- %d\n", (int) val);
 	bus_space_write_1(sc->sc_cmd_bt, sc->sc_cmd_bh, 0, val);
 }
@@ -186,7 +170,7 @@ u_int8_t
 acpiec_read_data(struct acpiec_softc *sc)
 {
 	u_int8_t val;
-	acpiec_wait(sc, EC_STAT_OBF, EC_STAT_OBF);
+	acpiec_wait_nosleep(sc, EC_STAT_OBF, EC_STAT_OBF);
 	dnprintf(40, "acpiec: read_data\n", (int) val);
 	val = bus_space_read_1(sc->sc_data_bt, sc->sc_data_bh, 0);
 
@@ -337,7 +321,8 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 
 	dnprintf(10, "%s: GPE: %d\n", DEVNAME(sc), sc->sc_gpe);
 
-	acpi_set_gpehandler(sc->sc_acpi, sc->sc_gpe, acpiec_gpehandler, sc, "acpiec");
+	acpi_set_gpehandler(sc->sc_acpi, sc->sc_gpe, acpiec_gpehandler,
+	    sc, "acpiec");
 
 	printf(": %s\n", sc->sc_devnode->parent->name);
 }
