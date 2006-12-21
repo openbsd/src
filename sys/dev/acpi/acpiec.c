@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.13 2006/12/21 05:53:35 marco Exp $ */
+/* $OpenBSD: acpiec.c,v 1.14 2006/12/21 11:33:21 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -55,7 +55,7 @@ void		acpiec_sci_event(struct acpiec_softc *);
 
 void		acpiec_get_events(struct acpiec_softc *);
 
-int     	acpiec_gpehandler(struct acpi_softc *, int, void *);
+int		acpiec_gpehandler(struct acpi_softc *, int, void *);
 
 struct aml_node	*aml_find_name(struct acpi_softc *, struct aml_node *,
 		    const char *);
@@ -63,7 +63,7 @@ struct aml_node	*aml_find_name(struct acpi_softc *, struct aml_node *,
 /* EC Status bits */
 #define		EC_STAT_SMI_EVT	0x40	/* SMI event pending */
 #define		EC_STAT_SCI_EVT	0x20	/* SCI event pending */
-#define 	EC_STAT_BURST	0x10	/* Controller in burst mode */
+#define	EC_STAT_BURST	0x10	/* Controller in burst mode */
 #define		EC_STAT_CMD	0x08	/* data is command */
 #define		EC_STAT_IBF	0x02	/* input buffer full */
 #define		EC_STAT_OBF	0x01	/* output buffer full */
@@ -97,7 +97,7 @@ struct acpiec_softc {
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
 	u_int32_t		sc_gpe;
-  	struct acpiec_event	sc_events[ACPIEC_MAX_EVENTS];
+	struct acpiec_event	sc_events[ACPIEC_MAX_EVENTS];
 	int			sc_locked;
 	int			sc_handling_events;
 };
@@ -488,7 +488,7 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 		return (1);
 	}
 
-       	return (0);
+	return (0);
 }
 
 int

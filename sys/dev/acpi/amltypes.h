@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.21 2006/12/21 11:23:41 deraadt Exp $ */
+/* $OpenBSD: amltypes.h,v 1.22 2006/12/21 11:33:21 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -240,7 +240,7 @@ struct aml_node;
 /* AML Object Value */
 struct aml_value {
 	int	type;
-  	int	length;
+	int	length;
 	int     refcnt;
 	int     stack;
 	struct aml_node *node;
@@ -269,17 +269,17 @@ struct aml_value {
 			int		  ref3;
 		} vfield;
 		struct {
-			u_int8_t      	proc_id;
-			u_int32_t     	proc_addr;
-			u_int8_t      	proc_len;
+			u_int8_t	proc_id;
+			u_int32_t	proc_addr;
+			u_int8_t	proc_len;
 		} vprocessor;
 		struct {
 			int		  index;
 			struct aml_value *ref;
 		} vobjref;
 		struct {
-			u_int8_t      	pwr_level;
-			u_int16_t     	pwr_order;
+			u_int8_t	pwr_level;
+			u_int16_t	pwr_order;
 		} vpowerrsrc;
 		struct acpi_mutex	*vmutex;
 	} _;
@@ -312,15 +312,15 @@ struct aml_node {
 	struct aml_node *sibling;
 
 	char             name[5];
-    	u_int16_t   	 opcode;
-        u_int8_t   	 *start;
-  	u_int8_t   	 *end;
-  //	const char 	 *name;
-  //	const char 	 *mnem;
+	u_int16_t	 opcode;
+        u_int8_t	 *start;
+	u_int8_t	 *end;
+  //	const char	 *name;
+  //	const char	 *mnem;
 
 	struct aml_value *value;
 
-  	int               depth;
+	int               depth;
 };
 
 #define AML_FALSE (0)

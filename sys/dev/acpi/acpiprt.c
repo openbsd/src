@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.9 2006/12/21 11:23:41 deraadt Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.10 2006/12/21 11:33:21 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -118,15 +118,15 @@ acpiprt_getirq(union acpi_resource *crs, void *arg)
 	typ=AML_CRSTYPE(crs);
 	switch (typ) {
 	case SR_IRQ:
-    		*irq = ffs(aml_letohost16(crs->sr_irq.irq_mask)) - 1;
-    		break;
+		*irq = ffs(aml_letohost16(crs->sr_irq.irq_mask)) - 1;
+		break;
 	case LR_EXTIRQ:
-    		*irq = aml_letohost32(crs->lr_extirq.irq[0]);
-    		break;
-  	default:
-    		printf("Unknown interrupt : %x\n", typ);
-  	}
-  	return (0);
+		*irq = aml_letohost32(crs->lr_extirq.irq[0]);
+		break;
+	default:
+		printf("Unknown interrupt : %x\n", typ);
+	}
+	return (0);
 }
 
 void
@@ -159,11 +159,11 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 
 	pp = v->v_package[2];
 	if (pp->type == AML_OBJTYPE_NAMEREF) {
-	  	node = aml_searchname(sc->sc_devnode, pp->v_nameref);
-	  	if (node == NULL) {
-	    		printf("Invalid device!\n");
-	    		return;
-	  	}
+		node = aml_searchname(sc->sc_devnode, pp->v_nameref);
+		if (node == NULL) {
+			printf("Invalid device!\n");
+			return;
+		}
 		pp = node->value;
 	}
 	if (pp->type == AML_OBJTYPE_OBJREF) {

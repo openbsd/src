@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.30 2006/12/21 11:23:41 deraadt Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.31 2006/12/21 11:33:21 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -183,7 +183,7 @@ struct acpi_softc {
 	struct aml_node		*sc_bfs;
 	struct aml_node		*sc_gts;
 	struct aml_node		*sc_wak;
-	int 			sc_state;
+	int			sc_state;
 	struct acpiec_softc	*sc_ec;		/* XXX assume single EC */
 
 	struct acpi_ac_head	sc_ac;

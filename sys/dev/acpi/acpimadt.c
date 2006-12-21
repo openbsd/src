@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.3 2006/11/25 16:59:31 niklas Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.4 2006/12/21 11:33:21 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -193,7 +193,7 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 		switch(entry->madt_lapic.apic_type) {
 		case ACPI_MADT_LAPIC:
 		case ACPI_MADT_IOAPIC:
-		  	break;
+			break;
 
 		case ACPI_MADT_OVERRIDE:
 			printf("OVERRIDE: bus %x, source %x, global_int %x, flags %x\n",
