@@ -1,4 +1,4 @@
-/*      $OpenBSD: lemacvar.h,v 1.2 2003/10/21 18:58:49 jmc Exp $ */
+/*      $OpenBSD: lemacvar.h,v 1.3 2006/12/21 22:17:56 jason Exp $ */
 /*      $NetBSD: lemacvar.h,v 1.6 2001/06/13 10:46:03 wiz Exp $ */
 
 /*
@@ -70,10 +70,6 @@ struct lemac_softc {
 		unsigned cntr_rxd_intrs;/* total # of receive error intrs */
 	} sc_cntrs;
 
-	/*
-	 * We rely on sc_enaddr being aligned on (at least) a 16 bit boundary
-	 */
-	unsigned char sc_enaddr[ETHER_ADDR_LEN];/* current Ethernet address */
 	char sc_prodname[LEMAC_EEP_PRDNMSZ+1];	/* product name DE20x-xx */
 	u_int8_t sc_eeprom[LEMAC_EEP_SIZE];	/* local copy eeprom */
 };
