@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.30 2006/11/29 22:17:07 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.31 2006/12/21 04:18:48 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -73,29 +73,22 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devnode = aa->aaa_node->child;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res))
-		dnprintf(10, "%s: no _STA\n",
-		    DEVNAME(sc));
+		dnprintf(10, "%s: no _STA\n", DEVNAME(sc));
 	
-	if (!(res.v_integer & STA_BATTERY)) {
-		sc->sc_bat_present = 0;
-		printf(": %s: not present\n", sc->sc_devnode->parent->name);
-		acpibat_monitor(sc);
-	} else {
-		sc->sc_bat_present = 1;
-
+	if ((sc->sc_bat_present = res.v_integer & STA_BATTERY) != 0) {
 		acpibat_getbif(sc);
-		acpibat_getbst(sc);
-
+		acpibat_getbst(sc); 
 		printf(": %s: model: %s serial: %s type: %s oem: %s\n",
 		    sc->sc_devnode->parent->name,
 		    sc->sc_bif.bif_model,
 		    sc->sc_bif.bif_serial,
 		    sc->sc_bif.bif_type,
 		    sc->sc_bif.bif_oem);
-
-		acpibat_monitor(sc);
-
-	}
+	} else
+		printf(": %s: not present\n", sc->sc_devnode->parent->name);
+	
+	acpibat_monitor(sc);
+	
 	aml_freevalue(&res);
 
 	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev,
@@ -108,7 +101,6 @@ acpibat_monitor(struct acpibat_softc *sc)
 	int			i, type;
 
 	/* assume _BIF and _BST have been called */
-
 	memset(sc->sc_sens, 0, sizeof(sc->sc_sens));
 	for (i = 0; i < 8; i++)
 		strlcpy(sc->sc_sens[i].device, DEVNAME(sc),
@@ -140,10 +132,11 @@ acpibat_monitor(struct acpibat_softc *sc)
 	sc->sc_sens[3].status = SENSOR_S_OK;
 	sc->sc_sens[3].value = sc->sc_bif.bif_voltage * 1000;
 
-	strlcpy(sc->sc_sens[4].desc, "state", sizeof(sc->sc_sens[4].desc));
+	strlcpy(sc->sc_sens[4].desc, "battery unknown",
+	    sizeof(sc->sc_sens[4].desc));
 	sc->sc_sens[4].type = SENSOR_INTEGER;
 	sensor_add(&sc->sc_sens[4]);
-	sc->sc_sens[4].status = SENSOR_S_OK;
+	sc->sc_sens[4].status = SENSOR_S_UNKNOWN;
 	sc->sc_sens[4].value = sc->sc_bst.bst_state;
 
 	strlcpy(sc->sc_sens[5].desc, "rate", sizeof(sc->sc_sens[5].desc));
@@ -169,9 +162,18 @@ void
 acpibat_refresh(void *arg)
 {
 	struct acpibat_softc	*sc = arg;
+	int			i;
 
 	dnprintf(30, "%s: %s: refresh\n", DEVNAME(sc),
 	    sc->sc_devnode->parent->name);
+
+	if (sc->sc_bat_present == 0) {
+		for (i = 0; i < 8; i++)
+			sc->sc_sens[i].value = 0;
+		strlcpy(sc->sc_sens[4].desc, "battery removed",
+		    sizeof(sc->sc_sens[4].desc));
+		return;
+	}
 
 	acpibat_getbif(sc);
 	acpibat_getbst(sc); 
@@ -192,7 +194,12 @@ acpibat_refresh(void *arg)
 		strlcpy(sc->sc_sens[4].desc, "battery critical",
 		    sizeof(sc->sc_sens[4].desc));
 		sc->sc_sens[4].status = SENSOR_S_CRIT;
+	} else {
+		strlcpy(sc->sc_sens[4].desc, "battery unknown",
+		    sizeof(sc->sc_sens[4].desc));
+		sc->sc_sens[4].status = SENSOR_S_UNKNOWN;
 	}
+
 	sc->sc_sens[4].value = sc->sc_bst.bst_state;
 	sc->sc_sens[5].value = sc->sc_bst.bst_rate;
 	sc->sc_sens[6].value = sc->sc_bst.bst_capacity * 1000;
@@ -203,24 +210,21 @@ int
 acpibat_getbif(struct acpibat_softc *sc)
 {
 	struct aml_value        res;
-	int			rv = 1;
+	int			rv = EINVAL;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res)) {
-		dnprintf(10, "%s: no _STA\n",
-		    DEVNAME(sc));
+		dnprintf(10, "%s: no _STA\n", DEVNAME(sc));
 		goto out;
 	}
 	aml_freevalue(&res);
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_BIF", 0, NULL, &res)) {
-		dnprintf(10, "%s: no _BIF\n",
-		    DEVNAME(sc));
-		printf("bif fails\n");
+		dnprintf(10, "%s: no _BIF\n", DEVNAME(sc));
 		goto out;
 	}
 
 	if (res.length != 13) {
-		printf("%s: invalid _BIF, battery information not saved\n",
+		dnprintf(10, "%s: invalid _BIF, battery info not saved\n",
 		    DEVNAME(sc));
 		goto out;
 	}
@@ -262,6 +266,7 @@ acpibat_getbif(struct acpibat_softc *sc)
 	    sc->sc_bif.bif_type,
 	    sc->sc_bif.bif_oem);
 
+	rv = 0;
 out:
 	aml_freevalue(&res);
 	return (rv);
@@ -271,20 +276,16 @@ int
 acpibat_getbst(struct acpibat_softc *sc)
 {
 	struct aml_value	res;
-	int			rv = 0;
+	int			rv = EINVAL;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_BST", 0, NULL, &res)) {
-		dnprintf(10, "%s: no _BST\n",
-		    DEVNAME(sc));
-		printf("_bst fails\n");
-		rv = EINVAL;
+		dnprintf(10, "%s: no _BST\n", DEVNAME(sc));
 		goto out;
 	}
 
 	if (res.length != 4) {
-		printf("%s: invalid _BST, battery status not saved\n",
+		dnprintf(10, "%s: invalid _BST, battery status not saved\n",
 		    DEVNAME(sc));
-		rv = EINVAL;
 		goto out;
 	}
 
@@ -292,14 +293,16 @@ acpibat_getbst(struct acpibat_softc *sc)
 	sc->sc_bst.bst_rate = aml_val2int(res.v_package[1]);
 	sc->sc_bst.bst_capacity = aml_val2int(res.v_package[2]);
 	sc->sc_bst.bst_voltage = aml_val2int(res.v_package[3]);
-	aml_freevalue(&res);
 
 	dnprintf(60, "state: %u rate: %u cap: %u volt: %u ",
 	    sc->sc_bst.bst_state,
 	    sc->sc_bst.bst_rate,
 	    sc->sc_bst.bst_capacity,
 	    sc->sc_bst.bst_voltage);
+
+	rv = 0;
 out:
+	aml_freevalue(&res);
 	return (rv);
 }
 
@@ -325,24 +328,14 @@ acpibat_notify(struct aml_node *node, int notify_type, void *arg)
 		if (sc->sc_bat_present == 0) {
 			printf("%s: %s: inserted\n", DEVNAME(sc),
 			    sc->sc_devnode->parent->name);
-
-			if (sensor_task_register(sc, acpibat_refresh, 10))
-				printf(", unable to register update task\n");
-
 			sc->sc_bat_present = 1;
 		}
-
 		break;
 	case 0x81:	/* _BIF changed */
 		/* XXX consider this a device removal */
-		if (sc->sc_bat_present != 0) {
-			sensor_task_unregister(sc);
-
-			strlcpy(sc->sc_sens[4].desc, "battery removed",
-			    sizeof(sc->sc_sens[4].desc));
+		if (sc->sc_bat_present == 1) {
 			printf("%s: %s: removed\n", DEVNAME(sc),
 			    sc->sc_devnode->parent->name);
-
 			sc->sc_bat_present = 0;
 		}
 		break;
@@ -352,8 +345,6 @@ acpibat_notify(struct aml_node *node, int notify_type, void *arg)
 		break;
 	}
 
-	acpibat_getbif(sc);
-	acpibat_getbst(sc);
 	acpibat_refresh(sc);
 
 	return (0);
