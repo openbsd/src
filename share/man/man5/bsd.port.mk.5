@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.185 2006/12/11 21:30:55 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.186 2006/12/21 16:27:23 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -269,7 +269,7 @@ See
 .Ev MASTER_SITES ,
 .Ev MASTER_SITES0 , ... ,
 .Ev MASTER_SITES9 ,
-.Ev PATCH_FILES ,
+.Ev PATCHFILES ,
 .Ev SUPDISTFILES ,
 .Ev REFETCH .
 .It Ar install
@@ -2035,13 +2035,13 @@ to
 .Sq :9
 extension to the file name, e.g.,
 .Bd -literal -offset indent
-PATCH_FILES=foo.diff.gz
+PATCHFILES=foo.diff.gz
 PATCH_SITES=ftp://ftp.zoinx.org/pub/
 .Ed
 .Pp
 becomes
 .Bd -literal -offset indent
-PATCH_FILES=foo.diff.gz:0
+PATCHFILES=foo.diff.gz:0
 MASTER_SITES0=ftp://ftp.zoinx.org/pub/
 .Ed
 .It Ev PKGREPOSITORY
