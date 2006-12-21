@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.29 2006/11/25 18:24:54 marco Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.30 2006/12/21 11:23:41 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -153,7 +153,7 @@ struct acpi_softc {
 	struct klist		*sc_note;
 	struct acpi_reg_map	sc_pmregs[ACPIREG_MAXREG];
 	bus_space_handle_t	sc_ioh_pm1a_evt;
-  
+
 	void			*sc_interrupt;
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void			*sc_softih;
@@ -177,7 +177,7 @@ struct acpi_softc {
 	u_int32_t		sc_gpe_sts;
 	u_int32_t		sc_gpe_en;
 	struct acpi_thread	*sc_thread;
-	
+
 	struct aml_node		*sc_tts;
 	struct aml_node		*sc_pts;
 	struct aml_node		*sc_bfs;

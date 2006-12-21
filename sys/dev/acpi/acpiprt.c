@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.8 2006/12/18 05:47:35 deraadt Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.9 2006/12/21 11:23:41 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -192,7 +192,7 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 	}
 
 #ifdef ACPI_DEBUG
-	printf("%s: %s addr 0x%llx pin %d irq %d sta %x\n", 
+	printf("%s: %s addr 0x%llx pin %d irq %d sta %x\n",
 	       DEVNAME(sc), aml_nodename(pp->node), addr, pin, irq, sta);
 #endif
 

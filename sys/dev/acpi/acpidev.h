@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.11 2006/11/29 22:17:07 marco Exp $ */
+/* $OpenBSD: acpidev.h,v 1.12 2006/12/21 11:23:41 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -85,11 +85,11 @@ struct acpibat_bif {
  * 	Battery Remaining Capacity	//DWORD
  * 	Battery Present Voltage		//DWORD
  * }
- * 
+ *
  * Per the spec section 10.2.2.3
  * Remaining Battery Percentage[%] = (Battery Remaining Capacity [=0 ~ 100] /
  *     Last Full Charged Capacity[=100]) * 100
- * 
+ *
  * Remaining Battery Life [h] = Battery Remaining Capacity [mAh/mWh] /
  *     Battery Present Rate [=0xFFFFFFFF] = unknown
  */

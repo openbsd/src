@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.20 2006/11/25 18:24:54 marco Exp $ */
+/* $OpenBSD: amltypes.h,v 1.21 2006/12/21 11:23:41 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -147,7 +147,7 @@
 
 /*
  * Comparison types for Match()
- * 
+ *
  *  true,==,<=,<,>=,>
  */
 #define AML_MATCH_TR          0
@@ -238,8 +238,7 @@ enum aml_objecttype {
 struct aml_node;
 
 /* AML Object Value */
-struct aml_value
-{
+struct aml_value {
 	int	type;
   	int	length;
 	int     refcnt;
@@ -307,8 +306,7 @@ struct aml_value
 #define aml_pkglen(v)   ((v)->length)
 #define aml_pkgval(v,i) (&(v)->v_package[(i)])
 
-struct aml_node
-{
+struct aml_node {
 	struct aml_node *parent;
 	struct aml_node *child;
 	struct aml_node *sibling;

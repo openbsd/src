@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.11 2006/12/18 17:55:58 deraadt Exp $ */
+/* $OpenBSD: acpiac.c,v 1.12 2006/12/21 11:23:41 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -71,7 +71,7 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev,
 	    acpiac_notify, sc);
 
-	acpiac_getsta(sc); 
+	acpiac_getsta(sc);
 	printf(": AC unit ");
 	if (sc->sc_ac_stat == PSR_ONLINE)
 		printf("online\n");
@@ -92,7 +92,7 @@ acpiac_refresh(void *arg)
 {
 	struct acpiac_softc *sc = arg;
 
-	acpiac_getsta(sc); 
+	acpiac_getsta(sc);
 	sc->sens[0].value = sc->sc_ac_stat;
 }
 

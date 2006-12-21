@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.32 2006/12/21 04:54:27 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.33 2006/12/21 11:23:41 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -74,10 +74,10 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res))
 		dnprintf(10, "%s: no _STA\n", DEVNAME(sc));
-	
+
 	if ((sc->sc_bat_present = res.v_integer & STA_BATTERY) != 0) {
 		acpibat_getbif(sc);
-		acpibat_getbst(sc); 
+		acpibat_getbst(sc);
 		printf(": %s: model: %s serial: %s type: %s oem: %s\n",
 		    sc->sc_devnode->parent->name,
 		    sc->sc_bif.bif_model,
@@ -86,9 +86,9 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_bif.bif_oem);
 	} else
 		printf(": %s: not present\n", sc->sc_devnode->parent->name);
-	
+
 	acpibat_monitor(sc);
-	
+
 	aml_freevalue(&res);
 
 	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev,
@@ -177,7 +177,7 @@ acpibat_refresh(void *arg)
 	}
 
 	acpibat_getbif(sc);
-	acpibat_getbst(sc); 
+	acpibat_getbst(sc);
 
 	sc->sc_sens[0].value = sc->sc_bif.bif_last_capacity * 1000;
 	sc->sc_sens[1].value = sc->sc_bif.bif_warning * 1000;

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.11 2006/12/19 18:17:15 deraadt Exp $ */
+/* $OpenBSD: acpitz.c,v 1.12 2006/12/21 11:23:41 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -127,7 +127,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 
 	aml_register_notify(sc->sc_devnode->parent, NULL,
 	    acpitz_notify, sc);
-	
+
 	memset(&sc->sc_sens, 0, sizeof(sc->sc_sens));
 	strlcpy(sc->sc_sens.device, DEVNAME(sc), sizeof(sc->sc_sens.device));
 	strlcpy(sc->sc_sens.desc, "zone temperature",
@@ -213,7 +213,7 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 			}
 			ref = res1.v_package[y]->v_objref.ref;
 			if (aml_evalname(sc->sc_acpi, ref->node, method, 0,
-			    NULL, NULL)) 
+			    NULL, NULL))
 				printf("%s: %s[%d.%d] %s fails\n",
 				    DEVNAME(sc), name, x, y, method);
 
