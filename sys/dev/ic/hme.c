@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.44 2006/12/21 21:43:44 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.45 2006/12/21 21:48:11 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -228,7 +228,7 @@ hme_config(sc)
 	}
 	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
-	printf(", address %s\n", ether_sprintf(sc->sc_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/* Initialize ifnet structure. */
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof ifp->if_xname);
