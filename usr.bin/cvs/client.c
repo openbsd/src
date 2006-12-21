@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.39 2006/12/20 16:25:27 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.40 2006/12/21 22:32:30 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -274,6 +274,9 @@ cvs_client_connect_to_server(void)
 
 	if (verbosity == 2)
 		cvs_client_send_request("Global_option -V");
+
+	if (cvs_cmdop == CVS_OP_ADD || cvs_cmdop == CVS_OP_IMPORT)
+		cvs_client_send_request("wrapper-sendme-rcsOptions");
 
 	/* XXX: If 'Set' is supported? */
 	TAILQ_FOREACH(vp, &cvs_variables, cv_link)
