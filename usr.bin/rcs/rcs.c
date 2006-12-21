@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.33 2006/09/21 15:30:07 millert Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.34 2006/12/21 15:37:44 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1866,13 +1866,6 @@ rcs_parse_delta(RCSFILE *rfp)
 	struct rcs_delta *rdp;
 	struct rcs_key *rk;
 
-	rdp = xcalloc(1, sizeof(*rdp));
-
-	rdp->rd_num = rcsnum_alloc();
-	rdp->rd_next = rcsnum_alloc();
-
-	TAILQ_INIT(&(rdp->rd_branches));
-
 	tok = rcs_gettok(rfp);
 	if (tok == RCS_TOK_DESC) {
 		rcs_pushtok(rfp, RCS_TOKSTR(rfp), tok);
@@ -1884,6 +1877,14 @@ rcs_parse_delta(RCSFILE *rfp)
 		rcs_freedelta(rdp);
 		return (-1);
 	}
+
+	rdp = xcalloc(1, sizeof(*rdp));
+
+	rdp->rd_num = rcsnum_alloc();
+	rdp->rd_next = rcsnum_alloc();
+
+	TAILQ_INIT(&(rdp->rd_branches));
+
 	rcsnum_aton(RCS_TOKSTR(rfp), NULL, rdp->rd_num);
 
 	hmask = 0;
