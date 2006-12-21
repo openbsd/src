@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_access.3,v 1.13 2003/07/08 13:52:52 jmc Exp $
+.\"	$OpenBSD: hosts_access.3,v 1.14 2006/12/21 18:56:03 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -33,6 +33,7 @@
 .Nm request_set
 .Nd tcp wrapper access control library
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
 .Fd #include <tcpd.h>
 .Vt extern int allow_severity;
 .Vt extern int deny_severity;
