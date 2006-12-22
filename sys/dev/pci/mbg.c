@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.3 2006/12/18 17:50:39 deraadt Exp $ */
+/*	$OpenBSD: mbg.c,v 1.4 2006/12/22 07:10:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -33,13 +33,13 @@
 #include <dev/pci/pcidevs.h>
 
 struct mbg_softc {
-	struct device		mbg_dev;
-	bus_space_tag_t		iot;
-	bus_space_handle_t	ioh;
+	struct device		sc_dev;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
 
-	struct sensor		timedelta;
-	struct sensor		signal;
-	u_int8_t		status;
+	struct sensor		sc_timedelta;
+	struct sensor		sc_signal;
+	u_int8_t		sc_status;
 };
 
 struct mbg_time {
@@ -91,7 +91,7 @@ struct mbg_time {
 int	mbg_probe(struct device *, void *, void *);
 void	mbg_attach(struct device *, struct device *, void *);
 int	mbg_read(struct mbg_softc *, int cmd, char *buf, size_t len,
-    struct timespec *tstamp);
+	    struct timespec *tstamp);
 void	mbg_task(void *);
 
 struct cfattach mbg_ca = {
@@ -116,7 +116,7 @@ mbg_probe(struct device *parent, void *match, void *aux)
 void
 mbg_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct mbg_softc *mbg = (struct mbg_softc *)self;
+	struct mbg_softc *sc = (struct mbg_softc *)self;
 	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
 	struct mbg_time tframe;
 	pcireg_t memtype;
@@ -124,16 +124,16 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	char fw_id[MBG_ID_LEN];
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
-	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &mbg->iot,
-	    &mbg->ioh, NULL, &iosize, 0)) {
+	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &sc->sc_iot,
+	    &sc->sc_ioh, NULL, &iosize, 0)) {
 		printf("\n%s: PCI %s region not found\n",
-		    mbg->mbg_dev.dv_xname,
+		    sc->sc_dev.dv_xname,
 		    memtype == PCI_MAPREG_TYPE_IO ? "I/O" : "memory");
 		return;
 	}
 
-	if (mbg_read(mbg, MBG_GET_FW_ID_1, fw_id, MBG_FIFO_LEN, NULL) ||
-	    mbg_read(mbg, MBG_GET_FW_ID_2, &fw_id[MBG_FIFO_LEN], MBG_FIFO_LEN,
+	if (mbg_read(sc, MBG_GET_FW_ID_1, fw_id, MBG_FIFO_LEN, NULL) ||
+	    mbg_read(sc, MBG_GET_FW_ID_2, &fw_id[MBG_FIFO_LEN], MBG_FIFO_LEN,
 	    NULL))
 		printf(": firmware unknown, ");
 	else {
@@ -141,10 +141,10 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		printf(": firmware %s, ", fw_id);
 	}
 
-	if (mbg_read(mbg, MBG_GET_TIME, (char *)&tframe,
+	if (mbg_read(sc, MBG_GET_TIME, (char *)&tframe,
 	    sizeof(struct mbg_time), NULL)) {
 		printf("unknown status\n");
-		mbg->status = 0;
+		sc->sc_status = 0;
 	} else {
 		if (tframe.status & MBG_FREERUN)
 			printf("free running on xtal\n");
@@ -152,48 +152,48 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 			printf("synchronised\n");
 		else if (tframe.status & MBG_INVALID)
 			printf("invalid\n");
-		mbg->status = tframe.status;
+		sc->sc_status = tframe.status;
 	}
-	strlcpy(mbg->timedelta.device, mbg->mbg_dev.dv_xname,
-	    sizeof(mbg->timedelta.device));
-	mbg->timedelta.type = SENSOR_TIMEDELTA;
-	mbg->timedelta.status = SENSOR_S_UNKNOWN;
-	mbg->timedelta.value = 0LL;
-	mbg->timedelta.flags = 0;
-	strlcpy(mbg->timedelta.desc, "DCF77", sizeof(mbg->timedelta.desc));
-	sensor_add(&mbg->timedelta);
+	strlcpy(sc->sc_timedelta.device, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_timedelta.device));
+	sc->sc_timedelta.type = SENSOR_TIMEDELTA;
+	sc->sc_timedelta.status = SENSOR_S_UNKNOWN;
+	sc->sc_timedelta.value = 0LL;
+	sc->sc_timedelta.flags = 0;
+	strlcpy(sc->sc_timedelta.desc, "DCF77", sizeof(sc->sc_timedelta.desc));
+	sensor_add(&sc->sc_timedelta);
 
-	strlcpy(mbg->signal.device, mbg->mbg_dev.dv_xname,
-	    sizeof(mbg->signal.device));
-	mbg->signal.type = SENSOR_PERCENT;
-	mbg->signal.status = SENSOR_S_UNKNOWN;
-	mbg->signal.value = 0LL;
-	mbg->signal.flags = 0;
-	strlcpy(mbg->signal.desc, "Signal strength", sizeof(mbg->signal.desc));
-	sensor_add(&mbg->signal);
+	strlcpy(sc->sc_signal.device, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_signal.device));
+	sc->sc_signal.type = SENSOR_PERCENT;
+	sc->sc_signal.status = SENSOR_S_UNKNOWN;
+	sc->sc_signal.value = 0LL;
+	sc->sc_signal.flags = 0;
+	strlcpy(sc->sc_signal.desc, "Signal strength", sizeof(sc->sc_signal.desc));
+	sensor_add(&sc->sc_signal);
 
-	sensor_task_register(mbg, mbg_task, 10);
+	sensor_task_register(sc, mbg_task, 10);
 }
 
 void
 mbg_task(void *arg)
 {
-	struct mbg_softc *mbg = (struct mbg_softc *)arg;
+	struct mbg_softc *sc = (struct mbg_softc *)arg;
 	struct mbg_time tframe;
 	struct clock_ymdhms ymdhms;
 	struct timespec tstamp;
 	time_t trecv;
 	int signal;
 
-	if (mbg_read(mbg, MBG_GET_TIME, (char *)&tframe, sizeof(tframe),
+	if (mbg_read(sc, MBG_GET_TIME, (char *)&tframe, sizeof(tframe),
 	    &tstamp)) {
 		log(LOG_ERR, "%s: error reading time\n",
-		    mbg->mbg_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	if (tframe.status & MBG_INVALID) {
-		log(LOG_INFO, "%s: inavlid time, battery was disconnected\n",
-		    mbg->mbg_dev.dv_xname);
+		log(LOG_INFO, "%s: invalid time, battery was disconnected\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	ymdhms.dt_year = tframe.year + 2000;
@@ -204,11 +204,11 @@ mbg_task(void *arg)
 	ymdhms.dt_sec = tframe.sec;
 	trecv = clock_ymdhms_to_secs(&ymdhms) - tframe.utc_off * 3600;
 
-	mbg->timedelta.value = (int64_t)((tstamp.tv_sec - trecv) * 100
+	sc->sc_timedelta.value = (int64_t)((tstamp.tv_sec - trecv) * 100
 	    - tframe.hundreds) * 10000000LL + tstamp.tv_nsec;
-	mbg->timedelta.status = SENSOR_S_OK;
-	mbg->timedelta.tv.tv_sec = tstamp.tv_sec;
-	mbg->timedelta.tv.tv_usec = tstamp.tv_nsec / 1000;
+	sc->sc_timedelta.status = SENSOR_S_OK;
+	sc->sc_timedelta.tv.tv_sec = tstamp.tv_sec;
+	sc->sc_timedelta.tv.tv_usec = tstamp.tv_nsec / 1000;
 
 	signal = tframe.signal - MBG_SIG_BIAS;
 	if (signal < 0)
@@ -216,24 +216,24 @@ mbg_task(void *arg)
 	else if (signal > MBG_SIG_MAX)
 		signal = MBG_SIG_MAX;
 
-	mbg->signal.value = signal * 100000 / MBG_SIG_MAX;
-	mbg->signal.status = SENSOR_S_OK;
-	mbg->signal.tv.tv_sec = mbg->timedelta.tv.tv_sec;
-	mbg->signal.tv.tv_usec = mbg->timedelta.tv.tv_usec;
+	sc->sc_signal.value = signal * 100000 / MBG_SIG_MAX;
+	sc->sc_signal.status = SENSOR_S_OK;
+	sc->sc_signal.tv.tv_sec = sc->sc_timedelta.tv.tv_sec;
+	sc->sc_signal.tv.tv_usec = sc->sc_timedelta.tv.tv_usec;
 
-	if (tframe.status != mbg->status) {
+	if (tframe.status != sc->sc_status) {
 		if (tframe.status & MBG_SYNC)
 			log(LOG_INFO, "%s: clock is synchronized",
-			    mbg->mbg_dev.dv_xname);
+			    sc->sc_dev.dv_xname);
 		else if (tframe.status & MBG_FREERUN)
 			log(LOG_INFO, "%s: clock is free running on xtal",
-			    mbg->mbg_dev.dv_xname);
-		mbg->status = tframe.status;
+			    sc->sc_dev.dv_xname);
+		sc->sc_status = tframe.status;
 	}
 }
 
 int
-mbg_read(struct mbg_softc *mbg, int cmd, char *buf, size_t len,
+mbg_read(struct mbg_softc *sc, int cmd, char *buf, size_t len,
     struct timespec *tstamp)
 {
 	long timer, tmax;
@@ -241,15 +241,15 @@ mbg_read(struct mbg_softc *mbg, int cmd, char *buf, size_t len,
 	u_int8_t status;
 
 	/* reset inbound mailbox and clear FIFO status */
-	bus_space_write_1(mbg->iot, mbg->ioh, AMCC_MCSR + 3, 0x0c);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMCC_MCSR + 3, 0x0c);
 
 	/* set FIFO */
-	bus_space_write_1(mbg->iot, mbg->ioh, AMCC_INTCSR + 3, 0x3c);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMCC_INTCSR + 3, 0x3c);
 
 	/* write the command, optionally taking a timestamp */
 	if (tstamp)
 		nanotime(tstamp);
-	bus_space_write_1(mbg->iot, mbg->ioh, AMCC_OMB1, cmd);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMCC_OMB1, cmd);
 
 	/* wait for the BUSY flag to go low (approx 70 us on i386) */
 	timer = 0;
@@ -259,7 +259,7 @@ mbg_read(struct mbg_softc *mbg, int cmd, char *buf, size_t len,
 			delay(20);
 		else
 			tsleep(tstamp, 0, "mbg", 1);
-		status = bus_space_read_1(mbg->iot, mbg->ioh, AMCC_IMB4 + 3);
+		status = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AMCC_IMB4 + 3);
 	} while ((status & MBG_BUSY) && timer++ < tmax);
 
 	if (status & MBG_BUSY)
@@ -267,11 +267,11 @@ mbg_read(struct mbg_softc *mbg, int cmd, char *buf, size_t len,
 
 	/* read data from the device FIFO */
 	for (n = 0; n < len; n++) {
-		if (bus_space_read_2(mbg->iot, mbg->ioh, AMCC_MCSR) & 0x20) {
-			printf("%s: FIFO error\n", mbg->mbg_dev.dv_xname);
+		if (bus_space_read_2(sc->sc_iot, sc->sc_ioh, AMCC_MCSR) & 0x20) {
+			printf("%s: FIFO error\n", sc->sc_dev.dv_xname);
 			return -1;
 		}
-		buf[n] = bus_space_read_1(mbg->iot, mbg->ioh,
+		buf[n] = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 		    AMCC_FIFO + (n % 4));
 	}
 	return 0;
