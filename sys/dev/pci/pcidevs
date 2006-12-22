@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1205 2006/12/21 18:53:26 deraadt Exp $
+$OpenBSD: pcidevs,v 1.1206 2006/12/22 07:58:44 mbalmer Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2446,6 +2446,8 @@ product MATROX MARV_G200_SD	0xff04	MGA Marvel G200 SD
 
 /* Meinberg Funkuhren */
 product MEINBERG PCI32		0x0101	PCI32
+product MEINBERG PCI511		0x0104	PCI511
+product MEINBERG GPS170		0x0204	GPS170
 
 /* Mentor */
 product MENTOR PCI0660		0x0660	PCI
