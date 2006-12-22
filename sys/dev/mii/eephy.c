@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.34 2006/11/28 18:23:10 brad Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.35 2006/12/22 13:43:00 kettenis Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -142,11 +142,10 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &eephy_funcs;
+	sc->mii_model = MII_MODEL(ma->mii_id2);
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
-
-	sc->mii_flags |= MIIF_NOISOLATE;
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_MARVELL &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1011 && 
@@ -164,6 +163,8 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	PHY_RESET(sc);
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
+	    E1000_CR_ISOLATE);
 
 	if ((sc->mii_flags & MIIF_HAVEFIBER) == 0) {
 		if (fast_ether == 0) {
@@ -323,6 +324,12 @@ eephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 			break;
 
+		case IFM_NONE:
+			reg = PHY_READ(sc, E1000_CR);
+			PHY_WRITE(sc, E1000_CR,
+			    reg | E1000_CR_ISOLATE | E1000_CR_POWER_DOWN);
+			break;
+
 		default:
 			return (EINVAL);
 		}
@@ -383,7 +390,7 @@ void
 eephy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
-	int bmsr, bmcr, ssr, ar, lpar;
+	int bmsr, bmcr, gsr, ssr, ar, lpar;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -423,6 +430,12 @@ eephy_status(struct mii_softc *sc)
 		mii->mii_media_active |= IFM_FDX;
 	else
 		mii->mii_media_active |= IFM_HDX;
+
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
+		gsr = PHY_READ(sc, E1000_1GSR) | PHY_READ(sc, E1000_1GSR);
+		if (gsr & E1000_1GSR_MS_CONFIG_RES)
+			mii->mii_media_active |= IFM_ETH_MASTER;
+	}
 
 	if ((sc->mii_flags & MIIF_HAVEFIBER) == 0) {
 		/* FLAG0==rx-flow-control FLAG1==tx-flow-control */
