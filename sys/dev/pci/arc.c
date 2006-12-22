@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.55 2006/11/28 23:59:45 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.56 2006/12/22 22:55:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -36,9 +36,9 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
+#include <sys/sensors.h>
 #if NBIO > 0
 #include <sys/ioctl.h>
-#include <sys/sensors.h>
 #include <dev/biovar.h>
 #endif
 
