@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.66 2006/10/22 22:33:49 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.67 2006/12/22 14:11:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -351,7 +351,7 @@ brgphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmsr, bmcr;
+	int bmsr, bmcr, gsr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -399,6 +399,12 @@ brgphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_NONE;
 			break;
 		}
+
+		gsr = PHY_READ(sc, BRGPHY_MII_1000STS);
+		if ((IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) &&
+		    gsr & BRGPHY_1000STS_MSR)
+			mii->mii_media_active |= IFM_ETH_MASTER;
+
 		return;
 	}
 
