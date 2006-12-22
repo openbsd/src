@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.5 2006/12/22 07:19:20 deraadt Exp $ */
+/*	$OpenBSD: mbg.c,v 1.6 2006/12/22 09:04:42 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -168,7 +168,8 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_signal.status = SENSOR_S_UNKNOWN;
 	sc->sc_signal.value = 0LL;
 	sc->sc_signal.flags = 0;
-	strlcpy(sc->sc_signal.desc, "Signal strength", sizeof(sc->sc_signal.desc));
+	strlcpy(sc->sc_signal.desc, "Signal strength",
+	    sizeof(sc->sc_signal.desc));
 	sensor_add(&sc->sc_signal);
 
 	sensor_task_register(sc, mbg_task, 10);
@@ -258,7 +259,8 @@ mbg_read(struct mbg_softc *sc, int cmd, char *buf, size_t len,
 			delay(20);
 		else
 			tsleep(tstamp, 0, "mbg", 1);
-		status = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AMCC_IMB4 + 3);
+		status = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    AMCC_IMB4 + 3);
 	} while ((status & MBG_BUSY) && timer++ < tmax);
 
 	if (status & MBG_BUSY)
@@ -266,7 +268,8 @@ mbg_read(struct mbg_softc *sc, int cmd, char *buf, size_t len,
 
 	/* read data from the device FIFO */
 	for (n = 0; n < len; n++) {
-		if (bus_space_read_2(sc->sc_iot, sc->sc_ioh, AMCC_MCSR) & 0x20) {
+		if (bus_space_read_2(sc->sc_iot, sc->sc_ioh, AMCC_MCSR)
+		    & 0x20) {
 			printf("%s: FIFO error\n", sc->sc_dev.dv_xname);
 			return -1;
 		}
