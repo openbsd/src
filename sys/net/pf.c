@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.522 2006/12/21 12:26:51 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.523 2006/12/22 13:24:52 reyk Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5418,6 +5418,15 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif)
 		if (kif != NULL && (kif->pfik_ifp == NULL ||
 		    kif->pfik_ifp != ro.ro_rt->rt_ifp))
 			ret = 0;
+		/*
+		 * If the interface is a carp one check if the packet was 
+		 * seen on the underlying interface
+		 */
+		if (kif != NULL && ret == 0) {
+			if (ro.ro_rt->rt_ifp->if_type == IFT_CARP &&
+			    ro.ro_rt->rt_ifp->if_carpdev == kif->pfik_ifp)
+				ret = 1;
+		}
 		RTFREE(ro.ro_rt);
 	} else
 		ret = 0;
