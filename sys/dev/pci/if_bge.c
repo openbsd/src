@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.201 2006/12/17 06:04:11 krw Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.202 2006/12/22 17:37:50 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1237,12 +1237,8 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Configure mbuf memory pool */
 	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
-		if (sc->bge_flags & BGE_EXTRAM)
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR,
-			    BGE_EXT_SSRAM);
-		else
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR,
-			    BGE_BUFFPOOL_1);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR,
+		    BGE_BUFFPOOL_1);
 
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x10000);
@@ -1313,10 +1309,7 @@ bge_blockinit(struct bge_softc *sc)
 	else
 		rcb->bge_maxlen_flags =
 		    BGE_RCB_MAXLEN_FLAGS(ETHER_MAX_DIX_LEN, 0);
-	if (sc->bge_flags & BGE_EXTRAM)
-		rcb->bge_nicaddr = BGE_EXT_STD_RX_RINGS;
-	else
-		rcb->bge_nicaddr = BGE_STD_RX_RINGS;
+	rcb->bge_nicaddr = BGE_STD_RX_RINGS;
 	CSR_WRITE_4(sc, BGE_RX_STD_RCB_HADDR_HI, rcb->bge_hostaddr.bge_addr_hi);
 	CSR_WRITE_4(sc, BGE_RX_STD_RCB_HADDR_LO, rcb->bge_hostaddr.bge_addr_lo);
 	CSR_WRITE_4(sc, BGE_RX_STD_RCB_MAXLEN_FLAGS, rcb->bge_maxlen_flags);
@@ -1336,10 +1329,7 @@ bge_blockinit(struct bge_softc *sc)
 		rcb->bge_maxlen_flags =
 		    BGE_RCB_MAXLEN_FLAGS(BGE_JUMBO_FRAMELEN,
 		        BGE_RCB_FLAG_RING_DISABLED);
-		if (sc->bge_flags & BGE_EXTRAM)
-			rcb->bge_nicaddr = BGE_EXT_JUMBO_RX_RINGS;
-		else
-			rcb->bge_nicaddr = BGE_JUMBO_RX_RINGS;
+		rcb->bge_nicaddr = BGE_JUMBO_RX_RINGS;
 
 		CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_HADDR_HI,
 		    rcb->bge_hostaddr.bge_addr_hi);
