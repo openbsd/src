@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.18 2006/12/20 22:18:05 kettenis Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.19 2006/12/22 14:12:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -336,7 +336,7 @@ rgephy_status(struct mii_softc *sc)
 		mii->mii_media_active |= IFM_FDX;
 
 	gtsr = PHY_READ(sc, RGEPHY_MII_1000STS);
-	if ((mii->mii_media_active & IFM_1000_T) &&
+	if ((IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) &&
 	    gtsr & RGEPHY_1000STS_MSR)
 		mii->mii_media_active |= IFM_ETH_MASTER;
 }
