@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.9 2004/05/04 18:58:50 deraadt Exp $	*/
+/*	$OpenBSD: packet.c,v 1.10 2006/12/22 03:18:14 stevesk Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -51,11 +51,6 @@
 
 u_int32_t	checksum(unsigned char *, unsigned, u_int32_t);
 u_int32_t	wrapsum(u_int32_t);
-
-void	assemble_ethernet_header(struct interface_info *, unsigned char *,
-	    int *, struct hardware *);
-ssize_t	decode_ethernet_header(struct interface_info *, unsigned char *,
-	    int bufix, struct hardware *);
 
 u_int32_t
 checksum(unsigned char *buf, unsigned nbytes, u_int32_t sum)

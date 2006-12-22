@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.54 2006/12/16 15:13:45 stevesk Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.55 2006/12/22 03:18:14 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -362,12 +362,6 @@ void assemble_udp_ip_header(unsigned char *, int *, u_int32_t, u_int32_t,
 ssize_t decode_hw_header(unsigned char *, int, struct hardware *);
 ssize_t decode_udp_ip_header(unsigned char *, int, struct sockaddr_in *,
     unsigned char *, int);
-
-/* ethernet.c */
-void assemble_ethernet_header(struct interface_info *, unsigned char *,
-    int *, struct hardware *);
-ssize_t decode_ethernet_header(struct interface_info *, unsigned char *,
-    int, struct hardware *);
 
 /* clparse.c */
 int read_client_conf(void);
