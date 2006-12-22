@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.4 2006/12/22 07:10:43 deraadt Exp $ */
+/*	$OpenBSD: mbg.c,v 1.5 2006/12/22 07:19:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -126,8 +126,7 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &sc->sc_iot,
 	    &sc->sc_ioh, NULL, &iosize, 0)) {
-		printf("\n%s: PCI %s region not found\n",
-		    sc->sc_dev.dv_xname,
+		printf(": PCI %s region not found\n",
 		    memtype == PCI_MAPREG_TYPE_IO ? "I/O" : "memory");
 		return;
 	}
