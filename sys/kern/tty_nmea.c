@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.14 2006/12/15 16:49:39 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.15 2006/12/23 08:29:39 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -91,7 +91,6 @@ nmeaopen(dev_t dev, struct tty *tp)
 	np->time.status = SENSOR_S_UNKNOWN;
 	np->time.type = SENSOR_TIMEDELTA;
 	np->time.flags = SENSOR_FINVALID;
-	sensor_add(&np->time);
 #ifdef NMEA_DEBUG
 	snprintf(np->skew.device, sizeof(np->skew.device), "skew%d",
 	    nmea_count - 1);
@@ -100,7 +99,6 @@ nmeaopen(dev_t dev, struct tty *tp)
 	np->skew.status = SENSOR_S_UNKNOWN;
 	np->skew.type = SENSOR_TIMEDELTA;
 	np->skew.flags = SENSOR_FINVALID;
-	sensor_add(&np->skew);
 #endif
 	np->sync = 1;
 	tp->t_sc = (caddr_t)np;
@@ -109,6 +107,11 @@ nmeaopen(dev_t dev, struct tty *tp)
 	if (error) {
 		free(np, M_DEVBUF);
 		tp->t_sc = NULL;
+	} else {
+		sensor_add(&np->time);
+#ifdef NMEA_DEBUG
+		sensor_add(&np->skew);
+#endif
 	}
 	return (error);
 }
