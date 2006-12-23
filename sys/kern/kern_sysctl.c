@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.145 2006/12/12 23:14:28 dim Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.146 2006/12/23 17:41:26 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1791,14 +1791,28 @@ sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
 	struct sensor *s;
-	int num;
+	struct sensordev *sd;
+	int dev;
+	enum sensor_type type;
+	int numt;
 
-	if (namelen != 1)
+	if (namelen != 1 && namelen != 3)
 		return (ENOTDIR);
 
-	num = name[0];
+	dev = name[0];
+	if (namelen == 1) {
+		sd = sensordev_get(dev);
+		if (sd == NULL)
+			return (ENOENT);
 
-	s = sensor_get(num);
+		return (sysctl_rdstruct(oldp, oldlenp, newp, sd,
+		    sizeof(struct sensordev)));
+	}
+
+	type = name[1];
+	numt = name[2];
+
+	s = sensor_find(dev, type, numt);
 	if (s == NULL)
 		return (ENOENT);
 
