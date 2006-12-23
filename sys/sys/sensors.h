@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.19 2006/11/29 20:00:22 mbalmer Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.20 2006/12/23 17:40:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -44,8 +44,31 @@ enum sensor_type {
 	SENSOR_PERCENT,			/* percent */
 	SENSOR_LUX,			/* illuminance (mulx) */
 	SENSOR_DRIVE,			/* disk */
-	SENSOR_TIMEDELTA		/* system time error (nSec) */
+	SENSOR_TIMEDELTA,		/* system time error (nSec) */
+	SENSOR_MAX_TYPES
 };
+
+#ifndef _KERNEL
+static const char * const sensor_type_s[SENSOR_MAX_TYPES + 1] = {
+	"temp",
+	"fan",
+	"volt",
+	"acvolt",
+	"resistance",
+	"power",
+	"current",
+	"watthour",
+	"amphour",
+	"indicator",
+	"raw",
+	"percentage",
+	"illuminance",
+	"drive",
+	"timedelta",
+	"undefined"
+};
+
+#endif	/* !_KERNEL */
 
 #define SENSOR_DRIVE_EMPTY	1
 #define SENSOR_DRIVE_READY	2
@@ -69,25 +92,44 @@ enum sensor_status {
 
 /* Sensor data */
 struct sensor {
-	SLIST_ENTRY(sensor) list;
-	char desc[32];			/* sensor description */
-	char device[16];		/* device name */
+	SLIST_ENTRY(sensor) list;	/* device-scope list */
+	char desc[32];			/* sensor description, may be empty */
 	struct timeval tv;		/* sensor value last change time */
 	int64_t value;			/* current value */
 	enum sensor_type type;		/* sensor type */
 	enum sensor_status status;	/* sensor status */
-	int num;			/* sensor number */
+	int numt;			/* sensor number of .type type */
 	int flags;			/* sensor flags */
 #define SENSOR_FINVALID		0x0001	/* sensor is invalid */
 #define SENSOR_FUNKNOWN		0x0002	/* sensor value is unknown */
 };
+SLIST_HEAD(sensors_head, sensor);
+
+/* Sensor device data */
+struct sensordev {
+	SLIST_ENTRY(sensordev)	list;
+	int num;			/* sensordev number */
+	char xname[16];			/* unix device name */
+	int maxnumt[SENSOR_MAX_TYPES];
+	int sensors_count;
+	struct sensors_head sensors_list;
+};
+
+#define MAXSENSORDEVICES 32
 
 #ifdef _KERNEL
 
-void		sensor_add(struct sensor *);
-void		sensor_del(struct sensor *);
-struct sensor	*sensor_get(int);
+/* struct sensordev */
+void			 sensordev_install(struct sensordev *);
+void			 sensordev_deinstall(struct sensordev *);
+struct sensordev	*sensordev_get(int);
 
+/* struct sensor */
+void			 sensor_attach(struct sensordev *, struct sensor *);
+void			 sensor_detach(struct sensordev *, struct sensor *);
+struct sensor		*sensor_find(int, enum sensor_type, int);
+
+/* task scheduling */
 int		sensor_task_register(void *, void (*)(void *), int);
 void		sensor_task_unregister(void *);
 
