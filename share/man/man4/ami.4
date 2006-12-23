@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ami.4,v 1.39 2006/11/28 11:56:03 deraadt Exp $
+.\"	$OpenBSD: ami.4,v 1.40 2006/12/23 17:50:20 deraadt Exp $
 .\"
 .\" Michael Shalayeff, 2001. Public Domain.
 .\"
@@ -122,10 +122,10 @@ and can be monitored using
 .Xr sensorsd 8 .
 For example:
 .Bd -literal -offset indent
-$ sysctl hw.sensors
-hw.sensors.0=ami0, sd0, drive online, OK
-hw.sensors.1=ami0, sd1, drive degraded, WARNING
-hw.sensors.2=ami0, sd2, drive failed, CRITICAL
+$ sysctl hw.sensors.ami0
+hw.sensors.ami0.drive0=online (sd0), OK
+hw.sensors.ami0.drive1=degraded (sd1), WARNING
+hw.sensors.ami0.drive2=failed (sd2), CRITICAL
 .Ed
 .Sh SEE ALSO
 .Xr bio 4 ,

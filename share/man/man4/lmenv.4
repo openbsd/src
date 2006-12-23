@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lmenv.4,v 1.9 2006/11/09 02:24:19 brad Exp $
+.\"	$OpenBSD: lmenv.4,v 1.10 2006/12/23 17:50:20 deraadt Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -33,15 +33,16 @@ made available through the
 .Xr sysctl 8
 interface:
 .Bd -literal -offset indent
-hw.sensors.0=lmenv0, +2.5Vin, 2.62 V DC
-hw.sensors.1=lmenv0, Vccp1, 1.49 V DC
-hw.sensors.2=lmenv0, +Vcc, 3.28 V DC
-hw.sensors.3=lmenv0, +5Vin/Vcc, 5.03 V DC
-hw.sensors.4=lmenv0, +12Vin, 12.00 V DC
-hw.sensors.5=lmenv0, Vccp2, 1.20 V DC
-hw.sensors.6=lmenv0, External Temp, -128.00 degC
-hw.sensors.7=lmenv0, Internal Temp, 29.00 degC
-hw.sensors.8=lmenv0, FAN1, 3220 RPM
+$ sysctl hw.sensors.lmenv0
+hw.sensors.lmenv0.temp0=-128.00 degC (External)
+hw.sensors.lmenv0.temp1=29.00 degC (Internal)
+hw.sensors.lmenv0.fan0=3220 RPM
+hw.sensors.lmenv0.volt0=2.62 V DC (+2.5Vin)
+hw.sensors.lmenv0.volt1=1.49 V DC (Vccp)
+hw.sensors.lmenv0.volt2=3.28 V DC (+Vcc)
+hw.sensors.lmenv0.volt3=5.03 V DC (+5Vin/Vcc)
+hw.sensors.lmenv0.volt4=12.00 V DC (+12Vin)
+hw.sensors.lmenv0.volt5=1.20 V DC (Vccp)
 .Ed
 .Sh SEE ALSO
 .Xr iic 4 ,
