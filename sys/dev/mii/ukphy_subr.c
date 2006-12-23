@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukphy_subr.c,v 1.5 2004/10/09 02:06:56 brad Exp $	*/
+/*	$OpenBSD: ukphy_subr.c,v 1.6 2006/12/23 12:34:50 kettenis Exp $	*/
 /*	$NetBSD: ukphy_subr.c,v 1.2 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
@@ -121,7 +121,7 @@ ukphy_status(struct mii_softc *phy)
 		else
 			mii->mii_media_active |= IFM_NONE;
 
-		if ((mii->mii_media_active & IFM_1000_T) &&
+		if ((IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) &&
 		    (gtsr & GTSR_MS_RES))
 			mii->mii_media_active |= IFM_ETH_MASTER;
 	} else
