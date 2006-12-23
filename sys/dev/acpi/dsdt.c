@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.72 2006/12/20 22:45:26 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.73 2006/12/23 17:19:06 canacar Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -402,11 +402,16 @@ _acpi_os_free(void *ptr, const char *fn, int line)
 void
 acpi_sleep(int ms)
 {
+	int to = ms * hz / 1000;
+
 	if (cold)
 		delay(ms * 1000);
-	else
-		while (tsleep(dsdt_softc, PWAIT, "asleep", ms / hz) !=
+	else {
+		if (to <= 0)
+			to = 1;
+		while (tsleep(dsdt_softc, PWAIT, "asleep", to) !=
 		    EWOULDBLOCK);
+	}
 }
 
 void
