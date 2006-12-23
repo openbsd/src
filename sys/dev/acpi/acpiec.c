@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.14 2006/12/21 11:33:21 deraadt Exp $ */
+/* $OpenBSD: acpiec.c,v 1.15 2006/12/23 17:24:40 canacar Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -98,8 +98,7 @@ struct acpiec_softc {
 	struct aml_node		*sc_devnode;
 	u_int32_t		sc_gpe;
 	struct acpiec_event	sc_events[ACPIEC_MAX_EVENTS];
-	int			sc_locked;
-	int			sc_handling_events;
+	int			sc_gotsci;
 };
 
 
@@ -113,20 +112,6 @@ struct cfdriver acpiec_cd = {
 	NULL, "acpiec", DV_DULL
 };
 
-int
-acpiec_intr(struct acpiec_softc *sc)
-{
-	u_int8_t		stat;
-
-	stat = acpiec_status(sc);
-	dnprintf(40, "%s: EC interrupt, stat: %b\n", DEVNAME(sc), (int)stat,
-	    "\20\x8IGN\x7SMI\x6SCI\05BURST\04CMD\03IGN\02IBF\01OBF");
-
-	if ((stat & EC_STAT_SCI_EVT) != 0 && sc->sc_locked == 0)
-		acpiec_sci_event(sc);
-
-	return (0);
-}
 
 void
 acpiec_wait(struct acpiec_softc *sc, u_int8_t mask, u_int8_t val)
@@ -136,8 +121,11 @@ acpiec_wait(struct acpiec_softc *sc, u_int8_t mask, u_int8_t val)
 	dnprintf(40, "%s: EC wait_ns for: %b == %02x\n", DEVNAME(sc), (int)mask,
 	    "\20\x8IGN\x7SMI\x6SCI\05BURST\04CMD\03IGN\02IBF\01OBF", (int)val);
 
-	while (((stat = acpiec_status(sc)) & mask) != val)
+	while (((stat = acpiec_status(sc)) & mask) != val) {
+		if (stat & EC_STAT_SCI_EVT)
+			sc->sc_gotsci = 1;
 		delay(1);
+	}
 
 	dnprintf(40, "%s: EC wait_ns, stat: %b\n", DEVNAME(sc), (int)stat,
 	    "\20\x8IGN\x7SMI\x6SCI\05BURST\04CMD\03IGN\02IBF\01OBF");
@@ -182,20 +170,18 @@ acpiec_sci_event(struct acpiec_softc *sc)
 {
 	u_int8_t		evt;
 
+	sc->sc_gotsci = 0;
+
 	acpiec_wait(sc, EC_STAT_IBF, 0);
 	bus_space_write_1(sc->sc_cmd_bt, sc->sc_cmd_bh, 0, EC_CMD_QR);
 
 	acpiec_wait(sc, EC_STAT_OBF, EC_STAT_OBF);
 	evt = bus_space_read_1(sc->sc_data_bt, sc->sc_data_bh, 0);
 
-	dnprintf(10, "%s: sci_event: 0x%02x\n", DEVNAME(sc), (int) evt);
-
-	/* FIXME this call is recursive, this works around that */
-	if (sc->sc_handling_events == 0) {
-		sc->sc_handling_events = 1;
+	if (evt) {
+		dnprintf(10, "%s: sci_event: 0x%02x\n", DEVNAME(sc), (int) evt);
 		aml_evalnode(sc->sc_acpi, sc->sc_events[evt].event, 0, NULL,
 		    NULL);
-		sc->sc_handling_events = 0;
 	}
 }
 
@@ -205,7 +191,7 @@ acpiec_read_1(struct acpiec_softc *sc, u_int8_t addr)
 	u_int8_t		val;
 
 	if ((acpiec_status(sc) & EC_STAT_SCI_EVT) == EC_STAT_SCI_EVT)
-		acpiec_sci_event(sc);
+		sc->sc_gotsci = 1;
 
 	acpiec_write_cmd(sc, EC_CMD_RD);
 	acpiec_write_data(sc, addr);
@@ -219,7 +205,7 @@ void
 acpiec_write_1(struct acpiec_softc *sc, u_int8_t addr, u_int8_t data)
 {
 	if ((acpiec_status(sc) & EC_STAT_SCI_EVT)  == EC_STAT_SCI_EVT)
-		acpiec_sci_event(sc);
+		sc->sc_gotsci = 1;
 
 	acpiec_write_cmd(sc, EC_CMD_WR);
 	acpiec_write_data(sc, addr);
@@ -243,15 +229,11 @@ acpiec_read(struct acpiec_softc *sc, u_int8_t addr, int len, u_int8_t *buffer)
 	 * at some point add a lock to deal with concurrency so that a
 	 * transaction does not get interrupted.
 	 */
-	sc->sc_locked = 1;
-
 	acpiec_burst_enable(sc);
 	dnprintf(20, "%s: read %d, %d\n", DEVNAME(sc), (int) addr, len);
 
 	for (reg = 0; reg < len; reg++)
 		buffer[reg] = acpiec_read_1(sc, addr + reg);
-
-	sc->sc_locked = 0;
 }
 
 void
@@ -264,14 +246,10 @@ acpiec_write(struct acpiec_softc *sc, u_int8_t addr, int len, u_int8_t *buffer)
 	 * at some point add a lock to deal with concurrency so that a
 	 * transaction does not get interrupted.
 	 */
-	sc->sc_locked = 1;
-
 	acpiec_burst_enable(sc);
 	dnprintf(20, "%s: write %d, %d\n", DEVNAME(sc), (int) addr, len);
 	for (reg = 0; reg < len; reg++)
 		acpiec_write_1(sc, addr + reg, buffer[reg]);
-
-	sc->sc_locked = 0;
 }
 
 int
@@ -297,8 +275,6 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
-
-	sc->sc_locked = 0;
 
 	if (sc->sc_acpi->sc_ec != NULL) {
 		printf(": Only single EC is supported!\n");
@@ -346,15 +322,25 @@ int
 acpiec_gpehandler(struct acpi_softc *acpi_sc, int gpe, void *arg)
 {
 	struct acpiec_softc	*sc = arg;
-	u_int8_t		mask;
+	u_int8_t		mask, stat;
 
 	dnprintf(10, "ACPIEC: got gpe\n");
-	acpiec_intr(sc);
 
 	/* Reset GPE event */
 	mask = (1L << (gpe & 7));
 	acpi_write_pmreg(acpi_sc, ACPIREG_GPE_STS, gpe>>3, mask);
 	acpi_write_pmreg(acpi_sc, ACPIREG_GPE_EN,  gpe>>3, mask);
+
+	do {
+		if (sc->sc_gotsci)
+			acpiec_sci_event(sc);
+
+		stat = acpiec_status(sc);
+		dnprintf(40, "%s: EC interrupt, stat: %b\n", DEVNAME(sc), (int)stat,
+			 "\20\x8IGN\x7SMI\x6SCI\05BURST\04CMD\03IGN\02IBF\01OBF");
+		if (stat & EC_STAT_SCI_EVT)
+			sc->sc_gotsci = 1;
+	} while (sc->sc_gotsci);
 
 	return (0);
 }
