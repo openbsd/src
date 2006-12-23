@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.49 2006/09/19 09:30:03 mickey Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.50 2006/12/23 00:36:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1117,16 +1117,16 @@ get_sdr(struct ipmi_softc *sc, u_int16_t recid, u_int16_t *nxtrec)
 	/* Reserve SDR */
 	if (ipmi_sendcmd(sc, BMC_SA, 0, STORAGE_NETFN, STORAGE_RESERVE_SDR,
 	    0, NULL)) {
-		printf("%s: reserve send fails\n", DEVNAME(sc));
+		printf(": reserve send fails\n");
 		return (-1);
 	}
 	if (ipmi_recvcmd(sc, sizeof(resid), &len, &resid)) {
-		printf("%s: reserve recv fails\n", DEVNAME(sc));
+		printf(": reserve recv fails\n");
 		return (-1);
 	}
 	/* Get SDR Header */
 	if (get_sdr_partial(sc, recid, resid, 0, sizeof shdr, &shdr, nxtrec)) {
-		printf("%s: get header fails\n", DEVNAME(sc));
+		printf(": get header fails\n");
 		return (-1);
 	}
 	/* Allocate space for entire SDR Length of SDR in header does not
@@ -1146,8 +1146,7 @@ get_sdr(struct ipmi_softc *sc, u_int16_t recid, u_int16_t *nxtrec)
 
 		if (get_sdr_partial(sc, recid, resid, offset, len,
 		    psdr + offset, NULL)) {
-			printf("%s: get chunk : %d,%d fails\n", DEVNAME(sc),
-			    offset, len);
+			printf(": get chunk: %d,%d fails\n", offset, len);
 			return (-1);
 		}
 	}
