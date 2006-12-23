@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.117 2006/12/12 02:44:36 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.118 2006/12/23 17:35:35 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1852,6 +1852,33 @@ dvd_auth(cd, a)
 		cmd.bytes[9] = 0x3f | (a->lsa.agid << 6);
 		error = scsi_scsi_cmd(cd->sc_link, &cmd, sizeof(cmd), buf, 16,
 		    CDRETRIES, 30000, NULL, 0);
+		if (error)
+			return (error);
+		return (0);
+
+	case DVD_LU_SEND_RPC_STATE:
+		cmd.opcode = GPCMD_REPORT_KEY;
+		cmd.bytes[8] = 8;
+		cmd.bytes[9] = 8 | (0 << 6);
+		error = scsi_scsi_cmd(cd->sc_link, &cmd, sizeof(cmd), buf, 8,
+		    CDRETRIES, 30000, NULL, SCSI_DATA_IN);
+		if (error)
+			return (error);
+		a->lrpcs.type = (buf[4] >> 6) & 3;
+		a->lrpcs.vra = (buf[4] >> 3) & 7;
+		a->lrpcs.ucca = (buf[4]) & 7;
+		a->lrpcs.region_mask = buf[5];
+		a->lrpcs.rpc_scheme = buf[6];
+		return (0);
+
+	case DVD_HOST_SEND_RPC_STATE:
+		cmd.opcode = GPCMD_SEND_KEY;
+		cmd.bytes[8] = 8;
+		cmd.bytes[9] = 6 | (0 << 6);
+		buf[1] = 6;
+		buf[4] = a->hrpcs.pdrc;
+		error = scsi_scsi_cmd(cd->sc_link, &cmd, sizeof(cmd), buf, 8,
+		    CDRETRIES, 30000, NULL, SCSI_DATA_OUT);
 		if (error)
 			return (error);
 		return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.h,v 1.15 2006/07/11 00:32:27 pedro Exp $	*/
+/*	$OpenBSD: cdio.h,v 1.16 2006/12/23 17:35:35 krw Exp $	*/
 /*	$NetBSD: cdio.h,v 1.11 1996/02/19 18:29:04 scottr Exp $	*/
 
 #ifndef _SYS_CDIO_H_
@@ -340,6 +340,8 @@ union dvd_struct {
 #define DVD_LU_SEND_TITLE_KEY	7
 #define DVD_LU_SEND_ASF		8
 #define DVD_INVALIDATE_AGID	9
+#define DVD_LU_SEND_RPC_STATE	10
+#define DVD_HOST_SEND_RPC_STATE	11
 
 #if 0
 /* State data */
@@ -405,6 +407,19 @@ struct dvd_lu_send_asf {
 	u_int8_t asf;
 };
 
+struct dvd_host_send_rpcstate {
+	u_int8_t type;
+	u_int8_t pdrc;
+};
+
+struct dvd_lu_send_rpcstate {
+	u_int8_t type;
+	u_int8_t vra;
+	u_int8_t ucca;
+	u_int8_t region_mask;
+	u_int8_t rpc_scheme;
+      };
+
 union dvd_authinfo {
 	u_int8_t type;
 
@@ -415,5 +430,7 @@ union dvd_authinfo {
 	struct dvd_send_key		hsk;
 	struct dvd_lu_send_title_key	lstk;
 	struct dvd_lu_send_asf		lsasf;
+	struct dvd_host_send_rpcstate	hrpcs;
+	struct dvd_lu_send_rpcstate	lrpcs;
 };
 #endif /* !_SYS_CDIO_H_ */
