@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.64 2006/12/12 20:15:13 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.65 2006/12/23 12:28:11 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -2195,6 +2195,7 @@ winfixsave:
 1:
 #if 1
 	/* Now we need to blast away the D$ to make sure we're in sync */
+dlflush1:
 	stxa	%g0, [%g7] ASI_DCACHE_TAG
 	brnz,pt	%g7, 1b
 	 dec	8, %g7
@@ -4094,17 +4095,7 @@ dostart:
 	sethi	%hi(_C_LABEL(nwindows)), %o1	! may as well tell everyone
 	st	%o0, [%o1 + %lo(_C_LABEL(nwindows))]
 
-#if defined(HORRID_III_HACK)
-	/*
-	 * Check for UltraSPARC III
-	 */
-	rdpr	%ver, %g1
-	srlx	%g1, 32, %g1
-	sll	%g1, 16, %g1
-	srl	%g1, 16, %g1
-	cmp	%g1, 0x0014
-	bl,pt	%icc, 1f
-	 nop
+#if 0
 	/*
 	 * Disable the DCACHE entirely for debug.
 	 */
@@ -4246,6 +4237,7 @@ _C_LABEL(cpu_initialize):
 
 	set	(1<<14)-8, %o0			! Clear out DCACHE
 1:
+dlflush2:
 	stxa	%g0, [%o0] ASI_DCACHE_TAG	! clear DCACHE line
 	membar	#Sync
 	brnz,pt	%o0, 1b
@@ -9621,3 +9613,9 @@ _C_LABEL(proc0paddr):
 	.comm	_C_LABEL(trapdebug), 4
 	.comm	_C_LABEL(pmapdebug), 4
 #endif	/* DEBUG */
+
+	.globl	_C_LABEL(dlflush_start)
+_C_LABEL(dlflush_start):
+	.xword	dlflush1
+	.xword	dlflush2
+	.xword 0
