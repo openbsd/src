@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.190 2006/11/18 20:18:28 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.191 2006/12/23 21:08:01 krw Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -477,7 +477,7 @@ checkin_update(struct checkin_params *pb)
 			t_head = gmtime(&head_date);
 			strftime(dbuf2, sizeof(dbuf2), fmt, t_head);
 
-			errx(1, "%s: Date %s preceeds %s in revision %s.",
+			errx(1, "%s: Date %s precedes %s in revision %s.",
 			    pb->file->rf_path, dbuf1, dbuf2,
 			    rcsnum_tostr(pb->frev, numb2, sizeof(numb2)));
 		}

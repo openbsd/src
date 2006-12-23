@@ -570,7 +570,7 @@ API_EXPORT(int) ap_bgets(char *buff, int n, BUFF *fb)
 	if (ch == LF) {  /* got LF */
 	    if (ct == 0)
 		buff[ct++] = '\n';
-/* if just preceeded by CR, replace CR with LF */
+/* if just preceded by CR, replace CR with LF */
 	    else if (buff[ct - 1] == CR)
 		buff[ct - 1] = '\n';
 	    else if (ct < n - 1)

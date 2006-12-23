@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: aicasm_gram.y,v 1.13 2005/04/28 10:10:49 moritz Exp $	*/
+/*	$OpenBSD: aicasm_gram.y,v 1.14 2006/12/23 21:08:01 krw Exp $	*/
 /*	$NetBSD: aicasm_gram.y,v 1.3 2003/04/19 19:26:11 fvdl Exp $	*/
 
 /*
@@ -776,7 +776,7 @@ macro_arglist:
 |	macro_arglist ',' T_ARG
 	{
 		if ($1 == 0) {
-			stop("Comma without preceeding argument in arg list",
+			stop("Comma without preceding argument in arg list",
 			     EX_DATAERR);
 			/* NOTREACHED */
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.26 2006/05/08 20:37:01 deraadt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.27 2006/12/23 21:08:01 krw Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -255,12 +255,12 @@ _dl_load_shlib_hint(struct sod *sod, struct sod *req_sod, int type,
 
 /*
  *  Load a shared object. Search order is:
- *	If the name contains a '/' use only the path preceeding the
+ *	If the name contains a '/' use only the path preceding the
  *	library name and do not continue on to other methods if not
  *	found.
- *	   search hints for match in path preceeding library name
+ *	   search hints for match in path preceding library name
  *	     this will only match specific library version.
- *	   search path preceeding library name
+ *	   search path preceding library name
  *	     this will find largest minor version in path provided
  *	try the LD_LIBRARY_PATH specification (if present)
  *	   search hints for match in LD_LIBRARY_PATH dirs

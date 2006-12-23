@@ -995,7 +995,7 @@ cm_walk (VenusFid fid,
     
     do {
         /* set things up so that fname points to the remainder of the path,
-         * whereas base points to the whatever preceeds the first /
+         * whereas base points to the whatever precedes the first /
          */
         base = fname;
         fname = strchr(fname, '/');

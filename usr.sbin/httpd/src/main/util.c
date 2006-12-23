@@ -577,7 +577,7 @@ API_EXPORT(char *) ap_make_dirstr_parent(pool *p, const char *s)
 
 
 /*
- * This function is deprecated.  Use one of the preceeding two functions
+ * This function is deprecated.  Use one of the preceding two functions
  * which are faster.
  */
 API_EXPORT(char *) ap_make_dirstr(pool *p, const char *s, int n)
