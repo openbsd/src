@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.26 2006/11/20 20:58:47 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.27 2006/12/23 17:49:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -31,11 +31,11 @@
 
 #include "ntpd.h"
 
-#define SENSORS_MAX		255
+#define MAXDEVNAMLEN		16
 #define	_PATH_DEV_HOTPLUG	"/dev/hotplug"
 
-void	sensor_probe(int);
-void	sensor_add(struct sensor *);
+int	sensor_probe(int, char *, struct sensor *);
+void	sensor_add(int, char *);
 void	sensor_remove(struct ntp_sensor *);
 void	sensor_update(struct ntp_sensor *);
 
@@ -52,47 +52,59 @@ void
 sensor_scan(void)
 {
 	int		i;
+	char		d[MAXDEVNAMLEN];
+	struct sensor	s;
 
-	for (i = 0; i < SENSORS_MAX; i++)
-		sensor_probe(i);
+	for (i = 0; i < MAXSENSORDEVICES; i++)
+		if (sensor_probe(i, d, &s))
+			sensor_add(i, d);
 }
 
-void
-sensor_probe(int id)
+int
+sensor_probe(int devid, char *dxname, struct sensor *sensor)
 {
-	int		mib[3];
-	size_t		len;
-	struct sensor	sensor;
+	int			mib[5];
+	size_t			slen, sdlen;
+	struct sensordev	sensordev;
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_SENSORS;
-	mib[2] = id;
+	mib[2] = devid;
+	mib[3] = SENSOR_TIMEDELTA;
+	mib[4] = 0;
 
-	len = sizeof(sensor);
-	if (sysctl(mib, 3, &sensor, &len, NULL, 0) == -1) {
+	sdlen = sizeof(sensordev);
+	if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
 		if (errno != ENOENT)
 			log_warn("sensor_probe sysctl");
-		return;
+		return (0);
+	}
+	strlcpy(dxname, sensordev.xname, MAXDEVNAMLEN);
+
+	slen = sizeof(sensor);
+	if (sysctl(mib, 5, sensor, &slen, NULL, 0) == -1) {
+		if (errno != ENOENT)
+			log_warn("sensor_probe sysctl");
+		return (0);
 	}
 
-	if (sensor.type == SENSOR_TIMEDELTA)
-		sensor_add(&sensor);
+	return (1);
 }
 
 void
-sensor_add(struct sensor *sensor)
+sensor_add(int sensordev, char *dxname)
 {
 	struct ntp_sensor	*s;
 	struct ntp_conf_sensor	*cs;
 
 	/* check wether it is already there */
 	TAILQ_FOREACH(s, &conf->ntp_sensors, entry)
-		if (!strcmp(s->device, sensor->device))
+		if (!strcmp(s->device, dxname))
 			return;
 
 	/* check wether it is requested in the config file */
 	for (cs = TAILQ_FIRST(&conf->ntp_conf_sensors); cs != NULL &&
-	    strcmp(cs->device, sensor->device) && strcmp(cs->device, "*");
+	    strcmp(cs->device, dxname) && strcmp(cs->device, "*");
 	    cs = TAILQ_NEXT(cs, entry))
 		; /* nothing */
 	if (cs == NULL)
@@ -103,9 +115,9 @@ sensor_add(struct sensor *sensor)
 
 	s->next = getmonotime();
 	s->weight = cs->weight;
-	if ((s->device = strdup(sensor->device)) == NULL)
+	if ((s->device = strdup(dxname)) == NULL)
 		fatal("sensor_add strdup");
-	s->sensorid = sensor->num;
+	s->sensordevid = sensordev;
 
 	TAILQ_INSERT_TAIL(&conf->ntp_sensors, s, entry);
 
@@ -123,10 +135,9 @@ sensor_remove(struct ntp_sensor *s)
 void
 sensor_query(struct ntp_sensor *s)
 {
+	char		 dxname[MAXDEVNAMLEN];
 	struct sensor	 sensor;
 	u_int32_t	 refid;
-	int		 mib[3];
-	size_t		 len;
 
 	s->next = getmonotime() + SENSOR_QUERY_INTERVAL;
 
@@ -134,15 +145,8 @@ sensor_query(struct ntp_sensor *s)
 	if (s->update.rcvd < time(NULL) - SENSOR_DATA_MAXAGE)
 		s->update.good = 0;
 
-	mib[0] = CTL_HW;
-	mib[1] = HW_SENSORS;
-	mib[2] = s->sensorid;
-	len = sizeof(sensor);
-	if (sysctl(mib, 3, &sensor, &len, NULL, 0) == -1) {
-		if (errno == ENOENT)
-			sensor_remove(s);
-		else
-			log_warn("sensor_query sysctl");
+	if (!sensor_probe(s->sensordevid, dxname, &sensor)) {
+		sensor_remove(s);
 		return;
 	}
 
@@ -150,8 +154,7 @@ sensor_query(struct ntp_sensor *s)
 	    sensor.status != SENSOR_S_OK)
 		return;
 
-	if (sensor.type != SENSOR_TIMEDELTA ||
-	    strcmp(sensor.device, s->device)) {
+	if (strcmp(dxname, s->device)) {
 		sensor_remove(s);
 		return;
 	}
@@ -249,7 +252,7 @@ sensor_hotplugevent(int fd)
 			switch (he.he_type) {
 			case HOTPLUG_DEVAT:
 				if (he.he_devclass == DV_DULL &&
-				    !strcmp(he.he_devname, "sensor"))
+				    !strcmp(he.he_devname, "sensordev"))
 					sensor_scan();
 				break;
 			default:		/* ignore */

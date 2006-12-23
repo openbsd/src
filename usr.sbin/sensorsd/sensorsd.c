@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.25 2006/12/18 14:13:15 mickey Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.26 2006/12/23 17:49:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -47,15 +47,17 @@ void		 reparse_cfg(int);
 
 struct limits_t {
 	TAILQ_ENTRY(limits_t)	entries;
+	char			dxname[16];	/* device unix name */
+	int			dev;		/* device number */
+	enum sensor_type	type;		/* sensor type */
+	int			numt;		/* sensor number */
 	int64_t			last_val;
 	int64_t			lower;		/* lower limit */
 	int64_t			upper;		/* upper limit */
 	char			*command;	/* failure command */
 	time_t			status_changed;
-	enum sensor_type	type;		/* sensor type */
 	enum sensor_status	status;		/* last status */
 	enum sensor_status	status2;
-	int			num;		/* sensor number */
 	int			count;		/* stat change counter */
 	u_int8_t		watch;
 };
@@ -78,10 +80,13 @@ int
 main(int argc, char *argv[])
 {
 	struct sensor	 sensor;
+	struct sensordev sensordev;
 	struct limits_t	*limit;
-	size_t		 len;
+	size_t		 slen, sdlen;
 	time_t		 next_report, last_report = 0, next_check;
-	int		 mib[3], i, sleeptime, sensor_cnt, watch_cnt, ch;
+	int		 mib[5], dev, numt;
+	enum sensor_type type;
+	int		 sleeptime, sensor_cnt, watch_cnt, ch;
 
 	while ((ch = getopt(argc, argv, "d")) != -1) {
 		switch (ch) {
@@ -95,24 +100,40 @@ main(int argc, char *argv[])
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_SENSORS;
-	len = sizeof(sensor);
+	slen = sizeof(sensor);
+	sdlen = sizeof(sensordev);
 
 	sensor_cnt = 0;
-	for (i = 0; i < 256; i++) {
-		mib[2] = i;
-		if (sysctl(mib, 3, &sensor, &len, NULL, 0) == -1) {
+	for (dev = 0; dev < MAXSENSORDEVICES; dev++) {
+		mib[2] = dev;
+		if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
 			if (errno != ENOENT)
 				warn("sysctl");
 			continue;
 		}
-		if (sensor.flags & SENSOR_FINVALID)
-			continue;
-		if ((limit = calloc(1, sizeof(struct limits_t))) == NULL)
-			err(1, "calloc");
-		limit->num = i;
-		limit->type = sensor.type;
-		TAILQ_INSERT_TAIL(&limits, limit, entries);
-		sensor_cnt++;
+		for (type = 0; type < SENSOR_MAX_TYPES; type++) {
+			mib[3] = type;
+			for (numt = 0; numt < sensordev.maxnumt[type]; numt++) {
+				mib[4] = numt;
+				if (sysctl(mib, 5, &sensor, &slen, NULL, 0) == -1) {
+					if (errno != ENOENT)
+						warn("sysctl");
+					continue;
+				}
+				if (sensor.flags & SENSOR_FINVALID)
+					continue;
+				if ((limit = calloc(1, sizeof(struct limits_t)))
+				    == NULL)
+					err(1, "calloc");
+				strlcpy(limit->dxname, sensordev.xname,
+				    sizeof(limit->dxname));
+				limit->dev = dev;
+				limit->type = type;
+				limit->numt = numt;
+				TAILQ_INSERT_TAIL(&limits, limit, entries);
+				sensor_cnt++;
+			}
+		}
 	}
 
 	if (sensor_cnt == 0)
@@ -175,7 +196,7 @@ check_sensors(void)
 	struct sensor		 sensor;
 	struct limits_t		*limit;
 	size_t		 	 len;
-	int		 	 mib[3];
+	int		 	 mib[5];
 	enum sensor_status 	 newstatus;
 
 	mib[0] = CTL_HW;
@@ -184,8 +205,10 @@ check_sensors(void)
 
 	TAILQ_FOREACH(limit, &limits, entries)
 		if (limit->watch) {
-			mib[2] = limit->num;
-			if (sysctl(mib, 3, &sensor, &len, NULL, 0) == -1)
+			mib[2] = limit->dev;
+			mib[3] = limit->type;
+			mib[4] = limit->numt;
+			if (sysctl(mib, 5, &sensor, &len, NULL, 0) == -1)
 				err(1, "sysctl");
 
 			limit->last_val = sensor.value;
@@ -246,8 +269,8 @@ report(time_t last_report)
 		if (limit->status_changed <= last_report)
 			continue;
 
-		syslog(LOG_ALERT, "hw.sensors.%d: %s limits, value: %s",
-		    limit->num,
+		syslog(LOG_ALERT, "hw.sensors.%s.%s%d: %s limits, value: %s",
+		    limit->dxname, sensor_type_s[limit->type], limit->numt,
 		    (limit->status != SENSOR_S_OK) ? "exceed" : "within",
 		    print_sensor(limit->type, limit->last_val));
 		if (limit->command) {
@@ -273,9 +296,17 @@ report(time_t last_report)
 				}
 
 				switch (cmd[i]) {
-				case '1':
+				case 'x':
+					r = snprintf(&buf[n], len - n, "%s",
+					    limit->dxname);
+					break;
+				case 't':
+					r = snprintf(&buf[n], len - n, "%s",
+					    sensor_type_s[limit->type]);
+					break;
+				case 'n':
 					r = snprintf(&buf[n], len - n, "%d",
-					    limit->num);
+					    limit->numt);
 					break;
 				case '2':
 					r = snprintf(&buf[n], len - n, "%s",
@@ -382,7 +413,8 @@ parse_config(char *cf)
 
 	for (p = TAILQ_FIRST(&limits); p != NULL; p = next) {
 		next = TAILQ_NEXT(p, entries);
-		snprintf(node, sizeof(node), "hw.sensors.%d", p->num);
+		snprintf(node, sizeof(node), "hw.sensors.%s.%s%d", 
+		    p->dxname, sensor_type_s[p->type], p->numt);
 		if (cgetent(&buf, cfa, node) != 0)
 			p->watch = 0;
 		else {

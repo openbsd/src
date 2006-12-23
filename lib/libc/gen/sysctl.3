@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.162 2006/11/21 05:37:32 itojun Exp $
+.\"	$OpenBSD: sysctl.3,v 1.163 2006/12/23 17:49:53 deraadt Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -321,9 +321,22 @@ The total physical memory, in bytes.
 .It Dv HW_PRODUCT
 The product name of the machine.
 .It Dv HW_SENSORS
-An array of
+Third level comprises an array of
+.Li struct sensorsdev
+structures containing information about devices 
+that may attach hardware monitoring sensors. 
+.Pp
+Third, fourth and fifth levels together comprise an array of
 .Li struct sensor
-structures containing information from the hardware monitoring sensors.
+structures containing snapshot readings of hardware monitoring sensors.
+In such usage, third level indicates the numerical representation 
+of the sensor device name to which the sensor is attached 
+(device's xname and number shall be matched with the help of 
+.Li struct sensorsdev
+structure above), 
+fourth level indicates sensor type and 
+fifth level is an ordinal sensor number (unique to
+the specified sensor type on the specified sensor device).
 .It Dv HW_SERIALNO
 The serial number of the machine.
 .It Dv HW_SETPERF

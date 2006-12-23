@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.8 2006/08/23 14:30:27 jmc Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.9 2006/12/23 17:49:53 deraadt Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -65,7 +65,11 @@ The command is executed on transitions out of, and back into, given limits.
 Tokens in the command are substituted as follows:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It %1
+.It %x
+the xname of the device sensor sits on
+.It %t
+the type of the sensor
+.It %n
 the sensor number
 .It %2
 the sensor's current value
@@ -82,26 +86,26 @@ Configuration file for
 .El
 .Sh EXAMPLES
 In the following configuration file,
-if hw.sensors.0 goes above 80C, the command
+if hw.sensors.ipmi0.temp0 goes above 80C, the command
 .Pa /etc/sensorsd/log_warning
 will be executed,
-with the sensor number and current value passed to it.
-Alerts will be sent if hw.sensors.1 goes above 170F;
-if hw.sensors.2 goes below 4.8V or above 5.2V;
-if the speed of the fan attached to hw.sensors.3
+with the sensor type, number and current value passed to it.
+Alerts will be sent if hw.sensors.ipmi0.temp1 goes above 170F;
+if hw.sensors.lm0.volt3 goes below 4.8V or above 5.2V;
+if the speed of the fan attached to hw.sensors.lm0.fan1
 goes below 1000RPM or above 8000RPM;
-or if hw.sensors.4,
+or if hw.sensors.ami0.drive0,
 attached to raid volume sd0,
 goes into a state other than
 .Dq OK ,
 such as drive failure, rebuild, or a complete failure.
 .Bd -literal -offset indent
 # Comments are allowed
-hw.sensors.0:high=80C:command=/etc/sensorsd/log_warning %1 %2
-hw.sensors.1:high=170F
-hw.sensors.2:low=4.8V:high=5.2V
-hw.sensors.3:low=1000:high=8000
-hw.sensors.4:		# raid volume status changes
+hw.sensors.ipmi0.temp0:high=80C:command=/etc/sensorsd/log_warning %t %n %2
+hw.sensors.ipmi0.temp1:high=170F
+hw.sensors.lm0.volt3:low=4.8V:high=5.2V
+hw.sensors.lm0.fan1:low=1000:high=8000
+hw.sensors.ami0.drive0:		# raid volume status changes
 .Ed
 .Sh SEE ALSO
 .Xr getcap 3 ,

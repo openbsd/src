@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.142 2006/10/19 03:49:26 marco Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.143 2006/12/23 17:49:53 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.142 2006/10/19 03:49:26 marco Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.143 2006/12/23 17:49:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -212,6 +212,7 @@ int sysctl_shminfo(char *, char **, int *, int, int *);
 int sysctl_watchdog(char *, char **, int *, int, int *);
 int sysctl_tc(char *, char **, int *, int, int *);
 int sysctl_sensors(char *, char **, int *, int, int *);
+void print_sensordev(char *, int *, u_int, struct sensordev *);
 void print_sensor(struct sensor *);
 int sysctl_emul(char *, char *, int);
 #ifdef CPU_CHIPSET
@@ -2095,34 +2096,157 @@ sysctl_tc(char *string, char **bufpp, int mib[], int flags,
 int
 sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
-	char *name;
-	int indx;
+	char *devname, *typename;
+	int dev, numt, i;
+	enum sensor_type type;
+	struct sensordev snsrdev;
+	size_t sdlen = sizeof(snsrdev);
 
 	if (*bufpp == NULL) {
 		char buf[BUFSIZ];
 
-		/* scan all sensors */
-		for (indx = 0; indx < 256; indx++) {
-			snprintf(buf, sizeof(buf), "%s.%u", string, indx);
-			parse(buf, 0);
+		/* scan all sensor devices */
+		for (dev = 0; dev < MAXSENSORDEVICES; dev++) {
+			mib[2] = dev;
+			if (sysctl(mib, 3, &snsrdev, &sdlen, NULL, 0) == -1)
+				continue;
+			snprintf(buf, sizeof(buf), "%s.%s", 
+			    string, snsrdev.xname);
+			print_sensordev(buf, mib, 3, &snsrdev);
 		}
 		return (-1);
 	}
-	if ((name = strsep(bufpp, ".")) == NULL) {
+
+	/*
+	 * If we get this far, it means that some arguments were 
+	 * provided below hw.sensors tree. 
+	 * The first branch of hw.sensors tree is the device name.
+	 */
+	if ((devname = strsep(bufpp, ".")) == NULL) {
 		warnx("%s: incomplete specification", string);
 		return (-1);
 	}
-	mib[2] = atoi(name);
+	/* convert sensor device string to an integer */
+	for (dev = 0; dev < MAXSENSORDEVICES; dev++) {
+		mib[2] = dev;
+		if (sysctl(mib, 3, &snsrdev, &sdlen, NULL, 0) == -1)
+			continue;
+		if (strcmp(devname, snsrdev.xname) == 0)
+			break;
+	}
+	if (strcmp(devname, snsrdev.xname) != 0) {
+		warnx("%s: sensor device not found: %s", string, devname);
+		return (-1);
+	}
+	if (*bufpp == NULL) {
+		/* only device name was provided -- let's print all sensors
+		 * that are attached to the specified device
+		 */
+		print_sensordev(string, mib, 3, &snsrdev);
+		return (-1);
+	}
+
+	/*
+	 * At this point we have identified the sensor device, 
+	 * now let's go further and identify sensor type.
+	 */
+	if ((typename = strsep(bufpp, ".")) == NULL) {
+		warnx("%s: incomplete specification", string);
+		return (-1);
+	}
+	numt = -1;
+	for (i = 0; typename[i] != '\0'; i++)
+		if (isdigit(typename[i])) {
+			numt = atoi(&typename[i]);
+			typename[i] = '\0';
+			break;
+		}
+	for (type = 0; type < SENSOR_MAX_TYPES; type++)
+		if (strcmp(typename, sensor_type_s[type]) == 0)
+			break;
+	if (type == SENSOR_MAX_TYPES) {
+		warnx("%s: sensor type not recognised: %s", string, typename);
+		return (-1);
+	}
+	mib[3] = type;
+
+	/*
+	 * If no integer was provided after sensor_type, let's 
+	 * print all sensors of the specified type.
+	 */
+	if (numt == -1) {
+		print_sensordev(string, mib, 4, &snsrdev);
+		return (-1);
+	}
+
+	/* 
+	 * At this point we know that we have received a direct request 
+	 * via command-line for a specific sensor. Let's have the parse() 
+	 * function deal with it further, and report any errors if such 
+	 * sensor node does not exist. 
+	 */
+	mib[4] = numt;
 	*typep = CTLTYPE_STRUCT;
-	return (3);
+	return (5);
+}
+
+/*
+ * Print sensors from the specified device. 
+ */
+
+void 
+print_sensordev(char *string, int mib[], u_int mlen, struct sensordev *snsrdev)
+{
+	char buf[BUFSIZ];
+	enum sensor_type type;
+
+	if (mlen == 3){
+		for (type = 0; type < SENSOR_MAX_TYPES; type++) {
+			mib[3] = type;
+			snprintf(buf, sizeof(buf), "%s.%s",
+			    string, sensor_type_s[type]);
+			print_sensordev(buf, mib, mlen+1, snsrdev);
+		}
+		return;
+	}
+
+	if (mlen == 4) {
+		int numt;
+
+		type = mib[3];
+		for (numt = 0; numt < snsrdev->maxnumt[type]; numt++) {
+			mib[4] = numt;
+			snprintf(buf, sizeof(buf), "%s%u", string, numt);
+			print_sensordev(buf, mib, mlen+1, snsrdev);
+		}
+		return;
+	}
+
+	if (mlen == 5) {
+		struct sensor snsr;
+		size_t slen = sizeof(snsr);
+
+		/* this function is only printing sensors in bulk, so we 
+		 * do not return any error messages if the requested sensor 
+		 * is not found by sysctl(3)
+		 */
+		if (sysctl(mib, 5, &snsr, &slen, NULL, 0) == -1)
+			return;
+
+		if (slen > 0 && (snsr.flags & SENSOR_FINVALID) == 0) {
+			if (!nflag)
+				printf("%s%s", string, equ);
+			print_sensor(&snsr);
+			printf("\n");
+		}
+		return;
+	}
 }
 
 void
 print_sensor(struct sensor *s)
 {
 	const char *name;
-
-	printf("%s, %s, ", s->device, s->desc);
 
 	if (s->flags & SENSOR_FUNKNOWN)
 		printf("unknown");
@@ -2151,7 +2275,7 @@ print_sensor(struct sensor *s)
 			printf("%s", s->value ? "On" : "Off");
 			break;
 		case SENSOR_INTEGER:
-			printf("%lld raw", s->value);
+			printf("%lld", s->value);
 			break;
 		case SENSOR_PERCENT:
 			printf("%.2f%%", s->value / 1000.0);
@@ -2195,7 +2319,7 @@ print_sensor(struct sensor *s)
 				name = "unknown";
 				break;
 			}
-			printf("drive %s", name);
+			printf(name);
 			break;
 		case SENSOR_TIMEDELTA:
 			printf("%.2f secs", s->value / 1000000000.0);
@@ -2204,6 +2328,9 @@ print_sensor(struct sensor *s)
 			printf("unknown");
 		}
 	}
+
+	if (s->desc[0] != '\0')
+		printf(", (%s)", s->desc);
 
 	switch (s->status) {
 	case SENSOR_S_OK:
