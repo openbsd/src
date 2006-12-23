@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1025.c,v 1.22 2006/04/10 00:57:23 deraadt Exp $	*/
+/*	$OpenBSD: adm1025.c,v 1.23 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -62,6 +62,7 @@ struct admtm_softc {
 	i2c_addr_t	sc_addr;
 
 	struct sensor	sc_sensor[ADMTM_NUM_SENSORS + SMSC_NUM_SENSORS];
+	struct sensordev sc_sensordev;
 	int		sc_nsensors;
 	int		sc_model;
 };
@@ -131,16 +132,15 @@ admtm_attach(struct device *parent, struct device *self, void *aux)
 	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
-	for (i = 0; i < ADMTM_NUM_SENSORS + SMSC_NUM_SENSORS; i++)
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor[ADMTM_INT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMTM_INT].desc, "Internal Temp",
+	strlcpy(sc->sc_sensor[ADMTM_INT].desc, "Internal",
 	    sizeof(sc->sc_sensor[ADMTM_INT].desc));
 
 	sc->sc_sensor[ADMTM_EXT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMTM_EXT].desc, "External Temp",
+	strlcpy(sc->sc_sensor[ADMTM_EXT].desc, "External",
 	    sizeof(sc->sc_sensor[ADMTM_EXT].desc));
 
 	sc->sc_sensor[ADMTM_V2_5].type = SENSOR_VOLTS_DC;
@@ -176,7 +176,7 @@ admtm_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensor[SMSC_V1_8].desc));
 
 	sc->sc_sensor[SMSC_TEMP2].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[SMSC_TEMP2].desc, "External2 Temp",
+	strlcpy(sc->sc_sensor[SMSC_TEMP2].desc, "External",
 	    sizeof(sc->sc_sensor[SMSC_TEMP2].desc));
 
 	if (sensor_task_register(sc, admtm_refresh, 5)) {
@@ -185,7 +185,8 @@ admtm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < sc->sc_nsensors; i++)
-		sensor_add(&sc->sc_sensor[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 }

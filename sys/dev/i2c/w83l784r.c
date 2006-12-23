@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83l784r.c,v 1.9 2006/11/14 20:26:01 kettenis Exp $	*/
+/*	$OpenBSD: w83l784r.c,v 1.10 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -79,6 +79,7 @@ struct wbenv_softc {
 	u_int8_t sc_chip_id;
 
 	struct sensor sc_sensors[WBENV_MAX_SENSORS];
+	struct sensordev sc_sensordev;
 	struct wbenv_sensor *sc_wbenv_sensors;
 	int sc_numsensors;
 };
@@ -113,11 +114,11 @@ struct wbenv_sensor w83l784r_sensors[] =
 	{ "VBAT", SENSOR_VOLTS_DC, W83L784R_VBAT, w83l784r_refresh_volt, RFACT(232, 99) },
 	{ "+3.3V", SENSOR_VOLTS_DC, W83L784R_3_3V, w83l784r_refresh_volt, RFACT_NONE },
 	{ "+5V", SENSOR_VOLTS_DC, W83L784R_VCC, w83l784r_refresh_volt, RFACT(50, 34) },
-	{ "Temp1", SENSOR_TEMP, W83L784R_TEMP1, wbenv_refresh_temp },
-	{ "Temp2", SENSOR_TEMP, 1, w83l784r_refresh_temp },
-	{ "Temp3", SENSOR_TEMP, 2, w83l784r_refresh_temp },
-	{ "Fan1", SENSOR_FANRPM, W83L784R_FAN1, w83l784r_refresh_fanrpm },
-	{ "Fan2", SENSOR_FANRPM, W83L784R_FAN2, w83l784r_refresh_fanrpm },
+	{ "", SENSOR_TEMP, W83L784R_TEMP1, wbenv_refresh_temp },
+	{ "", SENSOR_TEMP, 1, w83l784r_refresh_temp },
+	{ "", SENSOR_TEMP, 2, w83l784r_refresh_temp },
+	{ "", SENSOR_FANRPM, W83L784R_FAN1, w83l784r_refresh_fanrpm },
+	{ "", SENSOR_FANRPM, W83L784R_FAN2, w83l784r_refresh_fanrpm },
 
 	{ NULL }
 };
@@ -128,17 +129,17 @@ struct wbenv_sensor w83l785r_sensors[] =
 	{ "+2.5V", SENSOR_VOLTS_DC, W83L785R_2_5V, w83l785r_refresh_volt, RFACT(100, 100) },
 	{ "+1.5V", SENSOR_VOLTS_DC, W83L785R_1_5V, w83l785r_refresh_volt, RFACT_NONE },
 	{ "+3.3V", SENSOR_VOLTS_DC, W83L785R_VCC, w83l785r_refresh_volt, RFACT(20, 40) },
-	{ "Temp1", SENSOR_TEMP, W83L784R_TEMP1, wbenv_refresh_temp },
-	{ "Temp2", SENSOR_TEMP, W83L785R_TEMP2, wbenv_refresh_temp },
-	{ "Fan1", SENSOR_FANRPM, W83L784R_FAN1, w83l785r_refresh_fanrpm },
-	{ "Fan2", SENSOR_FANRPM, W83L784R_FAN2, w83l785r_refresh_fanrpm },
+	{ "", SENSOR_TEMP, W83L784R_TEMP1, wbenv_refresh_temp },
+	{ "", SENSOR_TEMP, W83L785R_TEMP2, wbenv_refresh_temp },
+	{ "", SENSOR_FANRPM, W83L784R_FAN1, w83l785r_refresh_fanrpm },
+	{ "", SENSOR_FANRPM, W83L784R_FAN2, w83l785r_refresh_fanrpm },
 
 	{ NULL }
 };
 
 struct wbenv_sensor w83l785ts_l_sensors[] =
 {
-	{ "Temp", SENSOR_TEMP, W83L784R_TEMP1, wbenv_refresh_temp },
+	{ "", SENSOR_TEMP, W83L784R_TEMP1, wbenv_refresh_temp },
 
 	{ NULL }
 };
@@ -230,7 +231,8 @@ wbenv_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Add sensors */
 	for (i = 0; i < sc->sc_numsensors; ++i)
-		sensor_add(&sc->sc_sensors[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[i]);
+	sensordev_install(&sc->sc_sensordev);
 }
 
 void
@@ -238,9 +240,10 @@ wbenv_setup_sensors(struct wbenv_softc *sc, struct wbenv_sensor *sensors)
 {
 	int i;
 
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
+
 	for (i = 0; sensors[i].desc; i++) {
-		strlcpy(sc->sc_sensors[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensors[i].device));
 		sc->sc_sensors[i].type = sensors[i].type;
 		strlcpy(sc->sc_sensors[i].desc, sensors[i].desc,
 		    sizeof(sc->sc_sensors[i].desc));

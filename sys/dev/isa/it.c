@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.20 2006/06/24 13:42:45 kettenis Exp $	*/
+/*	$OpenBSD: it.c,v 1.21 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
@@ -167,11 +167,11 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	it_writereg(sc, ITD_CONFIG, cr);
 
 	/* Initialize sensors */
-	for (i = 0; i < sc->numsensors; ++i) {
-		strlcpy(sc->sensors[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sensors[i].device));
-		sensor_add(&sc->sensors[i]);
-	}
+	strlcpy(sc->sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sensordev.xname));
+	for (i = 0; i < sc->numsensors; ++i)
+		sensor_attach(&sc->sensordev, &sc->sensors[i]);
+	sensordev_install(&sc->sensordev);
 }
 
 u_int8_t
@@ -222,12 +222,8 @@ it_setup_temp(struct it_softc *sc, int start, int n)
 {
 	int i;
 
-	for (i = 0; i < n; ++i) {
+	for (i = 0; i < n; ++i)
 		sc->sensors[start + i].type = SENSOR_TEMP;
-		snprintf(sc->sensors[start + i].desc,
-		    sizeof(sc->sensors[start + i].desc),
-		    "Temp %d", i + 1);
-	}
 }
 
 void
@@ -235,12 +231,8 @@ it_setup_fan(struct it_softc *sc, int start, int n)
 {
 	int i;
 
-	for (i = 0; i < n; ++i) {
+	for (i = 0; i < n; ++i)
 		sc->sensors[start + i].type = SENSOR_FANRPM;
-		snprintf(sc->sensors[start + i].desc,
-		    sizeof(sc->sensors[start + i].desc),
-		    "Fan%d", i + 1);
-	}
 }
 
 void

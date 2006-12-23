@@ -1,4 +1,4 @@
-/*	$OpenBSD: viasio.c,v 1.7 2006/06/26 17:33:35 kettenis Exp $	*/
+/*	$OpenBSD: viasio.c,v 1.8 2006/12/23 17:46:39 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -53,6 +53,7 @@ struct viasio_softc {
 	bus_space_handle_t	sc_hm_ioh;
 	int			sc_hm_clock;
 	struct sensor		sc_hm_sensors[VT1211_HM_NSENSORS];
+	struct sensordev	sc_sensordev;
 	struct timeout		sc_hm_timo;
 
 	/* Watchdog timer */
@@ -275,15 +276,8 @@ viasio_hm_init(struct viasio_softc *sc)
 	sc->sc_hm_clock = vt1211_hm_clock[reg0 & 0x07];
 	DPRINTF((", PWMCS 0x%02x, %dHz", reg0, sc->sc_hm_clock));
 
-	/* Initialize sensors */
-	for (i = 0; i < VT1211_HM_NSENSORS; i++)
-		strlcpy(sc->sc_hm_sensors[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_hm_sensors[i].device));
-
 	/* Temperature reading 1 */
 	sc->sc_hm_sensors[VT1211_HMS_TEMP1].type = SENSOR_TEMP;
-	strlcpy(sc->sc_hm_sensors[VT1211_HMS_TEMP1].desc, "Temp",
-	    sizeof(sc->sc_hm_sensors[VT1211_HMS_TEMP1].desc));
 
 	/* Universal channels (UCH) 1-5 */
 	reg0 = bus_space_read_1(sc->sc_iot, sc->sc_hm_ioh, VT1211_HM_UCHCONF);
@@ -309,15 +303,14 @@ viasio_hm_init(struct viasio_softc *sc)
 
 	/* FAN reading 1, 2 */
 	sc->sc_hm_sensors[VT1211_HMS_FAN1].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_hm_sensors[VT1211_HMS_FAN1].desc, "FAN1",
-	    sizeof(sc->sc_hm_sensors[VT1211_HMS_FAN1].desc));
 	sc->sc_hm_sensors[VT1211_HMS_FAN2].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_hm_sensors[VT1211_HMS_FAN2].desc, "FAN2",
-	    sizeof(sc->sc_hm_sensors[VT1211_HMS_FAN2].desc));
 
 	/* Start sensors */
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 	for (i = 0; i < VT1211_HM_NSENSORS; i++)
-		sensor_add(&sc->sc_hm_sensors[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_hm_sensors[i]);
+	sensordev_install(&sc->sc_sensordev);
 	timeout_set(&sc->sc_hm_timo, viasio_hm_refresh, sc);
 	timeout_add(&sc->sc_hm_timo, hz);
 }

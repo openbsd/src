@@ -1,4 +1,4 @@
-/* $OpenBSD: nsclpcsio_isa.c,v 1.9 2006/06/26 17:47:34 kettenis Exp $ */
+/* $OpenBSD: nsclpcsio_isa.c,v 1.10 2006/12/23 17:46:39 deraadt Exp $ */
 /* $NetBSD: nsclpcsio_isa.c,v 1.5 2002/10/22 16:18:26 drochner Exp $ */
 
 /*
@@ -177,6 +177,7 @@ struct nsclpcsio_softc {
 
 	/* TMS and VLM */
 	struct sensor sensors[SIO_NUM_SENSORS];
+	struct sensordev sensordev;
 };
 
 #define GPIO_READ(sc, reg) \
@@ -324,15 +325,16 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 	nsclpcsio_vlm_init(sc);
 
 	/* Hook into hw.sensors sysctl */
+	strlcpy(sc->sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sensordev.xname));
 	for (i = 0; i < SIO_NUM_SENSORS; i++) {
 		if (i < SIO_VLM_OFF && !sc->sc_ld_en[SIO_LDN_TMS])
 			continue;
 		if (i >= SIO_VLM_OFF && !sc->sc_ld_en[SIO_LDN_VLM])
 			continue;
-		strlcpy(sc->sensors[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sensors[i].device));
-		sensor_add(&sc->sensors[i]);
+		sensor_attach(&sc->sensordev, &sc->sensors[i]);
 	}
+	sensordev_install(&sc->sensordev);
 	if (sc->sc_ld_en[SIO_LDN_TMS] || sc->sc_ld_en[SIO_LDN_VLM]) {
 		timeout_set(&nsclpcsio_timeout, nsclpcsio_refresh, sc);
 		timeout_add(&nsclpcsio_timeout, (20 * hz) / 10);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: viaenv.c,v 1.8 2006/06/19 14:43:54 kettenis Exp $	*/
+/*	$OpenBSD: viaenv.c,v 1.9 2006/12/23 17:46:39 deraadt Exp $	*/
 /*	$NetBSD: viaenv.c,v 1.9 2002/10/02 16:51:59 thorpej Exp $	*/
 
 /*
@@ -70,6 +70,7 @@ struct viaenv_softc {
 	int     sc_fan_div[2];	/* fan RPM divisor */
 
 	struct sensor sc_data[VIANUMSENSORS];
+	struct sensordev sc_sensordev;
 };
 
 int  viaenv_match(struct device *, void *, void *);
@@ -283,25 +284,13 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 		goto nohwm;
 	}
 
-	/* Initialize sensors */
-	for (i = 0; i < VIANUMSENSORS; ++i) {
-		strlcpy(sc->sc_data[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_data[i].device));
-		sensor_add(&sc->sc_data[i]);
-	}
-
 	for (i = 0; i <= 2; i++) {
 		sc->sc_data[i].type = SENSOR_TEMP;
 	}
-	strlcpy(sc->sc_data[0].desc, "TSENS1", sizeof(sc->sc_data[0].desc));
-	strlcpy(sc->sc_data[1].desc, "TSENS2", sizeof(sc->sc_data[1].desc));
-	strlcpy(sc->sc_data[2].desc, "TSENS3", sizeof(sc->sc_data[2].desc));
 
 	for (i = 3; i <= 4; i++) {
 		sc->sc_data[i].type = SENSOR_FANRPM;
 	}
-	strlcpy(sc->sc_data[3].desc, "FAN1", sizeof(sc->sc_data[3].desc));
-	strlcpy(sc->sc_data[4].desc, "FAN2", sizeof(sc->sc_data[4].desc));
 
 	for (i = 5; i <= 9; ++i) {
 		sc->sc_data[i].type = SENSOR_VOLTS_DC;
@@ -319,6 +308,13 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 
 	/* Get initial set of sensor values. */
 	viaenv_refresh_sensor_data(sc);
+
+	/* Register sensors with sysctl */
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
+	for (i = 0; i < VIANUMSENSORS; ++i)
+		sensor_attach(&sc->sc_sensordev, &sc->sc_data[i]);
+	sensordev_install(&sc->sc_sensordev);
 
 	/* Refresh sensors data every 1.5 seconds */
 	timeout_set(&viaenv_timeout, viaenv_refresh, sc);

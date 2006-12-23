@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.174 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.175 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2448,6 +2448,9 @@ ami_create_sensors(struct ami_softc *sc)
 		return (1);
 	bzero(sc->sc_sensors, sizeof(struct sensor) * sc->sc_nunits);	
 
+	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensordev.xname));
+
 	for (i = 0; i < sc->sc_nunits; i++) {
 		if (ssc->sc_link[i][0] == NULL)
 			goto bad;
@@ -2457,12 +2460,10 @@ ami_create_sensors(struct ami_softc *sc)
 		sc->sc_sensors[i].type = SENSOR_DRIVE;
 		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
 
-		strlcpy(sc->sc_sensors[i].device, DEVNAME(sc),
-		    sizeof(sc->sc_sensors[i].device));
 		strlcpy(sc->sc_sensors[i].desc, dev->dv_xname,
 		    sizeof(sc->sc_sensors[i].desc));
 
-		sensor_add(&sc->sc_sensors[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[i]);
 	}
 
 	sc->sc_bd = malloc(sizeof(*sc->sc_bd), M_DEVBUF, M_WAITOK);
@@ -2472,13 +2473,13 @@ ami_create_sensors(struct ami_softc *sc)
 	if (sensor_task_register(sc, ami_refresh_sensors, 10) != 0)
 		goto freebd;
 
+	sensordev_install(&sc->sc_sensordev);
+
 	return (0);
 
 freebd:
 	free(sc->sc_bd, M_DEVBUF);
 bad:
-	while (--i >= 0)
-		sensor_del(&sc->sc_sensors[i]);
 	free(sc->sc_sensors, M_DEVBUF);
 
 	return (1);

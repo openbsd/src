@@ -1,4 +1,4 @@
-/*	$OpenBSD: owtemp.c,v 1.5 2006/12/20 14:46:59 grange Exp $	*/
+/*	$OpenBSD: owtemp.c,v 1.6 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -52,6 +52,7 @@ struct owtemp_softc {
 	u_int64_t		sc_rom;
 
 	struct sensor		sc_sensor;
+	struct sensordev	sc_sensordev;
 	struct rwlock		sc_lock;
 };
 
@@ -95,16 +96,16 @@ owtemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rom = oa->oa_rom;
 
 	/* Initialize sensor */
-	strlcpy(sc->sc_sensor.device, sc->sc_dev.dv_xname,
-	    sizeof(sc->sc_sensor.device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 	sc->sc_sensor.type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor.desc, "Temp", sizeof(sc->sc_sensor.desc));
 
 	if (sensor_task_register(sc, owtemp_update, 5)) {
 		printf(": unable to register update task\n");
 		return;
 	}
-	sensor_add(&sc->sc_sensor);
+	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
+	sensordev_install(&sc->sc_sensordev);
 
 	rw_init(&sc->sc_lock, sc->sc_dev.dv_xname);
 	printf("\n");
@@ -116,7 +117,7 @@ owtemp_detach(struct device *self, int flags)
 	struct owtemp_softc *sc = (struct owtemp_softc *)self;
 
 	rw_enter_write(&sc->sc_lock);
-	sensor_del(&sc->sc_sensor);
+	sensordev_deinstall(&sc->sc_sensordev);
 	sensor_task_unregister(sc);
 	rw_exit_write(&sc->sc_lock);
 

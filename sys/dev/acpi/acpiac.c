@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.12 2006/12/21 11:23:41 deraadt Exp $ */
+/* $OpenBSD: acpiac.c,v 1.13 2006/12/23 17:46:39 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -80,10 +80,12 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 	else
 		printf(" in unknown state");
 
-	strlcpy(sc->sens[0].device, DEVNAME(sc), sizeof(sc->sens[0].device));
-	strlcpy(sc->sens[0].desc, "power supply", sizeof(sc->sens[2].desc));
+	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensdev.xname));
+	strlcpy(sc->sens[0].desc, "power supply", sizeof(sc->sens[0].desc));
 	sc->sens[0].type = SENSOR_INDICATOR;
-	sensor_add(&sc->sens[0]);
+	sensor_attach(&sc->sc_sensdev, &sc->sens[0]);
+	sensordev_install(&sc->sc_sensdev);
 	sc->sens[0].value = sc->sc_ac_stat;
 }
 

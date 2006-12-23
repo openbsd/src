@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.6 2006/12/22 09:04:42 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.7 2006/12/23 17:46:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -39,6 +39,7 @@ struct mbg_softc {
 
 	struct sensor		sc_timedelta;
 	struct sensor		sc_signal;
+	struct sensordev	sc_sensordev;
 	u_int8_t		sc_status;
 };
 
@@ -153,26 +154,28 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 			printf("invalid\n");
 		sc->sc_status = tframe.status;
 	}
-	strlcpy(sc->sc_timedelta.device, sc->sc_dev.dv_xname,
-	    sizeof(sc->sc_timedelta.device));
+
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
+
 	sc->sc_timedelta.type = SENSOR_TIMEDELTA;
 	sc->sc_timedelta.status = SENSOR_S_UNKNOWN;
 	sc->sc_timedelta.value = 0LL;
 	sc->sc_timedelta.flags = 0;
 	strlcpy(sc->sc_timedelta.desc, "DCF77", sizeof(sc->sc_timedelta.desc));
-	sensor_add(&sc->sc_timedelta);
+	sensor_attach(&sc->sc_sensordev, &sc->sc_timedelta);
 
-	strlcpy(sc->sc_signal.device, sc->sc_dev.dv_xname,
-	    sizeof(sc->sc_signal.device));
 	sc->sc_signal.type = SENSOR_PERCENT;
 	sc->sc_signal.status = SENSOR_S_UNKNOWN;
 	sc->sc_signal.value = 0LL;
 	sc->sc_signal.flags = 0;
 	strlcpy(sc->sc_signal.desc, "Signal strength",
 	    sizeof(sc->sc_signal.desc));
-	sensor_add(&sc->sc_signal);
+	sensor_attach(&sc->sc_sensordev, &sc->sc_signal);
 
 	sensor_task_register(sc, mbg_task, 10);
+
+	sensordev_install(&sc->sc_sensordev);
 }
 
 void

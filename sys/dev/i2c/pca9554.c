@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9554.c,v 1.8 2006/06/27 20:29:48 deraadt Exp $	*/
+/*	$OpenBSD: pca9554.c,v 1.9 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -46,6 +46,7 @@ struct pcagpio_softc {
         gpio_pin_t sc_gpio_pins[PCAGPIO_NPINS];
 
 	struct sensor sc_sensor[PCAGPIO_NPINS];
+	struct sensordev sc_sensordev;
 };
 
 int	pcagpio_match(struct device *, void *, void *);
@@ -113,9 +114,8 @@ pcagpio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Initialize sensor data. */
-	for (i = 0; i < PCAGPIO_NPINS; i++)
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 
 	for (i = 0; i < PCAGPIO_NPINS; i++) {
 		sc->sc_sensor[i].type = SENSOR_INTEGER;
@@ -136,7 +136,8 @@ pcagpio_attach(struct device *parent, struct device *self, void *aux)
 
 #if 0
 	for (i = 0; i < PCAGPIO_NPINS; i++)
-		sensor_add(&sc->sc_sensor[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	sensordev_install(&sc->sc_sensordev);
 #endif
 
 	printf(":");

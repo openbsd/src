@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.15 2006/12/23 08:29:39 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.16 2006/12/23 17:46:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -52,6 +52,7 @@ struct nmea {
 #ifdef NMEA_DEBUG
 	struct sensor	skew;		/* soft to tty timestamp skew */
 #endif
+	struct sensordev timedev;
 	struct timespec	ts;		/* soft timestamp */
 	struct timeval	tv;		/* tty timestamp */
 	int64_t		last;		/* last time rcvd */
@@ -86,19 +87,19 @@ nmeaopen(dev_t dev, struct tty *tp)
 		return (error);
 	np = malloc(sizeof(struct nmea), M_DEVBUF, M_WAITOK);
 	bzero(np, sizeof(*np));
-	snprintf(np->time.device, sizeof(np->time.device), "nmea%d",
+	snprintf(np->timedev.xname, sizeof(np->timedev.xname), "nmea%d",
 	    nmea_count++);
 	np->time.status = SENSOR_S_UNKNOWN;
 	np->time.type = SENSOR_TIMEDELTA;
 	np->time.flags = SENSOR_FINVALID;
+	sensor_attach(&np->timedev, &np->time);
 #ifdef NMEA_DEBUG
-	snprintf(np->skew.device, sizeof(np->skew.device), "skew%d",
-	    nmea_count - 1);
 	snprintf(np->skew.desc, sizeof(np->skew.desc),
 	    "nmea%d timestamp skew", nmea_count - 1);
 	np->skew.status = SENSOR_S_UNKNOWN;
 	np->skew.type = SENSOR_TIMEDELTA;
 	np->skew.flags = SENSOR_FINVALID;
+	sensor_attach(&np->timedev, &np->skew);
 #endif
 	np->sync = 1;
 	tp->t_sc = (caddr_t)np;
@@ -107,12 +108,8 @@ nmeaopen(dev_t dev, struct tty *tp)
 	if (error) {
 		free(np, M_DEVBUF);
 		tp->t_sc = NULL;
-	} else {
-		sensor_add(&np->time);
-#ifdef NMEA_DEBUG
-		sensor_add(&np->skew);
-#endif
-	}
+	} else
+		sensordev_install(&np->timedev);
 	return (error);
 }
 
@@ -122,10 +119,7 @@ nmeaclose(struct tty *tp, int flags)
 	struct nmea *np = (struct nmea *)tp->t_sc;
 
 	tp->t_line = TTYDISC;	/* switch back to termios */
-	sensor_del(&np->time);
-#ifdef NMEA_DEBUG
-	sensor_del(&np->skew);
-#endif
+	sensordev_deinstall(&np->timedev);
 	free(np, M_DEVBUF);
 	tp->t_sc = NULL;
 	nmea_count--;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1031.c,v 1.5 2006/04/10 00:57:23 deraadt Exp $	*/
+/*	$OpenBSD: adm1031.c,v 1.6 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -48,6 +48,7 @@ struct admtt_softc {
 	int		sc_fanmul;
 
 	struct sensor	sc_sensor[ADMTT_NUM_SENSORS];
+	struct sensordev sc_sensordev;
 };
 
 int	admtt_match(struct device *, void *, void *);
@@ -92,29 +93,24 @@ admtt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_fanmul = 11250/8 * (1 << ADM1024_FANC_VAL(data)) * 60;
 
 	/* Initialize sensor data. */
-	for (i = 0; i < ADMTT_NUM_SENSORS; i++)
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor[ADMTT_INT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMTT_INT].desc, "Internal Temp",
+	strlcpy(sc->sc_sensor[ADMTT_INT].desc, "Internal",
 	    sizeof(sc->sc_sensor[ADMTT_INT].desc));
 
 	sc->sc_sensor[ADMTT_EXT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMTT_EXT].desc, "External1 Temp",
+	strlcpy(sc->sc_sensor[ADMTT_EXT].desc, "External",
 	    sizeof(sc->sc_sensor[ADMTT_EXT].desc));
 
 	sc->sc_sensor[ADMTT_EXT2].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMTT_EXT2].desc, "External2 Temp",
+	strlcpy(sc->sc_sensor[ADMTT_EXT2].desc, "External",
 	    sizeof(sc->sc_sensor[ADMTT_EXT2].desc));
 
 	sc->sc_sensor[ADMTT_FAN].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADMTT_FAN].desc, "Fan1",
-	    sizeof(sc->sc_sensor[ADMTT_FAN].desc));
 
 	sc->sc_sensor[ADMTT_FAN2].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADMTT_FAN2].desc, "Fan2",
-	    sizeof(sc->sc_sensor[ADMTT_FAN2].desc));
 
 	if (sensor_task_register(sc, admtt_refresh, 5)) {
 		printf(", unable to register update task\n");
@@ -122,7 +118,8 @@ admtt_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < ADMTT_NUM_SENSORS; i++)
-		sensor_add(&sc->sc_sensor[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 }

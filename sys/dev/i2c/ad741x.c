@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad741x.c,v 1.8 2006/04/10 00:57:23 deraadt Exp $	*/
+/*	$OpenBSD: ad741x.c,v 1.9 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -49,6 +49,7 @@ struct adc_softc {
 	u_int8_t	sc_config;
 
 	struct sensor sc_sensor[ADC_MAX_SENSORS];
+	struct sensordev sc_sensordev;
 };
 
 int	adc_match(struct device *, void *, void *);
@@ -119,31 +120,22 @@ adc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_config = data;
 
 	/* Initialize sensor data. */
-	for (i = 0; i < ADC_MAX_SENSORS; i++)
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor[ADC_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADC_TEMP].desc, "Internal Temp",
+	strlcpy(sc->sc_sensor[ADC_TEMP].desc, "Internal",
 	    sizeof(sc->sc_sensor[ADC_TEMP].desc));
 	nsens = 1;
 
 	if (sc->sc_chip == 7417 || sc->sc_chip == 7418) {
 		sc->sc_sensor[ADC_ADC0].type = SENSOR_INTEGER;
-		strlcpy(sc->sc_sensor[ADC_ADC0].desc, "adc0",
-		    sizeof(sc->sc_sensor[ADC_ADC0].desc));
 		nsens++;
 	}
 	if (sc->sc_chip == 7417 || sc->sc_chip == 7418) {
 		sc->sc_sensor[ADC_ADC1].type = SENSOR_INTEGER;
-		strlcpy(sc->sc_sensor[ADC_ADC1].desc, "adc1",
-		    sizeof(sc->sc_sensor[ADC_ADC1].desc));
 		sc->sc_sensor[ADC_ADC2].type = SENSOR_INTEGER;
-		strlcpy(sc->sc_sensor[ADC_ADC2].desc, "adc2",
-		    sizeof(sc->sc_sensor[ADC_ADC2].desc));
 		sc->sc_sensor[ADC_ADC3].type = SENSOR_INTEGER;
-		strlcpy(sc->sc_sensor[ADC_ADC3].desc, "adc3",
-		    sizeof(sc->sc_sensor[ADC_ADC3].desc));
 		nsens += 3;
 	}
 
@@ -152,12 +144,13 @@ adc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sensor_add(&sc->sc_sensor[0]);
+	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[0]);
 	if (sc->sc_chip == 7417 || sc->sc_chip == 7418)
-		sensor_add(&sc->sc_sensor[1]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[1]);
 	if (sc->sc_chip == 7417)
 		for (i = 2; i < nsens; i++)
-			sensor_add(&sc->sc_sensor[i]);
+			sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.27 2006/12/10 16:47:44 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.28 2006/12/23 17:46:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -102,6 +102,7 @@ struct udcf_softc {
 #ifdef UDCF_DEBUG
 	struct sensor		sc_skew;	/* recv vs local skew */
 #endif
+	struct sensordev	sc_sensordev;
 };
 
 /*
@@ -194,25 +195,28 @@ USB_ATTACH(udcf)
 	sc->sc_last = 0L;
 	sc->sc_last_tv.tv_sec = 0L;
 
-	strlcpy(sc->sc_sensor.device, USBDEVNAME(sc->sc_dev),
-	    sizeof(sc->sc_sensor.device));
+	strlcpy(sc->sc_sensordev.xname, USBDEVNAME(sc->sc_dev),
+	    sizeof(sc->sc_sensordev.xname));
+
 	sc->sc_sensor.type = SENSOR_TIMEDELTA;
 	sc->sc_sensor.status = SENSOR_S_UNKNOWN;
 	sc->sc_sensor.value = 0LL;
 	sc->sc_sensor.flags = 0;
 	strlcpy(sc->sc_sensor.desc, "Unknown", sizeof(sc->sc_sensor.desc));
-	sensor_add(&sc->sc_sensor);
+	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
+
 #ifdef UDCF_DEBUG
-	strlcpy(sc->sc_skew.device, USBDEVNAME(sc->sc_dev),
-	    sizeof(sc->sc_skew.device));
 	sc->sc_skew.type = SENSOR_TIMEDELTA;
 	sc->sc_skew.status = SENSOR_S_UNKNOWN;
 	sc->sc_skew.value = 0LL;
 	sc->sc_skew.flags = 0;
 	strlcpy(sc->sc_skew.desc, "local clock skew",
 	    sizeof(sc->sc_skew.desc));
-	sensor_add(&sc->sc_skew);
+	sensor_attach(&sc->sc_sensordev, &sc->sc_skew);
 #endif
+
+	sensordev_install(&sc->sc_sensordev);
+
 	/* Prepare the USB request to probe the value */
 	sc->sc_req.bmRequestType = UDCF_READ_REQ;
 	sc->sc_req.bRequest = 1;
@@ -320,10 +324,7 @@ USB_DETACH(udcf)
 	timeout_del(&sc->sc_ct_to);
 
 	/* Unregister the clock with the kernel */
-	sensor_del(&sc->sc_sensor);
-#ifdef UDCF_DEBUG
-	sensor_del(&sc->sc_skew);
-#endif
+	sensordev_deinstall(&sc->sc_sensordev);
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	usb_rem_task(sc->sc_udev, &sc->sc_bv_task);
 	usb_rem_task(sc->sc_udev, &sc->sc_mg_task);

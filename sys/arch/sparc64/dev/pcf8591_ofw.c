@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8591_ofw.c,v 1.1 2006/02/10 05:28:56 djm Exp $ */
+/*	$OpenBSD: pcf8591_ofw.c,v 1.2 2006/12/23 17:46:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Damien Miller <djm@openbsd.org>
@@ -38,6 +38,7 @@ struct pcfadc_softc {
 	u_char			sc_xlate[256];
 	u_int			sc_nchan;
 	struct pcfadc_channel	sc_channels[PCF8591_CHANNELS];
+	struct sensordev	sc_sensordev;
 };
 
 int	pcfadc_match(struct device *, void *, void *);
@@ -124,9 +125,6 @@ pcfadc_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < sc->sc_nchan; i++) {
 		struct pcfadc_channel *chp = &sc->sc_channels[i];
 
-		bzero(&chp->chan_sensor, sizeof(chp->chan_sensor));
-		strlcpy(chp->chan_sensor.device, sc->sc_dev.dv_xname,
-		    sizeof(chp->chan_sensor.device));
 		chp->chan_sensor.type = SENSOR_TEMP;
 
 		if (cp >= desc + dlen) {
@@ -172,14 +170,20 @@ pcfadc_attach(struct device *parent, struct device *self, void *aux)
 	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
+
 	for (i = 0; i < sc->sc_nchan; i++)
 		if (!(sc->sc_channels[i].chan_sensor.flags & SENSOR_FINVALID))
-			sensor_add(&sc->sc_channels[i].chan_sensor);
+			sensor_attach(&sc->sc_sensordev, 
+			    &sc->sc_channels[i].chan_sensor);
 
 	if (sensor_task_register(sc, pcfadc_refresh, 5)) {
 		printf(": unable to register update task\n");
 		return;
 	}
+
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 }

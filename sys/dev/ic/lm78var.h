@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78var.h,v 1.6 2006/05/07 17:45:16 kettenis Exp $	*/
+/*	$OpenBSD: lm78var.h,v 1.7 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -131,6 +131,7 @@ struct lm_softc {
 	struct device sc_dev;
 
 	struct sensor sensors[WB_MAX_SENSORS];
+	struct sensordev sensordev;
 	struct lm_sensor *lm_sensors;
 	u_int numsensors;
 	void (*refresh_sensor_data) (struct lm_softc *);

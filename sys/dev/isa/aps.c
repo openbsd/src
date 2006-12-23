@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.8 2006/06/19 14:43:54 kettenis Exp $	*/
+/*	$OpenBSD: aps.c,v 1.9 2006/12/23 17:46:39 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -157,12 +157,8 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sensors[APS_SENSOR_YACCEL].desc), "Y_ACCEL");
 
 	sc->sensors[APS_SENSOR_TEMP1].type = SENSOR_TEMP;
-	snprintf(sc->sensors[APS_SENSOR_TEMP1].desc,
-	    sizeof(sc->sensors[APS_SENSOR_TEMP1].desc), "Temp 1");
 
 	sc->sensors[APS_SENSOR_TEMP2].type = SENSOR_TEMP;
-	snprintf(sc->sensors[APS_SENSOR_TEMP2].desc,
-	    sizeof(sc->sensors[APS_SENSOR_TEMP2].desc), "Temp 2");
 
 	sc->sensors[APS_SENSOR_XVAR].type = SENSOR_INTEGER;
 	snprintf(sc->sensors[APS_SENSOR_XVAR].desc,
@@ -189,11 +185,12 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sensors[APS_SENSOR_LIDOPEN].desc), "Lid Open");
 
 	/* stop hiding and report to the authorities */
+	strlcpy(sc->sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sensordev.xname));
 	for (i = 0; i < sc->numsensors; i++) {
-		strlcpy(sc->sensors[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sensors[i].device));
-		sensor_add(&sc->sensors[i]);
+		sensor_attach(&sc->sensordev, &sc->sensors[i]);
 	}
+	sensordev_install(&sc->sensordev);
 
 	powerhook_establish(aps_power, (void *)sc);
 

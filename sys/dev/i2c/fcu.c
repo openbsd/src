@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcu.c,v 1.3 2006/01/19 17:08:39 grange Exp $	*/
+/*	$OpenBSD: fcu.c,v 1.4 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -51,6 +51,7 @@ struct fcu_softc {
 	i2c_addr_t sc_addr;
 
 	struct sensor sc_sensor[FCU_NUM_SENSORS];
+	struct sensordev sc_sensordev;
 };
 
 int	fcu_match(struct device *, void *, void *);
@@ -87,19 +88,14 @@ fcu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_addr = ia->ia_addr;
 
 	/* Initialize sensor data. */
-	for (i = 0; i < FCU_FANS; i++) {
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
+	for (i = 0; i < FCU_FANS; i++)
 		sc->sc_sensor[i].type = SENSOR_FANRPM;
-		snprintf(sc->sc_sensor[i].desc,
-		    sizeof(sc->sc_sensor[i].desc), "FAN%d", i);
-	}
 	for (i = 0; i < FCU_PWMS; i++) {
-		strlcpy(sc->sc_sensor[FCU_PWM1 + i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[FCU_PWM1 + i].device));
 		sc->sc_sensor[FCU_PWM1 + i].type = SENSOR_FANRPM;
-		snprintf(sc->sc_sensor[FCU_PWM1 + i].desc,
-		    sizeof(sc->sc_sensor[FCU_PWM1 + i].desc), "PWM%d", i);
+		strlcpy(sc->sc_sensor[FCU_PWM1 + i].desc, "PWM",
+		    sizeof(sc->sc_sensor[FCU_PWM1 + i].desc));
 	}
 
 	if (sensor_task_register(sc, fcu_refresh, 5)) {
@@ -108,7 +104,8 @@ fcu_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < FCU_NUM_SENSORS; i++)
-		sensor_add(&sc->sc_sensor[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 }

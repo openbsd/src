@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.12 2006/12/21 11:23:41 deraadt Exp $ */
+/* $OpenBSD: acpidev.h,v 1.13 2006/12/23 17:46:39 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -258,7 +258,8 @@ struct acpiac_softc {
 
 	int			sc_ac_stat;
 
-	struct sensor sens[1];	/* XXX debug only */
+	struct sensor		sens[1];	/* XXX debug only */
+	struct sensordev	sc_sensdev;
 };
 
 struct acpibat_softc {
@@ -274,6 +275,7 @@ struct acpibat_softc {
 	struct acpibat_bst	sc_bst;
 	volatile int		sc_bat_present;
 
-	struct sensor		sc_sens[8]; /* XXX debug only */
+	struct sensor		sc_sens[8];	/* XXX debug only */
+	struct sensordev	sc_sensdev;
 };
 #endif /* __DEV_ACPI_ACPIDEV_H__ */

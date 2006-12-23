@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75.c,v 1.13 2006/08/19 15:55:47 deraadt Exp $	*/
+/*	$OpenBSD: lm75.c,v 1.14 2006/12/23 17:46:39 deraadt Exp $	*/
 /*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -62,6 +62,7 @@ struct lmtemp_softc {
 	int	sc_bits;
 
 	struct sensor sc_sensor;
+	struct sensordev sc_sensordev;
 };
 
 int  lmtemp_match(struct device *, void *, void *);
@@ -203,13 +204,14 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/* Initialize sensor data */
-	strlcpy(sc->sc_sensor.device, sc->sc_dev.dv_xname,
-	    sizeof(sc->sc_sensor.device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 	sc->sc_sensor.type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor.desc, "Temp", sizeof(sc->sc_sensor.desc));
 
 	/* Hook into the hw.sensors sysctl */
-	sensor_add(&sc->sc_sensor);
+	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
+	sensordev_install(&sc->sc_sensordev);
+
 
 	sensor_task_register(sc, lmtemp_refresh_sensor_data, LM_POLLTIME);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asms.c,v 1.3 2006/01/19 17:08:39 grange Exp $	*/
+/*	$OpenBSD: asms.c,v 1.4 2006/12/23 17:46:39 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -62,6 +62,7 @@ struct asms_softc {
 	i2c_addr_t	sc_addr;
 
 	struct sensor	sc_sensor[ASMS_NUM_SENSORS];
+	struct sensordev sc_sensordev;
 };
 
 int	asms_match(struct device *, void *, void *);
@@ -247,9 +248,8 @@ asms_attach(struct device *parent, struct device *self, void *aux)
 	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
-	for (i = 0; i < ASMS_NUM_SENSORS; i++)
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor[ASMS_DATA_X].type = SENSOR_INTEGER;
 	strlcpy(sc->sc_sensor[ASMS_DATA_X].desc, "X_ACCEL",
@@ -269,7 +269,8 @@ asms_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < ASMS_NUM_SENSORS; i++)
-		sensor_add(&sc->sc_sensor[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 }

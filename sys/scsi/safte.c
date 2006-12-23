@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.31 2006/11/28 16:56:50 dlg Exp $ */
+/*	$OpenBSD: safte.c,v 1.32 2006/12/23 17:46:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -71,6 +71,7 @@ struct safte_softc {
 
 	int			sc_nsensors;
 	struct safte_sensor	*sc_sensors;
+	struct sensordev	sc_sensordev;
 
 	int			sc_celsius;
 	int			sc_ntemps;
@@ -185,7 +186,9 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 		free(sc->sc_sensors, M_DEVBUF);
 	} else {
 		for (i = 0; i < sc->sc_nsensors; i++)
-			sensor_add(&sc->sc_sensors[i].se_sensor);
+			sensor_attach(&sc->sc_sensordev, 
+			    &sc->sc_sensors[i].se_sensor);
+		sensordev_install(&sc->sc_sensordev);
 	}
 
 #if NBIO > 0
@@ -219,10 +222,12 @@ safte_detach(struct device *self, int flags)
 #endif
 
 	if (sc->sc_nsensors > 0) {
+		sensordev_deinstall(&sc->sc_sensordev);
 		sensor_task_unregister(sc);
 
 		for (i = 0; i < sc->sc_nsensors; i++)
-			sensor_del(&sc->sc_sensors[i].se_sensor);
+			sensor_detach(&sc->sc_sensordev, 
+			    &sc->sc_sensors[i].se_sensor);
 		free(sc->sc_sensors, M_DEVBUF);
 	}
 
@@ -290,6 +295,9 @@ safte_read_config(struct safte_softc *sc)
 		return (1);
 	}
 
+	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensordev.xname));
+
 	memset(sc->sc_sensors, 0,
 	    sc->sc_nsensors * sizeof(struct safte_sensor));
 	s = sc->sc_sensors;
@@ -354,18 +362,12 @@ safte_read_config(struct safte_softc *sc)
 		s->se_type = SAFTE_T_TEMP;
 		s->se_field = (u_int8_t *)(sc->sc_encbuf + j + i);
 		s->se_sensor.type = SENSOR_TEMP;
-		snprintf(s->se_sensor.desc, sizeof(s->se_sensor.desc),
-		    "Temp%d", i);
 
 		s++;
 	}
 	j += config.ntemps;
 
 	sc->sc_temperrs = (u_int16_t *)(sc->sc_encbuf + j);
-
-	for (i = 0; i < sc->sc_nsensors; i++)
-		strlcpy(sc->sc_sensors[i].se_sensor.device, DEVNAME(sc),
-		    sizeof(sc->sc_sensors[i].se_sensor.device));
 
 	return (0);
 }

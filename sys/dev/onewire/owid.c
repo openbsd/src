@@ -1,4 +1,4 @@
-/*	$OpenBSD: owid.c,v 1.2 2006/06/23 06:27:11 miod Exp $	*/
+/*	$OpenBSD: owid.c,v 1.3 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -38,6 +38,7 @@ struct owid_softc {
 	u_int64_t		sc_rom;
 
 	struct sensor		sc_sensor;
+	struct sensordev	sc_sensordev;
 
 	int			sc_dying;
 };
@@ -80,12 +81,13 @@ owid_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rom = oa->oa_rom;
 
 	/* Initialize sensor */
-	strlcpy(sc->sc_sensor.device, sc->sc_dev.dv_xname,
-	    sizeof(sc->sc_sensor.device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 	sc->sc_sensor.type = SENSOR_INTEGER;
 	strlcpy(sc->sc_sensor.desc, "ID", sizeof(sc->sc_sensor.desc));
 	sc->sc_sensor.value = ONEWIRE_ROM_SN(sc->sc_rom);
-	sensor_add(&sc->sc_sensor);
+	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 }
@@ -95,7 +97,7 @@ owid_detach(struct device *self, int flags)
 {
 	struct owid_softc *sc = (struct owid_softc *)self;
 
-	sensor_del(&sc->sc_sensor);
+	sensordev_deinstall(&sc->sc_sensordev);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1026.c,v 1.7 2006/04/10 00:57:23 deraadt Exp $	*/
+/*	$OpenBSD: adm1026.c,v 1.8 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -79,6 +79,7 @@ struct admcts_softc {
 	i2c_addr_t	sc_addr;
 
 	struct sensor	sc_sensor[ADMCTS_NUM_SENSORS];
+	struct sensordev sc_sensordev;
 	int		sc_fanmul[8];
 };
 
@@ -161,12 +162,11 @@ admcts_attach(struct device *parent, struct device *self, void *aux)
 	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
-	for (i = 0; i < ADMCTS_NUM_SENSORS; i++)
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor[ADMCTS_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMCTS_TEMP].desc, "Internal Temp",
+	strlcpy(sc->sc_sensor[ADMCTS_TEMP].desc, "Internal",
 	    sizeof(sc->sc_sensor[ADMCTS_TEMP].desc));
 
 	sc->sc_sensor[ADMCTS_Vbat].type = SENSOR_VOLTS_DC;
@@ -174,11 +174,11 @@ admcts_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensor[ADMCTS_Vbat].desc));
 
 	sc->sc_sensor[ADMCTS_EXT1].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMCTS_EXT1].desc, "External1 Temp",
+	strlcpy(sc->sc_sensor[ADMCTS_EXT1].desc, "External",
 	    sizeof(sc->sc_sensor[ADMCTS_EXT1].desc));
 
 	sc->sc_sensor[ADMCTS_EXT2].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMCTS_EXT2].desc, "External2 Temp",
+	strlcpy(sc->sc_sensor[ADMCTS_EXT2].desc, "External",
 	    sizeof(sc->sc_sensor[ADMCTS_EXT2].desc));
 
 	sc->sc_sensor[ADMCTS_V3_3stby].type = SENSOR_VOLTS_DC;
@@ -206,36 +206,12 @@ admcts_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensor[ADMCTS_Vminus12].desc));
 
 	sc->sc_sensor[ADMCTS_FAN1].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADMCTS_FAN1].desc, "Fan1",
-	    sizeof(sc->sc_sensor[ADMCTS_FAN1].desc));
-
 	sc->sc_sensor[ADMCTS_FAN2].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADMCTS_FAN2].desc, "Fan2",
-	    sizeof(sc->sc_sensor[ADMCTS_FAN2].desc));
-
-	sc->sc_sensor[ADMCTS_FAN2].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADMCTS_FAN2].desc, "Fan2",
-	    sizeof(sc->sc_sensor[ADMCTS_FAN2].desc));
-
 	sc->sc_sensor[ADMCTS_FAN3].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADMCTS_FAN3].desc, "Fan3",
-	    sizeof(sc->sc_sensor[ADMCTS_FAN3].desc));
-
 	sc->sc_sensor[ADMCTS_FAN4].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADMCTS_FAN4].desc, "Fan4",
-	    sizeof(sc->sc_sensor[ADMCTS_FAN4].desc));
-
 	sc->sc_sensor[ADMCTS_FAN5].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADMCTS_FAN5].desc, "Fan5",
-	    sizeof(sc->sc_sensor[ADMCTS_FAN5].desc));
-
 	sc->sc_sensor[ADMCTS_FAN6].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADMCTS_FAN6].desc, "Fan6",
-	    sizeof(sc->sc_sensor[ADMCTS_FAN6].desc));
-
 	sc->sc_sensor[ADMCTS_FAN7].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADMCTS_FAN7].desc, "Fan7",
-	    sizeof(sc->sc_sensor[ADMCTS_FAN7].desc));
 
 	if (sensor_task_register(sc, admcts_refresh, 5)) {
 		printf(", unable to register update task\n");
@@ -243,7 +219,8 @@ admcts_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < ADMCTS_NUM_SENSORS; i++)
-		sensor_add(&sc->sc_sensor[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 }

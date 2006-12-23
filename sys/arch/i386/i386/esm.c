@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.43 2006/11/26 11:21:55 mbalmer Exp $ */
+/*	$OpenBSD: esm.c,v 1.44 2006/12/23 17:46:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -115,6 +115,7 @@ struct esm_softc {
 
 	TAILQ_HEAD(, esm_sensor) sc_sensors;
 	struct esm_sensor	*sc_nextsensor;
+	struct sensordev	sc_sensordev;
 	int			sc_retries;
 	volatile int		sc_step;
 	struct timeout		sc_timeout;
@@ -926,11 +927,13 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 			break;
 		}
 
+		strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
+		    sizeof(sc->sc_sensordev.xname));
 		for (j = 0; j < nsensors; j++) {
 			s[j].type = esm_typemap[es->es_type];
-			strlcpy(s[j].device, DEVNAME(sc), sizeof(s[j].device));
-			sensor_add(&s[j]);
+			sensor_attach(&sc->sc_sensordev, &s[j]);
 		}
+		sensordev_install(&sc->sc_sensordev);
 
 		es->es_sensor = s;
 		TAILQ_INSERT_TAIL(&sc->sc_sensors, es, es_entry);

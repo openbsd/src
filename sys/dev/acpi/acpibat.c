@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.35 2006/12/21 19:59:02 deraadt Exp $ */
+/* $OpenBSD: acpibat.c,v 1.36 2006/12/23 17:46:39 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -104,64 +104,64 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 void
 acpibat_monitor(struct acpibat_softc *sc)
 {
-	int			i, type;
+	int			type;
 
 	/* assume _BIF and _BST have been called */
-	memset(sc->sc_sens, 0, sizeof(sc->sc_sens));
-	for (i = 0; i < 8; i++)
-		strlcpy(sc->sc_sens[i].device, DEVNAME(sc),
-		    sizeof(sc->sc_sens[i].device));
+	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensdev.xname));
 
 	type = sc->sc_bif.bif_power_unit ? SENSOR_AMPHOUR : SENSOR_WATTHOUR;
 
 	strlcpy(sc->sc_sens[0].desc, "last full capacity",
 	    sizeof(sc->sc_sens[0].desc));
 	sc->sc_sens[0].type = type;
-	sensor_add(&sc->sc_sens[0]);
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[0]);
 	sc->sc_sens[0].value = sc->sc_bif.bif_last_capacity * 1000;
 
 	strlcpy(sc->sc_sens[1].desc, "warning capacity",
 	    sizeof(sc->sc_sens[1].desc));
 	sc->sc_sens[1].type = type;
-	sensor_add(&sc->sc_sens[1]);
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[1]);
 	sc->sc_sens[1].value = sc->sc_bif.bif_warning * 1000;
 
 	strlcpy(sc->sc_sens[2].desc, "low capacity",
 	    sizeof(sc->sc_sens[2].desc));
 	sc->sc_sens[2].type = type;
-	sensor_add(&sc->sc_sens[2]);
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[2]);
 	sc->sc_sens[2].value = sc->sc_bif.bif_low * 1000;
 
 	strlcpy(sc->sc_sens[3].desc, "voltage", sizeof(sc->sc_sens[3].desc));
 	sc->sc_sens[3].type = SENSOR_VOLTS_DC;
-	sensor_add(&sc->sc_sens[3]);
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[3]);
 	sc->sc_sens[3].status = SENSOR_S_OK;
 	sc->sc_sens[3].value = sc->sc_bif.bif_voltage * 1000;
 
 	strlcpy(sc->sc_sens[4].desc, "battery unknown",
 	    sizeof(sc->sc_sens[4].desc));
 	sc->sc_sens[4].type = SENSOR_INTEGER;
-	sensor_add(&sc->sc_sens[4]);
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[4]);
 	sc->sc_sens[4].status = SENSOR_S_UNKNOWN;
 	sc->sc_sens[4].value = sc->sc_bst.bst_state;
 
 	strlcpy(sc->sc_sens[5].desc, "rate", sizeof(sc->sc_sens[5].desc));
 	sc->sc_sens[5].type = SENSOR_INTEGER;
-	sensor_add(&sc->sc_sens[5]);
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[5]);
 	sc->sc_sens[5].value = sc->sc_bst.bst_rate;
 
 	strlcpy(sc->sc_sens[6].desc, "remaining capacity",
 	    sizeof(sc->sc_sens[6].desc));
 	sc->sc_sens[6].type = type;
-	sensor_add(&sc->sc_sens[6]);
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[6]);
 	sc->sc_sens[6].value = sc->sc_bst.bst_capacity * 1000;
 
 	strlcpy(sc->sc_sens[7].desc, "current voltage",
 	    sizeof(sc->sc_sens[7].desc));
 	sc->sc_sens[7].type = SENSOR_VOLTS_DC;
-	sensor_add(&sc->sc_sens[7]);
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[7]);
 	sc->sc_sens[7].status = SENSOR_S_OK;
 	sc->sc_sens[7].value = sc->sc_bst.bst_voltage * 1000;
+
+	sensordev_install(&sc->sc_sensdev);
 }
 
 void

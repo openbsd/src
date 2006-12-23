@@ -1,4 +1,4 @@
-/*	$OpenBSD: fintek.c,v 1.2 2006/08/26 10:42:57 kettenis Exp $ */
+/*	$OpenBSD: fintek.c,v 1.3 2006/12/23 17:46:39 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
  *
@@ -39,6 +39,7 @@ struct fintek_softc {
 	i2c_addr_t sc_addr;
 
 	struct sensor sc_sensor[F_NUM_SENSORS];
+	struct sensordev sc_sensordev;
 };
 
 int	fintek_match(struct device *, void *, void *);
@@ -137,41 +138,22 @@ fintek_attach(struct device *parent, struct device *self, void *aux)
 
 	iic_release_bus(sc->sc_tag, 0);
 
-	for (i = 0; i < F_NUM_SENSORS; i++)
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor[F_VCC].type = SENSOR_VOLTS_DC;
 	strlcpy(sc->sc_sensor[F_VCC].desc, "VCC",
 	    sizeof(sc->sc_sensor[F_VCC].desc));
 
 	sc->sc_sensor[F_V1].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[F_V1].desc, "Volt1",
-	    sizeof(sc->sc_sensor[F_V1].desc));
-
 	sc->sc_sensor[F_V2].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[F_V2].desc, "Volt2",
-	    sizeof(sc->sc_sensor[F_V2].desc));
-
 	sc->sc_sensor[F_V3].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[F_V3].desc, "Volt3",
-	    sizeof(sc->sc_sensor[F_V3].desc));
 
 	sc->sc_sensor[F_TEMP1].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[F_TEMP1].desc, "Temp1",
-	    sizeof(sc->sc_sensor[F_TEMP1].desc));
-
 	sc->sc_sensor[F_TEMP2].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[F_TEMP2].desc, "Temp2",
-	    sizeof(sc->sc_sensor[F_TEMP2].desc));
 
 	sc->sc_sensor[F_FAN1].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[F_FAN1].desc, "Fan1",
-	    sizeof(sc->sc_sensor[F_FAN1].desc));
-
 	sc->sc_sensor[F_FAN2].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[F_FAN2].desc, "Fan2",
-	    sizeof(sc->sc_sensor[F_FAN2].desc));
 
 	if (sensor_task_register(sc, fintek_refresh, 5)) {
 		printf(", unable to register update task\n");
@@ -180,8 +162,9 @@ fintek_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; i < F_NUM_SENSORS; i++) {
 		sc->sc_sensor[i].flags &= ~SENSOR_FINVALID;
-		sensor_add(&sc->sc_sensor[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
 	}
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 	return;

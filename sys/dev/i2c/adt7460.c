@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7460.c,v 1.13 2006/04/17 06:20:00 deraadt Exp $	*/
+/*	$OpenBSD: adt7460.c,v 1.14 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -87,6 +87,7 @@ struct adt_softc {
 	struct adt_chip *chip;
 
 	struct sensor sc_sensor[ADT_NUM_SENSORS];
+	struct sensordev sc_sensordev;
 };
 
 int	adt_match(struct device *, void *, void *);
@@ -166,9 +167,8 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s rev 0x%02x", ia->ia_name, rev);
 
 	/* Initialize sensor data. */
-	for (i = 0; i < ADT_NUM_SENSORS; i++)
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor[ADT_2_5V].type = SENSOR_VOLTS_DC;
 	strlcpy(sc->sc_sensor[ADT_2_5V].desc, "+2.5Vin",
@@ -194,32 +194,21 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensor[ADT_V12].desc));
 
 	sc->sc_sensor[ADT_REM1_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADT_REM1_TEMP].desc, "Remote1 Temp",
+	strlcpy(sc->sc_sensor[ADT_REM1_TEMP].desc, "Remote",
 	    sizeof(sc->sc_sensor[ADT_REM1_TEMP].desc));
 
 	sc->sc_sensor[ADT_LOCAL_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADT_LOCAL_TEMP].desc, "Internal Temp",
+	strlcpy(sc->sc_sensor[ADT_LOCAL_TEMP].desc, "Internal",
 	    sizeof(sc->sc_sensor[ADT_LOCAL_TEMP].desc));
 
 	sc->sc_sensor[ADT_REM2_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADT_REM2_TEMP].desc, "Remote2 Temp",
+	strlcpy(sc->sc_sensor[ADT_REM2_TEMP].desc, "Remote",
 	    sizeof(sc->sc_sensor[ADT_REM2_TEMP].desc));
 
 	sc->sc_sensor[ADT_TACH1].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADT_TACH1].desc, "TACH1",
-	    sizeof(sc->sc_sensor[ADT_TACH1].desc));
-
 	sc->sc_sensor[ADT_TACH2].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADT_TACH2].desc, "TACH2",
-	    sizeof(sc->sc_sensor[ADT_TACH2].desc));
-
 	sc->sc_sensor[ADT_TACH3].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADT_TACH3].desc, "TACH3",
-	    sizeof(sc->sc_sensor[ADT_TACH3].desc));
-
 	sc->sc_sensor[ADT_TACH4].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADT_TACH4].desc, "TACH4",
-	    sizeof(sc->sc_sensor[ADT_TACH4].desc));
 
 	if (sensor_task_register(sc, adt_refresh, 5)) {
 		printf(", unable to register update task\n");
@@ -228,8 +217,10 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; i < ADT_NUM_SENSORS; i++) {
 		sc->sc_sensor[i].flags &= ~SENSOR_FINVALID;
-		sensor_add(&sc->sc_sensor[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
 	}
+	sensordev_install(&sc->sc_sensordev);
+
 
 	printf("\n");
 }

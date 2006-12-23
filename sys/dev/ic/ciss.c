@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.22 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.23 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -425,11 +425,12 @@ ciss_attach(struct ciss_softc *sc)
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->sensors) {
 		bzero(sc->sensors, sizeof(struct sensor) * sc->maxunits);
-		for (i = 0; i < sc->maxunits; sensor_add(&sc->sensors[i++])) {
+		strlcpy(sc->sensordev.xname, sc->sc_dev.dv_xname,
+		    sizeof(sc->sensordev.xname));
+		for (i = 0; i < sc->maxunits;
+		    sensor_attach(&sc->sensordev, &sc->sensors[i++])) {
 			sc->sensors[i].type = SENSOR_DRIVE;
 			sc->sensors[i].status = SENSOR_S_UNKNOWN;
-			strlcpy(sc->sensors[i].device, sc->sc_dev.dv_xname,
-			    sizeof(sc->sensors[i].device));
 			strlcpy(sc->sensors[i].desc, ((struct device *)
 			    scsibus->sc_link[i][0]->device_softc)->dv_xname,
 			    sizeof(sc->sensors[i].desc));
@@ -437,11 +438,10 @@ ciss_attach(struct ciss_softc *sc)
 			    scsibus->sc_link[i][0]->device_softc)->dv_xname,
 			    sizeof(sc->sc_lds[i]->xname));
 		}
-		if (sensor_task_register(sc, ciss_sensors, 10)) {
-			for (i = sc->maxunits; i--; )
-				sensor_del(&sc->sensors[i]);
+		if (sensor_task_register(sc, ciss_sensors, 10))
 			free(sc->sensors, M_DEVBUF);
-		}
+		else
+			sensordev_install(&sc->sensordev);
 	}
 #endif
 

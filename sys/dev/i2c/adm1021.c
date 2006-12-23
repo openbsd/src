@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.24 2006/07/20 21:23:42 kettenis Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.25 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -46,6 +46,7 @@ struct admtemp_softc {
 	i2c_addr_t	sc_addr;
 
 	struct sensor	sc_sensor[ADMTEMP_NUM_SENSORS];
+	struct sensordev sc_sensordev;
 	int		sc_noexternal;
 };
 
@@ -137,18 +138,17 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
-	for (i = 0; i < ADMTEMP_NUM_SENSORS; i++)
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor[ADMTEMP_EXT].type = SENSOR_TEMP;
 	strlcpy(sc->sc_sensor[ADMTEMP_EXT].desc,
-	    xeon ? "Xeon Temp" : "External Temp",
+	    xeon ? "Xeon" : "External",
 	    sizeof(sc->sc_sensor[ADMTEMP_EXT].desc));
 
 	sc->sc_sensor[ADMTEMP_INT].type = SENSOR_TEMP;
 	strlcpy(sc->sc_sensor[ADMTEMP_INT].desc,
-	    xeon ? "Xeon Temp" : "Internal Temp",
+	    xeon ? "Xeon" : "Internal",
 	    sizeof(sc->sc_sensor[ADMTEMP_INT].desc));
 
 	if (sensor_task_register(sc, admtemp_refresh, 5)) {
@@ -157,7 +157,8 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < (sc->sc_noexternal ? 1 : ADMTEMP_NUM_SENSORS); i++)
-		sensor_add(&sc->sc_sensor[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 }

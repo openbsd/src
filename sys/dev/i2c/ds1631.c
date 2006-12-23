@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds1631.c,v 1.6 2006/04/10 00:57:23 deraadt Exp $	*/
+/*	$OpenBSD: ds1631.c,v 1.7 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -41,6 +41,7 @@ struct maxds_softc {
 	i2c_addr_t	sc_addr;
 
 	struct sensor	sc_sensor[MAXDS_NUM_SENSORS];
+	struct sensordev sc_sensordev;
 };
 
 int	maxds_match(struct device *, void *, void *);
@@ -112,12 +113,11 @@ dostart:
 	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
-	for (i = 0; i < MAXDS_NUM_SENSORS; i++)
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor[MAXDS_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[MAXDS_TEMP].desc, "Internal Temp",
+	strlcpy(sc->sc_sensor[MAXDS_TEMP].desc, "Internal",
 	    sizeof(sc->sc_sensor[MAXDS_TEMP].desc));
 
 	if (sensor_task_register(sc, maxds_refresh, 5)) {
@@ -126,7 +126,8 @@ dostart:
 	}
 
 	for (i = 0; i < MAXDS_NUM_SENSORS; i++)
-		sensor_add(&sc->sc_sensor[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 }

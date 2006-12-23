@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.12 2006/12/21 11:23:41 deraadt Exp $ */
+/* $OpenBSD: acpitz.c,v 1.13 2006/12/23 17:46:39 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -52,6 +52,7 @@ struct acpitz_softc {
 	int			sc_tc2;
 	int			sc_lasttmp;
 	struct sensor		sc_sens;
+	struct sensordev	sc_sensdev;
 };
 
 int	acpitz_match(struct device *, void *, void *);
@@ -128,12 +129,13 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	aml_register_notify(sc->sc_devnode->parent, NULL,
 	    acpitz_notify, sc);
 
-	memset(&sc->sc_sens, 0, sizeof(sc->sc_sens));
-	strlcpy(sc->sc_sens.device, DEVNAME(sc), sizeof(sc->sc_sens.device));
+	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensdev.xname));
 	strlcpy(sc->sc_sens.desc, "zone temperature",
 	    sizeof(sc->sc_sens.desc));
 	sc->sc_sens.type = SENSOR_TEMP;
-	sensor_add(&sc->sc_sens);
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens);
+	sensordev_install(&sc->sc_sensdev);
 	sc->sc_sens.value = 0;
 }
 

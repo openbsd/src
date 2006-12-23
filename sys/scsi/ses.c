@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.41 2006/11/28 16:56:50 dlg Exp $ */
+/*	$OpenBSD: ses.c,v 1.42 2006/12/23 17:46:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -83,6 +83,7 @@ struct ses_softc {
 	TAILQ_HEAD(, ses_slot)	sc_slots;
 #endif
 	TAILQ_HEAD(, ses_sensor) sc_sensors;
+	struct sensordev	sc_sensordev;
 };
 
 struct cfattach ses_ca = {
@@ -178,7 +179,8 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 		}
 	} else {
 		TAILQ_FOREACH(sensor, &sc->sc_sensors, se_entry)
-			sensor_add(&sensor->se_sensor);
+			sensor_attach(&sc->sc_sensordev, &sensor->se_sensor);
+		sensordev_install(&sc->sc_sensordev);
 	}
 
 #if NBIO > 0
@@ -226,11 +228,12 @@ ses_detach(struct device *self, int flags)
 #endif
 
 	if (!TAILQ_EMPTY(&sc->sc_sensors)) {
+		sensordev_deinstall(&sc->sc_sensordev);
 		sensor_task_unregister(sc);
 
 		while (!TAILQ_EMPTY(&sc->sc_sensors)) {
 			sensor = TAILQ_FIRST(&sc->sc_sensors);
-			sensor_del(&sensor->se_sensor);
+			sensor_detach(&sc->sc_sensordev, &sensor->se_sensor);
 			TAILQ_REMOVE(&sc->sc_sensors, sensor, se_entry);
 			free(sensor, M_DEVBUF);
 		}
@@ -384,16 +387,13 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 #endif
 	enum sensor_type		stype;
 	char				*fmt;
-	int				*typecnt;
 	int				i, j;
 
 	if (ses_read_status(sc) != 0)
 		return (1);
 
-	typecnt = malloc(sizeof(int) * SES_NUM_TYPES, M_TEMP, M_NOWAIT);
-	if (typecnt == NULL)
-		return (1);
-	memset(typecnt, 0, sizeof(int) * SES_NUM_TYPES);
+	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensordev.xname));
 
 	TAILQ_INIT(&sc->sc_sensors);
 #if NBIO > 0
@@ -437,17 +437,17 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 
 			case SES_T_POWERSUPPLY:
 				stype = SENSOR_INDICATOR;
-				fmt = "PSU%d";
+				fmt = "PSU";
 				break;
 
 			case SES_T_COOLING:
 				stype = SENSOR_PERCENT;
-				fmt = "Fan%d";
+				fmt = "Fan";
 				break;
 
 			case SES_T_TEMP:
 				stype = SENSOR_TEMP;
-				fmt = "Temp%d";
+				fmt = "";
 				break;
 
 			default:
@@ -463,11 +463,8 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 			sensor->se_type = types[i].type;
 			sensor->se_stat = status;
 			sensor->se_sensor.type = stype;
-			strlcpy(sensor->se_sensor.device, DEVNAME(sc),
-			    sizeof(sensor->se_sensor.device));
-			snprintf(sensor->se_sensor.desc,
-			    sizeof(sensor->se_sensor.desc), fmt, 
-			    typecnt[types[i].type]++);
+			strlcpy(sensor->se_sensor.desc, fmt,
+			    sizeof(sensor->se_sensor.desc));
 
 			TAILQ_INSERT_TAIL(&sc->sc_sensors, sensor, se_entry);
 		}
@@ -476,7 +473,6 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 		status++;
 	}
 
-	free(typecnt, M_TEMP);
 	return (0);
 error:
 #if NBIO > 0
@@ -491,7 +487,6 @@ error:
 		TAILQ_REMOVE(&sc->sc_sensors, sensor, se_entry);
 		free(sensor, M_DEVBUF);
 	}
-	free(typecnt, M_TEMP);
 	return (1);
 }
 

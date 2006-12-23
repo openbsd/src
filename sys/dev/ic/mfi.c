@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.67 2006/12/23 17:46:39 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1794,6 +1794,9 @@ mfi_create_sensors(struct mfi_softc *sc)
 		return (1);
 	bzero(sc->sc_sensors, sizeof(struct sensor) * sc->sc_ld_cnt);	
 
+	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensordev.xname));
+
 	for (i = 0; i < sc->sc_ld_cnt; i++) {
 		if (ssc->sc_link[i][0] == NULL)
 			goto bad;
@@ -1803,22 +1806,20 @@ mfi_create_sensors(struct mfi_softc *sc)
 		sc->sc_sensors[i].type = SENSOR_DRIVE;
 		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
 
-		strlcpy(sc->sc_sensors[i].device, DEVNAME(sc),
-		    sizeof(sc->sc_sensors[i].device));
 		strlcpy(sc->sc_sensors[i].desc, dev->dv_xname,
 		    sizeof(sc->sc_sensors[i].desc));
 
-		sensor_add(&sc->sc_sensors[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[i]);
 	}
 
 	if (sensor_task_register(sc, mfi_refresh_sensors, 10) != 0)
 		goto bad;
 
+	sensordev_install(&sc->sc_sensordev);
+
 	return (0);
 
 bad:
-	while (--i >= 0)
-		sensor_del(&sc->sc_sensors[i]);
 	free(sc->sc_sensors, M_DEVBUF);
 
 	return (1);

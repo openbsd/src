@@ -1,4 +1,4 @@
-/*	$OpenBSD: maxim6690.c,v 1.12 2006/11/20 21:53:02 kettenis Exp $	*/
+/*	$OpenBSD: maxim6690.c,v 1.13 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -55,6 +55,7 @@ struct maxtmp_softc {
 	u_int8_t sc_temp2_mask;
 
 	struct sensor sc_sensor[MAXTMP_NUM_SENSORS];
+	struct sensordev sc_sensordev;
 };
 
 int	maxtmp_match(struct device *, void *, void *);
@@ -120,16 +121,15 @@ maxtmp_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s", ia->ia_name);
 
 	/* Initialize sensor data. */
-	for (i = 0; i < MAXTMP_NUM_SENSORS; i++)
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor[MAXTMP_INT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[MAXTMP_INT].desc, "Internal Temp",
+	strlcpy(sc->sc_sensor[MAXTMP_INT].desc, "Internal",
 	    sizeof(sc->sc_sensor[MAXTMP_INT].desc));
 
 	sc->sc_sensor[MAXTMP_EXT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[MAXTMP_EXT].desc, "External Temp",
+	strlcpy(sc->sc_sensor[MAXTMP_EXT].desc, "External",
 	    sizeof(sc->sc_sensor[MAXTMP_EXT].desc));
 
 	if (sensor_task_register(sc, maxtmp_refresh, 5)) {
@@ -138,7 +138,8 @@ maxtmp_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < MAXTMP_NUM_SENSORS; i++)
-		sensor_add(&sc->sc_sensor[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 }

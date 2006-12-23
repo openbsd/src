@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1024.c,v 1.11 2006/04/10 00:57:23 deraadt Exp $	*/
+/*	$OpenBSD: adm1024.c,v 1.12 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -62,6 +62,7 @@ struct admlc_softc {
 	i2c_addr_t	sc_addr;
 
 	struct sensor	sc_sensor[ADMLC_NUM_SENSORS];
+	struct sensordev sc_sensordev;
 	int		sc_fan1mul;
 	int		sc_fan2mul;
 };
@@ -130,16 +131,15 @@ admlc_attach(struct device *parent, struct device *self, void *aux)
 	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
-	for (i = 0; i < ADMLC_NUM_SENSORS; i++)
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor[ADMLC_INT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMLC_INT].desc, "Internal Temp",
+	strlcpy(sc->sc_sensor[ADMLC_INT].desc, "Internal",
 	    sizeof(sc->sc_sensor[ADMLC_INT].desc));
 
 	sc->sc_sensor[ADMLC_EXT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMLC_EXT].desc, "External Temp",
+	strlcpy(sc->sc_sensor[ADMLC_EXT].desc, "External",
 	    sizeof(sc->sc_sensor[ADMLC_EXT].desc));
 
 	sc->sc_sensor[ADMLC_V2_5].type = SENSOR_VOLTS_DC;
@@ -167,12 +167,8 @@ admlc_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensor[ADMLC_Vccp2].desc));
 
 	sc->sc_sensor[ADMLC_FAN1].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADMLC_FAN1].desc, "Fan1",
-	    sizeof(sc->sc_sensor[ADMLC_FAN1].desc));
 
 	sc->sc_sensor[ADMLC_FAN2].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ADMLC_FAN2].desc, "Fan2",
-	    sizeof(sc->sc_sensor[ADMLC_FAN2].desc));
 
 
 	if (sensor_task_register(sc, admlc_refresh, 5)) {
@@ -181,7 +177,8 @@ admlc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < ADMLC_NUM_SENSORS; i++)
-		sensor_add(&sc->sc_sensor[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 }

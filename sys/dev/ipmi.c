@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.51 2006/12/23 17:36:59 deraadt Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.52 2006/12/23 17:46:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1485,8 +1485,6 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
 		psensor->stype = sensor_type;
 		psensor->etype = ext_type;
 		psensor->i_sensor.type = typ;
-		strlcpy(psensor->i_sensor.device, DEVNAME(sc),
-		    sizeof(psensor->i_sensor.device));
 		if (count > 1)
 			snprintf(psensor->i_sensor.desc,
 			    sizeof(psensor->i_sensor.desc),
@@ -1501,7 +1499,7 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
 		    psensor->i_sensor.desc);
 		if (read_sensor(sc, psensor) == 0) {
 			SLIST_INSERT_HEAD(&ipmi_sensor_list, psensor, list);
-			sensor_add(&psensor->i_sensor);
+			sensor_attach(&sc->sc_sensordev, &psensor->i_sensor);
 			dbg_printf(5, "	 reading: %lld [%s]\n",
 			    psensor->i_sensor.value,
 			    psensor->i_sensor.desc);
@@ -1710,6 +1708,10 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Setup threads */
 	kthread_create_deferred(ipmi_create_thread, sc);
+
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
+	sensordev_install(&sc->sc_sensordev);
 
 	printf(": version %d.%d interface %s %sbase 0x%x/%x spacing %d",
 	    ia->iaa_if_rev >> 4, ia->iaa_if_rev & 0xF, sc->sc_if->name,

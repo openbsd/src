@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.56 2006/12/22 22:55:36 deraadt Exp $ */
+/*	$OpenBSD: arc.c,v 1.57 2006/12/23 17:46:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -385,6 +385,7 @@ struct arc_softc {
 	volatile int		sc_talking;
 
 	struct sensor		*sc_sensors;
+	struct sensordev	sc_sensordev;
 	int			sc_nsensors;
 };
 #define DEVNAME(_s)		((_s)->sc_dev.dv_xname)
@@ -1573,6 +1574,9 @@ arc_create_sensors(void *xsc, void *arg)
 		return;
 	bzero(sc->sc_sensors, sizeof(struct sensor) * sc->sc_nsensors);
 
+	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensordev.xname));
+
 	for (i = 0; i < sc->sc_nsensors; i++) {
 		bzero(&bv, sizeof(bv));
 		bv.bv_volid = i;
@@ -1582,22 +1586,20 @@ arc_create_sensors(void *xsc, void *arg)
 		sc->sc_sensors[i].type = SENSOR_DRIVE;
 		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
 
-		strlcpy(sc->sc_sensors[i].device, DEVNAME(sc),
-		    sizeof(sc->sc_sensors[i].device));
 		strlcpy(sc->sc_sensors[i].desc, bv.bv_dev,
 		    sizeof(sc->sc_sensors[i].desc));
 
-		sensor_add(&sc->sc_sensors[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[i]);
 	}
 
 	if (sensor_task_register(sc, arc_refresh_sensors, 120) != 0)
 		goto bad;
 
+	sensordev_install(&sc->sc_sensordev);
+
 	return;
 
 bad:
-	while (--i >= 0)
-		sensor_del(&sc->sc_sensors[i]);
 	free(sc->sc_sensors, M_DEVBUF);
 }
 

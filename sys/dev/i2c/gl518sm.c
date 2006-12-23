@@ -1,4 +1,4 @@
-/*	$OpenBSD: gl518sm.c,v 1.3 2006/01/26 22:25:34 kettenis Exp $	*/
+/*	$OpenBSD: gl518sm.c,v 1.4 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -60,6 +60,7 @@ struct glenv_softc {
 	i2c_addr_t sc_addr;
 
 	struct sensor sc_sensor[GLENV_NUM_SENSORS];
+	struct sensordev sc_sensordev;
 	int	sc_fan1_div, sc_fan2_div;
 };
 
@@ -141,25 +142,16 @@ glenv_attach(struct device *parent, struct device *self, void *aux)
 	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
-	for (i = 0; i < GLENV_NUM_SENSORS; i++)
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor[GLENV_VIN3].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[GLENV_VIN3].desc, "Vin3",
-	    sizeof(sc->sc_sensor[GLENV_VIN3].desc));
 
 	sc->sc_sensor[GLENV_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[GLENV_TEMP].desc, "Temp",
-	    sizeof(sc->sc_sensor[GLENV_TEMP].desc));
 
 	sc->sc_sensor[GLENV_FAN1].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[GLENV_FAN1].desc, "Fan1",
-	    sizeof(sc->sc_sensor[GLENV_FAN1].desc));
 
 	sc->sc_sensor[GLENV_FAN2].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[GLENV_FAN2].desc, "Fan2",
-	    sizeof(sc->sc_sensor[GLENV_FAN2].desc));
 	if (sc->sc_fan2_div == -1)
 		sc->sc_sensor[GLENV_FAN2].flags |= SENSOR_FINVALID;
 
@@ -169,7 +161,8 @@ glenv_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < GLENV_NUM_SENSORS; i++)
-		sensor_add(&sc->sc_sensor[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 }

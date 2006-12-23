@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.16 2006/04/09 21:06:33 deraadt Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.17 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -62,6 +62,7 @@ struct lmenv_softc {
 	i2c_addr_t sc_addr;
 
 	struct sensor sc_sensor[LMENV_NUM_SENSORS];
+	struct sensordev sc_sensordev;
 	int	sc_fan1_div, sc_fan2_div;
 	int	sc_family;
 };
@@ -169,16 +170,15 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
-	for (i = 0; i < LMENV_NUM_SENSORS; i++)
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor[LMENV_2_5V].type = SENSOR_VOLTS_DC;
 	strlcpy(sc->sc_sensor[LMENV_2_5V].desc, "+2.5Vin",
 	    sizeof(sc->sc_sensor[LMENV_2_5V].desc));
 
 	sc->sc_sensor[LMENV_VCCP1].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[LMENV_VCCP1].desc, "Vccp1",
+	strlcpy(sc->sc_sensor[LMENV_VCCP1].desc, "Vccp",
 	    sizeof(sc->sc_sensor[LMENV_VCCP1].desc));
 
 	sc->sc_sensor[LMENV_VCC].type = SENSOR_VOLTS_DC;
@@ -194,17 +194,17 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensor[LMENV_12V].desc));
 
 	sc->sc_sensor[LMENV_VCCP2].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[LMENV_VCCP2].desc, "Vccp2",
+	strlcpy(sc->sc_sensor[LMENV_VCCP2].desc, "Vccp",
 	    sizeof(sc->sc_sensor[LMENV_VCCP2].desc));
 
 	sc->sc_sensor[LMENV_EXT_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[LMENV_EXT_TEMP].desc, "External Temp",
+	strlcpy(sc->sc_sensor[LMENV_EXT_TEMP].desc, "External",
 	    sizeof(sc->sc_sensor[LMENV_EXT_TEMP].desc));
 	if (sc->sc_family == 81)
 		sc->sc_sensor[LMENV_EXT_TEMP].flags |= SENSOR_FINVALID;
 
 	sc->sc_sensor[LMENV_INT_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[LMENV_INT_TEMP].desc, "Internal Temp",
+	strlcpy(sc->sc_sensor[LMENV_INT_TEMP].desc, "Internal",
 	    sizeof(sc->sc_sensor[LMENV_INT_TEMP].desc));
 
 	if (channel & LM87_CHANNEL_AIN1) {
@@ -213,8 +213,6 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 		    sizeof(sc->sc_sensor[LMENV_FAN1].desc));
 	} else {
 		sc->sc_sensor[LMENV_FAN1].type = SENSOR_FANRPM;
-		strlcpy(sc->sc_sensor[LMENV_FAN1].desc, "FAN1",
-		    sizeof(sc->sc_sensor[LMENV_FAN1].desc));
 	}
 
 	if (channel & LM87_CHANNEL_AIN2) {
@@ -223,8 +221,6 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 		    sizeof(sc->sc_sensor[LMENV_FAN2].desc));
 	} else {
 		sc->sc_sensor[LMENV_FAN2].type = SENSOR_FANRPM;
-		strlcpy(sc->sc_sensor[LMENV_FAN2].desc, "FAN2",
-		    sizeof(sc->sc_sensor[LMENV_FAN2].desc));
 	}
 
 	if (sensor_task_register(sc, lmenv_refresh, 5)) {
@@ -233,7 +229,8 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < LMENV_NUM_SENSORS; i++)
-		sensor_add(&sc->sc_sensor[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 }

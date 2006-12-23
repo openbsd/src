@@ -1,4 +1,4 @@
-/*	$OpenBSD: asb100.c,v 1.7 2006/04/10 00:57:23 deraadt Exp $	*/
+/*	$OpenBSD: asb100.c,v 1.8 2006/12/23 17:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Damien Miller <djm@openbsd.org>
@@ -107,6 +107,7 @@ struct asbtm_softc {
 	i2c_addr_t	sc_addr;
 
 	struct sensor	sc_sensor[ASB100_NUM_SENSORS];
+	struct sensordev sc_sensordev;
 	int		sc_fanmul[3];
 	int		sc_satellite[2];
 };
@@ -224,66 +225,37 @@ asbtm_attach(struct device *parent, struct device *self, void *aux)
 	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
-	for (i = 0; i < ASB100_NUM_SENSORS; i++)
-		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
-		    sizeof(sc->sc_sensor[i].device));
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor[ASB100_SENSOR_VIN0].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[ASB100_SENSOR_VIN0].desc, "Vin0",
-	    sizeof(sc->sc_sensor[ASB100_SENSOR_VIN0].desc));
-
 	sc->sc_sensor[ASB100_SENSOR_VIN1].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[ASB100_SENSOR_VIN1].desc, "Vin1",
-	    sizeof(sc->sc_sensor[ASB100_SENSOR_VIN1].desc));
-
 	sc->sc_sensor[ASB100_SENSOR_VIN2].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[ASB100_SENSOR_VIN2].desc, "Vin2",
-	    sizeof(sc->sc_sensor[ASB100_SENSOR_VIN2].desc));
-
 	sc->sc_sensor[ASB100_SENSOR_VIN3].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[ASB100_SENSOR_VIN3].desc, "Vin3",
-	    sizeof(sc->sc_sensor[ASB100_SENSOR_VIN3].desc));
-
 	sc->sc_sensor[ASB100_SENSOR_VIN4].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[ASB100_SENSOR_VIN4].desc, "Vin4",
-	    sizeof(sc->sc_sensor[ASB100_SENSOR_VIN4].desc));
-
 	sc->sc_sensor[ASB100_SENSOR_VIN5].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[ASB100_SENSOR_VIN5].desc, "Vin5",
-	    sizeof(sc->sc_sensor[ASB100_SENSOR_VIN5].desc));
-
 	sc->sc_sensor[ASB100_SENSOR_VIN6].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[ASB100_SENSOR_VIN6].desc, "Vin6",
-	    sizeof(sc->sc_sensor[ASB100_SENSOR_VIN6].desc));
 
 	sc->sc_sensor[ASB100_SENSOR_FAN0].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ASB100_SENSOR_FAN0].desc, "Fan0",
-	    sizeof(sc->sc_sensor[ASB100_SENSOR_FAN0].desc));
-
 	sc->sc_sensor[ASB100_SENSOR_FAN1].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ASB100_SENSOR_FAN1].desc, "Fan1",
-	    sizeof(sc->sc_sensor[ASB100_SENSOR_FAN1].desc));
-
 	sc->sc_sensor[ASB100_SENSOR_FAN2].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ASB100_SENSOR_FAN2].desc, "Fan2",
-	    sizeof(sc->sc_sensor[ASB100_SENSOR_FAN2].desc));
 
 	sc->sc_sensor[ASB100_SENSOR_TEMP0].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ASB100_SENSOR_TEMP0].desc, "External Temp",
+	strlcpy(sc->sc_sensor[ASB100_SENSOR_TEMP0].desc, "External",
 	    sizeof(sc->sc_sensor[ASB100_SENSOR_TEMP0].desc));
 
 	sc->sc_sensor[ASB100_SENSOR_TEMP1].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ASB100_SENSOR_TEMP1].desc, "Internal Temp",
+	strlcpy(sc->sc_sensor[ASB100_SENSOR_TEMP1].desc, "Internal",
 	    sizeof(sc->sc_sensor[ASB100_SENSOR_TEMP1].desc));
 
 	sc->sc_sensor[ASB100_SENSOR_TEMP2].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ASB100_SENSOR_TEMP2].desc, "Internal Temp",
+	strlcpy(sc->sc_sensor[ASB100_SENSOR_TEMP2].desc, "Internal",
 	    sizeof(sc->sc_sensor[ASB100_SENSOR_TEMP2].desc));
 	if (sc->sc_satellite[1] == -1)
 		sc->sc_sensor[ASB100_SENSOR_TEMP2].flags |= SENSOR_FINVALID;
 
 	sc->sc_sensor[ASB100_SENSOR_TEMP3].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ASB100_SENSOR_TEMP3].desc, "External Temp",
+	strlcpy(sc->sc_sensor[ASB100_SENSOR_TEMP3].desc, "External",
 	    sizeof(sc->sc_sensor[ASB100_SENSOR_TEMP3].desc));
 
 	if (sensor_task_register(sc, asbtm_refresh, 5)) {
@@ -292,7 +264,8 @@ asbtm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < ASB100_NUM_SENSORS; i++)
-		sensor_add(&sc->sc_sensor[i]);
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 }
