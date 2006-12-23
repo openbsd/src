@@ -1,6 +1,6 @@
 #! /bin/sh
 # texi2dvi --- produce DVI (or PDF) files from Texinfo (or LaTeX) sources.
-# $Id: texi2dvi,v 1.5 2006/07/17 16:12:36 espie Exp $
+# $Id: texi2dvi,v 1.6 2006/12/23 19:00:33 kettenis Exp $
 #
 # Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001,
 # 2002, 2003, 2004 Free Software Foundation, Inc.
@@ -27,7 +27,7 @@
 # the `--debug' option when making a bug report.
 
 # This string is expanded by rcs automatically when this file is checked out.
-rcs_revision='$Revision: 1.5 $'
+rcs_revision='$Revision: 1.6 $'
 rcs_version=`set - $rcs_revision; echo $2`
 program=`echo $0 | sed -e 's!.*/!!'`
 version="texi2dvi (GNU Texinfo 4.8) $rcs_version
@@ -605,10 +605,10 @@ $textra" "$filename_input" >"$filename_xtr"
   # If this is a Texinfo file with a specified input encoding, and
   # recode is available, then recode to plain 7 bit Texinfo.
   if test $language = texinfo; then
-    pgm='s/\(^\|.* \)@documentencoding  *\([^ ][^ ]*\)\( .*\|$\)/\2/  
-	t found                                                
-	d                                                     
-	:found                                               
+    pgm='s/\(^\|.* \)@documentencoding  *\([^ ][^ ]*\)\( .*\|$\)/\2/
+	t found
+	d
+	:found
 	q'
     encoding=`sed -e "$pgm" "$filename_input"`
     if $recode && test -n "$encoding" && findprog recode; then
