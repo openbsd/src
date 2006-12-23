@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_explode.c,v 1.5 2004/09/28 18:03:36 otto Exp $	*/
+/*	$OpenBSD: fpu_explode.c,v 1.6 2006/12/23 23:40:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -328,6 +328,7 @@ __fpu_explode(fe, fp, type, reg)
 #ifdef DIAGNOSTIC
 				__utrap_panic("fpu_explode");
 #endif
+				break;
 		}
 	} else {
 #ifdef DIAGNOSTIC
