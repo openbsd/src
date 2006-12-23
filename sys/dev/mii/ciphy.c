@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.14 2006/10/07 23:44:51 brad Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.15 2006/12/23 13:16:32 kettenis Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -264,7 +264,7 @@ void
 ciphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
-	int bmsr, bmcr;
+	int bmsr, bmcr, gsr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -306,6 +306,11 @@ ciphy_status(struct mii_softc *sc)
 
 	if (bmsr & CIPHY_AUXCSR_FDX)
 		mii->mii_media_active |= IFM_FDX;
+
+	gsr = PHY_READ(sc, CIPHY_MII_1000STS);
+	if ((IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) &&
+	    gsr & CIPHY_1000STS_MSR)
+		mii->mii_media_active |= IFM_ETH_MASTER;
 }
 
 void

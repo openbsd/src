@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipgphy.c,v 1.2 2006/08/11 19:50:48 brad Exp $	*/
+/*	$OpenBSD: ipgphy.c,v 1.3 2006/12/23 13:16:32 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -337,6 +337,11 @@ ipgphy_status(struct mii_softc *sc)
 	else
 		mii->mii_media_active |= IFM_HDX;
 
+	stat = PHY_READ(sc, IPGPHY_MII_1000SR);
+	if ((IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) &&
+	    stat & IPGPHY_1000SR_MASTER)
+		mii->mii_media_active |= IFM_ETH_MASTER;
+
 	ar = PHY_READ(sc, IPGPHY_MII_ANAR);
 	lpar = PHY_READ(sc, IPGPHY_MII_ANLPAR);
 
@@ -353,15 +358,6 @@ ipgphy_status(struct mii_softc *sc)
 	    !(lpar & IPGPHY_ANLPAR_PAUSE) &&
 	    (lpar & IPGPHY_ANLPAR_APAUSE)) {
 		mii->mii_media_active |= IFM_FLAG0;
-	}
-
-	/*
-	 * FLAG2 : local PHY resolved to MASTER
-	 */
-	if ((mii->mii_media_active & IFM_1000_T) != 0) {
-		stat = PHY_READ(sc, IPGPHY_MII_1000SR);
-		if ((stat & IPGPHY_1000SR_MASTER) != 0)
-			mii->mii_media_active |= IFM_FLAG2;
 	}
 }
 
