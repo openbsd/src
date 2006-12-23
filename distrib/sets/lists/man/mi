@@ -2490,11 +2490,6 @@
 ./usr/share/man/cat9/mvme68k
 ./usr/share/man/cat9/mvme88k
 ./usr/share/man/cat9/mvmeppc
-./usr/share/man/cat9/sensor_add.0
-./usr/share/man/cat9/sensor_del.0
-./usr/share/man/cat9/sensor_get.0
-./usr/share/man/cat9/sensor_task_register.0
-./usr/share/man/cat9/sensor_task_unregister.0
 ./usr/share/man/cat9/sgi
 ./usr/share/man/cat9/sparc
 ./usr/share/man/cat9/sparc64

@@ -5966,6 +5966,14 @@
 ./usr/share/man/cat9/rw_init.0
 ./usr/share/man/cat9/rwlock.0
 ./usr/share/man/cat9/scanc.0
+./usr/share/man/cat9/sensor_attach.0
+./usr/share/man/cat9/sensor_detach.0
+./usr/share/man/cat9/sensor_find.0
+./usr/share/man/cat9/sensor_task_register.0
+./usr/share/man/cat9/sensor_task_unregister.0
+./usr/share/man/cat9/sensordev_deinstall.0
+./usr/share/man/cat9/sensordev_get.0
+./usr/share/man/cat9/sensordev_install.0
 ./usr/share/man/cat9/setdisklabel.0
 ./usr/share/man/cat9/shutdownhook_disestablish.0
 ./usr/share/man/cat9/shutdownhook_establish.0
