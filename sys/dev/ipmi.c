@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.50 2006/12/23 00:36:24 deraadt Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.51 2006/12/23 17:36:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1683,6 +1683,18 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	struct ipmi_attach_args *ia = aux;
 	u_int16_t		rec;
 
+	/* Map registers */
+	ipmi_map_regs(sc, ia);
+
+	/* Scan SDRs, add sensors */
+	for (rec = 0; rec != 0xFFFF;) {
+		if (get_sdr(sc, rec, &rec)) {
+			/* IPMI may have been advertised, but it is stillborn */
+			ipmi_unmap_regs(sc, ia);
+			return;
+		}
+	}
+
 	sc->sc_thread = malloc(sizeof(struct ipmi_thread), M_DEVBUF,
 	    M_NOWAIT|M_CANFAIL);
 	if (sc->sc_thread == NULL) {
@@ -1691,14 +1703,6 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_thread->sc = sc;
 	sc->sc_thread->running = 1;
-
-	/* Map registers */
-	ipmi_map_regs(sc, ia);
-
-	/* Scan SDRs, add sensors */
-	for (rec = 0; rec != 0xFFFF;)
-		if (get_sdr(sc, rec, &rec))
-			break;
 
 	/* initialize sensor list for thread */
 	if (!SLIST_EMPTY(&ipmi_sensor_list))
