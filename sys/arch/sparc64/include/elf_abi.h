@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_abi.h,v 1.2 2003/06/09 16:10:04 deraadt Exp $ */
+/*	$OpenBSD: elf_abi.h,v 1.3 2006/12/23 11:39:40 kettenis Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -29,14 +29,14 @@
 #ifndef _SPARC64_ELF_ABI_H
 #define _SPARC64_ELF_ABI_H
 
-/* From MIPS ABI supplemental */
+/* From SPARC Compliance Definition */
 
 /* Architecture dependent Segment types - p_type */ 
 /* ??NONE?? */
 
-/* Architecture dependent d_tag field for Elf32_Dyn.  */
-/* ??NONE?? */
+/* Architecture dependent d_tag field for Elf64_Dyn.  */
+#define DT_SPARC_REGISTER	0x70000001 /* STT_REGISTER_SPARC sym index */
 
-#define DT_PROCNUM 0
+#define DT_PROCNUM (DT_SPARC_REGISTER - DT_LOPROC + 1)
 
 #endif /* _SPARC64_ELF_ABI_H */
