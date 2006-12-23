@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.19 2006/05/07 20:06:50 tedu Exp $	*/
+/*	$OpenBSD: pool.h,v 1.20 2006/12/23 15:00:15 miod Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -197,7 +197,7 @@ void		pool_init(struct pool *, size_t, u_int, u_int, int,
 		    const char *, struct pool_allocator *);
 void		pool_destroy(struct pool *);
 
-void		*pool_get(struct pool *, int);
+void		*pool_get(struct pool *, int) __malloc;
 void		pool_put(struct pool *, void *);
 int		pool_reclaim(struct pool *);
 

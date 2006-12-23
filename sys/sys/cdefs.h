@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.23 2006/04/17 16:36:43 cloder Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.24 2006/12/23 15:00:14 miod Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -187,6 +187,12 @@
 #define __statement(x)	(0)
 #else
 #define __statement(x)	(x)
+#endif
+
+#if __GNUC_PREREQ__(3, 0)
+#define	__malloc	__attribute__((__malloc__))
+#else
+#define	__malloc
 #endif
 
 /*
