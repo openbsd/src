@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.62 2006/12/11 22:11:48 reyk Exp $
+.\"	$OpenBSD: brconfig.8,v 1.63 2006/12/24 19:05:25 reyk Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -253,6 +253,10 @@ Defaults to 15 seconds, minimum of 4, maximum of 30.
 Set the time (in seconds) between broadcasting spanning tree protocol
 configuration packets.
 Defaults to 2 seconds, minimum of 1, maximum of 2.
+This option is only supported in STP mode with rapid transitions disabled;
+see the
+.Cm proto
+command for setting the protocol version.
 .It Cm holdcnt Ar time
 Set the transmit hold count, which is the number of spanning tree protocol
 packets transmitted before being rate limited.
