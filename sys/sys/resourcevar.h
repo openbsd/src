@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.9 2006/07/11 19:10:20 kurt Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.10 2006/12/24 20:28:44 miod Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -55,6 +55,7 @@ struct pstats {
 		u_long	pr_off;		/* pc offset */
 		u_int   pr_scale;	/* pc scaling */
 		u_long	pr_addr;	/* temp storage for addr until AST */
+		u_long	pr_ticks;	/* temp storage for ticks until AST */
 	} p_prof;
 #define	pstat_endcopy	p_start
 	struct	timeval p_start;	/* starting time */
@@ -78,7 +79,12 @@ struct plimit {
 };
 
 /* add user profiling from AST */
-#define	ADDUPROF(p) addupc_task((p), (p)->p_stats->p_prof.pr_addr, 1)
+#define	ADDUPROF(p)							\
+do {									\
+	addupc_task((p), (p)->p_stats->p_prof.pr_addr,			\
+	    (p)->p_stats->p_prof.pr_ticks);				\
+	(p)->p_stats->p_prof.pr_ticks = 0;				\
+} while (0)
 
 #ifdef _KERNEL
 void	 addupc_intr(struct proc *p, u_long pc);
