@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.79 2006/11/19 16:51:19 deraadt Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.80 2006/12/24 01:20:53 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -139,6 +139,7 @@ ffputbuf(struct buffer *bp)
  * in the supplied buffer. Stop on end of file or end of
  * line.  When FIOEOF is returned, there is a valid line
  * of data without the normally implied \n.
+ * If the line length exceeds nbuf, FIOLONG is returned.
  */
 int
 ffgetline(char *buf, int nbuf, int *nbytes)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.43 2006/11/17 08:45:31 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.44 2006/12/24 01:20:53 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -309,6 +309,13 @@ linsert(int n, int c)
 	return (TRUE);
 }
 
+/*
+ * Do the work of inserting a newline at the given line/offset.
+ * If mark is on the current line, we may have to move the markline
+ * to keep line numbers in sync.
+ * lnewline_at assumes the current buffer is writable. Checking for
+ * this fact should be done by the caller.
+ */
 int
 lnewline_at(struct line *lp1, int doto)
 {
@@ -317,6 +324,14 @@ lnewline_at(struct line *lp1, int doto)
 	struct mgwin	*wp;
 
 	lchange(WFFULL);
+
+	curwp->w_bufp->b_lines++;
+	/* Check if mark is past dot (even on current line) */
+	if (curwp->w_markline > curwp->w_dotline  ||
+	   (curwp->w_dotline == curwp->w_markline &&
+	    curwp->w_marko >= doto))
+		curwp->w_markline++;
+	curwp->w_dotline++;
 
 	/* If start of line, allocate a new line instead of copying */
 	if (doto == 0) {
@@ -377,8 +392,6 @@ lnewline(void)
 		ewprintf("Buffer is read only");
 		return (FALSE);
 	}
-	curwp->w_bufp->b_lines++;
-	curwp->w_dotline++;
 	return (lnewline_at(curwp->w_dotp, curwp->w_doto));
 }
 
@@ -472,7 +485,9 @@ ldelete(RSIZE n, int kflag)
  * line is the magic header line always return TRUE; merging the last line
  * with the header line can be thought of as always being a successful
  * operation.  Even if nothing is done, this makes the kill buffer work
- * "right".  Easy cases can be done by shuffling data around.  Hard cases
+ * "right". If the mark is past the dot (actually, markline > dotline),
+ * decrease the markline accordingly to keep line numbers in sync.
+ * Easy cases can be done by shuffling data around.  Hard cases
  * require that lines be moved about in memory.  Return FALSE on error and
  * TRUE if all looks ok. We do not update w_dotline here, as deletes are done
  * after moves.
@@ -493,7 +508,10 @@ ldelnewline(void)
 	/* at the end of the buffer */
 	if (lp2 == curbp->b_headp)
 		return (TRUE);
+	/* Keep line counts in sync */
 	curwp->w_bufp->b_lines--;
+	if (curwp->w_markline > curwp->w_dotline)
+		curwp->w_markline--;
 	if (lp2->l_used <= lp1->l_size - lp1->l_used) {
 		bcopy(&lp2->l_text[0], &lp1->l_text[lp1->l_used], lp2->l_used);
 		for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {

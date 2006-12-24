@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.63 2006/11/17 08:45:31 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.64 2006/12/24 01:20:53 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -337,34 +337,32 @@ insertfile(char *fname, char *newname, int replacebuf)
 		(void)strlcat(bp->b_cwd, "/", sizeof(bp->b_cwd));
 	}
 	opos = curwp->w_doto;
-
-	/* Open a new line, at point, and start inserting after it. */
-	x2 = undo_enable(FALSE);
 	oline = curwp->w_dotline;
+	/*
+	 * Open a new line at dot and start inserting after it.
+	 * We will delete this newline after insertion.
+	 * Disable undo, as we create the undo record manually.
+	 */
+	x2 = undo_enable(FALSE);
 	(void)lnewline();
 	olp = lback(curwp->w_dotp);
-	if (olp == curbp->b_headp) {
-		/* if at end of buffer, create a line to insert before */
-		(void)lnewline();
-		curwp->w_dotp = lback(curwp->w_dotp);
-	}
 	undo_enable(x2);
 
-	/* don't count fake lines at the end */
 	nline = 0;
 	siz = 0;
 	while ((s = ffgetline(line, linesize, &nbytes)) != FIOERR) {
-doneread:
+retry:
 		siz += nbytes + 1;
 		switch (s) {
 		case FIOSUC:
 			/* FALLTHRU */
 		case FIOEOF:
-			/* the last line of the file */
 			++nline;
 			if ((lp1 = lalloc(nbytes)) == NULL) {
 				/* keep message on the display */
 				s = FIOERR;
+				undo_add_insert(olp, opos,
+				    siz - nbytes - 1 - 1);
 				goto endoffile;
 			}
 			bcopy(line, &ltext(lp1)[0], nbytes);
@@ -373,8 +371,10 @@ doneread:
 			lp1->l_fp = curwp->w_dotp;
 			lp1->l_bp = lp2;
 			curwp->w_dotp->l_bp = lp1;
-			if (s == FIOEOF)
+			if (s == FIOEOF) {
+				undo_add_insert(olp, opos, siz - 1);
 				goto endoffile;
+			}
 			break;
 		case FIOLONG: {
 				/* a line too long to fit in our buffer */
@@ -398,7 +398,7 @@ doneread:
 				linesize = newsize;
 				if (s == FIOERR)
 					goto endoffile;
-				goto doneread;
+				goto retry;
 			}
 		default:
 			ewprintf("Unknown code %d reading file", s);
@@ -407,8 +407,6 @@ doneread:
 		}
 	}
 endoffile:
-	undo_add_insert(olp, opos, siz - 1);
-
 	/* ignore errors */
 	ffclose(NULL);
 	/* don't zap an error */
@@ -421,7 +419,17 @@ endoffile:
 	/* set mark at the end of the text */
 	curwp->w_dotp = curwp->w_markp = lback(curwp->w_dotp);
 	curwp->w_marko = llength(curwp->w_markp);
-	(void)ldelnewline();
+	curwp->w_markline = oline + nline + 1;
+	/*
+	 * if we are at the end of the file, ldelnewline is a no-op,
+	 * but we still need to decrement the line and markline counts
+	 * as we've accounted for this fencepost in our arithmetic
+	 */
+	if (lforw(curwp->w_dotp) == curwp->w_bufp->b_headp) {
+		curwp->w_bufp->b_lines--;
+		curwp->w_markline--;
+	} else
+		(void)ldelnewline();
 	curwp->w_dotp = olp;
 	curwp->w_doto = opos;
 	curwp->w_dotline = oline;
