@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.21 2006/05/11 19:57:45 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.22 2006/12/24 20:30:35 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -124,8 +124,8 @@ int netisr;
  *  CPU is done. Instead a fixed mask is set and used throughout.
  */
 
-void interrupt (struct trap_frame *);
-void softintr (void);
+void interrupt(struct trap_frame *);
+void softintr(void);
 
 /*
  * Handle an interrupt. Both kernel and user mode is handled here.
@@ -256,7 +256,6 @@ set_intr(int pri, intrmask_t mask,
 
 /*
  * This is called from MipsUserIntr() if astpending is set.
- * This is very similar to the tail of trap().
  */
 void
 softintr()
@@ -265,26 +264,21 @@ softintr()
 	int sig;
 
 	uvmexp.softs++;
-	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-	p->p_priority = p->p_usrpri;
+
 	astpending = 0;
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
 		ADDUPROF(p);
 	}
-	if (want_resched) {
-		/*	
-		 * We're being preempted.
-		 */
+	if (want_resched)
 		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
-	curpriority = p->p_priority;
-}
 
+	/* inline userret(p) */
+
+	while ((sig = CURSIG(p)) != 0)		/* take pending signals */
+		postsig(sig);
+	curpriority = p->p_priority = p->p_usrpri;
+}
 
 
 intrmask_t intem = 0x0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.25 2004/06/13 21:49:12 niklas Exp $ */
+/* $OpenBSD: cpu.h,v 1.26 2006/12/24 20:30:35 miod Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -264,6 +264,11 @@ struct clockframe {
  * like this stastic has to be extremely accurate.
  */
 #define	CLKF_INTR(framep)	(curcpu()->ci_intrdepth)
+
+/*
+ * This is used during profiling to integrate system time.
+ */
+#define	PROC_PC(p)	((p)->p_md.md_tf->tf_regs[FRAME_PC])
 
 /*
  * Preempt the current process if in interrupt from user mode,

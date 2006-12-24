@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.85 2006/12/20 17:50:40 gwk Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.86 2006/12/24 20:30:35 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -213,6 +213,11 @@ extern void need_resched(struct cpu_info *);
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_eflags)
 #define	CLKF_PC(frame)		((frame)->if_eip)
 #define	CLKF_INTR(frame)	(IDXSEL((frame)->if_cs) == GICODE_SEL)
+
+/*
+ * This is used during profiling to integrate system time.
+ */
+#define	PROC_PC(p)		((p)->p_md.md_regs->tf_eip)
 
 /*
  * Give a profiling tick to the current process when the user profiling

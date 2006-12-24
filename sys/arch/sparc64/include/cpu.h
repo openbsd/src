@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.36 2006/11/29 12:26:14 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.37 2006/12/24 20:30:35 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -163,6 +163,11 @@ extern	int want_ast;
  */
 extern	int want_resched;	/* resched() was called */
 #define	need_resched(ci)	(want_resched = 1, want_ast = 1)
+
+/*
+ * This is used during profiling to integrate system time.
+ */
+#define	PROC_PC(p)	((p)->p_md.md_tf->tf_pc)
 
 /*
  * Give a profiling tick to the current process when the user profiling

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.6 2005/09/15 21:16:33 miod Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.7 2006/12/24 20:30:35 miod Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -115,14 +115,12 @@ swi_handler(trapframe_t *frame)
 	struct proc *p = curproc;
 	u_int32_t insn;
 	union sigval sv;
-	u_quad_t sticks;
 
 	/*
 	 * Enable interrupts if they were enabled before the exception.
 	 * Since all syscalls *should* come from user mode it will always
 	 * be safe to enable them, but check anyway. 
 	 */
-	sticks = p->p_sticks;
 #ifdef acorn26
 	if ((frame->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
@@ -135,6 +133,8 @@ swi_handler(trapframe_t *frame)
 	frame->tf_pc += INSN_SIZE;
 #endif
 
+	p->p_addr->u_pcb.pcb_tf = frame;
+
 	/*
 	 * Make sure the program counter is correctly aligned so we
 	 * don't take an alignment fault trying to read the opcode.
@@ -143,7 +143,7 @@ swi_handler(trapframe_t *frame)
 		/* Give the user an illegal instruction signal. */
 		sv.sival_ptr = (u_int32_t *)(u_int32_t)(frame->tf_pc-INSN_SIZE);
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
-		userret(p, frame->tf_pc, p->p_sticks);
+		userret(p);
 		return;
 	}
 
@@ -153,8 +153,6 @@ swi_handler(trapframe_t *frame)
 #else
 	insn = *(u_int32_t *)((frame->tf_r15 & R15_PC) - INSN_SIZE);
 #endif
-
-	p->p_addr->u_pcb.pcb_tf = frame;
 
 #ifdef CPU_ARM7
 	/*
@@ -176,7 +174,7 @@ swi_handler(trapframe_t *frame)
 	if ((insn & 0x0f000000) != 0x0f000000) {
 		frame->tf_pc -= INSN_SIZE;
 		curcpu()->ci_arm700bugcount.ev_count++;
-		userret(l, frame->tf_pc, p->p_sticks);
+		userret(p);
 		return;
 	}
 #endif	/* CPU_ARM7 */
@@ -213,7 +211,7 @@ syscall(struct trapframe *frame, struct proc *p, u_int32_t insn)
 			break;
 		}
 
-		userret(p, frame->tf_pc, p->p_sticks);
+		userret(p);
 		return;
 	case 0x000000: /* Old unofficial NetBSD range. */
 	case SWI_OS_NETBSD: /* New official NetBSD range. */
@@ -223,7 +221,7 @@ syscall(struct trapframe *frame, struct proc *p, u_int32_t insn)
 		/* Undefined so illegal instruction */
 		sv.sival_ptr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
 		trapsignal(p, SIGILL, 0, ILL_ILLOPN, sv);
-		userret(p, frame->tf_pc, p->p_sticks);
+		userret(p);
 		return;
 	}
 
@@ -316,7 +314,7 @@ syscall(struct trapframe *frame, struct proc *p, u_int32_t insn)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, orig_error, rval);
 #endif
-	userret(p, frame->tf_pc, p->p_sticks);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, orig_error, rval[0]);
@@ -337,7 +335,7 @@ child_return(arg)
 	frame->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
 #endif
 
-	userret(p, frame->tf_pc, 0);
+	userret(p);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {

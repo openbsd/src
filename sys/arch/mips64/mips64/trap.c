@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.30 2006/05/31 20:19:39 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.31 2006/12/24 20:30:35 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -157,6 +157,18 @@ int cpu_singlestep(struct proc *);
 #endif
 u_long MipsEmulateBranch(struct trap_frame *, long, int, u_int);
 
+static __inline__ void
+userret(struct proc *p)
+{
+	int sig;
+
+	/* take pending signals */
+	while ((sig = CURSIG(p)) != 0)
+		postsig(sig);
+
+	curpriority = p->p_priority = p->p_usrpri;
+}
+
 /*
  * Handle an exception.
  * In the case of a kernel trap, we return the pc where to resume if
@@ -169,7 +181,6 @@ trap(trapframe)
 	int type, i;
 	unsigned ucode = 0;
 	struct proc *p = curproc;
-	u_quad_t sticks;
 	vm_prot_t ftype;
 	extern vaddr_t onfault_table[];
 	int onfault;
@@ -181,7 +192,6 @@ trap(trapframe)
 	type = (trapframe->cause & CR_EXC_CODE) >> CR_EXC_CODE_SHIFT;
 	if (USERMODE(trapframe->sr)) {
 		type |= T_USER;
-		sticks = p->p_sticks;
 	}
 
 	/*
@@ -793,27 +803,7 @@ out:
 	/*
 	 * Note: we should only get here if returning to user mode.
 	 */
-	/* take pending signals */
-	while ((i = CURSIG(p)) != 0)
-		postsig(i);
-	p->p_priority = p->p_usrpri;
-	astpending = 0;
-	if (want_resched) {
-		preempt(NULL);
-		while ((i = CURSIG(p)) != 0)
-			postsig(i);
-	}
-
-	/*
-	 * If profiling, charge system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-
-		addupc_task(p, trapframe->pc, (int)(p->p_sticks - sticks) * psratio);
-	}
-
-	curpriority = p->p_priority;
+	userret(p);
 	return (trapframe->pc);
 }
 
@@ -823,33 +813,13 @@ child_return(arg)
 {
 	struct proc *p = arg;
 	struct trap_frame *trapframe;
-	int i;
 
 	trapframe = p->p_md.md_regs;
 	trapframe->v0 = 0;
 	trapframe->v1 = 1;
 	trapframe->a3 = 0;
 
-	/* take pending signals */
-	while ((i = CURSIG(p)) != 0)
-		postsig(i);
-	p->p_priority = p->p_usrpri;
-	astpending = 0;
-	if (want_resched) {
-		preempt(NULL);
-		while ((i = CURSIG(p)) != 0)
-			postsig(i);
-	}
-
-#if 0 /* Need sticks */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-
-		addupc_task(p, trapframe->pc, (int)(p->p_sticks - sticks) * psratio);
-	}
-#endif
-
-	curpriority = p->p_priority;
+	userret(p);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))

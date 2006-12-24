@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.44 2006/12/24 20:29:19 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.45 2006/12/24 20:30:35 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -320,7 +320,7 @@ const char *trap_type[] = {
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
-static __inline void userret(struct proc *, int,  u_quad_t);
+static __inline void userret(struct proc *);
 static __inline void share_fpu(struct proc *, struct trapframe64 *);
 
 void trap(struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate);
@@ -339,46 +339,18 @@ void syscall(struct trapframe64 *, register_t code, register_t pc);
  * trap, mem_access_fault, and syscall.
  */
 static __inline void
-userret(p, pc, oticks)
-	struct proc *p;
-	int pc;
-	u_quad_t oticks;
+userret(struct proc *p)
 {
 	int sig;
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (want_ast) {
-		want_ast = 0;
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
-			ADDUPROF(p);
-		}
-	}
-	if (want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
-
-	/*
-	 * If profiling, charge recent system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}
 
 #ifdef notyet
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 #else
-	curpriority = p->p_priority;
+	curpriority = p->p_priority = p->p_usrpri;
 #endif
 }
 
@@ -414,7 +386,6 @@ trap(tf, type, pc, tstate)
 	struct pcb *pcb;
 	int pstate = (tstate>>TSTATE_PSTATE_SHIFT);
 	int64_t n;
-	u_quad_t sticks;
 	union sigval sv;
 
 	sv.sival_ptr = (void *)pc;
@@ -482,7 +453,6 @@ trap(tf, type, pc, tstate)
 	}
 	if ((p = curproc) == NULL)
 		p = &proc0;
-	sticks = p->p_sticks;
 	pcb = &p->p_addr->u_pcb;
 	p->p_md.md_tf = tf;	/* for ptrace/signals */
 
@@ -750,7 +720,7 @@ badtrap:
 		trapsignal(p, SIGFPE, FPE_INTOVF_TRAP, FPE_INTOVF, sv);
 		break;
 	}
-	userret(p, pc, sticks);
+	userret(p);
 	share_fpu(p, tf);
 #undef ADVANCE
 }
@@ -843,7 +813,6 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	int rv;
 	vm_prot_t access_type;
 	vaddr_t onfault;
-	u_quad_t sticks;
 	union sigval sv;
 
 	sv.sival_ptr = (void *)addr;
@@ -851,7 +820,6 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	uvmexp.traps++;
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
-	sticks = p->p_sticks;
 
 	tstate = tf->tf_tstate;
 
@@ -954,7 +922,7 @@ kfault:
 		}
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
-		userret(p, pc, sticks);
+		userret(p);
 		share_fpu(p, tf);
 	}
 }
@@ -979,13 +947,11 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 	u_int64_t tstate;
 	struct proc *p;
 	vaddr_t onfault;
-	u_quad_t sticks;
 	union sigval sv;
 
 	uvmexp.traps++;
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
-	sticks = p->p_sticks;
 
 	pc = tf->tf_pc;
 	tstate = tf->tf_tstate;
@@ -1031,7 +997,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 	trapsignal(p, SIGSEGV, VM_PROT_READ|VM_PROT_WRITE, SEGV_MAPERR, sv);
 out:
 	if ((tstate & TSTATE_PRIV) == 0) {
-		userret(p, pc, sticks);
+		userret(p);
 		share_fpu(p, tf);
 	}
 }
@@ -1053,7 +1019,6 @@ text_access_fault(tf, type, pc, sfsr)
 	vaddr_t va;
 	int rv;
 	vm_prot_t access_type;
-	u_quad_t sticks;
 	union sigval sv;
 
 	sv.sival_ptr = (void *)pc;
@@ -1061,7 +1026,6 @@ text_access_fault(tf, type, pc, sfsr)
 	uvmexp.traps++;
 	if ((p = curproc) == NULL)	/* safety check */
 		panic("text_access_fault: no curproc");
-	sticks = p->p_sticks;
 
 	tstate = tf->tf_tstate;
 
@@ -1113,7 +1077,7 @@ text_access_fault(tf, type, pc, sfsr)
 		trapsignal(p, SIGSEGV, access_type, SEGV_MAPERR, sv);
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
-		userret(p, pc, sticks);
+		userret(p);
 		share_fpu(p, tf);
 	}
 }
@@ -1141,14 +1105,12 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 	vaddr_t va;
 	int rv;
 	vm_prot_t access_type;
-	u_quad_t sticks;
 	union sigval sv;
 
 	sv.sival_ptr = (void *)pc;
 	uvmexp.traps++;
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
-	sticks = p->p_sticks;
 
 	tstate = tf->tf_tstate;
 
@@ -1221,7 +1183,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 	}
 out:
 	if ((tstate & TSTATE_PRIV) == 0) {
-		userret(p, pc, sticks);
+		userret(p);
 		share_fpu(p, tf);
 	}
 }
@@ -1268,7 +1230,6 @@ syscall(tf, code, pc)
 	int error = 0, new;
 	register_t args[8];
 	register_t rval[2];
-	u_quad_t sticks;
 #ifdef DIAGNOSTIC
 	extern struct pcb *cpcb;
 #endif
@@ -1283,7 +1244,6 @@ syscall(tf, code, pc)
 	if (tf != (struct trapframe64 *)((caddr_t)cpcb + USPACE) - 1)
 		panic("syscall: trapframe");
 #endif
-	sticks = p->p_sticks;
 	p->p_md.md_tf = tf;
 	new = code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 	code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
@@ -1412,7 +1372,7 @@ syscall(tf, code, pc)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif
-	userret(p, pc, sticks);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
@@ -1437,7 +1397,7 @@ child_return(arg)
 	tf->tf_out[1] = 0;
 	tf->tf_tstate &= ~(((int64_t)(ICC_C|XCC_C))<<TSTATE_CCR_SHIFT);
 
-	userret(p, tf->tf_pc, 0);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p,

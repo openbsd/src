@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.13 2006/11/29 12:26:13 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.14 2006/12/24 20:30:35 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -332,6 +332,11 @@ extern int int_nest_cntr;
 #define	CLKF_USERMODE(framep)	((framep)->sr & SR_KSU_USER)
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	(int_nest_cntr > 0)
+
+/*
+ * This is used during profiling to integrate system time.
+ */
+#define	PROC_PC(p)	((p)->p_md.md_regs->pc)
 
 /*
  * Preempt the current process if in interrupt from user mode,

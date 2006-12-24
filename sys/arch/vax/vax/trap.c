@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.35 2006/12/24 20:29:19 miod Exp $     */
+/*	$OpenBSD: trap.c,v 1.36 2006/12/24 20:30:35 miod Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -64,7 +64,7 @@
 volatile int startsysc = 0, faultdebug = 0;
 #endif
 
-static __inline void userret(struct proc *, struct trapframe *, u_quad_t);
+static __inline void userret(struct proc *);
 
 void	arithflt(struct trapframe *);
 void	syscall(struct trapframe *);
@@ -108,36 +108,15 @@ int no_traps = 18;
  *	return to usermode.
  */
 static __inline void
-userret(p, frame, oticks)
-	struct proc *p;
-	struct trapframe *frame;
-	u_quad_t oticks;
+userret(struct proc *p)
 {
 	int sig;
 
 	/* Take pending signals. */
 	while ((sig = CURSIG(p)) !=0)
 		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * We're being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
 
-	/*
-	 * If profiling, charge system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) { 
-		extern int psratio;
-
-		addupc_task(p, frame->pc,
-		    (int)(p->p_sticks - oticks) * psratio);
-	}
-	curpriority = p->p_priority;
+	curpriority = p->p_priority = p->p_usrpri;
 }
 
 void
@@ -353,7 +332,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 	if (umode == 0)
 		return;
 
-	userret(p, frame, oticks);
+	userret(p);
 }
 
 void
@@ -465,7 +444,7 @@ bad:
 		break;
 	}
 
-	userret(p, frame, oticks);
+	userret(p);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
@@ -484,7 +463,7 @@ child_return(arg)
 	frame->r1 = frame->r0 = 0;
 	frame->psl &= ~PSL_C;
 
-	userret(p, frame, 0);
+	userret(p);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.16 2006/11/29 12:26:13 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.17 2006/12/24 20:30:35 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -200,6 +200,16 @@ extern int ssir;
 #define setsoftclock()	setsoftint(SIR_CLOCK)
 
 #define	aston(p)	((p)->p_md.md_astpending = 1)
+
+/*
+ * This is used during profiling to integrate system time.
+ */
+#define	PC_REGS(regs)							\
+	(CPU_IS88110 ? ((regs)->exip & XIP_ADDR) :			\
+	 ((regs)->sxip & XIP_V ? (regs)->sxip & XIP_ADDR :		\
+	  ((regs)->snip & NIP_V ? (regs)->snip & NIP_ADDR :		\
+				   (regs)->sfip & FIP_ADDR)))
+#define	PROC_PC(p)	PC_REGS((struct reg *)((p)->p_md.md_tf))
 
 /*
  * Preempt the current process if in interrupt from user mode,

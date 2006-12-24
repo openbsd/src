@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.51 2006/06/19 20:23:53 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.52 2006/12/24 20:30:33 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -126,7 +126,7 @@
 #include <compat/osf1/osf1_syscall.h>
 #endif
 
-void		userret(struct proc *, u_int64_t, u_quad_t);
+void		userret(struct proc *);
 
 #ifndef SMALL_KERNEL
 
@@ -184,13 +184,9 @@ trap_init()
  * trap and syscall.
  */
 void
-userret(p, pc, oticks)
-	register struct proc *p;
-	u_int64_t pc;
-	u_quad_t oticks;
+userret(struct proc *p)
 {
 	int sig;
-	struct cpu_info *ci = curcpu();
 
 	/* Do any deferred user pmap operations. */
 	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
@@ -198,30 +194,8 @@ userret(p, pc, oticks)
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (ci->ci_want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(NULL);
 
-		ci = curcpu();
-
-		PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
-
-	/*
-	 * If profiling, charge recent system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}
-
-	curpriority = p->p_priority;
+	curpriority = p->p_priority = p->p_usrpri;
 }
 
 #ifdef DEBUG
@@ -292,7 +266,6 @@ trap(a0, a1, a2, entry, framep)
 	struct proc *p;
 	int i;
 	u_int64_t ucode;
-	u_quad_t sticks;
 	int user;
 #if defined(DDB)
 	int call_debugger = 1;
@@ -308,7 +281,6 @@ trap(a0, a1, a2, entry, framep)
 	ucode = 0;
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
 	if (user)  {
-		sticks = p->p_sticks;
 		p->p_md.md_tf = framep;
 #if	0
 /* This is to catch some weird stuff on the UDB (mj) */
@@ -318,8 +290,6 @@ trap(a0, a1, a2, entry, framep)
 			printtrap(a0, a1, a2, entry, framep, 1, user);
 		}
 #endif
-	} else {
-		sticks = 0;		/* XXX bogus -Wuninitialized warning */
 	}
 
 	switch (entry) {
@@ -552,7 +522,7 @@ do_fault:
 	trapsignal(p, i, ucode, typ, sv);
 out:
 	if (user)
-		userret(p, framep->tf_regs[FRAME_PC], sticks);
+		userret(p);
 	return;
 
 dopanic:
@@ -595,7 +565,6 @@ syscall(code, framep)
 	struct proc *p;
 	int error, numsys;
 	u_int64_t opc;
-	u_quad_t sticks;
 	u_long rval[2];
 	u_long args[10];					/* XXX */
 	u_int hidden, nargs;
@@ -603,15 +572,10 @@ syscall(code, framep)
 	extern struct emul emul_osf1;
 #endif
 
-#if notdef				/* can't happen, ever. */
-	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0)
-		panic("syscall");
-#endif
 	uvmexp.syscalls++;
 	p = curproc;
 	p->p_md.md_tf = framep;
 	opc = framep->tf_regs[FRAME_PC] - 4;
-	sticks = p->p_sticks;
 
 	callp = p->p_emul->e_sysent;
 	numsys = p->p_emul->e_nsysent;
@@ -711,7 +675,7 @@ syscall(code, framep)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif
-	userret(p, framep->tf_regs[FRAME_PC], sticks);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
@@ -735,7 +699,7 @@ child_return(arg)
 	framep->tf_regs[FRAME_A4] = 0;
 	framep->tf_regs[FRAME_A3] = 0;
 
-	userret(p, framep->tf_regs[FRAME_PC], 0);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p,
@@ -789,17 +753,17 @@ void
 ast(framep)
 	struct trapframe *framep;
 {
-	register struct proc *p;
-	u_quad_t sticks;
+	struct proc *p;
 
 	curcpu()->ci_astpending = 0;
 
 	p = curproc;
-	sticks = p->p_sticks;
 	p->p_md.md_tf = framep;
 
+#ifdef DIAGNOSTIC
 	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0)
 		panic("ast and not user");
+#endif
 
 	uvmexp.softs++;
 
@@ -808,7 +772,10 @@ ast(framep)
 		ADDUPROF(p);
 	}
 
-	userret(p, framep->tf_regs[FRAME_PC], sticks);
+	if (curcpu()->ci_want_resched)
+		preempt(NULL);
+
+	userret(p);
 }
 
 /*

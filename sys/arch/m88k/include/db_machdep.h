@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.10 2006/05/08 14:03:34 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.11 2006/12/24 20:30:35 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -40,15 +40,6 @@
 #include <machine/trap.h>
 
 #include <uvm/uvm_param.h>
-
-/*
- * Extract the real pc from the exception pipeline.
- */
-#define	PC_REGS(regs)							\
-	(CPU_IS88110 ? ((regs)->exip & XIP_ADDR) :			\
-	 ((regs)->sxip & XIP_V ? (regs)->sxip & XIP_ADDR :		\
-	  ((regs)->snip & NIP_V ? (regs)->snip & NIP_ADDR :		\
-				   (regs)->sfip & FIP_ADDR)))
 
 #define	SET_PC_REGS(regs, value)					\
 do {									\

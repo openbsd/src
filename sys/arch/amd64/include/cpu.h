@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.22 2006/12/20 22:48:29 gwk Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.23 2006/12/24 20:30:35 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -216,6 +216,11 @@ extern u_int32_t cpus_attached;
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_rflags)
 #define CLKF_PC(frame)		((frame)->if_rip)
 #define CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
+
+/*
+ * This is used during profiling to integrate system time.
+ */
+#define	PROC_PC(p)		((p)->p_md.md_regs->tf_rip)
 
 /*
  * Give a profiling tick to the current process when the user profiling

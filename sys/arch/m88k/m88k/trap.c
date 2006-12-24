@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.36 2006/12/24 20:29:19 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.37 2006/12/24 20:30:35 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -118,35 +118,15 @@ const char *pbus_exception_type[] = {
 #endif
 
 static inline void
-userret(struct proc *p, struct trapframe *frame, u_quad_t oticks)
+userret(struct proc *p)
 {
 	int sig;
-	struct cpu_info *cpu = curcpu();
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
-	p->p_priority = p->p_usrpri;
 
-	if (cpu->ci_want_resched) {
-		/*
-		 * We're being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
-
-	/*
-	 * If profiling, charge recent system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-
-		addupc_task(p, frame->tf_sxip & XIP_ADDR,
-		    (int)(p->p_sticks - oticks) * psratio);
-	}
-	cpu->ci_schedstate.spc_curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
 
 __dead void
@@ -198,7 +178,6 @@ void
 m88100_trap(unsigned type, struct trapframe *frame)
 {
 	struct proc *p;
-	u_quad_t sticks = 0;
 	struct vm_map *map;
 	vaddr_t va, pcb_onfault;
 	vm_prot_t ftype;
@@ -221,7 +200,6 @@ m88100_trap(unsigned type, struct trapframe *frame)
 		p = &proc0;
 
 	if (USERMODE(frame->tf_epsr)) {
-		sticks = p->p_sticks;
 		type += T_USER;
 		p->p_md.md_tf = frame;	/* for ptrace/signals */
 	}
@@ -589,7 +567,7 @@ user_fault:
 		frame->tf_ipfsr = frame->tf_dpfsr = 0;
 	}
 
-	userret(p, frame, sticks);
+	userret(p);
 }
 #endif /* M88100 */
 
@@ -598,7 +576,6 @@ void
 m88110_trap(unsigned type, struct trapframe *frame)
 {
 	struct proc *p;
-	u_quad_t sticks = 0;
 	struct vm_map *map;
 	vaddr_t va, pcb_onfault;
 	vm_prot_t ftype;
@@ -623,7 +600,6 @@ m88110_trap(unsigned type, struct trapframe *frame)
 		p = &proc0;
 
 	if (USERMODE(frame->tf_epsr)) {
-		sticks = p->p_sticks;
 		type += T_USER;
 		p->p_md.md_tf = frame;	/* for ptrace/signals */
 	}
@@ -1102,7 +1078,7 @@ m88110_user_fault:
 		KERNEL_PROC_UNLOCK(p);
 	}
 
-	userret(p, frame, sticks);
+	userret(p);
 }
 #endif /* M88110 */
 
@@ -1129,7 +1105,6 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	struct proc *p;
 	int error;
 	register_t args[8], rval[2], *ap;
-	u_quad_t sticks;
 
 	uvmexp.syscalls++;
 
@@ -1138,7 +1113,6 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	callp = p->p_emul->e_sysent;
 	nsys  = p->p_emul->e_nsysent;
 
-	sticks = p->p_sticks;
 	p->p_md.md_tf = tf;
 
 	/*
@@ -1261,7 +1235,7 @@ bad:
 	scdebug_ret(p, code, error, rval);
 	KERNEL_PROC_UNLOCK(p);
 #endif
-	userret(p, tf, sticks);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(p);
@@ -1282,7 +1256,6 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	struct proc *p;
 	int error;
 	register_t args[8], rval[2], *ap;
-	u_quad_t sticks;
 
 	uvmexp.syscalls++;
 
@@ -1291,7 +1264,6 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	callp = p->p_emul->e_sysent;
 	nsys  = p->p_emul->e_nsysent;
 
-	sticks = p->p_sticks;
 	p->p_md.md_tf = tf;
 
 	/*
@@ -1425,7 +1397,7 @@ bad:
 	scdebug_ret(p, code, error, rval);
 	KERNEL_PROC_UNLOCK(p);
 #endif
-	userret(p, tf, sticks);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(p);
@@ -1469,7 +1441,7 @@ child_return(arg)
 #endif
 
 	KERNEL_PROC_UNLOCK(p);
-	userret(p, tf, p->p_sticks);
+	userret(p);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
@@ -1795,12 +1767,10 @@ cache_flush(struct trapframe *tf)
 {
 	struct proc *p;
 	struct pmap *pmap;
-	u_quad_t sticks;
 
 	if ((p = curproc) == NULL)
 		p = &proc0;
 
-	sticks = p->p_sticks;
 	p->p_md.md_tf = tf;
 
 	pmap = vm_map_pmap(&p->p_vmspace->vm_map);
@@ -1809,5 +1779,5 @@ cache_flush(struct trapframe *tf)
 	tf->tf_snip = tf->tf_snip & ~NIP_E;
 	tf->tf_sfip = tf->tf_sfip & ~FIP_E;
 
-	userret(p, tf, sticks);
+	userret(p);
 }

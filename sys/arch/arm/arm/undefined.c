@@ -1,4 +1,4 @@
-/*	$OpenBSD: undefined.c,v 1.2 2004/02/23 19:09:57 drahn Exp $	*/
+/*	$OpenBSD: undefined.c,v 1.3 2006/12/24 20:30:35 miod Exp $	*/
 /*	$NetBSD: undefined.c,v 1.22 2003/11/29 22:21:29 bjh21 Exp $	*/
 
 /*
@@ -45,8 +45,6 @@
  * Created      : 06/01/95
  */
 
-#define FAST_FPE
-
 #include <sys/param.h>
 
 #include <sys/malloc.h>
@@ -58,9 +56,6 @@
 #include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/vmmeter.h>
-#ifdef FAST_FPE
-#include <sys/acct.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -75,10 +70,6 @@
 #endif
 
 static int gdb_trapper(u_int, u_int, struct trapframe *, int);
-
-#ifdef FAST_FPE
-extern int want_resched;
-#endif
 
 LIST_HEAD(, undefined_handler) undefined_handlers[MAX_COPROCS];
 
@@ -196,7 +187,7 @@ undefinedinstruction(trapframe_t *frame)
 		/* Give the user an illegal instruction signal. */
 		sv.sival_int = (u_int32_t) fault_pc;
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
-		userret(p, fault_pc, p->p_sticks);
+		userret(p);
 		return;
 	}
 
@@ -226,11 +217,6 @@ undefinedinstruction(trapframe_t *frame)
 		coprocessor = (fault_instruction >> 8) & 0x0f;
 	else
 		coprocessor = 0;
-
-	/* Get the current proc structure or proc0 if there is none. */
-
-	if ((p = curproc) == 0)
-		p = &proc0;
 
 #ifdef __PROG26
 	if ((frame->tf_r15 & R15_MODE) == R15_MODE_USR)
@@ -291,41 +277,5 @@ undefinedinstruction(trapframe_t *frame)
 	if ((fault_code & FAULT_USER) == 0)
 		return;
 
-#ifdef FAST_FPE
-	/* Optimised exit code */
-	{
-		int sig;
-
-		/* take pending signals */
-
-		while ((sig = (CURSIG(p))) != 0) {
-			postsig(sig);
-		}
-
-		p->p_priority = p->p_usrpri;
-
-		/*
-		 * Check for reschedule request, at the moment there is only
-		 * 1 ast so this code should always be run
-		 */
-
-		if (want_resched) {
-			/*
-			 * We are being preempted.
-			 */
-			preempt(NULL);
-			while ((sig = (CURSIG(p))) != 0) {
-				postsig(sig);
-			}
-		}
-
-		/* XXX
-		curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
-		*/
-	}
-
-#else
 	userret(p);
-		userret(p, frame->tf_pc, p->p_sticks);
-#endif
 }

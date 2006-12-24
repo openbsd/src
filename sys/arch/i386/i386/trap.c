@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.79 2006/12/24 20:29:19 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.80 2006/12/24 20:30:35 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@ extern struct emul emul_aout;
 
 #include "npx.h"
 
-static __inline void userret(struct proc *, int, u_quad_t);
+static __inline void userret(struct proc *);
 void trap(struct trapframe);
 int trapwrite(unsigned);
 void syscall(struct trapframe);
@@ -107,31 +107,13 @@ void syscall(struct trapframe);
  * trap and syscall.
  */
 static __inline void
-userret(struct proc *p, int pc, u_quad_t oticks)
+userret(struct proc *p)
 {
 	int sig;
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * We're being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
-
-	/*
-	 * If profiling, charge recent system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}
 
 	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority;
 }
@@ -179,7 +161,6 @@ trap(struct trapframe frame)
 {
 	struct proc *p = curproc;
 	int type = frame.tf_trapno;
-	u_quad_t sticks;
 	struct pcb *pcb = NULL;
 	extern char resume_iret[], resume_pop_ds[], resume_pop_es[],
 	    resume_pop_fs[], resume_pop_gs[];
@@ -210,10 +191,8 @@ trap(struct trapframe frame)
 
 	if (!KERNELMODE(frame.tf_cs, frame.tf_eflags)) {
 		type |= T_USER;
-		sticks = p->p_sticks;
 		p->p_md.md_regs = &frame;
-	} else
-		sticks = 0;
+	}
 
 	switch (type) {
 
@@ -586,7 +565,7 @@ trap(struct trapframe frame)
 	if ((type & T_USER) == 0)
 		return;
 out:
-	userret(p, frame.tf_eip, sticks);
+	userret(p);
 }
 
 /*
@@ -629,7 +608,6 @@ syscall(struct trapframe frame)
 	int orig_error, error, opc, nsys;
 	size_t argsize;
 	register_t code, args[8], rval[2];
-	u_quad_t sticks;
 #ifdef DIAGNOSTIC
 	int ocpl = lapic_tpr;
 #endif
@@ -640,7 +618,6 @@ syscall(struct trapframe frame)
 		panic("syscall");
 #endif
 	p = curproc;
-	sticks = p->p_sticks;
 	p->p_md.md_regs = &frame;
 	opc = frame.tf_eip;
 	code = frame.tf_eax;
@@ -797,7 +774,7 @@ syscall(struct trapframe frame)
 	scdebug_ret(p, code, orig_error, rval);
 	KERNEL_PROC_UNLOCK(p);
 #endif
-	userret(p, frame.tf_eip, sticks);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(p);
@@ -826,7 +803,7 @@ child_return(void *arg)
 
 	KERNEL_PROC_UNLOCK(p);
 
-	userret(p, tf->tf_eip, 0);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(p);
