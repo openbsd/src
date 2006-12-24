@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.4 2006/11/10 10:28:18 michele Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.5 2006/12/24 15:56:28 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -307,7 +307,7 @@ nbr_set_timer(struct nbr *nbr)
 	tv.tv_sec = NBR_TIMEOUT;
 
 	if (evtimer_add(&nbr->timeout_timer, &tv) == -1)
-		fatal("nbr_ret_timer");
+		fatal("nbr_set_timer");
 }
 
 void
