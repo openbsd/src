@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.37 2006/12/14 17:36:12 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.38 2006/12/24 01:25:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -252,8 +252,10 @@ schizo_init(struct schizo_softc *sc, int busa)
 	schizo_pbm_write(pbm, SCZ_PCI_DIAG, reg);
 
 	/* double mapped */
-	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ue, sc, SCZ_UE_INO, "ue");
-	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ce, sc, SCZ_CE_INO, "ce");
+	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ue, sc, SCZ_UE_INO,
+	    "ue");
+	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ce, sc, SCZ_CE_INO,
+	    "ce");
 	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_safari_error, sc,
 	    SCZ_SERR_INO, "safari");
 
@@ -434,16 +436,23 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 	struct intrhand *ih;
 	volatile u_int64_t *map, *clr;
 	struct schizo_pbm_regs *pbmreg;
+	char *name;
+	int nlen;
 
 	pbmreg = bus_space_vaddr(pbm->sp_regt, pbm->sp_regh);
 	map = &pbmreg->imap[ino];
 	clr = &pbmreg->iclr[ino];
 	ino |= sc->sc_ign;
 
+	nlen = strlen(sc->sc_dv.dv_xname) + 1 + strlen(what) + 1;
+	name = malloc(nlen, M_DEVBUF, M_WAITOK);
+	snprintf(name, nlen, "%s:%s", sc->sc_dv.dv_xname, what);
+
 	ih = bus_intr_allocate(pbm->sp_regt, handler, arg, ino, ipl,
-	    map, clr, what);
+	    map, clr, name);
 	if (ih == NULL) {
 		printf("set_intr failed...\n");
+		free(name, M_DEVBUF);
 		return;
 	}
 

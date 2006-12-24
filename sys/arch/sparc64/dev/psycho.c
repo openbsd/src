@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.48 2006/12/14 17:36:12 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.49 2006/12/24 01:25:01 deraadt Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -627,7 +627,7 @@ psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
 	ih->ih_pil = (1 << ipl);
 	ih->ih_number = INTVEC(*(ih->ih_map));
 	snprintf(ih->ih_name, sizeof(ih->ih_name),
-	    "%s_%s", sc->sc_dev.dv_xname, suffix);
+	    "%s:%s", sc->sc_dev.dv_xname, suffix);
 
 	DPRINTF(PDB_INTR, (
 	    "\ninstalling handler %p arg %p for %s with number %x pil %u",
