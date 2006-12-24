@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.14 2004/07/10 07:26:22 deraadt Exp $	*/
+/*	$OpenBSD: bog.c,v 1.15 2006/12/24 12:47:57 martin Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bog.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: bog.c,v 1.14 2004/07/10 07:26:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: bog.c,v 1.15 2006/12/24 12:47:57 martin Exp $";
 #endif
 #endif /* not lint */
 
@@ -673,7 +673,10 @@ compar(const void *p, const void *q)
 void
 usage(void)
 {
+	extern char *__progname;
+
 	(void) fprintf(stderr,
-	    "usage: bog [-bd] [-s#] [-t#] [-w#] [+[+]] [boardspec]\n");
+	    "usage: %s [-bd] [-s#] [-t#] [-w#] [+[+]] [boardspec]\n",
+		__progname);
 	exit(1);
 }
