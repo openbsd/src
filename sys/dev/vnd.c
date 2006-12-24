@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.65 2006/10/05 18:29:26 thib Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.66 2006/12/24 09:39:27 pedro Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -167,12 +167,8 @@ int	vndlock(struct vnd_softc *);
 void	vndunlock(struct vnd_softc *);
 
 void
-vndencrypt(vnd, addr, size, off, encrypt)
-	struct vnd_softc *vnd;
-	caddr_t addr;
-	size_t size;
-	daddr_t off;
-	int encrypt;
+vndencrypt(struct vnd_softc *vnd, caddr_t addr, size_t size, daddr_t off,
+    int encrypt)
 {
 	int i, bsize;
 	u_char iv[8];
@@ -193,8 +189,7 @@ vndencrypt(vnd, addr, size, off, encrypt)
 }
 
 void
-vndattach(num)
-	int num;
+vndattach(int num)
 {
 	char *mem;
 	u_long size;
@@ -217,10 +212,7 @@ vndattach(num)
 }
 
 int
-vndopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+vndopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -298,9 +290,7 @@ bad:
  * Load the label information on the named device
  */
 void
-vndgetdisklabel(dev, sc)
-	dev_t dev;
-	struct vnd_softc *sc;
+vndgetdisklabel(dev_t dev, struct vnd_softc *sc)
 {
 	struct disklabel *lp = sc->sc_dk.dk_label;
 	char *errstring;
@@ -347,10 +337,7 @@ vndgetdisklabel(dev, sc)
 }
 
 int
-vndclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+vndclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -403,8 +390,7 @@ vndclose(dev, flags, mode, p)
  * queue one write.
  */
 void
-vndstrategy(bp)
-	struct buf *bp;
+vndstrategy(struct buf *bp)
 {
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd = &vnd_softc[unit];
@@ -647,8 +633,7 @@ vndstrategy(bp)
  * server.
  */
 void
-vndstart(vnd)
-	struct vnd_softc *vnd;
+vndstart(struct vnd_softc *vnd)
 {
 	struct buf *bp;
 
@@ -674,8 +659,7 @@ vndstart(vnd)
 }
 
 void
-vndiodone(bp)
-	struct buf *bp;
+vndiodone(struct buf *bp)
 {
 	struct vndbuf *vbp = (struct vndbuf *) bp;
 	struct buf *pbp = vbp->vb_obp;
@@ -721,10 +705,7 @@ vndiodone(bp)
 
 /* ARGSUSED */
 int
-vndread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+vndread(dev_t dev, struct uio *uio, int flags)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -746,10 +727,7 @@ vndread(dev, uio, flags)
 
 /* ARGSUSED */
 int
-vndwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+vndwrite(dev_t dev, struct uio *uio, int flags)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -771,12 +749,7 @@ vndwrite(dev, uio, flags)
 
 /* ARGSUSED */
 int
-vndioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *vnd;
@@ -1029,9 +1002,7 @@ vndioctl(dev, cmd, addr, flag, p)
  * if some other uid can write directly to the mapped file (NFS).
  */
 int
-vndsetcred(vnd, cred)
-	struct vnd_softc *vnd;
-	struct ucred *cred;
+vndsetcred(struct vnd_softc *vnd, struct ucred *cred)
 {
 	struct uio auio;
 	struct iovec aiov;
@@ -1063,9 +1034,7 @@ vndsetcred(vnd, cred)
  * Set maxactive based on FS type
  */
 void
-vndthrottle(vnd, vp)
-	struct vnd_softc *vnd;
-	struct vnode *vp;
+vndthrottle(struct vnd_softc *vnd, struct vnode *vp)
 {
 #ifdef NFSCLIENT
 	extern int (**nfsv2_vnodeop_p)(void *);
@@ -1078,7 +1047,7 @@ vndthrottle(vnd, vp)
 }
 
 void
-vndshutdown()
+vndshutdown(void)
 {
 	struct vnd_softc *vnd;
 
@@ -1088,8 +1057,7 @@ vndshutdown()
 }
 
 void
-vndclear(vnd)
-	struct vnd_softc *vnd;
+vndclear(struct vnd_softc *vnd)
 {
 	struct vnode *vp = vnd->sc_vp;
 	struct proc *p = curproc;		/* XXX */
@@ -1099,18 +1067,17 @@ vndclear(vnd)
 		printf("vndclear(%p): vp %p\n", vnd, vp);
 #endif
 	vnd->sc_flags &= ~VNF_INITED;
-	if (vp == (struct vnode *)0)
+	if (vp == NULL)
 		panic("vndioctl: null vp");
 	(void) vn_close(vp, VNDRW(vnd), vnd->sc_cred, p);
 	crfree(vnd->sc_cred);
-	vnd->sc_vp = (struct vnode *)0;
-	vnd->sc_cred = (struct ucred *)0;
+	vnd->sc_vp = NULL;
+	vnd->sc_cred = NULL;
 	vnd->sc_size = 0;
 }
 
 int
-vndsize(dev)
-	dev_t dev;
+vndsize(dev_t dev)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *vnd = &vnd_softc[unit];
@@ -1121,11 +1088,7 @@ vndsize(dev)
 }
 
 int
-vnddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
+vnddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 
 	/* Not implemented. */
@@ -1139,8 +1102,7 @@ vnddump(dev, blkno, va, size)
  * Several drivers do this; it should be abstracted and made MP-safe.
  */
 int
-vndlock(sc)
-	struct vnd_softc *sc;
+vndlock(struct vnd_softc *sc)
 {
 	int error;
 
@@ -1157,8 +1119,7 @@ vndlock(sc)
  * Unlock and wake up any waiters.
  */
 void
-vndunlock(sc)
-	struct vnd_softc *sc;
+vndunlock(struct vnd_softc *sc)
 {
 
 	sc->sc_flags &= ~VNF_LOCKED;
