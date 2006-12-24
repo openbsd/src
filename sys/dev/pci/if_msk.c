@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.33 2006/12/24 14:34:27 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.34 2006/12/24 22:56:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -310,6 +310,41 @@ msk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
 void
 msk_marv_miibus_statchg(struct device *dev)
 {
+	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
+	struct mii_data *mii = &sc_if->sk_mii;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	int gpcr;
+
+	gpcr = SK_YU_READ_2(sc_if, YUKON_GPCR);
+	gpcr &= (YU_GPCR_TXEN | YU_GPCR_RXEN);
+
+	if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
+		/* Set speed. */
+		gpcr |= YU_GPCR_SPEED_DIS;
+		switch (IFM_SUBTYPE(mii->mii_media_active)) {
+		case IFM_1000_SX:
+		case IFM_1000_LX:
+		case IFM_1000_CX:
+		case IFM_1000_T:
+			gpcr |= (YU_GPCR_GIG | YU_GPCR_SPEED);
+			break;
+		case IFM_100_TX:
+			gpcr |= YU_GPCR_SPEED;
+			break;
+		}
+
+		/* Set duplex. */
+		gpcr |= YU_GPCR_DPLX_DIS;
+		if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
+			gpcr |= YU_GPCR_DUPLEX;
+
+		/* Disable flow control. */
+		gpcr |= YU_GPCR_FCTL_DIS;
+		gpcr |= (YU_GPCR_FCTL_TX_DIS | YU_GPCR_FCTL_RX_DIS);
+	}
+
+	SK_YU_WRITE_2(sc_if, YUKON_GPCR, gpcr);
+
 	DPRINTFN(9, ("msk_marv_miibus_statchg: gpcr=%x\n",
 		     SK_YU_READ_2(((struct sk_if_softc *)dev), YUKON_GPCR)));
 }
