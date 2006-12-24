@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.13 2006/09/01 01:13:25 mpf Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.14 2006/12/24 05:01:08 msf Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -130,11 +130,22 @@ sasyncd_run(pid_t ppid)
 	return 0;
 }
 
+__dead static void
+usage(void)
+{
+	extern char *__progname;
+
+	fprintf(stderr, "Usage: %s [-c config-file] [-d] [-v[v]]\n",
+	    __progname);
+	exit(1);
+}
+
 int
 main(int argc, char **argv)
 {
 	extern char	*__progname;
-	int		r;
+	char		*cfgfile = 0;
+	int	 	 ch, r;
 
 	if (geteuid() != 0) {
 		/* No point in continuing. */
@@ -154,15 +165,47 @@ main(int argc, char **argv)
 	log_init(__progname);
 	timer_init();
 
-	r = conf_init(argc, argv);
-	if (r > 1) {
-		fprintf(stderr, "Usage: %s [-c config-file] [-d] [-v[v]]\n",
-		    __progname);
-		fprintf(stderr, "Default configuration file is %s\n",
-		    SASYNCD_CFGFILE);
+	memset(&cfgstate, 0, sizeof cfgstate);
+	cfgstate.runstate = INIT;
+	LIST_INIT(&cfgstate.peerlist);
+
+	cfgstate.listen_port = SASYNCD_DEFAULT_PORT;
+
+	while ((ch = getopt(argc, argv, "c:dv")) != -1) {
+		switch (ch) {
+		case 'c':
+			if (cfgfile)
+				return 2;
+			cfgfile = optarg;
+			break;
+		case 'd':
+			cfgstate.debug++;
+			break;
+		case 'v':
+			cfgstate.verboselevel++;
+			break;
+		default:
+			usage();
+		}
 	}
-	if (r)
-		return 1;
+	argc -= optind;
+	argv += optind;
+
+	if (argc > 0)
+		usage();
+
+	if (!cfgfile)
+		cfgfile = SASYNCD_CFGFILE;
+
+	if (conf_parse_file(cfgfile) == 0 ) {
+		if (!cfgstate.sharedkey) {
+			fprintf(stderr, "config: "
+			    "no shared key specified, cannot continue");
+			exit(1);
+		}
+	} else {
+		exit(1);
+	}
 
 	carp_demote(CARP_INC, 0);
 

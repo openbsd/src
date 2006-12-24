@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.11 2006/06/02 20:31:48 moritz Exp $	*/
+/*	$OpenBSD: conf.y,v 1.12 2006/12/24 05:01:08 msf Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -269,7 +269,7 @@ yylex(void)
 	return v;
 }
 
-static int
+int
 conf_parse_file(char *cfgfile)
 {
 	struct stat	st;
@@ -339,56 +339,6 @@ conf_parse_file(char *cfgfile)
 
   bad:
 	log_msg(0, "failed to open \"%s\"", cfgfile);
-	return 1;
-}
-
-int
-conf_init(int argc, char **argv)
-{
-	char	*cfgfile = 0;
-	int	 ch;
-
-	memset(&cfgstate, 0, sizeof cfgstate);
-	cfgstate.runstate = INIT;
-	LIST_INIT(&cfgstate.peerlist);
-
-	cfgstate.listen_port = SASYNCD_DEFAULT_PORT;
-
-	while ((ch = getopt(argc, argv, "c:dv")) != -1) {
-		switch (ch) {
-		case 'c':
-			if (cfgfile)
-				return 2;
-			cfgfile = optarg;
-			break;
-		case 'd':
-			cfgstate.debug++;
-			break;
-		case 'v':
-			cfgstate.verboselevel++;
-			break;
-		default:
-			return 2;
-		}
-	}
-	argc -= optind;
-	argv += optind;
-
-	if (argc > 0)
-		return 2;
-
-	if (!cfgfile)
-		cfgfile = SASYNCD_CFGFILE;
-
-	if (conf_parse_file(cfgfile) == 0) {
-		if (!cfgstate.sharedkey) {
-			fprintf(stderr, "config: "
-			    "no shared key specified, cannot continue");
-			return 1;
-		}
-		return 0;
-	}
-
 	return 1;
 }
 
