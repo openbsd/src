@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.78 2006/09/19 11:06:33 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.79 2006/12/24 20:29:19 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -409,6 +409,8 @@ trap(struct trapframe frame)
 			ADDUPROF(p);
 			KERNEL_PROC_UNLOCK(p);
 		}
+		if (want_resched)
+			preempt(NULL);
 		goto out;
 
 	case T_DNA|T_USER: {

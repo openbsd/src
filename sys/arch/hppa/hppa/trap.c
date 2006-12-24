@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.93 2005/12/12 18:59:02 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.94 2006/12/24 20:29:17 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -146,14 +146,8 @@ userret(struct proc *p, register_t pc, u_quad_t oticks)
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
-	}
-	if (want_resched) {
-		/*
-		 * We're being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
+		if (want_resched)
+			preempt(NULL);
 	}
 
 	/*
