@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.36 2006/11/26 15:12:24 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.37 2006/12/24 12:54:13 reyk Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -2262,7 +2262,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 		}
 
 		if (bus_dmamap_load(sc->bnx_dmatag, sc->tx_bd_chain_map[i],
-		    (caddr_t)sc->tx_bd_chain[i], BNX_STATS_BLK_SZ, NULL,
+		    (caddr_t)sc->tx_bd_chain[i], BNX_TX_CHAIN_PAGE_SZ, NULL,
 		    BUS_DMA_NOWAIT)) {
 			printf(": Could not load TX desc %d DMA memory!\n", i);
 			rc = ENOMEM;
@@ -2323,7 +2323,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 		}
 
 		if (bus_dmamap_load(sc->bnx_dmatag, sc->rx_bd_chain_map[i],
-		    (caddr_t)sc->rx_bd_chain[i], BNX_STATS_BLK_SZ, NULL,
+		    (caddr_t)sc->rx_bd_chain[i], BNX_RX_CHAIN_PAGE_SZ, NULL,
 		    BUS_DMA_NOWAIT)) {
 			printf(": Could not load Rx desc %d DMA memory!\n", i);
 			rc = ENOMEM;
