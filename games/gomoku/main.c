@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2006/12/14 10:15:09 martin Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2006/12/24 14:14:02 martin Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.18 2006/12/14 10:15:09 martin Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.19 2006/12/24 14:14:02 martin Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,10 +118,10 @@ main(argc, argv)
 			if ((debugfp = fopen(optarg, "w")) == NULL)
 				err(1, "%s", optarg);
 			break;
-		case 'u':	/* testing: user verses user */
+		case 'u':	/* testing: user versus user */
 			test = 1;
 			break;
-		case 'c':	/* testing: computer verses computer */
+		case 'c':	/* testing: computer versus computer */
 			test = 2;
 			break;
 		case 'h':
@@ -201,17 +201,17 @@ again:
 		input[WHITE] = INPUTF;
 	} else {
 		switch (test) {
-		case 0: /* user verses program */
+		case 0: /* user versus program */
 			input[color] = USER;
 			input[!color] = PROGRAM;
 			break;
 
-		case 1: /* user verses user */
+		case 1: /* user versus user */
 			input[BLACK] = USER;
 			input[WHITE] = USER;
 			break;
 
-		case 2: /* program verses program */
+		case 2: /* program versus program */
 			input[BLACK] = PROGRAM;
 			input[WHITE] = PROGRAM;
 			break;
