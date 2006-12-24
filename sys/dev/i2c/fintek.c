@@ -1,4 +1,4 @@
-/*	$OpenBSD: fintek.c,v 1.3 2006/12/23 17:46:39 deraadt Exp $ */
+/*	$OpenBSD: fintek.c,v 1.4 2006/12/24 01:26:20 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
  *
@@ -142,7 +142,7 @@ fintek_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor[F_VCC].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[F_VCC].desc, "VCC",
+	strlcpy(sc->sc_sensor[F_VCC].desc, "Vcc",
 	    sizeof(sc->sc_sensor[F_VCC].desc));
 
 	sc->sc_sensor[F_V1].type = SENSOR_VOLTS_DC;
