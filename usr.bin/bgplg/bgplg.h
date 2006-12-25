@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.h,v 1.1 2006/12/11 23:10:10 reyk Exp $	*/
+/*	$OpenBSD: bgplg.h,v 1.2 2006/12/25 00:02:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
@@ -40,7 +40,7 @@ struct cmd {
 	{ "show ip bgp as", 1, 1, "&lt;asnum&gt;",			\
 	    { BGPCTL, "show", "ip", "bgp", "as", NULL } },		\
 	{ "show ip bgp source-as", 1, 1, "&lt;asnum&gt;",		\
-	    { BGPCTL, "show", "ip", "bgp", "as", NULL } },		\
+	    { BGPCTL, "show", "ip", "bgp", "source-as", NULL } },	\
 	{ "show ip bgp transit-as", 1, 1, "&lt;asnum&gt;",		\
 	    { BGPCTL, "show", "ip", "bgp", "transit-as", NULL } },	\
 	{ "show ip bgp empty-as", 0, 0, NULL,				\
