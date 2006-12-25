@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.3 2006/12/25 18:12:14 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.4 2006/12/25 19:05:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -79,8 +79,7 @@ check_tcp(struct ctl_tcp_event *cte)
 		tcp_host_up(s, cte);
 		return;
 	}
-	tv.tv_sec = cte->table->timeout / 1000;
-	tv.tv_usec = cte->table->timeout % 1000;
+	bcopy(&cte->table->timeout, &tv, sizeof(tv));
 	event_once(s, EV_TIMEOUT|EV_WRITE, tcp_write, cte, &tv);
 	return;
 bad:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_http.c,v 1.3 2006/12/25 18:12:14 reyk Exp $	*/
+/*	$OpenBSD: check_http.c,v 1.4 2006/12/25 19:05:41 reyk Exp $	*/
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
  *
@@ -129,8 +129,7 @@ http_read(int s, short event, void *arg)
 		hce_notify_done(cte->host, "http_read: read failed");
 	} else {
 		buf_add(cte->buf, rbuf, br);
-		tv.tv_sec = cte->table->timeout / 1000;
-		tv.tv_usec = cte->table->timeout % 1000;
+		bcopy(&cte->table->timeout, &tv, sizeof(tv));
 		if (gettimeofday(&tv_now, NULL))
 			fatal("send_http_request: gettimeofday");
 		timersub(&tv_now, &cte->tv_start, &tv_now);
@@ -184,8 +183,7 @@ send_http_request(struct ctl_tcp_event *cte)
 	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
 		fatalx("send_http_request: cannot create dynamic buffer");
 
-	tv.tv_sec = cte->table->timeout / 1000;
-	tv.tv_usec = cte->table->timeout % 1000;
+	bcopy(&cte->table->timeout, &tv, sizeof(tv));
 	if (gettimeofday(&tv_now, NULL))
 		fatal("send_http_request: gettimeofday");
 	timersub(&tv_now, &cte->tv_start, &tv_now);

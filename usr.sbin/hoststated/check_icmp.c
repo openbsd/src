@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.3 2006/12/25 18:12:14 reyk Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.4 2006/12/25 19:05:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -69,18 +69,13 @@ check_icmp(struct ctl_icmp_event *cie)
 
 	if (gettimeofday(&cie->tv_start, NULL))
 		fatal("check_icmp: gettimeofday");
-	if (cie->has_icmp4) {
-		tv.tv_sec = cie->env->timeout / 1000;
-		tv.tv_usec = cie->env->timeout % 1000;
+	bcopy(&cie->env->timeout, &tv, sizeof(tv));
+	if (cie->has_icmp4)
 		event_once(cie->icmp_sock, EV_READ|EV_TIMEOUT,
 		    recv_icmp4, cie, &tv);
-	}
-	if (cie->has_icmp6) {
-		tv.tv_sec = cie->env->timeout / 1000;
-		tv.tv_usec = cie->env->timeout % 1000;
+	if (cie->has_icmp6)
 		event_once(cie->icmp6_sock, EV_READ|EV_TIMEOUT,
 		    recv_icmp6, cie, &tv);
-	}
 }
 
 int
@@ -247,8 +242,7 @@ recv_icmp6(int s, short event, void *arg)
 		return;
 	if (gettimeofday(&tv_now, NULL))
 		fatal("recv_icmp6: gettimeofday");
-	tv.tv_sec = cie->env->timeout / 1000;
-	tv.tv_usec = cie->env->timeout % 1000;
+	bcopy(&cie->env->timeout, &tv, sizeof(tv));
 	timersub(&tv_now, &cie->tv_start, &tv_now);
 	timersub(&tv, &tv_now, &tv);
 	event_once(cie->icmp6_sock, EV_READ|EV_TIMEOUT, recv_icmp6, cie, &tv);
@@ -327,8 +321,8 @@ recv_icmp4(int s, short event, void *arg)
 	
 	if (gettimeofday(&tv_now, NULL))
 		fatal("recv_icmp4: gettimeofday");
-	tv.tv_sec = cie->env->timeout / 1000;
-	tv.tv_usec = cie->env->timeout % 1000;
+
+	bcopy(&cie->env->timeout, &tv, sizeof(tv));
 	timersub(&tv_now, &cie->tv_start, &tv_now);
 	timersub(&tv, &tv_now, &tv);
 	event_once(cie->icmp_sock, EV_READ|EV_TIMEOUT, recv_icmp4, cie, &tv);

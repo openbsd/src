@@ -184,7 +184,7 @@ struct table {
 	int			 up;
 	in_port_t		 port;
 	int			 retcode;
-	int			 timeout;
+	struct timeval		 timeout;
 	char			 name[TABLE_NAME_SIZE];
 	char			 path[MAXPATHLEN];
 	char			 digest[41]; /* length of sha1 digest * 2 */
@@ -226,7 +226,7 @@ struct hostated {
 	int			 icmp6_sock;
 	int			 tablecount;
 	int			 servicecount;
-	int			 timeout;
+	struct timeval		 timeout;
 	struct table		 empty_table;
 	struct event		 ev;
 	struct tablelist	 tables;

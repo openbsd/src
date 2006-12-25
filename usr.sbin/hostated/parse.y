@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2006/12/25 18:12:14 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.6 2006/12/25 19:05:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -90,6 +90,7 @@ typedef struct {
 		u_int32_t	 number;
 		char		*string;
 		struct host	*host;
+		struct timeval	 tv;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -105,6 +106,7 @@ typedef struct {
 %type	<v.string>	interface
 %type	<v.number>	number
 %type	<v.host>	host
+%type	<v.tv>		timeout
 
 %%
 
@@ -140,7 +142,9 @@ varset		: STRING '=' STRING	{
 		;
 
 main		: INTERVAL number	{ conf->interval = $2; }
-		| TIMEOUT number	{ conf->timeout = $2; }
+		| TIMEOUT timeout	{
+			bcopy(&$2, &conf->timeout, sizeof(struct timeval));
+		}
 		;
 
 service		: SERVICE STRING	{
@@ -292,7 +296,7 @@ table		: TABLE STRING	{
 				YYERROR;
 			}
 			tb->id = last_table_id++;
-			tb->timeout = conf->timeout;
+			bcopy(&conf->timeout, &tb->timeout, sizeof(struct timeval));
 			if (last_table_id == UINT_MAX) {
 				yyerror("too many tables defined");
 				YYERROR;
@@ -326,8 +330,8 @@ tableoptsl	: host			{
 			$1->tablename = table->name;
 			TAILQ_INSERT_HEAD(&table->hosts, $1, entry);
 		}
-		| TIMEOUT number	{
-			table->timeout = $2;
+		| TIMEOUT timeout	{
+			bcopy(&$2, &table->timeout, sizeof(struct timeval));
 		}
 		| CHECK ICMP		{
 			table->check = CHECK_ICMP;
@@ -410,6 +414,13 @@ host		: HOST STRING {
 				free($2);
 				$$ = r;
 			}
+		}
+		;
+
+timeout		: number
+		{
+			$$.tv_sec = $1 / 1000;
+			$$.tv_usec = ($1 % 1000) * 1000;
 		}
 		;
 
@@ -686,7 +697,8 @@ parse_config(struct hostated *x_conf, const char *filename, int opts)
 	(void)strlcpy(conf->empty_table.name, "empty",
 	    sizeof(conf->empty_table.name));
 
-	conf->timeout = CHECK_TIMEOUT;
+	conf->timeout.tv_sec = CHECK_TIMEOUT / 1000;
+	conf->timeout.tv_usec = (CHECK_TIMEOUT % 1000) * 1000;
 	conf->interval = CHECK_INTERVAL;
 	conf->opts = opts;
 
