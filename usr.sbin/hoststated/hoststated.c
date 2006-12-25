@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.4 2006/12/16 18:50:33 reyk Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.5 2006/12/25 18:40:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -92,7 +92,8 @@ usage(void)
 	exit(1);
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
 	int		 c;
 	int		 debug;
