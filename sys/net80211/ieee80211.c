@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.19 2006/12/20 08:13:56 grange Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.20 2006/12/25 19:24:26 reyk Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -77,17 +77,6 @@ struct ieee80211com_head ieee80211com_head =
     LIST_HEAD_INITIALIZER(ieee80211com_head);
 
 static void ieee80211_setbasicrates(struct ieee80211com *);
-
-#if 0
-static const char *ieee80211_phymode_name[] = {
-	"auto",		/* IEEE80211_MODE_AUTO */
-	"11a",		/* IEEE80211_MODE_11A */
-	"11b",		/* IEEE80211_MODE_11B */
-	"11g",		/* IEEE80211_MODE_11G */
-	"FH",		/* IEEE80211_MODE_FH */
-	"turbo",	/* IEEE80211_MODE_TURBO */
-};
-#endif
 
 void
 ieee80211_ifattach(struct ifnet *ifp)

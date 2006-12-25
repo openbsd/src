@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.10 2006/11/03 19:02:08 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.11 2006/12/25 19:24:27 reyk Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@ enum ieee80211_state {
 	((*(_ic)->ic_send_mgmt)(_ic, _ni, _type, _arg))
 
 extern	const char *ieee80211_mgt_subtype_name[];
+extern	const char *ieee80211_phymode_name[];
 
 extern	void ieee80211_proto_attach(struct ifnet *);
 extern	void ieee80211_proto_detach(struct ifnet *);

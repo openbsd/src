@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.12 2006/08/29 17:56:32 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.13 2006/12/25 19:24:27 reyk Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -81,6 +81,14 @@ const char *ieee80211_state_name[IEEE80211_S_MAX] = {
 	"AUTH",		/* IEEE80211_S_AUTH */
 	"ASSOC",	/* IEEE80211_S_ASSOC */
 	"RUN"		/* IEEE80211_S_RUN */
+};
+const char *ieee80211_phymode_name[] = {
+	"auto",		/* IEEE80211_MODE_AUTO */
+	"11a",		/* IEEE80211_MODE_11A */
+	"11b",		/* IEEE80211_MODE_11B */
+	"11g",		/* IEEE80211_MODE_11G */
+	"fh",		/* IEEE80211_MODE_FH */
+	"turbo",	/* IEEE80211_MODE_TURBO */
 };
 
 static int ieee80211_newstate(struct ieee80211com *, enum ieee80211_state, int);

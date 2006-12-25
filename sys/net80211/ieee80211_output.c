@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.22 2006/11/03 19:02:08 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.23 2006/12/25 19:24:26 reyk Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -179,13 +179,15 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 #endif
 		    (type & IEEE80211_FC0_SUBTYPE_MASK) !=
 		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
-			printf("%s: sending %s to %s on channel %u\n",
+			printf("%s: sending %s to %s on channel %u mode %s\n",
 			    ifp->if_xname,
 			    ieee80211_mgt_subtype_name[
 			    (type & IEEE80211_FC0_SUBTYPE_MASK)
 			    >> IEEE80211_FC0_SUBTYPE_SHIFT],
 			    ether_sprintf(ni->ni_macaddr),
-			    ieee80211_chan2ieee(ic, ni->ni_chan));
+			    ieee80211_chan2ieee(ic, ni->ni_chan),
+			    ieee80211_phymode_name[
+			    ieee80211_chan2mode(ic, ni->ni_chan)]);
 	}
 
 	IF_ENQUEUE(&ic->ic_mgtq, m);

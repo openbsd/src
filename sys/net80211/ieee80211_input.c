@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.21 2006/08/29 18:10:34 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.22 2006/12/25 19:24:26 reyk Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -402,11 +402,13 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			doprint += ieee80211_debug;
 #endif
 			if (doprint)
-				printf("%s: received %s from %s rssi %d\n",
+				printf("%s: received %s from %s rssi %d mode %s\n",
 				    ifp->if_xname,
 				    ieee80211_mgt_subtype_name[subtype
 				    >> IEEE80211_FC0_SUBTYPE_SHIFT],
-				    ether_sprintf(wh->i_addr2), rssi);
+				    ether_sprintf(wh->i_addr2), rssi,
+				    ieee80211_phymode_name[ieee80211_chan2mode(ic,
+				    ic->ic_bss->ni_chan)]);
 		}
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf)
