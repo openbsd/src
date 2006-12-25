@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2006/12/16 18:05:35 martin Exp $	*/
+/*	$OpenBSD: parse.y,v 1.5 2006/12/25 18:12:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -140,6 +140,7 @@ varset		: STRING '=' STRING	{
 		;
 
 main		: INTERVAL number	{ conf->interval = $2; }
+		| TIMEOUT number	{ conf->timeout = $2; }
 		;
 
 service		: SERVICE STRING	{
@@ -291,7 +292,7 @@ table		: TABLE STRING	{
 				YYERROR;
 			}
 			tb->id = last_table_id++;
-			tb->timeout = CONNECT_TIMEOUT;
+			tb->timeout = conf->timeout;
 			if (last_table_id == UINT_MAX) {
 				yyerror("too many tables defined");
 				YYERROR;
@@ -685,6 +686,7 @@ parse_config(struct hostated *x_conf, const char *filename, int opts)
 	(void)strlcpy(conf->empty_table.name, "empty",
 	    sizeof(conf->empty_table.name));
 
+	conf->timeout = CHECK_TIMEOUT;
 	conf->interval = CHECK_INTERVAL;
 	conf->opts = opts;
 

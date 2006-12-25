@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.2 2006/12/16 11:59:12 reyk Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.3 2006/12/25 18:12:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -32,151 +32,306 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "hostated.h"
 
-int check_icmp6(struct host *, int, int);
-int check_icmp4(struct host *, int, int);
-int in_cksum(u_short *, int);
+int	icmp6_checks_done(struct ctl_icmp_event *);
+int	icmp4_checks_done(struct ctl_icmp_event *);
+void	send_icmp6(struct ctl_icmp_event *, struct host *);
+void	send_icmp4(struct ctl_icmp_event *, struct host *);
+void	recv_icmp6(int, short, void *);
+void	recv_icmp4(int, short, void *);
+int	in_cksum(u_short *, int);
 
-int check_icmp(struct host *host, int s, int s6, int timeout)
+void
+schedule_icmp(struct ctl_icmp_event *cie, struct table *table)
 {
-	if (host->ss.ss_family == AF_INET)
-		return (check_icmp4(host, s, timeout));
-	else
-		return (check_icmp6(host, s6, timeout));
+	struct host	*host;
+
+	TAILQ_FOREACH(host, &table->hosts, entry) {
+		if (host->flags & F_DISABLE)
+			continue;
+		host->last_up = host->up;
+		host->flags &= ~F_CHECK_DONE;
+		if (((struct sockaddr *)&host->ss)->sa_family == AF_INET) {
+			send_icmp4(cie, host);
+		} else {
+			send_icmp6(cie, host);
+		}
+	}
 }
 
-int check_icmp6(struct host *host, int s, int timeout)
+void
+check_icmp(struct ctl_icmp_event *cie)
+{
+	struct timeval	tv;
+
+	if (gettimeofday(&cie->tv_start, NULL))
+		fatal("check_icmp: gettimeofday");
+	if (cie->has_icmp4) {
+		tv.tv_sec = cie->env->timeout / 1000;
+		tv.tv_usec = cie->env->timeout % 1000;
+		event_once(cie->icmp_sock, EV_READ|EV_TIMEOUT,
+		    recv_icmp4, cie, &tv);
+	}
+	if (cie->has_icmp6) {
+		tv.tv_sec = cie->env->timeout / 1000;
+		tv.tv_usec = cie->env->timeout % 1000;
+		event_once(cie->icmp6_sock, EV_READ|EV_TIMEOUT,
+		    recv_icmp6, cie, &tv);
+	}
+}
+
+int
+icmp6_checks_done(struct ctl_icmp_event *cie)
+{
+	struct table	*table;
+	struct host	*host;
+
+	TAILQ_FOREACH(table, &cie->env->tables, entry) {
+		if (table->flags & F_DISABLE || table->check != CHECK_ICMP)
+			continue;
+		TAILQ_FOREACH(host, &table->hosts, entry) {
+			if (((struct sockaddr *)&host->ss)->sa_family !=
+			    AF_INET6)
+				continue;
+			if (!(host->flags & F_CHECK_DONE))
+				return (0);
+		}
+	}
+	return (1);
+}
+
+int
+icmp4_checks_done(struct ctl_icmp_event *cie)
+{
+	struct table	*table;
+	struct host	*host;
+
+	TAILQ_FOREACH(table, &cie->env->tables, entry) {
+		if (table->flags & F_DISABLE || table->check != CHECK_ICMP)
+			continue;
+		TAILQ_FOREACH(host, &table->hosts, entry) {
+			if (((struct sockaddr *)&host->ss)->sa_family !=
+			    AF_INET)
+				continue;
+			if (!(host->flags & F_CHECK_DONE)) {
+				return (0);
+			}
+		}
+	}
+	return (1);
+}
+
+void
+send_icmp6(struct ctl_icmp_event *cie, struct host *host)
 {
 	struct sockaddr		*to;
 	struct icmp6_hdr	*icp;
-	int			 ident;
 	ssize_t			 i;
-	int			 cc;
 	int			 datalen = (64 - 8);
 	u_char			 packet[datalen];
-	fd_set			 fdset;
-	socklen_t		 len;
-	struct timeval		 tv;
 
+	cie->has_icmp6 = 1;
 	to = (struct sockaddr *)&host->ss;
-	ident = getpid() & 0xFFFF;
-	len = sizeof(struct sockaddr_in6);
-
 	bzero(&packet, sizeof(packet));
 	icp = (struct icmp6_hdr *)packet;
 	icp->icmp6_type = ICMP6_ECHO_REQUEST;
 	icp->icmp6_code = 0;
 	icp->icmp6_seq = 1;
-	icp->icmp6_id = ident;
+	icp->icmp6_id = getpid() & 0xffff;
 
-	memset((packet + sizeof(*icp)), 'X', datalen);
-	cc = datalen + 8;
+	memcpy((packet + sizeof(*icp)), &host->id, sizeof(host->id));
 
-	i = sendto(s, packet, cc, 0, to, len);
-
-	if (i < 0 || i != cc) {
-		log_warn("check_icmp6: cannot send ping");
-		return (HOST_UNKNOWN);
+	i = sendto(cie->icmp6_sock, packet, datalen + 8, 0, to,
+	    sizeof(struct sockaddr_in6));
+	if (i < 0 || i != datalen + 8) {
+		host->up = HOST_DOWN;
+		hce_notify_done(host, "send_icmp6: cannot send");
+		return;
 	}
-
-	tv.tv_sec = timeout / 1000;
-	tv.tv_usec = timeout % 1000;
-	FD_ZERO(&fdset);
-	FD_SET(s, &fdset);
-	switch (select(s + 1, &fdset, NULL, NULL, &tv)) {
-	case -1:
-		if (errno == EINTR) {
-			log_warnx("check_icmp6: interrupted");
-			return (HOST_UNKNOWN);
-		} else
-			fatal("check_icmp6: select");
-	case 0:
-		log_debug("check_icmp6: timeout");
-		return (HOST_DOWN);
-	default:
-		bzero(&packet, sizeof(packet));
-		i = recvfrom(s, packet, cc, 0, to, &len);
-		if (i < 0 || i != cc) {
-			log_warn("check_icmp6: did not receive valid ping");
-			return (HOST_DOWN);
-		}
-		icp = (struct icmp6_hdr *)(packet);
-		if (icp->icmp6_id != ident) {
-			log_warnx("check_icmp6: did not receive valid ident");
-			return (HOST_DOWN);
-		}
-		break;
-	}
-	return (HOST_UP);
 }
 
-int check_icmp4(struct host *host, int s, int timeout)
+void
+send_icmp4(struct ctl_icmp_event *cie, struct host *host)
 {
-	struct sockaddr		*to;
-	struct icmp		*icp;
-	int			 ident;
-	ssize_t			 i;
-	int			 cc;
-	int			 datalen = (64 - 8);
-	u_char			 packet[datalen];
-	fd_set			 fdset;
-	socklen_t		 len;
-	struct timeval		 tv;
+	struct sockaddr	*to;
+	struct icmp	*icp;
+	ssize_t		 i;
+	int		 datalen = (64 - 8);
+	u_char		 packet[datalen];
 
+	cie->has_icmp4 = 1;
 	to = (struct sockaddr *)&host->ss;
-	ident = getpid() & 0xFFFF;
-	len = sizeof(struct sockaddr_in);
-
 	bzero(&packet, sizeof(packet));
 	icp = (struct icmp *)packet;
-	icp->icmp_type = htons(ICMP_ECHO);
+	icp->icmp_type = ICMP_ECHO;
 	icp->icmp_code = 0;
 	icp->icmp_seq = htons(1);
-	icp->icmp_id = htons(ident);
+	icp->icmp_id = htons(getpid() & 0xffff);
 	icp->icmp_cksum = 0;
 
-	memset(icp->icmp_data, 'X', datalen);
-	cc = datalen + 8;
-	icp->icmp_cksum = in_cksum((u_short *)icp, cc);
+	memcpy(icp->icmp_data, &host->id, sizeof(host->id));
+	icp->icmp_cksum = in_cksum((u_short *)icp, datalen + 8);
 
-	i = sendto(s, packet, cc, 0, to, len);
+	i = sendto(cie->icmp_sock, packet, datalen + 8, 0, to,
+	    sizeof(struct sockaddr_in));
+	if (i < 0 || i != datalen + 8) {
+		host->up = HOST_DOWN;
+		hce_notify_done(host, "send_icmp4: cannot send");
+	}
+}
 
-	if (i < 0 || i != cc) {
-		log_warn("check_icmp4: cannot send ping");
-		return (HOST_UNKNOWN);
+void
+recv_icmp6(int s, short event, void *arg)
+{
+	struct ctl_icmp_event	*cie = arg;
+	int			 datalen = (64 - 8);
+	u_char			 packet[datalen];
+	socklen_t		 len;
+	struct sockaddr_storage	 ss;
+	struct icmp6_hdr	*icp;
+	struct host		*host;
+	struct table		*table;
+	ssize_t			 i;
+	objid_t			 id;
+	struct timeval		 tv;
+	struct timeval		 tv_now;
+
+	if (event == EV_TIMEOUT) {
+		/*
+		 * mark all hosts which have not responded yet as down.
+		 */
+		TAILQ_FOREACH(table, &cie->env->tables, entry) {
+			if (table->check != CHECK_ICMP ||
+			    table->flags & F_DISABLE)
+				continue;
+			TAILQ_FOREACH(host, &table->hosts, entry) {
+				if (host->flags & F_DISABLE)
+					continue;
+				if (((struct sockaddr *)&host->ss)->sa_family
+				    != AF_INET6)
+					continue;
+				if (!(host->flags & F_CHECK_DONE)) {
+					host->up = HOST_DOWN;
+				}
+			}
+		}
+		return;
+	}
+	bzero(&packet, sizeof(packet));
+	bzero(&ss, sizeof(ss));
+	len = sizeof(struct sockaddr_in6);
+	i = recvfrom(s, packet, datalen + 8, 0, (struct sockaddr *)&ss, &len);
+	if (i < 0 || i != datalen + 8) {
+		log_warn("recv_icmp6: did not receive valid ping");
+		return;
+	}
+	icp = (struct icmp6_hdr *)(packet);
+	memcpy(&id, (packet + sizeof(*icp)), sizeof(id));
+	host = host_find(cie->env, id);
+	if (host == NULL)
+		log_warn("recv_icmp6: ping for unknown host received");
+	if (bcmp(&ss, &host->ss, len)) {
+		log_warnx("recv_icmp6: forged icmp packet ?");
+		return;
+	}
+	if (icp->icmp6_id != (getpid() & 0xffff)) {
+		log_warnx("recv_icmp6: did not receive valid ident");
+		host->up = HOST_DOWN;
+	} else
+		host->up = HOST_UP;
+	hce_notify_done(host, "recv_icmp6: final");
+	if (icmp6_checks_done(cie))
+		return;
+	if (gettimeofday(&tv_now, NULL))
+		fatal("recv_icmp6: gettimeofday");
+	tv.tv_sec = cie->env->timeout / 1000;
+	tv.tv_usec = cie->env->timeout % 1000;
+	timersub(&tv_now, &cie->tv_start, &tv_now);
+	timersub(&tv, &tv_now, &tv);
+	event_once(cie->icmp6_sock, EV_READ|EV_TIMEOUT, recv_icmp6, cie, &tv);
+}
+
+void
+recv_icmp4(int s, short event, void *arg)
+{
+	int			 datalen = (64 - 8);
+	socklen_t		 len;
+	struct icmp		*icp;
+	struct ctl_icmp_event	*cie = arg;
+	u_char		 	 packet[datalen];
+	struct host		*host;
+	struct table		*table;
+	ssize_t			 i;
+	objid_t			 id;
+	struct timeval		 tv;
+	struct timeval		 tv_now;
+	struct sockaddr_storage	 ss;
+
+	if (event == EV_TIMEOUT) {
+		/*
+		 * mark all hosts which have not responded yet as down.
+		 */
+		TAILQ_FOREACH(table, &cie->env->tables, entry) {
+			if (table->check != CHECK_ICMP ||
+			    table->flags & F_DISABLE)
+				continue;
+			TAILQ_FOREACH(host, &table->hosts, entry) {
+				if (host->flags & F_DISABLE)
+					continue;
+				if (((struct sockaddr *)&host->ss)->sa_family
+				    != AF_INET)
+					continue;
+				if (!(host->flags & F_CHECK_DONE)) {
+					host->up = HOST_DOWN;
+				}
+			}
+		}
+		return;
+	}
+	
+	len = sizeof(struct sockaddr_in);
+	bzero(&packet, sizeof(packet));
+	bzero(&ss, sizeof(ss));
+	i = recvfrom(s, packet, datalen + 8, 0, (struct sockaddr *)&ss, &len);
+	if (i < 0 || i != (datalen + 8)) {
+		log_warn("recv_icmp4: did not receive valid ping");
+		return;
 	}
 
-	tv.tv_sec = timeout / 1000;
-	tv.tv_usec = timeout % 1000;
-	FD_ZERO(&fdset);
-	FD_SET(s, &fdset);
-	switch (select(s + 1, &fdset, NULL, NULL, &tv)) {
-	case -1:
-		if (errno == EINTR) {
-			log_warnx("check_icmp4: ping interrupted");
-			return (HOST_UNKNOWN);
-		} else
-			fatal("check_icmp4: select");
-	case 0:
-		log_debug("check_icmp4: timeout");
-		return (HOST_DOWN);
-	default:
-		bzero(&packet, sizeof(packet));
-		i = recvfrom(s, packet, cc, 0, to, &len);
-		if (i < 0 || i != cc) {
-			log_warn("check_icmp4: did not receive valid ping");
-			return (HOST_DOWN);
-		}
-		icp = (struct icmp *)(packet + sizeof(struct ip));
-		if (ntohs(icp->icmp_id) != ident) {
-			log_warnx("check_icmp4: did not receive valid ident");
-			return (HOST_DOWN);
-		}
-		break;
+	icp = (struct icmp *)(packet + sizeof(struct ip));
+	memcpy(&id, icp->icmp_data, sizeof(id));
+	host = host_find(cie->env, id);
+	if (host == NULL) {
+		log_warnx("recv_icmp4: received ping for unknown host");
+		return;
 	}
-	return (HOST_UP);
+	if (bcmp(&ss, &host->ss, len)) {
+		log_warnx("recv_icmp4: forged icmp packet ?");
+		return;
+	}
+	if (ntohs(icp->icmp_id) != (getpid() & 0xffff)) {
+		log_warnx("recv_icmp4: did not receive valid ident");
+		host->up = HOST_DOWN;
+	} else
+		host->up = HOST_UP;
+
+	host->flags |= F_CHECK_DONE;
+	if (icmp4_checks_done(cie)) {
+		hce_notify_done(host, "recv_icmp4: all done");
+		return;	
+	}
+	hce_notify_done(host, "recv_icmp4: host");
+	
+	if (gettimeofday(&tv_now, NULL))
+		fatal("recv_icmp4: gettimeofday");
+	tv.tv_sec = cie->env->timeout / 1000;
+	tv.tv_usec = cie->env->timeout % 1000;
+	timersub(&tv_now, &cie->tv_start, &tv_now);
+	timersub(&tv, &tv_now, &tv);
+	event_once(cie->icmp_sock, EV_READ|EV_TIMEOUT, recv_icmp4, cie, &tv);
 }
 
 /* in_cksum from ping.c --

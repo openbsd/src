@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.3 2006/12/16 17:48:27 deraadt Exp $	*/
+/*	$OpenBSD: hce.c,v 1.4 2006/12/25 18:12:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -43,8 +43,9 @@ void	hce_shutdown(void);
 void	hce_dispatch_imsg(int, short, void *);
 void	hce_dispatch_parent(int, short, void *);
 void	hce_launch_checks(int, short, void *);
+int	hce_checks_done(void);
 
-static struct hostated		*env = NULL;
+static struct hostated	*env = NULL;
 struct imsgbuf		*ibuf_pfe;
 struct imsgbuf		*ibuf_main;
 
@@ -103,6 +104,10 @@ hce(struct hostated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("hce: can't drop privileges");
 
+	env->cie.icmp_sock = env->icmp_sock;
+	env->cie.icmp6_sock = env->icmp6_sock;
+	env->cie.env = env;
+
 	event_init();
 
 	signal_set(&ev_sigint, SIGINT, hce_sig_handler, NULL);
@@ -148,51 +153,89 @@ hce(struct hostated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 void
 hce_launch_checks(int fd, short event, void *arg)
 {
-	int			 previous_up;
 	struct host		*host;
 	struct table		*table;
-	struct ctl_status	 st;
-	struct timeval		 tv;
 
-	tv.tv_sec = env->interval;
-	tv.tv_usec = 0;
-	evtimer_add(&env->ev, &tv);
-	bzero(&st, sizeof(st));
+	TAILQ_FOREACH(table, &env->tables, entry) {
+		if (table->flags & F_DISABLE)
+			continue;
+		if (table->check == CHECK_NOCHECK)
+			fatalx("hce_launch_checks: unknown check type");
+		if (table->check == CHECK_ICMP) {
+			schedule_icmp(&env->cie, table);
+			continue;
+		}
+		/*
+		 * tcp type checks follow
+		 */
+		TAILQ_FOREACH(host, &table->hosts, entry) {
+			if (host->flags & F_DISABLE)
+				continue;
+			bzero(&host->cte, sizeof(host->cte));
+			host->last_up = host->up;
+			host->cte.host = host;
+			host->cte.table = table;
+			if (gettimeofday(&host->cte.tv_start, NULL))
+				fatal("hce_launch_checks: gettimeofday");
+			check_tcp(&host->cte);
+		}
+	}
+	check_icmp(&env->cie);
+}
+
+int
+hce_checks_done()
+{
+	struct table		*table;
+	struct host		*host;
+
 	TAILQ_FOREACH(table, &env->tables, entry) {
 		if (table->flags & F_DISABLE)
 			continue;
 		TAILQ_FOREACH(host, &table->hosts, entry) {
 			if (host->flags & F_DISABLE)
 				continue;
-			previous_up = host->up;
-			switch (table->check) {
-			case CHECK_ICMP:
-				host->up = check_icmp(host, env->icmp_sock,
-				    env->icmp6_sock, table->timeout);
-				break;
-			case CHECK_TCP:
-				host->up = check_tcp(host, table);
-				break;
-			case CHECK_HTTP_CODE:
-				host->up = check_http_code(host, table);
-				break;
-			case CHECK_HTTP_DIGEST:
-				host->up = check_http_digest(host, table);
-				break;
-			default:
-				fatalx("hce_launch_checks: unknown check type");
-				break;
-			}
-			if (host->up != previous_up) {
-				st.id = host->id;
-				st.up = host->up;
-				imsg_compose(ibuf_pfe, IMSG_HOST_STATUS, 0, 0,
-				    &st, sizeof(st));
-			}
+			if (!(host->flags & F_CHECK_DONE))
+				return (0);
 		}
 	}
-	/* tell pfe we're finished */
-	imsg_compose(ibuf_pfe, IMSG_SYNC, 0, 0, NULL, 0);
+	return (1);
+}
+
+void
+hce_notify_done(struct host *host, const char *msg)
+{
+	struct ctl_status	 st;
+	struct timeval		 tv;
+	struct table		*table;
+
+	st.id = host->id;
+	st.up = host->up;
+	host->flags |= F_CHECK_DONE;
+	if (msg)
+		log_debug("hce_notify_done: %s", msg);
+	if (host->up != host->last_up) {
+		imsg_compose(ibuf_pfe, IMSG_HOST_STATUS, 0, 0, &st, sizeof(st));
+		host->last_up = host->up;
+	}
+	/*
+	 * check if everything is done, I see no other way than going
+	 * through the tree for every host that calls this function.
+	 */
+	if (hce_checks_done()) {
+		/*
+		 * notify pfe checks are done and schedule next check
+		 */
+		imsg_compose(ibuf_pfe, IMSG_SYNC, 0, 0, NULL, 0);
+		TAILQ_FOREACH(table, &env->tables, entry) {
+			TAILQ_FOREACH(host, &table->hosts, entry)
+				host->flags &= ~F_CHECK_DONE;
+		}
+		tv.tv_sec = env->interval;
+		tv.tv_usec = 0;
+		evtimer_add(&env->ev, &tv);
+		bzero(&st, sizeof(st));
+	}
 }
 
 void

@@ -20,7 +20,7 @@
 #define PF_SOCKET	"/dev/pf"
 #define HOSTATED_USER	"_hostated"
 #define HOSTATED_ANCHOR	"hostated"
-#define CONNECT_TIMEOUT 200
+#define CHECK_TIMEOUT	200
 #define CHECK_INTERVAL	10
 #define EMPTY_TABLE	UINT_MAX
 #define EMPTY_ID	UINT_MAX
@@ -30,7 +30,8 @@
 #define MAX_NAME_SIZE	64
 #define SRV_MAX_VIRTS	16
 
-#define READ_BUF_SIZE	65535
+#define SMALL_READ_BUF_SIZE	1024
+#define READ_BUF_SIZE		65535
 
 /* buffer */
 struct buf {
@@ -120,6 +121,25 @@ struct ctl_id {
 	char		 name[MAX_NAME_SIZE];
 };
 
+struct ctl_icmp_event {
+	struct hostated	*env;
+	int		 icmp_sock;
+	int		 icmp6_sock;
+	int		 has_icmp4;
+	int		 has_icmp6;
+	int		 last_up;
+	struct event	 ev;
+	struct timeval	 tv_start;
+};
+
+struct ctl_tcp_event {
+	int		 s;
+	struct buf	*buf;
+	struct host 	*host;
+	struct table	*table;
+	struct timeval	 tv_start;
+};
+
 struct address {
 	struct sockaddr_storage	 ss;
 	in_port_t		 port;
@@ -130,8 +150,9 @@ TAILQ_HEAD(addresslist, address);
 
 #define F_DISABLE		0x01
 #define F_BACKUP		0x02
+#define F_CHECK_DONE		0x02 /* reused for host */
 #define F_USED			0x04
-#define F_ACTIVE_RULESET	0x04
+#define F_ACTIVE_RULESET	0x04 /* reused for service */
 #define F_DOWN			0x08
 #define F_ADD			0x10
 #define F_DEL			0x20
@@ -144,7 +165,9 @@ struct host {
 	char			*tablename;
 	char			 name[MAXHOSTNAMELEN];
 	int			 up;
+	int			 last_up;
 	struct sockaddr_storage	 ss;
+	struct ctl_tcp_event	 cte;
 	TAILQ_ENTRY(host)	 entry;
 };
 TAILQ_HEAD(hostlist, host);
@@ -203,10 +226,12 @@ struct hostated {
 	int			 icmp6_sock;
 	int			 tablecount;
 	int			 servicecount;
+	int			 timeout;
 	struct table		 empty_table;
 	struct event		 ev;
 	struct tablelist	 tables;
 	struct servicelist	 services;
+	struct ctl_icmp_event	 cie;
 };
 
 #define HOSTATED_OPT_VERBOSE	 0x01
@@ -299,17 +324,17 @@ void	 flush_rulesets(struct hostated *);
 
 /* hce.c */
 pid_t	 hce(struct hostated *, int [2], int [2], int [2]);
+void	 hce_notify_done(struct host *, const char *);
 
 /* check_icmp.c */
-int	 check_icmp(struct host *, int, int, int);
+void	 schedule_icmp(struct ctl_icmp_event *, struct table *);
+void	 check_icmp(struct ctl_icmp_event *);
 
 /* check_tcp.c */
-int	 check_tcp(struct host *, struct table *);
-int	 tcp_connect(struct host *, struct table *);
+void	 check_tcp(struct ctl_tcp_event *);
 
-/* check_tcp.c */
-int	 check_http_code(struct host *, struct table *);
-int	 check_http_digest(struct host *, struct table *);
+/* check_http.c */
+void	 send_http_request(struct ctl_tcp_event *);
 
 /* hostated.c */
 struct host	*host_find(struct hostated *, objid_t);

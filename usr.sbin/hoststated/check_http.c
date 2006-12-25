@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_http.c,v 1.2 2006/12/16 12:42:14 reyk Exp $	*/
+/*	$OpenBSD: check_http.c,v 1.3 2006/12/25 18:12:14 reyk Exp $	*/
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
  *
@@ -31,114 +31,164 @@
 
 #include "hostated.h"
 
-struct buf	*http_request(struct host *, struct table *, int, const char *);
+void	check_http_code(struct ctl_tcp_event *);
+void	check_http_digest(struct ctl_tcp_event *);
+void	http_read(int, short, void *);
 
-struct buf *
-http_request(struct host *host, struct table *table, int s, const char *req)
+void
+check_http_code(struct ctl_tcp_event *cte)
 {
-	int		 fl;
-	ssize_t		 sz;
-	char		 rbuf[1024];
-	struct buf	*buf;
-
-	if ((fl = fcntl(s, F_GETFL, 0)) == -1)
-		fatal("http_request: cannot get flags for socket");
-	if (fcntl(s, F_SETFL, fl & ~(O_NONBLOCK)) == -1)
-		fatal("http_request: cannot set blocking socket");
-	if ((buf = buf_dynamic(sizeof(rbuf), UINT_MAX)) == NULL)
-		fatalx("http_request: cannot create dynamic buffer");
-
-	if (write(s, req, strlen(req)) != (ssize_t) strlen(req)) {
-		close(s);
-		return (NULL);
-	}
-	for (; (sz = read(s, rbuf, sizeof(rbuf))) != 0; ) {
-		if (sz == -1)
-			fatal("http_request: read");
-		if (buf_add(buf, rbuf, sz) == -1)
-			fatal("http_request: buf_add");
-	}
-	return (buf);
-}
-
-int
-check_http_code(struct host *host, struct table *table)
-{
-	int		 s;
-	int		 code;
-	char		 scode[4];
-	char		*req;
 	char		*head;
+	char		 scode[4];
 	const char	*estr;
-	struct buf	*buf;
+	int		 code;
 
-	if ((s = tcp_connect(host, table)) <= 0)
-		return (s);
-
-	asprintf(&req, "HEAD %s HTTP/1.0\r\n\r\n", table->path);
-	if ((buf = http_request(host, table, s, req)) == NULL)
-		return (HOST_UNKNOWN);
-	free(req);
-
-	head = buf->buf;
+	head = cte->buf->buf;
 	if (strncmp(head, "HTTP/1.1 ", strlen("HTTP/1.1 ")) &&
 	    strncmp(head, "HTTP/1.0 ", strlen("HTTP/1.0 "))) {
 		log_debug("check_http_code: cannot parse HTTP version");
-		close(s);
-		return (HOST_DOWN);
+		cte->host->up = HOST_DOWN;
+		return;
 	}
 	head += strlen("HTTP/1.1 ");
-	if (strlen(head) < 5) /* code + \r\n */
-		return (HOST_DOWN);
+	if (strlen(head) < 5) /* code + \r\n */ {
+		cte->host->up = HOST_DOWN;
+		return;
+	}
 	strlcpy(scode, head, sizeof(scode));
 	code = strtonum(scode, 100, 999, &estr);
 	if (estr != NULL) {
 		log_debug("check_http_code: cannot parse HTTP code");
-		close(s);
-		return (HOST_DOWN);
+		cte->host->up = HOST_DOWN;
+		return;
 	}
-	if (code != table->retcode) {
+	if (code != cte->table->retcode) {
 		log_debug("check_http_code: invalid HTTP code returned");
-		close(s);
-		return (HOST_DOWN);
-	}
-	close(s);
-	return (HOST_UP);
+		cte->host->up = HOST_DOWN;
+	} else
+		cte->host->up = HOST_UP;
 }
 
-int
-check_http_digest(struct host *host, struct table *table)
+void
+check_http_digest(struct ctl_tcp_event *cte)
 {
-	int		 s;
-	char		*head;
-	char		*req;
-	struct buf	*buf;
-	char		 digest[(SHA1_DIGEST_LENGTH*2)+1];
+	char	*head;
+	char	 digest[(SHA1_DIGEST_LENGTH*2)+1];
 
-	if ((s = tcp_connect(host, table)) <= 0)
-		return (s);
-
-	asprintf(&req, "GET %s HTTP/1.0\r\n\r\n", table->path);
-	if ((buf = http_request(host, table, s, req)) == NULL)
-		return (HOST_UNKNOWN);
-	free(req);
-
-	head = buf->buf;
+	head = cte->buf->buf;
 	if ((head = strstr(head, "\r\n\r\n")) == NULL) {
 		log_debug("check_http_digest: host %u no end of headers",
-		    host->id);
-		close(s);
-		return (HOST_DOWN);
+		    cte->host->id);
+		cte->host->up = HOST_DOWN;
+		return;
 	}
 	head += strlen("\r\n\r\n");
 	SHA1Data(head, strlen(head), digest);
-	close(s);
-	buf_free(buf);
 
-	if (strcmp(table->digest, digest)) {
+	if (strcmp(cte->table->digest, digest)) {
 		log_warnx("check_http_digest: wrong digest for host %u",
-		    host->id);
-		return (HOST_DOWN);
+		    cte->host->id);
+		cte->host->up = HOST_DOWN;
+	} else
+		cte->host->up = HOST_UP;
+}
+
+void
+http_read(int s, short event, void *arg)
+{
+	ssize_t			 br;
+	char			 rbuf[SMALL_READ_BUF_SIZE];
+	struct timeval		 tv;
+	struct timeval		 tv_now;
+	struct ctl_tcp_event	*cte = arg;
+
+	if (event == EV_TIMEOUT) {
+		cte->host->up = HOST_DOWN;
+		buf_free(cte->buf);
+		hce_notify_done(cte->host, "http_read: timeout");
+		return;
 	}
-	return (HOST_UP);
+	br = read(s, rbuf, sizeof(rbuf));
+	if (br == 0) {
+		cte->host->up = HOST_DOWN;
+		switch (cte->table->check) {
+		case CHECK_HTTP_CODE:
+			check_http_code(cte);
+			break;
+		case CHECK_HTTP_DIGEST:
+			check_http_digest(cte);
+			break;
+		default:
+			fatalx("http_read: unhandled check type");
+		}
+		buf_free(cte->buf);
+		hce_notify_done(cte->host, "http_read: connection closed");
+	} else if (br == -1) {
+		cte->host->up = HOST_DOWN;
+		buf_free(cte->buf);
+		hce_notify_done(cte->host, "http_read: read failed");
+	} else {
+		buf_add(cte->buf, rbuf, br);
+		tv.tv_sec = cte->table->timeout / 1000;
+		tv.tv_usec = cte->table->timeout % 1000;
+		if (gettimeofday(&tv_now, NULL))
+			fatal("send_http_request: gettimeofday");
+		timersub(&tv_now, &cte->tv_start, &tv_now);
+		timersub(&tv, &tv_now, &tv);
+		event_once(s, EV_READ|EV_TIMEOUT, http_read, cte, &tv);
+	}
+}
+
+void
+send_http_request(struct ctl_tcp_event *cte)
+{
+	int		 bs;
+	int		 pos;
+	int		 len;
+	char		*req;
+	struct timeval	 tv;
+	struct timeval	 tv_now;
+
+	switch (cte->table->check) {
+	case CHECK_HTTP_CODE:
+		asprintf(&req, "HEAD %s HTTP/1.0\r\n\r\n",
+		    cte->table->path);
+		break;
+	case CHECK_HTTP_DIGEST:
+		asprintf(&req, "GET %s HTTP/1.0\r\n\r\n",
+		    cte->table->path);
+		break;
+	default:
+		fatalx("send_http_request: unhandled check type");
+	}
+	if (req == NULL)
+		fatal("out of memory");
+	pos = 0;
+	len = strlen(req);
+	/*
+	 * write all at once for now.
+	 */
+	do {
+		bs = write(cte->s, req + pos, len);
+		if (bs <= 0) {
+			log_warnx("send_http_request: cannot send request");
+			cte->host->up = HOST_DOWN;
+			hce_notify_done(cte->host, "send_http_request: write");
+			free(req);
+			return;
+		}
+		pos += bs;
+		len -= bs;
+	} while (len > 0);
+	free(req);
+	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
+		fatalx("send_http_request: cannot create dynamic buffer");
+
+	tv.tv_sec = cte->table->timeout / 1000;
+	tv.tv_usec = cte->table->timeout % 1000;
+	if (gettimeofday(&tv_now, NULL))
+		fatal("send_http_request: gettimeofday");
+	timersub(&tv_now, &cte->tv_start, &tv_now);
+	timersub(&tv, &tv_now, &tv);
+	event_once(cte->s, EV_READ|EV_TIMEOUT, http_read, cte, &tv);
 }

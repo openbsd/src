@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.2 2006/12/16 12:42:14 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.3 2006/12/25 18:12:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -27,84 +27,108 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include <errno.h>
 
 #include "hostated.h"
 
-int
-check_tcp(struct host *host, struct table *table)
+void	tcp_write(int, short, void *);
+void	tcp_host_up(int s, struct ctl_tcp_event *);
+
+void
+check_tcp(struct ctl_tcp_event *cte)
 {
-	int	sock;
+	int			 s;
+	int			 type;
+	socklen_t		 len;
+	struct timeval		 tv;
+	struct linger		 lng;
 
-	if ((sock = tcp_connect(host, table)) <= 0)
-		return (sock);
-	close(sock);
-	return (HOST_UP);
-}
-
-int
-tcp_connect(struct host *host, struct table *table)
-{
-	int		s;
-	socklen_t	len;
-	struct timeval	tv;
-	struct sockaddr	sa;
-	fd_set		fdset;
-
-	switch (host->ss.ss_family) {
+	switch (cte->host->ss.ss_family) {
 	case AF_INET:
-		((struct sockaddr_in *)&host->ss)->sin_port =
-			htons(table->port);
+		((struct sockaddr_in *)&cte->host->ss)->sin_port =
+			htons(cte->table->port);
 		break;
 	case AF_INET6:
-		((struct sockaddr_in6 *)&host->ss)->sin6_port =
-			htons(table->port);
+		((struct sockaddr_in6 *)&cte->host->ss)->sin6_port =
+			htons(cte->table->port);
 		break;
 	}
 
-	len = ((struct sockaddr *)&host->ss)->sa_len;
+	len = ((struct sockaddr *)&cte->host->ss)->sa_len;
 
-	if ((s = socket(host->ss.ss_family, SOCK_STREAM, 0)) == -1)
-		fatal("check_tcp: cannot create socket");
+	if ((s = socket(cte->host->ss.ss_family, SOCK_STREAM, 0)) == -1)
+		goto bad;
+
+	bzero(&lng, sizeof(lng));
+	if (setsockopt(s, SOL_SOCKET, SO_LINGER, &lng, sizeof(lng)) == -1)
+		goto bad;
+
+	type = 1;
+	if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &type, sizeof(type)) == -1)
+		goto bad;
 
 	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
-		fatal("check_tcp: cannot set non blocking socket");
+		goto bad;
 
-	if (connect(s, (struct sockaddr *)&host->ss, len) == -1) {
-		if (errno != EINPROGRESS && errno != EWOULDBLOCK) {
-			close(s);
-			return (HOST_DOWN);
-		}
-	} else
-		return (s);
-
-	tv.tv_sec = table->timeout / 1000;
-	tv.tv_usec = table->timeout % 1000;
-	FD_ZERO(&fdset);
-	FD_SET(s, &fdset);
-
-	/* XXX This needs to be rewritten */
-	switch (select(s + 1, NULL, &fdset, NULL, &tv)) {
-	case -1:
-		if (errno != EINTR)
-			fatal("check_tcp: select");
-		else
-			return (HOST_UNKNOWN);
-	case 0:
-		close(s);
-		return (HOST_DOWN);
-	default:
-		if (getpeername(s, &sa, &len) == -1) {
-			if (errno == ENOTCONN) {
-				close(s);
-				return (HOST_DOWN);
-			} else {
-				log_debug("check_tcp: unknown peername");
-				close(s);
-				return (HOST_UNKNOWN);
-			}
-		} else
-			return (s);
+	if (connect(s, (struct sockaddr *)&cte->host->ss, len) == -1) {
+		if (errno != EINPROGRESS)
+			goto bad;
+	} else {
+		cte->host->up = HOST_UP;
+		tcp_host_up(s, cte);
+		return;
 	}
-	return (HOST_UNKNOWN);
+	tv.tv_sec = cte->table->timeout / 1000;
+	tv.tv_usec = cte->table->timeout % 1000;
+	event_once(s, EV_TIMEOUT|EV_WRITE, tcp_write, cte, &tv);
+	return;
+bad:
+	close(s);
+	cte->host->up = HOST_DOWN;
+	hce_notify_done(cte->host, "check_tcp: cannot connect");
+}
+
+void
+tcp_write(int s, short event, void *arg)
+{
+	struct ctl_tcp_event	*cte = arg;
+	int			 err;
+	socklen_t		 len;
+
+	if (event == EV_TIMEOUT) {
+		log_debug("tcp_write: connect timed out");
+		cte->host->up = HOST_DOWN;
+	} else {
+		len = sizeof(err);
+		if (getsockopt(s, SOL_SOCKET, SO_ERROR, &err, &len))
+			fatal("tcp_write: getsockopt");
+		if (err)
+			cte->host->up = HOST_DOWN;
+		else
+			cte->host->up = HOST_UP;
+	}
+	if (cte->host->up == HOST_UP)
+		tcp_host_up(s, cte);
+	else {
+		close(s);
+		hce_notify_done(cte->host, "connect failed");
+	}
+}
+
+void
+tcp_host_up(int s, struct ctl_tcp_event *cte)
+{
+	switch (cte->table->check) {
+	case CHECK_TCP:
+		close(s);
+		hce_notify_done(cte->host, "tcp_write: success");
+		break;
+	case CHECK_HTTP_CODE:
+	case CHECK_HTTP_DIGEST:
+		send_http_request(cte);
+		break;
+	default:
+		fatalx("tcp_write: unhandled check type");
+	}
 }

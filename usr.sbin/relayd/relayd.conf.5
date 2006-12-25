@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.5 2006/12/19 14:39:30 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.6 2006/12/25 18:12:14 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -68,9 +68,16 @@ table webhosts {
 }
 .Ed
 .Sh GLOBAL CONFIGURATION
-Only one global setting can be set.
+Here are the settings that can be set globally:
 .Pp
 .Bl -tag -width Ds -compact
+.It Xo
+.Ic timeout Ar number
+.Xc
+Set the global timeout for checks.
+This can be overriden by the timeout value in the table definitions
+and is 200 milliseconds by default.
+.Pp
 .It Xo
 .Ic interval Ar number
 .Xc
@@ -125,8 +132,9 @@ to hosts.
 This parameter is mandatory.
 Main and backup tables need to have the same real port.
 .It Ic timeout Ar number
-Set the timeout in milliseconds for each host that is checked.
-The default timeout is 200 milliseconds.
+Set the timeout in milliseconds for each host that is checked using
+TCP as the transport.
+This will override the global timeout, which is 200 milliseconds by default.
 .El
 .Sh SERVICES
 Services represent a
