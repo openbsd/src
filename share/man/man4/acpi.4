@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.15 2006/10/29 12:18:45 mk Exp $
+.\"	$OpenBSD: acpi.4,v 1.16 2006/12/25 01:06:45 mk Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -107,9 +107,9 @@ driver supports ACPI Thermal Zones.
 Temperature information is available through this driver as a sensor
 which is updated every 10 seconds or, if the implementation supports it,
 via an event.
-.\" If the temperature exceeds the
-.\" .Sq critical
-.\" temperature threshold, the system will be shut down.
+If the temperature exceeds the
+.Sq critical
+temperature threshold, the system will be shut down and powered off.
 .Pp
 If the configuration option
 .Dq Dv ACPIVERBOSE
