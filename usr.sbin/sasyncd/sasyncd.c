@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.14 2006/12/24 05:01:08 msf Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.15 2006/12/25 08:27:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -79,7 +79,6 @@ sasyncd_run(pid_t ppid)
 
 	signal(SIGINT, sasyncd_stop);
 	signal(SIGTERM, sasyncd_stop);
-	signal(SIGHUP, sasyncd_stop);
 
 	timer_add("carp_undemote", CARP_DEMOTE_MAXTIME,
 	    monitor_carpundemote, NULL);
@@ -145,22 +144,14 @@ main(int argc, char **argv)
 {
 	extern char	*__progname;
 	char		*cfgfile = 0;
-	int	 	 ch, r;
+	int		 ch;
 
 	if (geteuid() != 0) {
 		/* No point in continuing. */
-		fprintf(stderr, "This daemon needs to be run as root.\n");
+		fprintf(stderr, "%s: This daemon needs to be run as root.\n",
+		    __progname);
 		return 1;
 	}
-
-	/* Init. */
-	closefrom(STDERR_FILENO + 1);
-	for (r = 0; r <= 2; r++)
-		if (fcntl(r, F_GETFL, 0) == -1 && errno == EBADF)
-			(void)open("/dev/null", r ? O_WRONLY : O_RDONLY, 0);
-
-	for (r = 1; r < _NSIG; r++)
-		signal(r, SIG_DFL);
 
 	log_init(__progname);
 	timer_init();
