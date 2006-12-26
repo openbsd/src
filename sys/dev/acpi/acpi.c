@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.73 2006/12/21 19:59:02 deraadt Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.74 2006/12/26 23:58:08 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -46,6 +46,7 @@
 int acpi_debug = 16;
 #endif
 int acpi_enabled = 0;
+int acpi_poll_enabled = 0;
 
 #define ACPIEN_RETRIES 15
 
@@ -777,6 +778,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Initialize GPE handlers */
 	acpi_init_gpes(sc);
+
+	/* some devices require periodic polling */
+	timeout_set(&sc->sc_dev_timeout, acpi_poll, sc);
 
 	/*
 	 * Take over ACPI control.  Note that once we do this, we
@@ -1604,6 +1608,12 @@ acpi_isr_thread(void *arg)
 			dnprintf(1,"sleep button pressed\n");
 			KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_SLPBTN,
 			    acpi_evindex));
+		}
+
+		/* handle polling here to keep code non-concurrent*/
+		if (sc->sc_poll) {
+			sc->sc_poll = 0;
+			acpi_poll_notify();
 		}
 	}
 	free(thread, M_DEVBUF);

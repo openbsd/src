@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.73 2006/12/23 17:19:06 canacar Exp $ */
+/* $OpenBSD: dsdt.c,v 1.74 2006/12/26 23:58:08 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -348,6 +348,7 @@ struct aml_notify_data {
 	char			pnpid[20];
 	void			*cbarg;
 	int			(*cbproc)(struct aml_node *, int, void *);
+	int			poll;
 
 	SLIST_ENTRY(aml_notify_data) link;
 };
@@ -547,12 +548,22 @@ aml_gasio(struct acpi_softc *sc, int type, uint64_t base, uint64_t length,
 /*
  * @@@: Notify functions
  */
+void
+acpi_poll(void *arg)
+{
+	dsdt_softc->sc_poll = 1;
+	dsdt_softc->sc_wakeup = 0;
+	wakeup(dsdt_softc);
+
+	timeout_add(&dsdt_softc->sc_dev_timeout, 10 * hz);
+}
 
 void
 aml_register_notify(struct aml_node *node, const char *pnpid,
-		    int (*proc)(struct aml_node *, int, void *), void *arg)
+    int (*proc)(struct aml_node *, int, void *), void *arg, int poll)
 {
 	struct aml_notify_data	*pdata;
+	extern int acpi_poll_enabled;
 
 	dnprintf(10, "aml_register_notify: %s %s %x\n",
 	    node->name, pnpid ? pnpid : "", proc);
@@ -561,11 +572,15 @@ aml_register_notify(struct aml_node *node, const char *pnpid,
 	pdata->node = node;
 	pdata->cbarg = arg;
 	pdata->cbproc = proc;
+	pdata->poll = poll;
 
 	if (pnpid)
 		strlcpy(pdata->pnpid, pnpid, sizeof(pdata->pnpid));
 
 	SLIST_INSERT_HEAD(&aml_notify_list, pdata, link);
+
+	if (poll && !acpi_poll_enabled)
+		timeout_add(&dsdt_softc->sc_dev_timeout, 10 * hz);
 }
 
 void
@@ -592,6 +607,15 @@ aml_notify_dev(const char *pnpid, int notify_value)
 	SLIST_FOREACH(pdata, &aml_notify_list, link)
 		if (pdata->pnpid && !strcmp(pdata->pnpid, pnpid))
 			pdata->cbproc(pdata->node, notify_value, pdata->cbarg);
+}
+
+void acpi_poll_notify(void)
+{
+	struct aml_notify_data	*pdata = NULL;
+
+	SLIST_FOREACH(pdata, &aml_notify_list, link)
+		if (pdata->cbproc && pdata->poll)
+			pdata->cbproc(pdata->node, 0, pdata->cbarg);
 }
 
 /*

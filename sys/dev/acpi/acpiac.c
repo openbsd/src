@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.13 2006/12/23 17:46:39 deraadt Exp $ */
+/* $OpenBSD: acpiac.c,v 1.14 2006/12/26 23:58:08 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -69,7 +69,7 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devnode = aa->aaa_node->child;
 
 	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev,
-	    acpiac_notify, sc);
+	    acpiac_notify, sc, ACPIDEV_NOPOLL);
 
 	acpiac_getsta(sc);
 	printf(": AC unit ");

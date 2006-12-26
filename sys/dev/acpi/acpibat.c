@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.36 2006/12/23 17:46:39 deraadt Exp $ */
+/* $OpenBSD: acpibat.c,v 1.37 2006/12/26 23:58:08 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -98,7 +98,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	acpibat_refresh(sc);
 
 	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev,
-	    acpibat_notify, sc);
+	    acpibat_notify, sc, ACPIDEV_POLL);
 }
 
 void
@@ -345,8 +345,6 @@ acpibat_notify(struct aml_node *node, int notify_type, void *arg)
 		}
 		break;
 	default:
-		printf("%s: unhandled battery event %x\n", DEVNAME(sc),
-		    notify_type);
 		break;
 	}
 

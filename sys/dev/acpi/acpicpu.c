@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.16 2006/12/21 11:23:41 deraadt Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.17 2006/12/26 23:58:08 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -131,7 +131,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		    i < sc->sc_pss_len - 1 ? ", " : " MHz\n");
 
 	aml_register_notify(sc->sc_devnode->parent, NULL,
-	    acpicpu_notify, sc);
+	    acpicpu_notify, sc, ACPIDEV_NOPOLL);
 
 	if (setperf_prio < 30) {
 		cpu_setperf = acpicpu_setperf;

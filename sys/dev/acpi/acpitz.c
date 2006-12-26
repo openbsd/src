@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.13 2006/12/23 17:46:39 deraadt Exp $ */
+/* $OpenBSD: acpitz.c,v 1.14 2006/12/26 23:58:08 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -126,9 +126,6 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tc2 = acpitz_getreading(sc, "_TC2");
 	sc->sc_psv = acpitz_getreading(sc, "_PSV");
 
-	aml_register_notify(sc->sc_devnode->parent, NULL,
-	    acpitz_notify, sc);
-
 	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensdev.xname));
 	strlcpy(sc->sc_sens.desc, "zone temperature",
@@ -137,6 +134,9 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	sensor_attach(&sc->sc_sensdev, &sc->sc_sens);
 	sensordev_install(&sc->sc_sensdev);
 	sc->sc_sens.value = 0;
+
+	aml_register_notify(sc->sc_devnode->parent, NULL,
+	    acpitz_notify, sc, ACPIDEV_POLL);
 }
 
 int

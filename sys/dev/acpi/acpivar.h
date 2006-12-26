@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.32 2006/12/21 19:59:02 deraadt Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.33 2006/12/26 23:58:08 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -188,6 +188,9 @@ struct acpi_softc {
 
 	struct acpi_ac_head	sc_ac;
 	struct acpi_bat_head	sc_bat;
+
+	struct timeout		sc_dev_timeout;
+	int			sc_poll;
 };
 
 #define GPE_NONE  0x00
@@ -240,6 +243,8 @@ void	acpiec_handle_events(struct acpiec_softc *);
 
 int	acpi_read_pmreg(struct acpi_softc *, int, int);
 void	acpi_write_pmreg(struct acpi_softc *, int, int, int);
+
+void	acpi_poll(void *);
 #endif
 
 #endif	/* !_DEV_ACPI_ACPIVAR_H_ */
