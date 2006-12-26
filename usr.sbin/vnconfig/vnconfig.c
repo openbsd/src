@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.19 2006/09/20 13:51:19 pedro Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.20 2006/12/26 22:55:20 grunk Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -67,14 +67,17 @@ int verbose = 0;
 __dead void usage(void);
 int config(char *, char *, int, char *, size_t);
 int getinfo(const char *);
+char	*get_pkcs_key(char *);
 
 int
 main(int argc, char **argv)
 {
-	int ch, rv, rounds, action = VND_CONFIG;
+	int ch, rv, action = VND_CONFIG;
 	char *key = NULL;
+	char *rounds = NULL;
 	size_t keylen = 0;
-	const char *errstr;
+	int opt_k = 0;
+	int opt_K = 0;
 
 	while ((ch = getopt(argc, argv, "cluvK:k")) != -1) {
 		switch (ch) {
@@ -84,77 +87,18 @@ main(int argc, char **argv)
 		case 'l':
 			action = VND_GET;
 			break;
+		case 'k':
+			opt_k = 1;
+			break;
+		case 'K':
+			opt_K = 1;
+			rounds = optarg;
+			break;
 		case 'u':
 			action = VND_UNCONFIG;
 			break;
 		case 'v':
 			verbose = 1;
-			break;
-		case 'K':
-		{
-			char keybuf[128];
-			char saltbuf[128];
-			char saltfilebuf[PATH_MAX];
-			char *saltfile;
-
-			rounds = strtonum(optarg, 1000, INT_MAX, &errstr);
-			if (errstr)
-				err(1, "rounds: %s", errstr);
-			key = getpass("Encryption key: ");
-			if (!key || strlen(key) == 0)
-				errx(1, "Need an encryption key");
-			strncpy(keybuf, key, sizeof(keybuf));
-			printf("Salt file: ");
-			fflush(stdout);
-			saltfile = fgets(saltfilebuf, sizeof(saltfilebuf),
-			    stdin);
-			if (!saltfile || saltfile[0] == '\n') {
-				warnx("Skipping salt file, insecure");
-				saltfile = 0;
-			} else {
-				size_t len = strlen(saltfile);
-				if (saltfile[len - 1] == '\n')
-					saltfile[len - 1] = 0;
-			}
-			if (saltfile) {
-				int fd;
-				
-				fd = open(saltfile, O_RDONLY);
-				if (fd == -1) {
-					int *s;
-
-					fprintf(stderr, "Salt file not found, attempting to create one\n");
-					fd = open(saltfile,
-					    O_RDWR|O_CREAT|O_EXCL, 0600);
-					if (fd == -1)
-						err(1, "Unable to create salt file: '%s'", saltfile);
-					for (s = (int *)saltbuf; s <
-					    (int *)(saltbuf + sizeof(saltbuf));
-					    s++)
-						*s = arc4random();
-					if (write(fd, saltbuf, sizeof(saltbuf))
-					    != sizeof(saltbuf))
-						err(1, "Unable to write salt file: '%s'", key);
-					fprintf(stderr, "Salt file created as '%s'\n", saltfile);
-				} else {
-					if (read(fd, saltbuf, sizeof(saltbuf))
-					    != sizeof(saltbuf))
-						err(1, "Unable to read salt file: '%s'", saltfile);
-				}
-				close(fd);
-			} else {
-				memset(saltbuf, 0, sizeof(saltbuf));
-			}
-			if (pkcs5_pbkdf2((u_int8_t**)&key, 128, keybuf,
-			    sizeof(keybuf), saltbuf, sizeof(saltbuf),
-			    rounds, 0))
-				errx(1, "pkcs5_pbkdf2 failed");
-			keylen = 128;
-			break;
-		}
-		case 'k':
-			key = getpass("Encryption key: ");
-			keylen = strlen(key);
 			break;
 		default:
 			usage();
@@ -164,6 +108,16 @@ main(int argc, char **argv)
 
 	argc -= optind;
 	argv += optind;
+
+	if (opt_k) {
+		if (opt_K)
+			errx(1, "-k and -K are mutually exclusive options");
+		key = getpass("Encryption key: ");
+		keylen = strlen(key);
+	} else if (opt_K) {
+		key = get_pkcs_key(rounds);
+		keylen = 128;
+	}
 
 	if (action == VND_CONFIG && argc == 2)
 		rv = config(argv[0], argv[1], action, key, keylen);
@@ -175,6 +129,68 @@ main(int argc, char **argv)
 		usage();
 
 	exit(rv);
+}
+
+char *
+get_pkcs_key(char *arg)
+{
+	char		 keybuf[128], saltbuf[128], saltfilebuf[PATH_MAX];
+	char		*saltfile;
+	char		*key = NULL;
+	const char	*errstr;
+	int		 rounds;
+
+	rounds = strtonum(arg, 1000, INT_MAX, &errstr);
+	if (errstr)
+		err(1, "rounds: %s", errstr);
+	key = getpass("Encryption key: ");
+	if (!key || strlen(key) == 0)
+		errx(1, "Need an encryption key");
+	strncpy(keybuf, key, sizeof(keybuf));
+	printf("Salt file: ");
+	fflush(stdout);
+	saltfile = fgets(saltfilebuf, sizeof(saltfilebuf), stdin);
+	if (!saltfile || saltfile[0] == '\n') {
+		warnx("Skipping salt file, insecure");
+		saltfile = 0;
+	} else {
+		size_t len = strlen(saltfile);
+		if (saltfile[len - 1] == '\n')
+			saltfile[len - 1] = 0;
+	}
+	if (saltfile) {
+		int fd;
+
+		fd = open(saltfile, O_RDONLY);
+		if (fd == -1) {
+			int *s;
+
+			fprintf(stderr, "Salt file not found, attempting to create one\n");
+			fd = open(saltfile, O_RDWR|O_CREAT|O_EXCL, 0600);
+			if (fd == -1)
+				err(1, "Unable to create salt file: '%s'",
+				    saltfile);
+			for (s = (int *)saltbuf;
+			    s < (int *)(saltbuf + sizeof(saltbuf)); s++)
+				*s = arc4random();
+			if (write(fd, saltbuf, sizeof(saltbuf))
+			    != sizeof(saltbuf))
+				err(1, "Unable to write salt file: '%s'", key);
+			fprintf(stderr, "Salt file created as '%s'\n", saltfile);
+		} else {
+			if (read(fd, saltbuf, sizeof(saltbuf))
+			    != sizeof(saltbuf))
+				err(1, "Unable to read salt file: '%s'", saltfile);
+		}
+		close(fd);
+	} else {
+		memset(saltbuf, 0, sizeof(saltbuf));
+	}
+	if (pkcs5_pbkdf2((u_int8_t**)&key, 128, keybuf, sizeof(keybuf),
+	    saltbuf, sizeof(saltbuf), rounds, 0))
+		errx(1, "pkcs5_pbkdf2 failed");
+
+	return (key);
 }
 
 int
