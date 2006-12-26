@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.9 2006/09/19 14:25:04 naddy Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.10 2006/12/26 06:24:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.9 2006/09/19 14:25:04 naddy Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.10 2006/12/26 06:24:48 itojun Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -192,6 +192,9 @@ esp_decrypt (const u_char *bp, u_int len, const u_char *bp2)
 	case IPPROTO_ICMP:
 		icmp_print(data, bp2);
 		break;
+	case IPPROTO_ICMPV6:
+		icmp6_print(data, bp2);
+		break;
 	default:
 		printf("ip-proto-%d %d", nh, len);
 		break;
@@ -299,6 +302,10 @@ ah_print (register const u_char *bp, register u_int len,
 
 	        case IPPROTO_ICMP: /* From here and down; Transport mode */
 		        icmp_print(bp + pl_len, (const u_char *) ip);
+			break;
+
+	        case IPPROTO_ICMPV6:
+		        icmp6_print(bp + pl_len, (const u_char *) ip);
 			break;
 
 	        case IPPROTO_TCP:
