@@ -1,3 +1,5 @@
+/*	$OpenBSD: relayd.h,v 1.6 2006/12/26 02:51:00 jsg Exp $	*/
+
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
