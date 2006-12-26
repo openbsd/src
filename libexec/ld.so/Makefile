@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.34 2006/05/11 22:03:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.35 2006/12/26 22:36:51 deraadt Exp $
 
 SUBDIR=ldconfig ldd
-#SUBDIR+=prebind
 VPATH=${.CURDIR}/../../lib/libc/string
 
 SRCS=	ldasm.S loader.c resolve.c dlfcn.c dl_printf.c rtld_machine.c
