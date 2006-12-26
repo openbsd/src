@@ -592,7 +592,7 @@ alpha*-*-openbsd*)
 	tm_file="${tm_file} exec-stack.h"
 	# default x-alpha is only appropriate for dec-osf.
 	target_cpu_default="MASK_GAS"
-	tmake_file="alpha/t-alpha alpha/t-ieee"
+	tmake_file="${tmake_file} alpha/t-alpha alpha/t-ieee"
 	gas=yes gnu_ld=yes
 	;;
 
