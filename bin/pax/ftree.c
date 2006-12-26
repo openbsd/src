@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.26 2005/04/21 21:47:18 beck Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.27 2006/12/26 20:58:25 otto Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: ftree.c,v 1.26 2005/04/21 21:47:18 beck Exp $";
+static const char rcsid[] = "$OpenBSD: ftree.c,v 1.27 2006/12/26 20:58:25 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -355,6 +355,8 @@ next_file(ARCHD *arcn)
 	 */
 	for (;;) {
 		if ((ftent = fts_read(ftsp)) == NULL) {
+			if (errno)
+				syswarn(1, errno, "next_file");
 			/*
 			 * out of files in this tree, go to next arg, if none
 			 * we are done

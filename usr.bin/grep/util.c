@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.33 2006/11/17 02:01:29 jaredy Exp $	*/
+/*	$OpenBSD: util.c,v 1.34 2006/12/26 20:59:23 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -86,6 +86,8 @@ grep_tree(char **argv)
 			break;
 		}
 	}
+	if (errno)
+		err(2, "fts_read");
 
 	return c;
 }

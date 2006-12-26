@@ -1,4 +1,4 @@
-/*	$OpenBSD: find.c,v 1.11 2004/07/20 03:50:25 deraadt Exp $	*/
+/*	$OpenBSD: find.c,v 1.12 2006/12/26 20:59:01 otto Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)find.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: find.c,v 1.11 2004/07/20 03:50:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: find.c,v 1.12 2006/12/26 20:59:01 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -163,8 +163,11 @@ find_execute(PLAN *plan,	/* search plan */
 		(void)sigprocmask(SIG_BLOCK, &fullset, &oset);
 		entry = fts_read(tree);
 		(void)sigprocmask(SIG_SETMASK, &oset, NULL);
-		if (entry == NULL)
+		if (entry == NULL) {
+			if (errno)
+				err(1, "fts_read");
 			break;
+		}
 
 		switch (entry->fts_info) {
 		case FTS_D:
