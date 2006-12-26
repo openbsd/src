@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.15 2006/12/25 08:27:58 deraadt Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.16 2006/12/26 00:58:11 msf Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -153,15 +153,6 @@ main(int argc, char **argv)
 		return 1;
 	}
 
-	log_init(__progname);
-	timer_init();
-
-	memset(&cfgstate, 0, sizeof cfgstate);
-	cfgstate.runstate = INIT;
-	LIST_INIT(&cfgstate.peerlist);
-
-	cfgstate.listen_port = SASYNCD_DEFAULT_PORT;
-
 	while ((ch = getopt(argc, argv, "c:dv")) != -1) {
 		switch (ch) {
 		case 'c':
@@ -184,6 +175,15 @@ main(int argc, char **argv)
 
 	if (argc > 0)
 		usage();
+
+	log_init(__progname);
+	timer_init();
+
+	memset(&cfgstate, 0, sizeof cfgstate);
+	cfgstate.runstate = INIT;
+	LIST_INIT(&cfgstate.peerlist);
+
+	cfgstate.listen_port = SASYNCD_DEFAULT_PORT;
 
 	if (!cfgfile)
 		cfgfile = SASYNCD_CFGFILE;
