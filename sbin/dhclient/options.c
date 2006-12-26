@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.26 2006/12/15 14:09:13 stevesk Exp $	*/
+/*	$OpenBSD: options.c,v 1.27 2006/12/26 21:19:52 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -475,8 +475,8 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 }
 
 void
-do_packet(struct interface_info *interface, struct dhcp_packet *packet,
-    int len, unsigned int from_port, struct iaddr from, struct hardware *hfrom)
+do_packet(struct dhcp_packet *packet, int len, unsigned int from_port,
+    struct iaddr from, struct hardware *hfrom)
 {
 	struct packet tp;
 	int i;
@@ -491,7 +491,6 @@ do_packet(struct interface_info *interface, struct dhcp_packet *packet,
 	tp.packet_length = len;
 	tp.client_port = from_port;
 	tp.client_addr = from;
-	tp.interface = interface;
 	tp.haddr = hfrom;
 
 	parse_options(&tp);

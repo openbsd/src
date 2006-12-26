@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.16 2006/11/27 19:32:17 stevesk Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.17 2006/12/26 21:19:52 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -58,7 +58,7 @@
  * mask.
  */
 int
-if_register_bpf(struct interface_info *info)
+if_register_bpf(void)
 {
 	char filename[50];
 	int sock, b;
@@ -77,15 +77,15 @@ if_register_bpf(struct interface_info *info)
 	}
 
 	/* Set the BPF device to point at this interface. */
-	if (ioctl(sock, BIOCSETIF, info->ifp) < 0)
+	if (ioctl(sock, BIOCSETIF, ifi->ifp) < 0)
 		error("Can't attach interface %s to bpf device %s: %m",
-		    info->name, filename);
+		    ifi->name, filename);
 
 	return (sock);
 }
 
 void
-if_register_send(struct interface_info *info)
+if_register_send(void)
 {
 	int sock, on = 1;
 
@@ -93,7 +93,7 @@ if_register_send(struct interface_info *info)
 	 * If we're using the bpf API for sending and receiving, we
 	 * don't need to register this interface twice.
 	 */
-	info->wfdesc = info->rfdesc;
+	ifi->wfdesc = ifi->rfdesc;
 
 	/*
 	 * Use raw socket for unicast send.
@@ -103,7 +103,7 @@ if_register_send(struct interface_info *info)
 	if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &on,
 	    sizeof(on)) == -1)
 		error("setsockopt(IP_HDRINCL): %m");
-	info->ufdesc = sock;
+	ifi->ufdesc = sock;
 }
 
 /*
@@ -182,17 +182,17 @@ struct bpf_insn dhcp_bpf_wfilter[] = {
 int dhcp_bpf_wfilter_len = sizeof(dhcp_bpf_wfilter) / sizeof(struct bpf_insn);
 
 void
-if_register_receive(struct interface_info *info)
+if_register_receive(void)
 {
 	struct bpf_version v;
 	struct bpf_program p;
 	int flag = 1, sz;
 
 	/* Open a BPF device and hang it on this interface... */
-	info->rfdesc = if_register_bpf(info);
+	ifi->rfdesc = if_register_bpf();
 
 	/* Make sure the BPF version is in range... */
-	if (ioctl(info->rfdesc, BIOCVERSION, &v) < 0)
+	if (ioctl(ifi->rfdesc, BIOCVERSION, &v) < 0)
 		error("Can't get BPF version: %m");
 
 	if (v.bv_major != BPF_MAJOR_VERSION ||
@@ -204,22 +204,22 @@ if_register_receive(struct interface_info *info)
 	 * comes in, rather than waiting for the input buffer to fill
 	 * with packets.
 	 */
-	if (ioctl(info->rfdesc, BIOCIMMEDIATE, &flag) < 0)
+	if (ioctl(ifi->rfdesc, BIOCIMMEDIATE, &flag) < 0)
 		error("Can't set immediate mode on bpf device: %m");
 
-	if (ioctl(info->rfdesc, BIOCSFILDROP, &flag) < 0)
+	if (ioctl(ifi->rfdesc, BIOCSFILDROP, &flag) < 0)
 		error("Can't set filter-drop mode on bpf device: %m");
 
 	/* Get the required BPF buffer length from the kernel. */
-	if (ioctl(info->rfdesc, BIOCGBLEN, &sz) < 0)
+	if (ioctl(ifi->rfdesc, BIOCGBLEN, &sz) < 0)
 		error("Can't get bpf buffer length: %m");
-	info->rbuf_max = sz;
-	info->rbuf = malloc(info->rbuf_max);
-	if (!info->rbuf)
+	ifi->rbuf_max = sz;
+	ifi->rbuf = malloc(ifi->rbuf_max);
+	if (!ifi->rbuf)
 		error("Can't allocate %lu bytes for bpf input buffer.",
-		    (unsigned long)info->rbuf_max);
-	info->rbuf_offset = 0;
-	info->rbuf_len = 0;
+		    (unsigned long)ifi->rbuf_max);
+	ifi->rbuf_offset = 0;
+	ifi->rbuf_len = 0;
 
 	/* Set up the bpf filter program structure. */
 	p.bf_len = dhcp_bpf_filter_len;
@@ -232,7 +232,7 @@ if_register_receive(struct interface_info *info)
 	 */
 	dhcp_bpf_filter[8].k = LOCAL_PORT;
 
-	if (ioctl(info->rfdesc, BIOCSETF, &p) < 0)
+	if (ioctl(ifi->rfdesc, BIOCSETF, &p) < 0)
 		error("Can't install packet filter program: %m");
 
 	/* Set up the bpf write filter program structure. */
@@ -242,17 +242,16 @@ if_register_receive(struct interface_info *info)
 	if (dhcp_bpf_wfilter[7].k == 0x1fff)
 		dhcp_bpf_wfilter[7].k = htons(IP_MF|IP_OFFMASK);
 
-	if (ioctl(info->rfdesc, BIOCSETWF, &p) < 0)
+	if (ioctl(ifi->rfdesc, BIOCSETWF, &p) < 0)
 		error("Can't install write filter program: %m");
 
-	if (ioctl(info->rfdesc, BIOCLOCK, NULL) < 0)
+	if (ioctl(ifi->rfdesc, BIOCLOCK, NULL) < 0)
 		error("Cannot lock bpf");
 }
 
 ssize_t
-send_packet(struct interface_info *interface, struct dhcp_packet *raw,
-    size_t len, struct in_addr from, struct sockaddr_in *to,
-    struct hardware *hto)
+send_packet(struct dhcp_packet *raw, size_t len, struct in_addr from,
+    struct sockaddr_in *to, struct hardware *hto)
 {
 #define IOVCNT		2
 	unsigned char buf[256];
@@ -261,7 +260,7 @@ send_packet(struct interface_info *interface, struct dhcp_packet *raw,
 	int result, bufp = 0;
 
 	if (to->sin_addr.s_addr == INADDR_BROADCAST) {
-		assemble_hw_header(interface, buf, &bufp, hto);
+		assemble_hw_header(buf, &bufp, hto);
 	}
 
 	assemble_udp_ip_header(buf, &bufp, from.s_addr,
@@ -273,14 +272,14 @@ send_packet(struct interface_info *interface, struct dhcp_packet *raw,
 	iov[1].iov_len = len;
 
 	if (to->sin_addr.s_addr == INADDR_BROADCAST) {
-		result = writev(interface->wfdesc, iov, IOVCNT);
+		result = writev(ifi->wfdesc, iov, IOVCNT);
 	} else {
 		memset(&msg, 0, sizeof(msg));
 		msg.msg_name = (struct sockaddr *)to;
 		msg.msg_namelen = sizeof(*to);
 		msg.msg_iov = iov;
 		msg.msg_iovlen = IOVCNT;
-		result = sendmsg(interface->ufdesc, &msg, 0);
+		result = sendmsg(ifi->ufdesc, &msg, 0);
 	}
 
 	if (result == -1)
@@ -289,8 +288,8 @@ send_packet(struct interface_info *interface, struct dhcp_packet *raw,
 }
 
 ssize_t
-receive_packet(struct interface_info *interface, unsigned char *buf,
-    size_t len, struct sockaddr_in *from, struct hardware *hfrom)
+receive_packet(unsigned char *buf, size_t len, struct sockaddr_in *from,
+    struct hardware *hfrom)
 {
 	int length = 0, offset = 0;
 	struct bpf_hdr hdr;
@@ -307,13 +306,12 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 	 */
 	do {
 		/* If the buffer is empty, fill it. */
-		if (interface->rbuf_offset == interface->rbuf_len) {
-			length = read(interface->rfdesc, interface->rbuf,
-			    interface->rbuf_max);
+		if (ifi->rbuf_offset == ifi->rbuf_len) {
+			length = read(ifi->rfdesc, ifi->rbuf, ifi->rbuf_max);
 			if (length <= 0)
 				return (length);
-			interface->rbuf_offset = 0;
-			interface->rbuf_len = BPF_WORDALIGN(length);
+			ifi->rbuf_offset = 0;
+			ifi->rbuf_len = BPF_WORDALIGN(length);
 		}
 
 		/*
@@ -321,23 +319,21 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		 * went wrong, but we'll ignore it and hope it goes
 		 * away... XXX
 		 */
-		if (interface->rbuf_len - interface->rbuf_offset <
-		    sizeof(hdr)) {
-			interface->rbuf_offset = interface->rbuf_len;
+		if (ifi->rbuf_len - ifi->rbuf_offset < sizeof(hdr)) {
+			ifi->rbuf_offset = ifi->rbuf_len;
 			continue;
 		}
 
 		/* Copy out a bpf header... */
-		memcpy(&hdr, &interface->rbuf[interface->rbuf_offset],
-		    sizeof(hdr));
+		memcpy(&hdr, &ifi->rbuf[ifi->rbuf_offset], sizeof(hdr));
 
 		/*
 		 * If the bpf header plus data doesn't fit in what's
 		 * left of the buffer, stick head in sand yet again...
 		 */
-		if (interface->rbuf_offset + hdr.bh_hdrlen + hdr.bh_caplen >
-		    interface->rbuf_len) {
-			interface->rbuf_offset = interface->rbuf_len;
+		if (ifi->rbuf_offset + hdr.bh_hdrlen + hdr.bh_caplen >
+		    ifi->rbuf_len) {
+			ifi->rbuf_offset = ifi->rbuf_len;
 			continue;
 		}
 
@@ -347,18 +343,17 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		 * do is drop it.
 		 */
 		if (hdr.bh_caplen != hdr.bh_datalen) {
-			interface->rbuf_offset = BPF_WORDALIGN(
-			    interface->rbuf_offset + hdr.bh_hdrlen +
+			ifi->rbuf_offset = BPF_WORDALIGN(
+			    ifi->rbuf_offset + hdr.bh_hdrlen +
 			    hdr.bh_caplen);
 			continue;
 		}
 
 		/* Skip over the BPF header... */
-		interface->rbuf_offset += hdr.bh_hdrlen;
+		ifi->rbuf_offset += hdr.bh_hdrlen;
 
 		/* Decode the physical header... */
-		offset = decode_hw_header(interface->rbuf,
-		    interface->rbuf_offset, hfrom);
+		offset = decode_hw_header(ifi->rbuf, ifi->rbuf_offset, hfrom);
 
 		/*
 		 * If a physical layer checksum failed (dunno of any
@@ -366,24 +361,24 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		 * this packet.
 		 */
 		if (offset < 0) {
-			interface->rbuf_offset = BPF_WORDALIGN(
-			    interface->rbuf_offset + hdr.bh_caplen);
+			ifi->rbuf_offset = BPF_WORDALIGN(
+			    ifi->rbuf_offset + hdr.bh_caplen);
 			continue;
 		}
-		interface->rbuf_offset += offset;
+		ifi->rbuf_offset += offset;
 		hdr.bh_caplen -= offset;
 
 		/* Decode the IP and UDP headers... */
-		offset = decode_udp_ip_header(interface->rbuf,
-		    interface->rbuf_offset, from, NULL, hdr.bh_caplen);
+		offset = decode_udp_ip_header(ifi->rbuf,
+		    ifi->rbuf_offset, from, NULL, hdr.bh_caplen);
 
 		/* If the IP or UDP checksum was bad, skip the packet... */
 		if (offset < 0) {
-			interface->rbuf_offset = BPF_WORDALIGN(
-			    interface->rbuf_offset + hdr.bh_caplen);
+			ifi->rbuf_offset = BPF_WORDALIGN(
+			    ifi->rbuf_offset + hdr.bh_caplen);
 			continue;
 		}
-		interface->rbuf_offset += offset;
+		ifi->rbuf_offset += offset;
 		hdr.bh_caplen -= offset;
 
 		/*
@@ -392,15 +387,15 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		 * life, though).
 		 */
 		if (hdr.bh_caplen > len) {
-			interface->rbuf_offset = BPF_WORDALIGN(
-			    interface->rbuf_offset + hdr.bh_caplen);
+			ifi->rbuf_offset = BPF_WORDALIGN(
+			    ifi->rbuf_offset + hdr.bh_caplen);
 			continue;
 		}
 
 		/* Copy out the data in the packet... */
-		memcpy(buf, interface->rbuf + interface->rbuf_offset,
+		memcpy(buf, ifi->rbuf + ifi->rbuf_offset,
 		    hdr.bh_caplen);
-		interface->rbuf_offset = BPF_WORDALIGN(interface->rbuf_offset +
+		ifi->rbuf_offset = BPF_WORDALIGN(ifi->rbuf_offset +
 		    hdr.bh_caplen);
 		return (hdr.bh_caplen);
 	} while (!length);

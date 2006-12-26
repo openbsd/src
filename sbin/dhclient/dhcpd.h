@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.55 2006/12/22 03:18:14 stevesk Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.56 2006/12/26 21:19:52 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -105,7 +105,6 @@ struct packet {
 	int			 options_valid;
 	int			 client_port;
 	struct iaddr		 client_addr;
-	struct interface_info	*interface;
 	struct hardware		*haddr;
 	struct option_data	 options[256];
 };
@@ -189,7 +188,6 @@ struct client_state {
 };
 
 struct interface_info {
-	struct interface_info	*next;
 	struct hardware		 hw_address;
 	struct in_addr		 primary_address;
 	char			 name[IFNAMSIZ];
@@ -211,15 +209,13 @@ struct interface_info {
 struct timeout {
 	struct timeout	*next;
 	time_t		 when;
-	void		 (*func)(void *);
-	void		*what;
+	void		 (*func)(void);
 };
 
 struct protocol {
 	struct protocol	*next;
 	int fd;
 	void (*handler)(struct protocol *);
-	void *local;
 };
 
 #define	_PATH_DHCLIENT_CONF	"/etc/dhclient.conf"
@@ -229,11 +225,13 @@ struct protocol {
 
 /* External definitions... */
 
+extern struct interface_info *ifi;
+
 /* options.c */
 int cons_options(unsigned char *, const int, struct option_data *);
 char *pretty_print_option(unsigned int, unsigned char *, int, int, int);
-void do_packet(struct interface_info *, struct dhcp_packet *,
-    int, unsigned int, struct iaddr, struct hardware *);
+void do_packet(struct dhcp_packet *, int, unsigned int, struct iaddr,
+    struct hardware *);
 
 /* errwarn.c */
 extern int warnings_occurred;
@@ -262,24 +260,24 @@ void convert_num(unsigned char *, char *, int, int);
 time_t parse_date(FILE *);
 
 /* bpf.c */
-int if_register_bpf(struct interface_info *);
-void if_register_send(struct interface_info *);
-void if_register_receive(struct interface_info *);
-ssize_t send_packet(struct interface_info *, struct dhcp_packet *, size_t,
+int if_register_bpf(void);
+void if_register_send(void);
+void if_register_receive(void);
+ssize_t send_packet(struct dhcp_packet *, size_t,
     struct in_addr, struct sockaddr_in *, struct hardware *);
-ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
-    struct sockaddr_in *, struct hardware *);
+ssize_t receive_packet(unsigned char *, size_t, struct sockaddr_in *,
+    struct hardware *);
 
 /* dispatch.c */
-extern void (*bootp_packet_handler)(struct interface_info *,
-    struct dhcp_packet *, int, unsigned int, struct iaddr, struct hardware *);
-void discover_interfaces(struct interface_info *);
-void reinitialize_interfaces(void);
+extern void (*bootp_packet_handler)(struct dhcp_packet *, int, unsigned int,
+    struct iaddr, struct hardware *);
+void discover_interface(void);
+void reinitialize_interface(void);
 void dispatch(void);
 void got_one(struct protocol *);
-void add_timeout(time_t, void (*)(void *), void *);
-void cancel_timeout(void (*)(void *), void *);
-void add_protocol(char *, int, void (*)(struct protocol *), void *);
+void add_timeout(time_t, void (*)(void));
+void cancel_timeout(void (*)(void));
+void add_protocol(char *, int, void (*)(struct protocol *));
 void remove_protocol(struct protocol *);
 int interface_link_status(char *);
 int interface_link_forceup(char *);
@@ -314,26 +312,26 @@ void dhcpoffer(struct packet *);
 void dhcpack(struct packet *);
 void dhcpnak(struct packet *);
 
-void send_discover(void *);
-void send_request(void *);
-void send_decline(void *);
+void send_discover(void);
+void send_request(void);
+void send_decline(void);
 
-void state_reboot(void *);
-void state_init(void *);
-void state_selecting(void *);
-void state_requesting(void *);
-void state_bound(void *);
-void state_panic(void *);
+void state_reboot(void);
+void state_init(void);
+void state_selecting(void);
+void state_requesting(void);
+void state_bound(void);
+void state_panic(void);
 
-void bind_lease(struct interface_info *);
+void bind_lease(void);
 
-void make_discover(struct interface_info *, struct client_lease *);
-void make_request(struct interface_info *, struct client_lease *);
-void make_decline(struct interface_info *, struct client_lease *);
+void make_discover(struct client_lease *);
+void make_request(struct client_lease *);
+void make_decline(struct client_lease *);
 
 void free_client_lease(struct client_lease *);
 void rewrite_client_leases(void);
-void write_client_lease(struct interface_info *, struct client_lease *, int);
+void write_client_lease(struct client_lease *, int);
 
 void	 priv_script_init(char *, char *);
 void	 priv_script_write_params(char *, struct client_lease *);
@@ -355,8 +353,7 @@ void bootp(struct packet *);
 void dhcp(struct packet *);
 
 /* packet.c */
-void assemble_hw_header(struct interface_info *, unsigned char *,
-    int *, struct hardware *);
+void assemble_hw_header(unsigned char *, int *, struct hardware *);
 void assemble_udp_ip_header(unsigned char *, int *, u_int32_t, u_int32_t,
     unsigned int, unsigned char *, int);
 ssize_t decode_hw_header(unsigned char *, int, struct hardware *);
@@ -371,8 +368,7 @@ int parse_X(FILE *, u_int8_t *, int);
 int parse_option_list(FILE *, u_int8_t *);
 void parse_interface_declaration(FILE *);
 void parse_client_lease_statement(FILE *, int);
-void parse_client_lease_declaration(FILE *, struct client_lease *,
-    struct interface_info **);
+void parse_client_lease_declaration(FILE *, struct client_lease *);
 int parse_option_decl(FILE *, struct option_data *);
 void parse_string_list(FILE *, struct string_list **, int);
 void parse_reject_statement(FILE *);

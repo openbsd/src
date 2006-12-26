@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.31 2006/12/16 15:13:45 stevesk Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.32 2006/12/26 21:19:52 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -42,8 +42,6 @@
 
 #include "dhcpd.h"
 #include "dhctoken.h"
-
-extern struct interface_info *ifi;
 
 /*
  * client-conf-file :== client-declarations EOF
@@ -394,7 +392,6 @@ void
 parse_client_lease_statement(FILE *cfile, int is_static)
 {
 	struct client_lease	*lease, *lp, *pl;
-	struct interface_info	*ip = ifi;
 	int			 token;
 	char			*val;
 
@@ -419,21 +416,21 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 		}
 		if (token == '}')
 			break;
-		parse_client_lease_declaration(cfile, lease, &ip);
+		parse_client_lease_declaration(cfile, lease);
 	} while (1);
 	token = next_token(&val, cfile);
 
 	/* If the lease declaration didn't include an interface
 	 * declaration that we recognized, it's of no use to us.
 	 */
-	if (!ip) {
+	if (!ifi) {
 		free_client_lease(lease);
 		return;
 	}
 
 	/* If this is an alias lease, it doesn't need to be sorted in. */
 	if (is_static == 2) {
-		ip->client->alias = lease;
+		ifi->client->alias = lease;
 		return;
 	}
 
@@ -444,14 +441,14 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	 * toss it.
 	 */
 	pl = NULL;
-	for (lp = ip->client->leases; lp; lp = lp->next) {
+	for (lp = ifi->client->leases; lp; lp = lp->next) {
 		if (lp->address.len == lease->address.len &&
 		    !memcmp(lp->address.iabuf, lease->address.iabuf,
 		    lease->address.len)) {
 			if (pl)
 				pl->next = lp->next;
 			else
-				ip->client->leases = lp->next;
+				ifi->client->leases = lp->next;
 			free_client_lease(lp);
 			break;
 		}
@@ -462,8 +459,8 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	 * recorded leases - don't make it the active lease.
 	 */
 	if (is_static) {
-		lease->next = ip->client->leases;
-		ip->client->leases = lease;
+		lease->next = ifi->client->leases;
+		ifi->client->leases = lease;
 		return;
 	}
 
@@ -481,20 +478,20 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	 * for this interface which are still valid but no longer
 	 * active.
 	 */
-	if (ip->client->active) {
-		if (ip->client->active->expiry < cur_time)
-			free_client_lease(ip->client->active);
-		else if (ip->client->active->address.len ==
+	if (ifi->client->active) {
+		if (ifi->client->active->expiry < cur_time)
+			free_client_lease(ifi->client->active);
+		else if (ifi->client->active->address.len ==
 		    lease->address.len &&
-		    !memcmp(ip->client->active->address.iabuf,
+		    !memcmp(ifi->client->active->address.iabuf,
 		    lease->address.iabuf, lease->address.len))
-			free_client_lease(ip->client->active);
+			free_client_lease(ifi->client->active);
 		else {
-			ip->client->active->next = ip->client->leases;
-			ip->client->leases = ip->client->active;
+			ifi->client->active->next = ifi->client->leases;
+			ifi->client->leases = ifi->client->active;
 		}
 	}
-	ip->client->active = lease;
+	ifi->client->active = lease;
 
 	/* Phew. */
 }
@@ -512,8 +509,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
  *	EXPIRE time-decl
  */
 void
-parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
-    struct interface_info **ipp)
+parse_client_lease_declaration(FILE *cfile, struct client_lease *lease)
 {
 	char *val;
 	int token;
@@ -535,7 +531,6 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 			skip_to_semi(cfile);
 			break;
 		}
-		*ipp = ifi;
 		break;
 	case TOK_FIXED_ADDR:
 		if (!parse_ip_addr(cfile, &lease->address))
