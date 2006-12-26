@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.10 2006/12/26 06:24:48 itojun Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.11 2006/12/26 18:22:30 moritz Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.10 2006/12/26 06:24:48 itojun Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.11 2006/12/26 18:22:30 moritz Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -289,7 +289,7 @@ ah_print (register const u_char *bp, register u_int len,
 
 	        pl_len = (ah->ah_pl_len + 2) << 2; /* RFC2402, sec 2.2 */
 
-		if (len - pl_len <= 0) {
+		if (len <= pl_len) {
 		        (void)printf("truncated");
 			goto out;
 		}
