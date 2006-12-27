@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.h,v 1.2 2005/04/02 23:27:25 miod Exp $	*/
+/*	$OpenBSD: p9000.h,v 1.3 2006/12/27 18:54:02 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -53,9 +53,14 @@
 #define	SCR_PIXEL_16BPP					0x0c000000
 #define	SCR_PIXEL_24BPP					0x1c000000
 #define	SCR_PIXEL_32BPP					0x14000000
+#define	SCR_SWAP_WORDS					0x00002000
+#define	SCR_SWAP_BYTES					0x00001000
+#define	SCR_SWAP_BITS					0x00000800
 #define	SCR_READ_BUFFER_MASK				0x00000400
 #define	SCR_WRITE_BUFFER_MASK				0x00000200
 #define	SCR_ID_MASK					0x00000007
+#define	SCR_SC(sc0, sc1, sc2, sc3) \
+    (((sc0) << 14) | ((sc1) << 17) | ((sc2) << 20) | ((sc3) << 29))
 
 /* Interrupt status register */
 #define	P9000_INTERRUPT					0x00000008

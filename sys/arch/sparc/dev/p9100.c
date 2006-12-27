@@ -1,7 +1,7 @@
-/*	$OpenBSD: p9100.c,v 1.41 2006/12/02 11:24:02 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.42 2006/12/27 18:54:04 miod Exp $	*/
 
 /*
- * Copyright (c) 2003, 2005, Miodrag Vallat.
+ * Copyright (c) 2003, 2005, 2006, Miodrag Vallat.
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
  * All rights reserved.
  *
@@ -69,6 +69,15 @@
 #include <sparc/dev/tctrlvar.h>
 #endif
 
+#undef	FIDDLE_WITH_PCI_REGISTERS
+
+/*
+ * Built-in LCD panel geometry
+ */
+
+#define	LCD_WIDTH	800
+#define	LCD_HEIGHT	600
+
 /*
  * SBus registers mappings
  */
@@ -78,21 +87,46 @@
 #define	P9100_REG_VRAM		2
 #define	P9100_REG_CONFIG	3
 
+#ifdef	FIDDLE_WITH_PCI_REGISTERS
+/*
+ * This structure, mapped at register address 0x9100, allows non-PCI
+ * designs (such as the SPARCbook) to access the PCI configuration space.
+ */
+struct p9100_pci {
+	volatile u_int32_t	address;	/* within configuration space */
+	volatile u_int32_t	data;		/* _byte_ to read or write */
+};
+#endif
+
 /* per-display variables */
 struct p9100_softc {
 	struct sunfb	sc_sunfb;	/* common base part */
-	struct rom_reg	sc_phys;
+	struct rom_reg	sc_phys[P9100_NREG - 1];
 	volatile u_int8_t *sc_cmd;	/* command registers (dac, etc) */
 	volatile u_int8_t *sc_ctl;	/* control registers (draw engine) */
+#ifdef	FIDDLE_WITH_PCI_REGISTERS
+	struct p9100_pci *sc_pci;	/* pci configuration space access */
+#endif
+	vsize_t		sc_vramsize;	/* total VRAM available */
 	union bt_cmap	sc_cmap;	/* Brooktree color map */
 	struct intrhand	sc_ih;
-	int		sc_flags;
-#define	SCF_EXTERNAL		0x01	/* external video enabled */
+	int		sc_mapmode;
+	u_int		sc_flags;
+#define	SCF_INTERNAL		0x01	/* internal video enabled */
+#define	SCF_EXTERNAL		0x02	/* external video enabled */
+#if NTCTRL > 0
+#define	SCF_MAPPEDSWITCH	0x04	/* switch mode when leaving emul */
+	u_int		sc_mapwidth;	/* non-emul video mode parameters */
+	u_int		sc_mapheight;
+	u_int		sc_mapdepth;
+#endif
+
 	u_int32_t	sc_junk;	/* throwaway value */
 };
 
 void	p9100_burner(void *, u_int, u_int);
 void	p9100_external_video(void *, int);
+void	p9100_initialize_ramdac(struct p9100_softc *, u_int, u_int);
 int	p9100_intr(void *);
 int	p9100_ioctl(void *, u_long, caddr_t, int, struct proc *);
 static __inline__
@@ -100,6 +134,7 @@ void	p9100_loadcmap_deferred(struct p9100_softc *, u_int, u_int);
 void	p9100_loadcmap_immediate(struct p9100_softc *, u_int, u_int);
 paddr_t	p9100_mmap(void *, off_t, int);
 int	p9100_pick_romfont(struct p9100_softc *);
+void	p9100_prom(void *);
 void	p9100_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 u_int	p9100_read_ramdac(struct p9100_softc *, u_int);
 void	p9100_write_ramdac(struct p9100_softc *, u_int, u_int);
@@ -229,61 +264,98 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	struct p9100_softc *sc = (struct p9100_softc *)self;
 	struct rasops_info *ri = &sc->sc_sunfb.sf_ro;
 	struct confargs *ca = args;
-	int node, scr, fb_depth;
-	int isconsole, fontswitch, clear;
+	struct romaux *ra = &ca->ca_ra;
+	int node, scr, force_reset;
+	int isconsole, fontswitch, clear = 0;
 
 #ifdef DIAGNOSTIC
-	if (ca->ca_ra.ra_nreg < P9100_NREG - 1) {
+	if (ra->ra_nreg < P9100_NREG) {
 		printf(": expected %d registers, got only %d\n",
-		    P9100_NREG, ca->ca_ra.ra_nreg);
+		    P9100_NREG, ra->ra_nreg);
 		return;
 	}
 #endif
 
-	sc->sc_flags = 0;
+	sc->sc_flags = SCF_INTERNAL;
+	sc->sc_mapmode = WSDISPLAYIO_MODE_EMUL;
 
-	sc->sc_phys = ca->ca_ra.ra_reg[P9100_REG_VRAM];
+	bcopy(ra->ra_reg, sc->sc_phys, sizeof(sc->sc_phys));
 
-	sc->sc_ctl = mapiodev(&ca->ca_ra.ra_reg[P9100_REG_CTL], 0,
-	    ca->ca_ra.ra_reg[P9100_REG_CTL].rr_len);
-	sc->sc_cmd = mapiodev(&ca->ca_ra.ra_reg[P9100_REG_CMD], 0,
-	    ca->ca_ra.ra_reg[P9100_REG_CMD].rr_len);
+	sc->sc_ctl = mapiodev(&ra->ra_reg[P9100_REG_CTL], 0,
+	    ra->ra_reg[P9100_REG_CTL].rr_len);
+	sc->sc_cmd = mapiodev(&ra->ra_reg[P9100_REG_CMD], 0,
+	    ra->ra_reg[P9100_REG_CMD].rr_len);
+#ifdef	FIDDLE_WITH_PCI_REGISTERS
+	sc->sc_pci = (struct p9100_pci *)
+	    mapiodev(&ra->ra_reg[P9100_REG_CONFIG], 0,
+	      ra->ra_reg[P9100_REG_CONFIG].rr_len);
+#endif
 
-	node = ca->ca_ra.ra_node;
+	node = ra->ra_node;
 	isconsole = node == fbnode;
 
 	P9100_SELECT_SCR(sc);
 	scr = P9100_READ_CTL(sc, P9000_SYSTEM_CONFIG);
 	switch (scr & SCR_PIXEL_MASK) {
-	case SCR_PIXEL_32BPP:
-		fb_depth = 32;
-		break;
-	case SCR_PIXEL_24BPP:
-		fb_depth = 24;
-		break;
-	case SCR_PIXEL_16BPP:
-		fb_depth = 16;
-		break;
 	default:
 #ifdef DIAGNOSTIC
-		printf(": unknown color depth code 0x%x, assuming 8\n%s",
-		    scr & SCR_PIXEL_MASK, self->dv_xname);
+		printf(": unknown color depth code 0x%x",
+		    scr & SCR_PIXEL_MASK);
 #endif
 		/* FALLTHROUGH */
+	case SCR_PIXEL_32BPP:
+	case SCR_PIXEL_24BPP:
+	case SCR_PIXEL_16BPP:
+		force_reset = 1;
+		break;
 	case SCR_PIXEL_8BPP:
-		fb_depth = 8;
+		force_reset = 0;
 		break;
 	}
 
-	fb_setsize(&sc->sc_sunfb, fb_depth, 800, 600, node, ca->ca_bustype);
+	fb_setsize(&sc->sc_sunfb, 8, LCD_WIDTH, LCD_HEIGHT, node,
+	    ca->ca_bustype);
 
-	ri->ri_bits = mapiodev(&sc->sc_phys, 0,
-	    round_page(sc->sc_sunfb.sf_fbsize));
+#if 0
+	/*
+	 * The PROM will initialize us in 800x600x8 mode anyway. If it
+	 * does not, we'll force this mode right now.
+	 */
+	if (sc->sc_sunfb.sf_width != LCD_WIDTH || sc->sc_sunfb.sf_depth != 8 ||
+	    sc->sc_sunfb.sf_height != LCD_HEIGHT || force_reset != 0) {
+		sc->sc_sunfb.sf_width = LCD_WIDTH;
+		sc->sc_sunfb.sf_height = LCD_HEIGHT;
+		sc->sc_sunfb.sf_depth = 8;
+		sc->sc_sunfb.sf_linebytes = LCD_WIDTH;
+
+		printf("\n");
+		p9100_initialize_ramdac(sc, LCD_WIDTH, 8);
+		printf("%s", self->dv_xname);
+		clear = 1;
+	}
+#endif
+
+#if NTCTRL > 0
+	/*
+	 * We want to run the frame buffer in 8bpp mode for the emulation mode,
+	 * and use a potentially better mode for the mapped (X11) mode.
+	 * Eventually this will become runtime user-selectable.
+	 */
+
+	sc->sc_mapwidth = LCD_WIDTH;
+	sc->sc_mapheight = LCD_HEIGHT;
+	sc->sc_mapdepth = 8;
+
+	if (sc->sc_mapwidth != sc->sc_sunfb.sf_width ||
+	    sc->sc_mapdepth != sc->sc_sunfb.sf_depth)
+		SET(sc->sc_flags, SCF_MAPPEDSWITCH);
+#endif
+
+	ri->ri_bits = mapiodev(&ra->ra_reg[P9100_REG_VRAM], 0,
+	    sc->sc_vramsize = round_page(ra->ra_reg[P9100_REG_VRAM].rr_len));
 	ri->ri_hw = sc;
 
-	printf(": rev %x, %dx%d, depth %d\n", scr & SCR_ID_MASK,
-	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height,
-	    sc->sc_sunfb.sf_depth);
+	printf(": rev %x, %dx%d\n", scr & SCR_ID_MASK, LCD_WIDTH, LCD_HEIGHT);
 
 	/* Disable frame buffer interrupts */
 	P9100_SELECT_SCR(sc);
@@ -291,7 +363,7 @@ p9100attach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_ih.ih_fun = p9100_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
+	intr_establish(ra->ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
 	    self->dv_xname);
 
 	/*
@@ -322,25 +394,28 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	p9100_external_video(sc, 1);
 #endif
 
-	clear = !isconsole || fontswitch;
+	if (isconsole == 0 || fontswitch)
+		clear = 1;
 	fbwscons_init(&sc->sc_sunfb, clear ? RI_CLEAR : 0);
-	if (!clear) {
+	if (clear == 0) {
 		ri->ri_bits -= 2 * ri->ri_xscale;
 		ri->ri_xorigin -= 2 * ri->ri_xscale;
 	}
 	fbwscons_setcolormap(&sc->sc_sunfb, p9100_setcolor);
 
 	/*
-	 * Plug-in accelerated console operations if we can.
+	 * Plug-in accelerated console operations.
 	 */
-	if (sc->sc_sunfb.sf_depth == 8)
-		p9100_ras_init(sc);
+	p9100_ras_init(sc);
 
 	/* enable video */
 	p9100_burner(sc, 1, 0);
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, clear ? 0 : -1);
+#if NTCTRL > 0
+		shutdownhook_establish(p9100_prom, sc);
+#endif
 	}
 
 	fbwscons_attach(&sc->sc_sunfb, &p9100_accessops, isconsole);
@@ -364,23 +439,54 @@ p9100_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		break;
 
 	case WSDISPLAYIO_SMODE:
-		/* Restore proper acceleration state upon leaving X11 */
-		if (*(u_int *)data == WSDISPLAYIO_MODE_EMUL &&
-		    sc->sc_sunfb.sf_depth == 8) {
+		sc->sc_mapmode = *(u_int *)data;
+		switch (sc->sc_mapmode) {
+		case WSDISPLAYIO_MODE_DUMBFB:
+		case WSDISPLAYIO_MODE_MAPPED:
+#if NTCTRL > 0
+			if (ISSET(sc->sc_flags, SCF_MAPPEDSWITCH))
+				p9100_initialize_ramdac(sc,
+				    sc->sc_mapwidth, sc->sc_mapdepth);
+#endif
+			break;
+		case WSDISPLAYIO_MODE_EMUL:
+#if NTCTRL > 0
+			if (ISSET(sc->sc_flags, SCF_MAPPEDSWITCH))
+				p9100_initialize_ramdac(sc, LCD_WIDTH, 8);
+#endif
+			fbwscons_setcolormap(&sc->sc_sunfb, p9100_setcolor);
+			/* Restore proper acceleration state as well */
 			p9100_ras_init(sc);
+			break;
 		}
 		break;
 
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
-		wdf->height = sc->sc_sunfb.sf_height;
-		wdf->width  = sc->sc_sunfb.sf_width;
-		wdf->depth  = sc->sc_sunfb.sf_depth;
-		wdf->cmsize = 256;
+#if NTCTRL > 0
+		if (ISSET(sc->sc_flags, SCF_MAPPEDSWITCH)) {
+			wdf->width = sc->sc_mapwidth;
+			wdf->height = sc->sc_mapheight;
+			wdf->depth  = sc->sc_mapdepth;
+			wdf->cmsize = sc->sc_mapdepth == 8 ? 256 : 0;
+		} else
+#endif
+		{
+			wdf->width  = LCD_WIDTH;
+			wdf->height = LCD_HEIGHT;
+			wdf->depth  = 8;
+			wdf->cmsize = 256;
+		}
 		break;
 
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
+#if NTCTRL > 0
+		if (ISSET(sc->sc_flags, SCF_MAPPEDSWITCH))
+			*(u_int *)data = sc->sc_mapwidth *
+			    (sc->sc_mapdepth / 8);
+		else
+#endif
+			*(u_int *)data = sc->sc_sunfb.sf_linebytes;
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
@@ -411,7 +517,11 @@ p9100_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		case WSDISPLAYIO_PARAM_BACKLIGHT:
 			dp->min = 0;
 			dp->max = 1;
-			dp->curval = tadpole_get_video() & TV_ON ? 1 : 0;
+			if (ISSET(sc->sc_flags, SCF_INTERNAL))
+				dp->curval =
+				    tadpole_get_video() & TV_ON ? 1 : 0;
+			else
+				dp->curval = 0;
 			break;
 		default:
 			return (-1);
@@ -426,7 +536,8 @@ p9100_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 			tadpole_set_brightness(dp->curval);
 			break;
 		case WSDISPLAYIO_PARAM_BACKLIGHT:
-			tadpole_set_video(dp->curval);
+			if (ISSET(sc->sc_flags, SCF_INTERNAL))
+				tadpole_set_video(dp->curval);
 			break;
 		default:
 			return (-1);
@@ -454,15 +565,38 @@ paddr_t
 p9100_mmap(void *v, off_t offset, int prot)
 {
 	struct p9100_softc *sc = v;
+	struct rom_reg *rr;
 
 	if ((offset & PAGE_MASK) != 0)
 		return (-1);
 
-	if (offset >= 0 && offset < sc->sc_sunfb.sf_fbsize) {
-		return (REG2PHYS(&sc->sc_phys, offset) | PMAP_NC);
+	switch (sc->sc_mapmode) {
+	case WSDISPLAYIO_MODE_MAPPED:
+		/*
+		 * We provide the following mapping:
+		 * 000000 - 0000ff  control registers
+		 * 002000 - 003fff  command registers
+		 * 800000 - 9fffff  vram
+		 */
+		rr = &sc->sc_phys[P9100_REG_CTL];
+		if (offset >= 0 && offset < rr->rr_len)
+			break;
+		offset -= 0x2000;
+		rr = &sc->sc_phys[P9100_REG_CMD];
+		if (offset >= 0 && offset < rr->rr_len)
+			break;
+		offset -= (0x800000 - 0x2000);
+		/* FALLTHROUGH */
+	case WSDISPLAYIO_MODE_DUMBFB:
+		rr = &sc->sc_phys[P9100_REG_VRAM];
+		if (offset >= 0 && offset < sc->sc_vramsize)
+			break;
+		/* FALLTHROUGH */
+	default:
+		return (-1);
 	}
 
-	return (-1);
+	return (REG2PHYS(rr, offset) | PMAP_NC);
 }
 
 void
@@ -544,7 +678,8 @@ p9100_burner(void *v, u_int on, u_int flags)
 		vcr &= ~SRTC1_VIDEN;
 	P9100_WRITE_CTL(sc, P9000_SRTC1, vcr);
 #if NTCTRL > 0
-	tadpole_set_video(on);
+	if (ISSET(sc->sc_flags, SCF_INTERNAL))
+		tadpole_set_video(on);
 #endif
 	splx(s);
 }
@@ -887,6 +1022,7 @@ p9100_pick_romfont(struct p9100_softc *sc)
 /*
  * External video control
  */
+
 void
 p9100_external_video(void *v, int on)
 {
@@ -898,12 +1034,320 @@ p9100_external_video(void *v, int on)
 	if (on) {
 		p9100_write_ramdac(sc, IBM525_POWER,
 		    p9100_read_ramdac(sc, IBM525_POWER) & ~P_DAC_PWR_DISABLE);
-		sc->sc_flags |= SCF_EXTERNAL;
+		SET(sc->sc_flags, SCF_EXTERNAL);
 	} else {
 		p9100_write_ramdac(sc, IBM525_POWER,
 		    p9100_read_ramdac(sc, IBM525_POWER) | P_DAC_PWR_DISABLE);
-		sc->sc_flags &= ~SCF_EXTERNAL;
+		CLR(sc->sc_flags, SCF_EXTERNAL);
 	}
 
 	splx(s);
 }
+
+/*
+ * Video mode programming
+ *
+ * All magic values come from s3gxtrmb.pdf.
+ */
+
+#if NTCTRL > 0
+
+/* IBM RGB525 registers and values */
+
+static const u_int8_t p9100_dacreg[] = {
+	IBM525_MISC1,
+	IBM525_MISC2,
+	IBM525_MISC3,
+	IBM525_MISC4,
+	IBM525_MISC_CLOCK,
+	IBM525_SYNC,
+	IBM525_HSYNC_POS,
+	IBM525_POWER,
+	IBM525_DAC_OP,
+	IBM525_PALETTE,
+	IBM525_PIXEL,
+	IBM525_PF8,
+	IBM525_PF16,
+	IBM525_PF24,
+	IBM525_PF32,
+	IBM525_PLL1,
+	IBM525_PLL2,
+	IBM525_PLL_FIXED_REF,
+	IBM525_SYSCLK,
+	IBM525_PLL_REF_DIV,
+	IBM525_PLL_VCO_DIV,
+	0
+};
+
+static u_int8_t p9100_dacval[] = {
+	M1_SENSE_DISABLE | M1_VRAM_64,
+	M2_PCLK_PLL | M2_PALETTE_8 | M2_MODE_VRAM,
+	0,
+	0,				/* will be computed */
+	MC_B24P_SCLK | MC_PLL_ENABLE,	/* will be modified */
+	S_HSYN_NORMAL | S_VSYN_NORMAL,
+	0,
+	0,				/* will be computed */
+	DO_FAST_SLEW,
+	0,
+	0,				/* will be computed */
+	PF8_INDIRECT,
+	PF16_DIRECT | PF16_LINEAR | PF16_565,
+	PF24_DIRECT,
+	PF32_DIRECT,
+	P1_CLK_REF | P1_SRC_EXT_F | P1_SRC_DIRECT_F,
+	0,	/* F0, will be set before */
+	5,
+	SC_ENABLE,
+	5,
+	MHZ_TO_PLL(50)
+};
+
+/* Power 9100 registers and values */
+
+static const u_int32_t p9100_reg[] = {
+	P9000_HTR,
+	P9000_HSRE,
+	P9000_HBRE,
+	P9000_HBFE,
+	P9000_HCP,
+	P9000_VL,
+	P9000_VSRE,
+	P9000_VBRE,
+	P9000_VBFE,
+	P9000_VCP,
+	0
+};
+
+static const u_int32_t p9100_val_800_32[] = {
+	0x1f3, 0x023, 0x053, 0x1e3, 0x000, 0x271, 0x002, 0x016, 0x26e, 0x000
+};
+#if 0	/* No X server for this mode, yet */
+static const u_int32_t p9100_val_800_24[] = {
+	0x176, 0x01a, 0x03d, 0x169, 0x000, 0x271, 0x002, 0x016, 0x26e, 0x000
+};
+#endif
+static const u_int32_t p9100_val_800_8[] = {
+	0x07c, 0x008, 0x011, 0x075, 0x000, 0x271, 0x002, 0x016, 0x26e, 0x000
+};
+#if NTCTRL > 0
+static const u_int32_t p9100_val_640_32[] = {
+	0x18f, 0x02f, 0x043, 0x183, 0x000, 0x205, 0x003, 0x022, 0x202, 0x000
+};
+static const u_int32_t p9100_val_640_8[] = {
+	0x063, 0x00b, 0x00d, 0x05d, 0x000, 0x205, 0x003, 0x022, 0x202, 0x000
+};
+static const u_int32_t p9100_val_1024_8[] = {
+	0x0a7, 0x019, 0x022, 0x0a2, 0x000, 0x325, 0x003, 0x023, 0x323, 0x000
+};
+#endif
+
+void
+p9100_initialize_ramdac(struct p9100_softc *sc, u_int width, u_int depth)
+{
+	int s;
+	const u_int8_t *dacregp, *dacvalp;
+	const u_int32_t *p9regp, *p9valp;
+	u_int8_t pllclk, dacval;
+	u_int32_t scr;
+
+	/*
+	 * XXX Switching to a low-res 8bpp mode causes kernel faults
+	 * XXX unless coming from an high-res 8bpp mode, and I have
+	 * XXX no idea why.
+	 */
+	if (depth == 8 && width != 1024)
+		p9100_initialize_ramdac(sc, 1024, 8);
+
+	switch (width) {
+	case 1024:
+		p9valp = p9100_val_1024_8;
+		pllclk = MHZ_TO_PLL(65);
+		/* 1024 bytes scanline */
+		scr = SCR_SC(0, 0, 0, 1) | SCR_PIXEL_8BPP;
+		break;
+	default:
+		/* FALLTHROUGH */
+	case 800:
+		switch (depth) {
+		case 32:
+			p9valp = p9100_val_800_32;
+			/* 3200 = 128 + 1024 + 2048 bytes scanline */
+			scr = SCR_SC(3, 6, 7, 0) |
+			    SCR_PIXEL_32BPP | SCR_SWAP_WORDS | SCR_SWAP_BYTES;
+			break;
+#if 0
+		case 24:
+			p9valp = p9100_val_800_24;
+			/* 2400 = 32 + 64 + 256 + 2048 bytes scanline */
+			scr = SCR_SC(1, 2, 4, 2) | SCR_PIXEL_24BPP;
+			break;
+#endif
+		default:
+		case 8:
+			p9valp = p9100_val_800_8;
+			/* 800 = 32 + 256 + 512 bytes scanline */
+			scr = SCR_SC(1, 4, 5, 0) | SCR_PIXEL_8BPP;
+			break;
+		}
+		pllclk = MHZ_TO_PLL(36);
+		break;
+	case 640:
+		switch (depth) {
+		case 32:
+			p9valp = p9100_val_640_32;
+			/* 2560 = 512 + 2048 bytes scanline */
+			scr = SCR_SC(5, 7, 0, 0) |
+			    SCR_PIXEL_32BPP | SCR_SWAP_WORDS | SCR_SWAP_BYTES;
+			break;
+		default:
+		case 8:
+			p9valp = p9100_val_640_8;
+			/* 640 = 128 + 512 bytes scanline */
+			scr = SCR_SC(3, 5, 0, 0) | SCR_PIXEL_8BPP;
+			break;
+		}
+		pllclk = MHZ_TO_PLL(25);
+		break;
+	}
+	dacvalp = p9100_dacval;
+
+	s = splhigh();
+
+#ifdef	FIDDLE_WITH_PCI_REGISTERS
+	/*
+	 * Magical initialization sequence, from s3gxtrmb.pdf.
+	 * DANGER! Sometimes freezes the machine solid, cause unknown.
+	 */
+	sc->sc_pci->address = 0x13000000;
+	sc->sc_pci->data = 0;
+	sc->sc_pci->address = 0x30000000;
+	sc->sc_pci->data = 0;
+	sc->sc_pci->address = 0x41000000;
+	sc->sc_pci->data = 0;	/* No register mapping at a0000 */
+	sc->sc_pci->address = 0x04000000;
+	sc->sc_pci->data = 0xa3000000;
+#endif
+
+	/*
+	 * Initialize the RAMDAC
+	 */
+	P9100_SELECT_DAC(sc);
+	P9100_WRITE_RAMDAC(sc, IBM525_PIXMASK, 0xff);
+	P9100_FLUSH_DAC(sc);
+	P9100_WRITE_RAMDAC(sc, IBM525_IDXCONTROL, 0x00);
+	P9100_FLUSH_DAC(sc);
+
+	p9100_write_ramdac(sc, IBM525_F(0), pllclk);
+	for (dacregp = p9100_dacreg; *dacregp != 0; dacregp++, dacvalp++) {
+		switch (*dacregp) {
+		case IBM525_MISC4:
+			dacval =  pllclk >= MHZ_TO_PLL(50) ?
+			    M4_FAST : M4_INVERT_DCLK;
+			break;
+		case IBM525_MISC_CLOCK:
+			dacval = *dacvalp & ~MC_DDOT_DIV_MASK;
+			switch (depth) {
+			case 32:
+				dacval |= MC_DDOT_DIV_2;
+				break;
+			case 16:
+				dacval |= MC_DDOT_DIV_4;
+				break;
+			default:
+			case 24:
+			case 8:
+				dacval |= MC_DDOT_DIV_8;
+				break;
+			}
+			break;
+		case IBM525_POWER:
+			if (depth == 24)
+				dacval = 0;
+			else
+				dacval = P_SCLK_DISABLE;
+			break;
+		case IBM525_PIXEL:
+			switch (depth) {
+			case 32:
+				dacval = PIX_32BPP;
+				break;
+			case 24:
+				dacval = PIX_24BPP;
+				break;
+			case 16:
+				dacval = PIX_16BPP;
+				break;
+			default:
+			case 8:
+				dacval = PIX_8BPP;
+				break;
+			}
+			break;
+		default:
+			dacval = *dacvalp;
+			break;
+		}
+		p9100_write_ramdac(sc, *dacregp, dacval);
+	}
+
+	/*
+	 * Initialize the Power 9100
+	 */
+
+	P9100_SELECT_SCR(sc);
+	P9100_WRITE_CTL(sc, P9000_SYSTEM_CONFIG, scr);
+	P9100_SELECT_VCR(sc);
+	P9100_WRITE_CTL(sc, P9000_SRTC1,
+	    SRTC1_VSYNC_INTERNAL | SRTC1_HSYNC_INTERNAL | SRTC1_VIDEN | 0x03);
+	P9100_WRITE_CTL(sc, P9000_SRTC2, 0x05);
+	P9100_SELECT_VRAM(sc);
+	P9100_WRITE_CTL(sc, P9000_MCR, 0xc808007d);
+	delay(3000);
+
+	P9100_SELECT_VCR(sc);
+	for (p9regp = p9100_reg; *p9regp != 0; p9regp++, p9valp++)
+		P9100_WRITE_CTL(sc, *p9regp, *p9valp);
+
+	P9100_SELECT_VRAM(sc);
+	P9100_WRITE_CTL(sc, P9000_REFRESH_PERIOD, 0x3ff);
+
+	/* Disable frame buffer interrupts */
+	P9100_SELECT_SCR(sc);
+	P9100_WRITE_CTL(sc, P9000_INTERRUPT_ENABLE, IER_MASTER_ENABLE | 0);
+
+	/*
+	 * Enable internal video... (it's a kind of magic)
+	 */
+	p9100_write_ramdac(sc, IBM525_MISC4,
+	    p9100_read_ramdac(sc, IBM525_MISC4) | 0xc0);
+
+	/*
+	 * ... unless it does not fit.
+	 */
+	if (width != LCD_WIDTH) {
+		CLR(sc->sc_flags, SCF_INTERNAL);
+		tadpole_set_video(0);
+	} else {
+		SET(sc->sc_flags, SCF_INTERNAL);
+		tadpole_set_video(1);
+	}
+
+	p9100_external_video(sc, ISSET(sc->sc_flags, SCF_EXTERNAL));
+
+	splx(s);
+}
+
+void
+p9100_prom(void *v)
+{
+	struct p9100_softc *sc = v;
+
+	if (ISSET(sc->sc_flags, SCF_MAPPEDSWITCH) &&
+	    sc->sc_mapmode != WSDISPLAYIO_MODE_EMUL) {
+		p9100_initialize_ramdac(sc, LCD_WIDTH, 8);
+		fbwscons_setcolormap(&sc->sc_sunfb, p9100_setcolor);
+		p9100_ras_init(sc);
+	}
+}
+#endif	/* NTCTRL > 0 */
