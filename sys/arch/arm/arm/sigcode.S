@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigcode.S,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: sigcode.S,v 1.2 2006/12/27 17:49:26 drahn Exp $	*/
 /*	$NetBSD: sigcode.S,v 1.6 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
@@ -50,6 +50,7 @@ ENTRY_NP(sigcode)
  */
 /*	mov	r0, sp */
 	add	r0, sp, #SIGF_SC
+	ldr	r12, =SYS_sigreturn
 	swi	SYS_sigreturn
 
 /* Well if that failed we better exit quick ! */
