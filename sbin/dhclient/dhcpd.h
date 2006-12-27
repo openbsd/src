@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.56 2006/12/26 21:19:52 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.57 2006/12/27 20:56:33 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -182,7 +182,6 @@ struct client_state {
 	struct dhcp_packet	  packet;
 	int			  packet_length;
 	struct iaddr		  requested_address;
-	struct client_config	 *config;
 	char			**scriptEnv;
 	int			  scriptEnvsize;
 };
@@ -199,7 +198,6 @@ struct interface_info {
 	size_t			 rbuf_offset;
 	size_t			 rbuf_len;
 	struct ifreq		*ifp;
-	struct client_state	*client;
 	int			 noifmedia;
 	int			 errors;
 	int			 dead;
@@ -226,6 +224,8 @@ struct protocol {
 /* External definitions... */
 
 extern struct interface_info *ifi;
+extern struct client_state *client;
+extern struct client_config *config;
 
 /* options.c */
 int cons_options(unsigned char *, const int, struct option_data *);

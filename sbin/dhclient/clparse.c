@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.32 2006/12/26 21:19:52 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.33 2006/12/27 20:56:33 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -52,7 +52,6 @@
 int
 read_client_conf(void)
 {
-	struct client_config *config = ifi->client->config;
 	FILE *cfile;
 	char *val;
 	int token;
@@ -157,7 +156,6 @@ read_client_leases(void)
 void
 parse_client_statement(FILE *cfile)
 {
-	struct client_config *config = ifi->client->config;
 	char *val;
 	int token, code;
 
@@ -430,7 +428,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 
 	/* If this is an alias lease, it doesn't need to be sorted in. */
 	if (is_static == 2) {
-		ifi->client->alias = lease;
+		client->alias = lease;
 		return;
 	}
 
@@ -441,14 +439,14 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	 * toss it.
 	 */
 	pl = NULL;
-	for (lp = ifi->client->leases; lp; lp = lp->next) {
+	for (lp = client->leases; lp; lp = lp->next) {
 		if (lp->address.len == lease->address.len &&
 		    !memcmp(lp->address.iabuf, lease->address.iabuf,
 		    lease->address.len)) {
 			if (pl)
 				pl->next = lp->next;
 			else
-				ifi->client->leases = lp->next;
+				client->leases = lp->next;
 			free_client_lease(lp);
 			break;
 		}
@@ -459,8 +457,8 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	 * recorded leases - don't make it the active lease.
 	 */
 	if (is_static) {
-		lease->next = ifi->client->leases;
-		ifi->client->leases = lease;
+		lease->next = client->leases;
+		client->leases = lease;
 		return;
 	}
 
@@ -478,20 +476,20 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	 * for this interface which are still valid but no longer
 	 * active.
 	 */
-	if (ifi->client->active) {
-		if (ifi->client->active->expiry < cur_time)
-			free_client_lease(ifi->client->active);
-		else if (ifi->client->active->address.len ==
+	if (client->active) {
+		if (client->active->expiry < cur_time)
+			free_client_lease(client->active);
+		else if (client->active->address.len ==
 		    lease->address.len &&
-		    !memcmp(ifi->client->active->address.iabuf,
+		    !memcmp(client->active->address.iabuf,
 		    lease->address.iabuf, lease->address.len))
-			free_client_lease(ifi->client->active);
+			free_client_lease(client->active);
 		else {
-			ifi->client->active->next = ifi->client->leases;
-			ifi->client->leases = ifi->client->active;
+			client->active->next = client->leases;
+			client->leases = client->active;
 		}
 	}
-	ifi->client->active = lease;
+	client->active = lease;
 
 	/* Phew. */
 }
@@ -772,7 +770,6 @@ parse_string_list(FILE *cfile, struct string_list **lp, int multiple)
 void
 parse_reject_statement(FILE *cfile)
 {
-	struct client_config *config = ifi->client->config;
 	struct iaddrlist *list;
 	struct iaddr addr;
 	char *val;
