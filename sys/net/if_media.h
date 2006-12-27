@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.21 2006/06/21 07:08:41 brad Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.22 2006/12/27 12:00:17 kettenis Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -185,6 +185,8 @@ int	ifmedia_baudrate(int);
 #define	IFM_10G_CX4	20		/* 10GBase-CX4 - copper */
 
 #define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
+#define	IFM_ETH_RXPAUSE	0x00000200	/* receive PAUSE frames */
+#define	IFM_ETH_TXPAUSE	0x00000400	/* transmit PAUSE frames */
 
 /*
  * Token ring
@@ -505,6 +507,8 @@ struct ifmedia_description {
 	{ IFM_LOOP,			"loop" },			\
 									\
 	{ IFM_ETHER|IFM_ETH_MASTER,	"master" },			\
+	{ IFM_ETHER|IFM_ETH_RXPAUSE,	"rxpause" },			\
+	{ IFM_ETHER|IFM_ETH_TXPAUSE,	"txpause" },			\
 									\
 	{ IFM_TOKEN|IFM_TOK_ETR,	"EarlyTokenRelease" },		\
 	{ IFM_TOKEN|IFM_TOK_ETR,	"ETR" },			\
