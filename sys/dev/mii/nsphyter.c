@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphyter.c,v 1.12 2006/03/04 03:53:30 brad Exp $	*/
+/*	$OpenBSD: nsphyter.c,v 1.13 2006/12/27 19:11:09 kettenis Exp $	*/
 /*	$NetBSD: nsphyter.c,v 1.5 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -258,8 +258,11 @@ nsphyter_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_10_T;
 		else
 			mii->mii_media_active |= IFM_100_TX;
+
 		if (physts & PHYSTS_DUPLEX)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

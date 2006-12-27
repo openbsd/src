@@ -1,4 +1,4 @@
-/*	$OpenBSD: tqphy.c,v 1.10 2005/02/19 06:00:04 brad Exp $	*/
+/*	$OpenBSD: tqphy.c,v 1.11 2006/12/27 19:11:09 kettenis Exp $	*/
 /*	$NetBSD: tqphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*
@@ -255,8 +255,11 @@ tqphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_100_TX;
 		else
 			mii->mii_media_active |= IFM_10_T;
+
 		if (diag & DIAG_DPLX)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

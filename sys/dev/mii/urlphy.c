@@ -1,4 +1,4 @@
-/*	$OpenBSD: urlphy.c,v 1.11 2005/05/27 08:04:15 brad Exp $ */
+/*	$OpenBSD: urlphy.c,v 1.12 2006/12/27 19:11:09 kettenis Exp $ */
 /*	$NetBSD: urlphy.c,v 1.1 2002/03/28 21:07:53 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -256,8 +256,11 @@ urlphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_100_TX;
 		else
 			mii->mii_media_active |= IFM_10_T;
+
 		if (msr & URLPHY_MSR_DUPLEX)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

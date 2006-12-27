@@ -1,4 +1,4 @@
-/*	$OpenBSD: inphy.c,v 1.13 2005/02/19 06:00:04 brad Exp $	*/
+/*	$OpenBSD: inphy.c,v 1.14 2006/12/27 19:11:08 kettenis Exp $	*/
 /*	$NetBSD: inphy.c,v 1.18 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -257,6 +257,7 @@ inphy_status(sc)
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
+
 		scr = PHY_READ(sc, MII_INPHY_SCR);
 		if ((bmsr & BMSR_100T4) && (scr & SCR_T4))
 			mii->mii_media_active |= IFM_100_T4;
@@ -264,8 +265,11 @@ inphy_status(sc)
 			mii->mii_media_active |= IFM_100_TX;
 		else
 			mii->mii_media_active |= IFM_10_T;
+
 		if (scr & SCR_FDX)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

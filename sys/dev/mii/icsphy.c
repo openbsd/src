@@ -1,4 +1,4 @@
-/*	$OpenBSD: icsphy.c,v 1.17 2005/02/19 06:00:04 brad Exp $	*/
+/*	$OpenBSD: icsphy.c,v 1.18 2006/12/27 19:11:08 kettenis Exp $	*/
 /*	$NetBSD: icsphy.c,v 1.17 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -260,12 +260,16 @@ icsphy_status(sc)
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
+
 		if (qpr & QPR_SPEED)
 			mii->mii_media_active |= IFM_100_TX;
 		else
 			mii->mii_media_active |= IFM_10_T;
+
 		if (qpr & QPR_FDX)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

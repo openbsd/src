@@ -1,4 +1,4 @@
-/*	$OpenBSD: acphy.c,v 1.5 2005/03/26 04:40:09 krw Exp $	*/
+/*	$OpenBSD: acphy.c,v 1.6 2006/12/27 19:11:08 kettenis Exp $	*/
 /*	$NetBSD: acphy.c,v 1.13 2003/04/29 01:49:33 thorpej Exp $	*/
 
 /*
@@ -238,8 +238,11 @@ acphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_100_TX;
 		else
 			mii->mii_media_active |= IFM_10_T;
+
 		if (dr & DR_DPLX)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

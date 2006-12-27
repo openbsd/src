@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlphy.c,v 1.17 2005/03/26 04:40:09 krw Exp $	*/
+/*	$OpenBSD: tlphy.c,v 1.18 2006/12/27 19:11:09 kettenis Exp $	*/
 /*	$NetBSD: tlphy.c,v 1.26 2000/07/04 03:29:00 thorpej Exp $	*/
 
 /*-
@@ -318,6 +318,8 @@ tlphy_status(struct mii_softc *physc)
 	 */
 	if (bmcr & BMCR_FDX)
 		mii->mii_media_active |= IFM_FDX;
+	else
+		mii->mii_media_active |= IFM_HDX;
 	mii->mii_media_active |= IFM_10_T;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.17 2006/07/22 04:45:13 brad Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.18 2006/12/27 19:11:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -260,9 +260,13 @@ nsgphy_status(struct mii_softc *sc)
 		default:
 			mii->mii_media_active |= IFM_NONE;
 			mii->mii_media_status = 0;
+			return;
 		}
+
 		if (physup & PHY_SUP_DUPLEX)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

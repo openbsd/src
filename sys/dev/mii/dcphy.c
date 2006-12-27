@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.17 2006/08/05 17:01:34 brad Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.18 2006/12/27 19:11:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -338,17 +338,17 @@ dcphy_status(struct mii_softc *sc)
 			anlpar = tstat >> 16;
 			if (anlpar & ANLPAR_T4 &&
 			    sc->mii_capabilities & BMSR_100TXHDX)
-				mii->mii_media_active |= IFM_100_T4;
+				mii->mii_media_active |= IFM_100_T4|IFM_HDX;
 			else if (anlpar & ANLPAR_TX_FD &&
 			    sc->mii_capabilities & BMSR_100TXFDX)
 				mii->mii_media_active |= IFM_100_TX|IFM_FDX;
 			else if (anlpar & ANLPAR_TX &&
 			    sc->mii_capabilities & BMSR_100TXHDX)
-				mii->mii_media_active |= IFM_100_TX;
+				mii->mii_media_active |= IFM_100_TX|IFM_HDX;
 			else if (anlpar & ANLPAR_10_FD)
 				mii->mii_media_active |= IFM_10_T|IFM_FDX;
 			else if (anlpar & ANLPAR_10)
-				mii->mii_media_active |= IFM_10_T;
+				mii->mii_media_active |= IFM_10_T|IFM_HDX;
 			else
 				mii->mii_media_active |= IFM_NONE;
 			if (DC_IS_INTEL(dc_sc))
@@ -356,6 +356,7 @@ dcphy_status(struct mii_softc *sc)
 				    DC_TCTL_AUTONEGENBL);
 			return;
 		}
+
 		/*
 		 * If the other side doesn't support NWAY, then the
 		 * best we can do is determine if we have a 10Mbps or
@@ -365,9 +366,9 @@ dcphy_status(struct mii_softc *sc)
 		 * change the media settings if we're wrong.
 		 */
 		if (!(reg & DC_TSTAT_LS100))
-			mii->mii_media_active |= IFM_100_TX;
+			mii->mii_media_active |= IFM_100_TX|IFM_HDX;
 		else if (!(reg & DC_TSTAT_LS10))
-			mii->mii_media_active |= IFM_10_T;
+			mii->mii_media_active |= IFM_10_T|IFM_HDX;
 		else
 			mii->mii_media_active |= IFM_NONE;
 		if (DC_IS_INTEL(dc_sc))
@@ -376,15 +377,15 @@ dcphy_status(struct mii_softc *sc)
 	}
 
 skip:
-
 	if (CSR_READ_4(dc_sc, DC_NETCFG) & DC_NETCFG_SPEEDSEL)
 		mii->mii_media_active |= IFM_10_T;
 	else
 		mii->mii_media_active |= IFM_100_TX;
+
 	if (CSR_READ_4(dc_sc, DC_NETCFG) & DC_NETCFG_FULLDUPLEX)
 		mii->mii_media_active |= IFM_FDX;
-
-	return;
+	else
+		mii->mii_media_active |= IFM_HDX;
 }
 
 int

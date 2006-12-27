@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.15 2006/12/23 13:16:32 kettenis Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.16 2006/12/27 19:11:08 kettenis Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -306,6 +306,8 @@ ciphy_status(struct mii_softc *sc)
 
 	if (bmsr & CIPHY_AUXCSR_FDX)
 		mii->mii_media_active |= IFM_FDX;
+	else
+		mii->mii_media_active |= IFM_HDX;
 
 	gsr = PHY_READ(sc, CIPHY_MII_1000STS);
 	if ((IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) &&
