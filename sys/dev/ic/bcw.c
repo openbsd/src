@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.11 2006/12/27 14:05:57 jsg Exp $ */
+/*	$OpenBSD: bcw.c,v 1.12 2006/12/27 14:22:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -297,15 +297,15 @@ bcw_attach(struct bcw_softc *sc)
 	 * XXX Select the 802.11 core, then
 	 * Get and display the PHY info from the MIMO
 	 */
-	for (i=0; i < sc->sc_numcores; i++) {
+	for (i = 0; i < sc->sc_numcores; i++) {
 		if (sc->sc_core[i].id == BCW_CORE_80211)
 			(sc->sc_conf_write)(sc, BCW_ADDR_SPACE0,
 			    BCW_CORE_SELECT(i));
 	}
 	sbval = BCW_READ16(sc, 0x3E0);
-	sc->sc_phy_version = (sbval&0xf000)>>12;
-	sc->sc_phy_rev = sbval&0xf;
-	sc->sc_phy_type = (sbval&0xf00)>>8;
+	sc->sc_phy_version = (sbval & 0xf000) >> 12;
+	sc->sc_phy_rev = sbval & 0xf;
+	sc->sc_phy_type = (sbval & 0xf00) >> 8;
 	DPRINTF(("%s: PHY version %d revision %d ",
 	    sc->sc_dev.dv_xname, sc->sc_phy_version, sc->sc_phy_rev));
 	switch (sc->sc_phy_type) {
@@ -674,7 +674,7 @@ bcw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP)&&(!(ifp->if_flags & IFF_RUNNING)))
+		if ((ifp->if_flags & IFF_UP) && (!(ifp->if_flags & IFF_RUNNING)))
 				bcw_init(ifp);
 		else if (ifp->if_flags & IFF_RUNNING)
 			bcw_stop(ifp, 1);
@@ -1323,7 +1323,7 @@ bcw_reset(struct bcw_softc *sc)
 
 	/* Really stupid PCI space dump */
 #if 0
-	for (i=0xe00; i<0x1000; i+=4) {
+	for (i = 0xe00; i < 0x1000; i += 4) {
 		if ((i % 16) == 0)
 		    DPRINTF(("%s: 0x%04x - ",sc->sc_dev.dv_xname, i));
 		DPRINTF(("0x%08x ", BCW_READ(sc, i)));
