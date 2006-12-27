@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.5 2006/12/06 19:21:45 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.6 2006/12/27 14:05:57 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -323,3 +323,11 @@
 #define BCW_PHY_TYPEG			0x2	/* 802.11g PHY */
 #define BCW_PHY_TYPEN			0x4	/* 802.11n PHY */
 
+#define BCW_READ16(sc, reg) \
+	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (reg))
+#define BCW_READ(sc, reg) \
+	bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg))
+#define BCW_WRITE16(sc, reg, val) \
+	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
+#define BCW_WRITE(sc, reg, val) \
+	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))

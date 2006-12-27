@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.10 2006/12/08 01:28:40 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.11 2006/12/27 14:05:57 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -124,8 +124,8 @@ bcw_attach(struct bcw_softc *sc)
 	 * be powered on and the clock started. This may even need to go
 	 * before the initial chip reset above.
 	 */
-	sc->sc_boardflags = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-	    BCW_SPROM_BOARDFLAGS);
+	sc->sc_boardflags = BCW_READ16(sc, BCW_SPROM_BOARDFLAGS);
+	    
 	/*
 	 * Dell, Product ID 0x4301 Revision 0x74, set BCW_BF_BTCOEXIST
 	 * Apple Board Type 0x4e Revision > 0x40, set BCW_BF_PACTRL
@@ -169,7 +169,7 @@ bcw_attach(struct bcw_softc *sc)
 	 * Core ID REG, this is either the default wireless core (0x812) or
 	 * a ChipCommon core that was successfully selected above
 	 */
-	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_CIR_SBID_HI);
+	sbval = BCW_READ(sc, BCW_CIR_SBID_HI);
 	DPRINTF(("%s: Got Core ID Reg 0x%x, type is 0x%x\n",
 	    sc->sc_dev.dv_xname, sbval, (sbval & 0x8ff0) >> 4));
 	
@@ -177,8 +177,7 @@ bcw_attach(struct bcw_softc *sc)
 	   get the number of cores from the chipid reg */
 	if (((sbval & 0x00008ff0) >> 4) == BCW_CORE_COMMON) {
 		sc->sc_havecommon = 1;
-		sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    BCW_CORE_COMMON_CHIPID);
+		sbval = BCW_READ(sc, BCW_CORE_COMMON_CHIPID);
 		sc->sc_chipid = (sbval & 0x0000ffff);
 		sc->sc_corerev =
 		    ((sbval & 0x00007000) >> 8 | (sbval & 0x0000000f));
@@ -274,8 +273,7 @@ bcw_attach(struct bcw_softc *sc)
 				delay(10);
 			}
 			if (j < 10) {
-				sbval = bus_space_read_4(sc->sc_iot,
-				    sc->sc_ioh, BCW_CIR_SBID_HI);
+				sbval = BCW_READ(sc, BCW_CIR_SBID_HI);
 				DPRINTF(("%s: Found core %d of type 0x%x\n",
 				    sc->sc_dev.dv_xname, i, 
 				    (sbval & 0x00008ff0) >> 4));
@@ -290,9 +288,9 @@ bcw_attach(struct bcw_softc *sc)
 	// ??? if (!sc->sc_singlecore) {
 #if 0
 	if (sc->sc_havecommon == 1) {
-		sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_PCICR);
+		sbval = BCW_READ(sc, BCW_PCICR);
 		sbval |= 0x1 << 8; /* XXX hardcoded bitmask of single core */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_PCICR, sbval);
+		BCW_WRITE(sc, BCW_PCICR, sbval);
 	}
 #endif
 	/*
@@ -304,7 +302,7 @@ bcw_attach(struct bcw_softc *sc)
 			(sc->sc_conf_write)(sc, BCW_ADDR_SPACE0,
 			    BCW_CORE_SELECT(i));
 	}
-	sbval = bus_space_read_2(sc->sc_iot, sc->sc_ioh, 0x3E0);
+	sbval = BCW_READ16(sc, 0x3E0);
 	sc->sc_phy_version = (sbval&0xf000)>>12;
 	sc->sc_phy_rev = sbval&0xf;
 	sc->sc_phy_type = (sbval&0xf00)>>8;
@@ -338,15 +336,11 @@ bcw_attach(struct bcw_softc *sc)
 	 * and the high data addresses.
 	 */
 	if (sc->sc_chipid != 0x4317) {
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh, BCW_RADIO_CONTROL,
-		    BCW_RADIO_ID);
-		sbval=bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_RADIO_DATAHIGH);
+		BCW_WRITE16(sc, BCW_RADIO_CONTROL, BCW_RADIO_ID);
+		sbval = BCW_READ16(sc, BCW_RADIO_DATAHIGH);
 		sbval <<= 16;
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh, BCW_RADIO_CONTROL,
-		    BCW_RADIO_ID);
-		sc->sc_radioid = sbval | bus_space_read_2(sc->sc_iot,
-		    sc->sc_ioh, BCW_RADIO_DATALOW);
+		BCW_WRITE16(sc, BCW_RADIO_CONTROL, BCW_RADIO_ID);
+		sc->sc_radioid = sbval | BCW_READ16(sc, BCW_RADIO_DATALOW);
 	} else {
 		switch (sc->sc_corerev) {
 		case 0:	
@@ -443,64 +437,46 @@ bcw_attach(struct bcw_softc *sc)
 	switch(sc->sc_phy_type) {
 	case BCW_PHY_TYPEA:
 		/* Magic unexplained values */
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_RADIO_CONTROL, 0x04);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_RADIO_DATALOW, 0xff);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_RADIO_CONTROL, 0x05);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_RADIO_DATALOW, 0xfb);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_CONTROL, 0x10);
-		sbval16 = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_DATA);
+		BCW_WRITE16(sc, BCW_RADIO_CONTROL, 0x04);
+		BCW_WRITE16(sc, BCW_RADIO_DATALOW, 0xff);
+		BCW_WRITE16(sc, BCW_RADIO_CONTROL, 0x05);
+		BCW_WRITE16(sc, BCW_RADIO_DATALOW, 0xfb);
+		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x10);
+
+		sbval16 = BCW_READ16(sc, BCW_PHY_DATA);
 		sbval16 |= 0x8;
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_CONTROL, 0x10);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_DATA, sbval16);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_CONTROL, 0x11);
-		sbval16 = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_DATA);
+		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x10);
+		BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
+		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x11);
+
+		sbval16 = BCW_READ16(sc, BCW_PHY_DATA);
 		sbval16 |= 0x8;
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_CONTROL, 0x11);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_DATA, sbval16);
+		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x11);
+		BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
 		break;
 	case BCW_PHY_TYPEG:
 		if (sc->sc_corerev >= 5) {
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			    BCW_PHY_CONTROL, 0x811);
-			sbval16 = bus_space_read_2(sc->sc_iot,
-			    sc->sc_ioh, BCW_PHY_DATA);
+			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x811);
+			sbval16 = BCW_READ16(sc, BCW_PHY_DATA);
 			sbval16 |= 0x8c;
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			    BCW_PHY_CONTROL, 0x811);
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			    BCW_PHY_DATA, sbval16);
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			    BCW_PHY_CONTROL, 0x812);
-			sbval16 = bus_space_read_2(sc->sc_iot,
-			    sc->sc_ioh, BCW_PHY_DATA);
+			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x811);
+			BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
+			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x812);
+			sbval16 = BCW_READ16(sc, BCW_PHY_DATA);
 			sbval16 &= 0xff73;
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			    BCW_PHY_CONTROL, 0x812);
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			    BCW_PHY_DATA, sbval16);
+			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x812);
+			    
+			BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
+			    
 		}
 		/* FALL-THROUGH */
 	default:
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_CONTROL, 0x15);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_DATA, 0xaa00);
+		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x15);
+		BCW_WRITE16(sc, BCW_PHY_DATA, 0xaa00);
 	} /* end of switch statement to turn off radio */
 
 	/* Read antenna gain from SPROM and multiply by 4 */
-	sbval = bus_space_read_2(sc->sc_iot, sc->sc_ioh, BCW_SPROM_ANTGAIN);
+	sbval = BCW_READ16(sc, BCW_SPROM_ANTGAIN);
 	/* If unset, assume 2 */
 	if ((sbval == 0) || (sbval == 0xffff))
 		sbval = 0x0202;
@@ -514,21 +490,17 @@ bcw_attach(struct bcw_softc *sc)
 	 * Set the paXbY vars, X=0 for PHY A, X=1 for B/G, but we'll
 	 * just grab them all while we're here
 	 */
-	sc->sc_radio_pa0b0 = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-	    BCW_SPROM_PA0B0);
-	sc->sc_radio_pa0b1 = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-	    BCW_SPROM_PA0B1);
-	sc->sc_radio_pa0b2 = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-	    BCW_SPROM_PA0B2);
-	sc->sc_radio_pa1b0 = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-	    BCW_SPROM_PA1B0);
-	sc->sc_radio_pa1b1 = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-	    BCW_SPROM_PA1B1);
-	sc->sc_radio_pa1b2 = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-	    BCW_SPROM_PA1B2);
+	sc->sc_radio_pa0b0 = BCW_READ16(sc, BCW_SPROM_PA0B0);
+	sc->sc_radio_pa0b1 = BCW_READ16(sc, BCW_SPROM_PA0B1);
+	    
+	sc->sc_radio_pa0b2 = BCW_READ16(sc, BCW_SPROM_PA0B2);
+	sc->sc_radio_pa1b0 = BCW_READ16(sc, BCW_SPROM_PA1B0);
+	    
+	sc->sc_radio_pa1b1 = BCW_READ16(sc, BCW_SPROM_PA1B1);
+	sc->sc_radio_pa1b2 = BCW_READ16(sc, BCW_SPROM_PA1B2);
 
 	/* Get the idle TSSI */
-	sbval = bus_space_read_2(sc->sc_iot, sc->sc_ioh, BCW_SPROM_IDLETSSI);
+	sbval = BCW_READ16(sc, BCW_SPROM_IDLETSSI);
 	if (sc->sc_phy_type == BCW_PHY_TYPEA)
 		sc->sc_idletssi = (sbval & 0xff);
 	else
@@ -574,12 +546,10 @@ bcw_attach(struct bcw_softc *sc)
 	 * This explanation could make more sense, but an SHM read/write
 	 * wrapper of some sort would be better.
 	 */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_CONTROL,
+	BCW_WRITE(sc, BCW_SHM_CONTROL,
 	    (BCW_SHM_CONTROL_SHARED << 16) + BCW_SHM_MICROCODEFLAGSLOW - 2);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, BCW_SHM_DATAHIGH,
-	    sbval & 0x00ff);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, BCW_SHM_DATALOW,
-	    (sbval & 0xff00)>>16);
+	BCW_WRITE16(sc, BCW_SHM_DATAHIGH, sbval & 0x00ff);
+	BCW_WRITE16(sc, BCW_SHM_DATALOW, (sbval & 0xff00)>>16);
 
 	/*
 	 * Initialize the TSSI to DBM table
@@ -611,29 +581,28 @@ bcw_attach(struct bcw_softc *sc)
 
 	/* MAC address */
 	if (sc->sc_phy_type == BCW_PHY_TYPEA) {
-		i = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_SPROM_ET1MACADDR);
+		i = BCW_READ16(sc, BCW_SPROM_ET1MACADDR);
 		ic->ic_myaddr[0] = (i & 0xff00) >> 8;
 		ic->ic_myaddr[1] = i & 0xff;
-		i = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_SPROM_ET1MACADDR + 2);
+		i = BCW_READ16(sc, BCW_SPROM_ET1MACADDR + 2);
+		    
 		ic->ic_myaddr[2] = (i & 0xff00) >> 8;
 		ic->ic_myaddr[3] = i & 0xff;
-		i = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_SPROM_ET1MACADDR + 4);
+		i = BCW_READ16(sc, BCW_SPROM_ET1MACADDR + 4);
+		    
 		ic->ic_myaddr[4] = (i & 0xff00) >> 8;
 		ic->ic_myaddr[5] = i & 0xff;
 	} else { /* assume B or G PHY */
-		i = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_SPROM_IL0MACADDR);
+		i = BCW_READ16(sc, BCW_SPROM_IL0MACADDR);
+		    
 		ic->ic_myaddr[0] = (i & 0xff00) >> 8;
 		ic->ic_myaddr[1] = i & 0xff;
-		i = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_SPROM_IL0MACADDR + 2);
+		i = BCW_READ16(sc, BCW_SPROM_IL0MACADDR + 2);
+		    
 		ic->ic_myaddr[2] = (i & 0xff00) >> 8;
 		ic->ic_myaddr[3] = i & 0xff;
-		i = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_SPROM_IL0MACADDR + 4);
+		i = BCW_READ16(sc, BCW_SPROM_IL0MACADDR + 4);
+		    
 		ic->ic_myaddr[4] = (i & 0xff00) >> 8;
 		ic->ic_myaddr[5] = i & 0xff;
 	}
@@ -858,7 +827,7 @@ bcw_start(struct ifnet *ifp)
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Give the packet to the chip. */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_DMA_DPTR,
+		BCW_WRITE(sc, BCW_DMA_DPTR,
 		    sc->sc_txsnext * sizeof(struct bcw_dma_slot));
 
 		newpkts++;
@@ -976,8 +945,7 @@ bcw_rxintr(struct bcw_softc *sc)
 	int curr;
 
 	/* get pointer to active receive slot */
-	curr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_DMA_RXSTATUS(0)) &
-	    RS_CD_MASK;
+	curr = BCW_READ(sc, BCW_DMA_RXSTATUS(0)) & RS_CD_MASK;
 	curr = curr / sizeof(struct bcw_dma_slot);
 	if (curr >= BCW_RX_RING_COUNT)
 		curr = BCW_RX_RING_COUNT - 1;
@@ -1072,8 +1040,7 @@ bcw_rxintr(struct bcw_softc *sc)
 		//ether_input_mbuf(ifp, m);
 
 		/* re-check current in case it changed */
-		curr = (bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    BCW_DMA_RXSTATUS) & RS_CD_MASK) /
+		curr = (BCW_READ(sc, BCW_DMA_RXSTATUS) & RS_CD_MASK) /
 		    sizeof(struct bcw_dma_slot);
 		if (curr >= BCW_NRXDESC)
 			curr = BCW_NRXDESC - 1;
@@ -1097,7 +1064,7 @@ bcw_txintr(struct bcw_softc *sc)
 	 * Go through the Tx list and free mbufs for those
 	 * frames which have been transmitted.
 	 */
-	curr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_DMA_TXSTATUS) & RS_CD_MASK;
+	curr = BCW_READ(sc, BCW_DMA_TXSTATUS) & RS_CD_MASK;
 	curr = curr / sizeof(struct bcw_dma_slot);
 	if (curr >= BCW_NTXDESC)
 		curr = BCW_NTXDESC - 1;
@@ -1147,23 +1114,20 @@ bcw_init(struct ifnet *ifp)
 	/* remap the pci registers to the Sonics config registers */
 
 	/* save the current map, so it can be restored */
-	reg_win = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_REG0_WIN);
+	reg_win = BCW_READ(sc, BCW_REG0_WIN);
 
 	/* set register window to Sonics registers */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_REG0_WIN, BCW_SONICS_WIN);
+	BCW_WRITE(sc, BCW_REG0_WIN, BCW_SONICS_WIN);
 
 	/* enable SB to PCI interrupt */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBINTVEC,
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBINTVEC) |
-	    SBIV_ENET0);
+	BCW_WRITE(sc, BCW_SBINTVEC, BCW_READ(sc, BCW_SBINTVEC) | SBIV_ENET0);
 
 	/* enable prefetch and bursts for sonics-to-pci translation 2 */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SPCI_TR2,
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SPCI_TR2) |
-	    SBTOPCI_PREF | SBTOPCI_BURST);
+	BCW_WRITE(sc, BCW_SPCI_TR2,
+	    BCW_READ(sc, BCW_SPCI_TR2) | SBTOPCI_PREF | SBTOPCI_BURST);
 
 	/* restore to ethernet register space */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_REG0_WIN, reg_win);
+	BCW_WRITE(sc, BCW_REG0_WIN, reg_win);
 
 	/* Reset the chip to a known state. */
 	bcw_reset(sc);
@@ -1176,32 +1140,27 @@ bcw_init(struct ifnet *ifp)
 #endif
 
 	/* enable crc32 generation and set proper LED modes */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_MACCTL,
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_MACCTL) |
-	    BCW_EMC_CRC32_ENAB | BCW_EMC_LED);
-
+	BCW_WRITE(sc, BCW_MACCTL,
+	    BCW_READ(sc, BCW_MACCTL) | BCW_EMC_CRC32_ENAB | BCW_EMC_LED);
+	    
 	/* reset or clear powerdown control bit  */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_MACCTL,
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_MACCTL) &
-	    ~BCW_EMC_PDOWN);
+	BCW_WRITE(sc, BCW_MACCTL, BCW_READ(sc, BCW_MACCTL) & ~BCW_EMC_PDOWN);
 
 	/* setup DMA interrupt control */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_DMAI_CTL, 1 << 24);	/* MAGIC */
+	BCW_WRITE(sc, BCW_DMAI_CTL, 1 << 24);	/* MAGIC */
 
 	/* setup packet filter */
 	bcw_set_filter(ifp);
 
 	/* set max frame length, account for possible VLAN tag */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_RX_MAX,
-	    ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_TX_MAX,
-	    ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
+	BCW_WRITE(sc, BCW_RX_MAX, ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
+	BCW_WRITE(sc, BCW_TX_MAX, ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
 
 	/* set tx watermark */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_TX_WATER, 56);
+	BCW_WRITE(sc, BCW_TX_WATER, 56);
 
 	/* enable transmit */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_DMA_TXCTL, XC_XE);
+	BCW_WRITE(sc, BCW_DMA_TXCTL, XC_XE);
 
 	/*
 	 * Give the receive ring to the chip, and
@@ -1210,19 +1169,18 @@ bcw_init(struct ifnet *ifp)
 	sc->sc_rxin = 0;
 
 	/* enable receive */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_DMA_RXCTL,
-	    BCW_PREPKT_HEADER_SIZE << 1 | 1);
+	BCW_WRITE(sc, BCW_DMA_RXCTL, BCW_PREPKT_HEADER_SIZE << 1 | 1);
 
 	/* Enable interrupts */
 	sc->sc_intmask =
 	    I_XI | I_RI | I_XU | I_RO | I_RU | I_DE | I_PD | I_PC | I_TO;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_INT_MASK,
-	    sc->sc_intmask);
+	BCW_WRITE(sc, BCW_INT_MASK, sc->sc_intmask);
+	    
 
 #if 0 /* FIXME */
 	/* start the receive dma */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_DMA_RXDPTR,
-	    BCW_NRXDESC * sizeof(struct bcw_dma_slot));
+	BCW_WRITE(sc, BCW_DMA_RXDPTR, BCW_NRXDESC * sizeof(struct bcw_dma_slot));
+	    
 #endif
 
 	/* set media */
@@ -1230,9 +1188,8 @@ bcw_init(struct ifnet *ifp)
 
 #if 0
 	/* turn on the ethernet mac */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_ENET_CTL,
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-	    BCW_ENET_CTL) | EC_EE);
+	BCW_WRITE(sc, BCW_ENET_CTL, BCW_READ(sc, BCW_ENET_CTL) | EC_EE);
+	    
 #endif
 
 	/* start timer */
@@ -1318,24 +1275,24 @@ bcw_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 
 	/* Disable interrupts. */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_INT_MASK, 0);
+	BCW_WRITE(sc, BCW_INT_MASK, 0);
 	sc->sc_intmask = 0;
 	delay(10);
 
 	/* Disable emac */
 #if 0
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_ENET_CTL, EC_ED);
+	BCW_WRITE(sc, BCW_ENET_CTL, EC_ED);
 	for (i = 0; i < 200; i++) {
-		val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    BCW_ENET_CTL);
+		val = BCW_READ(sc, BCW_ENET_CTL);
+		    
 		if (!(val & EC_ED))
 			break;
 		delay(10);
 	}
 #endif
 	/* Stop the DMA */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_DMA_RXCONTROL(0), 0);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_DMA_TXCONTROL(0), 0);
+	BCW_WRITE(sc, BCW_DMA_RXCONTROL(0), 0);
+	BCW_WRITE(sc, BCW_DMA_TXCONTROL(0), 0);
 	delay(10);
 
 #if 0	/* FIXME */
@@ -1369,7 +1326,7 @@ bcw_reset(struct bcw_softc *sc)
 	for (i=0xe00; i<0x1000; i+=4) {
 		if ((i % 16) == 0)
 		    DPRINTF(("%s: 0x%04x - ",sc->sc_dev.dv_xname, i));
-		DPRINTF(("0x%08x ",bus_space_read_4(sc->sc_iot, sc->sc_ioh,i)));
+		DPRINTF(("0x%08x ", BCW_READ(sc, i)));
 		if ((i % 16) == 12) DPRINTF(("\n"));
 	}
 #endif
@@ -1378,7 +1335,7 @@ bcw_reset(struct bcw_softc *sc)
 	 * of the Reject bit changed. Save the revision in the softc, and
 	 * use the local variable 'reject' in all the bit banging.
 	 */
-	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_CIR_SBID_LO);
+	sbval = BCW_READ(sc, BCW_CIR_SBID_LO);
 
 	sc->sc_sbrev = (sbval & SBREV_MASK) >> SBREV_MASK_SHIFT;
 	switch (sc->sc_sbrev) {
@@ -1392,7 +1349,7 @@ bcw_reset(struct bcw_softc *sc)
 		reject = SBTML_REJ22 | SBTML_REJ23;
 	}
 
-	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
+	sbval = BCW_READ(sc, BCW_SBTMSTATELOW);
 
 	/*
 	 * If the 802.11 core is enabled, only clock of clock,reset,reject
@@ -1408,21 +1365,19 @@ bcw_reset(struct bcw_softc *sc)
 	if (!(sbval & SBTML_RESET)) {
 		/* if the core is not enabled, the clock won't be enabled */
 		if (!(sbval & SBTML_CLK)) {
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_SBTMSTATELOW, SBTML_RESET | reject |
+			BCW_WRITE(sc, BCW_SBTMSTATELOW, SBTML_RESET | reject |
 			    SBTML_80211FLAG | SBTML_80211PHY );
 			delay(1);
-			sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_SBTMSTATELOW);
+			sbval = BCW_READ(sc, BCW_SBTMSTATELOW);
 			goto disabled;
 
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_SBTMSTATELOW, reject);
+			BCW_WRITE(sc, BCW_SBTMSTATELOW, reject);
+			    
 			delay(1);
 			/* wait until busy is clear */
 			for (i = 0; i < 10000; i++) {
-				val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				    BCW_SBTMSTATEHI);
+				val = BCW_READ(sc, BCW_SBTMSTATEHI);
+				    
 				if (!(val & SBTMH_BUSY))
 					break;
 				delay(10);
@@ -1431,21 +1386,22 @@ bcw_reset(struct bcw_softc *sc)
 				printf("%s: while resetting core, busy did "
 				    "not clear\n", sc->sc_dev.dv_xname);
 
-			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_CIR_SBID_LO);
+			val = BCW_READ(sc, BCW_CIR_SBID_LO);
+			    
 			if (val & BCW_CIR_SBID_LO_INITIATOR) {
-				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				sbval = BCW_READ(sc,
 				    BCW_SBIMSTATE);
-				bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-				    BCW_SBIMSTATE, sbval | SBIM_REJECT);
-				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				    BCW_SBIMSTATE);
+				BCW_WRITE(sc, BCW_SBIMSTATE, sbval |
+				    SBIM_REJECT);
+				    
+				sbval = BCW_READ(sc, BCW_SBIMSTATE);
+				    
 				delay(1);
 
 				/* wait until busy is clear */
 				for (i = 0; i < 10000; i++) {
-					val = bus_space_read_4(sc->sc_iot,
-					sc->sc_ioh, BCW_SBTMSTATEHI);
+					val = BCW_READ(sc, BCW_SBTMSTATEHI);
+					
 					if (!(val & SBTMH_BUSY))
 						break;
 					delay(10);
@@ -1457,28 +1413,27 @@ bcw_reset(struct bcw_softc *sc)
 			} /* end initiator check */
 
 			/* set reset and reject while enabling the clocks */
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_SBTMSTATELOW, SBTML_FGC | SBTML_CLK |
+			BCW_WRITE(sc, BCW_SBTMSTATELOW, SBTML_FGC | SBTML_CLK |
 			    SBTML_RESET | SBTML_80211FLAG | SBTML_80211PHY);
-			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_SBTMSTATELOW);
+			val = BCW_READ(sc, BCW_SBTMSTATELOW);
+			    
 			delay(10);
 
-			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_CIR_SBID_LO);
+			val = BCW_READ(sc, BCW_CIR_SBID_LO);
+
 			if (val & BCW_CIR_SBID_LO_INITIATOR) {
-				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				    BCW_SBIMSTATE);
-				bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-				    BCW_SBIMSTATE, sbval & ~SBIM_REJECT);
-				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				    BCW_SBIMSTATE);
+				sbval = BCW_READ(sc, BCW_SBIMSTATE);
+				    
+				BCW_WRITE(sc, BCW_SBIMSTATE, sbval &
+				    ~SBIM_REJECT);
+				    
+				sbval = BCW_READ(sc, BCW_SBIMSTATE);
 				delay(1);
 
 				/* wait until busy is clear */
 				for (i = 0; i < 10000; i++) {
-					val = bus_space_read_4(sc->sc_iot,
-					sc->sc_ioh, BCW_SBTMSTATEHI);
+					val = BCW_READ(sc, BCW_SBTMSTATEHI);
+
 					if (!(val & SBTMH_BUSY))
 						break;
 					delay(10);
@@ -1489,8 +1444,7 @@ bcw_reset(struct bcw_softc *sc)
 					    sc->sc_dev.dv_xname);
 			} /* end initiator check */
 
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_SBTMSTATELOW, SBTML_RESET | reject |
+			BCW_WRITE(sc, BCW_SBTMSTATELOW, SBTML_RESET | reject |
 			    SBTML_80211FLAG | SBTML_80211PHY);
 			delay(1);
 		}
@@ -1500,42 +1454,43 @@ disabled:
 
 	/* This is enabling/resetting the core */
 	/* enable clock */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW,
+	BCW_WRITE(sc, BCW_SBTMSTATELOW,
 	    SBTML_FGC | SBTML_CLK | SBTML_RESET |
 	    SBTML_80211FLAG | SBTML_80211PHY );
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
+	val = BCW_READ(sc, BCW_SBTMSTATELOW);
 	delay(1);
 
 	/* clear any error bits that may be on */
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATEHI);
+	val = BCW_READ(sc, BCW_SBTMSTATEHI);
 	if (val & SBTMH_SERR)
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATEHI, 0);
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBIMSTATE);
+		BCW_WRITE(sc, BCW_SBTMSTATEHI, 0);
+	val = BCW_READ(sc, BCW_SBIMSTATE);
 	if (val & (SBIM_INBANDERR | SBIM_TIMEOUT))
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBIMSTATE,
+		BCW_WRITE(sc, BCW_SBIMSTATE,
 		    val & ~(SBIM_INBANDERR | SBIM_TIMEOUT));
-
+		    
 	/* clear reset and allow it to propagate throughout the core */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW,
+	BCW_WRITE(sc, BCW_SBTMSTATELOW,
 	    SBTML_FGC | SBTML_CLK | SBTML_80211FLAG | SBTML_80211PHY );
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
+	val = BCW_READ(sc, BCW_SBTMSTATELOW);
 	delay(1);
 
 	/* leave clock enabled */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW,
-	    SBTML_CLK | SBTML_80211FLAG | SBTML_80211PHY);
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
+	BCW_WRITE(sc, BCW_SBTMSTATELOW, SBTML_CLK | SBTML_80211FLAG |
+	    SBTML_80211PHY);
+	    
+	val = BCW_READ(sc, BCW_SBTMSTATELOW);
 	delay(1);
 
 	/* XXX update PHYConnected to requested value */
 
 	/* Clear Baseband Attenuation, might only work for B/G rev < 0 */
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, BCW_RADIO_BASEBAND, 0);
+	BCW_WRITE16(sc, BCW_RADIO_BASEBAND, 0);
 
 	/* Set 0x400 in the MMIO StatusBitField reg */
-	sbval=bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBF);
+	sbval = BCW_READ(sc, BCW_SBF);
 	sbval |= BCW_SBF_400_MAGIC;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBF, sbval);
+	BCW_WRITE(sc, BCW_SBF, sbval);
 
 	/* XXX Clear saved interrupt status for DMA controllers */
 
@@ -1550,44 +1505,35 @@ bcw_set_filter(struct ifnet *ifp)
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		ifp->if_flags |= IFF_ALLMULTI;
-		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_RX_CTL,
-		    bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle, BCW_RX_CTL)
-		    | ERC_PE);
+		BCW_WRITE(sc, BCW_RX_CTL, BCW_READ(sc, BCW_RX_CTL) | ERC_PE);
 	} else {
 		ifp->if_flags &= ~IFF_ALLMULTI;
 
 		/* turn off promiscuous */
-		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_RX_CTL,
-		    bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle,
-		    BCW_RX_CTL) & ~ERC_PE);
+		BCW_WRITE(sc, BCW_RX_CTL, BCW_READ(sc, BCW_RX_CTL) & ~ERC_PE);
 
 		/* enable/disable broadcast */
 		if (ifp->if_flags & IFF_BROADCAST)
-			bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle,
-			    BCW_RX_CTL, bus_space_read_4(sc->bcw_btag,
-			    sc->bcw_bhandle, BCW_RX_CTL) & ~ERC_DB);
+			BCW_WRITE(sc,
+			    BCW_RX_CTL, BCW_READ(sc, BCW_RX_CTL) & ~ERC_DB);
 		else
-			bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle,
-			    BCW_RX_CTL, bus_space_read_4(sc->bcw_btag,
-			    sc->bcw_bhandle, BCW_RX_CTL) | ERC_DB);
+			BCW_WRITE(sc,
+			    BCW_RX_CTL, BCW_READ(sc, BCW_RX_CTL) | ERC_DB);
+			    sc->bcw_bhandle, 
 
 		/* disable the filter */
-		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_FILT_CTL,
-		    0);
+		BCW_WRITE(sc, BCW_FILT_CTL, 0);
 
 		/* add our own address */
 		// bcw_add_mac(sc, sc->bcw_ac.ac_enaddr, 0);
 
 		/* for now accept all multicast */
-		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_RX_CTL,
-		bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle, BCW_RX_CTL) |
-		    ERC_AM);
+		BCW_WRITE(sc, BCW_RX_CTL, BCW_READ(sc, BCW_RX_CTL) | ERC_AM);
+		    
 		ifp->if_flags |= IFF_ALLMULTI;
 
 		/* enable the filter */
-		bus_space_write_4(sc->bcw_btag, sc->bcw_bhandle, BCW_FILT_CTL,
-		    bus_space_read_4(sc->bcw_btag, sc->bcw_bhandle,
-		    BCW_FILT_CTL) | 1);
+		BCW_WRITE(sc, BCW_FILT_CTL, BCW_READ(sc, BCW_FILT_CTL) | 1);
 	}
 #endif
 }
@@ -1684,36 +1630,32 @@ bcw_validatechipaccess(struct bcw_softc *sc)
 	 */
 
 	/* Backup SHM uCode Revision before we clobber it */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_CONTROL,
-	    (BCW_SHM_CONTROL_SHARED << 16) + 0);
-	save = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_DATA);
+	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
+	save = BCW_READ(sc, BCW_SHM_DATA);
 	
 	/* write test value */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_CONTROL,
-	    (BCW_SHM_CONTROL_SHARED << 16) + 0);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_DATA, 0xaa5555aa);
+	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
+	BCW_WRITE(sc, BCW_SHM_DATA, 0xaa5555aa);
 	/* Read it back */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_CONTROL,
-	    (BCW_SHM_CONTROL_SHARED << 16) + 0);
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_DATA);
+	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
+	    
+	val = BCW_READ(sc, BCW_SHM_DATA);
 	if (val != 0xaa5555aa)
 		return (1);
 	
 	/* write 2nd test value */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_CONTROL,
-	    (BCW_SHM_CONTROL_SHARED << 16) + 0);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_DATA, 0x55aaaa55);
+	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
+	BCW_WRITE(sc, BCW_SHM_DATA, 0x55aaaa55);
 	/* Read it back */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_CONTROL,
-	    (BCW_SHM_CONTROL_SHARED << 16) + 0);
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_DATA);
+	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
+	    
+	val = BCW_READ(sc, BCW_SHM_DATA);
 	if (val != 0x55aaaa55)
 		return 2;
 
 	/* Restore the saved value now that we're done */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_CONTROL,
-	    (BCW_SHM_CONTROL_SHARED << 16) + 0);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_DATA, save);
+	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
+	BCW_WRITE(sc, BCW_SHM_DATA, save);
 	
 	if (sc->sc_corerev >= 3) {
 		/* do some test writes and reads against the TSF */
@@ -1723,18 +1665,18 @@ bcw_validatechipaccess(struct bcw_softc *sc)
 		 * say that we're reading/writing silly places, so these regs
 		 * are not quite documented yet
 		 */
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh, 0x18c, 0xaaaa);
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0x18c, 0xccccbbbb);
-		val = bus_space_read_2(sc->sc_iot, sc->sc_ioh, 0x604);
+		BCW_WRITE16(sc, 0x18c, 0xaaaa);
+		BCW_WRITE(sc, 0x18c, 0xccccbbbb);
+		val = BCW_READ16(sc, 0x604);
 		if (val != 0xbbbb) return 3;
-		val = bus_space_read_2(sc->sc_iot, sc->sc_ioh, 0x606);
+		val = BCW_READ16(sc, 0x606);
 		if (val != 0xcccc) return 4;
 		/* re-clear the TSF since we just filled it with garbage */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0x18c, 0x0);
+		BCW_WRITE(sc, 0x18c, 0x0);
 	}
 
 	/* Check the Status Bit Field for some unknown bits */
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBF);
+	val = BCW_READ(sc, BCW_SBF);
 	if ((val | 0x80000000) != 0x80000400 ) {
 		printf("%s: Warning, SBF is 0x%x, expected 0x80000400\n",
 		    sc->sc_dev.dv_xname, val);
@@ -1742,7 +1684,7 @@ bcw_validatechipaccess(struct bcw_softc *sc)
 		//return (5);
 	}
 	/* Verify there are no interrupts active on the core */
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_GIR);
+	val = BCW_READ(sc, BCW_GIR);
 	if (val != 0) {
 		DPRINTF(("Failed Pending Interrupt test with val=0x%x\n", val));
 		return (6);
@@ -1868,8 +1810,7 @@ bcw_alloc_rx_ring(struct bcw_softc *sc, struct bcw_rx_ring *ring, int count)
 		goto fail;
 	}
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_DMA_RXADDR,
-	    ring->physaddr + 0x40000000);
+	BCW_WRITE(sc, BCW_DMA_RXADDR, ring->physaddr + 0x40000000);
 
 	/*
 	 * Pre-allocate Rx buffers and populate Rx ring.
@@ -2020,8 +1961,7 @@ bcw_alloc_tx_ring(struct bcw_softc *sc, struct bcw_tx_ring *ring,
 	ring->physaddr = ring->map->dm_segs->ds_addr;
 
 	/* MAGIC */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_DMA_TXADDR,
-	    ring->physaddr + 0x40000000);
+	BCW_WRITE(sc, BCW_DMA_TXADDR, ring->physaddr + 0x40000000);
 
 	ring->data = malloc(count * sizeof(struct bcw_tx_data), M_DEVBUF,
 	    M_NOWAIT);
