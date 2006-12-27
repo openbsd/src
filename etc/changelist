@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.48 2006/12/01 11:42:25 hshoexer Exp $
+#	$OpenBSD: changelist,v 1.49 2006/12/27 23:32:49 msf Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -75,6 +75,10 @@
 /etc/monthly.local
 /etc/motd
 /etc/mrouted.conf
+/etc/mtree/4.4BSD.dist
+/etc/mtree/BSD.local.dist
+/etc/mtree/BSD.x11.dist
+/etc/mtree/special
 /etc/mygate
 /etc/myname
 /etc/netgroup
