@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umsm.4,v 1.8 2006/10/26 19:42:36 jmc Exp $
+.\"	$OpenBSD: umsm.4,v 1.9 2006/12/27 19:28:35 fkr Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -19,31 +19,37 @@
 .Os
 .Sh NAME
 .Nm umsm
-.Nd Qualcomm MSM EVDO modem device
+.Nd Qualcomm MSM modem device
 .Sh SYNOPSIS
 .Cd "umsm* at uhub?"
 .Cd "ucom* at umsm?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports Qualcomm MSM based EVDO adapters.
+driver supports Qualcomm MSM modem adapters.
+The MSM chipset is found in EDVO and UMTS capable modems.
 Typically
-these are actually CardBus cards that incorporate a USB controller
+these are CardBus and MiniPCI cards that incorporate a USB controller
 with the actual device attached to it.
 .Pp
 The following devices are known to work with the
 .Nm
 driver:
-.Bd -literal -offset indent
-AirPrime PC5220
-Kyocera KPC650
-.Ed
+.Pp
+.Bl -column "Device                " "Bus" -compact -offset 6n
+.It Em "Device	Bus"
+.It Li "AirPrime PC5220" Ta Cardbus
+.It Li "Kyocera KPC650" Ta Cardbus
+.It Li "Sierra Wireless MC8755" Ta MiniPCI
+.El
 .Pp
 Devices suspected of being compatible are:
-.Bd -literal -offset indent
-Novatel Merlin V620
-Sierra Wireless AirCard 580
-.Ed
+.Pp
+.Bl -column "Device                " "Bus" -compact -offset 6n
+.It Em "Device		Bus"
+.It Li "Novatel Wireless Merlin V620" Ta Cardbus
+.It Li "Sierra Wireless AirCard 580" Ta Cardbus
+.El
 .Sh EXAMPLES
 An example
 .Pa /etc/ppp/ppp.conf
