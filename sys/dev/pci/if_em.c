@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.162 2006/12/06 23:25:58 reyk Exp $ */
+/* $OpenBSD: if_em.c,v 1.163 2006/12/27 14:33:04 kettenis Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -795,6 +795,7 @@ em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct em_softc *sc = ifp->if_softc;
 	u_char fiber_type = IFM_1000_SX;
+	u_int16_t gsr;
 
 	INIT_DEBUGOUT("em_media_status: begin");
 
@@ -828,10 +829,17 @@ em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 			ifmr->ifm_active |= IFM_1000_T;
 			break;
 		}
+
 		if (sc->link_duplex == FULL_DUPLEX)
 			ifmr->ifm_active |= IFM_FDX;
 		else
 			ifmr->ifm_active |= IFM_HDX;
+
+		if (IFM_SUBTYPE(ifmr->ifm_active) == IFM_1000_T) {
+			em_read_phy_reg(&sc->hw, PHY_1000T_STATUS, &gsr);
+			if (gsr & SR_1000T_MS_CONFIG_RES)
+				ifmr->ifm_active |= IFM_ETH_MASTER;
+		}
 	}
 }
 
