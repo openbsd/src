@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6.c,v 1.13 2006/12/09 01:12:28 itojun Exp $	*/
+/*	$OpenBSD: route6.c,v 1.14 2006/12/27 05:12:13 itojun Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -65,9 +65,9 @@ route6_input(mp, offp, proto)
 
 	switch (rh->ip6r_type) {
 	case IPV6_RTHDR_TYPE_0:
+		rhlen = (rh->ip6r_len + 1) << 3;
 		if (rh->ip6r_segleft == 0)
 			break;	/* Final dst. Just ignore the header. */
-		rhlen = (rh->ip6r_len + 1) << 3;
 		/*
 		 * note on option length:
 		 * maximum rhlen: 2048
