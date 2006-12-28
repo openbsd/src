@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.14 2006/12/26 23:58:08 marco Exp $ */
+/* $OpenBSD: acpiac.c,v 1.15 2006/12/28 17:30:46 mk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -76,9 +76,9 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_ac_stat == PSR_ONLINE)
 		printf("online\n");
 	else if (sc->sc_ac_stat == PSR_OFFLINE)
-		printf("offline");
+		printf("offline\n");
 	else
-		printf(" in unknown state");
+		printf("in unknown state\n");
 
 	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensdev.xname));
