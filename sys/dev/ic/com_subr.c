@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_subr.c,v 1.7 2006/07/31 11:06:30 mickey Exp $	*/
+/*	$OpenBSD: com_subr.c,v 1.8 2006/12/28 20:50:26 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -169,28 +169,24 @@ com_attach_subr(sc)
 	bus_space_write_1(iot, ioh, com_fifo, FIFO_ENABLE);
 	delay(100);
 
-#ifdef COM_PXA2X0
-	/* Attachment driver presets COM_UART_PXA2X0. */
-	if (sc->sc_uarttype != COM_UART_PXA2X0)
-#endif
-#ifdef COM_UART_OX16C950
-	/* Attachment driver presets COM_UART_OX16C950. */
-	if (sc->sc_uarttype != COM_UART_OX16C950)
-#endif
-	switch(bus_space_read_1(iot, ioh, com_iir) >> 6) {
-	case 0:
-		sc->sc_uarttype = COM_UART_16450;
-		break;
-	case 2:
-		sc->sc_uarttype = COM_UART_16550;
-		break;
-	case 3:
-		sc->sc_uarttype = COM_UART_16550A;
-		break;
-	default:
-		sc->sc_uarttype = COM_UART_UNKNOWN;
-		break;
-	}
+	/*
+	 * Skip specific probes if attachment code knows it already.
+	 */
+	if (sc->sc_uarttype == COM_UART_UNKNOWN)
+		switch (bus_space_read_1(iot, ioh, com_iir) >> 6) {
+		case 0:
+			sc->sc_uarttype = COM_UART_16450;
+			break;
+		case 2:
+			sc->sc_uarttype = COM_UART_16550;
+			break;
+		case 3:
+			sc->sc_uarttype = COM_UART_16550A;
+			break;
+		default:
+			sc->sc_uarttype = COM_UART_UNKNOWN;
+			break;
+		}
 
 	if (sc->sc_uarttype == COM_UART_16550A) { /* Probe for ST16650s */
 		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
@@ -299,6 +295,11 @@ com_attach_subr(sc)
 			sc->sc_fifolen = 32;
 		printf(": st16650, %d byte fifo\n", sc->sc_fifolen);
 		SET(sc->sc_hwflags, COM_HW_FIFO);
+		break;
+	case COM_UART_ST16C654:
+		printf(": st16c654, 64 byte fifo\n");
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		sc->sc_fifolen = 64;
 		break;
 	case COM_UART_TI16750:
 		printf(": ti16750, 64 byte fifo\n");

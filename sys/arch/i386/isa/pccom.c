@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.55 2006/09/19 11:06:34 jsg Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.56 2006/12/28 20:50:21 miod Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -541,6 +541,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		switch (sc->sc_uarttype) {
 		case COM_UART_ST16650:
 		case COM_UART_ST16650V2:
+		case COM_UART_ST16C654:
 		case COM_UART_XR16850:
 		case COM_UART_OX16C950:
 			bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
@@ -570,6 +571,12 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 					fifo |= FIFO_RCV_TRIGGER_8|FIFO_XMT_TRIGGER_8; /* XXX */
 				else
 					fifo |= FIFO_RCV_TRIGGER_28|FIFO_XMT_TRIGGER_30;
+				break;
+			case COM_UART_ST16C654:
+				if (tp->t_ispeed <= 1200)
+					fifo |= FIFO_RCV3_TRIGGER_8|FIFO_XMT3_TRIGGER_8; /* XXX */
+				else
+					fifo |= FIFO_RCV3_TRIGGER_60|FIFO_XMT3_TRIGGER_56;
 				break;
 			case COM_UART_XR16850:
 			case COM_UART_OX16C950:
@@ -748,6 +755,7 @@ compwroff(struct com_softc *sc)
 	switch (sc->sc_uarttype) {
 	case COM_UART_ST16650:
 	case COM_UART_ST16650V2:
+	case COM_UART_ST16C654:
 	case COM_UART_XR16850:
 	case COM_UART_OX16C950:
 		bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
@@ -1018,6 +1026,7 @@ comparam(struct tty *tp, struct termios *t)
 				else
 					fifo |= FIFO_RCV_TRIGGER_28|FIFO_XMT_TRIGGER_30;
 				break;
+			case COM_UART_ST16C654:
 			case COM_UART_XR16850:
 			case COM_UART_OX16C950:
 				if (t->c_ispeed <= 1200)
