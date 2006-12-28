@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.29 2006/12/15 21:47:27 reyk Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.30 2006/12/28 09:24:27 kettenis Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -516,6 +516,52 @@ mii_phy_match(const struct mii_attach_args *ma, const struct mii_phydesc *mpd)
 			return (mpd);
 	}
 	return (NULL);
+}
+
+/*
+ * Return the flow control status flag from MII_ANAR & MII_ANLPAR.
+ */
+int
+mii_phy_flowstatus(struct mii_softc *sc)
+{
+	int anar, anlpar;
+
+	if ((sc->mii_flags & MIIF_DOPAUSE) == 0)
+		return (0);
+
+	anar = PHY_READ(sc, MII_ANAR);
+	anlpar = PHY_READ(sc, MII_ANLPAR);
+
+	if ((anar & ANAR_X_PAUSE_SYM) & (anlpar & ANLPAR_X_PAUSE_SYM))
+		return (IFM_FLOW|IFM_ETH_TXPAUSE|IFM_ETH_RXPAUSE);
+
+	if ((anar & ANAR_X_PAUSE_SYM) == 0) {
+		if ((anar & ANAR_X_PAUSE_ASYM) &&
+		    ((anlpar &
+		      ANLPAR_X_PAUSE_TOWARDS) == ANLPAR_X_PAUSE_TOWARDS))
+			return (IFM_FLOW|IFM_ETH_TXPAUSE);
+		else
+			return (0);
+	}
+
+	if ((anar & ANAR_X_PAUSE_ASYM) == 0) {
+		if (anlpar & ANLPAR_X_PAUSE_SYM)
+			return (IFM_FLOW|IFM_ETH_TXPAUSE|IFM_ETH_RXPAUSE);
+		else
+			return (0);
+	}
+
+	switch ((anlpar & ANLPAR_X_PAUSE_TOWARDS)) {
+	case ANLPAR_X_PAUSE_NONE:
+		return (0);
+
+	case ANLPAR_X_PAUSE_ASYM:
+		return (IFM_FLOW|IFM_ETH_RXPAUSE);
+
+	default:
+		return (IFM_FLOW|IFM_ETH_RXPAUSE|IFM_ETH_TXPAUSE);
+	}
+	/* NOTREACHED */
 }
 
 /*
