@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.35 2006/12/28 10:22:07 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.36 2006/12/28 16:34:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1286,14 +1286,6 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		     sc->sk_ramsize, sc->sk_ramsize / 1024,
 		     sc->sk_rboff));
 
-	/* Read and save physical media type */
-	sc->sk_pmd = sk_win_read_1(sc, SK_PMDTYPE);
-
-	if (!(sc->sk_pmd == 'L' || sc->sk_pmd == 'S'))
-		sc->sk_coppertype = 1;
-	else
-		sc->sk_coppertype = 0;
-
 	switch (sc->sk_type) {
 	case SK_YUKON_XL:
 		sc->sk_name = "Marvell Yukon-2 XL";
@@ -1845,7 +1837,7 @@ msk_intr(void *xsc)
 void
 msk_init_yukon(struct sk_if_softc *sc_if)
 {
-	u_int32_t		phy, v;
+	u_int32_t		v;
 	u_int16_t		reg;
 	struct sk_softc		*sc;
 	int			i;
@@ -1858,29 +1850,13 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 	DPRINTFN(6, ("msk_init_yukon: 1\n"));
 
 	/* GMAC and GPHY Reset */
-	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_SET);
 	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_RESET_SET);
+	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_SET);
 	DELAY(1000);
 
 	DPRINTFN(6, ("msk_init_yukon: 2\n"));
 
-#if 0
-	phy = SK_GPHY_INT_POL_HI | SK_GPHY_DIS_FC | SK_GPHY_DIS_SLEEP |
-		SK_GPHY_ENA_XC | SK_GPHY_ANEG_ALL | SK_GPHY_ENA_PAUSE;
-#else
-	phy = SK_GPHY_ENA_PAUSE;
-#endif
-
-	if (sc->sk_coppertype)
-		phy |= SK_GPHY_COPPER;
-	else
-		phy |= SK_GPHY_FIBER;
-
-	DPRINTFN(3, ("msk_init_yukon: phy=%#x\n", phy));
-
-	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, phy | SK_GPHY_RESET_SET);
-	DELAY(1000);
-	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, phy | SK_GPHY_RESET_CLEAR);
+	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_CLEAR);
 	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_LOOP_OFF |
 		      SK_GMAC_PAUSE_ON | SK_GMAC_RESET_CLEAR);
 
