@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.97 2006/10/20 13:01:10 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.98 2006/12/28 20:33:24 thib Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -94,7 +94,6 @@ struct inode_vtbl ffs_vtbl = {
 	ffs_bufatoff
 };
 
-extern u_long nextgennumber;
 
 /*
  * Called by main() when ufs is going to be mounted as root.

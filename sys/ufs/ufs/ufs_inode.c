@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.34 2006/01/09 12:43:17 pedro Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.35 2006/12/28 20:33:24 thib Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -54,8 +54,6 @@
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dirhash.h>
 #endif
-
-u_long	nextgennumber;		/* Next generation number to assign. */
 
 /*
  * Last reference to an inode.  If necessary, write or delete it.

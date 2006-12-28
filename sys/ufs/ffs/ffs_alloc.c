@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.66 2006/04/02 22:16:29 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.67 2006/12/28 20:33:24 thib Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -67,8 +67,6 @@
 	log(LOG_ERR, "uid %u on %s: %s\n", (uid),		\
 	    (fs)->fs_fsmnt, (cp));				\
 } while (0)
-
-extern u_long nextgennumber;
 
 static daddr_t	ffs_alloccg(struct inode *, int, daddr_t, int);
 static daddr_t	ffs_alloccgblk(struct inode *, struct buf *, daddr_t);
