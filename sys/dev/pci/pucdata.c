@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.45 2006/12/21 18:53:26 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.46 2006/12/28 20:52:36 miod Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1260,6 +1260,22 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 4 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 4 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 4 },
+	    },
+	},
+
+	/* Cronyx Engineering Ltd. Omega-PCI (8 serial port) card. */
+	{    /* "Cronyx Omega-PCI" */
+	    {	PCI_VENDOR_PLX,	PCI_PRODUCT_PLX_CRONYX_OMEGA,	0, 0 },
+	    {	0xffff,	0xffff,					0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ },
 	    },
 	},
 

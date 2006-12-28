@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.10 2006/08/01 20:10:29 jolan Exp $	*/
+/*	$OpenBSD: puc.c,v 1.11 2006/12/28 20:52:36 miod Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -60,6 +60,8 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pucvar.h>
+
+#include <dev/pci/pcidevs.h>
 
 struct puc_pci_softc {
 	struct puc_softc sc_psc;
@@ -214,6 +216,15 @@ puc_pci_attach(parent, self, aux)
 	paa.hwtype = 0;	/* autodetect */
 	paa.intr_string = &puc_pci_intr_string;
 	paa.intr_establish = &puc_pci_intr_establish;
+
+	/*
+	 * If this is a serial card with a known specific chip, provide
+	 * the UART type.
+	 */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_PLX &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_PLX_CRONYX_OMEGA)
+		paa.hwtype = 0x08;	/* XXX COM_UART_ST16C654 */
+
 	puc_common_attach(sc, &paa);
 }
 
