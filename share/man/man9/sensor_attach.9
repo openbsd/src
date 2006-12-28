@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensor_attach.9,v 1.2 2006/12/24 16:09:31 deraadt Exp $
+.\"	$OpenBSD: sensor_attach.9,v 1.3 2006/12/28 11:36:14 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Michael Knudsen <mk@openbsd.org>
 .\" Copyright (c) 2006 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -67,9 +67,9 @@ that are available under the
 tree.
 .Pp
 .Fn sensor_attach
-adds sensor specified by the
+adds the sensor specified by the
 .Pa sens
-argument to sensor device specified by the
+argument to the sensor device specified by the
 .Pa sensdev
 argument.
 .Fn sensor_detach
@@ -77,7 +77,7 @@ can be used to remove sensors previously added by
 .Fn sensor_attach .
 .Pp
 .Fn sensordev_install
-registers sensor device specified by the
+registers the sensor device specified by the
 .Pa sensdev
 argument so that all sensors that are attached to the device become
 accessible via the sysctl interface.
@@ -88,7 +88,7 @@ can be used to remove sensor devices previously registered by
 .Fn sensordev_get
 takes ordinal number
 .Pa devnum
-specifying sensor device and
+specifying a sensor device and
 returns a pointer to the corresponding
 .Vt struct sensordev ,
 or
@@ -98,7 +98,7 @@ if no such sensor device exists.
 .Fn sensor_find
 takes ordinal number
 .Pa devnum
-specifying sensor device, sensor type
+specifying a sensor device, sensor type
 .Pa stype
 and ordinal number of sensor of such type
 .Pa numt ,
