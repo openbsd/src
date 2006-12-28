@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.35 2006/12/22 13:43:00 kettenis Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.36 2006/12/28 09:26:19 kettenis Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -146,6 +146,12 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
+
+	/*
+	 * XXX really should be passed by the network controller
+	 * driver, since the MAC might not support it.
+	 */
+	sc->mii_flags |= MIIF_DOPAUSE;
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_MARVELL &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1011 && 
@@ -427,7 +433,7 @@ eephy_status(struct mii_softc *sc)
 	}
 
 	if (ssr & E1000_SSR_DUPLEX)
-		mii->mii_media_active |= IFM_FDX;
+		mii->mii_media_active |= mii_phy_flowstatus(sc) | IFM_FDX;
 	else
 		mii->mii_media_active |= IFM_HDX;
 
@@ -435,21 +441,6 @@ eephy_status(struct mii_softc *sc)
 		gsr = PHY_READ(sc, E1000_1GSR) | PHY_READ(sc, E1000_1GSR);
 		if (gsr & E1000_1GSR_MS_CONFIG_RES)
 			mii->mii_media_active |= IFM_ETH_MASTER;
-	}
-
-	if ((sc->mii_flags & MIIF_HAVEFIBER) == 0) {
-		/* FLAG0==rx-flow-control FLAG1==tx-flow-control */
-		if ((ar & E1000_AR_PAUSE) && (lpar & E1000_LPAR_PAUSE)) {
-			mii->mii_media_active |= IFM_FLAG0 | IFM_FLAG1;
-		} else if (!(ar & E1000_AR_PAUSE) && (ar & E1000_AR_ASM_DIR) &&
-			   (lpar & E1000_LPAR_PAUSE) &&
-			   (lpar & E1000_LPAR_ASM_DIR)) {
-			mii->mii_media_active |= IFM_FLAG1;
-		} else if ((ar & E1000_AR_PAUSE) && (ar & E1000_AR_ASM_DIR) &&
-			   !(lpar & E1000_LPAR_PAUSE) &&
-			   (lpar & E1000_LPAR_ASM_DIR)) {
-			mii->mii_media_active |= IFM_FLAG0;
-		}
 	}
 }
 
