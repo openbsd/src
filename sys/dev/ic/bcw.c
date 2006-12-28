@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.13 2006/12/28 22:23:07 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.14 2006/12/28 22:40:57 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -109,7 +109,6 @@ bcw_attach(struct bcw_softc *sc)
 	int		i;
 	u_int32_t	sbval;
 //	u_int16_t	sbval16;
-	
 
 	/*
 	 * Don't reset the chip here, we can only reset each core and we
@@ -129,7 +128,7 @@ bcw_attach(struct bcw_softc *sc)
 	 * before the initial chip reset above.
 	 */
 	sc->sc_boardflags = BCW_READ16(sc, BCW_SPROM_BOARDFLAGS);
-	    
+
 	/*
 	 * Dell, Product ID 0x4301 Revision 0x74, set BCW_BF_BTCOEXIST
 	 * Apple Board Type 0x4e Revision > 0x40, set BCW_BF_PACTRL
@@ -144,7 +143,7 @@ bcw_attach(struct bcw_softc *sc)
 	 * how many cores it has.
 	 */
 
-	/* 
+	/*
 	 * Try and change to the ChipCommon Core
 	 */
 	if (bcw_change_core(sc, 0))
@@ -158,7 +157,7 @@ bcw_attach(struct bcw_softc *sc)
 	sbval = BCW_READ(sc, BCW_CIR_SBID_HI);
 	DPRINTF(("%s: Got Core ID Reg 0x%x, type is 0x%x\n",
 	    sc->sc_dev.dv_xname, sbval, (sbval & 0x8ff0) >> 4));
-	
+
 	/* If we successfully got a commoncore, and the corerev=4 or >=6
 	   get the number of cores from the chipid reg */
 	if (((sbval & 0x00008ff0) >> 4) == BCW_CORE_COMMON) {
@@ -472,10 +471,9 @@ bcw_attach(struct bcw_softc *sc)
 	else
 		sc->sc_idletssi = ((sbval & 0xff00) >> 8);
 	
-	
 	/* Init the Microcode Flags Bitfield */
 	/* http://bcm-specs.sipsolutions.net/MicrocodeFlagsBitfield */
-	
+
 	sbval = 0;
 	if ((sc->sc_phy_type == BCW_PHY_TYPEA) ||
 	    (sc->sc_phy_type == BCW_PHY_TYPEB) ||
@@ -502,7 +500,8 @@ bcw_attach(struct bcw_softc *sc)
 	 * 10 or less set bit 0x80000
 	 */
 
-	/* Now, write the value into the regster
+	/*
+	 * Now, write the value into the regster
 	 *
 	 * The MicrocodeBitFlags is an unaligned 32bit value in SHM, so the
 	 * strategy is to select the aligned word for the lower 16 bits,
@@ -523,7 +522,7 @@ bcw_attach(struct bcw_softc *sc)
 	 * http://bcm-specs.sipsolutions.net/TSSI_to_DBM_Table
 	 * but I suspect there's a standard way to do it in the 80211 stuff
 	 */
-	
+
 	/*
 	 * XXX TODO still for the card attach:
 	 * - Disable the 80211 Core (and wrapper for on/off)
@@ -541,7 +540,7 @@ bcw_attach(struct bcw_softc *sc)
 	ic->ic_phytype = IEEE80211_T_OFDM;
 	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
 	ic->ic_state = IEEE80211_S_INIT;
-	
+
 	/* set device capabilities - keep it simple */
 	ic->ic_caps = IEEE80211_C_IBSS; /* IBSS mode supported */
 
@@ -1143,22 +1142,20 @@ bcw_init(struct ifnet *ifp)
 	    I_XI | I_RI | I_XU | I_RO | I_RU | I_DE | I_PD | I_PC | I_TO;
 	BCW_WRITE(sc, BCW_INT_MASK, sc->sc_intmask);
 	    
-
-#if 0 /* FIXME */
+#if 0
+	/* FIXME */
 	/* start the receive dma */
-	BCW_WRITE(sc, BCW_DMA_RXDPTR, BCW_NRXDESC * sizeof(struct bcw_dma_slot));
-	    
+	BCW_WRITE(sc, BCW_DMA_RXDPTR,
+	    BCW_NRXDESC * sizeof(struct bcw_dma_slot));
 #endif
 
 	/* set media */
 	//mii_mediachg(&sc->bcw_mii);
-
 #if 0
 	/* turn on the ethernet mac */
 	BCW_WRITE(sc, BCW_ENET_CTL, BCW_READ(sc, BCW_ENET_CTL) | EC_EE);
 	    
 #endif
-
 	/* start timer */
 	timeout_add(&sc->sc_timeout, hz);
 
@@ -1213,7 +1210,8 @@ bcw_add_rxbuf(struct bcw_softc *sc, int idx)
 void
 bcw_rxdrain(struct bcw_softc *sc)
 {
-#if 0 /* FIXME */
+#if 0
+	/* FIXME */
 	int i;
 
 	for (i = 0; i < BCW_NRXDESC; i++) {
@@ -1318,8 +1316,6 @@ bcw_reset(struct bcw_softc *sc)
 		/* XXX Stop all DMA */
 		/* XXX reset the dma engines */
 	}
-#endif
-#if 0
 	/* XXX Cores are reset manually elsewhere for now */
 	/* Reset the wireless core, attaching the PHY */
 	bcw_reset_core(sc, SBTML_80211FLAG | SBTML_80211PHY );
@@ -1328,7 +1324,6 @@ bcw_reset(struct bcw_softc *sc)
 	bcw_change_core(sc, sc->sc_core_bus->num);
 	bcw_reset_core(sc, 0);
 #endif
-
 	/* XXX update PHYConnected to requested value */
 
 	/* Clear Baseband Attenuation, might only work for B/G rev < 0 */
@@ -1359,7 +1354,7 @@ bcw_reset(struct bcw_softc *sc)
 }
 
 /* Set up the receive filter. */
-	void
+void
 bcw_set_filter(struct ifnet *ifp)
 {
 #if 0
@@ -1376,15 +1371,14 @@ bcw_set_filter(struct ifnet *ifp)
 
 		/* enable/disable broadcast */
 		if (ifp->if_flags & IFF_BROADCAST)
-			BCW_WRITE(sc,
-					BCW_RX_CTL, BCW_READ(sc, BCW_RX_CTL) & ~ERC_DB);
+			BCW_WRITE(sc, BCW_RX_CTL,
+			    BCW_READ(sc, BCW_RX_CTL) & ~ERC_DB);
 		else
-			BCW_WRITE(sc,
-					BCW_RX_CTL, BCW_READ(sc, BCW_RX_CTL) | ERC_DB);
-		sc->bcw_bhandle, 
+			BCW_WRITE(sc, BCW_RX_CTL,
+			    BCW_READ(sc, BCW_RX_CTL) | ERC_DB);
 
-			/* disable the filter */
-			BCW_WRITE(sc, BCW_FILT_CTL, 0);
+		/* disable the filter */
+		BCW_WRITE(sc, BCW_FILT_CTL, 0);
 
 		/* add our own address */
 		// bcw_add_mac(sc, sc->bcw_ac.ac_enaddr, 0);
@@ -1400,7 +1394,7 @@ bcw_set_filter(struct ifnet *ifp)
 #endif
 }
 
-	int
+int
 bcw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 #if 0
@@ -1413,7 +1407,7 @@ bcw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	return (0);
 }
 
-	int
+int
 bcw_media_change(struct ifnet *ifp)
 {
 	int error;
@@ -1467,7 +1461,7 @@ bcw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 }
 
 /* One second timer, checks link status */
-	void
+void
 bcw_tick(void *v)
 {
 #if 0
@@ -1480,7 +1474,7 @@ bcw_tick(void *v)
 /*
  * Validate Chip Access
  */
-	int
+int
 bcw_validatechipaccess(struct bcw_softc *sc)
 {
 	u_int32_t save,val;
@@ -1564,8 +1558,6 @@ bcw_validatechipaccess(struct bcw_softc *sc)
 	return (0);
 }
 
-
-
 int
 bcw_detach(void *arg)
 {
@@ -1583,7 +1575,6 @@ bcw_detach(void *arg)
 
 	return (0);
 }
-
 
 #if 0
 void
@@ -2198,5 +2189,4 @@ disabled:
 	delay(1);
 
 	return 0;
-
 }
