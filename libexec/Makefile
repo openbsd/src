@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.7 (Berkeley) 4/1/91
-#	$OpenBSD: Makefile,v 1.42 2005/12/31 18:48:34 pvalchev Exp $
+#	$OpenBSD: Makefile,v 1.43 2006/12/28 20:04:13 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ SUBDIR+=login_passwd login_skey login_reject \
 SUBDIR+=rpc.yppasswdd
 .endif
 
-.if (${ELF_TOOLCHAIN:L} == "yes") && !defined(NOPIC)
+.if (${ELF_TOOLCHAIN:L} == "yes")
 SUBDIR+=ld.so
 .endif
 
