@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1206 2006/12/22 07:58:44 mbalmer Exp 
+ *	OpenBSD: pcidevs,v 1.1207 2006/12/28 20:51:01 miod Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3186,6 +3186,7 @@
 #define	PCI_PRODUCT_PLX_8532_PCIE	0x8532		/* 8532 PCIE */
 #define	PCI_PRODUCT_PLX_9050	0x9050		/* I/O 9050 */
 #define	PCI_PRODUCT_PLX_9080	0x9080		/* I/O 9080 */
+#define	PCI_PRODUCT_PLX_CRONYX_OMEGA	0xc001		/* Cronyx Omega */
 
 /* Promise products */
 #define	PCI_PRODUCT_PROMISE_PDC20265	0x0d30		/* PDC20265 */
