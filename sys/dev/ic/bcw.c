@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.12 2006/12/27 14:22:48 jsg Exp $ */
+/*	$OpenBSD: bcw.c,v 1.13 2006/12/28 22:23:07 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -92,6 +92,9 @@ void	bcw_media_status(struct ifnet *, struct ifmediareq *);
 /* fashionably new functions */
 int	bcw_validatechipaccess(struct bcw_softc *);
 void	bcw_powercontrol_crystal_off(struct bcw_softc *);
+int	bcw_change_core(struct bcw_softc *, int);
+void	bcw_radio_off(struct bcw_softc *);
+int	bcw_reset_core(struct bcw_softc *, u_int32_t);
 
 struct cfdriver bcw_cd = {
 	NULL, "bcw", DV_IFNET
@@ -103,15 +106,16 @@ bcw_attach(struct bcw_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet	*ifp = &ic->ic_if;
 	int		error;
-	int		i,j;
+	int		i;
 	u_int32_t	sbval;
-	u_int16_t	sbval16;
+//	u_int16_t	sbval16;
 	
 
 	/*
-	 * Reset the chip
+	 * Don't reset the chip here, we can only reset each core and we
+	 * haven't identified the cores yet.
 	 */
-	bcw_reset(sc);
+//	bcw_reset(sc);
 
 	/*
 	 * Attach to the Backplane and start the card up
@@ -139,31 +143,13 @@ bcw_attach(struct bcw_softc *sc)
 	 * below for an example of just figuring out what the chip id is and
 	 * how many cores it has.
 	 */
-#if 0
-	sbval = pci_conf_read(sc->sc_pa.pa_pc, sc->sc_pa.pa_tag,
-	    BCW_ADDR_SPACE0);
-	if ((sbval & 0xffff0000) != 0x18000000) {
-		DPRINTF(("\n%s: Trial Core read was 0x%x, single core only?\n",
-		    sc->sc_dev.dv_xname, sbval));
-	 	//sc->sc_singlecore=1;
-	} else
-		DPRINTF(("\n%s: Trial Core read was 0x%x\n",
-		    sc->sc_dev.dv_xname, sbval));
-#endif
+
 	/* 
 	 * Try and change to the ChipCommon Core
 	 */
-	for (i = 0; i < 10; i++) {
-		(sc->sc_conf_write)(sc, BCW_ADDR_SPACE0, BCW_CORE_SELECT(0));
-		delay(10);
-		sbval = (sc->sc_conf_read)(sc, BCW_ADDR_SPACE0);
-		if (sbval == BCW_CORE_SELECT(0)) {
-			DPRINTF(("%s: Selected ChipCommon Core\n",
-			    sc->sc_dev.dv_xname));
-			break;
-		}
-		delay(10);
-	}
+	if (bcw_change_core(sc, 0))
+		DPRINTF(("%s: Selected ChipCommon Core\n",
+		    sc->sc_dev.dv_xname));
 
 	/*
 	 * Core ID REG, this is either the default wireless core (0x812) or
@@ -177,11 +163,12 @@ bcw_attach(struct bcw_softc *sc)
 	   get the number of cores from the chipid reg */
 	if (((sbval & 0x00008ff0) >> 4) == BCW_CORE_COMMON) {
 		sc->sc_havecommon = 1;
+		/* XXX do early init of sc_core[0] here */
 		sbval = BCW_READ(sc, BCW_CORE_COMMON_CHIPID);
 		sc->sc_chipid = (sbval & 0x0000ffff);
-		sc->sc_corerev =
+		sc->sc_chiprev =
 		    ((sbval & 0x00007000) >> 8 | (sbval & 0x0000000f));
-		if ((sc->sc_corerev == 4) || (sc->sc_corerev >= 6))
+		if ((sc->sc_chiprev == 4) || (sc->sc_chiprev >= 6))
 			sc->sc_numcores = (sbval & 0x0f000000) >> 24;
 		else
 			switch (sc->sc_chipid) {
@@ -207,10 +194,11 @@ bcw_attach(struct bcw_softc *sc)
 				sc->sc_numcores = 3;
 				break;
 			default:
-				/* XXX Educated Guess */
-				sc->sc_numcores = 0;
+				/* set to max */
+				sc->sc_numcores = BCW_MAX_CORES;
 			} /* end of switch */
 	} else { /* No CommonCore, set chipid,cores,rev based on product id */
+		sc->sc_core_common = NULL;
 		sc->sc_havecommon = 0;
 		switch (sc->sc_prodid) {
 		case 0x4710:
@@ -257,51 +245,71 @@ bcw_attach(struct bcw_softc *sc)
 	    sc->sc_dev.dv_xname, sc->sc_chipid,
 	    sc->sc_chiprev, sc->sc_numcores));
 
-	/* Identify each core */
-	if (sc->sc_numcores >= 2) { /* Exclude single core chips */
- 		for (i = 0; i < sc->sc_numcores; i++) {
-// 			DPRINTF(("%s: Trying core %d -\n",
-// 			    sc->sc_dev.dv_xname, i));
- 			(sc->sc_conf_write)(sc, BCW_ADDR_SPACE0,
-			    BCW_CORE_SELECT(i));
-			/* loop to see if the selected core shows up */
-			for (j = 0; j < 10; j++) {
-				sbval = (sc->sc_conf_read)(sc, BCW_ADDR_SPACE0);
-//				DPRINTF(("%s: read %d for core %d = 0x%x\n",
-//				    sc->sc_dev.dv_xname, j, i, sbval));
-				if (sbval == BCW_CORE_SELECT(i)) break;
-				delay(10);
-			}
-			if (j < 10) {
-				sbval = BCW_READ(sc, BCW_CIR_SBID_HI);
-				DPRINTF(("%s: Found core %d of type 0x%x\n",
-				    sc->sc_dev.dv_xname, i, 
-				    (sbval & 0x00008ff0) >> 4));
-			}
-			sc->sc_core[i].id = (sbval & 0x00008ff0) >> 4;
-		} /* End of For loop */
-	}
+       /* Reset and Identify each core */
+       for (i = 0; i < sc->sc_numcores; i++) {
+		if (bcw_change_core(sc, i)) {
+			sbval = bus_space_read_4(sc->sc_iot,
+			    sc->sc_ioh, BCW_CIR_SBID_HI);
 
-	/*
-	 * XXX Attach cores to the backplane, if we have more than one
-	 */
-	// ??? if (!sc->sc_singlecore) {
+			sc->sc_core[i].id = (sbval & 0x00008ff0) >> 4;
+			sc->sc_core[i].rev =
+			    ((sbval & 0x00007000) >> 8 | (sbval & 0x0000000f));
+
+			switch (sc->sc_core[i].id) {
+			case BCW_CORE_COMMON:
+				bcw_reset_core(sc, 0);
+				sc->sc_core_common = &sc->sc_core[i];
+				break;
+			case BCW_CORE_PCI:
 #if 0
-	if (sc->sc_havecommon == 1) {
-		sbval = BCW_READ(sc, BCW_PCICR);
-		sbval |= 0x1 << 8; /* XXX hardcoded bitmask of single core */
-		BCW_WRITE(sc, BCW_PCICR, sbval);
-	}
+				bcw_reset_core(sc,0);
+				(sc->sc_ca == NULL)
 #endif
+				sc->sc_core_bus = &sc->sc_core[i];
+				break;
+#if 0
+			case BCW_CORE_PCMCIA:
+				bcw_reset_core(sc,0);
+				if (sc->sc_pa == NULL)
+					sc->sc_core_bus = &sc->sc_core[i];
+				break;
+#endif
+			case BCW_CORE_80211:
+				bcw_reset_core(sc,
+				    SBTML_80211FLAG | SBTML_80211PHY);
+				sc->sc_core_80211 = &sc->sc_core[i];
+				break;
+			case BCW_CORE_NONEXIST:
+				sc->sc_numcores = i + 1;
+				break;
+			default:
+				/* Ignore all other core types */
+				break;
+			}
+			DPRINTF(("%s: core %d is type 0x%x rev %d\n",
+			    sc->sc_dev.dv_xname, i, 
+			    sc->sc_core[i].id, sc->sc_core[i].rev));
+			/* XXX Fill out the core location vars */
+			sbval = bus_space_read_4(sc->sc_iot,
+			    sc->sc_ioh, BCW_SBTPSFLAG);
+			sc->sc_core[i].backplane_flag =
+			sbval & SBTPS_BACKPLANEFLAGMASK;
+			sc->sc_core[i].num = i;
+		} else
+			DPRINTF(("%s: Failed change to core %d",
+			    sc->sc_dev.dv_xname, i));
+	} /* End of For loop */
+
+	/* Now that we have cores identified, finish the reset */
+	bcw_reset(sc);
+
 	/*
 	 * XXX Select the 802.11 core, then
 	 * Get and display the PHY info from the MIMO
+	 * This probably won't work for cards with multiple radio cores, as
+	 * the spec suggests that there is one PHY for each core
 	 */
-	for (i = 0; i < sc->sc_numcores; i++) {
-		if (sc->sc_core[i].id == BCW_CORE_80211)
-			(sc->sc_conf_write)(sc, BCW_ADDR_SPACE0,
-			    BCW_CORE_SELECT(i));
-	}
+	bcw_change_core(sc, sc->sc_core_80211->num);
 	sbval = BCW_READ16(sc, 0x3E0);
 	sc->sc_phy_version = (sbval & 0xf000) >> 12;
 	sc->sc_phy_rev = sbval & 0xf;
@@ -342,7 +350,7 @@ bcw_attach(struct bcw_softc *sc)
 		BCW_WRITE16(sc, BCW_RADIO_CONTROL, BCW_RADIO_ID);
 		sc->sc_radioid = sbval | BCW_READ16(sc, BCW_RADIO_DATALOW);
 	} else {
-		switch (sc->sc_corerev) {
+		switch (sc->sc_chiprev) {
 		case 0:	
 			sc->sc_radioid = 0x3205017F;
 			break;
@@ -431,49 +439,7 @@ bcw_attach(struct bcw_softc *sc)
 		    	return;
 	}
 
-	/*
-	 * Switch the radio off - candidate for seperate function
-	 */
-	switch(sc->sc_phy_type) {
-	case BCW_PHY_TYPEA:
-		/* Magic unexplained values */
-		BCW_WRITE16(sc, BCW_RADIO_CONTROL, 0x04);
-		BCW_WRITE16(sc, BCW_RADIO_DATALOW, 0xff);
-		BCW_WRITE16(sc, BCW_RADIO_CONTROL, 0x05);
-		BCW_WRITE16(sc, BCW_RADIO_DATALOW, 0xfb);
-		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x10);
-
-		sbval16 = BCW_READ16(sc, BCW_PHY_DATA);
-		sbval16 |= 0x8;
-		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x10);
-		BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
-		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x11);
-
-		sbval16 = BCW_READ16(sc, BCW_PHY_DATA);
-		sbval16 |= 0x8;
-		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x11);
-		BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
-		break;
-	case BCW_PHY_TYPEG:
-		if (sc->sc_corerev >= 5) {
-			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x811);
-			sbval16 = BCW_READ16(sc, BCW_PHY_DATA);
-			sbval16 |= 0x8c;
-			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x811);
-			BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
-			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x812);
-			sbval16 = BCW_READ16(sc, BCW_PHY_DATA);
-			sbval16 &= 0xff73;
-			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x812);
-			    
-			BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
-			    
-		}
-		/* FALL-THROUGH */
-	default:
-		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x15);
-		BCW_WRITE16(sc, BCW_PHY_DATA, 0xaa00);
-	} /* end of switch statement to turn off radio */
+	bcw_radio_off(sc);
 
 	/* Read antenna gain from SPROM and multiply by 4 */
 	sbval = BCW_READ16(sc, BCW_SPROM_ANTGAIN);
@@ -1097,7 +1063,6 @@ int
 bcw_init(struct ifnet *ifp)
 {
 	struct bcw_softc *sc = ifp->if_softc;
-	u_int32_t reg_win;
 
 	/* Cancel any pending I/O. */
 	bcw_stop(ifp, 0);
@@ -1112,7 +1077,8 @@ bcw_init(struct ifnet *ifp)
 	/* enable pci interrupts, bursts, and prefetch */
 
 	/* remap the pci registers to the Sonics config registers */
-
+#if 0
+	/* XXX - use (sc->sc_conf_read/write) */
 	/* save the current map, so it can be restored */
 	reg_win = BCW_READ(sc, BCW_REG0_WIN);
 
@@ -1131,6 +1097,7 @@ bcw_init(struct ifnet *ifp)
 
 	/* Reset the chip to a known state. */
 	bcw_reset(sc);
+#endif
 
 #if 0 /* FIXME */
 	/* Initialize transmit descriptors */
@@ -1316,28 +1283,16 @@ bcw_stop(struct ifnet *ifp, int disable)
 void
 bcw_reset(struct bcw_softc *sc)
 {
-	int i;
 	u_int32_t sbval;
-	u_int32_t val;
 	u_int32_t reject;
 
-	/* Really stupid PCI space dump */
-#if 0
-	for (i = 0xe00; i < 0x1000; i += 4) {
-		if ((i % 16) == 0)
-		    DPRINTF(("%s: 0x%04x - ",sc->sc_dev.dv_xname, i));
-		DPRINTF(("0x%08x ", BCW_READ(sc, i)));
-		if ((i % 16) == 12) DPRINTF(("\n"));
-	}
-#endif
 	/*
 	 * Figure out what revision the Sonic Backplane is, as the position
-	 * of the Reject bit changed. Save the revision in the softc, and
-	 * use the local variable 'reject' in all the bit banging.
+	 * of the Reject bit changes.
 	 */
 	sbval = BCW_READ(sc, BCW_CIR_SBID_LO);
-
 	sc->sc_sbrev = (sbval & SBREV_MASK) >> SBREV_MASK_SHIFT;
+
 	switch (sc->sc_sbrev) {
 	case 0:
 		reject = SBTML_REJ22;
@@ -1355,132 +1310,24 @@ bcw_reset(struct bcw_softc *sc)
 	 * If the 802.11 core is enabled, only clock of clock,reset,reject
 	 * will be set, and we need to reset all the DMA engines first.
 	 */
+	bcw_change_core(sc, sc->sc_core_80211->num);
+
+	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
 #if 0
 	if ((sbval & (SBTML_RESET | reject | SBTML_CLK)) == SBTML_CLK) {
-		/* Stop all DMA */
-		/* reset the dma engines */
+		/* XXX Stop all DMA */
+		/* XXX reset the dma engines */
 	}
 #endif
-	/* disable 802.11 core if not in reset */
-	if (!(sbval & SBTML_RESET)) {
-		/* if the core is not enabled, the clock won't be enabled */
-		if (!(sbval & SBTML_CLK)) {
-			BCW_WRITE(sc, BCW_SBTMSTATELOW, SBTML_RESET | reject |
-			    SBTML_80211FLAG | SBTML_80211PHY );
-			delay(1);
-			sbval = BCW_READ(sc, BCW_SBTMSTATELOW);
-			goto disabled;
-
-			BCW_WRITE(sc, BCW_SBTMSTATELOW, reject);
-			    
-			delay(1);
-			/* wait until busy is clear */
-			for (i = 0; i < 10000; i++) {
-				val = BCW_READ(sc, BCW_SBTMSTATEHI);
-				    
-				if (!(val & SBTMH_BUSY))
-					break;
-				delay(10);
-			}
-			if (i == 10000)
-				printf("%s: while resetting core, busy did "
-				    "not clear\n", sc->sc_dev.dv_xname);
-
-			val = BCW_READ(sc, BCW_CIR_SBID_LO);
-			    
-			if (val & BCW_CIR_SBID_LO_INITIATOR) {
-				sbval = BCW_READ(sc,
-				    BCW_SBIMSTATE);
-				BCW_WRITE(sc, BCW_SBIMSTATE, sbval |
-				    SBIM_REJECT);
-				    
-				sbval = BCW_READ(sc, BCW_SBIMSTATE);
-				    
-				delay(1);
-
-				/* wait until busy is clear */
-				for (i = 0; i < 10000; i++) {
-					val = BCW_READ(sc, BCW_SBTMSTATEHI);
-					
-					if (!(val & SBTMH_BUSY))
-						break;
-					delay(10);
-				}
-				if (i == 10000)
-					printf("%s: while resetting core, busy "
-					    "did not clear\n",
-					    sc->sc_dev.dv_xname);
-			} /* end initiator check */
-
-			/* set reset and reject while enabling the clocks */
-			BCW_WRITE(sc, BCW_SBTMSTATELOW, SBTML_FGC | SBTML_CLK |
-			    SBTML_RESET | SBTML_80211FLAG | SBTML_80211PHY);
-			val = BCW_READ(sc, BCW_SBTMSTATELOW);
-			    
-			delay(10);
-
-			val = BCW_READ(sc, BCW_CIR_SBID_LO);
-
-			if (val & BCW_CIR_SBID_LO_INITIATOR) {
-				sbval = BCW_READ(sc, BCW_SBIMSTATE);
-				    
-				BCW_WRITE(sc, BCW_SBIMSTATE, sbval &
-				    ~SBIM_REJECT);
-				    
-				sbval = BCW_READ(sc, BCW_SBIMSTATE);
-				delay(1);
-
-				/* wait until busy is clear */
-				for (i = 0; i < 10000; i++) {
-					val = BCW_READ(sc, BCW_SBTMSTATEHI);
-
-					if (!(val & SBTMH_BUSY))
-						break;
-					delay(10);
-				}
-				if (i == 10000)
-					printf("%s: while resetting core, busy "
-					    "did not clear\n",
-					    sc->sc_dev.dv_xname);
-			} /* end initiator check */
-
-			BCW_WRITE(sc, BCW_SBTMSTATELOW, SBTML_RESET | reject |
-			    SBTML_80211FLAG | SBTML_80211PHY);
-			delay(1);
-		}
-	}
-
-disabled:
-
-	/* This is enabling/resetting the core */
-	/* enable clock */
-	BCW_WRITE(sc, BCW_SBTMSTATELOW,
-	    SBTML_FGC | SBTML_CLK | SBTML_RESET |
-	    SBTML_80211FLAG | SBTML_80211PHY );
-	val = BCW_READ(sc, BCW_SBTMSTATELOW);
-	delay(1);
-
-	/* clear any error bits that may be on */
-	val = BCW_READ(sc, BCW_SBTMSTATEHI);
-	if (val & SBTMH_SERR)
-		BCW_WRITE(sc, BCW_SBTMSTATEHI, 0);
-	val = BCW_READ(sc, BCW_SBIMSTATE);
-	if (val & (SBIM_INBANDERR | SBIM_TIMEOUT))
-		BCW_WRITE(sc, BCW_SBIMSTATE,
-		    val & ~(SBIM_INBANDERR | SBIM_TIMEOUT));
-		    
-	/* clear reset and allow it to propagate throughout the core */
-	BCW_WRITE(sc, BCW_SBTMSTATELOW,
-	    SBTML_FGC | SBTML_CLK | SBTML_80211FLAG | SBTML_80211PHY );
-	val = BCW_READ(sc, BCW_SBTMSTATELOW);
-	delay(1);
-
-	/* leave clock enabled */
-	BCW_WRITE(sc, BCW_SBTMSTATELOW, SBTML_CLK | SBTML_80211FLAG |
-	    SBTML_80211PHY);
-	    
-	val = BCW_READ(sc, BCW_SBTMSTATELOW);
-	delay(1);
+#if 0
+	/* XXX Cores are reset manually elsewhere for now */
+	/* Reset the wireless core, attaching the PHY */
+	bcw_reset_core(sc, SBTML_80211FLAG | SBTML_80211PHY );
+	bcw_change_core(sc, sc->sc_core_common->num);
+	bcw_reset_core(sc, 0);
+	bcw_change_core(sc, sc->sc_core_bus->num);
+	bcw_reset_core(sc, 0);
+#endif
 
 	/* XXX update PHYConnected to requested value */
 
@@ -1494,10 +1341,25 @@ disabled:
 
 	/* XXX Clear saved interrupt status for DMA controllers */
 
+	/*
+	 * XXX Attach cores to the backplane, if we have more than one
+	 * Don't attach PCMCIA cores on a PCI card, and reverse?
+	 * OR together the bus flags of the 3 cores and write to PCICR
+	 */
+#if 0
+	if (sc->sc_havecommon == 1) {
+		sbval = (sc->sc_conf_read)(sc, BCW_PCICR);
+		sbval |= 0x1 << 8; /* XXX hardcoded bitmask of single core */
+		(sc->sc_conf_write)(sc, BCW_PCICR, sbval);
+	}
+#endif
+	/* Change back to the Wireless core */
+	bcw_change_core(sc, sc->sc_core_80211->num);
+
 }
 
 /* Set up the receive filter. */
-void
+	void
 bcw_set_filter(struct ifnet *ifp)
 {
 #if 0
@@ -1515,21 +1377,21 @@ bcw_set_filter(struct ifnet *ifp)
 		/* enable/disable broadcast */
 		if (ifp->if_flags & IFF_BROADCAST)
 			BCW_WRITE(sc,
-			    BCW_RX_CTL, BCW_READ(sc, BCW_RX_CTL) & ~ERC_DB);
+					BCW_RX_CTL, BCW_READ(sc, BCW_RX_CTL) & ~ERC_DB);
 		else
 			BCW_WRITE(sc,
-			    BCW_RX_CTL, BCW_READ(sc, BCW_RX_CTL) | ERC_DB);
-			    sc->bcw_bhandle, 
+					BCW_RX_CTL, BCW_READ(sc, BCW_RX_CTL) | ERC_DB);
+		sc->bcw_bhandle, 
 
-		/* disable the filter */
-		BCW_WRITE(sc, BCW_FILT_CTL, 0);
+			/* disable the filter */
+			BCW_WRITE(sc, BCW_FILT_CTL, 0);
 
 		/* add our own address */
 		// bcw_add_mac(sc, sc->bcw_ac.ac_enaddr, 0);
 
 		/* for now accept all multicast */
 		BCW_WRITE(sc, BCW_RX_CTL, BCW_READ(sc, BCW_RX_CTL) | ERC_AM);
-		    
+
 		ifp->if_flags |= IFF_ALLMULTI;
 
 		/* enable the filter */
@@ -1538,7 +1400,7 @@ bcw_set_filter(struct ifnet *ifp)
 #endif
 }
 
-int
+	int
 bcw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 #if 0
@@ -1551,7 +1413,7 @@ bcw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	return (0);
 }
 
-int
+	int
 bcw_media_change(struct ifnet *ifp)
 {
 	int error;
@@ -1566,7 +1428,7 @@ bcw_media_change(struct ifnet *ifp)
 	return (0);
 }
 
-void
+	void
 bcw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
 	struct bcw_softc *sc = ifp->if_softc;
@@ -1577,9 +1439,9 @@ bcw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	imr->ifm_status = IFM_AVALID;
 	imr->ifm_active = IFM_IEEE80211;
 	if (ic->ic_state == IEEE80211_S_RUN)
-	imr->ifm_status |= IFM_ACTIVE;
+		imr->ifm_status |= IFM_ACTIVE;
 
-        /*
+	/*
 	 * XXX Read current transmission rate from the adapter.
 	 */
 	//val = CSR_READ_4(sc, IWI_CSR_CURRENT_TX_RATE);
@@ -1589,23 +1451,23 @@ bcw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 
 	imr->ifm_active |= ieee80211_rate2media(ic, rate, ic->ic_curmode);
 	switch (ic->ic_opmode) {
-	case IEEE80211_M_STA:
-		break;
-	case IEEE80211_M_IBSS:
-		imr->ifm_active |= IFM_IEEE80211_ADHOC;
-		break;
-	case IEEE80211_M_MONITOR:
-		imr->ifm_active |= IFM_IEEE80211_MONITOR;
-		break;
-        case IEEE80211_M_AHDEMO:
-        case IEEE80211_M_HOSTAP:
-		/* should not get there */
-		break;
+		case IEEE80211_M_STA:
+			break;
+		case IEEE80211_M_IBSS:
+			imr->ifm_active |= IFM_IEEE80211_ADHOC;
+			break;
+		case IEEE80211_M_MONITOR:
+			imr->ifm_active |= IFM_IEEE80211_MONITOR;
+			break;
+		case IEEE80211_M_AHDEMO:
+		case IEEE80211_M_HOSTAP:
+			/* should not get there */
+			break;
 	}
 }
 
 /* One second timer, checks link status */
-void
+	void
 bcw_tick(void *v)
 {
 #if 0
@@ -1618,10 +1480,13 @@ bcw_tick(void *v)
 /*
  * Validate Chip Access
  */
-int
+	int
 bcw_validatechipaccess(struct bcw_softc *sc)
 {
 	u_int32_t save,val;
+
+	/* Make sure we're dealing with the wireless core */
+	bcw_change_core(sc, sc->sc_core_80211->num);
 
 	/*
 	 * We use the offset of zero a lot here to reset the SHM pointer to the
@@ -1632,23 +1497,23 @@ bcw_validatechipaccess(struct bcw_softc *sc)
 	/* Backup SHM uCode Revision before we clobber it */
 	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
 	save = BCW_READ(sc, BCW_SHM_DATA);
-	
+
 	/* write test value */
 	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
 	BCW_WRITE(sc, BCW_SHM_DATA, 0xaa5555aa);
 	/* Read it back */
 	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
-	    
+
 	val = BCW_READ(sc, BCW_SHM_DATA);
 	if (val != 0xaa5555aa)
 		return (1);
-	
+
 	/* write 2nd test value */
 	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
 	BCW_WRITE(sc, BCW_SHM_DATA, 0x55aaaa55);
 	/* Read it back */
 	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
-	    
+
 	val = BCW_READ(sc, BCW_SHM_DATA);
 	if (val != 0x55aaaa55)
 		return 2;
@@ -1656,8 +1521,7 @@ bcw_validatechipaccess(struct bcw_softc *sc)
 	/* Restore the saved value now that we're done */
 	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
 	BCW_WRITE(sc, BCW_SHM_DATA, save);
-	
-	if (sc->sc_corerev >= 3) {
+	if (sc->sc_core_80211->rev >= 3) {
 		/* do some test writes and reads against the TSF */
 		/*
 		 * This works during the attach, but the spec at
@@ -2087,7 +1951,7 @@ bcw_powercontrol_crystal_off(struct bcw_softc *sc)
 	u_int32_t sbval;
 
 	/* XXX Return if radio is hardware disabled */
-	if (sc->sc_corerev < 5)
+	if (sc->sc_chiprev < 5)
 		return;
 	if ((sc->sc_boardflags & BCW_BF_XTAL) == BCW_BF_XTAL)
 		return;
@@ -2101,4 +1965,238 @@ bcw_powercontrol_crystal_off(struct bcw_softc *sc)
 	sbval = (sc->sc_conf_read)(sc, BCW_GPIOE);
 	sbval |= BCW_PLLPOWERDOWN | BCW_XTALPOWERUP;
 	(sc->sc_conf_write)(sc, BCW_GPIOE, sbval);
+}
+
+int
+bcw_change_core(struct bcw_softc *sc, int changeto)
+{
+	u_int32_t	sbval;
+	int		i;
+
+	(sc->sc_conf_write)(sc, BCW_ADDR_SPACE0,
+	    BCW_CORE_SELECT(changeto));
+	/* loop to see if the selected core shows up */
+	for (i = 0; i < 10; i++) {
+		sbval = (sc->sc_conf_read)(sc, BCW_ADDR_SPACE0);
+		if (sbval == BCW_CORE_SELECT(changeto))
+			break;
+		delay(10);
+	}
+	if (i < 10) {
+		sc->sc_lastcore = sc->sc_currentcore;
+		sc->sc_currentcore = changeto;
+		return 1;
+	} else
+		return 0;
+}
+
+void
+bcw_radio_off(struct bcw_softc *sc)
+{
+	u_int16_t	sbval16;
+
+	switch(sc->sc_phy_type) {
+	case BCW_PHY_TYPEA:
+		/* Magic unexplained values */
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		    BCW_RADIO_CONTROL, 0x04);
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		    BCW_RADIO_DATALOW, 0xff);
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		    BCW_RADIO_CONTROL, 0x05);
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		    BCW_RADIO_DATALOW, 0xfb);
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		    BCW_PHY_CONTROL, 0x10);
+		sbval16 = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+		    BCW_PHY_DATA);
+		sbval16 |= 0x8;
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		    BCW_PHY_CONTROL, 0x10);
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		    BCW_PHY_DATA, sbval16);
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		    BCW_PHY_CONTROL, 0x11);
+		sbval16 = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+		    BCW_PHY_DATA);
+		sbval16 |= 0x8;
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		    BCW_PHY_CONTROL, 0x11);
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		    BCW_PHY_DATA, sbval16);
+		break;
+	case BCW_PHY_TYPEG:
+		if (sc->sc_core_80211->rev >= 5) {
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			    BCW_PHY_CONTROL, 0x811);
+			sbval16 = bus_space_read_2(sc->sc_iot,
+			    sc->sc_ioh, BCW_PHY_DATA);
+			sbval16 |= 0x8c;
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			    BCW_PHY_CONTROL, 0x811);
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			    BCW_PHY_DATA, sbval16);
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			    BCW_PHY_CONTROL, 0x812);
+			sbval16 = bus_space_read_2(sc->sc_iot,
+			    sc->sc_ioh, BCW_PHY_DATA);
+			sbval16 &= 0xff73;
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			    BCW_PHY_CONTROL, 0x812);
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			    BCW_PHY_DATA, sbval16);
+		}
+		/* FALL-THROUGH */
+	default:
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		    BCW_PHY_CONTROL, 0x15);
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		    BCW_PHY_DATA, 0xaa00);
+	} /* end of switch statement to turn off radio */
+}
+
+int
+bcw_reset_core(struct bcw_softc *sc, u_int32_t flags)
+{
+	u_int32_t	sbval, reject, val;
+	int		i;
+
+	/*
+	 * Figure out what revision the Sonic Backplane is, as the position
+	 * of the Reject bit changes.
+	 */
+	switch (sc->sc_sbrev) {
+	case 0:
+		reject = SBTML_REJ22;
+		break;
+	case 1:
+		reject = SBTML_REJ23;
+		break;
+	default:
+		reject = SBTML_REJ22 | SBTML_REJ23;
+	}
+
+	/* disable core if not in reset */
+	if (!(sbval & SBTML_RESET)) {
+		/* if the core is not enabled, the clock won't be enabled */
+		if (!(sbval & SBTML_CLK)) {
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    BCW_SBTMSTATELOW, SBTML_RESET | reject | flags );
+			delay(1);
+			sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+			    BCW_SBTMSTATELOW);
+			goto disabled;
+
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    BCW_SBTMSTATELOW, reject);
+			delay(1);
+			/* wait until busy is clear */
+			for (i = 0; i < 10000; i++) {
+				val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				    BCW_SBTMSTATEHI);
+				if (!(val & SBTMH_BUSY))
+					break;
+				delay(10);
+			}
+			if (i == 10000)
+				printf("%s: while resetting core, busy did "
+				    "not clear\n", sc->sc_dev.dv_xname);
+
+			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+			    BCW_CIR_SBID_LO);
+			if (val & BCW_CIR_SBID_LO_INITIATOR) {
+				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				    BCW_SBIMSTATE);
+				bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+				    BCW_SBIMSTATE, sbval | SBIM_REJECT);
+				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				    BCW_SBIMSTATE);
+				delay(1);
+
+				/* wait until busy is clear */
+				for (i = 0; i < 10000; i++) {
+					val = bus_space_read_4(sc->sc_iot,
+					sc->sc_ioh, BCW_SBTMSTATEHI);
+					if (!(val & SBTMH_BUSY))
+						break;
+					delay(10);
+				}
+				if (i == 10000)
+					printf("%s: while resetting core, busy "
+					    "did not clear\n",
+					    sc->sc_dev.dv_xname);
+			} /* end initiator check */
+
+			/* set reset and reject while enabling the clocks */
+			/* XXX why isn't reject in here? */
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    BCW_SBTMSTATELOW, SBTML_FGC | SBTML_CLK |
+			    SBTML_RESET | flags );
+			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+			    BCW_SBTMSTATELOW);
+			delay(10);
+
+			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+			    BCW_CIR_SBID_LO);
+			if (val & BCW_CIR_SBID_LO_INITIATOR) {
+				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				    BCW_SBIMSTATE);
+				bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+				    BCW_SBIMSTATE, sbval & ~SBIM_REJECT);
+				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				    BCW_SBIMSTATE);
+				delay(1);
+
+				/* wait until busy is clear */
+				for (i = 0; i < 10000; i++) {
+					val = bus_space_read_4(sc->sc_iot,
+					sc->sc_ioh, BCW_SBTMSTATEHI);
+					if (!(val & SBTMH_BUSY))
+						break;
+					delay(10);
+				}
+				if (i == 10000)
+					printf("%s: while resetting core, busy "
+					    "did not clear\n",
+					    sc->sc_dev.dv_xname);
+			} /* end initiator check */
+
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    BCW_SBTMSTATELOW, SBTML_RESET | reject | flags );
+			delay(1);
+		}
+	}
+
+disabled:
+
+	/* This is enabling/resetting the core */
+	/* enable clock */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW,
+	    SBTML_FGC | SBTML_CLK | SBTML_RESET | flags );
+	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
+	delay(1);
+
+	/* clear any error bits that may be on */
+	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATEHI);
+	if (val & SBTMH_SERR)
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATEHI, 0);
+	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBIMSTATE);
+	if (val & (SBIM_INBANDERR | SBIM_TIMEOUT))
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBIMSTATE,
+		    val & ~(SBIM_INBANDERR | SBIM_TIMEOUT));
+
+	/* clear reset and allow it to propagate throughout the core */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW,
+	    SBTML_FGC | SBTML_CLK | flags );
+	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
+	delay(1);
+
+	/* leave clock enabled */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW,
+	    SBTML_CLK | flags );
+	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
+	delay(1);
+
+	return 0;
+
 }

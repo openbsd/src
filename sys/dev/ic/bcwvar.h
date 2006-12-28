@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.8 2006/12/06 19:21:45 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.9 2006/12/28 22:23:07 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -33,8 +33,9 @@ struct bcw_radio {
 #define BCW_MAX_CORES		10
 struct bcw_core {
 	u_int16_t	id;
-	u_int16_t	revision;
-	u_char		enabled;
+	u_int8_t	num;
+	u_int8_t	rev;
+	u_int8_t	backplane_flag;
 };
 
 /* number of descriptors used in a ring */
@@ -162,13 +163,15 @@ struct bcw_softc {
 	u_int16_t		sc_phy_version;
 	u_int16_t		sc_phy_type;
 	u_int16_t		sc_phy_rev;
-	u_int16_t		sc_corerev;
+//	u_int16_t		sc_corerev;
 	u_int32_t		sc_radioid;
 	u_int16_t		sc_radiorev;
 	u_int16_t		sc_radiotype;
 	u_int32_t		sc_phyinfo;
 	u_int16_t		sc_numcores;
 	u_int16_t		sc_havecommon;
+	int			sc_currentcore;
+	int			sc_lastcore;
 	u_int8_t		sc_radio_gain;
 	u_int16_t		sc_radio_pa0b0;
 	u_int16_t		sc_radio_pa0b1;
@@ -180,6 +183,10 @@ struct bcw_softc {
 	u_int8_t		sc_spromrev;
 	u_int16_t		sc_boardflags;
 	u_int8_t		sc_sbrev; /* Sonics Backplane Revision */
+	/* Core locations */
+	struct bcw_core		*sc_core_common;
+	struct bcw_core		*sc_core_80211;
+	struct bcw_core		*sc_core_bus;	/* PCI or cardbus */
 };
 
 void	bcw_attach(struct bcw_softc *);

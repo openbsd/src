@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.6 2006/12/27 14:05:57 jsg Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.7 2006/12/28 22:23:07 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -154,6 +154,9 @@
 #define BCW_RX_PKTS			0x058C
 
 /* SiliconBackplane registers 0xea8 through 0xffc */
+#define BCW_SBTPSFLAG			0x0f18
+#define  SBTPS_BACKPLANEFLAGMASK	0x3f
+#define  SBTPS_INT_ALWAYS		0x40		/* Interrupt always sent on backplane */
 #define BCW_SBIMSTATE			0x0f90
 #define  SBIM_REJECT			0x0200000
 #define  SBIM_INBANDERR			0x20000		/* Inband Error */
