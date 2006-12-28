@@ -1,4 +1,4 @@
-.\"	$OpenBSD: namei.9,v 1.12 2006/06/23 22:20:39 sturm Exp $
+.\"	$OpenBSD: namei.9,v 1.13 2006/12/28 22:59:11 thib Exp $
 .\"     $NetBSD: namei.9,v 1.9 2003/05/06 10:46:44 jmmv Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -160,7 +160,8 @@ symlink needs interpretation
 .It REQUIREDIR
 must be a directory
 .It PDIRUNLOCK
-vfs_lookup() unlocked parent dir
+.Fn VOP_LOOKUP
+unlocked parent dir
 .El
 .Pp
 If the caller of
