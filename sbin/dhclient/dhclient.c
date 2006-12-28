@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.96 2006/12/27 20:56:33 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.97 2006/12/28 00:51:19 stevesk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -991,7 +991,7 @@ dhcpnak(struct packet *packet)
 	note("DHCPNAK from %s", piaddr(packet->client_addr));
 
 	if (!client->active) {
-		note("DHCPNAK with no active lease.\n");
+		note("DHCPNAK with no active lease.");
 		return;
 	}
 
@@ -1183,7 +1183,7 @@ activate_next:
 	/* No leases were available, or what was available didn't work, so
 	   tell the shell script that we failed to allocate an address,
 	   and try again later. */
-	note("No working leases in persistent database - sleeping.\n");
+	note("No working leases in persistent database - sleeping.");
 	script_init("FAIL", NULL);
 	if (client->alias)
 		script_write_params("alias_", client->alias);
