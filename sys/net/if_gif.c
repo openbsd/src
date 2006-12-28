@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.37 2006/11/16 07:58:43 itojun Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.38 2006/12/28 20:06:11 deraadt Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -165,12 +165,13 @@ gif_start(ifp)
 	dst.sa_family = AF_LINK;
 #endif /* NBRIDGE */
 
-	for (;;) {
+	while (ifp->if_snd.ifq_head) {
 	        s = splnet();
 		IF_DEQUEUE(&ifp->if_snd, m);
 		splx(s);
 
-		if (m == NULL) return;
+		if (m == NULL)
+			return;
 
 #if NBRIDGE > 0
 		/* Sanity check -- interface should be member of a bridge */

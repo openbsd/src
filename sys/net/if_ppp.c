@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.46 2006/03/25 22:41:47 djm Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.47 2006/12/28 20:06:11 deraadt Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -1127,7 +1127,7 @@ pppintr()
 	    splx(s2);
 	    (*sc->sc_start)(sc);
 	}
-	for (;;) {
+	while (sc->sc_rawq.ifq_head) {
 	    s2 = splnet();
 	    IF_DEQUEUE(&sc->sc_rawq, m);
 	    splx(s2);

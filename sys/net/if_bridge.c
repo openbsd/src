@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.155 2006/12/11 22:11:48 reyk Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.156 2006/12/28 20:06:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1168,7 +1168,7 @@ bridgeintr(void)
 	int s;
 
 	LIST_FOREACH(sc, &bridge_list, sc_list) {
-		for (;;) {
+		while (sc->sc_if.if_snd.ifq_head) {
 			s = splnet();
 			IF_DEQUEUE(&sc->sc_if.if_snd, m);
 			splx(s);

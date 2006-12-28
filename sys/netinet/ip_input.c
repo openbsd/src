@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.145 2006/11/27 12:27:45 henning Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.146 2006/12/28 20:06:10 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -247,7 +247,7 @@ ipintr()
 	struct mbuf *m;
 	int s;
 
-	while (1) {
+	while (ipintrq.ifq_head) {
 		/*
 		 * Get next datagram off input queue and get IP header
 		 * in first mbuf.

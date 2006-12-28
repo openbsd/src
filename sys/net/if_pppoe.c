@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.9 2006/07/11 21:21:59 canacar Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.10 2006/12/28 20:06:11 deraadt Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -370,13 +370,13 @@ pppoeintr(void)
 	splassert(IPL_SOFTNET);
 	
 	LIST_FOREACH(sc, &pppoe_softc_list, sc_list) {
-		for (;;) {
+		while (ppoediscinq.ifq_head) {
 			MBUFLOCK(IF_DEQUEUE(&ppoediscinq, m););
 			if (m == NULL) break;
 			pppoe_disc_input(m);
 		}
 
-		for (;;) {
+		while (ppoeinq.ifq_head) {
 			MBUFLOCK(IF_DEQUEUE(&ppoeinq, m););
 			if (m == NULL) break;
 			pppoe_data_input(m);
