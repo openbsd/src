@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.97 2006/12/28 00:51:19 stevesk Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.98 2006/12/28 01:10:46 stevesk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1227,7 +1227,7 @@ cancel:
 	   correctly. */
 	if (client->state == S_REBOOTING &&
 	    !client->medium &&
-	    client->active->medium ) {
+	    client->active->medium) {
 		script_init("MEDIUM", client->active->medium);
 
 		/* If the medium we chose won't fly, go to INIT state. */
@@ -1391,7 +1391,6 @@ make_discover(struct client_lease *lease)
 	memcpy(client->packet.chaddr, ifi->hw_address.haddr,
 	    ifi->hw_address.hlen);
 }
-
 
 void
 make_request(struct client_lease * lease)
@@ -2163,7 +2162,6 @@ ipv4addrs(char * buf)
 	}
 	return (0);
 }
-
 
 char *
 option_as_string(unsigned int code, unsigned char *data, int len)

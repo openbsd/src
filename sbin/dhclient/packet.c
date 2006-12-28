@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.11 2006/12/26 21:19:52 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.12 2006/12/28 01:10:46 stevesk Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -86,7 +86,7 @@ wrapsum(u_int32_t sum)
 }
 
 void
-assemble_hw_header( unsigned char *buf, int *bufix, struct hardware *to)
+assemble_hw_header(unsigned char *buf, int *bufix, struct hardware *to)
 {
 	struct ether_header eh;
 
