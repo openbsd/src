@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.99 2006/12/28 01:32:10 stevesk Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.100 2006/12/28 20:04:22 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2209,6 +2209,7 @@ fork_privchld(int fd, int fd2)
 	switch (fork()) {
 	case -1:
 		error("cannot fork");
+		break;
 	case 0:
 		break;
 	default:
