@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malo_pci.c,v 1.2 2006/11/29 10:37:11 mglocker Exp $ */
+/*	$OpenBSD: if_malo_pci.c,v 1.3 2006/12/29 07:17:53 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -135,7 +135,7 @@ malo_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s\n", intrstr);
+	printf(": %s", intrstr);
 
 	malo_attach(sc);
 }
