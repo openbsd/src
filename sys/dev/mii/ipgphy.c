@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipgphy.c,v 1.3 2006/12/23 13:16:32 kettenis Exp $	*/
+/*	$OpenBSD: ipgphy.c,v 1.4 2006/12/29 21:40:47 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -295,7 +295,6 @@ ipgphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	uint32_t bmsr, bmcr, stat;
-	uint32_t ar, lpar;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -332,8 +331,9 @@ ipgphy_status(struct mii_softc *sc)
 		mii->mii_media_active |= IFM_1000_T;
 		break;
 	}
+
 	if ((stat & PC_PhyDuplexStatus) != 0)
-		mii->mii_media_active |= IFM_FDX;
+		mii->mii_media_active |= mii_phy_flowstatus(sc) | IFM_FDX;
 	else
 		mii->mii_media_active |= IFM_HDX;
 
@@ -341,24 +341,6 @@ ipgphy_status(struct mii_softc *sc)
 	if ((IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) &&
 	    stat & IPGPHY_1000SR_MASTER)
 		mii->mii_media_active |= IFM_ETH_MASTER;
-
-	ar = PHY_READ(sc, IPGPHY_MII_ANAR);
-	lpar = PHY_READ(sc, IPGPHY_MII_ANLPAR);
-
-	/*
-	 * FLAG0 : Rx flow-control
-	 * FLAG1 : Tx flow-control
-	 */
-	if ((ar & IPGPHY_ANAR_PAUSE) && (lpar & IPGPHY_ANLPAR_PAUSE))
-		mii->mii_media_active |= IFM_FLAG0 | IFM_FLAG1;
-	else if (!(ar & IPGPHY_ANAR_PAUSE) && (ar & IPGPHY_ANAR_APAUSE) &&
-	    (lpar & IPGPHY_ANLPAR_PAUSE) && (lpar & IPGPHY_ANLPAR_APAUSE))
-		mii->mii_media_active |= IFM_FLAG1;
-	else if ((ar & IPGPHY_ANAR_PAUSE) && (ar & IPGPHY_ANAR_APAUSE) &&
-	    !(lpar & IPGPHY_ANLPAR_PAUSE) &&
-	    (lpar & IPGPHY_ANLPAR_APAUSE)) {
-		mii->mii_media_active |= IFM_FLAG0;
-	}
 }
 
 int
