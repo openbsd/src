@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.66 2006/12/27 19:12:49 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.67 2006/12/29 00:14:28 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4827,10 +4827,10 @@ dlflush3:
  *
  */
 	.align 8
-	.globl	_C_LABEL(dcache_flush_page)
+	.globl	_C_LABEL(us_dcache_flush_page)
 	.proc 1
-	FTYPE(dcache_flush_page)
-_C_LABEL(dcache_flush_page):
+	FTYPE(us_dcache_flush_page)
+_C_LABEL(us_dcache_flush_page):
 
 	!! Try using cache_flush_phys for a change.
 
@@ -4866,6 +4866,28 @@ dlflush4:
 	flush	%o5
 	retl
 	 membar	#Sync
+
+	.align 8
+	.globl  _C_LABEL(us3_dcache_flush_page)
+	.proc 1
+	FTYPE(us3_dcache_flush_page)
+_C_LABEL(us3_dcache_flush_page):
+	ldxa    [%g0] ASI_MCCR, %o1
+	btst    MCCR_DCACHE_EN, %o1
+	bz,pn   %icc, 1f
+	 nop
+	sethi   %hi(PAGE_SIZE), %o4
+	or      %g0, (PAGE_SIZE - 1), %o3
+	andn    %o0, %o3, %o0
+2:
+	subcc   %o4, 32, %o4
+	stxa    %g0, [%o0 + %o4] ASI_DCACHE_INVALIDATE
+	membar  #Sync
+	bne,pt  %icc, 2b
+	 nop
+1:
+	retl
+	 nop
 
 /*
  * cache_flush_virt(va, len)
