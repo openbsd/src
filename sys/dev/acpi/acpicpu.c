@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.17 2006/12/26 23:58:08 marco Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.18 2006/12/29 04:28:44 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -121,7 +121,6 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	}
 	dnprintf(20, "\n");
 #endif
-
 	/* XXX this needs to be moved to probe routine */
 	if (acpicpu_getpct(sc))
 		return;
@@ -138,7 +137,6 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		setperf_prio = 30;
 	}
 	acpicpu_sc[sc->sc_dev.dv_unit] = sc;
-
 }
 
 int
@@ -271,30 +269,67 @@ acpicpu_notify(struct aml_node *node, int notify_type, void *arg)
 
 void
 acpicpu_setperf(int level) {
-	struct acpicpu_softc *sc;
-	struct acpicpu_pss *pss = NULL;
-	int high, low, freq, i;
-	u_int32_t status;
+	struct acpicpu_softc	*sc;
+	struct acpicpu_pss	*pss = NULL;
+	int			idx;
+	u_int32_t		stat_as, ctrl_as, stat_len, ctrl_len;
+	u_int32_t		status = 0;
 
 	sc = acpicpu_sc[cpu_number()];
-	high = sc->sc_pss[0].pss_core_freq;
-	low = sc->sc_pss[sc->sc_pss_len - 1].pss_core_freq;
-	freq = low + (high - low) * level / 100;
 
-	for (i = 0; i < sc->sc_pss_len; i++) {
-		if (sc->sc_pss[i].pss_core_freq <= freq) {
-			pss = &sc->sc_pss[i];
-			break;
-		}
+	dnprintf(10, "%s: acpicpu setperf level %d\n", 
+	    sc->sc_devnode->parent->name, level);
+
+	if (level < 0 || level > 100) {
+		dnprintf(10, "%s: acpicpu setperf illegal percentage\n", 
+		    sc->sc_devnode->parent->name);
+		return;
 	}
 
-	if (pss == NULL)
+	idx = (sc->sc_pss_len - 1) - (level / (100 / sc->sc_pss_len));
+	if (idx < 0)
+		idx = 0; /* compensate */
+	if (idx > sc->sc_pss_len) {
+		/* XXX should never happen */
+		printf("%s: acpicpu setperf index out of range\n", 
+		    sc->sc_devnode->parent->name);
 		return;
+	}
 
+	dnprintf(10, "%s: acpicpu setperf index %d\n", 
+	    sc->sc_devnode->parent->name, idx);
+
+	pss = &sc->sc_pss[idx];
+
+	/* if not set assume single 32 bit access */
+	stat_as = sc->sc_pct.pct_status.grd_gas.register_bit_width / 8;
+	if (stat_as == 0)
+		stat_as = 4;
+	ctrl_as = sc->sc_pct.pct_ctrl.grd_gas.register_bit_width / 8;
+	if (ctrl_as == 0)
+		ctrl_as = 4;
+	stat_len = sc->sc_pct.pct_status.grd_gas.access_size;
+	if (stat_len == 0)
+		stat_len = stat_as;
+	ctrl_len = sc->sc_pct.pct_ctrl.grd_gas.access_size;
+	if (ctrl_len == 0)
+		ctrl_len = ctrl_as;
+
+#ifdef ACPI_DEBUG
+	/* keep this for now since we will need this for debug in the field */
+	printf("0 status: %x %llx %u %u ctrl: %x %llx %u %u\n",
+	    sc->sc_pct.pct_status.grd_gas.address_space_id,
+	    sc->sc_pct.pct_status.grd_gas.address,
+	    stat_as, stat_len,
+	    sc->sc_pct.pct_ctrl.grd_gas.address_space_id,
+	    sc->sc_pct.pct_ctrl.grd_gas.address,
+	    ctrl_as, ctrl_len);
+#endif
 	acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
 	    sc->sc_pct.pct_status.grd_gas.address_space_id,
-	    sc->sc_pct.pct_status.grd_gas.address, 1, 4,
+	    sc->sc_pct.pct_status.grd_gas.address, stat_as, stat_len,
 	    &status);
+	dnprintf(20, "status: %u <- %u\n", status, pss->pss_status);
 
 	/* Are we already at the requested frequency? */
 	if (status == pss->pss_status)
@@ -302,17 +337,20 @@ acpicpu_setperf(int level) {
 
 	acpi_gasio(sc->sc_acpi, ACPI_IOWRITE,
 	    sc->sc_pct.pct_ctrl.grd_gas.address_space_id,
-	    sc->sc_pct.pct_ctrl.grd_gas.address, 1, 4,
+	    sc->sc_pct.pct_ctrl.grd_gas.address, ctrl_as, ctrl_len,
 	    &pss->pss_ctrl);
+	dnprintf(20, "pss_ctrl: %x\n", pss->pss_ctrl);
 
 	acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
 	    sc->sc_pct.pct_status.grd_gas.address_space_id,
-	    sc->sc_pct.pct_status.grd_gas.address, 1, 4,
+	    sc->sc_pct.pct_status.grd_gas.address, stat_as, stat_as,
 	    &status);
+	dnprintf(20, "3 status: %d\n", status);
 
 	/* Did the transition succeed? */
 	 if (status == pss->pss_status)
 		cpuspeed = pss->pss_core_freq;
-
-	return;
+	else
+		printf("%s: acpicpu setperf failed to alter frequency\n", 
+		    sc->sc_devnode->parent->name);
 }
