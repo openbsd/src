@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_exec.c,v 1.17 2003/11/18 06:26:15 tedu Exp $	*/
+/*	$OpenBSD: ibcs2_exec.c,v 1.18 2006/12/29 13:04:37 pedro Exp $	*/
 /*	$NetBSD: ibcs2_exec.c,v 1.12 1996/10/12 02:13:52 thorpej Exp $	*/
 
 /*
@@ -131,7 +131,8 @@ exec_ibcs2_coff_makecmds(p, epp)
 	if (COFF_BADMAG(fp))
 		return ENOEXEC;
 	
-	ap = epp->ep_hdr + sizeof(struct coff_filehdr);
+	ap = (struct coff_aouthdr *)((char *)epp->ep_hdr +
+	    sizeof(struct coff_filehdr));
 	switch (ap->a_magic) {
 	case COFF_OMAGIC:
 		error = exec_ibcs2_coff_prep_omagic(p, epp, fp, ap);
@@ -589,7 +590,7 @@ exec_ibcs2_xout_makecmds(p, epp)
 	if ((xp->x_renv & (XE_ABS | XE_VMOD)) || !(xp->x_renv & XE_EXEC))
 		return ENOEXEC;
 
-	xep = epp->ep_hdr + sizeof(struct xexec);
+	xep = (struct xext *)((char *)epp->ep_hdr + sizeof(struct xexec));
 #ifdef notyet
 	if (xp->x_renv & XE_PURE)
 		error = exec_ibcs2_xout_prep_zmagic(p, epp, xp, xep);

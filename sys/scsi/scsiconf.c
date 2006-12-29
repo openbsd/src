@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.123 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.124 2006/12/29 13:04:37 pedro Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -869,12 +869,13 @@ bad:
  * the patterns for the particular driver.
  */
 const void *
-scsi_inqmatch(struct scsi_inquiry_data *inqbuf, const void *base, int nmatches,
-    int matchsize, int *bestpriority)
+scsi_inqmatch(struct scsi_inquiry_data *inqbuf, const void *_base,
+    int nmatches, int matchsize, int *bestpriority)
 {
 	u_int8_t			type;
 	int				removable;
 	const void			*bestmatch;
+	const unsigned char		*base = (const unsigned char *)_base;
 
 	/* Include the qualifier to catch vendor-unique types. */
 	type = inqbuf->device;

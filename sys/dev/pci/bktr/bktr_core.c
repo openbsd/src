@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.19 2006/01/20 18:14:17 millert Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.20 2006/12/29 13:04:37 pedro Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -2878,7 +2878,7 @@ rgb_vbi_prog(bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	*dma_prog++ = (u_int )vtophys(loop_point) ;
 #else
 	*dma_prog++ = htole32(bktr->dm_prog->dm_segs->ds_addr +
-	    ((void *)loop_point - (void *)bktr->dma_prog));
+	    ((char *)loop_point - (char *)bktr->dma_prog));
 #endif
 	*dma_prog++ = htole32(0);  /* NULL WORD */
 

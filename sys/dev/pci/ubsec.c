@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.137 2006/06/29 21:34:51 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.138 2006/12/29 13:04:37 pedro Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -493,7 +493,7 @@ ubsec_feed(struct ubsec_softc *sc)
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q_next);
 		--sc->sc_nqueue;
 
-		v = ((void *)&q2->q_dma->d_dma->d_mcr) + sizeof(struct ubsec_mcr) -
+		v = ((char *)&q2->q_dma->d_dma->d_mcr) + sizeof(struct ubsec_mcr) -
 		    sizeof(struct ubsec_mcr_add);
 		bcopy(v, &q->q_dma->d_dma->d_mcradd[i], sizeof(struct ubsec_mcr_add));
 		q->q_stacked_mcr[i] = q2;

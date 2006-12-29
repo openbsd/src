@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.45 2005/05/25 05:47:53 markus Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.46 2006/12/29 13:04:37 pedro Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -330,7 +330,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 			 * we only use it in the while() loop, only if
 			 * there are indeed enough data.
 			 */
-			idat = uio->uio_iov[ind].iov_base + k;
+			idat = (char *)uio->uio_iov[ind].iov_base + k;
 
 			while (uio->uio_iov[ind].iov_len >= k + blks &&
 			    i > 0) {

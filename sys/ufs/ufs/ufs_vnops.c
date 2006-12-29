@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.72 2006/01/09 12:43:17 pedro Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.73 2006/12/29 13:04:37 pedro Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1556,7 +1556,8 @@ ufs_readdir(void *v)
 			panic("ufs_readdir: lost in space");
 
 		dpstart = (struct dirent *)
-			(uio->uio_iov->iov_base - (uio->uio_offset - off));
+			((char *)uio->uio_iov->iov_base -
+			(uio->uio_offset - off));
                 offstart = off;
                 for (dp = dpstart, ncookies = 0; off < uio->uio_offset; ) {
                         if (dp->d_reclen == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.24 2005/04/15 13:05:14 mickey Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.25 2006/12/29 13:04:37 pedro Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1238,8 +1238,8 @@ sbdsp_trigger_input(addr, start, end, blksize, intr, arg, param)
 
 	DPRINTF(("sbdsp: dma start loop input start=%p end=%p chan=%d\n",
 	    start, end, sc->sc_i.dmachan));
-	isa_dmastart(sc->sc_isa, sc->sc_i.dmachan, start, end - start,
-	    NULL, DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
+	isa_dmastart(sc->sc_isa, sc->sc_i.dmachan, start, (char *)end -
+	    (char *)start, NULL, DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
 
 	return sbdsp_block_input(addr);
 }
@@ -1373,8 +1373,8 @@ sbdsp_trigger_output(addr, start, end, blksize, intr, arg, param)
 
 	DPRINTF(("sbdsp: dma start loop output start=%p end=%p chan=%d\n",
 	    start, end, sc->sc_o.dmachan));
-	isa_dmastart(sc->sc_isa, sc->sc_o.dmachan, start, end - start,
-	    NULL, DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
+	isa_dmastart(sc->sc_isa, sc->sc_o.dmachan, start, (char *)end -
+	    (char *)start, NULL, DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
 
 	return sbdsp_block_output(addr);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.32 2006/09/19 11:06:33 jsg Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.33 2006/12/29 13:04:37 pedro Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ linux_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	 */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct linux_sigframe *)(psp->ps_sigstk.ss_sp +
+		fp = (struct linux_sigframe *)((char *)psp->ps_sigstk.ss_sp +
 		    psp->ps_sigstk.ss_size - sizeof(struct linux_sigframe));
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else {
