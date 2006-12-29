@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.15 2006/06/27 20:55:51 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.16 2006/12/29 15:45:56 reyk Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -208,6 +208,10 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		memset(keys, 0, sizeof(keys));
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			keys[i].wk_len = nwkey->i_key[i].i_keylen;
+			/*
+			 * Limit the maximal allowed key size to 
+			 * IEEE80211_KEYBUF_SIZE bytes.
+			 */
 			if (keys[i].wk_len > sizeof(keys[i].wk_key)) {
 				error = EINVAL;
 				break;

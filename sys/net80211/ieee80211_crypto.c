@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.8 2006/06/18 18:39:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.9 2006/12/29 15:45:56 reyk Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -108,7 +108,7 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 	u_int32_t iv, crc;
 	u_int8_t *ivp;
 	void *ctx;
-	u_int8_t keybuf[IEEE80211_WEP_IVLEN + IEEE80211_KEYBUF_SIZE];
+	u_int8_t keybuf[klen_round(IEEE80211_WEP_IVLEN + IEEE80211_KEYBUF_SIZE)];
 	u_int8_t crcbuf[IEEE80211_WEP_CRCLEN];
 
 	n0 = NULL;
@@ -177,9 +177,18 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 		kid = ivp[IEEE80211_WEP_IVLEN] >> 6;
 		moff += IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN;
 	}
+
+	/*
+	 * Copy the IV and the key material.  The input key has been padded
+	 * with zeros by the ioctl.  The output key buffer length is rounded
+	 * to a multiple of 64bit to allow variable length keys padded by
+	 * zeros.
+	 */
+	bzero(&keybuf, sizeof(keybuf));
 	memcpy(keybuf, ivp, IEEE80211_WEP_IVLEN);
+	memcpy(keybuf + IEEE80211_WEP_IVLEN, ic->ic_nw_keys[kid].wk_key,
+	    ic->ic_nw_keys[kid].wk_len);
 	len = klen_round(IEEE80211_WEP_IVLEN + ic->ic_nw_keys[kid].wk_len);
-	memcpy(keybuf + IEEE80211_WEP_IVLEN, ic->ic_nw_keys[kid].wk_key, len);
 	arc4_setkey(ctx, keybuf, len);
 
 	/* encrypt with calculating CRC */
