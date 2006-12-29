@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.51 2006/12/12 10:06:29 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.52 2006/12/29 20:27:50 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -405,7 +405,7 @@ malo_attach(struct malo_softc *sc)
 		ic->ic_myaddr[i] = malo_ctl_read1(sc, 0xa528 + i);
 
 	/* show our mac address */
-	printf(", address: %s\n", ether_sprintf(ic->ic_myaddr));
+	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	/* attach interface */
 	if_attach(ifp);
