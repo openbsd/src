@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.34 2006/10/26 23:15:16 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.35 2006/12/29 22:16:05 kettenis Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -387,7 +387,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, stge_mediachange,
 	    stge_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0 /* MIIF_DOPAUSE */);
+	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
