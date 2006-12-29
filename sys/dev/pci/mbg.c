@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.7 2006/12/23 17:46:39 deraadt Exp $ */
+/*	$OpenBSD: mbg.c,v 1.8 2006/12/29 10:55:30 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -41,6 +41,10 @@ struct mbg_softc {
 	struct sensor		sc_signal;
 	struct sensordev	sc_sensordev;
 	u_int8_t		sc_status;
+
+	int			(*sc_read)(struct mbg_softc *, int cmd,
+				    char *buf, size_t len,
+				    struct timespec *tstamp);
 };
 
 struct mbg_time {
@@ -72,7 +76,16 @@ struct mbg_time {
 #define AMCC_IMB4		0x1c	/* incoming mailbox 4 */
 #define AMCC_FIFO		0x20	/* FIFO register */
 #define AMCC_INTCSR		0x38	/* interrupt control/status register */
-#define	AMCC_MCSR		0x3c	/* master control/status register */
+#define AMCC_MCSR		0x3c	/* master control/status register */
+
+/* ASIC registers */
+#define ASIC_CFG		0x00
+#define ASIC_FEATURES		0x08	/* r/o */
+#define ASIC_STATUS		0x10
+#define ASIC_CTLSTATUS		0x14
+#define ASIC_DATA		0x18
+#define ASIC_RES1		0x1c
+#define ASIC_ADDON		0x20
 
 /* commands */
 #define MBG_GET_TIME		0x00
@@ -85,15 +98,17 @@ struct mbg_time {
 /* misc. constants */
 #define MBG_FIFO_LEN		16
 #define MBG_ID_LEN		(2 * MBG_FIFO_LEN + 1)
-#define	MBG_BUSY		0x01
+#define MBG_BUSY		0x01
 #define MBG_SIG_BIAS		55
 #define MBG_SIG_MAX		68
 
 int	mbg_probe(struct device *, void *, void *);
 void	mbg_attach(struct device *, struct device *, void *);
-int	mbg_read(struct mbg_softc *, int cmd, char *buf, size_t len,
-	    struct timespec *tstamp);
 void	mbg_task(void *);
+int	mbg_read_amcc_s5933(struct mbg_softc *, int cmd, char *buf, size_t len,
+	    struct timespec *tstamp);
+int	mbg_read_asic(struct mbg_softc *, int cmd, char *buf, size_t len,
+	    struct timespec *tstamp);
 
 struct cfattach mbg_ca = {
 	sizeof(struct mbg_softc), mbg_probe, mbg_attach
@@ -104,7 +119,9 @@ struct cfdriver mbg_cd = {
 };
 
 const struct pci_matchid mbg_devices[] = {
-	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI32 }
+	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI32 },
+	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI511 },
+	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_GPS170 }
 };
 
 int
@@ -132,8 +149,23 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (mbg_read(sc, MBG_GET_FW_ID_1, fw_id, MBG_FIFO_LEN, NULL) ||
-	    mbg_read(sc, MBG_GET_FW_ID_2, &fw_id[MBG_FIFO_LEN], MBG_FIFO_LEN,
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_MEINBERG_PCI32:
+		sc->sc_read = mbg_read_amcc_s5933;
+		break;
+	case PCI_PRODUCT_MEINBERG_PCI511:
+		/* FALLTHROUGH */
+	case PCI_PRODUCT_MEINBERG_GPS170:
+		sc->sc_read = mbg_read_asic;
+		break;
+	default:
+		/* this can not normally happen, but then there is murphy */
+		panic(": unsupported product 0x%04x", PCI_PRODUCT(pa->pa_id));
+		break;
+	}	
+
+	if (sc->sc_read(sc, MBG_GET_FW_ID_1, fw_id, MBG_FIFO_LEN, NULL) ||
+	    sc->sc_read(sc, MBG_GET_FW_ID_2, &fw_id[MBG_FIFO_LEN], MBG_FIFO_LEN,
 	    NULL))
 		printf(": firmware unknown, ");
 	else {
@@ -141,7 +173,7 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		printf(": firmware %s, ", fw_id);
 	}
 
-	if (mbg_read(sc, MBG_GET_TIME, (char *)&tframe,
+	if (sc->sc_read(sc, MBG_GET_TIME, (char *)&tframe,
 	    sizeof(struct mbg_time), NULL)) {
 		printf("unknown status\n");
 		sc->sc_status = 0;
@@ -162,7 +194,13 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_timedelta.status = SENSOR_S_UNKNOWN;
 	sc->sc_timedelta.value = 0LL;
 	sc->sc_timedelta.flags = 0;
-	strlcpy(sc->sc_timedelta.desc, "DCF77", sizeof(sc->sc_timedelta.desc));
+#ifdef PCIVERBOSE
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, sc->sc_timedelta.desc,
+ 	    sizeof(sc->sc_timedelta.desc));
+#else
+	strlcpy(sc->sc_timedelta.desc, "Radio clock",
+	    sizeof(sc->sc_timedelta.desc));
+#endif
 	sensor_attach(&sc->sc_sensordev, &sc->sc_timedelta);
 
 	sc->sc_signal.type = SENSOR_PERCENT;
@@ -174,7 +212,6 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	sensor_attach(&sc->sc_sensordev, &sc->sc_signal);
 
 	sensor_task_register(sc, mbg_task, 10);
-
 	sensordev_install(&sc->sc_sensordev);
 }
 
@@ -188,10 +225,9 @@ mbg_task(void *arg)
 	time_t trecv;
 	int signal;
 
-	if (mbg_read(sc, MBG_GET_TIME, (char *)&tframe, sizeof(tframe),
+	if (sc->sc_read(sc, MBG_GET_TIME, (char *)&tframe, sizeof(tframe),
 	    &tstamp)) {
-		log(LOG_ERR, "%s: error reading time\n",
-		    sc->sc_dev.dv_xname);
+		log(LOG_ERR, "%s: error reading time\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	if (tframe.status & MBG_INVALID) {
@@ -235,8 +271,12 @@ mbg_task(void *arg)
 	}
 }
 
+/*
+ * send a command and read back results to an AMCC S5933 based card
+ * (i.e. the PCI32 DCF77 radio clock)
+ */
 int
-mbg_read(struct mbg_softc *sc, int cmd, char *buf, size_t len,
+mbg_read_amcc_s5933(struct mbg_softc *sc, int cmd, char *buf, size_t len,
     struct timespec *tstamp)
 {
 	long timer, tmax;
@@ -278,6 +318,59 @@ mbg_read(struct mbg_softc *sc, int cmd, char *buf, size_t len,
 		}
 		buf[n] = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 		    AMCC_FIFO + (n % 4));
+	}
+	return 0;
+}
+
+/*
+ * send a command and read back results to an ASIC based card
+ * (i.e. the PCI511 DCF77 radio clock)
+ */
+int
+mbg_read_asic(struct mbg_softc *sc, int cmd, char *buf, size_t len,
+    struct timespec *tstamp)
+{
+	long timer, tmax;
+	size_t n;
+	u_int32_t data;
+	char *p = buf;
+	u_int16_t port;
+	u_int8_t status;
+
+	/* write the command, optionally taking a timestamp */
+	if (tstamp)
+		nanotime(tstamp);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ASIC_DATA, cmd);
+
+	/* wait for the BUSY flag to go low */
+	timer = 0;
+	tmax = cold ? 50 : hz / 10;
+	do {
+		if (cold)
+			delay(20);
+		else
+			tsleep(tstamp, 0, "mbg", 1);
+		status = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ASIC_STATUS);
+	} while ((status & MBG_BUSY) && timer++ < tmax);
+
+	if (status & MBG_BUSY)
+		return -1;
+
+	/* read data from the device FIFO */
+	port = ASIC_ADDON;
+	for (n = 0; n < len / 4; n++) {
+		data = bus_space_read_4(sc->sc_iot, sc->sc_ioh, port);
+		*(u_int32_t *)p = data;
+		p += sizeof(data);
+		port += sizeof(data);
+	}
+
+	if (len % 4) {
+		data = bus_space_read_4(sc->sc_iot, sc->sc_ioh, port);
+		for (n = 0; n < len % 4; n++) {
+			*p++ = data & 0xff;
+			data >>= 8;
+		}
 	}
 	return 0;
 }
