@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.28 2006/09/02 20:06:48 jmc Exp $
+.\"	$OpenBSD: mg.1,v 1.29 2006/12/29 17:07:32 reyk Exp $
 .\"
 .Dd February 25, 2000
 .Dt MG 1
@@ -36,7 +36,7 @@ scratch buffer and all files.
 .It Fl n
 Turn off backup file generation.
 .El
-.Pp
+.Sh KEY BINDINGS
 Normal editing commands are very similar to Gnu Emacs.
 In the following examples, ^X means control-X, and M-X means Meta-X,
 where the Meta key may be either a special key on your keyboard
@@ -108,20 +108,7 @@ Undo.
 .Pp
 For more key bindings, type
 .Dq M-x describe-bindings .
-.Pp
-.Nm
-differs primarily in not having special modes for tasks other than
-straight editing, e.g., mail and news, and in not having special modes that
-support various programming languages.
-It does have text justification
-and auto-fill mode.
-Since it is written completely in C, there is no
-language in which you can write extensions.
-However, you can rebind keys and change some parameters.
-There are no limits to line length or format.
-Command, buffer, and file name completion and listing can
-be done using the spacebar and tab keys.
-.Pp
+.Sh CONFIGURATION AND COMMANDS
 Amongst other major differences, the
 .Nm
 configuration files are much simpler than real emacs.
@@ -172,6 +159,18 @@ global-set-key "\\^Z" scroll-one-line-up
 global-set-key "\\ez" scroll-one-line-down
 global-set-key "\\^_" suspend-emacs
 .Ed
+.Pp
+In order to use 8-bit characters, the Meta key needs to be disabled.
+This is required to read high bit characters like German umlauts.
+ESC can be used instead of the Meta key \(en see the
+.Sx KEY BINDINGS
+section for details.
+Execute the following command or add it to
+.Pa .mg
+to disable the Meta keys on startup:
+.Bd -literal -offset indent
+meta-key-mode
+.Ed
 .Sh FILES
 .Bl -tag -width ~/.mg-TERM -compact
 .It Pa ~/.mg
@@ -181,3 +180,16 @@ terminal-specific startup file
 .El
 .Sh SEE ALSO
 .Xr vi 1
+.Sh CAVEATS
+.Nm
+differs primarily in not having special modes for tasks other than
+straight editing, e.g., mail and news, and in not having special modes that
+support various programming languages.
+It does have text justification
+and auto-fill mode.
+Since it is written completely in C, there is no
+language in which you can write extensions.
+However, you can rebind keys and change some parameters.
+There are no limits to line length or format.
+Command, buffer, and file name completion and listing can
+be done using the spacebar and tab keys.
