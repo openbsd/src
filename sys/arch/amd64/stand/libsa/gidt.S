@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.5 2005/05/31 23:08:47 jmc Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.6 2006/12/29 11:44:01 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -146,7 +146,7 @@ ENTRY(_rtt)
 	movl	$0x07310731, (%ebx)
 #endif
 
-	/* Try to cause a tripple fault... */
+	/* Try to cause a triple fault... */
 	lidt    Idtr_reset
 	xorl	%eax, %eax
 	divl	%eax, %eax
