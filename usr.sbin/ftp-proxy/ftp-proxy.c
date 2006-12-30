@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.12 2006/12/30 13:01:54 camield Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.13 2006/12/30 13:24:00 camield Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -89,7 +89,6 @@ int	client_parse(struct session *s);
 int	client_parse_anon(struct session *s);
 int	client_parse_cmd(struct session *s);
 void	client_read(struct bufferevent *, void *);
-void	client_write(struct bufferevent *, void *);
 int	drop_privs(void);
 void	end_session(struct session *);
 int	exit_daemon(void);
@@ -104,7 +103,6 @@ void	proxy_reply(int, struct sockaddr *, u_int16_t);
 void	server_error(struct bufferevent *, short, void *);
 int	server_parse(struct session *s);
 void	server_read(struct bufferevent *, void *);
-void	server_write(struct bufferevent *, void *);
 const char *sock_ntop(struct sockaddr *);
 void	usage(void);
 
@@ -244,12 +242,6 @@ client_read(struct bufferevent *bufev, void *arg)
 			return;
 		}
 	} while (read == buf_avail);
-}
-
-void
-client_write(struct bufferevent *bufev, void *arg)
-{
-	return;
 }
 
 int
@@ -484,8 +476,8 @@ handle_connection(const int listen_fd, short event, void *ev)
 	/*
 	 * Setup buffered events.
 	 */
-	s->client_bufev = bufferevent_new(s->client_fd, &client_read,
-	    &client_write, &client_error, s);
+	s->client_bufev = bufferevent_new(s->client_fd, &client_read, NULL,
+	    &client_error, s);
 	if (s->client_bufev == NULL) {
 		logmsg(LOG_CRIT, "#%d bufferevent_new client failed", s->id);
 		goto fail;
@@ -493,8 +485,8 @@ handle_connection(const int listen_fd, short event, void *ev)
 	bufferevent_settimeout(s->client_bufev, timeout, 0);
 	bufferevent_enable(s->client_bufev, EV_READ | EV_TIMEOUT);
 
-	s->server_bufev = bufferevent_new(s->server_fd, &server_read,
-	    &server_write, &server_error, s);
+	s->server_bufev = bufferevent_new(s->server_fd, &server_read, NULL,
+	    &server_error, s);
 	if (s->server_bufev == NULL) {
 		logmsg(LOG_CRIT, "#%d bufferevent_new server failed", s->id);
 		goto fail;
@@ -1063,12 +1055,6 @@ server_read(struct bufferevent *bufev, void *arg)
 			return;
 		}
 	} while (read == buf_avail);
-}
-
-void
-server_write(struct bufferevent *bufev, void *arg)
-{
-	return;
 }
 
 const char *
