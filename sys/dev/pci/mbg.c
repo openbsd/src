@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.9 2006/12/29 16:26:18 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.10 2006/12/30 23:44:58 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -151,11 +151,18 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_MEINBERG_PCI32:
+		strlcpy(sc->sc_timedelta.desc, "PCI32",
+		    sizeof(sc->sc_timedelta.desc));
 		sc->sc_read = mbg_read_amcc_s5933;
 		break;
 	case PCI_PRODUCT_MEINBERG_PCI511:
-		/* FALLTHROUGH */
+		strlcpy(sc->sc_timedelta.desc, "PCI511",
+		    sizeof(sc->sc_timedelta.desc));
+		sc->sc_read = mbg_read_asic;
+		break;
 	case PCI_PRODUCT_MEINBERG_GPS170:
+		strlcpy(sc->sc_timedelta.desc, "GPS170",
+		    sizeof(sc->sc_timedelta.desc));
 		sc->sc_read = mbg_read_asic;
 		break;
 	default:
@@ -194,13 +201,6 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_timedelta.status = SENSOR_S_UNKNOWN;
 	sc->sc_timedelta.value = 0LL;
 	sc->sc_timedelta.flags = 0;
-#ifdef PCIVERBOSE
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, sc->sc_timedelta.desc,
- 	    sizeof(sc->sc_timedelta.desc));
-#else
-	strlcpy(sc->sc_timedelta.desc, "Radio clock",
-	    sizeof(sc->sc_timedelta.desc));
-#endif
 	sensor_attach(&sc->sc_sensordev, &sc->sc_timedelta);
 
 	sc->sc_signal.type = SENSOR_PERCENT;
