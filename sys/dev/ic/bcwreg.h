@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.7 2006/12/28 22:23:07 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.8 2006/12/30 23:23:41 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -155,30 +155,30 @@
 
 /* SiliconBackplane registers 0xea8 through 0xffc */
 #define BCW_SBTPSFLAG			0x0f18
-#define  SBTPS_BACKPLANEFLAGMASK	0x3f
-#define  SBTPS_INT_ALWAYS		0x40		/* Interrupt always sent on backplane */
+#define SBTPS_BACKPLANEFLAGMASK		0x3f
+#define SBTPS_INT_ALWAYS		0x40		/* Interrupt always sent on backplane */
 #define BCW_SBIMSTATE			0x0f90
-#define  SBIM_REJECT			0x0200000
-#define  SBIM_INBANDERR			0x20000		/* Inband Error */
-#define  SBIM_TIMEOUT			0x40000		/* Timeout */
+#define SBIM_REJECT			0x0200000
+#define SBIM_INBANDERR			0x20000		/* Inband Error */
+#define SBIM_TIMEOUT			0x40000		/* Timeout */
 #define BCW_SBTMSTATELOW		0x0f98
-#define  SBTML_RESET			0x1		/* reset */
-#define  SBTML_REJ			0x6		/* reject */
-#define  SBTML_REJ22			0x2		/* v2.2 Reject bit */
-#define  SBTML_REJ23			0x4		/* v2.3 Reject bit */
-#define  SBTML_CLK			0x10000		/* clock enable */
-#define  SBTML_FGC			0x20000		/* force gated clocks on */
-#define  SBTML_80211FLAG		0x40000		/* core specific flag */
-#define  SBTML_80211PHY			0x20000000	/* Attach PHY */
+#define SBTML_RESET			0x1		/* reset */
+#define SBTML_REJ			0x6		/* reject */
+#define SBTML_REJ22			0x2		/* v2.2 Reject bit */
+#define SBTML_REJ23			0x4		/* v2.3 Reject bit */
+#define SBTML_CLK			0x10000		/* clock enable */
+#define SBTML_FGC			0x20000		/* force gated clocks on */
+#define SBTML_80211FLAG			0x40000		/* core specific flag */
+#define SBTML_80211PHY			0x20000000	/* Attach PHY */
 #define BCW_SBTMSTATEHI			0x0f9C
-#define  SBTMH_SERR			0x1		/* S Error */
-#define  SBTMH_INT			0x2
-#define  SBTMH_BUSY			0x4
+#define SBTMH_SERR			0x1		/* S Error */
+#define SBTMH_INT			0x2
+#define SBTMH_BUSY			0x4
 
 #define BCW_CIR_SBID_LO			0xff8
-#define  BCW_CIR_SBID_LO_INITIATOR	0x80
-#define  SBREV_MASK			0xf0000000	/* 1 = v2.3, 0 <= v2.2 */
-#define  SBREV_MASK_SHIFT		28
+#define BCW_CIR_SBID_LO_INITIATOR	0x80
+#define SBREV_MASK			0xf0000000	/* 1 = v2.3, 0 <= v2.2 */
+#define SBREV_MASK_SHIFT		28
 #define BCW_CIR_SBID_HI			0xffc
 
 /*
@@ -187,21 +187,21 @@
 #define BCW_SPROM_CONTROL		0x88		/* SPROM Control register */
 
 #define BCW_SBF				0x120		/* MIMO - Status Bit Field */
-#define  BCW_SBF_MAC_ENABLED		0x00000001	/* Set when mac enabled */
-#define  BCW_SBF_CORE_READY		0x00000004	/* set after core reset/enabled */
-#define  BCW_SBF_400_MAGIC		0x00000400	/* MAGIC */
-#define  BCW_SBF_REGISTER_BYTESWAP	0x00010000	/* xfer regs are byteswapped in hw */
+#define BCW_SBF_MAC_ENABLED		0x00000001	/* Set when mac enabled */
+#define BCW_SBF_CORE_READY		0x00000004	/* set after core reset/enabled */
+#define BCW_SBF_400_MAGIC		0x00000400	/* MAGIC */
+#define BCW_SBF_REGISTER_BYTESWAP	0x00010000	/* xfer regs are byteswapped in hw */
 #define  BCW_SBF_ADHOC			0x00020000	/* Operating mode is not adhoc */
-#define  BCW_SBF_AP			0x00040000	/* Device is in AP mode */
-#define  BCW_SBF_RADIOREG_LOCK		0x00080000	/* Radio Registers locked for use */
-#define  BCW_SBF_MONITOR		0x00400000	/* Pass HW handled control frames 
+#define BCW_SBF_AP			0x00040000	/* Device is in AP mode */
+#define BCW_SBF_RADIOREG_LOCK		0x00080000	/* Radio Registers locked for use */
+#define BCW_SBF_MONITOR			0x00400000	/* Pass HW handled control frames 
 							 * to driver, needs PROMISC also */
-#define  BCW_SBF_PROMISC		0x01000000	/* Device is in promiscuous mode */
-#define  BCW_SBF_PS1			0x02000000	/* Power saving bit 1 - unknown */
-#define  BCW_SBF_PS2			0x04000000	/*  bit 2 - Device is awake */
-#define  BCW_SBF_SSID_BCAST		0x08000000	/* set = SSID bcast is disabled
+#define BCW_SBF_PROMISC			0x01000000	/* Device is in promiscuous mode */
+#define BCW_SBF_PS1			0x02000000	/* Power saving bit 1 - unknown */
+#define BCW_SBF_PS2			0x04000000	/*  bit 2 - Device is awake */
+#define BCW_SBF_SSID_BCAST		0x08000000	/* set = SSID bcast is disabled
 							 * unset = SSID bcast enabled */
-#define  BCW_SBF_TIME_UPDATE		0x10000000	/* Related to TSF updates */
+#define BCW_SBF_TIME_UPDATE		0x10000000	/* Related to TSF updates */
 
 #define BCW_GIR				0x128	/* MIMO - Generic Interrupt Reason */
 
@@ -270,15 +270,13 @@
 #define BCW_DMA_CONTROL_FLUSH		0x10	/* Flush Request */
 #define BCW_DMA_CONTROL_ADDREXT		0x30000	/* Address Extension */
 
-
 /* 0x300 PIO Register space */
-
 #define BCW_RADIO_BASEBAND		0x3e6	/* Baseband Attenuation */
 #define BCW_RADIO_CONTROL		0x3f6	/* Control - 16bit */
 #define BCW_RADIO_DATA			0x3fa	/* Data - 16bit */
 #define BCW_RADIO_DATALOW		0x3fa	/* Data Low - 16bit */
 #define BCW_RADIO_DATAHIGH		0x3f8	/* Data High - 16 bit */
-#define  BCW_RADIO_ID			0x01	/* Radio ID offset */
+#define BCW_RADIO_ID			0x01	/* Radio ID offset */
 
 #define BCW_PHY_CONTROL			0x3fc	/* Control - 16bit */
 #define BCW_PHY_DATA			0x3fe	/* Data - 16bit */
@@ -301,22 +299,22 @@
 #define BCW_SPROM_PA1B2			0x106e
 #define BCW_SPROM_IDLETSSI		0x1070  /* As below */
 #define BCW_SPROM_BOARDFLAGS		0x1072	/* lower 16 bits */
-#define  BCW_BF_BTCOEXIST		0x0001	/* Bluetooth Co-existance */
-#define  BCW_BF_PACTRL			0x0002	/* GPIO 9 controls PA */
-#define  BCW_BF_AIRLINEMODE		0x0004	/* GPIO13 -> radio off LED */
-#define  BCW_BF_RSSI			0x0008	/* "something RSSI related */
-#define  BCW_BF_ENETSPI			0x0010	/* EPHY Roboswitch SPI */
-#define  BCW_BF_XTAL			0x0020	/* XTAL doesn't slow clock */
-#define  BCW_BF_CCKHIPWR		0x0040	/* HiPower CCK xmission */
-#define  BCW_BF_ENETADM			0x0080	/* has ADMtek Switch */
-#define  BCW_BF_ENETVLAN		0x0100	/* VLAN capable - huh? */
-#define  BCW_BF_AFTERBURNER		0x0200	/* Afterburner capable */
-#define  BCW_BF_NOPCI			0x0400	/* Board leaves PCI floating */
-#define  BCW_BF_FEM			0x0800	/* Front End Module support */
-#define  BCW_BF_EXTLNA			0x1000	/* has external LNA */
-#define  BCW_BF_HGPA			0x2000	/* has High Gain PA */
-#define  BCW_BF_BTCMOD			0x4000	/* BTCOEXIST in alt GPIOs */
-#define  BCW_BF_ALTIQ			0x8000	/* Alternate I/Q settings */
+#define BCW_BF_BTCOEXIST		0x0001	/* Bluetooth Co-existance */
+#define BCW_BF_PACTRL			0x0002	/* GPIO 9 controls PA */
+#define BCW_BF_AIRLINEMODE		0x0004	/* GPIO13 -> radio off LED */
+#define BCW_BF_RSSI			0x0008	/* "something RSSI related */
+#define BCW_BF_ENETSPI			0x0010	/* EPHY Roboswitch SPI */
+#define BCW_BF_XTAL			0x0020	/* XTAL doesn't slow clock */
+#define BCW_BF_CCKHIPWR			0x0040	/* HiPower CCK xmission */
+#define BCW_BF_ENETADM			0x0080	/* has ADMtek Switch */
+#define BCW_BF_ENETVLAN			0x0100	/* VLAN capable - huh? */
+#define BCW_BF_AFTERBURNER		0x0200	/* Afterburner capable */
+#define BCW_BF_NOPCI			0x0400	/* Board leaves PCI floating */
+#define BCW_BF_FEM			0x0800	/* Front End Module support */
+#define BCW_BF_EXTLNA			0x1000	/* has external LNA */
+#define BCW_BF_HGPA			0x2000	/* has High Gain PA */
+#define BCW_BF_BTCMOD			0x4000	/* BTCOEXIST in alt GPIOs */
+#define BCW_BF_ALTIQ			0x8000	/* Alternate I/Q settings */
 
 #define BCW_SPROM_ANTGAIN		0x1074	/* bits 7-0 for an A PHY
 						   bits 15-8 for B/G PHYs */
