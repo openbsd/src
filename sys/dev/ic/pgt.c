@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.39 2006/12/07 23:50:10 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.40 2006/12/30 22:43:01 claudio Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1022,12 +1022,12 @@ input:
 				tap->wr_rssi = rssi;
 				tap->wr_max_rssi = ic->ic_max_rssi;
 
-				M_DUP_PKTHDR(&mb, m);
 				mb.m_data = (caddr_t)tap;
 				mb.m_len = sc->sc_rxtap_len;
 				mb.m_next = m;
-				mb.m_pkthdr.len += mb.m_len;
-
+				mb.m_nextpkt = NULL;
+				mb.m_type = 0;
+				mb.m_flags = 0;
 				bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 			}
 #endif
@@ -2231,11 +2231,12 @@ pgt_start(struct ifnet *ifp)
 				    htole16(ic->ic_bss->ni_chan->ic_flags);
 
 				if (m != NULL) {
-					M_DUP_PKTHDR(&mb, m);
 					mb.m_data = (caddr_t)tap;
 					mb.m_len = sc->sc_txtap_len;
 					mb.m_next = m;
-					mb.m_pkthdr.len += mb.m_len;
+					mb.m_nextpkt = NULL;
+					mb.m_type = 0;
+					mb.m_flags = 0;
 
 					bpf_mtap(sc->sc_drvbpf, &mb,
 					    BPF_DIRECTION_OUT);

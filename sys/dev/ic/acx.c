@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.58 2006/12/17 21:45:48 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.59 2006/12/30 22:43:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -971,11 +971,12 @@ acx_start(struct ifnet *ifp)
 			tap->wt_chan_flags =
 			    htole16(ic->ic_bss->ni_chan->ic_flags);
 
-			M_DUP_PKTHDR(&mb, m);
 			mb.m_data = (caddr_t)tap;
 			mb.m_len = sc->sc_txtap_len;
 			mb.m_next = m;
-			mb.m_pkthdr.len += mb.m_len;
+			mb.m_nextpkt = NULL;
+			mb.m_type = 0;
+			mb.m_flags = 0;
 			bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
 		}
 #endif
@@ -1328,11 +1329,12 @@ acx_rxeof(struct acx_softc *sc)
 				tap->wr_rssi = head->rbh_level;
 				tap->wr_max_rssi = ic->ic_max_rssi;
 
-				M_DUP_PKTHDR(&mb, m);
 				mb.m_data = (caddr_t)tap;
 				mb.m_len = sc->sc_rxtap_len;
 				mb.m_next = m;
-				mb.m_pkthdr.len += mb.m_len;
+				mb.m_nextpkt = NULL;
+				mb.m_type = 0;
+				mb.m_flags = 0;
 				bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 			}
 #endif
