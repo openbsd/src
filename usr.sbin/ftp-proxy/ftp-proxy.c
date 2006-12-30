@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.11 2006/12/12 07:28:41 camield Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.12 2006/12/30 13:01:54 camield Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -581,6 +581,7 @@ main(int argc, char *argv[])
 	struct addrinfo hints, *res;
 	struct event ev, ev_sighup, ev_sigint, ev_sigterm;
 	int ch, error, listenfd, on;
+	const char *errstr;
 
 	/* Defaults. */
 	anonymous_only	= 0;
@@ -617,17 +618,18 @@ main(int argc, char *argv[])
 			listen_ip = optarg;
 			break;
 		case 'D':
-			loglevel = atoi(optarg);
-			if (loglevel < LOG_EMERG || loglevel > LOG_DEBUG)
-				errx(1, "bad loglevel");
+			loglevel = strtonum(optarg, LOG_EMERG, LOG_DEBUG,
+			    &errstr);
+			if (errstr)
+				errx(1, "loglevel %s", errstr);
 			break;
 		case 'd':
 			daemonize = 0;
 			break;
 		case 'm':
-			max_sessions = atoi(optarg);
-			if (max_sessions < 0)
-				errx(1, "bad max sessions");
+			max_sessions = strtonum(optarg, 1, 500, &errstr);
+			if (errstr)
+				errx(1, "max sessions %s", errstr);
 			break;
 		case 'P':
 			fixed_server_port = optarg;
@@ -647,9 +649,9 @@ main(int argc, char *argv[])
 			rfc_mode = 1;
 			break;
 		case 't':
-			timeout = atoi(optarg);
-			if (timeout < 0)
-				errx(1, "bad timeout");
+			timeout = strtonum(optarg, 0, 86400, &errstr);
+			if (errstr)
+				errx(1, "timeout %s", errstr);
 			break;
 		case 'v':
 			verbose++;
