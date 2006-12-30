@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.60 2006/12/21 05:15:06 drahn Exp $	*/
+/*	$OpenBSD: re.c,v 1.61 2006/12/30 09:38:28 kettenis Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1001,7 +1001,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, re_ifmedia_upd,
 	    re_ifmedia_sts);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
 		ifmedia_add(&sc->sc_mii.mii_media,

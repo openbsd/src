@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.20 2006/12/27 19:11:09 kettenis Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.21 2006/12/30 09:38:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -334,7 +334,7 @@ rgephy_status(struct mii_softc *sc)
 		mii->mii_media_active |= IFM_10_T;
 
 	if (bmsr & RL_GMEDIASTAT_FDX)
-		mii->mii_media_active |= IFM_FDX;
+		mii->mii_media_active |= mii_phy_flowstatus(sc) | IFM_FDX;
 	else
 		mii->mii_media_active |= IFM_HDX;
 
@@ -348,11 +348,16 @@ rgephy_status(struct mii_softc *sc)
 int
 rgephy_mii_phy_auto(struct mii_softc *sc)
 {
+	int anar;
+
 	rgephy_loop(sc);
 	PHY_RESET(sc);
 
-	PHY_WRITE(sc, RGEPHY_MII_ANAR,
-	    BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) | ANAR_CSMA);
+	anar = BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) | ANAR_CSMA;
+	if (sc->mii_flags & MIIF_DOPAUSE)
+		anar |= RGEPHY_ANAR_PC | RGEPHY_ANAR_ASP;
+
+	PHY_WRITE(sc, RGEPHY_MII_ANAR, anar);
 	DELAY(1000);
 	PHY_WRITE(sc, RGEPHY_MII_1000CTL,
 	    RGEPHY_1000CTL_AHD | RGEPHY_1000CTL_AFD);
