@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.54 2006/12/30 22:43:01 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.55 2006/12/30 23:31:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1882,7 +1882,8 @@ malo_load_firmware(struct malo_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 	if (malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 5) != 0) {
-		printf("%s: timeout at sending firmware upload ACK\n");
+		printf("%s: timeout at sending firmware upload ACK\n",
+		    sc->sc_dev.dv_xname);
 		return (ETIMEDOUT);
 	}
 
