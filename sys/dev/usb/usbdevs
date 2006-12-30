@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.242 2006/12/27 19:20:12 fkr Exp $
+$OpenBSD: usbdevs,v 1.243 2006/12/30 14:07:58 martin Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -422,6 +422,7 @@ vendor ASANTE		0x10bd	Asante
 vendor SILABS		0x10c4	Silicon Labs
 vendor ANALOG		0x1110	Analog Devices
 vendor TENX		0x1130	Ten X Technology, Inc.
+vendor ISSC		0x1131	Integrated System Solution Corp.
 vendor JRC		0x1145	Japan Radio Company
 vendor SPHAIRON		0x114b	Sphairon Access Systems GmbH
 vendor DELORME		0x1163	DeLorme
@@ -763,6 +764,7 @@ product BBELECTRONICS USOTL4	0xAC01	uLinks RS-422/485
 /*product BELKIN F5U111		0x????	F5U111 Ethernet */
 product BELKIN2 F5U002		0x0002	F5U002 Parallel
 product BELKIN F5D6050		0x0050	F5D6050 802.11b Wireless adapter
+product BELKIN FBT001V		0x0081	FBT001v2 Bluetooth
 product BELKIN FBT003V		0x0084	FBT003v2 Bluetooth
 product BELKIN F5U103		0x0103	F5U103 Serial
 product BELKIN F5U109		0x0109	F5U109 Serial
@@ -2106,6 +2108,9 @@ product TELEX MIC1		0x0001	Microphone
 
 /* Ten X Technology, Inc. */
 product TENX MISSILE		0x0202	Missile Launcher
+
+/* Integrated System Solution Corp. */
+product ISSC KYBT100		0x1001	KY-BT100 Bluetooth
 
 /* Texas Intel products */
 product TI UTUSB41		0x1446	UT-USB41 hub
