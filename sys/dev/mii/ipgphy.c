@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipgphy.c,v 1.5 2006/12/30 20:59:44 kettenis Exp $	*/
+/*	$OpenBSD: ipgphy.c,v 1.6 2006/12/30 23:04:39 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -217,23 +217,10 @@ ipgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		PHY_WRITE(sc, IPGPHY_MII_1000CR, gig);
 		PHY_WRITE(sc, IPGPHY_MII_BMCR, speed);
 
-		/*
-		 * When setting the link manually, one side must
-		 * be the master and the other the slave. However
-		 * ifmedia doesn't give us a good way to specify
-		 * this, so we fake it by using one of the LINK
-		 * flags. If LINK0 is set, we program the PHY to
-		 * be a master, otherwise it's a slave.
-		 */
-		if ((mii->mii_ifp->if_flags & IFF_LINK0))
-			PHY_WRITE(sc, IPGPHY_MII_1000CR, gig |
-			    IPGPHY_1000CR_MASTER |
-			    IPGPHY_1000CR_MMASTER |
-			    IPGPHY_1000CR_MANUAL);
-		else
-			PHY_WRITE(sc, IPGPHY_MII_1000CR, gig |
-			    IPGPHY_1000CR_MASTER |
-			    IPGPHY_1000CR_MANUAL);
+		if (mii->mii_media.ifm_media & IFM_ETH_MASTER)
+			gig |= IPGPHY_1000CR_MASTER | IPGPHY_1000CR_MANUAL;
+
+		PHY_WRITE(sc, IPGPHY_MII_1000CR, gig);
 
 done:
 		break;

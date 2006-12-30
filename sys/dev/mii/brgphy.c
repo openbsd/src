@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.67 2006/12/22 14:11:03 kettenis Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.68 2006/12/30 23:04:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -256,21 +256,9 @@ setit:
 			if (sc->mii_model != MII_MODEL_xxBROADCOM_BCM5701)
  				break;
 
-			/*
-			 * When setting the link manually, one side must
-			 * be the master and the other the slave. However
-			 * ifmedia doesn't give us a good way to specify
-			 * this, so we fake it by using one of the LINK
-			 * flags. If LINK0 is set, we program the PHY to
-			 * be a master, otherwise it's a slave.
-			 */
-			if ((mii->mii_ifp->if_flags & IFF_LINK0)) {
-				PHY_WRITE(sc, BRGPHY_MII_1000CTL,
-				    gig|BRGPHY_1000CTL_MSE|BRGPHY_1000CTL_MSC);
-			} else {
-				PHY_WRITE(sc, BRGPHY_MII_1000CTL,
-				    gig|BRGPHY_1000CTL_MSE);
-			}
+			if (mii->mii_media.ifm_media & IFM_ETH_MASTER)
+				gig |= BRGPHY_1000CTL_MSE|BRGPHY_1000CTL_MSC;
+			PHY_WRITE(sc, BRGPHY_MII_1000CTL, gig);
 			break;
 		default:
 			return (EINVAL);

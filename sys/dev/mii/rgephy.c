@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.21 2006/12/30 09:38:28 kettenis Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.22 2006/12/30 23:04:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -209,19 +209,9 @@ setit:
 				    ~(RGEPHY_ANAR_TX_FD | RGEPHY_ANAR_10_FD);
 			}
 
-			/*
-			 * When setting the link manually, one side must
-			 * be the master and the other the slave. However
-			 * ifmedia doesn't give us a good way to specify
-			 * this, so we fake it by using one of the LINK
-			 * flags. If LINK0 is set, we program the PHY to
-			 * be a master, otherwise it's a slave.
-			 */
-			if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T) {
-				gig |= RGEPHY_1000CTL_MSE;
-				if (mii->mii_ifp->if_flags & IFF_LINK0)
-					gig |= RGEPHY_1000CTL_MSC;
-			}
+			if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T &&
+			    mii->mii_media.ifm_media & IFM_ETH_MASTER)
+				gig |= RGEPHY_1000CTL_MSE|RGEPHY_1000CTL_MSC;
 
 			PHY_WRITE(sc, RGEPHY_MII_1000CTL, gig);
 			PHY_WRITE(sc, RGEPHY_MII_BMCR, speed |
