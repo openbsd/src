@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.85 2006/11/19 16:49:22 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.86 2006/12/30 16:25:41 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -745,6 +745,7 @@ sys_sigreturn(p, v, retval)
 }
 
 int	waittime = -1;
+struct pcb dumppcb;
 
 void
 boot(howto)
@@ -901,7 +902,7 @@ dumpsys()
 	extern struct mem_region *mem;
 
 	/* copy registers to memory */
-	snapshot(cpcb);
+	snapshot(&dumppcb);
 	stackdump();
 
 	if (dumpdev == NODEV)
