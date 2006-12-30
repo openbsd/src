@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bcw.4,v 1.4 2006/11/30 09:38:24 jsg Exp $
+.\"	$OpenBSD: bcw.4,v 1.5 2006/12/30 23:08:06 mglocker Exp $
 .\"
 .\" Copyright (c) 2006 Marcus Glocker.
 .\"
@@ -218,13 +218,29 @@ or 104-bit (13 characters or 26 hexadecimal digits) keys.
 Disable WEP encryption.
 This is the default mode of operation.
 .El
-.\".Sh FILES
-.\"The driver needs a set of firmware files which are loaded when
-.\"an interface is brought up:
-.\".Pp
-.\".Bl -tag -width Ds -offset indent -compact
-.\".It Pa /etc/firmware/88w8335
-.\".El
+.Sh FILES
+The driver needs a set of firmware files which are loaded when
+an interface is brought up:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/bcm43xx_initval01.fw
+.It Pa /etc/firmware/bcm43xx_initval02.fw
+.It Pa /etc/firmware/bcm43xx_initval03.fw
+.It Pa /etc/firmware/bcm43xx_initval04.fw
+.It Pa /etc/firmware/bcm43xx_initval05.fw
+.It Pa /etc/firmware/bcm43xx_initval06.fw
+.It Pa /etc/firmware/bcm43xx_initval07.fw
+.It Pa /etc/firmware/bcm43xx_initval08.fw
+.It Pa /etc/firmware/bcm43xx_initval09.fw
+.It Pa /etc/firmware/bcm43xx_initval10.fw
+.It Pa /etc/firmware/bcm43xx_initval17.fw
+.It Pa /etc/firmware/bcm43xx_initval18.fw
+.It Pa /etc/firmware/bcm43xx_microcode11.fw
+.It Pa /etc/firmware/bcm43xx_microcode4.fw
+.It Pa /etc/firmware/bcm43xx_microcode5.fw
+.It Pa /etc/firmware/bcm43xx_pcm4.fw
+.It Pa /etc/firmware/bcm43xx_pcm5.fw
+.El
 .\".Pp
 .\"These firmware files are not free because Marvell refuses
 .\"to grant distribution rights.
@@ -232,13 +248,13 @@ This is the default mode of operation.
 .\".Ox
 .\"includes the driver, the firmware files cannot be included and
 .\"users have to download these files on their own.
-.\".Pp
-.\"A prepackaged version of the firmware, designed to be used with
-.\".Xr pkg_add 1 ,
-.\"can be found at:
-.\".Bd -literal -offset indent
-.\"http://www.nazgul.ch/malo/malo-firmware-1.0.tgz
-.\".Ed
+.Pp
+A prepackaged version of the firmware, designed to be used with
+.Xr pkg_add 1 ,
+can be found at:
+.Bd -literal -offset indent
+http://www.nazgul.ch/bcw/bcw-firmware-1.0.tgz
+.Ed
 .Sh HARDWARE
 The following cards are among those supported by the
 .Nm
