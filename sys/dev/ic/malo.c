@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.52 2006/12/29 20:27:50 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.53 2006/12/30 01:10:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1773,7 +1773,7 @@ malo_load_bootimg(struct malo_softc *sc)
 {
 	char *name = "mrv8k-b.fw";
 	uint8_t	*ucode;
-	size_t size, count;
+	size_t size;
 	int error;
 
 	/* load boot firmware */
@@ -1793,8 +1793,8 @@ malo_load_bootimg(struct malo_softc *sc)
 	malo_mem_write2(sc, 0xbefa, size);
 	malo_mem_write4(sc, 0xbefc, 0);
 
-	for (count = 0; count < size; count++)
-		malo_mem_write1(sc, 0xbf00 + count, ucode[count]);
+	bus_space_write_region_1(sc->sc_mem1_bt, sc->sc_mem1_bh, 0xbf00,
+	    ucode, size);
 
 	/*
 	 * we loaded the firmware into card memory now tell the CPU
