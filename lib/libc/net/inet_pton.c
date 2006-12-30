@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_pton.c,v 1.6 2005/08/06 20:30:03 espie Exp $	*/
+/*	$OpenBSD: inet_pton.c,v 1.7 2006/12/30 23:37:37 itojun Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -128,7 +128,7 @@ inet_pton6(const char *src, u_char *dst)
 			  xdigits_u[] = "0123456789ABCDEF";
 	u_char tmp[IN6ADDRSZ], *tp, *endp, *colonp;
 	const char *xdigits, *curtok;
-	int ch, saw_xdigit;
+	int ch, saw_xdigit, count_xdigit;
 	u_int val;
 
 	memset((tp = tmp), '\0', IN6ADDRSZ);
@@ -139,7 +139,7 @@ inet_pton6(const char *src, u_char *dst)
 		if (*++src != ':')
 			return (0);
 	curtok = src;
-	saw_xdigit = 0;
+	saw_xdigit = count_xdigit = 0;
 	val = 0;
 	while ((ch = *src++) != '\0') {
 		const char *pch;
@@ -147,11 +147,14 @@ inet_pton6(const char *src, u_char *dst)
 		if ((pch = strchr((xdigits = xdigits_l), ch)) == NULL)
 			pch = strchr((xdigits = xdigits_u), ch);
 		if (pch != NULL) {
+			if (count_xdigit >= 4)
+				return (0);
 			val <<= 4;
 			val |= (pch - xdigits);
 			if (val > 0xffff)
 				return (0);
 			saw_xdigit = 1;
+			count_xdigit++;
 			continue;
 		}
 		if (ch == ':') {
@@ -169,6 +172,7 @@ inet_pton6(const char *src, u_char *dst)
 			*tp++ = (u_char) (val >> 8) & 0xff;
 			*tp++ = (u_char) val & 0xff;
 			saw_xdigit = 0;
+			count_xdigit = 0;
 			val = 0;
 			continue;
 		}
@@ -176,6 +180,7 @@ inet_pton6(const char *src, u_char *dst)
 		    inet_pton4(curtok, tp) > 0) {
 			tp += INADDRSZ;
 			saw_xdigit = 0;
+			count_xdigit = 0;
 			break;	/* '\0' was seen by inet_pton4(). */
 		}
 		return (0);
