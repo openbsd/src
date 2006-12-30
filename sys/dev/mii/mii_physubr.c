@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.30 2006/12/28 09:24:27 kettenis Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.31 2006/12/30 09:36:21 kettenis Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -147,12 +147,27 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 			if (sc->mii_extcapabilities & EXTSR_1000XHDX)
 				anar |= ANAR_X_HD;
 
+			if (sc->mii_flags & MIIF_DOPAUSE &&
+			    sc->mii_extcapabilities & EXTSR_1000XFDX)
+				anar |= ANAR_X_PAUSE_TOWARDS;
+
 			PHY_WRITE(sc, MII_ANAR, anar);
 		} else {
 			uint16_t anar;
 
 			anar = BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) |
 			    ANAR_CSMA;
+			/* 
+			 * Most 100baseTX PHY's only support symmetric
+			 * PAUSE, so we don't advertise asymmetric
+			 * PAUSE unless we also have 1000baseT capability.
+			 */
+			if (sc->mii_flags & MIIF_DOPAUSE) {
+				if (sc->mii_capabilities & BMSR_100TXFDX)
+					anar |= ANAR_FC;
+				if (sc->mii_extcapabilities & EXTSR_1000TFDX)
+					anar |= ANAR_X_PAUSE_TOWARDS;
+			}
 			PHY_WRITE(sc, MII_ANAR, anar);
 			if (sc->mii_flags & MIIF_HAVE_GTCR) {
 				uint16_t gtcr = 0;
