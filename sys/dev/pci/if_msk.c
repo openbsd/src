@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.37 2006/12/30 20:39:09 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.38 2006/12/30 22:08:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1073,9 +1073,8 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = msk_start;
 	ifp->if_watchdog = msk_watchdog;
 	ifp->if_baudrate = 1000000000;
-#ifdef notyet
-	ifp->if_hardmtu = SK_JUMBO_MTU;
-#endif
+	if (sc->sk_type != SK_YUKON_FE)
+		ifp->if_hardmtu = SK_JUMBO_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, MSK_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc_if->sk_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -1895,9 +1894,14 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 
 	/* serial mode register */
 	DPRINTFN(6, ("msk_init_yukon: 9\n"));
-	SK_YU_WRITE_2(sc_if, YUKON_SMR, YU_SMR_DATA_BLIND(0x1c) |
-		      YU_SMR_MFL_VLAN | YU_SMR_MFL_JUMBO |
-		      YU_SMR_IPG_DATA(0x1e));
+	reg = YU_SMR_DATA_BLIND(0x1c) |
+	      YU_SMR_MFL_VLAN |
+	      YU_SMR_IPG_DATA(0x1e);
+
+	if (sc->sk_type != SK_YUKON_FE)
+		reg |= YU_SMR_MFL_JUMBO;
+
+	SK_YU_WRITE_2(sc_if, YUKON_SMR, reg);
 
 	DPRINTFN(6, ("msk_init_yukon: 10\n"));
 	/* Setup Yukon's address */
