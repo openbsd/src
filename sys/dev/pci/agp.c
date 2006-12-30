@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.1 2006/03/16 21:32:34 matthieu Exp $ */
+/* $OpenBSD: agp.c,v 1.2 2006/12/30 19:15:30 miod Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -474,6 +474,7 @@ agp_generic_alloc_memory(struct vga_pci_softc *sc, int type, vsize_t size)
 	mem = malloc(sizeof *mem, M_DEVBUF, M_WAITOK);
 	if (mem == NULL)
 		return NULL;
+	bzero(mem, sizeof *mem);
 
 	if (bus_dmamap_create(sc->sc_dmat, size, size / PAGE_SIZE + 1,
 	    size, 0, BUS_DMA_NOWAIT, &mem->am_dmamap) != 0) {
@@ -483,10 +484,6 @@ agp_generic_alloc_memory(struct vga_pci_softc *sc, int type, vsize_t size)
 
 	mem->am_id = sc->sc_nextid++;
 	mem->am_size = size;
-	mem->am_type = 0;
-	mem->am_physical = 0;
-	mem->am_offset = 0;
-	mem->am_is_bound = 0;
 	TAILQ_INSERT_TAIL(&sc->sc_memory, mem, am_link);
 	sc->sc_allocated += size;
 
