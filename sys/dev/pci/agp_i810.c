@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.13 2006/05/15 08:27:19 dim Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.14 2006/12/30 19:14:55 miod Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -538,9 +538,6 @@ agp_i810_alloc_memory(struct vga_pci_softc *sc, int type, vsize_t size)
 	int error;
 
 	if ((size & (AGP_PAGE_SIZE - 1)) != 0)
-		return 0;
-
-	if (sc->sc_allocated + size > sc->sc_maxmem)
 		return 0;
 
 	if (type == 1) {
