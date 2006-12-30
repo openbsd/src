@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malo.4,v 1.13 2006/12/17 21:38:26 mglocker Exp $
+.\"	$OpenBSD: malo.4,v 1.14 2006/12/30 22:56:05 mglocker Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt.
 .\"
@@ -217,7 +217,8 @@ The driver needs a set of firmware files which are loaded when
 an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Pa /etc/firmware/88w8335
+.It Pa /etc/firmware/mrv8k-b.fw
+.It Pa /etc/firmware/mrv8k-f.fw
 .El
 .Pp
 These firmware files are not free because Marvell refuses
