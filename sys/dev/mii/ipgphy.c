@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipgphy.c,v 1.4 2006/12/29 21:40:47 kettenis Exp $	*/
+/*	$OpenBSD: ipgphy.c,v 1.5 2006/12/30 20:59:44 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -348,10 +348,13 @@ ipgphy_mii_phy_auto(struct mii_softc *mii)
 {
 	uint32_t reg;
 
-	PHY_WRITE(mii, IPGPHY_MII_ANAR,
-	    IPGPHY_ANAR_10T | IPGPHY_ANAR_10T_FDX |
-	    IPGPHY_ANAR_100TX | IPGPHY_ANAR_100TX_FDX |
-	    IPGPHY_ANAR_PAUSE | IPGPHY_ANAR_APAUSE);
+	reg = IPGPHY_ANAR_10T | IPGPHY_ANAR_10T_FDX |
+	      IPGPHY_ANAR_100TX | IPGPHY_ANAR_100TX_FDX;
+
+	if (sc->mii_flags & MIIF_DOPAUSE)
+		reg |= IPGPHY_ANAR_PAUSE | IPGPHY_ANAR_APAUSE;
+
+	PHY_WRITE(mii, IPGPHY_MII_ANAR, reg);
 	reg = IPGPHY_1000CR_1000T | IPGPHY_1000CR_1000T_FDX;
 	reg |= IPGPHY_1000CR_MASTER;
 	PHY_WRITE(mii, IPGPHY_MII_1000CR, reg);
