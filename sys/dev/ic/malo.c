@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.55 2006/12/30 23:31:26 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.56 2006/12/31 16:27:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -330,7 +330,7 @@ malo_intr(void *arg)
 			    malo_cmd_string(hdr->cmd),
 			    malo_cmd_string_result(hdr->result));
 		}
-#if MALO_DEBUG
+#ifdef MALO_DEBUG
 		printf("%s: cmd answer for %s=%s\n",
 		    sc->sc_dev.dv_xname,
 		    malo_cmd_string(hdr->cmd),
