@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7460.c,v 1.15 2006/12/26 19:45:43 deraadt Exp $	*/
+/*	$OpenBSD: adt7460.c,v 1.16 2006/12/31 06:47:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -78,6 +78,25 @@ struct adt_chip {
 	{ "emc6w201",	{ 2500, 2250, 3300, 5000, 12000 },	6201,	   0 },
 	{ "lm96000",	{ 2500, 2250, 3300, 5000, 12000 },	96000,	   0 },
 	{ "sch5017",	{ 5000, 2250, 3300, 5000, 12000 },	5017,	   0 }
+};
+
+struct {
+	char		sensor;
+	u_int8_t	cmd;
+	u_short		index;
+} worklist[] = {
+	{ ADT_2_5V, ADT7460_2_5V, 32768 + 0 },
+	{ ADT_VCCP, ADT7460_VCCP, 32768 + 1 },
+	{ ADT_VCC, ADT7460_VCC, 32768 + 2 },
+	{ ADT_V5, ADT7460_V5, 32768 + 3 },
+	{ ADT_V12, ADT7460_V12, 32768 + 4 },
+	{ ADT_REM1_TEMP, ADT7460_REM1_TEMP },
+	{ ADT_LOCAL_TEMP, ADT7460_LOCAL_TEMP },
+	{ ADT_REM2_TEMP, ADT7460_REM2_TEMP },
+	{ ADT_TACH1, ADT7460_TACH1L },
+	{ ADT_TACH2, ADT7460_TACH2L },
+	{ ADT_TACH3, ADT7460_TACH3L },
+	{ ADT_TACH4, ADT7460_TACH4L },
 };
 
 struct adt_softc {
@@ -174,6 +193,7 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensor[ADT_2_5V].type = SENSOR_VOLTS_DC;
 	strlcpy(sc->sc_sensor[ADT_2_5V].desc, "+2.5Vin",
 	    sizeof(sc->sc_sensor[ADT_2_5V].desc));
+		
 	if (sc->chip->type == 5017)
 		strlcpy(sc->sc_sensor[ADT_2_5V].desc, "+5VTR",
 		    sizeof(sc->sc_sensor[ADT_2_5V].desc));
@@ -217,6 +237,9 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < ADT_NUM_SENSORS; i++) {
+		if (worklist[i].index >= 32768 &&
+		    sc->chip->ratio[worklist[i].index - 32768] == 0)
+			continue;
 		sc->sc_sensor[i].flags &= ~SENSOR_FINVALID;
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
 	}
@@ -225,25 +248,6 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 }
-
-struct {
-	char		sensor;
-	u_int8_t	cmd;
-	u_short		index;
-} worklist[] = {
-	{ ADT_2_5V, ADT7460_2_5V, 32768 + 0 },
-	{ ADT_VCCP, ADT7460_VCCP, 32768 + 1 },
-	{ ADT_VCC, ADT7460_VCC, 32768 + 2 },
-	{ ADT_V5, ADT7460_V5, 32768 + 3 },
-	{ ADT_V12, ADT7460_V12, 32768 + 4 },
-	{ ADT_REM1_TEMP, ADT7460_REM1_TEMP },
-	{ ADT_LOCAL_TEMP, ADT7460_LOCAL_TEMP },
-	{ ADT_REM2_TEMP, ADT7460_REM2_TEMP },
-	{ ADT_TACH1, ADT7460_TACH1L },
-	{ ADT_TACH2, ADT7460_TACH2L },
-	{ ADT_TACH3, ADT7460_TACH3L },
-	{ ADT_TACH4, ADT7460_TACH4L },
-};
 
 void
 adt_refresh(void *arg)
