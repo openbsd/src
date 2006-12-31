@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.59 2006/12/31 16:42:37 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.60 2006/12/31 16:50:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -247,7 +247,7 @@ struct cfdriver malo_cd = {
 
 int	malo_alloc_cmd(struct malo_softc *sc);
 void	malo_free_cmd(struct malo_softc *sc);
-int	malo_send_cmd(struct malo_softc *sc, bus_addr_t addr, uint32_t waitfor);
+void	malo_send_cmd(struct malo_softc *sc, bus_addr_t addr);
 int	malo_send_cmd_dma(struct malo_softc *sc, bus_addr_t addr);
 int	malo_alloc_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring,
 	    int count);
@@ -513,31 +513,13 @@ malo_free_cmd(struct malo_softc *sc)
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cmd_dmas, 1);
 }
 
-int
-malo_send_cmd(struct malo_softc *sc, bus_addr_t addr, uint32_t waitfor)
+void
+malo_send_cmd(struct malo_softc *sc, bus_addr_t addr)
 {
-	int i;
-
 	malo_ctl_write4(sc, 0x0c10, (uint32_t)addr);
 	malo_ctl_barrier(sc, BUS_SPACE_BARRIER_WRITE);
 	malo_ctl_write4(sc, 0x0c18, 2); /* CPU_TRANSFER_CMD */
 	malo_ctl_barrier(sc, BUS_SPACE_BARRIER_WRITE);
-
-	if (waitfor == 0)
-		return (0);
-
-	/* wait for the DMA engine to finish the transfer */
-	for (i = 0; i < 100; i++) {
-		delay(50);
-		malo_ctl_barrier(sc, BUS_SPACE_BARRIER_READ);
-		if (malo_ctl_read4(sc, 0x0c14) == waitfor)
-			break;
-	}
-
-	if (i == 100)
-		return (ETIMEDOUT);
-
-	return (0);
 }
 
 int
@@ -1786,7 +1768,7 @@ malo_load_bootimg(struct malo_softc *sc)
 	char *name = "mrv8k-b.fw";
 	uint8_t	*ucode;
 	size_t size;
-	int error;
+	int error, i;
 
 	/* load boot firmware */
 	if ((error = loadfirmware(name, &ucode, &size)) != 0) {
@@ -1813,7 +1795,16 @@ malo_load_bootimg(struct malo_softc *sc)
 	 * to fetch the code and execute it. The memory mapped via the
 	 * first bar is internaly mapped to 0xc0000000.
 	 */
-	if (malo_send_cmd(sc, 0xc000bef8, 5) != 0) {
+	malo_send_cmd(sc, 0xc000bef8);
+
+	/* wait for the device to go into FW loading mode */
+	for (i = 0; i < 10; i++) {
+		delay(50);
+		malo_ctl_barrier(sc, BUS_SPACE_BARRIER_READ);
+		if (malo_ctl_read4(sc, 0x0c14) == 0x5)
+			break;
+	}
+	if (i == 10) {
 		printf("%s: timeout at boot firmware load!\n",
 		    sc->sc_dev.dv_xname);
 		free(ucode, M_DEVBUF);
@@ -1825,7 +1816,7 @@ malo_load_bootimg(struct malo_softc *sc)
 	malo_mem_write2(sc, 0xbef8, 0x001);
 	malo_mem_write2(sc, 0xbefa, 0);
 	malo_mem_write4(sc, 0xbefc, 0);
-	malo_send_cmd(sc, 0xc000bef8, 5);
+	malo_send_cmd(sc, 0xc000bef8);
 
 	DPRINTF(("%s: boot firmware loaded\n", sc->sc_dev.dv_xname));
 
@@ -1865,14 +1856,10 @@ malo_load_firmware(struct malo_softc *sc)
 		bcopy(ucode + count, data, bsize);
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
-		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
-		if (malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 5) != 0) {
-			printf("%s: timeout at firmware upload!\n",
-			    sc->sc_dev.dv_xname);
-			free(ucode, M_DEVBUF);
-			return (ETIMEDOUT);
-		}
-
+		    BUS_DMASYNC_PREWRITE);
+		malo_send_cmd(sc, sc->sc_cmd_dmaaddr);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+		    BUS_DMASYNC_POSTWRITE);
 		delay(100);
 	}
 	free(ucode, M_DEVBUF);
@@ -1889,12 +1876,11 @@ malo_load_firmware(struct malo_softc *sc)
 	hdr->result = 0;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
-	if (malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 5) != 0) {
-		printf("%s: timeout at sending firmware upload ACK\n",
-		    sc->sc_dev.dv_xname);
-		return (ETIMEDOUT);
-	}
+	    BUS_DMASYNC_PREWRITE);
+	malo_send_cmd(sc, sc->sc_cmd_dmaaddr);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_POSTWRITE);
+	delay(100);
 
 	DPRINTF(("%s: loading firmware\n", sc->sc_dev.dv_xname));
 
