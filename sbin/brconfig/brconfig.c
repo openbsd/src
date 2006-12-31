@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.40 2006/12/30 18:43:41 reyk Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.41 2006/12/31 10:44:52 jmc Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -129,7 +129,7 @@ char *stproles[] = {
 void
 usage(void)
 {
-	fprintf(stderr, "usage: brconfig [-aA]\n");
+	fprintf(stderr, "usage: brconfig [-Aa]\n");
 	fprintf(stderr,
 	    "       brconfig interface [up] [down] [add if] [del if] ...\n");
 }
