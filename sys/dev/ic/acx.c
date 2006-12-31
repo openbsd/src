@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.59 2006/12/30 22:43:01 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.60 2006/12/31 14:27:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -139,7 +139,6 @@ int acxdebug = 0;
 
 int	 acx_attach(struct acx_softc *);
 int	 acx_detach(void *);
-void	 acx_shutdown(void *);
 
 int	 acx_init(struct ifnet *);
 int	 acx_stop(struct acx_softc *);
@@ -373,14 +372,6 @@ acx_detach(void *xsc)
 	acx_dma_free(sc);
 
 	return (0);
-}
-
-void
-acx_shutdown(void *arg)
-{
-	struct acx_softc *sc = arg;
-
-	acx_stop(sc);
 }
 
 int
