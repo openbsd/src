@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.58 2006/12/31 16:35:49 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.59 2006/12/31 16:42:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -237,6 +237,9 @@ struct malo_cmd_slot {
 	bus_space_read_4((sc)->sc_mem2_bt, (sc)->sc_mem2_bh, (off))
 #define malo_ctl_read1(sc, off) \
 	bus_space_read_1((sc)->sc_mem2_bt, (sc)->sc_mem2_bh, (off))
+
+#define malo_ctl_barrier(sc, t) \
+	bus_space_barrier((sc)->sc_mem2_bt, (sc)->sc_mem2_bh, 0x0c00, 0xff, (t))
 
 struct cfdriver malo_cd = {
 	NULL, "malo", DV_IFNET
@@ -516,9 +519,9 @@ malo_send_cmd(struct malo_softc *sc, bus_addr_t addr, uint32_t waitfor)
 	int i;
 
 	malo_ctl_write4(sc, 0x0c10, (uint32_t)addr);
-	malo_ctl_read4(sc, 0x0c14);
+	malo_ctl_barrier(sc, BUS_SPACE_BARRIER_WRITE);
 	malo_ctl_write4(sc, 0x0c18, 2); /* CPU_TRANSFER_CMD */
-	malo_ctl_read4(sc, 0x0c14);
+	malo_ctl_barrier(sc, BUS_SPACE_BARRIER_WRITE);
 
 	if (waitfor == 0)
 		return (0);
@@ -526,6 +529,7 @@ malo_send_cmd(struct malo_softc *sc, bus_addr_t addr, uint32_t waitfor)
 	/* wait for the DMA engine to finish the transfer */
 	for (i = 0; i < 100; i++) {
 		delay(50);
+		malo_ctl_barrier(sc, BUS_SPACE_BARRIER_READ);
 		if (malo_ctl_read4(sc, 0x0c14) == waitfor)
 			break;
 	}
@@ -543,9 +547,9 @@ malo_send_cmd_dma(struct malo_softc *sc, bus_addr_t addr)
 	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
 
 	malo_ctl_write4(sc, 0x0c10, (uint32_t)addr);
-	malo_ctl_read4(sc, 0x0c14);
+	malo_ctl_barrier(sc, BUS_SPACE_BARRIER_WRITE);
 	malo_ctl_write4(sc, 0x0c18, 2); /* CPU_TRANSFER_CMD */
-	malo_ctl_read4(sc, 0x0c14);
+	malo_ctl_barrier(sc, BUS_SPACE_BARRIER_WRITE);
 
 	for (i = 0; i < 10; i++) {
 		delay(100);
@@ -908,9 +912,9 @@ malo_init(struct ifnet *ifp)
 
 	/* enable interrupts */
 	malo_ctl_write4(sc, 0x0c34, 0x1f);
-	malo_ctl_read4(sc, 0x0c14);
+	malo_ctl_barrier(sc, BUS_SPACE_BARRIER_WRITE);
 	malo_ctl_write4(sc, 0x0c3c, 0x1f);
-	malo_ctl_read4(sc, 0x0c14);
+	malo_ctl_barrier(sc, BUS_SPACE_BARRIER_WRITE);
 
 	if ((error = malo_cmd_get_spec(sc)))
 		goto fail;
@@ -1506,7 +1510,7 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	/* kick mgmt TX */
 	malo_ctl_write4(sc, 0x0c18, 1);
-	malo_ctl_read4(sc, 0x0c14);
+	malo_ctl_barrier(sc, BUS_SPACE_BARRIER_WRITE);
 
 	return (0);
 }
@@ -1624,7 +1628,7 @@ malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 
 	/* kick data TX */
 	malo_ctl_write4(sc, 0x0c18, 1);
-	malo_ctl_read4(sc, 0x0c14);
+	malo_ctl_barrier(sc, BUS_SPACE_BARRIER_WRITE);
 
 	return (0);
 }
@@ -1898,6 +1902,8 @@ malo_load_firmware(struct malo_softc *sc)
 	for (i = 0; i < 200; i++) {
 		malo_ctl_write4(sc, 0x0c10, 0x5a);
 		delay(500);
+		malo_ctl_barrier(sc, BUS_SPACE_BARRIER_WRITE |
+		     BUS_SPACE_BARRIER_READ);
 		if (malo_ctl_read4(sc, 0x0c14) == 0xf0f1f2f4)
 			break;
 	}
