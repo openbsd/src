@@ -1,4 +1,4 @@
-/*	$OpenBSD: apme.c,v 1.13 2006/06/01 22:09:09 reyk Exp $	*/
+/*	$OpenBSD: apme.c,v 1.14 2006/12/31 03:25:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -46,6 +46,7 @@
 #include "iapp.h"
 
 void	 hostapd_apme_frame(struct hostapd_apme *, u_int8_t *, u_int);
+void	 hostapd_apme_hopper(int, short, void *);
 
 int
 hostapd_apme_add(struct hostapd_config *cfg, const char *name)
@@ -60,6 +61,7 @@ hostapd_apme_add(struct hostapd_config *cfg, const char *name)
 
 	strlcpy(apme->a_iface, name, sizeof(apme->a_iface));
 	apme->a_cfg = cfg;
+	apme->a_chanavail = NULL;
 
 	TAILQ_INSERT_TAIL(&cfg->c_apmes, apme, a_entries);
 
@@ -115,10 +117,84 @@ hostapd_apme_lookup(struct hostapd_config *cfg, const char *name)
 	return (NULL);
 }
 
+struct hostapd_apme *
+hostapd_apme_addhopper(struct hostapd_config *cfg, const char *name)
+{
+	struct hostapd_apme *apme;
+
+	if ((apme = hostapd_apme_lookup(cfg, name)) == NULL)
+		return (NULL);
+	if (apme->a_chanavail != NULL)
+		return (NULL);
+	apme->a_curchan = IEEE80211_CHAN_MAX;
+	apme->a_maxchan = roundup(IEEE80211_CHAN_MAX, NBBY);
+	if ((apme->a_chanavail = (u_int8_t *)
+	    calloc(apme->a_maxchan, sizeof(u_int8_t))) == NULL)
+		return (NULL);
+	memset(apme->a_chanavail, 0xff,
+	    apme->a_maxchan * sizeof(u_int8_t));
+	strlcpy(apme->a_chanreq.i_name, apme->a_iface, IFNAMSIZ);
+
+	return (apme);
+}
+
+void
+hostapd_apme_sethopper(struct hostapd_apme *apme, int now)
+{
+	struct hostapd_config *cfg = (struct hostapd_config *)apme->a_cfg;
+	struct timeval tv;
+
+	bzero(&tv, sizeof(tv));
+	if (!now)
+		bcopy(&cfg->c_apme_hopdelay, &tv, sizeof(tv));
+
+	if (!evtimer_initialized(&apme->a_chanev))
+		evtimer_set(&apme->a_chanev, hostapd_apme_hopper, apme);
+	evtimer_add(&apme->a_chanev, &tv);
+}
+
+void
+hostapd_apme_hopper(int fd, short sig, void *arg)
+{
+	struct hostapd_apme *apme = (struct hostapd_apme *)arg;
+	struct hostapd_config *cfg = (struct hostapd_config *)apme->a_cfg;
+	int ret;
+
+	if (apme->a_curchan >= IEEE80211_CHAN_MAX)
+		apme->a_curchan = 0;
+
+	do {
+		if (apme->a_curchan >= IEEE80211_CHAN_MAX)
+			return;
+		apme->a_curchan %= IEEE80211_CHAN_MAX;
+		apme->a_curchan++;
+	} while (isclr(apme->a_chanavail, apme->a_curchan));
+
+	apme->a_chanreq.i_channel = apme->a_curchan;
+	if ((ret = ioctl(cfg->c_apme_ctl, SIOCS80211CHANNEL,
+	    &apme->a_chanreq)) != 0) {
+		hostapd_apme_sethopper(apme, 1);
+		return;
+	}
+
+	hostapd_log(HOSTAPD_LOG_DEBUG,
+	    "[priv]: %s setting to channel %d",
+	    apme->a_iface, apme->a_curchan);
+
+	hostapd_apme_sethopper(apme, 0);
+}
+
 void
 hostapd_apme_term(struct hostapd_apme *apme)
 {
 	struct hostapd_config *cfg = (struct hostapd_config *)apme->a_cfg;
+
+	/* Remove the channel hopper, if active */
+	if (apme->a_chanavail != NULL) {
+		event_del(&apme->a_chanev);
+		free(apme->a_chanavail);
+		apme->a_chanavail = NULL;
+	}
 
 	/* Kick a specified Host AP interface */
 	event_del(&apme->a_ev);

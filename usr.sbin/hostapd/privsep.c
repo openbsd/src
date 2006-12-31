@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.20 2006/06/01 22:09:09 reyk Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.21 2006/12/31 03:25:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -81,6 +81,7 @@ void
 hostapd_priv_init(struct hostapd_config *cfg)
 {
 	struct hostapd_iapp *iapp = &cfg->c_iapp;
+	struct hostapd_apme *apme;
 	int i, socks[2];
 	struct passwd *pw;
 	struct servent *se;
@@ -152,6 +153,9 @@ hostapd_priv_init(struct hostapd_config *cfg)
 	if (cfg->c_flags & HOSTAPD_CFG_F_APME) {
 		if ((cfg->c_apme_ctl = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 			hostapd_fatal("unable to open ioctl socket\n");
+		TAILQ_FOREACH(apme, &cfg->c_apmes, a_entries)
+			if (apme->a_chanavail != NULL)
+				hostapd_apme_sethopper(apme, 0);
 	}
 
 	hostapd_roaming_init(cfg);

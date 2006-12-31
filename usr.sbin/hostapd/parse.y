@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2006/10/13 15:36:57 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.27 2006/12/31 03:25:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -105,10 +105,12 @@ typedef struct {
 		long			val;
 		u_int16_t		reason;
 		enum hostapd_op		op;
+		struct timeval		timeout;
 	} v;
 	int lineno;
 } YYSTYPE;
 
+struct hostapd_apme *apme;
 struct hostapd_table *table;
 struct hostapd_entry *entry;
 struct hostapd_frame frame, *frame_ptr;
@@ -149,6 +151,7 @@ struct hostapd_ieee80211_frame *frame_ieee80211;
 %token	REASON UNSPECIFIED EXPIRE LEAVE ASSOC TOOMANY NOT AUTHED ASSOCED
 %token	RESERVED RSN REQUIRED INCONSISTENT IE INVALID MIC FAILURE OPEN
 %token	ADDRESS PORT ON NOTIFY TTL INCLUDE ROUTE ROAMING RSSI TXRATE FREQ
+%token	HOPPER DELAY
 %token	<v.string>	STRING
 %token	<v.val>		VALUE
 %type	<v.val>		number
@@ -163,6 +166,7 @@ struct hostapd_ieee80211_frame *frame_ieee80211;
 %type	<v.val>		txrate
 %type	<v.val>		freq
 %type	<v.val>		not
+%type	<v.timeout>	timeout
 
 %%
 
@@ -200,6 +204,12 @@ option		: SET HOSTAP INTERFACE hostapifaces
 		{
 			if (!TAILQ_EMPTY(&hostapd_cfg.c_apmes))
 				hostapd_cfg.c_flags |= HOSTAPD_CFG_F_APME;
+		}
+		| SET HOSTAP HOPPER INTERFACE hopperifaces
+		| SET HOSTAP HOPPER DELAY timeout
+		{
+			bcopy(&$5, &hostapd_cfg.c_apme_hopdelay,
+			    sizeof(struct timeval));
 		}
 		| SET HOSTAP MODE hostapmode
 		| SET IAPP INTERFACE STRING passive
@@ -292,6 +302,26 @@ hostapiface	: STRING
 		{
 			if (hostapd_apme_add(&hostapd_cfg, $1) != 0) {
 				yyerror("failed to add hostap interface");
+				YYERROR;
+			}
+			free($1);
+		}
+		;
+
+hopperifaces	: '{' optnl hopperifacelist optnl '}'
+		| hopperiface
+		;
+
+hopperifacelist	: hopperiface
+		| hopperifacelist comma hopperiface
+		;
+
+hopperiface	: STRING
+		{
+			if ((apme = hostapd_apme_addhopper(&hostapd_cfg,
+			    $1)) == NULL) {
+				yyerror("failed to add hopper %s", $1);
+				free($1);
 				YYERROR;
 			}
 			free($1);
@@ -1151,6 +1181,13 @@ freq		: STRING
 			free($1);
 		}
 		;
+
+timeout		: number
+		{
+			$$.tv_sec = $1 / 1000;
+			$$.tv_usec = ($1 % 1000) * 1000;
+		}
+		;
 %%
 
 /*
@@ -1187,6 +1224,7 @@ lookup(char *token)
 		{ "const",		CONST },
 		{ "data",		DATA },
 		{ "deauth",		DEAUTH },
+		{ "delay",		DELAY },
 		{ "delete",		DELETE },
 		{ "dir",		DIR },
 		{ "disassoc",		DISASSOC },
@@ -1197,6 +1235,7 @@ lookup(char *token)
 		{ "freq",		FREQ },
 		{ "from",		FROM },
 		{ "handle",		HANDLE },
+		{ "hopper",		HOPPER },
 		{ "hostap",		HOSTAP },
 		{ "iapp",		IAPP },
 		{ "ie",			IE },
@@ -1589,6 +1628,8 @@ hostapd_parse_file(struct hostapd_config *cfg)
 	cfg->c_iapp.i_multicast.sin_addr.s_addr = INADDR_ANY;
 	cfg->c_iapp.i_flags = HOSTAPD_IAPP_F_DEFAULT;
 	cfg->c_iapp.i_ttl = IP_DEFAULT_MULTICAST_TTL;
+	cfg->c_apme_hopdelay.tv_sec = HOSTAPD_HOPPER_MDELAY / 1000;
+	cfg->c_apme_hopdelay.tv_usec = (HOSTAPD_HOPPER_MDELAY % 1000) * 1000;
 
 	errors = 0;
 

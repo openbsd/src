@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.19 2006/09/28 17:43:42 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.20 2006/12/31 03:25:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -279,8 +279,20 @@ struct hostapd_apme {
 	void				*a_cfg;
 	struct sockaddr_in		a_addr;
 
+	struct event			a_chanev;
+	u_int8_t			*a_chanavail;
+	u_int8_t			a_curchan;
+	u_int				a_maxchan;
+	struct ieee80211chanreq		a_chanreq;
+
 	TAILQ_ENTRY(hostapd_apme)	a_entries;
 };
+
+#ifndef IEEE80211_CHAN_MAX
+#define IEEE80211_CHAN_MAX	255
+#endif
+
+#define HOSTAPD_HOPPER_MDELAY	800
 
 struct hostapd_iapp {
 	u_int16_t			i_cnt;
@@ -313,6 +325,7 @@ struct hostapd_iapp {
 struct hostapd_config {
 	int				c_apme_ctl;
 	u_int				c_apme_dlt;
+	struct timeval			c_apme_hopdelay;
 
 	struct hostapd_iapp		c_iapp;
 
@@ -413,6 +426,9 @@ int	 hostapd_apme_delnode(struct hostapd_apme *,
 	    struct hostapd_node *node);
 int	 hostapd_apme_offset(struct hostapd_apme *, u_int8_t *,
 	    const u_int);
+struct hostapd_apme *hostapd_apme_addhopper(struct hostapd_config *,
+	    const char *);
+void	 hostapd_apme_sethopper(struct hostapd_apme *, int);
 
 void	 hostapd_iapp_init(struct hostapd_config *);
 void	 hostapd_iapp_term(struct hostapd_config *);
