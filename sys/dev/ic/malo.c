@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.57 2006/12/31 16:32:44 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.58 2006/12/31 16:35:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -901,8 +901,10 @@ malo_init(struct ifnet *ifp)
 	malo_ctl_write4(sc, 0x0c3c, 0);
 
 	/* load firmware */
-	malo_load_bootimg(sc);
-	malo_load_firmware(sc);
+	if ((error = malo_load_bootimg(sc)))
+		goto fail;
+	if ((error = malo_load_firmware(sc)))
+		goto fail;
 
 	/* enable interrupts */
 	malo_ctl_write4(sc, 0x0c34, 0x1f);
@@ -911,7 +913,7 @@ malo_init(struct ifnet *ifp)
 	malo_ctl_read4(sc, 0x0c14);
 
 	if ((error = malo_cmd_get_spec(sc)))
-		return (error);
+		goto fail;
 
 	/* select default channel */
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
@@ -921,32 +923,32 @@ malo_init(struct ifnet *ifp)
 	if ((error = malo_cmd_set_channel(sc, chan))) {
 		printf("%s: setting channel failed!\n",
 		    sc->sc_dev.dv_xname);
-		return (error);
+		goto fail;
 	}
 	if ((error = malo_cmd_set_antenna(sc, 1))) {
 		printf("%s: setting RX antenna failed!\n",
 		    sc->sc_dev.dv_xname);
-		return (error);
+		goto fail;
 	}
 	if ((error = malo_cmd_set_antenna(sc, 2))) {
 		printf("%s: setting TX antenna failed!\n",
 		    sc->sc_dev.dv_xname);
-		return (error);
+		goto fail;
 	}
 	if ((error = malo_cmd_set_radio(sc, 1, 5))) {
 		printf("%s: turn radio on failed!\n",
 		    sc->sc_dev.dv_xname);
-		return (error);
+		goto fail;
 	}
 	if ((error = malo_cmd_set_txpower(sc, 100))) {
 		printf("%s: setting TX power failed!\n",
 		    sc->sc_dev.dv_xname);
-		return (error);
+		goto fail;
 	}
 	if ((error = malo_cmd_set_rts(sc, IEEE80211_RTS_MAX))) {
 		printf("%s: setting RTS failed!\n",
 		    sc->sc_dev.dv_xname);
-		return (error);
+		goto fail;
 	}
 
 	/* WEP */
@@ -955,7 +957,7 @@ malo_init(struct ifnet *ifp)
 		if (malo_set_wepkey(sc)) {
 			printf("%s: setting WEP key failed!\n",
 			    sc->sc_dev.dv_xname);
-			return (error);
+			goto fail;
 		}
 	}
 
@@ -969,6 +971,11 @@ malo_init(struct ifnet *ifp)
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
 	return (0);
+
+fail:
+	/* reset adapter */
+	malo_ctl_write4(sc, 0x0c18, (1 << 15));
+	return (error);
 }
 
 int
