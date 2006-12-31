@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.56 2006/12/31 16:27:55 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.57 2006/12/31 16:32:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -257,7 +257,7 @@ void	malo_free_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring);
 int	malo_init(struct ifnet *ifp);
 int	malo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
 void	malo_start(struct ifnet *ifp);
-int	malo_stop(struct malo_softc *sc);
+void	malo_stop(struct malo_softc *sc);
 void	malo_watchdog(struct ifnet *ifp);
 int	malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 	    int arg);
@@ -1078,7 +1078,7 @@ malo_start(struct ifnet *ifp)
 	}
 }
 
-int
+void
 malo_stop(struct malo_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1106,8 +1106,6 @@ malo_stop(struct malo_softc *sc)
 	/* power off cardbus socket */
 	if (sc->sc_disable)
 		sc->sc_disable(sc);
-
-	return (0);
 }
 
 void
