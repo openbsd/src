@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.40 2006/12/31 15:33:23 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.41 2006/12/31 15:38:11 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -143,6 +143,9 @@ cvs_admin(int argc, char **argv)
 			cvs_client_send_request("Argument -L");
 		else if (lkmode == RCS_LOCK_LOOSE)
 			cvs_client_send_request("Argument -U");
+
+		if (logstr != NULL)
+			cvs_client_send_request("Argument -m%s", logstr);
 
 		if (orange != NULL)
 			cvs_client_send_request("Argument -o%s", orange);
