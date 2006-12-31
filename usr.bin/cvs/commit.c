@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.81 2006/07/08 09:25:44 ray Exp $	*/
+/*	$OpenBSD: commit.c,v 1.82 2006/12/31 15:11:23 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -56,15 +56,14 @@ cvs_commit(int argc, char **argv)
 
 	while ((ch = getopt(argc, argv, cvs_cmd_commit.cmd_opts)) != -1) {
 		switch (ch) {
-		case 'f':
-			break;
 		case 'F':
 			bp = cvs_buf_load(optarg, BUF_AUTOEXT);
 			if (bp == NULL)
-				fatal("failed to load commit message %s",
-				    optarg);
+				fatal("failed to load commit message %s", optarg);
 			cvs_buf_putc(bp, '\0');
 			logmsg = cvs_buf_release(bp);
+			break;
+		case 'f':
 			break;
 		case 'l':
 			flags &= ~CR_RECURSE_DIRS;
@@ -72,9 +71,9 @@ cvs_commit(int argc, char **argv)
 		case 'm':
 			logmsg = xstrdup(optarg);
 			break;
-		case 'r':
-			break;
 		case 'R':
+			break;
+		case 'r':
 			break;
 		default:
 			fatal("%s", cvs_cmd_commit.cmd_synopsis);
@@ -84,6 +83,7 @@ cvs_commit(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+	/* XXX */
 	if (logmsg == NULL)
 		fatal("please use -m or -F to specify a log message for now");
 
