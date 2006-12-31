@@ -1,4 +1,4 @@
-/*	$OpenBSD: amphy.c,v 1.14 2006/12/27 19:11:08 kettenis Exp $	*/
+/*	$OpenBSD: amphy.c,v 1.15 2006/12/31 15:04:33 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -179,7 +179,7 @@ amphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	}
 
 	/* Update the media status. */
-	amphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);

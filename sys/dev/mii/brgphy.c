@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.68 2006/12/30 23:04:39 kettenis Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.69 2006/12/31 15:04:33 krw Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -305,7 +305,7 @@ setit:
 	}
 
 	/* Update the media status. */
-	brgphy_status(sc);
+	mii_phy_status(sc);
 
 	/*
 	 * Callback if something changed. Note that we need to poke the DSP on

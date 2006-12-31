@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.16 2006/10/07 23:44:51 brad Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.17 2006/12/31 15:04:33 krw Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -232,7 +232,7 @@ xmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	}
 
 	/* Update the media status. */
-	xmphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);

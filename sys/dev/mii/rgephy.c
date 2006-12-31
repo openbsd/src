@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.22 2006/12/30 23:04:39 kettenis Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.23 2006/12/31 15:04:33 krw Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -269,7 +269,7 @@ setit:
 	}
 
 	/* Update the media status. */
-	rgephy_status(sc);
+	mii_phy_status(sc);
 
 	/*
 	 * Callback if something changed. Note that we need to poke
