@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.39 2006/11/13 12:51:58 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.40 2006/12/31 15:33:23 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -43,10 +43,8 @@ struct cvs_cmd cvs_cmd_admin = {
 
 static int	 runflags = 0;
 static int	 lkmode = RCS_LOCK_INVAL;
-static char	*alist = NULL;
-static char	*comment = NULL;
-static char	*elist = NULL;
-static char	*orange = NULL;
+static char	*alist, *comment, *elist, *logmsg, *logstr, *orange;
+static RCSNUM	*logrev;
 
 int
 cvs_admin(int argc, char **argv)
@@ -56,6 +54,8 @@ cvs_admin(int argc, char **argv)
 	struct cvs_recursion cr;
 
 	flags = CR_RECURSE_DIRS;
+
+	alist = comment = elist = logmsg = logstr = orange = NULL;
 
 	while ((ch = getopt(argc, argv, cvs_cmd_admin.cmd_opts)) != -1) {
 		switch (ch) {
@@ -87,6 +87,7 @@ cvs_admin(int argc, char **argv)
 		case 'l':
 			break;
 		case 'm':
+			logstr = optarg;
 			break;
 		case 'N':
 			break;
@@ -226,6 +227,28 @@ cvs_admin_local(struct cvs_file *cf)
 		}
 		/* no synced anymore */
 		cf->file_rcs->rf_flags &= ~RCS_SYNCED;
+	}
+
+	if (logstr != NULL) {
+		if ((logmsg = strchr(logstr, ':')) == NULL) {
+			cvs_log(LP_ERR, "missing log message");
+			return;
+		}
+
+		*logmsg++ = '\0';
+		if ((logrev = rcsnum_parse(logstr)) == NULL) {
+			cvs_log(LP_ERR, "`%s' bad revision number", logstr);
+			return;
+		}
+
+		if (rcs_rev_setlog(cf->file_rcs, logrev, logmsg) < 0) {
+			cvs_log(LP_ERR, "failed to set logmsg for `%s' to `%s'",
+			    logstr, logmsg);
+			rcsnum_free(logrev);
+			return;
+		}
+
+		rcsnum_free(logrev);
 	}
 
 	if (orange != NULL) {
