@@ -1,4 +1,4 @@
-/* $OpenBSD: esp.c,v 1.1 2006/12/14 21:52:04 gwk Exp $ */
+/* $OpenBSD: esp.c,v 1.2 2006/12/31 21:10:37 gwk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ struct scsi_adapter esp_switch = {
 };
 
 struct scsi_device esp_dev = {
-	NULL, NULL, NULL, NULL,	
+	NULL, NULL, NULL, NULL,
 };
 
 /*
@@ -222,7 +222,7 @@ espattach(struct device *parent, struct device *self, void *aux)
 	 * Map my registers in.
 	 */
 	reg = ca->ca_reg;
-	esc->sc_reg =    mapiodev(ca->ca_baseaddr + reg[0], reg[1]);
+	esc->sc_reg = mapiodev(ca->ca_baseaddr + reg[0], reg[1]);
 	esc->sc_dmareg = mapiodev(ca->ca_baseaddr + reg[2], reg[3]);
 
 	esc->sc_dmat = ca->ca_dmat;
@@ -232,11 +232,11 @@ espattach(struct device *parent, struct device *self, void *aux)
 		printf(": cannot create dma map, error = %d\n", error);
 		return;
 	}
-	
+
 	/* Allocate 16-byte aligned DMA command space */
 	esc->sc_dbdma = dbdma_alloc(esc->sc_dmat, ESP_DMALIST_MAX);
 	esc->sc_dmacmd = esc->sc_dbdma->d_addr;
-	
+
 	/* Other settings */
 	sc->sc_id = 7;
 	sz = OF_getprop(ca->ca_node, "clock-frequency",
@@ -246,12 +246,6 @@ espattach(struct device *parent, struct device *self, void *aux)
 
 	/* gimme MHz */
 	sc->sc_freq /= 1000000;
-
-	/*
-	 * XXX More of this should be in ncr53c9x_attach(), but
-	 * XXX should we really poke around the chip that much in
-	 * XXX the MI code?  Think about this more...
-	 */
 
 	/*
 	 * Set up static configuration info.
@@ -360,8 +354,8 @@ esp_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 		    DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 	}
 	DBDMA_BUILD(cmdp, DBDMA_CMD_STOP, 0, 0, 0,
- 	    DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
-	
+	    DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+
 	esc->sc_dma_direction = datain ? D_WRITE : 0;
 
 	return 0;
@@ -415,6 +409,7 @@ espdmaintr(struct esp_softc *sc)
 
 	/* DMA has stopped */
 	dbdma_stop(sc->sc_dmareg);
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmamap);
 	sc->sc_dmaactive = 0;
 
 	if (sc->sc_dmasize == 0) {
