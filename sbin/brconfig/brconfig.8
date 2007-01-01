@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.67 2007/01/01 20:41:23 jmc Exp $
+.\"	$OpenBSD: brconfig.8,v 1.68 2007/01/01 20:47:55 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -249,7 +249,7 @@ Otherwise, any key management daemons such as
 that are running on the bridge will be invoked to establish the
 necessary SAs.
 These daemons have to be configured as if they were running on the
-host whose traffic they are protecting (i.e., they need to have the
+host whose traffic they are protecting (i.e. they need to have the
 appropriate authentication and authorization material, such as keys
 and certificates, to impersonate the protected host(s)).
 .It Cm -link2
@@ -440,14 +440,16 @@ frames:
 .Pp
 .Dl # brconfig bridge0 up
 .Pp
-The internal interface, i.e., fxp1, on each bridge need not have an IP
-address; the bridge can function without it.
+The internal interface on each bridge need not have an IP
+address: the bridge can function without it.
 .Pp
 Note:  It is possible to put the above commands in the
 .Xr hostname.if 5
 and
 .Xr bridgename.if 5
-files, using the ! operator.
+files, using the
+.Sq !\&
+operator.
 .Sh SPANNING TREE
 The bridge has support for 802.1D-2004 Spanning Tree Protocol (STP),
 which can be used to detect and remove loops in a network topology.
