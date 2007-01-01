@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.243 2006/12/30 14:07:58 martin Exp $
+$OpenBSD: usbdevs,v 1.244 2007/01/01 22:23:38 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -91,6 +91,7 @@ vendor KYE		0x0458	KYE Systems
 vendor DIAMOND2		0x045a	Diamond (Supra)
 vendor MICROSOFT	0x045e	Microsoft
 vendor PRIMAX		0x0461	Primax Electronics
+vendor MGE		0x0463	MGE UPS Systems
 vendor AMP		0x0464	AMP
 vendor CHERRY		0x046a	Cherry Mikroschalter
 vendor MEGATRENDS	0x046b	American Megatrends
@@ -773,6 +774,7 @@ product BELKIN USB2LAN		0x0121	USB to LAN Converter
 product BELKIN F5U237		0x0237	F5U237 USB 2.0 7-Port Hub
 product BELKIN F5U257		0x0257	F5U257 Serial
 product BELKIN F5U409		0x0409	F5U409 Serial
+product BELKIN F6C550AVR	0x0551	F6C550-AVR UPS
 product BELKIN F5U120		0x1203	F5U120-PC Hub
 product BELKIN F5D7050		0x7050	F5D7050 54g USB Network Adapter
 product BELKIN F5D7050A		0x705a	F5D705A 54g USB Network Adapter
@@ -1496,6 +1498,10 @@ product METAGEEK WISPY		0x083e	Wi-Spy
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
+
+/* MGE UPS Systems products */
+product MGE UPS1		0x0001	Protection Center 1 UPS
+product MGE UPS2		0xffff	Protection Center 2 UPS
 
 /* Micro Star International products */
 product MSI WLAN		0x1020	WLAN
