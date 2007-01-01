@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.41 2006/12/31 15:38:11 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.42 2007/01/01 23:49:06 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -43,7 +43,7 @@ struct cvs_cmd cvs_cmd_admin = {
 
 static int	 runflags = 0;
 static int	 lkmode = RCS_LOCK_INVAL;
-static char	*alist, *comment, *elist, *logmsg, *logstr, *orange;
+static char	*alist, *comment, *elist, *logmsg, *logstr, *orange, *state, *statestr;
 static RCSNUM	*logrev;
 
 int
@@ -55,7 +55,7 @@ cvs_admin(int argc, char **argv)
 
 	flags = CR_RECURSE_DIRS;
 
-	alist = comment = elist = logmsg = logstr = orange = NULL;
+	alist = comment = elist = logmsg = logstr = orange = state = statestr = NULL;
 
 	while ((ch = getopt(argc, argv, cvs_cmd_admin.cmd_opts)) != -1) {
 		switch (ch) {
@@ -100,6 +100,7 @@ cvs_admin(int argc, char **argv)
 			verbosity = 0;
 			break;
 		case 's':
+			statestr = optarg;
 			break;
 		case 't':
 			break;
@@ -149,6 +150,9 @@ cvs_admin(int argc, char **argv)
 
 		if (orange != NULL)
 			cvs_client_send_request("Argument -o%s", orange);
+
+		if (statestr != NULL)
+			cvs_client_send_request("Argument -s%s", statestr);
 
 		if (verbosity == 0)
 			cvs_client_send_request("Argument -q");
@@ -274,6 +278,38 @@ cvs_admin_local(struct cvs_file *cf)
 				(void)rcs_rev_remove(cf->file_rcs, rdp->rd_num);
 			}
 		}
+	}
+
+	if (statestr != NULL) {
+		struct cvs_argvector *sargv;
+
+		sargv = cvs_strsplit(statestr, ":");
+		if (sargv->argv[1] != NULL) {
+			state = xstrdup(sargv->argv[0]);
+
+			if ((logrev = rcsnum_parse(sargv->argv[1])) == NULL) {
+				cvs_log(LP_ERR, "`%s' bad revision number", statestr);
+				return;
+			}
+		} else {
+			state = xstrdup(statestr);
+			logrev = rcsnum_alloc();
+			rcsnum_cpy(cf->file_rcs->rf_head, logrev, 0);
+		}
+
+		if (rcs_state_check(state) < 0) {
+			cvs_log(LP_ERR, "invalid state `%s'", state);
+			cvs_argv_destroy(sargv);
+			rcsnum_free(logrev);
+			xfree(state);
+			return;
+		}
+
+		(void)rcs_state_set(cf->file_rcs, logrev, state);
+
+		cvs_argv_destroy(sargv);
+		rcsnum_free(logrev);
+		xfree(state);
 	}
 
 	if (lkmode != RCS_LOCK_INVAL)
