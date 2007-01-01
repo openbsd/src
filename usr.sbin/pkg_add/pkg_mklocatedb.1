@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_mklocatedb.1,v 1.5 2007/01/01 18:20:59 espie Exp $
+.\"	$OpenBSD: pkg_mklocatedb.1,v 1.6 2007/01/01 20:53:46 jmc Exp $
 .\" Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -40,8 +40,8 @@ Entries created for each package will have the package name prepended:
 .Pp
 If the
 .Fl p
-option is used, 
-.Nm 
+option is used,
+.Nm
 will retrieve all package entries from the ports tree.
 Otherwise,
 .Nm
@@ -64,18 +64,17 @@ can also list files in the base sets of an
 distribution, which are not exactly packages in the usual sense.
 .Pp
 The options are as follows:
-.Bl -tag -width opt
-.It Fl
+.Bl -tag -width Ds
 .It Fl a
 Prepend file names with pkgpath information and package names.
 .It Fl n
 Do not pipe output to
 .Pa /usr/libexec/locate.mklocatedb
 (default if standard output is a terminal).
-.It Fl p Ar portsdir
-Retrieve packing lists from the ports tree instead of binary packages.
 .It Fl P
 Prepend file names with pkgpath information instead of package name.
+.It Fl p Ar portsdir
+Retrieve packing lists from the ports tree instead of binary packages.
 .It Fl q
 Be quiet: do not report every package processed to standard error.
 .It Fl r Ar release
