@@ -105,7 +105,7 @@ command is one of the following:\n\
   stats		Write server statistics to the statistics file.\n\
   querylog	Toggle query logging.\n\
   dumpdb [-all|-cache|-zones] [view ...]\n\
-		Dump cache(s) to the dump file (named_dump.db).\n\
+		Dump cache(s) to the dump file (/var/named/tmp/named_dump.db).\n\
   stop		Save pending updates to master files and stop the server.\n\
   stop -p	Save pending updates to master files and stop the server\n\
 		reporting process id.\n\

@@ -53,7 +53,7 @@ options {\n\
 #endif
 "	deallocate-on-exit true;\n\
 #	directory <none>\n\
-	dump-file \"named_dump.db\";\n\
+	dump-file \"tmp/named_dump.db\";\n\
 	fake-iquery no;\n\
 	has-old-clients false;\n\
 	heartbeat-interval 60;\n\
@@ -62,12 +62,12 @@ options {\n\
 	listen-on {any;};\n\
 	listen-on-v6 {any;};\n\
 	match-mapped-addresses no;\n\
-	memstatistics-file \"named.memstats\";\n\
+	memstatistics-file \"tmp/named.memstats\";\n\
 	multiple-cnames no;\n\
 #	named-xfer <obsolete>;\n\
 #	pid-file \"" NS_LOCALSTATEDIR "/named.pid\"; /* or /lwresd.pid */\n\
 	port 53;\n\
-	recursing-file \"named.recursing\";\n\
+	recursing-file \"tmp/named.recursing\";\n\
 "
 #ifdef PATH_RANDOMDEV
 "\
@@ -80,7 +80,7 @@ options {\n\
 	serial-queries 20;\n\
 	serial-query-rate 20;\n\
 	server-id none;\n\
-	statistics-file \"named.stats\";\n\
+	statistics-file \"tmp/named.stats\";\n\
 	statistics-interval 60;\n\
 	tcp-clients 100;\n\
 	tcp-listen-queue 3;\n\
