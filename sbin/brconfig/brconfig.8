@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.63 2006/12/24 19:05:25 reyk Exp $
+.\"	$OpenBSD: brconfig.8,v 1.64 2007/01/01 20:11:17 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -33,14 +33,13 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl Aa
-.Nm
-.Ar bridge-name
+.Op Ar interface
 .Op Ar parameters
 .Nm
-.Ar bridge-name Cm rule No {
+.Ar interface Cm rule No {
 .Cm block | pass No } {
 .Cm in | out | in/out No } Cm on
-.Ar interface-name
+.Ar interface
 .Op Cm src Ar address
 .Op Cm dst Ar address
 .Op Cm tag Ar tagname
@@ -59,27 +58,22 @@ segment and to provide a transparent filter for
 .Xr ip 4
 datagrams.
 .Pp
-In the first synopsis, invoking
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl A
+The same as
+.Fl a ,
+but also lists additional status information.
+.It Fl a
+Lists the status of all bridges in the system.
+This is the default if
 .Nm
-with no arguments, or with the
-.Fl a
-or
-.Fl A
-flag, will list the status of all bridges in the system.
-The
-.Fl A
-flag will also list additional status information.
-In the second, its command line consists
-of the name of a bridge and a set of operations to be
-performed on that bridge.
-The commands are executed in the order they were specified.
-If no command is specified in the second synopsis, the
-.Nm
-will display full status information about the bridge.
-With the third synopsis, rules for filtering Ethernet MAC addresses can
-be added to a bridge.
+is invoked without arguments.
+.El
 .Pp
-The following parameters may be set with
+The following
+.Ar parameters
+may be set with
 .Nm :
 .Bl -tag -width Ds
 .It Cm up

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.41 2006/12/31 10:44:52 jmc Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.42 2007/01/01 20:11:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -129,9 +129,14 @@ char *stproles[] = {
 void
 usage(void)
 {
-	fprintf(stderr, "usage: brconfig [-Aa]\n");
+	extern char *__progname;
+	fprintf(stderr, "usage: %s [-Aa] [interface] [parameters]\n",
+	    __progname);
 	fprintf(stderr,
-	    "       brconfig interface [up] [down] [add if] [del if] ...\n");
+	    "       %s interface rule { block | pass } "
+	    "{ in | out | in/out } on\n"
+	    "\t\tinterface [src address] [dst address] [tag tagname]\n",
+	    __progname);
 }
 
 int
