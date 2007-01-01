@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.66 2007/01/01 20:38:21 jmc Exp $
+.\"	$OpenBSD: brconfig.8,v 1.67 2007/01/01 20:41:23 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -331,84 +331,6 @@ is set to zero, then entries will not be expired.
 .It Cm up
 Start the bridge forwarding packets.
 .El
-.Sh EXAMPLES
-Create a bridge pseudo network device:
-.Pp
-.Dl # ifconfig bridge0 create
-.Pp
-Bring the Ethernet interfaces rl0 and xl0 up,
-add them to the bridge, bridge0,
-and have the bridge start forwarding packets:
-.Bd -literal -offset indent
-# ifconfig rl0 up
-# ifconfig xl0 up
-# brconfig bridge0 add rl0 add xl0 up
-.Ed
-.Pp
-Retrieve a list of interfaces that are members of bridge0, and the addresses
-learned by the bridge:
-.Pp
-.Dl # brconfig bridge0
-.Pp
-Stop bridge0 from forwarding packets:
-.Pp
-.Dl # brconfig bridge0 down
-.Pp
-Remove the interface xl0 from the bridge bridge0:
-.Pp
-.Dl # brconfig bridge0 delete xl0
-.Pp
-Flush all dynamically learned addresses from the address cache:
-.Pp
-.Dl # brconfig bridge0 flush
-.Pp
-Remove all addresses, including static addresses, from the address cache:
-.Pp
-.Dl # brconfig bridge0 flushall
-.Pp
-The following commands mark the xl0 interface so that it will not learn
-addresses and add a static entry for the host 8:0:20:1e:2f:2b on the xl0
-segment.
-Finally, xl0 is marked so that it will not receive packets with
-destinations not found in the address cache of bridge0.
-This setup is the most secure,
-and means that bogus MAC addresses seen by the xl0 side of the bridge
-will not be propagated to the rest of the network.
-Also, no packets will be sent onto the xl0 segment by the bridge unless they are
-broadcast packets or are destined for 8:0:20:1e:2f:2b.
-.Bd -literal -offset indent
-# brconfig bridge0 -learn xl0 static xl0 8:0:20:1e:2f:2b
-# brconfig bridge0 -discover xl0
-.Ed
-.Pp
-The following commands will set up a filter so that 0:1:2:3:4:5 can send frames
-through fxp0 only to 5:4:3:2:1:0, and 5:4:3:2:1:0 can return frames through
-fxp0 only to 0:1:2:3:4:5.
-All other traffic trying to go into or be sent from fxp0 will be blocked.
-.Bd -literal -offset indent
-# brconfig bridge0 rule pass in  on fxp0 \e
-	src 0:1:2:3:4:5 dst 5:4:3:2:1:0
-# brconfig bridge0 rule pass out on fxp0 \e
-	src 5:4:3:2:1:0 dst 0:1:2:3:4:5
-# brconfig bridge0 rule block in  on fxp0
-# brconfig bridge0 rule block out on fxp0
-.Ed
-.Pp
-The following commands will tag packets from and to 9:8:7:6:5:4 on fxp0 so that
-.Xr pf 4
-can refer to them using the
-.Cm tagged
-directive:
-.Bd -literal -offset indent
-# brconfig bridge0 rule pass in  on fxp0 src 9:8:7:6:5:4 tag boss
-# brconfig bridge0 rule pass out on fxp0 dst 9:8:7:6:5:4 tag boss
-.Ed
-.Pp
-An example
-.Xr pf.conf 5
-rule using this tag is:
-.Pp
-.Dl pass tagged boss queue q_med
 .Sh IPSEC BRIDGE
 The bridge can also be used to tunnel Ethernet frames over IPv4 or
 IPv6 by using the
@@ -561,6 +483,84 @@ Span ports cannot be bridge members; instead, the
 and
 .Cm delspan
 commands are used to add and delete span ports to and from a bridge.
+.Sh EXAMPLES
+Create a bridge pseudo network device:
+.Pp
+.Dl # ifconfig bridge0 create
+.Pp
+Bring the Ethernet interfaces rl0 and xl0 up,
+add them to the bridge, bridge0,
+and have the bridge start forwarding packets:
+.Bd -literal -offset indent
+# ifconfig rl0 up
+# ifconfig xl0 up
+# brconfig bridge0 add rl0 add xl0 up
+.Ed
+.Pp
+Retrieve a list of interfaces that are members of bridge0, and the addresses
+learned by the bridge:
+.Pp
+.Dl # brconfig bridge0
+.Pp
+Stop bridge0 from forwarding packets:
+.Pp
+.Dl # brconfig bridge0 down
+.Pp
+Remove the interface xl0 from the bridge bridge0:
+.Pp
+.Dl # brconfig bridge0 delete xl0
+.Pp
+Flush all dynamically learned addresses from the address cache:
+.Pp
+.Dl # brconfig bridge0 flush
+.Pp
+Remove all addresses, including static addresses, from the address cache:
+.Pp
+.Dl # brconfig bridge0 flushall
+.Pp
+The following commands mark the xl0 interface so that it will not learn
+addresses and add a static entry for the host 8:0:20:1e:2f:2b on the xl0
+segment.
+Finally, xl0 is marked so that it will not receive packets with
+destinations not found in the address cache of bridge0.
+This setup is the most secure,
+and means that bogus MAC addresses seen by the xl0 side of the bridge
+will not be propagated to the rest of the network.
+Also, no packets will be sent onto the xl0 segment by the bridge unless they are
+broadcast packets or are destined for 8:0:20:1e:2f:2b.
+.Bd -literal -offset indent
+# brconfig bridge0 -learn xl0 static xl0 8:0:20:1e:2f:2b
+# brconfig bridge0 -discover xl0
+.Ed
+.Pp
+The following commands will set up a filter so that 0:1:2:3:4:5 can send frames
+through fxp0 only to 5:4:3:2:1:0, and 5:4:3:2:1:0 can return frames through
+fxp0 only to 0:1:2:3:4:5.
+All other traffic trying to go into or be sent from fxp0 will be blocked.
+.Bd -literal -offset indent
+# brconfig bridge0 rule pass in  on fxp0 \e
+	src 0:1:2:3:4:5 dst 5:4:3:2:1:0
+# brconfig bridge0 rule pass out on fxp0 \e
+	src 5:4:3:2:1:0 dst 0:1:2:3:4:5
+# brconfig bridge0 rule block in  on fxp0
+# brconfig bridge0 rule block out on fxp0
+.Ed
+.Pp
+The following commands will tag packets from and to 9:8:7:6:5:4 on fxp0 so that
+.Xr pf 4
+can refer to them using the
+.Cm tagged
+directive:
+.Bd -literal -offset indent
+# brconfig bridge0 rule pass in  on fxp0 src 9:8:7:6:5:4 tag boss
+# brconfig bridge0 rule pass out on fxp0 dst 9:8:7:6:5:4 tag boss
+.Ed
+.Pp
+An example
+.Xr pf.conf 5
+rule using this tag is:
+.Pp
+.Dl pass tagged boss queue q_med
 .Sh SEE ALSO
 .Xr bridge 4 ,
 .Xr gif 4 ,
