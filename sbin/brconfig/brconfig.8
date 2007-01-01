@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.65 2007/01/01 20:27:08 jmc Exp $
+.\"	$OpenBSD: brconfig.8,v 1.66 2007/01/01 20:38:21 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -76,9 +76,9 @@ The following
 may be set with
 .Nm :
 .Bl -tag -width Ds
-.It Cm add Ar interface-name
-Add the interface named by
-.Ar interface-name
+.It Cm add Ar interface
+Add
+.Ar interface
 as a member of the bridge.
 The interface is put into promiscuous mode so
 that it can receive every packet sent on the
@@ -86,11 +86,13 @@ network.
 An interface can be a member of at most one bridge.
 .It Cm addr
 Display the addresses that have been learned by the bridge.
-.It Cm addspan Ar interface-name
-Add the interface named by
-.Ar interface-name
+.It Cm addspan Ar interface
+Add
+.Ar interface
 as a span port on the bridge.
-See the SPAN PORTS section for more details.
+See the
+.Sx SPAN PORTS
+section for more details.
 .It Cm autoedge Ar interface
 Automatically detect the spanning tree edge port status on
 .Ar interface .
@@ -107,29 +109,35 @@ This is the default for interfaces added to the bridge.
 Disable automatic point to point link detection on
 .Ar interface .
 .It Cm blocknonip Ar interface
-Mark an interface so that no non-IPv4, IPv6, ARP, or Reverse
+Mark
+.Ar interface
+so that no non-IPv4, IPv6, ARP, or Reverse
 ARP packets are accepted from it or forwarded to it from other
 bridge member interfaces.
 .It Cm -blocknonip Ar interface
-Allow non-IPv4, IPv6, ARP, or Reverse ARP packets through the
+Allow non-IPv4, IPv6, ARP, or Reverse ARP packets through
 .Ar interface .
-.It Cm del Ar interface-name
+.It Cm del Ar interface
 Alias for
 .Cm delete .
 .It Cm deladdr Ar address
-Delete an address from the cache.
-.It Cm delete Ar interface-name
-Remove the interface named by
-.Ar interface-name
+Delete
+.Ar address
+from the cache.
+.It Cm delete Ar interface
+Remove
+.Ar interface
 from the bridge.
 Promiscuous mode is turned off for the interface when it is
 removed from the bridge.
-.It Cm delspan Ar interface-name
-Delete the interface named by
-.Ar interface-name
+.It Cm delspan Ar interface
+Delete
+.Ar interface
 from the list of span ports of the bridge.
 .It Cm discover Ar interface
-Mark an interface so that packets are sent out of the interface
+Mark
+.Ar interface
+so that packets are sent out of the interface
 if the destination port of the packet is unknown.
 If the bridge has no address cache entry for the destination of
 a packet, meaning that there is no static entry and no dynamically learned
@@ -137,7 +145,9 @@ entry for the destination, the bridge will forward the packet to all member
 interfaces that have this flag set.
 This is the default for interfaces added to the bridge.
 .It Cm -discover Ar interface
-Mark an interface so that packets are not sent out of the interface
+Mark
+.Ar interface
+so that packets are not sent out of the interface
 if the destination port of the packet is unknown.
 Turning this flag
 off means that the bridge will not send packets out of this interface
@@ -149,7 +159,7 @@ segments that have no need to see the packet.
 .It Cm down
 Stop the bridge from forwarding packets.
 .It Cm edge Ar interface
-Set the
+Set
 .Ar interface
 as a spanning tree edge port.
 An edge port is a single connection to the network and cannot create
@@ -199,13 +209,16 @@ to
 .Ar num .
 Defaults to 128, minimum of 0, maximum of 240.
 .It Cm learn Ar interface
-Mark an interface so that the source address of packets received from
+Mark
 .Ar interface
+so that the source address of packets received from
+the interface
 are entered into the address cache.
 This is the default for interfaces added to the bridge.
 .It Cm -learn Ar interface
-Mark an interface so that the source address of packets received from
+Mark
 .Ar interface
+so that the source address of packets received from interface
 are not entered into the address cache.
 .It Cm link0
 Setting this flag stops all IP multicast packets from
@@ -263,7 +276,7 @@ or
 .Ar stp
 to force operation in Spanning Tree (STP) mode with rapid transitions disabled.
 .It Cm ptp Ar interface
-Set the
+Set
 .Ar interface
 as a point to point link.
 This is required for straight transitions to forwarding and
@@ -294,10 +307,11 @@ rule will match all frames (good for creating a catchall policy).
 Load a set of rules from the file
 .Ar filename .
 .It Cm rules Ar interface
-Display the active filtering rules in use on the given interface.
-.It Cm static Ar interface-name address
+Display the active filtering rules in use on
+.Ar interface .
+.It Cm static Ar interface address
 Add a static entry into the address cache pointing to
-.Ar interface-name .
+.Ar interface .
 Static entries are never aged out of the cache or replaced, even if the address
 is seen on a different interface.
 .It Cm stp Ar interface
