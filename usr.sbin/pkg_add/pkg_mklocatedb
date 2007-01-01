@@ -33,15 +33,17 @@ sub print_name
 
 package main;
 
-set_usage('pkg_mklocatedb [-nPq] [-r release] [-p portstree ] [-s src] [-x X11src] [pkg-name [...]]');
+set_usage('pkg_mklocatedb [-anPq] [-r release] [-p portstree ] [-s src] [-x X11src] [pkg-name [...]]');
 
-our ($opt_n, $opt_q, $opt_s, $opt_x, $opt_r, $opt_p, $opt_P);
+our ($opt_a, $opt_n, $opt_q, $opt_s, $opt_x, $opt_r, $opt_p, $opt_P);
 
 sub info
 {
 	my $plist = shift;
 	my $r;
-	if ($opt_P) {
+	if ($opt_a) {
+		$r = $plist->{extrainfo}->{subdir}.":".$plist->pkgname();
+	} elsif ($opt_P) {
 		$r = $plist->{extrainfo}->{subdir};
 	} else {
 		$r = $plist->pkgname();
@@ -54,7 +56,9 @@ sub tag
 {
 	my ($dir, $set, $rev) = @_;
 	my $r;
-	if ($opt_P) {
+	if ($opt_a) {
+		$r = "$dir/$set:$set$rev";
+	} elsif ($opt_P) {
 		$r = "$dir/$set";
 	} else {
 		$r = "$set$rev";
@@ -64,7 +68,7 @@ sub tag
 }
 
 try {
-	getopts('nqs:x:r:p:P');
+	getopts('anqs:x:r:p:P');
 } catchall {
 	Usage($_);
 };

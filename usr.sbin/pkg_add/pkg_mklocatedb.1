@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_mklocatedb.1,v 1.4 2005/03/03 17:22:04 jmc Exp $
+.\"	$OpenBSD: pkg_mklocatedb.1,v 1.5 2007/01/01 18:20:59 espie Exp $
 .\" Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -21,7 +21,8 @@
 .Nd create a locate database for packages
 .Sh SYNOPSIS
 .Nm pkg_mklocatedb
-.Op Fl nq
+.Op Fl anPq
+.Op Fl p Ar portsdir
 .Op Fl r Ar release
 .Op Fl s Ar src
 .Op Fl x Ar X11src
@@ -29,8 +30,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-command is used to create
-databases adapted for packages,
+command is used to create a file database for binary packages,
 which can be searched using the
 .Xr locate 1
 utility.
@@ -38,6 +38,12 @@ utility.
 Entries created for each package will have the package name prepended:
 .Li kdelibs-3.3.2p2:/usr/local/bin/meinproc .
 .Pp
+If the
+.Fl p
+option is used, 
+.Nm 
+will retrieve all package entries from the ports tree.
+Otherwise,
 .Nm
 will build database entries for every file object for each
 .Ar pkg-name
@@ -59,10 +65,17 @@ distribution, which are not exactly packages in the usual sense.
 .Pp
 The options are as follows:
 .Bl -tag -width opt
+.It Fl
+.It Fl a
+Prepend file names with pkgpath information and package names.
 .It Fl n
 Do not pipe output to
 .Pa /usr/libexec/locate.mklocatedb
 (default if standard output is a terminal).
+.It Fl p Ar portsdir
+Retrieve packing lists from the ports tree instead of binary packages.
+.It Fl P
+Prepend file names with pkgpath information instead of package name.
 .It Fl q
 Be quiet: do not report every package processed to standard error.
 .It Fl r Ar release
