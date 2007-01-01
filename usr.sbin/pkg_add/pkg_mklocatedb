@@ -33,7 +33,7 @@ sub print_name
 
 package main;
 
-set_usage('pkg_mklocatedb [-anPq] [-r release] [-p portstree ] [-s src] [-x X11src] [pkg-name [...]]');
+set_usage('pkg_mklocatedb [-anPq] [-p portsdir] [-r release] [-s src] [-x X11src] [pkg-name [...]]');
 
 our ($opt_a, $opt_n, $opt_q, $opt_s, $opt_x, $opt_r, $opt_p, $opt_P);
 
