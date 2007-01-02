@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.42 2007/01/01 23:49:06 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.43 2007/01/02 00:02:17 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -289,6 +289,8 @@ cvs_admin_local(struct cvs_file *cf)
 
 			if ((logrev = rcsnum_parse(sargv->argv[1])) == NULL) {
 				cvs_log(LP_ERR, "`%s' bad revision number", statestr);
+				cvs_argv_destroy(sargv);
+				xfree(state);
 				return;
 			}
 		} else {
