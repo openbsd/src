@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypset.c,v 1.15 2006/04/03 20:11:22 deraadt Exp $ */
+/*	$OpenBSD: ypset.c,v 1.16 2007/01/02 20:13:28 otto Exp $ */
 /*	$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $	*/
 
 /*
@@ -28,12 +28,13 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypset.c,v 1.15 2006/04/03 20:11:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypset.c,v 1.16 2007/01/02 20:13:28 otto Exp $";
 #endif
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,20 +65,16 @@ bind_tohost(struct sockaddr_in *sin, char *dom, char *server)
 	int sock, port, r;
 
 	port = getrpcport(server, YPPROG, YPPROC_NULL, IPPROTO_UDP);
-	if (port == 0) {
-		fprintf(stderr, "%s not running ypserv.\n", server);
-		exit(1);
-	}
+	if (port == 0)
+		errx(1, "%s not running ypserv", server);
 	port = htons(port);
 
 	memset(&ypsd, 0, sizeof ypsd);
 
 	if (inet_aton(server, &iaddr) == 0) {
 		hp = gethostbyname(server);
-		if (hp == NULL) {
-			fprintf(stderr, "ypset: can't find address for %s\n", server);
-			exit(1);
-		}
+		if (hp == NULL)
+			errx(1, "can't find address for %s", server);
 		memmove(&iaddr.s_addr, hp->h_addr, sizeof(iaddr.s_addr));
 	}
 	ypsd.ypsetdom_domain = dom;
@@ -92,8 +89,7 @@ bind_tohost(struct sockaddr_in *sin, char *dom, char *server)
 	sock = RPC_ANYSOCK;
 	client = clntudp_create(sin, YPBINDPROG, YPBINDVERS, tv, &sock);
 	if (client==NULL) {
-		fprintf(stderr, "can't yp_bind: Reason: %s\n",
-			yperr_string(YPERR_YPBIND));
+		warnx("can't yp_bind: reason: %s", yperr_string(YPERR_YPBIND));
 		return YPERR_YPBIND;
 	}
 	client->cl_auth = authunix_create_default();
@@ -101,7 +97,8 @@ bind_tohost(struct sockaddr_in *sin, char *dom, char *server)
 	r = clnt_call(client, YPBINDPROC_SETDOM,
 	    xdr_ypbind_setdom, &ypsd, xdr_void, NULL, tv);
 	if (r) {
-		fprintf(stderr, "Sorry, cannot ypset for domain %s on host.\n", dom);
+		warnx("Cannot ypset for domain %s on host %s: %s", dom,
+		    server, clnt_sperrno(r));
 		clnt_destroy(client);
 		return YPERR_YPBIND;
 	}
