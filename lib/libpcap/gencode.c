@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.27 2007/01/02 18:31:21 reyk Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.28 2007/01/02 18:35:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -2981,7 +2981,7 @@ gen_inbound(dir)
 		break;
 
 	default:
-		bpf_error("inbound/outbound not supported on linktype 0x%x\n",
+		bpf_error("inbound/outbound not supported on linktype 0x%x",
 		    linktype);
 		/* NOTREACHED */
 	}
@@ -3004,11 +3004,11 @@ gen_pf_ifname(char *ifname)
 		len = sizeof(((struct old_pfloghdr *)0)->ifname);
 		off = offsetof(struct old_pfloghdr, ifname);
 	} else {
-		bpf_error("ifname not supported on linktype 0x%x\n", linktype);
+		bpf_error("ifname not supported on linktype 0x%x", linktype);
 		/* NOTREACHED */
 	}
 	if (strlen(ifname) >= len) {
-		bpf_error("ifname interface names can only be %d characters\n",
+		bpf_error("ifname interface names can only be %d characters",
 		    len - 1);
 		/* NOTREACHED */
 	}
@@ -3024,11 +3024,11 @@ gen_pf_ruleset(char *ruleset)
 	struct block *b0;
 
 	if (linktype != DLT_PFLOG) {
-		bpf_error("ruleset not supported on linktype 0x%x\n", linktype);
+		bpf_error("ruleset not supported on linktype 0x%x", linktype);
 		/* NOTREACHED */
 	}
 	if (strlen(ruleset) >= sizeof(((struct pfloghdr *)0)->ruleset)) {
-		bpf_error("ruleset names can only be %d characters\n",
+		bpf_error("ruleset names can only be %d characters",
 		    sizeof(((struct pfloghdr *)0)->ruleset) - 1);
 		/* NOTREACHED */
 	}
@@ -3051,7 +3051,7 @@ gen_pf_rnr(int rnr)
 		b0 = gen_cmp(offsetof(struct old_pfloghdr, rnr), BPF_H,
 			 (bpf_int32)rnr);
 	} else {
-		bpf_error("rnr not supported on linktype 0x%x\n", linktype);
+		bpf_error("rnr not supported on linktype 0x%x", linktype);
 		/* NOTREACHED */
 	}
 
@@ -3066,7 +3066,7 @@ gen_pf_srnr(int srnr)
 	struct block *b0;
 
 	if (linktype != DLT_PFLOG) {
-		bpf_error("srnr not supported on linktype 0x%x\n", linktype);
+		bpf_error("srnr not supported on linktype 0x%x", linktype);
 		/* NOTREACHED */
 	}
 
@@ -3088,7 +3088,7 @@ gen_pf_reason(int reason)
 		b0 = gen_cmp(offsetof(struct old_pfloghdr, reason), BPF_H,
 		    (bpf_int32)reason);
 	} else {
-		bpf_error("reason not supported on linktype 0x%x\n", linktype);
+		bpf_error("reason not supported on linktype 0x%x", linktype);
 		/* NOTREACHED */
 	}
 
@@ -3108,7 +3108,7 @@ gen_pf_action(int action)
 		b0 = gen_cmp(offsetof(struct old_pfloghdr, action), BPF_H,
 		    (bpf_int32)action);
 	} else {
-		bpf_error("action not supported on linktype 0x%x\n", linktype);
+		bpf_error("action not supported on linktype 0x%x", linktype);
 		/* NOTREACHED */
 	}
 
