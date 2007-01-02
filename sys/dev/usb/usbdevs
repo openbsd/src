@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.245 2007/01/02 10:59:50 mbalmer Exp $
+$OpenBSD: usbdevs,v 1.246 2007/01/02 21:19:45 stevesk Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1949,7 +1949,7 @@ product CYBERTAN GIGASET108	0x160c	Siemens Gigaset 108
 
 /* Sierra Wireless products */
 product SIERRA AIRCARD_580	0x0112	Aircard 580 EVDO
-product SIERRA MC8755	0x6804	MC8755
+product SIERRA MC8755		0x6804	MC8755 HSDPA
 
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
