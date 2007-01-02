@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.53 2006/04/02 01:29:51 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.54 2007/01/02 20:10:48 otto Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.53 2006/04/02 01:29:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.54 2007/01/02 20:10:48 otto Exp $";
 #endif
 
 #include <sys/param.h>
@@ -440,7 +440,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-		sin.sin_port = 0;
+		sin.sin_port = htons(udptransp->xp_port);
 		if (bind(lsock, (struct sockaddr *)&sin, len) != 0) {
 			syslog(LOG_ERR, "cannot bind local udp: %m");
 			exit(1);
@@ -464,9 +464,9 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-		sin.sin_port = 0;
+		sin.sin_port = htons(tcptransp->xp_port);
 		if (bind(lsock, (struct sockaddr *)&sin, len) == -1) {
-			syslog(LOG_ERR, "cannot bind udp: %m");
+			syslog(LOG_ERR, "cannot bind local tcp: %m");
 			exit(1);
 		}
 		if ((ltcptransp = svctcp_create(lsock, 0, 0)) == NULL) {
