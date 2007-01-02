@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.54 2007/01/02 20:10:48 otto Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.55 2007/01/02 20:12:01 otto Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.54 2007/01/02 20:10:48 otto Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.55 2007/01/02 20:12:01 otto Exp $";
 #endif
 
 #include <sys/param.h>
@@ -221,32 +221,39 @@ static bool_t *
 ypbindproc_setdom_2x(SVCXPRT *transp, struct ypbind_setdom *argp, CLIENT *clnt)
 {
 	struct sockaddr_in *fromsin, bindsin;
-	static bool_t res;
+	static bool_t res = 1;
 
-	memset(&res, 0, sizeof(res));
 	fromsin = svc_getcaller(transp);
 
 	switch (ypsetmode) {
 	case YPSET_LOCAL:
 		if (transp != ludptransp && transp != ltcptransp) {
 			syslog(LOG_WARNING, "attempted spoof of ypsetme");
-			return (bool_t *)NULL;
+			svcerr_weakauth(transp);
+			return NULL;
 		}
-		if (fromsin->sin_addr.s_addr != htonl(INADDR_LOOPBACK))
-			return (bool_t *)NULL;
+		if (fromsin->sin_addr.s_addr != htonl(INADDR_LOOPBACK)) {
+			svcerr_weakauth(transp);
+			return NULL;
+		}
 		break;
 	case YPSET_ALL:
 		break;
 	case YPSET_NO:
 	default:
-		return &res;
+		svcerr_weakauth(transp);
+		return NULL;
 	}
 
-	if (ntohs(fromsin->sin_port) >= IPPORT_RESERVED)
-		return &res;
+	if (ntohs(fromsin->sin_port) >= IPPORT_RESERVED) {
+		svcerr_weakauth(transp);
+		return NULL;
+	}
 
-	if (argp->ypsetdom_vers != YPVERS)
-		return &res;
+	if (argp->ypsetdom_vers != YPVERS) {
+		svcerr_noprog(transp);
+		return NULL;
+	}
 
 	memset(&bindsin, 0, sizeof bindsin);
 	bindsin.sin_family = AF_INET;
@@ -257,7 +264,6 @@ ypbindproc_setdom_2x(SVCXPRT *transp, struct ypbind_setdom *argp, CLIENT *clnt)
 	    sizeof(argp->ypsetdom_binding.ypbind_binding_port));
 	rpc_received(argp->ypsetdom_domain, &bindsin, 1);
 
-	res = 1;
 	return &res;
 }
 
