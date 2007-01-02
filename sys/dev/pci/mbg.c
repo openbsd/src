@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.10 2006/12/30 23:44:58 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.11 2007/01/02 19:25:02 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -140,6 +140,7 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t memtype;
 	bus_size_t iosize;
 	char fw_id[MBG_ID_LEN];
+	const char *desc;
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &sc->sc_iot,
@@ -149,20 +150,17 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	if ((desc = pci_findproduct(pa->pa_id)) == NULL)
+		desc = "Radio clock";
+	strlcpy(sc->sc_timedelta.desc, desc, sizeof(sc->sc_timedelta.desc));
+
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_MEINBERG_PCI32:
-		strlcpy(sc->sc_timedelta.desc, "PCI32",
-		    sizeof(sc->sc_timedelta.desc));
 		sc->sc_read = mbg_read_amcc_s5933;
 		break;
 	case PCI_PRODUCT_MEINBERG_PCI511:
-		strlcpy(sc->sc_timedelta.desc, "PCI511",
-		    sizeof(sc->sc_timedelta.desc));
-		sc->sc_read = mbg_read_asic;
-		break;
+		/* FALLTHROUGH */
 	case PCI_PRODUCT_MEINBERG_GPS170:
-		strlcpy(sc->sc_timedelta.desc, "GPS170",
-		    sizeof(sc->sc_timedelta.desc));
 		sc->sc_read = mbg_read_asic;
 		break;
 	default:
@@ -170,7 +168,6 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		panic(": unsupported product 0x%04x", PCI_PRODUCT(pa->pa_id));
 		break;
 	}	
-
 	if (sc->sc_read(sc, MBG_GET_FW_ID_1, fw_id, MBG_FIFO_LEN, NULL) ||
 	    sc->sc_read(sc, MBG_GET_FW_ID_2, &fw_id[MBG_FIFO_LEN], MBG_FIFO_LEN,
 	    NULL))
