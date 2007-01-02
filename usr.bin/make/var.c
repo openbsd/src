@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.60 2006/01/20 23:10:19 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.61 2007/01/02 13:21:31 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ static int quick_lookup(const char *, const char **, uint32_t *);
 static Var *varfind(const char *, const char *, SymTable *, int, int, uint32_t);
 static Var *VarFindi(const char *, const char *, SymTable *, int);
 static Var *VarAdd(const char *, const char *, uint32_t, const char *, GSymT *);
-static void VarDelete(void *);
+static void VarDelete(Var *);
 static void VarPrintVar(Var *);
 static const char *context_name(GSymT *);
 static Var *new_var(const char *, const char *, const char *);
@@ -588,10 +588,8 @@ VarAdd(const char *name, const char *ename, uint32_t k, const char *val,
  *-----------------------------------------------------------------------
  */
 static void
-VarDelete(void *vp)
+VarDelete(Var *v)
 {
-    Var *v = (Var *)vp;
-
     if ((v->flags & VAR_DUMMY) == 0)
 	Buf_Destroy(&(v->val));
     free(v);
