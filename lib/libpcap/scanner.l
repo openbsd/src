@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.18 2006/04/18 18:17:52 otto Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.19 2007/01/02 18:31:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -24,7 +24,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.18 2006/04/18 18:17:52 otto Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.19 2007/01/02 18:31:21 reyk Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -234,6 +234,15 @@ rnr|rulenum	return PF_RNR;
 srnr|subrulenum	return PF_SRNR;
 reason		return PF_REASON;
 action		return PF_ACTION;
+
+wlan		return LINK;
+type		return TYPE;
+subtype		return SUBTYPE;
+direction|dir	return DIR;
+address1|addr1	return ADDR1;
+address2|addr2	return ADDR2;
+address3|addr3	return ADDR3;
+address4|addr4	return ADDR4;
 
 [ \n\t]			;
 [+\-*/:\[\]!<>()&|=]	return yytext[0];

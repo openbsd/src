@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.h,v 1.13 2006/07/18 11:52:12 dlg Exp $	*/
+/*	$OpenBSD: gencode.h,v 1.14 2007/01/02 18:31:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/lib/libpcap/gencode.h,v 1.13 2006/07/18 11:52:12 dlg Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/gencode.h,v 1.14 2007/01/02 18:31:21 reyk Exp $ (LBL)
  */
 
 /* Address qualifiers. */
@@ -67,6 +67,10 @@
 #define Q_DST		2
 #define Q_OR		3
 #define Q_AND		4
+#define Q_ADDR1		5
+#define Q_ADDR2		6
+#define Q_ADDR3		7
+#define Q_ADDR4		8
 
 #define Q_DEFAULT	0
 #define Q_UNDEF		255
@@ -183,6 +187,9 @@ struct block *gen_pf_ruleset(char *);
 struct block *gen_pf_reason(int);
 struct block *gen_pf_action(int);
 struct block *gen_pf_dir(int);
+
+struct block *gen_p80211_type(int, int);
+struct block *gen_p80211_fcdir(int);
 
 void bpf_optimize(struct block **);
 __dead void bpf_error(const char *, ...)

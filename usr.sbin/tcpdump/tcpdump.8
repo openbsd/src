@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.62 2006/05/15 09:01:39 jmc Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.63 2007/01/02 18:31:21 reyk Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -315,8 +315,12 @@ Possible directions are
 .Cm src ,
 .Cm dst ,
 .Cm src or dst ,
+.Cm src and dst ,
+.Cm addr1 ,
+.Cm addr2 ,
+.Cm addr3 ,
 and
-.Cm src and dst .
+.Cm addr4 .
 E.g.,
 .Dq src foo ,
 .Dq dst net 128.3 ,
@@ -326,6 +330,13 @@ If there is no
 qualifier,
 .Cm src or dst
 is assumed.
+The
+.Cm addr1 ,
+.Cm addr2 ,
+.Cm addr3 ,
+and
+.Cm addr4
+qualifiers are only valid for IEEE 802.11 Wireless LAN link layers.
 For null link layers (i.e., point-to-point protocols such as SLIP
 .Pq Serial Line Internet Protocol
 or the
@@ -359,12 +370,14 @@ Possible protocols are:
 .Cm sca ,
 .Cm stp ,
 .Cm tcp ,
+.Cm udp ,
 and
-.Cm udp .
+.Cm wlan .
 E.g.,
 .Dq ether src foo ,
 .Dq arp net 128.3 ,
-.Dq tcp port 21 .
+.Dq tcp port 21 ,
+.Dq wlan addr1 0:2:3:4:5:6 .
 If there is no protocol qualifier,
 all protocols consistent with the type are assumed.
 E.g.,
@@ -723,6 +736,58 @@ and
 .Ar scrub
 (applies only to packets logged by
 .Xr pf 4 ) .
+.It Cm wlan addr1 Ar ehost
+True if the first IEEE 802.11 address is
+.Ar ehost .
+.It Cm wlan addr2 Ar ehost
+True if the second IEEE 802.11 address is
+.Ar ehost .
+.It Cm wlan addr3 Ar ehost
+True if the third IEEE 802.11 address is
+.Ar ehost .
+.It Cm wlan addr4 Ar ehost
+True if the fourth IEEE 802.11 address is
+.Ar ehost .
+The fourth address field is only used for
+WDS (Wireless Distribution System) frames.
+.It Cm wlan host Ar ehost
+True if either the first, second, third, or fourth
+IEEE 802.11 address is
+.Ar ehost .
+.It Cm type Ar type
+True if the IEEE 802.11 frame type matches the specified
+.Ar type .
+Valid types are:
+.Ar data ,
+.Ar mgt ,
+.Ar ctl ,
+or a numeric value.
+.It Cm subtype Ar subtype
+True if the IEEE 802.11 frame subtype matches the specified
+.Ar subtype .
+Valid subtypes are:
+.Ar assocreq ,
+.Ar assocresp ,
+.Ar reassocreq ,
+.Ar reassocresp ,
+.Ar probereq ,
+.Ar proberesp ,
+.Ar beacon ,
+.Ar atim ,
+.Ar disassoc ,
+.Ar auth ,
+.Ar deauth ,
+.Ar data ,
+or a numeric value.
+.It Cm dir Ar dir
+True if the IEEE 802.11 frame direction matches the specified
+.Ar dir .
+Valid directions are:
+.Ar nods ,
+.Ar tods ,
+.Ar fromds ,
+.Ar dstods ,
+or a numeric value.
 .It Xo
 .Cm atalk ,
 .Cm ip ,

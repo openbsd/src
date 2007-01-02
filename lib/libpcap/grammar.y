@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: grammar.y,v 1.15 2006/03/26 19:15:13 camield Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.16 2007/01/02 18:31:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -24,7 +24,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.15 2006/03/26 19:15:13 camield Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.16 2007/01/02 18:31:21 reyk Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -40,6 +40,8 @@ struct rtentry;
 #include <netinet/if_ether.h>
 
 #include <net/pfvar.h>
+
+#include <net80211/ieee80211.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -101,7 +103,7 @@ pcap_parse()
 %type	<a>	arth narth
 %type	<i>	byteop pname pnum relop irelop
 %type	<blk>	and or paren not null prog
-%type	<rblk>	other pfvar
+%type	<rblk>	other pfvar p80211
 
 %token  DST SRC HOST GATEWAY
 %token  NET MASK PORT LESS GREATER PROTO PROTOCHAIN BYTE
@@ -110,6 +112,7 @@ pcap_parse()
 %token  TK_BROADCAST TK_MULTICAST
 %token  NUM INBOUND OUTBOUND
 %token  PF_IFNAME PF_RSET PF_RNR PF_SRNR PF_REASON PF_ACTION
+%token	TYPE SUBTYPE DIR ADDR1 ADDR2 ADDR3 ADDR4
 %token  LINK
 %token	GEQ LEQ NEQ
 %token	ID EID HID HID6
@@ -120,7 +123,7 @@ pcap_parse()
 %type	<s> ID
 %type	<e> EID
 %type	<s> HID HID6
-%type	<i> NUM action reason
+%type	<i> NUM action reason type subtype dir
 
 %left OR AND
 %nonassoc  '!'
@@ -234,7 +237,12 @@ dqual:	  SRC			{ $$ = Q_SRC; }
 	| DST OR SRC		{ $$ = Q_OR; }
 	| SRC AND DST		{ $$ = Q_AND; }
 	| DST AND SRC		{ $$ = Q_AND; }
+	| ADDR1			{ $$ = Q_ADDR1; }
+	| ADDR2			{ $$ = Q_ADDR2; }
+	| ADDR3			{ $$ = Q_ADDR3; }
+	| ADDR4			{ $$ = Q_ADDR4; }
 	;
+
 /* address type qualifiers */
 aqual:	  HOST			{ $$ = Q_HOST; }
 	| NET			{ $$ = Q_NET; }
@@ -273,6 +281,7 @@ other:	  pqual TK_BROADCAST	{ $$ = gen_broadcast($1); }
 	| INBOUND		{ $$ = gen_inbound(0); }
 	| OUTBOUND		{ $$ = gen_inbound(1); }
 	| pfvar			{ $$ = $1; }
+	| pqual p80211		{ $$ = $2; }
 	;
 
 pfvar:	  PF_IFNAME ID		{ $$ = gen_pf_ifname($2); }
@@ -313,6 +322,79 @@ action:	  ID			{ if (strcasecmp($1, "pass") == 0 ||
 				  	$$ = PF_SCRUB;
 				  else
 					  bpf_error("unknown PF action");
+				}
+	;
+
+p80211:   TYPE type SUBTYPE subtype
+				{ $$ = gen_p80211_type($2 | $4,
+					IEEE80211_FC0_TYPE_MASK |
+					IEEE80211_FC0_SUBTYPE_MASK);
+				}
+	| TYPE type		{ $$ = gen_p80211_type($2,
+					IEEE80211_FC0_TYPE_MASK); }
+	| SUBTYPE subtype	{ $$ = gen_p80211_type($2,
+					IEEE80211_FC0_SUBTYPE_MASK); }
+	| DIR dir		{ $$ = gen_p80211_fcdir($2); }
+	;
+
+type:	  NUM
+	| ID			{ if (strcasecmp($1, "data") == 0)
+					$$ = IEEE80211_FC0_TYPE_DATA;
+				  else if (strcasecmp($1, "mgt") == 0 ||
+					strcasecmp($1, "management") == 0)
+					$$ = IEEE80211_FC0_TYPE_MGT;
+				  else if (strcasecmp($1, "ctl") == 0 ||
+					strcasecmp($1, "control") == 0)
+					$$ = IEEE80211_FC0_TYPE_CTL;
+				  else
+					  bpf_error("unknown 802.11 type");
+				}
+	;
+
+subtype:  NUM
+	| ID			{ if (strcasecmp($1, "assocreq") == 0)
+					$$ = IEEE80211_FC0_SUBTYPE_ASSOC_REQ;
+				  else if (strcasecmp($1, "assocresp") == 0)
+					$$ = IEEE80211_FC0_SUBTYPE_ASSOC_RESP;
+				  else if (strcasecmp($1, "reassocreq") == 0)
+					$$ = IEEE80211_FC0_SUBTYPE_REASSOC_REQ;
+				  else if (strcasecmp($1, "reassocresp") == 0)
+					$$ = IEEE80211_FC0_SUBTYPE_REASSOC_RESP;
+				  else if (strcasecmp($1, "probereq") == 0)
+					$$ = IEEE80211_FC0_SUBTYPE_PROBE_REQ;
+				  else if (strcasecmp($1, "proberesp") == 0)
+					$$ = IEEE80211_FC0_SUBTYPE_PROBE_RESP;
+				  else if (strcasecmp($1, "beacon") == 0)
+					$$ = IEEE80211_FC0_SUBTYPE_BEACON;
+				  else if (strcasecmp($1, "atim") == 0)
+					$$ = IEEE80211_FC0_SUBTYPE_ATIM;
+				  else if (strcasecmp($1, "disassoc") == 0 ||
+				      strcasecmp($1, "disassociation") == 0)
+					$$ = IEEE80211_FC0_SUBTYPE_DISASSOC;
+				  else if (strcasecmp($1, "auth") == 0 ||
+				      strcasecmp($1, "authentication") == 0)
+					$$ = IEEE80211_FC0_SUBTYPE_AUTH;
+				  else if (strcasecmp($1, "deauth") == 0 ||
+				      strcasecmp($1, "deauthentication") == 0)
+					$$ = IEEE80211_FC0_SUBTYPE_DEAUTH;
+				  else if (strcasecmp($1, "data") == 0)
+					$$ = IEEE80211_FC0_SUBTYPE_DATA;
+				  else
+					  bpf_error("unknown 802.11 subtype");
+				}
+	;
+
+dir:	  NUM
+	| ID			{ if (strcasecmp($1, "nods") == 0)
+					$$ = IEEE80211_FC1_DIR_NODS;
+				  else if (strcasecmp($1, "tods") == 0)
+					$$ = IEEE80211_FC1_DIR_TODS;
+				  else if (strcasecmp($1, "fromds") == 0)
+					$$ = IEEE80211_FC1_DIR_FROMDS;
+				  else if (strcasecmp($1, "dstods") == 0)
+					$$ = IEEE80211_FC1_DIR_DSTODS;
+				  else
+					bpf_error("unknown 802.11 direction");
 				}
 	;
 
