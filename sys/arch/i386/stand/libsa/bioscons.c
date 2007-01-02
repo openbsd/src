@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.27 2004/03/09 19:12:12 tom Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.28 2007/01/02 16:29:27 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -79,6 +79,15 @@ pc_getc(dev_t dev)
 		    "0" (0x100) : "%ecx", "%edx", "cc" );
 		return (rv & 0xff);
 	}
+
+	/*
+	 * Wait for a character to actually become available.  Appears to
+	 * be necessary on (at least) the Intel Mac Mini.
+	 */
+	do {
+		__asm __volatile(DOINT(0x16) "; setnz %b0" : "=a" (rv) :
+		    "0" (0x100) : "%ecx", "%edx", "cc" );
+	} while ((rv & 0xff) == 0);
 
 	__asm __volatile(DOINT(0x16) : "=a" (rv) : "0" (0x000) :
 	    "%ecx", "%edx", "cc" );
