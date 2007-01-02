@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.78 2006/12/21 02:28:47 krw Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.79 2007/01/02 14:43:50 claudio Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1736,11 +1736,12 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		rr->rr_rssi = h->rssi;
 		rr->rr_max_rssi = ic->ic_max_rssi;
 
-		M_DUP_PKTHDR(&mb, m);
 		mb.m_data = (caddr_t)rr;
 		mb.m_len = sizeof(sc->sc_txtapu);
 		mb.m_next = m;
-		mb.m_pkthdr.len += mb.m_len;
+		mb.m_nextpkt = NULL;
+		mb.m_type = 0;
+		mb.m_flags = 0;
 		bpf_mtap(sc->sc_radiobpf, &mb, BPF_DIRECTION_IN);
 	}
 #endif /* NPBFILTER > 0 */
@@ -1859,11 +1860,12 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 		rt->rt_chan_flags =
 		    htole16(ic->ic_bss->ni_chan->ic_flags);
 
-		M_DUP_PKTHDR(&mb, m);
 		mb.m_data = (caddr_t)rt;
 		mb.m_len = sizeof(sc->sc_txtapu);
 		mb.m_next = m;
-		mb.m_pkthdr.len += mb.m_len;
+		mb.m_nextpkt = NULL;
+		mb.m_type = 0;
+		mb.m_flags = 0;
 		bpf_mtap(sc->sc_radiobpf, &mb, BPF_DIRECTION_OUT);
 	}
 #endif
