@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.54 2006/11/29 12:34:22 miod Exp $	 */
+/* $OpenBSD: machine.c,v 1.55 2007/01/02 19:09:24 otto Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -41,7 +41,6 @@
 #include <string.h>
 #include <limits.h>
 #include <err.h>
-#include <math.h>
 #include <unistd.h>
 #include <sys/sysctl.h>
 #include <sys/dir.h>
