@@ -4505,6 +4505,7 @@
 ./var/named
 ./var/named/dev
 ./var/named/etc
+./var/named/tmp
 ./var/quotas
 ./var/run
 ./var/rwho
