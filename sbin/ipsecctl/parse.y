@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.114 2006/11/24 13:52:13 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.115 2007/01/02 23:27:33 itojun Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -139,7 +139,7 @@ struct ipsec_key	*parsekeyfile(char *);
 struct ipsec_addr_wrap	*host(const char *);
 struct ipsec_addr_wrap	*host_v6(const char *, int);
 struct ipsec_addr_wrap	*host_v4(const char *, int);
-struct ipsec_addr_wrap	*host_dns(const char *, int, int);
+struct ipsec_addr_wrap	*host_dns(const char *, int);
 struct ipsec_addr_wrap	*host_if(const char *, int);
 void			 ifa_load(void);
 int			 ifa_exists(const char *);
@@ -1281,7 +1281,7 @@ struct ipsec_addr_wrap *
 host(const char *s)
 {
 	struct ipsec_addr_wrap	*ipa = NULL;
-	int			 mask, v4mask, cont = 1;
+	int			 mask, cont = 1;
 	char			*p, *q, *ps;
 
 	if ((p = strrchr(s, '/')) != NULL) {
@@ -1292,11 +1292,9 @@ host(const char *s)
 		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
 			err(1, "host: calloc");
 		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
-		v4mask = mask;
 	} else {
 		if ((ps = strdup(s)) == NULL)
 			err(1, "host: strdup");
-		v4mask = 32;
 		mask = -1;
 	}
 
@@ -1305,7 +1303,7 @@ host(const char *s)
 		cont = 0;
 
 	/* IPv4 address? */
-	if (cont && (ipa = host_v4(s, v4mask)) != NULL)
+	if (cont && (ipa = host_v4(s, mask == -1 ? 32 : mask)) != NULL)
 		cont = 0;
 
 	/* IPv6 address? */
@@ -1313,7 +1311,7 @@ host(const char *s)
 		cont = 0;
 
 	/* dns lookup */
-	if (cont && (ipa = host_dns(s, v4mask, 0)) != NULL)
+	if (cont && mask == -1 && (ipa = host_dns(s, mask)) != NULL)
 		cont = 0;
 	free(ps);
 
@@ -1328,27 +1326,24 @@ struct ipsec_addr_wrap *
 host_v6(const char *s, int prefixlen)
 {
 	struct ipsec_addr_wrap	*ipa = NULL;
-	struct addrinfo		 hints, *res0, *res;
+	struct addrinfo		 hints, *res;
 	char			 hbuf[NI_MAXHOST];
 
 	bzero(&hints, sizeof(struct addrinfo));
-	hints.ai_family = PF_UNSPEC;
+	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_NUMERICHOST;
-	if (getaddrinfo(s, NULL, &hints, &res0))
+	if (getaddrinfo(s, NULL, &hints, &res))
 		return (NULL);
+	if (res->ai_next)
+		err(1, "host_v6: numeric hostname expanded to multiple item");
 
-	for (res = res0; res; res = res->ai_next) {
-		if (res->ai_family != AF_INET6)
-			continue;
-		break; /* found one */
-	}
 	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 	if (ipa == NULL)
-		err(1, "host_addr: calloc");
+		err(1, "host_v6: calloc");
 	ipa->af = res->ai_family;
 	memcpy(&ipa->address.v6,
-	    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr.s6_addr,
+	    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
 	    sizeof(struct in6_addr));
 	if (prefixlen > 128)
 		prefixlen = 128;
@@ -1367,9 +1362,9 @@ host_v6(const char *s, int prefixlen)
 	} else
 		ipa->name = strdup(hbuf);
 	if (ipa->name == NULL)
-		err(1, "host_dns: strdup");
+		err(1, "host_v6: strdup");
 
-	freeaddrinfo(res0);
+	freeaddrinfo(res);
 
 	return (ipa);
 }
@@ -1410,12 +1405,12 @@ host_v4(const char *s, int mask)
 }
 
 struct ipsec_addr_wrap *
-host_dns(const char *s, int v4mask, int v6mask)
+host_dns(const char *s, int mask)
 {
 	struct ipsec_addr_wrap	*ipa = NULL;
 	struct addrinfo		 hints, *res0, *res;
 	int			 error;
-	int			 bits = 32;
+	char			 hbuf[NI_MAXHOST];
 
 	bzero(&hints, sizeof(struct addrinfo));
 	hints.ai_family = PF_UNSPEC;
@@ -1425,24 +1420,51 @@ host_dns(const char *s, int v4mask, int v6mask)
 		return (NULL);
 
 	for (res = res0; res; res = res->ai_next) {
-		if (res->ai_family != AF_INET)
+		if (res->ai_family != AF_INET && res->ai_family != AF_INET6)
 			continue;
+
 		ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 		if (ipa == NULL)
 			err(1, "host_dns: calloc");
-		memcpy(&ipa->address.v4,
-		    &((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr,
-		    sizeof(struct in_addr));
-		ipa->name = strdup(inet_ntoa(ipa->address.v4));
+		switch (res->ai_family) {
+		case AF_INET:
+			memcpy(&ipa->address.v4,
+			    &((struct sockaddr_in *)res->ai_addr)->sin_addr,
+			    sizeof(struct in_addr));
+			break;
+		case AF_INET6:
+			/* XXX we do not support scoped IPv6 address yet */
+			if (((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id) {
+				free(ipa);
+				continue;
+			}
+			memcpy(&ipa->address.v6,
+			    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
+			    sizeof(struct in6_addr));
+			break;
+		}
+		error = getnameinfo(res->ai_addr, res->ai_addrlen, hbuf,
+		    sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
+		if (error)
+			err(1, "host_dns: getnameinfo");
+		ipa->name = strdup(hbuf);
 		if (ipa->name == NULL)
 			err(1, "host_dns: strdup");
-		ipa->af = AF_INET;
+		ipa->af = res->ai_family;
 		ipa->next = NULL;
 		ipa->tail = ipa;
 
-		set_ipmask(ipa, bits);
-		if (bits != (ipa->af == AF_INET ? 32 : 128))
-			ipa->netaddress = 1;
+		/*
+		 * XXX for now, no netmask support for IPv6.
+		 * but since there's no way to specify address family, once you
+		 * have IPv6 address on a host, you cannot use dns/netmask
+		 * syntax.
+		 */
+		if (ipa->af == AF_INET)
+			set_ipmask(ipa, mask);
+		else
+			if (mask != -1)
+				err(1, "host_dns: cannot apply netmask on non-IPv4 address");
 		break;
 	}
 	freeaddrinfo(res0);
@@ -1488,18 +1510,18 @@ ifa_load(void)
 		if (n->af == AF_INET) {
 			n->af = AF_INET;
 			memcpy(&n->address.v4, &((struct sockaddr_in *)
-			    ifa->ifa_addr)->sin_addr.s_addr,
+			    ifa->ifa_addr)->sin_addr,
 			    sizeof(struct in_addr));
 			memcpy(&n->mask.v4, &((struct sockaddr_in *)
-			    ifa->ifa_netmask)->sin_addr.s_addr,
+			    ifa->ifa_netmask)->sin_addr,
 			    sizeof(struct in_addr));
 		} else if (n->af == AF_INET6) {
 			n->af = AF_INET6;
 			memcpy(&n->address.v6, &((struct sockaddr_in6 *)
-			    ifa->ifa_addr)->sin6_addr.s6_addr,
+			    ifa->ifa_addr)->sin6_addr,
 			    sizeof(struct in6_addr));
 			memcpy(&n->mask.v6, &((struct sockaddr_in6 *)
-			    ifa->ifa_netmask)->sin6_addr.s6_addr,
+			    ifa->ifa_netmask)->sin6_addr,
 			    sizeof(struct in6_addr));
 		}
 		if ((n->name = strdup(ifa->ifa_name)) == NULL)
@@ -1620,8 +1642,7 @@ ifa_lookup(const char *ifa_name)
 			break;
 		case AF_INET6:
 			/* route/show.c and bgpd/util.c give KAME credit */
-			if (IN6_IS_ADDR_LINKLOCAL(&n->address.v6) ||
-			    IN6_IS_ADDR_MC_LINKLOCAL(&n->address.v6)) {
+			if (IN6_IS_ADDR_LINKLOCAL(&n->address.v6)) {
 				u_int16_t tmp16;
 				/* for now we can not handle link local,
 				 * therefore bail for now
