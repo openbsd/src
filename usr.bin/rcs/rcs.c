@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.34 2006/12/21 15:37:44 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.35 2007/01/02 16:43:45 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -483,14 +483,8 @@ rcs_write(RCSFILE *rfp)
 				fputc('\n', fp);
 		}
 		fputs("@\ntext\n@", fp);
-		if (rdp->rd_text != NULL) {
+		if (rdp->rd_text != NULL)
 			rcs_strprint(rdp->rd_text, rdp->rd_tlen, fp);
-
-			if (rdp->rd_tlen != 0) {
-				if (rdp->rd_text[rdp->rd_tlen-1] != '\n')
-					fputc('\n', fp);
-			}
-		}
 		fputs("@\n", fp);
 	}
 	(void)fclose(fp);
@@ -1038,6 +1032,7 @@ rcs_patch_lines(struct rcs_lines *dlines, struct rcs_lines *plines)
 	char op, *ep;
 	struct rcs_line *lp, *dlp, *ndlp;
 	int i, lineno, nbln;
+	u_char tmp;
 
 	dlp = TAILQ_FIRST(&(dlines->l_lines));
 	lp = TAILQ_FIRST(&(plines->l_lines));
@@ -1045,14 +1040,21 @@ rcs_patch_lines(struct rcs_lines *dlines, struct rcs_lines *plines)
 	/* skip first bogus line */
 	for (lp = TAILQ_NEXT(lp, l_list); lp != NULL;
 	    lp = TAILQ_NEXT(lp, l_list)) {
+		if (lp->l_len < 2)
+			errx(1, "line too short, RCS patch seems broken");
 		op = *(lp->l_line);
+		/* NUL-terminate line buffer for strtol() safety. */
+		tmp = lp->l_line[lp->l_len - 1];
+		lp->l_line[lp->l_len - 1] = '\0';
 		lineno = (int)strtol((lp->l_line + 1), &ep, 10);
 		if (lineno > dlines->l_nblines || lineno < 0 ||
 		    *ep != ' ')
 			errx(1, "invalid line specification in RCS patch");
 		ep++;
 		nbln = (int)strtol(ep, &ep, 10);
-		if (nbln < 0 || *ep != '\0')
+		/* Restore the last byte of the buffer */
+		lp->l_line[lp->l_len - 1] = tmp;
+		if (nbln < 0)
 			errx(1,
 			    "invalid line number specification in RCS patch");
 
@@ -1078,8 +1080,6 @@ rcs_patch_lines(struct rcs_lines *dlines, struct rcs_lines *plines)
 			for (i = 0; (i < nbln) && (dlp != NULL); i++) {
 				ndlp = TAILQ_NEXT(dlp, l_list);
 				TAILQ_REMOVE(&(dlines->l_lines), dlp, l_list);
-				if (dlp->l_line != NULL)
-					xfree(dlp->l_line);
 				xfree(dlp);
 				dlp = ndlp;
 				/* last line is gone - reset dlp */
@@ -1134,11 +1134,12 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 {
 	u_int i, numlen;
 	int isbranch, lookonbranch, found;
-	size_t len;
+	size_t dlen, plen, len;
 	RCSNUM *crev, *rev, *brev;
-	BUF *rbuf, *dtext;
+	BUF *rbuf;
 	struct rcs_delta *rdp = NULL;
 	struct rcs_branch *rb;
+	u_char *data, *patch;
 
 	if (rfp->rf_head == NULL)
 		return (NULL);
@@ -1244,24 +1245,19 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 			return (NULL);
 		}
 
-		rcs_buf_putc(rbuf, '\0');
-
+		plen = rdp->rd_tlen;
+		dlen = rcs_buf_len(rbuf);
+		patch = rdp->rd_text;
+		data = rcs_buf_release(rbuf);
 		/* check if we have parsed this rev's deltatext */
 		if (rdp->rd_tlen == 0)
 			rcs_parse_deltatexts(rfp, rdp->rd_num);
 
-
-		dtext = rcs_buf_alloc(len, BUF_AUTOEXT);
-		rcs_buf_append(dtext, rdp->rd_text, rdp->rd_tlen);
-		rbuf = rcs_patchfile(rbuf, dtext, rcs_patch_lines);
+		rbuf = rcs_patchfile(data, dlen, patch, plen, rcs_patch_lines);
 
 		if (rbuf == NULL)
 			break;
 	} while (rcsnum_cmp(crev, rev, 0) != 0);
-
-	if (rcs_buf_getc(rbuf, rcs_buf_len(rbuf)-1) != '\n' &&
-	    rbuf != NULL)
-		rcs_buf_putc(rbuf, '\n');
 
 	return (rbuf);
 }

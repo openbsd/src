@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.16 2006/10/24 06:22:53 ray Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.17 2007/01/02 16:43:45 niallo Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.16 2006/10/24 06:22:53 ray Exp $";
+    "$OpenBSD: diff3.c,v 1.17 2007/01/02 16:43:45 niallo Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -162,9 +162,12 @@ merge_diff3(char **av, int flags)
 	int argc;
 	char *argv[5], *dp13, *dp23, *path1, *path2, *path3;
 	BUF *b1, *b2, *b3, *d1, *d2, *diffb;
+	u_char *data, *patch;
+	size_t dlen, plen;
 
 	b1 = b2 = b3 = d1 = d2 = diffb = NULL;
 	dp13 = dp23 = path1 = path2 = path3 = NULL;
+	data = patch = NULL;
 
 	if ((flags & MERGE_EFLAG) && !(flags & MERGE_OFLAG))
 		oflag = 0;
@@ -228,7 +231,13 @@ merge_diff3(char **av, int flags)
 	rcs_buf_putc(diffb, '\0');
 	rcs_buf_putc(b1, '\0');
 
-	if ((diffb = rcs_patchfile(b1, diffb, ed_patch_lines)) == NULL)
+
+	plen = rcs_buf_len(diffb);
+	patch = rcs_buf_release(diffb);
+	dlen = rcs_buf_len(b1);
+	data = rcs_buf_release(b1);
+
+	if ((diffb = rcs_patchfile(data, dlen, patch, plen, ed_patch_lines)) == NULL)
 		goto out;
 
 	if (!(flags & QUIET) && diff3_conflicts != 0)
@@ -260,6 +269,10 @@ out:
 		xfree(dp13);
 	if (dp23 != NULL)
 		xfree(dp23);
+	if (data != NULL)
+		xfree(data);
+	if (patch != NULL)
+		xfree(patch);
 
 	return (diffb);
 }
@@ -271,9 +284,12 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int flags)
 	char *argv[5], r1[16], r2[16];
 	char *dp13, *dp23, *path1, *path2, *path3;
 	BUF *b1, *b2, *b3, *d1, *d2, *diffb;
+	size_t dlen, plen;
+	u_char *data, *patch;
 
 	b1 = b2 = b3 = d1 = d2 = diffb = NULL;
 	dp13 = dp23 = path1 = path2 = path3 = NULL;
+	data = patch = NULL;
 
 	if ((flags & MERGE_EFLAG) && !(flags & MERGE_OFLAG))
 		oflag = 0;
@@ -346,7 +362,12 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int flags)
 	rcs_buf_putc(diffb, '\0');
 	rcs_buf_putc(b1, '\0');
 
-	if ((diffb = rcs_patchfile(b1, diffb, ed_patch_lines)) == NULL)
+	plen = rcs_buf_len(diffb);
+	patch = rcs_buf_release(diffb);
+	dlen = rcs_buf_len(b1);
+	data = rcs_buf_release(b1);
+
+	if ((diffb = rcs_patchfile(data, dlen, patch, plen, ed_patch_lines)) == NULL)
 		goto out;
 
 	if (!(flags & QUIET) && diff3_conflicts != 0)
@@ -378,6 +399,10 @@ out:
 		xfree(dp13);
 	if (dp23 != NULL)
 		xfree(dp23);
+	if (data != NULL)
+		xfree(data);
+	if (patch != NULL)
+		xfree(patch);
 
 	return (diffb);
 }
@@ -420,6 +445,7 @@ ed_patch_lines(struct rcs_lines *dlines, struct rcs_lines *plines)
 	char op, *ep;
 	struct rcs_line *sort, *lp, *dlp, *ndlp, *insert_after;
 	int start, end, i, lineno;
+	u_char tmp;
 
 	dlp = TAILQ_FIRST(&(dlines->l_lines));
 	lp = TAILQ_FIRST(&(plines->l_lines));
@@ -427,10 +453,17 @@ ed_patch_lines(struct rcs_lines *dlines, struct rcs_lines *plines)
 	end = 0;
 	for (lp = TAILQ_NEXT(lp, l_list); lp != NULL;
 	    lp = TAILQ_NEXT(lp, l_list)) {
-		if (lp->l_line[0] == '\0')
-			errx(1, "ed_patch_lines");
-		op = lp->l_line[strlen(lp->l_line) - 1];
+		/* Skip blank lines */
+		if (lp->l_len < 2)
+			continue;
+		/* NUL-terminate line buffer for strtol() safety. */
+		tmp = lp->l_line[lp->l_len - 1];
+		lp->l_line[lp->l_len - 1] = '\0';
+		/* len - 1 is NUL terminator so we use len - 2 for 'op' */
+		op = lp->l_line[lp->l_len - 2];
 		start = (int)strtol(lp->l_line, &ep, 10);
+		/* Restore the last byte of the buffer */
+		lp->l_line[lp->l_len - 1] = tmp;
 		if (op == 'a') {
 			if (start > dlines->l_nblines ||
 			    start < 0 || *ep != 'a')
@@ -487,7 +520,7 @@ ed_patch_lines(struct rcs_lines *dlines, struct rcs_lines *plines)
 				if (lp == NULL)
 					errx(1, "ed_patch_lines");
 
-				if (!strcmp(lp->l_line, "."))
+				if (!memcmp(lp->l_line, ".", 1))
 					break;
 
 				TAILQ_REMOVE(&(plines->l_lines), lp, l_list);

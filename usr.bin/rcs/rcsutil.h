@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.h,v 1.9 2006/11/09 21:47:52 millert Exp $	*/
+/*	$OpenBSD: rcsutil.h,v 1.10 2007/01/02 16:43:45 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -30,8 +30,9 @@
 #include "rcs.h"
 
 struct rcs_line {
-	char			*l_line;
+	u_char			*l_line;
 	int			 l_lineno;
+	size_t			 l_len;
 	TAILQ_ENTRY(rcs_line)	 l_list;
 };
 
@@ -39,7 +40,6 @@ TAILQ_HEAD(rcs_tqh, rcs_line);
 
 struct rcs_lines {
 	int		 l_nblines;
-	char		*l_data;
 	struct rcs_tqh	 l_lines;
 };
 
@@ -60,9 +60,10 @@ int			 rcs_set_description(RCSFILE *, const char *);
 void			 rcs_set_rev(const char *, RCSNUM **);
 void			 rcs_setrevstr(char **, char *);
 void			 rcs_setrevstr2(char **, char **, char *);
-BUF			*rcs_patchfile(BUF *, BUF *,
-			    int (*p)(struct rcs_lines *, struct rcs_lines *));
-struct rcs_lines	*rcs_splitlines(BUF *);
+BUF			*rcs_patchfile(const u_char *, size_t, const u_char *,
+			    size_t,
+			    int (*p)(struct rcs_lines *,struct rcs_lines *));
+struct rcs_lines	*rcs_splitlines(const u_char *, size_t);
 void			 rcs_freelines(struct rcs_lines *);
 int			 rcs_yesno(int);
 struct rcs_argvector	*rcs_strsplit(const char *, const char *);

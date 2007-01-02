@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.23 2006/11/09 21:47:52 millert Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.24 2007/01/02 16:43:45 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -472,33 +472,31 @@ rcs_set_description(RCSFILE *file, const char *in)
  * Split the contents of a file into a list of lines.
  */
 struct rcs_lines *
-rcs_splitlines(BUF *fcont)
+rcs_splitlines(const u_char *data, size_t len)
 {
 	u_char *c, *p;
 	struct rcs_lines *lines;
 	struct rcs_line *lp;
-	size_t i, len;
+	size_t i, tlen;
 
-	len = rcs_buf_len(fcont);
 	lines = xmalloc(sizeof(*lines));
+	memset(lines, 0, sizeof(*lines));
 	TAILQ_INIT(&(lines->l_lines));
-	lines->l_nblines = 0;
-	lines->l_data = rcs_buf_get(fcont);
 
 	lp = xmalloc(sizeof(*lp));
-	lp->l_line = NULL;
-	lp->l_lineno = 0;
+	memset(lp, 0, sizeof(*lp));
 	TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
 
 
-	p = c = lines->l_data;
-	for (i = 0; i < rcs_buf_len(fcont); i++) {
-		if (*p == '\n' || (i == rcs_buf_len(fcont) - 1 && *c)) {
-			len = p - c;
+	p = c = data;
+	for (i = 0; i < len; i++) {
+		if (*p == '\n' || (i == len - 1)) {
+			tlen = p - c;
+			if (*p == '\n')
+				tlen++;
 			lp = xmalloc(sizeof(*lp));
-			lp->l_line = xmalloc(len + 1);
-			memcpy(lp->l_line, c, len);
-			lp->l_line[len] = '\0';
+			lp->l_line = c;
+			lp->l_len = tlen;
 			lp->l_lineno = ++(lines->l_nblines);
 			TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
 			c = p + 1;
@@ -516,29 +514,22 @@ rcs_freelines(struct rcs_lines *lines)
 
 	while ((lp = TAILQ_FIRST(&(lines->l_lines))) != NULL) {
 		TAILQ_REMOVE(&(lines->l_lines), lp, l_list);
-		if (lp->l_line != NULL)
-			xfree(lp->l_line);
 		xfree(lp);
 	}
 
-	xfree(lines->l_data);
 	xfree(lines);
 }
 
 BUF *
-rcs_patchfile(BUF *data, BUF *patch,
+rcs_patchfile(const u_char *data, size_t dlen, const u_char *patch, size_t plen,
     int (*p)(struct rcs_lines *, struct rcs_lines *))
 {
 	struct rcs_lines *dlines, *plines;
 	struct rcs_line *lp;
-	size_t len;
-	int lineno;
 	BUF *res;
 
-	len = rcs_buf_len(data);
-
-	dlines = rcs_splitlines(data);
-	plines = rcs_splitlines(patch);
+	dlines = rcs_splitlines(data, dlen);
+	plines = rcs_splitlines(patch, plen);
 
 	if (p(dlines, plines) < 0) {
 		rcs_freelines(dlines);
@@ -546,12 +537,11 @@ rcs_patchfile(BUF *data, BUF *patch,
 		return (NULL);
 	}
 
-	lineno = 0;
-	res = rcs_buf_alloc(len, BUF_AUTOEXT);
+	res = rcs_buf_alloc(1024, BUF_AUTOEXT);
 	TAILQ_FOREACH(lp, &dlines->l_lines, l_list) {
-		if (lineno != 0)
-			rcs_buf_fappend(res, "%s\n", lp->l_line);
-		lineno++;
+		if (lp->l_line == NULL)
+			continue;
+		rcs_buf_append(res, lp->l_line, lp->l_len);
 	}
 
 	rcs_freelines(dlines);
