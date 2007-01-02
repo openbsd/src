@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.19 2006/06/01 11:17:31 brad Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.20 2007/01/02 19:22:38 mbalmer Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
@@ -312,6 +312,26 @@ pci_findvendor(pcireg_t id_reg)
 #endif
 }
 
+const char *
+pci_findproduct(pcireg_t id_reg)
+{
+#ifdef PCIVERBOSE
+	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);
+	pci_product_id_t product = PCI_PRODUCT(id_reg);
+	const struct pci_known_product *pkp;
+
+	pkp = pci_known_products;
+	while (pkp->productname != NULL) {	/* all have product name */
+		if (pkp->vendor == vendor && pkp->product == product)
+			break;
+		pkp++;
+	}
+	return (pkp->productname);
+#else
+	return NULL;
+#endif
+}
+
 void
 pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 	    size_t cp_max)
@@ -326,8 +346,6 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 	const struct pci_class *classp, *subclassp;
 	size_t cp_len = 0;
 #ifdef PCIVERBOSE
-	const struct pci_known_vendor *pkv;
-	const struct pci_known_product *pkp;
 	const char *unmatched = "unknown ";
 #else
 	const char *unmatched = "";
@@ -342,24 +360,9 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 	revision = PCI_REVISION(class_reg);
 
 #ifdef PCIVERBOSE
-	pkv = pci_known_vendors;
-	while (pkv->vendorname != NULL) {	/* all have vendor name */
-		if (pkv->vendor == vendor) {
-			vendor_namep = pkv->vendorname;
-			break;
-		}
-		pkv++;
-	}
-	if (vendor_namep) {
-		pkp = pci_known_products;
-		while (pkp->productname != NULL) {	/* all have product name */
-			if (pkp->vendor == vendor && pkp->product == product) {
-				product_namep = pkp->productname;
-				break;
-			}
-			pkp++;
-		}
-	}
+	vendor_namep = pci_findvendor(id_reg);
+	if (vendor_namep != NULL)
+		product_namep = pci_findproduct(id_reg);
 #endif /* PCIVERBOSE */
 
 	classp = pci_class;

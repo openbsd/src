@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.50 2006/12/14 17:36:12 kettenis Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.51 2007/01/02 19:22:38 mbalmer Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -216,6 +216,7 @@ int pci_matchbyid(struct pci_attach_args *, const struct pci_matchid *, int);
  * Helper functions for autoconfiguration.
  */
 const char *pci_findvendor(pcireg_t);
+const char *pci_findproduct(pcireg_t);
 int	pci_find_device(struct pci_attach_args *pa,
 			int (*match)(struct pci_attach_args *));
 int	pci_probe_device(struct pci_softc *, pcitag_t tag,
