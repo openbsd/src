@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.44 2006/03/05 21:48:56 miod Exp $	*/
+/*	$OpenBSD: in.c,v 1.45 2007/01/02 11:41:28 markus Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -69,6 +69,11 @@
 
 #include <net/if.h>
 #include <net/route.h>
+
+#include "carp.h"
+#if NCARP > 0
+#include <net/if_types.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -659,7 +664,6 @@ in_ifscrub(ifp, ia)
 	struct ifnet *ifp;
 	struct in_ifaddr *ia;
 {
-
 	in_scrubprefix(ia);
 }
 
@@ -793,13 +797,23 @@ in_addprefix(target, flags)
 			    mask.s_addr != ia->ia_sockmask.sin_addr.s_addr)
 				continue;
 		}
-
+		if ((ia->ia_flags & IFA_ROUTE) == 0)
+			continue;
+#if NCARP > 0
+		/* move to a real interface instead of carp interface */
+		if (ia->ia_ifp->if_type == IFT_CARP &&
+		    target->ia_ifp->if_type != IFT_CARP) {
+			rtinit(&(ia->ia_ifa), (int)RTM_DELETE,
+			    rtinitflags(ia));
+			ia->ia_flags &= ~IFA_ROUTE;
+			break;
+		}
+#endif
 		/*
 		 * if we got a matching prefix route inserted by other
 		 * interface adderss, we don't need to bother
 		 */
-		if (ia->ia_flags & IFA_ROUTE)
-			return 0;
+		return 0;
 	}
 
 	/*
