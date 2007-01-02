@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.16 2006/12/23 17:46:38 deraadt Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.17 2007/01/02 22:43:29 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -82,9 +82,9 @@ nmeaopen(dev_t dev, struct tty *tp)
 	int error;
 
 	if (tp->t_line == NMEADISC)
-		return (ENODEV);
+		return ENODEV;
 	if ((error = suser(p, 0)) != 0)
-		return (error);
+		return error;
 	np = malloc(sizeof(struct nmea), M_DEVBUF, M_WAITOK);
 	bzero(np, sizeof(*np));
 	snprintf(np->timedev.xname, sizeof(np->timedev.xname), "nmea%d",
@@ -110,7 +110,7 @@ nmeaopen(dev_t dev, struct tty *tp)
 		tp->t_sc = NULL;
 	} else
 		sensordev_install(&np->timedev);
-	return (error);
+	return error;
 }
 
 int
@@ -342,7 +342,7 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 /*
  * convert a NMEA 0183 formatted date string to seconds since the epoch
  * the string must be of the form DDMMYY
- * return (0) on success, (-1) if illegal characters are encountered
+ * return 0 on success, -1 if illegal characters are encountered
  */
 int
 nmea_date_to_nano(char *s, int64_t *nano)
@@ -356,7 +356,7 @@ nmea_date_to_nano(char *s, int64_t *nano)
 	for (n = 0, p = s; n < 6 && *p && *p >= '0' && *p <= '9'; n++, p++)
 		;
 	if (n != 6 || (*p != '\0'))
-		return (-1);
+		return -1;
 
 	ymd.dt_year = 2000 + (s[4] - '0') * 10 + (s[5] - '0');
 	ymd.dt_mon = (s[2] - '0') * 10 + (s[3] - '0');
@@ -365,14 +365,14 @@ nmea_date_to_nano(char *s, int64_t *nano)
 
 	secs = clock_ymdhms_to_secs(&ymd);
 	*nano = secs * 1000000000LL;
-	return (0);
+	return 0;
 }
 
 /*
  * convert NMEA 0183 formatted time string to nanoseconds since midnight
  * the string must be of the form HHMMSS[.[sss]]
  * (e.g. 143724 or 143723.615)
- * return (0) on success, (-1) if illegal characters are encountered
+ * return 0 on success, -1 if illegal characters are encountered
  */
 int
 nmea_time_to_nano(char *s, int64_t *nano)
@@ -403,7 +403,7 @@ nmea_time_to_nano(char *s, int64_t *nano)
 		}
 	}
 	if (fac)
-		return (-1);
+		return -1;
 
 	div = 1L;
 	frac = 0L;
@@ -417,8 +417,8 @@ nmea_time_to_nano(char *s, int64_t *nano)
 	}
 
 	if (*s != '\0')
-		return (-1);
+		return -1;
 
 	*nano = secs * 1000000000LL + (int64_t)frac * (1000000000 / div);
-	return (0);
+	return 0;
 }
