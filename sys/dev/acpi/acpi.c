@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.74 2006/12/26 23:58:08 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.75 2007/01/02 00:51:15 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -62,6 +62,7 @@ void	acpi_map_pmregs(struct acpi_softc *);
 
 void	acpi_foundpss(struct aml_node *, void *);
 void	acpi_foundhid(struct aml_node *, void *);
+void	acpi_foundec(struct aml_node *, void *);
 void	acpi_foundtmp(struct aml_node *, void *);
 void	acpi_inidev(struct aml_node *, void *);
 
@@ -539,6 +540,43 @@ acpi_foundpss(struct aml_node *node, void *arg)
 }
 
 void
+acpi_foundec(struct aml_node *node, void *arg)
+{
+	struct acpi_softc	*sc = (struct acpi_softc *)arg;
+	struct device		*self = (struct device *)arg;
+	const char		*dev;
+	struct aml_value	 res;
+	struct acpi_attach_args	aaa;
+
+	if (aml_evalnode(sc, node, 0, NULL, &res) != 0)
+		return;
+
+	switch (res.type) {
+	case AML_OBJTYPE_STRING:
+		dev = res.v_string;
+		break;
+	case AML_OBJTYPE_INTEGER:
+		dev = aml_eisaid(aml_val2int(&res));
+		break;
+	default:
+		dev = "unknown";
+		break;
+	}
+
+	if (strcmp(dev, ACPI_DEV_ECD))
+		return;
+
+	memset(&aaa, 0, sizeof(aaa));
+	aaa.aaa_iot = sc->sc_iot;
+	aaa.aaa_memt = sc->sc_memt;
+	aaa.aaa_node = node->parent;
+	aaa.aaa_dev = dev;
+	aaa.aaa_name = "acpiec";
+	config_found(self, &aaa, acpi_print);
+	aml_freevalue(&res);
+}
+
+void
 acpi_foundhid(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
@@ -578,8 +616,6 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	    !strcmp(dev, ACPI_DEV_PBD) ||
 	    !strcmp(dev, ACPI_DEV_SBD))
 		aaa.aaa_name = "acpibtn";
-	else if (!strcmp(dev, ACPI_DEV_ECD))
-		aaa.aaa_name = "acpiec";
 
 	if (aaa.aaa_name)
 		config_found(self, &aaa, acpi_print);
@@ -858,10 +894,10 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* attach pci interrupt routing tables */
 	aml_find_node(aml_root.child, "_PRT", acpi_foundprt, sc);
 
-	/*
-	 * attach embedded controller, battery, power supply and button
-	 * devices
-	 */
+	 /* XXX EC needs to be attached first on some systems */
+	aml_find_node(aml_root.child, "_HID", acpi_foundec, sc);
+
+	/* attach battery, power supply and button devices */
 	aml_find_node(aml_root.child, "_HID", acpi_foundhid, sc);
 
 	/* attach cpu devices */
