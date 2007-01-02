@@ -1,4 +1,4 @@
-/*	$OpenBSD: nmeaattach.c,v 1.6 2006/11/29 12:09:02 mbalmer Exp $	*/
+/*	$OpenBSD: nmeaattach.c,v 1.7 2007/01/02 22:49:08 mbalmer Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -155,7 +155,7 @@ main(int argc, char *argv[])
 	for (;;) {
 		sigsuspend(&sigset);
 		if (dying)
-			return (0);
+			return 0;
 	}
 }
 
