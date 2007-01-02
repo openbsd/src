@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.40 2006/12/21 22:32:30 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.41 2007/01/02 23:55:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -741,24 +741,27 @@ cvs_client_removed(char *data)
 void
 cvs_client_remove_entry(char *data)
 {
+	int l;
 	CVSENTRIES *entlist;
-	struct cvs_ent *ent;
-	char *dir, *entry;
+	char *filename, *rpath, *fpath;
 
-	dir = cvs_remote_input();
-	entry = cvs_remote_input();
-	xfree(dir);
+	rpath = cvs_remote_input();
+	if ((filename = strrchr(rpath, '/')) == NULL)
+		fatal("bad rpath in cvs_client_remove_entry: %s", rpath);
+	*filename++;
 
-	if ((ent = cvs_ent_parse(entry)) == NULL)
-		fatal("cvs_client_remove_entry: cvs_ent_parse failed");
+	fpath = xmalloc(MAXPATHLEN);
+	l = snprintf(fpath, MAXPATHLEN, "%s%s", data, filename);
+	if (l == -1 || l >= MAXPATHLEN)
+		fatal("cvs_client_remove_entry: overflow");
+
+	xfree(rpath);
 
 	entlist = cvs_ent_open(data);
-
-	cvs_ent_remove(entlist, ent->ce_name);
-	cvs_ent_free(ent);
+	cvs_ent_remove(entlist, fpath);
 	cvs_ent_close(entlist, ENT_SYNC);
 
-	xfree(entry);
+	xfree(fpath);
 }
 
 void
