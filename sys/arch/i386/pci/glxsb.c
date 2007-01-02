@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.4 2006/11/19 13:41:27 tom Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.5 2007/01/02 22:51:49 tom Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -197,8 +197,6 @@ int glxsb_crypto_setup(struct glxsb_softc *);
 int glxsb_crypto_newsession(uint32_t *, struct cryptoini *);
 int glxsb_crypto_process(struct cryptop *);
 int glxsb_crypto_freesession(uint64_t);
-static void glxsb_bus_space_write_consec_16(bus_space_tag_t,
-    bus_space_handle_t, bus_size_t, uint32_t *);
 static __inline void glxsb_aes(struct glxsb_softc *, uint32_t, uint32_t,
     uint32_t, void *, int, void *);
 
@@ -393,16 +391,6 @@ glxsb_crypto_freesession(uint64_t tid)
 	return (0);
 }
 
-static void
-glxsb_bus_space_write_consec_16(bus_space_tag_t iot, bus_space_handle_t ioh,
-    bus_size_t offset, uint32_t *dp)
-{
-	bus_space_write_4(iot, ioh, offset +  0, dp[0]);
-	bus_space_write_4(iot, ioh, offset +  4, dp[1]);
-	bus_space_write_4(iot, ioh, offset +  8, dp[2]);
-	bus_space_write_4(iot, ioh, offset + 12, dp[3]);
-}
-
 /*
  * Must be called at splnet() or higher
  */
@@ -430,13 +418,13 @@ glxsb_aes(struct glxsb_softc *sc, uint32_t control, uint32_t psrc,
 
 	/* Set the IV */
 	if (iv != NULL) {
-		glxsb_bus_space_write_consec_16(sc->sc_iot, sc->sc_ioh,
-		    SB_CBC_IV, iv);
+		bus_space_write_region_4(sc->sc_iot, sc->sc_ioh,
+		    SB_CBC_IV, iv, 4);
 		control |= SB_CTL_CBC;
 	}
 
 	/* Set the key */
-	glxsb_bus_space_write_consec_16(sc->sc_iot, sc->sc_ioh, SB_WKEY, key);
+	bus_space_write_region_4(sc->sc_iot, sc->sc_ioh, SB_WKEY, key, 4);
 
 	/* Ask the security block to do it */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SB_CTL_A,
