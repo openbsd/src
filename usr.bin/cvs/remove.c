@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.58 2007/01/03 22:28:30 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.59 2007/01/03 22:56:54 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -24,6 +24,7 @@
 extern char *__progname;
 
 void		cvs_remove_local(struct cvs_file *);
+void		cvs_remove_force(struct cvs_file *);
 
 static int	force_remove = 0;
 static int	removed = 0;
@@ -68,6 +69,13 @@ cvs_remove(int argc, char **argv)
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
+	cr.flags = flags;
+
+	cr.fileproc = cvs_remove_force;
+	if (argc > 0)
+		cvs_file_run(argc, argv, &cr);
+	else
+		cvs_file_run(1, &arg, &cr);
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cr.fileproc = cvs_client_sendfile;
@@ -77,8 +85,6 @@ cvs_remove(int argc, char **argv)
 	} else {
 		cr.fileproc = cvs_remove_local;
 	}
-
-	cr.flags = flags;
 
 	if (argc > 0)
 		cvs_file_run(argc, argv, &cr);
@@ -111,6 +117,19 @@ cvs_remove(int argc, char **argv)
 }
 
 void
+cvs_remove_force(struct cvs_file *cf)
+{
+	if (cf->file_type != CVS_DIR) {
+		if (force_remove == 1 && cvs_noexec == 0) {
+			if (unlink(cf->file_path) == -1)
+				fatal("cvs_remove_force: %s", strerror(errno));
+			(void)close(cf->fd);
+			cf->fd = -1;
+		}
+	}
+}
+
+void
 cvs_remove_local(struct cvs_file *cf)
 {
 	int l;
@@ -132,13 +151,6 @@ cvs_remove_local(struct cvs_file *cf)
 			cvs_log(LP_NOTICE, "nothing known about '%s'",
 			    cf->file_path);
 		return;
-	}
-
-	if (force_remove == 1 && cvs_noexec == 0) {
-		if (unlink(cf->file_path) == -1)
-			fatal("cvs_remove_local: %s", strerror(errno));
-		(void)close(cf->fd);
-		cf->fd = -1;
 	}
 
 	if (cf->fd != -1) {
