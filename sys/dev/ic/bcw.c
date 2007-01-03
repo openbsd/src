@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.18 2007/01/03 06:02:27 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.19 2007/01/03 06:10:47 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -267,8 +267,7 @@ bcw_attach(struct bcw_softc *sc)
        /* Reset and Identify each core */
        for (i = 0; i < sc->sc_numcores; i++) {
 		if (bcw_change_core(sc, i)) {
-			sbval = bus_space_read_4(sc->sc_iot,
-			    sc->sc_ioh, BCW_CIR_SBID_HI);
+			sbval = BCW_READ(sc, BCW_CIR_SBID_HI);
 
 			sc->sc_core[i].id = (sbval & 0x00008ff0) >> 4;
 			sc->sc_core[i].rev =
@@ -309,8 +308,7 @@ bcw_attach(struct bcw_softc *sc)
 			    sc->sc_dev.dv_xname, i, 
 			    sc->sc_core[i].id, sc->sc_core[i].rev));
 			/* XXX Fill out the core location vars */
-			sbval = bus_space_read_4(sc->sc_iot,
-			    sc->sc_ioh, BCW_SBTPSFLAG);
+			sbval = BCW_READ(sc, BCW_SBTPSFLAG);
 			sc->sc_core[i].backplane_flag =
 			sbval & SBTPS_BACKPLANEFLAGMASK;
 			sc->sc_core[i].num = i;
@@ -1345,7 +1343,7 @@ bcw_reset(struct bcw_softc *sc)
 	 */
 	bcw_change_core(sc, sc->sc_core_80211->num);
 
-	sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
+	sbval = BCW_READ(sc, BCW_SBTMSTATELOW);
 #if 0
 	if ((sbval & (SBTML_RESET | reject | SBTML_CLK)) == SBTML_CLK) {
 		/* XXX Stop all DMA */
@@ -2109,16 +2107,14 @@ bcw_reset_core(struct bcw_softc *sc, u_int32_t flags)
 			BCW_WRITE(sc, BCW_SBTMSTATELOW,
 			    SBTML_RESET | reject | flags);
 			delay(1);
-			sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_SBTMSTATELOW);
+			sbval = BCW_READ(sc, BCW_SBTMSTATELOW);
 			goto disabled;
 
 			BCW_WRITE(sc, BCW_SBTMSTATELOW, reject);
 			delay(1);
 			/* wait until busy is clear */
 			for (i = 0; i < 10000; i++) {
-				val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				    BCW_SBTMSTATEHI);
+				val = BCW_READ(sc, BCW_SBTMSTATEHI);
 				if (!(val & SBTMH_BUSY))
 					break;
 				delay(10);
@@ -2127,21 +2123,17 @@ bcw_reset_core(struct bcw_softc *sc, u_int32_t flags)
 				printf("%s: while resetting core, busy did "
 				    "not clear\n", sc->sc_dev.dv_xname);
 
-			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_CIR_SBID_LO);
+			val = BCW_READ(sc, BCW_CIR_SBID_LO);
 			if (val & BCW_CIR_SBID_LO_INITIATOR) {
-				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				    BCW_SBIMSTATE);
+				sbval = BCW_READ(sc, BCW_SBIMSTATE);
 				BCW_WRITE(sc, BCW_SBIMSTATE,
 				    sbval | SBIM_REJECT);
-				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				    BCW_SBIMSTATE);
+				sbval = BCW_READ(sc, BCW_SBIMSTATE);
 				delay(1);
 
 				/* wait until busy is clear */
 				for (i = 0; i < 10000; i++) {
-					val = bus_space_read_4(sc->sc_iot,
-					sc->sc_ioh, BCW_SBTMSTATEHI);
+					val = BCW_READ(sc, BCW_SBTMSTATEHI);
 					if (!(val & SBTMH_BUSY))
 						break;
 					delay(10);
@@ -2156,25 +2148,20 @@ bcw_reset_core(struct bcw_softc *sc, u_int32_t flags)
 			/* XXX why isn't reject in here? */
 			BCW_WRITE(sc, BCW_SBTMSTATELOW,
 			    SBTML_FGC | SBTML_CLK | SBTML_RESET | flags);
-			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_SBTMSTATELOW);
+			val = BCW_READ(sc, BCW_SBTMSTATELOW);
 			delay(10);
 
-			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_CIR_SBID_LO);
+			val = BCW_READ(sc, BCW_CIR_SBID_LO);
 			if (val & BCW_CIR_SBID_LO_INITIATOR) {
-				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				    BCW_SBIMSTATE);
+				sbval = BCW_READ(sc, BCW_SBIMSTATE);
 				BCW_WRITE(sc, BCW_SBIMSTATE,
 				    sbval & ~SBIM_REJECT);
-				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				    BCW_SBIMSTATE);
+				sbval = BCW_READ(sc, BCW_SBIMSTATE);
 				delay(1);
 
 				/* wait until busy is clear */
 				for (i = 0; i < 10000; i++) {
-					val = bus_space_read_4(sc->sc_iot,
-					sc->sc_ioh, BCW_SBTMSTATEHI);
+					val = BCW_READ(sc, BCW_SBTMSTATEHI);
 					if (!(val & SBTMH_BUSY))
 						break;
 					delay(10);
@@ -2197,14 +2184,14 @@ disabled:
 	/* enable clock */
 	BCW_WRITE(sc, BCW_SBTMSTATELOW,
 	    SBTML_FGC | SBTML_CLK | SBTML_RESET | flags);
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
+	val = BCW_READ(sc, BCW_SBTMSTATELOW);
 	delay(1);
 
 	/* clear any error bits that may be on */
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATEHI);
+	val = BCW_READ(sc, BCW_SBTMSTATEHI);
 	if (val & SBTMH_SERR)
 		BCW_WRITE(sc, BCW_SBTMSTATEHI, 0);
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBIMSTATE);
+	val = BCW_READ(sc, BCW_SBIMSTATE);
 	if (val & (SBIM_INBANDERR | SBIM_TIMEOUT))
 		BCW_WRITE(sc, BCW_SBIMSTATE,
 		    val & ~(SBIM_INBANDERR | SBIM_TIMEOUT));
@@ -2212,12 +2199,12 @@ disabled:
 	/* clear reset and allow it to propagate throughout the core */
 	BCW_WRITE(sc, BCW_SBTMSTATELOW,
 	    SBTML_FGC | SBTML_CLK | flags);
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
+	val = BCW_READ(sc, BCW_SBTMSTATELOW);
 	delay(1);
 
 	/* leave clock enabled */
 	BCW_WRITE(sc, BCW_SBTMSTATELOW, SBTML_CLK | flags);
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
+	val = BCW_READ(sc, BCW_SBTMSTATELOW);
 	delay(1);
 
 	return 0;
@@ -2365,8 +2352,7 @@ bcw_load_initvals(struct bcw_softc *sc)
 	if (rev >= 5) {
 		switch (sc->sc_phy_type) {
 		case BCW_PHY_TYPEA:
-			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_SBTMSTATEHI);
+			val = BCW_READ(sc, BCW_SBTMSTATEHI);
 			if (val & 0x00010000)
 				nr = 9;
 			else
