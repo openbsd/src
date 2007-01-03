@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogc.8,v 1.4 2005/09/24 02:09:54 djm Exp $
+.\"	$OpenBSD: syslogc.8,v 1.5 2007/01/03 13:25:21 mpf Exp $
 .\"
 .\" Copyright (c) 2004 Damien Miller
 .\"
@@ -21,7 +21,7 @@
 .Nd collect messages from syslog memory buffer
 .Sh SYNOPSIS
 .Nm syslogc
-.Op Fl Ccoq
+.Op Fl Ccfoq
 .Op Fl s Ar reporting_socket
 .Ar logname
 .Nm syslogc
@@ -59,6 +59,12 @@ The options are as follows:
 Request that the log buffer be cleared without reading it.
 .It Fl c
 Request that the log buffer be cleared once it has been read.
+.It Fl f
+Print out the last 10 lines and read from the buffer continuously.
+Like
+.Ar -f
+in
+.Xr tail 1
 .It Fl o
 Check whether the specified log has overflowed.
 If the log has overflowed, then a message will be printed to
@@ -73,6 +79,10 @@ will be appended to its name.
 Specify alternate reporting socket location (the default is
 .Pa /var/run/syslogd.sock ) .
 .El
+.Sh CAVEATS
+The buffer space used for writing logs through the socket is limited.
+Thus it is possible to lose logs when running in continuous mode.
+Losses are reported on standard error.
 .Sh SEE ALSO
 .Xr syslog 3 ,
 .Xr syslog.conf 5 ,

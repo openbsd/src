@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.93 2006/09/17 18:28:34 djm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.94 2007/01/03 13:25:20 mpf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.93 2006/09/17 18:28:34 djm Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.94 2007/01/03 13:25:20 mpf Exp $";
 #endif
 #endif /* not lint */
 
@@ -149,6 +149,7 @@ struct filed {
 			char	f_mname[MAX_MEMBUF_NAME];
 			struct ringbuf *f_rb;
 			int	f_overflow;
+			int	f_attached;
 		} f_mb;		/* Memory buffer */
 	} f_un;
 	char	f_prevline[MAXSVLINE];		/* last message logged */
@@ -210,12 +211,14 @@ char	*ctlsock_path = NULL;	/* Path to control socket */
 
 #define CTL_READING_CMD		1
 #define CTL_WRITING_REPLY	2
+#define CTL_WRITING_CONT_REPLY	3
 int	ctl_state = 0;		/* What the control socket is up to */
+int	membuf_drop = 0;	/* logs were dropped in continuous membuf read */
 
 /*
  * Client protocol NB. all numeric fields in network byte order
  */
-#define CTL_VERSION		0
+#define CTL_VERSION		1
 
 /* Request */
 struct	{
@@ -225,6 +228,7 @@ struct	{
 #define CMD_CLEAR	3	/* Clear log */
 #define CMD_LIST	4	/* List available logs */
 #define CMD_FLAGS	5	/* Query flags only */
+#define CMD_READ_CONT	6	/* Read out log continuously */
 	u_int32_t	cmd;
 	char		logname[MAX_MEMBUF_NAME];
 }	ctl_cmd;
@@ -241,8 +245,10 @@ struct ctl_reply_hdr {
 
 #define CTL_HDR_LEN		(sizeof(struct ctl_reply_hdr))
 #define CTL_REPLY_MAXSIZE	(CTL_HDR_LEN + MAX_MEMBUF)
+#define CTL_REPLY_SIZE		(strlen(reply_text) + CTL_HDR_LEN)
 
 char	*ctl_reply = NULL;	/* Buffer for control connection reply */
+char	*reply_text;		/* Start of reply text in buffer */
 size_t	ctl_reply_size = 0;	/* Number of bytes used in reply */
 size_t	ctl_reply_offset = 0;	/* Number of bytes of reply written so far */
 
@@ -277,6 +283,8 @@ void	double_rbuf(int);
 void	ctlsock_accept_handler(void);
 void	ctlconn_read_handler(void);
 void	ctlconn_write_handler(void);
+void	tailify_replytext(char *, int);
+void	logto_ctlconn(char *);
 
 int
 main(int argc, char *argv[])
@@ -478,6 +486,7 @@ main(int argc, char *argv[])
 		logerror("Couldn't allocate ctlsock reply buffer");
 		die(0);
 	}
+	reply_text = ctl_reply + CTL_HDR_LEN;
 
 	if (!Debug) {
 		dup2(nullfd, STDIN_FILENO);
@@ -944,6 +953,8 @@ fprintlog(struct filed *f, int flags, char *msg)
 		    (char *)iov[4].iov_base);
 		if (ringbuf_append_line(f->f_un.f_mb.f_rb, line) == 1)
 			f->f_un.f_mb.f_overflow = 1;
+		if (f->f_un.f_mb.f_attached)
+			logto_ctlconn(line);
 		break;
 	}
 	f->f_prevcount = 0;
@@ -1507,6 +1518,7 @@ cfline(char *line, char *prog)
 			break;
 		}
 		f->f_un.f_mb.f_overflow = 0;
+		f->f_un.f_mb.f_attached = 0;
 		break;
 
 	default:
@@ -1671,6 +1683,8 @@ double_rbuf(int fd)
 static void
 ctlconn_cleanup(void)
 {
+	struct filed *f;
+
 	if (pfd[PFD_CTLCONN].fd != -1)
 		close(pfd[PFD_CTLCONN].fd);
 
@@ -1678,6 +1692,11 @@ ctlconn_cleanup(void)
 	pfd[PFD_CTLCONN].events = pfd[PFD_CTLCONN].revents = 0;
 
 	pfd[PFD_CTLSOCK].events = POLLIN;
+
+	if (ctl_state == CTL_WRITING_CONT_REPLY)
+		for (f = Files; f != NULL; f = f->f_next)
+			if (f->f_type == F_MEMBUF)
+				f->f_un.f_mb.f_attached = 0;
 
 	ctl_state = ctl_cmd_bytes = ctl_reply_offset = ctl_reply_size = 0;
 }
@@ -1732,13 +1751,11 @@ ctlconn_read_handler(void)
 	ssize_t n;
 	struct filed *f;
 	u_int32_t flags = 0;
-	size_t reply_text_size;
 	struct ctl_reply_hdr *reply_hdr = (struct ctl_reply_hdr *)ctl_reply;
-	char *reply_text = ctl_reply + CTL_HDR_LEN;
 
-	if (ctl_state != CTL_READING_CMD) {
-		/* Shouldn't be here! */
-		logerror("ctlconn_read with bad ctl_state");
+	if (ctl_state == CTL_WRITING_REPLY ||
+	    ctl_state == CTL_WRITING_CONT_REPLY) {
+		/* client has closed the connection */
 		ctlconn_cleanup();
 		return;
 	}
@@ -1777,7 +1794,7 @@ ctlconn_read_handler(void)
 
 	*reply_text = '\0';
 
-	ctl_reply_size = reply_text_size = ctl_reply_offset = 0;
+	ctl_reply_size = ctl_reply_offset = 0;
 	memset(reply_hdr, '\0', sizeof(*reply_hdr));
 
 	ctl_cmd.cmd = ntohl(ctl_cmd.cmd);
@@ -1786,6 +1803,7 @@ ctlconn_read_handler(void)
 	switch (ctl_cmd.cmd) {
 	case CMD_READ:
 	case CMD_READ_CLEAR:
+	case CMD_READ_CONT:
 	case CMD_FLAGS:
 		f = find_membuf_log(ctl_cmd.logname);
 		if (f == NULL) {
@@ -1801,8 +1819,11 @@ ctlconn_read_handler(void)
 				ringbuf_clear(f->f_un.f_mb.f_rb);
 				f->f_un.f_mb.f_overflow = 0;
 			}
+			if (ctl_cmd.cmd == CMD_READ_CONT) {
+				f->f_un.f_mb.f_attached = 1;
+				tailify_replytext(reply_text, 10);
+			}
 		}
-		reply_text_size = strlen(reply_text);
 		break;
 	case CMD_CLEAR:
 		f = find_membuf_log(ctl_cmd.logname);
@@ -1815,7 +1836,6 @@ ctlconn_read_handler(void)
 			f->f_un.f_mb.f_overflow = 0;
 			strlcpy(reply_text, "Log cleared\n", MAX_MEMBUF);
 		}
-		reply_text_size = strlen(reply_text);
 		break;
 	case CMD_LIST:
 		for (f = Files; f != NULL; f = f->f_next) {
@@ -1830,7 +1850,6 @@ ctlconn_read_handler(void)
 			}
 		}
 		strlcat(reply_text, "\n", MAX_MEMBUF);
-		reply_text_size = strlen(reply_text);
 		break;
 	default:
 		logerror("Unsupported ctlsock command");
@@ -1840,13 +1859,22 @@ ctlconn_read_handler(void)
 	reply_hdr->version = htonl(CTL_VERSION);
 	reply_hdr->flags = htonl(flags);
 
-	ctl_reply_size = reply_text_size + CTL_HDR_LEN;
+	ctl_reply_size = CTL_REPLY_SIZE;
 	dprintf("ctlcmd reply length %lu\n", (u_long)ctl_reply_size);
 
 	/* Otherwise, set up to write out reply */
-	ctl_state = CTL_WRITING_REPLY;
+	ctl_state = (ctl_cmd.cmd == CMD_READ_CONT) ?
+	    CTL_WRITING_CONT_REPLY : CTL_WRITING_REPLY;
+
 	pfd[PFD_CTLCONN].events = POLLOUT;
-	pfd[PFD_CTLCONN].revents = 0;
+
+	/* monitor terminating syslogc */
+	pfd[PFD_CTLCONN].events |= POLLIN;
+
+	/* another syslogc can kick us out */
+	if (ctl_state == CTL_WRITING_CONT_REPLY)
+		pfd[PFD_CTLSOCK].events = POLLIN;
+
 }
 
 void
@@ -1854,7 +1882,8 @@ ctlconn_write_handler(void)
 {
 	ssize_t n;
 
-	if (ctl_state != CTL_WRITING_REPLY) {
+	if (!(ctl_state == CTL_WRITING_REPLY ||
+	    ctl_state == CTL_WRITING_CONT_REPLY)) {
 		/* Shouldn't be here! */
 		logerror("ctlconn_write with bad ctl_state");
 		ctlconn_cleanup();
@@ -1876,7 +1905,67 @@ ctlconn_write_handler(void)
 	default:
 		ctl_reply_offset += n;
 	}
+	if (ctl_reply_offset >= ctl_reply_size) {
+		/*
+		 * Make space in the buffer for continous writes.
+		 * Set offset behind reply header to skip it
+		 */
+		if (ctl_state == CTL_WRITING_CONT_REPLY) {
+			*reply_text = '\0';
+			ctl_reply_offset = ctl_reply_size = CTL_REPLY_SIZE;
 
-	if (ctl_reply_offset >= ctl_reply_size)
-		ctlconn_cleanup();
+			/* Now is a good time to report dropped lines */
+			if (membuf_drop) {
+				strlcat(reply_text, "<ENOBUFS>\n", MAX_MEMBUF);
+				ctl_reply_size = CTL_REPLY_SIZE;
+				membuf_drop = 0;
+			} else {
+				/* Nothing left to write */
+				pfd[PFD_CTLCONN].events = POLLIN;
+			}
+		} else
+			ctlconn_cleanup();
+	}
+}
+
+/* Shorten replytext to number of lines */
+void
+tailify_replytext(char *replytext, int lines)
+{
+	char *start, *nl;
+	int count = 0;
+	start = nl = replytext;
+
+	while ((nl = strchr(nl, '\n')) != NULL) {
+		nl++;
+		if (++count > lines) {
+			start = strchr(start, '\n');
+			start++;
+		}
+	}
+	if (start != replytext) {
+		int len = strlen(start);
+		memmove(replytext, start, len);
+		*(replytext + len) = '\0';
+	}
+}
+
+void
+logto_ctlconn(char *line)
+{
+	size_t l;
+
+	if (membuf_drop)
+		return;
+
+	l = strlen(line);
+	if (l + 2 > (CTL_REPLY_MAXSIZE - ctl_reply_size)) {
+		/* remember line drops for later report */
+		membuf_drop = 1;
+		return;
+	}
+	memcpy(ctl_reply + ctl_reply_size, line, l);
+	memcpy(ctl_reply + ctl_reply_size + l, "\n", 2);
+	ctl_reply_size += l + 1;
+	pfd[PFD_CTLCONN].events |= POLLOUT;
 }

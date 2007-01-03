@@ -1,4 +1,4 @@
-/* $OpenBSD: syslogc.c,v 1.11 2005/09/28 08:49:28 stevesk Exp $ */
+/* $OpenBSD: syslogc.c,v 1.12 2007/01/03 13:25:21 mpf Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -33,7 +33,7 @@
 /*
  * Client protocol NB. all numeric fields in network byte order
  */
-#define CTL_VERSION		0
+#define CTL_VERSION		1
 
 /* Request */
 struct ctl_cmd {
@@ -43,6 +43,7 @@ struct ctl_cmd {
 #define CMD_CLEAR	3	/* Clear log */
 #define CMD_LIST	4	/* List available logs */
 #define CMD_FLAGS	5	/* Query flags only */
+#define CMD_READ_CONT	6	/* Read out log continuously */
 	u_int32_t	cmd;
 	char		logname[MAX_MEMBUF_NAME];
 };
@@ -60,7 +61,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "Usage: %s [-Ccoq] [-s ctlsock] logname\n", __progname);
+	fprintf(stderr, "Usage: %s [-Ccfhoq] [-s ctlsock] logname\n", __progname);
 	exit(1);
 }
 
@@ -81,7 +82,7 @@ main(int argc, char **argv)
 
 	ctlsock_path = DEFAULT_CTLSOCK;
 	rval = oflag = 0;
-	while ((ch = getopt(argc, argv, "Cchoqs:")) != -1) {
+	while ((ch = getopt(argc, argv, "Ccfhoqs:")) != -1) {
 		switch (ch) {
 		case 'C':
 			cc.cmd = CMD_CLEAR;
@@ -91,6 +92,9 @@ main(int argc, char **argv)
 			break;
 		case 'h':
 			usage();
+			break;
+		case 'f':
+			cc.cmd = CMD_READ_CONT;
 			break;
 		case 'o':
 			cc.cmd = CMD_FLAGS;
@@ -149,8 +153,13 @@ main(int argc, char **argv)
 		errx(1, "unsupported syslogd version");
 
 	/* Write out reply */
-	while ((fgets(buf, sizeof(buf), ctlf)) != NULL)
-		fputs(buf, stdout);
+	while ((fgets(buf, sizeof(buf), ctlf)) != NULL) {
+		if (!strcmp(buf, "<ENOBUFS>\n"))
+			fprintf(stderr, "syslogc [%s]: Lines were dropped!\n",
+			    cc.logname);
+		else
+			fputs(buf, stdout);
+	}
 
 	if (oflag && (ntohl(rr.flags) & CTL_HDR_FLAG_OVERFLOW)) {
 		printf("%s has overflowed\n", cc.logname);
