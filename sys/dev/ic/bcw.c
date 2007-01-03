@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.16 2007/01/03 05:46:42 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.17 2007/01/03 05:53:03 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -176,8 +176,10 @@ bcw_attach(struct bcw_softc *sc)
 	DPRINTF(("%s: Got Core ID Reg 0x%x, type is 0x%x\n",
 	    sc->sc_dev.dv_xname, sbval, (sbval & 0x8ff0) >> 4));
 
-	/* If we successfully got a commoncore, and the corerev=4 or >=6
-	   get the number of cores from the chipid reg */
+	/*
+	 * If we successfully got a commoncore, and the corerev=4 or >=6
+	 * get the number of cores from the chipid reg
+	 */
 	if (((sbval & 0x00008ff0) >> 4) == BCW_CORE_COMMON) {
 		sc->sc_havecommon = 1;
 		/* XXX do early init of sc_core[0] here */
@@ -491,7 +493,6 @@ bcw_attach(struct bcw_softc *sc)
 	
 	/* Init the Microcode Flags Bitfield */
 	/* http://bcm-specs.sipsolutions.net/MicrocodeFlagsBitfield */
-
 	sbval = 0;
 	if ((sc->sc_phy_type == BCW_PHY_TYPEA) ||
 	    (sc->sc_phy_type == BCW_PHY_TYPEB) ||
@@ -620,6 +621,7 @@ bcw_attach(struct bcw_softc *sc)
 	/* Attach the interface */
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
+
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = bcw_newstate;
@@ -657,7 +659,8 @@ bcw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) && (!(ifp->if_flags & IFF_RUNNING)))
+		if ((ifp->if_flags & IFF_UP) &&
+		    (!(ifp->if_flags & IFF_RUNNING)))
 				bcw_init(ifp);
 		else if (ifp->if_flags & IFF_RUNNING)
 			bcw_stop(ifp, 1);
@@ -912,6 +915,7 @@ bcw_intr(void *xsc)
 		/* Try to get more packets going. */
 		bcw_start(ifp);
 	}
+
 	return (handled);
 }
 
