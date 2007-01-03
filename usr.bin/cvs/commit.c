@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.83 2007/01/02 23:55:15 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.84 2007/01/03 20:48:26 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -330,7 +330,7 @@ cvs_commit_local(struct cvs_file *cf)
 		if (b == NULL)
 			fatal("cvs_commit_local: failed to get HEAD");
 
-		cvs_checkout_file(cf, cf->file_rcs->rf_head, b, 0);
+		cvs_checkout_file(cf, cf->file_rcs->rf_head, b, CO_COMMIT);
 	} else {
 		entlist = cvs_ent_open(cf->file_wd);
 		cvs_ent_remove(entlist, cf->file_name);

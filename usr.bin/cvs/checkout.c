@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.67 2006/12/22 11:51:50 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.68 2007/01/03 20:48:26 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -263,17 +263,26 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 		if ((p = strrchr(cf->file_rpath, ',')) != NULL)
 			*p = '\0';
 
-		cvs_server_send_response("Updated %s/", cf->file_wd);
+		if (flags & CO_COMMIT) {
+			cvs_server_send_response("Checked-in %s/",
+			    cf->file_wd);
+		} else {
+			cvs_server_send_response("Updated %s/", cf->file_wd);
+		}
+
 		cvs_remote_output(cf->file_rpath);
 		cvs_remote_output(entry);
-		cvs_remote_output("u=rw,g=rw,o=rw");
 
-		/* XXX */
-		printf("%ld\n", cvs_buf_len(nbp));
+		if (!(flags & CO_COMMIT)) {
+			cvs_remote_output("u=rw,g=rw,o=rw");
 
-		if (cvs_buf_write_fd(nbp, STDOUT_FILENO) == -1)
-			fatal("cvs_checkout_file: failed to send file");
-		cvs_buf_free(nbp);
+			/* XXX */
+			printf("%ld\n", cvs_buf_len(nbp));
+
+			if (cvs_buf_write_fd(nbp, STDOUT_FILENO) == -1)
+				fatal("cvs_checkout_file: failed to send file");
+			cvs_buf_free(nbp);
+		}
 
 		if (p != NULL)
 			*p = ',';
