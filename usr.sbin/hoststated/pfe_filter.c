@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.2 2006/12/16 12:42:14 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.3 2007/01/03 09:42:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -308,6 +308,8 @@ sync_ruleset(struct hostated *env, struct service *service, int enable)
 		rio.rule.rpool.proxy_port[0] = service->table->port;
 		rio.rule.rpool.port_op = PF_OP_EQ;
 		rio.rule.rpool.opts = PF_POOL_ROUNDROBIN;
+		if (service->flags & F_STICKY)
+			rio.rule.rpool.opts |= PF_POOL_STICKYADDR;
 
 		if (ioctl(env->pf->dev, DIOCADDRULE, &rio) == -1)
 			fatal("cannot add rule");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2006/12/25 19:05:41 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.7 2007/01/03 09:42:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -100,7 +100,7 @@ typedef struct {
 %token	SERVICE TABLE BACKUP HOST REAL
 %token  CHECK HTTP HTTPS TCP ICMP EXTERNAL
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
-%token	VIRTUAL IP INTERVAL DISABLE
+%token	VIRTUAL IP INTERVAL DISABLE STICKYADDR
 %token	ERROR
 %token	<v.string>	STRING
 %type	<v.string>	interface
@@ -264,6 +264,7 @@ serviceoptsl	: TABLE STRING	{
 			free($6);
 		}
 		| DISABLE			{ service->flags |= F_DISABLE; }
+		| STICKYADDR			{ service->flags |= F_STICKY; }
 		| TAG STRING {
 			if (strlcpy(service->tag, $2, sizeof(service->tag)) >=
 			    sizeof(service->tag)) {
@@ -480,6 +481,7 @@ lookup(char *s)
 		{ "port",		PORT },
 		{ "real",		REAL },
 		{ "service",		SERVICE },
+		{ "sticky-address",	STICKYADDR },
 		{ "table",		TABLE },
 		{ "tag",		TAG },
 		{ "tcp",		TCP },

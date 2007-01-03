@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.7 2006/12/25 19:07:34 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.8 2007/01/03 09:42:30 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -152,6 +152,12 @@ are seen as down or disabled.
 Set the service initially disabled.
 It can be later enabled through
 .Xr hostatectl 8 .
+.It Ic sticky-address
+This has the same effect than specifying sticky-address
+for a rdr rule in
+.Xr pf.conf 5 .
+It will ensure that multiple connections from the same source are
+mapped to the same redirection address.
 .It Ic table Ar name
 Specify the main table to be used.
 This is mandatory.
