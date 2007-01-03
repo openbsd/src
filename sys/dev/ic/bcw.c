@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.19 2007/01/03 06:10:47 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.20 2007/01/03 06:20:14 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -2022,60 +2022,42 @@ bcw_radio_off(struct bcw_softc *sc)
 	switch(sc->sc_phy_type) {
 	case BCW_PHY_TYPEA:
 		/* Magic unexplained values */
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_RADIO_CONTROL, 0x04);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_RADIO_DATALOW, 0xff);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_RADIO_CONTROL, 0x05);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_RADIO_DATALOW, 0xfb);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_CONTROL, 0x10);
+		BCW_WRITE16(sc, BCW_RADIO_CONTROL, 0x04);
+		BCW_WRITE16(sc, BCW_RADIO_DATALOW, 0xff);
+		BCW_WRITE16(sc, BCW_RADIO_CONTROL, 0x05);
+		BCW_WRITE16(sc, BCW_RADIO_DATALOW, 0xfb);
+		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x10);
 		sbval16 = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 		    BCW_PHY_DATA);
 		sbval16 |= 0x8;
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_CONTROL, 0x10);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_DATA, sbval16);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_CONTROL, 0x11);
+		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x10);
+		BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
+		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x11);
 		sbval16 = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 		    BCW_PHY_DATA);
 		sbval16 |= 0x8;
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_CONTROL, 0x11);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_DATA, sbval16);
+		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x11);
+		BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
 		break;
 	case BCW_PHY_TYPEG:
 		if (sc->sc_core_80211->rev >= 5) {
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			    BCW_PHY_CONTROL, 0x811);
+			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x811);
 			sbval16 = bus_space_read_2(sc->sc_iot,
 			    sc->sc_ioh, BCW_PHY_DATA);
 			sbval16 |= 0x8c;
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			    BCW_PHY_CONTROL, 0x811);
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			    BCW_PHY_DATA, sbval16);
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			    BCW_PHY_CONTROL, 0x812);
+			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x811);
+			BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
+			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x812);
 			sbval16 = bus_space_read_2(sc->sc_iot,
 			    sc->sc_ioh, BCW_PHY_DATA);
 			sbval16 &= 0xff73;
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			    BCW_PHY_CONTROL, 0x812);
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			    BCW_PHY_DATA, sbval16);
+			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x812);
+			BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
 		}
 		/* FALL-THROUGH */
 	default:
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_CONTROL, 0x15);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_DATA, 0xaa00);
+		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x15);
+		BCW_WRITE16(sc, BCW_PHY_DATA, 0xaa00);
 	} /* end of switch statement to turn off radio */
 }
 
