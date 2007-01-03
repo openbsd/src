@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.3 2007/01/02 22:22:19 deraadt Exp $ */
+/* $OpenBSD: agp.c,v 1.4 2007/01/03 14:05:00 deraadt Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -146,7 +146,7 @@ agp_ioctl(void *v, u_long cmd, caddr_t addr, int flag, struct proc *pb)
 	vsize_t size;
 	int error = 0;
 
-	if (sc->sc_methods == NULL)
+	if (sc->sc_methods == NULL || sc->sc_chipc == NULL)
 		return (ENXIO);
 
 	switch (cmd) {
