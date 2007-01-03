@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.31 2006/12/06 18:40:03 martin Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.32 2007/01/03 21:17:44 martin Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ aesetup(sc)
 	/* Print additional info when attached. */
 	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
-	printf("type %s, %dKB memory\n", sc->type_str, sc->mem_size / 1024);
+	printf("%s, %dKB memory\n", sc->type_str, sc->mem_size / 1024);
 
 	return 0;
 }
