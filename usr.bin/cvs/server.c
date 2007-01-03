@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.46 2006/12/19 14:11:21 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.47 2007/01/03 22:28:30 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -586,4 +586,27 @@ cvs_server_version(char *data)
 	cvs_cmdop = CVS_OP_VERSION;
 	cvs_version(server_argc, server_argv);
 	cvs_server_send_response("ok");
+}
+
+void
+cvs_server_update_entry(const char *resp, struct cvs_file *cf)
+{
+	int l;
+	char *p, *response;
+
+	if ((p = strrchr(cf->file_rpath, ',')) != NULL)
+		*p = '\0';
+
+	response = xmalloc(MAXPATHLEN);
+	l = snprintf(response, MAXPATHLEN, "%s %s/", resp, cf->file_wd);
+	if (l == -1 || l >= MAXPATHLEN)
+		fatal("cvs_server_update_entry: overflow");
+
+	cvs_server_send_response("%s", response);
+	cvs_remote_output(cf->file_rpath);
+
+	if (p != NULL)
+		*p = ',';
+
+	xfree(response);
 }

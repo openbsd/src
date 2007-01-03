@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.57 2006/12/14 09:31:17 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.58 2007/01/03 22:28:30 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -98,7 +98,7 @@ cvs_remove(int argc, char **argv)
 		}
 
 		if (removed != 0) {
-			if (verbosity > 1) {
+			if (verbosity > 0) {
 				cvs_log(LP_NOTICE,
 				    "use '%s commit' to remove %s "
 				    "permanently", __progname, (removed > 1) ?
@@ -147,7 +147,7 @@ cvs_remove_local(struct cvs_file *cf)
 			    cf->file_name);
 		existing++;
 	} else {
-		switch(cf->file_status) {
+		switch (cf->file_status) {
 		case FILE_ADDED:
 			entlist = cvs_ent_open(cf->file_wd);
 			cvs_ent_remove(entlist, cf->file_name);
@@ -167,7 +167,7 @@ cvs_remove_local(struct cvs_file *cf)
 			}
 			return;
 		case FILE_REMOVED:
-			if (verbosity > 1 ) {
+			if (verbosity > 0) {
 				cvs_log(LP_ERR,
 				    "file `%s' already scheduled for removal",
 				    cf->file_name);
@@ -187,13 +187,18 @@ cvs_remove_local(struct cvs_file *cf)
 			if (l == -1 || l >= CVS_ENT_MAXLINELEN)
 				fatal("cvs_remove_local: overflow");
 
-			entlist = cvs_ent_open(cf->file_wd);
-			cvs_ent_add(entlist, entry);
-			cvs_ent_close(entlist, ENT_SYNC);
+			if (cvs_server_active == 1) {
+				cvs_server_update_entry("Checked-in", cf);
+				cvs_remote_output(entry);
+			} else {
+				entlist = cvs_ent_open(cf->file_wd);
+				cvs_ent_add(entlist, entry);
+				cvs_ent_close(entlist, ENT_SYNC);
+			}
 
 			xfree(entry);
 
-			if (verbosity > 1) {
+			if (verbosity > 0) {
 				cvs_log(LP_NOTICE,
 				    "scheduling file `%s' for removal",
 				    cf->file_name);

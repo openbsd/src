@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.43 2007/01/03 21:00:43 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.44 2007/01/03 22:28:30 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -591,8 +591,9 @@ cvs_client_checkedin(char *data)
 			fatal("cvs_client_checkedin: overflow");
 	}
 
-	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s//%s/",
-	    newent->ce_name, rev, timebuf, sticky);
+	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s%s/%s//%s/",
+	    newent->ce_name, (newent->ce_status == CVS_ENT_REMOVED) ? "-" : "",
+	    rev, timebuf, sticky);
 	if (l == -1 || l >= CVS_ENT_MAXLINELEN)
 		fatal("cvs_client_checkedin: overflow");
 
@@ -710,27 +711,19 @@ cvs_client_removed(char *data)
 void
 cvs_client_remove_entry(char *data)
 {
-	int l;
 	CVSENTRIES *entlist;
-	char *filename, *rpath, *fpath;
+	char *filename, *rpath;
 
 	rpath = cvs_remote_input();
 	if ((filename = strrchr(rpath, '/')) == NULL)
 		fatal("bad rpath in cvs_client_remove_entry: %s", rpath);
 	*filename++;
 
-	fpath = xmalloc(MAXPATHLEN);
-	l = snprintf(fpath, MAXPATHLEN, "%s%s", data, filename);
-	if (l == -1 || l >= MAXPATHLEN)
-		fatal("cvs_client_remove_entry: overflow");
-
-	xfree(rpath);
-
 	entlist = cvs_ent_open(data);
-	cvs_ent_remove(entlist, fpath);
+	cvs_ent_remove(entlist, filename);
 	cvs_ent_close(entlist, ENT_SYNC);
 
-	xfree(fpath);
+	xfree(rpath);
 }
 
 void

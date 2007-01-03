@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.84 2007/01/03 20:48:26 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.85 2007/01/03 22:28:30 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -358,6 +358,9 @@ cvs_commit_local(struct cvs_file *cf)
 
 		xfree(repo);
 		xfree(attic);
+
+		if (cvs_server_active == 1)
+			cvs_server_update_entry("Remove-entry", cf);
 	}
 
 	if (verbosity > 1)
@@ -365,20 +368,6 @@ cvs_commit_local(struct cvs_file *cf)
 	else {
 		cvs_log(LP_NOTICE, "checking in '%s'; revision %s -> %s",
 		    cf->file_path, rbuf, nbuf);
-	}
-
-	if (cvs_server_active == 1) {
-		if ((p = strrchr(cf->file_rpath, ',')) != NULL)
-			*p = '\0';
-
-		if (cf->file_status == FILE_REMOVED) {
-			cvs_server_send_response("Remove-entry %s/",
-			    cf->file_wd);
-			cvs_remote_output(cf->file_rpath);
-		}
-
-		if (p != NULL)
-			*p = ',';
 	}
 }
 
