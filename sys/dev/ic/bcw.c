@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.24 2007/01/03 14:58:33 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.25 2007/01/03 18:54:29 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -64,6 +64,7 @@
 #include <uvm/uvm_extern.h>
 
 void	bcw_shm_ctl_word(struct bcw_softc *, uint16_t, uint16_t);
+uint16_t	bcw_shm_read16(struct bcw_softc *, uint16_t, uint16_t);
 
 void	bcw_reset(struct bcw_softc *);
 int	bcw_init(struct ifnet *);
@@ -116,6 +117,22 @@ bcw_shm_ctl_word(struct bcw_softc *sc, uint16_t routing, uint16_t offset)
 	control |= offset;
 
 	BCW_WRITE(sc, BCW_SHM_CONTROL, control);
+}
+
+uint16_t
+bcw_shm_read16(struct bcw_softc *sc, uint16_t routing, uint16_t offset)
+{
+	if (routing == BCW_SHM_CONTROL_SHARED) {
+		if (offset & 0x0003) {
+			bcw_shm_ctl_word(sc, routing, offset >> 2);
+
+			return (BCW_READ16(sc, BCW_SHM_DATAHIGH));
+		}
+		offset >>= 2;
+	}
+	bcw_shm_ctl_word(sc, routing, offset);
+
+	return (BCW_READ16(sc, BCW_SHM_DATA));
 }
 
 void
@@ -1082,13 +1099,55 @@ int
 bcw_init(struct ifnet *ifp)
 {
 	struct bcw_softc *sc = ifp->if_softc;
-	int error;
+	uint16_t val16;
+	int error, i;
 
 	BCW_WRITE(sc, BCW_SBF, BCW_SBF_CORE_READY | BCW_SBF_400_MAGIC);
 
 	/* load firmware */
 	if ((error = bcw_load_firmware(sc)))
 		return (error);
+
+	/*
+	 * verify firmware revision
+	 */
+	BCW_WRITE(sc, BCW_GIR, 0xffffffff);
+	BCW_WRITE(sc, BCW_SBF, 0x00020402);
+	for (i = 0; i < 50; i++) {
+		if (BCW_READ(sc, BCW_GIR) == BCW_INTR_READY)
+			break;
+		delay(10);
+	}
+	if (i == 50) {
+		printf("%s: interrupt-ready timeout!\n", sc->sc_dev.dv_xname);
+		return (1);
+	}
+	BCW_READ(sc, BCW_GIR);	/* dummy read */
+
+	val16 = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_REVISION);
+
+	DPRINTF(("%s: Firmware revision 0x%x, patchlevel 0x%x "
+            "(20%.2i-%.2i-%.2i %.2i:%.2i:%.2i)\n",
+	    sc->sc_dev.dv_xname, val16,
+	    bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_PATCHLEVEL),
+            (bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_DATE) >> 12)
+            & 0xf,
+            (bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_DATE) >> 8)
+            & 0xf,
+            bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_DATE)
+            & 0xff,
+            (bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_TIME) >> 11)
+            & 0x1f,
+            (bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_TIME) >> 5)
+            & 0x3f,
+            bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_TIME)
+	    & 0x1f));
+
+	if (val16 > 0x128) {
+		printf("%s: no support for this firmware revision!\n",
+		    sc->sc_dev.dv_xname);
+		return (1);
+	}
 
 	/* load init values */
 	if ((error = bcw_load_initvals(sc)))

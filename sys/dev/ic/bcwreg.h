@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.8 2006/12/30 23:23:41 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.9 2007/01/03 18:54:29 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -323,6 +323,16 @@
 #define BCW_PHY_TYPEB			0x1	/* 802.11b PHY */
 #define BCW_PHY_TYPEG			0x2	/* 802.11g PHY */
 #define BCW_PHY_TYPEN			0x4	/* 802.11n PHY */
+
+/* generic interrupt reasons */
+#define BCW_INTR_READY			(1 << 0)
+
+/* firmware revision informations */
+#define BCW_UCODE_REVISION		0x0000
+#define BCW_UCODE_PATCHLEVEL		0x0002
+#define BCW_UCODE_DATE			0x0004
+#define BCW_UCODE_TIME			0x0006
+#define BCW_UCODE_STATUS		0x0040
 
 #define BCW_READ16(sc, reg) \
 	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (reg))
