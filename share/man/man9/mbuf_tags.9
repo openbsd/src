@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.19 2006/09/30 14:31:59 pedro Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.20 2007/01/03 18:43:12 claudio Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -25,20 +25,16 @@
 .Fd #include <sys/mbuf.h>
 .Ft "struct m_tag *"
 .Fn m_tag_get "int type" "int len" "int flags"
-.Ft void
-.Fn m_tag_free "struct m_tag *tag"
 .Ft "struct m_tag *"
 .Fn m_tag_find "struct mbuf *mbuf" "int type" "struct m_tag *tag"
 .Ft void
 .Fn m_tag_prepend "struct mbuf *mbuf" "struct m_tag *tag"
 .Ft void
-.Fn m_tag_unlink "struct mbuf *mbuf" "struct m_tag *tag"
-.Ft void
 .Fn m_tag_delete "struct mbuf *mbuf" "struct m_tag *tag"
 .Ft "struct m_tag *"
 .Fn m_tag_copy "struct m_tag *tag"
 .Ft void
-.Fn m_tag_delete_chain "struct mbuf *mbuf" "struct m_tag *tag"
+.Fn m_tag_delete_chain "struct mbuf *mbuf"
 .Ft void
 .Fn m_tag_init "struct mbuf *mbuf"
 .Ft int
@@ -203,9 +199,6 @@ listening on both unspecific and specific loopback sockets in order to
 grant higher privileges to local users.
 .El
 .Pp
-.Fn m_tag_free
-de-allocates a tag.
-.Pp
 .Fn m_tag_find
 finds an instance of a tag of type
 .Va type
@@ -231,12 +224,6 @@ adds the new tag
 at the head of the tag list for packet
 .Va mbuf .
 .Pp
-.Fn m_tag_unlink
-removes tag
-.Va tag
-from the list of tags of packet
-.Va mbuf .
-.Pp
 .Fn m_tag_delete
 removes and then de-allocates tag
 .Va tag
@@ -249,14 +236,7 @@ creates an unlinked copy of tag
 .Pp
 .Fn m_tag_delete_chain
 deletes all tags attached to packet
-.Va mbuf
-following tag
-.Va tag .
-If
-.Va tag
-is
-.Dv NULL ,
-all tags are deleted.
+.Va mbuf .
 .Pp
 .Fn m_tag_init
 initializes the tag storage for packet
