@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.52 2006/12/30 09:34:00 ray Exp $
+#	$OpenBSD: adduser.perl,v 1.53 2007/01/03 15:26:04 simon Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -91,7 +91,7 @@ sub variables {
     $etc_login_conf = "/etc/login.conf";
     @pwd_mkdb = ("pwd_mkdb", "-p");	# program for building passwd database
     $encryptionmethod = "auto";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.52 2006/12/30 09:34:00 ray Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.53 2007/01/03 15:26:04 simon Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -636,7 +636,7 @@ sub new_users_pwdmkdb {
 
 # update group database
 sub new_users_group_update {
-    local($e, @a);
+    local($e, $n, $a, @a);
 
     # Add *new* group
     if (!defined($groupname{$group_login}) && !defined($gid{$g_id})) {
@@ -653,8 +653,26 @@ sub new_users_group_update {
 	# new login group is already in name space
 	rename($group, "$group.bak");
 	#warn "$group_login $groupname{$group_login} $groupmembers{$groupname{$group_login}}\n";
-	foreach $e (sort {$a <=> $b} (keys %gid)) {
-	    push(@a, "$gid{$e}:*:$e:$groupmembers{$e}");
+	foreach (@group_backup) {
+            ($n, $e) = (split(/:/, $_))[0,2];
+	    # special handling of YP entries
+	    if (substr($n, 0, 1) eq "+") {
+		# remember and skip the empty group
+		if (length($n) == 1) {
+			$a = $_;
+			next;
+		}
+		# pass other groups
+		push(@a, $_);
+	    }
+	    # group membership might have changed
+	    else {
+		push(@a, "$gid{$e}:*:$e:$groupmembers{$e}");
+	    }
+	}
+	# append empty YP group
+	if ($a) {
+	    push(@a, $a);
 	}
 	&append_file($group, @a);
     } else {
