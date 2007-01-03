@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.14 2006/12/28 22:40:57 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.15 2007/01/03 05:44:59 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -528,7 +528,7 @@ bcw_attach(struct bcw_softc *sc)
 	 * - Disable the 80211 Core (and wrapper for on/off)
 	 * - Setup LEDs to blink in whatever fashionable manner
 	 */
-	bcw_powercontrol_crystal_off(sc);
+	//bcw_powercontrol_crystal_off(sc);	/* TODO Fix panic! */
 
 	/*
 	 * Allocate DMA-safe memory for ring descriptors.
