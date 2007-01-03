@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.44 2006/12/27 07:24:52 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.45 2007/01/03 18:57:49 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -128,6 +128,7 @@ char topn_specified = No;
 #define CMD_pid		17
 #define CMD_command	18
 #define CMD_threads	19
+#define CMD_grep	20
 
 static void
 usage(void)
@@ -135,7 +136,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-bCIinqSTu] [-d count] [-o field] [-p pid] [-s time] [-U username] [number]\n",
+	    "usage: %s [-bCIinqSTu] [-d count] [-g command] [-o field] [-p pid] [-s time]\n\t[-U username] [number]\n",
 	    __progname);
 }
 
@@ -145,7 +146,7 @@ parseargs(int ac, char **av)
 	char *endp;
 	int i;
 
-	while ((i = getopt(ac, av, "STICbinqus:d:p:U:o:")) != -1) {
+	while ((i = getopt(ac, av, "STICbinqus:d:p:U:o:g:")) != -1) {
 		switch (i) {
 		case 'C':
 			show_args = Yes;
@@ -234,6 +235,10 @@ parseargs(int ac, char **av)
 
 		case 'o':	/* select sort order */
 			order_name = optarg;
+			break;
+
+		case 'g':	/* grep command name */
+			ps.command = strdup(optarg);
 			break;
 
 		default:
@@ -522,7 +527,7 @@ rundisplay(void)
 	int change, i;
 	struct pollfd pfd[1];
 	uid_t uid;
-	static char command_chars[] = "\f qh?en#sdkriIuSopCT";
+	static char command_chars[] = "\f qh?en#sdkriIuSopCTg";
 
 	/*
 	 * assume valid command unless told
@@ -866,6 +871,22 @@ rundisplay(void)
 			new_message(MT_standout | MT_delayed,
 			    " %sisplaying threads.",
 			    ps.threads ? "D" : "Not d");
+			break;
+
+		case CMD_grep:
+			new_message(MT_standout,
+			    "Grep command name: ");
+			if (readline(tempbuf2, sizeof(tempbuf2), No) > 0) {
+				free(ps.command);
+				if (tempbuf2[0] == '+' &&
+				    tempbuf2[1] == '\0')
+					ps.command = NULL;
+				else
+					ps.command = strdup(tempbuf2);
+				if (putchar('\r') == EOF)
+					exit(1);
+			} else
+				clear_message();
 			break;
 
 		default:

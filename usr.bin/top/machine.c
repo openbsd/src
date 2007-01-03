@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.55 2007/01/02 19:09:24 otto Exp $	 */
+/* $OpenBSD: machine.c,v 1.56 2007/01/03 18:57:49 otto Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -341,7 +341,7 @@ caddr_t
 get_process_info(struct system_info *si, struct process_select *sel,
     int (*compare) (const void *, const void *))
 {
-	int show_idle, show_system, show_threads, show_uid, show_pid;
+	int show_idle, show_system, show_threads, show_uid, show_pid, show_cmd;
 	int total_procs, active_procs;
 	struct kinfo_proc2 **prefp, *pp;
 
@@ -365,6 +365,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	show_threads = sel->threads;
 	show_uid = sel->uid != (uid_t)-1;
 	show_pid = sel->pid != (pid_t)-1;
+	show_cmd = sel->command != NULL;
 
 	/* count up process states and get pointers to interesting procs */
 	total_procs = 0;
@@ -387,7 +388,9 @@ get_process_info(struct system_info *si, struct process_select *sel,
 			    (show_idle || pp->p_pctcpu != 0 ||
 			    pp->p_stat == SRUN) &&
 			    (!show_uid || pp->p_ruid == sel->uid) &&
-			    (!show_pid || pp->p_pid == sel->pid)) {
+			    (!show_pid || pp->p_pid == sel->pid) &&
+			    (!show_cmd || strstr(pp->p_comm,
+				sel->command))) {
 				*prefp++ = pp;
 				active_procs++;
 			}
