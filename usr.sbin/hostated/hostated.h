@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostated.h,v 1.7 2007/01/03 09:42:30 reyk Exp $	*/
+/*	$OpenBSD: hostated.h,v 1.8 2007/01/03 09:45:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -137,7 +137,7 @@ struct ctl_icmp_event {
 struct ctl_tcp_event {
 	int		 s;
 	struct buf	*buf;
-	struct host 	*host;
+	struct host	*host;
 	struct table	*table;
 	struct timeval	 tv_start;
 };

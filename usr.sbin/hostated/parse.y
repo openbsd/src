@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2007/01/03 09:42:30 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.8 2007/01/03 09:45:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -297,7 +297,8 @@ table		: TABLE STRING	{
 				YYERROR;
 			}
 			tb->id = last_table_id++;
-			bcopy(&conf->timeout, &tb->timeout, sizeof(struct timeval));
+			bcopy(&conf->timeout, &tb->timeout,
+			    sizeof(struct timeval));
 			if (last_table_id == UINT_MAX) {
 				yyerror("too many tables defined");
 				YYERROR;
@@ -360,7 +361,7 @@ tableoptsl	: host			{
 				YYERROR;
 			}
 			if (strlcpy(table->digest, $5,
-			    sizeof (table->digest)) >= sizeof (table->digest)) {
+			    sizeof(table->digest)) >= sizeof (table->digest)) {
 				yyerror("http digest truncated");
 				free($3);
 				free($5);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.4 2006/12/25 19:05:41 reyk Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.5 2007/01/03 09:45:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -255,7 +255,7 @@ recv_icmp4(int s, short event, void *arg)
 	socklen_t		 len;
 	struct icmp		*icp;
 	struct ctl_icmp_event	*cie = arg;
-	u_char		 	 packet[datalen];
+	u_char			 packet[datalen];
 	struct host		*host;
 	struct table		*table;
 	ssize_t			 i;
@@ -285,7 +285,7 @@ recv_icmp4(int s, short event, void *arg)
 		}
 		return;
 	}
-	
+
 	len = sizeof(struct sockaddr_in);
 	bzero(&packet, sizeof(packet));
 	bzero(&ss, sizeof(ss));
@@ -315,10 +315,10 @@ recv_icmp4(int s, short event, void *arg)
 	host->flags |= F_CHECK_DONE;
 	if (icmp4_checks_done(cie)) {
 		hce_notify_done(host, "recv_icmp4: all done");
-		return;	
+		return;
 	}
 	hce_notify_done(host, "recv_icmp4: host");
-	
+
 	if (gettimeofday(&tv_now, NULL))
 		fatal("recv_icmp4: gettimeofday");
 
