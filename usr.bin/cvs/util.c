@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.94 2006/12/05 15:59:48 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.95 2007/01/03 14:08:09 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -929,4 +929,23 @@ cvs_revision_select(RCSFILE *file, char *range)
 		rcsnum_free(rnum);
 
 	return (nrev);
+}
+
+int
+cvs_yesno(void)
+{
+	int c, ret;
+
+	ret = 0;
+
+	fflush(stderr);
+	fflush(stdout);
+
+	if ((c = getchar()) != 'y' && c != 'Y')
+		ret = -1;
+	else
+		while (c != EOF && c != '\n')
+			c = getchar();
+
+	return (ret);
 }
