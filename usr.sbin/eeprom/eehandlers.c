@@ -1,4 +1,4 @@
-/*	$OpenBSD: eehandlers.c,v 1.12 2004/08/01 18:32:17 deraadt Exp $	*/
+/*	$OpenBSD: eehandlers.c,v 1.13 2007/01/03 20:02:10 moritz Exp $	*/
 /*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
 
 /*-
@@ -398,9 +398,8 @@ ee_diagpath(struct keytabent *ktent, char *arg)
 
 	bzero(path, sizeof(path));
 	if (arg) {
-		if (strlen(arg) > sizeof(path))
+		if (strlcpy(path, arg, sizeof(path)) >= sizeof(path))
 			BARF(ktent);
-		snprintf(path, sizeof path, arg);
 		if (doio(ktent, (u_char *)&path[0], sizeof(path), IO_WRITE))
 			FAILEDWRITE(ktent);
 	} else
@@ -423,11 +422,11 @@ ee_banner(struct keytabent *ktent, char *arg)
 
 	bzero(string, sizeof(string));
 	if (arg) {
-		if (strlen(arg) > sizeof(string))
-			BARF(ktent);
 		if (*arg != '\0') {
 			enable = EE_TRUE;
-			snprintf(string, sizeof string, arg);
+			if (strlcpy(string, arg, sizeof(string)) >=
+			    sizeof(string))
+				BARF(ktent);
 			if (doio(ktent, (u_char *)string,
 			    sizeof(string), IO_WRITE))
 				FAILEDWRITE(ktent);
