@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.23 2007/01/03 10:41:04 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.24 2007/01/03 14:58:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -63,7 +63,7 @@
 
 #include <uvm/uvm_extern.h>
 
-void	bcw_shm_write_4(struct bcw_softc *, uint16_t, uint16_t);
+void	bcw_shm_ctl_word(struct bcw_softc *, uint16_t, uint16_t);
 
 void	bcw_reset(struct bcw_softc *);
 int	bcw_init(struct ifnet *);
@@ -107,7 +107,7 @@ struct cfdriver bcw_cd = {
 };
 
 void
-bcw_shm_write_4(struct bcw_softc *sc, uint16_t routing, uint16_t offset)
+bcw_shm_ctl_word(struct bcw_softc *sc, uint16_t routing, uint16_t offset)
 {
 	uint32_t control;
 
@@ -2223,7 +2223,7 @@ bcw_load_firmware(struct bcw_softc *sc)
 	/* upload microcode */
 	data = (uint32_t *)ucode;
 	len = size_ucode / sizeof(uint32_t);
-	bcw_shm_write_4(sc, BCW_SHM_CONTROL_MCODE, 0);
+	bcw_shm_ctl_word(sc, BCW_SHM_CONTROL_MCODE, 0);
 	for (i = 0; i < len; i++) {
 		BCW_WRITE(sc, BCW_SHM_DATA, betoh32(data[i]));
 		delay(10);
@@ -2234,9 +2234,9 @@ bcw_load_firmware(struct bcw_softc *sc)
 	/* upload pcm */
 	data = (uint32_t *)pcm;
 	len = size_pcm / sizeof(uint32_t);
-	bcw_shm_write_4(sc, BCW_SHM_CONTROL_PCM, 0x01ea);
+	bcw_shm_ctl_word(sc, BCW_SHM_CONTROL_PCM, 0x01ea);
 	BCW_WRITE(sc, BCW_SHM_DATA, 0x00004000);
-	bcw_shm_write_4(sc, BCW_SHM_CONTROL_PCM, 0x01eb);
+	bcw_shm_ctl_word(sc, BCW_SHM_CONTROL_PCM, 0x01eb);
 	for (i = 0; i < len; i++) {
 		BCW_WRITE(sc, BCW_SHM_DATA, betoh32(data[i]));
 		delay(10);
