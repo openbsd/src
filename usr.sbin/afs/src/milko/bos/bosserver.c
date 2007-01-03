@@ -362,7 +362,7 @@ read_config_file (char *filename)
 	    char name[100];
 	    int enablep;
 	    lineno ++;
-	    ret = fscanf (f, "%s %d", name, &enablep);
+	    ret = fscanf (f, "%99s %d", name, &enablep);
 	    if (ret == EOF)
 		break;
 	    if (ret != 2) {
