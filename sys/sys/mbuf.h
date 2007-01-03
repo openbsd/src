@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.85 2005/11/12 20:27:46 brad Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.86 2007/01/03 18:39:56 claudio Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -383,7 +383,7 @@ void _sk_mclget(struct mbuf *, int);
 	MBUFLOCK( \
 		mbstat.m_mtypes[(m)->m_type]--; \
 		if ((m)->m_flags & M_PKTHDR) \
-			m_tag_delete_chain((m), NULL); \
+			m_tag_delete_chain((m)); \
 		if ((m)->m_flags & M_EXT) { \
 			_MEXTREMOVE((m)); \
 		} \
@@ -562,11 +562,9 @@ int	m_apply(struct mbuf *, int, int,
 
 /* Packet tag routines */
 struct m_tag *m_tag_get(int, int, int);
-void	m_tag_free(struct m_tag *);
 void	m_tag_prepend(struct mbuf *, struct m_tag *);
-void	m_tag_unlink(struct mbuf *, struct m_tag *);
 void	m_tag_delete(struct mbuf *, struct m_tag *);
-void	m_tag_delete_chain(struct mbuf *, struct m_tag *);
+void	m_tag_delete_chain(struct mbuf *);
 struct m_tag *m_tag_find(struct mbuf *, int, struct m_tag *);
 struct m_tag *m_tag_copy(struct m_tag *);
 int	m_tag_copy_chain(struct mbuf *, struct mbuf *);

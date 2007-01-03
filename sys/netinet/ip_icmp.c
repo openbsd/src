@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.71 2006/06/16 16:49:40 henning Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.72 2007/01/03 18:39:56 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -414,7 +414,7 @@ icmp_input(struct mbuf *m, ...)
 	deliver:
 		/* Free packet atttributes */
 		if (m->m_flags & M_PKTHDR)
-			m_tag_delete_chain(m, NULL);
+			m_tag_delete_chain(m);
 
 		/*
 		 * Problem with datagram; advise higher level routines.
@@ -523,7 +523,7 @@ icmp_input(struct mbuf *m, ...)
 reflect:
 		/* Free packet atttributes */
 		if (m->m_flags & M_PKTHDR)
-			m_tag_delete_chain(m, NULL);
+			m_tag_delete_chain(m);
 
 		icmpstat.icps_reflect++;
 		icmpstat.icps_outhist[icp->icmp_type]++;
@@ -533,7 +533,7 @@ reflect:
 	case ICMP_REDIRECT:
 		/* Free packet atttributes */
 		if (m->m_flags & M_PKTHDR)
-			m_tag_delete_chain(m, NULL);
+			m_tag_delete_chain(m);
 		if (icmp_rediraccept == 0)
 			goto freeit;
 		if (code > 3)
