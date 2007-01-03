@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.9 2006/12/28 22:23:07 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.10 2007/01/03 05:46:42 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -22,6 +22,12 @@
  *
  * Cliff Wright cliff@snipe444.org
  */
+
+struct bcw_initval {
+        uint16_t	offset;
+        uint16_t	size;
+        uint32_t	value;
+} __packed;
 
 #define BCW_MAX_RADIOS		2
 struct bcw_radio {

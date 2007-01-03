@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.15 2007/01/03 05:44:59 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.16 2007/01/03 05:46:42 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -63,6 +63,8 @@
 
 #include <uvm/uvm_extern.h>
 
+void	bcw_shm_write_4(struct bcw_softc *, uint16_t, uint16_t);
+
 void	bcw_reset(struct bcw_softc *);
 int	bcw_init(struct ifnet *);
 void	bcw_start(struct ifnet *);
@@ -95,10 +97,26 @@ void	bcw_powercontrol_crystal_off(struct bcw_softc *);
 int	bcw_change_core(struct bcw_softc *, int);
 void	bcw_radio_off(struct bcw_softc *);
 int	bcw_reset_core(struct bcw_softc *, u_int32_t);
+int	bcw_load_firmware(struct bcw_softc *);
+int	bcw_write_initvals(struct bcw_softc *, const struct bcw_initval *,
+	    const unsigned int);
+int	bcw_load_initvals(struct bcw_softc *);
 
 struct cfdriver bcw_cd = {
 	NULL, "bcw", DV_IFNET
 };
+
+void
+bcw_shm_write_4(struct bcw_softc *sc, uint16_t routing, uint16_t offset)
+{
+	uint32_t control;
+
+	control = routing;
+	control <<= 16;
+	control |= offset;
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_CONTROL, control);
+}
 
 void
 bcw_attach(struct bcw_softc *sc)
@@ -629,12 +647,12 @@ bcw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			bcw_init(ifp);
+			//bcw_init(ifp);
 			/* XXX arp_ifinit(&sc->bcw_ac, ifa); */
 			break;
 #endif /* INET */
 		default:
-			bcw_init(ifp);
+			//bcw_init(ifp);
 			break;
 		}
 		break;
@@ -1062,6 +1080,19 @@ int
 bcw_init(struct ifnet *ifp)
 {
 	struct bcw_softc *sc = ifp->if_softc;
+	int error;
+
+	BCW_WRITE(sc, BCW_SBF, BCW_SBF_CORE_READY | BCW_SBF_400_MAGIC);
+
+	/* load firmware */
+	if ((error = bcw_load_firmware(sc)))
+		return (error);
+
+	/* load init values */
+	if ((error = bcw_load_initvals(sc)))
+		return (error);
+
+	return (0);
 
 	/* Cancel any pending I/O. */
 	bcw_stop(ifp, 0);
@@ -2189,4 +2220,196 @@ disabled:
 	delay(1);
 
 	return 0;
+}
+
+int
+bcw_load_firmware(struct bcw_softc *sc)
+{
+	int rev = sc->sc_core[sc->sc_currentcore].rev;
+	int error, len, i;
+	uint32_t *data;
+	uint8_t *ucode, *pcm;
+	size_t size_ucode, size_pcm;
+	char name[32];
+
+	/* read microcode file */
+	snprintf(name, sizeof(name), "bcm43xx_microcode%d.fw",
+	    rev >= 5 ? 5 : rev);
+
+	if ((error = loadfirmware(name, &ucode, &size_ucode)) != 0) {
+		printf("%s: error %d, could not read microcode %s!\n",
+		    sc->sc_dev.dv_xname, error, name);
+		return (EIO);
+	}
+	DPRINTF(("%s: successfully read %s\n", sc->sc_dev.dv_xname, name));
+
+	/* read pcm file */
+	snprintf(name, sizeof(name), "bcm43xx_pcm%d.fw",
+	    rev < 5 ? 4 : 5);
+
+	if ((error = loadfirmware(name, &pcm, &size_pcm)) != 0) {
+		printf("%s: error %d, could not read pcm %s!\n",
+		    sc->sc_dev.dv_xname, error, name);
+		return (EIO);
+	}
+	DPRINTF(("%s: successfully read %s\n", sc->sc_dev.dv_xname, name));
+
+	/* upload microcode */
+	data = (uint32_t *)ucode;
+	len = size_ucode / sizeof(uint32_t);
+	bcw_shm_write_4(sc, BCW_SHM_CONTROL_MCODE, 0);
+	for (i = 0; i < len; i++) {
+		BCW_WRITE(sc, BCW_SHM_DATA, betoh32(data[i]));
+		delay(10);
+	}
+	DPRINTF(("%s: uploaded microcode\n", sc->sc_dev.dv_xname));
+	free(ucode, M_DEVBUF);
+
+	/* upload pcm */
+	data = (uint32_t *)pcm;
+	len = size_pcm / sizeof(uint32_t);
+	bcw_shm_write_4(sc, BCW_SHM_CONTROL_PCM, 0x01ea);
+	BCW_WRITE(sc, BCW_SHM_DATA, 0x00004000);
+	bcw_shm_write_4(sc, BCW_SHM_CONTROL_PCM, 0x01eb);
+	for (i = 0; i < len; i++) {
+		BCW_WRITE(sc, BCW_SHM_DATA, betoh32(data[i]));
+		delay(10);
+	}
+	DPRINTF(("%s: uploaded pcm\n", sc->sc_dev.dv_xname));
+	free(pcm, M_DEVBUF);
+
+	return (0);
+}
+
+int
+bcw_write_initvals(struct bcw_softc *sc, const struct bcw_initval *data,
+    const unsigned int len)
+{
+	int i;
+	uint16_t offset, size;
+	uint32_t value;
+
+	for (i = 0; i < len; i++) {
+		offset = betoh16(data[i].offset);
+		size = betoh16(data[i].size);
+		value = betoh32(data[i].value);
+
+		if (offset >= 0x1000)
+			goto bad_format;
+		if (size == 2) {
+			if (value & 0xffff0000)
+				goto bad_format;
+			BCW_WRITE16(sc, offset, (uint16_t)value);
+		} else if (size == 4)
+			BCW_WRITE(sc, offset, value);
+		else
+			goto bad_format;
+	}
+
+	return (0);
+
+bad_format:
+	printf("%s: initvals file-format error!\n", sc->sc_dev.dv_xname);
+	return (EIO);
+}
+
+int
+bcw_load_initvals(struct bcw_softc *sc)
+{
+	int rev = sc->sc_core[sc->sc_currentcore].rev;
+	int error, nr;
+	uint32_t val;
+	uint8_t *initval0, *initval1;
+	size_t size_initval0, size_initval1;
+	char name[32];
+
+	/* read initval0 file */
+	if (rev == 2 || rev == 4) {
+		switch (sc->sc_phy_type) {
+		case BCW_PHY_TYPEA:
+			nr = 3;
+			break;
+		case BCW_PHY_TYPEB:
+		case BCW_PHY_TYPEG:
+			nr = 1;
+			break;
+		default:
+			goto bad_noinitval;
+		}
+	} else if (rev >= 5) {
+		switch (sc->sc_phy_type) {
+		case BCW_PHY_TYPEA:
+			nr = 7;
+			break;
+		case BCW_PHY_TYPEB:
+		case BCW_PHY_TYPEG:
+			nr = 5;
+			break;
+		default:
+			goto bad_noinitval;
+		}
+	} else
+		goto bad_noinitval;
+
+	snprintf(name, sizeof(name), "bcm43xx_initval%02d.fw", nr);
+
+	if ((error = loadfirmware(name, &initval0, &size_initval0)) != 0) {
+		printf("%s: error %d, could not read initval0 %s!\n",
+		    sc->sc_dev.dv_xname, error, name);
+		return (EIO);
+	}
+	DPRINTF(("%s: successfully read %s\n", sc->sc_dev.dv_xname, name));
+
+	/* read initval1 file */
+	if (rev >= 5) {
+		switch (sc->sc_phy_type) {
+		case BCW_PHY_TYPEA:
+			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+			    BCW_SBTMSTATEHI);
+			if (val & 0x00010000)
+				nr = 9;
+			else
+				nr = 10;
+			break;
+		case BCW_PHY_TYPEB:
+		case BCW_PHY_TYPEG:
+			nr = 6;
+			break;
+		default:
+			goto bad_noinitval;
+		}
+
+		snprintf(name, sizeof(name), "bcm43xx_initval%02d.fw", nr);
+
+		if ((error = loadfirmware(name, &initval1, &size_initval1))
+		    != 0) {
+			printf("%s: error %d, could not read initval1 %s\n",
+			    sc->sc_dev.dv_xname, error, name);
+			return (EIO);
+		}
+		DPRINTF(("%s: successfully read %s\n", sc->sc_dev.dv_xname,
+		    name));
+	}
+
+	/* upload initval0 */
+	if (bcw_write_initvals(sc, (struct bcw_initval *)initval0,
+	    size_initval0 / sizeof(struct bcw_initval)))
+		return (EIO);
+	DPRINTF(("%s: uploaded initval0\n", sc->sc_dev.dv_xname));
+	free(initval0, M_DEVBUF);
+
+	/* upload initval1 */
+	if (initval1 != NULL) {
+		if (bcw_write_initvals(sc, (struct bcw_initval *)initval1,
+		    size_initval1 / sizeof(struct bcw_initval)))
+			return (EIO);
+		DPRINTF(("%s: uploaded initval1\n", sc->sc_dev.dv_xname));
+		free(initval1, M_DEVBUF);
+	}
+
+	return (0);
+
+bad_noinitval:
+	printf("%s: no initvals available!\n", sc->sc_dev.dv_xname);
+	return (EIO);
 }
