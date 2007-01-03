@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.37 2006/11/26 11:14:22 deraadt Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.38 2007/01/03 18:19:06 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1157,11 +1157,12 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		if (letoh16(head->flags) & 0x4)
 			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
 
-		M_DUP_PKTHDR(&mb, m);
 		mb.m_data = (caddr_t)tap;
 		mb.m_len = sc->sc_rxtap_len;
 		mb.m_next = m;
-		mb.m_pkthdr.len += mb.m_len;
+		mb.m_nextpkt = NULL;
+		mb.m_type = 0;
+		mb.m_flags = 0;
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 	}
 #endif
@@ -1470,11 +1471,12 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
-		M_DUP_PKTHDR(&mb, m0);
 		mb.m_data = (caddr_t)tap;
 		mb.m_len = sc->sc_txtap_len;
 		mb.m_next = m0;
-		mb.m_pkthdr.len += mb.m_len;
+		mb.m_nextpkt = NULL;
+		mb.m_type = 0;
+		mb.m_flags = 0;
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
 	}
 #endif

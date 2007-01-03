@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.78 2006/11/26 11:14:22 deraadt Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.79 2007/01/03 18:19:06 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -963,11 +963,12 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
 		if (frame->antenna & 0x40)
 			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
 
-		M_DUP_PKTHDR(&mb, m);
 		mb.m_data = (caddr_t)tap;
 		mb.m_len = sc->sc_rxtap_len;
 		mb.m_next = m;
-		mb.m_pkthdr.len += mb.m_len;
+		mb.m_nextpkt = NULL;
+		mb.m_type = 0;
+		mb.m_flags = 0;
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 	}
 #endif
@@ -1272,11 +1273,12 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 
-		M_DUP_PKTHDR(&mb, m0);
 		mb.m_data = (caddr_t)tap;
 		mb.m_len = sc->sc_txtap_len;
 		mb.m_next = m0;
-		mb.m_pkthdr.len += mb.m_len;
+		mb.m_nextpkt = NULL;
+		mb.m_type = 0;
+		mb.m_flags = 0;
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.65 2006/11/26 11:14:22 deraadt Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.66 2007/01/03 18:19:06 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -883,11 +883,12 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 		tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
 		tap->wr_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 
-		M_DUP_PKTHDR(&mb, m);
 		mb.m_data = (caddr_t)tap;
 		mb.m_len = sc->sc_rxtap_len;
 		mb.m_next = m;
-		mb.m_pkthdr.len += mb.m_len;
+		mb.m_nextpkt = NULL;
+		mb.m_type = 0;
+		mb.m_flags = 0;
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 	}
 #endif
@@ -1147,11 +1148,12 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
 		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 
-		M_DUP_PKTHDR(&mb, m);
 		mb.m_data = (caddr_t)tap;
 		mb.m_len = sc->sc_txtap_len;
 		mb.m_next = m;
-		mb.m_pkthdr.len += mb.m_len;
+		mb.m_nextpkt = NULL;
+		mb.m_type = 0;
+		mb.m_flags = 0;
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
 	}
 #endif
