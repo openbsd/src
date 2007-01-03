@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.56 2006/11/26 17:20:33 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.57 2007/01/03 18:16:43 claudio Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -1329,11 +1329,12 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 			rr->rr_antsignal = rssi;
 			rr->rr_barker_lock = htole16(sq);
 
-			M_DUP_PKTHDR(&mb, m);
 			mb.m_data = (caddr_t)rr;
 			mb.m_len = sizeof(sc->sc_rxtapu);
 			mb.m_next = m;
-			mb.m_pkthdr.len += mb.m_len;
+			mb.m_nextpkt = NULL;
+			mb.m_type = 0;
+			mb.m_flags = 0;
 			bpf_mtap(sc->sc_radiobpf, &mb, BPF_DIRECTION_IN);
 		}
 #endif /* NPBFILTER > 0 */
@@ -3079,11 +3080,12 @@ rtw_start(struct ifnet *ifp)
 			rt->rt_chan_flags =
 			    htole16(ic->ic_bss->ni_chan->ic_flags);
 
-			M_DUP_PKTHDR(&mb, m0);
 			mb.m_data = (caddr_t)rt;
 			mb.m_len = sizeof(sc->sc_txtapu);
 			mb.m_next = m0;
-			mb.m_pkthdr.len += mb.m_len;
+			mb.m_nextpkt = NULL;
+			mb.m_type = 0;
+			mb.m_flags = 0;
 			bpf_mtap(sc->sc_radiobpf, &mb, BPF_DIRECTION_OUT);
 
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.49 2006/11/26 17:20:33 jsg Exp $	*/
+/*	$OpenBSD: atw.c,v 1.50 2007/01/03 18:16:43 claudio Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3210,11 +3210,12 @@ atw_rxintr(struct atw_softc *sc)
 			tap->ar_antsignal = (int)rssi;
 			/* TBD tap->ar_flags */
 
-			M_DUP_PKTHDR(&mb, m);
 			mb.m_data = (caddr_t)tap;
 			mb.m_len = tap->ar_ihdr.it_len;
 			mb.m_next = m;
-			mb.m_pkthdr.len += mb.m_len;
+			mb.m_nextpkt = NULL;
+			mb.m_type = 0;
+			mb.m_flags = 0;
 			bpf_mtap(sc->sc_radiobpf, &mb, BPF_DIRECTION_IN);
  		}
 #endif /* NPBFILTER > 0 */
@@ -3551,11 +3552,12 @@ atw_start(struct ifnet *ifp)
 
 			/* TBD tap->at_flags */
 
-			M_DUP_PKTHDR(&mb, m0);
 			mb.m_data = (caddr_t)tap;
 			mb.m_len = tap->at_ihdr.it_len;
 			mb.m_next = m0;
-			mb.m_pkthdr.len += mb.m_len;
+			mb.m_nextpkt = NULL;
+			mb.m_type = 0;
+			mb.m_flags = 0;
 			bpf_mtap(sc->sc_radiobpf, &mb, BPF_DIRECTION_OUT);
 		}
 #endif /* NBPFILTER > 0 */

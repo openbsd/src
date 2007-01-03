@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.60 2006/12/14 09:23:24 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.61 2007/01/03 18:16:43 claudio Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2018,12 +2018,12 @@ ath_rx_proc(void *arg, int npending)
 			sc->sc_rxtap.wr_rssi = ds->ds_rxstat.rs_rssi;
 			sc->sc_rxtap.wr_max_rssi = ic->ic_max_rssi;
 
-			M_DUP_PKTHDR(&mb, m);
 			mb.m_data = (caddr_t)&sc->sc_rxtap;
 			mb.m_len = sc->sc_rxtap_len;
 			mb.m_next = m;
-			mb.m_pkthdr.len += mb.m_len;
-
+			mb.m_nextpkt = NULL;
+			mb.m_type = 0;
+			mb.m_flags = 0;
 			bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 		}
 #endif
@@ -2410,11 +2410,12 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 		sc->sc_txtap.wt_antenna = antenna;
 		sc->sc_txtap.wt_hwqueue = hwqueue;
 
-		M_DUP_PKTHDR(&mb, m0);
 		mb.m_data = (caddr_t)&sc->sc_txtap;
 		mb.m_len = sc->sc_txtap_len;
 		mb.m_next = m0;
-		mb.m_pkthdr.len += mb.m_len;
+		mb.m_nextpkt = NULL;
+		mb.m_type = 0;
+		mb.m_flags = 0;
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
 	}
 #endif

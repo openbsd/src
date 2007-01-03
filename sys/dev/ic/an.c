@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.52 2006/06/25 18:50:51 mickey Exp $	*/
+/*	$OpenBSD: an.c,v 1.53 2007/01/03 18:16:43 claudio Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -463,11 +463,12 @@ an_rxeof(struct an_softc *sc)
 		tap->ar_chan_flags = ic->ic_bss->ni_chan->ic_flags;
 
 
-		M_DUP_PKTHDR(&mb, m);
 		mb.m_data = (caddr_t)tap;
 		mb.m_len = sizeof(sc->sc_rxtapu);
 		mb.m_next = m;
-		mb.m_pkthdr.len += mb.m_len;
+		mb.m_nextpkt = NULL;
+		mb.m_type = 0;
+		mb.m_flags = 0;
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 	}
 #endif /* NPBFILTER > 0 */
@@ -1192,11 +1193,12 @@ an_start(struct ifnet *ifp)
 			tap->at_chan_flags =
 			    ic->ic_bss->ni_chan->ic_flags;
 
-			M_DUP_PKTHDR(&mb, m);
 			mb.m_data = (caddr_t)tap;
 			mb.m_len = sizeof(sc->sc_txtapu);
 			mb.m_next = m;
-			mb.m_pkthdr.len += mb.m_len;
+			mb.m_nextpkt = NULL;
+			mb.m_type = 0;
+			mb.m_flags = 0;
 			bpf_mtap(sc->sc_drvbpf, m, BPF_DIRECTION_OUT);
 		}
 #endif
