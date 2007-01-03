@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.132 2006/12/06 23:34:44 reyk Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.133 2007/01/03 11:49:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1426,19 +1426,19 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (sc->sk_type) {
 	case SK_GENESIS:
-		sc->sk_name = "SysKonnect GEnesis";
+		sc->sk_name = "GEnesis";
 		break;
 	case SK_YUKON:
-		sc->sk_name = "Marvell Yukon";
+		sc->sk_name = "Yukon";
 		break;
 	case SK_YUKON_LITE:
-		sc->sk_name = "Marvell Yukon Lite";
+		sc->sk_name = "Yukon Lite";
 		break;
 	case SK_YUKON_LP:
-		sc->sk_name = "Marvell Yukon LP";
+		sc->sk_name = "Yukon LP";
 		break;
 	default:
-		sc->sk_name = "Marvell Yukon (Unknown)";
+		sc->sk_name = "Yukon (Unknown)";
 	}
 
 	/* Yukon Lite Rev A0 needs special test, from sk98lin driver */

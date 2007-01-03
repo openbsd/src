@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.38 2006/12/30 22:08:15 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.39 2007/01/03 11:49:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1287,19 +1287,19 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (sc->sk_type) {
 	case SK_YUKON_XL:
-		sc->sk_name = "Marvell Yukon-2 XL";
+		sc->sk_name = "Yukon-2 XL";
 		break;
 	case SK_YUKON_EC_U:
-		sc->sk_name = "Marvell Yukon-2 EC Ultra";
+		sc->sk_name = "Yukon-2 EC Ultra";
 		break;
 	case SK_YUKON_EC:
-		sc->sk_name = "Marvell Yukon-2 EC";
+		sc->sk_name = "Yukon-2 EC";
 		break;
 	case SK_YUKON_FE:
-		sc->sk_name = "Marvell Yukon-2 FE";
+		sc->sk_name = "Yukon-2 FE";
 		break;
 	default:
-		sc->sk_name = "Marvell Yukon (Unknown)";
+		sc->sk_name = "Yukon (Unknown)";
 	}
 
 	if (sc->sk_type == SK_YUKON_XL) {
