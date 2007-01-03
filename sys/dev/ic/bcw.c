@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.22 2007/01/03 06:31:54 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.23 2007/01/03 10:41:04 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -165,7 +165,7 @@ bcw_attach(struct bcw_softc *sc)
 	 * Try and change to the ChipCommon Core
 	 */
 	if (bcw_change_core(sc, 0))
-		DPRINTF(("%s: Selected ChipCommon Core\n",
+		DPRINTF(("\n%s: Selected ChipCommon Core\n",
 		    sc->sc_dev.dv_xname));
 
 	/*
