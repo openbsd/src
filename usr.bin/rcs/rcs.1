@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.47 2006/12/27 07:44:27 niallo Exp $
+.\"	$OpenBSD: rcs.1,v 1.48 2007/01/03 12:42:41 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -43,8 +43,6 @@
 .Oo Fl m Ns Ar rev :
 .Ar msg Oc
 .Op Fl o Ns Ar rev
-.Oo Fl s Ns Ar state Ns
-.Op : Ns Ar rev Oc
 .Op Fl t Ns Ar str
 .Op Fl u Ns Op Ar rev
 .Op Fl x Ns Ar suffixes
@@ -153,10 +151,6 @@ until the last revision of the branch.
 .El
 .It Fl q
 Be quiet about reporting.
-.Sm off
-.It Fl s Ar state Op : Ar rev
-.Sm on
-Sets the state of revision
 .Ar rev
 to the identifier
 .Ar state
