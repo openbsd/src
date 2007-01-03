@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.20 2007/01/03 06:20:14 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.21 2007/01/03 06:24:09 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -2027,14 +2027,12 @@ bcw_radio_off(struct bcw_softc *sc)
 		BCW_WRITE16(sc, BCW_RADIO_CONTROL, 0x05);
 		BCW_WRITE16(sc, BCW_RADIO_DATALOW, 0xfb);
 		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x10);
-		sbval16 = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_DATA);
+		sbval16 = BCW_READ16(sc, BCW_PHY_DATA);
 		sbval16 |= 0x8;
 		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x10);
 		BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
 		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x11);
-		sbval16 = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-		    BCW_PHY_DATA);
+		sbval16 = BCW_READ16(sc, BCW_PHY_DATA);
 		sbval16 |= 0x8;
 		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x11);
 		BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
@@ -2042,14 +2040,12 @@ bcw_radio_off(struct bcw_softc *sc)
 	case BCW_PHY_TYPEG:
 		if (sc->sc_core_80211->rev >= 5) {
 			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x811);
-			sbval16 = bus_space_read_2(sc->sc_iot,
-			    sc->sc_ioh, BCW_PHY_DATA);
+			sbval16 = BCW_READ16(sc, BCW_PHY_DATA);
 			sbval16 |= 0x8c;
 			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x811);
 			BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
 			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x812);
-			sbval16 = bus_space_read_2(sc->sc_iot,
-			    sc->sc_ioh, BCW_PHY_DATA);
+			sbval16 = BCW_READ16(sc, BCW_PHY_DATA);
 			sbval16 &= 0xff73;
 			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x812);
 			BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
