@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.64 2006/11/30 15:51:28 markus Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.65 2007/01/03 12:17:43 markus Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -648,22 +648,28 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "D:df:Fmnvs:")) != -1) {
+	while ((ch = getopt(argc, argv, "D:df:Fkmnvs:")) != -1) {
 		switch (ch) {
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
 				warnx("could not parse macro definition %s",
 				    optarg);
 			break;
+
 		case 'd':
 			opts |= IPSECCTL_OPT_DELETE;
 			break;
+
 		case 'f':
 			rulesopt = optarg;
 			break;
 
 		case 'F':
 			opts |= IPSECCTL_OPT_FLUSH;
+			break;
+
+		case 'k':
+			opts |= IPSECCTL_OPT_SHOWKEY;
 			break;
 
 		case 'm':

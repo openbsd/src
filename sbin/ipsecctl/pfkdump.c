@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.23 2006/11/24 13:52:13 reyk Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.24 2007/01/03 12:17:43 markus Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -618,7 +618,10 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 
 	setup_extensions(msg);
 	sa = (struct sadb_sa *)extensions[SADB_EXT_SA];
-
+	if (!(opts & IPSECCTL_OPT_SHOWKEY)) {
+	    extensions[SADB_EXT_KEY_AUTH] = NULL;
+	    extensions[SADB_EXT_KEY_ENCRYPT] = NULL;
+	}
 	bzero(&r, sizeof r);
 	r.type |= RULE_SA;
 	r.tmode = (msg->sadb_msg_satype != SADB_X_SATYPE_TCPSIGNATURE) &&

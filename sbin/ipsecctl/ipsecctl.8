@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsecctl.8,v 1.23 2006/09/29 10:51:27 jmc Exp $
+.\"	$OpenBSD: ipsecctl.8,v 1.24 2007/01/03 12:17:43 markus Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
 .\"
@@ -22,7 +22,7 @@
 .Nd control flows for IPsec
 .Sh SYNOPSIS
 .Nm ipsecctl
-.Op Fl dFmnv
+.Op Fl dFkmnv
 .Oo Fl D Ar macro Ns =
 .Ar value Oc
 .Op Fl f Ar file
@@ -67,6 +67,8 @@ option flushes the SPD and the SAD.
 .It Fl f Ar file
 Load the rules contained in
 .Ar file .
+.It Fl k
+Show secret keying material when printing the active SAD entries.
 .It Fl m
 Continuously display all
 .Dv PF_KEY
