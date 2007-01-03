@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.4 2006/07/10 01:32:32 joris Exp $	*/
+/*	$OpenBSD: remote.c,v 1.5 2007/01/03 19:27:28 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -97,6 +97,23 @@ cvs_remote_input(void)
 	}
 
 	ldata = xstrdup(data);
+
+	if (cvs_server_active == 0 && cvs_client_outlog_fd != -1) {
+		BUF *bp;
+
+		bp = cvs_buf_alloc(strlen(ldata), BUF_AUTOEXT);
+
+		if (cvs_buf_append(bp, ldata, strlen(ldata)) < 0)
+			fatal("cvs_remote_input: cvs_buf_append");
+
+		cvs_buf_putc(bp, '\n');
+
+		if (cvs_buf_write_fd(bp, cvs_client_outlog_fd) < 0)
+			fatal("cvs_remote_input: cvs_buf_write_fd");
+
+		cvs_buf_free(bp);
+	}
+
 	return (ldata);
 }
 
@@ -123,6 +140,11 @@ cvs_remote_receive_file(size_t len)
 			    len, ret);
 		cvs_buf_set(bp, data, len, 0);
 		xfree(data);
+	}
+
+	if (cvs_server_active == 0 && cvs_client_outlog_fd != -1) {
+		if (cvs_buf_write_fd(bp, cvs_client_outlog_fd) < 0)
+			fatal("cvs_remote_receive_file: cvs_buf_write_fd");
 	}
 
 	return (bp);
@@ -158,6 +180,12 @@ cvs_remote_send_file(const char *path)
 	cvs_remote_output(buf);
 
 	bp = cvs_buf_load_fd(fd, BUF_AUTOEXT);
+
+	if (cvs_server_active == 0 && cvs_client_inlog_fd != -1) {
+		if (cvs_buf_write_fd(bp, cvs_client_inlog_fd) < 0)
+			fatal("cvs_remote_send_file: cvs_buf_write");
+	}
+
 	fcont = cvs_buf_release(bp);
 
 	if (fcont != NULL) {

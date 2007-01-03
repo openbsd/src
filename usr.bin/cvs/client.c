@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.41 2007/01/02 23:55:15 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.42 2007/01/03 19:27:28 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -105,8 +105,8 @@ static void	cvs_client_initlog(void);
  * variable is set.
  */
 static int	cvs_client_logon = 0;
-static int	cvs_client_inlog_fd = -1;
-static int	cvs_client_outlog_fd = -1;
+int	cvs_client_inlog_fd = -1;
+int	cvs_client_outlog_fd = -1;
 
 
 int server_response = SERVER_OK;
@@ -345,34 +345,6 @@ cvs_client_read_response(void)
 
 	if (resp->hdlr == NULL)
 		fatal("opencvs client does not support '%s'", cmd);
-
-	if (cvs_client_outlog_fd != -1) {
-		BUF *bp;
-
-		bp = cvs_buf_alloc(strlen(cmd), BUF_AUTOEXT);
-
-		if (cvs_buf_append(bp, cmd, strlen(cmd)) < 0)
-			fatal("cvs_client_read_response: cvs_buf_append");
-
-		if (cvs_buf_append(bp,
-		    (data == NULL) ? "" : " ",
-		    (data == NULL) ? 0 : 1) < 0) {
-			fatal("cvs_client_read_response: cvs_buf_append");
-		}
-
-		if (cvs_buf_append(bp,
-		    (data == NULL) ? "" : data,
-		    (data == NULL) ? 0 : strlen(data)) < 0) {
-			fatal("cvs_client_read_response: cvs_buf_append");
-		}
-
-		cvs_buf_putc(bp, '\n');
-
-		if (cvs_buf_write_fd(bp, cvs_client_outlog_fd) < 0)
-			fatal("cvs_client_read_response: cvs_buf_write_fd");
-
-		cvs_buf_free(bp);
-	}
 
 	(*resp->hdlr)(data);
 
