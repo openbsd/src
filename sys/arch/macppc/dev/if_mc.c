@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.6 2006/12/31 20:53:04 gwk Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.7 2007/01/03 06:57:54 gwk Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
@@ -552,8 +552,8 @@ mc_start(struct ifnet *ifp)
 		if (ifp->if_flags & IFF_OACTIVE)
 			return;
 
-		IF_DEQUEUE(&ifp->if_snd, m);
-		if (m == 0)
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
 			return;
 
 #if NBPFILTER > 0
@@ -913,8 +913,9 @@ mace_get(struct mc_softc *sc, caddr_t pkt, int totlen)
 	 int len;
 
 	 MGETHDR(m, M_DONTWAIT, MT_DATA);
-	 if (m == 0)
-		  return (0);
+	 if (m == NULL)
+		  return (NULL);
+
 	 m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 	 m->m_pkthdr.len = totlen;
 	 len = MHLEN;
@@ -924,9 +925,9 @@ mace_get(struct mc_softc *sc, caddr_t pkt, int totlen)
 	 while (totlen > 0) {
 		  if (top) {
 			   MGET(m, M_DONTWAIT, MT_DATA);
-			   if (m == 0) {
+			   if (m == NULL) {
 				    m_freem(top);
-				    return 0;
+				    return (NULL);
 			   }
 			   len = MLEN;
 		  }
@@ -935,7 +936,7 @@ mace_get(struct mc_softc *sc, caddr_t pkt, int totlen)
 			   if ((m->m_flags & M_EXT) == 0) {
 				    m_free(m);
 				    m_freem(top);
-				    return 0;
+				    return (NULL);
 			   }
 			   len = MCLBYTES;
 		  }
