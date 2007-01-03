@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.10 2007/01/03 05:46:42 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.11 2007/01/03 06:31:54 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -31,17 +31,17 @@ struct bcw_initval {
 
 #define BCW_MAX_RADIOS		2
 struct bcw_radio {
-	u_int16_t	id;
-	u_int16_t	info;
+	uint16_t	id;
+	uint16_t	info;
 	u_char		enabled;
 };
 
 #define BCW_MAX_CORES		10
 struct bcw_core {
-	u_int16_t	id;
-	u_int8_t	num;
-	u_int8_t	rev;
-	u_int8_t	backplane_flag;
+	uint16_t	id;
+	uint8_t		num;
+	uint8_t		rev;
+	uint8_t		backplane_flag;
 };
 
 /* number of descriptors used in a ring */
@@ -86,14 +86,14 @@ struct bcw_tx_ring {
 };
 
 struct bcw_desc {
-	u_int32_t ctrl;
-	u_int32_t addr;
+	uint32_t	ctrl;
+	uint32_t	addr;
 };
 
 /* ring descriptor */
 struct bcw_dma_slot {
-	u_int32_t ctrl;
-	u_int32_t addr;
+	uint32_t	ctrl;
+	uint32_t	addr;
 };
 
 #define CTRL_BC_MASK	0x1fff		/* buffer byte count */
@@ -136,8 +136,8 @@ struct bcw_softc {
 	void			(*sc_disable)(struct bcw_softc *);
 	void			(*sc_power)(struct bcw_softc *, int);
 	void			(*sc_conf_write)(struct bcw_softc *,
-				    u_int32_t, u_int32_t);
-	u_int32_t		(*sc_conf_read)(struct bcw_softc *, u_int32_t);
+				    uint32_t, uint32_t);
+	uint32_t		(*sc_conf_read)(struct bcw_softc *, uint32_t);
 
 	struct timeout		sc_scan_to;
 
@@ -149,46 +149,46 @@ struct bcw_softc {
 	const char		*bcw_intrstr;	/* interrupt description */
 	struct pci_attach_args	sc_pa;
 	struct cardbus_attach_args	sc_ca;
-	u_int32_t		sc_phy;	/* eeprom indicated phy */
+	uint32_t		sc_phy;	/* eeprom indicated phy */
 	struct bcw_dma_slot	*bcw_rx_ring;	/* receive ring */
 	struct bcw_dma_slot	*bcw_tx_ring;	/* transmit ring */
 //	struct bcw_chain_data	sc_cdata;	/* mbufs */
 	bus_dmamap_t		sc_ring_map;
-	u_int32_t		sc_intmask;	/* current intr mask */
-	u_int32_t		sc_rxin;	/* last rx descriptor seen */
-	u_int32_t		sc_txin;	/* last tx descriptor seen */
+	uint32_t		sc_intmask;	/* current intr mask */
+	uint32_t		sc_rxin;	/* last rx descriptor seen */
+	uint32_t		sc_txin;	/* last tx descriptor seen */
 	int			sc_txsfree;	/* no. tx slots available */
 	int			sc_txsnext;	/* next available tx slot */
 	struct timeout		sc_timeout;
 	/* Break these out into seperate structs */
-	u_int16_t		sc_chipid;	/* Chip ID */
-	u_int16_t		sc_chiprev;	/* Chip Revision */
-	u_int16_t		sc_prodid;	/* Product ID */
+	uint16_t		sc_chipid;	/* Chip ID */
+	uint16_t		sc_chiprev;	/* Chip Revision */
+	uint16_t		sc_prodid;	/* Product ID */
 	struct bcw_core		sc_core[BCW_MAX_CORES];
 //	struct bcw_radio	radio[BCW_MAX_RADIOS];
-	u_int16_t		sc_phy_version;
-	u_int16_t		sc_phy_type;
-	u_int16_t		sc_phy_rev;
-//	u_int16_t		sc_corerev;
-	u_int32_t		sc_radioid;
-	u_int16_t		sc_radiorev;
-	u_int16_t		sc_radiotype;
-	u_int32_t		sc_phyinfo;
-	u_int16_t		sc_numcores;
-	u_int16_t		sc_havecommon;
+	uint16_t		sc_phy_version;
+	uint16_t		sc_phy_type;
+	uint16_t		sc_phy_rev;
+//	uint16_t		sc_corerev;
+	uint32_t		sc_radioid;
+	uint16_t		sc_radiorev;
+	uint16_t		sc_radiotype;
+	uint32_t		sc_phyinfo;
+	uint16_t		sc_numcores;
+	uint16_t		sc_havecommon;
 	int			sc_currentcore;
 	int			sc_lastcore;
-	u_int8_t		sc_radio_gain;
-	u_int16_t		sc_radio_pa0b0;
-	u_int16_t		sc_radio_pa0b1;
-	u_int16_t		sc_radio_pa0b2;
-	u_int16_t		sc_radio_pa1b0;
-	u_int16_t		sc_radio_pa1b1;
-	u_int16_t		sc_radio_pa1b2;
-	u_int8_t		sc_idletssi;
-	u_int8_t		sc_spromrev;
-	u_int16_t		sc_boardflags;
-	u_int8_t		sc_sbrev; /* Sonics Backplane Revision */
+	uint8_t			sc_radio_gain;
+	uint16_t		sc_radio_pa0b0;
+	uint16_t		sc_radio_pa0b1;
+	uint16_t		sc_radio_pa0b2;
+	uint16_t		sc_radio_pa1b0;
+	uint16_t		sc_radio_pa1b1;
+	uint16_t		sc_radio_pa1b2;
+	uint8_t			sc_idletssi;
+	uint8_t			sc_spromrev;
+	uint16_t		sc_boardflags;
+	uint8_t			sc_sbrev; /* Sonics Backplane Revision */
 	/* Core locations */
 	struct bcw_core		*sc_core_common;
 	struct bcw_core		*sc_core_80211;
@@ -220,9 +220,9 @@ void	bcw_powercontrol_crystal_on(struct bcw_softc *);
 
 /* Packet status is returned in a pre-packet header */
 struct rx_pph {
-	u_int16_t len;
-	u_int16_t flags;
-	u_int16_t pad[12];
+	uint16_t	len;
+	uint16_t	flags;
+	uint16_t	pad[12];
 };
 
 #define BCW_PREPKT_HEADER_SIZE		30
@@ -241,7 +241,7 @@ struct rx_pph {
 do {									\
 	struct bcw_dma_slot *__bcwd = &sc->bcw_rx_ring[x];		\
 									\
-	*mtod(sc->bcw_cdata.bcw_rx_chain[x], u_int32_t *) = 0;		\
+	*mtod(sc->bcw_cdata.bcw_rx_chain[x], uint32_t *) = 0;		\
 	__bcwd->addr =							\
 	    htole32(sc->bcw_cdata.bcw_rx_map[x]->dm_segs[0].ds_addr	\
 	    + 0x40000000);						\

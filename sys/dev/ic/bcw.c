@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.21 2007/01/03 06:24:09 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.22 2007/01/03 06:31:54 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -73,7 +73,7 @@ void	bcw_stop(struct ifnet *, int);
 void	bcw_watchdog(struct ifnet *);
 void	bcw_rxintr(struct bcw_softc *);
 void	bcw_txintr(struct bcw_softc *);
-//void	bcw_add_mac(struct bcw_softc *, u_int8_t *, unsigned long);
+//void	bcw_add_mac(struct bcw_softc *, uint8_t *, unsigned long);
 int	bcw_add_rxbuf(struct bcw_softc *, int);
 void	bcw_rxdrain(struct bcw_softc *);
 void	bcw_set_filter(struct ifnet *); 
@@ -96,7 +96,7 @@ int	bcw_validatechipaccess(struct bcw_softc *);
 void	bcw_powercontrol_crystal_off(struct bcw_softc *);
 int	bcw_change_core(struct bcw_softc *, int);
 void	bcw_radio_off(struct bcw_softc *);
-int	bcw_reset_core(struct bcw_softc *, u_int32_t);
+int	bcw_reset_core(struct bcw_softc *, uint32_t);
 int	bcw_load_firmware(struct bcw_softc *);
 int	bcw_write_initvals(struct bcw_softc *, const struct bcw_initval *,
 	    const unsigned int);
@@ -125,8 +125,8 @@ bcw_attach(struct bcw_softc *sc)
 	struct ifnet	*ifp = &ic->ic_if;
 	int		error;
 	int		i;
-	u_int32_t	sbval;
-//	u_int16_t	sbval16;
+	uint32_t	sbval;
+//	uint16_t	sbval16;
 
 	/*
 	 * Don't reset the chip here, we can only reset each core and we
@@ -784,7 +784,7 @@ bcw_start(struct ifnet *ifp)
 		/* Initialize the transmit descriptor(s). */
 		txstart = sc->sc_txsnext;
 		for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
-			u_int32_t ctrl;
+			uint32_t ctrl;
 
 			ctrl = dmamap->dm_segs[seg].ds_len & CTRL_BC_MASK;
 			if (seg == 0)
@@ -853,7 +853,7 @@ bcw_intr(void *xsc)
 {
 	struct bcw_softc *sc;
 	struct ifnet *ifp;
-	u_int32_t intstatus;
+	uint32_t intstatus;
 	int wantinit;
 	int handled = 0;
 
@@ -1263,7 +1263,7 @@ void
 bcw_stop(struct ifnet *ifp, int disable)
 {
 	struct bcw_softc *sc = ifp->if_softc;
-	//u_int32_t val;
+	//uint32_t val;
 
 	/* Stop the 1 second timer */
 	timeout_del(&sc->sc_timeout);
@@ -1314,8 +1314,8 @@ bcw_stop(struct ifnet *ifp, int disable)
 void
 bcw_reset(struct bcw_softc *sc)
 {
-	u_int32_t sbval;
-	u_int32_t reject;
+	uint32_t sbval;
+	uint32_t reject;
 
 	/*
 	 * Figure out what revision the Sonic Backplane is, as the position
@@ -1510,7 +1510,7 @@ bcw_tick(void *v)
 int
 bcw_validatechipaccess(struct bcw_softc *sc)
 {
-	u_int32_t save,val;
+	uint32_t save,val;
 
 	/* Make sure we're dealing with the wireless core */
 	bcw_change_core(sc, sc->sc_core_80211->num);
@@ -1954,7 +1954,7 @@ bcw_free_tx_ring(struct bcw_softc *sc, struct bcw_tx_ring *ring)
 void
 bcw_powercontrol_crystal_on(struct bcw_softc *sc)
 {
-	u_int32_t sbval;
+	uint32_t sbval;
 
 	sbval = (sc->sc_conf_read)(sc, BCW_GPIOI);
 	if ((sbval & BCW_XTALPOWERUP) != BCW_XTALPOWERUP) {
@@ -1972,7 +1972,7 @@ bcw_powercontrol_crystal_on(struct bcw_softc *sc)
 void
 bcw_powercontrol_crystal_off(struct bcw_softc *sc)
 {
-	u_int32_t sbval;
+	uint32_t sbval;
 
 	/* XXX Return if radio is hardware disabled */
 	if (sc->sc_chiprev < 5)
@@ -1994,7 +1994,7 @@ bcw_powercontrol_crystal_off(struct bcw_softc *sc)
 int
 bcw_change_core(struct bcw_softc *sc, int changeto)
 {
-	u_int32_t	sbval;
+	uint32_t	sbval;
 	int		i;
 
 	(sc->sc_conf_write)(sc, BCW_ADDR_SPACE0,
@@ -2017,7 +2017,7 @@ bcw_change_core(struct bcw_softc *sc, int changeto)
 void
 bcw_radio_off(struct bcw_softc *sc)
 {
-	u_int16_t	sbval16;
+	uint16_t	sbval16;
 
 	switch(sc->sc_phy_type) {
 	case BCW_PHY_TYPEA:
@@ -2058,9 +2058,9 @@ bcw_radio_off(struct bcw_softc *sc)
 }
 
 int
-bcw_reset_core(struct bcw_softc *sc, u_int32_t flags)
+bcw_reset_core(struct bcw_softc *sc, uint32_t flags)
 {
-	u_int32_t	sbval, reject, val;
+	uint32_t	sbval, reject, val;
 	int		i;
 
 	/*
