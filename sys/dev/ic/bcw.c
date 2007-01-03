@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.17 2007/01/03 05:53:03 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.18 2007/01/03 06:02:27 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -115,7 +115,7 @@ bcw_shm_write_4(struct bcw_softc *sc, uint16_t routing, uint16_t offset)
 	control <<= 16;
 	control |= offset;
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SHM_CONTROL, control);
+	BCW_WRITE(sc, BCW_SHM_CONTROL, control);
 }
 
 void
@@ -2106,15 +2106,14 @@ bcw_reset_core(struct bcw_softc *sc, u_int32_t flags)
 	if (!(sbval & SBTML_RESET)) {
 		/* if the core is not enabled, the clock won't be enabled */
 		if (!(sbval & SBTML_CLK)) {
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_SBTMSTATELOW, SBTML_RESET | reject | flags );
+			BCW_WRITE(sc, BCW_SBTMSTATELOW,
+			    SBTML_RESET | reject | flags);
 			delay(1);
 			sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 			    BCW_SBTMSTATELOW);
 			goto disabled;
 
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_SBTMSTATELOW, reject);
+			BCW_WRITE(sc, BCW_SBTMSTATELOW, reject);
 			delay(1);
 			/* wait until busy is clear */
 			for (i = 0; i < 10000; i++) {
@@ -2133,8 +2132,8 @@ bcw_reset_core(struct bcw_softc *sc, u_int32_t flags)
 			if (val & BCW_CIR_SBID_LO_INITIATOR) {
 				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 				    BCW_SBIMSTATE);
-				bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-				    BCW_SBIMSTATE, sbval | SBIM_REJECT);
+				BCW_WRITE(sc, BCW_SBIMSTATE,
+				    sbval | SBIM_REJECT);
 				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 				    BCW_SBIMSTATE);
 				delay(1);
@@ -2155,9 +2154,8 @@ bcw_reset_core(struct bcw_softc *sc, u_int32_t flags)
 
 			/* set reset and reject while enabling the clocks */
 			/* XXX why isn't reject in here? */
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_SBTMSTATELOW, SBTML_FGC | SBTML_CLK |
-			    SBTML_RESET | flags );
+			BCW_WRITE(sc, BCW_SBTMSTATELOW,
+			    SBTML_FGC | SBTML_CLK | SBTML_RESET | flags);
 			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 			    BCW_SBTMSTATELOW);
 			delay(10);
@@ -2167,8 +2165,8 @@ bcw_reset_core(struct bcw_softc *sc, u_int32_t flags)
 			if (val & BCW_CIR_SBID_LO_INITIATOR) {
 				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 				    BCW_SBIMSTATE);
-				bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-				    BCW_SBIMSTATE, sbval & ~SBIM_REJECT);
+				BCW_WRITE(sc, BCW_SBIMSTATE,
+				    sbval & ~SBIM_REJECT);
 				sbval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 				    BCW_SBIMSTATE);
 				delay(1);
@@ -2187,8 +2185,8 @@ bcw_reset_core(struct bcw_softc *sc, u_int32_t flags)
 					    sc->sc_dev.dv_xname);
 			} /* end initiator check */
 
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			    BCW_SBTMSTATELOW, SBTML_RESET | reject | flags );
+			BCW_WRITE(sc, BCW_SBTMSTATELOW,
+			    SBTML_RESET | reject | flags);
 			delay(1);
 		}
 	}
@@ -2197,29 +2195,28 @@ disabled:
 
 	/* This is enabling/resetting the core */
 	/* enable clock */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW,
-	    SBTML_FGC | SBTML_CLK | SBTML_RESET | flags );
+	BCW_WRITE(sc, BCW_SBTMSTATELOW,
+	    SBTML_FGC | SBTML_CLK | SBTML_RESET | flags);
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
 	delay(1);
 
 	/* clear any error bits that may be on */
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATEHI);
 	if (val & SBTMH_SERR)
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATEHI, 0);
+		BCW_WRITE(sc, BCW_SBTMSTATEHI, 0);
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBIMSTATE);
 	if (val & (SBIM_INBANDERR | SBIM_TIMEOUT))
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBIMSTATE,
+		BCW_WRITE(sc, BCW_SBIMSTATE,
 		    val & ~(SBIM_INBANDERR | SBIM_TIMEOUT));
 
 	/* clear reset and allow it to propagate throughout the core */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW,
-	    SBTML_FGC | SBTML_CLK | flags );
+	BCW_WRITE(sc, BCW_SBTMSTATELOW,
+	    SBTML_FGC | SBTML_CLK | flags);
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
 	delay(1);
 
 	/* leave clock enabled */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW,
-	    SBTML_CLK | flags );
+	BCW_WRITE(sc, BCW_SBTMSTATELOW, SBTML_CLK | flags);
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCW_SBTMSTATELOW);
 	delay(1);
 
