@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.67 2006/12/29 00:14:28 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.68 2007/01/04 23:08:16 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4924,20 +4924,6 @@ dlflush5:
 	retl
 	 nop
 
-	!! We got a hole.  Clear from start to hole
-	clr	%o4
-3:
-dlflush6:
-	stxa	%g0, [%o4] ASI_DCACHE_TAG
-	dec	16, %o1
-	brgz,pt	%o1, 3b
-	 inc	16, %o4
-
-	!! Now clear to the end.
-	sub	%o3, %o2, %o4	! Size to clear (NBPG - end)
-	ba,pt	%icc, 1b
-	 mov	%o2, %o0	! Start of clear
-
 /*
  *	cache_flush_phys(paddr_t, psize_t, int);
  *
@@ -4981,7 +4967,7 @@ _C_LABEL(cache_flush_phys):
 	 nop
 
 	membar	#LoadStore
-dlflush7:
+dlflush6:
 	stxa	%g0, [%o4] ASI_DCACHE_TAG ! Just right
 2:
 	membar	#StoreLoad
@@ -6343,7 +6329,7 @@ ENTRY(pmap_zero_phys)
 	dec	8, %o2
 	stxa	%g0, [%o0] ASI_PHYS_CACHED
 	inc	8, %o0
-dlflush8:
+dlflush7:
 	stxa	%g0, [%o1] ASI_DCACHE_TAG
 	brgz	%o2, 1b
 	 inc	16, %o1
@@ -9651,5 +9637,4 @@ _C_LABEL(dlflush_start):
 	.xword	dlflush5
 	.xword	dlflush6
 	.xword	dlflush7
-	.xword	dlflush8
 	.xword 0
