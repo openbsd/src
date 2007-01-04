@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.115 2007/01/02 23:27:33 itojun Exp $	*/
+/*	$OpenBSD: parse.y,v 1.116 2007/01/04 21:31:21 markus Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1461,10 +1461,11 @@ host_dns(const char *s, int mask)
 		 * syntax.
 		 */
 		if (ipa->af == AF_INET)
-			set_ipmask(ipa, mask);
+			set_ipmask(ipa, mask == -1 ? 32 : mask);
 		else
 			if (mask != -1)
-				err(1, "host_dns: cannot apply netmask on non-IPv4 address");
+				err(1, "host_dns: cannot apply netmask "
+				    "on non-IPv4 address");
 		break;
 	}
 	freeaddrinfo(res0);
