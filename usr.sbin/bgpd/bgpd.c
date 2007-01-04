@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.141 2007/01/04 12:43:36 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.142 2007/01/04 18:38:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -228,6 +228,7 @@ main(int argc, char *argv[])
 	signal(SIGHUP, sighdlr);
 	signal(SIGALRM, sighdlr);
 	signal(SIGUSR1, sighdlr);
+	signal(SIGPIPE, SIG_IGN);
 
 	close(pipe_m2s[1]);
 	close(pipe_m2r[1]);
