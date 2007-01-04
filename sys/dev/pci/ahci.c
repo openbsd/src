@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.31 2006/12/12 02:45:16 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.32 2007/01/04 08:39:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -304,7 +304,7 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTF(AHCI_D_VERBOSE, "%s: ports implemented: 0x%08x\n",
 	    DEVNAME(sc), reg);
 	for (i = 0; i < AHCI_MAX_PORTS; i++) {
-		if (((1 << i) & reg) == 0) {
+		if (!ISSET(reg, 1 << i)) {
 			/* dont allocate stuff if the port isnt implemented */
 			continue;
 		}
