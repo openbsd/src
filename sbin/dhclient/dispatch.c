@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.35 2006/12/26 21:19:52 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.36 2007/01/04 22:17:48 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -51,8 +51,8 @@ struct protocol *protocols;
 struct timeout *timeouts;
 static struct timeout *free_timeouts;
 static int interfaces_invalidated;
-void (*bootp_packet_handler)(struct dhcp_packet *, int, unsigned int,
-    struct iaddr, struct hardware *);
+void (*bootp_packet_handler)(int, unsigned int, struct iaddr,
+    struct hardware *);
 
 static int interface_status(void);
 
@@ -222,17 +222,8 @@ got_one(struct protocol *l)
 	struct hardware hfrom;
 	struct iaddr ifrom;
 	ssize_t result;
-	union {
-		/*
-		 * Packet input buffer.  Must be as large as largest
-		 * possible MTU.
-		 */
-		unsigned char packbuf[4095];
-		struct dhcp_packet packet;
-	} u;
 
-	if ((result = receive_packet(u.packbuf, sizeof(u), &from, &hfrom)) ==
-	    -1) {
+	if ((result = receive_packet(&from, &hfrom)) == -1) {
 		warning("receive_packet failed on %s: %s", ifi->name,
 		    strerror(errno));
 		ifi->errors++;
@@ -255,8 +246,7 @@ got_one(struct protocol *l)
 		ifrom.len = 4;
 		memcpy(ifrom.iabuf, &from.sin_addr, ifrom.len);
 
-		(*bootp_packet_handler)(&u.packet, result,
-		    from.sin_port, ifrom, &hfrom);
+		(*bootp_packet_handler)(result, from.sin_port, ifrom, &hfrom);
 	}
 }
 

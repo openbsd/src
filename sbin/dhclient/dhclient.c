@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.100 2006/12/28 20:04:22 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.101 2007/01/04 22:17:48 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -580,10 +580,10 @@ dhcpack(struct packet *packet)
 
 	/* If we're not receptive to an offer right now, or if the offer
 	   has an unrecognizable transaction id, then just drop it. */
-	if (client->xid != packet->raw->xid ||
-	    (ifi->hw_address.hlen != packet->raw->hlen) ||
+	if (client->xid != client->packet.xid ||
+	    (ifi->hw_address.hlen != client->packet.hlen) ||
 	    (memcmp(ifi->hw_address.haddr,
-	    packet->raw->chaddr, packet->raw->hlen)))
+	    client->packet.chaddr, client->packet.hlen)))
 		return;
 
 	if (client->state != S_REBOOTING &&
@@ -721,7 +721,7 @@ bootp(struct packet *packet)
 {
 	struct iaddrlist *ap;
 
-	if (packet->raw->op != BOOTREPLY)
+	if (client->packet.op != BOOTREPLY)
 		return;
 
 	/* If there's a reject list, make sure this packet's sender isn't
@@ -784,10 +784,10 @@ dhcpoffer(struct packet *packet)
 	/* If we're not receptive to an offer right now, or if the offer
 	   has an unrecognizable transaction id, then just drop it. */
 	if (client->state != S_SELECTING ||
-	    client->xid != packet->raw->xid ||
-	    (ifi->hw_address.hlen != packet->raw->hlen) ||
+	    client->xid != client->packet.xid ||
+	    (ifi->hw_address.hlen != client->packet.hlen) ||
 	    (memcmp(ifi->hw_address.haddr,
-	    packet->raw->chaddr, packet->raw->hlen)))
+	    client->packet.chaddr, client->packet.hlen)))
 		return;
 
 	note("%s from %s", name, piaddr(packet->client_addr));
@@ -805,9 +805,9 @@ dhcpoffer(struct packet *packet)
 	/* If we've already seen this lease, don't record it again. */
 	for (lease = client->offered_leases;
 	    lease; lease = lease->next) {
-		if (lease->address.len == sizeof(packet->raw->yiaddr) &&
+		if (lease->address.len == sizeof(client->packet.yiaddr) &&
 		    !memcmp(lease->address.iabuf,
-		    &packet->raw->yiaddr, lease->address.len)) {
+		    &client->packet.yiaddr, lease->address.len)) {
 			debug("%s already seen.", name);
 			return;
 		}
@@ -932,20 +932,22 @@ packet_to_lease(struct packet *packet)
 		}
 	}
 
-	lease->address.len = sizeof(packet->raw->yiaddr);
-	memcpy(lease->address.iabuf, &packet->raw->yiaddr, lease->address.len);
+	lease->address.len = sizeof(client->packet.yiaddr);
+	memcpy(lease->address.iabuf, &client->packet.yiaddr,
+	    lease->address.len);
 
 	/* If the server name was filled out, copy it. */
 	if ((!packet->options[DHO_DHCP_OPTION_OVERLOAD].len ||
 	    !(packet->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)) &&
-	    packet->raw->sname[0]) {
+	    client->packet.sname[0]) {
 		lease->server_name = malloc(DHCP_SNAME_LEN + 1);
 		if (!lease->server_name) {
 			warning("dhcpoffer: no memory for server name.");
 			free_client_lease(lease);
 			return (NULL);
 		}
-		memcpy(lease->server_name, packet->raw->sname, DHCP_SNAME_LEN);
+		memcpy(lease->server_name, client->packet.sname,
+		    DHCP_SNAME_LEN);
 		lease->server_name[DHCP_SNAME_LEN] = '\0';
 		if (!res_hnok(lease->server_name)) {
 			warning("Bogus server name %s", lease->server_name);
@@ -957,7 +959,7 @@ packet_to_lease(struct packet *packet)
 	/* Ditto for the filename. */
 	if ((!packet->options[DHO_DHCP_OPTION_OVERLOAD].len ||
 	    !(packet->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1)) &&
-	    packet->raw->file[0]) {
+	    client->packet.file[0]) {
 		/* Don't count on the NUL terminator. */
 		lease->filename = malloc(DHCP_FILE_LEN + 1);
 		if (!lease->filename) {
@@ -965,7 +967,8 @@ packet_to_lease(struct packet *packet)
 			free_client_lease(lease);
 			return (NULL);
 		}
-		memcpy(lease->filename, packet->raw->file, DHCP_FILE_LEN);
+		memcpy(lease->filename, client->packet.file,
+		    DHCP_FILE_LEN);
 		lease->filename[DHCP_FILE_LEN] = '\0';
 	}
 	return lease;
@@ -976,10 +979,10 @@ dhcpnak(struct packet *packet)
 {
 	/* If we're not receptive to an offer right now, or if the offer
 	   has an unrecognizable transaction id, then just drop it. */
-	if (client->xid != packet->raw->xid ||
-	    (ifi->hw_address.hlen != packet->raw->hlen) ||
+	if (client->xid != client->packet.xid ||
+	    (ifi->hw_address.hlen != client->packet.hlen) ||
 	    (memcmp(ifi->hw_address.haddr,
-	    packet->raw->chaddr, packet->raw->hlen)))
+	    client->packet.chaddr, client->packet.hlen)))
 		return;
 
 	if (client->state != S_REBOOTING &&
@@ -1091,8 +1094,8 @@ again:
 	    ntohs(sockaddr_broadcast.sin_port), client->interval);
 
 	/* Send out a packet. */
-	(void)send_packet(&client->packet, client->packet_length,
-	    inaddr_any, &sockaddr_broadcast, NULL);
+	send_packet(client->packet_length, inaddr_any, &sockaddr_broadcast,
+	    NULL);
 
 	add_timeout(cur_time + client->interval, send_discover);
 }
@@ -1312,8 +1315,7 @@ cancel:
 	    inet_ntoa(destination.sin_addr), ntohs(destination.sin_port));
 
 	/* Send out a packet. */
-	(void) send_packet(&client->packet, client->packet_length,
-	    from, &destination, NULL);
+	send_packet(client->packet_length, from, &destination, NULL);
 
 	add_timeout(cur_time + client->interval, send_request);
 }
@@ -1326,8 +1328,8 @@ send_decline(void)
 	    ntohs(sockaddr_broadcast.sin_port));
 
 	/* Send out a packet. */
-	(void) send_packet(&client->packet, client->packet_length,
-	    inaddr_any, &sockaddr_broadcast, NULL);
+	send_packet(client->packet_length, inaddr_any, &sockaddr_broadcast,
+	    NULL);
 }
 
 void

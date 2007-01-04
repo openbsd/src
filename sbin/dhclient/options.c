@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.27 2006/12/26 21:19:52 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.28 2007/01/04 22:17:48 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -60,7 +60,7 @@ parse_options(struct packet *packet)
 	memset(packet->options, 0, sizeof(packet->options));
 
 	/* If we don't see the magic cookie, there's nothing to parse. */
-	if (memcmp(packet->raw->options, DHCP_OPTIONS_COOKIE, 4)) {
+	if (memcmp(&client->packet.options, DHCP_OPTIONS_COOKIE, 4)) {
 		packet->options_valid = 0;
 		return;
 	}
@@ -69,8 +69,8 @@ parse_options(struct packet *packet)
 	 * Go through the options field, up to the end of the packet or
 	 * the End field.
 	 */
-	parse_option_buffer(packet, &packet->raw->options[4],
-	    packet->packet_length - DHCP_FIXED_NON_UDP - 4);
+	parse_option_buffer(packet, &client->packet.options[4],
+	    client->packet_length - DHCP_FIXED_NON_UDP - 4);
 
 	/*
 	 * If we parsed a DHCP Option Overload option, parse more
@@ -80,12 +80,12 @@ parse_options(struct packet *packet)
 	    packet->options[DHO_DHCP_OPTION_OVERLOAD].data) {
 		if (packet->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1)
 			parse_option_buffer(packet,
-			    (unsigned char *)packet->raw->file,
-			    sizeof(packet->raw->file));
+			    (unsigned char *)client->packet.file,
+			    sizeof(client->packet.file));
 		if (packet->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)
 			parse_option_buffer(packet,
-			    (unsigned char *)packet->raw->sname,
-			    sizeof(packet->raw->sname));
+			    (unsigned char *)client->packet.sname,
+			    sizeof(client->packet.sname));
 	}
 }
 
@@ -475,23 +475,19 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 }
 
 void
-do_packet(struct dhcp_packet *packet, int len, unsigned int from_port,
-    struct iaddr from, struct hardware *hfrom)
+do_packet(int len, unsigned int from_port, struct iaddr from,
+    struct hardware *hfrom)
 {
 	struct packet tp;
 	int i;
 
-	if (packet->hlen > sizeof(packet->chaddr)) {
+	if (client->packet.hlen > sizeof(client->packet.chaddr)) {
 		note("Discarding packet with invalid hlen.");
 		return;
 	}
 
 	memset(&tp, 0, sizeof(tp));
-	tp.raw = packet;
-	tp.packet_length = len;
-	tp.client_port = from_port;
 	tp.client_addr = from;
-	tp.haddr = hfrom;
 
 	parse_options(&tp);
 	if (tp.options_valid &&

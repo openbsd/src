@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.58 2007/01/04 19:12:41 stevesk Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.59 2007/01/04 22:17:48 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -98,13 +98,9 @@ struct iaddrlist {
 };
 
 struct packet {
-	struct dhcp_packet	*raw;
-	int			 packet_length;
 	int			 packet_type;
 	int			 options_valid;
-	int			 client_port;
 	struct iaddr		 client_addr;
-	struct hardware		*haddr;
 	struct option_data	 options[256];
 };
 
@@ -229,8 +225,7 @@ extern struct client_config *config;
 /* options.c */
 int cons_options(unsigned char *, const int, struct option_data *);
 char *pretty_print_option(unsigned int, unsigned char *, int, int, int);
-void do_packet(struct dhcp_packet *, int, unsigned int, struct iaddr,
-    struct hardware *);
+void do_packet(int, unsigned int, struct iaddr, struct hardware *);
 
 /* errwarn.c */
 extern int warnings_occurred;
@@ -262,14 +257,13 @@ time_t parse_date(FILE *);
 int if_register_bpf(void);
 void if_register_send(void);
 void if_register_receive(void);
-ssize_t send_packet(struct dhcp_packet *, size_t,
-    struct in_addr, struct sockaddr_in *, struct hardware *);
-ssize_t receive_packet(unsigned char *, size_t, struct sockaddr_in *,
+ssize_t send_packet(size_t, struct in_addr, struct sockaddr_in *,
     struct hardware *);
+ssize_t receive_packet(struct sockaddr_in *, struct hardware *);
 
 /* dispatch.c */
-extern void (*bootp_packet_handler)(struct dhcp_packet *, int, unsigned int,
-    struct iaddr, struct hardware *);
+extern void (*bootp_packet_handler)(int, unsigned int, struct iaddr,
+    struct hardware *);
 void discover_interface(void);
 void reinitialize_interface(void);
 void dispatch(void);

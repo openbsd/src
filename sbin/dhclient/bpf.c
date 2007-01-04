@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.17 2006/12/26 21:19:52 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.18 2007/01/04 22:17:48 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -250,8 +250,8 @@ if_register_receive(void)
 }
 
 ssize_t
-send_packet(struct dhcp_packet *raw, size_t len, struct in_addr from,
-    struct sockaddr_in *to, struct hardware *hto)
+send_packet(size_t len, struct in_addr from, struct sockaddr_in *to,
+    struct hardware *hto)
 {
 #define IOVCNT		2
 	unsigned char buf[256];
@@ -264,11 +264,13 @@ send_packet(struct dhcp_packet *raw, size_t len, struct in_addr from,
 	}
 
 	assemble_udp_ip_header(buf, &bufp, from.s_addr,
-	    to->sin_addr.s_addr, to->sin_port, (unsigned char *)raw, len);
+	    to->sin_addr.s_addr, to->sin_port,
+	    (unsigned char *)&client->packet,
+	    len);
 
 	iov[0].iov_base = (char *)buf;
 	iov[0].iov_len = bufp;
-	iov[1].iov_base = (char *)raw;
+	iov[1].iov_base = (char *)&client->packet;
 	iov[1].iov_len = len;
 
 	if (to->sin_addr.s_addr == INADDR_BROADCAST) {
@@ -288,8 +290,7 @@ send_packet(struct dhcp_packet *raw, size_t len, struct in_addr from,
 }
 
 ssize_t
-receive_packet(unsigned char *buf, size_t len, struct sockaddr_in *from,
-    struct hardware *hfrom)
+receive_packet(struct sockaddr_in *from, struct hardware *hfrom)
 {
 	int length = 0, offset = 0;
 	struct bpf_hdr hdr;
@@ -386,14 +387,15 @@ receive_packet(unsigned char *buf, size_t len, struct sockaddr_in *from,
 		 * we have to skip it (this shouldn't happen in real
 		 * life, though).
 		 */
-		if (hdr.bh_caplen > len) {
+		if (hdr.bh_caplen > sizeof(client->packet)) {
 			ifi->rbuf_offset = BPF_WORDALIGN(
 			    ifi->rbuf_offset + hdr.bh_caplen);
 			continue;
 		}
 
 		/* Copy out the data in the packet... */
-		memcpy(buf, ifi->rbuf + ifi->rbuf_offset,
+		bzero(&client->packet, sizeof(client->packet));
+		memcpy(&client->packet, ifi->rbuf + ifi->rbuf_offset,
 		    hdr.bh_caplen);
 		ifi->rbuf_offset = BPF_WORDALIGN(ifi->rbuf_offset +
 		    hdr.bh_caplen);
