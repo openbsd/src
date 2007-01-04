@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.35 2007/01/04 12:02:49 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.36 2007/01/04 12:14:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -460,7 +460,7 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	bzero(ap->ap_ccbs, sizeof(struct ahci_ccb) * sc->sc_ncmds);
 
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
-	    AHCI_PORT_REGION(i), AHCI_PORT_SIZE, &ap->ap_ioh) != 0) {
+	    AHCI_PORT_REGION(port), AHCI_PORT_SIZE, &ap->ap_ioh) != 0) {
 		printf("%s: unable to create register window for port %d\n",
 		    DEVNAME(sc), port);
 		goto freeccbs;
