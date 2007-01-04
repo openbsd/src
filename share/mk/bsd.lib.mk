@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.56 2006/06/26 03:12:37 brad Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.57 2007/01/04 11:51:26 otto Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -28,7 +28,7 @@ SHLIB_MINOR=${minor}
 .SUFFIXES: .out .o .go .po .so .S .s .c .cc .C .cxx .f .y .l .ln .m4 .m
 
 .c.o:
-	@echo "${COMPILE.c} ${DEBUG1} ${.IMPSRC} -o ${.TARGET}"
+	@echo "${COMPILE.c} ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.c} ${.IMPSRC}  -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
