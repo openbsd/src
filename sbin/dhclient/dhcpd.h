@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.59 2007/01/04 22:17:48 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.60 2007/01/04 22:30:57 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -257,8 +257,7 @@ time_t parse_date(FILE *);
 int if_register_bpf(void);
 void if_register_send(void);
 void if_register_receive(void);
-ssize_t send_packet(size_t, struct in_addr, struct sockaddr_in *,
-    struct hardware *);
+ssize_t send_packet(struct in_addr, struct sockaddr_in *, struct hardware *);
 ssize_t receive_packet(struct sockaddr_in *, struct hardware *);
 
 /* dispatch.c */

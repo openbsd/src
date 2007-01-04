@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.101 2007/01/04 22:17:48 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.102 2007/01/04 22:30:57 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1094,8 +1094,7 @@ again:
 	    ntohs(sockaddr_broadcast.sin_port), client->interval);
 
 	/* Send out a packet. */
-	send_packet(client->packet_length, inaddr_any, &sockaddr_broadcast,
-	    NULL);
+	send_packet(inaddr_any, &sockaddr_broadcast, NULL);
 
 	add_timeout(cur_time + client->interval, send_discover);
 }
@@ -1315,7 +1314,7 @@ cancel:
 	    inet_ntoa(destination.sin_addr), ntohs(destination.sin_port));
 
 	/* Send out a packet. */
-	send_packet(client->packet_length, from, &destination, NULL);
+	send_packet(from, &destination, NULL);
 
 	add_timeout(cur_time + client->interval, send_request);
 }
@@ -1328,8 +1327,7 @@ send_decline(void)
 	    ntohs(sockaddr_broadcast.sin_port));
 
 	/* Send out a packet. */
-	send_packet(client->packet_length, inaddr_any, &sockaddr_broadcast,
-	    NULL);
+	send_packet(inaddr_any, &sockaddr_broadcast, NULL);
 }
 
 void
