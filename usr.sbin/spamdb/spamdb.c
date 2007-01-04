@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.18 2006/12/09 20:04:27 jmc Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.19 2007/01/04 21:41:37 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -29,6 +29,7 @@
 #include <time.h>
 #include <netdb.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "grey.h"
 
@@ -252,7 +253,7 @@ int
 main(int argc, char **argv)
 {
 	int i, ch, action = 0, type = WHITE, r = 0;
-	BTREEINFO	btreeinfo;
+	HASHINFO	hashinfo;
 	DB		*db;
 
 	while ((ch = getopt(argc, argv, "adtT")) != -1) {
@@ -277,12 +278,17 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 	
-	memset(&btreeinfo, 0, sizeof(btreeinfo));
-	btreeinfo.cachesize = 8192 * 128;
-	db = dbopen(PATH_SPAMD_DB, O_EXLOCK|O_RDWR, 0600, DB_BTREE,
-	    &btreeinfo);
-	if (db == NULL)
-		err(1, "cannot open %s for writing", PATH_SPAMD_DB);
+	memset(&hashinfo, 0, sizeof(hashinfo));
+	db = dbopen(PATH_SPAMD_DB, O_EXLOCK|O_RDWR, 0600, DB_HASH,
+	    &hashinfo);
+	if (db == NULL) {
+		if (errno == EFTYPE)	
+			err(1,
+			    "%s is old, run current spamd to convert it",
+			    PATH_SPAMD_DB);
+		else 
+			err(1, "cannot open %s for writing", PATH_SPAMD_DB);
+	}
 
 	switch (action) {
 	case 0:

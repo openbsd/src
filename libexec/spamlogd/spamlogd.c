@@ -1,9 +1,9 @@
-/*	$OpenBSD: spamlogd.c,v 1.14 2006/11/03 19:39:33 henning Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.15 2007/01/04 21:41:37 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2006 Berk D. Demir.
- * Copyright (c) 2004 Bob Beck.
+ * Copyright (c) 2004-2007 Bob Beck.
  * Copyright (c) 2001 Theo de Raadt.
  * Copyright (c) 2001 Can Erkin Acar.
  * All rights reserved
@@ -187,7 +187,7 @@ logpkt_handler(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 int
 dbupdate(char *dbname, char *ip)
 {
-	BTREEINFO	btreeinfo;
+	HASHINFO	hashinfo;
 	DBT		dbk, dbd;
 	DB		*db;
 	struct gdata	gd;
@@ -196,8 +196,8 @@ dbupdate(char *dbname, char *ip)
 	struct in_addr	ia;
 
 	now = time(NULL);
-	memset(&btreeinfo, 0, sizeof(btreeinfo));
-	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_BTREE, &btreeinfo);
+	memset(&hashinfo, 0, sizeof(hashinfo));
+	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_HASH, &hashinfo);
 	if (db == NULL) {
 		logmsg(LOG_ERR, "Can not open db %s: %s", dbname,
 		    strerror(errno));

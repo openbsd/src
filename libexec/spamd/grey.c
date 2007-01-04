@@ -1,7 +1,7 @@
-/*	$OpenBSD: grey.c,v 1.23 2006/12/07 21:10:41 otto Exp $	*/
+/*	$OpenBSD: grey.c,v 1.24 2007/01/04 21:41:37 beck Exp $	*/
 
 /*
- * Copyright (c) 2004,2005 Bob Beck.  All rights reserved.
+ * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -63,6 +63,20 @@ pid_t db_pid = -1;
 int pfdev;
 int spamdconf;
 
+struct db_change {
+	SLIST_ENTRY(db_change)	entry;
+	char *			key;
+	void *			data;
+	size_t			dsiz;
+	int			act;
+};
+
+#define DBC_ADD 1
+#define DBC_DEL 2
+
+/* db pending changes list */
+SLIST_HEAD(,  db_change) db_changes = SLIST_HEAD_INITIALIZER(db_changes);
+
 static char *pargv[11]= {
 	"pfctl", "-p", "/dev/pf", "-q", "-t",
 	"spamd-white", "-T", "replace", "-f" "-", NULL
@@ -95,7 +109,8 @@ configure_spamd(char **addrs, int count, FILE *sdc)
 	for (i = 0; i < count; i++)
 		fprintf(sdc, "%s/32;", addrs[i]);
 	fprintf(sdc, "\n");
-	fflush(sdc);
+	if (fflush(sdc) == EOF)
+		syslog_r(LOG_DEBUG, &sdata, "configure_spamd: fflush failed (%m)");
 	return(0);
 }
 
@@ -269,11 +284,91 @@ addtrapaddr(char *addr)
 	return(0);
 }
 
+static int
+queue_change(char *key, char *data, size_t dsiz, int act) {
+	struct db_change *dbc;
+
+	if ((dbc = malloc(sizeof(*dbc))) == NULL) {
+		syslog_r(LOG_DEBUG, &sdata, "malloc failed (queue change)");
+		return(-1);
+	}
+	if ((dbc->key = strdup(key)) == NULL) {
+		syslog_r(LOG_DEBUG, &sdata, "malloc failed (queue change)");
+		free(dbc);
+		return(-1);
+	}
+	if ((dbc->data = malloc(dsiz)) == NULL) {
+		syslog_r(LOG_DEBUG, &sdata, "malloc failed (queue change)");
+		free(dbc->key);
+		free(dbc);
+		return(-1);
+	}
+	memcpy(dbc->data, data, dsiz);
+	dbc->dsiz = dsiz;
+	dbc->act = act;
+	syslog_r(LOG_DEBUG, &sdata,
+	    "queueing %s of %s", ((act == DBC_ADD) ? "add" : "deletion"),
+	     dbc->key);
+	SLIST_INSERT_HEAD(&db_changes, dbc, entry);
+	return(0);
+}	
+
+static int
+do_changes(DB *db) {
+	DBT			dbk, dbd;	 		
+	struct db_change	*dbc;
+	int ret = 0;
+
+	while (!SLIST_EMPTY(&db_changes)) {
+		dbc = SLIST_FIRST(&db_changes);
+		switch(dbc->act) {
+		case DBC_ADD:
+			memset(&dbk, 0, sizeof(dbk));
+			dbk.size = strlen(dbc->key);
+			dbk.data = dbc->key;
+			memset(&dbd, 0, sizeof(dbd));
+			dbd.size = dbc->dsiz;
+			dbd.data = dbc->data;
+			if (db->put(db, &dbk, &dbd, 0)) {
+				db->sync(db, 0);
+				syslog_r(LOG_ERR, &sdata,
+				    "can't add %s to spamd db (%m)", dbc->key);
+				ret = -1;
+			}
+			db->sync(db, 0);
+			break;
+		case DBC_DEL:
+			memset(&dbk, 0, sizeof(dbk));
+			dbk.size = strlen(dbc->key);
+			dbk.data = dbc->key;
+			if (db->del(db, &dbk, 0)) {
+				syslog_r(LOG_ERR, &sdata,
+				    "can't delete %s from spamd db (%m)",
+				    dbc->key);
+				ret = -1;
+			}
+			break;
+		default:
+			syslog_r(LOG_ERR, &sdata, "Unrecognized db change");
+			ret = -1;
+		}
+		free(dbc->key);
+		dbc->key = NULL;
+		free(dbc->data);
+		dbc->data = NULL;
+		dbc->act = 0;
+		dbc->dsiz = 0;
+		SLIST_REMOVE_HEAD(&db_changes, entry);
+
+	}
+	return(ret);
+}	
+
 
 int
 greyscan(char *dbname)
 {
-	BTREEINFO	btreeinfo;
+	HASHINFO	hashinfo;
 	DBT		dbk, dbd;
 	DB		*db;
 	struct gdata	gd;
@@ -283,9 +378,8 @@ greyscan(char *dbname)
 	time_t now = time(NULL);
 
 	/* walk db, expire, and whitelist */
-
-	memset(&btreeinfo, 0, sizeof(btreeinfo));
-	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_BTREE, &btreeinfo);
+	memset(&hashinfo, 0, sizeof(hashinfo));
+	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_HASH, &hashinfo);
 	if (db == NULL) {
 		syslog_r(LOG_INFO, &sdata, "dbopen failed (%m)");
 		return(-1);
@@ -295,6 +389,7 @@ greyscan(char *dbname)
 	for (r = db->seq(db, &dbk, &dbd, R_FIRST); !r;
 	    r = db->seq(db, &dbk, &dbd, R_NEXT)) {
 		if ((dbk.size < 1) || dbd.size != sizeof(struct gdata)) {
+			syslog_r(LOG_ERR, &sdata, "bogus entry in spamd database");
 			goto bad;
 		}
 		if (asiz < dbk.size + 1) {
@@ -311,21 +406,13 @@ greyscan(char *dbname)
 		memcpy(&gd, dbd.data, sizeof(gd));
 		if (gd.expire <= now && gd.pcount != -2) {
 			/* get rid of entry */
-			if (debug)
-				fprintf(stderr, "deleting %s\n", a);
-			if (db->del(db, &dbk, 0)) {
+			if (queue_change(a, NULL, 0, DBC_DEL) == -1)
 				goto bad;
-			}
-			db->sync(db, 0);
-		} else if (gd.pcount == -1) {
+		} else if (gd.pcount == -1)  {
 			/* this is a greytrap hit */
 			if ((addtrapaddr(a) == -1) &&
-			    db->del(db, &dbk, 0)) {
-				db->sync(db, 0);
+			    (queue_change(a, NULL, 0, DBC_DEL) == -1))
 				goto bad;
-			}
-			if (debug)
-				fprintf(stderr, "trapped %s\n", a);
 		} else if (gd.pcount >= 0 && gd.pass <= now) {
 			int tuple = 0;
 			char *cp;
@@ -335,33 +422,34 @@ greyscan(char *dbname)
 			 * add address to whitelist
 			 * add an address-keyed entry to db
 			 */
+
 			cp = strchr(a, '\n');
 			if (cp != NULL) {
 				tuple = 1;
 				*cp = '\0';
 			}
-			if ((addwhiteaddr(a) == -1) && db->del(db, &dbk, 0)) {
-				db->sync(db, 0);
-				goto bad;
+
+			if (addwhiteaddr(a) == -1) {
+				if (cp != NULL)
+					*cp = '\n';
+				if (queue_change(a, NULL, 0, DBC_DEL) == -1)
+					goto bad;
 			}
+
 			if (tuple) {
-				if (db->del(db, &dbk, 0)) {
-					db->sync(db, 0);
+				if (cp != NULL)
+					*cp = '\n';
+				if (queue_change(a, NULL, 0, DBC_DEL) == -1)
 					goto bad;
-				}
+				if (cp != NULL)
+					*cp = '\0';
 				/* re-add entry, keyed only by ip */
-				memset(&dbk, 0, sizeof(dbk));
-				dbk.size = strlen(a);
-				dbk.data = a;
-				memset(&dbd, 0, sizeof(dbd));
 				gd.expire = now + whiteexp;
-				dbd.size = sizeof(gd);
+ 				dbd.size = sizeof(gd);
 				dbd.data = &gd;
-				if (db->put(db, &dbk, &dbd, 0)) {
-					db->sync(db, 0);
+				if (queue_change(a, (void *) &gd, sizeof(gd),
+				    DBC_ADD) == -1)
 					goto bad;
-				}
-				db->sync(db, 0);
 				syslog_r(LOG_DEBUG, &sdata,
 				    "whitelisting %s in %s", a, dbname);
 
@@ -370,6 +458,7 @@ greyscan(char *dbname)
 				fprintf(stderr, "whitelisted %s\n", a);
 		}
 	}
+	(void) do_changes(db);
 	db->close(db);
 	db = NULL;
 	configure_pf(whitelist, whitecount);
@@ -382,6 +471,7 @@ greyscan(char *dbname)
 	asiz = 0;
 	return(0);
  bad:
+	(void) do_changes(db);
 	db->close(db);
 	db = NULL;
 	freeaddrlists();
@@ -394,7 +484,7 @@ greyscan(char *dbname)
 int
 greyupdate(char *dbname, char *ip, char *from, char *to)
 {
-	BTREEINFO	btreeinfo;
+	HASHINFO	hashinfo;
 	DBT		dbk, dbd;
 	DB		*db;
 	char		*key = NULL;
@@ -407,8 +497,8 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 	now = time(NULL);
 
 	/* open with lock, find record, update, close, unlock */
-	memset(&btreeinfo, 0, sizeof(btreeinfo));
-	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_BTREE, &btreeinfo);
+	memset(&hashinfo, 0, sizeof(hashinfo));
+	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_HASH, &hashinfo);
 	if (db == NULL)
 		return(-1);
 	if (asprintf(&key, "%s\n%s\n%s", ip, from, to) == -1)
@@ -575,51 +665,20 @@ greyreader(void)
 void
 greyscanner(void)
 {
-	int i;
-
 	for (;;) {
-		sleep(DB_SCAN_INTERVAL);
-		i = greyscan(PATH_SPAMD_DB);
-		if (i == -1)
+		if (greyscan(PATH_SPAMD_DB) == -1)
 			syslog_r(LOG_NOTICE, &sdata, "scan of %s failed",
 			    PATH_SPAMD_DB);
+		sleep(DB_SCAN_INTERVAL);
 	}
 	/* NOTREACHED */
 }
 
-int
-greywatcher(void)
+static void
+drop_privs(void)
 {
-	int i;
-	struct sigaction sa;
-
-	pfdev = open("/dev/pf", O_RDWR);
-	if (pfdev == -1) {
-		syslog_r(LOG_ERR, &sdata, "open of /dev/pf failed (%m)");
-		exit(1);
-	}
-
-	/* check to see if /var/db/spamd exists, if not, create it */
-	if ((i = open(PATH_SPAMD_DB, O_RDWR, 0)) == -1 && errno == ENOENT) {
-		i = open(PATH_SPAMD_DB, O_RDWR|O_CREAT, 0644);
-		if (i == -1) {
-			syslog_r(LOG_ERR, &sdata, "create %s failed (%m)",
-			    PATH_SPAMD_DB);
-			exit(1);
-		}
-		/* if we are dropping privs, chown to that user */
-		if (pw && (fchown(i, pw->pw_uid, pw->pw_gid) == -1)) {
-			syslog_r(LOG_ERR, &sdata, "chown %s failed (%m)",
-			    PATH_SPAMD_DB);
-			exit(1);
-		}
-	}
-	if (i != -1)
-		close(i);
-
 	/*
 	 * lose root, continue as non-root user
-	 * XXX Should not be _spamd - as it currently is.
 	 */
 	if (pw) {
 		setgroups(1, &pw->pw_gid);
@@ -628,6 +687,135 @@ greywatcher(void)
 		seteuid(pw->pw_uid);
 		setuid(pw->pw_uid);
 	}
+}
+
+static void
+convert_spamd_db(void)
+{
+	char 		sfn[] = "/var/db/spamd.XXXXXXXXX";
+	int		r, fd = -1;
+	DB 		*db1, *db2;
+	BTREEINFO	btreeinfo;
+	HASHINFO	hashinfo;
+	DBT		dbk, dbd;
+
+	/* try to open the db as a BTREE */
+	memset(&btreeinfo, 0, sizeof(btreeinfo));
+	db1 = dbopen(PATH_SPAMD_DB, O_EXLOCK|O_RDWR, 0600, DB_BTREE,
+	    &btreeinfo);
+	if (db1 == NULL) {
+		syslog_r(LOG_ERR, &sdata,
+		    "corrupt db in %s, remove and restart", PATH_SPAMD_DB);
+		exit(1);
+	}
+	
+	if ((fd = mkstemp(sfn)) == -1) {
+		syslog_r(LOG_ERR, &sdata,
+		    "can't convert %s: mkstemp failed (%m)", PATH_SPAMD_DB);
+		exit(1);
+		
+	}	
+	memset(&hashinfo, 0, sizeof(hashinfo));
+	db2 = dbopen(sfn, O_EXLOCK|O_RDWR, 0600, DB_HASH, &hashinfo);
+	if (db2 == NULL) {
+		unlink(sfn);
+		syslog_r(LOG_ERR, &sdata,
+		    "can't convert %s:  can't dbopen %s (%m)", PATH_SPAMD_DB,
+		sfn);
+	}		
+
+	memset(&dbk, 0, sizeof(dbk));
+	memset(&dbd, 0, sizeof(dbd));
+		for (r = db1->seq(db1, &dbk, &dbd, R_FIRST); !r;
+		    r = db1->seq(db1, &dbk, &dbd, R_NEXT)) {
+			if (db2->put(db2, &dbk, &dbd, 0)) {
+				db2->sync(db2, 0);
+				db2->close(db2);
+				db1->close(db1);
+				unlink(sfn);
+				syslog_r(LOG_ERR, &sdata,
+				    "can't convert %s - remove and restart",
+				    PATH_SPAMD_DB);
+				exit(1);
+			}
+		}
+	db2->sync(db2, 0);
+	db2->close(db2);
+	db1->sync(db1, 0);
+	db1->close(db1);
+	rename(sfn, PATH_SPAMD_DB);
+	close(fd);
+	/* if we are dropping privs, chown to that user */
+	if (pw && (chown(PATH_SPAMD_DB, pw->pw_uid, pw->pw_gid) == -1)) {
+		syslog_r(LOG_ERR, &sdata,
+		    "chown %s failed (%m)", PATH_SPAMD_DB);
+		exit(1);
+	}
+}
+
+static void
+check_spamd_db(void)
+{
+	HASHINFO hashinfo;
+	int i = -1;
+	DB *db;
+
+	/* check to see if /var/db/spamd exists, if not, create it */
+	memset(&hashinfo, 0, sizeof(hashinfo));
+	db = dbopen(PATH_SPAMD_DB, O_EXLOCK|O_RDWR, 0600, DB_HASH, &hashinfo);
+
+        if (db == NULL) {
+		switch (errno) {
+		case ENOENT: 
+			i = open(PATH_SPAMD_DB, O_RDWR|O_CREAT, 0644);
+			if (i == -1) {
+				syslog_r(LOG_ERR, &sdata,
+				    "create %s failed (%m)", PATH_SPAMD_DB);
+				exit(1);
+			}
+			/* if we are dropping privs, chown to that user */
+			if (pw && (fchown(i, pw->pw_uid, pw->pw_gid) == -1)) {
+				syslog_r(LOG_ERR, &sdata,
+				    "chown %s failed (%m)", PATH_SPAMD_DB);
+				exit(1);
+			}
+	                close(i);
+			drop_privs();
+			return;
+			break;
+		case EFTYPE:
+			/*
+			 *  db may be old BTREE instead of HASH, attempt to
+			 *  convert.
+			 */
+			convert_spamd_db();
+			drop_privs();
+			return;
+			break;
+		default:
+			syslog_r(LOG_ERR, &sdata, "open of %s failed (%m)",
+			    PATH_SPAMD_DB);
+			exit(1);
+		}
+	}
+	db->sync(db, 0);
+	db->close(db);
+	drop_privs();
+}
+
+
+int
+greywatcher(void)
+{
+	struct sigaction sa;
+
+	pfdev = open("/dev/pf", O_RDWR);
+	if (pfdev == -1) {
+		syslog_r(LOG_ERR, &sdata, "open of /dev/pf failed (%m)");
+		exit(1);
+	}
+
+	check_spamd_db();
 
 	db_pid = fork();
 	switch(db_pid) {
@@ -645,6 +833,7 @@ greywatcher(void)
 		/* NOTREACHED */
 		_exit(1);
 	}
+
 	/*
 	 * parent, scans db periodically for changes and updates
 	 * pf whitelist table accordingly.
