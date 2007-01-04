@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.34 2007/01/04 11:48:03 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.35 2007/01/04 12:02:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -179,6 +179,7 @@ struct ahci_ccb {
 	int			ccb_id;
 
 	struct ahci_cmd		*ccb_cmd;
+	u_int64_t		ccb_cmd_dva;
 
 	bus_dmamap_t		ccb_dmamap;
 
@@ -434,6 +435,8 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	struct ahci_port		*ap;
 	struct ahci_ccb			*ccb;
 	u_int8_t			*kva;
+	u_int64_t			dva;
+	int				offset = 0;
 	int				i;
 
 	ap = malloc(sizeof(struct ahci_port), M_DEVBUF, M_NOWAIT);
@@ -474,6 +477,7 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 		goto freeccbs;
 	}
 	kva = AHCI_DMA_KVA(ap->ap_dmamem);
+	dva = AHCI_DMA_DVA(ap->ap_dmamem);
 
 	for (i = 0; i < sc->sc_ncmds; i++) {
 		ccb = &ap->ap_ccbs[i];
@@ -486,16 +490,21 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 		}
 
 		ccb->ccb_id = i;
-		ccb->ccb_cmd = (struct ahci_cmd *)kva;
-		kva += sizeof(struct ahci_cmd);
+		ccb->ccb_cmd = (struct ahci_cmd *)(kva + offset);
+		ccb->ccb_cmd_dva = dva + offset;
+		offset += sizeof(struct ahci_cmd);
 
 		ahci_put_ccb(ap, ccb);
 	}
 
-	ap->ap_rfis = (struct ahci_rfis *)kva;
-	kva += sizeof(struct ahci_rfis);
+	ap->ap_rfis = (struct ahci_rfis *)(kva + offset);
+	ahci_pwrite(ap, AHCI_PREG_FB, (u_int32_t)(dva + offset));
+	ahci_pwrite(ap, AHCI_PREG_FBU, (u_int32_t)((dva + offset) >> 32));
+	offset += sizeof(struct ahci_rfis);
 
-	ap->ap_cmd_list = (struct ahci_cmd_list *)kva;
+	ap->ap_cmd_list = (struct ahci_cmd_list *)(kva + offset);
+	ahci_pwrite(ap, AHCI_PREG_CLB, (u_int32_t)(dva + offset));
+	ahci_pwrite(ap, AHCI_PREG_CLBU, (u_int32_t)((dva + offset) >> 32));
 
 	sc->sc_ports[port] = ap;
 
