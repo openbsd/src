@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.33 2007/01/04 11:37:12 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.34 2007/01/04 11:48:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -102,11 +102,12 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define AHCI_PREG_CMD		0x18 /* Command and Status */
 #define AHCI_PREG_TFD		0x20 /* Task File Data*/
 #define AHCI_PREG_SIG		0x24 /* Signature */
-#define AHCI_PREG_Status	0x28 /* SATA Status */
-#define AHCI_PREG_Control	0x2c /* SATA Control */
-#define AHCI_PREG_Error		0x30 /* SATA Error */
-#define AHCI_PREG_Active	0x34 /* SATA Active */
+#define AHCI_PREG_SSTS		0x28 /* SATA Status */
+#define AHCI_PREG_SCTL		0x2c /* SATA Control */
+#define AHCI_PREG_SERR		0x30 /* SATA Error */
+#define AHCI_PREG_ACT		0x34 /* SATA Active */
 #define AHCI_PREG_CI		0x38 /* Command Issue */
+#define AHCI_PREG_SNTF		0x3c /* SNotification */
 
 struct ahci_cmd_list {
 	u_int16_t		prdtl; /* sgl len */
