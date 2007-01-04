@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile.c,v 1.11 2006/12/30 18:31:39 mickey Exp $ */
+/* $OpenBSD: loadfile.c,v 1.12 2007/01/04 07:09:30 miod Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -261,8 +261,10 @@ elf_exec(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	Elf_Shdr *shp;
 	Elf_Phdr *phdr;
 	Elf_Off off;
+	int i;
 	size_t sz;
-	int first, i, j;
+	int first;
+	int havesyms;
 	paddr_t minp = ~0, maxp = 0, pos = 0;
 	paddr_t offset = marks[MARK_START], shpp, elfp;
 
@@ -368,21 +370,15 @@ elf_exec(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		 * there are no symbol sections.
 		 */
 		off = roundup((sizeof(Elf_Ehdr) + sz), sizeof(long));
+
+		for (havesyms = i = 0; i < elf->e_shnum; i++)
+			if (shp[i].sh_type == SHT_SYMTAB)
+				havesyms = 1;
+
 		for (first = 1, i = 0; i < elf->e_shnum; i++) {
-			switch (shp[i].sh_type) {
-			case SHT_STRTAB:
-				for (j = 0; j < elf->e_shnum; j++)
-					if (shp[j].sh_type == SHT_SYMTAB &&
-					    shp[j].sh_link == (unsigned)i)
-						goto havesym;
-				/* FALLTHROUGH */
-			default:
-				/* Not loading this, so zero out the offset. */
-				shp[i].sh_offset = 0;
-				break;
-			havesym:
-			case SHT_SYMTAB:
-				if (flags & LOAD_SYM) {
+			if (shp[i].sh_type == SHT_SYMTAB ||
+			    shp[i].sh_type == SHT_STRTAB) {
+				if (havesyms && (flags & LOAD_SYM)) {
 					PROGRESS(("%s%ld", first ? " [" : "+",
 					    (u_long)shp[i].sh_size));
 					if (lseek(fd, shp[i].sh_offset,
@@ -391,7 +387,6 @@ elf_exec(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 						FREE(shp, sz);
 						return 1;
 					}
-printf("*");
 					if (READ(fd, maxp, shp[i].sh_size) !=
 					    shp[i].sh_size) {
 						WARN(("read symbols"));
@@ -405,13 +400,11 @@ printf("*");
 				off += roundup(shp[i].sh_size, sizeof(long));
 				first = 0;
 			}
-			/* Since we don't load .shstrtab, zero the name. */
-			shp[i].sh_name = 0;
 		}
 		if (flags & LOAD_SYM) {
 			BCOPY(shp, shpp, sz);
 
-			if (first == 0)
+			if (havesyms && first == 0)
 				PROGRESS(("]"));
 		}
 		FREE(shp, sz);
