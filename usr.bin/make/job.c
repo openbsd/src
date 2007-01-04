@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.59 2005/04/13 02:33:08 deraadt Exp $	*/
+/*	$OpenBSD: job.c,v 1.60 2007/01/04 17:55:35 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -434,7 +434,7 @@ static void SigHandler(int);
 static void HandleSigs(void);
 static void JobPassSig(int);
 static int JobCmpPid(void *, void *);
-static int JobPrintCommand(void *, void *);
+static int JobPrintCommand(LstNode, void *);
 static void JobSaveCommand(void *, void *);
 static void JobClose(Job *);
 static void JobFinish(Job *, int *);
@@ -672,7 +672,7 @@ JobCmpPid(void *job,	/* job to examine */
  *-----------------------------------------------------------------------
  */
 static int
-JobPrintCommand(void *cmdp,	    /* command string to print */
+JobPrintCommand(LstNode cmdNode,    /* command string to print */
     void *jobp)			    /* job for which to print it */
 {
     bool	  noSpecials;	    /* true if we shouldn't worry about
@@ -686,8 +686,7 @@ JobPrintCommand(void *cmdp,	    /* command string to print */
     char	  *cmdTemplate;     /* Template to use when printing the
 				     * command */
     char	  *cmdStart;	    /* Start of expanded command */
-    LstNode	  cmdNode;	    /* Node for replacing the command */
-    char	  *cmd = (char *)cmdp;
+    char	  *cmd = (char *)Lst_Datum(cmdNode);
     Job 	  *job = (Job *)jobp;
 
     noSpecials = (noExecute && !(job->node->type & OP_MAKE));
@@ -695,7 +694,7 @@ JobPrintCommand(void *cmdp,	    /* command string to print */
     if (strcmp(cmd, "...") == 0) {
 	job->node->type |= OP_SAVE_CMDS;
 	if ((job->flags & JOB_IGNDOTS) == 0) {
-	    job->tailCmds = Lst_Succ(Lst_Member(&job->node->commands, cmd));
+	    job->tailCmds = Lst_Succ(cmdNode);
 	    return 0;
 	}
 	return 1;
@@ -712,7 +711,6 @@ JobPrintCommand(void *cmdp,	    /* command string to print */
 
     /* For debugging, we replace each command with the result of expanding
      * the variables in the command.  */
-    cmdNode = Lst_Member(&job->node->commands, cmd);
     cmdStart = cmd = Var_Subst(cmd, &job->node->context, false);
     Lst_Replace(cmdNode, cmdStart);
 
@@ -1664,7 +1662,7 @@ JobStart(GNode	  *gn,	      /* target to create */
 		gn->current = Lst_Succ(gn->current);
 
 	    if (gn->current == NULL ||
-		!JobPrintCommand(Lst_Datum(gn->current), job)) {
+		!JobPrintCommand(gn->current, job)) {
 		noExec = true;
 		gn->current = NULL;
 	    }
@@ -1687,7 +1685,7 @@ JobStart(GNode	  *gn,	      /* target to create */
 	     * We can do all the commands at once. hooray for sanity
 	     */
 	    numCommands = 0;
-	    Lst_Find(&gn->commands, JobPrintCommand, job);
+	    Lst_ForEachNodeWhile(&gn->commands, JobPrintCommand, job);
 
 	    /*
 	     * If we didn't print out any commands to the shell script,
@@ -1713,7 +1711,7 @@ JobStart(GNode	  *gn,	      /* target to create */
 	 * doesn't do any harm in this case and may do some good.
 	 */
 	if (cmdsOK) {
-	    Lst_Find(&gn->commands, JobPrintCommand, job);
+	    Lst_ForEachNodeWhile(&gn->commands, JobPrintCommand, job);
 	}
 	/*
 	 * Don't execute the shell, thank you.

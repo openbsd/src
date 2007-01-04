@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.50 2004/04/07 13:11:35 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.51 2007/01/04 17:55:35 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char	    meta[256];
 
 static GNode	    *ENDNode;
 static void CompatInterrupt(int);
-static int CompatRunCommand(void *, void *);
+static int CompatRunCommand(LstNode, void *);
 static void CompatMake(void *, void *);
 static int shellneed(char **);
 
@@ -154,7 +154,7 @@ shellneed(char **av)
  *-----------------------------------------------------------------------
  */
 static int
-CompatRunCommand(void *cmdp,	/* Command to execute */
+CompatRunCommand(LstNode cmdNode,/* Command to execute */
     void *gnp)			/* Node from which the command came */
 {
     char	  *cmdStart;	/* Start of expanded command */
@@ -166,13 +166,12 @@ CompatRunCommand(void *cmdp,	/* Command to execute */
     int 	  status;	/* Description of child's death */
     pid_t 	  cpid; 	/* Child actually found */
     pid_t	  stat; 	/* Status of fork */
-    LstNode	  cmdNode;	/* Node where current command is located */
     char	  ** volatile av; /* Argument vector for thing to exec */
     int 	  argc; 	/* Number of arguments in av or 0 if not
 				 * dynamically allocated */
     bool	  local;	/* true if command should be executed
 				 * locally */
-    char	  *cmd = (char *)cmdp;
+    char	  *cmd = (char *)Lst_Datum(cmdNode);
     GNode	  *gn = (GNode *)gnp;
     static char *shargv[4] = { _PATH_BSHELL };
 
@@ -180,7 +179,6 @@ CompatRunCommand(void *cmdp,	/* Command to execute */
     errCheck = !(gn->type & OP_IGNORE);
     doExecute = !noExecute;
 
-    cmdNode = Lst_Member(&gn->commands, cmd);
     cmdStart = Var_Subst(cmd, &gn->context, false);
 
     /* brk_string will return an argv with a NULL in av[0], thus causing
@@ -356,7 +354,7 @@ CompatRunCommand(void *cmdp,	/* Command to execute */
 	signal(SIGQUIT, SIG_IGN);
 	interrupted = 0;
 	if (i != NULL)
-	    Lst_Find(&i->commands, CompatRunCommand, i);
+	    Lst_ForEachNodeWhile(&i->commands, CompatRunCommand, i);
 	exit(SIGINT);
     }
     exit(interrupted);
@@ -441,7 +439,7 @@ CompatMake(void *gnp,	/* The node to make */
 	    /* Our commands are ok, but we still have to worry about the -t
 	     * flag...	*/
 	    if (!touchFlag)
-		Lst_Find(&gn->commands, CompatRunCommand, gn);
+		Lst_ForEachNodeWhile(&gn->commands, CompatRunCommand, gn);
 	    else
 		Job_Touch(gn, gn->type & OP_SILENT);
 	} else
@@ -575,7 +573,7 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
     if (!queryFlag) {
 	gn = Targ_FindNode(".BEGIN", TARG_NOCREATE);
 	if (gn != NULL) {
-	    Lst_Find(&gn->commands, CompatRunCommand, gn);
+	    Lst_ForEachNodeWhile(&gn->commands, CompatRunCommand, gn);
 	    if (gn->made == ERROR) {
 		printf("\n\nStop.\n");
 		exit(1);
@@ -605,5 +603,5 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
 
     /* If the user has defined a .END target, run its commands.  */
     if (errors == 0)
-	Lst_Find(&ENDNode->commands, CompatRunCommand, ENDNode);
+	Lst_ForEachNodeWhile(&ENDNode->commands, CompatRunCommand, ENDNode);
 }
