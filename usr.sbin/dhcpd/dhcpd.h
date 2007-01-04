@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.28 2006/12/17 18:03:33 stevesk Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.29 2007/01/04 19:12:41 stevesk Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -40,7 +40,6 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/sockio.h>
