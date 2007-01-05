@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_user.c,v 1.3 2005/11/09 20:30:03 martin Exp $	*/
+/*	$OpenBSD: acpi_user.c,v 1.4 2007/01/05 14:13:29 otto Exp $	*/
 /*-
  * Copyright (c) 1999 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: acpi_user.c,v 1.3 2005/11/09 20:30:03 martin Exp $
+ *	$Id: acpi_user.c,v 1.4 2007/01/05 14:13:29 otto Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpi_user.c,v 1.3 2000/11/08 02:37:00 iwasaki Exp $
  */
 #include <sys/types.h>
@@ -88,7 +88,7 @@ acpi_user_find_mapping(vm_offset_t pa, size_t size)
 	map->pa = pa;
 	map->va = mmap(0, size, PROT_READ, MAP_SHARED, acpi_mem_fd, pa);
 	map->size = size;
-	if ((long) map->va == -1)
+	if (map->va == MAP_FAILED)
 		err(1, "can't map address");
 	LIST_INSERT_HEAD(&maplist, map, link);
 
@@ -149,7 +149,7 @@ acpi_load_dsdt(char *dumpfile, u_int8_t **dpp, u_int8_t **endp)
 	}
 
 	dp = mmap(0, sb.st_size, PROT_READ, MAP_PRIVATE, acpi_mem_fd, 0);
-	if (dp == NULL) {
+	if (dp == MAP_FAILED) {
 		errx(1, "mmap %s", dumpfile);
 	}
 
