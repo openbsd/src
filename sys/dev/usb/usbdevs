@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.248 2007/01/05 00:12:09 krw Exp $
+$OpenBSD: usbdevs,v 1.249 2007/01/05 15:40:14 todd Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -809,12 +809,14 @@ product CANON N656U		0x2206	CANOSCAN N656U
 product CANON N1220U		0x2207	CANOSCAN N1220U
 product CANON N670U		0x220d	CANOSCAN N670U
 product CANON N1240U		0x220e	CANOSCAN N1240U
+product CANON LIDE60		0x221c	CANOSCAN LiDE60
 product CANON S10		0x3041	PowerShot S10
 product CANON S20		0x3043	PowerShot S20
 product CANON S100_US		0x3045	PowerShot S100
 product CANON S100_EU		0x3047	PowerShot S100
 product CANON G1		0x3048	PowerShot G1
 product CANON A20		0x304e	PowerShot A20
+product CANON A540		0x311b	PowerShot A540
 
 /* CATC products */
 product CATC NETMATE		0x000a	Netmate Ethernet
@@ -1346,6 +1348,7 @@ product KEISOKUGIKEN USBDAQ	0x0068	HKS-0200 USBDAQ
 product KENSINGTON ORBIT	0x1003	Orbit trackball
 product KENSINGTON TURBOBALL	0x1005	TurboBall
 product KENSINGTON ORBIT_MAC	0x1009	Orbit trackball for Mac
+product KENSINGTON BT_EDR	0x105e	Bluetooth
 product KENSINGTON VIDEOCAM_VGA	0x5002	VideoCAM VGA
 
 /* Keyspan products */
