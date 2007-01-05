@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.70 2006/12/21 02:05:46 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.71 2007/01/05 00:42:47 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1076,6 +1076,8 @@ stioctl(dev, cmd, arg, flag, p)
 			g->mt_dsreg |= MT_DS_MOUNTED;
 		g->mt_resid = st->mt_resid;
 		g->mt_erreg = st->mt_erreg;
+		g->mt_fileno = -1;	/* -1 means we don't know */
+		g->mt_blkno = -1;	/* -1 means we don't know */
 		/*
 		 * clear latched errors.
 		 */

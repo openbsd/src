@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtio.h,v 1.7 2006/06/01 05:42:01 krw Exp $	*/
+/*	$OpenBSD: mtio.h,v 1.8 2007/01/05 00:42:47 krw Exp $	*/
 /*	$NetBSD: mtio.h,v 1.14 1997/04/15 06:50:19 lukem Exp $	*/
 
 /*
@@ -72,6 +72,8 @@ struct mtget {
 	short	mt_erreg;	/* ``error'' register */
 /* end device-dependent registers */
 	short	mt_resid;	/* residual count */
+	daddr_t mt_fileno;	/* current file number relative to BOT. */ 
+	daddr_t mt_blkno;	/* current block number relative to BOF. */
 	daddr_t	mt_blksiz;	/* current block size */
 	daddr_t	mt_density;	/* current density code */
 	daddr_t	mt_mblksiz;	/* default block size */
