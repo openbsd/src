@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.16 2007/01/03 09:49:37 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.17 2007/01/05 07:13:49 xsa Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -177,7 +177,15 @@ cvs_unedit_local(struct cvs_file *cf)
 		return;
 	}
 
-	/* XXX: compare cf->file_path and bfpath */
+	if (cvs_file_cmp(cf->file_path, bfpath) != 0) {
+		cvs_printf("%s has been modified; revert changes? ",
+		    cf->file_name);
+
+		if (cvs_yesno() == -1) {
+			xfree(bfpath);
+			return;
+		}
+	}
 
 	cvs_rename(bfpath, cf->file_path);
 	xfree(bfpath);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.163 2006/10/25 20:52:34 moritz Exp $	*/
+/*	$OpenBSD: file.c,v 1.164 2007/01/05 07:13:49 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -26,6 +26,8 @@
  */
 
 #include "includes.h"
+
+#include <sys/mman.h>
 
 #include "cvs.h"
 #include "file.h"
@@ -846,4 +848,66 @@ cvs_file_cmpname(const char *name1, const char *name2)
 {
 	return (cvs_nocase == 0) ? (strcmp(name1, name2)) :
 	    (strcasecmp(name1, name2));
+}
+
+int
+cvs_file_cmp(const char *file1, const char *file2)
+{
+	struct stat stb1, stb2;
+	int fd1, fd2, ret;
+
+	ret = 0;
+
+	if ((fd1 = open(file1, O_RDONLY|O_NOFOLLOW, 0)) == -1)
+		fatal("cvs_file_cmp: open: `%s': %s", file1, strerror(errno));
+	if ((fd2 = open(file2, O_RDONLY|O_NOFOLLOW, 0)) == -1)
+		fatal("cvs_file_cmp: open: `%s': %s", file2, strerror(errno));
+
+	if (fstat(fd1, &stb1) == -1)
+		fatal("cvs_file_cmp: `%s': %s", file1, strerror(errno));
+	if (fstat(fd2, &stb2) == -1)
+		fatal("cvs_file_cmp: `%s': %s", file2, strerror(errno));
+
+	if (stb1.st_size != stb2.st_size ||
+	    (stb1.st_mode & S_IFMT) != (stb2.st_mode & S_IFMT)) {
+		ret = 1;
+		goto out;
+	}
+
+	if (S_ISBLK(stb1.st_mode) || S_ISCHR(stb1.st_mode)) {
+		if (stb1.st_rdev != stb2.st_rdev)
+			ret = 1;
+		goto out;
+	}
+
+	if (S_ISREG(stb1.st_mode)) {
+		void *p1, *p2;
+
+		if (stb1.st_size > SIZE_MAX) {
+			ret = 1;
+			goto out;
+		}	
+
+		if ((p1 = mmap(NULL, stb1.st_size, PROT_READ,
+		    MAP_FILE, fd1, (off_t)0)) == MAP_FAILED)
+			fatal("cvs_file_cmp: mmap failed");
+
+		if ((p2 = mmap(NULL, stb1.st_size, PROT_READ,
+		    MAP_FILE, fd2, (off_t)0)) == MAP_FAILED)
+			fatal("cvs_file_cmp: mmap failed");
+
+		madvise(p1, stb1.st_size, MADV_SEQUENTIAL);
+		madvise(p2, stb1.st_size, MADV_SEQUENTIAL);
+
+		ret = memcmp(p1, p2, stb1.st_size);
+
+		(void)munmap(p1, stb1.st_size);
+		(void)munmap(p2, stb1.st_size);
+	}
+
+out:
+	(void)close(fd1);
+	(void)close(fd2);
+
+	return (ret);
 }
