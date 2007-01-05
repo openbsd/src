@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.3 2007/01/03 09:42:30 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.4 2007/01/05 16:39:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -98,6 +98,8 @@ init_tables(struct hostated *env)
 		fatal("init_tables: cannot create tables");
 	log_debug("created %d tables", io.pfrio_nadd);
 
+	free(tables);
+
 	if (io.pfrio_nadd == env->servicecount)
 		return;
 
@@ -189,6 +191,8 @@ sync_table(struct hostated *env, struct service *service, struct table *table)
 
 	if (ioctl(env->pf->dev, DIOCRSETADDRS, &io) == -1)
 		fatal("sync_table: cannot set address list");
+
+	free(addlist);
 
 	log_debug("sync_table: table %s: %d added, %d deleted, %d changed",
 	    io.pfrio_table.pfrt_name,
