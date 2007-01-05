@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.10 2007/01/05 06:00:25 jsg Exp $	*/
+/*	$OpenBSD: aps.c,v 1.11 2007/01/05 06:26:44 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -155,7 +155,6 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sensors[APS_SENSOR_YACCEL].desc), "Y_ACCEL");
 
 	sc->sensors[APS_SENSOR_TEMP1].type = SENSOR_TEMP;
-
 	sc->sensors[APS_SENSOR_TEMP2].type = SENSOR_TEMP;
 
 	sc->sensors[APS_SENSOR_XVAR].type = SENSOR_INTEGER;
@@ -170,15 +169,15 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	snprintf(sc->sensors[APS_SENSOR_UNK].desc,
 	    sizeof(sc->sensors[APS_SENSOR_UNK].desc), "unknown");
 
-	sc->sensors[APS_SENSOR_KBACT].type = SENSOR_INTEGER;
+	sc->sensors[APS_SENSOR_KBACT].type = SENSOR_INDICATOR;
 	snprintf(sc->sensors[APS_SENSOR_KBACT].desc,
 	    sizeof(sc->sensors[APS_SENSOR_KBACT].desc), "Keyboard Active");
 
-	sc->sensors[APS_SENSOR_MSACT].type = SENSOR_INTEGER;
+	sc->sensors[APS_SENSOR_MSACT].type = SENSOR_INDICATOR;
 	snprintf(sc->sensors[APS_SENSOR_MSACT].desc,
 	    sizeof(sc->sensors[APS_SENSOR_MSACT].desc), "Mouse Active");
 
-	sc->sensors[APS_SENSOR_LIDOPEN].type = SENSOR_INTEGER;
+	sc->sensors[APS_SENSOR_LIDOPEN].type = SENSOR_INDICATOR;
 	snprintf(sc->sensors[APS_SENSOR_LIDOPEN].desc,
 	    sizeof(sc->sensors[APS_SENSOR_LIDOPEN].desc), "Lid Open");
 
