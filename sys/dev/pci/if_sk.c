@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.134 2007/01/03 23:04:28 kettenis Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.135 2007/01/05 21:32:25 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1230,8 +1230,13 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 
 	ifmedia_init(&sc_if->sk_mii.mii_media, 0,
 	    sk_ifmedia_upd, sk_ifmedia_sts);
-	mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	if (SK_IS_GENESIS(sc)) {
+		mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
+		    MII_OFFSET_ANY, 0);
+	} else {
+		mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
+		    MII_OFFSET_ANY, MIIF_DOPAUSE);
+	}
 	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc_if->sk_dev.dv_xname);
 		ifmedia_add(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_MANUAL,
