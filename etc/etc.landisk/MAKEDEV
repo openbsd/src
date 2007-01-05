@@ -413,7 +413,7 @@ ptm)
 	;;
 
 ttya)
-	M ttya 11 0 660 dialer uucp
+	M ttya c 11 0 660 dialer uucp
 	;;
 
 st*)
