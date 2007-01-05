@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.38 2006/12/30 20:37:46 kettenis Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.39 2007/01/05 21:40:45 kettenis Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -144,12 +144,6 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_model = MII_MODEL(ma->mii_id2);
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-
-	/*
-	 * XXX really should be passed by the network controller
-	 * driver, since the MAC might not support it.
-	 */
-	sc->mii_flags |= MIIF_DOPAUSE;
 
 	/* XXX No loopback support yet, although the hardware can do it. */
 	sc->mii_flags |= MIIF_NOLOOP;
