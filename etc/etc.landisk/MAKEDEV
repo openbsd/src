@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.landisk/MAKEDEV.md,v 1.2 2006/12/15 18:59:50 miod Exp 
+#	OpenBSD: etc.landisk/MAKEDEV.md,v 1.4 2007/01/05 20:06:24 drahn Exp 
 #	OpenBSD: MAKEDEV.common,v 1.31 2006/12/15 20:42:19 kettenis Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -76,7 +76,6 @@
 #	uk*	Unknown SCSI devices
 #	ss*	SCSI scanners
 #	systrace*	System call tracing device
-#	tuner*	Tuner devices
 #	xfs*	XFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
@@ -225,10 +224,6 @@ std)
 
 xfs*)
 	M xfs$U c 51 $U 600
-	;;
-
-tuner*)
-	M tuner$U c major_bktr_c $(($(($U*2))+16)) 644
 	;;
 
 systrace)
@@ -451,9 +446,9 @@ all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ss1 ch0 ttya hotplug
-	R ptm local wscons pci0 pci1 pci2 pci3 uall tuner0 radio0
-	R audio0 uk0 random lkm crypto pf systrace wd0 wd1 wd2 wd3
-	R raid0 raid1 raid2 raid3 std st0 st1 fd
+	R ptm local wscons pci0 pci1 pci2 pci3 uall radio0 audio0 uk0
+	R random lkm crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1
+	R raid2 raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)
