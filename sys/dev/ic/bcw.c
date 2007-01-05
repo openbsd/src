@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.29 2007/01/05 10:37:19 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.30 2007/01/05 11:36:23 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -2310,7 +2310,7 @@ bcw_load_firmware(struct bcw_softc *sc)
 	if (bcw_get_firmware(filename, ucode, &size_micro, &off_micro) != 0) {
 		printf("%s: get offset for firmware file %s failed!\n",
 		    sc->sc_dev.dv_xname, filename);
-		return (EIO);
+		goto fail;
 	}
 
 	/* get pcm file offset */
@@ -2320,7 +2320,7 @@ bcw_load_firmware(struct bcw_softc *sc)
 	if (bcw_get_firmware(filename, ucode, &size_pcm, &off_pcm) != 0) {
 		printf("%s: get offset for firmware file %s failed!\n",
 		    sc->sc_dev.dv_xname, filename);
-		return (EIO);
+		goto fail;
 	}
 
 	/* upload microcode */
@@ -2348,6 +2348,9 @@ bcw_load_firmware(struct bcw_softc *sc)
 	free(ucode, M_DEVBUF);
 
 	return (0);
+
+fail:	free(ucode, M_DEVBUF);
+	return (EIO);
 }
 
 int
@@ -2412,7 +2415,9 @@ bcw_load_initvals(struct bcw_softc *sc)
 			nr = 1;
 			break;
 		default:
-			goto bad_noinitval;
+			printf("%s: no initvals available!\n",
+			    sc->sc_dev.dv_xname);
+			goto fail;
 		}
 	} else if (rev >= 5) {
 		switch (sc->sc_phy_type) {
@@ -2424,17 +2429,21 @@ bcw_load_initvals(struct bcw_softc *sc)
 			nr = 5;
 			break;
 		default:
-			goto bad_noinitval;
+			printf("%s: no initvals available!\n",
+			    sc->sc_dev.dv_xname);
+			goto fail;
 		}
-	} else
-		goto bad_noinitval;
+	} else {
+		printf("%s: no initvals available!\n", sc->sc_dev.dv_xname);
+		goto fail;
+	}
 
 	snprintf(filename, sizeof(filename), "bcm43xx_initval%02d.fw", nr);
 
 	if (bcw_get_firmware(filename, ucode, &size_ival0, &off_ival0) != 0) {
 		printf("%s: get offset for initval0 file %s failed\n",
 		    sc->sc_dev.dv_xname, filename);
-		return (EIO);
+		goto fail;
 	}
 
 	/* get initval1 file offset */
@@ -2452,7 +2461,9 @@ bcw_load_initvals(struct bcw_softc *sc)
 			nr = 6;
 			break;
 		default:
-			goto bad_noinitval;
+			printf("%s: no initvals available!\n",
+			    sc->sc_dev.dv_xname);
+			goto fail;
 		}
 
 		snprintf(filename, sizeof(filename), "bcm43xx_initval%02d.fw",
@@ -2462,14 +2473,14 @@ bcw_load_initvals(struct bcw_softc *sc)
 		    != 0) {
 			printf("%s: get offset for initval1 file %s failed\n",
 			    sc->sc_dev.dv_xname, filename);
-			return (EIO);
+			goto fail;
 		}
 	}
 
 	/* upload initval0 */
 	if (bcw_write_initvals(sc, (struct bcw_initval *)(ucode + off_ival0),
 	    size_ival0 / sizeof(struct bcw_initval)))
-		return (EIO);
+		goto fail;
 	DPRINTF(("%s: uploaded initval0\n", sc->sc_dev.dv_xname));
 
 	/* upload initval1 */
@@ -2477,7 +2488,7 @@ bcw_load_initvals(struct bcw_softc *sc)
 		if (bcw_write_initvals(sc,
 		    (struct bcw_initval *)(ucode + off_ival1),
 		    size_ival1 / sizeof(struct bcw_initval)))
-			return (EIO);
+			goto fail;
 		DPRINTF(("%s: uploaded initval1\n", sc->sc_dev.dv_xname));
 	}
 
@@ -2485,7 +2496,6 @@ bcw_load_initvals(struct bcw_softc *sc)
 
 	return (0);
 
-bad_noinitval:
-	printf("%s: no initvals available!\n", sc->sc_dev.dv_xname);
+fail:	free(ucode, M_DEVBUF);
 	return (EIO);
 }
