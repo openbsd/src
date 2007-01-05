@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.30 2007/01/05 11:36:23 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.31 2007/01/05 12:52:30 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -100,8 +100,8 @@ void		bcw_powercontrol_crystal_off(struct bcw_softc *);
 int		bcw_change_core(struct bcw_softc *, int);
 void		bcw_radio_off(struct bcw_softc *);
 int		bcw_reset_core(struct bcw_softc *, uint32_t);
-int		bcw_get_firmware(const char *, const uint8_t *, size_t *,
-		    size_t *);
+int		bcw_get_firmware(const char *, const uint8_t *, size_t,
+		    size_t *, size_t *);
 int		bcw_load_firmware(struct bcw_softc *);
 int		bcw_write_initvals(struct bcw_softc *,
 		    const struct bcw_initval *, const unsigned int);
@@ -2252,8 +2252,8 @@ disabled:
 }
 
 int
-bcw_get_firmware(const char *name, const uint8_t *ucode, size_t *size,
-    size_t *offset)
+bcw_get_firmware(const char *name, const uint8_t *ucode, size_t size_ucode,
+    size_t *size, size_t *offset)
 {
 	int i, nfiles, off = 0, ret = 1;
 	struct fwheader *h;
@@ -2266,7 +2266,7 @@ bcw_get_firmware(const char *name, const uint8_t *ucode, size_t *size,
 	off += sizeof(nfiles);
 
 	/* parse header and search the firmware */
-	for (i = 0; i < nfiles; i++) {
+	for (i = 0; i < nfiles && off < size_ucode; i++) {
 		bzero(h, sizeof(struct fwheader));
 		bcopy(ucode + off, h, sizeof(struct fwheader));
 		off += sizeof(struct fwheader);
@@ -2307,7 +2307,8 @@ bcw_load_firmware(struct bcw_softc *sc)
 	snprintf(filename, sizeof(filename), "bcm43xx_microcode%d.fw",
 	    rev >= 5 ? 5 : rev);
 
-	if (bcw_get_firmware(filename, ucode, &size_micro, &off_micro) != 0) {
+	if (bcw_get_firmware(filename, ucode, size_ucode, &size_micro,
+	    &off_micro) != 0) {
 		printf("%s: get offset for firmware file %s failed!\n",
 		    sc->sc_dev.dv_xname, filename);
 		goto fail;
@@ -2317,7 +2318,8 @@ bcw_load_firmware(struct bcw_softc *sc)
 	snprintf(filename, sizeof(filename), "bcm43xx_pcm%d.fw",
 	    rev < 5 ? 4 : 5);
 
-	if (bcw_get_firmware(filename, ucode, &size_pcm, &off_pcm) != 0) {
+	if (bcw_get_firmware(filename, ucode, size_ucode, &size_pcm,
+	    &off_pcm) != 0) {
 		printf("%s: get offset for firmware file %s failed!\n",
 		    sc->sc_dev.dv_xname, filename);
 		goto fail;
@@ -2440,7 +2442,8 @@ bcw_load_initvals(struct bcw_softc *sc)
 
 	snprintf(filename, sizeof(filename), "bcm43xx_initval%02d.fw", nr);
 
-	if (bcw_get_firmware(filename, ucode, &size_ival0, &off_ival0) != 0) {
+	if (bcw_get_firmware(filename, ucode, size_ucode, &size_ival0,
+	    &off_ival0) != 0) {
 		printf("%s: get offset for initval0 file %s failed\n",
 		    sc->sc_dev.dv_xname, filename);
 		goto fail;
@@ -2469,8 +2472,8 @@ bcw_load_initvals(struct bcw_softc *sc)
 		snprintf(filename, sizeof(filename), "bcm43xx_initval%02d.fw",
 		    nr);
 
-		if (bcw_get_firmware(filename, ucode, &size_ival1, &off_ival1)
-		    != 0) {
+		if (bcw_get_firmware(filename, ucode, size_ucode, &size_ival1,
+		    &off_ival1) != 0) {
 			printf("%s: get offset for initval1 file %s failed\n",
 			    sc->sc_dev.dv_xname, filename);
 			goto fail;
