@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.26 2007/01/05 07:09:15 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.27 2007/01/05 10:17:32 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -1149,8 +1149,6 @@ bcw_init(struct ifnet *ifp)
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
-
-	return (0);
 
 	/* load init values */
 	if ((error = bcw_load_initvals(sc)))
@@ -2387,11 +2385,20 @@ bcw_load_initvals(struct bcw_softc *sc)
 	int rev = sc->sc_core[sc->sc_currentcore].rev;
 	int error, nr;
 	uint32_t val;
-	uint8_t *initval0, *initval1;
-	size_t size_initval0, size_initval1;
-	char name[32];
+	uint8_t *ucode;
+	size_t size_ucode, size_ival0, size_ival1, off_ival0, off_ival1;
+	char *name = "bcw-bcm43xx";
+	char filename[64];
 
-	/* read initval0 file */
+	/* load firmware */
+	if ((error = loadfirmware(name, &ucode, &size_ucode)) != 0) {
+		printf("%s: error %d, could not read initval0 %s!\n",
+		    sc->sc_dev.dv_xname, error, name);
+		return (EIO);
+	}
+	DPRINTF(("%s: successfully read %s\n", sc->sc_dev.dv_xname, name));
+
+	/* get initval0 file offset */
 	if (rev == 2 || rev == 4) {
 		switch (sc->sc_phy_type) {
 		case BCW_PHY_TYPEA:
@@ -2419,16 +2426,15 @@ bcw_load_initvals(struct bcw_softc *sc)
 	} else
 		goto bad_noinitval;
 
-	snprintf(name, sizeof(name), "bcm43xx_initval%02d.fw", nr);
+	snprintf(filename, sizeof(filename), "bcm43xx_initval%02d.fw", nr);
 
-	if ((error = loadfirmware(name, &initval0, &size_initval0)) != 0) {
-		printf("%s: error %d, could not read initval0 %s!\n",
-		    sc->sc_dev.dv_xname, error, name);
+	if (bcw_get_firmware(filename, ucode, &size_ival0, &off_ival0) != 0) {
+		printf("%s: getting initval0 file %s failed\n",
+		    sc->sc_dev.dv_xname, filename);
 		return (EIO);
 	}
-	DPRINTF(("%s: successfully read %s\n", sc->sc_dev.dv_xname, name));
 
-	/* read initval1 file */
+	/* get initval1 file offset */
 	if (rev >= 5) {
 		switch (sc->sc_phy_type) {
 		case BCW_PHY_TYPEA:
@@ -2446,33 +2452,33 @@ bcw_load_initvals(struct bcw_softc *sc)
 			goto bad_noinitval;
 		}
 
-		snprintf(name, sizeof(name), "bcm43xx_initval%02d.fw", nr);
+		snprintf(filename, sizeof(filename), "bcm43xx_initval%02d.fw",
+		    nr);
 
-		if ((error = loadfirmware(name, &initval1, &size_initval1))
+		if (bcw_get_firmware(filename, ucode, &size_ival1, &off_ival1)
 		    != 0) {
-			printf("%s: error %d, could not read initval1 %s\n",
-			    sc->sc_dev.dv_xname, error, name);
+			printf("%s: getting initval1 file %s failed\n",
+			    sc->sc_dev.dv_xname, filename);
 			return (EIO);
 		}
-		DPRINTF(("%s: successfully read %s\n", sc->sc_dev.dv_xname,
-		    name));
 	}
 
 	/* upload initval0 */
-	if (bcw_write_initvals(sc, (struct bcw_initval *)initval0,
-	    size_initval0 / sizeof(struct bcw_initval)))
+	if (bcw_write_initvals(sc, (struct bcw_initval *)(ucode + off_ival0),
+	    size_ival0 / sizeof(struct bcw_initval)))
 		return (EIO);
 	DPRINTF(("%s: uploaded initval0\n", sc->sc_dev.dv_xname));
-	free(initval0, M_DEVBUF);
 
 	/* upload initval1 */
-	if (initval1 != NULL) {
-		if (bcw_write_initvals(sc, (struct bcw_initval *)initval1,
-		    size_initval1 / sizeof(struct bcw_initval)))
+	if (off_ival1 != 0) {
+		if (bcw_write_initvals(sc,
+		    (struct bcw_initval *)(ucode + off_ival1),
+		    size_ival1 / sizeof(struct bcw_initval)))
 			return (EIO);
 		DPRINTF(("%s: uploaded initval1\n", sc->sc_dev.dv_xname));
-		free(initval1, M_DEVBUF);
 	}
+
+	free(ucode, M_DEVBUF);
 
 	return (0);
 
