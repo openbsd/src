@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.2 2006/12/15 18:59:50 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.3 2007/01/05 20:03:29 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -28,7 +28,7 @@ dnl
 dnl *** landisk specific devices
 dnl
 __devitem(scif, ttya, on-board serial port,scif)dnl
-_mkdev(scif, ttya, {-M ttya major_scif_c 0 660 dialer uucp-})dnl
+_mkdev(scif, ttya, {-M ttya c major_scif_c 0 660 dialer uucp-})dnl
 dnl
 dnl *** MAKEDEV itself
 dnl
