@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.95 2006/12/26 19:57:17 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.96 2007/01/05 19:25:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -380,17 +380,36 @@ iic_ignore_addr(u_int8_t addr)
 void
 iic_dump(struct device *dv, u_int8_t addr, char *name)
 {
-	u_int8_t val = iicprobe(0);
+	static u_int8_t iicvalcnt[256];
+	u_int8_t val, val2, max;
 	int i, cnt = 0;
 
+	/*
+	 * Don't bother printing the most often repeated register
+	 * value, since it is often weird devices that respond
+	 * incorrectly, busted controller driver, or in the worst
+	 * case, it in mosts cases, the value 0xff.
+	 */
+	bzero(iicvalcnt, sizeof iicvalcnt);
+	val = iicprobe(0);
+	iicvalcnt[val]++;
 	for (i = 1; i <= 0xff; i++) {
-		if (val == iicprobe(i))
+		val2 = iicprobe(i);
+		iicvalcnt[val2]++;
+		if (val == val2)
 			cnt++;
 	}
+
+	for (val = max = i = 0; i <= 0xff; i++)
+		if (max < iicvalcnt[i]) {
+			max = iicvalcnt[i];
+			val = i;
+		}
+
 	if (cnt <= 254) {
 		printf("%s: addr 0x%x", dv->dv_xname, addr);
 		for (i = 0; i <= 0xff; i++) {
-			if (iicprobe(i) != 0xff)
+			if (iicprobe(i) != val)
 				printf(" %02x=%02x", i, iicprobe(i));
 		}
 		if (name)
