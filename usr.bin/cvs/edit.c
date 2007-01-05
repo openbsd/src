@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.20 2007/01/05 09:15:00 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.21 2007/01/05 09:32:49 xsa Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -244,7 +244,7 @@ cvs_edit_local(struct cvs_file *cf)
 	FILE *fp;
 	struct tm *t;
 	time_t now;
-	char *bfpath, timebuf[64], thishost[MAXHOSTNAMELEN];
+	char *bfpath, timebuf[64], thishost[MAXHOSTNAMELEN], wdir[MAXPATHLEN];
 
 	if (cvs_noexec == 1)
 		return;
@@ -264,8 +264,11 @@ cvs_edit_local(struct cvs_file *cf)
 	if (gethostname(thishost, sizeof(thishost)) == -1)
 		fatal("gethostname failed");
 
+	if (getcwd(wdir, sizeof(wdir)) == NULL)
+		fatal("getcwd failed");
+
 	(void)fprintf(fp, "E%s\t%s GMT\t%s\t%s\t\n",
-	    cf->file_name, timebuf, thishost, cf->file_wd);
+	    cf->file_name, timebuf, thishost, wdir);
 
 	if (edit_aflags & E_EDIT)
 		(void)fprintf(fp, "E");
@@ -305,7 +308,7 @@ cvs_unedit_local(struct cvs_file *cf)
 	struct stat st;
 	struct tm *t;
 	time_t now;
-	char *bfpath, timebuf[64], thishost[MAXHOSTNAMELEN];
+	char *bfpath, timebuf[64], thishost[MAXHOSTNAMELEN], wdir[MAXPATHLEN];
 
 	if (cvs_noexec == 1)
 		return;
@@ -348,8 +351,11 @@ cvs_unedit_local(struct cvs_file *cf)
 	if (gethostname(thishost, sizeof(thishost)) == -1)
 		fatal("gethostname failed");
 
+	if (getcwd(wdir, sizeof(wdir)) == NULL)
+
+		fatal("getcwd failed");
 	(void)fprintf(fp, "U%s\t%s GMT\t%s\t%s\t\n",
-	    cf->file_name, timebuf, thishost, cf->file_wd);
+	    cf->file_name, timebuf, thishost, wdir);
 
 	(void)fclose(fp);
 
