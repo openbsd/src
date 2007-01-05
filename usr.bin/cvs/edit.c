@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.19 2007/01/05 08:52:37 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.20 2007/01/05 09:15:00 xsa Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -244,7 +244,7 @@ cvs_edit_local(struct cvs_file *cf)
 	FILE *fp;
 	struct tm *t;
 	time_t now;
-	char *bfpath, *fdate, thishost[MAXHOSTNAMELEN];
+	char *bfpath, timebuf[64], thishost[MAXHOSTNAMELEN];
 
 	if (cvs_noexec == 1)
 		return;
@@ -257,13 +257,15 @@ cvs_edit_local(struct cvs_file *cf)
 	if ((t = gmtime(&now)) == NULL)
 		fatal("gmtime failed");
 
-	fdate = asctime(t);
+	asctime_r(t, timebuf);
+	if (timebuf[strlen(timebuf) - 1] == '\n')
+                timebuf[strlen(timebuf) - 1] = '\0';
 
 	if (gethostname(thishost, sizeof(thishost)) == -1)
 		fatal("gethostname failed");
 
 	(void)fprintf(fp, "E%s\t%s GMT\t%s\t%s\t\n",
-	    cf->file_name, fdate, thishost, cf->file_wd);
+	    cf->file_name, timebuf, thishost, cf->file_wd);
 
 	if (edit_aflags & E_EDIT)
 		(void)fprintf(fp, "E");
@@ -303,7 +305,7 @@ cvs_unedit_local(struct cvs_file *cf)
 	struct stat st;
 	struct tm *t;
 	time_t now;
-	char *bfpath, *fdate, thishost[MAXHOSTNAMELEN];
+	char *bfpath, timebuf[64], thishost[MAXHOSTNAMELEN];
 
 	if (cvs_noexec == 1)
 		return;
@@ -339,13 +341,15 @@ cvs_unedit_local(struct cvs_file *cf)
 	if ((t = gmtime(&now)) == NULL)
 		fatal("gmtime failed");
 
-	fdate = asctime(t);
+	asctime_r(t, timebuf);
+	if (timebuf[strlen(timebuf) - 1] == '\n')
+                timebuf[strlen(timebuf) - 1] = '\0';
 
 	if (gethostname(thishost, sizeof(thishost)) == -1)
 		fatal("gethostname failed");
 
 	(void)fprintf(fp, "U%s\t%s GMT\t%s\t%s\t\n",
-	    cf->file_name, fdate, thishost, cf->file_wd);
+	    cf->file_name, timebuf, thishost, cf->file_wd);
 
 	(void)fclose(fp);
 
