@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.27 2007/01/05 10:17:32 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.28 2007/01/05 10:20:04 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -63,46 +63,49 @@
 
 #include <uvm/uvm_extern.h>
 
-void	bcw_shm_ctl_word(struct bcw_softc *, uint16_t, uint16_t);
+void		bcw_shm_ctl_word(struct bcw_softc *, uint16_t, uint16_t);
 uint16_t	bcw_shm_read16(struct bcw_softc *, uint16_t, uint16_t);
 
-void	bcw_reset(struct bcw_softc *);
-int	bcw_init(struct ifnet *);
-void	bcw_start(struct ifnet *);
-void	bcw_stop(struct ifnet *, int);
+void		bcw_reset(struct bcw_softc *);
+int		bcw_init(struct ifnet *);
+void		bcw_start(struct ifnet *);
+void		bcw_stop(struct ifnet *, int);
 
-void	bcw_watchdog(struct ifnet *);
-void	bcw_rxintr(struct bcw_softc *);
-void	bcw_txintr(struct bcw_softc *);
-//void	bcw_add_mac(struct bcw_softc *, uint8_t *, unsigned long);
-int	bcw_add_rxbuf(struct bcw_softc *, int);
-void	bcw_rxdrain(struct bcw_softc *);
-void	bcw_set_filter(struct ifnet *); 
-void	bcw_tick(void *);
-int	bcw_ioctl(struct ifnet *, u_long, caddr_t);
+void		bcw_watchdog(struct ifnet *);
+void		bcw_rxintr(struct bcw_softc *);
+void		bcw_txintr(struct bcw_softc *);
+//void		bcw_add_mac(struct bcw_softc *, uint8_t *, unsigned long);
+int		bcw_add_rxbuf(struct bcw_softc *, int);
+void		bcw_rxdrain(struct bcw_softc *);
+void		bcw_set_filter(struct ifnet *); 
+void		bcw_tick(void *);
+int		bcw_ioctl(struct ifnet *, u_long, caddr_t);
 
-int	bcw_alloc_rx_ring(struct bcw_softc *, struct bcw_rx_ring *, int);
-void	bcw_reset_rx_ring(struct bcw_softc *, struct bcw_rx_ring *);
-void	bcw_free_rx_ring(struct bcw_softc *, struct bcw_rx_ring *);
-int	bcw_alloc_tx_ring(struct bcw_softc *, struct bcw_tx_ring *, int);
-void	bcw_reset_tx_ring(struct bcw_softc *, struct bcw_tx_ring *);
-void	bcw_free_tx_ring(struct bcw_softc *, struct bcw_tx_ring *);
+int		bcw_alloc_rx_ring(struct bcw_softc *, struct bcw_rx_ring *,
+		    int);
+void		bcw_reset_rx_ring(struct bcw_softc *, struct bcw_rx_ring *);
+void		bcw_free_rx_ring(struct bcw_softc *, struct bcw_rx_ring *);
+int		bcw_alloc_tx_ring(struct bcw_softc *, struct bcw_tx_ring *,
+		    int);
+void		bcw_reset_tx_ring(struct bcw_softc *, struct bcw_tx_ring *);
+void		bcw_free_tx_ring(struct bcw_softc *, struct bcw_tx_ring *);
 
 /* 80211 functions copied from iwi */
-int	bcw_newstate(struct ieee80211com *, enum ieee80211_state, int);
-int	bcw_media_change(struct ifnet *);
-void	bcw_media_status(struct ifnet *, struct ifmediareq *);
+int		bcw_newstate(struct ieee80211com *, enum ieee80211_state, int);
+int		bcw_media_change(struct ifnet *);
+void		bcw_media_status(struct ifnet *, struct ifmediareq *);
 /* fashionably new functions */
-int	bcw_validatechipaccess(struct bcw_softc *);
-void	bcw_powercontrol_crystal_off(struct bcw_softc *);
-int	bcw_change_core(struct bcw_softc *, int);
-void	bcw_radio_off(struct bcw_softc *);
-int	bcw_reset_core(struct bcw_softc *, uint32_t);
-int	bcw_get_firmware(const char *, const uint8_t *, size_t *, size_t *);
-int	bcw_load_firmware(struct bcw_softc *);
-int	bcw_write_initvals(struct bcw_softc *, const struct bcw_initval *,
-	    const unsigned int);
-int	bcw_load_initvals(struct bcw_softc *);
+int		bcw_validatechipaccess(struct bcw_softc *);
+void		bcw_powercontrol_crystal_off(struct bcw_softc *);
+int		bcw_change_core(struct bcw_softc *, int);
+void		bcw_radio_off(struct bcw_softc *);
+int		bcw_reset_core(struct bcw_softc *, uint32_t);
+int		bcw_get_firmware(const char *, const uint8_t *, size_t *,
+		    size_t *);
+int		bcw_load_firmware(struct bcw_softc *);
+int		bcw_write_initvals(struct bcw_softc *,
+		    const struct bcw_initval *, const unsigned int);
+int		bcw_load_initvals(struct bcw_softc *);
 
 struct cfdriver bcw_cd = {
 	NULL, "bcw", DV_IFNET
