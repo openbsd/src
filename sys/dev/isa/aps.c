@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.9 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: aps.c,v 1.10 2007/01/05 06:00:25 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -146,8 +146,6 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	if (!aps_init(iot, ioh))
 		goto out;
 
-	sc->numsensors = APS_NUM_SENSORS;
-
 	sc->sensors[APS_SENSOR_XACCEL].type = SENSOR_INTEGER;
 	snprintf(sc->sensors[APS_SENSOR_XACCEL].desc,
 	    sizeof(sc->sensors[APS_SENSOR_XACCEL].desc), "X_ACCEL");
@@ -187,7 +185,7 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	/* stop hiding and report to the authorities */
 	strlcpy(sc->sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sensordev.xname));
-	for (i = 0; i < sc->numsensors; i++) {
+	for (i = 0; i < APS_NUM_SENSORS ; i++) {
 		sensor_attach(&sc->sensordev, &sc->sensors[i]);
 	}
 	sensordev_install(&sc->sensordev);

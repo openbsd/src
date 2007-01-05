@@ -1,4 +1,4 @@
-/*	$OpenBSD: apsvar.h,v 1.2 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: apsvar.h,v 1.3 2007/01/05 06:00:25 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -36,7 +36,6 @@ struct aps_softc {
 
 	struct sensor sensors[APS_NUM_SENSORS];
 	struct sensordev sensordev;
-	u_int numsensors;
 	void (*refresh_sensor_data)(struct aps_softc *);
 
 	struct sensor_rec aps_data;
