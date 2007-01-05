@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.28 2007/01/05 10:20:04 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.29 2007/01/05 10:37:19 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -2308,8 +2308,8 @@ bcw_load_firmware(struct bcw_softc *sc)
 	    rev >= 5 ? 5 : rev);
 
 	if (bcw_get_firmware(filename, ucode, &size_micro, &off_micro) != 0) {
-		printf("%s: getting firmware file %s failed!\n",
-		    sc->sc_dev.dv_xname, name);
+		printf("%s: get offset for firmware file %s failed!\n",
+		    sc->sc_dev.dv_xname, filename);
 		return (EIO);
 	}
 
@@ -2318,8 +2318,8 @@ bcw_load_firmware(struct bcw_softc *sc)
 	    rev < 5 ? 4 : 5);
 
 	if (bcw_get_firmware(filename, ucode, &size_pcm, &off_pcm) != 0) {
-		printf("%s: getting firmware file %s failed!\n",
-		    sc->sc_dev.dv_xname, name);
+		printf("%s: get offset for firmware file %s failed!\n",
+		    sc->sc_dev.dv_xname, filename);
 		return (EIO);
 	}
 
@@ -2432,7 +2432,7 @@ bcw_load_initvals(struct bcw_softc *sc)
 	snprintf(filename, sizeof(filename), "bcm43xx_initval%02d.fw", nr);
 
 	if (bcw_get_firmware(filename, ucode, &size_ival0, &off_ival0) != 0) {
-		printf("%s: getting initval0 file %s failed\n",
+		printf("%s: get offset for initval0 file %s failed\n",
 		    sc->sc_dev.dv_xname, filename);
 		return (EIO);
 	}
@@ -2460,7 +2460,7 @@ bcw_load_initvals(struct bcw_softc *sc)
 
 		if (bcw_get_firmware(filename, ucode, &size_ival1, &off_ival1)
 		    != 0) {
-			printf("%s: getting initval1 file %s failed\n",
+			printf("%s: get offset for initval1 file %s failed\n",
 			    sc->sc_dev.dv_xname, filename);
 			return (EIO);
 		}
