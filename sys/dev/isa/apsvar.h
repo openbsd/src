@@ -1,4 +1,4 @@
-/*	$OpenBSD: apsvar.h,v 1.3 2007/01/05 06:00:25 jsg Exp $	*/
+/*	$OpenBSD: apsvar.h,v 1.4 2007/01/05 06:36:37 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define APS_NUM_SENSORS		10
+#define APS_NUM_SENSORS		9
 
 #define APS_SENSOR_XACCEL	0
 #define APS_SENSOR_YACCEL	1
@@ -26,7 +26,6 @@
 #define APS_SENSOR_KBACT	6
 #define APS_SENSOR_MSACT	7
 #define APS_SENSOR_LIDOPEN	8
-#define APS_SENSOR_UNK		9
 
 struct aps_softc {
 	struct device sc_dev;

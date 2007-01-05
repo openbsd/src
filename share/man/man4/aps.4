@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aps.4,v 1.5 2006/02/17 00:55:48 jsg Exp $
+.\"	$OpenBSD: aps.4,v 1.6 2007/01/05 06:36:37 jsg Exp $
 .\"
 .\" Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -30,7 +30,7 @@ driver provides support for several sensors found in some ThinkPad laptops.
 The sensors currently exposed via the
 .Xr sysctl 8
 interface are:
-.Bl -column "Sensor" "Units" "Typical" -offset indent
+.Bl -column "Sensor          " "Units" "Typical" -offset indent
 .It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
 .It Li "X_ACCEL" Ta "Unknown" Ta "X Acceleration"
 .It Li "Y_ACCEL" Ta "Unknown" Ta "Y Acceleration"
@@ -38,10 +38,9 @@ interface are:
 .It Li "Y_VAR" Ta "Unknown" Ta "Weighted Y Acceleration?"
 .It Li "Temp1" Ta "uK" Ta "Unknown"
 .It Li "Temp2" Ta "uK" Ta "Unknown"
-.It Li "KBD_ACT" Ta "boolean" Ta "Keyboard activity"
-.It Li "MS_ACT" Ta "boolean" Ta "Mouse activity"
-.It Li "LID_OPEN" Ta "boolean" Ta "Lid state"
-.It Li "unknown" Ta "Unknown" Ta "Unknown"
+.It Li "Keyboard Active" Ta "boolean" Ta "Keyboard activity"
+.It Li "Mouse Active" Ta "boolean" Ta "Mouse activity"
+.It Li "Lid Open" Ta "boolean" Ta "Lid state"
 .El
 .Sh SEE ALSO
 .Xr sensorsd 8 ,

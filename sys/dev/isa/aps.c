@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.11 2007/01/05 06:26:44 jsg Exp $	*/
+/*	$OpenBSD: aps.c,v 1.12 2007/01/05 06:36:37 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -165,10 +165,6 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	snprintf(sc->sensors[APS_SENSOR_YVAR].desc,
 	    sizeof(sc->sensors[APS_SENSOR_YVAR].desc), "Y_VAR");
 
-	sc->sensors[APS_SENSOR_UNK].type = SENSOR_INTEGER;
-	snprintf(sc->sensors[APS_SENSOR_UNK].desc,
-	    sizeof(sc->sensors[APS_SENSOR_UNK].desc), "unknown");
-
 	sc->sensors[APS_SENSOR_KBACT].type = SENSOR_INDICATOR;
 	snprintf(sc->sensors[APS_SENSOR_KBACT].desc,
 	    sizeof(sc->sensors[APS_SENSOR_KBACT].desc), "Keyboard Active");
@@ -267,7 +263,6 @@ aps_read_data(struct aps_softc *sc)
 	sc->aps_data.x_var = bus_space_read_2(iot, ioh, APS_XVAR);
 	sc->aps_data.y_var = bus_space_read_2(iot, ioh, APS_YVAR);
 	sc->aps_data.temp2 = bus_space_read_1(iot, ioh, APS_TEMP2);
-	sc->aps_data.unk = bus_space_read_1(iot, ioh, APS_UNKNOWN);
 	sc->aps_data.input = bus_space_read_1(iot, ioh, APS_INPUT);
 
 	return (1);
@@ -315,7 +310,6 @@ aps_refresh_sensor_data(struct aps_softc *sc)
 
 	sc->sensors[APS_SENSOR_XVAR].value = sc->aps_data.x_var;
 	sc->sensors[APS_SENSOR_YVAR].value = sc->aps_data.y_var;
-	sc->sensors[APS_SENSOR_UNK].value = sc->aps_data.unk;
 	sc->sensors[APS_SENSOR_KBACT].value =
 	    (sc->aps_data.input &  APS_INPUT_KB) ? 1 : 0;
 	sc->sensors[APS_SENSOR_MSACT].value =
