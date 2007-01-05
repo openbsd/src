@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.36 2007/01/04 12:14:51 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.37 2007/01/05 12:22:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -100,6 +100,37 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define AHCI_PREG_IS		0x10 /* Interrupt Status */
 #define AHCI_PREG_IE		0x14 /* Interrupt Enable */
 #define AHCI_PREG_CMD		0x18 /* Command and Status */
+#define  AHCI_PREG_CMD_ST		(1<<0) /* Start */
+#define  AHCI_PREG_CMD_SUD		(1<<1) /* Spin Up Device */
+#define  AHCI_PREG_CMD_POD		(1<<2) /* Power On Device */
+#define  AHCI_PREG_CMD_CLO		(1<<3) /* Command List Override */
+#define  AHCI_PREG_CMD_FRE		(1<<4) /* FIS Receive Enable */
+#define  AHCI_PREG_CMD_CCS		0x1f00 /* Current Command Slot */
+#define  AHCI_PREG_CMD_MPSS		(1<<13) /* Mech Presence State */
+#define  AHCI_PREG_CMD_FR		(1<<14) /* FIS Receive Running */
+#define  AHCI_PREG_CMD_CR		(1<<15) /* Command List Running */
+#define  AHCI_PREG_CMD_CPS		(1<<16) /* Cold Presence State */
+#define  AHCI_PREG_CMD_PMA		(1<<17) /* Port Multiplier Attached */
+#define  AHCI_PREG_CMD_HPCP		(1<<18) /* Hot Plug Capable */
+#define  AHCI_PREG_CMD_MPSP		(1<<19) /* Mech Presence Switch */
+#define  AHCI_PREG_CMD_CPD		(1<<20) /* Cold Presence Detection */
+#define  AHCI_PREG_CMD_ESP		(1<<21) /* External SATA Port */
+#define  AHCI_PREG_CMD_ATAPI		(1<<24) /* Device is ATAPI */
+#define  AHCI_PREG_CMD_DLAE		(1<<25) /* Drv LED on ATAPI Enable */
+#define  AHCI_PREG_CMD_ALPE		(1<<26) /* Aggro Pwr Mgmt Enable */
+#define  AHCI_PREG_CMD_ASP		(1<<27) /* Aggro Slumber/Partial */
+#define  AHCI_PREG_CMD_ICC		0xf0000000 /* Interface Comm Ctrl */
+#define  AHCI_PREG_CMD_ICC_SLUMBER	0x60000000
+#define  AHCI_PREG_CMD_ICC_PARTIAL	0x20000000
+#define  AHCI_PREG_CMD_ICC_ACTIVE	0x10000000
+#define  AHCI_PREG_CMD_ICC_IDLE		0x00000000
+
+#define  AHCI_PFMT_CMD		"\020" "\001ST" "\002SUD" "\003POD" \
+				    "\004CLO" "\005FRE" "\016MPSS" "\017FR" \
+				    "\020CR" "\021CPS" "\022PMA" "\023HPCP" \
+				    "\024MPSP" "\025CPD" "\026ESP" \
+				    "\031ATAPI" "\032DLAE" "\033ALPE" "\034ASP"
+
 #define AHCI_PREG_TFD		0x20 /* Task File Data*/
 #define AHCI_PREG_SIG		0x24 /* Signature */
 #define AHCI_PREG_SSTS		0x28 /* SATA Status */
