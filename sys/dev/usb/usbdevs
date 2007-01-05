@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.247 2007/01/02 22:47:19 stevesk Exp $
+$OpenBSD: usbdevs,v 1.248 2007/01/05 00:12:09 krw Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2276,7 +2276,9 @@ product ZYDAS ZD1211B		0x1215	ZD1211B
 product ZYXEL OMNI56K		0x1500	Omni 56K Plus
 product ZYXEL 980N		0x2011	Scorpion-980N
 product ZYXEL ZYAIRG220		0x3401	ZyAIR G-220
+product ZYXEL AG225H		0x3409	AG-225H
 product ZYXEL M202		0x340a	M-202
 product ZYXEL G270S		0x340c	G-270S
 product ZYXEL G220V2		0x340f	G-220 v2
+product ZYXEL G202		0x3410	G-202
 product ZYXEL PRESTIGE		0x401a	Prestige
