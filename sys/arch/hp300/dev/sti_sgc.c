@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.10 2006/12/18 18:57:24 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.11 2007/01/06 20:09:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -62,7 +62,6 @@ int
 sti_sgc_match(struct device *parent, void *match, void *aux)
 {
 	struct sgc_attach_args *saa = aux;
-	bus_space_tag_t iot;
 
 	/*
 	 * If we already probed it succesfully as a console device, go ahead,
@@ -71,9 +70,7 @@ sti_sgc_match(struct device *parent, void *match, void *aux)
 	if (SGC_SLOT_TO_CONSCODE(saa->saa_slot) == conscode)
 		return (1);
 
-	iot = HP300_BUS_TAG(HP300_BUS_SGC, saa->saa_slot);
-
-	return (sti_sgc_probe(iot, saa->saa_slot));
+	return (sti_sgc_probe(saa->saa_iot, saa->saa_slot));
 }
 
 void
@@ -82,7 +79,6 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 	struct sti_softc *sc = (void *)self;
 	struct sgc_attach_args *saa = aux;
 	bus_addr_t base;
-	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	u_int romend;
 	int i;
@@ -98,10 +94,9 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 
 		sti_describe(sc);
 	} else {
-		iot = HP300_BUS_TAG(HP300_BUS_SGC, saa->saa_slot);
 		base = (bus_addr_t)sgc_slottopa(saa->saa_slot);
 
-		if (bus_space_map(iot, base, PAGE_SIZE, 0, &ioh)) {
+		if (bus_space_map(saa->saa_iot, base, PAGE_SIZE, 0, &ioh)) {
 			printf(": can't map frame buffer");
 			return;
 		}
@@ -109,16 +104,16 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 		/*
 		 * Compute real PROM size
 		 */
-		romend = sti_rom_size(iot, ioh);
+		romend = sti_rom_size(saa->saa_iot, ioh);
 
-		bus_space_unmap(iot, ioh, PAGE_SIZE);
+		bus_space_unmap(saa->saa_iot, ioh, PAGE_SIZE);
 
-		if (bus_space_map(iot, base, romend, 0, &ioh)) {
+		if (bus_space_map(saa->saa_iot, base, romend, 0, &ioh)) {
 			printf(": can't map frame buffer");
 			return;
 		}
 
-		sc->memt = sc->iot = iot;
+		sc->memt = sc->iot = saa->saa_iot;
 		sc->romh = ioh;
 		sc->bases[0] = sc->romh;
 		for (i = 1; i < STI_REGION_MAX; i++)

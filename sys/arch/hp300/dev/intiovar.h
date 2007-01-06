@@ -1,4 +1,4 @@
-/*	$OpenBSD: intiovar.h,v 1.2 1997/02/03 04:47:37 downsj Exp $	*/
+/*	$OpenBSD: intiovar.h,v 1.3 2007/01/06 20:09:12 miod Exp $	*/
 /*	$NetBSD: intiovar.h,v 1.2 1997/01/30 09:18:55 thorpej Exp $	*/
 
 /*-
@@ -47,4 +47,5 @@
  */
 struct intio_attach_args {
 	caddr_t	ia_addr;		/* physical address */
+	bus_space_tag_t ia_tag;
 };

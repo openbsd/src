@@ -1,4 +1,4 @@
-/*	$OpenBSD: frodo.c,v 1.8 2006/06/16 20:44:23 miod Exp $	*/
+/*	$OpenBSD: frodo.c,v 1.9 2007/01/06 20:09:12 miod Exp $	*/
 /*	$NetBSD: frodo.c,v 1.5 1999/07/31 21:15:20 thorpej Exp $	*/
 
 /*-
@@ -73,6 +73,7 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/hp300spu.h>
@@ -109,11 +110,11 @@ struct cfdriver frodo_cd = {
 };
 
 struct frodo_attach_args frodo_subdevs[] = {
-	{ "dnkbd",	FRODO_APCI_OFFSET(0),	FRODO_INTR_APCI0 },
-	{ "apci",	FRODO_APCI_OFFSET(1),	FRODO_INTR_APCI1 },
-	{ "apci",	FRODO_APCI_OFFSET(2),	FRODO_INTR_APCI2 },
-	{ "apci",	FRODO_APCI_OFFSET(3),	FRODO_INTR_APCI3 },
-	{ NULL,		0,			0 },
+	{ "dnkbd",	NULL,	FRODO_APCI_OFFSET(0),	FRODO_INTR_APCI0 },
+	{ "apci",	NULL,	FRODO_APCI_OFFSET(1),	FRODO_INTR_APCI1 },
+	{ "apci",	NULL,	FRODO_APCI_OFFSET(2),	FRODO_INTR_APCI2 },
+	{ "apci",	NULL,	FRODO_APCI_OFFSET(3),	FRODO_INTR_APCI3 },
+	{ NULL,		NULL,	0,			0 },
 };
 
 #define	FRODO_IPL	5
@@ -131,7 +132,7 @@ frodomatch(parent, match, aux)
 	if (frodo_matched)
 		return (0);
 
-	/* only 4xx workstations can have this */
+	/* only specific workstations can have this */
 	switch (machineid) {
 	case HP_362:
 	case HP_382:
@@ -205,6 +206,7 @@ frodoattach(parent, self, aux)
 		if (frodo_subdevs[i].fa_offset == FRODO_APCI_OFFSET(1) &&
 		    mmuid != MMUID_425_E)
 			continue;
+		frodo_subdevs[i].fa_tag = ia->ia_tag;
 		config_found_sm(self, &frodo_subdevs[i],
 		    frodoprint, frodosubmatch);
 	}

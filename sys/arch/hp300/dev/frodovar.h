@@ -1,4 +1,4 @@
-/*	$OpenBSD: frodovar.h,v 1.5 2004/09/29 07:35:52 miod Exp $	*/
+/*	$OpenBSD: frodovar.h,v 1.6 2007/01/06 20:09:12 miod Exp $	*/
 /*	$NetBSD: frodovar.h,v 1.1 1997/05/12 08:03:50 thorpej Exp $	*/
 
 /*
@@ -36,9 +36,10 @@
  * Arguments used to attach Frodo subdevices.
  */
 struct frodo_attach_args {
-	const char *fa_name;	/* device name */
-	int	fa_offset;	/* offset from Frodo base */
-	int	fa_line;	/* Frodo interrupt line */
+	const char	*fa_name;	/* device name */
+	bus_space_tag_t	 fa_tag;
+	int		 fa_offset;	/* offset from Frodo base */
+	int		 fa_line;	/* Frodo interrupt line */
 };
 
 #define	frodocf_offset	cf_loc[0]
