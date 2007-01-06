@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.32 2007/01/06 18:35:09 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.33 2007/01/06 20:33:09 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -2401,7 +2401,7 @@ bcw_load_initvals(struct bcw_softc *sc)
 
 	/* load firmware */
 	if ((error = loadfirmware(name, &ucode, &size_ucode)) != 0) {
-		printf("%s: error %d, could not read initval0 %s!\n",
+		printf("%s: error %d, could not read microcode %s!\n",
 		    sc->sc_dev.dv_xname, error, name);
 		return (EIO);
 	}
