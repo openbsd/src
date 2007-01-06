@@ -4843,6 +4843,7 @@ enum symbol_visibility
 decl_visibility (decl)
      tree decl;
 {
+#ifdef HAVE_GAS_HIDDEN
   tree attr = lookup_attribute ("visibility", DECL_ATTRIBUTES (decl));
 
   if (attr)
@@ -4860,6 +4861,7 @@ decl_visibility (decl)
 
       abort ();
     }
+#endif
 
   return VISIBILITY_DEFAULT;
 }
