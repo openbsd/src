@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1209 2007/01/01 21:03:10 mbalmer Exp $
+$OpenBSD: pcidevs,v 1.1210 2007/01/06 10:18:14 pedro Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2303,6 +2303,7 @@ product LAVA PARALLELB		0x8003	Dual Parallel B
 /* LeadTek Research */
 product LEADTEK S3_805		0x0000	S3 805
 product LEADTEK WINFAST		0x6606	Leadtek WinFast TV 2000
+product LEADTEK WINFAST_XP	0x6609	Leadtek WinFast TV 2000 XP
 
 /* Level 1 (Intel) */
 product LEVEL1 LXT1001		0x0001	LXT1001
