@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.31 2007/01/05 12:52:30 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.32 2007/01/06 18:35:09 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -2263,6 +2263,7 @@ bcw_get_firmware(const char *name, const uint8_t *ucode, size_t size_ucode,
 
 	/* get number of firmware files */
 	bcopy(ucode, &nfiles, sizeof(nfiles));
+	nfiles = ntohl(nfiles);
 	off += sizeof(nfiles);
 
 	/* parse header and search the firmware */
@@ -2273,8 +2274,8 @@ bcw_get_firmware(const char *name, const uint8_t *ucode, size_t size_ucode,
 
 		if (strcmp(name, h->filename) == 0) {
 			ret = 0;
-			*size = h->filesize;
-			*offset = h->fileoffset;
+			*size = ntohl(h->filesize);
+			*offset = ntohl(h->fileoffset);
 			break;
 		}
 	}
