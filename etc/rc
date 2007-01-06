@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.295 2006/11/28 23:44:35 mcbride Exp $
+#	$OpenBSD: rc,v 1.296 2007/01/06 12:00:06 matthieu Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -713,10 +713,6 @@ echo -n standard daemons:
 
 if [ X"${apmd_flags}" != X"NO" -a -x /usr/sbin/apmd ]; then
 	echo -n ' apmd';	/usr/sbin/apmd ${apmd_flags}
-fi
-
-if [ X"${acpid_flags}" != X"NO" -a -x /usr/sbin/acpid ]; then
-	echo -n ' acpid';	/usr/sbin/acpid ${acpid_flags}
 fi
 
 if [ X"${sensorsd_flags}" != X"NO" ]; then
