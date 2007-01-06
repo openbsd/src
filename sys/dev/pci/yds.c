@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.27 2005/08/09 04:10:13 mickey Exp $	*/
+/*	$OpenBSD: yds.c,v 1.28 2007/01/06 02:48:40 deraadt Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -90,6 +90,8 @@ static	int ac97_id2;
 int	yds_match(struct device *, void *, void *);
 void	yds_attach(struct device *, struct device *, void *);
 int	yds_intr(void *);
+
+static void nswaph(u_int32_t *p, int wcount);
 
 #define DMAADDR(p) ((p)->map->dm_segs[0].ds_addr)
 #define KERNADDR(p) ((void *)((p)->addr))
@@ -334,6 +336,15 @@ yds_get_dstype(id)
 	return -1;
 }
 
+static void
+nswaph(u_int32_t *p, int wcount)
+{
+	for (; wcount; wcount -=4) {
+		*p = ntohl(*p);
+		p++;
+	}
+}
+
 static int
 yds_download_mcode(sc)
 	struct yds_softc *sc;
@@ -352,14 +363,21 @@ yds_download_mcode(sc)
 	yf = (struct yds_firmware *)buf;
 
 	if (sc->sc_flags & YDS_CAP_MCODE_1) {
-		p = (u_int32_t *)&yf->data[yf->dsplen];
-		size = yf->ds1len;
+		p = (u_int32_t *)&yf->data[ntohl(yf->dsplen)];
+		size = ntohl(yf->ds1len);
 	} else if (sc->sc_flags & YDS_CAP_MCODE_1E) {
-		p = (u_int32_t *)&yf->data[yf->dsplen + yf->ds1len];
-		size = yf->ds1elen;
+		p = (u_int32_t *)&yf->data[ntohl(yf->dsplen) + ntohl(yf->ds1len)];
+		size = ntohl(yf->ds1elen);
 	} else {
 		free(buf, M_DEVBUF);
 		return 1;	/* unknown */
+	}
+
+	if (size > buflen) {
+		printf("%s: old firmware file, update please\n",
+		    sc->sc_dev.dv_xname);
+		free(buf, M_DEVBUF);
+		return 1;
 	}
 
 	if (yds_disable_dsp(sc)) {
@@ -382,9 +400,12 @@ yds_download_mcode(sc)
         YWRITE2(sc, YDS_GLOBAL_CONTROL, ctrl & ~0x0007);
 
 	/* Download DSP microcode. */
-	YWRITEREGION4(sc, YDS_DSP_INSTRAM, (u_int32_t *)&yf->data[0], yf->dsplen);
+	nswaph((u_int32_t *)&yf->data[0], ntohl(yf->dsplen));
+	YWRITEREGION4(sc, YDS_DSP_INSTRAM, (u_int32_t *)&yf->data[0],
+	    ntohl(yf->dsplen));
 
 	/* Download CONTROL microcode. */
+	nswaph((u_int32_t *)p, size);
 	YWRITEREGION4(sc, YDS_CTRL_INSTRAM, p, size);
 
 	yds_enable_dsp(sc);

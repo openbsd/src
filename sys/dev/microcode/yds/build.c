@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.3 2005/07/12 19:28:53 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.4 2007/01/06 02:48:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -27,6 +27,15 @@
 
 #define FILENAME "yds"
 
+void
+hswapn(u_int32_t *p, int wcount)
+{
+	for (; wcount; wcount -=4) {
+		*p = htonl(*p);
+		p++;
+	}
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -41,17 +50,28 @@ main(int argc, char *argv[])
 	yf = (struct yds_firmware *)malloc(len);
 	bzero(yf, len);
 
-	yf->dsplen = sizeof(yds_dsp_mcode);
-	yf->ds1len = sizeof(yds_ds1_ctrl_mcode);
-	yf->ds1elen = sizeof(yds_ds1e_ctrl_mcode);
+	yf->dsplen = htonl(sizeof(yds_dsp_mcode));
+	yf->ds1len = htonl(sizeof(yds_ds1_ctrl_mcode));
+	yf->ds1elen = htonl(sizeof(yds_ds1e_ctrl_mcode));
 
-	bcopy(yds_dsp_mcode, &yf->data[0], yf->dsplen);
-	bcopy(yds_ds1_ctrl_mcode, &yf->data[yf->dsplen], yf->ds1len);
-	bcopy(yds_ds1e_ctrl_mcode, &yf->data[yf->dsplen + yf->ds1len],
-	    yf->ds1elen);
+	bcopy(yds_dsp_mcode, &yf->data[0], sizeof(yds_dsp_mcode));
+	hswapn((u_int32_t *)&yf->data[0], sizeof(yds_dsp_mcode));
+
+	bcopy(yds_ds1_ctrl_mcode, &yf->data[sizeof(yds_dsp_mcode)],
+	    sizeof(yds_ds1_ctrl_mcode));
+	hswapn((u_int32_t *)&yf->data[sizeof(yds_dsp_mcode)],
+	    sizeof(yds_ds1_ctrl_mcode));
+
+	bcopy(yds_ds1e_ctrl_mcode,
+	    &yf->data[sizeof(yds_dsp_mcode) + sizeof(yds_ds1_ctrl_mcode)],
+	    sizeof(yds_ds1e_ctrl_mcode));
+	hswapn((u_int32_t *)&yf->data[sizeof(yds_dsp_mcode) +
+	    sizeof(yds_ds1_ctrl_mcode)],
+	    sizeof(yds_ds1e_ctrl_mcode));
 
 	printf("creating %s length %d [%d+%d+%d]\n",
-	    FILENAME, len, yf->dsplen, yf->ds1len, yf->ds1elen);
+	    FILENAME, len, sizeof(yds_dsp_mcode),
+	    sizeof(yds_ds1_ctrl_mcode), sizeof(yds_ds1e_ctrl_mcode));
 	fd = open(FILENAME, O_WRONLY|O_CREAT|O_TRUNC, 0644);
 	if (fd == -1)
 		err(1, FILENAME);
