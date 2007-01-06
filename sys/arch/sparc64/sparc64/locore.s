@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.68 2007/01/04 23:08:16 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.69 2007/01/06 23:07:13 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4705,12 +4705,6 @@ _C_LABEL(tlb_flush_pte):
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
 	membar	#Sync
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! to both TLBs
-	membar	#Sync					! No real reason for this XXXX
-	flush	%o4
-	srl	%g2, 0, %g2				! and make sure it's both 32- and 64-bit entries
-	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
-	membar	#Sync
-	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! Do the demap
 	membar	#Sync					! No real reason for this XXXX
 	flush	%o4
 	stxa	%g1, [%o2] ASI_DMMU			! Restore asi
