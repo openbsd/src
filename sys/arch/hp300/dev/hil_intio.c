@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil_intio.c,v 1.7 2007/01/06 20:09:12 miod Exp $	*/
+/*	$OpenBSD: hil_intio.c,v 1.8 2007/01/06 20:10:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -79,7 +79,7 @@ hil_intio_attach(struct device *parent, struct device *self, void *aux)
 	extern struct consdev wsdisplay_cons;
 
 	sc->sc_bst = ia->ia_tag;
-	if (bus_space_map(sc->sc_bst, HILADDR - INTIOBASE,
+	if (bus_space_map(sc->sc_bst, HILADDR,
 	    HILMAPSIZE, 0, &sc->sc_bsh) != 0) {
 		printf(": couldn't map hil controller\n");
 		return;

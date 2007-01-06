@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.11 2007/01/06 20:09:12 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.12 2007/01/06 20:10:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -161,16 +161,17 @@ void	sticninit(void);
 int
 sti_console_scan(int slot)
 {
+	extern struct hp300_bus_space_tag hp300_mem_tag;
 	bus_space_tag_t iot;
 
-	iot = HP300_BUS_TAG(HP300_BUS_SGC, slot);
-
+	iot = &hp300_mem_tag;
 	return (sti_sgc_probe(iot, slot));
 }
 
 void
 sticninit()
 {
+	extern struct hp300_bus_space_tag hp300_mem_tag;
 	bus_space_tag_t iot;
 	bus_addr_t base;
 	int i;
@@ -181,7 +182,7 @@ sticninit()
 	if (consolepass == 0)
 		return;
 
-	iot = HP300_BUS_TAG(HP300_BUS_SGC, CONSCODE_TO_SGC_SLOT(conscode));
+	iot = &hp300_mem_tag;
 	base = (bus_addr_t)sgc_slottopa(CONSCODE_TO_SGC_SLOT(conscode));
 
 	/* stifb_cn_bases[0] will be fixed in sti_cnattach() */
