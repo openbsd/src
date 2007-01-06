@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1209 2007/01/01 21:03:10 mbalmer Exp 
+ *	OpenBSD: pcidevs,v 1.1210 2007/01/06 10:18:14 pedro Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2308,6 +2308,7 @@
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
 #define	PCI_PRODUCT_LEADTEK_WINFAST	0x6606		/* Leadtek WinFast TV 2000 */
+#define	PCI_PRODUCT_LEADTEK_WINFAST_XP	0x6609		/* Leadtek WinFast TV 2000 XP */
 
 /* Level 1 (Intel) */
 #define	PCI_PRODUCT_LEVEL1_LXT1001	0x0001		/* LXT1001 */
