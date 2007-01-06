@@ -1,4 +1,4 @@
-/*	$OpenBSD: frodovar.h,v 1.6 2007/01/06 20:09:12 miod Exp $	*/
+/*	$OpenBSD: frodovar.h,v 1.7 2007/01/06 20:17:43 miod Exp $	*/
 /*	$NetBSD: frodovar.h,v 1.1 1997/05/12 08:03:50 thorpej Exp $	*/
 
 /*
@@ -45,5 +45,5 @@ struct frodo_attach_args {
 #define	frodocf_offset	cf_loc[0]
 #define	FRODO_UNKNOWN_OFFSET	-1
 
-void	frodo_intr_establish(struct device *, int, struct isr *, const char *);
+int	frodo_intr_establish(struct device *, int, struct isr *, const char *);
 void	frodo_intr_disestablish(struct device *, int);

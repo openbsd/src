@@ -1,4 +1,4 @@
-/*	$OpenBSD: frodoreg.h,v 1.1 1997/07/06 08:01:51 downsj Exp $	*/
+/*	$OpenBSD: frodoreg.h,v 1.2 2007/01/06 20:17:43 miod Exp $	*/
 /*	$NetBSD: frodoreg.h,v 1.1 1997/05/12 08:03:49 thorpej Exp $	*/
 
 /*
@@ -57,9 +57,9 @@
 #define	FRODO_IISR		0xc0	/* ISA Interrupt Status Register
 					   (also PIR) */
 #define	FRODO_IISR_SERVICE	(1<<0)	/* service switch "on" if 0 */
-#define	FRODO_IISR_ILOW		(1<<1)	/* IRQ 3,4,5 or 6 on ISA if 1 */
-#define	FRODO_IISR_IMID		(1<<2)	/* IRQ 7,9,10 or 11 on ISA if 1 */
-#define	FRODO_IISR_IHI		(1<<3)	/* IRQ 12,13,14 or 15 on ISA if 1 */
+#define	FRODO_IISR_ILOW		(1<<1)	/* IRQ 3,4,5 or 6 on ISA if 0 */
+#define	FRODO_IISR_IMID		(1<<2)	/* IRQ 7,9,10 or 11 on ISA if 0 */
+#define	FRODO_IISR_IHI		(1<<3)	/* IRQ 12,13,14 or 15 on ISA if 0 */
 		/* bits 4 and 5 are DN2500 SCSI interrupts */
 		/* bit 6 is unused */
 #define	FRODO_IISR_IOCHK	(1<<7)	/* ISA board asserted IOCHK if low */
@@ -68,6 +68,7 @@
 					   (ints 7->0) */
 
 #define	FRODO_PIO_IELR		0xc8	/* input edge/level register */
+#define	FRODO_PIO_ISA_CONTROL	0xcc	/* ISA interrupts masking */
 
 /* This is probably not used on the 4xx */
 #define	FRODO_DIAGCTL		0xd0	/* Diagnostic Control Register */
@@ -94,8 +95,6 @@
 #define	FRODO_GETPEND(sc)						\
 	((FRODO_READ((sc), FRODO_PIC_PU) << 8) |			\
 	    FRODO_READ((sc), FRODO_PIC_PL))
-#define	FRODO_IPEND(sc)							\
-	(FRODO_READ((sc), FRODO_PIC_ACK) & 0x0f)
 
 /*
  * Interrupt lines.  Use FRODO_INTR_BIT() below to get a bit
@@ -120,4 +119,5 @@
 
 #define	FRODO_NINTR		16
 
+#define	FRODO_INTR_ISA(l)	((l) != 0 && (l) <= FRODO_INTR_IHI)
 #define	FRODO_INTR_BIT(line)	(1 << (line))

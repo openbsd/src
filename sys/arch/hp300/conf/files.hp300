@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.31 2006/04/14 21:05:43 miod Exp $
+#	$OpenBSD: files.hp300,v 1.32 2007/01/06 20:17:41 miod Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -174,6 +174,18 @@ major	{cd = 9}
 
 attach	sti at sgc with sti_sgc
 file	arch/hp300/dev/sti_sgc.c		sti_sgc
+
+# ISA devices
+include "dev/isa/files.isa"
+include "dev/isa/files.isapnp"
+
+#
+# ISA bridge
+#
+
+device	isabr: isabus
+attach	isabr at frodo
+file	arch/hp300/dev/isabr.c			isabr	needs-flag
 
 #
 # HIL Human Interface Loop devices

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.51 2004/02/03 09:25:02 mickey Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.52 2007/01/06 20:17:43 miod Exp $	*/
 /*	$NetBSD: isavar.h,v 1.26 1997/06/06 23:43:57 thorpej Exp $	*/
 
 /*-
@@ -122,39 +122,20 @@
  */
 struct isabus_attach_args;
 
-#if (__alpha__ + amiga + __cats__ + __i386__ + arc + __wgrisc__ + __powerpc__ + __hppa__ + __amd64__ != 1)
-#error "COMPILING ISA FOR UNSUPPORTED MACHINE, OR MORE THAN ONE."
-#endif
-#ifdef __alpha__
+#if defined(__alpha__)
 #include <alpha/isa/isa_machdep.h>
-#endif
-#ifdef amiga
-#include <amiga/isa/isa_machdep.h>
-#endif
-#ifdef __cats__
+#elif defined(__cats__)
 #include <cats/isa/isa_machdep.h>
-#endif
-#ifdef __i386__
+#elif defined(hp300)
+#include <hp300/dev/isa_machdep.h>
+#elif defined(__i386__)
 #include <i386/isa/isa_machdep.h>
-#endif
-#ifdef arc
-#include <arc/isa/isa_machdep.h>
-#endif
-#ifdef __wgrisc__
-#include <wgrisc/isa/isa_machdep.h>
-#endif
-#ifdef __powerpc__
-#ifdef __mvmeppc__
+#elif defined(__mvmeppc__)
 #include <mvmeppc/isa/isa_machdep.h>
-#else
+#elif defined(__powerpc__)
 #include <powerpc/isa/isa_machdep.h>
-#endif 
-#endif
-#ifdef __hppa__
-#include <hppa/include/isa_machdep.h>
-#endif
-#ifdef __amd64__
-#include <amd64/include/isa_machdep.h>
+#else
+#include <machine/isa_machdep.h>
 #endif
 
 #include "isapnp.h"
@@ -165,14 +146,12 @@ struct isabus_attach_args;
  */
 struct isapnp_softc;
 
-#if (__i386__ != 1 && __alpha__ != 1)
-#error COMPILING ISAPNP FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
-#endif
-#if __i386__
-#include <i386/isa/isapnp_machdep.h>
-#endif
-#if __alpha__
+#if defined(__alpha__)
 #include <alpha/isa/isapnp_machdep.h>
+#elif defined(__i386__)
+#include <i386/isa/isapnp_machdep.h>
+#else
+#error COMPILING ISAPNP FOR UNSUPPORTED MACHINE.
 #endif
 #endif	/* NISAPNP */
 
