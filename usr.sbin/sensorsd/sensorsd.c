@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.26 2006/12/23 17:49:53 deraadt Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.27 2007/01/06 18:17:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -115,7 +115,8 @@ main(int argc, char *argv[])
 			mib[3] = type;
 			for (numt = 0; numt < sensordev.maxnumt[type]; numt++) {
 				mib[4] = numt;
-				if (sysctl(mib, 5, &sensor, &slen, NULL, 0) == -1) {
+				if (sysctl(mib, 5, &sensor, &slen, NULL, 0)
+				    == -1) {
 					if (errno != ENOENT)
 						warn("sysctl");
 					continue;
@@ -402,7 +403,7 @@ parse_config(char *cf)
 {
 	struct limits_t	 *p, *next;
 	char		 *buf = NULL, *ebuf = NULL;
-	char		  node[24];
+	char		  node[48];
 	char		**cfa;
 	int		  watch_cnt = 0;
 
