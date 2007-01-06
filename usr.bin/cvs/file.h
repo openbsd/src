@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.38 2007/01/05 07:13:49 xsa Exp $	*/
+/*	$OpenBSD: file.h,v 1.39 2007/01/06 17:09:08 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -103,6 +103,7 @@ void	cvs_file_freelist(struct cvs_flisthead *);
 struct cvs_filelist *cvs_file_get(const char *, struct cvs_flisthead *);
 
 int	cvs_file_chkign(const char *);
+int	cvs_file_cmpname(const char *, const char *);
 int	cvs_file_cmp(const char *, const char *);
 
 struct cvs_file *cvs_file_get_cf(const char *, const char *, int, int);

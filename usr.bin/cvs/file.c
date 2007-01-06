@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.164 2007/01/05 07:13:49 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.165 2007/01/06 17:09:08 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -67,8 +67,6 @@ static const char *cvs_ign_std[] = {
 
 struct ignore_head cvs_ign_pats;
 struct ignore_head dir_ign_pats;
-
-static int	cvs_file_cmpname(const char *, const char *);
 
 void
 cvs_file_init(void)
@@ -843,7 +841,7 @@ cvs_file_free(struct cvs_file *cf)
 	xfree(cf);
 }
 
-static int
+int
 cvs_file_cmpname(const char *name1, const char *name2)
 {
 	return (cvs_nocase == 0) ? (strcmp(name1, name2)) :

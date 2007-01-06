@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.22 2007/01/05 09:41:30 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.23 2007/01/06 17:09:08 xsa Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -26,9 +26,15 @@
 #define E_UNEDIT	0x04
 #define E_ALL		(E_EDIT|E_COMMIT|E_UNEDIT)
 
+#define BASE_ADD	0x01
+#define BASE_GET	0x02
+#define BASE_REMOVE	0x04
+
 static void	cvs_edit_local(struct cvs_file *);
 static void	cvs_editors_local(struct cvs_file *);
 static void	cvs_unedit_local(struct cvs_file *);
+
+static RCSNUM	*cvs_base_handle(struct cvs_file *, int);
 
 static int	edit_aflags = 0;
 
@@ -249,6 +255,8 @@ cvs_edit_local(struct cvs_file *cf)
 	if (cvs_noexec == 1)
 		return;
 
+	cvs_file_classify(cf, NULL, 0);
+
 	if ((fp = fopen(CVS_PATH_NOTIFY, "a")) == NULL)
 		fatal("cvs_edit_local: fopen: `%s': %s",
 		    CVS_PATH_NOTIFY, strerror(errno));
@@ -297,7 +305,7 @@ cvs_edit_local(struct cvs_file *cf)
 
 	xfree(bfpath);
 
-	/* XXX: Update revision number in CVS/Baserev from CVS/Entries */
+	(void)cvs_base_handle(cf, BASE_ADD);
 }
 
 static void
@@ -316,6 +324,8 @@ cvs_unedit_local(struct cvs_file *cf)
 
 	if (cvs_noexec == 1)
 		return;
+
+	cvs_file_classify(cf, NULL, 0);
 
 	bfpath = xmalloc(MAXPATHLEN);
 	if (cvs_path_cat(CVS_PATH_BASEDIR, cf->file_name, bfpath,
@@ -356,15 +366,89 @@ cvs_unedit_local(struct cvs_file *cf)
 		fatal("gethostname failed");
 
 	if (getcwd(wdir, sizeof(wdir)) == NULL)
-
 		fatal("getcwd failed");
+
 	(void)fprintf(fp, "U%s\t%s GMT\t%s\t%s\t\n",
 	    cf->file_name, timebuf, thishost, wdir);
 
 	(void)fclose(fp);
 
-	/* XXX: Update revision number in CVS/Entries from CVS/Baserev */
+	/* XXX: Update the revision number in CVS/Entries from CVS/Baserev */
 
 	if (fchmod(cf->fd, 0644) == -1)
 		fatal("cvs_unedit_local: fchmod %s", strerror(errno));
+}
+
+static RCSNUM *
+cvs_base_handle(struct cvs_file *cf, int flags)
+{
+	FILE *fp, *tfp;
+	RCSNUM *ba_rev;
+	size_t len;
+	char *filename, *filerev, *p;
+	char buf[MAXPATHLEN], rbuf[16];
+
+	cvs_log(LP_TRACE, "cvs_base_handle(%s)", cf->file_path);
+
+	tfp = NULL;
+	ba_rev = NULL;
+
+	if ((fp = fopen(CVS_PATH_BASEREV, "r")) == NULL) {
+		cvs_log(LP_ERRNO, "%s", CVS_PATH_BASEREV);
+		goto out;
+	}
+
+	if (flags & (BASE_ADD|BASE_REMOVE)) {
+		if ((tfp = fopen(CVS_PATH_BASEREVTMP, "w")) == NULL) {
+			cvs_log(LP_ERRNO, "%s", CVS_PATH_BASEREVTMP);
+			goto out;
+		}
+	}
+
+	while(fgets(buf, sizeof(buf), fp)) {
+		len = strlen(buf);
+		if (len > 0 && buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
+
+		if (buf[0] != 'B')
+			continue;
+
+		filename = buf;
+		if((p = strchr(filename, '/')) == NULL)
+			continue;
+
+		filerev = p;
+		if ((p = strchr(filerev, '/')) == NULL)
+			continue;
+
+		if (cvs_file_cmpname(filename, cf->file_path) == 0) {
+			if (flags & BASE_GET) {
+				*p = '\0';
+				if ((ba_rev = rcsnum_parse(filerev)) == NULL)
+					fatal("cvs_base_handle: rcsnum_parse");
+				*p = '/';
+				goto got_rev;
+			}
+		} else {
+			if (flags & (BASE_ADD|BASE_REMOVE))
+				(void)fprintf(tfp, "%s\n", buf);
+		}
+	}
+
+got_rev:
+	if (flags & (BASE_ADD)) {
+		(void)rcsnum_tostr(cf->file_ent->ce_rev, rbuf, sizeof(rbuf));
+		(void)fprintf(tfp, "B%s/%s/\n", cf->file_path, rbuf);
+	}
+
+out:
+	if (fp != NULL)
+		(void)fclose(fp);
+
+	if (tfp != NULL) {
+		(void)fclose(tfp);
+		(void)cvs_rename(CVS_PATH_BASEREVTMP, CVS_PATH_BASEREV);
+	}
+
+	return (ba_rev);
 }
