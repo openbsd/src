@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.144 2006/12/26 11:52:30 mbalmer Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.145 2007/01/06 00:23:52 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.144 2006/12/26 11:52:30 mbalmer Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.145 2007/01/06 00:23:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -2260,7 +2260,7 @@ print_sensor(struct sensor *s)
 			printf("%lld RPM", s->value);
 			break;
 		case SENSOR_VOLTS_DC:
-			printf("%.2f V DC", s->value / 1000000.0);
+			printf("%.2f VDC", s->value / 1000000.0);
 			break;
 		case SENSOR_AMPS:
 			printf("%.2f A", s->value / 1000000.0);
@@ -2330,7 +2330,7 @@ print_sensor(struct sensor *s)
 	}
 
 	if (s->desc[0] != '\0')
-		printf(", (%s)", s->desc);
+		printf(" (%s)", s->desc);
 
 	switch (s->status) {
 	case SENSOR_S_OK:
