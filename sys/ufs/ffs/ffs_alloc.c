@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.67 2006/12/28 20:33:24 thib Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.68 2007/01/06 23:30:42 tedu Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -240,7 +240,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	 */
 	if (bpref >= fs->fs_size)
 		bpref = 0;
-	switch ((int)fs->fs_optim) {
+	switch (fs->fs_optim) {
 	case FS_OPTSPACE:
 		/*
 		 * Allocate an exact sized fragment. Although this makes
@@ -254,8 +254,6 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		    fs->fs_cstotal.cs_nffree >
 		    fs->fs_dsize * fs->fs_minfree / (2 * 100))
 			break;
-		log(LOG_NOTICE, "%s: optimization changed from SPACE to TIME\n",
-			fs->fs_fsmnt);
 		fs->fs_optim = FS_OPTTIME;
 		break;
 	case FS_OPTTIME:
@@ -273,8 +271,6 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		if (fs->fs_cstotal.cs_nffree <
 		    fs->fs_dsize * (fs->fs_minfree - 2) / 100)
 			break;
-		log(LOG_NOTICE, "%s: optimization changed from TIME to SPACE\n",
-			fs->fs_fsmnt);
 		fs->fs_optim = FS_OPTSPACE;
 		break;
 	default:
