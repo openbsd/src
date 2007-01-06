@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.32 2006/07/01 16:23:31 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.33 2007/01/06 21:08:07 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1572,9 +1572,9 @@ pmap_growkernel(maxkvaddr)
 	paddr_t pg;
 	struct pmap *pm = pmap_kernel();
 	
-	if (maxkvaddr >= KERNEND) {
+	if (maxkvaddr >= VM_MAX_KERNEL_ADDRESS) {
 		printf("WARNING: cannot extend kernel pmap beyond %p to %p\n",
-		       (void *)KERNEND, (void *)maxkvaddr);
+		       (void *)VM_MAX_KERNEL_ADDRESS, (void *)maxkvaddr);
 		return (kbreak);
 	}
 	s = splvm();
