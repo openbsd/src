@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.85 2007/01/03 22:28:30 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.86 2007/01/07 02:39:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -24,14 +24,18 @@
 #include "remote.h"
 
 void	cvs_commit_local(struct cvs_file *);
-void	cvs_commit_check_conflicts(struct cvs_file *);
+void	cvs_commit_check_files(struct cvs_file *);
 
 static char *commit_diff_file(struct cvs_file *);
 static void commit_desc_set(struct cvs_file *);
 
 struct	cvs_flisthead files_affected;
+struct	cvs_flisthead files_added;
+struct	cvs_flisthead files_removed;
+struct	cvs_flisthead files_modified;
+
 int	conflicts_found;
-char	*logmsg;
+char	*logmsg = NULL;
 
 struct cvs_cmd cvs_cmd_commit = {
 	CVS_OP_COMMIT, 0, "commit",
@@ -83,15 +87,36 @@ cvs_commit(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	/* XXX */
+	TAILQ_INIT(&files_affected);
+	TAILQ_INIT(&files_added);
+	TAILQ_INIT(&files_removed);
+	TAILQ_INIT(&files_modified);
+	conflicts_found = 0;
+
+	cr.enterdir = NULL;
+	cr.leavedir = NULL;
+	cr.fileproc = cvs_commit_check_files;
+	cr.flags = flags;
+
+	if (argc > 0)
+		cvs_file_run(argc, argv, &cr);
+	else
+		cvs_file_run(1, &arg, &cr);
+
+	if (conflicts_found != 0)
+		fatal("%d conflicts found, please correct these first",
+		    conflicts_found);
+
+	if (logmsg == NULL && cvs_server_active == 0) {
+		logmsg = cvs_logmsg_create(&files_added, &files_removed,
+		    &files_modified);
+	}
+
 	if (logmsg == NULL)
-		fatal("please use -m or -F to specify a log message for now");
+		fatal("This shouldnt happen, honestly!");
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
-		cr.enterdir = NULL;
-		cr.leavedir = NULL;
 		cr.fileproc = cvs_client_sendfile;
-		cr.flags = flags;
 
 		if (argc > 0)
 			cvs_file_run(argc, argv, &cr);
@@ -104,37 +129,19 @@ cvs_commit(int argc, char **argv)
 		cvs_client_senddir(".");
 		cvs_client_send_request("ci");
 		cvs_client_get_responses();
-		return (0);
+	} else {
+		cr.fileproc = cvs_commit_local;
+		cvs_file_walklist(&files_affected, &cr);
+		cvs_file_freelist(&files_affected);
 	}
-
-	TAILQ_INIT(&files_affected);
-	conflicts_found = 0;
-
-	cr.enterdir = NULL;
-	cr.leavedir = NULL;
-	cr.fileproc = cvs_commit_check_conflicts;
-	cr.flags = flags;
-
-	if (argc > 0)
-		cvs_file_run(argc, argv, &cr);
-	else
-		cvs_file_run(1, &arg, &cr);
-
-	if (conflicts_found != 0)
-		fatal("%d conflicts found, please correct these first",
-		    conflicts_found);
-
-	cr.fileproc = cvs_commit_local;
-	cvs_file_walklist(&files_affected, &cr);
-	cvs_file_freelist(&files_affected);
 
 	return (0);
 }
 
 void
-cvs_commit_check_conflicts(struct cvs_file *cf)
+cvs_commit_check_files(struct cvs_file *cf)
 {
-	cvs_log(LP_TRACE, "cvs_commit_check_conflicts(%s)", cf->file_path);
+	cvs_log(LP_TRACE, "cvs_commit_check_files(%s)", cf->file_path);
 
 	/*
 	 * cvs_file_classify makes the noise for us
@@ -176,6 +183,18 @@ cvs_commit_check_conflicts(struct cvs_file *cf)
 	    cf->file_status == FILE_REMOVED ||
 	    cf->file_status == FILE_MODIFIED)
 		cvs_file_get(cf->file_path, &files_affected);
+
+	switch (cf->file_status) {
+	case FILE_ADDED:
+		cvs_file_get(cf->file_path, &files_added);
+		break;
+	case FILE_REMOVED:
+		cvs_file_get(cf->file_path, &files_removed);
+		break;
+	case FILE_MODIFIED:
+		cvs_file_get(cf->file_path, &files_modified);
+		break;
+	}
 }
 
 void
