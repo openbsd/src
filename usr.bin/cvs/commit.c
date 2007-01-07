@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.87 2007/01/07 02:44:13 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.88 2007/01/07 03:08:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -61,11 +61,7 @@ cvs_commit(int argc, char **argv)
 	while ((ch = getopt(argc, argv, cvs_cmd_commit.cmd_opts)) != -1) {
 		switch (ch) {
 		case 'F':
-			bp = cvs_buf_load(optarg, BUF_AUTOEXT);
-			if (bp == NULL)
-				fatal("failed to load commit message %s", optarg);
-			cvs_buf_putc(bp, '\0');
-			logmsg = cvs_buf_release(bp);
+			logmsg = cvs_logmsg_read(optarg);
 			break;
 		case 'f':
 			break;
