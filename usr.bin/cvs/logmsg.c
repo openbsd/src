@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.32 2007/01/07 13:33:04 jasper Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.33 2007/01/07 18:40:55 joris Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -103,6 +103,8 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 
 	if ((fd = mkstemp(fpath)) == NULL)
 		fatal("cvs_logmsg_create: mkstemp %s", strerror(errno));
+
+	cvs_worklist_add(fpath, &temp_files);
 
 	if ((fp = fdopen(fd, "w")) == NULL) {
 		(void)unlink(fpath);
