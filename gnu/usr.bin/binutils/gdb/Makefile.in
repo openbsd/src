@@ -2537,8 +2537,8 @@ sparc64-linux-tdep.o: sparc64-linux-tdep.c $(defs_h) $(gdbarch_h) $(osabi_h) \
 	$(sparc64_tdep_h)
 sparc64-nat.o: sparc64-nat.c $(defs_h) $(gdbarch_h) $(sparc64_tdep_h) \
 	$(sparc_nat_h)
-sparc64nbsd-nat.o: sparc64nbsd-nat.c $(defs_h) $(regcache_h) $(target_h) \
-	$(sparc64_tdep_h) $(sparc_nat_h) $(bsd_kvm_h)
+sparc64nbsd-nat.o: sparc64nbsd-nat.c $(defs_h) $(gdbcore_h) $(regcache_h) \
+	$(target_h) $(sparc64_tdep_h) $(sparc_nat_h) $(bsd_kvm_h)
 sparc64nbsd-tdep.o: sparc64nbsd-tdep.c $(defs_h) $(frame_h) \
 	$(frame_unwind_h) $(gdbcore_h) $(osabi_h) $(regcache_h) $(regset_h) \
 	$(symtab_h) $(objfiles_h) $(solib_svr4_h) $(trad_frame_h) \

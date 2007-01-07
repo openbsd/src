@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/sparc64.
 
-   Copyright 2004, 2005 Free Software Foundation, Inc.
+   Copyright 2004, 2005, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -189,6 +189,86 @@ sparc64obsd_sigtramp_frame_sniffer (struct frame_info *next_frame)
   return NULL;
 }
 
+/* Kernel debugging support.  */
+
+static struct sparc_frame_cache *
+sparc64obsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
+{
+  struct sparc_frame_cache *cache;
+  CORE_ADDR sp, trapframe_addr;
+  int regnum;
+
+  if (*this_cache)
+    return *this_cache;
+
+  cache = sparc_frame_cache (next_frame, this_cache);
+  gdb_assert (cache == *this_cache);
+
+  sp = frame_unwind_register_unsigned (next_frame, SPARC_SP_REGNUM);
+  trapframe_addr = sp + BIAS + 176;
+
+  cache->saved_regs = trad_frame_alloc_saved_regs (next_frame);
+
+  cache->saved_regs[SPARC64_STATE_REGNUM].addr = trapframe_addr;
+  cache->saved_regs[SPARC64_PC_REGNUM].addr = trapframe_addr + 8;
+  cache->saved_regs[SPARC64_NPC_REGNUM].addr = trapframe_addr + 16;
+
+  for (regnum = SPARC_G0_REGNUM; regnum <= SPARC_I7_REGNUM; regnum++)
+    cache->saved_regs[regnum].addr =
+      trapframe_addr + 48 + (regnum - SPARC_G0_REGNUM) * 8;
+
+  return cache;
+}
+
+static void
+sparc64obsd_trapframe_this_id (struct frame_info *next_frame,
+			       void **this_cache, struct frame_id *this_id)
+{
+  struct sparc_frame_cache *cache =
+    sparc64obsd_trapframe_cache (next_frame, this_cache);
+
+  (*this_id) = frame_id_build (cache->base, cache->pc);
+}
+
+static void
+sparc64obsd_trapframe_prev_register (struct frame_info *next_frame,
+				     void **this_cache,
+				     int regnum, int *optimizedp,
+				     enum lval_type *lvalp, CORE_ADDR *addrp,
+				     int *realnump, void *valuep)
+{
+  struct sparc_frame_cache *cache =
+    sparc64obsd_trapframe_cache (next_frame, this_cache);
+
+  trad_frame_get_prev_register (next_frame, cache->saved_regs, regnum,
+				optimizedp, lvalp, addrp, realnump, valuep);
+}
+
+static const struct frame_unwind sparc64obsd_trapframe_unwind =
+{
+  NORMAL_FRAME,
+  sparc64obsd_trapframe_this_id,
+  sparc64obsd_trapframe_prev_register
+};
+
+static const struct frame_unwind *
+sparc64obsd_trapframe_sniffer (struct frame_info *next_frame)
+{
+  ULONGEST pstate;
+  char *name;
+
+  /* Check whether we are in privileged mode, and bail out if we're not.  */
+  pstate = frame_unwind_register_unsigned (next_frame, SPARC64_PSTATE_REGNUM);
+  if ((pstate & SPARC64_PSTATE_PRIV) == 0)
+    return NULL;
+
+  find_pc_partial_function (frame_pc_unwind (next_frame), &name, NULL, NULL);
+  if (name && strcmp (name, "Lslowtrap_reenter") == 0)
+    return &sparc64obsd_trapframe_unwind;
+
+  return NULL;
+}
+
 
 static void
 sparc64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
@@ -199,6 +279,7 @@ sparc64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->sizeof_gregset = 832;
 
   frame_unwind_append_sniffer (gdbarch, sparc64obsd_sigtramp_frame_sniffer);
+  frame_unwind_append_sniffer (gdbarch, sparc64obsd_trapframe_sniffer);
 
   sparc64_init_abi (info, gdbarch);
 

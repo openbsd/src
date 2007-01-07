@@ -1,6 +1,6 @@
 /* Target-dependent code for UltraSPARC.
 
-   Copyright 2003, 2004 Free Software Foundation, Inc.
+   Copyright 2003, 2004, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -83,6 +83,18 @@ enum sparc64_regnum
   SPARC64_Q60_REGNUM		/* %q60 */
   = SPARC64_Q0_REGNUM + 15
 };
+
+/* Processor state bits.  */
+#define SPARC64_PSTATE_AG	0x001
+#define SPARC64_PSTATE_IE	0x002
+#define SPARC64_PSTATE_PRIV	0x004
+#define SPARC64_PSTATE_AM	0x008
+#define SPARC64_PSTATE_PEF	0x010
+#define SPARC64_PSTATE_RED	0x020
+#define SPARC64_PSTATE_TLE	0x100
+#define SPARC64_PSTATE_CLE	0x200
+#define SPARC64_PSTATE_PID0	0x400
+#define SPARC64_PSTATE_PID1	0x800
 
 extern void sparc64_init_abi (struct gdbarch_info info,
 			      struct gdbarch *gdbarch);

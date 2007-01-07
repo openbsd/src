@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/sparc64.
 
-   Copyright 2003, 2004 Free Software Foundation, Inc.
+   Copyright 2003, 2004, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
    Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
+#include "gdbcore.h"
 #include "regcache.h"
 #include "target.h"
 
@@ -136,20 +137,30 @@ sparc64nbsd_fpregset_supplies_p (int regnum)
 static int
 sparc64nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
+  u_int64_t state;
   int regnum;
 
   /* The following is true for NetBSD 1.6.2:
 
-     The pcb contains %sp and %pc, %psr and %wim.  From this information
-     we reconstruct the register state as it would look when we just
-     returned from cpu_switch().  */
+     The pcb contains %sp and %pc, %pstate and %cwp.  From this
+     information we reconstruct the register state as it would look
+     when we just returned from cpu_switch().  */
 
   /* The stack pointer shouldn't be zero.  */
   if (pcb->pcb_sp == 0)
     return 0;
 
+  /* If the program counter is zero, this is probably a core dump, and
+     we can get %pc from the stack.  */
+  if (pcb->pcb_pc == 0)
+      read_memory(pcb->pcb_sp + BIAS - 176 + (11 * 8), 
+		  (char *)&pcb->pcb_pc, sizeof pcb->pcb_pc);
+
   regcache_raw_supply (regcache, SPARC_SP_REGNUM, &pcb->pcb_sp);
   regcache_raw_supply (regcache, SPARC64_PC_REGNUM, &pcb->pcb_pc);
+
+  state = pcb->pcb_pstate << 8 | pcb->pcb_cwp;
+  regcache_raw_supply (regcache, SPARC64_STATE_REGNUM, &state);
 
   sparc_supply_rwindow (regcache, pcb->pcb_sp, -1);
 
