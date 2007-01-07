@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.18 2006/12/02 11:25:09 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.19 2007/01/07 13:28:50 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -216,7 +216,9 @@ wsemul_sun_attach(console, type, cookie, ccol, crow, cbcookie, defattr)
 		KASSERT(edp->console == 1);
 #endif
 	} else {
-		edp = malloc(sizeof *edp, M_DEVBUF, M_WAITOK);
+		edp = malloc(sizeof *edp, M_DEVBUF, M_NOWAIT);
+		if (edp == NULL)
+			return (NULL);
 		wsemul_sun_init(edp, type, cookie, ccol, crow, defattr);
 
 #ifdef DIAGNOSTIC

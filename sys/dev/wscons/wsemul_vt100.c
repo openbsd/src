@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.15 2006/10/19 17:35:09 dim Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.16 2007/01/07 13:28:50 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -203,7 +203,9 @@ wsemul_vt100_attach(console, type, cookie, ccol, crow, cbcookie, defattr)
 		KASSERT(edp->console == 1);
 #endif
 	} else {
-		edp = malloc(sizeof *edp, M_DEVBUF, M_WAITOK);
+		edp = malloc(sizeof *edp, M_DEVBUF, M_NOWAIT);
+		if (edp == NULL)
+			return (NULL);
 		wsemul_vt100_init(edp, type, cookie, ccol, crow, defattr);
 #ifdef DIAGNOSTIC
 		edp->console = 0;
