@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcu.c,v 1.4 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: fcu.c,v 1.5 2007/01/07 18:27:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -93,7 +93,7 @@ fcu_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < FCU_FANS; i++)
 		sc->sc_sensor[i].type = SENSOR_FANRPM;
 	for (i = 0; i < FCU_PWMS; i++) {
-		sc->sc_sensor[FCU_PWM1 + i].type = SENSOR_FANRPM;
+		sc->sc_sensor[FCU_PWM1 + i].type = SENSOR_PERCENT;
 		strlcpy(sc->sc_sensor[FCU_PWM1 + i].desc, "PWM",
 		    sizeof(sc->sc_sensor[FCU_PWM1 + i].desc));
 	}
@@ -170,7 +170,7 @@ fcu_refresh(void *arg)
 			sc->sc_sensor[FCU_PWM1 + i].flags |= SENSOR_FINVALID;
 			continue;
 		}
-		sc->sc_sensor[FCU_PWM1 + i].value = (fan[0] * 1000) / 2559;
+		sc->sc_sensor[FCU_PWM1 + i].value = (fan[0] * 100 * 1000) / 255;
 	}
 
 abort:
