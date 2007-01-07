@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.86 2007/01/07 02:39:24 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.87 2007/01/07 02:44:13 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -114,6 +114,10 @@ cvs_commit(int argc, char **argv)
 
 	if (logmsg == NULL)
 		fatal("This shouldnt happen, honestly!");
+
+	cvs_file_freelist(&files_modified);
+	cvs_file_freelist(&files_removed);
+	cvs_file_freelist(&files_added);
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cr.fileproc = cvs_client_sendfile;
