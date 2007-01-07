@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.30 2007/01/07 02:39:24 joris Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.31 2007/01/07 02:47:57 joris Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -113,7 +113,7 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 	    "removed automatically\n%s\n", CVS_LOGMSG_PREFIX, CVS_LOGMSG_LINE,
 	    CVS_LOGMSG_PREFIX, CVS_LOGMSG_PREFIX, CVS_LOGMSG_PREFIX);
 
-	if (!TAILQ_EMPTY(added)) {
+	if (added != NULL && !TAILQ_EMPTY(added)) {
 		fprintf(fp, "%s Added Files:", CVS_LOGMSG_PREFIX);
 		TAILQ_FOREACH(cf, added, flist)
 			fprintf(fp, "\n%s\t%s",
@@ -121,7 +121,7 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 		fputs("\n", fp);
 	}
 
-	if (!TAILQ_EMPTY(removed)) {
+	if (removed != NULL && !TAILQ_EMPTY(removed)) {
 		fprintf(fp, "%s Removed Files:", CVS_LOGMSG_PREFIX);
 		TAILQ_FOREACH(cf, removed, flist)
 			fprintf(fp, "\n%s\t%s",
@@ -129,7 +129,7 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 		fputs("\n", fp);
 	}
 
-	if (!TAILQ_EMPTY(modified)) {
+	if (modified != NULL && !TAILQ_EMPTY(modified)) {
 		fprintf(fp, "%s Modified Files:", CVS_LOGMSG_PREFIX);
 		TAILQ_FOREACH(cf, modified, flist)
 			fprintf(fp, "\n%s\t%s",

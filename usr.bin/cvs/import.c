@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.56 2006/12/04 09:51:21 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.57 2007/01/07 02:47:57 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -82,7 +82,10 @@ cvs_import(int argc, char **argv)
 		fatal("%s", cvs_cmd_import.cmd_synopsis);
 
 	if (logmsg == NULL)
-		fatal("please specify a logmessage using -m for now");
+		logmsg = cvs_logmsg_create(NULL, NULL, NULL);
+
+	if (logmsg == NULL)
+		fatal("This shouldnt happen, honestly!");
 
 	import_repository = argv[0];
 	vendor_tag = argv[1];
