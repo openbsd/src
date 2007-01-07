@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.29 2006/04/16 16:30:56 miod Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.30 2007/01/07 15:15:58 miod Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -77,9 +77,9 @@
 
 /* for debugging convenience */
 #ifdef EGDEBUG
-#define dprintf(x) printf x
+#define DPRINTF(x) printf x
 #else
-#define dprintf(x)
+#define DPRINTF(x)
 #endif
 
 #define EG_INLEN  	10
@@ -144,7 +144,7 @@ egprintpcb(sc)
 	int i;
 	
 	for (i = 0; i < sc->eg_pcb[1] + 2; i++)
-		dprintf(("pcb[%2d] = %x\n", i, sc->eg_pcb[i]));
+		DPRINTF(("pcb[%2d] = %x\n", i, sc->eg_pcb[i]));
 }
 
 
@@ -152,7 +152,7 @@ static __inline void
 egprintstat(b)
 	u_char b;
 {
-	dprintf(("%s %s %s %s %s %s %s\n", 
+	DPRINTF(("%s %s %s %s %s %s %s\n", 
 	    (b & EG_STAT_HCRE)?"HCRE":"",
 	    (b & EG_STAT_ACRF)?"ACRF":"",
 	    (b & EG_STAT_DIR )?"DIR ":"",
@@ -171,14 +171,14 @@ egoutPCB(sc, b)
 	bus_space_handle_t bsh = sc->sc_bsh;
 	int i;
 
-	for (i=0; i < 4000; i++) {
+	for (i = 0; i < 4000; i++) {
 		if (bus_space_read_1(bst, bsh, EG_STATUS) & EG_STAT_HCRE) {
 			bus_space_write_1(bst, bsh, EG_COMMAND, b);
 			return 0;
 		}
 		delay(10);
 	}
-	dprintf(("egoutPCB failed\n"));
+	DPRINTF(("egoutPCB failed\n"));
 	return (1);
 }
 	
@@ -215,7 +215,8 @@ egreadPCBready(sc)
 			return (0);
 		delay(5);
 	}
-	dprintf(("PCB read not ready\n"));
+	DPRINTF(("PCB read not ready status %02x\n",
+	    bus_space_read_1(bst, bsh, EG_STATUS)));
 	return (1);
 }
 	
@@ -279,7 +280,7 @@ egreadPCB(sc)
 	sc->eg_pcb[1] = bus_space_read_1(bst, bsh, EG_COMMAND);
 
 	if (sc->eg_pcb[1] > 62) {
-		dprintf(("len %d too large\n", sc->eg_pcb[1]));
+		DPRINTF(("len %d too large\n", sc->eg_pcb[1]));
 		return (1);
 	}
 	
@@ -292,9 +293,8 @@ egreadPCB(sc)
 		return (1);
 	if (egreadPCBstat(sc, EG_PCB_DONE))
 		return (1);
-	if ((b = bus_space_read_1(bst, bsh, EG_COMMAND)) != sc->eg_pcb[1] + 2)
-	    {
-		dprintf(("%d != %d\n", b, sc->eg_pcb[1] + 2));
+	if ((b = bus_space_read_1(bst, bsh, EG_COMMAND)) != sc->eg_pcb[1] + 2) {
+		DPRINTF(("%d != %d\n", b, sc->eg_pcb[1] + 2));
 		return (1);
 	}
 
@@ -321,12 +321,12 @@ egprobe(parent, match, aux)
 	int i;
 
 	if ((ia->ia_iobase & ~0x07f0) != 0) {
-		dprintf(("Weird iobase %x\n", ia->ia_iobase));
+		DPRINTF(("Weird iobase %x\n", ia->ia_iobase));
 		return (0);
 	}
 	
 	if (bus_space_map(bst, ia->ia_iobase, EG_IO_PORTS, 0, &bsh)) {
-		dprintf(("%s: can't map I/O space\n", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: can't map I/O space\n", sc->sc_dev.dv_xname));
 		return (0);
 	}
 	sc->sc_bsh = bsh;
@@ -342,7 +342,7 @@ egprobe(parent, match, aux)
 	}
 	if ((bus_space_read_1(bst, bsh, EG_STATUS) & EG_PCB_STAT) !=
 	    EG_PCB_NULL) {
-		dprintf(("eg: Reset failed\n"));
+		DPRINTF(("eg: Reset failed\n"));
 		goto lose;
 	}
 	sc->eg_pcb[0] = EG_CMD_GETINFO; /* Get Adapter Info */
@@ -396,18 +396,18 @@ egattach(parent, self, aux)
 	sc->eg_pcb[0] = EG_CMD_GETEADDR; /* Get Station address */
 	sc->eg_pcb[1] = 0;
 	if (egwritePCB(sc) != 0) {
-		dprintf(("write error\n"));
+		DPRINTF(("write error\n"));
 		return;
 	}	
 	if (egreadPCB(sc) != 0) {
-		dprintf(("read error\n"));
+		DPRINTF(("read error\n"));
 		egprintpcb(sc);
 		return;
 	}
 
 	/* check Get station address response */
 	if (sc->eg_pcb[0] != EG_RSP_GETEADDR || sc->eg_pcb[1] != 0x06) { 
-		dprintf(("parse error\n"));
+		DPRINTF(("parse error\n"));
 		egprintpcb(sc);
 		return;
 	}
@@ -419,17 +419,17 @@ egattach(parent, self, aux)
 
 	sc->eg_pcb[0] = EG_CMD_SETEADDR; /* Set station address */
 	if (egwritePCB(sc) != 0) {
-		dprintf(("write error2\n"));
+		DPRINTF(("write error2\n"));
 		return;
 	}
 	if (egreadPCB(sc) != 0) {
-		dprintf(("read error2\n"));
+		DPRINTF(("read error2\n"));
 		egprintpcb(sc);
 		return;
 	}
 	if (sc->eg_pcb[0] != EG_RSP_SETEADDR || sc->eg_pcb[1] != 0x02 ||
 	    sc->eg_pcb[2] != 0 || sc->eg_pcb[3] != 0) {
-		dprintf(("parse error2\n"));
+		DPRINTF(("parse error2\n"));
 		egprintpcb(sc);
 		return;
 	}
@@ -472,10 +472,10 @@ eginit(sc)
 	sc->eg_pcb[2] = 3; /* receive broadcast & multicast */
 	sc->eg_pcb[3] = 0;
 	if (egwritePCB(sc) != 0)
-		dprintf(("write error3\n"));
+		DPRINTF(("write error3\n"));
 
 	if (egreadPCB(sc) != 0) {
-		dprintf(("read error\n"));
+		DPRINTF(("read error3\n"));
 		egprintpcb(sc);
 	} else if (sc->eg_pcb[2] != 0 || sc->eg_pcb[3] != 0)
 		printf("%s: configure card command failed\n",
@@ -534,6 +534,7 @@ egstart(ifp)
 	caddr_t buffer;
 	int len;
 	u_short *ptr;
+	u_int i;
 
 	/* Don't transmit if interface is busy or not running */
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
@@ -566,7 +567,7 @@ loop:
 	sc->eg_pcb[6] = len; /* length of packet */
 	sc->eg_pcb[7] = len >> 8;
 	if (egwritePCB(sc) != 0) {
-		dprintf(("egwritePCB in egstart failed\n"));
+		DPRINTF(("egwritePCB in egstart failed\n"));
 		ifp->if_oerrors++;
 		ifp->if_flags &= ~IFF_OACTIVE;
 		m_freem(m0);
@@ -587,8 +588,15 @@ loop:
 	
 	for (ptr = (u_short *)sc->eg_outbuf; len > 0; len -= 2) {
 		bus_space_write_2(bst, bsh, EG_DATA, *ptr++);
-		while (!(bus_space_read_1(bst, bsh, EG_STATUS) & EG_STAT_HRDY))
-			; /* XXX need timeout here */
+		for (i = 10000; i != 0; i--) {
+			if (bus_space_read_1(bst, bsh, EG_STATUS) & EG_STAT_HRDY)
+				break;
+			delay(10);
+		}
+		if (i == 0) {
+			printf("%s: start failed\n", sc->sc_dev.dv_xname);
+			break;
+		}
 	}
 	
 	m_freem(m0);
@@ -617,24 +625,32 @@ egintr(arg)
 			    bus_space_read_1(bst, bsh, EG_CONTROL) |
 			    EG_CTL_DIR); 
 
-			for (ptr = (u_short *)sc->eg_inbuf; len > 0; len -= 2)
-			    {
-				while (!(bus_space_read_1(bst, bsh,
-				    EG_STATUS) & EG_STAT_HRDY))
-					;
+			for (ptr = (u_short *)sc->eg_inbuf; len > 0; len -= 2) {
+				for (i = 10000; i != 0; i--) {
+					if (bus_space_read_1(bst, bsh, EG_STATUS) & EG_STAT_HRDY)
+						break;
+					delay(10);
+				}
+				if (i == 0) {
+					printf("%s: receive failed\n",
+					    sc->sc_dev.dv_xname);
+					break;
+				}
 				*ptr++ = bus_space_read_2(bst, bsh, EG_DATA);
 			}
 
-			len = sc->eg_pcb[8] | (sc->eg_pcb[9] << 8);
-			egread(sc, sc->eg_inbuf, len);
+			if (len <= 0) {
+				len = sc->eg_pcb[8] | (sc->eg_pcb[9] << 8);
+				egread(sc, sc->eg_inbuf, len);
 
-			sc->eg_incount--;
-			egrecv(sc);
+				sc->eg_incount--;
+				egrecv(sc);
+			}
 			break;
 
 		case EG_RSP_SENDPACKET:
 			if (sc->eg_pcb[6] || sc->eg_pcb[7]) {
-				dprintf(("packet dropped\n"));
+				DPRINTF(("packet dropped\n"));
 				sc->sc_arpcom.ac_if.if_oerrors++;
 			} else
 				sc->sc_arpcom.ac_if.if_opackets++;
@@ -645,22 +661,22 @@ egintr(arg)
 			break;
 
 		case EG_RSP_GETSTATS:
-			dprintf(("Card Statistics\n"));
+			DPRINTF(("Card Statistics\n"));
 			bcopy(&sc->eg_pcb[2], &i, sizeof(i));
-			dprintf(("Receive Packets %d\n", i));
+			DPRINTF(("Receive Packets %d\n", i));
 			bcopy(&sc->eg_pcb[6], &i, sizeof(i));
-			dprintf(("Transmit Packets %d\n", i));
-			dprintf(("CRC errors %d\n", *(short *)&sc->eg_pcb[10]));
-			dprintf(("alignment errors %d\n",
+			DPRINTF(("Transmit Packets %d\n", i));
+			DPRINTF(("CRC errors %d\n", *(short *)&sc->eg_pcb[10]));
+			DPRINTF(("alignment errors %d\n",
 			    *(short *)&sc->eg_pcb[12]));
-			dprintf(("no resources errors %d\n",
+			DPRINTF(("no resources errors %d\n",
 			    *(short *)&sc->eg_pcb[14]));
-			dprintf(("overrun errors %d\n",
+			DPRINTF(("overrun errors %d\n",
 			    *(short *)&sc->eg_pcb[16]));
 			break;
 			
 		default:
-			dprintf(("egintr: Unknown response %x??\n",
+			DPRINTF(("egintr: Unknown response %x??\n",
 			    sc->eg_pcb[0]));
 			egprintpcb(sc);
 			break;
@@ -813,7 +829,7 @@ egioctl(ifp, cmd, data)
 			sc->eg_pcb[0] = EG_CMD_GETSTATS;
 			sc->eg_pcb[1] = 0;
 			if (egwritePCB(sc) != 0)
-				dprintf(("write error\n"));
+				DPRINTF(("write error\n"));
 			/*
 			 * XXX deal with flags changes:
 			 * IFF_MULTICAST, IFF_PROMISC,
@@ -837,7 +853,7 @@ egreset(sc)
 {
 	int s;
 
-	dprintf(("egreset()\n"));
+	DPRINTF(("egreset()\n"));
 	s = splnet();
 	egstop(sc);
 	eginit(sc);
