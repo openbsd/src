@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.17 2007/01/07 16:54:46 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.18 2007/01/07 18:13:41 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -187,9 +187,7 @@ cpu_attach(parent, dev, aux)
 	if ((1 << i) != l && l)
 		panic("bad icache line size %d", l);
 	cacheinfo.ic_l2linesize = i;
-	cacheinfo.ic_totalsize =
-	    getpropint(node, "icache-size", 0) *
-	    getpropint(node, "icache-associativity", 1);
+	cacheinfo.ic_totalsize = getpropint(node, "icache-size", 0);
 	if (cacheinfo.ic_totalsize == 0)
 		cacheinfo.ic_totalsize = l *
 		    getpropint(node, "icache-nlines", 64) *
@@ -202,9 +200,7 @@ cpu_attach(parent, dev, aux)
 	if ((1 << i) != l && l)
 		panic("bad dcache line size %d", l);
 	cacheinfo.dc_l2linesize = i;
-	cacheinfo.dc_totalsize =
-	    getpropint(node, "dcache-size", 0) *
-	    getpropint(node, "dcache-associativity", 1);
+	cacheinfo.dc_totalsize = getpropint(node, "dcache-size", 0);
 	if (cacheinfo.dc_totalsize == 0)
 		cacheinfo.dc_totalsize = l *
 		    getpropint(node, "dcache-nlines", 128) *
@@ -217,9 +213,7 @@ cpu_attach(parent, dev, aux)
 	if ((1 << i) != l && l)
 		panic("bad ecache line size %d", l);
 	cacheinfo.ec_l2linesize = i;
-	cacheinfo.ec_totalsize =
-		getpropint(node, "ecache-size", 0) *
-		getpropint(node, "ecache-associativity", 1);
+	cacheinfo.ec_totalsize = getpropint(node, "ecache-size", 0);
 	if (cacheinfo.ec_totalsize == 0)
 		cacheinfo.ec_totalsize = l *
 		    getpropint(node, "ecache-nlines", 32768) *
