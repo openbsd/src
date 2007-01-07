@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.11 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.12 2007/01/07 21:24:29 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -60,6 +60,7 @@ void lm_refresh_temp(struct lm_softc *, int);
 void lm_refresh_fanrpm(struct lm_softc *, int);
 
 void wb_refresh_sensor_data(struct lm_softc *);
+void wb_w83637hf_refresh_vcore(struct lm_softc *, int);
 void wb_refresh_nvolt(struct lm_softc *, int);
 void wb_refresh_temp(struct lm_softc *, int);
 void wb_refresh_fanrpm(struct lm_softc *, int);
@@ -125,7 +126,7 @@ struct lm_sensor w83627hf_sensors[] = {
 
 struct lm_sensor w83637hf_sensors[] = {
 	/* Voltage */
-	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
+	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, wb_w83637hf_refresh_vcore },
 	{ "+12V", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT(28, 10) },
 	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
 	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 51) },
@@ -441,6 +442,10 @@ wb_match(struct lm_softc *sc)
 		break;
 	case WB_CHIPID_W83637HF:
 		printf(": W83637HF\n");
+		sc->lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
+		if (sc->lm_readreg(sc, WB_BANK0_CONFIG) & WB_CONFIG_VMR9)
+			sc->vrm9 = 1;
+		sc->lm_writereg(sc, WB_BANKSEL, banksel);
 		lm_setup_sensors(sc, w83637hf_sensors);
 		break;
 	case WB_CHIPID_W83697HF:
@@ -613,6 +618,26 @@ wb_refresh_sensor_data(struct lm_softc *sc)
 		sc->lm_sensors[i].refresh(sc, i);
 	}
 	sc->lm_writereg(sc, WB_BANKSEL, banksel);
+}
+
+void
+wb_w83637hf_refresh_vcore(struct lm_softc *sc, int n)
+{
+	struct sensor *sensor = &sc->sensors[n];
+	int data;
+
+	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
+
+	/*
+	 * Depending on the voltage detection method,
+	 * one of the following formulas is used:
+	 *	VRM8 method: value = raw * 0.016V
+	 *	VRM9 method: value = raw * 0.00488V + 0.70V
+	 */
+	if (sc->vrm9)
+		sensor->value = (data * 4880) + 700000;
+	else
+		sensor->value = (data * 16000);
 }
 
 void
