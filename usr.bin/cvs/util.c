@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.95 2007/01/03 14:08:09 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.96 2007/01/07 01:53:12 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -368,7 +368,7 @@ cvs_freeargv(char **argv, int argc)
  * cvs_exec()
  */
 int
-cvs_exec(int argc, char **argv, int fds[3])
+cvs_exec(int argc, char **argv)
 {
 	int ret;
 	pid_t pid;
