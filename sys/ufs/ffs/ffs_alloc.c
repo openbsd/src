@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.68 2007/01/06 23:30:42 tedu Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.69 2007/01/07 15:39:22 sturm Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -134,23 +134,29 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 	if ((error = ufs_quota_alloc_blocks(ip, btodb(size), cred)) != 0)
 		return (error);
 
+	/*
+	 * Start allocation in the preferred block's cylinder group or
+	 * the file's inode's cylinder group if no preferred block was
+	 * specified.
+	 */
 	if (bpref >= fs->fs_size)
 		bpref = 0;
 	if (bpref == 0)
 		cg = ino_to_cg(fs, ip->i_number);
 	else
 		cg = dtog(fs, bpref);
+
+	/* Try allocating a block. */
 	bno = (daddr_t)ffs_hashalloc(ip, cg, (long)bpref, size, ffs_alloccg);
 	if (bno > 0) {
+		/* allocation successful, update inode data */
 		DIP_ADD(ip, blocks, btodb(size));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		*bnp = bno;
 		return (0);
 	}
 
-	/*
-	 * Restore user's disk quota because allocation failed.
-	 */
+	/* Restore user's disk quota because allocation failed. */
 	(void) ufs_quota_free_blocks(ip, btodb(size), cred);
 
 nospace:
@@ -1280,6 +1286,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 	fs = ip->i_fs;
 	if (fs->fs_cs(fs, cg).cs_nbfree == 0 && size == fs->fs_bsize)
 		return (0);
+	/* read cylinder group block */
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
 		(int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
@@ -1296,6 +1303,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 	cgp->cg_ffs2_time = cgp->cg_time = time_second;
 
 	if (size == fs->fs_bsize) {
+		/* allocate and return a complete data block */
 		bno = ffs_alloccgblk(ip, bp, bpref);
 		bdwrite(bp);
 		return (bno);
