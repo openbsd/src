@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.39 2006/11/28 16:56:50 dlg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.40 2007/01/07 15:14:32 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -94,13 +94,6 @@
 #include <scsi/scsiconf.h>
 
 #include <uvm/uvm_extern.h>
-
-#include "sgc.h"
-
-#if NSGC > 0
-#include <hp300/dev/sgcreg.h>
-#include <hp300/dev/sgcvar.h>
-#endif
 
 /*
  * The following several variables are related to
