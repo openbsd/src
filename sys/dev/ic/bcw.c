@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.33 2007/01/06 20:33:09 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.34 2007/01/07 00:29:44 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -106,6 +106,8 @@ int		bcw_load_firmware(struct bcw_softc *);
 int		bcw_write_initvals(struct bcw_softc *,
 		    const struct bcw_initval *, const unsigned int);
 int		bcw_load_initvals(struct bcw_softc *);
+void		bcw_leds_switch_all(struct bcw_softc *, int);
+int		bcw_gpio_init(struct bcw_softc *);
 
 struct cfdriver bcw_cd = {
 	NULL, "bcw", DV_IFNET
@@ -1152,6 +1154,10 @@ bcw_init(struct ifnet *ifp)
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
+
+	/* initialize GPIO */
+	if ((error = bcw_gpio_init(sc)))
+		return (error);
 
 	/* load init values */
 	if ((error = bcw_load_initvals(sc)))
@@ -2502,4 +2508,69 @@ bcw_load_initvals(struct bcw_softc *sc)
 
 fail:	free(ucode, M_DEVBUF);
 	return (EIO);
+}
+
+void
+bcw_leds_switch_all(struct bcw_softc *sc, int on)
+{
+	struct bcw_led *led;
+	uint16_t ledctl;
+	int i, bit_on;
+
+	ledctl = BCW_READ16(sc, BCW_GPIO_CTRL);
+
+	for (i = 0; i < BCW_NR_LEDS; i++) {
+		led = &(sc->leds[i]);
+		if (led->behaviour == BCW_LED_INACTIVE)
+			continue;
+		if (on)
+			bit_on = led->activelow ? 0 : 1;
+		else
+			bit_on = led->activelow ? 0 : 1;
+		if (bit_on)
+			ledctl |= (1 << i);
+		else
+			ledctl &= ~(1 << i);
+	}
+
+	BCW_WRITE16(sc, BCW_GPIO_CTRL, ledctl);
+}
+
+int
+bcw_gpio_init(struct bcw_softc *sc)
+{
+	uint32_t mask, set;
+
+	BCW_WRITE(sc, BCW_SBF, BCW_READ(sc, BCW_SBF) & 0xffff3fff);
+
+	bcw_leds_switch_all(sc, 0);
+
+	BCW_WRITE16(sc, BCW_GPIO_MASK, BCW_READ16(sc, BCW_GPIO_MASK) | 0x000f);
+
+	mask = 0x0000001f;
+	set = 0x0000000f;
+
+	if (sc->sc_chipid == 0x4301) {
+		mask |= 0x0060;
+		set |= 0x0060;
+	}
+	if (0) { /* FIXME conditional unknown */
+		BCW_WRITE16(sc, BCW_GPIO_MASK, BCW_READ16(sc, BCW_GPIO_MASK) |
+		    0x0100);
+		mask |= 0x0180;
+		set |= 0x0180;
+	}
+	if (sc->sc_boardflags & BCW_BF_PACTRL) {
+		BCW_WRITE16(sc, BCW_GPIO_MASK, BCW_READ16(sc, BCW_GPIO_MASK) |
+		    0x0200);
+		mask |= 0x0200;
+		set |= 0x0200;
+	}
+	if (sc->sc_chiprev >= 2)
+		mask |= 0x0010; /* FIXME this is redundant */
+
+	BCW_WRITE(sc, BCW_GPIO_CTRL, (BCW_READ(sc, BCW_GPIO_CTRL) & mask) |
+	    set);
+
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.9 2007/01/03 18:54:29 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.10 2007/01/07 00:29:44 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -333,6 +333,13 @@
 #define BCW_UCODE_DATE			0x0004
 #define BCW_UCODE_TIME			0x0006
 #define BCW_UCODE_STATUS		0x0040
+
+/* GPIO */
+#define BCW_GPIO_MASK			0x49e
+#define BCW_GPIO_CTRL			0x6c
+
+/* LEDS */
+#define BCW_NR_LEDS			4
 
 #define BCW_READ16(sc, reg) \
 	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (reg))

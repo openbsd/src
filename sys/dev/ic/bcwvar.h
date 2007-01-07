@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.12 2007/01/05 07:09:15 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.13 2007/01/07 00:29:44 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -34,6 +34,42 @@ struct bcw_initval {
         uint16_t	size;
         uint32_t	value;
 } __packed;
+
+struct bcw_led {
+	uint8_t		behaviour:7;
+	uint8_t		activelow:1;
+	unsigned long	blink_interval;
+};
+enum {
+	BCW_LED_OFF,
+	BCW_LED_ON,
+	BCW_LED_ACTIVITY,
+	BCW_LED_RADIO_ALL,
+	BCW_LED_RADIO_A,
+	BCW_LED_RADIO_B,
+	BCW_LED_MODE_BG,
+	BCW_LED_TRANSFER,
+	BCW_LED_APTRANSFER,
+	BCW_LED_WEIRD, /* FIXME */
+	BCW_LED_ASSOC,
+	BCW_LED_INACTIVE,
+
+	/*
+	 * Behaviour values for testing.
+	 * With these values it is easier to figure out
+	 * the real behaviour of leds, in case the SPROM
+	 * is missing information.
+	 */
+	BCW_LED_TEST_BLINKSLOW,
+	BCW_LED_TEST_BLINKMEDIUM,
+	BCW_LED_TEST_BLINKFAST,
+
+	/* misc values for BCM4303 */
+	BCW_LED_BCM4303_0 = 0x2B,
+	BCW_LED_BCM4303_1 = 0x78,
+	BCW_LED_BCM4303_2 = 0x2E,
+	BCW_LED_BCM4303_3 = 0x19,
+};
 
 #define BCW_MAX_RADIOS		2
 struct bcw_radio {
@@ -199,6 +235,7 @@ struct bcw_softc {
 	struct bcw_core		*sc_core_common;
 	struct bcw_core		*sc_core_80211;
 	struct bcw_core		*sc_core_bus;	/* PCI or cardbus */
+	struct bcw_led		leds[BCW_NR_LEDS];
 };
 
 void	bcw_attach(struct bcw_softc *);
