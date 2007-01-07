@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofbreg.h,v 1.2 2005/01/24 21:36:39 miod Exp $	*/
+/*	$OpenBSD: diofbreg.h,v 1.3 2007/01/07 15:13:52 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -90,15 +90,3 @@ struct	diofbreg {
 	u_int8_t	fbolsb;		/* frame buffer offset LSB	0x5f */
 };
 #endif
-
-/*
- * Offsets into the display ROM that is part of the first 4K of each
- * DIO display device.
- */
-#define FONTROM		0x3b	/* Offset of font information structure. */
-#define FONTADDR	0x4	/* Offset from FONTROM to font address. */
-#define FONTHEIGHT	0x0	/* Offset from font address to font height. */
-#define FONTWIDTH	0x2	/* Offset from font address to font width. */
-#define FONTDATA	0xA	/* Offset from font address to font glyphs. */
-
-#define FBBASE(fb)	((volatile char *)(fb)->fbkva)
