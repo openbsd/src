@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_chars.c,v 1.4 2004/04/02 04:39:51 deraadt Exp $ */
+/* $OpenBSD: wsemul_vt100_chars.c,v 1.5 2007/01/07 13:31:36 miod Exp $ */
 /* $NetBSD: wsemul_vt100_chars.c,v 1.4 1999/02/20 18:20:02 drochner Exp $ */
 
 /*
@@ -80,15 +80,21 @@ vt100_initchartables(edp)
 {
 	int i;
 
-	for (i = 0; i < 128; i++)
-		(*edp->emulops->mapchar)(edp->emulcookie, 128 + i,
-					 &edp->isolatin1tab[i]);
-	for (i = 0; i < 128; i++)
-		(*edp->emulops->mapchar)(edp->emulcookie, decspcgr2uni[i],
-					 &edp->decgraphtab[i]);
-	for (i = 0; i < 128; i++)
-		(*edp->emulops->mapchar)(edp->emulcookie, dectech2uni[i],
-					 &edp->dectechtab[i]);
+	if (edp->isolatin1tab != NULL)
+		for (i = 0; i < 128; i++)
+			(*edp->emulops->mapchar)(edp->emulcookie, 128 + i,
+			    &edp->isolatin1tab[i]);
+
+	if (edp->decgraphtab != NULL)
+		for (i = 0; i < 128; i++)
+			(*edp->emulops->mapchar)(edp->emulcookie,
+			    decspcgr2uni[i], &edp->decgraphtab[i]);
+
+	if (edp->dectechtab != NULL)
+		for (i = 0; i < 128; i++)
+			(*edp->emulops->mapchar)(edp->emulcookie,
+			    dectech2uni[i], &edp->dectechtab[i]);
+
 	vt100_setnrc(edp, 0);
 }
 
@@ -137,18 +143,24 @@ static const struct {
 	0x00e8, 0x00f4, 0x00e4, 0x00f6, 0x00fc, 0x00fb}},
 };
 
-void
+int
 vt100_setnrc(edp, nrc)
 	struct wsemul_vt100_emuldata *edp;
 	int nrc;
 {
 	int i;
 
-	KASSERT(nrc < sizeof(nrctable) / sizeof(nrctable[0]));
+	if (edp->nrctab == NULL)
+		return (0);
+
+	if (nrc < 0 || nrc >= sizeof(nrctable) / sizeof(nrctable[0]))
+		return (ERANGE);
 
 	for (i = 0; i < 128; i++)
 		(*edp->emulops->mapchar)(edp->emulcookie, i, &edp->nrctab[i]);
 	for (i = 0; i < 12; i++)
 		(*edp->emulops->mapchar)(edp->emulcookie, nrctable[nrc].c[i],
-					 &edp->nrctab[nrcovlpos[i]]);
+		    &edp->nrctab[nrcovlpos[i]]);
+
+	return (0);
 }

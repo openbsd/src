@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.16 2007/01/07 13:28:50 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.17 2007/01/07 13:31:36 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -176,12 +176,12 @@ wsemul_vt100_cnattach(type, cookie, ccol, crow, defattr)
 	if (res)
 		edp->kernattr = defattr;
 
-	edp->tabs = 0;
-	edp->dblwid = 0;
+	edp->tabs = NULL;
+	edp->dblwid = NULL;
 	edp->dw = 0;
 	edp->dcsarg = 0;
-	edp->isolatin1tab = edp->decgraphtab = edp->dectechtab = 0;
-	edp->nrctab = 0;
+	edp->isolatin1tab = edp->decgraphtab = edp->dectechtab = NULL;
+	edp->nrctab = NULL;
 	wsemul_vt100_reset(edp);
 	return (edp);
 }
@@ -215,7 +215,8 @@ wsemul_vt100_attach(console, type, cookie, ccol, crow, cbcookie, defattr)
 
 	edp->tabs = malloc(edp->ncols, M_DEVBUF, M_NOWAIT);
 	edp->dblwid = malloc(edp->nrows, M_DEVBUF, M_NOWAIT);
-	memset(edp->dblwid, 0, edp->nrows);
+	if (edp->dblwid != NULL)
+		memset(edp->dblwid, 0, edp->nrows);
 	edp->dw = 0;
 	edp->dcsarg = malloc(DCS_MAXLEN, M_DEVBUF, M_NOWAIT);
 	edp->isolatin1tab = malloc(128 * sizeof(int), M_DEVBUF, M_NOWAIT);
@@ -236,7 +237,7 @@ wsemul_vt100_detach(cookie, crowp, ccolp)
 
 	*crowp = edp->crow;
 	*ccolp = edp->ccol;
-#define f(ptr) if (ptr) {free(ptr, M_DEVBUF); ptr = 0;}
+#define f(ptr) if (ptr) {free(ptr, M_DEVBUF); ptr = NULL;}
 	f(edp->tabs)
 	f(edp->dblwid)
 	f(edp->dcsarg)
@@ -295,7 +296,7 @@ wsemul_vt100_reset(edp)
 	}
 	edp->dcspos = 0;
 	edp->dcstype = 0;
-	edp->chartab_G[0] = 0;
+	edp->chartab_G[0] = NULL;
 	edp->chartab_G[1] = edp->nrctab; /* ??? */
 	edp->chartab_G[2] = edp->isolatin1tab;
 	edp->chartab_G[3] = edp->isolatin1tab;
@@ -376,24 +377,24 @@ wsemul_vt100_output_c0c1(edp, c, kernel)
 	u_int n;
 
 	switch (c) {
-	    case ASCII_NUL:
-	    default:
+	case ASCII_NUL:
+	default:
 		/* ignore */
 		break;
-	    case ASCII_BEL:
+	case ASCII_BEL:
 		wsdisplay_emulbell(edp->cbcookie);
 		break;
-	    case ASCII_BS:
+	case ASCII_BS:
 		if (edp->ccol > 0) {
 			edp->ccol--;
 			edp->flags &= ~VTFL_LASTCHAR;
 		}
 		break;
-	    case ASCII_CR:
+	case ASCII_CR:
 		edp->ccol = 0;
 		edp->flags &= ~VTFL_LASTCHAR;
 		break;
-	    case ASCII_HT:
+	case ASCII_HT:
 		if (edp->tabs) {
 			if (!COLS_LEFT)
 				break;
@@ -405,13 +406,13 @@ wsemul_vt100_output_c0c1(edp, c, kernel)
 		}
 		edp->ccol = n;
 		break;
-	    case ASCII_SO: /* LS1 */
+	case ASCII_SO: /* LS1 */
 		edp->chartab0 = 1;
 		break;
-	    case ASCII_SI: /* LS0 */
+	case ASCII_SI: /* LS0 */
 		edp->chartab0 = 0;
 		break;
-	    case ASCII_ESC:
+	case ASCII_ESC:
 		if (kernel) {
 			printf("wsemul_vt100_output_c0c1: ESC in kernel "
 			    "output ignored\n");
@@ -427,27 +428,27 @@ wsemul_vt100_output_c0c1(edp, c, kernel)
 		}
 		break;
 #if 0
-	    case CSI: /* 8-bit */
+	case CSI: /* 8-bit */
 		/* XXX cancel current escape sequence */
 		edp->nargs = 0;
 		memset(edp->args, 0, sizeof (edp->args));
 		edp->modif1 = edp->modif2 = '\0';
 		edp->state = VT100_EMUL_STATE_CSI;
 		break;
-	    case DCS: /* 8-bit */
+	case DCS: /* 8-bit */
 		/* XXX cancel current escape sequence */
 		edp->nargs = 0;
 		memset(edp->args, 0, sizeof (edp->args));
 		edp->state = VT100_EMUL_STATE_DCS;
 		break;
-	    case ST: /* string end 8-bit */
+	case ST: /* string end 8-bit */
 		/* XXX only in VT100_EMUL_STATE_STRING */
 		wsemul_vt100_handle_dcs(edp);
 		return (VT100_EMUL_STATE_NORMAL);
 #endif
-	    case ASCII_LF:
-	    case ASCII_VT:
-	    case ASCII_FF:
+	case ASCII_LF:
+	case ASCII_VT:
+	case ASCII_FF:
 		wsemul_vt100_nextline(edp);
 		break;
 	}
@@ -462,13 +463,13 @@ wsemul_vt100_output_esc(edp, c)
 	int i;
 
 	switch (c) {
-	    case '[': /* CSI */
+	case '[': /* CSI */
 		edp->nargs = 0;
 		memset(edp->args, 0, sizeof (edp->args));
 		edp->modif1 = edp->modif2 = '\0';
 		newstate = VT100_EMUL_STATE_CSI;
 		break;
-	    case '7': /* DECSC */
+	case '7': /* DECSC */
 		edp->flags |= VTFL_SAVEDCURS;
 		edp->savedcursor_row = edp->crow;
 		edp->savedcursor_col = edp->ccol;
@@ -482,7 +483,7 @@ wsemul_vt100_output_esc(edp, c)
 		edp->savedchartab0 = edp->chartab0;
 		edp->savedchartab1 = edp->chartab1;
 		break;
-	    case '8': /* DECRC */
+	case '8': /* DECRC */
 		if ((edp->flags & VTFL_SAVEDCURS) == 0)
 			break;
 		edp->crow = edp->savedcursor_row;
@@ -497,44 +498,44 @@ wsemul_vt100_output_esc(edp, c)
 		edp->chartab0 = edp->savedchartab0;
 		edp->chartab1 = edp->savedchartab1;
 		break;
-	    case '=': /* DECKPAM application mode */
+	case '=': /* DECKPAM application mode */
 		edp->flags |= VTFL_APPLKEYPAD;
 		break;
-	    case '>': /* DECKPNM numeric mode */
+	case '>': /* DECKPNM numeric mode */
 		edp->flags &= ~VTFL_APPLKEYPAD;
 		break;
-	    case 'E': /* NEL */
+	case 'E': /* NEL */
 		edp->ccol = 0;
 		/* FALLTHRU */
-	    case 'D': /* IND */
+	case 'D': /* IND */
 		wsemul_vt100_nextline(edp);
 		break;
-	    case 'H': /* HTS */
-		KASSERT(edp->tabs != 0);
-		edp->tabs[edp->ccol] = 1;
+	case 'H': /* HTS */
+		if (edp->tabs != NULL)
+			edp->tabs[edp->ccol] = 1;
 		break;
-	    case '~': /* LS1R */
+	case '~': /* LS1R */
 		edp->chartab1 = 1;
 		break;
-	    case 'n': /* LS2 */
+	case 'n': /* LS2 */
 		edp->chartab0 = 2;
 		break;
-	    case '}': /* LS2R */
+	case '}': /* LS2R */
 		edp->chartab1 = 2;
 		break;
-	    case 'o': /* LS3 */
+	case 'o': /* LS3 */
 		edp->chartab0 = 3;
 		break;
-	    case '|': /* LS3R */
+	case '|': /* LS3R */
 		edp->chartab1 = 3;
 		break;
-	    case 'N': /* SS2 */
+	case 'N': /* SS2 */
 		edp->sschartab = 2;
 		break;
-	    case 'O': /* SS3 */
+	case 'O': /* SS3 */
 		edp->sschartab = 3;
 		break;
-	    case 'M': /* RI */
+	case 'M': /* RI */
 		if (ROWS_ABOVE > 0) {
 			edp->crow--;
 			CHECK_DW;
@@ -542,37 +543,37 @@ wsemul_vt100_output_esc(edp, c)
 		}
 		wsemul_vt100_scrolldown(edp, 1);
 		break;
-	    case 'P': /* DCS */
+	case 'P': /* DCS */
 		edp->nargs = 0;
 		memset(edp->args, 0, sizeof (edp->args));
 		newstate = VT100_EMUL_STATE_DCS;
 		break;
-	    case 'c': /* RIS */
+	case 'c': /* RIS */
 		wsemul_vt100_reset(edp);
 		wsemul_vt100_ed(edp, 2);
 		edp->ccol = edp->crow = 0;
 		break;
-	    case '(': case ')': case '*': case '+': /* SCS */
+	case '(': case ')': case '*': case '+': /* SCS */
 		edp->designating = c - '(';
 		newstate = VT100_EMUL_STATE_SCS94;
 		break;
-	    case '-': case '.': case '/': /* SCS */
+	case '-': case '.': case '/': /* SCS */
 		edp->designating = c - '-' + 1;
 		newstate = VT100_EMUL_STATE_SCS96;
 		break;
-	    case '#':
+	case '#':
 		newstate = VT100_EMUL_STATE_ESC_HASH;
 		break;
-	    case ' ': /* 7/8 bit */
+	case ' ': /* 7/8 bit */
 		newstate = VT100_EMUL_STATE_ESC_SPC;
 		break;
-	    case ']': /* OSC operating system command */
-	    case '^': /* PM privacy message */
-	    case '_': /* APC application program command */
+	case ']': /* OSC operating system command */
+	case '^': /* PM privacy message */
+	case '_': /* APC application program command */
 		/* ignored */
 		newstate = VT100_EMUL_STATE_STRING;
 		break;
-	    case '<': /* exit VT52 mode - ignored */
+	case '<': /* exit VT52 mode - ignored */
 		break;
 	    default:
 #ifdef VT100_PRINTUNKNOWN
@@ -592,23 +593,23 @@ wsemul_vt100_output_scs94(edp, c)
 	u_int newstate = VT100_EMUL_STATE_NORMAL;
 
 	switch (c) {
-	    case '%': /* probably DEC supplemental graphic */
+	case '%': /* probably DEC supplemental graphic */
 		newstate = VT100_EMUL_STATE_SCS94_PERCENT;
 		break;
-	    case 'A': /* british / national */
+	case 'A': /* british / national */
 		edp->chartab_G[edp->designating] = edp->nrctab;
 		break;
-	    case 'B': /* ASCII */
+	case 'B': /* ASCII */
 		edp->chartab_G[edp->designating] = 0;
 		break;
-	    case '<': /* user preferred supplemental */
+	case '<': /* user preferred supplemental */
 		/* XXX not really "user" preferred */
 		edp->chartab_G[edp->designating] = edp->isolatin1tab;
 		break;
-	    case '0': /* DEC special graphic */
+	case '0': /* DEC special graphic */
 		edp->chartab_G[edp->designating] = edp->decgraphtab;
 		break;
-	    case '>': /* DEC tech */
+	case '>': /* DEC tech */
 		edp->chartab_G[edp->designating] = edp->dectechtab;
 		break;
 	    default:
@@ -626,7 +627,7 @@ wsemul_vt100_output_scs94_percent(edp, c)
 	u_char c;
 {
 	switch (c) {
-	    case '5': /* DEC supplemental graphic */
+	case '5': /* DEC supplemental graphic */
 		/* XXX there are differences */
 		edp->chartab_G[edp->designating] = edp->isolatin1tab;
 		break;
@@ -648,44 +649,45 @@ wsemul_vt100_output_scs96(edp, c)
 	int nrc;
 
 	switch (c) {
-	    case '%': /* probably portugese */
+	case '%': /* probably portugese */
 		newstate = VT100_EMUL_STATE_SCS96_PERCENT;
 		break;
-	    case 'A': /* ISO-latin-1 supplemental */
+	case 'A': /* ISO-latin-1 supplemental */
 		edp->chartab_G[edp->designating] = edp->isolatin1tab;
 		break;
-	    case '4': /* dutch */
+	case '4': /* dutch */
 		nrc = 1;
 		goto setnrc;
-	    case '5': case 'C': /* finnish */
+	case '5': case 'C': /* finnish */
 		nrc = 2;
 		goto setnrc;
-	    case 'R': /* french */
+	case 'R': /* french */
 		nrc = 3;
 		goto setnrc;
-	    case 'Q': /* french canadian */
+	case 'Q': /* french canadian */
 		nrc = 4;
 		goto setnrc;
-	    case 'K': /* german */
+	case 'K': /* german */
 		nrc = 5;
 		goto setnrc;
-	    case 'Y': /* italian */
+	case 'Y': /* italian */
 		nrc = 6;
 		goto setnrc;
-	    case 'E': case '6': /* norwegian / danish */
+	case 'E': case '6': /* norwegian / danish */
 		nrc = 7;
 		goto setnrc;
-	    case 'Z': /* spanish */
+	case 'Z': /* spanish */
 		nrc = 9;
 		goto setnrc;
-	    case '7': case 'H': /* swedish */
+	case '7': case 'H': /* swedish */
 		nrc = 10;
 		goto setnrc;
-	    case '=': /* swiss */
+	case '=': /* swiss */
 		nrc = 11;
 setnrc:
-		vt100_setnrc(edp, nrc); /* what table ??? */
-		break;
+		if (vt100_setnrc(edp, nrc) == 0) /* what table ??? */
+			break;
+		/* else FALLTHROUGH */
 	    default:
 #ifdef VT100_PRINTUNKNOWN
 		printf("ESC%c%c unknown\n", edp->designating + '-' - 1, c);
@@ -701,12 +703,13 @@ wsemul_vt100_output_scs96_percent(edp, c)
 	u_char c;
 {
 	switch (c) {
-	    case '6': /* portugese */
-		vt100_setnrc(edp, 8);
-		break;
+	case '6': /* portugese */
+		if (vt100_setnrc(edp, 8) == 0)
+			break;
+		/* else FALLTHROUGH */
 	    default:
 #ifdef VT100_PRINTUNKNOWN
-		printf("ESC%c%%%c unknown\n", edp->designating + '-', c);
+		printf("ESC%c%%%c unknown\n", edp->designating + '-' - 1, c);
 #endif
 		break;
 	}
@@ -719,8 +722,8 @@ wsemul_vt100_output_esc_spc(edp, c)
 	u_char c;
 {
 	switch (c) {
-	    case 'F': /* 7-bit controls */
-	    case 'G': /* 8-bit controls */
+	case 'F': /* 7-bit controls */
+	case 'G': /* 8-bit controls */
 #ifdef VT100_PRINTNOTIMPL
 		printf("ESC<SPC>%c ignored\n", c);
 #endif
@@ -764,15 +767,15 @@ wsemul_vt100_output_dcs(edp, c)
 	u_int newstate = VT100_EMUL_STATE_DCS;
 
 	switch (c) {
-	    case '0': case '1': case '2': case '3': case '4':
-	    case '5': case '6': case '7': case '8': case '9':
+	case '0': case '1': case '2': case '3': case '4':
+	case '5': case '6': case '7': case '8': case '9':
 		/* argument digit */
 		if (edp->nargs > VT100_EMUL_NARGS - 1)
 			break;
 		edp->args[edp->nargs] = (edp->args[edp->nargs] * 10) +
 		    (c - '0');
 		break;
-	    case ';': /* argument terminator */
+	case ';': /* argument terminator */
 		edp->nargs++;
 		break;
 	    default:
@@ -785,13 +788,13 @@ wsemul_vt100_output_dcs(edp, c)
 		}
 		newstate = VT100_EMUL_STATE_STRING;
 		switch (c) {
-		    case '$':
+		case '$':
 			newstate = VT100_EMUL_STATE_DCS_DOLLAR;
 			break;
-		    case '{': /* DECDLD soft charset */
-		    case '!': /* DECRQUPSS user preferred supplemental set */
+		case '{': /* DECDLD soft charset */
+		case '!': /* DECRQUPSS user preferred supplemental set */
 			/* 'u' must follow - need another state */
-		    case '|': /* DECUDK program F6..F20 */
+		case '|': /* DECUDK program F6..F20 */
 #ifdef VT100_PRINTNOTIMPL
 			printf("DCS%c ignored\n", c);
 #endif
@@ -813,22 +816,22 @@ wsemul_vt100_output_dcs_dollar(edp, c)
 	u_char c;
 {
 	switch (c) {
-	    case 'p': /* DECRSTS terminal state restore */
-	    case 'q': /* DECRQSS control function request */
+	case 'p': /* DECRSTS terminal state restore */
+	case 'q': /* DECRQSS control function request */
 #ifdef VT100_PRINTNOTIMPL
 		printf("DCS$%c ignored\n", c);
 #endif
 		break;
-	    case 't': /* DECRSPS restore presentation state */
+	case 't': /* DECRSPS restore presentation state */
 		switch (ARG(0)) {
-		    case 0: /* error */
+		case 0: /* error */
 			break;
-		    case 1: /* cursor information restore */
+		case 1: /* cursor information restore */
 #ifdef VT100_PRINTNOTIMPL
 			printf("DCS1$t ignored\n");
 #endif
 			break;
-		    case 2: /* tab stop restore */
+		case 2: /* tab stop restore */
 			edp->dcspos = 0;
 			edp->dcstype = DCSTYPE_TABRESTORE;
 			break;
@@ -856,8 +859,8 @@ wsemul_vt100_output_esc_hash(edp, c)
 	int i;
 
 	switch (c) {
-	    case '5': /*  DECSWL single width, single height */
-		if (edp->dw) {
+	case '5': /*  DECSWL single width, single height */
+		if (edp->dblwid != NULL && edp->dw != 0) {
 			for (i = 0; i < edp->ncols / 2; i++)
 				(*edp->emulops->copycols)(edp->emulcookie,
 							  edp->crow,
@@ -869,10 +872,10 @@ wsemul_vt100_output_esc_hash(edp, c)
 			edp->dw = 0;
 		}
 		break;
-	    case '6': /*  DECDWL double width, single height */
-	    case '3': /*  DECDHL double width, double height, top half */
-	    case '4': /*  DECDHL double width, double height, bottom half */
-		if (!edp->dw) {
+	case '6': /*  DECDWL double width, single height */
+	case '3': /*  DECDHL double width, double height, top half */
+	case '4': /*  DECDHL double width, double height, bottom half */
+		if (edp->dblwid != NULL && edp->dw == 0) {
 			for (i = edp->ncols / 2 - 1; i >= 0; i--)
 				(*edp->emulops->copycols)(edp->emulcookie,
 							  edp->crow,
@@ -888,7 +891,7 @@ wsemul_vt100_output_esc_hash(edp, c)
 				edp->ccol = (edp->ncols >> 1) - 1;
 		}
 		break;
-	    case '8': { /* DECALN */
+	case '8': { /* DECALN */
 		int i, j;
 		for (i = 0; i < edp->nrows; i++)
 			for (j = 0; j < edp->ncols; j++)
@@ -915,25 +918,25 @@ wsemul_vt100_output_csi(edp, c)
 	u_int newstate = VT100_EMUL_STATE_CSI;
 
 	switch (c) {
-	    case '0': case '1': case '2': case '3': case '4':
-	    case '5': case '6': case '7': case '8': case '9':
+	case '0': case '1': case '2': case '3': case '4':
+	case '5': case '6': case '7': case '8': case '9':
 		/* argument digit */
 		if (edp->nargs > VT100_EMUL_NARGS - 1)
 			break;
 		edp->args[edp->nargs] = (edp->args[edp->nargs] * 10) +
 		    (c - '0');
 		break;
-	    case ';': /* argument terminator */
+	case ';': /* argument terminator */
 		edp->nargs++;
 		break;
-	    case '?': /* DEC specific */
-	    case '>': /* DA query */
+	case '?': /* DEC specific */
+	case '>': /* DA query */
 		edp->modif1 = c;
 		break;
-	    case '!':
-	    case '"':
-	    case '$':
-	    case '&':
+	case '!':
+	case '"':
+	case '$':
+	case '&':
 		edp->modif2 = c;
 		break;
 	    default: /* end of escape sequence */

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100var.h,v 1.5 2004/12/23 21:47:47 miod Exp $ */
+/* $OpenBSD: wsemul_vt100var.h,v 1.6 2007/01/07 13:31:36 miod Exp $ */
 /* $NetBSD: wsemul_vt100var.h,v 1.5 2000/04/28 21:56:17 mycroft Exp $ */
 
 /*
@@ -138,4 +138,4 @@ void wsemul_vt100_handle_dcs(struct wsemul_vt100_emuldata *);
 int wsemul_vt100_translate(void *cookie, keysym_t, char **);
 
 void vt100_initchartables(struct wsemul_vt100_emuldata *);
-void vt100_setnrc(struct wsemul_vt100_emuldata *, int);
+int vt100_setnrc(struct wsemul_vt100_emuldata *, int);
