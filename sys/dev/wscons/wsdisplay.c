@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.74 2006/12/02 18:16:14 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.75 2007/01/07 13:28:04 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -288,26 +288,21 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 		 * Tell the emulation about the callback argument.
 		 * The other stuff is already there.
 		 */
-		(*dconf->wsemul->attach)(1, 0, 0, 0, 0, scr, 0);
+		(void)(*dconf->wsemul->attach)(1, 0, 0, 0, 0, scr, 0);
 	} else { /* not console */
 		dconf = malloc(sizeof(struct wsscreen_internal),
 		    M_DEVBUF, M_NOWAIT);
-		if (dconf == NULL) {
-			free(scr, M_DEVBUF);
-			return (NULL);
-		}
+		if (dconf == NULL)
+			goto fail;
 		dconf->emulops = type->textops;
 		dconf->emulcookie = cookie;
-		if (dconf->emulops != NULL &&
-		    (dconf->wsemul = wsemul_pick(emul)) != NULL) {
-			dconf->wsemulcookie =
-			    (*dconf->wsemul->attach)(0, type, cookie,
-				ccol, crow, scr, defattr);
-		} else {
-			free(dconf, M_DEVBUF);
-			free(scr, M_DEVBUF);
-			return (NULL);
-		}
+		if (dconf->emulops == NULL ||
+		    (dconf->wsemul = wsemul_pick(emul)) == NULL)
+			goto fail;
+		dconf->wsemulcookie = (*dconf->wsemul->attach)(0, type, cookie,
+		    ccol, crow, scr, defattr);
+		if (dconf->wsemulcookie == NULL)
+			goto fail;
 		dconf->scrdata = type;
 	}
 
@@ -329,6 +324,12 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 	scr->scr_rawkbd = 0;
 #endif
 	return (scr);
+
+fail:
+	if (dconf != NULL)
+		free(dconf, M_DEVBUF);
+	free(scr, M_DEVBUF);
+	return (NULL);
 }
 
 void
