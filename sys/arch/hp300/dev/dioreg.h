@@ -1,4 +1,4 @@
-/*	$OpenBSD: dioreg.h,v 1.3 2005/01/15 21:13:08 miod Exp $	*/
+/*	$OpenBSD: dioreg.h,v 1.4 2007/01/07 15:12:19 miod Exp $	*/
 /*	$NetBSD: dioreg.h,v 1.3 1997/01/30 09:18:40 thorpej Exp $	*/
 
 /*-
@@ -87,7 +87,11 @@
  * Find the highest select code for a given machine; HP320 doesn't
  * have DIO-II.
  */
+#if defined(HP320)
 #define	DIO_SCMAX(machineid)	((machineid) == HP_320 ? 32 : 256)
+#else
+#define	DIO_SCMAX(machineid)	256
+#endif
 
 /*
  * Base of DIO-II select codes.
@@ -98,7 +102,7 @@
  * Macro that returns true if a select code lies within
  * the select code `hole'.
  */
-#define	DIO_INHOLE(scode)	((scode) >= 32 && (scode) < 132)
+#define	DIO_INHOLE(scode)	((scode) >= 32 && (scode) < DIOII_SCBASE)
 
 /*
  * Macros to determine if device is DIO or DIO-II.
