@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.53 2006/11/29 13:34:31 miod Exp $	*/
+/*	$OpenBSD: audio.c,v 1.54 2007/01/07 13:35:51 miod Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -2894,9 +2894,12 @@ audiogetinfo(sc, ai)
 	p->buffer_size = sc->sc_pr.bufsize;
 	r->buffer_size = sc->sc_rr.bufsize;
 
-	ai->blocksize = sc->sc_pr.blksize;
-	ai->hiwat = sc->sc_pr.usedhigh / sc->sc_pr.blksize;
-	ai->lowat = sc->sc_pr.usedlow / sc->sc_pr.blksize;
+	if ((ai->blocksize = sc->sc_pr.blksize) != 0) {
+		ai->hiwat = sc->sc_pr.usedhigh / sc->sc_pr.blksize;
+		ai->lowat = sc->sc_pr.usedlow / sc->sc_pr.blksize;
+	} else {
+		ai->hiwat = ai->lowat = 0;
+	}
 	ai->mode = sc->sc_mode;
 
 	return (0);
