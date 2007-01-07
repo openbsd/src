@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.31 2007/01/07 02:47:57 joris Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.32 2007/01/07 13:33:04 jasper Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -167,7 +167,7 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 		}
 
 		printf("\nLog message unchanged or not specified\n"
-		    "a)bort, c)ontinue, e(dit)\nAction: (continue) ");
+		    "a)bort, c)ontinue, e)dit\nAction: (continue) ");
 		(void)fflush(stdout);
 
 		c = getc(stdin);
