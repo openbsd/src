@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.16 2006/12/29 00:14:28 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.17 2007/01/07 16:54:46 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -174,9 +174,9 @@ cpu_attach(parent, dev, aux)
 		cpu_clockrate[0] = clk; /* Tell OS what frequency we run on */
 		cpu_clockrate[1] = clk/1000000;
 	}
-	snprintf(cpu_model, sizeof cpu_model, "%s @ %s MHz, %s FPU",
-		getpropstring(node, "name"),
-		clockfreq(clk), fpuname);
+	snprintf(cpu_model, sizeof cpu_model,
+		"%s (rev %d.%d) @ %s MHz, %s FPU", getpropstring(node, "name"),
+		vers >> 4, vers & 0xf, clockfreq(clk), fpuname);
 	printf(": %s\n", cpu_model);
 
 	cacheinfo.c_physical = 1; /* Dunno... */
