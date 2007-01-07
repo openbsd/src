@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.34 2007/01/07 00:29:44 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.35 2007/01/07 11:10:51 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -2086,9 +2086,9 @@ bcw_change_core(struct bcw_softc *sc, int changeto)
 void
 bcw_radio_off(struct bcw_softc *sc)
 {
-	uint16_t	sbval16;
+	uint16_t sbval16;
 
-	switch(sc->sc_phy_type) {
+	switch (sc->sc_phy_type) {
 	case BCW_PHY_TYPEA:
 		/* Magic unexplained values */
 		BCW_WRITE16(sc, BCW_RADIO_CONTROL, 0x04);
@@ -2119,11 +2119,11 @@ bcw_radio_off(struct bcw_softc *sc)
 			BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x812);
 			BCW_WRITE16(sc, BCW_PHY_DATA, sbval16);
 		}
-		/* FALL-THROUGH */
+		/* FALLTHROUGH */
 	default:
 		BCW_WRITE16(sc, BCW_PHY_CONTROL, 0x15);
 		BCW_WRITE16(sc, BCW_PHY_DATA, 0xaa00);
-	} /* end of switch statement to turn off radio */
+	}
 }
 
 int
