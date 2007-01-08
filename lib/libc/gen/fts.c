@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.37 2005/08/08 08:05:34 espie Exp $	*/
+/*	$OpenBSD: fts.c,v 1.38 2007/01/08 09:13:38 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -161,6 +161,9 @@ fts_open(char * const *argv, int options,
 	 */
 	if (!ISSET(FTS_NOCHDIR) && (sp->fts_rfd = open(".", O_RDONLY, 0)) < 0)
 		SET(FTS_NOCHDIR);
+
+	if (nitems == 0)
+		free(parent);
 
 	return (sp);
 
