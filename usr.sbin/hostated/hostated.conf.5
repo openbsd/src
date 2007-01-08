@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostated.conf.5,v 1.10 2007/01/08 17:05:48 reyk Exp $
+.\"	$OpenBSD: hostated.conf.5,v 1.11 2007/01/08 17:52:27 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -44,6 +44,19 @@ Services will be translated to
 .Xr pf 4
 rdr rules if their table or backup table have content.
 .El
+.Pp
+Within the sections,
+a host
+.Ar address
+can be either specified by IPv4 address, IPv6 address, or DNS host name.
+A
+.Ar port
+can be either specified by number or by name.
+The port name to number mappings are found in the file
+.Pa /etc/services,
+see
+.Xr services 5
+for details.
 .Sh MACROS
 Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, and may contain letters, digits,
@@ -142,9 +155,10 @@ Add the host whose address is
 .Ar address
 to the list of hosts to be checked in this table.
 Each table needs at least one host.
-.It Ic real port Ar number
-When using the TCP or HTTP checking methods, use this port to connect
-to hosts.
+.It Ic real port Ar port
+When using the TCP or HTTP checking methods, use this
+.Ar port
+to connect to hosts.
 This parameter is mandatory.
 Main and backup tables need to have the same real port.
 .It Ic timeout Ar number
@@ -182,8 +196,12 @@ Automatically tag packets passing through the
 .Xr pf 4
 rdr rule with the name supplied.
 This allows simpler filter rules.
-.It Ic virtual ip Ar address Ic port Ar number
-Specify an address and a port that will be used to redirect requests
+.It Ic virtual ip Ar address Ic port Ar port
+Specify an
+.Ar address
+and a
+.Ar port
+that will be used to redirect requests
 to the hosts in the main or backup table.
 Optionally an interface name can be given as follows,
 to specify which interface the rdr rule will be enabled on:
@@ -239,6 +257,8 @@ service www {
 .It Pa /etc/hostated.conf
 .Xr hostated 8
 configuration file
+.It Pa /etc/services
+Service name database
 .El
 .Sh SEE ALSO
 .Xr hostatectl 8 ,
