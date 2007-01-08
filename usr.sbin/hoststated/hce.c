@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.4 2006/12/25 18:12:14 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.5 2007/01/08 13:37:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <err.h>
 #include <pwd.h>
+#include <regex.h>
 
 #include "hostated.h"
 

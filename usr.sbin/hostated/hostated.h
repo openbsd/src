@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostated.h,v 1.8 2007/01/03 09:45:29 reyk Exp $	*/
+/*	$OpenBSD: hostated.h,v 1.9 2007/01/08 13:37:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -190,8 +190,11 @@ struct table {
 	struct timeval		 timeout;
 	char			 name[TABLE_NAME_SIZE];
 	char			 path[MAXPATHLEN];
+	char			 sendbuf[64];
+	char			 exbuf[64];
 	char			 digest[41]; /* length of sha1 digest * 2 */
 	struct hostlist		 hosts;
+	regex_t			 regx;
 	TAILQ_ENTRY(table)	 entry;
 };
 TAILQ_HEAD(tablelist, table);
@@ -201,6 +204,7 @@ TAILQ_HEAD(tablelist, table);
 #define CHECK_TCP		2
 #define CHECK_HTTP_CODE		3
 #define CHECK_HTTP_DIGEST	4
+#define CHECK_SEND_EXPECT	5
 
 struct service {
 	objid_t			 id;
@@ -338,6 +342,9 @@ void	 check_tcp(struct ctl_tcp_event *);
 
 /* check_http.c */
 void	 send_http_request(struct ctl_tcp_event *);
+
+/* check_send_expect.c */
+void	 start_send_expect(struct ctl_tcp_event *);
 
 /* hostated.c */
 struct host	*host_find(struct hostated *, objid_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostated.c,v 1.5 2006/12/25 18:40:38 reyk Exp $	*/
+/*	$OpenBSD: hostated.c,v 1.6 2007/01/08 13:37:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -32,6 +32,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <regex.h>
 
 #include "hostated.h"
 

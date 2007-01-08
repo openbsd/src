@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.8 2007/01/03 09:42:30 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.9 2007/01/08 13:37:26 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -115,6 +115,21 @@ a9993e36476816aba3e25717850c26c9cd0d89d
 Ping hosts in this table to determine whether they are up or not.
 This method will automatically use ICMP or ICMPV6 depending on the
 address family of each host.
+.It Ic check send Ar data Ic expect Ar regexp
+For each host in the table, a TCP connection is established on the
+port specified, then 
+.Ar data
+is sent.
+Incoming data is then read and is expected to match against 
+.Ar regexp.
+If
+.Ar data
+is an empty string or
+.Ic nothing
+then nothing is sent on the connection and data is immediately
+read.
+This can be useful with protocols that output a banner like
+SMTP, NNTP and FTP.
 .It Ic check tcp
 Use a simple TCP connect to check that hosts are up.
 .It Ic disable

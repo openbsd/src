@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.4 2006/12/25 19:05:41 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.5 2007/01/08 13:37:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -29,6 +29,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <regex.h>
 
 #include "hostated.h"
 
@@ -118,6 +119,8 @@ tcp_write(int s, short event, void *arg)
 void
 tcp_host_up(int s, struct ctl_tcp_event *cte)
 {
+	cte->s = s;
+
 	switch (cte->table->check) {
 	case CHECK_TCP:
 		close(s);
@@ -126,6 +129,9 @@ tcp_host_up(int s, struct ctl_tcp_event *cte)
 	case CHECK_HTTP_CODE:
 	case CHECK_HTTP_DIGEST:
 		send_http_request(cte);
+		break;
+	case CHECK_SEND_EXPECT:
+		start_send_expect(cte);
 		break;
 	default:
 		fatalx("tcp_write: unhandled check type");

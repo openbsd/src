@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2007/01/03 09:45:29 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.9 2007/01/08 13:37:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <netdb.h>
 #include <string.h>
+#include <regex.h>
 
 #include "hostated.h"
 
@@ -101,6 +102,7 @@ typedef struct {
 %token  CHECK HTTP HTTPS TCP ICMP EXTERNAL
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
 %token	VIRTUAL IP INTERVAL DISABLE STICKYADDR
+%token	SEND EXPECT NOTHING
 %token	ERROR
 %token	<v.string>	STRING
 %type	<v.string>	interface
@@ -138,6 +140,20 @@ varset		: STRING '=' STRING	{
 				fatal("cannot store variable");
 			free($1);
 			free($3);
+		}
+		;
+
+sendbuf		: NOTHING		{
+			bzero(table->sendbuf, sizeof(table->sendbuf));
+		}
+		| STRING		{
+			if (strlcpy(table->sendbuf, $1, sizeof(table->sendbuf))
+			    >= sizeof(table->sendbuf)) {
+				yyerror("yyparse: send buffer truncated");
+				free($1);
+				YYERROR;
+			}
+			free($1);
 		}
 		;
 
@@ -361,13 +377,28 @@ tableoptsl	: host			{
 				YYERROR;
 			}
 			if (strlcpy(table->digest, $5,
-			    sizeof(table->digest)) >= sizeof (table->digest)) {
+			    sizeof(table->digest)) >= sizeof(table->digest)) {
 				yyerror("http digest truncated");
 				free($3);
 				free($5);
 				YYERROR;
 			}
 			free($3);
+			free($5);
+		}
+		| CHECK SEND sendbuf EXPECT STRING {
+			int	ret;
+			char	ebuf[32];
+
+			table->check = CHECK_SEND_EXPECT;
+			ret = regcomp(&table->regx, $5, REG_EXTENDED|REG_NOSUB);
+			if (ret != 0) {
+				regerror(ret, &table->regx, ebuf, sizeof(ebuf));
+				yyerror("cannot compile expect regexp: %s",
+				    ebuf);
+				free($5);
+				YYERROR;
+			}
 			free($5);
 		}
 		| REAL PORT number {
@@ -471,6 +502,7 @@ lookup(char *s)
 		{ "code",		CODE },
 		{ "digest",		DIGEST },
 		{ "disable",		DISABLE },
+		{ "expect",		EXPECT },
 		{ "external",		EXTERNAL },
 		{ "host",		HOST },
 		{ "http",		HTTP },
@@ -479,8 +511,10 @@ lookup(char *s)
 		{ "interface",		INTERFACE },
 		{ "interval",		INTERVAL },
 		{ "ip",			IP },
+		{ "nothing",		NOTHING },
 		{ "port",		PORT },
 		{ "real",		REAL },
+		{ "send",		SEND },
 		{ "service",		SERVICE },
 		{ "sticky-address",	STICKYADDR },
 		{ "table",		TABLE },
@@ -528,7 +562,13 @@ lgetc(FILE *f)
 
 	while ((c = getc(f)) == '\\') {
 		next = getc(f);
-		if (next != '\n') {
+		if (next == 'n') {
+			c = '\n';
+			break;
+		} else if (next == 'r') {
+			c = '\r';
+			break;
+		} else if (next != '\n') {
 			c = next;
 			break;
 		}
