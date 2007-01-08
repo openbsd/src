@@ -1,6 +1,6 @@
-.\" $OpenBSD: rum.4,v 1.20 2006/12/07 17:32:19 damien Exp $
+.\" $OpenBSD: rum.4,v 1.21 2007/01/08 18:59:15 damien Exp $
 .\"
-.\" Copyright (c) 2005, 2006
+.\" Copyright (c) 2005-2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -26,8 +26,13 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports USB 2.0 wireless adapters based on the Ralink RT2501USB
-and RT2601USB chipsets.
+driver supports USB 2.0 and Mini-PCI Express wireless adapters based on the
+Ralink RT2501USB and RT2601USB chipsets.
+.Pp
+Ralink Mini-PCI Express adapters show up as normal USB 2.0 devices and are
+thus supported by the
+.Nm
+driver.
 .Pp
 The RT2501USB chipset is the second generation of 802.11a/b/g adapters from
 Ralink.
@@ -233,6 +238,7 @@ The following adapters should work:
 .It D-Link WUA-1340
 .It Edimax EW-7318USG
 .It Gigabyte GN-WB01GS
+.It Gigabyte GN-WI05GS
 .It Hawking HWUG1
 .It Linksys WUSB54G rev C
 .It Planex GW-USMM
