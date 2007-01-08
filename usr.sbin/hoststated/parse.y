@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2007/01/08 13:37:26 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.10 2007/01/08 14:30:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -99,7 +99,7 @@ typedef struct {
 %}
 
 %token	SERVICE TABLE BACKUP HOST REAL
-%token  CHECK HTTP HTTPS TCP ICMP EXTERNAL
+%token  CHECK HTTP TCP ICMP EXTERNAL
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
 %token	VIRTUAL IP INTERVAL DISABLE STICKYADDR
 %token	SEND EXPECT NOTHING
@@ -506,7 +506,6 @@ lookup(char *s)
 		{ "external",		EXTERNAL },
 		{ "host",		HOST },
 		{ "http",		HTTP },
-		{ "https",		HTTPS },
 		{ "icmp",		ICMP },
 		{ "interface",		INTERFACE },
 		{ "interval",		INTERVAL },
