@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.5 2007/01/08 13:37:26 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.6 2007/01/08 16:52:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -139,8 +139,7 @@ hce(struct hostated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	event_add(&ibuf_main->ev, NULL);
 
 	evtimer_set(&env->ev, hce_launch_checks, NULL);
-	tv.tv_sec = env->interval;
-	tv.tv_usec = 0;
+	bcopy(&env->interval, &tv, sizeof(tv));
 	evtimer_add(&env->ev, &tv);
 
 	hce_launch_checks(0, 0, NULL);
@@ -232,8 +231,7 @@ hce_notify_done(struct host *host, const char *msg)
 			TAILQ_FOREACH(host, &table->hosts, entry)
 				host->flags &= ~F_CHECK_DONE;
 		}
-		tv.tv_sec = env->interval;
-		tv.tv_usec = 0;
+		bcopy(&env->interval, &tv, sizeof(tv));
 		evtimer_add(&env->ev, &tv);
 		bzero(&st, sizeof(st));
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostated.h,v 1.9 2007/01/08 13:37:26 reyk Exp $	*/
+/*	$OpenBSD: hostated.h,v 1.10 2007/01/08 16:52:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -228,11 +228,11 @@ enum {
 struct hostated {
 	u_int8_t		 opts;
 	struct pfdata		*pf;
-	int			 interval;
 	int			 icmp_sock;
 	int			 icmp6_sock;
 	int			 tablecount;
 	int			 servicecount;
+	struct timeval		 interval;
 	struct timeval		 timeout;
 	struct table		 empty_table;
 	struct event		 ev;

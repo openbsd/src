@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2007/01/08 14:30:31 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.11 2007/01/08 16:50:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -157,7 +157,7 @@ sendbuf		: NOTHING		{
 		}
 		;
 
-main		: INTERVAL number	{ conf->interval = $2; }
+main		: INTERVAL number	{ conf->interval.tv_sec = $2; }
 		| TIMEOUT timeout	{
 			bcopy(&$2, &conf->timeout, sizeof(struct timeval));
 		}
@@ -741,7 +741,8 @@ parse_config(struct hostated *x_conf, const char *filename, int opts)
 
 	conf->timeout.tv_sec = CHECK_TIMEOUT / 1000;
 	conf->timeout.tv_usec = (CHECK_TIMEOUT % 1000) * 1000;
-	conf->interval = CHECK_INTERVAL;
+	conf->interval.tv_sec = CHECK_INTERVAL;
+	conf->interval.tv_usec = 0;
 	conf->opts = opts;
 
 	if ((fin = fopen(filename, "r")) == NULL) {
@@ -771,12 +772,23 @@ parse_config(struct hostated *x_conf, const char *filename, int opts)
 		errors++;
 	}
 
+	if (timercmp(&conf->timeout, &conf->interval, >=)) {
+		log_warnx("global timeout exceeds interval");
+		errors++;
+	}
+
 	/* Verify that every table is used */
-	TAILQ_FOREACH(table, &conf->tables, entry)
+	TAILQ_FOREACH(table, &conf->tables, entry) {
 		if (!(table->flags & F_USED)) {
 			log_warnx("unused table: %s", table->name);
 			errors++;
 		}
+		if (timercmp(&table->timeout, &conf->interval, >=)) {
+			log_warnx("table timeout exceeds interval: %s",
+			    table->name);
+			errors++;
+		}
+	}
 
 	if (errors) {
 		bzero(&conf, sizeof (*conf));
