@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_rum.c,v 1.49 2006/12/30 22:34:53 claudio Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.50 2007/01/08 18:53:00 damien Exp $	*/
 
 /*-
- * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
+ * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -93,6 +93,7 @@ static const struct usb_devno rum_devs[] = {
 	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_DWLG122C1 },
 	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_WUA1340 },
 	{ USB_VENDOR_GIGABYTE,		USB_PRODUCT_GIGABYTE_GNWB01GS },
+	{ USB_VENDOR_GIGABYTE,		USB_PRODUCT_GIGABYTE_GNWI05GS },
 	{ USB_VENDOR_GIGASET,		USB_PRODUCT_GIGASET_RT2573 },
 	{ USB_VENDOR_GOODWAY,		USB_PRODUCT_GOODWAY_RT2573 },
 	{ USB_VENDOR_HUAWEI3COM,	USB_PRODUCT_HUAWEI3COM_RT2573 },
