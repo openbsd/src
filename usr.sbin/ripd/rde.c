@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.2 2006/10/24 16:37:48 david Exp $ */
+/*	$OpenBSD: rde.c,v 1.3 2007/01/08 13:01:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -75,8 +75,9 @@ pid_t
 rde(struct ripd_conf *xconf, int pipe_parent2rde[2], int pipe_ripe2rde[2],
     int pipe_parent2ripe[2])
 {
-	struct passwd		*pw;
 	struct event		 ev_sigint, ev_sigterm;
+	struct passwd		*pw;
+	struct redistribute	*r;
 	pid_t			 pid;
 
 	switch (pid = fork()) {
@@ -137,8 +138,14 @@ rde(struct ripd_conf *xconf, int pipe_parent2rde[2], int pipe_ripe2rde[2],
 	event_set(&ibuf_main->ev, ibuf_main->fd, ibuf_main->events,
 	    ibuf_main->handler, ibuf_main);
 	event_add(&ibuf_main->ev, NULL);
-
 	rt_init();
+
+	/* remove unneeded config stuff */
+	while ((r = SIMPLEQ_FIRST(&rdeconf->redist_list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&rdeconf->redist_list, entry);
+		free(r);
+	}
+
 	event_dispatch();
 
 	rde_shutdown();

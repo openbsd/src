@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2006/10/25 20:01:49 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.5 2007/01/08 13:01:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -50,17 +50,18 @@ char				*start_state;
 
 struct iface	*iface = NULL;
 
-int		 yyerror(const char *, ...);
-int		 yyparse(void);
-int		 kw_cmp(const void *, const void *);
-int		 lookup(char *);
-int		 lgetc(FILE *);
-int		 lungetc(int);
-int		 findeol(void);
-int		 yylex(void);
-void		 clear_config(struct ripd_conf *);
-int		 check_file_secrecy(int fd, const char *fname);
-u_int32_t	 get_rtr_id(void);
+int		yyerror(const char *, ...);
+int		yyparse(void);
+int		kw_cmp(const void *, const void *);
+int		lookup(char *);
+int		lgetc(FILE *);
+int		lungetc(int);
+int		findeol(void);
+int		yylex(void);
+void		clear_config(struct ripd_conf *);
+int		check_file_secrecy(int, const char *);
+u_int32_t	get_rtr_id(void);
+int		host(const char *, struct in_addr *, struct in_addr *);
 
 static struct {
 	char			 auth_key[MAX_SIMPLE_AUTH_LEN];
@@ -95,11 +96,12 @@ typedef struct {
 
 %token  SPLIT_HORIZON TRIGGERED_UPDATES FIBUPDATE REDISTRIBUTE
 %token	AUTHKEY AUTHTYPE AUTHMD AUTHMDKEYID
-%token  INTERFACE
+%token  INTERFACE RTLABEL
 %token	COST PASSIVE
+%token	YES NO
 %token  ERROR
 %token  <v.string>	STRING
-%type   <v.number>	number yesno
+%type   <v.number>	number yesno no
 %type   <v.string>	string
 
 %%
@@ -139,19 +141,12 @@ string		: string STRING {
 		| STRING
 		;
 
-yesno		: STRING {
-			if (!strcmp($1, "yes"))
-				$$ = 1;
-			else if (!strcmp($1, "no"))
-				$$ = 0;
-			else {
-				free($1);
-				yyerror("recognized values are yes or no");
-				YYERROR;
-			}
-			free($1);
-		}
+yesno		: YES	{ $$ = 1; }
+		| NO	{ $$ = 0; }
 		;
+
+no		: /* empty */	{ $$ = 0; }
+		| NO		{ $$ = 1; }
 
 varset		: STRING '=' string {
 			if (conf->opts & RIPD_OPT_VERBOSE)
@@ -192,24 +187,54 @@ conf_main	: SPLIT_HORIZON STRING {
 			else
 				conf->flags &= ~RIPD_FLAG_NO_FIB_UPDATE;
 		}
-		| REDISTRIBUTE STRING {
-			if (!strcmp($2, "static"))
-				conf->redistribute_flags |=
-					REDISTRIBUTE_STATIC;
-			else if (!strcmp($2, "connected"))
-				conf->redistribute_flags |=
-					REDISTRIBUTE_CONNECTED;
-			else if (!strcmp($2, "default"))
-				conf->redistribute_flags |=
-					REDISTRIBUTE_DEFAULT;
-			else if (!strcmp($2, "none"))
-				conf->redistribute_flags = 0;
-			else  {
-				yyerror("unknown redistribute type");
-				free($2);
-				YYERROR;
+		| no REDISTRIBUTE STRING {
+			struct redistribute	*r;
+
+			if (!strcmp($3, "default")) {
+				if (!$1)
+					conf->redistribute |=
+					    REDISTRIBUTE_DEFAULT;
+				else
+					conf->redistribute &=
+					    ~REDISTRIBUTE_DEFAULT;
+			} else {
+				if ((r = calloc(1, sizeof(*r))) == NULL)
+					fatal(NULL);
+				if (!strcmp($3, "static"))
+					r->type = REDIST_STATIC;
+				else if (!strcmp($3, "connected"))
+					r->type = REDIST_CONNECTED;
+				else if (host($3, &r->addr, &r->mask))
+					r->type = REDIST_ADDR;
+				else {
+					yyerror("unknown redistribute type");
+					free($3);
+					free(r);
+					YYERROR;
+				}
+
+				if ($1)
+					r->type |= REDIST_NO;
+
+				SIMPLEQ_INSERT_TAIL(&conf->redist_list, r,
+				    entry);
 			}
-			free($2);
+			conf->redistribute |= REDISTRIBUTE_ON;
+			free($3);
+		}
+		| no REDISTRIBUTE RTLABEL STRING {
+			struct redistribute	*r;
+
+			if ((r = calloc(1, sizeof(*r))) == NULL)
+				fatal(NULL);
+			r->type = REDIST_LABEL;
+			r->label = rtlabel_name2id($4);
+			if ($1)
+				r->type |= REDIST_NO;
+			free($4);
+
+			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
+			conf->redistribute |= REDISTRIBUTE_ON;
 		}
 		;
 
@@ -365,17 +390,20 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
-	    {"auth-key",	    AUTHKEY},
-	    {"auth-md",		    AUTHMD},
-	    {"auth-md-keyid",	    AUTHMDKEYID},
-	    {"auth-type",	    AUTHTYPE},
-	    {"cost",		    COST},
-	    {"fib-update",          FIBUPDATE},
-	    {"interface",           INTERFACE},
-	    {"passive",		    PASSIVE},
-	    {"redistribute",        REDISTRIBUTE},
-	    {"split-horizon",       SPLIT_HORIZON},
-	    {"triggered-updates",   TRIGGERED_UPDATES}
+	    {"auth-key",		AUTHKEY},
+	    {"auth-md",			AUTHMD},
+	    {"auth-md-keyid",		AUTHMDKEYID},
+	    {"auth-type",		AUTHTYPE},
+	    {"cost",			COST},
+	    {"fib-update",		FIBUPDATE},
+	    {"interface",		INTERFACE},
+	    {"no",			NO},
+	    {"passive",			PASSIVE},
+	    {"redistribute",		REDISTRIBUTE},
+	    {"rtlabel",			RTLABEL},
+	    {"split-horizon",		SPLIT_HORIZON},
+	    {"triggered-updates",	TRIGGERED_UPDATES},
+	    {"yes",			YES}
 	};
 	const struct keywords	*p;
 
@@ -597,7 +625,7 @@ parse_config(char *filename, int opts)
 	infile = filename;
 
 	conf->opts = opts;
-	conf->redistribute_flags = 0;
+	SIMPLEQ_INIT(&conf->redist_list);
 
 	if (!(conf->opts & RIPD_OPT_NOACTION))
 		if (check_file_secrecy(fileno(fin), filename)) {
@@ -739,4 +767,25 @@ clear_config(struct ripd_conf *xconf)
 	}
 
 	free(xconf);
+}
+
+int
+host(const char *s, struct in_addr *addr, struct in_addr *mask)
+{
+	struct in_addr		 ina;
+	int			 bits = 32;
+
+	bzero(&ina, sizeof(struct in_addr));
+	if (strrchr(s, '/') != NULL) {
+		if ((bits = inet_net_pton(AF_INET, s, &ina, sizeof(ina))) == -1)
+			return (0);
+	} else {
+		if (inet_pton(AF_INET, s, &ina) != 1)
+			return (0);
+	}
+
+	addr->s_addr = ina.s_addr;
+	mask->s_addr = prefixlen2mask(bits);
+
+	return (1);
 }

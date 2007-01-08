@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.2 2006/11/09 04:06:09 joel Exp $ */
+/*	$OpenBSD: printconf.c,v 1.3 2007/01/08 13:01:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -28,8 +28,10 @@
 #include "ripd.h"
 #include "ripe.h"
 
-void	 print_mainconf(struct ripd_conf *);
-void	 print_iface(struct iface *);
+void	print_mainconf(struct ripd_conf *);
+const char *print_no(u_int16_t);
+void	print_redistribute(struct ripd_conf *);
+void	print_iface(struct iface *);
 
 void
 print_mainconf(struct ripd_conf *conf)
@@ -39,14 +41,7 @@ print_mainconf(struct ripd_conf *conf)
 	else
 		printf("fib-update yes\n");
 
-	if (conf->redistribute_flags & REDISTRIBUTE_STATIC)
-		printf("redistribute static\n");
-	else if (conf->redistribute_flags & REDISTRIBUTE_CONNECTED)
-		printf("redistribute connected\n");
-	else if (conf->redistribute_flags & REDISTRIBUTE_DEFAULT)
-		printf("redistribute default\n");
-	else
-		printf("redistribute none\n");
+	print_redistribute(conf);
 
 	if (conf->options & OPT_SPLIT_HORIZON)
 		printf("split-horizon default\n");
@@ -59,6 +54,44 @@ print_mainconf(struct ripd_conf *conf)
 		printf("triggered-updates yes\n");
 	else
 		printf("triggered-updates no\n");
+}
+
+const char *
+print_no(u_int16_t type)
+{
+	if (type & REDIST_NO)
+		return ("no ");
+	else
+		return ("");
+}
+
+void
+print_redistribute(struct ripd_conf *conf)
+{
+	struct redistribute	*r;
+
+	if (conf->redistribute & REDISTRIBUTE_DEFAULT)
+		printf("redistribute default\n");
+
+	SIMPLEQ_FOREACH(r, &conf->redist_list, entry) {
+		switch (r->type & ~REDIST_NO) {
+		case REDIST_STATIC:
+			printf("%sredistribute static\n", print_no(r->type));
+			break;
+		case REDIST_CONNECTED:
+			printf("%sredistribute connected\n", print_no(r->type));
+			break;
+		case REDIST_LABEL:
+			printf("%sredistribute rtlabel %s\n",
+			    print_no(r->type), rtlabel_id2name(r->label));
+			break;
+		case REDIST_ADDR:
+			printf("%ssredistribute %s/%d\n",
+			    print_no(r->type), inet_ntoa(r->addr),
+			    mask2prefixlen(r->mask.s_addr));
+			break;
+		}
+	}
 }
 
 void

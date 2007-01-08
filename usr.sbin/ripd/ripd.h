@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.4 2006/11/15 20:21:46 deraadt Exp $ */
+/*	$OpenBSD: ripd.h,v 1.5 2007/01/08 13:01:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -57,10 +57,8 @@
 #define	F_OSPFD_INSERTED	0x0080
 #define	F_REDISTRIBUTED		0x0100
 
-#define	REDISTRIBUTE_NONE	0x0
-#define	REDISTRIBUTE_STATIC	0x01
-#define	REDISTRIBUTE_CONNECTED	0x02
-#define	REDISTRIBUTE_DEFAULT	0x04
+#define REDISTRIBUTE_ON		0x01
+#define REDISTRIBUTE_DEFAULT	0x02
 
 #define	OPT_SPLIT_HORIZON	0x01
 #define	OPT_SPLIT_POISONED	0x02
@@ -252,28 +250,46 @@ enum {
 	PROC_RDE_ENGINE
 } ripd_process;
 
+#define	REDIST_CONNECTED	0x01
+#define	REDIST_STATIC		0x02
+#define	REDIST_LABEL		0x04
+#define	REDIST_ADDR		0x08
+#define	REDIST_NO		0x10
+
+struct redistribute {
+	SIMPLEQ_ENTRY(redistribute)	entry;
+	struct in_addr			addr;
+	struct in_addr			mask;
+	u_int32_t			metric;
+	u_int16_t			label;
+	u_int16_t			type;
+};
+
 struct ripd_conf {
 	struct event		 ev;
 	struct event		 report_timer;
 	LIST_HEAD(, iface)	 iface_list;
+	SIMPLEQ_HEAD(, redistribute) redist_list;
+
 	u_int32_t		 opts;
 #define RIPD_OPT_VERBOSE	0x00000001
 #define	RIPD_OPT_VERBOSE2	0x00000002
 #define	RIPD_OPT_NOACTION	0x00000004
 	int			 flags;
-	int			 redistribute_flags;
 	int			 options;
 	int			 rip_socket;
+	int			 redistribute;
 };
 
 /* kroute */
 struct kroute {
-	struct in_addr   prefix;
-	struct in_addr   netmask;
-	struct in_addr	 nexthop;
-	u_int8_t	 metric;
-	u_int16_t	 flags;
-	u_short		 ifindex;
+	struct in_addr	prefix;
+	struct in_addr	netmask;
+	struct in_addr	nexthop;
+	u_int16_t	flags;
+	u_int16_t	rtlabel;
+	u_short		ifindex;
+	u_int8_t	metric;
 };
 
 struct kif {
@@ -389,5 +405,10 @@ const char	*nbr_state_name(int);
 
 /* interface.c */
 struct iface	*if_find_index(u_short);
+
+/* name2id.c */
+u_int16_t	 rtlabel_name2id(const char *);
+const char	*rtlabel_id2name(u_int16_t);
+void		 rtlabel_unref(u_int16_t);
 
 #endif /* _RIPD_H_ */

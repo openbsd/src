@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.1 2006/10/18 16:11:58 norby Exp $ */
+/*	$OpenBSD: ripd.c,v 1.2 2007/01/08 13:01:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -55,6 +55,7 @@ void		 ripd_shutdown(void);
 void		 main_dispatch_ripe(int, short, void *);
 void		 main_dispatch_rde(int, short, void *);
 int		 check_file_secrecy(int, const char *);
+void		 ripd_redistribute_default(int);
 
 int     pipe_parent2ripe[2];
 int     pipe_parent2rde[2];
@@ -250,6 +251,9 @@ main(int argc, char *argv[])
 
 	if (kr_init(!(conf->flags & RIPD_FLAG_NO_FIB_UPDATE)) == -1)
 		fatalx("kr_init failed");
+
+	/* redistribute default */
+	ripd_redistribute_default(IMSG_NETWORK_ADD);
 
 	event_dispatch();
 
@@ -468,29 +472,63 @@ check_file_secrecy(int fd, const char *fname)
 int
 rip_redistribute(struct kroute *kr)
 {
+	struct redistribute	*r;
+
 	if (kr->flags & F_RIPD_INSERTED)
 		return (1);
 
-	/* XXX this is funky, it is not possible to distribute static and
-	 * connected. OSPFD has a much better way to do this including rtlabel
-	 * support
-	 */
-	switch (conf->redistribute_flags) {
-	case REDISTRIBUTE_NONE:
+	/* only allow 0.0.0.0/0 via REDISTRIBUTE_DEFAULT */
+	if (kr->prefix.s_addr == INADDR_ANY && kr->netmask.s_addr == INADDR_ANY)
 		return (0);
-	case REDISTRIBUTE_STATIC:
-		return (kr->flags & F_KERNEL ? 1 : 0);
-	case REDISTRIBUTE_CONNECTED:
-		return (kr->flags & F_CONNECTED ? 1 : 0);
-	case REDISTRIBUTE_DEFAULT:
-		if (kr->prefix.s_addr == INADDR_ANY &&
-		    kr->netmask.s_addr == INADDR_ANY)
-			return (1);
-		else
-			return (0);
-	default:
-		fatalx("unknown redistribute type");
+
+	SIMPLEQ_FOREACH(r, &conf->redist_list, entry) {
+		switch (r->type & ~REDIST_NO) {
+		case REDIST_LABEL:
+			if (kr->rtlabel == r->label)
+				return (r->type & REDIST_NO ? 0 : 1);
+			break;
+		case REDIST_STATIC:
+			/*
+			 * Dynamic routes are not redistributable. Placed here
+			 * so that link local addresses can be redistributed
+			 * via a rtlabel.
+			 */
+			if (kr->flags & F_DYNAMIC)
+				continue;
+			if (kr->flags & F_STATIC)
+				return (r->type & REDIST_NO ? 0 : 1);
+			break;
+		case REDIST_CONNECTED:
+			if (kr->flags & F_DYNAMIC)
+				continue;
+			if (kr->flags & F_CONNECTED)
+				return (r->type & REDIST_NO ? 0 : 1);
+			break;
+		case REDIST_ADDR:
+			if (kr->flags & F_DYNAMIC)
+				continue;
+			if ((kr->prefix.s_addr & r->mask.s_addr) ==
+			    (r->addr.s_addr & r->mask.s_addr) &&
+			    (kr->netmask.s_addr & r->mask.s_addr) ==
+			    r->mask.s_addr)
+				return (r->type & REDIST_NO? 0 : 1);
+			break;
+		}
 	}
+
+	return (0);
+}
+
+void
+ripd_redistribute_default(int type)
+{
+	struct kroute	kr;
+
+	if (!(conf->redistribute & REDISTRIBUTE_DEFAULT))
+		return;
+
+	bzero(&kr, sizeof(kr));
+	main_imsg_compose_rde(type, 0, &kr, sizeof(struct kroute));
 }
 
 /* this needs to be added here so that ripctl can be used without libevent */

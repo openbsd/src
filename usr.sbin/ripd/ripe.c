@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.4 2006/11/28 19:21:16 reyk Exp $ */
+/*	$OpenBSD: ripe.c,v 1.5 2007/01/08 13:01:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -69,10 +69,11 @@ pid_t
 ripe(struct ripd_conf *xconf, int pipe_parent2ripe[2], int pipe_ripe2rde[2],
     int pipe_parent2rde[2])
 {
-	struct iface		*iface = NULL;
-	struct sockaddr_in	 addr;
-	struct passwd		*pw;
 	struct event		 ev_sigint, ev_sigterm;
+	struct sockaddr_in	 addr;
+	struct iface		*iface = NULL;
+	struct passwd		*pw;
+	struct redistribute	*r;
 	pid_t			 pid;
 
 	switch (pid = fork()) {
@@ -169,6 +170,12 @@ ripe(struct ripd_conf *xconf, int pipe_parent2ripe[2], int pipe_ripe2rde[2],
 	event_set(&oeconf->ev, oeconf->rip_socket, EV_READ|EV_PERSIST,
 	    recv_packet, oeconf);
 	event_add(&oeconf->ev, NULL);
+
+	/* remove unneeded config stuff */
+	while ((r = SIMPLEQ_FIRST(&oeconf->redist_list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&oeconf->redist_list, entry);
+		free(r);
+	}
 
 	/* listen on ripd control socket */
 	TAILQ_INIT(&ctl_conns);

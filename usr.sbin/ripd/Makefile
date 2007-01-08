@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 2006/11/26 11:31:13 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2007/01/08 13:01:10 claudio Exp $
 
 PROG=	ripd
 SRCS=	auth.c buffer.c control.c imsg.c interface.c kroute.c \
-	log.c message.c neighbor.c packet.c parse.y printconf.c \
-	rde.c rde_rib.c ripe.c ripd.c
+	log.c message.c name2id.c neighbor.c packet.c parse.y \
+	printconf.c rde.c rde_rib.c ripe.c ripd.c
 
 MAN=	ripd.8 ripd.conf.5
 
