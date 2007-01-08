@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_tuner.c,v 1.4 2006/02/05 23:52:58 jakemsr Exp $	*/
+/*	$OpenBSD: bktr_tuner.c,v 1.5 2007/01/08 08:29:37 pedro Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.9 2000/10/19 07:33:28 roger Exp $ */
 
 /*
@@ -278,7 +278,17 @@ static const struct TUNER tuners[] = {
              TSBH1_FCONTROL,
              0x00 },
            { 0x00, 0x00 },                      /* band-switch crosspoints */
-           { 0x01, 0x02, 0x08, 0x00 } }         /* the band-switch values */
+           { 0x01, 0x02, 0x08, 0x00 } },        /* the band-switch values */
+
+	/* Tivision TVF5533-MF NTSC */
+	{ "Tivision TVF5533-MF NTSC",		/* the 'name' */
+	  TTYPE_NTSC,				/* input 'type' */
+	  { TSBH1_FCONTROL,			/* ctr byte for Tuner PLL */
+	    TSBH1_FCONTROL,
+	    TSBH1_FCONTROL,
+	    0x00 },
+	  { 0x00, 0x00 },			/* band-switch crosspoints */
+	  { 0x01, 0x02, 0x04, 0x00 } },		/* the band-switch values */
 };
 
 

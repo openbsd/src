@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_card.c,v 1.12 2005/02/24 20:23:39 mickey Exp $	*/
+/*	$OpenBSD: bktr_card.c,v 1.13 2007/01/08 08:29:37 pedro Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -318,7 +318,7 @@ static const struct CARDTYPE cards[] = {
 	   0xE00 },				/* GPIO mask */
 
 	{  CARD_LEADTEK,			/* the card id */
-	  "Leadtek Winfast TV 2000",		/* the 'name' */
+	  "Leadtek WinFast TV 2000",		/* the 'name' */
 	   NULL,				/* the tuner */
 	   0,
 	   0,
@@ -391,6 +391,17 @@ static const struct CARDTYPE cards[] = {
 	   { 0xbc803f, 0xbcb03f, 0xbc903f, 0x0, 1 },	/* audio MUX values*/
 	   0xbcf03f },				/* GPIO mask */
 
+	{  CARD_LEADTEK_XP,			/* the card id */
+	   "Leadtek WinFast TV 2000 XP",	/* the 'name' */
+	   NULL,				/* the tuner */
+	   0,					/* the tuner i2c address */
+	   0,					/* dbx is optional */
+	   0,					/* msp34xx is optional */
+	   0,					/* dpl3518a is optional */
+	   0,					/* EEProm type */
+	   0,					/* EEProm size */
+	   { 0x122000, 0x1000, 0x620000, 0x0, 1 },	/* audio MUX values*/
+	   0xb3300 },				/* GPIO mask */
 };
 
 struct bt848_card_sig bt848_card_signature[1]= {
@@ -707,7 +718,10 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
                  || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT)
 		 || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT_2)
 		 || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT_3)) {
-                    bktr->card = cards[ (card = CARD_LEADTEK) ];
+		    if (subsystem_id == PCI_PRODUCT_LEADTEK_WINFAST_XP)
+		        bktr->card = cards[ (card = CARD_LEADTEK_XP) ];
+		    else
+		        bktr->card = cards[ (card = CARD_LEADTEK) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
@@ -1182,6 +1196,11 @@ checkTuner:
 	    select_tuner( bktr, ALPS_TSCH5 ); /* ALPS_TSCH6, in fact. */
 	    goto checkDBX;
  	    break;
+
+	case CARD_LEADTEK_XP:
+	    select_tuner( bktr, TIVISION_TVF5533 );
+	    goto checkDBX;
+	    break;
 
 	} /* end switch(card) */
 

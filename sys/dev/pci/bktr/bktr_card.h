@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_card.h,v 1.6 2005/02/24 20:23:39 mickey Exp $	*/
+/*	$OpenBSD: bktr_card.h,v 1.7 2007/01/08 08:29:37 pedro Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.h,v 1.4 2000/06/26 09:41:31 roger Exp $ */
 
 /*
@@ -81,7 +81,8 @@
 #define CARD_IO_BCTV3		18
 #define CARD_AOPEN_VA1000	19
 #define CARD_ZOLTRIX_GENIE_FM	20
-#define Bt848_MAX_CARD		21
+#define CARD_LEADTEK_XP		21
+#define Bt848_MAX_CARD		22
 
 
 int	signCard( bktr_ptr_t bktr, int offset, int count, u_char *sig );
