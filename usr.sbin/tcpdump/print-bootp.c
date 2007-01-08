@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bootp.c,v 1.14 2006/05/21 11:17:20 canacar Exp $	*/
+/*	$OpenBSD: print-bootp.c,v 1.15 2007/01/08 21:29:35 stevesk Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -24,7 +24,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-bootp.c,v 1.14 2006/05/21 11:17:20 canacar Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-bootp.c,v 1.15 2007/01/08 21:29:35 stevesk Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -273,7 +273,7 @@ rfc1048_print(register const u_char *bp, register u_int length)
 	register u_char tag;
 	register u_int len, size;
 	register const char *cp;
-	register char c;
+	register u_char c;
 	int first;
 	u_int32_t ul;
 	u_short us;
