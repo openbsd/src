@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78var.h,v 1.8 2007/01/07 21:24:29 kettenis Exp $	*/
+/*	$OpenBSD: lm78var.h,v 1.9 2007/01/08 22:18:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -67,7 +67,7 @@
 #define WB_BANK0_FAN4	0xba	/* Fan 4 reading (W83791D only) */
 #define WB_BANK0_FAN5	0xbb	/* Fan 5 reading (W83791D only) */
 
-#define WB_BANK0_CONFIG	0x18	/* VRM & OVT Configuration (W83637HF only) */
+#define WB_BANK0_CONFIG	0x18	/* VRM & OVT Config (W83627THF/W83637HF) */
 
 /* Bank 1 registers */
 #define WB_BANK1_T2H	0x50	/* Temperature 2 High Byte */
