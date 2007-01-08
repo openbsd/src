@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripd.conf.5,v 1.4 2006/10/24 16:35:19 david Exp $
+.\"	$OpenBSD: ripd.conf.5,v 1.5 2007/01/08 13:11:14 michele Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -64,7 +64,8 @@ interface em0 {
 .Ed
 .Sh GLOBAL CONFIGURATION
 Global settings concerns the main behaviour of the daemon.
-.Bl -tag -width Ds
+.Pp
+.Bl -tag -width Ds -compact
 .It Xo
 .Ic fib-update
 .Pq Ic yes Ns \&| Ns Ic no
@@ -77,12 +78,20 @@ The default is
 .Ic yes .
 .Pp
 .It Xo
+.Op Ic no
 .Ic redistribute
 .Sm off
 .Po Ic static Ns \&| Ns Ic connected Ns \&| Ns
-.Ic default Ns \&|
-.Ic none Pc
+.Ic default Pc
 .Sm on
+.Xc
+.It Xo
+.Op Ic no
+.Ic redistribute Ar prefix
+.Xc
+.It Xo
+.Op Ic no
+.Ic redistribute rtlabel Ar label
 .Xc
 If set to
 .Ic connected ,
@@ -94,7 +103,21 @@ static routes will be announced over RIP.
 If set to
 .Ic default ,
 a default route pointing to this router will be announced over RIP.
+It is possible to specify a network range with
+.Ar prefix ;
+networks need to be part of that range to be redistributed.
+Additionally it is possible to redistribute based on route labels
+using the
+.Ic rtlabel
+keyword.
 By default no additional routes will be announced over RIP.
+.Pp
+.Ic redistribute
+statements are evaluated in sequential order, from first to last.
+The first matching rule decides if a route should be redistributed or not.
+Matching rules starting with
+.Ic no
+will force the route to be not announced.
 .Pp
 .It Xo
 .Ic split-horizon
