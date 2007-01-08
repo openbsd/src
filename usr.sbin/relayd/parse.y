@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2007/01/08 16:50:04 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.12 2007/01/08 17:10:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -106,7 +106,7 @@ typedef struct {
 %token	ERROR
 %token	<v.string>	STRING
 %type	<v.string>	interface
-%type	<v.number>	number
+%type	<v.number>	number port
 %type	<v.host>	host
 %type	<v.tv>		timeout
 
@@ -132,6 +132,39 @@ number		: STRING	{
 				YYERROR;
 			}
 			free($1);
+		}
+		;
+
+port		: PORT STRING	{
+			const char	*estr;
+			struct servent	*servent;
+			
+			$$ = strtonum($2, 1, USHRT_MAX, &estr);
+			if (estr) {
+				if (errno == ERANGE) {
+					yyerror("port %s is out of range", $2);
+					free($2);
+					YYERROR;
+				}
+				servent = getservbyname($2, "tcp");
+				if (servent == NULL) {
+					yyerror("port %s is invalid", $2);
+					free($2);
+					YYERROR;
+				}
+				$$ = servent->s_port;
+			} else
+				$$ = htons($$);
+			free($2);
+		}
+		| PORT HTTP {
+			struct servent	*servent;
+
+			servent = getservbyname("http", "tcp");
+			if (servent == NULL)
+				$$ = htons(80);
+			else
+				$$ = servent->s_port;
 		}
 		;
 
@@ -262,22 +295,16 @@ serviceoptsl	: TABLE STRING	{
 				free($3);
 			}
 		}
-		| VIRTUAL IP STRING PORT number	interface {
-			if ($5 < 1 || $5 > USHRT_MAX) {
-				yyerror("invalid port number: %d", $5);
-				free($3);
-				free($6);
-				YYERROR;
-			}
+		| VIRTUAL IP STRING port interface {
 			if (host($3, &service->virts,
-				 SRV_MAX_VIRTS, htons($5), $6) <= 0) {
+				 SRV_MAX_VIRTS, $4, $5) <= 0) {
 				yyerror("invalid virtual ip: %s", $3);
 				free($3);
-				free($6);
+				free($5);
 				YYERROR;
 			}
 			free($3);
-			free($6);
+			free($5);
 		}
 		| DISABLE			{ service->flags |= F_DISABLE; }
 		| STICKYADDR			{ service->flags |= F_STICKY; }
@@ -401,12 +428,8 @@ tableoptsl	: host			{
 			}
 			free($5);
 		}
-		| REAL PORT number {
-			if ($3 < 1 || $3 >= USHRT_MAX) {
-				yyerror("invalid port number: %d", $3);
-				YYERROR;
-			}
-			table->port = $3;
+		| REAL port {
+			table->port = $2;
 		}
 		| DISABLE			{ table->flags |= F_DISABLE; }
 		;
@@ -750,7 +773,9 @@ parse_config(struct hostated *x_conf, const char *filename, int opts)
 		return (NULL);
 	}
 	infile = filename;
+	setservent(1);
 	yyparse();
+	endservent();
 	fclose(fin);
 
 	/* Free macros and check which have not been used. */

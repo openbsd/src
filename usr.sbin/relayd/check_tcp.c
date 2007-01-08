@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.5 2007/01/08 13:37:26 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.6 2007/01/08 17:10:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -48,11 +48,11 @@ check_tcp(struct ctl_tcp_event *cte)
 	switch (cte->host->ss.ss_family) {
 	case AF_INET:
 		((struct sockaddr_in *)&cte->host->ss)->sin_port =
-			htons(cte->table->port);
+			cte->table->port;
 		break;
 	case AF_INET6:
 		((struct sockaddr_in6 *)&cte->host->ss)->sin6_port =
-			htons(cte->table->port);
+			cte->table->port;
 		break;
 	}
 

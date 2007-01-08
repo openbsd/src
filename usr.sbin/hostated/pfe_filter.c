@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.5 2007/01/08 13:37:26 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.6 2007/01/08 17:10:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -310,7 +310,7 @@ sync_ruleset(struct hostated *env, struct service *service, int enable)
 		if (ioctl(env->pf->dev, DIOCADDADDR, &pio) == -1)
 			fatal("sync_ruleset: cannot add address to pool");
 
-		rio.rule.rpool.proxy_port[0] = service->table->port;
+		rio.rule.rpool.proxy_port[0] = ntohs(service->table->port);
 		rio.rule.rpool.port_op = PF_OP_EQ;
 		rio.rule.rpool.opts = PF_POOL_ROUNDROBIN;
 		if (service->flags & F_STICKY)
