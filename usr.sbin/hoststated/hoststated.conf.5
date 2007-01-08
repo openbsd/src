@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.9 2007/01/08 13:37:26 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.10 2007/01/08 17:05:48 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -72,17 +72,18 @@ Here are the settings that can be set globally:
 .Pp
 .Bl -tag -width Ds -compact
 .It Xo
-.Ic timeout Ar number
-.Xc
-Set the global timeout in milliseconds for checks.
-This can be overriden by the timeout value in the table definitions
-and is 200 milliseconds by default.
-.Pp
-.It Xo
 .Ic interval Ar number
 .Xc
 Set the interval in seconds at which the hosts will be checked.
 The default interval is 10 seconds.
+.Pp
+.It Xo
+.Ic timeout Ar number
+.Xc
+Set the global timeout in milliseconds for checks.
+This can be overriden by the timeout value in the table definitions.
+The default interval is 200 milliseconds and it must not exceed the
+global interval.
 .El
 .Sh TABLES
 Tables are used to group a set of hosts that can be checked using the same
