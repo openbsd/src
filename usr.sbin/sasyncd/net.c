@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.14 2006/06/02 20:31:48 moritz Exp $	*/
+/*	$OpenBSD: net.c,v 1.15 2007/01/08 15:31:01 markus Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -273,18 +273,11 @@ int
 net_init(void)
 {
 	struct syncpeer *p;
-	int		 r;
 
-	/* The shared key needs to be 128, 192 or 256 bits */
-	r = strlen(cfgstate.sharedkey) << 3;
-	if (r != 128 && r != 192 && r != 256) {
-		fprintf(stderr, "Bad shared key length (%d bits), "
-		    "should be 128, 192 or 256\n", r);
-		return -1;
-	}
-
-	if (AES_set_encrypt_key(cfgstate.sharedkey, r, &aes_key[0]) ||
-	    AES_set_decrypt_key(cfgstate.sharedkey, r, &aes_key[1])) {
+	if (AES_set_encrypt_key(cfgstate.sharedkey, cfgstate.sharedkey_len,
+	    &aes_key[0]) ||
+	    AES_set_decrypt_key(cfgstate.sharedkey, cfgstate.sharedkey_len,
+	    &aes_key[1])) {
 		fprintf(stderr, "Bad AES shared key\n");
 		return -1;
 	}

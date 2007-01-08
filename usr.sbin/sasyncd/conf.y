@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.12 2006/12/24 05:01:08 msf Exp $	*/
+/*	$OpenBSD: conf.y,v 1.13 2007/01/08 15:31:01 markus Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -50,17 +50,23 @@ char	*confbuf, *confptr;
 int	yyparse(void);
 int	yylex(void);
 void	yyerror(const char *);
+unsigned char x2i(unsigned char *);
 %}
 
 %union {
 	char	*string;
 	int	 val;
+	struct {
+		unsigned char	*data;
+		int	 len;
+	} hex;
 }
 
 %token MODE INTERFACE INTERVAL LISTEN ON PORT PEER SHAREDKEY
 %token Y_SLAVE Y_MASTER INET INET6 FLUSHMODE STARTUP NEVER SYNC
 %token GROUP SKIPSLAVE
 %token <string> STRING
+%token <hex>	HEX
 %token <val>	VALUE
 %type  <val>	af port mode flushmode
 
@@ -101,6 +107,23 @@ flushmode	: STARTUP		{ $$ = FM_STARTUP; }
 		| NEVER			{ $$ = FM_NEVER; }
 		| SYNC			{ $$ = FM_SYNC; }
 		;
+
+key		: STRING
+		{
+			if (cfgstate.sharedkey)
+				free(cfgstate.sharedkey);
+			cfgstate.sharedkey = $1;
+			cfgstate.sharedkey_len = strlen($1) * 8;
+			log_msg(2, "config: shared ascii key");
+		}
+		| HEX
+		{
+			if (cfgstate.sharedkey)
+				free(cfgstate.sharedkey);
+			cfgstate.sharedkey = $1.data;
+			cfgstate.sharedkey_len = $1.len * 8;
+			log_msg(2, "config: %d byte shared hex key", $1.len);
+		}
 
 setting		: INTERFACE STRING
 		{
@@ -175,11 +198,16 @@ setting		: INTERFACE STRING
 			    $5 != SASYNCD_DEFAULT_PORT ? pstr : "");
 		}
 		| MODE modes
-		| SHAREDKEY STRING
+		| SHAREDKEY key
 		{
-			if (cfgstate.sharedkey)
-				free(cfgstate.sharedkey);
-			cfgstate.sharedkey = $2;
+			int bits;
+
+			bits = cfgstate.sharedkey_len;
+			if (bits != 128 && bits != 192 && bits != 256) {
+				log_err("config: bad shared key length %d, "
+				    "should be 128, 192 or 256 bits\n", bits);
+				YYERROR;
+			}
 			log_msg(2, "config: shared key set");
 		}
 		;
@@ -233,7 +261,7 @@ int
 yylex(void)
 {
 	char *p;
-	int v;
+	int v, i, len;
 
 	/* Locate next token */
 	if (!confptr)
@@ -245,6 +273,25 @@ yylex(void)
 		if (!*p)
 			return 0;
 		confptr = p;
+	}
+
+	/* Hex token? */
+	p = confptr;
+	if (!strncmp(p, "0x", 2)) {
+		for (p = confptr + 2; *p; p++)
+			if (!isxdigit(*p))
+				goto is_string;
+		p = confptr + 2;
+		len = strlen(p) / 2;
+		if ((yylval.hex.data = calloc(len, sizeof(unsigned char)))
+		    == NULL) {
+			log_err("yylex: calloc()");
+			exit(1);
+		}
+		for (i = 0; i < len; i++)
+			yylval.hex.data[i] = x2i(p + 2 * i);
+		yylval.hex.len = len;
+		return HEX;
 	}
 
 	/* Numerical token? */
@@ -340,6 +387,18 @@ conf_parse_file(char *cfgfile)
   bad:
 	log_msg(0, "failed to open \"%s\"", cfgfile);
 	return 1;
+}
+
+unsigned char
+x2i(unsigned char *s)
+{
+        char    ss[3];
+
+        ss[0] = s[0];
+        ss[1] = s[1];
+        ss[2] = 0;
+
+        return ((unsigned char)strtoul(ss, NULL, 16));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.h,v 1.13 2006/12/25 08:17:17 deraadt Exp $	*/
+/*	$OpenBSD: sasyncd.h,v 1.14 2007/01/08 15:31:01 markus Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -50,6 +50,7 @@ struct cfgstate {
 	int		 carp_ifindex;
 
 	char		*sharedkey;
+	int		 sharedkey_len;
 
 	int		 pfkey_socket;
 
