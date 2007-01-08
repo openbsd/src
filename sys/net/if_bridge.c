@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.156 2006/12/28 20:06:11 deraadt Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.157 2007/01/08 13:52:38 michele Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1009,6 +1009,13 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	struct m_tag *mtag;
 #endif /* IPSEC */
 
+	/* ifp must be a member interface of the bridge. */ 
+	sc = (struct bridge_softc *)ifp->if_bridge;
+	if (sc == NULL) {
+		m_freem(m);
+		return (0);
+	}
+
 	if (m->m_len < sizeof(*eh)) {
 		m = m_pullup(m, sizeof(*eh));
 		if (m == NULL)
@@ -1017,7 +1024,6 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	eh = mtod(m, struct ether_header *);
 	dst = (struct ether_addr *)&eh->ether_dhost[0];
 	src = (struct ether_addr *)&eh->ether_shost[0];
-	sc = (struct bridge_softc *)ifp->if_bridge;
 
 	s = splnet();
 
