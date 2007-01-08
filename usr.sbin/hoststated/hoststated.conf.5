@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.11 2007/01/08 17:52:27 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.12 2007/01/08 20:46:18 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -129,13 +129,14 @@ a9993e36476816aba3e25717850c26c9cd0d89d
 Ping hosts in this table to determine whether they are up or not.
 This method will automatically use ICMP or ICMPV6 depending on the
 address family of each host.
-.It Ic check send Ar data Ic expect Ar regexp
+.It Ic check send Ar data Ic expect Ar pattern
 For each host in the table, a TCP connection is established on the
 port specified, then 
 .Ar data
 is sent.
 Incoming data is then read and is expected to match against 
-.Ar regexp.
+.Ar pattern
+using shell globbing rules.
 If
 .Ar data
 is an empty string or
@@ -216,8 +217,6 @@ which load balances four hosts
 and falls back to one host containing a
 .Dq sorry page :
 .Bd -literal -offset indent
-##
-##
 www1=front-www1.private.example.com
 www2=front-www2.private.example.com
 www3=front-www3.private.example.com

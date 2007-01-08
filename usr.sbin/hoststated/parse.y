@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2007/01/08 17:10:23 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.13 2007/01/08 20:46:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -40,7 +40,6 @@
 #include <stdio.h>
 #include <netdb.h>
 #include <string.h>
-#include <regex.h>
 
 #include "hostated.h"
 
@@ -414,15 +413,10 @@ tableoptsl	: host			{
 			free($5);
 		}
 		| CHECK SEND sendbuf EXPECT STRING {
-			int	ret;
-			char	ebuf[32];
-
 			table->check = CHECK_SEND_EXPECT;
-			ret = regcomp(&table->regx, $5, REG_EXTENDED|REG_NOSUB);
-			if (ret != 0) {
-				regerror(ret, &table->regx, ebuf, sizeof(ebuf));
-				yyerror("cannot compile expect regexp: %s",
-				    ebuf);
+			if (strlcpy(table->exbuf, $5, sizeof(table->exbuf))
+			    >= sizeof(table->exbuf)) {
+				yyerror("yyparse: expect buffer truncated");
 				free($5);
 				YYERROR;
 			}

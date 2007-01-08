@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_send_expect.c,v 1.1 2007/01/08 13:37:26 reyk Exp $ */
+/*	$OpenBSD: check_send_expect.c,v 1.2 2007/01/08 20:46:18 reyk Exp $ */
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
  *
@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <regex.h>
+#include <fnmatch.h>
 
 #include "hostated.h"
 
@@ -46,7 +46,7 @@ se_validate(struct ctl_tcp_event *cte)
 	if (b == NULL)
 		fatal("out of memory");
 	*b = '\0';
-	if (regexec(&cte->table->regx, cte->buf->buf, 0, NULL, 0) == 0)
+	if (fnmatch(cte->table->exbuf, cte->buf->buf, 0) == 0)
 		cte->host->up = HOST_UP;
 	else
 		cte->host->up = HOST_DOWN;

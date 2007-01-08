@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.6 2007/01/08 17:10:23 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.7 2007/01/08 20:46:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -34,7 +34,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <regex.h>
 
 #include "hostated.h"
 

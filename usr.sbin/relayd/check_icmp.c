@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.6 2007/01/08 13:37:26 reyk Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.7 2007/01/08 20:46:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -33,7 +33,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-#include <regex.h>
 
 #include "hostated.h"
 
