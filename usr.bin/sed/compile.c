@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.22 2006/10/09 00:23:56 tedu Exp $	*/
+/*	$OpenBSD: compile.c,v 1.23 2007/01/09 08:37:44 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95"; */
-static const char rcsid[] = "$OpenBSD: compile.c,v 1.22 2006/10/09 00:23:56 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: compile.c,v 1.23 2007/01/09 08:37:44 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -161,8 +161,12 @@ compile_stream(struct s_command **link)
 		}
 
 semicolon:	EATSPACE();
-		if (p && (*p == '#' || *p == '\0'))
+		if (*p == '#' || *p == '\0')
 			continue;
+		if (*p == ';') {
+			p++;
+			goto semicolon;
+		}
 		*link = cmd = xmalloc(sizeof(struct s_command));
 		link = &cmd->next;
 		cmd->nonsel = cmd->inrange = 0;
