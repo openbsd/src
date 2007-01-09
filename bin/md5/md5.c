@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.38 2006/11/17 16:02:18 jmc Exp $	*/
+/*	$OpenBSD: md5.c,v 1.39 2007/01/09 18:06:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -630,7 +630,7 @@ usage(void)
 	fprintf(stderr, "usage: %s [-pqrtx] [-c [checklist ...]] "
 	    "[-s string] [file ...]\n", __progname);
 	if (strcmp(__progname, "cksum") == 0)
-		fprintf(stderr, "\t[-a algorithms]] [-o 1 | 2]\n");
+		fprintf(stderr, "             [-a algorithms]] [-o 1 | 2]\n");
 
 	exit(EXIT_FAILURE);
 }
