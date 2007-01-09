@@ -144,5 +144,14 @@ wantsym(const Elf_Sym *sym, const char *strtab)
 #endif
 	return 0;
 
+#ifdef __arm__
+    /* ignore what gas calls "mapping symbols" */
+    {
+	const char *c = strtab + sym->st_name;
+	if (c[0] == '$')
+	    return 0;
+    }
+#endif
+
     return 1;
 }
