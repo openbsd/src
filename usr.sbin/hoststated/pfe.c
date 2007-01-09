@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.5 2007/01/08 20:46:18 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.6 2007/01/09 00:45:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -31,7 +31,7 @@
 #include <unistd.h>
 #include <pwd.h>
 
-#include "hostated.h"
+#include "hoststated.h"
 
 void	pfe_sig_handler(int sig, short, void *);
 void	pfe_shutdown(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.6 2006/12/16 18:50:33 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.7 2007/01/09 00:45:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -36,7 +36,7 @@
 #include <unistd.h>
 #include <event.h>
 
-#include "hostated.h"
+#include "hoststated.h"
 #include "parser.h"
 
 __dead void	 usage(void);

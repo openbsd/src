@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.7 2007/01/08 20:46:18 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.8 2007/01/09 00:45:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include "hostated.h"
+#include "hoststated.h"
 
 void	tcp_write(int, short, void *);
 void	tcp_host_up(int s, struct ctl_tcp_event *);

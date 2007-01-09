@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2007/01/08 20:46:18 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.14 2007/01/09 00:45:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -41,7 +41,7 @@
 #include <netdb.h>
 #include <string.h>
 
-#include "hostated.h"
+#include "hoststated.h"
 
 struct hostated			*conf = NULL;
 static FILE			*fin = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.7 2007/01/08 20:46:18 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.8 2007/01/09 00:45:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -36,7 +36,7 @@
 #include <err.h>
 #include <pwd.h>
 
-#include "hostated.h"
+#include "hoststated.h"
 
 void	hce_sig_handler(int sig, short, void *);
 void	hce_shutdown(void);

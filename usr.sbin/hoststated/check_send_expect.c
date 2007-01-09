@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_send_expect.c,v 1.2 2007/01/08 20:46:18 reyk Exp $ */
+/*	$OpenBSD: check_send_expect.c,v 1.3 2007/01/09 00:45:32 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
  *
@@ -29,7 +29,7 @@
 #include <fcntl.h>
 #include <fnmatch.h>
 
-#include "hostated.h"
+#include "hoststated.h"
 
 void	se_validate(struct ctl_tcp_event *);
 void	se_read(int, short, void *);
