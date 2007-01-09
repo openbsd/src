@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.3 2005/05/17 18:48:52 jason Exp $	*/
+/*	$OpenBSD: build.c,v 1.4 2007/01/09 16:30:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -41,17 +41,21 @@ main(int argc, char *argv[])
 	kf = (struct kue_firmware *)malloc(len);
 	bzero(kf, len);
 
-	kf->codeseglen = sizeof(kue_code_seg);
-	kf->fixseglen = sizeof(kue_fix_seg);
-	kf->trigseglen = sizeof(kue_trig_seg);
+	kf->codeseglen = htonl(sizeof(kue_code_seg));
+	kf->fixseglen = htonl(sizeof(kue_fix_seg));
+	kf->trigseglen = htonl(sizeof(kue_trig_seg));
 
-	bcopy(kue_code_seg, &kf->data[0], kf->codeseglen);
-	bcopy(kue_fix_seg, &kf->data[kf->codeseglen], kf->fixseglen);
-	bcopy(kue_trig_seg, &kf->data[kf->codeseglen + kf->fixseglen],
-	    kf->trigseglen);
+	bcopy(kue_code_seg, &kf->data[0],
+	    sizeof(kue_code_seg));
+	bcopy(kue_fix_seg, &kf->data[sizeof(kue_code_seg)],
+	    sizeof(kue_fix_seg));
+	bcopy(kue_trig_seg,
+	    &kf->data[sizeof(kue_code_seg) + sizeof(kue_fix_seg)],
+	    sizeof(kue_trig_seg));
 
 	printf("creating %s length %d [%d+%d+%d]\n",
-	    FILENAME, len, kf->codeseglen, kf->fixseglen, kf->trigseglen);
+	    FILENAME, len, sizeof(kue_code_seg), sizeof(kue_fix_seg),
+	    sizeof(kue_trig_seg));
 	fd = open(FILENAME, O_WRONLY|O_CREAT|O_TRUNC, 0644);
 	if (fd == -1)
 		err(1, FILENAME);
