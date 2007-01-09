@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.14 2006/06/27 20:20:48 jason Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.15 2007/01/09 22:37:18 kettenis Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -128,10 +128,10 @@ ebus_match(struct device *parent, void *match, void *aux)
 		strcmp(name, "ebus") == 0)
 		return (1);
 
-	/* Or a real ebus III */
+	/* Or a real RIO ebus */
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUSIII &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_RIO_EBUS &&
 		strcmp(name, "ebus") == 0)
 		return (1);
 
