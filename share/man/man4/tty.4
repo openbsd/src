@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.29 2006/06/13 10:14:28 mbalmer Exp $
+.\"	$OpenBSD: tty.4,v 1.30 2007/01/09 16:24:05 robert Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -234,14 +234,14 @@ with in the integer pointed to by
 .Fa tpgrp .
 This is the underlying call that implements the
 .Xr termios 4
-.Fn tcgetattr
+.Fn tcgetpgrp
 call.
 .It Dv TIOCSPGRP Fa int *tpgrp
 Associate the terminal with the process group (as an integer) pointed to by
 .Fa tpgrp .
 This is the underlying call that implements the
 .Xr termios 4
-.Fn tcsetattr
+.Fn tcsetpgrp
 call.
 .It Dv TIOCGETA Fa struct termios *term
 Place the current value of the termios state associated with the
