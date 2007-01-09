@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2007/01/09 00:45:32 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.15 2007/01/09 13:50:11 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -43,7 +43,7 @@
 
 #include "hoststated.h"
 
-struct hostated			*conf = NULL;
+struct hoststated			*conf = NULL;
 static FILE			*fin = NULL;
 static int			 lineno = 1;
 static int			 errors = 0;
@@ -742,7 +742,7 @@ top:
 }
 
 int
-parse_config(struct hostated *x_conf, const char *filename, int opts)
+parse_config(struct hoststated *x_conf, const char *filename, int opts)
 {
 	struct sym	*sym, *next;
 
@@ -775,7 +775,7 @@ parse_config(struct hostated *x_conf, const char *filename, int opts)
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
 		next = TAILQ_NEXT(sym, entries);
-		if ((conf->opts & HOSTATED_OPT_VERBOSE) && !sym->used)
+		if ((conf->opts & HOSTSTATED_OPT_VERBOSE) && !sym->used)
 			fprintf(stderr, "warning: macro '%s' not "
 			    "used\n", sym->nam);
 		if (!sym->persist) {

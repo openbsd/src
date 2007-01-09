@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.12 2007/01/08 20:46:18 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.13 2007/01/09 13:50:11 pyr Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -15,15 +15,15 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd November 1, 2006
-.Dt HOSTATED.CONF 5
+.Dt HOSTSTATED.CONF 5
 .Os
 .Sh NAME
-.Nm hostated.conf
+.Nm hoststated.conf
 .Nd Host Status daemon configuration file
 .Sh DESCRIPTION
 .Nm
 is the configuration file for the Host Status Daemon,
-.Xr hostated 8 .
+.Xr hoststated 8 .
 .Sh SECTIONS
 .Nm
 is divided into four main sections:
@@ -33,7 +33,7 @@ User-defined variables may be defined and used later, simplifying the
 configuration file.
 .It Sy Global Configuration
 Global settings for
-.Xr hostated 8 .
+.Xr hoststated 8 .
 .It Sy Tables
 Table definitions describe the content of a
 .Xr pf 4
@@ -150,7 +150,7 @@ Use a simple TCP connect to check that hosts are up.
 .It Ic disable
 Start the table disabled \(en no hosts will be checked in this table.
 The table can be later enabled through
-.Xr hostatectl 8 .
+.Xr hoststatectl 8 .
 .It Ic host Ar address
 Add the host whose address is
 .Ar address
@@ -182,7 +182,7 @@ are seen as down or disabled.
 .It Ic disable
 Set the service initially disabled.
 It can be later enabled through
-.Xr hostatectl 8 .
+.Xr hoststatectl 8 .
 .It Ic sticky-address
 This has the same effect than specifying sticky-address
 for a rdr rule in
@@ -246,19 +246,19 @@ service www {
 	virtual ip www.example.com port 8080 interface trunk0
 	virtual ip www6.example.com port 80 interface trunk0
 
-	tag HOSTATED
+	tag HOSTSTATED
 	table phphosts
 	backup table sorryhost
 }
 .Ed
 .Sh FILES
-.Bl -tag -width "/etc/hostated.conf" -compact
-.It Pa /etc/hostated.conf
-.Xr hostated 8
+.Bl -tag -width "/etc/hoststated.conf" -compact
+.It Pa /etc/hoststated.conf
+.Xr hoststated 8
 configuration file
 .It Pa /etc/services
 Service name database
 .El
 .Sh SEE ALSO
-.Xr hostatectl 8 ,
-.Xr hostated 8
+.Xr hoststatectl 8 ,
+.Xr hoststated 8

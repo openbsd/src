@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.8 2007/01/09 00:45:32 deraadt Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.9 2007/01/09 13:50:11 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -44,12 +44,12 @@ struct pfdata {
 	struct pfioc_trans_e	 pfte;
 };
 
-int	 transaction_init(struct hostated *, const char *);
-int	 transaction_commit(struct hostated *);
-void	 kill_tables(struct hostated *);
+int	 transaction_init(struct hoststated *, const char *);
+int	 transaction_commit(struct hoststated *);
+void	 kill_tables(struct hoststated *);
 
 void
-init_filter(struct hostated *env)
+init_filter(struct hoststated *env)
 {
 	struct pf_status	status;
 
@@ -65,7 +65,7 @@ init_filter(struct hostated *env)
 }
 
 void
-init_tables(struct hostated *env)
+init_tables(struct hoststated *env)
 {
 	int			 i;
 	struct service		*service;
@@ -77,7 +77,7 @@ init_tables(struct hostated *env)
 	i = 0;
 
 	TAILQ_FOREACH(service, &env->services, entry) {
-		(void)strlcpy(tables[i].pfrt_anchor, HOSTATED_ANCHOR "/",
+		(void)strlcpy(tables[i].pfrt_anchor, HOSTSTATED_ANCHOR "/",
 		    sizeof(tables[i].pfrt_anchor));
 		(void)strlcat(tables[i].pfrt_anchor, service->name,
 		    sizeof(tables[i].pfrt_anchor));
@@ -111,13 +111,13 @@ init_tables(struct hostated *env)
 }
 
 void
-kill_tables(struct hostated *env) {
+kill_tables(struct hoststated *env) {
 	struct pfioc_table	 io;
 	struct service		*service;
 
 	memset(&io, 0, sizeof(io));
 	TAILQ_FOREACH(service, &env->services, entry) {
-		(void)strlcpy(io.pfrio_table.pfrt_anchor, HOSTATED_ANCHOR "/",
+		(void)strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
 		    sizeof(io.pfrio_table.pfrt_anchor));
 		(void)strlcat(io.pfrio_table.pfrt_anchor, service->name,
 		    sizeof(io.pfrio_table.pfrt_anchor));
@@ -128,7 +128,7 @@ kill_tables(struct hostated *env) {
 }
 
 void
-sync_table(struct hostated *env, struct service *service, struct table *table)
+sync_table(struct hoststated *env, struct service *service, struct table *table)
 {
 	int			 i;
 	struct pfioc_table	 io;
@@ -153,7 +153,7 @@ sync_table(struct hostated *env, struct service *service, struct table *table)
 	io.pfrio_size = table->up;
 	io.pfrio_size2 = 0;
 	io.pfrio_buffer = addlist;
-	(void)strlcpy(io.pfrio_table.pfrt_anchor, HOSTATED_ANCHOR "/",
+	(void)strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
 	    sizeof(io.pfrio_table.pfrt_anchor));
 	(void)strlcat(io.pfrio_table.pfrt_anchor, service->name,
 	    sizeof(io.pfrio_table.pfrt_anchor));
@@ -200,12 +200,12 @@ sync_table(struct hostated *env, struct service *service, struct table *table)
 }
 
 void
-flush_table(struct hostated *env, struct service *service)
+flush_table(struct hoststated *env, struct service *service)
 {
 	struct pfioc_table	io;
 
 	memset(&io, 0, sizeof(io));
-	(void)strlcpy(io.pfrio_table.pfrt_anchor, HOSTATED_ANCHOR "/",
+	(void)strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
 	    sizeof(io.pfrio_table.pfrt_anchor));
 	(void)strlcat(io.pfrio_table.pfrt_anchor, service->name,
 	    sizeof(io.pfrio_table.pfrt_anchor));
@@ -218,7 +218,7 @@ flush_table(struct hostated *env, struct service *service)
 }
 
 int
-transaction_init(struct hostated *env, const char *anchor)
+transaction_init(struct hoststated *env, const char *anchor)
 {
 	env->pf->pft.size = 1;
 	env->pf->pft.esize = sizeof env->pf->pfte;
@@ -234,7 +234,7 @@ transaction_init(struct hostated *env, const char *anchor)
 }
 
 int
-transaction_commit(struct hostated *env)
+transaction_commit(struct hoststated *env)
 {
 	if (ioctl(env->pf->dev, DIOCXCOMMIT, &env->pf->pft) == -1)
 		return (-1);
@@ -242,7 +242,7 @@ transaction_commit(struct hostated *env)
 }
 
 void
-sync_ruleset(struct hostated *env, struct service *service, int enable)
+sync_ruleset(struct hoststated *env, struct service *service, int enable)
 {
 	struct pfioc_rule	 rio;
 	struct pfioc_pooladdr	 pio;
@@ -252,7 +252,7 @@ sync_ruleset(struct hostated *env, struct service *service, int enable)
 	char			 anchor[PF_ANCHOR_NAME_SIZE];
 
 	bzero(anchor, sizeof(anchor));
-	(void)strlcpy(anchor, HOSTATED_ANCHOR "/", sizeof(anchor));
+	(void)strlcpy(anchor, HOSTSTATED_ANCHOR "/", sizeof(anchor));
 	(void)strlcat(anchor, service->name, sizeof(anchor));
 	transaction_init(env, anchor);
 
@@ -323,19 +323,19 @@ sync_ruleset(struct hostated *env, struct service *service, int enable)
 }
 
 void
-flush_rulesets(struct hostated *env)
+flush_rulesets(struct hoststated *env)
 {
 	struct service	*service;
 	char		 anchor[PF_ANCHOR_NAME_SIZE];
 
 	kill_tables(env);
 	TAILQ_FOREACH(service, &env->services, entry) {
-		strlcpy(anchor, HOSTATED_ANCHOR "/", sizeof(anchor));
+		strlcpy(anchor, HOSTSTATED_ANCHOR "/", sizeof(anchor));
 		strlcat(anchor, service->name, sizeof(anchor));
 		transaction_init(env, anchor);
 		transaction_commit(env);
 	}
-	strlcpy(anchor, HOSTATED_ANCHOR, sizeof(anchor));
+	strlcpy(anchor, HOSTSTATED_ANCHOR, sizeof(anchor));
 	transaction_init(env, anchor);
 	transaction_commit(env);
 	log_debug("flush_rulesets: flushed rules");

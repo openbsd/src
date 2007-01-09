@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.6 2007/01/09 00:45:32 deraadt Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.7 2007/01/09 13:50:11 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -40,7 +40,7 @@ void	pfe_dispatch_parent(int, short, void *);
 
 void	pfe_sync(void);
 
-static struct hostated	*env = NULL;
+static struct hoststated	*env = NULL;
 
 struct imsgbuf	*ibuf_main;
 struct imsgbuf	*ibuf_hce;
@@ -58,7 +58,7 @@ pfe_sig_handler(int sig, short event, void *arg)
 }
 
 pid_t
-pfe(struct hostated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
+pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	int pipe_pfe2hce[2])
 {
 	pid_t		 pid;
@@ -83,7 +83,7 @@ pfe(struct hostated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	init_filter(env);
 	init_tables(env);
 
-	if ((pw = getpwnam(HOSTATED_USER)) == NULL)
+	if ((pw = getpwnam(HOSTSTATED_USER)) == NULL)
 		fatal("pfe: getpwnam");
 
 	if (chroot(pw->pw_dir) == -1)
@@ -92,7 +92,7 @@ pfe(struct hostated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 		fatal("pfe: chdir(\"/\")");
 
 	setproctitle("pf update engine");
-	hostated_process = PROC_PFE;
+	hoststated_process = PROC_PFE;
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||

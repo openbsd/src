@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.7 2007/01/09 00:45:32 deraadt Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.8 2007/01/09 13:50:10 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -57,7 +57,7 @@ usage(void)
 	exit(1);
 }
 
-/* dummy function so that hostatectl does not need libevent */
+/* dummy function so that hoststatectl does not need libevent */
 void
 imsg_event_add(struct imsgbuf *i)
 {
@@ -78,15 +78,15 @@ main(int argc, char *argv[])
 	if ((res = parse(argc - 1, argv + 1)) == NULL)
 		exit(1);
 
-	/* connect to hostated control socket */
+	/* connect to hoststated control socket */
 	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, HOSTATED_SOCKET, sizeof(sun.sun_path));
+	strlcpy(sun.sun_path, HOSTSTATED_SOCKET, sizeof(sun.sun_path));
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
-		err(1, "connect: %s", HOSTATED_SOCKET);
+		err(1, "connect: %s", HOSTSTATED_SOCKET);
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.8 2007/01/09 02:32:58 reyk Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.9 2007/01/09 13:50:11 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 	int		 c;
 	int		 debug;
 	u_int32_t	 opts;
-	struct hostated	 env;
+	struct hoststated	 env;
 	const char	*conffile;
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
@@ -116,13 +116,13 @@ main(int argc, char *argv[])
 			debug = 1;
 			break;
 		case 'n':
-			opts |= HOSTATED_OPT_NOACTION;
+			opts |= HOSTSTATED_OPT_NOACTION;
 			break;
 		case 'f':
 			conffile = optarg;
 			break;
 		case 'v':
-			opts |= HOSTATED_OPT_VERBOSE;
+			opts |= HOSTSTATED_OPT_VERBOSE;
 			break;
 		default:
 			usage();
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 	if (parse_config(&env, conffile, opts))
 		exit(1);
 
-	if (env.opts & HOSTATED_OPT_NOACTION) {
+	if (env.opts & HOSTSTATED_OPT_NOACTION) {
 		fprintf(stderr, "configuration OK\n");
 		exit(0);
 	}
@@ -142,8 +142,8 @@ main(int argc, char *argv[])
 	if (geteuid())
 		errx(1, "need root privileges");
 
-	if (getpwnam(HOSTATED_USER) == NULL)
-		errx(1, "unknown user %s", HOSTATED_USER);
+	if (getpwnam(HOSTSTATED_USER) == NULL)
+		errx(1, "unknown user %s", HOSTSTATED_USER);
 
 	if (!debug)
 		daemon(1, 0);
@@ -342,7 +342,7 @@ main_dispatch_hce(int fd, short event, void * ptr)
 }
 
 struct host *
-host_find(struct hostated *env, objid_t id)
+host_find(struct hoststated *env, objid_t id)
 {
 	struct table	*table;
 	struct host	*host;
@@ -355,7 +355,7 @@ host_find(struct hostated *env, objid_t id)
 }
 
 struct table *
-table_find(struct hostated *env, objid_t id)
+table_find(struct hoststated *env, objid_t id)
 {
 	struct table	*table;
 
@@ -366,7 +366,7 @@ table_find(struct hostated *env, objid_t id)
 }
 
 struct service *
-service_find(struct hostated *env, objid_t id)
+service_find(struct hoststated *env, objid_t id)
 {
 	struct service	*service;
 
@@ -377,7 +377,7 @@ service_find(struct hostated *env, objid_t id)
 }
 
 struct host *
-host_findbyname(struct hostated *env, const char *name)
+host_findbyname(struct hoststated *env, const char *name)
 {
 	struct table	*table;
 	struct host	*host;
@@ -390,7 +390,7 @@ host_findbyname(struct hostated *env, const char *name)
 }
 
 struct table *
-table_findbyname(struct hostated *env, const char *name)
+table_findbyname(struct hoststated *env, const char *name)
 {
 	struct table	*table;
 
@@ -401,7 +401,7 @@ table_findbyname(struct hostated *env, const char *name)
 }
 
 struct service *
-service_findbyname(struct hostated *env, const char *name)
+service_findbyname(struct hoststated *env, const char *name)
 {
 	struct service	*service;
 

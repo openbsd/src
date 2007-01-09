@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.7 2007/01/09 00:45:32 deraadt Exp $	*/
+/*	$OpenBSD: control.c,v 1.8 2007/01/09 13:50:11 pyr Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -57,28 +57,28 @@ control_init(void)
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, HOSTATED_SOCKET, sizeof(sun.sun_path));
+	strlcpy(sun.sun_path, HOSTSTATED_SOCKET, sizeof(sun.sun_path));
 
-	if (unlink(HOSTATED_SOCKET) == -1)
+	if (unlink(HOSTSTATED_SOCKET) == -1)
 		if (errno != ENOENT) {
-			log_warn("control_init: unlink %s", HOSTATED_SOCKET);
+			log_warn("control_init: unlink %s", HOSTSTATED_SOCKET);
 			close(fd);
 			return (-1);
 		}
 
 	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
-		log_warn("control_init: bind: %s", HOSTATED_SOCKET);
+		log_warn("control_init: bind: %s", HOSTSTATED_SOCKET);
 		close(fd);
 		umask(old_umask);
 		return (-1);
 	}
 	umask(old_umask);
 
-	if (chmod(HOSTATED_SOCKET, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
+	if (chmod(HOSTSTATED_SOCKET, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
 		log_warn("control_init: chmod");
 		close(fd);
-		(void)unlink(HOSTATED_SOCKET);
+		(void)unlink(HOSTSTATED_SOCKET);
 		return (-1);
 	}
 
@@ -108,7 +108,7 @@ void
 control_cleanup(void)
 {
 
-	unlink(HOSTATED_SOCKET);
+	unlink(HOSTSTATED_SOCKET);
 }
 
 /* ARGSUSED */

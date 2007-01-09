@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.8 2007/01/09 00:45:32 deraadt Exp $	*/
+/*	$OpenBSD: hce.c,v 1.9 2007/01/09 13:50:11 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -45,7 +45,7 @@ void	hce_dispatch_parent(int, short, void *);
 void	hce_launch_checks(int, short, void *);
 int	hce_checks_done(void);
 
-static struct hostated	*env = NULL;
+static struct hoststated	*env = NULL;
 struct imsgbuf		*ibuf_pfe;
 struct imsgbuf		*ibuf_main;
 
@@ -62,7 +62,7 @@ hce_sig_handler(int sig, short event, void *arg)
 }
 
 pid_t
-hce(struct hostated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
+hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	int pipe_pfe2hce[2])
 {
 	pid_t		 pid;
@@ -88,7 +88,7 @@ hce(struct hostated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	if ((env->icmp6_sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
 		err(1, "socket");
 
-	if ((pw = getpwnam(HOSTATED_USER)) == NULL)
+	if ((pw = getpwnam(HOSTSTATED_USER)) == NULL)
 		fatal("hce: getpwnam");
 
 	if (chroot(pw->pw_dir) == -1)
@@ -97,7 +97,7 @@ hce(struct hostated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 		fatal("hce: chdir(\"/\")");
 
 	setproctitle("host check engine");
-	hostated_process = PROC_HCE;
+	hoststated_process = PROC_HCE;
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||

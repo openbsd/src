@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.8,v 1.4 2006/12/18 19:48:04 jmc Exp $
+.\"	$OpenBSD: hoststated.8,v 1.5 2007/01/09 13:50:11 pyr Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -15,10 +15,10 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd November 1, 2006
-.Dt HOSTATED 8
+.Dt HOSTSTATED 8
 .Os
 .Sh NAME
-.Nm hostated
+.Nm hoststated
 .Nd Host Status daemon
 .Sh SYNOPSIS
 .Nm
@@ -40,7 +40,7 @@ to install rulesets through the anchor,
 the following line is required in the NAT section of
 .Xr pf.conf 5 :
 .Bd -literal -offset indent
-rdr-anchor "hostated/*"
+rdr-anchor "hoststated/*"
 .Ed
 .Pp
 .Nm
@@ -55,11 +55,11 @@ Additionally a table can be backed up i.e. its content will be swapped
 by the content of another table when it is empty.
 This can be used to serve static content when a dynamic service goes down.
 See
-.Xr hostated.conf 5
+.Xr hoststated.conf 5
 for a more detailed explanation of how to configure
 .Nm .
 .Pp
-.Xr hostatectl 8
+.Xr hoststatectl 8
 can be used to enable or disable hosts, tables, and services as well
 as showing the current status of each object.
 .Pp
@@ -74,7 +74,7 @@ will run in the foreground and log to
 .It Fl f Ar file
 Specify an alternative configuration file.
 The default is
-.Pa /etc/hostated.conf .
+.Pa /etc/hoststated.conf .
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
@@ -82,15 +82,15 @@ Only check the configuration file for validity.
 Produce more verbose output.
 .El
 .Sh FILES
-.Bl -tag -width "/var/run/hostated.sockXX" -compact
-.It /etc/hostated.conf
+.Bl -tag -width "/var/run/hoststated.sockXX" -compact
+.It /etc/hoststated.conf
 Default
 .Nm
 configuration file.
-.It /var/run/hostated.sock
+.It /var/run/hoststated.sock
 Unix-domain socket used for communication with
-.Xr hostatectl 8 .
+.Xr hoststatectl 8 .
 .El
 .Sh SEE ALSO
-.Xr hostated.conf 5 ,
-.Xr hostatectl 8
+.Xr hoststated.conf 5 ,
+.Xr hoststatectl 8

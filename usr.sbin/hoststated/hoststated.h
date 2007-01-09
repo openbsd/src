@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.12 2007/01/09 03:32:56 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.13 2007/01/09 13:50:11 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -17,20 +17,20 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define CONF_FILE	"/etc/hostated.conf"
-#define HOSTATED_SOCKET	"/var/run/hostated.sock"
-#define PF_SOCKET	"/dev/pf"
-#define HOSTATED_USER	"_hostated"
-#define HOSTATED_ANCHOR	"hostated"
-#define CHECK_TIMEOUT	200
-#define CHECK_INTERVAL	10
-#define EMPTY_TABLE	UINT_MAX
-#define EMPTY_ID	UINT_MAX
-#define TABLE_NAME_SIZE	32
-#define	TAG_NAME_SIZE	64
-#define SRV_NAME_SIZE	64
-#define MAX_NAME_SIZE	64
-#define SRV_MAX_VIRTS	16
+#define CONF_FILE		"/etc/hoststated.conf"
+#define HOSTSTATED_SOCKET	"/var/run/hoststated.sock"
+#define PF_SOCKET		"/dev/pf"
+#define HOSTSTATED_USER		"_hoststated"
+#define HOSTSTATED_ANCHOR	"hoststated"
+#define CHECK_TIMEOUT		200
+#define CHECK_INTERVAL		10
+#define EMPTY_TABLE		UINT_MAX
+#define EMPTY_ID		UINT_MAX
+#define TABLE_NAME_SIZE		32
+#define	TAG_NAME_SIZE		64
+#define SRV_NAME_SIZE		64
+#define MAX_NAME_SIZE		64
+#define SRV_MAX_VIRTS		16
 
 #define SMALL_READ_BUF_SIZE	1024
 #define READ_BUF_SIZE		65535
@@ -74,13 +74,13 @@ struct imsgbuf {
 
 enum imsg_type {
 	IMSG_NONE,
-	IMSG_CTL_OK,		/* answer to hostatectl requests */
+	IMSG_CTL_OK,		/* answer to hoststatectl requests */
 	IMSG_CTL_FAIL,
 	IMSG_CTL_END,
 	IMSG_CTL_SERVICE,
 	IMSG_CTL_TABLE,
 	IMSG_CTL_HOST,
-	IMSG_CTL_SHOW_SUM,	/* hostatectl requests */
+	IMSG_CTL_SHOW_SUM,	/* hoststatectl requests */
 	IMSG_CTL_SERVICE_ENABLE,
 	IMSG_CTL_SERVICE_DISABLE,
 	IMSG_CTL_TABLE_ENABLE,
@@ -125,14 +125,14 @@ struct ctl_id {
 };
 
 struct ctl_icmp_event {
-	struct hostated	*env;
-	int		 icmp_sock;
-	int		 icmp6_sock;
-	int		 has_icmp4;
-	int		 has_icmp6;
-	int		 last_up;
-	struct event	 ev;
-	struct timeval	 tv_start;
+	struct hoststated	*env;
+	int			 icmp_sock;
+	int			 icmp6_sock;
+	int			 has_icmp4;
+	int			 has_icmp6;
+	int			 last_up;
+	struct event		 ev;
+	struct timeval		 tv_start;
 };
 
 struct ctl_tcp_event {
@@ -223,9 +223,9 @@ enum {
 	PROC_MAIN,
 	PROC_PFE,
 	PROC_HCE
-} hostated_process;
+} hoststated_process;
 
-struct hostated {
+struct hoststated {
 	u_int8_t		 opts;
 	struct pfdata		*pf;
 	int			 icmp_sock;
@@ -241,8 +241,8 @@ struct hostated {
 	struct ctl_icmp_event	 cie;
 };
 
-#define HOSTATED_OPT_VERBOSE	 0x01
-#define HOSTATED_OPT_NOACTION	 0x04
+#define HOSTSTATED_OPT_VERBOSE	 0x01
+#define HOSTSTATED_OPT_NOACTION	 0x04
 
 /* initially control.h */
 struct {
@@ -275,7 +275,7 @@ void    session_socket_blockmode(int, enum blockmodes);
 extern  struct ctl_connlist ctl_conns;
 
 /* parse.y */
-int	parse_config(struct hostated *, const char *, int);
+int	parse_config(struct hoststated *, const char *, int);
 
 /* log.c */
 void	log_init(int);
@@ -312,7 +312,7 @@ void	 imsg_free(struct imsg *);
 void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
 
 /* pfe.c */
-pid_t	 pfe(struct hostated *, int [2], int [2], int [2]);
+pid_t	 pfe(struct hoststated *, int [2], int [2], int [2]);
 void	 show(struct ctl_conn *);
 int	 enable_service(struct ctl_conn *, struct ctl_id *);
 int	 enable_table(struct ctl_conn *, struct ctl_id *);
@@ -322,15 +322,15 @@ int	 disable_table(struct ctl_conn *, struct ctl_id *);
 int	 disable_host(struct ctl_conn *, struct ctl_id *);
 
 /* pfe_filter.c */
-void	 init_filter(struct hostated *);
-void	 init_tables(struct hostated *);
-void	 flush_table(struct hostated *, struct service *);
-void	 sync_table(struct hostated *, struct service *, struct table *);
-void	 sync_ruleset(struct hostated *, struct service *, int);
-void	 flush_rulesets(struct hostated *);
+void	 init_filter(struct hoststated *);
+void	 init_tables(struct hoststated *);
+void	 flush_table(struct hoststated *, struct service *);
+void	 sync_table(struct hoststated *, struct service *, struct table *);
+void	 sync_ruleset(struct hoststated *, struct service *, int);
+void	 flush_rulesets(struct hoststated *);
 
 /* hce.c */
-pid_t	 hce(struct hostated *, int [2], int [2], int [2]);
+pid_t	 hce(struct hoststated *, int [2], int [2], int [2]);
 void	 hce_notify_done(struct host *, const char *);
 
 /* check_icmp.c */
@@ -346,10 +346,10 @@ void	 send_http_request(struct ctl_tcp_event *);
 /* check_send_expect.c */
 void	 start_send_expect(struct ctl_tcp_event *);
 
-/* hostated.c */
-struct host	*host_find(struct hostated *, objid_t);
-struct table	*table_find(struct hostated *, objid_t);
-struct service	*service_find(struct hostated *, objid_t);
-struct host	*host_findbyname(struct hostated *, const char *);
-struct table	*table_findbyname(struct hostated *, const char *);
-struct service	*service_findbyname(struct hostated *, const char *);
+/* hoststated.c */
+struct host	*host_find(struct hoststated *, objid_t);
+struct table	*table_find(struct hoststated *, objid_t);
+struct service	*service_find(struct hoststated *, objid_t);
+struct host	*host_findbyname(struct hoststated *, const char *);
+struct table	*table_findbyname(struct hoststated *, const char *);
+struct service	*service_findbyname(struct hoststated *, const char *);
