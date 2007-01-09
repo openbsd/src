@@ -1,4 +1,4 @@
-# $OpenBSD: login.conf.in,v 1.1 2005/08/15 00:40:17 millert Exp $
+# $OpenBSD: login.conf.in,v 1.2 2007/01/09 10:20:12 millert Exp $
 
 #
 # Sample login.conf file.  See login.conf(5) for details.
@@ -75,4 +75,12 @@ staff:\
 	:maxproc-cur=@STAFF_MAXPROC_CUR@:\
 	:ignorenologin:\
 	:requirehome@:\
+	:tc=default:
+
+#
+# Authpf accounts get a special motd and shell
+#
+authpf:\
+	:welcome=/etc/motd.authpf:\
+	:shell=/usr/sbin/authpf:\
 	:tc=default:
