@@ -1,6 +1,6 @@
-/*	$OpenBSD: watch.c,v 1.14 2007/01/02 13:51:13 xsa Exp $	*/
+/*	$OpenBSD: watch.c,v 1.15 2007/01/09 17:12:14 xsa Exp $	*/
 /*
- * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
+ * Copyright (c) 2005-2007 Xavier Santolaria <xsa@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +21,30 @@
 #include "log.h"
 #include "remote.h"
 
+#define W_COMMIT	0x01
+#define W_EDIT		0x02
+#define W_UNEDIT	0x04
+#define W_ADD		0x08
+#define W_REMOVE	0x10
+#define W_ON		0x20
+#define W_OFF		0x40
+#define W_ALL		(W_EDIT|W_COMMIT|W_UNEDIT)
+
+static void	cvs_watch_local(struct cvs_file *);
 static void	cvs_watchers_local(struct cvs_file *);
+
+static int	watch_req = 0;
+static int	watch_aflags = 0;
+
+struct cvs_cmd cvs_cmd_watch = {
+	CVS_OP_WATCH, 0, "watch",
+	{ },
+	"Set watches",
+	"on | off | add | remove [-lR] [-a action] [file ...]",
+	"a:lR",
+	NULL,
+	cvs_watch
+};
 
 struct cvs_cmd cvs_cmd_watchers = {
 	CVS_OP_WATCHERS, 0, "watchers",
@@ -32,6 +55,112 @@ struct cvs_cmd cvs_cmd_watchers = {
 	NULL,
 	cvs_watchers
 };
+
+int
+cvs_watch(int argc, char **argv)
+{
+	int ch, flags;
+	struct cvs_recursion cr;
+
+	if (argc < 2)
+		fatal("%s", cvs_cmd_watch.cmd_synopsis);
+
+	if (strcmp(argv[1], "on") == 0)
+		watch_req |= W_ON;
+	else if (strcmp(argv[1], "off") == 0)
+		watch_req |= W_OFF;
+	else if (strcmp(argv[1], "add") == 0)
+		watch_req |= W_ADD;
+	else if (strcmp(argv[1], "remove") == 0)
+		watch_req |= W_REMOVE;
+	else
+		fatal("%s", cvs_cmd_watch.cmd_synopsis);
+
+	--argc;
+	++argv;
+
+	flags = CR_RECURSE_DIRS;
+
+	while ((ch = getopt(argc, argv, cvs_cmd_watch.cmd_opts)) != -1) {
+		switch (ch) {
+		case 'a':
+			if (!(watch_req & (W_ADD|W_REMOVE)))
+				fatal("%s", cvs_cmd_watch.cmd_synopsis);
+
+			if (strcmp(optarg, "edit") == 0)
+				watch_aflags |= W_EDIT;
+			else if (strcmp(optarg, "unedit") == 0)
+				watch_aflags |= W_UNEDIT;
+			else if (strcmp(optarg, "commit") == 0)
+				watch_aflags |= W_COMMIT;
+			else if (strcmp(optarg, "all") == 0)
+				watch_aflags |= W_ALL;
+			else if (strcmp(optarg, "none") == 0)
+				watch_aflags &= ~W_ALL;
+			else
+				fatal("%s", cvs_cmd_watch.cmd_synopsis);
+		case 'l':
+			flags &= ~CR_RECURSE_DIRS;
+			break;
+		case 'R':
+			break;
+		default:
+			fatal("%s", cvs_cmd_watch.cmd_synopsis);
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (watch_aflags == 0)
+		watch_aflags |= W_ALL;
+
+	cr.enterdir = NULL;
+	cr.leavedir = NULL;
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cr.fileproc = cvs_client_sendfile;
+
+		if (watch_req & (W_ADD|W_REMOVE)) {
+			if (watch_aflags & W_EDIT)
+				cvs_client_send_request("Argument -a edit");
+
+			if (watch_aflags & W_UNEDIT)
+				cvs_client_send_request("Argument -a unedit");
+
+			if (watch_aflags & W_COMMIT)
+				cvs_client_send_request("Argument -a commit");
+
+			if (!(watch_aflags & W_ALL))
+				cvs_client_send_request("Argument -a none");
+		}
+
+		if (!(flags & CR_RECURSE_DIRS))
+			cvs_client_send_request("Argument -l");
+	} else {
+		cr.fileproc = cvs_watch_local;
+	}
+
+	cr.flags = flags;
+
+	cvs_file_run(argc, argv, &cr);
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_send_files(argv, argc);
+		cvs_client_senddir(".");
+
+		if (watch_req & (W_ADD|W_REMOVE))
+			cvs_client_send_request("watch-%s",
+			    (watch_req & W_ADD) ? "add" : "remove");
+		else
+			cvs_client_send_request("watch-%s",
+			    (watch_req & W_ON) ? "on" : "off");
+
+		cvs_client_get_responses();
+	}
+
+	return (0);
+}
 
 int
 cvs_watchers(int argc, char **argv)
@@ -84,6 +213,11 @@ cvs_watchers(int argc, char **argv)
 	}
 
 	return (0);
+}
+
+static void
+cvs_watch_local(struct cvs_file *cf)
+{
 }
 
 static void
