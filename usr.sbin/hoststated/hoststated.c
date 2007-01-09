@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.7 2007/01/08 20:46:18 reyk Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.8 2007/01/09 02:32:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -33,7 +33,7 @@
 #include <unistd.h>
 #include <pwd.h>
 
-#include "hostated.h"
+#include "hoststated.h"
 
 __dead void	 usage(void);
 
