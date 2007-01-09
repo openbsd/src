@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.8 2007/01/09 00:45:32 deraadt Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.9 2007/01/09 03:32:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -125,8 +125,7 @@ send_icmp6(struct ctl_icmp_event *cie, struct host *host)
 	struct sockaddr		*to;
 	struct icmp6_hdr	*icp;
 	ssize_t			 i;
-	int			 datalen = (64 - 8);
-	u_char			 packet[datalen];
+	u_char			 packet[ICMP_BUF_SIZE];
 
 	cie->has_icmp6 = 1;
 	to = (struct sockaddr *)&host->ss;
@@ -139,9 +138,9 @@ send_icmp6(struct ctl_icmp_event *cie, struct host *host)
 
 	memcpy((packet + sizeof(*icp)), &host->id, sizeof(host->id));
 
-	i = sendto(cie->icmp6_sock, packet, datalen + 8, 0, to,
+	i = sendto(cie->icmp6_sock, packet, sizeof(packet), 0, to,
 	    sizeof(struct sockaddr_in6));
-	if (i < 0 || i != datalen + 8) {
+	if (i < 0 || i != sizeof(packet)) {
 		host->up = HOST_DOWN;
 		hce_notify_done(host, "send_icmp6: cannot send");
 		return;
@@ -154,8 +153,7 @@ send_icmp4(struct ctl_icmp_event *cie, struct host *host)
 	struct sockaddr	*to;
 	struct icmp	*icp;
 	ssize_t		 i;
-	int		 datalen = (64 - 8);
-	u_char		 packet[datalen];
+	u_char		 packet[ICMP_BUF_SIZE];
 
 	cie->has_icmp4 = 1;
 	to = (struct sockaddr *)&host->ss;
@@ -168,11 +166,11 @@ send_icmp4(struct ctl_icmp_event *cie, struct host *host)
 	icp->icmp_cksum = 0;
 
 	memcpy(icp->icmp_data, &host->id, sizeof(host->id));
-	icp->icmp_cksum = in_cksum((u_short *)icp, datalen + 8);
+	icp->icmp_cksum = in_cksum((u_short *)icp, sizeof(packet));
 
-	i = sendto(cie->icmp_sock, packet, datalen + 8, 0, to,
+	i = sendto(cie->icmp_sock, packet, sizeof(packet), 0, to,
 	    sizeof(struct sockaddr_in));
-	if (i < 0 || i != datalen + 8) {
+	if (i < 0 || i != sizeof(packet)) {
 		host->up = HOST_DOWN;
 		hce_notify_done(host, "send_icmp4: cannot send");
 	}
@@ -182,8 +180,7 @@ void
 recv_icmp6(int s, short event, void *arg)
 {
 	struct ctl_icmp_event	*cie = arg;
-	int			 datalen = (64 - 8);
-	u_char			 packet[datalen];
+	u_char			 packet[ICMP_BUF_SIZE];
 	socklen_t		 len;
 	struct sockaddr_storage	 ss;
 	struct icmp6_hdr	*icp;
@@ -218,8 +215,8 @@ recv_icmp6(int s, short event, void *arg)
 	bzero(&packet, sizeof(packet));
 	bzero(&ss, sizeof(ss));
 	len = sizeof(struct sockaddr_in6);
-	i = recvfrom(s, packet, datalen + 8, 0, (struct sockaddr *)&ss, &len);
-	if (i < 0 || i != datalen + 8) {
+	i = recvfrom(s, packet, sizeof(packet), 0, (struct sockaddr *)&ss, &len);
+	if (i < 0 || i != sizeof(packet)) {
 		log_warn("recv_icmp6: did not receive valid ping");
 		return;
 	}
@@ -251,11 +248,10 @@ recv_icmp6(int s, short event, void *arg)
 void
 recv_icmp4(int s, short event, void *arg)
 {
-	int			 datalen = (64 - 8);
 	socklen_t		 len;
 	struct icmp		*icp;
 	struct ctl_icmp_event	*cie = arg;
-	u_char			 packet[datalen];
+	u_char			 packet[ICMP_BUF_SIZE];
 	struct host		*host;
 	struct table		*table;
 	ssize_t			 i;
@@ -289,8 +285,8 @@ recv_icmp4(int s, short event, void *arg)
 	len = sizeof(struct sockaddr_in);
 	bzero(&packet, sizeof(packet));
 	bzero(&ss, sizeof(ss));
-	i = recvfrom(s, packet, datalen + 8, 0, (struct sockaddr *)&ss, &len);
-	if (i < 0 || i != (datalen + 8)) {
+	i = recvfrom(s, packet, sizeof(packet), 0, (struct sockaddr *)&ss, &len);
+	if (i < 0 || i != sizeof(packet)) {
 		log_warn("recv_icmp4: did not receive valid ping");
 		return;
 	}

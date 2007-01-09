@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.11 2007/01/08 20:46:18 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.12 2007/01/09 03:32:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -34,6 +34,7 @@
 
 #define SMALL_READ_BUF_SIZE	1024
 #define READ_BUF_SIZE		65535
+#define ICMP_BUF_SIZE		64
 
 /* buffer */
 struct buf {
