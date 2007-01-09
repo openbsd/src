@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1210 2007/01/06 10:18:14 pedro Exp 
+ *	OpenBSD: pcidevs,v 1.1211 2007/01/09 22:33:43 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -11004,15 +11004,15 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUS,
-	    "PCIO Ebus2",
+	    "PCIO EBus2",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_HME,
 	    "HME",
 	},
 	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUSIII,
-	    "PCIO Ebus2 (US III)",
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_RIO_EBUS,
+	    "RIO EBus",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_ERINETWORK,

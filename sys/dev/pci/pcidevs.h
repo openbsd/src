@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1210 2007/01/06 10:18:14 pedro Exp 
+ *	OpenBSD: pcidevs,v 1.1211 2007/01/09 22:33:43 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3495,9 +3495,9 @@
 #define	PCI_PRODUCT_STB2_RIVA128	0x0018		/* Velocity128 */
 
 /* Sun */
-#define	PCI_PRODUCT_SUN_EBUS	0x1000		/* PCIO Ebus2 */
+#define	PCI_PRODUCT_SUN_EBUS	0x1000		/* PCIO EBus2 */
 #define	PCI_PRODUCT_SUN_HME	0x1001		/* HME */
-#define	PCI_PRODUCT_SUN_EBUSIII	0x1100		/* PCIO Ebus2 (US III) */
+#define	PCI_PRODUCT_SUN_RIO_EBUS	0x1100		/* RIO EBus */
 #define	PCI_PRODUCT_SUN_ERINETWORK	0x1101		/* ERI Ether */
 #define	PCI_PRODUCT_SUN_FIREWIRE	0x1102		/* FireWire */
 #define	PCI_PRODUCT_SUN_USB	0x1103		/* USB */
