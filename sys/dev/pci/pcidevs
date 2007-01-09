@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1210 2007/01/06 10:18:14 pedro Exp $
+$OpenBSD: pcidevs,v 1.1211 2007/01/09 22:33:43 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3490,9 +3490,9 @@ product SONY MEMSTICK_SLOT	0x808a	Memory Stick Slot
 product STB2 RIVA128		0x0018	Velocity128
 
 /* Sun */
-product SUN EBUS		0x1000	PCIO Ebus2
+product SUN EBUS		0x1000	PCIO EBus2
 product SUN HME			0x1001	HME
-product SUN EBUSIII		0x1100	PCIO Ebus2 (US III)
+product SUN RIO_EBUS		0x1100	RIO EBus
 product SUN ERINETWORK		0x1101	ERI Ether
 product SUN FIREWIRE		0x1102	FireWire
 product SUN USB			0x1103	USB
