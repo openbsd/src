@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.24 2007/01/02 16:43:45 niallo Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.25 2007/01/10 02:13:23 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -343,6 +343,7 @@ rcs_prompt(const char *prompt)
 		(void)fprintf(stderr, "%s", prompt);
 	if (isatty(STDIN_FILENO))
 		(void)fprintf(stderr, ">> ");
+	clearerr(stdin);
 	while ((buf = fgetln(stdin, &len)) != NULL) {
 		/* The last line may not be EOL terminated. */
 		if (buf[0] == '.' && (len == 1 || buf[1] == '\n'))
@@ -564,6 +565,7 @@ rcs_yesno(int defc)
 	fflush(stderr);
 	fflush(stdout);
 
+	clearerr(stdin);
 	if (isalpha(c = getchar()))
 		c = tolower(c);
 	if (c == defc || c == '\n' || (c == EOF && feof(stdin)))
