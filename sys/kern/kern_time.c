@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.60 2006/10/30 20:19:33 otto Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.61 2007/01/10 07:58:08 art Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -550,7 +550,7 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, which) == ITIMER_REAL) {
 		struct timeval now;
 
-		getmicrotime(&now);
+		getmicrouptime(&now);
 		/*
 		 * Convert from absolute to relative time in .it_value
 		 * part of real time timer.  If time for real time timer
