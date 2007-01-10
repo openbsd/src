@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isabr.4,v 1.1 2007/01/06 20:40:20 miod Exp $
+.\"	$OpenBSD: isabr.4,v 1.2 2007/01/10 14:40:35 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Miodrag Vallat.
 .\"
@@ -35,7 +35,7 @@ HP 9000/4xx workstations.
 .Xr intro 4 ,
 .Xr isa 4
 .Sh CAVEATS
-Interrupt numbers 0, 1, 2 and 8 are permanently makesd on hp300 systems.
+Interrupt numbers 0, 1, 2 and 8 are permanently masked on hp300 systems.
 Therefore ISA devices should not configured to use them.
 .Sh BUGS
 ISA interrupts are not handled correctly.
