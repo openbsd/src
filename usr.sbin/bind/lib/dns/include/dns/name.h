@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: name.h,v 1.95.2.3.2.12 2004/09/08 00:29:34 marka Exp $ */
+/* $ISC: name.h,v 1.95.2.3.2.14 2006/03/02 00:37:20 marka Exp $ */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -343,22 +343,6 @@ dns_name_hashbylabel(dns_name_t *name, isc_boolean_t case_sensitive);
  *	A hash value
  */
 
-unsigned int
-dns_fullname_hash(dns_name_t *name, isc_boolean_t case_sensitive);
-/*
- * Provide a hash value for 'name'.  Unlike dns_name_hash(), this function
- * always takes into account of the entire name to calculate the hash value.
- *
- * Note: if 'case_sensitive' is ISC_FALSE, then names which differ only in
- * case will have the same hash value.
- *
- * Requires:
- *	'name' is a valid name
- *
- * Returns:
- *	A hash value
- */
-
 /***
  *** Comparisons
  ***/
@@ -605,7 +589,7 @@ dns_name_getlabelsequence(const dns_name_t *source, unsigned int first,
 
 
 void
-dns_name_clone(dns_name_t *source, dns_name_t *target);
+dns_name_clone(const dns_name_t *source, dns_name_t *target);
 /*
  * Make 'target' refer to the same name as 'source'.
  *
@@ -719,7 +703,8 @@ dns_name_fromwire(dns_name_t *name, isc_buffer_t *source,
  */
 
 isc_result_t
-dns_name_towire(dns_name_t *name, dns_compress_t *cctx, isc_buffer_t *target);
+dns_name_towire(const dns_name_t *name, dns_compress_t *cctx,
+		isc_buffer_t *target);
 /*
  * Convert 'name' into wire format, compressing it as specified by the
  * compression context 'cctx', and storing the result in 'target'.
@@ -999,7 +984,7 @@ dns_name_split(dns_name_t *name, unsigned int suffixlabels,
  */
 
 isc_result_t
-dns_name_dup(dns_name_t *source, isc_mem_t *mctx, dns_name_t *target);
+dns_name_dup(const dns_name_t *source, isc_mem_t *mctx, dns_name_t *target);
 /*
  * Make 'target' a dynamically allocated copy of 'source'.
  *
