@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.69 2006/12/31 15:04:33 krw Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.70 2007/01/10 23:04:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -388,6 +388,9 @@ brgphy_status(struct mii_softc *sc)
 			break;
 		}
 
+		if (mii->mii_media_active & IFM_FDX)
+			mii->mii_media_active |= mii_phy_flowstatus(sc);
+
 		gsr = PHY_READ(sc, BRGPHY_MII_1000STS);
 		if ((IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) &&
 		    gsr & BRGPHY_1000STS_MSR)
@@ -403,7 +406,7 @@ brgphy_status(struct mii_softc *sc)
 int
 brgphy_mii_phy_auto(struct mii_softc *sc)
 {
-	int ktcr = 0;
+	int anar, ktcr = 0;
 
 	brgphy_loop(sc);
 	PHY_RESET(sc);
@@ -413,8 +416,11 @@ brgphy_mii_phy_auto(struct mii_softc *sc)
 	PHY_WRITE(sc, BRGPHY_MII_1000CTL, ktcr);
 	ktcr = PHY_READ(sc, BRGPHY_MII_1000CTL);
 	DELAY(1000);
-	PHY_WRITE(sc, BRGPHY_MII_ANAR,
-	    BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) | ANAR_CSMA);
+	anar = BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) | ANAR_CSMA;
+	if (sc->mii_flags & MIIF_DOPAUSE)
+		anar |= BRGPHY_ANAR_PC | BRGPHY_ANAR_ASP;
+
+	PHY_WRITE(sc, BRGPHY_MII_ANAR, anar);
 	DELAY(1000);
 	PHY_WRITE(sc, BRGPHY_MII_BMCR,
 	    BRGPHY_BMCR_AUTOEN | BRGPHY_BMCR_STARTNEG);

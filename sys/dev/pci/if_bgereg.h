@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.69 2006/12/22 17:37:50 krw Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.70 2007/01/10 23:04:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2391,6 +2391,7 @@ struct bge_softc {
 	u_int32_t		bge_rx_max_coal_bds;
 	u_int32_t		bge_tx_max_coal_bds;
 	u_int32_t		bge_tx_buf_ratio;
+	int			bge_flowflags;
 	int			bge_if_flags;
 	int			bge_txcnt;
 	int			bge_link;	/* link state */
