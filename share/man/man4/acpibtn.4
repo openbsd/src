@@ -1,0 +1,46 @@
+.\"	$OpenBSD: acpibtn.4,v 1.1 2007/01/10 16:14:36 mk Exp $
+.\"
+.\" Copyright (c) 2006 Michael Knudsen <mk@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd December 24, 2006
+.Dt ACPIBTN 4
+.Os
+.Sh NAME
+.Nm acpibtn
+.Nd ACPI Buttons
+.Sh SYNOPSIS
+.Cd "acpibtn* at acpi?"
+.Sh DESCRIPTION
+The
+.Nm
+driver is used to handle the event triggered when the user presses an ACPI
+button.
+Currently, the only event handled is the press of a power button which
+causes the system to perform a regular system shutdown and power off the
+machine.
+.Sh SEE ALSO
+.Xr acpi 4 ,
+.Xr intro 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 3.9 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Marco Peereboom Aq marco@openbsd.org .

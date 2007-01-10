@@ -1,6 +1,6 @@
-.\"	$OpenBSD: acpi.4,v 1.17 2007/01/10 16:14:36 mk Exp $
+.\"	$OpenBSD: acpiec.4,v 1.1 2007/01/10 16:14:36 mk Exp $
 .\"
-.\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
+.\" Copyright (c) 2006 Michael Knudsen <mk@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,38 +14,32 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd January 7, 2006
-.Dt ACPI 4
+.Dd December 24, 2006
+.Dt ACPIEC 4
 .Os
 .Sh NAME
-.Nm acpi
-.Nd Advanced Configuration and Power Interface
+.Nm acpiec
+.Nd ACPI Embedded Controllers
 .Sh SYNOPSIS
-.Cd "acpi0 at mainbus?"
-.Pp
-.Cd "option ACPIVERBOSE"
-.Cd "option ACPI_ENABLE"
+.Cd "acpiec* at acpi?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides basic support for ACPI including loading ACPI tables from
-the firmware, parsing and interpreting AML code, event handling,
-suspending and powering off, and attaching device drivers.
-.Pp
-If the configuration option
-.Dq Dv ACPIVERBOSE
-is set, information about all detected ACPI devices will be displayed
-on boot.
-.Pp
-If the configuration option
-.Dq Dv ACPI_ENABLE
-is set, the
+driver supports ACPI Embedded Controllers.
+It provides embedded controller access for other ACPI devices.
+On many systems
+which have an
 .Nm
-driver will take control of ACPI from the firmware (BIOS).
-WARNING: this may cause an overheating on some machines since
+device, other ACPI devices such as
+.Xr acpiac 4 ,
+.Xr acpibat 4 ,
+and
+.Xr acpitz 4
+implicitly depend on the
 .Nm
-doesn't provide any thermal or cooling control.
+device.
 .Sh SEE ALSO
+.Xr acpi 4 ,
 .Xr intro 4
 .Sh HISTORY
 The
@@ -57,6 +51,4 @@ driver first appeared in
 The
 .Nm
 driver was written by
-.An Thorsten Lockert Aq tholo@sigmasoft.com
-and
-.An Jordan Hargrave Aq jordan@openbsd.org .
+.An Can Erkin Acar Aq canacar@openbsd.org .

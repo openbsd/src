@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.17 2007/01/10 16:14:36 mk Exp $
+.\"	$OpenBSD: acpitimer.4,v 1.4 2007/01/10 16:14:36 mk Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -15,38 +15,24 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd January 7, 2006
-.Dt ACPI 4
+.Dt ACPITIMER 4
 .Os
 .Sh NAME
-.Nm acpi
-.Nd Advanced Configuration and Power Interface
+.Nm acpitimer
+.Nd ACPI power management timer
 .Sh SYNOPSIS
-.Cd "acpi0 at mainbus?"
-.Pp
-.Cd "option ACPIVERBOSE"
-.Cd "option ACPI_ENABLE"
+.Cd "acpitimer* at acpi?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides basic support for ACPI including loading ACPI tables from
-the firmware, parsing and interpreting AML code, event handling,
-suspending and powering off, and attaching device drivers.
-.Pp
-If the configuration option
-.Dq Dv ACPIVERBOSE
-is set, information about all detected ACPI devices will be displayed
-on boot.
-.Pp
-If the configuration option
-.Dq Dv ACPI_ENABLE
-is set, the
-.Nm
-driver will take control of ACPI from the firmware (BIOS).
-WARNING: this may cause an overheating on some machines since
-.Nm
-doesn't provide any thermal or cooling control.
+driver allows access to a power management timer through the ACPI.
+The timer is used as a timecounter for the
+.Xr tc_init 9
+framework.
 .Sh SEE ALSO
-.Xr intro 4
+.Xr acpi 4 ,
+.Xr intro 4 ,
+.Xr tc_init 9
 .Sh HISTORY
 The
 .Nm
@@ -57,6 +43,4 @@ driver first appeared in
 The
 .Nm
 driver was written by
-.An Thorsten Lockert Aq tholo@sigmasoft.com
-and
-.An Jordan Hargrave Aq jordan@openbsd.org .
+.An Thorsten Lockert Aq tholo@sigmasoft.com .
