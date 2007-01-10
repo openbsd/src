@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.44 2006/12/23 17:46:39 deraadt Exp $ */
+/*	$OpenBSD: esm.c,v 1.45 2007/01/10 15:41:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -257,6 +257,8 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	wdog_register(sc, esm_watchdog);
 	printf("\n");
 
+	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensordev.xname));
 	for (i = 0; i <= 0xff; i++) {
 		if (esm_get_devmap(sc, i, &devmap) != 0)
 			break; /* XXX not continue? */
@@ -264,6 +266,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (!TAILQ_EMPTY(&sc->sc_sensors)) {
+		sensordev_install(&sc->sc_sensordev);
 		DPRINTF("%s: starting refresh\n", DEVNAME(sc));
 		sc->sc_nextsensor = TAILQ_FIRST(&sc->sc_sensors);
 		sc->sc_retries = 0;
@@ -927,13 +930,10 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 			break;
 		}
 
-		strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
-		    sizeof(sc->sc_sensordev.xname));
 		for (j = 0; j < nsensors; j++) {
 			s[j].type = esm_typemap[es->es_type];
 			sensor_attach(&sc->sc_sensordev, &s[j]);
 		}
-		sensordev_install(&sc->sc_sensordev);
 
 		es->es_sensor = s;
 		TAILQ_INSERT_TAIL(&sc->sc_sensors, es, es_entry);
