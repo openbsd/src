@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.116 2007/01/04 21:31:21 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.117 2007/01/10 14:37:09 markus Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1916,7 +1916,7 @@ validate_af(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst)
 		if (dst_v4 && dst_v6)
 			break;
 	}
-	if (src_v4 != dst_v4 || src_v6 != dst_v6)
+	if (src_v4 != dst_v4 && src_v6 != dst_v6)
 		return (1);
 
 	return (0);
