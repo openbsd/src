@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.13 2007/01/09 13:50:11 pyr Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.14 2007/01/10 13:42:19 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -53,7 +53,7 @@ A
 .Ar port
 can be either specified by number or by name.
 The port name to number mappings are found in the file
-.Pa /etc/services,
+.Pa /etc/services ;
 see
 .Xr services 5
 for details.
@@ -131,10 +131,10 @@ This method will automatically use ICMP or ICMPV6 depending on the
 address family of each host.
 .It Ic check send Ar data Ic expect Ar pattern
 For each host in the table, a TCP connection is established on the
-port specified, then 
+port specified, then
 .Ar data
 is sent.
-Incoming data is then read and is expected to match against 
+Incoming data is then read and is expected to match against
 .Ar pattern
 using shell globbing rules.
 If
