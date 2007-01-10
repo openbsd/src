@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msk.4,v 1.3 2006/12/23 12:25:32 kettenis Exp $
+.\"	$OpenBSD: msk.4,v 1.4 2007/01/10 20:46:41 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -38,7 +38,7 @@
 .Sh NAME
 .Nm msk ,
 .Nm mskc
-.Nd "Marvell Yukon-2 based Fast Ethernet and Gigabit Ethernet device"
+.Nd "Marvell Yukon-2 10/100/Gigabit Ethernet device"
 .Sh SYNOPSIS
 .Cd "mskc* at pci?"
 .Cd "msk* at mskc?"
@@ -46,7 +46,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Marvell Yukon-2 based Fast Ethernet and Gigabit Ethernet
+driver provides support for Marvell Yukon-2 88E802x, 88E805x, and 88E806x
+based Gigabit Ethernet adapters and 88E803x based Fast Ethernet
 adapters, including the following:
 .Pp
 .Bl -bullet -offset indent -compact
