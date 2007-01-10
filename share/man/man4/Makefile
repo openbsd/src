@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile,v 1.400 2006/12/17 16:32:35 mbalmer Exp $
+#	$OpenBSD: Makefile,v 1.401 2007/01/10 16:15:32 mk Exp $
 
-MAN=	aac.4 ac97.4 acphy.4 acpi.4 acx.4 \
-	adc.4 addcom.4 admcts.4 admlc.4 admtemp.4 \
+MAN=	aac.4 ac97.4 acphy.4 \
+	acpi.4 acpiac.4 acpibat.4 acpibtn.4 acpiec.4 \
+	acpihpet.4 acpitimer.4 acpitz.4 \
+	acx.4 adc.4 addcom.4 admcts.4 admlc.4 admtemp.4 \
 	admtm.4 admtmp.4 admtt.4 adt.4 adv.4 aha.4 ahb.4 ahc.4 ahci.4 ahd.4 \
 	aic.4 akbd.4 alipm.4 amdiic.4 amdpm.4 ami.4 amphy.4 ams.4 \
 	an.4 aps.4 arc.4 aria.4 art.4 \
@@ -52,9 +54,6 @@ MAN=	aac.4 ac97.4 acphy.4 acpi.4 acx.4 \
 	wsdisplay.4 wskbd.4 wsmouse.4 wsmux.4 xe.4 xf86.4 xge.4 xl.4 \
 	xmphy.4 yds.4 ym.4 zero.4 zyd.4
 
-MLINKS+=acpi.4 acpiac.4 acpi.4 acpibat.4 acpi.4 acpibtn.4
-MLINKS+=acpi.4 acpiec.4 acpi.4 acpihpet.4 acpi.4 acpitimer.4
-MLINKS+=acpi.4 acpitz.4
 MLINKS+=adv.4 advansys.4 adv.4 adw.4
 MLINKS+=art.4 musycc.4
 MLINKS+=audio.4 mixer.4
