@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,37 +14,20 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: tkeyconf.h,v 1.9.208.3 2006/03/02 00:37:20 marka Exp $ */
+/* $ISC: dlv_32769.h,v 1.2.4.2 2006/02/19 06:50:46 marka Exp $ */
 
-#ifndef NS_TKEYCONF_H
-#define NS_TKEYCONF_H 1
+/* draft-ietf-dnsext-delegation-signer-05.txt */
+#ifndef GENERIC_DLV_32769_H
+#define GENERIC_DLV_32769_H 1
 
-#include <isc/types.h>
-#include <isc/lang.h>
+typedef struct dns_rdata_dlv {
+	dns_rdatacommon_t	common;
+	isc_mem_t		*mctx;
+	isc_uint16_t		key_tag;
+	isc_uint8_t		algorithm;
+	isc_uint8_t		digest_type;
+	isc_uint16_t		length;
+	unsigned char		*digest;
+} dns_rdata_dlv_t;
 
-#include <isccfg/cfg.h>
-
-ISC_LANG_BEGINDECLS
-
-isc_result_t
-ns_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
-		      isc_entropy_t *ectx, dns_tkeyctx_t **tctxp);
-/*
- * 	Create a TKEY context and configure it, including the default DH key
- *	and default domain, according to 'options'.
- *
- *	Requires:
- *		'cfg' is a valid configuration options object.
- *		'mctx' is not NULL
- *		'ectx' is not NULL
- *		'tctx' is not NULL
- *		'*tctx' is NULL
- *
- *	Returns:
- *		ISC_R_SUCCESS
- *		ISC_R_NOMEMORY
- */
-
-ISC_LANG_ENDDECLS
-
-#endif /* NS_TKEYCONF_H */
+#endif /* GENERIC_DLV_32769_H */

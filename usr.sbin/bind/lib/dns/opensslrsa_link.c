@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $ISC: opensslrsa_link.c,v 1.1.4.1 2004/12/09 04:07:18 marka Exp $
+ * $ISC: opensslrsa_link.c,v 1.1.4.9 2006/11/07 21:28:40 marka Exp $
  */
 #ifdef OPENSSL
 
@@ -39,6 +39,22 @@
 #include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/rsa.h>
+#if OPENSSL_VERSION_NUMBER > 0x00908000L
+#include <openssl/bn.h>
+#endif
+
+/*
+ * We don't use configure for windows so enforce the OpenSSL version
+ * here.  Unlike with configure we don't support overriding this test.
+ */
+#ifdef WIN32
+#if !((OPENSSL_VERSION_NUMBER >= 0x009070cfL && \
+       OPENSSL_VERSION_NUMBER < 0x00908000L) || \
+      OPENSSL_VERSION_NUMBER >= 0x0090804fL) 
+#error Please upgrade OpenSSL to 0.9.8d/0.9.7l or greater.
+#endif
+#endif
+
 
 	/*
 	 * XXXMPA  Temporarially disable RSA_BLINDING as it requires
@@ -68,6 +84,12 @@
 	(rsa)->flags &= ~(RSA_FLAG_CACHE_PUBLIC | RSA_FLAG_CACHE_PRIVATE); \
 	(rsa)->flags &= ~RSA_FLAG_BLINDING; \
 	} while (0)
+#elif defined(RSA_FLAG_NO_BLINDING)
+#define SET_FLAGS(rsa) \
+	do { \
+		(rsa)->flags &= ~RSA_FLAG_BLINDING; \
+		(rsa)->flags |= RSA_FLAG_NO_BLINDING; \
+	} while (0)
 #else
 #define SET_FLAGS(rsa) \
 	do { \
@@ -87,12 +109,16 @@ opensslrsa_createctx(dst_key_t *key, dst_context_t *dctx) {
 		isc_md5_t *md5ctx;
 
 		md5ctx = isc_mem_get(dctx->mctx, sizeof(isc_md5_t));
+		if (md5ctx == NULL)
+			return (ISC_R_NOMEMORY);
 		isc_md5_init(md5ctx);
 		dctx->opaque = md5ctx;
 	} else {
 		isc_sha1_t *sha1ctx;
 
 		sha1ctx = isc_mem_get(dctx->mctx, sizeof(isc_sha1_t));
+		if (sha1ctx == NULL)
+			return (ISC_R_NOMEMORY);
 		isc_sha1_init(sha1ctx);
 		dctx->opaque = sha1ctx;
 	}
@@ -260,20 +286,55 @@ opensslrsa_compare(const dst_key_t *key1, const dst_key_t *key2) {
 
 static isc_result_t
 opensslrsa_generate(dst_key_t *key, int exp) {
+#if OPENSSL_VERSION_NUMBER > 0x00908000L
+	BN_GENCB cb;
+	RSA *rsa = RSA_new();
+	BIGNUM *e = BN_new();
+
+	if (rsa == NULL || e == NULL)
+		goto err;
+
+	if (exp == 0) {
+		/* RSA_F4 0x10001 */
+		BN_set_bit(e, 0);
+		BN_set_bit(e, 16);
+	} else {
+		/* F5 0x100000001 */
+		BN_set_bit(e, 0);
+		BN_set_bit(e, 32);
+	}
+
+	BN_GENCB_set_old(&cb, NULL, NULL);
+
+	if (RSA_generate_key_ex(rsa, key->key_size, e, &cb)) {
+		BN_free(e);
+		SET_FLAGS(rsa);
+		key->opaque = rsa;
+		return (ISC_R_SUCCESS);
+	}
+
+err:
+	if (e != NULL)
+		BN_free(e);
+	if (rsa != NULL)
+		RSA_free(rsa);
+	return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
+#else
 	RSA *rsa;
 	unsigned long e;
 
 	if (exp == 0)
-		e = RSA_3;
+	       e = RSA_F4;
 	else
-		e = RSA_F4;
+	       e = 0x40000003;
 	rsa = RSA_generate_key(key->key_size, e, NULL, NULL);
 	if (rsa == NULL)
-		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
+	       return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
 	SET_FLAGS(rsa);
 	key->opaque = rsa;
 
 	return (ISC_R_SUCCESS);
+#endif
 }
 
 static isc_boolean_t
