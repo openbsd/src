@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.165 2007/01/06 17:09:08 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.166 2007/01/10 21:32:19 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -906,6 +906,88 @@ cvs_file_cmp(const char *file1, const char *file2)
 out:
 	(void)close(fd1);
 	(void)close(fd2);
+
+	return (ret);
+}
+
+int
+cvs_file_copy(const char *from, const char *to)
+{
+	struct stat st;
+	struct timeval tv[2];
+	time_t atime, mtime;
+	int src, dst, ret;
+
+	ret = 0;
+
+	cvs_log(LP_TRACE, "cvs_file_copy(%s,%s)", from, to);
+
+	if (cvs_noexec == 1)
+		return (0);
+
+	if ((src = open(from, O_RDONLY, 0)) == -1)
+		fatal("cvs_file_copy: open: `%s': %s", from, strerror(errno));
+
+	if (fstat(src, &st) == -1)
+		fatal("cvs_file_copy: `%s': %s", from, strerror(errno));
+
+	atime = st.st_atimespec.tv_sec;
+	mtime = st.st_mtimespec.tv_sec;
+
+	if (S_ISREG(st.st_mode)) {
+		size_t sz;
+		ssize_t nw;
+		char *p, *buf;
+		int saved_errno;
+
+		if (st.st_size > SIZE_MAX) {
+			ret = -1;
+			goto out;
+		}	
+
+		if ((dst = open(to, O_CREAT|O_TRUNC|O_WRONLY,
+		    st.st_mode & (S_IRWXU|S_IRWXG|S_IRWXO))) == -1)
+			fatal("cvs_file_copy: open `%s': %s",
+			    to, strerror(errno));
+
+		if ((p = mmap(NULL, st.st_size, PROT_READ,
+		    MAP_FILE, src, (off_t)0)) == MAP_FAILED) {
+			saved_errno = errno;
+			(void)unlink(to);
+			fatal("cvs_file_copy: mmap: %s", strerror(saved_errno));
+		}
+
+		madvise(p, st.st_size, MADV_SEQUENTIAL);
+
+		sz = st.st_size;
+		buf = p;
+
+		while (sz > 0) {
+			if ((nw = write(dst, p, sz)) == -1) {
+				saved_errno = errno;
+				(void)unlink(to);
+				fatal("cvs_file_copy: `%s': %s",
+				    from, strerror(saved_errno));
+			}
+			buf += nw;
+			sz -= nw;
+		}
+
+		(void)munmap(p, st.st_size);
+
+		tv[0].tv_sec = atime;
+		tv[1].tv_sec = mtime;
+
+		if (futimes(dst, tv) == -1) {
+			saved_errno = errno;
+			(void)unlink(to);
+			fatal("cvs_file_copy: futimes: %s",
+			    strerror(saved_errno));
+		}
+		(void)close(dst);
+	}
+out:
+	(void)close(src);
 
 	return (ret);
 }

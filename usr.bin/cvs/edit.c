@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.25 2007/01/09 10:01:43 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.26 2007/01/10 21:32:19 xsa Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -303,7 +303,8 @@ cvs_edit_local(struct cvs_file *cf)
 		fatal("cvs_edit_local: `%s': %s", CVS_PATH_BASEDIR,
 		    strerror(errno));
 
-	/* XXX: copy cf->file_path to bfpath */
+	if (cvs_file_copy(cf->file_path, bfpath) == -1)
+		fatal("cvs_edit_local: cvs_file_copy failed");
 
 	xfree(bfpath);
 
