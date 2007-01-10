@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.48 2007/01/10 15:22:55 tom Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.49 2007/01/10 16:17:23 tom Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -109,6 +109,10 @@ The address family of the interface, generally
 .Dq inet
 or
 .Dq inet6 .
+.It Li alias
+The literal string
+.Dq alias
+if this is an additional network address for the interface.
 .It Va addr
 The optional address that belongs to the interface, such as
 190.191.192.1 or fe80:2::1.
