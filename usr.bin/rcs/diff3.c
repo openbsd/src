@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.17 2007/01/02 16:43:45 niallo Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.18 2007/01/11 18:13:33 niallo Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.17 2007/01/02 16:43:45 niallo Exp $";
+    "$OpenBSD: diff3.c,v 1.18 2007/01/11 18:13:33 niallo Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -228,10 +228,6 @@ merge_diff3(char **av, int flags)
 		goto out;
 	}
 
-	rcs_buf_putc(diffb, '\0');
-	rcs_buf_putc(b1, '\0');
-
-
 	plen = rcs_buf_len(diffb);
 	patch = rcs_buf_release(diffb);
 	dlen = rcs_buf_len(b1);
@@ -358,9 +354,6 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int flags)
 		diffb = NULL;
 		goto out;
 	}
-
-	rcs_buf_putc(diffb, '\0');
-	rcs_buf_putc(b1, '\0');
 
 	plen = rcs_buf_len(diffb);
 	patch = rcs_buf_release(diffb);
