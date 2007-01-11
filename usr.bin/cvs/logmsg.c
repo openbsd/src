@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.33 2007/01/07 18:40:55 joris Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.34 2007/01/11 08:33:53 xsa Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -87,7 +87,7 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 {
 	FILE *fp;
 	size_t len;
-	int c, fd, argc;
+	int c, fd, argc, saved_errno;
 	struct cvs_filelist *cf;
 	struct stat st1, st2;
 	char *fpath, *logmsg, *argv[4];
@@ -107,8 +107,9 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 	cvs_worklist_add(fpath, &temp_files);
 
 	if ((fp = fdopen(fd, "w")) == NULL) {
+		saved_errno = errno;
 		(void)unlink(fpath);
-		fatal("cvs_logmsg_create: fdopen %s", strerror(errno));
+		fatal("cvs_logmsg_create: fdopen %s", strerror(saved_errno));
 	}
 
 	fprintf(fp, "\n%s %s\n%s Enter Log.  Lines beginning with `%s' are "
@@ -143,8 +144,9 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 	(void)fflush(fp);
 
 	if (fstat(fd, &st1) == -1) {
+		saved_errno = errno;
 		(void)unlink(fpath);
-		fatal("cvs_logmsg_create: fstat %s", strerror(errno));
+		fatal("cvs_logmsg_create: fstat %s", strerror(saved_errno));
 	}
 
 	argc = 0;
@@ -159,8 +161,10 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 			break;
 
 		if (fstat(fd, &st2) == -1) {
+			saved_errno = errno;
 			(void)unlink(fpath);
-			fatal("cvs_logmsg_create: fstat %s", strerror(errno));
+			fatal("cvs_logmsg_create: fstat %s",
+			    strerror(saved_errno));
 		}
 
 		if (st1.st_mtime != st2.st_mtime) {
