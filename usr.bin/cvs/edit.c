@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.28 2007/01/11 08:09:55 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.29 2007/01/11 15:45:02 xsa Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -382,15 +382,43 @@ cvs_unedit_local(struct cvs_file *cf)
 
 	(void)fclose(fp);
 
-	/* XXX: Update the revision number in CVS/Entries from CVS/Baserev */
-	if (cf->file_ent != NULL) {
-		if ((ba_rev = cvs_base_handle(cf, BASE_GET)) == NULL) {
-			cvs_log(LP_ERR, "%s not mentioned in %s",
-			    cf->file_name, CVS_PATH_BASEREV);
-			return;
-		}
-		rcsnum_free(ba_rev);
+	if ((ba_rev = cvs_base_handle(cf, BASE_GET)) == NULL) {
+		cvs_log(LP_ERR, "%s not mentioned in %s",
+		    cf->file_name, CVS_PATH_BASEREV);
+		return;
 	}
+
+	if (cf->file_ent != NULL) {
+		CVSENTRIES *entlist;
+		struct cvs_ent *ent;
+		char *entry, rbuf[16];
+
+		entlist = cvs_ent_open(cf->file_wd);
+
+		if ((ent = cvs_ent_get(entlist, cf->file_name)) == NULL)
+			fatal("cvs_unedit_local: cvs_ent_parse failed");
+
+		(void)rcsnum_tostr(ba_rev, rbuf, sizeof(rbuf));
+
+		memset(timebuf, 0, sizeof(timebuf));
+		ctime_r(&cf->file_ent->ce_mtime, timebuf);
+		if (timebuf[strlen(timebuf) - 1] == '\n')
+			timebuf[strlen(timebuf) - 1] = '\0';
+
+		(void)xasprintf(&entry, "/%s/%s/%s/%s/%s",
+		    cf->file_name, rbuf, timebuf,
+		    (cf->file_ent->ce_tag) ? cf->file_ent->ce_tag : "",
+		    (cf->file_ent->ce_opts) ? cf->file_ent->ce_opts : "");
+
+		cvs_ent_add(entlist, entry);
+
+		cvs_ent_free(ent);
+		cvs_ent_close(entlist, ENT_SYNC);
+
+		xfree(entry);
+	}
+
+	rcsnum_free(ba_rev);
 
 	(void)cvs_base_handle(cf, BASE_REMOVE);
 
