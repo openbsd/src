@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_send_expect.c,v 1.3 2007/01/09 00:45:32 deraadt Exp $ */
+/*	$OpenBSD: check_send_expect.c,v 1.4 2007/01/11 18:05:08 reyk Exp $ */
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
  *
@@ -19,6 +19,7 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/param.h>
+
 #include <net/if.h>
 #include <limits.h>
 #include <event.h>
@@ -28,6 +29,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <fnmatch.h>
+#include <errno.h>
 
 #include "hoststated.h"
 
@@ -49,7 +51,7 @@ se_validate(struct ctl_tcp_event *cte)
 	if (fnmatch(cte->table->exbuf, cte->buf->buf, 0) == 0)
 		cte->host->up = HOST_UP;
 	else
-		cte->host->up = HOST_DOWN;
+		cte->host->up = HOST_UNKNOWN;
 
 	/*
 	 * go back to original position.
@@ -62,8 +64,6 @@ se_read(int s, short event, void *arg)
 {
 	ssize_t			 br;
 	char			 rbuf[SMALL_READ_BUF_SIZE];
-	struct timeval		 tv;
-	struct timeval		 tv_now;
 	struct ctl_tcp_event	*cte = arg;
 
 	if (event == EV_TIMEOUT) {
@@ -72,42 +72,44 @@ se_read(int s, short event, void *arg)
 		hce_notify_done(cte->host, "se_read: timeout");
 		return;
 	}
+
 	br = read(s, rbuf, sizeof(rbuf));
-	log_debug("se_read: %d bytes read", br);
-	if (br == 0) {
+	if (br == -1) {
+		if (errno == EAGAIN || errno == EINTR)
+			goto retry;
+		cte->host->up = HOST_DOWN;
+		buf_free(cte->buf);
+		hce_notify_done(cte->host, "se_read: read failed");
+		return;
+	} else if (br == 0) {
 		cte->host->up = HOST_DOWN;
 		se_validate(cte);
 		buf_free(cte->buf);
 		hce_notify_done(cte->host, "se_read: connection closed");
-	} else if (br == -1) {
-		cte->host->up = HOST_DOWN;
-		buf_free(cte->buf);
-		hce_notify_done(cte->host, "se_read: read failed");
-	} else {
-		buf_add(cte->buf, rbuf, br);
-		bcopy(&cte->table->timeout, &tv, sizeof(tv));
-		if (gettimeofday(&tv_now, NULL))
-			fatal("se_read: gettimeofday");
-		timersub(&tv_now, &cte->tv_start, &tv_now);
-		timersub(&tv, &tv_now, &tv);
-		se_validate(cte);
-		if (cte->host->up == HOST_UP) {
-			buf_free(cte->buf);
-			hce_notify_done(cte->host, NULL);
-		} else
-			event_once(s, EV_READ|EV_TIMEOUT, se_read, cte, &tv);
+		return;
 	}
+
+	buf_add(cte->buf, rbuf, br);
+	se_validate(cte);
+	if (cte->host->up == HOST_UP) {
+		buf_free(cte->buf);
+		hce_notify_done(cte->host, "se_read: done");
+		return;
+	}
+
+ retry:
+	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, se_read,
+	    &cte->tv_start, &cte->table->timeout, cte);
 }
 
 void
-start_send_expect(struct ctl_tcp_event *cte)
+start_send_expect(int s, short event, void *arg)
 {
-	int		 bs;
-	int		 pos;
-	int		 len;
-	char		*req;
-	struct timeval	 tv;
-	struct timeval	 tv_now;
+	struct ctl_tcp_event	*cte = (struct ctl_tcp_event *)arg;
+	int			 bs;
+	int			 pos;
+	int			 len;
+	char			*req;
 
 	req = cte->table->sendbuf;
 	pos = 0;
@@ -115,7 +117,9 @@ start_send_expect(struct ctl_tcp_event *cte)
 	if (len) {
 		do {
 			bs = write(cte->s, req + pos, len);
-			if (bs <= 0) {
+			if (bs == -1) {
+				if (errno == EAGAIN || errno == EINTR)
+					goto retry;
 				log_warnx("send_se_data: cannot send");
 				cte->host->up = HOST_DOWN;
 				hce_notify_done(cte->host,
@@ -130,12 +134,11 @@ start_send_expect(struct ctl_tcp_event *cte)
 	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
 		fatalx("send_se_data: cannot create dynamic buffer");
 
-	log_debug("start_send_expect: reading");
+	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, se_read,
+	    &cte->tv_start, &cte->table->timeout, cte);
+	return;
 
-	bcopy(&cte->table->timeout, &tv, sizeof(tv));
-	if (gettimeofday(&tv_now, NULL))
-		fatal("start_send_expect: gettimeofday");
-	timersub(&tv_now, &cte->tv_start, &tv_now);
-	timersub(&tv, &tv_now, &tv);
-	event_once(cte->s, EV_READ|EV_TIMEOUT, se_read, cte, &tv);
+ retry:
+	event_again(&cte->ev, s, EV_TIMEOUT|EV_WRITE, start_send_expect,
+	    &cte->tv_start, &cte->table->timeout, cte);
 }

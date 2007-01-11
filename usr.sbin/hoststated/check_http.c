@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_http.c,v 1.8 2007/01/09 14:11:23 reyk Exp $	*/
+/*	$OpenBSD: check_http.c,v 1.9 2007/01/11 18:05:08 reyk Exp $	*/
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
  *
@@ -19,6 +19,7 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/param.h>
+
 #include <net/if.h>
 #include <sha1.h>
 #include <limits.h>
@@ -28,6 +29,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "hoststated.h"
 
@@ -98,8 +100,6 @@ http_read(int s, short event, void *arg)
 {
 	ssize_t			 br;
 	char			 rbuf[SMALL_READ_BUF_SIZE];
-	struct timeval		 tv;
-	struct timeval		 tv_now;
 	struct ctl_tcp_event	*cte = arg;
 
 	if (event == EV_TIMEOUT) {
@@ -109,7 +109,14 @@ http_read(int s, short event, void *arg)
 		return;
 	}
 	br = read(s, rbuf, sizeof(rbuf));
-	if (br == 0) {
+	if (br == -1) {
+		if (errno == EAGAIN || errno == EINTR)
+			goto retry;
+		cte->host->up = HOST_DOWN;
+		buf_free(cte->buf);
+		hce_notify_done(cte->host, "http_read: read failed");
+		return;
+	} else if (br == 0) {
 		cte->host->up = HOST_DOWN;
 		switch (cte->table->check) {
 		case CHECK_HTTP_CODE:
@@ -123,30 +130,24 @@ http_read(int s, short event, void *arg)
 		}
 		buf_free(cte->buf);
 		hce_notify_done(cte->host, "http_read: connection closed");
-	} else if (br == -1) {
-		cte->host->up = HOST_DOWN;
-		buf_free(cte->buf);
-		hce_notify_done(cte->host, "http_read: read failed");
-	} else {
-		buf_add(cte->buf, rbuf, br);
-		bcopy(&cte->table->timeout, &tv, sizeof(tv));
-		if (gettimeofday(&tv_now, NULL))
-			fatal("http_read: gettimeofday");
-		timersub(&tv_now, &cte->tv_start, &tv_now);
-		timersub(&tv, &tv_now, &tv);
-		event_once(s, EV_READ|EV_TIMEOUT, http_read, cte, &tv);
+		return;
 	}
+
+	buf_add(cte->buf, rbuf, br);
+
+ retry:
+	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, http_read,
+	    &cte->tv_start, &cte->table->timeout, cte);
 }
 
 void
-send_http_request(struct ctl_tcp_event *cte)
+send_http_request(int s, short event, void *arg)
 {
-	int		 bs;
-	int		 pos;
-	int		 len;
-	char		*req;
-	struct timeval	 tv;
-	struct timeval	 tv_now;
+	struct ctl_tcp_event	*cte = (struct ctl_tcp_event *)arg;
+	int		 	 bs;
+	int		 	 pos;
+	int		 	 len;
+	char			*req;
 
 	switch (cte->table->check) {
 	case CHECK_HTTP_CODE:
@@ -169,7 +170,9 @@ send_http_request(struct ctl_tcp_event *cte)
 	 */
 	do {
 		bs = write(cte->s, req + pos, len);
-		if (bs <= 0) {
+		if (bs == -1) {
+			if (errno == EAGAIN || errno == EINTR)
+				goto retry;
 			log_warnx("send_http_request: cannot send request");
 			cte->host->up = HOST_DOWN;
 			hce_notify_done(cte->host, "send_http_request: write");
@@ -183,10 +186,11 @@ send_http_request(struct ctl_tcp_event *cte)
 	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
 		fatalx("send_http_request: cannot create dynamic buffer");
 
-	bcopy(&cte->table->timeout, &tv, sizeof(tv));
-	if (gettimeofday(&tv_now, NULL))
-		fatal("send_http_request: gettimeofday");
-	timersub(&tv_now, &cte->tv_start, &tv_now);
-	timersub(&tv, &tv_now, &tv);
-	event_once(cte->s, EV_READ|EV_TIMEOUT, http_read, cte, &tv);
+	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, http_read,
+	    &cte->tv_start, &cte->table->timeout, cte);
+	return;
+
+ retry:
+	event_again(&cte->ev, s, EV_TIMEOUT|EV_WRITE, send_http_request,
+	    &cte->tv_start, &cte->table->timeout, cte);
 }

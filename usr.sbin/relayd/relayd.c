@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.9 2007/01/09 13:50:11 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.10 2007/01/11 18:05:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -409,4 +409,25 @@ service_findbyname(struct hoststated *env, const char *name)
 		if (strcmp(service->name, name) == 0)
 			return (service);
 	return (NULL);
+}
+
+void
+event_again(struct event *ev, int fd, short event, void (*fn)(int, short, void *),
+    struct timeval *start, struct timeval *end, void *arg)
+{
+	struct timeval tv_next, tv_now, tv;
+
+	if (gettimeofday(&tv_now, NULL))
+		fatal("event_again: gettimeofday");
+
+	bcopy(end, &tv_next, sizeof(tv_next));
+	timersub(&tv_now, start, &tv_now);
+	timersub(&tv_next, &tv_now, &tv_next);
+
+	bzero(&tv, sizeof(tv));
+	if (timercmp(&tv_next, &tv, >))
+		bcopy(&tv_next, &tv, sizeof(tv));
+
+	event_set(ev, fd, event, fn, arg);
+	event_add(ev, &tv);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.9 2007/01/09 13:50:11 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.10 2007/01/11 18:05:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -82,12 +82,6 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 
 	env = x_env;
 
-	/* this is needed for icmp tests */
-	if ((env->icmp_sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
-		err(1, "socket");
-	if ((env->icmp6_sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
-		err(1, "socket");
-
 	if ((pw = getpwnam(HOSTSTATED_USER)) == NULL)
 		fatal("hce: getpwnam");
 
@@ -99,14 +93,13 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	setproctitle("host check engine");
 	hoststated_process = PROC_HCE;
 
+	/* this is needed for icmp tests */
+	icmp_init(env);
+
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("hce: can't drop privileges");
-
-	env->cie.icmp_sock = env->icmp_sock;
-	env->cie.icmp6_sock = env->icmp6_sock;
-	env->cie.env = env;
 
 	event_init();
 
@@ -137,11 +130,10 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	    ibuf_main->handler, ibuf_main);
 	event_add(&ibuf_main->ev, NULL);
 
-	evtimer_set(&env->ev, hce_launch_checks, NULL);
-	bcopy(&env->interval, &tv, sizeof(tv));
+	evtimer_set(&env->ev, hce_launch_checks, env);
+	bzero(&tv, sizeof(tv));
 	evtimer_add(&env->ev, &tv);
 
-	hce_launch_checks(0, 0, NULL);
 	event_dispatch();
 
 	hce_shutdown();
@@ -154,32 +146,52 @@ hce_launch_checks(int fd, short event, void *arg)
 {
 	struct host		*host;
 	struct table		*table;
+	struct timeval		 tv;
+
+	log_debug("hce_launch_checks: scheduled");
+
+	/*
+	 * notify pfe checks are done and schedule next check
+	 */
+	imsg_compose(ibuf_pfe, IMSG_SYNC, 0, 0, NULL, 0);
+	TAILQ_FOREACH(table, &env->tables, entry) {
+		TAILQ_FOREACH(host, &table->hosts, entry) {
+			host->flags &= ~(F_CHECK_SENT|F_CHECK_DONE);
+			event_del(&host->cte.ev);
+		}
+	}
+
+	if (gettimeofday(&tv, NULL))
+		fatal("hce_launch_checks: gettimeofday");
 
 	TAILQ_FOREACH(table, &env->tables, entry) {
 		if (table->flags & F_DISABLE)
 			continue;
 		if (table->check == CHECK_NOCHECK)
 			fatalx("hce_launch_checks: unknown check type");
-		if (table->check == CHECK_ICMP) {
-			schedule_icmp(&env->cie, table);
-			continue;
-		}
-		/*
-		 * tcp type checks follow
-		 */
+
 		TAILQ_FOREACH(host, &table->hosts, entry) {
 			if (host->flags & F_DISABLE)
 				continue;
+			if (table->check == CHECK_ICMP) {
+				schedule_icmp(env, host);
+				continue;
+			}
+
+			/* Any other TCP-style checks */
 			bzero(&host->cte, sizeof(host->cte));
 			host->last_up = host->up;
 			host->cte.host = host;
 			host->cte.table = table;
-			if (gettimeofday(&host->cte.tv_start, NULL))
-				fatal("hce_launch_checks: gettimeofday");
+			bcopy(&tv, &host->cte.tv_start,
+			    sizeof(host->cte.tv_start));
 			check_tcp(&host->cte);
 		}
 	}
-	check_icmp(&env->cie);
+	check_icmp(env, &tv);
+
+	bcopy(&env->interval, &tv, sizeof(tv));
+	evtimer_add(&env->ev, &tv);
 }
 
 int
@@ -205,34 +217,15 @@ void
 hce_notify_done(struct host *host, const char *msg)
 {
 	struct ctl_status	 st;
-	struct timeval		 tv;
-	struct table		*table;
 
 	st.id = host->id;
 	st.up = host->up;
-	host->flags |= F_CHECK_DONE;
+	host->flags |= (F_CHECK_SENT|F_CHECK_DONE);
 	if (msg)
-		log_debug("hce_notify_done: %s", msg);
+		log_debug("hce_notify_done: %s (%s)", host->name, msg);
 	if (host->up != host->last_up) {
 		imsg_compose(ibuf_pfe, IMSG_HOST_STATUS, 0, 0, &st, sizeof(st));
 		host->last_up = host->up;
-	}
-	/*
-	 * check if everything is done, I see no other way than going
-	 * through the tree for every host that calls this function.
-	 */
-	if (hce_checks_done()) {
-		/*
-		 * notify pfe checks are done and schedule next check
-		 */
-		imsg_compose(ibuf_pfe, IMSG_SYNC, 0, 0, NULL, 0);
-		TAILQ_FOREACH(table, &env->tables, entry) {
-			TAILQ_FOREACH(host, &table->hosts, entry)
-				host->flags &= ~F_CHECK_DONE;
-		}
-		bcopy(&env->interval, &tv, sizeof(tv));
-		evtimer_add(&env->ev, &tv);
-		bzero(&st, sizeof(st));
 	}
 }
 

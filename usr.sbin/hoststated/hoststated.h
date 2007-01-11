@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.13 2007/01/09 13:50:11 pyr Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.14 2007/01/11 18:05:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -126,21 +126,20 @@ struct ctl_id {
 
 struct ctl_icmp_event {
 	struct hoststated	*env;
-	int			 icmp_sock;
-	int			 icmp6_sock;
-	int			 has_icmp4;
-	int			 has_icmp6;
+	int			 s;
+	int			 af;
 	int			 last_up;
 	struct event		 ev;
 	struct timeval		 tv_start;
 };
 
 struct ctl_tcp_event {
-	int		 s;
-	struct buf	*buf;
-	struct host	*host;
-	struct table	*table;
-	struct timeval	 tv_start;
+	int		 	 s;
+	struct buf		*buf;
+	struct host		*host;
+	struct table		*table;
+	struct timeval	 	 tv_start;
+	struct event	 	 ev;
 };
 
 struct address {
@@ -156,6 +155,7 @@ TAILQ_HEAD(addresslist, address);
 #define F_CHECK_DONE		0x02 /* reused for host */
 #define F_USED			0x04
 #define F_ACTIVE_RULESET	0x04 /* reused for service */
+#define F_CHECK_SENT		0x04 /* reused for host */
 #define F_DOWN			0x08
 #define F_ADD			0x10
 #define F_DEL			0x20
@@ -228,8 +228,6 @@ enum {
 struct hoststated {
 	u_int8_t		 opts;
 	struct pfdata		*pf;
-	int			 icmp_sock;
-	int			 icmp6_sock;
 	int			 tablecount;
 	int			 servicecount;
 	struct timeval		 interval;
@@ -238,7 +236,14 @@ struct hoststated {
 	struct event		 ev;
 	struct tablelist	 tables;
 	struct servicelist	 services;
-	struct ctl_icmp_event	 cie;
+	u_int16_t		 id;
+
+	int			 has_icmp;
+	int			 has_icmp6;
+	struct ctl_icmp_event	 icmp_send;
+	struct ctl_icmp_event	 icmp_recv;
+	struct ctl_icmp_event	 icmp6_send;
+	struct ctl_icmp_event	 icmp6_recv;
 };
 
 #define HOSTSTATED_OPT_VERBOSE	 0x01
@@ -334,17 +339,18 @@ pid_t	 hce(struct hoststated *, int [2], int [2], int [2]);
 void	 hce_notify_done(struct host *, const char *);
 
 /* check_icmp.c */
-void	 schedule_icmp(struct ctl_icmp_event *, struct table *);
-void	 check_icmp(struct ctl_icmp_event *);
+void	 icmp_init(struct hoststated *);
+void	 schedule_icmp(struct hoststated *, struct host *);
+void	 check_icmp(struct hoststated *, struct timeval *);
 
 /* check_tcp.c */
 void	 check_tcp(struct ctl_tcp_event *);
 
 /* check_http.c */
-void	 send_http_request(struct ctl_tcp_event *);
+void	 send_http_request(int, short, void *);
 
 /* check_send_expect.c */
-void	 start_send_expect(struct ctl_tcp_event *);
+void	 start_send_expect(int, short, void *);
 
 /* hoststated.c */
 struct host	*host_find(struct hoststated *, objid_t);
@@ -353,3 +359,6 @@ struct service	*service_find(struct hoststated *, objid_t);
 struct host	*host_findbyname(struct hoststated *, const char *);
 struct table	*table_findbyname(struct hoststated *, const char *);
 struct service	*service_findbyname(struct hoststated *, const char *);
+void		 event_again(struct event *, int, short,
+		    void (*)(int, short, void *),
+		    struct timeval *, struct timeval *, void *);

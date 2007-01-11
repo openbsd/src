@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.8 2007/01/09 00:45:32 deraadt Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.9 2007/01/11 18:05:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -71,17 +71,16 @@ check_tcp(struct ctl_tcp_event *cte)
 	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
 		goto bad;
 
+	bcopy(&cte->table->timeout, &tv, sizeof(tv));
 	if (connect(s, (struct sockaddr *)&cte->host->ss, len) == -1) {
 		if (errno != EINPROGRESS)
 			goto bad;
-	} else {
+	} else
 		cte->host->up = HOST_UP;
-		tcp_host_up(s, cte);
-		return;
-	}
-	bcopy(&cte->table->timeout, &tv, sizeof(tv));
-	event_once(s, EV_TIMEOUT|EV_WRITE, tcp_write, cte, &tv);
+	event_set(&cte->ev, s, EV_TIMEOUT|EV_WRITE, tcp_write, cte);
+	event_add(&cte->ev, &tv);
 	return;
+
 bad:
 	close(s);
 	cte->host->up = HOST_DOWN;
@@ -102,7 +101,7 @@ tcp_write(int s, short event, void *arg)
 		len = sizeof(err);
 		if (getsockopt(s, SOL_SOCKET, SO_ERROR, &err, &len))
 			fatal("tcp_write: getsockopt");
-		if (err)
+		if (err != 0)
 			cte->host->up = HOST_DOWN;
 		else
 			cte->host->up = HOST_UP;
@@ -123,16 +122,18 @@ tcp_host_up(int s, struct ctl_tcp_event *cte)
 	switch (cte->table->check) {
 	case CHECK_TCP:
 		close(s);
-		hce_notify_done(cte->host, "tcp_write: success");
+		hce_notify_done(cte->host, "tcp_host_up: success");
 		break;
 	case CHECK_HTTP_CODE:
 	case CHECK_HTTP_DIGEST:
-		send_http_request(cte);
+		event_again(&cte->ev, s, EV_TIMEOUT|EV_WRITE, send_http_request,
+		    &cte->tv_start, &cte->table->timeout, cte);
 		break;
 	case CHECK_SEND_EXPECT:
-		start_send_expect(cte);
+		event_again(&cte->ev, s, EV_TIMEOUT|EV_WRITE, start_send_expect,
+		    &cte->tv_start, &cte->table->timeout, cte);
 		break;
 	default:
-		fatalx("tcp_write: unhandled check type");
+		fatalx("tcp_host_up: unhandled check type");
 	}
 }
