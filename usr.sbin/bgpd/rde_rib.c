@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.91 2006/12/12 10:34:22 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.92 2007/01/11 22:00:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -137,7 +137,7 @@ path_update(struct rde_peer *peer, struct rde_aspath *nasp,
 	}
 
 	/* Do not try to move a prefix that is in the wrong RIB. */
-	if (p != NULL && (p->flags & flags) == 0)
+	if (p == NULL || (p->flags & flags) == 0)
 		p = oldp;
 
 	/*
