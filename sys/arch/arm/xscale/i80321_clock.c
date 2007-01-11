@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_clock.c,v 1.5 2006/08/24 21:32:19 deraadt Exp $ */
+/*	$OpenBSD: i80321_clock.c,v 1.6 2007/01/11 07:24:52 robert Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -263,8 +263,6 @@ cpu_initclocks()
 	setstatclockrate(stathz);
 
 	ticks_per_intr = ticks_per_second / hz;
-
-	printf("clock: hz= %d stathz = %d\n", hz, stathz);
 
 	evcount_attach(&clk_count, "clock", (void *)&clk_irq, &evcount_intr);
 	evcount_attach(&stat_count, "stat", (void *)&stat_irq, &evcount_intr);

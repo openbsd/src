@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa11x0_ost.c,v 1.6 2005/02/28 13:21:17 uwe Exp $ */
+/*	$OpenBSD: sa11x0_ost.c,v 1.7 2007/01/11 07:24:52 robert Exp $ */
 /*	$NetBSD: sa11x0_ost.c,v 1.11 2003/07/15 00:24:51 lukem Exp $	*/
 
 /*
@@ -252,8 +252,6 @@ cpu_initclocks()
 	stathz = STATHZ;
 	profhz = stathz;
 	saost_sc->sc_statclock_step = TIMER_FREQUENCY / stathz;
-
-	printf("clock: hz=%d stathz=%d\n", hz, stathz);
 
 	/* Use the channels 0 and 1 for hardclock and statclock, respectively */
 	saost_sc->sc_clock_count = TIMER_FREQUENCY / hz;
