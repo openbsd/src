@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.120 2007/01/11 09:17:03 jmc Exp $
+#	$OpenBSD: Makefile,v 1.121 2007/01/11 12:06:46 art Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -255,8 +255,10 @@ MLINKS+=rssadapt.9 ieee80211_rssadapt_choose.9 \
 	rssadapt.9 ieee80211_rssadapt_lower_rate.9 \
 	rssadapt.9 ieee80211_rssadapt_raise_rate.9 \
 	rssadapt.9 ieee80211_rssadapt_updatestats.9
-MLINKS+=rwlock.9 rw_init.9 rwlock.9 rw_enter_read.9 rwlock.9 rw_enter_write.9 \
-	rwlock.9 rw_exit_read.9 rwlock.9 rw_exit_write.9
+MLINKS+=rwlock.9 rw_init.9 rwlock.9 rw_enter.9 rwlock.9 rw_exit.9 \
+	rwlock.9 rw_enter_read.9 rwlock.9 rw_enter_write.9 \
+	rwlock.9 rw_exit_read.9 rwlock.9 rw_exit_write.9 
+	
 MLINKS+=sensor_attach.9 sensordev_install.9 \
 	sensor_attach.9 sensordev_deinstall.9 \
 	sensor_attach.9 sensordev_get.9 \
