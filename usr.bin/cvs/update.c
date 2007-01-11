@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.82 2007/01/11 02:35:55 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.83 2007/01/11 17:44:18 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -419,6 +419,7 @@ update_has_conflict_markers(struct cvs_file *cf)
 	char *content;
 	struct cvs_line *lp;
 	struct cvs_lines *lines;
+	size_t len;
 
 	cvs_log(LP_TRACE, "update_has_conflict_markers(%s)", cf->file_path);
 
@@ -430,11 +431,10 @@ update_has_conflict_markers(struct cvs_file *cf)
 		    cf->file_path);
 
 	cvs_buf_putc(bp, '\0');
+	len = cvs_buf_len(bp);
 	content = cvs_buf_release(bp);
-	if ((lines = cvs_splitlines(content)) == NULL)
+	if ((lines = cvs_splitlines(content, len)) == NULL)
 		fatal("update_has_conflict_markers: failed to split lines");
-
-	xfree(content);
 
 	conflict = 0;
 	TAILQ_FOREACH(lp, &(lines->l_lines), l_list) {
@@ -453,5 +453,6 @@ update_has_conflict_markers(struct cvs_file *cf)
 	}
 
 	cvs_freelines(lines);
+	xfree(content);
 	return (conflict);
 }

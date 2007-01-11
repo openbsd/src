@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.33 2007/01/11 02:35:55 joris Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.34 2007/01/11 17:44:18 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -112,6 +112,7 @@ cvs_annotate_local(struct cvs_file *cf)
 	BUF *b;
 	RCSNUM *ann_rev;
 	char *content;
+	size_t len;
 
 	ann_rev = NULL;
 
@@ -136,8 +137,9 @@ cvs_annotate_local(struct cvs_file *cf)
 	b = rcs_getrev(cf->file_rcs, ann_rev);
 	cvs_buf_putc(b, '\0');
 
+	len = cvs_buf_len(b);
 	content = cvs_buf_release(b);
-	if ((lines = cvs_splitlines(content)) == NULL)
+	if ((lines = cvs_splitlines(content, len)) == NULL)
 		fatal("cvs_annotate_local: cvs_splitlines failed");
 
         xfree(content);

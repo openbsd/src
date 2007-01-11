@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.192 2006/12/21 15:03:15 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.193 2007/01/11 17:44:18 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -493,11 +493,6 @@ rcs_write(RCSFILE *rfp)
 		fputs("@\ntext\n@", fp);
 		if (rdp->rd_text != NULL) {
 			rcs_strprint(rdp->rd_text, rdp->rd_tlen, fp);
-
-			if (rdp->rd_tlen != 0) {
-				if (rdp->rd_text[rdp->rd_tlen-1] != '\n')
-					fputc('\n', fp);
-			}
 		}
 		fputs("@\n", fp);
 	}
@@ -1078,6 +1073,7 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 	char op, *ep;
 	struct cvs_line *lp, *dlp, *ndlp;
 	int i, lineno, nbln;
+	u_char tmp;
 
 	dlp = TAILQ_FIRST(&(dlines->l_lines));
 	lp = TAILQ_FIRST(&(plines->l_lines));
@@ -1085,15 +1081,21 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 	/* skip first bogus line */
 	for (lp = TAILQ_NEXT(lp, l_list); lp != NULL;
 	    lp = TAILQ_NEXT(lp, l_list)) {
+		if (lp->l_len < 2)
+			fatal("line too short, RCS patch seems broken");
 		op = *(lp->l_line);
+		/* NUL-terminate line buffer for strtol() safety. */
+		tmp = lp->l_line[lp->l_len - 1];
+		lp->l_line[lp->l_len - 1] = '\0';
 		lineno = (int)strtol((lp->l_line + 1), &ep, 10);
-		if (lineno > dlines->l_nblines || lineno < 0 ||
-		    *ep != ' ')
-			fatal("invalid line specification in RCS patch: %s",
-			    ep);
+		if (lineno - 1 > dlines->l_nblines || lineno < 0) {
+			fatal("invalid line specification in RCS patch");
+		}
 		ep++;
 		nbln = (int)strtol(ep, &ep, 10);
-		if (nbln < 0 || *ep != '\0')
+		/* Restore the last byte of the buffer */
+		lp->l_line[lp->l_len - 1] = tmp;
+		if (nbln < 0)
 			fatal("invalid line number specification in RCS patch");
 
 		/* find the appropriate line */
@@ -1170,13 +1172,13 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 BUF*
 rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 {
-	size_t i;
+	size_t i, dlen, plen;
 	int done, nextroot, found;
 	BUF *rcsbuf;
 	RCSNUM *tnum, *bnum;
 	struct rcs_branch *brp;
 	struct rcs_delta *hrdp, *trdp, *rdp;
-	char *data;
+	u_char *data, *patch;
 
 	if ((hrdp = rcs_findrev(rfp, rfp->rf_head)) == NULL)
 		fatal("rcs_getrev: no HEAD revision");
@@ -1223,13 +1225,15 @@ again:
 			}
 		}
 
-		cvs_buf_putc(rcsbuf, '\0');
+		plen = rdp->rd_tlen;
+		dlen = cvs_buf_len(rcsbuf);
+		patch = rdp->rd_text;
 		data = cvs_buf_release(rcsbuf);
-
-		rcsbuf = cvs_patchfile(data, rdp->rd_text, rcs_patch_lines);
+		rcsbuf = cvs_patchfile(data, dlen, patch, plen,
+		    rcs_patch_lines);
+		xfree(data);
 		if (rcsbuf == NULL)
 			fatal("rcs_getrev: failed to apply rcsdiff");
-		xfree(data);
 
 		if (!rcsnum_differ(rdp->rd_num, bnum))
 			break;
@@ -2102,11 +2106,15 @@ rcs_parse_deltatext(RCSFILE *rfp)
 		return (-1);
 	}
 
-	rdp->rd_text = xmalloc(RCS_TOKLEN(rfp) + 1);
-	if (strlcpy(rdp->rd_text, RCS_TOKSTR(rfp), (RCS_TOKLEN(rfp) + 1)) >=
-	    RCS_TOKLEN(rfp) + 1)
-		fatal("rcs_parse_deltatext: strlcpy");
-	rdp->rd_tlen = RCS_TOKLEN(rfp);
+	if (RCS_TOKLEN(rfp) == 0) {
+		rdp->rd_text = xmalloc(1);
+		rdp->rd_text[0] = '\0';
+		rdp->rd_tlen = 0;
+	} else {
+		rdp->rd_text = xmalloc(RCS_TOKLEN(rfp));
+		memcpy(rdp->rd_text, RCS_TOKSTR(rfp), RCS_TOKLEN(rfp));
+		rdp->rd_tlen = RCS_TOKLEN(rfp);
+	}
 
 	return (1);
 }

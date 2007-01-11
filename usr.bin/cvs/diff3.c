@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.29 2006/11/10 08:32:37 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.30 2007/01/11 17:44:18 niallo Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.29 2006/11/10 08:32:37 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.30 2007/01/11 17:44:18 niallo Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -163,6 +163,7 @@ cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
 	char *argv[5], r1[16], r2[16];
 	char *dp13, *dp23, *path1, *path2, *path3;
 	BUF *b1, *b2, *b3, *d1, *d2, *diffb;
+	size_t dlen, plen;
 
 	b1 = b2 = b3 = d1 = d2 = diffb = NULL;
 
@@ -230,11 +231,13 @@ cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
 	cvs_buf_putc(diffb, '\0');
 	cvs_buf_putc(b1, '\0');
 
+	plen = cvs_buf_len(diffb);
 	patch = cvs_buf_release(diffb);
+	dlen = cvs_buf_len(b1);
 	data = cvs_buf_release(b1);
 	diffb = b1 = NULL;
 
-	if ((diffb = cvs_patchfile(data, patch, ed_patch_lines)) == NULL)
+	if ((diffb = cvs_patchfile(data, dlen, patch, plen, ed_patch_lines)) == NULL)
 		goto out;
 
 	if (verbose == 1 && diff3_conflicts != 0) {
@@ -319,6 +322,7 @@ ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 	char op, *ep;
 	struct cvs_line *sort, *lp, *dlp, *ndlp, *insert_after;
 	int start, end, i, lineno;
+	u_char tmp;
 
 	dlp = TAILQ_FIRST(&(dlines->l_lines));
 	lp = TAILQ_FIRST(&(plines->l_lines));
@@ -326,10 +330,17 @@ ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 	end = 0;
 	for (lp = TAILQ_NEXT(lp, l_list); lp != NULL;
 	    lp = TAILQ_NEXT(lp, l_list)) {
-		if (lp->l_line[0] == '\0')
-			fatal("ed_patch_lines");
+		/* Skip blank lines */
+		if (lp->l_len < 2)
+			continue;
+		/* NUL-terminate line buffer for strtol() safety. */
+		tmp = lp->l_line[lp->l_len - 1];
+		lp->l_line[lp->l_len - 1] = '\0';
+		/* len - 1 is NUL terminator so we use len - 2 for 'op' */
 		op = lp->l_line[strlen(lp->l_line) - 1];
 		start = (int)strtol(lp->l_line, &ep, 10);
+		/* Restore the last byte of the buffer */
+		lp->l_line[lp->l_len - 1] = tmp;
 		if (op == 'a') {
 			if (start > dlines->l_nblines ||
 			    start < 0 || *ep != 'a')
@@ -386,7 +397,7 @@ ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 				if (lp == NULL)
 					fatal("ed_patch_lines");
 
-				if (!strcmp(lp->l_line, "."))
+				if (!memcmp(lp->l_line, ".", 1))
 					break;
 
 				TAILQ_REMOVE(&(plines->l_lines), lp, l_list);

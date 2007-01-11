@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.96 2007/01/07 01:53:12 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.97 2007/01/11 17:44:18 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -738,32 +738,33 @@ cvs_mkpath(const char *path)
  * Split the contents of a file into a list of lines.
  */
 struct cvs_lines *
-cvs_splitlines(const char *fcont)
+cvs_splitlines(const u_char *data, size_t len)
 {
-	char *dcp;
+	u_char *p, *c;
+	size_t i, tlen;
 	struct cvs_lines *lines;
 	struct cvs_line *lp;
 
 	lines = xmalloc(sizeof(*lines));
+	memset(lines, 0, sizeof(*lines));
 	TAILQ_INIT(&(lines->l_lines));
-	lines->l_nblines = 0;
-	lines->l_data = xstrdup(fcont);
 
 	lp = xmalloc(sizeof(*lp));
-	lp->l_line = NULL;
-	lp->l_lineno = 0;
+	memset(lp, 0, sizeof(*lp));
 	TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
 
-	for (dcp = lines->l_data; *dcp != '\0';) {
-		lp = xmalloc(sizeof(*lp));
-		lp->l_line = dcp;
-		lp->l_lineno = ++(lines->l_nblines);
-		TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
-
-		dcp = strchr(dcp, '\n');
-		if (dcp == NULL)
-			break;
-		*(dcp++) = '\0';
+	p = c = data;
+	for (i = 0; i < len; i++) {
+		if (*p == '\n' || (i == len - 1)) {
+			tlen = p - c + 1;
+			lp = xmalloc(sizeof(*lp));
+			lp->l_line = c;
+			lp->l_len = tlen;
+			lp->l_lineno = ++(lines->l_nblines);
+			TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
+			c = p + 1;
+		}
+		p++;
 	}
 
 	return (lines);
@@ -779,26 +780,21 @@ cvs_freelines(struct cvs_lines *lines)
 		xfree(lp);
 	}
 
-	xfree(lines->l_data);
 	xfree(lines);
 }
 
 BUF *
-cvs_patchfile(const char *data, const char *patch,
+cvs_patchfile(const u_char *data, size_t dlen, const u_char *patch, size_t plen,
     int (*p)(struct cvs_lines *, struct cvs_lines *))
 {
 	struct cvs_lines *dlines, *plines;
 	struct cvs_line *lp;
-	size_t len;
-	int lineno;
 	BUF *res;
 
-	len = strlen(data);
-
-	if ((dlines = cvs_splitlines(data)) == NULL)
+	if ((dlines = cvs_splitlines(data, dlen)) == NULL)
 		return (NULL);
 
-	if ((plines = cvs_splitlines(patch)) == NULL)
+	if ((plines = cvs_splitlines(patch, plen)) == NULL)
 		return (NULL);
 
 	if (p(dlines, plines) < 0) {
@@ -807,12 +803,11 @@ cvs_patchfile(const char *data, const char *patch,
 		return (NULL);
 	}
 
-	lineno = 0;
-	res = cvs_buf_alloc(len, BUF_AUTOEXT);
+	res = cvs_buf_alloc(1024, BUF_AUTOEXT);
 	TAILQ_FOREACH(lp, &dlines->l_lines, l_list) {
-		if (lineno != 0)
-			cvs_buf_fappend(res, "%s\n", lp->l_line);
-		lineno++;
+		if (lp->l_line == NULL)
+			continue;
+		cvs_buf_append(res, lp->l_line, lp->l_len);
 	}
 
 	cvs_freelines(dlines);
