@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.26 2006/03/11 21:00:48 pedro Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.27 2007/01/11 08:47:52 pedro Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -78,6 +78,7 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 	daddr_t nb;
 	struct buf *bp, *nbp;
 	struct vnode *vp;
+	struct proc *p;
 	struct indir indirs[NIADDR + 2];
 	ufs1_daddr_t newb, *bap, pref;
 	int deallocated, osize, nsize, num, i, error;
@@ -86,6 +87,7 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 
 	vp = ITOV(ip);
 	fs = ip->i_fs;
+	p = curproc;
 	lbn = lblkno(fs, startoffset);
 	size = blkoff(fs, startoffset) + size;
 	if (size > fs->fs_bsize)
@@ -377,9 +379,22 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 
 fail:
 	/*
-	 * If we have failed part way through block allocation, we
-	 * have to deallocate any indirect blocks that we have allocated.
+	 * If we have failed to allocate any blocks, simply return the error.
+	 * This is the usual case and avoids the need to fsync the file.
 	 */
+	if (allocblk == allociblk && allocib == NULL && unwindidx == -1)
+		return (error);
+	/*
+	 * If we have failed part way through block allocation, we have to
+	 * deallocate any indirect blocks that we have allocated. We have to
+	 * fsync the file before we start to get rid of all of its
+	 * dependencies so that we do not leave them dangling. We have to sync
+	 * it at the end so that the softdep code does not find any untracked
+	 * changes. Although this is really slow, running out of disk space is
+	 * not expected to be a common occurence. The error return from fsync
+	 * is ignored as we already have an error to return to the user.
+	 */
+	VOP_FSYNC(vp, p->p_ucred, MNT_WAIT, p);
 	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
 		ffs_blkfree(ip, *blkp, fs->fs_bsize);
 		deallocated += fs->fs_bsize;
@@ -410,7 +425,7 @@ fail:
 		ip->i_ffs1_blocks -= btodb(deallocated);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
-
+	VOP_FSYNC(vp, p->p_ucred, MNT_WAIT, p);
 	return (error);
 }
 
