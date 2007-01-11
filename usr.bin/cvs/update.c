@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.81 2006/12/07 09:14:16 xsa Exp $	*/
+/*	$OpenBSD: update.c,v 1.82 2007/01/11 02:35:55 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -103,6 +103,7 @@ cvs_update(int argc, char **argv)
 		cr.fileproc = cvs_update_local;
 		flags |= CR_REPO;
 	} else {
+		cvs_client_connect_to_server();
 		if (reset_stickies)
 			cvs_client_send_request("Argument -A");
 		if (build_dirs)

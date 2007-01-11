@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.22 2006/11/14 09:47:52 xsa Exp $	*/
+/*	$OpenBSD: version.c,v 1.23 2007/01/11 02:35:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -43,6 +43,7 @@ cvs_version(int argc, char **argv)
 
 	if (current_cvsroot != NULL &&
 	    current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_connect_to_server();
 		cvs_client_send_request("version");
 		/* XXX: better way to handle server response? */
 		cvs_printf("Server: ");

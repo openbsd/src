@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.32 2006/11/27 16:02:52 xsa Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.33 2007/01/11 02:35:55 joris Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -72,6 +72,7 @@ cvs_annotate(int argc, char **argv)
 	cr.leavedir = NULL;
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
 
 		if (force_head == 1)

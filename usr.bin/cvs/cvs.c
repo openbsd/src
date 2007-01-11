@@ -1,6 +1,6 @@
-/*	$OpenBSD: cvs.c,v 1.112 2006/12/11 10:53:00 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.113 2007/01/11 02:35:55 joris Exp $	*/
 /*
- * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
+ * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
  *
@@ -252,10 +252,6 @@ main(int argc, char **argv)
 	}
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_server_active == 1)
-			fatal("remote Root while already running as server?");
-
-		cvs_client_connect_to_server();
 		cmdp->cmd(cmd_argc, cmd_argv);
 		cvs_cleanup();
 		return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.44 2007/01/03 22:28:30 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.45 2007/01/11 02:35:55 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -175,6 +175,9 @@ cvs_client_connect_to_server(void)
 	struct cvs_var *vp;
 	char *cmd, *argv[9], *resp;
 	int ifd[2], ofd[2], argc;
+
+	if (cvs_server_active == 1)
+		fatal("cvs_client_connect: I was already connected to server");
 
 	switch (current_cvsroot->cr_method) {
 	case CVS_METHOD_PSERVER:

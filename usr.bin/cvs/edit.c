@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.26 2007/01/10 21:32:19 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.27 2007/01/11 02:35:55 joris Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -116,6 +116,7 @@ cvs_edit(int argc, char **argv)
 	cr.leavedir = NULL;
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
 
 		if (!(flags & CR_RECURSE_DIRS))
@@ -169,6 +170,7 @@ cvs_editors(int argc, char **argv)
 	cr.leavedir = NULL;
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
 
 		if (!(flags & CR_RECURSE_DIRS))

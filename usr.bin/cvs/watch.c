@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.15 2007/01/09 17:12:14 xsa Exp $	*/
+/*	$OpenBSD: watch.c,v 1.16 2007/01/11 02:35:55 joris Exp $	*/
 /*
  * Copyright (c) 2005-2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -119,6 +119,7 @@ cvs_watch(int argc, char **argv)
 	cr.leavedir = NULL;
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
 
 		if (watch_req & (W_ADD|W_REMOVE)) {
@@ -193,6 +194,7 @@ cvs_watchers(int argc, char **argv)
 	cr.leavedir = NULL;
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
 
 		if (!(flags & CR_RECURSE_DIRS))

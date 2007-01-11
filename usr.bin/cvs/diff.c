@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.109 2006/07/08 09:25:44 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.110 2007/01/11 02:35:55 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -97,6 +97,7 @@ cvs_diff(int argc, char **argv)
 	cr.leavedir = NULL;
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
 
 		if (!(flags & CR_RECURSE_DIRS))
