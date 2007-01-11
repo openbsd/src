@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.19 2006/12/18 18:49:46 miod Exp $	*/
+/*	$OpenBSD: dino.c,v 1.20 2007/01/11 21:59:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Michael Shalayeff
@@ -47,6 +47,9 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#include <machine/pdc.h>
+#include <dev/cons.h>
 
 #define	DINO_MEM_CHUNK	0x800000
 #define	DINO_MEM_WINDOW	(2 * DINO_MEM_CHUNK)
@@ -115,6 +118,8 @@ struct dino_softc {
 	char sc_memexname[20];
 	struct extent *sc_memex;
 	struct hppa_bus_dma_tag sc_dmatag;
+
+	u_int32_t io_shadow;
 };
 
 int	dinomatch(struct device *, void *, void *);
@@ -149,6 +154,137 @@ dinomatch(parent, cfdata, aux)
 
 	return (1);
 }
+
+void	dino_attach_hook(struct device *, struct device *,
+	    struct pcibus_attach_args *);
+int	dino_maxdevs(void *, int);
+pcitag_t dino_make_tag(void *, int, int, int);
+void	dino_decompose_tag(void *, pcitag_t, int *, int *, int *);
+pcireg_t dino_conf_read(void *, pcitag_t, int);
+void	dino_conf_write(void *, pcitag_t, int, pcireg_t);
+int	dino_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+const char *dino_intr_string(void *, pci_intr_handle_t);
+void *	dino_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),
+	    void *, char *);
+void	dino_intr_disestablish(void *, void *);
+int	dino_iomap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+int	dino_memmap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+int	dino_subregion(void *, bus_space_handle_t, bus_size_t, bus_size_t,
+	    bus_space_handle_t *);
+int	dino_ioalloc(void *, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t,
+	    bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
+int	dino_memalloc(void *, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t,
+	    bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
+void	dino_unmap(void *, bus_space_handle_t, bus_size_t);
+void	dino_free(void *, bus_space_handle_t, bus_size_t);
+void	dino_barrier(void *, bus_space_handle_t, bus_size_t, bus_size_t, int);
+void *	dino_alloc_parent(struct device *, struct pci_attach_args *, int);
+u_int8_t dino_r1(void *, bus_space_handle_t, bus_size_t);
+u_int16_t dino_r2(void *, bus_space_handle_t, bus_size_t);
+u_int32_t dino_r4(void *, bus_space_handle_t, bus_size_t);
+u_int64_t dino_r8(void *, bus_space_handle_t, bus_size_t);
+void	dino_w1(void *, bus_space_handle_t, bus_size_t, u_int8_t);
+void	dino_w2(void *, bus_space_handle_t, bus_size_t, u_int16_t);
+void	dino_w4(void *, bus_space_handle_t, bus_size_t, u_int32_t);
+void	dino_w8(void *, bus_space_handle_t, bus_size_t, u_int64_t);
+void	dino_rm_1(void *, bus_space_handle_t, bus_size_t, u_int8_t *,
+	    bus_size_t);
+void	dino_rm_2(void *, bus_space_handle_t, bus_size_t, u_int16_t *,
+	    bus_size_t);
+void	dino_rm_4(void *, bus_space_handle_t, bus_size_t, u_int32_t *,
+	    bus_size_t);
+void	dino_rm_8(void *, bus_space_handle_t, bus_size_t, u_int64_t *,
+	    bus_size_t);
+void	dino_wm_1(void *, bus_space_handle_t, bus_size_t, const u_int8_t *,
+	    bus_size_t);
+void	dino_wm_2(void *, bus_space_handle_t, bus_size_t, const u_int16_t *,
+	    bus_size_t);
+void	dino_wm_4(void *, bus_space_handle_t, bus_size_t, const u_int32_t *,
+	    bus_size_t);
+void	dino_wm_8(void *, bus_space_handle_t, bus_size_t, const u_int64_t *,
+	    bus_size_t);
+void	dino_sm_1(void *, bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t);
+void	dino_sm_2(void *, bus_space_handle_t, bus_size_t, u_int16_t,
+	    bus_size_t);
+void	dino_sm_4(void *, bus_space_handle_t, bus_size_t, u_int32_t,
+	    bus_size_t);
+void	dino_sm_8(void *, bus_space_handle_t, bus_size_t, u_int64_t,
+	    bus_size_t);
+void	dino_rrm_2(void *, bus_space_handle_t, bus_size_t, u_int8_t *,
+	    bus_size_t);
+void	dino_rrm_4(void *, bus_space_handle_t, bus_size_t, u_int8_t *,
+	    bus_size_t);
+void	dino_rrm_8(void *, bus_space_handle_t, bus_size_t, u_int8_t *,
+	    bus_size_t);
+void	dino_wrm_2(void *, bus_space_handle_t, bus_size_t, const u_int8_t *,
+	    bus_size_t);
+void	dino_wrm_4(void *, bus_space_handle_t, bus_size_t, const u_int8_t *,
+	    bus_size_t);
+void	dino_wrm_8(void *, bus_space_handle_t, bus_size_t, const u_int8_t *,
+	    bus_size_t);
+void	dino_rr_1(void *, bus_space_handle_t, bus_size_t, u_int8_t *,
+	    bus_size_t);
+void	dino_rr_2(void *, bus_space_handle_t, bus_size_t, u_int16_t *,
+	    bus_size_t);
+void	dino_rr_4(void *, bus_space_handle_t, bus_size_t, u_int32_t *,
+	    bus_size_t);
+void	dino_rr_8(void *, bus_space_handle_t, bus_size_t, u_int64_t *,
+	    bus_size_t);
+void	dino_wr_1(void *, bus_space_handle_t, bus_size_t, const u_int8_t *,
+	    bus_size_t);
+void	dino_wr_2(void *, bus_space_handle_t, bus_size_t, const u_int16_t *,
+	    bus_size_t);
+void	dino_wr_4(void *, bus_space_handle_t, bus_size_t, const u_int32_t *,
+	    bus_size_t);
+void	dino_wr_8(void *, bus_space_handle_t, bus_size_t, const u_int64_t *,
+	    bus_size_t);
+void	dino_rrr_2(void *, bus_space_handle_t, bus_size_t, u_int8_t *,
+	    bus_size_t);
+void	dino_rrr_4(void *, bus_space_handle_t, bus_size_t, u_int8_t *,
+	    bus_size_t);
+void	dino_rrr_8(void *, bus_space_handle_t, bus_size_t, u_int8_t *,
+	    bus_size_t);
+void	dino_wrr_2(void *, bus_space_handle_t, bus_size_t, const u_int8_t *,
+	    bus_size_t);
+void	dino_wrr_4(void *, bus_space_handle_t, bus_size_t, const u_int8_t *,
+	    bus_size_t);
+void	dino_wrr_8(void *, bus_space_handle_t, bus_size_t, const u_int8_t *,
+	    bus_size_t);
+void	dino_sr_1(void *, bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t);
+void	dino_sr_2(void *, bus_space_handle_t, bus_size_t, u_int16_t,
+	    bus_size_t);
+void	dino_sr_4(void *, bus_space_handle_t, bus_size_t, u_int32_t,
+	    bus_size_t);
+void	dino_sr_8(void *, bus_space_handle_t, bus_size_t, u_int64_t,
+	    bus_size_t);
+void	dino_cp_1(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t,
+	    bus_size_t, bus_size_t);
+void	dino_cp_2(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t,
+	    bus_size_t, bus_size_t);
+void	dino_cp_4(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t,
+	    bus_size_t, bus_size_t);
+void	dino_cp_8(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t,
+	    bus_size_t, bus_size_t);
+int	dino_dmamap_create(void *, bus_size_t, int, bus_size_t, bus_size_t, int,
+	    bus_dmamap_t *);
+void	dino_dmamap_destroy(void *, bus_dmamap_t);
+int	dino_dmamap_load(void *, bus_dmamap_t, void *, bus_size_t,
+	    struct proc *, int);
+int	dino_dmamap_load_mbuf(void *, bus_dmamap_t, struct mbuf *, int);
+int	dino_dmamap_load_uio(void *, bus_dmamap_t, struct uio *, int);
+int	dino_dmamap_load_raw(void *, bus_dmamap_t, bus_dma_segment_t *, int,
+	    bus_size_t, int);
+void	dino_dmamap_unload(void *, bus_dmamap_t);
+void	dino_dmamap_sync(void *, bus_dmamap_t, bus_addr_t, bus_size_t, int);
+int	dino_dmamem_alloc(void *, bus_size_t, bus_size_t, bus_size_t,
+	    bus_dma_segment_t *, int, int *, int);
+void	dino_dmamem_free(void *, bus_dma_segment_t *, int);
+int	dino_dmamem_map(void *, bus_dma_segment_t *, int, size_t, caddr_t *,
+	    int);
+void	dino_dmamem_unmap(void *, caddr_t, size_t);
+paddr_t	dino_dmamem_mmap(void *, bus_dma_segment_t *, int, off_t, int, int);
+int	dinoprint(void *, const char *);
+void	dino_clear_pdc_mappings(void *);
 
 void
 dino_attach_hook(struct device *parent, struct device *self,
@@ -306,30 +442,32 @@ dino_memmap(void *v, bus_addr_t bpa, bus_size_t size,
 	struct dino_softc *sc = v;
 	volatile struct dino_regs *r = sc->sc_regs;
 	bus_addr_t sbpa;
+	bus_space_handle_t bush;
 	u_int32_t reg;
 	int first = 1;
 	int error;
 
 	while (size != 0) {
 		sbpa = bpa & 0xff800000;
-		reg = r->io_addr_en;
+		reg = sc->io_shadow;
 		reg |= 1 << ((bpa >> 23) & 0x1f);
 #ifdef DEBUG
 		if (reg & 0x80000001)
 			panic("mapping outside the mem extent range");
 #endif
 		/* map into the upper bus space, if not yet mapped this 8M */
-		if (reg != r->io_addr_en) {
+		if (reg != sc->io_shadow) {
 
 			if ((error = bus_space_map(sc->sc_bt, sbpa,
-			    DINO_MEM_CHUNK, flags, bshp))) {
+			    DINO_MEM_CHUNK, flags, &bush))) {
 				return (error);
 			}
-			r->io_addr_en = reg;
+			r->io_addr_en |= reg;
+			sc->io_shadow = reg;
 
 			if (first) {
 				if (bshp)
-					*bshp += (bpa - sbpa);
+					*bshp = bush + (bpa - sbpa);
 			}
 		} else {
 			if (first) {
@@ -400,13 +538,14 @@ dino_memalloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	    align, boundary, flags, addrp, bshp))
 		return (ENOMEM);
 
-	reg = r->io_addr_en;
+	reg = sc->io_shadow;
 	reg |= 1 << ((*addrp >> 23) & 0x1f);
 #ifdef DEBUG
 	if (reg & 0x80000001)
 		panic("mapping outside the mem extent range");
 #endif
-	r->io_addr_en = reg;
+	r->io_addr_en |= reg;
+	sc->io_shadow = reg;
 
 	return (0);
 }
@@ -1547,7 +1686,15 @@ dinoattach(parent, self, aux)
 	sc->sc_regs = r = (volatile struct dino_regs *)sc->sc_bh;
 	r->pciror = 0;
 	r->pciwor = 0;
-	r->io_addr_en = 0;
+
+	/*
+	 * Do not reset enabled io mappings mask if we are still running
+	 * with PDC console - we'll do it after autoconf.
+	 */
+	if (cn_tab->cn_putc != pdccnputc)
+		r->io_addr_en = 0;
+	sc->io_shadow = 0;
+
 	r->gmask &= ~1;	/* allow GSC bus req */
 	r->brdg_feat &= ~0xf00;
 	r->brdg_feat |= 3;
@@ -1649,6 +1796,25 @@ dinoattach(parent, self, aux)
 	pba.pba_bridgetag = NULL;
 	config_found(self, &pba, dinoprint);
 
+	/* postpone cleanup if necessary */
+	if (r->io_addr_en != sc->io_shadow)
+		startuphook_establish(dino_clear_pdc_mappings, sc);
+
 	/* enable interrupts now that all the devices are there */
 	r->imr = sc->sc_imr;
+}
+
+void
+dino_clear_pdc_mappings(void *v)
+{
+	struct dino_softc *sc = (struct dino_softc *)v;
+	volatile struct dino_regs *r;
+
+	if (cn_tab->cn_putc == pdccnputc) {
+		/* damn! */
+		return;
+	}
+
+	r = sc->sc_regs;
+	r->io_addr_en = sc->io_shadow;
 }
