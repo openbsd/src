@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.12 2007/01/06 20:10:57 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.13 2007/01/11 21:58:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -119,7 +119,8 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 		for (i = 1; i < STI_REGION_MAX; i++)
 			sc->bases[i] = base;
 
-		sti_attach_common(sc, STI_CODEBASE_M68K);
+		if (sti_attach_common(sc, STI_CODEBASE_M68K) != 0)
+			return;
 	}
 
 	sti_end_attach(sc);

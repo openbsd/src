@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.50 2006/12/18 18:58:37 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.51 2007/01/11 21:58:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -120,32 +120,39 @@ void sti_bmove(struct sti_screen *scr, int, int, int, int, int, int,
 int sti_setcment(struct sti_screen *scr, u_int i, u_char r, u_char g, u_char b);
 int sti_fetchfonts(struct sti_screen *scr, struct sti_inqconfout *cfg,
     u_int32_t addr);
-void sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
+int sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
     bus_space_tag_t memt, bus_space_handle_t romh, bus_addr_t *bases,
     u_int codebase);
 
-void
+int
 sti_attach_common(sc, codebase)
 	struct sti_softc *sc;
 	u_int codebase;
 {
 	struct sti_screen *scr;
+	int rc;
 
 	scr = malloc(sizeof(struct sti_screen), M_DEVBUF, M_NOWAIT);
 	if (scr == NULL) {
 		printf("cannot allocate screen data\n");
-		return;
+		return (ENOMEM);
 	}
 
 	bzero(scr, sizeof(struct sti_screen));
 	sc->sc_scr = scr;
 
-	sti_screen_setup(scr, sc->iot, sc->memt, sc->romh, sc->bases,
-	    codebase);
+	if ((rc = sti_screen_setup(scr, sc->iot, sc->memt, sc->romh, sc->bases,
+	    codebase)) != 0) {
+		free(scr, M_DEVBUF);
+		sc->sc_scr = NULL;
+		return (rc);
+	}
+
 	sti_describe(sc);
+	return (0);
 }
 
-void
+int
 sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
     bus_space_tag_t memt, bus_space_handle_t romh, bus_addr_t *bases,
     u_int codebase)
@@ -250,9 +257,13 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 	size = dd->dd_pacode[i] - dd->dd_pacode[STI_BEGIN];
 	if (scr->scr_devtype == STI_DEVTYPE1)
 		size = (size + 3) / 4;
+	if (size == 0) {
+		printf(": no code for the requested platform\n");
+		return (EINVAL);
+	}
 	if (!(scr->scr_code = uvm_km_alloc(kernel_map, round_page(size)))) {
 		printf(": cannot allocate %u bytes for code\n", size);
-		return;
+		return (ENOMEM);
 	}
 #ifdef STIDEBUG
 	printf("code=0x%x[%x]\n", scr->scr_code, size);
@@ -301,7 +312,7 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 	    scr->scr_code + round_page(size), UVM_PROT_RX, FALSE))) {
 		printf(": uvm_map_protect failed (%d)\n", error);
 		uvm_km_free(kernel_map, scr->scr_code, round_page(size));
-		return;
+		return (error);
 	}
 
 	cc = &scr->scr_cfg;
@@ -316,7 +327,7 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 			    dd->dd_stimemreq);
 			uvm_km_free(kernel_map, scr->scr_code,
 			    round_page(size));
-			return;
+			return (ENOMEM);
 		}
 	}
 	{
@@ -369,7 +380,8 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 
 	if ((error = sti_init(scr, 0))) {
 		printf(": can not initialize (%d)\n", error);
-		return;
+		/* XXX free resources */
+		return (ENXIO);
 	}
 
 	bzero(&cfg, sizeof(cfg));
@@ -377,7 +389,8 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 	cfg.ext = &ecfg;
 	if ((error = sti_inqcfg(scr, &cfg))) {
 		printf(": error %d inquiring config\n", error);
-		return;
+		/* XXX free resources */
+		return (ENXIO);
 	}
 
 	/*
@@ -407,7 +420,8 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 
 	if ((error = sti_init(scr, STI_TEXTMODE))) {
 		printf(": can not initialize (%d)\n", error);
-		return;
+		/* XXX free resources */
+		return (ENXIO);
 	}
 
 #ifdef STIDEBUG
@@ -421,7 +435,8 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 
 	if ((error = sti_fetchfonts(scr, &cfg, dd->dd_fntaddr))) {
 		printf(": cannot fetch fonts (%d)\n", error);
-		return;
+		/* XXX free resources */
+		return (ENXIO);
 	}
 
 	/*
@@ -437,6 +452,8 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 	sti_default_screen.fontheight = scr->scr_curfont.height;
 
 	/* { extern int pmapdebug; pmapdebug = 0; } */
+
+	return (0);
 }
 
 void
@@ -1131,7 +1148,8 @@ sti_cnattach(struct sti_screen *scr, bus_space_tag_t iot, bus_addr_t *bases,
 		return (error);
 
 	bases[0] = ioh;
-	sti_screen_setup(scr, iot, iot, ioh, bases, codebase);
+	if (sti_screen_setup(scr, iot, iot, ioh, bases, codebase) != 0)
+		panic(__func__);
 
 	sti_alloc_attr(scr, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&sti_default_screen, scr, 0, 0, defattr);

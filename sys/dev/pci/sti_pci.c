@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci.c,v 1.1 2006/12/18 18:59:25 miod Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.2 2007/01/11 21:58:05 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -66,9 +66,9 @@ sti_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	printf("%s", self->dv_xname);
-	sti_attach_common(sc, STI_CODEBASE_MAIN);
-
-	sti_end_attach(sc);
+	if (sti_attach_common(&spc->sc_base, STI_CODEBASE_MAIN) == 0) {
+		startuphook_establish(sti_end_attach, spc);
+	}
 }
 
 /*

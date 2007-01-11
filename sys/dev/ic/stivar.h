@@ -1,4 +1,4 @@
-/*	$OpenBSD: stivar.h,v 1.20 2006/12/18 18:57:26 miod Exp $	*/
+/*	$OpenBSD: stivar.h,v 1.21 2007/01/11 21:58:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -91,7 +91,7 @@ struct sti_softc {
 	u_int	sc_wsmode;
 };
 
-void	sti_attach_common(struct sti_softc *sc, u_int codebase);
+int	sti_attach_common(struct sti_softc *sc, u_int codebase);
 void	sti_clear(struct sti_screen *);
 int	sti_cnattach(struct sti_screen *, bus_space_tag_t, bus_addr_t *, u_int);
 void	sti_describe(struct sti_softc *);

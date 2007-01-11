@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.34 2006/12/18 18:57:26 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.35 2007/01/11 21:58:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -230,6 +230,6 @@ sti_sgc_attach(parent, self, aux)
 
 	if (ca->ca_hpa == (hppa_hpa_t)PAGE0->mem_cons.pz_hpa)
 		sc->sc_flags |= STI_CONSOLE;
-	sti_attach_common(sc, STI_CODEBASE_PA);
-	startuphook_establish(sti_end_attach, sc);
+	if (sti_attach_common(sc, STI_CODEBASE_PA) == 0)
+		startuphook_establish(sti_end_attach, sc);
 }
