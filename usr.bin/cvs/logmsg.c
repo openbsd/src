@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.34 2007/01/11 08:33:53 xsa Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.35 2007/01/11 08:48:59 xsa Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -86,20 +86,12 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 	struct cvs_flisthead *modified)
 {
 	FILE *fp;
-	size_t len;
 	int c, fd, argc, saved_errno;
 	struct cvs_filelist *cf;
 	struct stat st1, st2;
 	char *fpath, *logmsg, *argv[4];
 
-	fpath = xmalloc(MAXPATHLEN);
-	len = strlcpy(fpath, cvs_tmpdir, MAXPATHLEN);
-	if (len >= MAXPATHLEN)
-		fatal("cvs_logmsg_create: truncation");
-
-	len = strlcat(fpath, "/cvsXXXXXXXXXX", MAXPATHLEN);
-	if (len >= MAXPATHLEN)
-		fatal("cvs_logmsg_create: truncation");
+	(void)xasprintf(&fpath, "%s/cvsXXXXXXXXXX", cvs_tmpdir);
 
 	if ((fd = mkstemp(fpath)) == NULL)
 		fatal("cvs_logmsg_create: mkstemp %s", strerror(errno));
