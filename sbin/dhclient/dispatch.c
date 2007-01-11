@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.36 2007/01/04 22:17:48 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.37 2007/01/11 02:36:29 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -51,8 +51,6 @@ struct protocol *protocols;
 struct timeout *timeouts;
 static struct timeout *free_timeouts;
 static int interfaces_invalidated;
-void (*bootp_packet_handler)(int, unsigned int, struct iaddr,
-    struct hardware *);
 
 static int interface_status(void);
 
@@ -120,10 +118,9 @@ reinitialize_interface(void)
 }
 
 /*
- * Wait for packets to come in using poll().  When a packet comes in,
- * call receive_packet to receive the packet and possibly strip hardware
- * addressing information from it, and then call through the
- * bootp_packet_handler hook to try to do something with it.
+ * Wait for packets to come in using poll().  When a packet comes in, call
+ * receive_packet to receive the packet and possibly strip hardware addressing
+ * information from it, and then call do_packet to try to do something with it.
  */
 void
 dispatch(void)
@@ -242,12 +239,10 @@ got_one(struct protocol *l)
 	if (result == 0)
 		return;
 
-	if (bootp_packet_handler) {
-		ifrom.len = 4;
-		memcpy(ifrom.iabuf, &from.sin_addr, ifrom.len);
+	ifrom.len = 4;
+	memcpy(ifrom.iabuf, &from.sin_addr, ifrom.len);
 
-		(*bootp_packet_handler)(result, from.sin_port, ifrom, &hfrom);
-	}
+	do_packet(result, from.sin_port, ifrom, &hfrom);
 }
 
 int

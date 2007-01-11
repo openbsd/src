@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.102 2007/01/04 22:30:57 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.103 2007/01/11 02:36:29 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -382,8 +382,6 @@ main(int argc, char *argv[])
 
 	client->state = S_INIT;
 	state_reboot();
-
-	bootp_packet_handler = do_packet;
 
 	dispatch();
 
