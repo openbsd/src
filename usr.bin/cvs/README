@@ -17,9 +17,7 @@ To build and install this release on your OpenBSD system, do the following:
 	# make cleandir
 	# make && make install
 
-To preserve the GNU CVS binary, it is recommended that you first rename it:
-
-	# cd /usr/bin
-	# mv cvs gcvs
+The OpenCVS binary will be installed as /usr/bin/opencvs to
+prevent people from accidently overwriting their GNU CVS binary for now.
 
 See http://www.opencvs.org/ for more information.
