@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.29 2007/01/06 23:21:08 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.30 2007/01/11 00:04:48 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -43,9 +43,6 @@
 #include <ctype.h>
 
 #include "dhcpd.h"
-
-int bad_options = 0;
-int bad_options_max = 5;
 
 void	parse_options(struct packet *);
 void	parse_option_buffer(struct packet *, unsigned char *, int);
@@ -109,41 +106,25 @@ parse_option_buffer(struct packet *packet,
 			s++;
 			continue;
 		}
-		if (s + 2 > end) {
-			len = 65536;
-			goto bogus;
-		}
 
 		/*
-		 * All other fields (except end, see above) have a
-		 * one-byte length.
+		 * All options other than DHO_PAD and DHO_END have a
+		 * one-byte length field.
 		 */
-		len = s[1];
+		if (s + 2 > end)
+			len = 0;
+		else
+			len = s[1];
 
 		/*
-		 * If the length is outrageous, silently skip the rest,
-		 * and mark the packet bad. Unfortunately some crappy
-		 * dhcp servers always seem to give us garbage on the
-		 * end of a packet. so rather than keep refusing, give
-		 * up and try to take one after seeing a few without
-		 * anything good.
+		 * If the option claims to extend beyond the end of the buffer
+		 * then mark the options buffer bad.
 		 */
 		if (s + len + 2 > end) {
-		    bogus:
-			bad_options++;
-			warning("option %s (%d) %s.",
-			    dhcp_options[code].name, len,
-			    "larger than buffer");
-			if (bad_options == bad_options_max) {
-				packet->options_valid = 1;
-				bad_options = 0;
-				warning("Many bogus options seen in offers. "
-				    "Taking this offer in spite of bogus "
-				    "options - hope for the best!");
-			} else {
-				warning("rejecting bogus offer.");
-				packet->options_valid = 0;
-			}
+			warning("option %s (%d) larger than buffer.",
+			    dhcp_options[code].name, len);
+			warning("rejecting bogus offer.");
+			packet->options_valid = 0;
 			return;
 		}
 		/*
