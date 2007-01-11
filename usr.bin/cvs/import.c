@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.57 2007/01/07 02:47:57 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.58 2007/01/11 12:37:29 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -356,9 +356,6 @@ import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 		diff_format = D_RCSDIFF;
 		if (cvs_diffreg(p2, p1, b3) == D_ERROR)
 			fatal("import_get_rcsdiff: failed to get RCS patch");
-
-		(void)unlink(p1);
-		(void)unlink(p2);
 
 		if (p1 != NULL)
 			xfree(p1);
