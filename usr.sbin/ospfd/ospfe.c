@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.50 2006/11/28 19:21:15 reyk Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.51 2007/01/11 21:43:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -71,8 +71,8 @@ pid_t
 ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
     int pipe_parent2rde[2])
 {
-	struct area	*area = NULL;
-	struct iface	*iface = NULL;
+	struct area	*area;
+	struct iface	*iface;
 	struct redistribute *r;
 	struct passwd	*pw;
 	struct event	 ev_sigint, ev_sigterm;
@@ -369,8 +369,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 		case IMSG_DD:
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
 			if (nbr == NULL)
-				fatalx("ospfe_dispatch_rde: "
-				    "neighbor not found");
+				break;
 
 			/* put these on my ls_req_list for retrieval */
 			lhp = lsa_hdr_new();
@@ -380,8 +379,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 		case IMSG_DD_END:
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
 			if (nbr == NULL)
-				fatalx("ospfe_dispatch_rde: "
-				    "neighbor not found");
+				break;
 
 			nbr->dd_pending--;
 			if (nbr->dd_pending == 0 && nbr->state & NBR_STA_LOAD) {
@@ -394,8 +392,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 		case IMSG_DB_SNAPSHOT:
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
 			if (nbr == NULL)
-				fatalx("ospfe_dispatch_rde: "
-				    "neighbor not found");
+				break;
 
 			/* add LSA header to the neighbor db_sum_list */
 			lhp = lsa_hdr_new();
@@ -405,8 +402,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 		case IMSG_DB_END:
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
 			if (nbr == NULL)
-				fatalx("ospfe_dispatch_rde: "
-				    "neighbor not found");
+				break;
 
 			/* snapshot done, start tx of dd packets */
 			nbr_fsm(nbr, NBR_EVT_SNAP_DONE);
@@ -414,8 +410,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 		case IMSG_LS_FLOOD:
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
 			if (nbr == NULL)
-				fatalx("ospfe_dispatch_rde: "
-				    "neighbor not found");
+				break;
 
 			l = imsg.hdr.len - IMSG_HEADER_SIZE;
 			if (l < sizeof(lsa_hdr))
@@ -492,8 +487,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
 			if (nbr == NULL)
-				fatalx("ospfe_dispatch_rde: "
-				    "neighbor not found");
+				break;
 
 			if (nbr->iface->self == nbr)
 				break;
@@ -518,8 +512,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			 */
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
 			if (nbr == NULL)
-				fatalx("ospfe_dispatch_rde: "
-				    "neighbor not found");
+				break;
 
 			if (nbr->iface->self == nbr)
 				break;
@@ -544,8 +537,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 		case IMSG_LS_BADREQ:
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
 			if (nbr == NULL)
-				fatalx("ospfe_dispatch_rde: "
-				    "neighbor not found");
+				break;
 
 			if (nbr->iface->self == nbr)
 				fatalx("ospfe_dispatch_rde: "

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.51 2007/01/11 21:35:15 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.52 2007/01/11 21:43:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -290,9 +290,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 			nbr = rde_nbr_find(imsg.hdr.peerid);
 			if (nbr == NULL)
-				fatalx("rde_dispatch_imsg: "
-				    "neighbor does not exist");
-
+				break;
 
 			if (state != nbr->state && (nbr->state & NBR_STA_FULL ||
 			    state & NBR_STA_FULL))
@@ -305,8 +303,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_DB_SNAPSHOT:
 			nbr = rde_nbr_find(imsg.hdr.peerid);
 			if (nbr == NULL)
-				fatalx("rde_dispatch_imsg: "
-				    "neighbor does not exist");
+				break;
 
 			lsa_snap(nbr->area, imsg.hdr.peerid);
 
@@ -316,8 +313,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_DD:
 			nbr = rde_nbr_find(imsg.hdr.peerid);
 			if (nbr == NULL)
-				fatalx("rde_dispatch_imsg: "
-				    "neighbor does not exist");
+				break;
 
 			buf = imsg.data;
 			for (l = imsg.hdr.len - IMSG_HEADER_SIZE;
@@ -354,8 +350,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_LS_REQ:
 			nbr = rde_nbr_find(imsg.hdr.peerid);
 			if (nbr == NULL)
-				fatalx("rde_dispatch_imsg: "
-				    "neighbor does not exist");
+				break;
 
 			buf = imsg.data;
 			for (l = imsg.hdr.len - IMSG_HEADER_SIZE;
@@ -382,8 +377,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_LS_UPD:
 			nbr = rde_nbr_find(imsg.hdr.peerid);
 			if (nbr == NULL)
-				fatalx("rde_dispatch_imsg: "
-				    "neighbor does not exist");
+				break;
 
 			lsa = malloc(imsg.hdr.len - IMSG_HEADER_SIZE);
 			if (lsa == NULL)
@@ -480,8 +474,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_LS_MAXAGE:
 			nbr = rde_nbr_find(imsg.hdr.peerid);
 			if (nbr == NULL)
-				fatalx("rde_dispatch_imsg: "
-				    "neighbor does not exist");
+				break;
 
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct lsa_hdr))
