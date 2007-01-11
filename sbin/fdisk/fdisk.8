@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.56 2007/01/11 08:42:27 jmc Exp $
+.\"	$OpenBSD: fdisk.8,v 1.57 2007/01/11 08:49:00 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -122,7 +122,7 @@ Avoid asking yes/no questions when not desirable.
 .Sh TYPICAL LAYOUT
 When called with no special flags,
 .Nm
-prints the MBR partition table of the specified device, i.e.,
+prints the MBR partition table of the specified device:
 .Bd -literal -offset 1n
 # fdisk wd0
 Disk: wd0       geometry: 5168/240/63 [78140160 Sectors]
