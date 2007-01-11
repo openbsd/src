@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.51 2007/01/11 21:58:05 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.52 2007/01/11 22:02:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -32,8 +32,6 @@
  *	X11 support.
  */
 
-#include "wsdisplay.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -48,6 +46,8 @@
 
 #include <dev/ic/stireg.h>
 #include <dev/ic/stivar.h>
+
+#include "sti.h"
 
 struct cfdriver sti_cd = {
 	NULL, "sti", DV_DULL
@@ -124,6 +124,22 @@ int sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
     bus_space_tag_t memt, bus_space_handle_t romh, bus_addr_t *bases,
     u_int codebase);
 
+#if NSTI_PCI > 0
+#define	STI_ENABLE_ROM(sc) \
+do { \
+	if ((sc) != NULL && (sc)->sc_enable_rom != NULL) \
+		(*(sc)->sc_enable_rom)(sc); \
+} while (0)
+#define	STI_DISABLE_ROM(sc) \
+do { \
+	if ((sc) != NULL && (sc)->sc_disable_rom != NULL) \
+		(*(sc)->sc_disable_rom)(sc); \
+} while (0)
+#else
+#define	STI_ENABLE_ROM(sc)		do { /* nothing */ } while (0)
+#define	STI_DISABLE_ROM(sc)		do { /* nothing */ } while (0)
+#endif
+
 int
 sti_attach_common(sc, codebase)
 	struct sti_softc *sc;
@@ -140,6 +156,7 @@ sti_attach_common(sc, codebase)
 
 	bzero(scr, sizeof(struct sti_screen));
 	sc->sc_scr = scr;
+	scr->scr_main = sc;
 
 	if ((rc = sti_screen_setup(scr, sc->iot, sc->memt, sc->romh, sc->bases,
 	    codebase)) != 0) {
@@ -164,6 +181,8 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 	struct sti_cfg *cc;
 	int error, size, i;
 	int geometry_kluge = 0;
+
+	STI_ENABLE_ROM(scr->scr_main);
 
 	scr->iot = iot;
 	scr->memt = memt;
@@ -233,6 +252,8 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 		    (u_int8_t *)dd->dd_pacode, sizeof(dd->dd_pacode));
 	}
 
+	STI_DISABLE_ROM(scr->scr_main);
+
 #ifdef STIDEBUG
 	printf("dd:\n"
 	    "devtype=%x, rev=%x;%d, altt=%x, gid=%016llx, font=%x, mss=%x\n"
@@ -269,6 +290,8 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 	printf("code=0x%x[%x]\n", scr->scr_code, size);
 #endif
 
+	STI_ENABLE_ROM(scr->scr_main);
+
 	/* copy code into memory */
 	if (scr->scr_devtype == STI_DEVTYPE1) {
 		u_int8_t *p = (u_int8_t *)scr->scr_code;
@@ -283,9 +306,12 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 		    dd->dd_pacode[STI_BEGIN], (u_int8_t *)scr->scr_code,
 		    size);
 
+	STI_DISABLE_ROM(scr->scr_main);
+
 #define	O(i)	(dd->dd_pacode[(i)]? (scr->scr_code + \
 	(dd->dd_pacode[(i)] - dd->dd_pacode[0]) / \
 	(scr->scr_devtype == STI_DEVTYPE1? 4 : 1)) : NULL)
+
 	scr->init	= (sti_init_t)	O(STI_INIT_GRAPH);
 	scr->mgmt	= (sti_mgmt_t)	O(STI_STATE_MGMT);
 	scr->unpmv	= (sti_unpmv_t)	O(STI_FONT_UNPMV);
@@ -338,6 +364,9 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 #ifdef STIDEBUG
 		printf("stiregions @%p:\n", i);
 #endif
+
+		STI_ENABLE_ROM(scr->scr_main);
+
 		r.last = 0;
 		for (p = cc->regions; !r.last &&
 		     p < &cc->regions[STI_REGION_MAX]; p++) {
@@ -352,10 +381,12 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 
 			*p = bases[p - cc->regions] + (r.offset << PGSHIFT);
 #ifdef STIDEBUG
+			STI_DISABLE_ROM(scr->scr_main);
 			printf("%08x @ 0x%08x%s%s%s%s\n",
 			    r.length << PGSHIFT, *p, r.sys_only? " sys" : "",
 			    r.cache? " cache" : "", r.btlb? " btlb" : "",
 			    r.last? " last" : "");
+			STI_ENABLE_ROM(scr->scr_main);
 #endif
 
 			/* rom has already been mapped */
@@ -365,7 +396,9 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 				    r.cache ? BUS_SPACE_MAP_CACHEABLE : 0,
 				    &fbh)) {
 #ifdef STIDEBUG
+					STI_DISABLE_ROM(scr->scr_main);
 					printf("already mapped region\n");
+					STI_ENABLE_ROM(scr->scr_main);
 #endif
 				} else {
 					if (p - cc->regions == 1) {
@@ -376,6 +409,8 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 				}
 			}
 		}
+
+		STI_DISABLE_ROM(scr->scr_main);
 	}
 
 	if ((error = sti_init(scr, 0))) {
@@ -548,6 +583,9 @@ sti_fetchfonts(struct sti_screen *scr, struct sti_inqconfout *cfg,
 	/*
 	 * Get the first PROM font in memory
 	 */
+
+	STI_ENABLE_ROM(scr->scr_main);
+
 	do {
 		if (scr->scr_devtype == STI_DEVTYPE1) {
 			fp->first  = parseshort(addr + 0x00);
@@ -582,6 +620,8 @@ sti_fetchfonts(struct sti_screen *scr, struct sti_inqconfout *cfg,
 
 		addr = NULL; /* fp->next */
 	} while (addr);
+
+	STI_DISABLE_ROM(scr->scr_main);
 
 #ifdef notyet
 	/*
@@ -1114,8 +1154,10 @@ sti_unpack_attr(void *v, long attr, int *fg, int *bg, int *ul)
 		*ul = 0;
 }
 
+#if NSTI_SGC > 0
+
 /*
- * Console support
+ * Early console support
  */
 
 void
@@ -1156,3 +1198,5 @@ sti_cnattach(struct sti_screen *scr, bus_space_tag_t iot, bus_addr_t *bases,
 
 	return (0);
 }
+
+#endif	/* NSTI_SGC > 0 */
