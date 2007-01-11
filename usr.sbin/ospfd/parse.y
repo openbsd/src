@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.40 2006/12/21 17:22:29 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.41 2007/01/11 21:36:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -496,8 +496,7 @@ interface	: INTERFACE STRING	{
 			if (iface == NULL)
 				YYERROR;
 			iface->area = area;
-			LIST_INSERT_HEAD(&area->iface_list,
-			    iface, entry);
+			LIST_INSERT_HEAD(&area->iface_list, iface, entry);
 
 			memcpy(&ifacedefs, defs, sizeof(ifacedefs));
 			md_list_copy(&ifacedefs.md_list, &defs->md_list);
