@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.5 2006/12/21 19:59:02 deraadt Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.6 2007/01/11 22:01:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -118,6 +118,7 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 	caddr_t addr = (caddr_t)(madt + 1);
 	struct mp_intr_map *map;
 	struct ioapic_softc *apic;
+	int cpu_role = CPU_ROLE_BP;
 	int pin;
 
 	printf(" addr 0x%x", madt->local_apic_address);
@@ -147,10 +148,7 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 					break;
 
 				memset(&caa, 0, sizeof(struct cpu_attach_args));
-				if (entry->madt_lapic.apic_id == 0)
-					caa.cpu_role = CPU_ROLE_BP;
-				else
-					caa.cpu_role = CPU_ROLE_AP;
+				caa.cpu_role = cpu_role;
 				caa.caa_name = "cpu";
 				caa.cpu_number = entry->madt_lapic.apic_id;
 				caa.cpu_func = &mp_cpu_funcs;
@@ -161,6 +159,8 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 				config_found(mainbus, &caa, acpimadt_print);
+
+				cpu_role = CPU_ROLE_AP;
 			}
 			break;
 		case ACPI_MADT_IOAPIC:
