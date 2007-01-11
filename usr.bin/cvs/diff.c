@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.110 2007/01/11 02:35:55 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.111 2007/01/11 10:37:18 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -153,12 +153,14 @@ cvs_diff(int argc, char **argv)
 void
 cvs_diff_local(struct cvs_file *cf)
 {
-	size_t len;
 	RCSNUM *r1;
 	BUF *b1, *b2;
 	struct stat st;
 	struct timeval tv[2], tv2[2];
-	char rbuf[16], p1[MAXPATHLEN], p2[MAXPATHLEN];
+	char rbuf[16], *p1, *p2;
+
+	r1 = NULL;
+	b1 = b2 = NULL;
 
 	cvs_log(LP_TRACE, "cvs_diff_local(%s)", cf->file_path);
 
@@ -256,41 +258,28 @@ cvs_diff_local(struct cvs_file *cf)
 	cvs_printf(" %s\n", cf->file_path);
 
 	if (cf->file_status != FILE_ADDED) {
-		len = strlcpy(p1, cvs_tmpdir, sizeof(p1));
-		if (len >= sizeof(p1))
-			fatal("cvs_diff_local: truncation");
-
-		len = strlcat(p1, "/diff1.XXXXXXXXXX", sizeof(p1));
-		if (len >= sizeof(p1))
-			fatal("cvs_diff_local: truncation");
-
+		(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
 		cvs_buf_write_stmp(b1, p1, tv);
 		cvs_buf_free(b1);
-	} else {
-		len = strlcpy(p1, CVS_PATH_DEVNULL, sizeof(p1));
-		if (len >= sizeof(p1))
-			fatal("cvs_diff_local: truncation");
-	}
+	} else
+		(void)xasprintf(&p1, "%s", CVS_PATH_DEVNULL);
 
 	if (cf->file_status != FILE_REMOVED) {
-		len = strlcpy(p2, cvs_tmpdir, sizeof(p2));
-		if (len >= sizeof(p2))
-			fatal("cvs_diff_local: truncation");
-
-		len = strlcat(p2, "/diff2.XXXXXXXXXX", sizeof(p2));
-		if (len >= sizeof(p2))
-			fatal("cvs_diff_local: truncation");
-
+		(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
 		cvs_buf_write_stmp(b2, p2, tv2);
 		cvs_buf_free(b2);
-	} else {
-		len = strlcpy(p2, CVS_PATH_DEVNULL, sizeof(p2));
-		if (len >= sizeof(p2))
-			fatal("cvs_diff_local: truncation");
-	}
+	} else
+		(void)xasprintf(&p2, "%s", CVS_PATH_DEVNULL);
 
-	cvs_diffreg(p1, p2, NULL);
+	if (cvs_diffreg(p1, p2, NULL) == D_ERROR)
+		fatal("cvs_diff_local: failed to get RCS patch");
+
 	cvs_worklist_run(&temp_files, cvs_worklist_unlink);
+
+	if (p1 != NULL)
+		xfree(p1);
+	if (p2 != NULL)
+		xfree(p2);
 
 	if (diff_rev1 != NULL && diff_rev1 != cf->file_ent->ce_rev)
 		rcsnum_free(diff_rev1);
