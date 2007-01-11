@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.17 2007/01/10 16:14:36 mk Exp $
+.\"	$OpenBSD: acpi.4,v 1.18 2007/01/11 08:34:30 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -45,6 +45,26 @@ driver will take control of ACPI from the firmware (BIOS).
 WARNING: this may cause an overheating on some machines since
 .Nm
 doesn't provide any thermal or cooling control.
+.Pp
+The following devices can attach to
+.Nm :
+.Pp
+.Bl -tag -width "acpitimer(4)XXX" -offset indent -compact
+.It Xr acpiac 4
+ACPI AC adapter
+.It Xr acpibat 4
+ACPI control method battery
+.It Xr acpibtn 4
+ACPI button
+.It Xr acpiec 4
+ACPI embedded controller
+.It Xr acpihpet 4
+ACPI high precision event timer
+.It Xr acpitimer 4
+ACPI power management timer
+.It Xr acpitz 4
+ACPI thermal zone
+.El
 .Sh SEE ALSO
 .Xr intro 4
 .Sh HISTORY
