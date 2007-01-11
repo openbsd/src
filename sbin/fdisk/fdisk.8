@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.54 2006/11/09 13:18:56 jmc Exp $
+.\"	$OpenBSD: fdisk.8,v 1.55 2007/01/11 07:08:22 ray Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -59,6 +59,63 @@ place of the original (MBR) boot block.
 .Pp
 Some other architectures (like the zaurus), consider sector 0 of the disk
 to contain the MBR partition table, but do not use the MBR bootcode at all.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Xo Fl c Ar cylinders ,
+.Fl h Ar heads ,
+.Fl s Ar sectors
+.Xc
+Specifies an alternate BIOS geometry for
+.Nm
+to use.
+By default, an automatic calculation of disk size will be built
+using heuristics.
+These figures are taken from the in-core disklabel
+(see
+.Xr disklabel 8 ) ,
+or values that
+.Em /boot
+has passed to the kernel.
+.It Fl e
+Use the interactive edit of
+.Nm
+to modify a MBR partition table.
+The editor permits configuration of the MBR partition, as well as
+extended MBR partitions.
+.It Fl f Ar mbrfile
+Specifies an alternate MBR template file.
+The default file is
+.Pa /usr/mdec/mbr .
+.It Fl i
+Requests that the MBR partition data be re-initialized.
+In this mode,
+.Nm
+will completely overwrite the primary MBR bootcode and MBR partition table
+using the default MBR template
+.Pa /usr/mdec/mbr
+(or the one optionally specified by the
+.Fl f
+flag).
+In the default template, MBR partition number 3 will be configured as an
+.Ox
+MBR partition spanning from cylinder 0, head 1, sector 1, and extending
+to the end of the disk.
+This mode is designed to initialize the MBR the very first time.
+.It Fl u
+Update MBR bootcode, preserving existing MBR partition table.
+The MBR bootcode extends from offset 0x000 to the start of the MBR partition table
+at offset 0x1BE.
+It is similar to the
+.Fl i
+flag, except the existing MBR partition table is preserved.
+This is useful for writing new MBR bootcode onto an existing drive, and is
+equivalent to the DOS command
+.Dq FDISK /MBR .
+Note that this option will overwrite the NT disk signature, if present.
+.It Fl y
+Avoid asking yes/no questions when not desirable.
+.El
 .Sh TYPICAL LAYOUT
 When called with no special flags,
 .Nm
@@ -173,63 +230,6 @@ partitions are then mounted as follows using
 /dev/wd0l /usr/src ffs rw,softdep,nodev,nosuid 1 2
 /dev/wd0e /var ffs rw,softdep,nodev,nosuid 1 2
 .Ed
-.Sh OPTIONS
-The options are as follows:
-.Bl -tag -width Ds
-.It Xo Fl c Ar cylinders ,
-.Fl h Ar heads ,
-.Fl s Ar sectors
-.Xc
-Specifies an alternate BIOS geometry for
-.Nm
-to use.
-By default, an automatic calculation of disk size will be built
-using heuristics.
-These figures are taken from the in-core disklabel
-(see
-.Xr disklabel 8 ) ,
-or values that
-.Em /boot
-has passed to the kernel.
-.It Fl e
-Use the interactive edit of
-.Nm
-to modify a MBR partition table.
-The editor permits configuration of the MBR partition, as well as
-extended MBR partitions.
-.It Fl f Ar mbrfile
-Specifies an alternate MBR template file.
-The default file is
-.Pa /usr/mdec/mbr .
-.It Fl i
-Requests that the MBR partition data be re-initialized.
-In this mode,
-.Nm
-will completely overwrite the primary MBR bootcode and MBR partition table
-using the default MBR template
-.Pa /usr/mdec/mbr
-(or the one optionally specified by the
-.Fl f
-flag).
-In the default template, MBR partition number 3 will be configured as an
-.Ox
-MBR partition spanning from cylinder 0, head 1, sector 1, and extending
-to the end of the disk.
-This mode is designed to initialize the MBR the very first time.
-.It Fl u
-Update MBR bootcode, preserving existing MBR partition table.
-The MBR bootcode extends from offset 0x000 to the start of the MBR partition table
-at offset 0x1BE.
-It is similar to the
-.Fl i
-flag, except the existing MBR partition table is preserved.
-This is useful for writing new MBR bootcode onto an existing drive, and is
-equivalent to the DOS command
-.Dq FDISK /MBR .
-Note that this option will overwrite the NT disk signature, if present.
-.It Fl y
-Avoid asking yes/no questions when not desirable.
-.El
 .Sh COMMAND MODE
 The
 .Fl e
