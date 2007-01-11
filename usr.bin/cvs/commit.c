@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.89 2007/01/11 02:35:55 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.90 2007/01/11 18:06:49 jasper Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -51,7 +51,6 @@ int
 cvs_commit(int argc, char **argv)
 {
 	int ch;
-	BUF *bp;
 	char *arg = ".";
 	int flags;
 	struct cvs_recursion cr;
@@ -204,9 +203,10 @@ cvs_commit_local(struct cvs_file *cf)
 	BUF *b;
 	int isnew;
 	int l, openflags, rcsflags;
-	char *d, *f, rbuf[24], nbuf[24];
+	char *f, rbuf[24], nbuf[24];
+	char *d = NULL;
 	CVSENTRIES *entlist;
-	char *attic, *repo, *rcsfile, *p;
+	char *attic, *repo, *rcsfile;
 
 	cvs_log(LP_TRACE, "cvs_commit_local(%s)", cf->file_path);
 	cvs_file_classify(cf, NULL, 0);
