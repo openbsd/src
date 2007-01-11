@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.50 2006/12/21 17:10:11 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.51 2007/01/11 21:35:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -91,8 +91,10 @@ pid_t
 rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
     int pipe_parent2ospfe[2])
 {
-	struct timeval		 now;
 	struct event		 ev_sigint, ev_sigterm;
+	struct timeval		 now;
+	struct area		*area;
+	struct iface		*iface;
 	struct passwd		*pw;
 	struct redistribute	*r;
 	pid_t			 pid;
@@ -162,6 +164,11 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 	cand_list_init();
 	rt_init();
 
+	/* remove unneded stuff from config */
+	LIST_FOREACH(area, &rdeconf->area_list, entry)
+		LIST_FOREACH(iface, &area->iface_list, entry)
+			md_list_clr(&iface->auth_md_list);
+	
 	while ((r = SIMPLEQ_FIRST(&rdeconf->redist_list)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&rdeconf->redist_list, entry);
 		free(r);
