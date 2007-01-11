@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci.c,v 1.3 2007/01/11 22:04:28 miod Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.4 2007/01/11 22:06:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Miodrag Vallat.
@@ -55,6 +55,8 @@ int	sti_check_rom(struct sti_pci_softc *, struct pci_attach_args *);
 void	sti_pci_enable_rom(struct sti_softc *);
 void	sti_pci_disable_rom(struct sti_softc *);
 
+int	sti_pci_is_console(struct pci_attach_args *, bus_addr_t *);
+
 int
 sti_pci_match(struct device *parent, void *cf, void *aux)
 {
@@ -82,6 +84,8 @@ sti_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("%s", self->dv_xname);
 	if (sti_attach_common(&spc->sc_base, STI_CODEBASE_MAIN) == 0) {
+		if (sti_pci_is_console(paa, spc->sc_base.bases) != 0)
+			spc->sc_base.sc_flags |= STI_CONSOLE;
 		startuphook_establish(sti_end_attach, spc);
 	}
 }

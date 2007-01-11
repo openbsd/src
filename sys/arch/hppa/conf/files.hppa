@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.60 2006/09/27 06:33:03 grange Exp $
+#	$OpenBSD: files.hppa,v 1.61 2007/01/11 22:06:36 miod Exp $
 #
 # hppa-specific configuration info
 
@@ -160,6 +160,7 @@ file	arch/hppa/dev/com_dino.c		com_dino
 
 attach	sti at gedoens with sti_gedoens
 file	arch/hppa/dev/sti_sgc.c			sti_gedoens
+file	arch/hppa/dev/sti_pci_machdep.c		sti_pci
 
 attach	siop at gedoens with siop_sgc
 file	arch/hppa/dev/siop_sgc.c		siop_sgc
