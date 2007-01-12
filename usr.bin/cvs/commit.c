@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.90 2007/01/11 18:06:49 jasper Exp $	*/
+/*	$OpenBSD: commit.c,v 1.91 2007/01/12 17:25:33 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -26,7 +26,7 @@
 void	cvs_commit_local(struct cvs_file *);
 void	cvs_commit_check_files(struct cvs_file *);
 
-static char *commit_diff_file(struct cvs_file *);
+static BUF *commit_diff_file(struct cvs_file *);
 static void commit_desc_set(struct cvs_file *);
 
 struct	cvs_flisthead files_affected;
@@ -200,11 +200,10 @@ cvs_commit_check_files(struct cvs_file *cf)
 void
 cvs_commit_local(struct cvs_file *cf)
 {
-	BUF *b;
+	BUF *b, *d;
 	int isnew;
 	int l, openflags, rcsflags;
-	char *f, rbuf[24], nbuf[24];
-	char *d = NULL;
+	char rbuf[24], nbuf[24];
 	CVSENTRIES *entlist;
 	char *attic, *repo, *rcsfile;
 
@@ -293,9 +292,6 @@ cvs_commit_local(struct cvs_file *cf)
 			fatal("cvs_commit_local: failed to load file");
 	}
 
-	cvs_buf_putc(b, '\0');
-	f = cvs_buf_release(b);
-
 	if (isnew == 0) {
 		if (rcs_deltatext_set(cf->file_rcs,
 		    cf->file_rcs->rf_head, d) == -1)
@@ -305,13 +301,8 @@ cvs_commit_local(struct cvs_file *cf)
 	if (rcs_rev_add(cf->file_rcs, RCS_HEAD_REV, logmsg, -1, NULL) == -1)
 		fatal("cvs_commit_local: failed to add new revision");
 
-	if (rcs_deltatext_set(cf->file_rcs, cf->file_rcs->rf_head, f) == -1)
+	if (rcs_deltatext_set(cf->file_rcs, cf->file_rcs->rf_head, b) == -1)
 		fatal("cvs_commit_local: failed to set new HEAD delta");
-
-	xfree(f);
-
-	if (isnew == 0)
-		xfree(d);
 
 	if (cf->file_status == FILE_REMOVED) {
 		if (rcs_state_set(cf->file_rcs,
@@ -391,10 +382,10 @@ cvs_commit_local(struct cvs_file *cf)
 	}
 }
 
-static char *
+static BUF *
 commit_diff_file(struct cvs_file *cf)
 {
-	char*delta,  *p1, *p2;
+	char *p1, *p2;
 	BUF *b1, *b2, *b3;
 
 	if (cf->file_status == FILE_MODIFIED ||
@@ -428,9 +419,7 @@ commit_diff_file(struct cvs_file *cf)
 	if (cvs_diffreg(p1, p2, b3) == D_ERROR)
 		fatal("commit_diff_file: failed to get RCS patch");
 
-	cvs_buf_putc(b3, '\0');
-	delta = cvs_buf_release(b3);
-	return (delta);
+	return (b3);
 }
 
 static void

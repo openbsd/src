@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.193 2007/01/11 17:44:18 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.194 2007/01/12 17:25:33 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1374,9 +1374,9 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 int
 rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 {
-	char *newdeltatext, *path_tmp1, *path_tmp2;
+	char *path_tmp1, *path_tmp2;
 	struct rcs_delta *rdp, *prevrdp, *nextrdp;
-	BUF *nextbuf, *prevbuf, *newdiff;
+	BUF *nextbuf, *prevbuf, *newdiff, *newdeltatext;
 
 	if (rev == RCS_HEAD_REV)
 		rev = rf->rf_head;
@@ -1424,9 +1424,9 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 		if (cvs_diffreg(path_tmp1, path_tmp2, newdiff) == D_ERROR)
 			fatal("rcs_diffreg failed");
 
-		newdeltatext = cvs_buf_release(newdiff);
+		newdeltatext = newdiff;
 	} else if (nextrdp == NULL && prevrdp != NULL) {
-		newdeltatext = cvs_buf_release(prevbuf);
+		newdeltatext = prevbuf;
 	}
 
 	if (newdeltatext != NULL) {
@@ -2792,9 +2792,10 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
  * Returns -1 on error, 0 on success.
  */
 int
-rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, const char *dtext)
+rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, BUF *bp)
 {
 	size_t len;
+	u_char *dtext;
 	struct rcs_delta *rdp;
 
 	/* Write operations require full parsing */
@@ -2806,16 +2807,21 @@ rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, const char *dtext)
 	if (rdp->rd_text != NULL)
 		xfree(rdp->rd_text);
 
-	len = strlen(dtext);
+	len = cvs_buf_len(bp);
+	dtext = cvs_buf_release(bp);
+	bp = NULL;
+
 	if (len != 0) {
-		/* XXX - use xstrdup() if rd_text changes to char *. */
-		rdp->rd_text = xmalloc(len + 1);
+		rdp->rd_text = xmalloc(len);
 		rdp->rd_tlen = len;
-		(void)memcpy(rdp->rd_text, dtext, len + 1);
+		(void)memcpy(rdp->rd_text, dtext, len);
 	} else {
 		rdp->rd_text = NULL;
 		rdp->rd_tlen = 0;
 	}
+
+	if (dtext != NULL)
+		xfree(dtext);
 
 	return (0);
 }

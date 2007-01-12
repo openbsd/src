@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.59 2007/01/11 15:41:42 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.60 2007/01/12 17:25:33 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -169,7 +169,6 @@ static void
 import_new(struct cvs_file *cf)
 {
 	BUF *bp;
-	char *content;
 	time_t tstamp;
 	struct stat st;
 	struct rcs_branch *brp;
@@ -199,7 +198,6 @@ import_new(struct cvs_file *cf)
 		fatal("import_new: failed to load %s", cf->file_path);
 
 	cvs_buf_putc(bp, '\0');
-	content = cvs_buf_release(bp);
 
 	if ((brev = rcsnum_brtorev(branch)) == NULL)
 		fatal("import_new: failed to get first branch revision");
@@ -236,13 +234,12 @@ import_new(struct cvs_file *cf)
 	TAILQ_INSERT_TAIL(&(rdp->rd_branches), brp, rb_list);
 
 	if (rcs_deltatext_set(cf->file_rcs,
-	    cf->file_rcs->rf_head, content) == -1)
+	    cf->file_rcs->rf_head, bp) == -1)
 		fatal("import_new: failed to set deltatext");
 
 	rcs_write(cf->file_rcs);
 	cvs_printf("N %s/%s\n", import_repository, cf->file_path);
 
-	xfree(content);
 	rcsnum_free(branch);
 	rcsnum_free(brev);
 }
