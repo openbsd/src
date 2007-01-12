@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.91 2007/01/12 17:25:33 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.92 2007/01/12 18:27:18 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -101,6 +101,9 @@ cvs_commit(int argc, char **argv)
 	if (conflicts_found != 0)
 		fatal("%d conflicts found, please correct these first",
 		    conflicts_found);
+
+	if (TAILQ_EMPTY(&files_affected))
+		return (0);
 
 	if (logmsg == NULL && cvs_server_active == 0) {
 		logmsg = cvs_logmsg_create(&files_added, &files_removed,
