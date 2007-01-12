@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.92 2007/01/12 18:27:18 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.93 2007/01/12 19:28:12 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -205,6 +205,7 @@ cvs_commit_local(struct cvs_file *cf)
 {
 	BUF *b, *d;
 	int isnew;
+	RCSNUM *head;
 	int l, openflags, rcsflags;
 	char rbuf[24], nbuf[24];
 	CVSENTRIES *entlist;
@@ -221,10 +222,13 @@ cvs_commit_local(struct cvs_file *cf)
 
 	if (cf->file_status == FILE_MODIFIED ||
 	    cf->file_status == FILE_REMOVED || (cf->file_status == FILE_ADDED
-	    && cf->file_rcs != NULL && cf->file_rcs->rf_dead == 1))
-		rcsnum_tostr(rcs_head_get(cf->file_rcs), rbuf, sizeof(rbuf));
-	else
+	    && cf->file_rcs != NULL && cf->file_rcs->rf_dead == 1)) {
+		head = rcs_head_get(cf->file_rcs);
+		rcsnum_tostr(head, rbuf, sizeof(rbuf));
+		rcsnum_free(head);
+	} else {
 		strlcpy(rbuf, "Non-existent", sizeof(rbuf));
+	}
 
 	isnew = 0;
 	if (cf->file_status == FILE_ADDED) {

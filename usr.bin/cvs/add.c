@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.67 2007/01/12 03:34:50 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.68 2007/01/12 19:28:12 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -251,9 +251,11 @@ add_file(struct cvs_file *cf)
 	char revbuf[16];
 	RCSNUM *head;
 
-	if (cf->file_rcs != NULL)
-		rcsnum_tostr(rcs_head_get(cf->file_rcs),
-		    revbuf, sizeof(revbuf));
+	if (cf->file_rcs != NULL) {
+		head = rcs_head_get(cf->file_rcs);
+		rcsnum_tostr(head, revbuf, sizeof(revbuf));
+		rcsnum_free(head);
+	}
 
 	added = stop = 0;
 	switch (cf->file_status) {
@@ -273,6 +275,8 @@ add_file(struct cvs_file *cf)
 			/* Restore the file. */
 			head = rcs_head_get(cf->file_rcs);
 			b = rcs_getrev(cf->file_rcs, head);
+			rcsnum_free(head);
+
 			if (b == NULL)
 				fatal("cvs_add_local: failed to get HEAD");
 

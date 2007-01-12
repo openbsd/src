@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.194 2007/01/12 17:25:33 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.195 2007/01/12 19:28:12 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -592,13 +592,17 @@ RCSNUM *
 rcs_head_get(RCSFILE *file)
 {
 	char br[16];
+	RCSNUM *rev;
 
 	if (file->rf_branch != NULL) {
 		rcsnum_tostr(file->rf_branch, br, sizeof(br));
-		return (rcs_translate_tag(br, file));
+		rev = rcs_translate_tag(br, file);
+	} else {
+		rev = rcsnum_alloc();
+		rcsnum_cpy(file->rf_head, rev, 0);
 	}
 
-	return (file->rf_head);
+	return (rev);
 }
 
 /*
