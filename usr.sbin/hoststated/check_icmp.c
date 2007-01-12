@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.10 2007/01/11 18:05:08 reyk Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.11 2007/01/12 17:12:58 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -191,7 +191,8 @@ send_icmp(int s, short event, void *arg)
 		TAILQ_FOREACH(host, &table->hosts, entry) {
 			if (host->flags & (F_DISABLE | F_CHECK_SENT))
 				continue;
-			if (((struct sockaddr *)&host->ss)->sa_family != cie->af)
+			if (((struct sockaddr *)&host->ss)->sa_family !=
+			    cie->af)
 				continue;
 			i++;
 			to = (struct sockaddr *)&host->ss;
@@ -252,7 +253,8 @@ recv_icmp(int s, short event, void *arg)
 	bzero(&packet, sizeof(packet));
 	bzero(&ss, sizeof(ss));
 
-	r = recvfrom(s, packet, sizeof(packet), 0, (struct sockaddr *)&ss, &slen);
+	r = recvfrom(s, packet, sizeof(packet), 0,
+	    (struct sockaddr *)&ss, &slen);
 	if (r == -1 || r != ICMP_BUF_SIZE) {
 		if (r == -1 && errno != EAGAIN && errno != EINTR)
 			log_debug("recv_icmp: receive error");
