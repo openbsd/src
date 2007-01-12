@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.7 2005/11/19 02:18:00 pedro Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.8 2007/01/12 07:41:31 art Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/user.h>
 
 #include <uvm/uvm.h>
@@ -60,7 +60,7 @@ int gdt_dynavail;
 int gdt_next;		/* next available slot for sweeping */
 int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
-struct lock gdt_lock_store;
+struct rwlock gdt_lock_store = RWLOCK_INITIALIZER;
 
 static __inline void gdt_lock(void);
 static __inline void gdt_unlock(void);
@@ -79,17 +79,17 @@ void gdt_put_slot(int);
  * reclaim it.
  */
 static __inline void
-gdt_lock()
+gdt_lock(void)
 {
 	if (curproc != NULL)		/* XXX - ugh. needed for startup */
-		(void) lockmgr(&gdt_lock_store, LK_EXCLUSIVE, NULL);
+		rw_enter_write(&gdt_lock_store);
 }
 
 static __inline void
-gdt_unlock()
+gdt_unlock(void)
 {
 	if (curproc != NULL)
-		(void) lockmgr(&gdt_lock_store, LK_RELEASE, NULL);
+		rw_exit_write(&gdt_lock_store);
 }
 
 void
@@ -143,8 +143,6 @@ gdt_init()
 	struct vm_page *pg;
 	vaddr_t va;
 	struct cpu_info *ci = &cpu_info_primary;
-
-	lockinit(&gdt_lock_store, PZERO, "gdtlck", 0, 0);
 
 	gdt_size = MINGDTSIZ;
 	gdt_dyncount = 0;

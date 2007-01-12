@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.65 2006/11/28 11:14:52 pedro Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.66 2007/01/12 07:41:31 art Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
+#include <sys/rwlock.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -82,7 +83,7 @@ int buckstring_init = 0;
 #if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
 char *memname[] = INITKMEMNAMES;
 char *memall = NULL;
-extern struct lock sysctl_kmemlock;
+struct rwlock sysctl_kmemlock = RWLOCK_INITIALIZER;
 #endif
 
 #ifdef DIAGNOSTIC
@@ -585,7 +586,7 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		if (memall == NULL) {
 			int totlen;
 
-			i = lockmgr(&sysctl_kmemlock, LK_EXCLUSIVE, NULL);
+			i = rw_enter(&sysctl_kmemlock, RW_WRITE|RW_INTR);
 			if (i)
 				return (i);
 
@@ -611,7 +612,7 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			for (i = 0; i < totlen; i++)
 				if (memall[i] == ' ')
 					memall[i] = '_';
-			lockmgr(&sysctl_kmemlock, LK_RELEASE, NULL);
+			rw_exit_write(&sysctl_kmemlock);
 		}
 		return (sysctl_rdstring(oldp, oldlenp, newp, memall));
 #else

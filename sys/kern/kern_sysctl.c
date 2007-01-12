@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.146 2006/12/23 17:41:26 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.147 2007/01/12 07:41:31 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -111,22 +111,8 @@ int perflevel = 100;
  * Lock to avoid too many processes vslocking a large amount of memory
  * at the same time.
  */
-struct lock sysctl_lock, sysctl_disklock;
-
-#if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
-struct lock sysctl_kmemlock;
-#endif
-
-void
-sysctl_init(void)
-{
-	lockinit(&sysctl_lock, PLOCK|PCATCH, "sysctl", 0, 0);
-	lockinit(&sysctl_disklock, PLOCK|PCATCH, "sysctl_disklock", 0, 0);
-
-#if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
-	lockinit(&sysctl_kmemlock, PLOCK|PCATCH, "sysctl_kmemlock", 0, 0);
-#endif
-}
+struct rwlock sysctl_lock = RWLOCK_INITIALIZER;
+struct rwlock sysctl_disklock = RWLOCK_INITIALIZER;
 
 int
 sys___sysctl(struct proc *p, void *v, register_t *retval)
@@ -199,13 +185,13 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 	    (error = copyin(SCARG(uap, oldlenp), &oldlen, sizeof(oldlen))))
 		return (error);
 	if (SCARG(uap, old) != NULL) {
-		if ((error = lockmgr(&sysctl_lock, LK_EXCLUSIVE, NULL)) != 0)
+		if ((error = rw_enter(&sysctl_lock, RW_WRITE|RW_INTR)) != 0)
 			return (error);
 		if (dolock) {
 			error = uvm_vslock(p, SCARG(uap, old), oldlen,
 			    VM_PROT_READ|VM_PROT_WRITE);
 			if (error) {
-				lockmgr(&sysctl_lock, LK_RELEASE, NULL);
+				rw_exit_write(&sysctl_lock);
 				return (error);
 			}
 		}
@@ -216,7 +202,7 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, old) != NULL) {
 		if (dolock)
 			uvm_vsunlock(p, SCARG(uap, old), savelen);
-		lockmgr(&sysctl_lock, LK_RELEASE, NULL);
+		rw_exit_write(&sysctl_lock);
 	}
 	if (error)
 		return (error);
@@ -1577,7 +1563,7 @@ sysctl_diskinit(int update, struct proc *p)
 	struct disk *dk;
 	int i, tlen, l;
 
-	if ((i = lockmgr(&sysctl_disklock, LK_EXCLUSIVE, NULL)) != 0)
+	if ((i = rw_enter(&sysctl_disklock, RW_WRITE|RW_INTR)) != 0)
 		return i;
 
 	if (disk_change) {
@@ -1638,7 +1624,7 @@ sysctl_diskinit(int update, struct proc *p)
 			sdk->ds_time = dk->dk_time;
 		}
 	}
-	lockmgr(&sysctl_disklock, LK_RELEASE, NULL);
+	rw_exit_write(&sysctl_disklock);
 	return 0;
 }
 

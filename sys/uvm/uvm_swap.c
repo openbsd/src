@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.66 2006/10/03 19:49:06 pedro Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.67 2007/01/12 07:41:31 art Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -227,7 +227,7 @@ LIST_HEAD(swap_priority, swappri);
 static struct swap_priority swap_priority;
 
 /* locks */
-lock_data_t swap_syscall_lock;
+struct rwlock swap_syscall_lock = RWLOCK_INITIALIZER;
 
 /*
  * prototypes
@@ -279,7 +279,6 @@ uvm_swap_init()
 
 	LIST_INIT(&swap_priority);
 	uvmexp.nswapdev = 0;
-	lockinit(&swap_syscall_lock, PVM, "swapsys", 0, 0);
 	simple_lock_init(&uvm.swap_data_lock);
 
 	if (!swapdev_vp && bdevvp(swapdev, &swapdev_vp))
@@ -638,7 +637,7 @@ sys_swapctl(p, v, retval)
 	/*
 	 * ensure serialized syscall access by grabbing the swap_syscall_lock
 	 */
-	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
+	rw_enter_write(&swap_syscall_lock);
 	
 	/*
 	 * we handle the non-priv NSWAP and STATS request first.
@@ -877,7 +876,7 @@ sys_swapctl(p, v, retval)
 	vput(vp);
 
 out:
-	lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
+	rw_exit_write(&swap_syscall_lock);
 
 	UVMHIST_LOG(pdhist, "<- done!  error=%ld", error, 0, 0, 0);
 	return (error);
