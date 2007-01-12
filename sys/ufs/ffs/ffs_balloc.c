@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.27 2007/01/11 08:47:52 pedro Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.28 2007/01/12 14:33:01 pedro Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -600,6 +600,11 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 	error = ufs_getlbns(vp, lbn, indirs, &num);
 	if (error)
 		return (error);
+
+#ifdef DIAGNOSTIC
+	if (num < 1)
+		panic("ffs2_balloc: ufs_bmaparray returned indirect block");
+#endif
 
 	/*
 	 * Fetch the first indirect block allocating it necessary.
