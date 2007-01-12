@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci.c,v 1.4 2007/01/11 22:06:40 miod Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.5 2007/01/12 22:02:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Miodrag Vallat.
@@ -24,6 +24,8 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#include <dev/wscons/wsdisplayvar.h>
 
 #include <dev/ic/stireg.h>
 #include <dev/ic/stivar.h>

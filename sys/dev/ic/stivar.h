@@ -1,4 +1,4 @@
-/*	$OpenBSD: stivar.h,v 1.22 2007/01/11 22:02:04 miod Exp $	*/
+/*	$OpenBSD: stivar.h,v 1.23 2007/01/12 22:02:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -73,6 +73,11 @@ struct sti_screen {
 
 	u_int16_t	fbheight, fbwidth, oheight, owidth;
 	u_int8_t	name[STI_DEVNAME_LEN];
+
+	/* wsdisplay information */
+	struct	wsscreen_descr	scr_wsd;
+	struct	wsscreen_descr	*scr_scrlist[1];
+	struct	wsscreen_list	scr_screenlist;
 };
 
 struct sti_softc {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.52 2007/01/11 22:02:03 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.53 2007/01/12 22:02:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -91,22 +91,6 @@ const struct wsdisplay_accessops sti_accessops = {
 	sti_free_screen,
 	sti_show_screen,
 	sti_load_font
-};
-
-struct wsscreen_descr sti_default_screen = {
-	"default", 0, 0,
-	&sti_emulops,
-	0, 0,
-	0
-};
-
-const struct wsscreen_descr *sti_default_scrlist[] = {
-	&sti_default_screen
-};
-
-struct wsscreen_list sti_default_screenlist = {
-	sizeof(sti_default_scrlist) / sizeof(sti_default_scrlist[0]),
-	sti_default_scrlist
 };
 
 enum sti_bmove_funcs {
@@ -475,16 +459,24 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 	}
 
 	/*
-	 * parse screen descriptions:
+	 * setup screen descriptions:
 	 *	figure number of fonts supported;
 	 *	allocate wscons structures;
 	 *	calculate dimensions.
 	 */
 
-	sti_default_screen.ncols = cfg.width / scr->scr_curfont.width;
-	sti_default_screen.nrows = cfg.height / scr->scr_curfont.height;
-	sti_default_screen.fontwidth = scr->scr_curfont.width;
-	sti_default_screen.fontheight = scr->scr_curfont.height;
+	strlcpy(scr->scr_wsd.name, "std", sizeof(scr->scr_wsd.name));
+	scr->scr_wsd.ncols = cfg.width / scr->scr_curfont.width;
+	scr->scr_wsd.nrows = cfg.height / scr->scr_curfont.height;
+	scr->scr_wsd.textops = &sti_emulops;
+	scr->scr_wsd.fontwidth = scr->scr_curfont.width;
+	scr->scr_wsd.fontheight = scr->scr_curfont.height;
+	scr->scr_wsd.capabilities = 0;
+
+	scr->scr_scrlist[0] = &scr->scr_wsd;
+	scr->scr_screenlist.nscreens = 1;
+	scr->scr_screenlist.screens =
+	    (const struct wsscreen_descr **)scr->scr_scrlist;
 
 	/* { extern int pmapdebug; pmapdebug = 0; } */
 
@@ -521,7 +513,7 @@ sti_end_attach(void *v)
 	sc->sc_wsmode = WSDISPLAYIO_MODE_EMUL;
 
 	waa.console = sc->sc_flags & STI_CONSOLE ? 1 : 0;
-	waa.scrdata = &sti_default_screenlist;
+	waa.scrdata = &sc->sc_scr->scr_screenlist;
 	waa.accessops = &sti_accessops;
 	waa.accesscookie = sc;
 	waa.defaultscreens = 0;
@@ -531,8 +523,8 @@ sti_end_attach(void *v)
 		long defattr;
 
 		sti_alloc_attr(sc, 0, 0, 0, &defattr);
-		wsdisplay_cnattach(&sti_default_screen, sc->sc_scr,
-		    0, sti_default_screen.nrows - 1, defattr);
+		wsdisplay_cnattach(&sc->sc_scr->scr_wsd, sc->sc_scr,
+		    0, sc->sc_scr->scr_wsd.nrows - 1, defattr);
 		sc->sc_flags |= STI_ATTACHED;
 	}
 
@@ -1194,7 +1186,7 @@ sti_cnattach(struct sti_screen *scr, bus_space_tag_t iot, bus_addr_t *bases,
 		panic(__func__);
 
 	sti_alloc_attr(scr, 0, 0, 0, &defattr);
-	wsdisplay_cnattach(&sti_default_screen, scr, 0, 0, defattr);
+	wsdisplay_cnattach(&scr->scr_wsd, scr, 0, 0, defattr);
 
 	return (0);
 }
