@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.66 2007/01/11 02:35:55 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.67 2007/01/12 03:34:50 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -317,10 +317,9 @@ add_file(struct cvs_file *cf)
 	add_entry(cf);
 
 	if (added != 0) {
-		if (verbosity > 1)
-			cvs_log(LP_NOTICE, "use '%s commit' to add %s "
-			    "permanently", __progname,
-			    (added == 1) ? "this file" : "these files");
+		cvs_log(LP_NOTICE, "use '%s commit' to add %s "
+		    "permanently", __progname,
+		    (added == 1) ? "this file" : "these files");
 	}
 }
 
