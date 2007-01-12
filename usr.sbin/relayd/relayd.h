@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.15 2007/01/12 16:43:01 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.16 2007/01/12 17:05:18 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -153,20 +153,20 @@ struct address {
 };
 TAILQ_HEAD(addresslist, address);
 
-#define F_DISABLE		0x01
-#define F_BACKUP		0x02
-#define F_CHECK_DONE		0x02 /* reused for host */
-#define F_USED			0x04
-#define F_ACTIVE_RULESET	0x04 /* reused for service */
-#define F_CHECK_SENT		0x04 /* reused for host */
-#define F_DOWN			0x08
-#define F_ADD			0x10
-#define F_DEL			0x20
-#define F_CHANGED		0x40
-#define F_STICKY		0x80
+#define F_DISABLE		0x0001
+#define F_BACKUP		0x0002
+#define F_USED			0x0004
+#define F_DOWN			0x0008
+#define F_ADD			0x0010
+#define F_DEL			0x0020
+#define F_CHANGED		0x0040
+#define F_STICKY		0x0080
+#define F_CHECK_DONE		0x0100
+#define F_ACTIVE_RULESET	0x0200
+#define F_CHECK_SENT		0x0400
 
 struct host {
-	u_int8_t		 flags;
+	u_int16_t		 flags;
 	objid_t			 id;
 	objid_t			 tableid;
 	char			*tablename;
@@ -186,7 +186,7 @@ TAILQ_HEAD(hostlist, host);
 struct table {
 	objid_t			 id;
 	objid_t			 serviceid;
-	u_int8_t		 flags;
+	u_int16_t		 flags;
 	int			 check;
 	int			 up;
 	in_port_t		 port;
@@ -211,7 +211,7 @@ TAILQ_HEAD(tablelist, table);
 
 struct service {
 	objid_t			 id;
-	u_int8_t		 flags;
+	u_int16_t		 flags;
 	in_port_t		 port;
 	char			 name[SRV_NAME_SIZE];
 	char			 tag[TAG_NAME_SIZE];
