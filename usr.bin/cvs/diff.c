@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.111 2007/01/11 10:37:18 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.112 2007/01/12 23:32:01 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -209,7 +209,7 @@ cvs_diff_local(struct cvs_file *cf)
 		diff_rev1 = r1;
 		rcsnum_tostr(r1, rbuf , sizeof(rbuf));
 		cvs_printf("retrieving revision %s\n", rbuf);
-		if ((b1 = rcs_getrev(cf->file_rcs, r1)) == NULL)
+		if ((b1 = rcs_rev_getbuf(cf->file_rcs, r1)) == NULL)
 			fatal("failed to retrieve revision %s", rbuf);
 
 		b1 = rcs_kwexp_buf(b1, cf->file_rcs, r1);
@@ -223,7 +223,7 @@ cvs_diff_local(struct cvs_file *cf)
 	    cf->file_status != FILE_REMOVED) {
 		rcsnum_tostr(diff_rev2, rbuf, sizeof(rbuf));
 		cvs_printf("retrieving revision %s\n", rbuf);
-		if ((b2 = rcs_getrev(cf->file_rcs, diff_rev2)) == NULL)
+		if ((b2 = rcs_rev_getbuf(cf->file_rcs, diff_rev2)) == NULL)
 			fatal("failed to retrieve revision %s", rbuf);
 
 		b2 = rcs_kwexp_buf(b2, cf->file_rcs, diff_rev2);

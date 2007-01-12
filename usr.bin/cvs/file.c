@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.167 2007/01/12 19:28:12 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.168 2007/01/12 23:32:01 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -665,7 +665,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 	}
 
 	if (ismodified == 1 && cf->fd != -1 && cf->file_rcs != NULL) {
-		b1 = rcs_getrev(cf->file_rcs, cf->file_rcsrev);
+		b1 = rcs_rev_getbuf(cf->file_rcs, cf->file_rcsrev);
 		if (b1 == NULL)
 			fatal("failed to get HEAD revision for comparison");
 

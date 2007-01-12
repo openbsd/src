@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.70 2007/01/12 17:25:33 joris Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.71 2007/01/12 23:32:01 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -26,7 +26,6 @@
 
 #ifndef RCS_H
 #define RCS_H
-
 #include "buf.h"
 
 #define RCS_DIFF_MAXARG		32
@@ -216,6 +215,7 @@ typedef struct rcs_file {
 } RCSFILE;
 
 extern int rcs_errno;
+struct cvs_lines;
 
 RCSFILE			*rcs_open(const char *, int, int, ...);
 void			 rcs_close(RCSFILE *);
@@ -245,6 +245,8 @@ const char		*rcs_comment_lookup(const char *);
 const char		*rcs_comment_get(RCSFILE *);
 void			 rcs_comment_set(RCSFILE *, const char *);
 BUF			*rcs_kwexp_buf(BUF *, RCSFILE *, RCSNUM *);
+void			 rcs_kwexp_lines(char *, struct rcs_delta *,
+			     struct cvs_lines *, int);
 void			 rcs_kwexp_set(RCSFILE *, int);
 int			 rcs_kwexp_get(RCSFILE *);
 int			 rcs_rev_add(RCSFILE *, RCSNUM *, const char *, time_t,

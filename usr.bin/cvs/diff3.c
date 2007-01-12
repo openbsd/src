@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.31 2007/01/12 17:25:33 joris Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.32 2007/01/12 23:32:01 niallo Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.31 2007/01/12 17:25:33 joris Exp $";
+    "$OpenBSD: diff3.c,v 1.32 2007/01/12 23:32:01 niallo Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -173,16 +173,6 @@ cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
 	if ((b1 = cvs_buf_load_fd(workfd, BUF_AUTOEXT)) == NULL)
 		goto out;
 
-	if (verbose == 1)
-		cvs_printf("Retrieving revision %s\n", r1);
-	if ((b2 = rcs_getrev(rf, rev1)) == NULL)
-		goto out;
-
-	if (verbose == 1)
-		cvs_printf("Retrieving revision %s\n", r2);
-	if ((b3 = rcs_getrev(rf, rev2)) == NULL)
-		goto out;
-
 	d1 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
 	d2 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
 	diffb = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
@@ -192,11 +182,12 @@ cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
 	(void)xasprintf(&path3, "%s/diff3.XXXXXXXXXX", cvs_tmpdir);
 
 	cvs_buf_write_stmp(b1, path1, NULL);
-	cvs_buf_write_stmp(b2, path2, NULL);
-	cvs_buf_write_stmp(b3, path3, NULL);
-
-	cvs_buf_free(b2);
-	b2 = NULL;
+	if (verbose == 1)
+		cvs_printf("Retrieving revision %s\n", r1);
+	rcs_rev_write_stmp(rf, rev1, path2, 0);
+	if (verbose == 1)
+		cvs_printf("Retrieving revision %s\n", r2);
+	rcs_rev_write_stmp(rf, rev2, path3, 0);
 
 	cvs_diffreg(path1, path3, d1);
 	cvs_diffreg(path2, path3, d2);
@@ -249,10 +240,6 @@ cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
 out:
 	if (b1 != NULL)
 		cvs_buf_free(b1);
-	if (b2 != NULL)
-		cvs_buf_free(b2);
-	if (b3 != NULL)
-		cvs_buf_free(b3);
 	if (d1 != NULL)
 		cvs_buf_free(d1);
 	if (d2 != NULL)

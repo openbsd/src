@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.60 2007/01/12 17:25:33 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.61 2007/01/12 23:32:01 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -259,7 +259,7 @@ import_update(struct cvs_file *cf)
 		fatal("import_update: rcsnum_parse failed");
 
 	if (rev != NULL) {
-		if ((b1 = rcs_getrev(cf->file_rcs, rev)) == NULL)
+		if ((b1 = rcs_rev_getbuf(cf->file_rcs, rev)) == NULL)
 			fatal("import_update: failed to grab revision");
 
 		if ((b2 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
@@ -331,15 +331,12 @@ static char *
 import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 {
 	char *delta, *p1, *p2;
-	BUF *b1, *b2, *b3;
+	BUF *b1, *b2;
 
 	if ((b1 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
 		fatal("import_get_rcsdiff: failed loading %s", cf->file_path);
 
-	if ((b2 = rcs_getrev(cf->file_rcs, rev)) == NULL)
-		fatal("import_get_rcsdiff: failed loading revision");
-
-	b3 = cvs_buf_alloc(128, BUF_AUTOEXT);
+	b2 = cvs_buf_alloc(128, BUF_AUTOEXT);
 
 	if (cvs_noexec != 1) {
 		(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
@@ -347,11 +344,10 @@ import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 		cvs_buf_free(b1);
 
 		(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
-		cvs_buf_write_stmp(b2, p2, NULL);
-		cvs_buf_free(b2);
+		rcs_rev_write_stmp(cf->file_rcs, rev, p2, 0);
 
 		diff_format = D_RCSDIFF;
-		if (cvs_diffreg(p2, p1, b3) == D_ERROR)
+		if (cvs_diffreg(p2, p1, b2) == D_ERROR)
 			fatal("import_get_rcsdiff: failed to get RCS patch");
 
 		(void)unlink(p1);
@@ -363,15 +359,13 @@ import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 			xfree(p2);
 	}
 
-	cvs_buf_putc(b3, '\0');
-	delta = cvs_buf_release(b3);
+	cvs_buf_putc(b2, '\0');
+	delta = cvs_buf_release(b2);
 
 	if (b1 != NULL)
 		cvs_buf_free(b1);
 	if (b2 != NULL)
 		cvs_buf_free(b2);
-	if (b3 != NULL)
-		cvs_buf_free(b3);
 
 	return (delta);
 }

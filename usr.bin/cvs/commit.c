@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.93 2007/01/12 19:28:12 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.94 2007/01/12 23:32:01 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -291,7 +291,7 @@ cvs_commit_local(struct cvs_file *cf)
 		d = commit_diff_file(cf);
 
 	if (cf->file_status == FILE_REMOVED) {
-		b = rcs_getrev(cf->file_rcs, cf->file_rcs->rf_head);
+		b = rcs_rev_getbuf(cf->file_rcs, cf->file_rcs->rf_head);
 		if (b == NULL)
 			fatal("cvs_commit_local: failed to get HEAD");
 	} else {
@@ -401,13 +401,13 @@ commit_diff_file(struct cvs_file *cf)
 			fatal("commit_diff_file: failed to load '%s'",
 			    cf->file_path);
 	} else {
-		b1 = rcs_getrev(cf->file_rcs, cf->file_rcs->rf_head);
+		b1 = rcs_rev_getbuf(cf->file_rcs, cf->file_rcs->rf_head);
 		if (b1 == NULL)
 			fatal("commit_diff_file: failed to load HEAD");
 		b1 = rcs_kwexp_buf(b1, cf->file_rcs, cf->file_rcs->rf_head);
 	}
 
-	if ((b2 = rcs_getrev(cf->file_rcs, cf->file_rcs->rf_head)) == NULL)
+	if ((b2 = rcs_rev_getbuf(cf->file_rcs, cf->file_rcs->rf_head)) == NULL)
 		fatal("commit_diff_file: failed to load HEAD for '%s'",
 		    cf->file_path);
 
