@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.9 2007/01/11 18:05:08 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.10 2007/01/12 16:43:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -33,7 +33,9 @@
 #include "hoststated.h"
 
 void	tcp_write(int, short, void *);
-void	tcp_host_up(int s, struct ctl_tcp_event *);
+void	tcp_host_up(int, struct ctl_tcp_event *);
+void	tcp_send_req(int, short, void *);
+void	tcp_read_buf(int, short, void *);
 
 void
 check_tcp(struct ctl_tcp_event *cte)
@@ -123,17 +125,127 @@ tcp_host_up(int s, struct ctl_tcp_event *cte)
 	case CHECK_TCP:
 		close(s);
 		hce_notify_done(cte->host, "tcp_host_up: success");
-		break;
+		return;
 	case CHECK_HTTP_CODE:
+		cte->validate_read = NULL;
+		cte->validate_close = check_http_code;
+		break;
 	case CHECK_HTTP_DIGEST:
-		event_again(&cte->ev, s, EV_TIMEOUT|EV_WRITE, send_http_request,
-		    &cte->tv_start, &cte->table->timeout, cte);
+		cte->validate_read = NULL;;
+		cte->validate_close = check_http_digest;
 		break;
 	case CHECK_SEND_EXPECT:
-		event_again(&cte->ev, s, EV_TIMEOUT|EV_WRITE, start_send_expect,
-		    &cte->tv_start, &cte->table->timeout, cte);
+		cte->validate_read = check_send_expect;
+		cte->validate_close = check_send_expect;
 		break;
-	default:
-		fatalx("tcp_host_up: unhandled check type");
 	}
+	cte->req = cte->table->sendbuf;
+
+	if (cte->table->sendbuf != NULL) {
+		event_again(&cte->ev, s, EV_TIMEOUT|EV_WRITE, tcp_send_req,
+		    &cte->tv_start, &cte->table->timeout, cte);
+		return;
+	}
+
+	log_debug("tcp_host_up: nothing to write");
+	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
+		fatalx("tcp_host_up: cannot create dynamic buffer");
+	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, tcp_read_buf,
+	    &cte->tv_start, &cte->table->timeout, cte);
+}
+
+void
+tcp_send_req(int s, short event, void *arg)
+{
+	struct ctl_tcp_event	*cte = arg;
+	int		 	 bs;
+	int		 	 pos;
+	int		 	 len;
+
+	if (event == EV_TIMEOUT) {
+		cte->host->up = HOST_DOWN;
+		hce_notify_done(cte->host, "tcp_send_req: timeout");
+		return;
+	}
+	pos = 0;
+	len = strlen(cte->req);
+	do {
+		bs = write(s, cte->req + pos, len);
+		if (bs == -1) {
+			if (errno == EAGAIN || errno == EINTR)
+				goto retry;
+			log_warnx("tcp_send_req: cannot send request");
+			cte->host->up = HOST_DOWN;
+			hce_notify_done(cte->host, "tcp_send_req: write");
+			return;
+		}
+		pos += bs;
+		len -= bs;
+	} while (len > 0);
+
+	log_debug("tcp_send_req: write done");
+	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
+		fatalx("tcp_send_req: cannot create dynamic buffer");
+	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, tcp_read_buf,
+	    &cte->tv_start, &cte->table->timeout, cte);
+	return;
+
+ retry:
+	event_again(&cte->ev, s, EV_TIMEOUT|EV_WRITE, tcp_send_req,
+	    &cte->tv_start, &cte->table->timeout, cte);
+}
+
+void
+tcp_read_buf(int s, short event, void *arg)
+{
+	ssize_t			 br;
+	char			 rbuf[SMALL_READ_BUF_SIZE];
+	struct ctl_tcp_event	*cte = arg;
+
+        if (event == EV_TIMEOUT) {
+		cte->host->up = HOST_DOWN;
+		buf_free(cte->buf);
+		hce_notify_done(cte->host, "tcp_read_buf: timeout");
+		return;
+	}
+
+	log_debug("reading");
+	bzero(rbuf, sizeof(rbuf));
+	br = read(s, rbuf, sizeof(rbuf) - 1);
+	if (br == -1) {
+		if (errno == EAGAIN || errno == EINTR)
+			goto retry;
+		cte->host->up = HOST_DOWN;
+		buf_free(cte->buf);
+		hce_notify_done(cte->host, "tcp_read_buf: read failed");
+		return;
+	} else if (br == 0) {
+		cte->host->up = HOST_DOWN;
+		(void)cte->validate_close(cte);
+		close(cte->s);
+		buf_free(cte->buf);
+		if (cte->host->up == HOST_UP)
+			hce_notify_done(cte->host, "check succeeded");
+		else
+			hce_notify_done(cte->host, "check failed");
+		return;
+	}
+	buf_add(cte->buf, rbuf, br);
+	if (cte->validate_read != NULL) {
+		log_debug("calling check");
+		if (cte->validate_read(cte) != 0)
+			goto retry;
+
+		close(cte->s);
+		buf_free(cte->buf);
+		if (cte->host->up == HOST_UP)
+			hce_notify_done(cte->host, "check succeeded");
+		else
+			hce_notify_done(cte->host, "check failed");
+		return;
+	}
+retry:
+	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, tcp_read_buf,
+	    &cte->tv_start, &cte->table->timeout, cte);
+
 }

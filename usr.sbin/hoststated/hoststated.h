@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.14 2007/01/11 18:05:08 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.15 2007/01/12 16:43:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -135,11 +135,14 @@ struct ctl_icmp_event {
 
 struct ctl_tcp_event {
 	int		 	 s;
+	char			*req;
 	struct buf		*buf;
 	struct host		*host;
 	struct table		*table;
 	struct timeval	 	 tv_start;
 	struct event	 	 ev;
+	int			(*validate_read)(struct ctl_tcp_event *);
+	int			(*validate_close)(struct ctl_tcp_event *);
 };
 
 struct address {
@@ -191,7 +194,7 @@ struct table {
 	struct timeval		 timeout;
 	char			 name[TABLE_NAME_SIZE];
 	char			 path[MAXPATHLEN];
-	char			 sendbuf[64];
+	char			*sendbuf;
 	char			 exbuf[64];
 	char			 digest[41]; /* length of sha1 digest * 2 */
 	struct hostlist		 hosts;
@@ -347,10 +350,11 @@ void	 check_icmp(struct hoststated *, struct timeval *);
 void	 check_tcp(struct ctl_tcp_event *);
 
 /* check_http.c */
-void	 send_http_request(int, short, void *);
+int	check_http_code(struct ctl_tcp_event *);
+int	check_http_digest(struct ctl_tcp_event *);
 
 /* check_send_expect.c */
-void	 start_send_expect(int, short, void *);
+int	check_send_expect(struct ctl_tcp_event *);
 
 /* hoststated.c */
 struct host	*host_find(struct hoststated *, objid_t);

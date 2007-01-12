@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_http.c,v 1.9 2007/01/11 18:05:08 reyk Exp $	*/
+/*	$OpenBSD: check_http.c,v 1.10 2007/01/12 16:43:01 pyr Exp $	*/
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
  *
@@ -33,11 +33,7 @@
 
 #include "hoststated.h"
 
-void	check_http_code(struct ctl_tcp_event *);
-void	check_http_digest(struct ctl_tcp_event *);
-void	http_read(int, short, void *);
-
-void
+int
 check_http_code(struct ctl_tcp_event *cte)
 {
 	char		*head;
@@ -50,28 +46,29 @@ check_http_code(struct ctl_tcp_event *cte)
 	    strncmp(head, "HTTP/1.0 ", strlen("HTTP/1.0 "))) {
 		log_debug("check_http_code: cannot parse HTTP version");
 		cte->host->up = HOST_DOWN;
-		return;
+		return (1);
 	}
 	head += strlen("HTTP/1.1 ");
 	if (strlen(head) < 5) /* code + \r\n */ {
 		cte->host->up = HOST_DOWN;
-		return;
+		return (1);
 	}
 	strlcpy(scode, head, sizeof(scode));
 	code = strtonum(scode, 100, 999, &estr);
 	if (estr != NULL) {
 		log_debug("check_http_code: cannot parse HTTP code");
 		cte->host->up = HOST_DOWN;
-		return;
+		return (1);
 	}
 	if (code != cte->table->retcode) {
 		log_debug("check_http_code: invalid HTTP code returned");
 		cte->host->up = HOST_DOWN;
 	} else
 		cte->host->up = HOST_UP;
+	return (!(cte->host->up == HOST_UP));
 }
 
-void
+int
 check_http_digest(struct ctl_tcp_event *cte)
 {
 	char	*head;
@@ -82,7 +79,7 @@ check_http_digest(struct ctl_tcp_event *cte)
 		log_debug("check_http_digest: host %u no end of headers",
 		    cte->host->id);
 		cte->host->up = HOST_DOWN;
-		return;
+		return (1);
 	}
 	head += strlen("\r\n\r\n");
 	SHA1Data(head, strlen(head), digest);
@@ -93,104 +90,5 @@ check_http_digest(struct ctl_tcp_event *cte)
 		cte->host->up = HOST_DOWN;
 	} else
 		cte->host->up = HOST_UP;
-}
-
-void
-http_read(int s, short event, void *arg)
-{
-	ssize_t			 br;
-	char			 rbuf[SMALL_READ_BUF_SIZE];
-	struct ctl_tcp_event	*cte = arg;
-
-	if (event == EV_TIMEOUT) {
-		cte->host->up = HOST_DOWN;
-		buf_free(cte->buf);
-		hce_notify_done(cte->host, "http_read: timeout");
-		return;
-	}
-	br = read(s, rbuf, sizeof(rbuf));
-	if (br == -1) {
-		if (errno == EAGAIN || errno == EINTR)
-			goto retry;
-		cte->host->up = HOST_DOWN;
-		buf_free(cte->buf);
-		hce_notify_done(cte->host, "http_read: read failed");
-		return;
-	} else if (br == 0) {
-		cte->host->up = HOST_DOWN;
-		switch (cte->table->check) {
-		case CHECK_HTTP_CODE:
-			check_http_code(cte);
-			break;
-		case CHECK_HTTP_DIGEST:
-			check_http_digest(cte);
-			break;
-		default:
-			fatalx("http_read: unhandled check type");
-		}
-		buf_free(cte->buf);
-		hce_notify_done(cte->host, "http_read: connection closed");
-		return;
-	}
-
-	buf_add(cte->buf, rbuf, br);
-
- retry:
-	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, http_read,
-	    &cte->tv_start, &cte->table->timeout, cte);
-}
-
-void
-send_http_request(int s, short event, void *arg)
-{
-	struct ctl_tcp_event	*cte = (struct ctl_tcp_event *)arg;
-	int		 	 bs;
-	int		 	 pos;
-	int		 	 len;
-	char			*req;
-
-	switch (cte->table->check) {
-	case CHECK_HTTP_CODE:
-		asprintf(&req, "HEAD %s HTTP/1.0\r\n\r\n",
-		    cte->table->path);
-		break;
-	case CHECK_HTTP_DIGEST:
-		asprintf(&req, "GET %s HTTP/1.0\r\n\r\n",
-		    cte->table->path);
-		break;
-	default:
-		fatalx("send_http_request: unhandled check type");
-	}
-	if (req == NULL)
-		fatal("out of memory");
-	pos = 0;
-	len = strlen(req);
-	/*
-	 * write all at once for now.
-	 */
-	do {
-		bs = write(cte->s, req + pos, len);
-		if (bs == -1) {
-			if (errno == EAGAIN || errno == EINTR)
-				goto retry;
-			log_warnx("send_http_request: cannot send request");
-			cte->host->up = HOST_DOWN;
-			hce_notify_done(cte->host, "send_http_request: write");
-			free(req);
-			return;
-		}
-		pos += bs;
-		len -= bs;
-	} while (len > 0);
-	free(req);
-	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
-		fatalx("send_http_request: cannot create dynamic buffer");
-
-	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, http_read,
-	    &cte->tv_start, &cte->table->timeout, cte);
-	return;
-
- retry:
-	event_again(&cte->ev, s, EV_TIMEOUT|EV_WRITE, send_http_request,
-	    &cte->tv_start, &cte->table->timeout, cte);
+	return (!(cte->host->up == HOST_UP));
 }

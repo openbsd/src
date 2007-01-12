@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.15 2007/01/09 13:50:11 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.16 2007/01/12 16:43:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -176,15 +176,12 @@ varset		: STRING '=' STRING	{
 		;
 
 sendbuf		: NOTHING		{
-			bzero(table->sendbuf, sizeof(table->sendbuf));
+			table->sendbuf = NULL;
 		}
 		| STRING		{
-			if (strlcpy(table->sendbuf, $1, sizeof(table->sendbuf))
-			    >= sizeof(table->sendbuf)) {
-				yyerror("yyparse: send buffer truncated");
-				free($1);
-				YYERROR;
-			}
+			table->sendbuf = strdup($1);
+			if (table->sendbuf == NULL)
+				fatal("out of memory");
 			free($1);
 		}
 		;
@@ -386,30 +383,25 @@ tableoptsl	: host			{
 		| CHECK HTTP STRING CODE number {
 			table->check = CHECK_HTTP_CODE;
 			table->retcode = $5;
-			if (strlcpy(table->path, $3, sizeof(table->path)) >=
-			    sizeof(table->path)) {
-				yyerror("http path truncated");
-				free($3);
-				YYERROR;
-			}
+			asprintf(&table->sendbuf, "HEAD %s HTTP/1.0\r\n\r\n",
+			    $3);
+			free($3);
+			if (table->sendbuf == NULL)
+				fatal("out of memory");
 		}
 		| CHECK HTTP STRING DIGEST STRING {
 			table->check = CHECK_HTTP_DIGEST;
-			if (strlcpy(table->path, $3, sizeof(table->path)) >=
-			    sizeof(table->path)) {
-				yyerror("http path truncated");
-				free($3);
-				free($5);
-				YYERROR;
-			}
+			asprintf(&table->sendbuf, "GET %s HTTP/1.0\r\n\r\n",
+			    $3);
+			free($3);
+			if (table->sendbuf == NULL)
+				fatal("out of memory");
 			if (strlcpy(table->digest, $5,
 			    sizeof(table->digest)) >= sizeof(table->digest)) {
 				yyerror("http digest truncated");
-				free($3);
 				free($5);
 				YYERROR;
 			}
-			free($3);
 			free($5);
 		}
 		| CHECK SEND sendbuf EXPECT STRING {
