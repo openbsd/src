@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.32 2006/02/26 22:23:15 martin Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.33 2007/01/12 13:52:07 martin Exp $	*/
 /*	$NetBSD: grf_nubus.c,v 1.62 2001/01/22 20:27:02 briggs Exp $	*/
 
 /*
@@ -75,6 +75,9 @@ int	grfmv_intr_vimage(void *vsc);
 int	grfmv_intr_gvimage(void *vsc);
 int	grfmv_intr_radius_gsc(void *vsc);
 int	grfmv_intr_radius_gx(void *vsc);
+int	grfmv_intr_relax_200(void *);
+int	grfmv_intr_mvc(void *);
+int	grfmv_intr_viltro_340(void *);
 
 #define CARD_NAME_LEN	64
 
@@ -321,6 +324,11 @@ macfb_nubus_attach(struct device *parent, struct device *self, void *aux)
 		add_nubus_intr(na->slot, grfmv_intr_lapis, sc,
 		    sc->sc_dev.dv_xname);
 		break;
+	case NUBUS_DRHW_RELAX200:
+		add_nubus_intr(na->slot, grfmv_intr_relax_200, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_BAER:
 	case NUBUS_DRHW_FORMAC:
 		add_nubus_intr(na->slot, grfmv_intr_formac, sc,
 		    sc->sc_dev.dv_xname);
@@ -358,6 +366,14 @@ macfb_nubus_attach(struct device *parent, struct device *self, void *aux)
 		sc->cli_offset = 0xa00014;
 		sc->cli_value = 0;
 		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_MVC:
+		add_nubus_intr(na->slot, grfmv_intr_mvc, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_VILTRO340:
+		add_nubus_intr(na->slot, grfmv_intr_viltro_340, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	default:
@@ -668,7 +684,8 @@ grfmv_intr_lapis(void *vsc)
 }
 
 /*
- * Routine to clear interrupts for the Formac Color Card II
+ * Routine to clear interrupts for the Formac ProNitron 80.IVb
+ * and Color Card II
  */
 /*ARGSUSED*/
 int
@@ -736,5 +753,48 @@ grfmv_intr_radius_gx(void *vsc)
 
 	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0x600000, 0x00);
 	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0x600000, 0x20);
+	return (1);
+}
+
+/*
+ * Routine to clear interrupts for the Relax 19" model 200.
+ */
+/*ARGSUSED*/
+int
+grfmv_intr_relax_200(void *vsc)
+{
+	struct macfb_softc *sc = (struct macfb_softc *)vsc;
+
+	/* The board ROM driver code has a tst.l here. */
+	bus_space_read_4(sc->sc_tag, sc->sc_handle, 0x000D0040);
+	return (1);
+}
+
+/*
+ * Routine to clear interrupts for the Apple Mac II Monochrome Video Card.
+ */
+/*ARGSUSED*/
+int
+grfmv_intr_mvc(void *vsc)
+{
+	struct macfb_softc *sc = (struct macfb_softc *)vsc;
+
+	bus_space_write_4(sc->sc_tag, sc->sc_handle, 0x00040000, 0);
+	bus_space_write_4(sc->sc_tag, sc->sc_handle, 0x00020000, 0);    
+	return (1);
+}
+
+/*
+ * Routine to clear interrupts for the VillageTronic Mac Picasso 340.
+ */
+/*ARGSUSED*/
+int
+grfmv_intr_viltro_340(void *vsc)
+{
+	struct macfb_softc *sc = (struct macfb_softc *)vsc;
+
+	/* Yes, two read accesses to the same spot. */
+	bus_space_read_1(sc->sc_tag, sc->sc_handle, 0x0500);
+	bus_space_read_1(sc->sc_tag, sc->sc_handle, 0x0500);
 	return (1);
 }

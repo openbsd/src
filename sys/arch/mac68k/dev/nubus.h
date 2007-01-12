@@ -55,17 +55,20 @@
 #define  NUBUS_TYPE_LCD		0x0002
 #define   NUBUS_DRSW_APPLE	0x0001
 #define    NUBUS_DRHW_TFB	0x0001	/* Apple Toby Frame Buffer */
-#define    NUBUS_DRHW_BAER	0x0002  /* Formac Baers color card */
+#define    NUBUS_DRHW_BAER	0x0002  /* Formac Baers/ProNitron 80.IVb */
 #define    NUBUS_DRHW_WVC	0x0006	/* Apple Workstation Video Card */
 #define    NUBUS_DRHW_COLORMAX	0x0007	/* Sigma Designs ColorMax */
 #define    NUBUS_DRHW_SE30	0x0009	/* Apple SE/30 pseudo-slot video */
 #define    NUBUS_DRHW_M2HRVC	0x0013	/* Apple Mac II High-Res Video Card */
+#define    NUBUS_DRHW_MVC	0x0014	/* Apple Mac II Monochrome Video Card */
 #define    NUBUS_DRHW_PVC	0x0017	/* Apple Mac II Portrait Video Card */
 #define    NUBUS_DRHW_MDC	0x0019	/* Apple Macintosh Display Card */
 #define    NUBUS_DRHW_VSC	0x0020	/* Apple Macintosh Duo MiniDock */
 #define    NUBUS_DRHW_JET	0x0029	/* Apple Macintosh DuoDock II */
 #define    NUBUS_DRHW_BOOGIE	0x002b	/* Apple Macintosh 24AC Video Card */
+#define    NUBUS_DRHW_VILTRO340	0x0102	/* VillageTronic Mac Picasso 340 */
 #define    NUBUS_DRHW_SUPRGFX	0x0105	/* SuperMac GFX */
+#define    NUBUS_DRHW_RELAX200	0x0131	/* Relax 19" Model 200 */
 #define    NUBUS_DRHW_FORMAC	0x013A	/* Formac color card II */
 #define    NUBUS_DRHW_CB264	0x013B	/* RasterOps ColorBoard 264 */
 #define    NUBUS_DRHW_MICRON	0x0146	/* Micron Exceed color */
