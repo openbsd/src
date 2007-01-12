@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.14 2005/04/11 15:13:01 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.15 2007/01/12 19:19:34 kettenis Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2001/05/01 02:19:19 thorpej Exp $ */
 
 /*
@@ -130,10 +130,9 @@
 #define VM_MIN_ADDRESS		((vaddr_t)0)
 #define VM_MAX_ADDRESS		((vaddr_t)-1)
 #define VM_MAXUSER_ADDRESS	((vaddr_t)-1)
-#define VM_MAXUSER_ADDRESS32	((vaddr_t)(0x00000000ffffffffL&~PGOFSET))
 
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)KERNEND)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0x000007ffffffffffL)
 
 #define VM_PHYSSEG_MAX          32       /* up to 32 segments */
 #define VM_PHYSSEG_STRAT        VM_PSTRAT_BSEARCH
