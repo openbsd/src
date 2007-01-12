@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.67 2006/12/20 01:58:46 ray Exp $ */
+/* $OpenBSD: user.c,v 1.68 2007/01/12 13:25:12 otto Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -2196,7 +2196,8 @@ userinfo(int argc, char **argv)
 		(void) printf("groups\t%s", grp->gr_name);
 	while ((grp = getgrent()) != NULL) {
 		for (cpp = grp->gr_mem ; *cpp ; cpp++) {
-			if (strcmp(*cpp, *argv) == 0 && grp->gr_gid != pwp->pw_gid)
+			if (strcmp(*cpp, pwp->pw_name) == 0 &&
+			    grp->gr_gid != pwp->pw_gid)
 				(void) printf(" %s", grp->gr_name);
 		}
 	}
