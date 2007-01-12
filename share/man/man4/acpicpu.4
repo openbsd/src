@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpicpu.4,v 1.2 2007/01/12 20:05:00 jmc Exp $
+.\"	$OpenBSD: acpicpu.4,v 1.3 2007/01/12 20:06:11 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Michael Knudsen <mk@openbsd.org>
 .\"
@@ -28,7 +28,8 @@ The
 driver provides support for extracting processor power and performance
 levels from ACPI tables.
 This information can be used to throttle processor speed to reduce
-power usage and extend battery life through the hw.setperf
+power usage and extend battery life through the
+.Va hw.setperf
 .Xr sysctl 3
 mechanism.
 .Sh SEE ALSO
