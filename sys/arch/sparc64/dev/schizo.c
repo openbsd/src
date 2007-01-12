@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.38 2006/12/24 01:25:01 deraadt Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.39 2007/01/12 21:32:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -242,7 +242,7 @@ schizo_init(struct schizo_softc *sc, int busa)
 
 	reg = schizo_pbm_read(pbm, SCZ_PCI_CTRL);
 	/* enable/disable error interrupts and arbiter */
-	reg |= SCZ_PCICTRL_EEN | SCZ_PCICTRL_DTO_INT | SCZ_PCICTRL_ARB;
+	reg |= SCZ_PCICTRL_EEN | SCZ_PCICTRL_MMU_INT | SCZ_PCICTRL_ARB;
 	reg &= ~SCZ_PCICTRL_SBH_INT;
 	schizo_pbm_write(pbm, SCZ_PCI_CTRL, reg);
 
