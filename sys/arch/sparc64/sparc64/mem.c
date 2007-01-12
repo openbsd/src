@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.8 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: mem.c,v 1.9 2007/01/12 22:09:08 kettenis Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 2001/04/24 04:31:12 thorpej Exp $ */
 
 /*
@@ -125,7 +125,6 @@ mmrw(dev, uio, flags)
 
 		/* minor device 0 is physical memory */
 		case 0:
-#if 1
 			v = uio->uio_offset;
 			if (!pmap_pa_exists(v)) {
 				error = EFAULT;
@@ -143,79 +142,6 @@ mmrw(dev, uio, flags)
 			    (vaddr_t)vmmap + NBPG);
 			pmap_update(pmap_kernel());
 			break;
-#else
-			/* On v9 we can just use the physical ASI and not bother w/mapin & mapout */
-			v = uio->uio_offset;
-			if (!pmap_pa_exists(v)) {
-				error = EFAULT;
-				goto unlock;
-			}
-			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
-			/* However, we do need to partially re-implement uiomove() */
-			if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
-				panic("mmrw: uio mode");
-			if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
-				panic("mmrw: uio proc");
-			while (c > 0 && uio->uio_resid) {
-				struct iovec *iov;
-				u_int cnt;
-				int d;
-
-				iov = uio->uio_iov;
-				cnt = iov->iov_len;
-				if (cnt == 0) {
-					uio->uio_iov++;
-					uio->uio_iovcnt--;
-					continue;
-				}
-				if (cnt > c)
-					cnt = c;
-				d = iov->iov_base;
-				switch (uio->uio_segflg) {
-					
-				case UIO_USERSPACE:
-					if (uio->uio_rw == UIO_READ)
-						while (cnt--) {
-							char tmp;
-
-							tmp = lduba(v++, ASI_PHYS_CACHED);
-							error = copyout(&tmp, d++, sizeof(tmp));
-							if (error != 0)
-								break;
-						}
-					else
-						while (cnt--) {
-							char tmp;
-
-							error = copyin(d++, &tmp, sizeof(tmp));
-							if (error != 0)
-								break;
-							stba(v++, ASI_PHYS_CACHED, tmp);
-						}
-					if (error)
-						goto unlock;
-					break;
-					
-				case UIO_SYSSPACE:
-					if (uio->uio_rw == UIO_READ)
-						while (cnt--)
-							stba(d++, ASI_P, lduba(v++, ASI_PHYS_CACHED));
-					else
-						while (cnt--)
-							stba(v++, ASI_PHYS_CACHED, lduba(d++, ASI_P));
-					break;
-				}
-				iov->iov_base =  (caddr_t)iov->iov_base + cnt;
-				iov->iov_len -= cnt;
-				uio->uio_resid -= cnt;
-				uio->uio_offset += cnt;
-				c -= cnt;
-			}
-			/* Should not be necessary */
-			blast_vcache();
-			break;
-#endif
 
 		/* minor device 1 is kernel memory */
 		case 1:

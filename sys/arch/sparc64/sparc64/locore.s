@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.69 2007/01/06 23:07:13 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.70 2007/01/12 22:09:08 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4786,35 +4786,6 @@ _C_LABEL(tlb_flush_ctx):
 	 nop
 
 /*
- * blast_vcache()
- *
- * Clear out all of D$ regardless of contents
- * Does not modify %o0
- *
- */
-	.align 8
-	.globl	_C_LABEL(blast_vcache)
-	.proc 1
-	FTYPE(blast_vcache)
-_C_LABEL(blast_vcache):
-/*
- * We turn off interrupts for the duration to prevent RED exceptions.
- */
-	rdpr	%pstate, %o3
-	set	(2*NBPG)-8, %o1
-	andn	%o3, PSTATE_IE, %o4			! Turn off PSTATE_IE bit
-	wrpr	%o4, 0, %pstate
-1:
-dlflush3:
-	stxa	%g0, [%o1] ASI_DCACHE_TAG
-	brnz,pt	%o1, 1b
-	 dec	8, %o1
-	sethi	%hi(KERNBASE), %o2
-	flush	%o2
-	retl
-	 wrpr	%o3, %pstate
-
-/*
  * dcache_flush_page(paddr_t pa)
  *
  * Clear one page from D$.
@@ -4849,7 +4820,7 @@ _C_LABEL(us_dcache_flush_page):
 	bne,pt	%xcc, 1b
 	 membar	#LoadStore
 	
-dlflush4:
+dlflush3:
 	stxa	%g0, [%o0] ASI_DCACHE_TAG
 	ba,pt	%icc, 1b
 	 membar	#StoreLoad
@@ -4906,7 +4877,7 @@ _C_LABEL(cache_flush_virt):
 
 	!! Clear from start to end
 1:
-dlflush5:
+dlflush4:
 	stxa	%g0, [%o0] ASI_DCACHE_TAG
 	dec	16, %o4
 	brgz,pt	%o4, 1b
@@ -4961,7 +4932,7 @@ _C_LABEL(cache_flush_phys):
 	 nop
 
 	membar	#LoadStore
-dlflush6:
+dlflush5:
 	stxa	%g0, [%o4] ASI_DCACHE_TAG ! Just right
 2:
 	membar	#StoreLoad
@@ -6323,7 +6294,7 @@ ENTRY(pmap_zero_phys)
 	dec	8, %o2
 	stxa	%g0, [%o0] ASI_PHYS_CACHED
 	inc	8, %o0
-dlflush7:
+dlflush6:
 	stxa	%g0, [%o1] ASI_DCACHE_TAG
 	brgz	%o2, 1b
 	 inc	16, %o1
@@ -9630,5 +9601,4 @@ _C_LABEL(dlflush_start):
 	.xword	dlflush4
 	.xword	dlflush5
 	.xword	dlflush6
-	.xword	dlflush7
 	.xword 0
