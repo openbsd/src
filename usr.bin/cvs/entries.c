@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.64 2006/12/07 13:28:21 xsa Exp $	*/
+/*	$OpenBSD: entries.c,v 1.65 2007/01/12 18:24:59 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -91,9 +91,12 @@ cvs_ent_open(const char *dir)
 			} else if (buf[0] == 'R') {
 				ent = cvs_ent_parse(p);
 				line = ent_get_line(ep, ent->ce_name);
-				if (line != NULL)
+				if (line != NULL) {
 					TAILQ_REMOVE(&(ep->cef_ent), line,
 					    entries_list);
+					xfree(line->buf);
+					xfree(line);
+				}
 				cvs_ent_free(ent);
 			}
 		}
