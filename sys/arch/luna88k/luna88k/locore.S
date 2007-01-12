@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.12 2006/05/15 21:40:04 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.13 2007/01/12 21:41:53 aoyama Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -169,7 +169,6 @@ ASLOCAL(main_start)
 	bcnd	eq0, r2, 3b
 	br	1b			/* looks clear -- try to grab */
 4:
-#ifdef MULTIPROCESSOR
 	/* now try to grab the master_mpu prize */
 	FLUSH_PIPELINE
 	or.u	r11, r0,  hi16(_ASM_LABEL(master_mpu))
@@ -185,14 +184,6 @@ ASLOCAL(main_start)
 	 * We'll do that when we're ready for another CPU to go.
 	 */
 	bcnd	ne0, r22, _ASM_LABEL(secondary_init)
-#else
-	/*
-	 * On non-MP kernels, the main processor will never release
-	 * cpu_mutex, thus secondary processors will spin trying to
-	 * acquire the lock, with interrupts disabled.
-	 */
-#endif
-	/* fall through to main_init if that's appropriate */
 
 	/*
 	 * Main processor specific initialization (with cpu_mutex held).
@@ -275,11 +266,11 @@ ASLOCAL(main_panic)
 	text
 	.align	8
 
-#ifdef MULTIPROCESSOR
 	/*
 	 * Secondary processor specific initialization (with cpu_mutex held).
 	 */
 ASLOCAL(secondary_init)
+#ifdef MULTIPROCESSOR
 	/*
 	 * While holding the cpu_mutex, the secondary cpu can use the slavestack
 	 * to call secondary_pre_main() to determine its cpu number.
@@ -315,17 +306,23 @@ ASLOCAL(secondary_init)
 	 * be offered.
 	 */
 	br	_ASM_LABEL(cpu_switch_search)
+#else
 
-GLOBAL(cpu_boot_secondary_processors)
+	/*
+	 * Just keep the processor chewing in silence.
+	 */
+1:	br	1b
+
+#endif	/* MULTIPROCESSOR */
+
 	/*
 	 * Release the cpu_mutex; secondary processors will now have their
 	 * chance to initialize.
 	 */
+GLOBAL(cpu_boot_secondary_processors)
 	or.u	r2,  r0,  hi16(_ASM_LABEL(cpu_mutex))
 	jmp.n	r1
 	 st	r0,  r2,  lo16(_ASM_LABEL(cpu_mutex))
-
-#endif	/* MULTIPROCESSOR */
 
 /*
  * void delay(int count)
@@ -383,11 +380,10 @@ ASLOCAL(u0)
 GLOBAL(proc0paddr)
 	word	_ASM_LABEL(u0)	/*  KVA of proc0 uarea */
 
-#ifdef MULTIPROCESSOR
 /* The first processor that XMEMs this becomes the master */
 ASLOCAL(master_mpu)
 	word 0
-#endif
+
 /* XMEM spin lock -- controls access to master_mpu */
 ASLOCAL(cpu_mutex)
 	word 0
