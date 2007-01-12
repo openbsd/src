@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.14 2006/03/25 22:41:41 djm Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.15 2007/01/12 16:31:21 martin Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.24 2004/10/30 18:08:34 thorpej Exp $	*/
 
 /*-
@@ -161,6 +161,8 @@ mcsetup(sc, lladdr)
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	ifp->if_watchdog = mcwatchdog;
+	IFQ_SET_READY(&ifp->if_snd);
+
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -264,8 +266,8 @@ mcstart(ifp)
 		if (ifp->if_flags & IFF_OACTIVE)
 			return;
 
-		IF_DEQUEUE(&ifp->if_snd, m);
-		if (m == 0)
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
 			return;
 
 #if NBPFILTER > 0
@@ -633,8 +635,9 @@ mace_get(sc, pkt, totlen)
 	int len;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
-		return (0);
+	if (m == NULL)
+		return (NULL);
+
 	m->m_pkthdr.rcvif = &sc->sc_if;
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
@@ -644,9 +647,9 @@ mace_get(sc, pkt, totlen)
 	while (totlen > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
+			if (m == NULL) {
 				m_freem(top);
-				return 0;
+				return (NULL);
 			}
 			len = MLEN;
 		}
@@ -655,7 +658,7 @@ mace_get(sc, pkt, totlen)
 			if ((m->m_flags & M_EXT) == 0) {
 				m_free(m);
 				m_freem(top);
-				return 0;
+				return (NULL);
 			}
 			len = MCLBYTES;
 		}

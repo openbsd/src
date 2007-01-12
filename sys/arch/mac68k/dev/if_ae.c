@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.32 2007/01/03 21:17:44 martin Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.33 2007/01/12 16:31:21 martin Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
@@ -420,7 +420,7 @@ outloop:
 		return;
 	}
 	IF_DEQUEUE(&ifp->if_snd, m0);
-	if (m0 == 0)
+	if (m0 == NULL)
 		return;
 
 	/* We need to use m->m_pkthdr.len, so require the header */
@@ -856,7 +856,7 @@ aeread(sc, buf, len)
 
 	/* Pull packet off interface. */
 	m = aeget(sc, buf, len);
-	if (m == 0) {
+	if (m == NULL) {
 		ifp->if_ierrors++;
 		return;
 	}
@@ -929,8 +929,9 @@ aeget(sc, src, total_len)
 	int len;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
-		return 0;
+	if (m == NULL)
+		return (NULL);
+
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = total_len;
 	len = MHLEN;
@@ -940,9 +941,9 @@ aeget(sc, src, total_len)
 	while (total_len > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
+			if (m == NULL) {
 				m_freem(top);
-				return 0;
+				return (NULL);
 			}
 			len = MLEN;
 		}
@@ -951,7 +952,7 @@ aeget(sc, src, total_len)
 			if ((m->m_flags & M_EXT) == 0) {
 				m_free(m);
 				m_freem(top);
-				return 0;
+				return (NULL);
 			}
 			len = MCLBYTES;
 		}

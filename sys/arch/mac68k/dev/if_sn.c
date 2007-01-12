@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.45 2006/06/24 13:23:27 miod Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.46 2007/01/12 16:31:21 martin Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -349,7 +349,7 @@ outloop:
 	}
 
 	IF_DEQUEUE(&ifp->if_snd, m);
-	if (m == 0)
+	if (m == NULL)
 		return;
 
 	/* We need the header for m_pkthdr.len. */
@@ -1092,8 +1092,9 @@ sonic_get(struct sn_softc *sc, caddr_t pkt, int datalen)
 	int	len;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
-		return (0);
+	if (m == NULL)
+		return (NULL);
+
 	m->m_pkthdr.rcvif = &sc->sc_if;
 	m->m_pkthdr.len = datalen;
 	len = MHLEN;
@@ -1103,17 +1104,18 @@ sonic_get(struct sn_softc *sc, caddr_t pkt, int datalen)
 	while (datalen > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
+			if (m == NULL) {
 				m_freem(top);
-				return (0);
+				return (NULL);
 			}
 			len = MLEN;
 		}
 		if (datalen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
-				if (top) m_freem(top);
-				return (0);
+				if (top)
+					m_freem(top);
+				return (NULL);
 			}
 			len = MCLBYTES;
 		}
