@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.70 2007/01/12 23:32:01 niallo Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.71 2007/01/12 23:56:11 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -162,14 +162,11 @@ checkout_repository(const char *repobase, const char *wdbase)
 void
 cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 {
-	BUF *nbp;
 	int l, oflags, exists;
 	time_t rcstime;
 	CVSENTRIES *ent;
 	struct timeval tv[2];
 	char *p, *entry, rev[16], timebuf[64], tbuf[32], stickytag[32];
-
-	nbp = NULL;
 
 	rcsnum_tostr(rnum, rev, sizeof(rev));
 
@@ -177,19 +174,12 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 	    cf->file_path, rev, flags,
 	    (cvs_server_active) ? "to client" : "to disk");
 
-	if (bp != NULL)
-
 	if (flags & CO_DUMP) {
 		if (cvs_server_active) {
 			cvs_printf("dump file %s to client\n", cf->file_path);
 		} else {
-			if (nbp == NULL) {
-				rcs_rev_write_fd(cf->file_rcs, rnum,
-				    STDOUT_FILENO, 1);
-			} else {
-				if (cvs_buf_write_fd(nbp, STDOUT_FILENO == -1))
-					fatal("cvs_checkout_file: %s", strerror(errno));
-			}
+			rcs_rev_write_fd(cf->file_rcs, rnum,
+			    STDOUT_FILENO, 1);
 		}
 
 		return;
@@ -209,12 +199,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 		if (cf->fd == -1)
 			fatal("cvs_checkout_file: open: %s", strerror(errno));
 
-		if (nbp == NULL) {
-			rcs_rev_write_fd(cf->file_rcs, rnum, cf->fd, 1);
-		} else {
-			if (cvs_buf_write_fd(nbp, STDOUT_FILENO == -1))
-				fatal("cvs_checkout_file: %s", strerror(errno));
-		}
+		rcs_rev_write_fd(cf->file_rcs, rnum, cf->fd, 1);
 
 		if (fchmod(cf->fd, 0644) == -1)
 			fatal("cvs_checkout_file: fchmod: %s", strerror(errno));
@@ -279,6 +264,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 		cvs_remote_output(entry);
 
 		if (!(flags & CO_COMMIT)) {
+#if 0
 			cvs_remote_output("u=rw,g=rw,o=rw");
 
 			/* XXX */
@@ -287,6 +273,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 			if (cvs_buf_write_fd(nbp, STDOUT_FILENO) == -1)
 				fatal("cvs_checkout_file: failed to send file");
 			cvs_buf_free(nbp);
+#endif
 		}
 
 		if (p != NULL)
