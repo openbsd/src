@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.39 2007/01/12 21:32:38 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.40 2007/01/13 21:04:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -180,8 +180,9 @@ schizo_init(struct schizo_softc *sc, int busa)
 	    (void **)&busranges))
 		panic("schizo: can't get bus-range");
 
-	printf(": \"%s\", ign %x, bus %c %d to %d\n",
-	    sc->sc_tomatillo ? "Tomatillo" : "Schizo", sc->sc_ign,
+	printf(": \"%s\", version %d, ign %x, bus %c %d to %d\n",
+	    sc->sc_tomatillo ? "Tomatillo" : "Schizo",
+	    getpropint(sc->sc_node, "version#", 0), sc->sc_ign,
 	    busa ? 'A' : 'B', busranges[0], busranges[1]);
 
 	if (bus_space_subregion(pbm->sp_regt, sc->sc_ctrlh,
