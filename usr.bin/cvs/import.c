@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.61 2007/01/12 23:32:01 niallo Exp $	*/
+/*	$OpenBSD: import.c,v 1.62 2007/01/13 20:29:46 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -27,7 +27,7 @@ void	cvs_import_local(struct cvs_file *);
 static void import_new(struct cvs_file *);
 static void import_update(struct cvs_file *);
 static void import_tag(struct cvs_file *, RCSNUM *, RCSNUM *);
-static char *import_get_rcsdiff(struct cvs_file *, RCSNUM *);
+static BUF *import_get_rcsdiff(struct cvs_file *, RCSNUM *);
 
 #define IMPORT_DEFAULT_BRANCH	"1.1.1"
 
@@ -247,8 +247,8 @@ import_new(struct cvs_file *cf)
 static void
 import_update(struct cvs_file *cf)
 {
-	BUF *b1, *b2;
-	char *d, branch[16];
+	BUF *b1, *b2, *d;
+	char branch[16];
 	RCSNUM *newrev, *rev, *brev;
 
 	cvs_log(LP_TRACE, "import_update(%s)", cf->file_path);
@@ -294,8 +294,7 @@ import_update(struct cvs_file *cf)
 	if (rcs_deltatext_set(cf->file_rcs, newrev, d) == -1)
 		fatal("import_update: failed to set deltatext");
 
-	xfree(d);
-
+	cvs_buf_free(d);
 	import_tag(cf, brev, newrev);
 
 	if (cf->file_rcs->rf_branch == NULL || cf->file_rcs->rf_inattic == 1 ||
@@ -327,10 +326,10 @@ import_tag(struct cvs_file *cf, RCSNUM *branch, RCSNUM *newrev)
 	}
 }
 
-static char *
+static BUF *
 import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 {
-	char *delta, *p1, *p2;
+	char *p1, *p2;
 	BUF *b1, *b2;
 
 	if ((b1 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
@@ -359,13 +358,8 @@ import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 			xfree(p2);
 	}
 
-	cvs_buf_putc(b2, '\0');
-	delta = cvs_buf_release(b2);
-
 	if (b1 != NULL)
 		cvs_buf_free(b1);
-	if (b2 != NULL)
-		cvs_buf_free(b2);
 
-	return (delta);
+	return (b2);
 }

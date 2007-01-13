@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.27 2007/01/11 02:35:55 joris Exp $	*/
+/*	$OpenBSD: init.c,v 1.28 2007/01/13 20:29:46 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -144,13 +144,12 @@ init_mkfile(char *path, const char *const *content)
 	BUF *b;
 	size_t len;
 	int fd, openflags, rcsflags;
-	char *d, *rpath;
+	char *rpath;
 	const char *const *p;
 	RCSFILE *file;
 
 	len = 0;
 	fd = -1;
-	d = NULL;
 	openflags = O_WRONLY|O_CREAT|O_EXCL;
 	rcsflags = RCS_RDWR|RCS_CREATE;
 
@@ -192,13 +191,11 @@ init_mkfile(char *path, const char *const *content)
 	if ((b = cvs_buf_load(path, BUF_AUTOEXT)) == NULL)
 		fatal("init_mkfile: failed to load %s", path);
 
-	cvs_buf_putc(b, '\0');
-	d = cvs_buf_release(b);
-
 	if (rcs_rev_add(file, RCS_HEAD_REV, "initial checkin", -1, NULL) == -1)
 		fatal("init_mkfile: failed to add new revision");
 
-	if (rcs_deltatext_set(file, file->rf_head, d) == -1)
+	/* b buffer is free'd in rcs_deltatext_set */
+	if (rcs_deltatext_set(file, file->rf_head, b) == -1)
 		fatal("init_mkfile: failed to set delta");
 
 	file->rf_flags &= ~RCS_SYNCED;
@@ -206,7 +203,4 @@ init_mkfile(char *path, const char *const *content)
 	xfree(rpath);
 out:
 	(void)close(fd);
-
-	if (d != NULL)
-		xfree(d);
 }
