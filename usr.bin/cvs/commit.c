@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.96 2007/01/13 15:56:15 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.97 2007/01/13 18:28:27 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -389,43 +389,35 @@ static BUF *
 commit_diff_file(struct cvs_file *cf)
 {
 	char *p1, *p2;
-	BUF *b1, *b2, *b3;
+	BUF *b1, *b2;
+
+	(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
 
 	if (cf->file_status == FILE_MODIFIED ||
 	    cf->file_status == FILE_ADDED) {
 		if ((b1 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
 			fatal("commit_diff_file: failed to load '%s'",
 			    cf->file_path);
+		cvs_buf_write_stmp(b1, p1, NULL);
+		cvs_buf_free(b1);
 	} else {
-		b1 = rcs_rev_getbuf(cf->file_rcs, cf->file_rcs->rf_head);
-		if (b1 == NULL)
-			fatal("commit_diff_file: failed to load HEAD");
-		b1 = rcs_kwexp_buf(b1, cf->file_rcs, cf->file_rcs->rf_head);
+		rcs_rev_write_stmp(cf->file_rcs, cf->file_rcs->rf_head, p1, 0);
 	}
 
-	if ((b2 = rcs_rev_getbuf(cf->file_rcs, cf->file_rcs->rf_head)) == NULL)
-		fatal("commit_diff_file: failed to load HEAD for '%s'",
-		    cf->file_path);
+	(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
+	rcs_rev_write_stmp(cf->file_rcs, cf->file_rcs->rf_head, p2, 0);
 
-	if ((b3 = cvs_buf_alloc(128, BUF_AUTOEXT)) == NULL)
+	if ((b2 = cvs_buf_alloc(128, BUF_AUTOEXT)) == NULL)
 		fatal("commit_diff_file: failed to create diff buf");
 
-	(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
-	cvs_buf_write_stmp(b1, p1, NULL);
-	cvs_buf_free(b1);
-
-	(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
-	cvs_buf_write_stmp(b2, p2, NULL);
-	cvs_buf_free(b2);
-
 	diff_format = D_RCSDIFF;
-	if (cvs_diffreg(p1, p2, b3) == D_ERROR)
+	if (cvs_diffreg(p1, p2, b2) == D_ERROR)
 		fatal("commit_diff_file: failed to get RCS patch");
 
 	xfree(p1);
 	xfree(p2);
 
-	return (b3);
+	return (b2);
 }
 
 static void
