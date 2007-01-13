@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.196 2007/01/12 23:32:01 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.197 2007/01/13 04:29:37 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2593,7 +2593,7 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 	u_char *c, *kwstr, *start, *end, *fin;
 	char expbuf[256], buf[256];
 	char *fmt;
-	size_t len;
+	size_t len, kwlen;
 
 	kwtype = 0;
 	kwstr = NULL;
@@ -2636,8 +2636,6 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 			/* look for any matching keywords */
 			found = 0;
 			for (j = 0; j < RCS_NKWORDS; j++) {
-				size_t kwlen;
-
 				kwlen = strlen(rcs_expkw[j].kw_str);
 				/*
 				 * kwlen must be less than clen since clen
@@ -3048,7 +3046,7 @@ rcs_rev_getlines(RCSFILE *rfp, RCSNUM *frev)
 	struct cvs_lines *dlines, *plines;
 
 	if ((hrdp = rcs_findrev(rfp, rfp->rf_head)) == NULL)
-		fatal("rcs_rev_write_fd: no HEAD revision");
+		fatal("rcs_rev_getlines: no HEAD revision");
 
 	tnum = frev;
 	rcs_parse_deltatexts(rfp, hrdp->rd_num);
@@ -3127,7 +3125,7 @@ next:
 			fatal("expected branch not found on branch list");
 
 		if ((rdp = rcs_findrev(rfp, brp->rb_num)) == NULL)
-			fatal("rcs_rev_write_fd: failed to get delta for target rev");
+			fatal("rcs_rev_getlines: failed to get delta for target rev");
 
 		goto again;
 	}
@@ -3237,7 +3235,7 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 	u_char *c, *kwstr, *start, *end, *fin;
 	char expbuf[256], buf[256];
 	char *fmt;
-	size_t len;
+	size_t len, kwlen;
 
 	kwtype = 0;
 	kwstr = NULL;
@@ -3277,8 +3275,6 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 			/* look for any matching keywords */
 			found = 0;
 			for (j = 0; j < RCS_NKWORDS; j++) {
-				size_t kwlen;
-
 				kwlen = strlen(rcs_expkw[j].kw_str);
 				/*
 				 * kwlen must be less than clen since clen
@@ -3292,6 +3288,18 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 					kwtype = rcs_expkw[j].kw_type;
 					c += kwlen;
 					break;
+				}
+			}
+
+			if (found == 0 && cvs_tagname != NULL) {
+				kwlen = strlen(cvs_tagname);
+				if (kwlen < clen &&
+				    memcmp(c, cvs_tagname, kwlen) == 0 &&
+				    (c[kwlen] == '$' || c[kwlen] == ':')) {
+					found = 1;
+					kwstr = cvs_tagname;
+					kwtype = RCS_KW_ID;
+					c += kwlen;
 				}
 			}
 
@@ -3413,6 +3421,7 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 			len = cvs_buf_len(tmpbuf);
 
 			/* tmpbuf is now ready, convert to string */
+			xfree(line->l_line);
 			line->l_len = len;
 			line->l_line = cvs_buf_release(tmpbuf);
 		}
