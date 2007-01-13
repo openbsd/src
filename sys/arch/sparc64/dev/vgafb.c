@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.48 2006/12/17 22:18:16 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.49 2007/01/13 21:03:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -32,26 +32,28 @@
  */
 
 #include <sys/param.h>
-#include <sys/buf.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/pciio.h>
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/autoconf.h>
 #include <machine/openfirm.h>
 
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
+
 #include <machine/fbvar.h>
 
 struct vgafb_softc {
@@ -64,14 +66,11 @@ struct vgafb_softc {
 	bus_space_handle_t sc_mem_h;
 	bus_addr_t sc_io_addr, sc_mem_addr, sc_mmio_addr;
 	bus_size_t sc_io_size, sc_mem_size, sc_mmio_size;
-	pci_chipset_tag_t sc_pci_chip;
-	int sc_has_rom;
 	int sc_console;
 	u_int sc_mode;
 	u_int8_t sc_cmap_red[256];
 	u_int8_t sc_cmap_green[256];
 	u_int8_t sc_cmap_blue[256];
-	int *sc_crowp, *sc_ccolp;
 };
 
 int vgafb_mapregs(struct vgafb_softc *, struct pci_attach_args *);
@@ -112,27 +111,43 @@ struct cfdriver vgafb_cd = {
 extern int allowaperture;
 #endif
 
+static const struct pci_matchid ifb_devices[] = {
+	{ PCI_VENDOR_INTERGRAPH, 0x108 },	/* XXX */
+	{ PCI_VENDOR_INTERGRAPH, 0x140 },	/* XXX */
+	{ PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_EXPERT3D },
+};
+
 int
 vgafbmatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
 	struct pci_attach_args *pa = aux;
+	int node;
+	char *name;
+
+	/*
+	 * Do not match on Expert3D devices, which need a different
+	 * driver.
+	 */
+	if (pci_matchbyid(pa, ifb_devices,
+	    sizeof(ifb_devices) / sizeof(ifb_devices[0])) != 0)
+		return (0);
+
+	node = PCITAG_NODE(pa->pa_tag);
+	name = getpropstring(node, "name");
+	if (strcmp(name, "SUNW,Expert3D") == 0 ||
+	    strcmp(name, "SUNW,Expert3D-Lite") == 0)
+		return (0);
+
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_PREHISTORIC &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_PREHISTORIC_VGA)
 		return (1);
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA) {
-		extern char cpu_model[];
-
-		/* XXX Cannot yet deal with VGA devices on Blade 1000 and family */
-		if (strncmp(cpu_model, "SUNW,UltraSPARC-III",
-		    strlen("SUNW,UltraSPARC-III")) == 0)
-			return (0);
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA)
 		return (1);
-	}
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_MISC)
