@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.95 2007/01/13 15:45:59 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.96 2007/01/13 15:56:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -421,6 +421,9 @@ commit_diff_file(struct cvs_file *cf)
 	diff_format = D_RCSDIFF;
 	if (cvs_diffreg(p1, p2, b3) == D_ERROR)
 		fatal("commit_diff_file: failed to get RCS patch");
+
+	xfree(p1);
+	xfree(p2);
 
 	return (b3);
 }
