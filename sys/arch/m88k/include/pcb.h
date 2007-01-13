@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.3 2006/11/18 22:49:40 miod Exp $ */
+/*	$OpenBSD: pcb.h,v 1.4 2007/01/13 22:00:56 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Mach Operating System
@@ -34,7 +34,7 @@
 #ifndef _M88K_PCB_H_
 #define _M88K_PCB_H_
 
-#include <machine/reg.h>
+#include <machine/frame.h>
 
 /*
  * Our PCB is the regular PCB+Save area for kernel frame.
@@ -73,57 +73,6 @@ struct m88100_pcb {
 	unsigned pcb_fcr63;
 };
 
-struct trapframe {
-	struct reg	tf_regs;
-	register_t	tf_vector;	/* exception vector number */
-	register_t	tf_mask;	/* interrupt mask level */
-	register_t	tf_mode;	/* interrupt mode */
-	register_t	tf_scratch1;	/* reserved for use by locore */
-	register_t	tf_ipfsr;	/* P BUS status */
-	register_t	tf_dpfsr;	/* P BUS status */
-	void		*tf_cpu;	/* cpu_info pointer */
-};
-
-#define	tf_r		tf_regs.r
-#define	tf_sp		tf_regs.r[31]
-#define	tf_epsr		tf_regs.epsr
-#define	tf_fpsr		tf_regs.fpsr
-#define	tf_fpcr		tf_regs.fpcr
-#define	tf_sxip		tf_regs.sxip
-#define	tf_snip		tf_regs.snip
-#define	tf_sfip		tf_regs.sfip
-#define	tf_exip		tf_regs.sxip
-#define	tf_enip		tf_regs.snip
-#define	tf_ssbr		tf_regs.ssbr
-#define	tf_dmt0		tf_regs.dmt0
-#define	tf_dmd0		tf_regs.dmd0
-#define	tf_dma0		tf_regs.dma0
-#define	tf_dmt1		tf_regs.dmt1
-#define	tf_dmd1		tf_regs.dmd1
-#define	tf_dma1		tf_regs.dma1
-#define	tf_dmt2		tf_regs.dmt2
-#define	tf_dmd2		tf_regs.dmd2
-#define	tf_dma2		tf_regs.dma2
-#define	tf_duap		tf_regs.ssbr
-#define	tf_dsr		tf_regs.dmt0
-#define	tf_dlar		tf_regs.dmd0
-#define	tf_dpar		tf_regs.dma0
-#define	tf_isr		tf_regs.dmt1
-#define	tf_ilar		tf_regs.dmd1
-#define	tf_ipar		tf_regs.dma1
-#define	tf_isap		tf_regs.dmt2
-#define	tf_dsap		tf_regs.dmd2
-#define	tf_iuap		tf_regs.dma2
-#define	tf_fpecr	tf_regs.fpecr
-#define	tf_fphs1	tf_regs.fphs1
-#define	tf_fpls1	tf_regs.fpls1
-#define	tf_fphs2	tf_regs.fphs2
-#define	tf_fpls2	tf_regs.fpls2
-#define	tf_fppt		tf_regs.fppt
-#define	tf_fprh		tf_regs.fprh
-#define	tf_fprl		tf_regs.fprl
-#define	tf_fpit		tf_regs.fpit
-
 struct pcb
 {
 	struct m88100_pcb	kernel_state;
@@ -136,6 +85,7 @@ struct pcb
  */
 #define	USER_REGS(p) \
 	(((struct reg *)(&((p)->p_addr->u_pcb.user_state))))
+
 /*
  * The pcb is augmented with machine-dependent additional data for
  * core dumps.  Note that the trapframe here is a copy of the one

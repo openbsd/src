@@ -14,6 +14,7 @@
 ./usr/include/aviion/endian.h
 ./usr/include/aviion/exec.h
 ./usr/include/aviion/float.h
+./usr/include/aviion/frame.h
 ./usr/include/aviion/ieee.h
 ./usr/include/aviion/ieeefp.h
 ./usr/include/aviion/internal_types.h
@@ -166,6 +167,7 @@
 ./usr/include/m88k/endian.h
 ./usr/include/m88k/exec.h
 ./usr/include/m88k/float.h
+./usr/include/m88k/frame.h
 ./usr/include/m88k/ieee.h
 ./usr/include/m88k/ieeefp.h
 ./usr/include/m88k/internal_types.h

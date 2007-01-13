@@ -543,6 +543,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/endian.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/exec.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/float.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/frame.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/ieee.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/ieeefp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/internal_types.ph
@@ -1564,6 +1565,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/endian.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/exec.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/float.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/frame.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/ieee.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/ieeefp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/internal_types.ph
