@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.45 2007/01/11 02:35:55 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.46 2007/01/13 15:29:34 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -611,7 +611,6 @@ cvs_client_checkedin(char *data)
 void
 cvs_client_updated(char *data)
 {
-	BUF *bp;
 	int l, fd;
 	time_t now;
 	mode_t fmode;
@@ -670,16 +669,11 @@ cvs_client_updated(char *data)
 	cvs_ent_close(ent, ENT_SYNC);
 	xfree(entry);
 
-	bp = cvs_remote_receive_file(flen);
 	if ((fd = open(fpath, O_CREAT | O_WRONLY | O_TRUNC)) == -1)
 		fatal("cvs_client_updated: open: %s: %s",
 		    fpath, strerror(errno));
 
-	if (cvs_buf_write_fd(bp, fd) == -1)
-		fatal("cvs_client_updated: cvs_buf_write_fd failed for %s",
-		    fpath);
-
-	cvs_buf_free(bp);
+	cvs_remote_receive_file(fd, flen);
 
 	now = cvs_hack_time(now, 0);
 	tv[0].tv_sec = now;

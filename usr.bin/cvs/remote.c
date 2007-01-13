@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.5 2007/01/03 19:27:28 joris Exp $	*/
+/*	$OpenBSD: remote.c,v 1.6 2007/01/13 15:29:34 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -117,48 +117,50 @@ cvs_remote_input(void)
 	return (ldata);
 }
 
-BUF *
-cvs_remote_receive_file(size_t len)
+void
+cvs_remote_receive_file(int fd, size_t len)
 {
-	BUF *bp;
 	FILE *in;
-	size_t ret;
 	char *data;
+	size_t nread, nwrite, nleft, toread;
 
 	if (cvs_server_active)
 		in = stdin;
 	else
 		in = current_cvsroot->cr_srvout;
 
-	bp = cvs_buf_alloc(len, BUF_AUTOEXT);
+	data = xmalloc(MAXBSIZE);
+	nleft = len;
 
-	if (len != 0) {
-		data = xmalloc(len);
-		ret = fread(data, sizeof(char), len, in);
-		if (ret != len)
-			fatal("length mismatch, expected %ld, got %ld",
-			    len, ret);
-		cvs_buf_set(bp, data, len, 0);
-		xfree(data);
+	while (nleft > 0) {
+		toread = MIN(nleft, MAXBSIZE);
+
+		nread = fread(data, sizeof(char), toread, in);
+		if (nread == 0)
+			fatal("error receiving file");
+
+		nwrite = write(fd, data, nread);
+		if (nwrite != nread)
+			fatal("failed to write %ld bytes", nread);
+
+		if (cvs_server_active == 0 &&
+		    cvs_client_outlog_fd != -1)
+			(void)write(cvs_client_outlog_fd, data, nread);
+
+		nleft -= nread;
 	}
 
-	if (cvs_server_active == 0 && cvs_client_outlog_fd != -1) {
-		if (cvs_buf_write_fd(bp, cvs_client_outlog_fd) < 0)
-			fatal("cvs_remote_receive_file: cvs_buf_write_fd");
-	}
-
-	return (bp);
+	xfree(data);
 }
 
 void
 cvs_remote_send_file(const char *path)
 {
-	BUF *bp;
 	int l, fd;
-	FILE *out;
-	size_t ret;
+	FILE *out, *in;
+	size_t ret, rw, total;
 	struct stat st;
-	char buf[16], *fcont;
+	char buf[16], *data;
 
 	if (cvs_server_active)
 		out = stdout;
@@ -179,24 +181,29 @@ cvs_remote_send_file(const char *path)
 		fatal("cvs_remote_send_file: overflow");
 	cvs_remote_output(buf);
 
-	bp = cvs_buf_load_fd(fd, BUF_AUTOEXT);
+	if ((in = fdopen(fd, "r")) == NULL)
+		fatal("cvs_remote_send_file: fdopen %s", strerror(errno));
 
-	if (cvs_server_active == 0 && cvs_client_inlog_fd != -1) {
-		if (cvs_buf_write_fd(bp, cvs_client_inlog_fd) < 0)
-			fatal("cvs_remote_send_file: cvs_buf_write");
+	total = 0;
+	data = xmalloc(MAXBSIZE);
+	while ((ret = fread(data, sizeof(char), MAXBSIZE, in)) != 0) {
+		rw = fwrite(data, sizeof(char), ret, out);
+		if (rw != ret)
+			fatal("failed to write %ld bytes", ret);
+
+		if (cvs_server_active == 0 &&
+		    cvs_client_outlog_fd != -1)
+			(void)write(cvs_client_outlog_fd, data, ret);
+
+		total += ret;
 	}
 
-	fcont = cvs_buf_release(bp);
+	xfree(data);
 
-	if (fcont != NULL) {
-		ret = fwrite(fcont, sizeof(char), st.st_size, out);
-		if (ret != st.st_size)
-			fatal("tried to write %lld only wrote %ld",
-			    st.st_size, ret);
-		xfree(fcont);
-	}
+	if (total != st.st_size)
+		fatal("length mismatch, %ld vs %ld", total, st.st_size);
 
-	(void)close(fd);
+	(void)fclose(in);
 }
 
 void

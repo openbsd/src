@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.47 2007/01/03 22:28:30 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.48 2007/01/13 15:29:34 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -346,7 +346,6 @@ cvs_server_entry(char *data)
 void
 cvs_server_modified(char *data)
 {
-	BUF *bp;
 	int fd;
 	size_t flen;
 	mode_t fmode;
@@ -364,8 +363,6 @@ cvs_server_modified(char *data)
 		fatal("cvs_server_modified: %s", errstr);
 	xfree(len);
 
-	bp = cvs_remote_receive_file(flen);
-
 	fpath = xmalloc(MAXPATHLEN);
 	if (cvs_path_cat(server_currentdir, data, fpath, MAXPATHLEN) >=
 	    MAXPATHLEN)
@@ -374,15 +371,13 @@ cvs_server_modified(char *data)
 	if ((fd = open(fpath, O_WRONLY | O_CREAT | O_TRUNC)) == -1)
 		fatal("cvs_server_modified: %s: %s", fpath, strerror(errno));
 
-	if (cvs_buf_write_fd(bp, fd) == -1)
-		fatal("cvs_server_modified: failed to write file '%s'", fpath);
+	cvs_remote_receive_file(fd, flen);
 
 	if (fchmod(fd, 0600) == -1)
 		fatal("cvs_server_modified: failed to set file mode");
 
 	xfree(fpath);
 	(void)close(fd);
-	cvs_buf_free(bp);
 }
 
 void

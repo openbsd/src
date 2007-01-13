@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.71 2007/01/12 23:56:11 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.72 2007/01/13 15:29:34 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -24,8 +24,10 @@
 
 int	cvs_checkout(int, char **);
 int	cvs_export(int, char **);
+
 static void checkout_check_repository(int, char **);
 static void checkout_repository(const char *, const char *);
+static void checkout_write_revision(RCSFILE *, RCSNUM *, char *);
 
 extern int prune_dirs;
 extern int build_dirs;
@@ -166,7 +168,8 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 	time_t rcstime;
 	CVSENTRIES *ent;
 	struct timeval tv[2];
-	char *p, *entry, rev[16], timebuf[64], tbuf[32], stickytag[32];
+	char *template, *p, *entry, rev[16], timebuf[64];
+	char tbuf[32], stickytag[32];
 
 	rcsnum_tostr(rnum, rev, sizeof(rev));
 
@@ -264,16 +267,13 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 		cvs_remote_output(entry);
 
 		if (!(flags & CO_COMMIT)) {
-#if 0
-			cvs_remote_output("u=rw,g=rw,o=rw");
+			(void)xasprintf(&template,
+			    "%s/checkout.XXXXXXXXXX", cvs_tmpdir);
 
-			/* XXX */
-			printf("%ld\n", cvs_buf_len(nbp));
-
-			if (cvs_buf_write_fd(nbp, STDOUT_FILENO) == -1)
-				fatal("cvs_checkout_file: failed to send file");
-			cvs_buf_free(nbp);
-#endif
+			/* XXX - fd race below */
+			checkout_write_revision(cf->file_rcs, rnum, template);
+			cvs_remote_send_file(template);
+			(void)unlink(template);
 		}
 
 		if (p != NULL)
@@ -281,4 +281,17 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 	}
 
 	xfree(entry);
+}
+
+static void
+checkout_write_revision(RCSFILE *rfp, RCSNUM *rev, char *template)
+{
+	int fd;
+
+	if ((fd = mkstemp(template)) == -1)
+		fatal("mkstemp: '%s': %s", template, strerror(errno));
+
+	cvs_worklist_add(template, &temp_files);
+	rcs_rev_write_fd(rfp, rev, fd, 0);
+	(void)close(fd);
 }
