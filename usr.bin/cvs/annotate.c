@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.34 2007/01/11 17:44:18 niallo Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.35 2007/01/13 20:59:49 joris Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -107,15 +107,6 @@ cvs_annotate(int argc, char **argv)
 void
 cvs_annotate_local(struct cvs_file *cf)
 {
-	struct cvs_line *lp;
-	struct cvs_lines *lines;
-	BUF *b;
-	RCSNUM *ann_rev;
-	char *content;
-	size_t len;
-
-	ann_rev = NULL;
-
 	cvs_log(LP_TRACE, "cvs_annotate_local(%s)", cf->file_path);
 
 	cvs_file_classify(cf, NULL, 0);
@@ -126,33 +117,5 @@ cvs_annotate_local(struct cvs_file *cf)
 
 	cvs_printf("Annotations for %s", cf->file_name);
 	cvs_printf("\n***************\n");
-
-	if (rev != NULL)
-		ann_rev = rcs_translate_tag(rev, cf->file_rcs);
-	else {
-		ann_rev = rcsnum_alloc();
-		rcsnum_cpy(cf->file_rcs->rf_head, ann_rev, 0);
-	}
-
-	b = rcs_getrev(cf->file_rcs, ann_rev);
-	cvs_buf_putc(b, '\0');
-
-	len = cvs_buf_len(b);
-	content = cvs_buf_release(b);
-	if ((lines = cvs_splitlines(content, len)) == NULL)
-		fatal("cvs_annotate_local: cvs_splitlines failed");
-
-        xfree(content);
-
-	/* XXX */
-	TAILQ_FOREACH(lp, &(lines->l_lines), l_list) {
-		if (lp->l_line == NULL)
-			continue;
-
-		cvs_printf("%s\n", lp->l_line);
-	}
-        cvs_freelines(lines);
-
-	if (ann_rev != NULL)
-		rcsnum_free(ann_rev);
+	cvs_printf("no code yet\n");
 }
