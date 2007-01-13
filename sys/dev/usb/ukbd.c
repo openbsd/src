@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.25 2006/06/26 22:14:12 miod Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.26 2007/01/13 07:43:15 miod Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -408,12 +408,17 @@ USB_ATTACH(ukbd)
 			printf(", layout %d", hid->bCountryCode);
 #endif
 	} else {
-		if (hid->bCountryCode <= HCC_MAX)
-			layout = ukbd_countrylayout[hid->bCountryCode];
+		if (uha->uaa->vendor == USB_VENDOR_TOPRE &&
+		    uha->uaa->product == USB_PRODUCT_TOPRE_HHKB) {
+			/* ignore country code on purpose */
+		} else {
+			if (hid->bCountryCode <= HCC_MAX)
+				layout = ukbd_countrylayout[hid->bCountryCode];
 #ifdef DIAGNOSTIC
-		if (hid->bCountryCode != 0)
-			printf(", country code %d", hid->bCountryCode);
+			if (hid->bCountryCode != 0)
+				printf(", country code %d", hid->bCountryCode);
 #endif
+		}
 	}
 	if (layout == (kbd_t)-1) {
 #ifdef UKBD_LAYOUT
