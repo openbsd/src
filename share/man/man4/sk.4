@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.51 2007/01/10 20:46:41 jmc Exp $
+.\"	$OpenBSD: sk.4,v 1.52 2007/01/13 17:13:43 todd Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -101,7 +101,8 @@ allowing dual-port NIC configurations.
 The Marvell based adapters are a single integrated circuit, but are
 still presented as a separate MAC (sk) and controller ASIC (skc).
 .Pp
-The XMAC also supports a frame size of up to 9000 bytes.
+The GEnesis and Yukon 88E8001, 88E8003 and 88E8010 also supports a
+frame size of up to 9000 bytes.
 Support for Jumbo frames is provided via the interface MTU setting.
 Selecting an MTU larger than 1500 bytes with the
 .Xr ifconfig 8
