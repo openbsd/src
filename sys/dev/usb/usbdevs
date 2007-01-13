@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.250 2007/01/08 18:45:30 damien Exp $
+$OpenBSD: usbdevs,v 1.251 2007/01/13 07:42:13 miod Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -309,6 +309,7 @@ vendor SOURCENEXT	0x0833	SOURCENEXT
 vendor ACCTON		0x083a	Accton Technology
 vendor DIAMOND		0x0841	Diamond
 vendor NETGEAR		0x0846	BayNETGEAR
+vendor TOPRE		0x0853	Topre Corporation
 vendor ACTIVEWIRE	0x0854	ActiveWire
 vendor BBELECTRONICS	0x0856	B&B Electronics
 vendor PORTGEAR		0x085a	PortGear
@@ -575,6 +576,9 @@ product ACTIONTEC 802UAT1	0x7605	802UAT1
 
 /* ACTiSYS products */
 product ACTISYS IR2000U		0x0011	ACT-IR2000U FIR
+
+/* Topre Corporation products */
+product TOPRE HHKB		0x0100	HHKB Professional
 
 /* ActiveWire, Inc. products */
 product ACTIVEWIRE IOBOARD	0x0100	I/O Board
