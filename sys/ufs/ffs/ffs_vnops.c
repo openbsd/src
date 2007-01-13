@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.39 2006/10/29 00:53:37 thib Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.40 2007/01/13 17:41:55 thib Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -196,15 +196,15 @@ ffs_read(void *v)
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
-		panic("%s: mode", "ffs_read");
+		panic("ffs_read: mode");
 
 	if (vp->v_type == VLNK) {
 		if ((int)DIP(ip, size) < vp->v_mount->mnt_maxsymlinklen ||
 		    (vp->v_mount->mnt_maxsymlinklen == 0 &&
 		     DIP(ip, blocks) == 0))
-			panic("%s: short symlink", "ffs_read");
+			panic("ffs_read: short symlink");
 	} else if (vp->v_type != VREG && vp->v_type != VDIR)
-		panic("%s: type %d", "ffs_read", vp->v_type);
+		panic("ffs_read: type %d", vp->v_type);
 #endif
 	fs = ip->i_fs;
 	if ((u_int64_t)uio->uio_offset > fs->fs_maxfilesize)
@@ -297,7 +297,7 @@ ffs_write(void *v)
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
-		panic("%s: mode", "ffs_write");
+		panic("ffs_write: mode");
 #endif
 
 	/*
@@ -318,10 +318,10 @@ ffs_write(void *v)
 		break;
 	case VDIR:
 		if ((ioflag & IO_SYNC) == 0)
-			panic("%s: nonsync dir write", "ffs_write");
+			panic("ffs_write: nonsync dir write");
 		break;
 	default:
-		panic("%s: type", "ffs_write");
+		panic("ffs_write: type");
 	}
 
 	fs = ip->i_fs;
