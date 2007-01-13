@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.128 2007/01/12 23:32:01 niallo Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.129 2007/01/13 15:45:59 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -361,7 +361,7 @@ char *	cvs_logmsg_create(struct cvs_flisthead *, struct cvs_flisthead *,
 void	cvs_update_local(struct cvs_file *);
 void	cvs_update_enterdir(struct cvs_file *);
 void	cvs_update_leavedir(struct cvs_file *);
-void	cvs_checkout_file(struct cvs_file *, RCSNUM *, BUF *, int);
+void	cvs_checkout_file(struct cvs_file *, RCSNUM *, int);
 int	update_has_conflict_markers(struct cvs_file *);
 
 #define CO_MERGE	0x01

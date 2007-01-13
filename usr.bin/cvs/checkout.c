@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.72 2007/01/13 15:29:34 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.73 2007/01/13 15:45:59 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -162,7 +162,7 @@ checkout_repository(const char *repobase, const char *wdbase)
 }
 
 void
-cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
+cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int flags)
 {
 	int l, oflags, exists;
 	time_t rcstime;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.84 2007/01/12 23:32:01 niallo Exp $	*/
+/*	$OpenBSD: update.c,v 1.85 2007/01/13 15:45:59 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -270,7 +270,6 @@ cvs_update_leavedir(struct cvs_file *cf)
 void
 cvs_update_local(struct cvs_file *cf)
 {
-	BUF *bp;
 	int ret, flags;
 	CVSENTRIES *entlist;
 	char rbuf[16];
@@ -287,12 +286,7 @@ cvs_update_local(struct cvs_file *cf)
 		return;
 	}
 
-	/*
-	 * the bp buffer will be released inside rcs_kwexp_buf,
-	 * which is called from cvs_checkout_file().
-	 */
 	flags = 0;
-	bp = NULL;
 	cvs_file_classify(cf, tag, 1);
 
 	if (cf->file_status == FILE_UPTODATE && cf->file_ent != NULL &&
@@ -307,7 +301,7 @@ cvs_update_local(struct cvs_file *cf)
 			cvs_printf("%s\nChecking out %s\n"
 			    "RCS:\t%s\nVERS:\t%s\n***************\n",
 			    RCS_DIFF_DIV, cf->file_path, cf->file_rpath, rbuf);
-		cvs_checkout_file(cf, cf->file_rcsrev, NULL, CO_DUMP);
+		cvs_checkout_file(cf, cf->file_rcsrev, CO_DUMP);
 		return;
 	}
 
@@ -340,16 +334,15 @@ cvs_update_local(struct cvs_file *cf)
 		if (tag != NULL)
 			flags = CO_SETSTICKY;
 
-		cvs_checkout_file(cf, cf->file_rcsrev, NULL, flags);
+		cvs_checkout_file(cf, cf->file_rcsrev, flags);
 		cvs_printf("U %s\n", cf->file_path);
 		break;
 	case FILE_MERGE:
+#if 0
 		cvs_diff3(cf->file_rcs, cf->file_path, cf->fd,
 		    cf->file_ent->ce_rev, cf->file_rcsrev, 1);
-		if (bp == NULL)
-			fatal("cvs_update_local: failed to merge");
 
-		cvs_checkout_file(cf, cf->file_rcsrev, bp, CO_MERGE);
+		cvs_checkout_file(cf, cf->file_rcsrev, CO_MERGE);
 
 		if (diff3_conflicts != 0) {
 			cvs_printf("C %s\n", cf->file_path);
@@ -357,6 +350,7 @@ cvs_update_local(struct cvs_file *cf)
 			update_clear_conflict(cf);
 			cvs_printf("M %s\n", cf->file_path);
 		}
+#endif
 		break;
 	case FILE_UNLINK:
 		(void)unlink(cf->file_path);
