@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.40 2007/01/08 20:32:34 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.41 2007/01/13 21:05:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1689,12 +1689,12 @@ msk_txeof(struct sk_if_softc *sc_if)
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		cur_tx = &sc_if->sk_rdata->sk_tx_ring[idx];
-		sk_ctl = letoh32(cur_tx->sk_ctl);
+		sk_ctl = cur_tx->sk_ctl;
 #ifdef MSK_DEBUG
 		if (mskdebug >= 2)
 			msk_dump_txdesc(cur_tx, idx);
 #endif
-		if (sk_ctl & SK_TXCTL_LASTFRAG)
+		if (sk_ctl & SK_Y2_TXCTL_LASTFRAG)
 			ifp->if_opackets++;
 		if (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf != NULL) {
 			entry = sc_if->sk_cdata.sk_tx_map[idx];
