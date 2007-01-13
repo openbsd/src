@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.66 2006/12/24 09:39:27 pedro Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.67 2007/01/13 16:47:15 thib Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -85,13 +85,16 @@
 
 #include <dev/vndioctl.h>
 
-#ifdef DEBUG
+#ifdef VNDDEBUG
 int dovndcluster = 1;
 int vnddebug = 0x00;
 #define	VDB_FOLLOW	0x01
 #define	VDB_INIT	0x02
 #define	VDB_IO		0x04
-#endif
+#define	DNPRINTF(f, p...)	do { if ((f) & vnddebug) printf(p); } while (0)
+#else
+#define	DNPRINTF(f, p...)	/* nothing */
+#endif	/* VNDDEBUG */
 
 /*
  * vndunit is a bit weird.  have to reconstitute the dev_t for
@@ -218,10 +221,8 @@ vndopen(dev_t dev, int flags, int mode, struct proc *p)
 	struct vnd_softc *sc;
 	int error = 0, part, pmask;
 
-#ifdef DEBUG
-	if (vnddebug & VDB_FOLLOW)
-		printf("vndopen(%x, %x, %x, %p)\n", dev, flags, mode, p);
-#endif
+	DNPRINTF(VDB_FOLLOW, "vndopen(%x, %x, %x, %p)\n", dev, flags, mode, p);
+
 	if (unit >= numvnd)
 		return (ENXIO);
 	sc = &vnd_softc[unit];
@@ -293,7 +294,7 @@ void
 vndgetdisklabel(dev_t dev, struct vnd_softc *sc)
 {
 	struct disklabel *lp = sc->sc_dk.dk_label;
-	char *errstring;
+	char *errstring = NULL;
 
 	bzero(lp, sizeof(struct disklabel));
 	bzero(sc->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
@@ -302,14 +303,10 @@ vndgetdisklabel(dev_t dev, struct vnd_softc *sc)
 	lp->d_ntracks = 1;
 	lp->d_nsectors = 100;
 	lp->d_ncylinders = sc->sc_size / 100;
-	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-	if (lp->d_secpercyl == 0) {
-		lp->d_secpercyl = 100;
-		/* as long as it's not 0 - readdisklabel divides by it (?) */
-	}
+	lp->d_secpercyl = 100;		/* lp->d_ntracks * lp->d_nsectors */
 
 	strncpy(lp->d_typename, "vnd device", sizeof(lp->d_typename));
-	lp->d_type = DTYPE_SCSI;
+	lp->d_type = DTYPE_VND;
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	lp->d_secperunit = sc->sc_size;
 	lp->d_rpm = 3600;
@@ -325,13 +322,12 @@ vndgetdisklabel(dev_t dev, struct vnd_softc *sc)
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
 
-	/*
-	 * Call the generic disklabel extraction routine
-	 */
+	/* Call the generic disklabel extraction routine */
 	errstring = readdisklabel(VNDLABELDEV(dev), vndstrategy, lp,
 	    sc->sc_dk.dk_cpulabel, 0);
 	if (errstring) {
-		/*printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);*/
+		DNPRINTF(VDB_IO, "%s: %s\n", sc->sc_dev.dv_xname,
+		    errstring);
 		return;
 	}
 }
@@ -343,10 +339,7 @@ vndclose(dev_t dev, int flags, int mode, struct proc *p)
 	struct vnd_softc *sc;
 	int error = 0, part;
 
-#ifdef DEBUG
-	if (vnddebug & VDB_FOLLOW)
-		printf("vndclose(%x, %x, %x, %p)\n", dev, flags, mode, p);
-#endif
+	DNPRINTF(VDB_FOLLOW, "vndclose(%x, %x, %x, %p)\n", dev, flags, mode, p);
 
 	if (unit >= numvnd)
 		return (ENXIO);
@@ -404,10 +397,8 @@ vndstrategy(struct buf *bp)
 	struct uio auio;
 	struct proc *p = curproc;
 
-#ifdef DEBUG
-	if (vnddebug & VDB_FOLLOW)
-		printf("vndstrategy(%p): unit %d\n", bp, unit);
-#endif
+	DNPRINTF(VDB_FOLLOW, "vndstrategy(%p): unit %d\n", bp, unit);
+
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
@@ -544,7 +535,7 @@ vndstrategy(struct buf *bp)
 		VOP_UNLOCK(vnd->sc_vp, 0, p);
 		if (error == 0 && (long)nbn == -1)
 			error = EIO;
-#ifdef DEBUG
+#ifdef VNDDEBUG
 		if (!dovndcluster)
 			nra = 0;
 #endif
@@ -555,11 +546,9 @@ vndstrategy(struct buf *bp)
 			sz = (1 + nra) * bsize;
 		if (resid < sz)
 			sz = resid;
-#ifdef DEBUG
-		if (vnddebug & VDB_IO)
-			printf("vndstrategy: vp %p/%p bn %x/%x sz %x\n",
-			    vnd->sc_vp, vp, bn, nbn, sz);
-#endif
+
+		DNPRINTF(VDB_IO, "vndstrategy: vp %p/%p bn %x/%x sz %x\n",
+		    vnd->sc_vp, vp, bn, nbn, sz);
 
 		s = splbio();
 		nbp = getvndbuf();
@@ -643,12 +632,11 @@ vndstart(struct vnd_softc *vnd)
 	 */
 	bp = vnd->sc_tab.b_actf;
 	vnd->sc_tab.b_actf = bp->b_actf;
-#ifdef DEBUG
-	if (vnddebug & VDB_IO)
-		printf("vndstart(%d): bp %p vp %p blkno %x addr %p cnt %lx\n",
-		    vnd-vnd_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
-		    bp->b_bcount);
-#endif
+
+	DNPRINTF(VDB_IO,
+	    "vndstart(%d): bp %p vp %p blkno %x addr %p cnt %lx\n",
+	    vnd-vnd_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
+	    bp->b_bcount);
 
 	/* Instrumentation. */
 	disk_busy(&vnd->sc_dk);
@@ -667,19 +655,15 @@ vndiodone(struct buf *bp)
 
 	splassert(IPL_BIO);
 
-#ifdef DEBUG
-	if (vnddebug & VDB_IO)
-		printf("vndiodone(%d): vbp %p vp %p blkno %x addr %p cnt %lx\n",
-		    vnd-vnd_softc, vbp, vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
-		    vbp->vb_buf.b_data, vbp->vb_buf.b_bcount);
-#endif
+	DNPRINTF(VDB_IO,
+	    "vndiodone(%d): vbp %p vp %p blkno %x addr %p cnt %lx\n",
+	    vnd-vnd_softc, vbp, vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
+	    vbp->vb_buf.b_data, vbp->vb_buf.b_bcount);
 
 	if (vbp->vb_buf.b_error) {
-#ifdef DEBUG
-		if (vnddebug & VDB_IO)
-			printf("vndiodone: vbp %p error %d\n", vbp,
-			    vbp->vb_buf.b_error);
-#endif
+		DNPRINTF(VDB_IO, "vndiodone: vbp %p error %d\n", vbp,
+		    vbp->vb_buf.b_error);
+
 		pbp->b_flags |= B_ERROR;
 		pbp->b_error = biowait(&vbp->vb_buf);
 	}
@@ -694,10 +678,7 @@ vndiodone(struct buf *bp)
 			vnd->sc_tab.b_active--;
 	}
 	if (pbp->b_resid == 0) {
-#ifdef DEBUG
-		if (vnddebug & VDB_IO)
-			printf("vndiodone: pbp %p iodone\n", pbp);
-#endif
+		DNPRINTF(VDB_IO, "vndiodone: pbp %p iodone\n", pbp);
 		biodone(pbp);
 	}
 
@@ -710,10 +691,7 @@ vndread(dev_t dev, struct uio *uio, int flags)
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
 
-#ifdef DEBUG
-	if (vnddebug & VDB_FOLLOW)
-		printf("vndread(%x, %p)\n", dev, uio);
-#endif
+	DNPRINTF(VDB_FOLLOW, "vndread(%x, %p)\n", dev, uio);
 
 	if (unit >= numvnd)
 		return (ENXIO);
@@ -732,10 +710,7 @@ vndwrite(dev_t dev, struct uio *uio, int flags)
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
 
-#ifdef DEBUG
-	if (vnddebug & VDB_FOLLOW)
-		printf("vndwrite(%x, %p)\n", dev, uio);
-#endif
+	DNPRINTF(VDB_FOLLOW, "vndwrite(%x, %p)\n", dev, uio);
 
 	if (unit >= numvnd)
 		return (ENXIO);
@@ -759,11 +734,9 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	struct nameidata nd;
 	int error, part, pmask, s;
 
-#ifdef DEBUG
-	if (vnddebug & VDB_FOLLOW)
-		printf("vndioctl(%x, %lx, %p, %x, %p): unit %d\n",
-		    dev, cmd, addr, flag, p, unit);
-#endif
+	DNPRINTF(VDB_FOLLOW, "vndioctl(%x, %lx, %p, %x, %p): unit %d\n",
+	    dev, cmd, addr, flag, p, unit);
+
 	error = suser(p, 0);
 	if (error)
 		return (error);
@@ -854,11 +827,9 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		vndthrottle(vnd, vnd->sc_vp);
 		vio->vnd_size = dbtob((off_t)vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
-#ifdef DEBUG
-		if (vnddebug & VDB_INIT)
-			printf("vndioctl: SET vp %p size %llx\n",
-			    vnd->sc_vp, (unsigned long long)vnd->sc_size);
-#endif
+
+		DNPRINTF(VDB_INIT, "vndioctl: SET vp %p size %llx\n",
+		    vnd->sc_vp, (unsigned long long)vnd->sc_size);
 
 		/* Attach the disk. */
 		vnd->sc_dk.dk_driver = &vnddkdriver;
@@ -891,10 +862,8 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		}
 
 		vndclear(vnd);
-#ifdef DEBUG
-		if (vnddebug & VDB_INIT)
-			printf("vndioctl: CLRed\n");
-#endif
+		DNPRINTF(VDB_INIT, "vndioctl: CLRed\n");
+
 		/* Free crypto key */
 		if (vnd->sc_keyctx) {
 			bzero(vnd->sc_keyctx, sizeof(*vnd->sc_keyctx));
@@ -1062,10 +1031,8 @@ vndclear(struct vnd_softc *vnd)
 	struct vnode *vp = vnd->sc_vp;
 	struct proc *p = curproc;		/* XXX */
 
-#ifdef DEBUG
-	if (vnddebug & VDB_FOLLOW)
-		printf("vndclear(%p): vp %p\n", vnd, vp);
-#endif
+	DNPRINTF(VDB_FOLLOW, "vndclear(%p): vp %p\n", vnd, vp);
+
 	vnd->sc_flags &= ~VNF_INITED;
 	if (vp == NULL)
 		panic("vndioctl: null vp");
