@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.40 2007/01/13 21:04:03 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.41 2007/01/14 16:21:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -286,18 +286,31 @@ schizo_pci_error(void *vpbm)
 {
 	struct schizo_pbm *sp = vpbm;
 	struct schizo_softc *sc = sp->sp_sc;
-	u_int64_t afsr, afar, ctrl;
+	u_int64_t afsr, afar, ctrl, tfar;
+	u_int32_t csr;
 
 	afsr = schizo_pbm_read(sp, SCZ_PCI_AFSR);
 	afar = schizo_pbm_read(sp, SCZ_PCI_AFAR);
 	ctrl = schizo_pbm_read(sp, SCZ_PCI_CTRL);
+	csr = schizo_cfg_read(sp, PCI_COMMAND_STATUS_REG);
 
 	printf("%s: pci bus %c error\n", sc->sc_dv.dv_xname,
 	    sp->sp_bus_a ? 'A' : 'B');
 
-	printf("PCIAFSR=%lb\n", afsr, SCZ_PCIAFSR_BITS, afsr);
+	printf("PCIAFSR=%lb\n", afsr, SCZ_PCIAFSR_BITS);
 	printf("PCIAFAR=%lx\n", afar);
 	printf("PCICTRL=%lb\n", ctrl, SCZ_PCICTRL_BITS);
+	printf("PCICSR=%lb\n", csr, PCI_COMMAND_STATUS_BITS);
+
+	if (ctrl & SCZ_PCICTRL_MMU_ERR) {
+		ctrl = schizo_pbm_read(sp, SCZ_PCI_IOMMU_CTRL);
+		printf("IOMMUCTRL=%lx\n", ctrl);
+
+		if (sc->sc_tomatillo) {
+			tfar = schizo_pbm_read(sp, TOM_PCI_IOMMU_TFAR);
+			printf("IOMMUTFAR=%lx\n", ctrl);
+		}
+	}
 
 	panic("%s: fatal", sc->sc_dv.dv_xname);
 
