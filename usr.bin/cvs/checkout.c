@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.74 2007/01/13 15:56:15 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.75 2007/01/14 18:44:55 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -27,7 +27,6 @@ int	cvs_export(int, char **);
 
 static void checkout_check_repository(int, char **);
 static void checkout_repository(const char *, const char *);
-static void checkout_write_revision(RCSFILE *, RCSNUM *, char *);
 
 extern int prune_dirs;
 extern int build_dirs;
@@ -271,7 +270,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int flags)
 			    "%s/checkout.XXXXXXXXXX", cvs_tmpdir);
 
 			/* XXX - fd race below */
-			checkout_write_revision(cf->file_rcs, rnum, template);
+			rcs_rev_write_stmp(cf->file_rcs, rnum, template, 0);
 			cvs_remote_send_file(template);
 			(void)unlink(template);
 			xfree(template);
@@ -282,17 +281,4 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int flags)
 	}
 
 	xfree(entry);
-}
-
-static void
-checkout_write_revision(RCSFILE *rfp, RCSNUM *rev, char *template)
-{
-	int fd;
-
-	if ((fd = mkstemp(template)) == -1)
-		fatal("mkstemp: '%s': %s", template, strerror(errno));
-
-	cvs_worklist_add(template, &temp_files);
-	rcs_rev_write_fd(rfp, rev, fd, 0);
-	(void)close(fd);
 }
