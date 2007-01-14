@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.30 2007/01/11 00:04:48 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.31 2007/01/14 01:35:46 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -58,7 +58,7 @@ parse_options(struct packet *packet)
 
 	/* If we don't see the magic cookie, there's nothing to parse. */
 	if (memcmp(&client->packet.options, DHCP_OPTIONS_COOKIE, 4)) {
-		packet->options_valid = 0;
+		packet->options_valid = 1;
 		return;
 	}
 
@@ -74,12 +74,14 @@ parse_options(struct packet *packet)
 	 * options out of the buffer(s) containing them.
 	 */
 	if (packet->options_valid &&
+	    packet->options[DHO_DHCP_MESSAGE_TYPE].data &&
 	    packet->options[DHO_DHCP_OPTION_OVERLOAD].data) {
 		if (packet->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1)
 			parse_option_buffer(packet,
 			    (unsigned char *)client->packet.file,
 			    sizeof(client->packet.file));
-		if (packet->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)
+		if (packet->options_valid &&
+		    packet->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)
 			parse_option_buffer(packet,
 			    (unsigned char *)client->packet.sname,
 			    sizeof(client->packet.sname));
@@ -471,12 +473,10 @@ do_packet(int len, unsigned int from_port, struct iaddr from,
 	tp.client_addr = from;
 
 	parse_options(&tp);
-	if (tp.options_valid &&
-	    tp.options[DHO_DHCP_MESSAGE_TYPE].data)
+	if (tp.options[DHO_DHCP_MESSAGE_TYPE].data) {
 		tp.packet_type = tp.options[DHO_DHCP_MESSAGE_TYPE].data[0];
-	if (tp.packet_type)
 		dhcp(&tp);
-	else
+	} else if (tp.options_valid)
 		bootp(&tp);
 
 	/* Free the data associated with the options. */
