@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.22 2006/01/09 20:56:59 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.23 2007/01/14 18:50:23 martin Exp $	*/
 /*	$NetBSD: zs.c,v 1.19 1998/01/12 19:22:18 thorpej Exp $	*/
 
 /*
@@ -661,7 +661,7 @@ zs_set_speed(cs, bps)
 		}
 	}
 #ifdef ZSMACDEBUG
-	zsprintf("Checking for rate %d. Found source #%d.\n",bps, src);
+	printf("Checking for rate %d. Found source #%d.\n",bps, src);
 #endif
 	if (src == -1)
 		return (EINVAL); /* no can do */
@@ -708,9 +708,9 @@ zs_set_speed(cs, bps)
 	splx(s);
 
 #ifdef ZSMACDEBUG
-	zsprintf("Rate is %7d, tc is %7d, source no. %2d, flags %4x\n", \
+	printf("Rate is %7d, tc is %7d, source no. %2d, flags %4x\n", \
 		bps, tc, src, sf);
-	zsprintf("Registers are: 4 %x, 11 %x, 14 %x\n\n",
+	printf("Registers are: 4 %x, 11 %x, 14 %x\n\n",
 		cs->cs_preg[4], cs->cs_preg[11], cs->cs_preg[14]);
 #endif
 
