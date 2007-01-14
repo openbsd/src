@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.96 2006/12/20 16:50:13 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.97 2007/01/14 19:20:09 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -563,6 +563,11 @@ priv_adjtime(void)
 		for (i = 0; i < OFFSET_ARRAY_SIZE; i++)
 			p->reply[i].offset -= offset_median;
 		p->update.good = 0;
+	}
+	TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
+		for (i = 0; i < SENSOR_OFFSETS; i++)
+			s->offsets[i].offset -= offset_median;
+		s->update.offset -= offset_median;
 	}
 
 	return (0);
