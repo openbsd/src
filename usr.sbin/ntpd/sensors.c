@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.28 2006/12/28 00:24:27 naddy Exp $ */
+/*	$OpenBSD: sensors.c,v 1.29 2007/01/14 19:18:12 otto Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -164,8 +164,13 @@ sensor_query(struct ntp_sensor *s)
 
 	s->last = sensor.tv.tv_sec;
 	memcpy(&refid, "HARD", sizeof(refid));
-	s->offsets[s->shift].offset = (0 - (float)sensor.value / 1000000000.0) -
-	    getoffset();
+	/*
+	 * TD = device time
+	 * TS = system time
+	 * sensor.value = TS - TD in ns
+	 * if value is positive, system time is ahead
+	 */
+	s->offsets[s->shift].offset = (sensor.value / -1e9) - getoffset();
 	s->offsets[s->shift].rcvd = sensor.tv.tv_sec;
 	s->offsets[s->shift].good = 1;
 
