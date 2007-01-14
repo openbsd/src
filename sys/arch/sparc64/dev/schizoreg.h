@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizoreg.h,v 1.16 2007/01/12 21:32:38 kettenis Exp $	*/
+/*	$OpenBSD: schizoreg.h,v 1.17 2007/01/14 16:18:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -100,6 +100,7 @@ struct schizo_regs {
 #define	SCZ_PCI_IOMMU_TSBBASE		0x00208
 #define	SCZ_PCI_IOMMU_FLUSH		0x00210
 #define	SCZ_PCI_IOMMU_CTXFLUSH		0x00218
+#define	TOM_PCI_IOMMU_TFAR		0x00220
 #define	SCZ_PCI_IMAP_BASE		0x01000
 #define	SCZ_PCI_ICLR_BASE		0x01400
 #define	SCZ_PCI_INTR_RETRY		0x01a00	/* interrupt retry */
@@ -183,7 +184,7 @@ struct schizo_regs {
 
 #define	SCZ_PCICTRL_BUS_UNUS		(1UL << 63UL)		/* bus unusable */
 #define	TOM_PCICTRL_DTO_ERR		(1UL << 62UL)		/* pci discard timeout */
-#define	TOM_PCICTRL_DTO_INT		(1UL << 19UL)		/* discard intr en */
+#define	TOM_PCICTRL_DTO_INT		(1UL << 61UL)		/* discard intr en */
 #define	SCZ_PCICTRL_ESLCK		(1UL << 51UL)		/* error slot locked */
 #define	SCZ_PCICTRL_ERRSLOT		(7UL << 48UL)		/* error slot */
 #define	SCZ_PCICTRL_TTO_ERR		(1UL << 38UL)		/* pci trdy# timeout */
