@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.251 2007/01/13 07:42:13 miod Exp $
+$OpenBSD: usbdevs,v 1.252 2007/01/14 00:12:13 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1751,6 +1751,7 @@ product PHILIPS PCVC740K	0x0311	PCVC740K ToUCam Pro PC
 product PHILIPS PCVC750K	0x0312	PCVC750K ToUCam Pro Scan
 product PHILIPS DSS150		0x0471	DSS 150 Digital Speaker System
 product PHILIPS SNU6500		0x1233	SNU6500
+product PHILIPS SNU5600		0x1236	SNU5600
 product PHILIPS DIVAUSB		0x1801	DIVA mp3 player
 
 /* Philips Semiconductor products */
@@ -1913,6 +1914,7 @@ product SCANLOGIC 336CX		0x0300	Phantom 336CX - C3
 product SEALEVEL USBSERIAL	0x2101	USB-Serial converter
 
 /* Senao products */
+product SENAO NUB8301		0x2000	NUB-8301
 product SENAO NUB862		0x6100	NUB-862
 
 /* Serverworks */
@@ -2166,6 +2168,7 @@ product UMEDIA TEW429UB		0x300b	TEW-429UB
 product UMEDIA TEW444UBEU	0x3006	TEW-444UB EU
 product UMEDIA TEW444UBEU_NF	0x3007	TEW-444UB EU
 product UMEDIA TEW429UBC1	0x300d	TEW-429UB C1
+product UMEDIA ALL0298V2	0x3204	ALL0298 v2
 product UMEDIA AR5523_2		0x3205	AR5523
 product UMEDIA AR5523_2_NF	0x3206	AR5523
 
