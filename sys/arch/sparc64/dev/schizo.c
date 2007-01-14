@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.41 2007/01/14 16:21:22 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.42 2007/01/14 16:57:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -233,6 +233,8 @@ schizo_init(struct schizo_softc *sc, int busa)
 	/* clear out the bus errors */
 	schizo_pbm_write(pbm, SCZ_PCI_CTRL, schizo_pbm_read(pbm, SCZ_PCI_CTRL));
 	schizo_pbm_write(pbm, SCZ_PCI_AFSR, schizo_pbm_read(pbm, SCZ_PCI_AFSR));
+	schizo_cfg_write(pbm, PCI_COMMAND_STATUS_REG,
+	    schizo_cfg_read(pbm, PCI_COMMAND_STATUS_REG));
 
 	if (busa)
 		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_pci_error,
