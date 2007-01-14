@@ -1,4 +1,4 @@
-/*	$OpenBSD: frodo.c,v 1.10 2007/01/06 20:17:43 miod Exp $	*/
+/*	$OpenBSD: frodo.c,v 1.11 2007/01/14 17:54:45 miod Exp $	*/
 /*	$NetBSD: frodo.c,v 1.5 1999/07/31 21:15:20 thorpej Exp $	*/
 
 /*-
@@ -85,6 +85,13 @@
 
 #include "isabr.h"
 
+#if NISABR > 0
+#include <uvm/uvm_extern.h>
+
+#include <dev/isa/isareg.h>
+#include <hp300/dev/isabrreg.h>
+#endif
+
 struct frodo_softc {
 	struct device	sc_dev;		/* generic device glue */
 	volatile u_int8_t *sc_regs;	/* register base */
@@ -100,9 +107,9 @@ int	frodoprint(void *, const char *);
 int	frodosubmatch(struct device *, void *, void *);
 
 int	frodointr(void *);
-void	frodo_state(struct frodo_softc *);
-
 void	frodo_imask(struct frodo_softc *, u_int16_t, u_int16_t);
+int	frodo_isa_exists(void);
+void	frodo_state(struct frodo_softc *);
 
 struct cfattach frodo_ca = {
 	sizeof(struct frodo_softc), frodomatch, frodoattach
@@ -117,7 +124,6 @@ struct frodo_attach_args frodo_subdevs[] = {
 	{ "apci",	NULL,	FRODO_APCI_OFFSET(1),	FRODO_INTR_APCI1 },
 	{ "apci",	NULL,	FRODO_APCI_OFFSET(2),	FRODO_INTR_APCI2 },
 	{ "apci",	NULL,	FRODO_APCI_OFFSET(3),	FRODO_INTR_APCI3 },
-	{ "isabr",	NULL,	0,			0 },
 	{ NULL,		NULL,	0,			0 },
 };
 
@@ -220,6 +226,21 @@ frodoattach(parent, self, aux)
 		config_found_sm(self, &frodo_subdevs[i],
 		    frodoprint, frodosubmatch);
 	}
+
+#if NISABR > 0
+	/*
+	 * Only attempt to attach the isa bridge if it exists on this
+	 * machine.
+	 */
+	if (frodo_isa_exists()) {
+		struct frodo_attach_args fa;
+
+		fa.fa_name = "isabr";
+		fa.fa_tag = ia->ia_tag;
+		fa.fa_offset = fa.fa_line = 0;
+		config_found_sm(self, &fa, frodoprint, frodosubmatch);
+	}
+#endif
 }
 
 int
@@ -327,7 +348,7 @@ frodo_intr_disestablish(frdev, line)
 	if (FRODO_INTR_ISA(line)) {
 		if (sc->sc_intr[FRODO_INTR_ILOW] == NULL &&
 		    sc->sc_intr[FRODO_INTR_IMID] == NULL &&
-		    sc->sc_intr[FRODO_INTR_IHIGH] == NULL)
+		    sc->sc_intr[FRODO_INTR_IHI] == NULL)
 			FRODO_WRITE(sc, FRODO_PIO_ISA_CONTROL, 0x80);
 	}
 #endif
@@ -432,5 +453,40 @@ frodo_state(struct frodo_softc *sc)
 			printf(" /");
 	}
 	printf("\n");
+}
+#endif
+
+#if NISABR > 0
+int
+frodo_isa_exists()
+{
+	vaddr_t va;
+	int rv;
+
+	va = uvm_km_valloc(kernel_map, PAGE_SIZE);
+	if (va == NULL)
+		return (0);
+
+	/*
+	 * Check that the iomem space answers probes
+	 */
+	pmap_kenter_cache(va, ISABR_IOMEM_BASE, PG_RW | PG_CI);
+	pmap_update(pmap_kernel());
+	rv = badbaddr((caddr_t)va);
+	pmap_kremove(va, PAGE_SIZE);
+	pmap_update(pmap_kernel());
+
+	/*
+	 * Check that the ioport space answers probes
+	 */
+	pmap_kenter_cache(va, ISABR_IOPORT_BASE, PG_RW | PG_CI);
+	pmap_update(pmap_kernel());
+	rv |= badbaddr((caddr_t)va);
+	pmap_kremove(va, PAGE_SIZE);
+	pmap_update(pmap_kernel());
+
+	uvm_km_free(kernel_map, va, PAGE_SIZE);
+
+	return (!rv);
 }
 #endif

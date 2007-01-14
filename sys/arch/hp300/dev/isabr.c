@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabr.c,v 1.1 2007/01/06 20:17:43 miod Exp $	*/
+/*	$OpenBSD: isabr.c,v 1.2 2007/01/14 17:54:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Miodrag Vallat.
@@ -68,8 +68,6 @@ int
 isabr_match(struct device *parent, void *match, void *aux)
 {
 	struct frodo_attach_args *fa = aux;
-	vaddr_t va;
-	int rv;
 	static int isa_matched = 0;
 
 	if (isa_matched != 0)
@@ -78,32 +76,9 @@ isabr_match(struct device *parent, void *match, void *aux)
 	if (strcmp(fa->fa_name, isabr_cd.cd_name) != 0)
 		return (0);
 
-	va = uvm_km_valloc(kernel_map, PAGE_SIZE);
-	if (va == NULL)
-		return (0);
-
 	/*
-	 * Check that the iomem space answers probes
+	 * We assume parent has checked our physical existence for us.
 	 */
-	pmap_kenter_cache(va, ISABR_IOMEM_BASE, PG_RW | PG_CI);
-	pmap_update(pmap_kernel());
-	rv = badbaddr((caddr_t)va);
-	pmap_kremove(va, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-
-	/*
-	 * Check that the ioport space answers probes
-	 */
-	pmap_kenter_cache(va, ISABR_IOPORT_BASE, PG_RW | PG_CI);
-	pmap_update(pmap_kernel());
-	rv |= badbaddr((caddr_t)va);
-	pmap_kremove(va, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-
-	uvm_km_free(kernel_map, va, PAGE_SIZE);
-
-	if (rv != 0)
-		return (0);
 
 	return (isa_matched = 1);
 }
