@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.199 2007/01/13 20:59:49 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.200 2007/01/14 23:10:56 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -235,7 +235,6 @@ static int	rcs_pushtok(RCSFILE *, const char *, int);
 static void	rcs_growbuf(RCSFILE *);
 static void	rcs_strprint(const u_char *, size_t, FILE *);
 
-static BUF	*rcs_expand_keywords(char *, struct rcs_delta *, BUF *, int);
 static void	rcs_kwexp_line(char *, struct rcs_delta *, struct cvs_line *,
 		    int mode);
 
@@ -2464,207 +2463,6 @@ rcs_strprint(const u_char *str, size_t slen, FILE *stream)
 }
 
 /*
- * rcs_expand_keywords()
- *
- * Return expansion any RCS keywords in <data>
- *
- * On error, return NULL.
- */
-static BUF *
-rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
-{
-	BUF *newbuf;
-	int kwtype;
-	u_int j, found;
-	u_char *c, *kwstr, *start, *end, *fin;
-	char expbuf[256], buf[256];
-	char *fmt;
-	size_t len, kwlen;
-
-	kwtype = 0;
-	kwstr = NULL;
-
-	len = cvs_buf_len(bp);
-	if (len == 0)
-		return (bp);
-
-	c = cvs_buf_get(bp);
-	found = 0;
-	/* Final character in buffer. */
-	fin = c + len - 1;
-
-	/* If no keywords are found, return original buffer. */
-	newbuf = bp;
-
-	/*
-	 * Keyword formats:
-	 * $Keyword$
-	 * $Keyword: value$
-	 */
-	for (; c < fin; c++) {
-		if (*c == '$') {
-			BUF *tmpbuf;
-			size_t clen;
-
-			/* remember start of this possible keyword */
-			start = c;
-
-			/* first following character has to be alphanumeric */
-			c++;
-			if (!isalpha(*c)) {
-				c = start;
-				continue;
-			}
-
-			/* Number of characters between c and fin, inclusive. */
-			clen = fin - c + 1;
-
-			/* look for any matching keywords */
-			found = 0;
-			for (j = 0; j < RCS_NKWORDS; j++) {
-				kwlen = strlen(rcs_expkw[j].kw_str);
-				/*
-				 * kwlen must be less than clen since clen
-				 * includes either a terminating `$' or a `:'.
-				 */
-				if (kwlen < clen &&
-				    memcmp(c, rcs_expkw[j].kw_str, kwlen) == 0 &&
-				    (c[kwlen] == '$' || c[kwlen] == ':')) {
-					found = 1;
-					kwstr = rcs_expkw[j].kw_str;
-					kwtype = rcs_expkw[j].kw_type;
-					c += kwlen;
-					break;
-				}
-			}
-
-			/* unknown keyword, continue looking */
-			if (found == 0) {
-				c = start;
-				continue;
-			}
-
-			/*
-			 * if the next character was ':' we need to look for
-			 * an '$' before the end of the line to be sure it is
-			 * in fact a keyword.
-			 */
-			if (*c == ':') {
-				for (; c <= fin; ++c) {
-					if (*c == '$' || *c == '\n')
-						break;
-				}
-
-				if (*c != '$') {
-					c = start;
-					continue;
-				}
-			}
-			end = c + 1;
-
-			/* start constructing the expansion */
-			expbuf[0] = '\0';
-
-			if (mode & RCS_KWEXP_NAME) {
-				if (strlcat(expbuf, "$", sizeof(expbuf)) >= sizeof(expbuf) ||
-				    strlcat(expbuf, kwstr, sizeof(expbuf)) >= sizeof(expbuf))
-					fatal("rcs_expand_keywords: truncated");
-				if ((mode & RCS_KWEXP_VAL) &&
-				    strlcat(expbuf, ": ", sizeof(expbuf)) >= sizeof(expbuf))
-					fatal("rcs_expand_keywords: truncated");
-			}
-
-			/*
-			 * order matters because of RCS_KW_ID and
-			 * RCS_KW_HEADER here
-			 */
-			if (mode & RCS_KWEXP_VAL) {
-				if (kwtype & RCS_KW_RCSFILE) {
-					if (!(kwtype & RCS_KW_FULLPATH))
-						(void)strlcat(expbuf, basename(rcsfile), sizeof(expbuf));
-					else
-						(void)strlcat(expbuf, rcsfile, sizeof(expbuf));
-					if (strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: truncated");
-				}
-
-				if (kwtype & RCS_KW_REVISION) {
-					rcsnum_tostr(rdp->rd_num, buf, sizeof(buf));
-					if (strlcat(buf, " ", sizeof(buf)) >= sizeof(buf) ||
-					    strlcat(expbuf, buf, sizeof(expbuf)) >= sizeof(buf))
-						fatal("rcs_expand_keywords: truncated");
-				}
-
-				if (kwtype & RCS_KW_DATE) {
-					fmt = "%Y/%m/%d %H:%M:%S ";
-
-					strftime(buf, sizeof(buf), fmt, &rdp->rd_date);
-					if (strlcat(expbuf, buf, sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: string truncated");
-				}
-
-				if (kwtype & RCS_KW_AUTHOR) {
-					if (strlcat(expbuf, rdp->rd_author, sizeof(expbuf)) >= sizeof(expbuf) ||
-					    strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: string truncated");
-				}
-
-				if (kwtype & RCS_KW_STATE) {
-					if (strlcat(expbuf, rdp->rd_state, sizeof(expbuf)) >= sizeof(expbuf) ||
-					    strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: string truncated");
-				}
-
-				/* order does not matter anymore below */
-				if (kwtype & RCS_KW_LOG)
-					if (strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: string truncated");
-
-				if (kwtype & RCS_KW_SOURCE) {
-					if (strlcat(expbuf, rcsfile, sizeof(expbuf)) >= sizeof(expbuf) ||
-					    strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: string truncated");
-				}
-
-				if (kwtype & RCS_KW_NAME)
-					if (strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: string truncated");
-			}
-
-			/* end the expansion */
-			if (mode & RCS_KWEXP_NAME)
-				if (strlcat(expbuf, "$",
-				    sizeof(expbuf)) >= sizeof(expbuf))
-					fatal("rcs_expand_keywords: truncated");
-
-			/* Concatenate everything together. */
-			tmpbuf = cvs_buf_alloc(len + strlen(expbuf), BUF_AUTOEXT);
-			/* Append everything before keyword. */
-			cvs_buf_append(tmpbuf, cvs_buf_get(newbuf),
-			    start - (unsigned char *)cvs_buf_get(newbuf));
-			/* Append keyword. */
-			cvs_buf_append(tmpbuf, expbuf, strlen(expbuf));
-			/* Point c to end of keyword. */
-			c = cvs_buf_get(tmpbuf) + cvs_buf_len(tmpbuf) - 1;
-			/* Append everything after keyword. */
-			cvs_buf_append(tmpbuf, end,
-			    ((unsigned char *)cvs_buf_get(newbuf) + cvs_buf_len(newbuf)) - end);
-			/* Point fin to end of data. */
-			fin = cvs_buf_get(tmpbuf) + cvs_buf_len(tmpbuf) - 1;
-			/* Recalculate new length. */
-			len = cvs_buf_len(tmpbuf);
-
-			/* tmpbuf is now ready, free old newbuf if allocated here. */
-			if (newbuf != bp)
-				cvs_buf_free(newbuf);
-			newbuf = tmpbuf;
-		}
-	}
-
-	return (newbuf);
-}
-
-/*
  * rcs_deltatext_set()
  *
  * Set deltatext for <rev> in RCS file <rfp> to <dtext>
@@ -2803,34 +2601,6 @@ rcs_state_get(RCSFILE *rfp, RCSNUM *rev)
 		return (NULL);
 
 	return (rdp->rd_state);
-}
-
-/*
- * rcs_kwexp_buf()
- *
- * Do keyword expansion on a buffer if necessary
- *
- */
-BUF *
-rcs_kwexp_buf(BUF *bp, RCSFILE *rf, RCSNUM *rev)
-{
-	struct rcs_delta *rdp;
-	int expmode;
-
-	/*
-	 * Do keyword expansion if required.
-	 */
-	if (rf->rf_expand != NULL)
-		expmode = rcs_kwexp_get(rf);
-	else
-		expmode = RCS_KWEXP_DEFAULT;
-
-	if (!(expmode & RCS_KWEXP_NONE)) {
-		if ((rdp = rcs_findrev(rf, rev)) == NULL)
-			fatal("could not fetch revision");
-		return (rcs_expand_keywords(rf->rf_path, rdp, bp, expmode));
-	}
-	return (bp);
 }
 
 RCSNUM *
@@ -3031,17 +2801,38 @@ done:
  * return it as a BUF pointer.
  */
 BUF *
-rcs_rev_getbuf(RCSFILE *rfp, RCSNUM *rev)
+rcs_rev_getbuf(RCSFILE *rfp, RCSNUM *rev, int mode)
 {
+	int expmode, expand;
+	struct rcs_delta *rdp;
 	struct cvs_lines *lines;
 	struct cvs_line *lp;
 	BUF *bp;
 
+	expand = 0;
 	lines = rcs_rev_getlines(rfp, rev);
 	bp = cvs_buf_alloc(1024, BUF_AUTOEXT);
+
+	if (!(mode & RCS_KWEXP_NONE)) {
+		if (rfp->rf_expand != NULL)
+			expmode = rcs_kwexp_get(rfp);
+		else
+			expmode = RCS_KWEXP_DEFAULT;
+
+		if (!(expmode & RCS_KWEXP_NONE)) {
+			if ((rdp = rcs_findrev(rfp, rev)) == NULL)
+				fatal("could not fetch revision");
+			expand = 1;
+		}
+	}
+
 	TAILQ_FOREACH(lp, &lines->l_lines, l_list) {
 		if (lp->l_line == NULL)
 			continue;
+
+		if (expand)
+			rcs_kwexp_line(rfp->rf_path, rdp, lp, expmode);
+
 		cvs_buf_append(bp, lp->l_line, lp->l_len);
 	}
 
@@ -3059,13 +2850,14 @@ rcs_rev_getbuf(RCSFILE *rfp, RCSNUM *rev)
 void
 rcs_rev_write_fd(RCSFILE *rfp, RCSNUM *rev, int fd, int mode)
 {
-	int expmode;
+	int expmode, expand;
 	struct rcs_delta *rdp;
 	struct cvs_lines *lines;
 	struct cvs_line *lp;
 
+	expand = 0;
 	lines = rcs_rev_getlines(rfp, rev);
-	/* keyword expansion if necessary */
+
 	if (!(mode & RCS_KWEXP_NONE)) {
 		if (rfp->rf_expand != NULL)
 			expmode = rcs_kwexp_get(rfp);
@@ -3075,12 +2867,17 @@ rcs_rev_write_fd(RCSFILE *rfp, RCSNUM *rev, int fd, int mode)
 		if (!(expmode & RCS_KWEXP_NONE)) {
 			if ((rdp = rcs_findrev(rfp, rev)) == NULL)
 				fatal("could not fetch revision");
-			rcs_kwexp_lines(rfp->rf_path, rdp, lines, expmode);
+			expand = 1;
 		}
 	}
+
 	TAILQ_FOREACH(lp, &lines->l_lines, l_list) {
 		if (lp->l_line == NULL)
 			continue;
+
+		if (expand)
+			rcs_kwexp_line(rfp->rf_path, rdp, lp, expmode);
+
 		if (write(fd, lp->l_line, lp->l_len) == -1)
 			fatal("rcs_rev_write_fd: %s", strerror(errno));
 	}
@@ -3219,10 +3016,10 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 			if (mode & RCS_KWEXP_NAME) {
 				if (strlcat(expbuf, "$", sizeof(expbuf)) >= sizeof(expbuf) ||
 				    strlcat(expbuf, kwstr, sizeof(expbuf)) >= sizeof(expbuf))
-					fatal("rcs_expand_keywords: truncated");
+					fatal("rcs_kwexp_line: truncated");
 				if ((mode & RCS_KWEXP_VAL) &&
 				    strlcat(expbuf, ": ", sizeof(expbuf)) >= sizeof(expbuf))
-					fatal("rcs_expand_keywords: truncated");
+					fatal("rcs_kwexp_line: truncated");
 			}
 
 			/*
@@ -3236,14 +3033,14 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 					else
 						(void)strlcat(expbuf, rcsfile, sizeof(expbuf));
 					if (strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: truncated");
+						fatal("rcs_kwexp_line: truncated");
 				}
 
 				if (kwtype & RCS_KW_REVISION) {
 					rcsnum_tostr(rdp->rd_num, buf, sizeof(buf));
 					if (strlcat(buf, " ", sizeof(buf)) >= sizeof(buf) ||
 					    strlcat(expbuf, buf, sizeof(expbuf)) >= sizeof(buf))
-						fatal("rcs_expand_keywords: truncated");
+						fatal("rcs_kwexp_line: truncated");
 				}
 
 				if (kwtype & RCS_KW_DATE) {
@@ -3251,42 +3048,42 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 
 					strftime(buf, sizeof(buf), fmt, &rdp->rd_date);
 					if (strlcat(expbuf, buf, sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: string truncated");
+						fatal("rcs_kwexp_line: string truncated");
 				}
 
 				if (kwtype & RCS_KW_AUTHOR) {
 					if (strlcat(expbuf, rdp->rd_author, sizeof(expbuf)) >= sizeof(expbuf) ||
 					    strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: string truncated");
+						fatal("rcs_kwexp_line: string truncated");
 				}
 
 				if (kwtype & RCS_KW_STATE) {
 					if (strlcat(expbuf, rdp->rd_state, sizeof(expbuf)) >= sizeof(expbuf) ||
 					    strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: string truncated");
+						fatal("rcs_kwexp_line: string truncated");
 				}
 
 				/* order does not matter anymore below */
 				if (kwtype & RCS_KW_LOG)
 					if (strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: string truncated");
+						fatal("rcs_kwexp_line: string truncated");
 
 				if (kwtype & RCS_KW_SOURCE) {
 					if (strlcat(expbuf, rcsfile, sizeof(expbuf)) >= sizeof(expbuf) ||
 					    strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: string truncated");
+						fatal("rcs_kwexp_line: string truncated");
 				}
 
 				if (kwtype & RCS_KW_NAME)
 					if (strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: string truncated");
+						fatal("rcs_kwexp_line: string truncated");
 			}
 
 			/* end the expansion */
 			if (mode & RCS_KWEXP_NAME)
 				if (strlcat(expbuf, "$",
 				    sizeof(expbuf)) >= sizeof(expbuf))
-					fatal("rcs_expand_keywords: truncated");
+					fatal("rcs_kwexp_line: truncated");
 
 			/* Concatenate everything together. */
 			tmpbuf = cvs_buf_alloc(len + strlen(expbuf), BUF_AUTOEXT);
@@ -3311,24 +3108,4 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 			line->l_line = cvs_buf_release(tmpbuf);
 		}
 	}
-}
-
-/*
- * rcs_kwexp_lines()
- *
- * Do keyword expansion of cvs_lines struct, if necessary.
- * Any lines which need expansion are allocated memory in a separate malloc()
- * from the original, and l_needsfree is set to 1.  cvs_freelines() will check
- * for this and free if necessary.  This basically gives us 'copy-on-write'
- * semantics for expansion of keywords, so we do the minimum work required.
- *
- * On error, return NULL.
- */
-void
-rcs_kwexp_lines(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
-    int mode)
-{
-	struct cvs_line *lp;
-	TAILQ_FOREACH(lp, &lines->l_lines, l_list)
-		rcs_kwexp_line(rcsfile, rdp, lp, mode);
 }

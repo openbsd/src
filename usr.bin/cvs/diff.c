@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.112 2007/01/12 23:32:01 niallo Exp $	*/
+/*	$OpenBSD: diff.c,v 1.113 2007/01/14 23:10:56 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -209,10 +209,8 @@ cvs_diff_local(struct cvs_file *cf)
 		diff_rev1 = r1;
 		rcsnum_tostr(r1, rbuf , sizeof(rbuf));
 		cvs_printf("retrieving revision %s\n", rbuf);
-		if ((b1 = rcs_rev_getbuf(cf->file_rcs, r1)) == NULL)
+		if ((b1 = rcs_rev_getbuf(cf->file_rcs, r1, 0)) == NULL)
 			fatal("failed to retrieve revision %s", rbuf);
-
-		b1 = rcs_kwexp_buf(b1, cf->file_rcs, r1);
 
 		tv[0].tv_sec = rcs_rev_getdate(cf->file_rcs, r1);
 		tv[0].tv_usec = 0;
@@ -223,10 +221,8 @@ cvs_diff_local(struct cvs_file *cf)
 	    cf->file_status != FILE_REMOVED) {
 		rcsnum_tostr(diff_rev2, rbuf, sizeof(rbuf));
 		cvs_printf("retrieving revision %s\n", rbuf);
-		if ((b2 = rcs_rev_getbuf(cf->file_rcs, diff_rev2)) == NULL)
+		if ((b2 = rcs_rev_getbuf(cf->file_rcs, diff_rev2, 0)) == NULL)
 			fatal("failed to retrieve revision %s", rbuf);
-
-		b2 = rcs_kwexp_buf(b2, cf->file_rcs, diff_rev2);
 
 		tv2[0].tv_sec = rcs_rev_getdate(cf->file_rcs, diff_rev2);
 		tv2[0].tv_usec = 0;

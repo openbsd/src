@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.62 2007/01/13 20:29:46 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.63 2007/01/14 23:10:56 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -259,7 +259,7 @@ import_update(struct cvs_file *cf)
 		fatal("import_update: rcsnum_parse failed");
 
 	if (rev != NULL) {
-		if ((b1 = rcs_rev_getbuf(cf->file_rcs, rev)) == NULL)
+		if ((b1 = rcs_rev_getbuf(cf->file_rcs, rev, 0)) == NULL)
 			fatal("import_update: failed to grab revision");
 
 		if ((b2 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)

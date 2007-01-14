@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.72 2007/01/13 04:18:50 joris Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.73 2007/01/14 23:10:56 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -245,8 +245,6 @@ const char		*rcs_comment_lookup(const char *);
 const char		*rcs_comment_get(RCSFILE *);
 void			 rcs_comment_set(RCSFILE *, const char *);
 BUF			*rcs_kwexp_buf(BUF *, RCSFILE *, RCSNUM *);
-void			 rcs_kwexp_lines(char *, struct rcs_delta *,
-			     struct cvs_lines *, int);
 void			 rcs_kwexp_set(RCSFILE *, int);
 int			 rcs_kwexp_get(RCSFILE *);
 int			 rcs_rev_add(RCSFILE *, RCSNUM *, const char *, time_t,
@@ -263,7 +261,7 @@ void			 rcs_write(RCSFILE *);
 void			 rcs_rev_write_stmp(RCSFILE *,  RCSNUM *, char *, int);
 void			 rcs_rev_write_fd(RCSFILE *, RCSNUM *, int, int);
 struct cvs_lines	*rcs_rev_getlines(RCSFILE *, RCSNUM *);
-BUF			*rcs_rev_getbuf(RCSFILE *, RCSNUM *);
+BUF			*rcs_rev_getbuf(RCSFILE *, RCSNUM *, int);
 
 int	rcs_kflag_get(const char *);
 void	rcs_kflag_usage(void);
