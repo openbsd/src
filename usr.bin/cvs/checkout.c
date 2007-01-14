@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.75 2007/01/14 18:44:55 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.76 2007/01/14 22:20:46 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -30,6 +30,7 @@ static void checkout_repository(const char *, const char *);
 
 extern int prune_dirs;
 extern int build_dirs;
+extern int reset_stickies;
 
 struct cvs_cmd cvs_cmd_checkout = {
 	CVS_OP_CHECKOUT, 0, "checkout",
@@ -59,6 +60,9 @@ cvs_checkout(int argc, char **argv)
 
 	while ((ch = getopt(argc, argv, cvs_cmd_checkout.cmd_opts)) != -1) {
 		switch (ch) {
+		case 'A':
+			reset_stickies = 1;
+			break;
 		case 'P':
 			prune_dirs = 1;
 			break;
