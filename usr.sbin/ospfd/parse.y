@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.41 2007/01/11 21:36:49 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.42 2007/01/14 13:20:17 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -274,7 +274,7 @@ optlist_l	: optlist_l comma option {
 				YYERROR;
 			}
 			if ($1 & LSA_METRIC_MASK && $3 & LSA_METRIC_MASK) {
-				yyerror("redistribute metricr already defined");
+				yyerror("redistribute metric already defined");
 				YYERROR;
 			}
 			$$ = $1 | $3;
