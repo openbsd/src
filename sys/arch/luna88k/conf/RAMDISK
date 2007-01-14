@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.7 2005/09/06 19:21:55 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.8 2007/01/14 13:53:28 aoyama Exp $
 
 machine		luna88k m88k
 
@@ -8,6 +8,9 @@ option		RAMDISK_HOOKS
 
 # Processor type
 option		M88100		# 88100 support; mandatory
+
+# Number of maximum processors
+option		MAX_CPUS=4	# may have up to 4 processors 
 
 # Define this if your processor has the xxx.usr bug (mask C82N)
 option		ERRATA__XXX_USR
