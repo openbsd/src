@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.28 2007/01/12 14:33:01 pedro Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.29 2007/01/14 21:50:05 pedro Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -584,13 +584,12 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 			if (DOINGSOFTDEP(vp))
 				softdep_setup_allocdirect(ip, lbn, newb, 0,
 				    nsize, 0, bpp ? *bpp : NULL);
-
-			ip->i_ffs2_db[lbn] = newb;
-			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-
-			return (0);
 		}
 
+		ip->i_ffs2_db[lbn] = newb;
+		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+
+		return (0);
 	}
 
 	/*
