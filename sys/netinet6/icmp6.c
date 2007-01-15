@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.90 2006/12/09 01:12:28 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.91 2007/01/15 21:32:29 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -619,6 +619,7 @@ icmp6_input(mp, offp, proto)
 		} else {
 	 deliverecho:
 			nip6 = mtod(n, struct ip6_hdr *);
+			IP6_EXTHDR_GET(nicmp6, struct icmp6_hdr *, n, off, NULL);
 			nicmp6 = (struct icmp6_hdr *)((caddr_t)nip6 + off);
 			noff = off;
 		}
