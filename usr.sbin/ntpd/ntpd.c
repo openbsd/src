@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.48 2006/06/30 16:52:13 deraadt Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.49 2007/01/15 08:19:11 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,7 +81,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct ntpd_conf	 conf;
+	struct ntpd_conf	 lconf;
 	struct pollfd		 pfd[POLL_MAX];
 	pid_t			 chld_pid = 0, pid;
 	const char		*conffile;
@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 
 	conffile = CONFFILE;
 
-	bzero(&conf, sizeof(conf));
+	bzero(&lconf, sizeof(lconf));
 
 	log_init(1);		/* log to stderr until daemonized */
 	res_init();		/* XXX */
@@ -98,16 +98,16 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "df:sS")) != -1) {
 		switch (ch) {
 		case 'd':
-			conf.debug = 1;
+			lconf.debug = 1;
 			break;
 		case 'f':
 			conffile = optarg;
 			break;
 		case 's':
-			conf.settime = 1;
+			lconf.settime = 1;
 			break;
 		case 'S':
-			conf.settime = 0;
+			lconf.settime = 0;
 			break;
 		default:
 			usage();
@@ -115,7 +115,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (parse_config(conffile, &conf))
+	if (parse_config(conffile, &lconf))
 		exit(1);
 
 	if (geteuid()) {
@@ -130,9 +130,9 @@ main(int argc, char *argv[])
 	endpwent();
 
 	reset_adjtime();
-	if (!conf.settime) {
-		log_init(conf.debug);
-		if (!conf.debug)
+	if (!lconf.settime) {
+		log_init(lconf.debug);
+		if (!lconf.debug)
 			if (daemon(1, 0))
 				fatal("daemon");
 	} else
@@ -143,7 +143,7 @@ main(int argc, char *argv[])
 
 	signal(SIGCHLD, sighdlr);
 	/* fork child process */
-	chld_pid = ntp_main(pipe_chld, &conf);
+	chld_pid = ntp_main(pipe_chld, &lconf);
 
 	setproctitle("[priv]");
 	readfreq();
@@ -170,13 +170,13 @@ main(int argc, char *argv[])
 				quit = 1;
 			}
 
-		if (nfds == 0 && conf.settime) {
-			conf.settime = 0;
+		if (nfds == 0 && lconf.settime) {
+			lconf.settime = 0;
 			timeout = INFTIM;
-			log_init(conf.debug);
+			log_init(lconf.debug);
 			log_debug("no reply received in time, skipping initial "
 			    "time setting");
-			if (!conf.debug)
+			if (!lconf.debug)
 				if (daemon(1, 0))
 					fatal("daemon");
 		}
@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 
 		if (nfds > 0 && pfd[PFD_PIPE].revents & POLLIN) {
 			nfds--;
-			if (dispatch_imsg(&conf) == -1)
+			if (dispatch_imsg(&lconf) == -1)
 				quit = 1;
 		}
 
@@ -244,7 +244,7 @@ check_child(pid_t pid, const char *pname)
 }
 
 int
-dispatch_imsg(struct ntpd_conf *conf)
+dispatch_imsg(struct ntpd_conf *lconf)
 {
 	struct imsg		 imsg;
 	int			 n, cnt;
@@ -285,16 +285,16 @@ dispatch_imsg(struct ntpd_conf *conf)
 		case IMSG_SETTIME:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(d))
 				fatalx("invalid IMSG_SETTIME received");
-			if (!conf->settime)
+			if (!lconf->settime)
 				break;
-			log_init(conf->debug);
+			log_init(lconf->debug);
 			memcpy(&d, imsg.data, sizeof(d));
 			ntpd_settime(d);
 			/* daemonize now */
-			if (!conf->debug)
+			if (!lconf->debug)
 				if (daemon(1, 0))
 					fatal("daemon");
-			conf->settime = 0;
+			lconf->settime = 0;
 			break;
 		case IMSG_HOST_DNS:
 			name = imsg.data;

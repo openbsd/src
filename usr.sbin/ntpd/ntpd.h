@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.80 2006/12/23 17:49:53 deraadt Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.81 2007/01/15 08:19:11 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -263,6 +263,7 @@ int	 priv_adjtime(void);
 void	 priv_settime(double);
 void	 priv_host_dns(char *, u_int32_t);
 int	 offset_compare(const void *, const void *);
+extern struct ntpd_conf *conf;
 
 /* parse.y */
 int	 parse_config(const char *, struct ntpd_conf *);
@@ -306,7 +307,7 @@ double			sfp_to_d(struct s_fixedpt);
 struct s_fixedpt	d_to_sfp(double);
 
 /* sensors.c */
-void			sensor_init(struct ntpd_conf *);
+void			sensor_init(void);
 void			sensor_scan(void);
 void			sensor_query(struct ntp_sensor *);
 int			sensor_hotplugfd(void);

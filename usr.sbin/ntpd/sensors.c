@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.29 2007/01/14 19:18:12 otto Exp $ */
+/*	$OpenBSD: sensors.c,v 1.30 2007/01/15 08:19:11 otto Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -39,12 +39,9 @@ void	sensor_add(int, char *);
 void	sensor_remove(struct ntp_sensor *);
 void	sensor_update(struct ntp_sensor *);
 
-struct ntpd_conf *conf;
-
 void
-sensor_init(struct ntpd_conf *c)
+sensor_init(void)
 {
-	conf = c;
 	TAILQ_INIT(&conf->ntp_sensors);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.97 2007/01/14 19:20:09 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.98 2007/01/15 08:19:11 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -165,7 +165,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	conf->status.precision = a;
 	conf->scale = 1;
 
-	sensor_init(conf);
+	sensor_init();
 
 	log_info("ntp engine ready");
 

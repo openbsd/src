@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.30 2006/07/01 18:52:46 otto Exp $ */
+/*	$OpenBSD: server.c,v 1.31 2007/01/15 08:19:11 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 #include "ntpd.h"
 
 int
-setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
+setup_listeners(struct servent *se, struct ntpd_conf *lconf, u_int *cnt)
 {
 	struct listen_addr	*la;
 	struct ifaddrs		*ifa, *ifap;
@@ -38,7 +38,7 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 	u_int			 new_cnt = 0;
 	int			 tos = IPTOS_LOWDELAY;
 
-	if (conf->listen_all) {
+	if (lconf->listen_all) {
 		if (getifaddrs(&ifa) == -1)
 			fatal("getifaddrs");
 
@@ -69,13 +69,13 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 				fatal("setup_listeners calloc");
 
 			memcpy(&la->sa, sa, SA_LEN(sa));
-			TAILQ_INSERT_TAIL(&conf->listen_addrs, la, entry);
+			TAILQ_INSERT_TAIL(&lconf->listen_addrs, la, entry);
 		}
 
 		freeifaddrs(ifa);
 	}
 
-	TAILQ_FOREACH(la, &conf->listen_addrs, entry) {
+	TAILQ_FOREACH(la, &lconf->listen_addrs, entry) {
 		new_cnt++;
 
 		switch (la->sa.ss_family) {
@@ -114,7 +114,7 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 }
 
 int
-server_dispatch(int fd, struct ntpd_conf *conf)
+server_dispatch(int fd, struct ntpd_conf *lconf)
 {
 	ssize_t			 size;
 	u_int8_t		 version;
@@ -144,8 +144,8 @@ server_dispatch(int fd, struct ntpd_conf *conf)
 	version = (query.status & VERSIONMASK) >> 3;
 
 	bzero(&reply, sizeof(reply));
-	if (conf->status.synced)
-		reply.status = conf->status.leap;
+	if (lconf->status.synced)
+		reply.status = lconf->status.leap;
 	else
 		reply.status = LI_ALARM;
 	reply.status |= (query.status & VERSIONMASK);
@@ -154,19 +154,19 @@ server_dispatch(int fd, struct ntpd_conf *conf)
 	else
 		reply.status |= MODE_SYM_PAS;
 
-	reply.stratum =	conf->status.stratum;
+	reply.stratum =	lconf->status.stratum;
 	reply.ppoll = query.ppoll;
-	reply.precision = conf->status.precision;
+	reply.precision = lconf->status.precision;
 	reply.rectime = d_to_lfp(rectime);
-	reply.reftime = d_to_lfp(conf->status.reftime);
+	reply.reftime = d_to_lfp(lconf->status.reftime);
 	reply.xmttime = d_to_lfp(gettime_corrected());
 	reply.orgtime = query.xmttime;
-	reply.rootdelay = d_to_sfp(conf->status.rootdelay);
+	reply.rootdelay = d_to_sfp(lconf->status.rootdelay);
 
 	if (version > 3)
-		reply.refid = conf->status.refid4;
+		reply.refid = lconf->status.refid4;
 	else
-		reply.refid = conf->status.refid;
+		reply.refid = lconf->status.refid;
 
 	ntp_sendmsg(fd, (struct sockaddr *)&fsa, &reply, size, 0);
 	return (0);
