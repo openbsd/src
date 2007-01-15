@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.6 2006/11/09 00:12:12 deraadt Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.7 2007/01/15 22:22:19 martin Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*-
@@ -148,6 +148,8 @@ caddr_t allocsys(caddr_t);
 uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int dumpsize;			/* pages */
 long dumplo;	 		/* blocks */
+
+int kbd_reset;
 
 void
 sh_cpu_init(int arch, int product)
@@ -675,6 +677,11 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
 	}
+
+	case CPU_KBDRESET:
+		if (securelevel > 0)
+			return (sysctl_rdint(oldp, oldlenp, newp, kbd_reset));
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &kbd_reset));
 
 	default:
 		return (EOPNOTSUPP);

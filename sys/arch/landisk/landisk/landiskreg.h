@@ -1,4 +1,4 @@
-/*	$OpenBSD: landiskreg.h,v 1.2 2006/12/18 22:11:29 martin Exp $	*/
+/*	$OpenBSD: landiskreg.h,v 1.3 2007/01/15 22:22:19 martin Exp $	*/
 /*	$NetBSD: landiskreg.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@
 #define	INTEN_PCI3		0x08	/* ohci1 */
 #define	INTEN_ICONNECT		0x10	/* wdc1 at obio */
 #define	INTEN_CFIDE		0x20	/* wdc0 at obio */
-#define	INTEN_PWRSW		0x40	/* pwrsw at obio */
+#define	INTEN_PWRSW		0x40	/* power at obio */
 #define	INTEN_BTN		0x80	/* btn at obio */
 
 #define	LANDISK_INTR_PCI0	5	/* re/ehci */
