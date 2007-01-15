@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.80 2007/01/15 11:05:53 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.81 2007/01/15 11:18:17 pedro Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -3612,7 +3612,6 @@ initiate_write_inodeblock_ufs2(inodedep, bp)
 	inodedep->id_savedsize = dp->di_size;
 	if (TAILQ_FIRST(&inodedep->id_inoupdt) == NULL)
 		return;
-	ACQUIRE_LOCK(&lk);
 
 #ifdef notyet
 	inodedep->id_savedextsize = dp->di_extsize;
@@ -3622,7 +3621,6 @@ initiate_write_inodeblock_ufs2(inodedep, bp)
 	/*
 	 * Set the ext data dependencies to busy.
 	 */
-	ACQUIRE_LOCK(&lk);
 	for (deplist = 0, adp = TAILQ_FIRST(&inodedep->id_extupdt); adp;
 	     adp = TAILQ_NEXT(adp, ad_next)) {
 #ifdef DIAGNOSTIC
@@ -3756,7 +3754,6 @@ initiate_write_inodeblock_ufs2(inodedep, bp)
 #endif /* DIAGNOSTIC */
 			dp->di_ib[i] = 0;
 		}
-		FREE_LOCK(&lk);
 		return;
 	}
 	/*
@@ -3785,7 +3782,6 @@ initiate_write_inodeblock_ufs2(inodedep, bp)
 	 */
 	for (; adp; adp = TAILQ_NEXT(adp, ad_next))
 		dp->di_ib[adp->ad_lbn - NDADDR] = 0;
-	FREE_LOCK(&lk);
 }
 #endif /* UFS2 */
 
