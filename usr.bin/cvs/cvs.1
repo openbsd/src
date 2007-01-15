@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.101 2006/12/11 07:59:18 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.102 2007/01/15 11:59:54 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004-2006 Xavier Santolaria <xsa@openbsd.org>
@@ -1437,7 +1437,7 @@ The
 command is used to merge any of the changes that have occurred on the remote
 repository into the local one where the command was run.
 .Bd -literal -offset indent
-Usage: cvs update [-AdflPpR] [-D date | -r rev] [-I ign]
+Usage: cvs update [-ACdflPpR] [-D date | -r rev] [-I ign]
                   [-j rev] [-k mode] [-W spec] [file ...]
 .Ed
 .Pp
@@ -1448,6 +1448,8 @@ command takes the following options:
 .It Fl A
 Reset any sticky tags, dates, or keyword substitution modes that
 have been set on the tree.
+.It Fl C
+Overwrite locally modified files with clean repository copies.
 .It Fl D Ar date
 Update as of the latest revision no later than
 .Ar date
