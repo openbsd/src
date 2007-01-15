@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.191 2006/12/23 21:08:01 krw Exp $	*/
+/*	$OpenBSD: ci.c,v 1.192 2007/01/15 14:34:54 millert Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -574,6 +574,11 @@ checkin_update(struct checkin_params *pb)
 	    !(pb->flags & CI_DEFAULT))
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
 		    pb->username, pb->author, NULL, NULL);
+
+	if ((pb->flags & INTERACTIVE) && (pb->rcs_msg[0] == '\0')) {
+		xfree(pb->rcs_msg);	/* free empty log message */
+		pb->rcs_msg = NULL;
+	}
 out:
 	return (0);
 
