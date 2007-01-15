@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.10 2006/11/07 09:09:43 otto Exp $	*/
+/*	$OpenBSD: clock.c,v 1.11 2007/01/15 23:19:05 jsg Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -135,22 +135,16 @@ __inline u_int mc146818_read(void *, u_int);
 __inline void mc146818_write(void *, u_int, u_int);
 
 __inline u_int
-mc146818_read(sc, reg)
-	void *sc;					/* XXX use it? */
-	u_int reg;
+mc146818_read(void *sc, u_int reg)
 {
-
 	outb(IO_RTC, reg);
 	DELAY(1);
 	return (inb(IO_RTC+1));
 }
 
 __inline void
-mc146818_write(sc, reg, datum)
-	void *sc;					/* XXX use it? */
-	u_int reg, datum;
+mc146818_write(void *sc, u_int reg, u_int datum)
 {
-
 	outb(IO_RTC, reg);
 	DELAY(1);
 	outb(IO_RTC+1, datum);
@@ -190,7 +184,7 @@ initrtclock(void)
 }
 
 void
-startrtclock()
+startrtclock(void)
 {
 	int s;
 
@@ -240,7 +234,7 @@ rtcintr(void *arg)
 }
 
 int
-gettick()
+gettick(void)
 {
 	u_long ef;
 	u_char lo, hi;
@@ -344,7 +338,7 @@ rtcdrain(void *v)
 }
 
 void
-i8254_initclocks()
+i8254_initclocks(void)
 {
 	static struct timeout rtcdrain_timeout;
 
@@ -371,8 +365,7 @@ i8254_initclocks()
 }
 
 int
-rtcget(regs)
-	mc_todregs *regs;
+rtcget(mc_todregs *regs)
 {
 	if ((mc146818_read(NULL, MC_REGD) & MC_REGD_VRT) == 0) /* XXX softc */
 		return (-1);
@@ -381,25 +374,20 @@ rtcget(regs)
 }	
 
 void
-rtcput(regs)
-	mc_todregs *regs;
+rtcput(mc_todregs *regs)
 {
 	MC146818_PUTTOD(NULL, regs);			/* XXX softc */
 }
 
 int
-bcdtobin(n)
-	int n;
+bcdtobin(int n)
 {
-
 	return (((n >> 4) & 0x0f) * 10 + (n & 0x0f));
 }
 
 int
-bintobcd(n)
-	int n;
+bintobcd(int n)
 {
-
 	return ((u_char)(((n / 10) << 4) & 0xf0) | ((n % 10) & 0x0f));
 }
 
@@ -411,7 +399,7 @@ static int timeset;
  */
 static int cmoscheck(void);
 static int
-cmoscheck()
+cmoscheck(void)
 {
 	int i;
 	unsigned short cksum = 0;
@@ -429,7 +417,7 @@ cmoscheck()
  */
 static int cmoscheckps2(void);
 static int
-cmoscheckps2()
+cmoscheckps2(void)
 {
 #if 0
 	/* Disabled until I find out the CRC checksum algorithm IBM uses */
@@ -464,8 +452,7 @@ int rtc_update_century = 0;
 static int centb = NVRAM_CENTURY;
 static int clock_expandyear(int);
 static int
-clock_expandyear(clockyear)
-	int clockyear;
+clock_expandyear(int clockyear)
 {
 	int s, clockcentury, cmoscentury;
 
@@ -613,7 +600,7 @@ fstime:
  * Reset the clock.
  */
 void
-resettodr()
+resettodr(void)
 {
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
@@ -658,8 +645,7 @@ resettodr()
 }
 
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
 	if (arg == stathz)
 		mc146818_write(NULL, MC_REGA, MC_BASE_32_KHz | MC_RATE_128_Hz);

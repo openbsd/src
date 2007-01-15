@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.8 2007/01/12 07:41:31 art Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.9 2007/01/15 23:19:05 jsg Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -93,11 +93,8 @@ gdt_unlock(void)
 }
 
 void
-set_mem_gdt(sd, base, limit, type, dpl, gran, def32, is64)
-	struct mem_segment_descriptor *sd;
-	void *base;
-	size_t limit;
-	int type, dpl, gran, def32, is64;
+set_mem_gdt(struct mem_segment_descriptor *sd, void *base, size_t limit,
+    int type, int dpl, int gran, int def32, int is64)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
@@ -113,11 +110,8 @@ set_mem_gdt(sd, base, limit, type, dpl, gran, def32, is64)
 }
 
 void
-set_sys_gdt(sd, base, limit, type, dpl, gran)
-	struct sys_segment_descriptor *sd;
-	void *base;
-	size_t limit;
-	int type, dpl, gran;
+set_sys_gdt(struct sys_segment_descriptor *sd, void *base, size_t limit,
+    int type, int dpl, int gran)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
@@ -137,7 +131,7 @@ set_sys_gdt(sd, base, limit, type, dpl, gran)
  * Initialize the GDT.
  */
 void
-gdt_init()
+gdt_init(void)
 {
 	char *old_gdt;
 	struct vm_page *pg;
@@ -217,7 +211,7 @@ gdt_reload_cpu(struct cpu_info *ci)
  * Grow or shrink the GDT.
  */
 void
-gdt_grow()
+gdt_grow(void)
 {
 	size_t old_len;
 	struct vm_page *pg;
@@ -249,7 +243,7 @@ gdt_grow()
  *    the new slots.
  */
 int
-gdt_get_slot()
+gdt_get_slot(void)
 {
 	int slot;
 	struct sys_segment_descriptor *gdt;
@@ -285,8 +279,7 @@ gdt_get_slot()
  * Deallocate a GDT slot, putting it on the free list.
  */
 void
-gdt_put_slot(slot)
-	int slot;
+gdt_put_slot(int slot)
 {
 	struct sys_segment_descriptor *gdt;
 
@@ -303,8 +296,7 @@ gdt_put_slot(slot)
 }
 
 int
-tss_alloc(pcb)
-	struct pcb *pcb;
+tss_alloc(struct pcb *pcb)
 {
 	int slot;
 	struct sys_segment_descriptor *gdt;
@@ -344,10 +336,7 @@ tss_free(int sel)
 }
 
 void
-ldt_alloc(pmap, ldt, len)
-	struct pmap *pmap;
-	char *ldt;
-	size_t len;
+ldt_alloc(struct pmap *pmap, char *ldt, size_t len)
 {
 	int slot;
 	struct sys_segment_descriptor *gdt;
@@ -360,8 +349,7 @@ ldt_alloc(pmap, ldt, len)
 }
 
 void
-ldt_free(pmap)
-	struct pmap *pmap;
+ldt_free(struct pmap *pmap)
 {
 	int slot;
 

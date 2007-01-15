@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.1 2005/10/05 21:48:34 tdeval Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.2 2007/01/15 23:19:05 jsg Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -63,9 +63,7 @@
 #define RBUS_MEM_SIZE	0x00100000
 
 rbus_tag_t
-rbus_pccbb_parent_mem(self, pa)
-     struct device *self;
-     struct pci_attach_args *pa;
+rbus_pccbb_parent_mem(struct device *self, struct pci_attach_args *pa)
 {
 	bus_addr_t start, min_start;
 	bus_size_t size;
@@ -111,9 +109,7 @@ rbus_pccbb_parent_mem(self, pa)
 #define RBUS_IO_SIZE	0x1000
 
 rbus_tag_t
-rbus_pccbb_parent_io(self, pa)
-     struct device *self;
-     struct pci_attach_args *pa;
+rbus_pccbb_parent_io(struct device *self, struct pci_attach_args *pa)
 {
 	struct extent *ex;
 	bus_addr_t start;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aapic.c,v 1.2 2006/03/11 02:37:54 brad Exp $	*/
+/*	$OpenBSD: aapic.c,v 1.3 2007/01/15 23:19:05 jsg Exp $	*/
 /* 	$NetBSD: aapic.c,v 1.3 2005/01/13 23:40:01 fvdl Exp $	*/
 
 /*
@@ -43,10 +43,7 @@ struct cfdriver aapic_cd = {
 };
 
 int
-aapic_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+aapic_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -58,9 +55,7 @@ aapic_match(parent, match, aux)
 }
 
 void
-aapic_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+aapic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	int bus, dev, func;

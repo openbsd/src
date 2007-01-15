@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.9 2006/01/30 20:34:45 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.10 2007/01/15 23:19:05 jsg Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -156,8 +156,7 @@ static void frame_dump(struct trapframe *);
  */
 /*ARGSUSED*/
 void
-trap(frame)
-	struct trapframe frame;
+trap(struct trapframe frame)
 {
 	struct proc *p = curproc;
 	int type = (int)frame.tf_trapno;

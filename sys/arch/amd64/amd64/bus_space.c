@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.3 2005/10/26 18:46:06 martin Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.4 2007/01/15 23:19:05 jsg Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ int	x86_mem_add_mapping(bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *);
 
 void
-x86_bus_space_init()
+x86_bus_space_init(void)
 {
 	/*
 	 * Initialize the I/O port and I/O mem extent maps.
@@ -95,19 +95,15 @@ x86_bus_space_init()
 }
 
 void
-x86_bus_space_mallocok()
+x86_bus_space_mallocok(void)
 {
 
 	ioport_malloc_safe = 1;
 }
 
 int
-x86_memio_map(t, bpa, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+x86_memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
+    bus_space_handle_t *bshp)
 {
 	int error;
 	struct extent *ex;
@@ -162,12 +158,8 @@ x86_memio_map(t, bpa, size, flags, bshp)
 }
 
 int
-_x86_memio_map(t, bpa, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+_x86_memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
+    bus_space_handle_t *bshp)
 {
 
 	/*
@@ -186,14 +178,9 @@ _x86_memio_map(t, bpa, size, flags, bshp)
 }
 
 int
-x86_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
-    bpap, bshp)
-	bus_space_tag_t t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int flags;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+x86_memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
+    bus_size_t size, bus_size_t alignment, bus_size_t boundary, int flags,
+    bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 	struct extent *ex;
 	u_long bpa;
@@ -254,11 +241,8 @@ x86_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
 }
 
 int
-x86_mem_add_mapping(bpa, size, cacheable, bshp)
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
+    bus_space_handle_t *bshp)
 {
 	u_long pa, endpa;
 	vaddr_t va;
@@ -324,11 +308,8 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
  *   for the convenience of the extra extent manager.
  */
 void
-_x86_memio_unmap(t, bsh, size, adrp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-	bus_addr_t *adrp;
+_x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size,
+    bus_addr_t *adrp)
 {
 	u_long va, endva;
 	bus_addr_t bpa;
@@ -374,10 +355,7 @@ _x86_memio_unmap(t, bsh, size, adrp)
 }
 
 void
-x86_memio_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	struct extent *ex;
 	u_long va, endva;
@@ -427,10 +405,7 @@ ok:
 }
 
 void
-x86_memio_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+x86_memio_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	/* x86_memio_unmap() does all that we need to do. */
@@ -438,11 +413,8 @@ x86_memio_free(t, bsh, size)
 }
 
 int
-x86_memio_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+x86_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;
@@ -450,12 +422,7 @@ x86_memio_subregion(t, bsh, offset, size, nbshp)
 }
 
 paddr_t
-x86_memio_mmap(t, addr, off, prot, flags)
-	bus_space_tag_t t;
-	bus_addr_t addr;
-	off_t off;
-	int prot;
-	int flags;
+x86_memio_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot, int flags)
 {
 
 	/* Can't mmap I/O space. */

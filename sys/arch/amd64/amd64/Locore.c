@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.1 2004/01/28 01:39:38 mickey Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.2 2007/01/15 23:19:05 jsg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,8 +45,7 @@
  * Calls should be made at splstatclock(), and p->p_stat should be SRUN.
  */
 void
-setrunqueue(p)
-	struct proc *p;
+setrunqueue(struct proc *p)
 {
 	struct  prochd *q;
 	struct proc *oldlast;
@@ -69,8 +68,7 @@ setrunqueue(p)
  * Calls should be made at splstatclock().
  */
 void
-remrunqueue(p)
-	struct proc *p;
+remrunqueue(struct proc *p)
 {
 	int which = p->p_priority >> 2;
 	struct prochd *q;

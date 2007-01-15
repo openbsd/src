@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.4 2006/06/30 21:34:45 miod Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.5 2007/01/15 23:19:05 jsg Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -84,10 +84,7 @@ int amd64_set_mtrr(struct proc *, void *, register_t *);
 
 #if defined(USER_LDT) && 0
 int
-amd64_get_ldt(p, args, retval)
-	struct proc *p;
-	void *args;
-	register_t *retval;
+amd64_get_ldt(struct proc *p, void *args, register_t *retval)
 {
 	int error;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
@@ -133,10 +130,7 @@ amd64_get_ldt(p, args, retval)
 }
 
 int
-amd64_set_ldt(p, args, retval)
-	struct proc *p;
-	void *args;
-	register_t *retval;
+amd64_set_ldt(struct proc *p, void *args, register_t *retval)
 {
 	int error, i, n;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -317,10 +311,7 @@ amd64_iopl(struct proc *p, void *args, register_t *retval)
 #if 0
 
 int
-amd64_get_ioperm(p, args, retval)
-	struct proc *p;
-	void *args;
-	register_t *retval;
+amd64_get_ioperm(struct proc *p, void *args, register_t *retval)
 {
 	int error;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -333,10 +324,7 @@ amd64_get_ioperm(p, args, retval)
 }
 
 int
-amd64_set_ioperm(p, args, retval)
-	struct proc *p;
-	void *args;
-	register_t *retval;
+amd64_set_ioperm(struct proc *p, void *args, register_t *retval)
 {
 	int error;
 	struct pcb *pcb = &p->p_addr->u_pcb;

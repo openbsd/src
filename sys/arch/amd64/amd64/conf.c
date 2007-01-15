@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.9 2006/06/11 10:56:39 mk Exp $	*/
+/*	$OpenBSD: conf.c,v 1.10 2007/01/15 23:19:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -310,8 +310,7 @@ dev_t	swapdev = makedev(1, 0);
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
 int
-iskmemdev(dev)
-	dev_t dev;
+iskmemdev(dev_t dev)
 {
 
 	return (major(dev) == mem_no && (minor(dev) < 2 || minor(dev) == 14));
@@ -321,15 +320,14 @@ iskmemdev(dev)
  * Returns true if dev is /dev/zero.
  */
 int
-iszerodev(dev)
-	dev_t dev;
+iszerodev(dev_t dev)
 {
 
 	return (major(dev) == mem_no && minor(dev) == 12);
 }
 
 dev_t
-getnulldev()
+getnulldev(void)
 {
 	return makedev(mem_no, 2);
 }
@@ -408,8 +406,7 @@ int findblkmajor(struct device *dv);
 dev_t dev_rawpart(struct device *);	/* XXX */
 
 dev_t
-dev_rawpart(dv)
-	struct device *dv;
+dev_rawpart(struct device *dv)
 {
 	int majdev;
 

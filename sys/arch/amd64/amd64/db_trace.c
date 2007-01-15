@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.3 2005/03/31 02:53:48 tedu Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.4 2007/01/15 23:19:05 jsg Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /* 
@@ -128,7 +128,7 @@ void db_nextframe(struct x86_64_frame **, db_addr_t *, long *, int,
     int (*) (const char *, ...));
 
 void
-db_find_trace_symbols()
+db_find_trace_symbols(void)
 {
 	db_expr_t	value;
 
@@ -148,8 +148,7 @@ db_find_trace_symbols()
  * reliably determine the values currently, just return 0.
  */
 int
-db_numargs(fp)
-	struct x86_64_frame *fp;
+db_numargs(struct x86_64_frame *fp)
 {
 	return 0;
 }
@@ -165,12 +164,8 @@ db_numargs(fp)
  *   of the function that faulted, but that could get hairy.
  */
 void
-db_nextframe(fp, ip, argp, is_trap, pr)
-	struct x86_64_frame **fp;		/* in/out */
-	db_addr_t	*ip;		/* out */
-	long *argp;			/* in */
-	int is_trap;			/* in */
-	int (*pr)(const char *, ...); /* in */
+db_nextframe(struct x86_64_frame **fp, db_addr_t *ip, long *argp, int is_trap,
+    int (*pr)(const char *, ...))
 {
 
 	switch (is_trap) {
@@ -205,12 +200,8 @@ db_nextframe(fp, ip, argp, is_trap, pr)
 }
 
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t	addr;
-	boolean_t	have_addr;
-	db_expr_t	count;
-	char		*modif;
-	int		(*pr)(const char *, ...);
+db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
+    char *modif, int (*pr)(const char *, ...))
 {
 	struct x86_64_frame *frame, *lastframe;
 	long		*argp;
@@ -225,8 +216,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 #endif
 
 	{
-		register char *cp = modif;
-		register char c;
+		char *cp = modif;
+		char c;
 
 		while ((c = *cp++) != 0) {
 			if (c == 't')

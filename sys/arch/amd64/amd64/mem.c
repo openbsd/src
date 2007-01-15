@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 2005/10/26 18:46:06 martin Exp $ */
+/*	$OpenBSD: mem.c,v 1.6 2007/01/15 23:19:05 jsg Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -72,12 +72,8 @@ extern int allowaperture;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
-
 	switch (minor(dev)) {
 	case 0:
 	case 1:
@@ -103,10 +99,7 @@ mmopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 #ifdef APERTURE
 	if (minor(dev) == 4)
@@ -191,10 +184,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	struct proc *p = curproc;	/* XXX */
 
@@ -235,12 +225,7 @@ mmmmap(dev, off, prot)
 }
 
 int
-mmioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	return (ENODEV);
 }

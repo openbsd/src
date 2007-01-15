@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.12 2006/01/22 04:52:23 brad Exp $	*/
+/*	$OpenBSD: intr.c,v 1.13 2007/01/15 23:19:05 jsg Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ intr_find_mpmapping(int bus, int pin, int *handle)
 
 int
 intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
-		       int *index)
+    int *index)
 {
 	int start, slot, i;
 	struct intrsource *isp;
@@ -249,7 +249,7 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
  */
 int
 intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
-		   struct cpu_info **cip, int *index, int *idt_slot)
+    struct cpu_info **cip, int *index, int *idt_slot)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
@@ -356,7 +356,7 @@ found:
 
 void *
 intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
-	       int (*handler)(void *), void *arg, char *what)
+    int (*handler)(void *), void *arg, char *what)
 {
 	struct intrhand **p, *q, *ih;
 	struct cpu_info *ci;

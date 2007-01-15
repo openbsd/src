@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.52 2006/11/07 09:09:42 otto Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.53 2007/01/15 23:19:05 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -562,8 +562,7 @@ x86_64_proc0_tss_ldt_init(void)
          
 #ifdef MULTIPROCESSOR
 void    
-x86_64_init_pcb_tss_ldt(ci)   
-	struct cpu_info *ci;
+x86_64_init_pcb_tss_ldt(struct cpu_info *ci)   
 {        
 	int x;      
 	struct pcb *pcb = ci->ci_idle_pcb;
@@ -583,8 +582,7 @@ x86_64_init_pcb_tss_ldt(ci)
 #endif	/* MULTIPROCESSOR */
 
 bios_diskinfo_t *
-bios_getdiskinfo(dev)
-	dev_t dev;
+bios_getdiskinfo(dev_t dev)
 {
 	bios_diskinfo_t *pdi;
 
@@ -608,14 +606,8 @@ bios_getdiskinfo(dev)
 }
 
 int
-bios_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+bios_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	bios_diskinfo_t *pdi;
 	extern dev_t bootdev;
@@ -652,14 +644,8 @@ bios_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * machine dependent system variables.
  */ 
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	dev_t consdev;
 	dev_t dev;
@@ -948,7 +934,7 @@ long	dumplo = 0; 		/* blocks */
  * cpu_dump: dump the machine-dependent kernel core dump headers.
  */
 int
-cpu_dump()
+cpu_dump(void)
 {
 	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	char buf[dbtob(1)];
@@ -996,7 +982,7 @@ cpu_dump()
  * reduce the chance that swapping trashes it.
  */
 void
-dumpconf()
+dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
@@ -1050,7 +1036,7 @@ reserve_dumppages(vaddr_t p)
 }
 
 void
-dumpsys()
+dumpsys(void)
 {
 	u_long totalbytesleft, bytes, i, n, memseg;
 	u_long maddr;
@@ -1218,10 +1204,8 @@ char *gdtstore;
 extern  struct user *proc0paddr;
 
 void
-setgate(gd, func, ist, type, dpl, sel)
-	struct gate_descriptor *gd;
-	void *func;
-	int ist, type, dpl, sel;
+setgate(struct gate_descriptor *gd, void *func, int ist, int type, int dpl,
+    int sel)
 {
 	gd->gd_looffset = (u_int64_t)func & 0xffff;
 	gd->gd_selector = sel;
@@ -1237,17 +1221,13 @@ setgate(gd, func, ist, type, dpl, sel)
 }
 
 void
-unsetgate(gd)
-	struct gate_descriptor *gd;
+unsetgate(struct gate_descriptor *gd)
 {
 	memset(gd, 0, sizeof (*gd));
 }
 
 void
-setregion(rd, base, limit)
-	struct region_descriptor *rd;
-	void *base;
-	u_int16_t limit;
+setregion(struct region_descriptor *rd, void *base, u_int16_t limit)
 {
 	rd->rd_limit = limit;
 	rd->rd_base = (u_int64_t)base;
@@ -1257,11 +1237,8 @@ setregion(rd, base, limit)
  * Note that the base and limit fields are ignored in long mode.
  */
 void
-set_mem_segment(sd, base, limit, type, dpl, gran, def32, is64)
-	struct mem_segment_descriptor *sd;
-	void *base;
-	size_t limit;
-	int type, dpl, gran, is64;
+set_mem_segment(struct mem_segment_descriptor *sd, void *base, size_t limit,
+    int type, int dpl, int gran, int def32, int is64)
 {
 	sd->sd_lolimit = (unsigned)limit;
 	sd->sd_lobase = (unsigned long)base;
@@ -1277,11 +1254,8 @@ set_mem_segment(sd, base, limit, type, dpl, gran, def32, is64)
 }
 
 void
-set_sys_segment(sd, base, limit, type, dpl, gran)
-	struct sys_segment_descriptor *sd;
-	void *base;
-	size_t limit;
-	int type, dpl, gran;
+set_sys_segment(struct sys_segment_descriptor *sd, void *base, size_t limit,
+    int type, int dpl, int gran)
 {
 	memset(sd, 0, sizeof *sd);
 	sd->sd_lolimit = (unsigned)limit;
@@ -1294,7 +1268,7 @@ set_sys_segment(sd, base, limit, type, dpl, gran)
 	sd->sd_hibase = (u_int64_t)base >> 24;
 }
 
-void cpu_init_idt()
+void cpu_init_idt(void)
 {
 	struct region_descriptor region;
 
@@ -1314,8 +1288,7 @@ extern vector *IDTVEC(exceptions)[];
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
 
 void
-init_x86_64(first_avail)
-	paddr_t first_avail;
+init_x86_64(paddr_t first_avail)
 {
 	extern void consinit(void);
 	extern struct extent *iomem_ex;
@@ -1726,7 +1699,7 @@ init_x86_64(first_avail)
 
 #ifdef KGDB
 void
-kgdb_port_init()
+kgdb_port_init(void)
 {
 #if NCOM > 0
 	if (!strcmp(kgdb_devname, "com")) {
@@ -1739,7 +1712,7 @@ kgdb_port_init()
 #endif /* KGDB */
 
 void
-cpu_reset()
+cpu_reset(void)
 {
 
 	disable_intr();
@@ -1777,7 +1750,7 @@ cpu_reset()
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
  */
 int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 	int size;
 
@@ -1793,7 +1766,7 @@ cpu_dumpsize()
  * cpu_dump_mempagecnt: calculate the size of RAM (in pages) to be dumped.
  */
 u_long
-cpu_dump_mempagecnt()
+cpu_dump_mempagecnt(void)
 {
 	u_long i, n;
 
@@ -1829,9 +1802,7 @@ need_resched(struct cpu_info *ci)
  */
 
 int
-idt_vec_alloc(low, high)
-	int low;
-	int high;
+idt_vec_alloc(int low, int high)
 {
 	int vec;
 
@@ -1848,9 +1819,7 @@ idt_vec_alloc(low, high)
 }
 
 void
-idt_vec_set(vec, function)
-	int vec;
-	void (*function)(void);
+idt_vec_set(int vec, void (*function)(void))
 {
 	/*
 	 * Vector should be allocated, so no locking needed.
@@ -1861,8 +1830,7 @@ idt_vec_set(vec, function)
 }
 
 void
-idt_vec_free(vec)
-	int vec;
+idt_vec_free(int vec)
 {
 	simple_lock(&idt_lock);
 	unsetgate(&idt[vec]);

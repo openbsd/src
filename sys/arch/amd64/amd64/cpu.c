@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.11 2005/09/25 20:48:18 miod Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.12 2007/01/15 23:19:05 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -165,7 +165,7 @@ static void	cpu_copy_trampoline(void);
  * Called from lapic_boot_init() (from mpbios_scan()).
  */
 void
-cpu_init_first()
+cpu_init_first(void)
 {
 	int cpunum = lapic_cpu_number();
 
@@ -228,9 +228,7 @@ cpu_vm_init(struct cpu_info *ci)
 
 
 void
-cpu_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpu_softc *sc = (void *) self;
 	struct cpu_attach_args *caa = aux;
@@ -382,8 +380,7 @@ cpu_attach(parent, self, aux)
  */
 
 void
-cpu_init(ci)
-	struct cpu_info *ci;
+cpu_init(struct cpu_info *ci)
 {
 	/* configure the CPU if needed */
 	if (ci->cpu_setup != NULL)
@@ -407,7 +404,7 @@ cpu_init(ci)
 
 #ifdef MULTIPROCESSOR
 void
-cpu_boot_secondary_processors()
+cpu_boot_secondary_processors(void)
 {
 	struct cpu_info *ci;
 	u_long i;
@@ -427,7 +424,7 @@ cpu_boot_secondary_processors()
 }
 
 void
-cpu_init_idle_pcbs()
+cpu_init_idle_pcbs(void)
 {
 	struct cpu_info *ci;
 	u_long i;
@@ -445,8 +442,7 @@ cpu_init_idle_pcbs()
 }
 
 void
-cpu_start_secondary (ci)
-	struct cpu_info *ci;
+cpu_start_secondary(struct cpu_info *ci)
 {
 	struct pcb *pcb;
 	int i;
@@ -475,8 +471,7 @@ cpu_start_secondary (ci)
 }
 
 void
-cpu_boot_secondary(ci)
-	struct cpu_info *ci;
+cpu_boot_secondary(struct cpu_info *ci)
 {
 	int i;
 
@@ -576,7 +571,7 @@ cpu_debug_dump(void)
 #endif
 
 static void
-cpu_copy_trampoline()
+cpu_copy_trampoline(void)
 {
 	/*
 	 * Copy boot code.

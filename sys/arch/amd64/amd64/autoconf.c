@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.16 2006/10/29 18:28:07 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.17 2007/01/15 23:19:05 jsg Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -150,10 +150,7 @@ diskconf(void)
 }
 
 struct device *
-parsedisk(str, len, defpart, devp)
-	char *str;
-	int len, defpart;
-	dev_t *devp;
+parsedisk(char *str, int len, int defpart, dev_t *devp)
 {
 	struct device *dv;
 	char *cp, c;
@@ -226,8 +223,7 @@ findblkmajor(struct device *dv)
 }
 
 char *
-findblkname(maj)
-	int maj;
+findblkname(int maj)
 {
 	int i;
 
@@ -247,7 +243,7 @@ dev_t	argdev = NODEV;
  * change rootdev to correspond to the load device.
  */
 void
-setroot()
+setroot(void)
 {
 	int  majdev, mindev, unit, part, adaptor;
 	dev_t orootdev;
@@ -390,9 +386,9 @@ struct	genericconf {
 };
 
 void
-rootconf()
+rootconf(void)
 {
-	register struct genericconf *gc;
+	struct genericconf *gc;
 	int unit, part = 0;
 #if defined(NFSCLIENT)
 	struct ifnet *ifp;

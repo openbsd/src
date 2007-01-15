@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.5 2004/06/26 20:29:36 andreas Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.6 2007/01/15 23:19:05 jsg Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -882,12 +882,8 @@ db_addr_t db_disasm_3dnow(db_addr_t, int, int, int, char *);
  * Read address at location and return updated location.
  */
 db_addr_t
-db_read_address(loc, short_addr, regmodrm, rex, addrp)
-	db_addr_t	loc;
-	int		short_addr;
-	int		regmodrm;
-	int		rex;
-	struct i_addr	*addrp;		/* out */
+db_read_address(db_addr_t loc, int short_addr, int regmodrm, int rex,
+    struct i_addr *addrp)
 {
 	int		mod, rm, sib, index, disp, size;
 
@@ -937,10 +933,7 @@ db_read_address(loc, short_addr, regmodrm, rex, addrp)
 }
 
 void
-db_print_address(seg, size, addrp)
-	char *		seg;
-	int		size;
-	struct i_addr	*addrp;
+db_print_address(char *seg, int size, struct i_addr *addrp)
 {
 	if (addrp->is_reg) {
 		db_printf("%s", db_reg[size][addrp->disp]);
@@ -965,12 +958,7 @@ db_print_address(seg, size, addrp)
  * Disassemble 3DNow! instruction and return updated location.
  */
 db_addr_t
-db_disasm_3dnow(loc, short_addr, size, rex, seg)
-	db_addr_t	loc;
-	int		short_addr;
-	int		size;
-	int		rex;
-	char *		seg;
+db_disasm_3dnow(db_addr_t loc, int short_addr, int size, int rex, char *seg)
 {
 	int regmodrm, sib, displacement, opcode;
 
@@ -990,13 +978,8 @@ db_disasm_3dnow(loc, short_addr, size, rex, seg)
  * and return updated location.
  */
 db_addr_t
-db_disasm_esc(loc, inst, short_addr, size, rex, seg)
-	db_addr_t	loc;
-	int		inst;
-	int		short_addr;
-	int		size;
-	int		rex;
-	char *		seg;
+db_disasm_esc(db_addr_t loc, int inst, int short_addr, int size, int rex,
+    char *seg)
 {
 	int		regmodrm;
 	struct finst	*fp;
@@ -1087,9 +1070,7 @@ db_disasm_esc(loc, inst, short_addr, size, rex, seg)
  * next instruction.
  */
 db_addr_t
-db_disasm(loc, altfmt)
-	db_addr_t	loc;
-	boolean_t	altfmt;
+db_disasm(db_addr_t loc, boolean_t altfmt)
 {
 	int	inst;
 	int	size;
