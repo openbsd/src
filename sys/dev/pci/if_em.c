@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.163 2006/12/27 14:33:04 kettenis Exp $ */
+/* $OpenBSD: if_em.c,v 1.164 2007/01/15 22:51:05 kettenis Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -795,7 +795,7 @@ em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct em_softc *sc = ifp->if_softc;
 	u_char fiber_type = IFM_1000_SX;
-	u_int16_t gsr;
+	u_int16_t ar, lpar, gsr;
 
 	INIT_DEBUGOUT("em_media_status: begin");
 
@@ -834,6 +834,21 @@ em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 			ifmr->ifm_active |= IFM_FDX;
 		else
 			ifmr->ifm_active |= IFM_HDX;
+
+		if (ifmr->ifm_active & IFM_FDX) {
+			em_read_phy_reg(&sc->hw, PHY_AUTONEG_ADV, &ar);
+			em_read_phy_reg(&sc->hw, PHY_LP_ABILITY, &lpar);
+
+			if ((ar & NWAY_AR_PAUSE) && (lpar & NWAY_LPAR_PAUSE))
+				ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE |
+						    IFM_ETH_TXPAUSE;
+			else if (!(ar & NWAY_AR_PAUSE) && (ar & NWAY_AR_ASM_DIR) &&
+			    (lpar & NWAY_LPAR_PAUSE) && (lpar & NWAY_LPAR_ASM_DIR))
+				ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
+			else if ((ar & NWAY_AR_PAUSE) && (ar & NWAY_AR_ASM_DIR) &&
+			    !(lpar & NWAY_LPAR_PAUSE) && (lpar & NWAY_LPAR_ASM_DIR))
+				ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
+		}
 
 		if (IFM_SUBTYPE(ifmr->ifm_active) == IFM_1000_T) {
 			em_read_phy_reg(&sc->hw, PHY_1000T_STATUS, &gsr);
