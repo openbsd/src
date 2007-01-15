@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2007/01/08 13:01:10 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.6 2007/01/15 18:23:43 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -236,6 +236,7 @@ conf_main	: SPLIT_HORIZON STRING {
 			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
 			conf->redistribute |= REDISTRIBUTE_ON;
 		}
+		| defaults
 		;
 
 authmd		: AUTHMD number STRING {
@@ -332,8 +333,7 @@ interface       : INTERFACE STRING {
 				YYERROR;
 			LIST_INSERT_HEAD(&conf->iface_list, iface, entry);
 			memcpy(&ifacedefs, defs, sizeof(ifacedefs));
-			md_list_copy(&ifacedefs.md_list,
-			    &defs->md_list);
+			md_list_copy(&ifacedefs.md_list, &defs->md_list);
 			defs = &ifacedefs;
 		} interface_block {
 			iface->cost = defs->cost;
@@ -614,7 +614,7 @@ parse_config(char *filename, int opts)
 	bzero(&globaldefs, sizeof(globaldefs));
 	defs = &globaldefs;
 	TAILQ_INIT(&defs->md_list);
-	defs->cost = 1;
+	defs->cost = DEFAULT_COST;
 	defs->auth_type = AUTH_NONE;
 
 	if ((fin = fopen(filename, "r")) == NULL) {
