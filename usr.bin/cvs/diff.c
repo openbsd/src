@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.113 2007/01/14 23:10:56 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.114 2007/01/15 04:21:38 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -154,13 +154,13 @@ void
 cvs_diff_local(struct cvs_file *cf)
 {
 	RCSNUM *r1;
-	BUF *b1, *b2;
+	BUF *b1;
 	struct stat st;
 	struct timeval tv[2], tv2[2];
 	char rbuf[16], *p1, *p2;
 
 	r1 = NULL;
-	b1 = b2 = NULL;
+	b1 = NULL;
 
 	cvs_log(LP_TRACE, "cvs_diff_local(%s)", cf->file_path);
 
@@ -200,6 +200,9 @@ cvs_diff_local(struct cvs_file *cf)
 	cvs_printf("Index: %s\n%s\nRCS file: %s\n", cf->file_path,
 	    RCS_DIFF_DIV, cf->file_rpath);
 
+	(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
+	(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
+
 	if (cf->file_status != FILE_ADDED) {
 		if (diff_rev1 != NULL)
 			r1 = diff_rev1;
@@ -208,35 +211,38 @@ cvs_diff_local(struct cvs_file *cf)
 
 		diff_rev1 = r1;
 		rcsnum_tostr(r1, rbuf , sizeof(rbuf));
-		cvs_printf("retrieving revision %s\n", rbuf);
-		if ((b1 = rcs_rev_getbuf(cf->file_rcs, r1, 0)) == NULL)
-			fatal("failed to retrieve revision %s", rbuf);
 
 		tv[0].tv_sec = rcs_rev_getdate(cf->file_rcs, r1);
 		tv[0].tv_usec = 0;
 		tv[1] = tv[0];
+
+		printf("Retrieving revision %s\n", rbuf);
+		rcs_rev_write_stmp(cf->file_rcs, r1, p1, 0);
 	}
 
 	if (diff_rev2 != NULL && cf->file_status != FILE_ADDED &&
 	    cf->file_status != FILE_REMOVED) {
 		rcsnum_tostr(diff_rev2, rbuf, sizeof(rbuf));
-		cvs_printf("retrieving revision %s\n", rbuf);
-		if ((b2 = rcs_rev_getbuf(cf->file_rcs, diff_rev2, 0)) == NULL)
-			fatal("failed to retrieve revision %s", rbuf);
 
 		tv2[0].tv_sec = rcs_rev_getdate(cf->file_rcs, diff_rev2);
 		tv2[0].tv_usec = 0;
 		tv2[1] = tv2[0];
+
+		printf("Retrieving revision %s\n", rbuf);
+		rcs_rev_write_stmp(cf->file_rcs, diff_rev2, p2, 0);
 	} else if (cf->file_status != FILE_REMOVED) {
 		if (fstat(cf->fd, &st) == -1)
 			fatal("fstat failed %s", strerror(errno));
-		if ((b2 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
+		if ((b1 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
 			fatal("failed to load %s", cf->file_path);
 
 		st.st_mtime = cvs_hack_time(st.st_mtime, 1);
 		tv2[0].tv_sec = st.st_mtime;
 		tv2[0].tv_usec = 0;
 		tv2[1] = tv2[0];
+
+		cvs_buf_write_stmp(b1, p2, tv2);
+		cvs_buf_free(b1);
 	}
 
 	cvs_printf("%s", diffargs);
@@ -253,19 +259,13 @@ cvs_diff_local(struct cvs_file *cf)
 
 	cvs_printf(" %s\n", cf->file_path);
 
-	if (cf->file_status != FILE_ADDED) {
-		(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
-		cvs_buf_write_stmp(b1, p1, tv);
-		cvs_buf_free(b1);
-	} else
+	if (cf->file_status == FILE_ADDED) {
+		xfree(p1);
 		(void)xasprintf(&p1, "%s", CVS_PATH_DEVNULL);
-
-	if (cf->file_status != FILE_REMOVED) {
-		(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
-		cvs_buf_write_stmp(b2, p2, tv2);
-		cvs_buf_free(b2);
-	} else
+	} else if (cf->file_status == FILE_REMOVED) {
+		xfree(p2);
 		(void)xasprintf(&p2, "%s", CVS_PATH_DEVNULL);
+	}
 
 	if (cvs_diffreg(p1, p2, NULL) == D_ERROR)
 		fatal("cvs_diff_local: failed to get RCS patch");
