@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.79 2006/11/07 12:29:45 mickey Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.80 2007/01/15 11:05:53 pedro Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -129,7 +129,7 @@ STATIC	void handle_allocindir_partdone(struct allocindir *);
 STATIC	void initiate_write_filepage(struct pagedep *, struct buf *);
 STATIC	void handle_written_mkdir(struct mkdir *, int);
 STATIC	void initiate_write_inodeblock_ufs1(struct inodedep *, struct buf *);
-#ifdef UFS2
+#ifdef FFS2
 STATIC	void initiate_write_inodeblock_ufs2(struct inodedep *, struct buf *);
 #endif
 STATIC	void handle_workitem_freefile(struct freefile *);
@@ -3318,7 +3318,7 @@ softdep_disk_io_initiation(bp)
 			inodedep = WK_INODEDEP(wk);
 			if (inodedep->id_fs->fs_magic == FS_UFS1_MAGIC)
 				initiate_write_inodeblock_ufs1(inodedep, bp);
-#ifdef UFS2
+#ifdef FFS2
 			else
 				initiate_write_inodeblock_ufs2(inodedep, bp);
 #endif
@@ -3570,7 +3570,7 @@ initiate_write_inodeblock_ufs1(inodedep, bp)
 		dp->di_ib[adp->ad_lbn - NDADDR] = 0;
 }
 
-#ifdef UFS2
+#ifdef FFS2
 /*
  * Version of initiate_write_inodeblock that handles UFS2 dinodes.
  */
