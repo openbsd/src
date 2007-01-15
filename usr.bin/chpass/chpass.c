@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.32 2005/12/12 20:43:10 deraadt Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.33 2007/01/15 08:14:21 otto Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.32 2005/12/12 20:43:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.33 2007/01/15 08:14:21 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ void	usage(void);
 int
 main(int argc, char *argv[])
 {
-	struct passwd *pw = NULL, *opw, lpw;
+	struct passwd *pw = NULL, *opw = NULL, lpw;
 	int i, ch, pfd, tfd, dfd;
 	char *arg = NULL;
 	sigset_t fullset;
@@ -156,13 +156,16 @@ main(int argc, char *argv[])
 		}
 
 	if (op == LOADENTRY) {
+		if (argc != 0)
+			errx(1, "option -a does not accept user argument");
 		if (uid)
 			baduser();
 		pw = &lpw;
 		if (!pw_scan(arg, pw, NULL))
 			exit(1);
+		opw = getpwnam(pw->pw_name);
 	}
-	if ((opw = pw_dup(pw)) == NULL)
+	if (opw == NULL && (opw = pw_dup(pw)) == NULL)
 		err(1, NULL);
 
 	/* Edit the user passwd information if requested. */
