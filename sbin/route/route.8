@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.48 2006/11/29 14:42:22 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.49 2007/01/15 22:50:05 stevesk Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -51,7 +51,7 @@ is a utility used to manually view and manipulate the network routing tables.
 Except for setting up the default route, it normally is not needed to
 manipulate routes, as a
 system routing table management daemon, such as
-.Xr routed 8 ,
+.Xr ripd 8 ,
 .Xr ospfd 8 ,
 or
 .Xr bgpd 8 ,
@@ -468,7 +468,7 @@ to create the new entry.
 .Xr networks 5 ,
 .Xr bgpd 8 ,
 .Xr ospfd 8 ,
-.Xr routed 8 ,
+.Xr ripd 8 ,
 .Xr sysctl 8
 .Sh HISTORY
 The
@@ -490,10 +490,6 @@ table entries.
 The routing system no longer uses these values and the modifiers
 exist now only for compatibility with other operating systems.
 .Sh BUGS
-The first paragraph may have slightly exaggerated
-.Xr routed 8 Ns 's
-abilities.
-.Pp
 Some uses of the
 .Fl ifa
 or
