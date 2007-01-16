@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.46 2007/01/13 15:29:34 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.47 2007/01/16 09:14:19 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -780,6 +780,9 @@ cvs_client_set_sticky(char *data)
 	FILE *fp;
 	char *dir, *tag, *tagpath;
 
+	if (cvs_cmdop == CVS_OP_EXPORT)
+		return;
+
 	STRIP_SLASH(data);
 
 	dir = cvs_remote_input();
@@ -806,6 +809,9 @@ void
 cvs_client_clear_sticky(char *data)
 {
 	char *dir, *tagpath;
+
+	if (cvs_cmdop == CVS_OP_EXPORT)
+		return;
 
 	STRIP_SLASH(data);
 
