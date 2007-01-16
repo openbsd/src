@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.77 2007/01/16 08:17:27 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.78 2007/01/16 08:33:46 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -32,6 +32,8 @@ extern int prune_dirs;
 extern int build_dirs;
 extern int reset_stickies;
 
+static int flags = CR_REPO | CR_RECURSE_DIRS;
+
 struct cvs_cmd cvs_cmd_checkout = {
 	CVS_OP_CHECKOUT, 0, "checkout",
 	{ "co", "get" },
@@ -56,9 +58,7 @@ struct cvs_cmd cvs_cmd_export = {
 int
 cvs_checkout(int argc, char **argv)
 {
-	int ch, flags;
-
-	flags = CR_RECURSE_DIRS;
+	int ch;
 
 	while ((ch = getopt(argc, argv, cvs_cmd_checkout.cmd_opts)) != -1) {
 		switch (ch) {
@@ -92,10 +92,9 @@ cvs_checkout(int argc, char **argv)
 int
 cvs_export(int argc, char **argv)
 {
-	int ch, flags;
+	int ch;
 
 	prune_dirs = 1;
-	flags = CR_RECURSE_DIRS;
 
 	while ((ch = getopt(argc, argv, cvs_cmd_export.cmd_opts)) != -1) {
 		switch (ch) {
@@ -157,7 +156,7 @@ checkout_repository(const char *repobase, const char *wdbase)
 	cr.enterdir = cvs_update_enterdir;
 	cr.leavedir = cvs_update_leavedir;
 	cr.fileproc = cvs_update_local;
-	cr.flags = CR_REPO | CR_RECURSE_DIRS;
+	cr.flags = flags;
 
 	cvs_repository_lock(repobase);
 	cvs_repository_getdir(repobase, wdbase, &fl, &dl, 1);
@@ -172,7 +171,7 @@ checkout_repository(const char *repobase, const char *wdbase)
 }
 
 void
-cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int flags)
+cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 {
 	int l, oflags, exists;
 	time_t rcstime;
@@ -184,10 +183,10 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int flags)
 	rcsnum_tostr(rnum, rev, sizeof(rev));
 
 	cvs_log(LP_TRACE, "cvs_checkout_file(%s, %s, %d) -> %s",
-	    cf->file_path, rev, flags,
+	    cf->file_path, rev, co_flags,
 	    (cvs_server_active) ? "to client" : "to disk");
 
-	if (flags & CO_DUMP) {
+	if (co_flags & CO_DUMP) {
 		if (cvs_server_active) {
 			cvs_printf("dump file %s to client\n", cf->file_path);
 		} else {
@@ -240,7 +239,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int flags)
 	if (tbuf[strlen(tbuf) - 1] == '\n')
 		tbuf[strlen(tbuf) - 1] = '\0';
 
-	if (flags & CO_MERGE) {
+	if (co_flags & CO_MERGE) {
 		l = snprintf(timebuf, sizeof(timebuf), "Result of merge+%s",
 		    tbuf);
 		if (l == -1 || l >= (int)sizeof(timebuf))
@@ -249,7 +248,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int flags)
 		strlcpy(timebuf, tbuf, sizeof(timebuf));
 	}
 
-	if (flags & CO_SETSTICKY) {
+	if (co_flags & CO_SETSTICKY) {
 		l = snprintf(stickytag, sizeof(stickytag), "T%s", rev);
 		if (l == -1 || l >= (int)sizeof(stickytag))
 			fatal("cvs_checkout_file: overflow");
@@ -269,14 +268,14 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int flags)
 		if ((p = strrchr(cf->file_rpath, ',')) != NULL)
 			*p = '\0';
 
-		if (flags & CO_COMMIT)
+		if (co_flags & CO_COMMIT)
 			cvs_server_update_entry("Checked-in", cf);
 		else
 			cvs_server_update_entry("Updated", cf);
 
 		cvs_remote_output(entry);
 
-		if (!(flags & CO_COMMIT)) {
+		if (!(co_flags & CO_COMMIT)) {
 			(void)xasprintf(&template,
 			    "%s/checkout.XXXXXXXXXX", cvs_tmpdir);
 
