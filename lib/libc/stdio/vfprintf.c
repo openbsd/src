@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.40 2006/11/26 06:20:16 deraadt Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.41 2007/01/16 19:20:53 millert Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -41,6 +41,7 @@
 #include <sys/mman.h>
 
 #include <errno.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -158,7 +159,7 @@ vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 {
 	char *fmt;		/* format string */
 	int ch;			/* character from fmt */
-	int n, m, n2;		/* handy integers (short term usage) */
+	int n, n2;		/* handy integers (short term usage) */
 	char *cp;		/* handy char pointer (short term usage) */
 	struct __siov *iovp;	/* for PRINT macro */
 	int flags;		/* flags as above */
@@ -260,6 +261,18 @@ vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 	    flags&CHARINT ? (unsigned char)GETARG(int) : \
 	    GETARG(unsigned int)))
 
+	/*
+	 * Append a digit to a value and check for overflow.
+	 */
+#define APPEND_DIGIT(val, dig) do { \
+	if ((val) > INT_MAX / 10) \
+		goto overflow; \
+	(val) *= 10; \
+	if ((val) > INT_MAX - to_digit((dig))) \
+		goto overflow; \
+	(val) += to_digit((dig)); \
+} while (0)
+
 	 /*
 	  * Get * arguments, including the form *nn$.  Preserve the nextarg
 	  * that the argument can be gotten once the type is determined.
@@ -268,7 +281,7 @@ vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 	n2 = 0; \
 	cp = fmt; \
 	while (is_digit(*cp)) { \
-		n2 = 10 * n2 + to_digit(*cp); \
+		APPEND_DIGIT(n2, *cp); \
 		cp++; \
 	} \
 	if (*cp == '$') { \
@@ -328,7 +341,10 @@ vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 				break;
 			}
 		}
-		if ((m = fmt - cp) != 0) {
+		if (fmt != cp) {
+			ptrdiff_t m = fmt - cp;
+			if (m < 0 || m > INT_MAX - ret)
+				goto overflow;
 			PRINT(cp, m);
 			ret += m;
 		}
@@ -366,6 +382,8 @@ reswitch:	switch (ch) {
 			GETASTER(width);
 			if (width >= 0)
 				goto rflag;
+			if (width == INT_MIN)
+				goto overflow;
 			width = -width;
 			/* FALLTHROUGH */
 		case '-':
@@ -382,7 +400,7 @@ reswitch:	switch (ch) {
 			}
 			n = 0;
 			while (is_digit(ch)) {
-				n = 10 * n + to_digit(ch);
+				APPEND_DIGIT(n, ch);
 				ch = *fmt++;
 			}
 			if (ch == '$') {
@@ -394,7 +412,7 @@ reswitch:	switch (ch) {
 				}
 				goto rflag;
 			}
-			prec = n < 0 ? -1 : n;
+			prec = n;
 			goto reswitch;
 		case '0':
 			/*
@@ -408,7 +426,7 @@ reswitch:	switch (ch) {
 		case '5': case '6': case '7': case '8': case '9':
 			n = 0;
 			do {
-				n = 10 * n + to_digit(ch);
+				APPEND_DIGIT(n, ch);
 				ch = *fmt++;
 			} while (is_digit(ch));
 			if (ch == '$') {
@@ -780,13 +798,26 @@ number:			if ((dprec = prec) >= 0)
 			PAD(width - realsz, blanks);
 
 		/* finally, adjust ret */
-		ret += width > realsz ? width : realsz;
+		if (width < realsz)
+			width = realsz;
+		if (width > INT_MAX - ret)
+			goto overflow;
+		ret += width;
 
 		FLUSH();	/* copy out the I/O vectors */
 	}
 done:
 	FLUSH();
 error:
+	if (__sferror(fp))
+		ret = -1;
+	goto finish;
+
+overflow:
+	errno = ENOMEM;
+	ret = -1;
+
+finish:
 #ifdef FLOATING_POINT
 	if (dtoaresult)
 		__freedtoa(dtoaresult);
@@ -795,8 +826,7 @@ error:
 		munmap(argtable, argtablesiz);
 		argtable = NULL;
 	}
-	return (__sferror(fp) ? EOF : ret);
-	/* NOTREACHED */
+	return (ret);
 }
 
 /*
@@ -850,6 +880,7 @@ __find_arguments(const char *fmt0, va_list ap, va_list **argtable,
 	int tablesize;		/* current size of type table */
 	int tablemax;		/* largest used index in table */
 	int nextarg;		/* 1-based argument index */
+	int ret = 0;		/* return value */
 	wchar_t wc;
 	mbstate_t ps;
 
@@ -885,7 +916,7 @@ __find_arguments(const char *fmt0, va_list ap, va_list **argtable,
 	n2 = 0; \
 	cp = fmt; \
 	while (is_digit(*cp)) { \
-		n2 = 10 * n2 + to_digit(*cp); \
+		APPEND_DIGIT(n2, *cp); \
 		cp++; \
 	} \
 	if (*cp == '$') { \
@@ -949,7 +980,7 @@ reswitch:	switch (ch) {
 		case '5': case '6': case '7': case '8': case '9':
 			n = 0;
 			do {
-				n = 10 * n + to_digit(ch);
+				APPEND_DIGIT(n ,ch);
 				ch = *fmt++;
 			} while (is_digit(ch));
 			if (ch == '$') {
@@ -1141,12 +1172,18 @@ done:
 			break;
 		}
 	}
+	goto finish;
 
+overflow:
+	errno = ENOMEM;
+	ret = -1;
+
+finish:
 	if (typetable != NULL && typetable != stattypetable) {
 		munmap(typetable, *argtablesiz);
 		typetable = NULL;
 	}
-	return (0);
+	return (ret);
 }
 
 /*
