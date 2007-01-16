@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.15 2006/08/31 21:28:35 kettenis Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.16 2007/01/16 14:39:57 tsi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ prom_set_trap_table(tba)
 		cell_t tba;
 	} args;
 
-	args.name = ADR2CELL(&"SUNW,set-trap-table");
+	args.name = ADR2CELL("SUNW,set-trap-table");
 	args.nargs = 1;
 	args.nreturns = 0;
 	args.tba = ADR2CELL(tba);
@@ -149,18 +149,26 @@ prom_vtop(vaddr)
 		prom_printf("prom_vtop: cannot get mmuh\r\n");
 		return 0;
 	}
-	args.name = ADR2CELL(&"call-method");
+	args.name = ADR2CELL("call-method");
 	args.nargs = 3;
 	args.nreturns = 5;
-	args.method = ADR2CELL(&"translate");
+	args.method = ADR2CELL("translate");
 	args.ihandle = HDL2CELL(mmuh);
 	args.vaddr = ADR2CELL(vaddr);
 	if(openfirmware(&args) == -1)
 		return -1;
 #if 0
-	prom_printf("Called \"translate\", mmuh=%x, vaddr=%x, status=%x %x,\r\n retaddr=%x %x, mode=%x %x, phys_hi=%x %x, phys_lo=%x %x\r\n",
-		    mmuh, vaddr, (int)(args.status>>32), (int)args.status, (int)(args.retaddr>>32), (int)args.retaddr, 
-		    (int)(args.mode>>32), (int)args.mode, (int)(args.phys_hi>>32), (int)args.phys_hi,
+	prom_printf("Called \"translate\", mmuh=%x, vaddr=%x, "
+		    "status=%x %x,\r\n "
+		    "retaddr=%x %x, "
+		    "mode=%x %x, "
+		    "phys_hi=%x %x, "
+		    "phys_lo=%x %x\r\n",
+		    mmuh, vaddr,
+		    (int)(args.status>>32), (int)args.status,
+		    (int)(args.retaddr>>32), (int)args.retaddr, 
+		    (int)(args.mode>>32), (int)args.mode,
+		    (int)(args.phys_hi>>32), (int)args.phys_hi,
 		    (int)(args.phys_lo>>32), (int)args.phys_lo);
 #endif
 	return (paddr_t)CELL2HDQ(args.phys_hi, args.phys_lo);
@@ -193,10 +201,10 @@ prom_claim_virt(vaddr, len)
 		prom_printf("prom_claim_virt: cannot get mmuh\r\n");
 		return 0;
 	}
-	args.name = ADR2CELL(&"call-method");
+	args.name = ADR2CELL("call-method");
 	args.nargs = 5;
 	args.nreturns = 2;
-	args.method = ADR2CELL(&"claim");
+	args.method = ADR2CELL("claim");
 	args.ihandle = HDL2CELL(mmuh);
 	args.align = 0;
 	args.len = len;
@@ -232,10 +240,10 @@ prom_alloc_virt(len, align)
 		prom_printf("prom_alloc_virt: cannot get mmuh\r\n");
 		return -1LL;
 	}
-	args.name = ADR2CELL(&"call-method");
+	args.name = ADR2CELL("call-method");
 	args.nargs = 4;
 	args.nreturns = 2;
-	args.method = ADR2CELL(&"claim");
+	args.method = ADR2CELL("claim");
 	args.ihandle = HDL2CELL(mmuh);
 	args.align = align;
 	args.len = len;
@@ -268,10 +276,10 @@ prom_free_virt(vaddr, len)
 		prom_printf("prom_free_virt: cannot get mmuh\r\n");
 		return -1;
 	}
-	args.name = ADR2CELL(&"call-method");
+	args.name = ADR2CELL("call-method");
 	args.nargs = 4;
 	args.nreturns = 0;
-	args.method = ADR2CELL(&"release");
+	args.method = ADR2CELL("release");
 	args.ihandle = HDL2CELL(mmuh);
 	args.vaddr = ADR2CELL(vaddr);
 	args.len = len;
@@ -303,10 +311,10 @@ prom_unmap_virt(vaddr, len)
 		prom_printf("prom_unmap_virt: cannot get mmuh\r\n");
 		return -1;
 	}
-	args.name = ADR2CELL(&"call-method");
+	args.name = ADR2CELL("call-method");
 	args.nargs = 4;
 	args.nreturns = 0;
-	args.method = ADR2CELL(&"unmap");
+	args.method = ADR2CELL("unmap");
 	args.ihandle = HDL2CELL(mmuh);
 	args.vaddr = ADR2CELL(vaddr);
 	args.len = len;
@@ -344,15 +352,15 @@ prom_map_phys(paddr, size, vaddr, mode)
 		prom_printf("prom_map_phys: cannot get mmuh\r\n");
 		return 0;
 	}
-	args.name = ADR2CELL(&"call-method");
+	args.name = ADR2CELL("call-method");
 	args.nargs = 7;
 	args.nreturns = 1;
-	args.method = ADR2CELL(&"map");
+	args.method = ADR2CELL("map");
 	args.ihandle = HDL2CELL(mmuh);
 	args.mode = mode;
 	args.size = size;
 	args.vaddr = ADR2CELL(vaddr);
-	args.phys_hi = HDQ2CELL_HI(paddr); 
+	args.phys_hi = HDQ2CELL_HI(paddr);
 	args.phys_lo = HDQ2CELL_LO(paddr);
 
 	if (openfirmware(&args) == -1)
@@ -390,10 +398,10 @@ prom_alloc_phys(len, align)
 		prom_printf("prom_alloc_phys: cannot get memh\r\n");
 		return -1;
 	}
-	args.name = ADR2CELL(&"call-method");
+	args.name = ADR2CELL("call-method");
 	args.nargs = 4;
 	args.nreturns = 3;
-	args.method = ADR2CELL(&"claim");
+	args.method = ADR2CELL("claim");
 	args.ihandle = HDL2CELL(memh);
 	args.align = align;
 	args.len = len;
@@ -431,10 +439,10 @@ prom_claim_phys(phys, len)
 		prom_printf("prom_claim_phys: cannot get memh\r\n");
 		return -1;
 	}
-	args.name = ADR2CELL(&"call-method");
+	args.name = ADR2CELL("call-method");
 	args.nargs = 6;
 	args.nreturns = 3;
-	args.method = ADR2CELL(&"claim");
+	args.method = ADR2CELL("claim");
 	args.ihandle = HDL2CELL(memh);
 	args.align = 0;
 	args.len = len;
@@ -470,10 +478,10 @@ prom_free_phys(phys, len)
 		prom_printf("prom_free_phys: cannot get memh\r\n");
 		return -1;
 	}
-	args.name = ADR2CELL(&"call-method");
+	args.name = ADR2CELL("call-method");
 	args.nargs = 5;
 	args.nreturns = 0;
-	args.method = ADR2CELL(&"release");
+	args.method = ADR2CELL("release");
 	args.ihandle = HDL2CELL(memh);
 	args.len = len;
 	args.phys_hi = HDQ2CELL_HI(phys);
@@ -526,11 +534,11 @@ prom_get_msgbuf(len, align)
 		prom_printf("prom_get_msgbuf: Cannot recover msgbuf on E250/450\r\n");
 	} else if (OF_test("test-method") == 0) {
 		if (OF_test_method(memh, "SUNW,retain") != 0) {
-			args.name = ADR2CELL(&"call-method");
+			args.name = ADR2CELL("call-method");
 			args.nargs = 5;
 			args.nreturns = 3;
-			args.method = ADR2CELL(&"SUNW,retain");
-			args.id = ADR2CELL(&"msgbuf");
+			args.method = ADR2CELL("SUNW,retain");
+			args.id = ADR2CELL("msgbuf");
 			args.ihandle = HDL2CELL(memh);
 			args.len = len;
 			args.align = align;

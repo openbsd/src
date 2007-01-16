@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.11 2005/03/13 17:33:12 deraadt Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.12 2007/01/16 14:39:57 tsi Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ OF_peer(phandle)
 		cell_t sibling;
 	} args;
 
-	args.name = ADR2CELL(&"peer");
+	args.name = ADR2CELL("peer");
 	args.nargs = 1;
 	args.nreturns = 1;
 	args.phandle = HDL2CELL(phandle);
@@ -73,7 +73,7 @@ OF_child(phandle)
 		cell_t child;
 	} args;
 	
-	args.name = ADR2CELL(&"child");
+	args.name = ADR2CELL("child");
 	args.nargs = 1;
 	args.nreturns = 1;
 	args.phandle = HDL2CELL(phandle);
@@ -94,7 +94,7 @@ OF_parent(phandle)
 		cell_t parent;
 	} args;
 	
-	args.name = ADR2CELL(&"parent");
+	args.name = ADR2CELL("parent");
 	args.nargs = 1;
 	args.nreturns = 1;
 	args.phandle = HDL2CELL(phandle);
@@ -115,7 +115,7 @@ OF_instance_to_package(ihandle)
 		cell_t phandle;
 	} args;
 	
-	args.name = ADR2CELL(&"instance-to-package");
+	args.name = ADR2CELL("instance-to-package");
 	args.nargs = 1;
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(ihandle);
@@ -139,7 +139,7 @@ OF_getproplen(handle, prop)
 		cell_t size;
 	} args;
 	
-	args.name = ADR2CELL(&"getproplen");
+	args.name = ADR2CELL("getproplen");
 	args.nargs = 2;
 	args.nreturns = 1;
 	args.phandle = HDL2CELL(handle);
@@ -169,7 +169,7 @@ OF_getprop(handle, prop, buf, buflen)
 	
 	if (buflen > NBPG)
 		return -1;
-	args.name = ADR2CELL(&"getprop");
+	args.name = ADR2CELL("getprop");
 	args.nargs = 4;
 	args.nreturns = 1;
 	args.phandle = HDL2CELL(handle);
@@ -201,7 +201,7 @@ OF_setprop(handle, prop, buf, buflen)
 	
 	if (buflen > NBPG)
 		return -1;
-	args.name = ADR2CELL(&"setprop");
+	args.name = ADR2CELL("setprop");
 	args.nargs = 4;
 	args.nreturns = 1;
 	args.phandle = HDL2CELL(handle);
@@ -229,7 +229,7 @@ OF_nextprop(handle, prop, buf)
 		cell_t next;
 	} args;
 	
-	args.name = ADR2CELL(&"nextprop");
+	args.name = ADR2CELL("nextprop");
 	args.nargs = 3;
 	args.nreturns = 1;
 	args.phandle = HDL2CELL(handle);
@@ -252,7 +252,7 @@ char *name;
 		cell_t phandle;
 	} args;
 	
-	args.name = ADR2CELL(&"finddevice");
+	args.name = ADR2CELL("finddevice");
 	args.nargs = 1;
 	args.nreturns = 1;
 	args.device = ADR2CELL(name);
@@ -279,7 +279,7 @@ OF_instance_to_path(ihandle, buf, buflen)
 	
 	if (buflen > NBPG)
 		return -1;
-	args.name = ADR2CELL(&"instance-to-path");
+	args.name = ADR2CELL("instance-to-path");
 	args.nargs = 3;
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(ihandle);
@@ -308,7 +308,7 @@ OF_package_to_path(phandle, buf, buflen)
 	
 	if (buflen > NBPG)
 		return -1;
-	args.name = ADR2CELL(&"package-to-path");
+	args.name = ADR2CELL("package-to-path");
 	args.nargs = 3;
 	args.nreturns = 1;
 	args.phandle = HDL2CELL(phandle);
@@ -338,7 +338,7 @@ OF_call_method(char *method, int ihandle, int nargs, int nreturns, ...)
 	
 	if (nargs > 6)
 		return -1;
-	args.name = ADR2CELL(&"call-method");
+	args.name = ADR2CELL("call-method");
 	args.nargs = nargs + 2;
 	args.nreturns = nreturns + 1;
 	args.method = ADR2CELL(method);
@@ -376,7 +376,7 @@ OF_call_method_1(char *method, int ihandle, int nargs, ...)
 	
 	if (nargs > 6)
 		return -1;
-	args.name = ADR2CELL(&"call-method");
+	args.name = ADR2CELL("call-method");
 	args.nargs = nargs + 2;
 	args.nreturns = 1;
 	args.method = ADR2CELL(method);
@@ -407,7 +407,7 @@ OF_open(dname)
 	
 	if ((l = strlen(dname)) >= NBPG)
 		return -1;
-	args.name = ADR2CELL(&"open");	
+	args.name = ADR2CELL("open");	
 	args.nargs = 1;
 	args.nreturns = 1;
 	args.dname = ADR2CELL(dname);
@@ -427,7 +427,7 @@ OF_close(handle)
 		cell_t handle;
 	} args;
 	
-	args.name = ADR2CELL(&"close");
+	args.name = ADR2CELL("close");
 	args.nargs = 1;
 	args.nreturns = 0;
 	args.handle = HDL2CELL(handle);
@@ -446,7 +446,7 @@ OF_test(service)
 		cell_t status;
 	} args;
 	
-	args.name = ADR2CELL(&"test");
+	args.name = ADR2CELL("test");
 	args.nargs = 1;
 	args.nreturns = 1;
 	args.service = ADR2CELL(service);
@@ -469,7 +469,7 @@ OF_test_method(service, method)
 		cell_t status;
 	} args;
 	
-	args.name = ADR2CELL(&"test-method");
+	args.name = ADR2CELL("test-method");
 	args.nargs = 2;
 	args.nreturns = 1;
 	args.service = HDL2CELL(service);
@@ -500,7 +500,7 @@ OF_read(handle, addr, len)
 	} args;
 	int l, act = 0;
 	
-	args.name = ADR2CELL(&"read");	
+	args.name = ADR2CELL("read");	
 	args.nargs = 3;
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(handle);
@@ -542,7 +542,7 @@ OF_write(handle, addr, len)
 	} args;
 	int l, act = 0;
 		
-	args.name = ADR2CELL(&"write");
+	args.name = ADR2CELL("write");
 	args.nargs = 3;
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(handle);
@@ -581,12 +581,12 @@ OF_seek(handle, pos)
 		cell_t status;
 	} args;
 	
-	args.name = ADR2CELL(&"seek");
+	args.name = ADR2CELL("seek");
 	args.nargs = 3;
 	args.nreturns = 1;
 	args.handle = HDL2CELL(handle);
-	args.poshi = HDL2CELL(pos >> 32);
-	args.poslo = HDL2CELL(pos);
+	args.poshi = HDQ2CELL_HI(pos);
+	args.poslo = HDQ2CELL_LO(pos);
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.status;
@@ -606,7 +606,7 @@ OF_boot(bootspec)
 	
 	if ((l = strlen(bootspec)) >= NBPG)
 		panic("OF_boot");
-	args.name = ADR2CELL(&"boot");	
+	args.name = ADR2CELL("boot");	
 	args.nargs = 1;
 	args.nreturns = 0;
 	args.bootspec = ADR2CELL(bootspec);
@@ -623,7 +623,7 @@ OF_enter()
 		cell_t nreturns;
 	} args;
 	
-	args.name = ADR2CELL(&"enter");
+	args.name = ADR2CELL("enter");
 	args.nargs = 0;
 	args.nreturns = 0;
 	openfirmware(&args);
@@ -638,7 +638,7 @@ OF_exit()
 		cell_t nreturns;
 	} args;
 	
-	args.name = ADR2CELL(&"exit");
+	args.name = ADR2CELL("exit");
 	args.nargs = 0;
 	args.nreturns = 0;
 	openfirmware(&args);
@@ -654,7 +654,7 @@ OF_poweroff()
 		cell_t nreturns;
 	} args;
 	
-	args.name = ADR2CELL(&"SUNW,power-off");
+	args.name = ADR2CELL("SUNW,power-off");
 	args.nargs = 0;
 	args.nreturns = 0;
 	openfirmware(&args);
@@ -672,7 +672,7 @@ void
 		cell_t oldfunc;
 	} args;
 	
-	args.name = ADR2CELL(&"set-callback");
+	args.name = ADR2CELL("set-callback");
 	args.nargs = 1;
 	args.nreturns = 1;
 	args.newfunc = ADR2CELL(newfunc);
@@ -694,7 +694,7 @@ OF_set_symbol_lookup(s2v, v2s)
 		cell_t val2sym;
 	} args;
 		
-	args.name = ADR2CELL(&"set-symbol-lookup");
+	args.name = ADR2CELL("set-symbol-lookup");
 	args.nargs = 2;
 	args.nreturns = 0;
 	args.sym2val = ADR2CELL(s2v);
@@ -716,7 +716,7 @@ OF_interpret(char *cmd, int nreturns, ...)
 	cell_t status;
 	int i = 0;
 
-	args.name = ADR2CELL(&"interpret");
+	args.name = ADR2CELL("interpret");
 	args.nargs = 1;
 	args.nreturns = ++nreturns;
 	args.slot[i++] = ADR2CELL(cmd);
@@ -744,7 +744,7 @@ OF_milliseconds()
 		cell_t ticks;
 	} args;
 	
-	args.name = ADR2CELL(&"milliseconds");
+	args.name = ADR2CELL("milliseconds");
 	args.nargs = 0;
 	args.nreturns = 1;
 	if (openfirmware(&args) == -1)
