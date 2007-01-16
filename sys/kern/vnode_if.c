@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.31 2006/10/16 11:27:53 pedro Exp 
+ *	OpenBSD: vnode_if.src,v 1.32 2007/01/16 17:52:18 thib Exp 
  * by the script:
  *	OpenBSD: vnode_if.sh,v 1.15 2006/01/02 05:05:11 jsg Exp 
  */
@@ -379,33 +379,6 @@ int VOP_WRITE(struct vnode *vp, struct uio *uio, int ioflag,
 	a.a_ioflag = ioflag;
 	a.a_cred = cred;
 	return (VCALL(vp, VOFFSET(vop_write), &a));
-}
-
-int vop_lease_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_lease_args,a_vp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_lease_desc = {
-	0,
-	"vop_lease",
-	0,
-	vop_lease_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_lease_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_lease_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
-int VOP_LEASE(struct vnode *vp, struct proc *p, struct ucred *cred, int flag)
-{
-	struct vop_lease_args a;
-	a.a_desc = VDESC(vop_lease);
-	a.a_vp = vp;
-	a.a_p = p;
-	a.a_cred = cred;
-	a.a_flag = flag;
-	return (VCALL(vp, VOFFSET(vop_lease), &a));
 }
 
 int vop_ioctl_vp_offsets[] = {
@@ -1155,7 +1128,6 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_setattr_desc,
 	&vop_read_desc,
 	&vop_write_desc,
-	&vop_lease_desc,
 	&vop_ioctl_desc,
 	&vop_poll_desc,
 	&vop_kqfilter_desc,

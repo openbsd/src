@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.31 2006/10/16 11:27:53 pedro Exp 
+ *	OpenBSD: vnode_if.src,v 1.32 2007/01/16 17:52:18 thib Exp 
  * by the script:
  *	OpenBSD: vnode_if.sh,v 1.15 2006/01/02 05:05:11 jsg Exp 
  */
@@ -148,16 +148,6 @@ struct vop_write_args {
 };
 extern struct vnodeop_desc vop_write_desc;
 int VOP_WRITE(struct vnode *, struct uio *, int, struct ucred *);
-
-struct vop_lease_args {
-	struct vnodeop_desc *a_desc;
-	struct vnode *a_vp;
-	struct proc *a_p;
-	struct ucred *a_cred;
-	int a_flag;
-};
-extern struct vnodeop_desc vop_lease_desc;
-int VOP_LEASE(struct vnode *, struct proc *, struct ucred *, int);
 
 struct vop_ioctl_args {
 	struct vnodeop_desc *a_desc;
