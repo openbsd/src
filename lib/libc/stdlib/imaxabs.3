@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: imaxabs.3,v 1.1 2006/01/13 17:58:09 millert Exp $
+.\"	$OpenBSD: imaxabs.3,v 1.2 2007/01/16 17:17:21 steven Exp $
 .\"
 .Dd January 6, 2005
 .Dt IMAXABS 3
@@ -39,8 +39,8 @@
 .Nd integer absolute value function
 .Sh SYNOPSIS
 .Fd #include <inttypes.h>
-.Ft int
-.Fn imaxabs "int j"
+.Ft intmax_t
+.Fn imaxabs "intmax_t j"
 .Sh DESCRIPTION
 The
 .Fn imaxabs
