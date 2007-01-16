@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.42 2007/01/14 16:57:21 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.43 2007/01/16 11:10:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -310,7 +310,7 @@ schizo_pci_error(void *vpbm)
 
 		if (sc->sc_tomatillo) {
 			tfar = schizo_pbm_read(sp, TOM_PCI_IOMMU_TFAR);
-			printf("IOMMUTFAR=%lx\n", ctrl);
+			printf("IOMMUTFAR=%lx\n", tfar);
 		}
 	}
 
