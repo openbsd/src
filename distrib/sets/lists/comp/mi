@@ -5864,6 +5864,16 @@
 ./usr/share/man/cat9/m_pullup2.0
 ./usr/share/man/cat9/m_reclaim.0
 ./usr/share/man/cat9/m_split.0
+./usr/share/man/cat9/m_tag_copy.0
+./usr/share/man/cat9/m_tag_copy_chain.0
+./usr/share/man/cat9/m_tag_delete.0
+./usr/share/man/cat9/m_tag_delete_chain.0
+./usr/share/man/cat9/m_tag_find.0
+./usr/share/man/cat9/m_tag_first.0
+./usr/share/man/cat9/m_tag_get.0
+./usr/share/man/cat9/m_tag_init.0
+./usr/share/man/cat9/m_tag_next.0
+./usr/share/man/cat9/m_tag_prepend.0
 ./usr/share/man/cat9/m_zero.0
 ./usr/share/man/cat9/malloc.0
 ./usr/share/man/cat9/max.0
@@ -5957,8 +5967,10 @@
 ./usr/share/man/cat9/resettodr.0
 ./usr/share/man/cat9/rssadapt.0
 ./usr/share/man/cat9/runtime.0
+./usr/share/man/cat9/rw_enter.0
 ./usr/share/man/cat9/rw_enter_read.0
 ./usr/share/man/cat9/rw_enter_write.0
+./usr/share/man/cat9/rw_exit.0
 ./usr/share/man/cat9/rw_exit_read.0
 ./usr/share/man/cat9/rw_exit_write.0
 ./usr/share/man/cat9/rw_init.0
