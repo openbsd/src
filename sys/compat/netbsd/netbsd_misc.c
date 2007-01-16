@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_misc.c,v 1.14 2004/11/23 19:08:54 miod Exp $	*/
+/*	$OpenBSD: netbsd_misc.c,v 1.15 2007/01/16 17:52:18 thib Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -98,7 +98,6 @@ netbsd_sys_lchmod(p, v, retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
@@ -148,7 +147,6 @@ netbsd_sys_lutimes(p, v, retval)
         if ((error = namei(&nd)) != 0)
                 return (error);
         vp = nd.ni_vp;
-        VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
         if (vp->v_mount->mnt_flag & MNT_RDONLY)
                 error = EROFS;

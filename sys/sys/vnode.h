@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.72 2006/11/20 12:52:54 tom Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.73 2007/01/16 17:52:18 thib Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -270,12 +270,6 @@ extern	int desiredvnodes;		/* number of vnodes desired */
 extern	time_t syncdelay;		/* time to delay syncing vnodes */
 extern	int rushjob;			/* # of slots syncer should run ASAP */
 extern	struct vattr va_null;		/* predefined null vattr structure */
-
-/*
- * Macro/function to check for client cache inconsistency w.r.t. leasing.
- */
-#define	LEASE_READ	0x1		/* Check lease for readers */
-#define	LEASE_WRITE	0x2		/* Check lease for modifiers */
 
 #endif /* _KERNEL */
 

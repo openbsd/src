@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.19 2006/11/14 18:00:27 jmc Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.20 2007/01/16 17:52:18 thib Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -227,7 +227,6 @@ acct_process(struct proc *p)
 	/*
 	 * Now, just write the accounting information to the file.
 	 */
-	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&acct, sizeof (acct),
 	    (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT, p->p_ucred, NULL, p);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.32 2006/01/20 23:27:24 miod Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.33 2007/01/16 17:52:18 thib Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -78,13 +78,6 @@ int	adenotsup(void *);
 
 #define adosfs_close 		adnullop
 #define adosfs_fsync 		adnullop
-#ifdef NFSSERVER
-int	lease_check(void *);
-#define	adosfs_lease_check lease_check
-#else
-#define adosfs_lease_check 	adnullop
-#endif
-
 #define adosfs_bwrite 		adenotsup
 #define adosfs_create 		adenotsup
 #define adosfs_mkdir 		adenotsup
@@ -106,7 +99,6 @@ struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, adosfs_setattr },		/* setattr */
 	{ &vop_read_desc, adosfs_read },		/* read */
 	{ &vop_write_desc, adosfs_write },		/* write */
-	{ &vop_lease_desc, adosfs_lease_check },	/* lease */
 	{ &vop_ioctl_desc, adosfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, adosfs_poll },		/* poll */
 	{ &vop_fsync_desc, adosfs_fsync },		/* fsync */

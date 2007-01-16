@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.21 2004/05/18 12:37:51 pedro Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.22 2007/01/16 17:52:18 thib Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -74,7 +74,6 @@ struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_setattr_desc, fifo_setattr },		/* setattr */
 	{ &vop_read_desc, fifo_read },			/* read */
 	{ &vop_write_desc, fifo_write },		/* write */
-	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
 	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */

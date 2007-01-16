@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.58 2006/10/16 11:27:53 pedro Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.59 2007/01/16 17:52:18 thib Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1977,7 +1977,6 @@ struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, msdosfs_setattr },		/* setattr */
 	{ &vop_read_desc, msdosfs_read },		/* read */
 	{ &vop_write_desc, msdosfs_write },		/* write */
-	{ &vop_lease_desc, msdosfs_lease_check },	/* lease */
 	{ &vop_ioctl_desc, msdosfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, msdosfs_poll },		/* poll */
 	{ &vop_fsync_desc, msdosfs_fsync },		/* fsync */

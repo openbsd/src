@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.37 2006/11/29 14:30:30 krw Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.38 2007/01/16 17:52:18 thib Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -68,7 +68,6 @@ struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_setattr_desc, spec_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
-	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
 	{ &vop_kqfilter_desc, spec_kqfilter },		/* kqfilter */

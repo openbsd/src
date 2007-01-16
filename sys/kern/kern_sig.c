@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.84 2006/06/15 20:08:01 miod Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.85 2007/01/16 17:52:18 thib Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1353,7 +1353,6 @@ coredump(struct proc *p)
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_size = 0;
-	VOP_LEASE(vp, p, cred, LEASE_WRITE);
 	VOP_SETATTR(vp, &vattr, cred, p);
 	p->p_acflag |= ACORE;
 	bcopy(p, &p->p_addr->u_kproc.kp_proc, sizeof(struct proc));

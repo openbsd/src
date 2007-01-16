@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.18 2005/03/01 14:24:33 tom Exp $	*/
+/*	$OpenBSD: denode.h,v 1.19 2007/01/16 17:52:18 thib Exp $	*/
 /*	$NetBSD: denode.h,v 1.24 1997/10/17 11:23:39 ws Exp $	*/
 
 /*-
@@ -268,12 +268,6 @@ int	msdosfs_getattr(void *);
 int	msdosfs_setattr(void *);
 int	msdosfs_read(void *);
 int	msdosfs_write(void *);
-#ifdef NFSSERVER
-int	lease_check(void *);
-#define	msdosfs_lease_check lease_check
-#else
-#define	msdosfs_lease_check nullop
-#endif
 int	msdosfs_ioctl(void *);
 int	msdosfs_poll(void *);
 int	msdosfs_fsync(void *);

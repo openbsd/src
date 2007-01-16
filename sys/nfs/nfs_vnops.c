@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.69 2006/12/29 13:04:37 pedro Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.70 2007/01/16 17:52:18 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -98,7 +98,6 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_setattr_desc, nfs_setattr },	/* setattr */
 	{ &vop_read_desc, nfs_read },		/* read */
 	{ &vop_write_desc, nfs_write },		/* write */
-	{ &vop_lease_desc, nfs_lease_check },	/* lease */
 	{ &vop_ioctl_desc, nfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, nfs_poll },		/* poll */
 	{ &vop_kqfilter_desc, nfs_kqfilter },	/* kqfilter */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.40 2007/01/13 17:41:55 thib Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.41 2007/01/16 17:52:18 thib Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -76,7 +76,6 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, ffs_read },			/* read */
 	{ &vop_write_desc, ffs_write },			/* write */
-	{ &vop_lease_desc, ufs_lease_check },		/* lease */
 	{ &vop_ioctl_desc, ufs_ioctl },			/* ioctl */
 	{ &vop_poll_desc, ufs_poll },			/* poll */
 	{ &vop_kqfilter_desc, ufs_kqfilter },		/* kqfilter */

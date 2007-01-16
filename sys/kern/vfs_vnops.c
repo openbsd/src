@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.53 2006/06/02 20:25:09 pedro Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.54 2007/01/16 17:52:18 thib Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -96,7 +96,6 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 			VATTR_NULL(&va);
 			va.va_type = VREG;
 			va.va_mode = cmode;
-			VOP_LEASE(ndp->ni_dvp, p, cred, LEASE_WRITE);
 			error = VOP_CREATE(ndp->ni_dvp, &ndp->ni_vp,
 					   &ndp->ni_cnd, &va);
 			if (error)
@@ -149,9 +148,6 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 		}
 	}
 	if ((fmode & O_TRUNC) && vp->v_type == VREG) {
-		VOP_UNLOCK(vp, 0, p);				/* XXX */
-		VOP_LEASE(vp, p, cred, LEASE_WRITE);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);	/* XXX */
 		VATTR_NULL(&va);
 		va.va_size = 0;
 		if ((error = VOP_SETATTR(vp, &va, cred, p)) != 0)
@@ -292,7 +288,6 @@ vn_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	size_t count;
 	struct proc *p = uio->uio_procp;
 
-	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_READ);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	uio->uio_offset = *poff;
 	count = uio->uio_resid;
@@ -322,7 +317,6 @@ vn_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	if ((fp->f_flag & FFSYNC) ||
 	    (vp->v_mount && (vp->v_mount->mnt_flag & MNT_SYNCHRONOUS)))
 		ioflag |= IO_SYNC;
-	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	uio->uio_offset = *poff;
 	count = uio->uio_resid;

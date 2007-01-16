@@ -20,8 +20,6 @@ NNPFS_VOP_DEF(setattr);
 NNPFS_VOP_DEF(read);
 #define HAVE_VOP_WRITE 1
 NNPFS_VOP_DEF(write);
-#define HAVE_VOP_LEASE 1
-NNPFS_VOP_DEF(lease);
 #define HAVE_VOP_IOCTL 1
 NNPFS_VOP_DEF(ioctl);
 #define HAVE_VOP_POLL 1

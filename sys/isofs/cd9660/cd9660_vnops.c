@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.37 2006/12/29 13:04:37 pedro Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.38 2007/01/16 17:52:18 thib Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -1016,12 +1016,6 @@ cd9660_pathconf(v)
 #define	cd9660_create	eopnotsupp
 #define	cd9660_mknod	eopnotsupp
 #define	cd9660_write	eopnotsupp
-#ifdef	NFSSERVER
-int	lease_check(void *);
-#define	cd9660_lease_check	lease_check
-#else
-#define	cd9660_lease_check	nullop
-#endif
 #define	cd9660_fsync	nullop
 #define	cd9660_remove	eopnotsupp
 #define	cd9660_rename	eopnotsupp
@@ -1051,7 +1045,6 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_setattr_desc, cd9660_setattr },	/* setattr */
 	{ &vop_read_desc, cd9660_read },	/* read */
 	{ &vop_write_desc, cd9660_write },	/* write */
-	{ &vop_lease_desc, cd9660_lease_check },/* lease */
 	{ &vop_ioctl_desc, cd9660_ioctl },	/* ioctl */
 	{ &vop_poll_desc, cd9660_poll },	/* poll */
 	{ &vop_revoke_desc, cd9660_revoke },    /* revoke */
