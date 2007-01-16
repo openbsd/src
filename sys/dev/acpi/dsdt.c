@@ -1,5 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.74 2006/12/26 23:58:08 marco Exp $ */
-
+/* $OpenBSD: dsdt.c,v 1.75 2007/01/16 21:21:28 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1639,73 +1638,103 @@ aml_msb(u_int64_t val)
 int64_t
 aml_evalexpr(int64_t lhs, int64_t rhs, int opcode)
 {
-	dnprintf(50, "evalexpr: %s %lld %lld\n", aml_mnem(opcode), lhs, rhs);
+	int64_t res;
 
 	switch (opcode) {
 		/* Math operations */
 	case AMLOP_INCREMENT:
 	case AMLOP_ADD:
-		return (lhs + rhs);
+		res = (lhs + rhs);
+		break;
 	case AMLOP_DECREMENT:
 	case AMLOP_SUBTRACT:
-		return (lhs - rhs);
+		res = (lhs - rhs);
+		break;
 	case AMLOP_MULTIPLY:
-		return (lhs * rhs);
+		res = (lhs * rhs);
+		break;
 	case AMLOP_DIVIDE:
-		return (lhs / rhs);
+		res = (lhs / rhs);
+		break;
 	case AMLOP_MOD:
-		return (lhs % rhs);
+		res = (lhs % rhs);
+		break;
 	case AMLOP_SHL:
-		return (lhs << rhs);
+		res = (lhs << rhs);
+		break;
 	case AMLOP_SHR:
-		return (lhs >> rhs);
+		res = (lhs >> rhs);
+		break;
 	case AMLOP_AND:
-		return (lhs & rhs);
+		res = (lhs & rhs);
+		break;
 	case AMLOP_NAND:
-		return ~(lhs & rhs);
+		res = ~(lhs & rhs);
+		break;
 	case AMLOP_OR:
-		return (lhs | rhs);
+		res = (lhs | rhs);
+		break;
 	case AMLOP_NOR:
-		return ~(lhs | rhs);
+		res = ~(lhs | rhs);
+		break;
 	case AMLOP_XOR:
-		return (lhs ^ rhs);
+		res = (lhs ^ rhs);
+		break;
 	case AMLOP_NOT:
-		return ~(lhs);
+		res = ~(lhs);
+		break;
 
 		/* Conversion/misc */
 	case AMLOP_FINDSETLEFTBIT:
-		return aml_msb(lhs);
+		res = aml_msb(lhs);
+		break;
 	case AMLOP_FINDSETRIGHTBIT:
-		return aml_lsb(lhs);
+		res = aml_lsb(lhs);
+		break;
 	case AMLOP_TOINTEGER:
-		return (lhs);
+		res = (lhs);
+		break;
 	case AMLOP_FROMBCD:
-		return aml_convradix(lhs, 16, 10);
+		res = aml_convradix(lhs, 16, 10);
+		break;
 	case AMLOP_TOBCD:
-		return aml_convradix(lhs, 10, 16);
+		res = aml_convradix(lhs, 10, 16);
+		break;
 
 		/* Logical/Comparison */
 	case AMLOP_LAND:
-		return (lhs && rhs);
+		res = (lhs && rhs);
+		break;
 	case AMLOP_LOR:
-		return (lhs || rhs);
+		res = (lhs || rhs);
+		break;
 	case AMLOP_LNOT:
-		return (!lhs);
+		res = (!lhs);
+		break;
 	case AMLOP_LNOTEQUAL:
-		return (lhs != rhs);
+		res = (lhs != rhs);
+		break;
 	case AMLOP_LLESSEQUAL:
-		return (lhs <= rhs);
+		res = (lhs <= rhs);
+		break;
 	case AMLOP_LGREATEREQUAL:
-		return (lhs >= rhs);
+		res = (lhs >= rhs);
+		break;
 	case AMLOP_LEQUAL:
-		return (lhs == rhs);
+		res = (lhs == rhs);
+		break;
 	case AMLOP_LGREATER:
-		return (lhs > rhs);
+		res = (lhs > rhs);
+		break;
 	case AMLOP_LLESS:
-		return (lhs < rhs);
+		res = (lhs < rhs);
+		break;
 	}
 
-	return (0);
+	dnprintf(50,"aml_evalexpr: %s %llx %llx = %llx\n",
+		 aml_mnem(opcode), lhs, rhs, res);
+
+	return res;
 }
 
 int
@@ -2039,8 +2068,9 @@ aml_parseend(struct aml_scope *scope)
 	len = aml_parselength(scope);
 	if (pos+len > scope->end) {
 		dnprintf(10,
-		    "Bad scope... runover pos:%.4x new end:%.4x scope end:%.4x\n",
-		    aml_pc(pos), aml_pc(pos+len), aml_pc(scope->end));
+		    "Bad scope... runover pos:%.4x new end:%.4x scope "
+		    "end:%.4x\n", aml_pc(pos), aml_pc(pos+len),
+		    aml_pc(scope->end));
 		pos = scope->end;
 	}
 	return pos+len;
@@ -3121,7 +3151,8 @@ aml_print_resource(union acpi_resource *crs, void *arg)
 		    crs->sr_irq.irq_info);
 		break;
 	case SR_DMA:
-		printf("dma %.2x %.2x", crs->sr_dma.dma_chan, crs->sr_dma.dma_info);
+		printf("dma %.2x %.2x", crs->sr_dma.dma_chan,
+		    crs->sr_dma.dma_info);
 		break;
 	case SR_IOPORT:
 		printf("io %.2x _min:%.4x _max:%.4x _aln:%.2x _len:%.2x\n",
@@ -3146,17 +3177,52 @@ int
 aml_parse_resource(int length, uint8_t *buffer,
     int (*crs_enum)(union acpi_resource *, void *), void *arg)
 {
-	int off, rlen;
+	int off, rlen, mlen;
 	union acpi_resource *crs;
+	uint8_t *tmprsrc;
 
 	for (off = 0; off < length; off += rlen+1) {
+		tmprsrc = NULL;
 		crs = (union acpi_resource *)(buffer+off);
 		rlen = AML_CRSLEN(crs);
+
+		switch (AML_CRSTYPE(crs)) {
+		case LR_EXTIRQ:
+			mlen = 6;
+			break;
+		case LR_WORD:
+			mlen = 13;
+			break;
+		case LR_DWORD:
+			mlen = 23;
+			break;
+		case LR_QWORD:
+			mlen = 43;
+			break;
+		default:
+			mlen = 99;
+			break;
+		}
 		if (rlen == 0 || crs->hdr.typecode == 0x79)
 			break;
-		//aml_print_resource(crs, NULL);
+		if (rlen < mlen) {
+			tmprsrc = acpi_os_malloc(mlen+64);
+
+			rlen = mlen;
+			if (off+mlen >= length)
+				mlen = length-off;
+			dnprintf(20,"Bad resource length: %x/%d bytes\n", 
+			    mlen, rlen);
+			memcpy(tmprsrc, buffer+off, mlen);
+			crs = (union acpi_resource *)tmprsrc;
+		}
+		/* aml_print_resource(crs, NULL); */
 		crs_enum(crs, arg);
+
+		if (tmprsrc)
+			acpi_os_free(tmprsrc);
 	}
+
 	return 0;
 }
 
