@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.76 2007/01/14 22:20:46 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.77 2007/01/16 08:17:27 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -38,7 +38,7 @@ struct cvs_cmd cvs_cmd_checkout = {
 	"Checkout a working copy of a repository",
 	"[-AcflNnPpRs] [-D date | -r tag] [-d dir] [-j rev] [-k mode] "
 	"[-t id] module ...",
-	"AcD:d:fj:k:lNnPRr:st:",
+	"AcD:d:fj:k:lNnPpRr:st:",
 	NULL,
 	cvs_checkout
 };
@@ -56,15 +56,22 @@ struct cvs_cmd cvs_cmd_export = {
 int
 cvs_checkout(int argc, char **argv)
 {
-	int ch;
+	int ch, flags;
+
+	flags = CR_RECURSE_DIRS;
 
 	while ((ch = getopt(argc, argv, cvs_cmd_checkout.cmd_opts)) != -1) {
 		switch (ch) {
 		case 'A':
 			reset_stickies = 1;
 			break;
+		case 'l':
+			flags &= ~CR_RECURSE_DIRS;
+			break;
 		case 'P':
 			prune_dirs = 1;
+			break;
+		case 'R':
 			break;
 		default:
 			fatal("%s", cvs_cmd_checkout.cmd_synopsis);
