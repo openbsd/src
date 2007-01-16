@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.31 2007/01/14 01:35:46 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.32 2007/01/16 20:22:20 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -44,21 +44,18 @@
 
 #include "dhcpd.h"
 
-void	parse_options(struct packet *);
-void	parse_option_buffer(struct packet *, unsigned char *, int);
+void	parse_options(struct option_data *);
+void	parse_option_buffer(struct option_data *, unsigned char *, int);
 
 /*
  * Parse all available options out of the specified packet.
  */
 void
-parse_options(struct packet *packet)
+parse_options(struct option_data *options)
 {
-	/* Initially, zero all option pointers. */
-	memset(packet->options, 0, sizeof(packet->options));
-
 	/* If we don't see the magic cookie, there's nothing to parse. */
 	if (memcmp(&client->packet.options, DHCP_OPTIONS_COOKIE, 4)) {
-		packet->options_valid = 1;
+		client->options_valid = 1;
 		return;
 	}
 
@@ -66,23 +63,22 @@ parse_options(struct packet *packet)
 	 * Go through the options field, up to the end of the packet or
 	 * the End field.
 	 */
-	parse_option_buffer(packet, &client->packet.options[4],
+	parse_option_buffer(options, &client->packet.options[4],
 	    sizeof(client->packet.options) - 4);
 
 	/*
 	 * If we parsed a DHCP Option Overload option, parse more
 	 * options out of the buffer(s) containing them.
 	 */
-	if (packet->options_valid &&
-	    packet->options[DHO_DHCP_MESSAGE_TYPE].data &&
-	    packet->options[DHO_DHCP_OPTION_OVERLOAD].data) {
-		if (packet->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1)
-			parse_option_buffer(packet,
+	if (client->options_valid && options[DHO_DHCP_MESSAGE_TYPE].data &&
+	    options[DHO_DHCP_OPTION_OVERLOAD].data) {
+		if (options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1)
+			parse_option_buffer(options,
 			    (unsigned char *)client->packet.file,
 			    sizeof(client->packet.file));
-		if (packet->options_valid &&
-		    packet->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)
-			parse_option_buffer(packet,
+		if (client->options_valid &&
+		    options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)
+			parse_option_buffer(options,
 			    (unsigned char *)client->packet.sname,
 			    sizeof(client->packet.sname));
 	}
@@ -90,12 +86,12 @@ parse_options(struct packet *packet)
 
 /*
  * Parse options out of the specified buffer, storing addresses of
- * option values in packet->options and setting packet->options_valid if
+ * option values in options and setting client->options_valid if
  * no errors are encountered.
  */
 void
-parse_option_buffer(struct packet *packet,
-    unsigned char *buffer, int length)
+parse_option_buffer(struct option_data *options, unsigned char *buffer,
+    int length)
 {
 	unsigned char *s, *t, *end = buffer + length;
 	int len, code;
@@ -126,14 +122,14 @@ parse_option_buffer(struct packet *packet,
 			warning("option %s (%d) larger than buffer.",
 			    dhcp_options[code].name, len);
 			warning("rejecting bogus offer.");
-			packet->options_valid = 0;
+			client->options_valid = 0;
 			return;
 		}
 		/*
 		 * If we haven't seen this option before, just make
 		 * space for it and copy it there.
 		 */
-		if (!packet->options[code].data) {
+		if (!options[code].data) {
 			if (!(t = calloc(1, len + 1)))
 				error("Can't allocate storage for option %s.",
 				    dhcp_options[code].name);
@@ -143,30 +139,28 @@ parse_option_buffer(struct packet *packet,
 			 */
 			memcpy(t, &s[2], len);
 			t[len] = 0;
-			packet->options[code].len = len;
-			packet->options[code].data = t;
+			options[code].len = len;
+			options[code].data = t;
 		} else {
 			/*
 			 * If it's a repeat, concatenate it to whatever
 			 * we last saw.   This is really only required
 			 * for clients, but what the heck...
 			 */
-			t = calloc(1, len + packet->options[code].len + 1);
+			t = calloc(1, len + options[code].len + 1);
 			if (!t)
 				error("Can't expand storage for option %s.",
 				    dhcp_options[code].name);
-			memcpy(t, packet->options[code].data,
-				packet->options[code].len);
-			memcpy(t + packet->options[code].len,
-				&s[2], len);
-			packet->options[code].len += len;
-			t[packet->options[code].len] = 0;
-			free(packet->options[code].data);
-			packet->options[code].data = t;
+			memcpy(t, options[code].data, options[code].len);
+			memcpy(t + options[code].len, &s[2], len);
+			options[code].len += len;
+			t[options[code].len] = 0;
+			free(options[code].data);
+			options[code].data = t;
 		}
 		s += len + 2;
 	}
-	packet->options_valid = 1;
+	client->options_valid = 1;
 }
 
 /*
@@ -461,7 +455,7 @@ void
 do_packet(int len, unsigned int from_port, struct iaddr from,
     struct hardware *hfrom)
 {
-	struct packet tp;
+	struct option_data options[256];
 	int i;
 
 	if (client->packet.hlen > sizeof(client->packet.chaddr)) {
@@ -469,18 +463,16 @@ do_packet(int len, unsigned int from_port, struct iaddr from,
 		return;
 	}
 
-	memset(&tp, 0, sizeof(tp));
-	tp.client_addr = from;
+	memset(&options, 0, sizeof(options));
 
-	parse_options(&tp);
-	if (tp.options[DHO_DHCP_MESSAGE_TYPE].data) {
-		tp.packet_type = tp.options[DHO_DHCP_MESSAGE_TYPE].data[0];
-		dhcp(&tp);
-	} else if (tp.options_valid)
-		bootp(&tp);
+	parse_options(options);
+	if (options[DHO_DHCP_MESSAGE_TYPE].data) {
+		dhcp(from, options);
+	} else if (client->options_valid)
+		bootp(from, options);
 
 	/* Free the data associated with the options. */
 	for (i = 0; i < 256; i++)
-		if (tp.options[i].len && tp.options[i].data)
-			free(tp.options[i].data);
+		if (options[i].len && options[i].data)
+			free(options[i].data);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.103 2007/01/11 02:36:29 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.104 2007/01/16 20:22:20 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -572,7 +572,7 @@ freeit:
  * having sent out one or more DHCPREQUEST packets.
  */
 void
-dhcpack(struct packet *packet)
+dhcpack(struct iaddr client_addr, struct option_data *options)
 {
 	struct client_lease *lease;
 
@@ -590,9 +590,9 @@ dhcpack(struct packet *packet)
 	    client->state != S_REBINDING)
 		return;
 
-	note("DHCPACK from %s", piaddr(packet->client_addr));
+	note("DHCPACK from %s", piaddr(client_addr));
 
-	lease = packet_to_lease(packet);
+	lease = packet_to_lease(client_addr, options);
 	if (!lease) {
 		note("packet_to_lease failed.");
 		return;
@@ -715,7 +715,7 @@ state_bound(void)
 }
 
 void
-bootp(struct packet *packet)
+bootp(struct iaddr client_addr, struct option_data *options)
 {
 	struct iaddrlist *ap;
 
@@ -726,22 +726,22 @@ bootp(struct packet *packet)
 	   on it. */
 	for (ap = config->reject_list;
 	    ap; ap = ap->next) {
-		if (addr_eq(packet->client_addr, ap->addr)) {
+		if (addr_eq(client_addr, ap->addr)) {
 			note("BOOTREPLY from %s rejected.", piaddr(ap->addr));
 			return;
 		}
 	}
-	dhcpoffer(packet);
+	dhcpoffer(client_addr, options);
 }
 
 void
-dhcp(struct packet *packet)
+dhcp(struct iaddr client_addr, struct option_data *options)
 {
 	struct iaddrlist *ap;
-	void (*handler)(struct packet *);
+	void (*handler)(struct iaddr, struct option_data *);
 	char *type;
 
-	switch (packet->packet_type) {
+	switch (options[DHO_DHCP_MESSAGE_TYPE].data[0]) {
 	case DHCPOFFER:
 		handler = dhcpoffer;
 		type = "DHCPOFFER";
@@ -762,22 +762,22 @@ dhcp(struct packet *packet)
 	   on it. */
 	for (ap = config->reject_list;
 	    ap; ap = ap->next) {
-		if (addr_eq(packet->client_addr, ap->addr)) {
+		if (addr_eq(client_addr, ap->addr)) {
 			note("%s from %s rejected.", type, piaddr(ap->addr));
 			return;
 		}
 	}
-	(*handler)(packet);
+	(*handler)(client_addr, options);
 }
 
 void
-dhcpoffer(struct packet *packet)
+dhcpoffer(struct iaddr client_addr, struct option_data *options)
 {
 	struct client_lease *lease, *lp;
 	int i;
 	int arp_timeout_needed, stop_selecting;
-	char *name = packet->options[DHO_DHCP_MESSAGE_TYPE].len ?
-	    "DHCPOFFER" : "BOOTREPLY";
+	char *name = options[DHO_DHCP_MESSAGE_TYPE].len ? "DHCPOFFER" :
+	    "BOOTREPLY";
 
 	/* If we're not receptive to an offer right now, or if the offer
 	   has an unrecognizable transaction id, then just drop it. */
@@ -788,13 +788,13 @@ dhcpoffer(struct packet *packet)
 	    client->packet.chaddr, client->packet.hlen)))
 		return;
 
-	note("%s from %s", name, piaddr(packet->client_addr));
+	note("%s from %s", name, piaddr(client_addr));
 
 
 	/* If this lease doesn't supply the minimum required parameters,
 	   blow it off. */
 	for (i = 0; config->required_options[i]; i++) {
-		if (!packet->options[config->required_options[i]].len) {
+		if (!options[config->required_options[i]].len) {
 			note("%s isn't satisfactory.", name);
 			return;
 		}
@@ -811,7 +811,7 @@ dhcpoffer(struct packet *packet)
 		}
 	}
 
-	lease = packet_to_lease(packet);
+	lease = packet_to_lease(client_addr, options);
 	if (!lease) {
 		note("packet_to_lease failed.");
 		return;
@@ -819,7 +819,7 @@ dhcpoffer(struct packet *packet)
 
 	/* If this lease was acquired through a BOOTREPLY, record that
 	   fact. */
-	if (!packet->options[DHO_DHCP_MESSAGE_TYPE].len)
+	if (!options[DHO_DHCP_MESSAGE_TYPE].len)
 		lease->is_bootp = 1;
 
 	/* Record the medium under which this lease was offered. */
@@ -889,7 +889,7 @@ dhcpoffer(struct packet *packet)
  * parameters in the specified packet.
  */
 struct client_lease *
-packet_to_lease(struct packet *packet)
+packet_to_lease(struct iaddr client_addr, struct option_data *options)
 {
 	struct client_lease *lease;
 	int i;
@@ -905,19 +905,16 @@ packet_to_lease(struct packet *packet)
 
 	/* Copy the lease options. */
 	for (i = 0; i < 256; i++) {
-		if (packet->options[i].len) {
-			lease->options[i].data =
-			    malloc(packet->options[i].len + 1);
+		if (options[i].len) {
+			lease->options[i].data = malloc(options[i].len + 1);
 			if (!lease->options[i].data) {
 				warning("dhcpoffer: no memory for option %d", i);
 				free_client_lease(lease);
 				return (NULL);
 			} else {
-				memcpy(lease->options[i].data,
-				    packet->options[i].data,
-				    packet->options[i].len);
-				lease->options[i].len =
-				    packet->options[i].len;
+				memcpy(lease->options[i].data, options[i].data,
+				    options[i].len);
+				lease->options[i].len = options[i].len;
 				lease->options[i].data[lease->options[i].len] =
 				    0;
 			}
@@ -935,8 +932,8 @@ packet_to_lease(struct packet *packet)
 	    lease->address.len);
 
 	/* If the server name was filled out, copy it. */
-	if ((!packet->options[DHO_DHCP_OPTION_OVERLOAD].len ||
-	    !(packet->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)) &&
+	if ((!options[DHO_DHCP_OPTION_OVERLOAD].len ||
+	    !(options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)) &&
 	    client->packet.sname[0]) {
 		lease->server_name = malloc(DHCP_SNAME_LEN + 1);
 		if (!lease->server_name) {
@@ -955,8 +952,8 @@ packet_to_lease(struct packet *packet)
 	}
 
 	/* Ditto for the filename. */
-	if ((!packet->options[DHO_DHCP_OPTION_OVERLOAD].len ||
-	    !(packet->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1)) &&
+	if ((!options[DHO_DHCP_OPTION_OVERLOAD].len ||
+	    !(options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1)) &&
 	    client->packet.file[0]) {
 		/* Don't count on the NUL terminator. */
 		lease->filename = malloc(DHCP_FILE_LEN + 1);
@@ -965,15 +962,14 @@ packet_to_lease(struct packet *packet)
 			free_client_lease(lease);
 			return (NULL);
 		}
-		memcpy(lease->filename, client->packet.file,
-		    DHCP_FILE_LEN);
+		memcpy(lease->filename, client->packet.file, DHCP_FILE_LEN);
 		lease->filename[DHCP_FILE_LEN] = '\0';
 	}
 	return lease;
 }
 
 void
-dhcpnak(struct packet *packet)
+dhcpnak(struct iaddr client_addr, struct option_data *options)
 {
 	/* If we're not receptive to an offer right now, or if the offer
 	   has an unrecognizable transaction id, then just drop it. */
@@ -989,7 +985,7 @@ dhcpnak(struct packet *packet)
 	    client->state != S_REBINDING)
 		return;
 
-	note("DHCPNAK from %s", piaddr(packet->client_addr));
+	note("DHCPNAK from %s", piaddr(client_addr));
 
 	if (!client->active) {
 		note("DHCPNAK with no active lease.");

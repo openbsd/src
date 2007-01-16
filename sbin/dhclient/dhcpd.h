@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.61 2007/01/11 02:36:29 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.62 2007/01/16 20:22:20 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -97,13 +97,6 @@ struct iaddrlist {
 	struct iaddr addr;
 };
 
-struct packet {
-	int			 packet_type;
-	int			 options_valid;
-	struct iaddr		 client_addr;
-	struct option_data	 options[256];
-};
-
 struct hardware {
 	u_int8_t htype;
 	u_int8_t hlen;
@@ -176,6 +169,7 @@ struct client_state {
 	struct string_list	 *medium;
 	struct dhcp_packet	  packet;
 	int			  packet_length;
+	int			  options_valid;
 	struct iaddr		  requested_address;
 	char			**scriptEnv;
 	int			  scriptEnvsize;
@@ -298,9 +292,9 @@ extern char *path_dhclient_db;
 extern time_t cur_time;
 extern int log_perror;
 
-void dhcpoffer(struct packet *);
-void dhcpack(struct packet *);
-void dhcpnak(struct packet *);
+void dhcpoffer(struct iaddr, struct option_data *);
+void dhcpack(struct iaddr, struct option_data *);
+void dhcpnak(struct iaddr, struct option_data *);
 
 void send_discover(void);
 void send_request(void);
@@ -335,12 +329,12 @@ void script_set_env(const char *, const char *, const char *);
 void script_flush_env(void);
 int dhcp_option_ev_name(char *, size_t, const struct option *);
 
-struct client_lease *packet_to_lease(struct packet *);
+struct client_lease *packet_to_lease(struct iaddr, struct option_data *);
 void go_daemon(void);
 void client_location_changed(void);
 
-void bootp(struct packet *);
-void dhcp(struct packet *);
+void bootp(struct iaddr, struct option_data *);
+void dhcp(struct iaddr, struct option_data *);
 
 /* packet.c */
 void assemble_hw_header(unsigned char *, int *, struct hardware *);
