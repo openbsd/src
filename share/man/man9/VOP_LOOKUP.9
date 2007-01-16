@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.18 2006/10/16 11:27:52 pedro Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.19 2007/01/16 17:52:58 thib Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" All rights reserved.
@@ -114,13 +114,6 @@
 .Fa "struct vnode *vp"
 .Fa "struct knote *kn"
 .Fc
-.\" .Ft int
-.\" .Fo VOP_LEASE
-.\" .Fa "struct vnode *vp"
-.\" .Fa "struct proc *p"
-.\" .Fa "struct ucred *cred"
-.\" .Fa "int flag"
-.\" .Fc
 .Ft int
 .Fo VOP_LINK
 .Fa "struct vnode *dvp"
@@ -539,8 +532,6 @@ and
 will invoke this operation.
 Upon success, zero is returned; otherwise, a non-zero value is returned.
 .Pp
-.\" .It Fn VOP_LEASE vp p cred flag
-.\" .Pp
 .It Fn VOP_LINK dvp vp cnp
 Increase the link count for the vnode
 .Fa vp .
