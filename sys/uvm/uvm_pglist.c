@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.16 2006/06/01 05:16:49 krw Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.17 2007/01/16 13:36:38 dim Exp $	*/
 /*	$NetBSD: uvm_pglist.c,v 1.13 2001/02/18 21:19:08 chs Exp $	*/
 
 /*-
@@ -63,6 +63,93 @@ u_long	uvm_pglistalloc_npages;
 #define	STAT_DECR(v)
 #endif
 
+int	uvm_pglistalloc_simple(psize_t, paddr_t, paddr_t, struct pglist *);
+
+int
+uvm_pglistalloc_simple(psize_t size, paddr_t low, paddr_t high,
+    struct pglist *rlist)
+{
+	psize_t try;
+	int psi;
+	struct vm_page *pg;
+	int s, todo, idx, pgflidx, error, free_list;
+	UVMHIST_FUNC("uvm_pglistalloc_simple"); UVMHIST_CALLED(pghist);
+
+	/* Default to "lose". */
+	error = ENOMEM;
+
+	todo = size / PAGE_SIZE;
+
+	/*
+	 * Block all memory allocation and lock the free list.
+	 */
+	s = uvm_lock_fpageq();
+
+	/* Are there even any free pages? */
+	if (uvmexp.free <= (uvmexp.reserve_pagedaemon + uvmexp.reserve_kernel))
+		goto out;
+
+	for (try = low; try < high; try += PAGE_SIZE) {
+
+		/*
+		 * Make sure this is a managed physical page.
+		 */
+
+		if ((psi = vm_physseg_find(atop(try), &idx)) == -1)
+			continue; /* managed? */
+		pg = &vm_physmem[psi].pgs[idx];
+		if (VM_PAGE_IS_FREE(pg) == 0)
+			continue;
+
+		free_list = uvm_page_lookup_freelist(pg);
+		pgflidx = (pg->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN;
+#ifdef DEBUG
+		for (tp = TAILQ_FIRST(&uvm.page_free[free_list].pgfl_queues[pgflidx]);
+		     tp != NULL;
+		     tp = TAILQ_NEXT(tp, pageq)) {
+			if (tp == pg)
+				break;
+		}
+		if (tp == NULL)
+			panic("uvm_pglistalloc_simple: page not on freelist");
+#endif
+		TAILQ_REMOVE(&uvm.page_free[free_list].pgfl_queues[pgflidx], pg, pageq);
+		uvmexp.free--;
+		if (pg->flags & PG_ZERO)
+			uvmexp.zeropages--;
+		pg->flags = PG_CLEAN;
+		pg->pqflags = 0;
+		pg->uobject = NULL;
+		pg->uanon = NULL;
+		pg->version++;
+		TAILQ_INSERT_TAIL(rlist, pg, pageq);
+		STAT_INCR(uvm_pglistalloc_npages);
+		if (--todo == 0) {
+			error = 0;
+			goto out;
+		}
+	}
+
+out:
+	/*
+	 * check to see if we need to generate some free pages waking
+	 * the pagedaemon.
+	 */
+
+	if (!error && (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
+	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
+	    uvmexp.inactive < uvmexp.inactarg))) {
+		wakeup(&uvm.pagedaemon);
+	}
+
+	uvm_unlock_fpageq(s);
+
+	if (error)
+		uvm_pglistfree(rlist);
+
+	return (error);
+}
+
 /*
  * uvm_pglistalloc: allocate a list of pages
  *
@@ -115,6 +202,10 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 
 	size = round_page(size);
 	try = roundup(low, alignment);
+
+	if ((nsegs >= size / PAGE_SIZE) && (alignment == PAGE_SIZE) &&
+	    (boundary == 0))
+		return (uvm_pglistalloc_simple(size, try, high, rlist));
 
 	if (boundary != 0 && boundary < size)
 		return (EINVAL);

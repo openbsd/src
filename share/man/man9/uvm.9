@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.27 2005/09/30 20:34:25 jaredy Exp $
+.\"	$OpenBSD: uvm.9,v 1.28 2007/01/16 13:36:38 dim Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -700,11 +700,14 @@ If
 .Fa boundary
 is non-zero, no segment of the list may cross this power-of-two
 boundary, relative to zero.
-The
 .Fa nsegs
-and
+is the maximum number of physically contigous segments.
+The
 .Fa waitok
-arguments are currently ignored.
+argument is currently ignored.
+The allocated memory is returned in the
+.Fa rlist
+list.
 .Pp
 The
 .Fn uvm_pglistfree
