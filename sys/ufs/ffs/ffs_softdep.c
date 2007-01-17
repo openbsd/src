@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.81 2007/01/15 11:18:17 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.82 2007/01/17 16:43:36 pedro Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -3572,7 +3572,7 @@ initiate_write_inodeblock_ufs1(inodedep, bp)
 
 #ifdef FFS2
 /*
- * Version of initiate_write_inodeblock that handles UFS2 dinodes.
+ * Version of initiate_write_inodeblock that handles FFS2 dinodes.
  */
 STATIC void
 initiate_write_inodeblock_ufs2(inodedep, bp)
@@ -3783,7 +3783,7 @@ initiate_write_inodeblock_ufs2(inodedep, bp)
 	for (; adp; adp = TAILQ_NEXT(adp, ad_next))
 		dp->di_ib[adp->ad_lbn - NDADDR] = 0;
 }
-#endif /* UFS2 */
+#endif /* FFS2 */
 
 /*
  * This routine is called during the completion interrupt
