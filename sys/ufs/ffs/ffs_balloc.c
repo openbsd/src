@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.30 2007/01/16 21:04:31 sturm Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.31 2007/01/17 20:47:13 sturm Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -442,9 +442,11 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 	struct indir indirs[NIADDR + 2];
 	struct fs *fs;
 	struct vnode *vp;
+	struct proc *p;
 	
 	vp = ITOV(ip);
 	fs = ip->i_fs;
+	p = curproc;
 	unwindidx = -1;
 
 	lbn = lblkno(fs, off);
@@ -783,11 +785,23 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 	return (0);
 
 fail:
-
+	/*
+	 * If we have failed to allocate any blocks, simply return the error.
+	 * This is the usual case and avoids the need to fsync the file.
+	 */
+	if (allocblk == allociblk && allocib == NULL && unwindidx == -1)
+		return (error);
 	/*
 	 * If we have failed part way through block allocation, we have to
-	 * deallocate any indirect blocks that we have allocated.
+	 * deallocate any indirect blocks that we have allocated. We have to
+	 * fsync the file before we start to get rid of all of its
+	 * dependencies so that we do not leave them dangling. We have to sync
+	 * it at the end so that the softdep code does not find any untracked
+	 * changes. Although this is really slow, running out of disk space is
+	 * not expected to be a common occurence. The error return from fsync
+	 * is ignored as we already have an error to return to the user.
 	 */
+	VOP_FSYNC(vp, p->p_ucred, MNT_WAIT, p);
 	if (unwindidx >= 0) {
 		/*
 		 * First write out any buffers we've created to resolve their
@@ -866,7 +880,7 @@ fail:
 		ip->i_ffs2_blocks -= btodb(deallocated);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
-
+	VOP_FSYNC(vp, p->p_ucred, MNT_WAIT, p);
 	return (error);
 }
 #endif /* FFS2 */
