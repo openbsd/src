@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ss0,v 1.1 2002/12/03 21:36:35 mickey Exp $
+.\"	$OpenBSD: ss0,v 1.2 2007/01/17 07:58:51 ray Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -139,7 +139,7 @@ Literal characters such as ``,'' must also be passed through the lexical
 analyzer, and are also considered tokens.
 .PP
 Specification files are very flexible.
-It is realively easy to add to the above example the rule
+It is relatively easy to add to the above example the rule
 .DS
 date  :  month \'/\' day \'/\' year   ;
 .DE
