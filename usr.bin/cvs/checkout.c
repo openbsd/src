@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.79 2007/01/17 17:54:50 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.80 2007/01/17 20:38:50 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -132,6 +132,9 @@ checkout_check_repository(int argc, char **argv)
 
 		if (reset_stickies == 1)
 			cvs_client_send_request("Argument -A");
+
+		if (!(flags & CR_RECURSE_DIRS))
+			cvs_client_send_request("Argument -l");
 
 		if (cvs_cmdop == CVS_OP_CHECKOUT && prune_dirs == 1)
 			cvs_client_send_request("Argument -P");
