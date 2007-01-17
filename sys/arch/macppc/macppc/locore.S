@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.29 2006/03/31 05:23:14 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.30 2007/01/17 20:43:39 gwk Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -76,17 +76,7 @@ start:
 	lis	%r3, fwargsave@ha
 	stw	%r6, fwargsave@l(%r3)
 	stw	%r7, fwargsave@l+4(%r3)
-#ifdef SUPPORT_PPC1BUG
-	mr	%r0,%r5
-	cmpwi	0,%r0,0
-	bne	1f
-	/* need additional tests for other systems??? */
-	bl	ppc1bug_init
-	b	2f
-#endif /* SUPPORT_PPC1BUG
-1:	/* support openfirmware for Apple and PowerStack w/OFW, ... */
 	bl	ofw_init
-2:
 	li	%r0,0
 	mtmsr	%r0			/* Disable FPU/MMU/exceptions */
 	isync
@@ -373,7 +363,7 @@ nop32_2s:
 	mfmsr	%r1
 	clrldi	%r1,%r1,1
 	mtmsrd	%r1
-	mfsprg	%r1,1                   /* restore SP */
+	mfsprg	%r1,1			/* restore SP */
 nop32_2e:
 	stmw	%r28,tempsave(0)	/* free r28-r31 */
 	mfdar	%r30
@@ -452,11 +442,11 @@ _C_LABEL(dsisize) =	.-_C_LABEL(dsitrap)
 	.type	_C_LABEL(isisize),@object
 _C_LABEL(isitrap):
 nop32_4s:
-	mtsprg	1,%r1                   /* save SP */
+	mtsprg	1,%r1			/* save SP */
 	mfmsr	%r1
 	clrldi	%r1,%r1,1
 	mtmsrd	%r1
-	mfsprg	%r1,1                   /* restore SP */
+	mfsprg	%r1,1			/* restore SP */
 nop32_4e:
 	stmw	%r28,disisave(0)	/* free r28-r31 */
 	mflr	%r28			/* save LR */
@@ -987,7 +977,7 @@ s_dsitrap:
 	mfdsisr	%r5
 	li	%r6, 0
 s_pte_spill:
-	andi.	%r0,%r4,PSL_PR 
+	andi.	%r0,%r4,PSL_PR
 	li	%r3,0
 	bne	1f
 	mr	%r3,%r7
