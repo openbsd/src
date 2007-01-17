@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.h,v 1.18 2007/01/13 15:29:34 joris Exp $	*/
+/*	$OpenBSD: remote.h,v 1.19 2007/01/17 17:54:50 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -90,6 +90,7 @@ void	cvs_server_add(char *);
 void	cvs_server_admin(char *);
 void	cvs_server_annotate(char *);
 void	cvs_server_commit(char *);
+void	cvs_server_checkout(char *);
 void	cvs_server_diff(char *);
 void	cvs_server_init(char *);
 void	cvs_server_log(char *);

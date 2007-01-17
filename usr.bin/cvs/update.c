@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.85 2007/01/13 15:45:59 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.86 2007/01/17 17:54:50 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -184,6 +184,11 @@ cvs_update_leavedir(struct cvs_file *cf)
 	char *export;
 
 	cvs_log(LP_TRACE, "cvs_update_leavedir(%s)", cf->file_path);
+
+	if (cvs_server_active == 1) {
+		cvs_rmdir(cf->file_path);
+		return;
+	}
 
 	if (cvs_cmdop == CVS_OP_EXPORT) {
 		export = xmalloc(MAXPATHLEN);

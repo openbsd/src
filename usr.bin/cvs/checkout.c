@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.78 2007/01/16 08:33:46 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.79 2007/01/17 17:54:50 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -125,6 +125,34 @@ checkout_check_repository(int argc, char **argv)
 	int i;
 	char repo[MAXPATHLEN];
 	struct stat st;
+	struct cvs_recursion cr;
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_connect_to_server();
+
+		if (reset_stickies == 1)
+			cvs_client_send_request("Argument -A");
+
+		if (cvs_cmdop == CVS_OP_CHECKOUT && prune_dirs == 1)
+			cvs_client_send_request("Argument -P");
+
+		cr.enterdir = NULL;
+		cr.leavedir = NULL;
+		cr.fileproc = cvs_client_sendfile;
+		cr.flags = flags;
+
+		cvs_file_run(argc, argv, &cr);
+
+		cvs_client_send_files(argv, argc);
+		cvs_client_senddir(".");
+
+		cvs_client_send_request("%s",
+		    (cvs_cmdop == CVS_OP_CHECKOUT) ? "co" : "export");
+
+		cvs_client_get_responses();
+
+		return;
+	}
 
 	for (i = 0; i < argc; i++) {
 		cvs_mkpath(argv[i]);

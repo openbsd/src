@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.47 2007/01/16 09:14:19 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.48 2007/01/17 17:54:50 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -61,7 +61,7 @@ struct cvs_req cvs_requests[] = {
 
 	/* commands that might be supported */
 	{ "ci",				0,	cvs_server_commit, 0 },
-	{ "co",				0,	NULL, 0 },
+	{ "co",				0,	cvs_server_checkout, 0 },
 	{ "update",			0,	cvs_server_update, 0 },
 	{ "diff",			0,	cvs_server_diff, 0 },
 	{ "log",			0,	cvs_server_log, 0 },
@@ -631,6 +631,8 @@ cvs_client_updated(char *data)
 
 	repo = xmalloc(MAXPATHLEN);
 	cvs_get_repository_path(".", repo, MAXPATHLEN);
+
+	STRIP_SLASH(repo);
 
 	if (strlen(repo) + 1 > strlen(rpath))
 		fatal("received a repository path that is too short");

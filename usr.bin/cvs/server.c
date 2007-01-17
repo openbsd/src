@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.48 2007/01/13 15:29:34 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.49 2007/01/17 17:54:50 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -299,19 +299,34 @@ cvs_server_directory(char *data)
 {
 	int l;
 	CVSENTRIES *entlist;
-	char *dir, *repo, *parent, *entry, *dirn;
+	char *dir, *repo, *parent, *entry, *dirn, *p;
 
 	dir = cvs_remote_input();
-	if (strlen(dir) < strlen(current_cvsroot->cr_dir) + 1)
+	STRIP_SLASH(dir);
+
+	if (strlen(dir) < strlen(current_cvsroot->cr_dir))
 		fatal("cvs_server_directory: bad Directory request");
 
-	repo = dir + strlen(current_cvsroot->cr_dir) + 1;
-	cvs_mkpath(repo);
+	repo = dir + strlen(current_cvsroot->cr_dir);
 
-	if ((dirn = basename(repo)) == NULL)
+	/*
+	 * This is somewhat required for checkout, as the
+	 * directory request will be:
+	 *
+	 * Directory .
+	 * /path/to/cvs/root
+	 */
+	if (repo[0] == '\0')
+		p = xstrdup(".");
+	else
+		p = xstrdup(repo + 1);
+
+	cvs_mkpath(p);
+
+	if ((dirn = basename(p)) == NULL)
 		fatal("cvs_server_directory: %s", strerror(errno));
 
-	if ((parent = dirname(repo)) == NULL)
+	if ((parent = dirname(p)) == NULL)
 		fatal("cvs_server_directory: %s", strerror(errno));
 
 	if (strcmp(parent, ".")) {
@@ -328,8 +343,9 @@ cvs_server_directory(char *data)
 
 	if (server_currentdir != NULL)
 		xfree(server_currentdir);
-	server_currentdir = xstrdup(repo);
+	server_currentdir = xstrdup(p);
 
+	xfree(p);
 	xfree(dir);
 }
 
@@ -495,6 +511,16 @@ cvs_server_commit(char *data)
 
 	cvs_cmdop = CVS_OP_COMMIT;
 	cvs_commit(server_argc, server_argv);
+	cvs_server_send_response("ok");
+}
+
+void
+cvs_server_checkout(char *data)
+{	if (chdir(server_currentdir) == -1)
+		fatal("cvs_server_checkout: %s", strerror(errno));
+
+	cvs_cmdop = CVS_OP_CHECKOUT;
+	cvs_checkout(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
 
