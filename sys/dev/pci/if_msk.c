@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.41 2007/01/13 21:05:55 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -159,15 +159,14 @@ void msk_jfree(caddr_t, u_int, void *);
 int msk_init_rx_ring(struct sk_if_softc *);
 int msk_init_tx_ring(struct sk_if_softc *);
 
-int msk_marv_miibus_readreg(struct device *, int, int);
-void msk_marv_miibus_writereg(struct device *, int, int, int);
-void msk_marv_miibus_statchg(struct device *);
+int msk_miibus_readreg(struct device *, int, int);
+void msk_miibus_writereg(struct device *, int, int, int);
+void msk_miibus_statchg(struct device *);
 
-u_int32_t msk_yukon_hash(caddr_t);
 void msk_setfilt(struct sk_if_softc *, caddr_t, int);
 void msk_setmulti(struct sk_if_softc *);
 void msk_setpromisc(struct sk_if_softc *);
-void msk_yukon_tick(void *);
+void msk_tick(void *);
 
 #ifdef MSK_DEBUG
 #define DPRINTF(x)	if (mskdebug) printf x
@@ -251,7 +250,7 @@ sk_win_write_1(struct sk_softc *sc, u_int32_t reg, u_int8_t x)
 }
 
 int
-msk_marv_miibus_readreg(struct device *dev, int phy, int reg)
+msk_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
 	u_int16_t val;
@@ -273,24 +272,24 @@ msk_marv_miibus_readreg(struct device *dev, int phy, int reg)
 		return (0);
 	}
         
- 	DPRINTFN(9, ("msk_marv_miibus_readreg: i=%d, timeout=%d\n", i,
+ 	DPRINTFN(9, ("msk_miibus_readreg: i=%d, timeout=%d\n", i,
 		     SK_TIMEOUT));
 
         val = SK_YU_READ_2(sc_if, YUKON_SMIDR);
 
-	DPRINTFN(9, ("msk_marv_miibus_readreg phy=%d, reg=%#x, val=%#x\n",
+	DPRINTFN(9, ("msk_miibus_readreg phy=%d, reg=%#x, val=%#x\n",
 		     phy, reg, val));
 
 	return (val);
 }
 
 void
-msk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
+msk_miibus_writereg(struct device *dev, int phy, int reg, int val)
 {
 	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
 	int i;
 
-	DPRINTFN(9, ("msk_marv_miibus_writereg phy=%d reg=%#x val=%#x\n",
+	DPRINTFN(9, ("msk_miibus_writereg phy=%d reg=%#x val=%#x\n",
 		     phy, reg, val));
 
 	SK_YU_WRITE_2(sc_if, YUKON_SMIDR, val);
@@ -308,7 +307,7 @@ msk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
 }
 
 void
-msk_marv_miibus_statchg(struct device *dev)
+msk_miibus_statchg(struct device *dev)
 {
 	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
 	struct mii_data *mii = &sc_if->sk_mii;
@@ -345,21 +344,12 @@ msk_marv_miibus_statchg(struct device *dev)
 
 	SK_YU_WRITE_2(sc_if, YUKON_GPCR, gpcr);
 
-	DPRINTFN(9, ("msk_marv_miibus_statchg: gpcr=%x\n",
+	DPRINTFN(9, ("msk_miibus_statchg: gpcr=%x\n",
 		     SK_YU_READ_2(((struct sk_if_softc *)dev), YUKON_GPCR)));
 }
 
 #define HASH_BITS	6
   
-u_int32_t
-msk_yukon_hash(caddr_t addr)
-{
-	u_int32_t crc;
-
-	crc = ether_crc32_be(addr, ETHER_ADDR_LEN);
-	return (crc & ((1 << HASH_BITS) - 1));
-}
-
 void
 msk_setfilt(struct sk_if_softc *sc_if, caddr_t addr, int slot)
 {
@@ -401,7 +391,8 @@ allmulti:
 				ifp->if_flags |= IFF_ALLMULTI;
 				goto allmulti;
 			}
-			h = msk_yukon_hash(enm->enm_addrlo);
+			h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) &
+			    ((1 << HASH_BITS) - 1);
 			if (h < 32)
 				hashes[0] |= (1 << h);
 			else
@@ -1088,9 +1079,9 @@ msk_attach(struct device *parent, struct device *self, void *aux)
  	DPRINTFN(2, ("msk_attach: 1\n"));
 
 	sc_if->sk_mii.mii_ifp = ifp;
-	sc_if->sk_mii.mii_readreg = msk_marv_miibus_readreg;
-	sc_if->sk_mii.mii_writereg = msk_marv_miibus_writereg;
-	sc_if->sk_mii.mii_statchg = msk_marv_miibus_statchg;
+	sc_if->sk_mii.mii_readreg = msk_miibus_readreg;
+	sc_if->sk_mii.mii_writereg = msk_miibus_writereg;
+	sc_if->sk_mii.mii_statchg = msk_miibus_statchg;
 
 	ifmedia_init(&sc_if->sk_mii.mii_media, 0,
 	    msk_ifmedia_upd, msk_ifmedia_sts);
@@ -1104,7 +1095,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	} else
 		ifmedia_set(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
-	timeout_set(&sc_if->sk_tick_ch, msk_yukon_tick, sc_if);
+	timeout_set(&sc_if->sk_tick_ch, msk_tick, sc_if);
 
 	/*
 	 * Call MI attach routines.
@@ -1722,7 +1713,7 @@ msk_txeof(struct sk_if_softc *sc_if)
 }
 
 void
-msk_yukon_tick(void *xsc_if)
+msk_tick(void *xsc_if)
 {
 	struct sk_if_softc *sc_if = xsc_if;  
 	struct mii_data *mii = &sc_if->sk_mii;
