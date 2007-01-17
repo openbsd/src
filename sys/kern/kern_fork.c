@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.85 2006/11/29 12:24:17 miod Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.86 2007/01/17 13:51:52 mickey Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -275,18 +275,15 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 		p2->p_flag |= P_CONTROLT;
 	if (flags & FORK_PPWAIT)
 		p2->p_flag |= P_PPWAIT;
-	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	p2->p_pptr = p1;
 	if (flags & FORK_NOZOMBIE)
 		p2->p_flag |= P_NOZOMBIE;
-	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
 	LIST_INIT(&p2->p_children);
 
 #ifdef RTHREADS
 	if (flags & FORK_THREAD) {
 		p2->p_flag |= P_THREAD;
 		p2->p_thrparent = p1->p_thrparent;
-		LIST_INSERT_HEAD(&p1->p_thrparent->p_thrchildren, p2, p_thrsib);
 	} else {
 		p2->p_thrparent = p2;
 	}
@@ -338,6 +335,9 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	uvm_fork(p1, p2, ((flags & FORK_SHAREVM) ? TRUE : FALSE), stack,
 	    stacksize, func ? func : child_return, arg ? arg : p2);
 
+	timeout_set(&p2->p_stats->p_virt_to, virttimer_trampoline, p2);
+	timeout_set(&p2->p_stats->p_prof_to, proftimer_trampoline, p2);
+
 	vm = p2->p_vmspace;
 
 	if (flags & FORK_FORK) {
@@ -359,6 +359,15 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 		lastpid = 1 + (randompid ? arc4random() : lastpid) % PID_MAX;
 	} while (pidtaken(lastpid));
 	p2->p_pid = lastpid;
+
+	LIST_INSERT_HEAD(&allproc, p2, p_list);
+	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
+	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
+	LIST_INSERT_AFTER(p1, p2, p_pglist);
+#ifdef RTHREADS
+	if (flags & FORK_THREAD)
+		LIST_INSERT_HEAD(&p1->p_thrparent->p_thrchildren, p2, p_thrsib);
+#endif
 	if (p2->p_flag & P_TRACED) {
 		p2->p_oppid = p1->p_pid;
 		if (p2->p_pptr != p1->p_pptr)
@@ -377,16 +386,10 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 		}
 	}
 
-	LIST_INSERT_HEAD(&allproc, p2, p_list);
-	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
-
 #if NSYSTRACE > 0
 	if (ISSET(p1->p_flag, P_SYSTRACE))
 		systrace_fork(p1, p2);
 #endif
-
-	timeout_set(&p2->p_stats->p_virt_to, virttimer_trampoline, p2);
-	timeout_set(&p2->p_stats->p_prof_to, proftimer_trampoline, p2);
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.
