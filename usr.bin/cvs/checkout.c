@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.80 2007/01/17 20:38:50 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.81 2007/01/17 22:39:50 thib Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -158,18 +158,16 @@ checkout_check_repository(int argc, char **argv)
 	}
 
 	for (i = 0; i < argc; i++) {
-		cvs_mkpath(argv[i]);
-
 		if (cvs_path_cat(current_cvsroot->cr_dir, argv[i], repo,
 		    sizeof(repo)) >= sizeof(repo))
 			fatal("checkout_check_repository: truncation");
 
 		if (stat(repo, &st) == -1) {
-			cvs_log(LP_ERR, "cannot find repository %s - ignored",
+			cvs_log(LP_ERR, "cannot find module `%s' - ignored",
 			    argv[i]);
 			continue;
 		}
-
+		cvs_mkpath(argv[i]);
 		checkout_repository(repo, argv[i]);
 	}
 }
