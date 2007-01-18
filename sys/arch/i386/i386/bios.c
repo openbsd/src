@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.67 2006/08/22 19:15:36 tom Exp $	*/
+/*	$OpenBSD: bios.c,v 1.68 2007/01/18 18:32:10 gwk Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -160,8 +160,8 @@ biosattach(struct device *parent, struct device *self, void *aux)
 	case 0xf9: str = "PC Convertible";break;
 	case 0xf8: str = "PS/2 386+";	break;
 	}
-	printf(": %s(%02x) BIOS, date %c%c/%c%c/%c%c",
-	    str, va[15], va[5], va[6], va[8], va[9], va[11], va[12]);
+	printf(": %s BIOS, date %c%c/%c%c/%c%c",
+	    str, va[5], va[6], va[8], va[9], va[11], va[12]);
 
 	/* see if we have BIOS32 extensions */
 	if (!(flags & BIOSF_BIOS32)) {
