@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.188 2007/01/17 13:16:11 steven Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.189 2007/01/18 06:34:56 steven Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1023,7 +1023,6 @@ Defaults to ${PKGNAME}${FLAVOR_EXT}.
 .It Ev FULLPKGPATH
 Path to the current port's directory, relative to ${PORTSDIR},
 including flavors and subpackages.
-Read-only.
 .It Ev GMAKE
 Location of the GNU make binary, if needed.
 Defaults to gmake.
@@ -2303,20 +2302,21 @@ In the preceding example, the packing-list template for FULLPKGNAME-lib
 must be in PLIST-lib.
 .Pp
 The following variables are subpackage dependent:
+.Ev COMMENT ,
 .Ev PKG_ARCH ,
 .Ev PERMIT_PACKAGE_FTP ,
 .Ev PERMIT_PACKAGE_CDROM ,
-.Ev PKGNAME
+.Ev PKGNAME ,
 .Ev FULLPKGNAME ,
 .Ev FULLPKGPATH ,
 .Ev RUN_DEPENDS ,
 .Ev WANTLIB ,
 .Ev LIB_DEPENDS ,
 .Ev PREFIX ,
-.Ev CATEGORIES
+.Ev CATEGORIES ,
 .Ev MESSAGE ,
 .Ev UNMESSAGE ,
-.Ev DESCR
+.Ev DESCR ,
 .Ev PLIST .
 .Pp
 The usual non-MULTI_PACKAGES variables are simply used as default values
