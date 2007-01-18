@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.33 2006/06/16 14:07:42 joris Exp $	*/
+/*	$OpenBSD: root.c,v 1.34 2007/01/18 22:52:23 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -79,7 +79,7 @@ cvsroot_parse(const char *str)
 	 * at the first position again.
 	 */
 	TAILQ_FOREACH(root, &cvs_rcache, root_cache) {
-		if (strcmp(str, root->cr_str) == 0) {
+		if (root->cr_str != NULL && strcmp(str, root->cr_str) == 0) {
 			TAILQ_REMOVE(&cvs_rcache, root, root_cache);
 			TAILQ_INSERT_HEAD(&cvs_rcache, root, root_cache);
 			root->cr_ref++;
