@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.166 2006/11/24 13:52:14 reyk Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.167 2007/01/18 20:00:19 henning Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -109,6 +109,7 @@ struct ipsec_acquire_head ipsec_acquire_head =
  */
 
 struct xformsw xformsw[] = {
+#ifdef IPSEC
 	{ XF_IP4,	     0,               "IPv4 Simple Encapsulation",
 	  ipe4_attach,       ipe4_init,       ipe4_zeroize,
 	  (int (*)(struct mbuf *, struct tdb *, int, int))ipe4_input,
@@ -122,6 +123,7 @@ struct xformsw xformsw[] = {
 	{ XF_IPCOMP,	XFT_COMP, "IPcomp",
 	  ipcomp_attach,    ipcomp_init, ipcomp_zeroize,
 	  ipcomp_input,     ipcomp_output, },
+#endif /* IPSEC */
 #ifdef TCP_SIGNATURE
 	{ XF_TCPSIGNATURE,	 XFT_AUTH, "TCP MD5 Signature Option, RFC 2385",
 	  tcp_signature_tdb_attach, 	tcp_signature_tdb_init,

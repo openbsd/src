@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.112 2006/11/24 13:52:14 reyk Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.113 2007/01/18 20:00:19 henning Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -741,6 +741,7 @@ int
 pfkeyv2_get_proto_alg(u_int8_t satype, u_int8_t *sproto, int *alg)
 {
 	switch (satype) {
+#ifdef IPSEC
 	case SADB_SATYPE_AH:
 		if (!ah_enable)
 			return (EOPNOTSUPP);
@@ -781,7 +782,7 @@ pfkeyv2_get_proto_alg(u_int8_t satype, u_int8_t *sproto, int *alg)
 			*alg = satype = XF_IPCOMP;
 
 		break;
-
+#endif /* IPSEC */
 #ifdef TCP_SIGNATURE
 	case SADB_X_SATYPE_TCPSIGNATURE:
 		*sproto = IPPROTO_TCP;
@@ -944,6 +945,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			rval = EINVAL;
 			goto ret;
 		}
+#ifdef IPSEC
 		/* UDP encap has to be enabled and is only supported for ESP */
 		if (headers[SADB_X_EXT_UDPENCAP] &&
 		    (!udpencap_enable ||
@@ -951,6 +953,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			rval = EINVAL;
 			goto ret;
 		}
+#endif /* IPSEC */
 
 		s = spltdb();
 
@@ -1102,6 +1105,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			rval = EINVAL;
 			goto ret;
 		}
+#ifdef IPSEC
 		/* UDP encap has to be enabled and is only supported for ESP */
 		if (headers[SADB_X_EXT_UDPENCAP] &&
 		    (!udpencap_enable ||
@@ -1109,6 +1113,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			rval = EINVAL;
 			goto ret;
 		}
+#endif /* IPSEC */
 
 		s = spltdb();
 
