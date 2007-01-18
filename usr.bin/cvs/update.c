@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.86 2007/01/17 17:54:50 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.87 2007/01/18 09:26:19 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -151,7 +151,8 @@ cvs_update_enterdir(struct cvs_file *cf)
 	if (cf->file_status == DIR_CREATE && build_dirs == 1) {
 		cvs_mkpath(cf->file_path);
 		if ((cf->fd = open(cf->file_path, O_RDONLY)) == -1)
-			fatal("cvs_update_enterdir: %s", strerror(errno));
+			fatal("cvs_update_enterdir: `%s': %s",
+			    cf->file_path, strerror(errno));
 
 		entry = xmalloc(CVS_ENT_MAXLINELEN);
 		l = snprintf(entry, CVS_ENT_MAXLINELEN, "D/%s////",
