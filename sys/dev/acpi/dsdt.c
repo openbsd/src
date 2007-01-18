@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.75 2007/01/16 21:21:28 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.76 2007/01/18 19:01:02 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1746,7 +1746,7 @@ aml_cmpvalue(struct aml_value *lhs, struct aml_value *rhs, int opcode)
 	lt = lhs->type & ~AML_STATIC;
 	rt = rhs->type & ~AML_STATIC;
 	if (lt == rt) {
-		switch (lhs->type) {
+		switch (lt) {
 		case AML_OBJTYPE_INTEGER:
 			rc = (lhs->v_integer - rhs->v_integer);
 			break;
