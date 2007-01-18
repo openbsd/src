@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.67 2006/12/01 08:14:53 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.68 2007/01/18 20:53:36 millert Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.67 2006/12/01 08:14:53 otto Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.68 2007/01/18 20:53:36 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -176,7 +176,7 @@ main(int argc, char *argv[])
 	strlcpy(suffix, method->suffix, sizeof(suffix));
 
 	nargv[0] = NULL;
-	if ((p = getenv("GZIP")) != NULL) {
+	if (method == M_DEFLATE && (p = getenv("GZIP")) != NULL) {
 		char *last;
 
 		nargv[0] = *argv++;
