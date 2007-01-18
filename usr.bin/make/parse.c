@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.69 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.70 2007/01/18 17:49:51 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -220,6 +220,7 @@ static void ParseLookupIncludeFile(char *, char *, bool, bool);
 static void ParseFinishDependency(void);
 static bool ParseIsCond(Buffer, Buffer, char *);
 static char *strip_comments(Buffer, const char *);
+static char *find_include(const char *, bool);
 
 static void ParseDoCommands(const char *);
 
@@ -1240,26 +1241,18 @@ ParseConditionalInclude(char *file)/* file specification */
     ParseLookupIncludeFile(file, cp, true, false);
 }
 
-/* Common part to lookup and read an include file.  */
-static void
-ParseLookupIncludeFile(char *spec, char *endSpec, bool isSystem, 
-    bool errIfNotFound)
+/* helper function for ParseLookupIncludeFile */
+static char *
+find_include(const char *file, bool isSystem)
 {
-    char *file;
     char *fullname;
-    char endc;
-
-    /* Substitute for any variables in the file name before trying to
-     * find the thing.	*/
-    endc = *endSpec;
-    *endSpec = '\0';
-    file = Var_Subst(spec, NULL, false);
-    *endSpec = endc;
-
-    /* Now that we know the file name and its search path, we attempt to
-     * find the durn thing. NULL indicates the file still hasn't been
-     * found.  */
-    fullname = NULL;
+    
+    /* Look up system files on the system path first */
+    if (isSystem) {
+	fullname = Dir_FindFileNoDot(file, sysIncPath);
+	if (fullname)
+	    return fullname;
+    }
 
     /* Handle non-system non-absolute files... */
     if (!isSystem && file[0] != '/') {
@@ -1281,24 +1274,48 @@ ParseLookupIncludeFile(char *spec, char *endSpec, bool isSystem,
 	    if (fullname == NULL)
 		fullname = Dir_FindFile(newName, dirSearchPath);
 	    free(newName);
+	    if (fullname)
+	    	return fullname;
 	}
     }
 
     /* Now look first on the -I search path, then on the .PATH
      * search path, if not found in a -I directory.
      * XXX: Suffix specific?  */
-    if (fullname == NULL)
-	fullname = Dir_FindFile(file, parseIncPath);
-    if (fullname == NULL)
-	fullname = Dir_FindFile(file, dirSearchPath);
+    fullname = Dir_FindFile(file, parseIncPath);
+    if (fullname)
+    	return fullname;
+    fullname = Dir_FindFile(file, dirSearchPath);
+    if (fullname)
+    	return fullname;
 
     /* Still haven't found the makefile. Look for it on the system
      * path as a last resort.  */
-    if (fullname == NULL)
-	fullname = Dir_FindFile(file, sysIncPath);
+    if (isSystem)
+    	return NULL;
+    else
+	return Dir_FindFile(file, sysIncPath);
+}
 
+/* Common part to lookup and read an include file.  */
+static void
+ParseLookupIncludeFile(char *spec, char *endSpec, bool isSystem, 
+    bool errIfNotFound)
+{
+    char *file;
+    char *fullname;
+    char endc;
+
+    /* Substitute for any variables in the file name before trying to
+     * find the thing.	*/
+    endc = *endSpec;
+    *endSpec = '\0';
+    file = Var_Subst(spec, NULL, false);
+    *endSpec = endc;
+
+    fullname = find_include(file, isSystem);
     if (fullname == NULL && errIfNotFound)
-	    Parse_Error(PARSE_FATAL, "Could not find %s", file);
+	Parse_Error(PARSE_FATAL, "Could not find %s", file);
 	
 
     free(file);

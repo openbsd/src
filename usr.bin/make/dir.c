@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.44 2006/01/20 23:10:19 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.45 2007/01/18 17:49:51 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -634,7 +634,8 @@ Dir_Expandi(const char *word, const char *eword, Lst path, Lst expansions)
  *	that directory later on. 
  */
 char *
-Dir_FindFilei(const char *name, const char *ename, Lst path)
+Dir_FindFileComplexi(const char *name, const char *ename, Lst path, 
+    bool checkCurdirFirst)
 {
     Path		*p;	/* current path member */
     char		*p1;	/* pointer into p->name */
@@ -664,10 +665,10 @@ Dir_FindFilei(const char *name, const char *ename, Lst path)
 
     if (DEBUG(DIR))
 	printf("Searching for %s...", name);
-    /* No matter what, we always look for the file in the current directory
-     * before anywhere else and we always return exactly what the caller 
-     * specified. */
-    if ((!hasSlash || (cp - name == 2 && *name == '.')) &&
+    /* Unless checkCurDirFirst is false, we always look for 
+     * the file in the current directory before anywhere else 
+     * and we always return exactly what the caller specified. */
+    if (checkCurdirFirst && (!hasSlash || (cp - name == 2 && *name == '.')) &&
 	find_file_hashi(dot, cp, ename, hv) != NULL) {
 	    if (DEBUG(DIR))
 		printf("in '.'\n");

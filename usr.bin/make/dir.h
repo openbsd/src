@@ -2,7 +2,7 @@
 #define DIR_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.h,v 1.16 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: dir.h,v 1.17 2007/01/18 17:49:51 espie Exp $	*/
 /*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -115,17 +115,21 @@ extern bool Dir_HasWildcardsi(const char *, const char *);
 extern void Dir_Expandi(const char *, const char *, Lst, Lst);
 #define Dir_Expand(n, l1, l2) Dir_Expandi(n, strchr(n, '\0'), l1, l2)
 
-/* fullname = Dir_FindFilei(name, end, path)
+/* fullname = Dir_FindFileComplexi(name, end, path, checkCurdirFirst)
  *	Searches for a file (name, end) on a given search path.  If it exists, 
  *	return the fullname of the file, otherwise NULL.
  *	The fullname is always a copy, and the caller is responsible for
  *	free()ing it.
- *	Looking for a simple name always looks in the current directory.
+ *	Looking for a simple name always looks in the current directory,
+ *	unless checkCurdirFirst is false.
  *	For complex names, the current directory search only occurs for
  *	paths with dot in them.
  */
-extern char *Dir_FindFilei(const char *, const char *, Lst);
-#define Dir_FindFile(n, e) Dir_FindFilei(n, strchr(n, '\0'), e)
+extern char *Dir_FindFileComplexi(const char *, const char *, Lst, bool);
+#define Dir_FindFilei(n, e, p) Dir_FindFileComplexi(n, e, p, true)
+#define Dir_FindFileNoDoti(n, e, p) Dir_FindFileComplexi(n, e, p, false)
+#define Dir_FindFile(n, p) Dir_FindFilei(n, strchr(n, '\0'), p)
+#define Dir_FindFileNoDot(n, p) Dir_FindFileNoDoti(n, strchr(n, '\0'), p)
 
 /* stamp = Dir_MTime(gn);
  *	Return the modification time of node gn, searching along
