@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.64 2005/08/17 14:54:59 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.65 2007/01/18 20:45:55 henning Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -250,6 +250,42 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 			xprintf(opts, "no changes");
 		if (opts & PF_OPT_VERBOSE)
 			PFRB_FOREACH(a, &b)
+				if ((opts & PF_OPT_VERBOSE2) || a->pfra_fback)
+					print_addrx(a, NULL,
+					    opts & PF_OPT_USEDNS);
+	} else if (!strcmp(command, "expire")) {
+		const char		*errstr;
+		u_int			 lifetime;
+
+		b.pfrb_type = PFRB_ASTATS;
+		b2.pfrb_type = PFRB_ADDRS;
+		if (argc != 1 || file != NULL)
+			usage();
+		lifetime = strtonum(*argv, 0, UINT_MAX, &errstr);
+		if (errstr)
+			errx(1, "expiry time: %s", errstr);
+		for (;;) {
+			pfr_buf_grow(&b, b.pfrb_size);
+			b.pfrb_size = b.pfrb_msize;
+			RVTEST(pfr_get_astats(&table, b.pfrb_caddr,
+			    &b.pfrb_size, flags));
+			if (b.pfrb_size <= b.pfrb_msize)
+				break;
+		}
+		PFRB_FOREACH(p, &b)
+			if (time(NULL) - ((struct pfr_astats *)p)->pfras_tzero >
+			     lifetime)
+				if (pfr_buf_add(&b2,
+				    &((struct pfr_astats *)p)->pfras_a))
+					err(1, "duplicate buffer");
+
+		if (opts & PF_OPT_VERBOSE)
+			flags |= PFR_FLAG_FEEDBACK;
+		RVTEST(pfr_del_addrs(&table, b2.pfrb_caddr, b2.pfrb_size,
+		    &ndel, flags));
+		xprintf(opts, "%d/%d addresses expired", ndel, b2.pfrb_size);
+		if (opts & PF_OPT_VERBOSE)
+			PFRB_FOREACH(a, &b2)
 				if ((opts & PF_OPT_VERBOSE2) || a->pfra_fback)
 					print_addrx(a, NULL,
 					    opts & PF_OPT_USEDNS);

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.126 2006/11/20 14:31:17 mcbride Exp $
+.\" $OpenBSD: pfctl.8,v 1.127 2007/01/18 20:45:55 henning Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -450,6 +450,13 @@ Add one or more addresses in a table.
 Automatically create a nonexisting table.
 .It Fl T Cm delete
 Delete one or more addresses from a table.
+.It Fl T Cm expire Ar number
+Delete addresses which had their statistics cleared more than
+.Ar number
+seconds ago.
+For entries which have never had their statistics cleared,
+.Ar number
+refers to the time they were added to the table.
 .It Fl T Cm replace
 Replace the addresses of the table.
 Automatically create a nonexisting table.

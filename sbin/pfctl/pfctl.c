@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.257 2006/11/20 14:31:17 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.258 2007/01/18 20:45:55 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -212,7 +212,7 @@ static const char *showopt_list[] = {
 
 static const char *tblcmdopt_list[] = {
 	"kill", "flush", "add", "delete", "load", "replace", "show",
-	"test", "zero", NULL
+	"test", "zero", "expire", NULL
 };
 
 static const char *debugopt_list[] = {
@@ -2105,7 +2105,7 @@ main(int argc, char *argv[])
 			loadopt |= PFCTL_FLAG_TABLE;
 			tblcmdopt = NULL;
 		} else
-			mode = strchr("acdfkrz", ch) ? O_RDWR : O_RDONLY;
+			mode = strchr("acdefkrz", ch) ? O_RDWR : O_RDONLY;
 	} else if (argc != optind) {
 		warnx("unknown command line argument: %s ...", argv[optind]);
 		usage();
