@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.6 2007/01/13 15:29:34 joris Exp $	*/
+/*	$OpenBSD: remote.c,v 1.7 2007/01/18 16:45:52 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -245,5 +245,8 @@ cvs_remote_classify_file(struct cvs_file *cf)
 	} else if (cf->fd == -1) {
 		cf->file_status = FILE_UNKNOWN;
 	}
+
+	if (cvs_cmdop == CVS_OP_IMPORT && cf->file_type == CVS_FILE)
+		cf->file_status = FILE_MODIFIED;
 }
 

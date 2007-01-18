@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.49 2007/01/17 17:54:50 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.50 2007/01/18 16:45:52 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -478,6 +478,17 @@ cvs_server_add(char *data)
 
 	cvs_cmdop = CVS_OP_ADD;
 	cvs_add(server_argc, server_argv);
+	cvs_server_send_response("ok");
+}
+
+void
+cvs_server_import(char *data)
+{
+	if (chdir(server_currentdir) == -1)
+		fatal("cvs_server_import: %s", strerror(errno));
+
+	cvs_cmdop = CVS_OP_IMPORT;
+	cvs_import(server_argc, server_argv);
 	cvs_server_send_response("ok");
 }
 
