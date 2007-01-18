@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.81 2007/01/17 22:39:50 thib Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.82 2007/01/18 08:49:08 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -21,9 +21,6 @@
 #include "log.h"
 #include "diff.h"
 #include "remote.h"
-
-int	cvs_checkout(int, char **);
-int	cvs_export(int, char **);
 
 static void checkout_check_repository(int, char **);
 static void checkout_repository(const char *, const char *);
