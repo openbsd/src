@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.57 2006/12/07 18:24:49 reyk Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.58 2007/01/18 04:36:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -139,6 +139,7 @@ Static const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_CISCOLINKSYS, USB_PRODUCT_CISCOLINKSYS_USB200MV2}, AX772 },
 	{ { USB_VENDOR_COREGA, USB_PRODUCT_COREGA_FETHER_USB2_TX }, 0},
 	{ { USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DUBE100}, 0 },
+	{ { USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DUBE100B1 }, AX772 },
 	{ { USB_VENDOR_GOODWAY, USB_PRODUCT_GOODWAY_GWUSB2E}, 0 },
 	{ { USB_VENDOR_JVC, USB_PRODUCT_JVC_MP_PRX1}, 0 },
 	{ { USB_VENDOR_LINKSYS2, USB_PRODUCT_LINKSYS2_USB200M}, 0 },
@@ -469,10 +470,10 @@ axe_ax88178_init(struct axe_softc *sc)
 	}
 
 	/* soft reset */
-	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, 0, NULL);
+	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, AXE_SW_RESET_CLEAR, NULL);
 	usbd_delay_ms(sc->axe_udev, 150);
 	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0,
-	    AXE_178_RESET_PRL | AXE_178_RESET_MAGIC, NULL);
+	    AXE_SW_RESET_PRL | AXE_178_RESET_MAGIC, NULL);
 	usbd_delay_ms(sc->axe_udev, 150);
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, 0, NULL);
 }
@@ -483,24 +484,37 @@ axe_ax88772_init(struct axe_softc *sc)
 	axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x00b0, NULL);
 	usbd_delay_ms(sc->axe_udev, 40);
 
-	/* ask for embedded PHY */
-	axe_cmd(sc, AXE_CMD_SW_PHY_SELECT, 0, 0x01, NULL);
-	usbd_delay_ms(sc->axe_udev, 10);
+	if (sc->axe_phyaddrs[1] == AXE_INTPHY) {
+		/* ask for the embedded PHY */
+		axe_cmd(sc, AXE_CMD_SW_PHY_SELECT, 0, 0x01, NULL);
+		usbd_delay_ms(sc->axe_udev, 10);
 
-	/* power down and reset state, pin reset state */
-	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, 0x00, NULL);
-	usbd_delay_ms(sc->axe_udev, 60);
+		/* power down and reset state, pin reset state */
+		axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, AXE_SW_RESET_CLEAR, NULL);
+		usbd_delay_ms(sc->axe_udev, 60);
 
-	/* power down/reset state, pin operating state */
-	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, 0x48, NULL);
+		/* power down/reset state, pin operating state */
+		axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0,
+		    AXE_SW_RESET_IPPD | AXE_SW_RESET_PRL, NULL);
+		usbd_delay_ms(sc->axe_udev, 150);
+
+		/* power up, reset */
+		axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, AXE_SW_RESET_PRL, NULL);
+
+		/* power up, operating */
+		axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0,
+		    AXE_SW_RESET_IPRL | AXE_SW_RESET_PRL, NULL);
+	} else {
+		/* ask for external PHY */
+		axe_cmd(sc, AXE_CMD_SW_PHY_SELECT, 0, 0x00, NULL);
+		usbd_delay_ms(sc->axe_udev, 10);
+
+		/* power down internal PHY */
+		axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0,
+		    AXE_SW_RESET_IPPD | AXE_SW_RESET_PRL, NULL);
+	}
+
 	usbd_delay_ms(sc->axe_udev, 150);
-
-	/* power up, reset */
-	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, 0x08, NULL);
-
-	/* power up, operating */
-	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, 0x28, NULL);
-
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, 0, NULL);
 }
 
@@ -600,6 +614,12 @@ USB_ATTACH(axe)
 
 	s = splnet();
 
+	/* We need the PHYID for init dance in some cases */
+	axe_cmd(sc, AXE_CMD_READ_PHYID, 0, 0, (void *)&sc->axe_phyaddrs);
+
+	DPRINTF((" phyaddrs[0]: %x phyaddrs[1]: %x\n",
+	    sc->axe_phyaddrs[0], sc->axe_phyaddrs[1]));
+
 	if (sc->axe_flags & AX178) {
 		axe_ax88178_init(sc);
 		printf(", AX88178");
@@ -618,13 +638,9 @@ USB_ATTACH(axe)
 		axe_cmd(sc, AXE_172_CMD_READ_NODEID, 0, 0, &eaddr);
 
 	/*
-	 * Load IPG values and PHY indexes.
+	 * Load IPG values
 	 */
 	axe_cmd(sc, AXE_CMD_READ_IPG012, 0, 0, (void *)&sc->axe_ipgs);
-	axe_cmd(sc, AXE_CMD_READ_PHYID, 0, 0, (void *)&sc->axe_phyaddrs);
-
-	DPRINTF((" phyaddrs[0]: %x phyaddrs[1]: %x\n",
-	    sc->axe_phyaddrs[0], sc->axe_phyaddrs[1]));
 
 	/*
 	 * Work around broken adapters that appear to lie about

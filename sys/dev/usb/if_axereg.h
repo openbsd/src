@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.12 2006/06/01 05:19:38 pascoe Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.13 2007/01/18 04:36:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -94,11 +94,15 @@
 #define AXE_CMD_SW_PHY_STATUS			0x0021
 #define AXE_CMD_SW_PHY_SELECT			0x0122
 
-#define AXE_178_RESET_RR			0x01
-#define AXE_178_RESET_RT			0x02
-#define AXE_178_RESET_PRTE			0x04
-#define AXE_178_RESET_PRL			0x08
-#define AXE_178_RESET_BZ			0x10
+#define AXE_SW_RESET_CLEAR			0x00
+#define AXE_SW_RESET_RR				0x01
+#define AXE_SW_RESET_RT				0x02
+#define AXE_SW_RESET_PRTE			0x04
+#define AXE_SW_RESET_PRL			0x08
+#define AXE_SW_RESET_BZ				0x10
+#define AXE_SW_RESET_IPRL			0x20
+#define AXE_SW_RESET_IPPD			0x40
+
 /* AX88178 documentation says to always write this bit... */
 #define AXE_178_RESET_MAGIC			0x40
 
@@ -128,6 +132,7 @@
 #define AXE_178_RXCMD_MFB			0x0300
 
 #define AXE_NOPHY				0xE0
+#define AXE_INTPHY				0x10
 
 #define AXE_TIMEOUT		1000
 #define AXE_172_BUFSZ		1536
