@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.5 2007/01/02 22:51:49 tom Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.6 2007/01/19 19:59:09 tom Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -167,8 +167,6 @@ struct glxsb_softc {
 	int32_t			sc_cid;
 	int			sc_nsessions;
 	struct glxsb_session	*sc_sessions;
-
-	int			maxpolls;	/* XXX */
 #endif /* CRYPTO */
 };
 
@@ -448,20 +446,14 @@ glxsb_aes(struct glxsb_softc *sc, uint32_t control, uint32_t psrc,
 	 *
 	 * Since we have a maximum size of operation defined in
 	 * GLXSB_MAX_AES_LEN, we use this constant to decide how long
-	 * to wait.  Allow a couple of orders of magnitude longer than
-	 * it should really take, just in case.
+	 * to wait.  Allow an order of magnitude longer than it should
+	 * really take, just in case.
 	 */
 	for (i = 0; i < GLXSB_MAX_AES_LEN * 10; i++) {
 		status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SB_CTL_A);
 
-		if ((status & SB_CTL_ST) == 0) {	/* Done */
-			if (i > sc->maxpolls) {	/* XXX */
-				sc->maxpolls = i;
-				printf("%s: maxpolls now %d (len = %d)\n",
-				    sc->sc_dev.dv_xname, i, len);
-			}
+		if ((status & SB_CTL_ST) == 0)		/* Done */
 			return;
-		}
 	}
 
 	printf("%s: operation failed to complete\n", sc->sc_dev.dv_xname);
