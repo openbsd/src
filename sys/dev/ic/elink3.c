@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.68 2006/06/17 17:56:10 brad Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.69 2007/01/19 01:33:44 krw Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -983,7 +983,7 @@ epstart(ifp)
 startagain:
 	/* Sneak a peek at the next packet */
 	IFQ_POLL(&ifp->if_snd, m0);
-	if (m0 == 0)
+	if (m0 == NULL)
 		return;
 
 	/* We need to use m->m_pkthdr.len, so require the header */
@@ -1017,8 +1017,9 @@ startagain:
 		bus_space_write_2(iot, ioh, EP_COMMAND,
 		    SET_TX_AVAIL_THRESH | EP_THRESH_DISABLE);
 	}
+
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
-	if (m0 == 0)		/* not really needed */
+	if (m0 == NULL)
 		return;
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_TX_START_THRESH |
@@ -1309,7 +1310,7 @@ again:
 
 	/* Pull packet off interface. */
 	m = epget(sc, len);
-	if (m == 0) {
+	if (m == NULL) {
 		ifp->if_ierrors++;
 		goto abort;
 	}
@@ -1377,11 +1378,11 @@ epget(sc, totlen)
 	int len, pad, sh, rxreg;
 
 	m = sc->mb[sc->next_mb];
-	sc->mb[sc->next_mb] = 0;
-	if (m == 0) {
+	sc->mb[sc->next_mb] = NULL;
+	if (m == NULL) {
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == 0)
-			return 0;
+		if (m == NULL)
+			return (NULL);
 	} else {
 		/* If the queue is no longer full, refill. */
 		if (sc->last_mb == sc->next_mb)
@@ -1419,17 +1420,17 @@ epget(sc, totlen)
 	while (totlen > 0) {
 		if (top) {
 			m = sc->mb[sc->next_mb];
-			sc->mb[sc->next_mb] = 0;
-			if (m == 0) {
+			sc->mb[sc->next_mb] = NULL;
+			if (m == NULL) {
 				MGET(m, M_DONTWAIT, MT_DATA);
-				if (m == 0) {
+				if (m == NULL) {
 					splx(sh);
 					m_freem(top);
-					return 0;
+					return (NULL);
 				}
-			} else {
+			} else
 				sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
-			}
+
 			len = MLEN;
 		}
 		if (top && totlen >= MINCLSIZE) {
