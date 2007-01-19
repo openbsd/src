@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.98 2007/01/17 17:54:50 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.99 2007/01/19 23:55:31 todd Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -462,10 +462,11 @@ cvs_unlink(const char *path)
 int
 cvs_rmdir(const char *path)
 {
-	int ret = -1;
+	int type, ret = -1;
 	size_t len;
 	DIR *dirp;
 	struct dirent *ent;
+	struct stat st;
 	char fpath[MAXPATHLEN];
 
 	if (cvs_server_active == 0)
@@ -488,11 +489,46 @@ cvs_rmdir(const char *path)
 		if (len >= sizeof(fpath))
 			fatal("cvs_rmdir: path truncation");
 
-		if (ent->d_type == DT_DIR) {
+		if (ent->d_type == DT_UNKNOWN) {
+			if (stat(fpath, &st) == -1)
+				fatal("'%s': %s", fpath, strerror(errno));
+
+			switch (st.st_mode & S_IFMT) {
+			case S_IFDIR:
+				type = CVS_DIR;
+				break;
+			case S_IFREG:
+				type = CVS_FILE;
+				break;
+			default:
+				fatal("'%s': Unknown file type in copy",
+				    fpath);
+			}
+		} else {
+			switch (ent->d_type) {
+			case DT_DIR:
+				type = CVS_DIR;
+				break;
+			case DT_REG:
+				type = CVS_FILE;
+				break;
+			default:
+				fatal("'%s': Unknown file type in copy",
+				    fpath);
+			}
+		}
+		switch (type) {
+		case CVS_DIR: 
 			if (cvs_rmdir(fpath) == -1)
 				goto done;
-		} else if (cvs_unlink(fpath) == -1 && errno != ENOENT)
-			goto done;
+			break;
+		case CVS_FILE:
+			if (cvs_unlink(fpath) == -1 && errno != ENOENT)
+				goto done;
+			break;
+		default:
+			fatal("type %d unknown, shouldn't happen", type);
+		}
 	}
 
 
