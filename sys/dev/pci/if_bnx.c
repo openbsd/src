@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.38 2007/01/10 18:09:26 deraadt Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.39 2007/01/19 18:35:50 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4591,7 +4591,7 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				bnx_set_rx_mode(sc);
 			} else {
 				if (!(ifp->if_flags & IFF_RUNNING))
-					bnx_init(ifp);
+					bnx_init(sc);
 			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
