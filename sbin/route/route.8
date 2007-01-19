@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.49 2007/01/15 22:50:05 stevesk Exp $
+.\"	$OpenBSD: route.8,v 1.50 2007/01/19 20:49:30 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -424,6 +424,24 @@ default gateway address
 .It Pa /etc/networks
 network name database
 .El
+.Sh EXAMPLES
+Add a static
+.Xr inet 4
+route to the 192.168.5.0/24 network via the 192.168.0.1 gateway:
+.Pp
+.Dl # route add -inet 192.168.5.0/24 192.168.0.1
+.Pp
+Amend the
+.Xr inet 4
+route to the 192.168.5.0/24 network to use the 192.168.0.2 gateway:
+.Pp
+.Dl # route change -inet 192.168.5.0/24 192.168.0.2
+.Pp
+Delete the
+.Xr inet 4
+route to the 192.168.5.0/24 network:
+.Pp
+.Dl # route delete -inet 192.168.5.0/24
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "%s: gateway %s flags %x"
