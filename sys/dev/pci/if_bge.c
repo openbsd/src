@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.203 2007/01/10 23:04:53 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.204 2007/01/19 01:16:14 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1248,6 +1248,7 @@ bge_blockinit(struct bge_softc *sc)
 	vaddr_t			rcb_addr;
 	int			i;
 	bge_hostaddr		taddr;
+	u_int32_t		val;
 
 	/*
 	 * Initialize the memory window pointer register so that
@@ -1380,8 +1381,16 @@ bge_blockinit(struct bge_softc *sc)
 	 * values are 1/8th the number of descriptors allocated to
 	 * each ring.
 	 */
-	CSR_WRITE_4(sc, BGE_RBDI_STD_REPL_THRESH, BGE_STD_RX_RING_CNT/8);
-	CSR_WRITE_4(sc, BGE_RBDI_JUMBO_REPL_THRESH, BGE_JUMBO_RX_RING_CNT/8);
+	i = BGE_STD_RX_RING_CNT / 8;
+
+	/* Use a value of 8 for these chips to workaround HW errata */
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755)
+		i = 8;
+
+	CSR_WRITE_4(sc, BGE_RBDI_STD_REPL_THRESH, i);
+	CSR_WRITE_4(sc, BGE_RBDI_JUMBO_REPL_THRESH, BGE_JUMBO_RX_RING_CNT / 8);
 
 	/*
 	 * Disable all unused send rings by setting the 'ring disabled'
@@ -1549,9 +1558,15 @@ bge_blockinit(struct bge_softc *sc)
 	if (!(BGE_IS_5705_OR_BEYOND(sc)))
 		CSR_WRITE_4(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
 
+	val = BGE_WDMAMODE_ENABLE|BGE_WDMAMODE_ALL_ATTNS;
+
+	/* Enable host coalescing bug fix. */
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
+		val |= (1 << 29);
+
 	/* Turn on write DMA state machine */
-	CSR_WRITE_4(sc, BGE_WDMA_MODE,
-	    BGE_WDMAMODE_ENABLE|BGE_WDMAMODE_ALL_ATTNS);
+	CSR_WRITE_4(sc, BGE_WDMA_MODE, val);
 
 	/* Turn on read DMA state machine */
 	{
