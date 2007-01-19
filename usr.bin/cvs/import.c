@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.64 2007/01/18 16:45:52 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.65 2007/01/19 08:21:45 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -22,7 +22,6 @@
 #include "log.h"
 #include "remote.h"
 
-int	cvs_import(int, char **);
 void	cvs_import_local(struct cvs_file *);
 
 static void import_new(struct cvs_file *);
