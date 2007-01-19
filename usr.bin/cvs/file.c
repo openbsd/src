@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.170 2007/01/14 23:10:56 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.171 2007/01/19 23:23:21 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -342,7 +342,7 @@ next:
 void
 cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 {
-	int l;
+	int l, type;
 	FILE *fp;
 	int nbytes;
 	size_t len;
@@ -438,27 +438,61 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 				continue;
 			}
 
-			if (!(cr->flags & CR_RECURSE_DIRS) &&
-			    dp->d_type == DT_DIR) {
-				cp += dp->d_reclen;
-				continue;
-			}
-
 			l = snprintf(fpath, MAXPATHLEN, "%s/%s",
 			    cf->file_path, dp->d_name);
 			if (l == -1 || l >= MAXPATHLEN)
 				fatal("cvs_file_walkdir: overflow");
 
 			/*
-			 * Anticipate the file type to sort them,
-			 * note that we do not determine the final
-			 * type until we actually have the fd floating
-			 * around.
+			 * nfs and afs will show d_type as DT_UNKNOWN
+			 * for files and/or directories so when we encounter
+			 * this we call stat() on the path to be sure.
 			 */
-			if (dp->d_type == DT_DIR)
+			if (dp->d_type == DT_UNKNOWN) {
+				if (stat(fpath, &st) == -1)
+					fatal("'%s': %s", fpath,
+					    strerror(errno));
+
+				switch (st.st_mode & S_IFMT) {
+				case S_IFDIR:
+					type = CVS_DIR;
+					break;
+				case S_IFREG:
+					type = CVS_FILE;
+					break;
+				default:
+					fatal("Unknown file type in copy");
+				}
+			} else {
+				switch (dp->d_type) {
+				case DT_DIR:
+					type = CVS_DIR;
+					break;
+				case DT_REG:
+					type = CVS_FILE;
+					break;
+				default:
+					fatal("Unknown file type in copy");
+				}
+			}
+
+			if (!(cr->flags & CR_RECURSE_DIRS) &&
+			    type == CVS_DIR) {
+				cp += dp->d_reclen;
+				continue;
+			}
+
+			switch (type) {
+			case CVS_DIR:
 				cvs_file_get(fpath, &dl);
-			else if (dp->d_type == DT_REG)
+				break;
+			case CVS_FILE:
 				cvs_file_get(fpath, &fl);
+				break;
+			default:
+				fatal("type %d unknown, shouldn't happen",
+				    type);
+			}
 
 			cp += dp->d_reclen;
 		}

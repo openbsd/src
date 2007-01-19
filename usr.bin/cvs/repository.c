@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.7 2006/12/11 07:59:18 xsa Exp $	*/
+/*	$OpenBSD: repository.c,v 1.8 2007/01/19 23:23:21 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -89,9 +89,14 @@ void
 cvs_repository_getdir(const char *dir, const char *wdir,
 	struct cvs_flisthead *fl, struct cvs_flisthead *dl, int dodirs)
 {
+	int type;
 	DIR *dirp;
+	struct stat st;
 	struct dirent *dp;
-	char *s, fpath[MAXPATHLEN];
+	char *s, *fpath, *rpath;
+
+	rpath = xmalloc(MAXPATHLEN);
+	fpath = xmalloc(MAXPATHLEN);
 
 	if ((dirp = opendir(dir)) == NULL)
 		fatal("cvs_repository_getdir: failed to open '%s'", dir);
@@ -106,25 +111,65 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 		if (cvs_file_chkign(dp->d_name))
 			continue;
 
-		if (dodirs == 0 && dp->d_type == DT_DIR)
-			continue;
-
 		if (cvs_path_cat(wdir, dp->d_name,
-		    fpath, sizeof(fpath)) >= sizeof(fpath))
+		    fpath, MAXPATHLEN) >= MAXPATHLEN)
+			fatal("cvs_repository_getdir: truncation");
+
+		if (cvs_path_cat(dir, dp->d_name,
+		    rpath, MAXPATHLEN) >= MAXPATHLEN)
 			fatal("cvs_repository_getdir: truncation");
 
 		/*
-		 * Anticipate the file type for sorting, we do not determine
-		 * the final file type until we have the fd floating around.
+		 * nfs and afs will show d_type as DT_UNKNOWN
+		 * for files and/or directories so when we encounter
+		 * this we call stat() on the path to be sure.
 		 */
-		if (dp->d_type == DT_DIR) {
+		if (dp->d_type == DT_UNKNOWN) {
+			if (stat(rpath, &st) == -1)
+				fatal("'%s': %s", rpath, strerror(errno));
+
+			switch (st.st_mode & S_IFMT) {
+			case S_IFDIR:
+				type = CVS_DIR;
+				break;
+			case S_IFREG:
+				type = CVS_FILE;
+				break;
+			default:
+				fatal("Unknown file type in repository");
+			}
+		} else {
+			switch (dp->d_type) {
+			case DT_DIR:
+				type = CVS_DIR;
+				break;
+			case DT_REG:
+				type = CVS_FILE;
+				break;
+			default:
+				fatal("Unknown file type in repository");
+			}
+		}
+
+		if (dodirs == 0 && type == CVS_DIR)
+			continue;
+
+		switch (type) {
+		case CVS_DIR:
 			cvs_file_get(fpath, dl);
-		} else if (dp->d_type == DT_REG) {
+			break;
+		case CVS_FILE:
 			if ((s = strrchr(fpath, ',')) != NULL)
 				*s = '\0';
 			cvs_file_get(fpath, fl);
+			break;
+		default:
+			fatal("type %d unknown, shouldn't happen", type);
 		}
 	}
+
+	xfree(rpath);
+	xfree(fpath);
 
 	(void)closedir(dirp);
 }
