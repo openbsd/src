@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.172 2007/01/20 00:58:19 niallo Exp $	*/
+/*	$OpenBSD: file.c,v 1.173 2007/01/20 01:31:03 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -716,7 +716,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 			ismodified = 0;
 	}
 
-	if (cf->file_rcs != NULL) {
+	if (cf->file_rcs != NULL && cf->file_rcsrev != NULL) {
 		state = rcs_state_get(cf->file_rcs, cf->file_rcsrev);
 		if (state == NULL)
 			fatal("failed to get state for HEAD for %s",
