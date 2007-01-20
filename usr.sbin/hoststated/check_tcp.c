@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.10 2007/01/12 16:43:01 pyr Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.11 2007/01/20 16:32:10 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -139,9 +139,9 @@ tcp_host_up(int s, struct ctl_tcp_event *cte)
 		cte->validate_close = check_send_expect;
 		break;
 	}
-	cte->req = cte->table->sendbuf;
 
 	if (cte->table->sendbuf != NULL) {
+		cte->req = cte->table->sendbuf;
 		event_again(&cte->ev, s, EV_TIMEOUT|EV_WRITE, tcp_send_req,
 		    &cte->tv_start, &cte->table->timeout, cte);
 		return;
@@ -159,7 +159,6 @@ tcp_send_req(int s, short event, void *arg)
 {
 	struct ctl_tcp_event	*cte = arg;
 	int		 	 bs;
-	int		 	 pos;
 	int		 	 len;
 
 	if (event == EV_TIMEOUT) {
@@ -167,10 +166,9 @@ tcp_send_req(int s, short event, void *arg)
 		hce_notify_done(cte->host, "tcp_send_req: timeout");
 		return;
 	}
-	pos = 0;
 	len = strlen(cte->req);
 	do {
-		bs = write(s, cte->req + pos, len);
+		bs = write(s, cte->req, len);
 		if (bs == -1) {
 			if (errno == EAGAIN || errno == EINTR)
 				goto retry;
@@ -179,7 +177,7 @@ tcp_send_req(int s, short event, void *arg)
 			hce_notify_done(cte->host, "tcp_send_req: write");
 			return;
 		}
-		pos += bs;
+		cte->req += bs;
 		len -= bs;
 	} while (len > 0);
 
