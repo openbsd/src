@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.43 2007/01/16 11:10:53 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.44 2007/01/20 16:26:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -288,7 +288,7 @@ schizo_pci_error(void *vpbm)
 {
 	struct schizo_pbm *sp = vpbm;
 	struct schizo_softc *sc = sp->sp_sc;
-	u_int64_t afsr, afar, ctrl, tfar;
+	u_int64_t afsr, afar, ctrl;
 	u_int32_t csr;
 
 	afsr = schizo_pbm_read(sp, SCZ_PCI_AFSR);
@@ -305,17 +305,36 @@ schizo_pci_error(void *vpbm)
 	printf("PCICSR=%lb\n", csr, PCI_COMMAND_STATUS_BITS);
 
 	if (ctrl & SCZ_PCICTRL_MMU_ERR) {
+		u_int32_t ctrl, tfar;
+
 		ctrl = schizo_pbm_read(sp, SCZ_PCI_IOMMU_CTRL);
 		printf("IOMMUCTRL=%lx\n", ctrl);
+
+		if ((ctrl & TOM_IOMMU_ERR) == 0)
+			goto clear_error;
 
 		if (sc->sc_tomatillo) {
 			tfar = schizo_pbm_read(sp, TOM_PCI_IOMMU_TFAR);
 			printf("IOMMUTFAR=%lx\n", tfar);
 		}
+
+		/* These are non-fatal if target abort was signalled. */
+		if ((ctrl & TOM_IOMMU_ERR_MASK) == TOM_IOMMU_INV_ERR ||
+		    ctrl & TOM_IOMMU_ILLTSBTBW_ERR ||
+		    ctrl & TOM_IOMMU_BADVA_ERR) {
+			if (csr & PCI_STATUS_TARGET_TARGET_ABORT) {
+				schizo_pbm_write(sp, SCZ_PCI_IOMMU_CTRL, ctrl);
+				goto clear_error;
+			}
+		}
 	}
 
 	panic("%s: fatal", sc->sc_dv.dv_xname);
 
+ clear_error:
+	schizo_cfg_write(sp, PCI_COMMAND_STATUS_REG, csr);
+	schizo_pbm_write(sp, SCZ_PCI_CTRL, ctrl);
+	schizo_pbm_write(sp, SCZ_PCI_AFSR, afsr);
 	return (1);
 }
 

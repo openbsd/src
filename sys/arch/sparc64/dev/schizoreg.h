@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizoreg.h,v 1.17 2007/01/14 16:18:56 kettenis Exp $	*/
+/*	$OpenBSD: schizoreg.h,v 1.18 2007/01/20 16:26:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -231,6 +231,15 @@ struct schizo_regs {
 #define	SCZ_PCIDIAG_I_DMADPAR		(1UL <<  3UL)	/* invert dma parity */
 #define	SCZ_PCIDIAG_I_PIODPAR		(1UL <<  2UL)	/* invert pio data parity */
 #define	SCZ_PCIDIAG_I_PIOAPAR		(1UL <<  1UL)	/* invert pio addr parity */
+
+#define	TOM_IOMMU_ERR			(1UL << 24)
+#define	TOM_IOMMU_ERR_MASK		(3UL << 25)
+#define	TOM_IOMMU_PROT_ERR		(0UL << 25)
+#define	TOM_IOMMU_INV_ERR		(1UL << 25)
+#define	TOM_IOMMU_TO_ERR		(2UL << 25)
+#define	TOM_IOMMU_ECC_ERR		(3UL << 25)
+#define	TOM_IOMMU_ILLTSBTBW_ERR		(1UL << 27)
+#define	TOM_IOMMU_BADVA_ERR		(1UL << 28)
 
 #define	SCZ_PBM_A_REGS			(0x600000UL - 0x400000UL)
 #define	SCZ_PBM_B_REGS			(0x700000UL - 0x400000UL)
