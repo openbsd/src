@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.114 2007/01/15 04:21:38 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.115 2007/01/20 01:07:51 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -192,9 +192,11 @@ cvs_diff_local(struct cvs_file *cf)
 	}
 
 	if (rev1 != NULL)
-		diff_rev1 = rcs_translate_tag(rev1, cf->file_rcs);
+		if ((diff_rev1 = rcs_translate_tag(rev1, cf->file_rcs)) == NULL)
+			fatal("cvs_diff_local: could not translate tag `%s'", rev1);
 	if (rev2 != NULL)
-		diff_rev2 = rcs_translate_tag(rev2, cf->file_rcs);
+		if ((diff_rev2 = rcs_translate_tag(rev2, cf->file_rcs)) == NULL)
+			fatal("cvs_diff_local: could not translate tag `%s'", rev2);
 
 	diff_file = cf->file_path;
 	cvs_printf("Index: %s\n%s\nRCS file: %s\n", cf->file_path,
