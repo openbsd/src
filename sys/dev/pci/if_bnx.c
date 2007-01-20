@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.39 2007/01/19 18:35:50 mcbride Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.40 2007/01/20 00:36:07 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -627,7 +627,6 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t		val;
 	pcireg_t		memtype;
 	const char 		*intrstr = NULL;
-	pci_intr_handle_t	ih;
 
 	sc->bnx_pa = *pa;
 
@@ -647,12 +646,11 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_map(pa, &sc->bnx_ih)) {
 		printf(": couldn't map interrupt\n");
 		goto bnx_attach_fail;
 	}
-
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, sc->bnx_ih);
 
 	/*
 	 * Configure byte swap and enable indirect register access.
@@ -744,16 +742,6 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	if (val & BNX_PCICFG_MISC_STATUS_32BIT_DET)
 		sc->bnx_flags |= BNX_PCI_32BIT_FLAG;
 
-	/* Hookup IRQ last. */
-	sc->bnx_intrhand = pci_intr_establish(pc, ih, IPL_NET, bnx_intr, sc,
-	    sc->bnx_dev.dv_xname);
-	if (sc->bnx_intrhand == NULL) {
-		printf("%s: couldn't establish interrupt", sc->bnx_dev.dv_xname);
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		goto bnx_attach_fail;
-	}
 	printf(": %s\n", intrstr);
 
 	mountroothook_establish(bnx_attachhook, sc);
@@ -769,6 +757,7 @@ bnx_attachhook(void *xsc)
 {
 	struct bnx_softc *sc = xsc;
 	struct pci_attach_args *pa = &sc->bnx_pa;
+	pci_chipset_tag_t	pc = pa->pa_pc;
 	struct ifnet		*ifp;
 	u_int32_t		val;
 	int error;
@@ -933,6 +922,15 @@ bnx_attachhook(void *xsc)
 
 	/* Get the firmware running so ASF still works. */
 	bnx_mgmt_init(sc);
+
+	/* Hookup IRQ last. */
+	sc->bnx_intrhand = pci_intr_establish(pc, sc->bnx_ih, IPL_NET,
+	    bnx_intr, sc, sc->bnx_dev.dv_xname);
+	if (sc->bnx_intrhand == NULL) {
+		printf("%s: couldn't establish interrupt\n",
+		    sc->bnx_dev.dv_xname);
+		goto bnx_attach_fail;
+	}
 
 	goto bnx_attach_exit;
 
