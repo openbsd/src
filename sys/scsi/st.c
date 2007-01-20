@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.71 2007/01/05 00:42:47 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.72 2007/01/20 18:21:51 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -204,6 +204,8 @@ struct st_softc {
 	u_int64_t numblks;		/* nominal blocks capacity            */
 	u_int32_t media_blksize;	/* 0 if not ST_FIXEDBLOCKS            */
 	u_int32_t media_density;	/* this is what it said when asked    */
+	daddr_t media_fileno;		/* relative to BOT. -1 means unknown. */
+	daddr_t media_blkno;		/* relative to BOF. -1 means unknown. */
 /*--------------------quirks for the whole drive------------------------------*/
 	u_int drive_quirks;	/* quirks of this drive               */
 /*--------------------How we should set up when opening each minor device----*/
@@ -334,6 +336,10 @@ stattach(parent, self, aux)
 	st->buf_queue.b_active = 0;
 	st->buf_queue.b_actf = 0;
 	st->buf_queue.b_actb = &st->buf_queue.b_actf;
+
+	/* Start up with media position unknown. */
+	st->media_fileno = -1;
+	st->media_blkno = -1;
 
 	/*
 	 * Reset the media loaded flag, sometimes the data
@@ -623,6 +629,9 @@ st_unmount(st, eject, rewind)
 {
 	struct scsi_link *sc_link = st->sc_link;
 	int nmarks;
+
+	st->media_fileno = -1;
+	st->media_blkno = -1;
 
 	if (!(st->flags & ST_MOUNTED))
 		return;
@@ -961,6 +970,14 @@ ststart(v)
 		} else
 			_lto3b(bp->b_bcount, cmd.len);
 
+		if (st->media_blkno != -1) {
+			/* Update block count now, errors will set it to -1. */
+			if (st->flags & ST_FIXEDBLOCKS)
+				st->media_blkno += _3btol(cmd.len);
+			else if (cmd.len != 0)
+				st->media_blkno++;
+		}
+
 		/*
 		 * go ask the adapter to do all this for us
 		 */
@@ -1076,8 +1093,8 @@ stioctl(dev, cmd, arg, flag, p)
 			g->mt_dsreg |= MT_DS_MOUNTED;
 		g->mt_resid = st->mt_resid;
 		g->mt_erreg = st->mt_erreg;
-		g->mt_fileno = -1;	/* -1 means we don't know */
-		g->mt_blkno = -1;	/* -1 means we don't know */
+		g->mt_fileno = st->media_fileno;
+		g->mt_blkno = st->media_blkno;
 		/*
 		 * clear latched errors.
 		 */
@@ -1592,8 +1609,35 @@ st_space(st, number, what, flags)
 	cmd.byte2 = what;
 	_lto3b(number, cmd.number);
 
-	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
+	error = scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), 0, 0, 0, ST_SPC_TIME, NULL, flags);
+
+	if (error != 0) {
+		st->media_fileno = (daddr_t) -1;
+		st->media_blkno = (daddr_t) -1;
+	} else {
+		switch (what) {
+		case SP_BLKS:
+			if (st->media_blkno != -1) {
+				st->media_blkno += number;
+				if (st->media_blkno < 0)
+					st->media_blkno = -1;
+			}
+			break;
+		case SP_FILEMARKS:
+			if (st->media_fileno != -1) {
+				st->media_fileno += number;
+				st->media_blkno = 0;
+			}
+			break;
+		default:
+			st->media_fileno = -1;
+			st->media_blkno = -1;
+			break;
+		}
+	}
+
+	return (error);
 }
 
 /*
@@ -1606,6 +1650,7 @@ st_write_filemarks(st, number, flags)
 	daddr_t number;
 {
 	struct scsi_write_filemarks cmd;
+	int error;
 
 	/*
 	 * It's hard to write a negative number of file marks.
@@ -1631,8 +1676,18 @@ st_write_filemarks(st, number, flags)
 	cmd.opcode = WRITE_FILEMARKS;
 	_lto3b(number, cmd.number);
 
-	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
+	error = scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), 0, 0, 0, ST_IO_TIME * 4, NULL, flags);
+
+	if (error != 0) {
+		st->media_fileno = -1;
+		st->media_blkno = -1;
+	} else if (st->media_fileno != -1) {
+		st->media_fileno += number;
+		st->media_blkno = 0;
+	}
+
+	return (error);
 }
 
 /*
@@ -1679,6 +1734,9 @@ st_load(st, type, flags)
 	int flags;
 {
 	struct scsi_load cmd;
+
+	st->media_fileno = -1;
+	st->media_blkno = -1;
 
 	if (type != LD_LOAD) {
 		int error;
@@ -1729,9 +1787,16 @@ st_rewind(st, immediate, flags)
 	cmd.opcode = REWIND;
 	cmd.byte2 = immediate;
 
-	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
+	error = scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), 0, 0, ST_RETRIES,
 	    immediate ? ST_CTL_TIME: ST_SPC_TIME, NULL, flags);
+
+	if (error == 0) {
+		st->media_fileno = 0;
+		st->media_blkno = 0;
+	}
+
+	return (error);
 }
 
 /*
@@ -1808,6 +1873,10 @@ st_interpret_sense(xs)
 		}
 		if (sense->flags & SSD_FILEMARK) {
 			st->flags |= ST_AT_FILEMARK;
+			if (st->media_fileno != -1) {
+				st->media_fileno++;
+				st->media_blkno = 0;
+			}
 			if (bp)
 				bp->b_resid = xs->resid;
 		}
@@ -1848,6 +1917,10 @@ st_interpret_sense(xs)
 		if (sense->flags & SSD_EOM)
 			return EIO;
 		if (sense->flags & SSD_FILEMARK) {
+			if (st->media_fileno != -1) {
+				st->media_fileno++;
+				st->media_blkno = 0;
+			}
 			if (bp)
 				bp->b_resid = bp->b_bcount;
 			return 0;
