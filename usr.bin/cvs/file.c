@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.171 2007/01/19 23:23:21 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.172 2007/01/20 00:58:19 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -674,9 +674,10 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 	} else
 		cf->file_rcs = NULL;
 
-	if (tag != NULL && cf->file_rcs != NULL)
-		cf->file_rcsrev = rcs_translate_tag(tag, cf->file_rcs);
-	else if (cf->file_ent != NULL && cf->file_ent->ce_tag != NULL) {
+	if (tag != NULL && cf->file_rcs != NULL) {
+		if ((cf->file_rcsrev = rcs_translate_tag(tag, cf->file_rcs)) == NULL)
+			fatal("cvs_file_classify:  could not translate tag `%s'", tag);
+	} else if (cf->file_ent != NULL && cf->file_ent->ce_tag != NULL) {
 		cf->file_rcsrev = rcsnum_alloc();
 		rcsnum_cpy(cf->file_ent->ce_rev, cf->file_rcsrev, 0);
 	} else if (cf->file_rcs != NULL)
