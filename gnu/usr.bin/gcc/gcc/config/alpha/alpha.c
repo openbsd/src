@@ -7069,6 +7069,9 @@ alpha_expand_prologue ()
 		  + ALPHA_ROUND (frame_size
 				 + current_function_pretend_args_size));
 
+  if (warn_stack_larger_than && frame_size > stack_larger_than_size)
+    warning ("stack usage is %d bytes", frame_size);
+
   if (TARGET_ABI_OPEN_VMS)
     reg_offset = 8;
   else
