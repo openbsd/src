@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.38 2006/12/21 17:22:29 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.39 2007/01/20 17:13:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -227,6 +227,7 @@ main(int argc, char *argv[])
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigchld, NULL);
 	signal_add(&ev_sighup, NULL);
+	signal(SIGPIPE, SIG_IGN);
 
 	/* setup pipes to children */
 	close(pipe_parent2ospfe[1]);
