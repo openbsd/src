@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.30 2007/01/17 20:43:39 gwk Exp $	*/
+/*	$OpenBSD: locore.S,v 1.31 2007/01/21 23:01:45 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -492,7 +492,7 @@ nop32_5e:
 	lis	%r1,intstk+INTSTK@ha	/* get interrupt stack */
 	addi	%r1,%r1,intstk+INTSTK@l
 	lwz	%r31,0(%r1)		/* were we already running on intstk? */
-	addic.	%r31,%r31,%r1
+	addic.	%r31,%r31,1
 	stw	%r31,0(%r1)
 	beq	1f
 	mfsprg	%r1,1			/* yes, get old SP */
@@ -520,7 +520,7 @@ nop32_6e:
 	lis	%r1,intstk+INTSTK@ha	/* get interrupt stack */
 	addi	%r1,%r1,intstk+INTSTK@l
 	lwz	%r31,0(%r1)		/* were we already running on intstk? */
-	addic.	%r31,%r31,%r1
+	addic.	%r31,%r31,1
 	stw	%r31,0(%r1)
 	beq	1f
 	mfsprg	%r1,1			/* yes, get old SP */
