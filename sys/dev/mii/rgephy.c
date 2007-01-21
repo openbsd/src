@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.23 2006/12/31 15:04:33 krw Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.24 2007/01/21 22:37:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -128,7 +128,7 @@ rgephyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &rgephy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS;
+	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 
