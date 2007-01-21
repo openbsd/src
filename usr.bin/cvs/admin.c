@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.44 2007/01/11 02:35:55 joris Exp $	*/
+/*	$OpenBSD: admin.c,v 1.45 2007/01/21 11:20:10 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -31,7 +31,7 @@ struct cvs_cmd cvs_cmd_admin = {
 	CVS_OP_ADMIN, 0, "admin",
 	{ "adm", "rcs" },
 	"Administrative front-end for RCS",
-	"[-ILqU] [A oldfile] [-a users] [-b branch]\n"
+	"[-ILqU] [-A oldfile] [-a users] [-b branch]\n"
 	"[-c string] [-e [users]] [-k mode] [-l [rev]] [-m rev:msg]\n"
 	"[-N tag[:rev]] [-n tag[:rev]] [-o rev] [-s state[:rev]]"
 	"[-t file | str]\n"
@@ -43,7 +43,8 @@ struct cvs_cmd cvs_cmd_admin = {
 
 static int	 runflags = 0;
 static int	 lkmode = RCS_LOCK_INVAL;
-static char	*alist, *comment, *elist, *logmsg, *logstr, *orange, *state, *statestr;
+static char	*alist, *comment, *elist, *logmsg, *logstr;
+static char	*oldfilename, *orange, *state, *statestr;
 static RCSNUM	*logrev;
 
 int
@@ -55,11 +56,13 @@ cvs_admin(int argc, char **argv)
 
 	flags = CR_RECURSE_DIRS;
 
-	alist = comment = elist = logmsg = logstr = orange = state = statestr = NULL;
+	alist = comment = elist = logmsg = logstr = NULL;
+	oldfilename = orange = state = statestr = NULL;
 
 	while ((ch = getopt(argc, argv, cvs_cmd_admin.cmd_opts)) != -1) {
 		switch (ch) {
 		case 'A':
+			oldfilename = optarg;
 			break;
 		case 'a':
 			alist = optarg;
@@ -130,6 +133,9 @@ cvs_admin(int argc, char **argv)
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
+
+		if (oldfilename != NULL)
+			cvs_client_send_request("Argument -A%s", oldfilename);
 
 		if (alist != NULL)
 			cvs_client_send_request("Argument -a%s", alist);
@@ -202,6 +208,50 @@ cvs_admin_local(struct cvs_file *cf)
 
 	if (verbosity > 0)
 		cvs_printf("RCS file: %s\n", cf->file_rcs->rf_path);
+
+	if (oldfilename != NULL) {
+		struct cvs_file *ocf;
+		struct rcs_access *acp;
+		int ofd;
+		char *d, *f, *fpath, *repo;
+
+		fpath = xmalloc(MAXPATHLEN);
+		repo = xmalloc(MAXPATHLEN);
+
+		if ((f = basename(oldfilename)) == NULL)
+			fatal("cvs_admin_local: basename failed");
+		if ((d = dirname(oldfilename)) == NULL)
+			fatal("cvs_admin_local: dirname failed");
+
+		cvs_get_repository_path(d, repo, MAXPATHLEN);
+
+		if (cvs_path_cat(repo, f, fpath, MAXPATHLEN) >= MAXPATHLEN)
+			fatal("cvs_admin_local: truncation");
+
+		if (strlcat(fpath, RCS_FILE_EXT, MAXPATHLEN) >= MAXPATHLEN)
+			fatal("cvs_admin_local: truncation");
+
+		if ((ofd = open(fpath, O_RDONLY)) == -1)
+			fatal("cvs_admin_local: open: `%s': %s", fpath,
+			    strerror(errno));
+
+		/* XXX: S_ISREG() check instead of blindly using CVS_FILE? */
+		ocf = cvs_file_get_cf(d, f, ofd, CVS_FILE);
+
+		ocf->file_rcs = rcs_open(fpath, ofd, RCS_READ, 0444);
+		if (ocf->file_rcs == NULL)
+			fatal("cvs_admin_local: rcs_open failed");
+
+		TAILQ_FOREACH(acp, &(ocf->file_rcs->rf_access), ra_list)
+			rcs_access_add(cf->file_rcs, acp->ra_name);
+
+		(void)close(ofd);
+
+		cvs_file_free(ocf);
+
+		xfree(fpath);
+		xfree(repo);
+	}
 
 	if (alist != NULL) {
 		struct cvs_argvector *aargv;
