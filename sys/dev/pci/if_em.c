@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.164 2007/01/15 22:51:05 kettenis Exp $ */
+/* $OpenBSD: if_em.c,v 1.165 2007/01/21 18:38:02 kettenis Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -841,7 +841,7 @@ em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 			if ((ar & NWAY_AR_PAUSE) && (lpar & NWAY_LPAR_PAUSE))
 				ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE |
-						    IFM_ETH_TXPAUSE;
+						    IFM_ETH_RXPAUSE;
 			else if (!(ar & NWAY_AR_PAUSE) && (ar & NWAY_AR_ASM_DIR) &&
 			    (lpar & NWAY_LPAR_PAUSE) && (lpar & NWAY_LPAR_ASM_DIR))
 				ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
