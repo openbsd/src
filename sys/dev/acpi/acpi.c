@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.75 2007/01/02 00:51:15 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.76 2007/01/22 19:47:11 mk Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -60,6 +60,7 @@ int	acpi_print(void *, const char *);
 
 void	acpi_map_pmregs(struct acpi_softc *);
 
+void	acpi_founddock(struct aml_node *, void *);
 void	acpi_foundpss(struct aml_node *, void *);
 void	acpi_foundhid(struct aml_node *, void *);
 void	acpi_foundec(struct aml_node *, void *);
@@ -623,6 +624,26 @@ acpi_foundhid(struct aml_node *node, void *arg)
 }
 
 void
+acpi_founddock(struct aml_node *node, void *arg)
+{
+	struct acpi_softc	*sc = (struct acpi_softc *)arg;
+	struct device		*self = (struct device *)arg;
+	const char		*dev;
+	struct acpi_attach_args	aaa;
+
+	dnprintf(10, "found dock entry: %s\n", node->parent->name);
+
+	memset(&aaa, 0, sizeof(aaa));
+	aaa.aaa_iot = sc->sc_iot;
+	aaa.aaa_memt = sc->sc_memt;
+	aaa.aaa_node = node->parent;
+	aaa.aaa_dev = dev;
+	aaa.aaa_name = "acpidock";
+
+	config_found(self, &aaa, acpi_print);
+}
+
+void
 acpi_init_pic(struct acpi_softc *sc)
 {
 	struct aml_node		*node;
@@ -902,6 +923,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* attach cpu devices */
 	aml_find_node(aml_root.child, "_PSS", acpi_foundpss, sc);
+
+	/* attach docks */
+	aml_find_node(aml_root.child, "_DCK", acpi_founddock, sc);
 
 	/* attach thermal zone devices, XXX MUST be last entry */
 	aml_find_node(aml_root.child, "_TMP", acpi_foundtmp, sc);
