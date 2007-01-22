@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.21 2006/11/28 16:23:44 drahn Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.22 2007/01/22 03:46:49 dlg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -139,9 +139,10 @@ USB_ATTACH(cdce)
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
 	usb_cdc_union_descriptor_t	*ud;
+	usb_config_descriptor_t		*cd;
 	int				 data_ifcno;
 	u_int16_t			 macaddr_hi;
-	int				 i;
+	int				 i, j, numalts;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
@@ -187,8 +188,18 @@ USB_ATTACH(cdce)
 
 	/* Find endpoints. */
 	id = usbd_get_interface_descriptor(sc->cdce_data_iface);
-	sc->cdce_bulkin_no = sc->cdce_bulkout_no = -1;
-	for (i = 0; i < id->bNumEndpoints; i++) {
+	cd = usbd_get_config_descriptor(sc->cdce_udev);
+	numalts = usbd_get_no_alts(cd, id->bInterfaceNumber);
+
+	for (j = 0; j < numalts; j++) {
+    	    if (usbd_set_interface(sc->cdce_data_iface, j)) {
+       		printf("%s: setting alternate interface failed\n", 
+			USBDEVNAME(sc->cdce_dev));
+        	USB_ATTACH_ERROR_RETURN;
+    	    } 
+	    id = usbd_get_interface_descriptor(sc->cdce_data_iface);
+	    sc->cdce_bulkin_no = sc->cdce_bulkout_no = -1;
+	    for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->cdce_data_iface, i);
 		if (!ed) {
 			printf("%s: could not read endpoint descriptor\n",
@@ -209,8 +220,10 @@ USB_ATTACH(cdce)
 			printf("%s: unexpected endpoint\n",
 			    USBDEVNAME(sc->cdce_dev));
 		}
+	    }
+	    
 	}
-
+	
 	if (sc->cdce_bulkin_no == -1) {
 		printf("%s: could not find data bulk in\n",
 		    USBDEVNAME(sc->cdce_dev));
