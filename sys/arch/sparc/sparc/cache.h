@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.9 2005/04/19 21:30:20 miod Exp $	*/
+/*	$OpenBSD: cache.h,v 1.10 2007/01/22 19:39:33 miod Exp $	*/
 /*	$NetBSD: cache.h,v 1.16 1997/07/06 21:15:14 pk Exp $ */
 
 /*
@@ -118,16 +118,7 @@ enum vactype { VAC_UNKNOWN, VAC_NONE, VAC_WRITETHROUGH, VAC_WRITEBACK };
 #define CACHE_ALIAS_DIST_HS256k		0x40000
 #define CACHE_ALIAS_BITS_HS256k		0x3f000
 
-/*
- * Assuming a tag format where the least significant bits are the byte offset
- * into the cache line, and the next-most significant bits are the line id,
- * we can calculate the appropriate aliasing constants. We also assume that
- * the linesize and total cache size are powers of 2.
- */
-#define GUESS_CACHE_ALIAS_BITS		((cpuinfo.cacheinfo.c_totalsize - 1) & ~PGOFSET)
-#define GUESS_CACHE_ALIAS_DIST		(cpuinfo.cacheinfo.c_totalsize)
-
-extern int cache_alias_dist;		/* */
+extern int cache_alias_dist;
 extern int cache_alias_bits;
 
 /* Optimize cache alias macros on single architecture kernels */

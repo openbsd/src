@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.17 2005/04/19 21:30:20 miod Exp $	*/
+/*	$OpenBSD: cache.c,v 1.18 2007/01/22 19:39:33 miod Exp $	*/
 /*	$NetBSD: cache.c,v 1.34 1997/09/26 22:17:23 pk Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ int cache_alias_bits;
 void
 sun4_cache_enable()
 {
-	register u_int i, lim, ls, ts;
+	u_int i, lim, ls, ts;
 
 	cache_alias_bits = CPU_ISSUN4
 				? CACHE_ALIAS_BITS_SUN4
@@ -123,8 +123,10 @@ ms1_cache_enable()
 {
 	u_int pcr;
 
-	cache_alias_bits = GUESS_CACHE_ALIAS_BITS;
-	cache_alias_dist = GUESS_CACHE_ALIAS_DIST;
+	cache_alias_dist = max(
+	    CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
+	    CACHEINFO.dc_totalsize / CACHEINFO.dc_associativity);
+	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
 
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 
@@ -138,6 +140,15 @@ ms1_cache_enable()
 	sta(SRMMU_PCR, ASI_SRMMU, pcr | MS1_PCR_DCE | MS1_PCR_ICE);
 
 	CACHEINFO.c_enabled = CACHEINFO.dc_enabled = 1;
+
+	/*
+	 * When zeroing or copying pages, there might still be entries in
+	 * the cache, since we don't flush pages from the cache when
+	 * unmapping them (`vactype' is VAC_NONE).  Fortunately, the
+	 * MS1 cache is write-through and not write-allocate, so we can
+	 * use cacheable accesses while not displacing cache lines.
+	 */
+	cpuinfo.flags |= CPUFLG_CACHE_MANDATORY;
 
 	printf("cache enabled\n");
 }
@@ -362,8 +373,8 @@ turbosparc_cache_enable()
 void
 sun4_vcache_flush_context()
 {
-	register char *p;
-	register int i, ls;
+	char *p;
+	int i, ls;
 
 	cachestats.cs_ncxflush++;
 	p = (char *)0;	/* addresses 0..cacheinfo.c_totalsize will do fine */
@@ -392,10 +403,10 @@ sun4_vcache_flush_context()
  */
 void
 sun4_vcache_flush_region(vreg)
-	register int vreg;
+	int vreg;
 {
-	register int i, ls;
-	register char *p;
+	int i, ls;
+	char *p;
 
 	cachestats.cs_nrgflush++;
 	p = (char *)VRTOVA(vreg);	/* reg..reg+sz rather than 0..sz */
@@ -416,10 +427,10 @@ sun4_vcache_flush_region(vreg)
  */
 void
 sun4_vcache_flush_segment(vreg, vseg)
-	register int vreg, vseg;
+	int vreg, vseg;
 {
-	register int i, ls;
-	register char *p;
+	int i, ls;
+	char *p;
 
 	cachestats.cs_nsgflush++;
 	p = (char *)VSTOVA(vreg, vseg);	/* seg..seg+sz rather than 0..sz */
@@ -445,8 +456,8 @@ void
 sun4_vcache_flush_page(va)
 	int va;
 {
-	register int i, ls;
-	register char *p;
+	int i, ls;
+	char *p;
 
 #ifdef DEBUG
 	if (va & PGOFSET)
@@ -478,10 +489,10 @@ sun4_vcache_flush_page(va)
 void
 sun4_cache_flush(base, len)
 	caddr_t base;
-	register u_int len;
+	u_int len;
 {
-	register int i, ls, baseoff;
-	register char *p;
+	int i, ls, baseoff;
+	char *p;
 
 	if (CACHEINFO.c_vactype == VAC_NONE)
 		return;
@@ -555,8 +566,8 @@ sun4_cache_flush(base, len)
 void
 srmmu_vcache_flush_context()
 {
-	register char *p;
-	register int i, ls;
+	char *p;
+	int i, ls;
 
 	cachestats.cs_ncxflush++;
 	p = (char *)0;	/* addresses 0..cacheinfo.c_totalsize will do fine */
@@ -575,10 +586,10 @@ srmmu_vcache_flush_context()
  */
 void
 srmmu_vcache_flush_region(vreg)
-	register int vreg;
+	int vreg;
 {
-	register int i, ls;
-	register char *p;
+	int i, ls;
+	char *p;
 
 	cachestats.cs_nrgflush++;
 	p = (char *)VRTOVA(vreg);	/* reg..reg+sz rather than 0..sz */
@@ -599,10 +610,10 @@ srmmu_vcache_flush_region(vreg)
  */
 void
 srmmu_vcache_flush_segment(vreg, vseg)
-	register int vreg, vseg;
+	int vreg, vseg;
 {
-	register int i, ls;
-	register char *p;
+	int i, ls;
+	char *p;
 
 	cachestats.cs_nsgflush++;
 	p = (char *)VSTOVA(vreg, vseg);	/* seg..seg+sz rather than 0..sz */
@@ -621,8 +632,8 @@ void
 srmmu_vcache_flush_page(va)
 	int va;
 {
-	register int i, ls;
-	register char *p;
+	int i, ls;
+	char *p;
 
 #ifdef DEBUG
 	if (va & PGOFSET)
@@ -656,10 +667,10 @@ srmmu_cache_flush_all()
 void
 srmmu_cache_flush(base, len)
 	caddr_t base;
-	register u_int len;
+	u_int len;
 {
-	register int i, ls, baseoff;
-	register char *p;
+	int i, ls, baseoff;
+	char *p;
 
 	/*
 	 * Figure out how much must be flushed.
@@ -710,19 +721,63 @@ srmmu_cache_flush(base, len)
 	}
 }
 
+#ifndef	MS1_CACHEFLUSH_MAGIC
+#define	MS1_CACHEFLUSH_MAGIC	0 /* 48 */
+#endif
 void
 ms1_cache_flush(base, len)
 	caddr_t base;
-	register u_int len;
+	u_int len;
 {
 	/*
 	 * Although physically tagged, we still need to flush the
 	 * data cache after (if we have a write-through cache) or before
 	 * (in case of write-back caches) DMA operations.
 	 */
+#if MS1_CACHEFLUSH_MAGIC != 0
+	if (len <= MS1_CACHEFLUSH_MAGIC) {
+		/*
+		 * If the range to be flushed is sufficiently small
+		 * invalidate the covered cache lines by hand.
+		 *
+		 * The MicroSPARC I has a direct-mapped virtually addressed
+		 * physically tagged data cache which is organised as
+		 * 128 lines of 16 bytes. Virtual address bits [4-10]
+		 * select the cache line. The cache tags are accessed
+		 * through the standard DCACHE control space using the
+		 * same address bits as those used to select the cache
+		 * line in the virtual address.
+		 *
+		 * Note: we don't bother to compare the actual tags
+		 * since that would require looking up physical addresses.
+		 *
+		 * The format of the tags we read from ASI_DCACHE control
+		 * space is:
+		 *
+		 * 31     27 26            11 10         1 0
+		 * +--------+----------------+------------+-+
+		 * |  xxx   |    PA[26-11]   |    xxx     |V|
+		 * +--------+----------------+------------+-+
+		 *
+		 * PA: bits 11-26 of the physical address
+		 * V:  line valid bit
+		 */
+		int tagaddr = ((u_int)base & 0x7f0);
 
-	/* XXX investigate other methods instead of blowing the entire cache */
-	sta(0, ASI_DCACHECLR, 0);
+		len = roundup(len, 16);
+		while (len != 0) {
+			int tag = lda(tagaddr, ASI_DCACHETAG);
+			if ((tag & 1) == 1) {
+				/* Mark this cache line invalid */
+				sta(tagaddr, ASI_DCACHETAG, 0);
+			}
+			len -= 16;
+			tagaddr = (tagaddr + 16) & 0x7f0;
+		}
+	} else
+#endif
+		/* Flush entire data cache */
+		sta(0, ASI_DCACHECLR, 0);
 }
 
 /*
@@ -764,7 +819,7 @@ cypress_cache_flush_all()
 void
 viking_cache_flush(base, len)
 	caddr_t base;
-	register u_int len;
+	u_int len;
 {
 	/*
 	 * Although physically tagged, we still need to flush the
@@ -877,7 +932,7 @@ kap_vcache_flush_page(va)
 void
 kap_cache_flush(base, len)
 	caddr_t base;
-	register u_int len;
+	u_int len;
 {
 	u_int line;
 	u_int32_t mmcr;
