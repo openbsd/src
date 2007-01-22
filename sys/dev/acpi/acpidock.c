@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.2 2007/01/22 21:11:44 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.3 2007/01/22 22:01:13 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -146,7 +146,7 @@ acpidock_docklock(struct acpidock_softc *sc, int lock)
 	memset(&res, 0, sizeof res);
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode->parent, "_LCK", 1, &cmd,
 	    &res) != 0) {
-		/* no mechanical lock, no worries  */
+		/* lock is optional, no worries  */
 		dnprintf(20, "%s: unable to lock %d: %d\n", DEVNAME(sc),
 		    lock, aml_val2int(&res));
 
@@ -176,16 +176,14 @@ acpidock_dockctl(struct acpidock_softc *sc, int dock)
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode->parent, "_DCK", 1, &cmd,
 	    &res) != 0) {
 		/* XXX */
-		dnprintf(15, "%s: unable to dock %d: %d\n", DEVNAME(sc),
-		    dock, aml_val2int(&res));
+		dnprintf(15, "%s: _DCK %d failed\n", DEVNAME(sc), dock);
 
 		sc->sc_docked = 0;
 
 		aml_freevalue(&res);
 		return (0);
 	} else {
-		dnprintf(15, "%s: _DCK %d successful: %d\n", DEVNAME(sc),
-		    dock, aml_val2int(&res));
+		dnprintf(15, "%s: _DCK %d successful\n", DEVNAME(sc), dock);
 
 		sc->sc_docked = 1;
 		aml_freevalue(&res);
