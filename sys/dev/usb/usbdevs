@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.254 2007/01/18 06:28:11 jsg Exp $
+$OpenBSD: usbdevs,v 1.255 2007/01/22 02:30:39 ckuethe Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -285,6 +285,7 @@ vendor ADMTEK		0x07a6	ADMtek
 vendor COREGA		0x07aa	Corega
 vendor FREECOM		0x07ab	Freecom
 vendor MICROTECH	0x07af	Microtech
+vendor MOTOROLA3	0x07b2	Motorola
 vendor OLYMPUS		0x07b4	Olympus
 vendor ABOCOM		0x07b8	AboCom Systems
 vendor KEISOKUGIKEN	0x07c1	Keisokugiken
@@ -1591,6 +1592,7 @@ product MOTOROLA2 T720C		0x2822	T720c
 product MOTOROLA2 USBLAN	0x600c	USBLAN
 product MOTOROLA2 USBLAN2	0x6027	USBLAN
 product MOTOROLA SB4100		0x4100	SB4100 Cable Modem
+product MOTOROLA3 SB5100	0x5100	SB5100 Cable Modem
 
 /* MultiTech products */
 product MULTITECH ATLAS		0xf101	MT5634ZBA modem
