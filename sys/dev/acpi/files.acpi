@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.13 2006/11/15 21:39:06 kettenis Exp $
+#	$OpenBSD: files.acpi,v 1.14 2007/01/22 19:46:23 mk Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -60,3 +60,9 @@ file	dev/acpi/acpimadt.c		acpimadt
 device	acpiprt
 attach	acpiprt at acpi
 file	dev/acpi/acpiprt.c		acpiprt needs-flag
+
+# Docking station
+device	acpidock
+attach	acpidock at acpi
+file	dev/acpi/acpidock.c		acpidock
+
