@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.1 2007/01/22 19:45:16 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.2 2007/01/22 21:11:44 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -51,8 +51,7 @@ int
 acpidock_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args	 *aaa = aux;
-
-        struct cfdata		 *cf = match;
+	struct cfdata		 *cf = match;
 
 	/* sanity */
 	if (aaa->aaa_name == NULL ||
@@ -77,7 +76,7 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_docked = ACPIDOCK_STATUS_UNKNOWN;
 
 	if (!acpidock_init(sc)) {
-		printf(": couldn't initialise\n");
+		printf(": couldn't initialize\n");
 		return;
 	}
 
