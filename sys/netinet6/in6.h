@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.43 2006/12/09 01:12:28 itojun Exp $	*/
+/*	$OpenBSD: in6.h,v 1.44 2007/01/22 06:12:18 miod Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 
 /*
  * Identification of the network protocol stack
- * for *BSD-current/release: http://www.kame.net/dev/cvsweb.cgi/kame/COVERAGE
+ * for *BSD-current/release: http://www.kame.net/dev/cvsweb2.cgi/kame/COVERAGE
  * has the table of implementation/integration differences.
  */
 #define __KAME__
