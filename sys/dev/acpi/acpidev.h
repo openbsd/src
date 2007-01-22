@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.16 2007/01/18 19:49:52 kettenis Exp $ */
+/* $OpenBSD: acpidev.h,v 1.17 2007/01/22 19:45:16 mk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -282,4 +282,31 @@ struct acpibat_softc {
 	struct sensor		sc_sens[8];
 	struct sensordev	sc_sensdev;
 };
+
+
+/*
+ * ACPI dock (_DCK)
+ */
+
+struct acpidock_softc {
+	struct device           sc_dev;
+
+	bus_space_tag_t         sc_iot;
+	bus_space_handle_t      sc_ioh;
+			 
+	struct acpi_softc       *sc_acpi;
+	struct aml_node		*sc_devnode;
+
+	int			sc_docked;
+	int			sc_sta;
+
+#define ACPIDOCK_STATUS_UNKNOWN		-1
+#define ACPIDOCK_STATUS_UNDOCKED	0
+#define ACPIDOCK_STATUS_DOCKED		1
+};
+
+#define ACPIDOCK_EVENT_INSERT	0
+#define	ACPIDOCK_EVENT_EJECT	3
+
+
 #endif /* __DEV_ACPI_ACPIDEV_H__ */
