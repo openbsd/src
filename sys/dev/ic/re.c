@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.61 2006/12/30 09:38:28 kettenis Exp $	*/
+/*	$OpenBSD: re.c,v 1.62 2007/01/23 13:42:47 mglocker Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1103,21 +1103,13 @@ re_newbuf(struct rl_softc *sc, int idx, struct mbuf *m)
 	} else
 		m->m_data = m->m_ext.ext_buf;
 
-	m->m_len = m->m_pkthdr.len = MCLBYTES;
-#ifdef __STRICT_ALIGNMENT
 	/*
-	 * This is part of an evil trick to deal with strict alignment
-	 * architectures. The RealTek chip requires RX buffers to be
-	 * aligned on 64-bit boundaries, but that will hose strict
-	 * alignment architectures. To get around this, we leave some
-	 * empty space at the start of each buffer and for strict
-	 * alignment architectures, we copy the buffer back six
-	 * bytes to achieve word alignment. This is slightly more
-	 * efficient than allocating a new buffer, copying the
-	 * contents, and discarding the old buffer.
+	 * Initialize mbuf length fields and fixup
+	 * alignment so that the frame payload is
+	 * longword aligned on strict alignment archs.
 	 */
-	m_adj(m, RE_ETHER_ALIGN);
-#endif
+	m->m_len = m->m_pkthdr.len = RE_RX_DESC_BUFLEN;
+	m->m_data += RE_ETHER_ALIGN;
 
 	rxs = &sc->rl_ldata.rl_rxsoft[idx];
 	map = rxs->rxs_dmamap;
