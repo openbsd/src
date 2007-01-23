@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.4 2006/10/31 23:43:11 michele Exp $ */
+/*	$OpenBSD: packet.c,v 1.5 2007/01/23 21:10:10 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -197,7 +197,7 @@ recv_packet(int fd, short event, void *bula)
 		if (nbr == NULL) {
 			nbr = nbr_new(src.sin_addr.s_addr, iface, 0);
 			if (nbr_failed != NULL)
-				nbr_failed_delete(iface, nbr_failed);
+				nbr_failed_delete(nbr_failed);
 			nbr->addr = src.sin_addr;
 		}
 		nbr->auth_seq_num = auth_crypt_num;

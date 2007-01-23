@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip.h,v 1.2 2007/01/15 18:23:43 michele Exp $ */
+/*	$OpenBSD: rip.h,v 1.3 2007/01/23 21:10:10 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -36,6 +36,7 @@
 /* timers */
 #define	KEEPALIVE		30
 #define	OFFSET			10
+#define	FAILED_NBR_TIMEOUT	86400
 
 #define MAX_RIP_ENTRIES		25
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.h,v 1.3 2006/11/10 10:28:18 michele Exp $ */
+/*	$OpenBSD: ripe.h,v 1.4 2007/01/23 21:10:10 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -48,6 +48,7 @@ enum nbr_action {
 };
 
 struct nbr_failed {
+	struct event		 timeout_timer;
 	LIST_ENTRY(nbr_failed)	 entry;
 	struct in_addr		 addr;
 	u_int32_t		 auth_seq_num;
@@ -132,12 +133,10 @@ void		 nbr_act_del(struct nbr *);
 struct nbr		*nbr_find_ip(struct iface *, u_int32_t);
 struct nbr		*nbr_find_peerid(u_int32_t);
 struct nbr_failed	*nbr_failed_find(struct iface *, u_int32_t);
-void			 nbr_failed_delete(struct iface *, struct nbr_failed *);
+void			 nbr_failed_delete(struct nbr_failed *);
 
 int		 nbr_fsm(struct nbr *, enum nbr_event);
-
 void		 nbr_timeout_timer(int, short, void *);
-
 void		 nbr_act_delete(struct nbr *);
 
 const char	*nbr_event_name(int);

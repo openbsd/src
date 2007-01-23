@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.5 2006/12/24 15:56:28 michele Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.6 2007/01/23 21:10:10 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -42,6 +42,10 @@
 void	nbr_set_timer(struct nbr *);
 void	nbr_stop_timer(struct nbr *);
 
+void	nbr_failed_new(struct nbr *);
+void	nbr_failed_timeout(int, short, void *);
+void	nbr_failed_stop_timer(struct nbr_failed *);
+
 LIST_HEAD(nbr_head, nbr);
 
 struct nbr_table {
@@ -67,7 +71,7 @@ struct {
     {NBR_STA_ACTIVE,	NBR_EVT_REQUEST_RCVD,	NBR_ACT_NOTHING,	NBR_STA_ACTIVE},
     {NBR_STA_ACTIVE,	NBR_EVT_TIMEOUT,	NBR_ACT_DEL,		NBR_STA_DOWN},
     {NBR_STA_REQ_RCVD,	NBR_EVT_RESPONSE_SENT,	NBR_ACT_DEL,		NBR_STA_DOWN},
-    {NBR_STA_ACTIVE,	NBR_EVT_RESPONSE_SENT,	NBR_ACT_NOTHING,	NBR_STA_ACTIVE},	
+    {NBR_STA_ACTIVE,	NBR_EVT_RESPONSE_SENT,	NBR_ACT_NOTHING,	NBR_STA_ACTIVE},
     {NBR_STA_ANY,	NBR_EVT_KILL_NBR,	NBR_ACT_DEL,		NBR_STA_DOWN},
     {-1,		NBR_EVT_NOTHING,	NBR_ACT_NOTHING,	0},
 };
@@ -202,22 +206,11 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 void
 nbr_act_del(struct nbr *nbr)
 {
-	struct nbr_failed	*nbr_failed;
-	struct iface		*iface;
-
 	/* If there is no authentication or it is just a route request
 	 * there is no need to keep track of the failed neighbors */
 	if (nbr->iface->auth_type == AUTH_CRYPT &&
-	    nbr->state != NBR_STA_REQ_RCVD) {
-		if ((nbr_failed = calloc(1, sizeof(*nbr_failed))) == NULL)
-			fatal("nbr_act_del");
-
-		nbr_failed->addr = nbr->addr;
-		nbr_failed->auth_seq_num = nbr->auth_seq_num;
-		iface = nbr->iface;
-		LIST_INSERT_HEAD(&iface->failed_nbr_list,
-		    nbr_failed, entry);
-	}
+	    nbr->state != NBR_STA_REQ_RCVD)
+		nbr_failed_new(nbr);
 
 	log_debug("nbr_del: neighbor ID %s, peerid %lu", inet_ntoa(nbr->id),
 	    nbr->peerid);
@@ -265,6 +258,33 @@ nbr_find_ip(struct iface *iface, u_int32_t src_ip)
 	return (NULL);
 }
 
+/* failed nbr handling */
+void
+nbr_failed_new(struct nbr *nbr)
+{
+	struct timeval		 tv;
+	struct iface		*iface;
+	struct nbr_failed	*nbr_failed;
+
+	if ((nbr_failed = calloc(1, sizeof(*nbr_failed))) == NULL)
+		fatal("nbr_failed_new");
+
+	nbr_failed->addr = nbr->addr;
+	nbr_failed->auth_seq_num = nbr->auth_seq_num;
+	iface = nbr->iface;
+
+	timerclear(&tv);
+	tv.tv_sec = FAILED_NBR_TIMEOUT; 
+
+	evtimer_set(&nbr_failed->timeout_timer, nbr_failed_timeout,
+	    nbr_failed);
+
+	if (evtimer_add(&nbr_failed->timeout_timer, &tv) == -1)
+		fatal("nbr_failed_new");
+
+	LIST_INSERT_HEAD(&iface->failed_nbr_list, nbr_failed, entry);
+}
+
 struct nbr_failed *
 nbr_failed_find(struct iface *iface, u_int32_t src_ip)
 {
@@ -280,10 +300,13 @@ nbr_failed_find(struct iface *iface, u_int32_t src_ip)
 }
 
 void
-nbr_failed_delete(struct iface *iface, struct nbr_failed *nbr_failed)
+nbr_failed_delete(struct nbr_failed *nbr_failed)
 {
-	LIST_REMOVE(nbr_failed, entry);
+	if (evtimer_pending(&nbr_failed->timeout_timer, NULL))
+		if (evtimer_del(&nbr_failed->timeout_timer) == -1)
+			fatal("nbr_failed_delete");
 
+	LIST_REMOVE(nbr_failed, entry);
 	free(nbr_failed);
 }
 
@@ -295,6 +318,18 @@ nbr_timeout_timer(int fd, short event, void *arg)
 	struct nbr *nbr = arg;
 
 	nbr_fsm(nbr, NBR_EVT_TIMEOUT);
+}
+
+/* ARGSUSED */
+void
+nbr_failed_timeout(int fd, short event, void *arg)
+{
+	struct nbr_failed	*nbr_failed = arg;
+
+	log_debug("nbr_failed_timeout: failed neighbor ID %s deleted",
+	    inet_ntoa(nbr_failed->addr));
+
+	nbr_failed_delete(nbr_failed);
 }
 
 /* actions */
