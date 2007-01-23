@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbiosvar.h,v 1.6 2006/11/11 21:47:52 kettenis Exp $	*/
+/*	$OpenBSD: mpbiosvar.h,v 1.7 2007/01/23 21:17:18 kettenis Exp $	*/
 /* $NetBSD: mpbiosvar.h,v 1.1.2.3 2000/02/29 13:17:20 sommerfeld Exp $ */
 
 /*-
@@ -70,12 +70,14 @@ struct mp_intr_map
 	int type;		/* from mp spec intr record */
  	int flags;		/* from mp spec intr record */
 	u_int32_t redir;
+	int cpu_id;
 };
 
 #if defined(_KERNEL)
 extern int mp_verbose;
 extern struct mp_bus *mp_busses;
 extern struct mp_intr_map *mp_intrs;
+extern int mp_nintrs;
 extern struct mp_bus *mp_isa_bus;
 extern struct mp_bus *mp_eisa_bus;
 

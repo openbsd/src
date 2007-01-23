@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.19 2006/11/29 20:03:19 dim Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.20 2007/01/23 21:17:18 kettenis Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -454,7 +454,6 @@ int mp_nbus;
 struct mp_intr_map *mp_intrs;
 int mp_nintrs;
 
-struct mp_intr_map *lapic_ints[2]; /* XXX */
 struct mp_bus *mp_isa_bus;
 struct mp_bus *mp_eisa_bus;
 
@@ -1122,14 +1121,12 @@ mpbios_int(const u_int8_t *ent, struct mp_intr_map *mpi)
 			sc->sc_pins[pin].ip_map = mpi;
 		}
 	} else {
-		if (id != MPS_ALL_APICS)
-			panic("can't deal with not-all-lapics interrupt yet!");
 		if (pin >= 2)
 			printf("pin %d of local apic doesn't exist!\n", pin);
 		else {
 			mpi->ioapic = NULL;
 			mpi->ioapic_pin = pin;
-			lapic_ints[pin] = mpi;
+			mpi->cpu_id = id;
 		}
 	}
 

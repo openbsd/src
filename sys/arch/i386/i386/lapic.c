@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.10 2006/12/20 17:50:40 gwk Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.11 2007/01/23 21:17:18 kettenis Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -113,8 +113,6 @@ lapic_enable()
 	i82489_writereg(LAPIC_SVR, LAPIC_SVR_ENABLE | LAPIC_SPURIOUS_VECTOR);
 }
 
-extern struct mp_intr_map *lapic_ints[]; /* XXX header file? */
-
 void
 lapic_set_softvectors()
 {
@@ -126,23 +124,37 @@ lapic_set_softvectors()
 void
 lapic_set_lvt()
 {
-#ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
+	int i;
+	struct mp_intr_map *mpi;
 
-	if (0) {
+#ifdef MULTIPROCESSOR
+	if (mp_verbose) {
 		apic_format_redir(ci->ci_dev.dv_xname, "prelint", 0, 0,
 		    i82489_readreg(LAPIC_LVINT0));
 		apic_format_redir(ci->ci_dev.dv_xname, "prelint", 1, 0,
 		    i82489_readreg(LAPIC_LVINT1));
 	}
 #endif
-	if (lapic_ints[0])
-		i82489_writereg(LAPIC_LVINT0, lapic_ints[0]->redir);
-	if (lapic_ints[1])
-		i82489_writereg(LAPIC_LVINT1, lapic_ints[1]->redir);
+
+	for (i = 0; i < mp_nintrs; i++) {
+		mpi = &mp_intrs[i];
+		if (mpi->ioapic == NULL && (mpi->cpu_id == MPS_ALL_APICS
+					    || mpi->cpu_id == ci->ci_apicid)) {
+#ifdef DIAGNOSTIC
+			if (mpi->ioapic_pin > 1)
+				panic("lapic_set_lvt: bad pin value %d",
+				    mpi->ioapic_pin);
+#endif
+			if (mpi->ioapic_pin == 0)
+				i82489_writereg(LAPIC_LVINT0, mpi->redir);
+			else
+				i82489_writereg(LAPIC_LVINT1, mpi->redir);
+		}
+	}
 
 #ifdef MULTIPROCESSOR
-	if (0) {
+	if (mp_verbose) {
 		apic_format_redir(ci->ci_dev.dv_xname, "timer", 0, 0,
 		    i82489_readreg(LAPIC_LVTT));
 		apic_format_redir(ci->ci_dev.dv_xname, "pcint", 0, 0,
