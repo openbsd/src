@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.21 2006/01/30 17:27:29 miod Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.22 2007/01/23 11:40:26 bernd Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -34,6 +34,9 @@
 .Ek
 .Nm pkg_info
 .Op Fl Aa Ar flags
+.Nm pkg_info
+.Op Fl v
+.Op Fl Q Ar query
 .Sh DESCRIPTION
 The
 .Nm
@@ -144,6 +147,9 @@ Show the pkgpath for each package.
 You can easily build a subdirlist with this.
 .It Fl p
 Show the installation prefix for each package.
+.It Fl Q Ar query
+Show all packages in $PKG_PATH which match the given
+.Ar query .
 .It Fl q
 Be
 .Dq quiet
