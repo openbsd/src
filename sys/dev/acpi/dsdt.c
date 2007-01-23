@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.76 2007/01/18 19:01:02 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.77 2007/01/23 04:05:58 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1139,6 +1139,7 @@ aml_showvalue(struct aml_value *val, int lvl)
 		printf(" [%s]", aml_nodename(val->node));
 	printf(" %p cnt:%.2x", val, val->refcnt);
 	switch (val->type) {
+	case AML_OBJTYPE_STATICINT:
 	case AML_OBJTYPE_INTEGER:
 		printf(" integer: %llx\n", val->v_integer);
 		break;
@@ -1238,6 +1239,7 @@ aml_derefvalue(struct aml_scope *scope, struct aml_value *ref, int mode)
 				case AML_OBJTYPE_PACKAGE:
 					ref = ref->v_package[index];
 					break;
+				case AML_OBJTYPE_STATICINT:
 				case AML_OBJTYPE_INTEGER:
 					/* Convert to temporary buffer */
 					if (ref->node)
@@ -1319,8 +1321,9 @@ aml_val2int(struct aml_value *rval)
 		dnprintf(50, "null val2int\n");
 		return (0);
 	}
-	switch (rval->type & ~AML_STATIC) {
+	switch (rval->type) {
 	case AML_OBJTYPE_INTEGER:
+	case AML_OBJTYPE_STATICINT:
 		ival = rval->v_integer;
 		break;
 	case AML_OBJTYPE_BUFFER:
@@ -1343,8 +1346,9 @@ _aml_setvalue(struct aml_value *lhs, int type, int64_t ival, const void *bval)
 	memset(&lhs->_, 0x0, sizeof(lhs->_));
 
 	lhs->type = type;
-	switch (lhs->type & ~AML_STATIC) {
+	switch (lhs->type) {
 	case AML_OBJTYPE_INTEGER:
+	case AML_OBJTYPE_STATICINT:
 		lhs->length = aml_intlen>>3;
 		lhs->v_integer = ival;
 		break;
@@ -1394,6 +1398,7 @@ aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 	switch (lhs->type & ~AML_STATIC) {
 	case AML_OBJTYPE_UNINITIALIZED:
 		break;
+	case AML_OBJTYPE_STATICINT:
 	case AML_OBJTYPE_INTEGER:
 	case AML_OBJTYPE_MUTEX:
 		_aml_setvalue(lhs, rhs->type, rhs->v_integer, NULL);
@@ -1457,7 +1462,7 @@ aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
 		printf("-- debug --\n");
 		aml_showvalue(rhs, 50);
 		break;
-	case AML_OBJTYPE_INTEGER+AML_STATIC:
+	case AML_OBJTYPE_STATICINT:
 		break;
 	case AML_OBJTYPE_INTEGER:
 		lhs->v_integer = aml_val2int(rhs);
@@ -1469,7 +1474,7 @@ aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
 		if (rhs->type == AML_OBJTYPE_BUFFER)
 			_aml_setvalue(lhs, AML_OBJTYPE_BUFFER, rhs->length,
 			    rhs->v_buffer);
-		else if (rhs->type == AML_OBJTYPE_INTEGER)
+		else if (rhs->type == AML_OBJTYPE_INTEGER || rhs->type == AML_OBJTYPE_STATICINT)
 			_aml_setvalue(lhs, AML_OBJTYPE_BUFFER,
 			    sizeof(rhs->v_integer), &rhs->v_integer);
 		else if (rhs->type == AML_OBJTYPE_STRING)
@@ -1490,7 +1495,7 @@ aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
 		else if (rhs->type == AML_OBJTYPE_BUFFER)
 			_aml_setvalue(lhs, AML_OBJTYPE_STRING, rhs->length,
 			    rhs->v_buffer);
-		else if (rhs->type == AML_OBJTYPE_INTEGER) {
+		else if (rhs->type == AML_OBJTYPE_INTEGER || rhs->type == AML_OBJTYPE_STATICINT) {
 			_aml_setvalue(lhs, AML_OBJTYPE_STRING, 10, NULL);
 			snprintf(lhs->v_string, lhs->length, "%lld",
 			    rhs->v_integer);
@@ -1747,6 +1752,7 @@ aml_cmpvalue(struct aml_value *lhs, struct aml_value *rhs, int opcode)
 	rt = rhs->type & ~AML_STATIC;
 	if (lt == rt) {
 		switch (lt) {
+		case AML_OBJTYPE_STATICINT:
 		case AML_OBJTYPE_INTEGER:
 			rc = (lhs->v_integer - rhs->v_integer);
 			break;
@@ -1864,6 +1870,7 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
 			lastck = acpi_nalloc;
 		}
 		break;
+	case AML_OBJTYPE_STATICINT:
 	case AML_OBJTYPE_INTEGER:
 	case AML_OBJTYPE_STRING:
 	case AML_OBJTYPE_BUFFER:
