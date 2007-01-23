@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.31 2007/01/15 19:58:49 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.32 2007/01/23 17:44:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -232,10 +232,10 @@ sensor_hotplugfd(void)
 	}
 
 	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
-		fatal("fnctl F_GETFL");
+		fatal("fcntl F_GETFL");
 	flags |= O_NONBLOCK;
 	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
-		fatal("fnctl F_SETFL");
+		fatal("fcntl F_SETFL");
 
 	return (fd);
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.15 2006/04/25 08:00:22 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.16 2007/01/23 17:39:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -291,7 +291,7 @@ session_socket_blockmode(int fd, enum blockmodes bm)
 	int	flags;
 
 	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
-		fatal("fnctl F_GETFL");
+		fatal("fcntl F_GETFL");
 
 	if (bm == BM_NONBLOCK)
 		flags |= O_NONBLOCK;
@@ -299,5 +299,5 @@ session_socket_blockmode(int fd, enum blockmodes bm)
 		flags &= ~O_NONBLOCK;
 
 	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
-		fatal("fnctl F_SETFL");
+		fatal("fcntl F_SETFL");
 }
