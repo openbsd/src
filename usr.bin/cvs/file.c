@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.174 2007/01/20 17:02:36 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.175 2007/01/23 01:53:38 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -461,7 +461,8 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 					type = CVS_FILE;
 					break;
 				default:
-					fatal("Unknown file type in copy");
+					type = FILE_SKIP;
+					break;
 				}
 			} else {
 				switch (dp->d_type) {
@@ -472,8 +473,18 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 					type = CVS_FILE;
 					break;
 				default:
-					fatal("Unknown file type in copy");
+					type = FILE_SKIP;
+					break;
 				}
+			}
+
+			if (type == FILE_SKIP) {
+				if (verbosity > 1) {
+					cvs_log(LP_NOTICE, "ignoring `%s'",
+					    dp->d_name);
+				}
+				cp += dp->d_reclen;
+				continue;
 			}
 
 			if (!(cr->flags & CR_RECURSE_DIRS) &&
