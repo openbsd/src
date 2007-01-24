@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2007/01/12 16:43:01 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.17 2007/01/24 06:31:09 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -60,7 +60,7 @@ int	 yyerror(const char *, ...);
 int	 yyparse(void);
 int	 kw_cmp(const void *, const void *);
 int	 lookup(char *);
-int	 lgetc(FILE *);
+int	 lgetc(FILE *, int *);
 int	 lungetc(int);
 int	 findeol(void);
 int	 yylex(void);
@@ -550,10 +550,11 @@ char	 pushback_buffer[MAXPUSHBACK];
 int	 pushback_index = 0;
 
 int
-lgetc(FILE *f)
+lgetc(FILE *f, int *keep)
 {
 	int	c, next;
 
+	*keep = 0;
 	if (parsebuf) {
 		/* Read character from the parsebuffer instead of input. */
 		if (parseindex >= 0) {
@@ -571,9 +572,11 @@ lgetc(FILE *f)
 	while ((c = getc(f)) == '\\') {
 		next = getc(f);
 		if (next == 'n') {
+			*keep = 1;
 			c = '\n';
 			break;
 		} else if (next == 'r') {
+			*keep = 1;
 			c = '\r';
 			break;
 		} else if (next != '\n') {
@@ -615,14 +618,15 @@ int
 findeol(void)
 {
 	int	c;
+	int	k;
 
 	parsebuf = NULL;
 	pushback_index = 0;
 
 	/* skip to either EOF or the first real EOL */
 	while (1) {
-		c = lgetc(fin);
-		if (c == '\n') {
+		c = lgetc(fin, &k);
+		if (c == '\n' && k == 0) {
 			lineno++;
 			break;
 		}
@@ -639,19 +643,22 @@ yylex(void)
 	char	*p, *val;
 	int	 endc, c;
 	int	 token;
+	int	 keep;
 
 top:
 	p = buf;
-	while ((c = lgetc(fin)) == ' ')
+	while ((c = lgetc(fin, &keep)) == ' ')
 		; /* nothing */
 
 	yylval.lineno = lineno;
 	if (c == '#')
-		while ((c = lgetc(fin)) != '\n' && c != EOF)
-			; /* nothing */
+		do {
+			while ((c = lgetc(fin, &keep)) != '\n' && c != EOF)
+				; /* nothing */
+		} while (keep == 1);
 	if (c == '$' && parsebuf == NULL) {
 		while (1) {
-			if ((c = lgetc(fin)) == EOF)
+			if ((c = lgetc(fin, &keep)) == EOF)
 				return (0);
 
 			if (p + 1 >= buf + sizeof(buf) - 1) {
@@ -681,13 +688,13 @@ top:
 	case '"':
 		endc = c;
 		while (1) {
-			if ((c = lgetc(fin)) == EOF)
+			if ((c = lgetc(fin, &keep)) == EOF)
 				return (0);
 			if (c == endc) {
 				*p = '\0';
 				break;
 			}
-			if (c == '\n') {
+			if (c == '\n' && keep == 0) {
 				lineno++;
 				continue;
 			}
@@ -716,7 +723,8 @@ top:
 				yyerror("string too long");
 				return (findeol());
 			}
-		} while ((c = lgetc(fin)) != EOF && (allowed_in_string(c)));
+		} while ((c = lgetc(fin, &keep)) != EOF &&
+		    (allowed_in_string(c)));
 		lungetc(c);
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
