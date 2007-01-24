@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.30 2007/01/03 18:16:43 claudio Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.31 2007/01/24 17:56:24 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -2628,6 +2628,8 @@ rt2560_init(struct ifnet *ifp)
 	/* set basic rate set (will be updated later) */
 	RAL_WRITE(sc, RT2560_ARSP_PLCP_1, 0x153);
 
+	rt2560_set_txantenna(sc, 1);
+	rt2560_set_rxantenna(sc, 1);
 	rt2560_set_slottime(sc);
 	rt2560_update_plcp(sc);
 	rt2560_update_led(sc, 0, 0);
@@ -2639,9 +2641,6 @@ rt2560_init(struct ifnet *ifp)
 		rt2560_stop(ifp, 1);
 		return EIO;
 	}
-
-	rt2560_set_txantenna(sc, 1);
-	rt2560_set_rxantenna(sc, 1);
 
 	/* set default BSS channel */
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
