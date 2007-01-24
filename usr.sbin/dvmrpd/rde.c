@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.3 2006/12/03 20:14:37 michele Exp $ */
+/*	$OpenBSD: rde.c,v 1.4 2007/01/24 09:57:51 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -110,6 +110,7 @@ rde(struct dvmrpd_conf *xconf, int pipe_parent2rde[2], int pipe_dvmrpe2rde[2],
 	signal_set(&ev_sigterm, SIGTERM, rde_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
+	signal(SIGPIPE, SIG_IGN);
 
 	/* setup pipes */
 	close(pipe_dvmrpe2rde[0]);

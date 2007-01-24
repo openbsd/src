@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.2 2006/06/01 22:07:30 claudio Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.3 2007/01/24 09:57:51 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -243,6 +243,7 @@ main(int argc, char *argv[])
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigchld, NULL);
 	signal_add(&ev_sighup, NULL);
+	signal(SIGPIPE, SIG_IGN);
 
 	/* setup pipes to children */
 	close(pipe_parent2dvmrpe[1]);
