@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getopt.1,v 1.11 2006/01/14 09:37:24 jmc Exp $	-*- nroff -*-
+.\"	$OpenBSD: getopt.1,v 1.12 2007/01/24 19:11:14 otto Exp $	-*- nroff -*-
 .\"
 .\" This material, written by Henry Spencer, was released by him
 .\" into the public domain and is thus not subject to any copyright.
@@ -62,14 +62,14 @@ then
 	exit 2
 fi
 set -- $args
-for i
+while [ $# -ge 0 ]
 do
-	case "$i"
+	case "$1"
 	in
 		-a|-b)
-			flag=$i; shift;;
+			flag="$1"; shift;;
 		-o)
-			oarg=$2; shift; shift;;
+			oarg="$2"; shift; shift;;
 		--)
 			shift; break;;
 	esac
