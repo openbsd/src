@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.7 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.8 2007/01/24 20:26:59 kettenis Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -62,6 +62,12 @@
 #include <machine/apicvar.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
+
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#endif
 
 struct evcount clk_count;
 struct evcount ipi_count;
@@ -147,15 +153,16 @@ lapic_set_lvt(void)
 	}
 #endif
 
+#if NIOAPIC > 0
 	/*
 	 * Disable ExtINT by default when using I/O APICs.
-	 * XXX mp_nintr > 0 isn't quite the right test for this.
 	 */
-	if (mp_nintr > 0) {
+	if (nioapics > 0) {
 		lint0 = i82489_readreg(LAPIC_LVINT0);
 		lint0 |= LAPIC_LVT_MASKED;
 		i82489_writereg(LAPIC_LVINT0, lint0);
 	}
+#endif
 
 	for (i = 0; i < mp_nintr; i++) {
 		mpi = &mp_intrs[i];
@@ -172,7 +179,7 @@ lapic_set_lvt(void)
 				i82489_writereg(LAPIC_LVINT1, mpi->redir);
 		}
 	}
-			
+
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
 		apic_format_redir (ci->ci_dev->dv_xname, "timer", 0, 0,
