@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.216 2007/01/04 12:43:36 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.217 2007/01/24 13:24:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -676,7 +676,7 @@ rde_update_dispatch(struct imsg *imsg)
 	struct rde_peer		*peer;
 	struct rde_aspath	*asp = NULL, *fasp;
 	u_char			*p, *mpp = NULL;
-	int			 pos = 0;
+	int			 error = -1, pos = 0;
 	u_int16_t		 afi, len, mplen;
 	u_int16_t		 withdrawn_len;
 	u_int16_t		 attrpath_len;
@@ -720,10 +720,8 @@ rde_update_dispatch(struct imsg *imsg)
 		asp = path_get();
 		while (len > 0) {
 			if ((pos = rde_attr_parse(p, len, peer, asp,
-			    &mpa)) < 0) {
-				path_put(asp);
-				return (-1);
-			}
+			    &mpa)) < 0)
+				goto done;
 			p += pos;
 			len -= pos;
 		}
@@ -733,8 +731,7 @@ rde_update_dispatch(struct imsg *imsg)
 		    nlri_len))) {
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_MISSNG_WK_ATTR,
 			    &subtype, sizeof(u_int8_t));
-			path_put(asp);
-			return (-1);
+			goto done;
 		}
 
 		/* enforce remote AS if requested */
@@ -744,13 +741,12 @@ rde_update_dispatch(struct imsg *imsg)
 			    aspath_neighbor(asp->aspath)) {
 				rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
 				    NULL, 0);
-				path_put(asp);
-				return (-1);
+				goto done;
 			}
 
 		if (rde_reflector(peer, asp) != 1) {
-			path_put(asp);
-			return (0);
+			error = 0;
+			goto done;
 		}
 	}
 
@@ -768,17 +764,13 @@ rde_update_dispatch(struct imsg *imsg)
 			log_peer_warnx(&peer->conf, "bad withdraw prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
 			    NULL, 0);
-			if (attrpath_len != 0)
-				path_put(asp);
-			return (-1);
+			goto done;
 		}
 		if (prefixlen > 32) {
 			log_peer_warnx(&peer->conf, "bad withdraw prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
 			    NULL, 0);
-			if (attrpath_len != 0)
-				path_put(asp);
-			return (-1);
+			goto done;
 		}
 
 		p += pos;
@@ -789,9 +781,7 @@ rde_update_dispatch(struct imsg *imsg)
 			log_peer_warnx(&peer->conf, "bad AFI, IPv4 disabled");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
 			    NULL, 0);
-			if (attrpath_len != 0)
-				path_put(asp);
-			return (-1);
+			goto done;
 		}
 
 		rde_update_log("withdraw", peer, NULL, &prefix, prefixlen);
@@ -819,8 +809,7 @@ rde_update_dispatch(struct imsg *imsg)
 				    "IPv6 disabled");
 				rde_update_err(peer, ERR_UPDATE,
 				    ERR_UPD_OPTATTR, NULL, 0);
-				path_put(asp);
-				return (-1);
+				goto done;
 			}
 			while (mplen > 0) {
 				if ((pos = rde_update_get_prefix6(mpp, mplen,
@@ -830,8 +819,7 @@ rde_update_dispatch(struct imsg *imsg)
 					rde_update_err(peer, ERR_UPDATE,
 					    ERR_UPD_OPTATTR,
 					    mpa.unreach, mpa.unreach_len);
-					path_put(asp);
-					return (-1);
+					goto done;
 				}
 				if (prefixlen > 128) {
 					log_peer_warnx(&peer->conf,
@@ -839,8 +827,7 @@ rde_update_dispatch(struct imsg *imsg)
 					rde_update_err(peer, ERR_UPDATE,
 					    ERR_UPD_OPTATTR,
 					    mpa.unreach, mpa.unreach_len);
-					path_put(asp);
-					return (-1);
+					goto done;
 				}
 
 				mpp += pos;
@@ -860,8 +847,8 @@ rde_update_dispatch(struct imsg *imsg)
 		}
 
 		if ((asp->flags & ~F_ATTR_MP_UNREACH) == 0) {
-			path_put(asp);
-			return (0);
+			error = 0;
+			goto done;
 		}
 	}
 
@@ -870,8 +857,8 @@ rde_update_dispatch(struct imsg *imsg)
 
 	/* aspath needs to be loop free nota bene this is not a hard error */
 	if (peer->conf.ebgp && !aspath_loopfree(asp->aspath, conf->as)) {
-		path_put(asp);
-		return (0);
+		error = 0;
+		goto done;
 	}
 
 	/* parse nlri prefix */
@@ -881,15 +868,13 @@ rde_update_dispatch(struct imsg *imsg)
 			log_peer_warnx(&peer->conf, "bad nlri prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
 			    NULL, 0);
-			path_put(asp);
-			return (-1);
+			goto done;
 		}
 		if (prefixlen > 32) {
 			log_peer_warnx(&peer->conf, "bad nlri prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
 			    NULL, 0);
-			path_put(asp);
-			return (-1);
+			goto done;
 		}
 
 		p += pos;
@@ -900,8 +885,7 @@ rde_update_dispatch(struct imsg *imsg)
 			log_peer_warnx(&peer->conf, "bad AFI, IPv4 disabled");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
 			    NULL, 0);
-			path_put(asp);
-			return (-1);
+			goto done;
 		}
 
 		/* add original path to the Adj-RIB-In */
@@ -921,9 +905,8 @@ rde_update_dispatch(struct imsg *imsg)
 			log_peer_warnx(&peer->conf, "prefix limit reached");
 			rde_update_err(peer, ERR_CEASE, ERR_CEASE_MAX_PREFIX,
 			    NULL, 0);
-			path_put(asp);
 			path_put(fasp);
-			return (-1);
+			goto done;
 		}
 
 		if (fasp == NULL)
@@ -951,13 +934,18 @@ rde_update_dispatch(struct imsg *imsg)
 
 		/*
 		 * this works because asp is not linked.
+		 * But first unlock the previously locked nexthop.
 		 */
+		if (asp->nexthop) {
+			asp->nexthop->refcnt--;
+			(void)nexthop_delete(asp->nexthop);
+			asp->nexthop = NULL;
+		}
 		if ((pos = rde_get_mp_nexthop(mpp, mplen, afi, asp)) == -1) {
 			log_peer_warnx(&peer->conf, "bad IPv6 nlri prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
 			    mpa.reach, mpa.reach_len);
-			path_put(asp);
-			return (-1);
+			goto done;
 		}
 		mpp += pos;
 		mplen -= pos;
@@ -969,8 +957,7 @@ rde_update_dispatch(struct imsg *imsg)
 				    "IPv6 disabled");
 				rde_update_err(peer, ERR_UPDATE,
 				    ERR_UPD_OPTATTR, NULL, 0);
-				path_put(asp);
-				return (-1);
+				goto done;
 			}
 
 			while (mplen > 0) {
@@ -981,15 +968,13 @@ rde_update_dispatch(struct imsg *imsg)
 					rde_update_err(peer, ERR_UPDATE,
 					    ERR_UPD_OPTATTR,
 					    mpa.reach, mpa.reach_len);
-					path_put(asp);
-					return (-1);
+					goto done;
 				}
 				if (prefixlen > 128) {
 					rde_update_err(peer, ERR_UPDATE,
 					    ERR_UPD_OPTATTR,
 					    mpa.reach, mpa.reach_len);
-					path_put(asp);
-					return (-1);
+					goto done;
 				}
 
 				mpp += pos;
@@ -1015,9 +1000,8 @@ rde_update_dispatch(struct imsg *imsg)
 					    "prefix limit reached");
 					rde_update_err(peer, ERR_CEASE,
 					    ERR_CEASE_MAX_PREFIX, NULL, 0);
-					path_put(asp);
 					path_put(fasp);
-					return (-1);
+					goto done;
 				}
 
 				if (fasp == NULL)
@@ -1040,10 +1024,18 @@ rde_update_dispatch(struct imsg *imsg)
 		}
 	}
 
-	/* need to free allocated attribute memory that is no longer used */
-	path_put(asp);
+done:
+	if (attrpath_len != 0) {
+		/* unlock the previously locked entry */
+		if (asp->nexthop) {
+			asp->nexthop->refcnt--;
+			(void)nexthop_delete(asp->nexthop);
+		}
+		/* free allocated attribute memory that is no longer used */
+		path_put(asp);
+	}
 
-	return (0);
+	return (error);
 }
 
 /*
@@ -1161,6 +1153,12 @@ bad_flags:
 			return (-1);
 		}
 		a->nexthop = nexthop_get(&nexthop);
+		/*
+		 * lock the nexthop because it is not yet linked else
+		 * withdraws may remove this nexthop which in turn would
+		 * cause a use after free error.
+		 */
+		a->nexthop->refcnt++;
 		break;
 	case ATTR_MED:
 		if (attr_len != 4)
@@ -1329,6 +1327,12 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int16_t afi,
 		nexthop.af = AF_INET6;
 		memcpy(&nexthop.v6.s6_addr, data, 16);
 		asp->nexthop = nexthop_get(&nexthop);
+		/*
+		 * lock the nexthop because it is not yet linked else
+		 * withdraws may remove this nexthop which in turn would
+		 * cause a use after free error.
+		 */
+		asp->nexthop->refcnt++;
 
 		totlen += nhlen;
 		data += nhlen;
