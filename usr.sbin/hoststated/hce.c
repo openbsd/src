@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.10 2007/01/11 18:05:08 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.11 2007/01/24 10:26:00 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -107,6 +107,7 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	signal_set(&ev_sigterm, SIGTERM, hce_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
+	signal(SIGPIPE, SIG_IGN);
 
 	/* setup pipes */
 	close(pipe_pfe2hce[1]);

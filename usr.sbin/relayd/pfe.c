@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.7 2007/01/09 13:50:11 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.8 2007/01/24 10:26:00 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -105,6 +105,7 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	signal_set(&ev_sigterm, SIGTERM, pfe_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
+	signal(SIGPIPE, SIG_IGN);
 
 	/* setup pipes */
 	close(pipe_pfe2hce[0]);

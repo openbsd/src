@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.11 2007/01/11 18:28:28 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.12 2007/01/24 10:26:00 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -179,6 +179,7 @@ main(int argc, char *argv[])
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigchld, NULL);
 	signal_add(&ev_sighup, NULL);
+	signal(SIGPIPE, SIG_IGN);
 
 	close(pipe_parent2pfe[1]);
 	close(pipe_parent2hce[1]);
