@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.35 2006/12/13 13:24:09 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.36 2007/01/24 10:48:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -353,9 +353,6 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 			RB_INSERT(lsa_tree, tree, new);
 			new->deleted = 1;
 
-			log_debug("lsa_add: removing %p and putting %p on hold "
-			    "queue (timeout %d)", old, new, res.tv_sec);
-
 			if (evtimer_add(&new->ev, &res) != 0)
 				fatal("lsa_add");
 			return (1);
@@ -395,8 +392,6 @@ lsa_del(struct rde_nbr *nbr, struct lsa_hdr *lsa)
 	v = lsa_find(nbr->area, lsa->type, lsa->ls_id, lsa->adv_rtr);
 	if (v == NULL)
 		return;
-
-	log_debug("lsa_del: putting %p on hold queue", v);
 
 	v->deleted = 1;
 	/* hold time to make sure that a new lsa is not added premature */
@@ -563,7 +558,6 @@ lsa_dump(struct lsa_tree *tree, int imsg_type, pid_t pid)
 				break;
 			continue;
 		default:
-			log_debug("%d", imsg_type);
 			log_warnx("lsa_dump: unknown imsg type");
 			return;
 		}
@@ -583,7 +577,6 @@ lsa_timeout(int fd, short event, void *bula)
 
 	if (v->deleted) {
 		if (ntohs(v->lsa->hdr.age) >= MAX_AGE) {
-			log_debug("lsa_timeout: finally free %p", v);
 			vertex_free(v);
 		} else {
 			v->deleted = 0;
@@ -602,9 +595,6 @@ lsa_timeout(int fd, short event, void *bula)
 				tv.tv_sec = LS_REFRESH_TIME;
 			else
 				tv.tv_sec = MAX_AGE - ntohs(v->lsa->hdr.age);
-
-			log_debug("lsa_timeout: flodding %p new timeout %d",
-			    v, tv.tv_sec);
 
 			if (evtimer_add(&v->ev, &tv) != 0)
 				fatal("lsa_add");
