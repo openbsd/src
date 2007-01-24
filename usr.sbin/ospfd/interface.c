@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.55 2006/11/28 19:21:15 reyk Exp $ */
+/*	$OpenBSD: interface.c,v 1.56 2007/01/24 14:08:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -212,6 +212,13 @@ if_del(struct iface *iface)
 	/* clear lists etc */
 	while ((nbr = LIST_FIRST(&iface->nbr_list)) != NULL)
 		nbr_del(nbr);
+
+	if (evtimer_pending(&iface->hello_timer, NULL))
+		evtimer_del(&iface->hello_timer);
+	if (evtimer_pending(&iface->wait_timer, NULL))
+		evtimer_del(&iface->wait_timer);
+	if (evtimer_pending(&iface->lsack_tx_timer, NULL))
+		evtimer_del(&iface->lsack_tx_timer);
 
 	ls_ack_list_clr(iface);
 	md_list_clr(&iface->auth_md_list);
