@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.17 2004/07/05 02:31:54 pvalchev Exp $	*/
+/*	$OpenBSD: dir.c,v 1.18 2007/01/24 13:24:58 bluhm Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static const char rcsid[] = "$OpenBSD: dir.c,v 1.17 2004/07/05 02:31:54 pvalchev Exp $";
+static const char rcsid[] = "$OpenBSD: dir.c,v 1.18 2007/01/24 13:24:58 bluhm Exp $";
 #endif
 #endif /* not lint */
 
@@ -608,6 +608,8 @@ int
 allocdir(ino_t parent, ino_t request, int mode)
 {
 	ino_t ino;
+	uid_t uid;
+	gid_t gid;
 	char *cp;
 	struct ufs1_dinode *dp;
 	struct bufarea *bp;
@@ -655,6 +657,12 @@ allocdir(ino_t parent, ino_t request, int mode)
 	}
 	dp = ginode(parent);
 	dp->di_nlink++;
+	uid = dp->di_uid;
+	gid = dp->di_gid;
+	inodirty();
+	dp = ginode(ino);
+	dp->di_uid = uid;
+	dp->di_gid = gid;
 	inodirty();
 	return (ino);
 }
