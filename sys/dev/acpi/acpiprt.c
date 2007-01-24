@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.12 2007/01/18 19:49:52 kettenis Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.13 2007/01/24 20:52:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -104,6 +104,9 @@ acpiprt_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+	if (sc->sc_bus == -1)
+		return;
 
 	for (i = 0; i < res.length; i++)
 		acpiprt_prt_add(sc, res.v_package[i]);
@@ -260,8 +263,15 @@ acpiprt_getpcibus(struct acpiprt_softc *sc, struct aml_node *node)
 		bus = acpiprt_getpcibus(sc, parent);
 		dev = ACPI_PCI_DEV(aml_val2int(&res) << 16);
 		func = ACPI_PCI_FN(aml_val2int(&res) << 16);
-		tag = pci_make_tag(pc, bus, dev, func);
 
+		/*
+		 * Some systems return 255 as the device number for
+		 * devices that are not really there.
+		 */
+		if (dev >= pci_bus_maxdevs(pc, bus))
+			return -1;
+
+		tag = pci_make_tag(pc, bus, dev, func);
 		reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
 		if (PCI_CLASS(reg) == PCI_CLASS_BRIDGE &&
 		    PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI) {
