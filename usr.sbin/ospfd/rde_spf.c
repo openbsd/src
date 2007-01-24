@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.55 2006/07/06 13:03:39 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.56 2007/01/24 12:05:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -52,9 +52,6 @@ spf_calc(struct area *area)
 	u_int32_t		 d;
 	int			 i;
 	struct in_addr		 addr;
-
-	log_debug("spf_calc: calculation started, area ID %s",
-	    inet_ntoa(area->id));
 
 	/* clear SPF tree */
 	spf_tree_clr(area);
@@ -110,10 +107,8 @@ spf_calc(struct area *area)
 				continue;
 			}
 
-			if (w->lsa->hdr.age == MAX_AGE) {
-				log_debug("spf_calc: age = MAX_AGE");
+			if (w->lsa->hdr.age == MAX_AGE)
 				continue;
-			}
 
 			if (!linked(w, v)) {
 				addr.s_addr = htonl(w->ls_id);
@@ -161,7 +156,7 @@ spf_calc(struct area *area)
 	} while (v != NULL);
 
 	/* spf_dump(area); */
-	log_debug("spf_calc: calculation ended, area ID %s",
+	log_debug("spf_calc: area %s calculated",
 	    inet_ntoa(area->id));
 
 	area->num_spf_calc++;
@@ -485,7 +480,6 @@ spf_timer(int fd, short event, void *arg)
 	case SPF_IDLE:
 		fatalx("spf_timer: invalid state IDLE");
 	case SPF_HOLDQUEUE:
-		log_debug("spf_timer: HOLDQUEUE -> DELAY");
 		conf->spf_state = SPF_DELAY;
 		/* FALLTHROUGH */
 	case SPF_DELAY:
@@ -531,7 +525,6 @@ spf_timer(int fd, short event, void *arg)
 		start_spf_holdtimer(conf);
 		break;
 	case SPF_HOLD:
-		log_debug("spf_timer: state HOLD -> IDLE");
 		conf->spf_state = SPF_IDLE;
 		break;
 	default:
@@ -546,7 +539,6 @@ start_spf_timer(void)
 
 	switch (rdeconf->spf_state) {
 	case SPF_IDLE:
-		log_debug("start_spf_timer: IDLE -> DELAY");
 		timerclear(&tv);
 		tv.tv_sec = rdeconf->spf_delay;
 		rdeconf->spf_state = SPF_DELAY;
@@ -557,7 +549,6 @@ start_spf_timer(void)
 		/* ignore */
 		break;
 	case SPF_HOLD:
-		log_debug("start_spf_timer: HOLD -> HOLDQUEUE");
 		rdeconf->spf_state = SPF_HOLDQUEUE;
 		break;
 	case SPF_HOLDQUEUE:
@@ -585,7 +576,6 @@ start_spf_holdtimer(struct ospfd_conf *conf)
 		timerclear(&tv);
 		tv.tv_sec = conf->spf_hold_time;
 		conf->spf_state = SPF_HOLD;
-		log_debug("spf_start_holdtimer: DELAY -> HOLD");
 		if (evtimer_add(&conf->ev, &tv) == -1)
 			fatal("start_spf_holdtimer");
 		break;
