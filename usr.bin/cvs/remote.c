@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.7 2007/01/18 16:45:52 joris Exp $	*/
+/*	$OpenBSD: remote.c,v 1.8 2007/01/24 21:24:48 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -141,7 +141,7 @@ cvs_remote_receive_file(int fd, size_t len)
 
 		nwrite = write(fd, data, nread);
 		if (nwrite != nread)
-			fatal("failed to write %ld bytes", nread);
+			fatal("failed to write %zu bytes", nread);
 
 		if (cvs_server_active == 0 &&
 		    cvs_client_outlog_fd != -1)
@@ -158,7 +158,8 @@ cvs_remote_send_file(const char *path)
 {
 	int l, fd;
 	FILE *out, *in;
-	size_t ret, rw, total;
+	size_t ret, rw;
+	off_t total;
 	struct stat st;
 	char buf[16], *data;
 
@@ -189,7 +190,7 @@ cvs_remote_send_file(const char *path)
 	while ((ret = fread(data, sizeof(char), MAXBSIZE, in)) != 0) {
 		rw = fwrite(data, sizeof(char), ret, out);
 		if (rw != ret)
-			fatal("failed to write %ld bytes", ret);
+			fatal("failed to write %zu bytes", ret);
 
 		if (cvs_server_active == 0 &&
 		    cvs_client_outlog_fd != -1)
@@ -201,7 +202,7 @@ cvs_remote_send_file(const char *path)
 	xfree(data);
 
 	if (total != st.st_size)
-		fatal("length mismatch, %ld vs %ld", total, st.st_size);
+		fatal("length mismatch, %lld vs %lld", total, st.st_size);
 
 	(void)fclose(in);
 }
