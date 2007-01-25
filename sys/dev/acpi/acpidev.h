@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.17 2007/01/22 19:45:16 mk Exp $ */
+/* $OpenBSD: acpidev.h,v 1.18 2007/01/25 21:25:42 mk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -282,11 +282,6 @@ struct acpibat_softc {
 	struct sensor		sc_sens[8];
 	struct sensordev	sc_sensdev;
 };
-
-
-/*
- * ACPI dock (_DCK)
- */
 
 struct acpidock_softc {
 	struct device           sc_dev;
