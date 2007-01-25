@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.101 2007/01/20 16:52:39 thib Exp $	*/
+/*	$OpenBSD: util.c,v 1.102 2007/01/25 18:35:30 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -798,6 +798,7 @@ cvs_splitlines(const u_char *data, size_t len)
 		if (*p == '\n' || (i == len - 1)) {
 			tlen = p - c + 1;
 			lp = xmalloc(sizeof(*lp));
+			memset(lp, 0, sizeof(*lp));
 			lp->l_line = c;
 			lp->l_len = tlen;
 			lp->l_lineno = ++(lines->l_nblines);
@@ -817,6 +818,8 @@ cvs_freelines(struct cvs_lines *lines)
 
 	while ((lp = TAILQ_FIRST(&(lines->l_lines))) != NULL) {
 		TAILQ_REMOVE(&(lines->l_lines), lp, l_list);
+		if (lp->l_needsfree == 1)
+			xfree(lp->l_line);
 		xfree(lp);
 	}
 

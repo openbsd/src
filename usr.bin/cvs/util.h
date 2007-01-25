@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.13 2007/01/11 17:44:18 niallo Exp $	*/
+/*	$OpenBSD: util.h,v 1.14 2007/01/25 18:35:30 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -52,6 +52,7 @@ struct cvs_line {
 	char			*l_line;
 	size_t			 l_len;
 	int			 l_lineno;
+	int			 l_needsfree;
 	TAILQ_ENTRY(cvs_line)	 l_list;
 };
 
