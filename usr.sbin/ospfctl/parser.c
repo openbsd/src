@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.11 2006/03/23 18:37:34 norby Exp $ */
+/*	$OpenBSD: parser.c,v 1.12 2007/01/25 16:27:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -139,7 +139,7 @@ parse(int argc, char *argv[])
 
 	bzero(&res, sizeof(res));
 
-	while (argc > 0) {
+	while (argc >= 0) {
 		if ((match = match_token(argv[0], table)) == NULL) {
 			fprintf(stderr, "valid commands/args:\n");
 			show_valid_args(table);
@@ -197,7 +197,7 @@ match_token(const char *word, const struct token table[])
 			}
 			break;
 		case ADDRESS:
-			if (parse_addr(word, &res.addr)) {
+			if (word != NULL && parse_addr(word, &res.addr)) {
 				match++;
 				t = &table[i];
 				if (t->value)
@@ -205,7 +205,8 @@ match_token(const char *word, const struct token table[])
 			}
 			break;
 		case PREFIX:
-			if (parse_prefix(word, &res.addr, &res.prefixlen)) {
+			if (word != NULL &&
+			    parse_prefix(word, &res.addr, &res.prefixlen)) {
 				match++;
 				t = &table[i];
 				if (t->value)
@@ -231,9 +232,11 @@ match_token(const char *word, const struct token table[])
 	}
 
 	if (match != 1) {
-		if (match > 1)
+		if (word == NULL)
+			fprintf(stderr, "missing argument:\n");
+		else if (match > 1)
 			fprintf(stderr, "ambiguous argument: %s\n", word);
-		if (match < 1)
+		else if (match < 1)
 			fprintf(stderr, "unknown argument: %s\n", word);
 		return (NULL);
 	}
