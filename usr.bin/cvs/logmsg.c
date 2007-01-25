@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.36 2007/01/25 08:21:08 otto Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.37 2007/01/25 22:49:39 xsa Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -76,7 +76,6 @@ cvs_logmsg_read(const char *path)
 		xfree(lbuf);
 
 	(void)fclose(fp);
-	(void)close(fd);
 
 	cvs_buf_putc(bp, '\0');
 	return (cvs_buf_release(bp));
@@ -184,7 +183,6 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 	}
 
 	(void)fclose(fp);
-	(void)close(fd);
 	(void)unlink(fpath);
 	xfree(fpath);
 
