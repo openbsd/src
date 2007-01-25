@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.35 2007/01/11 08:48:59 xsa Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.36 2007/01/25 08:21:08 otto Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -55,7 +55,8 @@ cvs_logmsg_read(const char *path)
 			buf[len - 1] = '\0';
 		} else {
 			lbuf = xmalloc(len + 1);
-			strlcpy(lbuf, buf, len);
+			memcpy(lbuf, buf, len);
+			lbuf[len] = '\0';
 			buf = lbuf;
 		}
 
