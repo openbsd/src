@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.37 2006/12/26 23:58:08 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.38 2007/01/25 07:27:36 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -133,14 +133,12 @@ acpibat_monitor(struct acpibat_softc *sc)
 	strlcpy(sc->sc_sens[3].desc, "voltage", sizeof(sc->sc_sens[3].desc));
 	sc->sc_sens[3].type = SENSOR_VOLTS_DC;
 	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[3]);
-	sc->sc_sens[3].status = SENSOR_S_OK;
 	sc->sc_sens[3].value = sc->sc_bif.bif_voltage * 1000;
 
 	strlcpy(sc->sc_sens[4].desc, "battery unknown",
 	    sizeof(sc->sc_sens[4].desc));
 	sc->sc_sens[4].type = SENSOR_INTEGER;
 	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[4]);
-	sc->sc_sens[4].status = SENSOR_S_UNKNOWN;
 	sc->sc_sens[4].value = sc->sc_bst.bst_state;
 
 	strlcpy(sc->sc_sens[5].desc, "rate", sizeof(sc->sc_sens[5].desc));
@@ -158,7 +156,6 @@ acpibat_monitor(struct acpibat_softc *sc)
 	    sizeof(sc->sc_sens[7].desc));
 	sc->sc_sens[7].type = SENSOR_VOLTS_DC;
 	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[7]);
-	sc->sc_sens[7].status = SENSOR_S_OK;
 	sc->sc_sens[7].value = sc->sc_bst.bst_voltage * 1000;
 
 	sensordev_install(&sc->sc_sensdev);
@@ -174,24 +171,58 @@ acpibat_refresh(void *arg)
 	    sc->sc_devnode->parent->name);
 
 	if (!sc->sc_bat_present) {
-		for (i = 0; i < 8; i++)
+		for (i = 0; i < 8; i++) {
 			sc->sc_sens[i].value = 0;
+			sc->sc_sens[i].status = SENSOR_S_UNSPEC;
+			sc->sc_sens[i].flags = SENSOR_FINVALID;
+		}
+		/* override state */
 		strlcpy(sc->sc_sens[4].desc, "battery removed",
 		    sizeof(sc->sc_sens[4].desc));
-		sc->sc_sens[4].status = SENSOR_S_OK;
 		return;
 	}
 
+	/*
+	 * XXX don't really need _BIF but keep it here in case we
+	 * miss an insertion/removal event
+	 */
 	acpibat_getbif(sc);
 	acpibat_getbst(sc);
 
-	sc->sc_sens[0].value = sc->sc_bif.bif_last_capacity * 1000;
+	/* _BIF values are static, sensor 0..3 */
+	if (sc->sc_bif.bif_last_capacity == BIF_UNKNOWN) {
+		sc->sc_sens[0].value = 0;
+		sc->sc_sens[0].status = SENSOR_S_UNKNOWN;
+		sc->sc_sens[0].flags = SENSOR_FUNKNOWN;
+	} else {
+		sc->sc_sens[0].value = sc->sc_bif.bif_last_capacity * 1000;
+		sc->sc_sens[0].status = SENSOR_S_UNSPEC;
+		sc->sc_sens[0].flags = 0;
+	}
 	sc->sc_sens[1].value = sc->sc_bif.bif_warning * 1000;
+	sc->sc_sens[1].flags = 0;
 	sc->sc_sens[2].value = sc->sc_bif.bif_low * 1000;
-	sc->sc_sens[3].value = sc->sc_bif.bif_voltage * 1000;
+	sc->sc_sens[2].flags = 0;
+	if (sc->sc_bif.bif_voltage == BIF_UNKNOWN) {
+		sc->sc_sens[3].value = 0;
+		sc->sc_sens[3].status = SENSOR_S_UNKNOWN;
+		sc->sc_sens[3].flags = SENSOR_FUNKNOWN;
+	} else {
+		sc->sc_sens[3].value = sc->sc_bif.bif_voltage * 1000;
+		sc->sc_sens[3].status = SENSOR_S_UNSPEC;
+		sc->sc_sens[3].flags = 0;
+	}
 
+	/* _BST values are dynamic, sensor 4..7 */
 	sc->sc_sens[4].status = SENSOR_S_OK;
-	if (sc->sc_bst.bst_state & BST_DISCHARGE)
+	sc->sc_sens[4].flags = 0;
+	if (sc->sc_bif.bif_last_capacity == BIF_UNKNOWN ||
+	    sc->sc_bst.bst_capacity == BST_UNKNOWN) { 
+		sc->sc_sens[4].status = SENSOR_S_UNKNOWN;
+		sc->sc_sens[4].flags = SENSOR_FUNKNOWN;
+		strlcpy(sc->sc_sens[4].desc, "battery unknown",
+		    sizeof(sc->sc_sens[4].desc));
+	} else if (sc->sc_bst.bst_state & BST_DISCHARGE)
 		strlcpy(sc->sc_sens[4].desc, "battery discharging",
 		    sizeof(sc->sc_sens[4].desc));
 	else if (sc->sc_bst.bst_state & BST_CHARGE)
@@ -201,14 +232,50 @@ acpibat_refresh(void *arg)
 		strlcpy(sc->sc_sens[4].desc, "battery critical",
 		    sizeof(sc->sc_sens[4].desc));
 		sc->sc_sens[4].status = SENSOR_S_CRIT;
-	} else /* whenever there is no status the battery is full */
+	} else if (sc->sc_bst.bst_capacity >= sc->sc_bif.bif_last_capacity)
 		strlcpy(sc->sc_sens[4].desc, "battery full",
 		    sizeof(sc->sc_sens[4].desc));
-
+	else
+		strlcpy(sc->sc_sens[4].desc, "battery idle",
+		    sizeof(sc->sc_sens[4].desc));
 	sc->sc_sens[4].value = sc->sc_bst.bst_state;
-	sc->sc_sens[5].value = sc->sc_bst.bst_rate;
-	sc->sc_sens[6].value = sc->sc_bst.bst_capacity * 1000;
-	sc->sc_sens[7].value = sc->sc_bst.bst_voltage * 1000;
+
+	if (sc->sc_bst.bst_rate == BST_UNKNOWN) {
+		sc->sc_sens[5].value = 0;
+		sc->sc_sens[5].status = SENSOR_S_UNKNOWN;
+		sc->sc_sens[5].flags = SENSOR_FUNKNOWN;
+	} else {
+		sc->sc_sens[5].value = sc->sc_bst.bst_rate;
+		sc->sc_sens[5].status = SENSOR_S_UNSPEC;
+		sc->sc_sens[5].flags = 0;
+	}
+
+	if (sc->sc_bst.bst_capacity == BST_UNKNOWN) {
+		sc->sc_sens[6].value = 0;
+		sc->sc_sens[6].status = SENSOR_S_UNKNOWN;
+		sc->sc_sens[6].flags = SENSOR_FUNKNOWN;
+	} else {
+		sc->sc_sens[6].value = sc->sc_bst.bst_capacity * 1000;
+		sc->sc_sens[6].flags = 0;
+
+		if (sc->sc_bst.bst_capacity < sc->sc_bif.bif_low)
+			/* XXX we should shutdown the system */
+			sc->sc_sens[6].status = SENSOR_S_CRIT;
+		else if (sc->sc_bst.bst_capacity < sc->sc_bif.bif_warning)
+			sc->sc_sens[6].status = SENSOR_S_WARN;
+		else
+			sc->sc_sens[6].status = SENSOR_S_OK;
+	}
+
+	if(sc->sc_bst.bst_voltage == BST_UNKNOWN) {
+		sc->sc_sens[7].value = 0;
+		sc->sc_sens[7].status = SENSOR_S_UNKNOWN;
+		sc->sc_sens[7].flags = SENSOR_FUNKNOWN;
+	} else {
+		sc->sc_sens[7].value = sc->sc_bst.bst_voltage * 1000;
+		sc->sc_sens[7].status = SENSOR_S_UNSPEC;
+		sc->sc_sens[7].flags = 0;
+	}
 }
 
 int
