@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.202 2007/01/25 18:35:30 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.203 2007/01/25 19:32:56 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3104,6 +3104,8 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 			len = cvs_buf_len(tmpbuf);
 
 			/* tmpbuf is now ready, convert to string */
+			if (line->l_needsfree)
+				xfree(line->l_line);
 			line->l_len = len;
 			line->l_line = cvs_buf_release(tmpbuf);
 			line->l_needsfree = 1;
