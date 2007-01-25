@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.4 2007/01/25 21:26:06 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.5 2007/01/25 21:31:38 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -19,6 +19,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/sensors.h>
 
 #include <machine/bus.h>
 
@@ -91,6 +92,15 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 		acpidock_dockctl(sc, 0);
 		acpidock_docklock(sc, 0);
 	}
+
+	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensdev.xname));
+	strlcpy(sc->sc_sens[0].desc, "docked",
+	    sizeof(sc->sc_sens[0].desc));
+	sc->sc_sens[0].type = SENSOR_INDICATOR;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[0]);
+	sensordev_install(&sc->sc_sensdev);
+	sc->sc_sens[0].value = sc->sc_docked;
 
 	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev, 
 	    acpidock_notify, sc, ACPIDEV_NOPOLL);
@@ -241,6 +251,7 @@ acpidock_notify(struct aml_node *node, int notify_type, void *arg)
 	}
 
 	acpidock_status(sc);
+	sc->sc_sens[0].value = sc->sc_docked;
 	dnprintf(5, "acpidock_notify: status %s\n",
 	    sc->sc_docked == ACPIDOCK_STATUS_DOCKED ? "docked" : "undocked");
 
