@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.29 2007/01/11 15:45:02 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.30 2007/01/25 11:09:21 xsa Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -396,7 +396,7 @@ cvs_unedit_local(struct cvs_file *cf)
 		entlist = cvs_ent_open(cf->file_wd);
 
 		if ((ent = cvs_ent_get(entlist, cf->file_name)) == NULL)
-			fatal("cvs_unedit_local: cvs_ent_parse failed");
+			fatal("cvs_unedit_local: cvs_ent_get failed");
 
 		(void)rcsnum_tostr(ba_rev, rbuf, sizeof(rbuf));
 
