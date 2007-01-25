@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.30 2007/01/25 11:09:21 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.31 2007/01/25 18:56:33 otto Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -253,7 +253,8 @@ cvs_edit_local(struct cvs_file *cf)
 	FILE *fp;
 	struct tm *t;
 	time_t now;
-	char *bfpath, timebuf[64], thishost[MAXHOSTNAMELEN], wdir[MAXPATHLEN];
+	char bfpath[MAXPATHLEN], timebuf[64], thishost[MAXHOSTNAMELEN];
+	char wdir[MAXPATHLEN];
 
 	if (cvs_noexec == 1)
 		return;
@@ -297,7 +298,6 @@ cvs_edit_local(struct cvs_file *cf)
 	if (fchmod(cf->fd, 0644) == -1)
 		fatal("cvs_edit_local: fchmod %s", strerror(errno));
 
-	bfpath = xmalloc(MAXPATHLEN);
 	if (cvs_path_cat(CVS_PATH_BASEDIR, cf->file_name, bfpath,
 	    MAXPATHLEN) >= MAXPATHLEN)
 		fatal("cvs_edit_local: truncation");
@@ -308,8 +308,6 @@ cvs_edit_local(struct cvs_file *cf)
 
 	if (cvs_file_copy(cf->file_path, bfpath) == -1)
 		fatal("cvs_edit_local: cvs_file_copy failed");
-
-	xfree(bfpath);
 
 	(void)cvs_base_handle(cf, BASE_ADD);
 }
@@ -326,7 +324,8 @@ cvs_unedit_local(struct cvs_file *cf)
 	struct stat st;
 	struct tm *t;
 	time_t now;
-	char *bfpath, timebuf[64], thishost[MAXHOSTNAMELEN], wdir[MAXPATHLEN];
+	char bfpath[MAXPATHLEN], timebuf[64], thishost[MAXHOSTNAMELEN];
+	char wdir[MAXPATHLEN];
 	RCSNUM *ba_rev;
 
 	if (cvs_noexec == 1)
@@ -336,28 +335,22 @@ cvs_unedit_local(struct cvs_file *cf)
 
 	cvs_file_classify(cf, NULL, 0);
 
-	bfpath = xmalloc(MAXPATHLEN);
 	if (cvs_path_cat(CVS_PATH_BASEDIR, cf->file_name, bfpath,
 	    MAXPATHLEN) >= MAXPATHLEN)
 		fatal("cvs_unedit_local: truncation");
 
-	if (stat(bfpath, &st) == -1) {
-		xfree(bfpath);
+	if (stat(bfpath, &st) == -1)
 		return;
-	}
 
 	if (cvs_file_cmp(cf->file_path, bfpath) != 0) {
 		cvs_printf("%s has been modified; revert changes? ",
 		    cf->file_name);
 
-		if (cvs_yesno() == -1) {
-			xfree(bfpath);
+		if (cvs_yesno() == -1)
 			return;
-		}
 	}
 
 	cvs_rename(bfpath, cf->file_path);
-	xfree(bfpath);
 
 	if ((fp = fopen(CVS_PATH_NOTIFY, "a")) == NULL)
 		fatal("cvs_unedit_local: fopen: `%s': %s",

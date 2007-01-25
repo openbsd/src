@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.9 2007/01/25 06:44:11 otto Exp $	*/
+/*	$OpenBSD: remote.c,v 1.10 2007/01/25 18:56:33 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -119,7 +119,7 @@ void
 cvs_remote_receive_file(int fd, size_t len)
 {
 	FILE *in;
-	char *data;
+	char data[MAXBSIZE];
 	size_t nread, nwrite, nleft, toread;
 
 	if (cvs_server_active)
@@ -127,7 +127,6 @@ cvs_remote_receive_file(int fd, size_t len)
 	else
 		in = current_cvsroot->cr_srvout;
 
-	data = xmalloc(MAXBSIZE);
 	nleft = len;
 
 	while (nleft > 0) {
@@ -147,8 +146,6 @@ cvs_remote_receive_file(int fd, size_t len)
 
 		nleft -= nread;
 	}
-
-	xfree(data);
 }
 
 void
@@ -159,7 +156,7 @@ cvs_remote_send_file(const char *path)
 	size_t ret, rw;
 	off_t total;
 	struct stat st;
-	char buf[16], *data;
+	char buf[16], data[MAXBSIZE];
 
 	if (cvs_server_active)
 		out = stdout;
@@ -184,7 +181,6 @@ cvs_remote_send_file(const char *path)
 		fatal("cvs_remote_send_file: fdopen %s", strerror(errno));
 
 	total = 0;
-	data = xmalloc(MAXBSIZE);
 	while ((ret = fread(data, sizeof(char), MAXBSIZE, in)) != 0) {
 		rw = fwrite(data, sizeof(char), ret, out);
 		if (rw != ret)
@@ -196,8 +192,6 @@ cvs_remote_send_file(const char *path)
 
 		total += ret;
 	}
-
-	xfree(data);
 
 	if (total != st.st_size)
 		fatal("length mismatch, %lld vs %lld", total, st.st_size);

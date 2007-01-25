@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.99 2007/01/18 15:26:52 xsa Exp $	*/
+/*	$OpenBSD: commit.c,v 1.100 2007/01/25 18:56:33 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -212,7 +212,7 @@ cvs_commit_local(struct cvs_file *cf)
 	int l, openflags, rcsflags;
 	char rbuf[24], nbuf[24];
 	CVSENTRIES *entlist;
-	char *attic, *repo, *rcsfile;
+	char attic[MAXPATHLEN], repo[MAXPATHLEN], rcsfile[MAXPATHLEN];
 
 	cvs_log(LP_TRACE, "cvs_commit_local(%s)", cf->file_path);
 	cvs_file_classify(cf, NULL, 0);
@@ -247,8 +247,6 @@ cvs_commit_local(struct cvs_file *cf)
 				cvs_log(LP_ERR, "warning: expected %s "
 				    "to be dead", cf->file_path);
 
-			rcsfile = xmalloc(MAXPATHLEN);
-			repo = xmalloc(MAXPATHLEN);
 			cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
 			l = snprintf(rcsfile, MAXPATHLEN, "%s/%s%s",
 			    repo, cf->file_name, RCS_FILE_EXT);
@@ -262,8 +260,6 @@ cvs_commit_local(struct cvs_file *cf)
 
 			xfree(cf->file_rpath);
 			cf->file_rpath = xstrdup(rcsfile);
-			xfree(rcsfile);
-			xfree(repo);
 
 			rcsflags = RCS_READ | RCS_PARSE_FULLY;
 			openflags = O_RDONLY;
@@ -353,8 +349,6 @@ cvs_commit_local(struct cvs_file *cf)
 		cvs_ent_remove(entlist, cf->file_name);
 		cvs_ent_close(entlist, ENT_SYNC);
 
-		repo = xmalloc(MAXPATHLEN);
-		attic = xmalloc(MAXPATHLEN);
 		cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
 
 		l = snprintf(attic, MAXPATHLEN, "%s/%s", repo, CVS_PATH_ATTIC);
@@ -372,9 +366,6 @@ cvs_commit_local(struct cvs_file *cf)
 		if (rename(cf->file_rpath, attic) == -1)
 			fatal("cvs_commit_local: failed to move %s to Attic",
 			    cf->file_path);
-
-		xfree(repo);
-		xfree(attic);
 
 		if (cvs_server_active == 1)
 			cvs_server_update_entry("Remove-entry", cf);
@@ -428,18 +419,15 @@ commit_desc_set(struct cvs_file *cf)
 {
 	BUF *bp;
 	int l, fd;
-	char *desc_path, *desc;
+	char desc_path[MAXPATHLEN], *desc;
 
-	desc_path = xmalloc(MAXPATHLEN);
 	l = snprintf(desc_path, MAXPATHLEN, "%s/%s%s",
 	    CVS_PATH_CVSDIR, cf->file_name, CVS_DESCR_FILE_EXT);
 	if (l == -1 || l >= MAXPATHLEN)
 		fatal("commit_desc_set: overflow");
 
-	if ((fd = open(desc_path, O_RDONLY)) == -1) {
-		xfree(desc_path);
+	if ((fd = open(desc_path, O_RDONLY)) == -1)
 		return;
-	}
 
 	bp = cvs_buf_load_fd(fd, BUF_AUTOEXT);
 	cvs_buf_putc(bp, '\0');
@@ -451,5 +439,4 @@ commit_desc_set(struct cvs_file *cf)
 	(void)cvs_unlink(desc_path);
 
 	xfree(desc);
-	xfree(desc_path);
 }

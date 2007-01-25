@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.68 2007/01/24 13:55:11 pyr Exp $	*/
+/*	$OpenBSD: entries.c,v 1.69 2007/01/25 18:56:33 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -354,7 +354,7 @@ cvs_parse_tagfile(char *dir, char **tagp, char **datep, int *nbp)
 	FILE *fp;
 	int linenum;
 	size_t len;
-	char linebuf[128], *tagpath;
+	char linebuf[128], tagpath[MAXPATHLEN];
 
 	if (tagp != NULL)
 		*tagp = NULL;
@@ -365,16 +365,14 @@ cvs_parse_tagfile(char *dir, char **tagp, char **datep, int *nbp)
 	if (nbp != NULL)
 		*nbp = 0;
 
-	tagpath = xmalloc(MAXPATHLEN);
-
 	if (cvs_path_cat(dir, CVS_PATH_TAG, tagpath, MAXPATHLEN) >= MAXPATHLEN)
-		goto out;
+		return;
 
 	if ((fp = fopen(tagpath, "r")) == NULL) {
 		if (errno != ENOENT)
 			cvs_log(LP_NOTICE, "failed to open `%s' : %s", tagpath,
 			    strerror(errno));
-		goto out;
+		return;
         }
 
 	linenum = 0;
@@ -413,23 +411,19 @@ cvs_parse_tagfile(char *dir, char **tagp, char **datep, int *nbp)
 		cvs_log(LP_NOTICE, "failed to read line from `%s'", tagpath);
 
 	(void)fclose(fp);
-out:
-	xfree(tagpath);
 }
 
 void
 cvs_write_tagfile(char *dir, char *tag, char *date, int nb)
 {
 	FILE *fp;
-	char *tagpath;
+	char tagpath[MAXPATHLEN];
 
 	if (cvs_noexec == 1)
 		return;
 
-	tagpath = xmalloc(MAXPATHLEN);
-
 	if (cvs_path_cat(dir, CVS_PATH_TAG, tagpath, MAXPATHLEN) >= MAXPATHLEN)
-		goto out;
+		return;
 
 	if ((tag != NULL) || (date != NULL)) {
 		if ((fp = fopen(tagpath, "w+")) == NULL) {
@@ -437,7 +431,7 @@ cvs_write_tagfile(char *dir, char *tag, char *date, int nb)
 				cvs_log(LP_NOTICE, "failed to open `%s' : %s",
 				    tagpath, strerror(errno));
 			}
-			goto out;
+			return;
 		}
 		if (tag != NULL) {
 			if (nb != 0)
@@ -450,8 +444,5 @@ cvs_write_tagfile(char *dir, char *tag, char *date, int nb)
 		(void)fclose(fp);
 	} else {
 		(void)cvs_unlink(tagpath);
-		goto out;
 	}
-out:
-	xfree(tagpath);
 }

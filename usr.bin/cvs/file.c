@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.175 2007/01/23 01:53:38 ray Exp $	*/
+/*	$OpenBSD: file.c,v 1.176 2007/01/25 18:56:33 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -74,10 +74,7 @@ cvs_file_init(void)
 	int i, l;
 	FILE *ifp;
 	size_t len;
-	char *path, *buf;
-
-	path = xmalloc(MAXPATHLEN);
-	buf = xmalloc(MAXNAMLEN);
+	char path[MAXPATHLEN], buf[MAXNAMLEN];
 
 	TAILQ_INIT(&cvs_ign_pats);
 	TAILQ_INIT(&dir_ign_pats);
@@ -109,9 +106,6 @@ cvs_file_init(void)
 
 		(void)fclose(ifp);
 	}
-
-	xfree(path);
-	xfree(buf);
 }
 
 void
@@ -207,9 +201,7 @@ cvs_file_get_cf(const char *d, const char *f, int fd, int type)
 {
 	int l;
 	struct cvs_file *cf;
-	char *p, *rpath;
-
-	rpath = xmalloc(MAXPATHLEN);
+	char *p, rpath[MAXPATHLEN];
 
 	l = snprintf(rpath, MAXPATHLEN, "%s/%s", d, f);
 	if (l == -1 || l >= MAXPATHLEN)
@@ -230,7 +222,6 @@ cvs_file_get_cf(const char *d, const char *f, int fd, int type)
 	cf->file_status = cf->file_flags = 0;
 	cf->file_ent = NULL;
 
-	xfree(rpath);
 	return (cf);
 }
 
@@ -241,10 +232,7 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 	struct stat st;
 	struct cvs_file *cf;
 	struct cvs_filelist *l, *nxt;
-	char *d, *f, *repo, *fpath;
-
-	fpath = xmalloc(MAXPATHLEN);
-	repo = xmalloc(MAXPATHLEN);
+	char *d, *f, repo[MAXPATHLEN], fpath[MAXPATHLEN];
 
 	for (l = TAILQ_FIRST(fl); l != NULL; l = nxt) {
 		if (cvs_quit)
@@ -334,9 +322,6 @@ next:
 		xfree(l->file_path);
 		xfree(l);
 	}
-
-	xfree(fpath);
-	xfree(repo);
 }
 
 void
@@ -355,7 +340,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	struct cvs_ent_line *line;
 	struct cvs_flisthead fl, dl;
 	CVSENTRIES *entlist;
-	char *buf, *ebuf, *cp, *repo, *fpath;
+	char *buf, *ebuf, *cp, repo[MAXPATHLEN], fpath[MAXPATHLEN];
 
 	cvs_log(LP_TRACE, "cvs_file_walkdir(%s)", cf->file_path);
 
@@ -367,8 +352,6 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 
 	if (cf->file_status == FILE_SKIP)
 		return;
-
-	fpath = xmalloc(MAXPATHLEN);
 
 	/*
 	 * If we do not have a admin directory inside here, dont bother,
@@ -382,7 +365,6 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	l = stat(fpath, &st);
 	if (cvs_cmdop != CVS_OP_IMPORT &&
 	    (l == -1 || (l == 0 && !S_ISDIR(st.st_mode)))) {
-		xfree(fpath);
 		return;
 	}
 
@@ -544,7 +526,6 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	cvs_ent_close(entlist, ENT_NOSYNC);
 
 	if (cr->flags & CR_REPO) {
-		repo = xmalloc(MAXPATHLEN);
 		cvs_get_repository_path(cf->file_path, repo, MAXPATHLEN);
 		cvs_repository_lock(repo);
 
@@ -555,15 +536,11 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	cvs_file_walklist(&fl, cr);
 	cvs_file_freelist(&fl);
 
-	if (cr->flags & CR_REPO) {
+	if (cr->flags & CR_REPO)
 		cvs_repository_unlock(repo);
-		xfree(repo);
-	}
 
 	cvs_file_walklist(&dl, cr);
 	cvs_file_freelist(&dl);
-
-	xfree(fpath);
 
 	if (cr->leavedir != NULL)
 		cr->leavedir(cf);
@@ -591,7 +568,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 	int rflags, l, ismodified, rcsdead, verbose;
 	CVSENTRIES *entlist = NULL;
 	const char *state;
-	char *repo, *rcsfile, r1[16], r2[16];
+	char repo[MAXPATHLEN], rcsfile[MAXPATHLEN], r1[16], r2[16];
 
 	cvs_log(LP_TRACE, "cvs_file_classify(%s)", cf->file_path);
 
@@ -601,9 +578,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 	}
 
 	verbose = (verbosity > 1 && loud == 1);
-
-	repo = xmalloc(MAXPATHLEN);
-	rcsfile = xmalloc(MAXPATHLEN);
 
 	cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
 	l = snprintf(rcsfile, MAXPATHLEN, "%s/%s",
@@ -641,8 +615,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 		else
 			cf->file_status = FILE_UNKNOWN;
 
-		xfree(repo);
-		xfree(rcsfile);
 		cvs_ent_close(entlist, ENT_NOSYNC);
 		return;
 	}
@@ -861,8 +833,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 		}
 	}
 
-	xfree(repo);
-	xfree(rcsfile);
 	cvs_ent_close(entlist, ENT_NOSYNC);
 }
 

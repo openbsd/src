@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.50 2007/01/18 16:45:52 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.51 2007/01/25 18:56:33 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -220,42 +220,36 @@ void
 cvs_server_static_directory(char *data)
 {
 	FILE *fp;
-	char *fpath;
+	char fpath[MAXPATHLEN];
 
-	fpath = xmalloc(MAXPATHLEN);
 	if (cvs_path_cat(server_currentdir, CVS_PATH_STATICENTRIES, fpath,
 	    MAXPATHLEN) >= MAXPATHLEN)
 		fatal("cvs_server_static_directory: truncation");
 
 	if ((fp = fopen(fpath, "w+")) == NULL) {
 		cvs_log(LP_ERRNO, "%s", fpath);
-		goto out;
+		return;
 	}
 	(void)fclose(fp);
-out:
-	xfree(fpath);
 }
 
 void
 cvs_server_sticky(char *data)
 {
 	FILE *fp;
-	char *tagpath;
+	char tagpath[MAXPATHLEN];
 
-	tagpath = xmalloc(MAXPATHLEN);
 	if (cvs_path_cat(server_currentdir, CVS_PATH_TAG, tagpath,
 	    MAXPATHLEN) >= MAXPATHLEN)
 		fatal("cvs_server_sticky: truncation");
 
 	if ((fp = fopen(tagpath, "w+")) == NULL) {
 		cvs_log(LP_ERRNO, "%s", tagpath);
-		goto out;
+		return;
 	}
 
 	(void)fprintf(fp, "%s\n", data);
 	(void)fclose(fp);
-out:
-	xfree(tagpath);
 }
 
 void
@@ -299,7 +293,7 @@ cvs_server_directory(char *data)
 {
 	int l;
 	CVSENTRIES *entlist;
-	char *dir, *repo, *parent, *entry, *dirn, *p;
+	char *dir, *repo, *parent, entry[CVS_ENT_MAXLINELEN], *dirn, *p;
 
 	dir = cvs_remote_input();
 	STRIP_SLASH(dir);
@@ -331,14 +325,12 @@ cvs_server_directory(char *data)
 
 	if (strcmp(parent, ".")) {
 		entlist = cvs_ent_open(parent);
-		entry = xmalloc(CVS_ENT_MAXLINELEN);
 		l = snprintf(entry, CVS_ENT_MAXLINELEN, "D/%s////", dirn);
 		if (l == -1 || l >= CVS_ENT_MAXLINELEN)
 			fatal("cvs_server_directory: overflow");
 
 		cvs_ent_add(entlist, entry);
 		cvs_ent_close(entlist, ENT_SYNC);
-		xfree(entry);
 	}
 
 	if (server_currentdir != NULL)
@@ -366,7 +358,7 @@ cvs_server_modified(char *data)
 	size_t flen;
 	mode_t fmode;
 	const char *errstr;
-	char *mode, *len, *fpath;
+	char *mode, *len, fpath[MAXPATHLEN];
 
 	mode = cvs_remote_input();
 	len = cvs_remote_input();
@@ -379,7 +371,6 @@ cvs_server_modified(char *data)
 		fatal("cvs_server_modified: %s", errstr);
 	xfree(len);
 
-	fpath = xmalloc(MAXPATHLEN);
 	if (cvs_path_cat(server_currentdir, data, fpath, MAXPATHLEN) >=
 	    MAXPATHLEN)
 		fatal("cvs_server_modified: truncation");
@@ -392,7 +383,6 @@ cvs_server_modified(char *data)
 	if (fchmod(fd, 0600) == -1)
 		fatal("cvs_server_modified: failed to set file mode");
 
-	xfree(fpath);
 	(void)close(fd);
 }
 
@@ -405,12 +395,11 @@ void
 cvs_server_unchanged(char *data)
 {
 	int fd;
-	char *fpath;
+	char fpath[MAXPATHLEN];
 	CVSENTRIES *entlist;
 	struct cvs_ent *ent;
 	struct timeval tv[2];
 
-	fpath = xmalloc(MAXPATHLEN);
 	if (cvs_path_cat(server_currentdir, data, fpath, MAXPATHLEN) >=
 	    MAXPATHLEN)
 		fatal("cvs_server_unchanged: truncation");
@@ -434,7 +423,6 @@ cvs_server_unchanged(char *data)
 		fatal("cvs_server_unchanged: failed to set mode");
 
 	cvs_ent_free(ent);
-	xfree(fpath);
 	(void)close(fd);
 }
 
@@ -624,12 +612,11 @@ void
 cvs_server_update_entry(const char *resp, struct cvs_file *cf)
 {
 	int l;
-	char *p, *response;
+	char *p, response[MAXPATHLEN];
 
 	if ((p = strrchr(cf->file_rpath, ',')) != NULL)
 		*p = '\0';
 
-	response = xmalloc(MAXPATHLEN);
 	l = snprintf(response, MAXPATHLEN, "%s %s/", resp, cf->file_wd);
 	if (l == -1 || l >= MAXPATHLEN)
 		fatal("cvs_server_update_entry: overflow");
@@ -639,6 +626,4 @@ cvs_server_update_entry(const char *resp, struct cvs_file *cf)
 
 	if (p != NULL)
 		*p = ',';
-
-	xfree(response);
 }

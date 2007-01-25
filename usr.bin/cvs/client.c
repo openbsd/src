@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.49 2007/01/18 16:45:52 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.50 2007/01/25 18:56:33 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -365,29 +365,23 @@ cvs_client_senddir(const char *dir)
 {
 	struct stat st;
 	int nb;
-	char *d, *date, *fpath, *repo, *tag;
+	char *d, *date, fpath[MAXPATHLEN], repo[MAXPATHLEN], *tag;
 
 	d = NULL;
 
 	if (lastdir != NULL && !strcmp(dir, lastdir))
 		return;
 
-	repo = xmalloc(MAXPATHLEN);
 	cvs_get_repository_path(dir, repo, MAXPATHLEN);
 
 	cvs_client_send_request("Directory %s\n%s", dir, repo);
 
-	xfree(repo);
-
-	fpath = xmalloc(MAXPATHLEN);
 	if (cvs_path_cat(dir, CVS_PATH_STATICENTRIES, fpath, MAXPATHLEN) >=
 	    MAXPATHLEN)
 		fatal("cvs_client_senddir: truncation");
 
 	if (stat(fpath, &st) == 0 && (st.st_mode & (S_IRUSR|S_IRGRP|S_IROTH)))
 		cvs_client_send_request("Static-directory");
-
-	xfree(fpath);
 
 	d = xstrdup(dir);
 	cvs_parse_tagfile(d, &tag, &date, &nb);
@@ -619,7 +613,7 @@ cvs_client_updated(char *data)
 	struct cvs_ent *e;
 	const char *errstr;
 	struct timeval tv[2];
-	char timebuf[32], *repo, *rpath, *entry, *mode;
+	char timebuf[32], repo[MAXPATHLEN], *rpath, *entry, *mode;
 	char revbuf[32], *len, *fpath, *wdir;
 
 	client_check_directory(data);
@@ -629,7 +623,6 @@ cvs_client_updated(char *data)
 	mode = cvs_remote_input();
 	len = cvs_remote_input();
 
-	repo = xmalloc(MAXPATHLEN);
 	cvs_get_repository_path(".", repo, MAXPATHLEN);
 
 	STRIP_SLASH(repo);
@@ -640,7 +633,6 @@ cvs_client_updated(char *data)
 	fpath = rpath + strlen(repo) + 1;
 	if ((wdir = dirname(fpath)) == NULL)
 		fatal("cvs_client_updated: dirname: %s", strerror(errno));
-	xfree(repo);
 
 	flen = strtonum(len, 0, INT_MAX, &errstr);
 	if (errstr != NULL)
@@ -729,7 +721,7 @@ void
 cvs_client_set_static_directory(char *data)
 {
 	FILE *fp;
-	char *dir, *fpath;
+	char *dir, fpath[MAXPATHLEN];
 
 	if (cvs_cmdop == CVS_OP_EXPORT)
 		return;
@@ -739,24 +731,21 @@ cvs_client_set_static_directory(char *data)
 	dir = cvs_remote_input();
 	xfree(dir);
 
-	fpath = xmalloc(MAXPATHLEN);
 	if (cvs_path_cat(data, CVS_PATH_STATICENTRIES, fpath, MAXPATHLEN) >=
 	    MAXPATHLEN)
 		fatal("cvs_client_set_static_directory: truncation");
 
 	if ((fp = fopen(fpath, "w+")) == NULL) {
 		cvs_log(LP_ERRNO, "%s", fpath);
-		goto out;
+		return;
 	}
 	(void)fclose(fp);
-out:
-	xfree(fpath);
 }
 
 void
 cvs_client_clear_static_directory(char *data)
 {
-	char *dir, *fpath;
+	char *dir, fpath[MAXPATHLEN];
 
 	if (cvs_cmdop == CVS_OP_EXPORT)
 		return;
@@ -766,21 +755,18 @@ cvs_client_clear_static_directory(char *data)
 	dir = cvs_remote_input();
 	xfree(dir);
 
-	fpath = xmalloc(MAXPATHLEN);
 	if (cvs_path_cat(data, CVS_PATH_STATICENTRIES, fpath, MAXPATHLEN) >=
 	    MAXPATHLEN)
 		fatal("cvs_client_clear_static_directory: truncation");
 
 	(void)cvs_unlink(fpath);
-
-	xfree(fpath);
 }
 
 void
 cvs_client_set_sticky(char *data)
 {
 	FILE *fp;
-	char *dir, *tag, *tagpath;
+	char *dir, *tag, tagpath[MAXPATHLEN];
 
 	if (cvs_cmdop == CVS_OP_EXPORT)
 		return;
@@ -791,7 +777,6 @@ cvs_client_set_sticky(char *data)
 	xfree(dir);
 	tag = cvs_remote_input();
 
-	tagpath = xmalloc(MAXPATHLEN);
 	if (cvs_path_cat(data, CVS_PATH_TAG, tagpath, MAXPATHLEN) >= MAXPATHLEN)
 		fatal("cvs_client_clear_sticky: truncation");
 
@@ -803,14 +788,13 @@ cvs_client_set_sticky(char *data)
 	(void)fprintf(fp, "%s\n", tag);
 	(void)fclose(fp);
 out:
-	xfree(tagpath);
 	xfree(tag);
 }
 
 void
 cvs_client_clear_sticky(char *data)
 {
-	char *dir, *tagpath;
+	char *dir, tagpath[MAXPATHLEN];
 
 	if (cvs_cmdop == CVS_OP_EXPORT)
 		return;
@@ -820,13 +804,10 @@ cvs_client_clear_sticky(char *data)
 	dir = cvs_remote_input();
 	xfree(dir);
 
-	tagpath = xmalloc(MAXPATHLEN);
 	if (cvs_path_cat(data, CVS_PATH_TAG, tagpath, MAXPATHLEN) >= MAXPATHLEN)
 		fatal("cvs_client_clear_sticky: truncation");
 
 	(void)cvs_unlink(tagpath);
-
-	xfree(tagpath);
 }
 
 

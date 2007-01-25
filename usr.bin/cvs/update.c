@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.88 2007/01/23 16:42:19 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.89 2007/01/25 18:56:33 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -182,12 +182,11 @@ cvs_update_leavedir(struct cvs_file *cf)
 	struct cvs_ent *ent;
 	struct cvs_ent_line *line;
 	CVSENTRIES *entlist;
-	char *export;
+	char export[MAXPATHLEN];
 
 	cvs_log(LP_TRACE, "cvs_update_leavedir(%s)", cf->file_path);
 
 	if (cvs_cmdop == CVS_OP_EXPORT) {
-		export = xmalloc(MAXPATHLEN);
 		if (cvs_path_cat(cf->file_path, CVS_PATH_CVSDIR, export,
 		    MAXPATHLEN) >= MAXPATHLEN)
 			fatal("cvs_update_leavedir: truncation");
@@ -197,7 +196,6 @@ cvs_update_leavedir(struct cvs_file *cf)
 			fatal("cvs_update_leavedir: %s: %s:", export,
 			    strerror(errno));
 
-		xfree(export);
 		return;
 	}
 

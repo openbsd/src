@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.45 2007/01/21 11:20:10 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.46 2007/01/25 18:56:33 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -213,10 +213,8 @@ cvs_admin_local(struct cvs_file *cf)
 		struct cvs_file *ocf;
 		struct rcs_access *acp;
 		int ofd;
-		char *d, *f, *fpath, *repo;
+		char *d, *f, fpath[MAXPATHLEN], repo[MAXPATHLEN];
 
-		fpath = xmalloc(MAXPATHLEN);
-		repo = xmalloc(MAXPATHLEN);
 
 		if ((f = basename(oldfilename)) == NULL)
 			fatal("cvs_admin_local: basename failed");
@@ -248,9 +246,6 @@ cvs_admin_local(struct cvs_file *cf)
 		(void)close(ofd);
 
 		cvs_file_free(ocf);
-
-		xfree(fpath);
-		xfree(repo);
 	}
 
 	if (alist != NULL) {

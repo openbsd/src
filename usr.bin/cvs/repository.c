@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.8 2007/01/19 23:23:21 joris Exp $	*/
+/*	$OpenBSD: repository.c,v 1.9 2007/01/25 18:56:33 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -93,10 +93,7 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 	DIR *dirp;
 	struct stat st;
 	struct dirent *dp;
-	char *s, *fpath, *rpath;
-
-	rpath = xmalloc(MAXPATHLEN);
-	fpath = xmalloc(MAXPATHLEN);
+	char *s, fpath[MAXPATHLEN], rpath[MAXPATHLEN];
 
 	if ((dirp = opendir(dir)) == NULL)
 		fatal("cvs_repository_getdir: failed to open '%s'", dir);
@@ -167,9 +164,6 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 			fatal("type %d unknown, shouldn't happen", type);
 		}
 	}
-
-	xfree(rpath);
-	xfree(fpath);
 
 	(void)closedir(dirp);
 }
