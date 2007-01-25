@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.82 2007/01/18 08:49:08 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.83 2007/01/25 23:22:32 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -308,7 +308,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 			/* XXX - fd race below */
 			rcs_rev_write_stmp(cf->file_rcs, rnum, template, 0);
 			cvs_remote_send_file(template);
-			(void)unlink(template);
+			cvs_worklist_run(&temp_files, cvs_worklist_unlink);
 			xfree(template);
 		}
 
