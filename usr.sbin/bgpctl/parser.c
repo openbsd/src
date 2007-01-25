@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.34 2006/08/23 08:21:11 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.35 2007/01/25 19:30:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -295,7 +295,7 @@ parse(int argc, char *argv[])
 	bzero(&res, sizeof(res));
 	TAILQ_INIT(&res.set);
 
-	while (argc > 0) {
+	while (argc >= 0) {
 		if ((match = match_token(argv[0], table)) == NULL) {
 			fprintf(stderr, "valid commands/args:\n");
 			show_valid_args(table);
@@ -461,9 +461,11 @@ match_token(const char *word, const struct token table[])
 	}
 
 	if (match != 1) {
-		if (match > 1)
+		if (word == NULL)
+			fprintf(stderr, "missing argument:\n");
+		else if (match > 1)
 			fprintf(stderr, "ambiguous argument: %s\n", word);
-		if (match < 1)
+		else if (match < 1)
 			fprintf(stderr, "unknown argument: %s\n", word);
 		return (NULL);
 	}
