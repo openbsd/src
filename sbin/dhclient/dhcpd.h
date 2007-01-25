@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.62 2007/01/16 20:22:20 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.63 2007/01/25 01:21:04 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -169,7 +169,6 @@ struct client_state {
 	struct string_list	 *medium;
 	struct dhcp_packet	  packet;
 	int			  packet_length;
-	int			  options_valid;
 	struct iaddr		  requested_address;
 	char			**scriptEnv;
 	int			  scriptEnvsize;
@@ -332,9 +331,6 @@ int dhcp_option_ev_name(char *, size_t, const struct option *);
 struct client_lease *packet_to_lease(struct iaddr, struct option_data *);
 void go_daemon(void);
 void client_location_changed(void);
-
-void bootp(struct iaddr, struct option_data *);
-void dhcp(struct iaddr, struct option_data *);
 
 /* packet.c */
 void assemble_hw_header(unsigned char *, int *, struct hardware *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.32 2007/01/16 20:22:20 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.33 2007/01/25 01:21:04 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -44,52 +44,14 @@
 
 #include "dhcpd.h"
 
-void	parse_options(struct option_data *);
-void	parse_option_buffer(struct option_data *, unsigned char *, int);
-
-/*
- * Parse all available options out of the specified packet.
- */
-void
-parse_options(struct option_data *options)
-{
-	/* If we don't see the magic cookie, there's nothing to parse. */
-	if (memcmp(&client->packet.options, DHCP_OPTIONS_COOKIE, 4)) {
-		client->options_valid = 1;
-		return;
-	}
-
-	/*
-	 * Go through the options field, up to the end of the packet or
-	 * the End field.
-	 */
-	parse_option_buffer(options, &client->packet.options[4],
-	    sizeof(client->packet.options) - 4);
-
-	/*
-	 * If we parsed a DHCP Option Overload option, parse more
-	 * options out of the buffer(s) containing them.
-	 */
-	if (client->options_valid && options[DHO_DHCP_MESSAGE_TYPE].data &&
-	    options[DHO_DHCP_OPTION_OVERLOAD].data) {
-		if (options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1)
-			parse_option_buffer(options,
-			    (unsigned char *)client->packet.file,
-			    sizeof(client->packet.file));
-		if (client->options_valid &&
-		    options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)
-			parse_option_buffer(options,
-			    (unsigned char *)client->packet.sname,
-			    sizeof(client->packet.sname));
-	}
-}
+int parse_option_buffer(struct option_data *, unsigned char *, int);
 
 /*
  * Parse options out of the specified buffer, storing addresses of
  * option values in options and setting client->options_valid if
  * no errors are encountered.
  */
-void
+int
 parse_option_buffer(struct option_data *options, unsigned char *buffer,
     int length)
 {
@@ -122,8 +84,7 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 			warning("option %s (%d) larger than buffer.",
 			    dhcp_options[code].name, len);
 			warning("rejecting bogus offer.");
-			client->options_valid = 0;
-			return;
+			return (0);
 		}
 		/*
 		 * If we haven't seen this option before, just make
@@ -160,7 +121,8 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 		}
 		s += len + 2;
 	}
-	client->options_valid = 1;
+
+	return (1);
 }
 
 /*
@@ -455,23 +417,84 @@ void
 do_packet(int len, unsigned int from_port, struct iaddr from,
     struct hardware *hfrom)
 {
+	struct dhcp_packet *packet = &client->packet;
 	struct option_data options[256];
-	int i;
+	struct iaddrlist *ap;
+	void (*handler)(struct iaddr, struct option_data *);
+	char *type;
+	int i, options_valid = 1;
 
-	if (client->packet.hlen > sizeof(client->packet.chaddr)) {
+	if (packet->hlen > sizeof(packet->chaddr)) {
 		note("Discarding packet with invalid hlen.");
 		return;
 	}
 
-	memset(&options, 0, sizeof(options));
+	/*
+	 * Silently drop the packet if the client hardware address in the
+	 * packet is not the hardware address of the interface being managed.
+	 */
+	if ((ifi->hw_address.hlen != packet->hlen) ||
+	    (memcmp(ifi->hw_address.haddr, packet->chaddr, packet->hlen)))
+		return;
 
-	parse_options(options);
+	memset(options, 0, sizeof(options));
+
+	if (memcmp(&packet->options, DHCP_OPTIONS_COOKIE, 4) == 0) {
+		/* Parse the BOOTP/DHCP options field. */
+		options_valid = parse_option_buffer(options,
+		    &packet->options[4], sizeof(packet->options) - 4);
+
+		/* Only DHCP packets have overload areas for options. */ 
+		if (options_valid &&
+		    options[DHO_DHCP_MESSAGE_TYPE].data &&
+		    options[DHO_DHCP_OPTION_OVERLOAD].data) {
+			if (options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1)
+				options_valid = parse_option_buffer(options,
+				    (unsigned char *)packet->file,
+				    sizeof(packet->file));
+			if (options_valid &&
+			    options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)
+				options_valid = parse_option_buffer(options,
+				    (unsigned char *)packet->sname,
+				    sizeof(packet->sname));
+		}
+	}
+
+	type = "";
+	handler = NULL;
+
 	if (options[DHO_DHCP_MESSAGE_TYPE].data) {
-		dhcp(from, options);
-	} else if (client->options_valid)
-		bootp(from, options);
+		/* Always try a DHCP packet, even if a bad option was seen. */
+		switch (options[DHO_DHCP_MESSAGE_TYPE].data[0]) {
+		case DHCPOFFER:
+			handler = dhcpoffer;
+			type = "DHCPOFFER";
+			break;
+		case DHCPNAK:
+			handler = dhcpnak;
+			type = "DHCPNACK";
+			break;
+		case DHCPACK:
+			handler = dhcpack;
+			type = "DHCPACK";
+			break;
+		default:
+			break;
+		}
+	} else if (options_valid && packet->op == BOOTREPLY) {
+		handler = dhcpoffer;
+		type = "BOOTREPLY";
+	}
 
-	/* Free the data associated with the options. */
+	for (ap = config->reject_list; ap && handler; ap = ap->next)
+		if (addr_eq(from, ap->addr)) {
+			note("%s from %s rejected.", type, piaddr(from));
+			handler = NULL;
+		}
+
+	if (handler)	
+		(*handler)(from, options);
+
 	for (i = 0; i < 256; i++)
 		if (options[i].len && options[i].data)
 			free(options[i].data);

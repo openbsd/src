@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.104 2007/01/16 20:22:20 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.105 2007/01/25 01:21:04 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -576,12 +576,7 @@ dhcpack(struct iaddr client_addr, struct option_data *options)
 {
 	struct client_lease *lease;
 
-	/* If we're not receptive to an offer right now, or if the offer
-	   has an unrecognizable transaction id, then just drop it. */
-	if (client->xid != client->packet.xid ||
-	    (ifi->hw_address.hlen != client->packet.hlen) ||
-	    (memcmp(ifi->hw_address.haddr,
-	    client->packet.chaddr, client->packet.hlen)))
+	if (client->xid != client->packet.xid)
 		return;
 
 	if (client->state != S_REBOOTING &&
@@ -715,62 +710,6 @@ state_bound(void)
 }
 
 void
-bootp(struct iaddr client_addr, struct option_data *options)
-{
-	struct iaddrlist *ap;
-
-	if (client->packet.op != BOOTREPLY)
-		return;
-
-	/* If there's a reject list, make sure this packet's sender isn't
-	   on it. */
-	for (ap = config->reject_list;
-	    ap; ap = ap->next) {
-		if (addr_eq(client_addr, ap->addr)) {
-			note("BOOTREPLY from %s rejected.", piaddr(ap->addr));
-			return;
-		}
-	}
-	dhcpoffer(client_addr, options);
-}
-
-void
-dhcp(struct iaddr client_addr, struct option_data *options)
-{
-	struct iaddrlist *ap;
-	void (*handler)(struct iaddr, struct option_data *);
-	char *type;
-
-	switch (options[DHO_DHCP_MESSAGE_TYPE].data[0]) {
-	case DHCPOFFER:
-		handler = dhcpoffer;
-		type = "DHCPOFFER";
-		break;
-	case DHCPNAK:
-		handler = dhcpnak;
-		type = "DHCPNACK";
-		break;
-	case DHCPACK:
-		handler = dhcpack;
-		type = "DHCPACK";
-		break;
-	default:
-		return;
-	}
-
-	/* If there's a reject list, make sure this packet's sender isn't
-	   on it. */
-	for (ap = config->reject_list;
-	    ap; ap = ap->next) {
-		if (addr_eq(client_addr, ap->addr)) {
-			note("%s from %s rejected.", type, piaddr(ap->addr));
-			return;
-		}
-	}
-	(*handler)(client_addr, options);
-}
-
-void
 dhcpoffer(struct iaddr client_addr, struct option_data *options)
 {
 	struct client_lease *lease, *lp;
@@ -779,17 +718,13 @@ dhcpoffer(struct iaddr client_addr, struct option_data *options)
 	char *name = options[DHO_DHCP_MESSAGE_TYPE].len ? "DHCPOFFER" :
 	    "BOOTREPLY";
 
-	/* If we're not receptive to an offer right now, or if the offer
-	   has an unrecognizable transaction id, then just drop it. */
-	if (client->state != S_SELECTING ||
-	    client->xid != client->packet.xid ||
-	    (ifi->hw_address.hlen != client->packet.hlen) ||
-	    (memcmp(ifi->hw_address.haddr,
-	    client->packet.chaddr, client->packet.hlen)))
+	if (client->xid != client->packet.xid)
+		return;
+
+	if (client->state != S_SELECTING)
 		return;
 
 	note("%s from %s", name, piaddr(client_addr));
-
 
 	/* If this lease doesn't supply the minimum required parameters,
 	   blow it off. */
@@ -971,12 +906,7 @@ packet_to_lease(struct iaddr client_addr, struct option_data *options)
 void
 dhcpnak(struct iaddr client_addr, struct option_data *options)
 {
-	/* If we're not receptive to an offer right now, or if the offer
-	   has an unrecognizable transaction id, then just drop it. */
-	if (client->xid != client->packet.xid ||
-	    (ifi->hw_address.hlen != client->packet.hlen) ||
-	    (memcmp(ifi->hw_address.haddr,
-	    client->packet.chaddr, client->packet.hlen)))
+	if (client->xid != client->packet.xid)
 		return;
 
 	if (client->state != S_REBOOTING &&
