@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.12 2007/01/25 16:27:00 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.13 2007/01/25 16:40:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -197,7 +197,7 @@ match_token(const char *word, const struct token table[])
 			}
 			break;
 		case ADDRESS:
-			if (word != NULL && parse_addr(word, &res.addr)) {
+			if (parse_addr(word, &res.addr)) {
 				match++;
 				t = &table[i];
 				if (t->value)
@@ -205,8 +205,7 @@ match_token(const char *word, const struct token table[])
 			}
 			break;
 		case PREFIX:
-			if (word != NULL &&
-			    parse_prefix(word, &res.addr, &res.prefixlen)) {
+			if (parse_prefix(word, &res.addr, &res.prefixlen)) {
 				match++;
 				t = &table[i];
 				if (t->value)
