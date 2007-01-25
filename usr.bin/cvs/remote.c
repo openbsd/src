@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.8 2007/01/24 21:24:48 otto Exp $	*/
+/*	$OpenBSD: remote.c,v 1.9 2007/01/25 06:44:11 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -89,14 +89,12 @@ cvs_remote_input(void)
 
 	if (data[len - 1] == '\n') {
 		data[len - 1] = '\0';
+		ldata = xstrdup(data);
 	} else {
 		ldata = xmalloc(len + 1);
-		if (strlcpy(ldata, data, len) >= len)
-			fatal("cvs_remote_input: truncation");
-		data = ldata;
+		memcpy(ldata, data, len);
+		ldata[len] = '\0';
 	}
-
-	ldata = xstrdup(data);
 
 	if (cvs_server_active == 0 && cvs_client_outlog_fd != -1) {
 		BUF *bp;
