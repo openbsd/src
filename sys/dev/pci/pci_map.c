@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.19 2006/12/12 18:28:54 deraadt Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.20 2007/01/26 01:18:48 tsi Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@ int
 obsd_pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
     bus_addr_t *basep, bus_size_t *sizep, int *flagsp)
 {
-	pcireg_t address, mask;
+	pcireg_t address, mask, csr;
 	int s;
 
 	if (reg < PCI_MAPREG_START ||
@@ -79,14 +79,20 @@ obsd_pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	 * reasonable way.
 	 *
 	 * 2) A device which wants 2^n bytes of memory will hardwire the bottom
-	 * n bits of the address to 0.  As recommended, we write all 1s and see
-	 * what we get back.
+	 * n bits of the address to 0.  As recommended, we write all 1s while
+	 * the device is disabled and see what we get back.
 	 */
 	s = splhigh();
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	if (csr & PCI_COMMAND_IO_ENABLE)
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
+		    csr & ~PCI_COMMAND_IO_ENABLE);
 	address = pci_conf_read(pc, tag, reg);
 	pci_conf_write(pc, tag, reg, 0xffffffff);
 	mask = pci_conf_read(pc, tag, reg);
 	pci_conf_write(pc, tag, reg, address);
+	if (csr & PCI_COMMAND_IO_ENABLE)
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 	splx(s);
 
 	if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_IO) {
@@ -117,7 +123,7 @@ int
 obsd_pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
     bus_addr_t *basep, bus_size_t *sizep, int *flagsp)
 {
-	pcireg_t address, mask, address1 = 0, mask1 = 0xffffffff;
+	pcireg_t address, mask, address1 = 0, mask1 = 0xffffffff, csr;
 	u_int64_t waddress, wmask;
 	int s, is64bit;
 
@@ -144,10 +150,14 @@ obsd_pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	 * reasonable way.
 	 *
 	 * 2) A device which wants 2^n bytes of memory will hardwire the bottom
-	 * n bits of the address to 0.  As recommended, we write all 1s and see
-	 * what we get back.
+	 * n bits of the address to 0.  As recommended, we write all 1s while
+	 * the device is disabled and see what we get back.
 	 */
 	s = splhigh();
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	if (csr & PCI_COMMAND_MEM_ENABLE)
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
+		    csr & ~PCI_COMMAND_MEM_ENABLE);
 	address = pci_conf_read(pc, tag, reg);
 	pci_conf_write(pc, tag, reg, 0xffffffff);
 	mask = pci_conf_read(pc, tag, reg);
@@ -158,6 +168,8 @@ obsd_pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 		mask1 = pci_conf_read(pc, tag, reg + 4);
 		pci_conf_write(pc, tag, reg + 4, address1);
 	}
+	if (csr & PCI_COMMAND_MEM_ENABLE)
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 	splx(s);
 
 	if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_MEM) {
@@ -261,14 +273,20 @@ pci_mapreg_type(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 int
 pci_mapreg_probe(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t *typep)
 {
-	pcireg_t address, mask;
+	pcireg_t address, mask, csr;
 	int s;
 	
 	s = splhigh();
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	if (csr & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE))
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr &
+		    ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE));
 	address = pci_conf_read(pc, tag, reg);
 	pci_conf_write(pc, tag, reg, 0xffffffff);
 	mask = pci_conf_read(pc, tag, reg);
 	pci_conf_write(pc, tag, reg, address);
+	if (csr & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE))
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 	splx(s);
 
 	if (mask == 0) /* unimplemented mapping register */
