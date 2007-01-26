@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.62 2007/01/23 13:42:47 mglocker Exp $	*/
+/*	$OpenBSD: re.c,v 1.63 2007/01/26 15:29:10 jason Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1396,25 +1396,24 @@ re_txeof(struct rl_softc *sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 	}
 
-	/*
-	 * Some chips will ignore a second TX request issued while an
-	 * existing transmission is in progress. If the transmitter goes
-	 * idle but there are still packets waiting to be sent, we need
-	 * to restart the channel here to flush them out. This only seems
-	 * to be required with the PCIe devices.
-	 */
-	if (sc->rl_ldata.rl_tx_free < RL_TX_DESC_CNT(sc))
-	    CSR_WRITE_1(sc, sc->rl_txstart, RL_TXSTART_START);
+	if (sc->rl_ldata.rl_tx_free < RL_TX_DESC_CNT(sc)) {
+		/*
+		 * Some chips will ignore a second TX request issued while an
+		 * existing transmission is in progress. If the transmitter goes
+		 * idle but there are still packets waiting to be sent, we need
+		 * to restart the channel here to flush them out. This only
+		 * seems to be required with the PCIe devices.
+		 */
+		CSR_WRITE_1(sc, sc->rl_txstart, RL_TXSTART_START);
 
-	/*
-	 * If not all descriptors have been released reaped yet,
-	 * reload the timer so that we will eventually get another
-	 * interrupt that will cause us to re-enter this routine.
-	 * This is done in case the transmitter has gone idle.
-	 */
-	if (sc->rl_ldata.rl_tx_free < RL_TX_DESC_CNT(sc))
-                CSR_WRITE_4(sc, RL_TIMERCNT, 1);
-	else
+		/*
+		 * If not all descriptors have been released reaped yet,
+		 * reload the timer so that we will eventually get another
+		 * interrupt that will cause us to re-enter this routine.
+		 * This is done in case the transmitter has gone idle.
+		 */
+		CSR_WRITE_4(sc, RL_TIMERCNT, 1);
+	} else
 		ifp->if_timer = 0;
 }
 
