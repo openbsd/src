@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.1 2006/10/18 16:15:25 norby Exp $ */
+/*	$OpenBSD: parser.c,v 1.2 2007/01/26 10:04:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -117,7 +117,7 @@ parse(int argc, char *argv[])
 
 	bzero(&res, sizeof(res));
 
-	while (argc > 0) {
+	while (argc >= 0) {
 		if ((match = match_token(argv[0], table)) == NULL) {
 			fprintf(stderr, "valid commands/args:\n");
 			show_valid_args(table);
@@ -209,9 +209,11 @@ match_token(const char *word, const struct token table[])
 	}
 
 	if (match != 1) {
-		if (match > 1)
+		if (word == NULL)
+			fprintf(stderr, "missing argument:\n");
+		else if (match > 1)
 			fprintf(stderr, "ambiguous argument: %s\n", word);
-		if (match < 1)
+		else if (match < 1)
 			fprintf(stderr, "unknown argument: %s\n", word);
 		return (NULL);
 	}
