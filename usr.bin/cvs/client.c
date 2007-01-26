@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.51 2007/01/26 10:42:06 otto Exp $	*/
+/*	$OpenBSD: client.c,v 1.52 2007/01/26 11:19:44 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -646,8 +646,7 @@ cvs_client_updated(char *data)
 	fmode &= ~mask;
 
 	time(&now);
-	now = cvs_hack_time(now, 0);
-	ctime_r(&now, timebuf);
+	asctime_r(gmtime(&now), timebuf);
 	if (timebuf[strlen(timebuf) - 1] == '\n')
 		timebuf[strlen(timebuf) - 1] = '\0';
 
@@ -672,7 +671,6 @@ cvs_client_updated(char *data)
 
 	cvs_remote_receive_file(fd, flen);
 
-	now = cvs_hack_time(now, 0);
 	tv[0].tv_sec = now;
 	tv[0].tv_usec = 0;
 	tv[1] = tv[0];

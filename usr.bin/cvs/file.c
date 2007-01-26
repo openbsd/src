@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.176 2007/01/25 18:56:33 otto Exp $	*/
+/*	$OpenBSD: file.c,v 1.177 2007/01/26 11:19:44 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -562,7 +562,6 @@ void
 cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 {
 	size_t len;
-	time_t mtime;
 	struct stat st;
 	BUF *b1, *b2;
 	int rflags, l, ismodified, rcsdead, verbose;
@@ -678,8 +677,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 		if (fstat(cf->fd, &st) == -1)
 			fatal("cvs_file_classify: %s", strerror(errno));
 
-		mtime = cvs_hack_time(st.st_mtime, 1);
-		if (mtime != cf->file_ent->ce_mtime)
+		if (st.st_mtime != cf->file_ent->ce_mtime)
 			ismodified = 1;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.51 2007/01/25 18:56:33 otto Exp $	*/
+/*	$OpenBSD: server.c,v 1.52 2007/01/26 11:19:44 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -413,7 +413,7 @@ cvs_server_unchanged(char *data)
 		fatal("received Unchanged request for non-existing file");
 	cvs_ent_close(entlist, ENT_NOSYNC);
 
-	tv[0].tv_sec = cvs_hack_time(ent->ce_mtime, 0);
+	tv[0].tv_sec = ent->ce_mtime;
 	tv[0].tv_usec = 0;
 	tv[1] = tv[0];
 	if (futimes(fd, tv) == -1)

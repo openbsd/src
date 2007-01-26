@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.83 2007/01/25 23:22:32 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.84 2007/01/26 11:19:44 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -242,12 +242,10 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 		if (fchmod(cf->fd, 0644) == -1)
 			fatal("cvs_checkout_file: fchmod: %s", strerror(errno));
 
-		if (exists == 0) {
+		if (exists == 0 && cf->file_ent == NULL)
 			rcstime = rcs_rev_getdate(cf->file_rcs, rnum);
-			rcstime = cvs_hack_time(rcstime, 0);
-		} else {
+		else
 			time(&rcstime);
-		}
 
 		tv[0].tv_sec = rcstime;
 		tv[0].tv_usec = 0;
@@ -259,9 +257,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 		time(&rcstime);
 	}
 
-	rcstime = cvs_hack_time(rcstime, 1);
-
-	ctime_r(&rcstime, tbuf);
+	asctime_r(gmtime(&rcstime), tbuf);
 	if (tbuf[strlen(tbuf) - 1] == '\n')
 		tbuf[strlen(tbuf) - 1] = '\0';
 

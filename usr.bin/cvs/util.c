@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.102 2007/01/25 18:35:30 niallo Exp $	*/
+/*	$OpenBSD: util.c,v 1.103 2007/01/26 11:19:44 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -573,35 +573,6 @@ cvs_path_cat(const char *base, const char *end, char *dst, size_t dlen)
 	}
 
 	return (len);
-}
-
-/*
- * a hack to mimic and thus match gnu cvs behaviour.
- */
-time_t
-cvs_hack_time(time_t oldtime, int togmt)
-{
-	int l;
-	struct tm *t;
-	char tbuf[32];
-
-	if (togmt == 1) {
-		t = gmtime(&oldtime);
-		if (t == NULL)
-			fatal("gmtime failed");
-
-		return (mktime(t));
-	}
-
-	t = localtime(&oldtime);
-
-	l = snprintf(tbuf, sizeof(tbuf), "%d/%d/%d GMT %d:%d:%d",
-	    t->tm_mon + 1, t->tm_mday, t->tm_year + 1900, t->tm_hour,
-	    t->tm_min, t->tm_sec);
-	if (l == -1 || l >= (int)sizeof(tbuf))
-		fatal("cvs_hack_time: overflow");
-
-	return (cvs_date_parse(tbuf));
 }
 
 void

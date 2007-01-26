@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.203 2007/01/25 19:32:56 otto Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.204 2007/01/26 11:19:44 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2540,7 +2540,7 @@ rcs_rev_getdate(RCSFILE *rfp, RCSNUM *rev)
 	if ((rdp = rcs_findrev(rfp, rev)) == NULL)
 		return (-1);
 
-	return (mktime(&rdp->rd_date));
+	return (timegm(&rdp->rd_date));
 }
 
 /*

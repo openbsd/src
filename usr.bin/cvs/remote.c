@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.11 2007/01/26 08:35:23 otto Exp $	*/
+/*	$OpenBSD: remote.c,v 1.12 2007/01/26 11:19:44 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -202,7 +202,6 @@ cvs_remote_send_file(const char *path)
 void
 cvs_remote_classify_file(struct cvs_file *cf)
 {
-	time_t mtime;
 	struct stat st;
 	CVSENTRIES *entlist;
 
@@ -230,8 +229,7 @@ cvs_remote_classify_file(struct cvs_file *cf)
 			fatal("cvs_remote_classify_file(%s): %s", cf->file_path,
 			    strerror(errno));
 
-		mtime = cvs_hack_time(st.st_mtime, 1);
-		if (mtime != cf->file_ent->ce_mtime)
+		if (st.st_mtime != cf->file_ent->ce_mtime)
 			cf->file_status = FILE_MODIFIED;
 		else
 			cf->file_status = FILE_UPTODATE;

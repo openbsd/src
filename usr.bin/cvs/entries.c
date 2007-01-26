@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.69 2007/01/25 18:56:33 otto Exp $	*/
+/*	$OpenBSD: entries.c,v 1.70 2007/01/26 11:19:44 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -111,6 +111,7 @@ struct cvs_ent *
 cvs_ent_parse(const char *entry)
 {
 	int i;
+	struct tm t;
 	struct cvs_ent *ent;
 	char *fields[CVS_ENTRIES_NFIELDS], *buf, *sp, *dp;
 
@@ -159,8 +160,12 @@ cvs_ent_parse(const char *entry)
 		    strncmp(fields[3], "Initial ", 8) == 0 ||
 		    strncmp(fields[3], "Result of merge", 15) == 0)
 			ent->ce_mtime = CVS_DATE_DMSEC;
-		else
-			ent->ce_mtime = cvs_date_parse(fields[3]);
+		else {
+			strptime(fields[3], "%a %b %d %T %Y", &t);
+			t.tm_isdst = 0;
+			t.tm_gmtoff = 0;
+			ent->ce_mtime = mktime(&t);
+		}
 	}
 
 	ent->ce_conflict = fields[3];
