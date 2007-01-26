@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.9,v 1.12 2004/04/16 21:23:08 jmc Exp $
+.\"	$OpenBSD: printf.9,v 1.13 2007/01/26 00:20:47 jason Exp $
 .\"     $NetBSD: kprintf.9,v 1.6 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -166,11 +166,21 @@ Whereas a position value of 32
 .Pq "octal 40, hexadecimal 20, the ASCII space character"
 describes the most significant bit.
 .Pp
+To deal with more than 32 bits, the characters 128
+.Pq "octal 200, hexadecimal 80"
+through 255
+.Pq "octal 377, hexadecimal FF"
+are used.
+The value 127 is subtracted from the character to determine the
+bit position (1 is least significant, and 128 is most significant).
+.Pp
 The remaining characters in a bit-position\(endescription pair are the
 characters to print should the bit being described be set.
 Description strings are delimited by the next bit position value character
 encountered
-.Pq "distinguishable by its value being \(<= 32" ,
+.Po
+distinguishable by its value being \*(Le 32 or \*(Ge 128
+.Pc ,
 or the end of the decoding directive string itself.
 .It Li %r
 Displays an integer using the current
@@ -215,8 +225,3 @@ printf("enablereg=%b\en", 0xe860,
 .Xr log 9
 .Sh CODE REFERENCES
 .Pa sys/kern/subr_prf.c
-.Sh LIMITATIONS
-The
-.Li %b
-format specifier cannot be used to decode integers greater than 32 bits in
-size.
