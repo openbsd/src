@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.71 2007/01/26 06:21:51 otto Exp $	*/
+/*	$OpenBSD: add.c,v 1.72 2007/01/26 21:48:16 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -32,14 +32,17 @@ static void add_directory(struct cvs_file *);
 static void add_file(struct cvs_file *);
 static void add_entry(struct cvs_file *);
 
+static int	 kflag = RCS_KWEXP_DEFAULT;
+static char	 kbuf[8], *koptstr;
+
 char	*logmsg;
 
 struct cvs_cmd cvs_cmd_add = {
 	CVS_OP_ADD, 0, "add",
 	{ "ad", "new" },
 	"Add a new file or directory to the repository",
-	"[-m message] ...",
-	"m:",
+	"[-k mode] [-m message] ...",
+	"k:m:",
 	NULL,
 	cvs_add
 };
@@ -55,6 +58,16 @@ cvs_add(int argc, char **argv)
 
 	while ((ch = getopt(argc, argv, cvs_cmd_add.cmd_opts)) != -1) {
 		switch (ch) {
+		case 'k':
+			koptstr = optarg;
+			kflag = rcs_kflag_get(koptstr);
+			if (RCS_KWEXP_INVAL(kflag)) {
+				cvs_log(LP_ERR,
+				    "invalid RCS keyword expension mode");
+				fatal("%s", cvs_cmd_add.cmd_synopsis);
+			}
+			snprintf(kbuf, sizeof(kbuf), "-k%s", koptstr);
+			break;
 		case 'm':
 			logmsg = xstrdup(optarg);
 			break;
@@ -75,6 +88,9 @@ cvs_add(int argc, char **argv)
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
+
+		if (kflag != RCS_KWEXP_DEFAULT)
+			cvs_client_send_request("Argument %s", kbuf);
 
 		if (logmsg != NULL)
 			cvs_client_send_request("Argument -m%s", logmsg);
@@ -334,7 +350,8 @@ add_entry(struct cvs_file *cf)
 
 		/* Remove the '-' prefixing the version number. */
 		l = snprintf(entry, CVS_ENT_MAXLINELEN,
-		    "/%s/%s/%s//", cf->file_name, revbuf, tbuf);
+		    "/%s/%s/%s/%s/", cf->file_name, revbuf, tbuf,
+		    cf->file_ent->ce_opts ? cf->file_ent->ce_opts : "");
 		if (l == -1 || l >= CVS_ENT_MAXLINELEN)
                		fatal("add_entry: truncation");
 	} else {
@@ -356,8 +373,9 @@ add_entry(struct cvs_file *cf)
 			(void)fclose(fp);
 		}
 
-		l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/0/Initial %s//",
-		    cf->file_name, cf->file_name);
+		l = snprintf(entry, CVS_ENT_MAXLINELEN,
+		    "/%s/0/Initial %s/%s/", cf->file_name, cf->file_name,
+		    (kflag != RCS_KWEXP_DEFAULT) ? kbuf : "");
 		if (l == -1 || l >= CVS_ENT_MAXLINELEN)
                		fatal("add_entry: truncation");
 	}

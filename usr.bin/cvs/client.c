@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.52 2007/01/26 11:19:44 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.53 2007/01/26 21:48:17 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -472,7 +472,8 @@ cvs_client_sendfile(struct cvs_file *cf)
 
 		cvs_client_send_request("Entry /%s/%s%s/%s//%s",
 		    cf->file_name, (cf->file_status == FILE_REMOVED) ? "-" : "",
-		   rev, timebuf, sticky);
+		    rev, timebuf, cf->file_ent->ce_opts ?
+		    cf->file_ent->ce_opts : "", sticky);
 	}
 
 	switch (cf->file_status) {
@@ -588,9 +589,9 @@ cvs_client_checkedin(char *data)
 			fatal("cvs_client_checkedin: overflow");
 	}
 
-	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s%s/%s//%s/",
+	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s%s/%s/%s/%s",
 	    newent->ce_name, (newent->ce_status == CVS_ENT_REMOVED) ? "-" : "",
-	    rev, timebuf, sticky);
+	    rev, timebuf, ent->ce_opts ? ent->ce_opts : "", sticky);
 	if (l == -1 || l >= CVS_ENT_MAXLINELEN)
 		fatal("cvs_client_checkedin: overflow");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.204 2007/01/26 11:19:44 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.205 2007/01/26 21:48:17 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1466,6 +1466,7 @@ rcs_kflag_get(const char *flags)
 		} else if (*fp == 'b') {
 			if (len != 1)
 				fl |= RCS_KWEXP_ERR;
+			fl |= RCS_KWEXP_NONE;
 		} else	/* unknown letter */
 			fl |= RCS_KWEXP_ERR;
 	}

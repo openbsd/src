@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.84 2007/01/26 11:19:44 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.85 2007/01/26 21:48:17 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -199,12 +199,12 @@ checkout_repository(const char *repobase, const char *wdbase)
 void
 cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 {
-	int l, oflags, exists;
+	int kflag, l, oflags, exists;
 	time_t rcstime;
 	CVSENTRIES *ent;
 	struct timeval tv[2];
 	char *template, *p, *entry, rev[16], timebuf[64];
-	char tbuf[32], stickytag[32];
+	char kbuf[8], tbuf[32], stickytag[32];
 
 	rcsnum_tostr(rnum, rev, sizeof(rev));
 
@@ -278,9 +278,20 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 		stickytag[0] = '\0';
 	}
 
+	kbuf[0] = '\0';
+	if (cf->file_ent != NULL) {
+		if (cf->file_ent->ce_opts != NULL)
+			strlcpy(kbuf, cf->file_ent->ce_opts, sizeof(kbuf));
+	} else if (cf->file_rcs->rf_expand != NULL) {
+		kflag = rcs_kflag_get(cf->file_rcs->rf_expand);
+		if (!(kflag & RCS_KWEXP_DEFAULT))
+			snprintf(kbuf, sizeof(kbuf),
+			    "-k%s", cf->file_rcs->rf_expand);
+	}
+
 	entry = xmalloc(CVS_ENT_MAXLINELEN);
-	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s//%s", cf->file_name,
-	    rev, timebuf, stickytag);
+	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s/%s/%s",
+	    cf->file_name, rev, timebuf, kbuf, stickytag);
 
 	if (cvs_server_active == 0) {
 		ent = cvs_ent_open(cf->file_wd);
