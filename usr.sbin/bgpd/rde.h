@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.96 2006/11/10 14:47:32 henning Exp $ */
+/*	$OpenBSD: rde.h,v 1.97 2007/01/26 17:40:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -240,6 +240,20 @@ struct pt_entry6 {
 	struct in6_addr			 prefix6;
 };
 
+struct pt_context {
+	union {
+		struct pt_entry		p;
+		struct pt_entry4	p4;
+		struct pt_entry6	p6;
+	}			pu;
+#define ctx_p			pu.p
+#define ctx_p4			pu.p4
+#define ctx_p6			pu.p6
+	/* only count and done should be accessed by callers */
+	unsigned int		count;
+	int			done;
+};
+
 struct prefix {
 	LIST_ENTRY(prefix)		 prefix_l, path_l;
 	struct rde_aspath		*aspath;
@@ -370,6 +384,8 @@ void		 pt_remove(struct pt_entry *);
 struct pt_entry	*pt_lookup(struct bgpd_addr *);
 void		 pt_dump(void (*)(struct pt_entry *, void *), void *,
 		     sa_family_t);
+void		 pt_dump_r(void (*)(struct pt_entry *, void *), void *,
+		     sa_family_t, struct pt_context *);
 
 /* rde_filter.c */
 enum filter_actions rde_filter(struct rde_aspath **, struct filter_head *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.217 2007/01/24 13:24:51 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.218 2007/01/26 17:40:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,9 +35,10 @@
 #include "rde.h"
 #include "session.h"
 
-#define	PFD_PIPE_MAIN		0
+#define PFD_PIPE_MAIN		0
 #define PFD_PIPE_SESSION	1
-#define PFD_MRT_FILE		2
+#define PFD_PIPE_SESSION_CTL	2
+#define PFD_MRT_FILE		3
 
 void		 rde_sighdlr(int);
 void		 rde_dispatch_imsg_session(struct imsgbuf *);
@@ -58,6 +59,7 @@ void		 rde_update_log(const char *,
 		     const struct rde_peer *, const struct bgpd_addr *,
 		     const struct bgpd_addr *, u_int8_t);
 int		 rde_reflector(struct rde_peer *, struct rde_aspath *);
+
 void		 rde_dump_rib_as(struct prefix *, struct rde_aspath *,pid_t,
 		     int);
 void		 rde_dump_filter(struct prefix *,
@@ -68,6 +70,10 @@ void		 rde_dump_upcall(struct pt_entry *, void *);
 void		 rde_dump_as(struct ctl_show_rib_request *);
 void		 rde_dump_prefix_upcall(struct pt_entry *, void *);
 void		 rde_dump_prefix(struct ctl_show_rib_request *);
+void		 rde_dump_ctx_new(struct ctl_show_rib_request *, pid_t,
+		     enum imsg_type);
+void		 rde_dump_runner(void);
+
 void		 rde_up_dump_upcall(struct pt_entry *, void *);
 void		 rde_softreconfig_out(struct pt_entry *, void *);
 void		 rde_softreconfig_in(struct pt_entry *, void *);
@@ -101,9 +107,19 @@ struct rde_peer		 peerself;
 struct rde_peer		 peerdynamic;
 struct filter_head	*rules_l, *newrules;
 struct imsgbuf		*ibuf_se;
+struct imsgbuf		*ibuf_se_ctl;
 struct imsgbuf		*ibuf_main;
 struct mrt		*mrt;
 struct rde_memstats	 rdemem;
+
+struct rde_dump_ctx {
+	TAILQ_ENTRY(rde_dump_ctx)	entry;
+	struct pt_context		ptc;
+	struct ctl_show_rib_request	req;
+	sa_family_t			af;
+};
+
+TAILQ_HEAD(, rde_dump_ctx) rde_dump_h = TAILQ_HEAD_INITIALIZER(rde_dump_h);
 
 void
 rde_sighdlr(int sig)
@@ -125,13 +141,13 @@ pid_t
 rde_main(struct bgpd_config *config, struct peer *peer_l,
     struct network_head *net_l, struct filter_head *rules,
     struct mrt_head *mrt_l, int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2],
-    int debug)
+    int pipe_s2rctl[2], int debug)
 {
 	pid_t			 pid;
 	struct passwd		*pw;
 	struct peer		*p;
 	struct listen_addr	*la;
-	struct pollfd		 pfd[3];
+	struct pollfd		 pfd[4];
 	struct filter_rule	*f;
 	struct filter_set	*set;
 	struct nexthop		*nh;
@@ -169,15 +185,18 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	signal(SIGPIPE, SIG_IGN);
 
 	close(pipe_s2r[0]);
+	close(pipe_s2rctl[0]);
 	close(pipe_m2r[0]);
 	close(pipe_m2s[0]);
 	close(pipe_m2s[1]);
 
 	/* initialize the RIB structures */
 	if ((ibuf_se = malloc(sizeof(struct imsgbuf))) == NULL ||
+	    (ibuf_se_ctl = malloc(sizeof(struct imsgbuf))) == NULL ||
 	    (ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
 	imsg_init(ibuf_se, pipe_s2r[1]);
+	imsg_init(ibuf_se_ctl, pipe_s2rctl[1]);
 	imsg_init(ibuf_main, pipe_m2r[1]);
 
 	/* peer list, mrt list and listener list are not used in the RDE */
@@ -231,7 +250,12 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 		if (ibuf_se->w.queued > 0)
 			pfd[PFD_PIPE_SESSION].events |= POLLOUT;
 
-		i = 2;
+		pfd[PFD_PIPE_SESSION_CTL].fd = ibuf_se_ctl->fd;
+		pfd[PFD_PIPE_SESSION_CTL].events = POLLIN;
+		if (ibuf_se_ctl->w.queued > 0)
+			pfd[PFD_PIPE_SESSION_CTL].events |= POLLOUT;
+
+		i = 3;
 		if (mrt && mrt->queued) {
 			pfd[PFD_MRT_FILE].fd = mrt->fd;
 			pfd[PFD_MRT_FILE].events = POLLOUT;
@@ -260,6 +284,14 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 		if (pfd[PFD_PIPE_SESSION].revents & POLLIN)
 			rde_dispatch_imsg_session(ibuf_se);
 
+		if ((pfd[PFD_PIPE_SESSION_CTL].revents & POLLOUT) &&
+		    ibuf_se_ctl->w.queued)
+			if (msgbuf_write(&ibuf_se_ctl->w) < 0)
+				fatal("pipe write error");
+
+		if (pfd[PFD_PIPE_SESSION_CTL].revents & POLLIN)
+			rde_dispatch_imsg_session(ibuf_se_ctl);
+
 		if (pfd[PFD_MRT_FILE].revents & POLLOUT) {
 			if (mrt_write(mrt) == -1) {
 				free(mrt);
@@ -270,16 +302,18 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 
 		rde_update_queue_runner();
 		rde_update6_queue_runner();
+		if (ibuf_se_ctl->w.queued <= 0)
+			rde_dump_runner();
 	}
 
 	/* do not clean up on shutdown on production, it takes ages. */
 	if (debug)
 		rde_shutdown();
 
-	msgbuf_write(&ibuf_se->w);
 	msgbuf_clear(&ibuf_se->w);
 	free(ibuf_se);
-	msgbuf_write(&ibuf_main->w);
+	msgbuf_clear(&ibuf_se_ctl->w);
+	free(ibuf_se_ctl);
 	msgbuf_clear(&ibuf_main->w);
 	free(ibuf_main);
 
@@ -302,7 +336,6 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 	struct ctl_show_rib_request	req;
 	struct filter_set	*s;
 	struct nexthop		*nh;
-	pid_t			 pid;
 	int			 n;
 	sa_family_t		 af = AF_UNSPEC;
 
@@ -426,11 +459,9 @@ badnet:
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			pid = imsg.hdr.pid;
-			memcpy(&af, imsg.data, sizeof(af));
-			pt_dump(network_dump_upcall, &pid, af);
-			imsg_compose(ibuf_se, IMSG_CTL_END, 0, pid, -1,
-			    NULL, 0);
+			bzero(&req, sizeof(req));
+			memcpy(&req.af, imsg.data, sizeof(af));
+			rde_dump_ctx_new(&req, imsg.hdr.pid, imsg.hdr.type);
 			break;
 		case IMSG_CTL_SHOW_RIB:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
@@ -438,10 +469,7 @@ badnet:
 				break;
 			}
 			memcpy(&req, imsg.data, sizeof(req));
-			req.pid = imsg.hdr.pid;
-			pt_dump(rde_dump_upcall, &req, req.af);
-			imsg_compose(ibuf_se, IMSG_CTL_END, 0, req.pid, -1,
-			    NULL, 0);
+			rde_dump_ctx_new(&req, imsg.hdr.pid, imsg.hdr.type);
 			break;
 		case IMSG_CTL_SHOW_RIB_AS:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
@@ -451,7 +479,7 @@ badnet:
 			memcpy(&req, imsg.data, sizeof(req));
 			req.pid = imsg.hdr.pid;
 			rde_dump_as(&req);
-			imsg_compose(ibuf_se, IMSG_CTL_END, 0, req.pid, -1,
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, req.pid, -1,
 			    NULL, 0);
 			break;
 		case IMSG_CTL_SHOW_RIB_PREFIX:
@@ -462,7 +490,7 @@ badnet:
 			memcpy(&req, imsg.data, sizeof(req));
 			req.pid = imsg.hdr.pid;
 			rde_dump_prefix(&req);
-			imsg_compose(ibuf_se, IMSG_CTL_END, 0, req.pid, -1,
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, req.pid, -1,
 			    NULL, 0);
 			break;
 		case IMSG_CTL_SHOW_NEIGHBOR:
@@ -475,15 +503,15 @@ badnet:
 			peer = peer_get(p.conf.id);
 			if (peer != NULL)
 				p.stats.prefix_cnt = peer->prefix_cnt;
-			imsg_compose(ibuf_se, IMSG_CTL_SHOW_NEIGHBOR, 0,
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NEIGHBOR, 0,
 			    imsg.hdr.pid, -1, &p, sizeof(struct peer));
 			break;
 		case IMSG_CTL_END:
-			imsg_compose(ibuf_se, IMSG_CTL_END, 0, imsg.hdr.pid,
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, imsg.hdr.pid,
 			    -1, NULL, 0);
 			break;
 		case IMSG_CTL_SHOW_RIB_MEM:
-			imsg_compose(ibuf_se, IMSG_CTL_SHOW_RIB_MEM, 0,
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_MEM, 0,
 			    imsg.hdr.pid, -1, &rdemem, sizeof(rdemem));
 			break;
 		default:
@@ -1566,22 +1594,23 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 		rib.flags |= F_RIB_ELIGIBLE;
 	rib.aspath_len = aspath_length(asp->aspath);
 
-	if ((wbuf = imsg_create(ibuf_se, IMSG_CTL_SHOW_RIB, 0, pid,
+	if ((wbuf = imsg_create(ibuf_se_ctl, IMSG_CTL_SHOW_RIB, 0, pid,
 	    sizeof(rib) + rib.aspath_len)) == NULL)
 		return;
 	if (imsg_add(wbuf, &rib, sizeof(rib)) == -1 ||
 	    imsg_add(wbuf, aspath_dump(asp->aspath),
 	    rib.aspath_len) == -1)
 		return;
-	if (imsg_close(ibuf_se, wbuf) == -1)
+	if (imsg_close(ibuf_se_ctl, wbuf) == -1)
 		return;
 
 	if (flags & F_CTL_DETAIL)
 		for (l = 0; l < asp->others_len; l++) {
 			if ((a = asp->others[l]) == NULL)
 				break;
-			if ((wbuf = imsg_create(ibuf_se, IMSG_CTL_SHOW_RIB_ATTR,
-			    0, pid, attr_optlen(a))) == NULL)
+			if ((wbuf = imsg_create(ibuf_se_ctl,
+			    IMSG_CTL_SHOW_RIB_ATTR, 0, pid,
+			    attr_optlen(a))) == NULL)
 				return;
 			if ((bp = buf_reserve(wbuf, attr_optlen(a))) == NULL) {
 				buf_free(wbuf);
@@ -1592,7 +1621,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 				buf_free(wbuf);
 				return;
 			}
-			if (imsg_close(ibuf_se, wbuf) == -1)
+			if (imsg_close(ibuf_se_ctl, wbuf) == -1)
 				return;
 		}
 }
@@ -1709,6 +1738,62 @@ rde_dump_prefix(struct ctl_show_rib_request *req)
 	} else {
 		if ((pt = pt_get(&req->prefix, req->prefixlen)) != NULL)
 			rde_dump_upcall(pt, req);
+	}
+}
+
+void
+rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
+    enum imsg_type type)
+{
+	struct rde_dump_ctx	*ctx;
+	u_int			 error;
+
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
+		log_warn("rde_dump_ctx_new");
+		error = CTL_RES_NOMEM;
+		imsg_compose(ibuf_se_ctl, IMSG_CTL_RESULT, 0, pid, -1, &error,
+		    sizeof(error));
+		return;
+	}
+	memcpy(&ctx->req, req, sizeof(struct ctl_show_rib_request));
+	ctx->req.pid = pid;
+	ctx->req.type = type;
+	ctx->ptc.count = RDE_RUNNER_ROUNDS;
+	ctx->af = ctx->req.af;
+	if (ctx->af == AF_UNSPEC)
+		ctx->af = AF_INET;
+
+	TAILQ_INSERT_TAIL(&rde_dump_h, ctx, entry);
+}
+
+void
+rde_dump_runner(void)
+{
+	struct rde_dump_ctx	*ctx, *next;
+
+	for(ctx = TAILQ_FIRST(&rde_dump_h); ctx != NULL; ctx = next) {
+		next = TAILQ_NEXT(ctx, entry);
+		if (ctx->ptc.done) {
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, ctx->req.pid,
+			    -1, NULL, 0);
+			TAILQ_REMOVE(&rde_dump_h, ctx, entry);
+			free(ctx);
+			continue;
+		}
+		switch (ctx->req.type) {
+		case IMSG_CTL_SHOW_NETWORK:
+			pt_dump_r(network_dump_upcall, &ctx->req.pid,
+			    ctx->af, &ctx->ptc);
+			break;
+		case IMSG_CTL_SHOW_RIB:
+			pt_dump_r(rde_dump_upcall, &ctx->req, ctx->af,
+			    &ctx->ptc);
+			break;
+		default:
+			fatalx("rde_dump_runner: unsupported imsg type");
+		}
+		if (ctx->ptc.done && ctx->req.af == AF_UNSPEC)
+			ctx->af = AF_INET6;
 	}
 }
 
@@ -1997,7 +2082,7 @@ void
 rde_update_queue_runner(void)
 {
 	struct rde_peer		*peer;
-	int			 r, sent;
+	int			 r, sent, max = RDE_RUNNER_ROUNDS;
 	u_int16_t		 len, wd_len, wpos;
 
 	len = sizeof(queue_buf) - MSGSIZE_HEADER;
@@ -2034,7 +2119,8 @@ rde_update_queue_runner(void)
 				fatal("imsg_compose error");
 			sent++;
 		}
-	} while (sent != 0);
+		max -= sent;
+	} while (sent != 0 && max > 0);
 }
 
 void
@@ -2042,7 +2128,7 @@ rde_update6_queue_runner(void)
 {
 	struct rde_peer		*peer;
 	u_char			*b;
-	int			 sent;
+	int			 sent, max = RDE_RUNNER_ROUNDS / 2;
 	u_int16_t		 len;
 
 	/* first withdraws ... */
@@ -2062,9 +2148,11 @@ rde_update6_queue_runner(void)
 				fatal("imsg_compose error");
 			sent++;
 		}
-	} while (sent != 0);
+		max -= sent;
+	} while (sent != 0 && max > 0);
 
 	/* ... then updates */
+	max = RDE_RUNNER_ROUNDS / 2;
 	do {
 		sent = 0;
 		LIST_FOREACH(peer, &peerlist, peer_l) {
@@ -2081,7 +2169,8 @@ rde_update6_queue_runner(void)
 				fatal("imsg_compose error");
 			sent++;
 		}
-	} while (sent != 0);
+		max -= sent;
+	} while (sent != 0 && max > 0);
 }
 
 /*
@@ -2476,8 +2565,8 @@ network_dump_upcall(struct pt_entry *pt, void *ptr)
 			k.prefixlen = p->prefix->prefixlen;
 			if (p->aspath->peer == &peerself)
 				k.flags = F_KERNEL;
-			if (imsg_compose(ibuf_se, IMSG_CTL_SHOW_NETWORK, 0, pid,
-			    -1, &k, sizeof(k)) == -1)
+			if (imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NETWORK, 0,
+			    pid, -1, &k, sizeof(k)) == -1)
 				log_warnx("network_dump_upcall: "
 				    "imsg_compose error");
 		}
@@ -2488,7 +2577,7 @@ network_dump_upcall(struct pt_entry *pt, void *ptr)
 			k6.prefixlen = p->prefix->prefixlen;
 			if (p->aspath->peer == &peerself)
 				k6.flags = F_KERNEL;
-			if (imsg_compose(ibuf_se, IMSG_CTL_SHOW_NETWORK6, 0,
+			if (imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NETWORK6, 0,
 			    pid, -1, &k6, sizeof(k6)) == -1)
 				log_warnx("network_dump_upcall: "
 				    "imsg_compose error");

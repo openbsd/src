@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.267 2007/01/23 17:41:22 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.268 2007/01/26 17:40:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -46,9 +46,10 @@
 
 #define PFD_PIPE_MAIN		0
 #define PFD_PIPE_ROUTE		1
-#define	PFD_SOCK_CTL		2
-#define	PFD_SOCK_RCTL		3
-#define PFD_LISTENERS_START	4
+#define PFD_PIPE_ROUTE_CTL	2
+#define PFD_SOCK_CTL		3
+#define PFD_SOCK_RCTL		4
+#define PFD_LISTENERS_START	5
 
 void	session_sighdlr(int);
 int	setup_listeners(u_int *);
@@ -101,6 +102,7 @@ int			 pending_reconf = 0;
 int			 csock = -1, rcsock = -1;
 u_int			 peer_cnt;
 struct imsgbuf		*ibuf_rde;
+struct imsgbuf		*ibuf_rde_ctl;
 struct imsgbuf		*ibuf_main;
 
 struct mrt_head		 mrthead;
@@ -175,7 +177,8 @@ setup_listeners(u_int *la_cnt)
 pid_t
 session_main(struct bgpd_config *config, struct peer *cpeers,
     struct network_head *net_l, struct filter_head *rules,
-    struct mrt_head *m_l, int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2])
+    struct mrt_head *m_l, int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
+    int pipe_s2rctl[2])
 {
 	int			 nfds, timeout;
 	unsigned int		 i, j, idx_peers, idx_listeners, idx_mrts;
@@ -184,6 +187,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	u_int			 pfd_elms = 0, peer_l_elms = 0, mrt_l_elms = 0;
 	u_int			 listener_cnt, ctl_cnt, mrt_cnt;
 	u_int			 new_cnt;
+	u_int32_t		 ctl_queued;
 	struct passwd		*pw;
 	struct peer		*p, **peer_l = NULL, *last, *next;
 	struct network		*net;
@@ -242,13 +246,16 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	log_info("session engine ready");
 	close(pipe_m2s[0]);
 	close(pipe_s2r[1]);
+	close(pipe_s2rctl[1]);
 	close(pipe_m2r[0]);
 	close(pipe_m2r[1]);
 	init_conf(conf);
 	if ((ibuf_rde = malloc(sizeof(struct imsgbuf))) == NULL ||
+	    (ibuf_rde_ctl = malloc(sizeof(struct imsgbuf))) == NULL ||
 	    (ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
 	imsg_init(ibuf_rde, pipe_s2r[0]);
+	imsg_init(ibuf_rde_ctl, pipe_s2rctl[0]);
 	imsg_init(ibuf_main, pipe_m2s[1]);
 	TAILQ_INIT(&ctl_conns);
 	control_listen(csock);
@@ -371,6 +378,18 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		pfd[PFD_PIPE_ROUTE].events = POLLIN;
 		if (ibuf_rde->w.queued > 0)
 			pfd[PFD_PIPE_ROUTE].events |= POLLOUT;
+
+		ctl_queued = 0;
+		TAILQ_FOREACH(ctl_conn, &ctl_conns, entry)
+			ctl_queued += ctl_conn->ibuf.w.queued;
+
+		pfd[PFD_PIPE_ROUTE_CTL].fd = ibuf_rde_ctl->fd;
+		if (ctl_queued < SESSION_CTL_QUEUE_MAX)
+			/*
+			 * Do not act as unlimited buffer. Don't read in more
+			 * messages if the ctl sockets are getting full. 
+			 */
+			pfd[PFD_PIPE_ROUTE_CTL].events = POLLIN;
 		pfd[PFD_SOCK_CTL].fd = csock;
 		pfd[PFD_SOCK_CTL].events = POLLIN;
 		pfd[PFD_SOCK_RCTL].fd = rcsock;
@@ -493,6 +512,12 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
 			nfds--;
 			session_dispatch_imsg(ibuf_rde, PFD_PIPE_ROUTE,
+			    &listener_cnt);
+		}
+
+		if (nfds > 0 && pfd[PFD_PIPE_ROUTE_CTL].revents & POLLIN) {
+			nfds--;
+			session_dispatch_imsg(ibuf_rde_ctl, PFD_PIPE_ROUTE_CTL,
 			    &listener_cnt);
 		}
 
@@ -2424,7 +2449,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 		case IMSG_CTL_SHOW_NETWORK:
 		case IMSG_CTL_SHOW_NETWORK6:
 		case IMSG_CTL_SHOW_NEIGHBOR:
-			if (idx != PFD_PIPE_ROUTE)
+			if (idx != PFD_PIPE_ROUTE_CTL)
 				fatalx("ctl rib request not from RDE");
 			control_imsg_relay(&imsg);
 			break;

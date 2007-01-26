@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.142 2007/01/04 18:38:51 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.143 2007/01/26 17:40:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -116,6 +116,7 @@ main(int argc, char *argv[])
 	int			 pipe_m2s[2];
 	int			 pipe_m2r[2];
 	int			 pipe_s2r[2];
+	int			 pipe_s2r_c[2];
 
 	conffile = CONFFILE;
 	bgpd_process = PROC_MAIN;
@@ -205,20 +206,24 @@ main(int argc, char *argv[])
 		fatal("socketpair");
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_s2r) == -1)
 		fatal("socketpair");
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_s2r_c) == -1)
+		fatal("socketpair");
 	session_socket_blockmode(pipe_m2s[0], BM_NONBLOCK);
 	session_socket_blockmode(pipe_m2s[1], BM_NONBLOCK);
 	session_socket_blockmode(pipe_m2r[0], BM_NONBLOCK);
 	session_socket_blockmode(pipe_m2r[1], BM_NONBLOCK);
 	session_socket_blockmode(pipe_s2r[0], BM_NONBLOCK);
 	session_socket_blockmode(pipe_s2r[1], BM_NONBLOCK);
+	session_socket_blockmode(pipe_s2r_c[0], BM_NONBLOCK);
+	session_socket_blockmode(pipe_s2r_c[1], BM_NONBLOCK);
 
 	prepare_listeners(&conf);
 
 	/* fork children */
 	rde_pid = rde_main(&conf, peer_l, &net_l, rules_l, &mrt_l,
-	    pipe_m2r, pipe_s2r, pipe_m2s, debug);
+	    pipe_m2r, pipe_s2r, pipe_m2s, pipe_s2r_c, debug);
 	io_pid = session_main(&conf, peer_l, &net_l, rules_l, &mrt_l,
-	    pipe_m2s, pipe_s2r, pipe_m2r);
+	    pipe_m2s, pipe_s2r, pipe_m2r, pipe_s2r_c);
 
 	setproctitle("parent");
 

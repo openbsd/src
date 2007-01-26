@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.22 2006/01/03 22:49:17 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.23 2007/01/26 17:40:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -40,12 +40,14 @@
  * pt_init:   initialize prefix table.
  * pt_alloc?: allocate a AF specific pt_entry. Internal function.
  * pt_free:   free a pt_entry. Internal function.
+ * pt_restart used to restart a tree walk at the spot it was aborted earlier.
  */
 
 /* internal prototypes */
 static struct pt_entry4	*pt_alloc4(void);
 static struct pt_entry6	*pt_alloc6(void);
 static void		 pt_free(struct pt_entry *);
+static struct pt_entry	*pt_restart(struct pt_context *);
 
 int	pt_prefix_cmp(const struct pt_entry *, const struct pt_entry *);
 
@@ -227,14 +229,53 @@ pt_lookup(struct bgpd_addr *prefix)
 void
 pt_dump(void (*upcall)(struct pt_entry *, void *), void *arg, sa_family_t af)
 {
-	struct pt_entry *p;
-
 	if (af == AF_INET || af == AF_UNSPEC)
-		RB_FOREACH(p, pt_tree, &pttable4)
-		    upcall(p, arg);
+		pt_dump_r(upcall, arg, AF_INET, NULL);
 	if (af == AF_INET6 || af == AF_UNSPEC)
-		RB_FOREACH(p, pt_tree, &pttable6)
-		    upcall(p, arg);
+		pt_dump_r(upcall, arg, AF_INET6, NULL);
+}
+
+void
+pt_dump_r(void (*upcall)(struct pt_entry *, void *), void *arg,
+    sa_family_t af, struct pt_context *ctx)
+{
+	struct pt_entry	*p;
+	unsigned int	 i;
+
+	if (ctx == NULL || ctx->ctx_p.af != af) {
+		switch (af) {
+		case AF_INET:
+			p = RB_MIN(pt_tree, &pttable4);
+			break;
+		case AF_INET6:
+			p = RB_MIN(pt_tree, &pttable6);
+			break;
+		default:
+			return;
+		}
+	} else
+		p = pt_restart(ctx);
+
+	for (i = 0; p != NULL; p = RB_NEXT(pt_tree, unused, p)) {
+		if (ctx && i++ >= ctx->count) {
+			/* store next start point */
+			switch (p->af) {
+			case AF_INET:
+				ctx->ctx_p4 = *(struct pt_entry4 *)p;
+				break;
+			case AF_INET6:
+				ctx->ctx_p6 = *(struct pt_entry6 *)p;
+				break;
+			default:
+				fatalx("pt_dump_r: unknown af");
+			}
+			return;
+		}
+		upcall(p, arg);
+	}
+
+	if (ctx)
+		ctx->done = 1;
 }
 
 int
@@ -321,3 +362,55 @@ pt_free(struct pt_entry *pte)
 	free(pte);
 }
 
+static struct pt_entry *
+pt_restart(struct pt_context *ctx)
+{
+	struct pt_entry *tmp, *prev = NULL;
+	int comp;
+
+	/* first select correct tree */
+	switch (ctx->ctx_p.af) {
+	case AF_INET:
+		tmp = RB_ROOT(&pttable4);
+		break;
+	case AF_INET6:
+		tmp = RB_ROOT(&pttable6);
+		break;
+	default:
+		fatalx("pt_restart: unknown af");
+	}
+
+	/* then try to find the element */
+	while (tmp) {
+		prev = tmp;
+		comp = pt_prefix_cmp(&ctx->ctx_p, tmp);
+		if (comp < 0)
+			tmp = RB_LEFT(tmp, pt_e);
+		else if (comp > 0)
+			tmp = RB_RIGHT(tmp, pt_e);
+		else
+			return (tmp);
+	}
+
+	/* no match, empty tree */
+	if (prev == NULL)
+		return (NULL);
+
+	/*
+	 * no perfect match
+	 * if last element was bigger use that as new start point
+	 */
+	if (comp < 0)
+		return (prev);
+	
+	/* backtrack until parent is bigger */
+	do {
+		prev = RB_PARENT(prev, pt_e);
+		if (prev == NULL)
+			/* all elements in the tree are smaler */
+			return (NULL);
+		comp = pt_prefix_cmp(&ctx->ctx_p, prev);
+	} while (comp > 0);
+
+	return (prev);
+}
