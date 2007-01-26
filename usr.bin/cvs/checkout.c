@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.85 2007/01/26 21:48:17 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.86 2007/01/26 21:59:11 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -203,8 +203,8 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 	time_t rcstime;
 	CVSENTRIES *ent;
 	struct timeval tv[2];
-	char *template, *p, *entry, rev[16], timebuf[64];
-	char kbuf[8], tbuf[32], stickytag[32];
+	char template[MAXPATHLEN], *p, entry[CVS_ENT_MAXLINELEN], rev[16];
+	char timebuf[64], kbuf[8], tbuf[32], stickytag[32];
 
 	rcsnum_tostr(rnum, rev, sizeof(rev));
 
@@ -289,7 +289,6 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 			    "-k%s", cf->file_rcs->rf_expand);
 	}
 
-	entry = xmalloc(CVS_ENT_MAXLINELEN);
 	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s/%s/%s",
 	    cf->file_name, rev, timebuf, kbuf, stickytag);
 
@@ -309,19 +308,18 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 		cvs_remote_output(entry);
 
 		if (!(co_flags & CO_COMMIT)) {
-			(void)xasprintf(&template,
+			l = snprintf(template, MAXPATHLEN,
 			    "%s/checkout.XXXXXXXXXX", cvs_tmpdir);
+			if (l == -1 || l >= (int)sizeof(template))
+				fatal("cvs_checkout_file: overflow");
 
 			/* XXX - fd race below */
 			rcs_rev_write_stmp(cf->file_rcs, rnum, template, 0);
 			cvs_remote_send_file(template);
 			cvs_worklist_run(&temp_files, cvs_worklist_unlink);
-			xfree(template);
 		}
 
 		if (p != NULL)
 			*p = ',';
 	}
-
-	xfree(entry);
 }

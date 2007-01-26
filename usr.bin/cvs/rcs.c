@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.205 2007/01/26 21:48:17 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.206 2007/01/26 21:59:11 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -521,7 +521,7 @@ rcs_movefile(char *from, char *to, mode_t perm, u_int to_flags)
 {
 	FILE *src, *dst;
 	size_t nread, nwritten;
-	char *buf;
+	char buf[MAXBSIZE];
 	int ret;
 
 	ret = -1;
@@ -557,7 +557,6 @@ rcs_movefile(char *from, char *to, mode_t perm, u_int to_flags)
 		return (-1);
 	}
 
-	buf = xmalloc(MAXBSIZE);
 	while ((nread = fread(buf, sizeof(char), MAXBSIZE, src)) != 0) {
 		if (ferror(src)) {
 			cvs_log(LP_ERRNO, "failed to read `%s'", from);
@@ -572,14 +571,12 @@ rcs_movefile(char *from, char *to, mode_t perm, u_int to_flags)
 		}
 	}
 
+	(void)unlink(from);
 	ret = 0;
 
+out:
 	(void)fclose(src);
 	(void)fclose(dst);
-	(void)unlink(from);
-
-out:
-	xfree(buf);
 
 	return (ret);
 }

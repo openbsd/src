@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.53 2007/01/26 21:48:17 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.54 2007/01/26 21:59:11 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -142,7 +142,7 @@ client_check_directory(char *data)
 {
 	int l;
 	CVSENTRIES *entlist;
-	char *entry, *parent, *base;
+	char entry[CVS_ENT_MAXLINELEN], *parent, *base;
 
 	STRIP_SLASH(data);
 
@@ -157,7 +157,6 @@ client_check_directory(char *data)
 	if (!strcmp(parent, "."))
 		return;
 
-	entry = xmalloc(CVS_ENT_MAXLINELEN);
 	l = snprintf(entry, CVS_ENT_MAXLINELEN, "D/%s////", base);
 	if (l == -1 || l >= CVS_ENT_MAXLINELEN)
 		fatal("client_check_directory: overflow");
@@ -165,8 +164,6 @@ client_check_directory(char *data)
 	entlist = cvs_ent_open(parent);
 	cvs_ent_add(entlist, entry);
 	cvs_ent_close(entlist, ENT_SYNC);
-
-	xfree(entry);
 }
 
 void
@@ -564,18 +561,17 @@ cvs_client_checkedin(char *data)
 	int l;
 	CVSENTRIES *entlist;
 	struct cvs_ent *ent, *newent;
-	char *dir, *entry, rev[16], timebuf[64], sticky[16];
+	char *dir, *e, entry[CVS_ENT_MAXLINELEN], rev[16], timebuf[64];
+	char sticky[16];
 
 	dir = cvs_remote_input();
-	entry = cvs_remote_input();
+	e = cvs_remote_input();
 	xfree(dir);
 
 	entlist = cvs_ent_open(data);
-	newent = cvs_ent_parse(entry);
+	newent = cvs_ent_parse(e);
 	ent = cvs_ent_get(entlist, newent->ce_name);
-	xfree(entry);
-
-	entry = xmalloc(CVS_ENT_MAXLINELEN);
+	xfree(e);
 
 	rcsnum_tostr(newent->ce_rev, rev, sizeof(rev));
 	ctime_r(&ent->ce_mtime, timebuf);
@@ -599,8 +595,6 @@ cvs_client_checkedin(char *data)
 	cvs_ent_free(newent);
 	cvs_ent_add(entlist, entry);
 	cvs_ent_close(entlist, ENT_SYNC);
-
-	xfree(entry);
 }
 
 void
@@ -614,13 +608,13 @@ cvs_client_updated(char *data)
 	struct cvs_ent *e;
 	const char *errstr;
 	struct timeval tv[2];
-	char timebuf[32], repo[MAXPATHLEN], *rpath, *entry, *mode;
-	char revbuf[32], *len, *fpath, *wdir;
+	char timebuf[32], repo[MAXPATHLEN], *rpath, entry[CVS_ENT_MAXLINELEN];
+	char *en, *mode, revbuf[32], *len, *fpath, *wdir;
 
 	client_check_directory(data);
 
 	rpath = cvs_remote_input();
-	entry = cvs_remote_input();
+	en = cvs_remote_input();
 	mode = cvs_remote_input();
 	len = cvs_remote_input();
 
@@ -651,10 +645,9 @@ cvs_client_updated(char *data)
 	if (timebuf[strlen(timebuf) - 1] == '\n')
 		timebuf[strlen(timebuf) - 1] = '\0';
 
-	e = cvs_ent_parse(entry);
-	xfree(entry);
+	e = cvs_ent_parse(en);
+	xfree(en);
 	rcsnum_tostr(e->ce_rev, revbuf, sizeof(revbuf));
-	entry = xmalloc(CVS_ENT_MAXLINELEN);
 	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s//", e->ce_name,
 	    revbuf, timebuf);
 	if (l == -1 || l >= CVS_ENT_MAXLINELEN)
@@ -664,7 +657,6 @@ cvs_client_updated(char *data)
 	ent = cvs_ent_open(wdir);
 	cvs_ent_add(ent, entry);
 	cvs_ent_close(ent, ENT_SYNC);
-	xfree(entry);
 
 	if ((fd = open(fpath, O_CREAT | O_WRONLY | O_TRUNC)) == -1)
 		fatal("cvs_client_updated: open: %s: %s",
