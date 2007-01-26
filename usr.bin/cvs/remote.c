@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.10 2007/01/25 18:56:33 otto Exp $	*/
+/*	$OpenBSD: remote.c,v 1.11 2007/01/26 08:35:23 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -156,7 +156,7 @@ cvs_remote_send_file(const char *path)
 	size_t ret, rw;
 	off_t total;
 	struct stat st;
-	char buf[16], data[MAXBSIZE];
+	char buf[18], data[MAXBSIZE];
 
 	if (cvs_server_active)
 		out = stdout;
