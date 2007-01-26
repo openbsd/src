@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.79 2007/01/26 21:39:10 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.80 2007/01/26 23:17:18 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -432,6 +432,17 @@ which disables the announcement of that address family, and
 are supported) are announced during the capabilities negotiation.
 Only routes for that address family and subsequent address family will be
 announced and processed.
+.Pp
+.It Xo
+.Ic announce capabilities
+.Pq Ic yes Ns \&| Ns Ic no
+.Xc
+If set to
+.Ic no ,
+capability negotiation is disabled during the establishment of the session.
+This can be helpful to connect to old or broken BGP implementations.
+The default is
+.Ic yes .
 .Pp
 .It Ic demote Ar group
 Increase the
