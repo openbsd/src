@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.165 2007/01/21 18:38:02 kettenis Exp $ */
+/* $OpenBSD: if_em.c,v 1.166 2007/01/26 15:55:30 weingart Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1553,9 +1553,16 @@ em_hardware_init(struct em_softc *sc)
 
 	/* Make sure we have a good EEPROM before we read from it */
 	if (em_validate_eeprom_checksum(&sc->hw) < 0) {
-		printf("%s: The EEPROM Checksum Is Not Valid\n",
-		       sc->sc_dv.dv_xname);
-		return (EIO);
+		/*
+		 * Some PCIe parts fail the first check due to
+		 * the link being in sleep state, call it again,
+		 * if it fails a second time its a real issue.
+		 */
+		if (em_validate_eeprom_checksum(&sc->hw) < 0) {
+			printf("%s: The EEPROM Checksum Is Not Valid\n",
+			       sc->sc_dv.dv_xname);
+			return (EIO);
+		}
 	}
 
 	if (em_read_part_num(&sc->hw, &(sc->part_num)) < 0) {
