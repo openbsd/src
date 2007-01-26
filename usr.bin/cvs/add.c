@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.70 2007/01/25 18:56:33 otto Exp $	*/
+/*	$OpenBSD: add.c,v 1.71 2007/01/26 06:21:51 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -233,7 +233,6 @@ add_directory(struct cvs_file *cf)
 	}
 
 	cf->file_status = FILE_SKIP;
-	xfree(entry);
 }
 
 static void
