@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.44 2007/01/20 16:26:53 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.45 2007/01/26 16:53:29 tsi Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -351,7 +351,7 @@ void
 schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 {
 	struct iommu_state *is = &pbm->sp_is;
-	int *vdma = NULL, nitem, tsbsize = 128 * 1024;
+	int *vdma = NULL, nitem, tsbsize = 7;
 	u_int32_t iobase = -1;
 	vaddr_t va;
 	char *name;
@@ -412,7 +412,7 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 		free(vdma, M_DEVBUF);
 	} else {
 		DPRINTF(SDB_BUSMAP, ("schizo_iommu_init: getprop failed, "
-		    "iobase=0x%x\n", iobase));
+		    "using iobase=0x%x, tsbsize=%d\n", iobase, tsbsize));
 	}
 
 	iommu_init(name, is, tsbsize, iobase);

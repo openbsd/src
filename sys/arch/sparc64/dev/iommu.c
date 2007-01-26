@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.43 2006/09/01 20:07:57 miod Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.44 2007/01/26 16:53:28 tsi Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -150,12 +150,12 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, u_int32_t iovabase)
 	 */
 	is->is_cr = (tsbsize << 16) | IOMMUCR_EN;
 	is->is_tsbsize = tsbsize;
-	if (iovabase == -1) {
+	if (iovabase == (u_int32_t)-1) {
 		is->is_dvmabase = IOTSB_VSTART(is->is_tsbsize);
 		is->is_dvmaend = IOTSB_VEND;
 	} else {
 		is->is_dvmabase = iovabase;
-		is->is_dvmaend = iovabase + IOTSB_VSIZE(tsbsize);
+		is->is_dvmaend = iovabase + IOTSB_VSIZE(tsbsize) - 1;
 	}
 
 	/*
@@ -211,12 +211,12 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, u_int32_t iovabase)
 	/*
 	 * Now all the hardware's working we need to allocate a dvma map.
 	 */
-	printf("dvma map %x-%x, ", is->is_dvmabase, is->is_dvmaend - 1);
+	printf("dvma map %x-%x, ", is->is_dvmabase, is->is_dvmaend);
 	printf("iotdb %llx-%llx",
 	    (unsigned long long)is->is_ptsb,
 	    (unsigned long long)(is->is_ptsb + size));
 	is->is_dvmamap = extent_create(name,
-	    is->is_dvmabase, is->is_dvmaend - PAGE_SIZE,
+	    is->is_dvmabase, (u_long)is->is_dvmaend + 1,
 	    M_DEVBUF, 0, 0, EX_NOWAIT);
 
 	/*
@@ -297,8 +297,7 @@ iommu_enter(struct iommu_state *is, struct strbuf_ctl *sb, vaddr_t va,
 	volatile int64_t *tte_ptr = &is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)];
 
 #ifdef DIAGNOSTIC
-	if (va < is->is_dvmabase || round_page(va + PAGE_SIZE) >
-	    is->is_dvmaend + 1)
+	if (va < is->is_dvmabase || (va + PAGE_MASK) > is->is_dvmaend)
 		panic("iommu_enter: va %#lx not in DVMA space", va);
 
 	tte = *tte_ptr;
@@ -356,8 +355,7 @@ iommu_remove(struct iommu_state *is, struct strbuf_ctl *sb, vaddr_t va)
 	int64_t tte;
 
 #ifdef DIAGNOSTIC
-	if (trunc_page(va) < is->is_dvmabase || round_page(va) >
-	    is->is_dvmaend + 1)
+	if (va < is->is_dvmabase || (va + PAGE_MASK) > is->is_dvmaend)
 		panic("iommu_remove: va 0x%lx not in DVMA space", (u_long)va);
 	if (va != trunc_page(va)) {
 		printf("iommu_remove: unaligned va: %lx\n", va);
@@ -445,7 +443,7 @@ iommu_tsb_entry(struct iommu_state *is, vaddr_t dva)
 {
 	int64_t tte;
 
-	if (dva < is->is_dvmabase && dva > is->is_dvmaend)
+	if (dva < is->is_dvmabase || dva > is->is_dvmaend)
 		panic("invalid dva: %llx", (long long)dva);
 
 	tte = is->is_tsb[IOTSBSLOT(dva,is->is_tsbsize)];
@@ -1338,8 +1336,8 @@ iommu_dvmamap_validate_map(bus_dma_tag_t t, struct iommu_state *is,
 		err = 1;
 	}
 	if (map->_dm_dvmastart < is->is_dvmabase ||
-	    round_page(map->_dm_dvmastart + map->_dm_dvmasize) >
-	    is->is_dvmaend + 1) {
+	    (round_page(map->_dm_dvmastart + map->_dm_dvmasize) - 1) >
+	    is->is_dvmaend) {
 		printf("dvmaddr %llx len %llx out of range %x - %x\n",
 			    map->_dm_dvmastart, map->_dm_dvmasize,
 			    is->is_dvmabase, is->is_dvmaend);
@@ -1558,7 +1556,7 @@ iommu_dvmamap_sync_range(struct strbuf_ctl *sb, vaddr_t va, bus_size_t len)
 	va &= ~PAGE_MASK;
 
 #ifdef DIAGNOSTIC
-	if (va < is->is_dvmabase || vaend > is->is_dvmaend)
+	if (va < is->is_dvmabase || (vaend - 1) > is->is_dvmaend)
 		panic("invalid va range: %llx to %llx (%x to %x)",
 		    (long long)va, (long long)vaend,
 		    is->is_dvmabase,
