@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.63 2007/01/26 15:29:10 jason Exp $	*/
+/*	$OpenBSD: re.c,v 1.64 2007/01/27 20:55:55 miod Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -422,7 +422,7 @@ re_miibus_readreg(struct device *dev, int phy, int reg)
 		splx(s);
 		return (rval);
 	default:
-		printf("%s: bad phy register\n", sc->sc_dev.dv_xname);
+		printf("%s: bad phy register %x\n", sc->sc_dev.dv_xname, reg);
 		splx(s);
 		return (0);
 	}
@@ -481,7 +481,7 @@ re_miibus_writereg(struct device *dev, int phy, int reg, int data)
 		return;
 		break;
 	default:
-		printf("%s: bad phy register\n", sc->sc_dev.dv_xname);
+		printf("%s: bad phy register %x\n", sc->sc_dev.dv_xname, reg);
 		splx(s);
 		return;
 	}
