@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.19 2007/01/26 19:54:49 mk Exp $ */
+/* $OpenBSD: acpidev.h,v 1.20 2007/01/27 19:37:57 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -200,6 +200,8 @@ struct acpibat_bmd {
 
 #define STA_PRESENT   (1L << 0)
 #define STA_ENABLED   (1L << 1)
+#define STA_SHOW_UI   (1L << 2)
+#define STA_DEV_OK    (1L << 3)
 #define STA_BATTERY   (1L << 4)
 
 /*
