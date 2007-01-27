@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.177 2007/01/26 11:19:44 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.178 2007/01/27 20:02:33 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -564,7 +564,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 	size_t len;
 	struct stat st;
 	BUF *b1, *b2;
-	int rflags, l, ismodified, rcsdead, verbose;
+	int rflags, l, ismodified, rcsdead;
 	CVSENTRIES *entlist = NULL;
 	const char *state;
 	char repo[MAXPATHLEN], rcsfile[MAXPATHLEN], r1[16], r2[16];
@@ -575,8 +575,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 		cf->file_status = FILE_UPTODATE;
 		return;
 	}
-
-	verbose = (verbosity > 1 && loud == 1);
 
 	cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
 	l = snprintf(rcsfile, MAXPATHLEN, "%s/%s",
@@ -716,15 +714,13 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 	if (cf->file_ent == NULL) {
 		if (cf->file_rcs == NULL) {
 			if (cf->fd == -1) {
-				if (verbose)
-					cvs_log(LP_NOTICE,
-					    "nothing known about '%s'",
-					    cf->file_path);
-			} else {
-				if (verbose)
-					cvs_log(LP_NOTICE,
-					    "use add to create an entry for %s",
-					    cf->file_path);
+				cvs_log(LP_NOTICE,
+				    "nothing known about '%s'",
+				    cf->file_path);
+			} else if (cvs_cmdop != CVS_OP_ADD) {
+				cvs_log(LP_NOTICE,
+				    "use add to create an entry for %s",
+				    cf->file_path);
 			}
 
 			cf->file_status = FILE_UNKNOWN;
@@ -732,10 +728,9 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 			if (cf->fd == -1) {
 				cf->file_status = FILE_UPTODATE;
 			} else {
-				if (verbose)
-					cvs_log(LP_NOTICE,
-					    "use add to create an entry for %s",
-					    cf->file_path);
+				cvs_log(LP_NOTICE,
+				    "use add to create an entry for %s",
+				    cf->file_path);
 				cf->file_status = FILE_UNKNOWN;
 			}
 		} else {
@@ -743,36 +738,34 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 		}
 	} else if (cf->file_ent->ce_status == CVS_ENT_ADDED) {
 		if (cf->fd == -1) {
-			if (verbose)
+			if (cvs_cmdop != CVS_OP_REMOVE) {
 				cvs_log(LP_NOTICE,
 				    "warning: new-born %s has disappeared",
 				    cf->file_path);
+			}
 			cf->file_status = FILE_REMOVE_ENTRY;
 		} else if (cf->file_rcs == NULL || rcsdead == 1) {
 			cf->file_status = FILE_ADDED;
 		} else {
-			if (verbose)
-				cvs_log(LP_NOTICE,
-				    "conflict: %s already created by others",
-				    cf->file_path);
+			cvs_log(LP_NOTICE,
+			    "conflict: %s already created by others",
+			    cf->file_path);
 			cf->file_status = FILE_CONFLICT;
 		}
 	} else if (cf->file_ent->ce_status == CVS_ENT_REMOVED) {
 		if (cf->fd != -1) {
-			if (verbose)
-				cvs_log(LP_NOTICE,
-				    "%s should be removed but is still there",
-				    cf->file_path);
+			cvs_log(LP_NOTICE,
+			    "%s should be removed but is still there",
+			    cf->file_path);
 			cf->file_status = FILE_REMOVED;
 		} else if (cf->file_rcs == NULL || rcsdead == 1) {
 			cf->file_status = FILE_REMOVE_ENTRY;
 		} else {
 			if (strcmp(r1, r2)) {
-				if (verbose)
-					cvs_log(LP_NOTICE,
-					    "conflict: removed %s was modified"
-					    " by a second party",
-					    cf->file_path);
+				cvs_log(LP_NOTICE,
+				    "conflict: removed %s was modified"
+				    " by a second party",
+				    cf->file_path);
 				cf->file_status = FILE_CONFLICT;
 			} else {
 				cf->file_status = FILE_REMOVED;
@@ -781,39 +774,37 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 	} else if (cf->file_ent->ce_status == CVS_ENT_REG) {
 		if (cf->file_rcs == NULL || rcsdead == 1) {
 			if (cf->fd == -1) {
-				if (verbose)
-					cvs_log(LP_NOTICE,
-					    "warning: %s's entry exists but"
-					    " there is no longer a file"
-					    " in the repository,"
-					    " removing entry",
-					     cf->file_path);
+				cvs_log(LP_NOTICE,
+				    "warning: %s's entry exists but"
+				    " there is no longer a file"
+				    " in the repository,"
+				    " removing entry",
+				     cf->file_path);
 				cf->file_status = FILE_REMOVE_ENTRY;
 			} else {
 				if (ismodified) {
-					if (verbose)
-						cvs_log(LP_NOTICE,
-						    "conflict: %s is no longer "
-						    "in the repository but is "
-						    "locally modified",
-						    cf->file_path);
+					cvs_log(LP_NOTICE,
+					    "conflict: %s is no longer "
+					    "in the repository but is "
+					    "locally modified",
+					    cf->file_path);
 					cf->file_status = FILE_CONFLICT;
 				} else {
-					if (verbose)
-						cvs_log(LP_NOTICE,
-						    "%s is no longer in the "
-						    "repository",
-						    cf->file_path);
+					cvs_log(LP_NOTICE,
+					    "%s is no longer in the "
+					    "repository",
+					    cf->file_path);
 
 					cf->file_status = FILE_UNLINK;
 				}
 			}
 		} else {
 			if (cf->fd == -1) {
-				if (verbose)
+				if (cvs_cmdop != CVS_OP_REMOVE) {
 					cvs_log(LP_NOTICE,
 					    "warning: %s was lost",
 					    cf->file_path);
+				}
 				cf->file_status = FILE_LOST;
 			} else {
 				if (ismodified == 1)
