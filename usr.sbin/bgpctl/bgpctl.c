@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.112 2006/11/28 19:21:15 reyk Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.113 2007/01/27 19:03:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -509,7 +509,7 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 		    fmt_timeframe(p->stats.last_read),
 		    p->holdtime, p->holdtime/3);
 		if (p->capa.peer.mp_v4 || p->capa.peer.mp_v6 ||
-		    p->capa.peer.refresh) {
+		    p->capa.peer.refresh || p->capa.peer.restart) {
 			printf("  Neighbor capabilities:\n");
 			if (p->capa.peer.mp_v4) {
 				printf("    Multiprotocol extensions: IPv4");
