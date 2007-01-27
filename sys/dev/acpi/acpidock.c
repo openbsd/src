@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.9 2007/01/27 11:30:52 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.10 2007/01/27 11:48:33 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -100,7 +100,7 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sens[0].type = SENSOR_INDICATOR;
 	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[0]);
 	sensordev_install(&sc->sc_sensdev);
-	sc->sc_sens[0].value = sc->sc_docked;
+	sc->sc_sens[0].value = sc->sc_docked == ACPIDOCK_STATUS_DOCKED;
 
 	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev, 
 	    acpidock_notify, sc, ACPIDEV_NOPOLL);
@@ -251,7 +251,7 @@ acpidock_notify(struct aml_node *node, int notify_type, void *arg)
 	}
 
 	acpidock_status(sc);
-	sc->sc_sens[0].value = sc->sc_docked;
+	sc->sc_sens[0].value = sc->sc_docked == ACPIDOCK_STATUS_DOCKED;
 	dnprintf(5, "acpidock_notify: status %s\n",
 	    sc->sc_docked == ACPIDOCK_STATUS_DOCKED ? "docked" : "undocked");
 
