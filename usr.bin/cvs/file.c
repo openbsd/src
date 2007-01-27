@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.178 2007/01/27 20:02:33 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.179 2007/01/27 20:21:25 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -727,7 +727,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 		} else if (rcsdead == 1) {
 			if (cf->fd == -1) {
 				cf->file_status = FILE_UPTODATE;
-			} else {
+			} else if (cvs_cmdop != CVS_OP_ADD) {
 				cvs_log(LP_NOTICE,
 				    "use add to create an entry for %s",
 				    cf->file_path);
