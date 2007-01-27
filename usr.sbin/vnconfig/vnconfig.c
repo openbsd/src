@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.20 2006/12/26 22:55:20 grunk Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.21 2007/01/27 10:34:46 grunk Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -67,7 +67,7 @@ int verbose = 0;
 __dead void usage(void);
 int config(char *, char *, int, char *, size_t);
 int getinfo(const char *);
-char	*get_pkcs_key(char *);
+char	*get_pkcs_key(char *, char *);
 
 int
 main(int argc, char **argv)
@@ -75,11 +75,12 @@ main(int argc, char **argv)
 	int ch, rv, action = VND_CONFIG;
 	char *key = NULL;
 	char *rounds = NULL;
+	char *saltopt = NULL;
 	size_t keylen = 0;
 	int opt_k = 0;
 	int opt_K = 0;
 
-	while ((ch = getopt(argc, argv, "cluvK:k")) != -1) {
+	while ((ch = getopt(argc, argv, "ckK:luS:v")) != -1) {
 		switch (ch) {
 		case 'c':
 			action = VND_CONFIG;
@@ -93,6 +94,9 @@ main(int argc, char **argv)
 		case 'K':
 			opt_K = 1;
 			rounds = optarg;
+			break;
+		case 'S':
+			saltopt = optarg;
 			break;
 		case 'u':
 			action = VND_UNCONFIG;
@@ -115,7 +119,7 @@ main(int argc, char **argv)
 		key = getpass("Encryption key: ");
 		keylen = strlen(key);
 	} else if (opt_K) {
-		key = get_pkcs_key(rounds);
+		key = get_pkcs_key(rounds, saltopt);
 		keylen = 128;
 	}
 
@@ -132,7 +136,7 @@ main(int argc, char **argv)
 }
 
 char *
-get_pkcs_key(char *arg)
+get_pkcs_key(char *arg, char *saltopt)
 {
 	char		 keybuf[128], saltbuf[128], saltfilebuf[PATH_MAX];
 	char		*saltfile;
@@ -147,12 +151,16 @@ get_pkcs_key(char *arg)
 	if (!key || strlen(key) == 0)
 		errx(1, "Need an encryption key");
 	strncpy(keybuf, key, sizeof(keybuf));
-	printf("Salt file: ");
-	fflush(stdout);
-	saltfile = fgets(saltfilebuf, sizeof(saltfilebuf), stdin);
+	if (saltopt)
+		saltfile = saltopt;
+	else {
+		printf("Salt file: ");
+		fflush(stdout);
+		saltfile = fgets(saltfilebuf, sizeof(saltfilebuf), stdin);
+	}
 	if (!saltfile || saltfile[0] == '\n') {
 		warnx("Skipping salt file, insecure");
-		saltfile = 0;
+		saltfile = NULL;
 	} else {
 		size_t len = strlen(saltfile);
 		if (saltfile[len - 1] == '\n')
@@ -290,7 +298,7 @@ usage(void)
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-	    "usage: %s [-ckluv] [-K rounds] rawdev regular_file\n",
+	    "usage: %s [-ckluv] [-K rounds] [-S saltfile] rawdev regular_file\n",
 	    __progname);
 	exit(1);
 }
