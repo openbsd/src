@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.12 2007/01/27 16:39:56 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.13 2007/01/27 17:38:21 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -44,7 +44,6 @@ struct cfdriver acpidock_cd = {
 int	acpidock_docklock(struct acpidock_softc *, int);
 int	acpidock_dockctl(struct acpidock_softc *, int);
 int	acpidock_eject(struct acpidock_softc *);
-int	acpidock_init(struct acpidock_softc *);
 int	acpidock_notify(struct aml_node *, int, void *);
 int	acpidock_status(struct acpidock_softc *);
 
@@ -76,11 +75,6 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 
 	acpidock_status(sc);
 	if (sc->sc_docked == ACPIDOCK_STATUS_DOCKED) {
-		if (!acpidock_init(sc)) {
-			printf(": couldn't initialize\n");
-			return;
-		}
-
 		acpidock_docklock(sc, 1);
 		acpidock_dockctl(sc, 1);
 	} else {
@@ -105,16 +99,6 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev, 
 	    acpidock_notify, sc, ACPIDEV_NOPOLL);
 
-}
-
-int
-acpidock_init(struct acpidock_softc *sc)
-{
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_INI", 0, NULL,
-	    NULL) != 0)
-		return (0);
-	else
-		return (1);
 }
 
 int
