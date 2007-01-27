@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.70 2007/01/26 11:19:44 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.71 2007/01/27 18:53:16 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -165,6 +165,7 @@ cvs_ent_parse(const char *entry)
 			t.tm_isdst = 0;
 			t.tm_gmtoff = 0;
 			ent->ce_mtime = mktime(&t);
+			ent->ce_mtime += t.tm_gmtoff;
 		}
 	}
 
