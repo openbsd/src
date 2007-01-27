@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.72 2007/01/26 21:48:16 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.73 2007/01/27 21:18:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -143,7 +143,7 @@ cvs_add_local(struct cvs_file *cf)
 {
 	cvs_log(LP_TRACE, "cvs_add_local(%s)", cf->file_path);
 
-	cvs_file_classify(cf, NULL, 0);
+	cvs_file_classify(cf, NULL, 1);
 
 	/* dont use `cvs add *' */
 	if (strcmp(cf->file_name, ".") == 0 ||
@@ -276,7 +276,7 @@ add_file(struct cvs_file *cf)
 		if (cf->file_rcs == NULL) {
 			cvs_log(LP_NOTICE, "cannot resurrect %s; "
 			    "RCS file removed by second party", cf->file_name);
-		} else {
+		} else if (cf->fd == -1) {
 			add_entry(cf);
 
 			/* Restore the file. */
@@ -308,11 +308,14 @@ add_file(struct cvs_file *cf)
 			cvs_log(LP_NOTICE, "re-adding file %s "
 			    "(instead of dead revision %s)",
 			    cf->file_path, revbuf);
-		} else {
+			added++;
+		} else if (cf->fd != -1) {
 			cvs_log(LP_NOTICE, "scheduling file '%s' for addition",
 			    cf->file_path);
+			added++;
+		} else {
+			stop = 1;
 		}
-		added++;
 		break;
 	default:
 		break;
