@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.8 2007/01/27 01:26:27 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.9 2007/01/27 11:30:52 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -79,17 +79,19 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 		if (!acpidock_init(sc)) {
 			printf(": couldn't initialize\n");
 			return;
-		} else
-			printf(": docked (%d)\n", sc->sc_sta);
+		}
 
 		acpidock_docklock(sc, 1);
 		acpidock_dockctl(sc, 1);
 	} else {
-		printf(": not docked (%d)\n", sc->sc_sta);
-
 		acpidock_dockctl(sc, 0);
 		acpidock_docklock(sc, 0);
 	}
+
+	acpidock_status(sc);
+	printf(":%s docked (%d)\n",
+	    sc->sc_docked == ACPIDOCK_STATUS_DOCKED ? "" : " not",
+	    sc->sc_sta);
 
 	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensdev.xname));
