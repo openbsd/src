@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.41 2007/01/21 01:08:03 mcbride Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.42 2007/01/27 12:38:59 krw Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -868,11 +868,8 @@ bnx_attachhook(void *xsc)
 	bcopy(sc->eaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	bcopy(sc->bnx_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
-
-#ifdef BNX_CSUM
-	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
-#endif
+	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_TCPv4 |
+			       IFCAP_CSUM_UDPv4;
 
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
