@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.26 2006/12/27 19:11:09 kettenis Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.27 2007/01/27 20:55:14 miod Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -300,7 +300,8 @@ rlphy_status(struct mii_softc *sc)
 		 *   can test the 'SPEED10' bit of the MAC's media status
 		 *   register.
 		 */
-		if (strcmp("rl", devname) == 0) {
+		if (strcmp("rl", devname) == 0 ||
+		    strcmp("re", devname) == 0) {
 			if (PHY_READ(sc, RL_MEDIASTAT) & RL_MEDIASTAT_SPEED10)
 				mii->mii_media_active |= IFM_10_T;
 			else
