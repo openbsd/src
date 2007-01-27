@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.7 2007/01/27 01:21:14 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.8 2007/01/27 01:26:27 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -93,7 +93,7 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 
 	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensdev.xname));
-	strlcpy(sc->sc_sens[0].desc, "docked",
+	strlcpy(sc->sc_sens[0].desc, "docking station",
 	    sizeof(sc->sc_sens[0].desc));
 	sc->sc_sens[0].type = SENSOR_INDICATOR;
 	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[0]);
