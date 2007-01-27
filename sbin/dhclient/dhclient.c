@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.105 2007/01/25 01:21:04 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.106 2007/01/27 22:05:24 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -71,7 +71,7 @@ int privfd;
 int nullfd = -1;
 int no_daemon;
 int unknown_ok = 1;
-int routefd;
+int routefd = -1;
 
 struct iaddr iaddr_broadcast = { 4, { 255, 255, 255, 255 } };
 struct in_addr inaddr_any;
@@ -85,7 +85,6 @@ struct client_config *config;
 
 int		 findproto(char *, int);
 struct sockaddr	*get_ifa(char *, int);
-void		 routehandler(struct protocol *);
 void		 usage(void);
 int		 check_option(struct client_lease *l, int option);
 int		 ipv4addrs(char * buf);
@@ -151,7 +150,7 @@ struct iaddr defaddr = { 4 };
 
 /* ARGSUSED */
 void
-routehandler(struct protocol *p)
+routehandler(void)
 {
 	char msg[2048];
 	struct rt_msghdr *rtm;
@@ -358,8 +357,7 @@ main(int argc, char *argv[])
 		priv_script_write_params("alias_", client->alias);
 	priv_script_go();
 
-	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) != -1)
-		add_protocol("AF_ROUTE", routefd, routehandler);
+	routefd = socket(PF_ROUTE, SOCK_RAW, 0);
 
 	/* set up the interface */
 	discover_interface();

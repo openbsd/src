@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.37 2007/01/11 02:36:29 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.38 2007/01/27 22:05:24 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -47,7 +47,6 @@
 #include <ifaddrs.h>
 #include <poll.h>
 
-struct protocol *protocols;
 struct timeout *timeouts;
 static struct timeout *free_timeouts;
 static int interfaces_invalidated;
@@ -107,7 +106,6 @@ discover_interface(void)
 	/* Register the interface... */
 	if_register_receive();
 	if_register_send();
-	add_protocol(ifi->name, ifi->rfdesc, got_one);
 	freeifaddrs(ifap);
 }
 
@@ -125,17 +123,9 @@ reinitialize_interface(void)
 void
 dispatch(void)
 {
-	int count, i, to_msec, nfds = 0;
-	struct protocol *l;
-	struct pollfd *fds;
+	int count, to_msec;
+	struct pollfd fds[2];
 	time_t howlong;
-
-	for (l = protocols; l; l = l->next)
-		nfds++;
-
-	fds = malloc(nfds * sizeof(struct pollfd));
-	if (fds == NULL)
-		error("Can't allocate poll structures.");
 
 	do {
 		/*
@@ -169,51 +159,42 @@ another:
 			to_msec = -1;
 
 		/* Set up the descriptors to be polled. */
-		for (i = 0, l = protocols; l; l = l->next) {
-			if (ifi && (l->handler != got_one || !ifi->dead)) {
-				fds[i].fd = l->fd;
-				fds[i].events = POLLIN;
-				fds[i].revents = 0;
-				i++;
-			}
-		}
+		if (!ifi || ifi->rfdesc == -1)
+			error("No live interface to poll on");
 
-		if (i == 0)
-			error("No live interfaces to poll on - exiting.");
+		fds[0].fd = ifi->rfdesc;
+		fds[1].fd = routefd; /* Could be -1, which will be ignored. */
+		fds[0].events = fds[1].events = POLLIN;
 
 		/* Wait for a packet or a timeout... XXX */
-		count = poll(fds, nfds, to_msec);
+		count = poll(fds, 2, to_msec);
+
+		/* Get the current time... */
+		time(&cur_time);
 
 		/* Not likely to be transitory... */
 		if (count == -1) {
 			if (errno == EAGAIN || errno == EINTR) {
-				time(&cur_time);
 				continue;
 			} else
 				error("poll: %m");
 		}
 
-		/* Get the current time... */
-		time(&cur_time);
-
-		i = 0;
-		for (l = protocols; l; l = l->next) {
-			if ((fds[i].revents & (POLLIN | POLLHUP))) {
-				fds[i].revents = 0;
-				if (ifi && (l->handler != got_one ||
-				    !ifi->dead))
-					(*(l->handler))(l);
-				if (interfaces_invalidated)
-					break;
-			}
-			i++;
+		if ((fds[0].revents & (POLLIN | POLLHUP))) {
+			if (ifi && ifi->rfdesc != -1)
+				got_one();
 		}
+		if ((fds[1].revents & (POLLIN | POLLHUP))) {
+			if (ifi && !interfaces_invalidated)
+				routehandler();
+		}
+
 		interfaces_invalidated = 0;
 	} while (1);
 }
 
 void
-got_one(struct protocol *l)
+got_one(void)
 {
 	struct sockaddr_in from;
 	struct hardware hfrom;
@@ -229,10 +210,9 @@ got_one(struct protocol *l)
 			/* our interface has gone away. */
 			warning("Interface %s no longer appears valid.",
 			    ifi->name);
-			ifi->dead = 1;
 			interfaces_invalidated = 1;
-			close(l->fd);
-			remove_protocol(l);
+			close(ifi->rfdesc);
+			ifi->rfdesc = -1;
 		}
 		return;
 	}
@@ -442,40 +422,6 @@ cancel_timeout(void (*where)(void))
 	if (q) {
 		q->next = free_timeouts;
 		free_timeouts = q;
-	}
-}
-
-/* Add a protocol to the list of protocols... */
-void
-add_protocol(char *name, int fd, void (*handler)(struct protocol *))
-{
-	struct protocol *p;
-
-	p = malloc(sizeof(*p));
-	if (!p)
-		error("can't allocate protocol struct for %s", name);
-
-	p->fd = fd;
-	p->handler = handler;
-	p->next = protocols;
-	protocols = p;
-}
-
-void
-remove_protocol(struct protocol *proto)
-{
-	struct protocol *p, *next, *prev;
-
-	prev = NULL;
-	for (p = protocols; p; p = next) {
-		next = p->next;
-		if (p == proto) {
-			if (prev)
-				prev->next = p->next;
-			else
-				protocols = p->next;
-			free(p);
-		}
 	}
 }
 

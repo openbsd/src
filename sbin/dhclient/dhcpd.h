@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.63 2007/01/25 01:21:04 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.64 2007/01/27 22:05:24 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -188,7 +188,6 @@ struct interface_info {
 	struct ifreq		*ifp;
 	int			 noifmedia;
 	int			 errors;
-	int			 dead;
 	u_int16_t		 index;
 };
 
@@ -196,12 +195,6 @@ struct timeout {
 	struct timeout	*next;
 	time_t		 when;
 	void		 (*func)(void);
-};
-
-struct protocol {
-	struct protocol	*next;
-	int fd;
-	void (*handler)(struct protocol *);
 };
 
 #define	_PATH_DHCLIENT_CONF	"/etc/dhclient.conf"
@@ -257,11 +250,9 @@ ssize_t receive_packet(struct sockaddr_in *, struct hardware *);
 void discover_interface(void);
 void reinitialize_interface(void);
 void dispatch(void);
-void got_one(struct protocol *);
+void got_one(void);
 void add_timeout(time_t, void (*)(void));
 void cancel_timeout(void (*)(void));
-void add_protocol(char *, int, void (*)(struct protocol *));
-void remove_protocol(struct protocol *);
 int interface_link_status(char *);
 int interface_link_forceup(char *);
 void interface_link_forcedown(char *);
@@ -290,6 +281,7 @@ extern char *path_dhclient_conf;
 extern char *path_dhclient_db;
 extern time_t cur_time;
 extern int log_perror;
+extern int routefd;
 
 void dhcpoffer(struct iaddr, struct option_data *);
 void dhcpack(struct iaddr, struct option_data *);
@@ -331,6 +323,8 @@ int dhcp_option_ev_name(char *, size_t, const struct option *);
 struct client_lease *packet_to_lease(struct iaddr, struct option_data *);
 void go_daemon(void);
 void client_location_changed(void);
+
+void routehandler(void);
 
 /* packet.c */
 void assemble_hw_header(unsigned char *, int *, struct hardware *);
