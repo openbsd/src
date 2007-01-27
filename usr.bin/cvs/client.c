@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.54 2007/01/26 21:59:11 otto Exp $	*/
+/*	$OpenBSD: client.c,v 1.55 2007/01/27 19:38:19 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -467,7 +467,7 @@ cvs_client_sendfile(struct cvs_file *cf)
 				fatal("cvs_client_sendfile: overflow");
 		}
 
-		cvs_client_send_request("Entry /%s/%s%s/%s//%s",
+		cvs_client_send_request("Entry /%s/%s%s/%s/%s/%s",
 		    cf->file_name, (cf->file_status == FILE_REMOVED) ? "-" : "",
 		    rev, timebuf, cf->file_ent->ce_opts ?
 		    cf->file_ent->ce_opts : "", sticky);
@@ -648,8 +648,8 @@ cvs_client_updated(char *data)
 	e = cvs_ent_parse(en);
 	xfree(en);
 	rcsnum_tostr(e->ce_rev, revbuf, sizeof(revbuf));
-	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s//", e->ce_name,
-	    revbuf, timebuf);
+	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s/%s/", e->ce_name,
+	    revbuf, timebuf, e->ce_opts ? e->ce_opts : "");
 	if (l == -1 || l >= CVS_ENT_MAXLINELEN)
 		fatal("cvs_client_updated: overflow");
 
