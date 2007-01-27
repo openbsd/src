@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.175 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: ami.c,v 1.176 2007/01/27 05:09:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -58,7 +58,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 
@@ -538,7 +538,7 @@ ami_attach(struct ami_softc *sc)
 		    "disk\n", DEVNAME(sc));
 
 	/* lock around ioctl requests */
-	lockinit(&sc->sc_lock, PZERO, DEVNAME(sc), 0, 0);
+	rw_init(&sc->sc_lock, NULL);
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -1705,7 +1705,7 @@ ami_drv_inq(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t page,
 	int error = 0;
 	int s;
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+	rw_enter_write(&sc->sc_lock);
 
 	s = splbio();
 	ccb = ami_get_ccb(sc);
@@ -1772,7 +1772,7 @@ ptmemerr:
 	splx(s);
 
 err:
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	rw_exit_write(&sc->sc_lock);
 	return (error);
 }
 
@@ -1787,7 +1787,7 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 	int error = 0;
 	int s;
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+	rw_enter_write(&sc->sc_lock);
 
 	s = splbio();
 	ccb = ami_get_ccb(sc);
@@ -1845,7 +1845,7 @@ memerr:
 	splx(s);
 
 err:
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	rw_exit_write(&sc->sc_lock);
 	return (error);
 }
 

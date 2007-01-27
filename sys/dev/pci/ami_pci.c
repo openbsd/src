@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.41 2006/08/06 04:40:08 brad Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.42 2007/01/27 05:09:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -31,6 +31,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/rwlock.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

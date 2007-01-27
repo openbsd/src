@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.50 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.51 2007/01/27 05:09:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -121,7 +121,7 @@ struct ami_softc {
 	struct timeout		sc_run_tmo;
 	int			sc_dis_poll;
 
-	struct lock		sc_lock;
+	struct rwlock		sc_lock;
 
 	char			sc_fwver[16];
 	char			sc_biosver[16];
