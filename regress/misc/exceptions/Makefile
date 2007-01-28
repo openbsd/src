@@ -1,6 +1,3 @@
-#	$OpenBSD: Makefile,v 1.1 2002/12/04 05:02:15 art Exp $
+SUBDIR+= simple
 
-PROG=	exceptions
-SRCS=	exceptions.cc
-
-.include <bsd.regress.mk>
+.include <bsd.subdir.mk>

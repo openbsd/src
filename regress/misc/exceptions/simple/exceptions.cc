@@ -1,4 +1,4 @@
-/*	$OpenBSD: exceptions.cc,v 1.1 2002/12/04 05:02:15 art Exp $	*/
+/*	$OpenBSD: exceptions.cc,v 1.1 2007/01/28 19:10:06 kettenis Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
