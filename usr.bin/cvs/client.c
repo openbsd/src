@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.55 2007/01/27 19:38:19 otto Exp $	*/
+/*	$OpenBSD: client.c,v 1.56 2007/01/28 02:04:45 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -457,6 +457,9 @@ cvs_client_sendfile(struct cvs_file *cf)
 			    sizeof(timebuf));
 			if (len >= sizeof(timebuf))
 				fatal("cvs_client_sendfile: truncation");
+			len = strlcat(timebuf, "+", sizeof(timebuf));
+			if (len >= sizeof(timebuf))
+				fatal("cvs_client_sendfile: truncation");
 		}
 
 		sticky[0] = '\0';
@@ -682,6 +685,72 @@ cvs_client_updated(char *data)
 void
 cvs_client_merged(char *data)
 {
+	int fd;
+	time_t now;
+	mode_t fmode;
+	size_t flen;
+	CVSENTRIES *ent;
+	const char *errstr;
+	struct timeval tv[2];
+	char timebuf[32], *repo, *rpath, *entry, *mode;
+	char *len, *fpath, *wdir;
+
+	client_check_directory(data);
+
+	rpath = cvs_remote_input();
+	entry = cvs_remote_input();
+	mode = cvs_remote_input();
+	len = cvs_remote_input();
+
+	repo = xmalloc(MAXPATHLEN);
+	cvs_get_repository_path(".", repo, MAXPATHLEN);
+
+	STRIP_SLASH(repo);
+
+	if (strlen(repo) + 1 > strlen(rpath))
+		fatal("received a repository path that is too short");
+
+	fpath = rpath + strlen(repo) + 1;
+	if ((wdir = dirname(fpath)) == NULL)
+		fatal("cvs_client_merged: dirname: %s", strerror(errno));
+	xfree(repo);
+
+	flen = strtonum(len, 0, INT_MAX, &errstr);
+	if (errstr != NULL)
+		fatal("cvs_client_merged: %s: %s", len, errstr);
+	xfree(len);
+
+	cvs_strtomode(mode, &fmode);
+	xfree(mode);
+
+	time(&now);
+	asctime_r(gmtime(&now), timebuf);
+	if (timebuf[strlen(timebuf) - 1] == '\n')
+		timebuf[strlen(timebuf) - 1] = '\0';
+
+	ent = cvs_ent_open(wdir);
+	cvs_ent_add(ent, entry);
+	cvs_ent_close(ent, ENT_SYNC);
+
+	if ((fd = open(fpath, O_CREAT | O_WRONLY | O_TRUNC)) == -1)
+		fatal("cvs_client_merged: open: %s: %s",
+		    fpath, strerror(errno));
+
+	cvs_remote_receive_file(fd, flen);
+
+	tv[0].tv_sec = now;
+	tv[0].tv_usec = 0;
+	tv[1] = tv[0];
+
+	if (futimes(fd, tv) == -1)
+		fatal("cvs_client_merged: futimes: %s", strerror(errno));
+
+	if (fchmod(fd, fmode) == -1)
+		fatal("cvs_client_merged: fchmod: %s", strerror(errno));
+
+	(void)close(fd);
+
+	xfree(rpath);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.89 2007/01/25 18:56:33 otto Exp $	*/
+/*	$OpenBSD: update.c,v 1.90 2007/01/28 02:04:45 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -339,10 +339,6 @@ cvs_update_local(struct cvs_file *cf)
 		cvs_printf("U %s\n", cf->file_path);
 		break;
 	case FILE_MERGE:
-#if 0
-		cvs_diff3(cf->file_rcs, cf->file_path, cf->fd,
-		    cf->file_ent->ce_rev, cf->file_rcsrev, 1);
-
 		cvs_checkout_file(cf, cf->file_rcsrev, CO_MERGE);
 
 		if (diff3_conflicts != 0) {
@@ -351,7 +347,6 @@ cvs_update_local(struct cvs_file *cf)
 			update_clear_conflict(cf);
 			cvs_printf("M %s\n", cf->file_path);
 		}
-#endif
 		break;
 	case FILE_UNLINK:
 		(void)unlink(cf->file_path);

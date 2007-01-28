@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.32 2007/01/12 23:32:01 niallo Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.33 2007/01/28 02:04:45 joris Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.32 2007/01/12 23:32:01 niallo Exp $";
+    "$OpenBSD: diff3.c,v 1.33 2007/01/28 02:04:45 joris Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -133,7 +133,7 @@ static int last[4];
 static int eflag;
 static int oflag;		/* indicates whether to mark overlaps (-E or -X)*/
 static int debug  = 0;
-static char f1mark[40], f3mark[40];	/* markers for -E and -X */
+static char f1mark[MAXPATHLEN], f3mark[MAXPATHLEN];	/* markers for -E and -X */
 
 static int duplicate(struct range *, struct range *);
 static int edit(struct diff *, int, int);
@@ -154,9 +154,8 @@ static int diff3_internal(int, char **, const char *, const char *);
 
 int diff3_conflicts = 0;
 
-BUF *
-cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
-	RCSNUM *rev2, int verbose)
+void
+cvs_merge_file(struct cvs_file *cf, int verbose)
 {
 	int argc;
 	char *data, *patch;
@@ -164,18 +163,24 @@ cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
 	char *dp13, *dp23, *path1, *path2, *path3;
 	BUF *b1, *b2, *b3, *d1, *d2, *diffb;
 	size_t dlen, plen;
+	struct cvs_line *lp;
+	struct cvs_lines *dlines, *plines;
 
 	b1 = b2 = b3 = d1 = d2 = diffb = NULL;
+	rcsnum_tostr(cf->file_ent->ce_rev, r1, sizeof(r1));
+	rcsnum_tostr(cf->file_rcsrev, r2, sizeof(r2));
 
-	rcsnum_tostr(rev1, r1, sizeof(r1));
-	rcsnum_tostr(rev2, r2, sizeof(r2));
-
-	if ((b1 = cvs_buf_load_fd(workfd, BUF_AUTOEXT)) == NULL)
-		goto out;
-
+	b1 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT);
 	d1 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
 	d2 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
 	diffb = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
+
+	(void)close(cf->fd);
+	cf->fd = open(cf->file_path, O_WRONLY | O_TRUNC);
+	if (cf->fd == -1) {
+		fatal("cvs_merge_file: failed to reopen fd for writing: %s",
+		    strerror(errno));
+	}
 
 	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
 	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
@@ -184,25 +189,21 @@ cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
 	cvs_buf_write_stmp(b1, path1, NULL);
 	if (verbose == 1)
 		cvs_printf("Retrieving revision %s\n", r1);
-	rcs_rev_write_stmp(rf, rev1, path2, 0);
+	rcs_rev_write_stmp(cf->file_rcs, cf->file_ent->ce_rev, path2, 0);
 	if (verbose == 1)
 		cvs_printf("Retrieving revision %s\n", r2);
-	rcs_rev_write_stmp(rf, rev2, path3, 0);
+	rcs_rev_write_stmp(cf->file_rcs, cf->file_rcsrev, path3, 0);
 
 	cvs_diffreg(path1, path3, d1);
 	cvs_diffreg(path2, path3, d2);
 
 	(void)xasprintf(&dp13, "%s/d13.XXXXXXXXXX", cvs_tmpdir);
 	cvs_buf_write_stmp(d1, dp13, NULL);
-
 	cvs_buf_free(d1);
-	d1 = NULL;
 
 	(void)xasprintf(&dp23, "%s/d23.XXXXXXXXXX", cvs_tmpdir);
 	cvs_buf_write_stmp(d2, dp23, NULL);
-
 	cvs_buf_free(d2);
-	d2 = NULL;
 
 	argc = 0;
 	diffbuf = diffb;
@@ -212,21 +213,22 @@ cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
 	argv[argc++] = path2;
 	argv[argc++] = path3;
 
-	diff3_conflicts = diff3_internal(argc, argv, workfile, r2);
-	if (diff3_conflicts < 0) {
-		cvs_buf_free(diffb);
-		diffb = NULL;
-		goto out;
-	}
+	diff3_conflicts = diff3_internal(argc, argv, cf->file_path, r2);
+	if (diff3_conflicts < 0)
+		fatal("cvs_merge_file: merging failed for an unknown reason");
 
 	plen = cvs_buf_len(diffb);
 	patch = cvs_buf_release(diffb);
 	dlen = cvs_buf_len(b1);
 	data = cvs_buf_release(b1);
-	diffb = b1 = NULL;
 
-	if ((diffb = cvs_patchfile(data, dlen, patch, plen, ed_patch_lines)) == NULL)
-		goto out;
+	cvs_printf("Merging differences between %s and %s into `%s'\n",
+	    r1, r2, cf->file_path);
+
+	dlines = cvs_splitlines(data, dlen);
+	plines = cvs_splitlines(patch, plen);
+	ed_patch_lines(dlines, plines);
+	cvs_freelines(plines);
 
 	if (verbose == 1 && diff3_conflicts != 0) {
 		cvs_log(LP_ERR, "%d conflict%s found during merge, "
@@ -234,16 +236,19 @@ cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
 		    (diff3_conflicts > 1) ? "s" : "");
 	}
 
-	xfree(data);
-	xfree(patch);
+	TAILQ_FOREACH(lp, &(dlines->l_lines), l_list) {
+		if (lp->l_line == NULL)
+			continue;
 
-out:
-	if (b1 != NULL)
-		cvs_buf_free(b1);
-	if (d1 != NULL)
-		cvs_buf_free(d1);
-	if (d2 != NULL)
-		cvs_buf_free(d2);
+		if (write(cf->fd, lp->l_line, lp->l_len) == -1)
+			fatal("cvs_merge_file: %s", strerror(errno));
+	}
+
+	cvs_freelines(dlines);
+
+	if (data != NULL)
+		xfree(data);
+	xfree(patch);
 
 	(void)unlink(path1);
 	(void)unlink(path2);
@@ -251,18 +256,11 @@ out:
 	(void)unlink(dp13);
 	(void)unlink(dp23);
 
-	if (path1 != NULL)
-		xfree(path1);
-	if (path2 != NULL)
-		xfree(path2);
-	if (path3 != NULL)
-		xfree(path3);
-	if (dp13 != NULL)
-		xfree(dp13);
-	if (dp23 != NULL)
-		xfree(dp23);
-
-	return (diffb);
+	xfree(path1);
+	xfree(path2);
+	xfree(path3);
+	xfree(dp13);
+	xfree(dp23);
 }
 
 static int
