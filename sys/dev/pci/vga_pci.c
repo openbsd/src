@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.25 2006/11/27 18:04:28 gwk Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.26 2007/01/28 20:28:50 gwk Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -175,7 +175,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 #endif
- 	printf("\n");
+	printf("\n");
 	vga_common_attach(self, pa->pa_iot, pa->pa_memt,
 	    WSDISPLAY_TYPE_PCIVGA);
 }
@@ -188,6 +188,8 @@ vga_pci_mmap(void *v, off_t off, int prot)
 	struct vga_pci_softc *sc = (struct vga_pci_softc *)vc->vc_softc;
 
 	if (sc->sc_mode == WSDISPLAYIO_MODE_DUMBFB) {
+		if (off < 0 || off > vesabios_softc->sc_size)
+			return (-1);
 		return atop(sc->sc_base + off);
 	}
 #endif

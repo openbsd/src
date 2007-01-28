@@ -1,4 +1,4 @@
-/* $OpenBSD: vesabios.c,v 1.2 2006/12/02 13:26:15 matthieu Exp $ */
+/* $OpenBSD: vesabios.c,v 1.3 2007/01/28 20:28:50 gwk Exp $ */
 
 /*
  * Copyright (c) 2002, 2004
@@ -194,6 +194,8 @@ vesabios_attach(struct device *parent, struct device *self, void *aux)
 
 	res = kvm86_bios_read(FAR2FLATPTR(vi->OemVendorNamePtr),
 			      name, sizeof(name));
+
+	sc->sc_size = vi->TotalMemory * 65536;
 	if (res > 0) {
 		name[res - 1] = 0;
 		printf(", %s", name);

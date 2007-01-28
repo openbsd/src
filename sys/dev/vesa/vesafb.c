@@ -1,4 +1,4 @@
-/* $OpenBSD: vesafb.c,v 1.2 2006/12/02 20:20:55 matthieu Exp $ */
+/* $OpenBSD: vesafb.c,v 1.3 2007/01/28 20:28:50 gwk Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -112,7 +112,10 @@ vesafb_get_mode_info(struct vga_pci_softc *sc, int mode,
 	unsigned char *buf;
 	int res;
 
-	buf = kvm86_bios_addpage(0x2000);
+	if ((buf = kvm86_bios_addpage(0x2000)) == NULL) {
+		printf("%s: kvm86_bios_addpage(0x2000) failed.\n");
+		return;
+	}
 	memset(&tf, 0, sizeof(struct trapframe));
 	tf.tf_eax = 0x4f01; /* function code */
 	tf.tf_ecx = mode;
@@ -123,8 +126,9 @@ vesafb_get_mode_info(struct vga_pci_softc *sc, int mode,
 	if (res || (tf.tf_eax & 0xff) != 0x4f) {
 		printf("%s: vbecall: res=%d, ax=%x\n",
 		    sc->sc_dev.dv_xname, res, tf.tf_eax);
-		printf("%s: error getting info for mode %04x\n",
+		printf("%s: error getting info for mode %05x\n",
 		    sc->sc_dev.dv_xname, mode);
+		kvm86_bios_delpage(0x2000, buf);
 		return;
 	}
 	memcpy(mi, buf, sizeof(struct modeinfoblock));
@@ -138,8 +142,10 @@ vesafb_set_palette(struct vga_pci_softc *sc, int reg, struct paletteentry pe)
 	int res;
 	char *buf;
 
-	buf = kvm86_bios_addpage(0x2000);
-
+	if ((buf = kvm86_bios_addpage(0x2000)) == NULL) {
+		printf("%s: kvm86_bios_addpage(0x2000) failed.\n");
+		return;
+	}
 	/*
 	 * this function takes 8 bit per palette as input, but we're
 	 * working in 6 bit mode here
@@ -229,7 +235,7 @@ vesafb_putcmap(struct vga_pci_softc *sc, struct wsdisplay_cmap *cm)
 	idx = cm->index;
 	cnt = cm->count;
 
-	if (idx >= 255 || cnt > 256 || idx + cnt > 256)
+	if (idx >= 256 || cnt > 256 - idx)
 		return EINVAL;
 
 	rv = copyin(cm->red, &r[idx], cnt);
@@ -272,7 +278,7 @@ vesafb_getcmap(struct vga_pci_softc *sc, struct wsdisplay_cmap *cm)
 	idx = cm->index;
 	cnt = cm->count;
 
-	if (idx >= 255 || cnt > 256 || idx + cnt > 256)
+	if (idx >= 256 || cnt > 256 - idx)
 		return EINVAL;
 
 	rv = copyout(&sc->sc_cmap_red[idx], cm->red, cnt);
@@ -292,8 +298,7 @@ static int
 vesafb_getdepthflag(struct modeinfoblock *mi)
 {
 	int bpp, depth;
-	
-	
+
 	depth = mi->RedMaskSize + mi->GreenMaskSize + mi->BlueMaskSize;
 	bpp = mi->BitsPerPixel;
 	switch (depth) {
@@ -326,10 +331,10 @@ vesafb_get_supported_depth(struct vga_pci_softc *sc)
 	struct modeinfoblock mi;
 
 	depths = 0;
-	
+
 	if (vesabios_softc == NULL || vesabios_softc->sc_nmodes == 0)
 		return 0;
-	
+
 	for (i = 0; i < vesabios_softc->sc_nmodes; i++) {
 		vesafb_get_mode_info(sc, vesabios_softc->sc_modes[i], &mi);
 		depths |= vesafb_getdepthflag(&mi);
