@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexdump.h,v 1.7 2003/06/03 02:56:09 millert Exp $	*/
+/*	$OpenBSD: hexdump.h,v 1.8 2007/01/28 16:37:09 miod Exp $	*/
 /*	$NetBSD: hexdump.h,v 1.7 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ extern int deprecated;			/* od compatibility */
 extern FU *endfu;			/* format at end-of-data */
 extern int exitval;			/* final exit value */
 extern FS *fshead;			/* head of format strings list */
-extern int length;			/* max bytes to read */
+extern long length;			/* max bytes to read */
 extern off_t skip;			/* bytes to skip */
 extern enum _vflag vflag;
 

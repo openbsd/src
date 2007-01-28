@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexsyntax.c,v 1.8 2003/06/12 20:58:09 deraadt Exp $	*/
+/*	$OpenBSD: hexsyntax.c,v 1.9 2007/01/28 16:37:09 miod Exp $	*/
 /*	$NetBSD: hexsyntax.c,v 1.8 1998/04/08 23:48:57 jeremy Exp $	*/
 
 /*-
@@ -32,12 +32,13 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hexsyntax.c	5.2 (Berkeley) 5/8/90";*/
-static char rcsid[] = "$OpenBSD: hexsyntax.c,v 1.8 2003/06/12 20:58:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hexsyntax.c,v 1.9 2007/01/28 16:37:09 miod Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -80,7 +81,9 @@ newsyntax(int argc, char ***argvp)
 			addfile(optarg);
 			break;
 		case 'n':
-			if ((length = atoi(optarg)) < 0)
+			errno = 0;
+			if ((length = strtol(optarg, NULL, 0)) < 0 ||
+			    errno != 0)
 				errx(1, "%s: bad length value", optarg);
 			break;
 		case 'o':
@@ -88,7 +91,9 @@ newsyntax(int argc, char ***argvp)
 			add("\"%07.7_ax \" 8/2 \" %06o \" \"\\n\"");
 			break;
 		case 's':
-			if ((skip = strtol(optarg, &p, 0)) < 0)
+			errno = 0;
+			if ((skip = (off_t)strtoll(optarg, &p, 0)) < 0 ||
+			    errno != 0)
 				errx(1, "%s: bad skip value", optarg);
 			switch(*p) {
 			case 'b':

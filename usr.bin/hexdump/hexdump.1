@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hexdump.1,v 1.14 2003/06/03 02:56:09 millert Exp $
+.\"	$OpenBSD: hexdump.1,v 1.15 2007/01/28 16:37:09 miod Exp $
 .\"	$NetBSD: hexdump.1,v 1.14 2001/12/07 14:46:24 bjh21 Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -92,6 +92,19 @@ are ignored.
 Interpret only
 .Ar length
 bytes of input.
+By default,
+.Ar length
+is interpreted as a decimal number.
+With a leading
+.Cm 0x
+or
+.Cm 0X ,
+.Ar length
+is interpreted as a hexadecimal number,
+otherwise, with a leading
+.Cm 0 ,
+.Ar length
+is interpreted as an octal number.
 .It Fl o
 .Em Two-byte octal display .
 Display the input offset in hexadecimal, followed by eight
