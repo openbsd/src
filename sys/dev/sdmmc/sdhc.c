@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.15 2006/11/29 14:05:45 uwe Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.16 2007/01/28 03:03:12 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -321,8 +321,10 @@ sdhc_host_reset(sdmmc_chipset_handle_t sch)
 	 * Reset the entire host controller and wait up to 100ms for
 	 * the controller to clear the reset bit.
 	 */
-	if ((error = sdhc_soft_reset(hp, SDHC_RESET_ALL)) != 0)
+	if ((error = sdhc_soft_reset(hp, SDHC_RESET_ALL)) != 0) {
+		splx(s);
 		return (error);
+	}	
 
 	/* Set data timeout counter value to max for now. */
 	HWRITE1(hp, SDHC_TIMEOUT_CTL, SDHC_TIMEOUT_MAX);
