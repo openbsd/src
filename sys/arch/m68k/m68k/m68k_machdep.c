@@ -1,4 +1,4 @@
-/*	$OpenBSD: m68k_machdep.c,v 1.8 2006/04/16 22:36:44 miod Exp $	*/
+/*	$OpenBSD: m68k_machdep.c,v 1.9 2007/01/28 16:38:47 miod Exp $	*/
 /*	$NetBSD: m68k_machdep.c,v 1.3 1997/06/12 09:57:04 veego Exp $	*/
 
 /*-
@@ -103,7 +103,7 @@ child_return(arg)
 	f->f_sr &= ~PSL_C;	/* carry bit */
 	f->f_format = FMT0;
 
-	userret(p, f, p->p_sticks, 0, 0);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p,

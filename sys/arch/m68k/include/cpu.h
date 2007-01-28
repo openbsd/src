@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.14 2006/11/29 13:22:07 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.15 2007/01/28 16:38:47 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.3 1997/02/02 06:56:57 thorpej Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ int	suline(caddr_t, caddr_t);
 void	switch_exit(struct proc *);
 
 /* m68k_machdep.c */
-void userret(struct proc *, struct frame *, u_quad_t, u_int, int);
+void userret(struct proc *);
 
 /* regdump.c */
 void regdump(struct trapframe *, int);
@@ -241,6 +241,11 @@ int	cachectl(struct proc *, int, vaddr_t, int);
 #define	CC_FLUSH	0x00000002
 #define	CC_IPURGE	0x00000004
 #define	CC_EXTPURGE	0x80000000
+
+/*
+ * This is used during profiling to integrate system time.
+ */
+#define	PROC_PC(p)	(((struct trapframe *)((p)->p_md.md_regs))->tf_pc)
 
 #endif /* _KERNEL */
 

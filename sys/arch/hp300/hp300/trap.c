@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.48 2005/11/12 23:14:00 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.49 2007/01/28 16:38:45 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -103,9 +103,10 @@ extern struct emul emul_hpux;
 extern struct emul emul_sunos;
 #endif
 
-int	writeback(struct frame *fp, int docachepush);
+int	writeback(struct frame *);
 void	trap(int type, u_int code, u_int v, struct frame frame);
 void	syscall(register_t code, struct frame frame);
+void	wb_userret(struct proc *, struct frame *);
 
 #ifdef DEBUG
 void	dumpssw(u_short);
@@ -195,43 +196,31 @@ int mmupid = -1;
  * to user mode.
  */
 void
-userret(p, fp, oticks, faultaddr, fromtrap)
-	struct proc *p;
-	struct frame *fp;
-	u_quad_t oticks;
-	u_int faultaddr;
-	int fromtrap;
+userret(struct proc *p)
 {
 	int sig;
-#ifdef M68040
-	union sigval sv;
-	int beenhere = 0;
 
-again:
-#endif
+	/* take pending signals */
+	while ((sig = CURSIG(p)) != 0)
+		postsig(sig);
+	curpriority = p->p_priority = p->p_usrpri;
+}
+
+#ifdef M68040
+/*
+ * Same as above, but also handles writeback completion on 68040.
+ */
+void
+wb_userret(struct proc *p, struct frame *fp)
+{
+	int sig;
+	union sigval sv;
+
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
 	p->p_priority = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * We're being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
 
-	/*
-	 * If profiling, charge system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-
-		addupc_task(p, fp->f_pc,
-			    (int)(p->p_sticks - oticks) * psratio);
-	}
-#ifdef M68040
 	/*
 	 * Deal with user mode writebacks (from trap, or from sigreturn).
 	 * If any writeback fails, go back and attempt signal delivery.
@@ -241,25 +230,18 @@ again:
 	 * the writebacks.  Maybe we should just drop the sucker?
 	 */
 	if (cputype == CPU_68040 && fp->f_format == FMT7) {
-		if (beenhere) {
-#ifdef DEBUG
-			if (mmudebug & MDB_WBFAILED)
-				printf(fromtrap ?
-		"pid %d(%s): writeback aborted, pc=%x, fa=%x\n" :
-		"pid %d(%s): writeback aborted in sigreturn, pc=%x\n",
-				    p->p_pid, p->p_comm, fp->f_pc, faultaddr);
-#endif
-		} else if ((sig = writeback(fp, fromtrap))) {
-			beenhere = 1;
-			oticks = p->p_sticks;
-			sv.sival_ptr = (caddr_t)faultaddr;
+		if ((sig = writeback(fp)) != 0) {
+			sv.sival_ptr = (caddr_t)fp->f_fmt7.f_fa;
 			trapsignal(p, sig, T_MMUFLT, SEGV_MAPERR, sv);
-			goto again;
+
+			while ((sig = CURSIG(p)) != 0)
+				postsig(sig);
+			p->p_priority = p->p_usrpri;
 		}
 	}
-#endif
 	curpriority = p->p_priority;
 }
+#endif
 
 /*
  * Trap is called from locore to handle most types of processor traps,
@@ -577,6 +559,9 @@ dopanic:
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
+		if (type == (T_ASTFLT | T_USER) && want_resched) {
+			preempt(NULL);
+		}
 		goto out;
 
 	case T_MMUFLT:		/* kernel mode page fault */
@@ -661,7 +646,7 @@ dopanic:
 			if (type == T_MMUFLT) {
 #ifdef M68040
 				if (cputype == CPU_68040)
-					(void) writeback(&frame, 1);
+					(void)writeback(&frame);
 #endif
 				return;
 			}
@@ -688,7 +673,11 @@ dopanic:
 out:
 	if ((type & T_USER) == 0)
 		return;
-	userret(p, &frame, sticks, v, 1);
+#ifdef M68040
+	wb_userret(p, &frame);
+#else
+	userret(p);
+#endif
 }
 
 #ifdef M68040
@@ -710,14 +699,13 @@ char wberrstr[] =
 #endif
 
 int
-writeback(fp, docachepush)
-	struct frame *fp;
-	int docachepush;
+writeback(struct frame *fp)
 {
 	struct fmt7 *f = &fp->f_fmt7;
 	struct proc *p = curproc;
 	int err = 0;
 	u_int fa;
+	paddr_t pa;
 	caddr_t oonfault = p->p_addr->u_pcb.pcb_onfault;
 
 #ifdef DEBUG
@@ -754,23 +742,15 @@ writeback(fp, docachepush)
 		 * XXX there are security problems if we attempt to do a
 		 * cache push after a signal handler has been called.
 		 */
-		if (docachepush) {
-			paddr_t pa;
-
-			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-				   trunc_page((vaddr_t)f->f_fa), VM_PROT_WRITE,
-				   VM_PROT_WRITE|PMAP_WIRED);
-			pmap_update(pmap_kernel());
-			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
-			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
-			pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
-			DCFL(pa);
-			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
-				    (vaddr_t)&vmmap[NBPG]);
-			pmap_update(pmap_kernel());
-		} else
-			printf("WARNING: pid %d(%s) uid %u: CPUSH not done\n",
-			       p->p_pid, p->p_comm, p->p_ucred->cr_uid);
+		pmap_kenter_pa((vaddr_t)vmmap,
+		    trunc_page((vaddr_t)f->f_fa), VM_PROT_WRITE);
+		pmap_update(pmap_kernel());
+		fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0x000f];
+		bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
+		pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
+		DCFL(pa);
+		pmap_kremove((vaddr_t)vmmap, PAGE_SIZE);
+		pmap_update(pmap_kernel());
 	} else if ((f->f_ssw & (SSW4_RW|SSW4_TTMASK)) == SSW4_TTM16) {
 		/*
 		 * MOVE16 fault.
@@ -1182,7 +1162,7 @@ bad:
 	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ))
 		frame.f_regs[SP] -= sizeof (int);
 #endif
-	userret(p, &frame, sticks, 0, 0);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
