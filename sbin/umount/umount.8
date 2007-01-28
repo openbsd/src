@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umount.8,v 1.14 2006/06/29 20:01:07 jmc Exp $
+.\"	$OpenBSD: umount.8,v 1.15 2007/01/28 16:26:39 bluhm Exp $
 .\"	$NetBSD: umount.8,v 1.2 1995/03/18 15:01:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -63,15 +63,13 @@ If neither
 .Ar special
 nor
 .Ar node
-are provided, the appropriate information is taken from the
-.Xr fstab 5
-file.
+are provided, the appropriate information is taken from the kernel.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
-All of the file systems described in
-.Xr fstab 5
+All of the file systems except root returned by
+.Xr getmntinfo 3
 are unmounted.
 .It Fl f
 The file system is forcibly unmounted.
@@ -105,14 +103,9 @@ NFS and MFS:
 Verbose, additional information is printed out as each file system
 is unmounted.
 .El
-.Sh FILES
-.Bl -tag -width /etc/fstab -compact
-.It Pa /etc/fstab
-file system table
-.El
 .Sh SEE ALSO
 .Xr unmount 2 ,
-.Xr fstab 5 ,
+.Xr getmntinfo 3 ,
 .Xr mount 8
 .Sh HISTORY
 A
