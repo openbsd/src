@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1211 2007/01/09 22:33:43 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1212 2007/01/28 21:26:29 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2812,6 +2812,7 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_250_PPB	0x00ed		/* nForce3 250 PCI-PCI */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA2	0x00ee		/* nForce3 250 SATA */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE6600GTAGP	0x00f1		/* GeForce 6600 GT AGP */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE7800GS	0x00f5		/* GeForce 7800 GS */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE6800GT	0x00f9		/* GeForce 6800 GT */
 #define	PCI_PRODUCT_NVIDIA_QUADROFX330	0x00fd		/* Quadro FX 330 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE256	0x0100		/* GeForce256 */
