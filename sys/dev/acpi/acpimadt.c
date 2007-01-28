@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.6 2007/01/11 22:01:05 kettenis Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.7 2007/01/28 18:24:21 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -35,6 +35,10 @@
 #include <machine/mpbiosvar.h>
 
 #include "ioapic.h"
+
+#ifdef __amd64__ /* XXX */
+#define mp_nintrs mp_nintr
+#endif
 
 int acpimadt_match(struct device *, void *, void *);
 void acpimadt_attach(struct device *, struct device *, void *);
@@ -109,6 +113,8 @@ acpimadt_cfg_intr(int flags, u_int32_t *redir)
 	}
 }
 
+static u_int8_t lapic_map[256];
+
 void
 acpimadt_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -119,6 +125,7 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 	struct mp_intr_map *map;
 	struct ioapic_softc *apic;
 	int cpu_role = CPU_ROLE_BP;
+	int nlapic_nmis = 0;
 	int pin;
 
 	printf(" addr 0x%x", madt->local_apic_address);
@@ -141,6 +148,10 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			    entry->madt_lapic.acpi_proc_id,
 			    entry->madt_lapic.apic_id,
 			    entry->madt_lapic.flags);
+
+			lapic_map[entry->madt_lapic.acpi_proc_id] =
+			    entry->madt_lapic.apic_id;
+
 			{
 				struct cpu_attach_args caa;
 
@@ -181,9 +192,16 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 				config_found(mainbus, &aaa, acpimadt_print);
 			}
 			break;
+		case ACPI_MADT_LAPIC_NMI:
+			nlapic_nmis++;
+			break;
 		}
 		addr += entry->madt_lapic.length;
 	}
+
+	mp_intrs = malloc(nlapic_nmis * sizeof (struct mp_intr_map), M_DEVBUF, M_NOWAIT);
+	if (mp_intrs == NULL)
+		return;
 
 	/* 2nd pass, get interrupt overrides */
 	addr = (caddr_t)(madt + 1);
@@ -227,6 +245,25 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 
 			map->next = mp_isa_bus->mb_intrs;
 			mp_isa_bus->mb_intrs = map;
+			break;
+
+		case ACPI_MADT_LAPIC_NMI:
+			printf("LAPIC_NMI: acpi_proc_id %x, local_apic_lint %x, flags %x\n",
+			    entry->madt_lapic_nmi.acpi_proc_id,
+			    entry->madt_lapic_nmi.local_apic_lint,
+			    entry->madt_lapic_nmi.flags);
+
+			pin = entry->madt_lapic_nmi.local_apic_lint;
+
+			map = &mp_intrs[mp_nintrs++];
+			memset(map, 0, sizeof *map);
+			map->cpu_id = lapic_map[entry->madt_lapic_nmi.acpi_proc_id];
+			map->ioapic_pin = pin;
+			map->flags = entry->madt_lapic_nmi.flags;
+
+			acpimadt_cfg_intr(entry->madt_override.flags, &map->redir);
+			map->redir &= ~IOAPIC_REDLO_DEL_MASK;
+			map->redir |= (IOAPIC_REDLO_DEL_NMI << IOAPIC_REDLO_DEL_SHIFT);
 			break;
 
 		default:
