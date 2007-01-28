@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.108 2006/11/21 20:15:55 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.109 2007/01/28 21:28:23 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -362,7 +362,6 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	unsigned int loop;
 	int failed;
 	struct dep_node *n;
-	Elf_Addr start, end;
 
 	_dl_setup_env(envp);
 
@@ -407,9 +406,6 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 
 	exe_obj = NULL;
 	_dl_loading_object = NULL;
-
-	start = ELFDEFNNAME(NO_ADDR);
-	end = 0;
 	/*
 	 * Examine the user application and set up object information.
 	 */
@@ -435,10 +431,6 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 			next_load->size = size;
 			next_load->prot = PFLAGS(phdp->p_flags);
 
-			if (phdp->p_vaddr < start)
-				start = phdp->p_vaddr;
-			if (phdp->p_vaddr > end)
-				end = phdp->p_vaddr;
 			if (phdp->p_flags & 0x08000000) {
 //				dump_prelink(phdp->p_vaddr, phdp->p_memsz);
 				prebind_load_exe(phdp, exe_obj);
@@ -448,10 +440,6 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	}
 	exe_obj->load_list = load_list;
 	exe_obj->obj_flags |= RTLD_GLOBAL;
-	if (start != ELFDEFNNAME(NO_ADDR)) {
-		exe_obj->load_addr = start;
-		exe_obj->load_size = end - start;
-	}
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
