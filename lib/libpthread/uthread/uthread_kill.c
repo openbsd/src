@@ -1,4 +1,4 @@
-/* $OpenBSD: uthread_kill.c,v 1.11 2003/04/30 17:54:17 marc Exp $ */
+/* $OpenBSD: uthread_kill.c,v 1.12 2007/01/28 16:47:41 kettenis Exp $ */
 /* PUBLIC_DOMAIN <marc@snafu.org> */
 
 #include <errno.h>
@@ -41,7 +41,7 @@ pthread_kill(pthread_t pthread, int sig)
 
 	if (sig >= 0 && sig < NSIG) {
 		ret = _find_thread(pthread);
-		if (sig != 0) {
+		if (ret == 0 && sig != 0) {
 			if (_thread_sigact[sig - 1].sa_handler != SIG_IGN) {
 				_thread_kern_sig_defer();
 				if (pthread->state == PS_SIGWAIT &&
