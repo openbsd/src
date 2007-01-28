@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.7 2007/01/28 18:24:21 kettenis Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.8 2007/01/28 19:56:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -261,7 +261,7 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			map->ioapic_pin = pin;
 			map->flags = entry->madt_lapic_nmi.flags;
 
-			acpimadt_cfg_intr(entry->madt_override.flags, &map->redir);
+			acpimadt_cfg_intr(entry->madt_lapic_nmi.flags, &map->redir);
 			map->redir &= ~IOAPIC_REDLO_DEL_MASK;
 			map->redir |= (IOAPIC_REDLO_DEL_NMI << IOAPIC_REDLO_DEL_SHIFT);
 			break;
