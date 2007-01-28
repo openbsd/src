@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.87 2007/01/28 02:04:45 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.88 2007/01/28 23:39:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -225,9 +225,6 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 
 		return;
 	}
-
-	if (co_flags & CO_MERGE)
-		printf("merge on %s\n", cf->file_path);
 
 	if (cvs_server_active == 0) {
 		if (!(co_flags & CO_MERGE)) {
