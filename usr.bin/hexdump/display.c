@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.16 2005/08/18 17:18:24 miod Exp $	*/
+/*	$OpenBSD: display.c,v 1.17 2007/01/28 16:36:17 miod Exp $	*/
 /*	$NetBSD: display.c,v 1.12 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: display.c,v 1.16 2005/08/18 17:18:24 miod Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.17 2007/01/28 16:36:17 miod Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -324,30 +324,31 @@ next(char **argv)
 void
 doskip(const char *fname, int statok)
 {
-	int cnt;
+	off_t cnt;
 	struct stat sb;
 
 	if (statok) {
 		if (fstat(fileno(stdin), &sb))
 			err(1, "fstat %s", fname);
-		if (S_ISREG(sb.st_mode) && skip >= sb.st_size) {
-			address += sb.st_size;
-			skip -= sb.st_size;
+		if (S_ISREG(sb.st_mode)) {
+			if (skip >= sb.st_size) {
+				address += sb.st_size;
+				skip -= sb.st_size;
+			} else {
+				if (fseeko(stdin, skip, SEEK_SET))
+					err(1, "fseeko %s", fname);
+				address += skip;
+				skip = 0;
+			}
 			return;
 		}
 	}
-	if (S_ISREG(sb.st_mode)) {
-		if (fseeko(stdin, skip, SEEK_SET))
-			err(1, "fseeko %s", fname);
-		address += skip;
-		skip = 0;
-	} else {
-		for (cnt = 0; cnt < skip; ++cnt)
-			if (getchar() == EOF)
-				break;
-		address += cnt;
-		skip -= cnt;
-	}
+
+	for (cnt = 0; cnt < skip; ++cnt)
+		if (getchar() == EOF)
+			break;
+	address += cnt;
+	skip -= cnt;
 }
 
 void *
