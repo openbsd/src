@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.17 2006/06/29 12:51:26 jmc Exp $	*/
+/*	$OpenBSD: umount.c,v 1.18 2007/01/28 16:23:58 bluhm Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$OpenBSD: umount.c,v 1.17 2006/06/29 12:51:26 jmc Exp $";
+static char rcsid[] = "$OpenBSD: umount.c,v 1.18 2007/01/28 16:23:58 bluhm Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,6 @@ static char rcsid[] = "$OpenBSD: umount.c,v 1.17 2006/06/29 12:51:26 jmc Exp $";
 #include <nfs/rpcv2.h>
 
 #include <err.h>
-#include <fstab.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -123,7 +122,7 @@ main(int argc, char *argv[])
 
 	/* -h implies "-t nfs" if no -t flag. */
 	if ((nfshost != NULL) && (typelist == NULL))
-		maketypelist("nfs");
+		maketypelist(MOUNT_NFS);
 
 	if (all)
 		errs = umountall();
@@ -323,7 +322,7 @@ maketypelist(char *fslist)
 	/*
 	 * XXX
 	 * Note: the syntax is "noxxx,yyy" for no xxx's and
-	 * no yyy's, not the more intuitive "noyyy,noyyy".
+	 * no yyy's, not the more intuitive "noxxx,noyyy".
 	 */
 	if (fslist[0] == 'n' && fslist[1] == 'o') {
 		fslist += 2;
