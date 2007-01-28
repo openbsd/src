@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.90 2007/01/28 02:04:45 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.91 2007/01/28 23:37:29 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -290,9 +290,13 @@ cvs_update_local(struct cvs_file *cf)
 	flags = 0;
 	cvs_file_classify(cf, tag, 1);
 
-	if (cf->file_status == FILE_UPTODATE && cf->file_ent != NULL &&
+	if ((cf->file_status == FILE_UPTODATE ||
+	    cf->file_status == FILE_MODIFIED) && cf->file_ent != NULL &&
 	    cf->file_ent->ce_tag != NULL && reset_stickies == 1) {
-		cf->file_status = FILE_CHECKOUT;
+		if (cf->file_status == FILE_MODIFIED)
+			cf->file_status = FILE_MERGE;
+		else
+			cf->file_status = FILE_CHECKOUT;
 		cf->file_rcsrev = rcs_head_get(cf->file_rcs);
 	}
 
