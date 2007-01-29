@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tmpnam.3,v 1.14 2005/07/26 03:30:25 jaredy Exp $
+.\"	$OpenBSD: tmpnam.3,v 1.15 2007/01/29 19:13:05 jmc Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -134,6 +134,19 @@ and
 .Fn tempnam
 functions return a pointer to a file name on success, and a null pointer
 on error.
+.Sh ENVIRONMENT
+.Bl -tag -width Ds
+.It Ev TMPDIR
+.Pf [ Fn tempnam
+only]
+If set,
+the directory in which the temporary file is stored.
+.Ev TMPDIR
+is ignored for processes
+for which
+.Xr issetugid 2
+is true.
+.El
 .Sh ERRORS
 The
 .Fn tmpfile
@@ -160,6 +173,7 @@ for any of the errors specified for the library functions
 or
 .Xr mktemp 3 .
 .Sh SEE ALSO
+.Xr issetugid 2 ,
 .Xr mkstemp 3 ,
 .Xr mktemp 3
 .Sh STANDARDS
