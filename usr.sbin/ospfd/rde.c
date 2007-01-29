@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.54 2007/01/24 10:48:47 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.55 2007/01/29 13:04:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -428,7 +428,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				/* reflood self originated LSA */
 				if (self && v)
 					imsg_compose(ibuf_ospfe, IMSG_LS_FLOOD,
-					    v->nbr->peerid, 0, v->lsa,
+					    v->peerid, 0, v->lsa,
 					    ntohs(v->lsa->hdr.len));
 				/* lsa not added so free it */
 				if (self)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.30 2006/05/29 16:50:36 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.31 2007/01/29 13:04:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -32,16 +32,18 @@ struct vertex {
 	struct event		 ev;
 	struct in_addr		 nexthop;
 	struct vertex		*prev;
-	struct rde_nbr		*nbr;
+	struct area		*area;
 	struct lsa		*lsa;
 	time_t			 changed;
 	time_t			 stamp;
 	u_int32_t		 cost;
+	u_int32_t		 peerid;	/* neighbor unique imsg ID */
 	u_int32_t		 ls_id;
 	u_int32_t		 adv_rtr;
 	u_int8_t		 type;
 	u_int8_t		 flooded;
 	u_int8_t		 deleted;
+	u_int8_t		 self;
 };
 
 struct rde_req_entry {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.56 2007/01/24 12:05:10 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.57 2007/01/29 13:04:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -222,7 +222,7 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 			return;
 
 		/* ignore self-originated stuff */
-		if (v->nbr->self)
+		if (v->self)
 			return;
 
 		/* TODO type 3 area address range check */
@@ -276,7 +276,7 @@ asext_calc(struct vertex *v)
 	switch (v->type) {
 	case LSA_TYPE_EXTERNAL:
 		/* ignore self-originated stuff */
-		if (v->nbr->self)
+		if (v->self)
 			return;
 
 		if ((r = rt_lookup(DT_RTR, htonl(v->adv_rtr))) == NULL)

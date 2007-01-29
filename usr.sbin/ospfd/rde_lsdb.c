@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.36 2007/01/24 10:48:47 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.37 2007/01/29 13:04:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -69,7 +69,8 @@ vertex_get(struct lsa *lsa, struct rde_nbr *nbr)
 
 	if ((v = calloc(1, sizeof(struct vertex))) == NULL)
 		fatal(NULL);
-	v->nbr = nbr;
+	v->area = nbr->area;
+	v->peerid = nbr->peerid;
 	v->lsa = lsa;
 	clock_gettime(CLOCK_MONOTONIC, &tp);
 	v->changed = v->stamp = tp.tv_sec;
@@ -77,8 +78,10 @@ vertex_get(struct lsa *lsa, struct rde_nbr *nbr)
 	v->ls_id = ntohl(lsa->hdr.ls_id);
 	v->adv_rtr = ntohl(lsa->hdr.adv_rtr);
 	v->type = lsa->hdr.type;
+
 	if (!nbr->self)
 		v->flooded = 1; /* XXX fix me */
+	v->self = nbr->self;
 
 	evtimer_set(&v->ev, lsa_timeout, v);
 
@@ -91,7 +94,7 @@ vertex_free(struct vertex *v)
 	if (v->type == LSA_TYPE_EXTERNAL)
 		RB_REMOVE(lsa_tree, &asext_tree, v);
 	else
-		RB_REMOVE(lsa_tree, &v->nbr->area->lsa_tree, v);
+		RB_REMOVE(lsa_tree, &v->area->lsa_tree, v);
 
 	(void)evtimer_del(&v->ev);
 	free(v->lsa);
@@ -583,15 +586,15 @@ lsa_timeout(int fd, short event, void *bula)
 
 			/* schedule recalculation of the RIB */
 			if (v->lsa->hdr.type != LSA_TYPE_EXTERNAL)
-				v->nbr->area->dirty = 1;
+				v->area->dirty = 1;
 			start_spf_timer();
 
-			rde_imsg_compose_ospfe(IMSG_LS_FLOOD, v->nbr->peerid, 0,
+			rde_imsg_compose_ospfe(IMSG_LS_FLOOD, v->peerid, 0,
 			    v->lsa, ntohs(v->lsa->hdr.len));
 
 			/* timeout handling either MAX_AGE or LS_REFRESH_TIME */
 			timerclear(&tv);
-			if (v->nbr->self)
+			if (v->self)
 				tv.tv_sec = LS_REFRESH_TIME;
 			else
 				tv.tv_sec = MAX_AGE - ntohs(v->lsa->hdr.age);
@@ -602,10 +605,10 @@ lsa_timeout(int fd, short event, void *bula)
 		return;
 	}
 
-	if (v->nbr->self && ntohs(v->lsa->hdr.age) < MAX_AGE)
+	if (v->self && ntohs(v->lsa->hdr.age) < MAX_AGE)
 		lsa_refresh(v);
 
-	rde_imsg_compose_ospfe(IMSG_LS_FLOOD, v->nbr->peerid, 0,
+	rde_imsg_compose_ospfe(IMSG_LS_FLOOD, v->peerid, 0,
 	    v->lsa, ntohs(v->lsa->hdr.len));
 }
 
@@ -697,7 +700,7 @@ lsa_remove_invalid_sums(struct area *area)
 		nv = RB_NEXT(lsa_tree, tree, v);
 		if ((v->lsa->hdr.type == LSA_TYPE_SUM_NETWORK ||
 		    v->lsa->hdr.type == LSA_TYPE_SUM_ROUTER) &&
-		    v->nbr->self && v->cost == LS_INFINITY &&
+		    v->self && v->cost == LS_INFINITY &&
 		    v->deleted == 0) {
 			/*
 			 * age the lsa and call lsa_timeout() which will
