@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.11 2007/01/24 10:26:00 claudio Exp $	*/
+/*	$OpenBSD: hce.c,v 1.12 2007/01/29 14:23:31 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -36,6 +36,8 @@
 #include <err.h>
 #include <pwd.h>
 
+#include <openssl/ssl.h>
+
 #include "hoststated.h"
 
 void	hce_sig_handler(int sig, short, void *);
@@ -70,6 +72,7 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	struct timeval	 tv;
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
+	struct table	*table;
 
 	switch (pid = fork()) {
 	case -1:
@@ -134,6 +137,15 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	evtimer_set(&env->ev, hce_launch_checks, env);
 	bzero(&tv, sizeof(tv));
 	evtimer_add(&env->ev, &tv);
+
+	if (env->flags & F_SSL) {
+		ssl_init(env);
+		TAILQ_FOREACH(table, &env->tables, entry) {
+			if (!(table->flags & F_SSL))
+				continue;
+			table->ssl_ctx = ssl_ctx_create(env);
+		}
+	}
 
 	event_dispatch();
 

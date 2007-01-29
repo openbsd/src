@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.4 2007/01/09 00:45:32 deraadt Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.5 2007/01/29 14:23:31 pyr Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <openssl/ssl.h>
 
 #include "hoststated.h"
 

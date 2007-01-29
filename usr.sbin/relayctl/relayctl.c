@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.8 2007/01/09 13:50:10 pyr Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.9 2007/01/29 14:23:31 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -35,6 +35,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <event.h>
+
+#include <openssl/ssl.h>
 
 #include "hoststated.h"
 #include "parser.h"

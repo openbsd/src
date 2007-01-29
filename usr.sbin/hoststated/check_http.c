@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_http.c,v 1.10 2007/01/12 16:43:01 pyr Exp $	*/
+/*	$OpenBSD: check_http.c,v 1.11 2007/01/29 14:23:31 pyr Exp $	*/
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
  *
@@ -31,6 +31,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include <openssl/ssl.h>
+
 #include "hoststated.h"
 
 int
@@ -39,7 +41,16 @@ check_http_code(struct ctl_tcp_event *cte)
 	char		*head;
 	char		 scode[4];
 	const char	*estr;
+	u_char		*b;
 	int		 code;
+
+	/*
+	 * ensure string is nul-terminated.
+	 */
+	b = buf_reserve(cte->buf, 1);
+	if (b == NULL)
+		fatal("out of memory");
+	*b = '\0';
 
 	head = cte->buf->buf;
 	if (strncmp(head, "HTTP/1.1 ", strlen("HTTP/1.1 ")) &&
@@ -72,7 +83,16 @@ int
 check_http_digest(struct ctl_tcp_event *cte)
 {
 	char	*head;
+	u_char	*b;
 	char	 digest[(SHA1_DIGEST_LENGTH*2)+1];
+
+	/*
+	 * ensure string is nul-terminated.
+	 */
+	b = buf_reserve(cte->buf, 1);
+	if (b == NULL)
+		fatal("out of memory");
+	*b = '\0';
 
 	head = cte->buf->buf;
 	if ((head = strstr(head, "\r\n\r\n")) == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.16 2007/01/12 17:05:18 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.17 2007/01/29 14:23:31 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -143,6 +143,8 @@ struct ctl_tcp_event {
 	struct event	 	 ev;
 	int			(*validate_read)(struct ctl_tcp_event *);
 	int			(*validate_close)(struct ctl_tcp_event *);
+	SSL			*ssl;
+	char			 rbuf[SMALL_READ_BUF_SIZE];
 };
 
 struct address {
@@ -164,6 +166,7 @@ TAILQ_HEAD(addresslist, address);
 #define F_CHECK_DONE		0x0100
 #define F_ACTIVE_RULESET	0x0200
 #define F_CHECK_SENT		0x0400
+#define F_SSL			0x0800
 
 struct host {
 	u_int16_t		 flags;
@@ -197,6 +200,7 @@ struct table {
 	char			*sendbuf;
 	char			 exbuf[64];
 	char			 digest[41]; /* length of sha1 digest * 2 */
+	SSL_CTX			*ssl_ctx;
 	struct hostlist		 hosts;
 	TAILQ_ENTRY(table)	 entry;
 };
@@ -230,6 +234,7 @@ enum {
 
 struct hoststated {
 	u_int8_t		 opts;
+	u_int16_t		 flags;
 	struct pfdata		*pf;
 	int			 tablecount;
 	int			 servicecount;
@@ -355,6 +360,11 @@ int	check_http_digest(struct ctl_tcp_event *);
 
 /* check_send_expect.c */
 int	check_send_expect(struct ctl_tcp_event *);
+
+/* ssl.c */
+void	 ssl_init(struct hoststated *);
+void	 ssl_transaction(struct ctl_tcp_event *);
+SSL_CTX	*ssl_ctx_create(struct hoststated *);
 
 /* hoststated.c */
 struct host	*host_find(struct hoststated *, objid_t);

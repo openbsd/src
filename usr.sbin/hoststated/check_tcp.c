@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.11 2007/01/20 16:32:10 pyr Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.12 2007/01/29 14:23:31 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -29,6 +29,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+
+#include <openssl/ssl.h>
 
 #include "hoststated.h"
 
@@ -108,6 +110,7 @@ tcp_write(int s, short event, void *arg)
 		else
 			cte->host->up = HOST_UP;
 	}
+
 	if (cte->host->up == HOST_UP)
 		tcp_host_up(s, cte);
 	else {
@@ -123,8 +126,10 @@ tcp_host_up(int s, struct ctl_tcp_event *cte)
 
 	switch (cte->table->check) {
 	case CHECK_TCP:
+		if (cte->table->flags & F_SSL)
+			break;
 		close(s);
-		hce_notify_done(cte->host, "tcp_host_up: success");
+		hce_notify_done(cte->host, "tcp_host_up: connect successfull");
 		return;
 	case CHECK_HTTP_CODE:
 		cte->validate_read = NULL;
@@ -138,6 +143,11 @@ tcp_host_up(int s, struct ctl_tcp_event *cte)
 		cte->validate_read = check_send_expect;
 		cte->validate_close = check_send_expect;
 		break;
+	}
+
+	if (cte->table->flags & F_SSL) {
+		ssl_transaction(cte);
+		return;
 	}
 
 	if (cte->table->sendbuf != NULL) {

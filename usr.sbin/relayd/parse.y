@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.18 2007/01/25 19:40:08 niallo Exp $	*/
+/*	$OpenBSD: parse.y,v 1.19 2007/01/29 14:23:31 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -40,6 +40,8 @@
 #include <stdio.h>
 #include <netdb.h>
 #include <string.h>
+
+#include <openssl/ssl.h>
 
 #include "hoststated.h"
 
@@ -98,14 +100,14 @@ typedef struct {
 %}
 
 %token	SERVICE TABLE BACKUP HOST REAL
-%token  CHECK HTTP TCP ICMP EXTERNAL
+%token  CHECK HTTP HTTPS TCP ICMP EXTERNAL
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
 %token	VIRTUAL IP INTERVAL DISABLE STICKYADDR
-%token	SEND EXPECT NOTHING
+%token	SEND EXPECT NOTHING USE SSL
 %token	ERROR
 %token	<v.string>	STRING
 %type	<v.string>	interface
-%type	<v.number>	number port
+%type	<v.number>	number port http_type
 %type	<v.host>	host
 %type	<v.tv>		timeout
 
@@ -134,6 +136,10 @@ number		: STRING	{
 		}
 		;
 
+http_type	: HTTP		{ $$ = 0; }
+		| HTTPS		{ $$ = 1; }
+		;
+
 port		: PORT STRING	{
 			const char	*estr;
 			struct servent	*servent;
@@ -156,12 +162,22 @@ port		: PORT STRING	{
 				$$ = htons($$);
 			free($2);
 		}
-		| PORT HTTP {
+		| PORT http_type {
 			struct servent	*servent;
+			int		 port;
+			const char	*sport;
 
-			servent = getservbyname("http", "tcp");
+			if ($2) {
+				port = 443;
+				sport = "https";
+			} else {
+				port = 80;
+				sport = "http";
+			}
+
+			servent = getservbyname(sport, "tcp");
 			if (servent == NULL)
-				$$ = htons(80);
+				$$ = htons(port);
 			else
 				$$ = servent->s_port;
 		}
@@ -380,7 +396,16 @@ tableoptsl	: host			{
 		| CHECK TCP		{
 			table->check = CHECK_TCP;
 		}
-		| CHECK HTTP STRING CODE number {
+		| CHECK SSL		{
+			table->check = CHECK_TCP;
+			conf->flags |= F_SSL;
+			table->flags |= F_SSL;
+		}
+		| CHECK http_type STRING CODE number {
+			if ($2) {
+				conf->flags |= F_SSL;
+				table->flags |= F_SSL;
+			}
 			table->check = CHECK_HTTP_CODE;
 			table->retcode = $5;
 			asprintf(&table->sendbuf, "HEAD %s HTTP/1.0\r\n\r\n",
@@ -389,7 +414,11 @@ tableoptsl	: host			{
 			if (table->sendbuf == NULL)
 				fatal("out of memory");
 		}
-		| CHECK HTTP STRING DIGEST STRING {
+		| CHECK http_type STRING DIGEST STRING {
+			if ($2) {
+				conf->flags |= F_SSL;
+				table->flags |= F_SSL;
+			}
 			table->check = CHECK_HTTP_DIGEST;
 			asprintf(&table->sendbuf, "GET %s HTTP/1.0\r\n\r\n",
 			    $3);
@@ -418,6 +447,10 @@ tableoptsl	: host			{
 			table->port = $2;
 		}
 		| DISABLE			{ table->flags |= F_DISABLE; }
+		| USE SSL			{
+			table->flags |= F_SSL;
+			conf->flags |= F_SSL;
+		}
 		;
 
 interface	: /*empty*/		{ $$ = NULL; }
@@ -515,6 +548,7 @@ lookup(char *s)
 		{ "external",		EXTERNAL },
 		{ "host",		HOST },
 		{ "http",		HTTP },
+		{ "https",		HTTPS },
 		{ "icmp",		ICMP },
 		{ "interface",		INTERFACE },
 		{ "interval",		INTERVAL },
@@ -524,11 +558,13 @@ lookup(char *s)
 		{ "real",		REAL },
 		{ "send",		SEND },
 		{ "service",		SERVICE },
+		{ "ssl",		SSL },
 		{ "sticky-address",	STICKYADDR },
 		{ "table",		TABLE },
 		{ "tag",		TAG },
 		{ "tcp",		TCP },
 		{ "timeout",		TIMEOUT },
+		{ "use",		USE },
 		{ "virtual",		VIRTUAL }
 	};
 	const struct keywords	*p;

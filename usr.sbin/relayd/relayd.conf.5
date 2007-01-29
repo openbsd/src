@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.14 2007/01/10 13:42:19 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.15 2007/01/29 14:23:31 pyr Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -109,6 +109,12 @@ For each host in the table, verify that retrieving the URL
 .Ar path
 gives the HTTP return code
 .Ar number .
+If
+.Ic use ssl
+is specified, HTTPS will be used to contact the host.
+.It Ic check https Ar path Ic code Ar number
+This has the same effect than above but also implies 
+.Ic use ssl .
 .It Ic check http Ar path Ic digest Ar string
 For each host in the table, verify that retrieving the URL
 .Ar path
@@ -125,6 +131,12 @@ that can be used as is in a digest statement:
 .Bd -literal -offset indent
 a9993e36476816aba3e25717850c26c9cd0d89d
 .Ed
+If
+.Ic use ssl
+is specified, HTTPS will be used to contact the host.
+.It Ic check https Ar path Ic digest Ar string
+This has the same effect than above but also implies 
+.Ic use ssl .
 .It Ic check icmp
 Ping hosts in this table to determine whether they are up or not.
 This method will automatically use ICMP or ICMPV6 depending on the
@@ -145,8 +157,17 @@ then nothing is sent on the connection and data is immediately
 read.
 This can be useful with protocols that output a banner like
 SMTP, NNTP and FTP.
+If
+.Ic use ssl
+is specified, the data will be sent and/or received inside a SSL tunnel.
 .It Ic check tcp
 Use a simple TCP connect to check that hosts are up.
+If
+.Ic use ssl
+is specified, a complete SSL handshake will also be performed.
+.It Ic check ssl
+This has the same effect than above but also implies 
+.Ic use ssl .
 .It Ic disable
 Start the table disabled \(en no hosts will be checked in this table.
 The table can be later enabled through
@@ -166,6 +187,8 @@ Main and backup tables need to have the same real port.
 Set the timeout in milliseconds for each host that is checked using
 TCP as the transport.
 This will override the global timeout, which is 200 milliseconds by default.
+.It Ic use ssl
+When the table uses a TCP check, wrap it into SSL.
 .El
 .Sh SERVICES
 Services represent a

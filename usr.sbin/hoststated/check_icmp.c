@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.11 2007/01/12 17:12:58 pyr Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.12 2007/01/29 14:23:31 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -34,6 +34,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <err.h>
+
+#include <openssl/ssl.h>
 
 #include "hoststated.h"
 
