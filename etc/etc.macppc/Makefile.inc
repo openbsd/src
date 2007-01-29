@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.8 2006/07/27 02:53:55 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 2007/01/29 21:28:33 martin Exp $
 
 .ifdef DESTDIR
 snap_md: bsd bootblocks distrib gzip_bsd.rd
@@ -13,6 +13,7 @@ bsd:
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/ofwboot ${DESTDIR}/snapshot/ofwboot
 	cp ${DESTDIR}/usr/mdec/bsd.tbxi ${DESTDIR}/snapshot/bsd.tbxi
+	cp ${DESTDIR}/usr/mdec/boot.mac ${DESTDIR}/snapshot/boot.mac
 
 gzip_bsd.rd:
 	gzip -9 ${DESTDIR}/snapshot/bsd.rd
