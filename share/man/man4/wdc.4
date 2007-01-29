@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wdc.4,v 1.14 2004/09/30 19:59:26 mickey Exp $
+.\"	$OpenBSD: wdc.4,v 1.15 2007/01/29 21:29:47 martin Exp $
 .\"	$NetBSD: wdc.4,v 1.4 1999/05/19 14:44:02 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -47,6 +47,9 @@
 .Cd "wdc* at macobio?"
 .Cd "wdc* at kauaiata?"
 .Pp
+.Cd "# landisk"
+.Cd wdc0 at obio? port 0x14000000 irq 10
+.Pp
 .Cd "# all architectures"
 .Cd "wdc* at pcmcia?"
 .Pp
@@ -78,6 +81,7 @@ This is known to cause problems with some motherboards.
 .Xr isa 4 ,
 .Xr isapnp 4 ,
 .Xr macobio 4 ,
+.Xr obio 4 ,
 .Xr pciide 4 ,
 .Xr pcmcia 4 ,
 .Xr scsi 4 ,
