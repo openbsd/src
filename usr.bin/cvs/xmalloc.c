@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.c,v 1.6 2006/03/28 02:13:44 ray Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.7 2007/01/29 16:22:29 xsa Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -99,6 +99,22 @@ xasprintf(char **ret, const char *fmt, ...)
 
 	if (i < 0 || *ret == NULL)
 		fatal("xasprintf: could not allocate memory");
+
+	return (i);
+}
+
+int
+xsnprintf(char *str, size_t size, const char *fmt, ...)
+{
+	va_list ap;
+	int i;
+
+	va_start(ap, fmt);
+	i = vsnprintf(str, size, fmt, ap);
+	va_end(ap);
+
+	if (i == -1 || i >= (int)size)
+		fatal("xsnprintf: overflow");
 
 	return (i);
 }

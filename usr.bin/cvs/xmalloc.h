@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.h,v 1.2 2006/03/28 02:13:44 ray Exp $ */
+/* $OpenBSD: xmalloc.h,v 1.3 2007/01/29 16:22:29 xsa Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -27,5 +27,9 @@ char	*xstrdup(const char *);
 int	 xasprintf(char **, const char *, ...)
                 __attribute__((__format__ (printf, 2, 3)))
                 __attribute__((__nonnull__ (2)));
+int	 xsnprintf(char *, size_t, const char *, ...)
+		__attribute__((__format__ (printf, 3, 4)))
+		__attribute__((__nonnull__ (3)))
+		__attribute__((__bounded__ (__string__,1,2)));
 
-#endif				/* XMALLOC_H */
+#endif	/* XMALLOC_H */
