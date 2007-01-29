@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2004/12/30 01:52:48 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2007/01/29 19:40:06 jmc Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -63,8 +63,8 @@ int main(int argc, char *argv[])
 	setlocale(LC_NUMERIC, "C"); /* for parsing cmdline & prog */
 	cmdname = __progname;
 	if (argc == 1) {
-		fprintf(stderr, "usage: %s [-F fs] [-v var=value] [-safe] "
-		    "[-mr n] [-mf n] [prog | -f progfile] file ...\n",
+		fprintf(stderr, "usage: %s [-safe] [-V] [-d[n]] [-F fs] "
+		    "[-v var=value] [prog | -f progfile]\n\tfile ...\n",
 		    cmdname);
 		exit(1);
 	}
