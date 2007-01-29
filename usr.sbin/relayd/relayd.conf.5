@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.15 2007/01/29 14:23:31 pyr Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.16 2007/01/29 18:38:15 pyr Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -113,7 +113,7 @@ If
 .Ic use ssl
 is specified, HTTPS will be used to contact the host.
 .It Ic check https Ar path Ic code Ar number
-This has the same effect than above but also implies 
+This has the same effect as above but also implies
 .Ic use ssl .
 .It Ic check http Ar path Ic digest Ar string
 For each host in the table, verify that retrieving the URL
@@ -135,7 +135,7 @@ If
 .Ic use ssl
 is specified, HTTPS will be used to contact the host.
 .It Ic check https Ar path Ic digest Ar string
-This has the same effect than above but also implies 
+This has the same effect as above but also implies
 .Ic use ssl .
 .It Ic check icmp
 Ping hosts in this table to determine whether they are up or not.
@@ -159,14 +159,14 @@ This can be useful with protocols that output a banner like
 SMTP, NNTP and FTP.
 If
 .Ic use ssl
-is specified, the data will be sent and/or received inside a SSL tunnel.
+is specified, the data will be sent and/or received inside an SSL tunnel.
 .It Ic check tcp
 Use a simple TCP connect to check that hosts are up.
 If
 .Ic use ssl
 is specified, a complete SSL handshake will also be performed.
 .It Ic check ssl
-This has the same effect than above but also implies 
+This has the same effect as above but also implies
 .Ic use ssl .
 .It Ic disable
 Start the table disabled \(en no hosts will be checked in this table.
@@ -188,7 +188,7 @@ Set the timeout in milliseconds for each host that is checked using
 TCP as the transport.
 This will override the global timeout, which is 200 milliseconds by default.
 .It Ic use ssl
-When the table uses a TCP check, wrap it into SSL.
+If the table uses a TCP check, wrap it in SSL.
 .El
 .Sh SERVICES
 Services represent a
