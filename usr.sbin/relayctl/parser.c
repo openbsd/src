@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.5 2007/01/09 00:45:32 deraadt Exp $	*/
+/*	$OpenBSD: parser.c,v 1.6 2007/01/29 10:28:11 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -115,7 +115,7 @@ parse(int argc, char *argv[])
 
 	bzero(&res, sizeof(res));
 
-	while (argc > 0) {
+	while (argc >= 0) {
 		if ((match = match_token(argv[0], table)) == NULL) {
 			fprintf(stderr, "valid commands/args:\n");
 			show_valid_args(table);
@@ -166,6 +166,8 @@ match_token(const char *word, const struct token table[])
 			}
 			break;
 		case HOSTID:
+			if (word == NULL)
+				break;
 			res.id.id = strtonum(word, 0, UINT_MAX, &errstr);
 			if (errstr) {
 				strlcpy(res.id.name, word, sizeof(res.id.name));
@@ -175,6 +177,8 @@ match_token(const char *word, const struct token table[])
 			match++;
 			break;
 		case TABLEID:
+			if (word == NULL)
+				break;
 			res.id.id = strtonum(word, 0, UINT_MAX, &errstr);
 			if (errstr) {
 				strlcpy(res.id.name, word, sizeof(res.id.name));
@@ -184,6 +188,8 @@ match_token(const char *word, const struct token table[])
 			match++;
 			break;
 		case SERVICEID:
+			if (word == NULL)
+				break;
 			res.id.id = strtonum(word, 0, UINT_MAX, &errstr);
 			if (errstr) {
 				strlcpy(res.id.name, word, sizeof(res.id.name));
@@ -198,9 +204,11 @@ match_token(const char *word, const struct token table[])
 	}
 
 	if (match != 1) {
-		if (match > 1)
+		if (word == NULL)
+			fprintf(stderr, "missing argument:\n");
+		else if (match > 1)
 			fprintf(stderr, "ambiguous argument: %s\n", word);
-		if (match < 1)
+		else if (match < 1)
 			fprintf(stderr, "unknown argument: %s\n", word);
 		return (NULL);
 	}
