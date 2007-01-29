@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.22 2007/01/23 11:40:26 bernd Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.23 2007/01/29 10:57:36 bernd Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -26,17 +26,14 @@
 .Sh SYNOPSIS
 .Nm pkg_info
 .Bk -words
-.Op Fl cDdfIiKkLMPpqRrSsUv
+.Op Fl AacDdfIiKkLMPpqRrSsUv
 .Op Fl E Ar filename
 .Op Fl e Ar pkg-name
 .Op Fl l Ar str
-.Ar pkg-name Op Ar ...
-.Ek
-.Nm pkg_info
-.Op Fl Aa Ar flags
-.Nm pkg_info
-.Op Fl v
 .Op Fl Q Ar query
+.Op Ar pkg-name
+.Op Ar ...
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
