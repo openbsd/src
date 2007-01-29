@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.22 2004/04/15 00:22:42 tedu Exp $	*/
+/*	$OpenBSD: exec.h,v 1.23 2007/01/29 11:33:24 otto Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ struct ps_strings {
  * Below the PS_STRINGS and sigtramp, we may require a gap on the stack
  * (used to copyin/copyout various emulation data structures).
  */
-#define	STACKGAPLEN	512	/* plenty enough for now */
+#define	STACKGAPLEN	(2*1024)	/* plenty enough for now */
 
 #ifdef MACHINE_STACK_GROWS_UP
 #define	STACKGAPBASE_UNALIGNED	\
