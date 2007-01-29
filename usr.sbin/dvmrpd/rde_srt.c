@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.2 2006/12/03 20:14:37 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.3 2007/01/29 13:38:59 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -246,6 +246,7 @@ rde_check_route(struct route_report *rr, int connected)
 	struct rt_node		*rn;
 	struct iface		*iface;
 	u_int32_t		 adj_metric;
+	u_int32_t		 nbr_ip, nbr_report;
 
 	if ((iface = if_find_index(rr->ifindex)) == NULL)
 		return (-1);
@@ -256,13 +257,48 @@ rde_check_route(struct route_report *rr, int connected)
 
 	adj_metric = rr->metric + iface->metric;
 
+	if (rr->metric >= INFINITY_METRIC)
+		return (0);
+
+	if (adj_metric > INFINITY_METRIC)
+		adj_metric = INFINITY_METRIC;
+
+	/* If the route is new and the Adjusted Metric is less than infinity,
+	   the route should be added. */
 	if ((rn = rt_find(rr->net.s_addr, mask2prefixlen(rr->mask.s_addr)))
 	    == NULL) {
-		rn = rr_new_rt(rr, adj_metric, connected);
-		rt_insert(rn);
+		if (adj_metric < INFINITY_METRIC) {
+			rn = rr_new_rt(rr, adj_metric, connected);
+			rt_insert(rn);
+		}
+		return (0);
 	}
 
-	rt_update(rn);
+	nbr_ip = rr->nexthop.s_addr;
+	nbr_report = rn->nexthop.s_addr;
+
+	if (rr->metric < INFINITY_METRIC) {
+		if (adj_metric > rn->cost) {	
+			if (nbr_ip == nbr_report) {
+				rn->cost = adj_metric;	
+			}
+		} else if (adj_metric < rn->cost) {
+			rn->cost = adj_metric;
+			if (nbr_ip != nbr_report)
+				rn->nexthop.s_addr = nbr_report;
+		} else {
+			if (nbr_report < nbr_ip)
+				rn->nexthop.s_addr = nbr_report;
+		}
+		rt_update(rn);
+	} else if (rr->metric == INFINITY_METRIC) {
+		if (nbr_ip == nbr_report) {
+			rt_remove(rn);
+		}
+	} else if (INFINITY_METRIC < rr->metric &&
+	    rr->metric < 2 * INFINITY_METRIC) {
+		/* XXX */
+	}
 
 	return (0);
 }
