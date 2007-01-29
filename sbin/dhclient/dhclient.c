@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.106 2007/01/27 22:05:24 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.107 2007/01/29 13:12:56 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -839,20 +839,10 @@ packet_to_lease(struct iaddr client_addr, struct option_data *options)
 	/* Copy the lease options. */
 	for (i = 0; i < 256; i++) {
 		if (options[i].len) {
-			lease->options[i].data = malloc(options[i].len + 1);
-			if (!lease->options[i].data) {
-				warning("dhcpoffer: no memory for option %d", i);
-				free_client_lease(lease);
-				return (NULL);
-			} else {
-				memcpy(lease->options[i].data, options[i].data,
-				    options[i].len);
-				lease->options[i].len = options[i].len;
-				lease->options[i].data[lease->options[i].len] =
-				    0;
-			}
+			lease->options[i] = options[i];
+			options[i].data = NULL;
+			options[i].len = 0;
 			if (!check_option(lease, i)) {
-				/* ignore a bogus lease offer */
 				warning("Invalid lease option - ignoring offer");
 				free_client_lease(lease);
 				return (NULL);
