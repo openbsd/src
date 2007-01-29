@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.36 2005/05/19 09:28:24 jmc Exp $
+.\"	$OpenBSD: shutdown.8,v 1.37 2007/01/29 17:34:25 jmc Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -177,16 +177,16 @@ command by killing the shutdown process.
 .Bl -tag -width /etc/rc.shutdown -compact
 .It Pa /etc/nologin
 tells login not to let anyone log in
+.It Pa /etc/rc.shutdown
+run by
+.Xr rc 8
+before the system is shutdown
 .It Pa /fastboot
 tells
 .Xr rc 8
 not to run
 .Xr fsck 8
 during the next boot
-.It Pa /etc/rc.shutdown
-run by
-.Xr rc 8
-before the system is shutdown
 .El
 .Sh SEE ALSO
 .Xr kill 1 ,
