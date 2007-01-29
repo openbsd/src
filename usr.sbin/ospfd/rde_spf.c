@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.57 2007/01/29 13:04:13 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.58 2007/01/29 13:23:05 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -102,10 +102,8 @@ spf_calc(struct area *area)
 				fatalx("spf_calc: invalid LSA type");
 			}
 
-			if (w == NULL) {
-				log_debug("spf_calc: w = NULL");
+			if (w == NULL)
 				continue;
-			}
 
 			if (w->lsa->hdr.age == MAX_AGE)
 				continue;
