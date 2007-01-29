@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.181 2007/01/28 03:03:35 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.182 2007/01/29 15:47:39 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -717,10 +717,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 				cvs_log(LP_NOTICE,
 				    "nothing known about '%s'",
 				    cf->file_path);
-			} else if (cvs_cmdop != CVS_OP_ADD) {
-				cvs_log(LP_NOTICE,
-				    "use add to create an entry for %s",
-				    cf->file_path);
 			}
 
 			cf->file_status = FILE_UNKNOWN;
@@ -728,9 +724,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 			if (cf->fd == -1) {
 				cf->file_status = FILE_UPTODATE;
 			} else if (cvs_cmdop != CVS_OP_ADD) {
-				cvs_log(LP_NOTICE,
-				    "use add to create an entry for %s",
-				    cf->file_path);
 				cf->file_status = FILE_UNKNOWN;
 			}
 		} else {
