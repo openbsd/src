@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.1 2004/05/07 15:08:25 aoyama Exp $	*/
+/*	$OpenBSD: conf.h,v 1.2 2007/01/29 14:18:00 aoyama Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * All rights reserved.
@@ -34,3 +34,12 @@
 cdev_decl(mm);
 
 cdev_decl(sio);
+
+cdev_decl(lcd);
+
+/* open, close, write, ioctl */
+#define	cdev_lcd_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), \
+	(dev_type_read((*))) enodev, dev_init(c,n,write), \
+	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev }

@@ -1,4 +1,4 @@
-/* $OpenBSD: lcd.c,v 1.1.1.1 2004/04/21 15:23:52 aoyama Exp $ */
+/* $OpenBSD: lcd.c,v 1.2 2007/01/29 14:18:00 aoyama Exp $ */
 /* $NetBSD: lcd.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -37,17 +37,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Taken from NetBSD/luna68k */
-
-/*
- * XXX
- * Following code segments are subject to change.
- * XXX
- */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/ioctl.h>
+#include <sys/fcntl.h>
+
+#include <machine/conf.h>
+#include <machine/lcd.h>
 
 #define PIO1_MODE_OUTPUT	0x84
 #define PIO1_MODE_INPUT		0x94
@@ -69,6 +66,8 @@
 #define LCD_HOME	0x02
 #define LCD_LOCATE(X, Y)	(((Y) & 1 ? 0xc0 : 0x80) | ((X) & 0x0f))
 
+#define LCD_MAXBUFLEN	80
+
 struct pio {
 	volatile u_int8_t portA;
         volatile unsigned : 24;
@@ -80,15 +79,164 @@ struct pio {
         volatile unsigned : 24;
 };
 
+/* Internal prototypes */
 void lcdbusywait(void);
 void lcdput(int);
 void lcdctrl(int);
 void lcdshow(const char *);
 void greeting(void);
-			       /* "1234567890123456" */
+
+/* Internal variables */
+int lcd_opened = 0;
+				     /* "1234567890123456" */
 static const char lcd_boot_message1[] = "OpenBSD/luna88k ";
 static const char lcd_boot_message2[] = "   SX-9100/DT   ";
 
+/*
+ * open/close/write/ioctl
+ */
+
+int
+lcdopen(dev, flags, fmt, p)
+	dev_t dev;
+	int flags, fmt;
+	struct proc *p;
+{
+	if (minor(dev) != 0)
+		return ENXIO;
+	if (lcd_opened)
+		return EBUSY;
+	lcd_opened = 1;
+
+	return 0;
+}
+
+int
+lcdclose(dev, flags, fmt, p)
+	dev_t dev;
+	int flags, fmt;
+	struct proc *p;
+{
+	lcd_opened = 0;
+
+	return 0;
+}
+
+int
+lcdwrite(dev, uio, flag)
+	dev_t dev;
+	struct uio *uio;
+	int flag;
+{
+	int error, len;
+	int i, n;
+	char buf[LCD_MAXBUFLEN];
+
+	len = n = uio->uio_resid;
+
+	if ((len < 0) || (len > LCD_MAXBUFLEN))
+		return EIO;
+
+	while (n > 0) {
+		error = uiomove(buf, n, uio);
+		if (error)
+			return EIO;
+		n = uio->uio_resid;
+	}
+
+	for(i = 0; i < len; i++) {
+		lcdput((int)buf[i]);
+	}
+
+	return 0;
+}
+
+int
+lcdioctl(dev, cmd, addr, flag, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t addr;
+	int flag;
+	struct proc *p;
+{
+	int val;
+
+	/* check if the device opened with write mode */
+	switch(cmd) {
+	case LCDCLS:
+	case LCDHOME:
+	case LCDMODE:
+	case LCDDISP:
+	case LCDMOVE:
+	case LCDSEEK:
+	case LCDRESTORE:
+		if ((flag & FWRITE) == 0)
+			return EACCES;
+		break;
+	}
+
+	switch(cmd) {
+	case LCDCLS:
+		lcdctrl(LCD_CLS);
+		break;
+
+	case LCDHOME:
+		lcdctrl(LCD_HOME);
+		break;
+
+	case LCDMODE:
+		val = *(int *)addr;
+		switch (val) {
+		case LCDMODE_C_LEFT:
+		case LCDMODE_C_RIGHT:
+		case LCDMODE_D_LEFT:
+		case LCDMODE_D_RIGHT:
+			lcdctrl(val);
+			break;
+		default:
+			return EINVAL;
+		}
+		break;
+
+	case LCDDISP:
+		val = *(int *)addr;
+		if ((val & 0x7) != val)
+			return EINVAL;
+		lcdctrl(val | 0x8);
+		break;
+
+	case LCDMOVE:
+		val = *(int *)addr;
+		switch (val) {
+		case LCDMOVE_C_LEFT:
+		case LCDMOVE_C_RIGHT:
+		case LCDMOVE_D_LEFT:
+		case LCDMOVE_D_RIGHT:
+			lcdctrl(val);
+			break;
+		default:
+			return EINVAL;
+		}
+		break;
+
+	case LCDSEEK:
+		val = *(int *)addr & 0x7f;
+		lcdctrl(val | 0x80);
+		break;
+
+	case LCDRESTORE:
+		greeting();
+		break;
+
+	default:
+		return ENOTTY;
+	}
+	return 0;
+}
+
+/*
+ * Internal functions
+ */
 void
 lcdbusywait()
 {
