@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.8 2005/12/29 12:31:29 martin Exp $ */
+/* $OpenBSD: pckbd.c,v 1.9 2007/01/30 20:45:05 jcs Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -192,54 +192,79 @@ pckbd_set_xtscancode(kbctag, kbcslot)
 	pckbc_tag_t kbctag;
 	pckbc_slot_t kbcslot;
 {
-	u_char cmd[2];
-	int res;
+	/* default to have the 8042 translate the keyboard with table 3. */
+	int table = 3;
 
-	/*
-	 * Some keyboard/8042 combinations do not seem to work if the keyboard
-	 * is set to table 1; in fact, it would appear that some keyboards just
-	 * ignore the command altogether.  So by default, we use the AT scan
-	 * codes and have the 8042 translate them.  Unfortunately, this is
-	 * known to not work on some PS/2 machines.  We try desperately to deal
-	 * with this by checking the (lack of a) translate bit in the 8042 and
-	 * attempting to set the keyboard to XT mode.  If this all fails, well,
-	 * tough luck.
-	 *
-	 * XXX It would perhaps be a better choice to just use AT scan codes
-	 * and not bother with this.
-	 */
-	if (pckbc_xt_translation(kbctag, kbcslot, 1)) {
-		/* The 8042 is translating for us; use AT codes. */
+	if (!pckbc_xt_translation(kbctag, kbcslot, 1)) {
+#ifdef DEBUG
+		printf("pckbd: enabling of translation failed\n");
+#endif
+		/* just set the basic XT table and hope it works. */
+		table = 1;
+	}
+
+	/* keep falling back until we hit a table that looks usable. */
+	for (; table >= 1; table--) {
+		u_char cmd[2];
+#ifdef DEBUG
+		printf("pckbd: trying table %d\n", table);
+#endif
 		cmd[0] = KBC_SETTABLE;
-		cmd[1] = 2;
-		res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
-		if (res) {
+		cmd[1] = table;
+		if (pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0)) {
 			u_char cmd[1];
 #ifdef DEBUG
-			printf("pckbd: error setting scanset 2\n");
+			printf("pckbd: table set of %d failed\n", table);
 #endif
-			/*
-			 * XXX at least one keyboard is reported to lock up
-			 * if a "set table" is attempted, thus the "reset".
-			 * XXX ignore errors, scanset 2 should be
-			 * default anyway.
-			 */
-			cmd[0] = KBC_RESET;
-			(void)pckbc_poll_cmd(kbctag, kbcslot, cmd, 1, 1, 0, 1);
-			pckbc_flush(kbctag, kbcslot);
-			res = 0;
+			if (table > 1) {
+				cmd[0] = KBC_RESET;
+				(void)pckbc_poll_cmd(kbctag, kbcslot, cmd,
+				    1, 1, 0, 1);
+				pckbc_flush(kbctag, kbcslot);
+
+				continue;
+			}
 		}
-	} else {
-		/* Stupid 8042; set keyboard to XT codes. */
-		cmd[0] = KBC_SETTABLE;
-		cmd[1] = 1;
-		res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
+
+		/*
+		 * the 8042 took the table set request, however, not all that
+		 * report they can work with table 3 actually work, so ask what
+		 * table it reports it's in.
+		 */
+		if (table == 3) {
+			u_char cmd[1], resp[0];
+
+			cmd[0] = KBC_SETTABLE;
+			cmd[1] = 0;
+			if (pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 1, resp, 0)) {
+				/*
+				 * query failed, step down to table 2 to be
+				 * safe.
+				 */
 #ifdef DEBUG
-		if (res)
-			printf("pckbd: error setting scanset 1\n");
+				printf("pckbd: table 3 verification failed\n");
 #endif
+				continue;
+			} else if (resp[0] == 3) {
+#ifdef DEBUG
+				printf("pckbd: settling on table 3\n");
+#endif
+				return (0);
+			}
+#ifdef DEBUG
+			else
+				printf("pckbd: table \"%x\" != 3, trying 2\n",
+					resp[0]);
+#endif
+		} else {
+#ifdef DEBUG
+			printf("pckbd: settling on table %d\n", table);
+#endif
+			return (0);
+		}
 	}
-	return (res);
+
+	return (1);
 }
 
 static int
