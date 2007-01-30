@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2007/01/29 14:23:31 pyr Exp $
+#	$OpenBSD: Makefile,v 1.6 2007/01/30 15:11:51 reyk Exp $
 
 PROG=		hoststated
 SRCS=		parse.y log.c control.c buffer.c imsg.c hoststated.c 	\
@@ -6,8 +6,8 @@ SRCS=		parse.y log.c control.c buffer.c imsg.c hoststated.c 	\
 		check_icmp.c check_tcp.c check_http.c check_send_expect.c
 MAN=		hoststated.8 hoststated.conf.5
 
-LDADD=		-levent -lcrypto -lssl
-DPADD=		${LIBEVENT} ${LIBCRYPTO} ${LIBSSL}
+LDADD=		-levent -lssl -lcrypto
+DPADD=		${LIBEVENT} ${LIBSSL} ${LIBCRYPTO} 
 CFLAGS+=	-Wall -Werror -I${.CURDIR}
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
