@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.1 2007/01/29 14:23:31 pyr Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.2 2007/01/30 11:48:06 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -39,7 +39,7 @@ void	ssl_read(int, short, void *);
 void	ssl_write(int, short, void *);
 void	ssl_connect(int, short, void *);
 void	ssl_cleanup(struct ctl_tcp_event *);
-void	ssl_error(const char *);
+void	ssl_error(const char *, const char *);
 
 void
 ssl_read(int s, short event, void *arg)
@@ -92,7 +92,7 @@ ssl_read(int s, short event, void *arg)
 			/* FALLTHROUGH */
 		default:
 			cte->host->up = HOST_DOWN;
-			ssl_error("cannot read");
+			ssl_error(cte->host->name, "cannot read");
 			ssl_cleanup(cte);
 			hce_notify_done(cte->host, "ssl_read: SSL error");
 			break;
@@ -156,7 +156,7 @@ ssl_write(int s, short event, void *arg)
 			goto retry;
 		default:
 			cte->host->up = HOST_DOWN;
-			ssl_error("cannot write");
+			ssl_error(cte->host->name, "cannot write");
 			ssl_cleanup(cte);
 			hce_notify_done(cte->host, "ssl_write: SSL error");
 			return;
@@ -207,7 +207,7 @@ ssl_connect(int s, short event, void *arg)
 			goto retry;
 		default:
 			cte->host->up = HOST_DOWN;
-			ssl_error("ssl_connect: cannot connect");
+			ssl_error(cte->host->name, "cannot connect");
 			hce_notify_done(cte->host, "ssl_connect: SSL error");
 			ssl_cleanup(cte);
 			return;
@@ -254,15 +254,14 @@ ssl_cleanup(struct ctl_tcp_event *cte)
 }
 
 void
-ssl_error(const char *msg)
+ssl_error(const char *where, const char *what)
 {
-	unsigned long	code;
-	char		errbuf[128];
+	unsigned long	 code;
+	char		 errbuf[128];
 	
-
 	for (; (code = ERR_get_error()) != 0 ;) {
 		ERR_error_string_n(code, errbuf, sizeof(errbuf));
-		log_debug("ssl_error: %s: %s", msg, errbuf);
+		log_debug("SSL library error: %s: %s: %s", where, what, errbuf);
 	}
 }
 
@@ -278,13 +277,13 @@ ssl_transaction(struct ctl_tcp_event *cte)
 {
 	cte->ssl = SSL_new(cte->table->ssl_ctx);
 	if (cte->ssl == NULL) {
-		ssl_error("ssl_transaction: cannot create object");
+		ssl_error(cte->host->name, "cannot create object");
 		fatal("cannot create SSL object");
 	}
 
 	if (SSL_set_fd(cte->ssl, cte->s) == 0) {
 		cte->host->up = HOST_UNKNOWN;
-		ssl_error("ssl_transaction: cannot set fd"); 
+		ssl_error(cte->host->name, "cannot set fd"); 
 		ssl_cleanup(cte);
 		hce_notify_done(cte->host, "cannot set SSL fd");
 		return;
@@ -302,7 +301,7 @@ ssl_ctx_create(struct hoststated *env)
 
 	ctx = SSL_CTX_new(SSLv23_client_method());
 	if (ctx == NULL) {
-		ssl_error("ssl_ctx_create: cannot create context");
+		ssl_error("ssl_ctx_create", "cannot create context");
 		fatal("could not create SSL context");
 	}
 	return (ctx);
