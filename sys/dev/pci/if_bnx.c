@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.42 2007/01/27 12:38:59 krw Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4784,7 +4784,7 @@ bnx_set_rx_mode(struct bnx_softc *sc)
 	struct ifnet		*ifp = &ac->ac_if;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
-	u_int32_t		hashes[4] = { 0, 0, 0, 0 };
+	u_int32_t		hashes[NUM_MC_HASH_REGISTERS] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	u_int32_t		rx_mode, sort_mode;
 	int			h, i;
 
@@ -4831,12 +4831,12 @@ allmulti:
 				goto allmulti;
 			}
 			h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) &
-			    0x7F;
-			hashes[(h & 0x60) >> 5] |= 1 << (h & 0x1F);
+			    0xFF;
+			hashes[(h & 0xE0) >> 5] |= 1 << (h & 0x1F);
 			ETHER_NEXT_MULTI(step, enm);
 		}
 
-		for (i = 0; i < 4; i++)
+		for (i = 0; i < NUM_MC_HASH_REGISTERS; i++)
 			REG_WR(sc, BNX_EMAC_MULTICAST_HASH0 + (i * 4),
 			    hashes[i]);
 
