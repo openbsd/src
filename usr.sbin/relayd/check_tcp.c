@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.12 2007/01/29 14:23:31 pyr Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.13 2007/01/30 10:09:02 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -79,8 +79,9 @@ check_tcp(struct ctl_tcp_event *cte)
 	if (connect(s, (struct sockaddr *)&cte->host->ss, len) == -1) {
 		if (errno != EINPROGRESS)
 			goto bad;
-	} else
-		cte->host->up = HOST_UP;
+	}
+
+	cte->host->up = HOST_UP;
 	event_set(&cte->ev, s, EV_TIMEOUT|EV_WRITE, tcp_write, cte);
 	event_add(&cte->ev, &tv);
 	return;
@@ -220,14 +221,15 @@ tcp_read_buf(int s, short event, void *arg)
 	log_debug("reading");
 	bzero(rbuf, sizeof(rbuf));
 	br = read(s, rbuf, sizeof(rbuf) - 1);
-	if (br == -1) {
+	switch (br) {
+	case -1:
 		if (errno == EAGAIN || errno == EINTR)
 			goto retry;
 		cte->host->up = HOST_DOWN;
 		buf_free(cte->buf);
 		hce_notify_done(cte->host, "tcp_read_buf: read failed");
-		return;
-	} else if (br == 0) {
+		return;;
+	case 0:
 		cte->host->up = HOST_DOWN;
 		(void)cte->validate_close(cte);
 		close(cte->s);
@@ -237,23 +239,24 @@ tcp_read_buf(int s, short event, void *arg)
 		else
 			hce_notify_done(cte->host, "check failed");
 		return;
-	}
-	buf_add(cte->buf, rbuf, br);
-	if (cte->validate_read != NULL) {
-		log_debug("calling check");
-		if (cte->validate_read(cte) != 0)
-			goto retry;
+	default:
+		buf_add(cte->buf, rbuf, br);
+		if (cte->validate_read != NULL) {
+			log_debug("calling check");
+			if (cte->validate_read(cte) != 0)
+				goto retry;
 
-		close(cte->s);
-		buf_free(cte->buf);
-		if (cte->host->up == HOST_UP)
-			hce_notify_done(cte->host, "check succeeded");
-		else
-			hce_notify_done(cte->host, "check failed");
-		return;
+			close(cte->s);
+			buf_free(cte->buf);
+			if (cte->host->up == HOST_UP)
+				hce_notify_done(cte->host, "check succeeded");
+			else
+				hce_notify_done(cte->host, "check failed");
+			return;
+		}
+		break; /* retry */
 	}
 retry:
 	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, tcp_read_buf,
 	    &cte->tv_start, &cte->table->timeout, cte);
-
 }
