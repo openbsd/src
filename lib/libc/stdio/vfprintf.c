@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.41 2007/01/16 19:20:53 millert Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.42 2007/01/30 03:57:29 ray Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -605,15 +605,13 @@ reswitch:	switch (ch) {
 				 */
 				char *p = memchr(cp, 0, prec);
 
-				if (p != NULL) {
-					size = p - cp;
-					if (size > prec)
-						size = prec;
-				} else {
-					size = prec;
-				}
+				size = p ? (p - cp) : prec;
 			} else {
-				size = strlen(cp);
+				size_t len;
+
+				if ((len = strlen(cp)) > INT_MAX)
+					goto overflow;
+				size = (int)len;
 			}
 			sign = '\0';
 			break;
