@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.4 2007/01/03 14:05:00 deraadt Exp $ */
+/* $OpenBSD: agp.c,v 1.5 2007/01/30 21:12:14 dim Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -514,7 +514,7 @@ agp_generic_bind_memory(struct vga_pci_softc *sc, struct agp_memory *mem,
 	bus_size_t done, j;
 	bus_addr_t pa;
 	off_t i, k;
-	int contigpages, nseg, error;
+	int nseg, error;
 
 	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 
@@ -534,56 +534,47 @@ agp_generic_bind_memory(struct vga_pci_softc *sc, struct agp_memory *mem,
 	}
 
 	/*
-	 * XXXfvdl
 	 * The memory here needs to be directly accessable from the
 	 * AGP video card, so it should be allocated using bus_dma.
 	 * However, it need not be contiguous, since individual pages
 	 * are translated using the GATT.
-	 *
-	 * Using a large chunk of contiguous memory may get in the way
-	 * of other subsystems that may need one, so we try to be friendly
-	 * and ask for allocation in chunks of a minimum of 8 pages
-	 * of contiguous memory on average, falling back to 4, 2 and 1
-	 * if really needed. Larger chunks are preferred, since allocating
-	 * a bus_dma_segment per page would be overkill.
 	 */
 
-	for (contigpages = 32; contigpages > 0; contigpages >>= 1) {
-		nseg = (mem->am_size / (contigpages * PAGE_SIZE)) + 1;
-		segs = malloc(nseg * sizeof *segs, M_DEVBUF, M_WAITOK);
-		if (segs == NULL)
-			return ENOMEM;
-		if ((error = bus_dmamem_alloc(sc->sc_dmat, mem->am_size, PAGE_SIZE, 0,
-		    segs, nseg, &mem->am_nseg, BUS_DMA_WAITOK)) != 0) {
-			free(segs, M_DEVBUF);
-			AGP_DPF("bus_dmamem_alloc failed %d\n", error);
-			continue;
-		}
-		if ((error = bus_dmamem_map(sc->sc_dmat, segs, mem->am_nseg,
-		    mem->am_size, &mem->am_virtual, BUS_DMA_WAITOK)) != 0) {
-			bus_dmamem_free(sc->sc_dmat, segs, mem->am_nseg);
-			free(segs, M_DEVBUF);
-			AGP_DPF("bus_dmamem_map failed %d\n", error);
-			continue;
-		}
-		if ((error = bus_dmamap_load(sc->sc_dmat, mem->am_dmamap,
-		    mem->am_virtual, mem->am_size, NULL,
-		    BUS_DMA_WAITOK)) != 0) {
-			bus_dmamem_unmap(sc->sc_dmat, mem->am_virtual,
-			    mem->am_size);
-			bus_dmamem_free(sc->sc_dmat, segs, mem->am_nseg);
-			free(segs, M_DEVBUF);
-			AGP_DPF("bus_dmamap_load failed %d\n", error);
-			continue;
-		}
-		mem->am_dmaseg = segs;
-		break;
-	}
-
-	if (contigpages == 0) {
+	nseg = (mem->am_size + PAGE_SIZE - 1) / PAGE_SIZE;
+	segs = malloc(nseg * sizeof *segs, M_DEVBUF, M_WAITOK);
+	if (segs == NULL) {
 		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		AGP_DPF("malloc segs (%u) failed\n",
+		    nseg * sizeof *segs);
 		return ENOMEM;
 	}
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, mem->am_size, PAGE_SIZE, 0,
+	    segs, nseg, &mem->am_nseg, BUS_DMA_WAITOK)) != 0) {
+		free(segs, M_DEVBUF);
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		AGP_DPF("bus_dmamem_alloc failed %d\n", error);
+		return error;
+	}
+	if ((error = bus_dmamem_map(sc->sc_dmat, segs, mem->am_nseg,
+	    mem->am_size, &mem->am_virtual, BUS_DMA_WAITOK)) != 0) {
+		bus_dmamem_free(sc->sc_dmat, segs, mem->am_nseg);
+		free(segs, M_DEVBUF);
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		AGP_DPF("bus_dmamem_map failed %d\n", error);
+		return error;
+	}
+	if ((error = bus_dmamap_load(sc->sc_dmat, mem->am_dmamap,
+	    mem->am_virtual, mem->am_size, NULL,
+	    BUS_DMA_WAITOK)) != 0) {
+		bus_dmamem_unmap(sc->sc_dmat, mem->am_virtual,
+		    mem->am_size);
+		bus_dmamem_free(sc->sc_dmat, segs, mem->am_nseg);
+		free(segs, M_DEVBUF);
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		AGP_DPF("bus_dmamap_load failed %d\n", error);
+		return error;
+	}
+	mem->am_dmaseg = segs;
 
 	/*
 	 * Bind the individual pages and flush the chipset's
@@ -620,6 +611,7 @@ agp_generic_bind_memory(struct vga_pci_softc *sc, struct agp_memory *mem,
 						mem->am_nseg);
 				free(mem->am_dmaseg, M_DEVBUF);
 				lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+				AGP_DPF("AGP_BIND_PAGE failed %d\n", error);
 				return error;
 			}
 		}
