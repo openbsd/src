@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.38 2006/12/14 10:10:20 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.39 2007/01/30 09:54:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -935,7 +935,7 @@ vic_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 
 	vic_link_state(sc);
 
-	if (ifp->if_link_state == LINK_STATE_UP &&
+	if (LINK_STATE_IS_UP(ifp->if_link_state) &&
 	    ifp->if_flags & IFF_UP)
 		imr->ifm_status |= IFM_ACTIVE;
 }
