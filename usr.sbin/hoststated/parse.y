@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2007/01/29 14:23:31 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.20 2007/01/30 10:12:06 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -45,7 +45,7 @@
 
 #include "hoststated.h"
 
-struct hoststated			*conf = NULL;
+struct hoststated		*conf = NULL;
 static FILE			*fin = NULL;
 static int			 lineno = 1;
 static int			 errors = 0;
@@ -458,36 +458,36 @@ interface	: /*empty*/		{ $$ = NULL; }
 		;
 
 host		: HOST STRING {
-			struct host *r;
 			struct address *a;
 			struct addresslist al;
 
-			if ((r = calloc(1, sizeof(*r))) == NULL)
+			if (($$ = calloc(1, sizeof(*($$)))) == NULL)
 				fatal("out of memory");
 
 			TAILQ_INIT(&al);
 			if (host($2, &al, 1, 0, NULL) <= 0) {
 				yyerror("invalid host %s", $2);
 				free($2);
+				free($$);
 				YYERROR;
 			}
 			a = TAILQ_FIRST(&al);
-			memcpy(&r->ss, &a->ss, sizeof(r->ss));
+			memcpy(&$$->ss, &a->ss, sizeof($$->ss));
 			free(a);
 
-			if (strlcpy(r->name, $2, sizeof(r->name)) >=
-			    sizeof(r->name)) {
+			if (strlcpy($$->name, $2, sizeof($$->name)) >=
+			    sizeof($$->name)) {
 				yyerror("host name truncated");
 				free($2);
+				free($$);
 				YYERROR;
-			} else {
-				r->id = last_host_id++;
-				if (last_host_id == UINT_MAX) {
-					yyerror("too many hosts defined");
-					YYERROR;
-				}
-				free($2);
-				$$ = r;
+			}
+			free($2);
+			$$->id = last_host_id++;
+			if (last_host_id == UINT_MAX) {
+				yyerror("too many hosts defined");
+				free($$);
+				YYERROR;
 			}
 		}
 		;
