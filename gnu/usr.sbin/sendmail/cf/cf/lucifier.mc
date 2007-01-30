@@ -11,10 +11,7 @@ divert(-1)
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#	This product includes software developed by Michael Shalayeff.
-# 4. The name of the author may not be used to endorse or promote products
+# 3. The name of the author may not be used to endorse or promote products
 #    derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
@@ -30,7 +27,7 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-VERSIONID(`$OpenBSD: lucifier.mc,v 1.2 2001/09/11 19:02:48 millert Exp $')dnl
+VERSIONID(`$OpenBSD: lucifier.mc,v 1.3 2007/01/30 05:46:17 ray Exp $')dnl
 OSTYPE(openbsd)dnl
 MASQUERADE_AS(lucifier.dial-up.user.akula.net)dnl
 MASQUERADE_DOMAIN(lucifier.dial-up.user.akula.net)dnl
