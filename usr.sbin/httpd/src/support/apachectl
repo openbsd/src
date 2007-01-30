@@ -108,7 +108,7 @@ do
     restart)
 	if [ $RUNNING -eq 0 ]; then
 	    echo "$0 $ARG: httpd not running, trying to start"
-	    if $HTTPD ; then
+	    if $HTTPD $RCFLAGS; then
 		echo "$0 $ARG: httpd started"
 	    else
 		echo "$0 $ARG: httpd could not be started"
@@ -132,7 +132,7 @@ do
     graceful)
 	if [ $RUNNING -eq 0 ]; then
 	    echo "$0 $ARG: httpd not running, trying to start"
-	    if $HTTPD ; then
+	    if $HTTPD $RCFLAGS; then
 		echo "$0 $ARG: httpd started"
 	    else
 		echo "$0 $ARG: httpd could not be started"
