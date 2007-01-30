@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.70 2007/01/10 23:04:53 kettenis Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.71 2007/01/30 02:35:16 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2369,7 +2369,8 @@ struct bge_softc {
 #define BGE_PHY_5704_A0_BUG	0x00002000
 #define BGE_PHY_JITTER_BUG	0x00004000
 #define BGE_PHY_BER_BUG		0x00008000
-#define BGE_NO_ETH_WIRE_SPEED	0x00010000
+#define BGE_PHY_ADJUST_TRIM	0x00010000
+#define BGE_NO_ETH_WIRE_SPEED	0x00020000
 
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_chipid;

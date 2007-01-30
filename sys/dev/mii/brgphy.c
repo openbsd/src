@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.70 2007/01/10 23:04:53 kettenis Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.71 2007/01/30 02:35:16 krw Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -91,7 +91,6 @@ void	brgphy_bcm54k2_dspcode(struct mii_softc *);
 void	brgphy_adc_bug(struct mii_softc *);
 void	brgphy_5704_a0_bug(struct mii_softc *);
 void	brgphy_ber_bug(struct mii_softc *);
-void	brgphy_jitter_bug(struct mii_softc *);
 void	brgphy_jumbo_settings(struct mii_softc *);
 void	brgphy_eth_wirespeed(struct mii_softc *);
 
@@ -482,8 +481,22 @@ brgphy_reset(struct mii_softc *sc)
 			brgphy_5704_a0_bug(sc);
 		if (bge_sc->bge_flags & BGE_PHY_BER_BUG)
 			brgphy_ber_bug(sc);
-		if (bge_sc->bge_flags & BGE_PHY_JITTER_BUG)
-			brgphy_jitter_bug(sc);
+		else if (bge_sc->bge_flags & BGE_PHY_JITTER_BUG) {
+			PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0c00);
+			PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG, 0x000a);
+
+			if (bge_sc->bge_flags & BGE_PHY_ADJUST_TRIM) {
+				PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT,
+				    0x110b);
+				PHY_WRITE(sc, BRGPHY_TEST1,
+				    BRGPHY_TEST1_TRIM_EN | 0x4);
+			} else {
+				PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT,
+				    0x010b);
+			}
+
+			PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0400);
+		}
 
 		/* Set Jumbo frame settings in the PHY. */
 		if (bge_sc->bge_flags & BGE_JUMBO_CAP)
@@ -645,25 +658,6 @@ brgphy_ber_bug(struct mii_softc *sc)
 		{ BRGPHY_MII_DSP_RW_PORT,	0x9506 },
 		{ BRGPHY_MII_DSP_ADDR_REG,	0x401f },
 		{ BRGPHY_MII_DSP_RW_PORT,	0x14e2 },
-		{ BRGPHY_MII_AUXCTL,		0x0400 },
-		{ 0,				0 },
-	};
-	int i;
-
-	for (i = 0; dspcode[i].reg != 0; i++)
-		PHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
-}
-
-void
-brgphy_jitter_bug(struct mii_softc *sc)
-{
-	static const struct {
-		int		reg;
-		uint16_t	val;
-	} dspcode[] = {
-		{ BRGPHY_MII_AUXCTL,		0x0c00 },
-		{ BRGPHY_MII_DSP_ADDR_REG,	0x000a },
-		{ BRGPHY_MII_DSP_RW_PORT,	0x010b },
 		{ BRGPHY_MII_AUXCTL,		0x0400 },
 		{ 0,				0 },
 	};

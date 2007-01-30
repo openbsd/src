@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphyreg.h,v 1.8 2003/10/22 09:39:29 jmc Exp $	*/
+/*	$OpenBSD: brgphyreg.h,v 1.9 2007/01/30 02:35:16 krw Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -262,6 +262,9 @@
 #define BRGPHY_IMR_LSP_CHG	0x0004	/* Link speed changed */
 #define BRGPHY_IMR_LNK_CHG	0x0002	/* Link status change */
 #define BRGPHY_IMR_CRCERR	0x0001	/* CEC error */
+
+#define BRGPHY_TEST1		0x1E
+#define BRGPHY_TEST1_TRIM_EN	0x0010
 
 #define BRGPHY_INTRS	\
 	~(BRGPHY_IMR_LNK_CHG|BRGPHY_IMR_LSP_CHG|BRGPHY_IMR_DUP_CHG)
