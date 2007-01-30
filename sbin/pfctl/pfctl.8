@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.127 2007/01/18 20:45:55 henning Exp $
+.\" $OpenBSD: pfctl.8,v 1.128 2007/01/30 21:01:56 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -425,8 +425,11 @@ Show the list of tables.
 Show the list of operating system fingerprints.
 .It Fl s Cm Interfaces
 Show the list of interfaces and interface drivers available to PF.
-When used together with a double
+When used together with
 .Fl v ,
+it additionally lists which interfaces have skip rules activated.
+When used together with
+.Fl vv ,
 interface statistics are also shown.
 .Fl i
 can be used to select an interface or a group of interfaces.
