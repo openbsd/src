@@ -159,13 +159,13 @@ struct perl_thread;
 #endif
 
 #ifndef PERL_UNUSED_DECL
-#  ifdef HASATTRIBUTE_UNUSED
+#  if defined(HASATTRIBUTE_UNUSED) && !defined(__cplusplus)
 #    define PERL_UNUSED_DECL __attribute__unused__
 #  else
 #    define PERL_UNUSED_DECL
 #  endif
 #endif
-
+ 
 /* gcc -Wall:
  * for silencing unused variables that are actually used most of the time,
  * but we cannot quite get rid of, such as "ax" in PPCODE+noargs xsubs
@@ -182,10 +182,23 @@ struct perl_thread;
 #  define PERL_UNUSED_VAR(x) ((void)x)
 #endif
 
-#define NOOP (void)0
-#define dNOOP extern int Perl___notused PERL_UNUSED_DECL
+#ifdef USE_ITHREADS
+#  define PERL_UNUSED_CONTEXT PERL_UNUSED_ARG(my_perl)
+#else
+#  define PERL_UNUSED_CONTEXT
+#endif
+
+#define NOOP /*EMPTY*/(void)0
+#if !defined(HASATTRIBUTE_UNUSED) && defined(__cplusplus)
+#define dNOOP /*EMPTY*/(void)0 /* Older g++ has no __attribute((unused))__ */
+#else
+#define dNOOP extern int /*@unused@*/ Perl___notused PERL_UNUSED_DECL
+#endif
 
 #ifndef pTHX
+/* Don't bother defining tTHX and sTHX; using them outside
+ * code guarded by PERL_IMPLICIT_CONTEXT is an error.
+ */
 #  define pTHX		void
 #  define pTHX_
 #  define aTHX
@@ -2353,14 +2366,20 @@ typedef struct clone_params CLONE_PARAMS;
  * http://www.ohse.de/uwe/articles/gcc-attributes.html,
  * but contrary to this information warn_unused_result seems
  * not to be in gcc 3.3.5, at least. --jhi
+ * Also, when building extensions with an installed perl, this allows
+ * the user to upgrade gcc and get the right attributes, rather than
+ * relying on the list generated at Configure time.  --AD
  * Set these up now otherwise we get confused when some of the <*thread.h>
  * includes below indirectly pull in <perlio.h> (which needs to know if we
  * have HASATTRIBUTE_FORMAT).
  */
 
-#if defined __GNUC__
+#if defined __GNUC__ && !defined(__INTEL_COMPILER)
 #  if __GNUC__ >= 3 /* 3.0 -> */ /* XXX Verify this version */
 #    define HASATTRIBUTE_FORMAT
+#    if defined __MINGW32__
+#      define PRINTF_FORMAT_NULL_OK
+#    endif
 #  endif
 #  if __GNUC__ >= 3 /* 3.0 -> */
 #    define HASATTRIBUTE_MALLOC
@@ -2374,27 +2393,24 @@ typedef struct clone_params CLONE_PARAMS;
 #  if __GNUC__ >= 3 /* gcc 3.0 -> */
 #    define HASATTRIBUTE_PURE
 #  endif
-#  if __GNUC__ >= 3 /* gcc 3.0 -> */ /* XXX Verify this version */
+#  if __GNUC__ == 3 && __GNUC_MINOR__ >= 4 || __GNUC__ > 3 /* 3.4 -> */
 #    define HASATTRIBUTE_UNUSED
+#  endif
+#  if __GNUC__ == 3 && __GNUC_MINOR__ == 3 && !defined(__cplusplus)
+#    define HASATTRIBUTE_UNUSED /* gcc-3.3, but not g++-3.3. */
 #  endif
 #  if __GNUC__ == 3 && __GNUC_MINOR__ >= 4 || __GNUC__ > 3 /* 3.4 -> */
 #    define HASATTRIBUTE_WARN_UNUSED_RESULT
 #  endif
 #endif
 
-/*
- * USE_5005THREADS needs to be after unixish.h as <pthread.h> includes
+/* USE_5005THREADS needs to be after unixish.h as <pthread.h> includes
  * <sys/signal.h> which defines NSIG - which will stop inclusion of <signal.h>
  * this results in many functions being undeclared which bothers C++
  * May make sense to have threads after "*ish.h" anyway
  */
 
-#if defined(USE_5005THREADS) || defined(USE_ITHREADS)
-#  if defined(USE_5005THREADS)
-   /* pending resolution of licensing issues, we avoid the erstwhile
-    * atomic.h everywhere */
-#  define EMULATE_ATOMIC_REFCOUNTS
-#  endif
+#if defined(USE_ITHREADS)
 #  ifdef NETWARE
 #   include <nw5thread.h>
 #  else
