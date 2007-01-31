@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.48 2006/03/15 11:33:42 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.49 2007/01/31 13:04:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -181,13 +181,13 @@ host(const char *s, struct bgpd_addr *h, u_int8_t *len)
 {
 	int			 done = 0;
 	int			 mask;
-	char			*p, *q, *ps;
+	char			*p, *ps;
+	const char		*errstr;
 
 	if ((p = strrchr(s, '/')) != NULL) {
-		errno = 0;
-		mask = strtol(p+1, &q, 0);
-		if (errno == ERANGE || !q || *q || mask > 128 || q == (p+1)) {
-			log_warnx("invalid netmask");
+		mask = strtonum(p + 1, 0, 128, &errstr);
+		if (errstr) {
+			log_warnx("prefixlen is %s: %s", errstr, p + 1);
 			return (0);
 		}
 		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
