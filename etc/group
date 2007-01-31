@@ -53,6 +53,7 @@ _ospfd:*:85:
 _hostapd:*:86:
 _dvmrpd:*:87:
 _ripd:*:88:
+_hoststated:*:89:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:
