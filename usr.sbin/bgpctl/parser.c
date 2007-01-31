@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.35 2007/01/25 19:30:07 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.36 2007/01/31 09:12:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -615,21 +615,17 @@ parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
 int
 parse_asnum(const char *word, u_int16_t *asnum)
 {
-	u_long	 ulval;
-	char	*ep;
+	const char	*errstr;
+	u_int16_t	 uval;
 
 	if (word == NULL)
 		return (0);
 
-	errno = 0;
-	ulval = strtoul(word, &ep, 0);
-	if (word[0] == '\0' || *ep != '\0')
-		return (0);
-	if (errno == ERANGE && ulval == ULONG_MAX)
-		return (0);
-	if (ulval > USHRT_MAX)
-		return (0);
-	*asnum = (u_int16_t)ulval;
+	uval = strtonum(word, 0, USHRT_MAX - 1, &errstr);
+	if (errstr)
+		errx(1, "AS number is %s: %s", errstr, word);
+
+	*asnum = uval;
 	return (1);
 }
 
@@ -637,20 +633,15 @@ int
 parse_number(const char *word, struct parse_result *r, enum token_type type)
 {
 	struct filter_set	*fs;
-	u_long			 ulval;
-	char			*ep;
+	const char		*errstr;
+	u_int			 uval;
 
 	if (word == NULL)
 		return (0);
 
-	errno = 0;
-	ulval = strtoul(word, &ep, 0);
-	if (word[0] == '\0' || *ep != '\0')
-		return (0);
-	if (errno == ERANGE && ulval == ULONG_MAX)
-		return (0);
-	if (ulval > UINT_MAX)
-		return (0);
+	uval = strtonum(word, 0, UINT_MAX, &errstr);
+	if (errstr)
+		errx(1, "number is %s: %s", errstr, word);
 
 	/* number was parseable */
 	if ((fs = calloc(1, sizeof(struct filter_set))) == NULL)
@@ -658,31 +649,31 @@ parse_number(const char *word, struct parse_result *r, enum token_type type)
 	switch (type) {
 	case LOCALPREF:
 		fs->type = ACTION_SET_LOCALPREF;
-		fs->action.metric = ulval;
+		fs->action.metric = uval;
 		break;
 	case MED:
 		fs->type = ACTION_SET_MED;
-		fs->action.metric = ulval;
+		fs->action.metric = uval;
 		break;
 	case PREPNBR:
-		if (ulval > 128) {
+		if (uval > 128) {
 			free(fs);
 			return (0);
 		}
 		fs->type = ACTION_SET_PREPEND_PEER;
-		fs->action.prepend = ulval;
+		fs->action.prepend = uval;
 		break;
 	case PREPSELF:
-		if (ulval > 128) {
+		if (uval > 128) {
 			free(fs);
 			return (0);
 		}
 		fs->type = ACTION_SET_PREPEND_SELF;
-		fs->action.prepend = ulval;
+		fs->action.prepend = uval;
 		break;
 	case WEIGHT:
 		fs->type = ACTION_SET_WEIGHT;
-		fs->action.metric = ulval;
+		fs->action.metric = uval;
 		break;
 	default:
 		errx(1, "king bula sez bad things happen");
@@ -695,22 +686,17 @@ parse_number(const char *word, struct parse_result *r, enum token_type type)
 int
 getcommunity(const char *s)
 {
-	char	*ep;
-	u_long	 ulval;
+	const char	*errstr;
+	u_int16_t	 uval;
 
 	if (strcmp(s, "*") == 0)
 		return (COMMUNITY_ANY);
 
-	errno = 0;
-	ulval = strtoul(s, &ep, 0);
-	if (s[0] == '\0' || *ep != '\0')
-		return (COMMUNITY_ERROR);
-	if (errno == ERANGE && ulval == ULONG_MAX)
-		return (COMMUNITY_ERROR);
-	if (ulval > USHRT_MAX)
-		return (COMMUNITY_ERROR);
+	uval = strtonum(s, 0, USHRT_MAX, &errstr);
+	if (errstr)
+		errx(1, "Community is %s: %s", errstr, s);
 
-	return (ulval);
+	return (uval);
 }
 
 int
@@ -718,8 +704,7 @@ parse_community(const char *word, struct parse_result *r)
 {
 	struct filter_set	*fs;
 	char			*p;
-	int			 i;
-	u_int16_t		 as, type;
+	int			 as, type;
 
 	/* Well-known communities */
 	if (strcasecmp(word, "NO_EXPORT") == 0) {
@@ -746,17 +731,8 @@ parse_community(const char *word, struct parse_result *r)
 	}
 	*p++ = 0;
 
-	if ((i = getcommunity(word)) == COMMUNITY_ERROR) {
-		fprintf(stderr, "\"%s\" is not a number or too big", word);
-		return (0);
-	}
-	as = i;
-
-	if ((i = getcommunity(p)) == COMMUNITY_ERROR) {
-		fprintf(stderr, "\"%s\" is not a number or too big", p);
-		return (0);
-	}
-	type = i;
+	as = getcommunity(word);
+	type = getcommunity(p);
 
 done:
 	if (as == 0 || as == USHRT_MAX) {
