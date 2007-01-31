@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.13 2007/01/31 14:35:51 mickey Exp $ */
+/* $OpenBSD: pckbc.c,v 1.14 2007/01/31 14:38:54 mickey Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -96,6 +96,7 @@ void pckbc_cleanup(void *);
 void pckbc_poll(void *);
 int pckbc_cmdresponse(struct pckbc_internal *, pckbc_slot_t, u_char);
 void pckbc_start(struct pckbc_internal *, pckbc_slot_t);
+int pckbcintr_internal(struct pckbc_internal *, struct pckbc_softc *);
 
 const char *pckbc_slot_names[] = { "kbd", "aux" };
 
@@ -547,7 +548,7 @@ pckbc_set_poll(self, slot, on)
                  */
 		if (t->t_sc) {
 			s = spltty();
-			pckbcintr(t->t_sc);
+			pckbcintr_internal(t, t->t_sc);
 			splx(s);
 		}
 	}
@@ -918,7 +919,7 @@ pckbc_poll(v)
 	int s;
 
 	s = spltty();
-	(void) pckbcintr(v);
+	(void)pckbcintr_internal(t, t->t_sc);
 	timeout_add(&t->t_poll, hz);
 	splx(s);
 }
@@ -928,13 +929,21 @@ pckbcintr(vsc)
 	void *vsc;
 {
 	struct pckbc_softc *sc = (struct pckbc_softc *)vsc;
-	struct pckbc_internal *t = sc->id;
+
+	return (pckbcintr_internal(sc->id, sc));
+}
+
+int
+pckbcintr_internal(t, sc)
+	struct pckbc_internal *t;
+	struct pckbc_softc *sc;
+{
 	u_char stat;
 	pckbc_slot_t slot;
 	struct pckbc_slotdata *q;
 	int served = 0, data;
 
-	/* reschedule timeout futher into the idle times */
+	/* reschedule timeout further into the idle times */
 	if (timeout_pending(&t->t_poll))
 		timeout_add(&t->t_poll, hz);
 
@@ -966,12 +975,16 @@ pckbcintr(vsc)
 		if (CMD_IN_QUEUE(q) && pckbc_cmdresponse(t, slot, data))
 			continue;
 
-		if (sc->inputhandler[slot])
-			(*sc->inputhandler[slot])(sc->inputarg[slot], data);
+		if (sc != NULL) {
+			if (sc->inputhandler[slot])
+				(*sc->inputhandler[slot])(sc->inputarg[slot],
+				    data);
 #ifdef PCKBCDEBUG
-		else
-			printf("pckbcintr: slot %d lost %d\n", slot, data);
+			else
+				printf("pckbcintr: slot %d lost %d\n",
+				    slot, data);
 #endif
+		}
 	}
 
 	return (served);
