@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.37 2007/01/05 12:22:53 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.38 2007/01/31 07:12:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -134,6 +134,20 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define AHCI_PREG_TFD		0x20 /* Task File Data*/
 #define AHCI_PREG_SIG		0x24 /* Signature */
 #define AHCI_PREG_SSTS		0x28 /* SATA Status */
+#define  AHCI_PREG_SSTS_DET		0xf /* Device Detection */
+#define  AHCI_PREG_SSTS_DET_NONE	0x0
+#define  AHCI_PREG_SSTS_DET_DEV_NOPHY	0x1
+#define  AHCI_PREG_SSTS_DET_DEV_PHY	0x3
+#define  AHCI_PREG_SSTS_DET_PHYOFFLINE	0x4
+#define  AHCI_PREG_SSTS_SPD		0xf0 /* Current Interface Speed */
+#define  AHCI_PREG_SSTS_SPD_NONE	0x00
+#define  AHCI_PREG_SSTS_SPD_GEN1	0x10
+#define  AHCI_PREG_SSTS_SPD_GEN2	0x20
+#define  AHCI_PREG_SSTS_IPM		0xf00 /* Interface Power Management */
+#define  AHCI_PREG_SSTS_IPM_NONE	0x000
+#define  AHCI_PREG_SSTS_IPM_ACTIVE	0x100
+#define  AHCI_PREG_SSTS_IPM_PARTIAL	0x200
+#define  AHCI_PREG_SSTS_IPM_SLUMBER	0x600
 #define AHCI_PREG_SCTL		0x2c /* SATA Control */
 #define AHCI_PREG_SERR		0x30 /* SATA Error */
 #define AHCI_PREG_ACT		0x34 /* SATA Active */
