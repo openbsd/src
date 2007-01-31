@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.61 2007/01/27 20:23:26 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.62 2007/01/31 21:07:36 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -133,7 +133,6 @@ cvs_remove_force(struct cvs_file *cf)
 void
 cvs_remove_local(struct cvs_file *cf)
 {
-	int l;
 	CVSENTRIES *entlist;
 	char *entry, buf[MAXPATHLEN], tbuf[32], rbuf[16];
 
@@ -166,11 +165,9 @@ cvs_remove_local(struct cvs_file *cf)
 			cvs_ent_remove(entlist, cf->file_name);
 			cvs_ent_close(entlist, ENT_SYNC);
 
-			l = snprintf(buf, sizeof(buf), "%s/%s/%s%s",
+			(void)xsnprintf(buf, sizeof(buf), "%s/%s/%s%s",
 			    cf->file_path, CVS_PATH_CVSDIR, cf->file_name,
 			    CVS_DESCR_FILE_EXT);
-			if (l == -1 || l >= (int)sizeof(buf))
-				fatal("cvs_remove_local: overflow");
 
 			(void)unlink(buf);
 
@@ -195,10 +192,8 @@ cvs_remove_local(struct cvs_file *cf)
 				tbuf[strlen(tbuf) - 1] = '\0';
 
 			entry = xmalloc(CVS_ENT_MAXLINELEN);
-			l = snprintf(entry, CVS_ENT_MAXLINELEN,
+			(void)xsnprintf(entry, CVS_ENT_MAXLINELEN,
 			     "/%s/-%s/%s//", cf->file_name, rbuf, tbuf);
-			if (l == -1 || l >= CVS_ENT_MAXLINELEN)
-				fatal("cvs_remove_local: overflow");
 
 			if (cvs_server_active == 1) {
 				cvs_server_update_entry("Checked-in", cf);

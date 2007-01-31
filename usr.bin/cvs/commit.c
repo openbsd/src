@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.101 2007/01/26 21:48:17 xsa Exp $	*/
+/*	$OpenBSD: commit.c,v 1.102 2007/01/31 21:07:35 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -209,7 +209,7 @@ cvs_commit_local(struct cvs_file *cf)
 	BUF *b, *d;
 	int isnew;
 	RCSNUM *head;
-	int l, openflags, rcsflags;
+	int openflags, rcsflags;
 	char rbuf[24], nbuf[24];
 	CVSENTRIES *entlist;
 	char attic[MAXPATHLEN], repo[MAXPATHLEN], rcsfile[MAXPATHLEN];
@@ -248,10 +248,8 @@ cvs_commit_local(struct cvs_file *cf)
 				    "to be dead", cf->file_path);
 
 			cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
-			l = snprintf(rcsfile, MAXPATHLEN, "%s/%s%s",
+			(void)xsnprintf(rcsfile, MAXPATHLEN, "%s/%s%s",
 			    repo, cf->file_name, RCS_FILE_EXT);
-			if (l == -1 || l >= MAXPATHLEN)
-				fatal("cvs_commit_local: overflow");
 
 			if (rename(cf->file_rpath, rcsfile) == -1)
 				fatal("cvs_commit_local: failed to move %s "
@@ -358,17 +356,14 @@ cvs_commit_local(struct cvs_file *cf)
 
 		cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
 
-		l = snprintf(attic, MAXPATHLEN, "%s/%s", repo, CVS_PATH_ATTIC);
-		if (l == -1 || l >= MAXPATHLEN)
-			fatal("cvs_commit_local: overflow");
+		(void)xsnprintf(attic, MAXPATHLEN, "%s/%s",
+		    repo, CVS_PATH_ATTIC);
 
 		if (mkdir(attic, 0755) == -1 && errno != EEXIST)
 			fatal("cvs_commit_local: failed to create Attic");
 
-		l = snprintf(attic, MAXPATHLEN, "%s/%s/%s%s", repo,
+		(void)xsnprintf(attic, MAXPATHLEN, "%s/%s/%s%s", repo,
 		    CVS_PATH_ATTIC, cf->file_name, RCS_FILE_EXT);
-		if (l == -1 || l >= MAXPATHLEN)
-			fatal("cvs_commit_local: overflow");
 
 		if (rename(cf->file_rpath, attic) == -1)
 			fatal("cvs_commit_local: failed to move %s to Attic",
@@ -425,13 +420,11 @@ static void
 commit_desc_set(struct cvs_file *cf)
 {
 	BUF *bp;
-	int l, fd;
+	int fd;
 	char desc_path[MAXPATHLEN], *desc;
 
-	l = snprintf(desc_path, MAXPATHLEN, "%s/%s%s",
+	(void)xsnprintf(desc_path, MAXPATHLEN, "%s/%s%s",
 	    CVS_PATH_CVSDIR, cf->file_name, CVS_DESCR_FILE_EXT);
-	if (l == -1 || l >= MAXPATHLEN)
-		fatal("commit_desc_set: overflow");
 
 	if ((fd = open(desc_path, O_RDONLY)) == -1)
 		return;

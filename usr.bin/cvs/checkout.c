@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.88 2007/01/28 23:39:42 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.89 2007/01/31 21:07:35 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -199,7 +199,7 @@ checkout_repository(const char *repobase, const char *wdbase)
 void
 cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 {
-	int kflag, l, oflags, exists;
+	int kflag, oflags, exists;
 	time_t rcstime;
 	CVSENTRIES *ent;
 	struct timeval tv[2];
@@ -270,21 +270,16 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 		tbuf[strlen(tbuf) - 1] = '\0';
 
 	if (co_flags & CO_MERGE) {
-		l = snprintf(timebuf, sizeof(timebuf), "Result of merge+%s",
+		(void)xsnprintf(timebuf, sizeof(timebuf), "Result of merge+%s",
 		    tbuf);
-		if (l == -1 || l >= (int)sizeof(timebuf))
-			fatal("cvs_checkout_file: overflow");
 	} else {
 		strlcpy(timebuf, tbuf, sizeof(timebuf));
 	}
 
-	if (co_flags & CO_SETSTICKY) {
-		l = snprintf(stickytag, sizeof(stickytag), "T%s", rev);
-		if (l == -1 || l >= (int)sizeof(stickytag))
-			fatal("cvs_checkout_file: overflow");
-	} else {
+	if (co_flags & CO_SETSTICKY)
+		(void)xsnprintf(stickytag, sizeof(stickytag), "T%s", rev);
+	else
 		stickytag[0] = '\0';
-	}
 
 	kbuf[0] = '\0';
 	if (cf->file_ent != NULL) {
@@ -293,11 +288,11 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 	} else if (cf->file_rcs->rf_expand != NULL) {
 		kflag = rcs_kflag_get(cf->file_rcs->rf_expand);
 		if (!(kflag & RCS_KWEXP_DEFAULT))
-			snprintf(kbuf, sizeof(kbuf),
+			(void)xsnprintf(kbuf, sizeof(kbuf),
 			    "-k%s", cf->file_rcs->rf_expand);
 	}
 
-	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s/%s/%s",
+	(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s/%s/%s",
 	    cf->file_name, rev, timebuf, kbuf, stickytag);
 
 	if (cvs_server_active == 0) {
@@ -324,10 +319,9 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 
 		if (!(co_flags & CO_COMMIT)) {
 			if (!(co_flags & CO_MERGE)) {
-				l = snprintf(template, MAXPATHLEN,
+				(void)xsnprintf(template, MAXPATHLEN,
 				    "%s/checkout.XXXXXXXXXX", cvs_tmpdir);
-				if (l == -1 || l >= MAXPATHLEN)
-					fatal("cvs_Checkout_file: overflow");
+
 				rcs_rev_write_stmp(cf->file_rcs, rnum,
 				    template, 0);
 				tosend = template;

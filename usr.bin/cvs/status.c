@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.70 2007/01/12 19:28:12 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.71 2007/01/31 21:07:36 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -116,7 +116,6 @@ cvs_status(int argc, char **argv)
 void
 cvs_status_local(struct cvs_file *cf)
 {
-	int l;
 	size_t len;
 	RCSNUM *head;
 	const char *status;
@@ -143,9 +142,8 @@ cvs_status_local(struct cvs_file *cf)
 	if (cf->file_status == FILE_LOST ||
 	    cf->file_status == FILE_UNKNOWN ||
 	    (cf->file_rcs != NULL && cf->file_rcs->rf_inattic == 1)) {
-		l = snprintf(buf, sizeof(buf), "no file %s\t", cf->file_name);
-		if (l == -1 || l >= (int)sizeof(buf))
-			fatal("cvs_status_local: overflow");
+		(void)xsnprintf(buf, sizeof(buf), "no file %s\t",
+		    cf->file_name);
 	} else
 		if (strlcpy(buf, cf->file_name, sizeof(buf)) >= sizeof(buf))
 			fatal("cvs_status_local: overflow");
@@ -153,10 +151,8 @@ cvs_status_local(struct cvs_file *cf)
 	cvs_printf("File: %-17s\tStatus: %s\n\n", buf, status);
 
 	if (cf->file_ent == NULL) {
-		l = snprintf(buf, sizeof(buf),
+		(void)xsnprintf(buf, sizeof(buf),
 		    "No entry for %s", cf->file_name);
-		if (l == -1 || l >= (int)sizeof(buf))
-			fatal("cvs_status_local: overflow");
 	} else if (cf->file_status == FILE_ADDED) {
 		len = strlcpy(buf, "New file!", sizeof(buf));
 		if (len >= sizeof(buf))
@@ -175,9 +171,7 @@ cvs_status_local(struct cvs_file *cf)
 				fatal("cvs_status_local: truncation");
 		}
 
-		l = snprintf(buf, sizeof(buf), "%s\t%s", revbuf, timebuf);
-		if (l == -1 || l >= (int)sizeof(buf))
-			fatal("cvs_status_local: overflow");
+		(void)xsnprintf(buf, sizeof(buf), "%s\t%s", revbuf, timebuf);
 	}
 
 	cvs_printf("   Working revision:\t%s\n", buf);
@@ -191,10 +185,8 @@ cvs_status_local(struct cvs_file *cf)
 		head = rcs_head_get(cf->file_rcs);
 		rcsnum_tostr(head, revbuf, sizeof(revbuf));
 		rcsnum_free(head);
-		l = snprintf(buf, sizeof(buf), "%s\t%s", revbuf,
+		(void)xsnprintf(buf, sizeof(buf), "%s\t%s", revbuf,
 		    cf->file_rpath);
-		if (l == -1 || l >= (int)sizeof(buf))
-			fatal("cvs_status_local: overflow");
 	}
 
 	cvs_printf("   Repository revision:\t%s\n", buf);

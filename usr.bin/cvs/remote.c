@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.12 2007/01/26 11:19:44 joris Exp $	*/
+/*	$OpenBSD: remote.c,v 1.13 2007/01/31 21:07:35 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -151,7 +151,7 @@ cvs_remote_receive_file(int fd, size_t len)
 void
 cvs_remote_send_file(const char *path)
 {
-	int l, fd;
+	int fd;
 	FILE *out, *in;
 	size_t ret, rw;
 	off_t total;
@@ -172,9 +172,7 @@ cvs_remote_send_file(const char *path)
 	cvs_modetostr(st.st_mode, buf, sizeof(buf));
 	cvs_remote_output(buf);
 
-	l = snprintf(buf, sizeof(buf), "%lld", st.st_size);
-	if (l == -1 || l >= (int)sizeof(buf))
-		fatal("cvs_remote_send_file: overflow");
+	(void)xsnprintf(buf, sizeof(buf), "%lld", st.st_size);
 	cvs_remote_output(buf);
 
 	if ((in = fdopen(fd, "r")) == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.91 2007/01/28 23:37:29 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.92 2007/01/31 21:07:36 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -140,7 +140,6 @@ cvs_update(int argc, char **argv)
 void
 cvs_update_enterdir(struct cvs_file *cf)
 {
-	int l;
 	char *entry;
 	CVSENTRIES *entlist;
 
@@ -155,10 +154,8 @@ cvs_update_enterdir(struct cvs_file *cf)
 			    cf->file_path, strerror(errno));
 
 		entry = xmalloc(CVS_ENT_MAXLINELEN);
-		l = snprintf(entry, CVS_ENT_MAXLINELEN, "D/%s////",
+		(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "D/%s////",
 		    cf->file_name);
-		if (l == -1 || l >= CVS_ENT_MAXLINELEN)
-			fatal("cvs_update_enterdir: overflow");
 
 		entlist = cvs_ent_open(cf->file_wd);
 		cvs_ent_add(entlist, entry);
@@ -367,7 +364,6 @@ cvs_update_local(struct cvs_file *cf)
 static void
 update_clear_conflict(struct cvs_file *cf)
 {
-	int l;
 	time_t now;
 	CVSENTRIES *entlist;
 	char *entry, revbuf[16], timebuf[32];
@@ -382,10 +378,8 @@ update_clear_conflict(struct cvs_file *cf)
 	rcsnum_tostr(cf->file_ent->ce_rev, revbuf, sizeof(revbuf));
 
 	entry = xmalloc(CVS_ENT_MAXLINELEN);
-	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s//",
+	(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s//",
 	    cf->file_name, revbuf, timebuf);
-	if (l == -1 || l >= CVS_ENT_MAXLINELEN)
-		fatal("update_clear_conflict: overflow");
 
 	entlist = cvs_ent_open(cf->file_wd);
 	cvs_ent_add(entlist, entry);

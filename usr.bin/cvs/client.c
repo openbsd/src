@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.56 2007/01/28 02:04:45 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.57 2007/01/31 21:07:35 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -140,7 +140,6 @@ client_get_supported_responses(void)
 static void
 client_check_directory(char *data)
 {
-	int l;
 	CVSENTRIES *entlist;
 	char entry[CVS_ENT_MAXLINELEN], *parent, *base;
 
@@ -157,9 +156,7 @@ client_check_directory(char *data)
 	if (!strcmp(parent, "."))
 		return;
 
-	l = snprintf(entry, CVS_ENT_MAXLINELEN, "D/%s////", base);
-	if (l == -1 || l >= CVS_ENT_MAXLINELEN)
-		fatal("client_check_directory: overflow");
+	(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "D/%s////", base);
 
 	entlist = cvs_ent_open(parent);
 	cvs_ent_add(entlist, entry);
@@ -418,7 +415,6 @@ cvs_client_senddir(const char *dir)
 void
 cvs_client_sendfile(struct cvs_file *cf)
 {
-	int l;
 	size_t len;
 	char rev[16], timebuf[64], sticky[32];
 
@@ -464,10 +460,8 @@ cvs_client_sendfile(struct cvs_file *cf)
 
 		sticky[0] = '\0';
 		if (cf->file_ent->ce_tag != NULL) {
-			l = snprintf(sticky, sizeof(sticky), "T%s",
+			(void)xsnprintf(sticky, sizeof(sticky), "T%s",
 			    cf->file_ent->ce_tag);
-			if (l == -1 || l >= (int)sizeof(sticky))
-				fatal("cvs_client_sendfile: overflow");
 		}
 
 		cvs_client_send_request("Entry /%s/%s%s/%s/%s/%s",
@@ -561,7 +555,6 @@ cvs_client_m(char *data)
 void
 cvs_client_checkedin(char *data)
 {
-	int l;
 	CVSENTRIES *entlist;
 	struct cvs_ent *ent, *newent;
 	char *dir, *e, entry[CVS_ENT_MAXLINELEN], rev[16], timebuf[64];
@@ -582,17 +575,12 @@ cvs_client_checkedin(char *data)
 		timebuf[strlen(timebuf) - 1] = '\0';
 
 	sticky[0] = '\0';
-	if (ent->ce_tag != NULL) {
-		l = snprintf(sticky, sizeof(sticky), "T%s", ent->ce_tag);
-		if (l == -1 || l >= (int)sizeof(sticky))
-			fatal("cvs_client_checkedin: overflow");
-	}
+	if (ent->ce_tag != NULL)
+		(void)xsnprintf(sticky, sizeof(sticky), "T%s", ent->ce_tag);
 
-	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s%s/%s/%s/%s",
+	(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s%s/%s/%s/%s",
 	    newent->ce_name, (newent->ce_status == CVS_ENT_REMOVED) ? "-" : "",
 	    rev, timebuf, ent->ce_opts ? ent->ce_opts : "", sticky);
-	if (l == -1 || l >= CVS_ENT_MAXLINELEN)
-		fatal("cvs_client_checkedin: overflow");
 
 	cvs_ent_free(ent);
 	cvs_ent_free(newent);
@@ -603,7 +591,7 @@ cvs_client_checkedin(char *data)
 void
 cvs_client_updated(char *data)
 {
-	int l, fd;
+	int fd;
 	time_t now;
 	mode_t fmode, mask;
 	size_t flen;
@@ -651,10 +639,8 @@ cvs_client_updated(char *data)
 	e = cvs_ent_parse(en);
 	xfree(en);
 	rcsnum_tostr(e->ce_rev, revbuf, sizeof(revbuf));
-	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s/%s/", e->ce_name,
+	(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s/%s/", e->ce_name,
 	    revbuf, timebuf, e->ce_opts ? e->ce_opts : "");
-	if (l == -1 || l >= CVS_ENT_MAXLINELEN)
-		fatal("cvs_client_updated: overflow");
 
 	cvs_ent_free(e);
 	ent = cvs_ent_open(wdir);
@@ -885,7 +871,6 @@ cvs_client_clear_sticky(char *data)
 static void
 cvs_client_initlog(void)
 {
-	int l;
 	u_int i;
 	char *env, *envdup, buf[MAXPATHLEN], fpath[MAXPATHLEN];
 	char rpath[MAXPATHLEN], *s;
@@ -928,7 +913,7 @@ cvs_client_initlog(void)
 				fatal("cvs_client_initlog: truncation");
 			break;
 		case 'p':
-			snprintf(fpath, sizeof(fpath), "%d", getpid());
+			(void)xsnprintf(fpath, sizeof(fpath), "%d", getpid());
 			break;
 		case 'u':
 			if ((pwd = getpwuid(getuid())) != NULL) {
@@ -956,9 +941,7 @@ cvs_client_initlog(void)
 	}
 
 	for (i = 0; i < UINT_MAX; i++) {
-		l = snprintf(fpath, sizeof(fpath), "%s-%d.in", rpath, i);
-		if (l == -1 || l >= (int)sizeof(fpath))
-			fatal("cvs_client_initlog: overflow");
+		(void)xsnprintf(fpath, sizeof(fpath), "%s-%d.in", rpath, i);
 
 		if (stat(fpath, &st) != -1)
 			continue;
@@ -977,9 +960,7 @@ cvs_client_initlog(void)
 	}
 
 	for (i = 0; i < UINT_MAX; i++) {
-		l = snprintf(fpath, sizeof(fpath), "%s-%d.out", rpath, i);
-		if (l == -1 || l >= (int)sizeof(fpath))
-			fatal("cvs_client_initlog: overflow");
+		(void)xsnprintf(fpath, sizeof(fpath), "%s-%d.out", rpath, i);
 
 		if (stat(fpath, &st) != -1)
 			continue;

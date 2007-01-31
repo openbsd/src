@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.66 2007/01/20 01:07:51 niallo Exp $	*/
+/*	$OpenBSD: import.c,v 1.67 2007/01/31 21:07:35 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -145,7 +145,6 @@ cvs_import(int argc, char **argv)
 void
 cvs_import_local(struct cvs_file *cf)
 {
-	int l;
 	int isnew;
 	struct stat st;
 	char repo[MAXPATHLEN];
@@ -172,11 +171,9 @@ cvs_import_local(struct cvs_file *cf)
 	}
 
 	isnew = 1;
-	l = snprintf(repo, sizeof(repo), "%s/%s/%s/%s%s",
+	(void)xsnprintf(repo, sizeof(repo), "%s/%s/%s/%s%s",
 	    current_cvsroot->cr_dir, cf->file_wd, CVS_PATH_ATTIC,
 	    cf->file_name, RCS_FILE_EXT);
-	if (l == -1 || l >= (int)sizeof(repo))
-		fatal("import_new: overflow");
 
 	if (cf->file_rcs != NULL || stat(repo, &st) != -1)
 		isnew = 0;

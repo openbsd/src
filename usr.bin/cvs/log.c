@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.36 2006/07/07 17:37:17 joris Exp $	*/
+/*	$OpenBSD: log.c,v 1.37 2007/01/31 21:07:35 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -90,17 +90,17 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 			prefix[0] = 'C';
 	} else if (cvs_command != NULL) {
 		if (level == LP_ABORT)
-			snprintf(prefix, sizeof(prefix), "%s [%s aborted]",
-			    __progname, cmdname);
+			(void)xsnprintf(prefix, sizeof(prefix),
+			    "%s [%s aborted]", __progname, cmdname);
 		else
-			snprintf(prefix, sizeof(prefix), "%s %s", __progname,
-			    cmdname);
+			(void)xsnprintf(prefix, sizeof(prefix), "%s %s",
+			    __progname, cmdname);
 	} else /* just use the standard strlcpy */
 		strlcpy(prefix, __progname, sizeof(prefix));
 
 	vsnprintf(buf, sizeof(buf), fmt, vap);
 	if (level == LP_ERRNO) {
-		snprintf(ebuf, sizeof(ebuf), ": %s", strerror(errno));
+		(void)xsnprintf(ebuf, sizeof(ebuf), ": %s", strerror(errno));
 		strlcat(buf, ebuf, sizeof(buf));
 	}
 

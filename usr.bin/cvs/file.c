@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.182 2007/01/29 15:47:39 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.183 2007/01/31 21:07:35 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -71,7 +71,7 @@ struct ignore_head dir_ign_pats;
 void
 cvs_file_init(void)
 {
-	int i, l;
+	int i;
 	FILE *ifp;
 	size_t len;
 	char path[MAXPATHLEN], buf[MAXNAMLEN];
@@ -84,9 +84,7 @@ cvs_file_init(void)
 		cvs_file_ignore(cvs_ign_std[i], &cvs_ign_pats);
 
 	/* read the cvsignore file in the user's home directory, if any */
-	l = snprintf(path, MAXPATHLEN, "%s/.cvsignore", cvs_homedir);
-	if (l == -1 || l >= MAXPATHLEN)
-		fatal("overflow in cvs_file_init");
+	(void)xsnprintf(path, MAXPATHLEN, "%s/.cvsignore", cvs_homedir);
 
 	ifp = fopen(path, "r");
 	if (ifp == NULL) {
@@ -199,13 +197,10 @@ cvs_file_get(const char *name, struct cvs_flisthead *fl)
 struct cvs_file *
 cvs_file_get_cf(const char *d, const char *f, int fd, int type)
 {
-	int l;
 	struct cvs_file *cf;
 	char *p, rpath[MAXPATHLEN];
 
-	l = snprintf(rpath, MAXPATHLEN, "%s/%s", d, f);
-	if (l == -1 || l >= MAXPATHLEN)
-		fatal("cvs_file_get_cf: overflow");
+	(void)xsnprintf(rpath, MAXPATHLEN, "%s/%s", d, f);
 
 	for (p = rpath; p[0] == '.' && p[1] == '/';)
 		p += 2;
@@ -228,7 +223,7 @@ cvs_file_get_cf(const char *d, const char *f, int fd, int type)
 void
 cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 {
-	int len, fd, type;
+	int fd, type;
 	struct stat st;
 	struct cvs_file *cf;
 	struct cvs_filelist *l, *nxt;
@@ -272,10 +267,8 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 			}
 
 			cvs_get_repository_path(d, repo, MAXPATHLEN);
-			len = snprintf(fpath, MAXPATHLEN, "%s/%s",
+			(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
 			    repo, f);
-			if (len == -1 || len >= MAXPATHLEN)
-				fatal("cvs_file_walklist: overflow");
 
 			if ((fd = open(fpath, O_RDONLY)) == -1) {
 				strlcat(fpath, RCS_FILE_EXT, MAXPATHLEN);
@@ -357,10 +350,8 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	 * If we do not have a admin directory inside here, dont bother,
 	 * unless we are running import.
 	 */
-	l = snprintf(fpath, MAXPATHLEN, "%s/%s", cf->file_path,
+	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", cf->file_path,
 	    CVS_PATH_CVSDIR);
-	if (l == -1 || l >= MAXPATHLEN)
-		fatal("cvs_file_walkdir: overflow");
 
 	l = stat(fpath, &st);
 	if (cvs_cmdop != CVS_OP_IMPORT &&
@@ -371,9 +362,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	/*
 	 * check for a local .cvsignore file
 	 */
-	l = snprintf(fpath, MAXPATHLEN, "%s/.cvsignore", cf->file_path);
-	if (l == -1 || l >= MAXPATHLEN)
-		fatal("cvs_file_walkdir: overflow");
+	(void)xsnprintf(fpath, MAXPATHLEN, "%s/.cvsignore", cf->file_path);
 
 	if ((fp = fopen(fpath, "r")) != NULL) {
 		while (fgets(fpath, MAXPATHLEN, fp) != NULL) {
@@ -420,10 +409,8 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 				continue;
 			}
 
-			l = snprintf(fpath, MAXPATHLEN, "%s/%s",
+			(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
 			    cf->file_path, dp->d_name);
-			if (l == -1 || l >= MAXPATHLEN)
-				fatal("cvs_file_walkdir: overflow");
 
 			/*
 			 * nfs and afs will show d_type as DT_UNKNOWN
@@ -506,10 +493,8 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	TAILQ_FOREACH(line, &(entlist->cef_ent), entries_list) {
 		ent = cvs_ent_parse(line->buf);
 
-		l = snprintf(fpath, MAXPATHLEN, "%s/%s", cf->file_path,
+		(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", cf->file_path,
 		    ent->ce_name);
-		if (l == -1 || l >= MAXPATHLEN)
-			fatal("cvs_file_walkdir: overflow");
 
 		if (!(cr->flags & CR_RECURSE_DIRS) &&
 		    ent->ce_type == CVS_ENT_DIR)
@@ -564,7 +549,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 	size_t len;
 	struct stat st;
 	BUF *b1, *b2;
-	int rflags, l, ismodified, rcsdead;
+	int rflags, ismodified, rcsdead;
 	CVSENTRIES *entlist = NULL;
 	const char *state;
 	char repo[MAXPATHLEN], rcsfile[MAXPATHLEN], r1[16], r2[16];
@@ -577,10 +562,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 	}
 
 	cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
-	l = snprintf(rcsfile, MAXPATHLEN, "%s/%s",
+	(void)xsnprintf(rcsfile, MAXPATHLEN, "%s/%s",
 	    repo, cf->file_name);
-	if (l == -1 || l >= MAXPATHLEN)
-		fatal("cvs_file_classify: overflow");
 
 	if (cf->file_type == CVS_FILE) {
 		len = strlcat(rcsfile, RCS_FILE_EXT, MAXPATHLEN);
@@ -634,10 +617,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 			fatal("cvs_file_classify: failed to parse RCS");
 		cf->file_rcs->rf_inattic = 0;
 	} else if (cvs_cmdop != CVS_OP_CHECKOUT) {
-		l = snprintf(rcsfile, MAXPATHLEN, "%s/%s/%s%s",
+		(void)xsnprintf(rcsfile, MAXPATHLEN, "%s/%s/%s%s",
 		    repo, CVS_PATH_ATTIC, cf->file_name, RCS_FILE_EXT);
-		if (l == -1 || l >= MAXPATHLEN)
-			fatal("cvs_file_classify: overflow");
 
 		cf->repo_fd = open(rcsfile, O_RDONLY);
 		if (cf->repo_fd != -1) {

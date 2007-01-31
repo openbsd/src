@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.52 2007/01/26 11:19:44 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.53 2007/01/31 21:07:36 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -81,17 +81,14 @@ struct cvs_cmd cvs_cmd_server = {
 int
 cvs_server(int argc, char **argv)
 {
-	int l;
 	char *cmd, *data;
 	struct cvs_req *req;
 
 	server_argv[0] = xstrdup("server");
 
 	cvs_server_path = xmalloc(MAXPATHLEN);
-	l = snprintf(cvs_server_path, MAXPATHLEN, "%s/cvs-serv%d",
+	(void)xsnprintf(cvs_server_path, MAXPATHLEN, "%s/cvs-serv%d",
 	    cvs_tmpdir, getpid());
-	if (l == -1 || l >= MAXPATHLEN)
-		fatal("cvs_server: overflow in server path");
 
 	if (mkdir(cvs_server_path, 0700) == -1)
 		fatal("failed to create temporary server directory: %s, %s",
@@ -291,7 +288,6 @@ cvs_server_set(char *data)
 void
 cvs_server_directory(char *data)
 {
-	int l;
 	CVSENTRIES *entlist;
 	char *dir, *repo, *parent, entry[CVS_ENT_MAXLINELEN], *dirn, *p;
 
@@ -325,9 +321,7 @@ cvs_server_directory(char *data)
 
 	if (strcmp(parent, ".")) {
 		entlist = cvs_ent_open(parent);
-		l = snprintf(entry, CVS_ENT_MAXLINELEN, "D/%s////", dirn);
-		if (l == -1 || l >= CVS_ENT_MAXLINELEN)
-			fatal("cvs_server_directory: overflow");
+		(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "D/%s////", dirn);
 
 		cvs_ent_add(entlist, entry);
 		cvs_ent_close(entlist, ENT_SYNC);
@@ -611,15 +605,12 @@ cvs_server_version(char *data)
 void
 cvs_server_update_entry(const char *resp, struct cvs_file *cf)
 {
-	int l;
 	char *p, response[MAXPATHLEN];
 
 	if ((p = strrchr(cf->file_rpath, ',')) != NULL)
 		*p = '\0';
 
-	l = snprintf(response, MAXPATHLEN, "%s %s/", resp, cf->file_wd);
-	if (l == -1 || l >= MAXPATHLEN)
-		fatal("cvs_server_update_entry: overflow");
+	(void)xsnprintf(response, MAXPATHLEN, "%s %s/", resp, cf->file_wd);
 
 	cvs_server_send_response("%s", response);
 	cvs_remote_output(cf->file_rpath);
