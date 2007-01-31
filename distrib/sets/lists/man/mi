@@ -1283,6 +1283,8 @@
 ./usr/share/man/cat4/ksyms.0
 ./usr/share/man/cat4/kue.0
 ./usr/share/man/cat4/landisk
+./usr/share/man/cat4/landisk/mem.0
+./usr/share/man/cat4/landisk/obio.0
 ./usr/share/man/cat4/landisk/power.0
 ./usr/share/man/cat4/lc.0
 ./usr/share/man/cat4/lge.0
@@ -1831,6 +1833,7 @@
 ./usr/share/man/cat5/hosts.allow.0
 ./usr/share/man/cat5/hosts.deny.0
 ./usr/share/man/cat5/hosts.equiv.0
+./usr/share/man/cat5/hoststated.conf.0
 ./usr/share/man/cat5/hosts_access.0
 ./usr/share/man/cat5/hosts_options.0
 ./usr/share/man/cat5/hp300
@@ -2094,6 +2097,8 @@
 ./usr/share/man/cat8/growfs.0
 ./usr/share/man/cat8/halt.0
 ./usr/share/man/cat8/hostapd.0
+./usr/share/man/cat8/hoststatectl.0
+./usr/share/man/cat8/hoststated.0
 ./usr/share/man/cat8/hp300
 ./usr/share/man/cat8/hp300/MAKEDEV.0
 ./usr/share/man/cat8/hp300/boot_hp300.0

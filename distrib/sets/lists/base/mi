@@ -1802,6 +1802,8 @@
 ./usr/sbin/groupmod
 ./usr/sbin/host
 ./usr/sbin/hostapd
+./usr/sbin/hoststatectl
+./usr/sbin/hoststated
 ./usr/sbin/httpd
 ./usr/sbin/ifstated
 ./usr/sbin/inetd
