@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.31 2006/12/14 17:36:12 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.32 2007/01/31 23:30:51 gwk Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #if NACPI > 0
-	if (!acpi_attached)
+	if (!acpi_hasprocfvs)
 #endif
 	{
 		if (setperf_setup != NULL)
@@ -212,7 +212,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #if NVESABIOS > 0
-        if (vbeprobe())	{
+	if (vbeprobe())	{
 		mba.mba_busname = "vesabios";
 		config_found(self, &mba.mba_busname, NULL);
 	}

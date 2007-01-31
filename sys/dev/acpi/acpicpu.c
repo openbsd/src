@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.18 2006/12/29 04:28:44 marco Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.19 2007/01/31 23:30:51 gwk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -135,6 +135,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	if (setperf_prio < 30) {
 		cpu_setperf = acpicpu_setperf;
 		setperf_prio = 30;
+		acpi_hasprocfvs = 1;
 	}
 	acpicpu_sc[sc->sc_dev.dv_unit] = sc;
 }
@@ -277,11 +278,11 @@ acpicpu_setperf(int level) {
 
 	sc = acpicpu_sc[cpu_number()];
 
-	dnprintf(10, "%s: acpicpu setperf level %d\n", 
+	dnprintf(10, "%s: acpicpu setperf level %d\n",
 	    sc->sc_devnode->parent->name, level);
 
 	if (level < 0 || level > 100) {
-		dnprintf(10, "%s: acpicpu setperf illegal percentage\n", 
+		dnprintf(10, "%s: acpicpu setperf illegal percentage\n",
 		    sc->sc_devnode->parent->name);
 		return;
 	}
@@ -291,12 +292,12 @@ acpicpu_setperf(int level) {
 		idx = 0; /* compensate */
 	if (idx > sc->sc_pss_len) {
 		/* XXX should never happen */
-		printf("%s: acpicpu setperf index out of range\n", 
+		printf("%s: acpicpu setperf index out of range\n",
 		    sc->sc_devnode->parent->name);
 		return;
 	}
 
-	dnprintf(10, "%s: acpicpu setperf index %d\n", 
+	dnprintf(10, "%s: acpicpu setperf index %d\n",
 	    sc->sc_devnode->parent->name, idx);
 
 	pss = &sc->sc_pss[idx];
@@ -351,6 +352,6 @@ acpicpu_setperf(int level) {
 	 if (status == pss->pss_status)
 		cpuspeed = pss->pss_core_freq;
 	else
-		printf("%s: acpicpu setperf failed to alter frequency\n", 
+		printf("%s: acpicpu setperf failed to alter frequency\n",
 		    sc->sc_devnode->parent->name);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.76 2007/01/22 19:47:11 mk Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.77 2007/01/31 23:30:51 gwk Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -47,6 +47,7 @@ int acpi_debug = 16;
 #endif
 int acpi_enabled = 0;
 int acpi_poll_enabled = 0;
+int acpi_hasprocfvs = 0;
 
 #define ACPIEN_RETRIES 15
 
