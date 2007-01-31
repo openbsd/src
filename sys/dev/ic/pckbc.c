@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.12 2006/05/08 19:52:13 deraadt Exp $ */
+/* $OpenBSD: pckbc.c,v 1.13 2007/01/31 14:35:51 mickey Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -93,6 +93,7 @@ static void pckbc_poll_cmd1(struct pckbc_internal *, pckbc_slot_t,
 
 void pckbc_cleanqueue(struct pckbc_slotdata *);
 void pckbc_cleanup(void *);
+void pckbc_poll(void *);
 int pckbc_cmdresponse(struct pckbc_internal *, pckbc_slot_t, u_char);
 void pckbc_start(struct pckbc_internal *, pckbc_slot_t);
 
@@ -296,8 +297,10 @@ pckbc_attach(sc)
 	ioh_d = t->t_ioh_d;
 	ioh_c = t->t_ioh_c;
 
-	if (pckbc_console == 0)
+	if (pckbc_console == 0) {
 		timeout_set(&t->t_cleanup, pckbc_cleanup, t);
+		timeout_set(&t->t_poll, pckbc_poll, t);
+	}
 
 	/* flush */
 	(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
@@ -428,7 +431,7 @@ pckbc_flush(self, slot)
 	struct pckbc_internal *t = self;
 
 	(void) pckbc_poll_data1(t->t_iot, t->t_ioh_d, t->t_ioh_c,
-				slot, t->t_haveaux);
+	    slot, t->t_haveaux);
 }
 
 int
@@ -514,6 +517,13 @@ pckbc_slot_enable(self, slot, on)
 	if (!pckbc_send_cmd(t->t_iot, t->t_ioh_c,
 			    on ? cmd->cmd_en : cmd->cmd_dis))
 		printf("pckbc_slot_enable(%d) failed\n", on);
+
+	if (slot == PCKBC_KBD_SLOT) {
+		if (on)
+			timeout_add(&t->t_poll, hz);
+		else
+			timeout_del(&t->t_poll);
+	}
 }
 
 void
@@ -895,6 +905,22 @@ pckbc_set_inputhandler(self, slot, func, arg, name)
 	sc->inputhandler[slot] = func;
 	sc->inputarg[slot] = arg;
 	sc->subname[slot] = name;
+
+	if (pckbc_console && slot == PCKBC_KBD_SLOT)
+		timeout_add(&t->t_poll, hz);
+}
+
+void
+pckbc_poll(v)
+	void *v;
+{
+	struct pckbc_internal *t = v;
+	int s;
+
+	s = spltty();
+	(void) pckbcintr(v);
+	timeout_add(&t->t_poll, hz);
+	splx(s);
 }
 
 int
@@ -907,6 +933,10 @@ pckbcintr(vsc)
 	pckbc_slot_t slot;
 	struct pckbc_slotdata *q;
 	int served = 0, data;
+
+	/* reschedule timeout futher into the idle times */
+	if (timeout_pending(&t->t_poll))
+		timeout_add(&t->t_poll, hz);
 
 	for(;;) {
 		stat = bus_space_read_1(t->t_iot, t->t_ioh_c, 0);
@@ -969,6 +999,7 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 	pckbc_consdata.t_ioh_c = ioh_c;
 	pckbc_consdata.t_addr = addr;
 	timeout_set(&pckbc_consdata.t_cleanup, pckbc_cleanup, &pckbc_consdata);
+	timeout_set(&pckbc_consdata.t_poll, pckbc_poll, &pckbc_consdata);
 
 	/* flush */
 	(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);

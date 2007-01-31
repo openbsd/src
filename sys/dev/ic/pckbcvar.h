@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbcvar.h,v 1.4 2004/11/02 21:21:00 miod Exp $ */
+/* $OpenBSD: pckbcvar.h,v 1.5 2007/01/31 14:35:51 mickey Exp $ */
 /* $NetBSD: pckbcvar.h,v 1.4 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -57,6 +57,7 @@ struct pckbc_internal {
 	struct pckbc_softc *t_sc; /* back pointer */
 
 	struct timeout t_cleanup;
+	struct timeout t_poll;
 };
 
 typedef void (*pckbc_inputfcn)(void *, int);
