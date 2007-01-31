@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.29 2006/05/28 01:14:15 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.30 2007/01/31 06:20:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -250,17 +250,21 @@ int
 trunk_capabilities(struct trunk_softc *tr)
 {
 	struct trunk_port *tp;
-	int cap = ~0;
+	int cap = ~0, priv;
 
+	/* Preserve private capabilities */
+	priv = tr->tr_capabilities & IFCAP_TRUNK_MASK;
+
+	/* Get capabilities from the trunk ports */
 	SLIST_FOREACH(tp, &tr->tr_ports, tp_entries)
 		cap &= tp->tp_capabilities;
 
 	if (tr->tr_ifflags & IFF_DEBUG) {
 		printf("%s: capabilities 0x%08x\n",
-		    tr->tr_ifname, cap == ~0 ? 0 : cap);
+		    tr->tr_ifname, cap == ~0 ? priv : (cap | priv));
 	}
 
-	return (cap == ~0 ? 0 : cap);
+	return (cap == ~0 ? priv : (cap | priv));
 }
 
 void
@@ -1013,14 +1017,10 @@ struct trunk_port *
 trunk_link_active(struct trunk_softc *tr, struct trunk_port *tp)
 {
 	struct trunk_port *tp_next, *rval = NULL;
-	int new_link = LINK_STATE_UP;
+	int new_link = LINK_STATE_DOWN;
 
 	/*
 	 * Search a port which reports an active link state.
-	 * Normally, this should be LINK_STATE_UP but not all
-	 * drivers seem to report this correctly so we assume
-	 * that LINK_STATE_DOWN is the opposite from
-	 * LINK_STATE_UNKNOWN and LINK_STATE_UP.
 	 */
 
 	if (tp == NULL)
@@ -1044,8 +1044,20 @@ trunk_link_active(struct trunk_softc *tr, struct trunk_port *tp)
 	}
 
  found:
-	if (rval == NULL)
-		new_link = LINK_STATE_DOWN;
+	if (rval != NULL) {
+		/*
+		 * The IEEE 802.1D standard assumes that a trunk with
+		 * multiple ports is always full duplex. This is valid
+		 * for load sharing trunks and if at least two links
+		 * are active. Unfortunately, checking the latter would
+		 * be too expensive at this point.
+		 */
+		if ((tr->tr_capabilities & IFCAP_TRUNK_FULLDUPLEX) &&
+		    (tr->tr_count > 1))
+			new_link = LINK_STATE_FULL_DUPLEX;
+		else
+			new_link = rval->tp_link_state;
+	}
 
 	if (tr->tr_ac.ac_if.if_link_state != new_link) {
 		tr->tr_ac.ac_if.if_link_state = new_link;
@@ -1069,6 +1081,7 @@ trunk_rr_attach(struct trunk_softc *tr)
 	tr->tr_input = trunk_rr_input;
 	tr->tr_port_create = NULL;
 	tr->tr_port_destroy = trunk_rr_port_destroy;
+	tr->tr_capabilities = IFCAP_TRUNK_FULLDUPLEX;
 
 	tp = SLIST_FIRST(&tr->tr_ports);
 	tr->tr_psc = (caddr_t)tp;
@@ -1227,6 +1240,7 @@ trunk_lb_attach(struct trunk_softc *tr)
 	tr->tr_input = trunk_lb_input;
 	tr->tr_port_create = trunk_lb_port_create;
 	tr->tr_port_destroy = trunk_lb_port_destroy;
+	tr->tr_capabilities = IFCAP_TRUNK_FULLDUPLEX;
 
 	lb->lb_key = arc4random();
 	tr->tr_psc = (caddr_t)lb;

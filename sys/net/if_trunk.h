@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.10 2006/05/28 01:14:15 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.11 2007/01/31 06:20:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -115,7 +115,7 @@ struct trunk_port {
 #define tp_capabilities		tp_if->if_capabilities	/* capabilities */
 
 #define TRUNK_PORTACTIVE(_tp)	(					\
-	((_tp)->tp_link_state != LINK_STATE_DOWN) &&			\
+	(LINK_STATE_IS_UP((_tp)->tp_link_state)) &&			\
 	((_tp)->tp_ifflags & IFF_UP)					\
 )
 
@@ -167,6 +167,9 @@ struct trunk_softc {
 #define tr_ifflags		tr_ac.ac_if.if_flags		/* flags */
 #define tr_ifname		tr_ac.ac_if.if_xname		/* name */
 #define tr_capabilities		tr_ac.ac_if.if_capabilities	/* capabilities */
+
+#define IFCAP_TRUNK_MASK	0xffff0000	/* private capabilities */
+#define IFCAP_TRUNK_FULLDUPLEX	0x00010000	/* full duplex with >1 ports */
 
 /* Private data used by the loadbalancing protocol */
 #define TRUNK_LB_MAXKEYS	8
