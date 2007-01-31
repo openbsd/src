@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.52 2006/11/10 14:47:32 henning Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.53 2007/01/31 15:23:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -281,15 +281,6 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 		if (peer->capa_announced.mp_v6 == SAFI_NONE)
 			return (-1);
 		break;
-	}
-
-	if (peer->conf.ebgp && !aspath_loopfree(p->aspath->aspath,
-	    peer->conf.remote_as)) {
-		/*
-		 * Do not send routes back to sender which would
-		 * cause an aspath loop.
-		 */
-		return (0);
 	}
 
 	if (p->aspath->peer->conf.ebgp == 0 && peer->conf.ebgp == 0) {
