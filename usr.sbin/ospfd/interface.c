@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.56 2007/01/24 14:08:28 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.57 2007/02/01 13:06:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -564,6 +564,9 @@ if_act_reset(struct iface *iface)
 	stop_ls_ack_tx_timer(iface);
 	if_stop_hello_timer(iface);
 	if_stop_wait_timer(iface);
+	
+	/* send empty hello to tell everybody that we are going down */
+	send_hello(iface);
 
 	return (0);
 }
