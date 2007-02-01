@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.23 2006/12/24 20:30:35 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.24 2007/02/01 20:42:17 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -229,11 +229,7 @@ extern u_int32_t cpus_attached;
  */
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston(p))
 
-/*
- * Notify the current process (p) that it has a signal pending,
- * process as soon as possible.
- */
-#define	signotify(p)		aston(p)
+void signotify(struct proc *);
 
 /*
  * We need a machine-independent name for this.
