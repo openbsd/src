@@ -1,8 +1,8 @@
-/*	$OpenBSD: admin.c,v 1.46 2007/01/25 18:56:33 otto Exp $	*/
+/*	$OpenBSD: admin.c,v 1.47 2007/02/01 09:45:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
- * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
+ * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,7 +43,8 @@ struct cvs_cmd cvs_cmd_admin = {
 
 static int	 runflags = 0;
 static int	 lkmode = RCS_LOCK_INVAL;
-static char	*alist, *comment, *elist, *logmsg, *logstr;
+static int	 kflag = RCS_KWEXP_DEFAULT;
+static char	*alist, *comment, *elist, *logmsg, *logstr, *koptstr;
 static char	*oldfilename, *orange, *state, *statestr;
 static RCSNUM	*logrev;
 
@@ -79,6 +80,13 @@ cvs_admin(int argc, char **argv)
 		case 'I':
 			break;
 		case 'k':
+			koptstr = optarg;
+			kflag = rcs_kflag_get(koptstr);
+			if (RCS_KWEXP_INVAL(kflag)) {
+				cvs_log(LP_ERR,
+				    "invalid RCS keyword expension mode");
+				fatal("%s", cvs_cmd_admin.cmd_synopsis);
+			}
 			break;
 		case 'L':
 			if (lkmode == RCS_LOCK_LOOSE) {
@@ -146,6 +154,9 @@ cvs_admin(int argc, char **argv)
 		if (runflags & ADM_EFLAG)
 			cvs_client_send_request("Argument -e%s",
 			    (elist != NULL) ? elist : "");
+
+		if (koptstr != NULL)
+			cvs_client_send_request("Argument -k%s", koptstr);
 
 		if (lkmode == RCS_LOCK_STRICT)
 			cvs_client_send_request("Argument -L");
@@ -280,6 +291,13 @@ cvs_admin_local(struct cvs_file *cf)
 		}
 		/* no synced anymore */
 		cf->file_rcs->rf_flags &= ~RCS_SYNCED;
+	}
+
+	/* Default `-kv' is accepted here. */
+	if (koptstr != NULL) {
+		if (cf->file_rcs->rf_expand == NULL ||
+		    strcmp(cf->file_rcs->rf_expand, koptstr) != 0)
+			rcs_kwexp_set(cf->file_rcs, kflag);
 	}
 
 	if (logstr != NULL) {
