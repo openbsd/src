@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststatectl.c,v 1.11 2007/02/01 21:01:10 reyk Exp $	*/
+/*	$OpenBSD: hoststatectl.c,v 1.12 2007/02/01 21:57:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -248,6 +248,8 @@ monitor_id(struct imsg *imsg)
 
 	memcpy(&id, imsg->data, sizeof(id));
 	printf("\tid: %u\n", id.id);
+	if (strlen(id.name))
+		printf("\tname: %s\n", id.name);
 }
 
 int
