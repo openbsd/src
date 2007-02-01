@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.100 2006/11/10 16:31:29 millert Exp $	*/
+/*	$OpenBSD: co.c,v 1.101 2007/02/01 18:01:42 millert Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -518,6 +518,10 @@ checkout_file_has_diffs(RCSFILE *rfp, RCSNUM *frev, const char *dst)
 
 	if ((bp = rcs_getrev(rfp, frev)) == NULL) {
 		warnx("failed to load revision");
+		return (D_ERROR);
+	}
+	if ((bp = rcs_kwexp_buf(bp, rfp, frev)) == NULL) {
+		warnx("failed to expand tags");
 		return (D_ERROR);
 	}
 
