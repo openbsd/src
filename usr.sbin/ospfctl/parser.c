@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.13 2007/01/25 16:40:43 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.14 2007/02/01 13:09:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -60,7 +60,7 @@ static const struct token t_show_rib[];
 static const struct token t_show_fib[];
 
 static const struct token t_main[] = {
-/*	{KEYWORD,	"reload",	RELOAD,		NULL}, */
+	{KEYWORD,	"reload",	RELOAD,		NULL},
 	{KEYWORD,	"fib",		FIB,		t_fib},
 	{KEYWORD,	"show",		SHOW,		t_show},
 	{ENDTOKEN,	"",		NONE,		NULL}
