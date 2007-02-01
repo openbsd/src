@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.55 2007/01/29 13:04:13 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.56 2007/02/01 12:46:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -631,7 +631,12 @@ rde_dispatch_parent(int fd, short event, void *bula)
 				v = lsa_find(NULL, lsa->hdr.type,
 				    lsa->hdr.ls_id, lsa->hdr.adv_rtr);
 
-				lsa_merge(nbrself, lsa, v);
+				/*
+				 * if v == NULL no LSA is in the table and
+				 * nothing has to be done.
+				 */
+				if (v)
+					lsa_merge(nbrself, lsa, v);
 			}
 			break;
 		case IMSG_KROUTE_GET:
@@ -970,20 +975,10 @@ rde_asext_get(struct rroute *rr)
 struct lsa *
 rde_asext_put(struct rroute *rr)
 {
-	struct area	*area;
-	struct iface	*iface;
-
-	LIST_FOREACH(area, &rdeconf->area_list, entry)
-		LIST_FOREACH(iface, &area->iface_list, entry) {
-			if ((iface->addr.s_addr & iface->mask.s_addr) ==
-			    rr->kr.prefix.s_addr && iface->mask.s_addr ==
-			    prefixlen2mask(rr->kr.prefixlen)) {
-				/* already announced as (stub) net LSA */
-				log_debug("rde_asext_put: %s/%d is net LSA",
-				    inet_ntoa(rr->kr.prefix), rr->kr.prefixlen);
-				return (NULL);
-			}
-		}
+	/* 
+	 * just try to remove the LSA. If the prefix is announced as
+	 * stub net LSA lsa_find() will fail later and nothing will happen.
+	 */
 
 	/* remove by reflooding with MAX_AGE */
 	return (orig_asext_lsa(rr, MAX_AGE));
