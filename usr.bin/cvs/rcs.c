@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.206 2007/01/26 21:59:11 otto Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.207 2007/02/01 20:36:21 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -215,7 +215,6 @@ static const char *rcs_errstrs[] = {
 int rcs_errno = RCS_ERR_NOERR;
 
 int		rcs_patch_lines(struct cvs_lines *, struct cvs_lines *);
-static int	rcs_movefile(char *, char *, mode_t, u_int);
 static void	rcs_parse_init(RCSFILE *);
 static int	rcs_parse_admin(RCSFILE *);
 static int	rcs_parse_delta(RCSFILE *);
@@ -361,16 +360,16 @@ void
 rcs_write(RCSFILE *rfp)
 {
 	FILE *fp;
-	char buf[1024], numbuf[64], *fn;
+	char buf[1024], numbuf[64], *fn, tmpdir[MAXPATHLEN];
 	struct rcs_access *ap;
 	struct rcs_sym *symp;
 	struct rcs_branch *brp;
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkp;
 	size_t len;
-	int fd, from_fd, to_fd;
+	int fd, saved_errno;
 
-	from_fd = to_fd = fd = -1;
+	fd = -1;
 
 	if (rfp->rf_flags & RCS_SYNCED)
 		return;
@@ -381,18 +380,17 @@ rcs_write(RCSFILE *rfp)
 	/* Write operations need the whole file parsed */
 	rcs_parse_deltatexts(rfp, NULL);
 
-	(void)xasprintf(&fn, "%s/rcs.XXXXXXXXXX", cvs_tmpdir);
+	if (strlcpy(tmpdir, rfp->rf_path, sizeof(tmpdir)) >= sizeof(tmpdir))
+		fatal("rcs_write: truncation");
+	(void)xasprintf(&fn, "%s/rcs.XXXXXXXXXX", dirname(tmpdir));
 
 	if ((fd = mkstemp(fn)) == -1)
 		fatal("%s", fn);
 
-	if ((fp = fdopen(fd, "w+")) == NULL) {
-		int saved_errno;
-
+	if ((fp = fdopen(fd, "w")) == NULL) {
 		saved_errno = errno;
 		(void)unlink(fn);
-		errno = saved_errno;
-		fatal("%s", fn);
+		fatal("fdopen %s: %s", fn, strerror(saved_errno));
 	}
 
 	if (rfp->rf_head != NULL)
@@ -497,88 +495,25 @@ rcs_write(RCSFILE *rfp)
 		}
 		fputs("@\n", fp);
 	}
+	if (fchmod(fd, rfp->rf_mode) == -1) {
+		saved_errno = errno;
+		(void)unlink(fn);
+		fatal("fchmod %s: %s", fn, strerror(saved_errno));
+	}
+
 	(void)fclose(fp);
 
-	if (rcs_movefile(fn, rfp->rf_path, rfp->rf_mode, rfp->rf_flags) == -1) {
+	if (rename(fn, rfp->rf_path) == -1) {
+		saved_errno = errno;
 		(void)unlink(fn);
-		fatal("rcs_movefile failed");
+		fatal("rename(%s, %s): %s", fn, rfp->rf_path,
+		    strerror(saved_errno));
 	}
 
 	rfp->rf_flags |= RCS_SYNCED;
 
 	if (fn != NULL)
 		xfree(fn);
-}
-
-/*
- * rcs_movefile()
- *
- * Move a file using rename(2) if possible and copying if not.
- * Returns 0 on success, -1 on failure.
- */
-static int
-rcs_movefile(char *from, char *to, mode_t perm, u_int to_flags)
-{
-	FILE *src, *dst;
-	size_t nread, nwritten;
-	char buf[MAXBSIZE];
-	int ret;
-
-	ret = -1;
-
-	if (rename(from, to) == 0) {
-		if (chmod(to, perm) == -1) {
-			cvs_log(LP_ERRNO, "%s", to);
-			return (-1);
-		}
-		return (0);
-	} else if (errno != EXDEV) {
-		cvs_log(LP_NOTICE, "failed to access temp RCS output file");
-		return (-1);
-	}
-
-	if ((chmod(to, S_IWUSR) == -1) && !(to_flags & RCS_CREATE)) {
-		cvs_log(LP_ERR, "chmod(%s, 0%o) failed", to, S_IWUSR);
-		return (-1);
-	}
-
-	/* different filesystem, have to copy the file */
-	if ((src = fopen(from, "r")) == NULL) {
-		cvs_log(LP_ERRNO, "%s", from);
-		return (-1);
-	}
-	if ((dst = fopen(to, "w")) == NULL) {
-		cvs_log(LP_ERRNO, "%s", to);
-		return (-1);
-	}
-	if (fchmod(fileno(dst), perm)) {
-		cvs_log(LP_ERR, "%s", to);
-		(void)unlink(to);
-		return (-1);
-	}
-
-	while ((nread = fread(buf, sizeof(char), MAXBSIZE, src)) != 0) {
-		if (ferror(src)) {
-			cvs_log(LP_ERRNO, "failed to read `%s'", from);
-			(void)unlink(to);
-			goto out;
-		}
-		nwritten = fwrite(buf, sizeof(char), nread, dst);
-		if (nwritten != nread) {
-			cvs_log(LP_ERRNO, "failed to write `%s'", to);
-			(void)unlink(to);
-			goto out;
-		}
-	}
-
-	(void)unlink(from);
-	ret = 0;
-
-out:
-	(void)fclose(src);
-	(void)fclose(dst);
-
-	return (ret);
 }
 
 /*
