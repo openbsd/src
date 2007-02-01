@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.39 2007/01/20 17:13:36 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.40 2007/02/01 13:02:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -58,13 +58,19 @@ void	main_dispatch_rde(int, short, void *);
 int	check_file_secrecy(int, const char *);
 void	ospf_redistribute_default(int);
 
+int	ospf_reload(void);
+int	ospf_sendboth(enum imsg_type, void *, u_int16_t);
+void	merge_interfaces(struct area *, struct area *);
+struct iface *iface_lookup(struct area *, struct iface *);
+
 int	pipe_parent2ospfe[2];
 int	pipe_parent2rde[2];
 int	pipe_ospfe2rde[2];
 
-struct ospfd_conf	*conf = NULL;
+struct ospfd_conf	*ospfd_conf = NULL;
 struct imsgbuf		*ibuf_ospfe;
 struct imsgbuf		*ibuf_rde;
+char			*conffile;
 
 pid_t			 ospfe_pid = 0;
 pid_t			 rde_pid = 0;
@@ -119,7 +125,7 @@ int
 main(int argc, char *argv[])
 {
 	struct event		 ev_sigint, ev_sigterm, ev_sigchld, ev_sighup;
-	char			*conffile;
+	struct area		*a;
 	int			 ch, opts = 0;
 	int			 debug = 0;
 	int			 ipforwarding;
@@ -170,12 +176,12 @@ main(int argc, char *argv[])
 	kif_init();
 
 	/* parse config file */
-	if ((conf = parse_config(conffile, opts)) == NULL )
+	if ((ospfd_conf = parse_config(conffile, opts)) == NULL )
 		exit(1);
 
-	if (conf->opts & OSPFD_OPT_NOACTION) {
-		if (conf->opts & OSPFD_OPT_VERBOSE)
-			print_config(conf);
+	if (ospfd_conf->opts & OSPFD_OPT_NOACTION) {
+		if (ospfd_conf->opts & OSPFD_OPT_VERBOSE)
+			print_config(ospfd_conf);
 		else
 			fprintf(stderr, "configuration OK\n");
 		exit(0);
@@ -209,8 +215,9 @@ main(int argc, char *argv[])
 	session_socket_blockmode(pipe_ospfe2rde[1], BM_NONBLOCK);
 
 	/* start children */
-	rde_pid = rde(conf, pipe_parent2rde, pipe_ospfe2rde, pipe_parent2ospfe);
-	ospfe_pid = ospfe(conf, pipe_parent2ospfe, pipe_ospfe2rde,
+	rde_pid = rde(ospfd_conf, pipe_parent2rde, pipe_ospfe2rde,
+	    pipe_parent2ospfe);
+	ospfe_pid = ospfe(ospfd_conf, pipe_parent2ospfe, pipe_ospfe2rde,
 	    pipe_parent2rde);
 
 	/* show who we are */
@@ -252,8 +259,14 @@ main(int argc, char *argv[])
 	    ibuf_rde->handler, ibuf_rde);
 	event_add(&ibuf_rde->ev, NULL);
 
-	if (kr_init(!(conf->flags & OSPFD_FLAG_NO_FIB_UPDATE)) == -1)
+	if (kr_init(!(ospfd_conf->flags & OSPFD_FLAG_NO_FIB_UPDATE)) == -1)
 		fatalx("kr_init failed");
+
+	/* remove unneded stuff from config */
+	while ((a = LIST_FIRST(&ospfd_conf->area_list)) != NULL) {
+		LIST_REMOVE(a, entry);
+		area_del(a);
+	}
 
 	/* redistribute default */
 	ospf_redistribute_default(IMSG_NETWORK_ADD);
@@ -268,7 +281,6 @@ main(int argc, char *argv[])
 void
 ospfd_shutdown(void)
 {
-	struct area	*a;
 	pid_t		 pid;
 
 	if (ospfe_pid)
@@ -276,11 +288,6 @@ ospfd_shutdown(void)
 
 	if (rde_pid)
 		kill(rde_pid, SIGTERM);
-
-	while ((a = LIST_FIRST(&conf->area_list)) != NULL) {
-		LIST_REMOVE(a, entry);
-		area_del(a);
-	}
 
 	control_cleanup();
 	kr_shutdown();
@@ -295,7 +302,7 @@ ospfd_shutdown(void)
 	free(ibuf_ospfe);
 	msgbuf_clear(&ibuf_rde->w);
 	free(ibuf_rde);
-	free(conf);
+	free(ospfd_conf);
 
 	log_info("terminating");
 	exit(0);
@@ -326,9 +333,9 @@ check_child(pid_t pid, const char *pname)
 void
 main_dispatch_ospfe(int fd, short event, void *bula)
 {
-	struct imsgbuf  *ibuf = bula;
-	struct imsg	 imsg;
-	ssize_t		 n;
+	struct imsgbuf  	*ibuf = bula;
+	struct imsg		 imsg;
+	ssize_t			 n;
 
 	switch (event) {
 	case EV_READ:
@@ -355,7 +362,10 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_RELOAD:
-			/* XXX reconfig */
+			if (ospf_reload() == -1)
+				log_warnx("configuration reload failed");
+			else
+				log_debug("configuration reloaded");
 			break;
 		case IMSG_CTL_FIB_COUPLE:
 			kr_fib_couple();
@@ -491,14 +501,14 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 	struct redistribute	*r;
 
 	/* stub area router? */
-	if ((conf->options & OSPF_OPTION_E) == 0)
+	if ((ospfd_conf->options & OSPF_OPTION_E) == 0)
 		return (0);
 
 	/* only allow 0.0.0.0/0 via REDISTRIBUTE_DEFAULT */
 	if (kr->prefix.s_addr == INADDR_ANY && kr->prefixlen == 0)
 		return (0);
 
-	SIMPLEQ_FOREACH(r, &conf->redist_list, entry) {
+	SIMPLEQ_FOREACH(r, &ospfd_conf->redist_list, entry) {
 		switch (r->type & ~REDIST_NO) {
 		case REDIST_LABEL:
 			if (kr->rtlabel == r->label)
@@ -546,11 +556,236 @@ ospf_redistribute_default(int type)
 {
 	struct rroute	rr;
 
-	if (!(conf->redistribute & REDISTRIBUTE_DEFAULT))
+	if (!(ospfd_conf->redistribute & REDISTRIBUTE_DEFAULT))
 		return;
 
 	bzero(&rr, sizeof(rr));
-	rr.metric = conf->defaultmetric;
+	rr.metric = ospfd_conf->defaultmetric;
 	main_imsg_compose_rde(type, 0, &rr, sizeof(struct rroute));
+}
+
+int
+ospf_reload(void)
+{
+	struct area		*area;
+	struct iface		*iface;
+	struct ospfd_conf	*xconf;
+
+	if ((xconf = parse_config(conffile, ospfd_conf->opts)) == NULL)
+		return (-1);
+
+	/* send config to childs */
+	if (ospf_sendboth(IMSG_RECONF_CONF, xconf, sizeof(*xconf)) == -1)
+		return (-1);
+
+	/* send interfaces */
+	LIST_FOREACH(area, &xconf->area_list, entry) {
+		if (ospf_sendboth(IMSG_RECONF_AREA, area, sizeof(*area)) == -1)
+			return (-1);
+
+		LIST_FOREACH(iface, &area->iface_list, entry) {
+			if (ospf_sendboth(IMSG_RECONF_IFACE, iface,
+			    sizeof(*iface)) == -1)
+				return (-1);
+			if (iface->auth_type == AUTH_CRYPT)
+				if (md_list_send(&iface->auth_md_list,
+				    ibuf_ospfe) == -1)
+					return (-1);
+		}
+	}
+
+	if (ospf_sendboth(IMSG_RECONF_END, NULL, 0) == -1)
+		return (-1);
+
+	merge_config(ospfd_conf, xconf);
+	/* update redistribute lists */
+	kr_reload();
+	return (0);
+}
+
+int
+ospf_sendboth(enum imsg_type type, void *buf, u_int16_t len)
+{
+	if (imsg_compose(ibuf_ospfe, type, 0, 0, buf, len) == -1)
+		return (-1);
+	if (imsg_compose(ibuf_rde, type, 0, 0, buf, len) == -1)
+		return (-1);
+	return (0);
+}
+
+void
+merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
+{
+	struct area		*a, *xa, *na;
+	struct iface		*iface;
+	struct redistribute	*r;
+
+	/* change of rtr_id needs a restart and flags are ignored */
+	conf->spf_delay = xconf->spf_delay;
+	conf->spf_hold_time = xconf->spf_hold_time;
+	conf->redistribute = xconf->redistribute;
+	conf->rfc1583compat = xconf->rfc1583compat;
+
+	if (ospfd_process == PROC_MAIN) {
+		/* main process does neither use areas nor interfaces */
+		while ((r = SIMPLEQ_FIRST(&conf->redist_list)) != NULL) {
+			SIMPLEQ_REMOVE_HEAD(&conf->redist_list, entry);
+			free(r);
+		}
+		while ((r = SIMPLEQ_FIRST(&xconf->redist_list)) != NULL) {
+			SIMPLEQ_REMOVE_HEAD(&xconf->redist_list, entry);
+			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
+		}
+		goto done;
+	}
+
+	/* merge areas and interfaces */
+	for (a = LIST_FIRST(&conf->area_list); a != NULL; a = na) {
+		na = LIST_NEXT(a, entry);
+		/* find deleted areas */
+		if ((xa = area_find(xconf, a->id)) == NULL) {
+			if (ospfd_process == PROC_OSPF_ENGINE) {
+				LIST_FOREACH(iface, &a->iface_list, entry)
+					if_fsm(iface, IF_EVT_DOWN);
+			}
+			LIST_REMOVE(a, entry);
+			area_del(a);
+		}
+	}
+
+	for (xa = LIST_FIRST(&xconf->area_list); xa != NULL; xa = na) {
+		na = LIST_NEXT(xa, entry);
+		if ((a = area_find(conf, xa->id)) == NULL) {
+			LIST_REMOVE(xa, entry);
+			LIST_INSERT_HEAD(&conf->area_list, xa, entry);
+			if (ospfd_process == PROC_OSPF_ENGINE) {
+				/* start interfaces */
+				LIST_FOREACH(iface, &xa->iface_list, entry) {
+					if_init(conf, iface);
+					if (if_fsm(iface, IF_EVT_UP)) {
+						log_debug("error starting "
+						    "interface %s",
+						    iface->name);
+					}
+				}
+			}
+			/* no need to merge interfaces */
+			continue;
+		}
+		/*
+		 * stub is not yet used but switching between stub and normal
+		 * will be another painful job.
+		 */
+		a->stub = xa->stub;
+		a->stub_default_cost = xa->stub_default_cost;
+		a->dirty = 1; /* force SPF tree recalculation */
+
+		/* merge interfaces */
+		merge_interfaces(a, xa);
+	}
+
+	if (ospfd_process == PROC_OSPF_ENGINE) {
+		LIST_FOREACH(a, &conf->area_list, entry) {
+			LIST_FOREACH(iface, &a->iface_list, entry) {
+				if (iface->state == IF_STA_NEW) {
+					iface->state = IF_STA_DOWN;
+					if_init(conf, iface);
+					if (if_fsm(iface, IF_EVT_UP)) {
+						log_debug("error starting "
+						    "interface %s",
+						    iface->name);
+					}
+				}
+			}
+		}
+	}
+
+done:
+	while ((a = LIST_FIRST(&xconf->area_list)) != NULL) {
+		LIST_REMOVE(a, entry);
+		area_del(a);
+	}
+	free(xconf);
+}
+
+void
+merge_interfaces(struct area *a, struct area *xa)
+{
+	struct iface	*i, *xi, *ni;
+
+	/* problems:
+	 * - new interfaces (easy)
+	 * - deleted interfaces (needs to be done via fsm?)
+	 * - changing passive (painful?)
+	 */
+	for (i = LIST_FIRST(&a->iface_list); i != NULL; i = ni) {
+		ni = LIST_NEXT(i, entry);
+		if (iface_lookup(xa, i) == NULL) {
+			log_debug("merge_config: proc %d area %s removing interface %s",
+			    ospfd_process, inet_ntoa(a->id), i->name);
+			if (ospfd_process == PROC_OSPF_ENGINE)
+				if_fsm(i, IF_EVT_DOWN);
+			LIST_REMOVE(i, entry);
+			if_del(i);
+		}
+	}
+
+	for (xi = LIST_FIRST(&xa->iface_list); xi != NULL; xi = ni) {
+		ni = LIST_NEXT(xi, entry);
+		if ((i = iface_lookup(a, xi)) == NULL) {
+			/* new interface but delay initialisation */
+			log_debug("merge_config: proc %d area %s adding interface %s",
+			    ospfd_process, inet_ntoa(a->id), xi->name);
+			LIST_REMOVE(xi, entry);
+			LIST_INSERT_HEAD(&a->iface_list, xi, entry);
+			xi->area = a;
+			if (ospfd_process == PROC_OSPF_ENGINE)
+				xi->state = IF_STA_NEW;
+			continue;
+		}
+		log_debug("merge_config: proc %d area %s merging interface %s",
+		    ospfd_process, inet_ntoa(a->id), i->name);
+		i->addr = xi->addr;
+		i->dst = xi->dst;
+		i->mask = xi->mask;
+		i->abr_id = xi->abr_id;
+		i->baudrate = xi->baudrate;
+		i->dead_interval = xi->dead_interval;
+		i->mtu = xi->mtu;
+		i->transmit_delay = xi->transmit_delay;
+		i->hello_interval = xi->hello_interval;
+		i->rxmt_interval = xi->rxmt_interval;
+		i->metric = xi->metric;
+		i->priority = xi->priority;
+		i->flags = xi->flags; /* needed? */
+		i->type = xi->type; /* needed? */
+		i->media_type = xi->media_type; /* needed? */
+		i->linkstate = xi->linkstate; /* needed? */
+		
+		i->auth_type = xi->auth_type;
+		strlcpy(i->auth_key, xi->auth_key, MAX_SIMPLE_AUTH_LEN);
+		md_list_clr(&i->auth_md_list);
+		md_list_copy(&i->auth_md_list, &xi->auth_md_list);
+
+		if (i->passive != xi->passive) {
+			/* need to restart interface to cope with this change */
+			if (ospfd_process == PROC_OSPF_ENGINE)
+				if_fsm(i, IF_EVT_DOWN);
+			i->passive = xi->passive;
+			if (ospfd_process == PROC_OSPF_ENGINE)
+				if_fsm(i, IF_EVT_UP);
+		}
+	}
+}
+
+struct iface *
+iface_lookup(struct area *area, struct iface *iface)
+{
+	struct iface	*i;
+
+	LIST_FOREACH(i, &area->iface_list, entry)
+		if (i->ifindex == iface->ifindex)
+			return (i);
+	return (NULL);
 }
 

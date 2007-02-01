@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.51 2007/01/11 21:43:13 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.52 2007/02/01 13:02:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -48,7 +48,7 @@ void		 ospfe_shutdown(void);
 void		 orig_rtr_lsa_all(struct area *);
 struct iface	*find_vlink(struct abr_rtr *);
 
-struct ospfd_conf	*oeconf = NULL;
+struct ospfd_conf	*oeconf = NULL, *nconf;
 struct imsgbuf		*ibuf_main;
 struct imsgbuf		*ibuf_rde;
 
@@ -244,11 +244,14 @@ ospfe_imsg_compose_rde(int type, u_int32_t peerid, pid_t pid,
 void
 ospfe_dispatch_main(int fd, short event, void *bula)
 {
+	static struct area	*narea;
+	static struct iface	*niface;
 	struct imsg	 imsg;
 	struct imsgbuf  *ibuf = bula;
 	struct area	*area = NULL;
 	struct iface	*iface = NULL;
 	struct kif	*kif;
+	struct auth_md	 md;
 	int		 n, link_ok;
 
 	switch (event) {
@@ -309,6 +312,46 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 					}
 				}
 			}
+			break;
+		case IMSG_RECONF_CONF:
+			if ((nconf = malloc(sizeof(struct ospfd_conf))) ==
+			    NULL)
+				fatal(NULL);
+			memcpy(nconf, imsg.data, sizeof(struct ospfd_conf));
+
+			LIST_INIT(&nconf->area_list);
+			LIST_INIT(&nconf->cand_list);
+			break;
+		case IMSG_RECONF_AREA:
+			if ((narea = area_new()) == NULL)
+				fatal(NULL);
+			memcpy(narea, imsg.data, sizeof(struct area));
+
+			LIST_INIT(&narea->iface_list);
+			LIST_INIT(&narea->nbr_list);
+			RB_INIT(&narea->lsa_tree);
+
+			LIST_INSERT_HEAD(&nconf->area_list, narea, entry);
+			break;
+		case IMSG_RECONF_IFACE:
+			if ((niface = malloc(sizeof(struct iface))) == NULL)
+				fatal(NULL);
+			memcpy(niface, imsg.data, sizeof(struct iface));
+
+			LIST_INIT(&niface->nbr_list);
+			TAILQ_INIT(&niface->ls_ack_list);
+			TAILQ_INIT(&niface->auth_md_list);
+
+			niface->area = narea;
+			LIST_INSERT_HEAD(&narea->iface_list, niface, entry);
+			break;
+		case IMSG_RECONF_AUTHMD:
+			memcpy(&md, imsg.data, sizeof(struct auth_md));
+			md_list_add(&niface->auth_md_list, md.keyid, md.key);
+			break;
+		case IMSG_RECONF_END:
+			merge_config(oeconf, nconf);
+			nconf = NULL;
 			break;
 		case IMSG_CTL_KROUTE:
 		case IMSG_CTL_KROUTE_ADDR:

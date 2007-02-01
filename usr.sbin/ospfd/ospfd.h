@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.64 2007/02/01 12:51:01 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.65 2007/02/01 13:02:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -138,7 +138,12 @@ enum imsg_type {
 	IMSG_LS_BADREQ,
 	IMSG_LS_MAXAGE,
 	IMSG_ABR_UP,
-	IMSG_ABR_DOWN
+	IMSG_ABR_DOWN,
+	IMSG_RECONF_CONF,
+	IMSG_RECONF_AREA,
+	IMSG_RECONF_IFACE,
+	IMSG_RECONF_AUTHMD,
+	IMSG_RECONF_END
 };
 
 struct imsg_hdr {
@@ -175,6 +180,7 @@ struct area {
 };
 
 /* interface states */
+#define	IF_STA_NEW		0x00	/* dummy state for reload */
 #define	IF_STA_DOWN		0x01
 #define	IF_STA_LOOPBACK		0x02
 #define	IF_STA_WAITING		0x04
@@ -594,6 +600,7 @@ void		 rtlabel_unref(u_int16_t);
 void	main_imsg_compose_ospfe(int, pid_t, void *, u_int16_t);
 void	main_imsg_compose_rde(int, pid_t, void *, u_int16_t);
 int	ospf_redistribute(struct kroute *, u_int32_t *);
+void	merge_config(struct ospfd_conf *, struct ospfd_conf *);
 
 /* printconf.c */
 void	print_config(struct ospfd_conf *);

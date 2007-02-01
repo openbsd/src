@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.56 2007/02/01 12:46:54 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.57 2007/02/01 13:02:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -62,7 +62,7 @@ struct lsa	*rde_asext_put(struct rroute *);
 struct lsa	*orig_asext_lsa(struct rroute *, u_int16_t);
 struct lsa	*orig_sum_lsa(struct rt_node *, u_int8_t);
 
-struct ospfd_conf	*rdeconf = NULL;
+struct ospfd_conf	*rdeconf = NULL, *nconf = NULL;
 struct imsgbuf		*ibuf_ospfe;
 struct imsgbuf		*ibuf_main;
 struct rde_nbr		*nbrself;
@@ -574,6 +574,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 void
 rde_dispatch_parent(int fd, short event, void *bula)
 {
+	static struct area	*narea;
+	struct iface		*niface;
 	struct imsg		 imsg;
 	struct kroute		 kr;
 	struct rroute		 rr;
@@ -653,7 +655,43 @@ rde_dispatch_parent(int fd, short event, void *bula)
 				/* should not happen */
 				imsg_compose(ibuf_main, IMSG_KROUTE_DELETE, 0,
 				    0, &kr, sizeof(kr));
+			break;
+		case IMSG_RECONF_CONF:
+			if ((nconf = malloc(sizeof(struct ospfd_conf))) ==
+			    NULL)
+				fatal(NULL);
+			memcpy(nconf, imsg.data, sizeof(struct ospfd_conf));
 
+			LIST_INIT(&nconf->area_list);
+			LIST_INIT(&nconf->cand_list);
+			break;
+		case IMSG_RECONF_AREA:
+			if ((narea = area_new()) == NULL)
+				fatal(NULL);
+			memcpy(narea, imsg.data, sizeof(struct area));
+
+			LIST_INIT(&narea->iface_list);
+			LIST_INIT(&narea->nbr_list);
+			RB_INIT(&narea->lsa_tree);
+
+			LIST_INSERT_HEAD(&nconf->area_list, narea, entry);
+			break;
+		case IMSG_RECONF_IFACE:
+			if ((niface = malloc(sizeof(struct iface))) == NULL)
+				fatal(NULL);
+			memcpy(niface, imsg.data, sizeof(struct iface));
+
+			LIST_INIT(&niface->nbr_list);
+			TAILQ_INIT(&niface->ls_ack_list);
+			TAILQ_INIT(&niface->auth_md_list);
+
+			niface->area = narea;
+			LIST_INSERT_HEAD(&narea->iface_list, niface, entry);
+
+			break;
+		case IMSG_RECONF_END:
+			merge_config(rdeconf, nconf);
+			nconf = NULL;
 			break;
 		default:
 			log_debug("rde_dispatch_parent: unexpected imsg %d",
