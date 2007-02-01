@@ -1,4 +1,4 @@
-.\" $OpenBSD: hoststatectl.8,v 1.6 2007/01/09 13:50:10 pyr Exp $
+.\" $OpenBSD: hoststatectl.8,v 1.7 2007/02/01 20:03:38 pyr Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -39,6 +39,9 @@ Treat it as though it were always down.
 .It Cm host enable Op Ar name | id
 Enable the host.
 Start checking its health again.
+.It Cm monitor
+Continuously report any changes in the host checking engine and the
+pf engine.
 .It Cm service disable Op Ar name | id
 Disable a service.
 If it has

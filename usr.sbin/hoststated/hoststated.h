@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.17 2007/01/29 14:23:31 pyr Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.18 2007/02/01 20:03:39 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -89,14 +89,14 @@ enum imsg_type {
 	IMSG_CTL_HOST_DISABLE,
 	IMSG_CTL_SHUTDOWN,
 	IMSG_CTL_RELOAD,
+	IMSG_CTL_NOTIFY,
 	IMSG_SERVICE_ENABLE,	/* notifies from pfe to hce */
 	IMSG_SERVICE_DISABLE,
 	IMSG_TABLE_ENABLE,
 	IMSG_TABLE_DISABLE,
 	IMSG_HOST_ENABLE,
 	IMSG_HOST_DISABLE,
-	IMSG_TABLE_STATUS,	/* notifies from hce to pfe */
-	IMSG_HOST_STATUS,
+	IMSG_HOST_STATUS,	/* notifies from hce to pfe */
 	IMSG_SYNC
 };
 
@@ -270,6 +270,8 @@ enum blockmodes {
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;
+	u_int8_t		 flags;
+#define CTL_CONN_NOTIFY		 0x01
 	struct imsgbuf		 ibuf;
 
 };
@@ -281,6 +283,7 @@ int     control_listen(void);
 void    control_accept(int, short, void *);
 void    control_dispatch_imsg(int, short, void *);
 int     control_imsg_relay(struct imsg *);
+void	control_imsg_forward(struct imsg *);
 void    control_cleanup(void);
 
 void    session_socket_blockmode(int, enum blockmodes);

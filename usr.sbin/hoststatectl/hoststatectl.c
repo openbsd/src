@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststatectl.c,v 1.9 2007/01/29 14:23:31 pyr Exp $	*/
+/*	$OpenBSD: hoststatectl.c,v 1.10 2007/02/01 20:03:38 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -44,6 +44,7 @@
 __dead void	 usage(void);
 int		 show_summary_msg(struct imsg *);
 int		 show_command_output(struct imsg *);
+int		 monitor(struct imsg *);
 char		*print_service_status(int);
 char		*print_host_status(int, int);
 char		*print_table_status(int, int);
@@ -134,6 +135,9 @@ main(int argc, char *argv[])
 	case RELOAD:
 		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, NULL, 0);
 		break;
+	case MONITOR:
+		imsg_compose(ibuf, IMSG_CTL_NOTIFY, 0, 0, NULL, 0);
+		break;
 	}
 
 	while (ibuf->w.queued)
@@ -167,6 +171,9 @@ main(int argc, char *argv[])
 			case SHUTDOWN:
 			case NONE:
 				break;
+			case MONITOR:
+				done = monitor(&imsg);
+				break;
 			}
 			imsg_free(&imsg);
 		}
@@ -175,6 +182,57 @@ main(int argc, char *argv[])
 	free(ibuf);
 
 	return (0);
+}
+
+int
+monitor(struct imsg *imsg)
+{
+	time_t			 now;
+	int			 done;
+	struct ctl_status	 cs; 
+	struct ctl_id		 id; 
+
+	done = 0;
+	now = time(NULL);
+	printf("got message of size %u on  %s", imsg->hdr.len, ctime(&now));
+	switch (imsg->hdr.type) {
+	case IMSG_HOST_STATUS:
+		memcpy(&cs, imsg->data, sizeof(cs));
+		printf("HOST_STATUS: %u is in state %d\n", cs.id, cs.up);
+		break;
+	case IMSG_CTL_SERVICE_DISABLE:
+		memcpy(&id, imsg->data, sizeof(id));
+		printf("CTL_SERVICE_DISABLE: %u\n", id.id);
+		break;
+	case IMSG_CTL_SERVICE_ENABLE:
+		memcpy(&id, imsg->data, sizeof(id));
+		printf("CTL_SERVICE_ENABLE: %u\n", id.id);
+		break;
+	case IMSG_CTL_TABLE_DISABLE:
+		memcpy(&id, imsg->data, sizeof(id));
+		printf("CTL_TABLE_DISABLE: %u\n", id.id);
+		break;
+	case IMSG_CTL_TABLE_ENABLE:
+		memcpy(&id, imsg->data, sizeof(id));
+		printf("CTL_TABLE_ENABLE: %u\n", id.id);
+		break;
+	case IMSG_CTL_HOST_DISABLE:
+		memcpy(&id, imsg->data, sizeof(id));
+		printf("CTL_HOST_DISABLE: %u\n", id.id);
+		break;
+	case IMSG_CTL_HOST_ENABLE:
+		memcpy(&id, imsg->data, sizeof(id));
+		printf("CTL_HOST_ENABLE: %u\n", id.id);
+		break;
+	case IMSG_SYNC:
+		printf("SYNC\n");
+		break;
+	default:
+		printf("INVALID\n");
+		done = 1;
+		break;
+	}
+	return (done);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.2 2006/12/16 18:50:33 reyk Exp $	*/
+/*	$OpenBSD: parser.h,v 1.3 2007/02/01 20:03:38 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -26,7 +26,8 @@ enum actions {
 	HOST_DISABLE,
 	HOST_ENABLE,
 	SHUTDOWN,
-	RELOAD
+	RELOAD,
+	MONITOR
 };
 
 struct parse_result {

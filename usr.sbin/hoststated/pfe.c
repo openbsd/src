@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.9 2007/01/29 14:23:31 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.10 2007/02/01 20:03:39 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -182,6 +182,7 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 		if (n == 0)
 			break;
 
+		control_imsg_forward(&imsg);
 		switch (imsg.hdr.type) {
 		case IMSG_HOST_STATUS:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(st))
@@ -314,6 +315,7 @@ disable_service(struct ctl_conn *c, struct ctl_id *id)
 		service = service_findbyname(env, id->name);
 	else
 		service = service_find(env, id->id);
+	id->id = service->id;
 	if (service == NULL)
 		return (-1);
 
@@ -339,6 +341,7 @@ enable_service(struct ctl_conn *c, struct ctl_id *id)
 		service = service_findbyname(env, id->name);
 	else
 		service = service_find(env, id->id);
+	id->id = service->id;
 	if (service == NULL)
 		return (-1);
 
@@ -373,6 +376,7 @@ disable_table(struct ctl_conn *c, struct ctl_id *id)
 		table = table_findbyname(env, id->name);
 	else
 		table = table_find(env, id->id);
+	id->id = table->id;
 	if (table == NULL)
 		return (-1);
 	if ((service = service_find(env, table->serviceid)) == NULL)
@@ -402,6 +406,7 @@ enable_table(struct ctl_conn *c, struct ctl_id *id)
 		table = table_findbyname(env, id->name);
 	else
 		table = table_find(env, id->id);
+	id->id = table->id;
 	if (table == NULL)
 		return (-1);
 
@@ -432,6 +437,7 @@ disable_host(struct ctl_conn *c, struct ctl_id *id)
 		host = host_findbyname(env, id->name);
 	else
 		host = host_find(env, id->id);
+	id->id = host->id;
 	if (host == NULL)
 		return (-1);
 
@@ -466,6 +472,7 @@ enable_host(struct ctl_conn *c, struct ctl_id *id)
 		host = host_findbyname(env, id->name);
 	else
 		host = host_find(env, id->id);
+	id->id = host->id;
 	if (host == NULL)
 		return (-1);
 

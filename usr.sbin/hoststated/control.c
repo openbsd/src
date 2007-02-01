@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.10 2007/01/29 14:23:31 pyr Exp $	*/
+/*	$OpenBSD: control.c,v 1.11 2007/02/01 20:03:39 pyr Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -38,8 +38,6 @@
 #define	CONTROL_BACKLOG	5
 
 struct ctl_connlist ctl_conns;
-
-int control_imsg_relay(struct imsg *imsg);
 
 struct ctl_conn	*control_connbyfd(int);
 struct ctl_conn	*control_connbypid(pid_t);
@@ -238,9 +236,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (disable_service(c, &id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
 				    NULL, 0);
-			else
+			else {
+				memcpy(imsg.data, &id, sizeof(id));
+				control_imsg_forward(&imsg);
 				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0,
 				    NULL, 0);
+			}
 			break;
 		case IMSG_CTL_SERVICE_ENABLE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
@@ -249,9 +250,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (enable_service(c, &id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
 				    NULL, 0);
-			else
+			else {
+				memcpy(imsg.data, &id, sizeof(id));
+				control_imsg_forward(&imsg);
 				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0,
 				    NULL, 0);
+			}
 			break;
 		case IMSG_CTL_TABLE_DISABLE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
@@ -260,9 +264,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (disable_table(c, &id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
 				    NULL, 0);
-			else
+			else {
+				memcpy(imsg.data, &id, sizeof(id));
+				control_imsg_forward(&imsg);
 				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0,
 				    NULL, 0);
+			}
 			break;
 		case IMSG_CTL_TABLE_ENABLE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
@@ -271,9 +278,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (enable_table(c, &id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
 				    NULL, 0);
-			else
+			else {
+				memcpy(imsg.data, &id, sizeof(id));
+				control_imsg_forward(&imsg);
 				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0,
 				    NULL, 0);
+			}
 			break;
 		case IMSG_CTL_HOST_DISABLE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
@@ -282,9 +292,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (disable_host(c, &id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
 				    NULL, 0);
-			else
+			else {
+				memcpy(imsg.data, &id, sizeof(id));
+				control_imsg_forward(&imsg);
 				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0,
 				    NULL, 0);
+			}
 			break;
 		case IMSG_CTL_HOST_ENABLE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))
@@ -293,13 +306,26 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (enable_host(c, &id))
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
 				    NULL, 0);
-			else
+			else {
+				memcpy(imsg.data, &id, sizeof(id));
+				control_imsg_forward(&imsg);
 				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0,
 				    NULL, 0);
+			}
 			break;
 		case IMSG_CTL_SHUTDOWN:
 		case IMSG_CTL_RELOAD:
 			imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, NULL, 0);
+			break;
+		case IMSG_CTL_NOTIFY:
+			if (c->flags & CTL_CONN_NOTIFY) {
+				log_debug("control_dispatch_imsg: "
+				    "client requested notify more than once");
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
+				    NULL, 0);
+				break;
+			}
+			c->flags |= CTL_CONN_NOTIFY;
 			break;
 		default:
 			log_debug("control_dispatch_imsg: "
@@ -322,6 +348,17 @@ control_imsg_relay(struct imsg *imsg)
 
 	return (imsg_compose(&c->ibuf, imsg->hdr.type, 0, imsg->hdr.pid,
 	    imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE));
+}
+
+void
+control_imsg_forward(struct imsg *imsg)
+{
+	struct ctl_conn *c;
+
+	TAILQ_FOREACH(c, &ctl_conns, entry)
+		if (c->flags & CTL_CONN_NOTIFY)
+			imsg_compose(&c->ibuf, imsg->hdr.type, 0, imsg->hdr.pid,
+			    imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE);
 }
 
 void
