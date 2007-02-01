@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststatectl.c,v 1.10 2007/02/01 20:03:38 pyr Exp $	*/
+/*	$OpenBSD: hoststatectl.c,v 1.11 2007/02/01 21:01:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -44,10 +44,35 @@
 __dead void	 usage(void);
 int		 show_summary_msg(struct imsg *);
 int		 show_command_output(struct imsg *);
-int		 monitor(struct imsg *);
 char		*print_service_status(int);
 char		*print_host_status(int, int);
 char		*print_table_status(int, int);
+
+struct imsgname {
+	int type;
+	char *name;
+	void (*func)(struct imsg *);
+};
+
+struct imsgname *monitor_lookup(u_int8_t);
+void		 monitor_host_status(struct imsg *);
+void		 monitor_id(struct imsg *);
+int		 monitor(struct imsg *);
+
+struct imsgname imsgs[] = {
+	{ IMSG_HOST_STATUS,		"host_status",		monitor_host_status },
+	{ IMSG_CTL_SERVICE_DISABLE,	"ctl_disable_service",	monitor_id },
+	{ IMSG_CTL_SERVICE_ENABLE,	"ctl_service_enable",	monitor_id },
+	{ IMSG_CTL_TABLE_DISABLE,	"ctl_table_disable",	monitor_id },
+	{ IMSG_CTL_TABLE_ENABLE,	"ctl_table_enable",	monitor_id },
+	{ IMSG_CTL_HOST_DISABLE,	"ctl_host_disable",	monitor_id },
+	{ IMSG_CTL_HOST_ENABLE,		"ctl_host_enable",	monitor_id },
+	{ IMSG_SYNC,			"sync",			NULL },
+	{ 0,				NULL,			NULL }
+};
+struct imsgname imsgunknown = {
+	-1,				"<unknown>",		NULL
+};
 
 struct imsgbuf	*ibuf;
 
@@ -184,54 +209,65 @@ main(int argc, char *argv[])
 	return (0);
 }
 
+struct imsgname *
+monitor_lookup(u_int8_t type)
+{
+	int i;
+
+	for (i = 0; imsgs[i].name != NULL; i++)
+		if (imsgs[i].type == type)
+			return (&imsgs[i]);
+	return (&imsgunknown);
+}
+
+void
+monitor_host_status(struct imsg *imsg)
+{
+	struct ctl_status	 cs;
+
+	memcpy(&cs, imsg->data, sizeof(cs));
+	printf("\tid: %u\n", cs.id);
+	printf("\tstate: ");
+	switch (cs.up) {
+	case HOST_UP:
+		printf("up\n");
+		break;
+	case HOST_DOWN:
+		printf("down\n");
+		break;
+	default:
+		printf("unknown\n");
+		break;
+	}
+}
+
+void
+monitor_id(struct imsg *imsg)
+{
+	struct ctl_id		 id;
+
+	memcpy(&id, imsg->data, sizeof(id));
+	printf("\tid: %u\n", id.id);
+}
+
 int
 monitor(struct imsg *imsg)
 {
 	time_t			 now;
-	int			 done;
-	struct ctl_status	 cs; 
-	struct ctl_id		 id; 
+	int			 done = 0;
+	struct imsgname		*imn;
 
-	done = 0;
 	now = time(NULL);
-	printf("got message of size %u on  %s", imsg->hdr.len, ctime(&now));
-	switch (imsg->hdr.type) {
-	case IMSG_HOST_STATUS:
-		memcpy(&cs, imsg->data, sizeof(cs));
-		printf("HOST_STATUS: %u is in state %d\n", cs.id, cs.up);
-		break;
-	case IMSG_CTL_SERVICE_DISABLE:
-		memcpy(&id, imsg->data, sizeof(id));
-		printf("CTL_SERVICE_DISABLE: %u\n", id.id);
-		break;
-	case IMSG_CTL_SERVICE_ENABLE:
-		memcpy(&id, imsg->data, sizeof(id));
-		printf("CTL_SERVICE_ENABLE: %u\n", id.id);
-		break;
-	case IMSG_CTL_TABLE_DISABLE:
-		memcpy(&id, imsg->data, sizeof(id));
-		printf("CTL_TABLE_DISABLE: %u\n", id.id);
-		break;
-	case IMSG_CTL_TABLE_ENABLE:
-		memcpy(&id, imsg->data, sizeof(id));
-		printf("CTL_TABLE_ENABLE: %u\n", id.id);
-		break;
-	case IMSG_CTL_HOST_DISABLE:
-		memcpy(&id, imsg->data, sizeof(id));
-		printf("CTL_HOST_DISABLE: %u\n", id.id);
-		break;
-	case IMSG_CTL_HOST_ENABLE:
-		memcpy(&id, imsg->data, sizeof(id));
-		printf("CTL_HOST_ENABLE: %u\n", id.id);
-		break;
-	case IMSG_SYNC:
-		printf("SYNC\n");
-		break;
-	default:
-		printf("INVALID\n");
+
+	imn = monitor_lookup(imsg->hdr.type);
+	printf("%s: imsg type %u len %u peerid %u pid %d\n", imn->name,
+	    imsg->hdr.type, imsg->hdr.len, imsg->hdr.peerid, imsg->hdr.pid);
+	printf("\ttimestamp: %u, %s", now, ctime(&now));
+	if (imn->type == -1)
 		done = 1;
-		break;
-	}
+	if (imn->func != NULL)
+		(*imn->func)(imsg);
+
 	return (done);
 }
 
