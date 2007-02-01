@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.39 2006/12/13 13:30:07 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.40 2007/02/01 12:51:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -396,6 +396,24 @@ dont_redistribute:
 	rr.kr = *kr;
 	rr.metric = metric;
 	main_imsg_compose_rde(type, 0, &rr, sizeof(struct rroute));
+}
+
+void
+kr_reload(void)
+{
+	struct kroute_node	*kr;
+	u_int32_t		 dummy;
+	int			 r;
+
+	RB_FOREACH(kr, kroute_tree, &krt) {
+		r = ospf_redistribute(&kr->r, &dummy);
+		if (kr->r.flags & F_REDISTRIBUTED && !r) {
+			kr_redistribute(IMSG_NETWORK_DEL, &kr->r);
+		} else if (r) {
+			/* RIB will cope with duplicates */
+			kr_redistribute(IMSG_NETWORK_ADD, &kr->r);
+		}
+	}
 }
 
 /* rb-tree compare */
