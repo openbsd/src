@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.102 2007/01/31 21:07:35 xsa Exp $	*/
+/*	$OpenBSD: commit.c,v 1.103 2007/02/01 20:33:03 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -270,7 +270,7 @@ cvs_commit_local(struct cvs_file *cf)
 			fatal("cvs_commit_local: %s", strerror(errno));
 
 		cf->file_rcs = rcs_open(cf->file_rpath, cf->repo_fd,
-		    rcsflags, 0600);
+		    rcsflags, 0444);
 		if (cf->file_rcs == NULL)
 			fatal("cvs_commit_local: failed to create RCS file "
 			    "for %s", cf->file_path);
