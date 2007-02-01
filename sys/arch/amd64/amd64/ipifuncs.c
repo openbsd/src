@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.3 2004/08/04 01:16:36 art Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.4 2007/02/01 20:39:42 art Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -80,11 +80,7 @@ void x86_64_reload_mtrr(struct cpu_info *);
 void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 {
 	x86_64_ipi_halt,
-#if 0
-	cc_microset,
-#else
 	x86_64_ipi_nop,
-#endif
 	x86_64_ipi_flush_fpu,
 	x86_64_ipi_synch_fpu,
 	pmap_do_tlb_shootdown,
