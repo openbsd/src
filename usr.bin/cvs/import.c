@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.67 2007/01/31 21:07:35 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.68 2007/02/01 11:06:25 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -35,7 +35,8 @@ static char *import_branch = IMPORT_DEFAULT_BRANCH;
 static char *logmsg = NULL;
 static char *vendor_tag = NULL;
 static char *release_tag = NULL;
-
+static char *koptstr;
+static int kflag = RCS_KWEXP_DEFAULT;
 static int dflag = 0;
 
 char *import_repository = NULL;
@@ -45,8 +46,9 @@ struct cvs_cmd cvs_cmd_import = {
 	CVS_OP_IMPORT, 0, "import",
 	{ "im", "imp" },
 	"Import sources into CVS, using vendor branches",
-	"[-d] [-b branch] [-m message] repository vendor-tag release-tags",
-	"b:dm:",
+	"[-b branch] [-d] [-k mode] [-m message] "
+	"repository vendor-tag release-tags",
+	"b:dk:m:",
 	NULL,
 	cvs_import
 };
@@ -65,6 +67,15 @@ cvs_import(int argc, char **argv)
 			break;
 		case 'd':
 			dflag = 1;
+			break;
+		case 'k':
+			koptstr = optarg;
+			kflag = rcs_kflag_get(koptstr);
+			if (RCS_KWEXP_INVAL(kflag)) {
+				cvs_log(LP_ERR,
+				    "invalid RCS keyword expension mode");
+				fatal("%s", cvs_cmd_import.cmd_synopsis);
+			}
 			break;
 		case 'm':
 			logmsg = optarg;
@@ -95,6 +106,10 @@ cvs_import(int argc, char **argv)
 		cvs_client_connect_to_server();
 
 		cvs_client_send_request("Argument -b%s", IMPORT_DEFAULT_BRANCH);
+
+		if (kflag != RCS_KWEXP_DEFAULT)
+			cvs_client_send_request("Argument -k%s", koptstr);
+
 		cvs_client_send_request("Argument -m%s", logmsg);
 		cvs_client_send_request("Argument %s", import_repository);
 		cvs_client_send_request("Argument %s", vendor_tag);
@@ -254,6 +269,9 @@ import_new(struct cvs_file *cf)
 	    cf->file_rcs->rf_head, bp) == -1)
 		fatal("import_new: failed to set deltatext");
 
+	if (kflag != RCS_KWEXP_DEFAULT)
+		rcs_kwexp_set(cf->file_rcs, kflag);
+
 	rcs_write(cf->file_rcs);
 	cvs_printf("N %s/%s\n", import_repository, cf->file_path);
 
@@ -322,6 +340,9 @@ import_update(struct cvs_file *cf)
 	} else {
 		cvs_printf("U %s/%s\n", import_repository, cf->file_path);
 	}
+
+	if (kflag != RCS_KWEXP_DEFAULT)
+		rcs_kwexp_set(cf->file_rcs, kflag);
 
 	rcsnum_free(brev);
 	rcs_write(cf->file_rcs);
