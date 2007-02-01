@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.11 2007/02/01 12:41:03 claudio Exp $ */
+/*	$OpenBSD: auth.c,v 1.12 2007/02/01 13:25:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -224,7 +224,7 @@ md_list_copy(struct auth_md_head *to, struct auth_md_head *from)
 	struct auth_md	*m, *md;
 
 	TAILQ_INIT(to);
-	
+
 	TAILQ_FOREACH(m, from, entry) {
 		if ((md = calloc(1, sizeof(struct auth_md))) == NULL)
 			fatalx("md_list_add");

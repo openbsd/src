@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.57 2007/02/01 13:06:00 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.58 2007/02/01 13:25:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -564,7 +564,7 @@ if_act_reset(struct iface *iface)
 	stop_ls_ack_tx_timer(iface);
 	if_stop_hello_timer(iface);
 	if_stop_wait_timer(iface);
-	
+
 	/* send empty hello to tell everybody that we are going down */
 	send_hello(iface);
 
@@ -680,7 +680,7 @@ LIST_HEAD(,if_group_count) ifglist = LIST_HEAD_INITIALIZER(ifglist);
 int
 if_join_group(struct iface *iface, struct in_addr *addr)
 {
-	struct ip_mreq	 	 mreq;
+	struct ip_mreq		 mreq;
 	struct if_group_count	*ifg;
 
 	switch (iface->type) {
@@ -729,7 +729,7 @@ if_join_group(struct iface *iface, struct in_addr *addr)
 int
 if_leave_group(struct iface *iface, struct in_addr *addr)
 {
-	struct ip_mreq	 	 mreq;
+	struct ip_mreq		 mreq;
 	struct if_group_count	*ifg;
 
 	switch (iface->type) {

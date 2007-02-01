@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.40 2007/02/01 13:02:04 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.41 2007/02/01 13:25:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -333,7 +333,7 @@ check_child(pid_t pid, const char *pname)
 void
 main_dispatch_ospfe(int fd, short event, void *bula)
 {
-	struct imsgbuf  	*ibuf = bula;
+	struct imsgbuf		*ibuf = bula;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
@@ -761,7 +761,7 @@ merge_interfaces(struct area *a, struct area *xa)
 		i->type = xi->type; /* needed? */
 		i->media_type = xi->media_type; /* needed? */
 		i->linkstate = xi->linkstate; /* needed? */
-		
+
 		i->auth_type = xi->auth_type;
 		strlcpy(i->auth_key, xi->auth_key, MAX_SIMPLE_AUTH_LEN);
 		md_list_clr(&i->auth_md_list);
@@ -788,4 +788,3 @@ iface_lookup(struct area *area, struct iface *iface)
 			return (i);
 	return (NULL);
 }
-

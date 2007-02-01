@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.57 2007/02/01 13:02:05 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.58 2007/02/01 13:25:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -169,7 +169,7 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 	LIST_FOREACH(area, &rdeconf->area_list, entry)
 		LIST_FOREACH(iface, &area->iface_list, entry)
 			md_list_clr(&iface->auth_md_list);
-	
+
 	while ((r = SIMPLEQ_FIRST(&rdeconf->redist_list)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&rdeconf->redist_list, entry);
 		free(r);
