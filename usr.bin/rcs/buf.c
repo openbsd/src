@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.8 2006/08/16 07:39:15 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.9 2007/02/02 04:24:09 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -187,40 +187,6 @@ rcs_buf_empty(BUF *b)
 	memset(b->cb_buf, 0, b->cb_size);
 	b->cb_cur = b->cb_buf;
 	b->cb_len = 0;
-}
-
-/*
- * rcs_buf_set()
- *
- * Set the contents of the buffer <b> at offset <off> to the first <len>
- * bytes of data found at <src>.  If the buffer was not created with
- * BUF_AUTOEXT, as many bytes as possible will be copied in the buffer.
- */
-size_t
-rcs_buf_set(BUF *b, const void *src, size_t len, size_t off)
-{
-	size_t rlen = 0;
-
-	if (b->cb_size < (len + off)) {
-		if ((b->cb_flags & BUF_AUTOEXT)) {
-			rcs_buf_grow(b, len + off - b->cb_size);
-			rlen = len + off;
-		} else {
-			rlen = b->cb_size - off;
-		}
-	} else {
-		rlen = len;
-	}
-
-	b->cb_len = rlen;
-	memcpy((b->cb_buf + off), src, rlen);
-
-	if (b->cb_len == 0) {
-		b->cb_cur = b->cb_buf + off;
-		b->cb_len = rlen;
-	}
-
-	return (rlen);
 }
 
 /*
