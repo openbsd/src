@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstab.5,v 1.36 2007/01/28 16:26:39 bluhm Exp $
+.\"	$OpenBSD: fstab.5,v 1.37 2007/02/02 18:30:44 henning Exp $
 .\"	$NetBSD: fstab.5,v 1.5.2.1 1995/11/16 20:11:11 pk Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -69,10 +69,17 @@ fs_spec fs_file fs_vfstype fs_mntops fs_freq fs_passno
 The first field,
 .Fa fs_spec ,
 describes the block special device or remote filesystem to be mounted.
-For filesystems of type
-.Tn ffs ,
+For filesystems of type ffs
+.Pq Xr mount_ffs 8 ,
 the special file name is the block special file name,
 and not the character special file name.
+For filesystems of type mfs
+.Pq Xr mount_mfs 8 ,
+the special file name is typically that of the primary swap area;
+if the keyword
+.Dq swap
+is used instead of a special file name,
+default configuration parameters are used.
 If a program needs the character special file name,
 the program must create it by appending an
 .Dq r
@@ -267,7 +274,7 @@ file:
 /dev/sd0a / ffs rw 1 1
 /dev/sd0e /var ffs rw,nodev,nosuid 1 2
 #/dev/sd0f /tmp ffs rw,nodev,nosuid 1 2
-/dev/sd0b /tmp mfs rw,nodev,nosuid,-s=153600 0 0
+swap /tmp mfs rw,nodev,nosuid,-s=153600 0 0
 /dev/sd0g /usr ffs rw,nodev 1 2
 /dev/sd0h /usr/local ffs rw,nodev 1 2
 /dev/sd0i /home ffs rw,nodev,nosuid 1 2
