@@ -1,9 +1,10 @@
-# $OpenBSD: backward,v 1.17 2006/10/05 18:09:03 millert Exp $
-# @(#)backward	8.2
+# $OpenBSD: backward,v 1.18 2007/02/02 20:26:51 millert Exp $
+# @(#)backward	8.3
 
 # This file provides links between current names for time zones
 # and their old names.  Many names changed in late 1993.
 
+Link	Africa/Asmara		Africa/Asmera
 Link	Africa/Bamako		Africa/Timbuktu
 Link	America/Argentina/Catamarca	America/Argentina/ComodRivadavia
 Link	America/Adak		America/Atka
@@ -29,6 +30,7 @@ Link	Asia/Jerusalem		Asia/Tel_Aviv
 Link	Asia/Thimphu		Asia/Thimbu
 Link	Asia/Makassar		Asia/Ujung_Pandang
 Link	Asia/Ulaanbaatar	Asia/Ulan_Bator
+Link	Atlantic/Faroe		Atlantic/Faeroe
 Link	Australia/Sydney	Australia/ACT
 Link	Australia/Sydney	Australia/Canberra
 Link	Australia/Lord_Howe	Australia/LHI

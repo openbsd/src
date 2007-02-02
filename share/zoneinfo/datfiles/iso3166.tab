@@ -1,7 +1,7 @@
-# $OpenBSD: iso3166.tab,v 1.16 2006/10/29 22:25:43 millert Exp $
+# $OpenBSD: iso3166.tab,v 1.17 2007/02/02 20:26:51 millert Exp $
 # ISO 3166 alpha-2 country codes
 #
-# @(#)iso3166.tab	8.3
+# @(#)iso3166.tab	8.4
 #
 # From Paul Eggert (2006-09-27):
 #
@@ -93,7 +93,7 @@ FI	Finland
 FJ	Fiji
 FK	Falkland Islands
 FM	Micronesia
-FO	Faeroe Islands
+FO	Faroe Islands
 FR	France
 GA	Gabon
 GB	Britain (UK)

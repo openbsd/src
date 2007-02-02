@@ -1,5 +1,5 @@
-# $OpenBSD: africa,v 1.16 2006/10/05 18:09:03 millert Exp $
-# @(#)africa	8.5
+# $OpenBSD: africa,v 1.17 2007/02/02 20:26:51 millert Exp $
+# @(#)africa	8.7
 # <pre>
 
 # This data is by no means authoritative; if you think you know better,
@@ -233,8 +233,8 @@ Zone	Africa/Malabo	0:35:08 -	LMT	1912
 
 # Eritrea
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Asmera	2:35:32 -	LMT	1870
-			2:35:32	-	AMT	1890	      # Asmera Mean Time
+Zone	Africa/Asmara	2:35:32 -	LMT	1870
+			2:35:32	-	AMT	1890	      # Asmara Mean Time
 			2:35:20	-	ADMT	1936 May 5    # Adis Dera MT
 			3:00	-	EAT
 
