@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.54 2006/10/15 19:06:38 deraadt Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.55 2007/02/02 04:21:40 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -635,7 +635,7 @@ rl_rxeof(sc)
 
 		if (!(rxstat & RL_RXSTAT_RXOK) ||
 		    total_len < ETHER_MIN_LEN ||
-		    total_len > ETHER_MAX_LEN) {
+		    total_len > ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN) {
 			ifp->if_ierrors++;
 			rl_init(sc);
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dmamap,
