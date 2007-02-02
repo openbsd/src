@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.56 2007/02/02 04:24:09 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.57 2007/02/02 04:34:49 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -37,17 +37,13 @@
 struct cvs_buf {
 	u_int	cb_flags;
 
-	/* buffer handle and size */
+	/* buffer handle, buffer size, and data length */
 	u_char	*cb_buf;
 	size_t	 cb_size;
-
-	/* start and length of valid data in buffer */
-	u_char	*cb_cur;
 	size_t	 cb_len;
 };
 
-#define SIZE_LEFT(b)	(b->cb_size - (size_t)(b->cb_cur - b->cb_buf) \
-			    - b->cb_len)
+#define SIZE_LEFT(b)	(b->cb_size - b->cb_len)
 
 static void	cvs_buf_grow(BUF *, size_t);
 
@@ -72,7 +68,6 @@ cvs_buf_alloc(size_t len, u_int flags)
 
 	b->cb_flags = flags;
 	b->cb_size = len;
-	b->cb_cur = b->cb_buf;
 	b->cb_len = 0;
 
 	return (b);
@@ -109,7 +104,7 @@ cvs_buf_load_fd(int fd, u_int flags)
 		fatal("cvs_buf_load_fd: lseek: %s", strerror(errno));
 
 	buf = cvs_buf_alloc(st.st_size, flags);
-	for (bp = buf->cb_cur; ; bp += (size_t)ret) {
+	for (bp = buf->cb_buf; ; bp += (size_t)ret) {
 		len = SIZE_LEFT(buf);
 		ret = read(fd, bp, len);
 		if (ret == -1)
@@ -162,7 +157,6 @@ void
 cvs_buf_empty(BUF *b)
 {
 	memset(b->cb_buf, 0, b->cb_size);
-	b->cb_cur = b->cb_buf;
 	b->cb_len = 0;
 }
 
@@ -176,7 +170,7 @@ cvs_buf_putc(BUF *b, int c)
 {
 	u_char *bp;
 
-	bp = b->cb_cur + b->cb_len;
+	bp = b->cb_buf + b->cb_len;
 	if (bp == (b->cb_buf + b->cb_size)) {
 		/* extend */
 		if (b->cb_flags & BUF_AUTOEXT)
@@ -185,7 +179,7 @@ cvs_buf_putc(BUF *b, int c)
 			fatal("cvs_buf_putc failed");
 
 		/* the buffer might have been moved */
-		bp = b->cb_cur + b->cb_len;
+		bp = b->cb_buf + b->cb_len;
 	}
 	*bp = (u_char)c;
 	b->cb_len++;
@@ -200,7 +194,7 @@ cvs_buf_putc(BUF *b, int c)
 u_char
 cvs_buf_getc(BUF *b, size_t pos)
 {
-	return (b->cb_cur[pos]);
+	return (b->cb_buf[pos]);
 }
 
 /*
@@ -218,7 +212,7 @@ cvs_buf_append(BUF *b, const void *data, size_t len)
 	size_t left, rlen;
 	u_char *bp, *bep;
 
-	bp = b->cb_cur + b->cb_len;
+	bp = b->cb_buf + b->cb_len;
 	bep = b->cb_buf + b->cb_size;
 	left = bep - bp;
 	rlen = len;
@@ -226,7 +220,7 @@ cvs_buf_append(BUF *b, const void *data, size_t len)
 	if (left < len) {
 		if (b->cb_flags & BUF_AUTOEXT) {
 			cvs_buf_grow(b, len - left);
-			bp = b->cb_cur + b->cb_len;
+			bp = b->cb_buf + b->cb_len;
 		} else
 			rlen = bep - bp;
 	}
@@ -284,7 +278,7 @@ cvs_buf_write_fd(BUF *b, int fd)
 	ssize_t ret;
 
 	len = b->cb_len;
-	bp = b->cb_cur;
+	bp = b->cb_buf;
 
 	do {
 		ret = write(fd, bp, len);
@@ -372,15 +366,10 @@ static void
 cvs_buf_grow(BUF *b, size_t len)
 {
 	void *tmp;
-	size_t diff;
 
-	diff = b->cb_cur - b->cb_buf;
 	tmp = xrealloc(b->cb_buf, 1, b->cb_size + len);
 	b->cb_buf = tmp;
 	b->cb_size += len;
-
-	/* readjust pointers in case the buffer moved in memory */
-	b->cb_cur = b->cb_buf + diff;
 }
 
 /*
