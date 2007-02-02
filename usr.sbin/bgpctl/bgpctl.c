@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.113 2007/01/27 19:03:07 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.114 2007/02/02 15:53:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -423,7 +423,9 @@ show_summary_msg(struct imsg *imsg, int nodescr)
 			printf("%6u", p->stats.prefix_cnt);
 			if (p->conf.max_prefix != 0)
 				printf("/%u", p->conf.max_prefix);
-		} else
+		} else if (p->conf.template)
+			printf("Template");
+		else
 			printf("%s", statenames[p->state]);
 		printf("\n");
 		free(s);
@@ -449,7 +451,7 @@ show_summary_terse_msg(struct imsg *imsg, int nodescr)
 		s = fmt_peer(p->conf.descr, &p->conf.remote_addr,
 		    p->conf.remote_masklen, nodescr);
 		printf("%s %u %s\n", s, p->conf.remote_as,
-		    statenames[p->state]);
+		    p->conf.template ? "Template" : statenames[p->state]);
 		free(s);
 		break;
 	case IMSG_CTL_END:
