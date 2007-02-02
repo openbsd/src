@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.21 2007/01/27 10:34:46 grunk Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.22 2007/02/02 08:54:43 grunk Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -77,16 +77,16 @@ main(int argc, char **argv)
 	char *rounds = NULL;
 	char *saltopt = NULL;
 	size_t keylen = 0;
-	int opt_k = 0;
-	int opt_K = 0;
+	int opt_c = 0, opt_k = 0;
+	int opt_K = 0, opt_l = 0, opt_u = 0;
 
 	while ((ch = getopt(argc, argv, "ckK:luS:v")) != -1) {
 		switch (ch) {
 		case 'c':
-			action = VND_CONFIG;
+			opt_c = 1;
 			break;
 		case 'l':
-			action = VND_GET;
+			opt_l = 1;
 			break;
 		case 'k':
 			opt_k = 1;
@@ -99,7 +99,7 @@ main(int argc, char **argv)
 			saltopt = optarg;
 			break;
 		case 'u':
-			action = VND_UNCONFIG;
+			opt_u = 1;
 			break;
 		case 'v':
 			verbose = 1;
@@ -112,6 +112,19 @@ main(int argc, char **argv)
 
 	argc -= optind;
 	argv += optind;
+
+	if (opt_c + opt_l + opt_u > 1)
+		errx(1, "-c, -l and -u are mutually exclusive options");
+
+	if (opt_l)
+		action = VND_GET;
+	else if (opt_u)
+		action = VND_UNCONFIG;
+	else
+		action = VND_CONFIG;	/* default behavior */
+
+	if (saltopt && (!opt_K))
+		errx(1, "-S only makes sense when used with -K");
 
 	if (opt_k) {
 		if (opt_K)
