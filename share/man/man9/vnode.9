@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnode.9,v 1.22 2005/10/19 16:52:19 pedro Exp $
+.\"     $OpenBSD: vnode.9,v 1.23 2007/02/02 19:39:31 thib Exp $
 .\"
 .\" Copyright (c) 2001 Constantine Sapuntzakis
 .\" All rights reserved.
@@ -321,8 +321,6 @@ This vnode is locked to change its underlying type.
 A process is waiting for this vnode.
 .It Dv VALIASED
 This vnode has an alias.
-.It Dv VLAYER
-This vnode is on a layered file system.
 .It Dv VLOCKSWORK
 This vnode's underlying file system supports locking discipline.
 .El
