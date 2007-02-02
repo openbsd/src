@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: weekly,v 1.18 2006/10/26 12:20:55 ajacoutot Exp $
+#	$OpenBSD: weekly,v 1.19 2007/02/02 14:52:48 ajacoutot Exp $
 #
 umask 022
 
@@ -40,6 +40,10 @@ echo ""
 echo "Rebuilding whatis databases:"
 makewhatis
 
-# echo ""
-# echo "Doing login accounting:"
-# ac -p | sort -nr +1
+# If LOGINACCOUNTING is set to 1 in the environment, report user
+# accounting information
+[ "X$LOGINACCOUNTING" = X1 ] && {
+	echo ""
+	echo "Doing login accounting:"
+	ac -p | sort -nr -k 2
+}
