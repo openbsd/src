@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ac.8,v 1.14 2005/11/17 14:42:06 jmc Exp $
+.\"	$OpenBSD: ac.8,v 1.15 2007/02/02 14:53:37 ajacoutot Exp $
 .\"
 .\" Copyright (c) 1994 Simon J. Gerraty
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -105,32 +105,16 @@ It is normally truncated by
 .Xr newsyslog 8 ,
 which renames and rotates the
 .Pa wtmp
-files, keeping a week's worth of data on hand.
+files every week.
 In order for
 .Nm
 to run in sync with the rotation of
 .Pa wtmp ,
 .Xr newsyslog 8
-will have to be altered to run
+is configured to run
 just after
 .Nm
 completes.
-A suggested procedure is to
-uncomment the
-.Nm
-entry provided in
-.Xr weekly 8
-and make the following amendment to
-.Pa /etc/newsyslog :
-.Bd -literal -offset 3n
-/var/log/wtmp	644  7     *    $W6D4	ZB
-.Ed
-.Pp
-This will provide weekly mail reports on user accounting information,
-truncating the log file just after
-.Xr weekly 8
-is run from root's
-.Xr crontab 5 .
 .Pp
 No login or connect time accounting is performed if
 .Pa /var/log/wtmp

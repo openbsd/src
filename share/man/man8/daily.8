@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.5 2005/11/28 19:43:00 jmc Exp $
+.\"	$OpenBSD: daily.8,v 1.6 2007/02/02 14:53:37 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -185,6 +185,14 @@ Rebuilds the
 .Xr whatis 1
 database(s) via
 .Xr makewhatis 8 .
+.It
+If
+.Ev LOGINACCOUNTING
+is set to 1 in root's crontab and the
+.Pa /var/log/wtmp
+file exists, show individual users' login via the
+.Xr ac 8
+utility.
 .El
 .Ss /etc/monthly
 This script is run monthly.
@@ -204,6 +212,10 @@ Determines whether to run
 Determines whether to run
 .Xr fsck 8
 with the no-write flag.
+.It Ev LOGINACCOUNTING
+Determines whether to run
+.Xr ac 8
+to report login accounting.
 .It Ev ROOTBACKUP
 Determines whether to make a backup of the root file system.
 .El
