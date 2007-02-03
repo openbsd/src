@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.6 2007/01/30 15:11:51 reyk Exp $
+#	$OpenBSD: Makefile,v 1.7 2007/02/03 20:24:21 reyk Exp $
 
 PROG=		hoststated
 SRCS=		parse.y log.c control.c buffer.c imsg.c hoststated.c 	\
 		ssl.c pfe.c pfe_filter.c hce.c 				\
-		check_icmp.c check_tcp.c check_http.c check_send_expect.c
+		check_icmp.c check_tcp.c
 MAN=		hoststated.8 hoststated.conf.5
 
 LDADD=		-levent -lssl -lcrypto
