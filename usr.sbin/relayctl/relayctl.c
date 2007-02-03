@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.12 2007/02/01 21:57:18 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.13 2007/02/03 17:51:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -30,6 +30,7 @@
 #include <net/if_types.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -113,8 +114,16 @@ main(int argc, char *argv[])
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	strlcpy(sun.sun_path, HOSTSTATED_SOCKET, sizeof(sun.sun_path));
-	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
+ reconnect:
+	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
+		/* Keep retrying if running in monitor mode */
+		if (res->action == MONITOR &&
+		    (errno == ENOENT || errno == ECONNREFUSED)) {
+			usleep(100);
+			goto reconnect;
+		}
 		err(1, "connect: %s", HOSTSTATED_SOCKET);
+	}
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
