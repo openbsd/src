@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.13 2007/01/30 10:09:02 pyr Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.14 2007/02/03 17:45:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -218,7 +218,6 @@ tcp_read_buf(int s, short event, void *arg)
 		return;
 	}
 
-	log_debug("reading");
 	bzero(rbuf, sizeof(rbuf));
 	br = read(s, rbuf, sizeof(rbuf) - 1);
 	switch (br) {
