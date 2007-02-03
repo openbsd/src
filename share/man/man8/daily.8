@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.6 2007/02/02 14:53:37 ajacoutot Exp $
+.\"	$OpenBSD: daily.8,v 1.7 2007/02/03 18:43:06 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -148,7 +148,8 @@ client.
 .It
 If
 .Ev CHECKFILESYSTEMS
-is set to 1 in root's crontab,
+is set to 1 in root's
+.Xr crontab 5 ,
 runs
 .Xr fsck 8
 with the no-write flag
@@ -188,7 +189,9 @@ database(s) via
 .It
 If
 .Ev LOGINACCOUNTING
-is set to 1 in root's crontab and the
+is set to 1 in root's
+.Xr crontab 5
+and the
 .Pa /var/log/wtmp
 file exists, show individual users' login via the
 .Xr ac 8
