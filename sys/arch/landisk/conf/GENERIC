@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.10 2007/01/15 22:22:18 martin Exp $
+# $OpenBSD: GENERIC,v 1.11 2007/02/03 16:49:43 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -23,9 +23,6 @@ option	 	DONT_INIT_BSC
 
 option		PCIVERBOSE
 option		USBVERBOSE
-
-# Cache options.
-option	 	SH4_CACHE_DISABLE_EMODE	# disable extended (2x larger) mode
 
 #config		bsd	swap generic
 config		bsd	root on wd0a
