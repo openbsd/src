@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.70 2006/09/25 18:59:59 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.71 2007/02/03 05:18:40 ray Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.70 2006/09/25 18:59:59 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.71 2007/02/03 05:18:40 ray Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -1166,6 +1166,7 @@ proxy_connect(int socket, char *host)
 	if (write(socket, connstr, l) != l)
 		err(1, "Could not send connect string");
 	read(socket, &buf, sizeof(buf)); /* only proxy header XXX: error handling? */
+	free(connstr);
 	return(200);
 }
 #endif
