@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.17 2007/02/03 16:48:23 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -215,21 +215,6 @@
  *
  * we have the following locks that we must contend with:
  *
- * "normal" locks:
- *
- *  - pmap_main_lock
- *    this lock is used to prevent deadlock and/or provide mutex
- *    access to the pmap system.   most operations lock the pmap
- *    structure first, then they lock the pv_lists (if needed).
- *    however, some operations such as pmap_page_protect lock
- *    the pv_lists and then lock pmaps.   in order to prevent a
- *    cycle, we require a mutex lock when locking the pv_lists
- *    first.   thus, the "pmap = >pv_list" lockers must gain a
- *    read-lock on pmap_main_lock before locking the pmap.   and
- *    the "pv_list => pmap" lockers must gain a write-lock on
- *    pmap_main_lock before locking.    since only one thread
- *    can write-lock a lock at a time, this provides mutex.
- *
  * "simple" locks:
  *
  * - pmap lock (per pmap, part of uvm_object)
@@ -272,28 +257,12 @@ paddr_t DMPDpa;
 
 struct simplelock pmaps_lock;
 
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && 0
-struct lock pmap_main_lock;
-#define PMAP_MAP_TO_HEAD_LOCK() \
-     (void) spinlockmgr(&pmap_main_lock, LK_SHARED, NULL)
-#define PMAP_MAP_TO_HEAD_UNLOCK() \
-     (void) spinlockmgr(&pmap_main_lock, LK_RELEASE, NULL)
-
-#define PMAP_HEAD_TO_MAP_LOCK() \
-     (void) spinlockmgr(&pmap_main_lock, LK_EXCLUSIVE, NULL)
-#define PMAP_HEAD_TO_MAP_UNLOCK() \
-     (void) spinlockmgr(&pmap_main_lock, LK_RELEASE, NULL)
-
-#else
-
 #define PMAP_MAP_TO_HEAD_LOCK()		/* null */
 #define PMAP_MAP_TO_HEAD_UNLOCK()	/* null */
   
 #define PMAP_HEAD_TO_MAP_LOCK()		/* null */
 #define PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
  
-#endif
-
 #define COUNT(x)	/* nothing */
 
 /*
@@ -850,9 +819,6 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 	 * init the static-global locks and global lists.
 	 */
 
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && 0
-	spinlockinit(&pmap_main_lock, "pmaplk", 0);
-#endif
 	simple_lock_init(&pmaps_lock);
 	LIST_INIT(&pmaps);
 
@@ -1022,7 +988,6 @@ pmap_init(void)
 /*
  * pmap_enter_pv: enter a mapping onto a pv_head lst
  *
- * => caller should hold the proper lock on pmap_main_lock
  * => caller should have pmap locked
  * => we will gain the lock on the pv_head and allocate the new pv_entry
  * => caller should adjust ptp's wire_count before calling
@@ -1047,7 +1012,6 @@ pmap_enter_pv(struct pv_head *pvh, struct pv_entry *pve, struct pmap *pmap,
 /*
  * pmap_remove_pv: try to remove a mapping from a pv_list
  *
- * => caller should hold proper lock on pmap_main_lock
  * => pmap should be locked
  * => caller should hold lock on pv_head [so that attrs can be adjusted]
  * => caller should adjust ptp's wire_count and free PTP if needed

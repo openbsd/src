@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.8 2006/05/26 17:11:40 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.9 2007/02/03 16:48:23 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -311,23 +311,10 @@ boolean_t pmap_initialized;
  * Misc. locking data structures
  */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-static struct lock pmap_main_lock;
-
-#define PMAP_MAP_TO_HEAD_LOCK() \
-     (void) spinlockmgr(&pmap_main_lock, LK_SHARED, NULL)
-#define PMAP_MAP_TO_HEAD_UNLOCK() \
-     (void) spinlockmgr(&pmap_main_lock, LK_RELEASE, NULL)
-#define PMAP_HEAD_TO_MAP_LOCK() \
-     (void) spinlockmgr(&pmap_main_lock, LK_EXCLUSIVE, NULL)
-#define PMAP_HEAD_TO_MAP_UNLOCK() \
-     spinlockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
-#else
 #define PMAP_MAP_TO_HEAD_LOCK()		/* null */
 #define PMAP_MAP_TO_HEAD_UNLOCK()	/* null */
 #define PMAP_HEAD_TO_MAP_LOCK()		/* null */
 #define PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
-#endif
 
 #define	pmap_acquire_pmap_lock(pm)			\
 	do {						\
@@ -695,7 +682,6 @@ do {					\
 /*
  * pmap_enter_pv: enter a mapping onto a vm_page lst
  *
- * => caller should hold the proper lock on pmap_main_lock
  * => caller should have pmap locked
  * => we will gain the lock on the vm_page and allocate the new pv_entry
  * => caller should adjust ptp's wire_count before calling
@@ -755,7 +741,6 @@ pmap_find_pv(struct vm_page *pg, pmap_t pm, vaddr_t va)
 /*
  * pmap_remove_pv: try to remove a mapping from a pv_list
  *
- * => caller should hold proper lock on pmap_main_lock
  * => pmap should be locked
  * => caller should hold lock on vm_page [so that attrs can be adjusted]
  * => caller should adjust ptp's wire_count and free PTP if needed
@@ -3964,13 +3949,6 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	pmap_alloc_specials(&virtual_avail,
 	    round_page(size * sizeof(struct l2_dtable)) / PAGE_SIZE,
 	    &pmap_kernel_l2dtable_kva, NULL);
-
-	/*
-	 * init the static-global locks and global pmap list.
-	 */
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	spinlockinit(&pmap_main_lock, "pmaplk", 0);
-#endif
 
 	/*
 	 * We can now initialise the first L1's metadata.

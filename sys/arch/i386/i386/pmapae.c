@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.6 2006/11/29 22:40:13 miod Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.7 2007/02/03 16:48:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -397,21 +397,6 @@
  *
  * we have the following locks that we must contend with:
  *
- * "normal" locks:
- *
- *  - pmap_main_lock
- *    this lock is used to prevent deadlock and/or provide mutex
- *    access to the pmap system.   most operations lock the pmap
- *    structure first, then they lock the pv_lists (if needed).
- *    however, some operations such as pmap_page_protect lock
- *    the pv_lists and then lock pmaps.   in order to prevent a
- *    cycle, we require a mutex lock when locking the pv_lists
- *    first.   thus, the "pmap = >pv_list" lockers must gain a
- *    read-lock on pmap_main_lock before locking the pmap.   and
- *    the "pv_list => pmap" lockers must gain a write-lock on
- *    pmap_main_lock before locking.    since only one thread
- *    can write-lock a lock at a time, this provides mutex.
- *
  * "simple" locks:
  *
  * - pmap lock (per pmap, part of uvm_object)
@@ -440,29 +425,11 @@
  * locking data structures
  */
 
-#if defined(MULTIPROCESSOR) && 0
-
-extern struct lock pmap_main_lock;
-
-#define PMAP_MAP_TO_HEAD_LOCK() \
-     spinlockmgr(&pmap_main_lock, LK_SHARED, (void *) 0)
-#define PMAP_MAP_TO_HEAD_UNLOCK() \
-     spinlockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
-
-#define PMAP_HEAD_TO_MAP_LOCK() \
-     spinlockmgr(&pmap_main_lock, LK_EXCLUSIVE, (void *) 0)
-#define PMAP_HEAD_TO_MAP_UNLOCK() \
-     spinlockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
-
-#else
-
 #define PMAP_MAP_TO_HEAD_LOCK()		/* null */
 #define PMAP_MAP_TO_HEAD_UNLOCK()	/* null */
 
 #define PMAP_HEAD_TO_MAP_LOCK()		/* null */
 #define PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
-
-#endif
 
 #define	PG_FRAME	0xffffff000ULL	/* page frame mask */
 #define	PG_LGFRAME	0xfffe00000ULL	/* large (2M) page frame mask */

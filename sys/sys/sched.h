@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.13 2005/06/17 22:33:34 niklas Exp $	*/
+/*	$OpenBSD: sched.h,v 1.14 2007/02/03 16:48:23 miod Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -154,27 +154,6 @@ void roundrobin(struct cpu_info *);
  * XXX over our tree getting activated consuming both time and potentially
  * XXX introducing locking protocol bugs.
  */
-#ifdef notyet
-
-extern struct simplelock sched_lock;
-
-#define	SCHED_ASSERT_LOCKED()	KASSERT(simple_lock_held(&sched_lock))
-#define	SCHED_ASSERT_UNLOCKED()	KASSERT(simple_lock_held(&sched_lock) == 0)
-
-#define	SCHED_LOCK(s)							\
-do {									\
-	s = splsched();							\
-	simple_lock(&sched_lock);					\
-} while (/* CONSTCOND */ 0)
-
-#define	SCHED_UNLOCK(s)							\
-do {									\
-	simple_unlock(&sched_lock);					\
-	splx(s);							\
-} while (/* CONSTCOND */ 0)
-
-#else
-
 extern struct __mp_lock sched_lock;
 
 #define	SCHED_ASSERT_LOCKED()	KASSERT(__mp_lock_held(&sched_lock))
@@ -192,7 +171,6 @@ do {									\
 	splx(s);							\
 } while (/* CONSTCOND */ 0)
 
-#endif
 
 void	sched_lock_idle(void);
 void	sched_unlock_idle(void);

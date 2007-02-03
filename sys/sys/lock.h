@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.15 2005/11/19 02:18:01 pedro Exp $	*/
+/*	$OpenBSD: lock.h,v 1.16 2007/02/03 16:48:23 miod Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -55,8 +55,7 @@ struct lock {
 	u_int	lk_flags;		/* see below */
 	int	lk_sharecount;		/* # of accepted shared locks */
 	int	lk_waitcount;		/* # of processes sleeping for lock */
-	short	lk_exclusivecount;	/* # of recursive exclusive locks */
-	short	lk_recurselevel;	/* lvl above which recursion ok */
+	int	lk_exclusivecount;	/* # of recursive exclusive locks */
 
 	/*
 	 * This is the sleep message for sleep locks, and a simple name
@@ -64,34 +63,14 @@ struct lock {
 	 */
 	char	*lk_wmesg;		/* resource sleeping (for tsleep) */
 
-	union {
-		struct {
-			/* pid of exclusive lock holder */
-			pid_t lk_sleep_lockholder;
+	/* pid of exclusive lock holder */
+	pid_t lk_lockholder;
 
-			/* priority at which to sleep */
-			int lk_sleep_prio;
+	/* priority at which to sleep */
+	int lk_prio;
 
-			/* maximum sleep time (for tsleep) */
-			int lk_sleep_timo;
-		} lk_un_sleep;
-		struct {
-			/* CPU ID of exclusive lock holder */
-			cpuid_t lk_spin_cpu;
-#if defined(LOCKDEBUG)
-			TAILQ_ENTRY(lock) lk_spin_list;
-#endif
-		} lk_un_spin;
-	} lk_un;
-
-#define	lk_lockholder	lk_un.lk_un_sleep.lk_sleep_lockholder
-#define	lk_prio		lk_un.lk_un_sleep.lk_sleep_prio
-#define	lk_timo		lk_un.lk_un_sleep.lk_sleep_timo
-
-#define	lk_cpu		lk_un.lk_un_spin.lk_spin_cpu
-#if defined(LOCKDEBUG)
-#define	lk_list		lk_un.lk_un_spin.lk_spin_list
-#endif
+	/* maximum sleep time (for tsleep) */
+	int lk_timo;
 
 #if defined(LOCKDEBUG)
 	const char *lk_lock_file;
@@ -117,12 +96,6 @@ struct lock {
  *	have upgraded to an exclusive lock. Other processes may get
  *	exclusive access to the resource between the time that the upgrade
  *	is requested and the time that it is granted.
- *   LK_EXCLUPGRADE - the process must hold a shared lock that it wants to
- *	have upgraded to an exclusive lock. If the request succeeds, no
- *	other processes will have gotten exclusive access to the resource
- *	between the time that the upgrade is requested and the time that
- *	it is granted. However, if another process has already requested
- *	an upgrade, the request will fail (see error returns below).
  *   LK_DOWNGRADE - the process must hold an exclusive lock that it wants
  *	to have downgraded to a shared lock. If the process holds multiple
  *	(recursive) exclusive locks, they will all be downgraded to shared
@@ -138,7 +111,6 @@ struct lock {
 #define LK_SHARED	0x00000001	/* shared lock */
 #define LK_EXCLUSIVE	0x00000002	/* exclusive lock */
 #define LK_UPGRADE	0x00000003	/* shared-to-exclusive upgrade */
-#define LK_EXCLUPGRADE	0x00000004	/* first shared-to-exclusive upgrade */
 #define LK_DOWNGRADE	0x00000005	/* exclusive-to-shared downgrade */
 #define LK_RELEASE	0x00000006	/* release any type of lock */
 #define LK_DRAIN	0x00000007	/* wait for all lock activity to end */
@@ -146,17 +118,13 @@ struct lock {
  * External lock flags.
  *
  * The first three flags may be set in lock_init to set their mode permanently,
- * or passed in as arguments to the lock manager. The LK_REENABLE flag may be
- * set only at the release of a lock obtained by drain.
+ * or passed in as arguments to the lock manager.
  */
 #define LK_EXTFLG_MASK	0x00700070	/* mask of external flags */
 #define LK_NOWAIT	0x00000010	/* do not sleep to await lock */
 #define LK_SLEEPFAIL	0x00000020	/* sleep, then return failure */
 #define LK_CANRECURSE	0x00000040	/* allow recursive exclusive lock */
-#define LK_REENABLE	0x00000080	/* lock is be reenabled after drain */
-#define LK_SETRECURSE	0x00100000	/* other locks while we have it OK */
 #define LK_RECURSEFAIL	0x00200000	/* fail if recursive exclusive lock */
-#define LK_SPIN		0x00400000	/* lock spins instead of sleeps */
 /*
  * Internal lock flags.
  *
@@ -209,16 +177,6 @@ int	lockmgr(__volatile struct lock *, u_int flags, struct simplelock *);
 void	lockmgr_printinfo(__volatile struct lock *);
 int	lockstatus(struct lock *);
 
-#if (0 && defined(MULTIPROCESSOR)) || defined(LOCKDEBUG)
-#define spinlockinit(lkp, name, flags)					\
-	lockinit((lkp), 0, (name), 0, (flags) | LK_SPIN)
-#define spinlockmgr(lkp, flags, intrlk)					\
-	lockmgr((lkp), (flags) | LK_SPIN, (intrlk))
-#else
-#define spinlockinit(lkp, name, flags)	(void)(lkp)
-#define spinlockmgr(lkp, flags, intrlk)	(0)
-#endif
-
 #if defined(LOCKDEBUG)
 int	_spinlock_release_all(__volatile struct lock *, const char *, int);
 void	_spinlock_acquire_count(__volatile struct lock *, int, const char *,
@@ -238,37 +196,14 @@ void	spinlock_acquire_count(__volatile struct lock *, int);
 #define LOCK_ASSERT(x)	/* nothing */
 #endif
 
-#if defined(MULTIPROCESSOR)
-/*
- * XXX Instead of using struct lock for the kernel lock and thus requiring us
- * XXX to implement simplelocks, causing all sorts of fine-grained locks all
- * XXX over our tree getting activated consuming both time and potentially
- * XXX introducing locking protocol bugs.
- */
-#ifdef notyet
-
-extern struct lock kernel_lock;
-
+#if !defined(MULTIPROCESSOR)
 /*
  * XXX Simplelock macros used at "trusted" places.
  */
-#define SIMPLELOCK		simplelock
-#define SIMPLE_LOCK_INIT	simple_lock_init
-#define SIMPLE_LOCK		simple_lock
-#define SIMPLE_UNLOCK		simple_unlock
-
-#endif
-
-#else
-
-/*
- * XXX Simplelock macros used at "trusted" places.
- */
-#define SIMPLELOCK		simplelock
-#define SIMPLE_LOCK_INIT	simple_lock_init
-#define SIMPLE_LOCK		simple_lock
-#define SIMPLE_UNLOCK		simple_unlock
-
+#define	SIMPLELOCK		simplelock
+#define	SIMPLE_LOCK_INIT	simple_lock_init
+#define	SIMPLE_LOCK		simple_lock
+#define	SIMPLE_UNLOCK		simple_unlock
 #endif
 
 #endif /* !_LOCK_H_ */

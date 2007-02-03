@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.22 2006/01/03 15:34:21 jmc Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.23 2007/02/03 16:48:23 miod Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -62,42 +62,20 @@ void playback_stacktrace(int *, int);
  */
 
 #if defined(LOCKDEBUG) || defined(DIAGNOSTIC) /* { */
-#if defined(MULTIPROCESSOR) /* { */
-#define	COUNT_CPU(cpu_id, x)						\
-	curcpu()->ci_spin_locks += (x)
-#else
-u_long	spin_locks;
-#define	COUNT_CPU(cpu_id, x)	spin_locks += (x)
-#endif /* MULTIPROCESSOR */ /* } */
-
 #define	COUNT(lkp, p, cpu_id, x)					\
-do {									\
-	if ((lkp)->lk_flags & LK_SPIN)					\
-		COUNT_CPU((cpu_id), (x));				\
-	else								\
-		(p)->p_locks += (x);					\
-} while (/*CONSTCOND*/0)
+	(p)->p_locks += (x)
 #else
 #define COUNT(lkp, p, cpu_id, x)
-#define COUNT_CPU(cpu_id, x)
 #endif /* LOCKDEBUG || DIAGNOSTIC */ /* } */
 
-#ifndef SPINLOCK_SPIN_HOOK		/* from <machine/lock.h> */
-#define	SPINLOCK_SPIN_HOOK		/* nothing */
-#endif
-
-#define	INTERLOCK_ACQUIRE(lkp, flags, s)				\
+#define	INTERLOCK_ACQUIRE(lkp, flags)					\
 do {									\
-	if ((flags) & LK_SPIN)						\
-		s = spllock();						\
 	simple_lock(&(lkp)->lk_interlock);				\
 } while (/*CONSTCOND*/ 0)
 
-#define	INTERLOCK_RELEASE(lkp, flags, s)				\
+#define	INTERLOCK_RELEASE(lkp, flags)					\
 do {									\
 	simple_unlock(&(lkp)->lk_interlock);				\
-	if ((flags) & LK_SPIN)						\
-		splx(s);						\
 } while (/*CONSTCOND*/ 0)
 
 #ifdef DDB /* { */
@@ -115,109 +93,41 @@ int simple_lock_debugger = 0;
 #define	SLOCK_TRACE()		/* nothing */
 #endif /* } */
 
-#if defined(LOCKDEBUG)
-#if defined(DDB)
-#define	SPINLOCK_SPINCHECK_DEBUGGER	Debugger()
-#else
-#define	SPINLOCK_SPINCHECK_DEBUGGER	/* nothing */
-#endif
-
-#define	SPINLOCK_SPINCHECK_DECL						\
-	/* 32-bits of count -- wrap constitutes a "spinout" */		\
-	uint32_t __spinc = 0
-
-#define	SPINLOCK_SPINCHECK						\
-do {									\
-	if (++__spinc == 0) {						\
-		lock_printf("LK_SPIN spinout, excl %d, share %d\n",	\
-		    lkp->lk_exclusivecount, lkp->lk_sharecount);	\
-		if (lkp->lk_exclusivecount)				\
-			lock_printf("held by CPU %lu\n",		\
-			    (u_long) lkp->lk_cpu);			\
-		if (lkp->lk_lock_file)					\
-			lock_printf("last locked at %s:%d\n",		\
-			    lkp->lk_lock_file, lkp->lk_lock_line);	\
-		if (lkp->lk_unlock_file)				\
-			lock_printf("last unlocked at %s:%d\n",		\
-			    lkp->lk_unlock_file, lkp->lk_unlock_line);	\
-		SLOCK_TRACE();						\
-		SPINLOCK_SPINCHECK_DEBUGGER;				\
-	}								\
-} while (/*CONSTCOND*/ 0)
-#else
-#define	SPINLOCK_SPINCHECK_DECL			/* nothing */
-#define	SPINLOCK_SPINCHECK			/* nothing */
-#endif /* LOCKDEBUG && DDB */
-
 /*
  * Acquire a resource.
  */
 #define ACQUIRE(lkp, error, extflags, drain, wanted)			\
-	if ((extflags) & LK_SPIN) {					\
-		int interlocked;					\
-		SPINLOCK_SPINCHECK_DECL;				\
-									\
-		if ((drain) == 0)					\
+do {									\
+	for (error = 0; wanted; ) {					\
+		if ((drain))						\
+			(lkp)->lk_flags |= LK_WAITDRAIN;		\
+		else							\
 			(lkp)->lk_waitcount++;				\
-		for (interlocked = 1;;) {				\
-			SPINLOCK_SPINCHECK;				\
-			if (wanted) {					\
-				if (interlocked) {			\
-					INTERLOCK_RELEASE((lkp),	\
-					    LK_SPIN, s);		\
-					interlocked = 0;		\
-				}					\
-				SPINLOCK_SPIN_HOOK;			\
-			} else if (interlocked) {			\
-				break;					\
-			} else {					\
-				INTERLOCK_ACQUIRE((lkp), LK_SPIN, s);	\
-				interlocked = 1;			\
-			}						\
-		}							\
+		/* XXX Cast away volatile. */				\
+		error = ltsleep((drain) ?				\
+		    (void *)&(lkp)->lk_flags : (void *)(lkp),		\
+		    (lkp)->lk_prio, (lkp)->lk_wmesg, (lkp)->lk_timo,	\
+		    &(lkp)->lk_interlock);				\
 		if ((drain) == 0)					\
 			(lkp)->lk_waitcount--;				\
-		KASSERT((wanted) == 0);					\
-		error = 0;	/* sanity */				\
-	} else {							\
-		for (error = 0; wanted; ) {				\
-			if ((drain))					\
-				(lkp)->lk_flags |= LK_WAITDRAIN;	\
-			else						\
-				(lkp)->lk_waitcount++;			\
-			/* XXX Cast away volatile. */			\
-			error = ltsleep((drain) ?			\
-			    (void *)&(lkp)->lk_flags :			\
-			    (void *)(lkp), (lkp)->lk_prio,		\
-			    (lkp)->lk_wmesg, (lkp)->lk_timo,		\
-			    &(lkp)->lk_interlock);			\
-			if ((drain) == 0)				\
-				(lkp)->lk_waitcount--;			\
-			if (error)					\
-				break;					\
-			if ((extflags) & LK_SLEEPFAIL) {		\
-				error = ENOLCK;				\
-				break;					\
-			}						\
+		if (error)						\
+			break;						\
+		if ((extflags) & LK_SLEEPFAIL) {			\
+			error = ENOLCK;					\
+			break;						\
 		}							\
-	}
+	}								\
+} while (0)
 
 #define	SETHOLDER(lkp, pid, cpu_id)					\
-do {									\
-	if ((lkp)->lk_flags & LK_SPIN)					\
-		(lkp)->lk_cpu = cpu_id;					\
-	else								\
-		(lkp)->lk_lockholder = pid;				\
-} while (/*CONSTCOND*/0)
+	(lkp)->lk_lockholder = (pid)
 
 #define	WEHOLDIT(lkp, pid, cpu_id)					\
-	(((lkp)->lk_flags & LK_SPIN) != 0 ?				\
-	 ((lkp)->lk_cpu == (cpu_id)) :					\
-	 ((lkp)->lk_lockholder == (pid)))
+	(lkp)->lk_lockholder == (pid)
 
 #define	WAKEUP_WAITER(lkp)						\
 do {									\
-	if (((lkp)->lk_flags & LK_SPIN) == 0 && (lkp)->lk_waitcount) {	\
+	if ((lkp)->lk_waitcount) 				{	\
 		/* XXX Cast away volatile. */				\
 		wakeup((void *)(lkp));					\
 	}								\
@@ -240,37 +150,15 @@ struct simplelock spinlock_list_slock = SIMPLELOCK_INITIALIZER;
 
 TAILQ_HEAD(, lock) spinlock_list =
     TAILQ_HEAD_INITIALIZER(spinlock_list);
+#endif /* LOCKDEBUG */ /* } */
 
 #define	HAVEIT(lkp)							\
 do {									\
-	if ((lkp)->lk_flags & LK_SPIN) {				\
-		int s = spllock();					\
-		SPINLOCK_LIST_LOCK();					\
-		/* XXX Cast away volatile. */				\
-		TAILQ_INSERT_TAIL(&spinlock_list, (struct lock *)(lkp),	\
-		    lk_list);						\
-		SPINLOCK_LIST_UNLOCK();					\
-		splx(s);						\
-	}								\
 } while (/*CONSTCOND*/0)
 
 #define	DONTHAVEIT(lkp)							\
 do {									\
-	if ((lkp)->lk_flags & LK_SPIN) {				\
-		int s = spllock();					\
-		SPINLOCK_LIST_LOCK();					\
-		/* XXX Cast away volatile. */				\
-		TAILQ_REMOVE(&spinlock_list, (struct lock *)(lkp),	\
-		    lk_list);						\
-		SPINLOCK_LIST_UNLOCK();					\
-		splx(s);						\
-	}								\
 } while (/*CONSTCOND*/0)
-#else
-#define	HAVEIT(lkp)		/* nothing */
-
-#define	DONTHAVEIT(lkp)		/* nothing */
-#endif /* LOCKDEBUG */ /* } */
 
 #if defined(LOCKDEBUG)
 /*
@@ -304,13 +192,9 @@ lockinit(struct lock *lkp, int prio, char *wmesg, int timo, int flags)
 	bzero(lkp, sizeof(struct lock));
 	simple_lock_init(&lkp->lk_interlock);
 	lkp->lk_flags = flags & LK_EXTFLG_MASK;
-	if (flags & LK_SPIN)
-		lkp->lk_cpu = LK_NOCPU;
-	else {
-		lkp->lk_lockholder = LK_NOPROC;
-		lkp->lk_prio = prio;
-		lkp->lk_timo = timo;
-	}
+	lkp->lk_lockholder = LK_NOPROC;
+	lkp->lk_prio = prio;
+	lkp->lk_timo = timo;
 	lkp->lk_wmesg = wmesg;	/* just a name for spin locks */
 #if defined(LOCKDEBUG)
 	lkp->lk_lock_file = NULL;
@@ -324,14 +208,14 @@ lockinit(struct lock *lkp, int prio, char *wmesg, int timo, int flags)
 int
 lockstatus(struct lock *lkp)
 {
-	int s = 0, lock_type = 0;
+	int lock_type = 0;
 
-	INTERLOCK_ACQUIRE(lkp, lkp->lk_flags, s);
+	INTERLOCK_ACQUIRE(lkp, lkp->lk_flags);
 	if (lkp->lk_exclusivecount != 0)
 		lock_type = LK_EXCLUSIVE;
 	else if (lkp->lk_sharecount != 0)
 		lock_type = LK_SHARED;
-	INTERLOCK_RELEASE(lkp, lkp->lk_flags, s);
+	INTERLOCK_RELEASE(lkp, lkp->lk_flags);
 	return (lock_type);
 }
 
@@ -349,35 +233,21 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 	pid_t pid;
 	int extflags;
 	cpuid_t cpu_id;
-	int s = 0;
 	struct proc *p = curproc;
 
 	error = 0;
 
-	INTERLOCK_ACQUIRE(lkp, lkp->lk_flags, s);
+	INTERLOCK_ACQUIRE(lkp, lkp->lk_flags);
 	if (flags & LK_INTERLOCK)
 		simple_unlock(interlkp);
 	extflags = (flags | lkp->lk_flags) & LK_EXTFLG_MASK;
 
-#ifdef DIAGNOSTIC /* { */
-	/*
-	 * Don't allow spins on sleep locks and don't allow sleeps
-	 * on spin locks.
-	 */
-	if ((flags ^ lkp->lk_flags) & LK_SPIN)
-		panic("lockmgr: sleep/spin mismatch");
-#endif /* } */
-
-	if (extflags & LK_SPIN) {
-		pid = LK_KERNPROC;
-	} else {
 #ifdef DIAGNOSTIC
-		if (p == NULL)
-			panic("lockmgr: process context required");
+	if (p == NULL)
+		panic("lockmgr: process context required");
 #endif		
-		/* Process context required. */
-		pid = p->p_pid;
-	}
+	/* Process context required. */
+	pid = p->p_pid;
 	cpu_id = CPU_NUMBER();
 
 	/*
@@ -388,8 +258,6 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 	 * further requests of any sort will result in a panic. The bits
 	 * selected for these two flags are chosen so that they will be set
 	 * in memory that is freed (freed memory is filled with 0xdeadbeef).
-	 * The final release is permitted to give a new lease on life to
-	 * the lock by specifying LK_REENABLE.
 	 */
 	if (lkp->lk_flags & (LK_DRAINING|LK_DRAINED)) {
 #ifdef DIAGNOSTIC
@@ -401,8 +269,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 			    flags & LK_TYPE_MASK);
 #endif /* DIAGNOSTIC */
 		lkp->lk_flags &= ~LK_DRAINING;
-		if ((flags & LK_REENABLE) == 0)
-			lkp->lk_flags |= LK_DRAINED;
+		lkp->lk_flags |= LK_DRAINED;
 	}
 
 	/*
@@ -449,7 +316,6 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 			panic("lockmgr: not holding exclusive lock");
 		lkp->lk_sharecount += lkp->lk_exclusivecount;
 		lkp->lk_exclusivecount = 0;
-		lkp->lk_recurselevel = 0;
 		lkp->lk_flags &= ~LK_HAVE_EXCL;
 		SETHOLDER(lkp, LK_NOPROC, LK_NOCPU);
 #if defined(LOCKDEBUG)
@@ -459,20 +325,6 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 		DONTHAVEIT(lkp);
 		WAKEUP_WAITER(lkp);
 		break;
-
-	case LK_EXCLUPGRADE:
-		/*
-		 * If another process is ahead of us to get an upgrade,
-		 * then we want to fail rather than have an intervening
-		 * exclusive access.
-		 */
-		if (lkp->lk_flags & LK_WANT_UPGRADE) {
-			lkp->lk_sharecount--;
-			COUNT(lkp, p, cpu_id, -1);
-			error = EBUSY;
-			break;
-		}
-		/* fall into normal upgrade */
 
 	case LK_UPGRADE:
 		/*
@@ -517,8 +369,6 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 			if (lkp->lk_exclusivecount != 0)
 				panic("lockmgr: non-zero exclusive count");
 			lkp->lk_exclusivecount = 1;
-			if (extflags & LK_SETRECURSE)
-				lkp->lk_recurselevel = 1;
 			COUNT(lkp, p, cpu_id, 1);
 			break;
 		}
@@ -536,8 +386,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 			/*
 			 * Recursive lock.
 			 */
-			if ((extflags & LK_CANRECURSE) == 0 &&
-			     lkp->lk_recurselevel == 0) {
+			if ((extflags & LK_CANRECURSE) == 0) {
 				if (extflags & LK_RECURSEFAIL) {
 					error = EDEADLK;
 					break;
@@ -545,9 +394,6 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 					panic("lockmgr: locking against myself");
 			}
 			lkp->lk_exclusivecount++;
-			if (extflags & LK_SETRECURSE &&
-			    lkp->lk_recurselevel == 0)
-				lkp->lk_recurselevel = lkp->lk_exclusivecount;
 			COUNT(lkp, p, cpu_id, 1);
 			break;
 		}
@@ -586,27 +432,16 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 		if (lkp->lk_exclusivecount != 0)
 			panic("lockmgr: non-zero exclusive count");
 		lkp->lk_exclusivecount = 1;
-		if (extflags & LK_SETRECURSE)
-			lkp->lk_recurselevel = 1;
 		COUNT(lkp, p, cpu_id, 1);
 		break;
 
 	case LK_RELEASE:
 		if (lkp->lk_exclusivecount != 0) {
 			if (WEHOLDIT(lkp, pid, cpu_id) == 0) {
-				if (lkp->lk_flags & LK_SPIN) {
-					panic("lockmgr: processor %lu, not "
-					    "exclusive lock holder %lu "
-					    "unlocking", cpu_id, lkp->lk_cpu);
-				} else {
-					panic("lockmgr: pid %d, not "
-					    "exclusive lock holder %d "
-					    "unlocking", pid,
-					    lkp->lk_lockholder);
-				}
+				panic("lockmgr: pid %d, not exclusive lock "
+				    "holder %d unlocking",
+				    pid, lkp->lk_lockholder);
 			}
-			if (lkp->lk_exclusivecount == lkp->lk_recurselevel)
-				lkp->lk_recurselevel = 0;
 			lkp->lk_exclusivecount--;
 			COUNT(lkp, p, cpu_id, -1);
 			if (lkp->lk_exclusivecount == 0) {
@@ -662,140 +497,25 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 #endif
 		HAVEIT(lkp);
 		lkp->lk_exclusivecount = 1;
-		/* XXX unlikely that we'd want this */
-		if (extflags & LK_SETRECURSE)
-			lkp->lk_recurselevel = 1;
 		COUNT(lkp, p, cpu_id, 1);
 		break;
 
 	default:
-		INTERLOCK_RELEASE(lkp, lkp->lk_flags, s);
+		INTERLOCK_RELEASE(lkp, lkp->lk_flags);
 		panic("lockmgr: unknown locktype request %d",
 		    flags & LK_TYPE_MASK);
 		/* NOTREACHED */
 	}
-	if ((lkp->lk_flags & (LK_WAITDRAIN | LK_SPIN)) == LK_WAITDRAIN &&
+	if ((lkp->lk_flags & LK_WAITDRAIN) != 0 &&
 	    ((lkp->lk_flags &
 	    (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) == 0 &&
 	    lkp->lk_sharecount == 0 && lkp->lk_waitcount == 0)) {
 		lkp->lk_flags &= ~LK_WAITDRAIN;
 		wakeup((void *)&lkp->lk_flags);
 	}
-	INTERLOCK_RELEASE(lkp, lkp->lk_flags, s);
+	INTERLOCK_RELEASE(lkp, lkp->lk_flags);
 	return (error);
 }
-
-/*
- * For a recursive spinlock held one or more times by the current CPU,
- * release all N locks, and return N.
- * Intended for use in mi_switch() shortly before context switching.
- */
-
-#ifdef notyet
-int
-#if defined(LOCKDEBUG)
-_spinlock_release_all(__volatile struct lock *lkp, const char *file, int line)
-#else
-spinlock_release_all(__volatile struct lock *lkp)
-#endif
-{
-	int s, count;
-	cpuid_t cpu_id;
-
-	KASSERT(lkp->lk_flags & LK_SPIN);
-	
-	INTERLOCK_ACQUIRE(lkp, LK_SPIN, s);
-
-	cpu_id = CPU_NUMBER();
-	count = lkp->lk_exclusivecount;
-	
-	if (count != 0) {
-#ifdef DIAGNOSTIC		
-		if (WEHOLDIT(lkp, 0, cpu_id) == 0) {
-			panic("spinlock_release_all: processor %lu, not "
-			    "exclusive lock holder %lu "
-			    "unlocking", (long)cpu_id, lkp->lk_cpu);
-		}
-#endif
-		lkp->lk_recurselevel = 0;
-		lkp->lk_exclusivecount = 0;
-		COUNT_CPU(cpu_id, -count);
-		lkp->lk_flags &= ~LK_HAVE_EXCL;
-		SETHOLDER(lkp, LK_NOPROC, LK_NOCPU);
-#if defined(LOCKDEBUG)
-		lkp->lk_unlock_file = file;
-		lkp->lk_unlock_line = line;
-#endif
-		DONTHAVEIT(lkp);
-	}
-#ifdef DIAGNOSTIC
-	else if (lkp->lk_sharecount != 0)
-		panic("spinlock_release_all: release of shared lock!");
-	else
-		panic("spinlock_release_all: release of unlocked lock!");
-#endif
-	INTERLOCK_RELEASE(lkp, LK_SPIN, s);	
-
-	return (count);
-}
-#endif
-
-/*
- * For a recursive spinlock held one or more times by the current CPU,
- * release all N locks, and return N.
- * Intended for use in mi_switch() right after resuming execution.
- */
-
-#ifdef notyet
-void
-#if defined(LOCKDEBUG)
-_spinlock_acquire_count(__volatile struct lock *lkp, int count,
-    const char *file, int line)
-#else
-spinlock_acquire_count(__volatile struct lock *lkp, int count)
-#endif
-{
-	int s, error;
-	cpuid_t cpu_id;
-	
-	KASSERT(lkp->lk_flags & LK_SPIN);
-	
-	INTERLOCK_ACQUIRE(lkp, LK_SPIN, s);
-
-	cpu_id = CPU_NUMBER();
-
-#ifdef DIAGNOSTIC
-	if (WEHOLDIT(lkp, LK_NOPROC, cpu_id))
-		panic("spinlock_acquire_count: processor %lu already holds lock", (long)cpu_id);
-#endif
-	/*
-	 * Try to acquire the want_exclusive flag.
-	 */
-	ACQUIRE(lkp, error, LK_SPIN, 0, lkp->lk_flags &
-	    (LK_HAVE_EXCL | LK_WANT_EXCL));
-	lkp->lk_flags |= LK_WANT_EXCL;
-	/*
-	 * Wait for shared locks and upgrades to finish.
-	 */
-	ACQUIRE(lkp, error, LK_SPIN, 0, lkp->lk_sharecount != 0 ||
-	    (lkp->lk_flags & LK_WANT_UPGRADE));
-	lkp->lk_flags &= ~LK_WANT_EXCL;
-	lkp->lk_flags |= LK_HAVE_EXCL;
-	SETHOLDER(lkp, LK_NOPROC, cpu_id);
-#if defined(LOCKDEBUG)
-	lkp->lk_lock_file = file;
-	lkp->lk_lock_line = line;
-#endif
-	HAVEIT(lkp);
-	if (lkp->lk_exclusivecount != 0)
-		panic("lockmgr: non-zero exclusive count");
-	lkp->lk_exclusivecount = count;
-	lkp->lk_recurselevel = 1;
-	COUNT_CPU(cpu_id, count);
-
-	INTERLOCK_RELEASE(lkp, lkp->lk_flags, s);	
-}
-#endif
 
 /*
  * Print out information about state of a lock. Used by VOP_PRINT
@@ -811,13 +531,10 @@ lockmgr_printinfo(__volatile struct lock *lkp)
 	else if (lkp->lk_flags & LK_HAVE_EXCL) {
 		printf(" lock type %s: EXCL (count %d) by ",
 		    lkp->lk_wmesg, lkp->lk_exclusivecount);
-		if (lkp->lk_flags & LK_SPIN)
-			printf("processor %lu", lkp->lk_cpu);
-		else
-			printf("pid %d", lkp->lk_lockholder);
+		printf("pid %d", lkp->lk_lockholder);
 	} else
 		printf(" not locked");
-	if ((lkp->lk_flags & LK_SPIN) == 0 && lkp->lk_waitcount > 0)
+	if (lkp->lk_waitcount > 0)
 		printf(" with %d pending", lkp->lk_waitcount);
 }
 
@@ -1147,60 +864,6 @@ simple_lock_only_held(volatile struct simplelock *lp, const char *where)
  * so that they show up in profiles.
  */
 
-/*
- * XXX Instead of using struct lock for the kernel lock and thus requiring us
- * XXX to implement simplelocks, causing all sorts of fine-grained locks all
- * XXX over our tree getting activated consuming both time and potentially
- * XXX introducing locking protocol bugs.
- */
-#ifdef notyet
-
-struct lock kernel_lock; 
-
-void
-_kernel_lock_init(void)
-{
-	spinlockinit(&kernel_lock, "klock", 0);
-}
-
-/*
- * Acquire/release the kernel lock.  Intended for use in the scheduler
- * and the lower half of the kernel.
- */
-void
-_kernel_lock(int flag)
-{
-	SCHED_ASSERT_UNLOCKED();
-	spinlockmgr(&kernel_lock, flag, 0);
-}
-
-void
-_kernel_unlock(void)
-{
-	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
-}
-
-/*
- * Acquire/release the kernel_lock on behalf of a process.  Intended for
- * use in the top half of the kernel.
- */
-void
-_kernel_proc_lock(struct proc *p)
-{
-	SCHED_ASSERT_UNLOCKED();
-	spinlockmgr(&kernel_lock, LK_EXCLUSIVE, 0);
-	p->p_flag |= P_BIGLOCK;
-}
-
-void
-_kernel_proc_unlock(struct proc *p)
-{
-	p->p_flag &= ~P_BIGLOCK;
-	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
-}
-
-#else
-
 struct __mp_lock kernel_lock; 
 
 void
@@ -1246,8 +909,6 @@ _kernel_proc_unlock(struct proc *p)
 	p->p_flag &= ~P_BIGLOCK;
 	__mp_unlock(&kernel_lock);
 }
-
-#endif
 
 #ifdef MP_LOCKDEBUG
 /* CPU-dependent timing, needs this to be settable from ddb. */
