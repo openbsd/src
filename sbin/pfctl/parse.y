@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.516 2006/11/07 01:12:01 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.517 2007/02/03 23:26:40 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -5323,19 +5323,15 @@ mv_rules(struct pf_ruleset *src, struct pf_ruleset *dst)
 void
 decide_address_family(struct node_host *n, sa_family_t *af)
 {
-	sa_family_t	target_af = 0;
-
-	while (!*af && n != NULL) {
-		if (n->af) {
-			if (target_af == 0)
-				target_af = n->af;
-			if (target_af != n->af)
-				return;
+	if (*af != 0 || n == NULL)
+		return;
+	*af = n->af;
+	while ((n = n->next) != NULL) {
+		if (n->af != *af) {
+			*af = 0;
+			return;
 		}
-		n = n->next;
 	}
-	if (!*af && target_af)
-		*af = target_af;
 }
 
 void
