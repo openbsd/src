@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: Configure,v 1.23 2003/11/17 18:57:05 henning Exp $
+# $OpenBSD: Configure,v 1.24 2007/02/03 18:01:52 espie Exp $
 ## ====================================================================
 ## The Apache Software License, Version 1.1
 ##
@@ -2305,26 +2305,6 @@ fi
 ####################################################################
 ## More building ap_config_auto.h
 ##
-## We check the sizeof various data types
-##
-echo " + checking sizeof various data types"
-AP_TYPE_QUAD=`${SHELL} helpers/TestCompile -r sizeof 'long long'`
-if [ "x$AP_TYPE_QUAD" = "x" ]; then
-    AP_TYPE_QUAD="unknown_quad"
-    AP_LONGEST_LONG="long"
-else
-    AP_LONGEST_LONG="long long"
-fi
-
-echo "" >>$AP_CONFIG_AUTO_H
-echo "/* determine: longest possible integer type */" >>$AP_CONFIG_AUTO_H
-echo "#ifndef AP_LONGEST_LONG" >>$AP_CONFIG_AUTO_H
-echo "#define AP_LONGEST_LONG $AP_LONGEST_LONG" >>$AP_CONFIG_AUTO_H
-echo "#endif" >>$AP_CONFIG_AUTO_H
-
-####################################################################
-## More building ap_config_auto.h
-##
 ## Check for availability of isinf() and isnan()
 ##
 if ${SHELL} ./helpers/TestCompile func isinf ; then
@@ -2360,21 +2340,6 @@ elif ${SHELL} ./helpers/TestCompile lib m isnan ; then
     fi
 fi
 
-## We check for the endianess of the machine
-##
-AP_BYTE_ORDER=`${SHELL} helpers/TestCompile -r byteorder`
-if [ "x$AP_BYTE_ORDER" = "x21" ]; then
-    AP_BYTE_ORDER="21" # big endian
-else
-    AP_BYTE_ORDER="12" # little endian
-fi
-
-echo "" >>$AP_CONFIG_AUTO_H
-echo "/* determine: byte order of machine (12: little endian, 21: big endian) */" >>$AP_CONFIG_AUTO_H
-echo "#ifndef AP_BYTE_ORDER" >>$AP_CONFIG_AUTO_H
-echo "#define AP_BYTE_ORDER $AP_BYTE_ORDER" >>$AP_CONFIG_AUTO_H
-echo "#endif" >>$AP_CONFIG_AUTO_H
-
 ##
 ## Now compare the sizes of off_t to long
 ##
@@ -2399,28 +2364,6 @@ else
     echo "/* determine: is off_t a quad */" >>$AP_CONFIG_AUTO_H
     echo "#ifdef AP_OFF_T_IS_QUAD" >>$AP_CONFIG_AUTO_H
     echo "#undef AP_OFF_T_IS_QUAD" >>$AP_CONFIG_AUTO_H
-    echo "#endif" >>$AP_CONFIG_AUTO_H
-fi
-
-##
-## Now see of void * is as big as a quad (long long)
-##
-AP_TYPE_VOID_P=`${SHELL} helpers/TestCompile -r sizeof 'void *'`
-if [ "x$AP_TYPE_VOID_P" = "x" ]; then
-    AP_TYPE_VOID_P="unknown_void_p"
-fi
-
-if [ "x$AP_TYPE_VOID_P" = "x$AP_TYPE_QUAD" ]; then
-    echo "" >>$AP_CONFIG_AUTO_H
-    echo "/* determine: is void * a quad */" >>$AP_CONFIG_AUTO_H
-    echo "#ifndef AP_VOID_P_IS_QUAD" >>$AP_CONFIG_AUTO_H
-    echo "#define AP_VOID_P_IS_QUAD 1" >>$AP_CONFIG_AUTO_H
-    echo "#endif" >>$AP_CONFIG_AUTO_H
-else
-    echo "" >>$AP_CONFIG_AUTO_H
-    echo "/* determine: is void * a quad */" >>$AP_CONFIG_AUTO_H
-    echo "#ifdef AP_VOID_P_IS_QUAD" >>$AP_CONFIG_AUTO_H
-    echo "#undef AP_VOID_P_IS_QUAD" >>$AP_CONFIG_AUTO_H
     echo "#endif" >>$AP_CONFIG_AUTO_H
 fi
 

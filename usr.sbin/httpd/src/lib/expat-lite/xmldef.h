@@ -30,6 +30,14 @@ your version of this file under either the MPL or the GPL.
 
 #include <string.h>
 #include <stdlib.h>
+#include <sys/endian.h>
+#if _BYTE_ORDER == _BIG_ENDIAN
+#define XML_BYTE_ORDER 21
+#elif _BYTE_ORDER == _LITTLE_ENDIAN
+#define XML_BYTE_ORDER 12
+#else
+#error Unsupported byte order
+#endif
 
 /* This file can be used for any definitions needed in
 particular environments. */
@@ -44,10 +52,3 @@ particular environments. */
 #define int int32
 
 #endif /* MOZILLA */
-
-#ifdef APACHE
-
-#include "ap_config.h"
-#define XML_BYTE_ORDER AP_BYTE_ORDER
-
-#endif /* APACHE */
