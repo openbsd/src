@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ac.8,v 1.15 2007/02/02 14:53:37 ajacoutot Exp $
+.\"	$OpenBSD: ac.8,v 1.16 2007/02/03 18:47:02 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Simon J. Gerraty
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -116,6 +116,11 @@ just after
 .Nm
 completes.
 .Pp
+User accounting information can be mailed weekly
+to the system administrator:
+see
+.Xr weekly 8
+for more information.
 No login or connect time accounting is performed if
 .Pa /var/log/wtmp
 does not exist.
