@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.136 2007/01/18 04:56:33 krw Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.137 2007/02/03 12:50:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2106,7 +2106,7 @@ sk_intr_yukon(struct sk_if_softc *sc_if)
 	}
 	/* TX underrun */
 	if ((status & SK_GMAC_INT_TX_UNDER) != 0) {
-		SK_IF_WRITE_1(sc_if, 0, SK_RXMF1_CTRL_TEST,
+		SK_IF_WRITE_1(sc_if, 0, SK_TXMF1_CTRL_TEST,
 		    SK_TFCTL_TX_FIFO_UNDER);
 	}
 
