@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.64 2007/01/27 20:55:55 miod Exp $	*/
+/*	$OpenBSD: re.c,v 1.65 2007/02/03 01:55:00 krw Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1901,7 +1901,7 @@ re_init(struct ifnet *ifp)
 
 	mii_mediachg(&sc->sc_mii);
 
-	CSR_WRITE_1(sc, RL_CFG1, RL_CFG1_DRVLOAD|RL_CFG1_FULLDUPLEX);
+	CSR_WRITE_1(sc, RL_CFG1, CSR_READ_1(sc, RL_CFG1) | RL_CFG1_DRVLOAD);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
