@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.4 2006/11/11 23:04:50 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.5 2007/02/03 00:55:34 drahn Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -666,12 +666,20 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 				value += loff;
 			} else {
 				this = NULL;
+#if 0
 				ooff = _dl_find_symbol_bysym(object,
 				    ELF_R_SYM(rels->r_info), &this,
 				    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
 				    ((type == R_TYPE(JMP_SLOT)) ?
 					SYM_PLT : SYM_NOTPLT),
 				    sym, NULL);
+#else
+				ooff = _dl_find_symbol_bysym(object,
+				    ELF_R_SYM(rels->r_info), &this,
+				    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
+				    SYM_PLT,
+				    sym, NULL);
+#endif
 				if (this == NULL) {
 resolve_failed:
 					if (ELF_ST_BIND(sym->st_info) !=
