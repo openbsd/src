@@ -1,3 +1,5 @@
+.\"	$OpenBSD: accton.8,v 1.8 2007/02/03 18:52:47 jmc Exp $
+.\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
 .\"
@@ -24,8 +26,6 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: accton.8,v 1.7 2001/08/03 16:03:02 mpech Exp $
-.\"
 .Dd October 18, 1993
 .Dt ACCTON 8
 .Os
@@ -42,6 +42,19 @@ With an argument naming an existing
 causes system accounting information for every process executed
 to be placed at the end of the file.
 If no argument is given, accounting is turned off.
+.Pp
+.Nm
+is usually started at boot time,
+and can be enabled by setting the following in
+.Pa /etc/rc.conf.local :
+.Pp
+.Dl accounting=YES
+.Pp
+See
+.Xr rc 8
+and
+.Xr rc.conf 8
+for more information on the boot process and enabling daemons.
 .Sh FILES
 .Bl -tag -width /var/account/acct
 .It Pa /var/account/acct
