@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.75 2006/12/09 20:06:48 miod Exp $
+#	$OpenBSD: files.sparc64,v 1.76 2007/02/03 20:08:50 miod Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -220,6 +220,7 @@ file	arch/sparc64/sparc64/autoconf.c
 file	arch/sparc64/sparc64/busop.c
 file	arch/sparc64/sparc64/cache.c
 file	arch/sparc64/sparc64/conf.c
+file	arch/sparc64/sparc64/disksubr.c
 file	arch/sparc64/sparc64/emul.c
 file	arch/sparc64/sparc64/in_cksum.S		inet
 file	arch/sparc64/sparc64/in4_cksum.c	inet
@@ -229,19 +230,19 @@ file	arch/sparc64/sparc64/kgdb_machdep.c	kgdb
 # because it must come first in the "ld" command line.
 file	arch/sparc64/sparc64/locore2.c
 file	arch/sparc64/sparc64/machdep.c
-file	arch/sparc64/sparc64/process_machdep.c
 file	arch/sparc64/sparc64/mem.c
+file	arch/sparc64/sparc64/mutex.c
 file	arch/sparc64/sparc64/openprom.c
 file	arch/sparc64/sparc64/openfirm.c
 file	arch/sparc64/sparc64/ofw_machdep.c
 file	arch/sparc64/sparc64/pmap.c
+file	arch/sparc64/sparc64/process_machdep.c
 # the following overrides the generic "sys_process.c"
 # commented out by deraadt
 #file	arch/sparc64/sparc64/sys_process.c
 file	arch/sparc64/sparc64/sys_machdep.c
 file	arch/sparc64/sparc64/trap.c
 file	arch/sparc64/sparc64/vm_machdep.c
-file	arch/sparc64/sparc64/disksubr.c
 
 file	arch/sparc64/sparc64/db_interface.c	ddb | kgdb
 file	arch/sparc64/sparc64/db_trace.c	ddb
