@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.118 2006/12/23 17:35:35 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.119 2007/02/03 23:47:18 bluhm Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -275,7 +275,7 @@ cddetach(self, flags)
 	}
 	splx(s);
 
-	/* locate the major number */
+	/* locate the minor number */
 	mn = CDMINOR(self->dv_unit, 0);
 
 	for (bmaj = 0; bmaj < nblkdev; bmaj++)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.116 2006/12/21 02:05:46 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.117 2007/02/03 23:47:18 bluhm Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -302,7 +302,7 @@ sddetach(self, flags)
 	}
 	splx(s);
 
-	/* locate the major number */
+	/* locate the minor number */
 	mn = SDMINOR(self->dv_unit, 0);
 
 	for (bmaj = 0; bmaj < nblkdev; bmaj++)
