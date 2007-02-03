@@ -1,4 +1,4 @@
-.\"     $OpenBSD: lock.9,v 1.12 2005/11/19 09:33:58 jmc Exp $
+.\"     $OpenBSD: lock.9,v 1.13 2007/02/03 16:58:30 pedro Exp $
 .\"     $NetBSD: lock.9,v 1.12 2001/11/01 01:13:43 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -206,15 +206,6 @@ upgraded to an exclusive-access lock.
 Other processes may get exclusive
 access to the protected resource between the time that the upgrade is
 requested and the time that it is granted.
-.It LK_EXCLUPGRADE
-The process must hold a shared-access lock that it wants to have
-upgraded to an exclusive-access lock.
-If the request succeeds, no
-other processes will have acquired exclusive access to the protected
-resource between the time that the upgrade is requested and the time
-that it is granted.
-However, if another process has already requested
-an upgrade, the request will fail.
 .It LK_DOWNGRADE
 The process must hold an exclusive-access lock that it wants to have
 downgraded to a shared-access lock.
@@ -227,16 +218,8 @@ Release one instance of a lock.
 Wait for all activity on the lock to end, then mark it decommissioned.
 This feature is used before freeing a lock that is part of a piece of
 memory that is about to be freed.
-.It LK_REENABLE
-Lock is to be re-enabled after drain.
-The LK_REENABLE flag may be set
-only at the release of a lock obtained by a drain.
-.It LK_SETRECURSE
-Other locks while we have it OK.
 .It LK_RECURSEFAIL
 Attempt at recursive lock fails.
-.It LK_SPIN
-Lock spins instead of sleeping.
 .It LK_INTERLOCK
 Unlock the simplelock
 .Fa slock
