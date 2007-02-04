@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.220 2006/11/17 15:34:15 espie Exp $
+# $OpenBSD: pkg_add,v 1.221 2007/02/04 12:46:54 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -402,7 +402,12 @@ sub really_add($$)
 		}
 	}
 
-	$handle->finish_and_close();
+	try { 
+		$handle->finish_and_close(); }
+	catchall {
+		Warn $_;
+		$errors++;
+	};
 	OpenBSD::ProgressMeter::next();
 
 	if (!($interrupted || $errors)) {
