@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.47 2007/02/04 19:17:14 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.48 2007/02/04 19:23:27 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -731,10 +731,18 @@ rundisplay(void)
 				double newdelay = strtod(tempbuf2, &endp);
 
 				if (newdelay >= 0 && newdelay < 1000000 &&
-				    *endp == '\0')
+				    *endp == '\0') {
 					delay = newdelay;
-			}
-			clear_message();
+				} else {
+					new_message(MT_standout,
+					    "Delay should be a non-negative number");
+					if (putchar('\r') == EOF)
+						exit(1);
+					no_command = Yes;
+				}
+
+			} else
+				clear_message();
 			break;
 
 		case CMD_displays:	/* change display count */
