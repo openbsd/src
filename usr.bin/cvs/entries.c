@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.71 2007/01/27 18:53:16 otto Exp $	*/
+/*	$OpenBSD: entries.c,v 1.72 2007/02/04 06:09:31 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -115,8 +115,7 @@ cvs_ent_parse(const char *entry)
 	struct cvs_ent *ent;
 	char *fields[CVS_ENTRIES_NFIELDS], *buf, *sp, *dp;
 
-	buf = xstrdup(entry);
-	sp = buf;
+	buf = sp = xstrdup(entry);
 	i = 0;
 	do {
 		dp = strchr(sp, CVS_ENTRIES_DELIM);
@@ -129,7 +128,7 @@ cvs_ent_parse(const char *entry)
 	if (i < CVS_ENTRIES_NFIELDS)
 		fatal("missing fields in entry line '%s'", entry);
 
-	ent = (struct cvs_ent *)xmalloc(sizeof(*ent));
+	ent = xmalloc(sizeof(*ent));
 	ent->ce_buf = buf;
 
 	if (*fields[0] == '\0')
@@ -156,12 +155,14 @@ cvs_ent_parse(const char *entry)
 		if ((ent->ce_rev = rcsnum_parse(sp)) == NULL)
 			fatal("failed to parse entry revision '%s'", entry);
 
-		if (strcmp(fields[3], CVS_DATE_DUMMY) == 0 ||
+		if (fields[3][0] == '\0' ||
+		    strcmp(fields[3], CVS_DATE_DUMMY) == 0 ||
 		    strncmp(fields[3], "Initial ", 8) == 0 ||
 		    strncmp(fields[3], "Result of merge", 15) == 0)
 			ent->ce_mtime = CVS_DATE_DMSEC;
 		else {
-			strptime(fields[3], "%a %b %d %T %Y", &t);
+			if (strptime(fields[3], "%a %b %d %T %Y", &t) == NULL)
+				fatal("'%s' is not a valid date", fields[3]);
 			t.tm_isdst = 0;
 			t.tm_gmtoff = 0;
 			ent->ce_mtime = mktime(&t);
