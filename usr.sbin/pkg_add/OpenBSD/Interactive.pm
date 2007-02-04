@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Interactive.pm,v 1.5 2006/11/17 15:34:15 espie Exp $
+# $OpenBSD: Interactive.pm,v 1.6 2007/02/04 12:18:39 espie Exp $
 #
 # Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 #
@@ -106,12 +106,13 @@ sub choose1
 	} elsif (@l == 1) {
 		return $l[0];
 	} elsif (@l != 0) {
-		print "Ambiguous: $pkgname could be ", join(' ', @l),"\n";
 		if ($interactive) {
-		    my $result = OpenBSD::Interactive::ask_list('Choose one package', 1, ("<None>", @l));
+		    my $result = OpenBSD::Interactive::ask_list("Ambiguous: choose package for $pkgname", 1, ("<None>", @l));
 		    if ($result ne '<None>') {
 			return $result;
 		    }
+		} else {
+		    print "Ambiguous: $pkgname could be ", join(' ', @l),"\n";
 		}
 	}
 	return;

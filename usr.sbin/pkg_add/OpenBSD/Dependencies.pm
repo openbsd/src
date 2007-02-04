@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.5 2006/11/17 15:34:15 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.6 2007/02/04 12:18:39 espie Exp $
 #
 # Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 #
@@ -94,7 +94,7 @@ sub solve
 		@candidates = ((grep {$_ eq $dep->{def}} @candidates),
 				(sort (grep {$_ ne $dep->{def}} @candidates)));
 		my $choice = 
-		    OpenBSD::Interactive::ask_list('Choose dependency for '.$plist->pkgname().': ',
+		    OpenBSD::Interactive::ask_list('Ambiguous: choose dependency for '.$plist->pkgname().': ',
 			$state->{interactive}, @candidates);
 		push(@deps, $choice);
 		$to_register->{$choice} = 1;
