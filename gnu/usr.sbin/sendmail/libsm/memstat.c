@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2005, 2006 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -8,9 +8,10 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: memstat.c,v 1.4 2005/12/10 00:38:48 ca Exp $")
+SM_RCSID("@(#)$Sendmail: memstat.c,v 1.5 2006/06/28 23:57:59 ca Exp $")
 
 #include <errno.h>
+#include <sm/misc.h>
 
 #if USESWAPCTL
 #include <sys/stat.h>

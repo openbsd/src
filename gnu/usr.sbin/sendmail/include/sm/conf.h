@@ -10,14 +10,16 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: conf.h,v 1.128 2006/01/27 18:43:44 ca Exp $
+ *	$Sendmail: conf.h,v 1.130 2006/08/17 21:15:07 ca Exp $
  */
 
 /*
 **  CONF.H -- All user-configurable parameters for sendmail
 **
-**	Send updates to sendmail@Sendmail.ORG so they will be
-**	included in the next release.
+**	Send updates to Sendmail.ORG so they will be
+**	included in the next release; see
+**	http://www.sendmail.org/email-addresses.html
+**	for current e-mail address.
 */
 
 #ifndef SM_CONF_H
@@ -444,6 +446,7 @@ typedef int		pid_t;
 #     define SMRSH_CMDDIR	"/var/adm/sm.bin"
 #    endif /* ! SMRSH_CMDDIR */
 #    define SL_FUDGE	34	/* fudge offset for SyslogPrefixLen */
+#    define HASLDAPGETALIASBYNAME	1	/* added in S8 */
 #   endif /* SOLARIS >= 20800 || (SOLARIS < 10000 && SOLARIS >= 208) */
 #   if SOLARIS >= 20900 || (SOLARIS < 10000 && SOLARIS >= 209)
 #    define HASURANDOMDEV	1	/* /dev/[u]random added in S9 */

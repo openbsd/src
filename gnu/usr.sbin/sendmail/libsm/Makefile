@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2006/03/22 18:43:54 millert Exp $
+#       $Sendmail: Makefile,v 1.2 2006/08/16 21:06:30 ca Exp $
 
 LIB=	sm
 SRCS=	assert.c debug.c errstring.c exc.c heap.c match.c rpool.c strdup.c \
@@ -10,7 +10,7 @@ SRCS=	assert.c debug.c errstring.c exc.c heap.c match.c rpool.c strdup.c \
 	vsnprintf.c wbuf.c wsetup.c string.c stringf.c \
 	xtrap.c strto.c test.c path.c strcasecmp.c strrevcmp.c signal.c \
 	clock.c config.c shm.c sem.c mbdb.c strexit.c cf.c ldap.c niprop.c \
-	memstat.c
+	memstat.c util.c
 ENVDEF=	-DNOT_SENDMAIL
 
 # This is not a library that gets installed so only build the .a version
