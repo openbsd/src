@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.46 2007/02/04 15:01:11 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.47 2007/02/04 19:17:14 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -129,6 +129,7 @@ char topn_specified = No;
 #define CMD_command	18
 #define CMD_threads	19
 #define CMD_grep	20
+#define CMD_add		21
 
 static void
 usage(void)
@@ -528,7 +529,7 @@ rundisplay(void)
 	int change, i;
 	struct pollfd pfd[1];
 	uid_t uid;
-	static char command_chars[] = "\f qh?en#sdkriIuSopCTg";
+	static char command_chars[] = "\f qh?en#sdkriIuSopCTg+";
 
 	/*
 	 * assume valid command unless told
@@ -890,6 +891,13 @@ rundisplay(void)
 				clear_message();
 			break;
 
+		case CMD_add:
+			ps.uid = (uid_t)-1;	/* uid */
+			ps.pid = (pid_t)-1; 	/* pid */
+			ps.system = old_system;
+			ps.command = NULL;	/* grep */
+			break;
+		
 		default:
 			new_message(MT_standout, " BAD CASE IN SWITCH!");
 			if (putchar('\r') == EOF)
