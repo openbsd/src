@@ -244,27 +244,27 @@ Now perform the same steps as before, generating a Makefile from the
 Makefile.PL file, and running make.
 
 In order to test that our extension works, we now need to look at the
-file test.pl.  This file is set up to imitate the same kind of testing
+file t/MyTest.t.  This file is set up to imitate the same kind of testing
 structure that Perl itself has.  Within the test script, you perform a
 number of tests to confirm the behavior of the extension, printing "ok"
-when the test is correct, "not ok" when it is not.  Change the print
-statement in the BEGIN block to print "1..4", and add the following code
+when the test is correct, "not ok" when it is not.  Change the plan
+statement for Test::More to read 
+use Test::More tests => 4;
+and add the following code
 to the end of the file:
 
-	print &Mytest::is_even(0) == 1 ? "ok 2" : "not ok 2", "\n";
-	print &Mytest::is_even(1) == 0 ? "ok 3" : "not ok 3", "\n";
-	print &Mytest::is_even(2) == 1 ? "ok 4" : "not ok 4", "\n";
+	ok(&Mytest::is_even(0) == 1);
+	ok(&Mytest::is_even(1) == 0);
+	ok(&Mytest::is_even(2) == 1);
 
 We will be calling the test script through the command "C<make test>".  You
 should see output that looks something like this:
 
 	% make test
 	PERL_DL_NONLAZY=1 /opt/perl5.004/bin/perl (lots of -I arguments) test.pl
-	1..4
-	ok 1
-	ok 2
-	ok 3
-	ok 4
+	t/MyTest....ok
+	All tests successful.
+	Files=1, Tests=4,  0 wallclock secs ( 0.07 cusr +  0.03 csys =  0.10 CPU)
 	%
 
 =head2 What has gone on?
