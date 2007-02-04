@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.207 2007/02/01 20:36:21 otto Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.208 2007/02/04 15:05:05 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1175,7 +1175,7 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 			rcsnum_cpy(rdp->rd_num, brp->rb_num, 0);
 			TAILQ_INSERT_TAIL(&(rdp->rd_branches), brp, rb_list);
 
-			ordp = TAILQ_PREV(rdp, cvs_tqh, rd_list);
+			ordp = TAILQ_PREV(rdp, rcs_dlist, rd_list);
 			rcsnum_cpy(rdp->rd_num, ordp->rd_next, 0);
 		} else {
 			ordp = TAILQ_NEXT(rdp, rd_list);
