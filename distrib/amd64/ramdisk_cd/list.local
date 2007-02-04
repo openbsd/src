@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.8 2006/12/20 03:29:55 deraadt Exp $
+# $OpenBSD: list.local,v 1.9 2007/02/04 23:30:19 jsg Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 #LINK	instbin					sbin/ccdconfig
@@ -15,6 +15,9 @@ COPY	${DESTDIR}/etc/firmware/ral-rt2561	etc/firmware/ral-rt2561
 COPY	${DESTDIR}/etc/firmware/ral-rt2561s	etc/firmware/ral-rt2561s
 COPY	${DESTDIR}/etc/firmware/ral-rt2661	etc/firmware/ral-rt2661
 COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
+
+COPY	${DESTDIR}/etc/firmware/zd1211		etc/firmware/zd1211
+COPY	${DESTDIR}/etc/firmware/zd1211b		etc/firmware/zd1211b
 
 # dhcp things
 SCRIPT	${DESTDIR}/sbin/dhclient-script 	sbin/dhclient-script
