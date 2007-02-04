@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.82 2007/01/17 16:43:36 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.83 2007/02/04 10:36:05 pedro Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -2390,21 +2390,28 @@ handle_workitem_freeblocks(freeblks)
 	struct freeblks *freeblks;
 {
 	struct inode tip;
-	struct ufs1_dinode dtip1;
 	daddr_t bn;
+	union {
+		struct ufs1_dinode di1;
+		struct ufs2_dinode di2;
+	} di;
 	struct fs *fs;
 	int i, level, bsize;
 	long nblocks, blocksreleased = 0;
 	int error, allerror = 0;
 	ufs_lbn_t baselbns[NIADDR], tmpval;
 
-	tip.i_din1 = &dtip1;
+	if (VFSTOUFS(freeblks->fb_mnt)->um_fstype == UM_UFS1)
+		tip.i_din1 = &di.di1;
+	else
+		tip.i_din2 = &di.di2;
+
 	tip.i_fs = fs = VFSTOUFS(freeblks->fb_mnt)->um_fs;
 	tip.i_number = freeblks->fb_previousinum;
 	tip.i_ump = VFSTOUFS(freeblks->fb_mnt);
 	tip.i_dev = freeblks->fb_devvp->v_rdev;
-	tip.i_ffs1_size = freeblks->fb_oldsize;
-	tip.i_ffs1_uid = freeblks->fb_uid;
+	DIP_ASSIGN(&tip, size, freeblks->fb_oldsize);
+	DIP_ASSIGN(&tip, uid, freeblks->fb_uid);
 	tip.i_vnode = NULL;
 	tmpval = 1;
 	baselbns[0] = NDADDR;
