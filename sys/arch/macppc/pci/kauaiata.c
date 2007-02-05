@@ -1,4 +1,4 @@
-/*	$OpenBSD: kauaiata.c,v 1.7 2006/04/10 08:10:49 brad Exp $ */
+/*	$OpenBSD: kauaiata.c,v 1.8 2007/02/05 06:46:56 drahn Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -140,6 +140,21 @@ kauaiataattach(struct device *parent, struct device *self, void *aux)
 	/* config read */
 	sc->sc_membus_space.bus_base =
 	    pci_conf_read(pc, pa->pa_tag, PCI_MAPREG_START);
+
+	/* make sure device memory access is enabled */
+	{
+		bus_space_tag_t		iot;
+		bus_space_handle_t	ioh;
+		bus_size_t		size;
+
+		if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM, 0,
+		    &iot, &ioh, NULL, &size, 0)) {
+			printf(": mapping memory failed\n");
+			return;
+		}
+			
+		bus_space_unmap(iot, ioh, size);
+	}
 #if 0
 	pci_conf_write(pc, pa->pa_tag, PCI_MAPREG_START, 0xffffffff);
 	size =  ~(pci_conf_read(pc, pa->pa_tag, PCI_MAPREG_START));
