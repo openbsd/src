@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.15 2007/02/03 20:24:21 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.16 2007/02/06 10:26:13 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -42,6 +42,10 @@ void	tcp_write(int, short, void *);
 void	tcp_host_up(int, struct ctl_tcp_event *);
 void	tcp_send_req(int, short, void *);
 void	tcp_read_buf(int, short, void *);
+
+int	check_http_code(struct ctl_tcp_event *);
+int	check_http_digest(struct ctl_tcp_event *);
+int	check_send_expect(struct ctl_tcp_event *);
 
 void
 check_tcp(struct ctl_tcp_event *cte)

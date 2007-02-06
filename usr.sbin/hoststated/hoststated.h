@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.20 2007/02/06 10:06:55 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.21 2007/02/06 10:26:13 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -359,13 +359,6 @@ void	 check_icmp(struct hoststated *, struct timeval *);
 
 /* check_tcp.c */
 void	 check_tcp(struct ctl_tcp_event *);
-
-/* check_http.c */
-int	check_http_code(struct ctl_tcp_event *);
-int	check_http_digest(struct ctl_tcp_event *);
-
-/* check_send_expect.c */
-int	check_send_expect(struct ctl_tcp_event *);
 
 /* ssl.c */
 void	 ssl_init(struct hoststated *);
