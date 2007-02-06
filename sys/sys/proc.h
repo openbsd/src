@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.89 2006/11/29 12:24:18 miod Exp $	*/
+/*	$OpenBSD: proc.h,v 1.90 2007/02/06 18:42:37 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -45,6 +45,7 @@
 #include <sys/queue.h>
 #include <sys/timeout.h>		/* For struct timeout. */
 #include <sys/event.h>			/* For struct klist */
+#include <machine/atomic.h>
 
 #ifdef __HAVE_CPUINFO
 #define curproc curcpu()->ci_curproc

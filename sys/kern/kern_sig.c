@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.86 2007/01/17 23:08:18 art Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.87 2007/02/06 18:42:37 art Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -339,7 +339,7 @@ setsigvec(struct proc *p, int signum, struct sigaction *sa)
 	 */
 	if (sa->sa_handler == SIG_IGN ||
 	    (sigprop[signum] & SA_IGNORE && sa->sa_handler == SIG_DFL)) {
-		p->p_siglist &= ~bit;		/* never to be seen again */
+		atomic_clearbits_int(&p->p_siglist, bit);	
 		if (signum != SIGCONT)
 			p->p_sigignore |= bit;	/* easier in psignal */
 		p->p_sigcatch &= ~bit;
@@ -391,7 +391,7 @@ execsigs(struct proc *p)
 		if (sigprop[nc] & SA_IGNORE) {
 			if (nc != SIGCONT)
 				p->p_sigignore |= mask;
-			p->p_siglist &= ~mask;
+			atomic_clearbits_int(&p->p_siglist, mask);
 		}
 		ps->ps_sigact[nc] = SIG_DFL;
 	}
@@ -842,7 +842,7 @@ psignal(struct proc *p, int signum)
 		LIST_FOREACH(q, &p->p_thrchildren, p_thrsib)
 			psignal(q, signum);
 #endif
-		p->p_siglist &= ~stopsigmask;
+		atomic_clearbits_int(&p->p_siglist, stopsigmask);
 	}
 
 	if (prop & SA_STOP) {
@@ -850,11 +850,11 @@ psignal(struct proc *p, int signum)
 		LIST_FOREACH(q, &p->p_thrchildren, p_thrsib)
 			psignal(q, signum);
 #endif
-		p->p_siglist &= ~contsigmask;
+		atomic_clearbits_int(&p->p_siglist, contsigmask);
 		p->p_flag &= ~P_CONTINUED;
 	}
 
-	p->p_siglist |= mask;
+	atomic_setbits_int(&p->p_siglist, mask);
 
 	/*
 	 * Defer further processing for signals which are held,
@@ -889,7 +889,7 @@ psignal(struct proc *p, int signum)
 		 * be awakened.
 		 */
 		if ((prop & SA_CONT) && action == SIG_DFL) {
-			p->p_siglist &= ~mask;
+			atomic_clearbits_int(&p->p_siglist, mask);
 			goto out;
 		}
 		/*
@@ -903,7 +903,7 @@ psignal(struct proc *p, int signum)
 			 */
 			if (p->p_flag & P_PPWAIT)
 				goto out;
-			p->p_siglist &= ~mask;
+			atomic_clearbits_int(&p->p_siglist, mask);
 			p->p_xstat = signum;
 			if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
 				psignal(p->p_pptr, SIGCHLD);
@@ -945,7 +945,7 @@ psignal(struct proc *p, int signum)
 			p->p_flag |= P_CONTINUED;
 			wakeup(p->p_pptr);
 			if (action == SIG_DFL)
-				p->p_siglist &= ~mask;
+				atomic_clearbits_int(&p->p_siglist, mask);
 			if (action == SIG_CATCH)
 				goto runfast;
 			if (p->p_wchan == 0)
@@ -959,7 +959,7 @@ psignal(struct proc *p, int signum)
 			 * Already stopped, don't need to stop again.
 			 * (If we did the shell could get confused.)
 			 */
-			p->p_siglist &= ~mask;		/* take it away */
+			atomic_clearbits_int(&p->p_siglist, mask);
 			goto out;
 		}
 
@@ -1024,7 +1024,7 @@ issignal(struct proc *p)
 			return (0);
 		signum = ffs((long)mask);
 		mask = sigmask(signum);
-		p->p_siglist &= ~mask;		/* take the signal! */
+		atomic_clearbits_int(&p->p_siglist, mask);
 
 		/*
 		 * We should see pending but ignored signals
@@ -1061,7 +1061,9 @@ issignal(struct proc *p)
 			mask = sigmask(signum);
 			if ((p->p_sigmask & mask) != 0)
 				continue;
-			p->p_siglist &= ~mask;		/* take the signal! */
+
+			/* take the signal! */
+			atomic_clearbits_int(&p->p_siglist, mask);
 		}
 
 		prop = sigprop[signum];
@@ -1140,7 +1142,7 @@ issignal(struct proc *p)
 	/* NOTREACHED */
 
 keep:
-	p->p_siglist |= mask;		/* leave the signal for later */
+	atomic_setbits_int(&p->p_siglist, mask); /*leave the signal for later */
 	return (signum);
 }
 
@@ -1184,7 +1186,7 @@ postsig(int signum)
 	KERNEL_PROC_LOCK(p);
 
 	mask = sigmask(signum);
-	p->p_siglist &= ~mask;
+	atomic_clearbits_int(&p->p_siglist, mask);
 	action = ps->ps_sigact[signum];
 	sigval.sival_ptr = 0;
 	type = SI_USER;

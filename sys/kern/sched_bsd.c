@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.9 2006/11/29 12:24:18 miod Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.10 2007/02/06 18:42:37 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -609,7 +609,7 @@ setrunnable(struct proc *p)
 		 * while we were stopped), check for a signal from the debugger.
 		 */
 		if ((p->p_flag & P_TRACED) != 0 && p->p_xstat != 0)
-			p->p_siglist |= sigmask(p->p_xstat);
+			atomic_setbits_int(&p->p_siglist, sigmask(p->p_xstat));
 	case SSLEEP:
 		unsleep(p);		/* e.g. when sending signals */
 		break;
