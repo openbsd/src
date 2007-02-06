@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.13 2007/02/03 17:51:46 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.14 2007/02/06 08:45:46 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -68,6 +68,9 @@ struct imsgname imsgs[] = {
 	{ IMSG_CTL_TABLE_ENABLE,	"ctl_table_enable",	monitor_id },
 	{ IMSG_CTL_HOST_DISABLE,	"ctl_host_disable",	monitor_id },
 	{ IMSG_CTL_HOST_ENABLE,		"ctl_host_enable",	monitor_id },
+	{ IMSG_CTL_TABLE_CHANGED,	"ctl_table_changed",	monitor_id },
+	{ IMSG_CTL_PULL_RULESET,	"ctl_pull_ruleset",	monitor_id },
+	{ IMSG_CTL_PUSH_RULESET,	"ctl_push_ruleset",	monitor_id },
 	{ IMSG_SYNC,			"sync",			NULL },
 	{ 0,				NULL,			NULL }
 };

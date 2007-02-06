@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.18 2007/02/01 20:03:39 pyr Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.19 2007/02/06 08:45:46 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -80,6 +80,9 @@ enum imsg_type {
 	IMSG_CTL_SERVICE,
 	IMSG_CTL_TABLE,
 	IMSG_CTL_HOST,
+	IMSG_CTL_TABLE_CHANGED,
+	IMSG_CTL_PULL_RULESET,
+	IMSG_CTL_PUSH_RULESET,
 	IMSG_CTL_SHOW_SUM,	/* hoststatectl requests */
 	IMSG_CTL_SERVICE_ENABLE,
 	IMSG_CTL_SERVICE_DISABLE,

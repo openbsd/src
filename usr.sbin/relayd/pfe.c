@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.10 2007/02/01 20:03:39 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.11 2007/02/06 08:45:46 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -497,7 +497,11 @@ pfe_sync(void)
 	struct service	*service;
 	struct table	*active;
 	int		 backup;
+	struct ctl_id	 id;
+	struct imsg	 imsg;
 
+	bzero(&id, sizeof(id));
+	bzero(&imsg, sizeof(imsg));
 	TAILQ_FOREACH(service, &env->services, entry) {
 		backup = (service->flags & F_BACKUP);
 		service->flags &= ~(F_BACKUP);
@@ -515,8 +519,14 @@ pfe_sync(void)
 		} else
 			active = service->table;
 
-		if (active != NULL && active->flags & F_CHANGED)
+		if (active != NULL && active->flags & F_CHANGED) {
+			id.id = active->id;
+			imsg.hdr.type = IMSG_CTL_TABLE_CHANGED;
+			imsg.hdr.len = sizeof(id) + IMSG_HEADER_SIZE;
+			imsg.data = &id;
 			sync_table(env, service, active);
+			control_imsg_forward(&imsg);
+		}
 
 		service->table->flags &= ~(F_CHANGED);
 		service->backup->flags &= ~(F_CHANGED);
@@ -526,12 +536,22 @@ pfe_sync(void)
 				flush_table(env, service);
 				log_debug("pfe_sync: disabling ruleset");
 				service->flags &= ~(F_ACTIVE_RULESET);
+				id.id = service->id;
+				imsg.hdr.type = IMSG_CTL_PULL_RULESET;
+				imsg.hdr.len = sizeof(id) + IMSG_HEADER_SIZE;
+				imsg.data = &id;
 				sync_ruleset(env, service, 0);
+				control_imsg_forward(&imsg);
 			}
 		} else if (!(service->flags & F_ACTIVE_RULESET)) {
 			log_debug("pfe_sync: enabling ruleset");
 			service->flags |= F_ACTIVE_RULESET;
+			id.id = service->id;
+			imsg.hdr.type = IMSG_CTL_PUSH_RULESET;
+			imsg.hdr.len = sizeof(id) + IMSG_HEADER_SIZE;
+			imsg.data = &id;
 			sync_ruleset(env, service, 1);
+			control_imsg_forward(&imsg);
 		}
 	}
 }
