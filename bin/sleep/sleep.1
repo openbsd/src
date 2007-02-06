@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sleep.1,v 1.13 2003/06/02 23:32:09 millert Exp $
+.\"	$OpenBSD: sleep.1,v 1.14 2007/02/06 20:07:15 jmc Exp $
 .\"	$NetBSD: sleep.1,v 1.9 1995/07/25 19:37:43 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -62,8 +62,7 @@ utility):
 .Pp
 To repetitively run a command (with
 .Xr csh 1 ) :
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 while (! -r zzz.rawdata)
 	sleep 300
 end
@@ -87,8 +86,7 @@ by sleeping 70 seconds between each
 job.
 .Pp
 To monitor the growth of a file without consuming too many resources:
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 while true; do
 	ls -l file
 	sleep 5

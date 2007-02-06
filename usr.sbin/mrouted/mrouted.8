@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mrouted.8,v 1.15 2004/04/03 21:53:15 jmc Exp $
+.\"	$OpenBSD: mrouted.8,v 1.16 2007/02/06 20:07:16 jmc Exp $
 .\" The mrouted program is covered by the license in the accompanying file
 .\" named "LICENSE".  Use of the mrouted program represents acceptance of
 .\" the terms and conditions listed in that file.
@@ -270,7 +270,7 @@ direct tunnels (i.e., eliminate the middle man).
 .Sh EXAMPLE CONFIGURATION
 This is an example configuration for a mythical multicast router at a big
 school.
-.Bd -unfilled -compact -offset left
+.Bd -unfilled -offset left
 #
 # mrouted.conf example
 #
@@ -344,8 +344,7 @@ upon startup.
 .El
 .Sh EXAMPLES
 The routing tables look like this:
-.Pp
-.Bd -unfilled -compact -offset left
+.Bd -unfilled -offset left
 Virtual Interface Table
  Vif  Local-Address                    Metric  Thresh  Flags
   0   36.2.0.8      subnet: 36.2          1       1    querier
@@ -409,8 +408,7 @@ Entries are created and deleted by
 .Nm mrouted .
 .Pp
 The cache tables look like this:
-.Pp
-.Bd -unfilled -compact -offset left
+.Bd -unfilled -offset left
 Multicast Routing Cache Table (147 entries)
  Origin             Mcast-group     CTmr  Age Ptmr IVif Forwvifs
  13.2.116/22        224.2.127.255     3m   2m    -  0    1

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: oldrdist.1,v 1.14 2004/02/09 20:53:11 jmc Exp $
+.\"	$OpenBSD: oldrdist.1,v 1.15 2007/02/06 20:07:15 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -96,9 +96,8 @@ Forces
 to interpret the remaining arguments as a small
 .Ar distfile .
 .Pp
-The equivalent distfile is as follows.
-.Pp
-.Bd -filled -offset indent -compact
+The equivalent distfile is as follows:
+.Bd -filled -offset indent
 .Pq Ar name ...
 .Li ->
 .Op Ar login@
@@ -196,8 +195,7 @@ contains a sequence of entries that specify the files
 to be copied, the destination hosts, and what operations to perform
 to do the updating.
 Each entry has one of the following formats:
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 <variable name> `=' <name list>
 [label:]<source list> `\->' <destination list> <command list>
 [label:]<source list> `::' <time_stamp file> <command list>

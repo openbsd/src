@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hexdump.1,v 1.15 2007/01/28 16:37:09 miod Exp $
+.\"	$OpenBSD: hexdump.1,v 1.16 2007/02/06 20:07:15 jmc Exp $
 .\"	$NetBSD: hexdump.1,v 1.14 2001/12/07 14:46:24 bjh21 Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -216,18 +216,25 @@ are not supported.
 .It
 The single character escape sequences
 described in the C standard are supported:
-.Bd -ragged -offset indent -compact
-.Bl -column <alert_character>
-.It NUL	\e0
-.It <alert character>	\ea
-.It <backspace>	\eb
-.It <form-feed>	\ef
-.It <newline>	\en
-.It <carriage return>	\er
-.It <tab>	\et
-.It <vertical tab>	\ev
+.Pp
+.Bl -tag -width "<alert character>XX" -offset indent -compact
+.It NUL
+\e0
+.It Aq alert character
+\ea
+.It Aq backspace
+\eb
+.It Aq form-feed
+\ef
+.It Aq newline
+\en
+.It Aq carriage return
+\er
+.It Aq tab
+\et
+.It Aq vertical tab
+\ev
 .El
-.Ed
 .El
 .Pp
 .Nm

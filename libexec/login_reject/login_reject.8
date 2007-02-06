@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_reject.8,v 1.4 2002/03/13 22:34:06 marc Exp $
+.\" $OpenBSD: login_reject.8,v 1.5 2007/02/06 20:07:15 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -60,10 +60,9 @@ types of logins.
 For example, a class entry (see
 .Xr login.conf 5 )
 may contain:
-.Pp
-.Bd -literal -compact
-	:auth=krb-or-pwd,kerberos,passwd:
-	:auth-ftp=reject:
+.Bd -literal -offset indent
+:auth=krb-or-pwd,kerberos,passwd:
+:auth-ftp=reject:
 .Ed
 .Pp
 which would allow authentication for this class in most situations
