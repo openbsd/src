@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.51 2006/10/17 23:20:12 krw Exp $ */
+/*	$OpenBSD: wd.c,v 1.52 2007/02/06 03:17:24 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -945,7 +945,7 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		{
-		register struct format_op *fop;
+		struct format_op *fop;
 		struct iovec aiov;
 		struct uio auio;
 
