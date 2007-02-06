@@ -1,4 +1,4 @@
-.\"  $OpenBSD: od.1,v 1.13 2007/02/06 20:23:23 jmc Exp $
+.\"  $OpenBSD: od.1,v 1.14 2007/02/06 20:29:59 jmc Exp $
 .\"  $NetBSD: od.1,v 1.16 2001/12/07 01:23:42 bjh21 Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,15 +44,9 @@
 .Sh SYNOPSIS
 .Nm od
 .Op Fl aBbcDdeFfHhIiLlOovXx
-.Bk -words
-.Op Fl j Ar skip
-.Ek
-.Bk -words
+.Op Fl j Ar offset
 .Op Fl N Ar length
-.Ek
-.Bk -words
 .Op Fl t Ar type_string
-.Ek
 .Sm off
 .Oo
 .Op Cm \&+
@@ -61,7 +55,7 @@
 .Op Cm Bb
 .Sm on
 .Oc
-.Ar file ...
+.Op Ar
 .Sh DESCRIPTION
 .Nm
 has been deprecated in favor of

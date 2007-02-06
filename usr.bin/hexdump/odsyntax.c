@@ -1,4 +1,4 @@
-/*	$OpenBSD: odsyntax.c,v 1.14 2006/03/16 01:23:59 deraadt Exp $	*/
+/*	$OpenBSD: odsyntax.c,v 1.15 2007/02/06 20:29:59 jmc Exp $	*/
 /*	$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*-
@@ -32,7 +32,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)odsyntax.c	5.4 (Berkeley) 3/8/91";*/
-static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.14 2006/03/16 01:23:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.15 2007/02/06 20:29:59 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -303,9 +303,9 @@ void
 oldusage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-aBbcDdeFfHhIiLlOovXx] [-j skip] "
+	fprintf(stderr, "usage: %s [-aBbcDdeFfHhIiLlOovXx] [-j offset] "
 	    "[-N length] [-t type_string]\n"
-	    "          [[+]offset[.][Bb]] [file ...]\n", __progname);
+	    "\t[[+]offset[.][Bb]] [file ...]\n", __progname);
 	exit(1);
 }
 
