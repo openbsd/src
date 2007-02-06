@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hexdump.1,v 1.16 2007/02/06 20:07:15 jmc Exp $
+.\"	$OpenBSD: hexdump.1,v 1.17 2007/02/06 20:13:00 jmc Exp $
 .\"	$NetBSD: hexdump.1,v 1.14 2001/12/07 14:46:24 bjh21 Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -217,7 +217,7 @@ are not supported.
 The single character escape sequences
 described in the C standard are supported:
 .Pp
-.Bl -tag -width "<alert character>XX" -offset indent -compact
+.Bl -tag -width "Xalert characterXXX" -offset indent -compact
 .It NUL
 \e0
 .It Aq alert character
@@ -350,8 +350,7 @@ to specifying the
 .Fl x
 option.
 .Pp
-.Nm
-exits 0 on success and >0 if an error occurred.
+.Ex -std hexdump
 .Sh EXAMPLES
 Display the input in perusal format:
 .Bd -literal -offset indent
