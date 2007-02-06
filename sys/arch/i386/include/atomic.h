@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.3 2006/04/27 15:37:53 mickey Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.4 2007/02/06 17:13:33 art Exp $	*/
 /* $NetBSD: atomic.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
 
 /*-
@@ -42,11 +42,24 @@
 #ifndef _ATOMIC_H_
 #define _ATOMIC_H_
 
+/*
+ * Perform atomic operations on memory. Should be atomic with respect
+ * to interrupts and multiple processors.
+ *
+ * void atomic_setbits_int(volatile u_int *a, u_int mask) { *a |= mask; }
+ * void atomic_clearbits_int(volatile u_int *a, u_int mas) { *a &= ~mask; }
+ */
 #ifndef _LOCORE
+
+#ifdef MULTIPROCESSOR
+#define LOCK "lock"
+#else
+#define LOCK
+#endif
 
 static __inline u_int64_t
 i386_atomic_testset_uq (volatile u_int64_t *ptr, u_int64_t val) {
-    __asm__ volatile ("\n1:\tlock; cmpxchg8b (%1); jnz 1b" : "+A" (val) :
+    __asm__ volatile ("\n1:\t" LOCK " cmpxchg8b (%1); jnz 1b" : "+A" (val) :
 	"r" (ptr), "b" ((u_int32_t)val), "c" ((u_int32_t)(val >> 32)));
     return val;
 }
@@ -65,14 +78,19 @@ i386_atomic_testset_i (volatile int *ptr, unsigned long val) {
 
 static __inline void 
 i386_atomic_setbits_l (volatile u_int32_t *ptr, unsigned long bits) {
-    __asm __volatile("lock ; orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
+    __asm __volatile(LOCK " orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
 
 static __inline void 
 i386_atomic_clearbits_l (volatile u_int32_t *ptr, unsigned long bits) {
     bits = ~bits;
-    __asm __volatile("lock ; and %1,%0" :  "=m" (*ptr) : "ir" (bits));
+    __asm __volatile(LOCK " andl %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
+
+#define atomic_setbits_int i386_atomic_setbits_l
+#define atomic_clearbits_int i386_atomic_clearbits_l
+
+#undef LOCK
 
 #endif
 #endif

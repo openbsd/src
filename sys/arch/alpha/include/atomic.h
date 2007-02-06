@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.3 2002/02/15 15:31:58 art Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.4 2007/02/06 17:13:33 art Exp $	*/
 /* $NetBSD: atomic.h,v 1.7 2001/12/17 23:34:57 thorpej Exp $ */
 
 /*-
@@ -175,6 +175,18 @@ atomic_loadlatch_ulong(__volatile unsigned long *ulp, unsigned long v)
 		: "memory");
 
 	return (v0);
+}
+
+static __inline void
+atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
+{
+	*uip |= v;
+}
+
+static __inline void
+atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
+{
+	*uip &= ~v;
 }
 
 #endif /* _ALPHA_ATOMIC_H_ */

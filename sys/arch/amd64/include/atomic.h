@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.3 2004/02/23 06:25:14 mickey Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.4 2007/02/06 17:13:33 art Exp $	*/
 /*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
 
 /*
@@ -39,7 +39,21 @@
 #ifndef _ATOMIC_H
 #define _ATOMIC_H
 
+/*
+ * Perform atomic operations on memory. Should be atomic with respect
+ * to interrupts and multiple processors.
+ *
+ * void atomic_setbits_int(volatile u_int *a, u_int mask) { *a |= mask; }
+ * void atomic_clearbits_int(volatile u_int *a, u_int mas) { *a &= ~mask; }
+ */
+
 #ifndef _LOCORE
+
+#ifdef MULTIPROCESSOR
+#define LOCK "lock"
+#else
+#define LOCK
+#endif
 
 static __inline u_int64_t
 x86_atomic_testset_u64(volatile u_int64_t *ptr, u_int64_t val) {
@@ -65,12 +79,12 @@ x86_atomic_testset_i32(volatile int32_t *ptr, int32_t val) {
 
 static __inline void
 x86_atomic_setbits_u32(volatile u_int32_t *ptr, u_int32_t bits) {
-    __asm __volatile("lock ; orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
+    __asm __volatile(LOCK " orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
 
 static __inline void
 x86_atomic_clearbits_u32(volatile u_int32_t *ptr, u_int32_t bits) {
-    __asm __volatile("lock ; andl %1,%0" :  "=m" (*ptr) : "ir" (~bits));
+    __asm __volatile(LOCK " andl %1,%0" :  "=m" (*ptr) : "ir" (~bits));
 }
 
 
@@ -83,12 +97,12 @@ x86_atomic_clearbits_u32(volatile u_int32_t *ptr, u_int32_t bits) {
  */
 static __inline void
 x86_atomic_setbits_u64(volatile u_int64_t *ptr, u_int64_t bits) {
-    __asm __volatile("lock ; orq %1,%0" :  "=m" (*ptr) : "ir" (bits));
+    __asm __volatile(LOCK " orq %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
 
 static __inline void
 x86_atomic_clearbits_u64(volatile u_int64_t *ptr, u_int64_t bits) {
-    __asm __volatile("lock ; andq %1,%0" :  "=m" (*ptr) : "ir" (~bits));
+    __asm __volatile(LOCK " andq %1,%0" :  "=m" (*ptr) : "ir" (~bits));
 }
 
 #define x86_atomic_testset_ul	x86_atomic_testset_u32
@@ -97,6 +111,11 @@ x86_atomic_clearbits_u64(volatile u_int64_t *ptr, u_int64_t bits) {
 #define x86_atomic_setbits_ul	x86_atomic_setbits_u32
 #define x86_atomic_clearbits_l	x86_atomic_clearbits_u32
 #define x86_atomic_clearbits_ul	x86_atomic_clearbits_u32
+
+#define atomic_setbits_int x86_atomic_setbits_u32
+#define atomic_clearbits_int x86_atomic_clearbits_u32
+
+#undef LOCK
 
 #endif
 #endif
