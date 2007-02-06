@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.12 2007/02/06 08:46:31 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.13 2007/02/06 11:21:35 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -359,6 +359,8 @@ enable_service(struct ctl_conn *c, struct ctl_id *id)
 	eid.id = service->table->id;
 	if (enable_table(c, &eid) == -1)
 		return (-1);
+	if (service->backup->id == EMPTY_ID)
+		return (0);
 	eid.id = service->backup->id;
 	if (enable_table(c, &eid) == -1)
 		return (-1);
