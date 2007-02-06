@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.13 2007/01/29 14:23:31 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.14 2007/02/06 10:03:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -276,7 +276,7 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0)
-			fatalx("parent: pipe closed");
+			fatalx("main_dispatch_pfe: pipe closed");
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
@@ -316,8 +316,8 @@ main_dispatch_hce(int fd, short event, void * ptr)
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
-		if (n == 0)     /* connection closed */
-			fatalx("parent: pipe closed");
+		if (n == 0)
+			fatalx("main_dispatch_hce: pipe closed");
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
