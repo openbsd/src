@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.11 2007/02/06 08:45:46 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.12 2007/02/06 08:46:31 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -496,14 +496,12 @@ pfe_sync(void)
 {
 	struct service	*service;
 	struct table	*active;
-	int		 backup;
 	struct ctl_id	 id;
 	struct imsg	 imsg;
 
 	bzero(&id, sizeof(id));
 	bzero(&imsg, sizeof(imsg));
 	TAILQ_FOREACH(service, &env->services, entry) {
-		backup = (service->flags & F_BACKUP);
 		service->flags &= ~(F_BACKUP);
 		service->flags &= ~(F_DOWN);
 
