@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.7 2007/02/06 23:12:01 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.8 2007/02/06 23:14:11 miod Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -100,6 +100,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <sh/cache.h>
 #include <sh/cpu.h>
 #include <sh/mmu.h>
 #include <sh/trap.h>
@@ -150,6 +151,7 @@ void general_exception(struct proc *, struct trapframe *, uint32_t);
 void tlb_exception(struct proc *, struct trapframe *, uint32_t);
 void ast(struct proc *, struct trapframe *);
 void syscall(struct proc *, struct trapframe *);
+void cachectl(struct proc *, struct trapframe *);
 
 /*
  * void general_exception(struct proc *p, struct trapframe *tf):
@@ -202,6 +204,9 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 			goto out;
 		case _SH_TRA_SYSCALL << 2:
 			syscall(p, tf);
+			return;
+		case _SH_TRA_CACHECTL << 2:
+			cachectl(p, tf);
 			return;
 		default:
 			sv.sival_ptr = (void *)tf->tf_spc;
@@ -491,6 +496,27 @@ ast(struct proc *p, struct trapframe *tf)
 
 		userret(p);
 	}
+}
+
+void
+cachectl(struct proc *p, struct trapframe *tf)
+{
+	vaddr_t va;
+	vsize_t len;
+
+	if (!SH_HAS_UNIFIED_CACHE) {
+		va = (vaddr_t)tf->tf_r4;
+		len = (vsize_t)tf->tf_r5;
+
+		if (/* va < VM_MIN_ADDRESS || */ va >= VM_MAXUSER_ADDRESS ||
+		    va + len <= va || va + len >= VM_MAXUSER_ADDRESS)
+			len = 0;
+
+		if (len != 0)
+			sh_icache_sync_range_index(va, len);
+	}
+
+	userret(p);
 }
 
 void

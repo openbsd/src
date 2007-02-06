@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: trap.h,v 1.2 2007/02/06 23:14:09 miod Exp $	*/
 /*	$NetBSD: exception.h,v 1.9 2006/07/22 21:58:29 uwe Exp $	*/
 
 /*-
@@ -79,6 +79,7 @@
 #define	EXP_USER		0x001	/* exception from user-mode */
 
 #define	_SH_TRA_SYSCALL		0x80	/* syscall trapa number */
+#define	_SH_TRA_CACHECTL	0x81	/* cachectl trapa number */
 #define	_SH_TRA_BREAK		0xc3	/* magic number for debugger */
 
 /*
