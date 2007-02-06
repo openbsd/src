@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.80 2006/07/12 19:56:18 thib Exp $	*/
+/*	$OpenBSD: conf.h,v 1.81 2007/02/06 22:39:13 dlg Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -471,6 +471,13 @@ void	randomattach(void);
 
 /* open, close, ioctl */
 #define cdev_gpio_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
+	(dev_type_mmap((*))) enodev }
+
+/* open, close, ioctl */
+#define       cdev_bio_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \

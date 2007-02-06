@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.28 2006/03/27 06:15:24 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.29 2007/02/06 22:39:13 dlg Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -149,6 +149,7 @@ cdev_decl(pci);
 #include "bktr.h"
 #include "hotplug.h"
 #include "gpio.h"
+#include "bio.h"
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -243,6 +244,7 @@ struct cdevsw cdevsw[] = {
 	cdev_ptm_init(NPTY,ptm),	/* 77: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 78: devices hot plugging */
 	cdev_gpio_init(NGPIO,gpio),	/* 79: GPIO interface */
+	cdev_bio_init(NBIO,bio),	/* 80: ioctl tunnel */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 

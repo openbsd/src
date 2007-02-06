@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.11 2007/02/06 22:39:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -97,13 +97,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
-
-/* open, close, ioctl -- XXX should be a generic device */
-#define cdev_oci_init(c,n) { \
-        dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-        (dev_type_stop((*))) enodev, 0,  seltrue, \
-        (dev_type_mmap((*))) enodev, 0 }
 
 /* open, close, ioctl, select -- XXX should be a generic device */
 #define cdev_ocis_init(c,n) { \
@@ -285,7 +278,7 @@ struct cdevsw	cdevsw[] =
 	cdev_radio_init(NRADIO, radio), /* 76: generic radio I/O */
 	cdev_usbdev_init(NUSCANNER,uscanner),	/* 77: USB scanners */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 78: system call tracing */
- 	cdev_oci_init(NBIO,bio),	/* 79: ioctl tunnel */
+ 	cdev_bio_init(NBIO,bio),	/* 79: ioctl tunnel */
 	cdev_notdef(),			/* 80: gpr? XXX */
 	cdev_ptm_init(NPTY,ptm),	/* 81: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 82: devices hot plugging */
