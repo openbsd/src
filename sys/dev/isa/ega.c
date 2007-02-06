@@ -1,4 +1,4 @@
-/* $OpenBSD: ega.c,v 1.11 2006/12/02 19:11:11 miod Exp $ */
+/* $OpenBSD: ega.c,v 1.12 2007/02/06 22:03:24 miod Exp $ */
 /* $NetBSD: ega.c,v 1.4.4.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -916,7 +916,7 @@ ega_unpack_attr(id, attr, fg, bg, ul)
 	} else {
 		*fg = pctoansi[attr & 0x07];
 		*bg = pctoansi[(attr & 0x70) >> 4];
-		if (*ul != NULL)
+		if (ul != NULL)
 			*ul = 0;
 	}
 	if (attr & FG_INTENSE)

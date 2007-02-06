@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.43 2006/12/02 19:11:09 miod Exp $ */
+/* $OpenBSD: vga.c,v 1.44 2007/02/06 22:03:23 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -1012,7 +1012,7 @@ vga_unpack_attr(id, attr, fg, bg, ul)
 	} else {
 		*fg = pctoansi[attr & 0x07];
 		*bg = pctoansi[(attr & 0x70) >> 4];
-		if (*ul != NULL)
+		if (ul != NULL)
 			*ul = 0;
 	}
 	if (attr & FG_INTENSE)
