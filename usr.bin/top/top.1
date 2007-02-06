@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.38 2007/02/04 19:17:14 otto Exp $
+.\"	$OpenBSD: top.1,v 1.39 2007/02/06 15:27:25 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -264,7 +264,13 @@ Quit
 The following commands may not be available with overstrike terminals:
 .Bl -tag -width XxXXXX
 .It +
-Remove process filter(s).
+Reset any filters put in place by the
+.Sq g ,
+.Sq p ,
+and
+.Sq u
+interactive commands,
+or their command line equivalents.
 .It C
 Toggle the display of process command line arguments.
 .It d
