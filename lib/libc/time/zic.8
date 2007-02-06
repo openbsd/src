@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zic.8,v 1.18 2006/02/18 21:54:17 millert Exp $
+.\"	$OpenBSD: zic.8,v 1.19 2007/02/06 19:35:16 millert Exp $
 .Dd May 23, 1999
 .Dt ZIC 8
 .Os
@@ -8,7 +8,7 @@
 .Sh SYNOPSIS
 .Nm zic
 .Bk -words
-.Op Fl sv
+.Op Fl v
 .Op Fl d Ar directory
 .Op Fl L Ar leapsecondfilename
 .Op Fl l Ar timezone
@@ -48,10 +48,6 @@ time zone environment variables.
 will act as if the input contained a link line of the form
 .Pp
 .Dl Link	timezone		posixrules
-.It Fl s
-Limit time values stored in output files to values that are the same
-whether they're taken to be signed or unsigned.
-You can use this option to generate SVVS-compatible files.
 .It Fl v
 Complain if a year that appears in a data file is outside the range
 of years representable by
@@ -237,7 +233,7 @@ A zone line has the form
 .nf
 .ti +.5i
 .ta \w'Zone\0\0'u +\w'Australia/Adelaide\0\0'u +\w'GMTOFF\0\0'u +\w'RULES/SAVE\0\0'u +\w'FORMAT\0\0'u
-Zone	NAME	GMTOFF	RULES/SAVE	FORMAT	[UNTIL]
+Zone	NAME	GMTOFF	RULES/SAVE	FORMAT	[UNTILYEAR [MONTH [DAY [TIME]]]]
 .sp
 For example:
 .sp
@@ -276,15 +272,15 @@ Alternately,
 a slash
 .Pq \&/
 separates standard and daylight abbreviations.
-.It Cm UNTIL
+.It Cm UNTILYEAR [MONTH [DAY [TIME]]]
 The time at which the UTC offset or the rule(s) change for a location.
 It is specified as a year, a month, a day, and a time of day.
 If this is specified,
 the time zone information is generated from the given UTC offset
 and rule change until the time specified.
 The month, day, and time of day have the same format as the IN, ON, and AT
-columns of a rule; trailing columns can be omitted, and default to the
-earliest possible value for the missing columns.
+fields of a rule; trailing fields can be omitted, and default to the
+earliest possible value for the missing fields.
 .Pp
 The next line must be a
 .Dq continuation
@@ -293,11 +289,11 @@ string
 .Dq Zone
 and the name are omitted, as the continuation line will
 place information starting at the time specified as the
-.Em UNTIL
-field in the previous line in the file used by the previous line.
-Continuation lines may contain an
-.Em UNTIL
-field, just as zone lines do, indicating that the next line is a further
+.Dq until
+information in the previous line in the file used by the previous line.
+tion lines may contain
+.Dq until
+information, just as zone lines do, indicating that the next line is a further
 continuation.
 .El
 .Pp
@@ -401,7 +397,7 @@ link to local time zone
 standard directory used for created files
 .El
 .Sh SEE ALSO
-.Xr ctime 3 ,
+.\" @(#)zic.8	8.2
 .Xr tzfile 5 ,
 .Xr zdump 8
 .\" @(#)zic.8	7.24

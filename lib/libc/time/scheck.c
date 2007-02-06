@@ -1,7 +1,7 @@
-/*	$OpenBSD: scheck.c,v 1.9 2006/02/18 21:54:17 millert Exp $ */
+/*	$OpenBSD: scheck.c,v 1.10 2007/02/06 19:35:16 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
-** Feb 14, 2003 by Arthur David Olson.
+** 2006-07-17 by Arthur David Olson.
 */
 
 /*LINTLIBRARY*/

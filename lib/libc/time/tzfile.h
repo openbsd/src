@@ -1,4 +1,4 @@
-/*	$OpenBSD: tzfile.h,v 1.7 2006/02/18 21:54:17 millert Exp $	*/
+/*	$OpenBSD: tzfile.h,v 1.8 2007/02/06 19:35:16 millert Exp $	*/
 
 #ifndef TZFILE_H
 
@@ -24,7 +24,7 @@
 #if 0
 #ifndef lint
 #ifndef NOID
-static char	tzfilehid[] = "@(#)tzfile.h	7.18";
+static char	tzfilehid[] = "@(#)tzfile.h	8.1";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 #endif
@@ -53,7 +53,8 @@ static char	tzfilehid[] = "@(#)tzfile.h	7.18";
 
 struct tzhead {
 	char	tzh_magic[4];		/* TZ_MAGIC */
-	char	tzh_reserved[16];	/* reserved for future use */
+	char	tzh_version[1];		/* '\0' or '2' as of 2005 */
+	char	tzh_reserved[15];	/* reserved--must be zero */
 	char	tzh_ttisgmtcnt[4];	/* coded number of trans. time flags */
 	char	tzh_ttisstdcnt[4];	/* coded number of trans. time flags */
 	char	tzh_leapcnt[4];		/* coded number of leap seconds */
@@ -88,18 +89,22 @@ struct tzhead {
 */
 
 /*
+** If tzh_version is '2' or greater, the above is followed by a second instance
+** of tzhead and a second instance of the data in which each coded transition
+** time uses 8 rather than 4 chars,
+** then a POSIX-TZ-environment-variable-style string for use in handling
+** instants after the last transition time stored in the file
+** (with nothing between the newlines if there is no POSIX representation for
+** such instants).
+*/
+
+/*
 ** In the current implementation, "tzset()" refuses to deal with files that
 ** exceed any of the limits below.
 */
 
 #ifndef TZ_MAX_TIMES
-/*
-** The TZ_MAX_TIMES value below is enough to handle a bit more than a
-** year's worth of solar time (corrected daily to the nearest second) or
-** 138 years of Pacific Presidential Election time
-** (where there are three time zone transitions every fourth year).
-*/
-#define TZ_MAX_TIMES	370
+#define TZ_MAX_TIMES	1200
 #endif /* !defined TZ_MAX_TIMES */
 
 #ifndef TZ_MAX_TYPES
