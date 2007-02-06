@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.3 2007/02/06 10:06:55 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.4 2007/02/06 10:27:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -55,23 +55,19 @@ ssl_read(int s, short event, void *arg)
 		hce_notify_done(cte->host, "ssl_read: timeout");
 		return;
 	}
-	log_debug("ssl_read: event occurred");
 
 	bzero(rbuf, sizeof(rbuf));
 	ssl_err = 0;
 	retry_flag = EV_READ;
 
 	ret = SSL_read(cte->ssl, rbuf, sizeof(rbuf));
-
 	if (ret <= 0) {
 		ssl_err = SSL_get_error(cte->ssl, ret);
 		switch (ssl_err) {
 		case SSL_ERROR_WANT_READ:
-			log_debug("ssl_read: want read");
 			retry_flag = EV_READ;
 			goto retry;
 		case SSL_ERROR_WANT_WRITE:
-			log_debug("ssl_read: want read");
 			retry_flag = EV_WRITE;
 			goto retry;
 		case SSL_ERROR_ZERO_RETURN: /* FALLTHROUGH */
@@ -136,21 +132,17 @@ ssl_write(int s, short event, void *arg)
 		return;
 	}
 
-	log_debug("ssl_write: event occurred");
 	len = strlen(cte->table->sendbuf);
 	retry_flag = EV_WRITE;
 
 	ret = SSL_write(cte->ssl, cte->table->sendbuf, len); 
-
 	if (ret <= 0) {
 		ssl_err = SSL_get_error(cte->ssl, ret);
 		switch (ssl_err) {
 		case SSL_ERROR_WANT_READ:
-			log_debug("ssl_write: want read");
 			retry_flag = EV_READ;
 			goto retry;
 		case SSL_ERROR_WANT_WRITE:
-			log_debug("ssl_write: want write");
 			retry_flag = EV_WRITE;
 			goto retry;
 		default:
@@ -192,16 +184,13 @@ ssl_connect(int s, short event, void *arg)
 	retry_flag = ssl_err = 0;
 
 	ret = SSL_connect(cte->ssl); 
-
 	if (ret <= 0) {
 		ssl_err = SSL_get_error(cte->ssl, ret);
 		switch (ssl_err) {
 		case SSL_ERROR_WANT_READ:
-			log_debug("ssl_connect: want read");
 			retry_flag = EV_READ;
 			goto retry;
 		case SSL_ERROR_WANT_WRITE:
-			log_debug("ssl_connect: want write");
 			retry_flag = EV_WRITE;
 			goto retry;
 		default:
@@ -257,7 +246,10 @@ ssl_error(const char *where, const char *what)
 {
 	unsigned long	 code;
 	char		 errbuf[128];
-	
+	extern int	 debug;
+
+	if (!debug)
+		return;
 	for (; (code = ERR_get_error()) != 0 ;) {
 		ERR_error_string_n(code, errbuf, sizeof(errbuf));
 		log_debug("SSL library error: %s: %s: %s", where, what, errbuf);
@@ -284,7 +276,8 @@ ssl_transaction(struct ctl_tcp_event *cte)
 		cte->host->up = HOST_UNKNOWN;
 		ssl_error(cte->host->name, "cannot set fd"); 
 		ssl_cleanup(cte);
-		hce_notify_done(cte->host, "cannot set SSL fd");
+		hce_notify_done(cte->host,
+		    "ssl_transaction: cannot set SSL fd");
 		return;
 	}
 	SSL_set_connect_state(cte->ssl);

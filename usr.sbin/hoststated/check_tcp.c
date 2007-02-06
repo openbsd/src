@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.16 2007/02/06 10:26:13 pyr Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.17 2007/02/06 10:27:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -124,7 +124,7 @@ tcp_write(int s, short event, void *arg)
 		tcp_host_up(s, cte);
 	else {
 		close(s);
-		hce_notify_done(cte->host, "connect failed");
+		hce_notify_done(cte->host, "tcp_write: connect failed");
 	}
 }
 
@@ -138,7 +138,7 @@ tcp_host_up(int s, struct ctl_tcp_event *cte)
 		if (cte->table->flags & F_SSL)
 			break;
 		close(s);
-		hce_notify_done(cte->host, "tcp_host_up: connect successfull");
+		hce_notify_done(cte->host, "tcp_host_up: connect successful");
 		return;
 	case CHECK_HTTP_CODE:
 		cte->validate_read = NULL;
@@ -242,9 +242,11 @@ tcp_read_buf(int s, short event, void *arg)
 		close(cte->s);
 		buf_free(cte->buf);
 		if (cte->host->up == HOST_UP)
-			hce_notify_done(cte->host, "check succeeded");
+			hce_notify_done(cte->host,
+			    "tcp_read_buf: check succeeded");
 		else
-			hce_notify_done(cte->host, "check failed");
+			hce_notify_done(cte->host,
+			    "tcp_read_buf: check failed");
 		return;
 	default:
 		buf_add(cte->buf, rbuf, br);
@@ -256,9 +258,11 @@ tcp_read_buf(int s, short event, void *arg)
 			close(cte->s);
 			buf_free(cte->buf);
 			if (cte->host->up == HOST_UP)
-				hce_notify_done(cte->host, "check succeeded");
+				hce_notify_done(cte->host,
+				    "tcp_read_buf: check succeeded");
 			else
-				hce_notify_done(cte->host, "check failed");
+				hce_notify_done(cte->host,
+				    "tcp_read_buf: check failed");
 			return;
 		}
 		break; /* retry */
