@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.29 2007/01/25 18:56:33 otto Exp $	*/
+/*	$OpenBSD: init.c,v 1.30 2007/02/06 17:34:06 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -140,7 +140,7 @@ init_mkfile(char *path, const char *const *content)
 	BUF *b;
 	size_t len;
 	int fd, openflags, rcsflags;
-	char *rpath;
+	char rpath[MAXPATHLEN];
 	const char *const *p;
 	RCSFILE *file;
 
@@ -177,9 +177,7 @@ init_mkfile(char *path, const char *const *content)
 		goto out;
 	}
 
-	rpath = xstrdup(path);
-	if (strlcat(rpath, RCS_FILE_EXT, MAXPATHLEN) >= MAXPATHLEN)
-		fatal("init_mkfile: truncation");
+	(void)xsnprintf(rpath, MAXPATHLEN, "%s%s", path, RCS_FILE_EXT);
 
 	if ((file = rcs_open(rpath, fd, rcsflags, 0444)) == NULL)
 		fatal("failed to create RCS file for `%s'", path);
@@ -196,7 +194,6 @@ init_mkfile(char *path, const char *const *content)
 
 	file->rf_flags &= ~RCS_SYNCED;
 	rcs_close(file);
-	xfree(rpath);
 out:
 	(void)close(fd);
 }
