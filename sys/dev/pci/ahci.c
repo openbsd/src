@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.38 2007/01/31 07:12:09 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.39 2007/02/06 04:44:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -98,7 +98,51 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define AHCI_PREG_FB		0x08 /* FIS Base Addr */
 #define AHCI_PREG_FBU		0x0c /* FIS Base Hi Addr */
 #define AHCI_PREG_IS		0x10 /* Interrupt Status */
+#define  AHCI_PREG_IS_DHRS		(1<<0) /* Device to Host FIS */
+#define  AHCI_PREG_IS_PSS		(1<<1) /* PIO Setup FIS */
+#define  AHCI_PREG_IS_DSS		(1<<2) /* DMA Setup FIS */
+#define  AHCI_PREG_IS_SDBS		(1<<3) /* Set Devince Bits FIS */
+#define  AHCI_PREG_IS_UFS		(1<<4) /* Unknown FIS */
+#define  AHCI_PREG_IS_DPS		(1<<5) /* Descriptor Processed */
+#define  AHCI_PREG_IS_PCS		(1<<6) /* Port Change */
+#define  AHCI_PREG_IS_DMPS		(1<<7) /* Device Mechanical Presence */
+#define  AHCI_PREG_IS_PRCS		(1<<22) /* PhyRdy Change */
+#define  AHCI_PREG_IS_IPMS		(1<<23) /* Incorrect Port Multiplier */
+#define  AHCI_PREG_IS_OFS		(1<<24) /* Overflow */
+#define  AHCI_PREG_IS_INFS		(1<<26) /* Interface Non-fatal Error */
+#define  AHCI_PREG_IS_IFS		(1<<27) /* Interface Fatal Error */
+#define  AHCI_PREG_IS_HBDS		(1<<28) /* Host Bus Data Error */
+#define  AHCI_PREG_IS_HBFS		(1<<29) /* Host Bus Fatal Error */
+#define  AHCI_PREG_IS_TFES		(1<<30) /* Task File Error */
+#define  AHCI_PREG_IS_CPDS		(1<<31) /* Cold Presence Detect */
+#define AHCI_PFMT_IS		"\20" "\001DHRS" "\002PSS" "\003DSS" \
+				    "\004SDBS" "\005UFS" "\006DPS" "\007PCS" \
+				    "\010DMPS" "\027PRCS" "\030IPMS"  \
+				    "\031OFS" "\033INFS" "\034IFS" "\035HBDS" \
+				    "\036HBFS" "\037TFES" "\040CPDS"
 #define AHCI_PREG_IE		0x14 /* Interrupt Enable */
+#define  AHCI_PREG_IE_DHRE		(1<<0) /* Device to Host FIS */
+#define  AHCI_PREG_IE_PSE		(1<<1) /* PIO Setup FIS */
+#define  AHCI_PREG_IE_DSE		(1<<2) /* DMA Setup FIS */
+#define  AHCI_PREG_IE_SDBE		(1<<3) /* Set Devince Bits FIS */
+#define  AHCI_PREG_IE_UFE		(1<<4) /* Unknown FIS */
+#define  AHCI_PREG_IE_DPE		(1<<5) /* Descriptor Processed */
+#define  AHCI_PREG_IE_PCE		(1<<6) /* Port Change */
+#define  AHCI_PREG_IE_DMPE		(1<<7) /* Device Mechanical Presence */
+#define  AHCI_PREG_IE_PRCE		(1<<22) /* PhyRdy Change */
+#define  AHCI_PREG_IE_IPME		(1<<23) /* Incorrect Port Multiplier */
+#define  AHCI_PREG_IE_OFE		(1<<24) /* Overflow */
+#define  AHCI_PREG_IE_INFE		(1<<26) /* Interface Non-fatal Error */
+#define  AHCI_PREG_IE_IFE		(1<<27) /* Interface Fatal Error */
+#define  AHCI_PREG_IE_HBDE		(1<<28) /* Host Bus Data Error */
+#define  AHCI_PREG_IE_HBFE		(1<<29) /* Host Bus Fatal Error */
+#define  AHCI_PREG_IE_TFEE		(1<<30) /* Task File Error */
+#define  AHCI_PREG_IE_CPDE		(1<<31) /* Cold Presence Detect */
+#define AHCI_PFMT_IE		"\20" "\001DHRE" "\002PSE" "\003DSE" \
+				    "\004SDBE" "\005UFE" "\006DPE" "\007PCE" \
+				    "\010DMPE" "\027PRCE" "\030IPME"  \
+				    "\031OFE" "\033INFE" "\034IFE" "\035HBDE" \
+				    "\036HBFE" "\037TFEE" "\040CPDE"
 #define AHCI_PREG_CMD		0x18 /* Command and Status */
 #define  AHCI_PREG_CMD_ST		(1<<0) /* Start */
 #define  AHCI_PREG_CMD_SUD		(1<<1) /* Spin Up Device */
@@ -132,12 +176,18 @@ int ahcidebug = AHCI_D_VERBOSE;
 				    "\031ATAPI" "\032DLAE" "\033ALPE" "\034ASP"
 
 #define AHCI_PREG_TFD		0x20 /* Task File Data*/
+#define  AHCI_PREG_TFD_STS		0xff
+#define  AHCI_PREG_TFD_STS_ERR		(1<<0)
+#define  AHCI_PREG_TFD_STS_DRQ		(1<<3)
+#define  AHCI_PREG_TFD_STS_BSY		(1<<7)
+#define  AHCI_PREG_TFD_ERR		0xff00
+#define AHCI_PFTM_TFD_STS	"\20" "\001ERR" "\004DRQ" "\010BSY"
 #define AHCI_PREG_SIG		0x24 /* Signature */
 #define AHCI_PREG_SSTS		0x28 /* SATA Status */
 #define  AHCI_PREG_SSTS_DET		0xf /* Device Detection */
 #define  AHCI_PREG_SSTS_DET_NONE	0x0
-#define  AHCI_PREG_SSTS_DET_DEV_NOPHY	0x1
-#define  AHCI_PREG_SSTS_DET_DEV_PHY	0x3
+#define  AHCI_PREG_SSTS_DET_DEV_NE	0x1
+#define  AHCI_PREG_SSTS_DET_DEV		0x3
 #define  AHCI_PREG_SSTS_DET_PHYOFFLINE	0x4
 #define  AHCI_PREG_SSTS_SPD		0xf0 /* Current Interface Speed */
 #define  AHCI_PREG_SSTS_SPD_NONE	0x00
@@ -149,7 +199,44 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_PREG_SSTS_IPM_PARTIAL	0x200
 #define  AHCI_PREG_SSTS_IPM_SLUMBER	0x600
 #define AHCI_PREG_SCTL		0x2c /* SATA Control */
+#define  AHCI_PREG_SCTL_DET		0xf /* Device Detection */
+#define  AHCI_PREG_SCTL_DET_NONE	0x0
+#define  AHCI_PREG_SCTL_DET_INIT	0x1
+#define  AHCI_PREG_SCTL_DET_DISABLE	0x4
+#define  AHCI_PREG_SCTL_SPD		0xf0 /* Speed Allowed */
+#define  AHCI_PREG_SCTL_SPD_ANY		0x00
+#define  AHCI_PREG_SCTL_SPD_GEN1	0x10
+#define  AHCI_PREG_SCTL_SPD_GEN2	0x20
+#define  AHCI_PREG_SCTL_IPM		0xf00 /* Interface Power Management */
+#define  AHCI_PREG_SCTL_IPM_NONE	0x000
+#define  AHCI_PREG_SCTL_IPM_NOPARTIAL	0x100
+#define  AHCI_PREG_SCTL_IPM_NOSLUMBER	0x200
+#define  AHCI_PREG_SCTL_IPM_DISABLED	0x300
 #define AHCI_PREG_SERR		0x30 /* SATA Error */
+#define  AHCI_PREG_SERR_ERR(_r)		((_r) & 0xffff)
+#define  AHCI_PREG_SERR_ERR_I		(1<<0) /* Recovered Data Integrity */
+#define  AHCI_PREG_SERR_ERR_M		(1<<1) /* Recovered Communications */
+#define  AHCI_PREG_SERR_ERR_T		(1<<8) /* Transient Data Integrity */
+#define  AHCI_PREG_SERR_ERR_C		(1<<9) /* Persistent Comm/Data */
+#define  AHCI_PREG_SERR_ERR_P		(1<<10) /* Protocol */
+#define  AHCI_PREG_SERR_ERR_E		(1<<11) /* Internal */
+#define  AHCI_PFMT_SERR_ERR	"\020" "\001I" "\002M" "\011T" "\012C" \
+				    "\013P" "\014E"
+#define  AHCI_PREG_SERR_DIAG(_r)	(((_r) >> 16) & 0xffff)
+#define  AHCI_PREG_SERR_DIAG_N		(1<<0) /* PhyRdy Change */
+#define  AHCI_PREG_SERR_DIAG_I		(1<<1) /* Phy Internal Error */
+#define  AHCI_PREG_SERR_DIAG_W		(1<<2) /* Comm Wake */
+#define  AHCI_PREG_SERR_DIAG_B		(1<<3) /* 10B to 8B Decode Error */
+#define  AHCI_PREG_SERR_DIAG_D		(1<<4) /* Disparity Error */
+#define  AHCI_PREG_SERR_DIAG_C		(1<<5) /* CRC Error */
+#define  AHCI_PREG_SERR_DIAG_H		(1<<6) /* Handshake Error */
+#define  AHCI_PREG_SERR_DIAG_S		(1<<7) /* Link Sequence Error */
+#define  AHCI_PREG_SERR_DIAG_T		(1<<8) /* Transport State Trans Err */
+#define  AHCI_PREG_SERR_DIAG_F		(1<<9) /* Unknown FIS Type */
+#define  AHCI_PREG_SERR_DIAG_X		(1<<10) /* Exchanged */
+#define  AHCI_PFMT_SERR_DIAG	"\020" "\001N" "\002I" "\003W" "\004B" \
+				    "\005D" "\006C" "\007H" "\010S" "\011T" \
+				    "\012F" "\013X"
 #define AHCI_PREG_ACT		0x34 /* SATA Active */
 #define AHCI_PREG_CI		0x38 /* Command Issue */
 #define AHCI_PREG_SNTF		0x3c /* SNotification */
