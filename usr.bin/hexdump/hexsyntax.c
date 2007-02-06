@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexsyntax.c,v 1.9 2007/01/28 16:37:09 miod Exp $	*/
+/*	$OpenBSD: hexsyntax.c,v 1.10 2007/02/06 20:22:19 jmc Exp $	*/
 /*	$NetBSD: hexsyntax.c,v 1.8 1998/04/08 23:48:57 jeremy Exp $	*/
 
 /*-
@@ -32,7 +32,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hexsyntax.c	5.2 (Berkeley) 5/8/90";*/
-static char rcsid[] = "$OpenBSD: hexsyntax.c,v 1.9 2007/01/28 16:37:09 miod Exp $";
+static char rcsid[] = "$OpenBSD: hexsyntax.c,v 1.10 2007/02/06 20:22:19 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -130,7 +130,8 @@ void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-bcCdovx] [-e fmt] [-f fmt_file] "
-			"[-n length] [-s skip] [file ...]\n", __progname);
+	fprintf(stderr, "usage: %s [-bCcdovx] [-e format_string] "
+			"[-f format_file] [-n length]\n"
+			"\t[-s offset] [file ...]\n", __progname);
 	exit(1);
 }

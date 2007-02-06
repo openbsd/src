@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hexdump.1,v 1.17 2007/02/06 20:13:00 jmc Exp $
+.\"	$OpenBSD: hexdump.1,v 1.18 2007/02/06 20:22:19 jmc Exp $
 .\"	$NetBSD: hexdump.1,v 1.14 2001/12/07 14:46:24 bjh21 Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -38,20 +38,14 @@
 .Nd ascii, decimal, hexadecimal, octal dump
 .Sh SYNOPSIS
 .Nm hexdump
-.Op Fl bcCdovx
 .Bk -words
+.Op Fl bCcdovx
 .Op Fl e Ar format_string
-.Ek
-.Bk -words
 .Op Fl f Ar format_file
-.Ek
-.Bk -words
 .Op Fl n Ar length
+.Op Fl s Ar offset
+.Op Ar
 .Ek
-.Bk -words
-.Op Fl s Ar skip
-.Ek
-.Ar file ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -66,16 +60,16 @@ The options are as follows:
 Display the input offset in hexadecimal, followed by sixteen
 space-separated, three column, zero-filled, bytes of input data,
 in octal, per line.
-.It Fl c
-.Em One-byte character display .
-Display the input offset in hexadecimal, followed by sixteen
-space-separated, three column, space-filled, characters of input
-data per line.
 .It Fl C
 .Em Canonical hex+ASCII display .
 Display the input offset in hexadecimal, followed by sixteen
 space-separated, two column, hexadecimal bytes, followed by the
 same sixteen bytes in %_p format enclosed in ``|'' characters.
+.It Fl c
+.Em One-byte character display .
+Display the input offset in hexadecimal, followed by sixteen
+space-separated, three column, space-filled, characters of input
+data per line.
 .It Fl d
 .Em Two-byte decimal display .
 Display the input offset in hexadecimal, followed by eight
