@@ -1,4 +1,4 @@
-/*	$OpenBSD: odsyntax.c,v 1.15 2007/02/06 20:29:59 jmc Exp $	*/
+/*	$OpenBSD: odsyntax.c,v 1.16 2007/02/06 20:55:13 jmc Exp $	*/
 /*	$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*-
@@ -32,7 +32,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)odsyntax.c	5.4 (Berkeley) 3/8/91";*/
-static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.15 2007/02/06 20:29:59 jmc Exp $";
+static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.16 2007/02/06 20:55:13 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -115,7 +115,7 @@ oldsyntax(int argc, char ***argvp)
 			odprecede();
 			add("4/4 \"     %010u \" \"\\n\"");
 			break;
-		case 'e':		/* undocumented in od */
+		case 'e':
 		case 'F':
 			odprecede();
 			add("2/8 \"          %21.14e \" \"\\n\"");
