@@ -1,4 +1,4 @@
-.\"  $OpenBSD: od.1,v 1.14 2007/02/06 20:29:59 jmc Exp $
+.\"  $OpenBSD: od.1,v 1.15 2007/02/06 21:19:29 otto Exp $
 .\"  $NetBSD: od.1,v 1.16 2001/12/07 01:23:42 bjh21 Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -101,6 +101,10 @@ space-separated, three column, space-filled, characters of input data
 per line.
 Control characters are printed as c style escapes, or as three octal digits,
 if no c escape exists for the character.
+.It Fl D
+.Em Four-byte octal display.
+Display the input offset in octal, followed by four space-separated,
+ten column, space filled, four-byte units of input data, in octal, per line.
 .It Fl d
 .Em Two-byte decimal display .
 Display the input offset in octal, followed by eight
