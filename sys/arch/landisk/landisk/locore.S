@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.1.1.1 2006/10/06 21:16:15 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.2 2007/02/06 23:13:37 miod Exp $	*/
 /*	$NetBSD: locore.S,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -77,3 +77,9 @@ ALTENTRY(kernel_text)
 _L.landisk_startup:	.long	_C_LABEL(landisk_startup)
 _L.bootstrap_stack:	.long	_C_LABEL(start)
 _L.MMUCR:		.long	SH4_MMUCR
+
+ENTRY(getramsize)
+	mov	#4, r0
+	trapa	#0x3f
+	rts
+	 nop

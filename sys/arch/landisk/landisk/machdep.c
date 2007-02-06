@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 2006/11/09 00:12:12 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.8 2007/02/06 23:13:37 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -110,6 +110,8 @@ char machine[] = MACHINE;		/* landisk */
 __dead void landisk_startup(int, char *);
 __dead void main(void);
 
+extern u_int32_t getramsize(void);
+
 void
 cpu_startup(void)
 {
@@ -127,11 +129,15 @@ char *esym;
 __dead void
 landisk_startup(int howto, char *_esym)
 {
+	u_int32_t ramsize;
+
 	/* Start to determine heap area */
 	esym = _esym;
 	kernend = (vaddr_t)round_page((vaddr_t)esym);
 
 	boothowto = howto;
+
+	ramsize = getramsize();
 
 	/* Initialize CPU ops. */
 	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7751R);	
@@ -140,11 +146,13 @@ landisk_startup(int howto, char *_esym)
 	consinit();
 
 	/* Load memory to UVM */
-	physmem = atop(IOM_RAM_SIZE);
+	if (ramsize == 0 || ramsize > 512 * 1024 * 1024)
+		ramsize = IOM_RAM_SIZE;
+	physmem = atop(ramsize);
 	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(kernend)));
 	uvm_page_physload(atop(IOM_RAM_BEGIN),
-	    atop(IOM_RAM_BEGIN + IOM_RAM_SIZE), kernend,
-	    atop(IOM_RAM_BEGIN + IOM_RAM_SIZE), VM_FREELIST_DEFAULT);
+	    atop(IOM_RAM_BEGIN + ramsize), kernend,
+	    atop(IOM_RAM_BEGIN + ramsize), VM_FREELIST_DEFAULT);
 
 	/* Initialize proc0 u-area */
 	sh_proc0_init();
