@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.29 2007/01/04 19:12:41 stevesk Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.30 2007/02/06 17:58:39 stevesk Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -640,21 +640,15 @@ void free_tree(struct tree *, char *);
 
 /* print.c */
 char *print_hw_addr(int, int, unsigned char *);
-void dump_raw(unsigned char *, int);
 
 /* bpf.c */
 int if_register_bpf(struct interface_info *);
-void if_reinitialize_send(struct interface_info *);
 void if_register_send(struct interface_info *);
 ssize_t send_packet(struct interface_info *, struct dhcp_packet *, size_t,
     struct in_addr, struct sockaddr_in *, struct hardware *);
-void if_reinitialize_receive(struct interface_info *);
 void if_register_receive(struct interface_info *);
 ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
     struct sockaddr_in *, struct hardware *);
-int can_unicast_without_arp(void);
-int can_receive_unicast_unconfigured(struct interface_info *);
-void maybe_setup_fallback(void);
 
 /* dispatch.c */
 extern struct interface_info *interfaces;
