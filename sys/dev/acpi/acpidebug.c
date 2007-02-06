@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.14 2006/12/21 19:59:02 deraadt Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.15 2007/02/06 18:56:31 jordan Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -42,7 +42,7 @@ extern uint8_t *aml_parseend(struct aml_scope *);
 extern int aml_parselength(struct aml_scope *);
 extern int aml_parseopcode(struct aml_scope *);
 
-extern const char *aml_mnem(int opcode);
+extern const char *aml_mnem(int opcode, uint8_t *);
 extern const char *aml_args(int opcode);
 extern const char *aml_getname(uint8_t *);
 extern const char *aml_nodename(struct aml_node *);
@@ -159,7 +159,7 @@ db_aml_showvalue(struct aml_value *value)
 	case AML_OBJTYPE_FIELDUNIT:
 		db_printf("%s: access=%x,lock=%x,update=%x pos=%.4x "
 		    "len=%.4x\n",
-		    aml_mnem(value->v_field.type),
+		    aml_mnem(value->v_field.type, NULL),
 		    AML_FIELD_ACCESS(value->v_field.flags),
 		    AML_FIELD_LOCK(value->v_field.flags),
 		    AML_FIELD_UPDATE(value->v_field.flags),
@@ -171,7 +171,7 @@ db_aml_showvalue(struct aml_value *value)
 		break;
 	case AML_OBJTYPE_BUFFERFIELD:
 		db_printf("%s: pos=%.4x len=%.4x ",
-		    aml_mnem(value->v_field.type),
+		    aml_mnem(value->v_field.type, NULL),
 		    value->v_field.bitpos,
 		    value->v_field.bitlen);
 
@@ -236,7 +236,7 @@ db_aml_objtype(struct aml_value *val)
 		return "refof";
 	case AML_OBJTYPE_FIELDUNIT:
 	case AML_OBJTYPE_BUFFERFIELD:
-		return aml_mnem(val->v_field.type);
+		return aml_mnem(val->v_field.type, NULL);
 	}
 
 	return ("");
@@ -416,7 +416,7 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 		start = scope->pos;
 		opcode = aml_parseopcode(scope);
 
-		mnem = aml_mnem(opcode);
+		mnem = aml_mnem(opcode, scope->pos);
 		args = aml_args(opcode);
 
 		if (*args == 'p') {

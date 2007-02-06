@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.24 2006/12/26 23:58:08 marco Exp $ */
+/* $OpenBSD: dsdt.h,v 1.25 2007/02/06 18:56:31 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -47,7 +47,7 @@ struct aml_opcode {
 
 const char		*aml_eisaid(u_int32_t);
 const char              *aml_args(int);
-const char		*aml_mnem(int);
+const char		*aml_mnem(int, uint8_t *);
 int64_t			aml_val2int(struct aml_value *);
 struct aml_node		*aml_searchname(struct aml_node *, const void *);
 struct aml_node         *aml_createname(struct aml_node *, const void *,

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.77 2007/01/23 04:05:58 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.78 2007/02/06 18:56:31 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -100,9 +100,12 @@ void			_acpi_os_free(void *, const char *, int);
 void			acpi_sleep(int);
 void			acpi_stall(int);
 
+struct aml_value	*aml_callosi(struct aml_scope *, struct aml_value *);
+struct aml_value	*aml_callmethod(struct aml_scope *, struct aml_value *);
 struct aml_value	*aml_evalmethod(struct aml_scope *, struct aml_node *,
 			    int, struct aml_value *, struct aml_value *);
 
+const char *aml_getname(const char *);
 void			aml_dump(int, u_int8_t *);
 void			_aml_die(const char *fn, int line, const char *fmt, ...);
 #define aml_die(x...)	_aml_die(__FUNCTION__, __LINE__, x)
@@ -323,12 +326,37 @@ aml_findopcode(int opcode)
 }
 
 const char *
-aml_mnem(int opcode)
+aml_mnem(int opcode, uint8_t *pos)
 {
 	struct aml_opcode *tab;
+	static char mnemstr[32];
 
-	if ((tab = aml_findopcode(opcode)) != NULL)
-		return tab->mnem;
+	if ((tab = aml_findopcode(opcode)) != NULL) {
+		strlcpy(mnemstr, tab->mnem, sizeof(mnemstr));
+		if (pos != NULL) {
+			switch (opcode) {
+			case AMLOP_STRINGPREFIX:
+				snprintf(mnemstr, sizeof(mnemstr), "\"%s\"", pos);
+				break;
+			case AMLOP_BYTEPREFIX:
+				snprintf(mnemstr, sizeof(mnemstr), "0x%.2x",
+					 *(uint8_t *)pos);
+				break;
+			case AMLOP_WORDPREFIX:
+				snprintf(mnemstr, sizeof(mnemstr), "0x%.4x",
+					 *(uint16_t *)pos);
+				break;
+			case AMLOP_DWORDPREFIX:
+				snprintf(mnemstr, sizeof(mnemstr), "0x%.4x",
+					 *(uint16_t *)pos);
+				break;
+			case AMLOP_NAMECHAR:
+				strlcpy(mnemstr, aml_getname(pos), sizeof(mnemstr));
+				break;
+			}
+		}
+		return mnemstr;
+	}
 	return ("xxx");
 }
 
@@ -529,7 +557,7 @@ aml_gasio(struct acpi_softc *sc, int type, uint64_t base, uint64_t length,
     int bitpos, int bitlen, int size, void *buf, int mode)
 {
 	dnprintf(10, "-- aml_gasio: %.2x"
-	    " base:%llx len:%llx bitpos:%.4x bitlen:%.4x sz:%.2x mode=%s\n",
+	    " base:%llx len:%llx bpos:%.4x blen:%.4x sz:%.2x mode=%s\n",
 	    type, base, length, bitpos, bitlen, size,
 	    mode==ACPI_IOREAD?"read":"write");
 	acpi_gasio(sc, mode, type, base+(bitpos>>3),
@@ -623,7 +651,6 @@ void acpi_poll_notify(void)
 
 struct aml_node *__aml_search(struct aml_node *, uint8_t *);
 void aml_delchildren(struct aml_node *);
-const char *aml_getname(const char *);
 
 
 /* Search for a name in children nodes */
@@ -1165,7 +1192,7 @@ aml_showvalue(struct aml_value *val, int lvl)
 		printf(" field: bitpos=%.4x bitlen=%.4x ref1:%x ref2:%x [%s]\n",
 		    val->v_field.bitpos, val->v_field.bitlen,
 		    val->v_field.ref1, val->v_field.ref2,
-		    aml_mnem(val->v_field.type));
+		    aml_mnem(val->v_field.type, NULL));
 		aml_showvalue(val->v_field.ref1, lvl);
 		aml_showvalue(val->v_field.ref2, lvl);
 		break;
@@ -1354,6 +1381,7 @@ _aml_setvalue(struct aml_value *lhs, int type, int64_t ival, const void *bval)
 		break;
 	case AML_OBJTYPE_METHOD:
 		lhs->v_method.flags = ival;
+		lhs->v_method.fneval = bval;
 		break;
 	case AML_OBJTYPE_NAMEREF:
 		lhs->v_nameref = (uint8_t *)bval;
@@ -1463,6 +1491,9 @@ aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
 		aml_showvalue(rhs, 50);
 		break;
 	case AML_OBJTYPE_STATICINT:
+		if (lhs->node) {
+			lhs->v_integer = aml_val2int(rhs);
+		}
 		break;
 	case AML_OBJTYPE_INTEGER:
 		lhs->v_integer = aml_val2int(rhs);
@@ -1737,7 +1768,7 @@ aml_evalexpr(int64_t lhs, int64_t rhs, int opcode)
 	}
 
 	dnprintf(50,"aml_evalexpr: %s %llx %llx = %llx\n",
-		 aml_mnem(opcode), lhs, rhs, res);
+		 aml_mnem(opcode, NULL), lhs, rhs, res);
 
 	return res;
 }
@@ -1802,6 +1833,14 @@ aml_bufcpy(void *pvDst, int dstPos, const void *pvSrc, int srcPos, int len)
 		aml_setbit(pDst, idx + dstPos, aml_tstbit(pSrc, idx + srcPos));
 }
 
+struct aml_value *
+aml_callmethod(struct aml_scope *scope, struct aml_value *val)
+{
+	while (scope->pos < scope->end)
+		aml_parseterm(scope, val);
+	return val;
+}
+
 /*
  * Evaluate an AML method
  *
@@ -1827,13 +1866,11 @@ aml_evalmethod(struct aml_scope *parent, struct aml_node *node,
 		dnprintf(10, "  arg%d: ", argc);
 		aml_showvalue(&scope->args[argc], 10);
 	}
-	while (scope->pos < scope->end)
-		aml_parseterm(scope, res);
+	node->value->v_method.fneval(scope, res);
 	dnprintf(10, "[%s] returns: ", aml_nodename(node));
 	aml_showvalue(res, 10);
 #else
-	while (scope->pos < scope->end)
-		aml_parseterm(scope, res);
+	node->value->v_method.fneval(scope, res);
 #endif
 	/* Free any temporary children nodes */
 	aml_delchildren(node);
@@ -2230,7 +2267,7 @@ aml_parseint(struct aml_scope *scope, int opcode)
 		return aml_val2int(tmpval);
 	}
 	dnprintf(15, "%.4x: [%s] %s\n", aml_pc(scope->pos-opsize(opcode)),
-	    aml_nodename(scope->node), aml_mnem(opcode));
+	    aml_nodename(scope->node), aml_mnem(opcode, NULL));
 	return rval;
 }
 
@@ -2543,6 +2580,7 @@ aml_parsemethod(struct aml_scope *scope, int opcode, struct aml_value *res)
 	res->v_method.flags = aml_parseint(scope, AMLOP_BYTEPREFIX);
 	res->v_method.start = scope->pos;
 	res->v_method.end = end;
+	res->v_method.fneval = aml_callmethod;
 	aml_createname(scope->node, name, res);
 
 	scope->pos = end;
@@ -2911,7 +2949,7 @@ aml_parseref(struct aml_scope *scope, int opcode, struct aml_value *res)
 	case AMLOP_CONDREFOF:
 		/* Returns true if object exists */
 		tmparg = aml_alloctmp(scope, 2);
-		aml_parseterm(scope, &tmparg[0]);
+		aml_parsetarget(scope, &tmparg[0], NULL);
 		aml_parsetarget(scope, &tmparg[1], NULL);
 		if (tmparg[0].type != AML_OBJTYPE_NAMEREF) {
 			/* Object exists */
@@ -3034,8 +3072,7 @@ aml_parseop(struct aml_scope *scope, struct aml_value *res)
 	aml_freevalue(res);
 	opcode = aml_parseopcode(scope);
 	dnprintf(15, "%.4x: [%s] %s\n", aml_pc(scope->pos-opsize(opcode)),
-	    aml_nodename(scope->node), aml_mnem(opcode));
-
+	    aml_nodename(scope->node), aml_mnem(opcode, scope->pos));
 	delay(amlop_delay);
 
 	htab = aml_findopcode(opcode);
@@ -3122,8 +3159,48 @@ struct aml_defval {
 	{ "_OS_", AML_OBJTYPE_STRING, -1, "OpenBSD" },
 	{ "_REV", AML_OBJTYPE_INTEGER, 2, NULL },
 	{ "_GL", AML_OBJTYPE_MUTEX, 1, NULL, &aml_global_lock },
+	{ "_OSI", AML_OBJTYPE_METHOD, 1, aml_callosi },
 	{ NULL }
 };
+
+/* _OSI Default Method:
+ * Returns True if string argument matches list of known OS strings
+ * We return True for Windows to fake out nasty bad AML
+ */
+char *aml_valid_osi[] = { 
+	"OpenBSD",
+	"Windows 2000",
+	"Windows 2001",
+	"Windows 2001.1",
+	"Windows 2001 SP0",
+	"Windows 2001 SP1",
+	"Windows 2001 SP2",
+	"Windows 2001 SP3",
+	"Windows 2001 SP4",
+	NULL
+};
+
+struct aml_value *
+aml_callosi(struct aml_scope *scope, struct aml_value *val)
+{
+	struct aml_value tmpstr, *arg;
+	int idx, result;
+
+	/* Perform comparison with valid strings */
+	result = 0;
+	memset(&tmpstr, 0, sizeof(tmpstr));
+	tmpstr.type = AML_OBJTYPE_STRING;
+	arg = aml_derefvalue(scope, &scope->args[0], ACPI_IOREAD);
+
+	for (idx=0; !result && aml_valid_osi[idx] != NULL; idx++) {
+		tmpstr.v_string = aml_valid_osi[idx];
+		tmpstr.length = strlen(tmpstr.v_string);
+		
+		result = aml_cmpvalue(arg, &tmpstr, AMLOP_LEQUAL);
+	}
+	aml_setvalue(scope, val, NULL, result);
+	return val;
+}
 
 void
 aml_create_defaultobjects()

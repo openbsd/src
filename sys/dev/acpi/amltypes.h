@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.24 2007/01/23 04:05:58 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.25 2007/02/06 18:56:31 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -236,6 +236,7 @@ enum aml_objecttype {
 /* XXX fix this name */
 #define AML_FIELD_ATTR__		0x01
 
+struct aml_scope;
 struct aml_node;
 
 /* AML Object Value */
@@ -259,6 +260,7 @@ struct aml_value {
 			int		flags;
 			u_int8_t	*start;
 			u_int8_t	*end;
+			struct aml_value *(*fneval)(struct aml_scope *, struct aml_value *);
 		} vmethod;
 		struct {
 			u_int16_t	 type;
