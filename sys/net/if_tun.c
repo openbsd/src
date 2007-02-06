@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.82 2007/01/26 10:58:47 claudio Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.83 2007/02/06 10:49:40 claudio Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	bzero(tp, sizeof(*tp));
 
 	tp->tun_unit = unit;
-	tp->tun_flags = TUN_INITED;
+	tp->tun_flags = TUN_INITED|TUN_STAYUP;
 
 	/* generate fake MAC address: 00 bd xx xx xx unit_no */
 	tp->arpcom.ac_enaddr[0] = 0x00;
@@ -317,6 +317,7 @@ tunopen(dev_t dev, int flag, int mode, struct proc *p)
 
 		if ((tp = tun_lookup(minor(dev))) == NULL)
 			return (ENXIO);
+		tp->tun_flags &= ~TUN_STAYUP;
 	}
 
 	if (tp->tun_flags & TUN_OPEN)
@@ -337,7 +338,7 @@ tunopen(dev_t dev, int flag, int mode, struct proc *p)
 
 /*
  * tunclose - close the device; if closing the real device, flush pending
- *  output and (unless set STAYUP) bring down the interface.
+ *  output and unless STAYUP bring down and destroy the interface.
  */
 int
 tunclose(dev_t dev, int flag, int mode, struct proc *p)
@@ -360,34 +361,16 @@ tunclose(dev_t dev, int flag, int mode, struct proc *p)
 	IFQ_PURGE(&ifp->if_snd);
 	splx(s);
 
-	if ((ifp->if_flags & IFF_UP) && !(tp->tun_flags & TUN_STAYUP)) {
-		s = splnet();
-		if_down(ifp);
-		if (ifp->if_flags & IFF_RUNNING) {
-			/* find internet addresses and delete routes */
-			struct ifaddr	*ifa = NULL;
-
-			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-#ifdef INET
-				if (ifa->ifa_addr->sa_family == AF_INET) {
-					rtinit(ifa, (int)RTM_DELETE,
-					    (tp->tun_flags & TUN_DSTADDR)?
-					    RTF_HOST : 0);
-				}
-				/* XXX INET6 */
-#endif
-			}
-
-			rt_if_remove(ifp);
-			ifp->if_flags &= ~IFF_RUNNING;
-		}
-		splx(s);
-	}
-	tp->tun_pgid = 0;
-	selwakeup(&tp->tun_rsel);
-	KNOTE(&tp->tun_rsel.si_note, 0);
-
 	TUNDEBUG(("%s: closed\n", ifp->if_xname));
+
+	if (!(tp->tun_flags & TUN_STAYUP))
+		return (if_clone_destroy(ifp->if_xname));
+	else {
+		tp->tun_pgid = 0;
+		selwakeup(&tp->tun_rsel);
+		KNOTE(&tp->tun_rsel.si_note, 0);
+	}
+
 	return (0);
 }
 
@@ -554,7 +537,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	int			 s, len, error;
 	u_int32_t		*af;
 
-	if (!(ifp->if_flags & IFF_UP)) {
+	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
 		m_freem(m0);
 		return (EHOSTDOWN);
 	}

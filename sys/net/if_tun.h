@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.h,v 1.14 2006/08/20 16:13:26 stevesk Exp $	*/
+/*	$OpenBSD: if_tun.h,v 1.15 2007/02/06 10:49:40 claudio Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <Julian.Onions@nexor.co.uk>
@@ -33,7 +33,7 @@
 
 #define	TUN_OPEN	0x0001
 #define	TUN_INITED	0x0002
-#define	TUN_RCOLL	0x0004
+#define	TUN_RCOLL	0x0004	/* unused */
 #define	TUN_IASET	0x0008
 #define	TUN_DSTADDR	0x0010
 #define	TUN_RWAIT	0x0040
