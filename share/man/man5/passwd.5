@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.5,v 1.31 2005/08/02 17:51:26 jmc Exp $
+.\"	$OpenBSD: passwd.5,v 1.32 2007/02/06 17:44:51 jmc Exp $
 .\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -159,13 +159,13 @@ database should be used.
 .Pp
 The
 .Ar change
-field is the number in seconds, GMT, from the epoch, until the
+field is the number in seconds, GMT, from the Epoch, until the
 password for the account must be changed.
 This field may be left empty to turn off the password aging feature.
 .Pp
 The
 .Ar expire
-field is the number in seconds, GMT, from the epoch, until the
+field is the number in seconds, GMT, from the Epoch, until the
 account expires.
 This field may be left empty to turn off the account aging feature.
 .Pp
@@ -310,7 +310,7 @@ To set
 .Ar change
 and
 .Ar expire
-use the current day in seconds from the epoch plus the number of seconds
+use the current day in seconds from the Epoch plus the number of seconds
 of offset desired.
 .Bd -literal -offset indent
 BEGIN { FS = ":"}
