@@ -1,4 +1,4 @@
-.\"	$OpenBSD: math.3,v 1.20 2004/01/23 23:08:46 jmc Exp $
+.\"	$OpenBSD: math.3,v 1.21 2007/02/06 20:51:17 jmc Exp $
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -121,13 +121,14 @@ in the
 The functions have been cured of anomalies that
 afflicted the older math library in which incidents like
 the following had been reported:
-.Bd -unfilled -compact -offset indent
+.Bd -unfilled -offset indent
 sqrt(-1.0) = 0.0 and log(-1.0) = -1.7e38.
-cos(1.0e-11) > cos(0.0) > 1.0.
+cos(1.0e-11) \*(Gt cos(0.0) \*(Gt 1.0.
 pow(x,1.0) \*(Ne x when x = 2.0, 3.0, 4.0, ..., 9.0.
 pow(-1.0,1.0e10) trapped on Integer Overflow.
 sqrt(1.0e30) and sqrt(1.0e-30) were very slow.
 .Ed
+.Pp
 However, the two versions do differ in ways that have to be
 explained, to which end the following notes are provided.
 .Ss DEC VAX-11 D_floating-point:
@@ -158,7 +159,7 @@ Binary.
 56 \*(Si bits, roughly 17 \*(Si decimal digits.
 If x and x' are consecutive positive D_floating-point
 numbers (they differ by 1 \fIulp\fR), then
-.Li 1.3e-17 < 0.5**56 < (x'-x)/x \*(Le 0.5**55 < 2.8e-17.
+.Li 1.3e-17 \*(Lt 0.5**56 \*(Lt (x'-x)/x \*(Le 0.5**55 \*(Lt 2.8e-17.
 .It Range:
 Overflow threshold = 2.0**127 = 1.7e38.
 .br
@@ -173,7 +174,7 @@ Underflow is customarily flushed quietly to zero.
 CAUTION:
 .Bd -filled -offset indent -compact
 It is possible to have x \*(Ne y and yet x-y = 0 because of underflow.
-Similarly x > y > 0 cannot prevent either x\(**y = 0
+Similarly x \*(Gt y \*(Gt 0 cannot prevent either x\(**y = 0
 or y/x = 0 from happening without warning.
 .Ed
 .It Zero is represented ambiguously.
@@ -261,16 +262,17 @@ Therefore, no user of
 on a machine whose arithmetic resembles VAX D_floating-point need use
 anything worse than the new
 .Em libm .
-.Pp
 .Ss IEEE STANDARD 754 Floating-Point Arithmetic:
 This is the most widely adopted standard for computer arithmetic.
 VLSI chips that conform to some version of that standard have been
 produced by a host of manufacturers, among them:
+.Pp
 .Bl -column -offset indent -compact "Intel i8070, i80287" "Western Electric (AT&T) WE32106"
 .It "Intel i8087, i80287" Ta "National Semiconductor 32081"
 .It "Motorola 68881" Ta "Weitek WTL-1032, ... , -1165"
 .It "Zilog Z8070" Ta "Western Electric (AT&T) WE32106"
 .El
+.Pp
 Other implementations range from software, done thoroughly
 for the Apple Macintosh, through VLSI in the Hewlett-Packard
 9000 series, to the ELXSI 6400 running ECL at 3 Megaflops.
@@ -344,7 +346,7 @@ Binary.
 If x and x' are consecutive positive Double-Precision
 numbers (they differ by 1 \fIulp\fR, then
 .br
-.Li 1.1e-16 < 0.5**53 < (x'-x)/x \*(Le 0.5**52 < 2.3e-16.
+.Li 1.1e-16 \*(Lt 0.5**53 \*(Lt (x'-x)/x \*(Le 0.5**52 \*(Lt 2.3e-16.
 .It Range:
 Overflow threshold = 2.0**1024 = 1.8e308
 .br
@@ -362,7 +364,7 @@ with like signs; but x-x yields +0 for every
 finite x.
 The only operations that reveal zero's
 sign are division by zero and copysign(x,\*(Pm0).
-In particular, comparison (x > y, x \*(Ge y, etc.)
+In particular, comparison (x \*(Gt y, x \*(Ge y, etc.)
 cannot be affected by the sign of zero; but if
 finite x = y then \*(If \&= 1/(x-y) \*(Ne -1/(y-x) = -\*(If.
 .It \*(If is signed.
@@ -380,7 +382,7 @@ or nonexistent elements of arrays.
 The rest are Quiet \*(Nas; they are the default results of Invalid Operations,
 and propagate through subsequent arithmetic operations.
 If x \*(Ne x then x is \*(Na; every other predicate
-(x > y, x = y, x < y, ...) is FALSE if \*(Na is involved.
+(x \*(Gt y, x = y, x \*(Lt y, ...) is FALSE if \*(Na is involved.
 .br
 .Bl -tag -width "NOTE:" -compact
 .It NOTE:
@@ -460,7 +462,7 @@ since the program last reset its flag.
 .It 3)
 Test a result to see whether it is a value that only
 an exception could have produced.
-.Bd -filled
+.Pp
 CAUTION: The only reliable ways to discover
 whether Underflow has occurred are to test whether
 products or quotients lie closer to zero than the
@@ -482,9 +484,7 @@ digits lost to gradual underflow will not be missed
 because they would have been rounded off anyway.
 So gradual underflows are usually \fIprovably\fR ignorable.
 The same cannot be said of underflows flushed to 0.
-.Ed
 .El
-.Pp
 .Bl -tag -width XXX
 At the option of an implementor conforming to
 .St -ieee754 ,
@@ -562,13 +562,16 @@ Meanwhile, the functions in
 .Em libm
 are only approximately atomic.
 They signal no inappropriate exception except possibly:
+.Pp
 .Bl -tag -width Ds -offset indent -compact
 .It Over/Underflow
 when a result, if properly computed, might have lain barely within range, and
 .It Inexact in \fIcabs\fR, \fIcbrt\fR, \fIhypot\fR, \fIlog10\fR and \fIpow\fR
 when it happens to be exact, thanks to fortuitous cancellation of errors.
 .El
+.Pp
 Otherwise:
+.Pp
 .Bl -tag -width Ds -offset indent -compact
 .It Invalid Operation is signaled only when
 any result but \*(Na would probably be misleading.
@@ -596,7 +599,7 @@ Binary.
 If x and x' are consecutive positive Double-Precision
 numbers (they differ by 1 \fIulp\fR, then
 .br
-.Li 6.0e-8 < 0.5**24 < (x'-x)/x \*(Le 0.5**23 < 1.2e-7.
+.Li 6.0e-8 \*(Lt 0.5**24 \*(Lt (x'-x)/x \*(Le 0.5**23 \*(Lt 1.2e-7.
 .It Range:
 Overflow threshold = 2.0**128 = 3.4e38.
 .br
@@ -614,7 +617,7 @@ with like signs; but x-x yields +0 for every
 finite x.
 The only operations that reveal zero's
 sign are division by zero and copysign(x,\*(Pm0).
-In particular, comparison (x > y, x \*(Ge y, etc.)
+In particular, comparison (x \*(Gt y, x \*(Ge y, etc.)
 cannot be affected by the sign of zero; but if
 finite x = y then \*(If \&= 1/(x-y) \*(Ne -1/(y-x) = -\*(If.
 .It \*(If is signed.
@@ -632,7 +635,7 @@ or nonexistent elements of arrays.
 The rest are Quiet \*(Nas; they are the default results of Invalid Operations,
 and propagate through subsequent arithmetic operations.
 If x \*(Ne x then x is \*(Na; every other predicate
-(x > y, x = y, x < y, ...) is FALSE if \*(Na is involved.
+(x \*(Gt y, x = y, x \*(Lt y, ...) is FALSE if \*(Na is involved.
 .br
 .Bl -tag -width "NOTE:" -compact
 .It NOTE:
