@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.14 2006/09/30 14:34:13 kettenis Exp $	*/
+/*	$OpenBSD: elf.c,v 1.15 2007/02/07 10:20:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: elf.c,v 1.14 2006/09/30 14:34:13 kettenis Exp $";
+static const char rcsid[] = "$OpenBSD: elf.c,v 1.15 2007/02/07 10:20:40 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -503,7 +503,8 @@ elf_symloadx(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 
 				elf_fix_sym(eh, &sbuf);
 
-				if (!sbuf.st_name)
+				if (!sbuf.st_name ||
+				    sbuf.st_name > *pstabsize)
 					continue;
 
 				elf2nlist(&sbuf, eh, shdr, shstr, np);
