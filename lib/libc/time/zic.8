@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zic.8,v 1.19 2007/02/06 19:35:16 millert Exp $
+.\"	$OpenBSD: zic.8,v 1.20 2007/02/07 15:24:58 jmc Exp $
 .Dd May 23, 1999
 .Dt ZIC 8
 .Os
@@ -291,7 +291,7 @@ and the name are omitted, as the continuation line will
 place information starting at the time specified as the
 .Dq until
 information in the previous line in the file used by the previous line.
-tion lines may contain
+Continuation lines may contain
 .Dq until
 information, just as zone lines do, indicating that the next line is a further
 continuation.
@@ -397,9 +397,9 @@ link to local time zone
 standard directory used for created files
 .El
 .Sh SEE ALSO
-.\" @(#)zic.8	8.2
+.Xr ctime 3 ,
 .Xr tzfile 5 ,
 .Xr zdump 8
-.\" @(#)zic.8	7.24
+.\" @(#)zic.8	8.2
 .\" This file is in the public domain, so clarified as of
 .\" 2003-02-14 by Arthur David Olson.
