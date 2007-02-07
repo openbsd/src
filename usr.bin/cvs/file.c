@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.183 2007/01/31 21:07:35 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.184 2007/02/07 23:47:56 todd Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -415,10 +415,10 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 			/*
 			 * nfs and afs will show d_type as DT_UNKNOWN
 			 * for files and/or directories so when we encounter
-			 * this we call stat() on the path to be sure.
+			 * this we call lstat() on the path to be sure.
 			 */
 			if (dp->d_type == DT_UNKNOWN) {
-				if (stat(fpath, &st) == -1)
+				if (lstat(fpath, &st) == -1)
 					fatal("'%s': %s", fpath,
 					    strerror(errno));
 

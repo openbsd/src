@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.103 2007/01/26 11:19:44 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.104 2007/02/07 23:47:56 todd Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -490,7 +490,7 @@ cvs_rmdir(const char *path)
 			fatal("cvs_rmdir: path truncation");
 
 		if (ent->d_type == DT_UNKNOWN) {
-			if (stat(fpath, &st) == -1)
+			if (lstat(fpath, &st) == -1)
 				fatal("'%s': %s", fpath, strerror(errno));
 
 			switch (st.st_mode & S_IFMT) {
