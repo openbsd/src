@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.17 2007/02/06 10:27:33 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.18 2007/02/07 14:39:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -200,7 +200,6 @@ tcp_send_req(int s, short event, void *arg)
 		len -= bs;
 	} while (len > 0);
 
-	log_debug("tcp_send_req: write done");
 	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
 		fatalx("tcp_send_req: cannot create dynamic buffer");
 	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, tcp_read_buf,

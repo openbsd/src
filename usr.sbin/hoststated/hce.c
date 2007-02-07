@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.13 2007/02/07 13:39:58 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.14 2007/02/07 14:39:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -159,8 +159,6 @@ hce_launch_checks(int fd, short event, void *arg)
 	struct host		*host;
 	struct table		*table;
 	struct timeval		 tv;
-
-	log_debug("hce_launch_checks: scheduled");
 
 	/*
 	 * notify pfe checks are done and schedule next check

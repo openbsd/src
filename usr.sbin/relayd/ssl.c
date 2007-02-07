@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.4 2007/02/06 10:27:33 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.5 2007/02/07 14:39:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -109,8 +109,6 @@ ssl_read(int s, short event, void *arg)
 	}
 
 retry:
-	log_debug("ssl_read: scheduling ssl_read on %s",
-	    (retry_flag == EV_READ) ? "EV_READ" : "EV_WRITE");
 	event_again(&cte->ev, s, EV_TIMEOUT|retry_flag, ssl_read,
 	    &cte->tv_start, &cte->table->timeout, cte);
 	return;
@@ -156,13 +154,10 @@ ssl_write(int s, short event, void *arg)
 	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
 		fatalx("ssl_write: cannot create dynamic buffer");
 
-	log_debug("ssl_write: scheduling ssl_read on EV_READ");
 	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, ssl_read,
 	    &cte->tv_start, &cte->table->timeout, cte);
 	return;
 retry:
-	log_debug("ssl_write: scheduling ssl_write on %s",
-	    (retry_flag == EV_READ) ? "EV_READ" : "EV_WRITE");
 	event_again(&cte->ev, s, EV_TIMEOUT|retry_flag, ssl_write,
 	    &cte->tv_start, &cte->table->timeout, cte);
 }
@@ -208,9 +203,7 @@ ssl_connect(int s, short event, void *arg)
 		ssl_cleanup(cte);
 		return;
 	}
-	log_debug("ssl_connect: connect succeeded");
 	if (cte->table->sendbuf != NULL) {
-		log_debug("ssl_connect: scheduling ssl_write on EV_WRITE");
 		event_again(&cte->ev, cte->s, EV_TIMEOUT|EV_WRITE, ssl_write,
 		    &cte->tv_start, &cte->table->timeout, cte);
 		return;
@@ -218,14 +211,11 @@ ssl_connect(int s, short event, void *arg)
 
 	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
 		fatalx("ssl_connect: cannot create dynamic buffer");
-	log_debug("ssl_connect: scheduling ssl_read on EV_READ");
 	event_again(&cte->ev, cte->s, EV_TIMEOUT|EV_READ, ssl_read,
 	    &cte->tv_start, &cte->table->timeout, cte);
 	return;
 
 retry:
-	log_debug("ssl_write: scheduling ssl_write on %s",
-	    (retry_flag == EV_READ) ? "EV_READ" : "EV_WRITE");
 	event_again(&cte->ev, s, EV_TIMEOUT|retry_flag, ssl_connect,
 	    &cte->tv_start, &cte->table->timeout, cte);
 }
@@ -233,7 +223,6 @@ retry:
 void
 ssl_cleanup(struct ctl_tcp_event *cte)
 {
-	log_debug("ssl_cleanup: cleaning for %s", cte->host->name);
 	close(cte->s);
 	if (cte->ssl != NULL)
 		SSL_free(cte->ssl);
