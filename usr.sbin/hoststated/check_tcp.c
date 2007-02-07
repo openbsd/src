@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.18 2007/02/07 14:39:45 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.19 2007/02/07 14:45:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -250,7 +250,6 @@ tcp_read_buf(int s, short event, void *arg)
 	default:
 		buf_add(cte->buf, rbuf, br);
 		if (cte->validate_read != NULL) {
-			log_debug("calling check");
 			if (cte->validate_read(cte) != 0)
 				goto retry;
 
