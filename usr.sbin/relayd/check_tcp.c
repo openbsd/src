@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.19 2007/02/07 14:45:12 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.20 2007/02/07 14:54:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -166,7 +166,6 @@ tcp_host_up(int s, struct ctl_tcp_event *cte)
 		return;
 	}
 
-	log_debug("tcp_host_up: nothing to write");
 	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
 		fatalx("tcp_host_up: cannot create dynamic buffer");
 	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, tcp_read_buf,
