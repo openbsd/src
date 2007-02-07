@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.h,v 1.2 2007/01/11 01:51:59 stevesk Exp $	*/
+/*	$OpenBSD: dhcp.h,v 1.3 2007/02/07 01:43:54 stevesk Exp $	*/
 
 /* Protocol structures... */
 
@@ -40,8 +40,7 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#define DHCP_UDP_OVERHEAD	(14 + /* Ethernet header */	\
-				 20 + /* IP header */		\
+#define DHCP_UDP_OVERHEAD	(20 + /* IP header */		\
 				 8)   /* UDP header */
 #define DHCP_SNAME_LEN		64
 #define DHCP_FILE_LEN		128
