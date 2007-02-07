@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2007/02/07 13:30:17 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.22 2007/02/07 13:39:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -50,7 +50,6 @@ static FILE			*fin = NULL;
 static int			 lineno = 1;
 static int			 errors = 0;
 const char			*infile;
-char				*start_state;
 objid_t				 last_service_id = 0;
 objid_t				 last_table_id = 0;
 objid_t				 last_host_id = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.11 2007/02/01 20:03:39 pyr Exp $	*/
+/*	$OpenBSD: control.c,v 1.12 2007/02/07 13:39:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -40,7 +40,6 @@
 struct ctl_connlist ctl_conns;
 
 struct ctl_conn	*control_connbyfd(int);
-struct ctl_conn	*control_connbypid(pid_t);
 void		 control_close(int);
 
 int
@@ -150,18 +149,6 @@ control_connbyfd(int fd)
 	struct ctl_conn	*c;
 
 	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->ibuf.fd != fd;
-	    c = TAILQ_NEXT(c, entry))
-		;	/* nothing */
-
-	return (c);
-}
-
-struct ctl_conn *
-control_connbypid(pid_t pid)
-{
-	struct ctl_conn	*c;
-
-	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->ibuf.pid != pid;
 	    c = TAILQ_NEXT(c, entry))
 		;	/* nothing */
 
@@ -336,18 +323,6 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	}
 
 	imsg_event_add(&c->ibuf);
-}
-
-int
-control_imsg_relay(struct imsg *imsg)
-{
-	struct ctl_conn	*c;
-
-	if ((c = control_connbypid(imsg->hdr.pid)) == NULL)
-		return (0);
-
-	return (imsg_compose(&c->ibuf, imsg->hdr.type, 0, imsg->hdr.pid,
-	    imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE));
 }
 
 void

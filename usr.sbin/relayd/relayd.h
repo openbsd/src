@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.22 2007/02/07 13:30:17 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.23 2007/02/07 13:39:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -285,7 +285,6 @@ int     control_init(void);
 int     control_listen(void);
 void    control_accept(int, short, void *);
 void    control_dispatch_imsg(int, short, void *);
-int     control_imsg_relay(struct imsg *);
 void	control_imsg_forward(struct imsg *);
 void    control_cleanup(void);
 
@@ -311,7 +310,6 @@ struct buf	*buf_open(size_t);
 struct buf	*buf_dynamic(size_t, size_t);
 int		 buf_add(struct buf *, void *, size_t);
 void		*buf_reserve(struct buf *, size_t);
-void		*buf_seek(struct buf *, size_t, size_t);
 int		 buf_close(struct msgbuf *, struct buf *);
 void		 buf_free(struct buf *);
 void		 msgbuf_init(struct msgbuf *);
