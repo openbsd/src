@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.150 2006/11/28 16:39:34 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.151 2007/02/07 13:22:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2029,8 +2029,6 @@ fetchtable(u_int rtableid, int connected_only)
 			}
 
 		if (sa->sa_family == AF_INET) {
-log_debug("fetchtable id %u, %s/%u, %s", rtableid, inet_ntoa(kr->r.prefix), kr->r.prefixlen,
-kr->r.flags & F_CONNECTED ? "connected" : "");
 			if (rtm->rtm_flags & RTF_PROTO1)  {
 				send_rtmsg(kr_state.fd, RTM_DELETE, &kr->r);
 				free(kr);
