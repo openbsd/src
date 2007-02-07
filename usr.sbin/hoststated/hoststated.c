@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.14 2007/02/06 10:03:08 reyk Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.15 2007/02/07 13:30:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -112,10 +112,15 @@ main(int argc, char *argv[])
 	conffile = CONF_FILE;
 	bzero(&env, sizeof (env));
 
-	for (;(c = getopt(argc, argv, "dnf:v")) != -1;) {
+	for (;(c = getopt(argc, argv, "dD:nf:v")) != -1;) {
 		switch (c) {
 		case 'd':
 			debug = 1;
+			break;
+		case 'D':
+			if (cmdline_symset(optarg) < 0)
+				log_warnx("could not parse macro definition %s",
+				    optarg);
 			break;
 		case 'n':
 			opts |= HOSTSTATED_OPT_NOACTION;

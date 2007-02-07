@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.20 2007/01/30 10:12:06 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.21 2007/02/07 13:30:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -78,7 +78,6 @@ struct sym {
 
 int		 symset(const char *, const char *, int);
 char		*symget(const char *);
-int		 cmdline_symset(char *);
 
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);

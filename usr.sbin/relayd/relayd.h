@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.21 2007/02/06 10:26:13 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.22 2007/02/07 13:30:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -295,6 +295,7 @@ extern  struct ctl_connlist ctl_conns;
 
 /* parse.y */
 int	parse_config(struct hoststated *, const char *, int);
+int	cmdline_symset(char *);
 
 /* log.c */
 void	log_init(int);
