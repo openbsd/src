@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.72 2006/12/06 23:09:29 gwk Exp $
+#	$OpenBSD: RAMDISK,v 1.73 2007/02/07 03:23:23 dlg Exp $
 #
 # PPC GENERIC config file
 #
@@ -59,6 +59,7 @@ ahc*		at pci?		# Adaptec 294x, aic78x0 SCSI
 pcscp*		at pci?		# AMD Am53c974 PCscsi-PCI SCSI
 isp*		at pci?		# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mpi*		at pci?		# LSI Logic MPT-Fusion Message Passing Interface
+arc*		at pci?		# Areca RAID Controllers
 option		ISP_COMPILE_FW
 pciide*		at pci?
 kauaiata*	at pci?		# Apple ATA 100
@@ -148,6 +149,7 @@ scsibus*	at iopsp?
 scsibus*	at pcscp?
 scsibus*	at isp?
 scsibus*	at mpi?
+scsibus*	at arc?
 
 mediabay*	at macobio?
 wdc*		at mediabay?
