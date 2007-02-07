@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.12 2005/06/08 19:08:23 drahn Exp $	*/
+/*	$OpenBSD: bus.h,v 1.13 2007/02/07 03:20:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -253,6 +253,8 @@ bus_space_read_raw_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
 	volatile u_int16_t *s = __BA(tag, bsh, offset);
 	u_int16_t *laddr = (void *)addr;
 
+	count = count >> 1;
+
 	while (count--)
 		*laddr++ = *s++;
 	__asm __volatile("eieio; sync");
@@ -264,6 +266,8 @@ bus_space_read_raw_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 {
 	volatile u_int32_t *s = __BA(tag, bsh, offset);
 	u_int32_t *laddr = (void *)addr;
+
+	count = count >> 2;
 
 	while (count--)
 		*laddr++ = *s++;
@@ -292,6 +296,8 @@ bus_space_write_raw_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
 	volatile u_int16_t *d = __BA(tag, bsh, offset);
 	const u_int16_t *laddr = (void *)addr;
 
+	count = count >> 1;
+
 	while (count--)
 		*d++ = *laddr++;
 	__asm __volatile("eieio; sync");
@@ -303,6 +309,8 @@ bus_space_write_raw_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 {
 	volatile u_int32_t *d = __BA(tag, bsh, offset);
 	const u_int32_t *laddr = (void *)addr;
+
+	count = count >> 2;
 
 	while (count--)
 		*d++ = *laddr++;
