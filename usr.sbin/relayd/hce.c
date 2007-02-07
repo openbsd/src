@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.14 2007/02/07 14:39:45 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.15 2007/02/07 15:17:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -207,17 +207,43 @@ hce_launch_checks(int fd, short event, void *arg)
 void
 hce_notify_done(struct host *host, const char *msg)
 {
+	struct table		*table;
 	struct ctl_status	 st;
+	struct timeval		 tv_now, tv_dur;
+	u_long			 duration;
+	u_int			 logopt;
 
 	st.id = host->id;
 	st.up = host->up;
 	host->flags |= (F_CHECK_SENT|F_CHECK_DONE);
 	if (msg)
 		log_debug("hce_notify_done: %s (%s)", host->name, msg);
+
 	if (host->up != host->last_up) {
+		logopt = HOSTSTATED_OPT_LOGUPDATE;
 		imsg_compose(ibuf_pfe, IMSG_HOST_STATUS, 0, 0, &st, sizeof(st));
-		host->last_up = host->up;
+	} else
+		logopt = HOSTSTATED_OPT_LOGNOTIFY;
+
+	if ((table = table_find(env, host->tableid)) == NULL)
+		fatalx("hce_notify_done: invalid table id");
+
+	if (gettimeofday(&tv_now, NULL))
+		fatal("hce_notify_done: gettimeofday");
+	timersub(&tv_now, &host->cte.tv_start, &tv_dur);
+	if (timercmp(&host->cte.tv_start, &tv_dur, >))
+		duration = (tv_dur.tv_sec * 1000) + (tv_dur.tv_usec / 1000.0);
+	else
+		duration = 0;
+
+	if (env->opts & logopt) {
+		log_info("host %s, check %s%s (%lums), state %s -> %s",
+		    host->name, table_check(table->check),
+		    (table->flags & F_SSL) ? " use ssl" : "", duration,
+		    host_status(host->last_up), host_status(host->up));
 	}
+
+	host->last_up = host->up;
 }
 
 void

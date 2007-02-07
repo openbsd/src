@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.16 2007/01/29 18:38:15 pyr Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.17 2007/02/07 15:17:46 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -89,6 +89,25 @@ Here are the settings that can be set globally:
 .Xc
 Set the interval in seconds at which the hosts will be checked.
 The default interval is 10 seconds.
+.Pp
+.It Xo
+.Ic log
+.Pq Ic updates Ns \&| Ns Ic all
+.Xc
+Log state notifications after completed host checks.
+Either only log the
+.Ic updates
+to new states or log
+.Ic all
+state notifications, even if the state didn't change.
+The host state can be
+.Ar up
+(the health check completed successfully),
+.Ar down
+(the host is down or didn't match the check criteria),
+or
+.Ar unknown
+(the host is disabled or has not been checked yet).
 .Pp
 .It Xo
 .Ic timeout Ar number

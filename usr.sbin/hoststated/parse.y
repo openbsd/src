@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2007/02/07 13:39:58 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.23 2007/02/07 15:17:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -102,10 +102,11 @@ typedef struct {
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
 %token	VIRTUAL IP INTERVAL DISABLE STICKYADDR
 %token	SEND EXPECT NOTHING USE SSL
+%token	LOG UPDATES ALL
 %token	ERROR
 %token	<v.string>	STRING
 %type	<v.string>	interface
-%type	<v.number>	number port http_type
+%type	<v.number>	number port http_type loglevel
 %type	<v.host>	host
 %type	<v.tv>		timeout
 
@@ -201,9 +202,14 @@ sendbuf		: NOTHING		{
 		;
 
 main		: INTERVAL number	{ conf->interval.tv_sec = $2; }
+		| LOG loglevel		{ conf->opts |= $2; }
 		| TIMEOUT timeout	{
 			bcopy(&$2, &conf->timeout, sizeof(struct timeval));
 		}
+		;
+
+loglevel	: UPDATES		{ $$ = HOSTSTATED_OPT_LOGUPDATE; }
+		| ALL			{ $$ = HOSTSTATED_OPT_LOGALL; }
 		;
 
 service		: SERVICE STRING	{
@@ -537,6 +543,7 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "all",		ALL },
 		{ "backup",		BACKUP },
 		{ "check",		CHECK },
 		{ "code",		CODE },
@@ -551,6 +558,7 @@ lookup(char *s)
 		{ "interface",		INTERFACE },
 		{ "interval",		INTERVAL },
 		{ "ip",			IP },
+		{ "log",		LOG },
 		{ "nothing",		NOTHING },
 		{ "port",		PORT },
 		{ "real",		REAL },
@@ -562,6 +570,7 @@ lookup(char *s)
 		{ "tag",		TAG },
 		{ "tcp",		TCP },
 		{ "timeout",		TIMEOUT },
+		{ "updates",		UPDATES },
 		{ "use",		USE },
 		{ "virtual",		VIRTUAL }
 	};

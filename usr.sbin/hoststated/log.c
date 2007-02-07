@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 2006/12/16 17:48:27 deraadt Exp $	*/
+/*	$OpenBSD: log.c,v 1.3 2007/02/07 15:17:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,25 +16,31 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/queue.h>
+#include <sys/socket.h>
+
+#include <netinet/in_systm.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <net/if.h>
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <event.h>
 
-/* prototypes */
-void		 log_init(int);
-void		 vlog(int, const char *, va_list);
-void		 log_warn(const char *, ...);
-void		 log_warnx(const char *, ...);
-void		 log_info(const char *, ...);
-void		 log_debug(const char *, ...);
-void		 fatal(const char *);
-void		 fatalx(const char *);
+#include <openssl/ssl.h>
+
+#include "hoststated.h"
 
 int	 debug;
 
+void	 vlog(int, const char *, va_list);
 void	 logit(int, const char *, ...);
 
 void
@@ -156,4 +162,40 @@ fatalx(const char *emsg)
 {
 	errno = 0;
 	fatal(emsg);
+}
+
+const char *
+host_status(enum host_status status)
+{
+	switch (status) {
+	case HOST_DOWN:
+		return ("down");
+	case HOST_UNKNOWN:
+		return ("unknown");
+	case HOST_UP:
+		return ("up");
+	};
+	/* NOTREACHED */
+	return ("invalid");
+}
+
+const char *
+table_check(enum table_check check)
+{
+	switch (check) {
+	case CHECK_NOCHECK:
+		return ("none");
+	case CHECK_ICMP:
+		return ("icmp");
+	case CHECK_TCP:
+		return ("tcp");
+	case CHECK_HTTP_CODE:
+		return ("http code");
+	case CHECK_HTTP_DIGEST:
+		return ("http digest");
+	case CHECK_SEND_EXPECT:
+		return ("send expect");
+	};
+	/* NOTREACHED */
+	return ("invalid");
 }

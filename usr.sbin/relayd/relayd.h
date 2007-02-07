@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.23 2007/02/07 13:39:58 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.24 2007/02/07 15:17:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -185,9 +185,11 @@ struct host {
 };
 TAILQ_HEAD(hostlist, host);
 
-#define HOST_DOWN		-1
-#define HOST_UNKNOWN		0
-#define HOST_UP			1
+enum host_status {
+	HOST_DOWN	= -1,
+	HOST_UNKNOWN	= 0,
+	HOST_UP		= 1
+};
 
 struct table {
 	objid_t			 id;
@@ -209,12 +211,14 @@ struct table {
 };
 TAILQ_HEAD(tablelist, table);
 
-#define CHECK_NOCHECK		0
-#define CHECK_ICMP		1
-#define CHECK_TCP		2
-#define CHECK_HTTP_CODE		3
-#define CHECK_HTTP_DIGEST	4
-#define CHECK_SEND_EXPECT	5
+enum table_check {
+	CHECK_NOCHECK		= 0,
+	CHECK_ICMP		= 1,
+	CHECK_TCP		= 2,
+	CHECK_HTTP_CODE		= 3,
+	CHECK_HTTP_DIGEST	= 4,
+	CHECK_SEND_EXPECT	= 5
+};
 
 struct service {
 	objid_t			 id;
@@ -257,8 +261,11 @@ struct hoststated {
 	struct ctl_icmp_event	 icmp6_recv;
 };
 
-#define HOSTSTATED_OPT_VERBOSE	 0x01
-#define HOSTSTATED_OPT_NOACTION	 0x04
+#define HOSTSTATED_OPT_VERBOSE		0x01
+#define HOSTSTATED_OPT_NOACTION		0x04
+#define HOSTSTATED_OPT_LOGUPDATE	0x08
+#define HOSTSTATED_OPT_LOGNOTIFY	0x10
+#define HOSTSTATED_OPT_LOGALL		0x18
 
 /* initially control.h */
 struct {
@@ -304,6 +311,8 @@ void	log_info(const char *, ...);
 void	log_debug(const char *, ...);
 void	fatal(const char *);
 void	fatalx(const char *);
+const char *host_status(enum host_status);
+const char *table_check(enum table_check);
 
 /* buffer.c */
 struct buf	*buf_open(size_t);
