@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udcreg.h,v 1.2 2006/11/25 18:10:29 uwe Exp $ */
+/*	$OpenBSD: pxa27x_udcreg.h,v 1.3 2007/02/07 16:26:49 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -43,18 +43,18 @@
 #define  USBDC_UDCCR_AALTHNP	(1<<30) /* A-Dev Alt Host Neg Proto Port Sup */
 #define  USBDC_UDCCR_OEN	(1<<31)	/* On-The-Go Enable */
 #define USBDC_UDCICR0	0x0004	/* UDC Interrupt Control Register 0 */
-#define  USBDC_UDCICR0_IE(n)	(3<<(n)) /* Interrupt Enables */
+#define  USBDC_UDCICR0_IE(n)	(3<<((n)*2)) /* Interrupt Enables */
 #define USBDC_UDCICR1	0x0008	/* UDC Interrupt Control Register 1 */
-#define  USBDC_UDCICR1_IE(n)	(3<<(n)) /* Interrupt Enables */
+#define  USBDC_UDCICR1_IE(n)	(3<<((n)*2)) /* Interrupt Enables */
 #define  USBDC_UDCICR1_IERS	(1<<27)	/* Interrupt Enable Reset */
 #define  USBDC_UDCICR1_IESU	(1<<28)	/* Interrupt Enable Suspend */
 #define  USBDC_UDCICR1_IERU	(1<<29)	/* Interrupt Enable Resume */
 #define  USBDC_UDCICR1_IESOF	(1<<30)	/* Interrupt Enable Start of Frame */
 #define  USBDC_UDCICR1_IECC	(1<<31)	/* Interrupt Enable Config Change */
 #define USBDC_UDCISR0	0x000c	/* UDC Interrupt Status Register 0 */
-#define  USBDC_UDCISR0_IR(n)	(3<<(n)) /* Interrupt Requests */
+#define  USBDC_UDCISR0_IR(n)	(3<<((n)*2)) /* Interrupt Requests */
 #define USBDC_UDCISR1	0x0010	/* UDC Interrupt Status Register 1 */
-#define  USBDC_UDCISR1_IR(n)	(3<<(n)) /* Interrupt Requests */
+#define  USBDC_UDCISR1_IR(n)	(3<<((n)*2)) /* Interrupt Requests */
 #define  USBDC_UDCISR1_IRRS	(1<<27)	/* Interrupt Enable Reset */
 #define  USBDC_UDCISR1_IRSU	(1<<28)	/* Interrupt Enable Suspend */
 #define  USBDC_UDCISR1_IRRU	(1<<29)	/* Interrupt Enable Resume */
@@ -141,13 +141,23 @@
 #define USBDC_UDCECR(n)	(0x0400+4*(n)) /* UDC Configuration Registers */
 #define  USBDC_UDCECR_EE	(1<<0)	/* Endpoint Enable */
 #define  USBDC_UDCECR_DE	(1<<1)	/* Double-Buffering Enable */
-#define  USBDC_UDCECR_MPE	(1023<<2) /* Maximum Packet Size */
-#define  USBDC_UDCECR_ED	(1<<12)	/* USB Endpoint Direction */
+#define  USBDC_UDCECR_MPS	(1023<<2) /* Maximum Packet Size */
+#define  USBDC_UDCECR_ED	(1<<12)	/* USB Endpoint Direction 0 OUT, 1 IN */
 #define  USBDC_UDCECR_ET	(3<<13)	/* USB Enpoint Type */
 #define  USBDC_UDCECR_EN	(15<<15) /* Endpoint Number */
 #define  USBDC_UDCECR_AISN	(7<<19)	/* Alternate Interface Number */
 #define  USBDC_UDCECR_IN	(7<<22)	/* Interface Number */
 #define  USBDC_UDCECR_CN	(3<<25)	/* Configuration Number */
+
+#define  USBDC_UDCECR_MPSs(n)	((n)<<2)  /* Maximum Packet Size */
+#define  USBDC_UDCECR_ETs(n)	((n)<<13) /* USB Enpoint Type */
+#define  USBDC_UDCECR_ET_INT	3
+#define  USBDC_UDCECR_ET_BULK	2
+#define  USBDC_UDCECR_ET_ISO	1
+#define  USBDC_UDCECR_ENs(n)	((n)<<15) /* Endpoint Number */
+#define  USBDC_UDCECR_AISNs(n)	((n)<<19) /* Alternate Interface Number */
+#define  USBDC_UDCECR_INs(n)	((n)<<22) /* Interface Number */
+#define  USBDC_UDCECR_CNs(n)	((n)<<25) /* Configuration Number */
 
 #define USBDC_UDCCR_BITS						\
 	"\20\001UDE\002UDA\003UDR\004EMCE\005SMAC\021DWRE"		\

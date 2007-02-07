@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.1 2006/11/25 18:10:29 uwe Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.2 2007/02/07 16:26:49 drahn Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -136,10 +136,10 @@ USB_ATTACH(cdcef)
 		USB_ATTACH_ERROR_RETURN;
 	}
 	/* XXX don't use hard-coded values 128 and 16. */
-	err = usbf_add_endpoint(sc->sc_iface, UE_DIR_IN, UE_BULK,
-	    128, 16, &sc->sc_ep_in) ||
-	    usbf_add_endpoint(sc->sc_iface, UE_DIR_OUT, UE_BULK,
-	    128, 16, &sc->sc_ep_out);
+	err = usbf_add_endpoint(sc->sc_iface, UE_DIR_IN | 1, UE_BULK,
+	    64, 16, &sc->sc_ep_in) ||
+	    usbf_add_endpoint(sc->sc_iface, UE_DIR_OUT | 1, UE_BULK,
+	    64, 16, &sc->sc_ep_out);
 	if (err) {
 		printf("%s: usbf_add_endpoint failed\n", DEVNAME(sc));
 		USB_ATTACH_ERROR_RETURN;
@@ -189,6 +189,10 @@ USB_ATTACH(cdcef)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
+	printf("input pipe %x output pipe %x\n",
+	    usbf_endpoint_address(sc->sc_ep_in),
+	    usbf_endpoint_address(sc->sc_ep_out));
+
 	/* Get ready to receive packets. */
 	usbf_setup_xfer(sc->sc_xfer_out, sc->sc_pipe_out, (void *)sc,
 	    sc->sc_buffer_out, CDCEF_BUFSZ, 0, 0, cdcef_rxeof);
@@ -205,6 +209,7 @@ usbf_status
 cdcef_do_request(usbf_function_handle fun, usb_device_request_t *req,
     void **data)
 {
+	printf("cdcef_do_request\n");
 	return USBF_STALLED;
 }
 
@@ -224,7 +229,7 @@ cdcef_txeof(usbf_xfer_handle xfer, usbf_private_handle priv,
 
 	/* Setup another xfer. */
 	usbf_setup_xfer(xfer, sc->sc_pipe_in, (void *)sc,
-	    sc->sc_buffer_in, CDCEF_BUFSZ, 0, 0, cdcef_rxeof);
+	    sc->sc_buffer_in, CDCEF_BUFSZ, 0, 0, cdcef_txeof);
 	err = usbf_transfer(xfer);
 	if (err && err != USBF_IN_PROGRESS) {
 		printf("%s: usbf_transfer failed\n", DEVNAME(sc));
@@ -238,7 +243,7 @@ cdcef_rxeof(usbf_xfer_handle xfer, usbf_private_handle priv,
 {
 	struct cdcef_softc *sc = priv;
 
-	printf("cdcef_txeof: xfer=%p, priv=%p, %s\n", xfer, priv,
+	printf("cdcef_rxeof: xfer=%p, priv=%p, %s\n", xfer, priv,
 	    usbf_errstr(err));
 
 	/* Setup another xfer. */

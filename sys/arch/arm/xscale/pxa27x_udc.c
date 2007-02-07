@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.7 2006/11/28 15:42:30 uwe Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.8 2007/02/07 16:26:49 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -51,7 +51,7 @@ struct pxaudc_xfer {
 
 struct pxaudc_pipe {
 	struct usbf_pipe	 pipe;
-	LIST_ENTRY(pxaudc_pipe)	 list;
+//	LIST_ENTRY(pxaudc_pipe)	 list;
 };
 
 struct pxaudc_softc {
@@ -73,6 +73,7 @@ struct pxaudc_softc {
 	u_int32_t		 sc_isr1;	/* XXX deferred interrupts */
 	u_int32_t		 sc_otgisr;	/* XXX deferred interrupts */
 	struct pxaudc_pipe	*sc_pipe[PXAUDC_NEP];
+	int			 sc_npipe;
 };
 
 int		 pxaudc_match(struct device *, void *, void *);
@@ -167,7 +168,6 @@ struct usbf_pipe_methods pxaudc_bulk_methods = {
 #define CSR_CLR_4(sc, reg, val) \
 	CSR_WRITE_4((sc), (reg), CSR_READ_4((sc), (reg)) & ~(val))
 
-#define PXAUDC_DEBUG
 #ifndef PXAUDC_DEBUG
 #define DPRINTF(l, x)	do {} while (0)
 #else
@@ -242,6 +242,7 @@ pxaudc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bus.ep0_maxp = PXAUDC_EP0MAXP;
 	sc->sc_bus.usbrev = USBREV_1_1;
 	sc->sc_bus.dmatag = pxa->pxa_dmat;
+	sc->sc_npipe = 0;	/* ep0 is always there. */
 
 	/* Attach logical device and function. */
 	(void)config_found(self, &sc->sc_bus, NULL);
@@ -363,32 +364,81 @@ pxaudc_dump_regs(struct pxaudc_softc *sc)
 void
 pxaudc_enable(struct pxaudc_softc *sc)
 {
+	int i;
+
 	DPRINTF(0,("pxaudc_enable\n"));
 
 	/* Start the clocks. */
 	pxa2x0_clkman_config(CKEN_USBDC, 1);
 
+#if 0
 	/* Configure Port 2 for USB device. */
 	CSR_WRITE_4(sc, USBDC_UP2OCR, USBDC_UP2OCR_DMPUE |
 	    USBDC_UP2OCR_DPPUE | USBDC_UP2OCR_HXOE);
+#else
+	/* Configure Port 2 for USB device. */
+	CSR_WRITE_4(sc, USBDC_UP2OCR, USBDC_UP2OCR_DPPUE | USBDC_UP2OCR_HXOE);
+#endif
+
+	sc->sc_icr0 = 0;
+	sc->sc_icr1 = 0;
+
+	for (i = 0; i < PXAUDC_NEP; i++) 
+		CSR_WRITE_4(sc, USBDC_UDCECR(i), 0); /* disable endpoints */
+
+	for (i = 1; i < sc->sc_npipe; i++) {
+		if (sc->sc_pipe[i] != NULL)  {
+			struct usbf_endpoint *ep =
+			    sc->sc_pipe[i]->pipe.endpoint;
+			u_int32_t cr;
+			int dir = usbf_endpoint_dir(ep);
+			usb_endpoint_descriptor_t *ed = ep->edesc;
+
+			if (i < 16)
+				sc->sc_icr0 |= USBDC_UDCICR0_IE(i);
+			else
+				sc->sc_icr1 |= USBDC_UDCICR1_IE(i-16);
+
+			printf("configuring pipe/ep %x\n", i);
+			cr = USBDC_UDCECR_EE;
+			cr |= USBDC_UDCECR_ENs(
+			    UE_GET_ADDR(ed->bEndpointAddress));
+			cr |= USBDC_UDCECR_MPSs(UGETW(ed->wMaxPacketSize));
+			cr |= USBDC_UDCECR_ETs(ed->bmAttributes & UE_XFERTYPE);
+			if (dir == UE_DIR_OUT)
+				cr |= USBDC_UDCECR_ED;
+
+			/* XXX - until pipe has cn/in/ain */
+			cr |=   USBDC_UDCECR_AISNs(0) | USBDC_UDCECR_INs(0) |
+			    USBDC_UDCECR_CNs(1);
+
+			CSR_WRITE_4(sc, USBDC_UDCECR(i), cr);
+			printf("endpoint %c programed to %x\n", '@'+i, cr);
+
+			/* clear old status */
+			CSR_WRITE_4(sc, USBDC_UDCCSR(1), 
+			    USBDC_UDCCSR_PC | USBDC_UDCCSR_TRN |
+			    USBDC_UDCCSR_SST | USBDC_UDCCSR_FEF);
+			printf("csr%d %x\n", i, CSR_READ_4(sc,  USBDC_UDCCSR(1)));
+		}
+	}
+
 
 	/* Enable interrupts for configured endpoints. */
-	CSR_SET_4(sc, USBDC_UDCICR0, USBDC_UDCICR0_IE(0) |
+	CSR_WRITE_4(sc, USBDC_UDCICR0, USBDC_UDCICR0_IE(0) |
 	    sc->sc_icr0);
-	CSR_SET_4(sc, USBDC_UDCICR1, USBDC_UDCICR1_IERS |
+	printf("icr0 %x\n", CSR_READ_4(sc,  USBDC_UDCICR0));
+	CSR_WRITE_4(sc, USBDC_UDCICR1, USBDC_UDCICR1_IERS |
 	    USBDC_UDCICR1_IECC | sc->sc_icr1);
+	printf("icr1 %x\n", CSR_READ_4(sc,  USBDC_UDCICR1));
 
-	/* XXX */
-	CSR_WRITE_4(sc, USBDC_UDCICR0, 0x00000C3F);
-	CSR_WRITE_4(sc, USBDC_UDCECR(1), 0x0200D103);
-	CSR_WRITE_4(sc, USBDC_UDCECR(2), 0x02014103);
-	CSR_WRITE_4(sc, USBDC_UDCECR(3), 0x0201B403);
-	CSR_WRITE_4(sc, USBDC_UDCECR(4), 0x02022403);
-	CSR_WRITE_4(sc, USBDC_UDCECR(5), 0x0202F021);
+	CSR_SET_4(sc, USBDC_UDCCSR0, USBDC_UDCCSR0_ACM);
 
 	/* Enable the controller. */
 	CSR_CLR_4(sc, USBDC_UDCCR, USBDC_UDCCR_EMCE);
 	CSR_SET_4(sc, USBDC_UDCCR, USBDC_UDCCR_UDE);
+
+	printf("udccr %b\n", CSR_READ_4(sc, USBDC_UDCCR), USBDC_UDCCR_BITS);
 
 	/* Enable USB client on port 2. */
 	pxa2x0_gpio_clear_bit(37); /* USB_P2_8 */
@@ -556,7 +606,7 @@ pxaudc_intr(void *v)
 	isr1 = CSR_READ_4(sc, USBDC_UDCISR1);
 	otgisr = CSR_READ_4(sc, USBDC_UDCOTGISR);
 
-	DPRINTF(1,("pxaudc_intr: isr0=%b, isr1=%b, otgisr=%b\n",
+	DPRINTF(0,("pxaudc_intr: isr0=%b, isr1=%b, otgisr=%b\n",
 	    isr0, USBDC_UDCISR0_BITS, isr1, USBDC_UDCISR1_BITS,
 	    otgisr, USBDC_UDCOTGISR_BITS));
 
@@ -576,6 +626,7 @@ pxaudc_intr(void *v)
 	/* Claim this interrupt. */
 	return 1;
 }
+u_int32_t csr1, csr2;
 
 void
 pxaudc_intr1(struct pxaudc_softc *sc)
@@ -594,6 +645,32 @@ pxaudc_intr1(struct pxaudc_softc *sc)
 
 	sc->sc_bus.intr_context++;
 
+	if (isr0 & USBDC_UDCISR0_IR(1)) {
+		printf("interrupt pending ep[1]\n");
+	}
+	{
+		int i;
+		u_int32_t csr;
+                csr = CSR_READ_4(sc, USBDC_UDCCSR(1));
+		if (csr1 != csr) {
+			printf("CSR1 %x\n", csr);
+			csr1 = csr;
+		}
+                csr = CSR_READ_4(sc, USBDC_UDCCSR(2));
+		if (csr2 != csr) {
+			printf("CSR1 %x\n", csr);
+			csr2 = csr;
+		 }
+		 for (i = 1; i < 23; i++) {
+			int x;
+			x = CSR_READ_4(sc, USBDC_UDCBCR(i));
+			if( x != 0)
+				printf("data present in ep %d %d\n", i, x);
+		 }
+	}
+	if (isr0 & USBDC_UDCISR0_IR(2)) {
+		printf("interrupt pending ep[2]\n");
+	}
 	/* Handle USB RESET condition. */
 	if (isr1 & USBDC_UDCISR1_IRRS) {
 		sc->sc_ep0state = EP0_SETUP;
@@ -605,6 +682,25 @@ pxaudc_intr1(struct pxaudc_softc *sc)
 	/* Service control pipe interrupts. */
 	if (isr0 & USBDC_UDCISR0_IR(0))
 		pxaudc_ep0_intr(sc);
+
+	if (isr1 & USBDC_UDCISR1_IRCC) {
+                u_int32_t csr0;
+                csr0 = CSR_READ_4(sc, USBDC_UDCCSR0);
+ 
+                printf("config change isr %x %x acn %x ain %x aaisn %x\n",
+                    isr0, isr1,
+                        (csr0 >> 11)  & 7,
+                        (csr0 >> 8)  & 7,
+                        (csr0 >> 5)  & 7);
+                CSR_SET_4(sc, USBDC_UDCCSR0, USBDC_UDCCR_SMAC);
+                csr0 = CSR_READ_4(sc, USBDC_UDCCSR0);
+ 
+                printf("after config change isr %x %x acn %x ain %x aaisn %x\n",
+                    isr0, isr1,
+                        (csr0 >> 11)  & 7,
+                        (csr0 >> 8)  & 7,
+                        (csr0 >> 5)  & 7);
+	}
 
 ret:
 	sc->sc_bus.intr_context--;
@@ -619,7 +715,7 @@ pxaudc_ep0_intr(struct pxaudc_softc *sc)
 	u_int32_t csr0;
 
 	csr0 = CSR_READ_4(sc, USBDC_UDCCSR0);
-	DPRINTF(1,("pxaudc_ep0_intr: csr0=%b\n", csr0, USBDC_UDCCSR0_BITS));
+	DPRINTF(0,("pxaudc_ep0_intr: csr0=%b\n", csr0, USBDC_UDCCSR0_BITS));
 
 	ppipe = sc->sc_pipe[0];
 	if (ppipe != NULL) {
@@ -659,7 +755,7 @@ pxaudc_open(struct usbf_pipe *pipe)
 	if (usbf_endpoint_index(pipe->endpoint) >= PXAUDC_NEP)
 		return USBF_BAD_ADDRESS;
 
-	DPRINTF(1,("pxaudc_open\n"));
+	DPRINTF(0,("pxaudc_open\n"));
 	s = splhardusb();
 
 	switch (usbf_endpoint_type(pipe->endpoint)) {
@@ -679,7 +775,9 @@ pxaudc_open(struct usbf_pipe *pipe)
 		return USBF_BAD_ADDRESS;
 	}
 
-	sc->sc_pipe[usbf_endpoint_index(pipe->endpoint)] = ppipe;
+	sc->sc_pipe[sc->sc_npipe] = ppipe;
+	sc->sc_npipe++;
+	printf("adding pipe %x\n", usbf_endpoint_index(pipe->endpoint));
 
 	splx(s);
 	return USBF_NORMAL_COMPLETION;
@@ -765,8 +863,10 @@ pxaudc_ctrl_start(usbf_xfer_handle xfer)
 	else {
 		/* XXX boring message, this case is normally reached if
 		 * XXX the xfer for a device request is being queued. */
-		DPRINTF(0,("%s: ep0 ctrl-out, xfer=%p, len=%u, "
-		    "actlen=%u\n", DEVNAME(sc), xfer, xfer->length,
+		DPRINTF(0,("%s: ep[%x] ctrl-out, xfer=%p, len=%u, "
+		    "actlen=%u\n", DEVNAME(sc),
+		    usbf_endpoint_address(xfer->pipe->endpoint),
+		    xfer, xfer->length,
 		    xfer->actlen));
 	}
 	splx(s);
@@ -777,10 +877,10 @@ pxaudc_ctrl_start(usbf_xfer_handle xfer)
 void
 pxaudc_ctrl_abort(usbf_xfer_handle xfer)
 {
-	struct usbf_pipe *pipe = xfer->pipe;
-	struct pxaudc_softc *sc = (struct pxaudc_softc *)pipe->device->bus;
 	int s;
 #ifdef PXAUDC_DEBUG
+	struct usbf_pipe *pipe = xfer->pipe;
+	struct pxaudc_softc *sc = (struct pxaudc_softc *)pipe->device->bus;
 	int index = usbf_endpoint_index(pipe->endpoint);
 	int dir = usbf_endpoint_dir(pipe->endpoint);
 	int type = usbf_endpoint_type(pipe->endpoint);
@@ -861,7 +961,7 @@ pxaudc_bulk_start(usbf_xfer_handle xfer)
 	int iswrite = usbf_endpoint_dir(pipe->endpoint) == UE_DIR_IN;
 	int s;
 
-	DPRINTF(1,("%s: ep%d bulk-%s start, xfer=%p, len=%u\n", DEVNAME(sc),
+	DPRINTF(0,("%s: ep%d bulk-%s start, xfer=%p, len=%u\n", DEVNAME(sc),
 	    usbf_endpoint_index(pipe->endpoint), iswrite ? "in" : "out",
 	    xfer, xfer->length));
 
@@ -869,6 +969,9 @@ pxaudc_bulk_start(usbf_xfer_handle xfer)
 	xfer->status = USBF_IN_PROGRESS;
 	if (iswrite)
 		pxaudc_write(sc, xfer);
+	else {
+		/* enable interrupt */
+	}
 	splx(s);
 	return USBF_IN_PROGRESS;
 }

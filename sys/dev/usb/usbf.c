@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf.c,v 1.1 2006/11/25 18:10:29 uwe Exp $	*/
+/*	$OpenBSD: usbf.c,v 1.2 2007/02/07 16:26:49 drahn Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -64,7 +64,6 @@
 #include <dev/usb/usbf.h>
 #include <dev/usb/usbfvar.h>
 
-#define USBF_DEBUG
 #ifndef USBF_DEBUG
 #define DPRINTF(l, x)	do {} while (0)
 #else
@@ -455,6 +454,7 @@ usbf_do_request(usbf_xfer_handle xfer, usbf_private_handle priv,
 
 	case C(UR_SET_CONFIG, UT_WRITE_DEVICE):
 		/* Change device state from Address to Configured. */
+		printf("set config activated\n");
 		err = usbf_set_config(dev, UGETW(req->wValue) & 0xff);
 		break;
 
