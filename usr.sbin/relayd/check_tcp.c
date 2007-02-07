@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.20 2007/02/07 14:54:13 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.21 2007/02/07 15:13:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -302,6 +302,7 @@ check_http_code(struct ctl_tcp_event *cte)
 	const char	*estr;
 	u_char		*b;
 	int		 code;
+	struct host	*host;
 
 	/*
 	 * ensure string is nul-terminated.
@@ -312,38 +313,43 @@ check_http_code(struct ctl_tcp_event *cte)
 	*b = '\0';
 
 	head = cte->buf->buf;
+	host = cte->host;
 	if (strncmp(head, "HTTP/1.1 ", strlen("HTTP/1.1 ")) &&
 	    strncmp(head, "HTTP/1.0 ", strlen("HTTP/1.0 "))) {
-		log_debug("check_http_code: cannot parse HTTP version");
-		cte->host->up = HOST_DOWN;
+		log_debug("check_http_code: %s failed "
+		    "(cannot parse HTTP version)", host->name);
+		host->up = HOST_DOWN;
 		return (1);
 	}
 	head += strlen("HTTP/1.1 ");
 	if (strlen(head) < 5) /* code + \r\n */ {
-		cte->host->up = HOST_DOWN;
+		host->up = HOST_DOWN;
 		return (1);
 	}
 	strlcpy(scode, head, sizeof(scode));
 	code = strtonum(scode, 100, 999, &estr);
 	if (estr != NULL) {
-		log_debug("check_http_code: cannot parse HTTP code");
-		cte->host->up = HOST_DOWN;
+		log_debug("check_http_code: %s failed "
+		    "(cannot parse HTTP code)", host->name);
+		host->up = HOST_DOWN;
 		return (1);
 	}
 	if (code != cte->table->retcode) {
-		log_debug("check_http_code: invalid HTTP code returned");
-		cte->host->up = HOST_DOWN;
+		log_debug("check_http_code: %s failed "
+		    "(invalid HTTP code returned)", host->name);
+		host->up = HOST_DOWN;
 	} else
-		cte->host->up = HOST_UP;
-	return (!(cte->host->up == HOST_UP));
+		host->up = HOST_UP;
+	return (!(host->up == HOST_UP));
 }
 
 int
 check_http_digest(struct ctl_tcp_event *cte)
 {
-	char	*head;
-	u_char	*b;
-	char	 digest[(SHA1_DIGEST_LENGTH*2)+1];
+	char		*head;
+	u_char		*b;
+	char		 digest[(SHA1_DIGEST_LENGTH*2)+1];
+	struct host	*host;
 
 	/*
 	 * ensure string is nul-terminated.
@@ -354,20 +360,21 @@ check_http_digest(struct ctl_tcp_event *cte)
 	*b = '\0';
 
 	head = cte->buf->buf;
+	host = cte->host;
 	if ((head = strstr(head, "\r\n\r\n")) == NULL) {
-		log_debug("check_http_digest: host %u no end of headers",
-		    cte->host->id);
-		cte->host->up = HOST_DOWN;
+		log_debug("check_http_digest: %s failed "
+		    "(no end of headers)", host->name);
+		host->up = HOST_DOWN;
 		return (1);
 	}
 	head += strlen("\r\n\r\n");
 	SHA1Data(head, strlen(head), digest);
 
 	if (strcmp(cte->table->digest, digest)) {
-		log_warnx("check_http_digest: wrong digest for host %u",
-		    cte->host->id);
-		cte->host->up = HOST_DOWN;
+		log_warnx("check_http_digest: %s failed "
+		    "(wrong digest)", host->name);
+		host->up = HOST_DOWN;
 	} else
-		cte->host->up = HOST_UP;
-	return (!(cte->host->up == HOST_UP));
+		host->up = HOST_UP;
+	return (!(host->up == HOST_UP));
 }
