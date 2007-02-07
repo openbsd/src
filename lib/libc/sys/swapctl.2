@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapctl.2,v 1.14 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: swapctl.2,v 1.15 2007/02/07 15:21:58 sturm Exp $
 .\"	$NetBSD: swapctl.2,v 1.10 1998/08/29 17:11:09 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -36,8 +36,9 @@
 .Nm swapctl
 .Nd modify swap configuration
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.Fd #include <sys/param.h>
 .Fd #include <sys/swap.h>
+.Fd #include <unistd.h>
 .Ft int
 .Fn swapctl "int cmd" "const void *arg" "int misc"
 .Sh DESCRIPTION
