@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.16 2006/03/22 20:24:32 deraadt Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.17 2007/02/08 19:02:23 otto Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -73,6 +73,7 @@ struct bufarea {
 #define	MINBUFS		5	/* minimum number of buffers required */
 struct bufarea bufhead;		/* head of list of other blks in filesys */
 struct bufarea sblk;		/* file system superblock */
+struct bufarea asblk;		/* alternate file system superblock */
 struct bufarea cgblk;		/* cylinder group blocks */
 struct bufarea *pdirbp;		/* current directory contents */
 struct bufarea *pbp;		/* current inode block */
