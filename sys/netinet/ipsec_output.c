@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.36 2006/12/19 11:31:10 itojun Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.37 2007/02/08 15:25:30 itojun Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -77,6 +77,11 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	struct timeval tv;
 	int i, off, error;
 	struct mbuf *mp;
+#ifdef INET6
+	struct ip6_ext ip6e;
+	int nxt;
+	int dstopt = 0;
+#endif
 
 #ifdef INET
 	int setdf = 0;
@@ -303,6 +308,62 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 		ip6 = mtod(m, struct ip6_hdr *);
 		i = sizeof(struct ip6_hdr);
 		off = offsetof(struct ip6_hdr, ip6_nxt);
+		nxt = ip6->ip6_nxt;
+		/*
+		 * chase mbuf chain to find the appropriate place to
+		 * put AH/ESP/IPcomp header.
+		 *	IPv6 hbh dest1 rthdr ah* [esp* dest2 payload]
+		 */
+		do {
+			switch (nxt) {
+			case IPPROTO_AH:
+			case IPPROTO_ESP:
+			case IPPROTO_IPCOMP:
+				/*
+				 * we should not skip security header added
+				 * beforehand.
+				 */
+				goto exitip6loop;
+
+			case IPPROTO_HOPOPTS:
+			case IPPROTO_DSTOPTS:
+			case IPPROTO_ROUTING:
+				/*
+				 * if we see 2nd destination option header,
+				 * we should stop there.
+				 */
+				if (nxt == IPPROTO_DSTOPTS && dstopt)
+					goto exitip6loop;
+
+				if (nxt == IPPROTO_DSTOPTS) {
+					/*
+					 * seen 1st or 2nd destination option.
+					 * next time we see one, it must be 2nd.
+					 */
+					dstopt = 1;
+				} else if (nxt == IPPROTO_ROUTING) {
+					/*
+					 * if we see destionation option next
+					 * time, it must be dest2.
+					 */
+					dstopt = 2;
+				}
+
+				/* skip this header */
+				m_copydata(m, i, sizeof(ip6e), (caddr_t)&ip6e);
+				nxt = ip6e.ip6e_nxt;
+				off = i + offsetof(struct ip6_ext, ip6e_nxt);
+				/*
+				 * we will never see nxt == IPPROTO_AH
+				 * so it is safe to omit AH case.
+				 */
+				i += (ip6e.ip6e_len + 1) << 3;
+				break;
+			default:
+				goto exitip6loop;
+			}
+		} while (i < m->m_pkthdr.len);
+	exitip6loop:;
 		break;
 #endif /* INET6 */
 	}

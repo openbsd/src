@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.82 2006/12/15 09:32:30 otto Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.83 2007/02/08 15:25:30 itojun Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -953,7 +953,7 @@ int
 ah6_input(struct mbuf **mp, int *offp, int proto)
 {
 	int l = 0;
-	int protoff;
+	int protoff, nxt;
 	struct ip6_ext ip6e;
 
 	if (*offp < sizeof(struct ip6_hdr)) {
@@ -964,13 +964,14 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 	} else {
 		/* Chase down the header chain... */
 		protoff = sizeof(struct ip6_hdr);
+		nxt = (mtod(*mp, struct ip6_hdr *))->ip6_nxt;
 
 		do {
 			protoff += l;
 			m_copydata(*mp, protoff, sizeof(ip6e),
 			    (caddr_t) &ip6e);
 
-			if (ip6e.ip6e_nxt == IPPROTO_AH)
+			if (nxt == IPPROTO_AH)
 				l = (ip6e.ip6e_len + 2) << 2;
 			else
 				l = (ip6e.ip6e_len + 1) << 3;
@@ -978,6 +979,8 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 			if (l <= 0)
 				panic("ah6_input: l went zero or negative");
 #endif
+
+			nxt = ip6e.ip6e_nxt;
 		} while (protoff + l < *offp);
 
 		/* Malformed packet check */
@@ -1039,7 +1042,7 @@ int
 esp6_input(struct mbuf **mp, int *offp, int proto)
 {
 	int l = 0;
-	int protoff;
+	int protoff, nxt;
 	struct ip6_ext ip6e;
 
 	if (*offp < sizeof(struct ip6_hdr)) {
@@ -1050,13 +1053,14 @@ esp6_input(struct mbuf **mp, int *offp, int proto)
 	} else {
 		/* Chase down the header chain... */
 		protoff = sizeof(struct ip6_hdr);
+		nxt = (mtod(*mp, struct ip6_hdr *))->ip6_nxt;
 
 		do {
 			protoff += l;
 			m_copydata(*mp, protoff, sizeof(ip6e),
 			    (caddr_t) &ip6e);
 
-			if (ip6e.ip6e_nxt == IPPROTO_AH)
+			if (nxt == IPPROTO_AH)
 				l = (ip6e.ip6e_len + 2) << 2;
 			else
 				l = (ip6e.ip6e_len + 1) << 3;
@@ -1064,6 +1068,8 @@ esp6_input(struct mbuf **mp, int *offp, int proto)
 			if (l <= 0)
 				panic("esp6_input: l went zero or negative");
 #endif
+
+			nxt = ip6e.ip6e_nxt;
 		} while (protoff + l < *offp);
 
 		/* Malformed packet check */
@@ -1093,7 +1099,7 @@ int
 ipcomp6_input(struct mbuf **mp, int *offp, int proto)
 {
 	int l = 0;
-	int protoff;
+	int protoff, nxt;
 	struct ip6_ext ip6e;
 
 	if (*offp < sizeof(struct ip6_hdr)) {
@@ -1104,12 +1110,13 @@ ipcomp6_input(struct mbuf **mp, int *offp, int proto)
 	} else {
 		/* Chase down the header chain... */
 		protoff = sizeof(struct ip6_hdr);
+		nxt = (mtod(*mp, struct ip6_hdr *))->ip6_nxt;
 
 		do {
 			protoff += l;
 			m_copydata(*mp, protoff, sizeof(ip6e),
 			    (caddr_t) &ip6e);
-			if (ip6e.ip6e_nxt == IPPROTO_AH)
+			if (nxt == IPPROTO_AH)
 				l = (ip6e.ip6e_len + 2) << 2;
 			else
 				l = (ip6e.ip6e_len + 1) << 3;
@@ -1117,6 +1124,8 @@ ipcomp6_input(struct mbuf **mp, int *offp, int proto)
 			if (l <= 0)
 				panic("ipcomp6_input: l went zero or negative");
 #endif
+
+			nxt = ip6e.ip6e_nxt;
 		} while (protoff + l < *offp);
 
 		/* Malformed packet check */

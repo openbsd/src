@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.97 2006/12/10 10:16:12 miod Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.98 2007/02/08 15:25:30 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -288,15 +288,6 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		sspi = tdb->tdb_spi;
 		sproto = tdb->tdb_sproto;
 	        splx(s);
-
-#if 1 /* XXX */
-		/* if we have any extension header, we cannot perform IPsec */
-		if (exthdrs.ip6e_hbh || exthdrs.ip6e_dest1 ||
-		    exthdrs.ip6e_rthdr || exthdrs.ip6e_dest2) {
-			error = EHOSTUNREACH;
-			goto freehdrs;
-		}
-#endif
 	}
 
 	/* Fall through to the routing/multicast handling code */
@@ -521,7 +512,13 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
 
 		/* Callee frees mbuf */
-		error = ipsp_process_packet(m, tdb, AF_INET6, 0);
+		/*
+		 * if we are source-routing, do not attempt to tunnel the
+		 * packet just because ip6_dst is different from what tdb has.
+		 * XXX
+		 */
+		error = ipsp_process_packet(m, tdb, AF_INET6,
+		    exthdrs.ip6e_rthdr ? 1 : 0);
 		splx(s);
 
 		return error;  /* Nothing more to be done */
