@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.65 2007/02/03 01:55:00 krw Exp $	*/
+/*	$OpenBSD: re.c,v 1.66 2007/02/08 22:50:08 kettenis Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1391,10 +1391,10 @@ re_txeof(struct rl_softc *sc)
 			ifp->if_opackets++;
 	}
 
-	if (sc->rl_ldata.rl_tx_free) {
-		sc->rl_ldata.rl_txq_considx = idx;
+	sc->rl_ldata.rl_txq_considx = idx;
+
+	if (sc->rl_ldata.rl_tx_free > RL_NTXDESC_RSVD)
 		ifp->if_flags &= ~IFF_OACTIVE;
-	}
 
 	if (sc->rl_ldata.rl_tx_free < RL_TX_DESC_CNT(sc)) {
 		/*
