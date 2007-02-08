@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.13 2007/02/06 11:21:35 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.14 2007/02/08 13:32:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -132,7 +132,9 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	event_add(&ibuf_main->ev, NULL);
 
 	TAILQ_INIT(&ctl_conns);
-	control_listen();
+
+	if (control_listen() == -1)
+		fatalx("pfe: control socket listen failed");
 
 	event_dispatch();
 	pfe_shutdown();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.23 2007/02/07 15:17:46 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.24 2007/02/08 13:32:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -412,8 +412,9 @@ tableoptsl	: host			{
 			}
 			table->check = CHECK_HTTP_CODE;
 			table->retcode = $5;
-			asprintf(&table->sendbuf, "HEAD %s HTTP/1.0\r\n\r\n",
-			    $3);
+			if (asprintf(&table->sendbuf,
+			    "HEAD %s HTTP/1.0\r\n\r\n", $3) == -1)
+				fatal("asprintf");
 			free($3);
 			if (table->sendbuf == NULL)
 				fatal("out of memory");
@@ -424,8 +425,9 @@ tableoptsl	: host			{
 				table->flags |= F_SSL;
 			}
 			table->check = CHECK_HTTP_DIGEST;
-			asprintf(&table->sendbuf, "GET %s HTTP/1.0\r\n\r\n",
-			    $3);
+			if (asprintf(&table->sendbuf,
+			    "GET %s HTTP/1.0\r\n\r\n", $3) == -1)
+				fatal("asprintf");
 			free($3);
 			if (table->sendbuf == NULL)
 				fatal("out of memory");
@@ -913,7 +915,8 @@ cmdline_symset(char *s)
 	if ((sym = malloc(len)) == NULL)
 		errx(1, "cmdline_symset: malloc");
 
-	strlcpy(sym, s, len);
+	if (strlcpy(sym, s, len) >= len)
+		errx(1, "cmdline_symset: macro too long");
 
 	ret = symset(sym, val + 1, 1);
 	free(sym);

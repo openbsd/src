@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.21 2007/02/07 15:13:00 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.22 2007/02/08 13:32:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -247,7 +247,8 @@ tcp_read_buf(int s, short event, void *arg)
 			    "tcp_read_buf: check failed");
 		return;
 	default:
-		buf_add(cte->buf, rbuf, br);
+		if (buf_add(cte->buf, rbuf, br) == -1)
+			fatal("tcp_read_buf: buf_add error");
 		if (cte->validate_read != NULL) {
 			if (cte->validate_read(cte) != 0)
 				goto retry;
@@ -326,7 +327,7 @@ check_http_code(struct ctl_tcp_event *cte)
 		host->up = HOST_DOWN;
 		return (1);
 	}
-	strlcpy(scode, head, sizeof(scode));
+	(void)strlcpy(scode, head, sizeof(scode));
 	code = strtonum(scode, 100, 999, &estr);
 	if (estr != NULL) {
 		log_debug("check_http_code: %s failed "

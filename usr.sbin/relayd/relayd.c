@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.15 2007/02/07 13:30:17 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.16 2007/02/08 13:32:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -152,8 +152,10 @@ main(int argc, char *argv[])
 	if (getpwnam(HOSTSTATED_USER) == NULL)
 		errx(1, "unknown user %s", HOSTSTATED_USER);
 
-	if (!debug)
-		daemon(1, 0);
+	if (!debug) {
+		if (daemon(1, 0) == -1)
+			err(1, "failed to daemonize");
+	}
 
 	log_info("startup");
 

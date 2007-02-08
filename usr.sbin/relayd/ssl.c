@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.5 2007/02/07 14:39:45 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.6 2007/02/08 13:32:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -94,8 +94,8 @@ ssl_read(int s, short event, void *arg)
 		}
 		return;
 	} 
-	buf_add(cte->buf, rbuf, ret);
-
+	if (buf_add(cte->buf, rbuf, ret) == -1)
+		fatal("ssl_read: buf_add error");
 	if (cte->validate_read != NULL) {
 		if (cte->validate_read(cte) != 0)
 			goto retry;

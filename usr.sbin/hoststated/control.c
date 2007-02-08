@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.12 2007/02/07 13:39:58 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.13 2007/02/08 13:32:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -56,7 +56,12 @@ control_init(void)
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, HOSTSTATED_SOCKET, sizeof(sun.sun_path));
+	if (strlcpy(sun.sun_path, HOSTSTATED_SOCKET,
+	    sizeof(sun.sun_path)) >= sizeof(sun.sun_path)) {
+		log_warn("control_init: %s name too long", HOSTSTATED_SOCKET);
+		close(fd);
+		return (-1);
+	}
 
 	if (unlink(HOSTSTATED_SOCKET) == -1)
 		if (errno != ENOENT) {
@@ -69,10 +74,10 @@ control_init(void)
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
 		log_warn("control_init: bind: %s", HOSTSTATED_SOCKET);
 		close(fd);
-		umask(old_umask);
+		(void)umask(old_umask);
 		return (-1);
 	}
-	umask(old_umask);
+	(void)umask(old_umask);
 
 	if (chmod(HOSTSTATED_SOCKET, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
 		log_warn("control_init: chmod");
@@ -106,8 +111,7 @@ control_listen(void)
 void
 control_cleanup(void)
 {
-
-	unlink(HOSTSTATED_SOCKET);
+	(void)unlink(HOSTSTATED_SOCKET);
 }
 
 /* ARGSUSED */

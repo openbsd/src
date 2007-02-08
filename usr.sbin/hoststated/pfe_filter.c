@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.11 2007/02/07 14:45:12 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.12 2007/02/08 13:32:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -79,12 +79,16 @@ init_tables(struct hoststated *env)
 	i = 0;
 
 	TAILQ_FOREACH(service, &env->services, entry) {
-		(void)strlcpy(tables[i].pfrt_anchor, HOSTSTATED_ANCHOR "/",
-		    sizeof(tables[i].pfrt_anchor));
-		(void)strlcat(tables[i].pfrt_anchor, service->name,
-		    sizeof(tables[i].pfrt_anchor));
-		(void)strlcpy(tables[i].pfrt_name, service->name,
-		    sizeof(tables[i].pfrt_name));
+		if (strlcpy(tables[i].pfrt_anchor, HOSTSTATED_ANCHOR "/",
+		    sizeof(tables[i].pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
+			goto toolong;
+		if (strlcat(tables[i].pfrt_anchor, service->name,
+		    sizeof(tables[i].pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
+			goto toolong;
+		if (strlcpy(tables[i].pfrt_name, service->name,
+		    sizeof(tables[i].pfrt_name)) >=
+		    sizeof(tables[i].pfrt_name))
+			goto toolong;
 		tables[i].pfrt_flags |= PFR_TFLAG_PERSIST;
 		i++;
 	}
@@ -110,6 +114,11 @@ init_tables(struct hoststated *env)
 	 */
 	TAILQ_FOREACH(service, &env->services, entry)
 		flush_table(env, service);
+
+	return;
+
+ toolong:
+	fatal("init_tables: name too long");
 }
 
 void
@@ -119,14 +128,20 @@ kill_tables(struct hoststated *env) {
 
 	memset(&io, 0, sizeof(io));
 	TAILQ_FOREACH(service, &env->services, entry) {
-		(void)strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
-		    sizeof(io.pfrio_table.pfrt_anchor));
-		(void)strlcat(io.pfrio_table.pfrt_anchor, service->name,
-		    sizeof(io.pfrio_table.pfrt_anchor));
+		if (strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
+		    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
+			goto toolong;
+		if (strlcat(io.pfrio_table.pfrt_anchor, service->name,
+		    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
+			goto toolong;
 		if (ioctl(env->pf->dev, DIOCRCLRTABLES, &io) == -1)
 			fatal("kill_tables: ioctl faile: ioctl failed");
 	}
 	log_debug("kill_tables: deleted %d tables", io.pfrio_ndel);
+	return;
+
+ toolong:
+	fatal("kill_tables: name too long");
 }
 
 void
@@ -155,12 +170,16 @@ sync_table(struct hoststated *env, struct service *service, struct table *table)
 	io.pfrio_size = table->up;
 	io.pfrio_size2 = 0;
 	io.pfrio_buffer = addlist;
-	(void)strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
-	    sizeof(io.pfrio_table.pfrt_anchor));
-	(void)strlcat(io.pfrio_table.pfrt_anchor, service->name,
-	    sizeof(io.pfrio_table.pfrt_anchor));
-	(void)strlcpy(io.pfrio_table.pfrt_name, service->name,
-	    sizeof(io.pfrio_table.pfrt_name));
+	if (strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
+	    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
+		goto toolong;
+	if (strlcat(io.pfrio_table.pfrt_anchor, service->name,
+	    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
+		goto toolong;
+	if (strlcpy(io.pfrio_table.pfrt_name, service->name,
+	    sizeof(io.pfrio_table.pfrt_name)) >=
+	    sizeof(io.pfrio_table.pfrt_name))
+		goto toolong;
 
 	i = 0;
 	TAILQ_FOREACH(host, &table->hosts, entry) {
@@ -199,6 +218,10 @@ sync_table(struct hoststated *env, struct service *service, struct table *table)
 	log_debug("sync_table: table %s: %d added, %d deleted, %d changed",
 	    io.pfrio_table.pfrt_name,
 	    io.pfrio_nadd, io.pfrio_ndel, io.pfrio_nchange);
+	return;
+
+ toolong:
+	fatal("sync_table: name too long");
 }
 
 void
@@ -207,16 +230,23 @@ flush_table(struct hoststated *env, struct service *service)
 	struct pfioc_table	io;
 
 	memset(&io, 0, sizeof(io));
-	(void)strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
-	    sizeof(io.pfrio_table.pfrt_anchor));
-	(void)strlcat(io.pfrio_table.pfrt_anchor, service->name,
-	    sizeof(io.pfrio_table.pfrt_anchor));
-	(void)strlcpy(io.pfrio_table.pfrt_name, service->name,
-	    sizeof(io.pfrio_table.pfrt_name));
+	if (strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
+	    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
+		goto toolong;
+	if (strlcat(io.pfrio_table.pfrt_anchor, service->name,
+	    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
+		goto toolong;
+	if (strlcpy(io.pfrio_table.pfrt_name, service->name,
+	    sizeof(io.pfrio_table.pfrt_name)) >=
+    	    sizeof(io.pfrio_table.pfrt_name))
+		goto toolong;
 	if (ioctl(env->pf->dev, DIOCRCLRADDRS, &io) == -1)
 		fatal("flush_table: cannot flush table");
 	log_debug("flush_table: flushed table %s", service->name);
 	return;
+
+ toolong:
+	fatal("flush_table: name too long");
 }
 
 int
@@ -227,7 +257,7 @@ transaction_init(struct hoststated *env, const char *anchor)
 	env->pf->pft.array = &env->pf->pfte;
 
 	memset(&env->pf->pfte, 0, sizeof env->pf->pfte);
-	strlcpy(env->pf->pfte.anchor, anchor, PF_ANCHOR_NAME_SIZE);
+	(void)strlcpy(env->pf->pfte.anchor, anchor, PF_ANCHOR_NAME_SIZE);
 	env->pf->pfte.rs_num = PF_RULESET_RDR;
 
 	if (ioctl(env->pf->dev, DIOCXBEGIN, &env->pf->pft) == -1)
@@ -254,13 +284,23 @@ sync_ruleset(struct hoststated *env, struct service *service, int enable)
 	char			 anchor[PF_ANCHOR_NAME_SIZE];
 
 	bzero(anchor, sizeof(anchor));
-	(void)strlcpy(anchor, HOSTSTATED_ANCHOR "/", sizeof(anchor));
-	(void)strlcat(anchor, service->name, sizeof(anchor));
-	transaction_init(env, anchor);
+	if (strlcpy(anchor, HOSTSTATED_ANCHOR "/", sizeof(anchor)) >=
+	    PF_ANCHOR_NAME_SIZE)
+		goto toolong;
+	if (strlcat(anchor, service->name, sizeof(anchor)) >=
+	    PF_ANCHOR_NAME_SIZE)
+		goto toolong;
+	if (transaction_init(env, anchor) == -1) {
+		log_warn("sync_ruleset: transaction init failed");
+		return;
+	}
 
 	if (!enable) {
-		transaction_commit(env);
-		log_debug("sync_ruleset: rules removed");
+		if (transaction_commit(env) == -1)
+			log_warn("sync_ruleset: "
+			    "remove rules transaction failed");
+		else
+			log_debug("sync_ruleset: rules removed");
 		return;
 	}
 
@@ -306,8 +346,9 @@ sync_ruleset(struct hoststated *env, struct service *service, int enable)
 		}
 
 		pio.addr.addr.type = PF_ADDR_TABLE;
-		(void)strlcpy(pio.addr.addr.v.tblname, service->name,
-		    sizeof(pio.addr.addr.v.tblname));
+		if (strlcpy(pio.addr.addr.v.tblname, service->name,
+		    sizeof(pio.addr.addr.v.tblname)) >= sizeof(pio.addr.addr.v.tblname))
+			fatal("sync_ruleset: table name too long");
 		if (ioctl(env->pf->dev, DIOCADDADDR, &pio) == -1)
 			fatal("sync_ruleset: cannot add address to pool");
 
@@ -321,7 +362,12 @@ sync_ruleset(struct hoststated *env, struct service *service, int enable)
 			fatal("cannot add rule");
 		log_debug("sync_ruleset: rule added");
 	}
-	transaction_commit(env);
+	if (transaction_commit(env) == -1)
+		log_warn("sync_ruleset: add rules transaction failed");
+	return;
+
+ toolong:
+	fatal("sync_ruleset: name too long");
 }
 
 void
@@ -332,13 +378,27 @@ flush_rulesets(struct hoststated *env)
 
 	kill_tables(env);
 	TAILQ_FOREACH(service, &env->services, entry) {
-		strlcpy(anchor, HOSTSTATED_ANCHOR "/", sizeof(anchor));
-		strlcat(anchor, service->name, sizeof(anchor));
-		transaction_init(env, anchor);
-		transaction_commit(env);
+		if (strlcpy(anchor, HOSTSTATED_ANCHOR "/", sizeof(anchor)) >=
+		    PF_ANCHOR_NAME_SIZE)
+			goto toolong;
+		if (strlcat(anchor, service->name, sizeof(anchor)) >=
+		    PF_ANCHOR_NAME_SIZE)
+			goto toolong;
+		if (transaction_init(env, anchor) == -1 ||
+		    transaction_commit(env) == -1)
+			log_warn("flush_rulesets: transaction for %s/ failed",
+			    HOSTSTATED_ANCHOR);
 	}
-	strlcpy(anchor, HOSTSTATED_ANCHOR, sizeof(anchor));
-	transaction_init(env, anchor);
-	transaction_commit(env);
+	if (strlcpy(anchor, HOSTSTATED_ANCHOR, sizeof(anchor)) >=
+	    PF_ANCHOR_NAME_SIZE)
+		goto toolong;
+	if (transaction_init(env, anchor) == -1 ||
+	    transaction_commit(env) == -1)
+		log_warn("flush_rulesets: transaction for %s failed",
+		    HOSTSTATED_ANCHOR);
 	log_debug("flush_rulesets: flushed rules");
+ 	return;
+
+ toolong:
+	fatal("flush_rulesets: name too long");
 }
