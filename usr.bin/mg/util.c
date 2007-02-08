@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.23 2006/11/17 08:45:31 kjell Exp $	*/
+/*	$OpenBSD: util.c,v 1.24 2007/02/08 21:40:38 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -264,7 +264,7 @@ delwhite(int f, int n)
  * simple.  Figure out the indentation of the current line.  Insert a newline
  * by calling the standard routine.  Insert the indentation by inserting the
  * right number of tabs and spaces.  Return TRUE if all ok.  Return FALSE if
- * one of the subcommands failed. Normally bound to "C-J".
+ * one of the subcommands failed. Normally bound to "C-M".
  */
 /* ARGSUSED */
 int
