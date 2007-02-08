@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.523 2006/12/22 13:24:52 reyk Exp $ */
+/*	$OpenBSD: pf.c,v 1.524 2007/02/08 15:24:24 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6215,7 +6215,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 {
 	struct pfi_kif		*kif;
 	u_short			 action, reason = 0, log = 0;
-	struct mbuf		*m = *m0;
+	struct mbuf		*m = *m0, *n = NULL;
 	struct ip6_hdr		*h;
 	struct pf_rule		*a = NULL, *r = &pf_default_rule, *tr, *nr;
 	struct pf_state		*s = NULL;
@@ -6267,6 +6267,18 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	m = *m0;
 	h = mtod(m, struct ip6_hdr *);
 
+#if 1
+	/*
+	 * we do not support jumbogram yet.  if we keep going, zero ip6_plen
+	 * will do something bad, so drop the packet for now.
+	 */
+	if (htons(h->ip6_plen) == 0) {
+		action = PF_DROP;
+		REASON_SET(&reason, PFRES_NORM);	/*XXX*/
+		goto done;
+	}
+#endif
+
 	pd.src = (struct pf_addr *)&h->ip6_src;
 	pd.dst = (struct pf_addr *)&h->ip6_dst;
 	PF_ACPY(&pd.baddr, dir == PF_OUT ? pd.src : pd.dst, AF_INET6);
@@ -6286,9 +6298,67 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			if (action == PF_DROP)
 				REASON_SET(&reason, PFRES_FRAG);
 			goto done;
+		case IPPROTO_ROUTING: {
+			struct ip6_rthdr rthdr;
+			struct ip6_rthdr0 rthdr0;
+			struct in6_addr finaldst;
+			struct ip6_hdr *ip6;
+
+			if (!pf_pull_hdr(m, off, &rthdr, sizeof(rthdr), NULL,
+			    &reason, pd.af)) {
+				DPFPRINTF(PF_DEBUG_MISC,
+				    ("pf: IPv6 short rthdr\n"));
+				action = PF_DROP;
+				log = 1;
+				goto done;
+			}
+			if (rthdr.ip6r_type == IPV6_RTHDR_TYPE_0) {
+				if (!pf_pull_hdr(m, off, &rthdr0,
+				    sizeof(rthdr0), NULL, &reason, pd.af)) {
+					DPFPRINTF(PF_DEBUG_MISC,
+					    ("pf: IPv6 short rthdr0\n"));
+					action = PF_DROP;
+					log = 1;
+					goto done;
+				}
+				if (rthdr0.ip6r0_segleft != 0) {
+					if (!pf_pull_hdr(m, off +
+					    sizeof(rthdr0) +
+					    rthdr0.ip6r0_len * 8 -
+					    sizeof(finaldst), &finaldst,
+					    sizeof(finaldst), NULL,
+					    &reason, pd.af)) {
+						DPFPRINTF(PF_DEBUG_MISC,
+						    ("pf: IPv6 short rthdr0\n"));
+						action = PF_DROP;
+						log = 1;
+						goto done;
+					}
+
+					n = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+					if (!n) {
+						DPFPRINTF(PF_DEBUG_MISC,
+						    ("pf: mbuf shortage\n"));
+						action = PF_DROP;
+						log = 1;
+						goto done;
+					}
+					n = m_pullup(n, sizeof(struct ip6_hdr));
+					if (!n) {
+						DPFPRINTF(PF_DEBUG_MISC,
+						    ("pf: mbuf shortage\n"));
+						action = PF_DROP;
+						log = 1;
+						goto done;
+					}
+					ip6 = mtod(n, struct ip6_hdr *);
+					ip6->ip6_dst = finaldst;
+				}
+			}
+			/* fallthrough */
+		}
 		case IPPROTO_AH:
 		case IPPROTO_HOPOPTS:
-		case IPPROTO_ROUTING:
 		case IPPROTO_DSTOPTS: {
 			/* get next header and header length */
 			struct ip6_ext	opt6;
@@ -6315,6 +6385,10 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 		}
 	} while (!terminal);
 
+	/* if there's no routing header, use unmodified mbuf for checksumming */
+	if (!n)
+		n = m;
+
 	switch (pd.proto) {
 
 	case IPPROTO_TCP: {
@@ -6326,7 +6400,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = action != PF_PASS;
 			goto done;
 		}
-		if (dir == PF_IN && pf_check_proto_cksum(m, off,
+		if (dir == PF_IN && pf_check_proto_cksum(n, off,
 		    ntohs(h->ip6_plen) - (off - sizeof(struct ip6_hdr)),
 		    IPPROTO_TCP, AF_INET6)) {
 			action = PF_DROP;
@@ -6361,7 +6435,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = action != PF_PASS;
 			goto done;
 		}
-		if (dir == PF_IN && uh.uh_sum && pf_check_proto_cksum(m,
+		if (dir == PF_IN && uh.uh_sum && pf_check_proto_cksum(n,
 		    off, ntohs(h->ip6_plen) - (off - sizeof(struct ip6_hdr)),
 		    IPPROTO_UDP, AF_INET6)) {
 			action = PF_DROP;
@@ -6398,7 +6472,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = action != PF_PASS;
 			goto done;
 		}
-		if (dir == PF_IN && pf_check_proto_cksum(m, off,
+		if (dir == PF_IN && pf_check_proto_cksum(n, off,
 		    ntohs(h->ip6_plen) - (off - sizeof(struct ip6_hdr)),
 		    IPPROTO_ICMPV6, AF_INET6)) {
 			action = PF_DROP;
@@ -6436,7 +6510,12 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	}
 
 done:
-	/* XXX handle IPv6 options, if not allowed. not implemented. */
+	if (n != m) {
+		m_freem(n);
+		n = NULL;
+	}
+
+	/* XXX handle IPv6 options, if not allowed.  not implemented. */
 
 	if ((s && s->tag) || r->rtableid)
 		pf_tag_packet(m, pd.pf_mtag, s ? s->tag : 0, r->rtableid);
