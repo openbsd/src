@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.257 2007/02/07 23:48:45 jsg Exp $
+$OpenBSD: usbdevs,v 1.258 2007/02/08 05:23:08 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -475,6 +475,7 @@ vendor CMOTECH		0x16d8	CMOTECH CDMA Technologies
 vendor LINKSYS4		0x1737	Linksys
 vendor SENAO		0x1740	Senao
 vendor METAGEEK		0x1781	MetaGeek
+vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
 vendor DLINK		0x2001	D-Link
@@ -527,6 +528,8 @@ product 3COMUSR USRISDN		0x008f	3Com U.S. Robotics Pro ISDN TA
 product 3COMUSR HOMECONN	0x009d	3Com HomeConnect
 product 3COMUSR USR56K		0x3021	U.S.Robotics 56000
 
+product HUAWEI3COM WUB320G	0x0009	Aolynk WUB320g
+
 /* AboCom products */
 product ABOCOM XX1		0x110c	XX1
 product ABOCOM XX2		0x200c	XX2
@@ -543,7 +546,11 @@ product ABOCOM XX9		0x4104	XX9
 product ABOCOM WL54		0x6001	WL54
 product ABOCOM XX10		0xabc1	XX10
 product ABOCOM BWU613		0xb000	BWU613
-product ABOCOM RT2573		0xb21d	RT2573
+product ABOCOM HWU54DM		0xb21b	HWU54DM
+product ABOCOM RT2573_2		0xb21c	RT2573
+product ABOCOM RT2573_3		0xb21d	RT2573
+product ABOCOM RT2573_4		0xb21e	RT2573
+product ABOCOM WUG2700		0xb21f	WUG2700
 
 /* Accton products */
 product ACCTON USB320_EC	0x1046	USB320-EC Ethernet
@@ -663,6 +670,9 @@ product AMBIT WLAN		0x0302	WLAN
 /* American Power Conversion products */
 product APC UPSPRO500		0x0002	Back-UPS Pro 500
 
+/* AMIT products */
+product AMIT CGWLUSB2GO		0x0002	CG-WLUSB2GO
+
 /* Analog Devices, Inc. products */
 product ANALOG EAGLEI		0x900f	Eagle I
 product ANALOG EAGLEI_NF	0x9010	Eagle I
@@ -711,7 +721,8 @@ product ASIX AX88772		0x7720	AX88772
 /* ASUS products */
 product ASUS RT2570		0x1706	RT2570
 product ASUS RT2570_2		0x1707	RT2570
-product ASUS RT2573		0x1723	RT2573
+product ASUS RT2573_1		0x1723	RT2573
+product ASUS RT2573_2		0x1724	RT2573
 product ASUS WL159G		0x170c	WL-159g
 product ASUS MYPAL_A730		0x4202	MyPal A730
 product ASUS A9T_WIFI		0x171b	A9T wireless
@@ -861,6 +872,7 @@ product CISCOLINKSYS WUSB54G 	0x000d	RT2570
 product CISCOLINKSYS WUSB54GP	0x0011	RT2570
 product CISCOLINKSYS USB200MV2	0x0018	USB200M v2
 product CISCOLINKSYS WUSB54GC	0x0020	WUSB54GC
+product CISCOLINKSYS WUSB54GR	0x0023	WUSB54GR
 product CISCOLINKSYS WUSBF54G	0x0024	WUSBF54G
 product CISCOLINKSYS HU200TS	0x001a	HU200-TS
 
@@ -1173,6 +1185,8 @@ product GUDE DCF		0xdcf7	Expert mouseCLOCK USB
 /* Guillemot Corporation */
 product GUILLEMOT DALEADER	0xa300	DA Leader
 product GUILLEMOT HWGUSB254	0xe000	HWGUSB2-54 WLAN
+product GUILLEMOT HWGUSB254LB	0xe010	HWGUSB2-54-LB
+product GUILLEMOT HWGUSB254V2AP	0xe020	HWGUSB2-54V2-AP
 
 /* Hagiwara products */
 product HAGIWARA FGSM		0x0002  FlashGate SmartMedia
@@ -1241,7 +1255,6 @@ product HP 568J			0x1116  Jornada 568
 product HP2 C500		0x6002	PhotoSmart C500
 
 /* HUAWEI products */
-product HUAWEI3COM RT2573	0x0009	RT2573
 product HUAWEI E618		0x1001	HUAWEI Mobile E618
 
 /* IBM Corporation */
@@ -1509,6 +1522,8 @@ product MELCO KB11		0x0044	WLI-USB-KB11 WLAN
 product MELCO KG54YB		0x005e	WLI-U2-KG54-YB WLAN
 product MELCO KG54		0x0066	WLI-U2-KG54 WLAN
 product MELCO KG54AI		0x0067	WLI-U2-KG54-AI WLAN
+product MELCO SG54HP		0x00d8	WLI-U2-SG54HP
+product MELCO G54HP		0x00d9	WLI-U2-G54HP
 
 /* MetaGeek products */
 product METAGEEK WISPY		0x083e	Wi-Spy
@@ -1526,9 +1541,10 @@ product MSI BLUETOOTH		0x1967	Bluetooth
 product MSI RT2570		0x6861	RT2570
 product MSI RT2570_2		0x6865	RT2570
 product MSI RT2570_3		0x6869	RT2570
-product MSI RT2573		0x6877	RT2573
-product MSI RT2573_2		0xa861	RT2573
-product MSI RT2573_3		0xa874	RT2573
+product MSI RT2573_1		0x6874	RT2573
+product MSI RT2573_2		0x6877	RT2573
+product MSI RT2573_3		0xa861	RT2573
+product MSI RT2573_4		0xa874	RT2573
 
 /* Micronet Communications products */
 product MICRONET SP128AR	0x0003	SP128AR EtherFast
@@ -1674,6 +1690,7 @@ product NOKIA CA42		0x1234	CA-42 Serial
 
 /* Nova Tech products */
 product NOVATECH NV902W		0x9020	NV-902W
+product NOVATECH RT2573		0x9021	RT2573
 
 /* Novatel Wireless products */
 product NOVATEL EXPRESSCARD	0x1100	ExpressCard 3G
@@ -1778,8 +1795,10 @@ product PILOTECH CRW600		0x0001	CRW-600 6-in-1
 /* Planex Communications products */
 product PLANEX GW_US11H		0x14ea	GW-US11H WLAN
 product PLANEX2 GW_US11S	0x3220	GW-US11S WLAN
+product PLANEX2 GWUS54HP	0xab01	GW-US54HP
 product PLANEX3 GU1000T		0xab11	GU-1000T
 product PLANEX3 GWUS54MINI	0xab13	GW-US54Mini
+product PLANEX2 GWUS54MINI2	0xab50	GW-US54Mini2
 product PLANEX2 GWUS54SG	0xc002	GW-US54SG
 product PLANEX2 GWUS54GZL	0xc007	GW-US54GZL
 product PLANEX2 GWUSMM		0xed02	GW-USMM
@@ -1859,6 +1878,7 @@ product RALINK RT2570_2		0x2570	RT2570
 product RALINK RT2570_3		0x9020	RT2570
 product RALINK RT2573		0x2573	RT2573
 product RALINK RT2671		0x2671	RT2671
+product RALINK RT2573_2		0x9021	RT2573
 
 /* RATOC Systems products */
 product RATOC REXUSB60		0xb000	USB serial REX-USB60
