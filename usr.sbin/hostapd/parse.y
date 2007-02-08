@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.27 2006/12/31 03:25:58 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.28 2007/02/08 11:15:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -214,8 +214,13 @@ option		: SET HOSTAP INTERFACE hostapifaces
 		| SET HOSTAP MODE hostapmode
 		| SET IAPP INTERFACE STRING passive
 		{
-			strlcpy(hostapd_cfg.c_iapp.i_iface, $4,
-			    sizeof(hostapd_cfg.c_iapp.i_iface));
+			if (strlcpy(hostapd_cfg.c_iapp.i_iface, $4,
+			    sizeof(hostapd_cfg.c_iapp.i_iface)) >=
+			    sizeof(hostapd_cfg.c_iapp.i_iface)) {
+				yyerror("invalid interface %s", $4);
+				free($4);
+				YYERROR;
+			}
 
 			hostapd_cfg.c_flags |= HOSTAPD_CFG_F_IAPP;
 
@@ -358,7 +363,8 @@ event		: HOSTAP HANDLE
 				YYERROR;
 			}
 
-			gettimeofday(&frame.f_last, NULL);
+			if (gettimeofday(&frame.f_last, NULL) == -1)
+				hostapd_fatal("gettimeofday");
 			timeradd(&frame.f_last, &frame.f_limit, &frame.f_then);
 
 			bcopy(&frame, frame_ptr, sizeof(struct hostapd_frame));
@@ -1340,7 +1346,8 @@ lgetc(void)
 		do {
 			c = getc(file->stream);
 		} while (c == '\t' || c == ' ');
-		ungetc(c, file->stream);
+		if (ungetc(c, file->stream) == EOF)
+			hostapd_fatal("lgetc: ungetc");
 		c = ' ';
 	}
 
@@ -1552,7 +1559,8 @@ hostapd_parse_symset(char *s)
 	if ((sym = (char *)malloc(len)) == NULL)
 		hostapd_fatal("cmdline_symset: malloc");
 
-	strlcpy(sym, s, len);
+	if (strlcpy(sym, s, len) >= len)
+		hostapd_fatal("cmdline_symset: macro too long");
 
 	ret = symset(sym, val + 1, 1);
 

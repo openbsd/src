@@ -1,4 +1,4 @@
-/*	$OpenBSD: llc.c,v 1.4 2005/12/18 17:54:12 reyk Exp $	*/
+/*	$OpenBSD: llc.c,v 1.5 2007/02/08 11:15:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -52,7 +52,7 @@ hostapd_llc_init(struct hostapd_config *cfg)
 	cfg->c_flags |= HOSTAPD_CFG_F_RAW;
 
 	bzero(&ifr, sizeof(struct ifreq));
-	strlcpy(ifr.ifr_name, iapp->i_iface, sizeof(ifr.ifr_name));
+	(void)strlcpy(ifr.ifr_name, iapp->i_iface, sizeof(ifr.ifr_name));
 
 	/* Associate the wired network interface to the BPF descriptor */
 	if (ioctl(iapp->i_raw, BIOCSETIF, &ifr) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.30 2006/09/28 17:43:42 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.31 2007/02/08 11:15:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -228,7 +228,7 @@ hostapd_udp_init(struct hostapd_config *cfg)
 
 	cfg->c_flags |= HOSTAPD_CFG_F_UDP;
 
-	strlcpy(ifr.ifr_name, iapp->i_iface, sizeof(ifr.ifr_name));
+	(void)strlcpy(ifr.ifr_name, iapp->i_iface, sizeof(ifr.ifr_name));
 
 	if (ioctl(iapp->i_udp, SIOCGIFADDR, &ifr) == -1)
 		hostapd_fatal("UDP ioctl %s on \"%s\" failed: %s\n",
@@ -320,7 +320,7 @@ hostapd_sig_handler(int sig)
 	case SIGTERM:
 	case SIGQUIT:
 	case SIGINT:
-		event_loopexit(&tv);
+		(void)event_loopexit(&tv);
 	}
 }
 
@@ -390,7 +390,7 @@ main(int argc, char *argv[])
 	struct hostapd_iapp *iapp;
 	struct hostapd_apme *apme;
 	char *config = NULL;
-	u_int debug = 0;
+	u_int debug = 0, ret;
 	int ch;
 
 	/* Set startup logging */
@@ -421,9 +421,11 @@ main(int argc, char *argv[])
 	}
 
 	if (config == NULL)
-		strlcpy(cfg->c_config, HOSTAPD_CONFIG, sizeof(cfg->c_config));
+		ret = strlcpy(cfg->c_config, HOSTAPD_CONFIG, sizeof(cfg->c_config));
 	else
-		strlcpy(cfg->c_config, config, sizeof(cfg->c_config));
+		ret = strlcpy(cfg->c_config, config, sizeof(cfg->c_config));
+	if (ret >= sizeof(cfg->c_config))
+		hostapd_fatal("invalid configuration file\n");
 
 	if (geteuid())
 		hostapd_fatal("need root privileges\n");
@@ -452,7 +454,8 @@ main(int argc, char *argv[])
 	if ((cfg->c_debug = debug) == 0) {
 		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 		tzset();
-		daemon(0, 0);
+		if (daemon(0, 0) == -1)
+			hostapd_fatal("failed to daemonize\n");
 	}
 
 	if (cfg->c_flags & HOSTAPD_CFG_F_APME) {
@@ -474,7 +477,7 @@ main(int argc, char *argv[])
 	 * Unprivileged child process
 	 */
 
-	event_init();
+	(void)event_init();
 
 	/*
 	 * Set signal handlers
@@ -496,7 +499,8 @@ main(int argc, char *argv[])
 		TAILQ_FOREACH(apme, &cfg->c_apmes, a_entries) {
 			event_set(&apme->a_ev, apme->a_raw,
 			    EV_READ | EV_PERSIST, hostapd_apme_input, apme);
-			event_add(&apme->a_ev, NULL);
+			if (event_add(&apme->a_ev, NULL) == -1)
+				hostapd_fatal("failed to add APME event");
 		}
 	}
 
@@ -505,13 +509,15 @@ main(int argc, char *argv[])
 	 */
 	event_set(&iapp->i_udp_ev, iapp->i_udp, EV_READ | EV_PERSIST,
 	    hostapd_iapp_input, cfg);
-	event_add(&iapp->i_udp_ev, NULL);
+	if (event_add(&iapp->i_udp_ev, NULL) == -1)
+		hostapd_fatal("failed to add IAPP event");
 
 	hostapd_log(HOSTAPD_LOG, "starting hostapd with pid %u",
 	    getpid());
 
 	/* Run event loop */
-	event_dispatch();
+	if (event_dispatch() == -1)
+		hostapd_fatal("failed to dispatch hostapd");
 
 	/* Executed after the event loop has been terminated */
 	hostapd_cleanup(cfg);
@@ -542,8 +548,11 @@ hostapd_table_add(struct hostapd_config *cfg, const char *name)
 	if ((table = (struct hostapd_table *)
 	    calloc(1, sizeof(struct hostapd_table))) == NULL)
 		return (NULL);
-
-	strlcpy(table->t_name, name, sizeof(table->t_name));
+	if (strlcpy(table->t_name, name, sizeof(table->t_name)) >=
+	    sizeof(table->t_name)) {
+		free(table);
+		return (NULL);
+	}
 	RB_INIT(&table->t_tree);
 	TAILQ_INIT(&table->t_mask_head);
 	TAILQ_INSERT_TAIL(&cfg->c_tables, table, t_entries);

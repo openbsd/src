@@ -1,4 +1,4 @@
-/*	$OpenBSD: apme.c,v 1.14 2006/12/31 03:25:58 reyk Exp $	*/
+/*	$OpenBSD: apme.c,v 1.15 2007/02/08 11:15:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -58,8 +58,12 @@ hostapd_apme_add(struct hostapd_config *cfg, const char *name)
 	if ((apme = (struct hostapd_apme *)
 	    calloc(1, sizeof(struct hostapd_apme))) == NULL)
 		return (ENOMEM);
+	if (strlcpy(apme->a_iface, name, sizeof(apme->a_iface)) >=
+	    sizeof(apme->a_iface)) {
+		free(apme);
+		return (EINVAL);
+	}
 
-	strlcpy(apme->a_iface, name, sizeof(apme->a_iface));
 	apme->a_cfg = cfg;
 	apme->a_chanavail = NULL;
 
@@ -133,7 +137,7 @@ hostapd_apme_addhopper(struct hostapd_config *cfg, const char *name)
 		return (NULL);
 	memset(apme->a_chanavail, 0xff,
 	    apme->a_maxchan * sizeof(u_int8_t));
-	strlcpy(apme->a_chanreq.i_name, apme->a_iface, IFNAMSIZ);
+	(void)strlcpy(apme->a_chanreq.i_name, apme->a_iface, IFNAMSIZ);
 
 	return (apme);
 }
@@ -150,7 +154,8 @@ hostapd_apme_sethopper(struct hostapd_apme *apme, int now)
 
 	if (!evtimer_initialized(&apme->a_chanev))
 		evtimer_set(&apme->a_chanev, hostapd_apme_hopper, apme);
-	evtimer_add(&apme->a_chanev, &tv);
+	if (evtimer_add(&apme->a_chanev, &tv) == -1)
+		hostapd_fatal("failed to add hopper event");
 }
 
 void
@@ -191,14 +196,16 @@ hostapd_apme_term(struct hostapd_apme *apme)
 
 	/* Remove the channel hopper, if active */
 	if (apme->a_chanavail != NULL) {
-		event_del(&apme->a_chanev);
+		(void)event_del(&apme->a_chanev);
 		free(apme->a_chanavail);
 		apme->a_chanavail = NULL;
 	}
 
 	/* Kick a specified Host AP interface */
-	event_del(&apme->a_ev);
-	close(apme->a_raw);
+	(void)event_del(&apme->a_ev);
+	if (close(apme->a_raw))
+		hostapd_fatal("failed to close: %s\n",
+		    strerror(errno));
 
 	TAILQ_REMOVE(&cfg->c_apmes, apme, a_entries);
 
@@ -393,16 +400,15 @@ hostapd_apme_frame(struct hostapd_apme *apme, u_int8_t *buf, u_int len)
 		if (apme == other_apme)
 			continue;
 		if (iapp->i_flags & HOSTAPD_IAPP_F_ROAMING)
-			hostapd_roaming_del(other_apme, &node);
+			(void)hostapd_roaming_del(other_apme, &node);
 		if (hostapd_apme_delnode(other_apme, &node) == 0)
 			cfg->c_stats.cn_tx_apme++;
 	}
 
 	if (iapp->i_flags & HOSTAPD_IAPP_F_ROAMING)
-		hostapd_roaming_add(apme, &node);
+		(void)hostapd_roaming_add(apme, &node);
 
-	hostapd_iapp_add_notify(apme, &node);
-
+	(void)hostapd_iapp_add_notify(apme, &node);
 }
 
 void
@@ -425,10 +431,10 @@ hostapd_apme_init(struct hostapd_apme *apme)
 		    "%s\n", apme->a_iface, strerror(errno));
 
 	bzero(&ifr, sizeof(struct ifreq));
-	strlcpy(ifr.ifr_name, apme->a_iface, sizeof(ifr.ifr_name));
+	(void)strlcpy(ifr.ifr_name, apme->a_iface, sizeof(ifr.ifr_name));
 
 	/* This may fail, ignore it */
-	ioctl(apme->a_raw, BIOCPROMISC, NULL);
+	(void)ioctl(apme->a_raw, BIOCPROMISC, NULL);
 
 	/* Associate the wireless network interface to the BPF descriptor */
 	if (ioctl(apme->a_raw, BIOCSETIF, &ifr) == -1)

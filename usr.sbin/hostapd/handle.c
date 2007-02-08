@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle.c,v 1.10 2006/06/27 18:14:59 reyk Exp $	*/
+/*	$OpenBSD: handle.c,v 1.11 2007/02/08 11:15:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -126,7 +126,8 @@ hostapd_handle_frame(struct hostapd_apme *apme, struct hostapd_frame *frame,
 	flags = frame->f_flags;
 
 	/* Get timestamp */
-	gettimeofday(&t_now, NULL);
+	if (gettimeofday(&t_now, NULL) == -1)
+		hostapd_fatal("gettimeofday");
 
 	/* Handle optional limit */
 	if (frame->f_limit.tv_sec || frame->f_limit.tv_usec) {

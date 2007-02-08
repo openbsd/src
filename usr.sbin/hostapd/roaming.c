@@ -1,4 +1,4 @@
-/*	$OpenBSD: roaming.c,v 1.2 2006/06/01 22:09:09 reyk Exp $	*/
+/*	$OpenBSD: roaming.c,v 1.3 2007/02/08 11:15:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -70,7 +70,7 @@ hostapd_roaming_init(struct hostapd_config *cfg)
 
 	TAILQ_FOREACH(apme, &cfg->c_apmes, a_entries) {
 		bzero(&ifr, sizeof(ifr));
-		strlcpy(ifr.ifr_name, apme->a_iface, sizeof(ifr.ifr_name));
+		(void)strlcpy(ifr.ifr_name, apme->a_iface, sizeof(ifr.ifr_name));
 		if (ioctl(cfg->c_apme_ctl, SIOCGIFADDR, &ifr) == -1)
 			hostapd_fatal("ioctl %s on \"%s\" failed: %s\n",
 			    "SIOCGIFADDR", ifr.ifr_name, strerror(errno));
@@ -95,7 +95,7 @@ hostapd_roaming_term(struct hostapd_apme *apme)
 		RB_FOREACH(entry, hostapd_tree, &iapp->i_route_tbl->t_tree) {
 			if ((entry->e_flags & HOSTAPD_ENTRY_F_INADDR) == 0)
 				continue;
-			hostapd_roaming_rt(apme, &entry->e_inaddr, 0);
+			(void)hostapd_roaming_rt(apme, &entry->e_inaddr, 0);
 		}
 	}
 
@@ -104,7 +104,7 @@ hostapd_roaming_term(struct hostapd_apme *apme)
 		RB_FOREACH(entry, hostapd_tree, &iapp->i_addr_tbl->t_tree) {
 			if ((entry->e_flags & HOSTAPD_ENTRY_F_INADDR) == 0)
 				continue;
-			hostapd_roaming_addr(apme, &entry->e_inaddr, 0);
+			(void)hostapd_roaming_addr(apme, &entry->e_inaddr, 0);
 		}
 	}
 }
@@ -173,7 +173,7 @@ hostapd_roaming_addr(struct hostapd_apme *apme, struct hostapd_inaddr *addr,
 		    htonl(0xffffffff << (32 - addr->in_netmask));
 	}
 
-	strlcpy(ifra.ifra_name, apme->a_iface, sizeof(ifra.ifra_name));
+	(void)strlcpy(ifra.ifra_name, apme->a_iface, sizeof(ifra.ifra_name));
 	if (ioctl(cfg->c_apme_ctl, SIOCDIFADDR, &ifra) < 0) {
 		if (errno != EADDRNOTAVAIL) {
 			hostapd_log(HOSTAPD_LOG_VERBOSE,
@@ -244,8 +244,9 @@ hostapd_roaming_rt(struct hostapd_apme *apme, struct hostapd_inaddr *addr,
 		rm.rm_hdr.rtm_flags |= RTF_HOST;
 
 	rm.rm_label.sr_len = sizeof(rm.rm_label);
-	snprintf(rm.rm_label.sr_label, sizeof(rm.rm_label.sr_label),
-	    "apme-%s", apme->a_iface);
+	if (snprintf(rm.rm_label.sr_label, sizeof(rm.rm_label.sr_label),
+	    "apme-%s", apme->a_iface) == -1)
+		goto bad;
 
  retry:
 	if (write(cfg->c_rtsock, &rm, len) == -1) {

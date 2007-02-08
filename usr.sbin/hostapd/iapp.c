@@ -1,4 +1,4 @@
-/*	$OpenBSD: iapp.c,v 1.16 2006/06/01 22:09:09 reyk Exp $	*/
+/*	$OpenBSD: iapp.c,v 1.17 2007/02/08 11:15:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -60,7 +60,7 @@ hostapd_iapp_init(struct hostapd_config *cfg)
 		    etheraddr_string(apme->a_bssid));
 
 		/* Deauthenticate all stations on startup */
-		hostapd_apme_deauth(apme);
+		(void)hostapd_apme_deauth(apme);
 	}
 }
 
@@ -262,7 +262,7 @@ hostapd_iapp_input(int fd, short sig, void *arg)
 		    cfg->c_flags & HOSTAPD_CFG_F_APME) {
 			TAILQ_FOREACH(apme, &cfg->c_apmes, a_entries) {
 				if (iapp->i_flags & HOSTAPD_IAPP_F_ROAMING)
-					hostapd_roaming_del(apme, &node);
+					(void)hostapd_roaming_del(apme, &node);
 				if (iapp->i_flags & HOSTAPD_IAPP_F_ADD_NOTIFY &&
 				    (ret = hostapd_apme_delnode(apme,
 				    &node)) == 0)
