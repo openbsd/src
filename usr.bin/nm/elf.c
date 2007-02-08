@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.15 2007/02/07 10:20:40 mickey Exp $	*/
+/*	$OpenBSD: elf.c,v 1.16 2007/02/08 03:50:49 ray Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: elf.c,v 1.15 2007/02/07 10:20:40 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: elf.c,v 1.16 2007/02/08 03:50:49 ray Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -447,16 +447,13 @@ elf_symloadx(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 			*pstabsize = shdr[i].sh_size;
 			if (*pstabsize > SIZE_T_MAX) {
 				warnx("%s: corrupt file", name);
-				free(shstr);
 				return (1);
 			}
 
 			MMAP(stab, *pstabsize, PROT_READ, MAP_PRIVATE|MAP_FILE,
 			    fileno(fp), foff + shdr[i].sh_offset);
-			if (stab == MAP_FAILED) {
-				free(shstr);
+			if (stab == MAP_FAILED)
 				return (1);
-			}
 		}
 	}
 	for (i = 0; i < eh->e_shnum; i++) {
@@ -466,7 +463,6 @@ elf_symloadx(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 				warn("%s: fseeko", name);
 				if (stab)
 					MUNMAP(stab, *pstabsize);
-				free(shstr);
 				return (1);
 			}
 
@@ -475,17 +471,13 @@ elf_symloadx(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 				warn("%s: malloc names", name);
 				if (stab)
 					MUNMAP(stab, *pstabsize);
-				free(*pnames);
-				free(shstr);
 				return (1);
 			}
 			if ((*psnames = malloc(*pnrawnames * sizeof(np))) == NULL) {
 				warn("%s: malloc snames", name);
 				if (stab)
 					MUNMAP(stab, *pstabsize);
-				free(shstr);
 				free(*pnames);
-				free(*psnames);
 				return (1);
 			}
 
@@ -495,7 +487,6 @@ elf_symloadx(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 					warn("%s: read symbol", name);
 					if (stab)
 						MUNMAP(stab, *pstabsize);
-					free(shstr);
 					free(*pnames);
 					free(*psnames);
 					return (1);
