@@ -1,4 +1,4 @@
-/*	$OpenBSD: readdir.c,v 1.10 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: readdir.c,v 1.11 2007/02/08 16:34:39 millert Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,11 +44,9 @@ readdir(DIR *dirp)
 
 	for (;;) {
 		if (dirp->dd_loc >= dirp->dd_size) {
-			if (dirp->dd_flags & __DTF_READALL)
-				return (NULL);
 			dirp->dd_loc = 0;
 		}
-		if (dirp->dd_loc == 0 && !(dirp->dd_flags & __DTF_READALL)) {
+		if (dirp->dd_loc == 0) {
 			dirp->dd_size = getdirentries(dirp->dd_fd,
 			    dirp->dd_buf, dirp->dd_len, &dirp->dd_seek);
 			if (dirp->dd_size <= 0)

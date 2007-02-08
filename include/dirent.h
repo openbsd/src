@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.16 2006/04/01 18:06:59 otto Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.17 2007/02/08 16:34:38 millert Exp $	*/
 /*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-
@@ -77,7 +77,6 @@ typedef struct _dirdesc {
 
 /* flags for opendir2 */
 #define DTF_NODUP	0x0002	/* don't return duplicate names */
-#define __DTF_READALL	0x0008	/* everything has been read */
 
 #ifndef NULL
 #ifdef 	__GNUG__
