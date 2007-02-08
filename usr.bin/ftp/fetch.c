@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.71 2007/02/03 05:18:40 ray Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.72 2007/02/08 03:19:12 ray Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.71 2007/02/03 05:18:40 ray Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.72 2007/02/08 03:19:12 ray Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -410,7 +410,7 @@ again:
 		}
 		if (SSL_connect(ssl) <= 0) {
 			ERR_print_errors_fp(ttyout);
-			goto cleanup_url_get;;
+			goto cleanup_url_get;
 		}
 	} else {
 		fin = fdopen(s, "r+");

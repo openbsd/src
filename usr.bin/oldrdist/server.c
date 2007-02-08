@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.29 2005/07/04 01:54:10 djm Exp $	*/
+/*	$OpenBSD: server.c,v 1.30 2007/02/08 03:19:13 ray Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.29 2005/07/04 01:54:10 djm Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.30 2007/02/08 03:19:13 ray Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -1253,7 +1253,7 @@ clean(cp)
 		}
 		tp = otp;
 		*tp++ = '/';
-		cp = dp->d_name;;
+		cp = dp->d_name;
 		while (*tp++ = *cp++)
 			;
 		tp--;
@@ -1333,7 +1333,7 @@ removeit(stp)
 		}
 		tp = otp;
 		*tp++ = '/';
-		cp = dp->d_name;;
+		cp = dp->d_name;
 		while (*tp++ = *cp++)
 			;
 		tp--;
