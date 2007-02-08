@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.22 2006/08/07 19:32:49 ray Exp $	*/
+/*	$OpenBSD: ident.c,v 1.23 2007/02/08 03:35:09 ray Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -112,7 +112,7 @@ ident_line(FILE *fp)
 	bp = rcs_buf_alloc(512, BUF_AUTOEXT);
 
 	while ((c = getc(fp)) != VALDELIM) {
-		if (c == EOF && (feof(fp) | ferror(fp)))
+		if (c == EOF)
 			goto out;
 
 		if (isalpha(c))
@@ -124,7 +124,7 @@ ident_line(FILE *fp)
 	rcs_buf_putc(bp, VALDELIM);
 
 	while ((c = getc(fp)) != KEYDELIM) {
-		if (c == EOF && (feof(fp) | ferror(fp)))
+		if (c == EOF)
 			goto out;
 
 		if (c == '\n')
