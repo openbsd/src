@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.259 2007/02/08 12:56:39 mbalmer Exp $
+$OpenBSD: usbdevs,v 1.260 2007/02/09 09:09:04 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -57,6 +57,8 @@ $OpenBSD: usbdevs,v 1.259 2007/02/08 12:56:39 mbalmer Exp $
  * make the device recognised by the appropriate device driver.
  */
 
+vendor UNKNOWN1		0x0053	Unknown vendor
+vendor UNKNOWN2		0x0105	Unknown vendor
 vendor EGALAX2		0x0123	eGalax
 vendor BWCT		0x03da	Bernd Walter Computer Technology
 vendor AOX		0x03e8	AOX
@@ -435,6 +437,7 @@ vendor ACERCM		0x1189	Acer Communications & Multimedia
 vendor SIERRA		0x1199	Sierra Wireless
 vendor SIEMENS3		0x11f5	Siemens
 vendor ALCATEL		0x11f7	Alcatel
+vendor UNKNOWN3		0x1233	Unknown vendor
 vendor TSUNAMI		0x1241	Tsunami
 vendor PHEENET		0x124a	Pheenet
 vendor RAPTORGAMING	0x1267	Raptor Gaming
@@ -559,6 +562,7 @@ product ACCTON 2664W		0x3501	2664W
 product ACCTON 111		0x3503	T-Sinus 111 WLAN
 product ACCTON SMCWUSBG		0x4505	SMCWUSB-G
 product ACCTON SS1001		0x5046	SpeedStream Ethernet
+product ACCTON ZD1211B		0xe501	ZD1211B
 
 /* Aceeca products */
 product ACEECA MEZ1000		0x0001	MEZ1000 RDA
@@ -797,6 +801,7 @@ product BELKIN F5U257		0x0257	F5U257 Serial
 product BELKIN F5U409		0x0409	F5U409 Serial
 product BELKIN F6C550AVR	0x0551	F6C550-AVR UPS
 product BELKIN F5U120		0x1203	F5U120-PC Hub
+product BELKIN ZD1211B		0x4050	ZD1211B
 product BELKIN F5D5055		0x5055	F5D5055
 product BELKIN F5D7050		0x7050	F5D7050 54g USB Network Adapter
 product BELKIN F5D7050A		0x705a	F5D705A 54g USB Network Adapter
@@ -1528,6 +1533,7 @@ product MELCO KG54		0x0066	WLI-U2-KG54 WLAN
 product MELCO KG54AI		0x0067	WLI-U2-KG54-AI WLAN
 product MELCO SG54HP		0x00d8	WLI-U2-SG54HP
 product MELCO G54HP		0x00d9	WLI-U2-G54HP
+product MELCO KG54L		0x00da	WLI-U2-KG54L
 
 /* MetaGeek products */
 product METAGEEK WISPY		0x083e	Wi-Spy
@@ -1919,7 +1925,7 @@ product ROCKFIRE GAMEPAD	0x2033	Gamepad 203USB
 /* Sagem products */
 product SAGEM SERIAL		0x0027	Serial
 product SAGEM XG760A		0x004a	XG-760A
-product SAGEM XG76NA		0x0062	XG76NA
+product SAGEM XG76NA		0x0062	XG-76NA
 
 /* Saitek products */
 product SAITEK CYBORG_3D_GOLD	0x0006	Cyborg 3D Gold Joystick
@@ -2043,6 +2049,7 @@ product SITECOM CN104		0x2068	CN104
 /* Sitecom Europe products */
 product SITECOMEU LN028		0x061c	LN-028
 product SITECOMEU WL113		0x9071	WL-113
+product SITECOMEU ZD1211B	0x9075	ZD1211B
 product SITECOMEU WL172		0x90ac	WL-172
 product SITECOMEU WL113R2	0x9712	WL-113 rev 2
 
@@ -2165,7 +2172,8 @@ product TEKRAM 0193		0x1601	ALLNET 0193 WLAN
 product TEKRAM ZYAIR_B200	0x1602	ZyXEL ZyAIR B200 WLAN
 product TEKRAM U300C		0x1612	U-300C
 product TEKRAM QUICKWLAN	0x1630	QuickWLAN
-product TEKRAM ZD1211		0x5630	ZD1211
+product TEKRAM ZD1211_1		0x5630	ZD1211
+product TEKRAM ZD1211_2		0x6630	ZD1211
 
 /* Telex Communications products */
 product TELEX MIC1		0x0001	Microphone
@@ -2230,6 +2238,16 @@ product UMAX ASTRA3400		0x0060	Astra 3400
 /* Universal Access products */
 product UNIACCESS PANACHE	0x0101	Panache Surf ISDN
 
+/* Unknown vendor 1 */
+product UNKNOWN1 ZD1211B_1	0x5301	ZD1211B
+product UNKNOWN1 ZD1211B_2	0x5301	ZD1211B
+
+/* Unknown vendor 2 */
+product UNKNOWN2 ZD1211B	0x0105	ZD1211B
+
+/* Unknown vendor 3 */
+product UNKNOWN3 ZD1211B	0x1233 ZD1211B
+
 /* U.S. Robotics products */
 product USR USR1120		0x00eb	USR1120 WLAN
 product USR MILLER_A		0x00f1	USR9000 SureConnect ADSL
@@ -2270,6 +2288,7 @@ product VIVITAR DSC350		0x0003	DSC350
 
 /* VTech products */
 product VTECH RT2570		0x3012	RT2570
+product VTECH ZD1211B		0x3014	ZD1211B
 
 /* Option products */
 product OPTION VODAFONEMC3G	0x5000	Vodafone Mobile Connect 3G
@@ -2313,8 +2332,10 @@ product YANO U640MO		0x0101	U640MO-03
 product ZCOM M4Y750		0x0001	M4Y-750
 product ZCOM XI725		0x0002	XI-725/726
 product ZCOM XI735		0x0005	XI-735
+product ZCOM ZD1211		0x0011	ZD1211
 product ZCOM AR5523		0x0012	AR5523
 product ZCOM AR5523_NF		0x0013	AR5523 driver
+product ZCOM ZD1211B		0x001a	ZD1211B
 
 /* Zinwell products */
 product ZINWELL RT2570		0x0260	RT2570
