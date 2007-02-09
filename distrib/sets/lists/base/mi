@@ -2546,9 +2546,11 @@
 ./usr/share/sendmail/feature/allmasquerade.m4
 ./usr/share/sendmail/feature/always_add_domain.m4
 ./usr/share/sendmail/feature/authinfo.m4
+./usr/share/sendmail/feature/badmx.m4
 ./usr/share/sendmail/feature/bestmx_is_local.m4
 ./usr/share/sendmail/feature/bitdomain.m4
 ./usr/share/sendmail/feature/blacklist_recipients.m4
+./usr/share/sendmail/feature/block_bad_helo.m4
 ./usr/share/sendmail/feature/compat_check.m4
 ./usr/share/sendmail/feature/conncontrol.m4
 ./usr/share/sendmail/feature/delay_checks.m4
@@ -2586,6 +2588,7 @@
 ./usr/share/sendmail/feature/relay_hosts_only.m4
 ./usr/share/sendmail/feature/relay_local_from.m4
 ./usr/share/sendmail/feature/relay_mail_from.m4
+./usr/share/sendmail/feature/require_rdns.m4
 ./usr/share/sendmail/feature/smrsh.m4
 ./usr/share/sendmail/feature/stickyhost.m4
 ./usr/share/sendmail/feature/use_client_ptr.m4
@@ -2762,6 +2765,7 @@
 ./usr/share/zoneinfo/Africa/Accra
 ./usr/share/zoneinfo/Africa/Addis_Ababa
 ./usr/share/zoneinfo/Africa/Algiers
+./usr/share/zoneinfo/Africa/Asmara
 ./usr/share/zoneinfo/Africa/Asmera
 ./usr/share/zoneinfo/Africa/Bamako
 ./usr/share/zoneinfo/Africa/Bangui
@@ -3067,6 +3071,7 @@
 ./usr/share/zoneinfo/Atlantic/Bermuda
 ./usr/share/zoneinfo/Atlantic/Canary
 ./usr/share/zoneinfo/Atlantic/Cape_Verde
+./usr/share/zoneinfo/Atlantic/Faroe
 ./usr/share/zoneinfo/Atlantic/Faeroe
 ./usr/share/zoneinfo/Atlantic/Jan_Mayen
 ./usr/share/zoneinfo/Atlantic/Madeira
@@ -3082,6 +3087,7 @@
 ./usr/share/zoneinfo/Australia/Canberra
 ./usr/share/zoneinfo/Australia/Currie
 ./usr/share/zoneinfo/Australia/Darwin
+./usr/share/zoneinfo/Australia/Eucla
 ./usr/share/zoneinfo/Australia/Hobart
 ./usr/share/zoneinfo/Australia/LHI
 ./usr/share/zoneinfo/Australia/Lindeman
@@ -3336,6 +3342,7 @@
 ./usr/share/zoneinfo/posix/Africa/Accra
 ./usr/share/zoneinfo/posix/Africa/Addis_Ababa
 ./usr/share/zoneinfo/posix/Africa/Algiers
+./usr/share/zoneinfo/posix/Africa/Asmara
 ./usr/share/zoneinfo/posix/Africa/Asmera
 ./usr/share/zoneinfo/posix/Africa/Bamako
 ./usr/share/zoneinfo/posix/Africa/Bangui
@@ -3641,6 +3648,7 @@
 ./usr/share/zoneinfo/posix/Atlantic/Bermuda
 ./usr/share/zoneinfo/posix/Atlantic/Canary
 ./usr/share/zoneinfo/posix/Atlantic/Cape_Verde
+./usr/share/zoneinfo/posix/Atlantic/Faroe
 ./usr/share/zoneinfo/posix/Atlantic/Faeroe
 ./usr/share/zoneinfo/posix/Atlantic/Jan_Mayen
 ./usr/share/zoneinfo/posix/Atlantic/Madeira
@@ -3656,6 +3664,7 @@
 ./usr/share/zoneinfo/posix/Australia/Canberra
 ./usr/share/zoneinfo/posix/Australia/Currie
 ./usr/share/zoneinfo/posix/Australia/Darwin
+./usr/share/zoneinfo/posix/Australia/Eucla
 ./usr/share/zoneinfo/posix/Australia/Hobart
 ./usr/share/zoneinfo/posix/Australia/LHI
 ./usr/share/zoneinfo/posix/Australia/Lindeman
@@ -3911,6 +3920,7 @@
 ./usr/share/zoneinfo/right/Africa/Accra
 ./usr/share/zoneinfo/right/Africa/Addis_Ababa
 ./usr/share/zoneinfo/right/Africa/Algiers
+./usr/share/zoneinfo/right/Africa/Asmara
 ./usr/share/zoneinfo/right/Africa/Asmera
 ./usr/share/zoneinfo/right/Africa/Bamako
 ./usr/share/zoneinfo/right/Africa/Bangui
@@ -4216,6 +4226,7 @@
 ./usr/share/zoneinfo/right/Atlantic/Bermuda
 ./usr/share/zoneinfo/right/Atlantic/Canary
 ./usr/share/zoneinfo/right/Atlantic/Cape_Verde
+./usr/share/zoneinfo/right/Atlantic/Faroe
 ./usr/share/zoneinfo/right/Atlantic/Faeroe
 ./usr/share/zoneinfo/right/Atlantic/Jan_Mayen
 ./usr/share/zoneinfo/right/Atlantic/Madeira
@@ -4231,6 +4242,7 @@
 ./usr/share/zoneinfo/right/Australia/Canberra
 ./usr/share/zoneinfo/right/Australia/Currie
 ./usr/share/zoneinfo/right/Australia/Darwin
+./usr/share/zoneinfo/right/Australia/Eucla
 ./usr/share/zoneinfo/right/Australia/Hobart
 ./usr/share/zoneinfo/right/Australia/LHI
 ./usr/share/zoneinfo/right/Australia/Lindeman
