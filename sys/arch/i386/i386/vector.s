@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.8 2006/06/12 04:41:30 gwk Exp $	*/
+/*	$OpenBSD: vector.s,v 1.9 2007/02/09 19:49:47 tom Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -114,8 +114,7 @@ _C_LABEL(Xintr_/**/name/**/num):					;\
 	movl	CPL,%ebx						;\
 	cmpl	%eax,%ebx						;\
 	jae	_C_LABEL(Xhold_/**/name/**/num)/* currently masked; hold it */;\
-	movl	CPL,%eax		/* cpl to restore on exit */	;\
-	pushl	%eax							;\
+	pushl	%ebx			/* cpl to restore on exit */	;\
 1:									;\
 	movl	_C_LABEL(imaxlevel) + (num) * 4,%eax			;\
 	movl	%eax,CPL		/* block enough for this irq */	;\
