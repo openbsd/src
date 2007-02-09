@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.172 2006/11/20 14:25:11 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.173 2007/02/09 11:20:39 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -935,7 +935,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	if (!(flags & FWRITE))
 		switch (cmd) {
 		case DIOCGETRULES:
-		case DIOCGETRULE:
 		case DIOCGETADDRS:
 		case DIOCGETADDR:
 		case DIOCGETSTATE:
@@ -973,6 +972,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break; /* dummy operation ok */
 			}
 			return (EACCES);
+		case DIOCGETRULE:
+			if (((struct pfioc_rule *)addr)->action == PF_GET_CLR_CNTR)
+				return (EACCES);
+			break;
 		default:
 			return (EACCES);
 		}
@@ -1231,6 +1234,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			else
 				pr->rule.skip[i].nr =
 				    rule->skip[i].ptr->nr;
+
+		if (pr->action == PF_GET_CLR_CNTR) {
+			rule->evaluations = 0;
+			rule->packets[0] = rule->packets[1] = 0;
+			rule->bytes[0] = rule->bytes[1] = 0;
+		}
 		break;
 	}
 
@@ -1811,6 +1820,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCCLRRULECTRS: {
+		/* obsoleted by DIOCGETRULE with action=PF_GET_CLR_CNTR */
 		struct pf_ruleset	*ruleset = &pf_main_ruleset;
 		struct pf_rule		*rule;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.242 2006/12/13 05:10:15 itojun Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.243 2007/02/09 11:20:39 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -69,6 +69,7 @@ enum	{ PF_DEBUG_NONE, PF_DEBUG_URGENT, PF_DEBUG_MISC, PF_DEBUG_NOISY };
 enum	{ PF_CHANGE_NONE, PF_CHANGE_ADD_HEAD, PF_CHANGE_ADD_TAIL,
 	  PF_CHANGE_ADD_BEFORE, PF_CHANGE_ADD_AFTER,
 	  PF_CHANGE_REMOVE, PF_CHANGE_GET_TICKET };
+enum	{ PF_GET_NONE, PF_GET_CLR_CNTR };
 
 /*
  * Note about PFTM_*: real indices into pf_rule.timeout[] come before
