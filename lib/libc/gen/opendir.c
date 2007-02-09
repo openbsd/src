@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendir.c,v 1.17 2006/04/10 12:04:20 otto Exp $ */
+/*	$OpenBSD: opendir.c,v 1.18 2007/02/09 14:58:09 millert Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -58,8 +58,7 @@ __opendir2(const char *name, int flags)
 	DIR *dirp;
 	int fd;
 	struct stat sb;
-	int pagesz;
-	int incr;
+	int pageoffset;
 
 	if ((fd = open(name, O_RDONLY | O_NONBLOCK)) == -1)
 		return (NULL);
@@ -81,18 +80,13 @@ __opendir2(const char *name, int flags)
 	dirp->dd_td->td_last = 0;
 
 	/*
-	 * If the machine's page size is an exact multiple of DIRBLKSIZ,
-	 * use a buffer that is cluster boundary aligned.
+	 * Use a buffer that is page aligned.
 	 * Hopefully this can be a big win someday by allowing page trades
 	 * to user space to be done by getdirentries()
 	 */
-	if (((pagesz = getpagesize()) % DIRBLKSIZ) == 0)
-		incr = pagesz;
-	else
-		incr = DIRBLKSIZ;
-
-	dirp->dd_len = incr;
-	dirp->dd_buf = malloc(dirp->dd_len);
+	pageoffset = getpagesize() - 1;
+	dirp->dd_len = ((int)sb.st_blksize + pageoffset) & ~pageoffset;
+	dirp->dd_buf = malloc((size_t)dirp->dd_len);
 	if (dirp->dd_buf == NULL) {
 		free(dirp);
 		close (fd);
