@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.185 2007/02/09 03:49:15 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.186 2007/02/09 16:46:26 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -399,7 +399,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 			if (!strcmp(dp->d_name, ".") ||
 			    !strcmp(dp->d_name, "..") ||
 			    !strcmp(dp->d_name, CVS_PATH_CVSDIR) ||
-			    dp->d_reclen == 0) {
+			    dp->d_fileno == 0) {
 				cp += dp->d_reclen;
 				continue;
 			}
