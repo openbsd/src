@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.25 2007/02/08 19:02:23 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.26 2007/02/09 19:52:32 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.25 2007/02/08 19:02:23 otto Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.26 2007/02/09 19:52:32 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ setup(char *dev)
 	u_int64_t maxfilesize;
 
 	havesb = 0;
-	fswritefd = -1;
+	fswritefd = fsreadfd = -1;
 	doskipclean = skipclean;
 	if (stat(dev, &statb) < 0) {
 		printf("Can't stat %s: %s\n", dev, strerror(errno));

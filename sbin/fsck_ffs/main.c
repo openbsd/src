@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2007/02/08 19:02:23 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2007/02/09 19:52:32 otto Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.28 2007/02/08 19:02:23 otto Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.29 2007/02/09 19:52:32 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,16 @@ checkfilesys(char *filesys, char *mntpt, long auxdata, int child)
 	case 0:
 		if (preen)
 			pfatal("CAN'T CHECK FILE SYSTEM.");
+		/* FALLTHROUGH */
 	case -1:
+		if (fsreadfd != -1) {
+			(void)close(fsreadfd);
+			fsreadfd = -1;
+		}
+		if (fswritefd != -1) {
+			(void)close(fswritefd);
+			fswritefd = -1;
+		}
 		return (0);
 	}
 	info_filesys = filesys;
