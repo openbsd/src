@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.16 2005/09/29 21:30:42 marco Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.17 2007/02/09 02:58:10 jason Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -492,7 +492,7 @@ amdgart_iommu_unmap(struct extent *ex, paddr_t pa, psize_t len)
 
 	for (idx = 0; idx < alen; idx += PAGE_SIZE) {
 		pgno = ((base - amdgart_softcs[0].g_pa) + idx) >> PGSHIFT;
-		amdgart_softcs[0].g_pte[pgno] = 0;
+		amdgart_softcs[0].g_pte[pgno] = amdgart_softcs[0].g_scribpte;
 	}
 
 	s = splhigh();
