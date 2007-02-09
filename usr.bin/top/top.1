@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.40 2007/02/09 20:11:02 jmc Exp $
+.\"	$OpenBSD: top.1,v 1.41 2007/02/09 21:15:18 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -296,10 +296,15 @@ in their command name.
 shows all processes.
 .It I \*(Ba i
 Toggle the display of idle processes.
-.It k
-Send a signal
+.It Xo k
+.Op - Ns Ar sig
+.Ar pid
+.Xc
+Send signal
+.No - Ns Ar sig
 .Pf ( Dv TERM
-by default) to a list of processes.
+by default) to process
+.Ar pid .
 This acts similarly to the command
 .Xr kill 1 .
 .It n\*(Ba# Ar n
