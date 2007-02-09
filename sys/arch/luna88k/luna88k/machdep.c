@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.36 2007/01/12 21:41:53 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.37 2007/02/09 14:26:09 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -236,7 +236,6 @@ int hwplanebits;		/* set in locore.S */
 
 extern struct consdev syscons;	/* in dev/siotty.c */
 
-extern void greeting(void);	/* in dev/lcd.c */
 extern void syscnattach(int);	/* in dev/siotty.c */
 extern int omfb_cnattach(void);	/* in dev/lunafb.c */
 extern void ws_cnattach(void);	/* in dev/lunaws.c */
@@ -561,11 +560,6 @@ cpu_startup()
 		printf("kernel does not support -c; continuing..\n");
 #endif
 	}
-
-	/*
-	 * Say hello to the world on LCD.
-	 */
-	greeting();
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.13 2006/08/06 13:04:31 miod Exp $
+#	$OpenBSD: files.luna88k,v 1.14 2007/02/09 14:26:09 aoyama Exp $
 #
 maxpartitions 16
 
@@ -9,6 +9,10 @@ file	arch/luna88k/luna88k/mainbus.c
 device clock
 attach clock at mainbus
 file	arch/luna88k/dev/timekeeper.c			clock
+
+device lcd
+attach lcd at mainbus
+file	arch/luna88k/dev/lcd.c				lcd needs-flag
 
 attach le at mainbus
 file	arch/luna88k/dev/if_le.c			le
@@ -76,4 +80,3 @@ file	arch/luna88k/luna88k/isr.c
 file	arch/luna88k/luna88k/machdep.c
 file	arch/luna88k/luna88k/mem.c
 file	arch/luna88k/luna88k/pmap_table.c
-file	arch/luna88k/dev/lcd.c

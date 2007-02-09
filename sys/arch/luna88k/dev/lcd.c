@@ -1,4 +1,4 @@
-/* $OpenBSD: lcd.c,v 1.2 2007/01/29 14:18:00 aoyama Exp $ */
+/* $OpenBSD: lcd.c,v 1.3 2007/02/09 14:26:09 aoyama Exp $ */
 /* $NetBSD: lcd.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -43,6 +43,7 @@
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 
+#include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/lcd.h>
 
@@ -79,6 +80,23 @@ struct pio {
         volatile unsigned : 24;
 };
 
+/* Autoconf stuff */
+int  lcd_match(struct device *, void *, void *);
+void lcd_attach(struct device *, struct device *, void *);
+
+struct lcd_softc {
+	struct device sc_dev;
+	int sc_opened;
+};
+
+struct cfattach lcd_ca = {
+	sizeof(struct lcd_softc), lcd_match, lcd_attach
+};
+
+struct cfdriver lcd_cd = {
+	NULL, "lcd", DV_DULL, 0
+};
+
 /* Internal prototypes */
 void lcdbusywait(void);
 void lcdput(int);
@@ -87,10 +105,37 @@ void lcdshow(const char *);
 void greeting(void);
 
 /* Internal variables */
-int lcd_opened = 0;
 				     /* "1234567890123456" */
 static const char lcd_boot_message1[] = "OpenBSD/luna88k ";
 static const char lcd_boot_message2[] = "   SX-9100/DT   ";
+
+/*
+ * Autoconf functions
+ */
+int
+lcd_match(parent, cf, aux)
+	struct device *parent;
+	void *cf, *aux;
+{
+	struct mainbus_attach_args *ma = aux;
+
+	if (strcmp(ma->ma_name, lcd_cd.cd_name))
+		return 0;
+	if (badaddr((vaddr_t)ma->ma_addr, 4))
+		return 0;
+	return 1;
+}
+
+void
+lcd_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	printf("\n");
+
+	/* Say hello to the world on LCD. */
+	greeting();
+}
 
 /*
  * open/close/write/ioctl
@@ -102,11 +147,16 @@ lcdopen(dev, flags, fmt, p)
 	int flags, fmt;
 	struct proc *p;
 {
-	if (minor(dev) != 0)
+	int unit = minor(dev);
+	struct lcd_softc *sc;
+
+	if (unit >= lcd_cd.cd_ndevs)
 		return ENXIO;
-	if (lcd_opened)
+	if ((sc = lcd_cd.cd_devs[unit]) == NULL)
+		return ENXIO;
+	if (sc->sc_opened)
 		return EBUSY;
-	lcd_opened = 1;
+	sc->sc_opened = 1;
 
 	return 0;
 }
@@ -117,7 +167,11 @@ lcdclose(dev, flags, fmt, p)
 	int flags, fmt;
 	struct proc *p;
 {
-	lcd_opened = 0;
+	int unit = minor(dev);
+	struct lcd_softc *sc;
+
+	sc = lcd_cd.cd_devs[unit];
+	sc->sc_opened = 0;
 
 	return 0;
 }

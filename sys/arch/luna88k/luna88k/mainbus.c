@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.6 2006/01/10 18:56:13 miod Exp $ */
+/* $OpenBSD: mainbus.c,v 1.7 2007/02/09 14:26:09 aoyama Exp $ */
 /* $NetBSD: mainbus.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -48,8 +48,13 @@
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 
+#include "lcd.h"
+
 static const struct mainbus_attach_args devs[] = {
 	{ "clock", 0x45000000, 6,  LUNA_88K|LUNA_88K2 }, /* Mostek/Dallas TimeKeeper */
+#if NLCD > 0
+	{ "lcd",   0x4d000000, -1, LUNA_88K|LUNA_88K2 }, /* Sharp LM16X212 LCD module */
+#endif
 	{ "le",	   0xf1000000, 4,  LUNA_88K|LUNA_88K2 }, /* Am7990 */
 	{ "sio",   0x51000000, 5,  LUNA_88K|LUNA_88K2 }, /* uPD7201A */
 	{ "fb",	   0xc1100000, -1, LUNA_88K|LUNA_88K2 }, /* BrookTree RAMDAC */
