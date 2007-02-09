@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.103 2007/02/01 20:33:03 otto Exp $	*/
+/*	$OpenBSD: commit.c,v 1.104 2007/02/09 03:49:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -149,11 +149,7 @@ cvs_commit_check_files(struct cvs_file *cf)
 {
 	cvs_log(LP_TRACE, "cvs_commit_check_files(%s)", cf->file_path);
 
-	/*
-	 * cvs_file_classify makes the noise for us
-	 * XXX - we want that?
-	 */
-	cvs_file_classify(cf, NULL, 1);
+	cvs_file_classify(cf, NULL);
 
 	if (cf->file_type == CVS_DIR) {
 		if (verbosity > 1)
@@ -215,7 +211,7 @@ cvs_commit_local(struct cvs_file *cf)
 	char attic[MAXPATHLEN], repo[MAXPATHLEN], rcsfile[MAXPATHLEN];
 
 	cvs_log(LP_TRACE, "cvs_commit_local(%s)", cf->file_path);
-	cvs_file_classify(cf, NULL, 0);
+	cvs_file_classify(cf, NULL);
 
 	if (cvs_noexec == 1)
 		return;

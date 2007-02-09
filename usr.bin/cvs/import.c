@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.68 2007/02/01 11:06:25 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.69 2007/02/09 03:49:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -166,7 +166,7 @@ cvs_import_local(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "cvs_import_local(%s)", cf->file_path);
 
-	cvs_file_classify(cf, NULL, 0);
+	cvs_file_classify(cf, NULL);
 
 	if (cf->file_type == CVS_DIR) {
 		if (!strcmp(cf->file_path, "."))

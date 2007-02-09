@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.74 2007/01/31 21:07:35 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.75 2007/02/09 03:49:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -140,7 +140,7 @@ cvs_add_local(struct cvs_file *cf)
 {
 	cvs_log(LP_TRACE, "cvs_add_local(%s)", cf->file_path);
 
-	cvs_file_classify(cf, NULL, 1);
+	cvs_file_classify(cf, NULL);
 
 	/* dont use `cvs add *' */
 	if (strcmp(cf->file_name, ".") == 0 ||

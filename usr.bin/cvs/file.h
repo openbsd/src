@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.40 2007/01/10 21:32:19 xsa Exp $	*/
+/*	$OpenBSD: file.h,v 1.41 2007/02/09 03:49:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -94,7 +94,7 @@ TAILQ_HEAD(ignore_head, cvs_ignpat);
 
 void	cvs_file_init(void);
 void	cvs_file_ignore(const char *, struct ignore_head *);
-void	cvs_file_classify(struct cvs_file *, const char *, int);
+void	cvs_file_classify(struct cvs_file *, const char *);
 void	cvs_file_free(struct cvs_file *);
 void	cvs_file_run(int, char **, struct cvs_recursion *);
 void	cvs_file_walklist(struct cvs_flisthead *, struct cvs_recursion *);

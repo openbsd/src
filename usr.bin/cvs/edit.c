@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.31 2007/01/25 18:56:33 otto Exp $	*/
+/*	$OpenBSD: edit.c,v 1.32 2007/02/09 03:49:15 joris Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -261,7 +261,7 @@ cvs_edit_local(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "cvs_edit_local(%s)", cf->file_path);
 
-	cvs_file_classify(cf, NULL, 0);
+	cvs_file_classify(cf, NULL);
 
 	if ((fp = fopen(CVS_PATH_NOTIFY, "a")) == NULL)
 		fatal("cvs_edit_local: fopen: `%s': %s",
@@ -333,7 +333,7 @@ cvs_unedit_local(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "cvs_unedit_local(%s)", cf->file_path);
 
-	cvs_file_classify(cf, NULL, 0);
+	cvs_file_classify(cf, NULL);
 
 	if (cvs_path_cat(CVS_PATH_BASEDIR, cf->file_name, bfpath,
 	    MAXPATHLEN) >= MAXPATHLEN)

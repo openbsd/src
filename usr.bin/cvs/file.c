@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.184 2007/02/07 23:47:56 todd Exp $	*/
+/*	$OpenBSD: file.c,v 1.185 2007/02/09 03:49:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -544,7 +544,7 @@ cvs_file_freelist(struct cvs_flisthead *fl)
 }
 
 void
-cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
+cvs_file_classify(struct cvs_file *cf, const char *tag)
 {
 	size_t len;
 	struct stat st;

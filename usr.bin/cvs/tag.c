@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.53 2007/01/11 02:35:55 joris Exp $	*/
+/*	$OpenBSD: tag.c,v 1.54 2007/02/09 03:49:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -171,7 +171,7 @@ cvs_tag_local(struct cvs_file *cf)
 		return;
 	}
 
-	cvs_file_classify(cf, tag, 0);
+	cvs_file_classify(cf, tag);
 
 	if (runflags & T_CHECK_UPTODATE) {
 		if (cf->file_status != FILE_UPTODATE &&
