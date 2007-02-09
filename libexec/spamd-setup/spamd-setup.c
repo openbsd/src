@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.27 2006/05/11 15:37:21 dhill Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.28 2007/02/09 19:12:29 millert Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -542,7 +542,7 @@ collapse_blacklist(struct bl *bl, size_t blc)
 
 	if (blc == 0)
 		return (NULL);
-	cl = malloc((blc / 2) * sizeof(struct cidr));
+	cl = malloc(((blc / 2) + 1) * sizeof(struct cidr));
 	if (cl == NULL) {
 		return (NULL);
 	}
