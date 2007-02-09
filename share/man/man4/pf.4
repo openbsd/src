@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.57 2006/06/10 16:13:00 beck Exp $
+.\"	$OpenBSD: pf.4,v 1.58 2007/02/09 11:39:06 henning Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -184,6 +184,11 @@ using the
 obtained through a preceding
 .Dv DIOCGETRULES
 call.
+If
+.Va action
+is set to
+.Dv PF_GET_CLR_CNTR ,
+the per-rule statistics on the requested rule are cleared.
 .It Dv DIOCGETADDRS Fa "struct pfioc_pooladdr *pp"
 Get a
 .Va ticket
