@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.258 2007/01/18 20:45:55 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.259 2007/02/09 11:25:27 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -78,7 +78,7 @@ int	 pfctl_load_hostid(struct pfctl *, unsigned int);
 int	 pfctl_get_pool(int, struct pf_pool *, u_int32_t, u_int32_t, int,
 	    char *);
 void	 pfctl_print_rule_counters(struct pf_rule *, int);
-int	 pfctl_show_rules(int, char *, int, int, char *, int);
+int	 pfctl_show_rules(int, char *, int, enum pfctl_show, char *, int);
 int	 pfctl_show_nat(int, int, char *);
 int	 pfctl_show_src_nodes(int, int);
 int	 pfctl_show_states(int, const char *, int);
@@ -753,7 +753,7 @@ pfctl_print_title(char *title)
 }
 
 int
-pfctl_show_rules(int dev, char *path, int opts, int format,
+pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
     char *anchorname, int depth)
 {
 	struct pfioc_rule pr;
@@ -784,12 +784,15 @@ pfctl_show_rules(int dev, char *path, int opts, int format,
 		goto error;
 	}
 	if (opts & PF_OPT_SHOWALL) {
-		if (format == 0 && (pr.nr > 0 || header))
+		if (format == PFCTL_SHOW_RULES && (pr.nr > 0 || header))
 			pfctl_print_title("FILTER RULES:");
-		else if (format == 1 && labels)
+		else if (format == PFCTL_SHOW_LABELS && labels)
 			pfctl_print_title("LABEL COUNTERS:");
 	}
 	mnr = pr.nr;
+	if (opts & PF_OPT_CLRRULECTRS)
+		pr.action = PF_GET_CLR_CNTR;
+
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
 		if (ioctl(dev, DIOCGETRULE, &pr)) {
@@ -802,7 +805,7 @@ pfctl_show_rules(int dev, char *path, int opts, int format,
 			goto error;
 
 		switch (format) {
-		case 1:
+		case PFCTL_SHOW_LABELS:
 			if (pr.rule.label[0]) {
 				printf("%s ", pr.rule.label);
 				printf("%llu %llu %llu %llu %llu %llu %llu\n",
@@ -817,12 +820,15 @@ pfctl_show_rules(int dev, char *path, int opts, int format,
 				    (unsigned long long)pr.rule.bytes[1]);
 			}
 			break;
-		default:
+		case PFCTL_SHOW_RULES:
 			if (pr.rule.label[0] && (opts & PF_OPT_SHOWALL))
 				labels = 1;
 			print_rule(&pr.rule, pr.anchor_call, rule_numbers);
 			printf("\n");
 			pfctl_print_rule_counters(&pr.rule, opts);
+			break;
+		case PFCTL_SHOW_NOTHING:
+			break;
 		}
 		pfctl_clear_pool(&pr.rule.rpool);
 	}
@@ -844,7 +850,7 @@ pfctl_show_rules(int dev, char *path, int opts, int format,
 			goto error;
 
 		switch (format) {
-		case 1:
+		case PFCTL_SHOW_LABELS:
 			if (pr.rule.label[0]) {
 				printf("%s ", pr.rule.label);
 				printf("%llu %llu %llu %llu %llu %llu %llu\n",
@@ -859,7 +865,7 @@ pfctl_show_rules(int dev, char *path, int opts, int format,
 				    (unsigned long long)pr.rule.bytes[1]);
 			}
 			break;
-		default:
+		case PFCTL_SHOW_RULES:
 			brace = 0;
 			if (pr.rule.label[0] && (opts & PF_OPT_SHOWALL))
 				labels = 1;
@@ -889,6 +895,9 @@ pfctl_show_rules(int dev, char *path, int opts, int format,
 				INDENT(depth, !(opts & PF_OPT_VERBOSE));
 				printf("}\n");
 			}
+			break;
+		case PFCTL_SHOW_NOTHING:
+			break;
 		}
 		pfctl_clear_pool(&pr.rule.rpool);
 	}
@@ -1947,6 +1956,7 @@ main(int argc, char *argv[])
 	int	 opts = 0;
 	int	 optimize = 0;
 	char	 anchorname[MAXPATHLEN];
+	char	*path;
 	FILE	*fin = NULL;
 
 	if (argc < 2)
@@ -2114,6 +2124,8 @@ main(int argc, char *argv[])
 	if (loadopt == 0)
 		loadopt = ~0;
 
+	if ((path = calloc(1, MAXPATHLEN)) == NULL)
+		errx(1, "pfctl: calloc");
 	memset(anchorname, 0, sizeof(anchorname));
 	if (anchoropt != NULL) {
 		int len = strlen(anchoropt);
@@ -2152,22 +2164,19 @@ main(int argc, char *argv[])
 			error = 1;
 
 	if (showopt != NULL) {
-		char *path;
-
-		if ((path = calloc(1, MAXPATHLEN)) == NULL)
-			errx(1, "pfctl: calloc");
-
 		switch (*showopt) {
 		case 'A':
 			pfctl_show_anchors(dev, opts, anchorname);
 			break;
 		case 'r':
 			pfctl_load_fingerprints(dev, opts);
-			pfctl_show_rules(dev, path, opts, 0, anchorname, 0);
+			pfctl_show_rules(dev, path, opts, PFCTL_SHOW_RULES,
+			    anchorname, 0);
 			break;
 		case 'l':
 			pfctl_load_fingerprints(dev, opts);
-			pfctl_show_rules(dev, path, opts, 1, anchorname, 0);
+			pfctl_show_rules(dev, path, opts, PFCTL_SHOW_LABELS,
+			    anchorname, 0);
 			break;
 		case 'n':
 			pfctl_load_fingerprints(dev, opts);
@@ -2220,6 +2229,10 @@ main(int argc, char *argv[])
 			break;
 		}
 	}
+
+	if (opts & PF_OPT_CLRRULECTRS && showopt == NULL)
+		pfctl_show_rules(dev, path, opts, PFCTL_SHOW_NOTHING,
+		    anchorname, 0);
 
 	if (clearopt != NULL) {
 		if (anchorname[0] == '_' || strstr(anchorname, "/_") != NULL)
@@ -2344,9 +2357,5 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (opts & PF_OPT_CLRRULECTRS) {
-		if (pfctl_clear_rule_counters(dev, opts))
-			error = 1;
-	}
 	exit(error);
 }

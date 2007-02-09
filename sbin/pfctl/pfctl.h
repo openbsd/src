@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.39 2006/01/28 18:54:28 henning Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.40 2007/02/09 11:25:27 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -32,6 +32,8 @@
 
 #ifndef _PFCTL_H_
 #define _PFCTL_H_
+
+enum pfctl_show { PFCTL_SHOW_RULES, PFCTL_SHOW_LABELS, PFCTL_SHOW_NOTHING };
 
 enum {	PFRB_TABLES = 1, PFRB_TSTATS, PFRB_ADDRS, PFRB_ASTATS,
 	PFRB_IFACES, PFRB_TRANS, PFRB_MAX };
