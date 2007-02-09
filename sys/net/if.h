@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.85 2006/11/28 19:21:15 reyk Exp $	*/
+/*	$OpenBSD: if.h,v 1.86 2007/02/09 09:16:59 jmc Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  * and then transmits it on its medium.
  *
  * On input, each interface unwraps the data received by it, and either
- * places it on the input queue of a internetwork datagram routine
+ * places it on the input queue of an internetwork datagram routine
  * and posts the associated software interrupt, or passes the datagram to a raw
  * packet input routine.
  *
