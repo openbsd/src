@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.19 2004/10/17 03:56:49 drahn Exp $	*/
+/*	$OpenBSD: util.h,v 1.20 2007/02/09 14:51:13 drahn Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -44,6 +44,8 @@ unsigned int _dl_random(void);
 ssize_t _dl_write(int fd, const char* buf, size_t len);
 
 long _dl_strtol(const char *nptr, char **endptr, int base);
+
+#define	_dl_round_page(x)	(((x) + (__LDPGSZ - 1)) & ~(__LDPGSZ - 1))
 
 /*
  *	The following functions are declared inline so they can
