@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.114 2007/02/06 15:24:18 jmc Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.115 2007/02/09 03:30:31 joris Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -290,6 +290,7 @@ cvs_getopt(int argc, char **argv)
 {
 	int ret;
 	char *ep;
+	const char *errstr;
 
 	while ((ret = getopt(argc, argv, "b:d:e:fHlnQqRrs:T:tvVwz:")) != -1) {
 		switch (ret) {
@@ -367,12 +368,9 @@ cvs_getopt(int argc, char **argv)
 			 */
 			break;
 		case 'z':
-			cvs_compress = (int)strtol(optarg, &ep, 10);
-			if (*ep != '\0')
-				fatal("error parsing compression level");
-			if (cvs_compress < 0 || cvs_compress > 9)
-				fatal("gzip compression level must be "
-				    "between 0 and 9");
+			cvs_compress = strtonum(optarg, 0, 9, &errstr);
+			if (errstr != NULL)
+				fatal("cvs_compress: %s", errstr);
 			break;
 		default:
 			usage();
