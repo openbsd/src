@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.17 2007/02/09 02:58:10 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.18 2007/02/09 04:48:10 jason Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -128,9 +128,8 @@ void amdgart_invalidate_wait(void);
 void amdgart_invalidate(void);
 void amdgart_probe(struct pcibus_attach_args *);
 void amdgart_dumpregs(void);
-int amdgart_iommu_map(bus_dmamap_t, struct extent *, paddr_t,
-    paddr_t *, psize_t);
-int amdgart_iommu_unmap(struct extent *, paddr_t, psize_t);
+int amdgart_iommu_map(bus_dmamap_t, struct extent *, bus_dma_segment_t *);
+int amdgart_iommu_unmap(struct extent *, bus_dma_segment_t *);
 int amdgart_reload(struct extent *, bus_dmamap_t);
 int amdgart_ok(pci_chipset_tag_t, pcitag_t);
 void amdgart_initpt(struct amdgart_softc *, u_long);
@@ -421,27 +420,21 @@ amdgart_reload(struct extent *ex, bus_dmamap_t dmam)
 	int i, j, err;
 
 	for (i = 0; i < dmam->dm_nsegs; i++) {
-		paddr_t opa, npa;
 		psize_t len;
 
-		opa = dmam->dm_segs[i].ds_addr;
 		len = dmam->dm_segs[i].ds_len;
-		err = amdgart_iommu_map(dmam, ex, opa, &npa, len);
+		err = amdgart_iommu_map(dmam, ex, &dmam->dm_segs[i]);
 		if (err) {
 			for (j = 0; j < i - 1; j++)
-				amdgart_iommu_unmap(ex,
-				    dmam->dm_segs[j].ds_addr,
-				    dmam->dm_segs[j].ds_len);
+				amdgart_iommu_unmap(ex, &dmam->dm_segs[j]);
 			return (err);
 		}
-		dmam->dm_segs[i].ds_addr = npa;
 	}
 	return (0);
 }
 
 int
-amdgart_iommu_map(bus_dmamap_t dmam, struct extent *ex, paddr_t opa,
-    paddr_t *npa, psize_t len)
+amdgart_iommu_map(bus_dmamap_t dmam, struct extent *ex, bus_dma_segment_t *seg)
 {
 	paddr_t base, end, idx;
 	psize_t alen;
@@ -449,9 +442,10 @@ amdgart_iommu_map(bus_dmamap_t dmam, struct extent *ex, paddr_t opa,
 	int err, s;
 	u_int32_t pgno, flags;
 
-	base = trunc_page(opa);
-	end = roundup(opa + len, PAGE_SIZE);
+	base = trunc_page(seg->ds_addr);
+	end = roundup(seg->ds_addr + seg->ds_len, PAGE_SIZE);
 	alen = end - base;
+
 	s = splhigh();
 	err = extent_alloc(ex, alen, PAGE_SIZE, 0, dmam->_dm_boundary,
 	    EX_NOWAIT, &res);
@@ -460,7 +454,8 @@ amdgart_iommu_map(bus_dmamap_t dmam, struct extent *ex, paddr_t opa,
 		printf("GART: extent_alloc %d\n", err);
 		return (err);
 	}
-	*npa = res | (opa & PGOFSET);
+
+	seg->ds_addr = res | (seg->ds_addr & PGOFSET);
 
 	for (idx = 0; idx < alen; idx += PAGE_SIZE) {
 		pgno = ((res + idx) - amdgart_softcs[0].g_pa) >> PGSHIFT;
@@ -474,15 +469,15 @@ amdgart_iommu_map(bus_dmamap_t dmam, struct extent *ex, paddr_t opa,
 }
 
 int
-amdgart_iommu_unmap(struct extent *ex, paddr_t pa, psize_t len)
+amdgart_iommu_unmap(struct extent *ex, bus_dma_segment_t *seg)
 {
 	paddr_t base, end, idx;
 	psize_t alen;
 	int err, s;
 	u_int32_t pgno;
 
-	base = trunc_page(pa);
-	end = roundup(pa + len, PAGE_SIZE);
+	base = trunc_page(seg->ds_addr);
+	end = roundup(seg->ds_addr + seg->ds_len, PAGE_SIZE);
 	alen = end - base;
 
 	/*
@@ -598,8 +593,7 @@ amdgart_dmamap_unload(bus_dma_tag_t tag, bus_dmamap_t dmam)
 	int i;
 
 	for (i = 0; i < dmam->dm_nsegs; i++)
-		amdgart_iommu_unmap(amdgart_softcs[0].g_ex,
-		    dmam->dm_segs[i].ds_addr, dmam->dm_segs[i].ds_len);
+		amdgart_iommu_unmap(amdgart_softcs[0].g_ex, &dmam->dm_segs[i]);
 	/* XXX should we invalidate here? */
 	bus_dmamap_unload(amdgart_softcs[0].g_dmat, dmam);
 }
