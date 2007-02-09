@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.93 2007/02/09 03:49:15 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.94 2007/02/09 08:00:37 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -161,7 +161,8 @@ cvs_update_enterdir(struct cvs_file *cf)
 		cvs_ent_add(entlist, entry);
 		cvs_ent_close(entlist, ENT_SYNC);
 		xfree(entry);
-	} else if (cf->file_status == DIR_CREATE && build_dirs == 0) {
+	} else if ((cf->file_status == DIR_CREATE && build_dirs == 0) ||
+		    cf->file_status == FILE_UNKNOWN) {
 		cf->file_status = FILE_SKIP;
 	}
 }
