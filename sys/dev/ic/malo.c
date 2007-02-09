@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.61 2006/12/31 16:58:02 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.62 2007/02/09 10:35:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -485,7 +485,7 @@ malo_alloc_cmd(struct malo_softc *sc)
 		return (-1);
 	}
 
-	error = bus_dmamap_load(sc->sc_dmat, sc->sc_cmd_dmam, 
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_cmd_dmam,
 	    sc->sc_cmd_mem, PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: error load dma memory\n", sc->sc_dev.dv_xname);
@@ -1759,7 +1759,7 @@ skip:
 
 		sc->sc_rxring.cur = (sc->sc_rxring.cur + 1) %
 		    MALO_RX_RING_COUNT;
-        }
+	}
 
 	malo_mem_write4(sc, sc->sc_RxPdRdPtr, rxRdPtr);
 }
@@ -1811,7 +1811,7 @@ malo_load_bootimg(struct malo_softc *sc)
 		    sc->sc_dev.dv_xname);
 		free(ucode, M_DEVBUF);
 		return (ETIMEDOUT);
-	} 
+	}
 	free(ucode, M_DEVBUF);
 
 	/* tell the card we're done and... */
@@ -1966,7 +1966,7 @@ malo_hexdump(void *buf, int len)
 	int i;
 
 	for (i = 0; i < len; i++) {
-		if (i % 16 == 0) 
+		if (i % 16 == 0)
 			printf("%s%4i:", i ? "\n" : "", i);
 		if (i % 4 == 0)
 			printf(" ");
@@ -1984,7 +1984,7 @@ malo_cmd_string(uint16_t cmd)
 		uint16_t	 cmd_code;
 		char		*cmd_string;
 	} cmds[] = {
-		{ MALO_CMD_GET_HW_SPEC, 	"GetHwSpecifications"	},
+		{ MALO_CMD_GET_HW_SPEC,		"GetHwSpecifications"	},
 		{ MALO_CMD_SET_RADIO,		"SetRadio"		},
 		{ MALO_CMD_SET_TXPOWER,		"SetTxPower"		},
 		{ MALO_CMD_SET_ANTENNA,		"SetAntenna"		},
@@ -2207,8 +2207,8 @@ malo_cmd_set_radio(struct malo_softc *sc, uint16_t enable,
 int
 malo_cmd_set_aid(struct malo_softc *sc, uint8_t *bssid, uint16_t associd)
 {
-        struct malo_cmdheader *hdr = sc->sc_cmd_mem;
-        struct malo_cmd_aid *body;
+	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+	struct malo_cmd_aid *body;
 
 	hdr->cmd = htole16(MALO_CMD_SET_AID);
 	hdr->size = htole16(sizeof(*hdr) + sizeof(*body));
@@ -2263,7 +2263,7 @@ malo_cmd_set_rts(struct malo_softc *sc, uint32_t threshold)
 	hdr->seqnum = 1;
 	hdr->result = 0;
 
-	*(uint32_t *)(hdr + 1) = htole32(threshold);	
+	*(uint32_t *)(hdr + 1) = htole32(threshold);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
