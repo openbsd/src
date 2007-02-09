@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2007/02/08 13:32:24 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.25 2007/02/09 17:55:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -915,8 +915,7 @@ cmdline_symset(char *s)
 	if ((sym = malloc(len)) == NULL)
 		errx(1, "cmdline_symset: malloc");
 
-	if (strlcpy(sym, s, len) >= len)
-		errx(1, "cmdline_symset: macro too long");
+	(void)strlcpy(sym, s, len);
 
 	ret = symset(sym, val + 1, 1);
 	free(sym);
