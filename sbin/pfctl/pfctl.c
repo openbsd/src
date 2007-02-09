@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.259 2007/02/09 11:25:27 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.260 2007/02/09 11:28:32 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -86,7 +86,6 @@ int	 pfctl_show_status(int, int);
 int	 pfctl_show_timeouts(int, int);
 int	 pfctl_show_limits(int, int);
 void	 pfctl_debug(int, u_int32_t, int);
-int	 pfctl_clear_rule_counters(int, int);
 int	 pfctl_test_altqsupport(int, int);
 int	 pfctl_show_anchors(int, int, char *);
 int	 pfctl_ruleset_trans(struct pfctl *, char *, struct pf_anchor *);
@@ -1869,16 +1868,6 @@ pfctl_debug(int dev, u_int32_t level, int opts)
 		}
 		fprintf(stderr, "'\n");
 	}
-}
-
-int
-pfctl_clear_rule_counters(int dev, int opts)
-{
-	if (ioctl(dev, DIOCCLRRULECTRS))
-		err(1, "DIOCCLRRULECTRS");
-	if ((opts & PF_OPT_QUIET) == 0)
-		fprintf(stderr, "pf: rule counters cleared\n");
-	return (0);
 }
 
 int
