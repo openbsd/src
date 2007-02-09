@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.58 2007/02/01 13:25:28 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.59 2007/02/09 10:19:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -481,8 +481,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			    sizeof(struct lsa_hdr))
 				fatalx("invalid size of OE request");
 			memcpy(&lsa_hdr, imsg.data, sizeof(lsa_hdr));
-
-			aid.s_addr = lsa_hdr.ls_id;
 
 			if (rde_nbr_loading(nbr->area))
 				break;
