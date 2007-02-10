@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.44 2007/02/10 02:27:56 krw Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.45 2007/02/10 22:49:46 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -950,6 +950,7 @@ msk_probe(struct device *parent, void *match, void *aux)
 	switch (sa->skc_type) {
 	case SK_YUKON_XL:
 	case SK_YUKON_EC_U:
+	case SK_YUKON_EX:
 	case SK_YUKON_EC:
 	case SK_YUKON_FE:
 		return (1);
@@ -1279,6 +1280,9 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case SK_YUKON_EC_U:
 		sc->sk_name = "Yukon-2 EC Ultra";
+		break;
+	case SK_YUKON_EX:
+		sc->sk_name = "Yukon-2 Extreme";
 		break;
 	case SK_YUKON_EC:
 		sc->sk_name = "Yukon-2 EC";
