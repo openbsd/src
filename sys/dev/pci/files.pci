@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.223 2006/12/17 16:32:35 mbalmer Exp $
+#	$OpenBSD: files.pci,v 1.224 2007/02/10 07:31:28 jsg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -280,11 +280,6 @@ file	dev/pci/if_rl_pci.c		rl_pci
 # Realtek 8169/8169S/8110S
 attach	re at pci with re_pci
 file	dev/pci/if_re_pci.c		re_pci
-
-# Macronix
-device	mx: ether, ifnet, ifmedia
-attach	mx at pci
-file	dev/pci/if_mx.c			mx
 
 # Via Rhine
 device	vr: ether, ifnet, mii, ifmedia
