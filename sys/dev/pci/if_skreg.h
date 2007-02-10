@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.41 2006/11/23 21:56:32 kettenis Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.42 2007/02/10 02:27:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2171,3 +2171,5 @@ struct msk_status_desc {
 #define XM_RESAB_FDMODESEL	0x0020
 #define XM_RESAB_HDMODESEL	0x0040
 #define XM_RESAB_PAUSEBITS	0x0180
+
+#define SK_HASH_BITS		6

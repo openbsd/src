@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.43 2007/02/03 12:50:26 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.44 2007/02/10 02:27:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -348,8 +348,6 @@ msk_miibus_statchg(struct device *dev)
 		     SK_YU_READ_2(((struct sk_if_softc *)dev), YUKON_GPCR)));
 }
 
-#define HASH_BITS	6
-  
 void
 msk_setfilt(struct sk_if_softc *sc_if, caddr_t addr, int slot)
 {
@@ -392,7 +390,7 @@ allmulti:
 				goto allmulti;
 			}
 			h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) &
-			    ((1 << HASH_BITS) - 1);
+			    ((1 << SK_HASH_BITS) - 1);
 			if (h < 32)
 				hashes[0] |= (1 << h);
 			else
