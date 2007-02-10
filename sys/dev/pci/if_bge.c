@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.205 2007/01/30 02:35:16 krw Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.206 2007/02/10 01:23:19 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -352,6 +352,11 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5715_A0, "BCM5715 A0" },
 	{ BGE_CHIPID_BCM5715_A1, "BCM5715 A1" },
 	{ BGE_CHIPID_BCM5715_A3, "BCM5715 A3" },
+	{ BGE_CHIPID_BCM5755_A0, "BCM5755 A0" },
+	{ BGE_CHIPID_BCM5755_A1, "BCM5755 A1" },
+	{ BGE_CHIPID_BCM5755_A2, "BCM5755 A2" },
+	{ BGE_CHIPID_BCM5787_A0, "BCM5787 A0" },
+	{ BGE_CHIPID_BCM5787_A1, "BCM5787 A1" },
 	{ BGE_CHIPID_BCM5787_A2, "BCM5787 A2" },
 	{ BGE_CHIPID_BCM5906_A1, "BCM5906 A1" },
 
@@ -365,6 +370,7 @@ static const struct bge_revision {
 static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM5700, "unknown BCM5700" },
 	{ BGE_ASICREV_BCM5701, "unknown BCM5701" },
+	/* 5702 and 5703 share the same ASIC ID */
 	{ BGE_ASICREV_BCM5703, "unknown BCM5703" },
 	{ BGE_ASICREV_BCM5704, "unknown BCM5704" },
 	{ BGE_ASICREV_BCM5705, "unknown BCM5705" },
@@ -374,6 +380,7 @@ static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM5780, "unknown BCM5780" },
 	{ BGE_ASICREV_BCM5714, "unknown BCM5714" },
 	{ BGE_ASICREV_BCM5755, "unknown BCM5755" },
+	/* 5754 and 5787 share the same ASIC ID */
 	{ BGE_ASICREV_BCM5787, "unknown BCM5787" },
 	{ BGE_ASICREV_BCM5906, "unknown BCM5906" },
 
