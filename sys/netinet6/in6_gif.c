@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.22 2003/12/03 14:51:05 markus Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.23 2007/02/10 15:34:22 claudio Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -69,11 +69,10 @@
 #endif
 
 int
-in6_gif_output(ifp, family, m, rt)
+in6_gif_output(ifp, family, m)
 	struct ifnet *ifp;
 	int family; /* family of the packet to be encapsulate. */
 	struct mbuf *m;
-	struct rtentry *rt;
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
         struct sockaddr_in6 *dst = (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
@@ -82,7 +81,6 @@ in6_gif_output(ifp, family, m, rt)
 	struct tdb tdb;
 	struct xformsw xfs;
 	int error;
-	int hlen, poff;
 	struct mbuf *mp;
 
 	if (sin6_src == NULL || sin6_dst == NULL ||
@@ -107,24 +105,11 @@ in6_gif_output(ifp, family, m, rt)
 	switch (family) {
 #ifdef INET
 	case AF_INET:
-	    {
-		if (m->m_len < sizeof(struct ip)) {
-			m = m_pullup(m, sizeof(struct ip));
-			if (m == NULL)
-				return ENOBUFS;
-		}
-		hlen = (mtod(m, struct ip *)->ip_hl) << 2;
-		poff = offsetof(struct ip, ip_p);
 		break;
-	    }
 #endif
 #ifdef INET6
 	case AF_INET6:
-	    {
-		hlen = sizeof(struct ip6_hdr);
-		poff = offsetof(struct ip6_hdr, ip6_nxt);
 		break;
-	    }
 #endif
 #if NBRIDGE > 0
 	case AF_LINK:
@@ -155,7 +140,7 @@ in6_gif_output(ifp, family, m, rt)
 
 	/* encapsulate into IPv6 packet */
 	mp = NULL;
-	error = ipip_output(m, &tdb, &mp, hlen, poff);
+	error = ipip_output(m, &tdb, &mp, 0, 0);
 	if (error)
 	        return error;
 	else if (mp == NULL)

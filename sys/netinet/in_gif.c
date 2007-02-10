@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.31 2005/12/23 13:01:23 claudio Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.32 2007/02/10 15:34:22 claudio Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -54,11 +54,10 @@
 #include "bridge.h"
 
 int
-in_gif_output(ifp, family, m, rt)
+in_gif_output(ifp, family, m)
 	struct ifnet	*ifp;
 	int		family;
 	struct mbuf	*m;
-	struct rtentry *rt;
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	struct sockaddr_in *sin_src = (struct sockaddr_in *)sc->gif_psrc;
@@ -66,7 +65,6 @@ in_gif_output(ifp, family, m, rt)
 	struct tdb tdb;
 	struct xformsw xfs;
 	int error;
-	int hlen, poff;
 	struct mbuf *mp;
 
 	if (sin_src == NULL || sin_dst == NULL ||
@@ -90,18 +88,9 @@ in_gif_output(ifp, family, m, rt)
 
 	switch (family) {
 	case AF_INET:
-		if (m->m_len < sizeof(struct ip)) {
-			m = m_pullup(m, sizeof(struct ip));
-			if (m == NULL)
-				return ENOBUFS;
-		}
-		hlen = (mtod(m, struct ip *)->ip_hl) << 2;
-		poff = offsetof(struct ip, ip_p);
 		break;
 #ifdef INET6
 	case AF_INET6:
-		hlen = sizeof(struct ip6_hdr);
-		poff = offsetof(struct ip6_hdr, ip6_nxt);
 		break;
 #endif
 #if NBRIDGE > 0
@@ -127,13 +116,14 @@ in_gif_output(ifp, family, m, rt)
 		        return EFAULT;
 
 		m = mp;
-		goto sendit;
+		return ip_output(m, (void *)NULL, (void *)NULL, 0,
+		    (void *)NULL, (void *)NULL);
 	}
 #endif /* NBRIDGE */
 
 	/* encapsulate into IPv4 packet */
 	mp = NULL;
-	error = ipip_output(m, &tdb, &mp, hlen, poff);
+	error = ipip_output(m, &tdb, &mp, 0, 0);
 	if (error)
 		return error;
 	else if (mp == NULL)
@@ -141,11 +131,8 @@ in_gif_output(ifp, family, m, rt)
 
 	m = mp;
 
-#if NBRIDGE > 0
- sendit:
-#endif /* NBRIDGE */
-
-	return ip_output(m, (void *)NULL, (void *)NULL, 0, (void *)NULL, (void *)NULL);
+	return ip_output(m, (void *)NULL, (void *)NULL, 0, (void *)NULL,
+	    (void *)NULL);
 }
 
 void

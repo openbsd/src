@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.39 2007/01/08 18:09:24 michele Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.40 2007/02/10 15:34:22 claudio Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -241,12 +241,12 @@ gif_output(ifp, m, dst, rt)
 	switch (sc->gif_psrc->sa_family) {
 #ifdef INET
 	case AF_INET:
-		error = in_gif_output(ifp, dst->sa_family, m, rt);
+		error = in_gif_output(ifp, dst->sa_family, m);
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		error = in6_gif_output(ifp, dst->sa_family, m, rt);
+		error = in6_gif_output(ifp, dst->sa_family, m);
 		break;
 #endif
 	default:
