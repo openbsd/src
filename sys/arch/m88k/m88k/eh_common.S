@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.21 2006/11/19 19:36:40 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.22 2007/02/11 12:39:33 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -237,6 +237,7 @@
 	 or	r3, r0, ARG2
 
 /* Invoke a function and return elsewhere */
+/* CAREFUL: needs to have `RET' after the XCALL in memory */
 #define	XCALL(NAME, RET) \
 	bsr.n	NAME; \
 	 addu	r1, r1, RET - . - 4
@@ -1572,250 +1573,6 @@ ASLOCAL(m88100_fpu_enable)
 	jmp	r14	/* loaded above */
 #endif /* M88100 */
 
-/*
- * void proc_trampoline(void (*func)(void *), void *proc)
-  *
- * When a process setup by cpu_fork() resumes, it will find itself in
- * proc_trampoline, with r31 pointing to a ksigframe. proc_trampoline will
- * load func and proc values from ksigframe, call the function, and on return
- * pop off the ksigframe. Then, it will load pc from the switchframe and
- * jump there (the pc will usually be proc_do_uret).
- */
-
-ENTRY(proc_trampoline)
-#ifdef MULTIPROCESSOR
-	bsr	_C_LABEL(proc_trampoline_mp)
-#endif
-	ld	r1, r31, 0		/* load func */
-	ld	r2, r31, 4 		/* load proc pointer */
-	jsr.n	r1
-	 addu	r31, r31, 8		/* release ksigframe */
-	ld	r1,  r31, 0		/* load pc */
-	ld	r2,  r31, 4		/* & proc pointer from switch frame */
-	jsr.n	r1
-	 addu	r31, r31, 8
-
-#define	FPTR	r14
-
-/*
- * void proc_do_uret(struct proc *p)
- *
- * This is called as proc_do_uret(proc) from proc_trampoline(). This function
- * loads FPTR with a pointer to the trap frame for the given proc and continues
- * near the end of return_code, bypassing soft interrupts and AST checks, to
- * load all the registers and do an RTE.
- */
-
-ENTRY(proc_do_uret)
-	ld	FPTR, r2,   P_ADDR		/* p->p_addr */
-	br.n	_ASM_LABEL(no_ast)
-	 addu	FPTR, FPTR, PCB_USER_STATE	/* p->p_addr.u_pcb.user_state */
-
-
-	/*
-	 * Regs r1-r30 are free. r31 is pointing at the word
-	 * on the kernel stack where our pointer to the exception frame
-	 * it stored. Reload it now.
-	 *
-	 * At this point, if EF_DMT0 is not zero on MC88100, then
-	 * this must have been an interrupt where the fault didn't
-	 * get corrected above.  We'll do that now.
-	 *
-	 * We load it into r14 since it is preserved across function
-	 * calls, and we may have to call some routines from within here.
-	 *
-	 * Control is transferred here from obvious places in this file.
-	 */
-
-#ifdef M88100
-ASLOCAL(m88100_return_code)
-	/*
-	 * if there happens to be a data fault that hasn't been serviced yet,
-	 * go off and service that...
-	 */
-
-	ld	FPTR, r31, 0	/* grab exception frame pointer */
-	ld	r3, FPTR, REG_OFF(EF_DMT0)
-	bb0	DMT_VALID_BIT, r3, _ASM_LABEL(check_ast)
-
-	/*
-	 * If it's the interrupt exception, and interrupts were
-	 * initially disabled, enable interrupts again...
-	 */
-	ld	r2, FPTR, REG_OFF(EF_VECTOR)
-	cmp	r2, r2, 1	/* is an interrupt? */
-	bb1.n	ne, r2, 1f	/* if not so, skip */
-
-	/* ...unless they were already disabled */
-	 ld	r2, FPTR, REG_OFF(EF_EPSR)
-	bb1.n	PSR_INTERRUPT_DISABLE_BIT, r2, 1f
-
-	 ldcr	r2, PSR
-	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r2, PSR
-	FLUSH_PIPELINE
-1:
-
-	CALL(m88100_trap, T_DATAFLT, r30)
-#ifdef M88110
-	br	_ASM_LABEL(check_ast)
-#else
-	/* FALLTHROUGH */
-#endif
-#endif /* M88100 */
-
-#ifdef M88110
-ASLOCAL(m88110_return_code)
-#define	FPTR	r14
-	ld	FPTR, r31, 0	/* grab exception frame pointer */
-	/* FALLTHROUGH */
-#endif /* M88110 */
-
-/*
- *   If the saved ipl is 0, then call dosoftint() to process soft
- *   interrupts.
- *   If returning to userland, look for ASTs.
- */
-ASLOCAL(check_ast)
-	/* do not service soft interrupts if interrupts were disabled... */
-	ld	r2, FPTR, REG_OFF(EF_EPSR)
-	bb1	PSR_INTERRUPT_DISABLE_BIT, r2, _ASM_LABEL(no_softint)
-	/* ...or we were not at spl0 */
-	ld	r2, FPTR, REG_OFF(EF_MASK)
-	bcnd	ne0, r2, _ASM_LABEL(no_softint)
-
-	/* do an inline spl0() */
-	bsr.n	_C_LABEL(setipl)
-	 or	r2, r0, IPL_SOFTCLOCK
-	bsr	_C_LABEL(dosoftint)
-	bsr.n	_C_LABEL(setipl)
-	 or	r2, r0, IPL_NONE
-
-ASLOCAL(no_softint)
-	/* do not service AST if not returning to user mode */
-	ld	r2, FPTR, REG_OFF(EF_EPSR)
-	bb1	PSR_SUPERVISOR_MODE_BIT, r2, _ASM_LABEL(no_ast)
-
-	ldcr	r2,  CPU
-	ld	r3,  r2, CI_CURPROC
-	bcnd	eq0, r3, _ASM_LABEL(no_ast)	/* no AST if no process! */
-	ld	r2,  r3, P_ASTPENDING
-	bcnd.n	eq0, r2, _ASM_LABEL(no_ast)	/* .n safe since the first
-						   instruction of CALL() is
-						   safe in a delay slot. */
-	/*
-	 * trap(AST,...) will service ast's.
-	 */
-#if defined(M88110) && defined(M88100)
-	 or.u	r2, r0, hi16(_C_LABEL(cputyp))
-	ld	r3, r2, lo16(_C_LABEL(cputyp))
-	cmp	r2, r3, CPU_88110
-	bb0	eq, r2, 2f
-#endif
-#if defined(M88110)
-	CALL(m88110_trap, T_ASTFLT, FPTR)
-#endif
-#if defined(M88110) && defined(M88100)
-	br	_ASM_LABEL(no_ast)
-2:
-#endif
-#ifdef M88100
-	CALL(m88100_trap, T_ASTFLT, FPTR)
-#endif
-
-ASLOCAL(no_ast)
-	/* disable interrupts */
-	ldcr	r1, PSR
-	set	r1, r1, 1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r1, PSR
-	FLUSH_PIPELINE
-
-	/* now ready to return....*/
-	bsr.n	_C_LABEL(setipl)
-	 ld	r2, FPTR, REG_OFF(EF_MASK)	/* get pre-exception ipl */
-
-	/*
-	 * Transfer the frame pointer to r31, since we no longer need a stack.
-	 * No page faults here, and interrupts are disabled.
-	 */
-	or	r31, r0,  FPTR
-	/* restore r1 later */
-	ld	r2 , r31, GENREG_OFF(2)
-	ld	r3 , r31, GENREG_OFF(3)
-	ld	r4 , r31, GENREG_OFF(4)
-	ld	r5 , r31, GENREG_OFF(5)
-	ld	r6 , r31, GENREG_OFF(6)
-	ld	r7 , r31, GENREG_OFF(7)
-	ld	r8 , r31, GENREG_OFF(8)
-	ld	r9 , r31, GENREG_OFF(9)
-	ld	r10, r31, GENREG_OFF(10)
-	ld	r11, r31, GENREG_OFF(11)
-	ld	r12, r31, GENREG_OFF(12)
-	ld	r13, r31, GENREG_OFF(13)
-	ld	r14, r31, GENREG_OFF(14)
-	ld	r15, r31, GENREG_OFF(15)
-	ld	r16, r31, GENREG_OFF(16)
-	ld	r17, r31, GENREG_OFF(17)
-	ld	r18, r31, GENREG_OFF(18)
-	ld	r19, r31, GENREG_OFF(19)
-	ld	r20, r31, GENREG_OFF(20)
-	ld	r21, r31, GENREG_OFF(21)
-	ld	r22, r31, GENREG_OFF(22)
-	ld	r23, r31, GENREG_OFF(23)
-	ld	r24, r31, GENREG_OFF(24)
-	ld	r25, r31, GENREG_OFF(25)
-	ld	r26, r31, GENREG_OFF(26)
-	ld	r27, r31, GENREG_OFF(27)
-	ld	r28, r31, GENREG_OFF(28)
-	ld	r29, r31, GENREG_OFF(29)
-	/* restore r1, r30, r31 later */
-
-	/* disable shadowing */
-	ldcr	r1, PSR
-	set	r1, r1, 1<PSR_SHADOW_FREEZE_BIT>
-	stcr	r1, PSR
-	FLUSH_PIPELINE
-
-	/* reload the control regs*/
-#ifdef M88110
-#ifdef M88100
-	or.u	r1, r0, hi16(_C_LABEL(cputyp))
-	ld	r30, r1, lo16(_C_LABEL(cputyp))
-	cmp	r1, r30, CPU_88110
-	bb1	ne, r1, 1f
-#endif
-	ld	r30, r31, REG_OFF(EF_ENIP)
-	ld	r1,  r31, REG_OFF(EF_EXIP)
-	stcr	r30, ENIP
-	stcr	r1,  EXIP
-#ifdef M88100
-	br	2f
-1:
-#endif
-#endif
-#ifdef M88100
-	/*
-	 * RTE will cause execution to continue first with the
-	 * instruction pointed to by the NIP and then the FIP;
-	 * it is not necessary to restore XIP.
-	 */
-	stcr	r0,  SSBR
-	ld	r30, r31, REG_OFF(EF_SNIP)
-	ld	r1,  r31, REG_OFF(EF_SFIP)
-	stcr	r30, SNIP
-	stcr	r1,  SFIP
-2:
-#endif
-	ld	r30, r31, REG_OFF(EF_EPSR)
-	stcr	r30, EPSR
-
-	/* Now restore r1, r30, and r31 */
-	ld	r1,  r31, GENREG_OFF(1)
-	ld	r30, r31, GENREG_OFF(30)
-	ld	r31, r31, GENREG_OFF(31)
-
-	RTE
-
 #ifdef M88110
 /*
  * 88110 exception handlers
@@ -2560,3 +2317,247 @@ ASLOCAL(m88110_fpu_enable)
 ASLOCAL(save_frame)
 	space SIZEOF_EF
 #endif	/* M88110 */
+
+/*
+ * void proc_trampoline(void (*func)(void *), void *proc)
+  *
+ * When a process setup by cpu_fork() resumes, it will find itself in
+ * proc_trampoline, with r31 pointing to a ksigframe. proc_trampoline will
+ * load func and proc values from ksigframe, call the function, and on return
+ * pop off the ksigframe. Then, it will load pc from the switchframe and
+ * jump there (the pc will usually be proc_do_uret).
+ */
+
+ENTRY(proc_trampoline)
+#ifdef MULTIPROCESSOR
+	bsr	_C_LABEL(proc_trampoline_mp)
+#endif
+	ld	r1, r31, 0		/* load func */
+	ld	r2, r31, 4 		/* load proc pointer */
+	jsr.n	r1
+	 addu	r31, r31, 8		/* release ksigframe */
+	ld	r1,  r31, 0		/* load pc */
+	ld	r2,  r31, 4		/* & proc pointer from switch frame */
+	jsr.n	r1
+	 addu	r31, r31, 8
+
+#define	FPTR	r14
+
+/*
+ * void proc_do_uret(struct proc *p)
+ *
+ * This is called as proc_do_uret(proc) from proc_trampoline(). This function
+ * loads FPTR with a pointer to the trap frame for the given proc and continues
+ * near the end of return_code, bypassing soft interrupts and AST checks, to
+ * load all the registers and do an RTE.
+ */
+
+ENTRY(proc_do_uret)
+	ld	FPTR, r2,   P_ADDR		/* p->p_addr */
+	br.n	_ASM_LABEL(no_ast)
+	 addu	FPTR, FPTR, PCB_USER_STATE	/* p->p_addr.u_pcb.user_state */
+
+
+	/*
+	 * Regs r1-r30 are free. r31 is pointing at the word
+	 * on the kernel stack where our pointer to the exception frame
+	 * it stored. Reload it now.
+	 *
+	 * At this point, if EF_DMT0 is not zero on MC88100, then
+	 * this must have been an interrupt where the fault didn't
+	 * get corrected above.  We'll do that now.
+	 *
+	 * We load it into r14 since it is preserved across function
+	 * calls, and we may have to call some routines from within here.
+	 *
+	 * Control is transferred here from obvious places in this file.
+	 */
+
+#ifdef M88100
+ASLOCAL(m88100_return_code)
+	/*
+	 * if there happens to be a data fault that hasn't been serviced yet,
+	 * go off and service that...
+	 */
+
+	ld	FPTR, r31, 0	/* grab exception frame pointer */
+	ld	r3, FPTR, REG_OFF(EF_DMT0)
+	bb0	DMT_VALID_BIT, r3, _ASM_LABEL(check_ast)
+
+	/*
+	 * If it's the interrupt exception, and interrupts were
+	 * initially disabled, enable interrupts again...
+	 */
+	ld	r2, FPTR, REG_OFF(EF_VECTOR)
+	cmp	r2, r2, 1	/* is an interrupt? */
+	bb1.n	ne, r2, 1f	/* if not so, skip */
+
+	/* ...unless they were already disabled */
+	 ld	r2, FPTR, REG_OFF(EF_EPSR)
+	bb1.n	PSR_INTERRUPT_DISABLE_BIT, r2, 1f
+
+	 ldcr	r2, PSR
+	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	r2, PSR
+	FLUSH_PIPELINE
+1:
+
+	CALL(m88100_trap, T_DATAFLT, r30)
+#ifdef M88110
+	br	_ASM_LABEL(check_ast)
+#else
+	/* FALLTHROUGH */
+#endif
+#endif /* M88100 */
+
+#ifdef M88110
+ASLOCAL(m88110_return_code)
+#define	FPTR	r14
+	ld	FPTR, r31, 0	/* grab exception frame pointer */
+	/* FALLTHROUGH */
+#endif /* M88110 */
+
+/*
+ *   If the saved ipl is 0, then call dosoftint() to process soft
+ *   interrupts.
+ *   If returning to userland, look for ASTs.
+ */
+ASLOCAL(check_ast)
+	/* do not service soft interrupts if interrupts were disabled... */
+	ld	r2, FPTR, REG_OFF(EF_EPSR)
+	bb1	PSR_INTERRUPT_DISABLE_BIT, r2, _ASM_LABEL(no_softint)
+	/* ...or we were not at spl0 */
+	ld	r2, FPTR, REG_OFF(EF_MASK)
+	bcnd	ne0, r2, _ASM_LABEL(no_softint)
+
+	/* do an inline spl0() */
+	bsr.n	_C_LABEL(setipl)
+	 or	r2, r0, IPL_SOFTCLOCK
+	bsr	_C_LABEL(dosoftint)
+	bsr.n	_C_LABEL(setipl)
+	 or	r2, r0, IPL_NONE
+
+ASLOCAL(no_softint)
+	/* do not service AST if not returning to user mode */
+	ld	r2, FPTR, REG_OFF(EF_EPSR)
+	bb1	PSR_SUPERVISOR_MODE_BIT, r2, _ASM_LABEL(no_ast)
+
+	ldcr	r2,  CPU
+	ld	r3,  r2, CI_CURPROC
+	bcnd	eq0, r3, _ASM_LABEL(no_ast)	/* no AST if no process! */
+	ld	r2,  r3, P_ASTPENDING
+	bcnd.n	eq0, r2, _ASM_LABEL(no_ast)	/* .n safe since the first
+						   instruction of CALL() is
+						   safe in a delay slot. */
+	/*
+	 * trap(AST,...) will service ast's.
+	 */
+#if defined(M88110) && defined(M88100)
+	 or.u	r2, r0, hi16(_C_LABEL(cputyp))
+	ld	r3, r2, lo16(_C_LABEL(cputyp))
+	cmp	r2, r3, CPU_88110
+	bb0	eq, r2, 2f
+#endif
+#if defined(M88110)
+	CALL(m88110_trap, T_ASTFLT, FPTR)
+#endif
+#if defined(M88110) && defined(M88100)
+	br	_ASM_LABEL(no_ast)
+2:
+#endif
+#ifdef M88100
+	CALL(m88100_trap, T_ASTFLT, FPTR)
+#endif
+
+ASLOCAL(no_ast)
+	/* disable interrupts */
+	ldcr	r1, PSR
+	set	r1, r1, 1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	r1, PSR
+	FLUSH_PIPELINE
+
+	/* now ready to return....*/
+	bsr.n	_C_LABEL(setipl)
+	 ld	r2, FPTR, REG_OFF(EF_MASK)	/* get pre-exception ipl */
+
+	/*
+	 * Transfer the frame pointer to r31, since we no longer need a stack.
+	 * No page faults here, and interrupts are disabled.
+	 */
+	or	r31, r0,  FPTR
+	/* restore r1 later */
+	ld	r2 , r31, GENREG_OFF(2)
+	ld	r3 , r31, GENREG_OFF(3)
+	ld	r4 , r31, GENREG_OFF(4)
+	ld	r5 , r31, GENREG_OFF(5)
+	ld	r6 , r31, GENREG_OFF(6)
+	ld	r7 , r31, GENREG_OFF(7)
+	ld	r8 , r31, GENREG_OFF(8)
+	ld	r9 , r31, GENREG_OFF(9)
+	ld	r10, r31, GENREG_OFF(10)
+	ld	r11, r31, GENREG_OFF(11)
+	ld	r12, r31, GENREG_OFF(12)
+	ld	r13, r31, GENREG_OFF(13)
+	ld	r14, r31, GENREG_OFF(14)
+	ld	r15, r31, GENREG_OFF(15)
+	ld	r16, r31, GENREG_OFF(16)
+	ld	r17, r31, GENREG_OFF(17)
+	ld	r18, r31, GENREG_OFF(18)
+	ld	r19, r31, GENREG_OFF(19)
+	ld	r20, r31, GENREG_OFF(20)
+	ld	r21, r31, GENREG_OFF(21)
+	ld	r22, r31, GENREG_OFF(22)
+	ld	r23, r31, GENREG_OFF(23)
+	ld	r24, r31, GENREG_OFF(24)
+	ld	r25, r31, GENREG_OFF(25)
+	ld	r26, r31, GENREG_OFF(26)
+	ld	r27, r31, GENREG_OFF(27)
+	ld	r28, r31, GENREG_OFF(28)
+	ld	r29, r31, GENREG_OFF(29)
+	/* restore r1, r30, r31 later */
+
+	/* disable shadowing */
+	ldcr	r1, PSR
+	set	r1, r1, 1<PSR_SHADOW_FREEZE_BIT>
+	stcr	r1, PSR
+	FLUSH_PIPELINE
+
+	/* reload the control regs*/
+#ifdef M88110
+#ifdef M88100
+	or.u	r1, r0, hi16(_C_LABEL(cputyp))
+	ld	r30, r1, lo16(_C_LABEL(cputyp))
+	cmp	r1, r30, CPU_88110
+	bb1	ne, r1, 1f
+#endif
+	ld	r30, r31, REG_OFF(EF_ENIP)
+	ld	r1,  r31, REG_OFF(EF_EXIP)
+	stcr	r30, ENIP
+	stcr	r1,  EXIP
+#ifdef M88100
+	br	2f
+1:
+#endif
+#endif
+#ifdef M88100
+	/*
+	 * RTE will cause execution to continue first with the
+	 * instruction pointed to by the NIP and then the FIP;
+	 * it is not necessary to restore XIP.
+	 */
+	stcr	r0,  SSBR
+	ld	r30, r31, REG_OFF(EF_SNIP)
+	ld	r1,  r31, REG_OFF(EF_SFIP)
+	stcr	r30, SNIP
+	stcr	r1,  SFIP
+2:
+#endif
+	ld	r30, r31, REG_OFF(EF_EPSR)
+	stcr	r30, EPSR
+
+	/* Now restore r1, r30, and r31 */
+	ld	r1,  r31, GENREG_OFF(1)
+	ld	r30, r31, GENREG_OFF(30)
+	ld	r31, r31, GENREG_OFF(31)
+
+	RTE
