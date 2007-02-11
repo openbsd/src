@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.39 2007/01/05 21:40:45 kettenis Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.40 2007/02/11 21:29:24 kettenis Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -133,7 +133,7 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
-	int reg;
+	int reg, page;
 
 	mpd = mii_phy_match(ma, eephys);
 	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
@@ -147,6 +147,20 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX No loopback support yet, although the hardware can do it. */
 	sc->mii_flags |= MIIF_NOLOOP;
+
+	/* Switch to fiber-only mode if necessary. */
+	if (sc->mii_model == MII_MODEL_MARVELL_E1112 &&
+	    sc->mii_flags & MIIF_HAVEFIBER) {
+		page = PHY_READ(sc, E1000_EADR);
+		PHY_WRITE(sc, E1000_EADR, 2);
+		reg = PHY_READ(sc, E1000_SCR);
+		reg &= ~E1000_SCR_MODE_MASK;
+		reg |= E1000_SCR_MODE_1000BX;
+		PHY_WRITE(sc, E1000_SCR, reg);
+		PHY_WRITE(sc, E1000_EADR, page);
+
+		PHY_RESET(sc);
+	}
 
 	sc->mii_capabilities = PHY_READ(sc, E1000_SR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
@@ -317,8 +331,7 @@ eephy_status(struct mii_softc *sc)
 	}
 
 	if (sc->mii_flags & MIIF_IS_1000X) {
-		if (ssr & E1000_SSR_1000MBS)
-			mii->mii_media_active |= IFM_1000_SX;
+		mii->mii_media_active |= IFM_1000_SX;
 	} else {
 		if (ssr & E1000_SSR_1000MBS)
 			mii->mii_media_active |= IFM_1000_T;
