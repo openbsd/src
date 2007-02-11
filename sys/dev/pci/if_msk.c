@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.46 2007/02/10 23:19:34 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.47 2007/02/11 22:16:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -977,6 +977,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	bus_dma_segment_t seg;
 	int i, rseg;
 	u_int32_t chunk, val;
+	int mii_flags;
 
 	sc_if->sk_port = sa->skc_port;
 	sc_if->sk_softc = sc;
@@ -1087,8 +1088,11 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 
 	ifmedia_init(&sc_if->sk_mii.mii_media, 0,
 	    msk_ifmedia_upd, msk_ifmedia_sts);
+	mii_flags = MIIF_DOPAUSE|MIIF_FORCEANEG;
+	if (sc->sk_fibertype)
+		mii_flags = MIIF_HAVEFIBER;
 	mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, MIIF_DOPAUSE|MIIF_FORCEANEG);
+	    MII_OFFSET_ANY, mii_flags);
 	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc_if->sk_dev.dv_xname);
 		ifmedia_add(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_MANUAL,
@@ -1148,7 +1152,7 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_size_t size;
-	u_int8_t hw, skrs;
+	u_int8_t hw, pmd, skrs;
 	char *revstr = NULL;
 	caddr_t kva;
 	bus_dma_segment_t seg;
@@ -1276,6 +1280,10 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(2, ("mskc_attach: ramsize=%d (%dk), rboff=%d\n",
 		     sc->sk_ramsize, sc->sk_ramsize / 1024,
 		     sc->sk_rboff));
+
+	pmd = sk_win_read_1(sc, SK_PMDTYPE);
+	if (pmd == 'L' || pmd == 'S' || pmd == 'P')
+		sc->sk_fibertype = 1;
 
 	switch (sc->sk_type) {
 	case SK_YUKON_XL:

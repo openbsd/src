@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.4 2007/02/11 22:16:21 kettenis Exp $	*/
 /*	$NetBSD: if_skvar.h,v 1.6 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.4 2007/02/11 22:16:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -193,6 +193,7 @@ struct sk_softc {
 	bus_space_handle_t	sk_bhandle;	/* bus space handle */
 	bus_space_tag_t		sk_btag;	/* bus space tag */
 	void			*sk_intrhand;	/* irq handler handle */
+	u_int8_t		sk_fibertype;
 	u_int8_t		sk_type;
 	u_int8_t		sk_rev;
 	u_int8_t		sk_macs;	/* # of MACs */
