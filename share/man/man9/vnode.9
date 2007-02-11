@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnode.9,v 1.23 2007/02/02 19:39:31 thib Exp $
+.\"     $OpenBSD: vnode.9,v 1.24 2007/02/11 13:32:28 bluhm Exp $
 .\"
 .\" Copyright (c) 2001 Constantine Sapuntzakis
 .\" All rights reserved.
@@ -345,7 +345,7 @@ regular, FIFO) this vnode is.
 This is used by the generic code for various checks.
 For example, the
 .Xr read 2
-system call returns an error when a read is attempted on a directory.
+system call returns zero when a read is attempted on a directory.
 .Pp
 Possible types are:
 .Pp
