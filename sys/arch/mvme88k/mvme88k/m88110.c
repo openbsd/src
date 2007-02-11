@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.37 2006/05/08 14:36:10 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.38 2007/02/11 12:49:38 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -82,9 +82,9 @@ void	m88110_set_uapr(apr_t);
 void	m88110_flush_tlb(cpuid_t, unsigned, vaddr_t, u_int);
 void	m88110_flush_cache(cpuid_t, paddr_t, psize_t);
 void	m88110_flush_inst_cache(cpuid_t, paddr_t, psize_t);
-void	m88110_flush_data_cache(cpuid_t, paddr_t, psize_t);
-int	m88110_dma_cachectl(pmap_t, vaddr_t, vsize_t, int);
-int	m88110_dma_cachectl_pa(paddr_t, psize_t, int);
+void	m88110_flush_data_page(cpuid_t, paddr_t);
+void	m88110_dma_cachectl(pmap_t, vaddr_t, vsize_t, int);
+void	m88110_dma_cachectl_pa(paddr_t, psize_t, int);
 void	m88110_initialize_cpu(cpuid_t);
 
 /* This is the function table for the MC88110 built-in CMMUs */
@@ -99,7 +99,7 @@ struct cmmu_p cmmu88110 = {
 	m88110_flush_tlb,
 	m88110_flush_cache,
 	m88110_flush_inst_cache,
-	m88110_flush_data_cache,
+	m88110_flush_data_page,
 	m88110_dma_cachectl,
 	m88110_dma_cachectl_pa,
 #ifdef MULTIPROCESSOR
@@ -346,7 +346,7 @@ m88110_flush_tlb(cpuid_t cpu, unsigned kernel, vaddr_t vaddr, u_int count)
  *	flush both Instruction and Data caches
  */
 void
-m88110_flush_cache(cpuid_t cpu, paddr_t physaddr, psize_t size)
+m88110_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 
@@ -363,7 +363,7 @@ m88110_flush_cache(cpuid_t cpu, paddr_t physaddr, psize_t size)
  *	flush Instruction caches
  */
 void
-m88110_flush_inst_cache(cpuid_t cpu, paddr_t physaddr, psize_t size)
+m88110_flush_inst_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 
@@ -377,7 +377,7 @@ m88110_flush_inst_cache(cpuid_t cpu, paddr_t physaddr, psize_t size)
  * flush data cache
  */
 void
-m88110_flush_data_cache(cpuid_t cpu, paddr_t physaddr, psize_t size)
+m88110_flush_data_page(cpuid_t cpu, paddr_t pa)
 {
 	u_int32_t psr;
 
@@ -393,7 +393,7 @@ m88110_flush_data_cache(cpuid_t cpu, paddr_t physaddr, psize_t size)
  * sync dcache (and icache too)
  */
 void
-m88110_cmmu_sync_cache(paddr_t physaddr, psize_t size)
+m88110_cmmu_sync_cache(paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 
@@ -407,7 +407,7 @@ m88110_cmmu_sync_cache(paddr_t physaddr, psize_t size)
 }
 
 void
-m88110_cmmu_sync_inval_cache(paddr_t physaddr, psize_t size)
+m88110_cmmu_sync_inval_cache(paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 
@@ -420,7 +420,7 @@ m88110_cmmu_sync_inval_cache(paddr_t physaddr, psize_t size)
 }
 
 void
-m88110_cmmu_inval_cache(paddr_t physaddr, psize_t size)
+m88110_cmmu_inval_cache(paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 
@@ -433,7 +433,7 @@ m88110_cmmu_inval_cache(paddr_t physaddr, psize_t size)
 	set_psr(psr);
 }
 
-int
+void
 m88110_dma_cachectl(pmap_t pmap, vaddr_t va, vsize_t size, int op)
 {
 	paddr_t pa;
@@ -457,10 +457,9 @@ m88110_dma_cachectl(pmap_t pmap, vaddr_t va, vsize_t size, int op)
 		m88110_cmmu_inval_cache(pa, size);
 		break;
 	}
-	return (1);
 }
 
-int
+void
 m88110_dma_cachectl_pa(paddr_t pa, psize_t size, int op)
 {
 	switch (op) {
@@ -474,5 +473,4 @@ m88110_dma_cachectl_pa(paddr_t pa, psize_t size, int op)
 		m88110_cmmu_inval_cache(pa, size);
 		break;
 	}
-	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.16 2005/12/11 21:45:28 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.17 2007/02/11 12:49:35 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -64,9 +64,9 @@ struct cmmu_p {
 	void (*flush_tlb)(cpuid_t, u_int, vaddr_t, u_int);
 	void (*flush_cache)(cpuid_t, paddr_t, psize_t);
 	void (*flush_inst_cache)(cpuid_t, paddr_t, psize_t);
-	void (*flush_data_cache)(cpuid_t, paddr_t, psize_t);
-	int (*dma_cachectl)(pmap_t, vaddr_t, vsize_t, int);
-	int (*dma_cachectl_pa)(paddr_t, psize_t, int);
+	void (*flush_data_page)(cpuid_t, paddr_t);
+	void (*dma_cachectl)(pmap_t, vaddr_t, vsize_t, int);
+	void (*dma_cachectl_pa)(paddr_t, psize_t, int);
 #ifdef MULTIPROCESSOR
 	void (*initialize_cpu)(cpuid_t);
 #endif
@@ -84,7 +84,7 @@ extern struct cmmu_p *cmmu;
 #define	cmmu_flush_tlb(a, b, c, d) 	(cmmu->flush_tlb)(a, b, c, d)
 #define	cmmu_flush_cache(a, b, c)	(cmmu->flush_cache)(a, b, c)
 #define	cmmu_flush_inst_cache(a, b, c)	(cmmu->flush_inst_cache)(a, b, c)
-#define	cmmu_flush_data_cache(a, b, c)	(cmmu->flush_data_cache)(a, b, c)
+#define	cmmu_flush_data_page(a, b)	(cmmu->flush_data_page)(a, b)
 #define	dma_cachectl(a, b, c, d)	(cmmu->dma_cachectl)(a, b, c, d)
 #define	dma_cachectl_pa(a, b, c)	(cmmu->dma_cachectl_pa)(a, b, c)
 #define	cmmu_initialize_cpu(a)		(cmmu->initialize_cpu)(a)

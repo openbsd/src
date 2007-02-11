@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.28 2006/06/01 06:28:11 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.29 2007/02/11 12:49:37 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -842,7 +842,7 @@ pmap_zero_page(struct vm_page *pg)
 	 * So be sure to have the pa flushed after the filling.
 	 */
 	bzero((void *)va, PAGE_SIZE);
-	cmmu_flush_data_cache(cpu, pa, PAGE_SIZE);
+	cmmu_flush_data_page(cpu, pa);
 
 	splx(spl);
 }
@@ -2115,9 +2115,9 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	 * So be sure to have the source pa flushed before the copy is
 	 * attempted, and the destination pa flushed afterwards.
 	 */
-	cmmu_flush_data_cache(cpu, src, PAGE_SIZE);
+	cmmu_flush_data_page(cpu, src);
 	bcopy((const void *)srcva, (void *)dstva, PAGE_SIZE);
-	cmmu_flush_data_cache(cpu, dst, PAGE_SIZE);
+	cmmu_flush_data_page(cpu, dst);
 
 	splx(spl);
 }
@@ -2563,22 +2563,21 @@ void
 pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
 {
 	pmap_t pmap = vm_map_pmap(&p->p_vmspace->vm_map);
-	vaddr_t eva;
 	paddr_t pa;
+	vsize_t count;
 	u_int32_t users;
 	int cpu;
 
-	eva = round_page(va + len);
-	va = trunc_page(va);
-
-	while (va != eva) {
+	while (len != 0) {
+		count = min(len, PAGE_SIZE - (va & PAGE_MASK));
 		if (pmap_extract(pmap, va, &pa)) {
 			users = pmap->pm_cpus;
 			while ((cpu = ff1(users)) != 32) {
-				cmmu_flush_inst_cache(cpu, pa, PAGE_SIZE);
+				cmmu_flush_inst_cache(cpu, pa, count);
 				users &= ~(1 << cpu);
 			}
 		}
-		va += PAGE_SIZE;
+		va += count;
+		len -= count;
 	}
 }

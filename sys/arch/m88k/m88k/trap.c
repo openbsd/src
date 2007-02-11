@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.37 2006/12/24 20:30:35 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.38 2007/02/11 12:49:37 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1767,6 +1767,9 @@ cache_flush(struct trapframe *tf)
 {
 	struct proc *p;
 	struct pmap *pmap;
+	paddr_t pa;
+	vaddr_t va;
+	vsize_t len, count;
 
 	if ((p = curproc) == NULL)
 		p = &proc0;
@@ -1774,10 +1777,31 @@ cache_flush(struct trapframe *tf)
 	p->p_md.md_tf = tf;
 
 	pmap = vm_map_pmap(&p->p_vmspace->vm_map);
-	dma_cachectl(pmap, tf->tf_r[2], tf->tf_r[3], DMA_CACHE_SYNC);
+	va = tf->tf_r[2];
+	len = tf->tf_r[3];
 
-	tf->tf_snip = tf->tf_snip & ~NIP_E;
-	tf->tf_sfip = tf->tf_sfip & ~FIP_E;
+	if (/* va < VM_MIN_ADDRESS || */ va >= VM_MAXUSER_ADDRESS ||
+	    va + len <= va || va + len >= VM_MAXUSER_ADDRESS)
+		len = 0;
+
+	while (len != 0) {
+		count = min(len, PAGE_SIZE - (va & PAGE_MASK));
+		if (pmap_extract(pmap, va, &pa) != FALSE)	
+			dma_cachectl_pa(pa, count, DMA_CACHE_SYNC);
+		va += count;
+		len -= count;
+	}
+
+	if (CPU_IS88100) {
+		tf->tf_snip = tf->tf_snip & ~NIP_E;
+		tf->tf_sfip = tf->tf_sfip & ~FIP_E;
+	} else {
+		/* skip instruction */
+		if (tf->tf_exip & 1)
+			tf->tf_exip = tf->tf_enip;
+		else
+			tf->tf_exip += 4;
+	}
 
 	userret(p);
 }
