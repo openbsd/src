@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.406 2006/08/29 01:02:49 krw Exp $
+#	$OpenBSD: install.sub,v 1.407 2007/02/11 18:59:31 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2006 Todd Miller, Theo de Raadt, Ken Westerback
@@ -71,8 +71,6 @@
 # The following variables can be provided if required:
 #	MDSETS	    - list of files to add to THESETS
 #	MDTERM      - 'vt220' assumed if not provided
-#	MDFSTYPE    - nothing assumed if not provided
-#	MDFSOPTS    - nothing assumed if not provided
 #	MDDKDEVS    - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
 #	MDCDDEVS    - '/^cd[0-9][0-9]* /s/ .*//p'    assumed if not provided
 #	MDMTDEVS    - '/^[cmsw]t[0-9][0-9]* /s/ .*//p'
@@ -220,34 +218,32 @@ get_drive() {
 	return 0
 }
 
-get_partition() {
-	local _drive=$1 _fstypes=$2 _part _fst
+mount_mnt2() {
+	local _dev=$1 _opts _file=/tmp/parts.$1 _parts
 
-	# Create file /tmp/parts.$_drive where each line is of the
-	# form "<partition letter> <fs type>".
-	disklabel $_drive 2>/dev/null		\
-		| grep '^  [a-p]: '		\
-		| egrep -v "swap|unused"	\
-		| sed -e 's/^  \(.\):  *[^ ]*  *[^ ]*  *\([^ ]*\) .*/\1 \2/' \
-		>/tmp/parts.$_drive
+	disklabel $_dev 2>/dev/null | grep '^  [a-p]: '	\
+		| egrep -v "swap|unused" >$_file
 
-	disklabel $_drive 2>/dev/null | grep '^  .:'
+	_parts=$(sed -e 's/^  \(.\): .*/\1/' $_file)
+	set -- $_parts
+	[[ $# == 0 ]] && { echo "No filesystems found on $_dev" ; return 1 ; }
 
-	ask_which "$_drive partition" "has the $MODE sets" \
-		 "$(sed -e 's/^\(.\).*/\1/' /tmp/parts.$_drive)"
-	[[ $resp == done ]] && return 1
+	if isin "c" $_parts; then
+		# Don't ask questions if 'c' contains a filesystem.
+		resp=c
+	elif [[ $# == 1 ]]; then
+		# Don't ask questions if there's only one choice.
+		resp=$1
+	else
+		# Display partitions with filesystems and ask which to use.
+		cat /tmp/parts.$_dev
+		ask_which "$_dev partition" "has the $MODE sets" "$_parts"
+		[[ $resp == done ]] && return 1
+	fi
 
-	_part=$resp
-	_fst=$(sed -ne "/^$_part /s///p" /tmp/parts.$_drive)
-
-	ask_which "filesystem type" "should be used to mount $_drive$_part" "$_fst $_fstypes ffs"
-	case $resp in
-	done)	return 1 ;;
-	$_fst)	resp="$_part" ;;
-	*)	resp="$_part $resp" ;;
-	esac
-
-	return 0
+	# Always mount msdos partitions with -s to get lower case names.
+	grep -q "^  $resp: .*MSDOS" $_file && _opts="-s"
+	mount -o ro,$_opts /dev/$_dev$resp /mnt2
 }
 
 # Ask for a password, saving the input in $resp.
@@ -1175,44 +1171,19 @@ install_mounted_fs() {
 }
 
 install_cdrom() {
-	local _drive _part=c _fstype
-
 	get_drive "CD-ROM" "$CDDEVS" || return
-	_drive=$resp
+	mount_mnt2 $resp || return
 
-	set -- $(disklabel $_drive 2>&1 | grep '^  c: ')
-	case $4 in
-	ISO9660) _fstype=cd9660 ;;
-	UDF)	 _fstype=udf ;;
-	*)	 get_partition $_drive "cd9660" || return
-		 set -- $resp
-		 _part=$1
-		 [[ -n $2 ]] && _fstype=$2
-		;;
-	esac
-
-	mount -t $_fstype -o ro /dev/$_drive$_part /mnt2 || return
 	install_mounted_fs
 }
 
 install_disk() {
-	local _drive _dev _fstype _fsopts
-
 	ask_yn "Is the disk partition already mounted?"
 	if [[ $resp == n ]]; then
 		get_drive "disk" "$DKDEVS" || return
-		_drive=$resp
-
-		get_partition $_drive "$MDFSTYPE" || return
-		set -- $resp
-		_dev=/dev/$_drive$1
-		[[ -n $2 ]] && _fstype="-t $2"
-		[[ $_fstype == $MDFSTYPE ]] && _fsopts=$MDFSOPTS
-
-		if [[ -z $(mount | grep "^$_dev") ]]; then
-			mount $_fstype -o ro,$_fsopts $_dev /mnt2 || return
-		fi
+		mount_mnt2 $resp || return
 	fi
+
 	install_mounted_fs
 }
 

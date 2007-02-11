@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.28 2005/04/02 14:34:46 krw Exp $
+#	$OpenBSD: install.md,v 1.29 2007/02/11 18:59:30 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,8 +39,6 @@
 # machine dependent section of installation/upgrade script.
 #
 
-MDFSTYPE=msdos
-MDFSOPTS=-s
 MDXAPERTURE=2
 MDSERIAL="pccom com tty0"
 ARCH=ARCH
