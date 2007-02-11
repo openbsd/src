@@ -155,6 +155,7 @@
 ./usr/include/landisk
 ./usr/include/landisk/_types.h
 ./usr/include/landisk/asm.h
+./usr/include/landisk/atomic.h
 ./usr/include/landisk/autoconf.h
 ./usr/include/landisk/bus.h
 ./usr/include/landisk/cdefs.h
@@ -196,6 +197,7 @@
 ./usr/include/sh
 ./usr/include/sh/_types.h
 ./usr/include/sh/asm.h
+./usr/include/sh/atomic.h
 ./usr/include/sh/bscreg.h
 ./usr/include/sh/cache.h
 ./usr/include/sh/cache_sh3.h

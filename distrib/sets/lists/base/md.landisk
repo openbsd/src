@@ -1535,6 +1535,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/_types.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/asm.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/landisk/atomic.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/autoconf.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/bus.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/cdefs.ph
@@ -1925,6 +1926,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/_types.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/asm.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/sh/atomic.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/bscreg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/cache.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/cache_sh3.ph
