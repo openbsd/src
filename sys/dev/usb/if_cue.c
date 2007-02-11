@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.31 2006/06/23 06:27:11 miod Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.32 2007/02/11 20:29:22 miod Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -56,14 +56,7 @@
  * Ported to NetBSD and somewhat rewritten by Lennart Augustsson.
  */
 
-#if defined(__NetBSD__)
-#include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
-#include "rnd.h"
-#elif defined(__OpenBSD__)
-#include "bpfilter.h"
-#endif /* defined(__OpenBSD__) */
 
 #include <sys/param.h>
 #include <sys/systm.h>

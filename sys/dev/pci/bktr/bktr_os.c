@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.24 2006/02/05 23:52:58 jakemsr Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.25 2007/02/11 20:29:22 miod Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -52,10 +52,6 @@
 #ifdef __FreeBSD__
 #include "bktr.h"
 #endif /* __FreeBSD__ */
-
-#ifndef __OpenBSD__
-#include "opt_bktr.h"		/* include any kernel config options */
-#endif
 
 #define FIFO_RISC_DISABLED      0
 #define ALL_INTS_DISABLED       0

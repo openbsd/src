@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_card.c,v 1.13 2007/01/08 08:29:37 pedro Exp $	*/
+/*	$OpenBSD: bktr_card.c,v 1.14 2007/02/11 20:29:22 miod Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -47,10 +47,6 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef __OpenBSD__
-#include "opt_bktr.h"		/* Include any kernel config options */
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi.c,v 1.22 2006/06/23 06:27:11 miod Exp $	*/
+/*	$OpenBSD: awi.c,v 1.23 2007/02/11 20:29:22 miod Exp $	*/
 /*	$NetBSD: awi.c,v 1.26 2000/07/21 04:48:55 onoe Exp $	*/
 
 /*-
@@ -85,9 +85,6 @@
  * and to support adhoc mode by Atsushi Onoe <onoe@netbsd.org>
  */
 
-#ifndef __OpenBSD__
-#include "opt_inet.h"
-#endif
 #if defined(__FreeBSD__) && __FreeBSD__ >= 4
 #define	NBPFILTER	1
 #elif defined(__FreeBSD__) && __FreeBSD__ >= 3

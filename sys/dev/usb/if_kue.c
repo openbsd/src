@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.43 2007/01/09 16:30:08 deraadt Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.44 2007/02/11 20:29:22 miod Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -70,14 +70,7 @@
  * Ported to NetBSD and somewhat rewritten by Lennart Augustsson.
  */
 
-#if defined(__NetBSD__)
-#include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
-#include "rnd.h"
-#elif defined(__OpenBSD__)
-#include "bpfilter.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

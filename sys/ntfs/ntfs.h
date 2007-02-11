@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs.h,v 1.3 2003/05/20 03:36:42 tedu Exp $	*/
+/*	$OpenBSD: ntfs.h,v 1.4 2007/02/11 20:29:22 miod Exp $	*/
 /*	$NetBSD: ntfs.h,v 1.5 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -30,10 +30,6 @@
  */
 
 /*#define NTFS_DEBUG 1*/
-#if defined(__NetBSD__) && defined(_KERNEL_OPT)
-#include "opt_ntfs.h"
-#endif
-
 typedef u_int64_t cn_t;
 typedef u_int16_t wchar;
 

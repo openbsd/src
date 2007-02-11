@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.26 2007/01/13 07:43:15 miod Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.27 2007/02/11 20:29:22 miod Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -74,11 +74,6 @@
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
-
-#if defined(__NetBSD__)
-#include "opt_wsdisplay_compat.h"
-#include "opt_ddb.h"
-#endif
 
 #ifdef UKBD_DEBUG
 #define DPRINTF(x)	do { if (ukbddebug) logprintf x; } while (0)

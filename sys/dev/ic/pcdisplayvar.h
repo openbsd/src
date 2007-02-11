@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplayvar.h,v 1.8 2006/11/29 19:11:15 miod Exp $ */
+/* $OpenBSD: pcdisplayvar.h,v 1.9 2007/02/11 20:29:22 miod Exp $ */
 /* $NetBSD: pcdisplayvar.h,v 1.8 2000/01/25 02:44:03 ad Exp $ */
 
 /*
@@ -26,10 +26,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
-#if 0
-#include "opt_pcdisplay.h"
-#endif
 
 struct pcdisplayscreen {
 	struct pcdisplay_handle *hdl;
