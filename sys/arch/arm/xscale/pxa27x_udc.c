@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.9 2007/02/12 15:09:03 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.10 2007/02/12 16:11:11 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -400,9 +400,6 @@ pxaudc_enable(struct pxaudc_softc *sc)
 			else
 				sc->sc_icr1 |= USBDC_UDCICR1_IE(i-16);
 
-			printf("configuring pipe/ep %x %x\n", i,
-			    UE_GET_ADDR(ed->bEndpointAddress));
-
 			cr = USBDC_UDCECR_EE | USBDC_UDCECR_DE;
 			cr |= USBDC_UDCECR_ENs(
 			    UE_GET_ADDR(ed->bEndpointAddress));
@@ -416,13 +413,11 @@ pxaudc_enable(struct pxaudc_softc *sc)
 			    USBDC_UDCECR_CNs(1);
 
 			CSR_WRITE_4(sc, USBDC_UDCECR(i), cr);
-			printf("endpoint %c programed to %x\n", '@'+i, cr);
 
 			/* clear old status */
 			CSR_WRITE_4(sc, USBDC_UDCCSR(1), 
 			    USBDC_UDCCSR_PC | USBDC_UDCCSR_TRN |
 			    USBDC_UDCCSR_SST | USBDC_UDCCSR_FEF);
-			printf("csr%d %x\n", i, CSR_READ_4(sc,  USBDC_UDCCSR(1)));
 		}
 	}
 
@@ -434,11 +429,10 @@ pxaudc_enable(struct pxaudc_softc *sc)
 	/* Enable interrupts for configured endpoints. */
 	CSR_WRITE_4(sc, USBDC_UDCICR0, USBDC_UDCICR0_IE(0) |
 	    sc->sc_icr0);
-	printf("icr0 %x\n", CSR_READ_4(sc,  USBDC_UDCICR0));
+
 	CSR_WRITE_4(sc, USBDC_UDCICR1, USBDC_UDCICR1_IERS |
 	    USBDC_UDCICR1_IESU | USBDC_UDCICR1_IERU |
 	    USBDC_UDCICR1_IECC | sc->sc_icr1);
-	printf("icr1 %x\n", CSR_READ_4(sc,  USBDC_UDCICR1));
 
 	/* Enable the controller. */
 	CSR_CLR_4(sc, USBDC_UDCCR, USBDC_UDCCR_EMCE);
@@ -635,6 +629,7 @@ void
 pxaudc_intr1(struct pxaudc_softc *sc)
 {
 	u_int32_t isr0, isr1, otgisr;
+	int i;
 	//int s;
 
 	//s = splhardusb();
@@ -648,32 +643,28 @@ pxaudc_intr1(struct pxaudc_softc *sc)
 
 	sc->sc_bus.intr_context++;
 
-	if (isr0 & USBDC_UDCISR0_IR(1)) {
-		printf("interrupt pending ep[1]\n");
+	if (isr1 & USBDC_UDCISR1_IRCC) {
+                CSR_SET_4(sc, USBDC_UDCCR, USBDC_UDCCR_SMAC);
+
+		/* wait for reconfig to finish (SMAC auto clears */
+		while (CSR_READ_4(sc, USBDC_UDCCR)  & USBDC_UDCCR_SMAC)
+			delay(10);
+
 	}
-	{
-		int i;
-		u_int32_t csr;
-                csr = CSR_READ_4(sc, USBDC_UDCCSR(1));
-		if (csr1 != csr) {
-			printf("CSR1 %x\n", csr);
-			csr1 = csr;
+	for (i = 1; i < 24; i++) {
+		int x;
+		if (i < 16) {
+			if (isr0 & USBDC_UDCISR0_IR(i))
+				printf("interrupt pending ep[%d]\n", i);
+		} else {
+			if (isr1 & USBDC_UDCISR1_IR(i-16))
+				printf("interrupt pending ep[%d]\n", i);
 		}
-                csr = CSR_READ_4(sc, USBDC_UDCCSR(2));
-		if (csr2 != csr) {
-			printf("CSR1 %x\n", csr);
-			csr2 = csr;
-		 }
-		 for (i = 1; i < 23; i++) {
-			int x;
-			x = CSR_READ_4(sc, USBDC_UDCBCR(i));
-			if( x != 0)
-				printf("data present in ep %d %d\n", i, x);
-		 }
+		x = CSR_READ_4(sc, USBDC_UDCBCR(i));
+		if( x != 0)
+			printf("data present in ep %d %d\n", i, x);
 	}
-	if (isr0 & USBDC_UDCISR0_IR(2)) {
-		printf("interrupt pending ep[2]\n");
-	}
+
 	/* Handle USB RESET condition. */
 	if (isr1 & USBDC_UDCISR1_IRRS) {
 		sc->sc_ep0state = EP0_SETUP;
@@ -691,30 +682,6 @@ pxaudc_intr1(struct pxaudc_softc *sc)
 	}
 	if (isr1 & USBDC_UDCISR1_IRRU) {
 		/* resume ?? */
-	}
-	if (isr1 & USBDC_UDCISR1_IRCC) {
-                u_int32_t ccr;
-                ccr = CSR_READ_4(sc, USBDC_UDCCR);
- 
-                printf("config change isr %x %x ccr0 %b\n acn %x ain %x aaisn %x\n",
-                    isr0, isr1,
-			ccr, USBDC_UDCCR_BITS,
-                        (ccr >> 11)  & 7,
-                        (ccr >> 8)  & 7,
-                        (ccr >> 5)  & 7);
-                CSR_SET_4(sc, USBDC_UDCCR, USBDC_UDCCR_SMAC);
-
-		/* wait for reconfig to finish (SMAC auto clears */
-		while (CSR_READ_4(sc, USBDC_UDCCR)  & USBDC_UDCCR_SMAC)
-			delay(10);
-
-                ccr = CSR_READ_4(sc, USBDC_UDCCR);
- 
-                printf("after config change isr %x %x acn %x ain %x aaisn %x ccr0 %x\n",
-                    isr0, isr1,
-                        (ccr >> 11)  & 7,
-                        (ccr >> 8)  & 7,
-                        (ccr >> 5)  & 7, ccr);
 	}
 
 ret:
@@ -792,7 +759,6 @@ pxaudc_open(struct usbf_pipe *pipe)
 
 	sc->sc_pipe[sc->sc_npipe] = ppipe;
 	sc->sc_npipe++;
-	printf("adding pipe %x\n", usbf_endpoint_index(pipe->endpoint));
 
 	splx(s);
 	return USBF_NORMAL_COMPLETION;
