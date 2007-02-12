@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pxeboot.8,v 1.6 2007/02/12 22:06:20 jmc Exp $
+.\"	$OpenBSD: pxeboot.8,v 1.7 2007/02/12 22:13:07 jmc Exp $
 .\" Copyright (c) 2004 Tom Cosgrove
 .\" Copyright (c) 2003 Matthias Drochner
 .\" Copyright (c) 1999 Doug White
@@ -74,7 +74,7 @@ either by commands in the
 .Pa boot.conf
 file,
 or by commands typed by the user at the
-.Ic boot>
+.Ic boot\*(Gt
 prompt.
 .Nm
 can be used for
@@ -95,11 +95,11 @@ It may help to use the
 option with
 .Xr tftpd 8 ,
 to avoid confusion between files for the server's system
-and files for the client system.
-(Note that
+and files for the client system
+(note that
 .Fl s
 is set by default in
-OpenBSD.)
+.Ox ) .
 .Xr ftpd 8
 or
 .Xr httpd 8
@@ -166,11 +166,11 @@ Default root directory for
 .Sh EXAMPLES
 Boot the install kernel:
 .Pp
-.Dl boot> bsd.rd
+.Dl boot\*(Gt bsd.rd
 .Pp
 The same thing:
 .Pp
-.Dl boot> boot tftp:bsd.rd
+.Dl boot\*(Gt boot tftp:bsd.rd
 .Sh SEE ALSO
 .Xr dhcpd.conf 5 ,
 .Xr boot 8 ,
