@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.47 2007/02/11 22:16:21 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.48 2007/02/12 21:28:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -133,9 +133,11 @@
 
 int mskc_probe(struct device *, void *, void *);
 void mskc_attach(struct device *, struct device *self, void *aux);
+void mskc_reset(struct sk_softc *);
 void mskc_shutdown(void *);
 int msk_probe(struct device *, void *, void *);
 void msk_attach(struct device *, struct device *self, void *aux);
+void msk_reset(struct sk_if_softc *);
 int mskcprint(void *, const char *);
 int msk_intr(void *);
 void msk_intr_yukon(struct sk_if_softc *);
@@ -151,7 +153,6 @@ void msk_stop(struct sk_if_softc *);
 void msk_watchdog(struct ifnet *);
 int msk_ifmedia_upd(struct ifnet *);
 void msk_ifmedia_sts(struct ifnet *, struct ifmediareq *);
-void msk_reset(struct sk_softc *);
 int msk_newbuf(struct sk_if_softc *, int, struct mbuf *, bus_dmamap_t);
 int msk_alloc_jumbo_mem(struct sk_if_softc *);
 void *msk_jalloc(struct sk_if_softc *);
@@ -818,12 +819,13 @@ mskc_probe(struct device *parent, void *match, void *aux)
 /*
  * Force the GEnesis into reset, then bring it out of reset.
  */
-void msk_reset(struct sk_softc *sc)
+void
+mskc_reset(struct sk_softc *sc)
 {
 	u_int32_t imtimer_ticks, reg1;
 	int reg;
 
-	DPRINTFN(2, ("msk_reset\n"));
+	DPRINTFN(2, ("mskc_reset\n"));
 
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_SW_RESET);
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_MASTER_RESET);
@@ -860,8 +862,8 @@ void msk_reset(struct sk_softc *sc)
 
 	sk_win_write_1(sc, SK_TESTCTL1, 1);
 
-	DPRINTFN(2, ("sk_reset: sk_csr=%x\n", CSR_READ_1(sc, SK_CSR)));
-	DPRINTFN(2, ("msk_reset: sk_link_ctrl=%x\n",
+	DPRINTFN(2, ("mskc_reset: sk_csr=%x\n", CSR_READ_1(sc, SK_CSR)));
+	DPRINTFN(2, ("mskc_reset: sk_link_ctrl=%x\n",
 		     CSR_READ_2(sc, SK_LINK_CTRL)));
 
 	/* Disable ASF */
@@ -960,6 +962,18 @@ msk_probe(struct device *parent, void *match, void *aux)
 	}
 
 	return (0);
+}
+
+void
+msk_reset(struct sk_if_softc *sc_if)
+{
+	/* GMAC and GPHY Reset */
+	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_RESET_SET);
+	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_SET);
+	DELAY(1000);
+	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_CLEAR);
+	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_LOOP_OFF |
+		      SK_GMAC_PAUSE_ON | SK_GMAC_RESET_CLEAR);
 }
 
 /*
@@ -1074,6 +1088,8 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
+	msk_reset(sc_if);
+
 	/*
 	 * Do miibus setup.
 	 */
@@ -1088,7 +1104,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 
 	ifmedia_init(&sc_if->sk_mii.mii_media, 0,
 	    msk_ifmedia_upd, msk_ifmedia_sts);
-	mii_flags = MIIF_DOPAUSE|MIIF_FORCEANEG;
+	mii_flags = MIIF_DOPAUSE;
 	if (sc->sk_fibertype)
 		mii_flags = MIIF_HAVEFIBER;
 	mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
@@ -1268,7 +1284,7 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc));
 
 	/* Reset the adapter. */
-	msk_reset(sc);
+	mskc_reset(sc);
 
 	skrs = sk_win_read_1(sc, SK_EPROM0);
 	if (skrs == 0x00)
@@ -1563,7 +1579,8 @@ msk_watchdog(struct ifnet *ifp)
 		ifp->if_oerrors++;
 
 		/* XXX Resets both ports; we shouldn't do that. */
-		msk_reset(sc_if->sk_softc);
+		mskc_reset(sc_if->sk_softc);
+		msk_reset(sc_if);
 		msk_init(sc_if);
 	}
 }
@@ -1582,7 +1599,7 @@ mskc_shutdown(void *v)
 	 * Reset the GEnesis controller. Doing this should also
 	 * assert the resets on the attached XMAC(s).
 	 */
-	msk_reset(sc);
+	mskc_reset(sc);
 }
 
 __inline int
@@ -1850,17 +1867,6 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 		     CSR_READ_4(sc_if->sk_softc, SK_CSR)));
 
 	DPRINTFN(6, ("msk_init_yukon: 1\n"));
-
-	/* GMAC and GPHY Reset */
-	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_RESET_SET);
-	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_SET);
-	DELAY(1000);
-
-	DPRINTFN(6, ("msk_init_yukon: 2\n"));
-
-	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_CLEAR);
-	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_LOOP_OFF |
-		      SK_GMAC_PAUSE_ON | SK_GMAC_RESET_CLEAR);
 
 	DPRINTFN(3, ("msk_init_yukon: gmac_ctrl=%#x\n",
 		     SK_IF_READ_4(sc_if, 0, SK_GMAC_CTRL)));
