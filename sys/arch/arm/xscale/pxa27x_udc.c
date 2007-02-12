@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.8 2007/02/07 16:26:49 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.9 2007/02/12 15:09:03 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -380,10 +380,11 @@ pxaudc_enable(struct pxaudc_softc *sc)
 	CSR_WRITE_4(sc, USBDC_UP2OCR, USBDC_UP2OCR_DPPUE | USBDC_UP2OCR_HXOE);
 #endif
 
+	CSR_SET_4(sc, USBDC_UDCCR, 0);
 	sc->sc_icr0 = 0;
 	sc->sc_icr1 = 0;
 
-	for (i = 0; i < PXAUDC_NEP; i++) 
+	for (i = 1; i < PXAUDC_NEP; i++) 
 		CSR_WRITE_4(sc, USBDC_UDCECR(i), 0); /* disable endpoints */
 
 	for (i = 1; i < sc->sc_npipe; i++) {
@@ -399,13 +400,15 @@ pxaudc_enable(struct pxaudc_softc *sc)
 			else
 				sc->sc_icr1 |= USBDC_UDCICR1_IE(i-16);
 
-			printf("configuring pipe/ep %x\n", i);
-			cr = USBDC_UDCECR_EE;
+			printf("configuring pipe/ep %x %x\n", i,
+			    UE_GET_ADDR(ed->bEndpointAddress));
+
+			cr = USBDC_UDCECR_EE | USBDC_UDCECR_DE;
 			cr |= USBDC_UDCECR_ENs(
 			    UE_GET_ADDR(ed->bEndpointAddress));
 			cr |= USBDC_UDCECR_MPSs(UGETW(ed->wMaxPacketSize));
 			cr |= USBDC_UDCECR_ETs(ed->bmAttributes & UE_XFERTYPE);
-			if (dir == UE_DIR_OUT)
+			if (dir == UE_DIR_IN)
 				cr |= USBDC_UDCECR_ED;
 
 			/* XXX - until pipe has cn/in/ain */
@@ -423,22 +426,23 @@ pxaudc_enable(struct pxaudc_softc *sc)
 		}
 	}
 
+	CSR_WRITE_4(sc, USBDC_UDCISR0, 0xffffffff); /* clear all */
+	CSR_WRITE_4(sc, USBDC_UDCISR1, 0xffffffff); /* clear all */
+	CSR_SET_4(sc, USBDC_UDCCSR0, USBDC_UDCCSR0_ACM);
+
 
 	/* Enable interrupts for configured endpoints. */
 	CSR_WRITE_4(sc, USBDC_UDCICR0, USBDC_UDCICR0_IE(0) |
 	    sc->sc_icr0);
 	printf("icr0 %x\n", CSR_READ_4(sc,  USBDC_UDCICR0));
 	CSR_WRITE_4(sc, USBDC_UDCICR1, USBDC_UDCICR1_IERS |
+	    USBDC_UDCICR1_IESU | USBDC_UDCICR1_IERU |
 	    USBDC_UDCICR1_IECC | sc->sc_icr1);
 	printf("icr1 %x\n", CSR_READ_4(sc,  USBDC_UDCICR1));
-
-	CSR_SET_4(sc, USBDC_UDCCSR0, USBDC_UDCCSR0_ACM);
 
 	/* Enable the controller. */
 	CSR_CLR_4(sc, USBDC_UDCCR, USBDC_UDCCR_EMCE);
 	CSR_SET_4(sc, USBDC_UDCCR, USBDC_UDCCR_UDE);
-
-	printf("udccr %b\n", CSR_READ_4(sc, USBDC_UDCCR), USBDC_UDCCR_BITS);
 
 	/* Enable USB client on port 2. */
 	pxa2x0_gpio_clear_bit(37); /* USB_P2_8 */
@@ -458,8 +462,7 @@ pxaudc_disable(struct pxaudc_softc *sc)
 	CSR_WRITE_4(sc, USBDC_UDCOTGICR, 0);
 
 	/* Set Port 2 output to "Non-OTG Host with Differential Port". */
-	CSR_WRITE_4(sc, USBDC_UP2OCR, USBDC_UP2OCR_HXS |
-	    USBDC_UP2OCR_HXOE);
+	CSR_WRITE_4(sc, USBDC_UP2OCR, USBDC_UP2OCR_HXS | USBDC_UP2OCR_HXOE);
 
 	/* Set "Host Port 2 Transceiver D­ Pull Down Enable". */
 	CSR_SET_4(sc, USBDC_UP2OCR, USBDC_UP2OCR_DMPDE);
@@ -683,23 +686,35 @@ pxaudc_intr1(struct pxaudc_softc *sc)
 	if (isr0 & USBDC_UDCISR0_IR(0))
 		pxaudc_ep0_intr(sc);
 
+	if (isr1 & USBDC_UDCISR1_IRSU) {
+		/* suspend ?? */
+	}
+	if (isr1 & USBDC_UDCISR1_IRRU) {
+		/* resume ?? */
+	}
 	if (isr1 & USBDC_UDCISR1_IRCC) {
-                u_int32_t csr0;
-                csr0 = CSR_READ_4(sc, USBDC_UDCCSR0);
+                u_int32_t ccr;
+                ccr = CSR_READ_4(sc, USBDC_UDCCR);
  
-                printf("config change isr %x %x acn %x ain %x aaisn %x\n",
+                printf("config change isr %x %x ccr0 %b\n acn %x ain %x aaisn %x\n",
                     isr0, isr1,
-                        (csr0 >> 11)  & 7,
-                        (csr0 >> 8)  & 7,
-                        (csr0 >> 5)  & 7);
-                CSR_SET_4(sc, USBDC_UDCCSR0, USBDC_UDCCR_SMAC);
-                csr0 = CSR_READ_4(sc, USBDC_UDCCSR0);
+			ccr, USBDC_UDCCR_BITS,
+                        (ccr >> 11)  & 7,
+                        (ccr >> 8)  & 7,
+                        (ccr >> 5)  & 7);
+                CSR_SET_4(sc, USBDC_UDCCR, USBDC_UDCCR_SMAC);
+
+		/* wait for reconfig to finish (SMAC auto clears */
+		while (CSR_READ_4(sc, USBDC_UDCCR)  & USBDC_UDCCR_SMAC)
+			delay(10);
+
+                ccr = CSR_READ_4(sc, USBDC_UDCCR);
  
-                printf("after config change isr %x %x acn %x ain %x aaisn %x\n",
+                printf("after config change isr %x %x acn %x ain %x aaisn %x ccr0 %x\n",
                     isr0, isr1,
-                        (csr0 >> 11)  & 7,
-                        (csr0 >> 8)  & 7,
-                        (csr0 >> 5)  & 7);
+                        (ccr >> 11)  & 7,
+                        (ccr >> 8)  & 7,
+                        (ccr >> 5)  & 7, ccr);
 	}
 
 ret:
