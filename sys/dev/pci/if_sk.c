@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.138 2007/02/10 02:27:56 krw Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.139 2007/02/12 21:19:56 pedro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -958,7 +958,8 @@ skc_probe(struct device *parent, void *match, void *aux)
 /*
  * Force the GEnesis into reset, then bring it out of reset.
  */
-void sk_reset(struct sk_softc *sc)
+void
+sk_reset(struct sk_softc *sc)
 {
 	u_int32_t imtimer_ticks;
 
