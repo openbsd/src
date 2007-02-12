@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.59 2007/02/09 10:19:40 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.60 2007/02/12 13:23:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -900,14 +900,26 @@ int
 rde_nbr_loading(struct area *area)
 {
 	struct rde_nbr		*nbr;
+	int			 checkall = 0;
 
-	LIST_FOREACH(nbr, &area->nbr_list, entry) {
-		if (nbr->self)
-			continue;
-		if (nbr->state & NBR_STA_XCHNG ||
-		    nbr->state & NBR_STA_LOAD)
-			return (1);
+	if (area == NULL) {
+		area = LIST_FIRST(&rdeconf->area_list);
+		checkall = 1;
 	}
+
+	while (area != NULL) {
+		LIST_FOREACH(nbr, &area->nbr_list, entry) {
+			if (nbr->self)
+				continue;
+			if (nbr->state & NBR_STA_XCHNG ||
+			    nbr->state & NBR_STA_LOAD)
+				return (1);
+		}
+		if (!checkall)
+			break;
+		area = LIST_NEXT(area, entry);
+	}
+
 	return (0);
 }
 
