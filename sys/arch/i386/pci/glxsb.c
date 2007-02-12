@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.6 2007/01/19 19:59:09 tom Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.7 2007/02/12 14:31:45 tom Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -39,7 +39,6 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#undef CRYPTO			/* XXX AES support not yet ready XXX */
 #ifdef CRYPTO
 #include <crypto/cryptodev.h>
 #include <crypto/rijndael.h>
