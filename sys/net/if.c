@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.153 2006/12/03 13:41:19 reyk Exp $	*/
+/*	$OpenBSD: if.c,v 1.154 2007/02/12 22:36:47 mpf Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1345,11 +1345,14 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	                return (ENODEV);
 		}
 		if (ifp->if_flags & IFF_UP) {
+			struct ifreq ifrq;
 		        int s = splnet();
 			ifp->if_flags &= ~IFF_UP;
-			(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
+			ifrq.ifr_flags = ifp->if_flags;
+			(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
 			ifp->if_flags |= IFF_UP;
-			(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
+			ifrq.ifr_flags = ifp->if_flags;
+			(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
 			splx(s);
 			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			        if (ifa->ifa_addr != NULL &&
