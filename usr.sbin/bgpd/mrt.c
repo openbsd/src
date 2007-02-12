@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.51 2007/02/12 13:12:30 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.52 2007/02/12 19:15:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -91,6 +91,7 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 {
 	struct buf	*buf;
 	u_int16_t	 len;
+	int		 incoming = 0;
 
 	switch (peer->sa_local.ss_family) {
 	case AF_INET:
@@ -103,6 +104,10 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 		return (-1);
 	}
 
+	/* get the direction of the message to swap address and AS fields */
+	if (mrt->type == MRT_ALL_IN || mrt->type == MRT_UPDATE_IN)
+		incoming = 1;
+
 	if ((buf = buf_open(len + MRT_HEADER_SIZE)) == NULL) {
 		log_warnx("mrt_dump_bgp_msg: buf_open error");
 		return (-1);
@@ -114,29 +119,49 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 		return (-1);
 	}
 
-	DUMP_SHORT(buf, bgp->as);
+	if (!incoming)
+		DUMP_SHORT(buf, bgp->as);
 	DUMP_SHORT(buf, peer->conf.remote_as);
+	if (incoming)
+		DUMP_SHORT(buf, bgp->as);
 	DUMP_SHORT(buf, /* ifindex */ 0);
 	switch (peer->sa_local.ss_family) {
 	case AF_INET:
 		DUMP_SHORT(buf, AFI_IPv4);
-		DUMP_NLONG(buf,
-		    ((struct sockaddr_in *)&peer->sa_local)->sin_addr.s_addr);
+		if (!incoming)
+			DUMP_NLONG(buf, ((struct sockaddr_in *)
+			    &peer->sa_local)->sin_addr.s_addr);
 		DUMP_NLONG(buf,
 		    ((struct sockaddr_in *)&peer->sa_remote)->sin_addr.s_addr);
+		if (incoming)
+			DUMP_NLONG(buf, ((struct sockaddr_in *)
+			    &peer->sa_local)->sin_addr.s_addr);
 		break;
 	case AF_INET6:
 		DUMP_SHORT(buf, AFI_IPv6);
+		if (!incoming)
+			if (buf_add(buf, &((struct sockaddr_in6 *)
+			    &peer->sa_local)->sin6_addr,
+			    sizeof(struct in6_addr)) == -1) {
+				log_warnx("mrt_dump_bgp_msg: buf_add error");
+				buf_free(buf);
+				return (-1);
+			}
 		if (buf_add(buf,
-		    &((struct sockaddr_in6 *)&peer->sa_local)->sin6_addr,
-		    sizeof(struct in6_addr)) == -1 ||
-		    buf_add(buf,
 		    &((struct sockaddr_in6 *)&peer->sa_remote)->sin6_addr,
 		    sizeof(struct in6_addr)) == -1) {
 			log_warnx("mrt_dump_bgp_msg: buf_add error");
 			buf_free(buf);
 			return (-1);
 		}
+		if (incoming)
+			if (buf_add(buf, &((struct sockaddr_in6 *)
+			    &peer->sa_local)->sin6_addr,
+			    sizeof(struct in6_addr)) == -1) {
+				log_warnx("mrt_dump_bgp_msg: buf_add error");
+				buf_free(buf);
+				return (-1);
+			}
 		break;
 	}
 
