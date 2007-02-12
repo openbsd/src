@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.68 2006/07/26 20:34:11 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.69 2007/02/12 13:10:02 henning Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -41,8 +41,8 @@
 #define BSD4_3	1
 #define BSD4_4	1
 
-#define OpenBSD	200611		/* OpenBSD version (year & month). */
-#define OpenBSD4_0 1		/* OpenBSD 4.0 */
+#define OpenBSD	200705		/* OpenBSD version (year & month). */
+#define OpenBSD4_1 1		/* OpenBSD 4.1 */
 
 #ifndef NULL
 #ifdef 	__GNUG__

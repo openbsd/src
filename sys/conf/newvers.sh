@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.80 2006/09/17 16:47:27 steven Exp $
+#	$OpenBSD: newvers.sh,v 1.81 2007/02/12 13:10:02 henning Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -64,13 +64,13 @@ id=`basename ${d}`
 #	A month or so before release, select STATUS "-beta"
 
 ost="OpenBSD"
-osr="4.0"
+osr="4.1"
 
 cat >vers.c <<eof
-#define STATUS "-current"
-#if 0
-#define STATUS ""			/* release */
 #define STATUS "-beta"
+#if 0
+#define STATUS "-current"
+#define STATUS ""			/* release */
 #endif
 
 const char ostype[] = "${ost}";
