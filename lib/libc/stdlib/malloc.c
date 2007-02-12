@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.85 2006/12/19 13:00:50 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.86 2007/02/12 20:00:14 otto Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -1672,6 +1672,7 @@ not_return:
 static void
 free_bytes(void *ptr)
 {
+	u_int8_t __arc4_getbyte(void);
 	struct pginfo	**mp, **pd, *info;
 	struct pdinfo	*pi;
 #ifdef	MALLOC_EXTRA_SANITY
@@ -1687,7 +1688,7 @@ free_bytes(void *ptr)
 
 	
 	/* delay return, returning a random something from before instead */
-	tmpidx = arc4random() % 16;
+	tmpidx = __arc4_getbyte() % 16;
 	tmpptr = chunk_buffer[tmpidx];
 	chunk_buffer[tmpidx] = ptr;
 	ptr = tmpptr;
