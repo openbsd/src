@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.26 2007/02/09 19:52:32 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.27 2007/02/12 16:32:54 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.26 2007/02/09 19:52:32 otto Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.27 2007/02/12 16:32:54 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -495,7 +495,8 @@ calcsb(char *dev, int devfd, struct fs *fs)
 	int i;
 
 	cp = strchr(dev, '\0') - 1;
-	if ((cp == (char *)-1 || (*cp < 'a' || *cp > 'h')) && !isdigit(*cp)) {
+	if ((cp == (char *)-1 || (*cp < 'a' || *cp >= 'a' + MAXPARTITIONS)) &&
+	    !isdigit(*cp)) {
 		pfatal("%s: CANNOT FIGURE OUT FILE SYSTEM PARTITION\n", dev);
 		return (0);
 	}
