@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.117 2007/02/03 23:47:18 bluhm Exp $	*/
+/*	$OpenBSD: sd.c,v 1.118 2007/02/12 00:30:17 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1045,7 +1045,6 @@ sdgetdisklabel(dev, sd, lp, clp, spoofonly)
 	    spoofonly);
 	if (errstring) {
 		/*printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);*/
-		return;
 	}
 }
 
