@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.27 2007/01/24 13:24:58 bluhm Exp $	*/
+/*	$OpenBSD: inode.c,v 1.28 2007/02/12 16:41:07 otto Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static const char rcsid[] = "$OpenBSD: inode.c,v 1.27 2007/01/24 13:24:58 bluhm Exp $";
+static const char rcsid[] = "$OpenBSD: inode.c,v 1.28 2007/02/12 16:41:07 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ static const char rcsid[] = "$OpenBSD: inode.c,v 1.27 2007/01/24 13:24:58 bluhm 
 
 static ino_t startinum;
 
-static int iblock(struct inodesc *, long, u_int64_t);
+static int iblock(struct inodesc *, long, off_t);
 
 int
 ckinode(struct ufs1_dinode *dp, struct inodesc *idesc)
@@ -65,7 +65,7 @@ ckinode(struct ufs1_dinode *dp, struct inodesc *idesc)
 	ufs_daddr_t *ap;
 	long ret, n, ndb, offset;
 	struct ufs1_dinode dino;
-	u_int64_t remsize, sizepb;
+	off_t sizepb, remsize;
 	mode_t mode;
 	char pathbuf[MAXPATHLEN + 1];
 
@@ -148,13 +148,13 @@ ckinode(struct ufs1_dinode *dp, struct inodesc *idesc)
 }
 
 static int
-iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
+iblock(struct inodesc *idesc, long ilevel, off_t isize)
 {
 	daddr_t *ap;
 	daddr_t *aplim;
 	struct bufarea *bp;
 	int i, n, (*func)(struct inodesc *), nif;
-	u_int64_t sizepb;
+	off_t sizepb;
 	char buf[BUFSIZ];
 	char pathbuf[MAXPATHLEN + 1];
 	struct ufs1_dinode *dp;
@@ -171,7 +171,7 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 	ilevel--;
 	for (sizepb = sblock.fs_bsize, i = 0; i < ilevel; i++)
 		sizepb *= NINDIR(&sblock);
-	if (isize > sizepb * NINDIR(&sblock))
+	if (howmany(isize, sizepb) > NINDIR(&sblock))
 		nif = NINDIR(&sblock);
 	else
 		nif = howmany(isize, sizepb);
@@ -183,7 +183,9 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 			(void)snprintf(buf, sizeof buf,
 			    "PARTIALLY TRUNCATED INODE I=%u",
 			    idesc->id_number);
-			if (dofix(idesc, buf)) {
+			if (preen)
+				pfatal("%s", buf);
+			else if (dofix(idesc, buf)) {
 				*ap = 0;
 				dirty(bp);
 			}
@@ -237,8 +239,16 @@ chkrange(daddr_t blk, int cnt)
 {
 	int c;
 
-	if ((unsigned)blk > maxfsblock || (unsigned)(blk + cnt) > maxfsblock)
+	if (cnt <= 0 || blk <= 0 || blk > maxfsblock ||
+	    cnt - 1 > maxfsblock - blk)
 		return (1);
+	if (cnt > sblock.fs_frag ||
+	    fragnum(&sblock, blk) + cnt > sblock.fs_frag) {
+		if (debug)
+			printf("bad size: blk %ld, offset %i, size %d\n",
+			    (long)blk, (int)fragnum(&sblock, blk), cnt);
+		return (1);
+	}
 	c = dtog(&sblock, blk);
 	if (blk < cgdmin(&sblock, c)) {
 		if ((blk + cnt) > cgsblock(&sblock, c)) {
