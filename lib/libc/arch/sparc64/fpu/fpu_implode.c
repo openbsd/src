@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_implode.c,v 1.1 2003/07/21 18:41:30 jason Exp $	*/
+/*	$OpenBSD: fpu_implode.c,v 1.2 2007/02/12 19:47:10 jason Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -264,13 +264,13 @@ __fpu_ftox(fe, fp, res)
 	case FPC_NUM:
 		/*
 		 * If exp >= 2^64, overflow.  Otherwise shift value right
-		 * into last mantissa word (this will not exceed 0xffffffffffffffff),
-		 * shifting any guard and round bits out into the sticky
-		 * bit.  Then ``round'' towards zero, i.e., just set an
-		 * inexact exception if sticky is set (see round()).
-		 * If the result is > 0x8000000000000000, or is positive and equals
-		 * 0x8000000000000000, overflow; otherwise the last fraction word
-		 * is the result.
+		 * into last mantissa word (this will not exceed
+		 * 0xffffffffffffffff), shifting any guard and round bits out
+		 * into the sticky bit.  Then ``round'' towards zero, i.e.,
+		 * just set an inexact exception if sticky is set (see round()).
+		 * If the result is > 0x8000000000000000, or is positive and
+		 * equals 0x8000000000000000, overflow; otherwise the
+		 * last fraction word is the result.
 		 */
 		if ((exp = fp->fp_exp) >= 64)
 			break;
@@ -281,7 +281,7 @@ __fpu_ftox(fe, fp, res)
 		if (i >= ((u_int64_t)0x8000000000000000LL + sign))
 			break;
 		if (sign)
-			i = -1;
+			i = -i;
 		res[1] = (int)i;
 		return (i >> 32);
 
