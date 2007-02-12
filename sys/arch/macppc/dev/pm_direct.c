@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.20 2006/03/07 20:00:18 miod Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.21 2007/02/12 21:01:11 gwk Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -558,7 +558,7 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 	s = splhigh();
 	write_via_reg(VIA1, vIER, 0x10);
 
- 	adbBuffer = buffer;
+	adbBuffer = buffer;
 	adbCompRout = compRout;
 	adbCompData = data;
 
@@ -836,4 +836,24 @@ pm_battery_info(int battery, struct pmu_battery_info *info)
 	}
 
 	return 1;
+}
+
+void
+pmu_fileserver_mode()
+{
+	PMData p;
+
+	p.command = PMU_POWER_EVENTS;
+	p.num_data = 1;
+	p.s_buf = p.r_buf = p.data;
+	p.data[0] = PMU_PWR_GET_POWERUP_EVENTS;
+	pmgrop(&p);
+
+	p.command = PMU_POWER_EVENTS;
+	p.num_data = 3;
+	p.s_buf = p.r_buf = p.data;
+	p.data[1] = p.data[0];   /* result from the get */
+	p.data[0] = PMU_PWR_SET_POWERUP_EVENTS;
+	p.data[2] |= PMU_WAKE_AC_LOSS;
+	pmgrop(&p);
 }

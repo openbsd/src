@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.19 2006/03/07 20:00:18 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.20 2007/02/12 21:01:11 gwk Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -278,6 +278,7 @@ void	setsoftadb(void);
 
 int	adb_intr(void *arg);
 void	adb_cuda_autopoll(void);
+void 	adb_cuda_fileserver_mode(void);
 
 #ifdef ADB_DEBUG
 /*
@@ -1524,7 +1525,7 @@ adb_poweroff(void)
 	case ADB_HW_CUDA:
 		output[0] = 0x02;	/* 2 byte message */
 		output[1] = 0x01;	/* to pram/rtc/soft-power device */
-		output[2] = 0x0a;	/* set date/time */
+		output[2] = 0x0a;	/* set poweroff */
 		result = send_adb_cuda((u_char *)output, (u_char *)0,
 		    (void *)0, (void *)0, (int)0);
 		if (result != 0)	/* exit if not sent */
@@ -1555,15 +1556,35 @@ adb_cuda_autopoll()
 	u_char output[16];
 
 	output[0] = 0x03;	/* 3-byte message */
-	output[1] = 0x01;	/* to pram/rtc device */
+	output[1] = 0x01;	/* to pram/rtc/soft-power device */
 	output[2] = 0x01;	/* cuda autopoll */
 	output[3] = 0x01;
 	result = send_adb_cuda(output, output, adb_op_comprout,
-		(void *)&flag, 0);
+	    (void *)&flag, 0);
 	if (result != 0)	/* exit if not sent */
 		return;
 
 	while (flag == 0);	/* wait for result */
+}
+
+void
+adb_cuda_fileserver_mode()
+{
+	volatile int flag = 0;
+	int result;
+	u_char output[16];
+
+	output[0] = 0x03;	/* 3-byte message */
+	output[1] = 0x01; 	/* to pram/rtc device/soft-power device */
+	output[2] = 0x13;	/* cuda file server mode */
+	output[3] = 0x01;	/* True */
+
+	result = send_adb_cuda(output, output, adb_op_comprout,
+	    (void *)&flag, 0);
+	if (result != 0)
+		return;
+
+	while (flag == 0);
 }
 
 void
@@ -1716,4 +1737,9 @@ adbattach(struct device *parent, struct device *self, void *aux)
 			config_found(self, &nca, NULL);
 		}
 	}
+
+	if (adbHardware == ADB_HW_CUDA)
+		adb_cuda_fileserver_mode();
+	if (adbHardware == ADB_HW_PMU)
+		pmu_fileserver_mode();
 }

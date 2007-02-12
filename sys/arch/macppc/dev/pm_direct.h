@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.h,v 1.9 2005/12/22 22:55:25 miod Exp $	*/
+/*	$OpenBSD: pm_direct.h,v 1.10 2007/02/12 21:01:11 gwk Exp $	*/
 /*	$NetBSD: pm_direct.h,v 1.5 1999/07/12 15:54:55 tsubai Exp $	*/
 
 /*
@@ -68,6 +68,7 @@ struct pmu_battery_info
 int pm_battery_info(int, struct pmu_battery_info *);
 
 void pm_eject_pcmcia(int);
+void pmu_fileserver_mode(void);
 
 /* PMU commands */
 #define PMU_RESET_ADB		0x00	/* Reset ADB */
@@ -126,6 +127,14 @@ enum {
 	PMU_PWR_SET_WAKEUP_EVENTS       = 0x04,
 	PMU_PWR_CLR_WAKEUP_EVENTS       = 0x05,
 };
+
+/* PMU WAKE ON EVENTS */
+
+#define PMU_WAKE_KEYB		0x01
+#define PMU_WAKE_AC_LOSS	0x02
+#define PMU_WAKE_AC_CHG		0x04
+#define PMU_WAKE_LID		0x08
+#define PMU_WAKE_RING		0x10
 
 /* PMU Power Information */
 
