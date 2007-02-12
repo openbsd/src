@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.50 2006/02/08 14:49:58 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.51 2007/02/12 13:12:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -404,25 +404,25 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	}
 
 	if ((bptr = buf_reserve(buf, p_len)) == NULL) {
-		log_warnx("mrt_dump_entry_mpbuf_reserve error");
+		log_warnx("mrt_dump_entry_mp: buf_reserve error");
 		buf_free(buf);
 		return (-1);
 	}
 	if (prefix_write(bptr, p_len, &addr, p->prefix->prefixlen) == -1) {
-		log_warnx("mrt_dump_entry_mpprefix_write error");
+		log_warnx("mrt_dump_entry_mp: prefix_write error");
 		buf_free(buf);
 		return (-1);
 	}
 
 	DUMP_SHORT(buf, attr_len);
 	if ((bptr = buf_reserve(buf, attr_len)) == NULL) {
-		log_warnx("mrt_dump_entry_mpbuf_reserve error");
+		log_warnx("mrt_dump_entry_mp: buf_reserve error");
 		buf_free(buf);
 		return (-1);
 	}
 
 	if (mrt_attr_dump(bptr, attr_len, p->aspath, NULL) == -1) {
-		log_warnx("mrt_dump_entry_mpmrt_attr_dump error");
+		log_warnx("mrt_dump_entry_mp: mrt_attr_dump error");
 		buf_free(buf);
 		return (-1);
 	}
