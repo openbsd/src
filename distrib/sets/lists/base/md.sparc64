@@ -1475,6 +1475,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/_types.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/asm.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/atomic.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/autoconf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/boot_flag.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/bppioctl.ph
@@ -1504,6 +1505,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/kcore.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/limits.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/loadfile_machdep.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/mutex.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/netbsd_machdep.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/openfirm.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/openpromio.ph

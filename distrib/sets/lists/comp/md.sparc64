@@ -155,6 +155,7 @@
 ./usr/include/sparc64
 ./usr/include/sparc64/_types.h
 ./usr/include/sparc64/asm.h
+./usr/include/sparc64/atomic.h
 ./usr/include/sparc64/autoconf.h
 ./usr/include/sparc64/boot_flag.h
 ./usr/include/sparc64/bppioctl.h
@@ -184,6 +185,7 @@
 ./usr/include/sparc64/kcore.h
 ./usr/include/sparc64/limits.h
 ./usr/include/sparc64/loadfile_machdep.h
+./usr/include/sparc64/mutex.h
 ./usr/include/sparc64/netbsd_machdep.h
 ./usr/include/sparc64/openfirm.h
 ./usr/include/sparc64/openpromio.h

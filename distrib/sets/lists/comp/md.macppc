@@ -156,6 +156,7 @@
 ./usr/include/macppc/_types.h
 ./usr/include/macppc/apmvar.h
 ./usr/include/macppc/asm.h
+./usr/include/macppc/atomic.h
 ./usr/include/macppc/autoconf.h
 ./usr/include/macppc/bat.h
 ./usr/include/macppc/bus.h
@@ -205,6 +206,7 @@
 ./usr/include/powerpc
 ./usr/include/powerpc/_types.h
 ./usr/include/powerpc/asm.h
+./usr/include/powerpc/atomic.h
 ./usr/include/powerpc/bat.h
 ./usr/include/powerpc/cdefs.h
 ./usr/include/powerpc/cpu.h
