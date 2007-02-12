@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.12 2007/01/29 14:23:31 pyr Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.13 2007/02/12 10:39:48 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -123,7 +123,8 @@ icmp_checks_done(struct ctl_icmp_event *cie)
 		if (table->flags & F_DISABLE || table->check != CHECK_ICMP)
 			continue;
 		TAILQ_FOREACH(host, &table->hosts, entry) {
-			if (((struct sockaddr *)&host->ss)->sa_family != cie->af)
+			if (((struct sockaddr *)&host->ss)->sa_family !=
+			    cie->af)
 				continue;
 			if (!(host->flags & F_CHECK_DONE))
 				return (0);
@@ -142,7 +143,8 @@ icmp_checks_timeout(struct ctl_icmp_event *cie, const char *msg)
 		if (table->flags & F_DISABLE || table->check != CHECK_ICMP)
 			continue;
 		TAILQ_FOREACH(host, &table->hosts, entry) {
-			if (((struct sockaddr *)&host->ss)->sa_family != cie->af)
+			if (((struct sockaddr *)&host->ss)->sa_family !=
+			    cie->af)
 				continue;
 			if (!(host->flags & F_CHECK_DONE))
 				host->up = HOST_DOWN;
