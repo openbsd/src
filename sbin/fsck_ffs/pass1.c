@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.20 2006/03/22 20:24:32 deraadt Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.21 2007/02/12 16:35:55 otto Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass1.c,v 1.20 2006/03/22 20:24:32 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pass1.c,v 1.21 2007/02/12 16:35:55 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,6 +119,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	int ndb, j;
 	mode_t mode;
 	char *symbuf;
+	u_int64_t lndb;
 
 	dp = getnextinode(inumber);
 	mode = dp->di_mode & IFMT;
@@ -149,7 +150,8 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		dp->di_mode = IFREG|0600;
 		inodirty();
 	}
-	ndb = howmany(dp->di_size, sblock.fs_bsize);
+	lndb = howmany(dp->di_size, sblock.fs_bsize);
+	ndb = lndb > (u_int64_t)INT_MAX ? -1 : (int)lndb;
 	if (ndb < 0) {
 		if (debug)
 			printf("bad size %llu ndb %d:",
