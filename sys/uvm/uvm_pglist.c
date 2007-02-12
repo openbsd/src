@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.17 2007/01/16 13:36:38 dim Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.18 2007/02/12 11:43:47 tom Exp $	*/
 /*	$NetBSD: uvm_pglist.c,v 1.13 2001/02/18 21:19:08 chs Exp $	*/
 
 /*-
@@ -74,6 +74,9 @@ uvm_pglistalloc_simple(psize_t size, paddr_t low, paddr_t high,
 	struct vm_page *pg;
 	int s, todo, idx, pgflidx, error, free_list;
 	UVMHIST_FUNC("uvm_pglistalloc_simple"); UVMHIST_CALLED(pghist);
+#ifdef DEBUG
+	vm_page_t tp;
+#endif
 
 	/* Default to "lose". */
 	error = ENOMEM;
