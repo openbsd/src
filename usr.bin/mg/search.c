@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.34 2006/11/18 22:46:16 kjell Exp $	*/
+/*	$OpenBSD: search.c,v 1.35 2007/02/13 17:50:26 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -155,17 +155,16 @@ backisearch(int f, int n)
 static int
 isearch(int dir)
 {
-	struct line	*clp;
-
-	int	 c;
-	int	 cbo;
-	int	 success;
-	int	 pptr;
-	int	 firstc;
-	int	 xcase;
-	int	 i;
-	char	 opat[NPAT];
-	int	 cdotline;
+	struct line	*clp;		/* Saved line pointer */
+	int		 c;
+	int		 cbo;		/* Saved offset */
+	int		 success;
+	int		 pptr;
+	int		 firstc;
+	int		 xcase;
+	int		 i;
+	char		 opat[NPAT];
+	int		 cdotline;	/* Saved line number */
 
 #ifndef NO_MACRO
 	if (macrodef) {
@@ -222,7 +221,6 @@ isearch(int dir)
 			(void)ctrlg(FFRAND, 0);
 			(void)strlcpy(pat, opat, sizeof(pat));
 			return (ABORT);
-		case CCHR(']'):
 		case CCHR('S'):
 			if (dir == SRCH_BACK) {
 				dir = SRCH_FORW;
@@ -232,14 +230,14 @@ isearch(int dir)
 			}
 			if (success == FALSE && dir == SRCH_FORW) {
 				/* wrap the search to beginning */
-				clp = bfirstlp(curbp);
-				curwp->w_dotp = clp;
+				curwp->w_dotp = bfirstlp(curbp);
 				curwp->w_doto = 0;
 				curwp->w_dotline = 1;
 				if (is_find(dir) != FALSE) {
 					is_cpush(SRCH_MARK);
 					success = TRUE;
 				}
+				ewprintf("Overwrapped I-search: %s", pat);
 				break;
 			}
 
@@ -252,6 +250,7 @@ isearch(int dir)
 				(void)backchar(FFRAND, 1);
 				ttbeep();
 				success = FALSE;
+				ewprintf("Failed I-search: %s", pat);
 			}
 			is_prompt(dir, pptr < 0, success);
 			break;
@@ -264,15 +263,14 @@ isearch(int dir)
 			}
 			if (success == FALSE && dir == SRCH_BACK) {
 				/* wrap the search to end */
-				clp = blastlp(curbp);
-				curwp->w_dotp = clp;
-				curwp->w_doto =
-				    llength(curwp->w_dotp);
+				curwp->w_dotp = blastlp(curbp);
+				curwp->w_doto = llength(curwp->w_dotp);
 				curwp->w_dotline = curwp->w_bufp->b_lines;
 				if (is_find(dir) != FALSE) {
 					is_cpush(SRCH_MARK);
 					success = TRUE;
 				}
+				ewprintf("Overwrapped I-search: %s", pat);
 				break;
 			}
 			is_lpush();
