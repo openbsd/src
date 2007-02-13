@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.77 2007/01/31 23:30:51 gwk Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.78 2007/02/13 04:39:43 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -497,8 +497,23 @@ void
 acpi_inidev(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
+	struct aml_value	res;
 
-	aml_evalnode(sc, node, 0, NULL, NULL);
+	/*
+	 * XXX per the ACPI spec 6.5.1 only run _INI when device is there
+	 * or when there is no _STA.
+	 * The tricky bit is that the parent can have a _STA that is disabled
+	 * and the children do not have a _STA.  In that case the _INI will
+	 * execute!  This needs to be fixed.
+	 */
+
+	memset(&res, 0, sizeof res);
+	if (aml_evalname(sc, node, "_STA", 0, NULL, &res)) 
+		res.v_integer = STA_PRESENT; /* no _STA, fake it */
+
+	if (res.v_integer & STA_PRESENT)
+		aml_evalnode(sc, node, 0, NULL, NULL);
+	aml_freevalue(&res);
 }
 
 void
