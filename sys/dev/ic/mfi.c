@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.68 2007/02/08 03:20:52 ray Exp $ */
+/* $OpenBSD: mfi.c,v 1.69 2007/02/13 02:38:31 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -825,8 +825,8 @@ mfi_scsi_io(struct mfi_ccb *ccb, struct scsi_xfer *xs, uint32_t blockno,
 	ccb->ccb_data = xs->data;
 	ccb->ccb_len = xs->datalen;
 
-	if (mfi_create_sgl(ccb, xs->flags & SCSI_NOSLEEP) ?
-	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK)
+	if (mfi_create_sgl(ccb, (xs->flags & SCSI_NOSLEEP) ?
+	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK))
 		return (1);
 
 	return (0);
@@ -916,8 +916,8 @@ mfi_scsi_ld(struct mfi_ccb *ccb, struct scsi_xfer *xs)
 		ccb->ccb_data = xs->data;
 		ccb->ccb_len = xs->datalen;
 
-		if (mfi_create_sgl(ccb, xs->flags & SCSI_NOSLEEP) ?
-		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK)
+		if (mfi_create_sgl(ccb, (xs->flags & SCSI_NOSLEEP) ?
+		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK))
 			return (1);
 	}
 
