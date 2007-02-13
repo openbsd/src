@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.16 2007/02/04 18:59:12 millert Exp $	*/
+/*	$OpenBSD: event.h,v 1.17 2007/02/13 20:08:38 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -243,6 +243,7 @@ struct bufferevent {
 
 struct bufferevent *bufferevent_new(int fd,
     evbuffercb readcb, evbuffercb writecb, everrorcb errorcb, void *cbarg);
+int bufferevent_base_set(struct event_base *base, struct bufferevent *bufev);
 int bufferevent_priority_set(struct bufferevent *bufev, int pri);
 void bufferevent_free(struct bufferevent *bufev);
 int bufferevent_write(struct bufferevent *bufev, void *data, size_t size);
