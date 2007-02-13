@@ -1,4 +1,4 @@
-.\"	$OpenBSD: grep.1,v 1.32 2006/03/07 12:23:50 jmc Exp $
+.\"	$OpenBSD: grep.1,v 1.33 2007/02/13 21:48:20 kili Exp $
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -170,7 +170,11 @@ to behave as
 .It Fl f Ar file
 Read one or more newline separated patterns from
 .Ar file .
+Empty pattern lines match every input line.
 Newlines are not considered part of a pattern.
+If
+.Ar file
+is empty, nothing is matched.
 .It Fl G
 Interpret
 .Ar pattern
@@ -364,7 +368,9 @@ specification.
 .Pp
 The flags
 .Op Fl AaBbCGHhILoPRSUVwZ
-are extensions to that specification.
+are extensions to that specification, and the behaviour of the
+.Fl f
+flag when used with an empty pattern file is left undefined.
 .Pp
 All long options are provided for compatibility with
 GNU versions of this utility.
