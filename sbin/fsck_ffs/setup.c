@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.27 2007/02/12 16:32:54 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.28 2007/02/13 15:56:22 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.27 2007/02/12 16:32:54 otto Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.28 2007/02/13 15:56:22 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -227,6 +227,26 @@ setup(char *dev)
 			dirty(&asblk);
 		}
 	}
+	if (1 << sblock.fs_bshift != sblock.fs_bsize) {
+		pwarn("INCORRECT BSHIFT=%d IN SUPERBLOCK", sblock.fs_bshift);
+		sblock.fs_bshift = ffs(sblock.fs_bsize) - 1;
+		if (preen)
+			printf(" (FIXED)\n");
+		if (preen || reply("FIX") == 1) {
+			sbdirty();
+			dirty(&asblk);
+		}
+	}
+	if (1 << sblock.fs_fshift != sblock.fs_fsize) {
+		pwarn("INCORRECT FSHIFT=%d IN SUPERBLOCK", sblock.fs_fshift);
+		sblock.fs_fshift = ffs(sblock.fs_fsize) - 1;
+		if (preen)
+			printf(" (FIXED)\n");
+		if (preen || reply("FIX") == 1) {
+			sbdirty();
+			dirty(&asblk);
+		}
+	}
 	if (sblock.fs_inodefmt >= FS_44INODEFMT) {
 		if (sblock.fs_maxfilesize != maxfilesize) {
 			pwarn("INCORRECT MAXFILESIZE=%llu IN SUPERBLOCK",
@@ -315,6 +335,36 @@ setup(char *dev)
 			fragroundup(&sblock, CGSIZE(&sblock));
 		sbdirty();
 		dirty(&asblk);
+	}
+	if (sblock.fs_cgsize != fragroundup(&sblock, CGSIZE(&sblock))) {
+		pwarn("INCONSISTENT CGSIZE=%d\n", sblock.fs_cgsize);
+		sblock.fs_cgsize = fragroundup(&sblock, CGSIZE(&sblock));
+		if (preen)
+			printf(" (FIXED)\n");
+		if (preen || reply("FIX") == 1) {
+			sbdirty();
+			dirty(&asblk);
+		}
+	}
+	if (INOPB(&sblock) != sblock.fs_bsize / sizeof(struct ufs1_dinode)) {
+		pwarn("INCONSISTENT INOPB=%d\n", INOPB(&sblock));
+		sblock.fs_inopb = sblock.fs_bsize / sizeof(struct ufs1_dinode);
+		if (preen)
+			printf(" (FIXED)\n");
+		if (preen || reply("FIX") == 1) {
+			sbdirty();
+			dirty(&asblk);
+		}
+	}
+	if (NINDIR(&sblock) != sblock.fs_bsize / sizeof(ufs1_daddr_t)) {
+		pwarn("INCONSISTENT NINDIR=%d\n", NINDIR(&sblock));
+		sblock.fs_nindir = sblock.fs_bsize / sizeof(daddr_t);
+		if (preen)
+			printf(" (FIXED)\n");
+		if (preen || reply("FIX") == 1) {
+			sbdirty();
+			dirty(&asblk);
+		}
 	}
 	if (asblk.b_dirty && !bflag) {
 		memcpy(&altsblock, &sblock, (size_t)sblock.fs_sbsize);
@@ -427,9 +477,18 @@ readsb(int listerr)
 		return (0);
 	}
 	if (sblock.fs_sbsize > SBSIZE) {
-		badsb(listerr, "SIZE PREPOSTEROUSLY LARGE");
+		badsb(listerr, "SBSIZE PREPOSTEROUSLY LARGE");
 		return (0);
 	}
+
+	if (!POWEROF2(sblock.fs_bsize) || sblock.fs_bsize < MINBSIZE ||
+	    sblock.fs_bsize > MAXBSIZE)
+		badsb(listerr, "ILLEGAL BLOCK SIZE");
+
+	if (!POWEROF2(sblock.fs_fsize) || sblock.fs_fsize > sblock.fs_bsize ||
+	    sblock.fs_fsize < sblock.fs_bsize / MAXFRAG)
+		badsb(listerr, "ILLEGAL FRAGMENT SIZE");
+
 
 	/*
 	 * Compute block size that the filesystem is based on,
