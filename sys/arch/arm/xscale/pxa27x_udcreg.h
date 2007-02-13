@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udcreg.h,v 1.3 2007/02/07 16:26:49 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udcreg.h,v 1.4 2007/02/13 18:32:57 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -35,8 +35,11 @@
 #define  USBDC_UDCCR_EMCE	(1<<3)	/* Endpoint Mem Config Error */
 #define  USBDC_UDCCR_SMAC	(1<<4)	/* Switch EndPt Mem to Active Config */
 #define  USBDC_UDCCR_AAISN	(7<<5)	/* Active UDC Alt Iface Setting */
+#define  USBDC_UDCCR_AAISNr(x)	((x>>5)&7)	/* Active UDC Config */
 #define  USBDC_UDCCR_AIN	(7<<8)	/* Active UDC Iface */
+#define  USBDC_UDCCR_AINr(x)	((x>>8)&7)	/* Active UDC Config */
 #define  USBDC_UDCCR_ACN	(7<<11)	/* Active UDC Config */
+#define  USBDC_UDCCR_ACNr(x)	((x>>11)&7)	/* Active UDC Config */
 #define  USBDC_UDCCR_DWRE	(1<<16)	/* Device Remote Wake-Up Feature */
 #define  USBDC_UDCCR_BHNP	(1<<28)	/* B-Device Host Neg Proto Enable */
 #define  USBDC_UDCCR_AHNP	(1<<29)	/* A-Device Host NEg Proto Support */

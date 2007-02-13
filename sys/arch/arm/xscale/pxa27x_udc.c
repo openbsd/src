@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.10 2007/02/12 16:11:11 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.11 2007/02/13 18:32:57 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -74,6 +74,10 @@ struct pxaudc_softc {
 	u_int32_t		 sc_otgisr;	/* XXX deferred interrupts */
 	struct pxaudc_pipe	*sc_pipe[PXAUDC_NEP];
 	int			 sc_npipe;
+
+	int			 sc_cn;
+	int			 sc_in;
+	int			 sc_isn;
 };
 
 int		 pxaudc_match(struct device *, void *, void *);
@@ -90,13 +94,16 @@ void		 pxaudc_show(struct pxaudc_softc *);
 void		 pxaudc_enable(struct pxaudc_softc *);
 void		 pxaudc_disable(struct pxaudc_softc *);
 void		 pxaudc_read_ep0(struct pxaudc_softc *, usbf_xfer_handle);
+void		 pxaudc_read_epN(struct pxaudc_softc *sc, int ep);
 void		 pxaudc_write_ep0(struct pxaudc_softc *, usbf_xfer_handle);
 void		 pxaudc_write(struct pxaudc_softc *, usbf_xfer_handle);
+void		 pxaudc_write_epN(struct pxaudc_softc *sc, int ep);
 
 int		 pxaudc_connect_intr(void *);
 int		 pxaudc_intr(void *);
 void		 pxaudc_intr1(struct pxaudc_softc *);
 void		 pxaudc_ep0_intr(struct pxaudc_softc *);
+void		 pxaudc_epN_intr(struct pxaudc_softc *sc, int ep);
 
 usbf_status	 pxaudc_open(struct usbf_pipe *);
 void		 pxaudc_softintr(void *);
@@ -171,7 +178,7 @@ struct usbf_pipe_methods pxaudc_bulk_methods = {
 #ifndef PXAUDC_DEBUG
 #define DPRINTF(l, x)	do {} while (0)
 #else
-int pxaudcdebug = 0;
+int pxaudcdebug = 5;
 #define DPRINTF(l, x)	if ((l) <= pxaudcdebug) printf x; else {}
 #endif
 
@@ -366,7 +373,7 @@ pxaudc_enable(struct pxaudc_softc *sc)
 {
 	int i;
 
-	DPRINTF(0,("pxaudc_enable\n"));
+	DPRINTF(10,("pxaudc_enable\n"));
 
 	/* Start the clocks. */
 	pxa2x0_clkman_config(CKEN_USBDC, 1);
@@ -445,7 +452,7 @@ pxaudc_enable(struct pxaudc_softc *sc)
 void
 pxaudc_disable(struct pxaudc_softc *sc)
 {
-	DPRINTF(0,("pxaudc_disable\n"));
+	DPRINTF(10,("pxaudc_disable\n"));
 
 	/* Disable the controller. */
 	CSR_CLR_4(sc, USBDC_UDCCR, USBDC_UDCCR_UDE);
@@ -508,6 +515,94 @@ pxaudc_read_ep0(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 }
 
 void
+pxaudc_read_epN(struct pxaudc_softc *sc, int ep)
+{
+	size_t len, tlen;
+	u_int8_t *p;
+	struct pxaudc_pipe *ppipe;
+	usbf_pipe_handle pipe = NULL;
+	usbf_xfer_handle xfer = NULL;
+	int count;
+	u_int32_t csr;
+
+	ppipe = sc->sc_pipe[ep];
+
+	if (ppipe == NULL) {
+		return;
+	}
+	pipe = &ppipe->pipe;
+again:
+	xfer = SIMPLEQ_FIRST(&pipe->queue);
+
+	if (xfer == NULL)
+		return;
+
+	count = CSR_READ_4(sc, USBDC_UDCBCR(ep));
+	tlen = len = MIN(count, xfer->length - xfer->actlen);
+	p = xfer->buffer + xfer->actlen;
+	csr = CSR_READ_4(sc, USBDC_UDCCSR(ep));
+
+#if  0
+	if ((csr & (USBDC_UDCCSR_SP|USBDC_UDCCSR_PC)) ==
+	    (USBDC_UDCCSR_SP|USBDC_UDCCSR_PC)
+	    && count == 0)
+#else
+	if ((csr & USBDC_UDCCSR_PC) && count == 0)
+#endif
+	{
+#ifdef DEBUG_RX
+	        printf("trans1 complete\n");
+#endif
+		xfer->status = USBF_NORMAL_COMPLETION;
+		usbf_transfer_complete(xfer);
+	}
+
+#ifdef DEBUG_RX
+	printf("reading data from endpoint %x, len %x csr %x",
+		ep, count, csr);
+#endif
+
+	while (CSR_READ_4(sc, USBDC_UDCCSR(ep)) & USBDC_UDCCSR_BNE) {
+		u_int32_t v = CSR_READ_4(sc, USBDC_UDCDR(ep));
+
+		/* double buffering? */
+		if (len > 0) {
+			if (((unsigned)p & 0x3) == 0)
+				*(u_int32_t *)p = v;
+			else {
+				*(p+0) = v & 0xff;
+				*(p+1) = (v >> 8) & 0xff;
+				*(p+2) = (v >> 16) & 0xff;
+				*(p+3) = (v >> 24) & 0xff;
+			}
+			p += 4;
+			len -= 4;
+			xfer->actlen += 4;
+		}
+		count -= 4;
+	}
+#ifdef DEBUG_RX
+	printf(" remain %x\n", len);
+#endif
+	CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_PC);
+
+
+	if (xfer->length == xfer->actlen || (tlen == 0 && xfer->actlen != 0) ||
+	    csr & USBDC_UDCCSR_SP) {
+#ifdef DEBUG_RX
+	    printf("trans2 complete\n");
+#endif
+		xfer->status = USBF_NORMAL_COMPLETION;
+		usbf_transfer_complete(xfer);
+	}
+	csr = CSR_READ_4(sc, USBDC_UDCCSR(ep));
+	printf("csr now %x len %x\n",
+	    csr, CSR_READ_4(sc, USBDC_UDCBCR(ep)));
+	if (csr & USBDC_UDCCSR_PC)
+		goto again;
+}
+
+void
 pxaudc_write_ep0(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 {
 	struct pxaudc_xfer *lxfer = (struct pxaudc_xfer *)xfer;
@@ -519,7 +614,7 @@ pxaudc_write_ep0(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 		lxfer->frmlen = 0;
 	}
 
-	DPRINTF(1,("%s: ep0 ctrl-in, xfer=%p, len=%u, actlen=%u\n",
+	DPRINTF(11,("%s: ep0 ctrl-in, xfer=%p, len=%u, actlen=%u\n",
 	    DEVNAME(sc), xfer, xfer->length, xfer->actlen));
 
 	if (xfer->actlen >= xfer->length) {
@@ -566,7 +661,59 @@ pxaudc_write_ep0(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 void
 pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 {
-	printf("pxaudc_write: XXX\n");
+	u_int8_t *p;
+	int ep = usbf_endpoint_index(xfer->pipe->endpoint);
+	int tlen = 0;
+
+	if (xfer->actlen == xfer->length) {
+#if 0
+		if ((xfer->actlen % 64) != 0)
+			CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
+#endif
+		xfer->status = USBF_NORMAL_COMPLETION;
+		usbf_transfer_complete(xfer);
+		return;
+	}
+
+	p = xfer->buffer + xfer->actlen;
+
+	printf("writing data to endpoint %x, xlen %x xact %x",
+		ep, xfer->length, xfer->actlen);
+
+	if (CSR_READ_4(sc, USBDC_UDCCSR(ep)) & USBDC_UDCCSR_PC)
+		CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_PC);
+
+	while (CSR_READ_4(sc, USBDC_UDCCSR(ep)) & USBDC_UDCCSR_BNF) {
+		u_int32_t v;
+
+		if (xfer->actlen >= xfer->length)
+			break;
+
+		if (((unsigned)p & 0x3) == 0)
+			v = *(u_int32_t *)p;
+		else {
+			v = *(p+0);
+			v |= *(p+1) << 8;
+			v |= *(p+2) << 16;
+			v |= *(p+3) << 24;
+		}
+		CSR_WRITE_4(sc, USBDC_UDCDR(ep), v);
+
+		p += 4;
+		xfer->actlen += 4;
+
+		tlen += 4;
+	}
+	printf(" wrote tlen %x %x\n", tlen, xfer->actlen);
+	if (xfer->actlen >= xfer->length) {
+		if ((xfer->actlen % 64) != 0) {
+			CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
+			CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
+			printf("setting short packet on %x csr\n", ep,
+			CSR_READ_4(sc, USBDC_UDCCSR(ep)));
+		}
+		xfer->actlen = xfer->length; /* no overflow */
+	}
 }
 
 /*
@@ -578,7 +725,7 @@ pxaudc_connect_intr(void *v)
 {
 	struct pxaudc_softc *sc = v;
 
-	DPRINTF(0,("pxaudc_connect_intr: connect=%d device=%d\n",
+	DPRINTF(10,("pxaudc_connect_intr: connect=%d device=%d\n",
 	    pxa2x0_gpio_get_bit(C3000_USB_CONNECT_PIN),
 	    pxa2x0_gpio_get_bit(C3000_USB_DEVICE_PIN)));
 
@@ -603,7 +750,7 @@ pxaudc_intr(void *v)
 	isr1 = CSR_READ_4(sc, USBDC_UDCISR1);
 	otgisr = CSR_READ_4(sc, USBDC_UDCOTGISR);
 
-	DPRINTF(0,("pxaudc_intr: isr0=%b, isr1=%b, otgisr=%b\n",
+	DPRINTF(10,("pxaudc_intr: isr0=%b, isr1=%b, otgisr=%b\n",
 	    isr0, USBDC_UDCISR0_BITS, isr1, USBDC_UDCISR1_BITS,
 	    otgisr, USBDC_UDCOTGISR_BITS));
 
@@ -644,25 +791,31 @@ pxaudc_intr1(struct pxaudc_softc *sc)
 	sc->sc_bus.intr_context++;
 
 	if (isr1 & USBDC_UDCISR1_IRCC) {
+		u_int32_t ccr;
                 CSR_SET_4(sc, USBDC_UDCCR, USBDC_UDCCR_SMAC);
 
-		/* wait for reconfig to finish (SMAC auto clears */
+		/* wait for reconfig to finish (SMAC auto clears) */
 		while (CSR_READ_4(sc, USBDC_UDCCR)  & USBDC_UDCCR_SMAC)
 			delay(10);
 
+		ccr = CSR_READ_4(sc, USBDC_UDCCR);
+		sc->sc_cn = USBDC_UDCCR_ACNr(ccr);
+		sc->sc_in = USBDC_UDCCR_AINr(ccr);
+		sc->sc_isn = USBDC_UDCCR_AAISNr(ccr);
+		goto ret;
 	}
+	printf("pxaudc_intr: isr0=%b, isr1=%b, otgisr=%b\n",
+	    isr0, USBDC_UDCISR0_BITS, isr1, USBDC_UDCISR1_BITS,
+	    otgisr, USBDC_UDCOTGISR_BITS);
+
 	for (i = 1; i < 24; i++) {
-		int x;
 		if (i < 16) {
 			if (isr0 & USBDC_UDCISR0_IR(i))
-				printf("interrupt pending ep[%d]\n", i);
+				pxaudc_epN_intr(sc, i);
 		} else {
 			if (isr1 & USBDC_UDCISR1_IR(i-16))
-				printf("interrupt pending ep[%d]\n", i);
+				pxaudc_epN_intr(sc, i);
 		}
-		x = CSR_READ_4(sc, USBDC_UDCBCR(i));
-		if( x != 0)
-			printf("data present in ep %d %d\n", i, x);
 	}
 
 	/* Handle USB RESET condition. */
@@ -689,6 +842,49 @@ ret:
 }
 
 void
+pxaudc_epN_intr(struct pxaudc_softc *sc, int ep)
+{
+	/* should not occur before device is configured */
+	if (sc->sc_cn == 0)
+		return;
+
+	/* faster method of determining direction? */
+	struct pxaudc_pipe *ppipe;
+	usbf_pipe_handle pipe = NULL;
+	int dir;
+	ppipe = sc->sc_pipe[ep];
+
+	if (ppipe == NULL)
+		return;
+	pipe = &ppipe->pipe;
+	dir = usbf_endpoint_dir(pipe->endpoint);
+
+	if (dir == UE_DIR_IN) {
+		pxaudc_write_epN(sc, ep);
+	} else {
+		pxaudc_read_epN(sc, ep);
+	}
+
+}
+
+void
+pxaudc_write_epN(struct pxaudc_softc *sc, int ep)
+{
+	struct pxaudc_pipe *ppipe;
+	usbf_pipe_handle pipe = NULL;
+	usbf_xfer_handle xfer = NULL;
+
+	ppipe = sc->sc_pipe[ep];
+
+	if (ppipe == NULL) {
+		return;
+	}
+	pipe = &ppipe->pipe;
+	xfer = SIMPLEQ_FIRST(&pipe->queue);
+	if (xfer != NULL)
+		pxaudc_write(sc, xfer);
+}
+void
 pxaudc_ep0_intr(struct pxaudc_softc *sc)
 {
 	struct pxaudc_pipe *ppipe;
@@ -697,7 +893,7 @@ pxaudc_ep0_intr(struct pxaudc_softc *sc)
 	u_int32_t csr0;
 
 	csr0 = CSR_READ_4(sc, USBDC_UDCCSR0);
-	DPRINTF(0,("pxaudc_ep0_intr: csr0=%b\n", csr0, USBDC_UDCCSR0_BITS));
+	DPRINTF(10,("pxaudc_ep0_intr: csr0=%b\n", csr0, USBDC_UDCCSR0_BITS));
 
 	ppipe = sc->sc_pipe[0];
 	if (ppipe != NULL) {
@@ -707,12 +903,12 @@ pxaudc_ep0_intr(struct pxaudc_softc *sc)
 
 	if (sc->sc_ep0state == EP0_SETUP && (csr0 & USBDC_UDCCSR0_OPC)) {
 		if (pipe == NULL) {
-			DPRINTF(0,("pxaudc_ep0_intr: no control pipe\n"));
+			DPRINTF(10,("pxaudc_ep0_intr: no control pipe\n"));
 			return;
 		}
 
 		if (xfer == NULL) {
-			DPRINTF(0,("pxaudc_ep0_intr: no xfer\n"));
+			DPRINTF(10,("pxaudc_ep0_intr: no xfer\n"));
 			return;
 		}
 
@@ -737,7 +933,7 @@ pxaudc_open(struct usbf_pipe *pipe)
 	if (usbf_endpoint_index(pipe->endpoint) >= PXAUDC_NEP)
 		return USBF_BAD_ADDRESS;
 
-	DPRINTF(0,("pxaudc_open\n"));
+	DPRINTF(10,("pxaudc_open\n"));
 	s = splhardusb();
 
 	switch (usbf_endpoint_type(pipe->endpoint)) {
@@ -844,7 +1040,7 @@ pxaudc_ctrl_start(usbf_xfer_handle xfer)
 	else {
 		/* XXX boring message, this case is normally reached if
 		 * XXX the xfer for a device request is being queued. */
-		DPRINTF(0,("%s: ep[%x] ctrl-out, xfer=%p, len=%u, "
+		DPRINTF(10,("%s: ep[%x] ctrl-out, xfer=%p, len=%u, "
 		    "actlen=%u\n", DEVNAME(sc),
 		    usbf_endpoint_address(xfer->pipe->endpoint),
 		    xfer, xfer->length,
@@ -867,7 +1063,7 @@ pxaudc_ctrl_abort(usbf_xfer_handle xfer)
 	int type = usbf_endpoint_type(pipe->endpoint);
 #endif
 
-	DPRINTF(0,("%s: ep%d %s-%s abort, xfer=%p\n", DEVNAME(sc), index,
+	DPRINTF(10,("%s: ep%d %s-%s abort, xfer=%p\n", DEVNAME(sc), index,
 	    type == UE_CONTROL ? "ctrl" : "bulk", dir == UE_DIR_IN ?
 	    "in" : "out", xfer));
 
@@ -939,7 +1135,7 @@ pxaudc_bulk_start(usbf_xfer_handle xfer)
 {
 	struct usbf_pipe *pipe = xfer->pipe;
 	struct pxaudc_softc *sc = (struct pxaudc_softc *)pipe->device->bus;
-	int iswrite = usbf_endpoint_dir(pipe->endpoint) == UE_DIR_IN;
+	int iswrite = (usbf_endpoint_dir(pipe->endpoint) == UE_DIR_IN);
 	int s;
 
 	DPRINTF(0,("%s: ep%d bulk-%s start, xfer=%p, len=%u\n", DEVNAME(sc),
@@ -966,6 +1162,12 @@ pxaudc_bulk_abort(usbf_xfer_handle xfer)
 void
 pxaudc_bulk_done(usbf_xfer_handle xfer)
 {
+#if 0
+	int ep = usbf_endpoint_address(xfer->pipe->endpoint);
+	struct usbf_pipe *pipe = xfer->pipe;
+	struct pxaudc_softc *sc = (struct pxaudc_softc *)pipe->device->bus;
+
+#endif
 }
 
 void

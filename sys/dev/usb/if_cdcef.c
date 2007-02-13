@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.2 2007/02/07 16:26:49 drahn Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.3 2007/02/13 18:32:56 drahn Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -20,11 +20,14 @@
  * USB Communication Device Class Ethernet Emulation Model function driver
  * (counterpart of the host-side cdce(4) driver)
  */
+#include <bpfilter.h>
+
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
+#include <sys/mbuf.h>
 
 #include <net/if.h>
 
@@ -32,6 +35,17 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbf.h>
 #include <dev/usb/usbcdc.h>
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
+
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
+
 
 #define CDCEF_VENDOR_ID		0x0001
 #define CDCEF_PRODUCT_ID	0x0001
@@ -54,6 +68,15 @@ struct cdcef_softc {
 	usbf_xfer_handle	sc_xfer_out;
 	void			*sc_buffer_in;
 	void			*sc_buffer_out;
+
+	struct mbuf		*sc_xmit_mbuf;
+
+	struct arpcom           sc_arpcom;
+#define GET_IFP(sc) (&(sc)->sc_arpcom.ac_if)
+
+	int			sc_rxeof_errors;
+	int			sc_unit;
+	int			sc_attached;
 };
 
 int		cdcef_match(struct device *, void *, void *);
@@ -68,6 +91,12 @@ void		cdcef_txeof(usbf_xfer_handle, usbf_private_handle,
 			    usbf_status);
 void		cdcef_rxeof(usbf_xfer_handle, usbf_private_handle,
 			    usbf_status);
+int		cdcef_ioctl(struct ifnet *ifp, u_long command, caddr_t data);
+void		cdcef_watchdog(struct ifnet *ifp);
+void		cdcef_init(struct cdcef_softc *);
+void		cdcef_stop(struct cdcef_softc *);
+int		cdcef_encap(struct cdcef_softc *sc, struct mbuf *m, int idx);
+struct mbuf *	cdcef_newbuf(void);
 
 struct cfattach cdcef_ca = {
 	sizeof(struct cdcef_softc), cdcef_match, cdcef_attach
@@ -105,8 +134,12 @@ USB_ATTACH(cdcef)
 	struct usbf_attach_arg *uaa = aux;
 	usbf_device_handle dev = uaa->device;
 	char *devinfop;
+	struct ifnet *ifp;
 	usbf_status err;
 	usb_cdc_union_descriptor_t udesc;
+	int s;
+	u_int16_t macaddr_hi;
+
 
 	/* Set the device identification according to the function. */
 	usbf_devinfo_setup(dev, UDCLASS_IN_INTERFACE, 0, 0, CDCEF_VENDOR_ID,
@@ -194,13 +227,40 @@ USB_ATTACH(cdcef)
 	    usbf_endpoint_address(sc->sc_ep_out));
 
 	/* Get ready to receive packets. */
-	usbf_setup_xfer(sc->sc_xfer_out, sc->sc_pipe_out, (void *)sc,
-	    sc->sc_buffer_out, CDCEF_BUFSZ, 0, 0, cdcef_rxeof);
+	usbf_setup_xfer(sc->sc_xfer_out, sc->sc_pipe_out, sc,
+	    sc->sc_buffer_out, CDCEF_BUFSZ, USBD_SHORT_XFER_OK, 0, cdcef_rxeof);
 	err = usbf_transfer(sc->sc_xfer_out);
 	if (err && err != USBF_IN_PROGRESS) {
 		printf("%s: usbf_transfer failed\n", DEVNAME(sc));
 		USB_ATTACH_ERROR_RETURN;
 	}
+
+	s = splnet();
+
+	macaddr_hi = htons(0x2acb);
+	bcopy(&macaddr_hi, &sc->sc_arpcom.ac_enaddr[0], sizeof(u_int16_t));
+	bcopy(&ticks, &sc->sc_arpcom.ac_enaddr[2], sizeof(u_int32_t));
+	sc->sc_arpcom.ac_enaddr[5] = (u_int8_t)(sc->sc_unit);
+
+	printf("%s: address %s\n", DEVNAME(sc),
+	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+
+	ifp = GET_IFP(sc);
+	ifp->if_softc = sc;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_ioctl = cdcef_ioctl;
+	ifp->if_start = cdcef_start;
+	ifp->if_watchdog = cdcef_watchdog;
+	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
+
+	IFQ_SET_READY(&ifp->if_snd);
+
+	if_attach(ifp);
+	Ether_ifattach(ifp, sc->cdcef_arpcom.ac_enaddr);
+
+	sc->sc_attached = 1;
+	splx(s);
+
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -216,6 +276,31 @@ cdcef_do_request(usbf_function_handle fun, usb_device_request_t *req,
 void
 cdcef_start(struct ifnet *ifp)
 {
+	struct cdcef_softc	*sc = ifp->if_softc;
+	struct mbuf		*m_head = NULL;
+
+	if(ifp->if_flags & IFF_OACTIVE)
+		return;
+	IFQ_POLL(&ifp->if_snd, m_head);
+	if (m_head == NULL) {
+		return;
+	}
+
+	if (cdcef_encap(sc, m_head, 0)) {
+		ifp->if_flags |= IFF_OACTIVE;
+		return;
+	}
+
+	IFQ_DEQUEUE(&ifp->if_snd, m_head);
+
+#if NBPFILTER > 0
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+#endif
+					
+	ifp->if_flags |= IFF_OACTIVE;
+
+	ifp->if_timer = 6;
 }
 
 void
@@ -223,35 +308,263 @@ cdcef_txeof(usbf_xfer_handle xfer, usbf_private_handle priv,
     usbf_status err)
 {
 	struct cdcef_softc *sc = priv;
+	struct ifnet *ifp = GET_IFP(sc);
+	int s;
 
+	s = splnet();
 	printf("cdcef_txeof: xfer=%p, priv=%p, %s\n", xfer, priv,
 	    usbf_errstr(err));
 
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
+	if (sc->sc_xmit_mbuf != NULL) {
+		m_freem(sc->sc_xmit_mbuf);
+		sc->sc_xmit_mbuf = NULL;
+	}
+
+	if (err)
+		ifp->if_oerrors++;
+	else
+		ifp->if_opackets++;
+
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+		cdcef_start(ifp);
+
+	splx(s);
+}
+
+void
+cdcef_rxeof(usbf_xfer_handle xfer, usbf_private_handle priv,
+    usbf_status status)
+{
+	struct cdcef_softc	*sc = priv;
+	int total_len = 0;
+	struct ifnet		*ifp = GET_IFP(sc);
+	struct mbuf		*m = NULL;
+
+
+	int s;
+
+#if 0
+	printf("cdcef_rxeof: xfer=%p, priv=%p, %s\n", xfer, priv,
+	    usbf_errstr(status));
+#endif
+
+	if (status != USBF_NORMAL_COMPLETION) {
+		if (status == USBF_NOT_STARTED || status == USBF_CANCELLED)	
+			return;
+		if (sc->sc_rxeof_errors == 0)
+			printf("%s: usb error on rx: %s\n",
+			    DEVNAME(sc), usbf_errstr(status));
+		/* XXX - no stalls on client */
+		if (sc->sc_rxeof_errors++ > 10) {
+			printf("%s: too many errors, disabling\n",
+			    DEVNAME(sc));
+			/* sc->sc_dying = 1; */
+			// return;
+		}
+		goto done;
+	}
+	sc->sc_rxeof_errors = 0;
+
+	usbf_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
+
+	printf("recieved %d bytes\n", total_len);
+
+	/* total_len -= 4; Strip off CRC added for Zaurus - XXX*/
+	if (total_len <= 1)
+		goto done;
+
+	if (total_len < sizeof(struct ether_header)) {
+		ifp->if_ierrors++;
+		goto done;
+	}
+
+	s = splnet();
+	if (ifp->if_flags & IFF_RUNNING) {
+		m = cdcef_newbuf();
+		if (m == NULL) {
+			/* message? */
+			goto done1;
+		}
+
+		/* XXX - buffer big enough? */
+		m->m_pkthdr.len = m->m_len = total_len;
+		bcopy(sc->sc_buffer_out, mtod(m, char *), total_len);
+		m->m_pkthdr.rcvif = ifp;
+
+		ifp->if_ipackets++;
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+#endif
+
+		IF_INPUT(ifp, m);
+	}
+
+done1:
+	splx(s);
+
+done:
 	/* Setup another xfer. */
-	usbf_setup_xfer(xfer, sc->sc_pipe_in, (void *)sc,
-	    sc->sc_buffer_in, CDCEF_BUFSZ, 0, 0, cdcef_txeof);
-	err = usbf_transfer(xfer);
-	if (err && err != USBF_IN_PROGRESS) {
+	usbf_setup_xfer(xfer, sc->sc_pipe_out, sc, sc->sc_buffer_out,
+	    CDCEF_BUFSZ, USBD_SHORT_XFER_OK, 0, cdcef_rxeof);
+
+	status = usbf_transfer(xfer);
+	if (status && status != USBF_IN_PROGRESS) {
 		printf("%s: usbf_transfer failed\n", DEVNAME(sc));
 		USB_ATTACH_ERROR_RETURN;
 	}
 }
 
-void
-cdcef_rxeof(usbf_xfer_handle xfer, usbf_private_handle priv,
-    usbf_status err)
+struct mbuf *
+cdcef_newbuf(void)
 {
-	struct cdcef_softc *sc = priv;
+	struct mbuf		*m;
 
-	printf("cdcef_rxeof: xfer=%p, priv=%p, %s\n", xfer, priv,
-	    usbf_errstr(err));
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return (NULL);
 
-	/* Setup another xfer. */
-	usbf_setup_xfer(xfer, sc->sc_pipe_out, (void *)sc,
-	    sc->sc_buffer_out, CDCEF_BUFSZ, 0, 0, cdcef_rxeof);
-	err = usbf_transfer(xfer);
-	if (err && err != USBF_IN_PROGRESS) {
-		printf("%s: usbf_transfer failed\n", DEVNAME(sc));
-		USB_ATTACH_ERROR_RETURN;
+	MCLGET(m, M_DONTWAIT);
+	if (!(m->m_flags & M_EXT)) {
+		m_freem(m);
+		return (NULL);
+	}
+
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
+	m_adj(m, ETHER_ALIGN);
+
+	return (m);
+}
+
+int
+cdcef_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+{
+	struct cdcef_softc	*sc = ifp->if_softc;
+	struct ifaddr		*ifa = (struct ifaddr *)data;
+	struct ifreq		*ifr = (struct ifreq *)data;
+	int			 s, error = 0;
+
+	s = splnet();
+
+	switch (command) {
+	case SIOCSIFADDR:
+		ifp->if_flags |= IFF_UP;
+		cdcef_init(sc);
+		switch (ifa->ifa_addr->sa_family) {
+		case AF_INET:
+			arp_ifinit(&sc->sc_arpcom, ifa);
+			break;
+		}
+		break;
+
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu > ETHERMTU)
+			error = EINVAL;
+		else
+			ifp->if_mtu = ifr->ifr_mtu;
+		break;
+
+	case SIOCSIFFLAGS:
+		if (ifp->if_flags & IFF_UP) {
+			if (!(ifp->if_flags & IFF_RUNNING))
+				cdcef_init(sc);
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				cdcef_stop(sc);
+		}
+		error = 0;
+		break;
+
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		error = (command == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_arpcom) :
+		    ether_delmulti(ifr, &sc->sc_arpcom);
+
+		if (error == ENETRESET)
+			error = 0;
+		break;
+
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	splx(s);
+
+	return (error);
+}
+
+void
+cdcef_watchdog(struct ifnet *ifp)
+{
+	struct cdcef_softc	*sc = ifp->if_softc;
+
+#if 0
+	if (sc->sc_dying)
+		return;
+#endif
+
+	ifp->if_oerrors++;
+	printf("%s: watchdog timeout\n", DEVNAME(sc));
+}
+
+void
+cdcef_init(struct cdcef_softc *sc)
+{
+	int s;
+	struct ifnet    *ifp = GET_IFP(sc);
+	if (ifp->if_flags & IFF_RUNNING)
+		return;
+	s = splnet();
+
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
+	splx(s);
+}
+
+int
+cdcef_encap(struct cdcef_softc *sc, struct mbuf *m, int idx)
+{
+	usbf_status err;
+
+	printf("encap len %x m %x\n", m->m_pkthdr.len, m);
+	m_copydata(m, 0, m->m_pkthdr.len, sc->sc_buffer_in);
+	/* NO CRC */
+
+	usbf_setup_xfer(sc->sc_xfer_in, sc->sc_pipe_in, sc, sc->sc_buffer_in,
+	    m->m_pkthdr.len, USBD_NO_COPY, 10000, cdcef_txeof);
+
+	err = usbf_transfer(sc->sc_xfer_in);
+	if (err && err != USBD_IN_PROGRESS) {
+		printf("encap error\n");
+		cdcef_stop(sc);
+		return (EIO);
+	}
+	sc->sc_xmit_mbuf = m;
+	printf("encap finished\n");
+
+	return (0);
+}
+
+
+void
+cdcef_stop(struct cdcef_softc *sc)
+{
+	struct ifnet    *ifp = GET_IFP(sc);
+
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	/* cancel recieve pipe? */
+
+	if (sc->sc_xmit_mbuf != NULL) {
+		m_freem(sc->sc_xmit_mbuf);
+		sc->sc_xmit_mbuf = NULL;
 	}
 }
