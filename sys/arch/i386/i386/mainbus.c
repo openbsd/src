@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.32 2007/01/31 23:30:51 gwk Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.33 2007/02/13 12:52:07 dim Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -142,9 +142,6 @@ void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	union mainbus_attach_args	mba;
-#if NACPI > 0
-	int				acpi_attached = 0;
-#endif
 	extern void			(*setperf_setup)(struct cpu_info *);
 
 	printf("\n");
@@ -167,9 +164,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		mba.mba_aaa.aaa_iot = I386_BUS_SPACE_IO;
 		mba.mba_aaa.aaa_memt = I386_BUS_SPACE_MEM;
 
-		if (acpi_probe(self, aux, &mba.mba_aaa) &&
-		    config_found(self, &mba.mba_aaa, mainbus_print) != NULL)
-			acpi_attached = 1;
+		if (acpi_probe(self, aux, &mba.mba_aaa))
+			config_found(self, &mba.mba_aaa, mainbus_print);
 	}
 #endif
 
