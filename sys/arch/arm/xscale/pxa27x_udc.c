@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.11 2007/02/13 18:32:57 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.12 2007/02/13 20:54:10 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -590,14 +590,16 @@ again:
 	if (xfer->length == xfer->actlen || (tlen == 0 && xfer->actlen != 0) ||
 	    csr & USBDC_UDCCSR_SP) {
 #ifdef DEBUG_RX
-	    printf("trans2 complete\n");
+		printf("trans2 complete\n");
 #endif
 		xfer->status = USBF_NORMAL_COMPLETION;
 		usbf_transfer_complete(xfer);
 	}
 	csr = CSR_READ_4(sc, USBDC_UDCCSR(ep));
+#ifdef DEBUG_RX
 	printf("csr now %x len %x\n",
 	    csr, CSR_READ_4(sc, USBDC_UDCBCR(ep)));
+#endif
 	if (csr & USBDC_UDCCSR_PC)
 		goto again;
 }
@@ -677,8 +679,10 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 
 	p = xfer->buffer + xfer->actlen;
 
+#if 0
 	printf("writing data to endpoint %x, xlen %x xact %x",
 		ep, xfer->length, xfer->actlen);
+#endif
 
 	if (CSR_READ_4(sc, USBDC_UDCCSR(ep)) & USBDC_UDCCSR_PC)
 		CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_PC);
@@ -704,13 +708,16 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 
 		tlen += 4;
 	}
+#if 0
 	printf(" wrote tlen %x %x\n", tlen, xfer->actlen);
+#endif
 	if (xfer->actlen >= xfer->length) {
 		if ((xfer->actlen % 64) != 0) {
 			CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
-			CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
+#if 0
 			printf("setting short packet on %x csr\n", ep,
-			CSR_READ_4(sc, USBDC_UDCCSR(ep)));
+			    CSR_READ_4(sc, USBDC_UDCCSR(ep)));
+#endif
 		}
 		xfer->actlen = xfer->length; /* no overflow */
 	}
@@ -804,9 +811,11 @@ pxaudc_intr1(struct pxaudc_softc *sc)
 		sc->sc_isn = USBDC_UDCCR_AAISNr(ccr);
 		goto ret;
 	}
+#if 0
 	printf("pxaudc_intr: isr0=%b, isr1=%b, otgisr=%b\n",
 	    isr0, USBDC_UDCISR0_BITS, isr1, USBDC_UDCISR1_BITS,
 	    otgisr, USBDC_UDCOTGISR_BITS);
+#endif
 
 	for (i = 1; i < 24; i++) {
 		if (i < 16) {
@@ -894,6 +903,8 @@ pxaudc_ep0_intr(struct pxaudc_softc *sc)
 
 	csr0 = CSR_READ_4(sc, USBDC_UDCCSR0);
 	DPRINTF(10,("pxaudc_ep0_intr: csr0=%b\n", csr0, USBDC_UDCCSR0_BITS));
+
+	delay(200);
 
 	ppipe = sc->sc_pipe[0];
 	if (ppipe != NULL) {
