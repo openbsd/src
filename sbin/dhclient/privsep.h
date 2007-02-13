@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.4 2005/08/07 01:35:11 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.5 2007/02/13 21:54:22 stevesk Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -17,9 +17,6 @@
  */
 
 #include <sys/types.h>
-
-#include <poll.h>
-#include <pwd.h>
 
 struct buf {
 	u_char			*buf;

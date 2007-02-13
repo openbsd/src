@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.108 2007/02/13 15:21:59 stevesk Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.109 2007/02/13 21:54:22 stevesk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -54,6 +54,8 @@
  */
 
 #include <ctype.h>
+#include <poll.h>
+#include <pwd.h>
 
 #include "dhcpd.h"
 #include "privsep.h"
