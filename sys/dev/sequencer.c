@@ -1,4 +1,4 @@
-/*	$OpenBSD: sequencer.c,v 1.11 2005/11/21 18:16:38 millert Exp $	*/
+/*	$OpenBSD: sequencer.c,v 1.12 2007/02/13 08:05:37 jsg Exp $	*/
 /*	$NetBSD: sequencer.c,v 1.13 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -875,7 +875,7 @@ seq_timer(sc, cmd, parm, b)
 	switch(cmd) {
 	case TMR_WAIT_REL:
 		parm += t->last;
-		/* fall into */
+		/* FALLTHROUGH */
 	case TMR_WAIT_ABS:
 		t->last = parm;
 		usec = (long long)parm * (long long)t->tick; /* convert to usec */
@@ -1062,7 +1062,7 @@ midiseq_in(md, msg, len)
 			status = MIDI_NOTEOFF;
 			msg[2] = MIDI_HALF_VEL;
 		}
-		/* fall into */
+		/* FALLTHROUGH */
 	case MIDI_NOTEOFF:
 	case MIDI_KEY_PRESSURE:
 		SEQ_MK_CHN_VOICE(&ev, unit, status, chan, msg[1], msg[2]);
