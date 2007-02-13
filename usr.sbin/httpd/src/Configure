@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: Configure,v 1.24 2007/02/03 18:01:52 espie Exp $
+# $OpenBSD: Configure,v 1.25 2007/02/13 00:37:24 espie Exp $
 ## ====================================================================
 ## The Apache Software License, Version 1.1
 ##
@@ -998,7 +998,7 @@ echo " + setting C pre-processor to $CPP"
 ## Now check for existance of non-standard system header files
 ## and start generation of the ap_config_auto.h header
 ##
-AP_CONFIG_AUTO_H="include/ap_config_auto.h"
+AP_CONFIG_AUTO_H="include/ap_config_auto.h.new"
 echo "/*" >$AP_CONFIG_AUTO_H
 echo " *  ap_config_auto.h -- Automatically determined configuration stuff" >>$AP_CONFIG_AUTO_H
 echo " *  THIS FILE WAS AUTOMATICALLY GENERATED - DO NOT EDIT!" >>$AP_CONFIG_AUTO_H

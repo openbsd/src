@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.138 2006/01/06 18:54:25 millert Exp $
+#	$OpenBSD: Makefile,v 1.139 2007/02/13 00:37:24 espie Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -55,7 +55,7 @@ WDIRS=	../usr.sbin/httpd ../gnu/usr.bin/binutils
 
 # Places using Makefile.bsd-wrapper that needs a prerequisite target met
 # before includes
-PWDIRS=	../usr.sbin/httpd ../gnu/usr.bin/binutils
+PWDIRS=	../gnu/usr.bin/binutils
 
 .if ${USE_GCC3:L} == "yes"
 WDIRS+= ../gnu/lib/libstdc++ ../gnu/usr.bin/gcc ../gnu/lib/libobjc \

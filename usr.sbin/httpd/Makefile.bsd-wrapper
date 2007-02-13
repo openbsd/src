@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.59 2006/04/04 11:39:27 henning Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.60 2007/02/13 00:37:24 espie Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -128,7 +128,7 @@ INSTALL_MODULES= \
 PERLPATH=	/usr/bin/perl
 
 MUNGEDFILES =	${.OBJDIR}/src/ap/Makefile \
-		${.OBJDIR}/src/include/ap_config_auto.h \
+		${.OBJDIR}/src/include/ap_config_auto.h.new \
 		${.OBJDIR}/src/lib/expat-lite/Makefile \
 		${.OBJDIR}/src/lib/Makefile \
 		${.OBJDIR}/src/main/Makefile \
@@ -622,16 +622,15 @@ ICONFILES= \
 
 .include <bsd.own.mk>
 
-all: 	prereq
+all: 	${.OBJDIR}/config.status
 	@cd ${.OBJDIR} && ${MAKE}
-
-prereq: ${.OBJDIR}/config.status 
 
 ${.OBJDIR}/config.status : ${.OBJDIR}/config.layout 
 	@cd ${.OBJDIR} && CC="${CC}" LD_SHLIB="${CC}" \
 		OPTIM="${CFLAGS} ${COPTS}" \
 		PATH="/sbin:/usr/sbin:/bin:/usr/bin" \
 			sh configure ${CONFIG_ARGS}
+	diff -u ${.CURDIR}/src/include/ap_config_auto.h ${.OBJDIR}/src/include/ap_config_auto.h.new
 
 .if !exists(${.OBJDIR}/config.layout)
 ${.OBJDIR}/config.layout: ${.CURDIR}/config.layout
@@ -639,18 +638,18 @@ ${.OBJDIR}/config.layout: ${.CURDIR}/config.layout
 .endif
 
 
-includes: prereq
+includes:
 	@-for i in ${INCFILES}; do \
 		j=`basename $$i`; \
 		echo "Installing ${DESTDIR}${HTTPD_INCLUDEDIR}/$$j"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
-		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_INCLUDEDIR}; \
+		    ${.CURDIR}/$$i ${DESTDIR}${HTTPD_INCLUDEDIR}; \
 	done
 	@-for i in ${XMLFILES}; do \
 		j=`basename $$i`; \
 		echo "Installing ${DESTDIR}${HTTPD_INCLUDEDIR}/xml/$$j"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
-		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_INCLUDEDIR}/xml; \
+		    ${.CURDIR}/$$i ${DESTDIR}${HTTPD_INCLUDEDIR}/xml; \
 	done
 
 install: maninstall
@@ -703,7 +702,7 @@ install: maninstall
 	rm -rf $$d
 
 .if ${.OBJDIR} == ${.CURDIR}
-clean: prereq cleanman
+clean: cleanman
 	@cd ${.OBJDIR} && ${MAKE} clean  && rm -f ${MUNGEDFILES}
 .else 	
 clean: cleanman
@@ -712,10 +711,13 @@ clean: cleanman
 
 cleandir: clean
 
+prereq:
+# nothing left
+
 test:
 	# Nothing here so far...
 
-depend: prereq
+depend:
 	# Nothing here so far...
 
 lint:
