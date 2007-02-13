@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.78 2007/02/06 18:56:31 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.79 2007/02/13 04:40:00 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1025,6 +1025,26 @@ aml_unlockfield(struct aml_scope *scope, struct aml_value *field)
 	}
 }
 
+void *aml_getbuffer(struct aml_value *, int *);
+
+void *
+aml_getbuffer(struct aml_value *val, int *bitlen)
+{
+	switch (val->type) {
+	case AML_OBJTYPE_INTEGER:
+	case AML_OBJTYPE_STATICINT:
+		*bitlen = aml_intlen;
+		return &val->v_integer;
+	case AML_OBJTYPE_BUFFER:
+	case AML_OBJTYPE_STRING:
+		*bitlen = val->length<<3;
+		return val->v_buffer;
+	default:
+		aml_die("getvbi");
+	}
+	return NULL;
+}
+
 /*
  * Buffer/Region: read/write to bitfields
  */
@@ -1032,25 +1052,55 @@ void
 aml_fieldio(struct aml_scope *scope, struct aml_value *field,
     struct aml_value *res, int mode)
 {
-	struct aml_value *pop, *tmp;
+	struct aml_value *pop, tf;
 	int bpos, blen, aligned, mask;
+	void    *iobuf, *iobuf2;
 	uint64_t iobase;
 
 	pop = field->v_field.ref1;
 	bpos = field->v_field.bitpos;
 	blen = field->v_field.bitlen;
 
+	dnprintf(55,"--fieldio: %s [%s] bp:%.4x bl:%.4x\n",
+		 mode == ACPI_IOREAD ? "rd" : "wr",
+		 aml_nodename(field->node),
+		 bpos, blen);
+
 	aml_lockfield(scope, field);
 	switch (field->v_field.type) {
 	case AMLOP_INDEXFIELD:
 		/* Set Index */
+		memcpy(&tf, field->v_field.ref2, sizeof(struct aml_value));
+		tf.v_field.bitpos += (bpos & 7);
+		tf.v_field.bitlen  = blen;
+
 		aml_setvalue(scope, pop, NULL, bpos>>3);
-		aml_fieldio(scope, field->v_field.ref2, res, mode);
+		aml_fieldio(scope, &tf, res, mode);
+#ifdef ACPI_DEBUG
+		dnprintf(55, "-- post indexfield %x,%x @ %x,%x\n", 
+		       bpos & 3, blen, 
+		       field->v_field.ref2->v_field.bitpos, 
+		       field->v_field.ref2->v_field.bitlen);
+		iobuf = aml_getbuffer(res, &aligned);
+		aml_dump(aligned>>3, iobuf);
+#endif
 		break;
 	case AMLOP_BANKFIELD:
 		/* Set Bank */
+		memcpy(&tf, field->v_field.ref2, sizeof(struct aml_value));
+		tf.v_field.bitpos += (bpos & 7);
+		tf.v_field.bitlen  = blen;
+
 		aml_setvalue(scope, pop, NULL, field->v_field.ref3);
-		aml_fieldio(scope, field->v_field.ref2, res, mode);
+		aml_fieldio(scope, &tf, res, mode);
+#ifdef ACPI_DEBUG
+		dnprintf(55, "-- post bankfield %x,%x @ %x,%x\n", 
+		       bpos & 3, blen, 
+		       field->v_field.ref2->v_field.bitpos, 
+		       field->v_field.ref2->v_field.bitlen);
+		iobuf = aml_getbuffer(res, &aligned);
+		aml_dump(aligned>>3, iobuf);
+#endif
 		break;
 	case AMLOP_FIELD:
 		/* This is an I/O field */
@@ -1074,6 +1124,11 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 			break;
 		}
 
+		/* Pre-allocate return value for reads */
+		if (mode == ACPI_IOREAD)
+			_aml_setvalue(res, AML_OBJTYPE_BUFFER, 
+				      (field->v_field.bitlen+7)>>3, NULL);
+		
 		/* Get aligned bitpos/bitlength */
 		blen = ((bpos & mask) + blen + mask) & ~mask;
 		bpos = bpos & ~mask;
@@ -1081,6 +1136,70 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 		    blen == field->v_field.bitlen);
 		iobase = pop->v_opregion.iobase;
 
+		/* Check for aligned reads/writes */
+		if (aligned) {
+			iobuf = aml_getbuffer(res, &aligned);
+			aml_gasio(scope->sc, pop->v_opregion.iospace,
+				  iobase, pop->v_opregion.iolen, bpos, blen, mask+1,
+				  iobuf, mode); 
+#ifdef ACPI_DEBUG
+			dnprintf(55, "aligned: %s @ %.4x:%.4x + %.4x\n",
+			       mode == ACPI_IOREAD ? "rd" : "wr", 
+			       bpos, blen, aligned);
+			aml_dump(blen>>3, iobuf);
+#endif
+		}
+		else if (mode == ACPI_IOREAD) {
+			iobuf = acpi_os_malloc(blen>>3);
+			aml_gasio(scope->sc, pop->v_opregion.iospace,
+				  iobase, pop->v_opregion.iolen, bpos, blen, mask+1,
+				  iobuf, mode);
+
+			/* ASSERT: res is buffer type as it was set above */
+			aml_bufcpy(res->v_buffer, 0, iobuf, 
+				   field->v_field.bitpos & mask,
+				   field->v_field.bitlen);
+
+#ifdef ACPI_DEBUG
+			dnprintf(55,"non-aligned read: %.4x:%.4x : ", 
+			    field->v_field.bitpos & mask,
+			    field->v_field.bitlen);
+			aml_dump(blen>>3, iobuf);
+			dnprintf(55,"post-read: ");
+			aml_dump((field->v_field.bitlen+7)>>3, res->v_buffer);
+#endif
+			acpi_os_free(iobuf);
+		}
+		else {
+			iobuf = acpi_os_malloc(blen>>3);
+			switch (AML_FIELD_UPDATE(field->v_field.flags)) {
+			case AML_FIELD_WRITEASONES:
+				memset(iobuf, 0xFF, blen>>3);
+				break;
+			case AML_FIELD_PRESERVE:
+				aml_gasio(scope->sc, pop->v_opregion.iospace,
+					  iobase, pop->v_opregion.iolen, bpos, blen, mask+1,
+					  iobuf, ACPI_IOREAD);
+				break;
+			}
+			/* Copy into IOBUF */
+			iobuf2 = aml_getbuffer(res, &aligned);
+			aml_bufcpy(iobuf, field->v_field.bitpos & mask, 
+				   iobuf2, 0,
+				   field->v_field.bitlen);
+
+#ifdef ACPI_DEBUG
+			dnprintf(55,"non-aligned write: %.4x:%.4x : ", 
+				 field->v_field.bitpos & mask,
+				 field->v_field.bitlen);
+			aml_dump(blen>>3, iobuf);
+#endif
+			aml_gasio(scope->sc, pop->v_opregion.iospace,
+				  iobase, pop->v_opregion.iolen, bpos, blen, mask+1,
+				  iobuf, mode);
+
+			acpi_os_free(iobuf);
+		}
 		/* Verify that I/O is in range */
 #if 0
 		/*
@@ -1094,46 +1213,6 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 			    pop->v_opregion.iolen, bpos+blen);
 		}
 #endif
-
-		/* Allocate temporary space for field read
-		 * XXX: not needed if aligned??
-		 */
-		tmp = aml_alloctmp(scope, 1);
-		_aml_setvalue(tmp, AML_OBJTYPE_BUFFER, blen>>3, NULL);
-		if (mode == ACPI_IOREAD) {
-			/* Read from GAS space */
-			aml_gasio(scope->sc, pop->v_opregion.iospace,
-			    iobase, pop->v_opregion.iolen, bpos, blen, mask+1,
-			    tmp->v_buffer, ACPI_IOREAD);
-			aml_setbufint(res, field->v_field.bitpos & mask,
-			    field->v_field.bitlen, tmp);
-		} else {
-			switch (AML_FIELD_UPDATE(field->v_field.flags)) {
-			case AML_FIELD_WRITEASONES:
-				if (!aligned) {
-					dnprintf(50, "fpr:WriteOnes\n");
-					memset(tmp->v_buffer, 0xff, tmp->length);
-				}
-				break;
-			case AML_FIELD_PRESERVE:
-				if (!aligned) {
-					/* Non-aligned I/O: need to read current value */
-					/* XXX: only need to read 1st/last mask chunk */
-					dnprintf(50, "fpr:Preserve\n");
-					aml_gasio(scope->sc,
-					    pop->v_opregion.iospace, iobase,
-					    pop->v_opregion.iolen, bpos, blen,
-					    mask+1, tmp->v_buffer, ACPI_IOREAD);
-				}
-				break;
-			}
-			/* Copy Bits into destination buffer */
-			aml_getbufint(res, field->v_field.bitpos & mask,
-			    field->v_field.bitlen, tmp);
-			aml_gasio(scope->sc, pop->v_opregion.iospace,
-			    iobase, pop->v_opregion.iolen, bpos, blen, mask+1,
-			    tmp->v_buffer, ACPI_IOWRITE);
-		}
 		break;
 	default:
 		/* This is a buffer field */
@@ -1859,6 +1938,7 @@ aml_evalmethod(struct aml_scope *parent, struct aml_node *node,
 
 	if (res == NULL)
 		res = aml_alloctmp(scope, 1);
+
 #ifdef ACPI_DEBUG
 	dnprintf(10, "calling [%s] (%d args)\n",
 	    aml_nodename(node), scope->nargs);
@@ -3177,6 +3257,7 @@ char *aml_valid_osi[] = {
 	"Windows 2001 SP2",
 	"Windows 2001 SP3",
 	"Windows 2001 SP4",
+	"Windows 2006",
 	NULL
 };
 
