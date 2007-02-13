@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.200 2006/12/11 21:31:58 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.201 2007/02/13 06:39:50 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1854,7 +1854,7 @@ trimthenstep6:
 		 * since last PMTU update
 		 */
 		if (tp->t_pmtud_mss_acked < acked)
-		    tp->t_pmtud_mss_acked = acked;
+			tp->t_pmtud_mss_acked = acked;
 
 		tp->snd_una = th->th_ack;
 #ifdef TCP_ECN
