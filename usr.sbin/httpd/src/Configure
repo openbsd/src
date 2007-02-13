@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: Configure,v 1.25 2007/02/13 00:37:24 espie Exp $
+# $OpenBSD: Configure,v 1.26 2007/02/13 19:00:58 henning Exp $
 ## ====================================================================
 ## The Apache Software License, Version 1.1
 ##
@@ -2343,29 +2343,11 @@ fi
 ##
 ## Now compare the sizes of off_t to long
 ##
-AP_TYPE_OFF_T=`${SHELL} helpers/TestCompile -r sizeof off_t`
-if [ "x$AP_TYPE_OFF_T" = "x" ]; then
-    AP_TYPE_OFF_T="unknown_off_t"
-fi
-
-AP_TYPE_LONG=`${SHELL} helpers/TestCompile -r sizeof long`
-if [ "x$AP_TYPE_LONG" = "x" ]; then
-    AP_TYPE_LONG="unknown_long"
-fi
-
-if [ "x$AP_TYPE_OFF_T" != "x$AP_TYPE_LONG" ]; then
-    echo "" >>$AP_CONFIG_AUTO_H
-    echo "/* determine: is off_t a quad */" >>$AP_CONFIG_AUTO_H
-    echo "#ifndef AP_OFF_T_IS_QUAD" >>$AP_CONFIG_AUTO_H
-    echo "#define AP_OFF_T_IS_QUAD 1" >>$AP_CONFIG_AUTO_H
-    echo "#endif" >>$AP_CONFIG_AUTO_H
-else
-    echo "" >>$AP_CONFIG_AUTO_H
-    echo "/* determine: is off_t a quad */" >>$AP_CONFIG_AUTO_H
-    echo "#ifdef AP_OFF_T_IS_QUAD" >>$AP_CONFIG_AUTO_H
-    echo "#undef AP_OFF_T_IS_QUAD" >>$AP_CONFIG_AUTO_H
-    echo "#endif" >>$AP_CONFIG_AUTO_H
-fi
+echo "" >>$AP_CONFIG_AUTO_H
+echo "/* sizeof(off_t) == sizeof(quad_t) on OpenBSD */" >>$AP_CONFIG_AUTO_H
+echo "#ifndef AP_OFF_T_IS_QUAD" >>$AP_CONFIG_AUTO_H
+echo "#define AP_OFF_T_IS_QUAD 1" >>$AP_CONFIG_AUTO_H
+echo "#endif" >>$AP_CONFIG_AUTO_H
 
 ####################################################################
 ## Finish building ap_config_auto.h

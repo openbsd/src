@@ -61,7 +61,7 @@
 #define HAVE_ISNAN 1
 #endif
 
-/* determine: is off_t a quad */
+/* sizeof(off_t) == sizeof(quad_t) on OpenBSD */
 #ifndef AP_OFF_T_IS_QUAD
 #define AP_OFF_T_IS_QUAD 1
 #endif
