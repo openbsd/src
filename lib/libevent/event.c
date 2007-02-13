@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.15 2007/02/04 18:59:12 millert Exp $	*/
+/*	$OpenBSD: event.c,v 1.16 2007/02/13 20:10:57 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -364,12 +364,12 @@ event_base_loop(struct event_base *base, int flags)
 	struct timeval tv;
 	int res, done;
 
-	/* Calculate the initial events that we are waiting for */
-	if (evsel->recalc(base, evbase, 0) == -1)
-		return (-1);
-
 	done = 0;
 	while (!done) {
+		/* Calculate the initial events that we are waiting for */
+		if (evsel->recalc(base, evbase, 0) == -1)
+			return (-1);
+
 		/* Terminate the loop if we have been asked to */
 		if (base->event_gotterm) {
 			base->event_gotterm = 0;
@@ -423,9 +423,6 @@ event_base_loop(struct event_base *base, int flags)
 				done = 1;
 		} else if (flags & EVLOOP_NONBLOCK)
 			done = 1;
-
-		if (evsel->recalc(base, evbase, 0) == -1)
-			return (-1);
 	}
 
 	event_debug(("%s: asked to terminate loop.", __func__));
