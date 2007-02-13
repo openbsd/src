@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.5 2006/03/07 05:21:40 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.6 2007/02/13 00:20:59 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -123,6 +123,14 @@
 #define	CPUID_SBF	0x80000000	/* signal break on FERR */
 
 #define	CPUIDECX_SSE3	0x00000001	/* streaming SIMD extensions #3 */
+#define CPUIDECX_MWAIT	0x00000008	/* Monitor/Mwait */
+#define CPUIDECX_DSCPL	0x00000010	/* CPL Qualified Debug Store */
+#define CPUIDECX_VMX	0x00000020	/* Virtual Machine Extensions */
+#define CPUIDECX_EST	0x00000080	/* enhanced SpeedStep */
+#define CPUIDECX_TM2	0x00000100	/* thermal monitor 2 */
+#define CPUIDECX_CNXTID	0x00000400	/* Context ID */
+#define CPUIDECX_CX16	0x00002000	/* has CMPXCHG16B instruction */
+#define CPUIDECX_XTPR	0x00004000	/* xTPR Update Control */
 
 /*
  * AMD/VIA processor specific flags.

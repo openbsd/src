@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.9 2006/03/16 02:55:52 dlg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.10 2007/02/13 00:20:59 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -91,7 +91,15 @@ const struct {
 	{ CPUID_3DNOW2,	"3DNOW2" },
 	{ CPUID_3DNOW,	"3DNOW" }
 }, cpu_cpuid_ecxfeatures[] = {
-	{ CPUIDECX_SSE3, "SSE3" }
+	{ CPUIDECX_SSE3,	"SSE3" },
+	{ CPUIDECX_MWAIT,	"MWAIT" },
+	{ CPUIDECX_DSCPL,	"DS-CPL" },
+	{ CPUIDECX_VMX,		"VMX" },
+	{ CPUIDECX_EST,		"EST" },
+	{ CPUIDECX_TM2,		"TM2" },
+	{ CPUIDECX_CNXTID,	"CNXT-ID" },
+	{ CPUIDECX_CX16,	"CX16" },
+	{ CPUIDECX_XTPR,	"xTPR" }
 };
 
 int
