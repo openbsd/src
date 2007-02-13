@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.3 2006/04/16 02:49:52 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.4 2007/02/13 19:22:29 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -19,6 +19,9 @@ dnl
 dnl
 dnl *** luna88k-specific devices
 dnl
+__devitem(lcd, lcd, front panel LCD display)dnl
+_mkdev(lcd, {-lcd-},
+{-	M lcd c major_lcd_c 0 644 -})dnl
 __devitem(sio, ttya, On-board serial console port)dnl
 _mkdev(sio, {-ttya-},
 {-	M ttya c major_sio_c 0 660 dialer uucp
@@ -44,6 +47,7 @@ target(all, uk, 0)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
 twrget(all, sio, tty, a)dnl
+twrget(all, lcd, lcd)dnl
 _DEV(all)
 dnl
 dnl ramdisk)
@@ -80,6 +84,7 @@ _DEV(wsmouse, 15)
 _TITLE(spec)
 _DEV(bpf, 22)
 _DEV(fdesc, 21)
+_DEV(lcd, 10)
 _DEV(lkm, 24)
 _DEV(pf, 39)
 _DEV(rnd, 40)
