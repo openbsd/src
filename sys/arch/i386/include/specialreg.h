@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.28 2006/06/12 13:18:18 dim Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.29 2007/02/13 00:22:48 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -139,6 +139,7 @@
 #define CPUIDECX_TM2	0x00000100	/* thermal monitor 2 */
 #define CPUIDECX_CNXTID	0x00000400	/* Context ID */
 #define CPUIDECX_CX16	0x00002000	/* has CMPXCHG16B instruction */
+#define CPUIDECX_XTPR	0x00004000	/* xTPR Update Control */
 
 /*
  * Model-specific registers for the i386 family
