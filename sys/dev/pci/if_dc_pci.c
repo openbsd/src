@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.55 2006/07/20 02:49:18 brad Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.56 2007/02/13 10:38:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -294,6 +294,7 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_flags |= DC_REDUCED_MII_POLL;
 			dc_read_srom(sc, sc->dc_romwidth);
 		}
+		break;
 	case PCI_VENDOR_DAVICOM:
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DAVICOM_DM9100 ||
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DAVICOM_DM9102 ||
