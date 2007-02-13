@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.48 2007/02/12 21:28:23 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.49 2007/02/13 20:10:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1106,7 +1106,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	    msk_ifmedia_upd, msk_ifmedia_sts);
 	mii_flags = MIIF_DOPAUSE;
 	if (sc->sk_fibertype)
-		mii_flags = MIIF_HAVEFIBER;
+		mii_flags |= MIIF_HAVEFIBER;
 	mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, mii_flags);
 	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) == NULL) {
