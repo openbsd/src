@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.30 2006/04/17 19:33:54 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.31 2007/02/13 20:37:07 otto Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.30 2006/04/17 19:33:54 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.31 2007/02/13 20:37:07 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -45,6 +45,7 @@ static const char rcsid[] = "$OpenBSD: utilities.c,v 1.30 2006/04/17 19:33:54 de
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -248,10 +249,16 @@ ckfini(int markclean)
 {
 	struct bufarea *bp, *nbp;
 	int cnt = 0;
+	sigset_t oset, nset;
+
+	sigemptyset(&nset);
+	sigaddset(&nset, SIGINT);
+	sigprocmask(SIG_BLOCK, &nset, &oset);
 
 	if (fswritefd < 0) {
 		(void)close(fsreadfd);
 		fsreadfd = -1;
+		sigprocmask(SIG_SETMASK, &oset, NULL);
 		return;
 	}
 	sblock.fs_flags &= ~FS_FLAGS_UPDATED; /* Force update on next mount */
@@ -295,6 +302,7 @@ ckfini(int markclean)
 	fsreadfd = -1;
 	(void)close(fswritefd);
 	fswritefd = -1;
+	sigprocmask(SIG_SETMASK, &oset, NULL);
 }
 
 int
