@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.39 2007/02/06 04:44:01 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.40 2007/02/14 04:36:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -67,18 +67,17 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_REG_CAP_SSNTF		(1<<29) /* SNotification Register */
 #define  AHCI_REG_CAP_SNCQ		(1<<30) /* Native Cmd Queuing */
 #define  AHCI_REG_CAP_S64A		(1<<31) /* 64bit Addressing */
-
 #define  AHCI_FMT_CAP		"\020" "\006SXS" "\007EMS" "\010CCCS" \
 				    "\016PSC" "\017SSC" "\020PMD" "\021FBSS" \
 				    "\022SPM" "\023SAM" "\024SNZO" "\031SCLO" \
 				    "\032SAL" "\033SALP" "\034SSS" "\035SMPS" \
 				    "\036SSNTF" "\037NCQ" "\040S64A"
-
 #define AHCI_REG_GHC		0x004 /* Global HBA Control */
 #define  AHCI_REG_GHC_HR		(1<<0) /* HBA Reset */
 #define  AHCI_REG_GHC_IE		(1<<1) /* Interrupt Enable */
 #define  AHCI_REG_GHC_MRSM		(1<<2) /* MSI Revert to Single Msg */
 #define  AHCI_REG_GHC_AE		(1<<31) /* AHCI Enable */
+#define AHCI_FMT_GHC		"\020" "\001HR" "\002IE" "\003MRSM" "\040AE"
 #define AHCI_REG_IS		0x008 /* Interrupt Status */
 #define AHCI_REG_PI		0x00c /* Ports Implemented */
 #define AHCI_REG_VS		0x010 /* AHCI Version */
@@ -168,13 +167,11 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_PREG_CMD_ICC_PARTIAL	0x20000000
 #define  AHCI_PREG_CMD_ICC_ACTIVE	0x10000000
 #define  AHCI_PREG_CMD_ICC_IDLE		0x00000000
-
 #define  AHCI_PFMT_CMD		"\020" "\001ST" "\002SUD" "\003POD" \
 				    "\004CLO" "\005FRE" "\016MPSS" "\017FR" \
 				    "\020CR" "\021CPS" "\022PMA" "\023HPCP" \
 				    "\024MPSP" "\025CPD" "\026ESP" \
 				    "\031ATAPI" "\032DLAE" "\033ALPE" "\034ASP"
-
 #define AHCI_PREG_TFD		0x20 /* Task File Data*/
 #define  AHCI_PREG_TFD_STS		0xff
 #define  AHCI_PREG_TFD_STS_ERR		(1<<0)
