@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 2007/02/14 22:51:16 krw Exp $
+#	$OpenBSD: Makefile,v 1.2 2007/02/14 22:53:28 deraadt Exp $
 
 PROG=	disknames
 SRCS=	disknames.c
-CFLAGS=	-Os ${PIPE} ${DEBUG} -I${.CURDIR}
+CFLAGS+= -Os
 MAN=
 
 .PATH:	${.CURDIR}/../../../distrib/special/disknames
