@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.40 2006/12/30 22:43:01 claudio Exp $  */
+/*	$OpenBSD: pgt.c,v 1.41 2007/02/14 20:09:20 claudio Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2369,7 +2369,8 @@ pgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t req)
 		free(pob, M_DEVBUF);
 		break;
 	}
-	case SIOCSIFADDR: ifa = (struct ifaddr *)req;
+	case SIOCSIFADDR:
+		ifa = (struct ifaddr *)req;
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
@@ -2388,6 +2389,15 @@ pgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t req)
 				error = ENETRESET;
 			}
 		}
+		break;
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &ic->ic_ac) :
+		    ether_delmulti(ifr, &ic->ic_ac);
+
+		if (error == ENETRESET)
+			error = 0;
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > PGT_FRAG_SIZE) {
