@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.408 2007/02/12 13:10:02 henning Exp $
+#	$OpenBSD: install.sub,v 1.409 2007/02/14 23:37:18 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2006 Todd Miller, Theo de Raadt, Ken Westerback
@@ -180,6 +180,13 @@ stripcom () {
 		
 scan_dmesg() {
 	bsort $(sed -ne "$1" /var/run/dmesg.boot)
+}
+
+scan_disknames() {
+	local _n _oifs=$IFS
+	IFS=","
+	bsort $(for _n in $(disknames); do echo "$_n "; done | sed -ne "$1")
+	IFS=$_oifs
 }
 
 get_ifdevs() {
@@ -1636,8 +1643,8 @@ done
 dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' >/var/run/dmesg.boot
 
 # Scan /var/run/dmesg.boot for interesting devices.
-DKDEVS=$(scan_dmesg "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
-CDDEVS=$(scan_dmesg "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
+DKDEVS=$(scan_disknames "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
+CDDEVS=$(scan_disknames "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
 MTDEVS=$(scan_dmesg "${MDMTDEVS:-/^[cmsw]t[0-9][0-9]* /s/ .*//p}")
 IFDEVS=$(get_ifdevs)
 SERIALDEV=$(get_serialdev)
