@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.14 2006/12/26 23:58:08 marco Exp $ */
+/* $OpenBSD: acpitz.c,v 1.15 2007/02/14 01:31:12 deanna Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -178,7 +178,7 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 
 	snprintf(name, sizeof name, "_AL%d", i);
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, name, 0, NULL, &res0)) {
-		printf("%s: %s failed\n", DEVNAME(sc), name);
+		dnprintf(20, "%s: %s failed\n", DEVNAME(sc), name);
 		goto out;
 	}
 
