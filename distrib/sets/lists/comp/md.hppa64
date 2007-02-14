@@ -154,6 +154,7 @@
 ./usr/include/hppa64
 ./usr/include/hppa64/_types.h
 ./usr/include/hppa64/asm.h
+./usr/include/hppa64/atomic.h
 ./usr/include/hppa64/autoconf.h
 ./usr/include/hppa64/bus.h
 ./usr/include/hppa64/cdefs.h

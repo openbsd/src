@@ -112,6 +112,7 @@
 ./usr/include/m68k
 ./usr/include/m68k/_types.h
 ./usr/include/m68k/asm.h
+./usr/include/m68k/atomic.h
 ./usr/include/m68k/asm_single.h
 ./usr/include/m68k/cdefs.h
 ./usr/include/m68k/cpu.h
@@ -145,6 +146,7 @@
 ./usr/include/mvme68k
 ./usr/include/mvme68k/_types.h
 ./usr/include/mvme68k/asm.h
+./usr/include/mvme68k/atomic.h
 ./usr/include/mvme68k/autoconf.h
 ./usr/include/mvme68k/cdefs.h
 ./usr/include/mvme68k/conf.h

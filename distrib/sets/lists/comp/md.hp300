@@ -111,6 +111,7 @@
 ./usr/include/hp300
 ./usr/include/hp300/_types.h
 ./usr/include/hp300/asm.h
+./usr/include/hp300/atomic.h
 ./usr/include/hp300/autoconf.h
 ./usr/include/hp300/bus.h
 ./usr/include/hp300/cdefs.h
@@ -150,6 +151,7 @@
 ./usr/include/m68k
 ./usr/include/m68k/_types.h
 ./usr/include/m68k/asm.h
+./usr/include/m68k/atomic.h
 ./usr/include/m68k/asm_single.h
 ./usr/include/m68k/cdefs.h
 ./usr/include/m68k/cpu.h

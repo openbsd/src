@@ -113,6 +113,7 @@
 ./usr/include/m88k/_types.h
 ./usr/include/m88k/asm.h
 ./usr/include/m88k/asm_macro.h
+./usr/include/m88k/atomic.h
 ./usr/include/m88k/cdefs.h
 ./usr/include/m88k/cmmu.h
 ./usr/include/m88k/cpu.h
@@ -153,6 +154,7 @@
 ./usr/include/mvme88k/_types.h
 ./usr/include/mvme88k/asm.h
 ./usr/include/mvme88k/asm_macro.h
+./usr/include/mvme88k/atomic.h
 ./usr/include/mvme88k/autoconf.h
 ./usr/include/mvme88k/bug.h
 ./usr/include/mvme88k/bugio.h

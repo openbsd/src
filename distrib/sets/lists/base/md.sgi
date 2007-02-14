@@ -1658,6 +1658,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/arcbios.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/archtype.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/asm.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/atomic.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/cdefs.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/cpu.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/cpustate.ph
@@ -2026,6 +2027,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/_types.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/asm.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/atomic.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/autoconf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/bus.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/cdefs.ph

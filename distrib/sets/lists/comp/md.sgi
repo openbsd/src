@@ -155,6 +155,7 @@
 ./usr/include/mips64/arcbios.h
 ./usr/include/mips64/archtype.h
 ./usr/include/mips64/asm.h
+./usr/include/mips64/atomic.h
 ./usr/include/mips64/cdefs.h
 ./usr/include/mips64/cpu.h
 ./usr/include/mips64/cpustate.h
@@ -194,6 +195,7 @@
 ./usr/include/sgi
 ./usr/include/sgi/_types.h
 ./usr/include/sgi/asm.h
+./usr/include/sgi/atomic.h
 ./usr/include/sgi/autoconf.h
 ./usr/include/sgi/bus.h
 ./usr/include/sgi/cdefs.h

@@ -1586,6 +1586,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/_types.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/asm.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/atomic.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/autoconf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/bus.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/cdefs.ph

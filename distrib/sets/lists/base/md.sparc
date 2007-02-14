@@ -1423,6 +1423,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/_types.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/apmvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/asm.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/atomic.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/autoconf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/bppioctl.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/bsd_openprom.ph

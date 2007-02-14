@@ -119,6 +119,7 @@
 ./usr/include/sparc/_types.h
 ./usr/include/sparc/apmvar.h
 ./usr/include/sparc/asm.h
+./usr/include/sparc/atomic.h
 ./usr/include/sparc/autoconf.h
 ./usr/include/sparc/bppioctl.h
 ./usr/include/sparc/bsd_openprom.h

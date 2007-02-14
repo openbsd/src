@@ -112,6 +112,7 @@
 ./usr/include/vax/_types.h
 ./usr/include/vax/aout_machdep.h
 ./usr/include/vax/asm.h
+./usr/include/vax/atomic.h
 ./usr/include/vax/bus.h
 ./usr/include/vax/cdefs.h
 ./usr/include/vax/clock.h

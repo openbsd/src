@@ -1524,6 +1524,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/asm.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/atomic.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/autoconf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/bus.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/cdefs.ph
@@ -1620,6 +1621,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm_single.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/atomic.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cdefs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cpu.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/db_machdep.ph

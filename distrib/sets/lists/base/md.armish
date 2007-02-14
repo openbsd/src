@@ -624,6 +624,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/apmvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/armreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/asm.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/arm/atomic.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/blockio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/bus.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/cdefs.ph
@@ -673,6 +674,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/apmvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/armish_intr.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/asm.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/armish/atomic.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/bootconfig.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/bus.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/cdefs.ph
