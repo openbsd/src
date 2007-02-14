@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.33 2006/12/27 20:56:33 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.34 2007/02/14 23:19:26 deraadt Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -135,7 +135,7 @@ read_client_leases(void)
  *	TOK_SEND option-decl |
  *	TOK_DEFAULT option-decl |
  *	TOK_SUPERSEDE option-decl |
- *	TOK_APPEND option-decl 
+ *	TOK_APPEND option-decl |
  *	TOK_PREPEND option-decl |
  *	TOK_MEDIA string-list |
  *	hardware-declaration |

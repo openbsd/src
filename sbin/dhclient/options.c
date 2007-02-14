@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.33 2007/01/25 01:21:04 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.34 2007/02/14 23:19:26 deraadt Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -444,7 +444,7 @@ do_packet(int len, unsigned int from_port, struct iaddr from,
 		options_valid = parse_option_buffer(options,
 		    &packet->options[4], sizeof(packet->options) - 4);
 
-		/* Only DHCP packets have overload areas for options. */ 
+		/* Only DHCP packets have overload areas for options. */
 		if (options_valid &&
 		    options[DHO_DHCP_MESSAGE_TYPE].data &&
 		    options[DHO_DHCP_OPTION_OVERLOAD].data) {
@@ -492,7 +492,7 @@ do_packet(int len, unsigned int from_port, struct iaddr from,
 			handler = NULL;
 		}
 
-	if (handler)	
+	if (handler)
 		(*handler)(from, options);
 
 	for (i = 0; i < 256; i++)
