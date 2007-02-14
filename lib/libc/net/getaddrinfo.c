@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.57 2006/11/17 01:11:23 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.58 2007/02/14 05:48:46 ray Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -1115,11 +1115,8 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 				}
 			}
 			if (!haveanswer) {
-				int nn;
-
 				canonname = bp;
-				nn = strlen(bp) + 1;	/* for the \0 */
-				bp += nn;
+				bp += strlen(bp) + 1;	/* for the \0 */
 			}
 
 			/* don't overwrite pai */
