@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.69 2007/02/13 02:38:31 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.70 2007/02/14 00:53:16 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -703,8 +703,8 @@ mfi_despatch_cmd(struct mfi_ccb *ccb)
 	DNPRINTF(MFI_D_CMD, "%s: mfi_despatch_cmd\n",
 	    DEVNAME(ccb->ccb_sc));
 
-	mfi_write(ccb->ccb_sc, MFI_IQP, htole32((ccb->ccb_pframe >> 3) |
-	    ccb->ccb_extra_frames));
+	mfi_write(ccb->ccb_sc, MFI_IQP, (ccb->ccb_pframe >> 3) |
+	    ccb->ccb_extra_frames);
 
 	return(0);
 }
