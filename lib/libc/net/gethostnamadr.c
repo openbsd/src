@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr.c,v 1.68 2005/08/06 20:30:03 espie Exp $ */
+/*	$OpenBSD: gethostnamadr.c,v 1.69 2007/02/14 10:26:35 itojun Exp $ */
 /*-
  * Copyright (c) 1985, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -362,11 +362,8 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype)
 				}
 			}
 			if (!haveanswer) {
-				int nn;
-
 				host.h_name = bp;
-				nn = strlen(bp) + 1;	/* for the \0 */
-				bp += nn;
+				bp += strlen(bp) + 1;	/* for the \0 */
 			}
 
 			bp += sizeof(align) - ((u_long)bp % sizeof(align));
