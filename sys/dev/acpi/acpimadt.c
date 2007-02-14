@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.8 2007/01/28 19:56:23 kettenis Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.9 2007/02/14 22:45:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -144,8 +144,8 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 
 		switch (entry->madt_lapic.apic_type) {
 		case ACPI_MADT_LAPIC:
-			printf("LAPIC: acpi_proc_id %x, apic_id %x, flags 0x%x\n",
-			    entry->madt_lapic.acpi_proc_id,
+			dprintf("%s: LAPIC: acpi_proc_id %x, apic_id %x, flags 0x%x\n",
+			    self->dv_xname, entry->madt_lapic.acpi_proc_id,
 			    entry->madt_lapic.apic_id,
 			    entry->madt_lapic.flags);
 
@@ -175,8 +175,8 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			}
 			break;
 		case ACPI_MADT_IOAPIC:
-			printf("IOAPIC: acpi_ioapic_id %x, address 0x%x, global_int_base 0x%x\n",
-			    entry->madt_ioapic.acpi_ioapic_id,
+			dprintf("%s: IOAPIC: acpi_ioapic_id %x, address 0x%x, global_int_base 0x%x\n",
+			    self->dv_xname, entry->madt_ioapic.acpi_ioapic_id,
 			    entry->madt_ioapic.address,
 			    entry->madt_ioapic.global_int_base);
 
@@ -214,8 +214,8 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			break;
 
 		case ACPI_MADT_OVERRIDE:
-			printf("OVERRIDE: bus %x, source %x, global_int %x, flags %x\n",
-			    entry->madt_override.bus,
+			dprintf("%s: OVERRIDE: bus %x, source %x, global_int %x, flags %x\n",
+			    self->dv_xname, entry->madt_override.bus,
 			    entry->madt_override.source,
 			    entry->madt_override.global_int,
 			    entry->madt_override.flags);
@@ -248,8 +248,8 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			break;
 
 		case ACPI_MADT_LAPIC_NMI:
-			printf("LAPIC_NMI: acpi_proc_id %x, local_apic_lint %x, flags %x\n",
-			    entry->madt_lapic_nmi.acpi_proc_id,
+			dprintf("%s: LAPIC_NMI: acpi_proc_id %x, local_apic_lint %x, flags %x\n",
+			    self->dv_xname, entry->madt_lapic_nmi.acpi_proc_id,
 			    entry->madt_lapic_nmi.local_apic_lint,
 			    entry->madt_lapic_nmi.flags);
 
@@ -267,7 +267,8 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			break;
 
 		default:
-			printf("apic_type %x\n", entry->madt_lapic.apic_type);
+			printf("%s: unknown apic structure type %x\n",
+			    self->dv_xname, entry->madt_lapic.apic_type);
 		}
 
 		addr += entry->madt_lapic.length;
