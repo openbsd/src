@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.28 2007/02/09 19:12:29 millert Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.29 2007/02/14 01:16:22 millert Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -142,7 +142,7 @@ range2cidrlist(u_int32_t start, u_int32_t end)
 		diff = maxdiff(start, end);
 
 		maxsize = MAX(maxsize, diff);
-		if (cs == cu) {
+		if (cs <= cu + 1) {		/* one extra for terminator */
 			tmp = realloc(list, (cs + 32) * sizeof(struct cidr));
 			if (tmp == NULL)
 				errx(1, "malloc failed");
@@ -342,11 +342,11 @@ char *
 fix_quoted_colons(char *buf)
 {
 	int in = 0;
-	size_t nbs, i, j = 0;
-	char *newbuf, last, *tmp;
+	size_t i, j = 0;
+	char *newbuf, last;
 
-	nbs = strlen(buf) + 128;
-	newbuf = malloc(nbs);
+	/* Allocate enough space for a buf of all colons (impossible). */
+	newbuf = malloc(2 * strlen(buf) + 1);
 	if (newbuf == NULL)
 		return (NULL);
 	last = '\0';
@@ -367,13 +367,7 @@ fix_quoted_colons(char *buf)
 		default:
 			newbuf[j++] = buf[i];
 		}
-		if (j == nbs) {
-			nbs += 128;
-			tmp = realloc(newbuf, nbs);
-			if (tmp == NULL)
-				errx(1, "malloc failed");
-			newbuf = tmp;
-		}
+		last = buf[i];
 	}
 	free(buf);
 	newbuf[j] = '\0';
