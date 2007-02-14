@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.23 2004/01/01 20:17:34 millert Exp $	*/
+/*	$OpenBSD: param.c,v 1.24 2007/02/14 16:47:04 mickey Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ struct	msginfo msginfo = {
  * them here forces loader errors if this file is omitted
  * (if they've been externed everywhere else; hah!).
  */
-struct	buf *buf, *swbuf;
+struct	buf *buf;
 char	*buffers;
 
 struct	utsname utsname;
