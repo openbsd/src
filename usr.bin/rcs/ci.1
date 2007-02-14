@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ci.1,v 1.32 2006/08/04 06:26:39 ray Exp $
+.\"	$OpenBSD: ci.1,v 1.33 2007/02/14 16:07:29 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -23,9 +23,10 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl jMNqV
+.Op Fl qV
 .Op Fl d Ns Op Ar date
 .Op Fl f Ns Op Ar rev
+.Op Fl I Ns Op Ar rev
 .Op Fl i Ns Op Ar rev
 .Op Fl j Ns Op Ar rev
 .Op Fl k Ns Op Ar rev
@@ -90,7 +91,7 @@ is not specified, use the working file's last modification time.
 .It Fl f Ns Op Ar rev
 Force check-in
 \(en even if no changes have been made to the working file.
-.It Fl I
+.It Fl I Ns Op Ar rev
 Interactive mode.
 .It Fl i Ns Op Ar rev
 Only do initial check-in.
@@ -134,7 +135,7 @@ However, if
 is not specified the meaning is completely different \- override any
 .Fl l
 or
-.Fl u Op Ar rev
+.Fl u
 options, ensuring the default behaviour of releasing a lock and removing the
 working file.
 .It Fl s Ns Ar state
@@ -153,16 +154,16 @@ the actual descriptive text itself.
 If no argument is given,
 this option is ignored
 (for compatibility reasons).
-.It Fl u
+.It Fl u Ns Op Ar rev
 The same as
 .Fl r ,
 but also immediately checks out the deposited revision read-only.
 Useful if you wish to read the working file after check-in.
 .It Fl V
 Print RCS's version number.
-.It Fl w Ns Ar user
+.It Fl w Ns Ar username
 Uses
-.Ar user
+.Ar username
 as the author field of the deposited revision.
 .It Fl x Ns Ar suffixes
 Specifies the suffixes for RCS files.

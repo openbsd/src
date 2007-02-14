@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcsdiff.1,v 1.25 2006/09/22 13:42:43 jmc Exp $
+.\"	$OpenBSD: rcsdiff.1,v 1.26 2007/02/14 16:07:29 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -66,6 +66,8 @@ for more information.
 Specify the keyword substitution mode.
 .It Fl n
 Produces a diff in the same format that is used in the RCS files.
+.It Fl q
+Be quiet about reporting.
 .It Fl r Ns Ar rev
 Produces a diff with respect to revision
 .Ar rev .
@@ -74,8 +76,6 @@ between two specific revisions.
 If only one revision is specified,
 diffing is done between that revision and
 the latest revision of the default branch.
-.It Fl q
-Be quiet about reporting.
 .It Fl u
 Produces a unified diff with three lines of context.
 See
