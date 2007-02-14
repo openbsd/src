@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.38 2007/01/27 22:05:24 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.39 2007/02/14 23:15:01 stevesk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -293,7 +293,7 @@ interface_status(void)
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(ifsock, SIOCGIFFLAGS, &ifr) < 0) {
-		syslog(LOG_ERR, "ioctl(SIOCGIFFLAGS) on %s: %m", ifname);
+		warning("ioctl(SIOCGIFFLAGS) on %s: %m", ifname);
 		goto inactive;
 	}
 
@@ -311,8 +311,7 @@ interface_status(void)
 	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
 	if (ioctl(ifsock, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
 		if (errno != EINVAL) {
-			syslog(LOG_DEBUG, "ioctl(SIOCGIFMEDIA) on %s: %m",
-			    ifname);
+			debug("ioctl(SIOCGIFMEDIA) on %s: %m", ifname);
 
 			ifi->noifmedia = 1;
 			goto active;
@@ -439,8 +438,7 @@ interface_link_status(char *ifname)
 	if (ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmr) == -1) {
 		/* EINVAL -> link state unknown. treat as active */
 		if (errno != EINVAL)
-			syslog(LOG_DEBUG, "ioctl(SIOCGIFMEDIA) on %s: %m",
-			    ifname);
+			debug("ioctl(SIOCGIFMEDIA) on %s: %m", ifname);
 		close(sock);
 		return (1);
 	}
