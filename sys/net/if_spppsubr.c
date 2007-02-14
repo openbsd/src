@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.45 2007/02/11 20:29:22 miod Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.46 2007/02/14 00:53:48 jsg Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -973,7 +973,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCSIFADDR:
 		if_up(ifp);
-		/* fall through... */
+		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:
 		going_up = (ifp->if_flags & IFF_UP) &&
@@ -1438,7 +1438,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		case STATE_ACK_RCVD:
 		case STATE_ACK_SENT:
 			sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
-			/* fall through */
+			/* FALLTHROUGH */
 		case STATE_CLOSED:
 		case STATE_STOPPED:
 		case STATE_CLOSING:
@@ -2042,7 +2042,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 		switch (*p) {
 		case LCP_OPT_MAGIC:
 			/* Magic number. */
-			/* fall through, both are same length */
+			/* FALLTHROUGH, both are same length */
 		case LCP_OPT_ASYNC_MAP:
 			/* Async control character map. */
 			if (len >= 6 && p[1] == 6)
@@ -3321,7 +3321,7 @@ sppp_chap_TO(void *cookie)
 		case STATE_OPENED:
 			/* TO* event */
 			sp->rst_counter[IDX_CHAP] = sp->lcp.max_configure;
-			/* fall through */
+			/* FALLTHROUGH */
 		case STATE_REQ_SENT:
 			chap.scr(sp);
 			/* sppp_cp_change_state() will restart the timer */

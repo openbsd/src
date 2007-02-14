@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.167 2007/01/18 20:00:19 henning Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.168 2007/02/14 00:53:48 jsg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -1256,7 +1256,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 						return SLIST_FIRST(&tags);
 			}
 		}
-		/* Fall through. */
+		/* FALLTHROUGH */
 		case IPPROTO_AH:
 			mtag = m_tag_get(PACKET_TAG_IPSEC_IN_CRYPTO_DONE,
 			    sizeof(struct tdb_ident), M_NOWAIT);

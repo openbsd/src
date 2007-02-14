@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq.c,v 1.12 2002/06/02 22:49:59 deraadt Exp $	*/
+/*	$OpenBSD: pdq.c,v 1.13 2007/02/14 00:53:48 jsg Exp $	*/
 /*	$NetBSD: pdq.c,v 1.9 1996/10/13 01:37:26 christos Exp $	*/
 
 /*-
@@ -999,7 +999,7 @@ pdq_stop(
 	    pdq_do_port_control(csrs, PDQ_PCTL_SUB_CMD);
 	    state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(csrs, csr_port_status));
 	    PDQ_ASSERT(state == PDQS_DMA_AVAILABLE);
-	    /* FALL THROUGH */
+	    /* FALLTHROUGH */
 	}
 	case PDQS_DMA_AVAILABLE: {
 	    PDQ_CSR_WRITE(csrs, csr_port_data_a, 0);
@@ -1007,7 +1007,7 @@ pdq_stop(
 	    pdq_do_port_control(csrs, PDQ_PCTL_DMA_UNINIT);
 	    state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(csrs, csr_port_status));
 	    PDQ_ASSERT(state == PDQS_DMA_UNAVAILABLE);
-	    /* FALL THROUGH */
+	    /* FALLTHROUGH */
 	}
 	case PDQS_DMA_UNAVAILABLE: {
 	    break;

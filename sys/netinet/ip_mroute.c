@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.45 2006/06/15 10:11:27 pascoe Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.46 2007/02/14 00:53:48 jsg Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -371,10 +371,10 @@ mfc_find(struct in_addr *o, struct in_addr *g)
 	switch (xxs) {							\
 	case 2:								\
 		delta += 1000000;					\
-		/* fall through */					\
+		/* FALLTHROUGH */					\
 	case 1:								\
 		delta += 1000000;					\
-		/* fall through */					\
+		/* FALLTHROUGH */					\
 	case 0:								\
 		break;							\
 	default:							\

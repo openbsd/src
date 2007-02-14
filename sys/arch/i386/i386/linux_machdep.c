@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.33 2006/12/29 13:04:37 pedro Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.34 2007/02/14 00:53:47 jsg Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -455,7 +455,7 @@ linux_machdepioctl(struct proc *p, void *v, register_t *retval)
 	case LINUX_KIOCSOUND:
 		SCARG(&bia, data) =
 			(caddr_t)(((unsigned long)SCARG(&bia, data)) & 0xffff);
-		/* fall through */
+		/* FALLTHROUGH */
 	case LINUX_KDMKTONE:
 		com = KDMKTONE;
 		break;

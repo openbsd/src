@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.64 2006/06/10 17:05:17 beck Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.65 2007/02/14 00:53:48 jsg Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -989,7 +989,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 				goto bad;
 			}
 			so->so_linger = mtod(m, struct linger *)->l_linger;
-			/* fall thru... */
+			/* FALLTHROUGH */
 
 		case SO_DEBUG:
 		case SO_KEEPALIVE:

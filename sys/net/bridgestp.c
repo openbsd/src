@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.24 2006/12/11 22:11:48 reyk Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.25 2007/02/14 00:53:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1500,7 +1500,7 @@ bstp_set_port_tc(struct bstp_port *bp, int state)
 	case BSTP_TCSTATE_TCN:
 		bstp_set_timer_tc(bp);
 		DPRINTF("%s -> TC_TCN\n", bp->bp_ifp->if_xname);
-		/* FALLTROUGH */
+		/* FALLTHROUGH */
 	case BSTP_TCSTATE_TC:
 		bp->bp_rcvdtc = 0;
 		bp->bp_rcvdtcn = 0;

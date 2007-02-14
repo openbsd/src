@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_rrip.c,v 1.8 2003/06/02 23:28:05 millert Exp $	*/
+/*	$OpenBSD: cd9660_rrip.c,v 1.9 2007/02/14 00:53:48 jsg Exp $	*/
 /*	$NetBSD: cd9660_rrip.c,v 1.17 1997/01/24 00:27:32 cgd Exp $	*/
 
 /*-
@@ -184,7 +184,7 @@ cd9660_rrip_slink(v, ana)
 			
 		case ISO_SUSP_CFLAG_CONTINUE:
 			cont = 1;
-			/* fall thru */
+			/* FALLTHROUGH */
 		case 0:
 			/* Inserting component */
 			wlen = isonum_711(pcomp->clen);
@@ -256,7 +256,7 @@ cd9660_rrip_altname(v, ana)
 		
 	case ISO_SUSP_CFLAG_CONTINUE:
 		cont = 1;
-		/* fall thru */
+		/* FALLTHROUGH */
 	case 0:
 		/* Inserting component */
 		wlen = isonum_711(p->h.length) - 5;

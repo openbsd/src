@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.88 2007/02/08 15:25:30 itojun Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.89 2007/02/14 00:53:48 jsg Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -311,7 +311,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 					    sizeof(struct in_addr),
 					    &(ip->ip_dst), sizeof(struct in_addr));
 
-				/* Fall through */
+				/* FALLTHROUGH */
 			default:
 				/* Sanity check for option length. */
 				if (ptr[off + 1] < 2) {

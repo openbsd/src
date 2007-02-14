@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.524 2007/02/08 15:24:24 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.525 2007/02/14 00:53:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6355,7 +6355,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 					ip6->ip6_dst = finaldst;
 				}
 			}
-			/* fallthrough */
+			/* FALLTHROUGH */
 		}
 		case IPPROTO_AH:
 		case IPPROTO_HOPOPTS:

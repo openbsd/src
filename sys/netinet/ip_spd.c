@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.52 2006/06/16 16:49:40 henning Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.53 2007/02/14 00:53:48 jsg Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -414,7 +414,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 				return NULL;
 			}
 
-			/* Fall through */
+			/* FALLTHROUGH */
 		case IPSP_IPSEC_DONTACQ:
 			*error = -EINVAL; /* Silently drop packet. */
 			return NULL;
@@ -424,7 +424,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			ipsp_acquire_sa(ipo, dignore ? &sdst : &ipo->ipo_dst,
 			    signore ? NULL : &ipo->ipo_src, ddst, NULL);
 
-			/* Fall through */
+			/* FALLTHROUGH */
 		case IPSP_IPSEC_USE:
 			*error = 0;
 			return ipsp_spd_inp(m, af, hlen, error, direction,
@@ -527,7 +527,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			    signore ? NULL : &ipo->ipo_src, ddst, m)) != 0)
 				return NULL;
 
-			/* Fall through */
+			/* FALLTHROUGH */
 		case IPSP_IPSEC_DONTACQ:
 			/* Drop packet. */
 			*error = -EINVAL;
@@ -545,7 +545,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			ipsp_acquire_sa(ipo, dignore ? &ssrc : &ipo->ipo_dst,
 			    signore ? NULL : &ipo->ipo_src, ddst, NULL);
 
-			/* Fall through */
+			/* FALLTHROUGH */
 		case IPSP_IPSEC_USE:
 			*error = 0;
 			return ipsp_spd_inp(m, af, hlen, error, direction,

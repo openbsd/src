@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.34 2006/12/14 09:23:24 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.35 2007/02/14 00:53:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -2306,7 +2306,7 @@ ar5k_ar5212_set_power(struct ath_hal *hal, HAL_POWER_MODE mode,
 	switch (mode) {
 	case HAL_PM_AUTO:
 		staid &= ~AR5K_AR5212_STA_ID1_DEFAULT_ANTENNA;
-		/* fallthrough */
+		/* FALLTHROUGH */
 	case HAL_PM_NETWORK_SLEEP:
 		if (set_chip == AH_TRUE) {
 			AR5K_REG_WRITE(AR5K_AR5212_SCR,

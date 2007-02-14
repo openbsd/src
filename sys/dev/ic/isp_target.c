@@ -1,4 +1,4 @@
-/* $OpenBSD: isp_target.c,v 1.13 2003/10/21 18:58:49 jmc Exp $ */
+/* $OpenBSD: isp_target.c,v 1.14 2007/02/14 00:53:48 jsg Exp $ */
 /*
  * Machine and OS Independent Target Mode Code for the Qlogic SCSI/FC adapters.
  *
@@ -1047,7 +1047,7 @@ isp_handle_ctio2(struct ispsoftc *isp, ct2_entry_t *ct)
 	switch(ct->ct_status & ~QLTM_SVALID) {
 	case CT_BUS_ERROR:
 		isp_prt(isp, ISP_LOGERR, "PCI DMA Bus Error");
-		/* FALL Through */
+		/* FALLTHROUGH */
 	case CT_DATA_OVER:
 	case CT_DATA_UNDER:
 	case CT_OK:

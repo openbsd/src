@@ -1,4 +1,4 @@
-/*	$OpenBSD: slcompress.c,v 1.8 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: slcompress.c,v 1.9 2007/02/14 00:53:48 jsg Exp $	*/
 /*	$NetBSD: slcompress.c,v 1.17 1997/05/17 21:12:10 christos Exp $	*/
 
 /*
@@ -341,7 +341,7 @@ sl_compress_tcp(m, ip, comp, compress_cid)
 		    ntohs(cs->cs_ip.ip_len) == hlen)
 			break;
 
-		/* (fall through) */
+		/* FALLTHROUGH */
 
 	case SPECIAL_I:
 	case SPECIAL_D:

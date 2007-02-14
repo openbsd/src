@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.29 2006/10/04 00:52:55 krw Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.30 2007/02/14 00:53:47 jsg Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -559,7 +559,7 @@ again:
 			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
-	/* fall through */
+	/* FALLTHROUGH */
 
 	case PIOMODE:
 		/* Don't try to set modes if controller can't be adjusted */
@@ -584,7 +584,7 @@ again:
 			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
-	/* fall through */
+	/* FALLTHROUGH */
 
 	case DMAMODE:
 		if (drvp->drive_flags & DRIVE_UDMA) {
@@ -606,7 +606,7 @@ again:
 			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
-	/* fall through */
+	/* FALLTHROUGH */
 
 	case GEOMETRY:
 	geometry:
@@ -628,7 +628,7 @@ again:
 			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
-		/* fall through */
+		/* FALLTHROUGH */
 
 	case MULTIMODE:
 	multimode:
@@ -647,7 +647,7 @@ again:
 			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
-		/* fall through */
+		/* FALLTHROUGH */
 
 	case READY:
 	ready:

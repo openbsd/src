@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.58 2006/12/21 02:28:47 krw Exp $	*/
+/*	$OpenBSD: fd.c,v 1.59 2007/02/14 00:53:48 jsg Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -669,7 +669,7 @@ loop:
 		/* Make sure the right drive is selected. */
 		fd_set_motor(fdc, 0);
 
-		/* fall through */
+		/* FALLTHROUGH */
 	case DOSEEK:
 	doseek:
 		if (fd->sc_cylin == bp->b_cylinder)
@@ -842,7 +842,7 @@ loop:
 			(void) fdcresult(fdc);
 		}
 
-		/* fall through */
+		/* FALLTHROUGH */
 	case DORECAL:
 		out_fdc(iot, ioh, NE7CMD_RECAL);	/* recal function */
 		out_fdc(iot, ioh, fd->sc_drive);

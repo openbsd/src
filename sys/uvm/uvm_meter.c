@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.21 2006/11/29 12:24:18 miod Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.22 2007/02/14 00:53:48 jsg Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ uvm_loadav(avg)
 		case SSLEEP:
 			if (p->p_priority > PZERO || p->p_slptime > 1)
 				continue;
-		/* fall through */
+		/* FALLTHROUGH */
 		case SRUN:
 		case SIDL:
 		case SONPROC:

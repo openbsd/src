@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.23 2007/02/03 16:48:23 miod Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.24 2007/02/14 00:53:48 jsg Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -308,7 +308,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 		 */
 		lkp->lk_sharecount++;
 		COUNT(lkp, p, cpu_id, 1);
-		/* fall into downgrade */
+		/* FALLTHROUGH */
 
 	case LK_DOWNGRADE:
 		if (WEHOLDIT(lkp, pid, cpu_id) == 0 ||
@@ -379,7 +379,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 		 */
 		if (lkp->lk_sharecount == 0)
 			WAKEUP_WAITER(lkp);
-		/* fall into exclusive request */
+		/* FALLTHROUGH */
 
 	case LK_EXCLUSIVE:
 		if (WEHOLDIT(lkp, pid, cpu_id)) {

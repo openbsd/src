@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.25 2006/06/25 15:01:54 sturm Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.26 2007/02/14 00:53:48 jsg Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -1018,7 +1018,7 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, caddr_t arg,
 	case Q_GETQUOTA:
 		if (uid == p->p_cred->p_ruid)
 			break;
-		/* fall through */
+		/* FALLTHROUGH */
 	default:
 		if ((error = suser(p, 0)) != 0)
 			return (error);
