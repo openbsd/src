@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.50 2007/01/03 18:16:43 claudio Exp $	*/
+/*	$OpenBSD: atw.c,v 1.51 2007/02/14 04:46:44 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -141,10 +141,6 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $");
  */
 
 #define ATW_REFSLAVE	/* slavishly do what the reference driver does */
-
-#define	VOODOO_DUR_11_ROUNDING		0x01 /* necessary */
-#define	VOODOO_DUR_2_4_SPECIALCASE	0x02 /* NOT necessary */
-int atw_voodoo = VOODOO_DUR_11_ROUNDING;
 
 int atw_bbp_io_enable_delay = 20 * 1000;
 int atw_bbp_io_disable_delay = 2 * 1000;
