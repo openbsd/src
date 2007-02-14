@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.51 2007/02/14 04:46:44 jsg Exp $	*/
+/*	$OpenBSD: atw.c,v 1.52 2007/02/14 04:49:43 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -288,6 +288,9 @@ static const u_int atw_rfmd2958_rf1r[] = {
 	0x345d1, 0x28ba2, 0x1d174, 0x11745, 0x05d17, 0x3a2e8, 0x11745
 };
 
+
+#ifdef ATW_DEBUG
+
 const char *atw_tx_state[] = {
 	"STOPPED",
 	"RUNNING - read descriptor",
@@ -309,6 +312,8 @@ const char *atw_rx_state[] = {
 	"RUNNING - flush fifo",
 	"RUNNING - fifo drain"
 };
+
+#endif
 
 #ifndef __OpenBSD__
 int
