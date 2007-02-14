@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.15 2006/03/06 09:40:55 deraadt Exp $
+#	$OpenBSD: list,v 1.16 2007/02/14 23:38:21 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -47,6 +47,7 @@ LINK	instbin					usr/bin/awk
 LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/more
 LINK	instbin					usr/bin/sed
+LINK	instbin					usr/bin/disknames
 LINK	instbin					usr/bin/tar
 LINK	instbin					usr/sbin/chown
 #LINK	instbin					usr/sbin/bad144
