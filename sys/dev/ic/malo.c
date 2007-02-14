@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.62 2007/02/09 10:35:43 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.63 2007/02/14 20:52:26 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -972,6 +972,7 @@ malo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct malo_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifaddr *ifa;
+	struct ifreq *ifr;
 	int s, error = 0;
 
 	s = splnet();
@@ -993,6 +994,16 @@ malo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				malo_stop(sc);
 		}
+		break;
+        case SIOCADDMULTI:
+        case SIOCDELMULTI:
+		ifr = (struct ifreq *)data;
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &ic->ic_ac) :
+		    ether_delmulti(ifr, &ic->ic_ac);
+
+		if (error == ENETRESET)
+			error = 0;
 		break;
 	default:
 		error = ieee80211_ioctl(ifp, cmd, data);
