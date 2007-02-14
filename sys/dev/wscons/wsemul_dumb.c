@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_dumb.c,v 1.2 2002/03/14 01:27:03 millert Exp $ */
+/* $OpenBSD: wsemul_dumb.c,v 1.3 2007/02/14 01:12:16 jsg Exp $ */
 /* $NetBSD: wsemul_dumb.c,v 1.7 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -188,7 +188,7 @@ wsemul_dumb_output(cookie, data, count, kernel)
 			/* wrap the column around. */
 			edp->ccol = 0;
 
-                	/* FALLTHRU */
+                	/* FALLTHROUGH */
 
 		case ASCII_LF:
 	                /* if the cur line isn't the last, incr and leave. */

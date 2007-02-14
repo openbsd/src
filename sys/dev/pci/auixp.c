@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.6 2006/04/27 21:40:01 matthieu Exp $ */
+/* $OpenBSD: auixp.c,v 1.7 2007/02/14 01:12:16 jsg Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -312,11 +312,11 @@ auixp_commit_settings(void *hdl)
 	case 6:
 		value |= ATI_REG_OUT_DMA_SLOT_BIT(7) |
 			 ATI_REG_OUT_DMA_SLOT_BIT(8);
-		/* FALLTHRU */
+		/* FALLTHROUGH */
 	case 4:
 		value |= ATI_REG_OUT_DMA_SLOT_BIT(6) |
 			 ATI_REG_OUT_DMA_SLOT_BIT(9);
-		/* FALLTHRU */
+		/* FALLTHROUGH */
 	default:
 		value |= ATI_REG_OUT_DMA_SLOT_BIT(3) |
 			 ATI_REG_OUT_DMA_SLOT_BIT(4);

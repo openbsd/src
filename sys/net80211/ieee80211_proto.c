@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.13 2006/12/25 19:24:27 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.14 2007/02/14 01:12:16 jsg Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -398,7 +398,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 			default:
 				break;
 			}
-			/* FALLTHRU */
+			/* FALLTHROUGH */
 		case IEEE80211_S_ASSOC:
 			switch (ic->ic_opmode) {
 			case IEEE80211_M_STA:
@@ -418,7 +418,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 			default:
 				break;
 			}
-			/* FALLTHRU */
+			/* FALLTHROUGH */
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_SCAN:
 			ic->ic_mgt_timer = 0;
@@ -470,7 +470,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 				    ether_sprintf(ic->ic_bss->ni_bssid));
 			}
 			ieee80211_free_allnodes(ic);
-			/* FALLTHRU */
+			/* FALLTHROUGH */
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_ASSOC:
 			/* timeout restart scan */

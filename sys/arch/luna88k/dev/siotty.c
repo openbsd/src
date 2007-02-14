@@ -1,4 +1,4 @@
-/* $OpenBSD: siotty.c,v 1.4 2006/08/12 21:08:49 miod Exp $ */
+/* $OpenBSD: siotty.c,v 1.5 2007/02/14 01:12:16 jsg Exp $ */
 /* $NetBSD: siotty.c,v 1.9 2002/03/17 19:40:43 atatat Exp $ */
 
 /*-
@@ -323,7 +323,7 @@ siomctl(sc, control, op)
 	switch (op) {
 	case DMSET:
 		wr5 &= ~(WR5_BREAK|WR5_DTR|WR5_RTS);
-		/* FALLTHRU */
+		/* FALLTHROUGH */
 	case DMBIS:
 		wr5 |= val;
 		break;

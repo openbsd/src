@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.19 2007/01/07 13:28:50 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.20 2007/02/14 01:12:16 jsg Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -373,7 +373,7 @@ wsemul_sun_control(edp, c)
 
 	case 'E':		/* "Cursor Next Line (CNL)" */
 		edp->ccol = 0;
-		/* FALLTHRU */
+		/* FALLTHROUGH */
 	case 'B':		/* "Cursor Down (CUD)" */
 		edp->crow += min(NORMALIZE(ARG(0,1)), ROWS_LEFT);
 		break;
@@ -397,7 +397,7 @@ wsemul_sun_control(edp, c)
 			(*edp->emulops->eraserows)(edp->emulcookie,
 			     edp->crow + 1, ROWS_LEFT, edp->bkgdattr);
 		}
-		/* FALLTHRU */
+		/* FALLTHROUGH */
 	case 'K':		/* "Erase in Line (EL)" */
 		(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
 		    edp->ccol, COLS_LEFT + 1, edp->bkgdattr);
