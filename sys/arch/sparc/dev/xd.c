@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.33 2006/12/03 16:40:43 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.34 2007/02/15 00:53:26 krw Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -309,7 +309,7 @@ xdgetdisklabel(xd, b)
 			    xddummystrat,
 			    xd->sc_dk.dk_label, xd->sc_dk.dk_cpulabel, 0);
 	if (err) {
-		printf("%s: %s\n", xd->sc_dev.dv_xname, err);
+		/*printf("%s: %s\n", xd->sc_dev.dv_xname, err);*/
 		return(XD_ERR_FAIL);
 	}
 

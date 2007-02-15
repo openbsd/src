@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.17 2006/07/12 19:56:18 thib Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.18 2007/02/15 00:53:26 krw Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -163,9 +163,9 @@ ra_putonline(ra)
 	ra->ra_state = DK_RDLABEL;
 	printf("%s", ra->ra_dev.dv_xname);
 	if ((msg = readdisklabel(MAKEDISKDEV(RAMAJOR, ra->ra_dev.dv_unit,
-	    RAW_PART), rastrategy, dl, NULL, 0)) != NULL)
-		printf(": %s", msg);
-	else {
+	    RAW_PART), rastrategy, dl, NULL, 0)) != NULL) {
+		/*printf(": %s", msg);*/
+	} else {
 		ra->ra_havelabel = 1;
 		ra->ra_state = DK_OPEN;
 	}

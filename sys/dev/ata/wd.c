@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.52 2007/02/06 03:17:24 krw Exp $ */
+/*	$OpenBSD: wd.c,v 1.53 2007/02/15 00:53:26 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -853,7 +853,7 @@ wdgetdisklabel(dev_t dev, struct wd_softc *wd, struct disklabel *lp,
 		    wdstrategy, lp, clp, spoofonly);
 	}
 	if (errstring) {
-		printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);
+		/*printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);*/
 		return;
 	}
 

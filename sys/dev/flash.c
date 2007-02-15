@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.1 2006/11/25 14:32:00 uwe Exp $	*/
+/*	$OpenBSD: flash.c,v 1.2 2007/02/15 00:53:26 krw Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -1030,8 +1030,9 @@ flashgetdisklabel(dev_t dev, struct flash_softc *sc,
 	labeldev = flashlabeldev(dev);
 	errstring = readdisklabel(labeldev, flashstrategy, lp, clp,
 	    spoofonly);
-	if (errstring != NULL)
-		printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);
+	if (errstring != NULL) {
+		/*printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);*/
+	}
 }
 
 /*

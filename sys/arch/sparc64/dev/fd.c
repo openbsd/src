@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.8 2006/11/29 12:24:17 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.9 2007/02/15 00:53:26 krw Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -2035,7 +2035,7 @@ fdgetdisklabel(dev)
 	 */
 	errstring = readdisklabel(dev, fdstrategy, lp, clp, 0);
 	if (errstring) {
-		printf("%s: %s\n", fd->sc_dv.dv_xname, errstring);
+		/*printf("%s: %s\n", fd->sc_dv.dv_xname, errstring);*/
 	}
 }
 

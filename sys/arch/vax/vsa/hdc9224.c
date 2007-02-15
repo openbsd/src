@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.13 2006/11/06 20:28:23 miod Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.14 2007/02/15 00:53:26 krw Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -368,8 +368,9 @@ hdattach(struct device *parent, struct device *self, void *aux)
 	printf("%s: %luMB, %lu sectors\n",
 	    hd->sc_dev.dv_xname, dl->d_secperunit / (1048576 / DEV_BSIZE),
 	    dl->d_secperunit);
-	if (msg)
-		printf("%s: %s\n", hd->sc_dev.dv_xname, msg);
+	if (msg) {
+		/*printf("%s: %s\n", hd->sc_dev.dv_xname, msg);*/
+	}
 #ifdef HDDEBUG
 	hdc_printgeom(&hd->sc_xbn);
 #endif

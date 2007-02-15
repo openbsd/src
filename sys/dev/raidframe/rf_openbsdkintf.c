@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.33 2006/03/05 21:48:56 miod Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.34 2007/02/15 00:53:26 krw Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -2155,7 +2155,7 @@ raidgetdisklabel(dev_t dev)
 	errstring = readdisklabel(RAIDLABELDEV(dev), raidstrategy, lp,
 	    rs->sc_dkdev.dk_cpulabel, 0);
 	if (errstring) {
-		printf("%s: %s\n", rs->sc_xname, errstring);
+		/*printf("%s: %s\n", rs->sc_xname, errstring);*/
 		return;
 		/*raidmakedisklabel(rs);*/
 	}
