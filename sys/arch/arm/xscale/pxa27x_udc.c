@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.13 2007/02/15 06:28:11 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.14 2007/02/15 18:05:05 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -78,6 +78,7 @@ struct pxaudc_softc {
 	int			 sc_cn;
 	int			 sc_in;
 	int			 sc_isn;
+	int8_t			 sc_ep_map[16];
 };
 
 int		 pxaudc_match(struct device *, void *, void *);
@@ -178,7 +179,7 @@ struct usbf_pipe_methods pxaudc_bulk_methods = {
 #ifndef PXAUDC_DEBUG
 #define DPRINTF(l, x)	do {} while (0)
 #else
-int pxaudcdebug = 5;
+int pxaudcdebug = 0;
 #define DPRINTF(l, x)	if ((l) <= pxaudcdebug) printf x; else {}
 #endif
 
@@ -196,6 +197,7 @@ pxaudc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pxaudc_softc		*sc = (struct pxaudc_softc *)self;
 	struct pxaip_attach_args	*pxa = aux;
+	int i;
 
 	sc->sc_iot = pxa->pxa_iot;
 	if (bus_space_map(sc->sc_iot, PXA2X0_USBDC_BASE, PXA2X0_USBDC_SIZE, 0,
@@ -250,6 +252,12 @@ pxaudc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bus.usbrev = USBREV_1_1;
 	sc->sc_bus.dmatag = pxa->pxa_dmat;
 	sc->sc_npipe = 0;	/* ep0 is always there. */
+
+	sc->sc_ep_map[0] = 0;
+	/* 16 == max logical endpoints */
+	for (i = 1; i < 16; i++) {
+		sc->sc_ep_map[i] = -1;
+	}
 
 	/* Attach logical device and function. */
 	(void)config_found(self, &sc->sc_bus, NULL);
@@ -661,14 +669,20 @@ void
 pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 {
 	u_int8_t *p;
-	int ep = usbf_endpoint_index(xfer->pipe->endpoint);
+	int ep = sc->sc_ep_map[usbf_endpoint_index(xfer->pipe->endpoint)];
 	int tlen = 0;
+
+#define DEBUG_TX
+#ifdef DEBUG_TX
+	printf("writing data to endpoint %x, xlen %x xact %x\n",
+		ep, xfer->length, xfer->actlen);
+#endif
 
 	if (xfer->actlen == xfer->length) {
 		/*
-		 * if the packet's last bytes are in the 'word'
-		 * send a zero packet to indicate termiation
-		if ((((xfer->actlen+3)>>2) % (64>>2)) == 0)
+		 * If the packet size is 64 byte multiple
+		 * send a zero packet to indicate termiation.
+		 * This should be endpoint maxtransfersize.
 		 */
 		if ((xfer->actlen % 64) == 0)
 			CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
@@ -679,10 +693,6 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 
 	p = xfer->buffer + xfer->actlen;
 
-#if 0
-	printf("writing data to endpoint %x, xlen %x xact %x",
-		ep, xfer->length, xfer->actlen);
-#endif
 
 	if (CSR_READ_4(sc, USBDC_UDCCSR(ep)) & USBDC_UDCCSR_PC)
 		CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_PC);
@@ -714,13 +724,13 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 
 		tlen += 4;
 	}
-#if 0
+#ifdef DEBUG_TX
 	printf(" wrote tlen %x %x\n", tlen, xfer->actlen);
 #endif
 	if (xfer->actlen >= xfer->length) {
 		if ((xfer->actlen % 64) != 0) {
 			CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
-#if 0
+#ifdef DEBUG_TX
 			printf("setting short packet on %x csr\n", ep,
 			    CSR_READ_4(sc, USBDC_UDCCSR(ep)));
 #endif
@@ -744,8 +754,14 @@ pxaudc_connect_intr(void *v)
 
 	/* XXX only set a flag here */
 	if (pxaudc_is_host()) {
+#if 0
+		printf("%s:switching to host\n", sc->sc_bus.bdev.dv_xname);
+#endif
 		pxaudc_disable(sc);
 	} else {
+#if 0
+		printf("%s:switching to client\n", sc->sc_bus.bdev.dv_xname);
+#endif
 		pxaudc_enable(sc);
 	}
 
@@ -910,7 +926,7 @@ pxaudc_ep0_intr(struct pxaudc_softc *sc)
 	csr0 = CSR_READ_4(sc, USBDC_UDCCSR0);
 	DPRINTF(10,("pxaudc_ep0_intr: csr0=%b\n", csr0, USBDC_UDCCSR0_BITS));
 
-	delay(200);
+	delay(100);
 
 	ppipe = sc->sc_pipe[0];
 	if (ppipe != NULL) {
@@ -945,9 +961,11 @@ pxaudc_open(struct usbf_pipe *pipe)
 {
 	struct pxaudc_softc *sc = (struct pxaudc_softc *)pipe->device->bus;
 	struct pxaudc_pipe *ppipe = (struct pxaudc_pipe *)pipe;
+	int ep_idx;
 	int s;
 
-	if (usbf_endpoint_index(pipe->endpoint) >= PXAUDC_NEP)
+	ep_idx = usbf_endpoint_index(pipe->endpoint);
+	if (ep_idx >= PXAUDC_NEP)
 		return USBF_BAD_ADDRESS;
 
 	DPRINTF(10,("pxaudc_open\n"));
@@ -969,6 +987,13 @@ pxaudc_open(struct usbf_pipe *pipe)
 		splx(s);
 		return USBF_BAD_ADDRESS;
 	}
+	
+	if (ep_idx != 0 && sc->sc_ep_map[ep_idx] != -1) {
+		printf("endpoint %d already used by %c",
+		    ep_idx, '@'+ sc->sc_ep_map[0]);
+		return USBF_BAD_ADDRESS;
+	}
+	sc->sc_ep_map[ep_idx] = sc->sc_npipe;
 
 	sc->sc_pipe[sc->sc_npipe] = ppipe;
 	sc->sc_npipe++;
