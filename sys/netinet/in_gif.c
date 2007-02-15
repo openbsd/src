@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.32 2007/02/10 15:34:22 claudio Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.33 2007/02/15 22:40:02 claudio Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -106,23 +106,13 @@ in_gif_output(ifp, family, m)
 		return EAFNOSUPPORT;
 	}
 
-#if NBRIDGE > 0
-	if (family == AF_LINK) {
-	        mp = NULL;
-		error = etherip_output(m, &tdb, &mp, 0, 0);
-		if (error)
-		        return error;
-		else if (mp == NULL)
-		        return EFAULT;
-
-		m = mp;
-		return ip_output(m, (void *)NULL, (void *)NULL, 0,
-		    (void *)NULL, (void *)NULL);
-	}
-#endif /* NBRIDGE */
-
 	/* encapsulate into IPv4 packet */
 	mp = NULL;
+#if NBRIDGE > 0
+	if (family == AF_LINK)
+		error = etherip_output(m, &tdb, &mp, 0, 0);
+	else
+#endif /* NBRIDGE */
 	error = ipip_output(m, &tdb, &mp, 0, 0);
 	if (error)
 		return error;
