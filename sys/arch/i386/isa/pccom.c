@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.56 2006/12/28 20:50:21 miod Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.57 2007/02/15 18:39:26 mickey Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1266,19 +1266,7 @@ comsoft(void)
 			lsr = sc->sc_rxbuf[rxget];
 			rxget = (rxget + 1) & RBUFMASK;
 			if (ISSET(lsr, LSR_RCV_MASK)) {
-				if (ISSET(lsr, LSR_BI)) {
-#ifdef DDB
-					if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-						if (db_console)
-					 		Debugger();
-						rxget = (rxget + 1) & RBUFMASK;
-						continue;
- 					}
-#endif
-					c = 0;
-				}
-				else
-					c = sc->sc_rxbuf[rxget];
+				c = sc->sc_rxbuf[rxget];
 				if (ISSET(lsr, LSR_OE)) {
 					sc->sc_overflows++;
 					if (sc->sc_errors++ == 0)
@@ -1392,7 +1380,7 @@ comintr(void *arg)
 	struct tty *tp = sc->sc_tty;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t lsr;
+	u_int8_t lsr, c;
 	u_int	rxput;
 
 	if (!sc->sc_tty)
@@ -1409,9 +1397,21 @@ comintr(void *arg)
 			lsr = bus_space_read_1(iot, ioh, com_lsr);
 			if (!ISSET(lsr, LSR_RCV_MASK))
 				break;
+			c = bus_space_read_1(iot, ioh, com_data);
+			if (ISSET(lsr, LSR_BI)) {
+#ifdef DDB
+				if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+					if (db_console)
+			 			Debugger();
+					continue;
+				}
+#endif
+				c = 0;
+ 			}
+
 			sc->sc_rxbuf[rxput] = lsr;
 			rxput = (rxput + 1) & RBUFMASK;
-			sc->sc_rxbuf[rxput] = bus_space_read_1(iot, ioh, com_data);
+			sc->sc_rxbuf[rxput] = c;
 			rxput = (rxput + 1) & RBUFMASK;
 		}
 		msr = bus_space_read_1(iot, ioh, com_msr);
