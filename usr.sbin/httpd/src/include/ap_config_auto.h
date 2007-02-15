@@ -66,11 +66,6 @@
 #define AP_OFF_T_IS_QUAD 1
 #endif
 
-/* build flag: -DDEV_RANDOM=/dev/arandom */
-#ifndef DEV_RANDOM
-#define DEV_RANDOM /dev/arandom
-#endif
-
 /* build flag: -DMOD_SSL=208116 */
 #ifndef MOD_SSL
 #define MOD_SSL 208116
