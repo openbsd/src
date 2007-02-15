@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.16 2007/02/15 20:31:18 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.17 2007/02/15 21:02:17 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -134,6 +134,7 @@ acpidock_docklock(struct acpidock_softc *sc, int lock)
 {
 	struct aml_value	cmd;
 	struct aml_value	res;
+	int rv;
 
 	memset(&cmd, 0, sizeof cmd);
 	cmd.v_integer = lock;
@@ -142,15 +143,16 @@ acpidock_docklock(struct acpidock_softc *sc, int lock)
 	    &res) != 0) {
 		dnprintf(20, "%s: _LCD %d failed\n", DEVNAME(sc), lock);
 
-		aml_freevalue(&res);
-		return (0);
+		rv = 0;
 	} else {
 		dnprintf(20, "%s: _LCK %d successful\n", DEVNAME(sc), lock);
 
-		aml_freevalue(&res);
-		return (1);
+		rv = 1;
 	}
 
+	aml_freevalue(&res);
+
+	return rv;
 }
 
 int
@@ -158,6 +160,7 @@ acpidock_dockctl(struct acpidock_softc *sc, int dock)
 {
 	struct aml_value	cmd;
 	struct aml_value	res;
+	int rv;
 
 	memset(&cmd, 0, sizeof cmd);
 	cmd.v_integer = 1;
@@ -167,18 +170,18 @@ acpidock_dockctl(struct acpidock_softc *sc, int dock)
 		/* XXX */
 		dnprintf(15, "%s: _DCK %d failed\n", DEVNAME(sc), dock);
 
-		sc->sc_docked = 0;
-
-		aml_freevalue(&res);
-		return (0);
+		rv = 0;
 	} else {
 		dnprintf(15, "%s: _DCK %d successful\n", DEVNAME(sc), dock);
 
-		sc->sc_docked = 1;
-		aml_freevalue(&res);
-		return (1);
+		rv = 1;
 	}
 
+	aml_freevalue(&res);
+
+	sc->sc_docked = rv;
+
+	return rv;
 }
 
 int
@@ -186,6 +189,7 @@ acpidock_eject(struct acpidock_softc *sc, struct aml_node *node)
 {
 	struct aml_value	cmd;
 	struct aml_value	res;
+	int rv;
 
 	memset(&cmd, 0, sizeof cmd);
 	cmd.v_integer = 1;
@@ -195,16 +199,16 @@ acpidock_eject(struct acpidock_softc *sc, struct aml_node *node)
 		/* XXX */
 		dnprintf(15, "%s: _EJ0 failed\n", DEVNAME(sc));
 
-		aml_freevalue(&res);
-		return (0);
+		rv = 0;
 	} else {
 		dnprintf(15, "%s: _EJ0 successful\n", DEVNAME(sc));
 
-		sc->sc_docked = 0;
-		aml_freevalue(&res);
-		return (1);
+		rv = 1;
 	}
 
+	aml_freevalue(&res);
+
+	return rv;
 }
 
 int
