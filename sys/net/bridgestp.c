@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.25 2007/02/14 00:53:48 jsg Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.26 2007/02/15 12:43:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1293,7 +1293,7 @@ bstp_set_other_tcprop(struct bstp_port *bp)
 	LIST_FOREACH(bp2, &bs->bs_bplist, bp_next) {
 		if (bp2 == bp)
 			continue;
-		bp->bp_tc_prop = 1;
+		bp2->bp_tc_prop = 1;
 	}
 }
 
