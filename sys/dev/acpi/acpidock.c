@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.14 2007/02/03 17:41:39 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.15 2007/02/15 20:20:39 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -112,8 +112,6 @@ acpidock_status(struct acpidock_softc *sc)
 	struct aml_value	res;
 	int			rv, sta;
 
-	memset(&res, 0, sizeof res);
-	/* XXX: wrong */
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL,
 	    &res) != 0)
 		rv = 0;
@@ -139,10 +137,7 @@ acpidock_docklock(struct acpidock_softc *sc, int lock)
 
 	memset(&cmd, 0, sizeof cmd);
 	cmd.v_integer = lock;
-#if 1
 	cmd.type = AML_OBJTYPE_INTEGER;
-#endif
-	memset(&res, 0, sizeof res);
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_LCK", 1, &cmd,
 	    &res) != 0) {
 		dnprintf(20, "%s: _LCD %d failed\n", DEVNAME(sc), lock);
@@ -167,8 +162,6 @@ acpidock_dockctl(struct acpidock_softc *sc, int dock)
 	memset(&cmd, 0, sizeof cmd);
 	cmd.v_integer = 1;
 	cmd.type = AML_OBJTYPE_INTEGER;
-	memset(&res, 0, sizeof res);
-
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_DCK", 1, &cmd,
 	    &res) != 0) {
 		/* XXX */
@@ -197,8 +190,6 @@ acpidock_eject(struct acpidock_softc *sc)
 	memset(&cmd, 0, sizeof cmd);
 	cmd.v_integer = 1;
 	cmd.type = AML_OBJTYPE_INTEGER;
-
-	memset(&res, 0, sizeof res);
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_EJ0", 1, &cmd,
 	    &res) != 0) {
 		/* XXX */
