@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.15 2007/02/15 20:20:39 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.16 2007/02/15 20:31:18 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -43,7 +43,7 @@ struct cfdriver acpidock_cd = {
 
 int	acpidock_docklock(struct acpidock_softc *, int);
 int	acpidock_dockctl(struct acpidock_softc *, int);
-int	acpidock_eject(struct acpidock_softc *);
+int	acpidock_eject(struct acpidock_softc *, struct aml_node *);
 int	acpidock_notify(struct aml_node *, int, void *);
 int	acpidock_status(struct acpidock_softc *);
 
@@ -182,7 +182,7 @@ acpidock_dockctl(struct acpidock_softc *sc, int dock)
 }
 
 int
-acpidock_eject(struct acpidock_softc *sc)
+acpidock_eject(struct acpidock_softc *sc, struct aml_node *node)
 {
 	struct aml_value	cmd;
 	struct aml_value	res;
@@ -190,7 +190,7 @@ acpidock_eject(struct acpidock_softc *sc)
 	memset(&cmd, 0, sizeof cmd);
 	cmd.v_integer = 1;
 	cmd.type = AML_OBJTYPE_INTEGER;
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_EJ0", 1, &cmd,
+	if (aml_evalname(sc->sc_acpi, node, "_EJ0", 1, &cmd,
 	    &res) != 0) {
 		/* XXX */
 		dnprintf(15, "%s: _EJ0 failed\n", DEVNAME(sc));
@@ -225,7 +225,7 @@ acpidock_notify(struct aml_node *node, int notify_type, void *arg)
 		acpidock_docklock(sc, 0);
 
 		/* now actually undock */
-		acpidock_eject(sc);
+		acpidock_eject(sc, sc->sc_devnode);
 		
 		break;
 	}
