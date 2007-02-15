@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.4 2007/02/15 04:34:44 drahn Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.5 2007/02/15 05:09:15 drahn Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -170,7 +170,7 @@ USB_ATTACH(cdcef)
 		USB_ATTACH_ERROR_RETURN;
 	}
 	/* XXX don't use hard-coded values 128 and 16. */
-	err = usbf_add_endpoint(sc->sc_iface, UE_DIR_IN | 1, UE_BULK,
+	err = usbf_add_endpoint(sc->sc_iface, UE_DIR_IN | 2, UE_BULK,
 	    64, 16, &sc->sc_ep_in) ||
 	    usbf_add_endpoint(sc->sc_iface, UE_DIR_OUT | 1, UE_BULK,
 	    64, 16, &sc->sc_ep_out);
