@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.6 2007/02/15 07:00:28 drahn Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.7 2007/02/15 20:39:05 drahn Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -215,17 +215,13 @@ USB_ATTACH(cdcef)
 
 	/* Open the bulk pipes. */
 	err = usbf_open_pipe(sc->sc_iface,
-	    usbf_endpoint_address(sc->sc_ep_in), &sc->sc_pipe_in) ||
+	    usbf_endpoint_address(sc->sc_ep_out), &sc->sc_pipe_out) ||
 	    usbf_open_pipe(sc->sc_iface,
-	    usbf_endpoint_address(sc->sc_ep_out), &sc->sc_pipe_out);
+	    usbf_endpoint_address(sc->sc_ep_in), &sc->sc_pipe_in);
 	if (err) {
 		printf("%s: usbf_open_pipe failed\n", DEVNAME(sc));
 		USB_ATTACH_ERROR_RETURN;
 	}
-
-	printf("input pipe %x output pipe %x\n",
-	    usbf_endpoint_address(sc->sc_ep_in),
-	    usbf_endpoint_address(sc->sc_ep_out));
 
 	/* Get ready to receive packets. */
 	usbf_setup_xfer(sc->sc_xfer_out, sc->sc_pipe_out, sc,
@@ -321,8 +317,10 @@ cdcef_txeof(usbf_xfer_handle xfer, usbf_private_handle priv,
 	int s;
 
 	s = splnet();
+#if 0
 	printf("cdcef_txeof: xfer=%p, priv=%p, %s\n", xfer, priv,
 	    usbf_errstr(err));
+#endif
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -384,8 +382,6 @@ cdcef_rxeof(usbf_xfer_handle xfer, usbf_private_handle priv,
 
 
 	usbf_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
-
-	printf("recieved %d bytes\n", total_len);
 
 	/* total_len -= 4; Strip off CRC added for Zaurus - XXX*/
 	if (total_len <= 1)
@@ -558,7 +554,6 @@ cdcef_encap(struct cdcef_softc *sc, struct mbuf *m, int idx)
 {
 	usbf_status err;
 
-	printf("encap len %x m %x\n", m->m_pkthdr.len, m);
 	m_copydata(m, 0, m->m_pkthdr.len, sc->sc_buffer_in);
 	/* NO CRC */
 
@@ -572,7 +567,6 @@ cdcef_encap(struct cdcef_softc *sc, struct mbuf *m, int idx)
 		return (EIO);
 	}
 	sc->sc_xmit_mbuf = m;
-	printf("encap finished\n");
 
 	return (0);
 }
