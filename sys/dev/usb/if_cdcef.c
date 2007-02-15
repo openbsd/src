@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.5 2007/02/15 05:09:15 drahn Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.6 2007/02/15 07:00:28 drahn Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -526,6 +526,16 @@ cdcef_watchdog(struct ifnet *ifp)
 
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", DEVNAME(sc));
+
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
+	/* cancel recieve pipe? */
+
+	if (sc->sc_xmit_mbuf != NULL) {
+		m_freem(sc->sc_xmit_mbuf);
+		sc->sc_xmit_mbuf = NULL;
+	}
 }
 
 void
