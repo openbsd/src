@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.3 2007/02/13 18:32:56 drahn Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.4 2007/02/15 04:34:44 drahn Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -77,6 +77,7 @@ struct cdcef_softc {
 	int			sc_rxeof_errors;
 	int			sc_unit;
 	int			sc_attached;
+	int			sc_listening;
 };
 
 int		cdcef_match(struct device *, void *, void *);
@@ -261,7 +262,6 @@ USB_ATTACH(cdcef)
 	sc->sc_attached = 1;
 	splx(s);
 
-
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -281,8 +281,17 @@ cdcef_start(struct ifnet *ifp)
 
 	if(ifp->if_flags & IFF_OACTIVE)
 		return;
+
 	IFQ_POLL(&ifp->if_snd, m_head);
 	if (m_head == NULL) {
+		return;
+	}
+
+
+	if (sc->sc_listening == 0) {
+		/* drop packet because reciever is not listening */
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		m_freem(m_head);
 		return;
 	}
 
@@ -367,6 +376,12 @@ cdcef_rxeof(usbf_xfer_handle xfer, usbf_private_handle priv,
 		goto done;
 	}
 	sc->sc_rxeof_errors = 0;
+
+	/* upon first incoming packet we know the host is listening */
+	if (sc->sc_listening == 0) {
+		sc->sc_listening = 1;
+	}
+
 
 	usbf_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
