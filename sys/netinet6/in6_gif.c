@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.23 2007/02/10 15:34:22 claudio Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.24 2007/02/15 22:45:09 claudio Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -124,22 +124,13 @@ in6_gif_output(ifp, family, m)
 		return EAFNOSUPPORT;
 	}
 	
-#if NBRIDGE > 0
-	if (family == AF_LINK) {
-	        mp = NULL;
-		error = etherip_output(m, &tdb, &mp, 0, 0);
-		if (error)
-		        return error;
-		else if (mp == NULL)
-		        return EFAULT;
-
-		m = mp;
-		goto sendit;
-	}
-#endif /* NBRIDGE */
-
 	/* encapsulate into IPv6 packet */
 	mp = NULL;
+#if NBRIDGE > 0
+	if (family == AF_LINK)
+		error = etherip_output(m, &tdb, &mp, 0, 0);
+	else
+#endif /* NBRIDGE */
 	error = ipip_output(m, &tdb, &mp, 0, 0);
 	if (error)
 	        return error;
@@ -148,9 +139,6 @@ in6_gif_output(ifp, family, m)
 
 	m = mp;
 
-#if NBRIDGE > 0
- sendit:
-#endif /* NBRIDGE */
 	/* See if out cached route remains the same */
 	if (dst->sin6_family != sin6_dst->sin6_family ||
 	     !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &sin6_dst->sin6_addr)) {
