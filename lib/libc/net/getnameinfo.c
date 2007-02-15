@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.32 2006/11/17 01:11:23 itojun Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.33 2007/02/15 04:25:35 ray Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -88,9 +88,6 @@ static int ip6_parsenumeric(const struct sockaddr *, const char *, char *,
 static int ip6_sa2str(const struct sockaddr_in6 *, char *, size_t, int);
 #endif
 
-/*
- * this mutex is also used by get_port in getaddrinfo.c
- */
 void *__THREAD_NAME(serv_mutex);
 
 int
@@ -98,7 +95,6 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
     size_t hostlen, char *serv, size_t servlen, int flags)
 {
 	const struct afd *afd;
-	struct servent *sp;
 	struct hostent *hp;
 	u_short port;
 	int family, i;
@@ -133,25 +129,27 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
 		 * "||" here: rfc2553bis-03 says that serv == NULL OR
 		 * servlen == 0 means that the caller does not want the result.
 		 */
+	} else if (!(flags & NI_NUMERICSERV)) {
+		struct servent sp;
+		struct servent_data sd;
+
+		(void)memset(&sd, 0, sizeof(sd));
+		if (getservbyport_r(port,
+		    (flags & NI_DGRAM) ? "udp" : "tcp", &sp, &sd) == -1)
+			goto numeric;
+
+		if (strlen(sp.s_name) + 1 > servlen) {
+			endservent_r(&sd);
+			return EAI_MEMORY;
+		}
+		strlcpy(serv, sp.s_name, servlen);
+		endservent_r(&sd);
 	} else {
-		if (flags & NI_NUMERICSERV)
-			sp = NULL;
-		else {
-			_THREAD_PRIVATE_MUTEX_LOCK(serv_mutex);
-			sp = getservbyport(port,
-			    (flags & NI_DGRAM) ? "udp" : "tcp");
-			_THREAD_PRIVATE_MUTEX_UNLOCK(serv_mutex);
-		}
-		if (sp) {
-			if (strlen(sp->s_name) + 1 > servlen)
-				return EAI_MEMORY;
-			strlcpy(serv, sp->s_name, servlen);
-		} else {
-			snprintf(numserv, sizeof(numserv), "%u", ntohs(port));
-			if (strlen(numserv) + 1 > servlen)
-				return EAI_MEMORY;
-			strlcpy(serv, numserv, servlen);
-		}
+ numeric:
+		i = snprintf(numserv, sizeof(numserv), "%u", ntohs(port));
+		if (i < 0 || i >= servlen || i >= sizeof(numserv))
+			return EAI_MEMORY;
+		strlcpy(serv, numserv, servlen);
 	}
 
 	switch (sa->sa_family) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.58 2007/02/14 05:48:46 ray Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.59 2007/02/15 04:25:35 ray Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -826,11 +826,8 @@ static int
 get_port(struct addrinfo *ai, const char *servname, int matchonly)
 {
 	const char *errstr, *proto;
-	struct servent *sp;
 	int port;
 	int allownumeric;
-	/* mutex is defined in getnameinfo.c */
-	extern void *__THREAD_NAME(serv_mutex);
 
 	if (servname == NULL)
 		return 0;
@@ -864,6 +861,9 @@ get_port(struct addrinfo *ai, const char *servname, int matchonly)
 			return EAI_SERVICE;
 		port = htons(port);
 	} else {
+		struct servent sp;
+		struct servent_data sd;
+
 		if (errno == ERANGE)
 			return EAI_SERVICE;
 		if (ai->ai_flags & AI_NUMERICSERV)
@@ -881,12 +881,11 @@ get_port(struct addrinfo *ai, const char *servname, int matchonly)
 			break;
 		}
 
-		_THREAD_PRIVATE_MUTEX_LOCK(serv_mutex);
-		sp = getservbyname(servname, proto);
-		_THREAD_PRIVATE_MUTEX_UNLOCK(serv_mutex);
-		if (sp == NULL)
+		(void)memset(&sd, 0, sizeof(sd));
+		if (getservbyname_r(servname, proto, &sp, &sd) == -1)
 			return EAI_SERVICE;
-		port = sp->s_port;
+		port = sp.s_port;
+		endservent_r(&sd);
 	}
 
 	if (!matchonly) {
