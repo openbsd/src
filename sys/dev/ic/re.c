@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.66 2007/02/08 22:50:08 kettenis Exp $	*/
+/*	$OpenBSD: re.c,v 1.67 2007/02/15 18:42:53 jason Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -503,7 +503,7 @@ re_setmulti(struct rl_softc *sc)
 	struct ifnet		*ifp;
 	int			h = 0;
 	u_int32_t		hashes[2] = { 0, 0 };
-	u_int32_t		rxfilt;
+	u_int32_t		hwrev, rxfilt;
 	int			mcnt = 0;
 	struct arpcom		*ac = &sc->sc_arpcom;
 	struct ether_multi	*enm;
@@ -551,8 +551,23 @@ re_setmulti(struct rl_softc *sc)
 		rxfilt &= ~RL_RXCFG_RX_MULTI;
 
 	CSR_WRITE_4(sc, RL_RXCFG, rxfilt);
-	CSR_WRITE_4(sc, RL_MAR0, hashes[0]);
-	CSR_WRITE_4(sc, RL_MAR4, hashes[1]);
+
+	/*
+	 * For some unfathomable reason, RealTek decided to reverse
+	 * the order of the multicast hash registers in the PCI Express
+	 * parts. This means we have to write the hash pattern in reverse
+	 * order for those devices.
+	 */
+	hwrev = CSR_READ_4(sc, RL_TXCFG) & RL_TXCFG_HWREV;
+	if (hwrev == RL_HWREV_8100E_SPIN1 || hwrev == RL_HWREV_8100E_SPIN2 ||
+	    hwrev == RL_HWREV_8101E || hwrev == RL_HWREV_8168_SPIN1 ||
+	    hwrev == RL_HWREV_8168_SPIN2) {
+		CSR_WRITE_4(sc, RL_MAR0, swap32(hashes[1]));
+		CSR_WRITE_4(sc, RL_MAR4, swap32(hashes[0]));
+	} else {
+		CSR_WRITE_4(sc, RL_MAR0, hashes[0]);
+		CSR_WRITE_4(sc, RL_MAR4, hashes[1]);
+	}
 }
 
 void
