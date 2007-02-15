@@ -3071,8 +3071,8 @@
 ./usr/share/zoneinfo/Atlantic/Bermuda
 ./usr/share/zoneinfo/Atlantic/Canary
 ./usr/share/zoneinfo/Atlantic/Cape_Verde
-./usr/share/zoneinfo/Atlantic/Faroe
 ./usr/share/zoneinfo/Atlantic/Faeroe
+./usr/share/zoneinfo/Atlantic/Faroe
 ./usr/share/zoneinfo/Atlantic/Jan_Mayen
 ./usr/share/zoneinfo/Atlantic/Madeira
 ./usr/share/zoneinfo/Atlantic/Reykjavik
@@ -3648,8 +3648,8 @@
 ./usr/share/zoneinfo/posix/Atlantic/Bermuda
 ./usr/share/zoneinfo/posix/Atlantic/Canary
 ./usr/share/zoneinfo/posix/Atlantic/Cape_Verde
-./usr/share/zoneinfo/posix/Atlantic/Faroe
 ./usr/share/zoneinfo/posix/Atlantic/Faeroe
+./usr/share/zoneinfo/posix/Atlantic/Faroe
 ./usr/share/zoneinfo/posix/Atlantic/Jan_Mayen
 ./usr/share/zoneinfo/posix/Atlantic/Madeira
 ./usr/share/zoneinfo/posix/Atlantic/Reykjavik
@@ -4226,8 +4226,8 @@
 ./usr/share/zoneinfo/right/Atlantic/Bermuda
 ./usr/share/zoneinfo/right/Atlantic/Canary
 ./usr/share/zoneinfo/right/Atlantic/Cape_Verde
-./usr/share/zoneinfo/right/Atlantic/Faroe
 ./usr/share/zoneinfo/right/Atlantic/Faeroe
+./usr/share/zoneinfo/right/Atlantic/Faroe
 ./usr/share/zoneinfo/right/Atlantic/Jan_Mayen
 ./usr/share/zoneinfo/right/Atlantic/Madeira
 ./usr/share/zoneinfo/right/Atlantic/Reykjavik

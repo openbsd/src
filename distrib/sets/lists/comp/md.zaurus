@@ -7,6 +7,7 @@
 ./usr/include/arm/apmvar.h
 ./usr/include/arm/armreg.h
 ./usr/include/arm/asm.h
+./usr/include/arm/atomic.h
 ./usr/include/arm/blockio.h
 ./usr/include/arm/bus.h
 ./usr/include/arm/cdefs.h
@@ -207,6 +208,7 @@
 ./usr/include/zaurus/_types.h
 ./usr/include/zaurus/apmvar.h
 ./usr/include/zaurus/asm.h
+./usr/include/zaurus/atomic.h
 ./usr/include/zaurus/bootconfig.h
 ./usr/include/zaurus/bus.h
 ./usr/include/zaurus/cdefs.h

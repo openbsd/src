@@ -151,8 +151,8 @@
 ./usr/include/m68k
 ./usr/include/m68k/_types.h
 ./usr/include/m68k/asm.h
-./usr/include/m68k/atomic.h
 ./usr/include/m68k/asm_single.h
+./usr/include/m68k/atomic.h
 ./usr/include/m68k/cdefs.h
 ./usr/include/m68k/cpu.h
 ./usr/include/m68k/db_machdep.h
