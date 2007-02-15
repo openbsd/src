@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.14 2007/02/15 18:05:05 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.15 2007/02/15 20:36:03 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -672,7 +672,6 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 	int ep = sc->sc_ep_map[usbf_endpoint_index(xfer->pipe->endpoint)];
 	int tlen = 0;
 
-#define DEBUG_TX
 #ifdef DEBUG_TX
 	printf("writing data to endpoint %x, xlen %x xact %x\n",
 		ep, xfer->length, xfer->actlen);
