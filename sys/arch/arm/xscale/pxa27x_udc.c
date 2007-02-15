@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.12 2007/02/13 20:54:10 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.13 2007/02/15 06:28:11 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -581,9 +581,6 @@ again:
 		}
 		count -= 4;
 	}
-#ifdef DEBUG_RX
-	printf(" remain %x\n", len);
-#endif
 	CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_PC);
 
 
@@ -668,10 +665,13 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 	int tlen = 0;
 
 	if (xfer->actlen == xfer->length) {
-#if 0
-		if ((xfer->actlen % 64) != 0)
+		/*
+		 * if the packet's last bytes are in the 'word'
+		 * send a zero packet to indicate termiation
+		if ((((xfer->actlen+3)>>2) % (64>>2)) == 0)
+		 */
+		if ((xfer->actlen % 64) == 0)
 			CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
-#endif
 		xfer->status = USBF_NORMAL_COMPLETION;
 		usbf_transfer_complete(xfer);
 		return;
@@ -690,9 +690,15 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 	while (CSR_READ_4(sc, USBDC_UDCCSR(ep)) & USBDC_UDCCSR_BNF) {
 		u_int32_t v;
 
-		if (xfer->actlen >= xfer->length)
+		if (xfer->length - xfer->actlen < 4) {
+			while (xfer->actlen < xfer->length) {
+				CSR_WRITE_1(sc, USBDC_UDCDR(ep), *p);
+				p++;
+				xfer->actlen++;
+				tlen++;
+			}
 			break;
-
+		}
 		if (((unsigned)p & 0x3) == 0)
 			v = *(u_int32_t *)p;
 		else {
