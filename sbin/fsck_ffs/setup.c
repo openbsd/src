@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.28 2007/02/13 15:56:22 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.29 2007/02/16 08:34:29 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.28 2007/02/13 15:56:22 otto Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.29 2007/02/16 08:34:29 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -573,15 +573,19 @@ calcsb(char *dev, int devfd, struct fs *fs)
 	memset(fs, 0, sizeof(struct fs));
 	fs->fs_fsize = pp->p_fsize;
 	fs->fs_frag = pp->p_frag;
+	fs->fs_bsize = fs->fs_fsize * fs->fs_frag;
 	fs->fs_cpg = pp->p_cpg;
-	fs->fs_size = pp->p_size;
+	fs->fs_nspf = fs->fs_fsize / lp->d_secsize;
+	/* unit for fs->fs_size is fragments, for pp->p_size it is sectors */
+	fs->fs_size = pp->p_size / fs->fs_nspf;
 	fs->fs_ntrak = lp->d_ntracks;
 	fs->fs_nsect = lp->d_nsectors;
 	fs->fs_spc = lp->d_secpercyl;
-	fs->fs_nspf = fs->fs_fsize / lp->d_secsize;
+	/* we can't use lp->d_sbsize, it is the max sb size */
 	fs->fs_sblkno = roundup(
-		howmany(lp->d_bbsize + lp->d_sbsize, fs->fs_fsize),
+		howmany(lp->d_bbsize + SBSIZE, fs->fs_fsize),
 		fs->fs_frag);
+again:
 	fs->fs_cgmask = 0xffffffff;
 	for (i = fs->fs_ntrak; i > 1; i >>= 1)
 		fs->fs_cgmask <<= 1;
@@ -590,9 +594,19 @@ calcsb(char *dev, int devfd, struct fs *fs)
 	fs->fs_cgoffset = roundup(
 		howmany(fs->fs_nsect, NSPF(fs)), fs->fs_frag);
 	fs->fs_fpg = (fs->fs_cpg * fs->fs_spc) / NSPF(fs);
-	fs->fs_ncg = howmany(fs->fs_size / fs->fs_spc, fs->fs_cpg);
+	fs->fs_ncg = howmany(pp->p_size / fs->fs_spc, fs->fs_cpg);
 	for (fs->fs_fsbtodb = 0, i = NSPF(fs); i > 1; i >>= 1)
 		fs->fs_fsbtodb++;
+	/*
+	 * Mimick what mkfs is doing to get an acceptable cgsize,
+	 * not all fields used by CGSIZE() are filled in, but it's a best
+	 * effort anyway.
+	 */
+	if (CGSIZE(fs) > fs->fs_bsize && fs->fs_ntrak > 1) {
+		fs->fs_ntrak >>= 1;
+		fs->fs_spc >>= 1;
+		goto again;
+	}
 	dev_bsize = lp->d_secsize;
 	return (1);
 }
