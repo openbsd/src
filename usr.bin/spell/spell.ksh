@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: spell.ksh,v 1.9 2005/07/06 07:08:05 jmc Exp $
+# $OpenBSD: spell.ksh,v 1.10 2007/02/16 13:47:03 jmc Exp $
 #
 # Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 #
@@ -35,7 +35,7 @@ DEROFF="deroff -w"
 HISTFILE=
 TMP=`mktemp /tmp/spell.XXXXXXXX` || exit 1
 VTMP=
-USAGE="usage: spell [-biltvx] [-d list] [-h spellhist] [-m a | e | l | m | s]\n\t[-s stop] [+extra_list] [file ...]"
+USAGE="usage: spell [-biltvx] [-d list] [-h spellhist] [-m a | e | l | m | s]\n\t[-s list] [+extra_list] [file ...]"
 
 set -o posix		# set POSIX mode to prevent +foo in getopts
 OPTIND=1		# force getopts to reset itself

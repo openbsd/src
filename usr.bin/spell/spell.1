@@ -1,4 +1,4 @@
-.\" $OpenBSD: spell.1,v 1.8 2006/04/06 16:25:55 jmc Exp $
+.\" $OpenBSD: spell.1,v 1.9 2007/02/16 13:47:03 jmc Exp $
 .\"
 .\" Copyright (C) 1985, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -76,7 +76,7 @@
 .Fl m
 .Ar a | e | l | m | s
 .Oc
-.Op Fl s Ar stop
+.Op Fl s Ar list
 .Op + Ns Ar extra_list
 .Op Ar
 .Sh DESCRIPTION
@@ -149,7 +149,7 @@ in words like
 .Em standardise ,
 Fowler and the OED to the contrary notwithstanding.
 In this mode, American variants of words are added to the stop list.
-.It Fl d Ar word_list
+.It Fl d Ar list
 Use the specified word list instead of the default system word list.
 The word list must be sorted as specified above.
 .It Fl h Ar spellhist
@@ -181,7 +181,7 @@ Refer to the
 description in
 .Xr deroff 1
 for details.
-.It Fl s Ar stop_list
+.It Fl s Ar list
 Use the specified stop list instead of the default system stop list.
 The stop list must be sorted as specified above.
 .It Fl t
