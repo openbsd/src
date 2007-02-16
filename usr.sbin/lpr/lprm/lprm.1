@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lprm.1,v 1.8 2003/06/02 23:36:53 millert Exp $
+.\"	$OpenBSD: lprm.1,v 1.9 2007/02/16 13:34:58 jmc Exp $
 .\"	$NetBSD: lprm.1,v 1.10 2002/01/19 03:23:47 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -39,11 +39,11 @@
 .Sh SYNOPSIS
 .Nm lprm
 .Op Fl
-.Bk -words
 .Op Fl P Ns Ar printer
-.Ek
-.Oo Op Ar job# Ar ...
-.Op Ar user Ar ... Oc
+.Oo
+.Op Ar job# Ar ...
+.Op Ar user Ar ...
+.Oc
 .Sh DESCRIPTION
 .Nm lprm
 will remove a job, or jobs, from a printer's spool queue.
@@ -77,7 +77,7 @@ to attempt to remove any jobs queued belonging to that user (or users).
 This form of invoking
 .Nm
 is useful only to the superuser.
-.It Ar job\ \&#
+.It Ar job#
 A user may dequeue an individual job by specifying its job number.
 This number may be obtained from the
 .Xr lpq 1

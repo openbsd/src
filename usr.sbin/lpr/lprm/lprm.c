@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprm.c,v 1.16 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: lprm.c,v 1.17 2007/02/16 13:34:58 jmc Exp $	*/
 /*	$$NetBSD: lprm.c,v 1.9 1999/08/16 03:12:32 simonb Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: lprm.c,v 1.16 2003/06/02 23:36:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lprm.c,v 1.17 2007/02/16 13:34:58 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-] [-Pprinter] [[job #] [user] ...]\n",
+	fprintf(stderr, "usage: %s [-] [-Pprinter] [[job# ...] [user ...]]\n",
 	    __progname);
 	exit(2);
 }
