@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.6 2007/02/02 04:24:09 ray Exp $	*/
+/*	$OpenBSD: buf.h,v 1.7 2007/02/16 03:00:52 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -31,7 +31,7 @@
  * API user in order to avoid corruption of the fields and make sure that only
  * the internals can modify the fields.
  *
- * The first step is to allocate a new buffer using the rcs_buf_create()
+ * The first step is to allocate a new buffer using the rcs_buf_alloc()
  * function, which returns a pointer to a new buffer.
  */
 
