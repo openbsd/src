@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.159 2007/02/07 03:23:23 dlg Exp $g
+#	$OpenBSD: GENERIC,v 1.160 2007/02/16 22:59:44 claudio Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -95,6 +95,7 @@ musycc*		at pci?		# Conexant HDLC controller
 art*		at musycc?	# Accoom Artery E1/T1 cards
 xge*		at pci?		# Neterion Xframe-I/II 10Gb ethernet
 mbg*		at pci?		# Meinberg Funkuhren radio clocks
+malo*		at pci?		# Marvell Libertas
 
 iop*		at pci?		# I2O processor
 ioprbs*		at iop?		# I2O arrays
@@ -312,6 +313,7 @@ rtw*		at cardbus?	# Realtek 8180
 wdc*		at pcmcia?
 com*		at pcmcia?
 com*		at cardbus?
+malo*		at cardbus?	# Marvell Libertas
 
 wsdisplay*	at vgafb?
 
