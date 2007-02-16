@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.206 2007/02/10 01:23:19 krw Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.207 2007/02/16 01:25:50 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -809,8 +809,7 @@ bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
 			m_freem(m_new);
 			sc->bge_cdata.bge_rx_std_chain[i] = NULL;
 		}
-		return (ENOMEM);
-
+		return (ENOBUFS);
 	}
 
 	sc->bge_cdata.bge_rx_std_chain[i] = m_new;
