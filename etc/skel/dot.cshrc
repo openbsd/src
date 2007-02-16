@@ -1,4 +1,4 @@
-# $OpenBSD: dot.cshrc,v 1.5 2005/02/16 06:56:57 matthieu Exp $
+# $OpenBSD: dot.cshrc,v 1.6 2007/02/16 20:05:49 deraadt Exp $
 #
 # csh initialization
 
@@ -9,7 +9,7 @@ alias h		'history -r | more'
 alias j		jobs -l
 alias la	ls -a
 alias lf	ls -FA
-alias ll	ls -lgsA
+alias ll	ls -lsA
 alias tset	'set noglob histchars=""; eval `\tset -s \!*`; unset noglob histchars'
 alias z		suspend
 
