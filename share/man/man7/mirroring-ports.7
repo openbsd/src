@@ -1,4 +1,4 @@
-.\" $OpenBSD: mirroring-ports.7,v 1.14 2005/03/11 23:03:58 jmc Exp $
+.\" $OpenBSD: mirroring-ports.7,v 1.15 2007/02/16 19:15:28 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -43,11 +43,14 @@ This target builds
 which can be used on almost any Unix-like machine to mirror
 .Ox
 distfiles.
+By default, port dependencies will also be recorded in the Makefile,
+which accounts for most of the execution time of
+.Ar mirror-maker .
 The variable
 .Ev RECURSIVE_FETCH_LIST
 can be set to
-.Sq Yes
-if port dependencies  should also be recorded.
+.Sq \&No
+to bypass that computation.
 .Pp
 A sample Makefile entry is formatted like this:
 .Bd -literal
