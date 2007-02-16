@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpd.8,v 1.17 2005/07/17 18:53:45 jmc Exp $
+.\"	$OpenBSD: lpd.8,v 1.18 2007/02/16 13:39:06 jmc Exp $
 .\"	$NetBSD: lpd.8,v 1.23 2002/02/08 01:38:50 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -38,7 +38,7 @@
 .Nd line printer spooler daemon
 .Sh SYNOPSIS
 .Nm lpd
-.Op Fl dlsrW
+.Op Fl dlrsW
 .Op Fl b Ar bind-address
 .Op Fl n Ar maxchild
 .Op Fl w Ar maxwait
@@ -64,7 +64,7 @@ can continue to listen for more requests.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl b
+.It Fl b Ar bind-address
 Normally, if the
 .Fl s
 option is not specified,
@@ -103,7 +103,7 @@ flag causes
 .Nm
 to log valid requests received from the network.
 This can be useful for debugging purposes.
-.It Fl n
+.It Fl n Ar maxchild
 The
 .Fl n
 flag sets
@@ -137,7 +137,12 @@ This is valuable when the machine on which
 runs is subject to attack over the network and it is desired that the
 machine be protected from attempts to remotely fill spools and similar
 attacks.
-.It Fl w
+.It Fl W
+The
+.Fl W
+option will instruct lpd not to verify a remote tcp connection
+comes from a reserved port (<1024).
+.It Fl w Ar maxwait
 The
 .Fl w
 flag sets
@@ -146,11 +151,6 @@ as the wait time (in seconds) for dead remote server detection.
 If no response is returned from a connected server within this period,
 the connection is closed and a message logged.
 The default is 300 seconds.
-.It Fl W
-The
-.Fl W
-option will instruct lpd not to verify a remote tcp connection
-comes from a reserved port (<1024).
 .El
 .Pp
 If the
