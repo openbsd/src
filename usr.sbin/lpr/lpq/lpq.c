@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpq.c,v 1.15 2003/09/03 20:23:26 tedu Exp $	*/
+/*	$OpenBSD: lpq.c,v 1.16 2007/02/16 13:29:04 jmc Exp $	*/
 /*	$NetBSD: lpq.c,v 1.9 1999/12/07 14:54:47 mrg Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpq.c,v 1.15 2003/09/03 20:23:26 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: lpq.c,v 1.16 2007/02/16 13:29:04 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -192,7 +192,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-a] [-l] [-Pprinter] [user ...] [job ...]\n",
+	    "usage: %s [-al] [-Pprinter] [job# ...] [user ...]\n",
 	    __progname);
 	exit(1);
 }
