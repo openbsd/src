@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.32 2006/06/27 13:44:21 mickey Exp $
+ * $OpenBSD: calendar.openbsd,v 1.33 2007/02/16 13:16:06 mickey Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -16,6 +16,7 @@ Jan 29	``second anoncvs server is 100 miles from the first'', 1996
 Jan 31	OpenBSD/cats port is added, from NetBSD, 2004
 Feb 03	Describe the ports mechanism [in OpenBSD], 1997
 Feb 13	Unpatented fast block cipher for new password hashing, 1997
+Feb 14	GNU RCS expired from source tree, replaced with OpenRCS, 2007
 Feb 19	IPsec package by John Ioannidis and Angelos D. Keromytis, 1997
 Feb 26	OpenBSD/Amiga gets ISA bus support, 1996
 Feb 26	bridge(4) transparent firewall added to OpenBSD, 1999
@@ -58,6 +59,7 @@ Aug 17	c2k1-II hackathon, Washington D.C., 12 developers, 2001
 Aug 17	OpenBSD/sparc64 port is added, from NetBSD, 2001
 Sep 26	OpenSSH born, Sunday 11:56 MST, 1999
 Sep 29	OpenBSD/hppa gets PCI bus support, 2003
+Oct 06	OpenBSD/landisk port added, 2006
 Oct 17	CARP added, introducing OpenBSD into High Availability market, 2003
 Oct 18	OpenBSD born, Wednesday 08:37:01 GMT, 1995
 Oct 18	OpenBSD/mvme88k port added, from nivas, based on MACH/luna88k, 1995
