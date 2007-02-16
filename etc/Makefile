@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.246 2007/01/31 08:32:16 pyr Exp $
+#	$OpenBSD: Makefile,v 1.247 2007/02/16 16:56:22 tsi Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -35,11 +35,11 @@ PCS=	pcs750.bin
 # (pmax or slower :-)).  This way you get only tar'ed snap files and you can
 # gzip them on a faster machine
 .ifndef NOGZIP
-GZIP?=		gzip
+GZIPCMD?=	gzip
 GZIPFLAGS?=	-9
 GZIPEXT?=	.gz
 .else
-GZIP=		cat
+GZIPCMD=	cat
 GZIPFLAGS=
 GZIPEXT=
 .endif
@@ -340,7 +340,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.246 2007/01/31 08:32:16 pyr Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.247 2007/02/16 16:56:22 tsi Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \

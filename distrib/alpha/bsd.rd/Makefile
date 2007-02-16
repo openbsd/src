@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2002/06/09 05:53:53 todd Exp $
+#	$OpenBSD: Makefile,v 1.8 2007/02/16 16:56:22 tsi Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -15,7 +15,7 @@ PID!=		echo $$$$
 REALIMAGE!=	echo /var/tmp/image.${PID}
 
 STRIP?=		strip
-GZIP?=		gzip
+GZIPCMD?=	gzip
 GZIPFLAGS?=	-9f
 INSTALLBOOT?=	/usr/mdec/installboot -v
 
@@ -42,7 +42,7 @@ NEWFSARGS_FD=	-i 524288 -c 80
 bsd.rd:	bsd.rd_unz
 	objcopy -Sg -R .comment bsd.rd_unz bsd.strip
 	${STRIP} bsd.strip
-	${GZIP} -c ${GZIPFLAGS} bsd.strip > bsd.rd
+	${GZIPCMD} -c ${GZIPFLAGS} bsd.strip > bsd.rd
 
 bsd.rd_unz: bsd ${IMAGE} ${RDSETROOT}
 	cp bsd bsd.rd_unz

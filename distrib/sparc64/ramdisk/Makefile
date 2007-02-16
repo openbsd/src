@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2005/08/06 18:07:17 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.15 2007/02/16 16:56:22 tsi Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -23,9 +23,9 @@ VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
 
-GZIP?=			gzip
-GZIPFLAGS?=		-9v
-GZIPEXT?=		.gz
+GZIPCMD?=	gzip
+GZIPFLAGS?=	-9v
+GZIPEXT?=	.gz
 
 MOUNT_POINT?=	/mnt
 DISKTYPE=	rdroot
@@ -54,7 +54,7 @@ all ${IMAGE}:
 all:	${FLOPPY} ${BSD_RD}
 
 bsd.gz:	bsd.rd
-	${GZIP} ${GZIPFLAGS} < bsd.rd > bsd.gz
+	${GZIPCMD} ${GZIPFLAGS} < bsd.rd > bsd.gz
 
 ${FLOPPY}:	bsd.gz ${BOOT} /usr/
 	dd if=/dev/zero of=${REALIMAGE} count=${FLOPPYSIZE}

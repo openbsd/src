@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2002/04/05 03:10:04 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2007/02/16 16:56:22 tsi Exp $
 
 IMAGESIZE=		3072
-GZIP?=			gzip
+GZIPCMD?=		gzip
 GZIPFLAGS?=		-9v
 GZIPEXT?=		.gz
 MAKEFLOPPY=		1
