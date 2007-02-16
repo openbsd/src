@@ -195,9 +195,7 @@ sub sockname {
 sub peername {
     @_ == 1 or croak 'usage: $sock->peername()';
     my($sock) = @_;
-    getpeername($sock)
-      || ${*$sock}{'io_socket_peername'}
-      || undef;
+    ${*$sock}{'io_socket_peername'} ||= getpeername($sock);
 }
 
 sub connected {
@@ -213,7 +211,7 @@ sub send {
     my $peer  = $_[3] || $sock->peername;
 
     croak 'send: Cannot determine peer address'
-	 unless($peer);
+	 unless(defined($peer));
 
     my $r = defined(getpeername($sock))
 	? send($sock, $_[1], $flags)
@@ -239,6 +237,7 @@ sub recv {
 sub shutdown {
     @_ == 2 or croak 'usage: $sock->shutdown(HOW)';
     my($sock, $how) = @_;
+    ${*$sock}{'io_socket_peername'} = undef;
     shutdown($sock, $how);
 }
 
