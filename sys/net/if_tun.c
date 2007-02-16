@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.83 2007/02/06 10:49:40 claudio Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.84 2007/02/16 13:41:21 claudio Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -110,6 +110,9 @@ int	tundebug = TUN_DEBUG;
 #else
 #define TUNDEBUG(a)	/* (tundebug? printf a : 0) */
 #endif
+
+/* Only these IFF flags are changeable by TUNSIFINFO */
+#define TUN_IFF_FLAGS (IFF_UP|IFF_POINTOPOINT|IFF_MULTICAST|IFF_BROADCAST)
 
 extern int ifqmaxlen;
 
@@ -612,9 +615,15 @@ tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case TUNSIFINFO:
 		tunp = (struct tuninfo *)data;
+		if (tunp->mtu < ETHERMIN || tunp->mtu > TUNMRU) {
+			splx(s);
+			return (EINVAL);
+		}
 		tp->tun_if.if_mtu = tunp->mtu;
 		tp->tun_if.if_type = tunp->type;
-		tp->tun_if.if_flags = tunp->flags;
+		tp->tun_if.if_flags = 
+		    (tunp->flags & TUN_IFF_FLAGS) |
+		    (tp->tun_if.if_flags & ~TUN_IFF_FLAGS);
 		tp->tun_if.if_baudrate = tunp->baudrate;
 		break;
 	case TUNGIFINFO:
