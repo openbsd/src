@@ -1544,6 +1544,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/intr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/limits.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/mutex.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/param.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/pcb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/pmap.ph
@@ -1634,6 +1635,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/internal_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/limits.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/mutex.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/param.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/pcb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/pmap_motorola.ph

@@ -131,6 +131,7 @@
 ./usr/include/hp300/intr.h
 ./usr/include/hp300/kcore.h
 ./usr/include/hp300/limits.h
+./usr/include/hp300/mutex.h
 ./usr/include/hp300/param.h
 ./usr/include/hp300/pcb.h
 ./usr/include/hp300/pmap.h
@@ -165,6 +166,7 @@
 ./usr/include/m68k/internal_types.h
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
+./usr/include/m68k/mutex.h
 ./usr/include/m68k/param.h
 ./usr/include/m68k/pcb.h
 ./usr/include/m68k/pmap_motorola.h
