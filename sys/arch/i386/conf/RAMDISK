@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.146 2006/12/20 03:30:39 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.147 2007/02/17 03:16:26 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -131,7 +131,7 @@ bha*	at pci?
 scsibus* at bha?
 aha0	at isa? port 0x330	# Adaptec 154[02] SCSI controllers
 aha1	at isa? port 0x334	# Adaptec 154[02] SCSI controllers
-aha*	at isapnp?
+#aha*	at isapnp?
 scsibus* at aha?
 ahb*	at eisa?		# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
@@ -199,7 +199,7 @@ scsibus* at atapiscsi?
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
 we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
 we*	at isapnp?
-ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet card
+#ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet card
 ne0	at isa? port 0x240 irq 9	# NE[12]000 ethernet card
 ne1	at isa? port 0x300 irq 10	# NE[12]000 ethernet card
 ne2	at isa? port 0x280 irq 9	# NE[12]000 ethernet
