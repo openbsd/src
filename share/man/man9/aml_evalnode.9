@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aml_evalnode.9,v 1.2 2007/02/17 15:59:47 mk Exp $
+.\"	$OpenBSD: aml_evalnode.9,v 1.3 2007/02/17 23:25:07 mk Exp $
 .\"
 .\" Copyright (c) 2007 Michael Knudsen <mk@openbsd.org>
 .\"
@@ -41,6 +41,8 @@
 "void (*cbproc)(struct aml_node *, void *arg)" "void *arg"
 .Ft void
 .Fn "aml_freevalue" "struct aml_value *val"
+.Ft int64_t
+.Fn "aml_val2int" "struct aml_value *rval"
 .Sh DESCRIPTION
 The AML API handles decoding and evaluation of the AML
 code embedded in a machine's ACPI tables.
@@ -121,6 +123,75 @@ Also, calling
 with a parameter of
 .Dv NULL
 is not an error.
+.Pp
+.Fn aml_val2int
+is used to convert the
+.Pa struct aml_value
+pointed to by the
+.Pa rval
+parameter to a signed 64-bit integer value.
+Multiple types exist for
+.Pa struct aml_value ,
+and the conversion value depends on the type
+of the value object as follows.
+For objects of the types
+.Dv AML_OBJTYPE_INTEGER
+and
+.Dv AML_OBJTYPE_STATICINT ,
+the return value is simply the integer value stored in the object.
+For objects of the type
+.Dv AML_OBJTYPE_BUFFER ,
+the return value is the integer interpretation of the buffer contents.
+For objects of the type
+.Dv AML_OBJTYPE_STRING ,
+the return value is the integer value represented as a string in base 10
+or, if prefixed by
+.Dq 0x ,
+in base 16.
+If
+.Pa rval
+is
+.Dv NULL
+or not of one of the types mentioned above,
+.Fn aml_val2int
+returns 0.
+.Sh EXAMPLES
+Using
+.Fn aml_evalname
+to invoke the
+.Dq _STA
+method on a node
+.Pa n
+should be done like the following:
+.Bd -literal -offset indent
+struct acpi_softc	*sc
+struct aml_node		*n;
+struct aml_value	res;
+
+if (aml_evalname(sc->sc_acpi, n, "_STA", 0, NULL, &res) != 0) {
+	dnprintf(10, "%s: no _STA\\n", DEVNAME(sc));
+	return;
+}
+.Ed
+.Pp
+Using the
+.Pa struct aml_value
+obtained from the
+.Dq _STA
+call to determine if the device is a battery is done as follows:
+.Bd -literal -offset indent
+if ((aml_val2int(&res) & STA_BATTERY) == 0) {
+	dnprintf(10, %s: no battery present\\n", DEVNAME(sc));
+	return;
+.Ed
+.Pp
+Finally, when the result stored in
+.Pa res
+is no longer needed, free it using
+.Fn aml_freevalue :
+.Bd -literal -offset indent
+aml_freevalue(&res);
+.Ed
 .Sh SEE ALSO
 .Xr acpi 4 ,
 .Xr acpidump 8
