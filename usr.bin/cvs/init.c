@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.30 2007/02/06 17:34:06 xsa Exp $	*/
+/*	$OpenBSD: init.c,v 1.31 2007/02/17 18:23:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -103,17 +103,15 @@ cvs_init_local(void)
 	init_mkdir(current_cvsroot->cr_dir, 0777);
 
 	for (i = 0; i < INIT_NDIRS; i++) {
-		if (cvs_path_cat(current_cvsroot->cr_dir,
-		    cvsroot_dirs[i], path, MAXPATHLEN) >= MAXPATHLEN)
-			fatal("cvs_init_local: truncation");
+		(void)xsnprintf(path, MAXPATHLEN, "%s/%s",
+		    current_cvsroot->cr_dir, cvsroot_dirs[i]);
 
 		init_mkdir(path, 0777);
 	}
 
 	for (i = 0; i < INIT_NFILES; i++) {
-		if (cvs_path_cat(current_cvsroot->cr_dir,
-		    cvsroot_files[i].cf_path, path, MAXPATHLEN) >= MAXPATHLEN)
-			fatal("cvs_init_local: truncation");
+		(void)xsnprintf(path, MAXPATHLEN, "%s/%s",
+		    current_cvsroot->cr_dir, cvsroot_files[i].cf_path);
 
 		init_mkfile(path, cvsroot_files[i].cf_content);
 	}

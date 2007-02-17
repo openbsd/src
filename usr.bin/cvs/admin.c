@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.48 2007/02/09 03:49:15 joris Exp $	*/
+/*	$OpenBSD: admin.c,v 1.49 2007/02/17 18:23:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -234,8 +234,7 @@ cvs_admin_local(struct cvs_file *cf)
 
 		cvs_get_repository_path(d, repo, MAXPATHLEN);
 
-		if (cvs_path_cat(repo, f, fpath, MAXPATHLEN) >= MAXPATHLEN)
-			fatal("cvs_admin_local: truncation");
+		(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", repo, f);
 
 		if (strlcat(fpath, RCS_FILE_EXT, MAXPATHLEN) >= MAXPATHLEN)
 			fatal("cvs_admin_local: truncation");

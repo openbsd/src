@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.75 2007/02/09 03:49:15 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.76 2007/02/17 18:23:43 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -182,9 +182,8 @@ add_directory(struct cvs_file *cf)
 		/* Let's see if we have any per-directory tags first. */
 		cvs_parse_tagfile(cf->file_wd, &tag, &date, &nb);
 
-		if (cvs_path_cat(cf->file_path, CVS_PATH_CVSDIR,
-		    entry, MAXPATHLEN) >= MAXPATHLEN)
-			fatal("add_directory: truncation");
+		(void)xsnprintf(entry, MAXPATHLEN, "%s/%s",
+		    cf->file_path, CVS_PATH_CVSDIR);
 
 		if (stat(entry, &st) != -1) {
 			if (!S_ISDIR(st.st_mode)) {
@@ -204,9 +203,8 @@ add_directory(struct cvs_file *cf)
 			cvs_get_repository_name(cf->file_wd, repo,
 			    MAXPATHLEN);
 
-			if (cvs_path_cat(repo, cf->file_name, entry,
-			    MAXPATHLEN) >= MAXPATHLEN)
-				fatal("add_directory: truncation");
+			(void)xsnprintf(entry, MAXPATHLEN, "%s/%s",
+			    repo, cf->file_name);
 
 			cvs_mkadmin(cf->file_path, current_cvsroot->cr_dir,
 			    entry, tag, date, nb);

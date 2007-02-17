@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.10 2007/02/07 23:47:56 todd Exp $	*/
+/*	$OpenBSD: repository.c,v 1.11 2007/02/17 18:23:43 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -32,8 +32,7 @@ cvs_repository_unlock(const char *repo)
 
 	cvs_log(LP_TRACE, "cvs_repository_unlock(%s)", repo);
 
-	if (cvs_path_cat(repo, CVS_LOCK, fpath, sizeof(fpath)) >= sizeof(fpath))
-		fatal("cvs_repository_unlock: truncation");
+	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s", repo, CVS_LOCK);
 
 	/* XXX - this ok? */
 	cvs_worklist_run(&repo_locks, cvs_worklist_unlink);
@@ -52,8 +51,7 @@ cvs_repository_lock(const char *repo)
 
 	cvs_log(LP_TRACE, "cvs_repository_lock(%s)", repo);
 
-	if (cvs_path_cat(repo, CVS_LOCK, fpath, sizeof(fpath)) >= sizeof(fpath))
-		fatal("cvs_repository_unlock: truncation");
+	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s", repo, CVS_LOCK);
 
 	for (i = 0; i < CVS_LOCK_TRIES; i++) {
 		if (cvs_quit)
@@ -108,13 +106,8 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 		if (cvs_file_chkign(dp->d_name))
 			continue;
 
-		if (cvs_path_cat(wdir, dp->d_name,
-		    fpath, MAXPATHLEN) >= MAXPATHLEN)
-			fatal("cvs_repository_getdir: truncation");
-
-		if (cvs_path_cat(dir, dp->d_name,
-		    rpath, MAXPATHLEN) >= MAXPATHLEN)
-			fatal("cvs_repository_getdir: truncation");
+		(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", wdir, dp->d_name);
+		(void)xsnprintf(rpath, MAXPATHLEN, "%s/%s", dir, dp->d_name);
 
 		/*
 		 * nfs and afs will show d_type as DT_UNKNOWN

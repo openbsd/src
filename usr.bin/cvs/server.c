@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.53 2007/01/31 21:07:36 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.54 2007/02/17 18:23:43 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -219,9 +219,8 @@ cvs_server_static_directory(char *data)
 	FILE *fp;
 	char fpath[MAXPATHLEN];
 
-	if (cvs_path_cat(server_currentdir, CVS_PATH_STATICENTRIES, fpath,
-	    MAXPATHLEN) >= MAXPATHLEN)
-		fatal("cvs_server_static_directory: truncation");
+	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+	    server_currentdir, CVS_PATH_STATICENTRIES);
 
 	if ((fp = fopen(fpath, "w+")) == NULL) {
 		cvs_log(LP_ERRNO, "%s", fpath);
@@ -236,9 +235,8 @@ cvs_server_sticky(char *data)
 	FILE *fp;
 	char tagpath[MAXPATHLEN];
 
-	if (cvs_path_cat(server_currentdir, CVS_PATH_TAG, tagpath,
-	    MAXPATHLEN) >= MAXPATHLEN)
-		fatal("cvs_server_sticky: truncation");
+	(void)xsnprintf(tagpath, MAXPATHLEN, "%s/%s",
+	    server_currentdir, CVS_PATH_TAG);
 
 	if ((fp = fopen(tagpath, "w+")) == NULL) {
 		cvs_log(LP_ERRNO, "%s", tagpath);
@@ -365,9 +363,7 @@ cvs_server_modified(char *data)
 		fatal("cvs_server_modified: %s", errstr);
 	xfree(len);
 
-	if (cvs_path_cat(server_currentdir, data, fpath, MAXPATHLEN) >=
-	    MAXPATHLEN)
-		fatal("cvs_server_modified: truncation");
+	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", server_currentdir, data);
 
 	if ((fd = open(fpath, O_WRONLY | O_CREAT | O_TRUNC)) == -1)
 		fatal("cvs_server_modified: %s: %s", fpath, strerror(errno));
@@ -394,9 +390,7 @@ cvs_server_unchanged(char *data)
 	struct cvs_ent *ent;
 	struct timeval tv[2];
 
-	if (cvs_path_cat(server_currentdir, data, fpath, MAXPATHLEN) >=
-	    MAXPATHLEN)
-		fatal("cvs_server_unchanged: truncation");
+	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", server_currentdir, data);
 
 	if ((fd = open(fpath, O_RDWR | O_CREAT | O_TRUNC)) == -1)
 		fatal("cvs_server_unchanged: %s: %s", fpath, strerror(errno));

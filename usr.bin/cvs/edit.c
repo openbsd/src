@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.32 2007/02/09 03:49:15 joris Exp $	*/
+/*	$OpenBSD: edit.c,v 1.33 2007/02/17 18:23:43 xsa Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -298,9 +298,8 @@ cvs_edit_local(struct cvs_file *cf)
 	if (fchmod(cf->fd, 0644) == -1)
 		fatal("cvs_edit_local: fchmod %s", strerror(errno));
 
-	if (cvs_path_cat(CVS_PATH_BASEDIR, cf->file_name, bfpath,
-	    MAXPATHLEN) >= MAXPATHLEN)
-		fatal("cvs_edit_local: truncation");
+	(void)xsnprintf(bfpath, MAXPATHLEN, "%s/%s",
+	    CVS_PATH_BASEDIR, cf->file_name);
 
 	if (mkdir(CVS_PATH_BASEDIR, 0755) == -1 && errno != EEXIST)
 		fatal("cvs_edit_local: `%s': %s", CVS_PATH_BASEDIR,
@@ -335,9 +334,8 @@ cvs_unedit_local(struct cvs_file *cf)
 
 	cvs_file_classify(cf, NULL);
 
-	if (cvs_path_cat(CVS_PATH_BASEDIR, cf->file_name, bfpath,
-	    MAXPATHLEN) >= MAXPATHLEN)
-		fatal("cvs_unedit_local: truncation");
+	(void)xsnprintf(bfpath, MAXPATHLEN, "%s/%s",
+	    CVS_PATH_BASEDIR, cf->file_name);
 
 	if (stat(bfpath, &st) == -1)
 		return;

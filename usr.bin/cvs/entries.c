@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.72 2007/02/04 06:09:31 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.73 2007/02/17 18:23:43 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -38,21 +38,16 @@ cvs_ent_open(const char *dir)
 	ep = (CVSENTRIES *)xmalloc(sizeof(*ep));
 	memset(ep, 0, sizeof(*ep));
 
-	if (cvs_path_cat(dir, CVS_PATH_ENTRIES, buf, sizeof(buf)) >=
-	    sizeof(buf))
-		fatal("cvs_ent_open: truncation");
+	(void)xsnprintf(buf, sizeof(buf), "%s/%s", dir, CVS_PATH_ENTRIES);
 
 	ep->cef_path = xstrdup(buf);
 
-	if (cvs_path_cat(dir, CVS_PATH_BACKUPENTRIES, buf, sizeof(buf)) >=
-	    sizeof(buf))
-		fatal("cvs_ent_open: truncation");
+	(void)xsnprintf(buf, sizeof(buf), "%s/%s",
+	    dir, CVS_PATH_BACKUPENTRIES);
 
 	ep->cef_bpath = xstrdup(buf);
 
-	if (cvs_path_cat(dir, CVS_PATH_LOGENTRIES, buf, sizeof(buf)) >=
-	    sizeof(buf))
-		fatal("cvs_ent_open: truncation");
+	(void)xsnprintf(buf, sizeof(buf), "%s/%s", dir, CVS_PATH_LOGENTRIES);
 
 	ep->cef_lpath = xstrdup(buf);
 
@@ -359,7 +354,7 @@ void
 cvs_parse_tagfile(char *dir, char **tagp, char **datep, int *nbp)
 {
 	FILE *fp;
-	int linenum;
+	int i, linenum;
 	size_t len;
 	char linebuf[128], tagpath[MAXPATHLEN];
 
@@ -372,7 +367,8 @@ cvs_parse_tagfile(char *dir, char **tagp, char **datep, int *nbp)
 	if (nbp != NULL)
 		*nbp = 0;
 
-	if (cvs_path_cat(dir, CVS_PATH_TAG, tagpath, MAXPATHLEN) >= MAXPATHLEN)
+	i = snprintf(tagpath, MAXPATHLEN, "%s/%s", dir, CVS_PATH_TAG);
+	if (i < 0 || i >= MAXPATHLEN)
 		return;
 
 	if ((fp = fopen(tagpath, "r")) == NULL) {
@@ -425,11 +421,13 @@ cvs_write_tagfile(char *dir, char *tag, char *date, int nb)
 {
 	FILE *fp;
 	char tagpath[MAXPATHLEN];
+	int i;
 
 	if (cvs_noexec == 1)
 		return;
 
-	if (cvs_path_cat(dir, CVS_PATH_TAG, tagpath, MAXPATHLEN) >= MAXPATHLEN)
+	i = snprintf(tagpath, MAXPATHLEN, "%s/%s", dir, CVS_PATH_TAG);
+	if (i < 0 || i >= MAXPATHLEN)
 		return;
 
 	if ((tag != NULL) || (date != NULL)) {

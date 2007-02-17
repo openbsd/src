@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.57 2007/01/31 21:07:35 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.58 2007/02/17 18:23:43 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -370,9 +370,8 @@ cvs_client_senddir(const char *dir)
 
 	cvs_client_send_request("Directory %s\n%s", dir, repo);
 
-	if (cvs_path_cat(dir, CVS_PATH_STATICENTRIES, fpath, MAXPATHLEN) >=
-	    MAXPATHLEN)
-		fatal("cvs_client_senddir: truncation");
+	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+	    dir, CVS_PATH_STATICENTRIES);
 
 	if (stat(fpath, &st) == 0 && (st.st_mode & (S_IRUSR|S_IRGRP|S_IROTH)))
 		cvs_client_send_request("Static-directory");
@@ -780,9 +779,8 @@ cvs_client_set_static_directory(char *data)
 	dir = cvs_remote_input();
 	xfree(dir);
 
-	if (cvs_path_cat(data, CVS_PATH_STATICENTRIES, fpath, MAXPATHLEN) >=
-	    MAXPATHLEN)
-		fatal("cvs_client_set_static_directory: truncation");
+	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+	    data, CVS_PATH_STATICENTRIES);
 
 	if ((fp = fopen(fpath, "w+")) == NULL) {
 		cvs_log(LP_ERRNO, "%s", fpath);
@@ -804,9 +802,8 @@ cvs_client_clear_static_directory(char *data)
 	dir = cvs_remote_input();
 	xfree(dir);
 
-	if (cvs_path_cat(data, CVS_PATH_STATICENTRIES, fpath, MAXPATHLEN) >=
-	    MAXPATHLEN)
-		fatal("cvs_client_clear_static_directory: truncation");
+	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+	    data, CVS_PATH_STATICENTRIES);
 
 	(void)cvs_unlink(fpath);
 }
@@ -826,8 +823,7 @@ cvs_client_set_sticky(char *data)
 	xfree(dir);
 	tag = cvs_remote_input();
 
-	if (cvs_path_cat(data, CVS_PATH_TAG, tagpath, MAXPATHLEN) >= MAXPATHLEN)
-		fatal("cvs_client_clear_sticky: truncation");
+	(void)xsnprintf(tagpath, MAXPATHLEN, "%s/%s", data, CVS_PATH_TAG);
 
 	if ((fp = fopen(tagpath, "w+")) == NULL) {
 		cvs_log(LP_ERRNO, "%s", tagpath);
@@ -853,9 +849,7 @@ cvs_client_clear_sticky(char *data)
 	dir = cvs_remote_input();
 	xfree(dir);
 
-	if (cvs_path_cat(data, CVS_PATH_TAG, tagpath, MAXPATHLEN) >= MAXPATHLEN)
-		fatal("cvs_client_clear_sticky: truncation");
-
+	(void)xsnprintf(tagpath, MAXPATHLEN, "%s/%s", data, CVS_PATH_TAG);
 	(void)cvs_unlink(tagpath);
 }
 

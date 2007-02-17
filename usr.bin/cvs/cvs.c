@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.115 2007/02/09 03:30:31 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.116 2007/02/17 18:23:43 xsa Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -257,9 +257,8 @@ main(int argc, char **argv)
 		return (0);
 	}
 
-	if (cvs_path_cat(current_cvsroot->cr_dir, CVS_PATH_ROOT,
-	    fpath, sizeof(fpath)) >= sizeof(fpath))
-		fatal("main: truncation");
+	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
+	    current_cvsroot->cr_dir, CVS_PATH_ROOT);
 
 	if (stat(fpath, &st) == -1 && cvs_cmdop != CVS_OP_INIT) {
 		if (errno == ENOENT)
@@ -396,13 +395,15 @@ static void
 cvs_read_rcfile(void)
 {
 	char rcpath[MAXPATHLEN], linebuf[128], *lp, *p;
-	int linenum = 0;
+	int i, linenum;
 	size_t len;
 	struct cvs_cmd *cmdp;
 	FILE *fp;
 
-	if (cvs_path_cat(cvs_homedir, CVS_PATH_RC, rcpath, sizeof(rcpath))
-	    >= sizeof(rcpath)) {
+	linenum = 0;
+
+	i = snprintf(rcpath, MAXPATHLEN, "%s/%s", cvs_homedir, CVS_PATH_RC);
+	if (i < 0 || i >= MAXPATHLEN) {
 		cvs_log(LP_ERRNO, "%s", rcpath);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.104 2007/02/07 23:47:56 todd Exp $	*/
+/*	$OpenBSD: util.c,v 1.105 2007/02/17 18:23:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -463,7 +463,6 @@ int
 cvs_rmdir(const char *path)
 {
 	int type, ret = -1;
-	size_t len;
 	DIR *dirp;
 	struct dirent *ent;
 	struct stat st;
@@ -485,9 +484,8 @@ cvs_rmdir(const char *path)
 		    !strcmp(ent->d_name, ".."))
 			continue;
 
-		len = cvs_path_cat(path, ent->d_name, fpath, sizeof(fpath));
-		if (len >= sizeof(fpath))
-			fatal("cvs_rmdir: path truncation");
+		(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
+		    path, ent->d_name);
 
 		if (ent->d_type == DT_UNKNOWN) {
 			if (lstat(fpath, &st) == -1)
@@ -543,46 +541,13 @@ done:
 	return (ret);
 }
 
-/*
- * cvs_path_cat()
- *
- * Concatenate the two paths <base> and <end> and store the generated path
- * into the buffer <dst>, which can accept up to <dlen> bytes, including the
- * NUL byte.  The result is guaranteed to be NUL-terminated.
- * Returns the number of bytes necessary to store the full resulting path,
- * not including the NUL byte (a value equal to or larger than <dlen>
- * indicates truncation).
- */
-size_t
-cvs_path_cat(const char *base, const char *end, char *dst, size_t dlen)
-{
-	size_t len;
-
-	len = strlcpy(dst, base, dlen);
-	if (len >= dlen - 1) {
-		errno = ENAMETOOLONG;
-		fatal("overflow in cvs_path_cat");
-	} else {
-		dst[len] = '/';
-		dst[len + 1] = '\0';
-		len = strlcat(dst, end, dlen);
-		if (len >= dlen) {
-			errno = ENAMETOOLONG;
-			cvs_log(LP_ERR, "%s", dst);
-		}
-	}
-
-	return (len);
-}
-
 void
 cvs_get_repository_path(const char *dir, char *dst, size_t len)
 {
 	char buf[MAXPATHLEN];
 
 	cvs_get_repository_name(dir, buf, sizeof(buf));
-	if (cvs_path_cat(current_cvsroot->cr_dir, buf, dst, len) >= len)
-		fatal("cvs_get_repository_path: truncation");
+	(void)xsnprintf(dst, len, "%s/%s", current_cvsroot->cr_dir, buf);
 }
 
 void
@@ -591,9 +556,8 @@ cvs_get_repository_name(const char *dir, char *dst, size_t len)
 	FILE *fp;
 	char *s, fpath[MAXPATHLEN];
 
-	if (cvs_path_cat(dir, CVS_PATH_REPOSITORY,
-	    fpath, sizeof(fpath)) >= sizeof(fpath))
-		fatal("cvs_get_repository_name: truncation");
+	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
+	    dir, CVS_PATH_REPOSITORY);
 
 	if ((fp = fopen(fpath, "r")) != NULL) {
 		if ((fgets(dst, len, fp)) == NULL)
@@ -633,7 +597,6 @@ cvs_mkadmin(const char *path, const char *root, const char *repo,
     char *tag, char *date, int nb)
 {
 	FILE *fp;
-	size_t len;
 	struct stat st;
 	char buf[MAXPATHLEN];
 
@@ -642,9 +605,7 @@ cvs_mkadmin(const char *path, const char *root, const char *repo,
 		    path, root, repo, (tag != NULL) ? tag : "",
 		    (date != NULL) ? date : "", nb);
 
-	len = cvs_path_cat(path, CVS_PATH_CVSDIR, buf, sizeof(buf));
-	if (len >= sizeof(buf))
-		fatal("cvs_mkadmin: truncation");
+	(void)xsnprintf(buf, sizeof(buf), "%s/%s", path, CVS_PATH_CVSDIR);
 
 	if (stat(buf, &st) != -1)
 		return;
@@ -652,9 +613,7 @@ cvs_mkadmin(const char *path, const char *root, const char *repo,
 	if (mkdir(buf, 0755) == -1 && errno != EEXIST)
 		fatal("cvs_mkadmin: %s: %s", buf, strerror(errno));
 
-	len = cvs_path_cat(path, CVS_PATH_ROOTSPEC, buf, sizeof(buf));
-	if (len >= sizeof(buf))
-		fatal("cvs_mkadmin: truncation");
+	(void)xsnprintf(buf, sizeof(buf), "%s/%s", path, CVS_PATH_ROOTSPEC);
 
 	if ((fp = fopen(buf, "w")) == NULL)
 		fatal("cvs_mkadmin: %s: %s", buf, strerror(errno));
@@ -662,9 +621,7 @@ cvs_mkadmin(const char *path, const char *root, const char *repo,
 	fprintf(fp, "%s\n", root);
 	(void)fclose(fp);
 
-	len = cvs_path_cat(path, CVS_PATH_REPOSITORY, buf, sizeof(buf));
-	if (len >= sizeof(buf))
-		fatal("cvs_mkadmin: truncation");
+	(void)xsnprintf(buf, sizeof(buf), "%s/%s", path, CVS_PATH_REPOSITORY);
 
 	if ((fp = fopen(buf, "w")) == NULL)
 		fatal("cvs_mkadmin: %s: %s", buf, strerror(errno));
@@ -672,9 +629,7 @@ cvs_mkadmin(const char *path, const char *root, const char *repo,
 	fprintf(fp, "%s\n", repo);
 	(void)fclose(fp);
 
-	len = cvs_path_cat(path, CVS_PATH_ENTRIES, buf, sizeof(buf));
-	if (len >= sizeof(buf))
-		fatal("cvs_mkadmin: truncation");
+	(void)xsnprintf(buf, sizeof(buf), "%s/%s", path, CVS_PATH_ENTRIES);
 
 	if ((fp = fopen(buf, "w")) == NULL)
 		fatal("cvs_mkadmin: %s: %s", buf, strerror(errno));
