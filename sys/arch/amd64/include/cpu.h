@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.24 2007/02/01 20:42:17 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.25 2007/02/17 17:35:43 tom Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -240,10 +240,6 @@ struct timeval;
 #define DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
 
-
-/*
- * pull in #defines for kinds of processors
- */
 
 #ifdef _KERNEL
 extern int biosbasemem;

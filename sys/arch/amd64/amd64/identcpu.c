@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.10 2007/02/13 00:20:59 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.11 2007/02/17 17:35:43 tom Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ identifycpu(struct cpu_info *ci)
 	u_int64_t last_tsc;
 	u_int32_t dummy, val, pnfeatset;
 	u_int32_t brand[12];
+	u_int32_t vendor[4];
 	int i, max;
 	char *brandstr_from, *brandstr_to;
 	int skipspace;
@@ -123,6 +124,8 @@ identifycpu(struct cpu_info *ci)
 	CPUID(0x80000000, pnfeatset, dummy, dummy, dummy);
 	CPUID(0x80000001, dummy, dummy, dummy, ci->ci_feature_eflags);
 
+	vendor[3] = 0;
+	CPUID(0, dummy, vendor[0], vendor[2], vendor[1]);	/* yup, 0 2 1 */
 	CPUID(0x80000002, brand[0], brand[1], brand[2], brand[3]);
 	CPUID(0x80000003, brand[4], brand[5], brand[6], brand[7]);
 	CPUID(0x80000004, brand[8], brand[9], brand[10], brand[11]);
@@ -188,6 +191,11 @@ identifycpu(struct cpu_info *ci)
 		}
 	}
 #endif
+
+	/* AuthenticAMD:    h t u A                    i t n e */
+	if (vendor[0] == 0x68747541 && vendor[1] == 0x69746e65 &&
+	    vendor[2] == 0x444d4163)	/* DMAc */
+		amd64_errata(ci);
 }
 
 void
