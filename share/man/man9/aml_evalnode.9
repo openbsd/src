@@ -1,0 +1,109 @@
+.\"	$OpenBSD: aml_evalnode.9,v 1.1 2007/02/17 14:54:46 mk Exp $
+.\"
+.\" Copyright (c) 2007 Michael Knudsen <mk@openbsd.org>
+.\"
+.\"  Permission to use, copy, modify, and distribute this software for any
+.\"  purpose with or without fee is hereby granted, provided that the above
+.\"  copyright notice and this permission notice appear in all copies.
+.\"
+.\"  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\"  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\"  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\"  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\"  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\"  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\"  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd February 16, 2007
+.Dt AML_EVALNODE 9
+.Os
+.Sh NAME
+.Nm aml_evalnode ,
+.Nm aml_evalname ,
+.Nm aml_freevalue
+.Nd AML API
+.Sh SYNOPSIS
+.Fd #include <dev/acpi/acpireg.h>
+.Fd #include <dev/acpi/acpivar.h>
+.Fd #include <dev/acpi/acpidev.h>
+.Fd #include <dev/acpi/amltypes.h>
+.Fd #include <dev/acpi/dsdt.h>
+.Ft int
+.Fn "aml_evalnode" "struct acpi_softc *sc" "struct aml_node *node" \
+"int argc" "struct aml_value *argv" "struct aml_value *res"
+.Ft int
+.Fn "aml_evalname" "struct acpi_softc *sc" "struct aml_node *parent" \
+"const char *name" "int argc" "struct aml_value *argv" \
+"struct aml_value *res"
+.Ft void
+.Fn "aml_freevalue" "struct aml_value *val"
+.Sh DESCRIPTION
+The AML API handles decoding and evaluation of the AML
+code embedded in a machine's ACPI tables.
+This code is used to implement configuration and control mechanisms for
+machines.
+.Pp
+.Fn aml_evalnode
+evaluates the AML node
+.Fa node
+located in the ACPI table specified by
+.Fa sc .
+Parameters may be passed using the
+.Fa argv
+parameters with the parameter
+.Fa argc
+specifying the number of parameters passed.
+If there are no arguments,
+a value of 0 is used for
+.Fa argc
+and
+.Fa argv
+should be
+.Dv NULL .
+If evaluating the node produces any result, for example a string with a device
+name reference, this result is stored in the
+.Fa res
+parameter unless it is
+.Dv NULL .
+.Fa res
+is cleared before storing the result.
+If
+.Pa node
+does not exist,
+.Fn aml_evalnode
+returns
+.Dv ACPI_E_BADVALUE ,
+otherwise it returns 0.
+.Pp
+.Fn aml_evalname
+is similar to
+.Fn aml_evalnode
+but differs in that it searches for a subnode of
+.Pa parent
+with the name
+.Pa name .
+If such a node is found, it is evaluated using
+.Fn aml_evalnode ,
+passing whatever parameters were passed to itself.
+.Fn aml_evalname
+returns the return value of
+.Fn aml_evalnode .
+.Pp
+.Fn aml_freevalue
+is used to free up the result returned from
+.Fn aml_evalnode
+or the other AML evaluation functions.
+Note that no attempt is made to free the
+.Pa "struct aml_value"
+itself so it is safe to allocate this on the stack.
+Also, calling
+.Fn aml_freevalue
+with a parameter of
+.Dv NULL
+is not an error.
+.Sh SEE ALSO
+.Xr acpi 4 ,
+.Xr acpidump 8
+.Sh HISTORY
+The AML API was written by
+.An Jordan Hargrave Aq jordan@openbsd.org .
