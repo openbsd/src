@@ -141,6 +141,7 @@
 ./usr/include/vax/limits.h
 ./usr/include/vax/macros.h
 ./usr/include/vax/mtpr.h
+./usr/include/vax/mutex.h
 ./usr/include/vax/nexus.h
 ./usr/include/vax/param.h
 ./usr/include/vax/pcb.h
