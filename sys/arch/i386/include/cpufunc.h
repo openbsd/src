@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.12 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.13 2007/02/17 17:38:37 tom Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -238,12 +238,42 @@ rdmsr(u_int msr)
         return (rv);
 }
 
+/* 
+ * Some of the undocumented AMD64 MSRs need a 'passcode' to access.
+ *
+ * See LinuxBIOSv2: src/cpu/amd/model_fxx/model_fxx_init.c
+ */
+
+#define	OPTERON_MSR_PASSCODE	0x9c5a203a
+ 
+static __inline u_int64_t
+rdmsr_locked(u_int msr, u_int code)
+{
+	uint64_t rv;
+	__asm volatile("rdmsr"
+	    : "=A" (rv)
+	    : "c" (msr), "D" (code));
+	return (rv);
+}
+
+static __inline void
+wrmsr_locked(u_int msr, u_int code, u_int64_t newval)
+{
+	__asm volatile("wrmsr"
+	    :
+	    : "A" (newval), "c" (msr), "D" (code));
+}
+
 /* Break into DDB/KGDB. */
 static __inline void
 breakpoint(void)
 {
 	__asm __volatile("int $3");
 }
+
+#ifdef I686_CPU
+void amd64_errata(struct cpu_info *);
+#endif
 
 #endif /* _KERNEL */
 #endif /* !_I386_CPUFUNC_H_ */

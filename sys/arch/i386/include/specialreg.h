@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.29 2007/02/13 00:22:48 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.30 2007/02/17 17:38:37 tom Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -241,6 +241,51 @@
 
 /* AMD MSRs */
 #define MSR_K6_EPMR		0xc0000086
+
+/*
+ * AMD K8 (Opteron) MSRs.
+ */
+#define	MSR_SYSCFG	0xc0000010
+
+#define MSR_EFER	0xc0000080		/* Extended feature enable */
+#define 	EFER_SCE		0x00000001	/* SYSCALL extension */
+#define 	EFER_LME		0x00000100	/* Long Mode Active */
+#define		EFER_LMA		0x00000400	/* Long Mode Enabled */
+#define 	EFER_NXE		0x00000800	/* No-Execute Enabled */
+
+#define MSR_STAR	0xc0000081		/* 32 bit syscall gate addr */
+#define MSR_LSTAR	0xc0000082		/* 64 bit syscall gate addr */
+#define MSR_CSTAR	0xc0000083		/* compat syscall gate addr */
+#define MSR_SFMASK	0xc0000084		/* flags to clear on syscall */
+
+#define MSR_FSBASE	0xc0000100		/* 64bit offset for fs: */
+#define MSR_GSBASE	0xc0000101		/* 64bit offset for gs: */
+#define MSR_KERNELGSBASE 0xc0000102		/* storage for swapgs ins */
+
+/*
+ * These require a 'passcode' for access.  See cpufunc.h.
+ */
+#define	MSR_HWCR	0xc0010015
+#define		HWCR_FFDIS		0x00000040
+
+#define	MSR_NB_CFG	0xc001001f
+#define		NB_CFG_DISIOREQLOCK	0x0000000000000004ULL
+#define		NB_CFG_DISDATMSK	0x0000001000000000ULL
+
+#define	MSR_LS_CFG	0xc0011020
+#define		LS_CFG_DIS_LS2_SQUISH	0x02000000
+
+#define	MSR_IC_CFG	0xc0011021
+#define		IC_CFG_DIS_SEQ_PREFETCH	0x00000800
+
+#define	MSR_DC_CFG	0xc0011022
+#define		DC_CFG_DIS_CNV_WC_SSO	0x00000004
+#define		DC_CFG_DIS_SMC_CHK_BUF	0x00000400
+
+#define	MSR_BU_CFG	0xc0011023
+#define		BU_CFG_THRL2IDXCMPDIS	0x0000080000000000ULL
+#define		BU_CFG_WBPFSMCCHKDIS	0x0000200000000000ULL
+#define		BU_CFG_WBENHWSBDIS	0x0001000000000000ULL
 
 /*
  * Constants related to MTRRs

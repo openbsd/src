@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.375 2007/02/13 00:22:48 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.376 2007/02/17 17:38:37 tom Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1952,6 +1952,9 @@ identifycpu(struct cpu_info *ci)
 		}
 	} else
 		i386_use_fxsave = 0;
+
+	if (vendor == CPUVENDOR_AMD)
+		amd64_errata(ci);
 #endif /* I686_CPU */
 }
 
