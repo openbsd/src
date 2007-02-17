@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.48 2007/02/17 19:08:16 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.49 2007/02/17 19:08:58 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1624,6 +1624,14 @@ pmap_extract(pmap, va, pap)
 
 	PMAP_DPRINTF(PDB_FOLLOW,
 	    ("pmap_extract(%p, %lx) -> ", pmap, va));
+
+#ifdef __HAVE_PMAP_DIRECT
+	if (pmap == pmap_kernel() && trunc_page(va) > VM_MAX_KERNEL_ADDRESS) {
+		if (pap != NULL)
+			*pap = va;
+		return (TRUE);
+	}
+#endif
 
 	if (pmap_ste_v(pmap, va)) {
 		pte = pmap_pte(pmap, va);
