@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.25 2007/01/07 15:37:23 sturm Exp $	*/
+/*	$OpenBSD: fs.h,v 1.26 2007/02/17 14:32:38 mickey Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -62,13 +62,12 @@
 #define	SBOFF		((off_t)(BBOFF + BBSIZE))
 #define	BBLOCK		((daddr_t)(0))
 #define	SBLOCK		((daddr_t)(BBLOCK + BBSIZE / DEV_BSIZE))
-#define	SBLOCK_FLOPPY	0
 #define	SBLOCK_UFS1	8192
 #define	SBLOCK_UFS2	65536
 #define	SBLOCK_PIGGY	262144
 #define	SBLOCKSIZE	8192
 #define	SBLOCKSEARCH \
-	{ SBLOCK_UFS2, SBLOCK_UFS1, SBLOCK_FLOPPY, SBLOCK_PIGGY, -1 }
+	{ SBLOCK_UFS2, SBLOCK_UFS1, SBLOCK_PIGGY, -1 }
 
 /*
  * Addresses stored in inodes are capable of addressing fragments
