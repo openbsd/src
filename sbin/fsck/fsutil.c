@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.15 2006/05/28 15:43:41 thib Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.16 2007/02/17 15:57:14 grunk Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: fsutil.c,v 1.15 2006/05/28 15:43:41 thib Exp $";
+static const char rcsid[] = "$OpenBSD: fsutil.c,v 1.16 2007/02/17 15:57:14 grunk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -192,11 +192,9 @@ blockcheck(char *origname)
 	}
 	newname = origname;
 retry:
-	if (stat(newname, &stblock) < 0) {
-		xperror(newname);
-		printf("Can't stat %s\n", newname);
+	if (stat(newname, &stblock) < 0)
 		return (origname);
-	}
+
 	if (S_ISBLK(stblock.st_mode)) {
 		if (stslash.st_dev == stblock.st_rdev)
 			hot++;
