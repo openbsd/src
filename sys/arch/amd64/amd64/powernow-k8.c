@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.15 2006/12/20 22:48:29 gwk Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.16 2007/02/17 11:51:21 tom Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * Copyright (c) 2004-2005 Bruno Ducrot
@@ -45,7 +45,7 @@
 extern int setperf_prio;
 
 /*
- * MSRs and bits used by Powernow technology
+ * MSRs and bits used by PowerNow technology
  */
 #define MSR_AMDK7_FIDVID_CTL		0xc0010041
 #define MSR_AMDK7_FIDVID_STATUS		0xc0010042
@@ -64,13 +64,13 @@ extern int setperf_prio;
 #define PN8_STA_SVID(x)			(((x) >> 40) & 0x1f)
 #define PN8_STA_MVID(x)			(((x) >> 48) & 0x1f)
 
-/* Reserved1 to powernow k8 configuration */
+/* Reserved1 to PowerNow K8 configuration */
 #define PN8_PSB_TO_RVO(x)		((x) & 0x03)
 #define PN8_PSB_TO_IRT(x)		(((x) >> 2) & 0x03)
 #define PN8_PSB_TO_MVS(x)		(((x) >> 4) & 0x03)
 #define PN8_PSB_TO_BATT(x)		(((x) >> 6) & 0x03)
 
-/* ACPI ctr_val status register to powernow k8 configuration */
+/* ACPI ctr_val status register to PowerNow K8 configuration */
 #define ACPI_PN8_CTRL_TO_FID(x)		((x) & 0x3f)
 #define ACPI_PN8_CTRL_TO_VID(x)		(((x) >> 6) & 0x1f)
 #define ACPI_PN8_CTRL_TO_VST(x)		(((x) >> 11) & 0x1f)
@@ -365,7 +365,7 @@ k8_powernow_init(void)
 	if (PN8_STA_SFID(status) != PN8_STA_MFID(status))
 		techname = "PowerNow! K8";
 	else
-		techname = "Cool`n'Quiet K8";
+		techname = "Cool'n'Quiet K8";
 
 	/* Extended CPUID signature value */
 	CPUID(0x80000001, extcpuid, dummy, dummy, dummy);
