@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.18 2005/09/04 22:47:56 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.19 2007/02/17 10:39:35 sturm Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -227,7 +227,7 @@ sub solve_installed_names
 			    if ($state->{interactive}) {
 			    	require OpenBSD::ProgressMeter;
 
-				my $result = OpenBSD::ProgressMeter::ask_list('Choose one package', 1, ("<None>", sort @l));
+				my $result = OpenBSD::Interactive::ask_list('Choose one package', 1, ("<None>", sort @l));
 				push(@$new, $result) if $result ne '<None>';
 			    } else {
 				$bad = 1;
