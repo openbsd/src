@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.47 2006/08/22 21:03:56 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.48 2007/02/17 19:08:16 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -301,13 +301,13 @@ void		 pmap_free_pv(struct pv_entry *);
 #ifdef COMPAT_HPUX
 int		 pmap_mapmulti(pmap_t, vaddr_t);
 #endif
+void		 pmap_remove_flags(pmap_t, vaddr_t, vaddr_t, int);
 void		 pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, int);
 boolean_t	 pmap_testbit(struct vm_page *, int);
 void		 pmap_changebit(struct vm_page *, int, int);
 int		 pmap_enter_ptpage(pmap_t, vaddr_t);
 void		 pmap_ptpage_addref(vaddr_t);
 int		 pmap_ptpage_delref(vaddr_t);
-void		 pmap_collect1(pmap_t, paddr_t, paddr_t);
 
 
 #ifdef PMAP_DEBUG
@@ -316,9 +316,10 @@ void pmap_check_wiring(char *, vaddr_t);
 #endif
 
 /* pmap_remove_mapping flags */
-#define	PRM_TFLUSH	1
-#define	PRM_CFLUSH	2
-#define	PRM_KEEPPTPAGE	4
+#define	PRM_TFLUSH	0x01
+#define	PRM_CFLUSH	0x02
+#define	PRM_KEEPPTPAGE	0x04
+#define	PRM_SKIPWIRED	0x08
 
 static struct pv_entry *pa_to_pvh(paddr_t);
 static struct pv_entry *pg_to_pvh(struct vm_page *);
@@ -763,21 +764,30 @@ pmap_remove(pmap, sva, eva)
 	pmap_t pmap;
 	vaddr_t sva, eva;
 {
-	vaddr_t nssva;
-	pt_entry_t *pte;
-#ifdef M68K_MMU_HP
-	boolean_t firstpage, needcflush;
-#endif
 	int flags;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
 	    ("pmap_remove(%p, %lx, %lx)\n", pmap, sva, eva));
 
+	flags = active_pmap(pmap) ? PRM_TFLUSH : 0;
+	pmap_remove_flags(pmap, sva, eva, flags);
+}
+
+void
+pmap_remove_flags(pmap, sva, eva, flags)
+	pmap_t pmap;
+	vaddr_t sva, eva;
+{
+	vaddr_t nssva;
+	pt_entry_t *pte;
+#ifdef M68K_MMU_HP
+	boolean_t firstpage, needcflush;
+#endif
+
 #ifdef M68K_MMU_HP
 	firstpage = TRUE;
 	needcflush = FALSE;
 #endif
-	flags = active_pmap(pmap) ? PRM_TFLUSH : 0;
 	while (sva < eva) {
 		nssva = m68k_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
@@ -800,6 +810,9 @@ pmap_remove(pmap, sva, eva)
 				break;
 			}
 			if (pmap_pte_v(pte)) {
+				if ((flags & PRM_SKIPWIRED) &&
+				    pmap_pte_w(pte))
+					goto skip;
 #ifdef M68K_MMU_HP
 				if (pmap_aliasmask) {
 					/*
@@ -822,6 +835,7 @@ pmap_remove(pmap, sva, eva)
 				}
 #endif
 				pmap_remove_mapping(pmap, sva, pte, flags);
+skip:
 			}
 			pte++;
 			sva += PAGE_SIZE;
@@ -1645,140 +1659,20 @@ void
 pmap_collect(pmap)
 	pmap_t		pmap;
 {
+	int flags;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_collect(%p)\n", pmap));
 
-	if (pmap == pmap_kernel()) {
-		int bank, s;
-
-		/*
-		 * XXX This is very bogus.  We should handle kernel PT
-		 * XXX pages much differently.
-		 */
-
-		s = splvm();
-		for (bank = 0; bank < vm_nphysseg; bank++)
-			pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
-			    ptoa(vm_physmem[bank].end));
-		splx(s);
-	} else {
-		/*
-		 * This process is about to be swapped out; free all of
-		 * the PT pages by removing the physical mappings for its
-		 * entire address space.  Note: pmap_remove() performs
-		 * all necessary locking.
-		 */
-		pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
-		pmap_update(pmap);
-	}
-}
-
-/*
- * pmap_collect1:
- *
- *	Garbage-collect KPT pages.  Helper for the above (bogus)
- *	pmap_collect().
- *
- *	Note: THIS SHOULD GO AWAY, AND BE REPLACED WITH A BETTER
- *	WAY OF HANDLING PT PAGES!
- */
-void
-pmap_collect1(pmap, startpa, endpa)
-	pmap_t		pmap;
-	paddr_t		startpa, endpa;
-{
-	paddr_t pa;
-	struct pv_entry *pv;
-	pt_entry_t *pte;
-	paddr_t kpa;
-#ifdef PMAP_DEBUG
-	st_entry_t *ste;
-	int opmapdebug = 0 /* XXX initialize to quiet gcc -Wall */;
-#endif
-
-	for (pa = startpa; pa < endpa; pa += PAGE_SIZE) {
-		struct kpt_page *kpt, **pkpt;
-
-		/*
-		 * Locate physical pages which are being used as kernel
-		 * page table pages.
-		 */
-		pv = pa_to_pvh(pa);
-		if (pv->pv_pmap != pmap_kernel() || !(pv->pv_flags & PV_PTPAGE))
-			continue;
-		do {
-			if (pv->pv_ptste && pv->pv_ptpmap == pmap_kernel())
-				break;
-		} while ((pv = pv->pv_next));
-		if (pv == NULL)
-			continue;
-#ifdef PMAP_DEBUG
-		if (pv->pv_va < (vaddr_t)Sysmap ||
-		    pv->pv_va >= (vaddr_t)Sysmap + MACHINE_MAX_PTSIZE)
-			printf("collect: kernel PT VA out of range\n");
-		else
-			goto ok;
-		pmap_pvdump(pa);
-		continue;
-ok:
-#endif
-		pte = (pt_entry_t *)(pv->pv_va + PAGE_SIZE);
-		while (--pte >= (pt_entry_t *)pv->pv_va && *pte == PG_NV)
-			;
-		if (pte >= (pt_entry_t *)pv->pv_va)
-			continue;
-
-#ifdef PMAP_DEBUG
-		if (pmapdebug & (PDB_PTPAGE|PDB_COLLECT)) {
-			printf("collect: freeing KPT page at %lx (ste %x@%p)\n",
-			       pv->pv_va, *pv->pv_ptste, pv->pv_ptste);
-			opmapdebug = pmapdebug;
-			pmapdebug |= PDB_PTPAGE;
-		}
-
-		ste = pv->pv_ptste;
-#endif
-		/*
-		 * If all entries were invalid we can remove the page.
-		 * We call pmap_remove_entry to take care of invalidating
-		 * ST and Sysptmap entries.
-		 */
-		pmap_extract(pmap, pv->pv_va, &kpa);
-		pmap_remove_mapping(pmap, pv->pv_va, PT_ENTRY_NULL,
-				    PRM_TFLUSH|PRM_CFLUSH);
-		/*
-		 * Use the physical address to locate the original
-		 * (kmem_alloc assigned) address for the page and put
-		 * that page back on the free list.
-		 */
-		for (pkpt = &kpt_used_list, kpt = *pkpt;
-		     kpt != NULL;
-		     pkpt = &kpt->kpt_next, kpt = *pkpt)
-			if (kpt->kpt_pa == kpa)
-				break;
-#ifdef PMAP_DEBUG
-		if (kpt == NULL)
-			panic("pmap_collect: lost a KPT page");
-		if (pmapdebug & (PDB_PTPAGE|PDB_COLLECT))
-			printf("collect: %lx (%lx) to free list\n",
-			       kpt->kpt_va, kpa);
-#endif
-		*pkpt = kpt->kpt_next;
-		kpt->kpt_next = kpt_free_list;
-		kpt_free_list = kpt;
-#ifdef PMAP_DEBUG
-		if (pmapdebug & (PDB_PTPAGE|PDB_COLLECT))
-			pmapdebug = opmapdebug;
-
-		if (*ste & SG_V)
-			printf("collect: kernel STE at %p still valid (%x)\n",
-			       ste, *ste);
-		ste = &Sysptmap[ste - pmap_ste(pmap_kernel(), 0)];
-		if (*ste & SG_V)
-			printf("collect: kernel PTmap at %p still valid (%x)\n",
-			       ste, *ste);
-#endif
-	}
+	/*
+	 * This process is about to be swapped out; free all of
+	 * the PT pages by removing the physical mappings for its
+	 * entire address space.  Note: pmap_remove() performs
+	 * all necessary locking.
+	 */
+	flags = active_pmap(pmap) ? PRM_TFLUSH : 0;
+	pmap_remove_flags(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS,
+	    flags | PRM_SKIPWIRED);
+	pmap_update(pmap);
 }
 
 /*
