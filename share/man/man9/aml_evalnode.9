@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aml_evalnode.9,v 1.1 2007/02/17 14:54:46 mk Exp $
+.\"	$OpenBSD: aml_evalnode.9,v 1.2 2007/02/17 15:59:47 mk Exp $
 .\"
 .\" Copyright (c) 2007 Michael Knudsen <mk@openbsd.org>
 .\"
@@ -20,6 +20,7 @@
 .Sh NAME
 .Nm aml_evalnode ,
 .Nm aml_evalname ,
+.Nm aml_find_node ,
 .Nm aml_freevalue
 .Nd AML API
 .Sh SYNOPSIS
@@ -35,6 +36,9 @@
 .Fn "aml_evalname" "struct acpi_softc *sc" "struct aml_node *parent" \
 "const char *name" "int argc" "struct aml_value *argv" \
 "struct aml_value *res"
+.Ft int
+.Fn "aml_find_node" "struct aml_node *node" "const char *name" \
+"void (*cbproc)(struct aml_node *, void *arg)" "void *arg"
 .Ft void
 .Fn "aml_freevalue" "struct aml_value *val"
 .Sh DESCRIPTION
@@ -88,6 +92,22 @@ passing whatever parameters were passed to itself.
 .Fn aml_evalname
 returns the return value of
 .Fn aml_evalnode .
+.Pp
+.Fn aml_find_node
+is used to find all subnodes of
+.Pa parent
+with a name of
+.Pa name.
+For each node found, the function specified as the
+.Pa cbproc
+parameter is called with the node and
+.Pa arg
+as the first and the second parameter, respectively.
+The function specified as the
+.Pa cbproc
+parameter does not return any value.
+.Fn aml_find_node
+always returns 0.
 .Pp
 .Fn aml_freevalue
 is used to free up the result returned from
