@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.261 2007/02/17 01:45:33 jsg Exp $
+$OpenBSD: usbdevs,v 1.262 2007/02/17 02:17:18 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1336,6 +1336,7 @@ product IODATA USBETTX		0x0904	USB ETTX
 product IODATA USBETTXS		0x0913	USB ETTX
 product IODATA USBWNB11A	0x0919	USB WN-B11
 product IODATA USBWNB11		0x0922	USB Airport WN-B11
+product IODATA ETGUS2		0x0930	ETG-US2
 product IODATA USBRSAQ		0x0a03	RSAQ1 Serial
 product IODATA2 USB2SC		0x0a09	USB2.0-SCSI Bridge USB2-SC
 
@@ -1741,6 +1742,7 @@ product ONSPEC2 8IN2		0xb012	8In2
 /* OQO */
 product OQO WIFI01		0x0002	model 01 WiFi interface
 product OQO BT01		0x0003	model 01 Bluetooth interface
+product OQO ETHER01PLUS		0x7720	model 01+ Ethernet
 product OQO ETHER01		0x8150	model 01 Ethernet interface
 
 /* Ours Technology Inc. */
