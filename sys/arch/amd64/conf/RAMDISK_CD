@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.68 2007/02/04 23:30:19 jsg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.69 2007/02/17 23:59:03 marco Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -41,7 +41,7 @@ acpi0		at mainbus?	disable
 #acpibat*	at acpi?
 #acpibtn*	at acpi?
 #acpicpu*	at acpi?
-acpiec*		at acpi?	disable
+#acpiec*	at acpi?
 acpiprt*	at acpi?
 #acpitz*	at acpi?
 

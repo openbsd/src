@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.15 2006/12/23 17:24:40 canacar Exp $ */
+/* $OpenBSD: acpiec.c,v 1.16 2007/02/17 23:59:03 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -297,8 +297,10 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 
 	dnprintf(10, "%s: GPE: %d\n", DEVNAME(sc), sc->sc_gpe);
 
+#ifndef SMALL_KERNEL
 	acpi_set_gpehandler(sc->sc_acpi, sc->sc_gpe, acpiec_gpehandler,
 	    sc, "acpiec");
+#endif
 
 	printf(": %s\n", sc->sc_devnode->parent->name);
 }

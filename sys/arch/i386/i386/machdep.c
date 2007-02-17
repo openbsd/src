@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.376 2007/02/17 17:38:37 tom Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.377 2007/02/17 23:59:03 marco Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2456,7 +2456,7 @@ haltsys:
 	doshutdownhooks();
 
 	if (howto & RB_HALT) {
-#if NACPI > 0
+#if NACPI > 0 && !defined(SMALL_KERNEL)
 		extern int acpi_s5, acpi_enabled;
 
 		if (acpi_enabled) {
