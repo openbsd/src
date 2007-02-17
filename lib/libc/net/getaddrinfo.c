@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.59 2007/02/15 04:25:35 ray Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.60 2007/02/17 20:56:38 ray Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -613,14 +613,13 @@ explore_null(const struct addrinfo *pai, const char *servname,
 		/* xxx meaningless?
 		 * GET_CANONNAME(cur->ai_next, "anyaddr");
 		 */
-		GET_PORT(cur->ai_next, servname);
 	} else {
 		GET_AI(cur->ai_next, afd, afd->a_loopback);
 		/* xxx meaningless?
 		 * GET_CANONNAME(cur->ai_next, "localhost");
 		 */
-		GET_PORT(cur->ai_next, servname);
 	}
+	GET_PORT(cur->ai_next, servname);
 	cur = cur->ai_next;
 
 	*res = sentinel.ai_next;
@@ -662,46 +661,30 @@ explore_numeric(const struct addrinfo *pai, const char *hostname,
 	switch (afd->a_af) {
 #if 0 /*X/Open spec*/
 	case AF_INET:
-		if (inet_aton(hostname, (struct in_addr *)pton) == 1) {
-			if (pai->ai_family == afd->a_af ||
-			    pai->ai_family == PF_UNSPEC /*?*/) {
-				GET_AI(cur->ai_next, afd, pton);
-				GET_PORT(cur->ai_next, servname);
-				if ((pai->ai_flags & AI_CANONNAME)) {
-					/*
-					 * Set the numeric address itself as
-					 * the canonical name, based on a
-					 * clarification in rfc2553bis-03.
-					 */
-					GET_CANONNAME(cur->ai_next, canonname);
-				}
-				while (cur && cur->ai_next)
-					cur = cur->ai_next;
-			} else
-				ERR(EAI_FAMILY);	/*xxx*/
-		}
+		error = inet_aton(hostname, (struct in_addr *)pton);
 		break;
 #endif
 	default:
-		if (inet_pton(afd->a_af, hostname, pton) == 1) {
-			if (pai->ai_family == afd->a_af ||
-			    pai->ai_family == PF_UNSPEC /*?*/) {
-				GET_AI(cur->ai_next, afd, pton);
-				GET_PORT(cur->ai_next, servname);
-				if ((pai->ai_flags & AI_CANONNAME)) {
-					/*
-					 * Set the numeric address itself as
-					 * the canonical name, based on a
-					 * clarification in rfc2553bis-03.
-					 */
-					GET_CANONNAME(cur->ai_next, canonname);
-				}
-				while (cur && cur->ai_next)
-					cur = cur->ai_next;
-			} else
-				ERR(EAI_FAMILY);	/*xxx*/
-		}
+		error = inet_pton(afd->a_af, hostname, pton);
 		break;
+	}
+	if (error == 1) {
+		if (pai->ai_family == afd->a_af ||
+		    pai->ai_family == PF_UNSPEC /*?*/) {
+			GET_AI(cur->ai_next, afd, pton);
+			GET_PORT(cur->ai_next, servname);
+			if ((pai->ai_flags & AI_CANONNAME)) {
+				/*
+				 * Set the numeric address itself as
+				 * the canonical name, based on a
+				 * clarification in rfc2553bis-03.
+				 */
+				GET_CANONNAME(cur->ai_next, canonname);
+			}
+			while (cur && cur->ai_next)
+				cur = cur->ai_next;
+		} else
+			ERR(EAI_FAMILY);	/*xxx*/
 	}
 
 	*res = sentinel.ai_next;
