@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.41 2007/02/17 05:39:15 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.42 2007/02/18 01:27:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -584,21 +584,21 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	ap->ap_sc = sc;
 	TAILQ_INIT(&ap->ap_ccb_free);
 
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
+	    AHCI_PORT_REGION(port), AHCI_PORT_SIZE, &ap->ap_ioh) != 0) {
+		printf("%s: unable to create register window for port %d\n",
+		    DEVNAME(sc), port);
+		goto freeport;
+	}
+
 	ap->ap_ccbs = malloc(sizeof(struct ahci_ccb) * sc->sc_ncmds, M_DEVBUF,
 	    M_NOWAIT);
 	if (ap->ap_ccbs == NULL) {
 		printf("%s: unable to allocate command list for port %d\n",
 		    DEVNAME(sc), port);
-		goto freeport;
+		goto freeregion;
 	}
 	bzero(ap->ap_ccbs, sizeof(struct ahci_ccb) * sc->sc_ncmds);
-
-	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
-	    AHCI_PORT_REGION(port), AHCI_PORT_SIZE, &ap->ap_ioh) != 0) {
-		printf("%s: unable to create register window for port %d\n",
-		    DEVNAME(sc), port);
-		goto freeccbs;
-	}
 
 	/* calculate the size of the dmaable memory this port will need.  */
 	i = sizeof(struct ahci_cmd) * sc->sc_ncmds +
@@ -650,6 +650,8 @@ freemaps:
 	ahci_dmamem_free(sc, ap->ap_dmamem);
 freeccbs:
 	free(ap->ap_ccbs, M_DEVBUF);
+freeregion:
+	/* bus_space(9) says no cleanup necessary for subregions */
 freeport:
 	free(ap, M_DEVBUF);
 	return (1);
