@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.31 2007/02/06 21:12:07 stevesk Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.32 2007/02/18 21:19:00 henning Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -499,7 +499,6 @@ extern int		log_perror;
 
 extern char		*path_dhcpd_conf;
 extern char		*path_dhcpd_db;
-extern char		*path_dhcpd_pid;
 
 int	main(int, char *[]);
 void	cleanup(void);
