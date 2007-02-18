@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr.c,v 1.69 2007/02/14 10:26:35 itojun Exp $ */
+/*	$OpenBSD: gethostnamadr.c,v 1.70 2007/02/18 20:38:28 ray Exp $ */
 /*-
  * Copyright (c) 1985, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -202,9 +202,8 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype)
 		 * same as the one we sent; this just gets the expanded name
 		 * (i.e., with the succeeding search-domain tacked on).
 		 */
-		n = strlen(bp) + 1;		/* for the \0 */
 		host.h_name = bp;
-		bp += n;
+		bp += strlen(bp) + 1;		/* for the \0 */
 		/* The qname can be abbreviated, but h_name is now absolute. */
 		qname = host.h_name;
 	}
@@ -217,6 +216,8 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype)
 	haveanswer = 0;
 	had_error = 0;
 	while (ancount-- > 0 && cp < eom && !had_error) {
+		size_t len;
+
 		n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
 		if ((n < 0) || !(*name_ok)(bp)) {
 			had_error++;
@@ -258,17 +259,16 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype)
 			cp += n;
 			/* Store alias. */
 			*ap++ = bp;
-			n = strlen(bp) + 1;	/* for the \0 */
-			bp += n;
+			bp += strlen(bp) + 1;	/* for the \0 */
 			/* Get canonical name. */
-			n = strlen(tbuf) + 1;	/* for the \0 */
-			if (n > ep - bp) {
+			len = strlen(tbuf) + 1;	/* for the \0 */
+			if (len > ep - bp) {
 				had_error++;
 				continue;
 			}
 			strlcpy(bp, tbuf, ep - bp);
 			host.h_name = bp;
-			bp += n;
+			bp += len;
 			continue;
 		}
 		if (qtype == T_PTR && type == T_CNAME) {
@@ -283,14 +283,14 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype)
 			}
 			cp += n;
 			/* Get canonical name. */
-			n = strlen(tbuf) + 1;	/* for the \0 */
-			if (n > ep - bp) {
+			len = strlen(tbuf) + 1;	/* for the \0 */
+			if (len > ep - bp) {
 				had_error++;
 				continue;
 			}
 			strlcpy(bp, tbuf, ep - bp);
 			tname = bp;
-			bp += n;
+			bp += len;
 			continue;
 		}
 		if (type != qtype) {
@@ -406,12 +406,14 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype)
 			addrsort(h_addr_ptrs, haveanswer);
 # endif /*RESOLVSORT*/
 		if (!host.h_name) {
-			n = strlen(qname) + 1;	/* for the \0 */
-			if (n > ep - bp)
+			size_t len;
+
+			len = strlen(qname) + 1;
+			if (len > ep - bp)	/* for the \0 */
 				goto try_again;
 			strlcpy(bp, qname, ep - bp);
 			host.h_name = bp;
-			bp += n;
+			bp += len;
 		}
 		if (_resp->options & RES_USE_INET6)
 			map_v4v6_hostent(&host, &bp, ep);
