@@ -1,4 +1,4 @@
-/* $OpenBSD: vesafb.c,v 1.3 2007/01/28 20:28:50 gwk Exp $ */
+/* $OpenBSD: vesafb.c,v 1.4 2007/02/18 19:19:02 gwk Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -67,6 +67,7 @@
 
 #include <dev/vesa/vesabiosreg.h>
 #include <dev/vesa/vesabiosvar.h>
+#include <dev/vesa/vbe.h>
 
 #include <machine/frame.h>
 #include <machine/kvm86.h>
@@ -77,15 +78,61 @@
 #include <uvm/uvm_extern.h>
 
 
-
 void vesafb_set_mode(struct vga_pci_softc *, int);
 int vesafb_get_mode(struct vga_pci_softc *);
 void vesafb_get_mode_info(struct vga_pci_softc *, int, struct modeinfoblock *);
 void vesafb_set_palette(struct vga_pci_softc *, int, struct paletteentry);
 int vesafb_putcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
 int vesafb_getcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
+int vesafb_get_ddc_version(struct vga_pci_softc *);
+int vesafb_get_ddc_info(struct vga_pci_softc *, struct edid *);
+
+int
+vesafb_get_ddc_version(struct vga_pci_softc *sc)
+{
+	struct trapframe tf;
+	int res;
+
+	bzero(&tf, sizeof(struct trapframe));
+	tf.tf_eax = VBE_FUNC_DDC;
+
+	res = kvm86_bioscall(BIOS_VIDEO_INTR, &tf);
+	if (res || VBECALL_SUPPORT(tf.tf_eax) != VBECALL_SUPPORTED)
+		return 0;
+
+	return VBECALL_SUCESS(tf.tf_eax);
+}
 
 
+int
+vesafb_get_ddc_info(struct vga_pci_softc *sc, struct edid *info)
+{
+	struct trapframe tf;
+	unsigned char *buf;
+	int res;
+
+	if ((buf = kvm86_bios_addpage(KVM86_CALL_TASKVA)) == NULL) {
+		printf("%s: kvm86_bios_addpage failed.\n",
+		    sc->sc_dev.dv_xname);
+		return 1;
+	}
+
+	bzero(&tf, sizeof(struct trapframe));
+	tf.tf_eax = VBE_FUNC_DDC;
+	tf.tf_ebx = VBE_DDC_GET;
+	tf.tf_vm86_es = 0;
+	tf.tf_edi = KVM86_CALL_TASKVA;
+
+	res = kvm86_bioscall(BIOS_VIDEO_INTR, &tf);
+	if (res || VBECALL_SUPPORT(tf.tf_eax) != VBECALL_SUPPORTED) {
+		kvm86_bios_delpage(KVM86_CALL_TASKVA, buf);
+		return 1;
+	}
+
+	memcpy(info, buf, sizeof(struct edid));
+	kvm86_bios_delpage(KVM86_CALL_TASKVA, buf);
+	return VBECALL_SUCESS(tf.tf_eax);
+}
 
 int
 vesafb_get_mode(struct vga_pci_softc *sc)
@@ -94,10 +141,10 @@ vesafb_get_mode(struct vga_pci_softc *sc)
 	int res;
 
 	bzero(&tf, sizeof(struct trapframe));
-	tf.tf_eax = 0x4f03;
+	tf.tf_eax = VBE_FUNC_GETMODE;
 
-	res = kvm86_bioscall(0x10, &tf);
-	if (res || (tf.tf_eax & 0xff) != 0x4f) {
+	res = kvm86_bioscall(BIOS_VIDEO_INTR, &tf);
+	if (res || VBECALL_SUPPORT(tf.tf_eax) != VBECALL_SUPPORTED) {
 		printf("%s: vbecall: res=%d, ax=%x\n",
 		    sc->sc_dev.dv_xname, res, tf.tf_eax);
 	}
@@ -112,27 +159,28 @@ vesafb_get_mode_info(struct vga_pci_softc *sc, int mode,
 	unsigned char *buf;
 	int res;
 
-	if ((buf = kvm86_bios_addpage(0x2000)) == NULL) {
-		printf("%s: kvm86_bios_addpage(0x2000) failed.\n");
+	if ((buf = kvm86_bios_addpage(KVM86_CALL_TASKVA)) == NULL) {
+		printf("%s: kvm86_bios_addpage failed.\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	memset(&tf, 0, sizeof(struct trapframe));
-	tf.tf_eax = 0x4f01; /* function code */
+	tf.tf_eax = VBE_FUNC_MODEINFO;
 	tf.tf_ecx = mode;
 	tf.tf_vm86_es = 0;
-	tf.tf_edi = 0x2000; /* buf ptr */
+	tf.tf_edi = KVM86_CALL_TASKVA;
 
-	res = kvm86_bioscall(0x10, &tf);
-	if (res || (tf.tf_eax & 0xff) != 0x4f) {
+	res = kvm86_bioscall(BIOS_VIDEO_INTR, &tf);
+	if (res || VBECALL_SUPPORT(tf.tf_eax) != VBECALL_SUPPORTED) {
 		printf("%s: vbecall: res=%d, ax=%x\n",
 		    sc->sc_dev.dv_xname, res, tf.tf_eax);
 		printf("%s: error getting info for mode %05x\n",
 		    sc->sc_dev.dv_xname, mode);
-		kvm86_bios_delpage(0x2000, buf);
+		kvm86_bios_delpage(KVM86_CALL_TASKVA, buf);
 		return;
 	}
 	memcpy(mi, buf, sizeof(struct modeinfoblock));
-	kvm86_bios_delpage(0x2000, buf);
+	kvm86_bios_delpage(KVM86_CALL_TASKVA, buf);
 }
 
 void
@@ -142,8 +190,9 @@ vesafb_set_palette(struct vga_pci_softc *sc, int reg, struct paletteentry pe)
 	int res;
 	char *buf;
 
-	if ((buf = kvm86_bios_addpage(0x2000)) == NULL) {
-		printf("%s: kvm86_bios_addpage(0x2000) failed.\n");
+	if ((buf = kvm86_bios_addpage(KVM86_CALL_TASKVA)) == NULL) {
+		printf("%s: kvm86_bios_addpage failed.\n",
+		       sc->sc_dev.dv_xname);
 		return;
 	}
 	/*
@@ -158,19 +207,19 @@ vesafb_set_palette(struct vga_pci_softc *sc, int reg, struct paletteentry pe)
 
 	/* set palette */
 	memset(&tf, 0, sizeof(struct trapframe));
-	tf.tf_eax = 0x4f09; /* function code */
+	tf.tf_eax = VBE_FUNC_PALETTE;
 	tf.tf_ebx = 0x0600; /* 6 bit per primary, set format */
 	tf.tf_ecx = 1;
 	tf.tf_edx = reg;
 	tf.tf_vm86_es = 0;
-	tf.tf_edi = 0x2000;
+	tf.tf_edi = KVM86_CALL_TASKVA;
 
-	res = kvm86_bioscall(0x10, &tf);
-	if (res || (tf.tf_eax & 0xff) != 0x4f)
+	res = kvm86_bioscall(BIOS_VIDEO_INTR, &tf);
+	if (res || VBECALL_SUPPORT(tf.tf_eax) != VBECALL_SUPPORTED)
 		printf("%s: vbecall: res=%d, ax=%x\n",
 		    sc->sc_dev.dv_xname, res, tf.tf_eax);
 
-	kvm86_bios_delpage(0x2000, buf);
+	kvm86_bios_delpage(KVM86_CALL_TASKVA, buf);
 	return;
 }
 
@@ -181,11 +230,11 @@ vesafb_set_mode(struct vga_pci_softc *sc, int mode)
 	int res;
 
 	bzero(&tf, sizeof(struct trapframe));
-	tf.tf_eax = 0x4f02;
+	tf.tf_eax = VBE_FUNC_SETMODE;
 	tf.tf_ebx = mode | 0x4000; /* flat */
 
-	res = kvm86_bioscall(0x10, &tf);
-	if (res || (tf.tf_eax & 0xff) != 0x4f) {
+	res = kvm86_bioscall(BIOS_VIDEO_INTR, &tf);
+	if (res || VBECALL_SUPPORT(tf.tf_eax) != VBECALL_SUPPORTED) {
 		printf("%s: vbecall: res=%d, ax=%x\n",
 		    sc->sc_dev.dv_xname, res, tf.tf_eax);
 		return;

@@ -1,4 +1,4 @@
-/* $OpenBSD: vesabios.c,v 1.3 2007/01/28 20:28:50 gwk Exp $ */
+/* $OpenBSD: vesabios.c,v 1.4 2007/02/18 19:19:02 gwk Exp $ */
 
 /*
  * Copyright (c) 2002, 2004
@@ -37,6 +37,7 @@
 
 #include <dev/vesa/vesabiosvar.h>
 #include <dev/vesa/vesabiosreg.h>
+#include <dev/vesa/vbe.h>
 
 struct vbeinfoblock
 {
@@ -49,7 +50,7 @@ struct vbeinfoblock
 	uint16_t OemSoftwareRev;
 	uint32_t OemVendorNamePtr, OemProductNamePtr, OemProductRevPtr;
 	/* data area, in total max 512 bytes for VBE 2.0 */
-} __attribute__ ((packed));
+} __packed;
 
 #define FAR2FLATPTR(p) ((p & 0xffff) + ((p >> 12) & 0xffff0))
 
@@ -87,21 +88,20 @@ vbegetinfo(struct vbeinfoblock **vip)
 	struct trapframe tf;
 	int res, error;
 
-	buf = kvm86_bios_addpage(0x2000);
-	if (!buf) {
-		printf("vbegetinfo: kvm86_bios_addpage(0x2000) failed\n");
+	if ((buf = kvm86_bios_addpage(KVM86_CALL_TASKVA)) == NULL) {
+		printf("vbegetinfo: kvm86_bios_addpage failed\n");
 		return (ENOMEM);
 	}
 
 	memcpy(buf, "VBE2", 4);
 
 	memset(&tf, 0, sizeof(struct trapframe));
-	tf.tf_eax = 0x4f00; /* function code */
+	tf.tf_eax = VBE_FUNC_CTRLINFO;
 	tf.tf_vm86_es = 0;
-	tf.tf_edi = 0x2000; /* buf ptr */
+	tf.tf_edi = KVM86_CALL_TASKVA;
 
-	res = kvm86_bioscall(0x10, &tf);
-	if (res || (tf.tf_eax & 0xff) != 0x4f) {
+	res = kvm86_bioscall(BIOS_VIDEO_INTR, &tf);
+	if (res || VBECALL_SUPPORT(tf.tf_eax) != VBECALL_SUPPORTED) {
 		printf("vbecall: res=%d, ax=%x\n", res, tf.tf_eax);
 		error = ENXIO;
 		goto out;
@@ -117,7 +117,7 @@ vbegetinfo(struct vbeinfoblock **vip)
 	return (0);
 
 out:
-	kvm86_bios_delpage(0x2000, buf);
+	kvm86_bios_delpage(KVM86_CALL_TASKVA, buf);
 	return (error);
 }
 
@@ -125,7 +125,7 @@ void
 vbefreeinfo(struct vbeinfoblock *vip)
 {
 
-	kvm86_bios_delpage(0x2000, vip);
+	kvm86_bios_delpage(KVM86_CALL_TASKVA, vip);
 }
 
 int
@@ -136,7 +136,7 @@ vbeprobe(void)
 
 	if (vbegetinfo(&vi))
 		return (0);
-	if ((vi->VbeVersion >> 8) > 1) {
+	if (VBE_CTRLINFO_VERSION(vi->VbeVersion) > 1) {
 		/* VESA bios is at least version 2.0 */
 		found = 1;
 	}
@@ -190,10 +190,12 @@ vesabios_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf(": version %d.%d",
-	    vi->VbeVersion >> 8, vi->VbeVersion & 0xff);
+	    VBE_CTRLINFO_VERSION(vi->VbeVersion),
+	    VBE_CTRLINFO_REVISION(vi->VbeVersion));
+
 
 	res = kvm86_bios_read(FAR2FLATPTR(vi->OemVendorNamePtr),
-			      name, sizeof(name));
+	    name, sizeof(name));
 
 	sc->sc_size = vi->TotalMemory * 65536;
 	if (res > 0) {
@@ -224,22 +226,22 @@ vesabios_attach(struct device *parent, struct device *self, void *aux)
 
 	nrastermodes = ntextmodes = 0;
 
-	buf = kvm86_bios_addpage(0x2000);
+	buf = kvm86_bios_addpage(KVM86_CALL_TASKVA);
 	if (!buf) {
-		printf("%s: kvm86_bios_addpage(0x2000) failed\n",
+		printf("%s: kvm86_bios_addpage failed\n",
 		    self->dv_xname);
 		return;
 	}
 	for (i = 0; i < nmodes; i++) {
 
 		memset(&tf, 0, sizeof(struct trapframe));
-		tf.tf_eax = 0x4f01; /* function code */
+		tf.tf_eax = VBE_FUNC_MODEINFO;
 		tf.tf_ecx = modes[i];
 		tf.tf_vm86_es = 0;
-		tf.tf_edi = 0x2000; /* buf ptr */
+		tf.tf_edi = KVM86_CALL_TASKVA;
 
-		res = kvm86_bioscall(0x10, &tf);
-		if (res || (tf.tf_eax & 0xff) != 0x4f) {
+		res = kvm86_bioscall(BIOS_VIDEO_INTR, &tf);
+		if (res || VBECALL_SUPPORT(tf.tf_eax) != VBECALL_SUPPORTED) {
 			printf("%s: vbecall: res=%d, ax=%x\n",
 			    self->dv_xname, res, tf.tf_eax);
 			printf("%s: error getting info for mode %04x\n",
@@ -278,9 +280,9 @@ vesabios_attach(struct device *parent, struct device *self, void *aux)
 				textmodes[ntextmodes++] = modes[i];
 		}
 	}
-	kvm86_bios_delpage(0x2000, buf);
+	kvm86_bios_delpage(KVM86_CALL_TASKVA, buf);
 	if (nrastermodes > 0) {
-		sc->sc_modes = 
+		sc->sc_modes =
 		    (uint16_t *)malloc(sizeof(uint16_t)*nrastermodes,
 			M_DEVBUF, M_NOWAIT);
 		if (sc->sc_modes == NULL) {
