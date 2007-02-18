@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgmon.c,v 1.11 2004/08/01 18:32:19 deraadt Exp $	*/
+/*	$OpenBSD: kgmon.c,v 1.12 2007/02/18 20:51:46 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: kgmon.c,v 1.11 2004/08/01 18:32:19 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kgmon.c,v 1.12 2007/02/18 20:51:46 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -122,7 +122,7 @@ main(int argc, char **argv)
 
 		default:
 			fprintf(stderr,
-			    "usage: %s [-bhrp] [-M core] [-N system]\n",
+			    "usage: %s [-bhpr] [-M core] [-N system]\n",
 			    __progname);
 			exit(1);
 		}
