@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.36 2007/01/14 10:48:23 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.37 2007/02/18 00:05:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -105,6 +105,8 @@ int		bcw_change_core(struct bcw_softc *, int);
 void		bcw_radio_off(struct bcw_softc *);
 void		bcw_radio_on(struct bcw_softc *);
 int		bcw_radio_channel(struct bcw_softc *, uint8_t, int );
+void		bcw_spw(struct bcw_softc *, uint8_t);
+int		bcw_chan2freq_bg(uint8_t);
 int		bcw_reset_core(struct bcw_softc *, uint32_t);
 int		bcw_get_firmware(const char *, const uint8_t *, size_t,
 		    size_t *, size_t *);
@@ -1220,7 +1222,9 @@ bcw_init(struct ifnet *ifp)
 		return (error);
 
 	/* turn radio on */
-	//bcw_radio_on(sc);
+	bcw_radio_on(sc);
+
+	BCW_WRITE16(sc, 0x03e6, 0);
 
 	return (0);
 
@@ -2161,6 +2165,8 @@ bcw_radio_off(struct bcw_softc *sc)
 		    0xff73);
 	} else
 		bcw_phy_write16(sc, 0x0015, 0xaa00);
+
+	DPRINTF(("%s: Radio turned off\n", sc->sc_dev.dv_xname));
 }
 
 void
@@ -2180,13 +2186,15 @@ bcw_radio_on(struct bcw_softc *sc)
 	case BCW_PHY_TYPEG:
 		bcw_phy_write16(sc, 0x0015, 0x8000);
 		bcw_phy_write16(sc, 0x0015, 0xcc00);
-		/* XXX we must check for phy connected later */
-		bcw_phy_write16(sc, 0x0015, 1 ? 0x00c0 : 0);
-		/* TODO bcw_radio_channel() */
+		bcw_phy_write16(sc, 0x0015, 0); /* XXX check for phy connect */
+		if (bcw_radio_channel(sc, BCW_RADIO_DEFAULT_CHANNEL, 1))
+			return;
 		break;
 	default:
-		break;
+		return;
 	}
+
+	DPRINTF(("%s: Radio turned on\n", sc->sc_dev.dv_xname)); 
 }
 
 int
@@ -2208,7 +2216,8 @@ bcw_radio_channel(struct bcw_softc *sc, uint8_t channel, int spw)
 	if (freq >= 4920 && freq <= 5500)
 		r8 = 3 * freq / 116;
 
-	if (1) {
+	if (sc->sc_radioid == 0x17f && sc->sc_radiotype == 0x2060 &&
+	    sc->sc_radiorev == 1) {
 		bcw_radio_write16(sc, 0x0007, (r8 << 4) | r8);
 		bcw_radio_write16(sc, 0x0020, (r8 << 4) | r8);
 		bcw_radio_write16(sc, 0x0021, (r8 << 4) | r8);
@@ -2237,7 +2246,12 @@ bcw_radio_channel(struct bcw_softc *sc, uint8_t channel, int spw)
 
 		/* TODO bcw_radio_phy_xmitpower() */
 	} else {
-		/* TODO */
+		if (spw)
+			bcw_spw(sc, channel);
+		
+		BCW_WRITE16(sc, BCW_MMIO_CHANNEL, bcw_chan2freq_bg(channel));
+
+		/* TODO more stuff if channel = 14 */
 	}
 
 	delay(8000);
@@ -2245,6 +2259,38 @@ bcw_radio_channel(struct bcw_softc *sc, uint8_t channel, int spw)
 	return (0);
 }
 
+void
+bcw_spw(struct bcw_softc *sc, uint8_t channel)
+{
+	if (sc->sc_radiotype != 0x2050 || sc->sc_radiorev >= 6)
+		/* we do not need the workaround */
+		return;
+
+	if (channel <= 10)
+		BCW_WRITE16(sc, BCW_MMIO_CHANNEL,
+		    bcw_chan2freq_bg(channel + 4));
+	else
+		BCW_WRITE16(sc, BCW_MMIO_CHANNEL, bcw_chan2freq_bg(1));
+
+	delay(100);
+
+	BCW_WRITE16(sc, BCW_MMIO_CHANNEL, bcw_chan2freq_bg(channel));
+}
+
+int
+bcw_chan2freq_bg(uint8_t channel)
+{
+	static const uint16_t freqs_bg[14] = {
+	    12, 17, 22, 27,
+	    32, 37, 42, 47,
+	    52, 57, 62, 67,
+	    72, 84 };
+
+	if (channel < 1 && channel > 14)
+		return (0);
+
+	return (freqs_bg[channel - 1]);
+}
 
 int
 bcw_reset_core(struct bcw_softc *sc, uint32_t flags)

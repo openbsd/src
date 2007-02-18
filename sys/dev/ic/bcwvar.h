@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.13 2007/01/07 00:29:44 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.14 2007/02/18 00:05:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -71,7 +71,8 @@ enum {
 	BCW_LED_BCM4303_3 = 0x19,
 };
 
-#define BCW_MAX_RADIOS		2
+#define BCW_RADIO_DEFAULT_CHANNEL	6
+#define BCW_RADIO_MAX			2
 struct bcw_radio {
 	uint16_t	id;
 	uint16_t	info;
@@ -207,7 +208,7 @@ struct bcw_softc {
 	uint16_t		sc_chiprev;	/* Chip Revision */
 	uint16_t		sc_prodid;	/* Product ID */
 	struct bcw_core		sc_core[BCW_MAX_CORES];
-//	struct bcw_radio	radio[BCW_MAX_RADIOS];
+//	struct bcw_radio	radio[BCW_RADIO_MAX];
 	uint16_t		sc_phy_version;
 	uint16_t		sc_phy_type;
 	uint16_t		sc_phy_rev;
