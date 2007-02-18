@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_configure.c,v 1.14 2007/02/18 18:52:34 ray Exp $	*/
+/*	$OpenBSD: rf_configure.c,v 1.15 2007/02/18 18:56:33 ray Exp $	*/
 /*	$NetBSD: rf_configure.c,v 1.14 2001/02/04 21:05:42 christos Exp $	*/
 
 /*
@@ -258,7 +258,7 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 		cfgPtr->numSpare = 0;
   for (c = 0; c < cfgPtr->numSpare; c++) {
 		if (rf_get_next_nonblank_line(&cfgPtr->spare_names[c][0],
-		    256, fp, NULL)) {
+		    sizeof(cfgPtr->spare_names[c]), fp, NULL)) {
       RF_ERRORMSG1("Config file error: unable to get device file for spare disk %d\n",c);
 			retcode = -1;
 			goto out;
