@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.7 2006/12/17 22:18:16 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.8 2007/02/18 18:38:55 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -71,11 +71,17 @@
 /*
  * MGX CRTC empirical constants
  */
-#define	ADDRESS_REVERSE(x)	((x) ^ 0x03)
-#define	CRTC_COMMAND	ADDRESS_REVERSE(0x03c4)
-#define	CRTC_DATA	ADDRESS_REVERSE(0x03c5)
-#define	CRTC_CMAP	ADDRESS_REVERSE(0x03c9)
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+#define	IO_ADDRESS(x)		(x)
+#else
+#define	IO_ADDRESS(x)		((x) ^ 0x03)
+#endif
+#define	CRTC_INDEX		IO_ADDRESS(0x03c4)
+#define	CRTC_DATA		IO_ADDRESS(0x03c5)
 #define	CD_DISABLEVIDEO	0x0020
+#define	CMAP_READ_INDEX		IO_ADDRESS(0x03c7)
+#define	CMAP_WRITE_INDEX	IO_ADDRESS(0x03c8)
+#define	CMAP_DATA		IO_ADDRESS(0x03c9)
 
 /* per-display variables */
 struct mgx_softc {
@@ -328,7 +334,7 @@ mgx_burner(void *v, u_int on, u_int flags)
 {
 	struct mgx_softc *sc = v;
 
-	sc->sc_vidc[CRTC_COMMAND] = 1;	/* trigger? */
+	sc->sc_vidc[CRTC_INDEX] = 1;	/* TS mode register */
 	if (on)
 		sc->sc_vidc[CRTC_DATA] &= ~CD_DISABLEVIDEO;
 	else
@@ -358,12 +364,19 @@ mgx_loadcmap(struct mgx_softc *sc, int start, int ncolors)
 	u_int8_t *color;
 	int i;
 
+#if 0
+	sc->sc_vidc[CMAP_WRITE_INDEX] = start;
+	color = sc->sc_cmap + start * 3;
+#else
 	/*
 	 * Apparently there is no way to load an incomplete cmap to this
 	 * DAC. What a waste.
 	 */
-	for (color = sc->sc_cmap, i = 0; i < 256 * 3; i++)
-		sc->sc_vidc[CRTC_CMAP] = *color++;
+	ncolors = 256;
+	color = sc->sc_cmap;
+#endif
+	for (i = ncolors * 3; i != 0; i--)
+		sc->sc_vidc[CMAP_DATA] = *color++;
 }
 
 int
