@@ -1485,6 +1485,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/usbfvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/usbhid.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/vesa
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/vesa/vbe.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/vesa/vesabiosreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/vesa/vesabiosvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/vesa/vesafbvar.ph

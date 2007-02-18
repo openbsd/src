@@ -815,6 +815,7 @@
 ./usr/include/dev/usb/usbfvar.h
 ./usr/include/dev/usb/usbhid.h
 ./usr/include/dev/vesa
+./usr/include/dev/vesa/vbe.h
 ./usr/include/dev/vesa/vesabiosreg.h
 ./usr/include/dev/vesa/vesabiosvar.h
 ./usr/include/dev/vesa/vesafbvar.h

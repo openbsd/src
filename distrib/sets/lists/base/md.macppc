@@ -1414,6 +1414,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbfvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbhid.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/vesa
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/vesa/vbe.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/vesa/vesabiosreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/vesa/vesabiosvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/vesa/vesafbvar.ph

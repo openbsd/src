@@ -1312,6 +1312,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/usbfvar.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/usbhid.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/vesa
+./usr/libdata/perl5/site_perl/sh-openbsd/dev/vesa/vbe.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/vesa/vesabiosreg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/vesa/vesabiosvar.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/vesa/vesafbvar.ph
