@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_configure.c,v 1.13 2006/11/02 18:07:56 ray Exp $	*/
+/*	$OpenBSD: rf_configure.c,v 1.14 2007/02/18 18:52:34 ray Exp $	*/
 /*	$NetBSD: rf_configure.c,v 1.14 2001/02/04 21:05:42 christos Exp $	*/
 
 /*
@@ -458,12 +458,12 @@ rf_search_file_for_start_of(const char *string, char *buf, int len, FILE *fp)
 
 /* reads from file fp into buf until it finds an interesting line */
 int
-rf_get_next_nonblank_line(char *buf, int len ATTRIBUTE_UNUSED, FILE *fp,
+rf_get_next_nonblank_line(char *buf, int len, FILE *fp,
 			  const char *errmsg)
 {
   char *p;
 
-  while (fgets(buf,256,fp) != NULL) {
+  while (fgets(buf,len,fp) != NULL) {
     p = rf_find_non_white(buf);
 		if (*p == '\n' || *p == '\0' || *p == '#')
 			continue;
