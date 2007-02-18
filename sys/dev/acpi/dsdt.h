@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.25 2007/02/06 18:56:31 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.26 2007/02/18 02:25:05 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -195,5 +195,7 @@ void			aml_walknodes(struct aml_node *, int,
 
 void			aml_postparse(void);
 void			acpi_poll_notify(void);
+
+void			aml_hashopcodes(void);
 
 #endif /* __DEV_ACPI_DSDT_H__ */

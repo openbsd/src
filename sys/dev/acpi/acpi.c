@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.80 2007/02/18 01:37:49 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.81 2007/02/18 02:25:05 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -350,6 +350,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = aaa->aaa_iot;
 	sc->sc_memt = aaa->aaa_memt;
 
+
 	if (acpi_map(aaa->aaa_pbase, sizeof(struct acpi_rsdp), &handle)) {
 		printf(": can't map memory\n");
 		return;
@@ -406,6 +407,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 #endif
+
+	/* Create opcode hashtable */
+	aml_hashopcodes();
 
 	acpi_enabled=1;
 

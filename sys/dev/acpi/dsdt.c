@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.79 2007/02/13 04:40:00 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.80 2007/02/18 02:25:05 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -95,6 +95,9 @@ void			aml_gasio(struct acpi_softc *, int, uint64_t, uint64_t,
 
 struct aml_opcode	*aml_findopcode(int);
 
+#define acpi_os_malloc(sz) _acpi_os_malloc(sz, __FUNCTION__, __LINE__)
+#define acpi_os_free(ptr)  _acpi_os_free(ptr, __FUNCTION__, __LINE__)
+
 void			*_acpi_os_malloc(size_t, const char *, int);
 void			_acpi_os_free(void *, const char *, int);
 void			acpi_sleep(int);
@@ -136,10 +139,16 @@ struct aml_value *aml_parsematch(struct aml_scope *, int, struct aml_value *);
 struct aml_value *aml_parseref(struct aml_scope *, int, struct aml_value *);
 struct aml_value *aml_parsestring(struct aml_scope *, int, struct aml_value *);
 
+/* Perfect Hash key */
+#define HASH_OFF		6904
+#define HASH_SIZE		179
+#define HASH_KEY(k)		(((k) ^ HASH_OFF) % HASH_SIZE)
+
 /*
  * XXX this array should be sorted, and then aml_findopcode() should
  * do a binary search
  */
+struct aml_opcode **aml_ophash;
 struct aml_opcode aml_table[] = {
 	/* Simple types */
 	{ AMLOP_ZERO,		"Zero",		"c",	aml_parsesimple },
@@ -314,14 +323,25 @@ void _aml_die(const char *fn, int line, const char *fmt, ...)
 	panic("aml_die %s:%d", fn, line);
 }
 
-struct aml_opcode *
-aml_findopcode(int opcode)
+void
+aml_hashopcodes(void)
 {
 	int i;
 
+	/* Dynamically allocate hash table */
+	aml_ophash = (struct aml_opcode **)acpi_os_malloc(HASH_SIZE*sizeof(struct aml_opcode *));
 	for (i = 0; i < sizeof(aml_table) / sizeof(aml_table[0]); i++)
-		if (aml_table[i].opcode == opcode)
-			return &aml_table[i];
+		aml_ophash[HASH_KEY(aml_table[i].opcode)] = &aml_table[i];
+}
+
+struct aml_opcode *
+aml_findopcode(int opcode)
+{
+	struct aml_opcode *hop;
+
+	hop = aml_ophash[HASH_KEY(opcode)];
+	if (hop && hop->opcode == opcode)
+		return hop;
 	return NULL;
 }
 
@@ -387,9 +407,6 @@ struct aml_notify_head aml_notify_list =
 /*
  *  @@@: Memory management functions
  */
-
-#define acpi_os_malloc(sz) _acpi_os_malloc(sz, __FUNCTION__, __LINE__)
-#define acpi_os_free(ptr)  _acpi_os_free(ptr, __FUNCTION__, __LINE__)
 
 long acpi_nalloc;
 
