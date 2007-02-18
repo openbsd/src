@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.14 2007/02/18 00:05:39 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.15 2007/02/18 09:37:21 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -213,9 +213,9 @@ struct bcw_softc {
 	uint16_t		sc_phy_type;
 	uint16_t		sc_phy_rev;
 //	uint16_t		sc_corerev;
-	uint32_t		sc_radioid;
-	uint16_t		sc_radiorev;
-	uint16_t		sc_radiotype;
+	uint32_t		sc_radio_mnf;
+	uint16_t		sc_radio_rev;
+	uint16_t		sc_radio_ver;
 	uint32_t		sc_phyinfo;
 	uint16_t		sc_numcores;
 	uint16_t		sc_havecommon;

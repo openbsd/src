@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.11 2007/02/18 00:05:39 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.12 2007/02/18 09:37:21 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -338,6 +338,7 @@
 #define BCW_GPIO_MASK			0x49e
 #define BCW_GPIO_CTRL			0x6c
 
+#define BCW_MMIO_PHY_RADIO		0x3e2
 #define BCW_MMIO_CHANNEL		0x3f0
 
 /* LEDS */

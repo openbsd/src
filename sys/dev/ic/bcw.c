@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.37 2007/02/18 00:05:39 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.38 2007/02/18 09:37:21 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -117,6 +117,11 @@ int		bcw_load_initvals(struct bcw_softc *);
 void		bcw_leds_switch_all(struct bcw_softc *, int);
 int		bcw_gpio_init(struct bcw_softc *);
 
+int		bcw_phy_init(struct bcw_softc *);
+void		bcw_phy_initg(struct bcw_softc *);
+void		bcw_phy_initb5(struct bcw_softc *);
+void		bcw_phy_initb6(struct bcw_softc *);
+
 struct cfdriver bcw_cd = {
 	NULL, "bcw", DV_IFNET
 };
@@ -164,12 +169,12 @@ bcw_radio_read16(struct bcw_softc *sc, uint16_t offset)
 		offset |= 0x0040;
 		break;
 	case BCW_PHY_TYPEB:
-		if (sc->sc_radiotype == 0x2053) {
+		if (sc->sc_radio_ver == 0x2053) {
 			if (offset < 0x70)
 				offset += 0x80;
 			else if (offset < 0x80)
 				offset += 0x70;
-		} else if (sc->sc_radiotype == 0x2050)
+		} else if (sc->sc_radio_ver == 0x2050)
 			offset |= 0x80;
 		else
 			return (0);
@@ -446,26 +451,26 @@ bcw_attach(struct bcw_softc *sc)
 		sbval = BCW_READ16(sc, BCW_RADIO_DATAHIGH);
 		sbval <<= 16;
 		BCW_WRITE16(sc, BCW_RADIO_CONTROL, BCW_RADIO_ID);
-		sc->sc_radioid = sbval | BCW_READ16(sc, BCW_RADIO_DATALOW);
+		sc->sc_radio_mnf = sbval | BCW_READ16(sc, BCW_RADIO_DATALOW);
 	} else {
 		switch (sc->sc_chiprev) {
 		case 0:	
-			sc->sc_radioid = 0x3205017F;
+			sc->sc_radio_mnf = 0x3205017F;
 			break;
 		case 1:
-			sc->sc_radioid = 0x4205017f;
+			sc->sc_radio_mnf = 0x4205017f;
 			break;
 		default:
-			sc->sc_radioid = 0x5205017f;
+			sc->sc_radio_mnf = 0x5205017f;
 		}
 	}
 
-	sc->sc_radiorev = (sc->sc_radioid & 0xf0000000) >> 28;
-	sc->sc_radiotype = (sc->sc_radioid & 0x0ffff000) >> 12;
+	sc->sc_radio_rev = (sc->sc_radio_mnf & 0xf0000000) >> 28;
+	sc->sc_radio_ver = (sc->sc_radio_mnf & 0x0ffff000) >> 12;
 
 	DPRINTF(("%s: Radio Rev %d, Ver 0x%x, Manuf 0x%x\n",
-	    sc->sc_dev.dv_xname, sc->sc_radiorev, sc->sc_radiotype,
-	    sc->sc_radioid & 0xfff));
+	    sc->sc_dev.dv_xname, sc->sc_radio_rev, sc->sc_radio_ver,
+	    sc->sc_radio_mnf & 0xfff));
 
 	error = bcw_validatechipaccess(sc);
 	if (error) {
@@ -519,21 +524,21 @@ bcw_attach(struct bcw_softc *sc)
 
 	/* test for valid radio revisions */
 	if ((sc->sc_phy_type == BCW_PHY_TYPEA) &
-	    (sc->sc_radiotype != 0x2060)) {
+	    (sc->sc_radio_ver != 0x2060)) {
 		    	printf("%s: invalid PHY A radio 0x%x\n",
-		    	    sc->sc_dev.dv_xname, sc->sc_radiotype);
+		    	    sc->sc_dev.dv_xname, sc->sc_radio_ver);
 		    	return;
 	}
 	if ((sc->sc_phy_type == BCW_PHY_TYPEB) &
-	    ((sc->sc_radiotype & 0xfff0) != 0x2050)) {
+	    ((sc->sc_radio_ver & 0xfff0) != 0x2050)) {
 		    	printf("%s: invalid PHY B radio 0x%x\n",
-		    	    sc->sc_dev.dv_xname, sc->sc_radiotype);
+		    	    sc->sc_dev.dv_xname, sc->sc_radio_ver);
 		    	return;
 	}
 	if ((sc->sc_phy_type == BCW_PHY_TYPEG) &
-	    (sc->sc_radiotype != 0x2050)) {
+	    (sc->sc_radio_ver != 0x2050)) {
 		    	printf("%s: invalid PHY G radio 0x%x\n",
-		    	    sc->sc_dev.dv_xname, sc->sc_radiotype);
+		    	    sc->sc_dev.dv_xname, sc->sc_radio_ver);
 		    	return;
 	}
 
@@ -590,8 +595,8 @@ bcw_attach(struct bcw_softc *sc)
 		sbval |= 0x400;
 	if (sc->sc_phy_type == BCW_PHY_TYPEB)
 		sbval |= 0x4;
-	if ((sc->sc_radiotype == 0x2050) &&
-	    (sc->sc_radiorev <= 5))
+	if ((sc->sc_radio_ver == 0x2050) &&
+	    (sc->sc_radio_rev <= 5))
 	    	sbval |= 0x40000;
 	/*
 	 * XXX If the device isn't up and this is a PCI bus with revision
@@ -1225,6 +1230,8 @@ bcw_init(struct ifnet *ifp)
 	bcw_radio_on(sc);
 
 	BCW_WRITE16(sc, 0x03e6, 0);
+	//if ((error = bcw_phy_init(sc)))
+		//return (error);
 
 	return (0);
 
@@ -2216,8 +2223,8 @@ bcw_radio_channel(struct bcw_softc *sc, uint8_t channel, int spw)
 	if (freq >= 4920 && freq <= 5500)
 		r8 = 3 * freq / 116;
 
-	if (sc->sc_radioid == 0x17f && sc->sc_radiotype == 0x2060 &&
-	    sc->sc_radiorev == 1) {
+	if (sc->sc_radio_mnf == 0x17f && sc->sc_radio_ver == 0x2060 &&
+	    sc->sc_radio_rev == 1) {
 		bcw_radio_write16(sc, 0x0007, (r8 << 4) | r8);
 		bcw_radio_write16(sc, 0x0020, (r8 << 4) | r8);
 		bcw_radio_write16(sc, 0x0021, (r8 << 4) | r8);
@@ -2262,7 +2269,7 @@ bcw_radio_channel(struct bcw_softc *sc, uint8_t channel, int spw)
 void
 bcw_spw(struct bcw_softc *sc, uint8_t channel)
 {
-	if (sc->sc_radiotype != 0x2050 || sc->sc_radiorev >= 6)
+	if (sc->sc_radio_ver != 0x2050 || sc->sc_radio_rev >= 6)
 		/* we do not need the workaround */
 		return;
 
@@ -2739,4 +2746,314 @@ bcw_gpio_init(struct bcw_softc *sc)
 	    set);
 
 	return (0);
+}
+
+/*
+ * PHY
+ */
+int
+bcw_phy_init(struct bcw_softc *sc)
+{
+	int error = ENODEV;
+
+	switch (sc->sc_phy_type) {
+	case BCW_PHY_TYPEA:
+		if (sc->sc_phy_rev == 2 || sc->sc_phy_rev == 3) {
+			error = 0;
+		}
+		break;
+	case BCW_PHY_TYPEB:
+		switch (sc->sc_phy_rev) {
+		case 2:
+			// bcw_phy_initb2(sc);
+			error = 0;
+			break;
+		case 4:
+			// bcw_phy_initb4(sc);
+			error = 0;
+			break;
+		case 5:
+			// bcw_phy_initb5(sc);
+			error = 0;
+			break;
+		case 6:
+			// bcw_phy_initb6(sc);
+			error = 0;
+			break;
+		}
+		break;
+	case BCW_PHY_TYPEG:
+		// bcw_phy_initg(sc);
+		error = 0;
+		break;
+	}
+
+	if (error)
+		printf("%s: Unknown PHYTYPE found!\n", sc->sc_dev.dv_xname);
+
+	return (error);
+}
+
+void
+bcw_phy_initg(struct bcw_softc *sc)
+{
+	if (sc->sc_phy_rev == 1)
+		bcw_phy_initb5(sc);
+	else
+		bcw_phy_initb6(sc);
+}
+
+void
+bcw_phy_initb5(struct bcw_softc *sc)
+{
+	uint16_t offset;
+
+	if (sc->sc_phy_rev == 1 && sc->sc_radio_rev == 0x2050)
+		bcw_radio_write16(sc, 0x007a, bcw_radio_read16(sc, 0x007a) |
+		    0x0050);
+
+	if (1) { /* XXX bcw->board_vendor */
+		for (offset = 0x00a8; offset < 0x00c7; offset++)
+			bcw_phy_write16(sc, offset,
+			    (bcw_phy_read16(sc, offset) + 0x02020) & 0x3f3f);
+	}
+
+	bcw_phy_write16(sc, 0x0035, (bcw_phy_read16(sc, 0x0035) & 0xf0ff) |
+	    0x0700);
+
+	if (sc->sc_radio_rev == 0x2050)
+		bcw_phy_write16(sc, 0x0038, 0x0667);
+
+	if (1) { /* XXX phy->connected */
+		if (sc->sc_radio_rev == 0x2050) {
+			bcw_radio_write16(sc, 0x007a,
+			    bcw_radio_read16(sc, 0x007a) | 0x0020);
+			bcw_radio_write16(sc, 0x0051,
+			    bcw_radio_read16(sc, 0x0051) | 0x0004);
+		}
+		BCW_WRITE16(sc, BCW_MMIO_PHY_RADIO, 0);
+		bcw_phy_write16(sc, 0x0802, bcw_phy_read16(sc, 0x0802) |
+		    0x0100);
+		bcw_phy_write16(sc, 0x042b, bcw_phy_read16(sc, 0x042b) |
+		    0x2000);
+		bcw_phy_write16(sc, 0x001c, 0x186a);
+		bcw_phy_write16(sc, 0x0013,
+		    (bcw_phy_read16(sc, 0x0013) & 0x00ff) | 0x1900);
+		bcw_phy_write16(sc, 0x0035,
+		    (bcw_phy_read16(sc, 0x0035) & 0xffc0) | 0x0064);
+		bcw_phy_write16(sc, 0x005d,
+		    (bcw_phy_read16(sc, 0x005d) & 0xff80) | 0x000a);
+	}
+
+	if (sc->sc_phy_rev == 1 && sc->sc_radio_rev == 0x2050) {
+		bcw_phy_write16(sc, 0x0026, 0xce00);
+		bcw_phy_write16(sc, 0x0021, 0x3763);
+		bcw_phy_write16(sc, 0x0022, 0x1bc3);
+		bcw_phy_write16(sc, 0x0023, 0x06f9);
+		bcw_phy_write16(sc, 0x0024, 0x037e);
+	} else
+		bcw_phy_write16(sc, 0x0026, 0xcc00);
+	bcw_phy_write16(sc, 0x0030, 0x00c6);
+	BCW_WRITE16(sc, 0x3ec, 0x3f22);
+
+	if (sc->sc_phy_rev == 1 && sc->sc_radio_rev == 0x2050)
+		bcw_phy_write16(sc, 0x0020, 0x3e1c);
+	else
+		bcw_phy_write16(sc, 0x0020, 0x301c);
+
+	if (sc->sc_phy_rev == 0)
+		BCW_WRITE16(sc, 0x03e4, 0x3000);
+
+	/* force to channel 7, even if not supported */
+	bcw_radio_channel(sc, 7, 0);
+
+	if (sc->sc_radio_rev != 0x2050) {
+		bcw_radio_write16(sc, 0x0075, 0x0080);
+		bcw_radio_write16(sc, 0x0079, 0x0081);
+	}
+
+	bcw_radio_write16(sc, 0x0050, 0x0020);
+	bcw_radio_write16(sc, 0x0050, 0x0023);
+
+	if (sc->sc_radio_rev == 0x2050) {
+		bcw_radio_write16(sc, 0x0050, 0x0020);
+		bcw_radio_write16(sc, 0x005a, 0x0070);
+	}
+
+	bcw_radio_write16(sc, 0x005b, 0x007b);
+	bcw_radio_write16(sc, 0x005c, 0x00b0);
+
+	bcw_radio_write16(sc, 0x007a, bcw_radio_read16(sc, 0x007a) | 0x0007);
+
+	bcw_radio_channel(sc, BCW_RADIO_DEFAULT_CHANNEL, 0);
+
+	bcw_phy_write16(sc, 0x0014, 0x0080);
+	bcw_phy_write16(sc, 0x0032, 0x00ca);
+	bcw_phy_write16(sc, 0x88a3, 0x002a);
+
+	/* TODO bcw_radio_set_tx_power() */
+
+	if (sc->sc_radio_rev == 0x2050)
+		bcw_radio_write16(sc, 0x005d, 0x000d);
+
+	BCW_WRITE16(sc, 0x03e4, (BCW_READ16(sc, 0x03e4) & 0xffc0) | 0x0004);
+}
+
+void
+bcw_phy_initb6(struct bcw_softc *sc)
+{
+	uint16_t offset, val;
+
+	bcw_phy_write16(sc, 0x003e, 0x817a);
+	bcw_radio_write16(sc, 0x007a, (bcw_radio_read16(sc, 0x007a) | 0x0058));
+
+	if (sc->sc_radio_mnf == 0x17f && sc->sc_radio_ver == 0x2050 &&
+	    (sc->sc_radio_rev == 3 || sc->sc_radio_rev == 4 ||
+	    sc->sc_radio_rev == 5)) {
+		bcw_radio_write16(sc, 0x0051, 0x001f);
+		bcw_radio_write16(sc, 0x0052, 0x0040);
+		bcw_radio_write16(sc, 0x0053, 0x005b);
+		bcw_radio_write16(sc, 0x0054, 0x0098);
+		bcw_radio_write16(sc, 0x005a, 0x0088);
+		bcw_radio_write16(sc, 0x005b, 0x0088);
+		bcw_radio_write16(sc, 0x005d, 0x0088);
+		bcw_radio_write16(sc, 0x005e, 0x0088);
+		bcw_radio_write16(sc, 0x007d, 0x0088);
+	}
+
+	if (sc->sc_radio_mnf == 0x17f && sc->sc_radio_ver == 0x2050 &&
+	    sc->sc_radio_rev == 6) {
+		bcw_radio_write16(sc, 0x0051, 0);
+		bcw_radio_write16(sc, 0x0052, 0x0040);
+		bcw_radio_write16(sc, 0x0053, 0x00b7);
+		bcw_radio_write16(sc, 0x0054, 0x0098);
+		bcw_radio_write16(sc, 0x005a, 0x0088);
+		bcw_radio_write16(sc, 0x005b, 0x008b);
+		bcw_radio_write16(sc, 0x005c, 0x00b5);
+		bcw_radio_write16(sc, 0x005d, 0x0088);
+		bcw_radio_write16(sc, 0x005e, 0x0088);
+		bcw_radio_write16(sc, 0x007d, 0x0088);
+		bcw_radio_write16(sc, 0x007c, 0x0001);
+		bcw_radio_write16(sc, 0x007e, 0x0008);
+	}
+
+	if (sc->sc_radio_mnf == 0x017f && sc->sc_radio_ver == 0x2050 &&
+	    sc->sc_radio_rev == 7) {
+		bcw_radio_write16(sc, 0x0051, 0);
+		bcw_radio_write16(sc, 0x0052, 0x0040);
+		bcw_radio_write16(sc, 0x0053, 0x00b7);
+		bcw_radio_write16(sc, 0x0054, 0x0098);
+		bcw_radio_write16(sc, 0x005a, 0x0088);
+		bcw_radio_write16(sc, 0x005b, 0x00a8);
+		bcw_radio_write16(sc, 0x005c, 0x0075);
+		bcw_radio_write16(sc, 0x005d, 0x00f5);
+		bcw_radio_write16(sc, 0x005e, 0x00b8);
+		bcw_radio_write16(sc, 0x007d, 0x00e8);
+		bcw_radio_write16(sc, 0x007c, 0x0001);
+		bcw_radio_write16(sc, 0x007e, 0x0008);
+		bcw_radio_write16(sc, 0x007b, 0);
+	}
+
+	if (sc->sc_radio_mnf == 0x17f && sc->sc_radio_ver == 0x2050 &&
+	    sc->sc_radio_rev == 8) {
+		bcw_radio_write16(sc, 0x0051, 0);
+		bcw_radio_write16(sc, 0x0052, 0x0040);
+		bcw_radio_write16(sc, 0x0053, 0x00b7);
+		bcw_radio_write16(sc, 0x0054, 0x0098);
+		bcw_radio_write16(sc, 0x005a, 0x0088);
+		bcw_radio_write16(sc, 0x005b, 0x006b);
+		bcw_radio_write16(sc, 0x005c, 0x000f);
+		if (sc->sc_boardflags & 0x8000) {
+			bcw_radio_write16(sc, 0x005d, 0x00fa);
+			bcw_radio_write16(sc, 0x005e, 0x00d8);
+		} else {
+			bcw_radio_write16(sc, 0x005d, 0x00f5);
+			bcw_radio_write16(sc, 0x005e, 0x00b8);
+		}
+		bcw_radio_write16(sc, 0x0073, 0x0003);
+		bcw_radio_write16(sc, 0x007d, 0x00a8);
+		bcw_radio_write16(sc, 0x007c, 0x0001);
+		bcw_radio_write16(sc, 0x007e, 0x0008);
+	}
+
+	val = 0x1e1f;
+	for (offset = 0x0088; offset < 0x0098; offset++) {
+		bcw_phy_write16(sc, offset, val);
+		val -= 0x0202;
+	}
+	val = 0x3e3f;
+	for (offset = 0x0098; offset < 0x00a8; offset++) {
+		bcw_phy_write16(sc, offset, val);
+		val -= 0x0202;
+	}
+	val = 0x2120;
+	for (offset = 0x00a8; offset < 0x00c8; offset++) {
+		bcw_phy_write16(sc, offset, (val & 0x3f3f));
+		val += 0x0202;
+	}
+
+	if (sc->sc_phy_type == BCW_PHY_TYPEG) {
+		bcw_radio_write16(sc, 0x007a, bcw_radio_read16(sc, 0x007a) |
+		    0x0020);
+		bcw_radio_write16(sc, 0x0051, bcw_radio_read16(sc, 0x0051) |
+		    0x0004);
+		bcw_phy_write16(sc, 0x0802, bcw_phy_read16(sc, 0x0802) |
+		    0x0100);
+		bcw_phy_write16(sc, 0x042b, bcw_phy_read16(sc, 0x042b) |
+		    0x2000);
+	}
+
+	/* force to channel 7, even if not supported */
+	bcw_radio_channel(sc, 7, 0);
+
+	bcw_radio_write16(sc, 0x0050, 0x0020);
+	bcw_radio_write16(sc, 0x0050, 0x0023);
+	delay(40);
+	bcw_radio_write16(sc, 0x007c, (bcw_radio_read16(sc, 0x007c) |
+	    0x0002));
+	bcw_radio_write16(sc, 0x0050, 0x0020);
+	if (sc->sc_radio_mnf == 0x17f && sc->sc_radio_ver == 0x2050 &&
+	    sc->sc_radio_rev <= 2) {
+		bcw_radio_write16(sc, 0x0050, 0x0020);
+		bcw_radio_write16(sc, 0x005a, 0x0070);
+		bcw_radio_write16(sc, 0x005b, 0x007b);
+		bcw_radio_write16(sc, 0x005c, 0x00b0);
+	}
+	bcw_radio_write16(sc, 0x007a, (bcw_radio_read16(sc, 0x007a) & 0x00f8) |
+	    0x0007);
+
+	bcw_radio_channel(sc, BCW_RADIO_DEFAULT_CHANNEL, 0);
+
+	bcw_phy_write16(sc, 0x0014, 0x0200);
+	if (sc->sc_radio_ver == 0x2050) {
+		if (sc->sc_radio_rev == 3 || sc->sc_radio_rev == 4 ||
+		    sc->sc_radio_rev == 5)
+			bcw_phy_write16(sc, 0x002a, 0x8ac0);
+		else
+			bcw_phy_write16(sc, 0x002a, 0x88c2);
+	}
+	bcw_phy_write16(sc, 0x0038, 0x0668);
+	/* TODO bcw_radio_set_tx_power() */
+	if (sc->sc_radio_ver == 0x2050) {
+		if (sc->sc_radio_rev == 3 || sc->sc_radio_rev == 4 ||
+		    sc->sc_radio_rev == 5)
+			bcw_phy_write16(sc, 0x005d,
+			    bcw_phy_read16(sc, 0x005d) | 0x0003);
+		else if (sc->sc_radio_rev <= 2)
+			bcw_phy_write16(sc, 0x005d, 0x000d);
+	}
+
+	if (sc->sc_phy_rev == 4)
+		bcw_phy_write16(sc, 0x0002, (bcw_phy_read16(sc, 0x0002) &
+		    0xffc0) | 0x0004);
+	else
+		BCW_WRITE16(sc, 0x03e4, 0x0009);
+	if (sc->sc_phy_type == BCW_PHY_TYPEG) {
+		BCW_WRITE16(sc, 0x03e6, 0x8140);
+		bcw_phy_write16(sc, 0x0016, 0x0410);
+		bcw_phy_write16(sc, 0x0017, 0x0820);
+		bcw_phy_write16(sc, 0x0062, 0x0007);
+		/* TODO */
+	} else
+		BCW_WRITE16(sc, 0x03e6, 0);
 }
