@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)get_args.c	8.1 (Berkeley) 6/6/93
- *	$Id: get_args.c,v 1.8 2005/02/18 15:51:02 henning Exp $
+ *	$Id: get_args.c,v 1.9 2007/02/18 08:18:03 jmc Exp $
  */
 
 /*
@@ -306,16 +306,18 @@ get_args(int c, char *v[])
 
 show_usage:
 	fprintf(stderr,
-	    "Usage: %s [-mnprv] [-a mnt_point] [-c cache_time] [-d domain]\n"
-	    "\t[-k kernel_arch] [-l logfile|\"syslog\"] [-t afs_timeout]\n"
-	    "\t[-w wait_timeout] [-C cluster_name]", __progname);
+	    "usage: %s [-nprv] [-a mount_point] [-C cluster-name] "
+	    "[-c duration] [-D option]\n"
+	    "\t[-d domain] [-k kernel-arch] [-l logfile] "
+	    "[-t interval.interval]\n"
+	    "\t[-w interval]", __progname);
 
 #if defined(HAS_HOST) && defined(HOST_EXEC)
 	fputs(" [-h host_helper]\n", stderr);
 #endif /* defined(HAS_HOST) && defined(HOST_EXEC) */
 
 #ifdef HAS_NIS_MAPS
-	fputs(" [-y nis-domain]\n", stderr);
+	fputs(" [-y YP-domain]\n", stderr);
 #else
 	fputc('\n', stderr);
 #endif /* HAS_NIS_MAPS */
@@ -324,6 +326,6 @@ show_usage:
 #ifdef DEBUG
 	show_opts('D', dbg_opt);
 #endif /* DEBUG */
-	fprintf(stderr, "\t{directory mapname [-map_options]} ...\n");
+	fprintf(stderr, "\t[directory mapname [-map-options]] ...\n");
 	exit(1);
 }
