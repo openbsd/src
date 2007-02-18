@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.45 2007/02/03 18:22:33 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.46 2007/02/18 13:49:22 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -224,6 +224,7 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 	struct dos_partition dp[NDOSPART], *dp2;
 	struct partition *pp;
 	unsigned long extoff = 0;
+	unsigned int fattest;
 	daddr_t part_blkno = DOSBBSECTOR;
 	char *msg = NULL;
 	int dospartoff, cyl, i, ourpart = -1;
@@ -359,7 +360,34 @@ donot:
 	}
 	lp->d_bbsize = 8192;
 	lp->d_sbsize = 64*1024;		/* XXX ? */
-	lp->d_npartitions = n > 0 ? n + 8 : 3;
+	lp->d_npartitions = MAXPARTITIONS;
+
+	if (n == 0 && part_blkno == DOSBBSECTOR) {
+		/* Check for a short jump instruction. */
+		fattest = ((bp->b_data[0] << 8) & 0xff00) | (bp->b_data[2] &
+		    0xff);
+		if (fattest != 0xeb90 && fattest != 0xe900)
+			goto notfat;
+
+		/* Check for a valid bytes per sector value. */
+		fattest = ((bp->b_data[12] << 8) & 0xff00) | (bp->b_data[11] &
+		    0xff);
+		if (fattest < 512 || fattest > 4096 || (fattest % 512 != 0))
+			goto notfat;
+
+		/* Check the end of sector marker. */
+		fattest = ((bp->b_data[510] << 8) & 0xff00) | (bp->b_data[511] &
+		    0xff);
+		if (fattest != 0x55aa)
+			goto notfat;
+
+		/* Looks like a FAT filesystem. Spoof 'i'. */
+		lp->d_partitions['i' - 'a'].p_size =
+		    lp->d_partitions[RAW_PART].p_size;
+		lp->d_partitions['i' - 'a'].p_offset = 0;
+		lp->d_partitions['i' - 'a'].p_fstype = FS_MSDOS;
+	}
+notfat:
 
 	/* record the OpenBSD partition's placement for the caller */
 	if (partoffp)
