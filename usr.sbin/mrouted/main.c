@@ -26,7 +26,7 @@
 
 #ifndef lint
 static char rcsid[] =
-	"@(#) $Id: main.c,v 1.16 2005/06/16 19:41:23 robert Exp $";
+	"@(#) $Id: main.c,v 1.17 2007/02/18 21:04:14 jmc Exp $";
 #endif
 
 extern char *configfilename;
@@ -123,7 +123,7 @@ main(int argc, char *argv[])
     
     if (argc > 0) {
 usage:	fprintf(stderr,
-		"usage: mrouted [-p] [-c configfile] [-d [debug_level]]\n");
+		"usage: mrouted [-p] [-c config_file] [-d [debug_level]]\n");
 	exit(1);
     }
 
