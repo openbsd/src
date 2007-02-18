@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iostat.8,v 1.21 2005/09/06 23:28:23 jmc Exp $
+.\"	$OpenBSD: iostat.8,v 1.22 2007/02/18 20:41:34 jmc Exp $
 .\"	$NetBSD: iostat.8,v 1.10 1996/10/25 18:21:57 scottr Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -35,24 +35,20 @@
 .Os
 .Sh NAME
 .Nm iostat
-.Nd report
-.Tn I/O
-statistics
+.Nd report I/O statistics
 .Sh SYNOPSIS
 .Nm iostat
-.Op Fl CdDIT
+.Op Fl CDdIT
 .Op Fl c Ar count
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Op Fl w Ar wait
 .Op Ar drives
 .Sh DESCRIPTION
-.Nm iostat
-displays kernel
-.Tn I/O
-statistics on terminal, disk and CPU operations.
+.Nm
+displays kernel I/O statistics on terminal, disk and CPU operations.
 By default,
-.Nm iostat
+.Nm
 displays one line of statistics averaged over the machine's run time.
 The use of
 .Fl c
@@ -67,7 +63,15 @@ to print raw, unaveraged values.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl c
+.It Fl C
+Show CPU statistics.
+This is enabled by default unless the
+.Fl D ,
+.Fl d ,
+or
+.Fl T
+flags are used.
+.It Fl c Ar count
 Repeat the display
 .Ar count
 times.
@@ -78,43 +82,38 @@ each subsequent report is for the time period since the last display.
 If no
 .Ar wait
 interval is specified, the default is 1 second.
-.It Fl C
-Show CPU statistics.
-This is enabled by default unless the
-.Fl d ,
-.Fl D ,
-or
-.Fl T
-flags are used.
+.It Fl D
+Show alternate disk statistics.
+Displays kilobytes transferred, number of
+transfers, and time spent in transfers.
+Use of this flag disables the default display.
 .It Fl d
 Show disk statistics.
 This is the default.
 Displays kilobytes per
 transfer, number of transfers, and megabytes transferred.
 Use of this flag disables display of CPU and tty statistics.
-.It Fl D
-Show alternate disk statistics.
-Displays kilobytes transferred, number of
-transfers, and time spent in transfers.
-Use of this flag disables the default display.
 .It Fl I
 Show the running total values, rather than an average.
-.It Fl M
-Extract values associated with the name list from the specified core
+.It Fl M Ar core
+Extract values associated with the name list from the specified
+.Ar core
 instead of the default
-.Dq Pa /dev/mem .
-.It Fl N
-Extract the name list from the specified system instead of the default
+.Pa /dev/mem .
+.It Fl N Ar system
+Extract the name list from the specified
+.Ar system
+instead of the default
 .Dq Pa /bsd .
 .It Fl T
 Show tty statistics.
 This is enabled by default unless the
 .Fl C ,
-.Fl d ,
+.Fl D ,
 or
-.Fl D
+.Fl d
 flags are used.
-.It Fl w
+.It Fl w Ar wait
 Pause
 .Ar wait
 seconds between each display.
@@ -123,7 +122,7 @@ If no repeat
 is specified, the default is infinity.
 .El
 .Pp
-.Nm iostat
+.Nm
 displays its information in the following format:
 .Bl -tag -width flag
 .It tty
@@ -137,10 +136,10 @@ characters written to terminals
 Disk operations.
 The header of the field is the disk name and unit number.
 If more than four disk drives are configured in the system,
-.Nm iostat
+.Nm
 displays only the first four drives.
 To force
-.Nm iostat
+.Nm
 to display specific drives, their names may be supplied on the command
 line.
 .Pp
