@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.c	8.1 (Berkeley) 6/7/93
- *	$Id: amq.c,v 1.11 2003/06/02 23:36:51 millert Exp $
+ *	$Id: amq.c,v 1.12 2007/02/18 08:34:38 jmc Exp $
  */
 
 /*
@@ -48,7 +48,7 @@ char copyright[] = "\
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: amq.c,v 1.11 2003/06/02 23:36:51 millert Exp $";
+static char rcsid[] = "$Id: amq.c,v 1.12 2007/02/18 08:34:38 jmc Exp $";
 static char sccsid[] = "@(#)amq.c	8.1 (Berkeley) 6/7/93";
 #endif /* not lint */
 
@@ -313,10 +313,8 @@ main(int argc, char *argv[])
 	
 	if (errs) {
 show_usage:
-		fprintf(stderr, "usage: %s [-h host] [[-f] [-m] [-v] [-s]]"
-		    " | [[-u] directory ...]] |\n"
-		    "\t[-l logfile|\"syslog\"] [-x log_flags] "
-		    "[-D dbg_opts] [-M mapent]\n", __progname);
+		fprintf(stderr, "usage: %s [-fmsuv] [-h hostname] "
+		    "[directory ...]\n", __progname);
 		exit(1);
 	}
 
