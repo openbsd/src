@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.40 2007/02/18 15:14:38 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.41 2007/02/18 15:19:03 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -249,7 +249,7 @@ bcw_attach(struct bcw_softc *sc)
 	 */
 
 	/*
-	 * Get a copy of the BoardFlags and fix for broken boards
+	 * Get a copy of the BoardFlags and fix for broken boards.
 	 * This needs to be done as soon as possible to determine if the
 	 * board supports power control settings. If so, the board has to
 	 * be powered on and the clock started. This may even need to go
@@ -659,7 +659,7 @@ bcw_attach(struct bcw_softc *sc)
 
 	/*
 	 * Allocate DMA-safe memory for ring descriptors.
-	 * The receive, and transmit rings are 4k aligned
+	 * The receive and transmit rings are 4k aligned
 	 */
 	bcw_alloc_rx_ring(sc, &sc->sc_rxring, BCW_RX_RING_COUNT);
 	bcw_alloc_tx_ring(sc, &sc->sc_txring, BCW_TX_RING_COUNT);
@@ -1362,7 +1362,7 @@ bcw_init(struct ifnet *ifp)
 	return (0);
 }
 
-/* Add a receive buffer to the indiciated descriptor. */
+/* Add a receive buffer to the indicated descriptor. */
 int
 bcw_add_rxbuf(struct bcw_softc *sc, int idx)
 {
