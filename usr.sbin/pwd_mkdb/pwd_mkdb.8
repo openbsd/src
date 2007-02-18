@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwd_mkdb.8,v 1.20 2006/08/27 19:28:13 ray Exp $
+.\"	$OpenBSD: pwd_mkdb.8,v 1.21 2007/02/18 22:56:21 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Nm pwd_mkdb
 .Op Fl c
-.Op Fl p | Fl s
+.Op Fl p | s
 .Op Fl d Ar directory
 .Op Fl u Ar username
 .Ar file
@@ -70,19 +70,6 @@ The options are as follows:
 .It Fl c
 Check if the password file is in the correct format.
 Do not change, add, or remove any files.
-.It Fl p
-Create a 6th Edition-style password file and install it into
-.Pa /etc/passwd .
-.It Fl s
-Only update the secure version of the database.
-This is most commonly used in conjunction with the
-.Fl u
-flag during a password change.
-Because the insecure database doesn't contain the password there
-is no reason to update it if the only change is in the password field.
-Cannot be used in conjunction with the
-.Fl p
-flag.
 .It Fl d Ar directory
 Operate in a base directory other than the default of
 .Pa /etc .
@@ -99,6 +86,19 @@ other than
 for instance in a
 .Xr chroot 8
 jail.
+.It Fl p
+Create a 6th Edition-style password file and install it into
+.Pa /etc/passwd .
+.It Fl s
+Only update the secure version of the database.
+This is most commonly used in conjunction with the
+.Fl u
+flag during a password change.
+Because the insecure database doesn't contain the password there
+is no reason to update it if the only change is in the password field.
+Cannot be used in conjunction with the
+.Fl p
+flag.
 .It Fl u Ar username
 Only update the record for the specified user.
 Utilities that operate on a single user can use this option to avoid the
