@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.16 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.17 2007/02/18 18:40:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
@@ -241,8 +241,17 @@ vigraattach(struct device *parent, struct device *self, void *args)
 {
 	struct vigra_softc *sc = (struct vigra_softc *)self;
 	struct confargs *ca = args;
-	int node, row, isconsole = 0;
+	int node, pri, row, isconsole = 0;
 	char *nam;
+
+	pri = ca->ca_ra.ra_intr[0].int_pri;
+	printf(" pri %d", pri);
+
+	if (ca->ca_ra.ra_nreg < VIGRA_NREG) {
+		printf("\n%s: expected %d registers, got %d",
+		    self->dv_xname, VIGRA_NREG, ca->ca_ra.ra_nreg);
+		return;
+	}
 
 	node = ca->ca_ra.ra_node;
 	nam = getpropstring(node, "model");
@@ -251,12 +260,6 @@ vigraattach(struct device *parent, struct device *self, void *args)
 	printf(": %s", nam);
 
 	isconsole = node == fbnode;
-
-	if (ca->ca_ra.ra_nreg < VIGRA_NREG) {
-		printf("\n%s: expected %d registers, got %d",
-		    self->dv_xname, VIGRA_NREG, ca->ca_ra.ra_nreg);
-		return;
-	}
 
 	/*
 	 * Check whether we are using an G300 or an G335 chip.
@@ -272,8 +275,7 @@ vigraattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_ih.ih_fun = vigra_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
-	    self->dv_xname);
+	intr_establish(pri, &sc->sc_ih, IPL_FB, self->dv_xname);
 
 	/* enable video */
 	vigra_burner(sc, 1, 0);

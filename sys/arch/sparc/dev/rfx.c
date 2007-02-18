@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfx.c,v 1.11 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: rfx.c,v 1.12 2007/02/18 18:40:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -195,7 +195,15 @@ rfxattach(struct device *parent, struct device *self, void *args)
 	struct confargs *ca = args;
 	const char *device = ca->ca_ra.ra_name;
 	struct rfx_config cf;
-	int node, cflen, isconsole = 0;
+	int node, cflen, isconsole;
+#if 0
+	int pri;
+#endif
+
+#if 0
+	pri = ca->ca_ra.ra_intr[0].int_pri;
+	printf(" pri %d", pri);
+#endif
 
 	/* skip vendor name (could be CWARE, VITec, ...) */
 	while (*device != ',' && *device != '\0')
@@ -204,7 +212,6 @@ rfxattach(struct device *parent, struct device *self, void *args)
 		device = ca->ca_ra.ra_name;
 	else
 		device++;
-
 	printf(": %s", device);
 
 	if (ca->ca_ra.ra_nreg == 0) {
@@ -244,8 +251,7 @@ rfxattach(struct device *parent, struct device *self, void *args)
 #if 0	/* not yet */
 	sc->sc_ih.ih_fun = rfx_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
-	    self->dv_xname);
+	intr_establish(pri, &sc->sc_ih, IPL_FB, self->dv_xname);
 #endif
 
 	/*

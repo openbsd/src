@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.32 2006/12/03 16:38:13 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.33 2007/02/18 18:40:35 miod Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -189,12 +189,13 @@ cgthreeattach(struct device *parent, struct device *self, void *args)
 {
 	struct cgthree_softc *sc = (struct cgthree_softc *)self;
 	struct confargs *ca = args;
-	int node, isrdi = 0, i;
+	int node, pri, isrdi = 0, i;
 	volatile struct bt_regs *bt;
-	int isconsole = 0;
+	int isconsole;
 	char *nam;
 
-	printf(": ");
+	pri = ca->ca_ra.ra_intr[0].int_pri;
+	printf(" pri %d: ", pri);
 
 	node = ca->ca_ra.ra_node;
 
@@ -237,8 +238,7 @@ cgthreeattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_ih.ih_fun = cgthree_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
-	    self->dv_xname);
+	intr_establish(pri, &sc->sc_ih, IPL_FB, self->dv_xname);
 
 	/* enable video */
 	cgthree_burner(sc, 1, 0);

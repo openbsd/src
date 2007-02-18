@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.33 2005/12/25 21:47:15 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.34 2007/02/18 18:40:35 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -219,30 +219,32 @@ cgfourteenattach(struct device *parent, struct device *self, void *args)
 {
 	struct cgfourteen_softc *sc = (struct cgfourteen_softc *)self;
 	struct confargs *ca = args;
-	int node, i;
+	int node, pri, i;
 	u_int32_t *lut;
-	int isconsole = 0;
+	int isconsole;
 	char *nam;
+
+	pri = ca->ca_ra.ra_intr[0].int_pri;
+	printf(" pri %d: ", pri);
 
 	/*
 	 * Sanity checks
 	 */
 	if (ca->ca_ra.ra_len < 0x10000) {
-		printf(": expected %x bytes of control registers, got %x\n",
+		printf("expected %x bytes of control registers, got %x\n",
 		    0x10000, ca->ca_ra.ra_len);
 		return;
 	}
 	if (ca->ca_ra.ra_nreg < CG14_NREG) {
-		printf(": expected %d registers, got %d\n",
+		printf("expected %d registers, got %d\n",
 		    CG14_NREG, ca->ca_ra.ra_nreg);
 		return;
 	}
 	if (ca->ca_ra.ra_nintr != 1) {
-		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
+		printf("expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
 		return;
 	}
 
-	printf(": ");
 	node = ca->ca_ra.ra_node;
 	nam = getpropstring(node, "model");
 	if (*nam != '\0')
@@ -299,8 +301,7 @@ cgfourteenattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_ih.ih_fun = cgfourteen_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
-	    self->dv_xname);
+	intr_establish(pri, &sc->sc_ih, IPL_FB, self->dv_xname);
 
 	/*
 	 * Reset frame buffer controls
@@ -645,13 +646,13 @@ cgfourteen_intr(void *v)
 		claim = 1 | sc->sc_ctl->ctl_fsr;
 	}
 
-#ifdef DIAGNOSTIC
 	if (claim == 0) {
+#ifdef DEBUG
 		printf("%s: unknown interrupt cause, msr=%x\n",
 		    sc->sc_sunfb.sf_dev.dv_xname, msr);
+#endif
 		claim = 1;	/* claim anyway */
 	}
-#endif
 
 	return (claim & 1);
 }

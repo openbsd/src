@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.42 2006/12/27 18:54:04 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.43 2007/02/18 18:40:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005, 2006, Miodrag Vallat.
@@ -265,8 +265,11 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	struct rasops_info *ri = &sc->sc_sunfb.sf_ro;
 	struct confargs *ca = args;
 	struct romaux *ra = &ca->ca_ra;
-	int node, scr, force_reset;
+	int node, pri, scr, force_reset;
 	int isconsole, fontswitch, clear = 0;
+
+	pri = ca->ca_ra.ra_intr[0].int_pri;
+	printf(" pri %d", pri);
 
 #ifdef DIAGNOSTIC
 	if (ra->ra_nreg < P9100_NREG) {
@@ -363,8 +366,7 @@ p9100attach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_ih.ih_fun = p9100_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ra->ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
-	    self->dv_xname);
+	intr_establish(pri, &sc->sc_ih, IPL_FB, self->dv_xname);
 
 	/*
 	 * Try to get a copy of the PROM font.

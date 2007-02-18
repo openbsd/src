@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.18 2006/12/02 11:24:02 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.19 2007/02/18 18:40:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -184,9 +184,12 @@ p9000attach(struct device *parent, struct device *self, void *args)
 {
 	struct p9000_softc *sc = (struct p9000_softc *)self;
 	struct confargs *ca = args;
-	int node, row, isconsole, scr;
+	int node, pri, row, isconsole, scr;
 	struct device *btdev;
 	extern struct cfdriver btcham_cd;
+
+	pri = ca->ca_ra.ra_intr[0].int_pri;
+	printf(" pri %d", pri);
 
 #ifdef DIAGNOSTIC
 	if (ca->ca_ra.ra_nreg < P9000_NREG) {
@@ -240,8 +243,7 @@ p9000attach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_ih.ih_fun = p9000_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
-	    self->dv_xname);
+	intr_establish(pri, &sc->sc_ih, IPL_FB, self->dv_xname);
 
 	/*
 	 * If the framebuffer width is under 1024x768, we will switch from the

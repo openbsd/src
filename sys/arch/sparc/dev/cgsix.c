@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.37 2006/12/03 16:38:13 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.38 2007/02/18 18:40:35 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -206,12 +206,13 @@ cgsixattach(struct device *parent, struct device *self, void *args)
 {
 	struct cgsix_softc *sc = (struct cgsix_softc *)self;
 	struct confargs *ca = args;
-	int node = 0;
+	int node, pri;
 	int isconsole = 0, sbus = 1;
 	char *nam;
 	u_int fhcrev;
 
-	printf(": ");
+	pri = ca->ca_ra.ra_intr[0].int_pri;
+	printf(" pri %d: ", pri);
 
 	/*
 	 * Map just BT, FHC, FBC, THC, and video RAM.
@@ -265,8 +266,7 @@ cgsixattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_ih.ih_fun = cgsix_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
-	    self->dv_xname);
+	intr_establish(pri, &sc->sc_ih, IPL_FB, self->dv_xname);
 
 	/* reset cursor & frame buffer controls */
 	cgsix_reset(sc, fhcrev);

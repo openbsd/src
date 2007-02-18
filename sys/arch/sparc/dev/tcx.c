@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.28 2006/07/25 21:23:30 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.29 2007/02/18 18:40:35 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -176,9 +176,12 @@ tcxattach(struct device *parent, struct device *self, void *args)
 {
 	struct tcx_softc *sc = (struct tcx_softc *)self;
 	struct confargs *ca = args;
-	int node = 0, i;
+	int node, pri, i;
 	int isconsole = 0;
 	char *nam = NULL;
+
+	pri = ca->ca_ra.ra_intr[0].int_pri;
+	printf(" pri %d", pri);
 
 	node = ca->ca_ra.ra_node;
 
@@ -231,8 +234,7 @@ tcxattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_ih.ih_fun = tcx_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
-	    self->dv_xname);
+	intr_establish(pri, &sc->sc_ih, IPL_FB, self->dv_xname);
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, -1);
