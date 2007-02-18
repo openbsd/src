@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.60 2007/02/17 20:56:38 ray Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.61 2007/02/18 19:03:11 ray Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -1040,6 +1040,8 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		}
 		if ((qtype == T_A || qtype == T_AAAA || qtype == T_ANY) &&
 		    type == T_CNAME) {
+			size_t len;
+
 			n = dn_expand(answer->buf, eom, cp, tbuf, sizeof tbuf);
 			if ((n < 0) || !(*name_ok)(tbuf)) {
 				had_error++;
@@ -1047,14 +1049,14 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 			}
 			cp += n;
 			/* Get canonical name. */
-			n = strlen(tbuf) + 1;	/* for the \0 */
-			if (n > ep - bp || n >= MAXHOSTNAMELEN) {
+			len = strlen(tbuf) + 1;	/* for the \0 */
+			if (len > ep - bp || len >= MAXHOSTNAMELEN) {
 				had_error++;
 				continue;
 			}
 			strlcpy(bp, tbuf, ep - bp);
 			canonname = bp;
-			bp += n;
+			bp += len;
 			continue;
 		}
 		if (qtype == T_ANY) {
