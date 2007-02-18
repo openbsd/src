@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypset.c,v 1.16 2007/01/02 20:13:28 otto Exp $ */
+/*	$OpenBSD: ypset.c,v 1.17 2007/02/18 23:37:53 jmc Exp $ */
 /*	$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypset.c,v 1.16 2007/01/02 20:13:28 otto Exp $";
+static char rcsid[] = "$OpenBSD: ypset.c,v 1.17 2007/02/18 23:37:53 jmc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -50,7 +50,7 @@ static char rcsid[] = "$OpenBSD: ypset.c,v 1.16 2007/01/02 20:13:28 otto Exp $";
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: ypset [-h host ] [-d domain] server\n");
+	fprintf(stderr, "usage: ypset [-d domain] [-h host] server\n");
 	exit(1);
 }
 

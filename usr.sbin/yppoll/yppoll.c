@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppoll.c,v 1.10 2003/12/10 19:44:06 deraadt Exp $ */
+/*	$OpenBSD: yppoll.c,v 1.11 2007/02/18 23:32:02 jmc Exp $ */
 /*	$NetBSD: yppoll.c,v 1.5 1996/05/13 02:46:36 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: yppoll.c,v 1.10 2003/12/10 19:44:06 deraadt Exp $";
+static char rcsid[] = "$Id: yppoll.c,v 1.11 2007/02/18 23:32:02 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,7 +55,7 @@ static char rcsid[] = "$Id: yppoll.c,v 1.10 2003/12/10 19:44:06 deraadt Exp $";
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: yppoll [-h host] [-d domainname] mapname\n");
+	fprintf(stderr, "usage: yppoll [-d domain] [-h host] mapname\n");
 	exit(1);
 }
 

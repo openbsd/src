@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypset.8,v 1.6 2001/08/02 18:37:35 mpech Exp $
+.\"	$OpenBSD: ypset.8,v 1.7 2007/02/18 23:37:53 jmc Exp $
 .\"	$NetBSD: ypset.8,v 1.2 1996/02/28 01:25:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,8 +45,8 @@
 which YP server process to use
 .Sh SYNOPSIS
 .Nm ypset
-.Op Fl h Ar host
 .Op Fl d Ar domain
+.Op Fl h Ar host
 .Ar server
 .Sh DESCRIPTION
 .Nm
@@ -69,15 +69,15 @@ the local network supplying YP maps.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl h Ar host
-Set the YP binding on
-.Ar host
-instead of the local machine.
 .It Fl d Ar domain
 Use the YP domain
 .Ar domain
 instead of the default domain as returned by
 .Xr domainname 1 .
+.It Fl h Ar host
+Set the YP binding on
+.Ar host
+instead of the local machine.
 .El
 .Sh SEE ALSO
 .Xr domainname 1 ,

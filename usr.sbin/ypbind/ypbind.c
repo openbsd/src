@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.55 2007/01/02 20:12:01 otto Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.56 2007/02/18 23:27:06 jmc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.55 2007/01/02 20:12:01 otto Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.56 2007/02/18 23:27:06 jmc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -333,7 +333,7 @@ ypbindprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: ypbind [-ypset] [-ypsetme] [-insecure]\n");
+	fprintf(stderr, "usage: ypbind [-insecure] [-ypset] [-ypsetme]\n");
 	exit(0);
 }
 
