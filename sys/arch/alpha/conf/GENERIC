@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.187 2006/11/25 20:44:30 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.188 2007/02/18 14:18:28 krw Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -30,9 +30,6 @@ option		API_UP1000	# EV6:		Alpha Processor UP1000
 
 option		COMPAT_OSF1	# OSF/1 binary compatibility
 option		COMPAT_NETBSD	# NetBSD compatibility
-
-# Disklabel compatibility options
-option		DISKLABEL_I386	# i386/arc style of partitioning
 
 # Misc. options
 option		EISAVERBOSE		# recognize "unknown" EISA devices

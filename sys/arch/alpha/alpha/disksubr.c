@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.66 2007/02/18 13:49:22 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.67 2007/02/18 14:18:28 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -50,10 +50,8 @@
 
 char   *readbsdlabel(struct buf *, void (*)(struct buf *), int, int,
     int, struct disklabel *, int);
-#if defined(DISKLABEL_I386)
 char   *readdoslabel(struct buf *, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *, int *, int *, int);
-#endif
 
 /*
  * Try to read a standard BSD disklabel at a certain sector.
@@ -163,7 +161,6 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	    lp, spoofonly);
 	if (msg)
 		*lp = minilabel;
-#if defined(DISKLABEL_I386)
 	if (msg) {
 		msg = readdoslabel(bp, strat, lp, osdep, 0, 0, spoofonly);
 		if (msg) {
@@ -172,7 +169,6 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 			*lp = minilabel;
 		}
 	}
-#endif
 	/* Record metainformation about the disklabel.  */
 	if (msg == NULL) {
 		osdep->labelsector = bp->b_blkno;
@@ -198,7 +194,6 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	return (msg);
 }
 
-#if defined(DISKLABEL_I386)
 /*
  * If dos partition table requested, attempt to load it and
  * find disklabel inside a DOS partition. Return buffer
@@ -398,7 +393,6 @@ notfat:
 
 	return (msg);
 }
-#endif
 
 /*
  * Check new disk label for sensibility
@@ -478,9 +472,7 @@ writedisklabel(dev, strat, lp, osdep)
 	char *msg = "no disk label";
 	struct buf *bp;
 	struct disklabel dl;
-#if defined(DISKLABEL_I386)
 	struct cpu_disklabel cdl;
-#endif
 	int labeloffset, error, i, partoff = 0, cyl = 0, needcsum = 0;
 	u_int64_t csum, *p;
 
@@ -500,13 +492,11 @@ writedisklabel(dev, strat, lp, osdep)
 	labeloffset = ALPHA_LABELOFFSET;
 	if (msg == NULL)
 		needcsum = 1;
-#if defined(DISKLABEL_I386)
 	if (msg) {
 		dl = *lp;
 		msg = readdoslabel(bp, strat, &dl, &cdl, &partoff, &cyl, 0);
 		labeloffset = I386_LABELOFFSET;
 	}
-#endif
 	if (msg) {
 		if (partoff == -1)
 			return EIO;

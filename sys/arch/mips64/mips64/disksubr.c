@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.35 2007/02/18 13:49:22 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.36 2007/02/18 14:18:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -52,10 +52,8 @@
 
 char   *readbsdlabel(struct buf *, void (*)(struct buf *), int, int,
     int, struct disklabel *, int);
-#if defined(DISKLABEL_I386)
 char   *readdoslabel(struct buf *, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *, int *, int *, int);
-#endif
 char   *readsgilabel(struct buf *, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *, int *, int *, int);
 void map_sgi_label(struct disklabel *, struct sgilabel *);
@@ -170,7 +168,6 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 		fallbacklabel = *lp;
 		*lp = minilabel;
 	}	
-#if defined(DISKLABEL_I386)
 	if (msg) {
 		msg = readdoslabel(bp, strat, lp, osdep, 0, 0, spoofonly);
 		if (msg) {
@@ -179,7 +176,6 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 			*lp = minilabel;
 		}
 	}
-#endif
 	/* Record metainformation about the disklabel.  */
 	if (msg == NULL) {
 		osdep->labelsector = bp->b_blkno;
@@ -205,7 +201,6 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	return (msg);
 }
 
-#if defined(DISKLABEL_I386)
 /*
  * If dos partition table requested, attempt to load it and
  * find disklabel inside a DOS partition. Return buffer
@@ -405,7 +400,6 @@ notfat:
 
 	return (msg);
 }
-#endif
 
 /*
  * 
@@ -605,13 +599,11 @@ writedisklabel(dev, strat, lp, osdep)
 	dl = *lp;
 	msg = readsgilabel(bp, strat, &dl, &cdl, &partoff, &cyl, 0);
 	labeloffset = SGI_LABELOFFSET;
-#if defined(DISKLABEL_I386)
 	if (msg) {
 		dl = *lp;
 		msg = readdoslabel(bp, strat, &dl, &cdl, &partoff, &cyl, 0);
 		labeloffset = I386_LABELOFFSET;
 	}
-#endif
 	if (msg) {
 		if (partoff == -1)
 			return EIO;
