@@ -38,7 +38,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)repquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: repquota.c,v 1.27 2005/04/03 19:02:30 otto Exp $";
+static char *rcsid = "$Id: repquota.c,v 1.28 2007/02/18 23:17:59 jmc Exp $";
 #endif /* not lint */
 
 /*
@@ -164,9 +164,9 @@ main(int argc, char *argv[])
 void
 usage(void)
 {
-	fprintf(stderr, "Usage:\n\t%s\n\t%s\n",
-		"repquota [-v] [-g] [-u] -a",
-		"repquota [-v] [-g] [-u] filesys ...");
+	extern char *__progname;
+	fprintf(stderr, "usage: repquota [-aguv] filesystem ...\n",
+		__progname);
 	exit(1);
 }
 
