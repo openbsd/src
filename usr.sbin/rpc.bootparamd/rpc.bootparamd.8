@@ -1,4 +1,4 @@
-.\" $OpenBSD: rpc.bootparamd.8,v 1.16 2003/06/12 12:59:52 jmc Exp $
+.\" $OpenBSD: rpc.bootparamd.8,v 1.17 2007/02/18 20:33:45 jmc Exp $
 .\" @(#)bootparamd.8
 .\"
 .\" This code is not copyright, and is placed in the public domain.
@@ -17,10 +17,9 @@
 .Nd boot parameter server
 .Sh SYNOPSIS
 .Nm rpc.bootparamd
-.Op Fl d
-.Op Fl s
-.Op Fl r Ar router
+.Op Fl ds
 .Op Fl f Ar file
+.Op Fl r Ar router
 .Sh DESCRIPTION
 .Nm
 is a server process that provides information to diskless clients
@@ -49,15 +48,19 @@ The options are as follows:
 .It Fl d
 Display the debugging information.
 The daemon does not fork in this case.
-.It Fl s
-Log the debugging information with syslog.
-.It Fl r
-Set the default router (a hostname or IP address).
-This defaults to the machine running the server.
-.It Fl f
-Specify the file to read boot parameters from.
+.It Fl f Ar file
+Specify the
+.Ar file
+to read boot parameters from.
 Defaults to
 .Pa /etc/bootparams .
+.It Fl r Ar router
+Set the default
+.Ar router
+(a hostname or IP address).
+This defaults to the machine running the server.
+.It Fl s
+Log the debugging information with syslog.
 .El
 .Sh FILES
 .Bl -tag -width /etc/bootparams -compact
