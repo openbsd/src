@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)get_args.c	8.1 (Berkeley) 6/6/93
- *	$Id: get_args.c,v 1.9 2007/02/18 08:18:03 jmc Exp $
+ *	$Id: get_args.c,v 1.10 2007/02/18 20:26:38 jmc Exp $
  */
 
 /*
@@ -306,7 +306,7 @@ get_args(int c, char *v[])
 
 show_usage:
 	fprintf(stderr,
-	    "usage: %s [-nprv] [-a mount_point] [-C cluster-name] "
+	    "usage: %s [-nprv] [-a mount_point] [-C cluster] "
 	    "[-c duration] [-D option]\n"
 	    "\t[-d domain] [-k kernel-arch] [-l logfile] "
 	    "[-t interval.interval]\n"
