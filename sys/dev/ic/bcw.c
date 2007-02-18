@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.39 2007/02/18 11:42:40 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.40 2007/02/18 15:14:38 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -66,6 +66,8 @@
 /* register routines */
 void		bcw_shm_ctl_word(struct bcw_softc *, uint16_t, uint16_t);
 uint16_t	bcw_shm_read16(struct bcw_softc *, uint16_t, uint16_t);
+void		bcw_shm_write16(struct bcw_softc *, uint16_t, uint16_t,
+		    uint16_t);
 void		bcw_radio_write16(struct bcw_softc *, uint16_t, uint16_t);
 int		bcw_radio_read16(struct bcw_softc *, uint16_t);
 void		bcw_phy_write16(struct bcw_softc *, uint16_t, uint16_t);
@@ -114,10 +116,11 @@ int		bcw_phy_init(struct bcw_softc *);
 void		bcw_phy_initg(struct bcw_softc *);
 void		bcw_phy_initb5(struct bcw_softc *);
 void		bcw_phy_initb6(struct bcw_softc *);
+void		bcw_phy_lo_adjust(struct bcw_softc *, int);
 /* radio */
 void		bcw_radio_off(struct bcw_softc *);
 void		bcw_radio_on(struct bcw_softc *);
-void		bcw_radio_txpower(struct bcw_softc *, uint16_t, uint16_t,
+void		bcw_radio_txpower_bg(struct bcw_softc *, uint16_t, uint16_t,
 		    uint16_t);
 void		bcw_radio_spw(struct bcw_softc *, uint8_t);
 int		bcw_radio_channel(struct bcw_softc *, uint8_t, int );
@@ -157,6 +160,22 @@ bcw_shm_read16(struct bcw_softc *sc, uint16_t routing, uint16_t offset)
 	bcw_shm_ctl_word(sc, routing, offset);
 
 	return (BCW_READ16(sc, BCW_SHM_DATA));
+}
+
+void
+bcw_shm_write16(struct bcw_softc *sc, uint16_t routing, uint16_t offset,
+    uint16_t val)
+{
+	if (routing == BCW_SHM_CONTROL_SHARED) {
+		if (offset & 0x0003) {
+			bcw_shm_ctl_word(sc, routing, offset >> 2);
+			BCW_WRITE16(sc, BCW_SHM_DATAHIGH, val);
+			return;
+		}
+		offset >>= 2;
+	}
+	bcw_shm_ctl_word(sc, routing, offset);
+	BCW_WRITE16(sc, BCW_SHM_DATA, val);
 }
 
 void
@@ -2972,10 +2991,21 @@ bcw_radio_on(struct bcw_softc *sc)
 }
 
 void
-bcw_radio_txpower(struct bcw_softc *sc, uint16_t baseband_att,
+bcw_radio_txpower_bg(struct bcw_softc *sc, uint16_t baseband_att,
     uint16_t radio_att, uint16_t txpower)
 {
+	//if (baseband_att == 0xffff)
+	//if (radio_att == 0xfff)
+	//if (txpower == 0xfff)
 
+	bcw_radio_write16(sc, 0x0043, radio_att);
+	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0064, radio_att);
+	if (sc->sc_radio_ver == 0x2050)
+		bcw_radio_write16(sc, 0x0052, (bcw_radio_read16(sc, 0x0052) &
+		    ~0x0070) | ((txpower << 4) & 0x0070));
+
+	/* XXX unclear specs */
+	//if (sc->sc_phy_type == BCW_PHY_TYPEG)
 }
 
 void
