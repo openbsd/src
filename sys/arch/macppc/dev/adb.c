@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.20 2007/02/12 21:01:11 gwk Exp $	*/
+/*	$OpenBSD: adb.c,v 1.21 2007/02/18 19:33:48 gwk Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -278,7 +278,7 @@ void	setsoftadb(void);
 
 int	adb_intr(void *arg);
 void	adb_cuda_autopoll(void);
-void 	adb_cuda_fileserver_mode(void);
+void 	adb_cuda_fileserver_mode(int);
 
 #ifdef ADB_DEBUG
 /*
@@ -1516,6 +1516,8 @@ adb_poweroff(void)
 
 	switch (adbHardware) {
 	case ADB_HW_PMU:
+		/* Clear the wake on AC loss event */
+		pmu_fileserver_mode(0);
 		pm_adb_poweroff();
 
 		for (;;);		/* wait for power off */
@@ -1523,6 +1525,8 @@ adb_poweroff(void)
 		return 0;
 
 	case ADB_HW_CUDA:
+		/* Clear the wake on AC loss event */
+		adb_cuda_fileserver_mode(0);
 		output[0] = 0x02;	/* 2 byte message */
 		output[1] = 0x01;	/* to pram/rtc/soft-power device */
 		output[2] = 0x0a;	/* set poweroff */
@@ -1568,7 +1572,7 @@ adb_cuda_autopoll()
 }
 
 void
-adb_cuda_fileserver_mode()
+adb_cuda_fileserver_mode(int on)
 {
 	volatile int flag = 0;
 	int result;
@@ -1577,7 +1581,7 @@ adb_cuda_fileserver_mode()
 	output[0] = 0x03;	/* 3-byte message */
 	output[1] = 0x01; 	/* to pram/rtc device/soft-power device */
 	output[2] = 0x13;	/* cuda file server mode */
-	output[3] = 0x01;	/* True */
+	output[3] = on;
 
 	result = send_adb_cuda(output, output, adb_op_comprout,
 	    (void *)&flag, 0);
@@ -1739,7 +1743,7 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (adbHardware == ADB_HW_CUDA)
-		adb_cuda_fileserver_mode();
+		adb_cuda_fileserver_mode(1);
 	if (adbHardware == ADB_HW_PMU)
-		pmu_fileserver_mode();
+		pmu_fileserver_mode(1);
 }
