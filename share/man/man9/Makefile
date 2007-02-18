@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.121 2007/01/11 12:06:46 art Exp $
+#	$OpenBSD: Makefile,v 1.122 2007/02/18 20:47:16 mk Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	altq.9 audio.9 autoconf.9 bio_register.9 boot.9 buffercache.9 \
-	bus_dma.9 bus_space.9 copy.9 crypto.9 ctxsw.9 delay.9 disk.9 \
-	disklabel.9 dohooks.9 dopowerhooks.9 \
+MAN=	altq.9 aml_evalnode.9 audio.9 autoconf.9 bio_register.9 boot.9 \
+	buffercache.9 bus_dma.9 bus_space.9 copy.9 crypto.9 ctxsw.9 delay.9 \
+	disk.9 disklabel.9 dohooks.9 dopowerhooks.9 \
 	domountroothooks.9 doshutdownhooks.9 dostartuphooks.9 \
 	evcount.9 file.9 \
 	fork1.9 extent.9 getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
@@ -29,6 +29,8 @@ MAN=	altq.9 audio.9 autoconf.9 bio_register.9 boot.9 buffercache.9 \
 	VOP_GETATTR.9 VOP_LOOKUP.9 vput.9 vrecycle.9 vref.9 vrele.9 \
 	vwaitforio.9 vwakeup.9 wdog_register.9
 
+MLINKS+=aml_evalnode.9 aml_evalname.9 aml_evalnode.9 aml_find_node.9 \
+	aml_evalnode.9 aml_freevalue.9 aml_evalnode.9 aml_val2int.9
 MLINKS+=autoconf.9 config_init.9 autoconf.9 config_search.9 \
 	autoconf.9 config_rootsearch.9 autoconf.9 config_found_sm.9 \
 	autoconf.9 config_found.9 autoconf.9 config_rootfound.9 \
