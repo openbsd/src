@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtrace.8,v 1.12 2003/07/14 13:32:11 jmc Exp $
+.\"	$OpenBSD: mtrace.8,v 1.13 2007/02/18 21:16:03 jmc Exp $
 .\"	$NetBSD: mtrace.8,v 1.4 1995/12/10 10:57:11 mycroft Exp $
 .\"
 .\" Copyright (c) 1993, 1998-2001.
@@ -74,25 +74,18 @@
 .Nd print multicast path from a source to a receiver
 .Sh SYNOPSIS
 .Nm mtrace
-.Bk -words
+.Op Fl lMnpsv
 .Op Fl g Ar gateway
 .Op Fl i Ar if_addr
-.Op Fl l
-.Op Fl M
 .Op Fl m Ar max_hops
-.Op Fl n
-.Op Fl p
 .Op Fl q Ar nqueries
-.Op Fl r Ar resp_dest
-.Op Fl s
+.Op Fl r Ar host
 .Op Fl S Ar stat_int
 .Op Fl t Ar ttl
-.Op Fl v
 .Op Fl w Ar waittime
 .Ar source
 .Op Ar receiver
 .Op Ar group
-.Ek
 .Sh DESCRIPTION
 Assessing problems in the distribution of IP multicast traffic
 can be difficult.
@@ -128,18 +121,18 @@ is a multicast address.
 .Pp
 The options are as follows:
 .Bl -tag -width addr_xy
-.It Fl g Ar gwy
+.It Fl g Ar gateway
 Send the trace query via unicast directly to the multicast router
-.Ar gwy
+.Ar gateway
 rather than multicasting the query.
 This must be the last-hop router on the path from the intended
 .Ar source
 to the
 .Ar receiver .
 .Em NOTE: Read the BUGS section below.
-.It Fl i Ar addr
+.It Fl i Ar if_addr
 Use
-.Ar addr
+.Ar if_addr
 as the local interface address (on a multi-homed host) for sending the
 trace query and as the default for the
 .Ar receiver
@@ -151,25 +144,24 @@ multicast path every 10 seconds (see
 .It Fl M
 Always send the response using multicast rather than attempting
 unicast first.
-.It Fl m Ar n
+.It Fl m Ar max_hops
 Set to
-.Ar n
 the maximum number of hops that will be traced from the
 .Ar receiver
 back toward the
 .Ar source .
 The default is 32 hops (infinity for the DVMRP routing protocol).
+.It Fl p
+Listen passively for multicast responses from traces initiated by others.
+This works best when run on a multicast router.
+.It Fl q Ar nqueries
+Set the maximum number of query attempts for any hop to
+.Ar nqueries .
+The default is 3.
 .It Fl n
 Print hop addresses numerically rather than symbolically and numerically
 (saves a nameserver address-to-name lookup for each router found on the
 path).
-.It Fl q Ar n
-Set the maximum number of query attempts for any hop to
-.Ar n .
-The default is 3.
-.It Fl p
-Listen passively for multicast responses from traces initiated by others.
-This works best when run on a multicast router.
 .It Fl r Ar host
 Send the trace response to
 .Ar host
@@ -177,13 +169,13 @@ rather than to the host on which
 .Nm
 is being run, or to a multicast address other than the one registered
 for this purpose (224.0.1.32).
+.It Fl S Ar stat_int
+Change the interval between statistics gathering traces to
+.Ar stat_int
+seconds (default 10 seconds).
 .It Fl s
 Print a short form output including only the multicast path and not
 the packet rate and loss statistics.
-.It Fl S Ar n
-Change the interval between statistics gathering traces to
-.Ar n
-seconds (default 10 seconds).
 .It Fl t Ar ttl
 Set the
 .Ar ttl
@@ -193,9 +185,9 @@ The default is 64, except for local queries to the
 "all routers" multicast group which use ttl 1.
 .It Fl v
 Verbose mode; show hop times on the initial trace and statistics display.
-.It Fl w Ar n
+.It Fl w Ar waittime
 Set the time to wait for a trace response to
-.Ar n
+.Ar waittime
 seconds (default 3 seconds).
 .El
 .Ss How \&It Works

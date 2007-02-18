@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppstats.8,v 1.9 2003/06/12 12:59:52 jmc Exp $
+.\" $OpenBSD: pppstats.8,v 1.10 2007/02/18 21:20:08 jmc Exp $
 .\"
 .\" Contributed by Van Jacobson (van@ee.lbl.gov), Dec 31, 1989.
 .\"
@@ -37,13 +37,9 @@
 .Nd report statistics for the specified PPP interface
 .Sh SYNOPSIS
 .Nm pppstats
-.Op Fl v
-.Op Fl r
-.Op Fl z
-.Op Fl a
-.Op Fl d
+.Op Fl adrvz
 .Op Fl c Ar count
-.Op Fl w Ar secs
+.Op Fl w Ar wait
 .Op Ar interface
 .Sh DESCRIPTION
 The

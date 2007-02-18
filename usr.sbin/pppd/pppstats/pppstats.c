@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppstats.c,v 1.8 2002/06/18 17:29:05 deraadt Exp $	*/
+/*	$OpenBSD: pppstats.c,v 1.9 2007/02/18 21:20:08 jmc Exp $	*/
 
 /*
  * print PPP statistics:
@@ -51,7 +51,7 @@
 #if 0
 static char rcsid[] = "Id: pppstats.c,v 1.22 1998/03/31 23:48:03 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: pppstats.c,v 1.8 2002/06/18 17:29:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pppstats.c,v 1.9 2007/02/18 21:20:08 jmc Exp $";
 #endif
 #endif
 
@@ -96,7 +96,7 @@ usage()
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "Usage: %s [-adrvz] [-c count] [-w wait] [interface]\n",
+	    "usage: %s [-adrvz] [-c count] [-w wait] [interface]\n",
 	    __progname);
 	exit(1);
 }
