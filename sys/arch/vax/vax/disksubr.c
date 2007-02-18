@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.32 2006/10/21 16:01:54 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.33 2007/02/18 11:43:19 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -253,19 +253,23 @@ writedisklabel(dev, strat, lp, osdep)
 	int error = 0;
 
 	bp = geteblk((int)lp->d_secsize);
-
-	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
-	bcopy(lp, dlp, sizeof(struct disklabel));
-
 	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_READ;
+	(*strat)(bp);
+	if ((error = biowait(bp)) != 0)
+		goto done;
+
+	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+	bcopy(lp, dlp, sizeof(struct disklabel));
 	bp->b_flags = B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
-	brelse(bp);
 
+done:
+	brelse(bp);
 	return (error);
 }
 
