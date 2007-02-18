@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.38 2005/11/15 07:02:37 miod Exp $	*/
+/*	$OpenBSD: cron.c,v 1.39 2007/02/18 23:59:03 jmc Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: cron.c,v 1.38 2005/11/15 07:02:37 miod Exp $";
+static const char rcsid[] = "$OpenBSD: cron.c,v 1.39 2007/02/18 23:59:03 jmc Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -55,7 +55,7 @@ usage(void) {
 	const char **dflags;
 #endif
 
-	fprintf(stderr, "usage:  %s [-l load_avg] [-n] [-x [", ProgramName);
+	fprintf(stderr, "usage:  %s [-n] [-l load_avg] [-x [", ProgramName);
 #if DEBUGGING
 	for (dflags = DebugFlagNames; *dflags; dflags++)
 		fprintf(stderr, "%s%s", *dflags, dflags[1] ? "," : "]");

@@ -17,7 +17,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.\" $OpenBSD: cron.8,v 1.27 2005/11/30 11:18:28 jmc Exp $
+.\" $OpenBSD: cron.8,v 1.28 2007/02/18 23:59:03 jmc Exp $
 .\"
 .Dd July 6, 2002
 .Dt CRON 8
@@ -27,9 +27,16 @@
 .Nd clock daemon
 .Sh SYNOPSIS
 .Nm cron
-.Op Fl l Ar load_avg
 .Op Fl n
-.Op Fl x Ar [ext,sch,proc,pars,load,misc,test]
+.Op Fl l Ar load_avg
+.Oo
+.Fl x
+.Sm off
+.Oo Ar ext , sch , proc ,
+.Ar pars , load , misc , test
+.Oc
+.Sm on
+.Oc
 .Sh DESCRIPTION
 The
 .Nm
