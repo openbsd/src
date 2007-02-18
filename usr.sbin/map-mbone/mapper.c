@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapper.c,v 1.18 2005/06/22 14:50:21 robert Exp $	*/
+/*	$OpenBSD: mapper.c,v 1.19 2007/02/18 20:57:53 jmc Exp $	*/
 /*	$NetBSD: mapper.c,v 1.3 1995/12/10 11:12:04 mycroft Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
@@ -785,8 +785,8 @@ void usage(void)
     extern char *__progname;
 
     fprintf(stderr,
-	    "Usage: %s [-f] [-g] [-n] [-t timeout] [-r retries] "
-	    "[-d [debug-level]] [router]\n\n", __progname);
+	    "usage: %s [-fgn] [-d level] [-r count] [-t seconds] "
+	    "[starting_router]\n\n", __progname);
     fprintf(stderr, "\t-f  Flood the routing graph with queries\n");
     fprintf(stderr, "\t    (True by default unless `router' is given)\n");
     fprintf(stderr, "\t-g  Generate output in GraphEd format\n");
