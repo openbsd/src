@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.41 2007/02/18 15:19:03 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.42 2007/02/18 16:03:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -116,7 +116,7 @@ int		bcw_phy_init(struct bcw_softc *);
 void		bcw_phy_initg(struct bcw_softc *);
 void		bcw_phy_initb5(struct bcw_softc *);
 void		bcw_phy_initb6(struct bcw_softc *);
-void		bcw_phy_lo_adjust(struct bcw_softc *, int);
+void		bcw_phy_set_baseband_attenuation(struct bcw_softc *, uint16_t);
 /* radio */
 void		bcw_radio_off(struct bcw_softc *);
 void		bcw_radio_on(struct bcw_softc *);
@@ -2936,6 +2936,29 @@ bcw_phy_initb6(struct bcw_softc *sc)
 		BCW_WRITE16(sc, 0x03e6, 0);
 }
 
+void
+bcw_phy_set_baseband_attenuation(struct bcw_softc *sc,
+    uint16_t baseband_attenuation)
+{
+	uint16_t val;
+
+	if (sc->sc_phy_version == 0) {
+		val = (BCW_READ16(sc, 0x03e6) & 0xfff0);
+		val |= (baseband_attenuation & 0x000f);
+		BCW_WRITE16(sc, 0x03e6, val);
+		return;
+	}
+
+	if (sc->sc_phy_version > 1) {
+		val = bcw_phy_read16(sc, 0x0060) & ~0x003c;
+		val |= (baseband_attenuation << 2) & 0x003c;
+	} else {
+		val = bcw_phy_read16(sc, 0x0060) & ~0x0078;
+		val |= (baseband_attenuation << 3) & 0x0078;
+	}
+	bcw_phy_write16(sc, 0x0060, val);
+}
+
 /*
  * Radio
  */
@@ -2991,15 +3014,16 @@ bcw_radio_on(struct bcw_softc *sc)
 }
 
 void
-bcw_radio_txpower_bg(struct bcw_softc *sc, uint16_t baseband_att,
-    uint16_t radio_att, uint16_t txpower)
+bcw_radio_txpower_bg(struct bcw_softc *sc, uint16_t baseband_attenuation,
+    uint16_t radio_attenuation, uint16_t txpower)
 {
-	//if (baseband_att == 0xffff)
-	//if (radio_att == 0xfff)
+	//if (baseband_attenuation == 0xffff)
+	//if (radio_attenuation == 0xfff)
 	//if (txpower == 0xfff)
 
-	bcw_radio_write16(sc, 0x0043, radio_att);
-	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0064, radio_att);
+	bcw_phy_set_baseband_attenuation(sc, baseband_attenuation);
+	bcw_radio_write16(sc, 0x0043, radio_attenuation);
+	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0064, radio_attenuation);
 	if (sc->sc_radio_ver == 0x2050)
 		bcw_radio_write16(sc, 0x0052, (bcw_radio_read16(sc, 0x0052) &
 		    ~0x0070) | ((txpower << 4) & 0x0070));
