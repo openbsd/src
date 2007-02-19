@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.11 2006/06/12 04:41:30 gwk Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.12 2007/02/19 20:44:24 kettenis Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -488,10 +488,12 @@ apic_vectorset(struct ioapic_softc *sc, int pin, int minlevel, int maxlevel)
 		pp->ip_maxlevel = 0; /* XXX magic */
 		pp->ip_vector = 0;
 	} else if (maxlevel != pp->ip_maxlevel) {
+#ifdef MPVERBOSE
 		if (minlevel != maxlevel)
 			printf("%s: pin %d shares different IPL interrupts "
-			    "(%x..%x), degraded performance\n",
-			    sc->sc_dev.dv_xname, pin, minlevel, maxlevel);
+			    "(%x..%x)\n", sc->sc_dev.dv_xname, pin,
+			    minlevel, maxlevel);
+#endif
 
 		/*
 		 * Allocate interrupt vector at the *lowest* priority level
