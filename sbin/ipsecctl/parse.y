@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.119 2007/02/19 08:29:30 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.120 2007/02/19 09:00:46 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1991,11 +1991,11 @@ validate_sa(u_int32_t spi, u_int8_t satype, struct ipsec_transforms *xfs,
 		return (0);
 	}
 	if (xfs && xfs->authxf) {
-		if (!authkey) {
+		if (!authkey && xfs->authxf != &authxfs[AUTHXF_NONE]) {
 			yyerror("no authentication key specified");
 			return (0);
 		}
-		if (authkey->len != xfs->authxf->keymin) {
+		if (authkey && authkey->len != xfs->authxf->keymin) {
 			yyerror("wrong authentication key length, needs to be "
 			    "%d bits", xfs->authxf->keymin * 8);
 			return (0);

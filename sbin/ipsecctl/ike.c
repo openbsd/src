@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.59 2006/12/18 00:08:04 msf Exp $	*/
+/*	$OpenBSD: ike.c,v 1.60 2007/02/19 09:00:46 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -253,6 +253,9 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 				break;
 			case ENCXF_CAST128:
 				fprintf(fd, "CAST");
+				break;
+			case ENCXF_NULL:
+				fprintf(fd, "NULL");
 				break;
 			default:
 				warnx("illegal transform %s",
