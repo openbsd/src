@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.224 2007/02/10 07:31:28 jsg Exp $
+#	$OpenBSD: files.pci,v 1.225 2007/02/19 13:51:30 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -80,7 +80,7 @@ attach	arc at pci
 file	dev/pci/arc.c			arc
 
 # Advanced Host Controller Interface for Serial ATA
-device	ahci
+device	ahci: scsi, atascsi
 attach	ahci at pci
 file	dev/pci/ahci.c			ahci
 
