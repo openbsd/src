@@ -1,4 +1,4 @@
-.\" $OpenBSD: file.1,v 1.23 2004/12/04 19:55:12 jaredy Exp $
+.\" $OpenBSD: file.1,v 1.24 2007/02/19 13:02:08 tom Exp $
 .\" $FreeBSD: src/usr.bin/file/file.1,v 1.16 2000/03/01 12:19:39 sheldonh Exp $
 .\"
 .\" Copyright (c) Ian F. Darwin 1986-1995.
@@ -345,10 +345,9 @@ Primary development and maintenence from 1990 to the present by
 .Pp
 Altered by
 .An Chris Lowth Aq chris@lowth.com ,
-2000: Handle the
-.Fl i
-option to output mime type strings and using an alternative magic file
-and internal logic.
+2000, to optionally report MIME types.
+This required an alternative magic file, and is not available in
+.Ox .
 .Pp
 Altered by
 .An Eric Fischer Aq enf@pobox.com ,
