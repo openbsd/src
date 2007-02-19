@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.c,v 1.25 2005/02/17 12:33:30 aaron Exp $	*/
+/*	$OpenBSD: timed.c,v 1.26 2007/02/19 22:39:57 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -806,7 +806,7 @@ good_host_name(const char *name)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "timed: [-dMt] [-i network | -n network] "
-	    "[-F host1 host2 ...] [-G netgroup]\n");
+	(void)fprintf(stderr, "timed: [-dMt] [-F host ...] [-G netgroup] "
+	    "[-i network | -n network]\n");
 	exit(1);
 }
