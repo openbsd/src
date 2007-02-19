@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.1,v 1.22 2004/06/17 22:11:55 millert Exp $
+.\" $OpenBSD: crontab.1,v 1.23 2007/02/19 00:08:38 jmc Exp $
 .\"
 .Dd June 8, 1999
 .Dt CRONTAB 1
@@ -30,12 +30,10 @@
 .Op Fl u Ar user
 .Ar file
 .Nm crontab
-.Op Fl u Ar user
 .Oo
-.Fl l No \&|
-.Fl r No \&|
-.Fl e
+.Fl e | l | r
 .Oc
+.Op Fl u Ar user
 .Sh DESCRIPTION
 .Nm
 is the program used to install, deinstall, or list the tables
@@ -83,6 +81,20 @@ is unable to read the files, users will not be allowed to use
 .Pp
 The options are as follows:
 .Bl -tag -width "-u userX"
+.It Fl e
+Edit the current crontab using the editor specified by
+the
+.Ev VISUAL
+or
+.Ev EDITOR
+environment variables.
+After you exit from the editor, the modified
+.Xr crontab 5
+will be installed automatically.
+.It Fl l
+Causes the current crontab to be displayed on standard output.
+.It Fl r
+Causes the current crontab to be removed.
 .It Fl u Ar user
 Specifies the name of the user whose
 .Xr crontab 5
@@ -103,20 +115,6 @@ and that if you are running inside of
 you should always use the
 .Fl u
 option for safety's sake.
-.It Fl l
-Causes the current crontab to be displayed on standard output.
-.It Fl r
-Causes the current crontab to be removed.
-.It Fl e
-Edit the current crontab using the editor specified by
-the
-.Ev VISUAL
-or
-.Ev EDITOR
-environment variables.
-After you exit from the editor, the modified
-.Xr crontab 5
-will be installed automatically.
 .El
 .Sh FILES
 .Bl -tag -width "/var/cron/cron.allow" -compact

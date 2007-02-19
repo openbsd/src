@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.50 2007/02/13 18:39:34 mglocker Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.51 2007/02/19 00:08:38 jmc Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -21,7 +21,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.50 2007/02/13 18:39:34 mglocker Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.51 2007/02/19 00:08:38 jmc Exp $";
 
 /* crontab - install and manage per-user crontab files
  * vix 02may87 [RCS has the rest of the log]
@@ -62,7 +62,7 @@ static void
 usage(const char *msg) {
 	fprintf(stderr, "%s: usage error: %s\n", ProgramName, msg);
 	fprintf(stderr, "usage:\t%s [-u user] file\n", ProgramName);
-	fprintf(stderr, "\t%s [-u user] [ -e | -l | -r ]\n", ProgramName);
+	fprintf(stderr, "\t%s [ -e | -l | -r ] [-u user]\n", ProgramName);
 	fprintf(stderr, "\t\t(default operation is replace, per 1003.2)\n");
 	fprintf(stderr, "\t-e\t(edit user's crontab)\n");
 	fprintf(stderr, "\t-l\t(list user's crontab)\n");
