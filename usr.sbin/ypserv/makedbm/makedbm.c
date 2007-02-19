@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.27 2006/11/10 20:44:07 mk Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.28 2007/02/19 21:42:41 jmc Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: makedbm.c,v 1.27 2006/11/10 20:44:07 mk Exp $";
+static const char rcsid[] = "$OpenBSD: makedbm.c,v 1.28 2007/02/19 21:42:41 jmc Exp $";
 #endif
 
 #include <stdio.h>
@@ -290,10 +290,9 @@ create_database(char *infile, char *database, char *yp_input_file,
 static void
 usage(void)
 {
-	fprintf(stderr,"usage: makedbm [-u | -U] file\n"
-	    "       makedbm [-bls] [-i YP_INPUT_FILE] [-o YP_OUTPUT_FILE]\n"
-	    "               [-d YP_DOMAIN_NAME] [-m YP_MASTER_NAME] "
-	    "infile outfile\n");
+	fprintf(stderr,"usage: makedbm [-blsUu] [-d yp_domain_name] "
+	    "[-i yp_input_file]\n"
+	    "\t[-m yp_master_name] [-o yp_output_file] infile outfile\n");
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makedbm.8,v 1.14 2003/06/12 12:59:54 jmc Exp $
+.\"	$OpenBSD: makedbm.8,v 1.15 2007/02/19 21:42:41 jmc Exp $
 .\"
 .\" Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -32,17 +32,14 @@
 .Nd create a YP database
 .Sh SYNOPSIS
 .Nm makedbm
-.Fl u Ar file
-.Nm makedbm
-.Fl U Ar file
-.Nm makedbm
-.Op Fl bls
-.Op Fl i Ar yp_input_file
-.Op Fl o Ar yp_output_file
+.Bk -words
+.Op Fl blsUu
 .Op Fl d Ar yp_domain_name
+.Op Fl i Ar yp_input_file
 .Op Fl m Ar yp_master_name
-.Ar infile
-.Ar outfile
+.Op Fl o Ar yp_output_file
+.Ar infile outfile
+.Ek
 .Sh DESCRIPTION
 .Nm
 is the utility in YP that creates the database file containing the YP map.
@@ -50,23 +47,27 @@ The database format is a slightly modified version of ndbm.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl u
-Dump a database to standard output.
-.It Fl U
-Same as
-.Fl u
-but also try
-.Xr db 3
-hash format.
 .It Fl b
 Interdomain.
 Include an entry in the database informing a YP server to use
 DNS to get information about unknown hosts.
 This option will only have
 effect on the two maps hosts.byname and hosts.byaddr.
+.It Fl d Ar yp_domain_name
+Include an entry in the map with the key YP_DOMAIN_NAME and the argument
+as value.
+.It Fl i Ar yp_input_file
+Include an entry in the map with the key YP_INPUT_FILE and the argument
+as value.
 .It Fl l
 Lowercase.
 Convert all keys to lower case before adding them to the YP database.
+.It Fl m Ar yp_master_name
+Include an entry in the map with the key YP_MASTER_NAME and the argument
+as value.
+.It Fl o Ar yp_output_file
+Include an entry in the map with the key YP_OUTPUT_FILE and the argument
+as value.
 .It Fl s
 Secure map.
 Include an entry in the database informing
@@ -74,18 +75,14 @@ Include an entry in the database informing
 and
 .Xr ypserv 8
 that the YP map is going to be handled as secure.
-.It Fl i Ar yp_input_file
-Include an entry in the map with the key YP_INPUT_FILE and the argument
-as value.
-.It Fl o Ar yp_output_file
-Include an entry in the map with the key YP_OUTPUT_FILE and the argument
-as value.
-.It Fl d Ar yp_domain_name
-Include an entry in the map with the key YP_DOMAIN_NAME and the argument
-as value.
-.It Fl m Ar yp_master_name
-Include an entry in the map with the key YP_MASTER_NAME and the argument
-as value.
+.It Fl U
+Same as
+.Fl u
+but also try
+.Xr db 3
+hash format.
+.It Fl u
+Dump a database to standard output.
 .El
 .Sh SEE ALSO
 .Xr db 3 ,
