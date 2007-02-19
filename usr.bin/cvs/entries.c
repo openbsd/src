@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.73 2007/02/17 18:23:43 xsa Exp $	*/
+/*	$OpenBSD: entries.c,v 1.74 2007/02/19 11:40:00 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -417,7 +417,7 @@ cvs_parse_tagfile(char *dir, char **tagp, char **datep, int *nbp)
 }
 
 void
-cvs_write_tagfile(char *dir, char *tag, char *date, int nb)
+cvs_write_tagfile(const char *dir, char *tag, char *date, int nb)
 {
 	FILE *fp;
 	char tagpath[MAXPATHLEN];

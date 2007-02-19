@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.105 2007/02/17 18:23:43 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.106 2007/02/19 11:40:00 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -704,7 +704,7 @@ cvs_mkpath(const char *path)
  * Split the contents of a file into a list of lines.
  */
 struct cvs_lines *
-cvs_splitlines(const u_char *data, size_t len)
+cvs_splitlines(u_char *data, size_t len)
 {
 	u_char *p, *c;
 	size_t i, tlen;
@@ -753,7 +753,7 @@ cvs_freelines(struct cvs_lines *lines)
 }
 
 BUF *
-cvs_patchfile(const u_char *data, size_t dlen, const u_char *patch, size_t plen,
+cvs_patchfile(u_char *data, size_t dlen, u_char *patch, size_t plen,
     int (*p)(struct cvs_lines *, struct cvs_lines *))
 {
 	struct cvs_lines *dlines, *plines;

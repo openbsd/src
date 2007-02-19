@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.208 2007/02/04 15:05:05 otto Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.209 2007/02/19 11:40:00 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1007,7 +1007,8 @@ rcs_tag_resolve(RCSFILE *file, const char *tag)
 int
 rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 {
-	char op, *ep;
+	u_char op;
+	char *ep;
 	struct cvs_line *lp, *dlp, *ndlp;
 	int i, lineno, nbln;
 	u_char tmp;
@@ -1024,7 +1025,7 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 		/* NUL-terminate line buffer for strtol() safety. */
 		tmp = lp->l_line[lp->l_len - 1];
 		lp->l_line[lp->l_len - 1] = '\0';
-		lineno = (int)strtol((lp->l_line + 1), &ep, 10);
+		lineno = (int)strtol((char*)(lp->l_line + 1), &ep, 10);
 		if (lineno - 1 > dlines->l_nblines || lineno < 0) {
 			fatal("invalid line specification in RCS patch");
 		}
@@ -1174,7 +1175,6 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 			brp->rb_num = rcsnum_alloc();
 			rcsnum_cpy(rdp->rd_num, brp->rb_num, 0);
 			TAILQ_INSERT_TAIL(&(rdp->rd_branches), brp, rb_list);
-
 			ordp = TAILQ_PREV(rdp, rcs_dlist, rd_list);
 			rcsnum_cpy(rdp->rd_num, ordp->rd_next, 0);
 		} else {
@@ -1199,7 +1199,7 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 {
 	char *path_tmp1, *path_tmp2;
 	struct rcs_delta *rdp, *prevrdp, *nextrdp;
-	BUF *nextbuf, *prevbuf, *newdiff, *newdeltatext;
+	BUF *prevbuf, *newdiff, *newdeltatext;
 
 	if (rev == RCS_HEAD_REV)
 		rev = rf->rf_head;
@@ -1221,7 +1221,7 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 	nextrdp = (struct rcs_delta *)TAILQ_PREV(rdp, cvs_tqh, rd_list);
 
 	newdeltatext = NULL;
-	prevbuf = nextbuf = NULL;
+	prevbuf = NULL;
 
 	if (prevrdp != NULL && nextrdp != NULL) {
 		newdiff = cvs_buf_alloc(64, BUF_AUTOEXT);
@@ -1291,7 +1291,6 @@ struct rcs_delta *
 rcs_findrev(RCSFILE *rfp, RCSNUM *rev)
 {
 	int isbrev;
-	u_int cmplen;
 	struct rcs_delta *rdp;
 
 	isbrev = RCSNUM_ISBRANCHREV(rev);
@@ -1307,8 +1306,6 @@ rcs_findrev(RCSFILE *rfp, RCSNUM *rev)
 	    (isbrev && rcsnum_differ(rev, rdp->rd_num)))) {
 		rcs_parse_deltas(rfp, rev);
 	}
-
-	cmplen = rev->rn_len;
 
 	TAILQ_FOREACH(rdp, &(rfp->rf_delta), rd_list) {
 		if (rcsnum_differ(rdp->rd_num, rev))
@@ -2626,8 +2623,8 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 struct cvs_lines *
 rcs_rev_getlines(RCSFILE *rfp, RCSNUM *frev)
 {
-	size_t i, plen;
-	int done, nextroot, found;
+	size_t plen;
+	int i, done, nextroot, found;
 	RCSNUM *tnum, *bnum;
 	struct rcs_branch *brp;
 	struct rcs_delta *hrdp, *trdp, *rdp;
@@ -2698,6 +2695,7 @@ next:
 		nextroot += 2;
 		rcsnum_cpy(frev, bnum, nextroot);
 
+		/* XXX strange loop and "found" set but not used */
 		TAILQ_FOREACH(brp, &(rdp->rd_branches), rb_list) {
 			found = 1;
 			for (i = 0; i < nextroot - 1; i++) {
@@ -2848,7 +2846,8 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 {
 	int kwtype;
 	u_int j, found;
-	u_char *c, *kwstr, *start, *end, *fin;
+	const u_char *c, *start, *fin, *end;
+	char *kwstr;
 	char expbuf[256], buf[256];
 	char *fmt;
 	size_t len, kwlen;
@@ -3022,14 +3021,14 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 			tmpbuf = cvs_buf_alloc(len + strlen(expbuf), BUF_AUTOEXT);
 			/* Append everything before keyword. */
 			cvs_buf_append(tmpbuf, line->l_line,
-			    start - (unsigned char *)line->l_line);
+			    start - line->l_line);
 			/* Append keyword. */
 			cvs_buf_append(tmpbuf, expbuf, strlen(expbuf));
 			/* Point c to end of keyword. */
 			tlen = cvs_buf_len(tmpbuf) - 1;
 			/* Append everything after keyword. */
 			cvs_buf_append(tmpbuf, end,
-			    ((unsigned char *)line->l_line + line->l_len) - end);
+			    line->l_line + line->l_len - end);
 			c = cvs_buf_get(tmpbuf) + tlen;
 			/* Point fin to end of data. */
 			fin = cvs_buf_get(tmpbuf) + cvs_buf_len(tmpbuf) - 1;

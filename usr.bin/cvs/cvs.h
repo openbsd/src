@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.132 2007/01/19 08:21:44 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.133 2007/02/19 11:40:00 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -324,7 +324,7 @@ extern struct cvs_cmd cvs_cmd_watchers;
 
 /* cmd.c */
 struct cvs_cmd	*cvs_findcmd(const char *);
-struct cvs_cmd	*cvs_findcmdbyreq(int);
+struct cvs_cmd	*cvs_findcmdbyreq(u_int);
 
 /* cvs.c */
 int		 cvs_var_set(const char *, const char *);
@@ -345,7 +345,7 @@ void	 	cvs_ent_close(CVSENTRIES *, int);
 void		cvs_ent_free(struct cvs_ent *);
 int		cvs_ent_exists(CVSENTRIES *, const char *);
 void		cvs_parse_tagfile(char *, char **, char **, int *);
-void		cvs_write_tagfile(char *, char *, char *, int);
+void		cvs_write_tagfile(const char *, char *, char *, int);
 
 /* root.c */
 struct cvsroot	*cvsroot_parse(const char *);

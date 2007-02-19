@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.74 2007/02/12 14:35:28 xsa Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.75 2007/02/19 11:40:00 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -177,7 +177,7 @@ TAILQ_HEAD(rcs_dlist, rcs_delta);
 struct rcs_delta {
 	RCSNUM		*rd_num;
 	RCSNUM		*rd_next;
-	u_int		 rd_flags;
+	int		 rd_flags;
 	struct tm	 rd_date;
 	char		*rd_author;
 	char		*rd_state;
@@ -197,7 +197,7 @@ typedef struct rcs_file {
 	int	 rf_inattic;
 	char	*rf_path;
 	mode_t	 rf_mode;
-	u_int	 rf_flags;
+	int	 rf_flags;
 
 	RCSNUM	*rf_head;
 	RCSNUM	*rf_branch;

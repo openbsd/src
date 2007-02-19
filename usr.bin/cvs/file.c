@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.186 2007/02/09 16:46:26 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.187 2007/02/19 11:40:00 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -861,7 +861,7 @@ cvs_file_cmp(const char *file1, const char *file2)
 	if (S_ISREG(stb1.st_mode)) {
 		void *p1, *p2;
 
-		if (stb1.st_size > SIZE_MAX) {
+		if (stb1.st_size > (off_t)SIZE_MAX) {
 			ret = 1;
 			goto out;
 		}	
@@ -920,7 +920,7 @@ cvs_file_copy(const char *from, const char *to)
 		char *p, *buf;
 		int saved_errno;
 
-		if (st.st_size > SIZE_MAX) {
+		if (st.st_size > (off_t)SIZE_MAX) {
 			ret = -1;
 			goto out;
 		}	
