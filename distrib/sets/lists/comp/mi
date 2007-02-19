@@ -114,6 +114,7 @@
 ./usr/include/dev/adb/keyboard.h
 ./usr/include/dev/ata
 ./usr/include/dev/ata/atareg.h
+./usr/include/dev/ata/atascsi.h
 ./usr/include/dev/ata/atavar.h
 ./usr/include/dev/ata/satareg.h
 ./usr/include/dev/ata/wdvar.h
