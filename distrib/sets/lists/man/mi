@@ -2490,6 +2490,11 @@
 ./usr/share/man/cat9
 ./usr/share/man/cat9/alpha
 ./usr/share/man/cat9/amd64
+./usr/share/man/cat9/aml_evalname.0
+./usr/share/man/cat9/aml_evalnode.0
+./usr/share/man/cat9/aml_find_node.0
+./usr/share/man/cat9/aml_freevalue.0
+./usr/share/man/cat9/aml_val2int.0
 ./usr/share/man/cat9/armish
 ./usr/share/man/cat9/aviion
 ./usr/share/man/cat9/cats
