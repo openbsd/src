@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtrace.8,v 1.13 2007/02/18 21:16:03 jmc Exp $
+.\"	$OpenBSD: mtrace.8,v 1.14 2007/02/19 21:51:10 jmc Exp $
 .\"	$NetBSD: mtrace.8,v 1.4 1995/12/10 10:57:11 mycroft Exp $
 .\"
 .\" Copyright (c) 1993, 1998-2001.
@@ -151,6 +151,10 @@ the maximum number of hops that will be traced from the
 back toward the
 .Ar source .
 The default is 32 hops (infinity for the DVMRP routing protocol).
+.It Fl n
+Print hop addresses numerically rather than symbolically and numerically
+(saves a nameserver address-to-name lookup for each router found on the
+path).
 .It Fl p
 Listen passively for multicast responses from traces initiated by others.
 This works best when run on a multicast router.
@@ -158,10 +162,6 @@ This works best when run on a multicast router.
 Set the maximum number of query attempts for any hop to
 .Ar nqueries .
 The default is 3.
-.It Fl n
-Print hop addresses numerically rather than symbolically and numerically
-(saves a nameserver address-to-name lookup for each router found on the
-path).
 .It Fl r Ar host
 Send the trace response to
 .Ar host
