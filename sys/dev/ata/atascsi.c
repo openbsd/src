@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.3 2007/02/19 11:53:34 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.4 2007/02/19 11:55:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -200,21 +200,36 @@ atascsi_disk_inq(struct scsi_xfer *xs)
 {
 	return (atascsi_stuffup(xs));
 }
+
 int
 atascsi_disk_sync(struct scsi_xfer *xs)
 {
 	return (atascsi_stuffup(xs));
 }
-int
-atascsi_disk_sense(struct scsi_xfer *xs)
-{
-	return (atascsi_stuffup(xs));
-}
+
 int
 atascsi_disk_capacity(struct scsi_xfer *xs)
 {
 	return (atascsi_stuffup(xs));
 }
+
+int
+atascsi_disk_sense(struct scsi_xfer *xs)
+{
+	struct scsi_sense_data	*sd = xs->data;
+
+	bzero(xs->data, xs->datalen);
+	/* check datalen > sizeof(struct scsi_sense_data)? */
+	sd->error_code = 0x70; /* XXX magic */
+	sd->flags = SKEY_NO_SENSE;
+
+	xs->error = XS_NOERROR;
+	s = splbio();
+	scsi_done(xs);
+	splx(s);
+	return (COMPLETE);
+}
+
 
 int
 atascsi_atapi_cmd(struct scsi_xfer *xs)
