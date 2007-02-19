@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.92 2006/08/29 08:51:28 hshoexer Exp $	 */
+/* $OpenBSD: conf.c,v 1.93 2007/02/19 09:43:34 hshoexer Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -467,9 +467,9 @@ conf_load_defaults(int tr)
 	char	*dhgroup_p[] = {"", "-GRP1", "-GRP2", "-GRP5", "-GRP14",
 		    "-GRP15", 0};
 	char	*qm_enc[] = {"DES", "3DES", "CAST", "BLOWFISH", "AES",
-		    "AES_128_CTR", "NONE", 0};
+		    "AES_128_CTR", "NULL", "NONE", 0};
 	char	*qm_enc_p[] = {"-DES", "-3DES", "-CAST", "-BLF", "-AES",
-		    "-AESCTR", "", 0};
+		    "-AESCTR", "-NULL", "", 0};
 	char	*qm_hash[] = {"HMAC_MD5", "HMAC_SHA", "HMAC_RIPEMD",
 		    "HMAC_SHA2_256", "HMAC_SHA2_384", "HMAC_SHA2_512", "NONE",
 		    0};
