@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.2 2007/02/19 11:48:34 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.3 2007/02/19 11:53:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/queue.h>
 
 #include <scsi/scsi_all.h>
+#include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
 
 #include <dev/ata/atascsi.h>
@@ -34,7 +35,7 @@ struct atascsi {
 	struct device		*as_dev;
 	void			*as_cookie;
 
-	int			*as_ports;
+	struct ata_port		**as_ports;
 
 	struct atascsi_methods	*as_methods;
 	struct scsi_adapter	as_switch;
@@ -58,6 +59,16 @@ struct scsi_adapter atascsi_switch = {
 struct scsi_device atascsi_device = {
 	NULL, NULL, NULL, NULL
 };
+
+int		atascsi_disk_cmd(struct scsi_xfer *);
+int		atascsi_disk_inq(struct scsi_xfer *);
+int		atascsi_disk_capacity(struct scsi_xfer *);
+int		atascsi_disk_sync(struct scsi_xfer *);
+int		atascsi_disk_sense(struct scsi_xfer *);
+
+int		atascsi_atapi_cmd(struct scsi_xfer *);
+
+int		atascsi_stuffup(struct scsi_xfer *);
 
 struct atascsi *
 atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
@@ -86,7 +97,7 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	as->as_link.adapter_target = aaa->aaa_nports;
 	as->as_link.openings = aaa->aaa_ncmds;
 
-	as->as_ports = malloc(sizeof(int) * aaa->aaa_nports,
+	as->as_ports = malloc(sizeof(struct ata_port *) * aaa->aaa_nports,
 	    M_DEVBUF, M_WAITOK);
 	bzero(as->as_ports, sizeof(int) * aaa->aaa_nports);
 
@@ -116,13 +127,103 @@ atascsi_probe(struct atascsi *as, int port)
 	if (port > as->as_link.adapter_buswidth)
 		return (ENXIO);
 
+#if 0
 	as->as_ports[port] = as->as_methods->probe(as->as_cookie, port);
+#endif
 
 	return (0);
 }
 
 int
 atascsi_cmd(struct scsi_xfer *xs)
+{
+	struct scsi_link	*link = xs->sc_link;
+	struct atascsi		*as = link->adapter_softc;
+	struct ata_port		*ap = as->as_ports[link->target];
+
+	if (ap == NULL)
+		return (atascsi_stuffup(xs));
+
+	switch (ap->ap_type) {
+	case ATA_PORT_T_DISK:
+		return (atascsi_disk_cmd(xs));
+	case ATA_PORT_T_ATAPI:
+		return (atascsi_atapi_cmd(xs));
+
+	case ATA_PORT_T_NONE:
+	default:
+		return (atascsi_stuffup(xs));
+	}
+}
+
+int
+atascsi_disk_cmd(struct scsi_xfer *xs)
+{
+#if 0
+	struct scsi_link	*link = xs->sc_link;
+	struct atascsi		*as = link->adapter_softc;
+	struct ata_port		*ap = as->as_ports[link->target];
+	int			s;
+#endif
+
+	switch (xs->cmd->opcode) {
+	case READ_BIG:
+	case WRITE_BIG:
+	case READ_COMMAND:
+	case WRITE_COMMAND:
+		/* deal with io outside the switch */
+		break;
+
+	case SYNCHRONIZE_CACHE:
+		return (atascsi_disk_sync(xs));
+	case REQUEST_SENSE:
+		return (atascsi_disk_sense(xs));
+	case INQUIRY:
+		return (atascsi_disk_inq(xs));
+	case READ_CAPACITY:
+		return (atascsi_disk_capacity(xs));
+
+	case TEST_UNIT_READY:
+	case START_STOP:
+	case PREVENT_ALLOW:
+		return (COMPLETE);
+
+	default:
+		return (atascsi_stuffup(xs));
+	}
+
+	return (atascsi_stuffup(xs));
+}
+
+int
+atascsi_disk_inq(struct scsi_xfer *xs)
+{
+	return (atascsi_stuffup(xs));
+}
+int
+atascsi_disk_sync(struct scsi_xfer *xs)
+{
+	return (atascsi_stuffup(xs));
+}
+int
+atascsi_disk_sense(struct scsi_xfer *xs)
+{
+	return (atascsi_stuffup(xs));
+}
+int
+atascsi_disk_capacity(struct scsi_xfer *xs)
+{
+	return (atascsi_stuffup(xs));
+}
+
+int
+atascsi_atapi_cmd(struct scsi_xfer *xs)
+{
+	return (atascsi_stuffup(xs));
+}
+
+int
+atascsi_stuffup(struct scsi_xfer *xs)
 {
 	int			s;
 

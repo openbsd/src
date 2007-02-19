@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.2 2007/02/19 11:48:34 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.3 2007/02/19 11:53:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -33,11 +33,11 @@ struct atascsi_attach_args {
 	int			aaa_ncmds;
 };
 
-struct atascsi_port {
+struct ata_port {
 	int			ap_type;
-#define ATABUS_PORT_T_NONE		0
-#define ATABUS_PORT_T_DISK		1
-#define ATABUS_PORT_T_ATAPI		2
+#define ATA_PORT_T_NONE			0
+#define ATA_PORT_T_DISK			1
+#define ATA_PORT_T_ATAPI		2
 };
 
 struct ata_xfer {
