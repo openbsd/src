@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdformat.1,v 1.15 2006/04/17 15:13:51 steven Exp $
+.\"	$OpenBSD: fdformat.1,v 1.16 2007/02/19 21:32:35 jmc Exp $
 .\"
 .\" Copyright (C) 1993, 1994 by Joerg Wunsch, Dresden
 .\" All rights reserved.
@@ -33,16 +33,15 @@
 .Sh SYNOPSIS
 .Nm fdformat
 .Bk -words
-.Op Fl q
-.Op Fl n | v
+.Op Fl nqv
 .Op Fl c Ar cyls
-.Op Fl s Ar secs
-.Op Fl h Ar heads
-.Op Fl r Ar rate
-.Op Fl g Ar gap3len
-.Op Fl i Ar intleave
-.Op Fl S Ar secshft
 .Op Fl F Ar fillbyte
+.Op Fl g Ar gap3len
+.Op Fl h Ar heads
+.Op Fl i Ar intleave
+.Op Fl r Ar rate
+.Op Fl S Ar secshft
+.Op Fl s Ar secs
 .Op Fl t Ar steps_per_track
 .Ar device_name
 .Ek
@@ -76,13 +75,13 @@ Don't verify floppy after formatting.
 Don't format; verify only.
 .Pp
 .It Fl c Ar cyls
-.It Fl s Ar secs
-.It Fl h Ar heads
-.It Fl r Ar rate
-.It Fl g Ar gap3len
-.It Fl i Ar intleave
-.It Fl S Ar secshft
 .It Fl F Ar fillbyte
+.It Fl g Ar gap3len
+.It Fl h Ar heads
+.It Fl i Ar intleave
+.It Fl r Ar rate
+.It Fl S Ar secshft
+.It Fl s Ar secs
 .It Fl t Ar steps_per_track
 An alternate method to specify the geometry data to write to the floppy disk.
 .El
