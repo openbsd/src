@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.4 2007/02/19 12:10:40 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.5 2007/02/19 13:18:08 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -47,7 +47,7 @@ struct ata_cmd {
 	u_int16_t		cyl;
 	u_int8_t		sector;
 	u_int8_t		count;
-	u_int8_t		precomp;
+	u_int8_t		features;
 	u_int8_t		st_bmask;
 	u_int8_t		st_pmask;
 	u_int8_t		error;
