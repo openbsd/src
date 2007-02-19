@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.525 2007/02/14 00:53:48 jsg Exp $ */
+/*	$OpenBSD: pf.c,v 1.526 2007/02/19 10:18:58 pyr Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1296,6 +1296,7 @@ pf_addr_wrap_neq(struct pf_addr_wrap *aw1, struct pf_addr_wrap *aw2)
 	case PF_ADDR_DYNIFTL:
 		return (aw1->p.dyn->pfid_kt != aw2->p.dyn->pfid_kt);
 	case PF_ADDR_NOROUTE:
+	case PF_ADDR_URPFFAILED:
 		return (0);
 	case PF_ADDR_TABLE:
 		return (aw1->p.tbl != aw2->p.tbl);
