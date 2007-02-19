@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.42 2007/02/18 01:27:55 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.43 2007/02/19 13:54:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -30,6 +30,8 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#include <dev/ata/atascsi.h>
 
 #define AHCI_DEBUG
 
@@ -339,6 +341,8 @@ struct ahci_softc {
 
 	u_int			sc_ncmds;
 	struct ahci_port	*sc_ports[AHCI_MAX_PORTS];
+
+	struct atascsi		*sc_atascsi;
 };
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
 
@@ -380,6 +384,15 @@ int			ahci_wait_eq(struct ahci_softc *, bus_size_t,
 int			ahci_wait_ne(struct ahci_softc *, bus_size_t,
 			    u_int32_t, u_int32_t);
 
+/* provide methods for atascsi to call */
+int			ahci_ata_probe(void *, int);
+int			ahci_ata_cmd(void *, struct ata_xfer *);
+
+struct atascsi_methods ahci_atascsi_methods = {
+	ahci_ata_probe,
+	ahci_ata_cmd
+};
+
 int
 ahci_match(struct device *parent, void *match, void *aux)
 {
@@ -392,6 +405,7 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ahci_softc		*sc = (struct ahci_softc *)self;
 	struct pci_attach_args		*pa = aux;
+	struct atascsi_attach_args	aaa;
 	u_int32_t			reg;
 	int				i;
 
@@ -450,6 +464,15 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 		if (ahci_port_alloc(sc, i) != 0)
 			goto freeports;
 	}
+
+	bzero(&aaa, sizeof(aaa));
+	aaa.aaa_cookie = sc;
+	aaa.aaa_methods = &ahci_atascsi_methods;
+	aaa.aaa_minphys = minphys;
+	aaa.aaa_nports = AHCI_MAX_PORTS;
+	aaa.aaa_ncmds = sc->sc_ncmds;
+
+	sc->sc_atascsi = atascsi_attach(self, &aaa);
 
         return;
 
@@ -684,6 +707,19 @@ ahci_intr(void *arg)
 {
 	return (0);
 }
+
+int
+ahci_ata_probe(void *xsc, int port)
+{
+	return (0);
+}
+
+int
+ahci_ata_cmd(void *xsc, struct ata_xfer *xa)
+{
+	return (0);
+}
+
 
 struct ahci_ccb *
 ahci_get_ccb(struct ahci_port *ap)
