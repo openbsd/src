@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.46 2007/01/10 14:37:09 markus Exp $
+# $OpenBSD: Makefile,v 1.47 2007/02/19 10:12:45 hshoexer Exp $
 
 # you can update the *.ok files with: make -i | patch
 # TARGETS
@@ -43,7 +43,7 @@ TCPMD5_TARGETS+=tcpmd5${n}
 
 tcpmd5${n}:
 	cat ${.CURDIR}/tcpmd5${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
-	    ipsecctl -nv -f - | diff -u ${.CURDIR}/tcpmd5${n}.ok /dev/stdin
+	    ipsecctl -nkv -f - | diff -u ${.CURDIR}/tcpmd5${n}.ok /dev/stdin
 .endfor
 
 .for n in ${SATESTS}
@@ -51,7 +51,7 @@ SA_TARGETS+=sa${n}
 
 sa${n}:
 	cat ${.CURDIR}/sa${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
-	    ipsecctl -nv -f - | diff -u ${.CURDIR}/sa${n}.ok /dev/stdin
+	    ipsecctl -knv -f - | diff -u ${.CURDIR}/sa${n}.ok /dev/stdin
 .endfor
 
 .for n in ${SAFAIL}
