@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.29 2005/05/25 05:47:53 markus Exp $	*/
+/*	$OpenBSD: xform.c,v 1.30 2007/02/19 08:55:41 hshoexer Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -189,7 +189,7 @@ struct enc_xform enc_xform_arc4 = {
 
 struct enc_xform enc_xform_null = {
 	CRYPTO_NULL, "NULL",
-	1, 0, 0, 256,
+	4, 0, 0, 256,
 	null_encrypt,
 	null_decrypt,
 	null_setkey,
