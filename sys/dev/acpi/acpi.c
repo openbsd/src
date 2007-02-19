@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.81 2007/02/18 02:25:05 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.82 2007/02/19 23:42:39 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1343,6 +1343,33 @@ acpi_create_thread(void *arg)
 		    DEVNAME(sc));
 		return;
 	}
+}
+
+int
+acpi_map_address(struct acpi_softc *sc, struct acpi_gas *gas,  bus_addr_t base, bus_size_t size, 
+		 bus_space_handle_t *pioh, bus_space_tag_t *piot)
+{
+	int iospace = GAS_SYSTEM_IOSPACE;
+
+	/* No GAS structure, default to I/O space */
+	if (gas != NULL) {
+		base += gas->address;
+		iospace = gas->address_space_id;
+	}
+	switch (iospace) {
+	case GAS_SYSTEM_MEMORY:
+		*piot = sc->sc_memt;
+		break;
+	case GAS_SYSTEM_IOSPACE:
+		*piot = sc->sc_iot;
+		break;
+	default:
+		return -1;
+	}
+	if (bus_space_map(*piot, base, size, 0, pioh))
+		return -1;
+
+	return 0;
 }
 
 /* Map Power Management registers */
