@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.66 2007/01/10 13:45:01 jmc Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.67 2007/02/19 08:50:43 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -384,7 +384,7 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 		if (r->xfs && r->xfs->compxf)
 			printf(" comp %s", r->xfs->compxf->name);
 	}
-	if (r->authkey) {
+	if (r->authkey && (opts & IPSECCTL_OPT_SHOWKEY)) {
 		if (r->satype == IPSEC_TCPMD5)
 			printf(" ");
 		else
@@ -392,7 +392,7 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 		printf("authkey 0x");
 		ipsecctl_print_key(r->authkey);
 	}
-	if (r->enckey) {
+	if (r->enckey && (opts & IPSECCTL_OPT_SHOWKEY)) {
 		if (r->satype == IPSEC_TCPMD5)
 			printf(" ");
 		else
