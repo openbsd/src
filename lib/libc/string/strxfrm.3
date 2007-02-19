@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strxfrm.3,v 1.5 2005/08/12 18:34:32 jmc Exp $
+.\"	$OpenBSD: strxfrm.3,v 1.6 2007/02/19 19:09:27 jmc Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRXFRM 3
@@ -42,12 +42,19 @@
 .Ft size_t
 .Fn strxfrm "char *dst" "const char *src" "size_t n"
 .Sh DESCRIPTION
-The
+The idea of
 .Fn strxfrm
-function does something horrible (see
-.Tn ANSI
-standard).
-In this implementation it just copies.
+is to
+.Dq un-localize
+a string: the function transforms
+.Ar src ,
+storing the result in
+.Ar dst ,
+such that
+.Xr strcmp 3
+transformed strings return what
+.Xr strcoll 3
+on the original untransformed strings would return.
 .Sh SEE ALSO
 .Xr bcmp 3 ,
 .Xr memcmp 3 ,
@@ -60,3 +67,8 @@ The
 .Fn strxfrm
 function conforms to
 .St -ansiC .
+.Sh BUGS
+Since locales are not fully implemented on
+.Ox ,
+.Fn strxfrm
+just returns a copy of the original string.
