@@ -1,4 +1,4 @@
-.\"	$OpenBSD: map-mbone.8,v 1.11 2007/02/18 20:57:53 jmc Exp $
+.\"	$OpenBSD: map-mbone.8,v 1.12 2007/02/19 21:48:01 jmc Exp $
 .\"	$NetBSD: map-mbone.8,v 1.2 1995/10/03 23:16:53 thorpej Exp $
 .\"
 .\" Mapper for connections between MRouteD multicast routers.
@@ -54,6 +54,8 @@ If not specified on the command line,
 .Ar starting_router
 is
 .Dq localhost .
+.Nm
+must be run as root.
 .Pp
 .Nm
 sends an
@@ -78,10 +80,8 @@ repeats the above operation for each new
 multicast router in the list of neighbors and
 continues the process until no new multicast routers are reported.
 .Pp
-.Nm
-must be run as root.
+The options are as follows:
 .Pp
-.Em Options
 .Bl -tag -width "-t seconds"
 .It Fl d Ar level
 Sets the debug level to
@@ -93,13 +93,13 @@ the debug level, an error condition will always write an error message and will
 cause
 .Nm
 to terminate.
-Non-zero debug levels are
-.Bl -tag -width "1: " -offset indent
-.It 1 :
+Non-zero debug levels are:
+.Bl -enum -offset indent
+.It
 Print packet warnings, plus level 0 messages.
-.It 2 :
+.It
 Print notifications of down networks, plus level 1 messages.
-.It 3 :
+.It
 Print notifications of all packet timeouts, plus level 2 messages.
 .El
 .Pp
