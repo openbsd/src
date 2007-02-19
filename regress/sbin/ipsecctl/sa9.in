@@ -40,3 +40,7 @@ esp from 1.1.1.9 to 2.2.2.2 spi 0x9eadbeef:0xbeef9ead \
 	auth hmac-sha1 \
 	authkey file "DIR/ak160:DIR/ak160" \
 	enckey file "DIR/ek80:DIR/ek80"
+esp from 1.1.1.10 to 2.2.2.2 spi 0xaeadbeef:0xbeefaead \
+	enc null \
+	auth hmac-sha1 \
+	authkey file "DIR/ak160:DIR/ak160"
