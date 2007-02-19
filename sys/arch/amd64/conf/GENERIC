@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.172 2007/01/22 21:53:15 mk Exp $
+#	$OpenBSD: GENERIC,v 1.173 2007/02/19 17:17:54 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -43,7 +43,7 @@ isa0	at mainbus0
 isa0	at pcib?
 pci*	at mainbus0
 
-option		ACPIVERBOSE
+#option		ACPIVERBOSE
 #option		ACPI_ENABLE
 
 acpi0		at mainbus? disable
