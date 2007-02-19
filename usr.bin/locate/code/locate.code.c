@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.code.c,v 1.13 2003/11/09 20:13:57 otto Exp $
+ *	$OpenBSD: locate.code.c,v 1.14 2007/02/19 20:01:12 ray Exp $
  *
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.code.c,v 1.13 2003/11/09 20:13:57 otto Exp $
+ * 	$Id: locate.code.c,v 1.14 2007/02/19 20:01:12 ray Exp $
  */
 
 #ifndef lint
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.code.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.code.c,v 1.13 2003/11/09 20:13:57 otto Exp $";
+static char rcsid[] = "$OpenBSD: locate.code.c,v 1.14 2007/02/19 20:01:12 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -146,9 +146,10 @@ main(int argc, char *argv[])
 		err(1, "%s", argv[0]);
 
 	/* First copy bigram array to stdout. */
-	(void)fgets(bigrams, BGBUFSIZE + 1, fp);
+	if (fgets(bigrams, sizeof(bigrams), fp) == NULL)
+		err(1, "fgets");
 
-	if (fwrite(bigrams, 1, BGBUFSIZE, stdout) != BGBUFSIZE)
+	if (fputs(bigrams, stdout) == EOF)
 		err(1, "stdout");
 	(void)fclose(fp);
 
