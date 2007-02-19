@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.4 2007/02/06 17:13:33 art Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.5 2007/02/19 17:18:42 deraadt Exp $	*/
 /* $NetBSD: atomic.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
 
 /*-
@@ -39,8 +39,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ATOMIC_H_
-#define _ATOMIC_H_
+#ifndef _I386_ATOMIC_H_
+#define _I386_ATOMIC_H_
 
 /*
  * Perform atomic operations on memory. Should be atomic with respect
@@ -49,7 +49,7 @@
  * void atomic_setbits_int(volatile u_int *a, u_int mask) { *a |= mask; }
  * void atomic_clearbits_int(volatile u_int *a, u_int mas) { *a &= ~mask; }
  */
-#ifndef _LOCORE
+#if defined(_KERNEL) && !defined(_LOCORE)
 
 #ifdef MULTIPROCESSOR
 #define LOCK "lock"
@@ -58,33 +58,38 @@
 #endif
 
 static __inline u_int64_t
-i386_atomic_testset_uq (volatile u_int64_t *ptr, u_int64_t val) {
-    __asm__ volatile ("\n1:\t" LOCK " cmpxchg8b (%1); jnz 1b" : "+A" (val) :
-	"r" (ptr), "b" ((u_int32_t)val), "c" ((u_int32_t)(val >> 32)));
-    return val;
+i386_atomic_testset_uq(volatile u_int64_t *ptr, u_int64_t val)
+{
+	__asm__ volatile ("\n1:\t" LOCK " cmpxchg8b (%1); jnz 1b" : "+A" (val) :
+	    "r" (ptr), "b" ((u_int32_t)val), "c" ((u_int32_t)(val >> 32)));
+	return val;
 }
 
 static __inline u_int32_t
-i386_atomic_testset_ul (volatile u_int32_t *ptr, unsigned long val) {
-    __asm__ volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
-    return val;
+i386_atomic_testset_ul(volatile u_int32_t *ptr, unsigned long val)
+{
+	__asm__ volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
+	return val;
 }
 
 static __inline int
-i386_atomic_testset_i (volatile int *ptr, unsigned long val) {
-    __asm__ volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
-    return val;
+i386_atomic_testset_i(volatile int *ptr, unsigned long val)
+{
+	__asm__ volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
+	return val;
 }
 
-static __inline void 
-i386_atomic_setbits_l (volatile u_int32_t *ptr, unsigned long bits) {
-    __asm __volatile(LOCK " orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
+static __inline void
+i386_atomic_setbits_l(volatile u_int32_t *ptr, unsigned long bits)
+{
+	__asm __volatile(LOCK " orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
 
-static __inline void 
-i386_atomic_clearbits_l (volatile u_int32_t *ptr, unsigned long bits) {
-    bits = ~bits;
-    __asm __volatile(LOCK " andl %1,%0" :  "=m" (*ptr) : "ir" (bits));
+static __inline void
+i386_atomic_clearbits_l(volatile u_int32_t *ptr, unsigned long bits)
+{
+	bits = ~bits;
+	__asm __volatile(LOCK " andl %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
 
 #define atomic_setbits_int i386_atomic_setbits_l
@@ -92,6 +97,5 @@ i386_atomic_clearbits_l (volatile u_int32_t *ptr, unsigned long bits) {
 
 #undef LOCK
 
-#endif
-#endif
-
+#endif /* defined(_KERNEL) && !defined(_LOCORE) */
+#endif /* _I386_ATOMIC_H_ */

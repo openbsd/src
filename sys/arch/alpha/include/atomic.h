@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.4 2007/02/06 17:13:33 art Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.5 2007/02/19 17:18:40 deraadt Exp $	*/
 /* $NetBSD: atomic.h,v 1.7 2001/12/17 23:34:57 thorpej Exp $ */
 
 /*-
@@ -44,6 +44,8 @@
 
 #ifndef _ALPHA_ATOMIC_H_
 #define	_ALPHA_ATOMIC_H_
+
+#if defined(_KERNEL)
 
 /*
  * atomic_setbits_ulong:
@@ -189,4 +191,5 @@ atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
 	*uip &= ~v;
 }
 
+#endif /* defined(_KERNEL) */
 #endif /* _ALPHA_ATOMIC_H_ */

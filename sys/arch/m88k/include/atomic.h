@@ -1,9 +1,11 @@
-/*	$OpenBSD: atomic.h,v 1.1 2007/02/06 17:13:33 art Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.2 2007/02/19 17:18:43 deraadt Exp $	*/
 
 /* Public Domain */
 
 #ifndef __M88K_ATOMIC_H__
 #define __M88K_ATOMIC_H__
+
+#if defined(_KERNEL)
 
 static __inline void
 atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
@@ -17,4 +19,5 @@ atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
 	*uip &= ~v;
 }
 
-#endif
+#endif /* defined(_KERNEL) */
+#endif /* __M88K_ATOMIC_H__ */
