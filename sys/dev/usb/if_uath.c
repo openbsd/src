@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.16 2007/01/02 14:43:50 claudio Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.17 2007/02/19 17:22:02 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -922,14 +922,10 @@ uath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	timeout_del(&sc->scan_to);
 	timeout_del(&sc->stat_to);
 
+	/* do it in a process context */
 	sc->sc_state = nstate;
 	sc->sc_arg = arg;
-	if (curproc != NULL) {
-		uath_task(sc);
-	} else {
-		/* do it in a process context */
-		usb_add_task(sc->sc_udev, &sc->sc_task);
-	}
+	usb_add_task(sc->sc_udev, &sc->sc_task);
 	return 0;
 }
 
