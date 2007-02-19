@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.11 2007/01/23 21:17:18 kettenis Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.12 2007/02/19 11:59:00 tom Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -199,7 +199,6 @@ lapic_gettick()
 
 #include <sys/kernel.h>		/* for hz */
 
-int lapic_timer = 0;
 u_int32_t lapic_tval;
 
 /*
