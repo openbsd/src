@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.110 2007/02/16 20:13:20 cloder Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.111 2007/02/19 10:00:13 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -549,6 +549,7 @@ keyword:
 .It Li blowfish Ta "160 bits"
 .It Li cast Ta "128 bits"
 .It Li skipjack Ta "80 bits"
+.It Li null Ta "(none)" Ta "[phase 2 only]"
 .El
 .Pp
 Use of DES or Skipjack as an encryption algorithm is not recommended
@@ -559,6 +560,9 @@ in its structure.
 Note that DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
 to form its 168-bit key.
 This is because the most significant bit of each byte is used for parity.
+.Pp
+Note that using NULL with ESP will only provide authentication.
+This is useful in setups where AH can not be used, eg. when NAT is involved.
 .Pp
 The following group types are permitted with the
 .Ic group
