@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.2 2007/02/19 21:03:50 miod Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 		"	rotcl	%1	\n"
 		: "=m" (*lock), "=r" (old));
 
-	return (old != _SPINLOCK_UNLOCKED);
+	return (old == 0);
 }
 
 int
