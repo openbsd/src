@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.1 2007/02/19 11:44:24 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.2 2007/02/19 11:48:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
