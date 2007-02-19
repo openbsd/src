@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.6 2007/02/19 12:04:01 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.7 2007/02/19 12:06:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -88,6 +88,8 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	struct atascsi			*as;
 	int				i;
 
+	ata_init();
+
 	as = malloc(sizeof(struct atascsi), M_DEVBUF, M_WAITOK);
 	bzero(as, sizeof(struct atascsi));
 
@@ -129,6 +131,8 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 int
 atascsi_detach(struct atascsi *as)
 {
+	ata_destroy();
+
 	return (0);
 }
 
