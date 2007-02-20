@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.145 2007/01/06 00:23:52 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.146 2007/02/20 00:02:56 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.145 2007/01/06 00:23:52 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.146 2007/02/20 00:02:56 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -2110,7 +2110,7 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 			mib[2] = dev;
 			if (sysctl(mib, 3, &snsrdev, &sdlen, NULL, 0) == -1)
 				continue;
-			snprintf(buf, sizeof(buf), "%s.%s", 
+			snprintf(buf, sizeof(buf), "%s.%s",
 			    string, snsrdev.xname);
 			print_sensordev(buf, mib, 3, &snsrdev);
 		}
@@ -2118,8 +2118,8 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 	}
 
 	/*
-	 * If we get this far, it means that some arguments were 
-	 * provided below hw.sensors tree. 
+	 * If we get this far, it means that some arguments were
+	 * provided below hw.sensors tree.
 	 * The first branch of hw.sensors tree is the device name.
 	 */
 	if ((devname = strsep(bufpp, ".")) == NULL) {
@@ -2147,7 +2147,7 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 	}
 
 	/*
-	 * At this point we have identified the sensor device, 
+	 * At this point we have identified the sensor device,
 	 * now let's go further and identify sensor type.
 	 */
 	if ((typename = strsep(bufpp, ".")) == NULL) {
@@ -2171,7 +2171,7 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 	mib[3] = type;
 
 	/*
-	 * If no integer was provided after sensor_type, let's 
+	 * If no integer was provided after sensor_type, let's
 	 * print all sensors of the specified type.
 	 */
 	if (numt == -1) {
@@ -2179,11 +2179,11 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 		return (-1);
 	}
 
-	/* 
-	 * At this point we know that we have received a direct request 
-	 * via command-line for a specific sensor. Let's have the parse() 
-	 * function deal with it further, and report any errors if such 
-	 * sensor node does not exist. 
+	/*
+	 * At this point we know that we have received a direct request
+	 * via command-line for a specific sensor. Let's have the parse()
+	 * function deal with it further, and report any errors if such
+	 * sensor node does not exist.
 	 */
 	mib[4] = numt;
 	*typep = CTLTYPE_STRUCT;
@@ -2191,16 +2191,16 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 }
 
 /*
- * Print sensors from the specified device. 
+ * Print sensors from the specified device.
  */
 
-void 
+void
 print_sensordev(char *string, int mib[], u_int mlen, struct sensordev *snsrdev)
 {
 	char buf[BUFSIZ];
 	enum sensor_type type;
 
-	if (mlen == 3){
+	if (mlen == 3) {
 		for (type = 0; type < SENSOR_MAX_TYPES; type++) {
 			mib[3] = type;
 			snprintf(buf, sizeof(buf), "%s.%s",
@@ -2226,8 +2226,8 @@ print_sensordev(char *string, int mib[], u_int mlen, struct sensordev *snsrdev)
 		struct sensor snsr;
 		size_t slen = sizeof(snsr);
 
-		/* this function is only printing sensors in bulk, so we 
-		 * do not return any error messages if the requested sensor 
+		/* this function is only printing sensors in bulk, so we
+		 * do not return any error messages if the requested sensor
 		 * is not found by sysctl(3)
 		 */
 		if (sysctl(mib, 5, &snsr, &slen, NULL, 0) == -1)
