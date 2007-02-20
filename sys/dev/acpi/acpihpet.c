@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpihpet.c,v 1.2 2007/02/19 23:42:39 jordan Exp $	*/
+/*	$OpenBSD: acpihpet.c,v 1.3 2007/02/20 22:25:45 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -92,13 +92,13 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 	u_int64_t period, freq;	/* timer period in femtoseconds (10^-15) */
 
 	if (acpi_map_address(psc, &hpet->base_address, 0, HPET_REG_SIZE,
-			     &sc->sc_ioh, &sc->sc_iot))	{
+	    &sc->sc_ioh, &sc->sc_iot))	{
 		printf(": can't map i/o space\n");
 		return;
 	}
 
 	period = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				  HPET_CAPABILITIES + sizeof(u_int32_t));
+	    HPET_CAPABILITIES + sizeof(u_int32_t));
 	freq =  1000000000000000ull / period;
 	printf(": %lld Hz\n", freq);
 
