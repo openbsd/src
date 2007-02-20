@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tutorial.ms,v 1.9 2004/11/29 06:20:03 jsg Exp $
+.\"	$OpenBSD: tutorial.ms,v 1.10 2007/02/20 08:18:47 jmc Exp $
 .\"	$NetBSD: tutorial.ms,v 1.3 1996/03/06 00:15:31 christos Exp $
 .\" Copyright (c) 1988, 1989 by Adam de Boor
 .\" Copyright (c) 1989 by Berkeley Softworks
@@ -147,7 +147,7 @@ for the distributed operating system called Sprite. PMake departs from
 usual Make practices in several ways. A large number of those quirks
 are not relevant in a modern POSIX world, and hence development of 
 OpenBSD's make has aimed at removing unwanted differences.
-Useful features of OpenBSD's Make which are not POSIX complaint will
+Useful features of OpenBSD's Make which are not POSIX compliant will
 be flagged with a little sign in the left margin, like this:
 .No
 Also note that this tutorial was originally written for PMake, and hence
@@ -1351,7 +1351,7 @@ using the
 .Ix 0 ref !=
 .Ix 0 ref variable assignment shell-output
 operator.  Variables may be expanded (their value inserted) by enclosing
-their name in parentheses or curly braces, prceeded by a dollar sign.
+their name in parentheses or curly braces, preceded by a dollar sign.
 A dollar sign may be escaped with another dollar sign. Variables are
 not expanded if Make doesn't know about them. There are seven local
 variables:
@@ -2123,7 +2123,7 @@ make use of these  .USE rules to make your
 life easier (they're in the default, system makefile directory...take a look).
 Note that the .USE rule source itself
 .CW MAKELIB ) (
-does not appear in any of the targets's local variables.
+does not appear in any of the target's local variables.
 There is no limit to the number of times I could use the
 .CW MAKELIB
 rule. If there were more libraries, I could continue with
@@ -2751,7 +2751,7 @@ looks like this:
 # Rules for making libraries. The object files that make up the library are
 # removed once they are archived.
 #
-# To make several libararies in parallel, you should define the variable
+# To make several libraries in parallel, you should define the variable
 # "many_libraries". This will serialize the invocations of ranlib.
 #
 # To use, do something like this:
@@ -2989,7 +2989,7 @@ FORMATTER	= ditroff -Plaser_printer
 FORMATTER	= nroff -Pdot_matrix_printer
 #endif
 .DE
-would wreak havok if you tried
+would wreak havoc if you tried
 .CW "make draft print" '' ``
 since you would use the same formatter for each target. As I said,
 this all gets somewhat complicated.
