@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpitimer.c,v 1.4 2007/02/19 23:42:39 jordan Exp $	*/
+/*	$OpenBSD: acpitimer.c,v 1.5 2007/02/20 22:10:27 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -83,12 +83,10 @@ acpitimerattach(struct device *parent, struct device *self, void *aux)
 
 	if (psc->sc_fadt->hdr_revision > 1)
 		rc = acpi_map_address(psc, &psc->sc_fadt->x_pm_tmr_blk, 0,
-				      psc->sc_fadt->pm_tmr_len,
-				      &sc->sc_ioh, &sc->sc_iot);
+		    psc->sc_fadt->pm_tmr_len, &sc->sc_ioh, &sc->sc_iot);
 	else
 		rc = acpi_map_address(psc, NULL, psc->sc_fadt->pm_tmr_blk,
-				      psc->sc_fadt->pm_tmr_len,
-				      &sc->sc_ioh, &sc->sc_iot);
+		    psc->sc_fadt->pm_tmr_len, &sc->sc_ioh, &sc->sc_iot);
 	if (rc) {
 		printf(": can't map i/o space\n");
 		return;
@@ -121,6 +119,7 @@ acpi_get_timecount(struct timecounter *tc)
 		u2 = u3;
 		u3 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, 0);
 	} while (u1 > u2 || u2 > u3);
+
 	return (u2);
 }
 #endif
