@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsdb.8,v 1.14 2002/12/15 22:52:57 fgsch Exp $
+.\"	$OpenBSD: fsdb.8,v 1.15 2007/02/20 22:23:57 jmc Exp $
 .\"	$NetBSD: fsdb.8,v 1.5 1997/01/11 05:51:40 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@ The options are as follows:
 Enables additional debugging output (which comes primarily from
 .Xr fsck 8 -derived
 code).
+.It Fl f Ar fsname
+Open file system
+.Ar fsname .
 .El
 .Pp
 Besides the built-in
