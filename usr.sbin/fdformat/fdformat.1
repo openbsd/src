@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdformat.1,v 1.16 2007/02/19 21:32:35 jmc Exp $
+.\"	$OpenBSD: fdformat.1,v 1.17 2007/02/20 08:23:04 jmc Exp $
 .\"
 .\" Copyright (C) 1993, 1994 by Joerg Wunsch, Dresden
 .\" All rights reserved.
@@ -63,13 +63,13 @@ are meaningless, since they're overridden by
 The options are as follows:
 .Pp
 .Bl -tag -width Ds -compact
+.It Fl n
+Don't verify floppy after formatting.
+.Pp
 .It Fl q
 Suppress any normal output from the command, and don't ask the
 user for confirmation whether to format the floppy disk at
 .Ar device_name .
-.Pp
-.It Fl n
-Don't verify floppy after formatting.
 .Pp
 .It Fl v
 Don't format; verify only.
