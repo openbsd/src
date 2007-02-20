@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.21 2006/07/04 19:06:00 otto Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.22 2007/02/20 01:44:16 ray Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -320,11 +320,11 @@ main()
 	snprintf(salt + 3, 4, "%2.2u$", 5);
 
 	printf("24 bytes of salt: ");
-	fgets(salt + 6, 94, stdin);
+	fgets(salt + 6, sizeof(salt) - 6, stdin);
 	salt[99] = 0;
 	printf("72 bytes of password: ");
 	fpurge(stdin);
-	fgets(blubber, 73, stdin);
+	fgets(blubber, sizeof(blubber), stdin);
 	blubber[72] = 0;
 
 	p = crypt(blubber, salt);

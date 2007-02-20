@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.11 2004/12/02 22:54:55 pat Exp $	*/
+/*	$OpenBSD: units.c,v 1.12 2007/02/20 01:56:12 ray Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ readunits(char *userfile)
 		}
 	}
 	while (!feof(unitfile)) {
-		if (!fgets(line, 79, unitfile))
+		if (!fgets(line, sizeof(line), unitfile))
 			break;
 		linenum++;
 		lineptr = line;
@@ -713,7 +713,7 @@ main(int argc, char **argv)
 				initializeunit(&have);
 				if (!quiet)
 					printf("You have: ");
-				if (!fgets(havestr, 80, stdin)) {
+				if (!fgets(havestr, sizeof(havestr), stdin)) {
 					if (!quiet)
 						putchar('\n');
 					exit(0);
@@ -724,7 +724,7 @@ main(int argc, char **argv)
 				initializeunit(&want);
 				if (!quiet)
 					printf("You want: ");
-				if (!fgets(wantstr, 80, stdin)) {
+				if (!fgets(wantstr, sizeof(wantstr), stdin)) {
 					if (!quiet)
 						putchar('\n');
 					exit(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.14 2006/03/17 22:02:58 moritz Exp $	*/
+/*	$OpenBSD: value.c,v 1.15 2007/02/20 01:44:16 ray Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: value.c,v 1.14 2006/03/17 22:02:58 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: value.c,v 1.15 2007/02/20 01:44:16 ray Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -79,7 +79,7 @@ vinit(void)
 		if ((fp = fopen(file, "r")) != NULL) {
 			char *tp;
 
-			while (fgets(file, sizeof(file)-1, fp) != NULL) {
+			while (fgets(file, sizeof(file), fp) != NULL) {
 				if (vflag)
 					printf("set %s", file);
 				if ((tp = strrchr(file, '\n')))

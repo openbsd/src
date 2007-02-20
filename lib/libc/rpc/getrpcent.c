@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrpcent.c,v 1.13 2005/08/08 08:05:35 espie Exp $ */
+/*	$OpenBSD: getrpcent.c,v 1.14 2007/02/20 01:47:03 ray Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -141,7 +141,7 @@ getrpcent(void)
 	if (d->rpcf == NULL && (d->rpcf = fopen(RPCDB, "r")) == NULL)
 		return (NULL);
 	/* -1 so there is room to append a \n below */
-        if (fgets(d->line, BUFSIZ-1, d->rpcf) == NULL)
+        if (fgets(d->line, sizeof(d->line) - 1, d->rpcf) == NULL)
 		return (NULL);
 	return (interpret(d->line, strlen(d->line)));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.103 2006/10/14 19:16:39 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.104 2007/02/20 01:50:01 ray Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.103 2006/10/14 19:16:39 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.104 2007/02/20 01:50:01 ray Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1274,7 +1274,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 
 	lp->d_bbsize = BBSIZE;				/* XXX */
 	lp->d_sbsize = SBSIZE;				/* XXX */
-	while (fgets(line, sizeof(line) - 1, f)) {
+	while (fgets(line, sizeof(line), f)) {
 		lineno++;
 		if ((cp = strpbrk(line, "#\r\n")))
 			*cp = '\0';
