@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.80 2007/02/18 02:25:05 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.81 2007/02/20 16:52:40 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1051,15 +1051,18 @@ aml_getbuffer(struct aml_value *val, int *bitlen)
 	case AML_OBJTYPE_INTEGER:
 	case AML_OBJTYPE_STATICINT:
 		*bitlen = aml_intlen;
-		return &val->v_integer;
+		return (&val->v_integer);
+
 	case AML_OBJTYPE_BUFFER:
 	case AML_OBJTYPE_STRING:
 		*bitlen = val->length<<3;
-		return val->v_buffer;
+		return (val->v_buffer);
+
 	default:
 		aml_die("getvbi");
 	}
-	return NULL;
+
+	return (NULL);
 }
 
 /*
@@ -1079,9 +1082,8 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 	blen = field->v_field.bitlen;
 
 	dnprintf(55,"--fieldio: %s [%s] bp:%.4x bl:%.4x\n",
-		 mode == ACPI_IOREAD ? "rd" : "wr",
-		 aml_nodename(field->node),
-		 bpos, blen);
+	    mode == ACPI_IOREAD ? "rd" : "wr",
+	    aml_nodename(field->node), bpos, blen);
 
 	aml_lockfield(scope, field);
 	switch (field->v_field.type) {
@@ -1095,11 +1097,12 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 		aml_fieldio(scope, &tf, res, mode);
 #ifdef ACPI_DEBUG
 		dnprintf(55, "-- post indexfield %x,%x @ %x,%x\n", 
-		       bpos & 3, blen, 
-		       field->v_field.ref2->v_field.bitpos, 
-		       field->v_field.ref2->v_field.bitlen);
+		    bpos & 3, blen, 
+		    field->v_field.ref2->v_field.bitpos, 
+		    field->v_field.ref2->v_field.bitlen);
+
 		iobuf = aml_getbuffer(res, &aligned);
-		aml_dump(aligned>>3, iobuf);
+		aml_dump(aligned >> 3, iobuf);
 #endif
 		break;
 	case AMLOP_BANKFIELD:
@@ -1112,11 +1115,12 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 		aml_fieldio(scope, &tf, res, mode);
 #ifdef ACPI_DEBUG
 		dnprintf(55, "-- post bankfield %x,%x @ %x,%x\n", 
-		       bpos & 3, blen, 
-		       field->v_field.ref2->v_field.bitpos, 
-		       field->v_field.ref2->v_field.bitlen);
+		    bpos & 3, blen, 
+		    field->v_field.ref2->v_field.bitpos, 
+		    field->v_field.ref2->v_field.bitlen);
+
 		iobuf = aml_getbuffer(res, &aligned);
-		aml_dump(aligned>>3, iobuf);
+		aml_dump(aligned >> 3, iobuf);
 #endif
 		break;
 	case AMLOP_FIELD:
@@ -1143,8 +1147,8 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 
 		/* Pre-allocate return value for reads */
 		if (mode == ACPI_IOREAD)
-			_aml_setvalue(res, AML_OBJTYPE_BUFFER, 
-				      (field->v_field.bitlen+7)>>3, NULL);
+			_aml_setvalue(res, AML_OBJTYPE_BUFFER,
+			    (field->v_field.bitlen+7)>>3, NULL);
 		
 		/* Get aligned bitpos/bitlength */
 		blen = ((bpos & mask) + blen + mask) & ~mask;
@@ -1157,63 +1161,65 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 		if (aligned) {
 			iobuf = aml_getbuffer(res, &aligned);
 			aml_gasio(scope->sc, pop->v_opregion.iospace,
-				  iobase, pop->v_opregion.iolen, bpos, blen, mask+1,
-				  iobuf, mode); 
+			    iobase, pop->v_opregion.iolen, bpos, blen,
+			    mask + 1, iobuf, mode); 
 #ifdef ACPI_DEBUG
 			dnprintf(55, "aligned: %s @ %.4x:%.4x + %.4x\n",
-			       mode == ACPI_IOREAD ? "rd" : "wr", 
-			       bpos, blen, aligned);
-			aml_dump(blen>>3, iobuf);
+			    mode == ACPI_IOREAD ? "rd" : "wr", 
+			    bpos, blen, aligned);
+
+			aml_dump(blen >> 3, iobuf);
 #endif
 		}
 		else if (mode == ACPI_IOREAD) {
 			iobuf = acpi_os_malloc(blen>>3);
 			aml_gasio(scope->sc, pop->v_opregion.iospace,
-				  iobase, pop->v_opregion.iolen, bpos, blen, mask+1,
-				  iobuf, mode);
+			    iobase, pop->v_opregion.iolen, bpos, blen,
+			    mask + 1, iobuf, mode);
 
 			/* ASSERT: res is buffer type as it was set above */
 			aml_bufcpy(res->v_buffer, 0, iobuf, 
-				   field->v_field.bitpos & mask,
-				   field->v_field.bitlen);
+			    field->v_field.bitpos & mask,
+			    field->v_field.bitlen);
 
 #ifdef ACPI_DEBUG
 			dnprintf(55,"non-aligned read: %.4x:%.4x : ", 
 			    field->v_field.bitpos & mask,
 			    field->v_field.bitlen);
-			aml_dump(blen>>3, iobuf);
+
+			aml_dump(blen >> 3, iobuf);
 			dnprintf(55,"post-read: ");
 			aml_dump((field->v_field.bitlen+7)>>3, res->v_buffer);
 #endif
 			acpi_os_free(iobuf);
 		}
 		else {
-			iobuf = acpi_os_malloc(blen>>3);
+			iobuf = acpi_os_malloc(blen >> 3);
 			switch (AML_FIELD_UPDATE(field->v_field.flags)) {
 			case AML_FIELD_WRITEASONES:
-				memset(iobuf, 0xFF, blen>>3);
+				memset(iobuf, 0xFF, blen >> 3);
 				break;
 			case AML_FIELD_PRESERVE:
 				aml_gasio(scope->sc, pop->v_opregion.iospace,
-					  iobase, pop->v_opregion.iolen, bpos, blen, mask+1,
-					  iobuf, ACPI_IOREAD);
+				    iobase, pop->v_opregion.iolen, bpos, blen,
+				    mask + 1, iobuf, ACPI_IOREAD);
 				break;
 			}
 			/* Copy into IOBUF */
 			iobuf2 = aml_getbuffer(res, &aligned);
-			aml_bufcpy(iobuf, field->v_field.bitpos & mask, 
-				   iobuf2, 0,
-				   field->v_field.bitlen);
+			aml_bufcpy(iobuf, field->v_field.bitpos & mask,
+			    iobuf2, 0, field->v_field.bitlen);
 
 #ifdef ACPI_DEBUG
 			dnprintf(55,"non-aligned write: %.4x:%.4x : ", 
-				 field->v_field.bitpos & mask,
-				 field->v_field.bitlen);
-			aml_dump(blen>>3, iobuf);
+			    field->v_field.bitpos & mask,
+			    field->v_field.bitlen);
+
+			aml_dump(blen >> 3, iobuf);
 #endif
 			aml_gasio(scope->sc, pop->v_opregion.iospace,
-				  iobase, pop->v_opregion.iolen, bpos, blen, mask+1,
-				  iobuf, mode);
+			    iobase, pop->v_opregion.iolen, bpos, blen,
+			    mask + 1, iobuf, mode);
 
 			acpi_os_free(iobuf);
 		}
@@ -1583,8 +1589,10 @@ aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
 		aml_fieldio(scope, lhs, rhs, ACPI_IOWRITE);
 		break;
 	case AML_OBJTYPE_DEBUGOBJ:
+#ifdef ACPI_DEBUG
 		printf("-- debug --\n");
 		aml_showvalue(rhs, 50);
+#endif
 		break;
 	case AML_OBJTYPE_STATICINT:
 		if (lhs->node) {
@@ -1601,14 +1609,15 @@ aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
 		if (rhs->type == AML_OBJTYPE_BUFFER)
 			_aml_setvalue(lhs, AML_OBJTYPE_BUFFER, rhs->length,
 			    rhs->v_buffer);
-		else if (rhs->type == AML_OBJTYPE_INTEGER || rhs->type == AML_OBJTYPE_STATICINT)
+		else if (rhs->type == AML_OBJTYPE_INTEGER ||
+			    rhs->type == AML_OBJTYPE_STATICINT)
 			_aml_setvalue(lhs, AML_OBJTYPE_BUFFER,
 			    sizeof(rhs->v_integer), &rhs->v_integer);
 		else if (rhs->type == AML_OBJTYPE_STRING)
 			_aml_setvalue(lhs, AML_OBJTYPE_BUFFER, rhs->length+1,
 			    rhs->v_string);
 		else {
-			//aml_showvalue(rhs);
+			/* aml_showvalue(rhs); */
 			aml_die("setvalue.buf : %x", aml_pc(scope->pos));
 		}
 		break;
