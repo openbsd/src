@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.28 2006/07/09 14:42:27 millert Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.29 2007/02/20 11:24:32 henning Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -63,6 +63,7 @@ enum priv_state {
 enum cmd_types {
 	PRIV_OPEN_TTY,		/* open terminal or console device */
 	PRIV_OPEN_LOG,		/* open logfile for appending */
+	PRIV_OPEN_PIPE,		/* fork & exec child that gets logs on stdin */
 	PRIV_OPEN_UTMP,		/* open utmp for reading only */
 	PRIV_OPEN_CONFIG,	/* open config file for reading only */
 	PRIV_CONFIG_MODIFIED,	/* check if config file has been modified */
@@ -86,6 +87,8 @@ struct logname {
 static TAILQ_HEAD(, logname) lognames;
 
 static void check_log_name(char *, size_t);
+static int open_file(char *);
+static int open_pipe(char *);
 static void check_tty_name(char *, size_t);
 static void increase_state(int);
 static void sig_pass_to_chld(int);
@@ -220,7 +223,9 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			break;
 
 		case PRIV_OPEN_LOG:
-			dprintf("[priv]: msg PRIV_OPEN_LOG received\n");
+		case PRIV_OPEN_PIPE:
+			dprintf("[priv]: msg PRIV_OPEN_%s received\n",
+			    cmd == PRIV_OPEN_PIPE ? "PIPE" : "LOG");
 			/* Expecting: length, path */
 			must_read(socks[0], &path_len, sizeof(size_t));
 			if (path_len == 0 || path_len > sizeof(path))
@@ -228,7 +233,14 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			must_read(socks[0], &path, path_len);
 			path[path_len - 1] = '\0';
 			check_log_name(path, path_len);
-			fd = open(path, O_WRONLY|O_APPEND|O_NONBLOCK, 0);
+
+			if (cmd == PRIV_OPEN_LOG)
+				fd = open_file(path);
+			else if (cmd == PRIV_OPEN_PIPE)
+				fd = open_pipe(path);
+			else
+				errx(1, "invalid cmd");
+
 			send_fd(socks[0], fd);
 			if (fd < 0)
 				warnx("priv_open_log failed");
@@ -353,6 +365,84 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 	_exit(1);
 }
 
+static int
+open_file(char *path)
+{
+	/* must not start with | */
+	if (path[0] == '|')
+		return (-1);
+
+	return (open(path, O_WRONLY|O_APPEND|O_NONBLOCK, 0));
+}
+
+static int
+open_pipe(char *cmd)
+{
+	char *argp[] = {"sh", "-c", NULL, NULL};
+	struct passwd *pw;
+	int fd[2];
+	int bsize, flags;
+	pid_t pid;
+
+	/* skip over leading | and whitespace */
+	if (cmd[0] != '|')
+		return (-1);
+	for(cmd++; *cmd && *cmd == ' '; cmd++)
+		; /* nothing */
+	if (!*cmd)
+		return (-1);
+
+	argp[2] = cmd;
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fd) == -1) {
+		logerror("open_pipe");
+		return (-1);
+	}
+
+	/* make the fd on syslogd's side nonblocking */
+	if ((flags = fcntl(fd[1], F_GETFL, 0)) == -1) {
+		logerror("fcntl");
+		return (-1);
+	}
+	flags |= O_NONBLOCK;
+	if ((flags = fcntl(fd[1], F_SETFL, flags)) == -1) {
+		logerror("fcntl");
+		return (-1);
+	}
+
+	switch (pid = fork()) {
+	case -1:
+		logerror("fork error");
+		return (-1);
+	case 0:
+		break;
+	default:
+		close(fd[0]);
+		return (fd[1]);
+	}
+
+	close(fd[1]);
+
+	/* grow receive buffer */
+	bsize = 65535;
+	while (bsize > 0 && setsockopt(fd[0], SOL_SOCKET, SO_RCVBUF,
+	    &bsize, sizeof(bsize)) == -1)
+		bsize /= 2;
+
+	if ((pw = getpwnam("_syslogd")) == NULL)
+		errx(1, "unknown user _syslogd");
+	if (setgroups(1, &pw->pw_gid) == -1 ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1 ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
+		err(1, "failure dropping privs");
+	endpwent();
+
+	if (dup2(fd[0], STDIN_FILENO) == -1)
+		err(1, "dup2 failed");
+	if (execv("/bin/sh", argp) == -1)
+		err(1, "execv %s", cmd);
+}
+
 /* Check that the terminal device is ok, and if not, rewrite to /dev/null.
  * Either /dev/console or /dev/tty* are allowed.
  */
@@ -468,7 +558,10 @@ priv_open_log(const char *lognam)
 		return -1;
 	path_len = strlen(path) + 1;
 
-	cmd = PRIV_OPEN_LOG;
+	if (lognam[0] == '|')
+		cmd = PRIV_OPEN_PIPE;
+	else
+		cmd = PRIV_OPEN_LOG;
 	must_write(priv_fd, &cmd, sizeof(int));
 	must_write(priv_fd, &path_len, sizeof(size_t));
 	must_write(priv_fd, path, path_len);
@@ -654,7 +747,14 @@ sig_pass_to_chld(int sig)
 static void
 sig_got_chld(int sig)
 {
-	if (cur_state < STATE_QUIT)
+	pid_t	pid;
+
+	do {
+		pid = waitpid(WAIT_ANY, NULL, WNOHANG);
+	} while (pid == -1 && errno == EINTR);
+
+	if (pid == child_pid &&
+	    cur_state < STATE_QUIT)
 		cur_state = STATE_QUIT;
 }
 

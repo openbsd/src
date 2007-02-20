@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.94 2007/01/03 13:25:20 mpf Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.95 2007/02/20 11:24:32 henning Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.94 2007/01/03 13:25:20 mpf Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.95 2007/02/20 11:24:32 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,10 +183,12 @@ int	repeatinterval[] = { 30, 120, 600 };	/* # of secs before flush */
 #define F_USERS		5		/* list of users */
 #define F_WALL		6		/* everyone logged on */
 #define F_MEMBUF	7		/* memory buffer */
+#define F_PIPE		8		/* pipe to external program */
 
-char	*TypeNames[8] = {
+char	*TypeNames[9] = {
 	"UNUSED",	"FILE",		"TTY",		"CONSOLE",
-	"FORW",		"USERS",	"WALL",		"MEMBUF"
+	"FORW",		"USERS",	"WALL",		"MEMBUF",
+	"PIPE"
 };
 
 struct	filed *Files;
@@ -897,8 +899,9 @@ fprintlog(struct filed *f, int flags, char *msg)
 
 	case F_TTY:
 	case F_FILE:
+	case F_PIPE:
 		dprintf(" %s\n", f->f_un.f_fname);
-		if (f->f_type != F_FILE) {
+		if (f->f_type != F_FILE && f->f_type != F_PIPE) {
 			v->iov_base = "\r\n";
 			v->iov_len = 2;
 		} else {
@@ -920,8 +923,18 @@ fprintlog(struct filed *f, int flags, char *msg)
 				 */
 				break;
 			} else if ((e == EIO || e == EBADF) &&
-			    f->f_type != F_FILE && !retryonce) {
+			    f->f_type != F_FILE && f->f_type != F_PIPE &&
+			    !retryonce) {
 				f->f_file = priv_open_tty(f->f_un.f_fname);
+				retryonce = 1;
+				if (f->f_file < 0) {
+					f->f_type = F_UNUSED;
+					logerror(f->f_un.f_fname);
+				} else
+					goto again;
+			} else if ((e == EPIPE || e == EBADF) &&
+			    f->f_type == F_PIPE && !retryonce) {
+				f->f_file = priv_open_log(f->f_un.f_fname);
 				retryonce = 1;
 				if (f->f_file < 0) {
 					f->f_type = F_UNUSED;
@@ -1163,6 +1176,7 @@ init(void)
 		case F_FILE:
 		case F_TTY:
 		case F_CONSOLE:
+		case F_PIPE:
 			(void)close(f->f_file);
 			break;
 		case F_FORW:
@@ -1250,6 +1264,7 @@ init(void)
 			case F_FILE:
 			case F_TTY:
 			case F_CONSOLE:
+			case F_PIPE:
 				printf("%s", f->f_un.f_fname);
 				break;
 
@@ -1282,7 +1297,7 @@ init(void)
 	(p1 == p2 || (p1 != NULL && p2 != NULL && strcmp(p1, p2) == 0))
 
 /*
- * Spot a line with a duplicate file, console, tty, or membuf target.
+ * Spot a line with a duplicate file, pipe, console, tty, or membuf target.
  */
 struct filed *
 find_dup(struct filed *f)
@@ -1296,6 +1311,7 @@ find_dup(struct filed *f)
 		case F_FILE:
 		case F_TTY:
 		case F_CONSOLE:
+		case F_PIPE:
 			if (strcmp(list->f_un.f_fname, f->f_un.f_fname) == 0 &&
 			    progmatches(list->f_program, f->f_program))
 				return (list);
@@ -1441,6 +1457,7 @@ cfline(char *line, char *prog)
 		break;
 
 	case '/':
+	case '|':
 		(void)strlcpy(f->f_un.f_fname, p, sizeof(f->f_un.f_fname));
 		d = find_dup(f);
 		if (d != NULL) {
@@ -1465,11 +1482,16 @@ cfline(char *line, char *prog)
 			else
 				f->f_type = F_TTY;
 		} else {
-			f->f_type = F_FILE;
-			/* Clear O_NONBLOCK flag on f->f_file */
-			if ((i = fcntl(f->f_file, F_GETFL, 0)) != -1) {
-				i &= ~O_NONBLOCK;
-				fcntl(f->f_file, F_SETFL, i);
+			if (*p == '|')
+				f->f_type = F_PIPE;
+			else {
+				f->f_type = F_FILE;
+
+				/* Clear O_NONBLOCK flag on f->f_file */
+				if ((i = fcntl(f->f_file, F_GETFL, 0)) != -1) {
+					i &= ~O_NONBLOCK;
+					fcntl(f->f_file, F_SETFL, i);
+				}
 			}
 		}
 		break;
