@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.22 2004/09/14 22:11:35 deraadt Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.23 2007/02/20 13:55:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.22 2004/09/14 22:11:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.23 2007/02/20 13:55:17 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -274,7 +274,7 @@ fsirand(char *device)
 void
 usage(int ex)
 {
-	(void)fprintf(stderr, "Usage: %s [ -b ] [ -f ] [ -p ] special [special ...]\n",
+	(void)fprintf(stderr, "usage: %s [-bfp] special ...\n",
 	    __progname);
 	exit(ex);
 }
