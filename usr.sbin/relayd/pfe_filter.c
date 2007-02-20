@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.12 2007/02/08 13:32:24 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.13 2007/02/20 04:06:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -183,7 +183,7 @@ sync_table(struct hoststated *env, struct service *service, struct table *table)
 
 	i = 0;
 	TAILQ_FOREACH(host, &table->hosts, entry) {
-		if (host->up != 1)
+		if (host->up != HOST_UP)
 			continue;
 		memset(&(addlist[i]), 0, sizeof(addlist[i]));
 		switch (host->ss.ss_family) {
