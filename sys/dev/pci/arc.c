@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.57 2006/12/23 17:46:39 deraadt Exp $ */
+/*	$OpenBSD: arc.c,v 1.58 2007/02/20 17:06:23 thib Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1052,8 +1052,6 @@ arc_bio_alarm_state(struct arc_softc *sc, struct bioc_alarm *ba)
 	int				error = 0;
 
 	sysinfo = malloc(sizeof(struct arc_fw_sysinfo), M_TEMP, M_WAITOK);
-	if (sysinfo == NULL)
-		return (ENOMEM);
 
 	request = ARC_FW_SYSINFO;
 
@@ -1083,14 +1081,7 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 	int				error = 0;
 
 	sysinfo = malloc(sizeof(struct arc_fw_sysinfo), M_TEMP, M_WAITOK);
-	if (sysinfo == NULL)
-		return (ENOMEM);
-
 	volinfo = malloc(sizeof(struct arc_fw_volinfo), M_TEMP, M_WAITOK);
-	if (volinfo == NULL) {
-		free(sysinfo, M_TEMP);
-		return (ENOMEM);
-	}
 
 	arc_lock(sc);
 
@@ -1138,8 +1129,6 @@ arc_bio_getvol(struct arc_softc *sc, int vol, struct arc_fw_volinfo *volinfo)
 	int				maxvols, nvols = 0, i;
 
 	sysinfo = malloc(sizeof(struct arc_fw_sysinfo), M_TEMP, M_WAITOK);
-	if (sysinfo == NULL)
-		return (ENOMEM);
 
 	request[0] = ARC_FW_SYSINFO;
 	error = arc_msgbuf(sc, request, 1, sysinfo,
@@ -1188,8 +1177,6 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	int				error = 0;
 
 	volinfo = malloc(sizeof(struct arc_fw_volinfo), M_TEMP, M_WAITOK);
-	if (volinfo == NULL)
-		return (ENOMEM);
 
 	arc_lock(sc);
 	error = arc_bio_getvol(sc, bv->bv_volid, volinfo);
@@ -1269,21 +1256,8 @@ arc_bio_disk(struct arc_softc *sc, struct bioc_disk *bd)
 	char				rev[17];
 
 	volinfo = malloc(sizeof(struct arc_fw_volinfo), M_TEMP, M_WAITOK);
-	if (volinfo == NULL)
-		return (ENOMEM);
-
 	raidinfo = malloc(sizeof(struct arc_fw_raidinfo), M_TEMP, M_WAITOK);
-	if (raidinfo == NULL) {
-		free(volinfo, M_TEMP);
-		return (ENOMEM);
-	}
-
 	diskinfo = malloc(sizeof(struct arc_fw_diskinfo), M_TEMP, M_WAITOK);
-	if (diskinfo == NULL) {
-		free(raidinfo, M_TEMP);
-		free(volinfo, M_TEMP);
-		return (ENOMEM);
-	}
 
 	arc_lock(sc);
 
@@ -1393,15 +1367,9 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 
 	wlen = sizeof(struct arc_fw_bufhdr) + wbuflen + 1; /* 1 for cksum */
 	wbuf = malloc(wlen, M_TEMP, M_WAITOK);
-	if (wbuf == NULL)
-		return (ENOMEM);
 
 	rlen = sizeof(struct arc_fw_bufhdr) + rbuflen + 1; /* 1 for cksum */
 	rbuf = malloc(rlen, M_TEMP, M_WAITOK);
-	if (rbuf == NULL) {
-		free(wbuf, M_TEMP);
-		return (ENOMEM);
-	}
 
 	DNPRINTF(ARC_D_DB, "%s: arc_msgbuf wlen: %d rlen: %d\n", DEVNAME(sc),
 	    wlen, rlen);
@@ -1570,8 +1538,6 @@ arc_create_sensors(void *xsc, void *arg)
 
 	sc->sc_sensors = malloc(sizeof(struct sensor) * sc->sc_nsensors,
 	    M_DEVBUF, M_WAITOK);
-	if (sc->sc_sensors == NULL)
-		return;
 	bzero(sc->sc_sensors, sizeof(struct sensor) * sc->sc_nsensors);
 
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
@@ -1804,10 +1770,6 @@ arc_alloc_ccbs(struct arc_softc *sc)
 
 	sc->sc_ccbs = malloc(sizeof(struct arc_ccb) * sc->sc_req_count,
 	    M_DEVBUF, M_WAITOK);
-	if (sc->sc_ccbs == NULL) {
-		printf("%s: unable to allocate ccbs\n", DEVNAME(sc));
-		return (1);
-	}
 	bzero(sc->sc_ccbs, sizeof(struct arc_ccb) * sc->sc_req_count);
 
 	sc->sc_requests = arc_dmamem_alloc(sc,
