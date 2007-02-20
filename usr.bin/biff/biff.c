@@ -1,4 +1,4 @@
-/*	$OpenBSD: biff.c,v 1.9 2003/06/10 22:20:45 deraadt Exp $	*/
+/*	$OpenBSD: biff.c,v 1.10 2007/02/20 13:41:19 jmc Exp $	*/
 /*	$NetBSD: biff.c,v 1.3 1995/03/26 02:34:22 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)biff.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: biff.c,v 1.9 2003/06/10 22:20:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: biff.c,v 1.10 2007/02/20 13:41:19 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,6 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: biff [y | n]\n");
+	(void)fprintf(stderr, "usage: biff [n | y]\n");
 	exit(2);
 }
