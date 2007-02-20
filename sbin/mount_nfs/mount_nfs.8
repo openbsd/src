@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_nfs.8,v 1.36 2006/01/03 19:01:18 jmc Exp $
+.\"	$OpenBSD: mount_nfs.8,v 1.37 2007/02/20 14:07:32 jmc Exp $
 .\"	$NetBSD: mount_nfs.8,v 1.3 1996/02/18 11:59:10 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
@@ -143,16 +143,6 @@ The following NFS specific options are also available:
 .Bl -tag -width 15n
 .It Cm ac
 Enable attribute caching for both files and directories (default).
-.It Cm acregmax Ns = Ns Ar num
-Cache file attributes for no more than
-.Ar num
-seconds.
-The default is 60 seconds.
-.It Cm acregmin Ns = Ns Ar num
-Cache file attributes for at least
-.Ar num
-seconds.
-The default is 5 seconds.
 .It Cm acdirmax Ns = Ns Ar num
 Cache directory attributes for no more than
 .Ar num
@@ -160,6 +150,16 @@ seconds.
 The default is 60 seconds.
 .It Cm acdirmin Ns = Ns Ar num
 Cache directory attributes for at least
+.Ar num
+seconds.
+The default is 5 seconds.
+.It Cm acregmax Ns = Ns Ar num
+Cache file attributes for no more than
+.Ar num
+seconds.
+The default is 60 seconds.
+.It Cm acregmin Ns = Ns Ar num
+Cache file attributes for at least
 .Ar num
 seconds.
 The default is 5 seconds.
