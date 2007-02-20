@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.45 2007/02/20 22:27:59 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.46 2007/02/20 22:33:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -314,9 +314,13 @@ struct ahci_dmamem {
 #define AHCI_DMA_KVA(_adm)	((void *)(_adm)->adm_kva)
 
 struct ahci_softc;
+struct ahci_port;
 
 struct ahci_ccb {
-	int			ccb_id;
+	int			ccb_slot;
+	struct ahci_port	*ccb_port;
+
+	struct ata_xfer		*ccb_xa;
 
 	struct ahci_cmd		*ccb_cmd;
 	u_int64_t		ccb_cmd_dva;
@@ -655,7 +659,8 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 			goto freemaps;
 		}
 
-		ccb->ccb_id = i;
+		ccb->ccb_slot = i;
+		ccb->ccb_port = ap;
 		ccb->ccb_cmd = (struct ahci_cmd *)(kva + offset);
 		ccb->ccb_cmd_dva = dva + offset;
 		offset += sizeof(struct ahci_cmd);
