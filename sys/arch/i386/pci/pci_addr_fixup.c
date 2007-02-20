@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.20 2006/09/19 11:06:34 jsg Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.21 2007/02/20 21:15:01 tom Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -45,22 +45,24 @@
 #include <i386/pci/pcibiosvar.h>
 
 typedef int (*pciaddr_resource_manage_func_t)(struct pcibios_softc *, pci_chipset_tag_t, pcitag_t, int,
-	struct extent *, int, u_long *, bus_size_t);
+	struct extent *, int, bus_addr_t *, bus_size_t);
 void	pciaddr_resource_manage(struct pcibios_softc *,
     pci_chipset_tag_t, pcitag_t, pciaddr_resource_manage_func_t);
 void	pciaddr_resource_reserve(struct pcibios_softc *,
     pci_chipset_tag_t, pcitag_t);
 void	pciaddr_resource_reserve_disabled(struct pcibios_softc *,
     pci_chipset_tag_t, pcitag_t);
-int	pciaddr_do_resource_reserve(struct pcibios_softc *, pci_chipset_tag_t,
-    pcitag_t, int, struct extent *, int, u_long *, bus_size_t);
+int	pciaddr_do_resource_reserve(struct pcibios_softc *,
+    pci_chipset_tag_t, pcitag_t, int, struct extent *, int,
+    bus_addr_t *, bus_size_t);
 int	pciaddr_do_resource_reserve_disabled(struct pcibios_softc *,
     pci_chipset_tag_t, pcitag_t, int, struct extent *, int, u_long *,
     bus_size_t);
 void	pciaddr_resource_allocate(struct pcibios_softc *,
     pci_chipset_tag_t, pcitag_t);
-int	pciaddr_do_resource_allocate(struct pcibios_softc *, pci_chipset_tag_t,
-    pcitag_t, int, struct extent *, int, u_long *, bus_size_t);
+int	pciaddr_do_resource_allocate(struct pcibios_softc *,
+    pci_chipset_tag_t, pcitag_t, int, struct extent *, int, bus_addr_t *,
+    bus_size_t);
 bus_addr_t pciaddr_ioaddr(u_int32_t);
 void	pciaddr_print_devid(pci_chipset_tag_t, pcitag_t);
 
@@ -181,7 +183,7 @@ pciaddr_resource_manage(struct pcibios_softc *sc, pci_chipset_tag_t pc,
 {
 	struct extent *ex;
 	pcireg_t val, mask;
-	u_long addr;
+	bus_addr_t addr;
 	bus_size_t size;
 	int error, mapreg, type, reg_start, reg_end, width;
 
@@ -260,7 +262,7 @@ pciaddr_resource_manage(struct pcibios_softc *sc, pci_chipset_tag_t pc,
 
 int
 pciaddr_do_resource_allocate(struct pcibios_softc *sc, pci_chipset_tag_t pc,
-    pcitag_t tag, int mapreg, struct extent *ex, int type, u_long *addr,
+    pcitag_t tag, int mapreg, struct extent *ex, int type, bus_addr_t *addr,
     bus_size_t size)
 {
 	bus_addr_t start;
@@ -306,7 +308,7 @@ pciaddr_do_resource_allocate(struct pcibios_softc *sc, pci_chipset_tag_t pc,
 
 int
 pciaddr_do_resource_reserve(struct pcibios_softc *sc, pci_chipset_tag_t pc,
-    pcitag_t tag, int mapreg, struct extent *ex, int type, u_long *addr,
+    pcitag_t tag, int mapreg, struct extent *ex, int type, bus_addr_t *addr,
     bus_size_t size)
 {
 	pcireg_t val;

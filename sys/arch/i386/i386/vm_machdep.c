@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.47 2006/11/29 12:26:13 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.48 2007/02/20 21:15:01 tom Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -217,7 +217,8 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 void
 pagemove(caddr_t from, caddr_t to, size_t size)
 {
-	u_int32_t ofpte, otpte;
+	pt_entry_t *fpte, *tpte;
+	pt_entry_t ofpte, otpte;
 #ifdef MULTIPROCESSOR
 	u_int32_t cpumask = 0;
 #endif
@@ -226,12 +227,13 @@ pagemove(caddr_t from, caddr_t to, size_t size)
 	if ((size & PAGE_MASK) != 0)
 		panic("pagemove");
 #endif
+	fpte = kvtopte((vaddr_t)from);
+	tpte = kvtopte((vaddr_t)to);
 	while (size > 0) {
-		ofpte = pmap_pte_bits((vaddr_t)from);
-		otpte = pmap_pte_bits((vaddr_t)to);
-		pmap_pte_set((vaddr_t)to,
-		    pmap_pte_paddr((vaddr_t)from), ofpte);
-		pmap_pte_set((vaddr_t)from, 0, 0);
+		ofpte = *fpte;
+		otpte = *tpte;
+		*tpte++ = *fpte;
+		*fpte++ = 0;
 #if defined(I386_CPU) && !defined(MULTIPROCESSOR)
 		if (cpu_class != CPUCLASS_386)
 #endif

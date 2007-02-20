@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.69 2006/11/29 22:40:13 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.70 2007/02/20 21:15:01 tom Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -124,9 +124,6 @@ cpu_configure(void)
 	kvm86_init();
 #endif
 
-#ifndef SMALL_KERNEL
-	pmap_bootstrap_pae();
-#endif
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("cpu_configure: mainbus not configured");
 

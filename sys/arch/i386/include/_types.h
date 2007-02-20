@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.3 2006/04/27 15:37:53 mickey Exp $	*/
+/*	$OpenBSD: _types.h,v 1.4 2007/02/20 21:15:01 tom Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -86,9 +86,9 @@ typedef __int32_t		__register_t;
 
 /* VM system types */
 typedef unsigned long		__vaddr_t;
+typedef unsigned long		__paddr_t;
 typedef unsigned long		__vsize_t;
-typedef unsigned long long	__paddr_t;
-typedef unsigned long long	__psize_t;
+typedef unsigned long		__psize_t;
 
 /* Standard system types */
 typedef int			__clock_t;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.37 2006/12/20 18:59:50 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.38 2007/02/20 21:15:01 tom Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -113,7 +113,9 @@ extern bios_pciinfo_t *bios_pciinfo;
 #endif
 
 #include "pcibios.h"
+#if NPCIBIOS > 0
 #include <i386/pci/pcibiosvar.h>
+#endif
 
 int pci_mode = -1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.38 2006/11/30 21:20:41 dim Exp $	*/
+/*	$OpenBSD: param.h,v 1.39 2007/02/20 21:15:01 tom Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1996/03/04 05:04:26 cgd Exp $	*/
 
 /*-
@@ -75,6 +75,8 @@
 #define PAGE_SIZE	(1 << PAGE_SHIFT)
 #define PAGE_MASK	(PAGE_SIZE - 1)
 
+#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
+
 /*
  * Start of kernel virtual space.  Remember to alter the memory and
  * page table layout description in pmap.h when changing this.
@@ -129,3 +131,9 @@
 /* bytes to disk blocks */
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
+
+/*
+ * Mach derived conversion macros
+ */
+#define	i386_round_pdr(x)	((((unsigned)(x)) + PDOFSET) & ~PDOFSET)
+#define	i386_trunc_pdr(x)	((unsigned)(x) & ~PDOFSET)
