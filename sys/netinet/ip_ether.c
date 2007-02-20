@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.49 2006/03/25 22:41:48 djm Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.50 2007/02/20 19:37:40 claudio Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -217,9 +217,6 @@ etherip_input(struct mbuf *m, ...)
 			m->m_flags |= M_MCAST;
 	}
 
-	/* Trim the beginning of the mbuf, to remove the ethernet header. */
-	m_adj(m, sizeof(struct ether_header));
-
 #if NGIF > 0
 	/* Find appropriate gif(4) interface */
 	LIST_FOREACH(sc, &gif_softc_list, gif_list) {
@@ -243,9 +240,11 @@ etherip_input(struct mbuf *m, ...)
 	}
 #if NBPFILTER > 0
 	if (sc->gif_if.if_bpf)
-		bpf_mtap_af(sc->gif_if.if_bpf, sdst.sa.sa_family, m,
-		    BPF_DIRECTION_IN);
+		bpf_mtap_af(sc->gif_if.if_bpf, AF_LINK, m, BPF_DIRECTION_IN);
 #endif
+
+	/* Trim the beginning of the mbuf, to remove the ethernet header. */
+	m_adj(m, sizeof(struct ether_header));
 
 #if NBRIDGE > 0
 	/*
