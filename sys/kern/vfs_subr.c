@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.138 2007/02/17 23:57:16 mickey Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.139 2007/02/20 17:42:47 deraadt Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1351,7 +1351,8 @@ int
 vfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
-	struct vfsconf *vfsp;
+	struct vfsconf *vfsp, *tmpvfsp;
+	int ret;
 
 	/* all sysctl names at this level are at least name and field */
 	if (namelen < 2)
@@ -1384,8 +1385,18 @@ vfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		if (vfsp == NULL)
 			return (EOPNOTSUPP);
 
-		return (sysctl_rdstruct(oldp, oldlenp, newp, vfsp,
-		    sizeof(struct vfsconf)));
+		/* Make a copy, clear out kernel pointers */
+		tmpvfsp = malloc(sizeof(*tmpvfsp), M_TEMP, M_WAITOK);
+		bcopy(vfsp, tmpvfsp, sizeof(*tmpvfsp));
+		tmpvfsp->vfc_vfsops = NULL;
+		tmpvfsp->vfc_mountroot = NULL;
+		tmpvfsp->vfc_next = NULL;
+
+		ret = sysctl_rdstruct(oldp, oldlenp, newp, tmpvfsp,
+		    sizeof(struct vfsconf));
+
+		free(tmpvfsp, M_TEMP);
+		return (ret);
 	}
 
 	return (EOPNOTSUPP);
