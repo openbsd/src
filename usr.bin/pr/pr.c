@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.21 2004/06/21 15:27:19 avsm Exp $	*/
+/*	$OpenBSD: pr.c,v 1.22 2007/02/20 16:55:37 moritz Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: pr.c,v 1.21 2004/06/21 15:27:19 avsm Exp $";
+static char *rcsid = "$OpenBSD: pr.c,v 1.22 2007/02/20 16:55:37 moritz Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -50,6 +50,7 @@ static char *rcsid = "$OpenBSD: pr.c,v 1.21 2004/06/21 15:27:19 avsm Exp $";
 
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -139,7 +140,7 @@ char	*timefrmt;	/* time conversion string */
 /*
  * misc globals
  */
-int	ferr;		/* error message delayed */
+volatile sig_atomic_t	ferr;	/* error message delayed */
 int	addone = 0;	/* page length is odd with double space */
 int	errcnt = 0;	/* error count on file processing */
 int	beheaded = 0;	/* header / trailer link */
@@ -1144,7 +1145,7 @@ inln(FILE *inf, char *buf, int lim, int *cnt, int *cps, int trnc, int *mor)
 		    *ptbuf++ = ' ';
 		continue;
 	    }
-	    if (ch == '\n' || inform && ch == INFF)
+	    if (ch == '\n' || (inform && ch == INFF))
 		break;
 	    *ptbuf++ = ch;
 	}
@@ -1153,7 +1154,7 @@ inln(FILE *inf, char *buf, int lim, int *cnt, int *cps, int trnc, int *mor)
 	 * no expansion
 	 */
 	while ((--lim >= 0) && ((ch = getc(inf)) != EOF)) {
-	    if (ch == '\n' || inform && ch == INFF)
+	    if (ch == '\n' || (inform && ch == INFF))
 		break;
 	    *ptbuf++ = ch;
 	}
@@ -1347,7 +1348,7 @@ otln(char *buf, int cnt, int *svips, int *svops, int mor)
 	/*
 	 * output is not contracted
 	 */
-	if (cnt && (fwrite(buf, sizeof(char), cnt, stdout) <= 0)) {
+	if (cnt && (fwrite(buf, sizeof(char), cnt, stdout) < cnt)) {
 	    pfail();
 	    return(1);
 	}
@@ -1511,7 +1512,7 @@ nxtfile(int argc, char *argv[], char **fname, char *buf, int dt)
     /*
      * set up time field used in header
      */
-    if (strftime(buf, HDBUF, timefrmt, timeptr) <= 0) {
+    if (strftime(buf, HDBUF, timefrmt, timeptr) == 0) {
 	++errcnt;
 	if (inf != stdin)
 	    (void)fclose(inf);
@@ -1703,6 +1704,7 @@ prtail(int cnt, int incomp)
 /*
  * terminate():    when a SIGINT is recvd
  */
+/*ARGSUSED*/
 void
 terminate(int which_sig)
 {
@@ -1730,7 +1732,7 @@ usage(void)
     ferrout(
      "          [-i[ch][gap]] [-l line] [-n[ch][width]] [-o offset]\n");
     ferrout(
-     "          [-s[ch]] [-w width] [-] [file ...]\n", ferr);
+     "          [-s[ch]] [-w width] [-] [file ...]\n");
 }
 
 /*
@@ -1745,6 +1747,7 @@ setup(int argc, char *argv[])
     int iflag = 0;
     int wflag = 0;
     int cflag = 0;
+    const char *errstr;
 
     if (isatty(fileno(stdout)))
 	ferr = 1;
@@ -1752,15 +1755,17 @@ setup(int argc, char *argv[])
     while ((c = egetopt(argc, argv, "#adfFmrte?h:i?l:n?o:s?w:")) != -1) {
 	switch (c) {
 	case '+':
-	    if ((pgnm = atoi(eoptarg)) < 1) {
-		ferrout("pr: +page number must be 1 or more\n");
+	    pgnm = strtonum(eoptarg, 1, INT_MAX, &errstr);
+	    if (errstr) {
+		ferrout("pr: +page number is %s: %s\n", errstr, eoptarg);
 		return(1);
 	    }
 	    ++skipping;
 	    break;
 	case '-':
-	    if ((clcnt = atoi(eoptarg)) < 1) {
-		ferrout("pr: -columns must be 1 or more\n");
+	    clcnt = strtonum(eoptarg, 1, INT_MAX, &errstr);
+	    if (errstr) {
+		ferrout("pr: -columns number is %s: %s\n", errstr, eoptarg);
 		return(1);
 	    }
 	    if (clcnt > 1)
@@ -1779,8 +1784,9 @@ setup(int argc, char *argv[])
 	    else
 		inchar = INCHAR;
 	    if ((eoptarg != NULL) && isdigit(*eoptarg)) {
-		if ((ingap = atoi(eoptarg)) < 0) {
-		    ferrout("pr: -e gap must be 0 or more\n");
+		ingap = strtonum(eoptarg, 0, INT_MAX, &errstr);
+		if (errstr) {
+		    ferrout("pr: -e gap is %s: %s\n", errstr, eoptarg);
 		    return(1);
 		}
 		if (ingap == 0)
@@ -1805,8 +1811,9 @@ setup(int argc, char *argv[])
 	    else
 		ochar = OCHAR;
 	    if ((eoptarg != NULL) && isdigit(*eoptarg)) {
-		if ((ogap = atoi(eoptarg)) < 0) {
-		    ferrout("pr: -i gap must be 0 or more\n");
+		ogap = strtonum(eoptarg, 0, INT_MAX, &errstr);
+		if (errstr) {
+		    ferrout("pr: -i gap is %s: %s\n", errstr, eoptarg);
 		    return(1);
 		}
 		if (ogap == 0)
@@ -1818,8 +1825,9 @@ setup(int argc, char *argv[])
 		ogap = OGAP;
 	    break;
 	case 'l':
-	    if (!isdigit(*eoptarg) || ((lines=atoi(eoptarg)) < 1)) {
-		ferrout("pr: Number of lines must be 1 or more\n");
+	    lines = strtonum(eoptarg, 1, INT_MAX, &errstr);
+	    if (errstr) {
+		ferrout("pr: number of lines is %s: %s\n", errstr, eoptarg);
 		return(1);
 	    }
 	    break;
@@ -1832,8 +1840,9 @@ setup(int argc, char *argv[])
 	    else
 		nmchar = NMCHAR;
 	    if ((eoptarg != NULL) && isdigit(*eoptarg)) {
-		if ((nmwd = atoi(eoptarg)) < 1) {
-		    ferrout("pr: -n width must be 1 or more\n");
+		nmwd = strtonum(eoptarg, 1, INT_MAX, &errstr);
+		if (errstr) {
+		    ferrout("pr: -n width is %s: %s\n", errstr, eoptarg);
 		    return(1);
 		}
 	    } else if ((eoptarg != NULL) && (*eoptarg != '\0')) {
@@ -1843,8 +1852,9 @@ setup(int argc, char *argv[])
 		nmwd = NMWD;
 	    break;
 	case 'o':
-	    if (!isdigit(*eoptarg) || ((offst = atoi(eoptarg))< 1)){
-		ferrout("pr: -o offset must be 1 or more\n");
+	    offst = strtonum(eoptarg, 1, INT_MAX, &errstr);
+	    if (errstr) {
+		ferrout("pr: -o offset is %s: %s\n", errstr, eoptarg);
 		return(1);
 	    }
 	    break;
@@ -1868,12 +1878,12 @@ setup(int argc, char *argv[])
 	    break;
 	case 'w':
 	    ++wflag;
-	    if (!isdigit(*eoptarg) || ((pgwd = atoi(eoptarg)) < 1)){
-		ferrout("pr: -w width must be 1 or more \n");
+	    pgwd = strtonum(eoptarg, 1, INT_MAX, &errstr);
+	    if (errstr) {
+		ferrout("pr: -w width is %s: %s\n", errstr, eoptarg);
 		return(1);
 	    }
 	    break;
-	case '?':
 	default:
 	    return(1);
 	}
