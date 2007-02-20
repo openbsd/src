@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.147 2007/01/12 07:41:31 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.148 2007/02/20 17:42:29 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1776,11 +1776,10 @@ int
 sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
-	struct sensor *s;
-	struct sensordev *sd;
-	int dev;
+	struct sensor *s, *tmps;
+	struct sensordev *sd, *tmpsd;
+	int dev, numt, ret;
 	enum sensor_type type;
-	int numt;
 
 	if (namelen != 1 && namelen != 3)
 		return (ENOTDIR);
@@ -1791,8 +1790,17 @@ sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		if (sd == NULL)
 			return (ENOENT);
 
-		return (sysctl_rdstruct(oldp, oldlenp, newp, sd,
-		    sizeof(struct sensordev)));
+		/* Grab a copy, to clear the kernel pointers */
+		tmpsd = malloc(sizeof(*tmpsd), M_TEMP, M_WAITOK);
+		bcopy(sd, tmpsd, sizeof(*tmpsd));
+		bzero(&tmpsd->list, sizeof(tmpsd->list));
+		bzero(&tmpsd->sensors_list, sizeof(tmpsd->sensors_list));
+
+		ret = sysctl_rdstruct(oldp, oldlenp, newp, tmpsd,
+		    sizeof(struct sensordev));
+
+		free(tmpsd, M_TEMP);
+		return (ret);
 	}
 
 	type = name[1];
@@ -1802,7 +1810,15 @@ sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	if (s == NULL)
 		return (ENOENT);
 
-	return (sysctl_rdstruct(oldp, oldlenp, newp, s, sizeof(struct sensor)));
+	/* Grab a copy, to clear the kernel pointers */
+	tmps = malloc(sizeof(*tmps), M_TEMP, M_WAITOK);
+	bcopy(s, tmps, sizeof(*tmps));
+	bzero(&tmps->list, sizeof(tmps->list));
+
+	ret = sysctl_rdstruct(oldp, oldlenp, newp, tmps,
+	    sizeof(struct sensor));
+	free(tmps, M_TEMP);
+	return (ret);
 }
 
 int
