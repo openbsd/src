@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.20 2006/02/18 02:27:15 niallo Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.21 2007/02/20 11:56:45 henning Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
 .Dd June 9, 1993
@@ -199,11 +199,18 @@ The
 field of each line specifies the action to be taken when the
 .Em selector
 field selects a message.
-There are five forms:
+There are six forms:
 .Bl -bullet
 .It
 A pathname (beginning with a leading slash).
 Selected messages are appended to the file.
+.It
+A pipe to another program (beginning with a leading pipe symbol).
+The given program is started and presented the selected messages
+on its standard input.
+If the program exits,
+.Xr syslogd 8
+tries to restart it.
 .It
 A hostname (preceded by an at
 .Pq Ql @
@@ -290,6 +297,9 @@ mail,news.err						/var/log/spoolerr
 
 # Store notices and authpriv messages in a 64k buffer named "important"
 *.notice,authpriv.*					:64:important
+
+# feed everything to logsurfer
+*.*						|/usr/local/sbin/logsurfer
 .Ed
 .Sh SEE ALSO
 .Xr syslog 3 ,
