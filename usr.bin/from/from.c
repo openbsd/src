@@ -1,4 +1,4 @@
-/*	$OpenBSD: from.c,v 1.12 2006/03/14 19:39:49 moritz Exp $	*/
+/*	$OpenBSD: from.c,v 1.13 2007/02/20 13:52:22 jmc Exp $	*/
 /*	$NetBSD: from.c,v 1.6 1995/09/01 01:39:10 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)from.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: from.c,v 1.12 2006/03/14 19:39:49 moritz Exp $";
+static char rcsid[] = "$OpenBSD: from.c,v 1.13 2007/02/20 13:52:22 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,7 +81,8 @@ main(int argc, char *argv[])
 			break;
 		case '?':
 		default:
-			fprintf(stderr, "usage: from [-f file] [-s sender] [user]\n");
+			fprintf(stderr,
+			    "usage: from [-f file] [-s sender] [user]\n");
 			exit(1);
 		}
 	argv += optind;
