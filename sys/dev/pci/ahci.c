@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.44 2007/02/20 22:25:30 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.45 2007/02/20 22:27:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -243,6 +243,7 @@ int ahcidebug = AHCI_D_VERBOSE;
 struct ahci_cmd_list {
 	u_int16_t		prdtl; /* sgl len */
 	u_int16_t		flags;
+#define AHCI_CMD_LIST_FLAG_CFL		0x001f /* Command FIS Length */
 #define AHCI_CMD_LIST_FLAG_A		(1<<5) /* ATAPI */
 #define AHCI_CMD_LIST_FLAG_W		(1<<6) /* Write */
 #define AHCI_CMD_LIST_FLAG_P		(1<<7) /* Prefetchable */
