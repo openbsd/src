@@ -1,4 +1,4 @@
-.\" $OpenBSD: modload.8,v 1.21 2002/01/09 18:23:31 mpech Exp $
+.\" $OpenBSD: modload.8,v 1.22 2007/02/20 14:01:15 jmc Exp $
 .\" $NetBSD: modload.8,v 1.17 2001/11/16 11:57:16 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -41,11 +41,11 @@
 .Nd load a kernel module
 .Sh SYNOPSIS
 .Nm modload
-.Op Fl dnvsS
+.Op Fl dnSsv
 .Op Fl A Ar kernel
 .Op Fl e Ar entry
-.Op Fl p Ar postinstall
 .Op Fl o Ar output_file
+.Op Fl p Ar postinstall
 .Ar input_file
 .Sh DESCRIPTION
 The
@@ -57,28 +57,16 @@ The options to
 .Nm
 are as follows:
 .Bl -tag -width Ds
-.It Fl d
-Debug.
-Used to debug
-.Nm
-itself.
-.It Fl n
-Do everything, except calling the module entry point (and any
-post-install program).
-.It Fl v
-Print comments about the loading process.
-.It Fl s
-Do not load symbols from the kernel module.
-.It Fl S
-Do not remove the temporary object file.
-By default, the
-.Xr ld 1
-output is removed after being loaded into the kernel.
 .It Fl A Ar kernel
 Specify the file that is passed to the linker
 to resolve module references to external symbols.
 The symbol file must be for the currently running
 kernel or the module is likely to crash the system.
+.It Fl d
+Debug.
+Used to debug
+.Nm
+itself.
 .It Fl e Ar entry
 Specify the module entry point.
 This is passed by
@@ -90,6 +78,12 @@ The default module entry point name is `xxxinit'.
 If `xxxinit' cannot be found, an attempt to use `<module_name>_lkmentry'
 will be made, where <module_name> is the filename being loaded without
 the `.o'.
+.It Fl n
+Do everything, except calling the module entry point (and any
+post-install program).
+.It Fl o Ar output_file
+Specify the name of the output file that is produced by
+the linker.
 .It Fl p Ar postinstall
 Specify the name of a shell script or program that will
 be executed if the module is successfully loaded.
@@ -99,9 +93,15 @@ For loadable drivers, the third argument is
 the block or character major device number.
 For a loadable system call, the third argument is the system
 call number.
-.It Fl o Ar output_file
-Specify the name of the output file that is produced by
-the linker.
+.It Fl S
+Do not remove the temporary object file.
+By default, the
+.Xr ld 1
+output is removed after being loaded into the kernel.
+.It Fl s
+Do not load symbols from the kernel module.
+.It Fl v
+Print comments about the loading process.
 .El
 .Sh FILES
 .Bl -tag -width /usr/include/sys/lkm.h -compact

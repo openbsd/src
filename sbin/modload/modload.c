@@ -1,4 +1,4 @@
-/* 	$OpenBSD: modload.c,v 1.41 2003/08/06 20:37:25 millert Exp $	*/
+/* 	$OpenBSD: modload.c,v 1.42 2007/02/20 14:01:15 jmc Exp $	*/
 /*	$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
@@ -111,9 +111,9 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dnsvS] [-A system] [-e entry]\n",
+	fprintf(stderr, "usage: %s [-dnSsv] [-A kernel] [-e entry]\n",
 	    __progname);
-	fprintf(stderr, "\t[-p postinstall] [-o outputfile] <input file>\n");
+	fprintf(stderr, "\t[-o output_file] [-p postinstall] input_file\n");
 	exit(1);
 }
 
