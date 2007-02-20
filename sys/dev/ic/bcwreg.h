@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.12 2007/02/18 09:37:21 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.13 2007/02/20 21:24:36 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -343,6 +343,16 @@
 
 /* LEDS */
 #define BCW_NR_LEDS			4
+
+/* PHY registers */
+#define BCW_PHY_G_LO_CONTROL		0x0810
+#define BCW_PHY_ILT_A_CTRL		0x0072
+#define BCW_PHY_ILT_A_DATA1		0x0073
+#define BCW_PHY_ILT_G_CTRL		0x0472
+#define BCW_PHY_ILT_G_DATA1		0x0473
+#define BCW_PHY_G_CRS			0x0429
+#define BCW_PHY_NRSSILT_CTRL		0x0803
+#define BCW_PHY_NRSSILT_DATA		0x0804
 
 #define BCW_READ16(sc, reg) \
 	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (reg))

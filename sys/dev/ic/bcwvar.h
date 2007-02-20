@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.15 2007/02/18 09:37:21 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.16 2007/02/20 21:24:36 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -139,12 +139,29 @@ struct bcw_dma_slot {
 	uint32_t	addr;
 };
 
+struct bcw_lopair {
+	int8_t low;
+	int8_t high;
+	uint8_t used:1;
+};
+
 #define CTRL_BC_MASK	0x1fff		/* buffer byte count */
 #define CTRL_EOT	0x10000000	/* end of descriptor table */
 #define CTRL_IOC	0x20000000	/* interrupt on completion */
 #define CTRL_EOF	0x40000000	/* end of frame */
 #define CTRL_SOF	0x80000000	/* start of frame */
                 
+/* ilt */
+#define BCW_ILT_FINEFREQA_SIZE		256
+#define BCW_ILT_FINEFREQG_SIZE		256
+#define BCW_ILT_NOISEA2_SIZE		8
+#define BCW_ILT_NOISEA3_SIZE		8 
+#define BCW_ILT_NOISEG1_SIZE		8
+#define BCW_ILT_NOISEG2_SIZE		8
+#define BCW_ILT_ROTOR_SIZE		53
+#define BCW_ILT_RETARD_SIZE		53
+#define BCW_ILT_SIGMASQR_SIZE		53
+#define BCW_ILT_NOISESCALEG_SIZE	27
 
 #if 0
 /*
@@ -212,10 +229,13 @@ struct bcw_softc {
 	uint16_t		sc_phy_version;
 	uint16_t		sc_phy_type;
 	uint16_t		sc_phy_rev;
+	uint16_t		sc_phy_loopback_gain[2];
+	struct bcw_lopair	*sc_phy_lopairs;
 //	uint16_t		sc_corerev;
 	uint32_t		sc_radio_mnf;
 	uint16_t		sc_radio_rev;
 	uint16_t		sc_radio_ver;
+	uint16_t		sc_radio_initval;
 	uint32_t		sc_phyinfo;
 	uint16_t		sc_numcores;
 	uint16_t		sc_havecommon;
@@ -228,6 +248,10 @@ struct bcw_softc {
 	uint16_t		sc_radio_pa1b0;
 	uint16_t		sc_radio_pa1b1;
 	uint16_t		sc_radio_pa1b2;
+	uint16_t		sc_radio_baseband_atten;
+	uint16_t		sc_radio_radio_atten;
+	uint16_t		sc_radio_txctl1;
+	uint16_t		sc_radio_txctl2;
 	uint8_t			sc_idletssi;
 	uint8_t			sc_spromrev;
 	uint16_t		sc_boardflags;
