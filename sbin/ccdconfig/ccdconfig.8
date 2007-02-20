@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ccdconfig.8,v 1.18 2003/06/03 13:16:07 jmc Exp $
+.\"	$OpenBSD: ccdconfig.8,v 1.19 2007/02/20 13:47:28 jmc Exp $
 .\"	$NetBSD: ccdconfig.8,v 1.4 1996/02/28 01:01:17 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 .Op Fl cv
 .Ar ccd
 .Ar ileave
-.Ar flags
+.Op Ar flags
 .Ar dev
 .Op Ar ...
 .Nm ccdconfig
@@ -79,12 +79,12 @@ For more information about the ccd, see
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl C
+Configure all ccd devices listed in the ccd configuration file.
 .It Fl c
 Configure a ccd.
 This is the default behavior of
 .Nm ccdconfig .
-.It Fl C
-Configure all ccd devices listed in the ccd configuration file.
 .It Fl f Ar config_file
 When configuring or unconfiguring all devices, read the file
 .Pa config_file
@@ -108,10 +108,10 @@ instead of the default
 Extract the name list from
 .Ar system
 instead of the running kernel.
-.It Fl u
-Unconfigure a ccd.
 .It Fl U
 Unconfigure all ccd devices listed in the ccd configuration file.
+.It Fl u
+Unconfigure a ccd.
 .It Fl v
 Causes
 .Nm
