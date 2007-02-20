@@ -44,7 +44,7 @@
 ./usr/lib/libiberty.so.8.0
 ./usr/lib/libkafs.so.16.0
 ./usr/lib/libkrb5.so.16.0
-./usr/lib/libkvm.so.8.0
+./usr/lib/libkvm.so.9.0
 ./usr/lib/libm.so.2.3
 ./usr/lib/libmenu.so.3.0
 ./usr/lib/libmilter.so.2.0
@@ -158,6 +158,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/adb/keyboard.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ata
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ata/atareg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ata/atascsi.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ata/atavar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ata/satareg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ata/wdvar.ph

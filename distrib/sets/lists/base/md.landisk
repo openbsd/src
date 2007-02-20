@@ -611,6 +611,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/adb/keyboard.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ata
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ata/atareg.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/dev/ata/atascsi.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ata/atavar.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ata/satareg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ata/wdvar.ph
