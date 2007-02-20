@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpihpet.c,v 1.3 2007/02/20 22:25:45 marco Exp $	*/
+/*	$OpenBSD: acpihpet.c,v 1.4 2007/02/20 23:54:46 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -106,6 +106,7 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 	hpet_timecounter.tc_frequency = (u_int32_t)freq;
 	hpet_timecounter.tc_priv = sc;
 	hpet_timecounter.tc_name = sc->sc_dev.dv_xname;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, HPET_CONFIGURATION, 1);
 	tc_init(&hpet_timecounter);
 #endif
 }
