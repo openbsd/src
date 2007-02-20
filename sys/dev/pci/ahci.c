@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.43 2007/02/19 13:54:07 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.44 2007/02/20 22:25:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -180,7 +180,7 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_PREG_TFD_STS_DRQ		(1<<3)
 #define  AHCI_PREG_TFD_STS_BSY		(1<<7)
 #define  AHCI_PREG_TFD_ERR		0xff00
-#define AHCI_PFTM_TFD_STS	"\20" "\001ERR" "\004DRQ" "\010BSY"
+#define AHCI_PFMT_TFD_STS	"\20" "\001ERR" "\004DRQ" "\010BSY"
 #define AHCI_PREG_SIG		0x24 /* Signature */
 #define AHCI_PREG_SSTS		0x28 /* SATA Status */
 #define  AHCI_PREG_SSTS_DET		0xf /* Device Detection */
@@ -243,6 +243,13 @@ int ahcidebug = AHCI_D_VERBOSE;
 struct ahci_cmd_list {
 	u_int16_t		prdtl; /* sgl len */
 	u_int16_t		flags;
+#define AHCI_CMD_LIST_FLAG_A		(1<<5) /* ATAPI */
+#define AHCI_CMD_LIST_FLAG_W		(1<<6) /* Write */
+#define AHCI_CMD_LIST_FLAG_P		(1<<7) /* Prefetchable */
+#define AHCI_CMD_LIST_FLAG_R		(1<<8) /* Reset */
+#define AHCI_CMD_LIST_FLAG_B		(1<<9) /* BIST */
+#define AHCI_CMD_LIST_FLAG_C		(1<<10) /* Clear Busy upon R_OK */
+#define AHCI_CMD_LIST_FLAG_PMP		0xf000 /* Port Multiplier Port */
 
 	u_int32_t		prdbc; /* datalen */
 
@@ -275,6 +282,7 @@ struct ahci_prdt {
 	u_int32_t		dba_hi;
 	u_int32_t		reserved;
 	u_int32_t		flags;
+#define AHCI_PRDT_FLAG_INTR		(1<<31) /* interrupt on completion */
 } __packed;
 
 /* this makes ahci_cmd 512 bytes, which is good for alignment */
