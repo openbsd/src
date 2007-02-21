@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.9 2007/02/14 22:45:37 kettenis Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.10 2007/02/21 19:17:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -27,6 +27,8 @@
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidev.h>
+#include <dev/acpi/amltypes.h>
+#include <dev/acpi/dsdt.h>
 
 #include <machine/i8259.h>
 #include <machine/i82093reg.h>
@@ -118,10 +120,13 @@ static u_int8_t lapic_map[256];
 void
 acpimadt_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct acpi_softc *acpi_sc = (struct acpi_softc *)parent;
 	struct device *mainbus = parent->dv_parent;
 	struct acpi_attach_args *aaa = aux;
 	struct acpi_madt *madt = (struct acpi_madt *)aaa->aaa_table;
 	caddr_t addr = (caddr_t)(madt + 1);
+	struct aml_node *node;
+	struct aml_value arg;
 	struct mp_intr_map *map;
 	struct ioapic_softc *apic;
 	int cpu_role = CPU_ROLE_BP;
@@ -132,6 +137,15 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 	if (madt->flags & ACPI_APIC_PCAT_COMPAT)
 		printf(": PC-AT compat");
 	printf("\n");
+
+	/* Tell the BIOS we will be using APIC mode. */
+	node = aml_searchname(NULL, "\\_PIC");
+	if (node == 0)
+		return;
+	memset(&arg, 0, sizeof(arg));
+	arg.type = AML_OBJTYPE_INTEGER;
+	arg.v_integer = 1;
+	aml_evalnode(acpi_sc, node, 1, &arg, NULL);
 
 	mp_busses = acpimadt_busses;
 	mp_isa_bus = &acpimadt_isa_bus;

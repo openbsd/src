@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.14 2007/02/21 05:31:59 marco Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.15 2007/02/21 19:17:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -145,12 +145,11 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 #if NIOAPIC > 0
 	struct mp_intr_map *map;
 	struct ioapic_softc *apic;
-#else
+#endif
 	pci_chipset_tag_t pc = NULL;
 	pcitag_t tag;
 	pcireg_t reg;
 	int bus, dev, func, nfuncs;
-#endif
 
 	if (v->type != AML_OBJTYPE_PACKAGE || v->length != 4) {
 		printf("invalid mapping object\n");
@@ -206,32 +205,37 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 #endif
 
 #if NIOAPIC > 0
-	apic = ioapic_find_bybase(irq);
-	if (apic == NULL) {
-		printf("%s: no apic found for irq %d\n", DEVNAME(sc), irq);
+	if (nioapics > 0) {
+		apic = ioapic_find_bybase(irq);
+		if (apic == NULL) {
+			printf("%s: no apic found for irq %d\n", DEVNAME(sc), irq);
+			return;
+		}
+
+		map = malloc(sizeof (struct mp_intr_map), M_DEVBUF, M_NOWAIT);
+		if (map == NULL)
+			return;
+
+		memset(map, 0, sizeof *map);
+		map->ioapic = apic;
+		map->ioapic_pin = irq - apic->sc_apic_vecbase;
+		map->bus_pin = ((addr >> 14) & 0x7c) | (pin & 0x3);
+		map->redir = IOAPIC_REDLO_ACTLO | IOAPIC_REDLO_LEVEL;
+		map->redir |= (IOAPIC_REDLO_DEL_LOPRI << IOAPIC_REDLO_DEL_SHIFT);
+
+		map->ioapic_ih = APIC_INT_VIA_APIC |
+		    ((apic->sc_apicid << APIC_INT_APIC_SHIFT) |
+		    (map->ioapic_pin << APIC_INT_PIN_SHIFT));
+
+		apic->sc_pins[map->ioapic_pin].ip_map = map;
+
+		map->next = mp_busses[sc->sc_bus].mb_intrs;
+		mp_busses[sc->sc_bus].mb_intrs = map;
+
 		return;
 	}
+#endif
 
-	map = malloc(sizeof (struct mp_intr_map), M_DEVBUF, M_NOWAIT);
-	if (map == NULL)
-		return;
-
-	memset(map, 0, sizeof *map);
-	map->ioapic = apic;
-	map->ioapic_pin = irq - apic->sc_apic_vecbase;
-	map->bus_pin = ((addr >> 14) & 0x7c) | (pin & 0x3);
-	map->redir = IOAPIC_REDLO_ACTLO | IOAPIC_REDLO_LEVEL;
-	map->redir |= (IOAPIC_REDLO_DEL_LOPRI << IOAPIC_REDLO_DEL_SHIFT);
-
-	map->ioapic_ih = APIC_INT_VIA_APIC |
-	    ((apic->sc_apicid << APIC_INT_APIC_SHIFT) |
-	    (map->ioapic_pin << APIC_INT_PIN_SHIFT));
-
-	apic->sc_pins[map->ioapic_pin].ip_map = map;
-
-	map->next = mp_busses[sc->sc_bus].mb_intrs;
-	mp_busses[sc->sc_bus].mb_intrs = map;
-#else
 	bus = sc->sc_bus;
 	dev = ACPI_PCI_DEV(addr << 16);
 	tag = pci_make_tag(pc, bus, dev, 0);
@@ -251,7 +255,6 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 			pci_conf_write(pc, tag, PCI_INTERRUPT_REG, reg);
 		}
 	}
-#endif
 }
 
 int

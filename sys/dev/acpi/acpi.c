@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.82 2007/02/19 23:42:39 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.83 2007/02/21 19:17:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -38,8 +38,6 @@
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/dsdt.h>
 
-#include "ioapic.h"
-
 #include <machine/apmvar.h>
 
 #ifdef ACPI_DEBUG
@@ -76,7 +74,6 @@ void	acpi_init_states(struct acpi_softc *);
 void	acpi_init_gpes(struct acpi_softc *);
 void	acpi_init_pm(struct acpi_softc *);
 
-void	acpi_init_pic(struct acpi_softc *);
 void	acpi_foundprt(struct aml_node *, void *);
 
 void	acpi_filtdetach(struct knote *);
@@ -274,26 +271,6 @@ acpi_inidev(struct aml_node *node, void *arg)
 	if (res.v_integer & STA_PRESENT)
 		aml_evalnode(sc, node, 0, NULL, NULL);
 	aml_freevalue(&res);
-}
-
-void
-acpi_init_pic(struct acpi_softc *sc)
-{
-	struct aml_node		*node;
-	struct aml_value	arg;
-
-	node = aml_searchname(&aml_root, "\\_PIC");
-	if (node == 0)
-		return;
-
-	memset(&arg, 0, sizeof(arg));
-	arg.type = AML_OBJTYPE_INTEGER;
-#if NIOAPIC > 0
-	arg.v_integer = 1;
-#else
-	arg.v_integer = 0;
-#endif
-	aml_evalnode(sc, node, 1, &arg, NULL);
 }
 
 void
@@ -500,8 +477,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		}
 	} while (!(acpi_read_pmreg(sc, ACPIREG_PM1_CNT, 0) & ACPI_PM1_SCI_EN));
 #endif
-
-	acpi_init_pic(sc);
 
 	acpi_attach_machdep(sc);
 
