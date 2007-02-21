@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.102 2007/02/18 20:54:18 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.103 2007/02/21 18:12:36 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -355,6 +355,8 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		if (fstat(file->rf_fd, &st) == -1)
 			err(1, "%s", file->rf_path);
 		file->rf_mode = mode = st.st_mode;
+	} else {
+		mode = file->rf_mode;
 	}
 
 	if (flags & CO_LOCK) {
