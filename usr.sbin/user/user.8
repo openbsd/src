@@ -1,4 +1,4 @@
-.\" $OpenBSD: user.8,v 1.13 2004/06/26 09:31:46 jmc Exp $
+.\" $OpenBSD: user.8,v 1.14 2007/02/21 16:48:03 jmc Exp $
 .\" $NetBSD: user.8,v 1.9 2001/06/05 11:31:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -53,12 +53,12 @@
 .Bk -words
 .Cm add
 .Op Fl mov
-.Op Fl G Ar secondary-group
 .Op Fl b Ar base-dir
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
+.Op Fl G Ar secondary-group
 .Op Fl g Ar gid/name/=uid
 .Op Fl k Ar skel-dir
 .Op Fl L Ar login-class
@@ -84,11 +84,11 @@
 .Bk -words
 .Cm mod
 .Op Fl mov
-.Op Fl G Ar secondary-group
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
+.Op Fl G Ar secondary-group
 .Op Fl g Ar gid/name/=uid
 .Op Fl L Ar login-class
 .Op Fl l Ar new-login
