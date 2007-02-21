@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.187 2007/02/19 11:40:00 otto Exp $	*/
+/*	$OpenBSD: file.c,v 1.188 2007/02/21 04:18:45 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -669,11 +669,12 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		if (b2 == NULL)
 			fatal("failed to get file content for comparison");
 
-		/* b1 and b2 get released in cvs_buf_differ */
 		if (cvs_buf_differ(b1, b2))
 			ismodified = 1;
 		else
 			ismodified = 0;
+		cvs_buf_free(b1);
+		cvs_buf_free(b2);
 	}
 
 	if (cf->file_rcs != NULL && cf->file_rcsrev != NULL) {

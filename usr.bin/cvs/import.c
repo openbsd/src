@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.70 2007/02/17 18:23:43 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.71 2007/02/21 04:18:45 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -303,6 +303,8 @@ import_update(struct cvs_file *cf)
 			    cf->file_path);
 
 		ret = cvs_buf_differ(b1, b2);
+		cvs_buf_free(b1);
+		cvs_buf_free(b2);
 		if (ret == 0) {
 			import_tag(cf, brev, rev);
 			rcsnum_free(brev);
