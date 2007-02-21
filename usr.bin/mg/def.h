@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.98 2006/11/19 16:51:19 deraadt Exp $	*/
+/*	$OpenBSD: def.h,v 1.99 2007/02/21 23:33:12 deanna Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -212,7 +212,7 @@ struct mgwin {
 /*
  * Window flags are set by command processors to
  * tell the display system what has happened to the buffer
- * mapped by the window. Setting "WFHARD" is always a safe thing
+ * mapped by the window. Setting "WFFULL" is always a safe thing
  * to do, but it may do more work than is necessary. Always try
  * to set the simplest action that achieves the required update.
  * Because commands set bits in the "w_flag", update will see
