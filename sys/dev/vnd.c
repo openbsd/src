@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.68 2007/02/01 01:02:05 pedro Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.69 2007/02/21 19:25:40 grunk Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -773,7 +773,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		}
 
 		if (vio->vnd_keylen > 0) {
-			char key[128];
+			char key[BLF_MAXUTILIZED];
 
 			if (vio->vnd_keylen > sizeof(key))
 				vio->vnd_keylen = sizeof(key);
