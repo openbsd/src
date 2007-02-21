@@ -1,4 +1,4 @@
-.\" $OpenBSD: useradd.8,v 1.23 2007/02/06 17:44:51 jmc Exp $
+.\" $OpenBSD: useradd.8,v 1.24 2007/02/21 16:59:59 jmc Exp $
 .\" $NetBSD: useradd.8,v 1.26 2003/02/25 10:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -46,8 +46,8 @@
 .Op Fl f Ar inactive-time
 .Oo
 .Fl g Ar gid | name | Li =uid Oc
-.Op Fl L Ar login-class
 .Op Fl k Ar skel-dir
+.Op Fl L Ar login-class
 .Oo
 .Fl r Ar low Ns Li .. Ns Ar high
 .Oc
@@ -56,12 +56,12 @@
 .Nm useradd
 .Bk -words
 .Op Fl mov
-.Op Fl G Ar secondary-group[,group,...]
 .Op Fl b Ar base-dir
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
+.Op Fl G Ar secondary-group[,group,...]
 .Oo
 .Fl g Ar gid | name | Li =uid Oc
 .Op Fl k Ar skel-dir
@@ -165,10 +165,6 @@ after setting any defaults, and then reading values from
 .Pa /etc/usermgmt.conf ,
 the following command line options are processed:
 .Bl -tag -width Ds
-.It Fl G Ar secondary-group[,group,...]
-are the secondary groups to which the user will be added in the
-.Pa /etc/group
-file.
 .It Fl b Ar base-directory
 is the base directory name, in which the user's new home
 directory will be created, should the
@@ -199,6 +195,10 @@ sets the time at which the current password will expire.
 Also see the
 .Fl e
 option above.
+.It Fl G Ar secondary-group[,group,...]
+are the secondary groups to which the user will be added in the
+.Pa /etc/group
+file.
 .It Fl g Ar gid | name | Li =uid
 gives the group name or identifier to be used for the new user's primary group.
 If this is
