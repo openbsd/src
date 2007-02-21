@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.95 2007/02/20 11:24:32 henning Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.96 2007/02/21 18:10:31 mpf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.95 2007/02/20 11:24:32 henning Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.96 2007/02/21 18:10:31 mpf Exp $";
 #endif
 #endif /* not lint */
 
@@ -514,6 +514,9 @@ main(int argc, char *argv[])
 	(void)signal(SIGPIPE, SIG_IGN);
 	(void)alarm(TIMERINTVL);
 
+	logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: start", LocalHostName, ADDDATE);
+	dprintf("syslogd: started\n");
+
 	for (;;) {
 		if (MarkSet)
 			markit();
@@ -523,6 +526,10 @@ main(int argc, char *argv[])
 		if (DoInit) {
 			init();
 			DoInit = 0;
+
+			logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: restart",
+			    LocalHostName, ADDDATE);
+			dprintf("syslogd: restarted\n");
 		}
 
 		switch (poll(pfd, PFD_UNIX_0 + nfunix, -1)) {
@@ -1287,10 +1294,6 @@ init(void)
 			printf("\n");
 		}
 	}
-
-	logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: restart", LocalHostName,
-	    ADDDATE);
-	dprintf("syslogd: restarted\n");
 }
 
 #define progmatches(p1, p2) \
