@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.118 2007/02/12 00:30:17 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.119 2007/02/21 01:32:21 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -212,9 +212,10 @@ sdattach(parent, self, aux)
 
 	timeout_set(&sd->sc_timeout, sdrestart, sd);
 
-	/* Spin up the unit ready or not. */
-	scsi_start(sc_link, SSS_START, scsi_autoconf | SCSI_SILENT |
-	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+	/* Spin up non-UMASS devices ready or not. */
+	if ((sd->sc_link->flags & SDEV_UMASS) == 0)
+		scsi_start(sc_link, SSS_START, scsi_autoconf | SCSI_SILENT |
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 
 	/* Check that it is still responding and ok. */
 	error = scsi_test_unit_ready(sd->sc_link, TEST_READY_RETRIES,
@@ -366,9 +367,11 @@ sdopen(dev, flag, fmt, p)
 			goto bad;
 		}
 	} else {
-		/* Spin up the unit, ready or not. */
-		scsi_start(sc_link, SSS_START, (rawopen ? SCSI_SILENT : 0) |
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+		/* Spin up non-UMASS devices ready or not. */
+		if ((sd->sc_link->flags & SDEV_UMASS) == 0)
+			scsi_start(sc_link, SSS_START, (rawopen ? SCSI_SILENT :
+			    0) | SCSI_IGNORE_ILLEGAL_REQUEST |
+			    SCSI_IGNORE_MEDIA_CHANGE);
 
 		/* Use sd_interpret_sense() for sense errors.
 		 *
@@ -495,7 +498,6 @@ sdclose(dev, flag, fmt, p)
 
 		if (sd->sc_link->flags & SDEV_EJECTING) {
 			scsi_start(sd->sc_link, SSS_STOP|SSS_LOEJ, 0);
-
 			sd->sc_link->flags &= ~SDEV_EJECTING;
 		}
 
