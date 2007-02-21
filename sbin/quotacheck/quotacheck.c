@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.20 2005/04/05 00:13:49 deraadt Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.21 2007/02/21 06:22:25 jmc Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.20 2005/04/05 00:13:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.21 2007/02/21 06:22:25 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -207,9 +207,9 @@ main(int argc, char *argv[])
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage:\t%s\n\t%s\n",
-	    "quotacheck -a [-dguv] [-l <maxparallel>]",
-	    "quotacheck [-dguv] filesys ...");
+	extern char *__progname;
+	(void)fprintf(stderr, "usage: %s [-adguv] [-l maxparallel] "
+	    "filesystem ...\n", __progname);
 	exit(1);
 }
 
