@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.57 2004/06/26 17:50:47 tom Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.58 2007/02/21 13:17:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -291,11 +291,13 @@ readline(char *buf, size_t n, int to)
 			}
 			continue;
 		default:
-			if (p - buf < n-1)
-				*p++ = ch;
-			else {
-				putchar('\007');
-				putchar('\177');
+			if (ch >= ' ' && ch < '\177') {
+				if (p - buf < n-1)
+					*p++ = ch;
+				else {
+					putchar('\007');
+					putchar('\177');
+				}
 			}
 			continue;
 		}
