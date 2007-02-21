@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.61 2007/02/20 22:06:46 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.62 2007/02/21 14:25:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1578,9 +1578,9 @@ acx_load_firmware(struct acx_softc *sc, uint32_t offset, const uint8_t *data,
 
 	fw = (const uint32_t *)data;
 
-	if (*fw != csum) {
+	if (*fw != htole32(csum)) {
 		printf("%s: firmware checksum 0x%x does not match 0x%x!\n",
-		    ifp->if_xname, fw, csum);
+		    ifp->if_xname, *fw, htole32(csum));
 		return (ENXIO);
 	}
 
