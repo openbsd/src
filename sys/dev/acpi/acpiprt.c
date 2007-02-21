@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.13 2007/01/24 20:52:18 kettenis Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.14 2007/02/21 05:31:59 marco Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -100,6 +100,7 @@ acpiprt_attach(struct device *parent, struct device *self, void *aux)
 
 	if (res.type != AML_OBJTYPE_PACKAGE) {
 		printf(": _PRT is not a package\n");
+		aml_freevalue(&res);
 		return;
 	}
 
@@ -110,6 +111,8 @@ acpiprt_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; i < res.length; i++)
 		acpiprt_prt_add(sc, res.v_package[i]);
+
+	aml_freevalue(&res);
 }
 
 int
@@ -138,7 +141,7 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 	struct aml_node	*node;
 	struct aml_value res, *pp;
 	u_int64_t addr;
-	int pin, irq;
+	int pin, irq, sta;
 #if NIOAPIC > 0
 	struct mp_intr_map *map;
 	struct ioapic_softc *apic;
@@ -176,7 +179,10 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 		node = pp->node;
 		if (aml_evalname(sc->sc_acpi, node, "_STA", 0, NULL, &res))
 			printf("no _STA method\n");
-		if ((aml_val2int(&res) & STA_ENABLED) == 0)
+
+		sta = aml_val2int(&res) & STA_ENABLED;
+		aml_freevalue(&res);
+		if (sta == 0)
 			return;
 
 		if (aml_evalname(sc->sc_acpi, node, "_CRS", 0, NULL, &res))
@@ -184,10 +190,12 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 
 		if (res.type != AML_OBJTYPE_BUFFER || res.length < 6) {
 			printf("invalid _CRS object\n");
+			aml_freevalue(&res);
 			return;
 		}
 		aml_parse_resource(res.length, res.v_buffer,
 		    acpiprt_getirq, &irq);
+		aml_freevalue(&res);
 	} else {
 		irq = aml_val2int(v->v_package[3]);
 	}
@@ -254,7 +262,7 @@ acpiprt_getpcibus(struct acpiprt_softc *sc, struct aml_node *node)
 	pci_chipset_tag_t pc = NULL;
 	pcitag_t tag;
 	pcireg_t reg;
-	int bus, dev, func;
+	int bus, dev, func, rv;
 
 	if (parent == NULL)
 		return 0;
@@ -263,26 +271,29 @@ acpiprt_getpcibus(struct acpiprt_softc *sc, struct aml_node *node)
 		bus = acpiprt_getpcibus(sc, parent);
 		dev = ACPI_PCI_DEV(aml_val2int(&res) << 16);
 		func = ACPI_PCI_FN(aml_val2int(&res) << 16);
+		aml_freevalue(&res);
 
 		/*
 		 * Some systems return 255 as the device number for
 		 * devices that are not really there.
 		 */
 		if (dev >= pci_bus_maxdevs(pc, bus))
-			return -1;
+			return (-1);
 
 		tag = pci_make_tag(pc, bus, dev, func);
 		reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
 		if (PCI_CLASS(reg) == PCI_CLASS_BRIDGE &&
 		    PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI) {
 			reg = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
-			return PPB_BUSINFO_SECONDARY(reg);
+			return (PPB_BUSINFO_SECONDARY(reg));
 		}
 	}
 
 	if (aml_evalname(sc->sc_acpi, parent, "_BBN", 0, NULL, &res) == 0) {
-		return aml_val2int(&res);
+		rv = aml_val2int(&res);
+		aml_freevalue(&res);
+		return (rv);
 	}
 
-	return 0;
+	return (0);
 }
