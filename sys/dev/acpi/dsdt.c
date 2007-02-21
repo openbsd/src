@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.81 2007/02/20 16:52:40 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.82 2007/02/21 03:36:25 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1266,7 +1266,7 @@ aml_showvalue(struct aml_value *val, int lvl)
 
 	if (val->node)
 		printf(" [%s]", aml_nodename(val->node));
-	printf(" %p cnt:%.2x", val, val->refcnt);
+	printf(" %p cnt:%.2x stk:%.2x", val, val->refcnt, val->stack);
 	switch (val->type) {
 	case AML_OBJTYPE_STATICINT:
 	case AML_OBJTYPE_INTEGER:
@@ -1562,6 +1562,13 @@ aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 	}
 }
 
+int is_local(struct aml_scope *, struct aml_value *);
+
+int is_local(struct aml_scope *scope, struct aml_value *val)
+{
+	return val->stack;
+}
+
 /* Guts of the code: Assign one value to another.  LHS may contain a previous value */
 void
 aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
@@ -1575,11 +1582,14 @@ aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
 		rhs = _aml_setvalue(&tmpint, AML_OBJTYPE_INTEGER, ival, NULL);
 	}
 
-	lhs = aml_dereftarget(scope, lhs);
-	if (lhs->stack) {
+	if (is_local(scope, lhs)) {
 		/* ACPI: Overwrite writing to LocalX */
 		aml_freevalue(lhs);
 	}
+	else {
+		lhs = aml_dereftarget(scope, lhs);
+	}
+
 	switch (lhs->type) {
 	case AML_OBJTYPE_UNINITIALIZED:
 		aml_copyvalue(lhs, rhs);
@@ -2351,18 +2361,22 @@ aml_parseint(struct aml_scope *scope, int opcode)
 		rval = AML_REVISION;
 		break;
 	case AMLOP_BYTEPREFIX:
+		np = scope->pos;
 		rval = *(uint8_t *)scope->pos;
 		scope->pos += 1;
 		break;
 	case AMLOP_WORDPREFIX:
+		np = scope->pos;
 		rval = aml_letohost16(*(uint16_t *)scope->pos);
 		scope->pos += 2;
 		break;
 	case AMLOP_DWORDPREFIX:
+		np = scope->pos;
 		rval = aml_letohost32(*(uint32_t *)scope->pos);
 		scope->pos += 4;
 		break;
 	case AMLOP_QWORDPREFIX:
+		np = scope->pos;
 		rval = aml_letohost64(*(uint64_t *)scope->pos);
 		scope->pos += 8;
 		break;
@@ -2373,7 +2387,7 @@ aml_parseint(struct aml_scope *scope, int opcode)
 		return aml_val2int(tmpval);
 	}
 	dnprintf(15, "%.4x: [%s] %s\n", aml_pc(scope->pos-opsize(opcode)),
-	    aml_nodename(scope->node), aml_mnem(opcode, NULL));
+	    aml_nodename(scope->node), aml_mnem(opcode, np));
 	return rval;
 }
 
@@ -3046,6 +3060,14 @@ aml_parseref(struct aml_scope *scope, int opcode, struct aml_value *res)
 		tmparg = aml_alloctmp(scope, 1);
 		aml_parseterm(scope, res);
 		aml_parsetarget(scope, tmparg, NULL);
+
+		/* hack - keep from calling method in Locals */
+		while (tmparg->type == AML_OBJTYPE_OBJREF &&
+		    tmparg->v_objref.index == -1) {
+			if (tmparg->stack)
+				break;
+			tmparg = tmparg->v_objref.ref;
+		}
 		aml_setvalue(scope, tmparg, res, 0);
 		break;
 	case AMLOP_REFOF:
@@ -3174,7 +3196,7 @@ aml_parseop(struct aml_scope *scope, struct aml_value *res)
 
 	if (odp++ > 25)
 		panic("depth");
-
+	
 	aml_freevalue(res);
 	opcode = aml_parseopcode(scope);
 	dnprintf(15, "%.4x: [%s] %s\n", aml_pc(scope->pos-opsize(opcode)),
