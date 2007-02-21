@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.7 2007/02/21 13:08:22 dlg Exp $
+#	$OpenBSD: devlist2h.awk,v 1.8 2007/02/21 13:17:28 deraadt Exp $
 #	$NetBSD: devlist2h.awk,v 1.2 1996/01/22 21:08:09 cgd Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -46,18 +46,6 @@ NR == 1 {
 	printf(" * generated from:\n") > dfile
 	printf(" *\t%s\n", VERSION) > dfile
 	printf(" */\n\n") > dfile
-
-	printf("/* Descriptions of known vendors and devices. */\n") > dfile
-	printf("struct pci_known_vendor {\n") > dfile
-	printf("\tpci_vendor_id_t vendor;\n") > dfile
-	printf("\tconst char *vendorname;\n") > dfile
-	printf("};\n\n") > dfile
-
-	printf("struct pci_known_product {\n") > dfile
-	printf("\tpci_vendor_id_t vendor;\n") > dfile
-	printf("\tpci_product_id_t product;\n") > dfile
-	printf("\tconst char *productname;\n") > dfile
-	printf("};\n\n") > dfile
 
 	printf("/*\n") > hfile
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
@@ -178,6 +166,19 @@ END {
 
 	if (nvendor_dup > 0)
 		exit(1);
+
+	printf("/* Descriptions of known vendors and devices. */\n") > dfile
+	printf("struct pci_known_vendor {\n") > dfile
+	printf("\tpci_vendor_id_t vendor;\n") > dfile
+	printf("\tconst char *vendorname;\n") > dfile
+	printf("};\n\n") > dfile
+
+	printf("struct pci_known_product {\n") > dfile
+	printf("\tpci_vendor_id_t vendor;\n") > dfile
+	printf("\tpci_product_id_t product;\n") > dfile
+	printf("\tconst char *productname;\n") > dfile
+	printf("};\n\n") > dfile
+
 
 	printf("static const struct pci_known_product pci_known_products[] = {\n") \
 	    > dfile
