@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.26 2006/11/02 18:07:03 ray Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.27 2007/02/21 16:33:09 jmc Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -1225,9 +1225,9 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: raidctl [-v] [-afFgrR component] [-BGipPsSu] [-cC config_file]\n");
+	    "usage: raidctl [-BGiPpSsuv] [-A [yes | no | root]] [-Cc config_file]\n");
 	fprintf(stderr,
-	    "               [-A [yes | no | root]] [-I serial_number] dev\n");
+	    "               [-I serial_number] [-aFfgRr component] dev\n");
 	exit(1);
 	/* NOTREACHED */
 }

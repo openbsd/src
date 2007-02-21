@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.35 2005/08/27 06:43:42 jmc Exp $
+.\"	$OpenBSD: raidctl.8,v 1.36 2007/02/21 16:33:09 jmc Exp $
 .\"     $NetBSD: raidctl.8,v 1.24 2001/07/10 01:30:52 lukem Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,12 +70,11 @@
 .Sh SYNOPSIS
 .Nm raidctl
 .Bk -words
-.Op Fl v
-.Op Fl afFgrR Ar component
-.Op Fl BGipPsSu
-.Op Fl cC Ar config_file
+.Op Fl BGiPpSsuv
 .Op Fl A Op yes | no | root
+.Op Fl Cc Ar config_file
 .Op Fl I Ar serial_number
+.Op Fl aFfgRr Ar component
 .Ar dev
 .Ek
 .Sh DESCRIPTION
@@ -122,11 +121,6 @@ The command-line options for
 .Nm
 are as follows:
 .Bl -tag -width indent
-.It Fl a Ar component Ar dev
-Add
-.Ar component
-as a hot spare for the device
-.Ar dev .
 .It Fl A Ic yes Ar dev
 Make the RAID set auto-configurable.
 The RAID set will be automatically configured at boot
@@ -148,11 +142,21 @@ in order to have the root file system correctly mounted from it,
 the RAID set must have its
 .Sq a
 partition (aka raid[0..n]a) set up.
+.It Fl a Ar component Ar dev
+Add
+.Ar component
+as a hot spare for the device
+.Ar dev .
 .It Fl B Ar dev
 Initiate a copyback of reconstructed data from a spare disk to
 its original disk.
 This is performed after a component has failed,
 and the failed drive has been reconstructed onto a spare drive.
+.It Fl C Ar config_file Ar dev
+As for
+.Fl c ,
+but forces the configuration to take place.
+This is required the first time a RAID set is configured.
 .It Fl c Ar config_file Ar dev
 Configure the RAIDframe device
 .Ar dev
@@ -161,16 +165,6 @@ according to the configuration given in
 A description of the contents of
 .Ar config_file
 is given later.
-.It Fl C Ar config_file Ar dev
-As for
-.Fl c ,
-but forces the configuration to take place.
-This is required the first time a RAID set is configured.
-.It Fl f Ar component Ar dev
-This marks the specified
-.Ar component
-as having failed, but does not initiate a reconstruction of that
-component.
 .It Fl F Ar component Ar dev
 Fails the specified
 .Ar component
@@ -178,8 +172,11 @@ of the device, and immediately begin a reconstruction of the failed
 disk onto an available hot spare.
 This is one of the mechanisms used to start the reconstruction process
 if a component does have a hardware failure.
-.It Fl g Ar component Ar dev
-Get the component label for the specified component.
+.It Fl f Ar component Ar dev
+This marks the specified
+.Ar component
+as having failed, but does not initiate a reconstruction of that
+component.
 .It Fl G Ar dev
 Generate the configuration of the RAIDframe device in a format suitable for
 use with
@@ -187,15 +184,8 @@ use with
 .Fl c
 or
 .Fl C .
-.It Fl i Ar dev
-Initialize the RAID device.
-In particular, (re-write) the parity on the selected device.
-This
-.Em MUST
-be done for
-.Em all
-RAID sets before the RAID device is labeled and before
-file systems are created on the RAID device.
+.It Fl g Ar component Ar dev
+Get the component label for the specified component.
 .It Fl I Ar serial_number Ar dev
 Initialize the component labels on each component of the device.
 .Ar serial_number
@@ -206,20 +196,25 @@ different RAID sets.
 This step
 .Em MUST
 be performed when a new RAID set is created.
-.It Fl p Ar dev
-Check the status of the parity on the RAID set.
-Displays a status message, and returns successfully if the parity
-is up-to-date.
+.It Fl i Ar dev
+Initialize the RAID device.
+In particular, (re-write) the parity on the selected device.
+This
+.Em MUST
+be done for
+.Em all
+RAID sets before the RAID device is labeled and before
+file systems are created on the RAID device.
 .It Fl P Ar dev
 Check the status of the parity on the RAID set, and initialize
 (re-write) the parity if the parity is not known to be up-to-date.
 This is normally used after a system crash (and before a
 .Xr fsck 8 )
 to ensure the integrity of the parity.
-.It Fl r Ar component Ar dev
-Remove the spare disk specified by
-.Ar component
-from the set of available spare components.
+.It Fl p Ar dev
+Check the status of the parity on the RAID set.
+Displays a status message, and returns successfully if the parity
+is up-to-date.
 .It Fl R Ar component Ar dev
 Fails the specified
 .Ar component ,
@@ -227,13 +222,17 @@ if necessary, and immediately begins a reconstruction back to
 .Ar component .
 This is useful for reconstructing back onto a component after
 it has been replaced following a failure.
-.It Fl s Ar dev
-Display the status of the RAIDframe device for each of the components
-and spares.
+.It Fl r Ar component Ar dev
+Remove the spare disk specified by
+.Ar component
+from the set of available spare components.
 .It Fl S Ar dev
 Check the status of parity re-writing, component reconstruction, and
 component copyback.
 The output indicates the amount of progress achieved in each of these areas.
+.It Fl s Ar dev
+Display the status of the RAIDframe device for each of the components
+and spares.
 .It Fl u Ar dev
 Unconfigure the RAIDframe device.
 .It Fl v
