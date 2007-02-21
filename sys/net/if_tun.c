@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.84 2007/02/16 13:41:21 claudio Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.85 2007/02/21 13:24:55 claudio Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -645,9 +645,8 @@ tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		switch (*(int *)data & (IFF_POINTOPOINT|IFF_BROADCAST)) {
 		case IFF_POINTOPOINT:
 		case IFF_BROADCAST:
-		tp->tun_if.if_flags &=
-		    ~(IFF_BROADCAST|IFF_POINTOPOINT|IFF_MULTICAST);
-			tp->tun_if.if_flags |= *(int *)data;
+			tp->tun_if.if_flags &= ~TUN_IFF_FLAGS;
+			tp->tun_if.if_flags |= *(int *)data & TUN_IFF_FLAGS;
 			break;
 		default:
 			splx(s);
