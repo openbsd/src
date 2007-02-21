@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.263 2007/02/18 14:40:01 jsg Exp $
+$OpenBSD: usbdevs,v 1.264 2007/02/21 05:38:11 fkr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2309,6 +2309,7 @@ product VTECH ZD1211B		0x3014	ZD1211B
 product OPTION VODAFONEMC3G	0x5000	Vodafone Mobile Connect 3G
 product OPTION GT3GFUSION	0x6000	GlobeTrotter 3G FUSION
 product OPTION GT3GQUAD		0x6300	GlobeTrotter 3G QUAD
+product OPTION GT3GQUADPLUS		0x6600	GlobeTrotter 3G QUAD PLUS
 
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
