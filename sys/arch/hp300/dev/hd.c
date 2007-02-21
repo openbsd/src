@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.41 2006/08/12 13:53:44 krw Exp $	*/
+/*	$OpenBSD: hd.c,v 1.42 2007/02/21 11:01:10 mickey Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -734,7 +734,7 @@ hdfinish(rs, bp)
 	struct buf *dp = &rs->sc_tab;
 	int s;
 
-	dp->b_errcnt = 0;
+	rs->sc_errcnt = 0;
 	dp->b_actf = bp->b_actf;
 	bp->b_resid = 0;
 	s = splbio();
@@ -809,12 +809,12 @@ again:
 	if (hddebug & HDB_ERROR)
 		printf("%s: hdstart: cmd %x adr %lx blk %d len %d ecnt %ld\n",
 		       rs->sc_dev.dv_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
-		       bp->b_blkno, rs->sc_resid, rs->sc_tab.b_errcnt);
+		       bp->b_blkno, rs->sc_resid, rs->sc_errcnt);
 	rs->sc_stats.hdretries++;
 #endif
 	rs->sc_flags &= ~HDF_SEEK;
 	hdreset(rs);
-	if (rs->sc_tab.b_errcnt++ < HDRETRY)
+	if (rs->sc_errcnt++ < HDRETRY)
 		goto again;
 	printf("%s: hdstart err: err: cmd 0x%x sect %ld blk %d len %d\n",
 	       rs->sc_dev.dv_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
@@ -911,7 +911,7 @@ hdinterrupt(arg)
 #ifdef DEBUG
 		rs->sc_stats.hdretries++;
 #endif
-		if (rs->sc_tab.b_errcnt++ < HDRETRY) {
+		if (rs->sc_errcnt++ < HDRETRY) {
 			if (restart)
 				hdstart(rs);
 			return;
@@ -1004,7 +1004,7 @@ hderror(unit)
 	 * HDRETRY as defined, the range is 1 to 32 seconds.
 	 */
 	if (sp->c_fef & FEF_IMR) {
-		int hdtimo = HDWAITC << rs->sc_tab.b_errcnt;
+		int hdtimo = HDWAITC << rs->sc_errcnt;
 #ifdef DEBUG
 		printf("%s: internal maintenance, %d second timeout\n",
 		       rs->sc_dev.dv_xname, hdtimo);
@@ -1019,7 +1019,7 @@ hderror(unit)
 	 * threshold.  By default, this will only report after the
 	 * retry limit has been exceeded.
 	 */
-	if (rs->sc_tab.b_errcnt < hderrthresh)
+	if (rs->sc_errcnt < hderrthresh)
 		return(1);
 
 	/*
