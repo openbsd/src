@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.18 2007/02/22 03:32:39 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.19 2007/02/22 04:06:18 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -89,6 +89,18 @@ table webhosts {
 Here are the settings that can be set globally:
 .Pp
 .Bl -tag -width Ds -compact
+.It Ic demote Ar group
+Enable the global
+.Xr carp 4
+demotion option, this will reset the carp demotion counter for the
+specified interface group to zero on startup and to 128 on shutdown of
+the daemon.
+For more information on interface groups,
+see the
+.Ic group
+keyword in
+.Xr ifconfig 8 .
+.Pp
 .It Xo
 .Ic interval Ar number
 .Xc
@@ -201,6 +213,16 @@ is specified, a complete SSL handshake will also be performed.
 .It Ic check ssl
 This has the same effect as above but also implies
 .Ic use ssl .
+.It Ic demote Ar group
+Enable the per-table
+.Xr carp 4
+demotion option, this will increment the carp demotion counter for the
+specified interface group if all hosts in the table are down.
+For more information on interface groups,
+see the
+.Ic group
+keyword in
+.Xr ifconfig 8 .
 .It Ic disable
 Start the table disabled \(en no hosts will be checked in this table.
 The table can be later enabled through
