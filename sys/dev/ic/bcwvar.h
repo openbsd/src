@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.16 2007/02/20 21:24:36 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.17 2007/02/22 17:04:31 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -71,6 +71,7 @@ enum {
 	BCW_LED_BCM4303_3 = 0x19,
 };
 
+#define BCW_RADIO_INTERFMODE_NONWLAN	1
 #define BCW_RADIO_DEFAULT_CHANNEL	6
 #define BCW_RADIO_MAX			2
 struct bcw_radio {
@@ -229,13 +230,24 @@ struct bcw_softc {
 	uint16_t		sc_phy_version;
 	uint16_t		sc_phy_type;
 	uint16_t		sc_phy_rev;
+	uint8_t			sc_phy_connected:1, /* XXX */
+				    calibrated:1,
+				    is_locked:1,
+				    dyn_tssi_tbl:1;
 	uint16_t		sc_phy_loopback_gain[2];
 	struct bcw_lopair	*sc_phy_lopairs;
+	uint16_t		sc_phy_savedpctlreg;
 //	uint16_t		sc_corerev;
 	uint32_t		sc_radio_mnf;
 	uint16_t		sc_radio_rev;
 	uint16_t		sc_radio_ver;
 	uint16_t		sc_radio_initval;
+	int16_t			sc_radio_nrssi[2];
+	int			sc_radio_interfmode;
+	uint8_t			sc_radio_aci_enable:1,
+				    sc_radio_aci_wlan_automatic:1,
+				    sc_radio_aci_hw_rssi;
+	int32_t			sc_radio_nrssislope;
 	uint32_t		sc_phyinfo;
 	uint16_t		sc_numcores;
 	uint16_t		sc_havecommon;
@@ -252,6 +264,7 @@ struct bcw_softc {
 	uint16_t		sc_radio_radio_atten;
 	uint16_t		sc_radio_txctl1;
 	uint16_t		sc_radio_txctl2;
+	uint8_t			sc_radio_channel;
 	uint8_t			sc_idletssi;
 	uint8_t			sc_spromrev;
 	uint16_t		sc_boardflags;

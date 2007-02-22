@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.13 2007/02/20 21:24:36 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.14 2007/02/22 17:04:31 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -204,6 +204,8 @@
 #define BCW_SBF_TIME_UPDATE		0x10000000	/* Related to TSF updates */
 
 #define BCW_GIR				0x128	/* MIMO - Generic Interrupt Reason */
+#define BCW_MMIO_RAM_CONTROL		0x130
+#define BCW_MMIO_RAM_DATA		0x134
 
 #define BCW_SHM_CONTROL			0x160	/* Control */
 #define BCW_SHM_DATA			0x164	/* Data - 32bit */
@@ -340,6 +342,7 @@
 
 #define BCW_MMIO_PHY_RADIO		0x3e2
 #define BCW_MMIO_CHANNEL		0x3f0
+#define BCW_MMIO_CHANNEL_EXT		0x3f4
 
 /* LEDS */
 #define BCW_NR_LEDS			4
@@ -353,6 +356,7 @@
 #define BCW_PHY_G_CRS			0x0429
 #define BCW_PHY_NRSSILT_CTRL		0x0803
 #define BCW_PHY_NRSSILT_DATA		0x0804
+#define BCW_PHY_G_PCTL			0x0029
 
 #define BCW_READ16(sc, reg) \
 	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (reg))
