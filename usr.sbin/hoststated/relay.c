@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.1 2007/02/22 03:32:40 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.2 2007/02/22 23:07:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -930,16 +930,11 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			/*
 			 * Need to read data from the client after the
 			 * HTTP header.
-			 */
-			cre->toread = strtonum(pk.value, 1, INT_MAX, &errstr);
-
-			/*
-			 * \r\n between header and body.
 			 * XXX What about non-standard clients not using
 			 * the carriage return? And some browsers seem to
 			 * include the line length in the content-length.
 			 */
-			cre->toread += 2;
+			cre->toread = strtonum(pk.value, 1, INT_MAX, &errstr);
 
 			if (errstr) {
 				relay_close(con, errstr);
