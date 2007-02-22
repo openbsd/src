@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.21 2007/02/22 09:20:01 jmc Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.22 2007/02/22 09:34:06 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -205,14 +205,16 @@ SMTP, NNTP and FTP.
 If
 .Ic use ssl
 is specified, the data will be sent and/or received inside an SSL tunnel.
+.It Ic check ssl
+This has the same effect as
+.Ic check tcp
+but also implies
+.Ic use ssl .
 .It Ic check tcp
 Use a simple TCP connect to check that hosts are up.
 If
 .Ic use ssl
 is specified, a complete SSL handshake will also be performed.
-.It Ic check ssl
-This has the same effect as above but also implies
-.Ic use ssl .
 .It Ic demote Ar group
 Enable the per-table
 .Xr carp 4
