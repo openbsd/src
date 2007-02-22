@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.3 2007/02/07 15:17:46 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.4 2007/02/22 03:32:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/tree.h>
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -198,4 +199,16 @@ table_check(enum table_check check)
 	};
 	/* NOTREACHED */
 	return ("invalid");
+}
+
+const char *
+print_availability(u_long cnt, u_long up)
+{
+	static char buf[BUFSIZ];
+
+	if (cnt == 0)
+		return ("");
+	bzero(buf, sizeof(buf));
+	snprintf(buf, sizeof(buf), "%.2f%%", (double)up / cnt * 100);
+	return (buf);
 }

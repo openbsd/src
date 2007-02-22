@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.16 2007/02/08 13:32:24 reyk Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.17 2007/02/22 03:32:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -40,25 +40,33 @@
 __dead void	 usage(void);
 
 void		 main_sig_handler(int, short, void *);
-void		 main_shutdown(void);
+void		 main_shutdown(struct hoststated *);
 void		 main_dispatch_pfe(int, short, void *);
 void		 main_dispatch_hce(int, short, void *);
+void		 main_dispatch_relay(int, short, void *);
 int		 check_child(pid_t, const char *);
 
 int		 pipe_parent2pfe[2];
 int		 pipe_parent2hce[2];
+int		 pipe_parent2relay[2];
 int		 pipe_pfe2hce[2];
+int		 pipe_pfe2relay[RELAY_MAXPROC][2];
 
 struct imsgbuf	*ibuf_pfe;
 struct imsgbuf	*ibuf_hce;
+struct imsgbuf	*ibuf_relay;
 
 pid_t		 pfe_pid = 0;
 pid_t		 hce_pid = 0;
+pid_t		 relay_pid = 0;
 
 void
 main_sig_handler(int sig, short event, void *arg)
 {
-	int		 die = 0;
+	struct hoststated	*env = arg;
+	int		 	 die = 0;
+
+	log_debug("signal %d", sig);
 
 	switch (sig) {
 	case SIGTERM:
@@ -73,8 +81,12 @@ main_sig_handler(int sig, short event, void *arg)
 			hce_pid = 0;
 			die  = 1;
 		}
+		if (check_child(relay_pid, "socket relay engine")) {
+			relay_pid = 0;
+			die  = 1;
+		}
 		if (die)
-			main_shutdown();
+			main_shutdown(env);
 		break;
 	case SIGHUP:
 		/* reconfigure */
@@ -145,6 +157,8 @@ main(int argc, char *argv[])
 		fprintf(stderr, "configuration OK\n");
 		exit(0);
 	}
+	if (debug)
+		env.opts |= HOSTSTATED_OPT_LOGUPDATE;
 
 	if (geteuid())
 		errx(1, "need root privileges");
@@ -163,27 +177,42 @@ main(int argc, char *argv[])
 		fatal("socketpair");
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_parent2hce) == -1)
 		fatal("socketpair");
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_parent2relay) == -1)
+		fatal("socketpair");
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_pfe2hce) == -1)
 		fatal("socketpair");
+	for (c = 0; c < env.prefork_relay; c++) {
+		if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
+		    pipe_pfe2relay[c]) == -1)
+			fatal("socketpair");
+		session_socket_blockmode(pipe_pfe2relay[c][0], BM_NONBLOCK);
+		session_socket_blockmode(pipe_pfe2relay[c][1], BM_NONBLOCK);
+	}
 
 	session_socket_blockmode(pipe_parent2pfe[0], BM_NONBLOCK);
 	session_socket_blockmode(pipe_parent2pfe[1], BM_NONBLOCK);
 	session_socket_blockmode(pipe_parent2hce[0], BM_NONBLOCK);
 	session_socket_blockmode(pipe_parent2hce[1], BM_NONBLOCK);
+	session_socket_blockmode(pipe_parent2relay[0], BM_NONBLOCK);
+	session_socket_blockmode(pipe_parent2relay[1], BM_NONBLOCK);
 	session_socket_blockmode(pipe_pfe2hce[0], BM_NONBLOCK);
 	session_socket_blockmode(pipe_pfe2hce[1], BM_NONBLOCK);
 
-	pfe_pid = pfe(&env, pipe_parent2pfe, pipe_parent2hce, pipe_pfe2hce);
-	hce_pid = hce(&env, pipe_parent2pfe, pipe_parent2hce, pipe_pfe2hce);
+	pfe_pid = pfe(&env, pipe_parent2pfe, pipe_parent2hce,
+	    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
+	hce_pid = hce(&env, pipe_parent2pfe, pipe_parent2hce,
+	    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
+	relay_pid = relay(&env, pipe_parent2pfe, pipe_parent2hce,
+	    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
 
 	setproctitle("parent");
 
 	event_init();
 
-	signal_set(&ev_sigint, SIGINT, main_sig_handler, NULL);
-	signal_set(&ev_sigterm, SIGTERM, main_sig_handler, NULL);
-	signal_set(&ev_sigchld, SIGCHLD, main_sig_handler, NULL);
-	signal_set(&ev_sighup, SIGHUP, main_sig_handler, NULL);
+	signal_set(&ev_sigint, SIGINT, main_sig_handler, &env);
+	signal_set(&ev_sigterm, SIGTERM, main_sig_handler, &env);
+	signal_set(&ev_sigchld, SIGCHLD, main_sig_handler, &env);
+	signal_set(&ev_sighup, SIGHUP, main_sig_handler, &env);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigchld, NULL);
@@ -192,15 +221,22 @@ main(int argc, char *argv[])
 
 	close(pipe_parent2pfe[1]);
 	close(pipe_parent2hce[1]);
+	close(pipe_parent2relay[1]);
 	close(pipe_pfe2hce[0]);
 	close(pipe_pfe2hce[1]);
+	for (c = 0; c < env.prefork_relay; c++) {
+		close(pipe_pfe2relay[c][0]);
+		close(pipe_pfe2relay[c][1]);
+	}
 
 	if ((ibuf_pfe = calloc(1, sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_hce = calloc(1, sizeof(struct imsgbuf))) == NULL)
+	    (ibuf_hce = calloc(1, sizeof(struct imsgbuf))) == NULL ||
+	    (ibuf_relay = calloc(1, sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
 
 	imsg_init(ibuf_pfe, pipe_parent2pfe[0], main_dispatch_pfe);
 	imsg_init(ibuf_hce, pipe_parent2hce[0], main_dispatch_hce);
+	imsg_init(ibuf_relay, pipe_parent2relay[0], main_dispatch_relay);
 
 	ibuf_pfe->events = EV_READ;
 	event_set(&ibuf_pfe->ev, ibuf_pfe->fd, ibuf_pfe->events,
@@ -212,13 +248,21 @@ main(int argc, char *argv[])
 	    ibuf_hce->handler, ibuf_hce);
 	event_add(&ibuf_hce->ev, NULL);
 
+	ibuf_relay->events = EV_READ;
+	event_set(&ibuf_relay->ev, ibuf_relay->fd, ibuf_relay->events,
+	    ibuf_relay->handler, ibuf_relay);
+	event_add(&ibuf_relay->ev, NULL);
+
+	if (env.flags & F_DEMOTE)
+		carp_demote_reset(env.demote_group, 0);
+
 	event_dispatch();
 
 	return (0);
 }
 
 void
-main_shutdown(void)
+main_shutdown(struct hoststated *env)
 {
 	pid_t	pid;
 
@@ -226,6 +270,8 @@ main_shutdown(void)
 		kill(pfe_pid, SIGTERM);
 	if (hce_pid)
 		kill(hce_pid, SIGTERM);
+	if (relay_pid)
+		kill(relay_pid, SIGTERM);
 
 	do {
 		if ((pid = wait(NULL)) == -1 &&
@@ -234,6 +280,9 @@ main_shutdown(void)
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
 	control_cleanup();
+	carp_demote_shutdown();
+	if (env->flags & F_DEMOTE)
+		carp_demote_reset(env->demote_group, 128);
 	log_info("terminating");
 	exit(0);
 }
@@ -276,6 +325,7 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
+	struct ctl_demote	 demote;
 
 	ibuf = ptr;
 	switch (event) {
@@ -301,6 +351,14 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_DEMOTE:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(demote))
+				fatalx("main_dispatch_pfe: "
+				    "invalid size of demote request");
+			memcpy(&demote, imsg.data, sizeof(demote));
+			carp_demote_set(demote.group, demote.level);
+			break;
 		default:
 			log_debug("main_dispatch_pfe: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -351,6 +409,46 @@ main_dispatch_hce(int fd, short event, void * ptr)
 	}
 }
 
+void
+main_dispatch_relay(int fd, short event, void * ptr)
+{
+	struct imsgbuf          *ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	ibuf = ptr;
+	switch (event) {
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read error");
+		if (n == 0)
+			fatalx("main_dispatch_relay: pipe closed");
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("unknown event");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("main_dispatch_relay: imsg_read error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		default:
+			log_debug("main_dispatch_relay: unexpected imsg %d",
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
+}
+
 struct host *
 host_find(struct hoststated *env, objid_t id)
 {
@@ -383,6 +481,32 @@ service_find(struct hoststated *env, objid_t id)
 	TAILQ_FOREACH(service, &env->services, entry)
 		if (service->id == id)
 			return (service);
+	return (NULL);
+}
+
+struct relay *
+relay_find(struct hoststated *env, objid_t id)
+{
+	struct relay	*rlay;
+
+	TAILQ_FOREACH(rlay, &env->relays, entry)
+		if (rlay->id == id)
+			return (rlay);
+	return (NULL);
+}
+
+struct session *
+session_find(struct hoststated *env, objid_t id)
+{
+	struct relay		*rlay;
+	struct session		*con;
+
+	TAILQ_FOREACH(rlay, &env->relays, entry)
+		TAILQ_FOREACH(con, &rlay->sessions, entry) {
+			log_debug("session_find: %d : %d", id, con->id);
+			if (con->id == id)
+				return (con);
+		}
 	return (NULL);
 }
 
@@ -421,6 +545,17 @@ service_findbyname(struct hoststated *env, const char *name)
 	return (NULL);
 }
 
+struct relay *
+relay_findbyname(struct hoststated *env, const char *name)
+{
+	struct relay	*rlay;
+
+	TAILQ_FOREACH(rlay, &env->relays, entry)
+		if (strcmp(rlay->name, name) == 0)
+			return (rlay);
+	return (NULL);
+}
+
 void
 event_again(struct event *ev, int fd, short event,
     void (*fn)(int, short, void *),
@@ -441,4 +576,35 @@ event_again(struct event *ev, int fd, short event,
 
 	event_set(ev, fd, event, fn, arg);
 	event_add(ev, &tv);
+}
+
+int
+expand_string(char *label, size_t len, const char *srch, const char *repl)
+{
+	char *tmp;
+	char *p, *q;
+
+	if ((tmp = calloc(1, len)) == NULL) {
+		log_debug("expand_string: calloc");
+		return (-1);
+	}
+	p = q = label;
+	while ((q = strstr(p, srch)) != NULL) {   
+		*q = '\0';
+		if ((strlcat(tmp, p, len) >= len) ||
+		    (strlcat(tmp, repl, len) >= len)) {
+			log_debug("expand_string: string too long");
+			return (-1);
+		}
+		q += strlen(srch);
+		p = q;
+	}
+	if (strlcat(tmp, p, len) >= len) {
+		log_debug("expand_string: string too long");
+		return (-1);
+	}
+	strlcpy(label, tmp, len);       /* always fits */
+	free(tmp);
+
+	return (0);
 }

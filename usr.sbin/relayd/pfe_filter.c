@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.13 2007/02/20 04:06:17 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.14 2007/02/22 03:32:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -401,4 +401,76 @@ flush_rulesets(struct hoststated *env)
 
  toolong:
 	fatal("flush_rulesets: name too long");
+}
+
+int
+natlook(struct hoststated *env, struct ctl_natlook *cnl)
+{
+	struct pfioc_natlook	 pnl;
+	struct sockaddr_in	*in, *out;
+	struct sockaddr_in6	*in6, *out6;
+	char			 ibuf[BUFSIZ], obuf[BUFSIZ];
+
+	bzero(&pnl, sizeof(pnl));
+
+	if ((pnl.af = cnl->src.ss_family) != cnl->dst.ss_family)
+		fatalx("natlook: illegal address families");
+	switch (pnl.af) {
+	case AF_INET:
+		in = (struct sockaddr_in *)&cnl->src;
+		out = (struct sockaddr_in *)&cnl->dst;
+		bcopy(&in->sin_addr, &pnl.saddr.addr8, in->sin_len);
+		pnl.sport = in->sin_port;
+		bcopy(&out->sin_addr, &pnl.daddr.addr8, out->sin_len);
+		pnl.dport = out->sin_port;
+		break;
+	case AF_INET6:
+		in6 = (struct sockaddr_in6 *)&cnl->src;
+		out6 = (struct sockaddr_in6 *)&cnl->dst;
+		bcopy(&in6->sin6_addr, &pnl.saddr.addr8, in6->sin6_len);
+		pnl.sport = in6->sin6_port;
+		bcopy(&out6->sin6_addr, &pnl.daddr.addr8, out6->sin6_len);
+		pnl.dport = out6->sin6_port;
+	}
+	pnl.proto = IPPROTO_TCP;
+	pnl.direction = PF_IN;
+	cnl->in = 1;
+
+	if (ioctl(env->pf->dev, DIOCNATLOOK, &pnl) == -1) {
+		pnl.direction = PF_OUT;
+		cnl->in = 0;
+		if (ioctl(env->pf->dev, DIOCNATLOOK, &pnl) == -1) {
+			log_debug("natlook: error");
+			return (-1);
+		}
+	}
+
+	inet_ntop(pnl.af, &pnl.rsaddr, ibuf, sizeof(ibuf));
+	inet_ntop(pnl.af, &pnl.rdaddr, obuf, sizeof(obuf));
+	log_debug("natlook: %s %s:%d -> %s:%d",
+	    pnl.direction == PF_IN ? "in" : "out",
+	    ibuf, ntohs(pnl.rsport), obuf, ntohs(pnl.rdport));
+
+	switch (pnl.af) {
+	case AF_INET:
+		in = (struct sockaddr_in *)&cnl->rsrc;
+		out = (struct sockaddr_in *)&cnl->rdst;
+		bcopy(&pnl.rsaddr.addr8, &in->sin_addr, sizeof(in->sin_addr));
+		in->sin_port = pnl.rsport;
+		bcopy(&pnl.rdaddr.addr8, &out->sin_addr, sizeof(out->sin_addr));
+		out->sin_port = pnl.rdport;
+		break;
+	case AF_INET6:
+		in6 = (struct sockaddr_in6 *)&cnl->rsrc;
+		out6 = (struct sockaddr_in6 *)&cnl->rdst;
+		bcopy(&pnl.rsaddr.addr8, &in6->sin6_addr, sizeof(in6->sin6_addr));
+		bcopy(&pnl.rdaddr.addr8, &out6->sin6_addr, sizeof(out6->sin6_addr));
+		break;
+	}
+	cnl->rsrc.ss_family = pnl.af;
+	cnl->rdst.ss_family = pnl.af;
+	cnl->rsport = pnl.rsport;
+	cnl->rdport = pnl.rdport;
+
+	return (0);
 }

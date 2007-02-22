@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.6 2007/02/08 13:32:24 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.7 2007/02/22 03:32:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -32,6 +32,7 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/engine.h>
 
 #include "hoststated.h"
 
@@ -250,6 +251,10 @@ ssl_init(struct hoststated *env)
 {
 	SSL_library_init();
 	SSL_load_error_strings();
+
+	/* Init hardware crypto engines. */
+	ENGINE_load_builtin_engines();
+	ENGINE_register_all_complete();
 }
 
 void

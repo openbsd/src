@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststatectl.c,v 1.14 2007/02/06 08:45:46 pyr Exp $	*/
+/*	$OpenBSD: hoststatectl.c,v 1.15 2007/02/22 03:32:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -43,11 +43,12 @@
 #include "parser.h"
 
 __dead void	 usage(void);
-int		 show_summary_msg(struct imsg *);
+int		 show_summary_msg(struct imsg *, int);
 int		 show_command_output(struct imsg *);
 char		*print_service_status(int);
 char		*print_host_status(int, int);
 char		*print_table_status(int, int);
+char		*print_relay_status(int);
 
 struct imsgname {
 	int type;
@@ -139,8 +140,11 @@ main(int argc, char *argv[])
 		usage();
 		/* not reached */
 	case SHOW_SUM:
+	case SHOW_HOSTS:
+	case SHOW_RELAYS:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_SUM, 0, 0, NULL, 0);
-		printf("Type\t%4s\t%-24s\tStatus\n", "Id", "Name");
+		printf("Type\t%4s\t%-24s\t%-7s\tStatus\n",
+		    "Id", "Name", "Avlblty");
 		break;
 	case SERV_ENABLE:
 		imsg_compose(ibuf, IMSG_CTL_SERVICE_ENABLE, 0, 0,
@@ -194,7 +198,13 @@ main(int argc, char *argv[])
 				break;
 			switch (res->action) {
 			case SHOW_SUM:
-				done = show_summary_msg(&imsg);
+				done = show_summary_msg(&imsg, SHOW_SUM);
+				break;
+			case SHOW_HOSTS:
+				done = show_summary_msg(&imsg, SHOW_HOSTS);
+				break;
+			case SHOW_RELAYS:
+				done = show_summary_msg(&imsg, SHOW_RELAYS);
 				break;
 			case SERV_DISABLE:
 			case SERV_ENABLE:
@@ -286,31 +296,81 @@ monitor(struct imsg *imsg)
 }
 
 int
-show_summary_msg(struct imsg *imsg)
+show_summary_msg(struct imsg *imsg, int type)
 {
-	struct service	*service;
-	struct table	*table;
-	struct host	*host;
+	struct service		*service;
+	struct table		*table;
+	struct host		*host;
+	struct relay		*rlay;
+	struct ctl_stats	 stats[RELAY_MAXPROC], crs;
+	int		 	 i;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SERVICE:
+		if (type == SHOW_RELAYS)
+			break;
 		service = imsg->data;
-		printf("service\t%4u\t%-24s\t%s\n",
-		    service->id, service->name,
+		printf("service\t%4u\t%-24s\t%-7s\t%s\n",
+		    service->id, service->name, "",
 		    print_service_status(service->flags));
 		break;
 	case IMSG_CTL_TABLE:
+		if (type == SHOW_RELAYS)
+			break;
 		table = imsg->data;
-		printf("table\t%4u\t%-24s\t%s",
-		    table->id, table->name,
+		printf("table\t%4u\t%-24s\t%-7s\t%s\n",
+		    table->id, table->name, "",
 		    print_table_status(table->up, table->flags));
-		printf("\n");
 		break;
 	case IMSG_CTL_HOST:
+		if (type == SHOW_RELAYS)
+			break;
 		host = imsg->data;
-		printf("host\t%4u\t%-24s\t%s\n",
+		printf("host\t%4u\t%-24s\t%-7s\t%s\n",
 		    host->id, host->name,
+		    print_availability(host->check_cnt, host->up_cnt),
 		    print_host_status(host->up, host->flags));
+		if (type == SHOW_HOSTS && host->check_cnt) {
+			printf("\t%4s\ttotal: %lu/%lu checks",
+			    "", host->up_cnt, host->check_cnt);
+			if (host->retry_cnt)
+				printf(", %d retries", host->retry_cnt);
+			printf("\n");
+		}
+		break;
+	case IMSG_CTL_RELAY:
+		if (type == SHOW_HOSTS)
+			break;
+		rlay = imsg->data;
+		printf("relay\t%4u\t%-24s\t%-7s\t%s\n",
+		    rlay->id, rlay->name, "",
+		    print_relay_status(rlay->flags));
+		break;
+	case IMSG_CTL_STATISTICS:
+		if (type != SHOW_RELAYS)
+			break;
+		bcopy(imsg->data, &stats, sizeof(stats));
+		bzero(&crs, sizeof(crs));
+		crs.interval = stats[0].interval;
+		for (i = 0; stats[i].id != EMPTY_ID; i++) {
+			crs.cnt += stats[i].cnt;
+			crs.last += stats[i].last;
+			crs.avg += stats[i].avg;
+			crs.last_hour += stats[i].last_hour;
+			crs.avg_hour += stats[i].avg_hour;
+			crs.last_day += stats[i].last_day;
+			crs.avg_day += stats[i].avg_day;
+		}
+		if (crs.cnt == 0)
+			break;
+		printf("\t%4s\ttotal: %lu sessions\n"
+		    "\t%4s\tlast: %lu/%us %lu/h %lu/d sessions\n"
+		    "\t%4s\taverage: %lu/%us %lu/h %lu/d sessions\n",
+		    "", crs.cnt,
+		    "", crs.last, crs.interval,
+		    crs.last_hour, crs.last_day,
+		    "", crs.avg, crs.interval,
+		    crs.avg_hour, crs.avg_day);
 		break;
 	case IMSG_CTL_END:
 		return (1);
@@ -383,3 +443,13 @@ print_host_status(int status, int fl)
 		errx(1, "invalid status: %d", status);
 	}
 }
+
+char *
+print_relay_status(int flags)
+{
+	if (flags & F_DISABLE) {
+		return ("disabled");
+	} else
+		return ("active");
+}
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.15 2007/02/07 15:17:46 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.16 2007/02/22 03:32:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -64,7 +64,8 @@ hce_sig_handler(int sig, short event, void *arg)
 
 pid_t
 hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
-	int pipe_pfe2hce[2])
+    int pipe_parent2relay[2], int pipe_pfe2hce[2],
+    int pipe_pfe2relay[RELAY_MAXPROC][2])
 {
 	pid_t		 pid;
 	struct passwd	*pw;
@@ -72,6 +73,7 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
 	struct table	*table;
+	int		 i;
 
 	switch (pid = fork()) {
 	case -1:
@@ -116,6 +118,12 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	close(pipe_parent2hce[0]);
 	close(pipe_parent2pfe[0]);
 	close(pipe_parent2pfe[1]);
+	close(pipe_parent2relay[0]);
+	close(pipe_parent2relay[1]);
+	for (i = 0; i < env->prefork_relay; i++) {
+		close(pipe_pfe2relay[i][0]);
+		close(pipe_pfe2relay[i][1]);
+	}
 
 	if ((ibuf_pfe = calloc(1, sizeof(struct imsgbuf))) == NULL ||
 	    (ibuf_main = calloc(1, sizeof(struct imsgbuf))) == NULL)
@@ -133,9 +141,11 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	    ibuf_main->handler, ibuf_main);
 	event_add(&ibuf_main->ev, NULL);
 
-	evtimer_set(&env->ev, hce_launch_checks, env);
-	bzero(&tv, sizeof(tv));
-	evtimer_add(&env->ev, &tv);
+	if (!TAILQ_EMPTY(&env->services)) {
+		evtimer_set(&env->ev, hce_launch_checks, env);
+		bzero(&tv, sizeof(tv));
+		evtimer_add(&env->ev, &tv);
+	}
 
 	if (env->flags & F_SSL) {
 		ssl_init(env);
@@ -213,20 +223,32 @@ hce_notify_done(struct host *host, const char *msg)
 	u_long			 duration;
 	u_int			 logopt;
 
+
+	if (host->up == HOST_DOWN && host->retry_cnt) {
+		log_debug("hce_notify_done: host %s retry %d",
+		    host->name, host->retry_cnt);
+		host->up = HOST_UP;
+		host->retry_cnt--;
+	} else
+		host->retry_cnt = host->retry;
+	if (host->up != HOST_UNKNOWN) {
+		host->check_cnt++;
+		if (host->up == HOST_UP)
+			host->up_cnt++;
+	}
 	st.id = host->id;
 	st.up = host->up;
+	st.check_cnt = host->check_cnt;
+	st.retry_cnt = host->retry_cnt;
 	host->flags |= (F_CHECK_SENT|F_CHECK_DONE);
 	if (msg)
 		log_debug("hce_notify_done: %s (%s)", host->name, msg);
 
-	if (host->up != host->last_up) {
+	imsg_compose(ibuf_pfe, IMSG_HOST_STATUS, 0, 0, &st, sizeof(st));
+	if (host->up != host->last_up)
 		logopt = HOSTSTATED_OPT_LOGUPDATE;
-		imsg_compose(ibuf_pfe, IMSG_HOST_STATUS, 0, 0, &st, sizeof(st));
-	} else
+	else
 		logopt = HOSTSTATED_OPT_LOGNOTIFY;
-
-	if ((table = table_find(env, host->tableid)) == NULL)
-		fatalx("hce_notify_done: invalid table id");
 
 	if (gettimeofday(&tv_now, NULL))
 		fatal("hce_notify_done: gettimeofday");
@@ -236,11 +258,16 @@ hce_notify_done(struct host *host, const char *msg)
 	else
 		duration = 0;
 
+	if ((table = table_find(env, host->tableid)) == NULL)
+		fatalx("hce_notify_done: invalid table id");
+
 	if (env->opts & logopt) {
-		log_info("host %s, check %s%s (%lums), state %s -> %s",
+		log_info("host %s, check %s%s (%lums), state %s -> %s, "
+		    "availability %s",
 		    host->name, table_check(table->check),
 		    (table->flags & F_SSL) ? " use ssl" : "", duration,
-		    host_status(host->last_up), host_status(host->up));
+		    host_status(host->last_up), host_status(host->up),
+		    print_availability(host->check_cnt, host->up_cnt));
 	}
 
 	host->last_up = host->up;
@@ -293,6 +320,8 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 				fatalx("hce_dispatch_imsg: desynchronized");
 			host->flags |= F_DISABLE;
 			host->up = HOST_UNKNOWN;
+			host->check_cnt = 0;
+			host->up_cnt = 0;
 			break;
 		case IMSG_HOST_ENABLE:
 			memcpy(&id, imsg.data, sizeof(id));
@@ -339,7 +368,7 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("hce_dispatch_parent: imsg_read error");
-		if (n == 0)	/* connection closed */
+		if (n == 0)
 			fatalx("hce_dispatch_parent: pipe closed");
 		break;
 	case EV_WRITE:

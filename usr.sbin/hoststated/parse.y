@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2007/02/09 17:55:49 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.26 2007/02/22 03:32:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <event.h>
 #include <limits.h>
+#include <stdint.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <netdb.h>
@@ -53,9 +54,14 @@ const char			*infile;
 objid_t				 last_service_id = 0;
 objid_t				 last_table_id = 0;
 objid_t				 last_host_id = 0;
+objid_t				 last_relay_id = 0;
+objid_t				 last_proto_id = 0;
 
 static struct service		*service = NULL;
 static struct table		*table = NULL;
+static struct relay		*rlay = NULL;
+static struct protocol		*proto = NULL;
+static struct protonode		 node;
 
 int	 yyerror(const char *, ...);
 int	 yyparse(void);
@@ -101,12 +107,15 @@ typedef struct {
 %token  CHECK HTTP HTTPS TCP ICMP EXTERNAL
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
 %token	VIRTUAL IP INTERVAL DISABLE STICKYADDR
-%token	SEND EXPECT NOTHING USE SSL
-%token	LOG UPDATES ALL
+%token	SEND EXPECT NOTHING USE SSL LOADBALANCE ROUNDROBIN
+%token	RELAY LISTEN ON FORWARD TO NAT LOOKUP PREFORK NO MARK MARKED
+%token	PROTO SESSION CACHE APPEND CHANGE REMOVE FROM FILTER HASH
+%token	LOG UPDATES ALL DEMOTE NODELAY SACK SOCKET BUFFER URL RETRY
 %token	ERROR
 %token	<v.string>	STRING
 %type	<v.string>	interface
-%type	<v.number>	number port http_type loglevel
+%type	<v.number>	number port http_type loglevel sslcache
+%type	<v.number>	prototype dstmode docheck retry
 %type	<v.host>	host
 %type	<v.tv>		timeout
 
@@ -118,6 +127,8 @@ grammar		: /* empty */
 		| grammar main '\n'
 		| grammar service '\n'
 		| grammar table '\n'
+		| grammar relay '\n'
+		| grammar proto '\n'
 		| grammar error '\n'		{ errors++; }
 		;
 
@@ -206,6 +217,30 @@ main		: INTERVAL number	{ conf->interval.tv_sec = $2; }
 		| TIMEOUT timeout	{
 			bcopy(&$2, &conf->timeout, sizeof(struct timeval));
 		}
+		| PREFORK number	{
+			if ($2 <= 0 || $2 > RELAY_MAXPROC) {
+				yyerror("invalid number of preforked "
+				    "relays: %d", $2);
+				YYERROR;
+			}
+			conf->prefork_relay = $2;
+		}
+		| DEMOTE STRING		{
+			conf->flags |= F_DEMOTE;
+			if (strlcpy(conf->demote_group, $2,
+			    sizeof(conf->demote_group))
+			    >= sizeof(conf->demote_group)) {
+				yyerror("yyparse: demote group name too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			if (carp_demote_init(conf->demote_group, 1) == -1) {
+				yyerror("yyparse: error initializing group '%s'",
+				    conf->demote_group);
+				YYERROR;
+			}
+		}
 		;
 
 loglevel	: UPDATES		{ $$ = HOSTSTATED_OPT_LOGUPDATE; }
@@ -233,7 +268,7 @@ service		: SERVICE STRING	{
 			}
 			free($2);
 			srv->id = last_service_id++;
-			if (last_service_id == UINT_MAX) {
+			if (last_service_id == INT_MAX) {
 				yyerror("too many services defined");
 				YYERROR;
 			}
@@ -358,7 +393,7 @@ table		: TABLE STRING	{
 			tb->id = last_table_id++;
 			bcopy(&conf->timeout, &tb->timeout,
 			    sizeof(struct timeval));
-			if (last_table_id == UINT_MAX) {
+			if (last_table_id == INT_MAX) {
 				yyerror("too many tables defined");
 				YYERROR;
 			}
@@ -452,9 +487,385 @@ tableoptsl	: host			{
 		| REAL port {
 			table->port = $2;
 		}
+		| DEMOTE STRING	{
+			table->flags |= F_DEMOTE;
+			if (strlcpy(table->demote_group, $2,
+			    sizeof(table->demote_group))
+			    >= sizeof(table->demote_group)) {
+				yyerror("yyparse: demote group name too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			if (carp_demote_init(table->demote_group, 1) == -1) {
+				yyerror("yyparse: error initializing group '%s'",
+				    table->demote_group);
+				YYERROR;
+			}
+		}
 		| DISABLE			{ table->flags |= F_DISABLE; }
 		| USE SSL			{
 			table->flags |= F_SSL;
+			conf->flags |= F_SSL;
+		}
+		;
+
+proto		: PROTO STRING	{
+			struct protocol *p;
+
+			TAILQ_FOREACH(p, &conf->protos, entry)
+				if (!strcmp(p->name, $2))
+					break;
+			if (p != NULL) {
+				yyerror("protocol %s defined twice", $2);
+				free($2);
+				YYERROR;
+			}
+			if ((p = calloc(1, sizeof (*p))) == NULL)
+				fatal("out of memory");
+
+			if (strlcpy(p->name, $2, sizeof(p->name)) >=
+			    sizeof(p->name)) {
+				yyerror("protocol name truncated");
+				YYERROR;
+			}
+			free($2);
+			p->id = last_proto_id++;
+			p->cache = RELAY_CACHESIZE;
+			p->type = RELAY_PROTO_TCP;
+			if (last_proto_id == INT_MAX) {
+				yyerror("too many protocols defined");
+				YYERROR;
+			}
+			RB_INIT(&p->tree);
+			proto = p;
+		} '{' optnl protopts_l '}'	{
+			conf->protocount++;
+			TAILQ_INSERT_HEAD(&conf->protos, proto, entry);
+		}
+		;
+
+protopts_l	: protopts_l protoptsl nl
+		| protoptsl optnl
+		;
+
+protoptsl	: SSL SESSION CACHE sslcache	{ proto->cache = $4; }
+		| PROTO prototype		{ proto->type = $2; }
+		| TCP tcpflags
+		| TCP '{' tcpflags_l '}'
+		| protonode			{
+			struct protonode *pn, pk;
+
+			pn = RB_FIND(proto_tree, &proto->tree, &node);
+			if (pn != NULL) {
+				yyerror("protocol node %s defined twice",
+				    node.key);
+				YYERROR;
+			}
+			if ((pn = calloc(1, sizeof (*pn))) == NULL)
+				fatal("out of memory");
+
+			bcopy(&node, pn, sizeof(*pn));
+			pn->key = node.key;
+			pn->value = node.value;
+			pn->header = node.getvars ? 0 : 1;
+			pn->id = proto->nodecount++;
+			if (pn->id == INT_MAX) {
+				yyerror("too many protocol nodes defined");
+				YYERROR;
+			}
+			RB_INSERT(proto_tree, &proto->tree, pn);
+
+			if (node.getvars) {
+				pk.key = "GET";
+				pn = RB_FIND(proto_tree, &proto->tree, &pk);
+				if (pn != NULL) {
+					pn->getvars++;
+				} else if (pn == NULL) {
+					if ((pn = (struct protonode *)
+					    calloc(1, sizeof(*pn))) == NULL)
+						fatal("out of memory");
+					pn->key = strdup("GET");
+					if (pn->key == NULL)
+						fatal("out of memory");
+					pn->value = NULL;
+					pn->action = NODE_ACTION_NONE;
+					pn->getvars = 1;
+					pn->id = proto->nodecount++;
+					if (pn->id == INT_MAX) {
+						yyerror("too many protocol "
+						    "nodes defined");
+						YYERROR;
+					}
+					RB_INSERT(proto_tree, &proto->tree, pn);
+				}
+			}
+
+			bzero(&node, sizeof(node));
+		}
+		;
+
+tcpflags_l	: tcpflags comma tcpflags_l
+		| tcpflags
+		;
+
+tcpflags	: SACK 			{ proto->tcpflags |= TCPFLAG_SACK; }
+		| NO SACK		{ proto->tcpflags |= TCPFLAG_NSACK; }
+		| NODELAY		{ proto->tcpflags |= TCPFLAG_NODELAY; }
+		| NO NODELAY		{ proto->tcpflags |= TCPFLAG_NNODELAY; }
+		| SOCKET BUFFER number	{
+			proto->tcpflags |= TCPFLAG_BUFSIZ;
+			proto->tcpbufsiz = $3;
+		}
+		;
+
+
+protonode	: APPEND STRING TO STRING marked	{
+			node.action = NODE_ACTION_APPEND;
+			node.key = strdup($4);
+			node.value = strdup($2);
+			if (node.key == NULL || node.value == NULL)
+				fatal("out of memory");
+			if (strchr(node.value, '$') != NULL)
+				node.macro = 1;
+			free($4);
+			free($2);
+		}
+		| CHANGE STRING TO STRING marked	{
+			node.action = NODE_ACTION_CHANGE;
+			node.key = strdup($2);
+			node.value = strdup($4);
+			if (node.key == NULL || node.value == NULL)
+				fatal("out of memory");
+			if (strchr(node.value, '$') != NULL)
+				node.macro = 1;
+			free($4);
+			free($2);
+		}
+		| REMOVE STRING	marked	{
+			node.action = NODE_ACTION_REMOVE;
+			node.key = strdup($2);
+			node.value = NULL;
+			if (node.key == NULL)
+				fatal("out of memory");
+			free($2);
+		}
+		| getvars EXPECT STRING FROM STRING mark	{
+			node.action = NODE_ACTION_EXPECT;
+			node.key = strdup($5);
+			node.value = strdup($3);;
+			if (node.key == NULL || node.value == NULL)
+				fatal("out of memory");
+			free($5);
+			free($3);
+		}
+		| getvars FILTER STRING FROM STRING mark	{
+			node.action = NODE_ACTION_FILTER;
+			node.key = strdup($5);
+			node.value = strdup($3);;
+			if (node.key == NULL || node.value == NULL)
+				fatal("out of memory");
+			free($5);
+			free($3);
+		}
+		| getvars HASH STRING marked			{
+			node.action = NODE_ACTION_HASH;
+			node.key = strdup($3);
+			node.value = NULL;
+			if (node.key == NULL)
+				fatal("out of memory");
+			free($3);
+			proto->lateconnect++;
+		}
+		;
+
+mark		: /* nothing */
+		| MARK				{ node.mark++; }
+		;
+
+marked		: /* nothing */
+		| MARKED			{ node.mark++; }
+		;
+
+getvars		: /* nothing */
+		| URL				{ node.getvars++; }
+		;
+
+sslcache	: /* empty */			{ $$ = RELAY_CACHESIZE; }
+		| number			{ $$ = $1; }
+		| DISABLE			{ $$ = -2; }
+		;
+
+prototype	: TCP				{ $$ = RELAY_PROTO_TCP; }
+		| HTTP				{ $$ = RELAY_PROTO_HTTP; }
+		;
+
+relay		: RELAY STRING	{
+			struct relay *r;
+
+			TAILQ_FOREACH(r, &conf->relays, entry)
+				if (!strcmp(r->name, $2))
+					break;
+			if (r != NULL) {
+				yyerror("relay %s defined twice", $2);
+				free($2);
+				YYERROR;
+			}
+			if ((r = calloc(1, sizeof (*r))) == NULL)
+				fatal("out of memory");
+
+			if (strlcpy(r->name, $2, sizeof(r->name)) >=
+			    sizeof(r->name)) {
+				yyerror("relay name truncated");
+				YYERROR;
+			}
+			free($2);
+			r->id = last_relay_id++;
+			r->timeout.tv_sec = RELAY_TIMEOUT;
+			r->proto = NULL;
+			r->dsttable = NULL;
+			if (last_relay_id == INT_MAX) {
+				yyerror("too many relays defined");
+				YYERROR;
+			}
+			rlay = r;
+		} '{' optnl relayopts_l '}'	{
+			if (rlay->ss.ss_family == AF_UNSPEC) {
+				yyerror("relay %s has no listener",
+				    rlay->name);
+				YYERROR;
+			}
+			if ((rlay->flags & F_NATLOOK) == 0 &&
+			    rlay->dstss.ss_family == AF_UNSPEC &&
+			    rlay->dsttable == NULL) {
+				yyerror("relay %s has no target, service, "
+				    "or table", rlay->name);
+				YYERROR;
+			}
+			if (rlay->proto == NULL)
+				rlay->proto = &conf->proto_default;
+			conf->relaycount++;
+			TAILQ_INIT(&rlay->sessions);
+			TAILQ_INSERT_HEAD(&conf->relays, rlay, entry);
+		}
+		;
+
+relayopts_l	: relayopts_l relayoptsl nl
+		| relayoptsl optnl
+		;
+
+relayoptsl	: LISTEN ON STRING port sslserv {
+			struct addresslist 	 al;
+			struct address		*h;
+
+			if (rlay->ss.ss_family != AF_UNSPEC) {
+				yyerror("relay %s listener already specified",
+				    rlay->name);
+				YYERROR;
+			}
+
+			TAILQ_INIT(&al);
+			if (host($3, &al, 1, $4, NULL) <= 0) {
+				yyerror("invalid listen ip: %s", $3);
+				free($3);
+				YYERROR;
+			}
+			free($3);
+			h = TAILQ_FIRST(&al);
+			bcopy(&h->ss, &rlay->ss, sizeof(rlay->ss));
+			rlay->port = h->port;
+		}
+		| FORWARD TO STRING port {
+			struct addresslist 	 al;
+			struct address		*h;
+
+			if (rlay->dstss.ss_family != AF_UNSPEC) {
+				yyerror("relay %s target or service already specified",
+				    rlay->name);
+				free($3);
+				YYERROR;
+			}
+
+			TAILQ_INIT(&al);
+			if (host($3, &al, 1, $4, NULL) <= 0) {
+				yyerror("invalid listen ip: %s", $3);
+				free($3);
+				YYERROR;
+			}
+			free($3);
+			h = TAILQ_FIRST(&al);
+			bcopy(&h->ss, &rlay->dstss, sizeof(rlay->dstss));
+			rlay->dstport = h->port;
+		}
+		| SERVICE STRING {
+			struct service	*svc;
+			struct address	*h;
+
+			if (rlay->dstss.ss_family != AF_UNSPEC) {
+				yyerror("relay %s target or service already specified",
+				    rlay->name);
+				free($2);
+				YYERROR;
+			}
+
+			if ((svc = service_findbyname(conf, $2)) == NULL) {
+				yyerror("relay %s for unknown service %s",
+				    rlay->name, $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			h = TAILQ_FIRST(&svc->virts);
+			bcopy(&h->ss, &rlay->dstss, sizeof(rlay->dstss));
+			rlay->dstport = h->port;
+		}
+		| TABLE STRING dstmode docheck {
+			struct table	*dsttable;
+
+			if ((dsttable = table_findbyname(conf, $2)) == NULL) {
+				yyerror("relay %d for unknown table %s",
+				    rlay->name, $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			rlay->dsttable = dsttable;
+			rlay->dstmode = $3;
+			rlay->dstcheck = $4;
+		}
+		| PROTO STRING {
+			struct protocol *p;
+
+			TAILQ_FOREACH(p, &conf->protos, entry)
+				if (!strcmp(p->name, $2))
+					break;
+			if (p == NULL) {
+				yyerror("no such protocol: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			p->flags |= F_USED;
+			rlay->proto = p;
+			free($2);
+		}
+		| NAT LOOKUP			{ rlay->flags |= F_NATLOOK; }
+		| TIMEOUT number		{ rlay->timeout.tv_sec = $2; }
+		| DISABLE			{ rlay->flags |= F_DISABLE; }
+		;
+
+dstmode		: /* empty */		{ $$ = RELAY_DSTMODE_DEFAULT; }
+		| LOADBALANCE		{ $$ = RELAY_DSTMODE_LOADBALANCE; }
+		| ROUNDROBIN		{ $$ = RELAY_DSTMODE_ROUNDROBIN; }
+		| HASH			{ $$ = RELAY_DSTMODE_HASH; }
+		;
+
+docheck		: /* empty */		{ $$ = 1; }
+		| NO CHECK		{ $$ = 0; }
+		;
+
+sslserv		: /* empty */
+		| SSL	{
+			rlay->flags |= F_SSL;
 			conf->flags |= F_SSL;
 		}
 		;
@@ -463,7 +874,7 @@ interface	: /*empty*/		{ $$ = NULL; }
 		| INTERFACE STRING	{ $$ = $2; }
 		;
 
-host		: HOST STRING {
+host		: HOST STRING retry {
 			struct address *a;
 			struct addresslist al;
 
@@ -490,7 +901,8 @@ host		: HOST STRING {
 			}
 			free($2);
 			$$->id = last_host_id++;
-			if (last_host_id == UINT_MAX) {
+			$$->retry = $3;
+			if (last_host_id == INT_MAX) {
 				yyerror("too many hosts defined");
 				free($$);
 				YYERROR;
@@ -498,11 +910,19 @@ host		: HOST STRING {
 		}
 		;
 
+retry		: /* nothing */		{ $$ = 0; }
+		| RETRY number		{ $$ = $2; }
+		;
+
 timeout		: number
 		{
 			$$.tv_sec = $1 / 1000;
 			$$.tv_usec = ($1 % 1000) * 1000;
 		}
+		;
+
+comma		: ','
+		| /* empty */
 		;
 
 optnl		: '\n' optnl
@@ -546,13 +966,22 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "all",		ALL },
+		{ "append",		APPEND },
 		{ "backup",		BACKUP },
+		{ "buffer",		BUFFER },
+		{ "cache",		CACHE },
+		{ "change",		CHANGE },
 		{ "check",		CHECK },
 		{ "code",		CODE },
+		{ "demote",		DEMOTE },
 		{ "digest",		DIGEST },
 		{ "disable",		DISABLE },
 		{ "expect",		EXPECT },
 		{ "external",		EXTERNAL },
+		{ "filter",		FILTER },
+		{ "forward",		FORWARD },
+		{ "from",		FROM },
+		{ "hash",		HASH },
 		{ "host",		HOST },
 		{ "http",		HTTP },
 		{ "https",		HTTPS },
@@ -560,19 +989,39 @@ lookup(char *s)
 		{ "interface",		INTERFACE },
 		{ "interval",		INTERVAL },
 		{ "ip",			IP },
+		{ "listen",		LISTEN },
+		{ "loadbalance",	LOADBALANCE },
 		{ "log",		LOG },
+		{ "lookup",		LOOKUP },
+		{ "mark",		MARK },
+		{ "marked",		MARKED },
+		{ "nat",		NAT },
+		{ "no",			NO },
+		{ "nodelay",		NODELAY },
 		{ "nothing",		NOTHING },
+		{ "on",			ON },
 		{ "port",		PORT },
+		{ "prefork",		PREFORK },
+		{ "protocol",		PROTO },
 		{ "real",		REAL },
+		{ "relay",		RELAY },
+		{ "remove",		REMOVE },
+		{ "retry",		RETRY },
+		{ "roundrobin",		ROUNDROBIN },
+		{ "sack",		SACK },
 		{ "send",		SEND },
 		{ "service",		SERVICE },
+		{ "session",		SESSION },
+		{ "socket",		SOCKET },
 		{ "ssl",		SSL },
 		{ "sticky-address",	STICKYADDR },
 		{ "table",		TABLE },
 		{ "tag",		TAG },
 		{ "tcp",		TCP },
 		{ "timeout",		TIMEOUT },
+		{ "to",			TO },
 		{ "updates",		UPDATES },
+		{ "url",		URL },
 		{ "use",		USE },
 		{ "virtual",		VIRTUAL }
 	};
@@ -795,16 +1244,30 @@ parse_config(struct hoststated *x_conf, const char *filename, int opts)
 
 	TAILQ_INIT(&conf->services);
 	TAILQ_INIT(&conf->tables);
+	TAILQ_INIT(&conf->protos);
+	TAILQ_INIT(&conf->relays);
+
 	memset(&conf->empty_table, 0, sizeof(conf->empty_table));
 	conf->empty_table.id = EMPTY_TABLE;
 	conf->empty_table.flags |= F_DISABLE;
 	(void)strlcpy(conf->empty_table.name, "empty",
 	    sizeof(conf->empty_table.name));
 
+	bzero(&conf->proto_default, sizeof(conf->proto_default));
+	conf->proto_default.flags = F_USED;
+	conf->proto_default.cache = RELAY_CACHESIZE;
+	conf->proto_default.type = RELAY_PROTO_TCP;
+	(void)strlcpy(conf->proto_default.name, "default",
+	    sizeof(conf->proto_default.name));
+	RB_INIT(&conf->proto_default.tree);
+	TAILQ_INSERT_TAIL(&conf->protos, &conf->proto_default, entry);
+
 	conf->timeout.tv_sec = CHECK_TIMEOUT / 1000;
 	conf->timeout.tv_usec = (CHECK_TIMEOUT % 1000) * 1000;
 	conf->interval.tv_sec = CHECK_INTERVAL;
 	conf->interval.tv_usec = 0;
+	conf->prefork_relay = RELAY_NUMPROC;
+	conf->statinterval.tv_sec = RELAY_STATINTERVAL;
 	conf->opts = opts;
 
 	if ((fin = fopen(filename, "r")) == NULL) {
@@ -831,7 +1294,7 @@ parse_config(struct hoststated *x_conf, const char *filename, int opts)
 		}
 	}
 
-	if (TAILQ_EMPTY(&conf->services)) {
+	if (TAILQ_EMPTY(&conf->services) && TAILQ_EMPTY(&conf->relays)) {
 		log_warnx("no services, nothing to do");
 		errors++;
 	}
@@ -850,6 +1313,14 @@ parse_config(struct hoststated *x_conf, const char *filename, int opts)
 		if (timercmp(&table->timeout, &conf->interval, >=)) {
 			log_warnx("table timeout exceeds interval: %s",
 			    table->name);
+			errors++;
+		}
+	}
+
+	/* Verify that every non-default protocol is used */
+	TAILQ_FOREACH(proto, &conf->protos, entry) {
+		if (!(proto->flags & F_USED)) {
+			log_warnx("unused protocol: %s", proto->name);
 			errors++;
 		}
 	}

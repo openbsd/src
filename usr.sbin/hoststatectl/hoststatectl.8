@@ -1,4 +1,4 @@
-.\" $OpenBSD: hoststatectl.8,v 1.7 2007/02/01 20:03:38 pyr Exp $
+.\" $OpenBSD: hoststatectl.8,v 1.8 2007/02/22 03:32:40 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -53,11 +53,14 @@ if applicable \(en backup table disabled as well.
 Enable a service.
 Mark the service's main table and \(en if applicable \(en backup
 table enabled as well.
-.It Cm show Op Cm summary
-Show status of services, tables, and hosts.
-The keyword
-.Cm summary
-is optional.
+.It Cm show hosts
+Show detailed status of hosts, tables, and services.
+.It Cm show relays
+Show detailed status of relays including the current and average
+access statistics.
+The statistics will be updated every minute.
+.It Cm show summary
+Display a list of all relays, services, tables, and hosts.
 .It Cm table disable Op Ar name | id
 Disable a table.
 Consider all hosts disabled.
@@ -78,3 +81,8 @@ Unix-domain socket used for communication with
 .El
 .Sh SEE ALSO
 .Xr hoststated 8
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 4.1 .
