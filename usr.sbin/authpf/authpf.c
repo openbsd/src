@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.100 2007/02/22 21:15:41 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.101 2007/02/22 21:54:23 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -834,8 +834,6 @@ do_death(int active)
 		authpf_kill_states();
 		remove_stale_rulesets();
 	}
-	if (pidfp != NULL) 
-		ftruncate(fileno(pidfp), 0);
 	if (pidfile[0] && (pidfp != NULL))
 		if (unlink(pidfile) == -1)
 			syslog(LOG_ERR, "cannot unlink %s (%m)", pidfile);
