@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.99 2006/08/09 16:21:39 dhartmei Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.100 2007/02/22 21:15:41 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -50,8 +50,6 @@
 
 #include "pathnames.h"
 
-extern int	symset(const char *, const char *, int);
-
 static int	read_config(FILE *);
 static void	print_message(char *);
 static int	allowed_luser(char *);
@@ -67,7 +65,6 @@ char	rulesetname[MAXPATHLEN - PF_ANCHOR_NAME_SIZE - 2];
 char	tablename[PF_TABLE_NAME_SIZE] = "authpf_users";
 
 FILE	*pidfp;
-char	*infile;		/* file name printed by yyerror() in parse.y */
 char	 luser[MAXLOGNAME];	/* username */
 char	 ipsrc[256];		/* ip as a string */
 char	 pidfile[MAXPATHLEN];	/* we save pid in this file. */
@@ -246,6 +243,8 @@ main(int argc, char *argv[])
 		if (++lockcnt > 10) {
 			syslog(LOG_ERR, "cannot kill previous authpf (pid %d)",
 			    otherpid);
+			fclose(pidfp);
+			pidfp = NULL;
 			goto dogdeath;
 		}
 		sleep(1);
@@ -255,6 +254,7 @@ main(int argc, char *argv[])
 		 * it's lock, giving us a chance to get it now
 		 */
 		fclose(pidfp);
+		pidfp = NULL;
 	} while (1);
 	
 	/* whack the group list */
@@ -727,7 +727,6 @@ error:
 	ipstr = NULL;
 	free(fn);
 	fn = NULL;
-	infile = NULL;
 	return (-1);
 }
 
@@ -835,9 +834,9 @@ do_death(int active)
 		authpf_kill_states();
 		remove_stale_rulesets();
 	}
-	if (pidfp)
+	if (pidfp != NULL) 
 		ftruncate(fileno(pidfp), 0);
-	if (pidfile[0])
+	if (pidfile[0] && (pidfp != NULL))
 		if (unlink(pidfile) == -1)
 			syslog(LOG_ERR, "cannot unlink %s (%m)", pidfile);
 	exit(ret);
