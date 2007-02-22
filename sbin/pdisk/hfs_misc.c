@@ -162,7 +162,7 @@ int read_partition_block(partition_map *entry, unsigned long num, char *buf);
 // Routines
 //
 u32
-embeded_offset(struct mdb_record *mdb, u32 sector)
+embedded_offset(struct mdb_record *mdb, u32 sector)
 {
     u32 e_offset;
 
