@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.20 2007/02/22 04:13:06 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.21 2007/02/22 09:20:01 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -44,8 +44,8 @@ Services will be translated to
 .Xr pf 4
 rdr rules if their table or backup table have content.
 .It Sy Relays
-Relays allow layer 7 loadbalancing, SSL acceleration, and
-general-purpose TCP proxying.
+Relays allow layer 7 load balancing, SSL acceleration, and
+general purpose TCP proxying.
 .It Sy Protocols
 Protocols are predefined protocol handlers and settings for relays.
 .El
@@ -303,7 +303,7 @@ server, open an outgoing connection to a target host, and forward
 any traffic between the target host and the remote client.
 A relay is also called an application layer or layer 7 proxy.
 .Pp
-The main purpose of a relay is to provide advanced loadbalancing
+The main purpose of a relay is to provide advanced load balancing
 functionality based on specified protocol characteristics, such as
 HTTP headers, to provide SSL acceleration functionality and to allow
 basic handling of the underlying application protocol.
@@ -317,15 +317,14 @@ The relay configuration directives are described below.
 Specify the address and port for the relay to listen on.
 The relay will accept incoming connections to the specified address.
 .Pp
-If the 
+If the
 .Ic ssl
 keyword is present, the relay will accept connections using the
 encrypted SSL protocol.
-The relay will lookup a private key in
+The relay will look up a private key in
 .Pa /etc/ssl/private/address.key
 and a public certificate in
-.Pa /etc/ssl/address.crt
-in this case, 
+.Pa /etc/ssl/address.crt ,
 where
 .Ar address
 is the specified IP address of the relay to listen on.
@@ -352,7 +351,7 @@ table:
 .Pp
 .Bl -tag -width loadbalance -offset indent -compact
 .It Ic roundrobin
-distributes the outgoing connections using a round-robin scheduler
+Distributes the outgoing connections using a round-robin scheduler
 through all active hosts.
 .It Ic loadbalance
 Balances the outgoing connections across the active hosts based on the
@@ -363,19 +362,19 @@ Like the
 .Ic loadbalance
 mode, but without including the source and destination addresses and
 ports.
-Additional input can be feeded into the hash by looking at HTTP
-headers and GET variables, see the
-.Sx Protocols
+Additional input can be fed into the hash by looking at HTTP
+headers and GET variables; see the
+.Sx PROTOCOLS
 section below.
 .El
 .It Ic nat lookup
-When redirecting connections with a
+When redirecting connections with an
 .Ar rdr
 rule in
 .Xr pf.conf 5
-to a relay listening on localhost, this directive will allow to
-lookup the real destination address of the intended target host.
-This allows to run the relay as a transparent proxy.
+to a relay listening on localhost, this directive will
+look up the real destination address of the intended target host,
+allowing the relay to be run as a transparent proxy.
 If either the
 .Ic forward to ,
 .Ic service ,
@@ -390,14 +389,14 @@ The default timeout is 600 seconds (10 minutes).
 Start the relay but immediately close any accepted connections.
 .It Ic protocol Ar name
 Use the specified protocol definition for the relay.
-The generic TCP protocol options will be used by default,
+The generic TCP protocol options will be used by default;
 see the
-.Sx Protocols
+.Sx PROTOCOLS
 section below.
 .El
 .Sh PROTOCOLS
 Protocols are templates defining actions and settings for relays.
-They allow to set generic TCP options, SSL settings, and actions
+They allow setting generic TCP options, SSL settings, and actions
 specific to the selected application layer protocol.
 .Pp
 The protocol configuration directives are described below.
@@ -436,7 +435,7 @@ will be dropped.
 The
 .Ic url
 keyword will expect the value as a GET variable in the URL instead
-of a HTTP header value when using the
+of an HTTP header value when using the
 .Ic http
 protocol.
 .It Xo
@@ -451,25 +450,24 @@ and value.
 .Op Ic url
 .Ic hash Ar key
 .Xc
-Feed the value of the selected entity into the loadbalancing hash to
+Feed the value of the selected entity into the load balancing hash to
 select the target host.
 See the
 .Ic table
 keyword in the
-.Sx Relays
+.Sx RELAYS
 section above.
 The
 .Ic url
-keyword will lookup the entity as a GET variable in the URL instead
-of a HTTP header value when using the
+keyword will look up the entity as a GET variable in the URL instead
+of an HTTP header value when using the
 .Ic http
 protocol.
 .It Ic tcp Ar option
-Enable or disable the specified TCP option, see
+Enable or disable the specified TCP option; see
 .Xr tcp 4
 for details about TCP options.
 Valid options are:
-.Pp
 .Bl -tag -width Ds
 .It Xo
 .Op Ic no
@@ -477,7 +475,7 @@ Valid options are:
 .Xc
 Enable the TCP NODELAY option for this connection.
 This is recommended to avoid delays in the relayed data stream,
-ie. for SSH connections.
+i.e. for SSH connections.
 .It Xo
 .Op Ic no
 .Ic sack
@@ -492,9 +490,8 @@ This will affect the TCP window size.
 Set the maximum size of the SSL session cache.
 If the
 .Ar value
-is zero, the default size defined by the SSL library will be
-used, a positive number will set the maximun size in bytes and the
-keyword
+is zero, the default size defined by the SSL library will be used.
+A positive number will set the maximum size in bytes and the keyword
 .Ic disable
 will disable the SSL session cache.
 .El
@@ -505,7 +502,7 @@ strings of the
 .Ic append
 and
 .Ic change
-directives may contain predefined macros that will be expanded on runtime:
+directives may contain predefined macros that will be expanded at runtime:
 .Pp
 .Bl -tag -width $SERVER_ADDR -offset indent -compact
 .It Ic $REMOTE_ADDR
@@ -518,6 +515,21 @@ The configured IP address of the relay.
 The configured TCP server port of the relay.
 .It Ic $TIMEOUT
 The configured session timeout of the relay.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/ssl/private/address.keyXX" -compact
+.It Pa /etc/hoststated.conf
+.Xr hoststated 8
+configuration file.
+.Pp
+.It Pa /etc/services
+Service name database.
+.Pp
+.It Pa /etc/ssl/address.crt
+.It Pa /etc/ssl/private/address.key
+Location of the relay SSL server certificates, where
+.Ar address
+is the configured IP address of the relay.
 .El
 .Sh EXAMPLES
 This configuration file would create a service
@@ -565,7 +577,7 @@ The following configuration would add a relay to forward
 secure HTTPS connections to a pool of HTTP webservers
 using the
 .Ic loadbalance
-protocol (SSL acceleration and layer 7 loadbalancing).
+protocol (SSL acceleration and layer 7 load balancing).
 The HTTP protocol definition will add two HTTP headers containing
 address information of the client and the server, set the
 .Dq Keep-Alive
@@ -606,19 +618,7 @@ relay sshforward {
         listen on www.example.com port 2222
 	forward to shell.example.com port 22
 }
-.Sh FILES
-.Bl -tag -width "/etc/hoststated.conf" -compact
-.It Pa /etc/hoststated.conf
-.Xr hoststated 8
-configuration file
-.It Pa /etc/services
-Service name database
-.It Pa /etc/ssl/private/address.key
-.It Pa /etc/ssl/address.crt
-Location of the relay SSL server certificates, where
-.Ar address
-is the configured IP address of the relay.
-.El
+.Ed
 .Sh SEE ALSO
 .Xr hoststatectl 8 ,
 .Xr hoststated 8 ,
@@ -629,6 +629,7 @@ The
 program first appeared in
 .Ox 4.1 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 program was written by
