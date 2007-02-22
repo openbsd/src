@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.c,v 1.17 2006/06/14 14:03:33 hshoexer Exp $	*/
+/*	$OpenBSD: nat_traversal.c,v 1.18 2007/02/22 10:01:02 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -55,6 +55,11 @@ int	disable_nat_t = 0;
  *
  * These seem to be the "well" known variants of this string in use by
  * products today.
+ *
+ * Note that the VID specified in draft 2 is ambiguous: It was
+ * accidentally calculated from the string "draft-ietf-ipsec-nat-t-ike-02\n"
+ * although the string was documented without the trailing '\n'. The authors
+ * suggested afterwards to use the string with the trailing '\n'.
  */
 
 static struct nat_t_cap isakmp_nat_t_cap[] = {
