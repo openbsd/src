@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.83 2007/02/21 19:17:22 kettenis Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.84 2007/02/22 07:40:47 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -477,8 +477,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		}
 	} while (!(acpi_read_pmreg(sc, ACPIREG_PM1_CNT, 0) & ACPI_PM1_SCI_EN));
 #endif
-
-	acpi_attach_machdep(sc);
 
 	printf("\n");
 
@@ -1226,6 +1224,8 @@ acpi_isr_thread(void *arg)
 	struct acpi_thread *thread = arg;
 	struct acpi_softc  *sc = thread->sc;
 	u_int32_t gpe;
+
+	acpi_attach_machdep(sc);
 
 	/*
 	 * If we have an interrupt handler, we can get notification
