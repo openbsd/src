@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.5 2006/11/29 11:57:27 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.6 2007/02/22 07:39:55 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -29,6 +29,13 @@
 #include <dev/isa/isareg.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
+#endif
 
 #define ACPI_BIOS_RSDP_WINDOW_BASE        0xe0000
 #define ACPI_BIOS_RSDP_WINDOW_SIZE        0x20000
@@ -150,8 +157,21 @@ void
 acpi_attach_machdep(struct acpi_softc *sc)
 {
 #ifdef ACPI_ENABLE
-	sc->sc_interrupt = intr_establish(sc->sc_fadt->sci_int, &i8259_pic,
-	    sc->sc_fadt->sci_int, IST_LEVEL, IPL_TTY, acpi_interrupt, sc,
-	    "acpi");
+	struct pic *pic;
+	int pin;
+	int irq;
+
+	pic = &i8259_pic;
+	pin = sc->sc_fadt->sci_int;
+	irq = sc->sc_fadt->sci_int;
+#if NIOAPIC > 0
+	pic = (struct pic *)ioapic_find_bybase(sc->sc_fadt->sci_int);
+	if (pic == NULL) {
+		printf("error: can't establish ACPI interrupt!\n");
+		return;
+	}
+#endif
+	sc->sc_interrupt = intr_establish(irq, pic, pin, IST_LEVEL, IPL_TTY, 
+	    acpi_interrupt, sc, "acpi");
 #endif
 }
