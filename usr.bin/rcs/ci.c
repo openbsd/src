@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.193 2007/02/14 16:07:29 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.194 2007/02/22 19:11:13 otto Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -233,8 +233,13 @@ checkin_main(int argc, char **argv)
 	if ((pb.username = getlogin()) == NULL)
 		err(1, "getlogin");
 
+	/* If -x flag was not given, use default. */
+	if (rcs_suffixes == NULL)
+		rcs_suffixes = RCS_DEFAULT_SUFFIX;
+
 	for (i = 0; i < argc; i++) {
 		pb.filename = argv[i];
+		rcs_strip_suffix(pb.filename);
 
 		if ((workfile_fd = open(pb.filename, O_RDONLY)) == -1)
 			err(1, "%s", pb.filename);

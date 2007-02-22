@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.27 2007/02/22 08:30:45 xsa Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.28 2007/02/22 19:11:13 otto Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -618,4 +618,24 @@ rcs_argv_destroy(struct rcs_argvector *av)
 	xfree(av->str);
 	xfree(av->argv);
 	xfree(av);
+}
+
+/*
+ * Strip suffix from filename.
+ */
+void
+rcs_strip_suffix(char *filename)
+{
+	char *p, *suffixes, *next, *ext;
+
+	if ((p = strrchr(filename, ',')) != NULL) {
+		suffixes = xstrdup(rcs_suffixes);
+		for (next = suffixes; (ext = strsep(&next, "/")) != NULL;) {
+			if (!strcmp(p, ext)) {
+				*p = '\0';
+				break;
+			}
+		}
+		xfree(suffixes);
+	}
 }
