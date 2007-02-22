@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.43 2006/11/17 15:34:15 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.44 2007/02/22 21:40:39 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -100,7 +100,7 @@ sub next
     $self->skip();
     my $header;
     my $n = read $self->{fh}, $header, 512;
-    return if $n == 0;
+    return if (defined $n) and $n == 0;
     die "Error while reading header"
 	unless defined $n and $n == 512;
     if ($header eq "\0"x512) {
