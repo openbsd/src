@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.114 2007/02/02 15:53:39 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.115 2007/02/22 08:38:19 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -482,7 +482,8 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 			    p->conf.remote_masklen) == -1)
 				err(1, NULL);
 		} else
-			if ((s = strdup(log_addr(&p->conf.remote_addr))) == NULL)
+			if ((s = strdup(log_addr(&p->conf.remote_addr))) ==
+			    NULL)
 				err(1, "strdup");
 
 		ina.s_addr = p->remote_bgpid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.37 2007/02/01 20:27:37 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.38 2007/02/22 08:38:19 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -62,8 +62,8 @@ static const struct token t_main[];
 static const struct token t_show[];
 static const struct token t_show_summary[];
 static const struct token t_show_fib[];
-static const struct token t_show_rib[]; 
-static const struct token t_show_rib_neigh[]; 
+static const struct token t_show_rib[];
+static const struct token t_show_rib_neigh[];
 static const struct token t_show_neighbor[];
 static const struct token t_show_neighbor_modifiers[];
 static const struct token t_fib[];
@@ -813,4 +813,3 @@ inet6applymask(struct in6_addr *dest, const struct in6_addr *src, int prefixlen)
 	for (i = 0; i < 16; i++)
 		dest->s6_addr[i] = src->s6_addr[i] & mask.s6_addr[i];
 }
-
