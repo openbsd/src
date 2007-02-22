@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.1 2007/02/22 03:32:39 reyk Exp $ */
+/*	$OpenBSD: carp.c,v 1.2 2007/02/22 05:58:06 reyk Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -73,7 +73,7 @@ carp_demote_init(char *group, int force)
 			free(c);
 			return (-1);
 		}
-		
+
 		/* only demote if this group already is demoted */
 		if ((level = carp_demote_get(group)) == -1)
 			return (-1);
@@ -204,6 +204,6 @@ carp_demote_ioctl(char *group, int demote)
 		log_info("%s the demote state of group '%s'",
 		    (demote > 0) ? "incremented" : "decremented", group);
 
-	close (s);
+	close(s);
 	return (res);
 }

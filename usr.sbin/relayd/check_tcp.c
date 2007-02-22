@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.22 2007/02/08 13:32:24 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.23 2007/02/22 05:58:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -176,8 +176,8 @@ void
 tcp_send_req(int s, short event, void *arg)
 {
 	struct ctl_tcp_event	*cte = arg;
-	int		 	 bs;
-	int		 	 len;
+	int			 bs;
+	int			 len;
 
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
@@ -217,7 +217,7 @@ tcp_read_buf(int s, short event, void *arg)
 	char			 rbuf[SMALL_READ_BUF_SIZE];
 	struct ctl_tcp_event	*cte = arg;
 
-        if (event == EV_TIMEOUT) {
+	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
 		buf_free(cte->buf);
 		hce_notify_done(cte->host, "tcp_read_buf: timeout");

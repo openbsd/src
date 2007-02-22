@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.25 2007/02/22 03:32:39 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.26 2007/02/22 05:58:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -160,13 +160,13 @@ struct ctl_icmp_event {
 };
 
 struct ctl_tcp_event {
-	int		 	 s;
+	int			 s;
 	char			*req;
 	struct buf		*buf;
 	struct host		*host;
 	struct table		*table;
-	struct timeval	 	 tv_start;
-	struct event	 	 ev;
+	struct timeval		 tv_start;
+	struct event		 ev;
 	int			(*validate_read)(struct ctl_tcp_event *);
 	int			(*validate_close)(struct ctl_tcp_event *);
 	SSL			*ssl;
@@ -198,7 +198,7 @@ struct ctl_relay_event {
 	int			 marked;
 	int			 line;
 	size_t			 toread;
-	enum httpmethod		 method;	
+	enum httpmethod		 method;
 
 	u_int8_t		*buf;
 	int			 buflen;
@@ -328,18 +328,18 @@ struct service {
 TAILQ_HEAD(servicelist, service);
 
 struct session {
-	objid_t			 	 id;
-	struct ctl_relay_event	 	 in;
-	struct ctl_relay_event	 	 out;
+	objid_t				 id;
+	struct ctl_relay_event		 in;
+	struct ctl_relay_event		 out;
 	u_int32_t			 outkey;
 	struct event			 ev;
-	struct timeval		 	 timeout;
+	struct timeval			 timeout;
 	struct timeval			 tv_start;
 	struct timeval			 tv_last;
-	int			 	 done;
+	int				 done;
 	void				*relay;
 	struct ctl_natlook		*cnl;
-	TAILQ_ENTRY(session)	 	 entry;
+	TAILQ_ENTRY(session)		 entry;
 };
 TAILQ_HEAD(sessionlist, session);
 

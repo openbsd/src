@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.14 2007/02/22 03:32:40 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.15 2007/02/22 05:58:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -238,7 +238,7 @@ flush_table(struct hoststated *env, struct service *service)
 		goto toolong;
 	if (strlcpy(io.pfrio_table.pfrt_name, service->name,
 	    sizeof(io.pfrio_table.pfrt_name)) >=
-    	    sizeof(io.pfrio_table.pfrt_name))
+	    sizeof(io.pfrio_table.pfrt_name))
 		goto toolong;
 	if (ioctl(env->pf->dev, DIOCRCLRADDRS, &io) == -1)
 		fatal("flush_table: cannot flush table");
@@ -347,7 +347,8 @@ sync_ruleset(struct hoststated *env, struct service *service, int enable)
 
 		pio.addr.addr.type = PF_ADDR_TABLE;
 		if (strlcpy(pio.addr.addr.v.tblname, service->name,
-		    sizeof(pio.addr.addr.v.tblname)) >= sizeof(pio.addr.addr.v.tblname))
+		    sizeof(pio.addr.addr.v.tblname)) >=
+		    sizeof(pio.addr.addr.v.tblname))
 			fatal("sync_ruleset: table name too long");
 		if (ioctl(env->pf->dev, DIOCADDADDR, &pio) == -1)
 			fatal("sync_ruleset: cannot add address to pool");
@@ -397,7 +398,7 @@ flush_rulesets(struct hoststated *env)
 		log_warn("flush_rulesets: transaction for %s failed",
 		    HOSTSTATED_ANCHOR);
 	log_debug("flush_rulesets: flushed rules");
- 	return;
+	return;
 
  toolong:
 	fatal("flush_rulesets: name too long");
@@ -463,8 +464,10 @@ natlook(struct hoststated *env, struct ctl_natlook *cnl)
 	case AF_INET6:
 		in6 = (struct sockaddr_in6 *)&cnl->rsrc;
 		out6 = (struct sockaddr_in6 *)&cnl->rdst;
-		bcopy(&pnl.rsaddr.addr8, &in6->sin6_addr, sizeof(in6->sin6_addr));
-		bcopy(&pnl.rdaddr.addr8, &out6->sin6_addr, sizeof(out6->sin6_addr));
+		bcopy(&pnl.rsaddr.addr8, &in6->sin6_addr,
+		    sizeof(in6->sin6_addr));
+		bcopy(&pnl.rdaddr.addr8, &out6->sin6_addr,
+		    sizeof(out6->sin6_addr));
 		break;
 	}
 	cnl->rsrc.ss_family = pnl.af;

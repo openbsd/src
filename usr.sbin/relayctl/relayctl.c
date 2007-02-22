@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.15 2007/02/22 03:32:40 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.16 2007/02/22 05:59:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -303,7 +303,7 @@ show_summary_msg(struct imsg *imsg, int type)
 	struct host		*host;
 	struct relay		*rlay;
 	struct ctl_stats	 stats[RELAY_MAXPROC], crs;
-	int		 	 i;
+	int			 i;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SERVICE:

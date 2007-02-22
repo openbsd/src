@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.7 2007/02/22 03:32:40 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.8 2007/02/22 05:58:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -94,7 +94,7 @@ ssl_read(int s, short event, void *arg)
 			break;
 		}
 		return;
-	} 
+	}
 	if (buf_add(cte->buf, rbuf, ret) == -1)
 		fatal("ssl_read: buf_add error");
 	if (cte->validate_read != NULL) {
@@ -120,7 +120,7 @@ ssl_write(int s, short event, void *arg)
 {
 	struct ctl_tcp_event	*cte = arg;
 	int			 len;
-	int		 	 ret;
+	int			 ret;
 	int			 ssl_err;
 	int			 retry_flag;
 
@@ -134,7 +134,7 @@ ssl_write(int s, short event, void *arg)
 	len = strlen(cte->table->sendbuf);
 	retry_flag = EV_WRITE;
 
-	ret = SSL_write(cte->ssl, cte->table->sendbuf, len); 
+	ret = SSL_write(cte->ssl, cte->table->sendbuf, len);
 	if (ret <= 0) {
 		ssl_err = SSL_get_error(cte->ssl, ret);
 		switch (ssl_err) {
@@ -167,7 +167,7 @@ void
 ssl_connect(int s, short event, void *arg)
 {
 	struct ctl_tcp_event	*cte = arg;
-	int		 	 ret;
+	int			 ret;
 	int			 ssl_err;
 	int			 retry_flag;
 
@@ -179,7 +179,7 @@ ssl_connect(int s, short event, void *arg)
 
 	retry_flag = ssl_err = 0;
 
-	ret = SSL_connect(cte->ssl); 
+	ret = SSL_connect(cte->ssl);
 	if (ret <= 0) {
 		ssl_err = SSL_get_error(cte->ssl, ret);
 		switch (ssl_err) {
@@ -268,7 +268,7 @@ ssl_transaction(struct ctl_tcp_event *cte)
 
 	if (SSL_set_fd(cte->ssl, cte->s) == 0) {
 		cte->host->up = HOST_UNKNOWN;
-		ssl_error(cte->host->name, "cannot set fd"); 
+		ssl_error(cte->host->name, "cannot set fd");
 		ssl_cleanup(cte);
 		hce_notify_done(cte->host,
 		    "ssl_transaction: cannot set SSL fd");

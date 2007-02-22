@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.15 2007/02/22 03:32:39 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.16 2007/02/22 05:58:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -233,8 +233,8 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 
 			/* Forward to relay engine(s) */
 			for (n = 0; n < env->prefork_relay; n++)
-				imsg_compose(&ibuf_relay[n], IMSG_HOST_STATUS, 0, 0,
-				    &st, sizeof(st));
+				imsg_compose(&ibuf_relay[n],
+				    IMSG_HOST_STATUS, 0, 0, &st, sizeof(st));
 
 			if ((table = table_find(env, host->tableid)) == NULL)
 				fatalx("pfe_dispatch_imsg: invalid table id");
@@ -363,7 +363,8 @@ pfe_dispatch_relay(int fd, short event, void * ptr)
 				fatalx("invalid imsg header len");
 			bcopy(imsg.data, &crs, sizeof(crs));
 			if (crs.proc > env->prefork_relay)
-				fatalx("pfe_dispatch_relay: invalid relay proc");
+				fatalx("pfe_dispatch_relay: "
+				    "invalid relay proc");
 			if ((rlay = relay_find(env, crs.id)) == NULL)
 				fatalx("pfe_dispatch_relay: invalid relay id");
 			bcopy(&crs, &rlay->stats[crs.proc], sizeof(crs));
@@ -616,8 +617,8 @@ pfe_sync(void)
 	struct service		*service;
 	struct table		*active;
 	struct table		*table;
-	struct ctl_id	 	 id;
-	struct imsg	 	 imsg;
+	struct ctl_id		 id;
+	struct imsg		 imsg;
 	struct ctl_demote	 demote;
 
 	bzero(&id, sizeof(id));

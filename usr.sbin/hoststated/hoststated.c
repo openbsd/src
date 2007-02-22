@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.17 2007/02/22 03:32:39 reyk Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.18 2007/02/22 05:58:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -64,7 +64,7 @@ void
 main_sig_handler(int sig, short event, void *arg)
 {
 	struct hoststated	*env = arg;
-	int		 	 die = 0;
+	int			 die = 0;
 
 	log_debug("signal %d", sig);
 
@@ -173,13 +173,17 @@ main(int argc, char *argv[])
 
 	log_info("startup");
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_parent2pfe) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
+	    pipe_parent2pfe) == -1)
 		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_parent2hce) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
+	    pipe_parent2hce) == -1)
 		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_parent2relay) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
+	    pipe_parent2relay) == -1)
 		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_pfe2hce) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
+	    pipe_pfe2hce) == -1)
 		fatal("socketpair");
 	for (c = 0; c < env.prefork_relay; c++) {
 		if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
@@ -589,7 +593,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 		return (-1);
 	}
 	p = q = label;
-	while ((q = strstr(p, srch)) != NULL) {   
+	while ((q = strstr(p, srch)) != NULL) {
 		*q = '\0';
 		if ((strlcat(tmp, p, len) >= len) ||
 		    (strlcat(tmp, repl, len) >= len)) {
