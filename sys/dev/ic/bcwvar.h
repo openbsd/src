@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.17 2007/02/22 17:04:31 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.18 2007/02/22 19:25:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -72,7 +72,7 @@ enum {
 };
 
 #define BCW_RADIO_INTERFMODE_NONWLAN	1
-#define BCW_RADIO_DEFAULT_CHANNEL	6
+#define BCW_RADIO_DEFAULT_CHANNEL_BG	6
 #define BCW_RADIO_MAX			2
 struct bcw_radio {
 	uint16_t	id;
