@@ -1,4 +1,4 @@
-/*	$OpenBSD: layout.h,v 1.3 2005/06/08 22:36:43 millert Exp $	*/
+/*	$OpenBSD: layout.h,v 1.4 2007/02/22 06:36:59 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -48,7 +48,6 @@
 #define  x_mem		8
 extern int y_mem;
 extern int y_message;
-#define  x_header	0
 extern int y_header;
 #define  x_idlecursor	0
 extern int y_idlecursor;

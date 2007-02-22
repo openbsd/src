@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.h,v 1.7 2005/06/17 09:40:48 markus Exp $	*/
+/*	$OpenBSD: top.h,v 1.8 2007/02/22 06:36:59 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -87,4 +87,3 @@ extern int y_message;
 extern int y_header;
 extern int y_idlecursor;
 extern int y_procs;
-extern int num_CPUS;
