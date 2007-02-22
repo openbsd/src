@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.40 2007/02/10 15:34:22 claudio Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.41 2007/02/22 15:31:44 claudio Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -45,14 +45,17 @@
 
 #ifdef	INET
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/in_gif.h>
+#include <netinet/ip.h>
 #endif	/* INET */
 
 #ifdef INET6
 #ifndef INET
 #include <netinet/in.h>
 #endif
+#include <netinet/ip6.h>
 #include <netinet6/in6_gif.h>
 #endif /* INET6 */
 
@@ -104,7 +107,8 @@ gif_clone_create(ifc, unit)
 	sc->gif_if.if_start  = gif_start;
 	sc->gif_if.if_output = gif_output;
 	sc->gif_if.if_type   = IFT_GIF;
-	sc->gif_if.if_snd.ifq_maxlen = ifqmaxlen;
+	IFQ_SET_MAXLEN(&sc->gif_if.if_snd, ifqmaxlen);
+	IFQ_SET_READY(&sc->gif_if.if_snd);
 	sc->gif_if.if_softc = sc;
 	if_attach(&sc->gif_if);
 	if_alloc_sadl(&sc->gif_if);
@@ -147,42 +151,123 @@ void
 gif_start(ifp)
         struct ifnet *ifp;
 {
-#if NBRIDGE > 0
-        struct sockaddr dst;
-#endif /* NBRIDGE */
-
+	struct gif_softc *sc = (struct gif_softc*)ifp;
         struct mbuf *m;
+	struct m_tag *mtag;
+	int family;
 	int s;
+	u_int8_t tp;
 
-#if NBRIDGE > 0
-	bzero(&dst, sizeof(dst));
+	/* is interface up and running? */
+	if ((ifp->if_flags & (IFF_OACTIVE | IFF_UP)) != IFF_UP ||
+	    sc->gif_psrc == NULL || sc->gif_pdst == NULL)
+		return;
 
-	/*
-	 * XXX The assumption here is that only the ethernet bridge
-	 * uses the start routine of this interface, and it's thus
-	 * safe to do this.
-	 */
-	dst.sa_family = AF_LINK;
-#endif /* NBRIDGE */
+	/* are the tunnel endpoints valid? */
+#ifdef INET
+	if (sc->gif_psrc->sa_family != AF_INET)
+#endif
+#ifdef INET6
+		if (sc->gif_psrc->sa_family != AF_INET6)
+#endif
+			return;
 
-	while (ifp->if_snd.ifq_head) {
+	s = splnet();
+	ifp->if_flags |= IFF_OACTIVE;
+	splx(s);
+
+	while (1) {
 	        s = splnet();
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		splx(s);
 
 		if (m == NULL)
-			return;
+			break;
+
+		/*
+		 * gif may cause infinite recursion calls when misconfigured.
+		 * We'll prevent this by detecting loops.
+		 */
+		for (mtag = m_tag_find(m, PACKET_TAG_GIF, NULL); mtag;
+		    mtag = m_tag_find(m, PACKET_TAG_GIF, mtag)) {
+			if (!bcmp((caddr_t)(mtag + 1), &ifp,
+			    sizeof(struct ifnet *))) {
+				IF_DROP(&ifp->if_snd);
+				log(LOG_NOTICE, "gif_output: "
+				    "recursively called too many times\n");
+				m_freem(m);
+				continue;
+			}
+		}
+
+		mtag = m_tag_get(PACKET_TAG_GIF, sizeof(caddr_t), M_NOWAIT);
+		if (mtag == NULL) {
+			m_freem(m);
+			break;
+		}
+		bcopy(&ifp, mtag + 1, sizeof(caddr_t));
+		m_tag_prepend(m, mtag);
+
+		/*
+		 * remove multicast and broadcast flags or encapsulated paket
+		 * ends up as multicast or broadcast packet.
+		 */
+		m->m_flags &= ~(M_BCAST|M_MCAST);
+
+		/* extract address family */
+		tp = *mtod(m, u_int8_t *);
+		tp = (tp >> 4) & 0xff;  /* Get the IP version number. */
+#ifdef INET
+		if (tp == IPVERSION)
+			family = AF_INET;
+#endif
+#ifdef INET6
+		if (tp == (IPV6_VERSION >> 4))
+			family = AF_INET6;
+#endif
 
 #if NBRIDGE > 0
-		/* Sanity check -- interface should be member of a bridge */
-		if (ifp->if_bridge == NULL)
+		/*
+		 * Check if the packet is comming via bridge and needs
+		 * etherip encapsulation or not.
+		 */
+		if (ifp->if_bridge)
+			for (mtag = m_tag_find(m, PACKET_TAG_BRIDGE, NULL);
+			    mtag;
+			    mtag = m_tag_find(m, PACKET_TAG_BRIDGE, mtag)) {
+				if (!bcmp(&ifp->if_bridge, mtag + 1,
+				    sizeof(caddr_t))) {
+					family = AF_LINK;
+					break;
+				}
+			}
+#endif
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap_af(ifp->if_bpf, family, m, BPF_DIRECTION_OUT);
+#endif
+		ifp->if_opackets++;
+		ifp->if_obytes += m->m_pkthdr.len;
+
+		switch (sc->gif_psrc->sa_family) {
+#ifdef INET
+		case AF_INET:
+			in_gif_output(ifp, family, m);
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
+			in6_gif_output(ifp, family, m);
+			break;
+#endif
+		default:
 			m_freem(m);
-		else
-			gif_output(ifp, m, &dst, NULL);
-#else
-		m_freem(m);
-#endif /* NBRIDGE */
+			break;
+		}
 	}
+
+	ifp->if_flags &= ~IFF_OACTIVE;
 }
 
 int
@@ -194,7 +279,7 @@ gif_output(ifp, m, dst, rt)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	int error = 0;
-	struct m_tag *mtag;
+	int s;
 
 	if (!(ifp->if_flags & IFF_UP) ||
 	    sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
@@ -203,57 +288,36 @@ gif_output(ifp, m, dst, rt)
 		goto end;
 	}
 
-	/*
-	 * gif may cause infinite recursion calls when misconfigured.
-	 * We'll prevent this by detecting loops.
-	 */
-	for (mtag = m_tag_find(m, PACKET_TAG_GIF, NULL); mtag;
-	     mtag = m_tag_find(m, PACKET_TAG_GIF, mtag)) {
-		if (!bcmp((caddr_t)(mtag + 1), &ifp, sizeof(struct ifnet *))) {
-			IF_DROP(&ifp->if_snd);
-			log(LOG_NOTICE,
-			    "gif_output: recursively called too many times\n");
-			m_freem(m);
-			error = EIO;	/* is there better errno? */
-			goto end;
-		}
-	}
-
-	mtag = m_tag_get(PACKET_TAG_GIF, sizeof(struct ifnet *), M_NOWAIT);
-	if (mtag == NULL) {
-		IF_DROP(&ifp->if_snd);
-		m_freem(m);
-		error = ENOMEM;
-		goto end;
-	}
-	bcopy(&ifp, (caddr_t)(mtag + 1), sizeof(struct ifnet *));
-	m_tag_prepend(m, mtag);
-
-	m->m_flags &= ~(M_BCAST|M_MCAST);
-
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m, BPF_DIRECTION_OUT);
-#endif
-	ifp->if_opackets++;	
-	ifp->if_obytes += m->m_pkthdr.len;
-
 	switch (sc->gif_psrc->sa_family) {
 #ifdef INET
 	case AF_INET:
-		error = in_gif_output(ifp, dst->sa_family, m);
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		error = in6_gif_output(ifp, dst->sa_family, m);
 		break;
 #endif
 	default:
 		m_freem(m);		
 		error = ENETDOWN;
-		break;
+		goto end;
 	}
+
+	s = splnet();
+	/*
+	 * Queue message on interface, and start output if interface
+	 * not yet active.
+	 */
+	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
+	if (error) {
+		/* mbuf is already freed */
+		splx(s);
+		return (error);
+	}
+	if ((ifp->if_flags & IFF_OACTIVE) == 0)
+		(*ifp->if_start)(ifp);
+	splx(s);
+	return (error);
 
   end:
 	if (error)
