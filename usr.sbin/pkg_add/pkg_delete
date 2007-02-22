@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.94 2006/08/01 10:23:38 bernd Exp $
+# $OpenBSD: pkg_delete,v 1.95 2007/02/22 21:31:41 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -133,7 +133,7 @@ if (@todo > @realnames) {
 		for my $p (@realnames) {
 			delete $deps{$p};
 		}
-		&$show([@ARGV], [keys %deps]);
+		&$show([@realnames], [keys %deps]);
 		if ((keys %deps) > 1 && OpenBSD::Interactive::confirm(
 		    "Do you want details", $state->{interactive}, 1)) {
 			$details = 1;
