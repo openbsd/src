@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.32 2007/02/18 21:19:00 henning Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.33 2007/02/22 07:02:31 henning Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -65,8 +65,6 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
-
-extern int h_errno;
 
 #define ifr_netmask ifr_addr
 
