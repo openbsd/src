@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.18 2007/02/22 19:25:45 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.19 2007/02/22 21:26:49 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -237,6 +237,8 @@ struct bcw_softc {
 	uint16_t		sc_phy_loopback_gain[2];
 	struct bcw_lopair	*sc_phy_lopairs;
 	uint16_t		sc_phy_savedpctlreg;
+	uint16_t		sc_phy_minlowsig[2];
+	uint16_t		sc_phy_minlowsigpos[2];
 //	uint16_t		sc_corerev;
 	uint32_t		sc_radio_mnf;
 	uint16_t		sc_radio_rev;
