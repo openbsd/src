@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpidump.8,v 1.3 2006/12/19 05:53:47 jmc Exp $
+.\"	$OpenBSD: acpidump.8,v 1.4 2007/02/22 19:29:51 jordan Exp $
 .\"
 .\" Copyright (c) 1999 Doug Rabson <dfr@FreeBSD.org>
 .\" Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
 .\"
 .\" $FreeBSD: src/usr.sbin/acpi/acpidump/acpidump.8,v 1.9 2001/09/05 19:21:25 dd Exp $
 .\"
-.Dd August 31, 2000
+.Dd February 22, 2007
 .Dt ACPIDUMP 8
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nm
 .Op Fl f Ar dsdt_file_for_input
 .Nm
-.Op Fl o Ar dsdt_file_for_output
+.Op Fl o Ar prefix_for_output
 .Sh DESCRIPTION
 The
 .Nm
@@ -118,10 +118,15 @@ Interpret AML data in DSDT from a file specified in
 and dumps them in ASL to standard output.
 .It Fl h
 Display usage and exit.
-.It Fl o Ar dsdt_file_for_output
-Store DSDT data block from physical memory into a file specified in
-.Ar dsdt_file_for_output
-in addition to behavior with no option.
+.It Fl o Ar prefix_for_output
+Store ACPI tables from physical memory into files specified by
+.Ar prefix_for_output
+in addition to behavior with no option.  The files generated will
+be of the form <prefix>.<sig>.<id>.  The sig is the signature of
+the ACPI Table, id is unique for each table.
+
+The following are common table signatures (there may be others):
+RSDP, FACP, DSDT, SSDT, HPET, MCFG, SPMI, APIC, SPCR, SRAT, XSDT
 .El
 .Sh FILES
 .Bl -tag -width /dev/mem
@@ -131,7 +136,9 @@ in addition to behavior with no option.
 This is an example to get a dump of SDTs and a DSDT data file
 simultaneously on a machine that supports ACPI BIOS:
 .Pp
-.Dl # acpidump -o foo.dsdt \*(Gt foo.asl
+.Dl # acpidump -o foo \*(Gt foo.asl
+
+This will generate foo.RSDP.x, foo.FACP.x, foo.DSDT.x, etc.
 .Sh SEE ALSO
 .\" .Xr acpi 4 ,
 .Xr mem 4 ,
@@ -160,6 +167,7 @@ Some contributions made by:
 .An Takayasu IWANASHI Aq takayasu@wendy.a.perfect-liberty.or.jp ,
 .An Yoshihiko SARUMARU Aq mistral@imasy.or.jp ,
 .An Hiroki Sato Aq hrs@FreeBSD.org ,
+.An Jordan Hargrave Aq jordan@openbsd.org
 and
 .An Michael Lucas Aq mwlucas@blackhelicopters.org .
 .Sh BUGS
