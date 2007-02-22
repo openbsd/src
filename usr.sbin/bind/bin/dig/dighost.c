@@ -3590,7 +3590,7 @@ get_trusted_key(isc_mem_t *mctx)
 		       filename);
 		return (ISC_R_FAILURE);
 	}
-	while (fgets(buf, 1500, fp) != NULL) {
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		result = opentmpkey(mctx,"tmp_file", &filetemp, &fptemp);
 		if (result != ISC_R_SUCCESS) {
 			fclose(fp);
