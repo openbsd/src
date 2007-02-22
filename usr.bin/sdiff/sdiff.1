@@ -1,9 +1,9 @@
-.\" $OpenBSD: sdiff.1,v 1.10 2006/12/20 15:32:10 jasper Exp $
+.\" $OpenBSD: sdiff.1,v 1.11 2007/02/22 02:50:56 ray Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
 .\"
-.Dd October 29, 2005
+.Dd February 21, 2007
 .Dt SDIFF 1
 .Os
 .Sh NAME
@@ -18,7 +18,22 @@
 .Ar file1
 .Ar file2
 .Sh DESCRIPTION
-Shows a side-by-side comparison of two files.
+.Nm
+displays two files side by side,
+with any differences between the two highlighted as follows:
+new lines are marked with
+.Sq \*(Gt ;
+deleted lines are marked with
+.Sq \*(Lt ;
+and changed lines are marked with
+.Sq \*(Ba .
+.Pp
+.Nm
+can also be used to interactively merge two files,
+prompting at each set of differences.
+See the
+.Fl o
+option for an explanation.
 .Pp
 The options are:
 .Bl -tag -width Ds
