@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.10 2007/01/24 20:47:45 kettenis Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.11 2007/02/22 03:47:15 marco Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -343,7 +343,8 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 		    aaa->flags & IOAPIC_PICMODE ? "PIC" : "virtual wire");
 	}
 
-	printf(", version %x, %d pins\n", sc->sc_apic_vers, sc->sc_apic_sz);
+	printf(", version %x, pins %d, base %d\n", sc->sc_apic_vers,
+	    sc->sc_apic_sz, sc->sc_apic_vecbase);
 
 	apic_id = (ioapic_read(sc, IOAPIC_ID) & IOAPIC_ID_MASK) >>
 	    IOAPIC_ID_SHIFT;
