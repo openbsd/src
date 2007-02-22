@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.199 2007/01/26 21:34:21 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.200 2007/02/22 08:34:18 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2142,7 +2142,7 @@ symget(const char *nam)
 int
 getcommunity(char *s)
 {
-	int	 	 val;
+	int		 val;
 	const char	*errstr;
 
 	if (strcmp(s, "*") == 0)

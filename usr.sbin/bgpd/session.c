@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.269 2007/02/22 08:26:45 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.270 2007/02/22 08:34:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -939,7 +939,8 @@ change_state(struct peer *peer, enum session_state state,
 			    peer->IdleHoldTime < MAX_IDLE_HOLD/2)
 				peer->IdleHoldTime *= 2;
 		}
-		if (peer->state == STATE_NONE || peer->state == STATE_ESTABLISHED) {
+		if (peer->state == STATE_NONE ||
+		    peer->state == STATE_ESTABLISHED) {
 			/* initialize capability negotiation structures */
 			memcpy(&peer->capa.ann, &peer->conf.capabilities,
 			    sizeof(peer->capa.ann));
@@ -1353,7 +1354,7 @@ session_open(struct peer *p)
 	if ((opb = buf_open(0)) == NULL) {
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
-	}	
+	}
 
 	/* multiprotocol extensions, RFC 2858 */
 	if (p->capa.ann.mp_v4) {	/* 4 bytes data */
@@ -1384,7 +1385,7 @@ session_open(struct peer *p)
 		buf_free(opb);
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
-	}	
+	}
 
 	msg.version = 4;
 	msg.myas = htons(conf->as);

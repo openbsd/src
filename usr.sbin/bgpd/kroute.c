@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.151 2007/02/07 13:22:55 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.152 2007/02/22 08:34:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -759,10 +759,10 @@ kr_reload(void)
 	LIST_FOREACH(rn, &redistlist, entry)
 		if (bgpd_redistribute(IMSG_NETWORK_ADD, rn->kr, rn->kr6) == -1)
 			return (-1);
-	
+
 	RB_FOREACH(nh, knexthop_tree, &knt)
 		knexthop_validate(nh);
-	
+
 	return (0);
 }
 
@@ -2032,7 +2032,8 @@ fetchtable(u_int rtableid, int connected_only)
 			if (rtm->rtm_flags & RTF_PROTO1)  {
 				send_rtmsg(kr_state.fd, RTM_DELETE, &kr->r);
 				free(kr);
-			} else if (connected_only && !(kr->r.flags & F_CONNECTED))
+			} else if (connected_only &&
+			    !(kr->r.flags & F_CONNECTED))
 				free(kr);
 			else
 				kroute_insert(kr);
@@ -2040,7 +2041,8 @@ fetchtable(u_int rtableid, int connected_only)
 			if (rtm->rtm_flags & RTF_PROTO1)  {
 				send_rt6msg(kr_state.fd, RTM_DELETE, &kr6->r);
 				free(kr6);
-			} else if (connected_only && !(kr6->r.flags & F_CONNECTED))
+			} else if (connected_only &&
+			    !(kr6->r.flags & F_CONNECTED))
 				free(kr6);
 			else
 				kroute6_insert(kr6);
@@ -2154,13 +2156,13 @@ dispatch_rtmsg(void)
 			sa = (struct sockaddr *)(rtm + 1);
 			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
-			if (rtm->rtm_pid == kr_state.pid)	/* cause by us */
+			if (rtm->rtm_pid == kr_state.pid) /* cause by us */
 				continue;
 
-			if (rtm->rtm_errno)			/* failed attempts... */
+			if (rtm->rtm_errno)		 /* failed attempts */
 				continue;
 
-			if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
+			if (rtm->rtm_flags & RTF_LLINFO) /* arp cache */
 				continue;
 
 			connected_only = 0;
@@ -2171,7 +2173,8 @@ dispatch_rtmsg(void)
 					continue;
 			}
 
-			if (dispatch_rtmsg_addr(rtm, rti_info, connected_only) == -1)
+			if (dispatch_rtmsg_addr(rtm, rti_info,
+			    connected_only) == -1)
 				return (-1);
 			break;
 		case RTM_IFINFO:

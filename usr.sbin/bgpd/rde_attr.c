@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.68 2006/12/21 15:25:19 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.69 2007/02/22 08:34:18 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -794,7 +794,7 @@ community_delete(struct rde_aspath *asp, int as, int type)
 	if (attr == NULL)
 		/* no attr nothing to do */
 		return;
-	
+
 	p = attr->data;
 	for (l = 0; l < attr->len; l += 4) {
 		eas = *p++;

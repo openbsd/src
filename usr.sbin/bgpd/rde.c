@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.218 2007/01/26 17:40:49 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.219 2007/02/22 08:34:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1669,7 +1669,7 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 			return;
 
 		if (req->peerid) {
-		       	if ((peer = peer_get(req->peerid)) != NULL)
+			if ((peer = peer_get(req->peerid)) != NULL)
 				rde_dump_filterout(peer, p, req);
 			return;
 		}
@@ -1771,7 +1771,7 @@ rde_dump_runner(void)
 {
 	struct rde_dump_ctx	*ctx, *next;
 
-	for(ctx = TAILQ_FIRST(&rde_dump_h); ctx != NULL; ctx = next) {
+	for (ctx = TAILQ_FIRST(&rde_dump_h); ctx != NULL; ctx = next) {
 		next = TAILQ_NEXT(ctx, entry);
 		if (ctx->ptc.done) {
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, ctx->req.pid,
@@ -1995,7 +1995,7 @@ rde_softreconfig_in(struct pt_entry *pt, void *ptr)
 	struct bgpd_addr	 addr;
 
 	pt_getaddr(pt, &addr);
-	for(p = LIST_FIRST(&pt->prefix_h); p != NULL; p = np) {
+	for (p = LIST_FIRST(&pt->prefix_h); p != NULL; p = np) {
 		np = LIST_NEXT(p, prefix_l);
 		if (!(p->flags & F_ORIGINAL))
 			continue;
