@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78var.h,v 1.9 2007/01/08 22:18:50 kettenis Exp $	*/
+/*	$OpenBSD: lm78var.h,v 1.10 2007/02/22 20:44:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -112,12 +112,14 @@
 #define WB_CHIPID_W83792D	0x7a
 #define WB_CHIPID_W83637HF	0x80
 #define WB_CHIPID_W83627THF	0x90
+#define WB_CHIPID_W83627EHF	0xa1
 
 /* Config bits */
 #define WB_CONFIG_VMR9		0x01
 
 /* Reference voltage (mV) */
-#define WB_VREF		3600
+#define WB_VREF			3600
+#define WB_W83627EHF_VREF	2048
 
 #define WB_MAX_SENSORS  19
 
