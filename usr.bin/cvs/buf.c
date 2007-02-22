@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.59 2007/02/21 04:18:45 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.60 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -24,13 +24,15 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
+#include <sys/stat.h>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
 #include "buf.h"
-#include "log.h"
-#include "xmalloc.h"
-#include "worklist.h"
 
 #define BUF_INCR	128
 

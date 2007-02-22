@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.3 2006/07/07 17:37:17 joris Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.4 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -126,14 +126,17 @@
  *	6n words for files of length n.
  */
 
-#include "includes.h"
+#include <sys/stat.h>
 
-#include "buf.h"
+#include <ctype.h>
+#include <errno.h>
+#include <regex.h>
+#include <stddef.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "cvs.h"
 #include "diff.h"
-#include "log.h"
-
-#include "xmalloc.h"
 
 struct cand {
 	int	x;

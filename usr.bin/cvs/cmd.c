@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.56 2007/02/19 11:40:00 otto Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.57 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -23,11 +23,12 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/param.h>
+#include <sys/dirent.h>
 
-#include "includes.h"
+#include <string.h>
 
 #include "cvs.h"
-#include "log.h"
 
 extern char *cvs_rootstr;
 

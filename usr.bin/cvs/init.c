@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.31 2007/02/17 18:23:43 xsa Exp $	*/
+/*	$OpenBSD: init.c,v 1.32 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -25,11 +25,15 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
+#include <sys/stat.h>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
 #include "init.h"
-#include "log.h"
 #include "remote.h"
 
 void	cvs_init_local(void);

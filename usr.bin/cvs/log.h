@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.19 2006/05/27 03:30:31 joris Exp $	*/
+/*	$OpenBSD: log.h,v 1.20 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -26,6 +26,8 @@
 
 #ifndef LOG_H
 #define LOG_H
+
+#include <stdarg.h>
 
 /* log priority levels */
 #define LP_NOTICE	0

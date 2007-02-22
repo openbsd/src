@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.c,v 1.5 2006/05/29 17:10:57 pat Exp $	*/
+/*	$OpenBSD: compress.c,v 1.6 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2006 Patrick Latifi <pat@openbsd.org>
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -25,9 +25,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
+#include <zlib.h>
 
-#include "log.h"
 #include "cvs.h"
 #include "compress.h"
 

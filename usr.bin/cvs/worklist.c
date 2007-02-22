@@ -1,4 +1,4 @@
-/*	$OpenBSD: worklist.c,v 1.5 2006/04/05 01:38:56 ray Exp $	*/
+/*	$OpenBSD: worklist.c,v 1.6 2007/02/22 06:42:10 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -24,11 +24,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
+#include <string.h>
+#include <unistd.h>
 
-#include "log.h"
-#include "worklist.h"
-#include "xmalloc.h"
+#include "cvs.h"
 
 /*
  * adds a path to a worklist.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.104 2007/02/09 03:49:15 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.105 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -16,11 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "includes.h"
+#include <sys/stat.h>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
 #include "diff.h"
-#include "log.h"
 #include "remote.h"
 
 void	cvs_commit_local(struct cvs_file *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.209 2007/02/19 11:40:00 otto Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.210 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -24,15 +24,19 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
+#include <sys/stat.h>
 
-#include "buf.h"
+#include <ctype.h>
+#include <errno.h>
+#include <libgen.h>
+#include <pwd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "cvs.h"
 #include "diff.h"
-#include "log.h"
 #include "rcs.h"
-#include "util.h"
-#include "xmalloc.h"
 
 #define RCS_BUFSIZE	16384
 #define RCS_BUFEXTSIZE	8192

@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.71 2007/02/21 04:18:45 ray Exp $	*/
+/*	$OpenBSD: import.c,v 1.72 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -15,11 +15,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "includes.h"
+#include <sys/stat.h>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
 #include "diff.h"
-#include "log.h"
 #include "remote.h"
 
 void	cvs_import_local(struct cvs_file *);

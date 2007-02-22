@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.13 2007/01/31 21:07:35 xsa Exp $	*/
+/*	$OpenBSD: remote.c,v 1.14 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -15,11 +15,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "includes.h"
+#include <sys/stat.h>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
-#include "log.h"
-#include "diff.h"
 #include "remote.h"
 
 struct cvs_resp *

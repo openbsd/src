@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.133 2007/02/19 11:40:00 otto Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.134 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -27,12 +27,15 @@
 #ifndef CVS_H
 #define CVS_H
 
-#include "rcs.h"
+#include <signal.h>
+
+#include "config.h"
+#include "file.h"
+#include "log.h"
+#include "worklist.h"
+#include "repository.h"
 #include "util.h"
 #include "xmalloc.h"
-#include "file.h"
-#include "repository.h"
-#include "worklist.h"
 
 #define CVS_VERSION_MINOR	"0"
 #define CVS_VERSION_MAJOR	"1"
@@ -390,5 +393,6 @@ int	cvs_update(int, char **);
 int	cvs_version(int, char **);
 int	cvs_watch(int, char **);
 int	cvs_watchers(int, char **);
+
 
 #endif

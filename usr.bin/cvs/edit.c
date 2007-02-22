@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.33 2007/02/17 18:23:43 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.34 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -15,10 +15,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "includes.h"
+#include <sys/stat.h>
+
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
-#include "log.h"
 #include "remote.h"
 
 #define E_COMMIT	0x01

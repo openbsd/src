@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.36 2007/02/09 03:49:15 joris Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.37 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -15,10 +15,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "includes.h"
+#include <sys/param.h>
+#include <sys/dirent.h>
+#include <unistd.h>
 
 #include "cvs.h"
-#include "log.h"
 #include "remote.h"
 
 void	cvs_annotate_local(struct cvs_file *);

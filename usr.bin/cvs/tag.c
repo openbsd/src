@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.54 2007/02/09 03:49:15 joris Exp $	*/
+/*	$OpenBSD: tag.c,v 1.55 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -15,10 +15,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "includes.h"
+#include <unistd.h>
 
 #include "cvs.h"
-#include "log.h"
 #include "remote.h"
 
 #define T_CHECK_UPTODATE	0x01

@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.76 2007/02/17 18:23:43 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.77 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -16,11 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "includes.h"
+#include <sys/stat.h>
+
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
-#include "diff.h"
-#include "log.h"
 #include "remote.h"
 
 extern char *__progname;

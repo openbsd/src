@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.37 2007/01/25 22:49:39 xsa Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.38 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -15,12 +15,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "includes.h"
+#include <sys/stat.h>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
-#include "file.h"
-#include "log.h"
-#include "worklist.h"
 
 #define CVS_LOGMSG_PREFIX		"CVS:"
 #define CVS_LOGMSG_LINE		\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.188 2007/02/21 04:18:45 ray Exp $	*/
+/*	$OpenBSD: file.c,v 1.189 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -25,13 +25,18 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
-
+#include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <fnmatch.h>
+#include <libgen.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
-#include "file.h"
-#include "log.h"
 
 #define CVS_IGN_STATIC	0x01	/* pattern is static, no need to glob */
 

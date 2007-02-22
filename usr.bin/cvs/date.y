@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: date.y,v 1.15 2007/01/20 06:57:54 ray Exp $	*/
+/*	$OpenBSD: date.y,v 1.16 2007/02/22 06:42:09 otto Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -14,9 +14,11 @@
 /* SUPPRESS 287 on yaccpar_sccsid *//* Unused static variable */
 /* SUPPRESS 288 on yyerrlab *//* Label unused */
 
-#include "includes.h"
+#include <sys/timeb.h>
 
-#include "log.h"
+#include <ctype.h>
+#include <string.h>
+
 #include "cvs.h"
 
 #define YEAR_EPOCH	1970

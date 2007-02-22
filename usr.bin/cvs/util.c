@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.106 2007/02/19 11:40:00 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.107 2007/02/22 06:42:09 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -26,11 +26,16 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
+#include <sys/stat.h>
+#include <sys/wait.h>
+
+#include <errno.h>
+#include <md5.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
-#include "log.h"
-#include "util.h"
 
 /* letter -> mode type map */
 static const int cvs_modetypes[26] = {
