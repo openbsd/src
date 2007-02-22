@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.64 2006/02/22 07:26:08 otto Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.65 2007/02/22 01:44:36 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.64 2006/02/22 07:26:08 otto Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.65 2007/02/22 01:44:36 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -201,7 +201,7 @@ static int lastline;
 static int lastmatchline;
 
 static FILE *opentemp(const char *);
-static void output(char *, FILE *, char *, FILE *);
+static void output(char *, FILE *, char *, FILE *, int);
 static void check(char *, FILE *, char *, FILE *);
 static void range(int, int, char *);
 static void uni_range(int, int);
@@ -212,7 +212,7 @@ static void prune(void);
 static void equiv(struct line *, int, struct line *, int, int *);
 static void unravel(int);
 static void unsort(struct line *, int, int *);
-static void change(char *, FILE *, char *, FILE *, int, int, int, int);
+static void change(char *, FILE *, char *, FILE *, int, int, int, int, int);
 static void sort(struct line *, int);
 static void print_header(const char *, const char *);
 static int  ignoreline(char *);
@@ -405,8 +405,7 @@ diffreg(char *ofile1, char *ofile2, int flags)
 			rewind(stdout);
 			free(header);
 		}
-	} else if (flags & D_HEADER)
-		printf("%s %s %s\n", diffargs, file1, file2);
+	}
 	prepare(0, f1, stb1.st_size);
 	prepare(1, f2, stb2.st_size);
 	prune();
@@ -437,7 +436,7 @@ diffreg(char *ofile1, char *ofile2, int flags)
 	ixold = erealloc(ixold, (len[0] + 2) * sizeof(long));
 	ixnew = erealloc(ixnew, (len[1] + 2) * sizeof(long));
 	check(file1, f1, file2, f2);
-	output(file1, f1, file2, f2);
+	output(file1, f1, file2, f2, (flags & D_HEADER));
 	if (ostdout != -1) {
 		int wstatus;
 
@@ -898,7 +897,7 @@ skipline(FILE *f)
 }
 
 static void
-output(char *file1, FILE *f1, char *file2, FILE *f2)
+output(char *file1, FILE *f1, char *file2, FILE *f2, int flags)
 {
 	int m, i0, i1, j0, j1;
 
@@ -917,7 +916,7 @@ output(char *file1, FILE *f1, char *file2, FILE *f2)
 				i1++;
 			j1 = J[i1 + 1] - 1;
 			J[i1] = j1;
-			change(file1, f1, file2, f2, i0, i1, j0, j1);
+			change(file1, f1, file2, f2, i0, i1, j0, j1, flags);
 		}
 	} else {
 		for (i0 = m; i0 >= 1; i0 = i1 - 1) {
@@ -929,11 +928,11 @@ output(char *file1, FILE *f1, char *file2, FILE *f2)
 				i1--;
 			j1 = J[i1 - 1] + 1;
 			J[i1] = j1;
-			change(file1, f1, file2, f2, i1, i0, j1, j0);
+			change(file1, f1, file2, f2, i1, i0, j1, j0, flags);
 		}
 	}
 	if (m == 0)
-		change(file1, f1, file2, f2, 1, 0, 1, len[1]);
+		change(file1, f1, file2, f2, 1, 0, 1, len[1], flags);
 	if (format == D_IFDEF) {
 		for (;;) {
 #define	c i0
@@ -1003,7 +1002,8 @@ ignoreline(char *line)
  * lines missing from the to file.
  */
 static void
-change(char *file1, FILE *f1, char *file2, FILE *f2, int a, int b, int c, int d)
+change(char *file1, FILE *f1, char *file2, FILE *f2, int a, int b, int c, int d,
+    int flags)
 {
 	static size_t max_context = 64;
 	int i;
@@ -1037,6 +1037,8 @@ restart:
 		return;
 	}
 proceed:
+	if (flags & D_HEADER)
+		printf("%s %s %s\n", diffargs, file1, file2);
 	if (format == D_CONTEXT || format == D_UNIFIED) {
 		/*
 		 * Allocate change records as needed.
