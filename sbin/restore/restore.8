@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.27 2006/11/03 12:59:52 jmc Exp $
+.\"	$OpenBSD: restore.8,v 1.28 2007/02/22 09:40:11 jmc Exp $
 .\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -84,11 +84,6 @@ subsequent incremental backups layered on top of it.
 Single files and
 directory subtrees may be restored from full or partial
 backups.
-.Nm
-works across a network;
-to do this see the
-.Fl f
-flag described below.
 Other arguments to the command are file or directory
 names specifying the files that are to be restored.
 Unless the
@@ -96,6 +91,19 @@ Unless the
 flag is specified (see below),
 the appearance of a directory name refers to
 the files and (recursively) subdirectories of that directory.
+.Pp
+.Nm
+works across networks,
+replacing the functionality of the old
+.Nm rrestore
+program
+(though
+.Nm
+may still be invoked as
+.Nm rrestore ) .
+See the
+.Fl f
+option for more on reading backups from remote hosts.
 .Pp
 Exactly one of the following flags is required:
 .Bl -tag -width Ds
