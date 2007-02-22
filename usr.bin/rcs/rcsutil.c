@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.26 2007/01/11 18:13:33 niallo Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.27 2007/02/22 08:30:45 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -473,7 +473,7 @@ rcs_set_description(RCSFILE *file, const char *in)
  * Split the contents of a file into a list of lines.
  */
 struct rcs_lines *
-rcs_splitlines(const u_char *data, size_t len)
+rcs_splitlines(u_char *data, size_t len)
 {
 	u_char *c, *p;
 	struct rcs_lines *lines;
@@ -520,7 +520,7 @@ rcs_freelines(struct rcs_lines *lines)
 }
 
 BUF *
-rcs_patchfile(const u_char *data, size_t dlen, const u_char *patch, size_t plen,
+rcs_patchfile(u_char *data, size_t dlen, u_char *patch, size_t plen,
     int (*p)(struct rcs_lines *, struct rcs_lines *))
 {
 	struct rcs_lines *dlines, *plines;

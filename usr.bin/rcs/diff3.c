@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.18 2007/01/11 18:13:33 niallo Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.19 2007/02/22 08:30:45 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.18 2007/01/11 18:13:33 niallo Exp $";
+    "$OpenBSD: diff3.c,v 1.19 2007/02/22 08:30:45 xsa Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -411,11 +411,11 @@ diff3_internal(int argc, char **argv, const char *fmark, const char *rmark)
 
 	if (oflag) {
 		i = snprintf(f1mark, sizeof(f1mark), "<<<<<<< %s", fmark);
-		if (i < 0 || i >= sizeof(f1mark))
+		if (i < 0 || i >= (int)sizeof(f1mark))
 			errx(1, "diff3_internal: string truncated");
 
 		i = snprintf(f3mark, sizeof(f3mark), ">>>>>>> %s", rmark);
-		if (i < 0 || i >= sizeof(f3mark))
+		if (i < 0 || i >= (int)sizeof(f3mark))
 			errx(1, "diff3_internal: string truncated");
 	}
 

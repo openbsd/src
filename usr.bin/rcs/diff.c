@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.10 2006/09/27 06:25:46 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.11 2007/02/22 08:30:45 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -536,7 +536,8 @@ stone(int *a, int n, int *b, int *c, int flags)
 	u_int numtries;
 
 	/* XXX move the isqrt() out of the macro to avoid multiple calls */
-	const u_int bound = (flags & D_MINIMAL) ? UINT_MAX : MAX(256, isqrt(n));
+	const u_int bound = (flags & D_MINIMAL) ? UINT_MAX :
+	    MAX(256, (u_int)isqrt(n));
 
 	k = 0;
 	if ((ret = newcand(0, 0, 0)) < 0)

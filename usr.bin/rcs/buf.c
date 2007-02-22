@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.10 2007/02/02 04:34:49 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.11 2007/02/22 08:30:45 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -165,7 +165,7 @@ rcs_buf_release(BUF *b)
 /*
  * rcs_buf_get()
  */
-void *
+u_char *
 rcs_buf_get(BUF *b)
 {
 	return (b->cb_buf);
