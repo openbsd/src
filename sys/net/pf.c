@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.526 2007/02/19 10:18:58 pyr Exp $ */
+/*	$OpenBSD: pf.c,v 1.527 2007/02/22 15:23:23 pyr Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -55,6 +55,7 @@
 #include <net/if_types.h>
 #include <net/bpf.h>
 #include <net/route.h>
+#include <net/radix_mpath.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -5383,14 +5384,21 @@ int
 pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif)
 {
 	struct sockaddr_in	*dst;
-	int ret = 1;
+	int			 ret = 1;
+	int			 check_mpath;
+	extern int		 ipmultipath;
 #ifdef INET6
+	extern int		 ip6_multipath;
 	struct sockaddr_in6	*dst6;
 	struct route_in6	 ro;
 #else
 	struct route		 ro;
 #endif
+	struct radix_node	*rn;
+	struct rtentry		*rt;
+	struct ifnet		*ifp;
 
+	check_mpath = 0;
 	bzero(&ro, sizeof(ro));
 	switch (af) {
 	case AF_INET:
@@ -5398,6 +5406,8 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif)
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = addr->v4;
+		if (ipmultipath)
+			check_mpath = 1;
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -5405,33 +5415,49 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif)
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_len = sizeof(*dst6);
 		dst6->sin6_addr = addr->v6;
+		if (ip6_multipath)
+			check_mpath = 1;
 		break;
 #endif /* INET6 */
 	default:
 		return (0);
 	}
 
+	/* Skip checks for ipsec interfaces */
+	if (kif != NULL && kif->pfik_ifp->if_type == IFT_ENC)
+		goto out;
+
 	rtalloc_noclone((struct route *)&ro, NO_CLONING);
 
 	if (ro.ro_rt != NULL) {
-		/* Perform uRPF check if passed input interface */
-		/* XXX doesn't try to grok multipath */
-		if (kif != NULL && (kif->pfik_ifp == NULL ||
-		    kif->pfik_ifp != ro.ro_rt->rt_ifp))
+		/* No interface given, this is a no-route check */
+		if (kif == NULL)
+			goto out;
+
+		if (kif->pfik_ifp == NULL) {
 			ret = 0;
-		/*
-		 * If the interface is a carp one check if the packet was 
-		 * seen on the underlying interface
-		 */
-		if (kif != NULL && ret == 0) {
-			if (ro.ro_rt->rt_ifp->if_type == IFT_CARP &&
-			    ro.ro_rt->rt_ifp->if_carpdev == kif->pfik_ifp)
-				ret = 1;
+			goto out;
 		}
-		RTFREE(ro.ro_rt);
+
+		/* Perform uRPF check if passed input interface */
+		ret = 0;
+		rn = (struct radix_node *)ro.ro_rt;
+		do {
+			rt = (struct rtentry *)rn;
+			if (rt->rt_ifp->if_type == IFT_CARP)
+				ifp = rt->rt_ifp->if_carpdev;
+			else
+				ifp = rt->rt_ifp;
+
+			if (kif->pfik_ifp == ifp)
+				ret = 1;
+			rn = rn_mpath_next(rn);
+		} while (check_mpath == 1 && rn != NULL && ret == 0);
 	} else
 		ret = 0;
-
+out:
+	if (ro.ro_rt != NULL)
+		RTFREE(ro.ro_rt);
 	return (ret);
 }
 
