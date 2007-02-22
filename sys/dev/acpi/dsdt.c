@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.82 2007/02/21 03:36:25 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.83 2007/02/22 06:22:31 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -3355,29 +3355,47 @@ aml_print_resource(union acpi_resource *crs, void *arg)
 
 	switch (typ) {
 	case LR_EXTIRQ:
-		printf("extirq: flags:%x len:%x irq:%x\n",
+		printf("extirq\tflags:%.2x len:%.2x irq:%.4x\n",
 		    crs->lr_extirq.flags, crs->lr_extirq.irq_count,
 		    aml_letohost32(crs->lr_extirq.irq[0]));
 		break;
 	case SR_IRQ:
-		printf("irq %.4x %.2x", aml_letohost16(crs->sr_irq.irq_mask),
-		    crs->sr_irq.irq_info);
+		printf("irq\t%.4x %.2x\n", aml_letohost16(crs->sr_irq.irq_mask),
+		    crs->sr_irq.irq_flags);
 		break;
 	case SR_DMA:
-		printf("dma %.2x %.2x", crs->sr_dma.dma_chan,
-		    crs->sr_dma.dma_info);
+		printf("dma\t%.2x %.2x\n", crs->sr_dma.channel,
+		    crs->sr_dma.flags);
 		break;
 	case SR_IOPORT:
-		printf("io %.2x _min:%.4x _max:%.4x _aln:%.2x _len:%.2x\n",
-		    crs->sr_ioport.io_info, crs->sr_ioport.io_min,
-		    crs->sr_ioport.io_max, crs->sr_ioport.io_aln,
-		    crs->sr_ioport.io_len);
+		printf("ioport\tflags:%.2x _min:%.4x _max:%.4x _aln:%.2x _len:%.2x\n",
+		    crs->sr_ioport.flags, crs->sr_ioport._min,
+		    crs->sr_ioport._max, crs->sr_ioport._aln,
+		    crs->sr_ioport._len);
 		break;
 	case SR_STARTDEP:
-		printf("startdep");
+		printf("startdep\n");
 		break;
 	case SR_ENDDEP:
-		printf("enddep");
+		printf("enddep\n");
+		break;
+	case LR_WORD:
+	  	printf("word\ttype:%.2x flags:%.2x tflag:%.2x gra:%.4x min:%.4x max:%.4x tra:%.4x len:%.4x\n",
+			crs->lr_word.type, crs->lr_word.flags, crs->lr_word.tflags,
+			crs->lr_word._gra, crs->lr_word._min, crs->lr_word._max,
+			crs->lr_word._tra, crs->lr_word._len);
+		break;
+	case LR_DWORD:
+	  	printf("dword\ttype:%.2x flags:%.2x tflag:%.2x gra:%.8x min:%.8x max:%.8x tra:%.8x len:%.8x\n",
+			crs->lr_dword.type, crs->lr_dword.flags, crs->lr_dword.tflags,
+			crs->lr_dword._gra, crs->lr_dword._min, crs->lr_dword._max,
+			crs->lr_dword._tra, crs->lr_dword._len);
+		break;
+	case LR_QWORD:
+	  	printf("dword\ttype:%.2x flags:%.2x tflag:%.2x gra:%.16llx min:%.16llx max:%.16llx tra:%.16llx len:%.16llx\n",
+			crs->lr_qword.type, crs->lr_qword.flags, crs->lr_qword.tflags,
+			crs->lr_qword._gra, crs->lr_qword._min, crs->lr_qword._max,
+			crs->lr_qword._tra, crs->lr_qword._len);
 		break;
 	default:
 		printf("unknown type: %x\n", typ);
@@ -3386,54 +3404,43 @@ aml_print_resource(union acpi_resource *crs, void *arg)
 	return (0);
 }
 
+union acpi_resource *aml_mapresource(union acpi_resource *);
+
+union acpi_resource *
+aml_mapresource(union acpi_resource *crs)
+{
+	static union acpi_resource map;
+	int rlen;
+
+	rlen = AML_CRSLEN(crs);
+	if (rlen >= sizeof(map))
+		return crs;
+
+	memset(&map, 0, sizeof(map));
+	memcpy(&map, crs, rlen);
+
+	return &map;
+}
+
 int
 aml_parse_resource(int length, uint8_t *buffer,
     int (*crs_enum)(union acpi_resource *, void *), void *arg)
 {
-	int off, rlen, mlen;
+	int off, rlen;
 	union acpi_resource *crs;
-	uint8_t *tmprsrc;
 
-	for (off = 0; off < length; off += rlen+1) {
-		tmprsrc = NULL;
+	for (off = 0; off < length; off += rlen) {
 		crs = (union acpi_resource *)(buffer+off);
+	
 		rlen = AML_CRSLEN(crs);
+		if (crs->hdr.typecode == 0x79 || rlen <= 3)
+			break;
 
-		switch (AML_CRSTYPE(crs)) {
-		case LR_EXTIRQ:
-			mlen = 6;
-			break;
-		case LR_WORD:
-			mlen = 13;
-			break;
-		case LR_DWORD:
-			mlen = 23;
-			break;
-		case LR_QWORD:
-			mlen = 43;
-			break;
-		default:
-			mlen = 99;
-			break;
-		}
-		if (rlen == 0 || crs->hdr.typecode == 0x79)
-			break;
-		if (rlen < mlen) {
-			tmprsrc = acpi_os_malloc(mlen+64);
-
-			rlen = mlen;
-			if (off+mlen >= length)
-				mlen = length-off;
-			dnprintf(20,"Bad resource length: %x/%d bytes\n", 
-			    mlen, rlen);
-			memcpy(tmprsrc, buffer+off, mlen);
-			crs = (union acpi_resource *)tmprsrc;
-		}
-		/* aml_print_resource(crs, NULL); */
+		crs = aml_mapresource(crs);
+#ifdef ACPI_DEBUG
+		aml_print_resource(crs, NULL);
+#endif
 		crs_enum(crs, arg);
-
-		if (tmprsrc)
-			acpi_os_free(tmprsrc);
 	}
 
 	return 0;
