@@ -1,4 +1,4 @@
-/*	$OpenBSD: aml_dump.c,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: aml_dump.c,v 1.2 2007/02/22 19:09:26 jordan Exp $	*/
 /*-
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: aml_dump.c,v 1.1 2005/06/02 20:09:39 tholo Exp $
+ *	$Id: aml_dump.c,v 1.2 2007/02/22 19:09:26 jordan Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/aml_dump.c,v 1.3 2000/11/08 02:37:00 iwasaki Exp $
  */
 
@@ -40,8 +40,10 @@
 char	*aml_dumpfile = NULL;
 
 void
-aml_dump(struct ACPIsdt *dsdp)
+aml_dump(struct ACPIsdt *hdr)
 {
+	static int hdr_index;
+	char    name[128];
 	int	fd;
 	mode_t	mode;
 
@@ -49,13 +51,17 @@ aml_dump(struct ACPIsdt *dsdp)
 		return;
 	}
 
+	snprintf(name, sizeof(name), "%s.%c%c%c%c.%d", 
+		 aml_dumpfile, hdr->signature[0], hdr->signature[1], 
+		 hdr->signature[2], hdr->signature[3],
+		 hdr_index++);
+
 	mode = (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-	fd = open(aml_dumpfile, O_WRONLY | O_CREAT | O_TRUNC, mode);
+	fd = open(name, O_WRONLY | O_CREAT | O_TRUNC, mode);
 	if (fd == -1) {
 		return;
 	}
-	write(fd, dsdp, SIZEOF_SDT_HDR);
-	write(fd, dsdp->body, dsdp->len - SIZEOF_SDT_HDR);
+	write(fd, hdr, SIZEOF_SDT_HDR);
+	write(fd, hdr->body, hdr->len - SIZEOF_SDT_HDR);
 	close(fd);
 }
-
