@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.7 2007/02/15 20:39:05 drahn Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.8 2007/02/23 06:10:08 drahn Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -558,7 +558,8 @@ cdcef_encap(struct cdcef_softc *sc, struct mbuf *m, int idx)
 	/* NO CRC */
 
 	usbf_setup_xfer(sc->sc_xfer_in, sc->sc_pipe_in, sc, sc->sc_buffer_in,
-	    m->m_pkthdr.len, USBD_NO_COPY, 10000, cdcef_txeof);
+	    m->m_pkthdr.len, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+	    10000, cdcef_txeof);
 
 	err = usbf_transfer(sc->sc_xfer_in);
 	if (err && err != USBD_IN_PROGRESS) {
