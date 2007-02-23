@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.67 2007/02/23 19:22:07 beck Exp $
+.\"	$OpenBSD: spamd.8,v 1.68 2007/02/23 23:14:56 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -445,10 +445,10 @@ section can be used to log connection details to a dedicated file:
 daemon.err;daemon.warn;daemon.info	/var/log/spamd
 .Ed
 .Sh FILES
-.Bl -tag -width "/etc/spamd/to_suffixesXX" -compact
+.Bl -tag -width "/etc/spamd/alloweddomainsXX" -compact
 .It /etc/spamd.conf
 Default configuration file.
-.It /etc/spamd/to_suffixes
+.It /etc/spamd/alloweddomains
 Optional required suffixes for greytrapping
 .It /var/db/spamd
 Greylisting database.
@@ -469,7 +469,7 @@ The
 command
 appeared in
 .Ox 3.3 .
-previous versions of
+Previous versions of
 .Nm
 required traps to be be entered into the database including the enclosing
 <> characters, current versions expect only the email address without the
