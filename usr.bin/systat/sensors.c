@@ -161,6 +161,7 @@ printline(void)
 			mvwprintw(wnd, row, 24, "%15s", drvstat[sensor.value]);
 			break;
 		}
+		break;
 	case SENSOR_TIMEDELTA:
 		mvwprintw(wnd, row, 24, "%10.6f secs",
 		    sensor.value / 1000000000.0);
@@ -171,29 +172,26 @@ printline(void)
 	case SENSOR_AMPHOUR:
 		mvwprintw(wnd, row, 24, "%10.2f Ah", sensor.value / 1000000.0);
 		break;
-		/* FALLTHROUGH */
 	default:
 		mvwprintw(wnd, row, 24, "%10lld", sensor.value);
+		break;
 	}
-	if (sensor.desc != NULL && strlen(sensor.desc) < 1)
-		mvwprintw(wnd, row, 58, "(%s%d)",
-		    sensor_type_s[sensor.type], sensor.numt);
-	else
+	if (sensor.desc && strlen(sensor.desc) >= 1)
 		mvwprintw(wnd, row, 58, "(%s)", sensor.desc);
 
 	switch (sensor.status) {
 	case SENSOR_S_UNKNOWN:
-		mvwaddstr(wnd, row++, 45, "unknown");
+		mvwaddstr(wnd, row, 45, "unknown");
 		break;
 	case SENSOR_S_WARN:
-		mvwaddstr(wnd, row++, 45, "WARNING");
+		mvwaddstr(wnd, row, 45, "WARNING");
 		break;
 	case SENSOR_S_CRIT:
-		mvwaddstr(wnd, row++, 45, "CRITICAL");
+		mvwaddstr(wnd, row, 45, "CRITICAL");
 		break;
-		/* FALLTHROUGH */
-	default:
-		mvwaddstr(wnd, row++, 45, "OK");
+	case SENSOR_S_OK:
+		mvwaddstr(wnd, row, 45, "OK");
 		break;
 	}
+	row++;
 }
