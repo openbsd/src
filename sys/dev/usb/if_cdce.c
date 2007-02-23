@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.22 2007/01/22 03:46:49 dlg Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.23 2007/02/23 01:19:15 drahn Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -344,7 +344,8 @@ cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 	c->cdce_mbuf = m;
 
 	usbd_setup_xfer(c->cdce_xfer, sc->cdce_bulkout_pipe, c, c->cdce_buf,
-	    m->m_pkthdr.len + extra, USBD_NO_COPY, 10000, cdce_txeof);
+	    m->m_pkthdr.len + extra, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+	    10000, cdce_txeof);
 	err = usbd_transfer(c->cdce_xfer);
 	if (err != USBD_IN_PROGRESS) {
 		cdce_stop(sc);
