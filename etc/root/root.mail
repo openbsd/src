@@ -82,8 +82,9 @@ including a bit of information about your machine in the subject or the body
 can help us even further.  We will use this information to improve device driver
 support in future releases.  (Please do this using the supplied GENERIC kernel,
 not for a custom compiled kernel, unless you're unable to boot the GENERIC
-kernel.)  The device driver information we get from this helps us fix existing
-drivers. Thank you!
+kernel.  If you have a multi-processor machine, dmesg results of both GENERIC.MP
+and GENERIC kernels are appreciated.)  The device driver information we get from
+this helps us fix existing drivers. Thank you!
 
 (If you used 'mail' to read this message and it scrolled by too quickly,
 type "more ."  If you wish to save it, use the "x" command.)
