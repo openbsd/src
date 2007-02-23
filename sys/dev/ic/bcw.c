@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.53 2007/02/23 20:10:32 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.54 2007/02/23 20:30:20 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -177,6 +177,7 @@ void		bcw_radio_set_tx_iq(struct bcw_softc *);
 uint16_t	bcw_radio_get_txgain_baseband(uint16_t);
 uint16_t	bcw_radio_get_txgain_freq_power_amp(uint16_t);
 uint16_t	bcw_radio_get_txgain_dac(uint16_t);
+uint16_t	bcw_radio_freq_r3a_value(uint16_t);
 /* ilt */
 void		bcw_ilt_write(struct bcw_softc *, uint16_t, uint16_t);
 uint16_t	bcw_ilt_read(struct bcw_softc *, uint16_t);
@@ -3162,7 +3163,7 @@ bcw_phy_initg(struct bcw_softc *sc)
 		bcw_phy_calc_loopback_gain(sc);
 	if (sc->sc_radio_rev != 8) {
 		if (sc->sc_radio_initval == 0xffff)
-			sc->sc_radio_initval = 0; /* XXX bcw_radio_initval */ 
+			sc->sc_radio_initval = bcw_radio_init2050(sc);
 		else
 			bcw_radio_write16(sc, 0x0078, sc->sc_radio_initval);
 	}
@@ -4611,7 +4612,7 @@ bcw_phy_lo_g_measure(struct bcw_softc *sc)
 			bcw_radio_write16(sc, 0x007a, tmp);
 
 			tmp_control = bcw_get_lopair(sc, i, j * 2);
-			/* XXX bcm43xx_phy_lo_g_state() */
+			/* TODO bcm43xx_phy_lo_g_state() */
 		}
 		oldi = i;
 	}
@@ -5379,7 +5380,7 @@ bcw_radio_set_txpower_bg(struct bcw_softc *sc, uint16_t baseband_atten,
 	sc->sc_radio_radio_atten = radio_atten;
 	sc->sc_radio_txctl1 = txpower;
 
-	/* XXX do we need that assert() mess here really? */
+	/* XXX assert() */
 
 	bcw_phy_set_baseband_atten(sc, baseband_atten);
 	bcw_radio_write16(sc, 0x0043, radio_atten);
@@ -5658,7 +5659,7 @@ bcw_radio_select_channel(struct bcw_softc *sc, uint8_t channel, int spw)
 		bcw_radio_write16(sc, 0x0035, 0x00aa);
 		bcw_radio_write16(sc, 0x0036, 0x0085);
 		bcw_radio_write16(sc, 0x003a, (bcw_radio_read16(sc, 0x003a) &
-		    0xff20) | 0); /* TODO */
+		    0xff20) | bcw_radio_freq_r3a_value(freq));
 		bcw_radio_write16(sc, 0x003d, bcw_radio_read16(sc, 0x003d) &
 		    0x00ff);
 		bcw_radio_write16(sc, 0x0081, (bcw_radio_read16(sc, 0x0081) &
@@ -5825,6 +5826,23 @@ bcw_radio_get_txgain_dac(uint16_t txpower)
 		r = txpower;
 
 	return (r);
+}
+
+uint16_t
+bcw_radio_freq_r3a_value(uint16_t frequency)
+{
+	uint16_t val;
+
+	if (frequency < 5091)
+		val = 0x0040;
+	else if (frequency < 5321)
+		val = 0;
+	else if (frequency < 5806)
+		val = 0x0080;
+	else
+		val = 0x0040;
+
+	return (val);
 }
 
 /*
