@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.85 2006/11/27 20:46:03 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.86 2007/02/23 19:22:07 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -339,13 +339,13 @@ read_configline(FILE *config)
 		if (buf[len - 1] == '\n')
 			buf[len - 1] = '\0';
 		else
-			return(-1);	/* all valid lines end in \n */
+			return (-1);	/* all valid lines end in \n */
 		parse_configline(buf);
 	} else {
 		syslog_r(LOG_DEBUG, &sdata, "read_configline: fgetln (%m)");
-		return(-1);
+		return (-1);
 	}
-	return(0);
+	return (0);
 }
 
 int
@@ -446,7 +446,7 @@ loglists(struct con *cp)
 	matchlists[0] = '\0';
 	matches = cp->blacklists;
 	if (matches == NULL)
-		return(NULL);
+		return (NULL);
 	for (; *matches; matches++) {
 
 		/* don't report an insane amount of lists in the logs.
@@ -1005,7 +1005,7 @@ main(int argc, char *argv[])
 			bzero(&hostname, sizeof(hostname));
 			if (strlcpy(hostname, optarg, sizeof(hostname)) >=
 			    sizeof(hostname))
-				errx(1, "-h arg too long"); 
+				errx(1, "-h arg too long");
 			break;
 		case 'r':
 			reply = optarg;
@@ -1161,7 +1161,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		close(trappipe[0]);
-		return(greywatcher());
+		return (greywatcher());
 		/* NOTREACHED */
 	}
 

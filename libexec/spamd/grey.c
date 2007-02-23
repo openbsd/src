@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.24 2007/01/04 21:41:37 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.25 2007/02/23 19:22:07 beck Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -76,6 +76,15 @@ struct db_change {
 
 /* db pending changes list */
 SLIST_HEAD(,  db_change) db_changes = SLIST_HEAD_INITIALIZER(db_changes);
+
+struct mail_addr {
+	SLIST_ENTRY(mail_addr)	entry;
+	char			addr[MAX_MAIL];
+};
+
+/* list of suffixes that must match TO: */
+SLIST_HEAD(, mail_addr) match_suffix = SLIST_HEAD_INITIALIZER(match_suffix);
+char *alloweddomains_file = PATH_SPAMD_ALLOWEDDOMAINS;
 
 static char *pargv[11]= {
 	"pfctl", "-p", "/dev/pf", "-q", "-t",
@@ -188,6 +197,56 @@ configure_pf(char **addrs, int count)
 
 	sigaction(SIGCHLD, &sa, NULL);
 	return(0);
+}
+
+char *
+dequotetolower(const char *addr)
+{
+	static char buf[MAX_MAIL];
+	int i;
+
+	if (*addr == '<');
+		addr++;
+	for (i = 0; addr[i] != '\0' && i < sizeof(buf); i++)
+		buf[i] = tolower(addr[i]);
+	buf[i]='\0';
+	if (i > 0 && buf[i-1] == '>')
+		buf[i-1] = '\0';
+	return (buf);
+}
+
+void
+readsuffixlists(void)
+{
+	FILE *fp;
+	char * buf;
+	size_t len;
+	struct mail_addr *m;
+
+	while (!SLIST_EMPTY(&match_suffix))
+		SLIST_REMOVE_HEAD(&match_suffix, entry);
+	if ((fp = fopen(alloweddomains_file, "r")) != NULL) {
+		while ((buf = fgetln(fp, &len))) {
+			if (buf[len-1] == '\n')
+				len--;
+			if ((m = malloc(sizeof(struct mail_addr))) == NULL)
+				goto bad;
+			if ((len + 1) > sizeof(m->addr)) {
+				syslog_r(LOG_ERR, &sdata,
+				    "line too long in %s - file ignored",
+				    alloweddomains_file);
+				goto bad;
+			}
+			memcpy(m->addr, buf, len);
+			m->addr[len]='\0';
+			syslog_r(LOG_ERR, &sdata, "got suffix %s", m->addr);
+			SLIST_INSERT_HEAD(&match_suffix, m, entry);
+		}
+	}
+	return;
+bad:
+	while (!SLIST_EMPTY(&match_suffix))
+		SLIST_REMOVE_HEAD(&match_suffix, entry);
 }
 
 void
@@ -311,11 +370,11 @@ queue_change(char *key, char *data, size_t dsiz, int act) {
 	     dbc->key);
 	SLIST_INSERT_HEAD(&db_changes, dbc, entry);
 	return(0);
-}	
+}
 
 static int
 do_changes(DB *db) {
-	DBT			dbk, dbd;	 		
+	DBT			dbk, dbd;
 	struct db_change	*dbc;
 	int ret = 0;
 
@@ -362,7 +421,7 @@ do_changes(DB *db) {
 
 	}
 	return(ret);
-}	
+}
 
 
 int
@@ -445,7 +504,7 @@ greyscan(char *dbname)
 					*cp = '\0';
 				/* re-add entry, keyed only by ip */
 				gd.expire = now + whiteexp;
- 				dbd.size = sizeof(gd);
+				dbd.size = sizeof(gd);
 				dbd.data = &gd;
 				if (queue_change(a, (void *) &gd, sizeof(gd),
 				    DBC_ADD) == -1)
@@ -482,17 +541,52 @@ greyscan(char *dbname)
 }
 
 int
+trapcheck(DB *db, char *to)
+{
+	int			i, j, smatch = 0;
+	DBT			dbk, dbd;
+	struct mail_addr	*m;
+	char *			trap;
+	size_t			s;
+
+	trap = dequotetolower(to);
+	if (!SLIST_EMPTY(&match_suffix)) {
+		s = strlen(trap);
+		SLIST_FOREACH(m, &match_suffix, entry) {
+			j = s - strlen(m->addr);
+			if ((j >= 0) && (strcasecmp(trap+j, m->addr) == 0))
+				smatch = 1;
+		}
+		if (!smatch)
+			/* no suffixes match, so trap it */
+			return (0);
+	}
+	memset(&dbk, 0, sizeof(dbk));
+	dbk.size = strlen(trap);
+	dbk.data = trap;
+	memset(&dbd, 0, sizeof(dbd));
+	i = db->get(db, &dbk, &dbd, 0);
+	if (i == -1)
+		return (-1);
+	if (i)
+		/* didn't exist - so this doesn't match a known spamtrap  */
+		return (1);
+	else
+		/* To: address is a spamtrap, so add as a greytrap entry */
+		return (0);
+}
+
+int
 greyupdate(char *dbname, char *ip, char *from, char *to)
 {
 	HASHINFO	hashinfo;
 	DBT		dbk, dbd;
 	DB		*db;
 	char		*key = NULL;
-	char		*trap = NULL;
 	char		*lookup;
 	struct gdata	gd;
 	time_t		now, expire;
-	int		i, r, spamtrap;
+	int		r, spamtrap;
 
 	now = time(NULL);
 
@@ -503,28 +597,23 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 		return(-1);
 	if (asprintf(&key, "%s\n%s\n%s", ip, from, to) == -1)
 		goto bad;
-	if ((trap = strdup(to)) == NULL)
-		goto bad;
-	for (i = 0; trap[i] != '\0'; i++)
-		if (isupper(trap[i]))
-			trap[i] = tolower(trap[i]);
-	memset(&dbk, 0, sizeof(dbk));
-	dbk.size = strlen(trap);
-	dbk.data = trap;
-	memset(&dbd, 0, sizeof(dbd));
-	r = db->get(db, &dbk, &dbd, 0);
-	if (r == -1)
-		goto bad;
-	if (r) {
-		/* didn't exist - so this doesn't match a known spamtrap  */
+	r = trapcheck(db, to);
+	switch (r) {
+	case 1:
+		/* do not trap */
 		spamtrap = 0;
 		lookup = key;
 		expire = greyexp;
-	} else {
-		/* To: address is a spamtrap, so add as a greytrap entry */
+		break;
+	case 0:
+		/* trap */
 		spamtrap = 1;
 		lookup = ip;
 		expire = trapexp;
+		break;
+	default:
+		goto bad;
+		break;
 	}
 	memset(&dbk, 0, sizeof(dbk));
 	dbk.size = strlen(lookup);
@@ -582,16 +671,12 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 	}
 	free(key);
 	key = NULL;
-	free(trap);
-	trap = NULL;
 	db->close(db);
 	db = NULL;
 	return(0);
  bad:
 	free(key);
 	key = NULL;
-	free(trap);
-	trap = NULL;
 	db->close(db);
 	db = NULL;
 	return(-1);
@@ -616,6 +701,10 @@ greyreader(void)
 		syslog_r(LOG_ERR, &sdata, "No greylist pipe stream!\n");
 		exit(1);
 	}
+
+	/* grab trap suffixes */
+	readsuffixlists();
+
 	while ((buf = fgetln(grey, &len))) {
 		if (buf[len - 1] == '\n')
 			buf[len - 1] = '\0';
@@ -692,9 +781,9 @@ drop_privs(void)
 static void
 convert_spamd_db(void)
 {
-	char 		sfn[] = "/var/db/spamd.XXXXXXXXX";
+	char		sfn[] = "/var/db/spamd.XXXXXXXXX";
 	int		r, fd = -1;
-	DB 		*db1, *db2;
+	DB		*db1, *db2;
 	BTREEINFO	btreeinfo;
 	HASHINFO	hashinfo;
 	DBT		dbk, dbd;
@@ -708,13 +797,12 @@ convert_spamd_db(void)
 		    "corrupt db in %s, remove and restart", PATH_SPAMD_DB);
 		exit(1);
 	}
-	
+
 	if ((fd = mkstemp(sfn)) == -1) {
 		syslog_r(LOG_ERR, &sdata,
 		    "can't convert %s: mkstemp failed (%m)", PATH_SPAMD_DB);
 		exit(1);
-		
-	}	
+	}
 	memset(&hashinfo, 0, sizeof(hashinfo));
 	db2 = dbopen(sfn, O_EXLOCK|O_RDWR, 0600, DB_HASH, &hashinfo);
 	if (db2 == NULL) {
@@ -722,7 +810,7 @@ convert_spamd_db(void)
 		syslog_r(LOG_ERR, &sdata,
 		    "can't convert %s:  can't dbopen %s (%m)", PATH_SPAMD_DB,
 		sfn);
-	}		
+	}
 
 	memset(&dbk, 0, sizeof(dbk));
 	memset(&dbd, 0, sizeof(dbd));
@@ -766,7 +854,7 @@ check_spamd_db(void)
 
         if (db == NULL) {
 		switch (errno) {
-		case ENOENT: 
+		case ENOENT:
 			i = open(PATH_SPAMD_DB, O_RDWR|O_CREAT, 0644);
 			if (i == -1) {
 				syslog_r(LOG_ERR, &sdata,

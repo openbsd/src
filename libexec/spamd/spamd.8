@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.66 2006/11/14 17:37:47 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.67 2007/02/23 19:22:07 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -393,12 +393,41 @@ database with the following
 .Xr spamdb 8
 command:
 .Pp
-.Dl # spamdb -T -a '<spamtrap@mydomain.org>'
+.Dl # spamdb -T -a 'spamtrap@mydomain.org'
 .Pp
-It should be entered exactly, as the address will be used in the SMTP dialogue.
 See
 .Xr spamdb 8
 for further details.
+.Pp
+The file
+.Pa /etc/spamd/alloweddomains
+can be used to specify a list of domainname suffixes, one per line, one of
+which must match each destination email address in the greylist.
+Any destination address which does not match one of the suffixes listed in
+.Pa /etc/spamd/alloweddomains
+will be trapped, exactly as if it were sent to a
+.Em spamtrap
+address above.
+.Pp
+For example, if
+.Pa /etc/spamd/alloweddomains
+contains:
+.Bd -literal -offset 4n
+@humpingforjesus.com
+obtuse.com
+.Ed
+.Pp
+the destination addresses
+.Em beardedclams@humpingforjesus.com ,
+.Em beck@obtuse.com ,
+and
+.Em beck@snouts.obtuse.com
+would not cause the sending host be trapped.
+However the addresses
+.Em peter@apostles.humpingforjesus.com ,
+or
+.Em bigbutts@bofh.ucs.ualberta.ca
+would cause the sending host to be trapped.
 .Sh LOGGING
 .Nm
 sends log messages to
@@ -416,9 +445,11 @@ section can be used to log connection details to a dedicated file:
 daemon.err;daemon.warn;daemon.info	/var/log/spamd
 .Ed
 .Sh FILES
-.Bl -tag -width "/etc/spamd.confXX" -compact
+.Bl -tag -width "/etc/spamd/to_suffixesXX" -compact
 .It /etc/spamd.conf
 Default configuration file.
+.It /etc/spamd/to_suffixes
+Optional required suffixes for greytrapping
 .It /var/db/spamd
 Greylisting database.
 .El
@@ -438,6 +469,11 @@ The
 command
 appeared in
 .Ox 3.3 .
+previous versions of
+.Nm
+required traps to be be entered into the database including the enclosing
+<> characters, current versions expect only the email address without the
+enclosing <> characters.
 .Sh BUGS
 .Nm
 currently uses the user
