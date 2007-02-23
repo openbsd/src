@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.27 2007/02/23 19:36:23 deraadt Exp $	*/
+/*	$OpenBSD: grey.c,v 1.28 2007/02/23 19:45:08 beck Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -202,16 +202,20 @@ char *
 dequotetolower(const char *addr)
 {
 	static char buf[MAX_MAIL];
-	int i;
+	char *cp;
 
 	if (*addr == '<');
 		addr++;
-	for (i = 0; addr[i] != '\0' && i < sizeof(buf); i++)
-		buf[i] = tolower(addr[i]);
-	buf[i]='\0';
-	if (i > 0 && buf[i-1] == '>')
-		buf[i-1] = '\0';
-	return (buf);
+	(void) strlcpy(buf, addr, sizeof(buf));
+	cp = strrchr(buf, '>');
+	if (cp != NULL && cp[1] == '\0')
+		*cp = '\0';
+	cp = buf;
+	while(*cp != '\0') {
+		*cp = tolower(*cp);
+		cp++;
+	}
+	return(buf);
 }
 
 void
