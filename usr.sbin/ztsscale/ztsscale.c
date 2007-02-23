@@ -1,4 +1,4 @@
-/*	$OpenBSD: ztsscale.c,v 1.11 2005/07/21 16:38:55 fgsch Exp $	*/
+/*	$OpenBSD: ztsscale.c,v 1.12 2007/02/23 17:50:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Matthieu Herrb
@@ -165,6 +165,7 @@ cleanup(void)
 		err(1, "sysctl");
 }
 
+/* ARGSUSED */
 void
 sighandler(int sig)
 {
@@ -178,7 +179,7 @@ main(int argc, char *argv[])
 {
 	int mfd;
 	int i, x[5], y[5];
-	double a, a1, a2, b, b1, b2, errx, erry;
+	double a, a1, a2, b, b1, b2, xerr, yerr;
 	int rawmode;
 	size_t oldsize;
 	struct ztsscale {
@@ -241,11 +242,11 @@ again:
 	/* use the average ratio and average minimum position */
 	a = (a1+a2)/2.0;
 	b = (b1+b2)/2.0;
-	errx = a*WIDTH/2+b - x[2];
-	if (fabs(errx) > (a*WIDTH+b)*.01) {
+	xerr = a*WIDTH/2+b - x[2];
+	if (fabs(xerr) > (a*WIDTH+b)*.01) {
 #ifdef DEBUG
 		fprintf(stderr, "X error (%.2f) too high, try again\n",
-		    fabs(errx));
+		    fabs(xerr));
 #endif
 		goto err;
 	}
@@ -262,11 +263,11 @@ again:
 	/* use the average ratio and average minimum position */
 	a = (a1+a2)/2.0;
 	b = (b1+b2)/2.0;
-	erry = a*HEIGHT/2+b - y[2];
-	if (fabs(erry) > (a*HEIGHT+b)*.01) {
+	yerr = a*HEIGHT/2+b - y[2];
+	if (fabs(yerr) > (a*HEIGHT+b)*.01) {
 #ifdef DEBUG
 		fprintf(stderr, "Y error (%.2f) too high, try again\n",
-		    fabs(erry));
+		    fabs(yerr));
 #endif
 		goto err;
 	}
