@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.51 2007/01/02 19:22:38 mbalmer Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.52 2007/02/23 21:34:32 deraadt Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -50,6 +50,17 @@
  * Structures and definitions needed by the machine-dependent header.
  */
 typedef u_int32_t pcireg_t;		/* configuration space register XXX */
+
+/*
+ * Power Management (PCI 2.2)
+ */
+#define PCI_PWR_D0	0
+#define PCI_PWR_D1	1
+#define PCI_PWR_D2	2
+#define PCI_PWR_D3	3
+
+#ifdef _KERNEL
+
 struct pcibus_attach_args;
 struct pci_softc;
 
@@ -226,12 +237,5 @@ const struct pci_quirkdata *
 	pci_lookup_quirkdata(pci_vendor_id_t, pci_product_id_t);
 void	pciagp_set_pchb(struct pci_attach_args *);
 
-/*
- * Power Management (PCI 2.2)
- */
-#define PCI_PWR_D0	0
-#define PCI_PWR_D1	1
-#define PCI_PWR_D2	2
-#define PCI_PWR_D3	3
-
+#endif /* _KERNEL */
 #endif /* _DEV_PCI_PCIVAR_H_ */
