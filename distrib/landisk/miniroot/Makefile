@@ -2,7 +2,7 @@
 REV=	${OSrev}
 BSD_RD=		bsd.rd
 
-IMAGE=	miniroot40.fs
+IMAGE=	miniroot${REV}.fs
 
 MOUNT_POINT=	/mnt
 
