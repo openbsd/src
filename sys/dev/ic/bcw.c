@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.49 2007/02/23 12:24:55 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.50 2007/02/23 14:27:00 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -168,6 +168,9 @@ int		bcw_radio_chan2freq_bg(uint8_t);
 uint16_t	bcw_radio_defaultbaseband(struct bcw_softc *);
 void		bcw_radio_clear_tssi(struct bcw_softc *);
 void		bcw_radio_set_tx_iq(struct bcw_softc *);
+uint16_t	bcw_radio_get_txgain_baseband(uint16_t);
+uint16_t	bcw_radio_get_txgain_freq_power_amp(uint16_t);
+uint16_t	bcw_radio_get_txgain_dac(uint16_t);
 /* ilt */
 void		bcw_ilt_write(struct bcw_softc *, uint16_t, uint16_t);
 uint16_t	bcw_ilt_read(struct bcw_softc *, uint16_t);
@@ -5142,19 +5145,19 @@ bcw_radio_set_txpower_a(struct bcw_softc *sc, uint16_t txpower)
 
 	/* TODO txpower = limit_value(txpower, 0, 63); */
 
-	/* TODO pamp = bcw_get_txgain_freq_power_amp(txpower); */
+	pamp = bcw_radio_get_txgain_freq_power_amp(txpower);
 	pamp <<= 5;
 	pamp &= 0x00e0;
 	bcw_phy_write16(sc, 0x0019, pamp);
 
-	/*TODO base = bcw_get_txgain_banseband(txpower); */
+	base = bcw_radio_get_txgain_baseband(txpower);
 	base &= 0x000f;
 	bcw_phy_write16(sc, 0x0017, base | 0x0020);
 
 	ilt = bcw_ilt_read(sc, 0x3001);
 	ilt &= 0x0007;
 
-	/* TODO dac = bcw_get_txgain_dac(txpower); */
+	dac = bcw_radio_get_txgain_dac(txpower);
 	dac <<= 3;
 	dac |= ilt;
 
@@ -5545,6 +5548,73 @@ bcw_radio_set_tx_iq(struct bcw_softc *sc)
 			}
 		}
 	}
+}
+
+uint16_t
+bcw_radio_get_txgain_baseband(uint16_t txpower)
+{
+	uint16_t r;
+
+	/* XXX assert(txpower <= 63); ? */
+
+	if (txpower >= 54)
+		r = 2;
+	else if (txpower >= 49)
+		r = 4;
+	else if (txpower >= 44)
+		r = 5;
+	else
+		r = 6;
+
+	return (r);
+}
+
+uint16_t
+bcw_radio_get_txgain_freq_power_amp(uint16_t txpower)
+{
+	uint16_t r;
+
+	/* XXX assert(txpower <= 63); ? */
+
+	if (txpower >= 32)
+		r = 0;
+	else if (txpower >= 25)
+		r = 1;
+	else if (txpower >= 20)
+		r = 2;
+	else if (txpower >= 12)
+		r = 3;
+	else
+		r = 4;
+
+	return (r);
+}
+
+uint16_t
+bcw_radio_get_txgain_dac(uint16_t txpower)
+{
+	uint16_t r;
+
+	/* XXX assert(txpower <= 63); ? */
+
+	if (txpower >= 54)
+		r = txpower - 53;
+	else if (txpower >= 49)
+		r = txpower - 42;
+	else if (txpower >= 44)
+		r = txpower - 37;
+	else if (txpower >= 32)
+		r = txpower - 32;
+	else if (txpower >= 25)
+		r = txpower - 20;
+	else if (txpower >= 20)
+		r = txpower - 13;
+	else if (txpower >= 12)
+		r = txpower - 8;
+	else
+		r = txpower;
+
+	return (r);
 }
 
 /*
