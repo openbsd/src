@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.46 2007/02/23 21:52:01 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.47 2007/02/23 22:15:36 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -343,7 +343,11 @@ schizo_safari_error(void *vsc)
 {
 	struct schizo_softc *sc = vsc;
 
-	panic("%s: safari error", sc->sc_dv.dv_xname);
+	printf("%s: safari error\n", sc->sc_dv.dv_xname);
+
+	printf("ERRLOG=%lx\n", schizo_read(sc, SCZ_SAFARI_ERRLOG));
+
+	panic("%s: fatal", sc->sc_dv.dv_xname);
 	return (1);
 }
 
