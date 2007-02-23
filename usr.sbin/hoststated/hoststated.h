@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.26 2007/02/22 05:58:06 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.27 2007/02/23 00:28:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -501,8 +501,8 @@ struct ctl_conn {
 TAILQ_HEAD(ctl_connlist, ctl_conn);
 
 /* control.c */
-int     control_init(void);
-int     control_listen(void);
+int	control_init(void);
+int	control_listen(void);
 void    control_accept(int, short, void *);
 void    control_dispatch_imsg(int, short, void *);
 void	control_imsg_forward(struct imsg *);

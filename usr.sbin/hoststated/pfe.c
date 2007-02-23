@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.16 2007/02/22 05:58:06 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.17 2007/02/23 00:28:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -318,7 +318,7 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 void
 pfe_dispatch_relay(int fd, short event, void * ptr)
 {
-	struct imsgbuf          *ibuf;
+	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 	struct ctl_natlook	 cnl;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.18 2007/02/22 05:58:06 reyk Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.19 2007/02/23 00:28:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -376,7 +376,7 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 void
 main_dispatch_hce(int fd, short event, void * ptr)
 {
-	struct imsgbuf          *ibuf;
+	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
@@ -416,7 +416,7 @@ main_dispatch_hce(int fd, short event, void * ptr)
 void
 main_dispatch_relay(int fd, short event, void * ptr)
 {
-	struct imsgbuf          *ibuf;
+	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
@@ -607,7 +607,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 		log_debug("expand_string: string too long");
 		return (-1);
 	}
-	strlcpy(label, tmp, len);       /* always fits */
+	strlcpy(label, tmp, len);	/* always fits */
 	free(tmp);
 
 	return (0);
