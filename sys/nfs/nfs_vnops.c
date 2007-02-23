@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.71 2007/01/21 15:52:39 pedro Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.72 2007/02/23 14:27:06 deraadt Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1457,16 +1457,7 @@ nfs_removerpc(dvp, name, namelen, cred, proc)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	int v3;
-
-	/*
-	 * It is possible for our directory vnode to have been flushed out
-	 * before us. If that's the case, we can't remove the file.
-	 */
-	if (dvp->v_type == VBAD)
-		return (EIO);
-
-	v3 = NFS_ISV3(dvp);
+	int v3 = NFS_ISV3(dvp);
 
 	nfsstats.rpccnt[NFSPROC_REMOVE]++;
 	nfsm_reqhead(dvp, NFSPROC_REMOVE,
