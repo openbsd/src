@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhidaction.c,v 1.8 2006/07/09 23:02:21 mk Exp $ */
+/*	$OpenBSD: usbhidaction.c,v 1.9 2007/02/23 17:37:28 deraadt Exp $ */
 /*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
 
 /*
@@ -56,7 +56,8 @@
 
 int verbose = 0;
 int isdemon = 0;
-int reparse = 0;
+
+volatile sig_atomic_t reparse = 0;
 
 struct command {
 	struct command *next;
