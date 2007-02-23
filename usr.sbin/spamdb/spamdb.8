@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamdb.8,v 1.11 2007/02/23 19:22:07 beck Exp $
+.\"	$OpenBSD: spamdb.8,v 1.12 2007/02/23 22:40:50 beck Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -116,7 +116,7 @@ will be when the IP is due to be removed from the blacklist.
 .Pp
 For GREY or WHITE entries, the format is:
 .Pp
-.Dl type|source IP|from|to|first|pass|expire|block|pass
+.Dl type|source IP|helo|from|to|first|pass|expire|block|pass
 .Pp
 The fields are as follows:
 .Pp
@@ -128,6 +128,9 @@ if whitelisted or
 if greylisted
 .It source IP
 IP address the connection originated from
+.It helo
+what the connecting host sent as identification in the HELO/EHLO command in the
+SMTP dialogue
 .It from
 envelope-from address for
 .Em GREY

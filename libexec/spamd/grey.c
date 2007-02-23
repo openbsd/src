@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.28 2007/02/23 19:45:08 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.29 2007/02/23 22:40:50 beck Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -580,7 +580,7 @@ trapcheck(DB *db, char *to)
 }
 
 int
-greyupdate(char *dbname, char *ip, char *from, char *to)
+greyupdate(char *dbname, char *helo, char *ip, char *from, char *to)
 {
 	HASHINFO	hashinfo;
 	DBT		dbk, dbd;
@@ -598,7 +598,7 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_HASH, &hashinfo);
 	if (db == NULL)
 		return(-1);
-	if (asprintf(&key, "%s\n%s\n%s", ip, from, to) == -1)
+	if (asprintf(&key, "%s\n%s\n%s\n%s", ip, helo, from, to) == -1)
 		goto bad;
 	r = trapcheck(db, to);
 	switch (r) {
@@ -688,7 +688,7 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 int
 greyreader(void)
 {
-	char ip[32], from[MAX_MAIL], to[MAX_MAIL], *buf;
+	char ip[32], helo[MAX_MAIL], from[MAX_MAIL], to[MAX_MAIL], *buf;
 	size_t len;
 	int state;
 	struct addrinfo hints, *res;
@@ -719,24 +719,32 @@ greyreader(void)
 
 		switch (state) {
 		case 0:
+			if (strncmp(buf, "HE:", 3) != 0) {
+				state = 0;
+				break;
+			}
+			strlcpy(helo, buf+3, sizeof(helo));
+			state = 1;
+			break;
+		case 1:
 			if (strncmp(buf, "IP:", 3) != 0)
 				break;
 			strlcpy(ip, buf+3, sizeof(ip));
 			if (getaddrinfo(ip, NULL, &hints, &res) == 0) {
 				freeaddrinfo(res);
-				state = 1;
+				state = 2;
 			} else
 				state = 0;
 			break;
-		case 1:
+		case 2:
 			if (strncmp(buf, "FR:", 3) != 0) {
 				state = 0;
 				break;
 			}
 			strlcpy(from, buf+3, sizeof(from));
-			state = 2;
+			state = 3;
 			break;
-		case 2:
+		case 3:
 			if (strncmp(buf, "TO:", 3) != 0) {
 				state = 0;
 				break;
@@ -744,9 +752,9 @@ greyreader(void)
 			strlcpy(to, buf+3, sizeof(to));
 			if (debug)
 				fprintf(stderr,
-				    "Got Grey IP %s from %s to %s\n",
-				    ip, from, to);
-			greyupdate(PATH_SPAMD_DB, ip, from, to);
+				    "Got Grey HELO %s, IP %s from %s to %s\n",
+				    helo, ip, from, to);
+			greyupdate(PATH_SPAMD_DB, helo, ip, from, to);
 			state = 0;
 			break;
 		}

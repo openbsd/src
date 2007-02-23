@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.19 2007/01/04 21:41:37 beck Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.20 2007/02/23 22:40:50 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -209,22 +209,36 @@ dblist(DB *db)
 				break;
 			}
 		} else {
-			char *from, *to;
+			char *helo, *from, *to;
 
 			/* greylist entry */
 			*cp = '\0';
-			from = cp + 1;
-			to = strchr(from, '\n');
-			if (to == NULL) {
+			helo = cp + 1;
+			from = strchr(helo, '\n');
+			if (from == NULL) {
 				warnx("No from part in grey key %s", a);
 				free(a);
 				goto bad;
 			}
-			*to = '\0';
-			to++;
-			printf("GREY|%s|%s|%s|%d|%d|%d|%d|%d\n",
-			    a, from, to, gd.first, gd.pass, gd.expire,
-			    gd.bcount, gd.pcount);
+			*from = '\0';
+			from++;
+			to = strchr(from, '\n');
+			if (to == NULL) {
+				/* probably old format - print it the
+				 * with an empty HELO field instead 
+				 * of erroring out.
+				 */			  
+				printf("GREY|%s|%s|%s|%s|%d|%d|%d|%d|%d\n",
+				    a, "", helo, from, gd.first, gd.pass,
+				    gd.expire, gd.bcount, gd.pcount);
+			
+			} else {
+				*to = '\0';
+				to++;
+				printf("GREY|%s|%s|%s|%s|%d|%d|%d|%d|%d\n",
+				    a, helo, from, to, gd.first, gd.pass,
+				    gd.expire, gd.bcount, gd.pcount);
+			}
 		}
 		free(a);
 	}

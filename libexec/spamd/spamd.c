@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.87 2007/02/23 19:36:23 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.88 2007/02/23 22:40:50 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -56,7 +56,7 @@ struct con {
 	struct sockaddr_storage ss;
 	void *ia;
 	char addr[32];
-	char mail[MAX_MAIL], rcpt[MAX_MAIL];
+  	char helo[MAX_MAIL], mail[MAX_MAIL], rcpt[MAX_MAIL];
 	struct sdlist **blacklists;
 
 	/*
@@ -552,6 +552,28 @@ setlog(char *p, size_t len, char *f)
 }
 
 void
+gethelo(char *p, size_t len, char *f)
+{
+	char *s;
+
+	/* skip HELO/EHLO */
+	f+=4;
+	/* skip whitespace */
+	while (*f == ' ' || *f == '\t')
+		f++;
+	s = strsep(&f, " \t");
+	if (s == NULL)
+		return;
+	strlcpy(p, s, len);
+	s = strsep(&p, " \t\n\r");
+	if (s == NULL)
+		return;
+	s = strsep(&p, " \t\n\r");
+	if (s)
+		*s = '\0';
+}
+
+void
 initcon(struct con *cp, int fd, struct sockaddr *sa)
 {
 	time_t tt;
@@ -683,6 +705,7 @@ nextstate(struct con *cp)
 		/* received input: parse, and select next state */
 		if (match(cp->ibuf, "HELO") ||
 		    match(cp->ibuf, "EHLO")) {
+			gethelo(cp->helo, sizeof cp->helo, cp->ibuf);
 			snprintf(cp->obuf, cp->osize,
 			    "250 Hello, spam sender. "
 			    "Pleased to be wasting your time.\r\n");
@@ -750,8 +773,10 @@ nextstate(struct con *cp)
 					    cp->addr, cp->mail, cp->rcpt);
 				if (greylist && cp->blacklists == NULL) {
 					/* send this info to the greylister */
-					fprintf(grey, "IP:%s\nFR:%s\nTO:%s\n",
-					    cp->addr, cp->mail, cp->rcpt);
+					fprintf(grey,
+					    "HE:%s\nIP:%s\nFR:%s\nTO:%s\n",
+					    cp->helo, cp->addr, cp->mail,
+					    cp->rcpt);
 					fflush(grey);
 				}
 			}
