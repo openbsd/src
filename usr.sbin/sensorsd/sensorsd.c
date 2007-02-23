@@ -1,8 +1,9 @@
-/*	$OpenBSD: sensorsd.c,v 1.27 2007/01/06 18:17:06 deraadt Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.28 2007/02/23 22:55:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
+ * Copyright (c) 2006 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

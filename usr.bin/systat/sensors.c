@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2007 Deanna Phillips <deanna@openbsd.org>
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2006 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

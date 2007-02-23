@@ -1,7 +1,8 @@
-/*	$OpenBSD: sensors.h,v 1.21 2006/12/27 13:04:29 mbalmer Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.22 2007/02/23 22:55:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
+ * Copyright (c) 2006 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
