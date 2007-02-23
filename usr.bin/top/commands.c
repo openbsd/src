@@ -1,4 +1,4 @@
-/* $OpenBSD: commands.c,v 1.26 2007/02/14 08:29:28 jmc Exp $	 */
+/* $OpenBSD: commands.c,v 1.27 2007/02/23 13:31:45 millert Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -48,7 +48,6 @@
 
 #include "top.h"
 
-#include "sigdesc.h"		/* generated automatically */
 #include "boolean.h"
 #include "utils.h"
 #include "machine.h"
@@ -314,7 +313,6 @@ char *
 kill_procs(char *str)
 {
 	int signum = SIGTERM, procnum;
-	struct sigdesc *sigp;
 	uid_t uid, puid;
 	char *nptr;
 
@@ -339,15 +337,13 @@ kill_procs(char *str)
 				return (" invalid signal number");
 		} else {
 			/* translate the name into a number */
-			for (sigp = sigdesc; sigp->name != NULL; sigp++) {
-				if (strcmp(sigp->name, str + 1) == 0) {
-					signum = sigp->number;
+			for (signum = 0; signum < NSIG; signum++) {
+				if (strcasecmp(sys_signame[signum], str + 1) == 0)
 					break;
-				}
 			}
 
 			/* was it ever found */
-			if (sigp->name == NULL)
+			if (signum == NSIG)
 				return (" bad signal name");
 		}
 		/* put the new pointer in place */
