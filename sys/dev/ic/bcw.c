@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.46 2007/02/22 21:26:49 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.47 2007/02/23 10:40:54 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -157,13 +157,16 @@ void		bcw_radio_set_all_gains(struct bcw_softc *, int16_t, int16_t,
 		    int16_t);
 void		bcw_radio_set_original_gains(struct bcw_softc *);
 uint16_t	bcw_radio_calibrationvalue(struct bcw_softc *);
+void		bcw_radio_set_txpower_a(struct bcw_softc *, uint16_t);
 void		bcw_radio_set_txpower_bg(struct bcw_softc *, uint16_t, uint16_t,
 		    uint16_t);
+void		bcw_radio_init2060(struct bcw_softc *);
 void		bcw_radio_spw(struct bcw_softc *, uint8_t);
 int		bcw_radio_channel(struct bcw_softc *, uint8_t, int );
 int		bcw_radio_chan2freq_bg(uint8_t);
 uint16_t	bcw_radio_defaultbaseband(struct bcw_softc *);
 void		bcw_radio_clear_tssi(struct bcw_softc *);
+void		bcw_radio_set_tx_iq(struct bcw_softc *);
 /* ilt */
 void		bcw_ilt_write(struct bcw_softc *, uint16_t, uint16_t);
 uint16_t	bcw_ilt_read(struct bcw_softc *, uint16_t);
@@ -3559,7 +3562,7 @@ bcw_phy_initb6(struct bcw_softc *sc)
 void
 bcw_phy_inita(struct bcw_softc *sc)
 {
-	//uint16_t val;
+	uint16_t tval;
 
 	if (sc->sc_phy_type == BCW_PHY_TYPEA)
 		bcw_phy_setupa(sc);
@@ -3569,6 +3572,42 @@ bcw_phy_inita(struct bcw_softc *sc)
 			bcw_phy_write16(sc, 0x046e, 0x03cf);
 		return;
 	}
+
+	bcw_phy_write16(sc, BCW_PHY_A_CRS, (bcw_phy_read16(sc, BCW_PHY_A_CRS) &
+	    0xf83c) | 0x0340);
+	bcw_phy_write16(sc, 0x0034, 0x0001);
+
+	bcw_phy_write16(sc, BCW_PHY_A_CRS, bcw_phy_read16(sc, BCW_PHY_A_CRS) |
+	    (1 << 14));
+	bcw_radio_init2060(sc);
+
+	if (1) { /* XXX board_vendor, board_type */
+		if (sc->sc_radio_lofcal == 0xffff)
+			bcw_radio_set_tx_iq(sc);
+		else
+			bcw_radio_write16(sc, 0x001e, sc->sc_radio_lofcal);
+	}
+
+	bcw_phy_write16(sc, 0x007a, 0xf111);
+
+	if (sc->sc_phy_savedpctlreg == 0xffff) {
+		bcw_radio_write16(sc, 0x0019, 0x0000);
+		bcw_radio_write16(sc, 0x0017, 0x0020);
+
+		tval = bcw_ilt_read(sc, 0x3001);
+		if (sc->sc_phy_rev == 1)
+			bcw_ilt_write(sc, 0x3001, (bcw_ilt_read(sc, 0x3001) &
+			    0xff87) | 0x0058);
+		else
+			bcw_ilt_write(sc, 0x3001, (bcw_ilt_read(sc, 0x3001) &
+			    0xffc3) | 0x002c);
+		bcw_dummy_transmission(sc);
+		sc->sc_phy_savedpctlreg = bcw_phy_read16(sc, BCW_PHY_A_PCTL);
+		bcw_ilt_write(sc, 0x3001, tval);
+
+		bcw_radio_set_txpower_a(sc, 0x0018);
+	}
+	bcw_radio_clear_tssi(sc);
 }
 
 void
@@ -5096,6 +5135,34 @@ bcw_radio_calibrationvalue(struct bcw_softc *sc)
 }
 
 void
+bcw_radio_set_txpower_a(struct bcw_softc *sc, uint16_t txpower)
+{
+	uint16_t pamp, base, dac, ilt;
+
+	/* TODO txpower = limit_value(txpower, 0, 63); */
+
+	/* TODO pamp = bcw_get_txgain_freq_power_amp(txpower); */
+	pamp <<= 5;
+	pamp &= 0x00e0;
+	bcw_phy_write16(sc, 0x0019, pamp);
+
+	/*TODO base = bcw_get_txgain_banseband(txpower); */
+	base &= 0x000f;
+	bcw_phy_write16(sc, 0x0017, base | 0x0020);
+
+	ilt = bcw_ilt_read(sc, 0x3001);
+	ilt &= 0x0007;
+
+	/* TODO dac = bcw_get_txgain_dac(txpower); */
+	dac <<= 3;
+	dac |= ilt;
+
+	bcw_ilt_write(sc, 0x3001, dac);
+
+	sc->sc_radio_txpwr_offset = txpower;
+}
+
+void
 bcw_radio_set_txpower_bg(struct bcw_softc *sc, uint16_t baseband_atten,
     uint16_t radio_atten, uint16_t txpower)
 {
@@ -5122,6 +5189,50 @@ bcw_radio_set_txpower_bg(struct bcw_softc *sc, uint16_t baseband_atten,
 	/* XXX unclear specs */
 	if (sc->sc_phy_type == BCW_PHY_TYPEG)
 		bcw_phy_lo_adjust(sc, 0);
+}
+
+void
+bcw_radio_init2060(struct bcw_softc *sc)
+{
+	int error;
+
+	bcw_radio_write16(sc, 0x0004, 0x00c0);
+	bcw_radio_write16(sc, 0x0005, 0x0008);
+	bcw_radio_write16(sc, 0x0009, 0x0040);
+	bcw_radio_write16(sc, 0x0005, 0x00aa);
+	bcw_radio_write16(sc, 0x0032, 0x008f);
+	bcw_radio_write16(sc, 0x0006, 0x008f);
+	bcw_radio_write16(sc, 0x0034, 0x008f);
+	bcw_radio_write16(sc, 0x002c, 0x0007);
+	bcw_radio_write16(sc, 0x0082, 0x0080);
+	bcw_radio_write16(sc, 0x0080, 0x0000);
+	bcw_radio_write16(sc, 0x003f, 0x00d4);
+	bcw_radio_write16(sc, 0x0005, bcw_radio_read16(sc, 0x0005) & ~0x0008);
+	bcw_radio_write16(sc, 0x0081, bcw_radio_read16(sc, 0x0081) & ~0x0010);
+	bcw_radio_write16(sc, 0x0081, bcw_radio_read16(sc, 0x0081) & ~0x0020);
+	bcw_radio_write16(sc, 0x0081, bcw_radio_read16(sc, 0x0081) & ~0x0020);
+	delay(400);
+	bcw_radio_write16(sc, 0x0081, (bcw_radio_read16(sc, 0x0081) & ~0x0020) |
+	    0x0010);
+	delay(400);
+	bcw_radio_write16(sc, 0x0005, (bcw_radio_read16(sc, 0x0005) & ~0x0020) |
+	    0x0008);
+	bcw_radio_write16(sc, 0x0085, bcw_radio_read16(sc, 0x0085) & ~0x0010);
+	bcw_radio_write16(sc, 0x0005, bcw_radio_read16(sc, 0x0005) & ~0x0008);
+	bcw_radio_write16(sc, 0x0081, bcw_radio_read16(sc, 0x0081) & ~0x0040);
+	bcw_radio_write16(sc, 0x0081, (bcw_radio_read16(sc, 0x0081) & ~0x0040) |
+	    0x0040);
+	bcw_radio_write16(sc, 0x0005, (bcw_radio_read16(sc, 0x0081) & ~0x0008) |
+	    0x0008);
+	bcw_phy_write16(sc, 0x0063, 0xddc6);
+	bcw_phy_write16(sc, 0x0069, 0x07be);
+	bcw_phy_write16(sc, 0x006a, 0x0000);
+
+	error = bcw_radio_channel(sc, BCW_RADIO_DEFAULT_CHANNEL_A, 0);
+
+	/* XXX assert(error == 0) ? */
+
+	delay(1000);
 }
 
 void
@@ -5187,7 +5298,7 @@ bcw_radio_channel(struct bcw_softc *sc, uint8_t channel, int spw)
 		bcw_radio_write16(sc, 0x0035, (bcw_radio_read16(sc, 0x0035) &
 		    0xffef) | 0x0010);
 
-		/* TODO bcw_radio_set_tx_iq() */
+		bcw_radio_set_tx_iq(sc);
 
 		/* TODO bcw_radio_phy_xmitpower() */
 	} else {
@@ -5244,6 +5355,25 @@ bcw_radio_clear_tssi(struct bcw_softc *sc)
 		bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0070, 0x7f7f);
 		bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0072, 0x7f7f);
 		break;
+	}
+}
+
+void
+bcw_radio_set_tx_iq(struct bcw_softc *sc)
+{
+	const uint8_t data_high[5] = { 0x00, 0x40, 0x80, 0x90, 0xD0 };
+	const uint8_t data_low[5] = { 0x00, 0x01, 0x05, 0x06, 0x0A };
+	uint16_t tmp = bcw_radio_read16(sc, 0x001e);
+	int i, j;
+
+	for (i = 0; i < 5; i++) {
+		for (j = 0; j < 5; j++) {
+			if (tmp == (data_high[i] << 4 | data_low[j])) {
+				bcw_phy_write16(sc, 0x0069, (i - j) << 8 |
+				    0x00c0);
+				return;
+			}
+		}
 	}
 }
 

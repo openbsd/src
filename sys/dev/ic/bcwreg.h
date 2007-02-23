@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.14 2007/02/22 17:04:31 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.15 2007/02/23 10:40:54 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -354,8 +354,10 @@
 #define BCW_PHY_ILT_G_CTRL		0x0472
 #define BCW_PHY_ILT_G_DATA1		0x0473
 #define BCW_PHY_G_CRS			0x0429
+#define BCW_PHY_A_CRS			0x0029
 #define BCW_PHY_NRSSILT_CTRL		0x0803
 #define BCW_PHY_NRSSILT_DATA		0x0804
+#define BCW_PHY_A_PCTL			0x007b
 #define BCW_PHY_G_PCTL			0x0029
 
 #define BCW_READ16(sc, reg) \
