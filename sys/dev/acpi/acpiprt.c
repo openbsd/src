@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.15 2007/02/21 19:17:23 kettenis Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.16 2007/02/23 00:04:40 jordan Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -43,6 +43,8 @@
 int	acpiprt_match(struct device *, void *, void *);
 void	acpiprt_attach(struct device *, struct device *, void *);
 int	acpiprt_getirq(union acpi_resource *crs, void *arg);
+int	acpiprt_getminbus(union acpi_resource *, void *);
+
 
 struct acpiprt_softc {
 	struct device		sc_dev;
@@ -258,6 +260,18 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 }
 
 int
+acpiprt_getminbus(union acpi_resource *crs, void *arg)
+{
+	int *bbn = arg;
+	int typ = AML_CRSTYPE(crs);
+
+	/* Check for embedded bus number */
+	if (typ == LR_WORD && crs->lr_word.type == 2)
+		*bbn = crs->lr_word._min;
+	return 0;
+}
+
+int
 acpiprt_getpcibus(struct acpiprt_softc *sc, struct aml_node *node)
 {
 	struct aml_node *parent = node->parent;
@@ -292,6 +306,15 @@ acpiprt_getpcibus(struct acpiprt_softc *sc, struct aml_node *node)
 		}
 	}
 
+	if (aml_evalname(sc->sc_acpi, parent, "_CRS", 0, NULL, &res) == 0) {
+		rv = -1;
+	  	if (res.type == AML_OBJTYPE_BUFFER)
+			aml_parse_resource(res.length, res.v_buffer, 
+			    acpiprt_getminbus, &rv);
+		aml_freevalue(&res);
+		if (rv != -1)
+			return rv;
+	}
 	if (aml_evalname(sc->sc_acpi, parent, "_BBN", 0, NULL, &res) == 0) {
 		rv = aml_val2int(&res);
 		aml_freevalue(&res);
