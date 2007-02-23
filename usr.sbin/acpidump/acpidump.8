@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpidump.8,v 1.4 2007/02/22 19:29:51 jordan Exp $
+.\"	$OpenBSD: acpidump.8,v 1.5 2007/02/23 14:47:45 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Doug Rabson <dfr@FreeBSD.org>
 .\" Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -119,14 +119,17 @@ and dumps them in ASL to standard output.
 .It Fl h
 Display usage and exit.
 .It Fl o Ar prefix_for_output
-Store ACPI tables from physical memory into files specified by
-.Ar prefix_for_output
-in addition to behavior with no option.  The files generated will
-be of the form <prefix>.<sig>.<id>.  The sig is the signature of
-the ACPI Table, id is unique for each table.
-
+Additionally store ACPI tables from physical memory into files specified by
+.Ar prefix_for_output .
+The files generated will
+be of the form <prefix>.<sig>.<id>.
+.Dq sig
+is the signature of the ACPI Table;
+.Dq id
+is unique for each table.
+.Pp
 The following are common table signatures (there may be others):
-RSDP, FACP, DSDT, SSDT, HPET, MCFG, SPMI, APIC, SPCR, SRAT, XSDT
+RSDP, FACP, DSDT, SSDT, HPET, MCFG, SPMI, APIC, SPCR, SRAT, XSDT.
 .El
 .Sh FILES
 .Bl -tag -width /dev/mem
@@ -137,11 +140,11 @@ This is an example to get a dump of SDTs and a DSDT data file
 simultaneously on a machine that supports ACPI BIOS:
 .Pp
 .Dl # acpidump -o foo \*(Gt foo.asl
-
+.Pp
 This will generate foo.RSDP.x, foo.FACP.x, foo.DSDT.x, etc.
 .Sh SEE ALSO
 .\" .Xr acpi 4 ,
-.Xr mem 4 ,
+.Xr mem 4
 .\" .Xr acpiconf 8 ,
 .\" Xr amldb 8
 .Rs
