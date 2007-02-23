@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.26 2007/02/23 15:26:52 deraadt Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.27 2007/02/23 15:55:17 millert Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.26 2007/02/23 15:26:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.27 2007/02/23 15:55:17 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -219,11 +219,14 @@ readheaders(void)
 			 * to any message which contains an Auto-Submitted
 			 * header where the field has any value other than "no".
 			 */
-			if (!*p)
-				exit(0);
-			if (strlen(p) != 3 || strncasecmp(p, "no", 2))
-				exit(0);
-			break;
+			if ((p[0] == 'n' || p[0] == 'N') &&
+			    (p[1] == 'o' || p[1] == 'O')) {
+				for (p += 2; *p && isspace(*p); ++p)
+					;
+				if (*p == '\0')
+					break;	/* Auto-Submitted: no */
+			}
+			exit(0);
 		case 'F':		/* "From " */
 		case 'f':
 			cont = 0;
@@ -264,8 +267,6 @@ readheaders(void)
 				break;
 			for (p = buf + 11; *p && isspace(*p); ++p)
 				;
-			if (!*p)
-				break;
 			if (!strncasecmp(p, "junk", 4) ||
 			    !strncasecmp(p, "bulk", 4) ||
 			    !strncasecmp(p, "list", 4))
