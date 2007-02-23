@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.15 2007/02/15 20:36:03 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.16 2007/02/23 06:12:43 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -563,6 +563,8 @@ again:
 #endif
 		xfer->status = USBF_NORMAL_COMPLETION;
 		usbf_transfer_complete(xfer);
+		CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_PC);
+		return;
 	}
 
 #ifdef DEBUG_RX
@@ -671,6 +673,7 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 	u_int8_t *p;
 	int ep = sc->sc_ep_map[usbf_endpoint_index(xfer->pipe->endpoint)];
 	int tlen = 0;
+	int maxp = UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
 
 #ifdef DEBUG_TX
 	printf("writing data to endpoint %x, xlen %x xact %x\n",
@@ -679,12 +682,20 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 
 	if (xfer->actlen == xfer->length) {
 		/*
-		 * If the packet size is 64 byte multiple
+		 * If the packet size is wMaxPacketSize byte multiple
 		 * send a zero packet to indicate termiation.
-		 * This should be endpoint maxtransfersize.
 		 */
-		if ((xfer->actlen % 64) == 0)
+		if ((xfer->actlen % maxp) == 0 &&
+		    xfer->status != USBF_NORMAL_COMPLETION) {
 			CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
+			/*
+			 * if we send a zero packet, we are 'done', but dont
+			 * to usbf_transfer_complete() just yet because the
+			 * short packet will cause another interrupt.
+			 */
+			xfer->status = USBF_NORMAL_COMPLETION;
+			return;
+		}
 		xfer->status = USBF_NORMAL_COMPLETION;
 		usbf_transfer_complete(xfer);
 		return;
@@ -727,7 +738,7 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 	printf(" wrote tlen %x %x\n", tlen, xfer->actlen);
 #endif
 	if (xfer->actlen >= xfer->length) {
-		if ((xfer->actlen % 64) != 0) {
+		if ((xfer->actlen % maxp) != 0) {
 			CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
 #ifdef DEBUG_TX
 			printf("setting short packet on %x csr\n", ep,
