@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.51 2007/02/23 19:44:37 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.52 2007/02/23 19:51:37 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -4901,7 +4901,7 @@ bcw_radio_nrssi_hw_update(struct bcw_softc *sc, uint16_t val)
 	for (i = 0; i < 64; i++) {
 		tmp = bcw_radio_nrssi_hw_read(sc, i);
 		tmp -= val;
-		/* XXX limit_value() ? */
+		tmp = bcw_lv(tmp, 32, 31);
 		bcw_radio_nrssi_hw_write(sc, i, tmp);
 	}
 }
@@ -4929,7 +4929,7 @@ bcw_radio_calc_nrssi_threshold(struct bcw_softc *sc)
 		} else
 			threshold = sc->sc_radio_nrssi[1] - 5;
 
-		threshold = 0; /* XXX limit_value() */
+		threshold = bcw_lv(threshold, 0, 0x3e);
 		bcw_phy_read16(sc, 0x0020);
 		bcw_phy_write16(sc, 0x0020, (((uint16_t)threshold) << 8) |
 		    0x001c);
@@ -4980,7 +4980,7 @@ bcw_radio_calc_nrssi_threshold(struct bcw_softc *sc)
 			else
 				a += 32;
 			a = a >> 6;
-			a = 0; /* XXX limit_value() */
+			a = bcw_lv(a, -31, 31);
 
 			b = b * (sc->sc_radio_nrssi[1] - sc->sc_radio_nrssi[0]);
 			b += (sc->sc_radio_nrssi[0] << 6);
@@ -4989,7 +4989,7 @@ bcw_radio_calc_nrssi_threshold(struct bcw_softc *sc)
 			else
 				b += 32;
 			b = b >> 6;
-			b = 0; /* XXX limit_value() */
+			b = bcw_lv(b, -31, 31);
 
 			tmp_u16 = bcw_phy_read16(sc, 0x048a) & 0xf000;
 			tmp_u16 |= ((uint32_t)b & 0x0000003f);
@@ -5339,7 +5339,7 @@ bcw_radio_set_txpower_a(struct bcw_softc *sc, uint16_t txpower)
 {
 	uint16_t pamp, base, dac, ilt;
 
-	/* TODO txpower = limit_value(txpower, 0, 63); */
+	txpower = bcw_lv(txpower, 0, 63);
 
 	pamp = bcw_radio_get_txgain_freq_power_amp(txpower);
 	pamp <<= 5;
