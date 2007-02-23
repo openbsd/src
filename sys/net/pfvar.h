@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.243 2007/02/09 11:20:39 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.244 2007/02/23 21:31:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1184,7 +1184,8 @@ struct pf_tagname {
 #define PFFRAG_FRCACHE_HIWAT	10000	/* Number of fragment descriptors */
 
 #define PFR_KTABLE_HIWAT	1000	/* Number of tables */
-#define PFR_KENTRY_HIWAT	100000	/* Number of table entries */
+#define PFR_KENTRY_HIWAT	200000	/* Number of table entries */
+#define PFR_KENTRY_HIWAT_SMALL	100000	/* Number of table entries (tiny hosts) */
 
 /*
  * ioctl parameter structures

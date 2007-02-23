@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.260 2007/02/09 11:28:32 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.261 2007/02/23 21:31:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -41,6 +41,7 @@
 #include <net/pfvar.h>
 #include <arpa/inet.h>
 #include <altq/altq.h>
+#include <sys/sysctl.h>
 
 #include <err.h>
 #include <errno.h>
@@ -1501,6 +1502,9 @@ pfctl_fopen(const char *name, const char *mode)
 void
 pfctl_init_options(struct pfctl *pf)
 {
+	int mib[2], mem;
+	size_t size;
+
 	pf->timeout[PFTM_TCP_FIRST_PACKET] = PFTM_TCP_FIRST_PACKET_VAL;
 	pf->timeout[PFTM_TCP_OPENING] = PFTM_TCP_OPENING_VAL;
 	pf->timeout[PFTM_TCP_ESTABLISHED] = PFTM_TCP_ESTABLISHED_VAL;
@@ -1527,6 +1531,13 @@ pfctl_init_options(struct pfctl *pf)
 	pf->limit[PF_LIMIT_SRC_NODES] = PFSNODE_HIWAT;
 	pf->limit[PF_LIMIT_TABLES] = PFR_KTABLE_HIWAT;
 	pf->limit[PF_LIMIT_TABLE_ENTRIES] = PFR_KENTRY_HIWAT;
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_PHYSMEM;
+	size = sizeof(mem);
+	(void) sysctl(mib, 2, &mem, &size, NULL, 0);
+	if (mem <= 100*1024*1024)
+		pf->limit[PF_LIMIT_TABLE_ENTRIES] = PFR_KENTRY_HIWAT_SMALL; 
 
 	pf->debug = PF_DEBUG_URGENT;
 }
