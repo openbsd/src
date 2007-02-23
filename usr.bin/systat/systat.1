@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.53 2007/02/23 23:33:14 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.54 2007/02/23 23:36:36 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -484,11 +484,11 @@ more drives configured than can normally be displayed on the
 screen.
 .Pp
 .Bl -tag -width Tx -compact
-.It Cm ignore Op Ar drives
-Do not display information about the drives indicated.
-Multiple drives may be specified, separated by spaces.
 .It Cm display Op Ar drives
 Display information about the drives indicated.
+Multiple drives may be specified, separated by spaces.
+.It Cm ignore Op Ar drives
+Do not display information about the drives indicated.
 Multiple drives may be specified, separated by spaces.
 .El
 .Sh FILES
