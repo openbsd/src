@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.20 2007/02/23 10:40:54 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.21 2007/02/23 19:44:37 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -240,6 +240,8 @@ struct bcw_softc {
 	uint16_t		sc_phy_savedpctlreg;
 	uint16_t		sc_phy_minlowsig[2];
 	uint16_t		sc_phy_minlowsigpos[2];
+	int8_t			sc_phy_idle_tssi;
+	const int8_t		sc_phy_tssi2dbm;
 //	uint16_t		sc_corerev;
 	uint32_t		sc_radio_mnf;
 	uint16_t		sc_radio_rev;
@@ -253,6 +255,7 @@ struct bcw_softc {
 	int32_t			sc_radio_nrssislope;
 	uint16_t		sc_radio_txpwr_offset;
 	uint16_t		sc_radio_lofcal;
+	uint16_t		sc_radio_txpower_desired;
 	uint32_t		sc_phyinfo;
 	uint16_t		sc_numcores;
 	uint16_t		sc_havecommon;
