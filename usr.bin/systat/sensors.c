@@ -85,7 +85,7 @@ fetchsensors(void)
 			mib[3] = type;
 			for (numt = 0; numt < sensordev.maxnumt[type]; numt++) {
 				mib[4] = numt;
-				if (sysctl(mib, 5, &sensor, &slen, NULL, 0) 
+				if (sysctl(mib, 5, &sensor, &slen, NULL, 0)
 				    == -1) {
 					if (errno != ENOENT)
 						warn("sysctl");
@@ -102,8 +102,9 @@ fetchsensors(void)
 }
 
 const char *drvstat[] = {
-        NULL, "empty", "ready", "powerup", "online", "idle", "active",
-        "rebuild", "powerdown", "fail", "pfail"
+	NULL,
+	"empty", "ready", "powerup", "online", "idle", "active",
+	"rebuild", "powerdown", "fail", "pfail"
 };
 
 void
@@ -127,7 +128,7 @@ printline(void)
 	wclrtoeol(wnd);
 	mvwprintw(wnd, row, 0, "%s.%s%d", sensordev.xname,
 	    sensor_type_s[sensor.type], sensor.numt);
-	switch(sensor.type) {
+	switch (sensor.type) {
 	case SENSOR_TEMP:
 		mvwprintw(wnd, row, 24, "%10.2f degC",
 		    (sensor.value - 273150000) / 1000000.0);
@@ -155,8 +156,8 @@ printline(void)
 		mvwprintw(wnd, row, 24, "%15.2f lx", sensor.value / 1000000.0);
 		break;
 	case SENSOR_DRIVE:
-		if (0 < sensor.value && sensor.value <  
-		    sizeof(drvstat)/sizeof(drvstat[0])) {
+		if (0 < sensor.value &&
+		    sensor.value < sizeof(drvstat)/sizeof(drvstat[0])) {
 			mvwprintw(wnd, row, 24, "%15s", drvstat[sensor.value]);
 			break;
 		}
@@ -174,11 +175,12 @@ printline(void)
 	default:
 		mvwprintw(wnd, row, 24, "%10lld", sensor.value);
 	}
-	if ((sensor.desc != NULL) && strlen(sensor.desc) < 1)
+	if (sensor.desc != NULL && strlen(sensor.desc) < 1)
 		mvwprintw(wnd, row, 58, "(%s%d)",
 		    sensor_type_s[sensor.type], sensor.numt);
 	else
 		mvwprintw(wnd, row, 58, "(%s)", sensor.desc);
+
 	switch (sensor.status) {
 	case SENSOR_S_UNKNOWN:
 		mvwaddstr(wnd, row++, 45, "unknown");
@@ -194,5 +196,4 @@ printline(void)
 		mvwaddstr(wnd, row++, 45, "OK");
 		break;
 	}
-	
 }
