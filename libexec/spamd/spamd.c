@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.86 2007/02/23 19:22:07 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.87 2007/02/23 19:36:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -1189,7 +1189,7 @@ jail:
 
 	while (1) {
 		struct timeval tv, *tvp;
-		int max, i, n;
+		int max, n;
 		int writers;
 
 		max = MAX(s, conflisten);

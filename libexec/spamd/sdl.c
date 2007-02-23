@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.13 2005/08/04 09:48:27 otto Exp $ */
+/*	$OpenBSD: sdl.c,v 1.14 2007/02/23 19:36:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -58,7 +58,7 @@ int blc = 0, blu = 0;
 int
 sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 {
-	int i, index = -1;
+	int i, idx = -1;
 	char astring[40];
 	unsigned int maskbits;
 	struct sdaddr *m, *n;
@@ -69,21 +69,21 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 	 */
 	for (i = 0; i < blu; i++) {
 		if (strcmp(blacklists[i].tag, sdname) == 0) {
-			index = i;
+			idx = i;
 			break;
 		}
 	}
-	if (index != -1) {
+	if (idx != -1) {
 		if (debug > 0)
 			printf("replacing list %s; %d new entries\n",
-			    blacklists[index].tag, addrc);
-		sdl_free(&blacklists[index]);
+			    blacklists[idx].tag, addrc);
+		sdl_free(&blacklists[idx]);
 	} else {
 		if (debug > 0)
 			printf("adding list %s; %d entries\n", sdname, addrc);
-		index = blu;
+		idx = blu;
 	}
-	if (index == blu && blu == blc) {
+	if (idx == blu && blu == blc) {
 		struct sdlist *tmp;
 
 		tmp = realloc(blacklists, (blc + 128) *
@@ -92,30 +92,30 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 			return (-1);
 		blacklists = tmp;
 		blc += 128;
-		sdl_clear(&blacklists[index]);
+		sdl_clear(&blacklists[idx]);
 	}
 
-	if ((blacklists[index].tag = strdup(sdname)) == NULL)
+	if ((blacklists[idx].tag = strdup(sdname)) == NULL)
 		goto misc_error;
-	if ((blacklists[index].string = strdup(sdstring)) == NULL)
+	if ((blacklists[idx].string = strdup(sdstring)) == NULL)
 		goto misc_error;
 
-	blacklists[index].naddrs = addrc;
+	blacklists[idx].naddrs = addrc;
 
 	/*
 	 * Cycle through addrs, converting. We assume they are correctly
 	 * formatted v4 and v6 addrs, if they don't all convert correctly, the
 	 * add fails. Each address should be address/maskbits
 	 */
-	blacklists[index].addrs = malloc(addrc * sizeof(struct sdentry));
-	if (blacklists[index].addrs == NULL)
+	blacklists[idx].addrs = malloc(addrc * sizeof(struct sdentry));
+	if (blacklists[idx].addrs == NULL)
 		goto misc_error;
 
 	for(i = 0; i < addrc; i++) {
 		int j, k, af;
 
-		n = &blacklists[index].addrs[i].sda;
-		m = &blacklists[index].addrs[i].sdm;
+		n = &blacklists[idx].addrs[i].sda;
+		m = &blacklists[idx].addrs[i].sdm;
 
 		j = sscanf(addrs[i], "%39[^/]/%u", astring, &maskbits);
 		if (j != 2)
@@ -157,7 +157,7 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 		for (j = 0; j < 4; j++)
 			n->addr32[j] = n->addr32[j] & m->addr32[j];
 	}
-	if (index == blu) {
+	if (idx == blu) {
 		blu++;
 		blacklists[blu].tag = NULL;
 	}
@@ -166,7 +166,7 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 	if (debug > 0)
 		printf("sdl_add: parse error, \"%s\"\n", addrs[i]);
  misc_error:
-	sdl_free(&blacklists[index]);
+	sdl_free(&blacklists[idx]);
 	return (-1);
 }
 

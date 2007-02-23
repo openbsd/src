@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.26 2007/02/23 19:28:39 deraadt Exp $	*/
+/*	$OpenBSD: grey.c,v 1.27 2007/02/23 19:36:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -61,7 +61,6 @@ char *traplist_msg = "\"Your address %A has mailed to spamtraps here\\n\"";
 
 pid_t db_pid = -1;
 int pfdev;
-int spamdconf;
 
 struct db_change {
 	SLIST_ENTRY(db_change)	entry;
