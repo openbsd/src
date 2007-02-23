@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.54 2007/02/23 20:30:20 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.55 2007/02/23 22:28:08 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -137,18 +137,20 @@ int8_t		bcw_phy_estimate_powerout(struct bcw_softc *, int8_t tssi);
 void		bcw_phy_xmitpower(struct bcw_softc *);
 uint16_t	bcw_phy_lo_b_r15_loop(struct bcw_softc *);
 void		bcw_phy_lo_b_measure(struct bcw_softc *);
+void		bcw_phy_lo_g_state(struct bcw_softc *,  struct bcw_lopair *,
+		    struct bcw_lopair *, uint16_t);
 void		bcw_phy_lo_g_measure(struct bcw_softc *);
 void		bcw_phy_lo_g_measure_txctl2(struct bcw_softc *);
 uint32_t	bcw_phy_lo_g_singledeviation(struct bcw_softc *, uint16_t);
 uint16_t	bcw_phy_lo_g_deviation_subval(struct bcw_softc *, uint16_t);
 void		bcw_phy_lo_adjust(struct bcw_softc *, int fixed);
 void		bcw_phy_lo_mark_current_used(struct bcw_softc *);
+void		bcw_phy_lo_write(struct bcw_softc *, struct bcw_lopair *);
 struct bcw_lopair *
 		bcw_phy_find_lopair(struct bcw_softc *, uint16_t, uint16_t,
 		    uint16_t);
 struct bcw_lopair *
 		bcw_phy_current_lopair(struct bcw_softc *);
-void		bcw_lowrite(struct bcw_softc *, struct bcw_lopair *);
 /* radio */
 void		bcw_radio_off(struct bcw_softc *);
 void		bcw_radio_on(struct bcw_softc *);
@@ -1700,8 +1702,8 @@ bcw_init(struct ifnet *ifp)
 	bcw_radio_on(sc);
 
 	BCW_WRITE16(sc, 0x03e6, 0);
-	//if ((error = bcw_phy_init(sc)))
-	//	return (error);
+	if ((error = bcw_phy_init(sc)))
+		return (error);
 
 	return (0);
 
@@ -3109,11 +3111,12 @@ bcw_phy_init(struct bcw_softc *sc)
 	case BCW_PHY_TYPEG:
 		bcw_phy_initg(sc);
 		error = 0;
+		DPRINTF(("%s: PHY type G initialized\n", sc->sc_dev.dv_xname));
 		break;
 	}
 
 	if (error)
-		printf("%s: Unknown PHYTYPE found!\n", sc->sc_dev.dv_xname);
+		printf("%s: PHY type unknown!\n", sc->sc_dev.dv_xname);
 
 	return (error);
 }
@@ -4495,6 +4498,87 @@ bcw_phy_lo_b_measure(struct bcw_softc *sc)
 }
 
 void
+bcw_phy_lo_g_state(struct bcw_softc *sc, struct bcw_lopair *in_pair,
+    struct bcw_lopair *out_pair, uint16_t r27)
+{
+	const struct bcw_lopair transitions[8] = {
+	    { .high =  1,  .low =  1, },
+	    { .high =  1,  .low =  0, },
+	    { .high =  1,  .low = -1, },
+	    { .high =  0,  .low = -1, },
+	    { .high = -1,  .low = -1, },
+	    { .high = -1,  .low =  0, },
+	    { .high = -1,  .low =  1, },
+	    { .high =  0,  .low =  1, } };
+	struct bcw_lopair lowest_transition = {
+	    .high = in_pair->high,
+	    .low = in_pair->low };
+	struct bcw_lopair tmp_pair;
+	struct bcw_lopair transition;
+	int i = 12;
+	int state = 0;
+	int found_lower;
+	int j, begin, end;
+	uint32_t lowest_deviation;
+	uint32_t tmp;
+
+	bcw_phy_lo_write(sc, &lowest_transition);
+	lowest_deviation = bcw_phy_lo_g_singledeviation(sc, r27);
+	do {
+		found_lower = 0;
+		/* XXX assert() */
+		if (state == 0) {
+			begin = 1;
+			end = 8;
+		} else if (state % 2 == 0) {
+			begin = state - 1;
+			end = state + 1;
+		} else {
+			begin = state - 2;
+			end = state + 2;
+		}
+		if (begin < 1)
+			begin += 8;
+		if (end > 8)
+			end -= 8;
+
+		j = begin;
+		tmp_pair.high = lowest_transition.high;
+		tmp_pair.low = lowest_transition.low;
+		while (1) {
+			/* XXX assert() */
+			transition.high = tmp_pair.high +
+			    transitions[j - 1].high;
+			transition.low = tmp_pair.low +
+			    transitions[j - 1].low;
+			if ((abs(transition.low) < 9) && (abs(transition.high)
+			    < 9)) {
+				bcw_phy_lo_write(sc, &transition);
+				tmp = bcw_phy_lo_g_singledeviation(sc, r27);
+				if (tmp < lowest_deviation) {
+					lowest_deviation = tmp;
+					state = j;
+					found_lower = 1;
+					lowest_transition.high =
+					    transition.high;
+					lowest_transition.low =
+					    transition.low;
+				}
+			}
+			if (j == end)
+				break;
+			if (j == 8)
+				j = 1;
+			else
+				j++;
+		}
+	} while (i-- && found_lower);
+
+	out_pair->high = lowest_transition.high;
+	out_pair->low = lowest_transition.low;
+}
+
+void
 bcw_phy_lo_g_measure(struct bcw_softc *sc)
 {
 	const uint8_t pairorder[10] = { 3, 1, 5, 7, 9, 2, 0, 4, 6, 8 };
@@ -4612,7 +4696,7 @@ bcw_phy_lo_g_measure(struct bcw_softc *sc)
 			bcw_radio_write16(sc, 0x007a, tmp);
 
 			tmp_control = bcw_get_lopair(sc, i, j * 2);
-			/* TODO bcm43xx_phy_lo_g_state() */
+			bcw_phy_lo_g_state(sc, &control, tmp_control, r27);
 		}
 		oldi = i;
 	}
@@ -4776,7 +4860,7 @@ bcw_phy_lo_adjust(struct bcw_softc *sc, int fixed)
 	else
 		pair = bcw_phy_current_lopair(sc);
 
-	bcw_lowrite(sc, pair);
+	bcw_phy_lo_write(sc, pair);
 }
 
 void
@@ -4786,6 +4870,26 @@ bcw_phy_lo_mark_current_used(struct bcw_softc *sc)
 
 	pair = bcw_phy_current_lopair(sc);
 	pair->used = 1;
+}
+
+void
+bcw_phy_lo_write(struct bcw_softc *sc, struct bcw_lopair *pair)
+{
+	uint16_t val;
+
+	val = (uint8_t)(pair->low);
+	val |= ((uint8_t)(pair->high)) << 8;
+
+#ifdef BCW_DEBUG
+	if (pair->low < -8 || pair->low > 8 ||
+	    pair->high < -8 || pair->high > 8)
+		printf("%s: writing invalid LO pair "
+		    "low: %d, high: %d, index: %lu)\n",
+		    pair->low, pair->high,
+		    (unsigned long)(pair - sc->sc_phy_lopairs));
+#endif
+
+	bcw_phy_write16(sc, BCW_PHY_G_LO_CONTROL, val);
 }
 
 struct bcw_lopair *
@@ -4809,17 +4913,6 @@ bcw_phy_current_lopair(struct bcw_softc *sc)
 {
 	return (bcw_phy_find_lopair(sc, sc->sc_radio_baseband_atten,
 	    sc->sc_radio_radio_atten, sc->sc_radio_txctl1));
-}
-
-void
-bcw_lowrite(struct bcw_softc *sc, struct bcw_lopair *pair)
-{
-	uint16_t val;
-
-	val = (uint8_t)(pair->low);
-	val |= ((uint8_t)(pair->high)) << 8;
-
-	bcw_phy_write16(sc, BCW_PHY_G_LO_CONTROL, val);
 }
 
 /*
