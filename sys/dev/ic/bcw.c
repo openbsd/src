@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.47 2007/02/23 10:40:54 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.48 2007/02/23 10:52:24 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -4657,7 +4657,7 @@ bcw_radio_on(struct bcw_softc *sc)
 		    0xfff7);
 		bcw_phy_write16(sc, 0x0011, bcw_phy_read16(sc, 0x0011) &
 		    0xfff7);
-		/* TODO bcw_radio_init_2060() */
+		bcw_radio_init2060(sc);
 		break;
 	case BCW_PHY_TYPEB:
 	case BCW_PHY_TYPEG:
