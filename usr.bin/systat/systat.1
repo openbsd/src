@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.47 2006/10/15 01:45:10 millert Exp $
+.\"	$OpenBSD: systat.1,v 1.48 2007/02/23 22:02:58 deanna Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -199,6 +199,10 @@ Areas known to the kernel but not in use are shown as not available.
 .It Ic mbufs
 Display, in the lower window, the number of mbufs allocated
 for particular uses, i.e., data, socket structures, etc.
+.It Ic sensors
+Display the current values of available hardware sensors,
+in a format similar to that of
+.Xr sysctl 8 .
 .It Ic vmstat
 Take over the entire display and show a (rather crowded) compendium
 of statistics related to virtual memory usage, process scheduling,
@@ -499,6 +503,7 @@ port names
 .Xr iostat 8 ,
 .Xr pstat 8 ,
 .Xr renice 8 ,
+.Xr sysctl 8 ,
 .Xr vmstat 8
 .Sh HISTORY
 The
