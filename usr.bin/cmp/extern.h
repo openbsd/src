@@ -1,4 +1,4 @@
-/*      $OpenBSD: extern.h,v 1.4 2003/06/03 02:56:06 millert Exp $      */
+/*      $OpenBSD: extern.h,v 1.5 2007/02/23 16:00:04 millert Exp $      */
 /*      $NetBSD: extern.h,v 1.2 1995/09/08 03:22:57 tls Exp $      */
 
 /*-
@@ -32,7 +32,6 @@
  *	@(#)extern.h	8.3 (Berkeley) 4/2/94
  */
 
-#define OK_EXIT		0
 #define DIFF_EXIT	1
 #define ERR_EXIT	2	/* error exit code */
 
