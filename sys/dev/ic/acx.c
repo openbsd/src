@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.62 2007/02/21 14:25:51 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.63 2007/02/23 22:17:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -768,17 +768,11 @@ acx_write_config(struct acx_softc *sc, struct acx_config *conf)
 
 	/* What we want to receive and how to receive */
 	/* XXX may not belong here, acx_init() */
-	rx_opt.opt1 = RXOPT1_FILT_FDEST | RXOPT1_INCL_RXBUF_HDR;
-	rx_opt.opt2 = RXOPT2_RECV_ASSOC_REQ |
-	    RXOPT2_RECV_AUTH |
-	    RXOPT2_RECV_BEACON |
-	    RXOPT2_RECV_CF |
-	    RXOPT2_RECV_CTRL |
-	    RXOPT2_RECV_DATA |
-	    RXOPT2_RECV_MGMT |
-	    RXOPT2_RECV_PROBE_REQ |
-	    RXOPT2_RECV_PROBE_RESP |
-	    RXOPT2_RECV_OTHER;
+	rx_opt.opt1 = htole16(RXOPT1_FILT_FDEST | RXOPT1_INCL_RXBUF_HDR);
+	rx_opt.opt2 = htole16(RXOPT2_RECV_ASSOC_REQ | RXOPT2_RECV_AUTH |
+	    RXOPT2_RECV_BEACON | RXOPT2_RECV_CF | RXOPT2_RECV_CTRL |
+	    RXOPT2_RECV_DATA | RXOPT2_RECV_MGMT | RXOPT2_RECV_PROBE_REQ |
+	    RXOPT2_RECV_PROBE_RESP | RXOPT2_RECV_OTHER);
 	if (acx_set_rxopt_conf(sc, &rx_opt) != 0) {
 		printf("%s: can't set RX option\n", ifp->if_xname);
 		return (ENXIO);
