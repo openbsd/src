@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.25 2007/02/23 19:22:07 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.26 2007/02/23 19:28:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -367,7 +367,7 @@ queue_change(char *key, char *data, size_t dsiz, int act) {
 	dbc->act = act;
 	syslog_r(LOG_DEBUG, &sdata,
 	    "queueing %s of %s", ((act == DBC_ADD) ? "add" : "deletion"),
-	     dbc->key);
+	    dbc->key);
 	SLIST_INSERT_HEAD(&db_changes, dbc, entry);
 	return(0);
 }
@@ -380,7 +380,7 @@ do_changes(DB *db) {
 
 	while (!SLIST_EMPTY(&db_changes)) {
 		dbc = SLIST_FIRST(&db_changes);
-		switch(dbc->act) {
+		switch (dbc->act) {
 		case DBC_ADD:
 			memset(&dbk, 0, sizeof(dbk));
 			dbk.size = strlen(dbc->key);
@@ -852,7 +852,7 @@ check_spamd_db(void)
 	memset(&hashinfo, 0, sizeof(hashinfo));
 	db = dbopen(PATH_SPAMD_DB, O_EXLOCK|O_RDWR, 0600, DB_HASH, &hashinfo);
 
-        if (db == NULL) {
+	if (db == NULL) {
 		switch (errno) {
 		case ENOENT:
 			i = open(PATH_SPAMD_DB, O_RDWR|O_CREAT, 0644);
@@ -867,7 +867,7 @@ check_spamd_db(void)
 				    "chown %s failed (%m)", PATH_SPAMD_DB);
 				exit(1);
 			}
-	                close(i);
+			close(i);
 			drop_privs();
 			return;
 			break;
@@ -906,7 +906,7 @@ greywatcher(void)
 	check_spamd_db();
 
 	db_pid = fork();
-	switch(db_pid) {
+	switch (db_pid) {
 	case -1:
 		syslog_r(LOG_ERR, &sdata, "fork failed (%m)");
 		exit(1);
