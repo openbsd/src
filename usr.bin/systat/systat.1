@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.52 2007/02/23 23:23:54 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.53 2007/02/23 23:33:14 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -106,8 +106,9 @@ or
 .Ic netstat .
 These displays can also be requested interactively and are described in
 full detail below.
-Commands to switch between displays may be abbreviated to the
-minimum unambiguous prefix; for example,
+.Ar display
+may be abbreviated to the minimum unambiguous prefix;
+for example,
 .Dq io
 for
 .Dq iostat .
@@ -173,6 +174,9 @@ Supplying only a number will set the refresh interval to this
 value.
 .El
 .Pp
+Again,
+.Ar display
+may be abbreviated to the minimum unambiguous prefix.
 The available displays are:
 .Bl -tag -width "netstatXXX"
 .It Ic ifstat
