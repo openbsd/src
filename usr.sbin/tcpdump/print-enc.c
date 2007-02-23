@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-enc.c,v 1.8 2004/11/17 13:27:55 markus Exp $	*/
+/*	$OpenBSD: print-enc.c,v 1.9 2007/02/23 22:29:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-enc.c,v 1.8 2004/11/17 13:27:55 markus Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-enc.c,v 1.9 2007/02/23 22:29:26 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -58,13 +58,11 @@ struct rtentry;
 	}
 
 void
-enc_if_print(u_char *user, const struct pcap_pkthdr *h,
-	     register const u_char *p)
+enc_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
-	register u_int length = h->len;
-	register u_int caplen = h->caplen;
-	int flags;
+	u_int length = h->len, caplen = h->caplen;
 	const struct enchdr *hdr;
+	int flags;
 
 	ts_print(&h->ts);
 
@@ -80,13 +78,13 @@ enc_if_print(u_char *user, const struct pcap_pkthdr *h,
 	 */
 	packetp = p;
 	snapend = p + caplen;
-	
+
 	hdr = (struct enchdr *)p;
 	flags = hdr->flags;
 	if (flags == 0)
-	  printf("(unprotected): ");
+		printf("(unprotected): ");
 	else
-	  printf("(");
+		printf("(");
 	ENC_PRINT_TYPE(flags, M_AUTH, "authentic");
 	ENC_PRINT_TYPE(flags, M_CONF, "confidential");
 	/* ENC_PRINT_TYPE(flags, M_TUNNEL, "tunnel"); */
