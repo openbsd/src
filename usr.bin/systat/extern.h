@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.16 2007/02/23 22:02:58 deanna Exp $	*/
+/*	$OpenBSD: extern.h,v 1.17 2007/02/24 09:45:27 otto Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/05/10 23:16:34 thorpej Exp $	*/
 
 /*-
@@ -38,14 +38,12 @@
 
 extern struct	cmdtab *curcmd;
 extern struct	cmdtab cmdtab[];
-extern struct	text *xtext;
 extern WINDOW	*wnd;
 extern char	**dr_name;
 extern char	hostname[];
 extern double	avenrun[3];
-extern float	*dk_mspw;
 extern kvm_t	*kd;
-extern long	ntext, textp;
+extern long	ntext;
 extern int	*dk_select;
 extern int	CMDLINE;
 extern int	dk_ndrive;
