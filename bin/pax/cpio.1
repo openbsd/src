@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpio.1,v 1.24 2007/02/24 09:29:55 jmc Exp $
+.\"	$OpenBSD: cpio.1,v 1.25 2007/02/24 09:33:21 jmc Exp $
 .\"
 .\" Copyright (c) 1997 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: cpio.1,v 1.24 2007/02/24 09:29:55 jmc Exp $
+.\"	$OpenBSD: cpio.1,v 1.25 2007/02/24 09:33:21 jmc Exp $
 .\"
 .Dd February 16, 1997
 .Dt CPIO 1
@@ -86,6 +86,7 @@ Use ASCII format for
 .Nm
 header for portability.
 .It Fl F Ar archive
+Use the specified file as the input for the archive.
 .It Fl H Ar format
 Write the archive in the specified format.
 Recognized formats are:
