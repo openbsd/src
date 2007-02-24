@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.53 2006/10/21 18:09:52 thib Exp $	*/
+/*	$OpenBSD: buf.h,v 1.54 2007/02/24 11:59:47 miod Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -147,19 +147,14 @@ struct buf *bufq_default_get(struct bufq *);
 #define	B_CACHE		0x00000020	/* Bread found us in the cache. */
 #define	B_CALL		0x00000040	/* Call b_iodone from biodone. */
 #define	B_DELWRI	0x00000080	/* Delay I/O until buffer reused. */
-#define	B_DIRTY		0x00000100	/* Dirty page to be pushed out async. */
 #define	B_DONE		0x00000200	/* I/O completed. */
 #define	B_EINTR		0x00000400	/* I/O was interrupted */
 #define	B_ERROR		0x00000800	/* I/O error occurred. */
 #define	B_INVAL		0x00002000	/* Does not contain valid info. */
 #define	B_NOCACHE	0x00008000	/* Do not cache block after use. */
-#define	B_PAGET		0x00010000	/* Page in/out of page table space. */
-#define	B_PGIN		0x00020000	/* Pagein op, so swap() can count it. */
 #define	B_PHYS		0x00040000	/* I/O to user memory. */
 #define	B_RAW		0x00080000	/* Set by physio for raw transfers. */
 #define	B_READ		0x00100000	/* Read buffer. */
-#define	B_TAPE		0x00200000	/* Magnetic tape I/O. */
-#define	B_UAREA		0x00400000	/* Buffer describes Uarea I/O. */
 #define	B_WANTED	0x00800000	/* Process wants this buffer. */
 #define	B_WRITE		0x00000000	/* Write buffer (pseudo flag). */
 #define	B_WRITEINPROG	0x01000000	/* Write in progress. */
@@ -169,9 +164,9 @@ struct buf *bufq_default_get(struct bufq *);
 #define	B_PDAEMON	0x10000000	/* I/O started by pagedaemon */
 
 #define	B_BITS	"\010\001AGE\002NEEDCOMMIT\003ASYNC\004BAD\005BUSY\006CACHE" \
-    "\007CALL\010DELWRI\011DIRTY\012DONE\013EINTR\014ERROR" \
-    "\016INVAL\020NOCACHE\021PAGET\022PGIN\023PHYS\024RAW\025READ" \
-    "\026TAPE\027UAREA\030WANTED\031WRITEINPROG\032XXX\033DEFERRED" \
+    "\007CALL\010DELWRI\012DONE\013EINTR\014ERROR" \
+    "\016INVAL\020NOCACHE\023PHYS\024RAW\025READ" \
+    "\030WANTED\031WRITEINPROG\032XXX\033DEFERRED" \
     "\034SCANNED\035PDAEMON"
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.48 2007/02/20 21:15:01 tom Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.49 2007/02/24 11:59:45 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -282,22 +282,7 @@ kvtop(caddr_t addr)
 }
 
 /*
- * Map an IO request into kernel virtual address space.  Requests fall into
- * one of five catagories:
- *
- *	B_PHYS|B_UAREA:	User u-area swap.
- *			Address is relative to start of u-area (p_addr).
- *	B_PHYS|B_PAGET:	User page table swap.
- *			Address is a kernel VA in usrpt (Usrptmap).
- *	B_PHYS|B_DIRTY:	Dirty page push.
- *			Address is a VA in proc2's address space.
- *	B_PHYS|B_PGIN:	Kernel pagein of user pages.
- *			Address is VA in user's address space.
- *	B_PHYS:		User "raw" IO request.
- *			Address is VA in user's address space.
- *
- * All requests are (re)mapped into kernel VA space via the useriomap
- * (a name with only slightly more meaning than "kernelmap")
+ * Map an user IO request into kernel virtual address space.
  */
 void
 vmapbuf(struct buf *bp, vsize_t len)
