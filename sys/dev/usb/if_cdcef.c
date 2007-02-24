@@ -1,6 +1,7 @@
-/*	$OpenBSD: if_cdcef.c,v 1.8 2007/02/23 06:10:08 drahn Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.9 2007/02/24 21:57:27 drahn Exp $	*/
 
 /*
+ * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -69,6 +70,8 @@ struct cdcef_softc {
 	void			*sc_buffer_in;
 	void			*sc_buffer_out;
 
+	struct timeout		start_to;
+
 	struct mbuf		*sc_xmit_mbuf;
 
 	struct arpcom           sc_arpcom;
@@ -98,6 +101,7 @@ void		cdcef_init(struct cdcef_softc *);
 void		cdcef_stop(struct cdcef_softc *);
 int		cdcef_encap(struct cdcef_softc *sc, struct mbuf *m, int idx);
 struct mbuf *	cdcef_newbuf(void);
+void		cdcef_start_timeout (void *);
 
 struct cfattach cdcef_ca = {
 	sizeof(struct cdcef_softc), cdcef_match, cdcef_attach
@@ -153,6 +157,9 @@ USB_ATTACH(cdcef)
 
 	/* Fill in the fields needed by the parent device. */
 	sc->sc_dev.methods = &cdcef_methods;
+
+	/* timeout to start delayed tranfers */
+	timeout_set(&sc->start_to, cdcef_start_timeout, sc);
 
 	/*
 	 * Build descriptors according to the device class specification.
@@ -336,10 +343,22 @@ cdcef_txeof(usbf_xfer_handle xfer, usbf_private_handle priv,
 		ifp->if_opackets++;
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		cdcef_start(ifp);
+		timeout_add(&sc->start_to, 1); /* XXX  */
 
 	splx(s);
 }
+void
+cdcef_start_timeout (void *v)
+{
+	struct cdcef_softc *sc = v;
+	struct ifnet *ifp = GET_IFP(sc);
+	int s;
+
+	s = splnet();
+	cdcef_start(ifp);
+	splx(s);
+}
+
 
 void
 cdcef_rxeof(usbf_xfer_handle xfer, usbf_private_handle priv,
@@ -397,10 +416,10 @@ cdcef_rxeof(usbf_xfer_handle xfer, usbf_private_handle priv,
 		m = cdcef_newbuf();
 		if (m == NULL) {
 			/* message? */
+			ifp->if_ierrors++;
 			goto done1;
 		}
 
-		/* XXX - buffer big enough? */
 		m->m_pkthdr.len = m->m_len = total_len;
 		bcopy(sc->sc_buffer_out, mtod(m, char *), total_len);
 		m->m_pkthdr.rcvif = ifp;
@@ -514,6 +533,7 @@ void
 cdcef_watchdog(struct ifnet *ifp)
 {
 	struct cdcef_softc	*sc = ifp->if_softc;
+	int s;
 
 #if 0
 	if (sc->sc_dying)
@@ -523,15 +543,13 @@ cdcef_watchdog(struct ifnet *ifp)
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", DEVNAME(sc));
 
+	s = splusb();
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* cancel recieve pipe? */
-
-	if (sc->sc_xmit_mbuf != NULL) {
-		m_freem(sc->sc_xmit_mbuf);
-		sc->sc_xmit_mbuf = NULL;
-	}
+	usbf_abort_pipe(sc->sc_pipe_in); /* in is tx pipe */
+	splx(s);
 }
 
 void
