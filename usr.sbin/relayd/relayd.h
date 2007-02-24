@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.29 2007/02/24 15:48:54 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.30 2007/02/24 16:14:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -398,7 +398,7 @@ enum prototype {
 #define SSLFLAG_VERSION		0x07
 #define SSLFLAG_DEFAULT		(SSLFLAG_SSLV3|SSLFLAG_TLSV1)
 
-#define SSLCIPHERS_DEFAULT	"HIGH"
+#define SSLCIPHERS_DEFAULT	"HIGH:!ADH"
 
 struct protocol {
 	objid_t			 id;
