@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.117 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.118 2007/02/24 20:52:38 otto Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -522,7 +522,7 @@ cvs_var_set(const char *var, const char *val)
 }
 
 /*
- * cvs_var_set()
+ * cvs_var_unset()
  *
  * Remove any entry for the variable <var>.
  * Returns 0 on success, or -1 on failure.
