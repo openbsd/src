@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.14 2006/02/07 10:56:55 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.15 2007/02/24 18:45:11 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -165,7 +165,12 @@ sub tally()
 {
 	while (my ($device, $data) = each %$devinfo) {
 		if ($data->{used} != 0) {
-			print $device, ": ", $data->{used}, " bytes\n";
+			print $device, ": ", $data->{used}, " bytes";
+			my $avail = $data->avail(); 
+			if ($avail < 0) {
+				print " (missing ", int(-$avail+1), " blocks)";
+			}
+			print "\n";
 		}
 	}
 }
