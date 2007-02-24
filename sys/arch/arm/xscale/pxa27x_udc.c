@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.17 2007/02/24 22:08:20 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.18 2007/02/24 22:16:14 drahn Exp $ */
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -756,10 +756,10 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 	}
 #ifdef DEBUG_TX
 	printf(" wrote tlen %x %x\n", tlen, xfer->actlen);
-#endif
 	if (xfer->actlen == 0) {
 		printf("whoa, write_ep called, but no free space\n");
 	}
+#endif
 	if (xfer->actlen >= xfer->length) {
 		if ((xfer->actlen % maxp) != 0) {
 			CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
