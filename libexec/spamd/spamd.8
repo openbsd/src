@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.68 2007/02/23 23:14:56 beck Exp $
+.\"	$OpenBSD: spamd.8,v 1.69 2007/02/24 08:48:49 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -422,9 +422,9 @@ the destination addresses
 .Em beck@obtuse.com ,
 and
 .Em beck@snouts.obtuse.com
-would not cause the sending host be trapped.
+would not cause the sending host to be trapped.
 However the addresses
-.Em peter@apostles.humpingforjesus.com ,
+.Em peter@apostles.humpingforjesus.com
 or
 .Em bigbutts@bofh.ucs.ualberta.ca
 would cause the sending host to be trapped.
@@ -449,7 +449,7 @@ daemon.err;daemon.warn;daemon.info	/var/log/spamd
 .It /etc/spamd.conf
 Default configuration file.
 .It /etc/spamd/alloweddomains
-Optional required suffixes for greytrapping
+Optional required suffixes for greytrapping.
 .It /var/db/spamd
 Greylisting database.
 .El
@@ -466,14 +466,15 @@ Greylisting database.
 .Sh HISTORY
 The
 .Nm
-command
-appeared in
+command first appeared in
 .Ox 3.3 .
+.Pp
 Previous versions of
 .Nm
 required traps to be be entered into the database including the enclosing
-<> characters, current versions expect only the email address without the
-enclosing <> characters.
+\*(Lt\*(Gt characters;
+current versions expect only the email address without the enclosing
+\*(Lt\*(Gt characters.
 .Sh BUGS
 .Nm
 currently uses the user
