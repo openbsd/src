@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.66 2007/02/24 09:29:55 jmc Exp $	*/
+/*	$OpenBSD: options.c,v 1.67 2007/02/24 09:50:55 jmc Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: options.c,v 1.66 2007/02/24 09:29:55 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: options.c,v 1.67 2007/02/24 09:50:55 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -1536,16 +1536,16 @@ void
 pax_usage(void)
 {
 	(void)fputs(
-	    "usage: pax [-0cdOnvz] [-E limit] [-f archive] [-G group] [-s replstr]\n"
-	    "\t  [-T [from_date][,to_date][/[c][m]]] [-U user] [pattern ...]\n"
-	    "       pax -r [-0cDdikOnuvzYZz] [-E limit] [-f archive] [-G group]\n"
-	    "\t  [-o options] [-p string] [-s replstr] [-T [from_date][,to_date]]\n"
+	    "usage: pax [-0cdnOvz] [-E limit] [-f archive] [-G group] [-s replstr]\n"
+	    "\t  [-T range] [-U user] [pattern ...]\n"
+	    "       pax -r [-0cDdiknOuvYZz] [-E limit] [-f archive] [-G group]\n"
+	    "\t  [-o options] [-p string] [-s replstr] [-T range]\n"
 	    "\t  [-U user] [pattern ...]\n"
 	    "       pax -w [-0adHiLOPtuvXz] [-B bytes] [-b blocksize] [-f archive]\n"
 	    "\t  [-G group] [-o options] [-s replstr]\n"
-	    "\t  [-T [from_date][,to_date][/[c][m]]] [-U user] [-x format] [file ...]\n"
-	    "       pax -r -w [-0DdHikLlnOPtuvXYZ] [-G group] [-p string] [-s replstr]\n"
-	    "\t  [-T [from_date][,to_date][/[c][m]]] [-U user] [file ...] directory\n",
+	    "\t  [-T range] [-U user] [-x format] [file ...]\n"
+	    "       pax -rw [-0DdHikLlnOPtuvXYZ] [-G group] [-p string] [-s replstr]\n"
+	    "\t  [-T range] [-U user] [file ...] directory\n",
 	    stderr);
 	exit(1);
 }
