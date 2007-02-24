@@ -55,7 +55,7 @@ labelsensors(void)
 {
 	wmove(wnd, 0, 0);
 	wclrtobot(wnd);
-	mvwaddstr(wnd, 1, 0, "Device");
+	mvwaddstr(wnd, 1, 0, "Sensor");
 	mvwaddstr(wnd, 1, 34, "Value");
 	mvwaddstr(wnd, 1, 45, "Status");
 	mvwaddstr(wnd, 1, 58, "Description");
@@ -177,7 +177,7 @@ printline(void)
 		mvwprintw(wnd, row, 24, "%10lld", sensor.value);
 		break;
 	}
-	if (sensor.desc && strlen(sensor.desc) >= 1)
+	if (strlen(sensor.desc) >= 1)
 		mvwprintw(wnd, row, 58, "(%s)", sensor.desc);
 
 	switch (sensor.status) {
