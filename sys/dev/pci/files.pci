@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.225 2007/02/19 13:51:30 dlg Exp $
+#	$OpenBSD: files.pci,v 1.226 2007/02/24 20:18:08 kettenis Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -356,6 +356,11 @@ file	dev/pci/if_ne_pci.c		ne_pci
 # Sun GEM ethernet
 attach	gem at pci with gem_pci
 file	dev/pci/if_gem_pci.c		gem_pci
+
+# Sun Cassini ethernet
+device	cas: ether, ifnet, ifmedia, mii
+attach	cas at pci
+file	dev/pci/if_cas.c		cas
 
 # Hi/fn 6500
 device	lofn: crypto
