@@ -1,8 +1,8 @@
-/*	$OpenBSD: hoststated.h,v 1.27 2007/02/23 00:28:06 deraadt Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.28 2007/02/24 00:22:32 reyk Exp $	*/
 
 /*
- * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
- * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
+ * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -42,6 +42,7 @@
 #define RELAY_MAXPROC		32
 #define RELAY_MAXHOSTS		32
 #define RELAY_STATINTERVAL	60
+#define RELAY_BACKLOG		10
 
 #define SMALL_READ_BUF_SIZE	1024
 #define READ_BUF_SIZE		65535
@@ -337,6 +338,7 @@ struct session {
 	struct timeval			 tv_start;
 	struct timeval			 tv_last;
 	int				 done;
+	struct evbuffer			*log;
 	void				*relay;
 	struct ctl_natlook		*cnl;
 	TAILQ_ENTRY(session)		 entry;
@@ -350,18 +352,29 @@ enum nodeaction {
 	NODE_ACTION_REMOVE	= 3,
 	NODE_ACTION_EXPECT	= 4,
 	NODE_ACTION_FILTER	= 5,
-	NODE_ACTION_HASH	= 6
+	NODE_ACTION_HASH	= 6,
+	NODE_ACTION_LOG		= 7
 };
+
+enum nodetype {
+	NODE_TYPE_HEADER	= 0,
+	NODE_TYPE_URL		= 1,
+	NODE_TYPE_COOKIE	= 2
+};
+
+#define PNFLAG_MACRO		0x01
+#define PNFLAG_MARK		0x02
+#define PNFLAG_LOG		0x04
+#define PNFLAG_LOOKUP_URL	0x08
+#define PNFLAG_LOOKUP_COOKIE	0x10
 
 struct protonode {
 	objid_t			 id;
 	char			*key;
 	enum nodeaction		 action;
 	char			*value;
-	int			 macro;
-	int			 getvars;
-	int			 header;
-	int			 mark;
+	u_int8_t		 flags;
+	enum nodetype		 type;
 
 	RB_ENTRY(protonode)	 nodes;
 };
@@ -377,12 +390,22 @@ enum prototype {
 #define TCPFLAG_SACK		0x04
 #define TCPFLAG_NSACK		0x08
 #define TCPFLAG_BUFSIZ		0x10
+#define TCPFLAG_DEFAULT		0x00
+
+#define SSLFLAG_SSLV2		0x01
+#define SSLFLAG_SSLV3		0x02
+#define SSLFLAG_TLSV1		0x04
+#define SSLFLAG_VERSION		0x07
+#define SSLFLAG_DEFAULT		(SSLFLAG_SSLV2|SSLFLAG_SSLV3|SSLFLAG_TLSV1)
 
 struct protocol {
 	objid_t			 id;
 	u_int16_t		 flags;
-	u_int16_t		 tcpflags;
+	u_int8_t		 tcpflags;
 	int			 tcpbufsiz;
+	int			 tcpbacklog;
+	u_int8_t		 sslflags;
+	char			*sslciphers;
 	char			 name[MAX_NAME_SIZE];
 	int			 cache;
 	enum prototype		 type;

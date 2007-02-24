@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2007/02/22 03:32:39 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.27 2007/02/24 00:22:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -106,8 +106,8 @@ typedef struct {
 %token	SERVICE TABLE BACKUP HOST REAL
 %token  CHECK HTTP HTTPS TCP ICMP EXTERNAL
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
-%token	VIRTUAL IP INTERVAL DISABLE STICKYADDR
-%token	SEND EXPECT NOTHING USE SSL LOADBALANCE ROUNDROBIN
+%token	VIRTUAL IP INTERVAL DISABLE STICKYADDR BACKLOG
+%token	SEND EXPECT NOTHING USE SSL LOADBALANCE ROUNDROBIN CIPHERS
 %token	RELAY LISTEN ON FORWARD TO NAT LOOKUP PREFORK NO MARK MARKED
 %token	PROTO SESSION CACHE APPEND CHANGE REMOVE FROM FILTER HASH
 %token	LOG UPDATES ALL DEMOTE NODELAY SACK SOCKET BUFFER URL RETRY
@@ -115,7 +115,7 @@ typedef struct {
 %token	<v.string>	STRING
 %type	<v.string>	interface
 %type	<v.number>	number port http_type loglevel sslcache
-%type	<v.number>	prototype dstmode docheck retry
+%type	<v.number>	prototype dstmode docheck retry no log
 %type	<v.host>	host
 %type	<v.tv>		timeout
 
@@ -533,6 +533,10 @@ proto		: PROTO STRING	{
 			p->id = last_proto_id++;
 			p->cache = RELAY_CACHESIZE;
 			p->type = RELAY_PROTO_TCP;
+			p->tcpflags = TCPFLAG_DEFAULT;
+			p->sslflags = SSLFLAG_DEFAULT;
+			p->sslciphers = NULL;
+			p->tcpbacklog = RELAY_BACKLOG;
 			if (last_proto_id == INT_MAX) {
 				yyerror("too many protocols defined");
 				YYERROR;
@@ -541,6 +545,12 @@ proto		: PROTO STRING	{
 			proto = p;
 		} '{' optnl protopts_l '}'	{
 			conf->protocount++;
+
+			if ((proto->sslflags & SSLFLAG_VERSION) == 0) {
+				yyerror("invalid SSL protocol");
+				YYERROR;
+			}
+
 			TAILQ_INSERT_HEAD(&conf->protos, proto, entry);
 		}
 		;
@@ -549,11 +559,12 @@ protopts_l	: protopts_l protoptsl nl
 		| protoptsl optnl
 		;
 
-protoptsl	: SSL SESSION CACHE sslcache	{ proto->cache = $4; }
-		| PROTO prototype		{ proto->type = $2; }
+protoptsl	: SSL sslflags
+		| SSL '{' sslflags_l '}'
 		| TCP tcpflags
 		| TCP '{' tcpflags_l '}'
-		| protonode			{
+		| PROTO prototype		{ proto->type = $2; }
+		| protonode log			{
 			struct protonode *pn, pk;
 
 			pn = RB_FIND(proto_tree, &proto->tree, &node);
@@ -568,20 +579,23 @@ protoptsl	: SSL SESSION CACHE sslcache	{ proto->cache = $4; }
 			bcopy(&node, pn, sizeof(*pn));
 			pn->key = node.key;
 			pn->value = node.value;
-			pn->header = node.getvars ? 0 : 1;
+			pn->type = node.type;
 			pn->id = proto->nodecount++;
+			if ($2) {
+				proto->lateconnect++;
+				pn->flags |= PNFLAG_LOG;
+			}
 			if (pn->id == INT_MAX) {
 				yyerror("too many protocol nodes defined");
 				YYERROR;
 			}
 			RB_INSERT(proto_tree, &proto->tree, pn);
 
-			if (node.getvars) {
+			if (node.type != NODE_TYPE_HEADER) {
 				pk.key = "GET";
+				pk.type = NODE_TYPE_HEADER;
 				pn = RB_FIND(proto_tree, &proto->tree, &pk);
-				if (pn != NULL) {
-					pn->getvars++;
-				} else if (pn == NULL) {
+				if (pn == NULL) {
 					if ((pn = (struct protonode *)
 					    calloc(1, sizeof(*pn))) == NULL)
 						fatal("out of memory");
@@ -590,7 +604,7 @@ protoptsl	: SSL SESSION CACHE sslcache	{ proto->cache = $4; }
 						fatal("out of memory");
 					pn->value = NULL;
 					pn->action = NODE_ACTION_NONE;
-					pn->getvars = 1;
+					pn->type = pk.type;
 					pn->id = proto->nodecount++;
 					if (pn->id == INT_MAX) {
 						yyerror("too many protocol "
@@ -598,6 +612,16 @@ protoptsl	: SSL SESSION CACHE sslcache	{ proto->cache = $4; }
 						YYERROR;
 					}
 					RB_INSERT(proto_tree, &proto->tree, pn);
+				}
+				switch (node.type) {
+				case NODE_TYPE_URL:
+					pn->flags |= PNFLAG_LOOKUP_URL;
+					break;
+				case NODE_TYPE_COOKIE:
+					pn->flags |= PNFLAG_LOOKUP_COOKIE;
+					break;
+				default:
+					break;
 				}
 			}
 
@@ -613,12 +637,45 @@ tcpflags	: SACK 			{ proto->tcpflags |= TCPFLAG_SACK; }
 		| NO SACK		{ proto->tcpflags |= TCPFLAG_NSACK; }
 		| NODELAY		{ proto->tcpflags |= TCPFLAG_NODELAY; }
 		| NO NODELAY		{ proto->tcpflags |= TCPFLAG_NNODELAY; }
+		| BACKLOG number	{
+			if ($2 > RELAY_MAX_SESSIONS) {
+				yyerror("invalid backlog: %d", $2);
+				YYERROR;
+			}
+			proto->tcpbacklog = $2;
+		}
 		| SOCKET BUFFER number	{
 			proto->tcpflags |= TCPFLAG_BUFSIZ;
 			proto->tcpbufsiz = $3;
 		}
 		;
 
+sslflags_l	: sslflags comma sslflags_l
+		| sslflags
+		;
+
+sslflags	: SESSION CACHE sslcache	{ proto->cache = $3; }
+		| CIPHERS STRING		{
+			proto->sslciphers = strdup($2);
+			if (proto->sslciphers == NULL)
+				fatal("out of memory");
+			free($2);
+		}
+		| no STRING			{
+			u_int flags = 0;
+			if (strcmp("sslv2", $2) == 0)
+				flags = SSLFLAG_SSLV2;
+			else if (strcmp("sslv3", $2) == 0)
+				flags = SSLFLAG_SSLV3;
+			else if (strcmp("tlsv1", $2) == 0)
+				flags = SSLFLAG_TLSV1;
+			if ($1)
+				proto->sslflags &= ~flags;
+			else
+				proto->sslflags |= flags;
+			free($2);
+		}
+		;
 
 protonode	: APPEND STRING TO STRING marked	{
 			node.action = NODE_ACTION_APPEND;
@@ -627,7 +684,7 @@ protonode	: APPEND STRING TO STRING marked	{
 			if (node.key == NULL || node.value == NULL)
 				fatal("out of memory");
 			if (strchr(node.value, '$') != NULL)
-				node.macro = 1;
+				node.flags |= PNFLAG_MACRO;
 			free($4);
 			free($2);
 		}
@@ -638,7 +695,7 @@ protonode	: APPEND STRING TO STRING marked	{
 			if (node.key == NULL || node.value == NULL)
 				fatal("out of memory");
 			if (strchr(node.value, '$') != NULL)
-				node.macro = 1;
+				node.flags |= PNFLAG_MACRO;
 			free($4);
 			free($2);
 		}
@@ -677,18 +734,28 @@ protonode	: APPEND STRING TO STRING marked	{
 			free($3);
 			proto->lateconnect++;
 		}
+		| getvars LOG STRING marked			{
+			node.action = NODE_ACTION_LOG;
+			node.key = strdup($3);
+			node.value = NULL;
+			node.flags |= PNFLAG_LOG;
+			if (node.key == NULL)
+				fatal("out of memory");
+			free($3);
+			proto->lateconnect++;
+		}
 		;
 
 mark		: /* nothing */
-		| MARK				{ node.mark++; }
+		| MARK				{ node.flags |= PNFLAG_MARK; }
 		;
 
 marked		: /* nothing */
-		| MARKED			{ node.mark++; }
+		| MARKED			{ node.flags |= PNFLAG_MARK; }
 		;
 
 getvars		: /* nothing */
-		| URL				{ node.getvars++; }
+		| URL				{ node.type = NODE_TYPE_URL; }
 		;
 
 sslcache	: /* empty */			{ $$ = RELAY_CACHESIZE; }
@@ -921,6 +988,14 @@ timeout		: number
 		}
 		;
 
+no		: /* empty */		{ $$ = 0; }
+		| NO			{ $$ = 1; }
+		;
+
+log		: /* empty */		{ $$ = 0; }
+		| LOG			{ $$ = 1; }
+		;
+
 comma		: ','
 		| /* empty */
 		;
@@ -967,11 +1042,13 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "all",		ALL },
 		{ "append",		APPEND },
+		{ "backlog",		BACKLOG },
 		{ "backup",		BACKUP },
 		{ "buffer",		BUFFER },
 		{ "cache",		CACHE },
 		{ "change",		CHANGE },
 		{ "check",		CHECK },
+		{ "ciphers",		CIPHERS },
 		{ "code",		CODE },
 		{ "demote",		DEMOTE },
 		{ "digest",		DIGEST },

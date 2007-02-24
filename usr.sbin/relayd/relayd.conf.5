@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.23 2007/02/23 14:54:44 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.24 2007/02/24 00:22:32 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -414,6 +414,22 @@ Handle the Hypertext Transfer Protocol
 .It Ic tcp
 Generic handler for TCP-based protocols.
 .El
+.It Xo
+.Ar action
+.Op Ic log
+.Xc
+Define an action for the selected entity.
+The
+.Ic log
+keyword will log the entity name and the value.
+The optional
+.Ic url
+keyword will look up the entity as a GET variable in the URL instead
+of an HTTP header value when using the
+.Ic http
+protocol.
+.Pp
+.Bl -tag -width Ds
 .It Ic append Ar value Ic to Ar key
 Append the specified value to a protocol entity with the selected name.
 When using the
@@ -459,18 +475,24 @@ See the
 keyword in the
 .Sx RELAYS
 section above.
-The
-.Ic url
-keyword will look up the entity as a GET variable in the URL instead
-of an HTTP header value when using the
-.Ic http
-protocol.
+.It Xo
+.Op Ic url
+.Ic log Ar key
+.Xc
+Log the name and the value of the entity.
+.El
 .It Ic tcp Ar option
 Enable or disable the specified TCP option; see
 .Xr tcp 4
 for details about TCP options.
 Valid options are:
 .Bl -tag -width Ds
+.It Ic backlog Ar number
+Set the maximum length the queue of pending connections may grow to.
+The backlog option is 10 by default and is limited by the
+.Ic kern.somaxconn
+.Xr sysctl 8
+variable.
 .It Xo
 .Op Ic no
 .Ic nodelay
@@ -488,7 +510,21 @@ Set the socket-level buffer size for input and output for this
 connection.
 This will affect the TCP window size.
 .El
-.It Ic ssl session cache Ar value
+.It Ic ssl Ar option
+Set the SSL options and session settings.
+This is only used if SSL is enabled in the relay.
+Valid options are:
+.Bl -tag -width Ds
+.It Ic ciphers Ar string
+Set the string defining the SSL cipher suite.
+If not specified, the default suite defined by the SSL library will be
+used.
+See the
+.Sx CIPHERS
+section of
+.Xr openssl 1
+for information about SSL cipher suites and preference lists.
+.It Ic session cache Ar value
 Set the maximum size of the SSL session cache.
 If the
 .Ar value
@@ -496,6 +532,22 @@ is zero, the default size defined by the SSL library will be used.
 A positive number will set the maximum size in bytes and the keyword
 .Ic disable
 will disable the SSL session cache.
+.It Xo
+.Op Ic no
+.Ic sslv2
+.Xc
+Enable the SSLv2 protocol.
+.It Xo
+.Op Ic no
+.Ic sslv3
+.Xc
+Enable the SSLv3 protocol.
+.It Xo
+.Op Ic no
+.Ic tlsv1
+.Xc
+Enable the TLSv1/SSLv3.1 protocol.
+.El
 .El
 .Pp
 The
@@ -594,6 +646,8 @@ protocol http_ssl {
         append "$SERVER_ADDR:$SERVER_PORT" to "X-Forwarded-By"
         change "Keep-Alive" to "$TIMEOUT"
 	url hash "sessid"
+
+	ssl { no sslv2, ciphers "HIGH" }
 }
 
 relay sslaccel {
@@ -612,11 +666,12 @@ option will allow a
 SSH session without delays between keystrokes or displayed output on
 the terminal:
 .Bd -literal -offset indent
-protocol http_ssl {
+protocol myssh {
         tcp { nodelay, socket buffer 65536 }
 }
 
 relay sshforward {
+	protocol myssh
         listen on www.example.com port 2222
 	forward to shell.example.com port 22
 }
