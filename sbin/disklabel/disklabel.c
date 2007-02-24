@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.104 2007/02/20 01:50:01 ray Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.105 2007/02/24 03:33:27 ray Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.104 2007/02/20 01:50:01 ray Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.105 2007/02/24 03:33:27 ray Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1258,7 +1258,7 @@ getnum(char *nptr, u_int32_t min, u_int32_t max, const char **errstr)
 }
 
 /*
- * Read an ascii label in from fd f,
+ * Read an ascii label in from FILE f,
  * in the same format as that put out by display(),
  * and fill in lp.
  */
