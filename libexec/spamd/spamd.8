@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.69 2007/02/24 08:48:49 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.70 2007/02/24 19:28:13 millert Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -298,16 +298,17 @@ database and configures all whitelist addresses as the
 table.
 The
 .Em spamd-white
-table must be used to allow connections to pass to the
+table
+.Em must
+be used to allow connections to pass to the
 real MTA as in the following
 .Xr pf.conf 5
 example:
 .Bd -literal -offset 4n
-table <spamd> persist
 table <spamd-white> persist
-rdr pass inet proto tcp from <spamd> to any \e
-    port smtp -> 127.0.0.1 port spamd
-rdr pass inet proto tcp from !<spamd-white> to any \e
+no rdr inet proto tcp from <spamd-white> to any \e
+    port smtp
+rdr pass inet proto tcp from any to any \e
     port smtp -> 127.0.0.1 port spamd
 .Ed
 .Pp
@@ -331,6 +332,13 @@ considered for greylisting and eventual whitelisting (by addition
 to the
 .Em spamd-white
 table so they are not redirected) if they retry mail delivery.
+Note that when greylisting we do not need the
+.Em spamd
+table since connections are passed to
+.Nm
+unless the address is listed in the
+.Em spamd-white
+table.
 .Pp
 .Nm
 removes tuple entries from the
@@ -353,6 +361,15 @@ hours from the initial time an address
 is whitelisted.
 The default is 36 days to allow for the delivery of
 monthly mailing list digests without greylist delays every time.
+.Pp
+.Xr spamd-setup 8
+should be run with the
+.Fl g
+flag when operating in greylisting mode.
+Otherwise, it will attempt to populate the
+.Em spamd
+.Xr pf 4
+table (which is not needed when greylisting).
 .Pp
 .Xr spamlogd 8
 should be used to update the whitelist entries in

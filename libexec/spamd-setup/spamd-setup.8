@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.9 2004/01/29 17:41:00 jmc Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.10 2007/02/24 19:28:13 millert Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Nd parse and load file of spammer addresses
 .Sh SYNOPSIS
 .Nm spamd-setup
-.Op Fl dn
+.Op Fl dgn
 .Sh DESCRIPTION
 The
 .Nm
@@ -55,6 +55,14 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
 Debug mode reports a few pieces of information.
+.It Fl g
+Greylisting mode.
+Blacklist data is stored only in
+.Xr spamd 8 .
+In the absence of this flag, data is stored in both
+.Xr spamd 8
+and
+.Xr pf 4 .
 .It Fl n
 Dry-run mode.
 No data is shipped to
@@ -93,3 +101,14 @@ file.
 .Xr services 5 ,
 .Xr spamd.conf 5 ,
 .Xr spamd 8
+.Sh BUGS
+Blacklists removed from
+.Pa /etc/spamd.conf
+are not automatically removed from the running
+.Xr spamd 8 .
+If an entry is removed from
+.Pa /etc/spamd.conf
+that is currently in use, it is necessary to restart
+.Xr spamd 8 .
+This applies only to blacklists that are removed entirely, not those
+that are simply modified.
