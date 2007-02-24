@@ -1,8 +1,9 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.16 2007/02/23 06:12:43 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.17 2007/02/24 22:08:20 drahn Exp $ */
 
 /*
- * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
+ * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
+ * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -104,7 +105,7 @@ int		 pxaudc_connect_intr(void *);
 int		 pxaudc_intr(void *);
 void		 pxaudc_intr1(struct pxaudc_softc *);
 void		 pxaudc_ep0_intr(struct pxaudc_softc *);
-void		 pxaudc_epN_intr(struct pxaudc_softc *sc, int ep);
+void		 pxaudc_epN_intr(struct pxaudc_softc *sc, int ep, int isr);
 
 usbf_status	 pxaudc_open(struct usbf_pipe *);
 void		 pxaudc_softintr(void *);
@@ -542,8 +543,10 @@ pxaudc_read_epN(struct pxaudc_softc *sc, int ep)
 again:
 	xfer = SIMPLEQ_FIRST(&pipe->queue);
 
-	if (xfer == NULL)
+	if (xfer == NULL) {
+		printf("pxaudc_read_epN: ep %d, no xfer\n", ep);
 		return;
+	}
 
 	count = CSR_READ_4(sc, USBDC_UDCBCR(ep));
 	tlen = len = MIN(count, xfer->length - xfer->actlen);
@@ -674,11 +677,18 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 	int ep = sc->sc_ep_map[usbf_endpoint_index(xfer->pipe->endpoint)];
 	int tlen = 0;
 	int maxp = UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
+	u_int32_t csr, csr_o;
+
+#ifdef DEBUG_TX_PKT
+	if (xfer->actlen == 0)
+		printf("new packet len %x\n", xfer->length);
+#endif
 
 #ifdef DEBUG_TX
 	printf("writing data to endpoint %x, xlen %x xact %x\n",
 		ep, xfer->length, xfer->actlen);
 #endif
+
 
 	if (xfer->actlen == xfer->length) {
 		/*
@@ -687,16 +697,16 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 		 */
 		if ((xfer->actlen % maxp) == 0 &&
 		    xfer->status != USBF_NORMAL_COMPLETION) {
-			CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
-			/*
-			 * if we send a zero packet, we are 'done', but dont
-			 * to usbf_transfer_complete() just yet because the
-			 * short packet will cause another interrupt.
-			 */
-			xfer->status = USBF_NORMAL_COMPLETION;
-			return;
+			if (CSR_READ_4(sc, USBDC_UDCCSR(ep)) & USBDC_UDCCSR_BNF) {
+				CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
+			} else  {
+				printf("fifo full when trying to set short packet\n");
+			}
 		}
 		xfer->status = USBF_NORMAL_COMPLETION;
+#ifdef DEBUG_TX_PKT
+		printf("packet complete %x\n", xfer->actlen);
+#endif
 		usbf_transfer_complete(xfer);
 		return;
 	}
@@ -704,8 +714,18 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 	p = xfer->buffer + xfer->actlen;
 
 
-	if (CSR_READ_4(sc, USBDC_UDCCSR(ep)) & USBDC_UDCCSR_PC)
-		CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_PC);
+
+	csr_o = 0;
+	csr = CSR_READ_4(sc, USBDC_UDCCSR(ep));
+	if (csr & USBDC_UDCCSR_PC)
+		csr_o |= USBDC_UDCCSR_PC;
+	if (csr & USBDC_UDCCSR_TRN)
+		csr_o |= USBDC_UDCCSR_TRN;
+	if (csr & USBDC_UDCCSR_SST)
+		csr_o |= USBDC_UDCCSR_SST;
+	if (csr_o != 0)
+	CSR_WRITE_4(sc, USBDC_UDCCSR(ep), csr_o);
+
 
 	while (CSR_READ_4(sc, USBDC_UDCCSR(ep)) & USBDC_UDCCSR_BNF) {
 		u_int32_t v;
@@ -737,6 +757,9 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 #ifdef DEBUG_TX
 	printf(" wrote tlen %x %x\n", tlen, xfer->actlen);
 #endif
+	if (xfer->actlen == 0) {
+		printf("whoa, write_ep called, but no free space\n");
+	}
 	if (xfer->actlen >= xfer->length) {
 		if ((xfer->actlen % maxp) != 0) {
 			CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
@@ -849,16 +872,6 @@ pxaudc_intr1(struct pxaudc_softc *sc)
 	    otgisr, USBDC_UDCOTGISR_BITS);
 #endif
 
-	for (i = 1; i < 24; i++) {
-		if (i < 16) {
-			if (isr0 & USBDC_UDCISR0_IR(i))
-				pxaudc_epN_intr(sc, i);
-		} else {
-			if (isr1 & USBDC_UDCISR1_IR(i-16))
-				pxaudc_epN_intr(sc, i);
-		}
-	}
-
 	/* Handle USB RESET condition. */
 	if (isr1 & USBDC_UDCISR1_IRRS) {
 		sc->sc_ep0state = EP0_SETUP;
@@ -870,6 +883,18 @@ pxaudc_intr1(struct pxaudc_softc *sc)
 	/* Service control pipe interrupts. */
 	if (isr0 & USBDC_UDCISR0_IR(0))
 		pxaudc_ep0_intr(sc);
+
+	for (i = 1; i < 24; i++) {
+		if (i < 16) {
+			if (USBDC_UDCISR0_IRs(isr0,i))
+				pxaudc_epN_intr(sc, i,
+				    USBDC_UDCISR0_IRs(isr0,i));
+		} else {
+			if (USBDC_UDCISR1_IRs(isr1,i))
+				pxaudc_epN_intr(sc, i,
+				    USBDC_UDCISR1_IRs(isr1,i));
+		}
+	}
 
 	if (isr1 & USBDC_UDCISR1_IRSU) {
 		/* suspend ?? */
@@ -883,16 +908,19 @@ ret:
 }
 
 void
-pxaudc_epN_intr(struct pxaudc_softc *sc, int ep)
+pxaudc_epN_intr(struct pxaudc_softc *sc, int ep, int isr)
 {
+	struct pxaudc_pipe *ppipe;
+	usbf_pipe_handle pipe;
+	int dir;
+
 	/* should not occur before device is configured */
 	if (sc->sc_cn == 0)
 		return;
+	if (isr &  2)
+		printf("ep%d: fifo error\n", ep); /* XXX */
 
 	/* faster method of determining direction? */
-	struct pxaudc_pipe *ppipe;
-	usbf_pipe_handle pipe = NULL;
-	int dir;
 	ppipe = sc->sc_pipe[ep];
 
 	if (ppipe == NULL)
@@ -935,8 +963,7 @@ pxaudc_ep0_intr(struct pxaudc_softc *sc)
 
 	csr0 = CSR_READ_4(sc, USBDC_UDCCSR0);
 	DPRINTF(10,("pxaudc_ep0_intr: csr0=%b\n", csr0, USBDC_UDCCSR0_BITS));
-
-	delay(100);
+	delay (25);
 
 	ppipe = sc->sc_pipe[0];
 	if (ppipe != NULL) {
