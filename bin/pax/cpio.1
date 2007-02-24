@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpio.1,v 1.23 2006/01/03 17:22:47 jmc Exp $
+.\"	$OpenBSD: cpio.1,v 1.24 2007/02/24 09:29:55 jmc Exp $
 .\"
 .\" Copyright (c) 1997 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: cpio.1,v 1.23 2006/01/03 17:22:47 jmc Exp $
+.\"	$OpenBSD: cpio.1,v 1.24 2007/02/24 09:29:55 jmc Exp $
 .\"
 .Dd February 16, 1997
 .Dt CPIO 1
@@ -34,28 +34,28 @@
 .Sh SYNOPSIS
 .Nm cpio
 .Fl o
-.Op Fl aABcLvzZ
+.Op Fl AaBcLvZz
 .Op Fl C Ar bytes
 .Op Fl F Ar archive
 .Op Fl H Ar format
 .Op Fl O Ar archive
-.Ar "< name-list"
-.Op Ar "> archive"
+.Ar \*(Lt name-list
+.Op Ar \*(Gt archive
 .Nm cpio
 .Fl i
-.Op Fl bBcdfmrsStuvzZ6
+.Op Fl 6BbcdfmrSstuvZz
 .Op Fl C Ar bytes
 .Op Fl E Ar file
 .Op Fl F Ar archive
 .Op Fl H Ar format
 .Op Fl I Ar archive
-.Op Ar "pattern ..."
-.Op Ar "< archive"
+.Op Ar pattern ...
+.Op Ar \*(Lt archive
 .Nm cpio
 .Fl p
-.Op Fl adlLmuv
+.Op Fl adLlmuv
 .Ar destination-directory
-.Ar "< name-list"
+.Ar \*(Lt name-list
 .Sh DESCRIPTION
 The
 .Nm
@@ -71,23 +71,21 @@ Reads the list of files to store in the
 archive from standard input, and writes the archive on standard
 output.
 .Bl -tag -width Ds
+.It Fl A
+Append to the specified archive.
 .It Fl a
 Reset the access times on files that have been copied to the
 archive.
-.It Fl A
-Append to the specified archive.
 .It Fl B
 Set block size of output to 5120 bytes.
+.It Fl C Ar bytes
+Set the block size of output to
+.Ar bytes .
 .It Fl c
 Use ASCII format for
 .Nm
 header for portability.
-.It Fl C Ar bytes
-Set the block size of output to
-.Ar bytes .
 .It Fl F Ar archive
-.It Fl O Ar archive
-Use the specified file name as the archive to write to.
 .It Fl H Ar format
 Write the archive in the specified format.
 Recognized formats are:
@@ -112,16 +110,18 @@ POSIX ustar format.
 .El
 .It Fl L
 Follow symbolic links.
+.It Fl O Ar archive
+Use the specified file name as the archive to write to.
 .It Fl v
 Be verbose about operations.
 List filenames as they are written to the archive.
-.It Fl z
-Compress archive using
-.Xr gzip 1
-format.
 .It Fl Z
 Compress archive using
 .Xr compress 1
+format.
+.It Fl z
+Compress archive using
+.Xr gzip 1
 format.
 .El
 .It Fl i
@@ -131,30 +131,33 @@ standard input and extracts files matching the
 .Ar patterns
 that were specified on the command line.
 .Bl -tag -width Ds
+.It Fl 6
+Process old-style
+.Nm
+format archives.
+.It Fl B
+Set the block size of the archive being read to 5120 bytes.
 .It Fl b
 Do byte and word swapping after reading in data from the
 archive, for restoring archives created on systems with
 a different byte order.
-.It Fl B
-Set the block size of the archive being read to 5120 bytes.
-.It Fl c
-Expect the archive headers to be in ASCII format.
 .It Fl C Ar bytes
 Read archive written with a block size of
 .Ar bytes .
+.It Fl c
+Expect the archive headers to be in ASCII format.
 .It Fl d
 Create any intermediate directories as needed during
 restore.
 .It Fl E Ar file
 Read list of file name patterns to extract or list from
 .Ar file .
+.It Fl F Ar archive , Fl I Ar archive
+Use the specified file as the input for the archive.
 .It Fl f
 Restore all files except those matching the
 .Ar patterns
 given on the command line.
-.It Fl F Ar archive
-.It Fl I Ar archive
-Use the specified file as the input for the archive.
 .It Fl H Ar format
 Read an archive of the specified format.
 Recognized formats are:
@@ -181,10 +184,10 @@ POSIX ustar format.
 Restore modification times on files.
 .It Fl r
 Rename restored files interactively.
-.It Fl s
-Swap bytes after reading data from the archive.
 .It Fl S
 Swap words after reading data from the archive.
+.It Fl s
+Swap bytes after reading data from the archive.
 .It Fl t
 Only list the contents of the archive, no files or
 directories will be created.
@@ -194,18 +197,14 @@ older than the one that will be overwritten.
 .It Fl v
 Be verbose about operations.
 List filenames as they are copied in from the archive.
-.It Fl z
-Uncompress archive using
-.Xr gzip 1
-format.
 .It Fl Z
 Uncompress archive using
 .Xr compress 1
 format.
-.It Fl 6
-Process old-style
-.Nm
-format archives.
+.It Fl z
+Uncompress archive using
+.Xr gzip 1
+format.
 .El
 .It Fl p
 Copy files from one location to another in a single pass.
@@ -219,11 +218,11 @@ Reset the access times on files that have been copied.
 .It Fl d
 Create any intermediate directories as needed to write
 the files at the new location.
+.It Fl L
+Follow symbolic links.
 .It Fl l
 When possible, link files rather than creating an
 extra copy.
-.It Fl L
-Follow symbolic links.
 .It Fl m
 Restore modification times on files.
 .It Fl u

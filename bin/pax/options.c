@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.65 2006/11/17 08:38:04 otto Exp $	*/
+/*	$OpenBSD: options.c,v 1.66 2007/02/24 09:29:55 jmc Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: options.c,v 1.65 2006/11/17 08:38:04 otto Exp $";
+static const char rcsid[] = "$OpenBSD: options.c,v 1.66 2007/02/24 09:29:55 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -1576,10 +1576,10 @@ tar_usage(void)
 void
 cpio_usage(void)
 {
-	(void)fputs("usage: cpio -o [-aABcLvVzZ] [-C bytes] [-H format] [-O archive]\n", stderr);
-	(void)fputs("               [-F archive] < name-list [> archive]\n", stderr);
-	(void)fputs("       cpio -i [-bBcdfmnrsStuvVzZ6] [-C bytes] [-E file] [-H format]\n", stderr);
-	(void)fputs("               [-I archive] [-F archive] [pattern...] [< archive]\n", stderr);
-	(void)fputs("       cpio -p [-adlLmuvV] destination-directory < name-list\n", stderr);
+	(void)fputs("usage: cpio -o [-AaBcLvZz] [-C bytes] [-F archive] [-H format]\n", stderr);
+	(void)fputs("               [-O archive] < name-list [> archive]\n", stderr);
+	(void)fputs("       cpio -i [-6BbcdfmrSstuvZz] [-C bytes] [-E file] [-F archive]\n", stderr);
+	(void)fputs("               [-H format] [-I archive] [pattern...] [< archive]\n", stderr);
+	(void)fputs("       cpio -p [-adLlmuv] destination-directory < name-list\n", stderr);
 	exit(1);
 }
