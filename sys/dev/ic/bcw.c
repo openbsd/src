@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.56 2007/02/24 11:59:33 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.57 2007/02/24 23:05:04 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -743,13 +743,15 @@ bcw_attach(struct bcw_softc *sc)
 		sc->sc_havecommon = 1;
 		/* XXX do early init of sc_core[0] here */
 		sbval = BCW_READ(sc, BCW_CORE_COMMON_CHIPID);
-		sc->sc_chipid = (sbval & 0x0000ffff);
-		sc->sc_chiprev =
-		    ((sbval & 0x00007000) >> 8 | (sbval & 0x0000000f));
-		if ((sc->sc_chiprev == 4) || (sc->sc_chiprev >= 6))
+		sc->sc_chip_id = (sbval & 0x0000ffff);
+		sc->sc_chip_rev = (sbval & 0x000f0000) >> 16;
+		sc->sc_chip_package = (sbval & 0x00f00000) >> 20;
+		//sc->sc_chip_rev =
+		//    ((sbval & 0x00007000) >> 8 | (sbval & 0x0000000f));
+		if ((sc->sc_chip_rev == 4) || (sc->sc_chip_rev >= 6))
 			sc->sc_numcores = (sbval & 0x0f000000) >> 24;
 		else
-			switch (sc->sc_chipid) {
+			switch (sc->sc_chip_id) {
 			case 0x4710:
 			case 0x4610:
 			case 0x4704:
@@ -785,7 +787,7 @@ bcw_attach(struct bcw_softc *sc)
 		case 0x4713:
 		case 0x4714:
 		case 0x4715:
-			sc->sc_chipid = 0x4710;
+			sc->sc_chip_id = 0x4710;
 			sc->sc_numcores = 9;
 			break;
 		case 0x4610:
@@ -794,34 +796,35 @@ bcw_attach(struct bcw_softc *sc)
 		case 0x4613:
 		case 0x4614:
 		case 0x4615:
-			sc->sc_chipid = 0x4610;
+			sc->sc_chip_id = 0x4610;
 			sc->sc_numcores = 9;
 			break;
 		case 0x4402:
 		case 0x4403:
-			sc->sc_chipid = 0x4402;
+			sc->sc_chip_id = 0x4402;
 			sc->sc_numcores = 3;
 			break;
 		case 0x4305:
 		case 0x4306:
 		case 0x4307:
-			sc->sc_chipid = 0x4307;
+			sc->sc_chip_id = 0x4307;
 			sc->sc_numcores = 5;
 			break;
 		case 0x4301:
-			sc->sc_chipid = 0x4301;
+			sc->sc_chip_id = 0x4301;
 			sc->sc_numcores = 5;
 			break;
 		default:
-			sc->sc_chipid = sc->sc_prodid;
+			sc->sc_chip_id = sc->sc_prodid;
 			/* Set to max */
 			sc->sc_numcores = BCW_MAX_CORES;
 		} /* end of switch */
 	} /* End of if/else */
 
-	DPRINTF(("%s: ChipID=0x%x, ChipRev=0x%x, NumCores=%d\n",
-	    sc->sc_dev.dv_xname, sc->sc_chipid,
-	    sc->sc_chiprev, sc->sc_numcores));
+	DPRINTF(("%s: ChipID=0x%x, ChipRev=0x%x, ChipPkg=0x%x, NumCores=%d\n",
+	    sc->sc_dev.dv_xname,
+	    sc->sc_chip_id, sc->sc_chip_rev, sc->sc_chip_package,
+	    sc->sc_numcores));
 
        /* Reset and Identify each core */
        for (i = 0; i < sc->sc_numcores; i++) {
@@ -919,14 +922,14 @@ bcw_attach(struct bcw_softc *sc)
 	 * Radio registers, and requires seperate 16bit reads from the low
 	 * and the high data addresses.
 	 */
-	if (sc->sc_chipid != 0x4317) {
+	if (sc->sc_chip_id != 0x4317) {
 		BCW_WRITE16(sc, BCW_RADIO_CONTROL, BCW_RADIO_ID);
 		sbval = BCW_READ16(sc, BCW_RADIO_DATAHIGH);
 		sbval <<= 16;
 		BCW_WRITE16(sc, BCW_RADIO_CONTROL, BCW_RADIO_ID);
 		sc->sc_radio_mnf = sbval | BCW_READ16(sc, BCW_RADIO_DATALOW);
 	} else {
-		switch (sc->sc_chiprev) {
+		switch (sc->sc_chip_rev) {
 		case 0:	
 			sc->sc_radio_mnf = 0x3205017F;
 			break;
@@ -1703,8 +1706,8 @@ bcw_init(struct ifnet *ifp)
 	bcw_radio_on(sc);
 
 	BCW_WRITE16(sc, 0x03e6, 0);
-	if ((error = bcw_phy_init(sc)))
-		return (error);
+	//if ((error = bcw_phy_init(sc)))
+	//	return (error);
 
 	return (0);
 
@@ -2587,7 +2590,7 @@ bcw_powercontrol_crystal_off(struct bcw_softc *sc)
 	uint32_t sbval;
 
 	/* XXX Return if radio is hardware disabled */
-	if (sc->sc_chiprev < 5)
+	if (sc->sc_chip_rev < 5)
 		return;
 	if ((sc->sc_boardflags & BCW_BF_XTAL) == BCW_BF_XTAL)
 		return;
@@ -3050,7 +3053,7 @@ bcw_gpio_init(struct bcw_softc *sc)
 	mask = 0x0000001f;
 	set = 0x0000000f;
 
-	if (sc->sc_chipid == 0x4301) {
+	if (sc->sc_chip_id == 0x4301) {
 		mask |= 0x0060;
 		set |= 0x0060;
 	}
@@ -3066,7 +3069,7 @@ bcw_gpio_init(struct bcw_softc *sc)
 		mask |= 0x0200;
 		set |= 0x0200;
 	}
-	if (sc->sc_chiprev >= 2)
+	if (sc->sc_chip_rev >= 2)
 		mask |= 0x0010; /* FIXME this is redundant */
 
 	BCW_WRITE(sc, BCW_GPIO_CTRL, (BCW_READ(sc, BCW_GPIO_CTRL) & mask) |
@@ -3215,7 +3218,7 @@ bcw_phy_initg(struct bcw_softc *sc)
 	if (sc->sc_radio_rev == 8)
 		bcw_phy_write16(sc, 0x0805, 0x3230);
 	bcw_phy_init_pctl(sc);
-	if (sc->sc_chipid == 0x4306 && sc->sc_chiprev == 2) {
+	if (sc->sc_chip_id == 0x4306 && sc->sc_chip_rev == 2) {
 		bcw_phy_write16(sc, 0x0429, bcw_phy_read16(sc, 0x0429) &
 		    0xbfff);
 		bcw_phy_write16(sc, 0x04c3, bcw_phy_read16(sc, 0x04c3) &

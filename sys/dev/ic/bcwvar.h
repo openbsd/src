@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.22 2007/02/24 11:59:33 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.23 2007/02/24 23:05:04 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -223,8 +223,9 @@ struct bcw_softc {
 	int			sc_txsnext;	/* next available tx slot */
 	struct timeout		sc_timeout;
 	/* Break these out into seperate structs */
-	uint16_t		sc_chipid;	/* Chip ID */
-	uint16_t		sc_chiprev;	/* Chip Revision */
+	uint16_t		sc_chip_id;		/* Chip ID */
+	uint16_t		sc_chip_rev;		/* Chip Revision */
+	uint16_t		sc_chip_package;	/* Chip Package */
 	uint16_t		sc_prodid;	/* Product ID */
 	struct bcw_core		sc_core[BCW_MAX_CORES];
 //	struct bcw_radio	radio[BCW_RADIO_MAX];
