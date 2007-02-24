@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.12 2007/02/20 01:56:12 ray Exp $	*/
+/*	$OpenBSD: units.c,v 1.13 2007/02/24 03:28:16 ray Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -463,6 +463,7 @@ static char buffer[100];	/* buffer for lookupunit answers with
 char *
 lookupunit(char *unit)
 {
+	size_t len;
 	int i;
 	char *copy;
 
@@ -471,9 +472,12 @@ lookupunit(char *unit)
 			return unittable[i].uval;
 	}
 
-	if (unit[strlen(unit) - 1] == '^') {
+	len = strlen(unit);
+	if (len == 0)
+		return NULL;
+	if (unit[len - 1] == '^') {
 		copy = dupstr(unit);
-		copy[strlen(copy) - 1] = '\0';
+		copy[len - 1] = '\0';
 		for (i = 0; i < unitcount; i++) {
 			if (!strcmp(unittable[i].uname, copy)) {
 				strlcpy(buffer, copy, sizeof(buffer));
@@ -483,9 +487,10 @@ lookupunit(char *unit)
 		}
 		free(copy);
 	}
-	if (unit[strlen(unit) - 1] == 's') {
+	if (unit[len - 1] == 's') {
 		copy = dupstr(unit);
-		copy[strlen(copy) - 1] = 0;
+		copy[len - 1] = '\0';
+		--len;
 		for (i = 0; i < unitcount; i++) {
 			if (!strcmp(unittable[i].uname, copy)) {
 				strlcpy(buffer, copy, sizeof(buffer));
@@ -493,8 +498,8 @@ lookupunit(char *unit)
 				return buffer;
 			}
 		}
-		if (copy[strlen(copy) - 1] == 'e') {
-			copy[strlen(copy) - 1] = 0;
+		if (len != 0 && copy[len - 1] == 'e') {
+			copy[len - 1] = 0;
 			for (i = 0; i < unitcount; i++) {
 				if (!strcmp(unittable[i].uname, copy)) {
 					strlcpy(buffer, copy, sizeof(buffer));
@@ -506,9 +511,9 @@ lookupunit(char *unit)
 		free(copy);
 	}
 	for (i = 0; i < prefixcount; i++) {
-		if (!strncmp(prefixtable[i].prefixname, unit,
-			strlen(prefixtable[i].prefixname))) {
-			unit += strlen(prefixtable[i].prefixname);
+		len = strlen(prefixtable[i].prefixname);
+		if (!strncmp(prefixtable[i].prefixname, unit, len)) {
+			unit += len;
 			if (!strlen(unit) || lookupunit(unit)) {
 				snprintf(buffer, sizeof(buffer),
 				    "%s %s", prefixtable[i].prefixval, unit);
@@ -516,7 +521,7 @@ lookupunit(char *unit)
 			}
 		}
 	}
-	return 0;
+	return NULL;
 }
 
 
