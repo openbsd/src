@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.21 2006/03/07 16:40:09 kjell Exp $
+.\"	$OpenBSD: dc.1,v 1.22 2007/02/24 08:56:42 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -186,12 +186,12 @@ A one is pushed if the top of the stack is equal to the second number
 on the stack.
 A zero is pushed otherwise.
 This is a non-portable extension.
+.It Ic I
+Pushes the input base on the top of the stack.
 .It Ic i
 The top value on the stack is popped and used as the
 base for further input.
 The initial input base is 10.
-.It Ic I
-Pushes the input base on the top of the stack.
 .It Ic J
 Pop the top value from the stack.
 The recursion level is popped by that value and, following that,
