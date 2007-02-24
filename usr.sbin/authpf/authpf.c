@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.103 2007/02/24 17:21:04 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.104 2007/02/24 17:35:08 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -86,6 +86,10 @@ main(int argc, char *argv[])
 	login_cap_t	*lc;
 
 	config = fopen(PATH_CONFFILE, "r");
+	if (config == NULL) {
+		syslog(LOG_ERR, "can not open %s (%m)", PATH_CONFFILE);
+		exit(1);
+	}
 
 	if ((cp = getenv("SSH_TTY")) == NULL) {
 		syslog(LOG_ERR, "non-interactive session connection for authpf");
@@ -268,8 +272,8 @@ main(int argc, char *argv[])
 		do_death(0);
 	}
 
-	if (config == NULL || read_config(config)) {
-		syslog(LOG_INFO, "bad or nonexistent %s", PATH_CONFFILE);
+	if (read_config(config)) {
+		syslog(LOG_ERR, "invalid config file %s", PATH_CONFFILE);
 		do_death(0);
 	}
 
