@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.101 2007/02/22 21:54:23 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.102 2007/02/24 17:14:26 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -56,7 +56,7 @@ static int	allowed_luser(char *);
 static int	check_luser(char *, char *);
 static int	remove_stale_rulesets(void);
 static int	change_filter(int, const char *, const char *);
-static int	change_table(int, const char *, const char *);
+static int	change_table(int, const char *);
 static void	authpf_kill_states(void);
 
 int	dev;			/* pf device */
@@ -297,7 +297,7 @@ main(int argc, char *argv[])
 		printf("Unable to modify filters\r\n");
 		do_death(0);
 	}
-	if (change_table(1, luser, ipsrc) == -1) {
+	if (change_table(1, ipsrc) == -1) {
 		printf("Unable to modify table\r\n");
 		change_filter(0, luser, ipsrc);
 		do_death(0);
@@ -684,7 +684,8 @@ change_filter(int add, const char *luser, const char *ipsrc)
 
 	switch (pid = fork()) {
 	case -1:
-		err(1, "fork failed");
+		syslog(LOG_ERR, "fork failed");
+		goto error;
 	case 0:
 		/* revoke group privs before exec */
 		gid = getgid();
@@ -699,10 +700,8 @@ change_filter(int add, const char *luser, const char *ipsrc)
 	/* parent */
 	waitpid(pid, &s, 0);
 	if (s != 0) {
-		if (WIFEXITED(s)) {
-			syslog(LOG_ERR, "pfctl exited abnormally");
-			goto error;
-		}
+		syslog(LOG_ERR, "pfctl exited abnormally");
+		goto error;
 	}
 
 	if (add) {
@@ -718,15 +717,10 @@ no_mem:
 	syslog(LOG_ERR, "malloc failed");
 error:
 	free(fdpath);
-	fdpath = NULL;
 	free(rsn);
-	rsn = NULL;
 	free(userstr);
-	userstr = NULL;
 	free(ipstr);
-	ipstr = NULL;
 	free(fn);
-	fn = NULL;
 	return (-1);
 }
 
@@ -734,7 +728,7 @@ error:
  * Add/remove this IP from the "authpf_users" table.
  */
 static int
-change_table(int add, const char *luser, const char *ipsrc)
+change_table(int add, const char *ipsrc)
 {
 	struct pfioc_table	io;
 	struct pfr_addr		addr;
@@ -830,7 +824,7 @@ do_death(int active)
 
 	if (active) {
 		change_filter(0, luser, ipsrc);
-		change_table(0, luser, ipsrc);
+		change_table(0, ipsrc);
 		authpf_kill_states();
 		remove_stale_rulesets();
 	}
