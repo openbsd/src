@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.24 2007/02/24 00:22:32 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.25 2007/02/24 15:48:54 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -517,8 +517,9 @@ Valid options are:
 .Bl -tag -width Ds
 .It Ic ciphers Ar string
 Set the string defining the SSL cipher suite.
-If not specified, the default suite defined by the SSL library will be
-used.
+If not specified, the default value 
+.Ar HIGH
+to force strong crypto cipher suites will be used.
 See the
 .Sx CIPHERS
 section of
@@ -536,17 +537,20 @@ will disable the SSL session cache.
 .Op Ic no
 .Ic sslv2
 .Xc
-Enable the SSLv2 protocol.
+Enable the SSLv2 protocol,
+disabled by default.
 .It Xo
 .Op Ic no
 .Ic sslv3
 .Xc
-Enable the SSLv3 protocol.
+Disable the SSLv3 protocol,
+enabled by default.
 .It Xo
 .Op Ic no
 .Ic tlsv1
 .Xc
-Enable the TLSv1/SSLv3.1 protocol.
+Disable the TLSv1/SSLv3.1 protocol,
+enabled by default.
 .El
 .El
 .Pp
@@ -647,7 +651,7 @@ protocol http_ssl {
         change "Keep-Alive" to "$TIMEOUT"
 	url hash "sessid"
 
-	ssl { no sslv2, ciphers "HIGH" }
+	ssl { sslv2, ciphers "MEDIUM:HIGH" }
 }
 
 relay sslaccel {
