@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.55 2007/02/23 22:28:08 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.56 2007/02/24 11:59:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -173,7 +173,8 @@ void		bcw_radio_spw(struct bcw_softc *, uint8_t);
 int		bcw_radio_select_channel(struct bcw_softc *, uint8_t, int );
 uint16_t	bcw_radio_chan2freq_a(uint8_t);
 uint16_t	bcw_radio_chan2freq_bg(uint8_t);
-uint16_t	bcw_radio_defaultbaseband(struct bcw_softc *);
+uint16_t	bcw_radio_default_baseband_attenuation(struct bcw_softc *);
+uint16_t	bcw_radio_default_radio_attenuation(struct bcw_softc *);
 void		bcw_radio_clear_tssi(struct bcw_softc *);
 void		bcw_radio_set_tx_iq(struct bcw_softc *);
 uint16_t	bcw_radio_get_txgain_baseband(uint16_t);
@@ -886,11 +887,11 @@ bcw_attach(struct bcw_softc *sc)
 	 */
 	bcw_change_core(sc, sc->sc_core_80211->num);
 	sbval = BCW_READ16(sc, 0x3E0);
-	sc->sc_phy_version = (sbval & 0xf000) >> 12;
+	sc->sc_phy_ver = (sbval & 0xf000) >> 12;
 	sc->sc_phy_rev = sbval & 0xf;
 	sc->sc_phy_type = (sbval & 0xf00) >> 8;
 	DPRINTF(("%s: PHY version %d revision %d ",
-	    sc->sc_dev.dv_xname, sc->sc_phy_version, sc->sc_phy_rev));
+	    sc->sc_dev.dv_xname, sc->sc_phy_ver, sc->sc_phy_rev));
 	switch (sc->sc_phy_type) {
 	case BCW_PHY_TYPEA:
 		DPRINTF(("PHY %d (A)\n", sc->sc_phy_type));
@@ -1089,7 +1090,7 @@ bcw_attach(struct bcw_softc *sc)
 	BCW_WRITE(sc, BCW_SHM_CONTROL,
 	    (BCW_SHM_CONTROL_SHARED << 16) + BCW_SHM_MICROCODEFLAGSLOW - 2);
 	BCW_WRITE16(sc, BCW_SHM_DATAHIGH, sbval & 0x00ff);
-	BCW_WRITE16(sc, BCW_SHM_DATALOW, (sbval & 0xff00)>>16);
+	BCW_WRITE16(sc, BCW_SHM_DATALOW, (sbval & 0xff00) >> 16);
 
 	/*
 	 * Initialize the TSSI to DBM table
@@ -3424,6 +3425,8 @@ bcw_phy_initb6(struct bcw_softc *sc)
 {
 	uint16_t offset, val;
 
+	printf("trap 1\n");
+
 	bcw_phy_write16(sc, 0x003e, 0x817a);
 	bcw_radio_write16(sc, 0x007a, (bcw_radio_read16(sc, 0x007a) | 0x0058));
 
@@ -3543,7 +3546,7 @@ bcw_phy_initb6(struct bcw_softc *sc)
 	    0x0007);
 
 	bcw_radio_select_channel(sc, BCW_RADIO_DEFAULT_CHANNEL_BG, 0);
-
+	
 	bcw_phy_write16(sc, 0x0014, 0x0200);
 	if (sc->sc_radio_ver == 0x2050) {
 		if (sc->sc_radio_rev == 3 || sc->sc_radio_rev == 4 ||
@@ -3553,6 +3556,7 @@ bcw_phy_initb6(struct bcw_softc *sc)
 			bcw_phy_write16(sc, 0x002a, 0x88c2);
 	}
 	bcw_phy_write16(sc, 0x0038, 0x0668);
+	printf("trap 2\n");
 	bcw_radio_set_txpower_bg(sc, 0xffff, 0xffff, 0xffff);
 	if (sc->sc_radio_ver == 0x2050) {
 		if (sc->sc_radio_rev == 3 || sc->sc_radio_rev == 4 ||
@@ -3905,7 +3909,7 @@ bcw_phy_calc_loopback_gain(struct bcw_softc *sc)
 	bcw_phy_write16(sc, 0x005a, 0x0780);
 	bcw_phy_write16(sc, 0x0059, 0xc810);
 	bcw_phy_write16(sc, 0x0058, 0x000d);
-	if (sc->sc_phy_version == 9)
+	if (sc->sc_phy_ver == 9)
 		bcw_phy_write16(sc, 0x0003, 0x0122);
 	else
 		bcw_phy_write16(sc, 0x000a, bcw_phy_read16(sc, 0x000a) |
@@ -4197,14 +4201,14 @@ bcw_phy_set_baseband_atten(struct bcw_softc *sc,
 {
 	uint16_t val;
 
-	if (sc->sc_phy_version == 0) {
+	if (sc->sc_phy_ver == 0) {
 		val = (BCW_READ16(sc, 0x03e6) & 0xfff0);
 		val |= (baseband_atten & 0x000f);
 		BCW_WRITE16(sc, 0x03e6, val);
 		return;
 	}
 
-	if (sc->sc_phy_version > 1) {
+	if (sc->sc_phy_ver > 1) {
 		val = bcw_phy_read16(sc, 0x0060) & ~0x003c;
 		val |= (baseband_atten << 2) & 0x003c;
 	} else {
@@ -4860,7 +4864,11 @@ bcw_phy_lo_adjust(struct bcw_softc *sc, int fixed)
 	else
 		pair = bcw_phy_current_lopair(sc);
 
+	printf("trap 4\n");
+
 	bcw_phy_lo_write(sc, pair);
+
+	printf("trap 4 end\n");
 }
 
 void
@@ -4877,8 +4885,12 @@ bcw_phy_lo_write(struct bcw_softc *sc, struct bcw_lopair *pair)
 {
 	uint16_t val;
 
+	printf("trap 5\n");
+
 	val = (uint8_t)(pair->low);
 	val |= ((uint8_t)(pair->high)) << 8;
+
+	printf("trap 5 end\n");
 
 #ifdef BCW_DEBUG
 	if (pair->low < -8 || pair->low > 8 ||
@@ -4889,7 +4901,11 @@ bcw_phy_lo_write(struct bcw_softc *sc, struct bcw_lopair *pair)
 		    (unsigned long)(pair - sc->sc_phy_lopairs));
 #endif
 
+	printf("trap 6\n");
+
 	bcw_phy_write16(sc, BCW_PHY_G_LO_CONTROL, val);
+
+	printf("trap 6 end\n");
 }
 
 struct bcw_lopair *
@@ -4901,6 +4917,8 @@ bcw_phy_find_lopair(struct bcw_softc *sc, uint16_t baseband_atten,
 
 	if (baseband_atten > 6)
 		baseband_atten = 6;
+
+	/* XXX assert() */
 
 	if (tx == 3)
 		return (bcw_get_lopair(sc, radio_atten, baseband_atten));
@@ -5464,9 +5482,9 @@ bcw_radio_set_txpower_bg(struct bcw_softc *sc, uint16_t baseband_atten,
 {
 	if (baseband_atten == 0xffff)
 		baseband_atten = sc->sc_radio_baseband_atten;
-	if (radio_atten == 0xfff)
+	if (radio_atten == 0xffff)
 		radio_atten = sc->sc_radio_radio_atten;
-	if (txpower == 0xfff)
+	if (txpower == 0xffff)
 		txpower = sc->sc_radio_txctl1;
 
 	sc->sc_radio_baseband_atten = baseband_atten;
@@ -5481,6 +5499,8 @@ bcw_radio_set_txpower_bg(struct bcw_softc *sc, uint16_t baseband_atten,
 	if (sc->sc_radio_ver == 0x2050)
 		bcw_radio_write16(sc, 0x0052, (bcw_radio_read16(sc, 0x0052) &
 		    ~0x0070) | ((txpower << 4) & 0x0070));
+
+	printf("trap 3\n");
 
 	/* XXX unclear specs */
 	if (sc->sc_phy_type == BCW_PHY_TYPEG)
@@ -5535,10 +5555,10 @@ bcw_radio_init2050(struct bcw_softc *sc)
 	backup[12] = BCW_READ16(sc, BCW_MMIO_CHANNEL_EXT);
 
 	/* initialization */
-	if (sc->sc_phy_version == 0)
+	if (sc->sc_phy_ver == 0)
 		BCW_WRITE16(sc, 0x03e6, 0x0122);
 	else {
-		if (sc->sc_phy_version >= 2)
+		if (sc->sc_phy_ver >= 2)
 			BCW_WRITE16(sc, 0x03e6, 0x0040);
 		BCW_WRITE16(sc, BCW_MMIO_CHANNEL_EXT,
 		    (BCW_READ16(sc, BCW_MMIO_CHANNEL_EXT) | 0x2000));
@@ -5631,7 +5651,7 @@ bcw_radio_init2050(struct bcw_softc *sc)
 	bcw_phy_write16(sc, 0x0059, backup[17]);
 	bcw_phy_write16(sc, 0x0058, backup[18]);
 	BCW_WRITE16(sc, 0x03e6, backup[11]);
-	if (sc->sc_phy_version != 0)
+	if (sc->sc_phy_ver != 0)
 		BCW_WRITE16(sc, BCW_MMIO_CHANNEL_EXT, backup[12]);
 	bcw_phy_write16(sc, 0x0035, backup[10]);
 	bcw_radio_select_channel(sc, sc->sc_radio_channel, 1);
@@ -5809,13 +5829,43 @@ bcw_radio_chan2freq_bg(uint8_t channel)
 }
 
 uint16_t
-bcw_radio_defaultbaseband(struct bcw_softc *sc)
+bcw_radio_default_baseband_attenuation(struct bcw_softc *sc)
 {
 	if (sc->sc_radio_ver == 0x2050 && sc->sc_radio_rev < 6)
 		return (0);
 
 	return (2);
-} 
+}
+
+uint16_t
+bcw_radio_default_radio_attenuation(struct bcw_softc *sc)
+{
+	uint16_t att = 0xffff;
+
+	if (sc->sc_phy_type == BCW_PHY_TYPEA)
+		return (0x60);
+
+	switch (sc->sc_radio_ver) {
+	case 0x2053:
+		switch (sc->sc_radio_rev) {
+		case 1:
+			att = 6;
+			break;
+		}
+		break;
+	case 0x2050:
+		switch (sc->sc_radio_rev) {
+		case 0:
+			att = 5;
+			break;
+		case 1:
+			if (sc->sc_phy_type == BCW_PHY_TYPEG) {
+			}
+		}
+	}
+
+	return (0);
+}
 
 void
 bcw_radio_clear_tssi(struct bcw_softc *sc)

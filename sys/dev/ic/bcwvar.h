@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.21 2007/02/23 19:44:37 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.22 2007/02/24 11:59:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -228,7 +228,7 @@ struct bcw_softc {
 	uint16_t		sc_prodid;	/* Product ID */
 	struct bcw_core		sc_core[BCW_MAX_CORES];
 //	struct bcw_radio	radio[BCW_RADIO_MAX];
-	uint16_t		sc_phy_version;
+	uint16_t		sc_phy_ver;
 	uint16_t		sc_phy_type;
 	uint16_t		sc_phy_rev;
 	uint8_t			sc_phy_connected:1, /* XXX */
