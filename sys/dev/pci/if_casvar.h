@@ -1,0 +1,263 @@
+/*	$OpenBSD: if_casvar.h,v 1.1 2007/02/24 20:13:34 kettenis Exp $	*/
+
+/*
+ *
+ * Copyright (C) 2001 Eduardo Horvath.
+ * All rights reserved.
+ *
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR  ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR  BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ */
+
+#ifndef	_IF_CASVAR_H
+#define	_IF_CASVAR_H
+
+#include <sys/queue.h>
+#include <sys/timeout.h>
+
+/*
+ * Misc. definitions for Sun Cassini ethernet controllers.
+ */
+
+/*
+ * Transmit descriptor list size.  This is arbitrary, but allocate
+ * enough descriptors for 64 pending transmissions and 16 segments
+ * per packet.
+ */
+#define	CAS_NTXSEGS		16
+
+#define	CAS_TXQUEUELEN		64
+#define	CAS_NTXDESC		(CAS_TXQUEUELEN * CAS_NTXSEGS)
+#define	CAS_NTXDESC_MASK	(CAS_NTXDESC - 1)
+#define	CAS_NEXTTX(x)		((x + 1) & CAS_NTXDESC_MASK)
+
+struct cas_sxd {
+	struct mbuf *sd_mbuf;
+	bus_dmamap_t sd_map;
+};
+
+/*
+ * Receive descriptor list size.  We have one Rx buffer per incoming
+ * packet, so this logic is a little simpler.
+ */
+#define	CAS_NRXDESC		128
+#define	CAS_NRXDESC_MASK	(CAS_NRXDESC - 1)
+#define	CAS_NEXTRX(x)		((x + 1) & CAS_NRXDESC_MASK)
+
+/*
+ * Control structures are DMA'd to the GEM chip.  We allocate them in
+ * a single clump that maps to a single DMA segment to make several things
+ * easier.
+ */
+struct cas_control_data {
+	/*
+	 * The transmit descriptors.
+	 */
+	struct cas_desc gcd_txdescs[CAS_NTXDESC];
+
+	/*
+	 * The receive descriptors.
+	 */
+	struct cas_desc gcd_rxdescs[CAS_NRXDESC];
+};
+
+#define	CAS_CDOFF(x)		offsetof(struct cas_control_data, x)
+#define	CAS_CDTXOFF(x)		CAS_CDOFF(gcd_txdescs[(x)])
+#define	CAS_CDRXOFF(x)		CAS_CDOFF(gcd_rxdescs[(x)])
+
+/*
+ * Software state for receive jobs.
+ */
+struct cas_rxsoft {
+	struct mbuf *rxs_mbuf;		/* head of our mbuf chain */
+	bus_dmamap_t rxs_dmamap;	/* our DMA map */
+};
+
+
+/*
+ * Table which describes the transmit threshold mode.  We generally
+ * start at index 0.  Whenever we get a transmit underrun, we increment
+ * our index, falling back if we encounter the NULL terminator.
+ */
+struct cas_txthresh_tab {
+	u_int32_t txth_opmode;		/* OPMODE bits */
+	const char *txth_name;		/* name of mode */
+};
+
+/*
+ * Some misc. statics, useful for debugging.
+ */
+struct cas_stats {
+	u_long		ts_tx_uf;	/* transmit underflow errors */
+	u_long		ts_tx_to;	/* transmit jabber timeouts */
+	u_long		ts_tx_ec;	/* excessive collision count */
+	u_long		ts_tx_lc;	/* late collision count */
+};
+
+/*
+ * Software state per device.
+ */
+struct cas_softc {
+	struct device	sc_dev;		/* generic device information */
+	struct arpcom	sc_arpcom;	/* ethernet common data */
+	struct mii_data	sc_mii;		/* MII media control */
+#define sc_media	sc_mii.mii_media/* shorthand */
+	struct timeout	sc_tick_ch;	/* tick callout */
+
+	bus_space_tag_t	sc_memt;
+	bus_space_handle_t sc_memh;
+	void		*sc_ih;
+
+	bus_dma_tag_t	sc_dmatag;	/* bus dma tag */
+	bus_dmamap_t	sc_dmamap;	/* bus dma handle */
+	int		sc_burst;	/* DVMA burst size in effect */
+	int		sc_phys[2];	/* MII instance -> PHY map */
+
+	int		sc_if_flags;
+
+	int		sc_mif_config;	/* Selected MII reg setting */
+
+	void *sc_sdhook;		/* shutdown hook */
+	void *sc_powerhook;		/* power management hook */
+
+	struct cas_stats sc_stats;	/* debugging stats */
+
+	/*
+	 * Ring buffer DMA stuff.
+	 */
+	bus_dma_segment_t sc_cdseg;	/* control data memory */
+	int		sc_cdnseg;	/* number of segments */
+	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
+#define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
+
+	/*
+	 * Software state for transmit and receive descriptors.
+	 */
+	struct cas_sxd sc_txd[CAS_NTXDESC];
+	u_int32_t sc_tx_cnt, sc_tx_prod, sc_tx_cons;
+
+	struct cas_rxsoft sc_rxsoft[CAS_NRXDESC];
+
+	/*
+	 * Control data structures.
+	 */
+	struct cas_control_data *sc_control_data;
+#define	sc_txdescs	sc_control_data->gcd_txdescs
+#define	sc_rxdescs	sc_control_data->gcd_rxdescs
+
+	int			sc_txfree;		/* number of free Tx descriptors */
+	int			sc_txnext;		/* next ready Tx descriptor */
+
+	u_int32_t		sc_tdctl_ch;		/* conditional desc chaining */
+	u_int32_t		sc_tdctl_er;		/* conditional desc end-of-ring */
+
+	u_int32_t		sc_setup_fsls;	/* FS|LS on setup descriptor */
+
+	int			sc_rxptr;		/* next ready RX descriptor/descsoft */
+	int			sc_rxfifosize;
+
+	/* ========== */
+	int			sc_inited;
+	int			sc_debug;
+	void			*sc_sh;		/* shutdownhook cookie */
+};
+
+#define	CAS_DMA_READ(sc, v)	letoh64(v)
+#define	CAS_DMA_WRITE(sc, v)	htole64(v)
+
+/*
+ * This macro returns the current media entry for *non-MII* media.
+ */
+#define	CAS_CURRENT_MEDIA(sc)						\
+	(IFM_SUBTYPE((sc)->sc_mii.mii_media.ifm_cur->ifm_media) != IFM_AUTO ? \
+	 (sc)->sc_mii.mii_media.ifm_cur : (sc)->sc_nway_active)
+
+/*
+ * This macro determines if a change to media-related OPMODE bits requires
+ * a chip reset.
+ */
+#define	CAS_MEDIA_NEEDSRESET(sc, newbits)				\
+	(((sc)->sc_opmode & OPMODE_MEDIA_BITS) !=			\
+	 ((newbits) & OPMODE_MEDIA_BITS))
+
+#define	CAS_CDTXADDR(sc, x)	((sc)->sc_cddma + CAS_CDTXOFF((x)))
+#define	CAS_CDRXADDR(sc, x)	((sc)->sc_cddma + CAS_CDRXOFF((x)))
+
+#define	CAS_CDSPADDR(sc)	((sc)->sc_cddma + CAS_CDSPOFF)
+
+#define	CAS_CDTXSYNC(sc, x, n, ops)					\
+do {									\
+	int __x, __n;							\
+									\
+	__x = (x);							\
+	__n = (n);							\
+									\
+	/* If it will wrap around, sync to the end of the ring. */	\
+	if ((__x + __n) > CAS_NTXDESC) {				\
+		bus_dmamap_sync((sc)->sc_dmatag, (sc)->sc_cddmamap,	\
+		    CAS_CDTXOFF(__x), sizeof(struct cas_desc) *		\
+		    (CAS_NTXDESC - __x), (ops));			\
+		__n -= (CAS_NTXDESC - __x);				\
+		__x = 0;						\
+	}								\
+									\
+	/* Now sync whatever is left. */				\
+	bus_dmamap_sync((sc)->sc_dmatag, (sc)->sc_cddmamap,		\
+	    CAS_CDTXOFF(__x), sizeof(struct cas_desc) * __n, (ops));	\
+} while (0)
+
+#define	CAS_CDRXSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmatag, (sc)->sc_cddmamap,		\
+	    CAS_CDRXOFF((x)), sizeof(struct cas_desc), (ops))
+
+#define	CAS_CDSPSYNC(sc, ops)						\
+	bus_dmamap_sync((sc)->sc_dmatag, (sc)->sc_cddmamap,		\
+	    CAS_CDSPOFF, CAS_SETUP_PACKET_LEN, (ops))
+
+#define	CAS_INIT_RXDESC(sc, x)						\
+do {									\
+	struct cas_rxsoft *__rxs = &sc->sc_rxsoft[(x)];			\
+	struct cas_desc *__rxd = &sc->sc_rxdescs[(x)];			\
+	struct mbuf *__m = __rxs->rxs_mbuf;				\
+									\
+	__m->m_data = __m->m_ext.ext_buf;				\
+	__rxd->gd_addr =						\
+	    CAS_DMA_WRITE((sc), __rxs->rxs_dmamap->dm_segs[0].ds_addr);	\
+	__rxd->gd_flags =						\
+	    CAS_DMA_WRITE((sc),						\
+		(((__m->m_ext.ext_size)<<CAS_RD_BUFSHIFT)		\
+	    & CAS_RD_BUFSIZE) | CAS_RD_OWN);				\
+	CAS_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
+} while (0)
+
+#ifdef _KERNEL
+int	cas_mediachange(struct ifnet *);
+void	cas_mediastatus(struct ifnet *, struct ifmediareq *);
+
+void	cas_config(struct cas_softc *);
+void	cas_reset(struct cas_softc *);
+int	cas_intr(void *);
+#endif /* _KERNEL */
+
+
+#endif
