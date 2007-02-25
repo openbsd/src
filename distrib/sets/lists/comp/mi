@@ -517,6 +517,8 @@
 ./usr/include/dev/pci/if_bcereg.h
 ./usr/include/dev/pci/if_bgereg.h
 ./usr/include/dev/pci/if_bnxreg.h
+./usr/include/dev/pci/if_casreg.h
+./usr/include/dev/pci/if_casvar.h
 ./usr/include/dev/pci/if_devar.h
 ./usr/include/dev/pci/if_em.h
 ./usr/include/dev/pci/if_em_hw.h
