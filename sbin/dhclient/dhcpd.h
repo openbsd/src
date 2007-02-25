@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.64 2007/01/27 22:05:24 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.65 2007/02/25 16:27:20 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -294,7 +294,6 @@ void send_decline(void);
 void state_reboot(void);
 void state_init(void);
 void state_selecting(void);
-void state_requesting(void);
 void state_bound(void);
 void state_panic(void);
 
@@ -315,14 +314,12 @@ int	 priv_script_go(void);
 void script_init(char *, struct string_list *);
 void script_write_params(char *, struct client_lease *);
 int script_go(void);
-void client_envadd(const char *, const char *, const char *, ...);
 void script_set_env(const char *, const char *, const char *);
 void script_flush_env(void);
 int dhcp_option_ev_name(char *, size_t, const struct option *);
 
 struct client_lease *packet_to_lease(struct iaddr, struct option_data *);
 void go_daemon(void);
-void client_location_changed(void);
 
 void routehandler(void);
 
