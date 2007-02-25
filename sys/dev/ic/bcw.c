@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.57 2007/02/24 23:05:04 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.58 2007/02/25 09:59:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -686,6 +686,7 @@ bcw_attach(struct bcw_softc *sc)
 	int		i;
 	uint32_t	sbval;
 //	uint16_t	sbval16;
+	uint32_t	core_id, core_rev, core_vendor;
 
 	/*
 	 * Don't reset the chip here, we can only reset each core and we
@@ -732,25 +733,30 @@ bcw_attach(struct bcw_softc *sc)
 	 * a ChipCommon core that was successfully selected above
 	 */
 	sbval = BCW_READ(sc, BCW_CIR_SBID_HI);
-	DPRINTF(("%s: Got Core ID Reg 0x%x, type is 0x%x\n",
-	    sc->sc_dev.dv_xname, sbval, (sbval & 0x8ff0) >> 4));
+	core_id = (sbval & 0x8ff0) >> 4;
+	core_rev = (sbval & 0x7000) >> 8;
+	core_rev |= (sbval & 0xf);
+	core_vendor = (sbval & 0xffff0000) >> 16;
+	DPRINTF(("%s: CoreID=0x%x, CoreRev=0x%x, CoreVendor=0x%x\n",
+	    sc->sc_dev.dv_xname, core_id, core_rev, core_vendor));
 
 	/*
 	 * If we successfully got a commoncore, and the corerev=4 or >=6
 	 * get the number of cores from the chipid reg
 	 */
-	if (((sbval & 0x00008ff0) >> 4) == BCW_CORE_COMMON) {
+	if (core_id == BCW_CORE_COMMON) {
 		sc->sc_havecommon = 1;
+
 		/* XXX do early init of sc_core[0] here */
+
 		sbval = BCW_READ(sc, BCW_CORE_COMMON_CHIPID);
 		sc->sc_chip_id = (sbval & 0x0000ffff);
 		sc->sc_chip_rev = (sbval & 0x000f0000) >> 16;
 		sc->sc_chip_package = (sbval & 0x00f00000) >> 20;
-		//sc->sc_chip_rev =
-		//    ((sbval & 0x00007000) >> 8 | (sbval & 0x0000000f));
-		if ((sc->sc_chip_rev == 4) || (sc->sc_chip_rev >= 6))
+
+		if (core_rev >= 4)
 			sc->sc_numcores = (sbval & 0x0f000000) >> 24;
-		else
+		else {
 			switch (sc->sc_chip_id) {
 			case 0x4710:
 			case 0x4610:
@@ -776,8 +782,9 @@ bcw_attach(struct bcw_softc *sc)
 			default:
 				/* set to max */
 				sc->sc_numcores = BCW_MAX_CORES;
-			} /* end of switch */
-	} else { /* No CommonCore, set chipid,cores,rev based on product id */
+			}
+		}
+	} else { /* No CommonCore, set chipid, cores, rev based on product id */
 		sc->sc_core_common = NULL;
 		sc->sc_havecommon = 0;
 		switch (sc->sc_prodid) {
@@ -818,8 +825,8 @@ bcw_attach(struct bcw_softc *sc)
 			sc->sc_chip_id = sc->sc_prodid;
 			/* Set to max */
 			sc->sc_numcores = BCW_MAX_CORES;
-		} /* end of switch */
-	} /* End of if/else */
+		}
+	}
 
 	DPRINTF(("%s: ChipID=0x%x, ChipRev=0x%x, ChipPkg=0x%x, NumCores=%d\n",
 	    sc->sc_dev.dv_xname,
