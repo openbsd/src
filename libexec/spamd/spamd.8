@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.70 2007/02/24 19:28:13 millert Exp $
+.\"	$OpenBSD: spamd.8,v 1.71 2007/02/25 20:21:01 millert Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -315,28 +315,26 @@ rdr pass inet proto tcp from any to any \e
 With this configuration,
 .Xr spamd-setup 8
 should be used to configure blacklists in
-.Nm
-and add them to the
-.Em spamd
-.Xr pf 4
-table.
-These connections will be stuttered at by
 .Nm .
-All other connections not in the
+Connections from addresses not listed in the
 .Em spamd-white
+.Xr pf 4
 table are redirected to
-.Nm
-but will not be stuttered at.
-Such connections will be
-considered for greylisting and eventual whitelisting (by addition
-to the
+.Nm .
+If an address matches a blacklist specified in
+.Pa /etc/spamd.conf ,
+the connection will be stuttered at by
+.Nm .
+All other connections will be considered for greylisting and
+eventual whitelisting (by addition to the
 .Em spamd-white
-table so they are not redirected) if they retry mail delivery.
+table so they are not redirected in the future) if they retry mail delivery.
 Note that when greylisting we do not need the
 .Em spamd
-table since connections are passed to
+.Xr pf 4
+table since all connections are passed to
 .Nm
-unless the address is listed in the
+unless the source address is listed in the
 .Em spamd-white
 table.
 .Pp
@@ -366,10 +364,6 @@ monthly mailing list digests without greylist delays every time.
 should be run with the
 .Fl g
 flag when operating in greylisting mode.
-Otherwise, it will attempt to populate the
-.Em spamd
-.Xr pf 4
-table (which is not needed when greylisting).
 .Pp
 .Xr spamlogd 8
 should be used to update the whitelist entries in
