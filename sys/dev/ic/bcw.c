@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.58 2007/02/25 09:59:18 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.59 2007/02/25 17:03:08 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -685,14 +685,18 @@ bcw_attach(struct bcw_softc *sc)
 	int		error;
 	int		i;
 	uint32_t	sbval;
-//	uint16_t	sbval16;
+	//uint16_t	sbval16;
 	uint32_t	core_id, core_rev, core_vendor;
+
+	/* power on cardbus socket */
+	if (sc->sc_enable)
+		sc->sc_enable(sc);
 
 	/*
 	 * Don't reset the chip here, we can only reset each core and we
 	 * haven't identified the cores yet.
 	 */
-//	bcw_reset(sc);
+	//bcw_reset(sc);
 
 	/*
 	 * Attach to the Backplane and start the card up
@@ -2227,6 +2231,10 @@ bcw_detach(void *arg)
 	if_detach(ifp);
 	bcw_free_rx_ring(sc, &sc->sc_rxring);
 	bcw_free_tx_ring(sc, &sc->sc_txring);
+
+	/* power off cardbus socket */
+	if (sc->sc_disable)
+		sc->sc_disable(sc);
 
 	return (0);
 }

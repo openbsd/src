@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_cardbus.c,v 1.7 2007/02/25 10:06:04 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_cardbus.c,v 1.8 2007/02/25 17:03:08 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -146,7 +146,7 @@ bcw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	bcw_attach(sc);
 
-	Cardbus_function_disable(ct);
+	//Cardbus_function_disable(ct);
 }
 
 int
