@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2006/05/09 17:09:22 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 2007/02/25 18:21:24 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.34 2006/05/09 17:09:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.35 2007/02/25 18:21:24 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,6 +53,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.34 2006/05/09 17:09:22 deraadt Exp $
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <utmp.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -69,7 +70,7 @@ double	avenrun[3];
 u_int	naptime = 5;
 int	verbose = 1;		/* to report kvm read errs */
 int	nflag = 0;
-int	hz, stathz;
+int	ut, hz, stathz;
 char    hostname[MAXHOSTNAMELEN];
 WINDOW  *wnd;
 int	CMDLINE;
@@ -81,10 +82,16 @@ static void usage(void);
 int
 main(int argc, char *argv[])
 {
-	int ch;
 	char errbuf[_POSIX2_LINE_MAX];
 	const char *errstr;
 	gid_t gid;
+	int ch;
+
+	ut = open(_PATH_UTMP, O_RDONLY);
+	if (ut < 0) {
+		error("No utmp");
+		exit(1);
+	}
 
 	kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
 	if (kd == NULL) {
@@ -157,7 +164,7 @@ main(int argc, char *argv[])
 		warnx("couldn't initialize display");
 		die();
 	}
-	wload = newwin(1, 0, 3, 20);
+	wload = newwin(1, 0, 1, 20);
 	if (wload == NULL) {
 		warnx("couldn't set up load average window");
 		die();
@@ -207,11 +214,8 @@ usage(void)
 void
 labels(void)
 {
-	if (curcmd->c_flags & CF_LOADAV) {
-		mvaddstr(2, 20,
-		    "/0   /1   /2   /3   /4   /5   /6   /7   /8   /9   /10");
-		mvaddstr(3, 5, "Load Average");
-	}
+	if (curcmd->c_flags & CF_LOADAV)
+		mvprintw(0, 2 + 4, "users    Load");
 	(*curcmd->c_label)();
 #ifdef notdef
 	mvprintw(21, 25, "CPU usage on %s", hostname);
@@ -229,30 +233,22 @@ sigdisplay(int signo)
 void
 display(void)
 {
-	int i, j;
-	chtype c;
-
 	/* Get the load average over the last minute. */
 	(void) getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
 	(*curcmd->c_fetch)();
 	if (curcmd->c_flags & CF_LOADAV) {
-		j = 5.0*avenrun[0] + 0.5;
-		dellave -= avenrun[0];
-		if (dellave >= 0.0)
-			c = '<';
-		else {
-			c = '>';
-			dellave = -dellave;
-		}
-		if (dellave < 0.05)
-			c = '|';
-		dellave = avenrun[0];
-		wmove(wload, 0, 0);
-		wclrtoeol(wload);
-		for (i = (j > 50) ? 50 : j; i > 0; i--)
-			waddch(wload, c);
-		if (j > 50)
-			wprintw(wload, " %4.1f", avenrun[0]);
+		extern int ucount();
+		char tbuf[26];
+		time_t now;
+
+		time(&now);
+		strlcpy(tbuf, ctime(&now), sizeof tbuf);
+
+		putint(ucount(), 0, 2, 3);
+		putfloat(avenrun[0], 0, 2 + 17, 6, 2, 0);
+		putfloat(avenrun[1], 0, 2 + 23, 6, 2, 0);
+		putfloat(avenrun[2], 0, 2 + 29, 6, 2, 0);
+		mvaddstr(0, 2 + 53, tbuf);
 	}
 	(*curcmd->c_refresh)();
 	if (curcmd->c_flags & CF_LOADAV)
@@ -352,4 +348,21 @@ nlisterr(struct nlist namelist[])
 	refresh();
 	endwin();
 	exit(1);
+}
+
+/* calculate number of users on the system */
+int
+ucount(void)
+{
+	int nusers = 0;
+	struct	utmp utmp;
+
+	if (ut < 0)
+		return (0);
+	lseek(ut, (off_t)0, SEEK_SET);
+	while (read(ut, &utmp, sizeof(utmp)))
+		if (utmp.ut_name[0] != '\0')
+			nusers++;
+
+	return (nusers);
 }

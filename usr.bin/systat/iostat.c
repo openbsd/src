@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.26 2006/06/29 21:17:27 dlg Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.27 2007/02/25 18:21:24 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.26 2006/06/29 21:17:27 dlg Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.27 2007/02/25 18:21:24 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ static void numlabels(void);
 WINDOW *
 openiostat(void)
 {
-	return (subwin(stdscr, LINES-1-5, 0, 5, 0));
+	return (subwin(stdscr, LINES-1-1, 0, 1, 0));
 }
 
 void

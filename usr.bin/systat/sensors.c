@@ -37,7 +37,7 @@ void printline(void);
 WINDOW *
 opensensors(void)
 {
-	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
+	return (subwin(stdscr, LINES-1-1, 0, 1, 0));
 }
 
 void

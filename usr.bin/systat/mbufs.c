@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.16 2006/03/31 04:10:59 deraadt Exp $	*/
+/*	$OpenBSD: mbufs.c,v 1.17 2007/02/25 18:21:24 deraadt Exp $	*/
 /*	$NetBSD: mbufs.c,v 1.2 1995/01/20 08:52:02 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: mbufs.c,v 1.16 2006/03/31 04:10:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mbufs.c,v 1.17 2007/02/25 18:21:24 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ char *mtnames[] = {
 WINDOW *
 openmbufs(void)
 {
-	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
+	return (subwin(stdscr, LINES-1-2, 0, 2, 0));
 }
 
 void

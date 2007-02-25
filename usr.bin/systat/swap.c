@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.c,v 1.18 2006/03/31 04:10:59 deraadt Exp $	*/
+/*	$OpenBSD: swap.c,v 1.19 2007/02/25 18:21:24 deraadt Exp $	*/
 /*	$NetBSD: swap.c,v 1.9 1998/12/26 07:05:08 marc Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: swap.c,v 1.18 2006/03/31 04:10:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: swap.c,v 1.19 2007/02/25 18:21:24 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -63,7 +63,7 @@ static	struct swapent *swap_devices;
 WINDOW *
 openswap(void)
 {
-	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
+	return (subwin(stdscr, LINES-1-2, 0, 2, 0));
 }
 
 void

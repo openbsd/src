@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.61 2006/11/13 19:03:51 otto Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.62 2007/02/25 18:21:24 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.61 2006/11/13 19:03:51 otto Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.62 2007/02/25 18:21:24 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -59,7 +59,6 @@ static char rcsid[] = "$OpenBSD: vmstat.c,v 1.61 2006/11/13 19:03:51 otto Exp $"
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <utmp.h>
 #include <unistd.h>
 
 #include "systat.h"
@@ -90,13 +89,11 @@ static void copyinfo(struct Info *, struct Info *);
 static float cputime(int);
 static void dinfo(int, int);
 static void getinfo(struct Info *);
-static void putint(int, int, int, int);
-static void putuint64(u_int64_t, int, int, int);
-static void putfloat(double, int, int, int, int, int);
-static int ucount(void);
+void putint(int, int, int, int);
+void putuint64(u_int64_t, int, int, int);
+void putfloat(double, int, int, int, int, int);
+int ucount(void);
 
-static	int ut;
-static	char buf[26];
 static	time_t t;
 static	double etime;
 static	float hertz;
@@ -105,29 +102,22 @@ static	long *intrloc;
 static	char **intrname;
 static	int nextintsrow;
 
-struct	utmp utmp;
-
 WINDOW *
 openkre(void)
 {
-
-	ut = open(_PATH_UTMP, O_RDONLY);
-	if (ut < 0)
-		error("No utmp");
-	return (stdscr);
+	return (subwin(stdscr, LINES-1-1, 0, 1, 0));
 }
 
 void
 closekre(WINDOW *w)
 {
 
-	(void) close(ut);
 	if (w == NULL)
 		return;
 	wclear(w);
 	wrefresh(w);
+	delwin(w);
 }
-
 
 /*
  * These constants define where the major pieces are laid out
@@ -213,10 +203,6 @@ initkre(void)
 void
 fetchkre(void)
 {
-	time_t now;
-
-	time(&now);
-	strlcpy(buf, ctime(&now), sizeof buf);
 	getinfo(&s);
 }
 
@@ -225,8 +211,6 @@ labelkre(void)
 {
 	int i, j, l;
 
-	clear();
-	mvprintw(STATROW, STATCOL + 4, "users    Load");
 	mvprintw(MEMROW, MEMCOL,     "            memory totals (in KB)");
 	mvprintw(MEMROW + 1, MEMCOL, "           real   virtual     free");
 	mvprintw(MEMROW + 2, MEMCOL, "Active");
@@ -387,11 +371,6 @@ showkre(void)
 			addch(cpuchar[c]);
 	}
 
-	putint(ucount(), STATROW, STATCOL, 3);
-	putfloat(avenrun[0], STATROW, STATCOL + 17, 6, 2, 0);
-	putfloat(avenrun[1], STATROW, STATCOL + 23, 6, 2, 0);
-	putfloat(avenrun[2], STATROW, STATCOL + 29, 6, 2, 0);
-	mvaddstr(STATROW, STATCOL + 53, buf);
 #define pgtokb(pg)	((pg) * (s.uvmexp.pagesize / 1024))
 
 	putint(pgtokb(s.uvmexp.active), MEMROW + 2, MEMCOL + 7, 8);
@@ -499,22 +478,6 @@ cmdkre(char *cmd, char *args)
 	return (dkcmd(cmd, args));
 }
 
-/* calculate number of users on the system */
-static int
-ucount(void)
-{
-	int nusers = 0;
-
-	if (ut < 0)
-		return (0);
-	while (read(ut, &utmp, sizeof(utmp)))
-		if (utmp.ut_name[0] != '\0')
-			nusers++;
-
-	lseek(ut, 0, SEEK_SET);
-	return (nusers);
-}
-
 static float
 cputime(int indx)
 {
@@ -529,7 +492,7 @@ cputime(int indx)
 	return (s.time[indx] * 100.0 / t);
 }
 
-static void
+void
 putint(int n, int l, int c, int w)
 {
 	char b[128];
@@ -549,7 +512,7 @@ putint(int n, int l, int c, int w)
 	addstr(b);
 }
 
-static void
+void
 putuint64(u_int64_t n, int l, int c, int w)
 {
 	char b[128];
@@ -569,7 +532,7 @@ putuint64(u_int64_t n, int l, int c, int w)
 	addstr(b);
 }
 
-static void
+void
 putfloat(double f, int l, int c, int w, int d, int nz)
 {
 	char b[128];
