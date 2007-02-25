@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "systat.h"
 #include "extern.h"
@@ -120,6 +121,7 @@ int
 initsensors(void)
 {
 	fetchsensors();
+	return (1);
 }
 
 void
