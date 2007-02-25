@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.10 2006/06/03 19:30:06 mpf Exp $
+# $OpenBSD: dhclient-script,v 1.11 2007/02/25 16:02:51 stevesk Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -173,9 +173,9 @@ BOUND|RENEW|REBIND|REBOOT)
 			delete_old_routes
 		fi
 	fi
-	if [ "$reason" = BOUND ] || \
-	   [ "$reason" = REBOOT ] || \
-	   [ -z "$old_ip_address" ] || \
+	if [ "$reason" = BOUND ] ||
+	   [ "$reason" = REBOOT ] ||
+	   [ -z "$old_ip_address" ] ||
 	   [ "$old_ip_address" != "$new_ip_address" ]; then
 		add_new_address
 		add_new_routes
