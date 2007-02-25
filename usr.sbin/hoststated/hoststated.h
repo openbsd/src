@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.30 2007/02/24 16:14:02 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.31 2007/02/25 14:57:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -293,7 +293,6 @@ struct table {
 	char			 demote_group[IFNAMSIZ];
 	in_port_t		 port;
 	int			 retcode;
-	int			 retry;
 	struct timeval		 timeout;
 	char			 name[TABLE_NAME_SIZE];
 	char			 path[MAXPATHLEN];
