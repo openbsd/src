@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.8 2006/05/27 21:24:36 claudio Exp $ */
+/*	$OpenBSD: log.h,v 1.9 2007/02/25 11:59:39 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -66,7 +66,7 @@ static const char * const suberr_open_names[] = {
 	"AS unacceptable",
 	"BGPID invalid",
 	"optional parameter error",
-	"Authentication error",
+	"authentication error",
 	"unacceptable holdtime",
 	"unsupported capability"
 };
@@ -95,7 +95,7 @@ static const char * const suberr_cease_names[] = {
 	"connection rejected",
 	"other config change",
 	"collision",
-	"ressource exhaustion"
+	"resource exhaustion"
 };
 
 static const char * const procnames[] = {
