@@ -1,7 +1,8 @@
-/*	$OpenBSD: if_casreg.h,v 1.1 2007/02/24 20:13:34 kettenis Exp $	*/
+/*	$OpenBSD: if_casreg.h,v 1.2 2007/02/25 21:54:52 kettenis Exp $	*/
 
 /*
  *
+ * Copyright (C) 2007 Mark Kettenis.
  * Copyright (C) 2001 Eduardo Horvath.
  * All rights reserved.
  *
@@ -79,9 +80,11 @@
 #define	CAS_INTR_TX_INTME	0x000000001	/* Frame w/INTME bit set sent */
 #define	CAS_INTR_TX_EMPTY	0x000000002	/* TX ring empty */
 #define	CAS_INTR_TX_DONE	0x000000004	/* TX complete */
+#define	CAS_INTR_TX_TAG_ERR	0x000000008
 #define	CAS_INTR_RX_DONE	0x000000010	/* Got a packet */
 #define	CAS_INTR_RX_NOBUF	0x000000020
 #define	CAS_INTR_RX_TAG_ERR	0x000000040
+#define	CAS_INTR_RX_COMP_FULL	0x000000080
 #define	CAS_INTR_PCS		0x000002000	/* Physical Code Sub-layer */
 #define	CAS_INTR_TX_MAC		0x000004000
 #define	CAS_INTR_RX_MAC		0x000008000
@@ -89,8 +92,9 @@
 #define	CAS_INTR_MIF		0x000020000
 #define	CAS_INTR_BERR		0x000040000	/* Bus error interrupt */
 #define CAS_INTR_BITS	"\020"					\
-			"\1INTME\2TXEMPTY\3TXDONE"		\
+			"\1INTME\2TXEMPTY\3TXDONE\4TX_TAG_ERR"	\
 			"\5RXDONE\6RXNOBUF\7RX_TAG_ERR"		\
+			"\10RX_COMP_FULL"			\
 			"\16PCS\17TXMAC\20RXMAC"		\
 			"\21MACCONTROL\22MIF\23BERR"
 
@@ -175,49 +179,44 @@
 
 /* GEM RX DMA registers */
 #define	CAS_RX_CONFIG		0x4000
-#define	CAS_RX_RING_PTR_LO	0x4004		/* 64-bits unaligned GAK! */
-#define	CAS_RX_RING_PTR_HI	0x4008		/* 64-bits unaligned GAK! */
+#define	CAS_RX_PAGE_SIZE	0x4004
 
-#define	CAS_RX_FIFO_WR_PTR	0x400c		/* FIFO write pointer */
-#define	CAS_RX_FIFO_SDWR_PTR	0x4010		/* FIFO shadow write pointer */
-#define	CAS_RX_FIFO_RD_PTR	0x4014		/* FIFO read pointer */
-#define	CAS_RX_FIFO_PKT_CNT	0x4018		/* FIFO packet counter */
-
-#define	CAS_RX_STATE_MACHINE	0x401c		/* ERX state machine reg */
+#define	CAS_RX_FIFO_WR_PTR	0x4008		/* FIFO write pointer */
+#define	CAS_RX_FIFO_RD_PTR	0x400c		/* FIFO read pointer */
+#define	CAS_RX_IPPFIFO_WR_PTR	0x4010		/* IPP FIFO write pointer */
+#define	CAS_RX_IPPFIFO_RD_PTR	0x4014		/* IPP FIFO read pointer */
+#define	CAS_RX_IPPFIFO_SDWR_PTR	0x4018		/* FIFO shadow write pointer */
+#define	CAS_RX_DEBUG		0x401c		/* Debug reg */
 #define	CAS_RX_PAUSE_THRESH	0x4020
+#define	CAS_RX_KICK		0x4024		/* Write last valid desc + 1 */
+#define	CAS_RX_DRING_PTR_LO	0x4028
+#define	CAS_RX_DRING_PTR_HI	0x402c
+#define	CAS_RX_CRING_PTR_LO	0x4030
+#define	CAS_RX_CRING_PTR_HI	0x4034
+#define	CAS_RX_COMPLETION	0x4038		/* First pending desc */
+#define	CAS_RX_COMP_HEAD	0x403c
+#define	CAS_RX_COMP_TAIL	0x4040
+#define	CAS_RX_BLANKING		0x4044		/* Interrupt blanking reg */
+#define	CAS_RX_RED		0x404c		/* Random Early Detection */
 
-#define	CAS_RX_DATA_PTR_LO	0x4024		/* ERX state machine reg */
-#define	CAS_RX_DATA_PTR_HI	0x4028		/* Damn thing is unaligned */
+#define	CAS_RX_IPP_PKT_CNT	0x4054		/* IPP packet counter */
 
-#define	CAS_RX_KICK		0x4100		/* Write last valid desc + 1 */
-#define	CAS_RX_COMPLETION	0x4104		/* First pending desc */
-#define	CAS_RX_BLANKING		0x4108		/* Interrupt blanking reg */
-
-#define	CAS_RX_FIFO_ADDRESS	0x410c
-#define	CAS_RX_FIFO_TAG		0x4110
-#define	CAS_RX_FIFO_DATA_LO	0x4114
-#define	CAS_RX_FIFO_DATA_HI_T1	0x4118
-#define	CAS_RX_FIFO_DATA_HI_T0	0x411c
-#define	CAS_RX_FIFO_SIZE	0x4120
+#define	CAS_RX_FIFO_ADDRESS	0x4080
+#define	CAS_RX_FIFO_TAG		0x4084
+#define	CAS_RX_FIFO_DATA_LO	0x4088
+#define	CAS_RX_FIFO_DATA_HI_T0	0x408c
+#define	CAS_RX_FIFO_DATA_HI_T1	0x4090
 
 /* CAS_RX_CONFIG register bits. */
 #define	CAS_RX_CONFIG_RXDMA_EN	0x00000001	/* RX DMA enable */
-#define	CAS_RX_CONFIG_RXRING_SZ	0x0000001e	/* RX ring size */
-#define	CAS_RX_CONFIG_BATCH_DIS	0x00000020	/* desc batching disable */
+#define	CAS_RX_CONFIG_RXDRNG_SZ	0x0000001e	/* RX descriptor ring size */
+#define	CAS_RX_CONFIG_RXCRNG_SZ	0x000001e0	/* RX completion ring size */
+#define	CAS_RX_CONFIG_BATCH_DIS	0x00000200	/* desc batching disable */
 #define	CAS_RX_CONFIG_FBOFF	0x00001c00	/* first byte offset */
-#define	CAS_RX_CONFIG_CXM_START	0x000fe000	/* cksum start offset bytes */
-#define	CAS_RX_CONFIG_FIFO_THRS	0x07000000	/* fifo threshold size */
 
-#define	CAS_THRSH_64	0
-#define	CAS_THRSH_128	1
-#define	CAS_THRSH_256	2
-#define	CAS_THRSH_512	3
-#define	CAS_THRSH_1024	4
-#define	CAS_THRSH_2048	5
-
-#define	CAS_RX_CONFIG_FIFO_THRS_SHIFT	24
+#define CAS_RX_CONFIG_RXDRNG_SZ_SHIFT	1
+#define CAS_RX_CONFIG_RXCRNG_SZ_SHIFT	5
 #define	CAS_RX_CONFIG_FBOFF_SHFT	10
-#define	CAS_RX_CONFIG_CXM_START_SHFT	13
 
 /* CAS_RX_PAUSE_THRESH register bits -- sizes in multiples of 64 bytes */
 #define	CAS_RX_PTH_XOFF_THRESH	0x000001ff
@@ -226,7 +225,7 @@
 /* CAS_RX_BLANKING register bits */
 #define	CAS_RX_BLANKING_PACKETS	0x000001ff	/* Delay intr for x packets */
 #define	CAS_RX_BLANKING_TIME	0x03fc0000	/* Delay intr for x ticks */
-/* One tick is 1048 PCI clocs, or 16us at 66MHz */
+/* One tick is 1048 PCI clocks, or 16us at 66MHz */
 
 /* CAS_MAC registers */
 #define	CAS_MAC_TXRESET		0x6000		/* Store 1, cleared when done */
@@ -517,11 +516,13 @@
 #define	CAS_PHYAD_EXTERNAL	0
 
 /*
- * GEM descriptor table structures.
+ * Cassini ring structures.
  */
+
+/* Descriptor rings */
 struct cas_desc {
-	uint64_t	gd_flags;
-	uint64_t	gd_addr;
+	uint64_t	cd_flags;
+	uint64_t	cd_addr;
 };
 
 /* Transmit flags */
@@ -540,16 +541,47 @@ struct cas_desc {
  * CAS_TD_CXSUM_START, and CAS_TD_INTERRUPT_ME in 1st descriptor of a group.
  */
 
-/* Receive flags */
-#define	CAS_RD_CHECKSUM		0x000000000000ffffLL	/* is the complement */
-#define	CAS_RD_BUFSIZE		0x000000007fff0000LL
-#define	CAS_RD_OWN		0x0000000080000000LL	/* 1 - owned by h/w */
-#define	CAS_RD_HASHVAL		0x0ffff00000000000LL
-#define	CAS_RD_HASH_PASS	0x1000000000000000LL	/* passed hash filter */
-#define	CAS_RD_ALTERNATE_MAC	0x2000000000000000LL	/* Alternate MAC adrs */
-#define	CAS_RD_BAD_CRC		0x4000000000000000LL
+/* Completion ring */
+struct cas_comp {
+	u_int64_t	cc_word[4];
+};
 
-#define	CAS_RD_BUFSHIFT		16
-#define	CAS_RD_BUFLEN(x)	(((x)&CAS_RD_BUFSIZE)>>CAS_RD_BUFSHIFT)
+#define	CAS_RC0_TYPE		0xc000000000000000ULL
+#define	CAS_RC0_RELEASE_HDR	0x2000000000000000ULL
+#define	CAS_RC0_RELEASE_DATA	0x1000000000000000ULL
+#define	CAS_RC0_SPLIT		0x0400000000000000ULL
+#define	CAS_RC0_SKIP_MASK	0x0180000000000000ULL
+#define	CAS_RC0_SKIP_SHIFT	55
+#define CAS_RC0_DATA_IDX_MASK	0x007ffe0000000000ULL
+#define CAS_RC0_DATA_IDX_SHIFT	41
+#define CAS_RC0_DATA_OFF_MASK	0x000001fff8000000ULL
+#define CAS_RC0_DATA_OFF_SHIFT	27
+#define CAS_RC0_DATA_LEN_MASK	0x0000000007ffe000ULL
+#define CAS_RC0_DATA_LEN_SHIFT	13
+
+#define CAS_RC0_SKIP(w) \
+	(((w) & CAS_RC0_SKIP_MASK) >> CAS_RC0_SKIP_SHIFT)
+#define CAS_RC0_DATA_IDX(w) \
+	(((w) & CAS_RC0_DATA_IDX_MASK) >> CAS_RC0_DATA_IDX_SHIFT)
+#define CAS_RC0_DATA_OFF(w) \
+	(((w) & CAS_RC0_DATA_OFF_MASK) >> CAS_RC0_DATA_OFF_SHIFT)
+#define CAS_RC0_DATA_LEN(w) \
+	(((w) & CAS_RC0_DATA_LEN_MASK) >> CAS_RC0_DATA_LEN_SHIFT)
+
+#define CAS_RC1_HDR_IDX_MASK	0xfffc000000000000ULL
+#define CAS_RC1_HDR_IDX_SHIFT	50
+#define CAS_RC1_HDR_OFF_MASK	0x0003f00000000000ULL
+#define CAS_RC1_HDR_OFF_SHIFT	44
+#define CAS_RC1_HDR_LEN_MASK	0x00000ff800000000ULL
+#define CAS_RC1_HDR_LEN_SHIFT	35
+
+#define CAS_RC1_HDR_IDX(w) \
+	(((w) & CAS_RC1_HDR_IDX_MASK) >> CAS_RC1_HDR_IDX_SHIFT)
+#define CAS_RC1_HDR_OFF(w) \
+	(((w) & CAS_RC1_HDR_OFF_MASK) >> CAS_RC1_HDR_OFF_SHIFT)
+#define CAS_RC1_HDR_LEN(w) \
+	(((w) & CAS_RC1_HDR_LEN_MASK) >> CAS_RC1_HDR_LEN_SHIFT)
+
+#define	CAS_RC3_OWN		0x0000080000000000ULL /* Owned by hardware */
 
 #endif /* _IF_CASREG_H */

@@ -1,7 +1,8 @@
-/*	$OpenBSD: if_cas.c,v 1.1 2007/02/24 20:13:34 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.2 2007/02/25 21:54:52 kettenis Exp $	*/
 
 /*
  *
+ * Copyright (C) 2007 Mark Kettenis.
  * Copyright (C) 2001 Eduardo Horvath.
  * All rights reserved.
  *
@@ -103,6 +104,7 @@ void		cas_shutdown(void *);
 int		cas_init(struct ifnet *);
 void		cas_init_regs(struct cas_softc *);
 int		cas_ringsize(int);
+int		cas_cringsize(int);
 int		cas_meminit(struct cas_softc *);
 void		cas_mifinit(struct cas_softc *);
 int		cas_bitwait(struct cas_softc *, bus_space_handle_t, int,
@@ -365,14 +367,44 @@ cas_config(struct cas_softc *sc)
 	 * Create the receive buffer DMA maps.
 	 */
 	for (i = 0; i < CAS_NRXDESC; i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmatag, MCLBYTES, 1,
-		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
+		bus_dma_segment_t seg;
+		caddr_t kva;
+		int rseg;
+
+		if ((error = bus_dmamem_alloc(sc->sc_dmatag, PAGE_SIZE,
+		    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+			printf("\n%s: unable to alloc rx DMA mem %d, "
+			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			goto fail_5;
+		}
+		sc->sc_rxsoft[i].rxs_dmaseg = seg;
+
+		if ((error = bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
+		    PAGE_SIZE, &kva, BUS_DMA_NOWAIT)) != 0) {
+			printf("\n%s: unable to alloc rx DMA mem %d, "
+			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			goto fail_5;
+		}
+		sc->sc_rxsoft[i].rxs_kva = kva;
+
+		if ((error = bus_dmamap_create(sc->sc_dmatag, PAGE_SIZE, 1,
+		    PAGE_SIZE, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
 			printf("\n%s: unable to create rx DMA map %d, "
+			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			goto fail_5;
+		}
+
+
+		if ((error = bus_dmamap_load(sc->sc_dmatag,
+		   sc->sc_rxsoft[i].rxs_dmamap, kva, PAGE_SIZE, NULL,
+		   BUS_DMA_NOWAIT)) != 0) {
+			printf("\n%s: unable to load rx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
 	}
+
 	/*
 	 * Create the transmit buffer DMA maps.
 	 */
@@ -397,8 +429,7 @@ cas_config(struct cas_softc *sc)
 	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/* Get RX FIFO size */
-	sc->sc_rxfifosize = 64 *
-	    bus_space_read_4(sc->sc_memt, sc->sc_memh, CAS_RX_FIFO_SIZE);
+	sc->sc_rxfifosize = 16 * 1024;
 
 	/* Initialize ifnet structure. */
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof ifp->if_xname);
@@ -488,28 +519,6 @@ cas_config(struct cas_softc *sc)
 
 			sc->sc_phys[child->mii_inst] = child->mii_phy;
 		}
-
-#if 0
-		/*
-		 * Now select and activate the PHY we will use.
-		 *
-		 * The order of preference is External (MDI1),
-		 * Internal (MDI0), Serial Link (no MII).
-		 */
-		if (sc->sc_phys[1]) {
-#ifdef CAS_DEBUG
-			printf("using external phy\n");
-#endif
-			sc->sc_mif_config |= CAS_MIF_CONFIG_PHY_SEL;
-		} else {
-#ifdef CAS_DEBUG
-			printf("using internal phy\n");
-#endif
-			sc->sc_mif_config &= ~CAS_MIF_CONFIG_PHY_SEL;
-		}
-		bus_space_write_4(sc->sc_memt, sc->sc_memh, CAS_MIF_CONFIG, 
-			sc->sc_mif_config);
-#endif
 
 		/*
 		 * XXX - we can really do the following ONLY if the
@@ -802,12 +811,14 @@ cas_meminit(struct cas_softc *sc)
 	struct cas_rxsoft *rxs;
 	int i, error;
 
+	rxs = (void *)&error;
+
 	/*
 	 * Initialize the transmit descriptor ring.
 	 */
 	for (i = 0; i < CAS_NTXDESC; i++) {
-		sc->sc_txdescs[i].gd_flags = 0;
-		sc->sc_txdescs[i].gd_addr = 0;
+		sc->sc_txdescs[i].cd_flags = 0;
+		sc->sc_txdescs[i].cd_addr = 0;
 	}
 	CAS_CDTXSYNC(sc, 0, CAS_NTXDESC,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -816,24 +827,22 @@ cas_meminit(struct cas_softc *sc)
 	 * Initialize the receive descriptor and receive job
 	 * descriptor rings.
 	 */
-	for (i = 0; i < CAS_NRXDESC; i++) {
-		rxs = &sc->sc_rxsoft[i];
-		if (rxs->rxs_mbuf == NULL) {
-			if ((error = cas_add_rxbuf(sc, i)) != 0) {
-				printf("%s: unable to allocate or map rx "
-				    "buffer %d, error = %d\n",
-				    sc->sc_dev.dv_xname, i, error);
-				/*
-				 * XXX Should attempt to run with fewer receive
-				 * XXX buffers instead of just failing.
-				 */
-				cas_rxdrain(sc);
-				return (1);
-			}
-		} else
-			CAS_INIT_RXDESC(sc, i);
-	}
+	for (i = 0; i < CAS_NRXDESC; i++)
+		CAS_INIT_RXDESC(sc, i, i);
+	sc->sc_rxdptr = 0;
 	sc->sc_rxptr = 0;
+
+	/*
+	 * Initialize the receive completion ring.
+	 */
+	for (i = 0; i < CAS_NRXCOMP; i++) {
+		sc->sc_rxcomps[i].cc_word[0] = 0;
+		sc->sc_rxcomps[i].cc_word[1] = 0;
+		sc->sc_rxcomps[i].cc_word[2] = 0;
+		sc->sc_rxcomps[i].cc_word[3] = CAS_DMA_WRITE(CAS_RC3_OWN);
+		CAS_CDRXCSYNC(sc, i,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	}
 
 	return (0);
 }
@@ -864,6 +873,19 @@ cas_ringsize(int sz)
 		printf("cas: invalid Receive Descriptor ring size %d\n", sz);
 		return CAS_RING_SZ_32;
 	}
+}
+
+int
+cas_cringsize(int sz)
+{
+	int i;
+
+	for (i = 0; i < 9; i++)
+		if (sz == (128 << i))
+			return i;
+
+	printf("cas: invalid completion ring size %d\n", sz);
+	return 128;
 }
 
 /*
@@ -912,25 +934,33 @@ cas_init(struct ifnet *ifp)
 	cas_setladrf(sc);
 
 	/* step 6 & 7. Program Descriptor Ring Base Addresses */
-	bus_space_write_4(t, h, CAS_TX_RING_PTR_HI, 
+	KASSERT((CAS_CDTXADDR(sc, 0) & 0x1fff) == 0);
+	bus_space_write_4(t, h, CAS_TX_RING_PTR_HI,
 	    (((uint64_t)CAS_CDTXADDR(sc,0)) >> 32));
 	bus_space_write_4(t, h, CAS_TX_RING_PTR_LO, CAS_CDTXADDR(sc, 0));
 
-	bus_space_write_4(t, h, CAS_RX_RING_PTR_HI, 
+	KASSERT((CAS_CDRXADDR(sc, 0) & 0x1fff) == 0);
+	bus_space_write_4(t, h, CAS_RX_DRING_PTR_HI,
 	    (((uint64_t)CAS_CDRXADDR(sc,0)) >> 32));
-	bus_space_write_4(t, h, CAS_RX_RING_PTR_LO, CAS_CDRXADDR(sc, 0));
+	bus_space_write_4(t, h, CAS_RX_DRING_PTR_LO, CAS_CDRXADDR(sc, 0));
+
+	KASSERT((CAS_CDRXCADDR(sc, 0) & 0x1fff) == 0);
+	bus_space_write_4(t, h, CAS_RX_CRING_PTR_HI,
+	    (((uint64_t)CAS_CDRXCADDR(sc,0)) >> 32));
+	bus_space_write_4(t, h, CAS_RX_CRING_PTR_LO, CAS_CDRXCADDR(sc, 0));
 
 	/* step 8. Global Configuration & Interrupt Mask */
 	bus_space_write_4(t, h, CAS_INTMASK,
-		      ~(CAS_INTR_TX_INTME|
-			CAS_INTR_TX_EMPTY|
+		      ~(CAS_INTR_TX_INTME|CAS_INTR_TX_EMPTY|
+			CAS_INTR_TX_TAG_ERR|
 			CAS_INTR_RX_DONE|CAS_INTR_RX_NOBUF|
-			CAS_INTR_RX_TAG_ERR|CAS_INTR_PCS|
+			CAS_INTR_RX_TAG_ERR|
+			CAS_INTR_RX_COMP_FULL|CAS_INTR_PCS|
 			CAS_INTR_MAC_CONTROL|CAS_INTR_MIF|
 			CAS_INTR_BERR));
 	bus_space_write_4(t, h, CAS_MAC_RX_MASK,
 	    CAS_MAC_RX_DONE|CAS_MAC_RX_FRAME_CNT);
-	bus_space_write_4(t, h, CAS_MAC_TX_MASK, 0 /*CAS_MAC_TX_XMIT_DONE*/);
+	bus_space_write_4(t, h, CAS_MAC_TX_MASK, CAS_MAC_TX_XMIT_DONE);
 	bus_space_write_4(t, h, CAS_MAC_CONTROL_MASK, 0); /* XXXX */
 
 	/* step 9. ETX Configuration: use mostly default values */
@@ -943,14 +973,16 @@ cas_init(struct ifnet *ifp)
 
 	/* step 10. ERX Configuration */
 
-	/* Encode Receive Descriptor ring size: four possible values */
-	v = cas_ringsize(CAS_NRXDESC /*XXX*/) << 1;
+	/* Encode Receive Descriptor ring size */
+	v = cas_ringsize(CAS_NRXDESC) << CAS_RX_CONFIG_RXDRNG_SZ_SHIFT;
+
+	/* Encode Receive Completion ring size */
+	v |= cas_cringsize(CAS_NRXCOMP) << CAS_RX_CONFIG_RXCRNG_SZ_SHIFT;
 
 	/* Enable DMA */
-	bus_space_write_4(t, h, CAS_RX_CONFIG, 
-		v|(CAS_THRSH_1024<<CAS_RX_CONFIG_FIFO_THRS_SHIFT)|
-		(2<<CAS_RX_CONFIG_FBOFF_SHFT)|CAS_RX_CONFIG_RXDMA_EN|
-		(0<<CAS_RX_CONFIG_CXM_START_SHFT));
+	bus_space_write_4(t, h, CAS_RX_CONFIG,
+	    v|(2<<CAS_RX_CONFIG_FBOFF_SHFT)|CAS_RX_CONFIG_RXDMA_EN);
+
 	/*
 	 * The following value is for an OFF Threshold of about 3/4 full
 	 * and an ON Threshold of 1/4 full.
@@ -1073,94 +1105,116 @@ cas_rint(struct cas_softc *sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t t = sc->sc_memt;
 	bus_space_handle_t h = sc->sc_memh;
-	struct ether_header *eh;
 	struct cas_rxsoft *rxs;
 	struct mbuf *m;
-	u_int64_t rxstat;
-	int i, len;
+	u_int64_t word[4];
+	int len, off, idx;
+	int i, skip;
+	caddr_t cp;
 
-	for (i = sc->sc_rxptr;; i = CAS_NEXTRX(i)) {
-		rxs = &sc->sc_rxsoft[i];
-
-		CAS_CDRXSYNC(sc, i,
+	for (i = sc->sc_rxptr;; i = CAS_NEXTRX(i + skip)) {
+		CAS_CDRXCSYNC(sc, i,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		rxstat = CAS_DMA_READ(sc, sc->sc_rxdescs[i].gd_flags);
+		word[0] = CAS_DMA_READ(sc->sc_rxcomps[i].cc_word[0]);
+		word[1] = CAS_DMA_READ(sc->sc_rxcomps[i].cc_word[1]);
+		word[2] = CAS_DMA_READ(sc->sc_rxcomps[i].cc_word[2]);
+		word[3] = CAS_DMA_READ(sc->sc_rxcomps[i].cc_word[3]);
 
-		if (rxstat & CAS_RD_OWN) {
-			/*
-			 * We have processed all of the receive buffers.
-			 */
+		/* Stop if the hardware still owns the descriptor. */
+		if ((word[0] & CAS_RC0_TYPE) == 0 || word[3] & CAS_RC3_OWN)
 			break;
-		}
 
-		if (rxstat & CAS_RD_BAD_CRC) {
-#ifdef CAS_DEBUG
-			printf("%s: receive error: CRC error\n",
-				sc->sc_dev.dv_xname);
-#endif
-			CAS_INIT_RXDESC(sc, i);
-			continue;
-		}
+		len = CAS_RC1_HDR_LEN(word[1]);
+		if (len > 0) {
+			off = CAS_RC1_HDR_OFF(word[1]);
+			idx = CAS_RC1_HDR_IDX(word[1]);
+			rxs = &sc->sc_rxsoft[idx];
 
-		bus_dmamap_sync(sc->sc_dmatag, rxs->rxs_dmamap, 0,
-		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
-#ifdef CAS_DEBUG
-		if (ifp->if_flags & IFF_DEBUG) {
-			printf("    rxsoft %p descriptor %d: ", rxs, i);
-			printf("gd_flags: 0x%016llx\t", (long long)
-				CAS_DMA_READ(sc, sc->sc_rxdescs[i].gd_flags));
-			printf("gd_addr: 0x%016llx\n", (long long)
-				CAS_DMA_READ(sc, sc->sc_rxdescs[i].gd_addr));
-		}
-#endif
+			DPRINTF(sc, ("hdr at idx %d, off %d, len %d\n",
+			    idx, len, off));
 
-		/* No errors; receive the packet. */
-		len = CAS_RD_BUFLEN(rxstat);
-
-		/*
-		 * Allocate a new mbuf cluster.  If that fails, we are
-		 * out of memory, and must drop the packet and recycle
-		 * the buffer that's already attached to this descriptor.
-		 */
-		m = rxs->rxs_mbuf;
-		if (cas_add_rxbuf(sc, i) != 0) {
-			ifp->if_ierrors++;
-			CAS_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmatag, rxs->rxs_dmamap, 0,
-			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
-			continue;
-		}
-		m->m_data += 2; /* We're already off by two */
+			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
-		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = m->m_len = len;
+			cp = rxs->rxs_kva + off * 256;
+			m = m_devget(cp, len + ETHER_ALIGN, 0, ifp, NULL);
+			m_adj(m, ETHER_ALIGN);
+
+			if (word[0] & CAS_RC0_RELEASE_HDR)
+				cas_add_rxbuf(sc, idx);
 
 #if NBPFILTER > 0
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if its for us.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+			/*
+			 * Pass this up to any BPF listeners, but only
+			 * pass it up the stack if its for us.
+			 */
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif /* NPBFILTER > 0 */
 
-		/* Pass it on. */
-		ether_input_mbuf(ifp, m);
+			ifp->if_ipackets++;
+			ether_input_mbuf(ifp, m);
+		}
+
+		len = CAS_RC0_DATA_LEN(word[0]);
+		if (len > 0) {
+			off = CAS_RC0_DATA_OFF(word[0]);
+			idx = CAS_RC0_DATA_IDX(word[0]);
+			rxs = &sc->sc_rxsoft[idx];
+
+			DPRINTF(sc, ("data at idx %d, off %d, len %d\n",
+			    idx, off, len));
+
+			bus_dmamap_sync(sc->sc_dmatag, rxs->rxs_dmamap, 0,
+			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+
+			/* XXX We should not be copying the packet here. */
+			cp = rxs->rxs_kva + off;
+			m = m_devget(cp, len + ETHER_ALIGN, 0, ifp, NULL);
+			m_adj(m, ETHER_ALIGN);
+
+			if (word[0] & CAS_RC0_RELEASE_DATA)
+				cas_add_rxbuf(sc, idx);
+
+#if NBPFILTER > 0
+			/*
+			 * Pass this up to any BPF listeners, but only
+			 * pass it up the stack if its for us.
+			 */
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+#endif /* NPBFILTER > 0 */
+
+			ifp->if_ipackets++;
+			ether_input_mbuf(ifp, m);
+		}
+
+		if (word[0] & CAS_RC0_SPLIT)
+			printf("split packet\n");
+
+		skip = CAS_RC0_SKIP(word[0]);
 	}
 
-	/* Update the receive pointer. */
-	sc->sc_rxptr = i;
-	bus_space_write_4(t, h, CAS_RX_KICK, i);
+	while (sc->sc_rxptr != i) {
+		sc->sc_rxcomps[sc->sc_rxptr].cc_word[0] = 0;
+		sc->sc_rxcomps[sc->sc_rxptr].cc_word[1] = 0;
+		sc->sc_rxcomps[sc->sc_rxptr].cc_word[2] = 0;
+		sc->sc_rxcomps[sc->sc_rxptr].cc_word[3] =
+		    CAS_DMA_WRITE(CAS_RC3_OWN);
+		CAS_CDRXCSYNC(sc, sc->sc_rxptr,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		sc->sc_rxptr = CAS_NEXTRX(sc->sc_rxptr);
+	}
+
+	bus_space_write_4(t, h, CAS_RX_COMP_TAIL, sc->sc_rxptr);
 
 	DPRINTF(sc, ("cas_rint: done sc->rxptr %d, complete %d\n",
 		sc->sc_rxptr, bus_space_read_4(t, h, CAS_RX_COMPLETION)));
 
 	return (1);
 }
-
 
 /*
  * cas_add_rxbuf:
@@ -1170,47 +1224,17 @@ cas_rint(struct cas_softc *sc)
 int
 cas_add_rxbuf(struct cas_softc *sc, int idx)
 {
-	struct cas_rxsoft *rxs = &sc->sc_rxsoft[idx];
-	struct mbuf *m;
-	int error;
+	bus_space_tag_t t = sc->sc_memt;
+	bus_space_handle_t h = sc->sc_memh;
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-		return (ENOBUFS);
+	CAS_INIT_RXDESC(sc, sc->sc_rxdptr, idx);
 
-	MCLGET(m, M_DONTWAIT);
-	if ((m->m_flags & M_EXT) == 0) {
-		m_freem(m);
-		return (ENOBUFS);
-	}
+	if ((sc->sc_rxdptr % 4) == 0)
+		bus_space_write_4(t, h, CAS_RX_KICK, sc->sc_rxdptr);
 
-#ifdef CAS_DEBUG
-/* bzero the packet to check dma */
-	memset(m->m_ext.ext_buf, 0, m->m_ext.ext_size);
-#endif
-
-	if (rxs->rxs_mbuf != NULL)
-		bus_dmamap_unload(sc->sc_dmatag, rxs->rxs_dmamap);
-
-	rxs->rxs_mbuf = m;
-
-	error = bus_dmamap_load(sc->sc_dmatag, rxs->rxs_dmamap,
-	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: can't load rx DMA map %d, error = %d\n",
-		    sc->sc_dev.dv_xname, idx, error);
-		panic("cas_add_rxbuf");	/* XXX */
-	}
-
-	bus_dmamap_sync(sc->sc_dmatag, rxs->rxs_dmamap, 0,
-	    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
-
-	CAS_INIT_RXDESC(sc, idx);
-
+	sc->sc_rxdptr++;
 	return (0);
 }
-
 
 int
 cas_eint(struct cas_softc *sc, u_int status)
@@ -1259,7 +1283,8 @@ cas_intr(void *v)
 	if ((status & CAS_INTR_PCS) != 0)
 		r |= cas_pint(sc);
 
-	if ((status & (CAS_INTR_RX_TAG_ERR | CAS_INTR_BERR)) != 0)
+	if ((status & (CAS_INTR_TX_TAG_ERR | CAS_INTR_RX_TAG_ERR |
+	    CAS_INTR_RX_COMP_FULL | CAS_INTR_BERR)) != 0)
 		r |= cas_eint(sc, status);
 
 	if ((status & (CAS_INTR_TX_EMPTY | CAS_INTR_TX_INTME)) != 0)
@@ -1360,11 +1385,9 @@ cas_mii_readreg(struct device *self, int phy, int reg)
 	int n;
 	u_int32_t v;
 
-#if 0
 #ifdef CAS_DEBUG
 	if (sc->sc_debug)
 		printf("cas_mii_readreg: phy %d reg %d\n", phy, reg);
-#endif
 #endif
 
 	/* Construct the frame command */
@@ -1392,12 +1415,10 @@ cas_mii_writereg(struct device *self, int phy, int reg, int val)
 	int n;
 	u_int32_t v;
 
-#if 0
 #ifdef CAS_DEBUG
 	if (sc->sc_debug)
 		printf("cas_mii_writereg: phy %d reg %d val %x\n",
 			phy, reg, val);
-#endif
 #endif
 
 #if 0
@@ -1457,11 +1478,6 @@ cas_mii_statchg(struct device *dev)
 	/* XIF Configuration */
 	v = CAS_MAC_XIF_TX_MII_ENA;
 	v |= CAS_MAC_XIF_LINK_LED;
-
-#if 0
-	/* If an external transceiver is connected, enable its MII drivers */
-	sc->sc_mif_config = bus_space_read_4(t, mac, CAS_MIF_CONFIG);
-#endif
 
 	/* MII needs echo disable if half duplex. */
 	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0)
@@ -1800,12 +1816,12 @@ cas_encap(struct cas_softc *sc, struct mbuf *mhead, u_int32_t *bixp)
 	    BUS_DMASYNC_PREWRITE);
 
 	for (i = 0; i < map->dm_nsegs; i++) {
-		sc->sc_txdescs[frag].gd_addr =
-		    CAS_DMA_WRITE(sc, map->dm_segs[i].ds_addr);
+		sc->sc_txdescs[frag].cd_addr =
+		    CAS_DMA_WRITE(map->dm_segs[i].ds_addr);
 		flags = (map->dm_segs[i].ds_len & CAS_TD_BUFSIZE) |
 		    (i == 0 ? CAS_TD_START_OF_PACKET : 0) |
 		    ((i == (map->dm_nsegs - 1)) ? CAS_TD_END_OF_PACKET : 0);
-		sc->sc_txdescs[frag].gd_flags = CAS_DMA_WRITE(sc, flags);
+		sc->sc_txdescs[frag].cd_flags = CAS_DMA_WRITE(flags);
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_cddmamap,
 		    CAS_CDTXOFF(frag), sizeof(struct cas_desc),
 		    BUS_DMASYNC_PREWRITE);

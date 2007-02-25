@@ -1,7 +1,8 @@
-/*	$OpenBSD: if_casvar.h,v 1.1 2007/02/24 20:13:34 kettenis Exp $	*/
+/*	$OpenBSD: if_casvar.h,v 1.2 2007/02/25 21:54:52 kettenis Exp $	*/
 
 /*
  *
+ * Copyright (C) 2007 Mark Kettenis.
  * Copyright (C) 2001 Eduardo Horvath.
  * All rights reserved.
  *
@@ -40,7 +41,7 @@
  */
 
 /*
- * Transmit descriptor list size.  This is arbitrary, but allocate
+ * Transmit descriptor ring size.  This is arbitrary, but allocate
  * enough descriptors for 64 pending transmissions and 16 segments
  * per packet.
  */
@@ -57,15 +58,21 @@ struct cas_sxd {
 };
 
 /*
- * Receive descriptor list size.  We have one Rx buffer per incoming
+ * Receive descriptor ring size.  We have one Rx buffer per incoming
  * packet, so this logic is a little simpler.
  */
 #define	CAS_NRXDESC		128
 #define	CAS_NRXDESC_MASK	(CAS_NRXDESC - 1)
-#define	CAS_NEXTRX(x)		((x + 1) & CAS_NRXDESC_MASK)
 
 /*
- * Control structures are DMA'd to the GEM chip.  We allocate them in
+ * Receive completion ring size.
+ */
+#define	CAS_NRXCOMP		256
+#define	CAS_NRXCOMP_MASK	(CAS_NRXCOMP - 1)
+#define	CAS_NEXTRX(x)		((x + 1) & CAS_NRXCOMP_MASK)
+
+/*
+ * Control structures are DMA'd to the Cassini chip.  We allocate them in
  * a single clump that maps to a single DMA segment to make several things
  * easier.
  */
@@ -73,17 +80,23 @@ struct cas_control_data {
 	/*
 	 * The transmit descriptors.
 	 */
-	struct cas_desc gcd_txdescs[CAS_NTXDESC];
+	struct cas_desc ccd_txdescs[CAS_NTXDESC];
+
+	/*
+	 * The receive completions.
+	 */
+	struct cas_comp ccd_rxcomps[CAS_NRXCOMP];
 
 	/*
 	 * The receive descriptors.
 	 */
-	struct cas_desc gcd_rxdescs[CAS_NRXDESC];
+	struct cas_desc ccd_rxdescs[CAS_NRXDESC];
 };
 
 #define	CAS_CDOFF(x)		offsetof(struct cas_control_data, x)
-#define	CAS_CDTXOFF(x)		CAS_CDOFF(gcd_txdescs[(x)])
-#define	CAS_CDRXOFF(x)		CAS_CDOFF(gcd_rxdescs[(x)])
+#define	CAS_CDTXOFF(x)		CAS_CDOFF(ccd_txdescs[(x)])
+#define	CAS_CDRXOFF(x)		CAS_CDOFF(ccd_rxdescs[(x)])
+#define	CAS_CDRXCOFF(x)		CAS_CDOFF(ccd_rxcomps[(x)])
 
 /*
  * Software state for receive jobs.
@@ -91,6 +104,8 @@ struct cas_control_data {
 struct cas_rxsoft {
 	struct mbuf *rxs_mbuf;		/* head of our mbuf chain */
 	bus_dmamap_t rxs_dmamap;	/* our DMA map */
+	bus_dma_segment_t rxs_dmaseg;	/* our DMA segment */
+	caddr_t rxs_kva;
 };
 
 
@@ -162,8 +177,9 @@ struct cas_softc {
 	 * Control data structures.
 	 */
 	struct cas_control_data *sc_control_data;
-#define	sc_txdescs	sc_control_data->gcd_txdescs
-#define	sc_rxdescs	sc_control_data->gcd_rxdescs
+#define	sc_txdescs	sc_control_data->ccd_txdescs
+#define	sc_rxdescs	sc_control_data->ccd_rxdescs
+#define	sc_rxcomps	sc_control_data->ccd_rxcomps
 
 	int			sc_txfree;		/* number of free Tx descriptors */
 	int			sc_txnext;		/* next ready Tx descriptor */
@@ -175,6 +191,7 @@ struct cas_softc {
 
 	int			sc_rxptr;		/* next ready RX descriptor/descsoft */
 	int			sc_rxfifosize;
+	int			sc_rxdptr;
 
 	/* ========== */
 	int			sc_inited;
@@ -182,8 +199,8 @@ struct cas_softc {
 	void			*sc_sh;		/* shutdownhook cookie */
 };
 
-#define	CAS_DMA_READ(sc, v)	letoh64(v)
-#define	CAS_DMA_WRITE(sc, v)	htole64(v)
+#define	CAS_DMA_READ(v)		letoh64(v)
+#define	CAS_DMA_WRITE(v)	htole64(v)
 
 /*
  * This macro returns the current media entry for *non-MII* media.
@@ -202,8 +219,7 @@ struct cas_softc {
 
 #define	CAS_CDTXADDR(sc, x)	((sc)->sc_cddma + CAS_CDTXOFF((x)))
 #define	CAS_CDRXADDR(sc, x)	((sc)->sc_cddma + CAS_CDRXOFF((x)))
-
-#define	CAS_CDSPADDR(sc)	((sc)->sc_cddma + CAS_CDSPOFF)
+#define	CAS_CDRXCADDR(sc, x)	((sc)->sc_cddma + CAS_CDRXCOFF((x)))
 
 #define	CAS_CDTXSYNC(sc, x, n, ops)					\
 do {									\
@@ -230,24 +246,20 @@ do {									\
 	bus_dmamap_sync((sc)->sc_dmatag, (sc)->sc_cddmamap,		\
 	    CAS_CDRXOFF((x)), sizeof(struct cas_desc), (ops))
 
-#define	CAS_CDSPSYNC(sc, ops)						\
+#define	CAS_CDRXCSYNC(sc, x, ops)					\
 	bus_dmamap_sync((sc)->sc_dmatag, (sc)->sc_cddmamap,		\
-	    CAS_CDSPOFF, CAS_SETUP_PACKET_LEN, (ops))
+	    CAS_CDRXCOFF((x)), sizeof(struct cas_desc), (ops))
 
-#define	CAS_INIT_RXDESC(sc, x)						\
+#define	CAS_INIT_RXDESC(sc, d, s)					\
 do {									\
-	struct cas_rxsoft *__rxs = &sc->sc_rxsoft[(x)];			\
-	struct cas_desc *__rxd = &sc->sc_rxdescs[(x)];			\
-	struct mbuf *__m = __rxs->rxs_mbuf;				\
+	struct cas_rxsoft *__rxs = &sc->sc_rxsoft[(s)];			\
+	struct cas_desc *__rxd = &sc->sc_rxdescs[(d)];			\
 									\
-	__m->m_data = __m->m_ext.ext_buf;				\
-	__rxd->gd_addr =						\
-	    CAS_DMA_WRITE((sc), __rxs->rxs_dmamap->dm_segs[0].ds_addr);	\
-	__rxd->gd_flags =						\
-	    CAS_DMA_WRITE((sc),						\
-		(((__m->m_ext.ext_size)<<CAS_RD_BUFSHIFT)		\
-	    & CAS_RD_BUFSIZE) | CAS_RD_OWN);				\
-	CAS_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
+	__rxd->cd_addr =						\
+	    CAS_DMA_WRITE(__rxs->rxs_dmamap->dm_segs[0].ds_addr);	\
+	__rxd->cd_flags =						\
+	    CAS_DMA_WRITE((s));						\
+	CAS_CDRXSYNC((sc), (d), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (0)
 
 #ifdef _KERNEL
