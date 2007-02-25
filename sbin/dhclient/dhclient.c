@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.110 2007/02/25 16:27:20 stevesk Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.111 2007/02/25 18:10:43 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -854,8 +854,8 @@ packet_to_lease(struct iaddr client_addr, struct option_data *options)
 	    lease->address.len);
 
 	/* If the server name was filled out, copy it. */
-	if ((!options[DHO_DHCP_OPTION_OVERLOAD].len ||
-	    !(options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)) &&
+	if ((!lease->options[DHO_DHCP_OPTION_OVERLOAD].len ||
+	    !(lease->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)) &&
 	    client->packet.sname[0]) {
 		lease->server_name = malloc(DHCP_SNAME_LEN + 1);
 		if (!lease->server_name) {
@@ -874,8 +874,8 @@ packet_to_lease(struct iaddr client_addr, struct option_data *options)
 	}
 
 	/* Ditto for the filename. */
-	if ((!options[DHO_DHCP_OPTION_OVERLOAD].len ||
-	    !(options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1)) &&
+	if ((!lease->options[DHO_DHCP_OPTION_OVERLOAD].len ||
+	    !(lease->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1)) &&
 	    client->packet.file[0]) {
 		/* Don't count on the NUL terminator. */
 		lease->filename = malloc(DHCP_FILE_LEN + 1);
