@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.164 2007/01/03 19:25:08 mbalmer Exp $
+#	$OpenBSD: GENERIC,v 1.165 2007/02/25 22:29:41 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -47,8 +47,9 @@ ebus*	at pci?
 
 # PCI Ethernet
 lmc*	at pci?			# Lan Media Corp SSI/T3/HSSI
-hme*	at pci?
-gem*	at pci?
+hme*	at pci?			# Sun Happy Meal 10/100
+gem*	at pci?			# Sun GEM 10/100/Gigabit
+cas*	at pci?			# Sun Cassini 100/Gigabit
 ti*	at pci?			# Alteon Tigon 1Gb ethernet
 skc*	at pci?			# SysKonnect GEnesis 984x
 sk*	at skc?			#  each port of above
