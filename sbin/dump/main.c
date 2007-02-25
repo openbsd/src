@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.38 2005/05/24 21:28:50 moritz Exp $	*/
+/*	$OpenBSD: main.c,v 1.39 2007/02/25 16:48:46 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 4/15/94";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.38 2005/05/24 21:28:50 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.39 2007/02/25 16:48:46 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -559,10 +559,11 @@ usage(void)
 {
 	extern char *__progname;
 
-	(void)fprintf(stderr, "usage: %s [-0123456789acnu] [-B records]"
-		      "[-b blocksize] [-d density] [-f file]\n"
-		      "            [-h level] [-s feet] [-T date] filesystem\n"
-		      "       %s [-W | -w]\n", __progname, __progname);
+	(void)fprintf(stderr, "usage: %s [-0123456789acnuWw] [-B records] "
+		      "[-b blocksize] [-d density]\n"
+		      "\t[-f file] [-h level] [-s feet] "
+		      "[-T date] files-to-dump\n",
+		      __progname);
 	exit(X_STARTUP);
 }
 
