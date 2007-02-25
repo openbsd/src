@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.18 2007/02/24 22:16:14 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.19 2007/02/25 01:49:27 drahn Exp $ */
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -553,13 +553,7 @@ again:
 	p = xfer->buffer + xfer->actlen;
 	csr = CSR_READ_4(sc, USBDC_UDCCSR(ep));
 
-#if  0
-	if ((csr & (USBDC_UDCCSR_SP|USBDC_UDCCSR_PC)) ==
-	    (USBDC_UDCCSR_SP|USBDC_UDCCSR_PC)
-	    && count == 0)
-#else
 	if ((csr & USBDC_UDCCSR_PC) && count == 0)
-#endif
 	{
 #ifdef DEBUG_RX
 	        printf("trans1 complete\n");
@@ -696,9 +690,20 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 		 * send a zero packet to indicate termiation.
 		 */
 		if ((xfer->actlen % maxp) == 0 &&
-		    xfer->status != USBF_NORMAL_COMPLETION) {
-			if (CSR_READ_4(sc, USBDC_UDCCSR(ep)) & USBDC_UDCCSR_BNF) {
-				CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
+		    xfer->status != USBF_NORMAL_COMPLETION &&
+		    xfer->flags & USBD_FORCE_SHORT_XFER) {
+			if (CSR_READ_4(sc, USBDC_UDCCSR(ep))
+			    & USBDC_UDCCSR_BNF) {
+				CSR_SET_4(sc, USBDC_UDCCSR(ep),
+				    USBDC_UDCCSR_SP);
+				/*
+				 * if we send a zero packet, we are 'done', but
+				 * dont to usbf_transfer_complete() just yet
+				 * because the short packet will cause another
+				 * interrupt.
+				 */
+				xfer->status = USBF_NORMAL_COMPLETION;
+				return;
 			} else  {
 				printf("fifo full when trying to set short packet\n");
 			}
@@ -760,15 +765,18 @@ pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 		printf("whoa, write_ep called, but no free space\n");
 	}
 #endif
-	if (xfer->actlen >= xfer->length) {
+	if (xfer->actlen == xfer->length) {
 		if ((xfer->actlen % maxp) != 0) {
-			CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
+			if (xfer->flags & USBD_FORCE_SHORT_XFER) {
+				CSR_SET_4(sc, USBDC_UDCCSR(ep), USBDC_UDCCSR_SP);
 #ifdef DEBUG_TX
-			printf("setting short packet on %x csr\n", ep,
-			    CSR_READ_4(sc, USBDC_UDCCSR(ep)));
+				printf("setting short packet on %x csr\n", ep,
+				    CSR_READ_4(sc, USBDC_UDCCSR(ep)));
 #endif
+			} else {
+				/* fill buffer to maxpacket size??? */
+			}
 		}
-		xfer->actlen = xfer->length; /* no overflow */
 	}
 }
 
