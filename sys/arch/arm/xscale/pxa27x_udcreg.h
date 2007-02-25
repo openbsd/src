@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udcreg.h,v 1.4 2007/02/13 18:32:57 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udcreg.h,v 1.5 2007/02/25 01:40:12 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -56,8 +56,10 @@
 #define  USBDC_UDCICR1_IECC	(1<<31)	/* Interrupt Enable Config Change */
 #define USBDC_UDCISR0	0x000c	/* UDC Interrupt Status Register 0 */
 #define  USBDC_UDCISR0_IR(n)	(3<<((n)*2)) /* Interrupt Requests */
+#define  USBDC_UDCISR0_IRs(v,n)	(((v)>>((n)*2))&3) /* Interrupt Requests */
 #define USBDC_UDCISR1	0x0010	/* UDC Interrupt Status Register 1 */
 #define  USBDC_UDCISR1_IR(n)	(3<<((n)*2)) /* Interrupt Requests */
+#define  USBDC_UDCISR1_IRs(v,n)	(((v)>>((n)*2))&3) /* Interrupt Requests */
 #define  USBDC_UDCISR1_IRRS	(1<<27)	/* Interrupt Enable Reset */
 #define  USBDC_UDCISR1_IRSU	(1<<28)	/* Interrupt Enable Suspend */
 #define  USBDC_UDCISR1_IRRU	(1<<29)	/* Interrupt Enable Resume */
@@ -180,5 +182,8 @@
 #define USBDC_UDCCSR0_BITS						\
 	"\20\001OPC\002IPR\003FTF\004DME\005SST\006FST\007RNE"		\
 	"\010SA\011AREN\012ACM"
+#define USBDC_UDCCSRN_BITS						\
+	"\20\001FS\002PC\003TRN\004DME\005SST\006FST\007BNEF"		\
+	"\010SP\011FEF\012DPE"
 
 #endif /* _ARM_XSCALE_PXA27X_UDCREG_H_ */
