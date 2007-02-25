@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_cardbus.c,v 1.5 2006/12/08 01:28:39 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_cardbus.c,v 1.6 2007/02/25 09:07:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -137,7 +137,7 @@ bcw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Get some cardbus info into the softc
 	 */
-	sc->sc_chiprev = PCI_REVISION(ca->ca_class);
+	sc->sc_chip_rev = PCI_REVISION(ca->ca_class);
 	sc->sc_prodid = CARDBUS_PRODUCT(ca->ca_id);
 
 #if 0
