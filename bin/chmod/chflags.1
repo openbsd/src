@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.8 2007/02/25 09:39:48 jmc Exp $
+.\"	$OpenBSD: chflags.1,v 1.9 2007/02/25 09:47:43 jmc Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -58,6 +58,12 @@ The
 .Ar flags
 of a file dictate special restrictions beyond those enforced by its
 mode/permissions.
+Only the superuser can change the user flags on block and
+character devices.
+.Pp
+You can use
+.Ic ls -lo
+to see the flags of existing files.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -113,13 +119,6 @@ can be used to alter this.
 An immutable file may not be changed, moved, or deleted.
 An append-only file is immutable except that data may be appended to it.
 .Pp
-Putting the letters
-.Dq no
-before a flag name causes the flag to be turned off.
-For example:
-.Pp
-.Dl nouchg	the immutable bit should be cleared
-.Pp
 The
 superuser-settable
 .Dq sappnd
@@ -131,6 +130,13 @@ running at security level 0 or \-1
 For more information on setting the system security level,
 see
 .Xr securelevel 7 .
+.Pp
+Putting the letters
+.Dq no
+before a flag name causes the flag to be turned off.
+For example:
+.Pp
+.Dl nouchg	the immutable bit should be cleared
 .Pp
 Symbolic links do not have flags, so unless the
 .Fl H
@@ -150,16 +156,7 @@ option is specified.
 In addition, these options override each other and the
 command's actions are determined by the last one specified.
 .Pp
-Only the superuser can change the user flags on block and
-character devices.
-.Pp
-You can use
-.Ic ls -lo
-to see the flags of existing files.
-.Pp
-The
-.Nm
-utility exits 0 on success or >0 if an error occurred.
+.Ex -std chflags
 .Sh SEE ALSO
 .Xr ls 1 ,
 .Xr chflags 2 ,
