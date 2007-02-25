@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2003/02/06 13:26:47 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2007/02/25 04:41:07 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -43,7 +43,7 @@ installboot:
 	/usr/mdec/installboot -v ${DESTDIR}/usr/mdec/bootblk /dev/svnd0c
 
 blank_filesystem:
-	dd if=/dev/zero of=${TARGET} bs=512 count=4096
+	dd if=/dev/zero of=${TARGET} bs=512 count=5120
 
 .endif
 
