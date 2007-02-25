@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.7 2005/10/15 08:42:14 jmc Exp $
+.\"	$OpenBSD: chflags.1,v 1.8 2007/02/25 09:39:48 jmc Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -92,6 +92,24 @@ uappnd	set the user append-only flag (owner or superuser only)
 uchg	set the user immutable flag (owner or superuser only)
 .Ed
 .Pp
+The
+.Dq arch
+and
+.Dq opaque
+flags are for compatibility only,
+and currently have no effect.
+.Pp
+A file with the
+.Dq nodump
+flag set will by default only be backed up by
+.Xr dump 8
+during full backups.
+The
+.Fl h
+option of
+.Xr dump 8
+can be used to alter this.
+.Pp
 An immutable file may not be changed, moved, or deleted.
 An append-only file is immutable except that data may be appended to it.
 .Pp
@@ -148,7 +166,8 @@ utility exits 0 on success or >0 if an error occurred.
 .Xr stat 2 ,
 .Xr fts 3 ,
 .Xr securelevel 7 ,
-.Xr symlink 7
+.Xr symlink 7 ,
+.Xr dump 8
 .Sh HISTORY
 The
 .Nm
