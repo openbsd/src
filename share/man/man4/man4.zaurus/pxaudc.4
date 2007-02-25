@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: pxaudc.4,v 1.6 2007/02/25 00:16:14 drahn Exp $
+.\" 	$OpenBSD: pxaudc.4,v 1.7 2007/02/25 00:43:19 drahn Exp $
 .\"
 .\" Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
 .\"
@@ -30,21 +30,21 @@ cable is plugged into the connector.
 .Pp
 An appropriate driver can configure the device controller to operate as a
 variety of devices, e.g. an Ethernet or mass storage device, when plugged
-into a USB host.
+into a USB host. Currently only ethernet 
+.Xr cdcef 4
+is supported .
 .Pp
 Currently, the
 .Nm
-driver disables the functionality of the USB Device Controller and configures
-the physical port to be always routed to the
+driver configures
+.Xr usbf 4
+and 
+.Xr cdcef
+usb client drivers on boot and enables host mode
 .Xr ohci 4
-controller.
-In this mode the hardware only supports attachment of USB devices;
-it will not operate as a USB device itself.
+and probes the usb bus when a host cable is connected.
 .Sh SEE ALSO
 .Xr autoconf 4 ,
 .Xr ohci 4 ,
-.Xr pxaip 4 ,
+.Xr usbf 4 ,
 .Xr config 8
-.Pp
-Intel(R) PXA27x Processor Family Developer's Manual,
-.Pa http://www.intel.com/design/pca/applicationsprocessors/manuals/280000.htm
