@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.41 2007/02/24 00:10:45 deraadt Exp $ */
+/*	$OpenBSD: kroute.c,v 1.42 2007/02/25 18:10:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -936,7 +936,7 @@ fetchifs(int ifindex)
 	int			 mib[6];
 	char			*buf, *next, *lim;
 	struct rt_msghdr	*rtm;
-	struct if_msghdr	*ifm;
+	struct if_msghdr	*ifmp, ifm;
 	struct ifa_msghdr	*ifam;
 	struct kif_node		*kif = NULL;
 	struct kif_addr		*kaddr;
@@ -972,9 +972,10 @@ fetchifs(int ifindex)
 			continue;
 		switch (rtm->rtm_type) {
 		case RTM_IFINFO:
-			ifm = (struct if_msghdr *)rtm;
-			sa = (struct sockaddr *)(next + sizeof(*ifm));
-			get_rtaddrs(ifm->ifm_addrs, sa, rti_info);
+			ifmp = (struct if_msghdr *)rtm;
+			bcopy(ifmp, &ifm, sizeof ifm);
+			sa = (struct sockaddr *)(next + sizeof(ifm));
+			get_rtaddrs(ifm.ifm_addrs, sa, rti_info);
 
 			if ((kif = calloc(1, sizeof(struct kif_node))) ==
 			    NULL) {
@@ -983,17 +984,17 @@ fetchifs(int ifindex)
 				return (-1);
 			}
 
-			kif->k.ifindex = ifm->ifm_index;
-			kif->k.flags = ifm->ifm_flags;
-			kif->k.link_state = ifm->ifm_data.ifi_link_state;
-			kif->k.media_type = ifm->ifm_data.ifi_type;
-			kif->k.baudrate = ifm->ifm_data.ifi_baudrate;
-			kif->k.mtu = ifm->ifm_data.ifi_mtu;
+			kif->k.ifindex = ifm.ifm_index;
+			kif->k.flags = ifm.ifm_flags;
+			kif->k.link_state = ifm.ifm_data.ifi_link_state;
+			kif->k.media_type = ifm.ifm_data.ifi_type;
+			kif->k.baudrate = ifm.ifm_data.ifi_baudrate;
+			kif->k.mtu = ifm.ifm_data.ifi_mtu;
 			kif->k.nh_reachable = (kif->k.flags & IFF_UP) &&
-			    (LINK_STATE_IS_UP(ifm->ifm_data.ifi_link_state) ||
-			    (ifm->ifm_data.ifi_link_state ==
+			    (LINK_STATE_IS_UP(ifm.ifm_data.ifi_link_state) ||
+			    (ifm.ifm_data.ifi_link_state ==
 			    LINK_STATE_UNKNOWN &&
-			    ifm->ifm_data.ifi_type != IFT_CARP));
+			    ifm.ifm_data.ifi_type != IFT_CARP));
 			TAILQ_INIT(&kif->addrs);
 			if ((sa = rti_info[RTAX_IFP]) != NULL &&
 			    sa->sa_family == AF_LINK) {
