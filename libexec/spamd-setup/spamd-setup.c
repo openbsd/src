@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.30 2007/02/24 19:28:13 millert Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.31 2007/02/25 22:59:38 millert Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -82,10 +82,13 @@ struct cidr	**collapse_blacklist(struct bl *, size_t);
 int		  configure_spamd(u_short, char *, char *, struct cidr **);
 int		  configure_pf(struct cidr **);
 int		  getlist(char **, char *, struct blacklist *, struct blacklist *);
+__dead void	  usage(void);
 
 int		  debug;
 int		  dryrun;
 int		  greyonly;
+
+extern char 	 *__progname;
 
 u_int32_t
 imask(u_int8_t b)
@@ -773,6 +776,14 @@ send_blacklist(struct blacklist *blist, in_port_t port)
 	}
 }
 
+__dead void
+usage(void)
+{
+
+	fprintf(stderr, "usage: %s [-dgn]\n", __progname);
+	exit(1);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -794,9 +805,14 @@ main(int argc, char *argv[])
 			greyonly = 1;
 			break;
 		default:
+			usage();
 			break;
 		}
 	}
+	argc -= optind;
+	argv += optind;
+	if (argc != 0)
+		usage();
 
 	if ((ent = getservbyname("spamd-cfg", "tcp")) == NULL)
 		errx(1, "cannot find service \"spamd-cfg\" in /etc/services");
