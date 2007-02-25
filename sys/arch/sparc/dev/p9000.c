@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.19 2007/02/18 18:40:35 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.20 2007/02/25 18:14:48 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -263,7 +263,8 @@ p9000attach(struct device *parent, struct device *self, void *args)
 	/*
 	 * Plug-in accelerated console operations.
 	 */
-	p9000_ras_init(sc);
+	if (sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags != 0)
+		p9000_ras_init(sc);
 
 	/* enable video */
 	p9000_burner(sc, 1, 0);
@@ -300,7 +301,8 @@ p9000_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 	case WSDISPLAYIO_SMODE:
 		/* Restore proper acceleration state upon leaving X11 */
 		if (*(u_int *)data == WSDISPLAYIO_MODE_EMUL) {
-			p9000_ras_init(sc);
+			if (sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags != 0)
+				p9000_ras_init(sc);
 		}
 		break;
 
