@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.67 2007/02/15 18:42:53 jason Exp $	*/
+/*	$OpenBSD: re.c,v 1.68 2007/02/25 08:00:06 deraadt Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -876,11 +876,11 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	}
 
 	if (re_name == NULL)
-		printf(", unknown ASIC (0x%04x)", hwrev >> 16);
+		printf(": unknown ASIC (0x%04x)", hwrev >> 16);
 	else
-		printf(", %s (0x%04x)", re_name, hwrev >> 16);
+		printf(": %s (0x%04x)", re_name, hwrev >> 16);
 
-	printf(": %s, address %s\n", intrstr,
+	printf(", %s, address %s\n", intrstr,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	if (sc->rl_ldata.rl_tx_desc_cnt >
