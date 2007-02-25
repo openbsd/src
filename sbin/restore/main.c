@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2006/03/20 18:55:13 dhill Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2007/02/25 16:41:42 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.13 1997/07/01 05:37:51 lukem Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.16 2006/03/20 18:55:13 dhill Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.17 2007/02/25 16:41:42 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -286,11 +286,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s -i [-chmvy] [-b blocksize] [-f file] [-s fileno]\n", __progname);
-	(void)fprintf(stderr, "       %s -R [-cvy] [-b blocksize] [-f file] [-s fileno]\n", __progname);
-	(void)fprintf(stderr, "       %s -r [-cvy] [-b blocksize] [-f file] [-s fileno]\n", __progname);
-	(void)fprintf(stderr, "       %s -t [-chvy] [-b blocksize] [-f file] [-s fileno] [file ...]\n", __progname);
-	(void)fprintf(stderr, "       %s -x [-chmvy] [-b blocksize] [-f file] [-s fileno] [file ...]\n", __progname);
+	(void)fprintf(stderr, "usage: %s [-chimRrtvxy] [-b blocksize] [-f file] [-s fileno] [file ...]\n", __progname);
 	exit(1);
 }
 
