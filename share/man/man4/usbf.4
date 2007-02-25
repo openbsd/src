@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usbf.4,v 1.2 2006/11/27 15:46:55 uwe Exp $
+.\"	$OpenBSD: usbf.4,v 1.3 2007/02/25 21:32:15 dlg Exp $
 .\"
 .\" Uwe Stuehler, 2006. Public Domain.
 .\"
@@ -10,7 +10,8 @@
 .Nd introduction to Universal Serial Bus function support
 .Sh SYNOPSIS
 .\" XXX SYNOPSIS should be similar to usb.4
-.Cd "usbf* at pxaudc?"
+.Cd "usbf* at pxaudc?	# zaurus"
+.Cd "cdcef* at usbf?"
 .Sh DESCRIPTION
 .Ox
 provides machine-independent bus support and drivers for Universal Serial
@@ -58,6 +59,7 @@ network adapter.
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr cdcef 4 ,
 .Xr pxaudc 4
 .\" .Xr usbf 9
 .Sh HISTORY
