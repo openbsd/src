@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.28 2007/02/22 09:40:11 jmc Exp $
+.\"	$OpenBSD: restore.8,v 1.29 2007/02/25 16:29:49 jmc Exp $
 .\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -69,11 +69,6 @@
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Op Ar file Ar ...
-.Pp
-(The
-.Bx 4.3
-option syntax is implemented for backward compatibility but
-is not documented here.)
 .Sh DESCRIPTION
 The
 .Nm
@@ -444,6 +439,11 @@ The
 .Nm
 command appeared in
 .Bx 4.2 .
+.Pp
+The
+.Bx 4.3
+option syntax is implemented for backward compatibility but
+is not documented here.
 .Sh BUGS
 .Nm
 can get confused when doing incremental restores from
