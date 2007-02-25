@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pninek.4,v 1.5 2007/02/25 18:14:46 miod Exp $
+.\"	$OpenBSD: pninek.4,v 1.6 2007/02/25 20:16:23 jmc Exp $
 .\"
 .\" Copyright (c) 2003, Miodrag Vallat.
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -53,7 +53,7 @@ Due to specifics of the video hardware on the
 .Tn Tadpole SPARCbook
 3, the complete driver is split in two parts:
 .Pp
-.Bl -tag -width Ds -compact
+.Bl -tag -width Ds -compact -offset indent
 .It Nm btcham
 RAMDAC interface
 .It Nm pninek
@@ -87,8 +87,7 @@ By default, acceleration is
 enabled.
 By setting
 .Ar flags
-to
-.Ar 1
+to 1
 (via
 .Xr config 8
 or
