@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.26 2007/02/24 16:14:02 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.27 2007/02/25 09:04:59 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -428,7 +428,6 @@ keyword will look up the entity as a GET variable in the URL instead
 of an HTTP header value when using the
 .Ic http
 protocol.
-.Pp
 .Bl -tag -width Ds
 .It Ic append Ar value Ic to Ar key
 Append the specified value to a protocol entity with the selected name.
@@ -517,7 +516,7 @@ Valid options are:
 .Bl -tag -width Ds
 .It Ic ciphers Ar string
 Set the string defining the SSL cipher suite.
-If not specified, the default value 
+If not specified, the default value
 .Ar HIGH:!ADH
 will be used (strong crypto cipher suites without anonymous DH).
 See the
@@ -537,19 +536,19 @@ will disable the SSL session cache.
 .Op Ic no
 .Ic sslv2
 .Xc
-Enable the SSLv2 protocol,
+Enable the SSLv2 protocol;
 disabled by default.
 .It Xo
 .Op Ic no
 .Ic sslv3
 .Xc
-Disable the SSLv3 protocol,
+Disable the SSLv3 protocol;
 enabled by default.
 .It Xo
 .Op Ic no
 .Ic tlsv1
 .Xc
-Disable the TLSv1/SSLv3.1 protocol,
+Disable the TLSv1/SSLv3.1 protocol;
 enabled by default.
 .El
 .El
