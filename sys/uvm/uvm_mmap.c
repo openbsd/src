@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.63 2006/07/13 22:51:26 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.64 2007/02/25 19:24:59 millert Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -73,6 +73,23 @@
 #include <uvm/uvm_device.h>
 #include <uvm/uvm_vnode.h>
 
+/*
+ * Page align addr and size, returning EINVAL on wraparound.
+ */
+#define ALIGN_ADDR(addr, size, pageoff)	do {				\
+	pageoff = (addr & PAGE_MASK);					\
+	if (pageoff != 0) {						\
+		if (size > SIZE_MAX - pageoff)				\
+			return (EINVAL);	/* wraparound */	\
+		addr -= pageoff;					\
+		size += pageoff;					\
+	}								\
+	if (size != 0) {						\
+		size = (vsize_t)round_page(size);			\
+		if (size == 0)						\
+			return (EINVAL);	/* wraparound */	\
+	}								\
+} while (0)
 
 /*
  * unimplemented VM system calls:
@@ -417,15 +434,7 @@ sys_mmap(p, v, retval)
 	/*
 	 * align file position and save offset.  adjust size.
 	 */
-
-	pageoff = (pos & PAGE_MASK);
-	pos  -= pageoff;
-	size += pageoff;			/* add offset */
-	if (size != 0) {
-		size = (vsize_t) round_page(size);	/* round up */
-		if (size == 0)
-			return (ENOMEM);		/* don't allow wrap */
-	}
+	ALIGN_ADDR(pos, size, pageoff);
 
 	/*
 	 * now check (MAP_FIXED) or get (!MAP_FIXED) the "addr" 
@@ -433,18 +442,18 @@ sys_mmap(p, v, retval)
 
 	if (flags & MAP_FIXED) {
 
-		/* ensure address and file offset are aligned properly */
+		/* adjust address by the same amount as we did the offset */
 		addr -= pageoff;
 		if (addr & PAGE_MASK)
-			return (EINVAL);
+			return (EINVAL);		/* not page aligned */
 
+		if (addr > SIZE_MAX - size)
+			return (EINVAL);		/* no wrapping! */
 		if (VM_MAXUSER_ADDRESS > 0 &&
 		    (addr + size) > VM_MAXUSER_ADDRESS)
 			return (EINVAL);
 		if (vm_min_address > 0 && addr < vm_min_address)
 			return (EINVAL);
-		if (addr > addr + size)
-			return (EINVAL);		/* no wrapping! */
 
 	} else {
 
@@ -649,15 +658,9 @@ sys_msync(p, v, retval)
 	/*
 	 * align the address to a page boundary, and adjust the size accordingly
 	 */
-
-	pageoff = (addr & PAGE_MASK);
-	addr -= pageoff;
-	size += pageoff;
-	size = (vsize_t) round_page(size);
-
-	/* disallow wrap-around. */
-	if (addr + (ssize_t)size < addr)
-		return (EINVAL);
+	ALIGN_ADDR(addr, size, pageoff);
+	if (addr > SIZE_MAX - size)
+		return (EINVAL);		/* disallow wrap-around. */
 
 	/*
 	 * get map
@@ -741,26 +744,17 @@ sys_munmap(p, v, retval)
 	/*
 	 * align the address to a page boundary, and adjust the size accordingly
 	 */
-
-	pageoff = (addr & PAGE_MASK);
-	addr -= pageoff;
-	size += pageoff;
-	size = (vsize_t) round_page(size);
-
-	if ((ssize_t)size < 0)
-		return (EINVAL);
-	if (size == 0)
-		return (0);
+	ALIGN_ADDR(addr, size, pageoff);
 
 	/*
 	 * Check for illegal addresses.  Watch out for address wrap...
 	 * Note that VM_*_ADDRESS are not constants due to casts (argh).
 	 */
+	if (addr > SIZE_MAX - size)
+		return (EINVAL);
 	if (VM_MAXUSER_ADDRESS > 0 && addr + size > VM_MAXUSER_ADDRESS)
 		return (EINVAL);
 	if (vm_min_address > 0 && addr < vm_min_address)
-		return (EINVAL);
-	if (addr > addr + size)
 		return (EINVAL);
 	map = &p->p_vmspace->vm_map;
 
@@ -824,12 +818,9 @@ sys_mprotect(p, v, retval)
 	/*
 	 * align the address to a page boundary, and adjust the size accordingly
 	 */
-	pageoff = (addr & PAGE_MASK);
-	addr -= pageoff;
-	size += pageoff;
-	size = (vsize_t) round_page(size);
-	if ((ssize_t)size < 0)
-		return (EINVAL);
+	ALIGN_ADDR(addr, size, pageoff);
+	if (addr > SIZE_MAX - size)
+		return (EINVAL);		/* disallow wrap-around. */
 
 	/*
 	 * doit
@@ -867,17 +858,13 @@ sys_minherit(p, v, retval)
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
 	inherit = SCARG(uap, inherit);
+
 	/*
 	 * align the address to a page boundary, and adjust the size accordingly
 	 */
-
-	pageoff = (addr & PAGE_MASK);
-	addr -= pageoff;
-	size += pageoff;
-	size = (vsize_t) round_page(size);
-
-	if ((ssize_t)size < 0)
-		return (EINVAL);
+	ALIGN_ADDR(addr, size, pageoff);
+	if (addr > SIZE_MAX - size)
+		return (EINVAL);		/* disallow wrap-around. */
 	
 	switch (uvm_map_inherit(&p->p_vmspace->vm_map, addr, addr+size,
 			 inherit)) {
@@ -916,13 +903,9 @@ sys_madvise(p, v, retval)
 	/*
 	 * align the address to a page boundary, and adjust the size accordingly
 	 */
-	pageoff = (addr & PAGE_MASK);
-	addr -= pageoff;
-	size += pageoff;
-	size = (vsize_t) round_page(size);
-
-	if ((ssize_t)size <= 0)
-		return (EINVAL);
+	ALIGN_ADDR(addr, size, pageoff);
+	if (addr > SIZE_MAX - size)
+		return (EINVAL);		/* disallow wrap-around. */
 
 	switch (advice) {
 	case MADV_NORMAL:
@@ -1011,14 +994,9 @@ sys_mlock(p, v, retval)
 	/*
 	 * align the address to a page boundary and adjust the size accordingly
 	 */
-	pageoff = (addr & PAGE_MASK);
-	addr -= pageoff;
-	size += pageoff;
-	size = (vsize_t) round_page(size);
-	
-	/* disallow wrap-around. */
-	if (addr + (ssize_t)size < addr)
-		return (EINVAL);
+	ALIGN_ADDR(addr, size, pageoff);
+	if (addr > SIZE_MAX - size)
+		return (EINVAL);		/* disallow wrap-around. */
 
 	if (atop(size) + uvmexp.wired > uvmexp.wiredmax)
 		return (EAGAIN);
@@ -1065,14 +1043,9 @@ sys_munlock(p, v, retval)
 	/*
 	 * align the address to a page boundary, and adjust the size accordingly
 	 */
-	pageoff = (addr & PAGE_MASK);
-	addr -= pageoff;
-	size += pageoff;
-	size = (vsize_t) round_page(size);
-
-	/* disallow wrap-around. */
-	if (addr + (ssize_t)size < addr)
-		return (EINVAL);
+	ALIGN_ADDR(addr, size, pageoff);
+	if (addr > SIZE_MAX - size)
+		return (EINVAL);		/* disallow wrap-around. */
 
 #ifndef pmap_wired_count
 	if ((error = suser(p, 0)) != 0)
