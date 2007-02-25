@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.30 2007/02/25 16:41:42 jmc Exp $
+.\"	$OpenBSD: restore.8,v 1.31 2007/02/25 17:00:32 jmc Exp $
 .\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -164,7 +164,7 @@ Restore (rebuild) a file system.
 The target file system should be made pristine with
 .Xr newfs 8 ,
 mounted, and the user
-.Xr cd Ns 'd
+changed working directory
 into the pristine file system
 before starting the restoration of the initial level 0 backup.
 If the level 0 restores successfully, the
