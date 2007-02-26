@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.6 2007/02/26 11:24:26 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.7 2007/02/26 11:59:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1297,6 +1297,7 @@ relay_from_table(struct session *con)
 	fatalx("relay_from_table: no active hosts, desynchronized");
 
  found:
+	con->retry = host->retry;
 	con->out.port = table->port;
 	bcopy(&host->ss, &con->out.ss, sizeof(con->out.ss));
 
@@ -1368,8 +1369,17 @@ relay_connect(struct session *con)
 		con->out.port = rlay->dstport;
 	}
 
+ retry:
 	if ((con->out.s = relay_socket_connect(&con->out.ss, con->out.port,
 	    rlay->proto)) == -1) {
+		if (con->retry) {
+			con->retry--;
+			log_debug("relay_connect: session %d: "
+			    "forward failed: %s, %s",
+			    con->id, strerror(errno),
+			    con->retry ? "next retry" : "last retry");
+			goto retry;
+		}
 		log_debug("relay_connect: session %d: forward failed: %s",
 		    con->id, strerror(errno));
 		return (-1);

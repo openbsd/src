@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.27 2007/02/25 09:04:59 jmc Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.28 2007/02/26 11:59:48 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -369,6 +369,14 @@ headers and GET variables; see the
 .Sx PROTOCOLS
 section below.
 .El
+.Pp
+The optional host retry option will be used as a tolerance for failed
+host connections, the connection will be retried for
+.Ar number
+more times,
+see the
+.Sx TABLES
+section for details about host entries.
 .It Ic nat lookup
 When redirecting connections with an
 .Ar rdr
