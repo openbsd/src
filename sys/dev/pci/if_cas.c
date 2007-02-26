@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.2 2007/02/25 21:54:52 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.3 2007/02/26 21:48:32 kettenis Exp $	*/
 
 /*
  *
@@ -966,7 +966,7 @@ cas_init(struct ifnet *ifp)
 	/* step 9. ETX Configuration: use mostly default values */
 
 	/* Enable DMA */
-	v = cas_ringsize(CAS_NTXDESC /*XXX*/) << 13;
+	v = cas_ringsize(CAS_NTXDESC /*XXX*/) << 10;
 	bus_space_write_4(t, h, CAS_TX_CONFIG,
 	    v|CAS_TX_CONFIG_TXDMA_EN|(1<<24)|(1<<29));
 	bus_space_write_4(t, h, CAS_TX_KICK, 0);
