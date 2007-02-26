@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.5 2007/02/25 18:16:16 deraadt Exp $	*/
+/*	$OpenBSD: relay.c,v 1.6 2007/02/26 11:24:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -946,6 +946,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 
 			if (errstr) {
 				relay_close(con, errstr);
+				free(line);
 				return;
 			}
 		}
@@ -1408,6 +1409,8 @@ relay_close(struct session *con, const char *msg)
 		    "%s%s%s", rlay->name, con->id, relay_sessions,
 		    ibuf, obuf, ntohs(con->out.port), msg,
 		    ptr == NULL ? "" : ",", ptr == NULL ? "" : ptr);
+		if (ptr != NULL)
+			free(ptr);
 	}
 
 	if (con->in.bev != NULL)
