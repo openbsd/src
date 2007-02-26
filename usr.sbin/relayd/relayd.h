@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.33 2007/02/26 12:09:21 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.34 2007/02/26 12:35:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -199,6 +199,7 @@ struct ctl_relay_event {
 	int			 marked;
 	int			 line;
 	size_t			 toread;
+	int			 chunked;
 	int			 done;
 	enum httpmethod		 method;
 

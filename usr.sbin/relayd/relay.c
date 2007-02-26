@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.10 2007/02/26 12:16:12 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.11 2007/02/26 12:35:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -86,6 +86,7 @@ int		 relay_handle_http(struct ctl_relay_event *,
 		    struct protonode *, struct protonode *, int);
 void		 relay_read_http(struct bufferevent *, void *);
 void		 relay_read_httpcontent(struct bufferevent *, void *);
+void		 relay_read_httpchunks(struct bufferevent *, void *);
 char		*relay_expand_http(struct ctl_relay_event *, char *,
 		    char *, size_t);
 
@@ -104,6 +105,8 @@ int		 relay_bufferevent_printf(struct ctl_relay_event *,
 int		 relay_bufferevent_print(struct ctl_relay_event *, char *);
 int		 relay_bufferevent_write_buffer(struct ctl_relay_event *,
 		    struct evbuffer *);
+int		 relay_bufferevent_write_chunk(struct ctl_relay_event *,
+		    struct evbuffer *, size_t);
 int		 relay_bufferevent_write(struct ctl_relay_event *,
 		    void *, size_t);
 static __inline int
@@ -851,6 +854,96 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 }
 
 void
+relay_read_httpchunks(struct bufferevent *bev, void *arg)
+{
+	struct ctl_relay_event	*cre = (struct ctl_relay_event *)arg;
+	struct session		*con = (struct session *)cre->con;
+	struct evbuffer		*src = EVBUFFER_INPUT(bev);
+	char			*line, *ep;
+	long			 lval;
+	size_t			 size;
+
+	if (gettimeofday(&con->tv_last, NULL))
+		goto done;
+	size = EVBUFFER_LENGTH(src);
+	DPRINTF("relay_read_httpchunks: size %d, to read %d",
+	    size, cre->toread);
+	if (!size)
+		return;
+
+	if (!cre->toread) {
+		line = evbuffer_readline(src);
+		if (line == NULL) {
+			relay_close(con, "invalid chunk");
+			return;
+		}
+
+		/* Read prepended chunk size in hex */
+		errno = 0;
+		lval = strtol(line, &ep, 16);
+		if (line[0] == '\0' || *ep != '\0') {
+			free(line);
+			relay_close(con, "invalid chunk size");
+			return;
+		}
+		if (errno == ERANGE &&
+		    (lval == LONG_MAX || lval == LONG_MIN)) {
+			free(line);
+			relay_close(con, "chunk size out of range");
+			return;
+		}
+		relay_bufferevent_print(cre->dst, line);
+		relay_bufferevent_print(cre->dst, "\r\n");
+		free(line);
+
+		/* Last chunk is 0 bytes followed by an empty newline */
+		if ((cre->toread = lval) == 0) {
+			line = evbuffer_readline(src);
+			if (line == NULL) {
+				relay_close(con, "invalid chunk");
+				return;
+			}
+			free(line);
+			relay_bufferevent_print(cre->dst, "\r\n");
+
+			/* Switch to HTTP header mode */
+			bev->readcb = relay_read_http;
+		}
+	} else {
+		/* Read chunk data */
+		if (size > cre->toread)
+			size = cre->toread;
+		relay_bufferevent_write_chunk(cre->dst, src, size);
+		cre->toread -= size;
+		DPRINTF("relay_read_httpchunks: done, size %d, to read %d",
+		    size, cre->toread);
+
+		if (cre->toread == 0) {
+			/* Chunk is terminated by an empty newline */
+			line = evbuffer_readline(src);
+			if (line == NULL || strlen(line)) {
+				if (line != NULL)
+					free(line);
+				relay_close(con, "invalid chunk");
+				return;
+			}
+			free(line);
+			relay_bufferevent_print(cre->dst, "\r\n\r\n");
+		}
+	}
+
+	if (con->done)
+		goto done;
+	if (EVBUFFER_LENGTH(src))
+		bev->readcb(bev, arg);
+	bufferevent_enable(bev, EV_READ);
+	return;
+
+ done:
+	relay_close(con, "last http chunk read (done)");
+}
+
+void
 relay_read_http(struct bufferevent *bev, void *arg)
 {
 	struct ctl_relay_event	*cre = (struct ctl_relay_event *)arg;
@@ -950,6 +1043,9 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				return;
 			}
 		}
+		if (strcasecmp("Transfer-Encoding", pk.key) == 0 &&
+		    strcasecmp("chunked", pk.value) == 0)
+			cre->chunked = 1;
 
 		/* Match the HTTP header */
 		if ((pn = RB_FIND(proto_tree, &proto->tree, &pk)) == NULL)
@@ -1066,6 +1162,11 @@ next:
 			bev->readcb = relay_read_http;
 			break;
 		}
+		if (cre->chunked) {
+			/* Chunked transfer encoding */
+			cre->toread = 0;
+			bev->readcb = relay_read_httpchunks;
+		}
 
 		/* Write empty newline and switch to relay mode */
 		relay_bufferevent_print(cre->dst, "\r\n");
@@ -1073,6 +1174,7 @@ next:
 		cre->method = 0;
 		cre->marked = 0;
 		cre->done = 0;
+		cre->chunked = 0;
 
 		if (proto->lateconnect && cre->dst->bev == NULL &&
 		    relay_connect(con) == -1) {
@@ -1967,6 +2069,17 @@ relay_bufferevent_write_buffer(struct ctl_relay_event *cre,
 	if (cre->bev == NULL)
 		return (evbuffer_add_buffer(cre->output, buf));
 	return (bufferevent_write_buffer(cre->bev, buf));
+}
+
+int
+relay_bufferevent_write_chunk(struct ctl_relay_event *cre,
+    struct evbuffer *buf, size_t size)
+{
+	int ret;
+	ret = relay_bufferevent_write(cre, buf->buffer, size);
+	if (ret != -1)
+		evbuffer_drain(buf, size);
+	return (ret);
 }
 
 int
