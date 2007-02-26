@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdistd.c,v 1.6 2003/06/03 02:56:15 millert Exp $	*/
+/*	$OpenBSD: rdistd.c,v 1.7 2007/02/26 15:44:57 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ static char RCSid[] __attribute__((__unused__)) =
 "$From: rdistd.c,v 1.2 1999/08/04 15:57:33 christos Exp $";
 #else
 static char RCSid[] __attribute__((__unused__)) =
-"$OpenBSD: rdistd.c,v 1.6 2003/06/03 02:56:15 millert Exp $";
+"$OpenBSD: rdistd.c,v 1.7 2007/02/26 15:44:57 jmc Exp $";
 #endif
 
 static char sccsid[] __attribute__((__unused__)) =
@@ -57,7 +57,7 @@ static void usage(void);
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s -S [ -DV ]\n", progname);
+	fprintf(stderr, "usage: %s [-DV] -S\n", progname);
 	exit(1);
 }
 
