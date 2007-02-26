@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_cardbus.c,v 1.9 2007/02/26 14:14:02 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_cardbus.c,v 1.10 2007/02/26 14:36:11 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -45,27 +45,27 @@
 #include <dev/ic/bcwvar.h>
 
 struct bcw_cardbus_softc {
-	struct bcw_softc	sc_bcw;
+	struct bcw_softc	 sc_bcw;
 
 	/* cardbus specific goo */
-	cardbus_devfunc_t	sc_ct;
-	cardbustag_t		sc_tag;
+	cardbus_devfunc_t	 sc_ct;
+	cardbustag_t		 sc_tag;
 	void			*sc_ih;
 
-	bus_size_t		sc_mapsize;
-	pcireg_t		sc_bar_val;
-	int			sc_intrline;
+	bus_size_t		 sc_mapsize;
+	pcireg_t		 sc_bar_val;
+	int			 sc_intrline;
 };
 
-int	bcw_cardbus_match(struct device *, void *, void *);
-void	bcw_cardbus_attach(struct device *, struct device *, void *);
-int	bcw_cardbus_detach(struct device *, int);
-void	bcw_cardbus_power(struct bcw_softc *, int);
-void	bcw_cardbus_setup(struct bcw_cardbus_softc *);
-int	bcw_cardbus_enable(struct bcw_softc *);
-void	bcw_cardbus_disable(struct bcw_softc *);
-void	bcw_cardbus_conf_write(struct bcw_softc *, u_int32_t, u_int32_t);
-u_int32_t	bcw_cardbus_conf_read(struct bcw_softc *, u_int32_t);
+int		bcw_cardbus_match(struct device *, void *, void *);
+void		bcw_cardbus_attach(struct device *, struct device *, void *);
+int		bcw_cardbus_detach(struct device *, int);
+void		bcw_cardbus_power(struct bcw_softc *, int);
+void		bcw_cardbus_setup(struct bcw_cardbus_softc *);
+int		bcw_cardbus_enable(struct bcw_softc *);
+void		bcw_cardbus_disable(struct bcw_softc *);
+void		bcw_cardbus_conf_write(struct bcw_softc *, uint32_t, uint32_t);
+uint32_t	bcw_cardbus_conf_read(struct bcw_softc *, uint32_t);
 
 struct cfattach bcw_cardbus_ca = {
 	sizeof (struct bcw_cardbus_softc), bcw_cardbus_match,
@@ -258,13 +258,13 @@ bcw_cardbus_disable(struct bcw_softc *sc)
 }
 
 void
-bcw_cardbus_conf_write(struct bcw_softc *sc, u_int32_t reg, u_int32_t val)
+bcw_cardbus_conf_write(struct bcw_softc *sc, uint32_t reg, uint32_t val)
 {
 	Cardbus_conf_write(sc->sc_ca.ca_ct, sc->sc_ca.ca_tag, reg, val);
 }
 
-u_int32_t
-bcw_cardbus_conf_read(struct bcw_softc *sc, u_int32_t reg)
+uint32_t
+bcw_cardbus_conf_read(struct bcw_softc *sc, uint32_t reg)
 {
-	return Cardbus_conf_read(sc->sc_ca.ca_ct, sc->sc_ca.ca_tag, reg);
+	return (Cardbus_conf_read(sc->sc_ca.ca_ct, sc->sc_ca.ca_tag, reg));
 }

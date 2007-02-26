@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_pci.c,v 1.11 2007/02/26 14:28:19 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_pci.c,v 1.12 2007/02/26 14:36:11 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -81,30 +81,28 @@ const struct pci_matchid bcw_pci_devices[]  = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43XG }
 };
 
-
 struct bcw_pci_softc {
-	struct bcw_softc	psc_bcw;	/* Real softc */
-	pci_intr_handle_t	psc_ih;		/* interrupt handle */
+	struct bcw_softc	 psc_bcw;		/* Real softc */
+	pci_intr_handle_t	 psc_ih;		/* interrupt handle */
 	void			*psc_intrcookie;
-	pci_chipset_tag_t	psc_pc;		/* our PCI chipset */
-	pcitag_t		psc_pcitag;	/* our PCI tag */
+	pci_chipset_tag_t	 psc_pc;		/* our PCI chipset */
+	pcitag_t		 psc_pcitag;		/* our PCI tag */
 };
 
 int		bcw_pci_match(struct device *, void *, void *);
 void		bcw_pci_attach(struct device *, struct device *, void *);
-void		bcw_pci_conf_write(struct bcw_softc *, u_int32_t, u_int32_t);
-u_int32_t	bcw_pci_conf_read(struct bcw_softc *, u_int32_t);
+void		bcw_pci_conf_write(struct bcw_softc *, uint32_t, uint32_t);
+uint32_t	bcw_pci_conf_read(struct bcw_softc *, uint32_t);
 
 struct cfattach bcw_pci_ca = {
 	sizeof(struct bcw_pci_softc), bcw_pci_match, bcw_pci_attach
 };
 
-
 int
 bcw_pci_match(struct device *parent, void *match, void *aux)
 {
-	return pci_matchbyid((struct pci_attach_args *)aux, bcw_pci_devices,
-	    sizeof(bcw_pci_devices) / sizeof(bcw_pci_devices[0]));
+	return (pci_matchbyid((struct pci_attach_args *)aux, bcw_pci_devices,
+	    sizeof(bcw_pci_devices) / sizeof(bcw_pci_devices[0])));
 }
 
 void
@@ -114,11 +112,11 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct bcw_softc *sc = &psc->psc_bcw;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pcireg_t	memtype;
-	bus_addr_t	memaddr;
-	bus_size_t	memsize;
-	int		pmreg;
-	pcireg_t	pmode;
+	pcireg_t memtype;
+	bus_addr_t memaddr;
+	bus_size_t memsize;
+	int pmreg;
+	pcireg_t pmode;
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
@@ -211,24 +209,23 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag,
 	    PCI_COMMAND_STATUS_REG,
 	    pci_conf_read(pa->pa_pc, pa->pa_tag,
-		PCI_COMMAND_STATUS_REG)
+	    PCI_COMMAND_STATUS_REG)
 	    & ~PCI_STATUS_TARGET_TARGET_ABORT);
 
 	/*
 	 * Finish the attach
 	 */
-
 	bcw_attach(sc);
 }
 
 void
-bcw_pci_conf_write(struct bcw_softc *sc, u_int32_t reg, u_int32_t val)
+bcw_pci_conf_write(struct bcw_softc *sc, uint32_t reg, uint32_t val)
 {
 	pci_conf_write(sc->sc_pa.pa_pc, sc->sc_pa.pa_tag, reg, val);
 }
 
-u_int32_t
-bcw_pci_conf_read(struct bcw_softc *sc, u_int32_t reg)
+uint32_t
+bcw_pci_conf_read(struct bcw_softc *sc, uint32_t reg)
 {
-	return pci_conf_read(sc->sc_pa.pa_pc, sc->sc_pa.pa_tag, reg);
+	return (pci_conf_read(sc->sc_pa.pa_pc, sc->sc_pa.pa_tag, reg));
 }
