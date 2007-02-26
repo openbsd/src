@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.60 2007/02/26 15:40:04 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.61 2007/02/26 16:15:35 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -5892,11 +5892,75 @@ bcw_radio_default_radio_attenuation(struct bcw_softc *sc)
 			break;
 		case 1:
 			if (sc->sc_phy_type == BCW_PHY_TYPEG) {
+				if (sc->sc_board_vendor ==
+				    PCI_VENDOR_BROADCOM &&
+				    sc->sc_board_type == 0x0421 &&
+				    sc->sc_board_rev >= 30)
+					att = 3;
+				else if (sc->sc_board_vendor ==
+				    PCI_VENDOR_BROADCOM &&
+				    sc->sc_board_type == 0x0416)
+					att = 3;
+				else
+						att = 1;
+			} else {
+				if (sc->sc_board_vendor ==
+				    PCI_VENDOR_BROADCOM &&
+				    sc->sc_board_type == 0x0421 &&
+				    sc->sc_board_rev >= 30)
+					att = 7;
+				else
+					att = 6;
 			}
+			break;
+		case 2:
+			if (sc->sc_phy_type == BCW_PHY_TYPEG) {
+				if (sc->sc_board_vendor ==
+				    PCI_VENDOR_BROADCOM &&
+				    sc->sc_board_type == 0x0421 &&
+				    sc->sc_board_rev >= 30)
+					att = 3;
+				else if (sc->sc_board_vendor ==
+				    PCI_VENDOR_BROADCOM &&
+				    sc->sc_board_type == 0x0416)
+					att = 5;
+				else if (sc->sc_chip_id == 0x4320)
+					att = 4;
+				else
+					att = 3;
+			} else
+				att = 6;
+			break;
+		case 3:
+			att = 5;
+			break;
+		case 4:
+		case 5:
+			att = 1;
+			break;
+		case 6:
+		case 7:
+			att = 5;
+			break;
+		case 8:
+			att = 0x1a;
+			break;
+		case 9:
+		default:
+			att = 5;
 		}
 	}
+	if (sc->sc_board_vendor == PCI_VENDOR_BROADCOM &&
+	    sc->sc_board_type == 0x0421) {
+		if (sc->sc_board_rev < 0x43)
+			att = 2;
+		else if (sc->sc_board_rev < 0x51)
+			att = 3; 
+	}
+	if (att == 0x0ffff)
+		att = 5;
 
-	return (0);
+	return (att);
 }
 
 void
