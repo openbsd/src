@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloca.c,v 1.7 2005/11/30 15:02:59 deraadt Exp $	*/
+/*	$OpenBSD: alloca.c,v 1.8 2007/02/26 19:32:54 miod Exp $	*/
 
 /* alloca.c -- allocate automatically reclaimed memory
    (Mostly) portable public-domain implementation -- D A Gwyn
@@ -43,7 +43,8 @@ typedef void *pointer;
 #if defined(__alpha__) || defined(__m68k__)    || defined(__i386__) || \
     defined(__m88k__)  || defined(__mips__)    || defined(__powerpc__) || \
     defined(__sparc__) || defined(__sparc64__) || defined(__vax__) || \
-    defined(__amd64__) || defined(__mips64__) || defined(__arm__)
+    defined(__amd64__) || defined(__mips64__) || defined(__arm__) || \
+    defined(__sh__)
 # define	STACK_DIRECTION	-1
 #elif defined(__hppa__) || defined(__hppa64__)
 # define	STACK_DIRECTION	1
