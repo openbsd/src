@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_pci.c,v 1.9 2007/02/24 23:05:04 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_pci.c,v 1.10 2007/02/26 14:14:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -223,6 +223,9 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Get some PCI based info into the softc
 	 */
+	sc->sc_board_vendor = PCI_VENDOR(pa->pa_id);
+	sc->sc_board_type = sc->sc_conf_read(sc, 0x2e); /* XXX right one? */
+	sc->sc_board_rev = PCI_REVISION(pa->pa_class); /* XXX right one? */
 	sc->sc_prodid = PCI_PRODUCT(pa->pa_id);
 
 	/*
