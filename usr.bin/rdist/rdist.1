@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.22 2007/02/26 15:38:04 jmc Exp $
+.\"	$OpenBSD: rdist.1,v 1.23 2007/02/26 15:53:12 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -414,114 +414,6 @@ The default is 900 seconds.
 .It Fl V
 Print version information and exit.
 .El
-.Sh MESSAGE LOGGING
-.Nm
-uses a collection of predefined message
-.Em facilities
-that each contain a list of message
-.Sy types
-specifying which types of messages to send to that
-.Em facility .
-The local client (\fIrdist\fR) and the remote server (\fIrdistd\fR) each
-maintain their own copy of what types of messages to log to what facilities.
-.Pp
-The
-.Fl l
-.Em logopts
-option to
-.Nm
-tells
-.Nm
-what logging options to use locally.
-The
-.Fl L
-.Em logopts
-option to
-.Nm
-tells
-.Nm
-what logging options to pass to the remote
-.Em rdistd
-server.
-.Pp
-.Em logopts
-should be of the form
-.Bd -literal -offset indent
-\fIfacility\fB=\fItypes\fB:\fIfacility\fB=\fItypes...
-.Ed
-.Pp
-The valid facility names are:
-.Bl -tag -width Ds
-.It Sy stdout
-Messages to standard output.
-.It Sy file
-Log to a file.
-To specify the file name, use the format
-.Dq \fBfile=\fIfilename\fB=\fItypes\fR .
-e.g.,
-.Dq \fBfile=\fI/tmp/rdist.log\fB=\fIall,debug\fR .
-.It Sy syslog
-Use the
-.Xr syslogd 8
-facility.
-.It Sy notify
-Use the internal
-.Nm
-.Sy notify
-facility.
-This facility is used in conjunction with the
-.Sy notify
-keyword in a
-.Pa distfile
-to specify what messages are mailed to the
-.Sy notify
-address.
-.El
-.Pp
-.Em types
-should be a comma separated list of message types.
-Each message type specified enables that message level.
-This is unlike the
-.Xr syslog 3
-system facility which uses an ascending order scheme.
-The following are the valid
-.Em types :
-.Bl -tag -width Ds
-.It Sy change
-Things that change.
-This includes files that are installed or updated in some way.
-.It Sy info
-General information.
-.It Sy notice
-General info about things that change.
-This includes things like making directories which are needed in order
-to install a specific target, but which are not explicitly specified in the
-.Pa distfile .
-.It Sy nerror
-Normal errors that are not fatal.
-.It Sy ferror
-Fatal errors.
-.It Sy warning
-Warnings about errors which are not as serious as
-.Sy nerror
-type messages.
-.It Sy debug
-Debugging information.
-.It Sy all
-All but debug messages.
-.El
-.Pp
-Here is a sample command line option:
-.Bd -literal -offset indent
--l stdout=all:syslog=change,notice:file=/tmp/rdist.log=all
-.Ed
-.Pp
-This entry will set local message logging to have all but debug
-messages sent to standard output, change and notice messages will
-be sent to
-.Xr syslog 3 ,
-and all messages will be written to the file
-.Pa /tmp/rdist.log .
 .Sh DISTFILES
 The
 .Pa distfile
@@ -729,8 +621,133 @@ is stripped off and NFS checks are disabled.
 This is equivalent to disabling the
 .Fl o Ns Ar chknfs
 option just for this one host.
+.Sh MESSAGE LOGGING
+.Nm
+uses a collection of predefined message
+.Em facilities
+that each contain a list of message
+.Sy types
+specifying which types of messages to send to that
+.Em facility .
+The local client (\fIrdist\fR) and the remote server (\fIrdistd\fR) each
+maintain their own copy of what types of messages to log to what facilities.
 .Pp
-The following is a small example.
+The
+.Fl l
+.Em logopts
+option to
+.Nm
+tells
+.Nm
+what logging options to use locally.
+The
+.Fl L
+.Em logopts
+option to
+.Nm
+tells
+.Nm
+what logging options to pass to the remote
+.Em rdistd
+server.
+.Pp
+.Em logopts
+should be of the form
+.Bd -literal -offset indent
+\fIfacility\fB=\fItypes\fB:\fIfacility\fB=\fItypes...
+.Ed
+.Pp
+The valid facility names are:
+.Bl -tag -width Ds
+.It Sy stdout
+Messages to standard output.
+.It Sy file
+Log to a file.
+To specify the file name, use the format
+.Dq \fBfile=\fIfilename\fB=\fItypes\fR .
+e.g.,
+.Dq \fBfile=\fI/tmp/rdist.log\fB=\fIall,debug\fR .
+.It Sy syslog
+Use the
+.Xr syslogd 8
+facility.
+.It Sy notify
+Use the internal
+.Nm
+.Sy notify
+facility.
+This facility is used in conjunction with the
+.Sy notify
+keyword in a
+.Pa distfile
+to specify what messages are mailed to the
+.Sy notify
+address.
+.El
+.Pp
+.Em types
+should be a comma separated list of message types.
+Each message type specified enables that message level.
+This is unlike the
+.Xr syslog 3
+system facility which uses an ascending order scheme.
+The following are the valid
+.Em types :
+.Bl -tag -width Ds
+.It Sy change
+Things that change.
+This includes files that are installed or updated in some way.
+.It Sy info
+General information.
+.It Sy notice
+General info about things that change.
+This includes things like making directories which are needed in order
+to install a specific target, but which are not explicitly specified in the
+.Pa distfile .
+.It Sy nerror
+Normal errors that are not fatal.
+.It Sy ferror
+Fatal errors.
+.It Sy warning
+Warnings about errors which are not as serious as
+.Sy nerror
+type messages.
+.It Sy debug
+Debugging information.
+.It Sy all
+All but debug messages.
+.El
+.Pp
+Here is a sample command line option:
+.Bd -literal -offset indent
+-l stdout=all:syslog=change,notice:file=/tmp/rdist.log=all
+.Ed
+.Pp
+This entry will set local message logging to have all but debug
+messages sent to standard output, change and notice messages will
+be sent to
+.Xr syslog 3 ,
+and all messages will be written to the file
+.Pa /tmp/rdist.log .
+.Sh ENVIRONMENT
+.Bl -tag -width "TMPDIR"
+.It TMPDIR
+Name of temporary directory to use.
+Default is
+.Pa /tmp .
+.It RSH
+Name of the default remote shell program to use.
+Default is
+.Xr ssh 1 .
+.El
+.Sh FILES
+.Bl -tag -width "$TMPDIR/rdist*" -compact
+.It distfile
+input command file
+.It $TMPDIR/rdist*
+temporary file for update lists
+.El
+.Sh EXAMPLES
 .Bd -literal -offset indent
 HOSTS = ( matisse root@arpa)
 
@@ -761,24 +778,6 @@ imagen:
 ${FILES} :: stamp.cory
 	notify root@cory ;
 .Ed
-.Sh ENVIRONMENT
-.Bl -tag -width "TMPDIR"
-.It TMPDIR
-Name of temporary directory to use.
-Default is
-.Pa /tmp .
-.It RSH
-Name of the default remote shell program to use.
-Default is
-.Xr ssh 1 .
-.El
-.Sh FILES
-.Bl -tag -width "$TMPDIR/rdist*" -compact
-.It distfile
-input command file
-.It $TMPDIR/rdist*
-temporary file for update lists
-.El
 .Sh SEE ALSO
 .Xr csh 1 ,
 .Xr rsh 1 ,
@@ -786,7 +785,11 @@ temporary file for update lists
 .Xr ssh 1 ,
 .Xr stat 2 ,
 .Xr rcmdsh 3
-.Sh NOTES
+.Sh STANDARDS
+The options
+.Op Fl bhiNOqRrsvwxy
+are still recognized for backwards compatibility.
+.Sh CAVEATS
 If the basename of a file  (the last component in the pathname) is ".", then
 .Nm
 assumes the remote (destination) name is a directory.
@@ -795,24 +798,6 @@ i.e.,
 means that
 .Pa /tmp
 should be a directory on the remote host.
-.Pp
-The following options are still recognized for backwards compatibility:
-.Pp
-.Bd -filled -offset indent
-.Fl v
-.Fl N
-.Fl O
-.Fl q
-.Fl b
-.Fl r
-.Fl R
-.Fl s
-.Fl w
-.Fl y
-.Fl h
-.Fl i
-.Fl x
-.Ed
 .Sh BUGS
 Source files must reside on the local host where rdist is executed.
 .Pp
