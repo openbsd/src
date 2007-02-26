@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.30 2007/02/26 13:41:52 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.31 2007/02/26 19:25:25 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -423,19 +423,31 @@ Handle the Hypertext Transfer Protocol
 Generic handler for TCP-based protocols.
 .El
 .It Xo
+.Op Ar type
 .Ar action
 .Op Ic log
 .Xc
 Define an action for the selected entity.
-The
+The optional
 .Ic log
 keyword will log the entity name and the value.
-The optional
-.Ic url
-keyword will look up the entity as a GET variable in the URL instead
-of an HTTP header value when using the
+The actions are depending on the underlying application
+.Ic protocol .
+.Pp
+The following entity types for the actions are available:
+.Bl -tag -width Ds
+.It Ic header
+Look up the entity in the application protocol headers, like HTTP
+headers in
+.Ic http
+mode.
+.It Ic url
+Look up the entity as a GET variable in the URL when using the
 .Ic http
 protocol.
+.El
+.Pp
+The following actions are available:
 .Bl -tag -width Ds
 .It Ic append Ar value Ic to Ar key
 Append the specified value to a protocol entity with the selected name.
@@ -450,31 +462,16 @@ Like the
 directive above, but change the contents of the specified entity.
 .It Ic remove Ar key
 Remove the entity with the selected name.
-.It Xo
-.Op Ic url
-.Ic expect Ar value Ic from Ar key
-.Xc
+.It Ic expect Ar value Ic from Ar key
 Expect an entity with the specified value.
 If the entity is not present or the value doesn't match, the connection
 will be dropped.
-The
-.Ic url
-keyword will expect the value as a GET variable in the URL instead
-of an HTTP header value when using the
-.Ic http
-protocol.
-.It Xo
-.Op Ic url
-.Ic filter Ar value Ic from Ar key
-.Xc
+.It Ic filter Ar value Ic from Ar key
 Like the
 .Ic expect
 directive above, but drop any connections with the specified entity
 and value.
-.It Xo
-.Op Ic url
-.Ic hash Ar key
-.Xc
+.It Ic hash Ar key
 Feed the value of the selected entity into the load balancing hash to
 select the target host.
 See the
@@ -482,10 +479,7 @@ See the
 keyword in the
 .Sx RELAYS
 section above.
-.It Xo
-.Op Ic url
-.Ic log Ar key
-.Xc
+.It Ic log Ar key
 Log the name and the value of the entity.
 .El
 .It Ic tcp Ar option
@@ -652,10 +646,10 @@ and include the
 variable in the hash to calculate the target host:
 .Bd -literal -offset indent
 protocol http_ssl {
-        protocol http
-        append "$REMOTE_ADDR" to "X-Forwarded-For"
-        append "$SERVER_ADDR:$SERVER_PORT" to "X-Forwarded-By"
-        change "Keep-Alive" to "$TIMEOUT"
+	protocol http
+	header append "$REMOTE_ADDR" to "X-Forwarded-For"
+	header append "$SERVER_ADDR:$SERVER_PORT" to "X-Forwarded-By"
+	header change "Keep-Alive" to "$TIMEOUT"
 	url hash "sessid"
 
 	ssl { sslv2, ciphers "MEDIUM:HIGH" }
