@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.69 2007/02/21 19:25:40 grunk Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.70 2007/02/26 11:25:23 pedro Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -461,8 +461,12 @@ vndstrategy(struct buf *bp)
 					vndencrypt(vnd, bp->b_data,
 					   bp->b_bcount, bp->b_blkno, 1);
 				auio.uio_rw = UIO_WRITE;
-				bp->b_error = VOP_WRITE(vnd->sc_vp, &auio, 0,
-				    vnd->sc_cred);
+				/*
+				 * Upper layer has already checked I/O for
+				 * limits, so there is no need to do it again.
+				 */
+				bp->b_error = VOP_WRITE(vnd->sc_vp, &auio,
+				    IO_NOLIMIT, vnd->sc_cred);
 				/* Data in buffer cache needs to be in clear */
 				if (vnd->sc_keyctx)
 					vndencrypt(vnd, bp->b_data,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.73 2007/01/16 17:52:18 thib Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.74 2007/02/26 11:25:23 pedro Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -187,6 +187,7 @@ struct vattr {
 #define	IO_SYNC		0x04		/* do I/O synchronously */
 #define	IO_NODELOCKED	0x08		/* underlying node already locked */
 #define	IO_NDELAY	0x10		/* FNDELAY flag set in file table */
+#define	IO_NOLIMIT	0x20		/* don't enforce limits on i/o */
 
 /*
  *  Modes.  Some values same as Ixxx entries from inode.h for now.

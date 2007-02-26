@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.41 2007/01/16 17:52:18 thib Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.42 2007/02/26 11:25:23 pedro Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -332,7 +332,7 @@ ffs_write(void *v)
 	 * file servers have no limits, I don't think it matters.
 	 */
 	p = uio->uio_procp;
-	if (vp->v_type == VREG && p &&
+	if (vp->v_type == VREG && p && !(ioflag & IO_NOLIMIT) &&
 	    uio->uio_offset + uio->uio_resid >
 	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
 		psignal(p, SIGXFSZ);
