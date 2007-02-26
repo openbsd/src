@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.23 2007/02/26 15:53:12 jmc Exp $
+.\"	$OpenBSD: rdist.1,v 1.24 2007/02/26 16:17:10 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -101,16 +101,16 @@ If the target host is the string
 .Em localhost
 and the remote user name is the same as the local user name,
 .Nm
-will run the command
+will run the command:
 .Bd -literal -offset indent
 /bin/sh -c rdistd -S
 .Ed
 .Pp
 Otherwise,
 .Nm
-run will run the command
+run will run the command:
 .Bd -literal -offset indent
-\fBssh \fIhost\fB -l \fIremuser \fBrdistd -S\fR
+ssh host -l remuser rdistd -S
 .Ed
 .Pp
 where
@@ -127,10 +127,9 @@ will attempt to run the command
 .Bd -literal -offset indent
 rdistd -S
 .Ed
-.Pp
 or
-.Bd -literal -offset indent
-<rdistd path> -S
+.Bd -literal -compact -offset indent
+\*(Ltrdistd path\*(Gt -S
 .Ed
 .Pp
 if the
@@ -139,11 +138,11 @@ option was specified.
 If no
 .Fl p
 option is included, or the
-.Ar <rdistd path>
+.Aq Ar rdistd path
 is a simple filename,
-.Em rdistd
+.Xr rdistd 1
 or
-.Em <rdistd path>
+.Aq Ar rdistd path
 must be somewhere in the
 .Ev PATH
 of the user running
@@ -169,8 +168,8 @@ to interpret the remaining arguments as a small
 .Pa distfile .
 The equivalent distfile is as follows.
 .Bd -literal -offset indent
-( \fIname\fP ... ) -> [\fIlogin\fP@]\fIhost\fP
-	install	[\fIdest\fP] ;
+(  name ... ) -\*(Gt [login@]host
+	install	[dest] ;
 .Ed
 .It Fl D
 Enable copious debugging messages.
@@ -204,7 +203,8 @@ is specified as
 Set remote logging options.
 .Ar logopts
 is the same as for local logging except the values are passed to the remote
-server (\fIrdistd\fR).
+server,
+.Xr rdistd 1 .
 See the section
 .Sy MESSAGE LOGGING
 for details on the syntax for
@@ -387,7 +387,7 @@ The
 .Ar rsh-path
 may be a colon separated list of possible pathnames.
 In this case, the first component of the path to exist is used.
-e.g.,
+For example,
 .Pa "/usr/bin/ssh:/usr/bin/rsh" ,
 .Pa /usr/bin/ssh .
 .It Fl p Ar rdistd-path
@@ -422,9 +422,9 @@ to be copied, the destination hosts, and what operations to perform
 to do the updating.
 Each entry has one of the following formats.
 .Bd -literal -offset indent
-<variable name> `=' <name list>
-[ label: ] <source list> `\->' <destination list> <command list>
-[ label: ] <source list> `::' <time_stamp file> <command list>
+\*(Ltvariable name\*(Gt `=' \*(Ltname list\*(Gt
+[ label: ] \*(Ltsource list\*(Gt `\-\*(Gt' \*(Ltdestination list\*(Gt \*(Ltcommand list\*(Gt
+[ label: ] \*(Ltsource list\*(Gt `::' \*(Lttime_stamp file\*(Gt \*(Ltcommand list\*(Gt
 .Ed
 .Pp
 The first format is used for defining variables.
@@ -458,11 +458,11 @@ followed by one character or a name enclosed in curly braces
 .Pp
 The source and destination lists have the following format:
 .Bd -literal -offset indent
-<name>
+\*(Ltname\*(Gt
 .Ed
 or
 .Bd -literal -compact -offset indent
-`(' <zero or more names separated by whitespace> `)'
+`(' \*(Ltzero or more names separated by whitespace\*(Gt `)'
 .Ed
 .Pp
 These simple lists can be modified by using one level of set addition,
@@ -479,7 +479,7 @@ or
 list '&' list
 .Ed
 .Pp
-If additional modifications are needed (e.g.,
+If additional modifications are needed (e.g.\&
 .Do
 all servers and client machines except for the OSF/1 machines
 .Dc )
@@ -503,13 +503,13 @@ home directory as the root directory for the rest of the file name.
 .Pp
 The command list consists of zero or more commands of the following
 format.
-.Bl -column "except_pat" "<pattern list>" "opt_dest_name" ";" -offset indent
-.It `install' Ta <options> Ta opt_dest_name Ta `;'
-.It `notify' Ta <name list> Ta "" Ta `;'
-.It `except' Ta <name list> Ta "" Ta `;'
-.It `except_pat' Ta <pattern list> Ta "" Ta `;'
-.It `special' Ta <name list> Ta string Ta `;'
-.It `cmdspecial' Ta <name list> Ta string Ta `;'
+.Bl -column "except_pat" "pattern listXX" "opt_dest_name" ";" -offset indent
+.\" .It `install' Ta \*(Ltoptions\*(Gt Ta opt_dest_name Ta `;'
+.\" .It `notify' Ta \*(Ltname list\*(Gt Ta "" Ta `;'
+.\" .It `except' Ta \*(Ltname list\*(Gt Ta "" Ta `;'
+.\" .It `except_pat' Ta \*(Ltpattern list\*(Gt Ta "" Ta `;'
+.\" .It `special' Ta \*(Ltname list\*(Gt Ta string Ta `;'
+.\" .It `cmdspecial' Ta \*(Ltname list\*(Gt Ta string Ta `;'
 .El
 .Pp
 The
@@ -541,7 +541,7 @@ command is used to mail the list of files updated (and any errors
 that may have occurred) to the listed names.
 If no `@' appears in the name, the destination host is appended to
 the name
-(e.g., name1@host, name2@host, ...).
+(e.g. name1@host, name2@host, ...).
 .Pp
 The
 .Em except
@@ -629,12 +629,16 @@ that each contain a list of message
 .Sy types
 specifying which types of messages to send to that
 .Em facility .
-The local client (\fIrdist\fR) and the remote server (\fIrdistd\fR) each
-maintain their own copy of what types of messages to log to what facilities.
+The local client
+.Pq Nm rdist
+and the remote server
+.Pq Xr rdistd 1
+each maintain their own copy
+of what types of messages to log to what facilities.
 .Pp
 The
 .Fl l
-.Em logopts
+.Ar local_logopts
 option to
 .Nm
 tells
@@ -642,7 +646,7 @@ tells
 what logging options to use locally.
 The
 .Fl L
-.Em logopts
+.Ar remote_logopts
 option to
 .Nm
 tells
@@ -652,36 +656,36 @@ what logging options to pass to the remote
 server.
 .Pp
 .Em logopts
-should be of the form
-.Bd -literal -offset indent
-\fIfacility\fB=\fItypes\fB:\fIfacility\fB=\fItypes...
-.Ed
+should be of the form:
+.Pp
+.D1 facility=types:facility=types...
 .Pp
 The valid facility names are:
 .Bl -tag -width Ds
-.It Sy stdout
+.It Ic stdout
 Messages to standard output.
-.It Sy file
+.It Ic file
 Log to a file.
 To specify the file name, use the format
-.Dq \fBfile=\fIfilename\fB=\fItypes\fR .
-e.g.,
-.Dq \fBfile=\fI/tmp/rdist.log\fB=\fIall,debug\fR .
-.It Sy syslog
+.Dq file=filename=types .
+For example:
+.Pp
+.Dl file=/tmp/rdist.log=all,debug
+.It Ic syslog
 Use the
 .Xr syslogd 8
 facility.
-.It Sy notify
+.It Ic notify
 Use the internal
 .Nm
-.Sy notify
+.Ic notify
 facility.
 This facility is used in conjunction with the
-.Sy notify
+.Ic notify
 keyword in a
 .Pa distfile
 to specify what messages are mailed to the
-.Sy notify
+.Ic notify
 address.
 .El
 .Pp
@@ -694,27 +698,27 @@ system facility which uses an ascending order scheme.
 The following are the valid
 .Em types :
 .Bl -tag -width Ds
-.It Sy change
+.It Ic change
 Things that change.
 This includes files that are installed or updated in some way.
-.It Sy info
+.It Ic info
 General information.
-.It Sy notice
+.It Ic notice
 General info about things that change.
 This includes things like making directories which are needed in order
 to install a specific target, but which are not explicitly specified in the
 .Pa distfile .
-.It Sy nerror
+.It Ic nerror
 Normal errors that are not fatal.
-.It Sy ferror
+.It Ic ferror
 Fatal errors.
-.It Sy warning
+.It Ic warning
 Warnings about errors which are not as serious as
-.Sy nerror
+.Ic nerror
 type messages.
-.It Sy debug
+.It Ic debug
 Debugging information.
-.It Sy all
+.It Ic all
 All but debug messages.
 .El
 .Pp
@@ -758,20 +762,20 @@ FILES = ( /bin /lib /usr/bin /usr/games
 EXLIB = ( Mail.rc aliases aliases.db crontab dshrc
 	sendmail.cf sendmail.hf sendmail.st uucp vfont )
 
-${FILES} -> ${HOSTS}
+${FILES} -\*(Gt ${HOSTS}
 	install -oremove,chknfs ;
 	except /usr/lib/${EXLIB} ;
 	except /usr/games/lib ;
 	special /usr/lib/sendmail "/usr/lib/sendmail -bi" ;
 
 srcs:
-/usr/src/bin -> arpa
+/usr/src/bin -\*(Gt arpa
 	except_pat ( \e\e.o\e$ /SCCS\e$ ) ;
 
 IMAGEN = (ips dviimp catdvi)
 
 imagen:
-/usr/local/${IMAGEN} -> arpa
+/usr/local/${IMAGEN} -\*(Gt arpa
 	install /usr/local/lib ;
 	notify ralph ;
 
@@ -793,7 +797,7 @@ are still recognized for backwards compatibility.
 If the basename of a file  (the last component in the pathname) is ".", then
 .Nm
 assumes the remote (destination) name is a directory.
-i.e.,
+That is,
 .Pa /tmp/ .
 means that
 .Pa /tmp
