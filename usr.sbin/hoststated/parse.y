@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.30 2007/02/26 19:25:05 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.31 2007/02/26 19:58:04 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -104,7 +104,7 @@ typedef struct {
 %}
 
 %token	SERVICE TABLE BACKUP HOST REAL
-%token  CHECK HTTP HTTPS TCP ICMP EXTERNAL
+%token  CHECK TCP ICMP EXTERNAL
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
 %token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG
 %token	SEND EXPECT NOTHING USE SSL LOADBALANCE ROUNDROBIN CIPHERS
@@ -115,7 +115,7 @@ typedef struct {
 %token	<v.string>	STRING
 %type	<v.string>	interface
 %type	<v.number>	number port http_type loglevel sslcache
-%type	<v.number>	prototype dstmode docheck retry log flag
+%type	<v.number>	proto_type dstmode docheck retry log flag
 %type	<v.host>	host
 %type	<v.tv>		timeout
 
@@ -146,16 +146,39 @@ number		: STRING	{
 		}
 		;
 
-http_type	: HTTP		{ $$ = 0; }
-		| HTTPS		{ $$ = 1; }
+http_type	: STRING	{
+			if (strcmp("https", $1) == 0) {
+				$$ = 1;
+			} else if (strcmp("http", $1) == 0) {
+				$$ = 0;
+			} else {
+				yyerror("invalid check type: $1", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+		}
 		;
 
-port		: PORT STRING	{
+proto_type	: TCP				{ $$ = RELAY_PROTO_TCP; }
+		| STRING			{
+			if (strcmp("http", $1) == 0) {
+				$$ = RELAY_PROTO_HTTP;
+			} else {
+				yyerror("invalid protocol type: $1", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+		}
+		;
+
+port		: PORT STRING {
 			const char	*estr;
 			struct servent	*servent;
-			
+
 			$$ = strtonum($2, 1, USHRT_MAX, &estr);
-			if (estr) {
+                        if (estr) {
 				if (errno == ERANGE) {
 					yyerror("port %s is out of range", $2);
 					free($2);
@@ -171,25 +194,6 @@ port		: PORT STRING	{
 			} else
 				$$ = htons($$);
 			free($2);
-		}
-		| PORT http_type {
-			struct servent	*servent;
-			int		 port;
-			const char	*sport;
-
-			if ($2) {
-				port = 443;
-				sport = "https";
-			} else {
-				port = 80;
-				sport = "http";
-			}
-
-			servent = getservbyname(sport, "tcp");
-			if (servent == NULL)
-				$$ = htons(port);
-			else
-				$$ = servent->s_port;
 		}
 		;
 
@@ -563,7 +567,7 @@ protoptsl	: SSL sslflags
 		| SSL '{' sslflags_l '}'
 		| TCP tcpflags
 		| TCP '{' tcpflags_l '}'
-		| PROTO prototype		{ proto->type = $2; }
+		| PROTO proto_type		{ proto->type = $2; }
 		| protonode log			{
 			struct protonode *pn, pk;
 
@@ -764,10 +768,6 @@ nodetype	: HEADER			{ node.type = NODE_TYPE_HEADER; }
 
 sslcache	: number			{ $$ = $1; }
 		| DISABLE			{ $$ = -2; }
-		;
-
-prototype	: TCP				{ $$ = RELAY_PROTO_TCP; }
-		| HTTP				{ $$ = RELAY_PROTO_HTTP; }
 		;
 
 relay		: RELAY STRING	{
@@ -1060,8 +1060,6 @@ lookup(char *s)
 		{ "hash",		HASH },
 		{ "header",		HEADER },
 		{ "host",		HOST },
-		{ "http",		HTTP },
-		{ "https",		HTTPS },
 		{ "icmp",		ICMP },
 		{ "interface",		INTERFACE },
 		{ "interval",		INTERVAL },
