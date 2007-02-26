@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.11 2007/02/26 12:35:43 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.12 2007/02/26 15:41:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -694,13 +694,17 @@ relay_read(struct bufferevent *bev, void *arg)
 		goto done;
 	if (!EVBUFFER_LENGTH(src))
 		return;
-	relay_bufferevent_write_buffer(cre->dst, src);
+	if (relay_bufferevent_write_buffer(cre->dst, src) == -1)
+		goto fail;
 	if (con->done)
 		goto done;
 	bufferevent_enable(con->in.bev, EV_READ);
 	return;
  done:
 	relay_close(con, "last read (done)");
+	return;
+ fail:
+	relay_close(con, strerror(errno));
 }
 
 char *
@@ -714,7 +718,8 @@ relay_expand_http(struct ctl_relay_event *cre, char *val, char *buf, size_t len)
 
 	if (strstr(val, "$REMOTE_") != NULL) {
 		if (strstr(val, "$REMOTE_ADDR") != NULL) {
-			relay_host(&cre->ss, ibuf, sizeof(ibuf));
+			if (relay_host(&cre->ss, ibuf, sizeof(ibuf)) == NULL)
+				return (NULL);
 			if (expand_string(buf, len,
 			    "$REMOTE_ADDR", ibuf) != 0)
 				return (NULL);
@@ -728,7 +733,8 @@ relay_expand_http(struct ctl_relay_event *cre, char *val, char *buf, size_t len)
 	}
 	if (strstr(val, "$SERVER_") != NULL) {
 		if (strstr(val, "$SERVER_ADDR") != NULL) {
-			relay_host(&rlay->ss, ibuf, sizeof(ibuf));
+			if (relay_host(&rlay->ss, ibuf, sizeof(ibuf)) == NULL)
+				return (NULL);
 			if (expand_string(buf, len,
 			    "$SERVER_ADDR", ibuf) != 0)
 				return (NULL);
@@ -760,18 +766,19 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *pn,
 	switch (pn->action) {
 	case NODE_ACTION_APPEND:
 		if (!header || ((pn->flags & PNFLAG_MARK) && cre->marked == 0))
-			return (-1);
+			return (1);
 		ptr = pn->value;
 		if ((pn->flags & PNFLAG_MACRO) &&
 		    (ptr = relay_expand_http(cre, pn->value,
 		    buf, sizeof(buf))) == NULL)
 			break;
-		relay_bufferevent_print(cre->dst, pn->key);
-		relay_bufferevent_print(cre->dst, ": ");
-		relay_bufferevent_print(cre->dst, pk->value);
-		relay_bufferevent_print(cre->dst, ", ");
-		relay_bufferevent_print(cre->dst, ptr);
-		relay_bufferevent_print(cre->dst, "\r\n");
+		if (relay_bufferevent_print(cre->dst, pn->key) == -1 ||
+		    relay_bufferevent_print(cre->dst, ": ") == -1 ||
+		    relay_bufferevent_print(cre->dst, pk->value) == -1 ||
+		    relay_bufferevent_print(cre->dst, ", ") == -1 ||
+		    relay_bufferevent_print(cre->dst, ptr) == -1 ||
+		    relay_bufferevent_print(cre->dst, "\r\n") == -1)
+			goto fail;
 		cre->nodes[pn->id] = 1;
 		DPRINTF("relay_handle_http: append '%s: %s, %s'",
 		    pk->key, pk->value, ptr);
@@ -779,7 +786,7 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *pn,
 	case NODE_ACTION_CHANGE:
 	case NODE_ACTION_REMOVE:
 		if (!header || ((pn->flags & PNFLAG_MARK) && cre->marked == 0))
-			return (-1);
+			return (1);
 		DPRINTF("relay_handle_http: change/remove '%s: %s'",
 		    pk->key, pk->value);
 		break;
@@ -804,24 +811,32 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *pn,
 		break;
 	case NODE_ACTION_HASH:
 		if ((pn->flags & PNFLAG_MARK) && cre->marked == 0)
-			return (-1);
+			return (1);
 		DPRINTF("relay_handle_http: hash '%s: %s'",
 		    pn->key, pk->value);
 		con->outkey = hash32_str(pk->value, con->outkey);
 		break;
 	case NODE_ACTION_LOG:
 		if ((pn->flags & PNFLAG_MARK) && cre->marked == 0)
-			return (-1);
+			return (1);
 		DPRINTF("relay_handle_http: log '%s: %s'",
 		    pn->key, pk->value);
 		break;
 	case NODE_ACTION_NONE:
-		return (-1);
+		return (1);
 	}
-	if (pn->flags & PNFLAG_LOG)
-		evbuffer_add_printf(con->log, " [%s: %s]",
-		    pn->key, pk->value);
+	if (pn->flags & PNFLAG_LOG) {
+		bzero(buf, sizeof(buf));
+		if (snprintf(buf, sizeof(buf), " [%s: %s]",
+		    pk->key, pk->value) == -1 ||
+		    evbuffer_add(con->log, buf, strlen(buf)) == -1)
+			goto fail;
+	}
+
 	return (0);
+ fail:
+	relay_close(con, strerror(errno));
+	return (-1);
 }
 
 void
@@ -839,7 +854,8 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	    size, cre->toread);
 	if (!size)
 		return;
-	relay_bufferevent_write_buffer(cre->dst, src);
+	if (relay_bufferevent_write_buffer(cre->dst, src) == -1)
+		goto fail;
 	if (size >= cre->toread)
 		bev->readcb = relay_read_http;
 	cre->toread -= size;
@@ -851,6 +867,9 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	return;
  done:
 	relay_close(con, "last http content read (done)");
+	return;
+ fail:
+	relay_close(con, strerror(errno));
 }
 
 void
@@ -892,8 +911,9 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 			relay_close(con, "chunk size out of range");
 			return;
 		}
-		relay_bufferevent_print(cre->dst, line);
-		relay_bufferevent_print(cre->dst, "\r\n");
+		if (relay_bufferevent_print(cre->dst, line) == -1 ||
+		    relay_bufferevent_print(cre->dst, "\r\n") == -1)
+			goto fail;
 		free(line);
 
 		/* Last chunk is 0 bytes followed by an empty newline */
@@ -904,7 +924,8 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 				return;
 			}
 			free(line);
-			relay_bufferevent_print(cre->dst, "\r\n");
+			if (relay_bufferevent_print(cre->dst, "\r\n") == -1)
+				goto fail;
 
 			/* Switch to HTTP header mode */
 			bev->readcb = relay_read_http;
@@ -913,7 +934,8 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 		/* Read chunk data */
 		if (size > cre->toread)
 			size = cre->toread;
-		relay_bufferevent_write_chunk(cre->dst, src, size);
+		if (relay_bufferevent_write_chunk(cre->dst, src, size) == -1)
+			goto fail;
 		cre->toread -= size;
 		DPRINTF("relay_read_httpchunks: done, size %d, to read %d",
 		    size, cre->toread);
@@ -928,7 +950,8 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 				return;
 			}
 			free(line);
-			relay_bufferevent_print(cre->dst, "\r\n\r\n");
+			if (relay_bufferevent_print(cre->dst, "\r\n\r\n") == -1)
+				goto fail;
 		}
 	}
 
@@ -941,6 +964,9 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 
  done:
 	relay_close(con, "last http chunk read (done)");
+	return;
+ fail:
+	relay_close(con, strerror(errno));
 }
 
 void
@@ -953,7 +979,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	struct protonode	*pn, pk, *pnv, pkv;
 	char			*line, buf[READ_BUF_SIZE], *ptr, *url, *method;
-	int			 header = 0;
+	int			 header = 0, ret;
 	const char		*errstr;
 	size_t			 size;
 
@@ -989,8 +1015,11 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		if (pk.value == NULL || strlen(pk.value) < 3) {
 			DPRINTF("relay_read_http: request '%s'", line);
 			/* Append line to the output buffer */
-			relay_bufferevent_print(cre->dst, line);
-			relay_bufferevent_print(cre->dst, "\r\n");
+			if (relay_bufferevent_print(cre->dst, line) == -1 ||
+			    relay_bufferevent_print(cre->dst, "\r\n") == -1) {
+				free(line);
+				goto fail;
+			}
 			free(line);
 			continue;
 		}
@@ -1078,26 +1107,35 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				if ((pnv = RB_FIND(proto_tree,
 				    &proto->tree, &pkv)) == NULL)
 					continue;
-				if (relay_handle_http(cre, pnv, &pkv, 0) == -1)
+				ret = relay_handle_http(cre, pnv, &pkv, 0);
+				if (ret == 1)
 					continue;
+				else if (ret == -1) {
+					free(url);
+					free(line);
+					return;
+				}
 			}
 			free(url);
 		}
 
-		if (relay_handle_http(cre, pn, &pk, header) == -1)
+		ret = relay_handle_http(cre, pn, &pk, header);
+		if (ret == 1)
 			goto next;
-
 		free(line);
+		if (ret == -1)
+			return;
 		continue;
 
 next:
-		relay_bufferevent_print(cre->dst, pk.key);
-		if (header)
-			relay_bufferevent_print(cre->dst, ": ");
-		else
-			relay_bufferevent_print(cre->dst, " ");
-		relay_bufferevent_print(cre->dst, pk.value);
-		relay_bufferevent_print(cre->dst, "\r\n");
+		if (relay_bufferevent_print(cre->dst, pk.key) == -1 ||
+		    relay_bufferevent_print(cre->dst,
+		    header ? ": " : " ") == -1 ||
+		    relay_bufferevent_print(cre->dst, pk.value) == -1 ||
+		    relay_bufferevent_print(cre->dst, "\r\n") == -1) {
+			free(line);
+			goto fail;
+		}
 		free(line);
 		continue;
 	}
@@ -1118,10 +1156,15 @@ next:
 				    (ptr = relay_expand_http(cre, pn->value,
 				    buf, sizeof(buf))) == NULL)
 					break;
-				relay_bufferevent_print(cre->dst, pn->key);
-				relay_bufferevent_print(cre->dst, ": ");
-				relay_bufferevent_print(cre->dst, ptr);
-				relay_bufferevent_print(cre->dst, "\r\n");
+				if (relay_bufferevent_print(cre->dst,
+				    pn->key) == -1 ||
+				    relay_bufferevent_print(cre->dst,
+				    ": ") == -1 ||
+				    relay_bufferevent_print(cre->dst,
+				    ptr) == -1 ||
+				    relay_bufferevent_print(cre->dst,
+				    "\r\n") == -1)
+					goto fail;
 				DPRINTF("relay_read_http: add '%s: %s'",
 				    pn->key, ptr);
 				break;
@@ -1169,7 +1212,8 @@ next:
 		}
 
 		/* Write empty newline and switch to relay mode */
-		relay_bufferevent_print(cre->dst, "\r\n");
+		if (relay_bufferevent_print(cre->dst, "\r\n") == -1)
+			goto fail;
 		cre->line = 0;
 		cre->method = 0;
 		cre->marked = 0;
@@ -1190,6 +1234,9 @@ next:
 	return;
  done:
 	relay_close(con, "last http read (done)");
+	return;
+ fail:
+	relay_close(con, strerror(errno));
 }
 
 void
@@ -1502,12 +1549,13 @@ relay_close(struct session *con, const char *msg)
 		bufferevent_disable(con->out.bev, EV_READ|EV_WRITE);
 
 	if (env->opts & HOSTSTATED_OPT_LOGUPDATE) {
-		relay_host(&con->in.ss, ibuf, sizeof(ibuf));
-		relay_host(&con->out.ss, obuf, sizeof(obuf));
-		if (EVBUFFER_LENGTH(con->log)) {
-			evbuffer_add_printf(con->log, "\r\n");
+		bzero(&ibuf, sizeof(ibuf));
+		bzero(&obuf, sizeof(obuf));
+		(void)relay_host(&con->in.ss, ibuf, sizeof(ibuf));
+		(void)relay_host(&con->out.ss, obuf, sizeof(obuf));
+		if (EVBUFFER_LENGTH(con->log) &&
+		    evbuffer_add_printf(con->log, "\r\n") != -1)
 			ptr = evbuffer_readline(con->log);
-		}
 		log_info("relay %s, session %d (%d active), %s -> %s:%d, "
 		    "%s%s%s", rlay->name, con->id, relay_sessions,
 		    ibuf, obuf, ntohs(con->out.port), msg,
