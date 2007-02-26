@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.52 2007/02/01 13:02:04 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.53 2007/02/26 12:16:18 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -704,6 +704,7 @@ orig_rtr_lsa(struct area *area)
 			rtr_link.id = iface->addr.s_addr;
 			rtr_link.data = 0xffffffff;
 			rtr_link.type = LINK_TYPE_STUB_NET;
+			rtr_link.metric = htons(iface->metric);
 			num_links++;
 			if (buf_add(buf, &rtr_link, sizeof(rtr_link)))
 				fatalx("orig_rtr_lsa: buf_add failed");
