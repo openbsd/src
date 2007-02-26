@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.10 2006/11/22 21:35:56 stevesk Exp $	*/
+/*	$OpenBSD: parse.c,v 1.11 2007/02/26 00:49:53 stevesk Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -128,8 +128,10 @@ parse_string(FILE *cfile)
 		error("no memory for string %s.", val);
 	strlcpy(s, val, strlen(val) + 1);
 
-	if (!parse_semi(cfile))
+	if (!parse_semi(cfile)) {
+		free(s);
 		return (NULL);
+	}
 	return (s);
 }
 
