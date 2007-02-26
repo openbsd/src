@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.9 2007/02/24 21:57:27 drahn Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.10 2007/02/26 15:41:28 drahn Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -55,7 +55,8 @@
 #define CDCEF_PRODUCT_STRING	"CDC Ethernet Emulation"
 #define CDCEF_SERIAL_STRING	"1.00"
 
-#define CDCEF_BUFSZ		65536
+#define CDCEF_BUFSZ		1600
+
 
 struct cdcef_softc {
 	struct usbf_function	sc_dev;
@@ -290,9 +291,11 @@ cdcef_start(struct ifnet *ifp)
 		return;
 	}
 
-
-	if (sc->sc_listening == 0) {
-		/* drop packet because reciever is not listening */
+	if (sc->sc_listening == 0 || m_head->mpkthdr.len > CDCEF_BUFSZ) {
+		/*
+		 * drop packet because reciever is not listening,
+		 * or if packet is larger than xmit buffer
+		 */
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		m_freem(m_head);
 		return;
