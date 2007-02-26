@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.21 2004/07/13 23:18:10 jmc Exp $
+.\"	$OpenBSD: rdist.1,v 1.22 2007/02/26 15:38:04 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -39,32 +39,25 @@
 .Sh SYNOPSIS
 .Nm rdist
 .Bk -words
-.Op Fl DFn
+.Op Fl DFnV
+.Op Fl Server
 .Op Fl A Ar num
 .Op Fl a Ar num
-.Op Fl d Ar var=value
-.Op Fl l Ar <local logopts>
-.Op Fl L Ar <remote logopts>
+.Op Fl c Ar mini_distfile
+.Oo
+.Fl d Ar var Ns = Ns Ar value
+.Oc
 .Op Fl f Ar distfile
+.Op Fl L Ar remote_logopts
+.Op Fl l Ar local_logopts
 .Op Fl M Ar maxproc
 .Op Fl m Ar host
 .Op Fl o Ar distopts
+.Op Fl P Ar rsh-path
+.Op Fl p Ar rdistd-path
 .Op Fl t Ar timeout
-.Op Fl p Ar <rdistd-path>
-.Op Fl P Ar <rsh-path>
 .Op Ar name ...
 .Ek
-.Pp
-.Nm rdist
-.Fl DFn
-.Fl c Ar name ...
-.Ar [login@]host[:dest]
-.Pp
-.Nm rdist
-.Fl Server
-.Pp
-.Nm rdist
-.Fl V
 .Sh DESCRIPTION
 .Nm
 is a program to maintain identical copies of files over multiple hosts.
@@ -94,34 +87,6 @@ Otherwise, the argument is taken to be the name of a file to be updated
 or the label of a command to execute.
 If label and file names conflict, it is assumed to be a label.
 These may be used together to update specific files using specific commands.
-.Pp
-The
-.Fl c
-option forces
-.Nm
-to interpret the remaining arguments as a small
-.Pa distfile .
-The equivalent distfile is as follows.
-.Bd -literal -offset indent
-( \fIname\fP ... ) -> [\fIlogin\fP@]\fIhost\fP
-	install	[\fIdest\fP] ;
-.Ed
-.Pp
-The
-.Fl Server
-option is recognized to provide partial backward compatible support
-for older versions of
-.Nm
-which used this option to put
-.Nm
-into server mode.
-If
-.Nm
-is started with the
-.Fl Server
-command line option, it will attempt to exec (run) the old version of
-.Nm rdist ,
-.Pa /usr/bin/oldrdist .
 .Pp
 .Nm
 uses a remote shell command to access each target host.
@@ -197,9 +162,21 @@ Set the minimum amount of free space (in bytes) on a filesystem that must exist
 for
 .Nm
 to update or install a file.
+.It Fl c Ar mini_distfile
+Forces
+.Nm
+to interpret the remaining arguments as a small
+.Pa distfile .
+The equivalent distfile is as follows.
+.Bd -literal -offset indent
+( \fIname\fP ... ) -> [\fIlogin\fP@]\fIhost\fP
+	install	[\fIdest\fP] ;
+.Ed
 .It Fl D
 Enable copious debugging messages.
-.It Fl d Ar var=value
+.It Xo
+.Fl d Ar var Ns = Ns Ar value
+.Xc
 Define
 .Ar var
 to have
@@ -223,13 +200,7 @@ If
 is specified as
 .Dq -
 (dash) then read from standard input (stdin).
-.It Fl l Ar logopts
-Set local logging options.
-See the section
-.Sy MESSAGE LOGGING
-for details on the syntax for
-.Ar logopts .
-.It Fl L Ar logopts
+.It Fl L Ar remote_logopts
 Set remote logging options.
 .Ar logopts
 is the same as for local logging except the values are passed to the remote
@@ -238,13 +209,19 @@ See the section
 .Sy MESSAGE LOGGING
 for details on the syntax for
 .Ar logopts .
-.It Fl M Ar num
+.It Fl l Ar local_logopts
+Set local logging options.
+See the section
+.Sy MESSAGE LOGGING
+for details on the syntax for
+.Ar logopts .
+.It Fl M Ar maxproc
 Set the maximum number of simultaneously running child
 .Nm
 processes to
-.Ar num .
+.Ar maxproc .
 The default is 4.
-.It Fl m Ar machine
+.It Fl m Ar host
 Limit which machines are to be updated.
 Multiple
 .Fl m
@@ -254,7 +231,7 @@ arguments can be given to limit updates to a subset of the hosts listed in the
 Print the commands without executing them.
 This option is useful for debugging a
 .Pa distfile .
-.It Fl o Ns Ar distopts
+.It Fl o Ar distopts
 Specify the dist options to enable.
 .Ar distopts
 is a comma separated list of options which are listed below.
@@ -262,11 +239,114 @@ The valid values for
 .Ar distopts
 are:
 .Bl -tag -width Ds
-.It Sy verify
+.It Ic chknfs
+Do not check or update files on target host that reside on NFS filesystems.
+.It Ic chkreadonly
+Enable check on target host to see if a file resides on a read-only filesystem.
+If a file does, then no checking or updating of the file is attempted.
+.It Ic chksym
+If the target on the remote host is a symbolic link, but is not on the
+master host, the remote target will be left a symbolic link.
+This behavior is generally considered a bug in the original version of
+.Nm rdist ,
+but is present to allow compatibility with older versions.
+.It Ic compare
+Binary comparison.
+Perform a binary comparison and update files if they differ rather than
+comparing dates and sizes.
+.It Ic defgroup Ns Op = Ns Ic groupname
+If the group of a file to be transferred does not exist on the destination
+host, use the specified group instead.
+If groupname is not specified, the
+.Em bin
+group is used.
+.It Ic defowner Ns Op = Ns Ic owner
+If the owner of a file to be transferred does not exist on the destination
+host, use the specified owner instead.
+If owner is not specified, the user
+.Em bin
+is used.
+.It Ic follow
+Follow symbolic links.
+Copy the file that the link points to rather than the link itself.
+.It Ic history
+When
+.Ic savetargets
+and
+.Ic history
+are both defined then the target file that is updated is first renamed from
+.Pa file
+to
+.Pa file.NNN
+where NNN increases for each generation update.
+The first generation is 001, and the last is 999.
+After 999 generations, the counter is reset to 001 and 001 will get
+overwritten all the time.
+This is undesirable behavior, so some other method needs to be devised
+to clean up or limit the number of generations.
+.It Ic ignlnks
+Ignore unresolved links.
+.Nm
+will normally try to maintain the link structure of files being transferred
+and warn the user if all the links cannot be found.
+.It Ic nochkgroup
+Do not check group ownership of files that already exist.
+The file ownership is only set when the file is updated.
+.It Ic nochkmode
+Do not check file and directory permission modes.
+The permission mode is only set when the file is updated.
+.It Ic nochkowner
+Do not check user ownership of files that already exist.
+The file ownership is only set when the file is updated.
+.It Ic nodescend
+Do not descend into a directory.
+Normally,
+.Nm
+will recursively check directories.
+If this option is enabled, then any files listed in the file list in the
+distfile that are directories are not recursively scanned.
+Only the existence, ownership, and mode of the directory are checked.
+.It Ic noexec
+Automatically exclude executable files that are in
+.Xr a.out 5
+format from being checked or updated.
+.It Ic numchkgroup
+Use the numeric group ID (GID) to check group ownership instead of
+the group name.
+.It Ic numchkowner
+Use the numeric user ID (UID) to check user ownership instead of
+the user name.
+.It Ic quiet
+Quiet mode.
+Files that are being modified are normally printed on standard output.
+This option suppresses that.
+.It Ic remove
+Remove extraneous files.
+If a directory is being updated, any files that exist on the remote host
+that do not exist in the master directory are removed.
+This is useful for maintaining truly identical copies of directories.
+.It Ic savetargets
+Save files that are updated instead of removing them.
+Any target file that is updated is first renamed from
+.Pa file
+to
+.Pa file.OLD .
+.It Ic sparse
+Enable checking for sparse (aka
+.Dq wholely )
+files.
+One of the most common types of sparse files are those produced by
+.Xr db 3 .
+This option adds some additional processing overhead so it should
+only be enabled for targets likely to contain sparse files.
+.It Ic updateperm
+Do not send the whole file when the size and the modification time match.
+Instead, just update the ownership, group, and permissions as necessary.
+.It Ic verify
 Verify that the files are up to date on all the hosts.
 Any files that are out of date will be displayed but no files will be
 changed nor will any mail be sent.
-.It Sy whole
+.It Ic whole
 Whole mode.
 The whole file name is appended to the destination directory name.
 Normally, only the last component of a name is used when renaming files.
@@ -286,11 +366,7 @@ instead of
 .Pa /tmp/dir/dir1/f1
 and
 .Pa /tmp/dir/dir2/f2 .
-.It Sy noexec
-Automatically exclude executable files that are in
-.Xr a.out 5
-format from being checked or updated.
-.It Sy younger
+.It Ic younger
 Younger mode.
 Files are normally updated if their
 .Em mtime
@@ -304,109 +380,8 @@ This option causes
 not to update files that are younger than the master copy.
 This can be used to prevent newer copies on other hosts from being replaced.
 A warning message is printed for files which are newer than the master copy.
-.It Sy compare
-Binary comparison.
-Perform a binary comparison and update files if they differ rather than
-comparing dates and sizes.
-.It Sy follow
-Follow symbolic links.
-Copy the file that the link points to rather than the link itself.
-.It Sy ignlnks
-Ignore unresolved links.
-.Nm
-will normally try to maintain the link structure of files being transferred
-and warn the user if all the links cannot be found.
-.It Sy chknfs
-Do not check or update files on target host that reside on NFS filesystems.
-.It Sy chkreadonly
-Enable check on target host to see if a file resides on a read-only filesystem.
-If a file does, then no checking or updating of the file is attempted.
-.It Sy chksym
-If the target on the remote host is a symbolic link, but is not on the
-master host, the remote target will be left a symbolic link.
-This behavior is generally considered a bug in the original version of
-.Nm rdist ,
-but is present to allow compatibility with older versions.
-.It Sy defgroup[=groupname]
-If the group of a file to be transferred does not exist on the destination
-host, use the specified group instead.
-If groupname is not specified, the
-.Em bin
-group is used.
-.It Sy defowner[=owner]
-If the owner of a file to be transferred does not exist on the destination
-host, use the specified owner instead.
-If owner is not specified, the user
-.Em bin
-is used.
-.It Sy updateperm
-Do not send the whole file when the size and the modification time match.
-Instead, just update the ownership, group, and permissions as necessary.
-.It Sy quiet
-Quiet mode.
-Files that are being modified are normally printed on standard output.
-This option suppresses that.
-.It Sy remove
-Remove extraneous files.
-If a directory is being updated, any files that exist on the remote host
-that do not exist in the master directory are removed.
-This is useful for maintaining truly identical copies of directories.
-.It Sy nochkowner
-Do not check user ownership of files that already exist.
-The file ownership is only set when the file is updated.
-.It Sy nochkgroup
-Do not check group ownership of files that already exist.
-The file ownership is only set when the file is updated.
-.It Sy nochkmode
-Do not check file and directory permission modes.
-The permission mode is only set when the file is updated.
-.It Sy nodescend
-Do not descend into a directory.
-Normally,
-.Nm
-will recursively check directories.
-If this option is enabled, then any files listed in the file list in the
-distfile that are directories are not recursively scanned.
-Only the existence, ownership, and mode of the directory are checked.
-.It Sy numchkgroup
-Use the numeric group ID (GID) to check group ownership instead of
-the group name.
-.It Sy numchkowner
-Use the numeric user ID (UID) to check user ownership instead of
-the user name.
-.It Sy savetargets
-Save files that are updated instead of removing them.
-Any target file that is updated is first renamed from
-.Pa file
-to
-.Pa file.OLD .
-.It Sy history
-When
-.Sy savetargets
-and
-.Sy history
-are both defined then the target file that is updated is first renamed from
-.Pa file
-to
-.Pa file.NNN
-where NNN increases for each generation update.
-The first generation is 001, and the last is 999.
-After 999 generations, the counter is reset to 001 and 001 will get
-overwritten all the time.
-This is undesirable behavior, so some other method needs to be devised
-to clean up or limit the number of generations.
-.It Sy sparse
-Enable checking for sparse (aka
-.Dq wholely )
-files.
-One of the most common types of sparse files are those produced by
-.Xr db 3 .
-This option adds some additional processing overhead so it should
-only be enabled for targets likely to contain sparse files.
 .El
-.It Fl p Ar <rdistd-path>
-Set the path where the rdistd server is searched for on the target host.
-.It Fl P Ar <rsh-path>
+.It Fl P Ar rsh-path
 Set the path to the remote shell command.
 The
 .Ar rsh-path
@@ -415,6 +390,22 @@ In this case, the first component of the path to exist is used.
 e.g.,
 .Pa "/usr/bin/ssh:/usr/bin/rsh" ,
 .Pa /usr/bin/ssh .
+.It Fl p Ar rdistd-path
+Set the path where the rdistd server is searched for on the target host.
+.It Fl Server
+This option is recognized to provide partial backward compatible support
+for older versions of
+.Nm
+which used this option to put
+.Nm
+into server mode.
+If
+.Nm
+is started with the
+.Fl Server
+command line option, it will attempt to exec (run) the old version of
+.Nm rdist ,
+.Pa /usr/bin/oldrdist .
 .It Fl t Ar timeout
 Set the timeout period (in seconds) for waiting for responses from the remote
 .Nm

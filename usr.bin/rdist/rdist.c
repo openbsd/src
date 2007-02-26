@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.17 2003/06/03 02:56:15 millert Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.18 2007/02/26 15:38:04 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,7 +38,7 @@ static char RCSid[] __attribute__((__unused__)) =
 "$From: rdist.c,v 1.6 2001/03/12 18:16:36 kim Exp $";
 #else
 static char RCSid[] __attribute__((__unused__)) =
-"$OpenBSD: rdist.c,v 1.17 2003/06/03 02:56:15 millert Exp $";
+"$OpenBSD: rdist.c,v 1.18 2007/02/26 15:38:04 jmc Exp $";
 #endif
 
 static char sccsid[] __attribute__((__unused__)) =
@@ -361,23 +361,17 @@ opendist(char *distfile)
 static void
 usage(void)
 {
-	char *sopts = "cDFnv";
+	extern char *__progname;
 
 	(void) fprintf(stderr,
-		      "Usage: %s [-%s] [-A <num>] [-a <num>] [-d var=value]\n",
-		       progname, sopts);
-	(void) fprintf(stderr, 
-       "\t[-f distfile] [-l <msgopt>] [-L <msgopt>] [-M <maxproc>]\n");
-	(void) fprintf(stderr, 
-       "\t[-m host] [-o <distopts>] [-p <rdistd-cmd>] [-P <rsh-path>]\n");
-	(void) fprintf(stderr, 
-       "\t[-t <timeout>] [target ...]\n");
+		"usage: %s [-DFnV] [-Server] [-A num] [-a num] "
+		"[-c mini_distfile]\n"
+		"\t[-d var=value] [-f distfile] [-L remote_logopts] "
+		"[-l local_logopts]\n"
+		"\t[-M maxproc] [-m host] [-o distopts] [-P rsh-path] "
+		"[-p rdistd-path]\n"
+		"\t[-t timeout] [name ...]\n", __progname);
 
-	(void) fprintf(stderr,
-		      "OR:    %s [-%s] -c source [...] machine[:dest]\n", 
-		       progname, sopts);
-
-	(void) fprintf(stderr, "OR:    %s -V\n", progname);
 
 	(void) fprintf(stderr, "\nThe values for <distopts> are:\n\t%s\n",
 		       getdistoptlist());
