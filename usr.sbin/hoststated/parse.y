@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.27 2007/02/24 00:22:32 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.28 2007/02/26 13:03:30 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -106,7 +106,7 @@ typedef struct {
 %token	SERVICE TABLE BACKUP HOST REAL
 %token  CHECK HTTP HTTPS TCP ICMP EXTERNAL
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
-%token	VIRTUAL IP INTERVAL DISABLE STICKYADDR BACKLOG
+%token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG
 %token	SEND EXPECT NOTHING USE SSL LOADBALANCE ROUNDROBIN CIPHERS
 %token	RELAY LISTEN ON FORWARD TO NAT LOOKUP PREFORK NO MARK MARKED
 %token	PROTO SESSION CACHE APPEND CHANGE REMOVE FROM FILTER HASH
@@ -346,7 +346,7 @@ serviceoptsl	: TABLE STRING	{
 				free($3);
 			}
 		}
-		| VIRTUAL IP STRING port interface {
+		| VIRTUAL HOST STRING port interface {
 			if (host($3, &service->virts,
 				 SRV_MAX_VIRTS, $4, $5) <= 0) {
 				yyerror("invalid virtual ip: %s", $3);
@@ -1065,7 +1065,6 @@ lookup(char *s)
 		{ "icmp",		ICMP },
 		{ "interface",		INTERFACE },
 		{ "interval",		INTERVAL },
-		{ "ip",			IP },
 		{ "listen",		LISTEN },
 		{ "loadbalance",	LOADBALANCE },
 		{ "log",		LOG },

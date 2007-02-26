@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.28 2007/02/26 11:59:48 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.29 2007/02/26 13:03:30 pyr Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -284,7 +284,7 @@ Automatically tag packets passing through the
 .Xr pf 4
 rdr rule with the name supplied.
 This allows simpler filter rules.
-.It Ic virtual ip Ar address Ic port Ar port
+.It Ic virtual host Ar address Ic port Ar port
 Specify an
 .Ar address
 and a
@@ -629,8 +629,8 @@ table sorryhost {
 }
 
 service www {
-	virtual ip www.example.com port 8080 interface trunk0
-	virtual ip www6.example.com port 80 interface trunk0
+	virtual host www.example.com port 8080 interface trunk0
+	virtual host www6.example.com port 80 interface trunk0
 
 	tag HOSTSTATED
 	table phphosts
