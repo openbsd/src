@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.7 2007/02/26 11:59:48 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.8 2007/02/26 12:09:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -860,7 +860,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	struct protonode	*pn, pk, *pnv, pkv;
 	char			*line, buf[READ_BUF_SIZE], *ptr, *url, *method;
-	int			 done = 0, header = 0;
+	int			 header = 0;
 	const char		*errstr;
 	size_t			 size;
 
@@ -873,13 +873,13 @@ relay_read_http(struct bufferevent *bev, void *arg)
 
 	pk.type = NODE_TYPE_HEADER;
 
-	while (!done && (line = evbuffer_readline(src)) != NULL) {
+	while (!cre->done && (line = evbuffer_readline(src)) != NULL) {
 		/*
 		 * An empty line indicates the end of the request.
 		 * libevent already stripped the \r\n for us.
 		 */
 		if (!strlen(line)) {
-			done = 1;
+			cre->done = 1;
 			free(line);
 			break;
 		}
@@ -1005,7 +1005,7 @@ next:
 		free(line);
 		continue;
 	}
-	if (done) {
+	if (cre->done) {
 		RB_FOREACH(pn, proto_tree, &proto->tree) {
 			if (cre->nodes[pn->id]) {
 				cre->nodes[pn->id] = 0;
@@ -1072,6 +1072,7 @@ next:
 		cre->line = 0;
 		cre->method = 0;
 		cre->marked = 0;
+		cre->done = 0;
 
 		if (proto->lateconnect && cre->dst->bev == NULL &&
 		    relay_connect(con) == -1) {
@@ -1094,30 +1095,20 @@ relay_error(struct bufferevent *bev, short error, void *arg)
 {
 	struct ctl_relay_event *cre = (struct ctl_relay_event *)arg;
 	struct session *con = (struct session *)cre->con;
-	struct evbuffer *src = EVBUFFER_OUTPUT(bev);
 	struct evbuffer *dst;
 
 	if (error & EVBUFFER_TIMEOUT) {
 		relay_close(con, "buffer event timeout");
 		return;
 	}
-#if 0
-	if (error & EVBUFFER_EOF) {
-		bufferevent_disable(bev, EV_READ|EV_WRITE);
-		relay_close(con, "done");
-		return;
-	}
-#endif
 	if (error & (EVBUFFER_READ|EVBUFFER_WRITE|EVBUFFER_EOF)) {
 		bufferevent_disable(bev, EV_READ|EV_WRITE);
 
 		con->done = 1;
 		if (cre->dst->bev != NULL) {
 			dst = EVBUFFER_OUTPUT(cre->dst->bev);
-			if (EVBUFFER_LENGTH(dst)) {
-				bufferevent_write_buffer(cre->dst->bev, src);
+			if (EVBUFFER_LENGTH(dst))
 				return;
-			}
 		}
 
 		relay_close(con, "done");
