@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.2 2006/11/19 14:28:38 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.3 2007/02/26 19:33:41 miod Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.13 2006/01/21 02:09:06 uwe Exp $	*/
 
 /*
@@ -196,15 +196,13 @@ get_opcode(db_addr_t loc, char *buf, size_t bufsiz)
 	int n0, n3;
 	u_int insn = *(u_int16_t *)loc;
 
-	strlcpy(buf, "unknown opcode", bufsiz);
+	snprintf(buf, bufsiz, ".word 0x%x", insn);
 
 	n0 = (insn & 0xf000) >> 12;
 	n3 = (insn & 0x000f);
 
 	if (f[n0][n3] != NULL)
 		(*f[n0][n3])(loc, insn, buf, bufsiz);
-	else
-		snprintf(buf, bufsiz, ".word 0x%x", insn);
 }
 
 static void
@@ -244,7 +242,7 @@ f_02(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 		snprintf(buf, bufsiz, "stc     r%d_bank, r%d", md, rn);
 		break;
 	case 3:
-		snprintf(buf, bufsiz, "stc     r%d_bank, r%d", md+4, rn);
+		snprintf(buf, bufsiz, "stc     r%d_bank, r%d", md + 4, rn);
 		break;
 	} /* end of switch (type) */
 }
@@ -299,7 +297,7 @@ f_04(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 		snprintf(buf, bufsiz, "mov.l   r%d, @(r0, r%d)", rm, rn);
 		break;
 	case 3:
-		snprintf(buf, bufsiz, "mul.l   r%d, r%d)", rm, rn);
+		snprintf(buf, bufsiz, "mul.l   r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -510,7 +508,7 @@ f_24(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 		snprintf(buf, bufsiz, "mov.l   r%d, @-r%d", rm, rn);
 		break;
 	case 3:
-		snprintf(buf, bufsiz, "div0s   r%d, r%d)", rm, rn);
+		snprintf(buf, bufsiz, "div0s   r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -774,7 +772,7 @@ f_43(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 		snprintf(buf, bufsiz, "stc.l   r%d_bank, @-r%d", md, rn);
 		break;
 	case 3:
-		snprintf(buf, bufsiz, "stc.l   r%d_bank, @-r%d", md+4, rn);
+		snprintf(buf, bufsiz, "stc.l   r%d_bank, @-r%d", md + 4, rn);
 		break;
 	} /* end of switch (type) */
 }
@@ -891,7 +889,7 @@ f_47(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 		snprintf(buf, bufsiz, "ldc.l   @r%d+, r%d_bank", rm, md);
 		break;
 	case 3:
-		snprintf(buf, bufsiz, "ldc.l   @r%d+, r%d_bank", rm, md+4);
+		snprintf(buf, bufsiz, "ldc.l   @r%d+, r%d_bank", rm, md + 4);
 		break;
 	} /* end of switch (type) */
 }
@@ -1052,7 +1050,7 @@ f_4e(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 		snprintf(buf, bufsiz, "ldc     r%d, r%d_bank", rm, md);
 		break;
 	case 3:
-		snprintf(buf, bufsiz, "ldc     r%d, r%d_bank", rm, md+4);
+		snprintf(buf, bufsiz, "ldc     r%d, r%d_bank", rm, md + 4);
 		break;
 	} /* end of switch (type) */
 }
