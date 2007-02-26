@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.14 2006/05/25 03:20:32 ray Exp $ */
+/*	$OpenBSD: edit.c,v 1.15 2007/02/26 08:32:00 steven Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -69,7 +69,7 @@ int
 eparse(const char *cmd, const char *left, const char *right)
 {
 	FILE *file;
-	size_t nread, nwritten;
+	size_t nread;
 	int fd;
 	char *filename;
 	char buf[BUFSIZ], *text;
@@ -129,6 +129,7 @@ RIGHT:
 		err(2, "mkstemp");
 	if (text != NULL) {
 		size_t len;
+		ssize_t nwritten;
 
 		len = strlen(text);
 		if ((nwritten = write(fd, text, len)) == -1 ||
@@ -153,6 +154,8 @@ RIGHT:
 
 	/* Copy temporary file contents to output file. */
 	for (nread = sizeof(buf); nread == sizeof(buf);) {
+		size_t nwritten;
+
 		nread = fread(buf, sizeof(*buf), sizeof(buf), file);
 		/* Test for error or end of file. */
 		if (nread != sizeof(buf) &&
