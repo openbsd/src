@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.31 2007/02/26 19:58:04 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.32 2007/02/26 20:48:48 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -107,14 +107,14 @@ typedef struct {
 %token  CHECK TCP ICMP EXTERNAL
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
 %token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG
-%token	SEND EXPECT NOTHING USE SSL LOADBALANCE ROUNDROBIN CIPHERS
+%token	SEND EXPECT NOTHING SSL LOADBALANCE ROUNDROBIN CIPHERS
 %token	RELAY LISTEN ON FORWARD TO NAT LOOKUP PREFORK NO MARK MARKED
 %token	PROTO SESSION CACHE APPEND CHANGE REMOVE FROM FILTER HASH HEADER
 %token	LOG UPDATES ALL DEMOTE NODELAY SACK SOCKET BUFFER URL RETRY
 %token	ERROR
 %token	<v.string>	STRING
 %type	<v.string>	interface
-%type	<v.number>	number port http_type loglevel sslcache
+%type	<v.number>	number port http_type loglevel sslcache optssl
 %type	<v.number>	proto_type dstmode docheck retry log flag
 %type	<v.host>	host
 %type	<v.tv>		timeout
@@ -144,6 +144,10 @@ number		: STRING	{
 			}
 			free($1);
 		}
+		;
+
+optssl		: /*empty*/	{ $$ = 0; }
+		| SSL		{ $$ = 1; }
 		;
 
 http_type	: STRING	{
@@ -478,8 +482,12 @@ tableoptsl	: host			{
 			}
 			free($5);
 		}
-		| CHECK SEND sendbuf EXPECT STRING {
+		| CHECK SEND sendbuf EXPECT STRING optssl {
 			table->check = CHECK_SEND_EXPECT;
+			if ($6) {
+				conf->flags |= F_SSL;
+				table->flags |= F_SSL;
+			}
 			if (strlcpy(table->exbuf, $5, sizeof(table->exbuf))
 			    >= sizeof(table->exbuf)) {
 				yyerror("yyparse: expect buffer truncated");
@@ -508,10 +516,6 @@ tableoptsl	: host			{
 			}
 		}
 		| DISABLE			{ table->flags |= F_DISABLE; }
-		| USE SSL			{
-			table->flags |= F_SSL;
-			conf->flags |= F_SSL;
-		}
 		;
 
 proto		: PROTO STRING	{
@@ -824,7 +828,7 @@ relayopts_l	: relayopts_l relayoptsl nl
 		| relayoptsl optnl
 		;
 
-relayoptsl	: LISTEN ON STRING port sslserv {
+relayoptsl	: LISTEN ON STRING port optssl {
 			struct addresslist 	 al;
 			struct address		*h;
 
@@ -844,6 +848,10 @@ relayoptsl	: LISTEN ON STRING port sslserv {
 			h = TAILQ_FIRST(&al);
 			bcopy(&h->ss, &rlay->ss, sizeof(rlay->ss));
 			rlay->port = h->port;
+			if ($5) {
+				rlay->flags |= F_SSL;
+				conf->flags |= F_SSL;
+			}
 		}
 		| FORWARD TO STRING port {
 			struct addresslist 	 al;
@@ -931,13 +939,6 @@ dstmode		: /* empty */		{ $$ = RELAY_DSTMODE_DEFAULT; }
 
 docheck		: /* empty */		{ $$ = 1; }
 		| NO CHECK		{ $$ = 0; }
-		;
-
-sslserv		: /* empty */
-		| SSL	{
-			rlay->flags |= F_SSL;
-			conf->flags |= F_SSL;
-		}
 		;
 
 interface	: /*empty*/		{ $$ = NULL; }
@@ -1096,7 +1097,6 @@ lookup(char *s)
 		{ "to",			TO },
 		{ "updates",		UPDATES },
 		{ "url",		URL },
-		{ "use",		USE },
 		{ "virtual",		VIRTUAL }
 	};
 	const struct keywords	*p;

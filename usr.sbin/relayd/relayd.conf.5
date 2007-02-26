@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.31 2007/02/26 19:25:25 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.32 2007/02/26 20:48:48 pyr Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -154,12 +154,8 @@ For each host in the table, verify that retrieving the URL
 .Ar path
 gives the HTTP return code
 .Ar number .
-If
-.Ic use ssl
-is specified, HTTPS will be used to contact the host.
 .It Ic check https Ar path Ic code Ar number
-This has the same effect as above but also implies
-.Ic use ssl .
+This has the same effect as above but wraps the HTTP request in SSL.
 .It Ic check http Ar path Ic digest Ar string
 For each host in the table, verify that retrieving the URL
 .Ar path
@@ -177,16 +173,19 @@ that can be used as is in a digest statement:
 a9993e36476816aba3e25717850c26c9cd0d89d
 .Ed
 If
-.Ic use ssl
-is specified, HTTPS will be used to contact the host.
 .It Ic check https Ar path Ic digest Ar string
-This has the same effect as above but also implies
-.Ic use ssl .
+This has the same effect as above but wraps the HTTP request in SSL.
 .It Ic check icmp
 Ping hosts in this table to determine whether they are up or not.
 This method will automatically use ICMP or ICMPV6 depending on the
 address family of each host.
-.It Ic check send Ar data Ic expect Ar pattern
+.It Xo
+.Ic check send
+.Ar data
+.Ic expect
+.Ar pattern
+.Op Ic ssl
+.Xc
 For each host in the table, a TCP connection is established on the
 port specified, then
 .Ar data
@@ -202,19 +201,13 @@ then nothing is sent on the connection and data is immediately
 read.
 This can be useful with protocols that output a banner like
 SMTP, NNTP and FTP.
-If
-.Ic use ssl
-is specified, the data will be sent and/or received inside an SSL tunnel.
+If this directive is postpended with
+.Ic ssl
+the transaction will occur in an SSL tunnel.
 .It Ic check ssl
-This has the same effect as
-.Ic check tcp
-but also implies
-.Ic use ssl .
+Perform a complete SSL handshake with each host to check their availability.
 .It Ic check tcp
 Use a simple TCP connect to check that hosts are up.
-If
-.Ic use ssl
-is specified, a complete SSL handshake will also be performed.
 .It Ic demote Ar group
 Enable the per-table
 .Xr carp 4
@@ -251,8 +244,6 @@ Main and backup tables need to have the same real port.
 Set the timeout in milliseconds for each host that is checked using
 TCP as the transport.
 This will override the global timeout, which is 200 milliseconds by default.
-.It Ic use ssl
-If the table uses a TCP check, wrap it in SSL.
 .El
 .Sh SERVICES
 Services represent a
