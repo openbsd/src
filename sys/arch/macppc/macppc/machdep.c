@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.85 2006/06/30 16:14:30 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.86 2007/02/26 21:30:17 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -660,6 +660,8 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->srr0 = pack->ep_entry;
 	tf->srr1 = PSL_MBO | PSL_USERSET | PSL_FE_DFLT;
 	p->p_addr->u_pcb.pcb_flags = 0;
+
+	retval[1] = 0;
 }
 
 /*

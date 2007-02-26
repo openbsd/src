@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.33 2006/08/11 08:17:37 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.34 2007/02/26 21:30:18 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -801,6 +801,8 @@ setregs(p, pack, stack, retval)
 	p->p_md.md_pc_ctrl = 0;
 	p->p_md.md_watch_1 = 0;
 	p->p_md.md_watch_2 = 0;
+
+	retval[1] = 0;
 }
 
 
