@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_pci.c,v 1.10 2007/02/26 14:14:02 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_pci.c,v 1.11 2007/02/26 14:28:19 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -91,8 +91,6 @@ struct bcw_pci_softc {
 };
 
 int		bcw_pci_match(struct device *, void *, void *);
-int		bcw_pci_enable(struct bcw_softc *sc);
-void		bcw_pci_disable(struct bcw_softc *sc);
 void		bcw_pci_attach(struct device *, struct device *, void *);
 void		bcw_pci_conf_write(struct bcw_softc *, u_int32_t, u_int32_t);
 u_int32_t	bcw_pci_conf_read(struct bcw_softc *, u_int32_t);
@@ -107,33 +105,6 @@ bcw_pci_match(struct device *parent, void *match, void *aux)
 {
 	return pci_matchbyid((struct pci_attach_args *)aux, bcw_pci_devices,
 	    sizeof(bcw_pci_devices) / sizeof(bcw_pci_devices[0]));
-}
-
-int
-bcw_pci_enable(struct bcw_softc *sc)
-{
-	struct bcw_pci_softc *psc = (void *)sc;
-	
-	/* Establish PCI interrupt */
-	psc->psc_intrcookie = pci_intr_establish(psc->psc_pc, psc->psc_ih,
-	    IPL_NET, bcw_intr, sc, sc->sc_dev.dv_xname);
-	if(psc->psc_intrcookie == NULL) {
-		printf("%s: unable to establish interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return (1);
-	}
-	
-	return (0);
-}
-
-void
-bcw_pci_disable(struct bcw_softc *sc)
-{
-	struct bcw_pci_softc *psc = (void *)sc;
-	
-	/* Remove PCI interrupt */
-	pci_intr_disestablish(psc->psc_pc, psc->psc_intrcookie);
-	psc->psc_intrcookie = NULL;
 }
 
 void
@@ -215,8 +186,6 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": %s", sc->bcw_intrstr);
 
-	sc->sc_enable = bcw_pci_enable;
-	sc->sc_disable = bcw_pci_disable;
 	sc->sc_conf_write = bcw_pci_conf_write;
 	sc->sc_conf_read = bcw_pci_conf_read;
 
