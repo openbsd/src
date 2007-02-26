@@ -1,4 +1,4 @@
-/*	$OpenBSD: distopt.c,v 1.9 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: distopt.c,v 1.10 2007/02/26 20:57:18 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -36,7 +36,7 @@ static char RCSid[] __attribute__((__unused__)) =
 "$From: distopt.c,v 1.5 1999/08/04 15:57:33 christos Exp $";
 #else
 static char RCSid[] __attribute__((__unused__)) = 
-"$OpenBSD: distopt.c,v 1.9 2003/06/03 02:56:14 millert Exp $";
+"$OpenBSD: distopt.c,v 1.10 2007/02/26 20:57:18 jmc Exp $";
 #endif
 
 static char sccsid[] __attribute__((__unused__)) =
@@ -59,9 +59,9 @@ DISTOPTINFO distoptinfo[] = {
 	{ DO_CHKNFS,		"chknfs", 	NULL,		0},
 	{ DO_CHKREADONLY,	"chkreadonly",	NULL,		0},
 	{ DO_CHKSYM,		"chksym",	NULL,		0},
+	{ DO_COMPARE,		"compare", 	NULL,		0},
 	{ DO_DEFGROUP,		"defgroup",	defgroup,	sizeof(defgroup) },
 	{ DO_DEFOWNER,		"defowner",	defowner,	sizeof(defowner) },
-	{ DO_COMPARE,		"compare", 	NULL,		0},
 	{ DO_FOLLOW,		"follow", 	NULL,		0},
 	{ DO_HISTORY,		"history", 	NULL,		0},
 	{ DO_IGNLNKS,		"ignlnks",	NULL,		0},
