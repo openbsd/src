@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.59 2007/02/25 17:03:08 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.60 2007/02/26 15:40:04 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -692,6 +692,10 @@ bcw_attach(struct bcw_softc *sc)
 	if (sc->sc_enable)
 		sc->sc_enable(sc);
 
+	DPRINTF(("\n%s: BoardVendor=0x%x, BoardType=0x%x, BoardRev=0x%x\n",
+	    sc->sc_dev.dv_xname,
+	    sc->sc_board_vendor, sc->sc_board_type, sc->sc_board_rev));
+
 	/*
 	 * Don't reset the chip here, we can only reset each core and we
 	 * haven't identified the cores yet.
@@ -729,7 +733,7 @@ bcw_attach(struct bcw_softc *sc)
 	 * Try and change to the ChipCommon Core
 	 */
 	if (bcw_change_core(sc, 0))
-		DPRINTF(("\n%s: Selected ChipCommon Core\n",
+		DPRINTF(("%s: Selected ChipCommon Core\n",
 		    sc->sc_dev.dv_xname));
 
 	/*
@@ -3250,7 +3254,8 @@ bcw_phy_initb5(struct bcw_softc *sc)
 		bcw_radio_write16(sc, 0x007a, bcw_radio_read16(sc, 0x007a) |
 		    0x0050);
 
-	if (1) { /* XXX bcw->board_vendor */
+	if (sc->sc_board_vendor != PCI_VENDOR_BROADCOM &&
+	    sc->sc_board_type != 0x0416) {
 		for (offset = 0x00a8; offset < 0x00c7; offset++)
 			bcw_phy_write16(sc, offset,
 			    (bcw_phy_read16(sc, offset) + 0x02020) & 0x3f3f);
@@ -3628,7 +3633,8 @@ bcw_phy_inita(struct bcw_softc *sc)
 	    (1 << 14));
 	bcw_radio_init2060(sc);
 
-	if (1) { /* XXX board_vendor, board_type */
+	if (sc->sc_board_vendor == PCI_VENDOR_BROADCOM &&
+	    (sc->sc_board_type == 0x0416 || sc->sc_board_type == 0x040a)) {
 		if (sc->sc_radio_lofcal == 0xffff)
 			bcw_radio_set_tx_iq(sc);
 		else
@@ -3853,7 +3859,9 @@ bcw_phy_setupg(struct bcw_softc *sc)
 		}
 		bcw_phy_agcsetup(sc);
 
-		if (1) /* XXX board_vendor, board_type, board_revision */
+		if (sc->sc_board_vendor == PCI_VENDOR_BROADCOM &&
+		    sc->sc_board_type == 0x0416 &&
+		    sc->sc_board_rev == 0x0017)
 			return;
 
 		bcw_ilt_write(sc, 0x5001, 0x0002);
@@ -3867,7 +3875,9 @@ bcw_phy_setupg(struct bcw_softc *sc)
 		bcw_ilt_write(sc, 0x3c02, 0x000f);
 		bcw_ilt_write(sc, 0x3c03, 0x0014);
 
-		if (1) /* XXX board_vendor, board_type, board_revision */
+		if (sc->sc_board_vendor == PCI_VENDOR_BROADCOM &&
+		    sc->sc_board_type == 0x0416 &&
+		    sc->sc_board_rev == 0x0017)
 			return;
 
 		bcw_ilt_write(sc, 0x0401, 0x0002);
@@ -4141,7 +4151,10 @@ bcw_phy_init_pctl(struct bcw_softc *sc)
 	int must_reset_txpower = 0;
 
 	/* XXX assert() */
-	/* TODO board_vendor, board_type */
+
+	if (sc->sc_board_vendor == PCI_VENDOR_BROADCOM &&
+	    sc->sc_board_type == 0x0416)
+		return;
 
 	BCW_WRITE16(sc, 0x03e6, BCW_READ16(sc, 0x03e6) & 0xffdf);
 	bcw_phy_write16(sc, 0x0028, 0x8018);
@@ -4270,7 +4283,8 @@ bcw_phy_xmitpower(struct bcw_softc *sc)
 {
 	if (sc->sc_phy_savedpctlreg == 0xffff)
 		return;
-	if (1) /* XXX board_vendor, board_type */
+	if (sc->sc_board_type == 0x0416 &&
+	    sc->sc_board_vendor == PCI_VENDOR_BROADCOM)
 		return;
 
 	switch (sc->sc_phy_type) {
