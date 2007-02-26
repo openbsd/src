@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.8 2007/02/26 12:09:21 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.9 2007/02/26 12:11:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1961,8 +1961,8 @@ relay_bufferevent_print(struct ctl_relay_event *cre, char *str)
 }
 
 int
-relay_bufferevent_write_buffer(struct ctl_relay_event *cre, struct
-    evbuffer *buf)
+relay_bufferevent_write_buffer(struct ctl_relay_event *cre,
+    struct evbuffer *buf)
 {
 	if (cre->bev == NULL)
 		return (evbuffer_add_buffer(cre->output, buf));
