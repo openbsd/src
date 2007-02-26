@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.9 2007/02/26 12:11:19 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.10 2007/02/26 12:16:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1083,7 +1083,7 @@ next:
 	if (con->done)
 		goto done;
 	if (EVBUFFER_LENGTH(src))
-		relay_bufferevent_write_buffer(cre->dst, src);
+		bev->readcb(bev, arg);
 	bufferevent_enable(bev, EV_READ);
 	return;
  done:
