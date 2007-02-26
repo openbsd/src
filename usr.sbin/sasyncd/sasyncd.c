@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.16 2006/12/26 00:58:11 msf Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.17 2007/02/26 04:36:57 ray Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -153,6 +153,8 @@ main(int argc, char **argv)
 		return 1;
 	}
 
+	memset(&cfgstate, 0, sizeof cfgstate);
+
 	while ((ch = getopt(argc, argv, "c:dv")) != -1) {
 		switch (ch) {
 		case 'c':
@@ -179,7 +181,6 @@ main(int argc, char **argv)
 	log_init(__progname);
 	timer_init();
 
-	memset(&cfgstate, 0, sizeof cfgstate);
 	cfgstate.runstate = INIT;
 	LIST_INIT(&cfgstate.peerlist);
 
