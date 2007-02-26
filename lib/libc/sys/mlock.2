@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mlock.2,v 1.14 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: mlock.2,v 1.15 2007/02/26 07:44:06 otto Exp $
 .\"	$NetBSD: mlock.2,v 1.3 1995/06/24 10:42:03 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -125,7 +125,11 @@ There was an error faulting/mapping a page.
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
-The address given is not page aligned or the length is negative.
+The address given is not page aligned or
+.Fa addr
+and
+.Fa size
+specify a region that would extend beyond the end of the address space.
 .It Bq Er ENOMEM
 Some portion of the indicated address range is not allocated.
 Some portion of the indicated address range is not locked.

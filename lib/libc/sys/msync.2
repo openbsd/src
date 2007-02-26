@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msync.2,v 1.19 2005/09/12 20:06:26 miod Exp $
+.\"	$OpenBSD: msync.2,v 1.20 2007/02/26 07:44:06 otto Exp $
 .\"	$NetBSD: msync.2,v 1.8 1995/10/12 15:41:09 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -99,7 +99,11 @@ argument was invalid.
 .It Bq Er EINVAL
 The
 .Fa addr
-parameter was not page aligned.
+parameter was not page aligned or
+.Fa addr
+and
+.Fa size
+specify a region that would extend beyond the end of the address space.
 .It Bq Er ENOMEM
 Addresses in the specified region are outside the range allowed
 for the address space of the process, or specify one or more pages

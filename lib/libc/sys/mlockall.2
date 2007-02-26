@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mlockall.2,v 1.2 2001/03/11 05:23:18 aaron Exp $
+.\"	$OpenBSD: mlockall.2,v 1.3 2007/02/26 07:44:06 otto Exp $
 .\"	$NetBSD: mlockall.2,v 1.6 2000/06/26 17:00:02 kleink Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -98,7 +98,11 @@ will fail if:
 .It Bq Er EINVAL
 The
 .Ar flags
-argument is zero or includes unimplemented flags.
+argument is zero or includes unimplemented flags or
+.Fa addr
+and
+.Fa size
+specify a region that would extend beyond the end of the address space.
 .It Bq Er ENOMEM
 Locking the indicated range would exceed either the system or per-process
 limit for locked memory.
