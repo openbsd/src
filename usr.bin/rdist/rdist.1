@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.25 2007/02/26 16:39:23 jmc Exp $
+.\"	$OpenBSD: rdist.1,v 1.26 2007/02/26 21:39:13 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -180,7 +180,7 @@ Define
 to have
 .Ar value .
 This
-option is used to define or override variable definitions in the
+option is used to define or override variable definitions in
 .Pa distfile .
 .Ar value
 can be the empty string, one name, or a list of names surrounded by
@@ -191,29 +191,23 @@ Do not fork any child
 processes.
 All clients are updated sequentially.
 .It Fl f Ar distfile
-Set the name of the distfile to use to be
+Set the name of the distfile to
 .Ar distfile .
 If
-.Ar distfile
-is specified as
-.Dq -
-(dash) then read from standard input (stdin).
+.Sq -
+(dash) is used then read from standard input (stdin).
 .It Fl L Ar remote_logopts
 Set remote logging options.
-.Ar logopts
-is the same as for local logging except the values are passed to the remote
-server,
-.Xr rdistd 1 .
 See the section
-.Sy MESSAGE LOGGING
+.Sx MESSAGE LOGGING
 for details on the syntax for
-.Ar logopts .
+.Ar remote_logopts .
 .It Fl l Ar local_logopts
 Set local logging options.
 See the section
-.Sy MESSAGE LOGGING
+.Sx MESSAGE LOGGING
 for details on the syntax for
-.Ar logopts .
+.Ar local_logopts .
 .It Fl M Ar maxproc
 Set the maximum number of simultaneously running child
 .Nm
@@ -224,12 +218,11 @@ The default is 4.
 Limit which machines are to be updated.
 Multiple
 .Fl m
-arguments can be given to limit updates to a subset of the hosts listed in the
+arguments can be given to limit updates to a subset of the hosts listed in
 .Pa distfile .
 .It Fl n
 Print the commands without executing them.
-This option is useful for debugging a
-.Pa distfile .
+This option is useful for debugging a distfile.
 .It Fl o Ar distopts
 Specify the dist options to enable.
 .Ar distopts
@@ -239,9 +232,11 @@ The valid values for
 are:
 .Bl -tag -width Ds
 .It Ic chknfs
-Do not check or update files on target host that reside on NFS filesystems.
+Do not check or update files on the target host
+that reside on NFS filesystems.
 .It Ic chkreadonly
-Enable check on target host to see if a file resides on a read-only filesystem.
+Enable a check on the target host
+to see if a file resides on a read-only filesystem.
 If a file does, then no checking or updating of the file is attempted.
 .It Ic chksym
 If the target on the remote host is a symbolic link, but is not on the
@@ -343,8 +338,8 @@ Do not send the whole file when the size and the modification time match.
 Instead, just update the ownership, group, and permissions as necessary.
 .It Ic verify
 Verify that the files are up to date on all the hosts.
-Any files that are out of date will be displayed but no files will be
-changed nor will any mail be sent.
+Any files that are out of date will be displayed
+but no files will be changed and no mail will be sent.
 .It Ic whole
 Whole mode.
 The whole file name is appended to the destination directory name.
@@ -352,15 +347,15 @@ Normally, only the last component of a name is used when renaming files.
 This will preserve the directory structure of the files being
 copied instead of flattening the directory structure.
 For example, rdisting a list of files such as
-.Pa /path/dir1/f1
+.Pa /p/dir1/f1
 and
-.Pa /path/dir2/f2
+.Pa /p/dir2/f2
 to
 .Pa /tmp/dir
 would create files
-.Pa /tmp/dir/path/dir1/f1
+.Pa /tmp/dir/p/dir1/f1
 and
-.Pa /tmp/dir/path/dir2/f2
+.Pa /tmp/dir/p/dir2/f2
 instead of
 .Pa /tmp/dir/dir1/f1
 and
@@ -382,12 +377,12 @@ A warning message is printed for files which are newer than the master copy.
 .El
 .It Fl P Ar rsh-path
 Set the path to the remote shell command.
-The
 .Ar rsh-path
 may be a colon separated list of possible pathnames.
 In this case, the first component of the path to exist is used.
 For example,
-.Pa "/usr/bin/ssh:/usr/bin/rsh" ,
+.Pa /usr/bin/ssh:/usr/bin/rsh
+or
 .Pa /usr/bin/ssh .
 .It Fl p Ar rdistd-path
 Set the path where the rdistd server is searched for on the target host.
@@ -406,7 +401,9 @@ command line option, it will attempt to exec (run) the old version of
 .Nm rdist ,
 .Pa /usr/bin/oldrdist .
 .It Fl t Ar timeout
-Set the timeout period (in seconds) for waiting for responses from the remote
+Set the timeout period,
+in seconds,
+for waiting for responses from the remote
 .Nm
 server.
 The default is 900 seconds.
