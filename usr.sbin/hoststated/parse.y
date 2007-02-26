@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.28 2007/02/26 13:03:30 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.29 2007/02/26 13:31:21 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -498,8 +498,8 @@ tableoptsl	: host			{
 			}
 			free($2);
 			if (carp_demote_init(table->demote_group, 1) == -1) {
-				yyerror("yyparse: error initializing group '%s'",
-				    table->demote_group);
+				yyerror("yyparse: error initializing group "
+				    "'%s'", table->demote_group);
 				YYERROR;
 			}
 		}
@@ -847,8 +847,8 @@ relayoptsl	: LISTEN ON STRING port sslserv {
 			struct address		*h;
 
 			if (rlay->dstss.ss_family != AF_UNSPEC) {
-				yyerror("relay %s target or service already specified",
-				    rlay->name);
+				yyerror("relay %s target or service already "
+				    "specified", rlay->name);
 				free($3);
 				YYERROR;
 			}
@@ -869,8 +869,8 @@ relayoptsl	: LISTEN ON STRING port sslserv {
 			struct address	*h;
 
 			if (rlay->dstss.ss_family != AF_UNSPEC) {
-				yyerror("relay %s target or service already specified",
-				    rlay->name);
+				yyerror("relay %s target or service already "
+				    "specified", rlay->name);
 				free($2);
 				YYERROR;
 			}
