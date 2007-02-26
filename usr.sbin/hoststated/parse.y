@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.29 2007/02/26 13:31:21 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.30 2007/02/26 19:25:05 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -109,13 +109,13 @@ typedef struct {
 %token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG
 %token	SEND EXPECT NOTHING USE SSL LOADBALANCE ROUNDROBIN CIPHERS
 %token	RELAY LISTEN ON FORWARD TO NAT LOOKUP PREFORK NO MARK MARKED
-%token	PROTO SESSION CACHE APPEND CHANGE REMOVE FROM FILTER HASH
+%token	PROTO SESSION CACHE APPEND CHANGE REMOVE FROM FILTER HASH HEADER
 %token	LOG UPDATES ALL DEMOTE NODELAY SACK SOCKET BUFFER URL RETRY
 %token	ERROR
 %token	<v.string>	STRING
 %type	<v.string>	interface
 %type	<v.number>	number port http_type loglevel sslcache
-%type	<v.number>	prototype dstmode docheck retry no log
+%type	<v.number>	prototype dstmode docheck retry log flag
 %type	<v.host>	host
 %type	<v.tv>		timeout
 
@@ -661,53 +661,57 @@ sslflags	: SESSION CACHE sslcache	{ proto->cache = $3; }
 				fatal("out of memory");
 			free($2);
 		}
-		| no STRING			{
-			u_int flags = 0;
-			if (strcmp("sslv2", $2) == 0)
-				flags = SSLFLAG_SSLV2;
-			else if (strcmp("sslv3", $2) == 0)
-				flags = SSLFLAG_SSLV3;
-			else if (strcmp("tlsv1", $2) == 0)
-				flags = SSLFLAG_TLSV1;
-			if ($1)
-				proto->sslflags &= ~flags;
-			else
-				proto->sslflags |= flags;
-			free($2);
+		| NO flag			{ proto->sslflags &= ~($2); }
+		| flag				{ proto->sslflags |= $1; }
+		;
+
+flag		: STRING			{
+			if (strcmp("sslv2", $1) == 0)
+				$$ = SSLFLAG_SSLV2;
+			else if (strcmp("sslv3", $1) == 0)
+				$$ = SSLFLAG_SSLV3;
+			else if (strcmp("tlsv1", $1) == 0)
+				$$ = SSLFLAG_TLSV1;
+			else {
+				yyerror("invalid SSL flag: %s", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
 		}
 		;
 
-protonode	: APPEND STRING TO STRING marked	{
+protonode	: nodetype APPEND STRING TO STRING marked	{
 			node.action = NODE_ACTION_APPEND;
-			node.key = strdup($4);
-			node.value = strdup($2);
+			node.key = strdup($5);
+			node.value = strdup($3);
 			if (node.key == NULL || node.value == NULL)
 				fatal("out of memory");
 			if (strchr(node.value, '$') != NULL)
 				node.flags |= PNFLAG_MACRO;
-			free($4);
-			free($2);
+			free($5);
+			free($3);
 		}
-		| CHANGE STRING TO STRING marked	{
+		| nodetype CHANGE STRING TO STRING marked {
 			node.action = NODE_ACTION_CHANGE;
-			node.key = strdup($2);
-			node.value = strdup($4);
+			node.key = strdup($3);
+			node.value = strdup($5);
 			if (node.key == NULL || node.value == NULL)
 				fatal("out of memory");
 			if (strchr(node.value, '$') != NULL)
 				node.flags |= PNFLAG_MACRO;
-			free($4);
-			free($2);
+			free($5);
+			free($3);
 		}
-		| REMOVE STRING	marked	{
+		| nodetype REMOVE STRING marked	{
 			node.action = NODE_ACTION_REMOVE;
-			node.key = strdup($2);
+			node.key = strdup($3);
 			node.value = NULL;
 			if (node.key == NULL)
 				fatal("out of memory");
-			free($2);
+			free($3);
 		}
-		| getvars EXPECT STRING FROM STRING mark	{
+		| nodetype EXPECT STRING FROM STRING mark	{
 			node.action = NODE_ACTION_EXPECT;
 			node.key = strdup($5);
 			node.value = strdup($3);;
@@ -716,7 +720,7 @@ protonode	: APPEND STRING TO STRING marked	{
 			free($5);
 			free($3);
 		}
-		| getvars FILTER STRING FROM STRING mark	{
+		| nodetype FILTER STRING FROM STRING mark	{
 			node.action = NODE_ACTION_FILTER;
 			node.key = strdup($5);
 			node.value = strdup($3);;
@@ -725,7 +729,7 @@ protonode	: APPEND STRING TO STRING marked	{
 			free($5);
 			free($3);
 		}
-		| getvars HASH STRING marked			{
+		| nodetype HASH STRING marked			{
 			node.action = NODE_ACTION_HASH;
 			node.key = strdup($3);
 			node.value = NULL;
@@ -734,7 +738,7 @@ protonode	: APPEND STRING TO STRING marked	{
 			free($3);
 			proto->lateconnect++;
 		}
-		| getvars LOG STRING marked			{
+		| nodetype LOG STRING marked			{
 			node.action = NODE_ACTION_LOG;
 			node.key = strdup($3);
 			node.value = NULL;
@@ -746,20 +750,19 @@ protonode	: APPEND STRING TO STRING marked	{
 		}
 		;
 
-mark		: /* nothing */
+mark		: /* empty */
 		| MARK				{ node.flags |= PNFLAG_MARK; }
 		;
 
-marked		: /* nothing */
+marked		: /* empty */
 		| MARKED			{ node.flags |= PNFLAG_MARK; }
 		;
 
-getvars		: /* nothing */
+nodetype	: HEADER			{ node.type = NODE_TYPE_HEADER; }
 		| URL				{ node.type = NODE_TYPE_URL; }
 		;
 
-sslcache	: /* empty */			{ $$ = RELAY_CACHESIZE; }
-		| number			{ $$ = $1; }
+sslcache	: number			{ $$ = $1; }
 		| DISABLE			{ $$ = -2; }
 		;
 
@@ -988,10 +991,6 @@ timeout		: number
 		}
 		;
 
-no		: /* empty */		{ $$ = 0; }
-		| NO			{ $$ = 1; }
-		;
-
 log		: /* empty */		{ $$ = 0; }
 		| LOG			{ $$ = 1; }
 		;
@@ -1059,6 +1058,7 @@ lookup(char *s)
 		{ "forward",		FORWARD },
 		{ "from",		FROM },
 		{ "hash",		HASH },
+		{ "header",		HEADER },
 		{ "host",		HOST },
 		{ "http",		HTTP },
 		{ "https",		HTTPS },
