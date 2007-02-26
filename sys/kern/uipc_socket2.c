@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.41 2006/01/05 05:05:07 jsg Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.42 2007/02/26 23:53:33 kurt Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -780,6 +780,8 @@ sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 			    (unsigned)m->m_len);
 			n->m_len += m->m_len;
 			sb->sb_cc += m->m_len;
+			if (m->m_type != MT_CONTROL && m->m_type != MT_SONAME)
+				sb->sb_datacc += m->m_len;
 			m = m_free(m);
 			continue;
 		}
@@ -817,6 +819,7 @@ sbflush(struct sockbuf *sb)
 		sbdrop(sb, (int)sb->sb_cc);
 
 	KASSERT(sb->sb_cc == 0);
+	KASSERT(sb->sb_datacc == 0);
 	KASSERT(sb->sb_mb == NULL);
 	KASSERT(sb->sb_mbtail == NULL);
 	KASSERT(sb->sb_lastrecord == NULL);
@@ -844,6 +847,8 @@ sbdrop(struct sockbuf *sb, int len)
 			m->m_len -= len;
 			m->m_data += len;
 			sb->sb_cc -= len;
+			if (m->m_type != MT_CONTROL && m->m_type != MT_SONAME)
+				sb->sb_datacc -= len;
 			break;
 		}
 		len -= m->m_len;

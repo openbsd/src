@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.38 2005/11/21 18:16:46 millert Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.39 2007/02/26 23:53:33 kurt Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -80,6 +80,7 @@ struct socket {
  */
 	struct	sockbuf {
 		u_long	sb_cc;		/* actual chars in buffer */
+		u_long	sb_datacc;	/* data only chars in buffer */
 		u_long	sb_hiwat;	/* max actual char count */
 		u_long	sb_mbcnt;	/* chars of mbufs used */
 		u_long	sb_mbmax;	/* max chars of mbufs to use */
@@ -179,6 +180,8 @@ do {									\
 /* adjust counters in sb reflecting allocation of m */
 #define	sballoc(sb, m) { \
 	(sb)->sb_cc += (m)->m_len; \
+	if ((m)->m_type != MT_CONTROL && (m)->m_type != MT_SONAME) \
+		(sb)->sb_datacc += (m)->m_len; \
 	(sb)->sb_mbcnt += MSIZE; \
 	if ((m)->m_flags & M_EXT) \
 		(sb)->sb_mbcnt += (m)->m_ext.ext_size; \
@@ -187,6 +190,8 @@ do {									\
 /* adjust counters in sb reflecting freeing of m */
 #define	sbfree(sb, m) { \
 	(sb)->sb_cc -= (m)->m_len; \
+	if ((m)->m_type != MT_CONTROL && (m)->m_type != MT_SONAME) \
+		(sb)->sb_datacc -= (m)->m_len; \
 	(sb)->sb_mbcnt -= MSIZE; \
 	if ((m)->m_flags & M_EXT) \
 		(sb)->sb_mbcnt -= (m)->m_ext.ext_size; \
