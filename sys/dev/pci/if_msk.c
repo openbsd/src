@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.49 2007/02/13 20:10:33 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.50 2007/02/26 04:00:25 todd Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -683,14 +683,14 @@ msk_jfree(caddr_t buf, u_int size, void	*arg)
 	sc = (struct sk_if_softc *)arg;
 
 	if (sc == NULL)
-		panic("sk_jfree: can't find softc pointer!");
+		panic("msk_jfree: can't find softc pointer!");
 
 	/* calculate the slot this buffer belongs to */
 	i = ((vaddr_t)buf
 	     - (vaddr_t)sc->sk_cdata.sk_jumbo_buf) / SK_JLEN;
 
 	if ((i < 0) || (i >= MSK_JSLOTS))
-		panic("sk_jfree: asked to free buffer that we don't manage!");
+		panic("msk_jfree: asked to free buffer that we don't manage!");
 
 	entry = LIST_FIRST(&sc->sk_jinuse_listhead);
 	if (entry == NULL)
