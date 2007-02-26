@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail.1,v 1.47 2007/02/25 20:26:10 jmc Exp $
+.\"	$OpenBSD: mail.1,v 1.48 2007/02/26 13:17:37 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -142,7 +142,7 @@ by a control-D
 .Pq Sq ^D
 at the beginning of a line.
 The section below,
-.Ar Replying to or originating mail ,
+.Sx Replying to or originating mail ,
 describes some features of
 .Nm mail
 available to help you compose your letter.
@@ -422,8 +422,6 @@ file, or his edit file in
 .Pq Ic fi
 The same as
 .Ic folder .
-.It Ic folders
-List the names of the folders in your folder directory.
 .It Ic folder
 .Pq Ic fo
 The
@@ -443,6 +441,8 @@ your
 file, and
 +folder means a file in your folder
 directory.
+.It Ic folders
+List the names of the folders in your folder directory.
 .It Ic from
 .Pq Ic f
 Takes a list of messages and prints their message headers.
@@ -916,14 +916,14 @@ in your home directory.
 Setting the binary option
 .Ar nosave
 prevents this.
+.It Ar quiet
+Suppresses the printing of the version when first invoked.
 .It Ar Replyall
 Reverses the sense of
 .Ic reply
 and
 .Ic Reply
 commands.
-.It Ar quiet
-Suppresses the printing of the version when first invoked.
 .It Ar searchheaders
 If this option is set, then a message-list specifier in the form
 .Dq /x:y
@@ -1111,15 +1111,15 @@ system initialization file
 .Xr newaliases 8 ,
 .Xr sendmail 8
 .Pp
-"The Mail Reference Manual",
+"Mail Reference Manual",
 .Pa /usr/share/doc/usd/07.mail/ .
 .Sh HISTORY
 A
 .Nm mail
 command appeared in
 .At v3 .
-This man page is derived from
-.%T "The Mail Reference Manual"
+This man page is derived from the
+.%T "Mail Reference Manual"
 originally written by Kurt Shoens.
 .Sh BUGS
 There are some flags that are not documented here.
