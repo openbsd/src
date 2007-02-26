@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.2 2006/11/05 05:38:18 drahn Exp $	*/
+/*	$OpenBSD: psl.h,v 1.3 2007/02/26 19:34:41 miod Exp $	*/
 /*	$NetBSD: psl.h,v 1.8 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
@@ -52,10 +52,10 @@
 #define	PSL_MD		0x40000000	/* Processor Mode bit */
 
 #define	PSL_MBO		0x00000000	/* must be one bits */
-#define	PSL_MBZ		0x8ffffc0c	/* must be zero bits */
+#define	PSL_MBZ		0x8fff7c0c	/* must be zero bits */
 
 #define	PSL_USERSET	0
-#define	PSL_USERSTATIC	(PSL_BL|PSL_RB|PSL_MD|PSL_IMASK|PSL_MBO|PSL_MBZ)
+#define	PSL_USERSTATIC	(PSL_BL|PSL_RB|PSL_MD|PSL_IMASK|PSL_FD|PSL_MBO|PSL_MBZ)
 
 #define	KERNELMODE(sr)		((sr) & PSL_MD)
 
