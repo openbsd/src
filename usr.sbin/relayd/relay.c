@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.12 2007/02/26 15:41:44 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.13 2007/02/26 16:10:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -714,7 +714,7 @@ relay_expand_http(struct ctl_relay_event *cre, char *val, char *buf, size_t len)
 	struct relay	*rlay = (struct relay *)con->relay;
 	char		 ibuf[128];
 
-	strlcpy(buf, val, len);
+	(void)strlcpy(buf, val, len);
 
 	if (strstr(val, "$REMOTE_") != NULL) {
 		if (strstr(val, "$REMOTE_ADDR") != NULL) {

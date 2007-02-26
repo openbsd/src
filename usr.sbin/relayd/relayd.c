@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.19 2007/02/23 00:28:06 deraadt Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.20 2007/02/26 16:10:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -607,7 +607,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 		log_debug("expand_string: string too long");
 		return (-1);
 	}
-	strlcpy(label, tmp, len);	/* always fits */
+	(void)strlcpy(label, tmp, len);	/* always fits */
 	free(tmp);
 
 	return (0);

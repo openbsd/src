@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.2 2007/02/22 05:58:06 reyk Exp $ */
+/*	$OpenBSD: carp.c,v 1.3 2007/02/26 16:10:24 reyk Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -114,7 +114,11 @@ carp_demote_get(char *group)
 	}
 
 	bzero(&ifgr, sizeof(ifgr));
-	strlcpy(ifgr.ifgr_name, group, sizeof(ifgr.ifgr_name));
+	if (strlcpy(ifgr.ifgr_name, group, sizeof(ifgr.ifgr_name)) >=
+	    sizeof(ifgr.ifgr_name)) {
+		log_warn("carp_demote_get: invalid group");
+		return (-1);
+	}
 
 	if (ioctl(s, SIOCGIFGATTR, (caddr_t)&ifgr) == -1) {
 		if (errno == ENOENT)
@@ -193,7 +197,11 @@ carp_demote_ioctl(char *group, int demote)
 	}
 
 	bzero(&ifgr, sizeof(ifgr));
-	strlcpy(ifgr.ifgr_name, group, sizeof(ifgr.ifgr_name));
+	if (strlcpy(ifgr.ifgr_name, group, sizeof(ifgr.ifgr_name)) >=
+	    sizeof(ifgr.ifgr_name)) {
+		log_warn("carp_demote_ioctl: invalid group");
+		return (-1);
+	}
 	ifgr.ifgr_attrib.ifg_carp_demoted = demote;
 
 	if ((res = ioctl(s, SIOCSIFGATTR, (caddr_t)&ifgr)) == -1)
