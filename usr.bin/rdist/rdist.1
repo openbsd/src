@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.24 2007/02/26 16:17:10 jmc Exp $
+.\"	$OpenBSD: rdist.1,v 1.25 2007/02/26 16:39:23 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -77,7 +77,7 @@ If no
 option is present, the program looks first for
 .Pa distfile ,
 then
-.Pa Distfile
+.Pa Distfile ,
 to use as the input.
 If no names are specified on the command line,
 .Nm
@@ -92,13 +92,13 @@ These may be used together to update specific files using specific commands.
 uses a remote shell command to access each target host.
 By default,
 .Xr ssh 1
-is used, unless overridden by the
+is used unless overridden by the
 .Fl P
 option or the
 .Ev RSH
 environment variable.
 If the target host is the string
-.Em localhost
+.Dq localhost
 and the remote user name is the same as the local user name,
 .Nm
 will run the command:
@@ -110,34 +110,33 @@ Otherwise,
 .Nm
 run will run the command:
 .Bd -literal -offset indent
-ssh host -l remuser rdistd -S
+ssh \*(Lthost\*(Gt -l \*(Ltlogin_name\*(Gt rdistd -S
 .Ed
 .Pp
-where
-.Em host
-is the name of the target host,
-.Em remuser
-is the name of the user to make the connection as, and
-.Em rdistd
-is the rdist server command on the target host as shown below.
+.Ar host
+is the name of the target host;
+.Ar login_name
+is the name of the user to make the connection as.
 .Pp
 On each target host
 .Nm
-will attempt to run the command
+will attempt to run the command:
 .Bd -literal -offset indent
 rdistd -S
 .Ed
-or
-.Bd -literal -compact -offset indent
+.Pp
+Or if the
+.Fl p
+option was specified,
+.Nm
+will attempt to run the command:
+.Bd -literal -offset indent
 \*(Ltrdistd path\*(Gt -S
 .Ed
 .Pp
-if the
-.Fl p
-option was specified.
 If no
 .Fl p
-option is included, or the
+option is specified, or
 .Aq Ar rdistd path
 is a simple filename,
 .Xr rdistd 1
