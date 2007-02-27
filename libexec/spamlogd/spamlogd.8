@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamlogd.8,v 1.9 2006/11/04 00:19:44 jmc Exp $
+.\"	$OpenBSD: spamlogd.8,v 1.10 2007/02/27 16:04:26 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -31,9 +31,7 @@ manipulates the
 .Xr spamd 8
 database in
 .Pa /var/db/spamd
-used for
-.Xr spamd 8
-greylisting.
+used for greylisting.
 .Nm
 updates the
 .Pa /var/db/spamd
@@ -51,11 +49,9 @@ The destination addresses of outbound connections are whitelisted
 when seen by
 .Nm
 so that replies to outbound mail may be received without initial
-greylisting delays
-(see
-.Sx GREYLISTING
-in
-.Xr spamd 8 ) .
+greylisting delays.
+Greylisting is explained more fully in
+.Xr spamd 8 .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
