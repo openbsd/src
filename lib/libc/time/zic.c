@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.27 2007/02/06 19:35:16 millert Exp $	*/
+/*	$OpenBSD: zic.c,v 1.28 2007/02/27 16:40:35 millert Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -2465,9 +2465,12 @@ register char *	cp;
 			else while ((*dp = *cp++) != '"')
 				if (*dp != '\0')
 					++dp;
-				else	error(_(
+				else {
+					error(_(
 						"Odd number of quotation marks"
 						));
+					exit(1);
+				}
 		} while (*cp != '\0' && *cp != '#' &&
 			(!isascii(*cp) || !isspace((unsigned char) *cp)));
 		if (isascii(*cp) && isspace((unsigned char) *cp))
@@ -2655,7 +2658,7 @@ wp = _("time zone abbreviation differs from POSIX standard");
 
 static int
 mkdirs(argname)
-char * const	argname;
+char *		argname;
 {
 	register char *	name;
 	register char *	cp;

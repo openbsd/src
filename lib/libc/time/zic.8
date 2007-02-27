@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zic.8,v 1.20 2007/02/07 15:24:58 jmc Exp $
+.\"	$OpenBSD: zic.8,v 1.21 2007/02/27 16:40:35 millert Exp $
 .Dd May 23, 1999
 .Dt ZIC 8
 .Os
@@ -371,6 +371,63 @@ or (an abbreviation of)
 .Dq Rolling
 if the leap second time given by the other fields should be interpreted as
 local wall clock time.
+.Sh EXTENDED EXAMPLE
+Here is an extended example of
+.Nm
+input, intended to illustrate many of its features.
+.br
+.ne 22
+.nf
+.in +2m
+.ta \w'# Rule\0\0'u +\w'NAME\0\0'u +\w'FROM\0\0'u +\w'1973\0\0'u +\w'TYPE\0\0'u +\w'Apr\0\0'u +\w'lastSun\0\0'u +\w'2:00\0\0'u +\w'SAVE\0\0'u
+.sp
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+Rule	Swiss	1940	only	-	Nov	2	0:00	1:00	S
+Rule	Swiss	1940	only	-	Dec	31	0:00	0	-
+Rule	Swiss	1941	1942	-	May	Sun>=1	2:00	1:00	S
+Rule	Swiss	1941	1942	-	Oct	Sun>=1	0:00	0
+.sp .5
+Rule	EU	1977	1980	-	Apr	Sun>=1	1:00u	1:00	S
+Rule	EU	1977	only	-	Sep	lastSun	1:00u	0	-
+Rule	EU	1978	only	-	Oct	 1	1:00u	0	-
+Rule	EU	1979	1995	-	Sep	lastSun	1:00u	0	-
+Rule	EU	1981	max	-	Mar	lastSun	1:00u	1:00	S
+Rule	EU	1996	max	-	Oct	lastSun	1:00u	0	-
+.sp
+.ta \w'# Zone\0\0'u +\w'Europe/Zurich\0\0'u +\w'0:34:08\0\0'u +\w'RULES/SAVE\0\0'u +\w'FORMAT\0\0'u
+# Zone	NAME	GMTOFF	RULES	FORMAT	UNTIL
+Zone	Europe/Zurich	0:34:08	-	LMT	1848 Sep 12
+		0:29:44	-	BMT	1894 Jun
+		1:00	Swiss	CE%sT	1981
+		1:00	EU	CE%sT
+.sp
+Link	Europe/Zurich	Switzerland
+.sp
+.in
+.fi
+In this example, the zone is named Europe/Zurich but it has an alias
+as Switzerland.  Zurich was 34 minutes and 8 seconds west of GMT until
+1848-09-12 at 00:00, when the offset changed to 29 minutes and 44
+seconds.  After 1894-06-01 at 00:00 Swiss daylight saving rules (defined
+with lines beginning with "Rule Swiss") apply, and the GMT offset
+became one hour.  From 1981 to the present, EU daylight saving rules have
+applied, and the UTC offset has remained at one hour.
+.Pp
+In 1940, daylight saving time applied from November 2 at 00:00 to
+December 31 at 00:00.  In 1941 and 1942, daylight saving time applied
+from the first Sunday in May at 02:00 to the first Sunday in October
+at 00:00.
+The pre-1981 EU daylight-saving rules have no effect
+here, but are included for completeness.  Since 1981, daylight
+saving has begun on the last Sunday in March at 01:00 UTC.
+Until 1995 it ended the last Sunday in September at 01:00 UTC,
+but this changed to the last Sunday in October starting in 1996.
+.Pp
+For purposes of
+display, "LMT" and "BMT" were initially used, respectively.  Since
+Swiss rules and later EU rules were applied, the display name for the
+timezone has been CET for standard time and CEST for daylight saving
+time.
 .Sh NOTES
 For areas with more than two types of local time,
 you may need to use local standard time in the
@@ -400,6 +457,6 @@ standard directory used for created files
 .Xr ctime 3 ,
 .Xr tzfile 5 ,
 .Xr zdump 8
-.\" @(#)zic.8	8.2
+.\" @(#)zic.8	8.3
 .\" This file is in the public domain, so clarified as of
 .\" 2003-02-14 by Arthur David Olson.

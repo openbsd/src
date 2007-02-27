@@ -8,7 +8,7 @@
 <meta http-equiv="Content-type" content='text/html; charset="US-ASCII"'>
 <meta name="DC.Creator" content="Eggert, Paul">
 <meta name="DC.Contributor" content="Olson, Arthur David">
-<meta name="DC.Date" content="2007-01-02">
+<meta name="DC.Date" content="2007-02-22">
 <meta name="DC.Description"
  content="Sources of information about time zones and daylight saving time">
 <meta name="DC.Identifier" content="http://www.twinsun.com/tz/tz-link.htm">
@@ -18,7 +18,7 @@
 <body>
 <h1>Sources for Time Zone and Daylight Saving Time Data</h1>
 <address>
-@(#)tz-link.htm	8.9
+@(#)tz-link.htm	8.10
 </address>
 <p>
 Please send corrections to this web page to the
@@ -152,6 +152,9 @@ Consortium</a> is promoting further work in this area. <a
 href="http://www.calconnect.org/publications/icalendartimezoneproblemsandrecommendationsv1.0.pdf">iCalendar
 TIMEZONE Problems and Recommendations</a> offers guidelines and
 recommendations for the use of VTIMEZONE and <code>tz</code>.</li>
+<li><a href="http://www.calconnect.org/dstlinks.html">Extended Daylight
+Saving Time Links, Advisories and Changes</a> lists vendor material on recent
+daylight saving time changes.</li>
 <li><a
 href="http://www.calconnect.org/publications/timezoneregistryandservicerecommendationsv1.0.pdf">Timezone
 Registry and Service Recommendations</a> discusses a
@@ -216,6 +219,13 @@ compiles <code>tz</code> source into
 <a href="http://www.ruby-lang.org/">Ruby</a>.
 It is freely available under the <abbr
 title="Massachusetts Institute of Technology">MIT</abbr> license.</li>
+<li>The <a href="http://www.chronos-st.org/">Chronos Date/Time
+Library</a> is a <a href="http://smalltalk.org/">Smalltalk</a> class
+library that compiles <code>tz</code> source into a <a
+href="http://date-time-zone.com/">time zone repository</a> whose format
+is either proprietary or an <a href="http://www.w3.org/XML/"><abbr
+title="Extensible Markup Language">XML</abbr></a>-encoded
+representation.</li>
 <li>Starting with version 8.5, <a href="http://www.tcl.tk/">Tcl</a>
 contains a developer-oriented parser that compiles <samp>tz</samp>
 source into text files, along with a runtime that can read those
@@ -543,11 +553,9 @@ title="International Organization for Standardization">ISO</abbr>
 8601:2004 -- Data elements and interchange formats -- Information
 interchange -- Representation of dates and times</a>.</li>
 <li>
-<a href="http://www.w3.org/TR/xmlschema-2/#dateTime"><abbr
-title="Extensible Markup Language">XML</abbr>
+<a href="http://www.w3.org/TR/xmlschema-2/#dateTime"><abbr>XML</abbr>
 Schema: Datatypes - dateTime</a> specifies a format inspired by
-<abbr>ISO</abbr> 8601 that is in common use in <a
-href="http://www.w3.org/XML/"><abbr>XML</abbr></a> data.</li>
+<abbr>ISO</abbr> 8601 that is in common use in XML data.</li>
 <li>
 <a href="ftp://ftp.rfc-editor.org/in-notes/rfc2822.txt">Internet <abbr
 title="Request For Comments">RFC</abbr> 2822</a> &sect;3.3
