@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.32 2007/02/26 20:48:48 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.33 2007/02/27 13:38:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -104,7 +104,7 @@ typedef struct {
 %}
 
 %token	SERVICE TABLE BACKUP HOST REAL
-%token  CHECK TCP ICMP EXTERNAL
+%token  CHECK TCP ICMP EXTERNAL REQUEST RESPONSE
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
 %token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG
 %token	SEND EXPECT NOTHING SSL LOADBALANCE ROUNDROBIN CIPHERS
@@ -115,7 +115,7 @@ typedef struct {
 %token	<v.string>	STRING
 %type	<v.string>	interface
 %type	<v.number>	number port http_type loglevel sslcache optssl
-%type	<v.number>	proto_type dstmode docheck retry log flag
+%type	<v.number>	proto_type dstmode docheck retry log flag direction
 %type	<v.host>	host
 %type	<v.tv>		timeout
 
@@ -549,7 +549,8 @@ proto		: PROTO STRING	{
 				yyerror("too many protocols defined");
 				YYERROR;
 			}
-			RB_INIT(&p->tree);
+			RB_INIT(&p->request_tree);
+			RB_INIT(&p->response_tree);
 			proto = p;
 		} '{' optnl protopts_l '}'	{
 			conf->protocount++;
@@ -572,10 +573,15 @@ protoptsl	: SSL sslflags
 		| TCP tcpflags
 		| TCP '{' tcpflags_l '}'
 		| PROTO proto_type		{ proto->type = $2; }
-		| protonode log			{
-			struct protonode *pn, pk;
+		| direction protonode log	{
+			struct protonode 	*pn, pk;
+			struct proto_tree	*tree;
 
-			pn = RB_FIND(proto_tree, &proto->tree, &node);
+			if ($1 == RELAY_DIR_RESPONSE)
+				tree = &proto->response_tree;
+			else
+				tree = &proto->request_tree;
+			pn = RB_FIND(proto_tree, tree, &node);
 			if (pn != NULL) {
 				yyerror("protocol node %s defined twice",
 				    node.key);
@@ -588,21 +594,22 @@ protoptsl	: SSL sslflags
 			pn->key = node.key;
 			pn->value = node.value;
 			pn->type = node.type;
-			pn->id = proto->nodecount++;
-			if ($2) {
-				proto->lateconnect++;
+			if ($1 == RELAY_DIR_RESPONSE)
+				pn->id = proto->response_nodes++;
+			else
+				pn->id = proto->request_nodes++;
+			if ($3)
 				pn->flags |= PNFLAG_LOG;
-			}
 			if (pn->id == INT_MAX) {
 				yyerror("too many protocol nodes defined");
 				YYERROR;
 			}
-			RB_INSERT(proto_tree, &proto->tree, pn);
+			RB_INSERT(proto_tree, tree, pn);
 
 			if (node.type != NODE_TYPE_HEADER) {
 				pk.key = "GET";
 				pk.type = NODE_TYPE_HEADER;
-				pn = RB_FIND(proto_tree, &proto->tree, &pk);
+				pn = RB_FIND(proto_tree, tree, &pk);
 				if (pn == NULL) {
 					if ((pn = (struct protonode *)
 					    calloc(1, sizeof(*pn))) == NULL)
@@ -613,13 +620,17 @@ protoptsl	: SSL sslflags
 					pn->value = NULL;
 					pn->action = NODE_ACTION_NONE;
 					pn->type = pk.type;
-					pn->id = proto->nodecount++;
+					if ($1 == RELAY_DIR_RESPONSE)
+						pn->id =
+						    proto->response_nodes++;
+					else
+						pn->id = proto->request_nodes++;
 					if (pn->id == INT_MAX) {
 						yyerror("too many protocol "
 						    "nodes defined");
 						YYERROR;
 					}
-					RB_INSERT(proto_tree, &proto->tree, pn);
+					RB_INSERT(proto_tree, tree, pn);
 				}
 				switch (node.type) {
 				case NODE_TYPE_URL:
@@ -635,6 +646,11 @@ protoptsl	: SSL sslflags
 
 			bzero(&node, sizeof(node));
 		}
+		;
+
+direction	: /* empty */		{ $$ = RELAY_DIR_REQUEST; }
+		| REQUEST		{ $$ = RELAY_DIR_REQUEST; }
+		| RESPONSE		{ $$ = RELAY_DIR_RESPONSE; }
 		;
 
 tcpflags_l	: tcpflags comma tcpflags_l
@@ -754,7 +770,6 @@ protonode	: nodetype APPEND STRING TO STRING marked	{
 			if (node.key == NULL)
 				fatal("out of memory");
 			free($3);
-			proto->lateconnect++;
 		}
 		;
 
@@ -1081,6 +1096,8 @@ lookup(char *s)
 		{ "real",		REAL },
 		{ "relay",		RELAY },
 		{ "remove",		REMOVE },
+		{ "request",		REQUEST },
+		{ "response",		RESPONSE },
 		{ "retry",		RETRY },
 		{ "roundrobin",		ROUNDROBIN },
 		{ "sack",		SACK },
@@ -1333,7 +1350,8 @@ parse_config(struct hoststated *x_conf, const char *filename, int opts)
 	conf->proto_default.type = RELAY_PROTO_TCP;
 	(void)strlcpy(conf->proto_default.name, "default",
 	    sizeof(conf->proto_default.name));
-	RB_INIT(&conf->proto_default.tree);
+	RB_INIT(&conf->proto_default.request_tree);
+	RB_INIT(&conf->proto_default.response_tree);
 	TAILQ_INSERT_TAIL(&conf->protos, &conf->proto_default, entry);
 
 	conf->timeout.tv_sec = CHECK_TIMEOUT / 1000;

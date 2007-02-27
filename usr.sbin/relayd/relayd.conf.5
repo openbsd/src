@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.34 2007/02/27 08:39:00 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.35 2007/02/27 13:38:58 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -415,6 +415,7 @@ Handle the Hypertext Transfer Protocol
 Generic handler for TCP-based protocols.
 .El
 .It Xo
+.Op Ar direction
 .Op Ar type
 .Ar action
 .Op Ic log
@@ -425,6 +426,17 @@ The optional
 keyword will log the entity name and the value.
 The actions are depending on the underlying application
 .Ic protocol .
+.Pp
+The following directions are allowed for the specified action:
+.Bl -tag -width Ds
+.It Ic request
+Handle the data stream from the client to the relay, like HTTP
+requests.
+This is the default if the direction directive is omitted.
+.It Ic response
+Handle the data stream from the target host to the relay, like
+HTTP server replys.
+.El
 .Pp
 The following entity types for the actions are available:
 .Bl -tag -width Ds
@@ -437,6 +449,8 @@ mode.
 Look up the entity as a GET variable in the URL when using the
 .Ic http
 protocol.
+This type is only available with the direction
+.Ic request .
 .El
 .Pp
 The following actions are available:

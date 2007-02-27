@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.34 2007/02/26 12:35:43 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.35 2007/02/27 13:38:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -182,7 +182,13 @@ enum httpmethod {
 	HTTP_METHOD_DELETE	= 4,
 	HTTP_METHOD_OPTIONS	= 5,
 	HTTP_METHOD_TRACE	= 6,
-	HTTP_METHOD_CONNECT	= 7
+	HTTP_METHOD_CONNECT	= 7,
+	HTTP_METHOD_RESPONSE	= 8	/* Server response */
+};
+
+enum direction {
+	RELAY_DIR_REQUEST	= 0,
+	RELAY_DIR_RESPONSE	= 1
 };
 
 struct ctl_relay_event {
@@ -195,6 +201,7 @@ struct ctl_relay_event {
 	void			*con;
 	SSL			*ssl;
 	u_int8_t		*nodes;
+	struct proto_tree	*tree;
 
 	int			 marked;
 	int			 line;
@@ -202,6 +209,7 @@ struct ctl_relay_event {
 	int			 chunked;
 	int			 done;
 	enum httpmethod		 method;
+	enum direction		 dir;
 
 	u_int8_t		*buf;
 	int			 buflen;
@@ -415,8 +423,10 @@ struct protocol {
 	enum prototype		 type;
 	int			 lateconnect;
 
-	int			 nodecount;
-	struct proto_tree	 tree;
+	int			 request_nodes;
+	struct proto_tree	 request_tree;
+	int			 response_nodes;
+	struct proto_tree	 response_tree;
 	TAILQ_ENTRY(protocol)	 entry;
 };
 TAILQ_HEAD(protolist, protocol);

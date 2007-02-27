@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.13 2007/02/26 16:10:24 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.14 2007/02/27 13:38:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -273,6 +273,8 @@ relay_protodebug(struct relay *rlay)
 {
 	struct protocol *proto = rlay->proto;
 	struct protonode *pn;
+	struct proto_tree *tree;
+	const char *name;
 
 	fprintf(stderr, "protocol %d: name %s\n", proto->id, proto->name);
 	fprintf(stderr, "\tflags: 0x%04x\n", proto->flags);
@@ -287,8 +289,14 @@ relay_protodebug(struct relay *rlay)
 		fprintf(stderr, "http\n");
 		break;
 	}
-	RB_FOREACH(pn, proto_tree, &proto->tree) {
+
+	name = "request";
+	tree = &proto->request_tree;
+ show:
+	RB_FOREACH(pn, proto_tree, tree) {
 		fprintf(stderr, "\t\t");
+
+		fprintf(stderr, "%s ", name);
 
 		switch (pn->type) {
 		case NODE_TYPE_HEADER:
@@ -333,6 +341,11 @@ relay_protodebug(struct relay *rlay)
 			break;
 		}
 		fprintf(stderr, "\n");
+	}
+	if (tree == &proto->request_tree) {
+		name = "response";
+		tree = &proto->response_tree;
+		goto show;
 	}
 }
 
@@ -597,6 +610,7 @@ relay_connected(int fd, short sig, void *arg)
 {
 	struct session		*con = (struct session *)arg;
 	struct relay		*rlay = (struct relay *)con->relay;
+	struct protocol		*proto = rlay->proto;
 	evbuffercb		 outrd = relay_read;
 	evbuffercb		 outwr = relay_write;
 	struct bufferevent	*bev;
@@ -608,6 +622,25 @@ relay_connected(int fd, short sig, void *arg)
 
 	DPRINTF("relay_connected: session %d: %ssuccessful",
 	    con->id, rlay->proto->lateconnect ? "late connect " : "");
+
+	switch (rlay->proto->type) {
+	case RELAY_PROTO_HTTP:
+		/* Check the servers's HTTP response */
+		if (!RB_EMPTY(&rlay->proto->response_tree)) {
+			outrd = relay_read_http;
+			if ((con->out.nodes = calloc(proto->response_nodes,
+			    sizeof(u_int8_t))) == NULL) {
+				relay_close(con, "failed to allocate nodes");
+				return;
+			}
+		}
+		break;
+	case RELAY_PROTO_TCP:
+		/* Use defaults */
+		break;
+	default:
+		fatalx("relay_input: unknown protocol");
+	}
 
 	/*
 	 * Relay <-> Server
@@ -639,11 +672,14 @@ relay_input(struct session *con)
 	switch (rlay->proto->type) {
 	case RELAY_PROTO_HTTP:
 		/* Check the client's HTTP request */
-		inrd = relay_read_http;
-		if ((con->in.nodes = calloc(proto->nodecount,
-		    sizeof(u_int8_t))) == NULL) {
-			relay_close(con, "failed to allocate node buffer");
-			return;
+		if (!RB_EMPTY(&rlay->proto->request_tree) ||
+		    proto->lateconnect) {
+			inrd = relay_read_http;
+			if ((con->in.nodes = calloc(proto->request_nodes,
+			    sizeof(u_int8_t))) == NULL) {
+				relay_close(con, "failed to allocate nodes");
+				return;
+			}
 		}
 		break;
 	case RELAY_PROTO_TCP:
@@ -1038,7 +1074,9 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		 * Identify and handle specific HTTP request methods
 		 */
 		if (cre->line == 1) {
-			if (strcmp("GET", pk.key) == 0)
+			if (cre->dir == RELAY_DIR_RESPONSE)
+				cre->method = HTTP_METHOD_RESPONSE;
+			else if (strcmp("GET", pk.key) == 0)
 				cre->method = HTTP_METHOD_GET;
 			else if (strcmp("HEAD", pk.key) == 0)
 				cre->method = HTTP_METHOD_HEAD;
@@ -1055,7 +1093,8 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			else if (strcmp("CONNECT", pk.key) == 0)
 				cre->method = HTTP_METHOD_CONNECT;
 		} else if ((cre->method == HTTP_METHOD_POST ||
-		    cre->method == HTTP_METHOD_PUT) &&
+		    cre->method == HTTP_METHOD_PUT ||
+		    cre->method == HTTP_METHOD_RESPONSE) &&
 		    strcasecmp("Content-Length", pk.key) == 0) {
 			/*
 			 * Need to read data from the client after the
@@ -1077,11 +1116,12 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			cre->chunked = 1;
 
 		/* Match the HTTP header */
-		if ((pn = RB_FIND(proto_tree, &proto->tree, &pk)) == NULL)
+		if ((pn = RB_FIND(proto_tree, cre->tree, &pk)) == NULL)
 			goto next;
 
 		/* Decode the URL */
-		if (pn->flags & PNFLAG_LOOKUP_URL) {
+		if (pn->flags & PNFLAG_LOOKUP_URL &&
+		    cre->dir == RELAY_DIR_REQUEST) {
 			url = strdup(pk.value);
 			if (url == NULL)
 				goto next;
@@ -1105,7 +1145,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 					continue;
 				*pkv.value++ = '\0';
 				if ((pnv = RB_FIND(proto_tree,
-				    &proto->tree, &pkv)) == NULL)
+				    cre->tree, &pkv)) == NULL)
 					continue;
 				ret = relay_handle_http(cre, pnv, &pkv, 0);
 				if (ret == 1)
@@ -1140,7 +1180,7 @@ next:
 		continue;
 	}
 	if (cre->done) {
-		RB_FOREACH(pn, proto_tree, &proto->tree) {
+		RB_FOREACH(pn, proto_tree, cre->tree) {
 			if (cre->nodes[pn->id]) {
 				cre->nodes[pn->id] = 0;
 				continue;
@@ -1194,6 +1234,7 @@ next:
 			break;
 		case HTTP_METHOD_POST:
 		case HTTP_METHOD_PUT:
+		case HTTP_METHOD_RESPONSE:
 			/* HTTP request payload */
 			if (cre->toread) {
 				bev->readcb = relay_read_httpcontent;
@@ -1220,7 +1261,8 @@ next:
 		cre->done = 0;
 		cre->chunked = 0;
 
-		if (proto->lateconnect && cre->dst->bev == NULL &&
+		if (cre->dir == RELAY_DIR_REQUEST &&
+		    proto->lateconnect && cre->dst->bev == NULL &&
 		    relay_connect(con) == -1) {
 			relay_close(con, "session failed");
 			return;
@@ -1284,6 +1326,7 @@ void
 relay_accept(int fd, short sig, void *arg)
 {
 	struct relay *rlay = (struct relay *)arg;
+	struct protocol *proto = rlay->proto;
 	struct session *con = NULL;
 	struct ctl_natlook *cnl = NULL;
 	socklen_t slen;
@@ -1313,6 +1356,10 @@ relay_accept(int fd, short sig, void *arg)
 	con->relay = rlay;
 	con->id = ++relay_conid;
 	con->outkey = rlay->dstkey;
+	con->in.tree = &proto->request_tree;
+	con->out.tree = &proto->response_tree;
+	con->in.dir = RELAY_DIR_REQUEST;
+	con->out.dir = RELAY_DIR_RESPONSE;
 	if (gettimeofday(&con->tv_start, NULL))
 		goto err;
 	bcopy(&con->tv_start, &con->tv_last, sizeof(con->tv_last));
