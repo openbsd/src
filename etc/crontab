@@ -1,4 +1,4 @@
-#	$OpenBSD: crontab,v 1.14 2007/02/24 19:30:59 millert Exp $
+#	$OpenBSD: crontab,v 1.15 2007/02/27 16:04:16 beck Exp $
 #
 # /var/cron/tabs/root - root's crontab
 #
@@ -20,4 +20,4 @@ HOME=/var/log
 30	1	*	*	*	umask 077; /bin/sh /etc/daily 2>&1 | tee /var/log/daily.out | mail -s "`/bin/hostname` daily output" root
 30	3	*	*	6	umask 077; /bin/sh /etc/weekly 2>&1 | tee /var/log/weekly.out | mail -s "`/bin/hostname` weekly output" root
 30	5	1	*	*	umask 077; /bin/sh /etc/monthly 2>&1 | tee /var/log/monthly.out | mail -s "`/bin/hostname` monthly output" root
-#0	*	*	*	*	/usr/libexec/spamd-setup -g
+#0	*	*	*	*	/usr/libexec/spamd-setup
