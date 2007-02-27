@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.78 2007/02/27 18:02:23 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.79 2007/02/27 19:47:31 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -34,7 +34,10 @@
 .Op Fl 45bdv
 .Op Fl B Ar maxblack
 .Op Fl c Ar maxcon
-.Op Fl G Ar passtime:greyexp:whiteexp
+.Oo
+.Fl G
+.Ar passtime : Ns Ar greyexp : Ns Ar whiteexp
+.Oc
 .Op Fl h Ar hostname
 .Op Fl l Ar address
 .Op Fl n Ar name
@@ -127,7 +130,10 @@ Debug mode.
 does not
 .Xr fork 2
 into the background.
-.It Fl G Ar passtime:greyexp:whiteexp
+.It Xo
+.Fl G
+.Ar passtime : Ns Ar greyexp : Ns Ar whiteexp
+.Xc
 Adjust the three time parameters for greylisting;
 see below.
 .Ar passtime
@@ -234,11 +240,11 @@ real MTA as in the following
 .Xr pf.conf 5
 example:
 .Bd -literal -offset 4n
-table <spamd-white> persist
-no rdr inet proto tcp from <spamd-white> to any \e
+table \*(Ltspamd-white\*(Gt persist
+no rdr inet proto tcp from \*(Ltspamd-white\*(Gt to any \e
     port smtp
 rdr pass inet proto tcp from any to any \e
-    port smtp -> 127.0.0.1 port spamd
+    port smtp -\*(Gt 127.0.0.1 port spamd
 .Ed
 .Pp
 Connections from addresses not listed in the
@@ -374,13 +380,13 @@ The rules can be loaded into a
 .Em table
 to simplify handling.
 .Bd -literal -offset 4n
-table <spamd> persist
-rdr pass inet proto tcp from <spamd> to any \e
-    port smtp -> 127.0.0.1 port spamd
+table \*(Ltspamd\*(Gt persist
+rdr pass inet proto tcp from \*(Ltspamd\*(Gt to any \e
+    port smtp -\*(Gt 127.0.0.1 port spamd
 .Ed
 .Pp
 Any addresses in table
-.Em <spamd>
+.Em spamd
 are then redirected to
 .Nm .
 Addresses can be loaded into the
@@ -392,7 +398,7 @@ like:
 .Pp
 .Xr spamd-setup 8
 can also be used to load addresses into the
-.Em <spamd>
+.Em spamd
 table.
 .Xr spamd-setup 8
 also has the added benefit of being able to remove addresses from
