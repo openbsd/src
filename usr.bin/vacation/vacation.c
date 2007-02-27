@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.27 2007/02/23 15:55:17 millert Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.28 2007/02/27 15:51:17 deraadt Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.27 2007/02/23 15:55:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.28 2007/02/27 15:51:17 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -240,6 +240,16 @@ readheaders(void)
 				if (junkmail())
 					exit(0);
 			}
+			break;
+		case 'L':		/* "List-Id:" */
+		case 'l':
+			cont = 0;
+			/*
+			 * If present (with any value), message is coming from a
+			 * mailing list, cf. RFC2919.
+			 */
+			if (strncasecmp(buf, "List-Id:", 8) == 0)
+				exit(0);
 			break;
 		case 'R':		/* "Return-Path:" */
 		case 'r':
