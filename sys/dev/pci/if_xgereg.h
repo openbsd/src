@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xgereg.h,v 1.3 2007/02/27 22:18:53 kettenis Exp $	*/
+/*	$OpenBSD: if_xgereg.h,v 1.4 2007/02/27 22:39:39 kettenis Exp $	*/
 /*	$NetBSD: if_xgereg.h,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -235,6 +235,9 @@ struct txd {
 #define	TXD_CTL2_CIPv4	(1ULL << 58)	/* Calculate IPv4 header checksum */
 #define	TXD_CTL2_CTCP	(1ULL << 57)	/* Calculate TCP checksum */
 #define	TXD_CTL2_CUDP	(1ULL << 56)	/* Calculate UDP checksum */
+#define	TXD_CTL2_VLANE	(1ULL << 48)	/* Enable VLAN tag insertion */
+#define	TXD_CTL2_VLANT(x) ((uint64_t)(x) << 32)
+
 /*
  * Receive DMA registers
  */
