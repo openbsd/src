@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.35 2006/10/24 20:14:43 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.36 2007/02/27 22:18:53 kettenis Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -746,6 +746,11 @@ xge_init(struct ifnet *ifp)
 		splx(s);
 		return (1);
 	}
+
+	/* disable VLAN tag stripping */
+	val = PIF_RCSR(RX_PA_CFG);
+	val &= ~STRIP_VLAN_TAG;
+	PIF_WCSR(RX_PA_CFG, val);
 
 	/* set MRU */
 #ifdef XGE_JUMBO
