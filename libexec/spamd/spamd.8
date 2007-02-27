@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.77 2007/02/27 17:51:10 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.78 2007/02/27 18:02:23 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -274,9 +274,8 @@ The default is 36 days to allow for the delivery of
 monthly mailing list digests without greylist delays every time.
 .Pp
 .Xr spamd-setup 8
-should be run with the
-.Fl g
-flag.
+should be run periodically by
+.Xr cron 8 .
 Use
 .Xr crontab 1
 to uncomment the entry in root's crontab.
