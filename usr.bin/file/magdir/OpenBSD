@@ -1,4 +1,4 @@
-#	$OpenBSD: OpenBSD,v 1.12 2004/08/10 19:32:49 deraadt Exp $
+#	$OpenBSD: OpenBSD,v 1.13 2007/02/27 21:07:10 miod Exp $
 
 #------------------------------------------------------------------------------
 # OpenBSD:  file(1) magic for OpenBSD objects
@@ -264,4 +264,6 @@
 0	belong&0377777777	043600507	OpenBSD/arm core
 >12	string			>\0		from '%s'
 0	belong&0377777777	047200507	OpenBSD/amd64 core
+>12	string			>\0		from '%s'
+0	belong&0377777777	044200507	OpenBSD/sh core
 >12	string			>\0		from '%s'
