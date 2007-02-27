@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.72 2006/10/29 18:58:57 norby Exp $
+#	$OpenBSD: special,v 1.73 2007/02/27 20:55:23 david Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -75,6 +75,7 @@ rc.shutdown	type=file mode=0644 uname=root gname=wheel
 resolv.conf	type=file mode=0644 uname=root gname=wheel optional
 resolv.conf.tail type=file mode=0644 uname=root gname=wheel optional
 ripd.conf	type=file mode=0600 uname=root gname=wheel
+sasyncd.conf	type=file mode=0600 uname=root gname=wheel
 security	type=file mode=0644 uname=root gname=wheel
 sensorsd.conf	type=file mode=0644 uname=root gname=wheel
 shells		type=file mode=0644 uname=root gname=wheel
