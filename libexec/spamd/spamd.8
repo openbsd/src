@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.74 2007/02/27 14:52:31 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.75 2007/02/27 15:38:27 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -49,10 +49,36 @@
 is a fake
 .Xr sendmail 8 Ns -like
 daemon which rejects false mail.
-If the
-.Xr pf 4
-packet filter is configured to redirect port 25 (SMTP) to this daemon,
-it will attempt to waste the time and resources of the spam sender.
+.\"It If the
+.\".Xr pf 4
+.\"packet filter is configured to redirect port 25 (SMTP) to this daemon,
+.\"it will attempt to waste the time and resources of the spam sender.
+It is designed to be very efficient so that it does not slow down the
+receiving machine.
+.Pp
+In its default mode of operation,
+.Nm
+will initially
+.Em greylist
+a connection,
+giving the connecting machine a temporary failure message
+and requesting it try again later.
+Any such machine retrying after a predefined amount of time
+will be put in a
+.Em whitelist ,
+allowing it to bypass such checks in the future.
+.Pp
+.Nm
+can also run in
+.Em blacklist
+mode,
+either in addition to or instead of greylisting mode.
+In this mode,
+spam is never accepted,
+but always rejected with either a 450 or 550 error message.
+See
+.Sx BLACKLISTING
+below for more information.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -68,9 +94,9 @@ The default is
 .Ar maxcon
 \- 100.
 .It Fl b
-Turn off Greylisting mode, and run only as a blacklister.
+Turn off greylisting mode, and run only as a blacklister.
 See
-.Sx GREYLISTING
+.Sx BLACKLISTING
 below.
 .It Fl c Ar maxcon
 The maximum number of concurrent connections to allow.
@@ -83,9 +109,8 @@ does not
 .Xr fork 2
 into the background.
 .It Fl G Ar passtime:greyexp:whiteexp
-Adjust the three time parameters for greylisting; see
-.Sx GREYLISTING
-below.
+Adjust the three time parameters for greylisting;
+see below.
 .Ar passtime
 defaults to 25 (minutes),
 .Ar greyexp
@@ -144,11 +169,174 @@ level.
 Set the socket receive buffer to this many bytes, adjusting the window size.
 .El
 .Pp
+When run in greylisting mode,
+connections receive the pleasantly innocuous temporary failure of:
+.Bd -literal -offset 4n
+451 Temporary failure, please try again later.
+.Ed
+.Pp
+This happens in the SMTP dialogue
+immediately after the recipient is specified.
 .Nm
-is designed to be very efficient so that it does not slow down the
-receiving machine.
-Spam is never accepted, but always rejected with either a 450 or 550
-error message.
+will use the db file in
+.Pa /var/db/spamd
+to track these connections to
+.Nm
+by connecting IP address, HELO/EHLO, envelope-from, and envelope-to, or
+.Em tuple
+for short.
+.Pp
+A previously unseen tuple is added to the
+.Pa /var/db/spamd
+database, recording the time an initial connection attempt was seen.
+After
+.Em passtime
+minutes if
+.Nm
+sees a retried attempt to deliver mail for the same tuple,
+.Nm
+will whitelist the connecting address by adding it as a
+whitelist entry to
+.Pa /var/db/spamd .
+.Pp
+.Nm
+regularly scans the
+.Pa /var/db/spamd
+database and configures all whitelist addresses as the
+.Em spamd-white
+.Xr pf 4
+table.
+The
+.Em spamd-white
+table
+.Em must
+be used to allow connections to pass to the
+real MTA as in the following
+.Xr pf.conf 5
+example:
+.Bd -literal -offset 4n
+table <spamd-white> persist
+no rdr inet proto tcp from <spamd-white> to any \e
+    port smtp
+rdr pass inet proto tcp from any to any \e
+    port smtp -> 127.0.0.1 port spamd
+.Ed
+.Pp
+Connections from addresses not listed in the
+.Em spamd-white
+.Xr pf 4
+table are redirected to
+.Nm .
+Connections are considered for greylisting and
+eventual whitelisting (by addition to the
+.Em spamd-white
+table so they are not redirected in the future) if they retry mail delivery.
+.Pp
+.Nm
+removes tuple entries from the
+.Pa /var/db/spamd
+database if delivery has not been retried within
+.Em greyexp
+hours from the initial time a connection is seen.
+The default is 4 hours as this is the most common setting after which
+MTAs will give up attempting to retry delivery of a message.
+.Pp
+.Nm
+removes whitelist entries from the
+.Pa /var/db/spamd
+database if no mail delivery activity has been seen from the
+whitelisted address by
+.Xr spamlogd 8
+within
+.Em whiteexp
+hours from the initial time an address
+is whitelisted.
+The default is 36 days to allow for the delivery of
+monthly mailing list digests without greylist delays every time.
+.Pp
+.Xr spamd-setup 8
+should be run with the
+.Fl g
+flag.
+Use
+.Xr crontab 1
+to uncomment the entry in root's crontab.
+.Pp
+.Xr spamlogd 8
+should be used to update the whitelist entries in
+.Pa /var/db/spamd
+when connections are seen to pass to the real MTA on the
+.Em smtp
+port.
+.Pp
+.Xr spamdb 8
+can be used to examine and alter the contents of
+.Pa /var/db/spamd .
+See
+.Xr spamdb 8
+for further information.
+.Sh GREYTRAPPING
+When greylisting with
+.Nm
+it may be useful to define
+.Em spamtrap
+destination addresses to catch spammers as they send mail from greylisted
+hosts.
+Such
+.Em spamtrap
+addresses affect only greylisted connections to
+.Nm
+and are used to temporarily blacklist a host that is obviously sending spam.
+Unused email addresses or email addresses on spammers' lists are very
+useful for this.
+When a host that is currently greylisted attempts to send mail to a
+.Em spamtrap
+address, it is blacklisted for 24 hours by adding the host to the
+.Nm
+blacklist
+.Em spamd-greytrap .
+Spamtrap addresses are added to the
+.Pa /var/db/spamd
+database with the following
+.Xr spamdb 8
+command:
+.Pp
+.Dl # spamdb -T -a 'spamtrap@mydomain.org'
+.Pp
+See
+.Xr spamdb 8
+for further details.
+.Pp
+The file
+.Pa /etc/mail/spamd.alloweddomains
+can be used to specify a list of domainname suffixes, one per line, one of
+which must match each destination email address in the greylist.
+Any destination address which does not match one of the suffixes listed in
+.Pa /etc/mail/spamd.alloweddomains
+will be trapped, exactly as if it were sent to a
+.Em spamtrap
+address above.
+.Pp
+For example, if
+.Pa /etc/mail/spamd.alloweddomains
+contains:
+.Bd -literal -offset 4n
+@humpingforjesus.com
+obtuse.com
+.Ed
+.Pp
+the destination addresses
+.Em beardedclams@humpingforjesus.com ,
+.Em beck@obtuse.com ,
+and
+.Em beck@snouts.obtuse.com
+would not cause the sending host to be trapped.
+However the addresses
+.Em peter@apostles.humpingforjesus.com
+or
+.Em bigbutts@bofh.ucs.ualberta.ca
+would cause the sending host to be trapped.
+.Sh BLACKLISTING
 The normal way that spam has been dealt with in the past is to either
 accept and drop, or outright block.
 When configured to use 450 responses,
@@ -156,24 +344,6 @@ When configured to use 450 responses,
 takes neither of these actions: it rejects the mail back to the senders'
 queue.
 .Pp
-.Nm
-can be enabled in
-.Xr rc.conf.local 8 .
-It should be used in conjunction with
-.Xr spamd-setup 8 ,
-which reads
-.Xr spamd.conf 5 ,
-processes a list of spammers' addresses, and applies appropriate
-.Xr pf 4
-.Em rdr
-rules.
-.Xr spamd-setup 8
-should be run periodically via
-.Xr cron 8 .
-Use
-.Xr crontab 1
-to uncomment the entry in root's crontab.
-.Sh REDIRECTING SMTP CONNECTIONS
 With
 .Xr pf 4 ,
 connections to port 25 (SMTP) can be redirected to another host or port,
@@ -250,193 +420,6 @@ will reject mail by displaying all the messages from all blacklists in which
 a connecting address is matched.
 .Xr spamd-setup 8
 is normally used to configure this information.
-.Sh GREYLISTING
-When run in greylisting mode,
-.Nm
-will run in the normal mode for any addresses blacklisted by
-.Xr spamd-setup 8 .
-Connections from addresses not blacklisted by
-.Xr spamd-setup 8
-will be considered for greylisting.
-Such connections will not be stuttered at
-(though see the
-.Fl S
-option above)
-or delayed,
-and will receive the pleasantly innocuous temporary failure of:
-.Bd -literal -offset 4n
-451 Temporary failure, please try again later.
-.Ed
-.Pp
-in the SMTP dialogue immediately after the recipient is specified.
-.Nm
-will use the db file in
-.Pa /var/db/spamd
-to track these non-blacklisted connections to
-.Nm
-by connecting IP address, HELO/EHLO, envelope-from, and envelope-to,
-or "tuple" for
-short.
-.Pp
-A previously unseen tuple is added to the
-.Pa /var/db/spamd
-database, recording the time an initial connection attempt was seen.
-After
-.Em passtime
-minutes if
-.Nm
-sees a retried attempt to deliver mail for the same tuple,
-.Nm
-will whitelist the connecting address by adding it as a
-whitelist entry to
-.Pa /var/db/spamd .
-.Pp
-.Nm
-regularly scans the
-.Pa /var/db/spamd
-database and configures all whitelist addresses as the
-.Em spamd-white
-.Xr pf 4
-table.
-The
-.Em spamd-white
-table
-.Em must
-be used to allow connections to pass to the
-real MTA as in the following
-.Xr pf.conf 5
-example:
-.Bd -literal -offset 4n
-table <spamd-white> persist
-no rdr inet proto tcp from <spamd-white> to any \e
-    port smtp
-rdr pass inet proto tcp from any to any \e
-    port smtp -> 127.0.0.1 port spamd
-.Ed
-.Pp
-Connections from addresses not listed in the
-.Em spamd-white
-.Xr pf 4
-table are redirected to
-.Nm .
-If an address matches a blacklist specified in
-.Pa /etc/mail/spamd.conf ,
-the connection will be stuttered at by
-.Nm .
-All other connections will be considered for greylisting and
-eventual whitelisting (by addition to the
-.Em spamd-white
-table so they are not redirected in the future) if they retry mail delivery.
-Note that when greylisting we do not need the
-.Em spamd
-.Xr pf 4
-table since all connections are passed to
-.Nm
-unless the source address is listed in the
-.Em spamd-white
-table.
-.Pp
-.Nm
-removes tuple entries from the
-.Pa /var/db/spamd
-database if delivery has not been retried within
-.Em greyexp
-hours from the initial time a connection is seen.
-The default is 4 hours as this is the most common setting after which
-MTAs will give up attempting to retry delivery of a message.
-.Pp
-.Nm
-removes whitelist entries from the
-.Pa /var/db/spamd
-database if no mail delivery activity has been seen from the
-whitelisted address by
-.Xr spamlogd 8
-within
-.Em whiteexp
-hours from the initial time an address
-is whitelisted.
-The default is 36 days to allow for the delivery of
-monthly mailing list digests without greylist delays every time.
-.Pp
-.Xr spamd-setup 8
-should be run with the
-.Fl g
-flag when operating in greylisting mode.
-.Pp
-.Xr spamlogd 8
-should be used to update the whitelist entries in
-.Pa /var/db/spamd
-when connections are seen to pass to the real MTA on the
-.Em smtp
-port.
-.Pp
-.Xr spamdb 8
-can be used to examine and alter the contents of
-.Pa /var/db/spamd .
-See
-.Xr spamdb 8
-for further information.
-.Sh GREYTRAPPING
-When greylisting with
-.Nm
-it may be useful to define
-.Em spamtrap
-destination addresses to catch spammers as they send mail from greylisted
-hosts.
-Such
-.Em spamtrap
-addresses affect only greylisted connections to
-.Nm
-and are used to temporarily blacklist a host that is obviously sending spam.
-Unused email addresses or email addresses on spammers' lists are very
-useful for this.
-When a host that is currently greylisted attempts to send mail to a
-.Em spamtrap
-address, it is blacklisted for 24 hours by adding the host to the
-.Nm
-blacklist
-.Em spamd-greytrap .
-Spamtrap addresses are added to the
-.Pa /var/db/spamd
-database with the following
-.Xr spamdb 8
-command:
-.Pp
-.Dl # spamdb -T -a 'spamtrap@mydomain.org'
-.Pp
-See
-.Xr spamdb 8
-for further details.
-.Pp
-The file
-.Pa /etc/mail/spamd.alloweddomains
-can be used to specify a list of domainname suffixes, one per line, one of
-which must match each destination email address in the greylist.
-Any destination address which does not match one of the suffixes listed in
-.Pa /etc/mail/spamd.alloweddomains
-will be trapped, exactly as if it were sent to a
-.Em spamtrap
-address above.
-.Pp
-For example, if
-.Pa /etc/mail/spamd.alloweddomains
-contains:
-.Bd -literal -offset 4n
-@humpingforjesus.com
-obtuse.com
-.Ed
-.Pp
-the destination addresses
-.Em beardedclams@humpingforjesus.com ,
-.Em beck@obtuse.com ,
-and
-.Em beck@snouts.obtuse.com
-would not cause the sending host to be trapped.
-However the addresses
-.Em peter@apostles.humpingforjesus.com
-or
-.Em bigbutts@bofh.ucs.ualberta.ca
-would cause the sending host to be trapped.
 .Sh LOGGING
 .Nm
 sends log messages to
