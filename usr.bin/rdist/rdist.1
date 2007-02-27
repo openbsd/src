@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.28 2007/02/26 22:16:09 jmc Exp $
+.\"	$OpenBSD: rdist.1,v 1.29 2007/02/27 08:08:40 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -278,8 +278,8 @@ to
 .Pa file.NNN
 where NNN increases for each generation update.
 The first generation is 001, and the last is 999.
-After 999 generations, the counter is reset to 001 and 001 will get
-overwritten all the time.
+After 999 generations, the counter is reset and stuck to 001,
+and 001 will get overwritten all the time.
 This is undesirable behavior, so some other method needs to be devised
 to clean up or limit the number of generations.
 .It Ic ignlnks
@@ -305,8 +305,10 @@ If this option is enabled, then any files listed in the file list in the
 distfile that are directories are not recursively scanned.
 Only the existence, ownership, and mode of the directory are checked.
 .It Ic noexec
-Automatically exclude executable files that are in
+Automatically exclude executable binary files that are in
 .Xr a.out 5
+or
+.Xr elf 5
 format from being checked or updated.
 .It Ic numchkgroup
 Use the numeric group ID (GID) to check group ownership instead of
@@ -330,9 +332,7 @@ Any target file that is updated is first renamed from
 to
 .Pa file.OLD .
 .It Ic sparse
-Enable checking for sparse (aka
-.Dq wholely )
-files.
+Enable checking for sparse files.
 One of the most common types of sparse files are those produced by
 .Xr db 3 .
 This option adds some additional processing overhead so it should
