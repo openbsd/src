@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.28 2007/02/22 19:11:13 otto Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.29 2007/02/27 07:59:13 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -27,7 +27,14 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
+#include <sys/stat.h>
+
+#include <ctype.h>
+#include <err.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "rcsprog.h"
 

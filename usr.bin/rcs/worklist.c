@@ -1,4 +1,4 @@
-/*	$OpenBSD: worklist.c,v 1.1 2006/04/26 02:55:13 joris Exp $	*/
+/*	$OpenBSD: worklist.c,v 1.2 2007/02/27 07:59:13 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -24,7 +24,12 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
+#include <sys/queue.h>
+
+#include <err.h>
+#include <signal.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "worklist.h"
 #include "xmalloc.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.11 2007/02/22 08:30:45 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.12 2007/02/27 07:59:13 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -24,7 +24,16 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
+#include <sys/queue.h>
+#include <sys/stat.h>
+
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "buf.h"
 #include "xmalloc.h"

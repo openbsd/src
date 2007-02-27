@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.3 2006/07/27 03:17:10 ray Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.4 2007/02/27 07:59:13 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -24,7 +24,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
+#include <sys/param.h>
+
+#include <ctype.h>
+#include <err.h>
+#include <string.h>
 
 #include "rcs.h"
 #include "xmalloc.h"

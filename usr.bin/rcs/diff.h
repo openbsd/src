@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.5 2006/09/21 15:30:07 millert Exp $	*/
+/*	$OpenBSD: diff.h,v 1.6 2007/02/27 07:59:13 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -66,6 +66,10 @@
 
 #ifndef RCS_DIFF_H
 #define RCS_DIFF_H
+
+#include <sys/queue.h>
+
+#include <regex.h>
 
 #include "buf.h"
 #include "rcs.h"
