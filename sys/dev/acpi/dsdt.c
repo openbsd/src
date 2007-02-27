@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.83 2007/02/22 06:22:31 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.84 2007/02/27 19:53:32 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1524,14 +1524,23 @@ aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 {
 	int idx;
 
-	lhs->type = rhs->type;
-	switch (lhs->type & ~AML_STATIC) {
+	lhs->type = rhs->type  & ~AML_STATIC;
+	switch (lhs->type) {
 	case AML_OBJTYPE_UNINITIALIZED:
 		break;
 	case AML_OBJTYPE_STATICINT:
 	case AML_OBJTYPE_INTEGER:
+		lhs->length = aml_intlen>>3;
+		lhs->v_integer = rhs->v_integer;
+		break;
 	case AML_OBJTYPE_MUTEX:
-		_aml_setvalue(lhs, rhs->type, rhs->v_integer, NULL);
+		lhs->v_mutex = rhs->v_mutex;
+		break;
+	case AML_OBJTYPE_POWERRSRC:
+		lhs->v_powerrsrc = rhs->v_powerrsrc;
+		break;
+	case AML_OBJTYPE_METHOD:
+		lhs->v_method = rhs->v_method;
 		break;
 	case AML_OBJTYPE_BUFFER:
 		_aml_setvalue(lhs, rhs->type, rhs->length, rhs->v_buffer);
@@ -1546,7 +1555,7 @@ aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 		lhs->v_processor = rhs->v_processor;
 		break;
 	case AML_OBJTYPE_NAMEREF:
-		_aml_setvalue(lhs, rhs->type, 0, rhs->v_nameref);
+		lhs->v_nameref = rhs->v_nameref;
 		break;
 	case AML_OBJTYPE_PACKAGE:
 		_aml_setvalue(lhs, rhs->type, rhs->length, NULL);
@@ -1554,7 +1563,7 @@ aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 			aml_copyvalue(lhs->v_package[idx], rhs->v_package[idx]);
 		break;
 	case AML_OBJTYPE_OBJREF:
-		_aml_setvalue(lhs, rhs->type, rhs->v_objref.index, rhs->v_objref.ref);
+		lhs->v_objref = rhs->v_objref;
 		break;
 	default:
 		printf("copyvalue: %x", rhs->type);
@@ -3061,13 +3070,6 @@ aml_parseref(struct aml_scope *scope, int opcode, struct aml_value *res)
 		aml_parseterm(scope, res);
 		aml_parsetarget(scope, tmparg, NULL);
 
-		/* hack - keep from calling method in Locals */
-		while (tmparg->type == AML_OBJTYPE_OBJREF &&
-		    tmparg->v_objref.index == -1) {
-			if (tmparg->stack)
-				break;
-			tmparg = tmparg->v_objref.ref;
-		}
 		aml_setvalue(scope, tmparg, res, 0);
 		break;
 	case AMLOP_REFOF:
@@ -3081,6 +3083,7 @@ aml_parseref(struct aml_scope *scope, int opcode, struct aml_value *res)
 		aml_parsetarget(scope, &tmparg[1], NULL);
 		if (tmparg[0].type != AML_OBJTYPE_NAMEREF) {
 			/* Object exists */
+			aml_freevalue(&tmparg[1]);
 			aml_setvalue(scope, &tmparg[1], &tmparg[0], 0);
 			aml_setvalue(scope, res, NULL, 1);
 		} else {
@@ -3444,6 +3447,19 @@ aml_parse_resource(int length, uint8_t *buffer,
 	}
 
 	return 0;
+}
+
+void
+aml_foreachpkg(struct aml_value *pkg, int start, 
+	       void (*fn)(struct aml_value *, void *), 
+	       void *arg)
+{
+	int idx;
+	
+	if (pkg->type != AML_OBJTYPE_PACKAGE)
+		return;
+	for (idx=start; idx<pkg->length; idx++) 
+		fn(pkg->v_package[idx], arg);
 }
 
 int
