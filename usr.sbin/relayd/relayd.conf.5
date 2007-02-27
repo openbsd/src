@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.33 2007/02/27 08:02:33 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.34 2007/02/27 08:39:00 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -448,10 +448,20 @@ When using the
 protocol,
 .Ic key
 will indicate a specified HTTP header.
+If
+.Ar key
+does not exist in the request, it will be created with the value
+set to
+.Ar value .
 .It Ic change Ar key Ic to Ar value
 Like the
 .Ic append
 directive above, but change the contents of the specified entity.
+If
+.Ar key
+does not exist in the request, it will be created with the value
+set to
+.Ar value .
 .It Ic remove Ar key
 Remove the entity with the selected name.
 .It Ic expect Ar value Ic from Ar key
