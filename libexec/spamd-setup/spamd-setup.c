@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.31 2007/02/25 22:59:38 millert Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.32 2007/02/27 02:10:58 beck Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -41,7 +41,7 @@
 
 #define PATH_FTP		"/usr/bin/ftp"
 #define PATH_PFCTL		"/sbin/pfctl"
-#define PATH_SPAMD_CONF		"/etc/spamd.conf"
+#define PATH_SPAMD_CONF		"/etc/mail/spamd.conf"
 #define SPAMD_ARG_MAX		256 /* max # of args to an exec */
 
 struct cidr {
@@ -86,7 +86,7 @@ __dead void	  usage(void);
 
 int		  debug;
 int		  dryrun;
-int		  greyonly;
+int		  greyonly = 1;
 
 extern char 	 *__progname;
 
@@ -780,7 +780,7 @@ __dead void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-dgn]\n", __progname);
+	fprintf(stderr, "usage: %s [-bdn]\n", __progname);
 	exit(1);
 }
 
@@ -793,7 +793,7 @@ main(int argc, char *argv[])
 	struct servent *ent;
 	int i, ch;
 
-	while ((ch = getopt(argc, argv, "ndg")) != -1) {
+	while ((ch = getopt(argc, argv, "bdn")) != -1) {
 		switch (ch) {
 		case 'n':
 			dryrun = 1;
@@ -801,8 +801,8 @@ main(int argc, char *argv[])
 		case 'd':
 			debug = 1;
 			break;
-		case 'g':
-			greyonly = 1;
+		case 'b':
+			greyonly = 0;
 			break;
 		default:
 			usage();

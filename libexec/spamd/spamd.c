@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.88 2007/02/23 22:40:50 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.89 2007/02/27 02:10:58 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -142,7 +142,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: spamd [-45dgv] [-B maxblack] [-b address] [-c maxcon]\n");
+	    "usage: spamd [-45dbv] [-B maxblack] [-l address] [-c maxcon]\n");
 	fprintf(stderr,
 	    "             [-G mins:hours:hours] [-h host] [-n name] [-p port]\n");
 	fprintf(stderr,
@@ -984,7 +984,7 @@ main(int argc, char *argv[])
 	if (gethostname(hostname, sizeof hostname) == -1)
 		err(1, "gethostname");
 
-	while ((ch = getopt(argc, argv, "45b:c:B:p:dgG:h:r:s:S:n:vw:")) != -1) {
+	while ((ch = getopt(argc, argv, "45l:c:B:p:bdG:h:r:s:S:n:vw:")) != -1) {
 		switch (ch) {
 		case '4':
 			nreply = "450";
@@ -992,7 +992,7 @@ main(int argc, char *argv[])
 		case '5':
 			nreply = "550";
 			break;
-		case 'b':
+		case 'l':
 			bind_address = optarg;
 			break;
 		case 'B':
@@ -1012,8 +1012,8 @@ main(int argc, char *argv[])
 		case 'd':
 			debug = 1;
 			break;
-		case 'g':
-			greylist = 1;
+		case 'b':
+			greylist = 0;
 			break;
 		case 'G':
 			if (sscanf(optarg, "%d:%d:%d", &passtime, &greyexp,

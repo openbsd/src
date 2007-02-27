@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.h,v 1.6 2007/02/23 19:22:07 beck Exp $	*/
+/*	$OpenBSD: grey.h,v 1.7 2007/02/27 02:10:58 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -22,7 +22,7 @@
 #define WHITEEXP (60 * 60 * 24 * 36) /* remove white entries after 36 days */
 #define TRAPEXP (60 * 60 * 24) /* hitting a spamtrap blacklists for a day */
 #define PATH_PFCTL "/sbin/pfctl"
-#define PATH_SPAMD_ALLOWEDDOMAINS "/etc/spamd/alloweddomains"
+#define PATH_SPAMD_ALLOWEDDOMAINS "/etc/mail/spamd.alloweddomains"
 #define DB_SCAN_INTERVAL 60
 #define PATH_SPAMD_DB "/var/db/spamd"
 

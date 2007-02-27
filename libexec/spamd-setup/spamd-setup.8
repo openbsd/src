@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.10 2007/02/24 19:28:13 millert Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.11 2007/02/27 02:10:58 beck Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -55,11 +55,11 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
 Debug mode reports a few pieces of information.
-.It Fl g
-Greylisting mode.
-Blacklist data is stored only in
+.It Fl b
+Blacklisting only mode.
+Blacklist data is normally stored only in
 .Xr spamd 8 .
-In the absence of this flag, data is stored in both
+With this flag, data is stored in both
 .Xr spamd 8
 and
 .Xr pf 4 .
@@ -70,7 +70,7 @@ No data is shipped to
 .El
 .Pp
 Blacklists and whitelists are specified in the configuration file
-.Pa /etc/spamd.conf
+.Pa /etc/mail/spamd.conf
 and are processed in the order specified in the
 .Ar all
 tag.
@@ -93,7 +93,7 @@ reads all configuration information from a
 file.
 .Sh FILES
 .Bd -literal
-/etc/spamd.conf
+/etc/mail/spamd.conf
 .Ed
 .Sh SEE ALSO
 .Xr ftp 1 ,
