@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_casvar.h,v 1.2 2007/02/25 21:54:52 kettenis Exp $	*/
+/*	$OpenBSD: if_casvar.h,v 1.3 2007/02/27 21:19:40 kettenis Exp $	*/
 
 /*
  *
@@ -102,31 +102,9 @@ struct cas_control_data {
  * Software state for receive jobs.
  */
 struct cas_rxsoft {
-	struct mbuf *rxs_mbuf;		/* head of our mbuf chain */
 	bus_dmamap_t rxs_dmamap;	/* our DMA map */
 	bus_dma_segment_t rxs_dmaseg;	/* our DMA segment */
 	caddr_t rxs_kva;
-};
-
-
-/*
- * Table which describes the transmit threshold mode.  We generally
- * start at index 0.  Whenever we get a transmit underrun, we increment
- * our index, falling back if we encounter the NULL terminator.
- */
-struct cas_txthresh_tab {
-	u_int32_t txth_opmode;		/* OPMODE bits */
-	const char *txth_name;		/* name of mode */
-};
-
-/*
- * Some misc. statics, useful for debugging.
- */
-struct cas_stats {
-	u_long		ts_tx_uf;	/* transmit underflow errors */
-	u_long		ts_tx_to;	/* transmit jabber timeouts */
-	u_long		ts_tx_ec;	/* excessive collision count */
-	u_long		ts_tx_lc;	/* late collision count */
 };
 
 /*
@@ -152,11 +130,6 @@ struct cas_softc {
 
 	int		sc_mif_config;	/* Selected MII reg setting */
 
-	void *sc_sdhook;		/* shutdown hook */
-	void *sc_powerhook;		/* power management hook */
-
-	struct cas_stats sc_stats;	/* debugging stats */
-
 	/*
 	 * Ring buffer DMA stuff.
 	 */
@@ -180,14 +153,6 @@ struct cas_softc {
 #define	sc_txdescs	sc_control_data->ccd_txdescs
 #define	sc_rxdescs	sc_control_data->ccd_rxdescs
 #define	sc_rxcomps	sc_control_data->ccd_rxcomps
-
-	int			sc_txfree;		/* number of free Tx descriptors */
-	int			sc_txnext;		/* next ready Tx descriptor */
-
-	u_int32_t		sc_tdctl_ch;		/* conditional desc chaining */
-	u_int32_t		sc_tdctl_er;		/* conditional desc end-of-ring */
-
-	u_int32_t		sc_setup_fsls;	/* FS|LS on setup descriptor */
 
 	int			sc_rxptr;		/* next ready RX descriptor/descsoft */
 	int			sc_rxfifosize;
@@ -261,15 +226,5 @@ do {									\
 	    CAS_DMA_WRITE((s));						\
 	CAS_CDRXSYNC((sc), (d), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (0)
-
-#ifdef _KERNEL
-int	cas_mediachange(struct ifnet *);
-void	cas_mediastatus(struct ifnet *, struct ifmediareq *);
-
-void	cas_config(struct cas_softc *);
-void	cas_reset(struct cas_softc *);
-int	cas_intr(void *);
-#endif /* _KERNEL */
-
 
 #endif

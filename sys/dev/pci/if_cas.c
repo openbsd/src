@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.3 2007/02/26 21:48:32 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.4 2007/02/27 21:19:40 kettenis Exp $	*/
 
 /*
  *
@@ -95,6 +95,7 @@ struct cfattach cas_ca = {
 	sizeof(struct cas_softc), cas_match, cas_attach
 };
 
+void		cas_config(struct cas_softc *);
 void		cas_start(struct ifnet *);
 void		cas_stop(struct ifnet *, int);
 int		cas_ioctl(struct ifnet *, u_long, caddr_t);
@@ -129,11 +130,11 @@ void		cas_pcs_writereg(struct device *, int, int, int);
 int		cas_mediachange(struct ifnet *);
 void		cas_mediastatus(struct ifnet *, struct ifmediareq *);
 
-struct mbuf	*cas_get(struct cas_softc *, int, int);
 int		cas_eint(struct cas_softc *, u_int);
 int		cas_rint(struct cas_softc *);
 int		cas_tint(struct cas_softc *, u_int32_t);
 int		cas_pint(struct cas_softc *);
+int		cas_intr(void *);
 
 #ifdef CAS_DEBUG
 #define	DPRINTF(sc, x)	if ((sc)->sc_arpcom.ac_if.if_flags & IFF_DEBUG) \
@@ -394,7 +395,6 @@ cas_config(struct cas_softc *sc)
 			goto fail_5;
 		}
 
-
 		if ((error = bus_dmamap_load(sc->sc_dmatag,
 		   sc->sc_rxsoft[i].rxs_dmamap, kva, PAGE_SIZE, NULL,
 		   BUS_DMA_NOWAIT)) != 0) {
@@ -402,7 +402,6 @@ cas_config(struct cas_softc *sc)
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
 		}
-		sc->sc_rxsoft[i].rxs_mbuf = NULL;
 	}
 
 	/*
@@ -640,19 +639,7 @@ cas_reset(struct cas_softc *sc)
 void
 cas_rxdrain(struct cas_softc *sc)
 {
-	struct cas_rxsoft *rxs;
-	int i;
-
-	for (i = 0; i < CAS_NRXDESC; i++) {
-		rxs = &sc->sc_rxsoft[i];
-		if (rxs->rxs_mbuf != NULL) {
-			bus_dmamap_sync(sc->sc_dmatag, rxs->rxs_dmamap, 0,
-			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
-			bus_dmamap_unload(sc->sc_dmatag, rxs->rxs_dmamap);
-			m_freem(rxs->rxs_mbuf);
-			rxs->rxs_mbuf = NULL;
-		}
-	}
+	/* Nothing to do yet. */
 }
 
 /*
