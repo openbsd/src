@@ -113,6 +113,7 @@
 ./usr/include/m68k/_types.h
 ./usr/include/m68k/asm.h
 ./usr/include/m68k/asm_single.h
+./usr/include/m68k/atomic.h
 ./usr/include/m68k/cdefs.h
 ./usr/include/m68k/cpu.h
 ./usr/include/m68k/db_machdep.h
@@ -125,6 +126,7 @@
 ./usr/include/m68k/internal_types.h
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
+./usr/include/m68k/mutex.h
 ./usr/include/m68k/param.h
 ./usr/include/m68k/pcb.h
 ./usr/include/m68k/pmap_motorola.h
@@ -145,6 +147,7 @@
 ./usr/include/mac68k
 ./usr/include/mac68k/_types.h
 ./usr/include/mac68k/asm.h
+./usr/include/mac68k/atomic.h
 ./usr/include/mac68k/autoconf.h
 ./usr/include/mac68k/bus.h
 ./usr/include/mac68k/cdefs.h
@@ -163,6 +166,7 @@
 ./usr/include/mac68k/kcore.h
 ./usr/include/mac68k/keyboard.h
 ./usr/include/mac68k/limits.h
+./usr/include/mac68k/mutex.h
 ./usr/include/mac68k/param.h
 ./usr/include/mac68k/pcb.h
 ./usr/include/mac68k/pmap.h

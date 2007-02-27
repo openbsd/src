@@ -1587,6 +1587,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm_single.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/atomic.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cdefs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cpu.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/db_machdep.ph
@@ -1599,6 +1600,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/internal_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/limits.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/mutex.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/param.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/pcb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/pmap_motorola.ph
@@ -1620,6 +1622,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/asm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/autoconf.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/atomic.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/bus.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/cdefs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/cpu.ph
@@ -1637,6 +1640,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/keyboard.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/limits.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/mutex.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/param.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/pcb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/pmap.ph
