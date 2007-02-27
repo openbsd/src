@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_casreg.h,v 1.2 2007/02/25 21:54:52 kettenis Exp $	*/
+/*	$OpenBSD: if_casreg.h,v 1.3 2007/02/27 21:45:35 kettenis Exp $	*/
 
 /*
  *
@@ -114,7 +114,7 @@
 #define	CAS_RESET_RX		0x000000002	/* Reset RX half */
 #define	CAS_RESET_RSTOUT	0x000000004	/* Force PCI RSTOUT# */
 
-/* GEM TX DMA registers */
+/* TX DMA registers */
 #define	CAS_TX_CONFIG		0x2004
 
 #define	CAS_TX_FIFO_WR_PTR	0x2014		/* FIFO write pointer */
@@ -177,7 +177,7 @@
 /* CAS_TX_COMPLETION register bits */
 #define	CAS_TX_COMPLETION_MASK	0x00001fff	/* # of last descriptor */
 
-/* GEM RX DMA registers */
+/* RX DMA registers */
 #define	CAS_RX_CONFIG		0x4000
 #define	CAS_RX_PAGE_SIZE	0x4004
 
@@ -511,7 +511,7 @@
 #define	CAS_MII_SLINK_COMMA	0x00000002	/* waiting for comma detect */
 #define	CAS_MII_SLINK_SYNC	0x00000003	/* recv data synchronized */
 
-/* Wired GEM PHY addresses */
+/* Wired PHY addresses */
 #define	CAS_PHYAD_INTERNAL	1
 #define	CAS_PHYAD_EXTERNAL	0
 
