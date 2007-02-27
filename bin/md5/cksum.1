@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.11 2006/11/19 17:09:15 jmc Exp $
+.\"	$OpenBSD: cksum.1,v 1.12 2007/02/27 21:41:58 millert Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -259,10 +259,11 @@ utility appeared in
 Do not use the
 .Ar cksum ,
 .Ar md4 ,
+.Ar md5 ,
 .Ar sum ,
 or
 .Ar sysvsum
-algorithms to detect hostile binary modifications.
-An attacker can trivially produce backdoored daemons which have the same
-checksum as the standard versions.
+algorithms to verify file integrity.
+An attacker can trivially produce modified payload that
+has the same checksum as the original version.
 Use a cryptographic checksum instead.
