@@ -1,5 +1,5 @@
-# $OpenBSD: zone.tab,v 1.18 2007/02/02 20:26:51 millert Exp $
-# @(#)zone.tab	8.8
+# $OpenBSD: zone.tab,v 1.19 2007/02/27 16:26:46 millert Exp $
+# @(#)zone.tab	8.9
 #
 # TZ zone descriptions
 #
@@ -380,11 +380,12 @@ US	+421953-0830245	America/Detroit	Eastern Time - Michigan - most locations
 US	+381515-0854534	America/Kentucky/Louisville	Eastern Time - Kentucky - Louisville area
 US	+364947-0845057	America/Kentucky/Monticello	Eastern Time - Kentucky - Wayne County
 US	+394606-0860929	America/Indiana/Indianapolis	Eastern Time - Indiana - most locations
-US	+382232-0862041	America/Indiana/Marengo	Eastern Time - Indiana - Crawford County
 US	+411745-0863730	America/Indiana/Knox	Eastern Time - Indiana - Starke County
+US	+410305-0863611	America/Indiana/Winamac	Eastern Time - Indiana - Pulaski County
+US	+382232-0862041	America/Indiana/Marengo	Eastern Time - Indiana - Crawford County
 US	+384452-0850402	America/Indiana/Vevay	Eastern Time - Indiana - Switzerland County
 US	+415100-0873900	America/Chicago	Central Time
-US	+384038-0873143	America/Indiana/Vincennes	Central Time - Indiana - Daviess, Dubois, Knox, Martin, Perry & Pulaski Counties
+US	+384038-0873143	America/Indiana/Vincennes	Central Time - Indiana - Daviess, Dubois, Knox, Martin & Perry Counties
 US	+382931-0871643	America/Indiana/Petersburg	Central Time - Indiana - Pike County
 US	+450628-0873651	America/Menominee	Central Time - Michigan - Dickinson, Gogebic, Iron & Menominee Counties
 US	+470659-1011757	America/North_Dakota/Center	Central Time - North Dakota - Oliver County
