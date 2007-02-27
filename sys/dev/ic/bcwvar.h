@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.24 2007/02/26 14:14:02 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.25 2007/02/27 07:04:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -146,6 +146,7 @@ struct bcw_lopair {
 	int8_t high;
 	uint8_t used:1;
 };
+#define BCW_LO_COUNT	(14 * 4)
 
 #define CTRL_BC_MASK	0x1fff		/* buffer byte count */
 #define CTRL_EOT	0x10000000	/* end of descriptor table */

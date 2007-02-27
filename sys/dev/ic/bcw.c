@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.61 2007/02/26 16:15:35 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.62 2007/02/27 07:04:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -681,12 +681,11 @@ void
 bcw_attach(struct bcw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet	*ifp = &ic->ic_if;
-	int		error;
-	int		i;
-	uint32_t	sbval;
-	//uint16_t	sbval16;
-	uint32_t	core_id, core_rev, core_vendor;
+	struct ifnet *ifp = &ic->ic_if;
+	int error;
+	int i;
+	uint32_t sbval;
+	uint32_t core_id, core_rev, core_vendor;
 
 	/* power on cardbus socket */
 	if (sc->sc_enable)
@@ -904,12 +903,15 @@ bcw_attach(struct bcw_softc *sc)
 	 * the spec suggests that there is one PHY for each core
 	 */
 	bcw_change_core(sc, sc->sc_core_80211->num);
+
 	sbval = BCW_READ16(sc, 0x3E0);
 	sc->sc_phy_ver = (sbval & 0xf000) >> 12;
 	sc->sc_phy_rev = sbval & 0xf;
 	sc->sc_phy_type = (sbval & 0xf00) >> 8;
+
 	DPRINTF(("%s: PHY version %d revision %d ",
 	    sc->sc_dev.dv_xname, sc->sc_phy_ver, sc->sc_phy_rev));
+
 	switch (sc->sc_phy_type) {
 	case BCW_PHY_TYPEA:
 		DPRINTF(("PHY %d (A)\n", sc->sc_phy_type));
@@ -927,7 +929,11 @@ bcw_attach(struct bcw_softc *sc)
 		DPRINTF(("Unrecognizeable PHY type %d\n",
 		    sc->sc_phy_type));
 		break;
-	} /* end of switch */
+	}
+
+	sc->sc_phy_lopairs = malloc(sizeof(struct bcw_lopair) * BCW_LO_COUNT,
+	    M_DEVBUF, M_NOWAIT);
+	memset(sc->sc_phy_lopairs, 0, sizeof(struct bcw_lopair) * BCW_LO_COUNT);
 
 	/*
 	 * Query the RadioID register, on a 4317 use a lookup instead
@@ -1721,8 +1727,8 @@ bcw_init(struct ifnet *ifp)
 	bcw_radio_on(sc);
 
 	BCW_WRITE16(sc, 0x03e6, 0);
-	//if ((error = bcw_phy_init(sc)))
-	//	return (error);
+	if ((error = bcw_phy_init(sc)))
+		return (error);
 
 	return (0);
 
@@ -3448,8 +3454,6 @@ bcw_phy_initb6(struct bcw_softc *sc)
 {
 	uint16_t offset, val;
 
-	printf("trap 1\n");
-
 	bcw_phy_write16(sc, 0x003e, 0x817a);
 	bcw_radio_write16(sc, 0x007a, (bcw_radio_read16(sc, 0x007a) | 0x0058));
 
@@ -3579,7 +3583,6 @@ bcw_phy_initb6(struct bcw_softc *sc)
 			bcw_phy_write16(sc, 0x002a, 0x88c2);
 	}
 	bcw_phy_write16(sc, 0x0038, 0x0668);
-	printf("trap 2\n");
 	bcw_radio_set_txpower_bg(sc, 0xffff, 0xffff, 0xffff);
 	if (sc->sc_radio_ver == 0x2050) {
 		if (sc->sc_radio_rev == 3 || sc->sc_radio_rev == 4 ||
@@ -4896,11 +4899,7 @@ bcw_phy_lo_adjust(struct bcw_softc *sc, int fixed)
 	else
 		pair = bcw_phy_current_lopair(sc);
 
-	printf("trap 4\n");
-
 	bcw_phy_lo_write(sc, pair);
-
-	printf("trap 4 end\n");
 }
 
 void
@@ -4917,12 +4916,8 @@ bcw_phy_lo_write(struct bcw_softc *sc, struct bcw_lopair *pair)
 {
 	uint16_t val;
 
-	printf("trap 5\n");
-
 	val = (uint8_t)(pair->low);
 	val |= ((uint8_t)(pair->high)) << 8;
-
-	printf("trap 5 end\n");
 
 #ifdef BCW_DEBUG
 	if (pair->low < -8 || pair->low > 8 ||
@@ -4933,11 +4928,7 @@ bcw_phy_lo_write(struct bcw_softc *sc, struct bcw_lopair *pair)
 		    (unsigned long)(pair - sc->sc_phy_lopairs));
 #endif
 
-	printf("trap 6\n");
-
 	bcw_phy_write16(sc, BCW_PHY_G_LO_CONTROL, val);
-
-	printf("trap 6 end\n");
 }
 
 struct bcw_lopair *
@@ -5531,8 +5522,6 @@ bcw_radio_set_txpower_bg(struct bcw_softc *sc, uint16_t baseband_atten,
 	if (sc->sc_radio_ver == 0x2050)
 		bcw_radio_write16(sc, 0x0052, (bcw_radio_read16(sc, 0x0052) &
 		    ~0x0070) | ((txpower << 4) & 0x0070));
-
-	printf("trap 3\n");
 
 	/* XXX unclear specs */
 	if (sc->sc_phy_type == BCW_PHY_TYPEG)
