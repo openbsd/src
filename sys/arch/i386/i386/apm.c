@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.72 2006/10/22 23:21:25 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.73 2007/02/27 15:16:30 marco Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -638,7 +638,7 @@ void
 apm_cpu_idle(void)
 {
 	struct apmregs regs;
-	static int call_apm = 0;
+	static u_int64_t call_apm = 0;
 
 	if (!apm_cd.cd_ndevs) {	/* No APM device, wait for next interrupt */
 		__asm __volatile("sti;hlt");
