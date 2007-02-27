@@ -2890,6 +2890,7 @@
 ./usr/share/zoneinfo/America/Indiana/Petersburg
 ./usr/share/zoneinfo/America/Indiana/Vevay
 ./usr/share/zoneinfo/America/Indiana/Vincennes
+./usr/share/zoneinfo/America/Indiana/Winamac
 ./usr/share/zoneinfo/America/Indianapolis
 ./usr/share/zoneinfo/America/Inuvik
 ./usr/share/zoneinfo/America/Iqaluit
@@ -3467,6 +3468,7 @@
 ./usr/share/zoneinfo/posix/America/Indiana/Petersburg
 ./usr/share/zoneinfo/posix/America/Indiana/Vevay
 ./usr/share/zoneinfo/posix/America/Indiana/Vincennes
+./usr/share/zoneinfo/posix/America/Indiana/Winamac
 ./usr/share/zoneinfo/posix/America/Indianapolis
 ./usr/share/zoneinfo/posix/America/Inuvik
 ./usr/share/zoneinfo/posix/America/Iqaluit
@@ -4045,6 +4047,7 @@
 ./usr/share/zoneinfo/right/America/Indiana/Petersburg
 ./usr/share/zoneinfo/right/America/Indiana/Vevay
 ./usr/share/zoneinfo/right/America/Indiana/Vincennes
+./usr/share/zoneinfo/right/America/Indiana/Winamac
 ./usr/share/zoneinfo/right/America/Indianapolis
 ./usr/share/zoneinfo/right/America/Inuvik
 ./usr/share/zoneinfo/right/America/Iqaluit
