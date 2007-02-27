@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.11 2007/02/27 02:10:58 beck Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.12 2007/02/27 15:41:10 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Nd parse and load file of spammer addresses
 .Sh SYNOPSIS
 .Nm spamd-setup
-.Op Fl dgn
+.Op Fl bdn
 .Sh DESCRIPTION
 The
 .Nm
@@ -53,8 +53,6 @@ daemon.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl d
-Debug mode reports a few pieces of information.
 .It Fl b
 Blacklisting only mode.
 Blacklist data is normally stored only in
@@ -63,6 +61,8 @@ With this flag, data is stored in both
 .Xr spamd 8
 and
 .Xr pf 4 .
+.It Fl d
+Debug mode reports a few pieces of information.
 .It Fl n
 Dry-run mode.
 No data is shipped to
