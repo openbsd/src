@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.73 2007/02/27 02:10:58 beck Exp $
+.\"	$OpenBSD: spamd.8,v 1.74 2007/02/27 14:52:31 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -33,10 +33,10 @@
 .Bk -words
 .Op Fl 45bdv
 .Op Fl B Ar maxblack
-.Op Fl l Ar address
 .Op Fl c Ar maxcon
 .Op Fl G Ar passtime:greyexp:whiteexp
 .Op Fl h Ar hostname
+.Op Fl l Ar address
 .Op Fl n Ar name
 .Op Fl p Ar port
 .Op Fl r Ar reply
@@ -67,14 +67,11 @@ This value may not be greater than maxcon (see below).
 The default is
 .Ar maxcon
 \- 100.
-.It Fl l Ar address
-Specify the local address to which
-.Nm
-is to
-.Xr bind 2 .
-By default
-.Nm
-listens on all local addresses.
+.It Fl b
+Turn off Greylisting mode, and run only as a blacklister.
+See
+.Sx GREYLISTING
+below.
 .It Fl c Ar maxcon
 The maximum number of concurrent connections to allow.
 .Ar maxcon
@@ -96,12 +93,16 @@ to 4 (hours),
 and
 .Ar whiteexp
 to 864 (hours, approximately 36 days).
-.It Fl b
-Turn off Greylisting mode, and run only as a blacklister. see
-.Sx GREYLISTING
-below.
 .It Fl h Ar hostname
 The hostname that is reported in the SMTP banner.
+.It Fl l Ar address
+Specify the local address to which
+.Nm
+is to
+.Xr bind 2 .
+By default
+.Nm
+listens on all local addresses.
 .It Fl n Ar name
 The SMTP version banner that is reported upon initial connection.
 .It Fl p Ar port

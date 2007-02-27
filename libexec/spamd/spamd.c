@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.89 2007/02/27 02:10:58 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.90 2007/02/27 14:52:31 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -141,12 +141,15 @@ int window;
 void
 usage(void)
 {
+	extern char *__progname;
+
 	fprintf(stderr,
-	    "usage: spamd [-45dbv] [-B maxblack] [-l address] [-c maxcon]\n");
-	fprintf(stderr,
-	    "             [-G mins:hours:hours] [-h host] [-n name] [-p port]\n");
-	fprintf(stderr,
-	    "             [-r reply] [-S secs] [-s secs] [-w window]\n");
+	    "usage: %s [-45bdv] [-B maxblack] [-c maxcon] "
+	    "[-G passtime:greyexp:whiteexp]\n"
+	    "\t[-h hostname] [-l address] [-n name] [-p port] "
+	    "[-r reply] [-S secs]\n"
+	    "\t[-s secs] [-w window]\n", __progname);
+
 	exit(1);
 }
 
