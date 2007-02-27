@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1999/12/12 08:02:10 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 2007/02/27 21:07:40 miod Exp $
 
 PROG=	tic
 SRCS=	dump_entry.c tic.c
@@ -9,6 +9,10 @@ LDADD=	-lcurses
 CURSES=	${.CURDIR}/../../lib/libcurses
 CFLAGS+= -I${CURSES} -I${.CURDIR} -I.
 CLEANFILES+= termsort.c
+
+.if (${MACHINE_ARCH} == sh)
+COPTS+=	-O1
+.endif
 
 beforedepend: termsort.c
 
