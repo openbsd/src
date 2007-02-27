@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.32 2007/02/26 20:48:48 pyr Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.33 2007/02/27 08:02:33 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -172,7 +172,6 @@ that can be used as is in a digest statement:
 .Bd -literal -offset indent
 a9993e36476816aba3e25717850c26c9cd0d89d
 .Ed
-If
 .It Ic check https Ar path Ic digest Ar string
 This has the same effect as above but wraps the HTTP request in SSL.
 .It Ic check icmp
@@ -201,8 +200,9 @@ then nothing is sent on the connection and data is immediately
 read.
 This can be useful with protocols that output a banner like
 SMTP, NNTP and FTP.
-If this directive is postpended with
+If the
 .Ic ssl
+keyword is present,
 the transaction will occur in an SSL tunnel.
 .It Ic check ssl
 Perform a complete SSL handshake with each host to check their availability.
@@ -211,7 +211,8 @@ Use a simple TCP connect to check that hosts are up.
 .It Ic demote Ar group
 Enable the per-table
 .Xr carp 4
-demotion option, this will increment the carp demotion counter for the
+demotion option.
+This will increment the carp demotion counter for the
 specified interface group if all hosts in the table are down.
 For more information on interface groups,
 see the
