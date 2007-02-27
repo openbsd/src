@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.91 2007/02/27 23:00:54 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.92 2007/02/27 23:03:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -56,7 +56,7 @@ struct con {
 	struct sockaddr_storage ss;
 	void *ia;
 	char addr[32];
-  	char helo[MAX_MAIL], mail[MAX_MAIL], rcpt[MAX_MAIL];
+	char helo[MAX_MAIL], mail[MAX_MAIL], rcpt[MAX_MAIL];
 	struct sdlist **blacklists;
 
 	/*
@@ -330,7 +330,6 @@ configdone:
 	close(conffd);
 	conffd = -1;
 }
-
 
 int
 read_configline(FILE *config)
@@ -1154,7 +1153,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		jail_pid = fork();
-		switch(jail_pid) {
+		switch (jail_pid) {
 		case -1:
 			syslog(LOG_ERR, "fork (%m)");
 			exit(1);
