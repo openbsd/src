@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2004/08/14 17:06:03 millert Exp $
+# $OpenBSD: Makefile,v 1.5 2007/02/27 02:22:01 beck Exp $
 #
 # Generate the various .db versions from their source files.
 # The sendmail .mc files are not built here.  They live in
@@ -43,6 +43,8 @@ distribution:
 	    ${DESTDIR}/etc/mail/trusted-users
 	${INSTALL} -c -o root -g wheel -m 644 virtusertable \
 	    ${DESTDIR}/etc/mail/virtusertable
+	${INSTALL} -c -o root -g wheel -m 644 spamd.conf \
+	    ${DESTDIR}/etc/mail/spamd.conf
 	makemap hash ${DESTDIR}/etc/mail/virtusertable < virtusertable
 	@for db in access.db aliases.db genericstable.db mailertable.db \
 	    virtusertable.db; do \
