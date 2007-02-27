@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.48 2007/02/04 19:23:27 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.49 2007/02/27 16:27:39 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -251,8 +251,8 @@ parseargs(int ac, char **av)
 	/* get count of top processes to display (if any) */
 	if (optind < ac) {
 		if ((topn = atoiwi(av[optind])) == Invalid) {
-			warnx("warning: process display count should "
-			    "be non-negative -- using default");
+			warnx("warning: process count should "
+			    "be a non-negative number -- using default");
 			warnings++;
 			topn = Infinity;
 		}

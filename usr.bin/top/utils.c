@@ -1,4 +1,4 @@
-/* $OpenBSD: utils.c,v 1.16 2005/06/08 22:36:43 millert Exp $	 */
+/* $OpenBSD: utils.c,v 1.17 2007/02/27 16:27:39 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -48,6 +48,8 @@ int
 atoiwi(char *str)
 {
 	size_t len;
+	const char *errstr;
+	int i;
 
 	len = strlen(str);
 	if (len != 0) {
@@ -55,10 +57,12 @@ atoiwi(char *str)
 		    strncmp(str, "all", len) == 0 ||
 		    strncmp(str, "maximum", len) == 0) {
 			return (Infinity);
-		} else if (str[0] == '-')
+		} 
+		i = (int)strtonum(str, 0, INT_MAX, &errstr);
+		if (errstr) {
 			return (Invalid);
-		else
-			return (atoi(str));
+		} else
+			return (i);
 	}
 	return (0);
 }
