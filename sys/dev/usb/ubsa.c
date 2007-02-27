@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.19 2007/02/21 05:41:57 fkr Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.20 2007/02/27 11:02:34 fkr Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -219,6 +219,8 @@ struct	ucom_methods ubsa_methods = {
 };
 
 Static const struct usb_devno ubsa_devs[] = {
+	/* AnyDATA ADU-E100H */
+	{ USB_VENDOR_ANYDATA, USB_PRODUCT_ANYDATA_ADU_E100H },
 	/* BELKIN F5U103 */
 	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U103 },
 	/* BELKIN F5U120 */
