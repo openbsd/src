@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.80 2007/02/27 19:48:17 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.81 2007/02/27 19:56:47 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -156,7 +156,7 @@ Specify a different port number from the default port that
 .Nm
 should listen for redirected SMTP connections on.
 The default port is found by looking for the named service
-.Em spamd
+.Dq spamd
 using
 .Xr getservbyname 3 .
 .It Fl r Ar reply
@@ -224,11 +224,11 @@ whitelist entry to
 regularly scans the
 .Pa /var/db/spamd
 database and configures all whitelist addresses as the
-.Em spamd-white
+.Aq spamd-white
 .Xr pf 4
 table.
 The
-.Em spamd-white
+.Aq spamd-white
 table
 .Em must
 be used to allow connections to pass to the
@@ -244,13 +244,12 @@ rdr pass inet proto tcp from any to any \e
 .Ed
 .Pp
 Connections from addresses not listed in the
-.Em spamd-white
-.Xr pf 4
+.Aq spamd-white
 table are redirected to
 .Nm .
 Connections are considered for greylisting and
 eventual whitelisting (by addition to the
-.Em spamd-white
+.Aq spamd-white
 table so they are not redirected in the future) if they retry mail delivery.
 .Pp
 .Nm
@@ -314,7 +313,7 @@ When a host that is currently greylisted attempts to send mail to a
 address, it is blacklisted for 24 hours by adding the host to the
 .Nm
 blacklist
-.Em spamd-greytrap .
+.Aq spamd-greytrap .
 Spamtrap addresses are added to the
 .Pa /var/db/spamd
 database with the following
@@ -382,7 +381,7 @@ rdr pass inet proto tcp from \*(Ltspamd\*(Gt to any \e
 .Ed
 .Pp
 Any addresses in table
-.Em spamd
+.Aq spamd
 are then redirected to
 .Nm .
 Addresses can be loaded into the
@@ -394,7 +393,7 @@ like:
 .Pp
 .Xr spamd-setup 8
 can also be used to load addresses into the
-.Em spamd
+.Aq spamd
 table.
 .Xr spamd-setup 8
 also has the added benefit of being able to remove addresses from
@@ -416,7 +415,7 @@ may be removed from the relevant blacklists.
 .Nm
 listens for configuration connections on the port identified by the
 named service
-.Em spamd-cfg
+.Dq spamd-cfg
 (see
 .Xr services 5 ) .
 The configuration socket listens only on the INADDR_LOOPBACK
