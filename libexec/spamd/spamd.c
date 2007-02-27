@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.90 2007/02/27 14:52:31 jmc Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.91 2007/02/27 23:00:54 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -131,7 +131,7 @@ int maxblack = MAXCON;
 int blackcount;
 int clients;
 int debug;
-int greylist;
+int greylist = 1;
 int grey_stutter = 10;
 int verbose;
 int stutter = 1;
