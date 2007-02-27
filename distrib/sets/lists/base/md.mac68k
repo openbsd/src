@@ -1621,8 +1621,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/asm.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/autoconf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/atomic.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/autoconf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/bus.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/cdefs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/cpu.ph

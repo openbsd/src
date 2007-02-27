@@ -61,6 +61,7 @@
 ./etc/mail/mailertable.db
 ./etc/mail/relay-domains
 ./etc/mail/sendmail.cf
+./etc/mail/spamd.conf
 ./etc/mail/submit.cf
 ./etc/mail/trusted-users
 ./etc/mail/virtusertable
@@ -121,7 +122,6 @@
 ./etc/skel/.profile
 ./etc/sliphome/slip.hosts
 ./etc/sliphome/slip.login
-./etc/mail/spamd.conf
 ./etc/spwd.db
 ./etc/ssh
 ./etc/ssh/ssh_config
