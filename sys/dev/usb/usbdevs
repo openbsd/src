@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.265 2007/02/23 23:01:22 jsg Exp $
+$OpenBSD: usbdevs,v 1.266 2007/02/27 10:59:56 fkr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -476,6 +476,7 @@ vendor ACTIONTEC	0x1668	Actiontec Electronics
 vendor ATHEROS		0x168c	Atheros Communications
 vendor GIGASET		0x1690	Gigaset
 vendor GLOBALSUN	0x16ab	Global Sun Technology
+vendor ANYDATA		0x16d5	AnyDATA Inc.
 vendor JABLOTRON	0x16d6	Jablotron
 vendor CMOTECH		0x16d8	CMOTECH CDMA Technologies
 vendor LINKSYS4		0x1737	Linksys
@@ -694,6 +695,9 @@ product ANALOG EAGLEIII_NF	0x9032	Eagle III
 product ANCHOR SERIAL		0x2008	Serial
 product ANCHOR EZUSB		0x2131	EZUSB
 product ANCHOR EZLINK		0x2720	EZLINK
+
+/* Anydata products */
+product ANYDATA ADU_E100H		0x6501	ADU-E100H
 
 /* AOX, Inc. products */
 product AOX USB101		0x0008	Ethernet
