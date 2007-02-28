@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsi64854.c,v 1.7 2007/02/28 18:46:16 miod Exp $	*/
+/*	$OpenBSD: lsi64854.c,v 1.8 2007/02/28 18:48:35 miod Exp $	*/
 /*	$NetBSD: lsi64854.c,v 1.18 2001/06/04 20:56:51 mrg Exp $ */
 
 /*-
@@ -64,6 +64,8 @@ int	lsi64854_setup(struct lsi64854_softc *, caddr_t *, size_t *,
 			     int, size_t *);
 int	lsi64854_setup_pp(struct lsi64854_softc *, caddr_t *, size_t *,
 			     int, size_t *);
+int	lsi64854_scsi_intr(void *);
+int	lsi64854_pp_intr(void *);
 
 #ifdef DEBUG
 #define LDB_SCSI	1
@@ -103,8 +105,10 @@ lsi64854_attach(sc)
 		break;
 	case L64854_CHANNEL_ENET:
 		sc->intr = lsi64854_enet_intr;
+		sc->setup = lsi64854_setup;
 		break;
 	case L64854_CHANNEL_PP:
+		sc->intr = lsi64854_pp_intr;
 		sc->setup = lsi64854_setup_pp;
 		break;
 	default:

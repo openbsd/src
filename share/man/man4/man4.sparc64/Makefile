@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.49 2006/09/17 16:35:16 steven Exp $
+#	$OpenBSD: Makefile,v 1.50 2007/02/28 18:48:32 miod Exp $
 
 MAN=	agten.4 apio.4 asio.4 audioce.4 audiocs.4 autoconf.4 auxio.4 \
-	be.4 beeper.4 bwtwo.4 central.4 cgsix.4 cgthree.4 cgtwelve.4 \
+	be.4 beeper.4 bpp.4 bwtwo.4 central.4 cgsix.4 cgthree.4 cgtwelve.4 \
 	clkbrd.4 clock.4 comkbd.4 creator.4 \
 	ebus.4 esp.4 fhc.4 intro.4 le.4 magma.4 mem.4 mgx.4 openprom.4 \
 	pcons.4 power.4 ppm.4 psycho.4 qe.4 qec.4 rfx.4 sab.4 schizo.4 spif.4 \

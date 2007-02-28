@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.40 2005/07/31 06:39:07 dlg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.41 2007/02/28 18:48:35 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -74,11 +74,7 @@
 #include "pcons.h"
 #include "com.h"
 #include "lpt.h"
-#ifdef notyet
 #include "bpp.h"
-#else
-#define	NBPP 0
-#endif
 #include "magma.h"		/* has NMTTY and NMBPP */
 #include "spif.h"		/* has NSTTY and NSBPP */
 #include "uperf.h"
@@ -267,11 +263,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 104 */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 105: packet filter */
 	cdev_notdef(),			/* 106 */
-#ifdef notyet
 	cdev_bpp_init(NBPP,bpp),	/* 107: on-board parallel port */
-#else
-	cdev_notdef(),
-#endif
 	cdev_tty_init(NSTTY,stty),	/* 108: spif serial ports */
 	cdev_gen_init(NSBPP,sbpp),	/* 109: spif parallel ports */
 	cdev_disk_init(NVND,vnd),	/* 110: vnode disk driver */

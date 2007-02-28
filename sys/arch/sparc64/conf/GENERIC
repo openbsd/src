@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.166 2007/02/27 21:06:59 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.167 2007/02/28 18:48:35 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -228,6 +228,7 @@ wsmouse* at pmsi?			#   generic mouse
 audioce*	at ebus?		# ebus cs4231
 
 # parallel ports
+bpp*	at sbus?
 lpt*	at ebus?
 
 ppm*	at ebus?
