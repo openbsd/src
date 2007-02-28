@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.20 2006/06/29 21:34:51 deraadt Exp $	*/
+/*	$OpenBSD: safe.c,v 1.21 2007/02/28 22:16:55 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -1555,7 +1555,7 @@ safe_feed(struct safe_softc *sc, struct safe_ringentry *re)
  * of an operation.  The hardware requires that each ``particle''
  * but the last in an operation result have the same size.  We
  * fix that size at SAFE_MAX_DSIZE bytes.  This routine returns
- * 0 if some segment is not a multiple of of this size, 1 if all
+ * 0 if some segment is not a multiple of this size, 1 if all
  * segments are exactly this size, or 2 if segments are at worst
  * a multple of this size.
  */
