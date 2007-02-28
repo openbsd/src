@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zic.8,v 1.23 2007/02/28 09:57:38 jmc Exp $
+.\"	$OpenBSD: zic.8,v 1.24 2007/02/28 10:01:48 jmc Exp $
 .Dd May 23, 1999
 .Dt ZIC 8
 .Os
@@ -144,16 +144,16 @@ Month names may be abbreviated.
 Gives the day on which the rule takes effect.
 Recognized forms include:
 .Pp
-.Bl -tag -width "Sun<=25" -compact -offset indent
+.Bl -tag -width "SunXX25" -compact -offset indent
 .It 5
 the fifth of the month
 .It lastSun
 the last Sunday in the month
 .It lastMon
 the last Monday in the month
-.It "Sun>=8"
+.It Sun\*(Ge8
 first Sunday on or after the eighth
-.It "Sun<=25"
+.It Sun\*(Le25
 last Sunday on or before the 25th
 .El
 .Pp
@@ -367,10 +367,10 @@ input, intended to illustrate many of its features.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Swiss	1940	only	-	Nov	2	0:00	1:00	S
 Rule	Swiss	1940	only	-	Dec	31	0:00	0	-
-Rule	Swiss	1941	1942	-	May	Sun>=1	2:00	1:00	S
-Rule	Swiss	1941	1942	-	Oct	Sun>=1	0:00	0
+Rule	Swiss	1941	1942	-	May	Sun\*(Ge1	2:00	1:00	S
+Rule	Swiss	1941	1942	-	Oct	Sun\*(Ge1	0:00	0
 
-Rule	EU	1977	1980	-	Apr	Sun>=1	1:00u	1:00	S
+Rule	EU	1977	1980	-	Apr	Sun\*(Ge1	1:00u	1:00	S
 Rule	EU	1977	only	-	Sep	lastSun	1:00u	0	-
 Rule	EU	1978	only	-	Oct	 1	1:00u	0	-
 Rule	EU	1979	1995	-	Sep	lastSun	1:00u	0	-
@@ -414,7 +414,18 @@ For purposes of display,
 Since Swiss rules and later EU rules were applied,
 the display name for the timezone has been CET for standard time
 and CEST for daylight saving time.
-.Sh NOTES
+.Sh FILES
+.Bl -tag -width "/usr/share/zoneinfo" -compact
+.It Pa /etc/localtime
+link to local time zone
+.It Pa /usr/share/zoneinfo
+standard directory used for created files
+.El
+.Sh SEE ALSO
+.Xr ctime 3 ,
+.Xr tzfile 5 ,
+.Xr zdump 8
+.Sh CAVEATS
 For areas with more than two types of local time,
 you may need to use local standard time in the
 .Em AT
@@ -432,17 +443,6 @@ produces a single transition to daylight saving at the new UTC offset
 To get separate transitions
 use multiple zone continuation lines
 specifying transition instants using universal time.
-.Sh FILES
-.Bl -tag -width "/usr/share/zoneinfo" -compact
-.It Pa /etc/localtime
-link to local time zone
-.It Pa /usr/share/zoneinfo
-standard directory used for created files
-.El
-.Sh SEE ALSO
-.Xr ctime 3 ,
-.Xr tzfile 5 ,
-.Xr zdump 8
 .\" @(#)zic.8	8.3
 .\" This file is in the public domain, so clarified as of
 .\" 2003-02-14 by Arthur David Olson.
