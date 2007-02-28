@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl_int.9,v 1.2 2006/01/19 15:16:49 jmc Exp $
+.\"	$OpenBSD: sysctl_int.9,v 1.3 2007/02/28 01:46:17 david Exp $
 .\"
 .\" Copyright (c) 2006 Michael Shalayeff
 .\" All rights reserved.
@@ -190,7 +190,7 @@ instead of returning
 A read-only version of
 .Fn sysctl_string .
 .It Fn sysctl_struct "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen" "void *sp" "int len"
-Aassume the area pointed to by the
+Assume the area pointed to by the
 .Ar sp
 argument is an opaque array of bytes of size
 .Ar len .
