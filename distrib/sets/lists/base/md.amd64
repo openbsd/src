@@ -1383,6 +1383,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/sbus
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/sbus/asioreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/sbus/bereg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/sbus/bppreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/sbus/cgsixreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/sbus/cgtwelvereg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/sbus/cs4231var.ph
