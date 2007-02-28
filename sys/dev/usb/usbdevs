@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.266 2007/02/27 10:59:56 fkr Exp $
+$OpenBSD: usbdevs,v 1.267 2007/02/28 04:11:38 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -197,6 +197,7 @@ vendor APPLE		0x05ac	Apple Computer
 vendor DIGI		0x05c5	Digi International
 vendor QUALCOMM		0x05c6	Qualcomm
 vendor QTRONIX		0x05c7	Qtronix
+vendor RICOH		0x05ca	Ricoh
 vendor ELSA		0x05cc	ELSA
 vendor BRAINBOXES	0x05d1	Brainboxes
 vendor ULTIMA		0x05d8	Ultima
@@ -406,7 +407,7 @@ vendor SITECOMEU	0x0df6	Sitecom Europe
 vendor MOBILEACTION	0x0df7	Mobile Action
 vendor SPEEDDRAGON	0x0e55	Speed Dragon Multimedia
 vendor HAWKING		0x0e66	Hawking
-vendor GMATE		0x0e73	G.Mate
+vendor GMATE		0x0e7e	G.Mate
 vendor OTI		0x0ea0	Ours Technology
 vendor PILOTECH		0x0eaf  Pilotech
 vendor NOVATECH		0x0eb0	Nova Tech
