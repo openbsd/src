@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx111.c,v 1.14 2006/12/08 00:04:10 mglocker Exp $ */
+/*	$OpenBSD: acx111.c,v 1.15 2007/02/28 09:26:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -214,17 +214,6 @@ struct acx111_wepkey {
 #define ACX111_WEPKEY_ACT_ADD		1
 #define ACX111_WEPKEY_TYPE_DEFAULT	0
 
-#define ACX111_CONF_FUNC(sg, name)	_ACX_CONF_FUNC(sg, name, 111)
-#define ACX_CONF_mem			ACX111_CONF_MEM
-#define ACX_CONF_meminfo		ACX111_CONF_MEMINFO
-#define ACX_CONF_txpower		ACX_CONF_TXPOWER
-#define ACX_CONF_option			ACX_CONF_OPTION
-ACX111_CONF_FUNC(set, mem);
-ACX111_CONF_FUNC(get, meminfo);
-ACX111_CONF_FUNC(set, txpower);
-ACX111_CONF_FUNC(get, option);
-ACX111_CONF_FUNC(set, option);
-
 static const uint16_t acx111_reg[ACXREG_MAX] = {
 	ACXREG(SOFT_RESET,		0x0000),
 
@@ -362,13 +351,14 @@ acx111_init_memory(struct acx_softc *sc)
 	mem.fw_txring_attr = ACX111_TXRING_ATTR_DEFAULT;
 	mem.fw_txdesc_num = ACX_TX_DESC_CNT;
 
-	if (acx111_set_mem_conf(sc, &mem) != 0) {
+	if (acx_set_conf(sc, ACX111_CONF_MEM, &mem, sizeof(mem)) != 0) {
 		printf("%s: can't set mem\n", ifp->if_xname);
 		return (1);
 	}
 
 	/* Get memory configuration */
-	if (acx111_get_meminfo_conf(sc, &mem_info) != 0) {
+	if (acx_get_conf(sc, ACX111_CONF_MEMINFO, &mem_info,
+	    sizeof(mem_info)) != 0) {
 		printf("%s: can't get meminfo\n", ifp->if_xname);
 		return (1);
 	}
@@ -421,7 +411,8 @@ acx111_write_config(struct acx_softc *sc, struct acx_config *conf)
 
 	/* Set TX power */
 	tx_power.txpower = ACX111_TXPOWER_VAL;
-	if (acx111_set_txpower_conf(sc, &tx_power) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_TXPOWER, &tx_power,
+	    sizeof(tx_power)) != 0) {
 		printf("%s: %s can't set TX power\n",
 		    ifp->if_xname, __func__);
 		return (ENXIO);
@@ -430,7 +421,7 @@ acx111_write_config(struct acx_softc *sc, struct acx_config *conf)
 	/*
 	 * Turn off hardware WEP
 	 */
-	if (acx111_get_option_conf(sc, &opt) != 0) {
+	if (acx_get_conf(sc, ACX_CONF_OPTION, &opt, sizeof(opt)) != 0) {
 		printf("%s: %s can't get option\n", ifp->if_xname, __func__);
 		return (ENXIO);
 	}
@@ -440,7 +431,7 @@ acx111_write_config(struct acx_softc *sc, struct acx_config *conf)
 	    ACX111_DF_NO_RXDECRYPT;
 	opt.dataflow = htole32(dataflow);
 
-	if (acx111_set_option_conf(sc, &opt) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_OPTION, &opt, sizeof(opt)) != 0) {
 		printf("%s: %s can't set option\n", ifp->if_xname, __func__);
 		return (ENXIO);
 	}

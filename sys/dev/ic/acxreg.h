@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxreg.h,v 1.9 2006/12/17 21:45:49 claudio Exp $ */
+/*	$OpenBSD: acxreg.h,v 1.10 2007/02/28 09:26:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -425,52 +425,6 @@ struct acx_tmplt_tim {
 
 #define ACX_TMPLT_TIM_SIZ(bitmap_len)	\
 	(sizeof(uint16_t) + sizeof(struct tim_head) + (bitmap_len))
-
-#define _ACX_CONF_FUNC(sg, name, chip)			\
-static __inline int					\
-acx##chip##_##sg##_##name##_conf(struct acx_softc *_sc,	\
-	struct acx##chip##_conf_##name *_conf)		\
-{							\
-	return acx_##sg##_conf(_sc, ACX_CONF_##name,	\
-			       _conf, sizeof(*_conf));	\
-}							\
-struct __hack
-
-
-#define ACXCMD_TMPLT_tim	ACXCMD_TMPLT_TIM
-#define ACXCMD_TMPLT_beacon	ACXCMD_TMPLT_BEACON
-#define ACXCMD_TMPLT_probe_resp	ACXCMD_TMPLT_PROBE_RESP
-#define ACXCMD_TMPLT_null_data	ACXCMD_TMPLT_NULL_DATA
-#define ACXCMD_TMPLT_probe_req	ACXCMD_TMPLT_PROBE_REQ
-
-#define ACX_CONF_FUNC(sg, name)	_ACX_CONF_FUNC(sg, name,)
-#define ACX_CONF_wepopt		ACX_CONF_WEPOPT
-#define ACX_CONF_mmap		ACX_CONF_MMAP
-#define ACX_CONF_eaddr		ACX_CONF_EADDR
-#define ACX_CONF_regdom		ACX_CONF_REGDOM
-#define ACX_CONF_antenna	ACX_CONF_ANTENNA
-#define ACX_CONF_fwrev		ACX_CONF_FWREV
-#define ACX_CONF_nretry_long	ACX_CONF_NRETRY_LONG
-#define ACX_CONF_nretry_short	ACX_CONF_NRETRY_SHORT
-#define ACX_CONF_msdu_lifetime	ACX_CONF_MSDU_LIFETIME
-#define ACX_CONF_rate_fallback	ACX_CONF_RATE_FALLBACK
-#define ACX_CONF_rxopt		ACX_CONF_RXOPT
-#define ACX_CONF_wep_txkey	ACX_CONF_WEP_TXKEY
-ACX_CONF_FUNC(get, mmap);
-ACX_CONF_FUNC(set, mmap);
-ACX_CONF_FUNC(set, wepopt);
-ACX_CONF_FUNC(get, eaddr);
-ACX_CONF_FUNC(get, regdom);
-ACX_CONF_FUNC(set, regdom);
-ACX_CONF_FUNC(get, antenna);
-ACX_CONF_FUNC(set, antenna);
-ACX_CONF_FUNC(get, fwrev);
-ACX_CONF_FUNC(set, nretry_long);
-ACX_CONF_FUNC(set, nretry_short);
-ACX_CONF_FUNC(set, msdu_lifetime);
-ACX_CONF_FUNC(set, rate_fallback);
-ACX_CONF_FUNC(set, rxopt);
-ACX_CONF_FUNC(set, wep_txkey);
 
 #define CMDPRM_WRITE_REGION_1(sc, r, rlen)		\
 	bus_space_write_region_1((sc)->sc_mem2_bt,	\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.64 2007/02/28 09:09:29 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.65 2007/02/28 09:26:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -507,7 +507,8 @@ acx_set_crypt_keys(struct acx_softc *sc)
 
 	/* Set current WEP key index */
 	wep_txkey.wep_txkey = ic->ic_wep_txkey;
-	if (acx_set_wep_txkey_conf(sc, &wep_txkey) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_WEP_TXKEY, &wep_txkey,
+	    sizeof(wep_txkey)) != 0) {
 		printf("%s: set WEP txkey failed\n", sc->sc_dev.dv_xname);
 		return (ENXIO);
 	}
@@ -641,7 +642,7 @@ acx_read_config(struct acx_softc *sc, struct acx_config *conf)
 	int error;
 
 	/* Get region domain */
-	if (acx_get_regdom_conf(sc, &reg_dom) != 0) {
+	if (acx_get_conf(sc, ACX_CONF_REGDOM, &reg_dom, sizeof(reg_dom)) != 0) {
 		printf("%s: can't get region domain\n", sc->sc_dev.dv_xname);
 		return (ENXIO);
 	}
@@ -649,7 +650,7 @@ acx_read_config(struct acx_softc *sc, struct acx_config *conf)
 	DPRINTF(("%s: regdom %02x\n", sc->sc_dev.dv_xname, reg_dom.regdom));
 
 	/* Get antenna */
-	if (acx_get_antenna_conf(sc, &ant) != 0) {
+	if (acx_get_conf(sc, ACX_CONF_ANTENNA, &ant, sizeof(ant)) != 0) {
 		printf("%s: can't get antenna\n", sc->sc_dev.dv_xname);
 		return (ENXIO);
 	}
@@ -671,7 +672,7 @@ acx_read_config(struct acx_softc *sc, struct acx_config *conf)
 	DPRINTF(("%s: sensitivity %02x\n", sc->sc_dev.dv_xname, sen));
 
 	/* Get firmware revision */
-	if (acx_get_fwrev_conf(sc, &fw_rev) != 0) {
+	if (acx_get_conf(sc, ACX_CONF_FWREV, &fw_rev, sizeof(fw_rev)) != 0) {
 		printf("%s: can't get firmware revision\n",
 		    sc->sc_dev.dv_xname);
 		return (ENXIO);
@@ -721,41 +722,45 @@ acx_write_config(struct acx_softc *sc, struct acx_config *conf)
 
 	/* Set number of long/short retry */
 	sretry.nretry = sc->sc_short_retry_limit;
-	if (acx_set_nretry_short_conf(sc, &sretry) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_NRETRY_SHORT, &sretry,
+	    sizeof(sretry)) != 0) {
 		printf("%s: can't set short retry limit\n", ifp->if_xname);
 		return (ENXIO);
 	}
 
 	lretry.nretry = sc->sc_long_retry_limit;
-	if (acx_set_nretry_long_conf(sc, &lretry) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_NRETRY_LONG, &lretry,
+	    sizeof(lretry)) != 0) {
 		printf("%s: can't set long retry limit\n", ifp->if_xname);
 		return (ENXIO);
 	}
 
 	/* Set MSDU lifetime */
 	msdu_lifetime.lifetime = htole32(sc->sc_msdu_lifetime);
-	if (acx_set_msdu_lifetime_conf(sc, &msdu_lifetime) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_MSDU_LIFETIME, &msdu_lifetime,
+	    sizeof(msdu_lifetime)) != 0) {
 		printf("%s: can't set MSDU lifetime\n", ifp->if_xname);
 		return (ENXIO);
 	}
 
 	/* Enable rate fallback */
 	rate_fb.ratefb_enable = 1;
-	if (acx_set_rate_fallback_conf(sc, &rate_fb) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_RATE_FALLBACK, &rate_fb,
+	    sizeof(rate_fb)) != 0) {
 		printf("%s: can't enable rate fallback\n", ifp->if_xname);
 		return (ENXIO);
 	}
 
 	/* Set antenna */
 	ant.antenna = conf->antenna;
-	if (acx_set_antenna_conf(sc, &ant) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_ANTENNA, &ant, sizeof(ant)) != 0) {
 		printf("%s: can't set antenna\n", ifp->if_xname);
 		return (ENXIO);
 	}
 
 	/* Set region domain */
 	reg_dom.regdom = conf->regdom;
-	if (acx_set_regdom_conf(sc, &reg_dom) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_REGDOM, &reg_dom, sizeof(reg_dom)) != 0) {
 		printf("%s: can't set region domain\n", ifp->if_xname);
 		return (ENXIO);
 	}
@@ -773,7 +778,7 @@ acx_write_config(struct acx_softc *sc, struct acx_config *conf)
 	    RXOPT2_RECV_BEACON | RXOPT2_RECV_CF | RXOPT2_RECV_CTRL |
 	    RXOPT2_RECV_DATA | RXOPT2_RECV_MGMT | RXOPT2_RECV_PROBE_REQ |
 	    RXOPT2_RECV_PROBE_RESP | RXOPT2_RECV_OTHER);
-	if (acx_set_rxopt_conf(sc, &rx_opt) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_RXOPT, &rx_opt, sizeof(rx_opt)) != 0) {
 		printf("%s: can't set RX option\n", ifp->if_xname);
 		return (ENXIO);
 	}
@@ -1505,7 +1510,7 @@ acx_load_radio_firmware(struct acx_softc *sc, const char *name)
 	 * Get the position, where base firmware is loaded, so that
 	 * radio firmware can be loaded after it.
 	 */
-	if (acx_get_mmap_conf(sc, &mem_map) != 0) {
+	if (acx_get_conf(sc, ACX_CONF_MMAP, &mem_map, sizeof(mem_map)) != 0) {
 		free(ucode, M_DEVBUF);
 		return (ENXIO);
 	}
@@ -1537,7 +1542,7 @@ acx_load_radio_firmware(struct acx_softc *sc, const char *name)
 		return (ENXIO);
 
 	/* Verify radio firmware's loading position */
-	if (acx_get_mmap_conf(sc, &mem_map) != 0)
+	if (acx_get_conf(sc, ACX_CONF_MMAP, &mem_map, sizeof(mem_map)) != 0)
 		return (ENXIO);
 
 	if (letoh32(mem_map.code_end) != radio_fw_ofs + size) {

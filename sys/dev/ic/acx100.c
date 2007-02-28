@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.17 2006/12/17 21:45:49 claudio Exp $ */
+/*	$OpenBSD: acx100.c,v 1.18 2007/02/28 09:26:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -200,22 +200,6 @@ struct acx100_conf_wepkey {
 
 #define ACX100_WEPKEY_ACT_ADD	1
 
-#define ACX100_CONF_FUNC(sg, name)	_ACX_CONF_FUNC(sg, name, 100)
-#define ACX_CONF_fw_ring		ACX100_CONF_FW_RING
-#define ACX_CONF_memblk_size		ACX_CONF_MEMBLK_SIZE
-#define ACX_CONF_mem			ACX100_CONF_MEMOPT
-#define ACX_CONF_cca_mode		ACX_CONF_CCA_MODE
-#define ACX_CONF_ed_thresh		ACX_CONF_ED_THRESH
-#define ACX_CONF_wepkey			ACX_CONF_WEPKEY
-ACX100_CONF_FUNC(set, fw_ring);
-ACX100_CONF_FUNC(set, memblk_size);
-ACX100_CONF_FUNC(set, mem);
-ACX100_CONF_FUNC(get, cca_mode);
-ACX100_CONF_FUNC(set, cca_mode);
-ACX100_CONF_FUNC(get, ed_thresh);
-ACX100_CONF_FUNC(set, ed_thresh);
-ACX100_CONF_FUNC(set, wepkey);
-
 static const uint16_t	acx100_reg[ACXREG_MAX] = {
 	ACXREG(SOFT_RESET,		0x0000),
 
@@ -287,8 +271,7 @@ acx100_set_param(struct acx_softc *sc)
 	sc->chip_ee_eaddr_ofs = ACX100_EE_EADDR_OFS;
 	sc->chip_txdesc1_len = ACX_FRAME_HDRLEN;
 	sc->chip_fw_txdesc_ctrl = DESC_CTRL_AUTODMA |
-	    DESC_CTRL_RECLAIM |
-	    DESC_CTRL_FIRST_FRAG;
+	    DESC_CTRL_RECLAIM | DESC_CTRL_FIRST_FRAG;
 
 	sc->chip_phymode = IEEE80211_MODE_11B;
 	sc->chip_chan_flags = IEEE80211_CHAN_B;
@@ -353,14 +336,14 @@ acx100_init_wep(struct acx_softc *sc)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	/* Set WEP cache start/end address */
-	if (acx_get_mmap_conf(sc, &mem_map) != 0) {
+	if (acx_get_conf(sc, ACX_CONF_MMAP, &mem_map, sizeof(mem_map)) != 0) {
 		printf("%s: can't get mmap\n", ifp->if_xname);
 		return (1);
 	}
 
 	mem_map.wep_cache_start = htole32(letoh32(mem_map.code_end) + 4);
 	mem_map.wep_cache_end = htole32(letoh32(mem_map.code_end) + 4);
-	if (acx_set_mmap_conf(sc, &mem_map) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_MMAP, &mem_map, sizeof(mem_map)) != 0) {
 		printf("%s: can't set mmap\n", ifp->if_xname);
 		return (1);
 	}
@@ -368,7 +351,7 @@ acx100_init_wep(struct acx_softc *sc)
 	/* Set WEP options */
 	wep_opt.nkey = htole16(IEEE80211_WEP_NKID + 10);
 	wep_opt.opt = WEPOPT_HDWEP;
-	if (acx_set_wepopt_conf(sc, &wep_opt) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_WEPOPT, &wep_opt, sizeof(wep_opt)) != 0) {
 		printf("%s: can't set wep opt\n", ifp->if_xname);
 		return (1);
 	}
@@ -383,13 +366,13 @@ acx100_init_tmplt(struct acx_softc *sc)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	/* Set templates start address */
-	if (acx_get_mmap_conf(sc, &mem_map) != 0) {
+	if (acx_get_conf(sc, ACX_CONF_MMAP, &mem_map, sizeof(mem_map)) != 0) {
 		printf("%s: can't get mmap\n", ifp->if_xname);
 		return (1);
 	}
 
 	mem_map.pkt_tmplt_start = mem_map.wep_cache_end;
-	if (acx_set_mmap_conf(sc, &mem_map) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_MMAP, &mem_map, sizeof(mem_map)) != 0) {
 		printf("%s: can't set mmap\n", ifp->if_xname);
 		return (1);
 	}
@@ -412,7 +395,7 @@ acx100_init_fw_ring(struct acx_softc *sc)
 	uint32_t txring_start, rxring_start, ring_end;
 
 	/* Set firmware descriptor ring start address */
-	if (acx_get_mmap_conf(sc, &mem_map) != 0) {
+	if (acx_get_conf(sc, ACX_CONF_MMAP, &mem_map, sizeof(mem_map)) != 0) {
 		printf("%s: can't get mmap\n", ifp->if_xname);
 		return (1);
 	}
@@ -422,7 +405,7 @@ acx100_init_fw_ring(struct acx_softc *sc)
 	ring_end = rxring_start + ACX100_FW_RXRING_SIZE;
 
 	mem_map.fw_desc_start = htole32(txring_start);
-	if (acx_set_mmap_conf(sc, &mem_map) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_MMAP, &mem_map, sizeof(mem_map)) != 0) {
 		printf("%s: can't set mmap\n", ifp->if_xname);
 		return (1);
 	}
@@ -442,7 +425,7 @@ acx100_init_fw_ring(struct acx_softc *sc)
 
 	ring.opt = ACX100_RINGOPT_AUTO_RESET;
 	ACX100_SET_RING_END(&ring, ring_end);
-	if (acx100_set_fw_ring_conf(sc, &ring) != 0) {
+	if (acx_set_conf(sc, ACX100_CONF_FW_RING, &ring, sizeof(ring)) != 0) {
 		printf("%s: can't set fw ring configure\n", ifp->if_xname);
 		return (1);
 	}
@@ -468,7 +451,7 @@ acx100_init_memory(struct acx_softc *sc)
 	int total_memblk, txblk_num, rxblk_num;
 
 	/* Set memory block start address */
-	if (acx_get_mmap_conf(sc, &mem_map) != 0) {
+	if (acx_get_conf(sc, ACX_CONF_MMAP, &mem_map, sizeof(mem_map)) != 0) {
 		printf("%s: can't get mmap\n", ifp->if_xname);
 		return (1);
 	}
@@ -476,20 +459,21 @@ acx100_init_memory(struct acx_softc *sc)
 	mem_map.memblk_start =
 	    htole32(MEMBLK_ALIGN(letoh32(mem_map.fw_desc_end) + 4));
 
-	if (acx_set_mmap_conf(sc, &mem_map) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_MMAP, &mem_map, sizeof(mem_map)) != 0) {
 		printf("%s: can't set mmap\n", ifp->if_xname);
 		return (1);
 	}
 
 	/* Set memory block size */
 	memblk_sz.memblk_size = htole16(ACX_MEMBLOCK_SIZE);
-	if (acx100_set_memblk_size_conf(sc, &memblk_sz) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_MEMBLK_SIZE, &memblk_sz,
+	    sizeof(memblk_sz)) != 0) {
 		printf("%s: can't set mem block size\n", ifp->if_xname);
 		return (1);
 	}
 
 	/* Get memory map after setting it */
-	if (acx_get_mmap_conf(sc, &mem_map) != 0) {
+	if (acx_get_conf(sc, ACX_CONF_MMAP, &mem_map, sizeof(mem_map)) != 0) {
 		printf("%s: can't get mmap again\n", ifp->if_xname);
 		return (1);
 	}
@@ -517,7 +501,7 @@ acx100_init_memory(struct acx_softc *sc)
 	mem.tx_memblk_addr = htole32(MEMBLK_ALIGN(memblk_start +
 	    (ACX_MEMBLOCK_SIZE * rxblk_num)));
 
-	if (acx100_set_mem_conf(sc, &mem) != 0) {
+	if (acx_set_conf(sc, ACX100_CONF_MEMOPT, &mem, sizeof(mem)) != 0) {
 		printf("%s: can't set mem options\n", ifp->if_xname);
 		return (1);
 	}
@@ -542,10 +526,8 @@ acx100_init_fw_txring(struct acx_softc *sc, uint32_t fw_txdesc_start)
 	int i;
 
 	bzero(&fw_desc, sizeof(fw_desc));
-	fw_desc.f_tx_ctrl = DESC_CTRL_HOSTOWN |
-	    DESC_CTRL_RECLAIM |
-	    DESC_CTRL_AUTODMA |
-	    DESC_CTRL_FIRST_FRAG;
+	fw_desc.f_tx_ctrl = DESC_CTRL_HOSTOWN | DESC_CTRL_RECLAIM |
+	    DESC_CTRL_AUTODMA | DESC_CTRL_FIRST_FRAG;
 
 	tx_buf = sc->sc_buf_data.tx_buf;
 	fw_desc_offset = fw_txdesc_start;
@@ -612,7 +594,7 @@ acx100_read_config(struct acx_softc *sc, struct acx_config *conf)
 	 */
 
 	/* Get CCA mode */
-	if (acx100_get_cca_mode_conf(sc, &cca) != 0) {
+	if (acx_get_conf(sc, ACX_CONF_CCA_MODE, &cca, sizeof(cca)) != 0) {
 		printf("%s: %s can't get cca mode\n",
 		    ifp->if_xname, __func__);
 		return (ENXIO);
@@ -621,7 +603,7 @@ acx100_read_config(struct acx_softc *sc, struct acx_config *conf)
 	DPRINTF(("%s: cca mode %02x\n", ifp->if_xname, cca.cca_mode));
 
 	/* Get ED threshold */
-	if (acx100_get_ed_thresh_conf(sc, &ed) != 0) {
+	if (acx_get_conf(sc, ACX_CONF_ED_THRESH, &ed, sizeof(ed)) != 0) {
 		printf("%s: %s can't get ed threshold\n",
 		    ifp->if_xname, __func__);
 		return (ENXIO);
@@ -641,7 +623,7 @@ acx100_write_config(struct acx_softc *sc, struct acx_config *conf)
 
 	/* Set CCA mode */
 	cca.cca_mode = conf->cca_mode;
-	if (acx100_set_cca_mode_conf(sc, &cca) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_CCA_MODE, &cca, sizeof(cca)) != 0) {
 		printf("%s: %s can't set cca mode\n",
 		    ifp->if_xname, __func__);
 		return (ENXIO);
@@ -649,7 +631,7 @@ acx100_write_config(struct acx_softc *sc, struct acx_config *conf)
 
 	/* Set ED threshold */
 	ed.ed_thresh = conf->ed_thresh;
-	if (acx100_set_ed_thresh_conf(sc, &ed) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_ED_THRESH, &ed, sizeof(ed)) != 0) {
 		printf("%s: %s can't set ed threshold\n",
 		    ifp->if_xname, __func__);
 		return (ENXIO);
@@ -719,7 +701,7 @@ acx100_set_wepkey(struct acx_softc *sc, struct ieee80211_wepkey *wk, int wk_idx)
 	conf_wk.key_len = wk->wk_len;
 	conf_wk.key_idx = wk_idx;
 	bcopy(wk->wk_key, conf_wk.key, wk->wk_len);
-	if (acx100_set_wepkey_conf(sc, &conf_wk) != 0) {
+	if (acx_set_conf(sc, ACX_CONF_WEPKEY, &conf_wk, sizeof(conf_wk)) != 0) {
 		printf("%s: %s set %dth WEP key failed\n",
 		    ifp->if_xname, __func__, wk_idx);
 		return ENXIO;
