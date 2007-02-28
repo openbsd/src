@@ -1,10 +1,10 @@
-/*	$OpenBSD: onewiredevs_data.h,v 1.3 2006/12/20 15:06:21 grange Exp $	*/
+/*	$OpenBSD: onewiredevs_data.h,v 1.4 2007/02/28 21:20:43 grange Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * Generated from:
- *	OpenBSD: onewiredevs,v 1.2 2006/12/20 15:04:22 grange Exp 
+ *	OpenBSD: onewiredevs,v 1.3 2007/02/28 21:20:22 grange Exp 
  */
 
 static const struct onewire_family onewire_famtab[] = {
@@ -17,6 +17,7 @@ static const struct onewire_family onewire_famtab[] = {
 	{ ONEWIRE_FAMILY_DS1995, "16kb NVRAM" },
 	{ ONEWIRE_FAMILY_DS1996, "64kb NVRAM" },
 	{ ONEWIRE_FAMILY_DS1920, "Temperature" },
+	{ ONEWIRE_FAMILY_DS2438, "Smart Battery Monitor" },
 	{ ONEWIRE_FAMILY_DS195X, "Java" },
 	{ 0, NULL }
 };
