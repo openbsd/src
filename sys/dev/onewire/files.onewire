@@ -1,4 +1,4 @@
-# $OpenBSD: files.onewire,v 1.1 2006/03/04 16:27:03 grange Exp $
+# $OpenBSD: files.onewire,v 1.2 2007/02/28 21:54:43 grange Exp $
 
 define	onewire {}
 
@@ -13,6 +13,11 @@ file	dev/onewire/onewire_bitbang.c	onewire_bitbang
 device	owid
 attach	owid at onewire
 file	dev/onewire/owid.c		owid
+
+# Smart Battery Monitor type device
+device	owsbm
+attach	owsbm at onewire
+file	dev/onewire/owsbm.c		owsbm
 
 # Temperature family type device
 device	owtemp
