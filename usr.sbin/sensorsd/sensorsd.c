@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.28 2007/02/23 22:55:40 deraadt Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.29 2007/02/28 15:28:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -213,7 +213,6 @@ check_sensors(void)
 			if (sysctl(mib, 5, &sensor, &len, NULL, 0) == -1)
 				err(1, "sysctl");
 
-			limit->last_val = sensor.value;
 			newstatus = sensor.status;
 			/* unknown may as well mean producing valid
 			 * status had failed so warn about it */
@@ -228,14 +227,11 @@ check_sensors(void)
 			}
 
 			if (limit->status != newstatus) {
-				if (newstatus == SENSOR_S_OK) {
-					limit->status2 =
-					    limit->status = newstatus;
-					limit->status_changed = time(NULL);
-				} else if (limit->status2 != newstatus) {
+				if (limit->status2 != newstatus) {
 					limit->status2 = newstatus;
 					limit->count = 0;
 				} else if (++limit->count >= 3) {
+					limit->last_val = sensor.value;
 					limit->status2 =
 					    limit->status = newstatus;
 					limit->status_changed = time(NULL);
