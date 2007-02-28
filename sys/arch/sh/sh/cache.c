@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: cache.c,v 1.2 2007/02/28 19:37:55 deraadt Exp $	*/
 /*	$NetBSD: cache.c,v 1.11 2006/01/02 23:37:34 uwe Exp $	*/
 
 /*-
@@ -102,44 +102,45 @@ sh_cache_information()
 	printf("cpu0: %dKB/%dB",
 	       sh_cache_size_icache >> 10, sh_cache_line_size);
 	if (sh_cache_ways > 1)
-		printf(" %d-way set-associative", sh_cache_ways);
+		printf(" %d-way associative", sh_cache_ways);
 	else
-		printf(" direct-mapped");
+		printf(" direct");
 	if (sh_cache_unified)
-		printf(" I/D-unified");
+		printf(" I/D-");
 	else
-		printf(" Instruction");
-	printf(" cache.");
+		printf(" I-");
+	printf("cache");
 	if (!sh_cache_enable_icache)
 		printf(" DISABLED");
 	if (sh_cache_unified && sh_cache_ram_mode)
 		printf(" RAM-mode");
 	if (sh_cache_index_mode_icache)
 		printf(" INDEX-mode");
-	printf("\n");
 
 	/* D-cache */
 	if (!sh_cache_unified) {
-		printf("cpu0: %dKB/%dB", sh_cache_size_dcache >> 10,
+		printf(", %dKB/%dB", sh_cache_size_dcache >> 10,
 		    sh_cache_line_size);
 		if (sh_cache_ways > 1)
-			printf(" %d-way set-associative", sh_cache_ways);
+			printf(" %d-way associative", sh_cache_ways);
 		else
-			printf(" direct-mapped");
-		printf(" Data cache.");
+			printf(" direct");
+		printf(" D-cache");
 		if (!sh_cache_enable_dcache)
 			printf(" DISABLED");
 		if (sh_cache_ram_mode)
 			printf(" RAM-mode");
 		if (sh_cache_index_mode_dcache)
 			printf(" INDEX-mode");
-		printf("\n");
 	}
+	printf("\n");
 
+#ifdef CACHE_DEBUG
 	/* Write-through/back */
 	printf("cpu0: P0, U0, P3 write-%s; P1 write-%s\n",
 	    sh_cache_write_through_p0_u0_p3 ? "through" : "back",
 	    sh_cache_write_through_p1 ? "through" : "back");
+#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: mmu.c,v 1.2 2007/02/28 19:37:55 deraadt Exp $	*/
 /*	$NetBSD: mmu.c,v 1.15 2006/02/12 02:30:55 uwe Exp $	*/
 
 /*-
@@ -80,6 +80,7 @@ sh_mmu_init(void)
 void
 sh_mmu_information(void)
 {
+#ifdef DEBUG
 	uint32_t r;
 #ifdef SH3
 	if (CPU_IS_SH3) {
@@ -92,7 +93,7 @@ sh_mmu_information(void)
 #endif
 #ifdef SH4
 	if (CPU_IS_SH4) {
-		printf("cpu0: full-associative 4 ITLB, 64 UTLB entries\n");
+		printf("cpu0: fully-associative 4 ITLB, 64 UTLB entries\n");
 		r = _reg_read_4(SH4_MMUCR);
 		printf("cpu0: %s virtual storage mode, SQ access: kernel%s, ",
 		    r & SH3_MMUCR_SV ? "single" : "multiple",
@@ -101,6 +102,7 @@ sh_mmu_information(void)
 		    (r & SH4_MMUCR_URB_MASK) >> SH4_MMUCR_URB_SHIFT);
 	}
 #endif
+#endif /* DEBUG */
 }
 
 void
