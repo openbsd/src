@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.38 2005/09/11 18:17:08 mickey Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.39 2007/02/28 19:40:38 kettenis Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -39,6 +39,10 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#ifdef __sparc64__
+#include <dev/ofw/openfirm.h>
+#endif
 
 static u_int16_t isp_pci_rd_reg(struct ispsoftc *, int);
 static void isp_pci_wr_reg(struct ispsoftc *, int, u_int16_t);
@@ -399,6 +403,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	int ioh_valid, memh_valid;
 	bus_size_t iosize, msize;
+	u_int32_t confopts = 0;
 
 	ioh_valid = memh_valid = 0;
 
@@ -573,6 +578,17 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
 		    PCI_MBOX_REGS2100_OFF;
 		data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG);
+#ifdef __sparc64__
+		{
+			char name[32];
+
+			bzero(name, sizeof(name));
+			OF_getprop(PCITAG_NODE(pa->pa_tag),
+			    "name", name, sizeof(name));
+			if (strcmp(name, "SUNW,qlc") == 0)
+				confopts |= ISP_CFG_NONVRAM;
+		}
+#endif
 	}
 #endif
 #ifndef	ISP_DISABLE_2300_SUPPORT
@@ -682,7 +698,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 		DEFAULT_PORTWWN(isp) = 0x400000007F000003ULL;
 	}
 
-	isp->isp_confopts = self->dv_cfdata->cf_flags;
+	isp->isp_confopts = confopts | self->dv_cfdata->cf_flags;
 	isp->isp_role = ISP_DEFAULT_ROLES;
 	ISP_LOCK(isp);
 	isp->isp_osinfo.no_mbox_ints = 1;
