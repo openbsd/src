@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.73 2007/02/27 20:55:23 david Exp $
+#	$OpenBSD: special,v 1.74 2007/02/28 01:37:15 david Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -54,6 +54,7 @@ mail		type=dir mode=0755 uname=root gname=wheel
 aliases		type=file mode=0644 uname=root gname=wheel optional
 aliases.db	type=file mode=0644 uname=root gname=wheel optional
 sendmail.cf	type=file mode=0644 uname=root gname=wheel optional
+spamd.conf	type=file mode=0644 uname=root gname=wheel optional
 submit.cf	type=file mode=0644 uname=root gname=wheel optional
 ..	#mail
 mtree		type=dir mode=0755 uname=root gname=wheel
@@ -81,7 +82,6 @@ sensorsd.conf	type=file mode=0644 uname=root gname=wheel
 shells		type=file mode=0644 uname=root gname=wheel
 skey		type=dir mode=01730 uname=root gname=auth optional
 ..	#skey
-spamd.conf	type=file mode=0644 uname=root gname=wheel optional
 spwd.db		type=file mode=0640 uname=root gname=_shadow
 ssh		type=dir mode=0755 uname=root gname=wheel optional
 ssh_config	type=file mode=0644 uname=root gname=wheel

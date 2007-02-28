@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.51 2007/02/27 20:55:22 david Exp $
+#	$OpenBSD: changelist,v 1.52 2007/02/28 01:37:15 david Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -64,6 +64,7 @@
 /etc/mail/mailertable
 /etc/mail/relay-domains
 /etc/mail/sendmail.cf
+/etc/mail/spamd.conf
 /etc/mail/submit.cf
 /etc/mail/trusted-users
 /etc/mail/virtusertable
@@ -117,7 +118,6 @@
 /etc/shosts.equiv
 /etc/slip.hosts
 /etc/slip.login
-/etc/spamd.conf
 /etc/ssh/ssh_config
 +/etc/ssh/ssh_host_dsa_key
 /etc/ssh/ssh_host_dsa_key.pub
