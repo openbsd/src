@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.63 2007/02/23 22:17:05 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.64 2007/02/28 09:09:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -899,13 +899,6 @@ acx_start(struct ifnet *ifp)
 				}
 			}
 			eh = mtod(m, struct ether_header *);
-
-			ni = ieee80211_find_txnode(ic, eh->ether_dhost);
-			if (ni == NULL) {
-				m_freem(m);
-				ifp->if_oerrors++;
-				continue;
-			}
 
 			/* TODO power save */
 
