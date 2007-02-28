@@ -717,7 +717,7 @@
 ./usr/include/dev/sbus
 ./usr/include/dev/sbus/asioreg.h
 ./usr/include/dev/sbus/bereg.h
-./usr/include/dev/sbus/bppreg.h 
+./usr/include/dev/sbus/bppreg.h
 ./usr/include/dev/sbus/cgsixreg.h
 ./usr/include/dev/sbus/cgtwelvereg.h
 ./usr/include/dev/sbus/cs4231var.h
