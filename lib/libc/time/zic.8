@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zic.8,v 1.21 2007/02/27 16:40:35 millert Exp $
+.\"	$OpenBSD: zic.8,v 1.22 2007/02/28 09:39:26 jmc Exp $
 .Dd May 23, 1999
 .Dt ZIC 8
 .Os
@@ -405,29 +405,34 @@ Link	Europe/Zurich	Switzerland
 .sp
 .in
 .fi
-In this example, the zone is named Europe/Zurich but it has an alias
-as Switzerland.  Zurich was 34 minutes and 8 seconds west of GMT until
-1848-09-12 at 00:00, when the offset changed to 29 minutes and 44
-seconds.  After 1894-06-01 at 00:00 Swiss daylight saving rules (defined
-with lines beginning with "Rule Swiss") apply, and the GMT offset
-became one hour.  From 1981 to the present, EU daylight saving rules have
-applied, and the UTC offset has remained at one hour.
+In this example, the zone is named Europe/Zurich
+but it has an alias as Switzerland.
+Zurich was 34 minutes and 8 seconds west of GMT until 1848-09-12 at 00:00,
+when the offset changed to 29 minutes and 44 seconds.
+After 1894-06-01 at 00:00 Swiss daylight saving rules
+(defined with lines beginning with "Rule Swiss") apply,
+and the GMT offset became one hour.
+From 1981 to the present,
+EU daylight saving rules have applied,
+and the UTC offset has remained at one hour.
 .Pp
-In 1940, daylight saving time applied from November 2 at 00:00 to
-December 31 at 00:00.  In 1941 and 1942, daylight saving time applied
-from the first Sunday in May at 02:00 to the first Sunday in October
-at 00:00.
-The pre-1981 EU daylight-saving rules have no effect
-here, but are included for completeness.  Since 1981, daylight
-saving has begun on the last Sunday in March at 01:00 UTC.
+In 1940, daylight saving time applied from
+November 2 at 00:00 to December 31 at 00:00.
+In 1941 and 1942, daylight saving time applied
+from the first Sunday in May at 02:00
+to the first Sunday in October at 00:00.
+The pre-1981 EU daylight-saving rules have no effect here,
+but are included for completeness.
+Since 1981,
+daylight saving has begun on the last Sunday in March at 01:00 UTC.
 Until 1995 it ended the last Sunday in September at 01:00 UTC,
 but this changed to the last Sunday in October starting in 1996.
 .Pp
-For purposes of
-display, "LMT" and "BMT" were initially used, respectively.  Since
-Swiss rules and later EU rules were applied, the display name for the
-timezone has been CET for standard time and CEST for daylight saving
-time.
+For purposes of display,
+"LMT" and "BMT" were initially used, respectively.
+Since Swiss rules and later EU rules were applied,
+the display name for the timezone has been CET for standard time
+and CEST for daylight saving time.
 .Sh NOTES
 For areas with more than two types of local time,
 you may need to use local standard time in the
