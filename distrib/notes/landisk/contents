@@ -1,5 +1,10 @@
-dnl	$OpenBSD: contents,v 1.1 2006/11/09 00:45:37 deraadt Exp $
+dnl	$OpenBSD: contents,v 1.2 2007/02/28 22:30:05 miod Exp $
 TopPart
+
+dnl can't use OpenBSDminiroot here - comment is inappropriate
+	miniroot{:--:}OSrev.fs	A miniroot filesystem image to be copied to
+			the beginning of the disk to allow installing
+			OpenBSD OSREV.
 
 OpenBSDdistsets
 
@@ -8,25 +13,26 @@ OpenBSDbsd
 OpenBSDrd
 dnl not yet...
 dnl OpenBSDcd
+dnl XXX describe boot, mbr, and xxboot. Or stop providing them?
 
 DistributionDescription(eleven)
 
-OpenBSDbase(47220942,146546688,shared)
+OpenBSDbase(87288058,179014870)
 
-OpenBSDcomp(77089010,225058816,shared)
+OpenBSDcomp(62336682,181123299)
 
-OpenBSDetc(1158334,4775936)
+OpenBSDetc(1237410,4082221)
 
-OpenBSDgame(2647990,6273024)
+OpenBSDgame(7146289,13072218)
 
-OpenBSDman(7546451,30212096)
+OpenBSDman(7644466,27595277)
 
-OpenBSDmisc(2280496,7482328)
+OpenBSDmisc(2292771,7568192)
 
-dnl OpenBSDxbase(11562138,32391047)
+OpenBSDxbase(84782265,140201761)
 
-dnl OpenBSDxetc(91396,354879)
+OpenBSDxetc(991594,1700766)
 
-dnl OpenBSDxfont(33236507,37547572)
+OpenBSDxfont(33239414,37547572)
 
-dnl OpenBSDxshare(2093518,11018844)
+OpenBSDxshare(2080226,10996662)

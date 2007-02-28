@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.69 2006/06/06 17:49:20 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.70 2007/02/28 22:30:02 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -24,8 +24,9 @@ MACHINE,armish,arm,
 MACHINE,aviion,m88k,
 MACHINE,cats,arm,
 MACHINE,hp300,m68k,
-MACHINE,mac68k,m68k,
+MACHINE,landisk,sh,
 MACHINE,luna88k,m88k,
+MACHINE,mac68k,m68k,
 MACHINE,macppc,powerpc,
 MACHINE,mvme68k,m68k,
 MACHINE,mvme88k,m88k,
@@ -149,8 +150,8 @@ define({:-OpenBSDetc-:},
 		 system from scratch, but should NOT be used if you are
 		 upgrading. (If you are upgrading, it's recommended that
 		 you get a copy of this set and CAREFULLY upgrade your
-		 configuration files by hand; see the section named "Upgrading
-		 a previously-installed OpenBSD System" below.)-:},.)showsize($1,$2)-:})dnl
+		 configuration files by hand; see the section named 
+		 Upgrading a previously-installed OpenBSD System" below.)-:},.)showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDgame( compressed size, uncompressed size )

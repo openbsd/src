@@ -1,4 +1,4 @@
-dnl	$OpenBSD: packages,v 1.40 2005/03/18 13:30:28 miod Exp $
+dnl	$OpenBSD: packages,v 1.41 2007/02/28 22:30:02 miod Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
@@ -124,6 +124,8 @@ MACHINE_ARCH,i386,{:-FreeBSD
 MACHINE_ARCH,m68k,{:-NetBSD
 	pkgsrc-:},
 MACHINE_ARCH,powerpc,{:-NetBSD
+	pkgsrc-:},
+MACHINE_ARCH,sh,{:-NetBSD
 	pkgsrc-:},
 MACHINE_ARCH,sparc,{:-NetBSD
 	pkgsrc-:},

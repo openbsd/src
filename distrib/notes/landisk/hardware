@@ -1,5 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.3 2007/02/15 13:57:53 jsg Exp $
-dnl When more than one model is supported, turn this into a list...
+dnl	$OpenBSD: hardware,v 1.4 2007/02/28 22:30:05 miod Exp $
 OpenBSD/MACHINE runs on the following SH4-based IO-DATA made models:
 	IO-DATA USL-5P, using CF storage (Japan)
 	IO-DATA HDL-U, HDL-AV, HDL-W and HDLM-U series (Japan)
@@ -208,7 +207,7 @@ Supported devices {:-include-:}:
 		    Zinwell ZWX-G261
 		    Zonet ZEW2500P
 	Serial ports
-		On-board serial (com) ports
+		On-board serial (scif) port
 	Universal Serial Bus (USB) Devices
 		USB Audio
 		USB Diamond Multimedia Rio MP3 players
