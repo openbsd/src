@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.5 2007/02/19 13:18:08 jsg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.6 2007/02/28 13:25:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -34,6 +34,7 @@ struct atascsi_attach_args {
 };
 
 struct ata_port {
+	struct atascsi		*ap_as;
 	int			ap_port;
 	int			ap_type;
 #define ATA_PORT_T_NONE			0
@@ -58,17 +59,26 @@ struct ata_xfer {
 	u_int8_t		*data;
 	size_t			datalen;
 
-	void			(*complete)(void *);
+	void			(*complete)(struct ata_xfer *);
 
 	struct ata_port		*port;
 	int			flags;
-#define ATA_F_READ		(1<<0)
-#define ATA_F_WRITE		(1<<1)
-#define ATA_F_NOWAIT		(1<<2)
-#define ATA_F_POLL		(1<<2)
+#define ATA_F_READ			(1<<0)
+#define ATA_F_WRITE			(1<<1)
+#define ATA_F_NOWAIT			(1<<2)
+#define ATA_F_POLL			(1<<3)
+	volatile int		state;
+#define ATA_S_SETUP			0
+#define ATA_S_PENDING			1
+#define ATA_S_COMPLETE			2
+#define ATA_S_ERROR			3
 
 	void			*atascsi_private;
 };
+
+#define ATA_QUEUED		0
+#define ATA_COMPLETE		1
+#define ATA_ERROR		2
 
 struct atascsi	*atascsi_attach(struct device *, struct atascsi_attach_args *);
 int		atascsi_detach(struct atascsi *);
