@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zic.8,v 1.22 2007/02/28 09:39:26 jmc Exp $
+.\"	$OpenBSD: zic.8,v 1.23 2007/02/28 09:57:38 jmc Exp $
 .Dd May 23, 1999
 .Dt ZIC 8
 .Os
@@ -76,19 +76,16 @@ Any line that is blank (after comment stripping) is ignored.
 Non-blank lines are expected to be of one of three types:
 rule lines, zone lines, and link lines.
 .Pp
-A rule line has the form
-.nf
-.ti +.5i
-.ta \w'Rule\0\0'u +\w'NAME\0\0'u +\w'FROM\0\0'u +\w'1973\0\0'u +\w'TYPE\0\0'u +\w'Apr\0\0'u +\w'lastSun\0\0'u +\w'2:00\0\0'u +\w'SAVE\0\0'u
-.sp
-Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-.sp
+A rule line has the form:
+.Bd -literal -offset indent
+Rule  NAME  FROM  TO    TYPE  IN    ON       AT    SAVE  LETTER/S
+.Ed
+.Pp
 For example:
-.ti +.5i
-.sp
-Rule	US	1967	1973	\-	Apr	lastSun	2:00	1:00	D
-.sp
-.fi
+.Bd -literal -offset indent
+Rule  US    1967  1973  -     Apr   lastSun  2:00  1:00  D
+.Ed
+.Pp
 The fields that make up a rule line are:
 .Bl -tag -width "LETTER/S"
 .It Cm NAME
@@ -228,19 +225,16 @@ If this field is
 the variable part is null.
 .El
 .Pp
-A zone line has the form
-.sp
-.nf
-.ti +.5i
-.ta \w'Zone\0\0'u +\w'Australia/Adelaide\0\0'u +\w'GMTOFF\0\0'u +\w'RULES/SAVE\0\0'u +\w'FORMAT\0\0'u
-Zone	NAME	GMTOFF	RULES/SAVE	FORMAT	[UNTILYEAR [MONTH [DAY [TIME]]]]
-.sp
+A zone line has the form:
+.Bd -literal -offset 3n
+Zone NAME GMTOFF RULES/SAVE FORMAT [UNTILYEAR [MONTH [DAY [TIME]]]]
+.Ed
+.Pp
 For example:
-.sp
-.ti +.5i
-Zone	Australia/Adelaide	9:30	Aus	CST	1971 Oct 31 2:00
-.sp
-.fi
+.Bd -literal -offset 3n
+Zone Australia/Adelaide 9:30 Aus CST 1971 Oct 31 2:00
+.Ed
+.Pp
 The fields that make up a zone line are:
 .Bl -tag -width GMTOFF
 .It Cm NAME
@@ -297,19 +291,16 @@ information, just as zone lines do, indicating that the next line is a further
 continuation.
 .El
 .Pp
-A link line has the form
-.sp
-.nf
-.ti +.5i
-.ta \w'Link\0\0'u +\w'Europe/Istanbul\0\0'u
+A link line has the form:
+.Bd -literal -offset indent
 Link	LINK-FROM	LINK-TO
-.sp
+.Ed
+.Pp
 For example:
-.sp
-.ti +.5i
+.Bd -literal -offset indent
 Link	Europe/Istanbul	Asia/Istanbul
-.sp
-.fi
+.Ed
+.Pp
 The
 .Em LINK-FROM
 field should appear as the
@@ -323,18 +314,15 @@ Except for continuation lines,
 lines may appear in any order in the input.
 .Pp
 Lines in the file that describes leap seconds have the following form:
-.nf
-.ti +.5i
-.ta \w'Leap\0\0'u +\w'YEAR\0\0'u +\w'MONTH\0\0'u +\w'DAY\0\0'u +\w'HH:MM:SS\0\0'u +\w'CORR\0\0'u
-.sp
+.Bd -literal -offset indent
 Leap	YEAR	MONTH	DAY	HH:MM:SS	CORR	R/S
-.sp
+.Ed
+.Pp
 For example:
-.ti +.5i
-.sp
+.Bd -literal -offset indent
 Leap	1974	Dec	31	23:59:60	+	S
-.sp
-.fi
+.Ed
+.Pp
 The
 .Em YEAR ,
 .Em MONTH ,
@@ -375,36 +363,29 @@ local wall clock time.
 Here is an extended example of
 .Nm
 input, intended to illustrate many of its features.
-.br
-.ne 22
-.nf
-.in +2m
-.ta \w'# Rule\0\0'u +\w'NAME\0\0'u +\w'FROM\0\0'u +\w'1973\0\0'u +\w'TYPE\0\0'u +\w'Apr\0\0'u +\w'lastSun\0\0'u +\w'2:00\0\0'u +\w'SAVE\0\0'u
-.sp
+.Bd -literal
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Swiss	1940	only	-	Nov	2	0:00	1:00	S
 Rule	Swiss	1940	only	-	Dec	31	0:00	0	-
 Rule	Swiss	1941	1942	-	May	Sun>=1	2:00	1:00	S
 Rule	Swiss	1941	1942	-	Oct	Sun>=1	0:00	0
-.sp .5
+
 Rule	EU	1977	1980	-	Apr	Sun>=1	1:00u	1:00	S
 Rule	EU	1977	only	-	Sep	lastSun	1:00u	0	-
 Rule	EU	1978	only	-	Oct	 1	1:00u	0	-
 Rule	EU	1979	1995	-	Sep	lastSun	1:00u	0	-
 Rule	EU	1981	max	-	Mar	lastSun	1:00u	1:00	S
 Rule	EU	1996	max	-	Oct	lastSun	1:00u	0	-
-.sp
-.ta \w'# Zone\0\0'u +\w'Europe/Zurich\0\0'u +\w'0:34:08\0\0'u +\w'RULES/SAVE\0\0'u +\w'FORMAT\0\0'u
+
 # Zone	NAME	GMTOFF	RULES	FORMAT	UNTIL
 Zone	Europe/Zurich	0:34:08	-	LMT	1848 Sep 12
 		0:29:44	-	BMT	1894 Jun
 		1:00	Swiss	CE%sT	1981
 		1:00	EU	CE%sT
-.sp
+
 Link	Europe/Zurich	Switzerland
-.sp
-.in
-.fi
+.Ed
+.Pp
 In this example, the zone is named Europe/Zurich
 but it has an alias as Switzerland.
 Zurich was 34 minutes and 8 seconds west of GMT until 1848-09-12 at 00:00,
