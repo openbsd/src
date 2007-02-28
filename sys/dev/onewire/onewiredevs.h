@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewiredevs.h,v 1.3 2007/02/28 21:20:43 grange Exp $	*/
+/*	$OpenBSD: onewiredevs.h,v 1.4 2007/02/28 22:31:35 deraadt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
