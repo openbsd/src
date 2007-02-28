@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.8 2007/02/28 13:23:23 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.9 2007/02/28 13:38:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -78,7 +78,9 @@ struct pool	ata_xfer_pool;
 void		ata_init(void);
 void		ata_destroy(void);
 
-struct ata_xfer	*ata_get_xfer(int);
+int		ata_exec(struct atascsi *, struct ata_xfer *);
+
+struct ata_xfer	*ata_get_xfer(struct ata_port *, int);
 void		ata_put_xfer(struct ata_xfer *);
 
 struct atascsi *
@@ -283,13 +285,25 @@ ata_destroy(void)
 
 	pool_destroy(&ata_xfer_pool);
 }
+ 
+int
+ata_exec(struct atascsi *as, struct ata_xfer *xa)
+{
+	xa->state = ATA_S_PENDING;
+	return (as->as_methods->ata_cmd(as->as_cookie, xa));
+}
 
 struct ata_xfer *
-ata_get_xfer(int nosleep)
+ata_get_xfer(struct ata_port *ap, int nosleep)
 {
 	struct ata_xfer		*xa;
 
 	xa = pool_get(&ata_xfer_pool, nosleep ? PR_NOWAIT : PR_WAITOK);
+	if (xa != NULL) {
+		bzero(&xa->cmd, sizeof(xa->cmd));
+		xa->port = ap;
+		xa->state = ATA_S_SETUP;
+	}
 
 	return (xa);
 }
@@ -299,5 +313,3 @@ ata_put_xfer(struct ata_xfer *xa)
 {
 	pool_put(&ata_xfer_pool, xa);
 }
-
-
