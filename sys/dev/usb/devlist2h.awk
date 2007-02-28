@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.8 2005/10/17 18:00:43 drahn Exp $
+#	$OpenBSD: devlist2h.awk,v 1.9 2007/02/28 22:30:55 deraadt Exp $
 #	$NetBSD: devlist2h.awk,v 1.9 2001/01/18 20:28:22 jdolecek Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -175,6 +175,22 @@ END {
 
 	printf("\n") > dfile
 
+	printf("typedef u_int16_t usb_vendor_id_t;\n") > dfile
+	printf("typedef u_int16_t usb_product_id_t;\n\n") > dfile
+
+	printf("/*\n") > dfile
+	printf(" * Descriptions of known vendors and devices (\"products\").\n") > dfile
+	printf(" */\n") > dfile
+	printf("struct usb_known_vendor {\n") > dfile
+	printf("	usb_vendor_id_t		vendor;\n") > dfile
+	printf("	char			*vendorname;\n") > dfile
+	printf("};\n\n") > dfile
+
+	printf("struct usb_known_product {\n") > dfile
+	printf("	usb_vendor_id_t		vendor;\n") > dfile
+	printf("	usb_product_id_t	product;\n") > dfile
+	printf("	char			*productname;\n") > dfile
+	printf("};\n\n") > dfile
 	printf("const struct usb_known_product usb_known_products[] = {\n") \
 	    > dfile
 	for (i = 1; i <= nproducts; i++) {

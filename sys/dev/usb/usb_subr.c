@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.47 2006/07/17 05:24:16 miod Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.48 2007/02/28 22:30:55 deraadt Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -82,23 +82,6 @@ Static usbd_status	usbd_probe_and_attach(device_ptr_t,
 Static u_int32_t	usb_cookie_no = 0;
 
 #ifdef USBVERBOSE
-typedef u_int16_t usb_vendor_id_t;
-typedef u_int16_t usb_product_id_t;
-
-/*
- * Descriptions of of known vendors and devices ("products").
- */
-struct usb_known_vendor {
-	usb_vendor_id_t		vendor;
-	char			*vendorname;
-};
-
-struct usb_known_product {
-	usb_vendor_id_t		vendor;
-	usb_product_id_t	product;
-	char			*productname;
-};
-
 #include <dev/usb/usbdevs_data.h>
 #endif /* USBVERBOSE */
 
