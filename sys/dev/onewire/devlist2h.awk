@@ -1,4 +1,4 @@
-# $OpenBSD: devlist2h.awk,v 1.3 2006/03/10 14:36:32 grange Exp $
+# $OpenBSD: devlist2h.awk,v 1.4 2007/02/28 22:31:32 deraadt Exp $
 
 #
 # Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -28,9 +28,16 @@ NR == 1	{
 	printf("/*\t\$OpenBSD\$\t*/\n\n" \
 	       "/*\n * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n" \
 	       " *\n * Generated from:\n *\t%s\n */\n\n", VERSION) > hfile
+
 	printf("/*\t\$OpenBSD\$\t*/\n\n" \
 	       "/*\n * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n" \
 	       " *\n * Generated from:\n *\t%s\n */\n\n", VERSION) > dfile
+
+	printf("struct onewire_family {\n") > dfile
+	printf("\tint\t\tof_type;\n") > dfile
+	printf("\tconst char\t*of_name;\n") > dfile
+	printf("};\n\n") > dfile
+
 	printf("static const struct onewire_family " \
 	       "onewire_famtab[] = {\n") > dfile
 }
