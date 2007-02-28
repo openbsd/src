@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.44 2007/02/22 17:20:17 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.45 2007/02/28 20:19:05 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
+#include <sys/syslog.h>
 
 #include <ufs/ffs/fs.h>			/* for BBSIZE and SBSIZE */
 
@@ -1082,24 +1083,15 @@ hderror(unit)
 		hwbn = sp->c_blk;
 		pbn = HDSTOB(hwbn) - pbn;
 	}
-	/*
-	 * Now output a generic message suitable for badsect.
-	 * Note that we don't use harderr because it just prints
-	 * out b_blkno which is just the beginning block number
-	 * of the transfer, not necessarily where the error occurred.
-	 */
-	printf("%s%c: hard error sn%d\n", rs->sc_dev.dv_xname,
-	    'a' + HDPART(bp->b_dev), pbn);
-	/*
-	 * Now report the status as returned by the hardware with
-	 * no attempt at interpretation (unless debugging).
-	 */
-	printf("%s: %s error:", rs->sc_dev.dv_xname,
-	    (bp->b_flags & B_READ) ? "read" : "write");
+
+	diskerr(bp, hd_cd.cd_name, "hard error", LOG_PRINTF,
+	    pbn - bp->b_blkno, rs->sc_dkdev.dk_label);
+	printf("\n%s%c: ", rs->sc_dev.dv_xname, 'a' + HDPART(bp->b_dev));
+	
 #ifdef DEBUG
 	if (hddebug & HDB_ERROR) {
 		/* status info */
-		printf("\n    volume: %d, unit: %d\n",
+		printf("volume: %d, unit: %d\n",
 		       (sp->c_vu>>4)&0xF, sp->c_vu&0xF);
 		hdprinterr("reject", sp->c_ref, err_reject);
 		hdprinterr("fault", sp->c_fef, err_fault);
@@ -1117,15 +1109,16 @@ hderror(unit)
 		printf("0x%x", *(u_short *)&rs->sc_ioc.c_nop2);
 		printf("0x%x", *(u_int *)&rs->sc_ioc.c_len);
 		printf("0x%x\n", *(u_short *)&rs->sc_ioc.c_cmd);
-		return (1);
-	}
+	} else
 #endif
-	printf(" v%d u%d, R0x%x F0x%x A0x%x I0x%x",
-	       (sp->c_vu>>4)&0xF, sp->c_vu&0xF,
-	       sp->c_ref, sp->c_fef, sp->c_aef, sp->c_ief);
-	printf(" P1-P10: 0x%04x%04x%02x\n",
-	    *(u_int *)&sp->c_raw[0], *(u_int *)&sp->c_raw[4],
-	    *(u_short *)&sp->c_raw[8]);
+	{
+		printf("v%d u%d, R0x%x F0x%x A0x%x I0x%x",
+		    (sp->c_vu>>4)&0xF, sp->c_vu&0xF,
+		    sp->c_ref, sp->c_fef, sp->c_aef, sp->c_ief);
+		printf(" P1-P10: 0x%04x%04x%02x\n",
+		    *(u_int *)&sp->c_raw[0], *(u_int *)&sp->c_raw[4],
+		    *(u_short *)&sp->c_raw[8]);
+	}
 	return (1);
 }
 
