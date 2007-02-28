@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsi64854.c,v 1.6 2005/03/03 01:41:44 miod Exp $	*/
+/*	$OpenBSD: lsi64854.c,v 1.7 2007/02/28 18:46:16 miod Exp $	*/
 /*	$NetBSD: lsi64854.c,v 1.18 2001/06/04 20:56:51 mrg Exp $ */
 
 /*-
@@ -438,6 +438,9 @@ lsi64854_scsi_intr(arg)
 	if (!(csr & D_WRITE) &&
 	    (resid = (NCR_READ_REG(nsc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
 		DPRINTF(LDB_SCSI, ("dmaintr: empty esp FIFO of %d ", resid));
+		if (nsc->sc_rev == NCR_VARIANT_FAS366 &&
+		    (NCR_READ_REG(nsc, NCR_CFG3) & NCRFASCFG3_EWIDE))
+			resid <<= 1;
 	}
 
 	if ((nsc->sc_espstat & NCRSTAT_TC) == 0) {
