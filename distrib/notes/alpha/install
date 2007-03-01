@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.28 2006/02/15 12:46:47 martin Exp $
+dnl	$OpenBSD: install,v 1.29 2007/03/01 19:24:45 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk.  The easiest way is
@@ -119,7 +119,7 @@ OpenBSDBootMsgs
 	you should choose the terminal type from amongst those listed.
 	(If your terminal type is xterm, just use vt220.)
 
-OpenBSDInstallPart3({:- or "wd0" for IDE drives-:})
+OpenBSDInstallPart3
 
 OpenBSDInstallPart4
 

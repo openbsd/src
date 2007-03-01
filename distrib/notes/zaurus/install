@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.18 2006/04/04 00:26:33 uwe Exp $
+dnl	$OpenBSD: install,v 1.19 2007/03/01 19:24:45 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSD is installed on the Zaurus by effectively converting
@@ -80,12 +80,12 @@ partition on the C3x00 hard drive, you can instead use
 
 OpenBSDInstallPart2
 
-OpenBSDBootMsgs
+OpenBSDBootMsgs(,"wd0")
 
 	You will next be asked for your terminal type.  You should just
 	hit return to select the default (vt220).
 
-OpenBSDInstallPart3({:- or "wd0" for IDE drives-:})
+OpenBSDInstallPart3
 
 	Next you will have to edit or create a disk label for the disk
 	OpenBSD is being installed on.  If there are any existing

@@ -1,19 +1,17 @@
-dnl	$OpenBSD: install,v 1.2 2007/02/28 22:30:05 miod Exp $
-OpenBSDInstallShortPrelude
+dnl	$OpenBSD: install,v 1.3 2007/03/01 19:24:10 miod Exp $
+OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
 
 	If you have copied the miniroot image to the disk, it will
 	boot automatically upon power-up.
 
-	Once the kernel has loaded, you will be presenteh with the
-	OpenBSD kernel boot messages.
+OpenBSDBootMsgs(,"wd0")
 
 	You will next be asked for your terminal type.  You should just
 	hit return to select the default (vt220).
 
-OpenBSDInstallPart3({:-, such as external USB drives,  or "wd0"
-	for IDE drives, such as the boot disk-:})
+OpenBSDInstallPart3({:-"wd0" for IDE drives-:})
 
 	Next you will have to edit or create a disk label for the disk
 	OpenBSD is being installed on.  You will first be given an

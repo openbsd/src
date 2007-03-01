@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.13 2005/08/30 17:05:31 miod Exp $
+dnl	$OpenBSD: install,v 1.14 2007/03/01 19:24:45 miod Exp $
 dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -118,7 +118,7 @@ OpenBSDInstallPart2
 	media is bad, your diskless setup is incorrect, or you may have
 	a hardware or configuration problem.
 
-OpenBSDBootMsgs
+OpenBSDBootMsgs(,"sd0")
 
 	You will next be asked for your terminal type.  If you are
 	installing from a non-serial console, the default of "vt100"

@@ -1,5 +1,5 @@
-dnl	$OpenBSD: install,v 1.31 2007/03/01 19:16:16 miod Exp $
-OpenBSDInstallPrelude
+dnl	$OpenBSD: install,v 1.32 2007/03/01 19:24:45 miod Exp $
+OpenBSDInstallPrelude({:-HP-IB disks-:})
 dnl No extra line, this has to stick to the geometry notes paragraph.
 
 The ramdisk kernel may be loaded from the network, from CD-ROM, or other
@@ -90,8 +90,8 @@ OpenBSDInstallPart2
 	either your boot media is bad, your diskless setup is incorrect,
 	or you may have a hardware or configuration problem.
 
-
-OpenBSDBootMsgs
+OpenBSDBootMsgs(warn,{:-"sd0" for SCSI drives-:},{:-or "hd0" for HP-IB
+	drives-:})
 
 	You will next be asked for your terminal type.  There are only
 	a few specific terminal types supported.  If you are using a
@@ -100,7 +100,7 @@ OpenBSDBootMsgs
 	or vt100 compatible terminal; nothing else is supported.  (If
 	your terminal type is xterm, just use vt100.)
 	
-OpenBSDInstallPart3({:- or "hd0" for HP-IB/CS80 drives-:})
+OpenBSDInstallPart3
 
 OpenBSDInstallPart4
 

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.38 2004/09/10 19:14:05 miod Exp $
+dnl	$OpenBSD: install,v 1.39 2007/03/01 19:24:45 miod Exp $
 OpenBSDInstallPrelude
 
 If OpenBSD will be sharing the disk with DOS or another operating
@@ -45,13 +45,12 @@ OpenBSDInstallPart2
 	you do, please {:-include-:} as many details about your system
 	configuration as you can.
 
-
 OpenBSDBootMsgs
 
 	You will next be asked for your terminal type.  You should just
 	hit return to select the default (vt220).
 
-OpenBSDInstallPart3({:- or "wd0" for IDE/RLL/ESDI/ST506 drives-:})
+OpenBSDInstallPart3
 
 	Next you will have to edit or create a disk label for the disk
 	OpenBSD is being installed on.  If there are any existing

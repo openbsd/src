@@ -1,5 +1,5 @@
-dnl	$OpenBSD: install,v 1.33 2006/06/10 06:46:41 martin Exp $
-OpenBSDInstallShortPrelude
+dnl	$OpenBSD: install,v 1.34 2007/03/01 19:24:45 miod Exp $
+OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
 
@@ -10,7 +10,7 @@ OpenBSDInstallPart2
 	Performa 476 models it is also necessary to activate the video address
 	hack. Now boot the kernel.
 
-OpenBSDBootMsgs
+OpenBSDBootMsgs(,"sd0")
 
 	You will next be asked for your terminal type.  You should choose
 	the terminal type from amongst those listed.

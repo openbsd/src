@@ -1,5 +1,5 @@
-dnl	$OpenBSD: install,v 1.23 2004/05/24 15:47:00 tom Exp $
-OpenBSDInstallShortPrelude
+dnl	$OpenBSD: install,v 1.24 2007/03/01 19:24:45 miod Exp $
+OpenBSDInstallPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
 on the whole disk or share the disk with Mac OS.
@@ -33,12 +33,12 @@ OpenBSDInstallPart2
 	(Refer to "Preparing your System for OpenBSD Installation" above
 	 for information on how to access and boot from Open Firmware.)
 
-OpenBSDBootMsgs
+OpenBSDBootMsgs(,"wd0")
 
 	You will next be asked for your terminal type.  You should just
 	hit return to select the default (vt220).
 
-OpenBSDInstallPart3({:- or "wd0" for IDE/ATA drives-:})
+OpenBSDInstallPart3
 
 	Next you will have to edit or create a disk label for the disk
 	OpenBSD is being installed on.  If there are any existing
