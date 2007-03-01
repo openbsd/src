@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.14 2006/04/21 17:42:50 deraadt Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.15 2007/03/01 20:06:27 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -85,7 +85,7 @@ send_data(int sock, void *buf, size_t len)
 	while (len > pos) {
 		switch (n = write(sock, ptr + pos, len - pos)) {
 		case 0:
-			kill_slave();
+			kill_slave("write failure");
 			_exit(0);
 			/* NOTREACHED */
 		case -1:
@@ -111,7 +111,7 @@ recv_data(int sock, void *buf, size_t len)
 	while (len > pos) {
 		switch (n = read(sock, ptr + pos, len - pos)) {
 		case 0:
-			kill_slave();
+			kill_slave("read failure");
 			_exit(0);
 			/* NOTREACHED */
 		case -1:
@@ -416,10 +416,12 @@ sig_chld(int signo)
 }
 
 void
-kill_slave(void)
+kill_slave(char *reason)
 {
-	if (slave_pid > 0)
+	if (slave_pid > 0) {
+		syslog(LOG_NOTICE, "kill slave %d: %s", slave_pid, reason);
 		kill(slave_pid, SIGQUIT);
+	}
 }
 
 void
@@ -431,7 +433,7 @@ fatalx(char *fmt, ...)
 	vsyslog(LOG_ERR, fmt, ap);
 	va_end(ap);
 
-	kill_slave();
+	kill_slave("fatal error");
 
 	_exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.174 2006/12/21 02:28:47 krw Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.175 2007/03/01 20:06:27 otto Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.174 2006/12/21 02:28:47 krw Exp $";
+    "$OpenBSD: ftpd.c,v 1.175 2007/03/01 20:06:27 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -655,6 +655,7 @@ lostconn(int signo)
 {
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 
+	sdata.log_fac = LOG_FTP;
 	if (debug)
 		syslog_r(LOG_DEBUG, &sdata, "lost connection");
 	dologout(1);
@@ -665,7 +666,8 @@ sigquit(int signo)
 {
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 
-	syslog_r(LOG_ERR, &sdata, "got signal %s", sys_signame[signo]);
+	sdata.log_fac = LOG_FTP;
+	syslog_r(LOG_DEBUG, &sdata, "got signal %s", sys_signame[signo]);
 	dologout(1);
 }
 
@@ -718,7 +720,7 @@ user(char *name)
 	char *class = NULL;
 
 	if (logged_in) {
-		kill_slave();
+		kill_slave("user already logged in");
 		end_login();
 	}
 
@@ -929,7 +931,7 @@ pass(char *passwd)
 				syslog(LOG_NOTICE,
 				    "repeated login failures from %s",
 				    remotehost);
-				kill_slave();
+				kill_slave("repeated login failures");
 				_exit(0);
 			}
 			return (AUTH_FAILED);
@@ -940,7 +942,7 @@ pass(char *passwd)
 			free(guestpw);
 		guestpw = strdup(passwd);
 		if (guestpw == NULL) {
-			kill_slave();
+			kill_slave("out of mem");
 			fatal("Out of memory.");
 		}
 
@@ -952,7 +954,7 @@ pass(char *passwd)
 			    "FTP LOGIN FAILED (HOST) as %s: approval failure.",
 			    pw->pw_name);
 			reply(530, "Approval failure.");
-			kill_slave();
+			kill_slave("approval failure");
 			_exit(0);
 		}
 	} else {
@@ -960,7 +962,7 @@ pass(char *passwd)
 		    "FTP LOGIN CLASS %s MISSING for %s: approval failure.",
 		    pw->pw_class, pw->pw_name);
 		reply(530, "Permission denied.");
-		kill_slave();
+		kill_slave("permission denied");
 		_exit(0);
 	}
 
@@ -1959,6 +1961,7 @@ reply_r(int n, const char *fmt, ...)
 	va_list ap;
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 
+	sdata.log_fac = LOG_FTP;
 	va_start(ap, fmt);
 	vsnprintf(msg, sizeof(msg), fmt, ap);
 	va_end(ap);
