@@ -85,12 +85,12 @@ generate a random master key.
 .Fl -master-key-fd= Ns Ar fd
 .Xc
 filedescriptor to read passphrase from, if not specified the
-passphrase will be read from the terminal/.
+passphrase will be read from the terminal.
 .El
 .\".Sh ENVIRONMENT
 .Sh FILES
 .Pa /var/heimdal/m-key
-is the default keyfile is no other keyfile is specified.
+is the default keyfile if no other keyfile is specified.
 The format of a Heimdal master key is the same as a keytab, so
 .Nm ktutil
 list can be used to list the content of the file.
