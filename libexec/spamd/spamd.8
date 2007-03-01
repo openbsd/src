@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.82 2007/02/28 01:01:20 david Exp $
+.\"	$OpenBSD: spamd.8,v 1.83 2007/03/01 20:38:52 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -67,14 +67,9 @@ i.e. they are communicated with very slowly
 to consume the sender's resources.
 Mail is rejected with either a 450 or 550 error message.
 A blacklisted host will not be allowed to talk to a real mail server.
-See
-.Sx BLACKLISTING
-below for more information.
 .Pp
 .Em whitelisted
-hosts do
-.Em NOT
-talk to
+hosts do not talk to
 .Nm .
 Their connections are instead sent to a real mail server,
 such as
@@ -89,14 +84,23 @@ has not yet decided if they are likely spammers.
 They are given a temporary failure message by
 .Nm
 when they try to deliver mail.
-If they attempt to redeliver mail
-after a predetermined amount of time has passed,
-they will be whitelisted.
 .Pp
-By default
+When
 .Nm
-runs in greylisting mode,
-considering hosts for eventual whitelisting.
+is run in default mode,
+it will greylist connections from new hosts.
+Depending on its configuration,
+it may choose to blacklist the host or,
+if the checks described below are met,
+eventually whitelist it.
+When
+.Nm
+is run in blacklist-only mode,
+using the
+.Fl b
+flag,
+it will consult a pre-defined set of blacklist addresses
+to decide whether to tarpit the host or not.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -105,17 +109,13 @@ For blacklisted entries, return error code 450 to the spammer (default).
 .It Fl 5
 For blacklisted entries, return error code 550 to the spammer.
 .It Fl B Ar maxblack
-The maximum number of concurrent blacklisted connections to allow in
-greylisting mode.
+The maximum number of concurrent blacklisted connections to allow.
 This value may not be greater than maxcon (see below).
 The default is
 .Ar maxcon
 \- 100.
 .It Fl b
-Turn off greylisting mode, and run only as a blacklister.
-See
-.Sx BLACKLISTING
-below.
+Run in blacklist-only mode.
 .It Fl c Ar maxcon
 The maximum number of concurrent connections to allow.
 .Ar maxcon
@@ -130,8 +130,7 @@ into the background.
 .Fl G
 .Ar passtime : Ns Ar greyexp : Ns Ar whiteexp
 .Xc
-Adjust the three time parameters for greylisting;
-see below.
+Adjust the three time parameters for greylisting.
 .Ar passtime
 defaults to 25 (minutes),
 .Ar greyexp
@@ -190,7 +189,7 @@ level.
 Set the socket receive buffer to this many bytes, adjusting the window size.
 .El
 .Pp
-When run in greylisting mode,
+When run in default mode,
 connections receive the pleasantly innocuous temporary failure of:
 .Bd -literal -offset 4n
 451 Temporary failure, please try again later.
@@ -247,10 +246,6 @@ Connections from addresses not listed in the
 .Aq spamd-white
 table are redirected to
 .Nm .
-Connections are considered for greylisting and
-eventual whitelisting (by addition to the
-.Aq spamd-white
-table so they are not redirected in the future) if they retry mail delivery.
 .Pp
 .Nm
 removes tuple entries from the
@@ -295,8 +290,9 @@ See
 .Xr spamdb 8
 for further information.
 .Sh GREYTRAPPING
-When greylisting with
+When running
 .Nm
+in default mode,
 it may be useful to define
 .Em spamtrap
 destination addresses to catch spammers as they send mail from greylisted
@@ -490,7 +486,7 @@ current versions expect only the email address without the enclosing
 .Nm
 currently uses the user
 .Dq _spamd
-outside a chroot jail when running in greylisting mode, and requires
+outside a chroot jail when running in default mode, and requires
 the greylisting database in
 .Pa /var/db/spamd
 to be owned by the
