@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.32 2007/03/01 22:51:57 jmc Exp $
+.\"	$OpenBSD: rdist.1,v 1.33 2007/03/01 23:01:18 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -723,21 +723,22 @@ and all messages will be written to the file
 .Pa /tmp/rdist.log .
 .Sh ENVIRONMENT
 .Bl -tag -width "TMPDIR"
-.It TMPDIR
-Name of temporary directory to use.
-Default is
-.Pa /tmp .
 .It RSH
 Name of the default remote shell program to use.
-Default is
+The default is
 .Xr ssh 1 .
+.It TMPDIR
+Name of the temporary directory to use.
+The default is
+.Pa /tmp .
 .El
 .Sh FILES
 .Bl -tag -width "$TMPDIR/rdist*" -compact
-.It distfile
-input command file
+.It {d,D}istfile
+.Nm
+command file.
 .It $TMPDIR/rdist*
-temporary file for update lists
+Temporary file for update lists.
 .El
 .Sh EXAMPLES
 .Bd -literal -offset indent
@@ -771,36 +772,40 @@ ${FILES} :: stamp.cory
 	notify root@cory ;
 .Ed
 .Sh SEE ALSO
-.Xr csh 1 ,
+.Xr rdistd 1 ,
 .Xr rsh 1 ,
 .Xr sh 1 ,
 .Xr ssh 1 ,
-.Xr stat 2 ,
-.Xr rcmdsh 3
+.Xr re_format 7 ,
+.Xr syslogd 8
 .Sh STANDARDS
 The options
 .Op Fl bhiNOqRrsvwxy
 are still recognized for backwards compatibility.
 .Sh CAVEATS
-If the basename of a file  (the last component in the pathname) is ".", then
+If the basename of a file
+(the last component in the pathname)
+is
+.Sq .\& ,
 .Nm
 assumes the remote (destination) name is a directory.
 That is,
-.Pa /tmp/ .
+.Pa /tmp/.\&
 means that
 .Pa /tmp
 should be a directory on the remote host.
 .Sh BUGS
-Source files must reside on the local host where rdist is executed.
+Source files must reside on the local host where
+.Nm
+is executed.
 .Pp
-Variable expansion only works for name lists; there should be a general macro
-facility.
+Variable expansion only works for name lists;
+there should be a general macro facility.
 .Pp
 .Nm
 aborts on files which have a negative mtime (before Jan 1, 1970).
 .Pp
 If a hardlinked file is listed more than once in the same target,
-then
 .Nm
 will report missing links.
 Only one instance of a link should be listed in each target.
