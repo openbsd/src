@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.31 2007/03/01 22:36:25 jmc Exp $
+.\"	$OpenBSD: rdist.1,v 1.32 2007/03/01 22:51:57 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -630,44 +630,27 @@ option just for this one host.
 uses a collection of predefined message
 .Em facilities
 that each contain a list of message
-.Sy types
-specifying which types of messages to send to that
-.Em facility .
+.Em types
+specifying which types of messages to send to that facility.
 The local client
-.Pq Nm rdist
 and the remote server
-.Pq Xr rdistd 1
 each maintain their own copy
 of what types of messages to log to what facilities.
 .Pp
 The
 .Fl l
 .Ar local_logopts
-option to
-.Nm
-tells
-.Nm
-what logging options to use locally.
-The
+option specifies the logging options to use locally;
 .Fl L
 .Ar remote_logopts
-option to
-.Nm
-tells
-.Nm
-what logging options to pass to the remote
-.Em rdistd
-server.
+specifies the logging options to pass to the remote server.
 .Pp
-.Em logopts
-should be of the form:
+Logging options should be of the form:
 .Pp
 .D1 facility=types:facility=types...
 .Pp
 The valid facility names are:
-.Bl -tag -width Ds
-.It Ic stdout
-Messages to standard output.
+.Bl -tag -width Ds -offset indent
 .It Ic file
 Log to a file.
 To specify the file name, use the format
@@ -675,10 +658,6 @@ To specify the file name, use the format
 For example:
 .Pp
 .Dl file=/tmp/rdist.log=all,debug
-.It Ic syslog
-Use the
-.Xr syslogd 8
-facility.
 .It Ic notify
 Use the internal
 .Nm
@@ -691,39 +670,44 @@ keyword in a
 to specify what messages are mailed to the
 .Ic notify
 address.
+.It Ic stdout
+Messages to standard output.
+.It Ic syslog
+Use the
+.Xr syslogd 8
+facility.
 .El
 .Pp
-.Em types
+.Ar types
 should be a comma separated list of message types.
 Each message type specified enables that message level.
 This is unlike the
 .Xr syslog 3
 system facility which uses an ascending order scheme.
-The following are the valid
-.Em types :
-.Bl -tag -width Ds
+The following are the valid types:
+.Bl -tag -width Ds -offset indent
+.It Ic all
+All but debug messages.
 .It Ic change
 Things that change.
 This includes files that are installed or updated in some way.
+.It Ic debug
+Debugging information.
+.It Ic ferror
+Fatal errors.
 .It Ic info
 General information.
+.It Ic nerror
+Normal errors that are not fatal.
 .It Ic notice
 General info about things that change.
 This includes things like making directories which are needed in order
 to install a specific target, but which are not explicitly specified in the
 .Pa distfile .
-.It Ic nerror
-Normal errors that are not fatal.
-.It Ic ferror
-Fatal errors.
 .It Ic warning
 Warnings about errors which are not as serious as
 .Ic nerror
 type messages.
-.It Ic debug
-Debugging information.
-.It Ic all
-All but debug messages.
 .El
 .Pp
 Here is a sample command line option:
