@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.65 2007/02/28 09:26:26 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.66 2007/03/01 10:55:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -2333,6 +2333,8 @@ acx_set_probe_resp_tmplt(struct acx_softc *sc, struct ieee80211_node *ni)
 	bzero(&resp, sizeof(resp));
 
 	m = ieee80211_beacon_alloc(ic, ni);
+	if (m == NULL)
+		return (1);
 	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)&resp.data);
 	len = m->m_pkthdr.len + sizeof(resp.size);
 	m_freem(m); 
