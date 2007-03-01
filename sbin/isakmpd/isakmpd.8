@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.100 2006/12/05 14:29:14 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.101 2007/03/01 20:30:09 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -117,13 +117,13 @@ The default is to use both IPv4 and IPv6.
 If given,
 .Nm
 does not set up flows automatically.
-This is useful when flows are configured with
-.Xr ipsecctl 8
-or by other programs like
+Instead manual flows may be configured using
+.Xr ipsec.conf 5
+or by programs such as
 .Xr bgpd 8 .
 Thus
 .Nm
-only takes care of the SA establishment.
+only takes care of SA establishment.
 .It Fl c Ar config-file
 If given, the
 .Fl c
