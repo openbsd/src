@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.14 2007/03/01 20:54:33 kettenis Exp $	*/
+/*	$OpenBSD: smu.c,v 1.15 2007/03/01 21:39:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -254,6 +254,8 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Fans */
 	node = OF_getnodebyname(ca->ca_node, "fans");
+	if (node == 0)
+		node = OF_getnodebyname(ca->ca_node, "rpm-fans");
 	for (node = OF_child(node); node; node = OF_peer(node)) {
 		if (OF_getprop(node, "reg", &reg, sizeof reg) <= 0 ||
 		    OF_getprop(node, "device_type", type, sizeof type) <= 0)
