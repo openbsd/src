@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.30 2006/07/09 19:44:59 miod Exp $
+dnl	$OpenBSD: install,v 1.31 2007/03/01 19:16:16 miod Exp $
 OpenBSDInstallPrelude
 dnl No extra line, this has to stick to the geometry notes paragraph.
 
@@ -89,9 +89,6 @@ OpenBSDInstallPart2
 	spinning cursor has stopped and nothing further has happened,
 	either your boot media is bad, your diskless setup is incorrect,
 	or you may have a hardware or configuration problem.
-	Remember that if your machine is a 425e, you must use a serial
-	console, even if you can initiate the boot process from the
-	graphics console.
 
 
 OpenBSDBootMsgs
