@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.65 2007/01/18 20:45:55 henning Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.66 2007/03/01 17:20:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -174,7 +174,7 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 				break;
 		}
 
-		if (opts & PF_OPT_SHOWALL && b.pfrb_size > 0)
+		if ((opts & PF_OPT_SHOWALL) && b.pfrb_size > 0)
 			pfctl_print_title("TABLES:");
 
 		PFRB_FOREACH(p, &b)
@@ -326,7 +326,7 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 		RVTEST(pfr_tst_addrs(&table, b.pfrb_caddr, b.pfrb_size,
 		    &nmatch, flags));
 		xprintf(opts, "%d/%d addresses match", nmatch, b.pfrb_size);
-		if (opts & PF_OPT_VERBOSE && !(opts & PF_OPT_VERBOSE2))
+		if ((opts & PF_OPT_VERBOSE) && !(opts & PF_OPT_VERBOSE2))
 			PFRB_FOREACH(a, &b)
 				if (a->pfra_fback == PFR_FB_MATCH)
 					print_addrx(a, NULL,

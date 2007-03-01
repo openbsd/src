@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.261 2007/02/23 21:31:52 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.262 2007/03/01 17:20:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -873,7 +873,7 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 			if (pr.anchor_call[0] &&
 			   ((((p = strrchr(pr.anchor_call, '_')) != NULL) &&
 			   ((void *)p == (void *)pr.anchor_call ||
-			   *(--p) == '/')) || opts & PF_OPT_RECURSE)) {
+			   *(--p) == '/')) || (opts & PF_OPT_RECURSE))) {
 				brace++;
 				if ((p = strrchr(pr.anchor_call, '/')) !=
 				    NULL)
@@ -1929,9 +1929,9 @@ pfctl_show_anchors(int dev, int opts, char *anchorname)
 			strlcat(sub, "/", sizeof(sub));
 		}
 		strlcat(sub, pr.name, sizeof(sub));
-		if (sub[0] != '_' || opts & PF_OPT_VERBOSE)
+		if (sub[0] != '_' || (opts & PF_OPT_VERBOSE))
 			printf("  %s\n", sub);
-		if (opts & PF_OPT_VERBOSE && pfctl_show_anchors(dev, opts, sub))
+		if ((opts & PF_OPT_VERBOSE) && pfctl_show_anchors(dev, opts, sub))
 			return (-1);
 	}
 	return (0);
@@ -2230,7 +2230,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (opts & PF_OPT_CLRRULECTRS && showopt == NULL)
+	if ((opts & PF_OPT_CLRRULECTRS) && showopt == NULL)
 		pfctl_show_rules(dev, path, opts, PFCTL_SHOW_NOTHING,
 		    anchorname, 0);
 
