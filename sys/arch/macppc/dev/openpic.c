@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.35 2006/06/19 22:42:33 miod Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.36 2007/03/01 15:00:57 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -503,7 +503,7 @@ openpic_do_pending_int()
 			ipending &= ~SINT_TTY;
 			softtty();
 		}
-	} while (ipending & (SINT_NET|SINT_CLOCK|SINT_TTY) & ~cpl);
+	} while (ipending & (SINT_NET|SINT_CLOCK|SINT_TTY) & ~pcpl);
 	ipending &= pcpl;
 	cpl = pcpl;	/* Don't use splx... we are here already! */
 	ppc_intr_enable(s);

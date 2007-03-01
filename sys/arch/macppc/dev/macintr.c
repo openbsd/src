@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.30 2006/03/12 02:49:50 brad Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.31 2007/03/01 15:00:57 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -589,7 +589,7 @@ mac_intr_do_pending_int()
 			ipending &= ~SINT_TTY;
 			softtty();
 		}
-	} while (ipending & (SINT_NET|SINT_CLOCK|SINT_TTY) & ~cpl);
+	} while (ipending & (SINT_NET|SINT_CLOCK|SINT_TTY) & ~pcpl);
 	ipending &= pcpl;
 	cpl = pcpl;	/* Don't use splx... we are here already! */
 	ppc_intr_enable(s);
