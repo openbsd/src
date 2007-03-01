@@ -156,7 +156,7 @@ add_action_attributes(int sessid, request_rec *r)
     add_action_attribute(sessid, "LocalTimeOfDay", mytimeofday, r);
 
     add_action_attribute(sessid, "local_address", r->connection->local_ip, r);
-    add_action_attribute(sessid, "remote_adress", r->connection->remote_ip, r);
+    add_action_attribute(sessid, "remote_address", r->connection->remote_ip, r);
 
     if (r->connection->local_host != NULL)
 	add_action_attribute(sessid, "local_hostname",

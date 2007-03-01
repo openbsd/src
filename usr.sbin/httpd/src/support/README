@@ -46,7 +46,7 @@ log_server_status
 	it to a file. 
 
 logresolve
-	resolve hostnames for IP-adresses in Apache logfiles
+	resolve hostnames for IP-addresses in Apache logfiles
 
 phf_abuse_log.cgi
 	This script can be used to detect people trying to abuse an ancient
