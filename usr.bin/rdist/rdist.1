@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.29 2007/02/27 08:08:40 jmc Exp $
+.\"	$OpenBSD: rdist.1,v 1.30 2007/03/01 22:34:54 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -422,9 +422,9 @@ to be copied, the destination hosts, and what operations to perform
 to do the updating.
 Each entry has one of the following formats.
 .Bd -literal -offset indent
-\*(Ltvariable name\*(Gt `=' \*(Ltname list\*(Gt
-[ label: ] \*(Ltsource list\*(Gt `\-\*(Gt' \*(Ltdestination list\*(Gt \*(Ltcommand list\*(Gt
-[ label: ] \*(Ltsource list\*(Gt `::' \*(Lttime_stamp file\*(Gt \*(Ltcommand list\*(Gt
+\*(Ltvariable name\*(Gt = \*(Ltname list\*(Gt
+[ label: ] \*(Ltsource list\*(Gt -\*(Gt \*(Ltdestination list\*(Gt \*(Ltcommand list\*(Gt
+[ label: ] \*(Ltsource list\*(Gt :: \*(Lttimestamp file\*(Gt \*(Ltcommand list\*(Gt
 .Ed
 .Pp
 The first format is used for defining variables.
@@ -432,18 +432,17 @@ The second format is used for distributing files to other hosts.
 The third format is used for making lists of files that have been changed
 since some given date.
 The
-.Em source list
+.Ar source list
 specifies a list of files and/or directories on the local host which are to
 be used as the master copy for distribution.
 The
-.Em destination list
+.Ar destination list
 is the list of hosts to which these files are to be copied.
 Each file in the source list is added to a list of changes if the file
 is out of date on the host which is being updated (second format) or
-the file is newer than the time stamp file (third format).
-.Pp
-Labels are optional.
-They are used to identify a command for partial updates.
+the file is newer than the
+.Ar timestamp file
+(third format).
 .Pp
 Newlines, tabs, and blanks are only used as separators and are
 otherwise ignored.
@@ -456,6 +455,10 @@ Variables to be expanded begin with
 followed by one character or a name enclosed in curly braces
 (see the examples at the end).
 .Pp
+Labels are optional.
+They are used to identify a specific command to execute
+(for example, allowing an update of a subset of a repository).
+.Pp
 The source and destination lists have the following format:
 .Bd -literal -offset indent
 \*(Ltname\*(Gt
@@ -467,17 +470,12 @@ or
 .Pp
 These simple lists can be modified by using one level of set addition,
 subtraction, or intersection like this:
-.Bd -literal -offset indent
-list '-' list
-.Ed
+.Pp
+.Dl list - list
 or
-.Bd -literal -compact -offset indent
-list '+' list
-.Ed
+.Dl list + list
 or
-.Bd -literal -compact -offset indent
-list '&' list
-.Ed
+.Dl list & list
 .Pp
 If additional modifications are needed (e.g.\&
 .Do
@@ -489,13 +487,13 @@ variables.
 .Pp
 The shell meta-characters `[', `]', `{', `}', `*', and `?'
 are recognized and expanded (on the local host only) in the same way as
-.Xr csh 1 .
+.Xr ksh 1 .
 They can be escaped with a backslash.
 The `~' character is also expanded in the same way as
-.Xr csh 1
+.Xr ksh 1
 but is expanded separately on the local and destination hosts.
 When the
-.Fl o Ns Ar whole
+.Fl o Ar whole
 option is used with a file name that begins with `~', everything except the
 home directory is appended to the destination name.
 File names which do not begin with `/' or `~' use the destination user's
@@ -504,39 +502,39 @@ home directory as the root directory for the rest of the file name.
 The command list consists of zero or more commands of the following
 format.
 .Bl -column "except_pat" "pattern listXX" "opt_dest_name" ";" -offset indent
-.It `install' Ta \*(Ltoptions\*(Gt Ta opt_dest_name Ta `;'
-.It `notify' Ta \*(Ltname list\*(Gt Ta "" Ta `;'
-.It `except' Ta \*(Ltname list\*(Gt Ta "" Ta `;'
-.It `except_pat' Ta \*(Ltpattern list\*(Gt Ta "" Ta `;'
-.It `special' Ta \*(Ltname list\*(Gt Ta string Ta `;'
-.It `cmdspecial' Ta \*(Ltname list\*(Gt Ta string Ta `;'
+.It install Ta \*(Ltoptions\*(Gt Ta opt_dest_name Ta ;
+.It notify Ta \*(Ltname list\*(Gt Ta "" Ta ;
+.It except Ta \*(Ltname list\*(Gt Ta "" Ta ;
+.It except_pat Ta \*(Ltpattern list\*(Gt Ta "" Ta ;
+.It special Ta \*(Ltname list\*(Gt Ta string Ta ;
+.It cmdspecial Ta \*(Ltname list\*(Gt Ta string Ta ;
 .El
 .Pp
 The
-.Em install
+.Cm install
 command is used to copy out of date files and/or directories.
 Each source file is copied to each host in the destination list.
 Directories are recursively copied in the same way.
-.Em opt_dest_name
+.Ar opt_dest_name
 is an optional parameter to rename files.
 If no
-.Em install
+.Cm install
 command appears in the command list or the destination name is not specified,
 the source file name is used.
 Directories in the path name will be created if they
 do not exist on the remote host.
 The
-.Fl o Ns Ar distopts
+.Fl o Ar distopts
 option as specified above has the same semantics as
 on the command line except
 .Ar distopts
-only apply to the files in the source list.
+only applies to the files in the source list.
 The login name used on the destination host is the same as the local host
 unless the destination name is of the format
 .Dq login@host .
 .Pp
 The
-.Em notify
+.Cm notify
 command is used to mail the list of files updated (and any errors
 that may have occurred) to the listed names.
 If no `@' appears in the name, the destination host is appended to
@@ -544,57 +542,58 @@ the name
 (e.g. name1@host, name2@host, ...).
 .Pp
 The
-.Em except
+.Cm except
 command is used to update all of the files in the source list
 .Sy except
 for the files listed in
-.Em name list .
+.Ar name list .
 This is usually used to copy everything in a directory except certain files.
 .Pp
 The
-.Em except_pat
+.Cm except_pat
 command is like the
-.Em except
+.Cm except
 command except that
-.Em pattern list
-is a list of regular expressions
+.Ar pattern list
+is a list of basic regular expressions
 (see
-.Xr ed 1
+.Xr re_format 7
 for details).
 If one of the patterns matches some string within a file name, that file will
 be ignored.
 Note that since `\e' is a quote character, it must be doubled to become
 part of the regular expression.
 Variables are expanded in
-.Em pattern list
+.Ar pattern list
 but not shell file pattern matching characters.
 To include a `$', it must be escaped with `\e'.
 .Pp
 The
-.Em special
+.Cm special
 command is used to specify
 .Xr sh 1
 commands that are to be executed on the remote host after the file in
-.Em name list
+.Ar name list
 is updated or installed.
 If the
-.Em name list
+.Ar name list
 is omitted then the shell commands will be executed for every file
 updated or installed.
-.Em string
+.Ar string
 starts and ends with `"' and can cross multiple lines in
 .Pa distfile .
 Multiple commands to the shell should be separated by `;'.
 Commands are executed in the user's home directory on the host
 being updated.
 The
-.Em special
-command can be used to rebuild private databases, etc.
+.Cm special
+command can be used, for exmaple, to rebuild private databases
 after a program has been updated.
 The following environment variables are set for each
-.Em special
+.Cm special
 command:
-.Bl -tag -width "BASEFILE"
+.Pp
+.Bl -tag -width "BASEFILE" -offset 3n -compact
 .It Ev FILE
 The full pathname of the local file that was just updated.
 .It Ev REMFILE
@@ -604,9 +603,9 @@ The basename of the remote file that was just updated.
 .El
 .Pp
 The
-.Em cmdspecial
+.Cm cmdspecial
 command is similar to the
-.Em special
+.Cm special
 command, except it is executed only when the entire command is completed
 instead of after each file is updated.
 The list of files is placed in the
@@ -614,12 +613,17 @@ The list of files is placed in the
 environment variable.
 Each file name in
 .Ev FILES
-is separated by a `:' (colon).
+is separated by a
+.Sq :\&
+(colon).
 .Pp
-If a hostname ends in a `+' (plus sign), then the plus
+If a hostname ends in a
+.Sq +
+(plus sign),
+then the plus
 is stripped off and NFS checks are disabled.
 This is equivalent to disabling the
-.Fl o Ns Ar chknfs
+.Fl o Ar chknfs
 option just for this one host.
 .Sh MESSAGE LOGGING
 .Nm
