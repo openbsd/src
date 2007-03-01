@@ -1,4 +1,4 @@
-.\"	$OpenBSD: owsbm.4,v 1.2 2007/02/28 22:31:42 miod Exp $
+.\"	$OpenBSD: owsbm.4,v 1.3 2007/03/01 16:13:55 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Aaron Linville <aaron@linville.org>
 .\"
@@ -33,7 +33,7 @@ outgoing current, an elapsed time and 40 bytes of nonvolatile EEPROM.
 Only the three voltages (VDD, VAD, CR) and temperature are accessible by
 the
 .Xr sysctl 8
-interface though.
+interface.
 .Pp
 The following chips are supported by the driver:
 .Pp
@@ -42,12 +42,11 @@ The following chips are supported by the driver:
 Maxim/Dallas DS2438
 .El
 .Sh MEASURING CURRENT
-.Pp
 The sensor does not measure current directly.
 Instead it measures the voltage across the Rsens pins.
-.Bl -bullet -offset indent
+.Bd -literal -offset indent
 I = Voltage CR / Rsens    (where Rsens is in Ohms)
-.El
+.Ed
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr onewire 4 ,
