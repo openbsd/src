@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.25 2006/03/23 06:10:20 deraadt Exp $
+dnl	$OpenBSD: xfer,v 1.26 2007/03/01 19:17:29 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
@@ -28,7 +28,7 @@ OpenBSDXferFloppyFromUNIX
 
 Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
 
-	If you don't have a floppy drive you can copy the mini-root
+	If you don't have a floppy drive you can copy the miniroot
 	"miniroot{:--:}OSrev.fs" onto the hard disk you intend to boot on.
 	Traditionally, the way to do this is to use dd(1) to place the
 	bootable filesystem image in the "swap" partition of the disk
