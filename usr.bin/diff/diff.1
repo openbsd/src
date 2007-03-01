@@ -1,4 +1,4 @@
-.\" $OpenBSD: diff.1,v 1.30 2006/05/05 14:54:14 jmc Exp $
+.\" $OpenBSD: diff.1,v 1.31 2007/03/01 21:48:32 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nd differential file and directory comparator
 .Sh SYNOPSIS
 .Nm diff
-.Op Fl abdilpqtTw
+.Op Fl abdilpqTtw
 .Op Fl I Ar pattern
 .Oo
 .Fl c | e | f |
@@ -46,7 +46,7 @@
 .Op Fl L Ar label
 .Ar file1 file2
 .Nm diff
-.Op Fl abdilpqtTw
+.Op Fl abdilpqTtw
 .Op Fl I Ar pattern
 .Op Fl L Ar label
 .Fl C Ar number
@@ -57,13 +57,13 @@
 .Fl D Ar string
 .Ar file1 file2
 .Nm diff
-.Op Fl abdilpqtTw
+.Op Fl abdilpqTtw
 .Op Fl I Ar pattern
 .Op Fl L Ar label
 .Fl U Ar number
 .Ar file1 file2
 .Nm diff
-.Op Fl abdilNPpqtTw
+.Op Fl abdilNPpqrsTtw
 .Op Fl I Ar pattern
 .Oo
 .Fl c | e | f |
@@ -71,8 +71,6 @@
 .Oc
 .Bk -words
 .Op Fl L Ar label
-.Op Fl r
-.Op Fl s
 .Op Fl S Ar name
 .Op Fl X Ar file
 .Op Fl x Ar pattern
@@ -91,6 +89,12 @@ No output is produced if the files are identical.
 .Pp
 Output options (mutually exclusive):
 .Bl -tag -width Ds
+.It Fl C Ar number
+Like
+.Fl c
+but produces a diff with
+.Ar number
+lines of context.
 .It Fl c
 Produces a diff with 3 lines of context.
 With
@@ -113,6 +117,20 @@ both files with
 .Sq !\ \& .
 Changes which lie within 3 lines of each other are grouped together on
 output.
+.It Fl D Ar string
+Creates a merged version of
+.Ar file1
+and
+.Ar file2
+on the standard output, with C preprocessor controls included so that
+a compilation of the result without defining
+.Ar string
+is equivalent to compiling
+.Ar file1 ,
+while defining
+.Ar string
+will yield
+.Ar file2 .
 .It Fl e
 Produces output in a form suitable as input for the editor utility,
 .Xr ed 1 ,
@@ -143,6 +161,12 @@ This is the form used by
 .It Fl q
 Just print a line when the files differ.
 Does not output a list of changes.
+.It Fl U Ar number
+Like
+.Fl u
+but produces a diff with
+.Ar number
+lines of context.
 .It Fl u
 Produces a
 .Em unified
@@ -154,32 +178,6 @@ However, unlike with
 .Fl c ,
 all lines to be changed (added and/or removed) are present in
 a single section.
-.It Fl C Ar number
-Like
-.Fl c
-but produces a diff with
-.Ar number
-lines of context.
-.It Fl D Ar string
-Creates a merged version of
-.Ar file1
-and
-.Ar file2
-on the standard output, with C preprocessor controls included so that
-a compilation of the result without defining
-.Ar string
-is equivalent to compiling
-.Ar file1 ,
-while defining
-.Ar string
-will yield
-.Ar file2 .
-.It Fl U Ar number
-Like
-.Fl u
-but produces a diff with
-.Ar number
-lines of context.
 .El
 .Pp
 Comparison options:
@@ -221,6 +219,11 @@ E.g.,
 .Dq A
 will compare equal to
 .Dq a .
+.It Fl L Ar label
+Print
+.Ar label
+instead of the first (and second, if this option is specified twice)
+file name and time in the context or unified diff header.
 .It Fl l
 Long output format; each text file
 .Nm diff Ns \'d
@@ -229,17 +232,16 @@ is piped through
 to paginate it;
 other differences are remembered and summarized
 after all text file differences are reported.
-.It Fl L Ar label
-Print
-.Ar label
-instead of the first (and second, if this option is specified twice)
-file name and time in the context or unified diff header.
 .It Fl p
 With unified and context diffs, show with each change
 the first 40 characters of the last line before the context beginning
 with a letter, an underscore or a dollar sign.
 For C source code following standard layout conventions, this will
 show the prototype of the function the change applies to.
+.It Fl T
+Print a tab rather than a space before the rest of the line for the
+normal, context or unified output formats.
+This makes the alignment of tabs in the line consistent.
 .It Fl t
 Will expand tabs in output lines.
 Normal or
@@ -248,10 +250,6 @@ output adds character(s) to the front of each line which may screw up
 the indentation of the original source lines and make the output listing
 difficult to interpret.
 This option will preserve the original source's indentation.
-.It Fl T
-Print a tab rather than a space before the rest of the line for the
-normal, context or unified output formats.
-This makes the alignment of tabs in the line consistent.
 .It Fl w
 Is similar to
 .Fl b
@@ -277,15 +275,15 @@ too but was of zero size.
 Causes application of
 .Nm
 recursively to common subdirectories encountered.
-.It Fl s
-Causes
-.Nm
-to report files which are the same, which are otherwise not mentioned.
 .It Fl S Ar name
 Re-starts a directory
 .Nm
 in the middle, beginning with file
 .Ar name .
+.It Fl s
+Causes
+.Nm
+to report files which are the same, which are otherwise not mentioned.
 .It Fl X Ar file
 Exclude files and subdirectories from comparison whose basenames match
 lines in
