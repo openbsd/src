@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.2 2007/01/29 19:17:20 martin Exp $
+#	$OpenBSD: Makefile,v 1.3 2007/03/01 22:53:44 martin Exp $
 
-# TODO: autoconf intro mainbus scif shb rsclock shpcic
-MAN=	obio.4 power.4 mem.4
+# TODO: autoconf scif shb rsclock
+MAN=	intro.4 obio.4 power.4 shpcic.4 mainbus.4 mem.4
 MANSUBDIR=landisk
 
 #MLINKS+= mem.4 kmem.4

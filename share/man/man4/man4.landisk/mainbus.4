@@ -28,41 +28,35 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: obio.4,v 1.3 2007/03/01 22:53:44 martin Exp $
-.\"	$NetBSD: obio.4,v 1.1 1997/07/18 02:13:40 ender Exp $
+.\"	$OpenBSD: mainbus.4,v 1.1 2007/03/01 22:53:44 martin Exp $
+.\"	$NetBSD: mainbus.4,v 1.1 1997/07/18 02:13:40 ender Exp $
 .\"
-.Dd January 16, 2007
-.Dt OBIO 4 landisk
+.Dd March 2, 2007
+.Dt MAINBUS 4 landisk
 .Os
 .Sh NAME
-.Nm obio
-.Nd landisk onboard I/O bus device
+.Nm mainbus
+.Nd landisk main processor bus device
 .Sh SYNOPSIS
+.Cd "mainbus0 at root"
+.Cd "cpu0 at mainbus?"
+.Cd "shb* at mainbus?"
+.Cd "shpcic* at mainbus?"
 .Cd "obio0 at mainbus?"
 .Sh DESCRIPTION
 The
 .Nm
 interface serves as an abstraction used by the autoconfiguration
-system to help find and attach devices
-.Pq e.g. the disk controllers
-connected to the
+system to help find and attach buses or devices connected to the
 .Tn landisk
-onboard I/O bus.
-.Pp
-.Ox
-provides support for the following devices:
-.Pp
-.Bl -tag -width 12n -offset indent -compact
-.It Xr power 4
-power switch
-.It Xr wdc 4
-WD100x compatible hard disk controller driver
-.El
-.\".Sh SEE ALSO
+main processor bus.
+.Sh SEE ALSO
 .Xr intro 4 ,
-.\".Xr mainbus 4
+.Xr obio 4 ,
+.\" shb
+.Xr shpcic 4
 .Sh HISTORY
 The
 .Nm
-driver first appeared in
+first appeared in
 .Ox 4.1 .

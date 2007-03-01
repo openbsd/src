@@ -1,7 +1,6 @@
-.\"     $OpenBSD: power.4,v 1.2 2007/03/01 22:53:44 martin Exp $
+.\"	$OpenBSD: shpcic.4,v 1.1 2007/03/01 22:53:44 martin Exp $
 .\"
-.\"
-.\" Copyright (c) 2007 Martin Reindl
+.\" Copyright (c) 2004 Martin Reindl
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,33 +14,25 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd January 8, 2007
-.Dt POWER 4 landisk
+.Dd March 2, 2007
+.Dt SHPCIC 4 landisk
 .Os
 .Sh NAME
-.Nm power
-.Nd power switch
+.Nm shpcic 
+.Nd landisk SuperH PCI-Host Bridge
 .Sh SYNOPSIS
-.Cd "power0 at obio?"
+.Cd "shpcic* at mainbus?"
+.Cd "pci0 at shpcic?"
 .Sh DESCRIPTION
-Landisk models provide an interrupt when the power switch is flipped to the
-Off position.
 The
 .Nm
-driver catches that interrupt.
-If the
-.Va machdep.kbdreset
-.Xr sysctl 8
-is set to 1,
-.Nm power
-will signal
-.Xr init 8
-to do a clean shutdown.
+driver provides support for the landisk on-board PCI bus.
+This device is largely transparent and provides no user accessible entry points.
 .Sh SEE ALSO
-.Xr obio 4 ,
-.Xr intro 4 ,
+.Xr mainbus 4 ,
+.Xr pci 4
 .Sh HISTORY
-Support for the
+The
 .Nm
 driver first appeared in
 .Ox 4.1 .
