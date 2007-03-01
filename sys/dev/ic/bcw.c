@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.62 2007/02/27 07:04:18 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.63 2007/03/01 19:48:00 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -151,6 +151,7 @@ struct bcw_lopair *
 		    uint16_t);
 struct bcw_lopair *
 		bcw_phy_current_lopair(struct bcw_softc *);
+void		bcw_phy_prepare_init(struct bcw_softc *);
 /* radio */
 void		bcw_radio_off(struct bcw_softc *);
 void		bcw_radio_on(struct bcw_softc *);
@@ -175,12 +176,14 @@ uint16_t	bcw_radio_chan2freq_a(uint8_t);
 uint16_t	bcw_radio_chan2freq_bg(uint8_t);
 uint16_t	bcw_radio_default_baseband_attenuation(struct bcw_softc *);
 uint16_t	bcw_radio_default_radio_attenuation(struct bcw_softc *);
+uint16_t	bcw_radio_default_txctl1(struct bcw_softc *);
 void		bcw_radio_clear_tssi(struct bcw_softc *);
 void		bcw_radio_set_tx_iq(struct bcw_softc *);
 uint16_t	bcw_radio_get_txgain_baseband(uint16_t);
 uint16_t	bcw_radio_get_txgain_freq_power_amp(uint16_t);
 uint16_t	bcw_radio_get_txgain_dac(uint16_t);
 uint16_t	bcw_radio_freq_r3a_value(uint16_t);
+void		bcw_radio_prepare_init(struct bcw_softc *);
 /* ilt */
 void		bcw_ilt_write(struct bcw_softc *, uint16_t, uint16_t);
 uint16_t	bcw_ilt_read(struct bcw_softc *, uint16_t);
@@ -931,9 +934,13 @@ bcw_attach(struct bcw_softc *sc)
 		break;
 	}
 
+	/*
+	 * Initialize softc vars
+	 */
 	sc->sc_phy_lopairs = malloc(sizeof(struct bcw_lopair) * BCW_LO_COUNT,
 	    M_DEVBUF, M_NOWAIT);
-	memset(sc->sc_phy_lopairs, 0, sizeof(struct bcw_lopair) * BCW_LO_COUNT);
+	bcw_phy_prepare_init(sc);
+	bcw_radio_prepare_init(sc);
 
 	/*
 	 * Query the RadioID register, on a 4317 use a lookup instead
@@ -4956,6 +4963,24 @@ bcw_phy_current_lopair(struct bcw_softc *sc)
 	    sc->sc_radio_radio_atten, sc->sc_radio_txctl1));
 }
 
+void
+bcw_phy_prepare_init(struct bcw_softc *sc)
+{
+	sc->sc_phy_antenna_diversity = 0xffff;
+	memset(sc->sc_phy_minlowsig, 0xff, sizeof(sc->sc_phy_minlowsig));
+	memset(sc->sc_phy_minlowsigpos, 0, sizeof(sc->sc_phy_minlowsigpos));
+
+	/* flags */
+	sc->sc_phy_calibrated = 0;
+	sc->sc_phy_is_locked = 0;
+
+	if (sc->sc_phy_lopairs)
+		memset(sc->sc_phy_lopairs, 0, sizeof(struct bcw_lopair) *
+		    BCW_LO_COUNT);
+
+	memset(sc->sc_phy_loopback_gain, 0, sizeof(sc->sc_phy_loopback_gain));
+}
+
 /*
  * Radio
  */
@@ -5952,6 +5977,21 @@ bcw_radio_default_radio_attenuation(struct bcw_softc *sc)
 	return (att);
 }
 
+uint16_t
+bcw_radio_default_txctl1(struct bcw_softc *sc)
+{
+	if (sc->sc_radio_ver != 0x2050)
+		return (0);
+	if (sc->sc_radio_rev == 1)
+		return (3);
+	if (sc->sc_radio_rev < 6)
+		return (2);
+	if (sc->sc_radio_rev == 8)
+		return (1);
+
+	return (0);
+}
+
 void
 bcw_radio_clear_tssi(struct bcw_softc *sc)
 {
@@ -6071,6 +6111,35 @@ bcw_radio_freq_r3a_value(uint16_t frequency)
 		val = 0x0040;
 
 	return (val);
+}
+
+void
+bcw_radio_prepare_init(struct bcw_softc *sc)
+{
+	int i;
+
+	/* set default attenuation values */
+	sc->sc_radio_baseband_atten =
+	    bcw_radio_default_baseband_attenuation(sc);
+	sc->sc_radio_radio_atten =
+	    bcw_radio_default_radio_attenuation(sc);
+	sc->sc_radio_txctl1 = bcw_radio_default_txctl1(sc);
+	sc->sc_radio_txctl2 = 0xffff;
+	sc->sc_radio_txpwr_offset = 0;
+
+	/* nrssi */
+	sc->sc_radio_nrssislope = 0;
+	for (i = 0; i < BCW_ARRAY_SIZE(sc->sc_radio_nrssi); i++)
+		sc->sc_radio_nrssi[i] = -1000;
+	for (i = 0; i < BCW_ARRAY_SIZE(sc->sc_radio_nrssi_lt); i++)
+		sc->sc_radio_nrssi_lt[i] = i;
+
+	sc->sc_radio_lofcal = 0xffff;
+	sc->sc_radio_initval = 0xffff;
+
+	sc->sc_radio_aci_enable = 0;
+	sc->sc_radio_aci_wlan_automatic = 0;
+	sc->sc_radio_aci_hw_rssi = 0;
 }
 
 /*

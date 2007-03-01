@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.25 2007/02/27 07:04:18 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.26 2007/03/01 19:48:00 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -22,6 +22,8 @@
  *
  * Cliff Wright cliff@snipe444.org
  */
+
+#define BCW_ARRAY_SIZE(array)	(sizeof(array) / sizeof(array[0]))
 
 struct fwheader {
 	char	filename[64];
@@ -237,9 +239,9 @@ struct bcw_softc {
 	uint16_t		sc_phy_type;
 	uint16_t		sc_phy_rev;
 	uint8_t			sc_phy_connected:1, /* XXX */
-				    calibrated:1,
-				    is_locked:1,
-				    dyn_tssi_tbl:1;
+				    sc_phy_calibrated:1,
+				    sc_phy_is_locked:1,
+				    sc_phy_dyn_tssi_tbl:1;
 	uint16_t		sc_phy_loopback_gain[2];
 	struct bcw_lopair	*sc_phy_lopairs;
 	uint16_t		sc_phy_savedpctlreg;
@@ -247,6 +249,7 @@ struct bcw_softc {
 	uint16_t		sc_phy_minlowsigpos[2];
 	int8_t			sc_phy_idle_tssi;
 	const int8_t		sc_phy_tssi2dbm;
+	uint16_t		sc_phy_antenna_diversity;
 //	uint16_t		sc_corerev;
 	uint32_t		sc_radio_mnf;
 	uint16_t		sc_radio_rev;
@@ -278,6 +281,7 @@ struct bcw_softc {
 	uint16_t		sc_radio_txctl1;
 	uint16_t		sc_radio_txctl2;
 	uint8_t			sc_radio_channel;
+	int8_t			sc_radio_nrssi_lt[64];
 	uint8_t			sc_idletssi;
 	uint8_t			sc_spromrev;
 	uint16_t		sc_boardflags;
