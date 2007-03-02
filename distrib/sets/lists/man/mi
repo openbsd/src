@@ -1284,10 +1284,10 @@
 ./usr/share/man/cat4/ksyms.0
 ./usr/share/man/cat4/kue.0
 ./usr/share/man/cat4/landisk
+./usr/share/man/cat4/landisk/intro.0
 ./usr/share/man/cat4/landisk/mainbus.0
 ./usr/share/man/cat4/landisk/mem.0
 ./usr/share/man/cat4/landisk/obio.0
-./usr/share/man/cat4/landisk/power.0
 ./usr/share/man/cat4/landisk/power.0
 ./usr/share/man/cat4/landisk/shpcic.0
 ./usr/share/man/cat4/lc.0
