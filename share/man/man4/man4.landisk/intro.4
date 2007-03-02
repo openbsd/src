@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.1 2007/03/01 22:53:44 martin Exp $
+.\"	$OpenBSD: intro.4,v 1.2 2007/03/02 08:15:54 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -97,25 +97,25 @@ Not all supported devices are listed.
 .Pp
 .Bl -tag -width lotsofletters -compact -offset indent
 .It Xr cd 4
-ATAPI or SCSI CD drives.
+ATAPI and SCSI CD-ROM driver
 .It Xr obio 4
-Onboard I/O bus device.
+landisk onboard I/O bus device
 .It Xr pciide 4
-PCI IDE controller.
+PCI IDE controller driver
 .It Xr power 4
-Power switch.
+power switch
 .\" cpu
-.It Xr sd 4
-SCSI disks.
 .\" rsclock
+.It Xr sd 4
+SCSI disk driver
 .\" shb
 .\" scif
 .It Xr shpcic 4
-SuperH PCI-Host Bridge.
+landisk SuperH PCI-Host Bridge
 .It Xr wd 4
-IDE disks.
+WD100x compatible hard disk driver
 .It Xr wdc 4
-IDE disk controller.
+WD100x compatible hard disk controller driver
 .El
 .Pp
 A further list of available devices is contained within the pages
