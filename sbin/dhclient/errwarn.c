@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.14 2007/03/02 11:27:36 henning Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.15 2007/03/02 11:31:17 henning Exp $	*/
 
 /* Errors and warnings... */
 
@@ -238,8 +238,8 @@ parse_warn(char *fmt, ...)
 		if (lexchar < 81) {
 			iov[4].iov_base = spaces;
 			iov[4].iov_len = lexchar - 1;
-			iov[5].iov_base = "\n";
-			iov[5].iov_len = 1;
+			iov[5].iov_base = "^\n";
+			iov[5].iov_len = 2;
 			iovcnt += 2;
 		}
 		writev(STDERR_FILENO, iov, iovcnt);
