@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.68 2007/02/25 08:00:06 deraadt Exp $	*/
+/*	$OpenBSD: re.c,v 1.69 2007/03/02 17:49:51 krw Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1002,7 +1002,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
 			       IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
-#ifdef RE_VLAN
+#if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
@@ -1149,6 +1149,7 @@ re_newbuf(struct rl_softc *sc, int idx, struct mbuf *m)
 
 	rxs->rxs_mbuf = m;
 
+	d->rl_vlanctl = 0;
 	cmdstat = map->dm_segs[0].ds_len;
 	if (idx == (RL_RX_DESC_CNT - 1))
 		cmdstat |= RL_RDESC_CMD_EOR;
@@ -1522,12 +1523,16 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 {
 	bus_dmamap_t	map;
 	int		error, seg, nsegs, uidx, startidx, curidx, lastidx, pad;
-#ifdef RE_VLAN
-	struct m_tag	*mtag;
-#endif
 	struct rl_desc	*d;
 	u_int32_t	cmdstat, rl_flags = 0;
 	struct rl_txq	*txq;
+#if NVLAN > 0
+	struct ifvlan	*ifv = NULL;
+
+	if ((m->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
+	    m->m_pkthdr.rcvif != NULL)
+		ifv = m->m_pkthdr.rcvif->if_softc;
+#endif
 
 	if (sc->rl_ldata.rl_tx_free <= RL_NTXDESC_RSVD)
 		return (EFBIG);
@@ -1619,6 +1624,7 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 			goto fail_unload;
 		}
 
+		d->rl_vlanctl = 0;
 		re_set_bufaddr(d, map->dm_segs[seg].ds_addr);
 		cmdstat = rl_flags | map->dm_segs[seg].ds_len;
 		if (seg == 0)
@@ -1639,6 +1645,7 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 		bus_addr_t paddaddr;
 
 		d = &sc->rl_ldata.rl_tx_list[curidx];
+		d->rl_vlanctl = 0;
 		paddaddr = RL_TXPADDADDR(sc);
 		re_set_bufaddr(d, paddaddr);
 		cmdstat = rl_flags |
@@ -1660,12 +1667,12 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 	 * transmission attempt.
 	 */
 
-#ifdef RE_VLAN
-	if (sc->ethercom.ec_nvlans &&
-	    (mtag = m_tag_find(m_head, PACKET_TAG_VLAN, NULL)) != NULL)
-		sc->rl_ldata.rl_tx_list[*idx].rl_vlanctl =
-		    htole32(htons(*(u_int *)(mtag + 1)) |
+#if NVLAN > 0
+	if (ifv != NULL) {
+		sc->rl_ldata.rl_tx_list[startidx].rl_vlanctl =
+		    htole32(swap16(ifv->ifv_tag) |
 		    RL_TDESC_VLANCTL_TAG);
+	}
 #endif
 
 	/* Transfer ownership of packet to the chip. */
