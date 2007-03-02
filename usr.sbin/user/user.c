@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.69 2007/03/02 04:23:35 ray Exp $ */
+/* $OpenBSD: user.c,v 1.70 2007/03/02 04:27:11 ray Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -2112,11 +2112,11 @@ groupmod(int argc, char **argv)
 	if (dupgid && gid < 0) {
 		errx(EXIT_FAILURE, "Duplicate which gid?");
 	}
-	if (!is_local(*argv, _PATH_GROUP)) {
-		errx(EXIT_FAILURE, "Group `%s' must be a local group", *argv);
-	}
 	if ((grp = getgrnam(*argv)) == NULL) {
 		errx(EXIT_FAILURE, "can't find group `%s' to modify", *argv);
+	}
+	if (!is_local(*argv, _PATH_GROUP)) {
+		errx(EXIT_FAILURE, "Group `%s' must be a local group", *argv);
 	}
 	if (newname != NULL && !valid_group(newname)) {
 		errx(EXIT_FAILURE, "invalid group name `%s'", newname);
