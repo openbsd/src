@@ -1,4 +1,4 @@
-/*	$OpenBSD: monop.c,v 1.7 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: monop.c,v 1.8 2007/03/02 04:32:32 ray Exp $	*/
 /*	$NetBSD: monop.c,v 1.3 1995/03/23 08:34:52 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: monop.c,v 1.7 2003/06/03 03:01:40 millert Exp $";
+static const char rcsid[] = "$OpenBSD: monop.c,v 1.8 2007/03/02 04:32:32 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,8 +111,7 @@ blew_it:
 				printf("user closed input stream, quitting...\n");
 				exit(0);
 			}
-			sp = buf + strlen(buf) - 1;
-			if (*sp == '\n')
+			if ((sp = strchr(buf, '\n')) != NULL)
 				*sp = '\0';
 		} while (strlen(buf) == 0);
 		if ((name_list[i] = play[i].name = strdup(buf)) == NULL)

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.60 2007/01/04 17:55:35 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.61 2007/03/02 04:32:32 ray Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -2055,7 +2055,7 @@ end_loop:
 
 		cp = inLine;
 		oendp = endp = inLine + strlen(inLine);
-		if (endp[-1] == '\n') {
+		if (endp != inLine && endp[-1] == '\n') {
 		    *--endp = '\0';
 		}
 		cp = JobOutput(job, inLine, endp, false);
