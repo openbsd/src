@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetround.c,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $	*/
+/*	$OpenBSD: fpsetround.c,v 1.2 2007/03/02 06:11:54 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -23,10 +23,17 @@ fp_rnd
 fpsetround(fp_rnd rnd_dir)
 {
 	register_t fpscr, nfpscr;
+#if defined(__SH4__) && !defined(__SH4_NOFPU__)
+	extern register_t __fpscr_values[2];
+#endif
 
 	__asm__ __volatile__ ("sts fpscr, %0" : "=r" (fpscr));
 	if (rnd_dir == FP_RN || rnd_dir == FP_RZ) {
 		nfpscr = (fpscr & ~0x03) | rnd_dir;
+#if defined(__SH4__) && !defined(__SH4_NOFPU__)
+		__fpscr_values[0] = (__fpscr_values[0] & ~0x03) | rnd_dir;
+		__fpscr_values[1] = (__fpscr_values[1] & ~0x03) | rnd_dir;
+#endif
 		__asm__ __volatile__ ("lds %0, fpscr" : : "r" (nfpscr));
 	}
 	/* else how report an error? */

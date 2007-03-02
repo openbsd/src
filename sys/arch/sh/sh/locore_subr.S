@@ -1,6 +1,22 @@
-/*	$OpenBSD: locore_subr.S,v 1.5 2006/12/14 14:56:23 kettenis Exp $	*/
+/*	$OpenBSD: locore_subr.S,v 1.6 2007/03/02 06:11:54 miod Exp $	*/
 /*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
+/*
+ * Copyright (c) 2007 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice, this permission notice, and the disclaimer below
+ * appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,8 +65,14 @@
  * LINTSTUB: include <sh/locore.h>
  */
 
-#define	SAVEPCB(reg,branch) \
+/*
+ * Save integer registers in the pcb.
+ * reg points to pcb->pcb_sf.
+ */
+#define	SAVEPCB(reg) \
 	add	#SF_SIZE, reg ; \
+	sts.l	mach,	@-/**/reg ; \
+	sts.l	macl,	@-/**/reg ; \
 	stc.l	r7_bank,@-/**/reg ; \
 	stc.l	sr,	@-/**/reg ; \
 	stc.l	r6_bank,@-/**/reg ; \
@@ -62,8 +84,98 @@
 	mov.l	r12,	@-/**/reg ; \
 	mov.l	r13,	@-/**/reg ; \
 	mov.l	r14,	@-/**/reg ; \
-	branch ; \
-	 mov.l	r15,	@-/**/reg
+	mov.l	r15,	@-/**/reg
+
+/*
+ * Save floating point registers to a fpreg structure.
+ * reg points to the structure, tmp and tmp2 are two scratch integer registers.
+ */
+#define	SAVEFP(reg, tmp, tmp2) \
+	add	#124,	reg ; \
+	sts	fpscr,	tmp2 ; \
+	add	#(FP_SIZE - 124), reg ; \
+	mov	#0,	tmp; \
+	mov.l	tmp2,	@-/**/reg ; \
+	lds	tmp,	fpscr; \
+	sts.l	fpul,	@-/**/reg ; \
+	frchg; \
+	fmov.s	fr15,	@-/**/reg ; \
+	fmov.s	fr14,	@-/**/reg ; \
+	fmov.s	fr13,	@-/**/reg ; \
+	fmov.s	fr12,	@-/**/reg ; \
+	fmov.s	fr11,	@-/**/reg ; \
+	fmov.s	fr10,	@-/**/reg ; \
+	fmov.s	fr9,	@-/**/reg ; \
+	fmov.s	fr8,	@-/**/reg ; \
+	fmov.s	fr7,	@-/**/reg ; \
+	fmov.s	fr6,	@-/**/reg ; \
+	fmov.s	fr5,	@-/**/reg ; \
+	fmov.s	fr4,	@-/**/reg ; \
+	fmov.s	fr3,	@-/**/reg ; \
+	fmov.s	fr2,	@-/**/reg ; \
+	fmov.s	fr1,	@-/**/reg ; \
+	fmov.s	fr0,	@-/**/reg ; \
+	frchg; \
+	fmov.s	fr15,	@-/**/reg ; \
+	fmov.s	fr14,	@-/**/reg ; \
+	fmov.s	fr13,	@-/**/reg ; \
+	fmov.s	fr12,	@-/**/reg ; \
+	fmov.s	fr11,	@-/**/reg ; \
+	fmov.s	fr10,	@-/**/reg ; \
+	fmov.s	fr9,	@-/**/reg ; \
+	fmov.s	fr8,	@-/**/reg ; \
+	fmov.s	fr7,	@-/**/reg ; \
+	fmov.s	fr6,	@-/**/reg ; \
+	fmov.s	fr5,	@-/**/reg ; \
+	fmov.s	fr4,	@-/**/reg ; \
+	fmov.s	fr3,	@-/**/reg ; \
+	fmov.s	fr2,	@-/**/reg ; \
+	fmov.s	fr1,	@-/**/reg ; \
+	fmov.s	fr0,	@-/**/reg ; \
+	lds	tmp2,	fpscr
+
+/*
+ * Load floating point registers from a fpreg structure.
+ * reg points to the structure, tmp is a scratch integer register.
+ */
+#define	LOADFP(reg, tmp) \
+	mov	#0,	tmp; \
+	lds	tmp,	fpscr; \
+	fmov.s	@/**/reg/**/+, fr0 ; \
+	fmov.s	@/**/reg/**/+, fr1 ; \
+	fmov.s	@/**/reg/**/+, fr2 ; \
+	fmov.s	@/**/reg/**/+, fr3 ; \
+	fmov.s	@/**/reg/**/+, fr4 ; \
+	fmov.s	@/**/reg/**/+, fr5 ; \
+	fmov.s	@/**/reg/**/+, fr6 ; \
+	fmov.s	@/**/reg/**/+, fr7 ; \
+	fmov.s	@/**/reg/**/+, fr8 ; \
+	fmov.s	@/**/reg/**/+, fr9 ; \
+	fmov.s	@/**/reg/**/+, fr10 ; \
+	fmov.s	@/**/reg/**/+, fr11 ; \
+	fmov.s	@/**/reg/**/+, fr12 ; \
+	fmov.s	@/**/reg/**/+, fr13 ; \
+	fmov.s	@/**/reg/**/+, fr14 ; \
+	fmov.s	@/**/reg/**/+, fr15 ; \
+	frchg; \
+	fmov.s	@/**/reg/**/+, fr0 ; \
+	fmov.s	@/**/reg/**/+, fr1 ; \
+	fmov.s	@/**/reg/**/+, fr2 ; \
+	fmov.s	@/**/reg/**/+, fr3 ; \
+	fmov.s	@/**/reg/**/+, fr4 ; \
+	fmov.s	@/**/reg/**/+, fr5 ; \
+	fmov.s	@/**/reg/**/+, fr6 ; \
+	fmov.s	@/**/reg/**/+, fr7 ; \
+	fmov.s	@/**/reg/**/+, fr8 ; \
+	fmov.s	@/**/reg/**/+, fr9 ; \
+	fmov.s	@/**/reg/**/+, fr10 ; \
+	fmov.s	@/**/reg/**/+, fr11 ; \
+	fmov.s	@/**/reg/**/+, fr12 ; \
+	fmov.s	@/**/reg/**/+, fr13 ; \
+	fmov.s	@/**/reg/**/+, fr14 ; \
+	fmov.s	@/**/reg/**/+, fr15 ; \
+	lds.l	@/**/reg/**/+, fpul ; \
+	lds.l	@/**/reg/**/+, fpscr
 
 	.text
 	.align 5	/* align cache line size (32B) */
@@ -75,7 +187,9 @@ ENTRY(cpu_switch)
 	/* Save current proc's context to switchframe */
 	mov.l	.L_SF,	r0
 	mov.l	@(r0, r4), r1
-	SAVEPCB(r1,)
+	SAVEPCB(r1)
+	add	#PCB_FP, r1
+	SAVEFP(r1, r8, r9)
 
 .L_find_and_switch:
 	/* Search next proc. cpu_switch_search may or may not sleep. */
@@ -123,7 +237,13 @@ ENTRY(cpu_switch)
 	lds.l	@r1+,	pr
 	add	#4,	r1		/* r6_bank already restored */
 	ldc.l	@r1+,	sr
+	add	#4,	r1		/* r7_bank already restored */
+	lds.l	@r1+,	macl
+	lds.l	@r1+,	mach
 
+	mov.l	@(r0, r4), r1
+	add	#PCB_FP, r1
+	LOADFP(r1, r0)
 	rts
 	 nop
 	.align	2
@@ -439,8 +559,34 @@ _C_LABEL(esigcode):
  *	save struct switchframe.
  */
 ENTRY(savectx)
-	SAVEPCB(r4, rts)
+	SAVEPCB(r4)
+	add	#PCB_FP, r4
+	SAVEFP(r4, r0, r1)
+	rts
+	 nop
 	SET_ENTRY_SIZE(savectx)
+
+/*
+ * void fpu_save(struct fpreg *fp)
+ *
+ * Saves fpu context.
+ */
+ENTRY(fpu_save)
+	SAVEFP(r4, r0, r1)
+	rts
+	 nop
+	SET_ENTRY_SIZE(fpu_save)
+
+/*
+ * void fpu_restore(struct fpreg *fp)
+ * 
+ * Restores fpu context.
+ */
+ENTRY(fpu_restore)
+	LOADFP(r4, r0)
+	rts
+	 nop
+	SET_ENTRY_SIZE(fpu_restore)
 
 /*
  * LINTSTUB: Func: int copyout(const void *ksrc, void *udst, size_t len)

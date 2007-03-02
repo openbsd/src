@@ -1,6 +1,22 @@
-/*	$OpenBSD: sh_machdep.c,v 1.8 2007/02/26 21:30:18 miod Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.9 2007/03/02 06:11:54 miod Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
+/*
+ * Copyright (c) 2007 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice, this permission notice, and the disclaimer below
+ * appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +53,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -461,30 +476,36 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 		sip = NULL;
 
 	/* Save register context. */
-	frame.sf_uc.sc_spc = tf->tf_spc;
-	frame.sf_uc.sc_ssr = tf->tf_ssr;
-	frame.sf_uc.sc_pr = tf->tf_pr;
-	frame.sf_uc.sc_r14 = tf->tf_r14;
-	frame.sf_uc.sc_r13 = tf->tf_r13;
-	frame.sf_uc.sc_r12 = tf->tf_r12;
-	frame.sf_uc.sc_r11 = tf->tf_r11;
-	frame.sf_uc.sc_r10 = tf->tf_r10;
-	frame.sf_uc.sc_r9 = tf->tf_r9;
-	frame.sf_uc.sc_r8 = tf->tf_r8;
-	frame.sf_uc.sc_r7 = tf->tf_r7;
-	frame.sf_uc.sc_r6 = tf->tf_r6;
-	frame.sf_uc.sc_r5 = tf->tf_r5;
-	frame.sf_uc.sc_r4 = tf->tf_r4;
-	frame.sf_uc.sc_r3 = tf->tf_r3;
-	frame.sf_uc.sc_r2 = tf->tf_r2;
-	frame.sf_uc.sc_r1 = tf->tf_r1;
-	frame.sf_uc.sc_r0 = tf->tf_r0;
-	frame.sf_uc.sc_r15 = tf->tf_r15;
+	frame.sf_uc.sc_reg.r_spc = tf->tf_spc;
+	frame.sf_uc.sc_reg.r_ssr = tf->tf_ssr;
+	frame.sf_uc.sc_reg.r_pr = tf->tf_pr;
+	frame.sf_uc.sc_reg.r_mach = tf->tf_mach;
+	frame.sf_uc.sc_reg.r_macl = tf->tf_macl;
+	frame.sf_uc.sc_reg.r_r15 = tf->tf_r15;
+	frame.sf_uc.sc_reg.r_r14 = tf->tf_r14;
+	frame.sf_uc.sc_reg.r_r13 = tf->tf_r13;
+	frame.sf_uc.sc_reg.r_r12 = tf->tf_r12;
+	frame.sf_uc.sc_reg.r_r11 = tf->tf_r11;
+	frame.sf_uc.sc_reg.r_r10 = tf->tf_r10;
+	frame.sf_uc.sc_reg.r_r9 = tf->tf_r9;
+	frame.sf_uc.sc_reg.r_r8 = tf->tf_r8;
+	frame.sf_uc.sc_reg.r_r7 = tf->tf_r7;
+	frame.sf_uc.sc_reg.r_r6 = tf->tf_r6;
+	frame.sf_uc.sc_reg.r_r5 = tf->tf_r5;
+	frame.sf_uc.sc_reg.r_r4 = tf->tf_r4;
+	frame.sf_uc.sc_reg.r_r3 = tf->tf_r3;
+	frame.sf_uc.sc_reg.r_r2 = tf->tf_r2;
+	frame.sf_uc.sc_reg.r_r1 = tf->tf_r1;
+	frame.sf_uc.sc_reg.r_r0 = tf->tf_r0;
+#ifdef SH4
+	if (CPU_IS_SH4)
+		fpu_save(&frame.sf_uc.sc_fpreg);
+#endif
+
 	frame.sf_uc.sc_onstack = onstack;
 	frame.sf_uc.sc_expevt = tf->tf_expevt;
 	/* frame.sf_uc.sc_err = 0; */
 	frame.sf_uc.sc_mask = mask;
-	/* XXX tf_macl, tf_mach not saved */
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -536,29 +557,35 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	tf = p->p_md.md_regs;
 
 	/* Check for security violations. */
-	if (((context.sc_ssr ^ tf->tf_ssr) & PSL_USERSTATIC) != 0)
+	if (((context.sc_reg.r_ssr ^ tf->tf_ssr) & PSL_USERSTATIC) != 0)
 		return (EINVAL);
 
-	tf->tf_ssr = context.sc_ssr;
+	tf->tf_spc = context.sc_reg.r_spc;
+	tf->tf_ssr = context.sc_reg.r_ssr;
+	tf->tf_macl = context.sc_reg.r_macl;
+	tf->tf_mach = context.sc_reg.r_mach;
+	tf->tf_pr = context.sc_reg.r_pr;
+	tf->tf_r13 = context.sc_reg.r_r13;
+	tf->tf_r12 = context.sc_reg.r_r12;
+	tf->tf_r11 = context.sc_reg.r_r11;
+	tf->tf_r10 = context.sc_reg.r_r10;
+	tf->tf_r9 = context.sc_reg.r_r9;
+	tf->tf_r8 = context.sc_reg.r_r8;
+	tf->tf_r7 = context.sc_reg.r_r7;
+	tf->tf_r6 = context.sc_reg.r_r6;
+	tf->tf_r5 = context.sc_reg.r_r5;
+	tf->tf_r4 = context.sc_reg.r_r4;
+	tf->tf_r3 = context.sc_reg.r_r3;
+	tf->tf_r2 = context.sc_reg.r_r2;
+	tf->tf_r1 = context.sc_reg.r_r1;
+	tf->tf_r0 = context.sc_reg.r_r0;
+	tf->tf_r15 = context.sc_reg.r_r15;
+	tf->tf_r14 = context.sc_reg.r_r14;
 
-	tf->tf_r0 = context.sc_r0;
-	tf->tf_r1 = context.sc_r1;
-	tf->tf_r2 = context.sc_r2;
-	tf->tf_r3 = context.sc_r3;
-	tf->tf_r4 = context.sc_r4;
-	tf->tf_r5 = context.sc_r5;
-	tf->tf_r6 = context.sc_r6;
-	tf->tf_r7 = context.sc_r7;
-	tf->tf_r8 = context.sc_r8;
-	tf->tf_r9 = context.sc_r9;
-	tf->tf_r10 = context.sc_r10;
-	tf->tf_r11 = context.sc_r11;
-	tf->tf_r12 = context.sc_r12;
-	tf->tf_r13 = context.sc_r13;
-	tf->tf_r14 = context.sc_r14;
-	tf->tf_spc = context.sc_spc;
-	tf->tf_r15 = context.sc_r15;
-	tf->tf_pr = context.sc_pr;
+#ifdef SH4
+	if (CPU_IS_SH4)
+		fpu_restore(&context.sc_fpreg);
+#endif
 
 	/* Restore signal stack. */
 	if (context.sc_onstack)
@@ -579,6 +606,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
     register_t rval[2])
 {
 	struct trapframe *tf;
+	struct pcb *pcb = p->p_md.md_pcb;
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 
@@ -602,6 +630,16 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->tf_spc = pack->ep_entry;
 	tf->tf_ssr = PSL_USERSET;
 	tf->tf_r15 = stack;
+
+#ifdef SH4
+	if (CPU_IS_SH4) {
+		/*
+		 * Clear floating point registers.
+		 */
+		bzero(&pcb->pcb_fp, sizeof(pcb->pcb_fp));
+		fpu_restore(&pcb->pcb_fp);
+	}
+#endif
 
 	rval[1] = 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.2 2007/03/02 06:11:54 miod Exp $	*/
 /*	$NetBSD: pcb.h,v 1.7 2002/05/09 12:28:08 uch Exp $	*/
 
 /*-
@@ -41,15 +41,17 @@
 #define	_SH_PCB_H_
 
 #include <sh/frame.h>
+#include <sh/reg.h>
 
 struct pcb {
-	struct switchframe pcb_sf;	/* kernel context for resume */
-	caddr_t	pcb_onfault;		/* for copyin/out fault */
-	int	pcb_faultbail;		/* bail out before call uvm_fault. */
+	struct	switchframe	pcb_sf;		/* kernel context for resume */
+	caddr_t			pcb_onfault;	/* for copyin/out fault */
+	struct	fpreg		pcb_fp;		/* fp context for resume */
 };
 
 struct md_coredump {
 };
 
 extern struct pcb *curpcb;
+
 #endif /* !_SH_PCB_H_ */

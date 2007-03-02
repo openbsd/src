@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.2 2007/03/02 06:11:54 miod Exp $	*/
 /*	$NetBSD: setjmp.S,v 1.10 2006/01/05 19:21:37 uwe Exp $	*/
 
 /*-
@@ -50,73 +50,113 @@
 
 ENTRY(setjmp)
 	PIC_PROLOGUE(.L_got_1)
-	sts.l	pr, @-sp
-	mov.l	r4, @-sp
+	sts.l	pr,	@-sp
+	mov.l	r4,	@-sp
 
 	mov.l	.L_sigprocmask_1, r0
-	mov	r4, r6
-	mov	#1, r4			/* how = SIG_BLOCK */
-	mov	#0, r5			/* new = NULL */
+	mov	r4,	r6
+	mov	#1,	r4		/* how = SIG_BLOCK */
+	mov	#0,	r5		/* new = NULL */
 1:	CALL	r0
-	 add	#(_JB_SIGMASK * 4), r6	/* old = &sigmask */
+	 add	#4,	r6		/* old = &sigmask */
 
-	mov.l	@sp+, r4
-	lds.l	@sp+, pr
+	mov.l	@sp+,	r4
+	lds.l	@sp+,	pr
 	PIC_EPILOGUE
 
-	/* identical to _setjmp except that _JB_HAS_MASK is non-zero */
-	add	#((_JB_HAS_MASK + 1) * 4), r4
-	mov	#1, r0
-	mov.l	r0, @-r4		/* has signal mask */
-	mov.l	r15, @-r4
-	mov.l	r14, @-r4
-	mov.l	r13, @-r4
-	mov.l	r12, @-r4
-	mov.l	r11, @-r4
-	mov.l	r10, @-r4
-	mov.l	r9, @-r4
-	mov.l	r8, @-r4
-	sts.l	pr, @-r4
+	/* identical to _setjmp except that the first word is non-zero */
+#if defined(__SH4__) && !defined(__SH4_NOFPU__)
+	add	#(_JBLEN * 4), r4
+	sts	fpscr,	r1
+	xor	r0,	r0
+	mov.l	r1,	@-r4
+	lds	r0,	fpscr
+	sts.l	fpul,	@-r4
+	fmov.s	fr15,	@-r4
+	fmov.s	fr14,	@-r4
+	fmov.s	fr13,	@-r4
+	fmov.s	fr12,	@-r4
+	frchg
+	fmov.s	fr15,	@-r4
+	fmov.s	fr14,	@-r4
+	fmov.s	fr13,	@-r4
+	fmov.s	fr12,	@-r4
+	lds	r1,	fpscr
+#else
+	add	#((_JBLEN - 10) * 4), r4
+#endif
+	sts.l	mach,	@-r4
+	sts.l	macl,	@-r4
+	mov.l	r15,	@-r4
+	mov.l	r14,	@-r4
+	mov.l	r13,	@-r4
+	mov.l	r12,	@-r4
+	mov.l	r11,	@-r4
+	mov.l	r10,	@-r4
+	mov.l	r9,	@-r4
+	mov.l	r8,	@-r4
+	sts.l	pr,	@-r4
+	add	#-4,	r4		/* skip signal mask */
+	mov	#1,	r0
+	mov.l	r0,	@-r4		/* has signal mask */
 	rts
-	 xor	r0, r0
+	 xor	r0,	r0
 
 	.align	2
 .L_got_1:		PIC_GOT_DATUM
 .L_sigprocmask_1:	CALL_DATUM(_C_LABEL(sigprocmask), 1b)
 	SET_ENTRY_SIZE(setjmp)
 
-
 ENTRY(longjmp)
 	/* we won't return here, so we don't need to save pr and r12 */
 	PIC_PROLOGUE_NOSAVE(.L_got_2)
-	mov.l	r5, @-sp
-	mov.l	r4, @-sp
+	mov.l	r5,	@-sp
+	mov.l	r4,	@-sp
 
 	mov.l	.L_sigprocmask_2, r0
-	mov	r4, r5
-	mov	#3, r4			/* how = SIG_SETMASK */
-	add	#(_JB_SIGMASK * 4), r5	/* new = &sigmask */
+	mov	r4,	r5
+	mov	#3,	r4		/* how = SIG_SETMASK */
+	add	#4,	r5		/* new = &sigmask */
 1:	CALL	r0
-	 mov	#0, r6			/* old = NULL */
+	 mov	#0,	r6		/* old = NULL */
 
-	mov.l	@sp+, r4
-	mov.l	@sp+, r5
+	mov.l	@sp+,	r4
+	mov.l	@sp+,	r5
 
 	/* identical to _longjmp */
-	lds.l	@r4+, pr
-	mov.l	@r4+, r8
-	mov.l	@r4+, r9
-	mov.l	@r4+, r10
-	mov.l	@r4+, r11
-	mov.l	@r4+, r12
-	mov.l	@r4+, r13
-	mov.l	@r4+, r14
-	mov.l	@r4+, r15
+	add	#8,	r4
+	lds.l	@r4+,	pr
+	mov.l	@r4+,	r8
+	mov.l	@r4+,	r9
+	mov.l	@r4+,	r10
+	mov.l	@r4+,	r11
+	mov.l	@r4+,	r12
+	mov.l	@r4+,	r13
+	mov.l	@r4+,	r14
+	mov.l	@r4+,	r15
+	lds.l	@r4+,	macl
+	lds.l	@r4+,	mach
+#if defined(__SH4__) && !defined(__SH4_NOFPU__)
+	xor	r0, 	r0
+	lds	r0,	fpscr
+	frchg
+	fmov.s	@r4+,	fr12
+	fmov.s	@r4+,	fr13
+	fmov.s	@r4+,	fr14
+	fmov.s	@r4+,	fr15
+	frchg
+	fmov.s	@r4+,	fr12
+	fmov.s	@r4+,	fr13
+	fmov.s	@r4+,	fr14
+	fmov.s	@r4+,	fr15
+	lds.l	@r4+,	fpul
+	lds.l	@r4+,	fpscr
+#endif
 
-	mov	r5, r0
-	tst	r0, r0	/* make sure return value is non-zero */
+	mov	r5,	r0
+	tst	r0,	r0	/* make sure return value is non-zero */
 	bf	.L0
-	add	#1, r0
+	add	#1,	r0
 .L0:
 	rts
 	 nop

@@ -22,6 +22,9 @@ Boston, MA 02111-1307, USA.  */
 /* Get generic OpenBSD definitions. */
 #include <openbsd.h>
 
+#undef TARGET_CPU_DEFAULT
+#define TARGET_CPU_DEFAULT SELECT_SH4
+
 #undef TARGET_DEFAULT
 #define TARGET_DEFAULT \
   (TARGET_CPU_DEFAULT | USERMODE_BIT | TARGET_ENDIAN_DEFAULT)

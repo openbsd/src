@@ -1,6 +1,22 @@
-/*	$OpenBSD: process_machdep.c,v 1.2 2006/11/28 18:52:23 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.3 2007/03/02 06:11:54 miod Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.12 2006/01/21 04:12:22 uwe Exp $	*/
 
+/*
+ * Copyright (c) 2007 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice, this permission notice, and the disclaimer below
+ * appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*
  * Copyright (c) 1993 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +51,6 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  */
-
 /*
  * Copyright (c) 1995, 1996, 1997
  *	Charles M. Hannum.  All rights reserved.
@@ -86,11 +101,17 @@
  *	and copy it into the regs structure (<machine/reg.h>).
  *	The process is stopped at the time read_regs is called.
  *
+ * process_read_fpregs(proc, fpregs)
+ *	Same as the above, but for floating-point registers.
+ *
  * process_write_regs(proc, regs)
  *	Update the current register set from the passed in regs
  *	structure.  Take care to avoid clobbering special CPU
  *	registers or privileged bits in the PSL.
  *	The process is stopped at the time write_regs is called.
+ *
+ * process_write_fpregs(proc, fpregs)
+ *	Same as the above, but for floating-point registers.
  *
  * process_sstep(proc)
  *	Arrange for the process to trap after executing a single instruction.
@@ -108,13 +129,13 @@
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
 
+#include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 
 static inline struct trapframe *
 process_frame(struct proc *p)
 {
-
 	return (p->p_md.md_regs);
 }
 
@@ -148,6 +169,26 @@ process_read_regs(struct proc *p, struct reg *regs)
 	return (0);
 }
 
+int
+process_read_fpregs(struct proc *p, struct fpreg *fpregs)
+{
+#ifdef SH4
+	if (CPU_IS_SH4) {
+		struct pcb *pcb = p->p_md.md_pcb;
+
+		if (p == curproc)
+			fpu_save(&pcb->pcb_fp);
+
+		bcopy(&pcb->pcb_fp, fpregs, sizeof(*fpregs));
+	}
+#endif
+#ifdef SH3
+	if (CPU_IS_SH3)
+		return (EINVAL);
+#endif
+	return (0);
+}
+
 #ifdef PTRACE
 
 int
@@ -158,9 +199,8 @@ process_write_regs(struct proc *p, struct reg *regs)
 	/*
 	 * Check for security violations.
 	 */
-	if (((regs->r_ssr ^ tf->tf_ssr) & PSL_USERSTATIC) != 0) {
+	if (((regs->r_ssr ^ tf->tf_ssr) & PSL_USERSTATIC) != 0)
 		return (EINVAL);
-	}
 
 	tf->tf_spc = regs->r_spc;
 	tf->tf_ssr = regs->r_ssr;
@@ -185,6 +225,27 @@ process_write_regs(struct proc *p, struct reg *regs)
 	tf->tf_r0 = regs->r_r0;
 	tf->tf_r15 = regs->r_r15;
 
+	return (0);
+}
+
+int
+process_write_fpregs(struct proc *p, struct fpreg *fpregs)
+{
+#ifdef SH4
+	if (CPU_IS_SH4) {
+		struct pcb *pcb = p->p_md.md_pcb;
+
+		bcopy(fpregs, &pcb->pcb_fp, sizeof(*fpregs));
+
+		/* force update of live cpu registers */
+		if (p == curproc)
+			fpu_restore(&pcb->pcb_fp);
+	}
+#endif
+#ifdef SH3
+	if (CPU_IS_SH3)
+		return (EINVAL);
+#endif
 	return (0);
 }
 

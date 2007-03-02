@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep.c,v 1.1 2007/02/19 21:03:50 miod Exp $	*/
+/*	$OpenBSD: uthread_machdep.c,v 1.2 2007/03/02 06:11:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Miodrag Vallat.
@@ -20,10 +20,12 @@
 #include <pthread.h>
 #include "pthread_private.h"
 
-#define STACK_ALIGNMENT		8
+#define STACK_ALIGNMENT		4
 
 struct regframe {
+	/* return address */
 	register_t	pr;
+	/* call-saved general registers */
 	register_t	r14;
 	register_t	r13;
 	register_t	r12;
@@ -31,6 +33,22 @@ struct regframe {
 	register_t	r10;
 	register_t	r9;
 	register_t	r8;
+	register_t	macl;
+	register_t	mach;
+#if defined(__SH4__) && !defined(__SH4_NOFPU__)
+	/* call-saved floating point registers */
+	register_t	fr12;
+	register_t	fr13;
+	register_t	fr14;
+	register_t	fr15;
+	register_t	xd12;
+	register_t	xd13;
+	register_t	xd14;
+	register_t	xd15;
+	/* floating point control registers */
+	register_t	fpul;
+	register_t	fpscr;
+#endif
 };
 
 void
@@ -42,9 +60,17 @@ _thread_machdep_init(struct _machdep_state* statep, void *base, int len,
 	regs = (struct regframe *)
 	    (((u_int32_t)base + len - sizeof *regs) & ~(STACK_ALIGNMENT - 1));
 	regs->pr = (register_t)entry;
+#if defined(__SH4__) && !defined(__SH4_NOFPU__)
+	__asm__ __volatile__ ("sts fpscr, %0" : "=r" (regs->fpscr));
+#endif
 
 	statep->sp = (u_int)regs;
 }
+
+/*
+ * Floating point state is saved with the general registers in
+ * _thread_machdep_switch().
+ */
 
 void
 _thread_machdep_save_float_state(struct _machdep_state* statep)

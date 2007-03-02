@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: signal.h,v 1.2 2007/03/02 06:11:54 miod Exp $	*/
 /*	$NetBSD: signal.h,v 1.12 2005/12/11 12:18:58 christos Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #define	_SH_SIGNAL_H_
 
 #include <sys/cdefs.h>
+#include <sh/reg.h>
 
 typedef int sig_atomic_t;
 
@@ -48,25 +49,8 @@ typedef int sig_atomic_t;
  * a non-standard exit is performed.
  */
 struct sigcontext {
-	int	sc_spc;
-	int	sc_ssr;
-	int	sc_pr;
-	int	sc_r14;
-	int	sc_r13;
-	int	sc_r12;
-	int	sc_r11;
-	int	sc_r10;
-	int	sc_r9;
-	int	sc_r8;
-	int	sc_r7;
-	int	sc_r6;
-	int	sc_r5;
-	int	sc_r4;
-	int	sc_r3;
-	int	sc_r2;
-	int	sc_r1;
-	int	sc_r0;
-	int	sc_r15;
+	struct reg sc_reg;
+	struct fpreg sc_fpreg;
 
 	int	sc_onstack;	/* sigstack state to restore */
 

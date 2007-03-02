@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $	*/
+/*	$OpenBSD: _setjmp.S,v 1.2 2007/03/02 06:11:54 miod Exp $	*/
 /*	$NetBSD: _setjmp.S,v 1.7 2006/01/05 02:04:41 uwe Exp $	*/
 
 /*-
@@ -49,37 +49,76 @@
  */
 
 ENTRY(_setjmp)
-	add	#((_JB_HAS_MASK + 1) * 4), r4
-	mov	#0, r0
-	mov.l	r0, @-r4		/* no saved signal mask */
-	mov.l	r15, @-r4
-	mov.l	r14, @-r4
-	mov.l	r13, @-r4
-	mov.l	r12, @-r4
-	mov.l	r11, @-r4
-	mov.l	r10, @-r4
-	mov.l	r9, @-r4
-	mov.l	r8, @-r4
-	sts.l	pr, @-r4
+	xor	r0,	r0
+#if defined(__SH4__) && !defined(__SH4_NOFPU__)
+	add	#(_JBLEN * 4), r4
+	sts	fpscr,	r1
+	mov.l	r1,	@-r4
+	lds	r0,	fpscr
+	sts.l	fpul,	@-r4
+	fmov.s	fr15,	@-r4
+	fmov.s	fr14,	@-r4
+	fmov.s	fr13,	@-r4
+	fmov.s	fr12,	@-r4
+	frchg
+	fmov.s	fr15,	@-r4
+	fmov.s	fr14,	@-r4
+	fmov.s	fr13,	@-r4
+	fmov.s	fr12,	@-r4
+	lds	r1,	fpscr
+#else
+	add	#((_JBLEN - 10) * 4), r4
+#endif
+	sts.l	mach,	@-r4
+	sts.l	macl,	@-r4
+	mov.l	r15,	@-r4
+	mov.l	r14,	@-r4
+	mov.l	r13,	@-r4
+	mov.l	r12,	@-r4
+	mov.l	r11,	@-r4
+	mov.l	r10,	@-r4
+	mov.l	r9,	@-r4
+	mov.l	r8,	@-r4
+	sts.l	pr,	@-r4
+	mov.l	r0,	@-r4		/* dummy signal mask */
 	rts
-	 xor	r0, r0
+	 mov.l	r0,	@-r4		/* no saved signal mask */
 	SET_ENTRY_SIZE(_setjmp)
 
 ENTRY(_longjmp)
-	lds.l	@r4+, pr
-	mov.l	@r4+, r8
-	mov.l	@r4+, r9
-	mov.l	@r4+, r10
-	mov.l	@r4+, r11
-	mov.l	@r4+, r12
-	mov.l	@r4+, r13
-	mov.l	@r4+, r14
-	mov.l	@r4+, r15
+	add	#8,	r4
+	lds.l	@r4+,	pr
+	mov.l	@r4+,	r8
+	mov.l	@r4+,	r9
+	mov.l	@r4+,	r10
+	mov.l	@r4+,	r11
+	mov.l	@r4+,	r12
+	mov.l	@r4+,	r13
+	mov.l	@r4+,	r14
+	mov.l	@r4+,	r15
+	lds.l	@r4+,	macl
+	lds.l	@r4+,	mach
+#if defined(__SH4__) && !defined(__SH4_NOFPU__)
+	xor	r0, 	r0
+	lds	r0,	fpscr
+	frchg
+	fmov.s	@r4+,	fr12
+	fmov.s	@r4+,	fr13
+	fmov.s	@r4+,	fr14
+	fmov.s	@r4+,	fr15
+	frchg
+	fmov.s	@r4+,	fr12
+	fmov.s	@r4+,	fr13
+	fmov.s	@r4+,	fr14
+	fmov.s	@r4+,	fr15
+	lds.l	@r4+,	fpul
+	lds.l	@r4+,	fpscr
+#endif
 
-	mov	r5, r0
-	tst	r0, r0
+	mov	r5,	r0
+	tst	r0,	r0
 	bf	.L0
-	add	#1, r0
+	add	#1,	r0
 .L0:
 	rts
 	 nop

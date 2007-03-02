@@ -1,6 +1,22 @@
-/*	$OpenBSD: vm_machdep.c,v 1.7 2006/11/17 08:35:43 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.8 2007/03/02 06:11:54 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.53 2006/08/31 16:49:21 matt Exp $	*/
 
+/*
+ * Copyright (c) 2007 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice, this permission notice, and the disclaimer below
+ * appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -36,7 +52,6 @@
  *
  *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
  */
-
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1989, 1990 William Jolitz
@@ -215,6 +230,19 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	 * kernel thread begin to run without restoring trapframe.
 	 */
 	sf->sf_sr = PSL_MD;		/* kernel mode, interrupt enable */
+
+#ifdef SH4
+	if (CPU_IS_SH4) {
+		/*
+		 * Propagate floating point registers to the new process
+		 * (they are not in the trapframe).
+		 */
+		if (p1 == curproc)
+			fpu_save(&p1->p_md.md_pcb->pcb_fp);
+		bcopy(&p1->p_md.md_pcb->pcb_fp, &pcb->pcb_fp,
+		    sizeof(struct fpreg));
+	}
+#endif
 }
 
 /*
@@ -222,6 +250,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
  */
 struct md_core {
 	struct reg intreg;
+	struct fpreg fpreg;
 };
 
 int
@@ -241,6 +270,18 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 	error = process_read_regs(p, &md_core.intreg);
 	if (error)
 		return error;
+
+#ifdef SH4
+	if (CPU_IS_SH4) {
+		error = process_read_fpregs(p, &md_core.fpreg);
+		if (error)
+			return error;
+	}
+#endif
+#ifdef SH3
+	if (CPU_IS_SH3)
+		bzero(&md_core.fpreg, sizeof(md_core.fpreg));
+#endif
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;

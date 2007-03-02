@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.2 2007/03/02 06:11:54 miod Exp $
 #	$NetBSD: genassym.cf,v 1.10 2005/12/11 12:19:00 christos Exp $
 
 #-
@@ -41,7 +41,9 @@ include <sys/mbuf.h>
 include <sys/user.h>
 include <sys/errno.h>
 include <uvm/uvm_extern.h>
+include <sh/fpu.h>
 include <sh/locore.h>
+include <sh/reg.h>
 include <sh/vmparam.h>
 
 struct	trapframe
@@ -49,26 +51,6 @@ define	TF_SIZE			sizeof(struct trapframe)
 member	tf_expevt
 member	tf_ubc
 member	tf_spc
-member	tf_ssr
-member	tf_macl
-member	tf_mach
-member	tf_pr
-member	tf_r14
-member	tf_r13
-member	tf_r12
-member	tf_r11
-member	tf_r10
-member	tf_r9
-member	tf_r8
-member	tf_r7
-member	tf_r6
-member	tf_r5
-member	tf_r4
-member	tf_r3
-member	tf_r2
-member	tf_r1
-member	tf_r0
-member	tf_r15
 
 struct	proc
 member	p_addr
@@ -81,24 +63,16 @@ member	P_MD_PCB	p_md.md_pcb
 
 struct	switchframe
 define	SF_SIZE			sizeof(struct switchframe)
-member	sf_sr
 member	sf_r15
-member	sf_r14
-member	sf_r13
-member	sf_r12
-member	sf_r10
-member	sf_r9
-member	sf_r8
-member	sf_pr
 member	sf_r6_bank
 member	sf_r7_bank
 
-struct	sigcontext
-member	SC_EFLAGS	sc_ssr
+struct	fpreg
+define	FP_SIZE			sizeof(struct fpreg)
 
 struct	pcb
 member	pcb_onfault
-member	pcb_faultbail
+member	pcb_fp
 
 export	SONPROC
 export	SRUN

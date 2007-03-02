@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: reg.h,v 1.2 2007/03/02 06:11:54 miod Exp $	*/
 /*	$NetBSD: reg.h,v 1.5 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@
 /*
  * Registers accessible to ptrace(2) syscall for debugger
  * The machine-dependent code for PT_{SET,GET}REGS needs to
- * use whichver order, defined above, is correct, so that it
+ * use whichever order, defined above, is correct, so that it
  * is all invisible to the user.
  */
 struct reg {
@@ -98,6 +98,43 @@ struct reg {
 	int r_r2;
 	int r_r1;
 	int r_r0;
+};
+
+struct fpreg {
+	int	fpr_fr0;
+	int	fpr_fr1;
+	int	fpr_fr2;
+	int	fpr_fr3;
+	int	fpr_fr4;
+	int	fpr_fr5;
+	int	fpr_fr6;
+	int	fpr_fr7;
+	int	fpr_fr8;
+	int	fpr_fr9;
+	int	fpr_fr10;
+	int	fpr_fr11;
+	int	fpr_fr12;
+	int	fpr_fr13;
+	int	fpr_fr14;
+	int	fpr_fr15;
+	int	fpr_xf0;
+	int	fpr_xf1;
+	int	fpr_xf2;
+	int	fpr_xf3;
+	int	fpr_xf4;
+	int	fpr_xf5;
+	int	fpr_xf6;
+	int	fpr_xf7;
+	int	fpr_xf8;
+	int	fpr_xf9;
+	int	fpr_xf10;
+	int	fpr_xf11;
+	int	fpr_xf12;
+	int	fpr_xf13;
+	int	fpr_xf14;
+	int	fpr_xf15;
+	int	fpr_fpul;
+	int	fpr_fpscr;
 };
 
 #endif /* !_SH_REG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetsticky.c,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $	*/
+/*	$OpenBSD: fpsetsticky.c,v 1.2 2007/03/02 06:11:54 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -23,7 +23,12 @@ fp_except
 fpsetsticky(fp_except mask)
 {
 	register_t fpscr, nfpscr;
+#if defined(__SH4__) && !defined(__SH4_NOFPU__)
+	extern register_t __fpscr_values[2];
 
+	__fpscr_values[0] = (__fpscr_values[0] & ~(0x1f << 2)) | (mask << 2);
+	__fpscr_values[1] = (__fpscr_values[1] & ~(0x1f << 2)) | (mask << 2);
+#endif
 	__asm__ __volatile__ ("sts fpscr, %0" : "=r" (fpscr));
 	nfpscr = (fpscr & ~(0x1f << 2)) | (mask << 2);
 	__asm__ __volatile__ ("lds %0, fpscr" : : "r" (nfpscr));
