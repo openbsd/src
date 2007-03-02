@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.6 2005/04/18 16:39:25 moritz Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.7 2007/03/02 11:37:53 henning Exp $	*/
 
 /* Errors and warnings... */
 
@@ -199,6 +199,7 @@ parse_warn(char *fmt, ...)
 	    "                                        "
 	    "                                        "; /* 80 spaces */
 	struct iovec iov[6];
+	size_t iovcnt;
 
 	do_percentm(mbuf, sizeof(mbuf), fmt);
 	snprintf(fbuf, sizeof(fbuf), "%s line %d: %s", tlname, lexline, mbuf);
@@ -215,17 +216,20 @@ parse_warn(char *fmt, ...)
 		iov[2].iov_len = strlen(token_line);
 		iov[3].iov_base = "\n";
 		iov[3].iov_len = 1;
-		iov[4].iov_base = spaces;
-		iov[4].iov_len = lexchar - 1;
-		iov[5].iov_base = "^\n";
-		iov[5].iov_len = 2;
-		writev(STDERR_FILENO, iov, sizeof(iov)/sizeof(iov[0]));
+		iovcnt = 4;
+		if (lexchar < 81) {
+			iov[4].iov_base = spaces;
+			iov[4].iov_len = lexchar - 1;
+			iov[5].iov_base = "^\n";
+			iov[5].iov_len = 2;
+			iovcnt += 2;
+		}
+		writev(STDERR_FILENO, iov, iovcnt);
 	} else {
 		syslog(log_priority | LOG_ERR, "%s", mbuf);
 		syslog(log_priority | LOG_ERR, "%s", token_line);
-		if (lexline < 81)
-			syslog(log_priority | LOG_ERR,
-			    "%s^", &spaces[sizeof(spaces) - lexchar]);
+		if (lexchar < 81)
+			syslog(log_priority | LOG_ERR, "%*c", lexchar, '^');
 	}
 
 	warnings_occurred = 1;
