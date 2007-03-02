@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.106 2007/02/22 02:26:35 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.107 2007/03/02 02:29:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.106 2007/02/22 02:26:35 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.107 2007/03/02 02:29:13 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -222,9 +222,10 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 		case 'D':
 			tmplabel = lastlabel;
 			lastlabel = label;
-			if (ioctl(f, DIOCGPDINFO, &label) == 0)
+			if (ioctl(f, DIOCGPDINFO, &label) == 0) {
+				dflag = 1;
 				editor_countfree(&label, &freesectors);
-			else {
+			} else {
 				warn("unable to get default partition table");
 				lastlabel = tmplabel;
 			}
@@ -321,7 +322,12 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 			/* Save mountpoint info if there is any. */
 			if (mountpoints != NULL)
 				mpsave(&label, mountpoints, dev, fstabfile);
-			if (memcmp(lp, &label, sizeof(label)) == 0) {
+			/*
+			 * If we didn't manufacture a new default label and
+			 * didn't change the label read from disk, there is no
+			 * need to do anything before exiting.
+			 */
+			if (!dflag && memcmp(lp, &label, sizeof(label)) == 0) {
 				puts("No label changes.");
 				return(1);
 			}
@@ -392,8 +398,10 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 			/* Write label to disk. */
 			if (writelabel(f, bootarea, &label) != 0)
 				warnx("unable to write label");
-			else
+			else {
+				dflag = 0;
 				*lp = label;
+			}
 			break;
 
 		case 'X':

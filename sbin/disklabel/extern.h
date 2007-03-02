@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 2005/01/07 21:58:14 otto Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2007/03/02 02:29:13 krw Exp $	*/
 
 /*
  * Copyright (c) 2003 Theo de Raadt <deraadt@openbsd.org>
@@ -29,6 +29,7 @@ int	editor(struct disklabel *, int, char *, char *);
 int	writelabel(int, char *, struct disklabel *);
 extern  char bootarea[], *specname;
 extern  int donothing;
+extern  int dflag;
 
 #ifdef DOSLABEL
 extern  struct dos_partition *dosdp;    /* DOS partition, if found */
