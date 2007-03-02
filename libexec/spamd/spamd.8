@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.83 2007/03/01 20:38:52 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.84 2007/03/02 08:14:59 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -223,17 +223,17 @@ whitelist entry to
 regularly scans the
 .Pa /var/db/spamd
 database and configures all whitelist addresses as the
-.Aq spamd-white
 .Xr pf 4
-table.
-The
 .Aq spamd-white
-table
-.Em must
-be used to allow connections to pass to the
-real MTA as in the following
+table,
+allowing connections to pass to the real MTA.
+Any addresses not found in
+.Aq spamd-white
+are redirected to
+.Nm .
+The following
 .Xr pf.conf 5
-example:
+example is suggested:
 .Bd -literal -offset 4n
 table \*(Ltspamd-white\*(Gt persist
 no rdr inet proto tcp from \*(Ltspamd-white\*(Gt to any \e
@@ -241,11 +241,6 @@ no rdr inet proto tcp from \*(Ltspamd-white\*(Gt to any \e
 rdr pass inet proto tcp from any to any \e
     port smtp -\*(Gt 127.0.0.1 port spamd
 .Ed
-.Pp
-Connections from addresses not listed in the
-.Aq spamd-white
-table are redirected to
-.Nm .
 .Pp
 .Nm
 removes tuple entries from the
@@ -359,27 +354,25 @@ When configured to use 450 responses,
 takes neither of these actions: it rejects the mail back to the senders'
 queue.
 .Pp
-With
-.Xr pf 4 ,
-connections to port 25 (SMTP) can be redirected to another host or port,
-based on the source address of the sender.
-The
-.Em rdr
-rules used for this purpose are described in
-.Xr pf.conf 5 .
-The rules can be loaded into a
-.Em table
-to simplify handling.
+When running in default mode, the
+.Xr pf.conf 5
+rules described above are sufficient.
+However when running in blacklist-only mode,
+a slightly modified
+.Xr pf.conf 5
+ruleset is required,
+redirecting any addresses found in the
+.Aq spamd
+table to
+.Nm .
+Any other addresses
+are passed to the real MTA.
 .Bd -literal -offset 4n
 table \*(Ltspamd\*(Gt persist
 rdr pass inet proto tcp from \*(Ltspamd\*(Gt to any \e
     port smtp -\*(Gt 127.0.0.1 port spamd
 .Ed
 .Pp
-Any addresses in table
-.Aq spamd
-are then redirected to
-.Nm .
 Addresses can be loaded into the
 .Em table ,
 like:
@@ -391,8 +384,7 @@ like:
 can also be used to load addresses into the
 .Aq spamd
 table.
-.Xr spamd-setup 8
-also has the added benefit of being able to remove addresses from
+It has the added benefit of being able to remove addresses from
 blacklists, and will connect to
 .Nm
 over a localhost socket, giving
