@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.h,v 1.3 2007/02/07 01:43:54 stevesk Exp $	*/
+/*	$OpenBSD: dhcp.h,v 1.4 2007/03/02 18:26:29 stevesk Exp $	*/
 
 /* Protocol structures... */
 
@@ -80,8 +80,8 @@ struct dhcp_packet {
 #define BOOTP_BROADCAST 32768L
 
 /* Possible values for hardware type (htype) field... */
-#define HTYPE_ETHER	1               /* Ethernet 10Mbps              */
-#define HTYPE_IEEE802	6               /* IEEE 802.2 Token Ring...	*/
+#define HTYPE_ETHER	1		/* Ethernet			*/
+#define HTYPE_IEEE802	6		/* IEEE 802.2 Token Ring...	*/
 #define HTYPE_FDDI	8		/* FDDI...			*/
 
 /* Magic cookie validating dhcp options field (and bootp vendor
