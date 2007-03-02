@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.13 2007/03/02 11:23:23 henning Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.14 2007/03/02 11:27:36 henning Exp $	*/
 
 /* Errors and warnings... */
 
@@ -210,6 +210,7 @@ parse_warn(char *fmt, ...)
 	    "                                        "
 	    "                                        "; /* 80 spaces */
 	struct iovec iov[6];
+	size_t iovcnt;
 
 	do_percentm(mbuf, sizeof(mbuf), fmt);
 	snprintf(fbuf, sizeof(fbuf), "%s line %d: %s", tlname, lexline, mbuf);
@@ -233,11 +234,15 @@ parse_warn(char *fmt, ...)
 		iov[2].iov_len = strlen(token_line);
 		iov[3].iov_base = "\n";
 		iov[3].iov_len = 1;
-		iov[4].iov_base = spaces;
-		iov[4].iov_len = lexchar - 1;
-		iov[5].iov_base = "\n";
-		iov[5].iov_len = 1;
-		writev(STDERR_FILENO, iov, sizeof(iov)/sizeof(iov[0]));
+		iovcnt = 4;
+		if (lexchar < 81) {
+			iov[4].iov_base = spaces;
+			iov[4].iov_len = lexchar - 1;
+			iov[5].iov_base = "\n";
+			iov[5].iov_len = 1;
+			iovcnt += 2;
+		}
+		writev(STDERR_FILENO, iov, iovcnt);
 	}
 	warnings_occurred = 1;
 	return (0);
