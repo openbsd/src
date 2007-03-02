@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.14 2007/02/27 13:38:58 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.15 2007/03/02 11:32:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -899,6 +899,8 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	    size, cre->toread);
 	if (con->done)
 		goto done;
+	if (EVBUFFER_LENGTH(src) && bev->readcb != relay_read_httpcontent)
+		bev->readcb(bev, arg);
 	bufferevent_enable(bev, EV_READ);
 	return;
  done:
@@ -993,7 +995,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 
 	if (con->done)
 		goto done;
-	if (EVBUFFER_LENGTH(src))
+	if (EVBUFFER_LENGTH(src) && bev->readcb != relay_read_httpchunks)
 		bev->readcb(bev, arg);
 	bufferevent_enable(bev, EV_READ);
 	return;
@@ -1270,7 +1272,7 @@ next:
 	}
 	if (con->done)
 		goto done;
-	if (EVBUFFER_LENGTH(src))
+	if (EVBUFFER_LENGTH(src) && bev->readcb != relay_read_http)
 		bev->readcb(bev, arg);
 	bufferevent_enable(bev, EV_READ);
 	return;
