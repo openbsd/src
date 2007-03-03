@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.267 2007/02/28 04:11:38 deraadt Exp $
+$OpenBSD: usbdevs,v 1.268 2007/03/03 12:40:31 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1122,6 +1122,7 @@ product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial
 product FTDI SERIAL_2232C	0x6010	2232C Serial
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	Serial
+product FTDI MJS_SIRIUS_PC	0xca81	MJS Sirius To PC Interface
 product FTDI SERIAL_232BM	0xee18	FT232BM Serial
 product FTDI MHAM_KW		0xeee8	KW
 product FTDI MHAM_YS		0xeee9	YS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.32 2007/02/07 23:51:51 jsg Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.33 2007/03/03 12:40:31 deraadt Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -160,8 +160,9 @@ USB_MATCH(uftdi)
 	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_631 ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_632 ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_633 ||
-	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_634))
-	    return (UMATCH_VENDOR_PRODUCT);
+	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_634 ||
+	     uaa->product == USB_PRODUCT_FTDI_MJS_SIRIUS_PC))
+		return (UMATCH_VENDOR_PRODUCT);
 	if (uaa->vendor == USB_VENDOR_SIIG2 &&
 	    (uaa->product == USB_PRODUCT_SIIG2_US2308))
 		return (UMATCH_VENDOR_PRODUCT);
@@ -255,6 +256,7 @@ USB_ATTACH(uftdi)
 		case USB_PRODUCT_FTDI_MHAM_RS232:
 		case USB_PRODUCT_FTDI_MHAM_Y9:
 		case USB_PRODUCT_SEALEVEL_USBSERIAL:
+		case USB_PRODUCT_FTDI_MJS_SIRIUS_PC:
 			sc->sc_type = UFTDI_TYPE_8U232AM;
 			sc->sc_hdrlen = 0;
 			break;
