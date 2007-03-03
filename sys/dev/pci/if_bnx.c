@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.46 2007/03/03 03:46:12 todd Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.47 2007/03/03 11:17:48 reyk Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -738,6 +738,15 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": %s\n", intrstr);
 
+	/* Hookup IRQ last. */
+	sc->bnx_intrhand = pci_intr_establish(pc, sc->bnx_ih, IPL_NET,
+	    bnx_intr, sc, sc->bnx_dev.dv_xname);
+	if (sc->bnx_intrhand == NULL) {
+		printf("%s: couldn't establish interrupt\n",
+		    sc->bnx_dev.dv_xname);
+		goto bnx_attach_fail;
+	}
+
 	mountroothook_establish(bnx_attachhook, sc);
 	return;
 
@@ -751,7 +760,6 @@ bnx_attachhook(void *xsc)
 {
 	struct bnx_softc *sc = xsc;
 	struct pci_attach_args *pa = &sc->bnx_pa;
-	pci_chipset_tag_t	pc = pa->pa_pc;
 	struct ifnet		*ifp;
 	u_int32_t		val;
 	int error;
@@ -914,14 +922,8 @@ bnx_attachhook(void *xsc)
 	/* Get the firmware running so ASF still works. */
 	bnx_mgmt_init(sc);
 
-	/* Hookup IRQ last. */
-	sc->bnx_intrhand = pci_intr_establish(pc, sc->bnx_ih, IPL_NET,
-	    bnx_intr, sc, sc->bnx_dev.dv_xname);
-	if (sc->bnx_intrhand == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->bnx_dev.dv_xname);
-		goto bnx_attach_fail;
-	}
+	/* Handle interrupts */
+	sc->bnx_flags |= BNX_ACTIVE_FLAG;
 
 	goto bnx_attach_exit;
 
@@ -4656,6 +4658,9 @@ bnx_intr(void *xsc)
 	u_int32_t		status_attn_bits;
 
 	sc = xsc;
+	if ((sc->bnx_flags & BNX_ACTIVE_FLAG) == 0)
+		return (0);
+
 	ifp = &sc->arpcom.ac_if;
 
 	DBRUNIF(1, sc->interrupts_generated++);
