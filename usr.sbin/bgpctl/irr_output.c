@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.1 2007/03/03 11:45:30 henning Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.2 2007/03/03 12:41:13 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -18,34 +18,64 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/stat.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <ctype.h>
 
 #include "irrfilter.h"
 
-int	 process_policies(struct policy_head *, char *);
+int	 process_policies(FILE *, struct policy_head *);
 void	 policy_prettyprint(FILE *, struct policy_item *);
 void	 policy_torule(FILE *, struct policy_item *);
 char	*action_torule(char *);
 void	 print_rule(FILE *, enum pdir, char *, char *, char *);
 
+#define allowed_in_address(x) \
+	(isalnum(x) || x == '.' || x == ':' || x == '-')
+
 int
 write_filters(char *outpath)
 {
 	struct router	*r;
-	int		 ret = 0;
+	char		*fn;
+	int		 fd, ret = 0;
+	u_int		 i;
+	FILE		*fh;
 
 	while ((r = TAILQ_FIRST(&router_head)) != NULL) {
 		TAILQ_REMOVE(&router_head, r, entry);
-		printf("\nRouter %s\n", r->address);
 
-		if (process_policies(&r->policy_h,
-		    r->address) == -1)
+		if (r->address != NULL) {
+			for (i = 0; i < strlen(r->address); i++)
+				if (!allowed_in_address(r->address[i]))
+					errx(1, "router address \"%s\" contains"
+					    " illegal character \"%c\"",
+					    r->address, r->address[i]);
+			if(asprintf(&fn, "%s/bgpd-%s.filter",
+			    outpath, r->address) == -1)
+				err(1, "write_filters asprintf");
+		} else
+			if(asprintf(&fn, "%s/bgpd.filter",
+			    outpath) == -1)
+				err(1, "write_filters asprintf");
+
+		fd = open(fn, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR);
+		if (fd == -1)
+			err(1, "error opening %s", fn);
+		if ((fh = fdopen(fd, "w")) == NULL)
+			err(1, "fdopen %s", fn);
+
+		if (process_policies(fh, &r->policy_h) == -1)
 			ret = -1;
 
+		fclose(fh);
+		close(fd);
+		free(fn);
 		free(r->address);
 		free(r);
 	}
@@ -54,15 +84,15 @@ write_filters(char *outpath)
 }
 
 int
-process_policies(struct policy_head *head, char *router)
+process_policies(FILE *fh, struct policy_head *head)
 {
 	struct policy_item	*pi;
 
 	while ((pi = TAILQ_FIRST(head)) != NULL) {
 		TAILQ_REMOVE(head, pi, entry);
 
-		policy_prettyprint(stdout, pi);
-		policy_torule(stdout, pi);
+		policy_prettyprint(fh, pi);
+		policy_torule(fh, pi);
 
 		free(pi->peer_as);
 		free(pi->peer_addr);
@@ -104,7 +134,7 @@ policy_torule(FILE *fh, struct policy_item *pi)
 
 		for (i = 0; i < ass->n_as; i++) {
 			pfxs = prefixset_get(ass->as[i]);
-			printf("#  prefixes from %s\n", ass->as[i]);
+			fprintf(fh, "# prefixes from %s\n", ass->as[i]);
 			for (j = 0; j < pfxs->prefixcnt; j++)
 				print_rule(fh, pi->dir, pi->peer_addr,
 				    pi->action, pfxs->prefix[j]);
