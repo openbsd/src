@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.5 2007/03/02 06:11:54 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.6 2007/03/03 21:37:27 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -207,6 +207,9 @@ void savectx(struct pcb *);
 struct fpreg;
 void fpu_save(struct fpreg *);
 void fpu_restore(struct fpreg *);
+u_int cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
+u_int cpu_dumpsize(void);
+void dumpconf(void);
 void dumpsys(void);
 #endif /* _KERNEL */
 #endif /* !_SH_CPU_H_ */

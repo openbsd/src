@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.9 2007/03/02 06:11:54 miod Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.10 2007/03/03 21:37:27 miod Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -101,6 +101,9 @@
 #include <sys/user.h>
 #include <sys/sched.h>
 #include <sys/msg.h>
+#include <sys/conf.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -112,6 +115,7 @@
 #include <sh/mmu.h>
 #include <sh/trap.h>
 #include <sh/intr.h>
+#include <sh/kcore.h>
 
 #ifdef  NBUF
 int	nbuf = NBUF;
@@ -143,7 +147,7 @@ struct user *proc0paddr;	/* init_main.c use this. */
 struct pcb *curpcb;
 struct md_upte *curupte;	/* SH3 wired u-area hack */
 
-#define	VBR	(uint8_t *)SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN)
+#define	VBR	(u_int8_t *)SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN)
 vaddr_t ram_start = SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN);
 /* exception handler holder (sh/sh/vectors.S) */
 extern char sh_vector_generic[], sh_vector_generic_end[];
@@ -160,9 +164,10 @@ caddr_t allocsys(caddr_t);
 /*
  * These variables are needed by /sbin/savecore
  */
-uint32_t dumpmag = 0x8fca0101;	/* magic number */
-int dumpsize;			/* pages */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+u_int dumpsize;			/* pages */
 long dumplo;	 		/* blocks */
+cpu_kcore_hdr_t cpu_kcore_hdr;
 
 int kbd_reset;
 
@@ -424,9 +429,147 @@ allocsys(caddr_t v)
 }
 
 void
+dumpconf()
+{
+	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
+	u_int dumpextra, totaldumpsize;		/* in disk blocks */
+	u_int seg, nblks;
+	int maj;
+
+	if (dumpdev == NODEV)
+		return;
+
+	maj = major(dumpdev);
+	if (maj < 0 || maj >= nblkdev) {
+		printf("dumpconf: bad dumpdev=0x%x\n", dumpdev);
+		dumpdev = NODEV;
+		return;
+	}
+	if (bdevsw[maj].d_psize == NULL)
+		return;
+	nblks = (u_int)(*bdevsw[maj].d_psize)(dumpdev);
+	if (nblks <= btodb(1U))
+		return;
+
+	dumpsize = 0;
+	for (seg = 0; seg < h->kcore_nsegs; seg++)
+		dumpsize += atop(h->kcore_segs[seg].size);
+	dumpextra = cpu_dumpsize();
+
+	/* Always skip the first block, in case there is a label there. */
+	if (dumplo < btodb(1));
+		dumplo = btodb(1);
+
+	/* Put dump at the end of the partition, and make it fit. */
+	totaldumpsize = ctod(dumpsize) + dumpextra;
+	if (totaldumpsize > nblks - dumplo) {
+		totaldumpsize = dbtob(nblks - dumplo);
+		dumpsize = dtoc(totaldumpsize - dumpextra);
+	}
+	if (dumplo < nblks - totaldumpsize)
+		dumplo = nblks - totaldumpsize;
+}
+
+void
 dumpsys()
 {
-	/* TODO */
+	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
+	daddr_t blkno;
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	u_int page = 0;
+	paddr_t dumppa;
+	u_int seg;
+	int rc;
+	extern int msgbufmapped;
+
+	/* Don't record dump messages in msgbuf. */
+	msgbufmapped = 0;
+
+	/* Make sure dump settings are valid. */
+	if (dumpdev == NODEV)
+		return;
+	if (dumpsize == 0) {
+		dumpconf();
+		if (dumpsize == 0)
+			return;
+	}
+	if (dumplo <= 0) {
+		printf("\ndump to dev 0x%x not possible, not enough space\n",
+		    dumpdev);
+		return;
+	}
+
+	dump = bdevsw[major(dumpdev)].d_dump;
+	blkno = dumplo;
+
+	printf("\ndumping to dev 0x%x offset %ld\n", dumpdev, dumplo);
+
+	printf("dump ");
+
+	/* Write dump header */
+	rc = cpu_dump(dump, &blkno);
+	if (rc != 0)
+		goto bad;
+
+	for (seg = 0; seg < h->kcore_nsegs; seg++) {
+		u_int pagesleft;
+
+		pagesleft = atop(h->kcore_segs[seg].size);
+		dumppa = (paddr_t)h->kcore_segs[seg].start;
+
+		while (pagesleft != 0) {
+			u_int npages;
+
+#define	NPGMB	atop(1024 * 1024)
+			if (page != 0 && (page % NPGMB) == 0)
+				printf("%u ", page / NPGMB);
+
+			/* do not dump more than 1MB at once */
+			npages = min(pagesleft, NPGMB);
+#undef NPGMB
+			npages = min(npages, dumpsize);
+
+			rc = (*dump)(dumpdev, blkno,
+			    (caddr_t)SH3_PHYS_TO_P2SEG(dumppa), ptoa(npages));
+			if (rc != 0)
+				goto bad;
+
+			pagesleft -= npages;
+			dumppa += ptoa(npages);
+			page += npages;
+			dumpsize -= npages;
+			if (dumpsize == 0)
+				goto bad;	/* if truncated dump */
+			blkno += ctod(npages);
+		}
+	}
+bad:
+	switch (rc) {
+	case 0:
+		printf("succeeded\n");
+		break;
+	case ENXIO:
+		printf("device bad\n");
+		break;
+	case EFAULT:
+		printf("device not ready\n");
+		break;
+	case EINVAL:
+		printf("area improper\n");
+		break;
+	case EIO:
+		printf("I/O error\n");
+		break;
+	case EINTR:
+		printf("aborted\n");
+		break;
+	default:
+		printf("error %d\n", rc);
+		break;
+	}
+
+	/* make sure console can output our last message */
+	delay(1 * 1000 * 1000);
 }
 
 /*

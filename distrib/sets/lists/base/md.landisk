@@ -1557,6 +1557,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/ieeefp.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/internal_types.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/intr.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/landisk/kcore.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/limits.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/lock.ph
@@ -1954,6 +1955,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/intcreg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/internal_types.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/intr.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/sh/kcore.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/limits.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/lock.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/locore.ph

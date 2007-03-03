@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.2 2006/11/03 17:28:01 drahn Exp $	*/
+/*	$OpenBSD: param.h,v 1.3 2007/03/03 21:37:27 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.15 2006/08/28 13:43:35 yamt Exp $	*/
 
 /*-
@@ -104,13 +104,17 @@
 #define	MSGBUFSIZE	NBPG		/* default message buffer size */
 #endif
 
+/* pages to bytes */
 #define	btoc(x)		(((x) + PAGE_MASK) >> PAGE_SHIFT)
 #define	ctob(x)		((x) << PAGE_SHIFT)
 
-#define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
-	((bytes) >> DEV_BSHIFT)
-#define	dbtob(db)			/* calculates (db * DEV_BSIZE) */ \
-	((db) << DEV_BSHIFT)
+/* pages to disk blocks */
+#define	ctod(x)		((x) << (PAGE_SHIFT - DEV_BSHIFT))
+#define	dtoc(x)		((x) >> (PAGE_SHIFT - DEV_BSHIFT))
+
+/* bytes to disk blocks */
+#define	btodb(x)	((x) >> DEV_BSHIFT)
+#define	dbtob(x)	((x) << DEV_BSHIFT)
 
 /*
  * Constants related to network buffer management.

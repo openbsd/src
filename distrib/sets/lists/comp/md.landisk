@@ -172,6 +172,7 @@
 ./usr/include/landisk/ieeefp.h
 ./usr/include/landisk/internal_types.h
 ./usr/include/landisk/intr.h
+./usr/include/landisk/kcore.h
 ./usr/include/landisk/limits.h
 ./usr/include/landisk/loadfile_machdep.h
 ./usr/include/landisk/lock.h
@@ -220,6 +221,7 @@
 ./usr/include/sh/intcreg.h
 ./usr/include/sh/internal_types.h
 ./usr/include/sh/intr.h
+./usr/include/sh/kcore.h
 ./usr/include/sh/limits.h
 ./usr/include/sh/lock.h
 ./usr/include/sh/locore.h
