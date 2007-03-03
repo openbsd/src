@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.134 2006/09/22 22:15:19 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.135 2007/03/03 21:21:25 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -775,7 +775,7 @@ dumpconf()
 		dumplo = ctod(1);
 
 	/* Put dump at end of partition, and make it fit. */
-	if (dumpsize < dtoc(nblks - dumplo))
+	if (dumpsize > dtoc(nblks - dumplo))
 		dumpsize = dtoc(nblks - dumplo);
 	if (dumplo < nblks - ctod(dumpsize))
 		dumplo = nblks - ctod(dumpsize);
