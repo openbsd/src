@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.107 2006/09/19 10:48:41 otto Exp $	 */
+/* $OpenBSD: x509.c,v 1.108 2007/03/03 20:03:03 tom Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -1099,7 +1099,12 @@ x509_cert_subjectaltname(X509 *scert, u_int8_t **altname, u_int32_t *len)
 	sanlen = sandata[3];
 	sandata += 4;
 
-	if (sanlen + 4 != subjectaltname->value->length) {
+	/*
+	 * The test here used to be !=, but some certificates can include
+	 * extra stuff in subjectAltName, so we will just take the first
+	 * salen bytes, and not worry about what follows.
+	 */
+	if (sanlen + 4 > subjectaltname->value->length) {
 		log_print("x509_cert_subjectaltname: subjectaltname invalid "
 		    "length");
 		return 0;
