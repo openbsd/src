@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.45 2007/03/02 14:08:48 reyk Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.46 2007/03/03 03:46:12 todd Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -3241,9 +3241,9 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod,
 	int			i, rc = 0;
 	u_int32_t		addr;
 #ifdef BNX_DEBUG
-	u_int16_t debug_chain_prod =	*chain_prod;
+	u_int16_t		debug_chain_prod = *chain_prod;
 #endif
-	u_int16_t first_chain_prod;
+	u_int16_t		first_chain_prod;
 
 	DBPRINT(sc, (BNX_VERBOSE_RESET | BNX_VERBOSE_RECV), "Entering %s()\n", 
 	    __FUNCTION__);
@@ -3354,9 +3354,9 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod,
 	rxbd->rx_bd_flags |= htole32(RX_BD_FLAGS_END);
 
 	/*
-	 * Save the mbuf, ajust the map pointer (swap map for first and
-	 * last rx_bd entry to that rx_mbuf_ptr and rx_mbuf_map matches)
-	 * and update counter.
+	 * Save the mbuf, adjust the map pointer (swap map for first and
+	 * last rx_bd entry so that rx_mbuf_ptr and rx_mbuf_map matches)
+	 * and update our counter.
 	 */
 	sc->rx_mbuf_ptr[*chain_prod] = m_new;
 	sc->rx_mbuf_map[first_chain_prod] = sc->rx_mbuf_map[*chain_prod];
