@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.39 2006/12/12 21:14:22 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.40 2007/03/03 14:49:55 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd December 22, 2003
+.Dd March 3, 2007
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Sh SYNOPSIS
 .Nm bgpctl
 .Op Fl n
+.Op Fl o Ar directory
 .Op Fl s Ar socket
 .Ar command
 .Op Ar arguments ...
@@ -42,6 +43,10 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl n
 Show neighbors' IP addresses instead of their description.
+.It Fl o Ar directory
+Use
+.Ar directory
+to write the filter files to in irrfilter mode.
 .It Fl s Ar socket
 Use
 .Ar socket
@@ -204,6 +209,18 @@ filter can be combined with other filters.
 .It Cm show summary
 Show a list of all neighbors, including information about the session state
 and message counters.
+.It Xo
+.Cm irrfilter
+.Ar as
+.Op Ar options
+.Xc
+Get the
+.Em aut-num
+object from the
+.Em Internet Routing Registry
+and generate bgpd filters from the policy specified therein.
+The aut-num object as well as the associated as-set and route objects
+have to be in RPSL format.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/bgpd.sockXXX" -compact
@@ -221,8 +238,15 @@ control socket
 .Xr bgpd 8 ,
 .Xr bgplg 8 ,
 .Xr bgplgsh 8
+.Rs
+.%R RFC 2622
+.%T "Routing Policy Specification Language (RPSL)"
+.%D June 1999
+.Re
 .Sh HISTORY
 The
 .Nm
 program first appeared in
 .Ox 3.5 .
+irrfilter mode was added in
+.Ox 4.1 .
