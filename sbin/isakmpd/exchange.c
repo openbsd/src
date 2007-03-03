@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.128 2006/09/01 00:24:06 mpf Exp $	 */
+/* $OpenBSD: exchange.c,v 1.129 2007/03/03 10:29:18 tom Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1662,6 +1662,13 @@ exchange_add_certs(struct message *msg)
 			free(cert);
 			return -1;
 		}
+		/*
+		 * We need to reset cert here, as it is now controlled by
+		 * message_add_payload() (i.e. we must not free() it), and
+		 * it is possible for the next iteration of the aca loop
+		 * to fail early in cert_obtain before it writes to &cert.
+		 */
+		cert = NULL;
 	}
 
 	/* We dont need the CERT REQs any more, they are answered.  */
