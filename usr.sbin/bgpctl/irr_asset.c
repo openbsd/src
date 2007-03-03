@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_asset.c,v 1.1 2007/03/03 11:45:30 henning Exp $ */
+/*	$OpenBSD: irr_asset.c,v 1.2 2007/03/03 15:26:46 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "irrfilter.h"
 
@@ -75,23 +76,30 @@ asset_get(char *name)
 		err(1, "expand_as_set strdup");
 	RB_INSERT(as_set_h, &as_set_h, ass);
 
-	curass = ass;
-	if ((r = whois(name, QTYPE_ASSET)) == -1)
-		errx(1, "whois error, asset_get %s", name);
-	curass = NULL;
-
-	/*
-	 * if there are no members, this is an aut-num.
-	 * if thsi was specified directly in the policy,
-	 * make a dummy as-set with the the AS as name
-	 * and its only member */
-	if (ass->n_members == 0)
+	if (!strncasecmp(name, "AS", 2) &&
+	    strlen(name) > 2 && isdigit(name[2])) {
+		/* 
+		 * this must be an aut-num
+		 * make a dummy as-set with the the AS both as name
+		 * and its only member
+		 */
 		asset_add_as(ass, name);
+		return (ass);
+
+	} else if (!strncasecmp(name, "AS-", 3)) {
+		/* as-set */
+		curass = ass;
+		if ((r = whois(name, QTYPE_ASSET)) == -1)
+			errx(1, "whois error, asset_get %s", name);
+		curass = NULL;
+	} else
+		fprintf(stderr, "asset_get: %s: unknown object type\n", name);
 
 	for (i = 0; i < ass->n_members; i++) {
 		mas = asset_get(ass->members[i]);
-		if (mas->n_members == 0)
-			asset_add_as(ass, ass->members[i]);
+		if (mas->n_members == 0 && mas->n_as == 0)
+			fprintf(stderr, "%s: can't resolve member %s\n",
+			    name, ass->members[i]);
 		else
 			asset_add_asset(ass, ass->members[i]);
 	}
