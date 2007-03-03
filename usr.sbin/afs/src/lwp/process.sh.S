@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.sh.S,v 1.5 2006/11/17 20:54:47 deraadt Exp $	*/
+/*	$OpenBSD: process.sh.S,v 1.6 2007/03/03 13:40:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Theo de Raadt
@@ -52,13 +52,26 @@ ENTRY(savecontext)
 	mov.l	r9, @-sp
 	mov.l	r8, @-sp
 	sts.l	pr, @-sp
+	sts.l	macl, @-sp
+	sts.l	mach, @-sp
 
 #if defined(__SH4__) && !defined(__SH4_NOFPU__)
 	/* float point registers */
+	sts	fpscr, r0
+	mov.l	r0, @-sp
+	mov	#0, r1
+	sts.l	fpul, @-sp
+	lds	r1, fpscr
 	fmov.s	fr15, @-sp
 	fmov.s	fr14, @-sp
 	fmov.s	fr13, @-sp
 	fmov.s	fr12, @-sp
+	frchg
+	fmov.s	fr15, @-sp
+	fmov.s	fr14, @-sp
+	fmov.s	fr13, @-sp
+	fmov.s	fr12, @-sp
+	lds	r0, fpscr
 #endif
 
 	mov.l	sp,@r5			/* store top of stack */
@@ -83,12 +96,23 @@ ENTRY(returnto)
 
 #if defined(__SH4__) && !defined(__SH4_NOFPU__)
 	/* float point registers */
+	mov	#0, r1
+	lds	r1, fpscr
+	frchg
 	fmov.s	@sp+, fr12
 	fmov.s	@sp+, fr13
 	fmov.s	@sp+, fr14
 	fmov.s	@sp+, fr15
+	frchg
+	fmov.s	@sp+, fr12
+	fmov.s	@sp+, fr13
+	fmov.s	@sp+, fr14
+	fmov.s	@sp+, fr15
+	lds.l	@sp+, fpul
+	lds.l	@sp+, fpscr
 #endif
-
+	lds.l	@sp+, mach
+	lds.l	@sp+, macl
 	lds.l   @sp+, pr
 	mov.l	@sp+, r8
 	mov.l	@sp+, r9
