@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_parser.c,v 1.1 2007/03/03 11:45:30 henning Exp $ */
+/*	$OpenBSD: irr_parser.c,v 1.2 2007/03/03 14:56:43 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -39,6 +39,12 @@ int	 policy_additem(char *, struct policy_item *);
 int	 parse_asset(char *, char *);
 int	 parse_route(char *, char *);
 
+/*
+ * parse_response() return values:
+ * -1	error
+ * 0	object not found
+ * >0	number of lines matched plus 1
+ */
 int
 parse_response(FILE *f, enum qtype qtype)
 {
@@ -46,7 +52,7 @@ parse_response(FILE *f, enum qtype qtype)
 	int	 cnt, n;
 
 	lineno = 1;
-	cnt = 0;
+	cnt = 1;
 	while ((val = irr_getln(f)) != NULL) {
 		if (!strncmp(val, "%ERROR:101:", 11))	/* no entries found */
 			return (0);
