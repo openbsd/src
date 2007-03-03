@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.116 2007/03/03 11:45:30 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.117 2007/03/03 12:43:08 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -88,7 +88,7 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-s socket] [-n] "
+	fprintf(stderr, "usage: %s [-s socket] [-o path] [-n] "
 	    "<command> [arg [...]]\n", __progname);
 	exit(1);
 }
@@ -108,11 +108,14 @@ main(int argc, char *argv[])
 
 	sockname = SOCKET_NAME;
 	outdir = getcwd(NULL, 0);
-	while ((ch = getopt(argc, argv, "ns:")) != -1) {
+	while ((ch = getopt(argc, argv, "no:s:")) != -1) {
 		switch (ch) {
 		case 'n':
 			if (++nodescr > 1)
 				usage();
+			break;
+		case 'o':
+			outdir = optarg;
 			break;
 		case 's':
 			sockname = optarg;
