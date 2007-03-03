@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.84 2007/02/22 07:40:47 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.85 2007/03/03 15:27:35 mk Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -540,8 +540,10 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* attach cpu devices */
 	aml_find_node(aml_root.child, "_PSS", acpi_foundpss, sc);
 
+#if 0
 	/* attach docks */
 	aml_find_node(aml_root.child, "_DCK", acpi_founddock, sc);
+#endif
 
 	/* attach thermal zone devices, XXX MUST be last entry */
 	aml_find_node(aml_root.child, "_TMP", acpi_foundtmp, sc);
