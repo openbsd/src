@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.115 2007/02/22 08:38:19 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.116 2007/03/03 11:45:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -36,6 +36,7 @@
 #include "rde.h"
 #include "log.h"
 #include "parser.h"
+#include "irrfilter.h"
 
 enum neighbor_views {
 	NV_DEFAULT,
@@ -102,10 +103,11 @@ main(int argc, char *argv[])
 	struct parse_result	*res;
 	struct ctl_neighbor	 neighbor;
 	struct ctl_show_rib_request	ribreq;
-	char			*sockname;
+	char			*sockname, *outdir;
 	enum imsg_type		 type;
 
 	sockname = SOCKET_NAME;
+	outdir = getcwd(NULL, 0);
 	while ((ch = getopt(argc, argv, "ns:")) != -1) {
 		switch (ch) {
 		case 'n':
@@ -125,6 +127,9 @@ main(int argc, char *argv[])
 
 	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
+
+	if (res->action == IRRFILTER)
+		irr_main(res->as.as, res->flags, outdir);
 
 	memcpy(&neighbor.addr, &res->peeraddr, sizeof(neighbor.addr));
 	strlcpy(neighbor.descr, res->peerdesc, sizeof(neighbor.descr));
@@ -147,6 +152,7 @@ main(int argc, char *argv[])
 
 	switch (res->action) {
 	case NONE:
+	case IRRFILTER:
 		usage();
 		/* not reached */
 	case SHOW:
@@ -352,6 +358,7 @@ main(int argc, char *argv[])
 			case NETWORK_ADD:
 			case NETWORK_REMOVE:
 			case NETWORK_FLUSH:
+			case IRRFILTER:
 				break;
 			}
 			imsg_free(&imsg);

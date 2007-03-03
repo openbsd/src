@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.38 2007/02/22 08:38:19 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.39 2007/03/03 11:45:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "parser.h"
+#include "irrfilter.h"
 
 enum token_type {
 	NOTOKEN,
@@ -84,6 +85,8 @@ static const struct token t_pftable[];
 static const struct token t_prepnbr[];
 static const struct token t_prepself[];
 static const struct token t_weight[];
+static const struct token t_irrfilter[];
+static const struct token t_irrfilter_opts[];
 
 static const struct token t_main[] = {
 	{ KEYWORD,	"reload",	RELOAD,		NULL},
@@ -91,6 +94,7 @@ static const struct token t_main[] = {
 	{ KEYWORD,	"fib",		FIB,		t_fib},
 	{ KEYWORD,	"neighbor",	NEIGHBOR,	t_neighbor},
 	{ KEYWORD,	"network",	NONE,		t_network},
+	{ KEYWORD,	"irrfilter",	IRRFILTER,	t_irrfilter},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -271,6 +275,16 @@ static const struct token t_weight[] = {
 	{ ENDTOKEN,	"",			NONE,	NULL}
 };
 
+static const struct token t_irrfilter[] = {
+	{ ASNUM,	"",		NONE,		t_irrfilter_opts},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_irrfilter_opts[] = {
+	{ NOTOKEN,	"",		NONE,			NULL},
+	{ FLAG,		"importonly",	F_IMPORTONLY,		t_irrfilter_opts},
+	{ ENDTOKEN,	"",		NONE,			NULL}
+};
 
 static struct parse_result	res;
 
