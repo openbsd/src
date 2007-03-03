@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.88 2006/06/17 10:06:21 hshoexer Exp $	 */
+/* $OpenBSD: policy.c,v 1.89 2007/03/03 18:47:37 cloder Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -2208,6 +2208,8 @@ keynote_cert_obtain(u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 		LOG_DBG((LOG_POLICY, 30, "keynote_cert_obtain: "
 		    "failed to read %lu bytes from \"%s\"",
 		    (unsigned long)size, file));
+		free(cert);
+		cert = NULL;
 		free(file);
 		close(fd);
 		return 0;
