@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.53 2007/03/04 12:23:25 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.54 2007/03/04 13:19:14 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -331,9 +331,12 @@ struct ahci_port {
 	struct ahci_softc	*ap_sc;
 	bus_space_handle_t	ap_ioh;
 
-	struct ahci_dmamem	*ap_dmamem;
 	struct ahci_rfis	*ap_rfis;
+	struct ahci_dmamem	*ap_dmamem_rfis;
+
 	struct ahci_cmd_hdr	*ap_cmd_list;
+	struct ahci_dmamem	*ap_dmamem_cmd_list;
+	struct ahci_dmamem	*ap_dmamem_cmd_table;
 
 	struct ahci_ccb		*ap_ccbs;
 	TAILQ_HEAD(, ahci_ccb)	ap_ccb_free;
@@ -498,7 +501,7 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 		}
 
-		if (ahci_port_alloc(sc, i) != 0)
+		if (ahci_port_alloc(sc, i) == ENOMEM)
 			goto freeports;
 	}
 
@@ -511,13 +514,12 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_atascsi = atascsi_attach(self, &aaa);
 
-        return;
+	return;
 
 freeports:
-	for (i = 0; i < AHCI_MAX_PORTS; i++) {
+	for (i = 0; i < AHCI_MAX_PORTS; i++)
 		if (sc->sc_ports[i] != NULL)
 			ahci_port_free(sc, i);
-	}
 unmap:
 	ahci_unmap_regs(sc, pa);
 }
@@ -630,19 +632,18 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	struct ahci_ccb			*ccb;
 	u_int8_t			*kva;
 	u_int64_t			dva;
-	int				offset = 0;
-	int				i;
+	int				i, rc = ENOMEM;
 
 	ap = malloc(sizeof(struct ahci_port), M_DEVBUF, M_NOWAIT);
 	if (ap == NULL) {
 		printf("%s: unable to allocate memory for port %d\n",
 		    DEVNAME(sc), port);
-		return (1);
+		goto reterr;
 	}
 	bzero(ap, sizeof(struct ahci_port));
 
 	ap->ap_sc = sc;
-	TAILQ_INIT(&ap->ap_ccb_free);
+	sc->sc_ports[port] = ap;
 
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
 	    AHCI_PORT_REGION(port), AHCI_PORT_SIZE, &ap->ap_ioh) != 0) {
@@ -651,71 +652,78 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 		goto freeport;
 	}
 
+	/* Allocate RFIS */
+	ap->ap_dmamem_rfis = ahci_dmamem_alloc(sc, sizeof(struct ahci_rfis));
+	if (ap->ap_dmamem_rfis == NULL)
+		goto nomem;
+
+	/* Setup RFIS base address */
+	kva = AHCI_DMA_KVA(ap->ap_dmamem_rfis);
+	dva = AHCI_DMA_DVA(ap->ap_dmamem_rfis);
+	ap->ap_rfis = (struct ahci_rfis *)kva;
+	ahci_pwrite(ap, AHCI_PREG_FBU, htole32((u_int32_t)(dva >> 32)));
+	ahci_pwrite(ap, AHCI_PREG_FB, htole32((u_int32_t)dva));
+
+	/* Allocate a CCB for each command slot */
 	ap->ap_ccbs = malloc(sizeof(struct ahci_ccb) * sc->sc_ncmds, M_DEVBUF,
 	    M_NOWAIT);
 	if (ap->ap_ccbs == NULL) {
 		printf("%s: unable to allocate command list for port %d\n",
 		    DEVNAME(sc), port);
-		goto freeregion;
+		goto freeport;
 	}
 	bzero(ap->ap_ccbs, sizeof(struct ahci_ccb) * sc->sc_ncmds);
 
-	/* calculate the size of the dmaable memory this port will need.  */
-	i = sizeof(struct ahci_cmd_table) * sc->sc_ncmds +
-	    sizeof(struct ahci_rfis) +
-	    sizeof(struct ahci_cmd_hdr) * sc->sc_ncmds;
-	ap->ap_dmamem = ahci_dmamem_alloc(sc, i);
-	if (ap->ap_dmamem == NULL) {
-		printf("unable to allocate dmamem for port %d\n", DEVNAME(sc),
-		    port);
-		goto freeccbs;
+	/* Command List Structures and Command Tables */
+	ap->ap_dmamem_cmd_list = ahci_dmamem_alloc(sc,
+	    sc->sc_ncmds * sizeof(struct ahci_cmd_hdr));
+	ap->ap_dmamem_cmd_table = ahci_dmamem_alloc(sc,
+	    sc->sc_ncmds * sizeof(struct ahci_cmd_table));
+	if (ap->ap_dmamem_cmd_table == NULL || ap->ap_dmamem_cmd_list == NULL) {
+nomem:
+		printf("%s: unable to allocate DMA memory for port %d\n",
+		    DEVNAME(sc), port);
+		goto freeport;
 	}
-	kva = AHCI_DMA_KVA(ap->ap_dmamem);
-	dva = AHCI_DMA_DVA(ap->ap_dmamem);
 
+	/* Setup command list base address */
+	kva = AHCI_DMA_KVA(ap->ap_dmamem_cmd_list);
+	dva = AHCI_DMA_DVA(ap->ap_dmamem_cmd_list);
+	ap->ap_cmd_list = (struct ahci_cmd_hdr *)kva;
+	ahci_pwrite(ap, AHCI_PREG_CLBU, htole32((u_int32_t)(dva >> 32)));
+	ahci_pwrite(ap, AHCI_PREG_CLB, htole32((u_int32_t)dva));
+
+	/* Split CCB allocation into CCBs and assign command table entries */
+	TAILQ_INIT(&ap->ap_ccb_free);
+	kva = AHCI_DMA_KVA(ap->ap_dmamem_cmd_table);
+	dva = AHCI_DMA_DVA(ap->ap_dmamem_cmd_table);
 	for (i = 0; i < sc->sc_ncmds; i++) {
 		ccb = &ap->ap_ccbs[i];
 
 		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, AHCI_MAX_PRDT,
 		    MAXPHYS, 0, 0, &ccb->ccb_dmamap) != 0) {
-			printf("unable to create dmamap for port %d ccb %d\n",
-			    DEVNAME(sc), port, i);
-			goto freemaps;
+			printf("%s: unable to create dmamap for port %d "
+			    "ccb %d\n", DEVNAME(sc), port, i);
+			goto freeport;
 		}
 
 		ccb->ccb_slot = i;
 		ccb->ccb_port = ap;
-		ccb->ccb_cmd_table = (struct ahci_cmd_table *)(kva + offset);
-		ccb->ccb_cmd_table_dva = dva + offset;
-		offset += sizeof(struct ahci_cmd_table);
+		ccb->ccb_cmd_table = (struct ahci_cmd_table *)
+		    (kva + i * sizeof(struct ahci_cmd_table));
+		ccb->ccb_cmd_table_dva =
+		    dva + i * sizeof(struct ahci_cmd_table);
 
 		ahci_put_ccb(ap, ccb);
 	}
 
-	ap->ap_rfis = (struct ahci_rfis *)(kva + offset);
-	ahci_pwrite(ap, AHCI_PREG_FB, (u_int32_t)(dva + offset));
-	ahci_pwrite(ap, AHCI_PREG_FBU, (u_int32_t)((dva + offset) >> 32));
-	offset += sizeof(struct ahci_rfis);
+	rc = 0;
 
-	ap->ap_cmd_list = (struct ahci_cmd_hdr *)(kva + offset);
-	ahci_pwrite(ap, AHCI_PREG_CLB, (u_int32_t)(dva + offset));
-	ahci_pwrite(ap, AHCI_PREG_CLBU, (u_int32_t)((dva + offset) >> 32));
-
-	sc->sc_ports[port] = ap;
-
-	return (0);
-
-freemaps:
-	while ((ccb = ahci_get_ccb(ap)) != NULL)
-		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
-	ahci_dmamem_free(sc, ap->ap_dmamem);
-freeccbs:
-	free(ap->ap_ccbs, M_DEVBUF);
-freeregion:
-	/* bus_space(9) says no cleanup necessary for subregions */
 freeport:
-	free(ap, M_DEVBUF);
-	return (1);
+	if (rc != 0)
+		ahci_port_free(sc, port);
+reterr:
+	return (rc);
 }
 
 void
@@ -723,17 +731,22 @@ ahci_port_free(struct ahci_softc *sc, u_int port)
 {
 	struct ahci_port		*ap = sc->sc_ports[port];
 	struct ahci_ccb			*ccb;
-	int				i;
 
-	for (i = 0; i < sc->sc_ncmds; i++) {
-		ccb = &ap->ap_ccbs[i];
-
-		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
+	if (ap->ap_ccbs) {
+		while ((ccb = ahci_get_ccb(ap)) != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
+		free(ap->ap_ccbs, M_DEVBUF);
 	}
 
-	ahci_dmamem_free(sc, ap->ap_dmamem);
+	if (ap->ap_dmamem_cmd_list)
+		ahci_dmamem_free(sc, ap->ap_dmamem_cmd_list);
+	if (ap->ap_dmamem_rfis)
+		ahci_dmamem_free(sc, ap->ap_dmamem_rfis);
+	if (ap->ap_dmamem_cmd_table)
+		ahci_dmamem_free(sc, ap->ap_dmamem_cmd_table);
+
 	/* bus_space(9) says we dont free the subregions handle */
-	free(ap->ap_ccbs, M_DEVBUF);
+
 	free(ap, M_DEVBUF);
 	sc->sc_ports[port] = NULL;
 }
