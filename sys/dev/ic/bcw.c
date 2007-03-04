@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.66 2007/03/04 15:41:58 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.67 2007/03/04 16:10:10 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -3079,6 +3079,7 @@ int
 bcw_gpio_init(struct bcw_softc *sc)
 {
 	uint32_t mask, set;
+	int error = 0;
 
 	BCW_WRITE(sc, BCW_SBF, BCW_READ(sc, BCW_SBF) & 0xffff3fff);
 
@@ -3109,16 +3110,22 @@ bcw_gpio_init(struct bcw_softc *sc)
 		mask |= 0x0010; /* FIXME this is redundant */
 
 	/*
-	 * TODO
-	 * We need to switch to common or pci core before we can write
-	 * to BCW_GPIO_CTR.
+	 * TODO bcw_change_core_to_gpio()
+	 *
+	 * Where to find the GPIO register depends on the chipset.
+	 * If it has a ChipCommon, its register at offset 0x6c is the GPIO
+	 * control register. Otherwise the register at offset 0x6c in the
+	 * PCI core is the GPIO control register.
 	 */
-	return (0);
+	if ((error = bcw_change_core(sc, 0)))
+		return (error);
 
 	BCW_WRITE(sc, BCW_GPIO_CTRL, (BCW_READ(sc, BCW_GPIO_CTRL) & mask) |
 	    set);
 
-	return (0);
+	error = bcw_change_core(sc, sc->sc_lastcore);
+
+	return (error);
 }
 
 /*
