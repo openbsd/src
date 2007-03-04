@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.23 2006/04/14 09:36:49 martin Exp $	*/
+/*	$OpenBSD: adb.c,v 1.24 2007/03/04 15:35:09 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.47 2005/06/16 22:43:36 jmc Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.51 2005/06/16 22:43:36 jmc Exp $	*/
 
@@ -689,7 +689,8 @@ send_adb_cuda(u_char *in, u_char *buffer, void *compRout, void *data, int
 
 	splx(s);
 
-	if (0x0100 <= (s & 0x0700))	/* were VIA1 interrupts blocked? */
+	/* were VIA1 interrupts blocked? */
+	if (PSLTOIPL(s) >= mac68k_machine.via1_ipl) {
 		/* poll until byte done */
 		while ((adbActionState != ADB_ACTION_IDLE) || (ADB_INTR_IS_ON)
 		    || (adbWaiting == 1))
@@ -698,6 +699,7 @@ send_adb_cuda(u_char *in, u_char *buffer, void *compRout, void *data, int
 				if (adb_polling)
 					adb_soft_intr();
 			}
+	}
 
 	return 0;
 }				/* send_adb_cuda */
@@ -1130,7 +1132,8 @@ send_adb_II(u_char *in, u_char *buffer, void *compRout, void *data, int command)
 
 	splx(s);
 
-	if (0x0100 <= (s & 0x0700))	/* were VIA1 interrupts blocked? */
+	/* were VIA1 interrupts blocked? */
+	if (PSLTOIPL(s) >= mac68k_machine.via1_ipl) {
 		/* poll until message done */
 		while ((adbActionState != ADB_ACTION_IDLE) || (ADB_INTR_IS_ON)
 		    || (adbWaiting == 1))
@@ -1139,6 +1142,7 @@ send_adb_II(u_char *in, u_char *buffer, void *compRout, void *data, int command)
 				if (adb_polling)
 					adb_soft_intr();
 			}
+	}
 
 	return 0;
 }
@@ -1501,7 +1505,8 @@ send_adb_IIsi(u_char *in, u_char *buffer, void *compRout, void *data, int
 
 	splx(s);
 
-	if (0x0100 <= (s & 0x0700))	/* were VIA1 interrupts blocked? */
+	/* were VIA1 interrupts blocked? */
+	if (PSLTOIPL(s) >= mac68k_machine.via1_ipl) {
 		/* poll until byte done */
 		while ((adbActionState != ADB_ACTION_IDLE) || (ADB_INTR_IS_ON)
 		    || (adbWaiting == 1))
@@ -1510,6 +1515,7 @@ send_adb_IIsi(u_char *in, u_char *buffer, void *compRout, void *data, int
 				if (adb_polling)
 					adb_soft_intr();
 			}
+	}
 
 	 return 0;
 }				/* send_adb_IIsi */
