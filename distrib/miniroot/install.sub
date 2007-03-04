@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.410 2007/03/01 03:51:56 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.411 2007/03/04 14:37:37 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2006 Todd Miller, Theo de Raadt, Ken Westerback
@@ -949,6 +949,11 @@ Set names are: $THESETS
 __EOT
 		return
 	fi
+
+	resp=y
+	isin INSTALL.$ARCH $_files ||
+		ask_yn "INSTALL.$ARCH not found. Use sets found here anyway?"
+	[[ $resp = n ]] && return
 
 	select_sets "$_sets" "$_get_sets"
 
