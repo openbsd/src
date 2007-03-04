@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamlogd.8,v 1.11 2007/03/04 03:19:41 beck Exp $
+.\"	$OpenBSD: spamlogd.8,v 1.12 2007/03/04 09:58:22 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -111,7 +111,7 @@ will log each connection it sees at level
 .Sh SYNCHRONISATION
 .Nm
 supports realtime synchronisation of whitelist states by sending
-the information it updates to a 
+the information it updates to
 a number of
 .Xr spamd 8
 daemons running on multiple machines.
@@ -122,7 +122,6 @@ to specify the machines to which
 will send messages when it updates the state information.
 For more information see
 .Xr spamd 8
-.Pp
 .Sh FILES
 /var/db/spamd
 .Sh SEE ALSO
