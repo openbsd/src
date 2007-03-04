@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.63 2006/07/18 11:52:12 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.64 2007/03/04 23:36:34 canacar Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -289,16 +289,6 @@ bpf_detachd(struct bpf_d *d)
 	d->bd_bif = 0;
 }
 
-
-/*
- * Mark a descriptor free by making it point to itself.
- * This is probably cheaper than marking with a constant since
- * the address should be in a register anyway.
- */
-#define D_ISFREE(d) ((d) == (d)->bd_next)
-#define D_MARKFREE(d) ((d)->bd_next = (d))
-#define D_MARKUSED(d) ((d)->bd_next = 0)
-
 /*
  * Reference count access to descriptor buffers
  */
@@ -328,12 +318,6 @@ bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	/* create on demand */
 	if ((d = bpfilter_create(minor(dev))) == NULL)
-		return (ENXIO);
-	/*
-	 * Each minor can be opened by only one process.  If the requested
-	 * minor is in use, return EBUSY.
-	 */
-	if (!D_ISFREE(d))
 		return (EBUSY);
 
 	/* Mark "free" and do most initialization. */
@@ -1397,7 +1381,7 @@ bpfattach(caddr_t *driverp, struct ifnet *ifp, u_int dlt, u_int hdrlen)
 	bp->bif_next = bpf_iflist;
 	bpf_iflist = bp;
 
-	*bp->bif_driverp = 0;
+	*bp->bif_driverp = NULL;
 
 	/*
 	 * Compute the length of the bpf header.  This is not necessarily
@@ -1500,11 +1484,10 @@ bpfilter_create(int unit)
 	struct bpf_d *bd;
 
 	if ((bd = bpfilter_lookup(unit)) != NULL)
-		return (bd);
+		return (NULL);
 	if ((bd = malloc(sizeof(*bd), M_DEVBUF, M_NOWAIT)) != NULL) {
 		bzero(bd, sizeof(*bd));
 		bd->bd_unit = unit;
-		D_MARKFREE(bd);
 		LIST_INSERT_HEAD(&bpf_d_list, bd, bd_list);
 	}
 	return (bd);
