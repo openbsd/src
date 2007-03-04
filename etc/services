@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.65 2007/03/04 03:19:41 beck Exp $
+#	$OpenBSD: services,v 1.66 2007/03/04 12:46:25 jmc Exp $
 #
 # Network services, Internet style
 #
@@ -273,7 +273,7 @@ postgresql	5432/tcp		# PostgreSQL
 canna		5680/tcp		# Kana->Kanji server
 icb		7326/tcp		# Internet Citizen's Band
 spamd		8025/tcp		# spamd(8)
-spamd-sync	8025/udp		# spamd(8) synchronization
+spamd-sync	8025/udp		# spamd(8) synchronisation
 spamd-cfg	8026/tcp		# spamd(8) configuration
 hunt		26740/udp		# hunt(6)
 #
