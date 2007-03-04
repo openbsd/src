@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.3 2007/03/04 12:37:07 henning Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.4 2007/03/04 17:03:01 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -170,10 +170,10 @@ action_torule(char *s)
 
 		if (!strcmp(key, "pref"))
 			snprintf(ebuf, sizeof(ebuf),
-			    "%s localpref=%s", pre, val);
+			    "%s localpref %s", pre, val);
 		else if (!strcmp(key, "med"))
 			snprintf(ebuf, sizeof(ebuf),
-			    "%s med=%s", pre, val);
+			    "%s med %s", pre, val);
 		else
 			warnx("unknown action key \"%s\"", key);
 
@@ -207,7 +207,7 @@ print_rule(FILE *fh, enum pdir pdir, char *peerspec, char *actspec,
 		action = action_torule(actspec);
 
 	if (prefix == NULL)
-		fprintf(fh, fmt, dir, peer, action, "", "");
+		fprintf(fh, fmt, dir, peer, "", "", action);
 	else
-		fprintf(fh, fmt, dir, peer, action, " prefix ", prefix);
+		fprintf(fh, fmt, dir, peer, " prefix ", prefix, action);
 }
