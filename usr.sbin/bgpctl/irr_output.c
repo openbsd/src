@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.6 2007/03/04 18:13:13 henning Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.7 2007/03/04 18:40:08 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -33,7 +33,7 @@ int	 process_policies(FILE *, struct policy_head *);
 void	 policy_prettyprint(FILE *, struct policy_item *);
 void	 policy_torule(FILE *, struct policy_item *);
 char	*action_torule(char *);
-void	 print_rule(FILE *, struct policy_item *, char *);
+void	 print_rule(FILE *, struct policy_item *, char *, char *);
 
 #define allowed_in_address(x) \
 	(isalnum(x) || x == '.' || x == ':' || x == '-')
@@ -124,18 +124,23 @@ policy_torule(FILE *fh, struct policy_item *pi)
 {
 	struct as_set		*ass;
 	struct prefix_set	*pfxs;
+	char			*srcas;
 	u_int			 i, j;
 
 	if (pi->filter == NULL || !strcasecmp(pi->filter, "any"))
-		print_rule(fh, pi, NULL);
+		print_rule(fh, pi, NULL, NULL);
 	else {
 		ass = asset_expand(pi->filter);
 
 		for (i = 0; i < ass->n_as; i++) {
 			pfxs = prefixset_get(ass->as[i]);
-			fprintf(fh, "# prefixes from %s\n", ass->as[i]);
+
+			/* ass->as[i] format and len have been checked before */
+			if (strlen(ass->as[i]) < 3)
+				errx(1, "%s not AS...", ass->as[i]);
+			srcas = ass->as[i] + 2;
 			for (j = 0; j < pfxs->prefixcnt; j++)
-				print_rule(fh, pi, pfxs->prefix[j]);
+				print_rule(fh, pi, srcas, pfxs->prefix[j]);
 		}
 	}
 }
@@ -185,12 +190,14 @@ action_torule(char *s)
 }
 
 void
-print_rule(FILE *fh, struct policy_item *pi, char *prefix)
+print_rule(FILE *fh, struct policy_item *pi, char *sourceas, char *prefix)
 {
-	char			*fmt = "allow quick %s %s%s%s%s\n";
+	char			*fmt = "allow quick %s %s%s%s%s%s%s\n";
 	char			*peer = "any";
 	char			*action = "";
 	char			*dir;
+	char			*pfx[2] = { "", "" };
+	char			*srcas[2] = { "", "" };
 
 	if (pi->dir == IMPORT)
 		dir = "from";
@@ -203,8 +210,14 @@ print_rule(FILE *fh, struct policy_item *pi, char *prefix)
 	if (pi->action)
 		action = action_torule(pi->action);
 
-	if (prefix == NULL)
-		fprintf(fh, fmt, dir, peer, "", "", action);
-	else
-		fprintf(fh, fmt, dir, peer, " prefix ", prefix, action);
+	if (prefix != NULL) {
+		pfx[0] = " prefix ";
+		pfx[1] = prefix;
+		if (pi->dir == IMPORT) {
+			srcas[0] = " source-as ";
+			srcas[1] = sourceas;
+		}
+	}
+
+	fprintf(fh, fmt, dir, peer, srcas[0], srcas[1], pfx[0], pfx[1], action);
 }
