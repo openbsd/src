@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.23 2004/11/04 20:10:06 deraadt Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.24 2007/03/04 22:36:54 deraadt Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: dumprmt.c,v 1.23 2004/11/04 20:10:06 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: dumprmt.c,v 1.24 2007/03/04 22:36:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -43,13 +43,7 @@ static const char rcsid[] = "$OpenBSD: dumprmt.c,v 1.23 2004/11/04 20:10:06 dera
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#ifdef sunos
-#include <sys/vnode.h>
-
-#include <ufs/inode.h>
-#else
 #include <ufs/ufs/dinode.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>

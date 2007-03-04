@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.39 2007/02/25 16:48:46 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.40 2007/03/04 22:36:54 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 4/15/94";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.39 2007/02/25 16:48:46 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.40 2007/03/04 22:36:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,15 +48,8 @@ static const char rcsid[] = "$OpenBSD: main.c,v 1.39 2007/02/25 16:48:46 jmc Exp
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#ifdef sunos
-#include <sys/vnode.h>
-
-#include <ufs/inode.h>
-#include <ufs/fs.h>
-#else
 #include <ufs/ffs/fs.h>
 #include <ufs/ufs/dinode.h>
-#endif
 
 #include <protocols/dumprestore.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.17 2006/12/26 20:57:54 otto Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.18 2007/03/04 22:36:54 deraadt Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -34,24 +34,16 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static const char rcsid[] = "$OpenBSD: traverse.c,v 1.17 2006/12/26 20:57:54 otto Exp $";
+static const char rcsid[] = "$OpenBSD: traverse.c,v 1.18 2007/03/04 22:36:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#ifdef sunos
-#include <sys/vnode.h>
-
-#include <ufs/fs.h>
-#include <ufs/fsdir.h>
-#include <ufs/inode.h>
-#else
 #include <ufs/ffs/fs.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
-#endif
 
 #include <protocols/dumprestore.h>
 

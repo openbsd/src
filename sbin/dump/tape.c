@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.27 2006/06/02 05:09:35 krw Exp $	*/
+/*	$OpenBSD: tape.c,v 1.28 2007/03/04 22:36:54 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.27 2006/06/02 05:09:35 krw Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.28 2007/03/04 22:36:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -44,15 +44,8 @@ static const char rcsid[] = "$OpenBSD: tape.c,v 1.27 2006/06/02 05:09:35 krw Exp
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#ifdef sunos
-#include <sys/vnode.h>
-
-#include <ufs/fs.h>
-#include <ufs/inode.h>
-#else
 #include <ufs/ffs/fs.h>
 #include <ufs/ufs/dinode.h>
-#endif
 
 #include <protocols/dumprestore.h>
 
@@ -571,11 +564,7 @@ startnewtape(int top)
 	int	status;
 	pid_t	waitingpid;
 	char	*p;
-#ifdef sunos
-	void	(*interrupt_save)();
-#else
 	sig_t	interrupt_save;
-#endif
 
 	interrupt_save = signal(SIGINT, SIG_IGN);
 	parentpid = getpid();
