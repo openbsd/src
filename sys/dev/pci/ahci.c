@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.47 2007/03/04 04:51:12 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.48 2007/03/04 04:58:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -240,8 +240,7 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define AHCI_PREG_CI		0x38 /* Command Issue */
 #define AHCI_PREG_SNTF		0x3c /* SNotification */
 
-struct ahci_cmd_list {
-	u_int16_t		prdtl; /* sgl len */
+struct ahci_cmd_hdr {
 	u_int16_t		flags;
 #define AHCI_CMD_LIST_FLAG_CFL		0x001f /* Command FIS Length */
 #define AHCI_CMD_LIST_FLAG_A		(1<<5) /* ATAPI */
@@ -251,8 +250,9 @@ struct ahci_cmd_list {
 #define AHCI_CMD_LIST_FLAG_B		(1<<9) /* BIST */
 #define AHCI_CMD_LIST_FLAG_C		(1<<10) /* Clear Busy upon R_OK */
 #define AHCI_CMD_LIST_FLAG_PMP		0xf000 /* Port Multiplier Port */
+	u_int16_t		prdtl; /* sgl len */
 
-	u_int32_t		prdbc; /* datalen */
+	u_int32_t		prdbc; /* transferred byte count */
 
 	u_int32_t		ctba_lo;
 	u_int32_t		ctba_hi;
@@ -336,7 +336,7 @@ struct ahci_port {
 
 	struct ahci_dmamem	*ap_dmamem;
 	struct ahci_rfis	*ap_rfis;
-	struct ahci_cmd_list	*ap_cmd_list;
+	struct ahci_cmd_hdr	*ap_cmd_list;
 
 	struct ahci_ccb		*ap_ccbs;
 	TAILQ_HEAD(, ahci_ccb)	ap_ccb_free;
@@ -639,7 +639,7 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	/* calculate the size of the dmaable memory this port will need.  */
 	i = sizeof(struct ahci_cmd) * sc->sc_ncmds +
 	    sizeof(struct ahci_rfis) +
-	    sizeof(struct ahci_cmd_list) * sc->sc_ncmds;
+	    sizeof(struct ahci_cmd_hdr) * sc->sc_ncmds;
 	ap->ap_dmamem = ahci_dmamem_alloc(sc, i);
 	if (ap->ap_dmamem == NULL) {
 		printf("unable to allocate dmamem for port %d\n", DEVNAME(sc),
@@ -673,7 +673,7 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	ahci_pwrite(ap, AHCI_PREG_FBU, (u_int32_t)((dva + offset) >> 32));
 	offset += sizeof(struct ahci_rfis);
 
-	ap->ap_cmd_list = (struct ahci_cmd_list *)(kva + offset);
+	ap->ap_cmd_list = (struct ahci_cmd_hdr *)(kva + offset);
 	ahci_pwrite(ap, AHCI_PREG_CLB, (u_int32_t)(dva + offset));
 	ahci_pwrite(ap, AHCI_PREG_CLBU, (u_int32_t)((dva + offset) >> 32));
 
