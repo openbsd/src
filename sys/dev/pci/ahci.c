@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.58 2007/03/04 13:49:42 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.59 2007/03/04 13:53:17 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -379,6 +379,12 @@ void			ahci_unmap_intr(struct ahci_softc *,
 int			ahci_port_alloc(struct ahci_softc *, u_int);
 void			ahci_port_free(struct ahci_softc *, u_int);
 
+int			ahci_port_start(struct ahci_port *, int);
+int			ahci_port_stop(struct ahci_port *, int);
+int			ahci_port_clo(struct ahci_port *);
+int			ahci_port_portreset(struct ahci_port *);
+int			ahci_port_softreset(struct ahci_port *);
+
 int			ahci_load_prdt(struct ahci_ccb *, struct ata_xfer *);
 int			ahci_start(struct ahci_ccb *);
 
@@ -753,6 +759,246 @@ ahci_port_free(struct ahci_softc *sc, u_int port)
 }
 
 int
+ahci_port_start(struct ahci_port *ap, int fre_only)
+{
+	u_int32_t			r;
+
+	/* Turn on FRE (and ST) */
+	r = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
+	r |= AHCI_PREG_CMD_FRE;
+	if (!fre_only)
+		r |= AHCI_PREG_CMD_ST;
+	ahci_pwrite(ap, AHCI_PREG_CMD, r);
+
+	/* Wait for FR to come on */
+	if (ahci_pwait_set(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_FR))
+		return (2);
+
+	/* Wait for CR to come on */
+	if (!fre_only && ahci_pwait_set(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_CR))
+		return (1);
+
+	return (0);
+}
+
+int
+ahci_port_stop(struct ahci_port *ap, int stop_fis_rx)
+{
+	u_int32_t			r;
+
+	/* Turn off ST (and FRE) */
+	r = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
+	r &= ~AHCI_PREG_CMD_ST;
+	if (stop_fis_rx)
+		r &= ~AHCI_PREG_CMD_FRE;
+	ahci_pwrite(ap, AHCI_PREG_CMD, r);
+
+	/* Wait for CR to go off */
+	if (ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_CR))
+		return (1);
+
+	/* Wait for FR to go off */
+	if (stop_fis_rx && ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_FR))
+		return (2);
+
+	return (0);
+}
+
+/* AHCI command list override -> forcibly clear TFD.STS.{BSY,DRQ} */
+int
+ahci_port_clo(struct ahci_port *ap)
+{
+	struct ahci_softc		*sc = ap->ap_sc;
+	u_int32_t 			cmd;
+
+	/* Only attempt CLO if supported by controller */
+	if (!ISSET(ahci_read(sc, AHCI_REG_CAP), AHCI_REG_CAP_SCLO))
+		return (1);
+
+	/* Issue CLO */
+	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
+#ifdef DIAGNOSTIC
+	if (ISSET(cmd, AHCI_PREG_CMD_ST))
+		printf("%s: CLO requested while port running\n", DEVNAME(sc));
+#endif
+	ahci_pwrite(ap, AHCI_PREG_CMD, cmd | AHCI_PREG_CMD_CLO);
+
+	/* Wait for completion */
+	if (ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_CLO)) {
+		printf("%s: CLO did not complete\n", DEVNAME(sc));
+		return (1);
+	}
+
+	return (0);
+}
+
+/* AHCI soft reset, Section 10.4.1 */
+int
+ahci_port_softreset(struct ahci_port *ap)
+{
+	struct ahci_ccb			*ccb;
+	struct ahci_cmd_hdr		*cmd_slot;
+	u_int8_t			*fis;
+	int				s, rc = EIO;
+	u_int32_t			cmd;
+	struct ata_xfer			xa;
+
+	DPRINTF(AHCI_D_VERBOSE, "%s: soft reset\n", DEVNAME(ap->ap_sc));
+
+	s = splbio();
+	ccb = ahci_get_ccb(ap);
+	splx(s);
+	if (ccb == NULL)
+		goto err;
+
+	/* Save previous command register state */
+	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
+
+	/* Idle port */
+	if (ahci_port_stop(ap, 0)) {
+		printf("%s: failed to stop port, cannot softreset\n",
+		    DEVNAME(ap->ap_sc));
+		goto err;
+	}
+
+	/* Request CLO if device appears hung */
+	if (ISSET(ahci_pread(ap, AHCI_PREG_TFD), AHCI_PREG_TFD_STS_BSY |
+	    AHCI_PREG_TFD_STS_DRQ))
+		ahci_port_clo(ap);
+
+	/* Clear port errors to permit TFD transfer */
+	ahci_pwrite(ap, AHCI_PREG_SERR, ahci_pread(ap, AHCI_PREG_SERR));
+
+	/* Restart port */
+	if (ahci_port_start(ap, 0)) {
+		printf("%s: failed to start port, cannot softreset\n",
+		    DEVNAME(ap->ap_sc));
+		goto err;
+	}
+
+	/* Check whether CLO worked */
+	if (ahci_pwait_clr(ap, AHCI_PREG_TFD,
+	    AHCI_PREG_TFD_STS_BSY | AHCI_PREG_TFD_STS_DRQ)) {
+		printf("%s: CLO %s, need port reset\n", DEVNAME(ap->ap_sc),
+		    ISSET(ahci_read(ap->ap_sc, AHCI_REG_CAP), AHCI_REG_CAP_SCLO)
+		    ? "failed" : "unsupported");
+		rc = EBUSY;
+		goto err;
+	}
+
+	/* Prep first D2H command with SRST feature & clear busy/reset flags */
+	bzero(&xa, sizeof(struct ata_xfer));
+	xa.flags = ATA_F_POLL | ATA_F_WRITE;
+	ccb->ccb_xa = &xa;
+	cmd_slot = &ap->ap_cmd_list[ccb->ccb_slot];
+	bzero(cmd_slot, sizeof(struct ahci_cmd_hdr));
+	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
+
+	fis = ccb->ccb_cmd_table->cfis;
+	fis[0] = 0x27;	/* Host to device */
+	fis[15] = 0x04;	/* SRST DEVCTL */
+
+	cmd_slot->flags = htole16(5);	/* FIS length: 5 DWORDS */
+	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_C); /* Clear busy on OK */
+	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_R); /* Reset */
+	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W); /* Write */
+	cmd_slot->ctba_hi = htole32((u_int32_t)(ccb->ccb_cmd_table_dva >> 32));
+	cmd_slot->ctba_lo = htole32((u_int32_t)ccb->ccb_cmd_table_dva);
+
+	if (ahci_start(ccb) != ATA_COMPLETE)
+		goto err;
+
+	/* Prep second D2H command to read status and complete reset sequence */
+	bzero(&xa, sizeof(struct ata_xfer));
+	xa.flags = ATA_F_POLL | ATA_F_WRITE;
+	ccb->ccb_xa = &xa;
+	cmd_slot = &ap->ap_cmd_list[ccb->ccb_slot];
+	bzero(cmd_slot, sizeof(struct ahci_cmd_hdr));
+	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
+
+	fis = ccb->ccb_cmd_table->cfis;
+	fis[0] = 0x27;	/* Host to device */
+
+	cmd_slot->flags = htole16(5);	/* FIS length: 5 DWORDS */
+	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
+	cmd_slot->ctba_hi = htole32((u_int32_t)(ccb->ccb_cmd_table_dva >> 32));
+	cmd_slot->ctba_lo = htole32((u_int32_t)ccb->ccb_cmd_table_dva);
+
+	if (ahci_start(ccb) != ATA_COMPLETE)
+		goto err;
+
+	if (ahci_pwait_clr(ap, AHCI_PREG_TFD, AHCI_PREG_TFD_STS_BSY |
+	    AHCI_PREG_TFD_STS_DRQ | AHCI_PREG_TFD_STS_ERR)) {
+		printf("%s: device didn't come ready after reset, TFD: 0x%b\n",
+		    DEVNAME(ap->ap_sc), ahci_pread(ap, AHCI_PREG_TFD),
+		    AHCI_PFMT_TFD_STS);
+		goto err;
+	}
+
+	rc = 0;
+err:
+	if (ccb != NULL)
+		ahci_put_ccb(ap, ccb);
+
+	/* Restore saved CMD register state */
+	ahci_pwrite(ap, AHCI_PREG_CMD, cmd);
+
+	return (rc);
+}
+
+/* AHCI port reset, Section 10.4.2 */
+int
+ahci_port_portreset(struct ahci_port *ap)
+{
+	u_int32_t cmd, r;
+	int rc;
+
+	DPRINTF(AHCI_D_VERBOSE, "%s: port reset\n", DEVNAME(ap->ap_sc));
+
+	/* Save previous command register state */
+	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
+
+	/* Clear ST, ignoring failure */
+	ahci_port_stop(ap, 0);
+
+	/* Perform device detection */
+	ahci_pwrite(ap, AHCI_PREG_SCTL, 0);
+	r = AHCI_PREG_SCTL_IPM_DISABLED | AHCI_PREG_SCTL_SPD_ANY |
+	    AHCI_PREG_SCTL_DET_INIT;
+	ahci_pwrite(ap, AHCI_PREG_SCTL, r);
+	delay(2000);	/* wait at least 1ms for COMRESET to be sent */
+	r &= ~AHCI_PREG_SCTL_DET_INIT;
+	r |= AHCI_PREG_SCTL_DET_NONE;
+	ahci_pwrite(ap, AHCI_PREG_SCTL, r);
+	delay(2000);
+
+	/* Wait for device to be detected and communications established */
+	if (ahci_pwait_eq(ap, AHCI_PREG_SSTS, AHCI_PREG_SSTS_DET,
+	    AHCI_PREG_SSTS_DET_DEV)) {
+		rc = ENODEV;
+		goto err;
+	}
+
+	/* Clear SERR (incl X bit), so TFD can update */
+	ahci_pwrite(ap, AHCI_PREG_SERR, ahci_pread(ap, AHCI_PREG_SERR));
+
+	/* Wait for device to become ready */
+	/* XXX maybe more than the default wait is appropriate here? */
+	if (ahci_pwait_clr(ap, AHCI_PREG_TFD, AHCI_PREG_TFD_STS_BSY |
+	    AHCI_PREG_TFD_STS_DRQ | AHCI_PREG_TFD_STS_ERR)) {
+		rc = EBUSY;
+		goto err;
+	}
+
+	rc = 0;
+err:
+	/* Restore preserved port state */
+	ahci_pwrite(ap, AHCI_PREG_CMD, cmd);
+
+	return (rc);
+}
+
+int
 ahci_load_prdt(struct ahci_ccb *ccb, struct ata_xfer *xa)
 {
 	struct ahci_port		*ap = ccb->ccb_port;
@@ -824,6 +1070,8 @@ ahci_start(struct ahci_ccb *ccb)
 			/* Command didn't go inactive.  XXX: wait longer? */
 			printf("%s: polled command didn't go inactive\n",
 			    DEVNAME(sc));
+			/* Shutdown port.  XXX: recover via port reset? */
+			ahci_port_stop(ap, 0);
 			rc = ATA_ERROR;
 		} else
 			rc = ATA_COMPLETE;
