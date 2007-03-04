@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.59 2007/03/04 13:53:17 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.60 2007/03/04 14:06:34 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -586,11 +586,17 @@ ahci_unmap_intr(struct ahci_softc *sc, struct pci_attach_args *pa)
 int
 ahci_init(struct ahci_softc *sc)
 {
-	u_int32_t			reg;
+	u_int32_t			reg, cap, pi;
 	const char			*revision;
 
 	DPRINTF(AHCI_D_VERBOSE, " GHC 0x%b", ahci_read(sc, AHCI_REG_GHC),
 	    AHCI_FMT_GHC);
+
+	/* save BIOS initialised parameters, enable staggered spin up */
+	cap = ahci_read(sc, AHCI_REG_CAP);
+	cap &= AHCI_REG_CAP_SMPS;
+	cap |= AHCI_REG_CAP_SSS;
+	pi = ahci_read(sc, AHCI_REG_PI);
 
 	if (ISSET(AHCI_REG_GHC_AE, ahci_read(sc, AHCI_REG_GHC))) {
 		/* reset the controller */
@@ -602,7 +608,11 @@ ahci_init(struct ahci_softc *sc)
 		}
 	}
 
-	/* enable ahci */
+	/* restore parameters */
+	ahci_write(sc, AHCI_REG_CAP, cap);
+	ahci_write(sc, AHCI_REG_PI, pi);
+
+	/* enable ahci (global interrupts disabled) */
 	ahci_write(sc, AHCI_REG_GHC, AHCI_REG_GHC_AE);
 
 	/* check the revision */
@@ -622,10 +632,6 @@ ahci_init(struct ahci_softc *sc)
 		printf(": unsupported AHCI revision 0x%08x\n", reg);
 		return (1);
 	}
-
-	/* clean interrupts */
-	reg = ahci_read(sc, AHCI_REG_IS);
-	ahci_write(sc, AHCI_REG_IS, reg);
 
 	printf(": AHCI %s", revision);
 
