@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.4 2007/03/04 17:03:01 henning Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.5 2007/03/04 17:47:31 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -33,7 +33,7 @@ int	 process_policies(FILE *, struct policy_head *);
 void	 policy_prettyprint(FILE *, struct policy_item *);
 void	 policy_torule(FILE *, struct policy_item *);
 char	*action_torule(char *);
-void	 print_rule(FILE *, enum pdir, char *, char *, char *);
+void	 print_rule(FILE *, struct policy_item *, char *);
 
 #define allowed_in_address(x) \
 	(isalnum(x) || x == '.' || x == ':' || x == '-')
@@ -128,7 +128,7 @@ policy_torule(FILE *fh, struct policy_item *pi)
 	u_int			 i, j;
 
 	if (pi->filter == NULL || !strcasecmp(pi->filter, "any"))
-		print_rule(fh, pi->dir, pi->peer_addr, pi->action, NULL);
+		print_rule(fh, pi, NULL);
 	else {
 		ass = asset_expand(pi->filter);
 
@@ -136,8 +136,7 @@ policy_torule(FILE *fh, struct policy_item *pi)
 			pfxs = prefixset_get(ass->as[i]);
 			fprintf(fh, "# prefixes from %s\n", ass->as[i]);
 			for (j = 0; j < pfxs->prefixcnt; j++)
-				print_rule(fh, pi->dir, pi->peer_addr,
-				    pi->action, pfxs->prefix[j]);
+				print_rule(fh, pi, pfxs->prefix[j]);
 		}
 	}
 }
@@ -187,24 +186,23 @@ action_torule(char *s)
 }
 
 void
-print_rule(FILE *fh, enum pdir pdir, char *peerspec, char *actspec,
-    char *prefix)
+print_rule(FILE *fh, struct policy_item *pi, char *prefix)
 {
 	char			*fmt = "allow quick %s %s%s%s%s\n";
 	char			*peer = "any";
 	char			*action = "";
 	char			*dir;
 
-	if (pdir == IMPORT)
+	if (pi->dir == IMPORT)
 		dir = "from";
 	else
 		dir = "to";
 
-	if (peerspec)
-		peer = peerspec;
+	if (pi->peer_addr)
+		peer = pi->peer_addr;
 
-	if (actspec)
-		action = action_torule(actspec);
+	if (pi->action)
+		action = action_torule(pi->action);
 
 	if (prefix == NULL)
 		fprintf(fh, fmt, dir, peer, "", "", action);
