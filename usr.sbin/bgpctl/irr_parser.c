@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_parser.c,v 1.2 2007/03/03 14:56:43 henning Exp $ */
+/*	$OpenBSD: irr_parser.c,v 1.3 2007/03/04 12:27:46 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -382,7 +382,8 @@ parse_asset(char *key, char *val)
 
 	while ((tok = strsep(&val, ",")) != NULL) {
 		EATWS(tok);
-		asset_addmember(tok);
+		if (tok[0] != '\0')
+			asset_addmember(tok);
 	}
 
 	return (1);
