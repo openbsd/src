@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.56 2007/03/04 13:32:41 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.57 2007/03/04 13:47:08 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -379,6 +379,8 @@ void			ahci_unmap_intr(struct ahci_softc *,
 int			ahci_port_alloc(struct ahci_softc *, u_int);
 void			ahci_port_free(struct ahci_softc *, u_int);
 
+int			ahci_load_prdt(struct ahci_ccb *, struct ata_xfer *);
+
 int			ahci_intr(void *);
 
 struct ahci_ccb		*ahci_get_ccb(struct ahci_port *);
@@ -747,6 +749,50 @@ ahci_port_free(struct ahci_softc *sc, u_int port)
 
 	free(ap, M_DEVBUF);
 	sc->sc_ports[port] = NULL;
+}
+
+int
+ahci_load_prdt(struct ahci_ccb *ccb, struct ata_xfer *xa)
+{
+	struct ahci_port		*ap = ccb->ccb_port;
+	struct ahci_softc		*sc = ap->ap_sc;
+	struct ahci_prdt		*prdt = ccb->ccb_cmd_table->prdt, *prd;
+	bus_dmamap_t			dmap = ccb->ccb_dmamap;
+	struct ahci_cmd_hdr		*cmd_slot;
+	u_int64_t			addr;
+	int				i, error;
+
+	if (xa->datalen == 0)
+		return (0);
+
+	error = bus_dmamap_load(sc->sc_dmat, dmap,
+	    xa->data, xa->datalen, NULL,
+	    (xa->flags & ATA_F_NOWAIT) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+	if (error != 0) {
+		printf("%s: error %d loading dmamap\n", DEVNAME(sc), error);
+		return (1);
+	}
+
+	for (i = 0; i < dmap->dm_nsegs; i++) {
+		prd = &prdt[i];
+
+		addr = dmap->dm_segs[i].ds_addr;
+		prd->dba_hi = htole32((u_int32_t)(addr >> 32));
+		prd->dba_lo = htole32((u_int32_t)addr);
+
+		prd->flags = htole32(dmap->dm_segs[i].ds_len - 1);
+	}
+	prd->flags |= htole32(AHCI_PRDT_FLAG_INTR);
+
+	cmd_slot = &ap->ap_cmd_list[ccb->ccb_slot];
+	cmd_slot->prdtl = htole16(ccb->ccb_dmamap->dm_nsegs);
+	cmd_slot->prdbc = 0;
+
+	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
+	    (xa->flags & ATA_F_READ) ? BUS_DMASYNC_PREREAD :
+	    BUS_DMASYNC_PREWRITE);
+
+	return (0);
 }
 
 int
