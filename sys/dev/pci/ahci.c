@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.46 2007/02/20 22:33:37 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.47 2007/03/04 04:51:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -69,17 +69,17 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_REG_CAP_SSNTF		(1<<29) /* SNotification Register */
 #define  AHCI_REG_CAP_SNCQ		(1<<30) /* Native Cmd Queuing */
 #define  AHCI_REG_CAP_S64A		(1<<31) /* 64bit Addressing */
-#define  AHCI_FMT_CAP		"\020" "\006SXS" "\007EMS" "\010CCCS" \
-				    "\016PSC" "\017SSC" "\020PMD" "\021FBSS" \
-				    "\022SPM" "\023SAM" "\024SNZO" "\031SCLO" \
-				    "\032SAL" "\033SALP" "\034SSS" "\035SMPS" \
-				    "\036SSNTF" "\037NCQ" "\040S64A"
+#define  AHCI_FMT_CAP		"\020" "\040S64A" "\037NCQ" "\036SSNTF" \
+				    "\035SMPS" "\034SSS" "\033SALP" "\032SAL" \
+				    "\031SCLO" "\024SNZO" "\023SAM" "\022SPM" \
+				    "\021FBSS" "\020PMD" "\017SSC" "\016PSC" \
+				    "\010CCCS" "\007EMS" "\006SXS"
 #define AHCI_REG_GHC		0x004 /* Global HBA Control */
 #define  AHCI_REG_GHC_HR		(1<<0) /* HBA Reset */
 #define  AHCI_REG_GHC_IE		(1<<1) /* Interrupt Enable */
 #define  AHCI_REG_GHC_MRSM		(1<<2) /* MSI Revert to Single Msg */
 #define  AHCI_REG_GHC_AE		(1<<31) /* AHCI Enable */
-#define AHCI_FMT_GHC		"\020" "\001HR" "\002IE" "\003MRSM" "\040AE"
+#define AHCI_FMT_GHC		"\020" "\040AE" "\003MRSM" "\002IE" "\001HR"
 #define AHCI_REG_IS		0x008 /* Interrupt Status */
 #define AHCI_REG_PI		0x00c /* Ports Implemented */
 #define AHCI_REG_VS		0x010 /* AHCI Version */
@@ -116,11 +116,11 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_PREG_IS_HBFS		(1<<29) /* Host Bus Fatal Error */
 #define  AHCI_PREG_IS_TFES		(1<<30) /* Task File Error */
 #define  AHCI_PREG_IS_CPDS		(1<<31) /* Cold Presence Detect */
-#define AHCI_PFMT_IS		"\20" "\001DHRS" "\002PSS" "\003DSS" \
-				    "\004SDBS" "\005UFS" "\006DPS" "\007PCS" \
-				    "\010DMPS" "\027PRCS" "\030IPMS"  \
-				    "\031OFS" "\033INFS" "\034IFS" "\035HBDS" \
-				    "\036HBFS" "\037TFES" "\040CPDS"
+#define AHCI_PFMT_IS		"\20" "\040CPDS" "\037TFES" "\036HBFS" \
+				    "\035HBDS" "\034IFS" "\033INFS" "\031OFS" \
+				    "\030IPMS" "\027PRCS" "\010DMPS" "\006DPS" \
+				    "\007PCS" "\005UFS" "\004SDBS" "\003DSS" \
+				    "\002PSS" "\001DHRS"
 #define AHCI_PREG_IE		0x14 /* Interrupt Enable */
 #define  AHCI_PREG_IE_DHRE		(1<<0) /* Device to Host FIS */
 #define  AHCI_PREG_IE_PSE		(1<<1) /* PIO Setup FIS */
@@ -139,11 +139,11 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_PREG_IE_HBFE		(1<<29) /* Host Bus Fatal Error */
 #define  AHCI_PREG_IE_TFEE		(1<<30) /* Task File Error */
 #define  AHCI_PREG_IE_CPDE		(1<<31) /* Cold Presence Detect */
-#define AHCI_PFMT_IE		"\20" "\001DHRE" "\002PSE" "\003DSE" \
-				    "\004SDBE" "\005UFE" "\006DPE" "\007PCE" \
-				    "\010DMPE" "\027PRCE" "\030IPME"  \
-				    "\031OFE" "\033INFE" "\034IFE" "\035HBDE" \
-				    "\036HBFE" "\037TFEE" "\040CPDE"
+#define AHCI_PFMT_IE		"\20" "\040CPDE" "\037TFEE" "\036HBFE" \
+				    "\035HBDE" "\034IFE" "\033INFE" "\031OFE" \
+				    "\030IPME" "\027PRCE" "\010DMPE" "\007PCE" \
+				    "\006DPE" "\005UFE" "\004SDBE" "\003DSE" \
+				    "\002PSE" "\001DHRE"
 #define AHCI_PREG_CMD		0x18 /* Command and Status */
 #define  AHCI_PREG_CMD_ST		(1<<0) /* Start */
 #define  AHCI_PREG_CMD_SUD		(1<<1) /* Spin Up Device */
@@ -169,18 +169,18 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_PREG_CMD_ICC_PARTIAL	0x20000000
 #define  AHCI_PREG_CMD_ICC_ACTIVE	0x10000000
 #define  AHCI_PREG_CMD_ICC_IDLE		0x00000000
-#define  AHCI_PFMT_CMD		"\020" "\001ST" "\002SUD" "\003POD" \
-				    "\004CLO" "\005FRE" "\016MPSS" "\017FR" \
-				    "\020CR" "\021CPS" "\022PMA" "\023HPCP" \
-				    "\024MPSP" "\025CPD" "\026ESP" \
-				    "\031ATAPI" "\032DLAE" "\033ALPE" "\034ASP"
+#define  AHCI_PFMT_CMD		"\020" "\034ASP" "\033ALPE" "\032DLAE" \
+				    "\031ATAPI" "\026ESP" "\025CPD" "\024MPSP" \
+				    "\023HPCP" "\022PMA" "\021CPS" "\020CR" \
+				    "\017FR" "\016MPSS" "\005FRE" "\004CLO" \
+				    "\003POD" "\002SUD" "\001ST"
 #define AHCI_PREG_TFD		0x20 /* Task File Data*/
 #define  AHCI_PREG_TFD_STS		0xff
 #define  AHCI_PREG_TFD_STS_ERR		(1<<0)
 #define  AHCI_PREG_TFD_STS_DRQ		(1<<3)
 #define  AHCI_PREG_TFD_STS_BSY		(1<<7)
 #define  AHCI_PREG_TFD_ERR		0xff00
-#define AHCI_PFMT_TFD_STS	"\20" "\001ERR" "\004DRQ" "\010BSY"
+#define AHCI_PFMT_TFD_STS	"\20" "\010BSY" "\004DRQ" "\001ERR"
 #define AHCI_PREG_SIG		0x24 /* Signature */
 #define AHCI_PREG_SSTS		0x28 /* SATA Status */
 #define  AHCI_PREG_SSTS_DET		0xf /* Device Detection */
@@ -219,8 +219,8 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_PREG_SERR_ERR_C		(1<<9) /* Persistent Comm/Data */
 #define  AHCI_PREG_SERR_ERR_P		(1<<10) /* Protocol */
 #define  AHCI_PREG_SERR_ERR_E		(1<<11) /* Internal */
-#define  AHCI_PFMT_SERR_ERR	"\020" "\001I" "\002M" "\011T" "\012C" \
-				    "\013P" "\014E"
+#define  AHCI_PFMT_SERR_ERR	"\020" "\014E" "\013P" "\012C" "\011T" "\002M" \
+				    "\001I"
 #define  AHCI_PREG_SERR_DIAG(_r)	(((_r) >> 16) & 0xffff)
 #define  AHCI_PREG_SERR_DIAG_N		(1<<0) /* PhyRdy Change */
 #define  AHCI_PREG_SERR_DIAG_I		(1<<1) /* Phy Internal Error */
@@ -233,9 +233,9 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_PREG_SERR_DIAG_T		(1<<8) /* Transport State Trans Err */
 #define  AHCI_PREG_SERR_DIAG_F		(1<<9) /* Unknown FIS Type */
 #define  AHCI_PREG_SERR_DIAG_X		(1<<10) /* Exchanged */
-#define  AHCI_PFMT_SERR_DIAG	"\020" "\001N" "\002I" "\003W" "\004B" \
-				    "\005D" "\006C" "\007H" "\010S" "\011T" \
-				    "\012F" "\013X"
+#define  AHCI_PFMT_SERR_DIAG	"\020" "\013X" "\012F" "\011T" "\010S" "\007H" \
+				    "\006C" "\005D" "\004B" "\003W" "\002I" \
+				    "\001N"
 #define AHCI_PREG_ACT		0x34 /* SATA Active */
 #define AHCI_PREG_CI		0x38 /* Command Issue */
 #define AHCI_PREG_SNTF		0x3c /* SNotification */
