@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.67 2007/03/04 16:10:10 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.68 2007/03/04 19:04:31 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -3241,7 +3241,7 @@ bcw_phy_initg(struct bcw_softc *sc)
 		if (sc->sc_boardflags & BCW_BF_PACTRL)
 			bcw_phy_write16(sc, 0x002e, 0x8075);
 		else
-			bcw_phy_write16(sc, 0x002f, 0x807f);
+			bcw_phy_write16(sc, 0x002e, 0x807f);
 		if (sc->sc_phy_rev < 2)
 			bcw_phy_write16(sc, 0x002f, 0x0101);
 		else
@@ -4670,9 +4670,9 @@ bcw_phy_lo_g_measure(struct bcw_softc *sc)
 	regstack[6]  = bcw_phy_read16(sc, 0x2a);
 	regstack[7]  = bcw_phy_read16(sc, 0x35);
 	regstack[8]  = bcw_phy_read16(sc, 0x60);
-	regstack[9]  = bcw_phy_read16(sc, 0x43);
-	regstack[10] = bcw_phy_read16(sc, 0x7a);
-	regstack[11] = bcw_phy_read16(sc, 0x52);
+	regstack[9]  = bcw_radio_read16(sc, 0x43);
+	regstack[10] = bcw_radio_read16(sc, 0x7a);
+	regstack[11] = bcw_radio_read16(sc, 0x52);
 	if (sc->sc_phy_connected) {
 		regstack[12] = bcw_phy_read16(sc, 0x0811);
 		regstack[13] = bcw_phy_read16(sc, 0x0812);
