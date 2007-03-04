@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.64 2007/03/04 00:43:26 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.65 2007/03/04 14:27:27 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -3051,7 +3051,7 @@ bcw_leds_switch_all(struct bcw_softc *sc, int on)
 	uint16_t ledctl;
 	int i, bit_on;
 
-	ledctl = BCW_READ16(sc, BCW_GPIO_CTRL);
+	ledctl = BCW_READ16(sc, BCW_MMIO_GPIO_CONTROL);
 
 	for (i = 0; i < BCW_NR_LEDS; i++) {
 		led = &(sc->leds[i]);
@@ -3067,7 +3067,7 @@ bcw_leds_switch_all(struct bcw_softc *sc, int on)
 			ledctl &= ~(1 << i);
 	}
 
-	BCW_WRITE16(sc, BCW_GPIO_CTRL, ledctl);
+	BCW_WRITE16(sc, BCW_MMIO_GPIO_CONTROL, ledctl);
 }
 
 int
@@ -3102,6 +3102,13 @@ bcw_gpio_init(struct bcw_softc *sc)
 	}
 	if (sc->sc_chip_rev >= 2)
 		mask |= 0x0010; /* FIXME this is redundant */
+
+	/*
+	 * TODO
+	 * We need to switch to common or pci core before we can write
+	 * to BCW_GPIO_CTR.
+	 */
+	return (0);
 
 	BCW_WRITE(sc, BCW_GPIO_CTRL, (BCW_READ(sc, BCW_GPIO_CTRL) & mask) |
 	    set);
