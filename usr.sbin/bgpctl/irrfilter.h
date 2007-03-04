@@ -1,4 +1,4 @@
-/*	$OpenBSD: irrfilter.h,v 1.3 2007/03/04 20:05:11 henning Exp $ */
+/*	$OpenBSD: irrfilter.h,v 1.4 2007/03/04 20:31:22 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -68,7 +68,7 @@ struct as_set {
 	u_int			  n_as;
 };
 
-struct prefix {
+struct irr_prefix {
 	union {
 		struct in_addr	in;
 	} addr;
@@ -79,7 +79,7 @@ struct prefix {
 struct prefix_set {
 	RB_ENTRY(prefix_set)	  entry;
 	char			 *as;
-	struct prefix		**prefix;
+	struct irr_prefix	**prefix;
 	u_int			  prefixcnt;
 };
 

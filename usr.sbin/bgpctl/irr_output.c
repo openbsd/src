@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.8 2007/03/04 20:05:11 henning Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.9 2007/03/04 20:31:22 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -37,7 +37,7 @@ int	 process_policies(FILE *, struct policy_head *);
 void	 policy_prettyprint(FILE *, struct policy_item *);
 void	 policy_torule(FILE *, struct policy_item *);
 char	*action_torule(char *);
-void	 print_rule(FILE *, struct policy_item *, char *, struct prefix *);
+void	 print_rule(FILE *, struct policy_item *, char *, struct irr_prefix *);
 
 #define allowed_in_address(x) \
 	(isalnum(x) || x == '.' || x == ':' || x == '-')
@@ -195,7 +195,7 @@ action_torule(char *s)
 
 void
 print_rule(FILE *fh, struct policy_item *pi, char *sourceas,
-    struct prefix *prefix)
+    struct irr_prefix *prefix)
 {
 	char	*fmt = "allow quick %s %s%s%s%s%s\n";
 	char	*peer = "any";

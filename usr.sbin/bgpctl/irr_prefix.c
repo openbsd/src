@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_prefix.c,v 1.2 2007/03/04 20:05:11 henning Exp $ */
+/*	$OpenBSD: irr_prefix.c,v 1.3 2007/03/04 20:31:22 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -29,7 +29,7 @@
 
 #include "irrfilter.h"
 
-int	 prefix_compare(void *, void *);
+int	 prefix_compare(const void *, const void *);
 int	 prefix_set_compare(struct prefix_set *, struct prefix_set *);
 struct prefix_set
 	*prefix_set_find(char *);
@@ -67,10 +67,10 @@ prefixset_get(char *as)
 int
 prefixset_addmember(char *s)
 {
-	void		*p;
-	u_int		 i;
-	struct prefix	*pfx;
-	int		 len;
+	void			*p;
+	u_int			 i;
+	struct irr_prefix	*pfx;
+	int			 len;
 
 	if (strchr(s, '/') == NULL)
 		errx(1, "prefix %s does not have the len specified", s);
@@ -103,11 +103,11 @@ prefixset_addmember(char *s)
 }
 
 int
-prefix_compare(void *a, void *b)
+prefix_compare(const void *a, const void *b)
 {
-	struct prefix	*pa = a;
-	struct prefix	*pb = b;
-	int		 r;
+	const struct irr_prefix	*pa = a;
+	const struct irr_prefix	*pb = b;
+	int			 r;
 
 	if ((r = pa->af - pb->af) != 0)
 		return (r);
@@ -116,7 +116,7 @@ prefix_compare(void *a, void *b)
 		    ntohl(pb->addr.in.s_addr)) != 0)
 			return (r);
 	} else
-		errx(1, "prefixcmp unknown af %u", pa->af);
+		errx(1, "prefix_compare unknown af %u", pa->af);
 
 	if ((r = pa->len - pb->len) != 0)
 		return (r);
