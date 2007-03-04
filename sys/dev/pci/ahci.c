@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.60 2007/03/04 14:06:34 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.61 2007/03/04 14:23:08 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -646,6 +646,7 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	u_int8_t			*kva;
 	u_int64_t			dva;
 	int				i, rc = ENOMEM;
+	u_int32_t			cmd;
 
 	ap = malloc(sizeof(struct ahci_port), M_DEVBUF, M_NOWAIT);
 	if (ap == NULL) {
@@ -655,7 +656,6 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	}
 	bzero(ap, sizeof(struct ahci_port));
 
-	ap->ap_sc = sc;
 	sc->sc_ports[port] = ap;
 
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
@@ -663,6 +663,30 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 		printf("%s: unable to create register window for port %d\n",
 		    DEVNAME(sc), port);
 		goto freeport;
+	}
+
+	ap->ap_sc = sc;
+
+	/* Disable port interrupts */
+	ahci_pwrite(ap, AHCI_PREG_IE, 0);
+
+	/* Sec 10.1.2 - deinitialise port if it is already running */
+	cmd = ahci_pread(ap, AHCI_PREG_CMD);
+	if (ISSET(cmd, (AHCI_PREG_CMD_ST | AHCI_PREG_CMD_CR |
+	    AHCI_PREG_CMD_FRE | AHCI_PREG_CMD_FR)) ||
+	    ISSET(ahci_pread(ap, AHCI_PREG_SCTL), AHCI_PREG_SCTL_DET)) {
+		int r;
+
+		r = ahci_port_stop(ap, 1);
+		if (r) {
+			printf("%s: unable to disable %s, ignoring port %d\n",
+			    DEVNAME(sc), r == 2 ? "CR" : "FR", port);
+			rc = ENXIO;
+			goto freeport;
+		}
+
+		/* Write DET to zero */
+		ahci_pwrite(ap, AHCI_PREG_SCTL, 0);
 	}
 
 	/* Allocate RFIS */
@@ -676,6 +700,18 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	ap->ap_rfis = (struct ahci_rfis *)kva;
 	ahci_pwrite(ap, AHCI_PREG_FBU, htole32((u_int32_t)(dva >> 32)));
 	ahci_pwrite(ap, AHCI_PREG_FB, htole32((u_int32_t)dva));
+
+	/* Enable FIS reception and activate port. */
+	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
+	cmd |= AHCI_PREG_CMD_FRE | AHCI_PREG_CMD_POD | AHCI_PREG_CMD_SUD;
+	ahci_pwrite(ap, AHCI_PREG_CMD, cmd | AHCI_PREG_CMD_ICC_ACTIVE);
+
+	/* Check whether port activated.  Skip it if not. */
+	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
+	if (!ISSET(cmd, AHCI_PREG_CMD_FRE)) {
+		rc = ENXIO;
+		goto freeport;
+	}
 
 	/* Allocate a CCB for each command slot */
 	ap->ap_ccbs = malloc(sizeof(struct ahci_ccb) * sc->sc_ncmds, M_DEVBUF,
@@ -720,6 +756,11 @@ nomem:
 			goto freeport;
 		}
 
+		/*
+		 * NB: ahci_start assumes a 1:1 mapping of CCB slot number
+		 * to command slot and command table positions in its
+		 * bus_dmasync_calls.
+		 */
 		ccb->ccb_slot = i;
 		ccb->ccb_port = ap;
 		ccb->ccb_cmd_table = (struct ahci_cmd_table *)
@@ -730,8 +771,57 @@ nomem:
 		ahci_put_ccb(ap, ccb);
 	}
 
-	rc = 0;
+	/* Wait for ICC change to complete */
+	ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_ICC);
 
+	/* Reset port */
+	rc = ahci_port_portreset(ap);
+	printf("ahci_portreset returned %d\n", rc);
+	switch (rc) {
+	case ENODEV:
+		printf("%s: ", DEVNAME(sc));
+		switch (ahci_pread(ap, AHCI_PREG_SSTS) & AHCI_PREG_SSTS_DET) {
+		case AHCI_PREG_SSTS_DET_DEV_NE:
+			printf("device not communicating");
+			break;
+		case AHCI_PREG_SSTS_DET_PHYOFFLINE:
+			printf("PHY offline");
+			break;
+		default:
+			printf("no device detected");
+		}
+		printf(" on port %d, disabling.\n", port);
+		goto freeport;
+
+	case EBUSY:
+		printf("%s: device on port %d didn't come ready, TFD: 0x%b\n",
+		    DEVNAME(sc), port, ahci_pread(ap, AHCI_PREG_TFD),
+		    AHCI_PFMT_TFD_STS);
+
+		/* Try a soft reset to clear busy */
+		rc = ahci_port_softreset(ap);
+		printf("ahci_portsoftreset returned %d\n", rc);
+		if (rc) {
+			printf("%s: unable to communicate with device on port "
+			    "%d, disabling\n", DEVNAME(sc), port);
+			goto freeport;
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	/* Enable command transfers on port */
+	if (ahci_port_start(ap, 0)) {
+		printf("%s: failed to start command DMA on port %d, "
+		    "disabling\n", DEVNAME(sc), port);
+		rc = ENXIO;	/* couldn't start port */
+	}
+
+	/* Flush interrupts for port */
+	ahci_pwrite(ap, AHCI_PREG_IS, ahci_pread(ap, AHCI_PREG_IS));
+	ahci_write(sc, AHCI_REG_IS, 1 << port);
 freeport:
 	if (rc != 0)
 		ahci_port_free(sc, port);
@@ -744,6 +834,14 @@ ahci_port_free(struct ahci_softc *sc, u_int port)
 {
 	struct ahci_port		*ap = sc->sc_ports[port];
 	struct ahci_ccb			*ccb;
+
+	/* Ensure port is disabled and its interrupts are flushed */
+	if (ap->ap_sc) {
+		ahci_pwrite(ap, AHCI_PREG_CMD, 0);
+		ahci_pwrite(ap, AHCI_PREG_IE, 0);
+		ahci_pwrite(ap, AHCI_PREG_IS, ahci_pread(ap, AHCI_PREG_IS));
+		ahci_write(sc, AHCI_REG_IS, 1 << port);
+	}
 
 	if (ap->ap_ccbs) {
 		while ((ccb = ahci_get_ccb(ap)) != NULL)
