@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_parser.c,v 1.3 2007/03/04 12:27:46 henning Exp $ */
+/*	$OpenBSD: irr_parser.c,v 1.4 2007/03/04 12:37:07 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -211,7 +211,7 @@ parse_policy(char *key, char *val)
 	struct policy_item	*pi;
 	enum pdir		 dir;
 	enum policy_parser_st	 st = PO_NONE, nextst;
-	char			*tok, *router = NULL, *p;
+	char			*tok, *router = "", *p;
 
 	if (!strcmp(key, "import"))
 		dir = IMPORT;

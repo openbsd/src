@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.2 2007/03/03 12:41:13 henning Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.3 2007/03/04 12:37:07 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -50,7 +50,7 @@ write_filters(char *outpath)
 	while ((r = TAILQ_FIRST(&router_head)) != NULL) {
 		TAILQ_REMOVE(&router_head, r, entry);
 
-		if (r->address != NULL) {
+		if (r->address != NULL && r->address[0] != '\0') {
 			for (i = 0; i < strlen(r->address); i++)
 				if (!allowed_in_address(r->address[i]))
 					errx(1, "router address \"%s\" contains"
