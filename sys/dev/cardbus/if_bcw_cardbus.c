@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_cardbus.c,v 1.11 2007/03/04 00:43:25 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_cardbus.c,v 1.12 2007/03/04 11:06:07 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -137,9 +137,9 @@ bcw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	 * Get some cardbus info into the softc
 	 */
 	sc->sc_board_vendor = CARDBUS_VENDOR(ca->ca_id);
-	sc->sc_board_type = sc->sc_conf_read(sc, 0x2e);
+	sc->sc_prodid = CARDBUS_PRODUCT(ca->ca_id); /* XXX */
+	sc->sc_board_type = sc->sc_prodid; /* XXX */
 	sc->sc_board_rev = CARDBUS_REVISION(ca->ca_class);
-	sc->sc_prodid = CARDBUS_PRODUCT(ca->ca_id);
 
 #if 0
 	error = bcw_attach(sc);
