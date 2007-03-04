@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.61 2007/03/04 14:23:08 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.62 2007/03/04 14:40:41 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -340,6 +340,11 @@ struct ahci_port {
 
 	struct ahci_ccb		*ap_ccbs;
 	TAILQ_HEAD(, ahci_ccb)	ap_ccb_free;
+
+#ifdef AHCI_DEBUG
+	char			ap_name[16];
+#define PORTNAME(_ap)	((_ap)->ap_name)
+#endif
 };
 
 struct ahci_softc {
@@ -656,6 +661,10 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	}
 	bzero(ap, sizeof(struct ahci_port));
 
+#ifdef AHCI_DEBUG
+	snprintf(ap->ap_name, sizeof(ap->ap_name), "%s.%d",
+	    DEVNAME(sc), port);
+#endif
 	sc->sc_ports[port] = ap;
 
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
@@ -776,7 +785,6 @@ nomem:
 
 	/* Reset port */
 	rc = ahci_port_portreset(ap);
-	printf("ahci_portreset returned %d\n", rc);
 	switch (rc) {
 	case ENODEV:
 		printf("%s: ", DEVNAME(sc));
@@ -800,7 +808,6 @@ nomem:
 
 		/* Try a soft reset to clear busy */
 		rc = ahci_port_softreset(ap);
-		printf("ahci_portsoftreset returned %d\n", rc);
 		if (rc) {
 			printf("%s: unable to communicate with device on port "
 			    "%d, disabling\n", DEVNAME(sc), port);
@@ -811,6 +818,7 @@ nomem:
 	default:
 		break;
 	}
+	printf("%s: detected device on port %d\n", DEVNAME(sc), port);
 
 	/* Enable command transfers on port */
 	if (ahci_port_start(ap, 0)) {
@@ -913,7 +921,7 @@ int
 ahci_port_clo(struct ahci_port *ap)
 {
 	struct ahci_softc		*sc = ap->ap_sc;
-	u_int32_t 			cmd;
+	u_int32_t			cmd;
 
 	/* Only attempt CLO if supported by controller */
 	if (!ISSET(ahci_read(sc, AHCI_REG_CAP), AHCI_REG_CAP_SCLO))
@@ -923,13 +931,13 @@ ahci_port_clo(struct ahci_port *ap)
 	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
 #ifdef DIAGNOSTIC
 	if (ISSET(cmd, AHCI_PREG_CMD_ST))
-		printf("%s: CLO requested while port running\n", DEVNAME(sc));
+		printf("%s: CLO requested while port running\n", PORTNAME(ap));
 #endif
 	ahci_pwrite(ap, AHCI_PREG_CMD, cmd | AHCI_PREG_CMD_CLO);
 
 	/* Wait for completion */
 	if (ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_CLO)) {
-		printf("%s: CLO did not complete\n", DEVNAME(sc));
+		printf("%s: CLO did not complete\n", PORTNAME(ap));
 		return (1);
 	}
 
@@ -947,7 +955,7 @@ ahci_port_softreset(struct ahci_port *ap)
 	u_int32_t			cmd;
 	struct ata_xfer			xa;
 
-	DPRINTF(AHCI_D_VERBOSE, "%s: soft reset\n", DEVNAME(ap->ap_sc));
+	DPRINTF(AHCI_D_VERBOSE, "%s: soft reset\n", PORTNAME(ap));
 
 	s = splbio();
 	ccb = ahci_get_ccb(ap);
@@ -961,7 +969,7 @@ ahci_port_softreset(struct ahci_port *ap)
 	/* Idle port */
 	if (ahci_port_stop(ap, 0)) {
 		printf("%s: failed to stop port, cannot softreset\n",
-		    DEVNAME(ap->ap_sc));
+		    PORTNAME(ap));
 		goto err;
 	}
 
@@ -976,14 +984,14 @@ ahci_port_softreset(struct ahci_port *ap)
 	/* Restart port */
 	if (ahci_port_start(ap, 0)) {
 		printf("%s: failed to start port, cannot softreset\n",
-		    DEVNAME(ap->ap_sc));
+		    PORTNAME(ap));
 		goto err;
 	}
 
 	/* Check whether CLO worked */
 	if (ahci_pwait_clr(ap, AHCI_PREG_TFD,
 	    AHCI_PREG_TFD_STS_BSY | AHCI_PREG_TFD_STS_DRQ)) {
-		printf("%s: CLO %s, need port reset\n", DEVNAME(ap->ap_sc),
+		printf("%s: CLO %s, need port reset\n", PORTNAME(ap),
 		    ISSET(ahci_read(ap->ap_sc, AHCI_REG_CAP), AHCI_REG_CAP_SCLO)
 		    ? "failed" : "unsupported");
 		rc = EBUSY;
@@ -1034,7 +1042,7 @@ ahci_port_softreset(struct ahci_port *ap)
 	if (ahci_pwait_clr(ap, AHCI_PREG_TFD, AHCI_PREG_TFD_STS_BSY |
 	    AHCI_PREG_TFD_STS_DRQ | AHCI_PREG_TFD_STS_ERR)) {
 		printf("%s: device didn't come ready after reset, TFD: 0x%b\n",
-		    DEVNAME(ap->ap_sc), ahci_pread(ap, AHCI_PREG_TFD),
+		    PORTNAME(ap), ahci_pread(ap, AHCI_PREG_TFD),
 		    AHCI_PFMT_TFD_STS);
 		goto err;
 	}
@@ -1054,10 +1062,10 @@ err:
 int
 ahci_port_portreset(struct ahci_port *ap)
 {
-	u_int32_t cmd, r;
-	int rc;
+	u_int32_t			cmd, r;
+	int				rc;
 
-	DPRINTF(AHCI_D_VERBOSE, "%s: port reset\n", DEVNAME(ap->ap_sc));
+	DPRINTF(AHCI_D_VERBOSE, "%s: port reset\n", PORTNAME(ap));
 
 	/* Save previous command register state */
 	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
@@ -1120,7 +1128,7 @@ ahci_load_prdt(struct ahci_ccb *ccb, struct ata_xfer *xa)
 	    xa->data, xa->datalen, NULL,
 	    (xa->flags & ATA_F_NOWAIT) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 	if (error != 0) {
-		printf("%s: error %d loading dmamap\n", DEVNAME(sc), error);
+		printf("%s: error %d loading dmamap\n", PORTNAME(ap), error);
 		return (1);
 	}
 
@@ -1173,7 +1181,7 @@ ahci_start(struct ahci_ccb *ccb)
 		if (ahci_pwait_clr(ap, AHCI_PREG_CI, 1 << ccb->ccb_slot)) {
 			/* Command didn't go inactive.  XXX: wait longer? */
 			printf("%s: polled command didn't go inactive\n",
-			    DEVNAME(sc));
+			    PORTNAME(ap));
 			/* Shutdown port.  XXX: recover via port reset? */
 			ahci_port_stop(ap, 0);
 			rc = ATA_ERROR;
@@ -1202,7 +1210,6 @@ ahci_ata_cmd(void *xsc, struct ata_xfer *xa)
 {
 	return (0);
 }
-
 
 struct ahci_ccb *
 ahci_get_ccb(struct ahci_port *ap)
