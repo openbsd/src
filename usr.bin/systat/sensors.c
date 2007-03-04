@@ -1,3 +1,5 @@
+/* $OpenBSD: sensors.c,v 1.8 2007/03/04 21:17:37 deanna Exp $ */
+
 /*
  * Copyright (c) 2007 Deanna Phillips <deanna@openbsd.org>
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -76,6 +78,10 @@ fetchsensors(void)
 
 	row = 2;
 	sensor_cnt = 0;
+
+	wmove(wnd, row, 0);
+	wclrtobot(wnd);
+
 	for (dev = 0; dev < MAXSENSORDEVICES; dev++) {
 		mib[2] = dev;
 		if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
@@ -183,6 +189,8 @@ printline(void)
 		mvwprintw(wnd, row, 58, "(%s)", sensor.desc);
 
 	switch (sensor.status) {
+	case SENSOR_S_UNSPEC:
+		break;
 	case SENSOR_S_UNKNOWN:
 		mvwaddstr(wnd, row, 45, "unknown");
 		break;
