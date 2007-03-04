@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.30 2007/03/04 03:19:41 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.31 2007/03/04 03:24:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -48,8 +48,8 @@ extern struct syslog_data sdata;
 extern struct passwd *pw;
 extern u_short cfg_port;
 extern pid_t jail_pid;
-extern FILE * trapcfg;
-extern FILE * grey;
+extern FILE *trapcfg;
+extern FILE *grey;
 extern int debug;
 extern int syncsend;
 
@@ -224,7 +224,7 @@ void
 readsuffixlists(void)
 {
 	FILE *fp;
-	char * buf;
+	char *buf;
 	size_t len;
 	struct mail_addr *m;
 
@@ -349,7 +349,8 @@ addtrapaddr(char *addr)
 }
 
 static int
-queue_change(char *key, char *data, size_t dsiz, int act) {
+queue_change(char *key, char *data, size_t dsiz, int act)
+{
 	struct db_change *dbc;
 
 	if ((dbc = malloc(sizeof(*dbc))) == NULL) {
@@ -378,7 +379,8 @@ queue_change(char *key, char *data, size_t dsiz, int act) {
 }
 
 static int
-do_changes(DB *db) {
+do_changes(DB *db)
+{
 	DBT			dbk, dbd;
 	struct db_change	*dbc;
 	int ret = 0;
@@ -427,7 +429,6 @@ do_changes(DB *db) {
 	}
 	return(ret);
 }
-
 
 int
 greyscan(char *dbname)
@@ -486,7 +487,6 @@ greyscan(char *dbname)
 			 * add address to whitelist
 			 * add an address-keyed entry to db
 			 */
-
 			cp = strchr(a, '\n');
 			if (cp != NULL) {
 				tuple = 1;
@@ -582,7 +582,8 @@ trapcheck(DB *db, char *to)
 }
 
 int
-twupdate(char *dbname, char *what, char *ip, char *source, char *expires) {
+twupdate(char *dbname, char *what, char *ip, char *source, char *expires)
+{
 	/* we got a TRAP or WHITE update from someone else */
 	HASHINFO	hashinfo;
 	DBT		dbk, dbd;
@@ -590,7 +591,7 @@ twupdate(char *dbname, char *what, char *ip, char *source, char *expires) {
 	struct gdata	gd;
 	time_t		now, expire;
 	int		r, spamtrap;
-	
+
 	now = time(NULL);
 	/* expiry times have to be in the future */
 	expire = strtonum(expires, now, UINT_MAX, NULL);
@@ -622,7 +623,7 @@ twupdate(char *dbname, char *what, char *ip, char *source, char *expires) {
 		gd.first = now;
 		gd.pcount = spamtrap ? -1 : 0;
 		gd.expire = expire;
- 		memset(&dbk, 0, sizeof(dbk));
+		memset(&dbk, 0, sizeof(dbk));
 		dbk.size = strlen(ip);
 		dbk.data = ip;
 		memset(&dbd, 0, sizeof(dbd));
@@ -787,25 +788,27 @@ greyupdate(char *dbname, char *helo, char *ip, char *from, char *to, int sync)
 }
 
 int
-twread(char * buf) {
-	if ((strncmp(buf, "WHITE:", 6) == 0) || 
+twread(char *buf)
+{
+	if ((strncmp(buf, "WHITE:", 6) == 0) ||
 	    (strncmp(buf, "TRAP:", 5) == 0)) {
-	  	char **ap, *argv[5];
+		char **ap, *argv[5];
 		int argc = 0;
-	        for (ap = argv; ap < &argv[4] &&
-        	(*ap = strsep(&buf, ":")) != NULL;) {
-                	if (**ap != '\0')
-                        ap++;
+
+		for (ap = argv;
+		    ap < &argv[4] && (*ap = strsep(&buf, ":")) != NULL;) {
+			if (**ap != '\0')
+				ap++;
 			argc++;
-	  	}
-	        *ap = NULL;
+		}
+		*ap = NULL;
 		if (argc != 4)
-			return(-1);
+			return (-1);
 		twupdate(PATH_SPAMD_DB, argv[0], argv[1], argv[2], argv[3]);
-		return 0;
+		return (0);
 	} else
-		return -1;
-}	
+		return (-1);
+}
 
 int
 greyreader(void)
@@ -1016,8 +1019,8 @@ check_spamd_db(void)
 			break;
 		case EFTYPE:
 			/*
-			 *  db may be old BTREE instead of HASH, attempt to
-			 *  convert.
+			 * db may be old BTREE instead of HASH, attempt to
+			 * convert.
 			 */
 			convert_spamd_db();
 			drop_privs();
