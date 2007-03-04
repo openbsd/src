@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.49 2007/03/04 05:04:32 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.50 2007/03/04 05:06:28 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -284,8 +284,8 @@ struct ahci_prdt {
 #define AHCI_MAX_PRDT		24
 
 struct ahci_cmd_table {
-	u_int8_t		cfis[64];
-	u_int8_t		acmd[16];
+	u_int8_t		cfis[64];	/* Command FIS */
+	u_int8_t		acmd[16];	/* ATAPI Command */
 	u_int8_t		reserved[48];
 
 	struct ahci_prdt	prdt[AHCI_MAX_PRDT];
