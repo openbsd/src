@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.57 2007/03/04 13:47:08 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.58 2007/03/04 13:49:42 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -380,6 +380,7 @@ int			ahci_port_alloc(struct ahci_softc *, u_int);
 void			ahci_port_free(struct ahci_softc *, u_int);
 
 int			ahci_load_prdt(struct ahci_ccb *, struct ata_xfer *);
+int			ahci_start(struct ahci_ccb *);
 
 int			ahci_intr(void *);
 
@@ -793,6 +794,43 @@ ahci_load_prdt(struct ahci_ccb *ccb, struct ata_xfer *xa)
 	    BUS_DMASYNC_PREWRITE);
 
 	return (0);
+}
+
+int
+ahci_start(struct ahci_ccb *ccb)
+{
+	struct ahci_port		*ap = ccb->ccb_port;
+	struct ahci_softc		*sc = ap->ap_sc;
+	int				rc = ATA_QUEUED;
+	int				s;
+
+	/* Sync command list entry and corresponding command table entry */
+	bus_dmamap_sync(sc->sc_dmat, AHCI_DMA_MAP(ap->ap_dmamem_cmd_list),
+	    ccb->ccb_slot * sizeof(struct ahci_cmd_hdr),
+	    sizeof(struct ahci_cmd_hdr), BUS_DMASYNC_PREWRITE);
+	/* NB this assumes a 1:1 mapping of ccb slot to command table entry */
+	bus_dmamap_sync(sc->sc_dmat, AHCI_DMA_MAP(ap->ap_dmamem_cmd_table),
+	    ccb->ccb_slot * sizeof(struct ahci_cmd_table),
+	    sizeof(struct ahci_cmd_table), BUS_DMASYNC_PREWRITE);
+
+	/* Prepare RFIS area for write by controller */
+	bus_dmamap_sync(sc->sc_dmat, AHCI_DMA_MAP(ap->ap_dmamem_rfis), 0,
+	    sizeof(struct ahci_rfis), BUS_DMASYNC_PREREAD);
+
+	s = splbio();
+	ahci_pwrite(ap, AHCI_PREG_CI, 1 << ccb->ccb_slot);
+	if (ccb->ccb_xa->flags & ATA_F_POLL) {
+		if (ahci_pwait_clr(ap, AHCI_PREG_CI, 1 << ccb->ccb_slot)) {
+			/* Command didn't go inactive.  XXX: wait longer? */
+			printf("%s: polled command didn't go inactive\n",
+			    DEVNAME(sc));
+			rc = ATA_ERROR;
+		} else
+			rc = ATA_COMPLETE;
+	}
+	splx(s);
+
+	return (rc);
 }
 
 int
