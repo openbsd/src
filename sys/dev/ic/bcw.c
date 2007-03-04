@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.65 2007/03/04 14:27:27 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.66 2007/03/04 15:41:58 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -733,7 +733,7 @@ bcw_attach(struct bcw_softc *sc)
 	/*
 	 * Try and change to the ChipCommon Core
 	 */
-	if (bcw_change_core(sc, 0))
+	if (bcw_change_core(sc, 0) == 0)
 		DPRINTF(("%s: Selected ChipCommon Core\n",
 		    sc->sc_dev.dv_xname));
 
@@ -844,7 +844,7 @@ bcw_attach(struct bcw_softc *sc)
 
        /* Reset and Identify each core */
        for (i = 0; i < sc->sc_numcores; i++) {
-		if (bcw_change_core(sc, i)) {
+		if (bcw_change_core(sc, i) == 0) {
 			sbval = BCW_READ(sc, BCW_CIR_SBID_HI);
 
 			sc->sc_core[i].id = (sbval & 0x00008ff0) >> 4;
@@ -2025,7 +2025,6 @@ bcw_reset(struct bcw_softc *sc)
 #endif
 	/* Change back to the Wireless core */
 	bcw_change_core(sc, sc->sc_core_80211->num);
-
 }
 
 /* Set up the receive filter. */
@@ -2640,11 +2639,12 @@ bcw_powercontrol_crystal_off(struct bcw_softc *sc)
 int
 bcw_change_core(struct bcw_softc *sc, int changeto)
 {
-	uint32_t	sbval;
-	int		i;
+	uint32_t sbval;
+	int i;
 
 	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_ADDR_SPACE0,
 	    BCW_CORE_SELECT(changeto));
+
 	/* loop to see if the selected core shows up */
 	for (i = 0; i < 10; i++) {
 		sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_ADDR_SPACE0);
@@ -2652,12 +2652,17 @@ bcw_change_core(struct bcw_softc *sc, int changeto)
 			break;
 		delay(10);
 	}
-	if (i < 10) {
-		sc->sc_lastcore = sc->sc_currentcore;
-		sc->sc_currentcore = changeto;
-		return 1;
-	} else
-		return 0;
+	if (i == 10) {
+		DPRINTF(("%s: can not change to core %d!\n",
+		    sc->sc_dev.dv_xname, changeto)); 
+		return (1);
+	}
+
+	/* core changed */
+	sc->sc_lastcore = sc->sc_currentcore;
+	sc->sc_currentcore = changeto;
+
+	return (0);
 }
 
 int
