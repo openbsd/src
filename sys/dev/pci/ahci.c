@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.62 2007/03/04 14:40:41 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.63 2007/03/04 14:46:38 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1199,18 +1199,6 @@ ahci_intr(void *arg)
 	return (0);
 }
 
-int
-ahci_ata_probe(void *xsc, int port)
-{
-	return (0);
-}
-
-int
-ahci_ata_cmd(void *xsc, struct ata_xfer *xa)
-{
-	return (0);
-}
-
 struct ahci_ccb *
 ahci_get_ccb(struct ahci_port *ap)
 {
@@ -1375,4 +1363,78 @@ ahci_pwait_ne(struct ahci_port *ap, bus_size_t r, u_int32_t mask,
 	}
 
 	return (1);
+}
+
+int
+ahci_ata_probe(void *xsc, int port)
+{
+	struct ahci_softc		*sc = xsc;
+	struct ahci_port		*ap = sc->sc_ports[port];
+
+	if (ap == NULL)
+		return (ATA_PORT_T_NONE);
+
+	return (ATA_PORT_T_DISK);
+}
+
+int
+ahci_ata_cmd(void *xsc, struct ata_xfer *xa)
+{
+	struct ahci_softc		*sc = xsc;
+	struct ahci_port		*ap = sc->sc_ports[xa->port->ap_port];
+	struct ahci_ccb			*ccb;
+	struct ahci_cmd_hdr		*cmd_slot;
+	u_int8_t			*fis;
+	int				s;
+
+	if (ap == NULL)
+		return (ATA_ERROR);
+
+	s = splbio();
+	ccb = ahci_get_ccb(ap);
+	splx(s);
+	if (ccb == NULL)
+		return (ATA_ERROR);
+
+	ccb->ccb_xa = xa;
+	cmd_slot = &ap->ap_cmd_list[ccb->ccb_slot];
+	bzero(cmd_slot, sizeof(struct ahci_cmd_hdr));
+	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
+
+	fis = ccb->ccb_cmd_table->cfis;
+	fis[0] = 0x27;
+	fis[1] = 0x80;
+	fis[2] = xa->cmd.command;
+	fis[3] = xa->cmd.features;
+	fis[4] = xa->cmd.sector;
+	fis[5] = (xa->cmd.cyl & 0xff);
+	fis[6] = (xa->cmd.cyl >> 8) & 0xff;
+	fis[7] = xa->cmd.head & 0x0f;
+	fis[8] = 0;
+	fis[9] = 0;
+	fis[10] = 0;
+	fis[11] = 0;
+	fis[12] = xa->cmd.count;
+	fis[13] = 0;
+	fis[14] = 0;
+	fis[15] = 0x08;
+	fis[16] = 0;
+	fis[17] = 0;
+	fis[18] = 0;
+	fis[19] = 0;
+
+	if (ahci_load_prdt(ccb, xa) != 0) {
+		s = splbio();
+		ahci_put_ccb(ap, ccb);
+		splx(s);
+		return (ATA_ERROR);
+	}
+
+	cmd_slot->flags = htole16(5); /* FIS length (in DWORDs) */
+	if (xa->flags & ATA_F_WRITE)
+		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
+	cmd_slot->ctba_hi = htole32((u_int32_t)(ccb->ccb_cmd_table_dva >> 32));
+	cmd_slot->ctba_lo = htole32((u_int32_t)ccb->ccb_cmd_table_dva);
+
+	return (ahci_start(ccb));
 }
