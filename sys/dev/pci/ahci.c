@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.48 2007/03/04 04:58:38 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.49 2007/03/04 05:04:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -272,12 +272,6 @@ struct ahci_rfis {
 	u_int8_t		reserved4[96];
 } __packed;
 
-struct ahci_cmd_table {
-	u_int8_t		cfis[64];
-	u_int8_t		acmd[16];
-	u_int8_t		reserved[48];
-} __packed;
-
 struct ahci_prdt {
 	u_int32_t		dba_lo;
 	u_int32_t		dba_hi;
@@ -286,12 +280,15 @@ struct ahci_prdt {
 #define AHCI_PRDT_FLAG_INTR		(1<<31) /* interrupt on completion */
 } __packed;
 
-/* this makes ahci_cmd 512 bytes, which is good for alignment */
+/* this makes ahci_cmd_table 512 bytes, which is good for alignment */
 #define AHCI_MAX_PRDT		24
 
-struct ahci_cmd {
-	struct ahci_cmd_table	table;
-	struct ahci_prdt		prdt[AHCI_MAX_PRDT];
+struct ahci_cmd_table {
+	u_int8_t		cfis[64];
+	u_int8_t		acmd[16];
+	u_int8_t		reserved[48];
+
+	struct ahci_prdt	prdt[AHCI_MAX_PRDT];
 } __packed;
 
 #define AHCI_MAX_PORTS		32
@@ -322,8 +319,8 @@ struct ahci_ccb {
 
 	struct ata_xfer		*ccb_xa;
 
-	struct ahci_cmd		*ccb_cmd;
-	u_int64_t		ccb_cmd_dva;
+	struct ahci_cmd_table	*ccb_cmd_table;
+	u_int64_t		ccb_cmd_table_dva;
 
 	bus_dmamap_t		ccb_dmamap;
 
@@ -637,7 +634,7 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	bzero(ap->ap_ccbs, sizeof(struct ahci_ccb) * sc->sc_ncmds);
 
 	/* calculate the size of the dmaable memory this port will need.  */
-	i = sizeof(struct ahci_cmd) * sc->sc_ncmds +
+	i = sizeof(struct ahci_cmd_table) * sc->sc_ncmds +
 	    sizeof(struct ahci_rfis) +
 	    sizeof(struct ahci_cmd_hdr) * sc->sc_ncmds;
 	ap->ap_dmamem = ahci_dmamem_alloc(sc, i);
@@ -661,9 +658,9 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 
 		ccb->ccb_slot = i;
 		ccb->ccb_port = ap;
-		ccb->ccb_cmd = (struct ahci_cmd *)(kva + offset);
-		ccb->ccb_cmd_dva = dva + offset;
-		offset += sizeof(struct ahci_cmd);
+		ccb->ccb_cmd_table = (struct ahci_cmd_table *)(kva + offset);
+		ccb->ccb_cmd_table_dva = dva + offset;
+		offset += sizeof(struct ahci_cmd_table);
 
 		ahci_put_ccb(ap, ccb);
 	}
