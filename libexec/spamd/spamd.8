@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.84 2007/03/02 08:14:59 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.85 2007/03/04 03:19:41 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -46,6 +46,8 @@
 .Op Fl S Ar secs
 .Op Fl s Ar secs
 .Op Fl w Ar window
+.Op Fl Y Ar synctarget
+.Op Fl y Ar synclisten
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -187,6 +189,17 @@ along with the message body and SMTP dialogue being logged at
 level.
 .It Fl w Ar window
 Set the socket receive buffer to this many bytes, adjusting the window size.
+.It Fl Y Ar synctarget
+Add a target to receive synchronisation messages; see
+.Sx SYNCHRONISATION
+below.
+This option can be specified multiple times.
+.It Fl y Ar synclisten
+Listen for incoming synchronisation messages on the specified address
+or interface; see
+.Sx SYNCHRONISATION
+below.
+This option can be specified only once.
 .El
 .Pp
 When run in default mode,
@@ -443,10 +456,66 @@ section can be used to log connection details to a dedicated file:
 !spamd
 daemon.err;daemon.warn;daemon.info	/var/log/spamd
 .Ed
+.Sh SYNCHRONISATION
+.Nm
+supports realtime synchronisation of greylisting states between
+a number of
+.Nm
+daemons running on multiple machines.
+To enable synchronisation, use the command line options
+.Fl y
+and
+.Fl Y .
+.Pp
+If the
+.Fl y
+option is specified,
+.Nm
+will listen for incoming synchronisation messages to synchronize
+the local
+.Pa /var/db/spamd
+database.
+The
+.Fl Y
+option will add a target for outgoing messages.
+A target can be either an IPv4 address for unicast messages or a
+network interface and optional TTL value for multicast messages
+to the group 224.0.1.240.
+If the multicast TTL is not specified, a default value of 1 is used.
+.Pp
+The following example will accept incoming multicast and unicast
+synchronisation messages, and send outgoing multicast messages through
+the network interface
+.Ar em0 :
+.Bd -literal -offset indent
+# /usr/libexec/spamd -y em0 -Y em0
+.Ed
+.Pp
+The second example will increase the multicast TTL to a value of 2,
+add the unicast targets
+.Ar foo.somewhere.org
+and
+.Ar bar.somewhere.org ,
+and accept incoming unicast messages from
+.Ar foo.somewhere.org
+only.
+.Bd -literal -offset indent
+# /usr/libexec/spamd -y foo.somewhere.org -Y em0:2 \e
+	-Y foo.somewhere.org -Y bar.somewhere.org
+.Ed
+.Pp
+If the file
+.Pa /etc/spamd.key
+exists,
+.Nm
+will calculate the message-digest fingerprint (checksum) for the file
+and use it as a shared key to authenticate the synchronisation messages.
 .Sh FILES
 .Bl -tag -width "/etc/mail/spamd.alloweddomainsXX" -compact
 .It /etc/mail/spamd.conf
 Default configuration file.
+.It /etc/mail/spamd.key
+Authentication key for synchronisation messages.
 .It /etc/mail/spamd.alloweddomains
 Optional required suffixes for greytrapping.
 .It /var/db/spamd

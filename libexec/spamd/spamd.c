@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.92 2007/02/27 23:03:09 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.93 2007/03/04 03:19:41 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -47,6 +47,7 @@
 
 #include "sdl.h"
 #include "grey.h"
+#include "sync.h"
 
 struct con {
 	int fd;
@@ -115,6 +116,7 @@ time_t trapexp = TRAPEXP;
 struct passwd *pw;
 pid_t jail_pid = -1;
 u_short cfg_port;
+u_short sync_port;
 
 extern struct sdlist *blacklists;
 
@@ -125,7 +127,7 @@ size_t cbs, cbu;
 
 time_t t;
 
-#define MAXCON 800
+#define MAXCON 1800
 int maxcon = MAXCON;
 int maxblack = MAXCON;
 int blackcount;
@@ -136,6 +138,8 @@ int grey_stutter = 10;
 int verbose;
 int stutter = 1;
 int window;
+int syncrecv;
+int syncsend;
 #define MAXTIME 400
 
 void
@@ -148,7 +152,8 @@ usage(void)
 	    "[-G passtime:greyexp:whiteexp]\n"
 	    "\t[-h hostname] [-l address] [-n name] [-p port] "
 	    "[-r reply] [-S secs]\n"
-	    "\t[-s secs] [-w window]\n", __progname);
+	    "\t[-s secs] [-w window] [-Y synctarget] [-y synclisten]\n",
+	    __progname);
 
 	exit(1);
 }
@@ -965,13 +970,15 @@ main(int argc, char *argv[])
 	fd_set *fdsr = NULL, *fdsw = NULL;
 	struct sockaddr_in sin;
 	struct sockaddr_in lin;
-	int ch, s, s2, conflisten = 0, i, omax = 0, one = 1;
+	int ch, s, s2, conflisten = 0, syncfd = 0, i, omax = 0, one = 1;
 	socklen_t sinlen;
 	u_short port;
 	struct servent *ent;
 	struct rlimit rlp;
 	char *bind_address = NULL;
 	const char *errstr;
+	char *sync_iface = NULL;
+	char *sync_baddr = NULL;
 
 	tzset();
 	openlog_r("spamd", LOG_PID | LOG_NDELAY, LOG_DAEMON, &sdata);
@@ -982,11 +989,15 @@ main(int argc, char *argv[])
 	if ((ent = getservbyname("spamd-cfg", "tcp")) == NULL)
 		errx(1, "Can't find service \"spamd-cfg\" in /etc/services");
 	cfg_port = ntohs(ent->s_port);
+	if ((ent = getservbyname("spamd-sync", "udp")) == NULL)
+		errx(1, "Can't find service \"spamd-sync\" in /etc/services");
+	sync_port = ntohs(ent->s_port);
 
 	if (gethostname(hostname, sizeof hostname) == -1)
 		err(1, "gethostname");
 
-	while ((ch = getopt(argc, argv, "45l:c:B:p:bdG:h:r:s:S:n:vw:")) != -1) {
+	while ((ch =
+	    getopt(argc, argv, "45l:c:B:p:bdG:h:r:s:S:n:vw:y:Y:")) != -1) {
 		switch (ch) {
 		case '4':
 			nreply = "450";
@@ -1060,11 +1071,24 @@ main(int argc, char *argv[])
 			if (window <= 0)
 				usage();
 			break;
+		case 'Y':
+			if (sync_addhost(optarg, sync_port) != 0)
+				sync_iface = optarg;
+			syncsend++;
+			break;
+		case 'y':
+			sync_baddr = optarg;
+			syncrecv++;
+			break;
 		default:
 			usage();
 			break;
 		}
 	}
+
+	setproctitle("[priv]%s%s",
+	    greylist ? " (greylist)" : "",
+	    (syncrecv || syncsend) ? " (sync)" : "");
 
 	if (!greylist)
 		maxblack = maxcon;
@@ -1127,6 +1151,12 @@ main(int argc, char *argv[])
 
 	if (bind(conflisten, (struct sockaddr *)&lin, sizeof lin) == -1)
 		err(1, "bind local");
+
+	if (syncsend || syncrecv) {
+		syncfd = sync_init(sync_iface, sync_baddr, sync_port);
+		if (syncfd == -1)
+			err(1, "sync init");
+	}
 
 	pw = getpwnam("_spamd");
 	if (!pw)
@@ -1220,6 +1250,8 @@ jail:
 		int writers;
 
 		max = MAX(s, conflisten);
+		if (syncrecv)
+			max = MAX(max, syncfd);
 		max = MAX(max, conffd);
 		max = MAX(max, trapfd);
 
@@ -1277,6 +1309,8 @@ jail:
 			FD_SET(conffd, fdsr);
 		if (trapfd != -1)
 			FD_SET(trapfd, fdsr);
+		if (syncrecv)
+			FD_SET(syncfd, fdsr);
 
 		if (writers == 0) {
 			tvp = NULL;
@@ -1339,6 +1373,8 @@ jail:
 			do_config();
 		if (trapfd != -1 && FD_ISSET(trapfd, fdsr))
 			read_configline(trapcfg);
+		if (syncrecv && FD_ISSET(syncfd, fdsr))
+			sync_recv();
 	}
 	exit(1);
 }

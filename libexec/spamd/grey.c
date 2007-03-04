@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.29 2007/02/23 22:40:50 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.30 2007/03/04 03:19:41 beck Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -41,6 +41,7 @@
 #include <netdb.h>
 
 #include "grey.h"
+#include "sync.h"
 
 extern time_t passtime, greyexp, whiteexp, trapexp;
 extern struct syslog_data sdata;
@@ -50,6 +51,7 @@ extern pid_t jail_pid;
 extern FILE * trapcfg;
 extern FILE * grey;
 extern int debug;
+extern int syncsend;
 
 size_t whitecount, whitealloc;
 size_t trapcount, trapalloc;
@@ -580,7 +582,98 @@ trapcheck(DB *db, char *to)
 }
 
 int
-greyupdate(char *dbname, char *helo, char *ip, char *from, char *to)
+twupdate(char *dbname, char *what, char *ip, char *source, char *expires) {
+	/* we got a TRAP or WHITE update from someone else */
+	HASHINFO	hashinfo;
+	DBT		dbk, dbd;
+	DB		*db;
+	struct gdata	gd;
+	time_t		now, expire;
+	int		r, spamtrap;
+	
+	now = time(NULL);
+	/* expiry times have to be in the future */
+	expire = strtonum(expires, now, UINT_MAX, NULL);
+	if (expire == 0)
+		return(-1);
+
+	if (strcmp(what, "TRAP") == 0)
+		spamtrap = 1;
+	else if (strcmp(what, "WHITE") == 0)
+		spamtrap = 0;
+	else
+		return(-1);
+
+	memset(&hashinfo, 0, sizeof(hashinfo));
+	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_HASH, &hashinfo);
+	if (db == NULL)
+		return(-1);
+
+	memset(&dbk, 0, sizeof(dbk));
+	dbk.size = strlen(ip);
+	dbk.data = ip;
+	memset(&dbd, 0, sizeof(dbd));
+	r = db->get(db, &dbk, &dbd, 0);
+	if (r == -1)
+		goto bad;
+	if (r) {
+		/* new entry */
+		memset(&gd, 0, sizeof(gd));
+		gd.first = now;
+		gd.pcount = spamtrap ? -1 : 0;
+		gd.expire = expire;
+ 		memset(&dbk, 0, sizeof(dbk));
+		dbk.size = strlen(ip);
+		dbk.data = ip;
+		memset(&dbd, 0, sizeof(dbd));
+		dbd.size = sizeof(gd);
+		dbd.data = &gd;
+		r = db->put(db, &dbk, &dbd, 0);
+		db->sync(db, 0);
+		if (r)
+			goto bad;
+		if (debug)
+			fprintf(stderr, "added %s %s\n",
+			    spamtrap ? "trap entry for" : "", ip);
+	} else {
+		/* existing entry */
+		if (dbd.size != sizeof(gd)) {
+			/* whatever this is, it doesn't belong */
+			db->del(db, &dbk, 0);
+			db->sync(db, 0);
+			goto bad;
+		}
+		memcpy(&gd, dbd.data, sizeof(gd));
+		if (spamtrap) {
+			gd.pcount = -1;
+			gd.bcount++;
+		} else
+			gd.pcount++;
+		memset(&dbk, 0, sizeof(dbk));
+		dbk.size = strlen(ip);
+		dbk.data = ip;
+		memset(&dbd, 0, sizeof(dbd));
+		dbd.size = sizeof(gd);
+		dbd.data = &gd;
+		r = db->put(db, &dbk, &dbd, 0);
+		db->sync(db, 0);
+		if (r)
+			goto bad;
+		if (debug)
+			fprintf(stderr, "updated %s\n", ip);
+	}
+	db->close(db);
+	syslog_r(LOG_DEBUG, &sdata, "Update from %s for %s %s, expires %s",
+	    source, what, ip, expires);
+	return(0);
+ bad:
+	db->close(db);
+	return(-1);
+
+}
+
+int
+greyupdate(char *dbname, char *helo, char *ip, char *from, char *to, int sync)
 {
 	HASHINFO	hashinfo;
 	DBT		dbk, dbd;
@@ -676,6 +769,14 @@ greyupdate(char *dbname, char *helo, char *ip, char *from, char *to)
 	key = NULL;
 	db->close(db);
 	db = NULL;
+
+	/* Entry successfully update, sent out sync message */
+	if (syncsend && sync) {
+		if (spamtrap)
+			sync_trapped(now, now + expire, ip);
+		else
+			sync_update(now, helo, ip, from, to);
+	}
 	return(0);
  bad:
 	free(key);
@@ -686,11 +787,32 @@ greyupdate(char *dbname, char *helo, char *ip, char *from, char *to)
 }
 
 int
+twread(char * buf) {
+	if ((strncmp(buf, "WHITE:", 6) == 0) || 
+	    (strncmp(buf, "TRAP:", 5) == 0)) {
+	  	char **ap, *argv[5];
+		int argc = 0;
+	        for (ap = argv; ap < &argv[4] &&
+        	(*ap = strsep(&buf, ":")) != NULL;) {
+                	if (**ap != '\0')
+                        ap++;
+			argc++;
+	  	}
+	        *ap = NULL;
+		if (argc != 4)
+			return(-1);
+		twupdate(PATH_SPAMD_DB, argv[0], argv[1], argv[2], argv[3]);
+		return 0;
+	} else
+		return -1;
+}	
+
+int
 greyreader(void)
 {
 	char ip[32], helo[MAX_MAIL], from[MAX_MAIL], to[MAX_MAIL], *buf;
 	size_t len;
-	int state;
+	int state, sync;
 	struct addrinfo hints, *res;
 
 	memset(&hints, 0, sizeof(hints));
@@ -700,6 +822,7 @@ greyreader(void)
 	hints.ai_flags = AI_NUMERICHOST;
 
 	state = 0;
+	sync = 1;
 	if (grey == NULL) {
 		syslog_r(LOG_ERR, &sdata, "No greylist pipe stream!\n");
 		exit(1);
@@ -717,8 +840,17 @@ greyreader(void)
 		if (strlen(buf) < 4)
 			continue;
 
+		if (strcmp(buf, "SYNC") == 0) {
+			sync = 0;
+			continue;
+		}
+
 		switch (state) {
 		case 0:
+			if (twread(buf) == 0) {
+				state = 0;
+				break;
+			}
 			if (strncmp(buf, "HE:", 3) != 0) {
 				state = 0;
 				break;
@@ -754,7 +886,7 @@ greyreader(void)
 				fprintf(stderr,
 				    "Got Grey HELO %s, IP %s from %s to %s\n",
 				    helo, ip, from, to);
-			greyupdate(PATH_SPAMD_DB, helo, ip, from, to);
+			greyupdate(PATH_SPAMD_DB, helo, ip, from, to, sync);
 			state = 0;
 			break;
 		}

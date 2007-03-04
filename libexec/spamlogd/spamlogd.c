@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.15 2007/01/04 21:41:37 beck Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.16 2007/03/04 03:19:41 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -41,6 +41,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <netdb.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -51,6 +52,7 @@
 #include <pcap.h>
 
 #include "grey.h"
+#include "sync.h"
 
 #define MIN_PFLOG_HDRLEN	45
 #define PCAPSNAP		512
@@ -58,6 +60,12 @@
 #define PCAPOPTZ		1	/* optimize filter */
 #define PCAPFSIZ		512	/* pcap filter string size */
 
+int debug = 1;
+int greylist = 1;
+FILE *grey = NULL;
+
+u_short sync_port;
+int syncsend;
 u_int8_t		 flag_debug = 0;
 u_int8_t		 flag_inbound = 0;
 char			*networkif = NULL;
@@ -260,6 +268,10 @@ dbupdate(char *dbname, char *ip)
 	}
 	db->close(db);
 	db = NULL;
+	if (syncsend) {
+		syslog_r(LOG_DEBUG, &sdata, "sync_white %s,", ip);
+		sync_white(now, now + WHITEEXP, ip);
+	}
 	return (0);
  bad:
 	db->close(db);
@@ -270,7 +282,7 @@ dbupdate(char *dbname, char *ip)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-DI] [-i interface] [-l pflog_interface]\n",
+	fprintf(stderr, "usage: %s [-DI] [-i interface] [-l pflog_interface] [-Y synctarget ]\n",
 	    __progname);
 	exit(1);
 }
@@ -281,8 +293,16 @@ main(int argc, char **argv)
 	int		 ch;
 	struct passwd	*pw;
 	pcap_handler	 phandler = logpkt_handler;
+	int syncfd = 0;
+	struct servent *ent;
+	char *sync_iface = NULL;
+	char *sync_baddr = NULL;
 
-	while ((ch = getopt(argc, argv, "DIi:l:")) != -1) {
+	if ((ent = getservbyname("spamd-sync", "udp")) == NULL)
+		errx(1, "Can't find service \"spamd-sync\" in /etc/services");
+	sync_port = ntohs(ent->s_port);
+
+	while ((ch = getopt(argc, argv, "DIi:l:Y:")) != -1) {
 		switch (ch) {
 		case 'D':
 			flag_debug = 1;
@@ -295,6 +315,11 @@ main(int argc, char **argv)
 			break;
 		case 'l':
 			pflogif = optarg;
+			break;
+		case 'Y':
+			if (sync_addhost(optarg, sync_port) != 0)
+				sync_iface = optarg;
+			syncsend++;
 			break;
 		default:
 			usage();
@@ -312,6 +337,12 @@ main(int argc, char **argv)
 
 	if (init_pcap() == -1)
 		err(1, "couldn't initialize pcap");
+
+	if (syncsend) {
+		syncfd = sync_init(sync_iface, sync_baddr, sync_port);
+		if (syncfd == -1)
+			err(1, "sync init");
+	}
 
 	/* privdrop */
 	pw = getpwnam("_spamd");

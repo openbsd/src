@@ -1,11 +1,12 @@
-#	$OpenBSD: Makefile,v 1.5 2006/11/26 11:31:14 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2007/03/04 03:19:41 beck Exp $
 
 PROG=	spamlogd
-SRCS=	spamlogd.c
+SRCS=	spamlogd.c sync.c
 MAN=	spamlogd.8
 
 CFLAGS+= -Wall -Wstrict-prototypes -I${.CURDIR}/../spamd
-LDADD+= -lpcap
+LDADD+= -lpcap -lcrypto
 DPADD+=	${LIBPCAP}
+.PATH:  ${.CURDIR}/../spamd
 
 .include <bsd.prog.mk>

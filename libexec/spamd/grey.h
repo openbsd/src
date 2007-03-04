@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.h,v 1.7 2007/02/27 02:10:58 beck Exp $	*/
+/*	$OpenBSD: grey.h,v 1.8 2007/03/04 03:19:41 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -35,3 +35,4 @@ struct gdata {
 };
 
 extern int greywatcher(void);
+extern int greyupdate(char *, char *, char *, char *, char *, int);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamlogd.8,v 1.10 2007/02/27 16:04:26 jmc Exp $
+.\"	$OpenBSD: spamlogd.8,v 1.11 2007/03/04 03:19:41 beck Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -25,6 +25,7 @@
 .Op Fl DI
 .Op Fl i Ar interface
 .Op Fl l Ar pflog_interface
+.Op Fl Y Ar synctarget
 .Sh DESCRIPTION
 .Nm
 manipulates the
@@ -76,6 +77,11 @@ Specify a
 interface to listen for connection notifications.
 The default is to watch for connections logged on
 .Dq pflog0 .
+.It Fl Y Ar synctarget
+Add a target to receive synchronisation messages; see
+.Sx SYNCHRONISATION
+below.
+This option can be specified multiple times.
 .El
 .Pp
 It is important to be sure to log any connections to and from your real
@@ -102,6 +108,21 @@ using facility
 .Nm
 will log each connection it sees at level
 .Dv LOG_DEBUG .
+.Sh SYNCHRONISATION
+.Nm
+supports realtime synchronisation of whitelist states by sending
+the information it updates to a 
+a number of
+.Xr spamd 8
+daemons running on multiple machines.
+To enable synchronisation, use the command line
+.Fl Y
+to specify the machines to which
+.Nm
+will send messages when it updates the state information.
+For more information see
+.Xr spamd 8
+.Pp
 .Sh FILES
 /var/db/spamd
 .Sh SEE ALSO
