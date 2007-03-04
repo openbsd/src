@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.51 2007/03/04 12:01:46 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.52 2007/03/04 12:20:17 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -387,12 +387,25 @@ void			ahci_dmamem_free(struct ahci_softc *,
 
 u_int32_t		ahci_read(struct ahci_softc *, bus_size_t);
 void			ahci_write(struct ahci_softc *, bus_size_t, u_int32_t);
-u_int32_t		ahci_pread(struct ahci_port *, bus_size_t);
-void			ahci_pwrite(struct ahci_port *, bus_size_t, u_int32_t);
 int			ahci_wait_eq(struct ahci_softc *, bus_size_t,
 			    u_int32_t, u_int32_t);
 int			ahci_wait_ne(struct ahci_softc *, bus_size_t,
 			    u_int32_t, u_int32_t);
+
+u_int32_t		ahci_pread(struct ahci_port *, bus_size_t);
+void			ahci_pwrite(struct ahci_port *, bus_size_t, u_int32_t);
+u_int32_t		ahci_pread(struct ahci_port *, bus_size_t);
+void			ahci_pwrite(struct ahci_port *, bus_size_t, u_int32_t);
+int			ahci_pwait_eq(struct ahci_port *, bus_size_t,
+			    u_int32_t, u_int32_t);
+int			ahci_pwait_ne(struct ahci_port *, bus_size_t,
+			    u_int32_t, u_int32_t);
+
+/* Wait for all bits in _b to be cleared */
+#define ahci_pwait_clr(_ap, _r, _b) ahci_pwait_eq((_ap), (_r), (_b), 0)
+
+/* Wait for all bits in _b to be set */
+#define ahci_pwait_set(_ap, _r, _b) ahci_pwait_eq((_ap), (_r), (_b), (_b))
 
 /* provide methods for atascsi to call */
 int			ahci_ata_probe(void *, int);
@@ -836,22 +849,6 @@ ahci_write(struct ahci_softc *sc, bus_size_t r, u_int32_t v)
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
-u_int32_t
-ahci_pread(struct ahci_port *ap, bus_size_t r)
-{
-	bus_space_barrier(ap->ap_sc->sc_iot, ap->ap_ioh, r, 4,
-	    BUS_SPACE_BARRIER_READ);
-	return (bus_space_read_4(ap->ap_sc->sc_iot, ap->ap_ioh, r));
-}
-
-void
-ahci_pwrite(struct ahci_port *ap, bus_size_t r, u_int32_t v)
-{
-	bus_space_write_4(ap->ap_sc->sc_iot, ap->ap_ioh, r, v);
-	bus_space_barrier(ap->ap_sc->sc_iot, ap->ap_ioh, r, 4,
-	    BUS_SPACE_BARRIER_WRITE);
-}
-
 int
 ahci_wait_eq(struct ahci_softc *sc, bus_size_t r, u_int32_t mask,
     u_int32_t target)
@@ -875,6 +872,52 @@ ahci_wait_ne(struct ahci_softc *sc, bus_size_t r, u_int32_t mask,
 
 	for (i = 0; i < 1000; i++) {
 		if ((ahci_read(sc, r) & mask) != target)
+			return (0);
+		delay(1000);
+	}
+
+	return (1);
+}
+
+u_int32_t
+ahci_pread(struct ahci_port *ap, bus_size_t r)
+{
+	bus_space_barrier(ap->ap_sc->sc_iot, ap->ap_ioh, r, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(ap->ap_sc->sc_iot, ap->ap_ioh, r));
+}
+
+void
+ahci_pwrite(struct ahci_port *ap, bus_size_t r, u_int32_t v)
+{
+	bus_space_write_4(ap->ap_sc->sc_iot, ap->ap_ioh, r, v);
+	bus_space_barrier(ap->ap_sc->sc_iot, ap->ap_ioh, r, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+int
+ahci_pwait_eq(struct ahci_port *ap, bus_size_t r, u_int32_t mask,
+    u_int32_t target)
+{
+	int				i;
+
+	for (i = 0; i < 1000; i++) {
+		if ((ahci_pread(ap, r) & mask) == target)
+			return (0);
+		delay(1000);
+	}
+
+	return (1);
+}
+
+int
+ahci_pwait_ne(struct ahci_port *ap, bus_size_t r, u_int32_t mask,
+    u_int32_t target)
+{
+	int				i;
+
+	for (i = 0; i < 1000; i++) {
+		if ((ahci_pread(ap, r) & mask) != target)
 			return (0);
 		delay(1000);
 	}
