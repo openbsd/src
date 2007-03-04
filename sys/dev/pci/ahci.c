@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.55 2007/03/04 13:24:48 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.56 2007/03/04 13:32:41 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -367,8 +367,6 @@ struct cfdriver ahci_cd = {
 	NULL, "ahci", DV_DULL
 };
 
-int			ahci_intr(void *);
-
 int			ahci_map_regs(struct ahci_softc *,
 			    struct pci_attach_args *);
 void			ahci_unmap_regs(struct ahci_softc *,
@@ -380,6 +378,8 @@ void			ahci_unmap_intr(struct ahci_softc *,
 			    struct pci_attach_args *);
 int			ahci_port_alloc(struct ahci_softc *, u_int);
 void			ahci_port_free(struct ahci_softc *, u_int);
+
+int			ahci_intr(void *);
 
 struct ahci_ccb		*ahci_get_ccb(struct ahci_port *);
 void			ahci_put_ccb(struct ahci_port *, struct ahci_ccb *);
@@ -395,8 +395,6 @@ int			ahci_wait_eq(struct ahci_softc *, bus_size_t,
 int			ahci_wait_ne(struct ahci_softc *, bus_size_t,
 			    u_int32_t, u_int32_t);
 
-u_int32_t		ahci_pread(struct ahci_port *, bus_size_t);
-void			ahci_pwrite(struct ahci_port *, bus_size_t, u_int32_t);
 u_int32_t		ahci_pread(struct ahci_port *, bus_size_t);
 void			ahci_pwrite(struct ahci_port *, bus_size_t, u_int32_t);
 int			ahci_pwait_eq(struct ahci_port *, bus_size_t,
