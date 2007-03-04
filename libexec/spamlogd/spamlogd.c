@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.16 2007/03/04 03:19:41 beck Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.17 2007/03/04 03:25:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -282,7 +282,8 @@ dbupdate(char *dbname, char *ip)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-DI] [-i interface] [-l pflog_interface] [-Y synctarget ]\n",
+	fprintf(stderr,
+	    "usage: %s [-DI] [-i interface] [-l pflog_interface] [-Y synctarget]\n",
 	    __progname);
 	exit(1);
 }
