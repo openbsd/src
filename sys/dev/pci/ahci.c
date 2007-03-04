@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.50 2007/03/04 05:06:28 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.51 2007/03/04 12:01:46 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -418,6 +418,20 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	struct atascsi_attach_args	aaa;
 	u_int32_t			reg;
 	int				i;
+
+	/* Switch JMICRON ports to AHCI mode */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_JMICRON) {
+		u_int32_t ccr;
+
+		ccr = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40);
+		ccr &= ~0x0000ff00;
+		ccr |=  0x0000a100;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, 0x40, ccr);
+
+		/* Only function 0 is SATA */
+		if (pa->pa_function != 0)
+			return;
+	}
 
 	if (ahci_map_regs(sc, pa) != 0) {
 		/* error already printed by ahci_map_regs */
