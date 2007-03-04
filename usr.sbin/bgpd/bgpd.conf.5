@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.81 2007/01/27 08:08:54 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.82 2007/03/04 17:41:40 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -53,6 +53,17 @@ With the exception of macros,
 the sections should be grouped and appear in
 .Nm
 in the order shown above.
+.Pp
+Comments can be put anywhere in the file using a hash mark
+.Pq Sq # ,
+and extend to the end of the current line.
+.Pp
+Additional configuration files can be included with the
+.Ic include
+keyword, for example:
+.Bd -literal -offset indent
+include "/etc/bgpd/bgpd-10.0.0.1.filter"
+.Ed
 .Sh MACROS
 Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, and may contain letters, digits
