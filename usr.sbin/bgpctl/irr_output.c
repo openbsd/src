@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.7 2007/03/04 18:40:08 henning Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.8 2007/03/04 20:05:11 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,6 +27,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "irrfilter.h"
 
@@ -33,7 +37,7 @@ int	 process_policies(FILE *, struct policy_head *);
 void	 policy_prettyprint(FILE *, struct policy_item *);
 void	 policy_torule(FILE *, struct policy_item *);
 char	*action_torule(char *);
-void	 print_rule(FILE *, struct policy_item *, char *, char *);
+void	 print_rule(FILE *, struct policy_item *, char *, struct prefix *);
 
 #define allowed_in_address(x) \
 	(isalnum(x) || x == '.' || x == ':' || x == '-')
@@ -190,14 +194,16 @@ action_torule(char *s)
 }
 
 void
-print_rule(FILE *fh, struct policy_item *pi, char *sourceas, char *prefix)
+print_rule(FILE *fh, struct policy_item *pi, char *sourceas,
+    struct prefix *prefix)
 {
-	char			*fmt = "allow quick %s %s%s%s%s%s%s\n";
-	char			*peer = "any";
-	char			*action = "";
-	char			*dir;
-	char			*pfx[2] = { "", "" };
-	char			*srcas[2] = { "", "" };
+	char	*fmt = "allow quick %s %s%s%s%s%s\n";
+	char	*peer = "any";
+	char	*action = "";
+	char	*dir;
+	char	*srcas[2] = { "", "" };
+	char	 pbuf[8 + NI_MAXHOST + 4];
+	size_t	 offset;
 
 	if (pi->dir == IMPORT)
 		dir = "from";
@@ -211,13 +217,21 @@ print_rule(FILE *fh, struct policy_item *pi, char *sourceas, char *prefix)
 		action = action_torule(pi->action);
 
 	if (prefix != NULL) {
-		pfx[0] = " prefix ";
-		pfx[1] = prefix;
+		strlcpy(pbuf, " prefix ", sizeof(pbuf));
+		offset = strlen(pbuf);
+		if (inet_ntop(prefix->af, &prefix->addr, pbuf + offset,
+		    sizeof(pbuf) - offset) == NULL)
+			err(1, "print_rule inet_ntop");
+		offset = strlen(pbuf);
+		if (snprintf(pbuf + offset, sizeof(pbuf) - offset,
+		    "/%u", prefix->len) == -1)
+			err(1, "print_rule snprintf");
+
 		if (pi->dir == IMPORT) {
 			srcas[0] = " source-as ";
 			srcas[1] = sourceas;
 		}
 	}
 
-	fprintf(fh, fmt, dir, peer, srcas[0], srcas[1], pfx[0], pfx[1], action);
+	fprintf(fh, fmt, dir, peer, srcas[0], srcas[1], pbuf, action);
 }

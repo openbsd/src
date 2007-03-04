@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_prefix.c,v 1.1 2007/03/03 11:45:30 henning Exp $ */
+/*	$OpenBSD: irr_prefix.c,v 1.2 2007/03/04 20:05:11 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -18,14 +18,18 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/socket.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include "irrfilter.h"
 
+int	 prefix_compare(void *, void *);
 int	 prefix_set_compare(struct prefix_set *, struct prefix_set *);
 struct prefix_set
 	*prefix_set_find(char *);
@@ -63,27 +67,62 @@ prefixset_get(char *as)
 int
 prefixset_addmember(char *s)
 {
-	void	*p;
-	u_int	 i;
+	void		*p;
+	u_int		 i;
+	struct prefix	*pfx;
+	int		 len;
+
+	if (strchr(s, '/') == NULL)
+		errx(1, "prefix %s does not have the len specified", s);
+
+	if ((pfx = calloc(1, sizeof(*pfx))) == NULL)
+		err(1, "prefixset_addmember calloc");
+
+	if ((len = inet_net_pton(AF_INET, s, &pfx->addr.in,
+	    sizeof(pfx->addr.in))) == -1)
+		err(1, "inet_net_pton %s", s);
+
+	pfx->af = AF_INET;
+	pfx->len = len;
 
 	/* yes, there are dupes... e. g. from multiple sources */
 	for (i = 0; i < curpfxs->prefixcnt; i++)
-		if (!strcmp(curpfxs->prefix[i], s))
+		if (prefix_compare(curpfxs->prefix[i], pfx) == 0) {
+			free(pfx);
 			return (0);
+		}
 
 	if ((p = realloc(curpfxs->prefix,
-	    (curpfxs->prefixcnt + 1) * sizeof(char *))) == NULL)
-		err(1, "prefixset_addmember strdup");
+	    (curpfxs->prefixcnt + 1) * sizeof(void *))) == NULL)
+		err(1, "prefixset_addmember realloc");
 	curpfxs->prefix = p;
 	curpfxs->prefixcnt++;
-
-	if ((curpfxs->prefix[curpfxs->prefixcnt - 1] =
-	    strdup(s)) == NULL)
-		err(1, "prefixset_addmember strdup");
+	curpfxs->prefix[curpfxs->prefixcnt - 1] = pfx;
 
 	return (1);
 }
 
+int
+prefix_compare(void *a, void *b)
+{
+	struct prefix	*pa = a;
+	struct prefix	*pb = b;
+	int		 r;
+
+	if ((r = pa->af - pb->af) != 0)
+		return (r);
+	if (pa->af == AF_INET) {
+		if ((r = ntohl(pa->addr.in.s_addr) -
+		    ntohl(pb->addr.in.s_addr)) != 0)
+			return (r);
+	} else
+		errx(1, "prefixcmp unknown af %u", pa->af);
+
+	if ((r = pa->len - pb->len) != 0)
+		return (r);
+
+	return (0);
+}
 
 /* RB helpers */
 int

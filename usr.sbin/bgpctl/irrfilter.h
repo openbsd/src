@@ -1,4 +1,4 @@
-/*	$OpenBSD: irrfilter.h,v 1.2 2007/03/04 18:13:13 henning Exp $ */
+/*	$OpenBSD: irrfilter.h,v 1.3 2007/03/04 20:05:11 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/queue.h>
 #include <sys/tree.h>
+#include <netinet/in.h>
 
 #define	F_IMPORTONLY	0x01	/* skip export: items */
 
@@ -67,10 +68,18 @@ struct as_set {
 	u_int			  n_as;
 };
 
+struct prefix {
+	union {
+		struct in_addr	in;
+	} addr;
+	sa_family_t	af;
+	u_int8_t	len;
+};
+
 struct prefix_set {
 	RB_ENTRY(prefix_set)	  entry;
 	char			 *as;
-	char			**prefix;
+	struct prefix		**prefix;
 	u_int			  prefixcnt;
 };
 
