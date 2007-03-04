@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.22 2007/02/26 00:11:49 gwk Exp $	*/
+/*	$OpenBSD: adb.c,v 1.23 2007/03/04 15:33:31 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -646,6 +646,8 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 		    || (adbWaiting == 1))
 			if (ADB_SR_INTR_IS_ON) {	/* wait for "interrupt" */
 				adb_intr_cuda();	/* process it */
+				if (cold)
+					delay(ADB_DELAY);
 				adb_soft_intr();
 			}
 
@@ -1725,10 +1727,6 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	(void)config_found(self, &aa_args, NULL);
 #endif
 
-	if (adbHardware == ADB_HW_CUDA)
-		adb_cuda_autopoll();
-	adb_polling = 0;
-
 	/* Attach I2C controller. */
 	for (node = OF_child(ca->ca_node); node; node = OF_peer(node)) {
 		if (OF_getprop(node, "name", name, sizeof name) <= 0)
@@ -1744,4 +1742,8 @@ adbattach(struct device *parent, struct device *self, void *aux)
 		adb_cuda_fileserver_mode();
 	if (adbHardware == ADB_HW_PMU)
 		pmu_fileserver_mode(1);
+
+	if (adbHardware == ADB_HW_CUDA)
+		adb_cuda_autopoll();
+	adb_polling = 0;
 }
