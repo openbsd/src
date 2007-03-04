@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.52 2007/03/04 12:20:17 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.53 2007/03/04 12:23:25 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -721,11 +721,9 @@ freeport:
 void
 ahci_port_free(struct ahci_softc *sc, u_int port)
 {
-	struct ahci_port		*ap;
+	struct ahci_port		*ap = sc->sc_ports[port];
 	struct ahci_ccb			*ccb;
 	int				i;
-
-	ap = sc->sc_ports[i];
 
 	for (i = 0; i < sc->sc_ncmds; i++) {
 		ccb = &ap->ap_ccbs[i];
@@ -737,7 +735,7 @@ ahci_port_free(struct ahci_softc *sc, u_int port)
 	/* bus_space(9) says we dont free the subregions handle */
 	free(ap->ap_ccbs, M_DEVBUF);
 	free(ap, M_DEVBUF);
-	sc->sc_ports[i] = NULL;
+	sc->sc_ports[port] = NULL;
 }
 
 int
