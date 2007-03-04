@@ -1,4 +1,4 @@
-/*	$OpenBSD: irrfilter.h,v 1.1 2007/03/03 11:45:30 henning Exp $ */
+/*	$OpenBSD: irrfilter.h,v 1.2 2007/03/04 18:13:13 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -31,11 +31,11 @@ enum pdir {
 
 struct policy_item {
 	TAILQ_ENTRY(policy_item)	 entry;
-	enum pdir			 dir;
-	char				*peer_as;
 	char				*peer_addr;
 	char				*action;
 	char				*filter;
+	enum pdir			 dir;
+	u_int16_t			 peer_as;
 };
 
 TAILQ_HEAD(policy_head, policy_item);

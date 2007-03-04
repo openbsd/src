@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_parser.c,v 1.4 2007/03/04 12:37:07 henning Exp $ */
+/*	$OpenBSD: irr_parser.c,v 1.5 2007/03/04 18:13:13 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <ctype.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -271,11 +272,21 @@ parse_policy(char *key, char *val)
 			st = nextst;
 			break;
 		case PO_PEER_KEY:
-			if (pi->peer_as == NULL) {
+			if (pi->peer_as == 0) {
+				const char	*errstr;
+
 				if (nextst != PO_NONE)
 					goto ppoerr;
-				if ((pi->peer_as = strdup(tok)) == NULL)
-					err(1, NULL);
+				if (strlen(tok) < 3 ||
+				    strncasecmp(tok, "AS", 2) ||
+				    !isdigit(tok[2]))
+					errx(1, "peering spec \"%s\": format "
+					    "error, AS expected", tok);
+				pi->peer_as = strtonum(tok + 2, 1, USHRT_MAX,
+				    &errstr);
+				if (errstr)
+					errx(1, "peering spec \"%s\": format "
+					    "error: %s", tok, errstr);
 			} else {
 				switch (nextst) {
 				case PO_NONE:

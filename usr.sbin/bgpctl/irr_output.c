@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.5 2007/03/04 17:47:31 henning Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.6 2007/03/04 18:13:13 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -94,7 +94,6 @@ process_policies(FILE *fh, struct policy_head *head)
 		policy_prettyprint(fh, pi);
 		policy_torule(fh, pi);
 
-		free(pi->peer_as);
 		free(pi->peer_addr);
 		free(pi->action);
 		free(pi->filter);
@@ -111,7 +110,7 @@ policy_prettyprint(FILE *fh, struct policy_item *pi)
 		fprintf(fh, "# import: from ");
 	else
 		fprintf(fh, "# export: to ");
-	fprintf(fh, "%s ", pi->peer_as);
+	fprintf(fh, "AS%u ", pi->peer_as);
 	if (pi->peer_addr)
 		fprintf(fh, "%s ", pi->peer_addr);
 	if (pi->action)
