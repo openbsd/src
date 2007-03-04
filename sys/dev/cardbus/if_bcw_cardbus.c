@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_cardbus.c,v 1.10 2007/02/26 14:36:11 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_cardbus.c,v 1.11 2007/03/04 00:43:25 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -64,8 +64,8 @@ void		bcw_cardbus_power(struct bcw_softc *, int);
 void		bcw_cardbus_setup(struct bcw_cardbus_softc *);
 int		bcw_cardbus_enable(struct bcw_softc *);
 void		bcw_cardbus_disable(struct bcw_softc *);
-void		bcw_cardbus_conf_write(struct bcw_softc *, uint32_t, uint32_t);
-uint32_t	bcw_cardbus_conf_read(struct bcw_softc *, uint32_t);
+void		bcw_cardbus_conf_write(void *, uint32_t, uint32_t);
+uint32_t	bcw_cardbus_conf_read(void *, uint32_t);
 
 struct cfattach bcw_cardbus_ca = {
 	sizeof (struct bcw_cardbus_softc), bcw_cardbus_match,
@@ -107,8 +107,7 @@ bcw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
 	csc->sc_intrline = ca->ca_intrline;
-	sc->sc_ca.ca_tag = ca->ca_tag;
-	sc->sc_ca.ca_ct = ca->ca_ct;
+	sc->sc_dev_softc = csc;
 
 	/* power management hooks */
 	sc->sc_enable = bcw_cardbus_enable;
@@ -258,13 +257,17 @@ bcw_cardbus_disable(struct bcw_softc *sc)
 }
 
 void
-bcw_cardbus_conf_write(struct bcw_softc *sc, uint32_t reg, uint32_t val)
+bcw_cardbus_conf_write(void *self, uint32_t reg, uint32_t val)
 {
-	Cardbus_conf_write(sc->sc_ca.ca_ct, sc->sc_ca.ca_tag, reg, val);
+	struct bcw_cardbus_softc *csc = (struct bcw_cardbus_softc *)self;
+
+	Cardbus_conf_write(csc->sc_ct, csc->sc_tag, reg, val);
 }
 
 uint32_t
-bcw_cardbus_conf_read(struct bcw_softc *sc, uint32_t reg)
+bcw_cardbus_conf_read(void *self, uint32_t reg)
 {
-	return (Cardbus_conf_read(sc->sc_ca.ca_ct, sc->sc_ca.ca_tag, reg));
+	struct bcw_cardbus_softc *csc = (struct bcw_cardbus_softc *)self;
+
+	return (Cardbus_conf_read(csc->sc_ct, csc->sc_tag, reg));
 }

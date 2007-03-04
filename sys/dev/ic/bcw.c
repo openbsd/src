@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.63 2007/03/01 19:48:00 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.64 2007/03/04 00:43:26 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -56,7 +56,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-#include <dev/cardbus/cardbusvar.h>
 
 #include <dev/ic/bcwreg.h>
 #include <dev/ic/bcwvar.h>
@@ -1450,7 +1449,7 @@ bcw_intr(void *xsc)
 	sc = xsc;
 
 	for (wantinit = 0; wantinit == 0;) {
-		intstatus = (sc->sc_conf_read)(sc, BCW_INT_STS);
+		intstatus = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_INT_STS);
 
 		/* ignore if not ours, or unsolicited interrupts */
 		intstatus &= sc->sc_intmask;
@@ -1460,7 +1459,7 @@ bcw_intr(void *xsc)
 		handled = 1;
 
 		/* Ack interrupt */
-		(sc->sc_conf_write)(sc, BCW_INT_STS, intstatus);
+		(sc->sc_conf_write)(sc->sc_dev_softc, BCW_INT_STS, intstatus);
 
 		/* Receive interrupts. */
 		if (intstatus & I_RI)
@@ -2603,15 +2602,15 @@ bcw_powercontrol_crystal_on(struct bcw_softc *sc)
 {
 	uint32_t sbval;
 
-	sbval = (sc->sc_conf_read)(sc, BCW_GPIOI);
+	sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOI);
 	if ((sbval & BCW_XTALPOWERUP) != BCW_XTALPOWERUP) {
-		sbval = (sc->sc_conf_read)(sc, BCW_GPIOO);
+		sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
 		sbval |= (BCW_XTALPOWERUP & BCW_PLLPOWERDOWN);
-		(sc->sc_conf_write)(sc, BCW_GPIOO, sbval);
+		(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, sbval);
 		delay(1000);
-		sbval = (sc->sc_conf_read)(sc, BCW_GPIOO);
+		sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
 		sbval &= ~BCW_PLLPOWERDOWN;
-		(sc->sc_conf_write)(sc, BCW_GPIOO, sbval);
+		(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, sbval);
 		delay(5000);
 	}
 }
@@ -2629,13 +2628,13 @@ bcw_powercontrol_crystal_off(struct bcw_softc *sc)
 
 	/* XXX bcw_powercontrol_clock_slow() */
 
-	sbval = (sc->sc_conf_read)(sc, BCW_GPIOO);
+	sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
 	sbval |= BCW_PLLPOWERDOWN;
 	sbval &= ~BCW_XTALPOWERUP;
-	(sc->sc_conf_write)(sc, BCW_GPIOO, sbval);
-	sbval = (sc->sc_conf_read)(sc, BCW_GPIOE);
+	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, sbval);
+	sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOE);
 	sbval |= BCW_PLLPOWERDOWN | BCW_XTALPOWERUP;
-	(sc->sc_conf_write)(sc, BCW_GPIOE, sbval);
+	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOE, sbval);
 }
 
 int
@@ -2644,11 +2643,11 @@ bcw_change_core(struct bcw_softc *sc, int changeto)
 	uint32_t	sbval;
 	int		i;
 
-	(sc->sc_conf_write)(sc, BCW_ADDR_SPACE0,
+	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_ADDR_SPACE0,
 	    BCW_CORE_SELECT(changeto));
 	/* loop to see if the selected core shows up */
 	for (i = 0; i < 10; i++) {
-		sbval = (sc->sc_conf_read)(sc, BCW_ADDR_SPACE0);
+		sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_ADDR_SPACE0);
 		if (sbval == BCW_CORE_SELECT(changeto))
 			break;
 		delay(10);

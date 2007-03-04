@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.26 2007/03/01 19:48:00 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.27 2007/03/04 00:43:26 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -200,9 +200,8 @@ struct bcw_softc {
 	int			(*sc_enable)(struct bcw_softc *);
 	void			(*sc_disable)(struct bcw_softc *);
 	void			(*sc_power)(struct bcw_softc *, int);
-	void			(*sc_conf_write)(struct bcw_softc *,
-				    uint32_t, uint32_t);
-	uint32_t		(*sc_conf_read)(struct bcw_softc *, uint32_t);
+	void			(*sc_conf_write)(void *, uint32_t, uint32_t);
+	uint32_t		(*sc_conf_read)(void *, uint32_t);
 
 	struct timeout		sc_scan_to;
 
@@ -212,8 +211,7 @@ struct bcw_softc {
 
 	void			*bcw_intrhand;
 	const char		*bcw_intrstr;	/* interrupt description */
-	struct pci_attach_args	sc_pa;
-	struct cardbus_attach_args	sc_ca;
+	void			*sc_dev_softc;
 	uint32_t		sc_phy;	/* eeprom indicated phy */
 	struct bcw_dma_slot	*bcw_rx_ring;	/* receive ring */
 	struct bcw_dma_slot	*bcw_tx_ring;	/* transmit ring */

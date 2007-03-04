@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_pci.c,v 1.12 2007/02/26 14:36:11 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_pci.c,v 1.13 2007/03/04 00:43:26 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -60,7 +60,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-#include <dev/cardbus/cardbusvar.h>
 
 #include <dev/ic/bcwreg.h>
 #include <dev/ic/bcwvar.h>
@@ -91,8 +90,8 @@ struct bcw_pci_softc {
 
 int		bcw_pci_match(struct device *, void *, void *);
 void		bcw_pci_attach(struct device *, struct device *, void *);
-void		bcw_pci_conf_write(struct bcw_softc *, uint32_t, uint32_t);
-uint32_t	bcw_pci_conf_read(struct bcw_softc *, uint32_t);
+void		bcw_pci_conf_write(void *, uint32_t, uint32_t);
+uint32_t	bcw_pci_conf_read(void *, uint32_t);
 
 struct cfattach bcw_pci_ca = {
 	sizeof(struct bcw_pci_softc), bcw_pci_match, bcw_pci_attach
@@ -108,9 +107,9 @@ bcw_pci_match(struct device *parent, void *match, void *aux)
 void
 bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct bcw_pci_softc *psc = (void *) self;
-	struct bcw_softc *sc = &psc->psc_bcw;
+	struct bcw_pci_softc *psc = (void *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	struct bcw_softc *sc = &psc->psc_bcw;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t memtype;
 	bus_addr_t memaddr;
@@ -118,10 +117,10 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 	int pmreg;
 	pcireg_t pmode;
 
+	sc->sc_dmat = pa->pa_dmat;
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
-	sc->sc_pa.pa_pc = pa->pa_pc;
-	sc->sc_pa.pa_tag = pa->pa_tag;
+	sc->sc_dev_softc = psc;
 
 	/* Get it out of power save mode if needed. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
@@ -158,8 +157,6 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-
-	sc->sc_dmat = pa->pa_dmat;
 
 	/* Map the PCI interrupt */
 	if (pci_intr_map(pa, &psc->psc_ih)) {
@@ -219,13 +216,17 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-bcw_pci_conf_write(struct bcw_softc *sc, uint32_t reg, uint32_t val)
+bcw_pci_conf_write(void *self, uint32_t reg, uint32_t val)
 {
-	pci_conf_write(sc->sc_pa.pa_pc, sc->sc_pa.pa_tag, reg, val);
+	struct bcw_pci_softc *psc = (struct bcw_pci_softc *)self;
+
+	pci_conf_write(psc->psc_pc, psc->psc_pcitag, reg, val);
 }
 
 uint32_t
-bcw_pci_conf_read(struct bcw_softc *sc, uint32_t reg)
+bcw_pci_conf_read(void *self, uint32_t reg)
 {
-	return (pci_conf_read(sc->sc_pa.pa_pc, sc->sc_pa.pa_tag, reg));
+	struct bcw_pci_softc *psc = (struct bcw_pci_softc *)self;
+
+	return (pci_conf_read(psc->psc_pc, psc->psc_pcitag, reg));
 }
