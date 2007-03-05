@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.96 2007/01/17 19:30:12 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.97 2007/03/05 17:13:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -552,8 +552,8 @@ if (kdb_trap (type, va, frame))
 	 * for weird things start to happen on return to the userland
 	 * and also see a note in locore.S:TLABEL(all)
 	 */
-	if ((type & T_USER) &&
-	    (frame->tf_iioq_head & ~PAGE_MASK) != SYSCALLGATE)
+	if ((type & T_USER) && !(frame->tf_iisq_head == HPPA_SID_KERNEL &&
+	    (frame->tf_iioq_head & ~PAGE_MASK) == SYSCALLGATE))
 		userret(p);
 }
 
