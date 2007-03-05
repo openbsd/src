@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.86 2007/03/04 06:44:45 joel Exp $
+.\"	$OpenBSD: spamd.8,v 1.87 2007/03/05 16:57:25 reyk Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -510,6 +510,13 @@ exists,
 .Nm
 will calculate the message-digest fingerprint (checksum) for the file
 and use it as a shared key to authenticate the synchronisation messages.
+The file can contain any data.
+For example, create a secure random key:
+.Bd -literal -offset indent
+# dd if=/dev/arandom of=/etc/mail/spamd.key count=4
+.Ed
+.Pp
+The file needs to be copied to all synchronised hosts.
 .Sh FILES
 .Bl -tag -width "/etc/mail/spamd.alloweddomainsXX" -compact
 .It /etc/mail/spamd.conf
