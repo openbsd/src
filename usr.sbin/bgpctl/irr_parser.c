@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_parser.c,v 1.5 2007/03/04 18:13:13 henning Exp $ */
+/*	$OpenBSD: irr_parser.c,v 1.7 2007/03/05 17:31:12 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -69,8 +69,7 @@ parse_response(FILE *f, enum qtype qtype)
 			warnx("no \":\" found!");
 			return (-1);
 		}
-		while (ISWS(*val))
-			val++;
+		EATWS(val);
 
 		switch (qtype) {
 		case QTYPE_OWNAS:
@@ -264,7 +263,7 @@ parse_policy(char *key, char *val)
 			while (ISWS(*p))
 				p++;
 		}
-			
+
 		switch (st) {
 		case PO_NONE:
 			if (nextst != PO_PEER_KEY)
@@ -293,10 +292,12 @@ parse_policy(char *key, char *val)
 					if (!strcasecmp(tok, "and") ||
 					    !strcasecmp(tok, "or") ||
 					    !strcasecmp(tok, "not"))
-						fprintf(stderr, "compound peering "
-						    "statements are not supported");
+						fprintf(stderr, "compound "
+						    "peering statements are "
+						    "not supported");
 					 else	/* peer address */
-						if ((pi->peer_addr = strdup(tok)) == NULL)
+						if ((pi->peer_addr =
+						    strdup(tok)) == NULL)
 							err(1, NULL);
 					break;
 				case PO_RTR_KEY:
@@ -409,5 +410,5 @@ parse_route(char *key, char *val)
 	if (strcmp(key, "route"))	/* ignore everything else */
 		return (0);
 
-	return(prefixset_addmember(val));
+	return (prefixset_addmember(val));
 }

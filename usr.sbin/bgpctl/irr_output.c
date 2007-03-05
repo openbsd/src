@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.12 2007/03/05 15:02:05 henning Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.13 2007/03/05 17:28:21 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -60,11 +60,11 @@ write_filters(char *outpath)
 					errx(1, "router address \"%s\" contains"
 					    " illegal character \"%c\"",
 					    r->address, r->address[i]);
-			if(asprintf(&fn, "%s/bgpd-%s.filter",
+			if (asprintf(&fn, "%s/bgpd-%s.filter",
 			    outpath, r->address) == -1)
 				err(1, "write_filters asprintf");
 		} else
-			if(asprintf(&fn, "%s/bgpd.filter",
+			if (asprintf(&fn, "%s/bgpd.filter",
 			    outpath) == -1)
 				err(1, "write_filters asprintf");
 
