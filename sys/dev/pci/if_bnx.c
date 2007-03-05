@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.47 2007/03/03 11:17:48 reyk Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.48 2007/03/05 11:13:09 reyk Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -870,7 +870,6 @@ bnx_attachhook(void *xsc)
                 ifp->if_baudrate = IF_Gbps(2.5);
         else
                 ifp->if_baudrate = IF_Gbps(1);
-	ifp->if_hardmtu = BNX_MAX_JUMBO_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, USABLE_TX_BD - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->eaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
@@ -3281,7 +3280,7 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod,
 		}
 
 		DBRUNIF(1, sc->rx_mbuf_alloc++);
-		MEXTMALLOC(m_new, sc->mbuf_alloc_size, M_DONTWAIT);
+		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
 			DBPRINT(sc, BNX_WARN,
 			    "%s(%d): RX mbuf chain allocation failed!\n", 
@@ -3961,11 +3960,8 @@ bnx_rx_intr(struct bnx_softc *sc)
 				vh.evl_tag = l2fhdr->l2_fhdr_vlan_tag;
 				vh.evl_encap_proto = htons(ETHERTYPE_VLAN);
 				m_adj(m, ETHER_HDR_LEN);
-				if ((m = m_prepend(m, sizeof(vh), M_DONTWAIT)) == NULL)
-					goto bnx_rx_int_next_rx;
-				m->m_pkthdr.len += sizeof(vh);
-				if (m->m_len < sizeof(vh) &&
-				    (m = m_pullup(m, sizeof(vh))) == NULL)
+				M_PREPEND(m, sizeof(vh), M_DONTWAIT);
+				if (m == NULL)
 					goto bnx_rx_int_next_rx;
 				m_copyback(m, 0, sizeof(vh), &vh);
 #else
@@ -4219,7 +4215,7 @@ bnx_init(void *xsc)
 	bnx_set_mac_addr(sc);
 
 	/* Calculate and program the Ethernet MRU size. */
-	ether_mtu = BNX_MAX_JUMBO_ETHER_MTU_VLAN;
+	ether_mtu = BNX_MAX_STD_ETHER_MTU_VLAN;
 
 	DBPRINT(sc, BNX_INFO, "%s(): setting MRU = %d\n",
 	    __FUNCTION__, ether_mtu);
