@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.17 2007/01/02 22:43:29 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.18 2007/03/05 10:23:16 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -58,6 +58,7 @@ struct nmea {
 	int64_t		last;		/* last time rcvd */
 	int		sync;
 	int		pos;
+	int		no_pps;		/* tty timestamping on, but no PPS */
 	char		mode;		/* GPS mode */
 };
 
@@ -131,6 +132,7 @@ int
 nmeainput(int c, struct tty *tp)
 {
 	struct nmea *np = (struct nmea *)tp->t_sc;
+	long tmin, tmax;
 
 	switch (c) {
 	case '$':
@@ -141,11 +143,32 @@ nmeainput(int c, struct tty *tp)
 		 * case we use the soft timestamp later.
 		 */
 		nanotime(&np->ts);
-		/* if a tty timestamp is available, copy it now */
+		/*
+		 * If a tty timestamp is available, make sure its value is
+		 * reasonable by comparing against the "soft"-timestamp.  If
+		 * they differ by more than 2 seconds, assume no PPS signal
+		 * is present.
+		 */
 		if (tp->t_flags & (TS_TSTAMPDCDSET | TS_TSTAMPDCDCLR |
 		    TS_TSTAMPCTSSET | TS_TSTAMPCTSCLR)) {
-			np->tv.tv_sec = tp->t_tv.tv_sec;
-			np->tv.tv_usec = tp->t_tv.tv_usec;
+			tmax = lmax(np->ts.tv_sec, tp->t_tv.tv_sec);
+			tmin = lmin(np->ts.tv_sec, tp->t_tv.tv_sec);
+			DPRINTF(("tmax %ld, tmin %ld, diff %ld\n", tmax, tmin,
+			    tmax - tmin));
+			if (tmax - tmin > 1) {
+				if (!np->no_pps)
+					printf("nmea%d: tty timestamping "
+					    "enabled, but no PPS signal\n",
+					    nmea_count - 1);
+				np->no_pps = 1;
+			} else {
+				np->tv.tv_sec = tp->t_tv.tv_sec;
+				np->tv.tv_usec = tp->t_tv.tv_usec;
+				if (np->no_pps)
+					printf("nmea%d: PPS signal ok\n",
+					    nmea_count - 1);
+				np->no_pps = 0;
+			}
 		}
 		np->pos = 0;
 		np->sync = 0;
@@ -258,12 +281,12 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	 * from the tty, else use the timestamp taken on the initial '$'
 	 * character.
 	 */
-	if (tp->t_flags & (TS_TSTAMPDCDSET | TS_TSTAMPDCDCLR |
-	    TS_TSTAMPCTSSET | TS_TSTAMPCTSCLR)) {
-		np->time.value = np->tv.tv_sec * 1000000000LL +
-		    np->tv.tv_usec * 1000LL - nmea_now;
-		np->time.tv.tv_sec = np->tv.tv_sec;
-		np->time.tv.tv_usec = np->tv.tv_usec;
+	if (!np->no_pps && (tp->t_flags & (TS_TSTAMPDCDSET | TS_TSTAMPDCDCLR |
+	    TS_TSTAMPCTSSET | TS_TSTAMPCTSCLR))) {
+		np->time.value = np->ts.tv_sec * 1000000000LL +
+		    np->ts.tv_nsec - nmea_now;
+		np->time.tv.tv_sec = np->ts.tv_sec;
+		np->time.tv.tv_usec = np->ts.tv_nsec / 1000L;
 #ifdef NMEA_DEBUG
 		/*
 		 * If we got a tty timestamp, provide the skew to the
@@ -337,6 +360,13 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	default:
 		DPRINTF(("gprmc: unknown warning indication\n"));
 	}
+
+	/*
+	 * if tty timestamping is on, but not PPS signal is present, set
+	 * the sensor state to WARNING.
+	 */
+	if (np->no_pps)
+		np->time.status = SENSOR_S_WARN;
 }
 
 /*
