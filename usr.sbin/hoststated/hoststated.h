@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.35 2007/02/27 13:38:58 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.36 2007/03/05 11:44:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -377,6 +377,12 @@ enum nodetype {
 #define PNFLAG_LOG		0x04
 #define PNFLAG_LOOKUP_URL	0x08
 #define PNFLAG_LOOKUP_COOKIE	0x10
+
+enum noderesult {
+	PN_DROP			= 0,
+	PN_PASS			= 1,
+	PN_FAIL			= -1
+};
 
 struct protonode {
 	objid_t			 id;

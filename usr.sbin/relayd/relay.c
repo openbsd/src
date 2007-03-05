@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.15 2007/03/02 11:32:40 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.16 2007/03/05 11:44:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -798,11 +798,12 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *pn,
 {
 	struct session		*con = (struct session *)cre->con;
 	char			 buf[READ_BUF_SIZE], *ptr;
+	int			 ret = PN_DROP;
 
 	switch (pn->action) {
 	case NODE_ACTION_APPEND:
 		if (!header || ((pn->flags & PNFLAG_MARK) && cre->marked == 0))
-			return (1);
+			return (PN_PASS);
 		ptr = pn->value;
 		if ((pn->flags & PNFLAG_MACRO) &&
 		    (ptr = relay_expand_http(cre, pn->value,
@@ -822,7 +823,7 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *pn,
 	case NODE_ACTION_CHANGE:
 	case NODE_ACTION_REMOVE:
 		if (!header || ((pn->flags & PNFLAG_MARK) && cre->marked == 0))
-			return (1);
+			return (PN_PASS);
 		DPRINTF("relay_handle_http: change/remove '%s: %s'",
 		    pk->key, pk->value);
 		break;
@@ -834,6 +835,7 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *pn,
 				cre->marked++;
 			cre->nodes[pn->id] = 1;
 		}
+		ret = PN_PASS;
 		break;
 	case NODE_ACTION_FILTER:
 		DPRINTF("relay_handle_http: filter '%s: %s'",
@@ -847,19 +849,21 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *pn,
 		break;
 	case NODE_ACTION_HASH:
 		if ((pn->flags & PNFLAG_MARK) && cre->marked == 0)
-			return (1);
+			return (PN_PASS);
 		DPRINTF("relay_handle_http: hash '%s: %s'",
 		    pn->key, pk->value);
 		con->outkey = hash32_str(pk->value, con->outkey);
+		ret = PN_PASS;
 		break;
 	case NODE_ACTION_LOG:
 		if ((pn->flags & PNFLAG_MARK) && cre->marked == 0)
-			return (1);
+			return (PN_PASS);
 		DPRINTF("relay_handle_http: log '%s: %s'",
 		    pn->key, pk->value);
+		ret = PN_PASS;
 		break;
 	case NODE_ACTION_NONE:
-		return (1);
+		return (PN_PASS);
 	}
 	if (pn->flags & PNFLAG_LOG) {
 		bzero(buf, sizeof(buf));
@@ -869,10 +873,10 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *pn,
 			goto fail;
 	}
 
-	return (0);
+	return (ret);
  fail:
 	relay_close(con, strerror(errno));
-	return (-1);
+	return (PN_FAIL);
 }
 
 void
@@ -1150,9 +1154,9 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				    cre->tree, &pkv)) == NULL)
 					continue;
 				ret = relay_handle_http(cre, pnv, &pkv, 0);
-				if (ret == 1)
+				if (ret == PN_PASS)
 					continue;
-				else if (ret == -1) {
+				else if (ret == PN_FAIL) {
 					free(url);
 					free(line);
 					return;
@@ -1162,10 +1166,10 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		}
 
 		ret = relay_handle_http(cre, pn, &pk, header);
-		if (ret == 1)
+		if (ret == PN_PASS)
 			goto next;
 		free(line);
-		if (ret == -1)
+		if (ret == PN_FAIL)
 			return;
 		continue;
 
