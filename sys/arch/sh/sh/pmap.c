@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.5 2007/03/05 21:47:55 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.6 2007/03/05 21:48:23 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -883,6 +883,26 @@ pmap_clear_modify(struct vm_page *pg)
 
 	return (TRUE);
 }
+
+#ifdef SH4
+/*
+ * pmap_prefer(vaddr_t foff, vaddr_t *vap)
+ *
+ * Find first virtual address >= *vap that doesn't cause
+ * a virtual cache alias against vaddr_t foff.
+ */
+void
+pmap_prefer(vaddr_t foff, vaddr_t *vap)
+{
+	vaddr_t va;
+
+	if (SH_HAS_VIRTUAL_ALIAS) {
+		va = *vap;
+
+		*vap = va + ((foff - va) & sh_cache_prefer_mask);
+	}
+}
+#endif /* SH4 */
 
 /*
  * pv_entry pool allocator:

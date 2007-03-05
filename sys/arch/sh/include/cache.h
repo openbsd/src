@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: cache.h,v 1.2 2007/03/05 21:48:21 miod Exp $	*/
 /*	$NetBSD: cache.h,v 1.7 2006/01/21 00:46:36 uwe Exp $	*/
 
 /*-
@@ -156,6 +156,8 @@ extern int sh_cache_entry_mask;
 extern int sh_cache_ram_mode;
 extern int sh_cache_index_mode_icache;
 extern int sh_cache_index_mode_dcache;
+
+extern int sh_cache_prefer_mask;
 
 extern struct sh_cache_ops sh_cache_ops;
 

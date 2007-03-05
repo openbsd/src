@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.2 2007/03/05 21:48:21 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.28 2006/04/10 23:12:11 uwe Exp $	*/
 
 /*-
@@ -79,6 +79,15 @@ pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
 }
+
+/*
+ * pmap_prefer() helps to avoid virtual cache aliases on SH4 CPUs
+ * which have the virtually-indexed cache.
+ */
+#ifdef SH4
+#define	PMAP_PREFER(pa, va)		pmap_prefer((pa), (va))
+void pmap_prefer(vaddr_t, vaddr_t *);
+#endif /* SH4 */
 
 #define	__HAVE_PMAP_DIRECT
 #define	pmap_map_direct(pg)		SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg))
