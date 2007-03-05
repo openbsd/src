@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_prefix.c,v 1.6 2007/03/05 13:45:52 henning Exp $ */
+/*	$OpenBSD: irr_prefix.c,v 1.7 2007/03/05 13:57:59 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -164,6 +164,17 @@ prefix_aggregate(struct irr_prefix *a, const struct irr_prefix *b)
 
 	if ((a->addr.in.s_addr & mask) == (b->addr.in.s_addr & mask))
 		return (1);
+
+	/* see wether we can fold them in one */
+	if (a->len == b->len && a->len > 1) {
+		mask = htonl(0xffffffff << (32 - (a->len - 1)));
+		if ((a->addr.in.s_addr & mask) ==
+		    (b->addr.in.s_addr & mask)) {
+			a->len--;
+			a->addr.in.s_addr &= mask;
+			return (1);
+		}
+	}
 
 	return (0);
 }
