@@ -1,4 +1,4 @@
-/*	$OpenBSD: netgroup_mkdb.c,v 1.12 2005/05/16 03:12:59 deraadt Exp $	*/
+/*	$OpenBSD: netgroup_mkdb.c,v 1.13 2007/03/05 20:29:14 millert Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char *rcsid = "$OpenBSD: netgroup_mkdb.c,v 1.12 2005/05/16 03:12:59 deraadt Exp $";
+static char *rcsid = "$OpenBSD: netgroup_mkdb.c,v 1.13 2007/03/05 20:29:14 millert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -363,7 +363,10 @@ ng_reventry(DB *db, DB *udb, struct nentry *fe, char *name, size_t s,
 		warnx("Cycle in netgroup `%s'", name);
 		return;
 	}
-	_ng_sl_add(ss, fe->n_name);
+	if (_ng_sl_add(ss, fe->n_name) == -1) {
+		warn(NULL);
+		return;
+	}
 
 	for (e = fe->n_next; e != NULL; e = e->n_next)
 		switch (e->n_type) {

@@ -1,4 +1,4 @@
-/* * $OpenBSD: netgroup.h,v 1.5 2002/02/17 19:42:21 millert Exp $*/
+/* * $OpenBSD: netgroup.h,v 1.6 2007/03/05 20:29:14 millert Exp $*/
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -66,7 +66,7 @@ int	innetgr(const char *, const char *, const char *, const char *);
 struct stringlist;
 
 struct stringlist *_ng_sl_init(void);
-void	_ng_sl_add(struct stringlist *, char *);
+int	_ng_sl_add(struct stringlist *, char *);
 void	_ng_sl_free(struct stringlist *, int);
 char    *_ng_sl_find(struct stringlist *, char *);
 char    *_ng_makekey(const char *, const char *, size_t);

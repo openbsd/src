@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.17 2005/08/08 08:05:34 espie Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.18 2007/03/05 20:29:14 millert Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -50,7 +50,6 @@
 #define _NG_ISSPACE(p)	(isspace((unsigned char) (p)) || (p) == '\n')
 
 static const char _ngstar[] = "*";
-static const char _ngoomem[] = "netgroup: %m";
 static struct netgroup *_nghead = (struct netgroup *)NULL;
 static struct netgroup *_nglist = (struct netgroup *)NULL;
 static DB *_ng_db;
@@ -85,13 +84,13 @@ _ng_sl_init(void)
 {
 	struct stringlist *sl = malloc(sizeof(struct stringlist));
 	if (sl == NULL)
-		_err(1, _ngoomem);
+		return NULL;
 
 	sl->sl_cur = 0;
 	sl->sl_max = 20;
 	sl->sl_str = malloc(sl->sl_max * sizeof(char *));
 	if (sl->sl_str == NULL)
-		_err(1, _ngoomem);
+		return NULL;
 	return sl;
 }
 
@@ -99,7 +98,7 @@ _ng_sl_init(void)
 /*
  * _ng_sl_add(): Add an item to the string list
  */
-void
+int
 _ng_sl_add(struct stringlist *sl, char *name)
 {
 	if (sl->sl_cur == sl->sl_max - 1) {
@@ -108,14 +107,14 @@ _ng_sl_add(struct stringlist *sl, char *name)
 		sl->sl_max += 20;
 		slstr = realloc(sl->sl_str, sl->sl_max * sizeof(char *));
 		if (slstr == NULL) {
-			if (sl->sl_str)
-				free(sl->sl_str);
+			free(sl->sl_str);
 			sl->sl_str = NULL;
-			_err(1, _ngoomem);
+			return -1;
 		}
 		sl->sl_str = slstr;
 	}
 	sl->sl_str[sl->sl_cur++] = name;
+	return 0;
 }
 
 
@@ -183,7 +182,7 @@ getstring(char **pp, int del, char **str)
 	if (del > 1) {
 		dp = malloc(del);
 		if (dp == NULL)
-			_err(1, _ngoomem);
+			return 0;
 		memcpy(dp, sp, del);
 		dp[del - 1] = '\0';
 	} else
@@ -203,7 +202,7 @@ getnetgroup(char **pp)
 	struct netgroup *ng = malloc(sizeof(struct netgroup));
 
 	if (ng == NULL)
-		_err(1, _ngoomem);
+		return NULL;
 
 	(*pp)++;	/* skip '(' */
 	if (!getstring(pp, ',', &ng->ng_host))
@@ -243,6 +242,7 @@ badhost:
 static int
 lookup(const char *ypdom, char *name, char **line, int bywhat)
 {
+	int	ret;
 #ifdef YP
 	int	i;
 	char	*map = NULL;
@@ -253,28 +253,29 @@ lookup(const char *ypdom, char *name, char **line, int bywhat)
 		size_t	 len = strlen(name) + 2;
 		char	*ks = malloc(len);
 
+		if (ks == NULL)
+			return 0;
 		ks[0] = bywhat;
 		memcpy(&ks[1], name, len - 1);
 
 		key.data = (u_char *) ks;
 		key.size = len;
 
-		switch ((_ng_db->get) (_ng_db, &key, &data, 0)) {
+		ret = (_ng_db->get)(_ng_db, &key, &data, 0);
+		free(ks);
+		switch (ret) {
 		case 0:
-			free(ks);
 			*line = strdup(data.data);
 			if (*line == NULL)
-				_err(1, _ngoomem);
+				return 0;
 			return 1;
 
 		case 1:
 			break;
 
 		case -1:
-			_warn("netgroup: db get");
-			break;
+			return 0;
 		}
-		free(ks);
 	}
 #ifdef YP
 	if (ypdom) {
@@ -322,10 +323,8 @@ _ng_parse(char **p, char **name, struct netgroup **ng)
 			(*p)++;
 
 		if (**p == '(') {
-			if ((*ng = getnetgroup(p)) == NULL) {
-				_warnx("netgroup: Syntax error `%s'", *p);
+			if ((*ng = getnetgroup(p)) == NULL)
 				return _NG_ERROR;
-			}
 			return _NG_GROUP;
 		} else {
 			char	*np;
@@ -337,7 +336,7 @@ _ng_parse(char **p, char **name, struct netgroup **ng)
 				i = (*p - np) + 1;
 				*name = malloc(i);
 				if (*name == NULL)
-					_err(1, _ngoomem);
+					return _NG_ERROR;
 				memcpy(*name, np, i);
 				(*name)[i - 1] = '\0';
 				return _NG_NAME;
@@ -367,7 +366,10 @@ addgroup(char *ypdom, struct stringlist *sl, char *grp)
 		free(grp);
 		return;
 	}
-	_ng_sl_add(sl, grp);
+	if (_ng_sl_add(sl, grp) == -1) {
+		free(grp);
+		return;
+	}
 
 	/* Lookup this netgroup */
 	if (!lookup(ypdom, grp, &line, _NG_KEYBYNAME))
@@ -445,7 +447,10 @@ in_find(char *ypdom, struct stringlist *sl, char *grp, const char *host,
 		free(grp);
 		return 0;
 	}
-	_ng_sl_add(sl, grp);
+	if (_ng_sl_add(sl, grp) == -1) {
+		free(grp);
+		return 0;
+	}
 
 	/* Lookup this netgroup */
 	if (!lookup(ypdom, grp, &line, _NG_KEYBYNAME))
@@ -500,9 +505,8 @@ char *
 _ng_makekey(const char *s1, const char *s2, size_t len)
 {
 	char *buf = malloc(len);
-	if (buf == NULL)
-		_err(1, _ngoomem);
-	(void) snprintf(buf, len, "%s.%s", _NG_STAR(s1), _NG_STAR(s2));
+	if (buf != NULL)
+		(void) snprintf(buf, len, "%s.%s", _NG_STAR(s1), _NG_STAR(s2));
 	return buf;
 }
 
@@ -527,6 +531,8 @@ in_lookup1(const char *ypdom, const char *key, const char *domain, int map)
 
 	len = (key ? strlen(key) : 1) + (domain ? strlen(domain) : 1) + 2;
 	ptr = _ng_makekey(key, domain, len);
+	if (ptr == NULL)
+		return NULL;
 	res = lookup(ypdom, ptr, &line, map);
 	free(ptr);
 	return res ? line : NULL;
@@ -601,7 +607,7 @@ endnetgrent(void)
 void
 setnetgrent(const char *ng)
 {
-	struct stringlist	*sl = _ng_sl_init();
+	struct stringlist	*sl;
 #ifdef YP
 	char			*line;
 #endif
@@ -610,6 +616,10 @@ setnetgrent(const char *ng)
 	/* Cleanup any previous storage */
 	if (_nghead != NULL)
 		endnetgrent();
+
+	sl = _ng_sl_init();
+	if (sl == NULL)
+		return;
 
 	if (_ng_db == NULL)
 		_ng_db = dbopen(_PATH_NETGROUP_DB, O_RDONLY, 0, DB_HASH, NULL);
@@ -625,9 +635,8 @@ setnetgrent(const char *ng)
 		free(line);
 #endif
 	ng_copy = strdup(ng);
-	if (ng_copy == NULL)
-		_err(1, _ngoomem);
-	addgroup(ypdom, sl, ng_copy);
+	if (ng_copy != NULL)
+		addgroup(ypdom, sl, ng_copy);
 	_nghead = _nglist;
 	_ng_sl_free(sl, 1);
 }
@@ -690,10 +699,12 @@ innetgr(const char *grp, const char *host, const char *user, const char *domain)
 
 	grpdup = strdup(grp);
 	if (grpdup == NULL)
-		return (0);
+		return 0;
 
 	/* Too bad need the slow recursive way */
 	sl = _ng_sl_init();
+	if (sl == NULL)
+		return 0;
 	found = in_find(ypdom, sl, grpdup, host, user, domain);
 	_ng_sl_free(sl, 1);
 
