@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.14 2007/02/23 19:36:23 deraadt Exp $ */
+/*	$OpenBSD: sdl.c,v 1.15 2007/03/05 02:10:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -111,7 +111,7 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 	if (blacklists[idx].addrs == NULL)
 		goto misc_error;
 
-	for(i = 0; i < addrc; i++) {
+	for (i = 0; i < addrc; i++) {
 		int j, k, af;
 
 		n = &blacklists[idx].addrs[i].sda;

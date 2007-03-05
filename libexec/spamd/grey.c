@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.31 2007/03/04 03:24:47 deraadt Exp $	*/
+/*	$OpenBSD: grey.c,v 1.32 2007/03/05 02:10:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -76,7 +76,7 @@ struct db_change {
 #define DBC_DEL 2
 
 /* db pending changes list */
-SLIST_HEAD(,  db_change) db_changes = SLIST_HEAD_INITIALIZER(db_changes);
+SLIST_HEAD(, db_change) db_changes = SLIST_HEAD_INITIALIZER(db_changes);
 
 struct mail_addr {
 	SLIST_ENTRY(mail_addr)	entry;
@@ -213,7 +213,7 @@ dequotetolower(const char *addr)
 	if (cp != NULL && cp[1] == '\0')
 		*cp = '\0';
 	cp = buf;
-	while(*cp != '\0') {
+	while (*cp != '\0') {
 		*cp = tolower(*cp);
 		cp++;
 	}
@@ -1077,7 +1077,7 @@ greywatcher(void)
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = sig_term_chld;
 	sigaction(SIGTERM, &sa, NULL);
-	sigaction(SIGHUP,  &sa, NULL);
+	sigaction(SIGHUP, &sa, NULL);
 	sigaction(SIGCHLD, &sa, NULL);
 	sigaction(SIGINT, &sa, NULL);
 
