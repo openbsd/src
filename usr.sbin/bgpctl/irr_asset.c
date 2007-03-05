@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_asset.c,v 1.3 2007/03/05 15:02:05 henning Exp $ */
+/*	$OpenBSD: irr_asset.c,v 1.4 2007/03/05 19:30:46 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -43,13 +43,21 @@ int		 asset_add_as(struct as_set *, char *);
 int		 asset_add_asset(struct as_set *, char *);
 
 struct as_set *
-asset_expand(char *name)
+asset_expand(char *s)
 {
 	struct as_set	*ass;
+	char		*name;
+	size_t		 i;
+
+	if ((name = calloc(1, strlen(s) + 1)) == NULL)
+		err(1, "asset_expand calloc");
+	for (i = 0; i < strlen(s); i++)
+		name[i] = toupper(s[i]);
 
 	ass = asset_get(name);
 	asset_resolve(ass);
 
+	free(name);
 	return (ass);
 }
 
@@ -74,7 +82,7 @@ asset_get(char *name)
 		err(1, "expand_as_set strdup");
 	RB_INSERT(as_set_h, &as_set_h, ass);
 
-	if (!strncasecmp(name, "AS", 2) &&
+	if (!strncmp(name, "AS", 2) &&
 	    strlen(name) > 2 && isdigit(name[2])) {
 		/* 
 		 * this must be an aut-num
@@ -84,7 +92,7 @@ asset_get(char *name)
 		asset_add_as(ass, name);
 		return (ass);
 
-	} else if (!strncasecmp(name, "AS-", 3)) {
+	} else if (!strncmp(name, "AS-", 3)) {
 		/* as-set */
 		curass = ass;
 		if (whois(name, QTYPE_ASSET) == -1)
@@ -172,17 +180,22 @@ asset_merge(struct as_set *ass, struct as_set *mas)
 int
 asset_addmember(char *s)
 {
-	void *p;
+	void	*p;
+	char	*as;
+	size_t	 i;
+
+	/* convert to uppercase on the fly */
+	if ((as = calloc(1, strlen(s) + 1)) == NULL)
+		err(1, "asset_addmember strdup");
+	for (i = 0; i < strlen(s); i++)
+		as[i] = toupper(s[i]);
 
 	if ((p = realloc(curass->members,
 	    (curass->n_members + 1) * sizeof(char *))) == NULL)
 		err(1, "asset_addmember strdup");
 	curass->members = p;
 	curass->n_members++;
-
-	if ((curass->members[curass->n_members - 1] =
-	    strdup(s)) == NULL)
-		err(1, "asset_addmember strdup");
+	curass->members[curass->n_members - 1] = as;
 
 	return (0);
 }
