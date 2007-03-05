@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_asset.c,v 1.2 2007/03/03 15:26:46 henning Exp $ */
+/*	$OpenBSD: irr_asset.c,v 1.3 2007/03/05 15:02:05 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -58,8 +58,6 @@ asset_get(char *name)
 {
 	struct as_set	*ass, *mas;
 	u_int		 i;
-	int		 r;
-
 
 	/*
 	 * the caching prevents the endless recursion.
@@ -89,7 +87,7 @@ asset_get(char *name)
 	} else if (!strncasecmp(name, "AS-", 3)) {
 		/* as-set */
 		curass = ass;
-		if ((r = whois(name, QTYPE_ASSET)) == -1)
+		if (whois(name, QTYPE_ASSET) == -1)
 			errx(1, "whois error, asset_get %s", name);
 		curass = NULL;
 	} else
