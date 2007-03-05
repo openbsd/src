@@ -1,7 +1,7 @@
-/*	$OpenBSD: ar5211.c,v 1.30 2007/03/05 15:13:26 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.31 2007/03/05 16:54:33 deraadt Exp $	*/
 
 /*
- * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -175,22 +175,6 @@ ar5k_ar5211_fill(struct ath_hal *hal)
 	AR5K_HAL_FUNCTION(hal, ar5211, eeprom_is_busy);
 	AR5K_HAL_FUNCTION(hal, ar5211, eeprom_read);
 	AR5K_HAL_FUNCTION(hal, ar5211, eeprom_write);
-
-	/*
-	 * Unused functions or functions not implemented
-	 */
-	AR5K_HAL_FUNCTION(hal, ar5211, get_tx_queueprops);
-	AR5K_HAL_FUNCTION(hal, ar5211, num_tx_pending);
-	AR5K_HAL_FUNCTION(hal, ar5211, phy_disable);
-	AR5K_HAL_FUNCTION(hal, ar5211, set_txpower_limit);
-	AR5K_HAL_FUNCTION(hal, ar5211, set_def_antenna);
-	AR5K_HAL_FUNCTION(hal, ar5211, get_def_antenna);
-	AR5K_HAL_FUNCTION(hal, ar5211, set_bssid_mask);
-#ifdef notyet
-	AR5K_HAL_FUNCTION(hal, ar5211, set_capability);
-	AR5K_HAL_FUNCTION(hal, ar5211, proc_mib_event);
-	AR5K_HAL_FUNCTION(hal, ar5211, get_tx_inter_queue);
-#endif
 }
 
 struct ath_hal *
@@ -404,13 +388,6 @@ ar5k_ar5211_detach(struct ath_hal *hal)
 	 * Free HAL structure, assume interrupts are down
 	 */
 	free(hal, M_DEVBUF);
-}
-
-HAL_BOOL
-ar5k_ar5211_phy_disable(struct ath_hal *hal)
-{
-	AR5K_REG_WRITE(AR5K_AR5211_PHY_ACTIVE, AR5K_AR5211_PHY_DISABLE);
-	return (AH_TRUE);
 }
 
 HAL_BOOL
@@ -667,18 +644,6 @@ ar5k_ar5211_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 }
 
 void
-ar5k_ar5211_set_def_antenna(struct ath_hal *hal, u_int ant)
-{
-	AR5K_REG_WRITE(AR5K_AR5211_DEFAULT_ANTENNA, ant);
-}
-
-u_int
-ar5k_ar5211_get_def_antenna(struct ath_hal *hal)
-{
-	return AR5K_REG_READ(AR5K_AR5211_DEFAULT_ANTENNA);
-}
-
-void
 ar5k_ar5211_set_opmode(struct ath_hal *hal)
 {
 	u_int32_t pcu_reg, low_id, high_id;
@@ -853,15 +818,6 @@ ar5k_ar5211_setup_tx_queueprops(struct ath_hal *hal, int queue,
 		hal->ah_txq[queue].tqi_flags |=
 		    AR5K_TXQ_FLAG_POST_FR_BKOFF_DIS;
 
-	return (AH_TRUE);
-}
-
-HAL_BOOL
-ar5k_ar5211_get_tx_queueprops(struct ath_hal *hal, int queue,
-    HAL_TXQ_INFO *queue_info)
-{
-	AR5K_ASSERT_ENTRY(queue, hal->ah_capabilities.cap_queues.q_tx_num);
-	bcopy(&hal->ah_txq[queue], queue_info, sizeof(HAL_TXQ_INFO));
 	return (AH_TRUE);
 }
 
@@ -1079,13 +1035,6 @@ ar5k_ar5211_put_tx_buf(struct ath_hal *hal, u_int queue, u_int32_t phys_addr)
 	AR5K_REG_WRITE(AR5K_AR5211_QCU_TXDP(queue), phys_addr);
 
 	return (AH_TRUE);
-}
-
-u_int32_t
-ar5k_ar5211_num_tx_pending(struct ath_hal *hal, u_int queue)
-{
-	AR5K_ASSERT_ENTRY(queue, hal->ah_capabilities.cap_queues.q_tx_num);
-	return (AR5K_AR5211_QCU_STS(queue) & AR5K_AR5211_QCU_STS_FRMPENDCNT);
 }
 
 HAL_BOOL
@@ -1687,13 +1636,6 @@ ar5k_ar5211_set_associd(struct ath_hal *hal, const u_int8_t *bssid,
 	    AR5K_AR5211_BEACON_TIM));
 
 	ar5k_ar5211_enable_pspoll(hal, NULL, 0);
-}
-
-HAL_BOOL
-ar5k_ar5211_set_bssid_mask(struct ath_hal *hal, const u_int8_t* mask)
-{
-	/* Not supported in 5211 */
-	return (AH_FALSE);
 }
 
 HAL_BOOL
@@ -2574,11 +2516,4 @@ ar5k_ar5211_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int freq,
 	}
 
 	hal->ah_rf_gain = HAL_RFGAIN_INACTIVE;
-}
-
-HAL_BOOL
-ar5k_ar5211_set_txpower_limit(struct ath_hal *hal, u_int power)
-{
-	/* Not implemented */
-	return (AH_FALSE);
 }
