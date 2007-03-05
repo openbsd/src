@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.64 2007/03/04 14:49:46 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.65 2007/03/05 06:06:13 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1372,11 +1372,16 @@ ahci_ata_probe(void *xsc, int port)
 {
 	struct ahci_softc		*sc = xsc;
 	struct ahci_port		*ap = sc->sc_ports[port];
+	u_int32_t			sig;
 
 	if (ap == NULL)
 		return (ATA_PORT_T_NONE);
 
-	return (ATA_PORT_T_DISK);
+	sig = ahci_pread(ap, AHCI_PREG_SIG);
+	if ((sig & 0xffff0000) == 0xeb140000)
+		return ATA_PORT_T_ATAPI;
+	else
+		return ATA_PORT_T_DISK;
 }
 
 int
