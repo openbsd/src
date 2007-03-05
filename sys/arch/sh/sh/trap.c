@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.9 2007/03/02 06:11:54 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.10 2007/03/05 21:47:30 miod Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -163,11 +163,18 @@ void
 general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 {
 	int expevt = tf->tf_expevt;
-	int tra;
+	int tra, s;
 	boolean_t usermode = !KERNELMODE(tf->tf_ssr);
 	union sigval sv;
 
 	uvmexp.traps++;
+
+	/*
+	 * This function is entered at splhigh. Restore the interrupt
+	 * level to what it was when the trap occureh.
+	 */
+	s = tf->tf_ssr & PSL_IMASK;
+	splx(s);
 
 	if (usermode) {
 		if (p == NULL)
