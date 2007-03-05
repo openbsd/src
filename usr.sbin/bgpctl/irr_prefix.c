@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_prefix.c,v 1.7 2007/03/05 13:57:59 henning Exp $ */
+/*	$OpenBSD: irr_prefix.c,v 1.8 2007/03/05 15:06:35 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -31,7 +31,7 @@
 
 void	 prefixset_aggregate(struct prefix_set *);
 int	 prefix_aggregate(struct irr_prefix *, const struct irr_prefix *);
-int	 prefix_compare(const void *, const void *);
+int	 irr_prefix_cmp(const void *, const void *);
 int	 prefix_set_compare(struct prefix_set *, struct prefix_set *);
 struct prefix_set
 	*prefix_set_find(char *);
@@ -46,7 +46,6 @@ struct prefix_set *
 prefixset_get(char *as)
 {
 	struct prefix_set	*pfxs;
-	int			 r;
 
 	if ((pfxs = prefix_set_find(as)) != NULL)
 		return (pfxs);
@@ -59,7 +58,7 @@ prefixset_get(char *as)
 	RB_INSERT(prefix_set_h, &prefix_set_h, pfxs);
 
 	curpfxs = pfxs;
-	if ((r = whois(as, QTYPE_ROUTE)) == -1)
+	if (whois(as, QTYPE_ROUTE) == -1)
 		errx(1, "whois error, prefixset_get %s", as);
 	curpfxs = NULL;
 
@@ -91,7 +90,7 @@ prefixset_addmember(char *s)
 
 	/* yes, there are dupes... e. g. from multiple sources */
 	for (i = 0; i < curpfxs->prefixcnt; i++)
-		if (prefix_compare(&curpfxs->prefix[i], &pfx) == 0) {
+		if (irr_prefix_cmp(&curpfxs->prefix[i], &pfx) == 0) {
 			free(pfx);
 			return (0);
 		}
@@ -114,7 +113,7 @@ prefixset_aggregate(struct prefix_set *pfxs)
 	struct irr_prefix	*cur, *last;
 	void			*p;
 
-	qsort(pfxs->prefix, pfxs->prefixcnt, sizeof(void *), prefix_compare);
+	qsort(pfxs->prefix, pfxs->prefixcnt, sizeof(void *), irr_prefix_cmp);
 
 	last = cur = NULL;
 	for (i = 0, newcnt = 0; i < pfxs->prefixcnt; i++) {
@@ -180,7 +179,7 @@ prefix_aggregate(struct irr_prefix *a, const struct irr_prefix *b)
 }
 
 int
-prefix_compare(const void *a, const void *b)
+irr_prefix_cmp(const void *a, const void *b)
 {
 	const struct irr_prefix	*pa;
 	const struct irr_prefix	*pb;
@@ -200,7 +199,7 @@ prefix_compare(const void *a, const void *b)
 		    ntohl(pb->addr.in.s_addr))
 			return (1);
 	} else
-		errx(1, "prefix_compare unknown af %u", pa->af);
+		errx(1, "irr_prefix_cmp unknown af %u", pa->af);
 
 	if ((r = pa->len - pb->len) != 0)
 		return (r);
