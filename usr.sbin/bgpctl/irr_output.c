@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.10 2007/03/05 10:10:40 henning Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.11 2007/03/05 11:07:47 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -202,7 +202,7 @@ print_rule(FILE *fh, struct policy_item *pi, char *sourceas,
 	char	*action = "";
 	char	*dir;
 	char	*srcas[2] = { "", "" };
-	char	 pbuf[8 + NI_MAXHOST + 4];
+	char	 pbuf[8 + NI_MAXHOST + 4 + 14 + 3];
 	size_t	 offset;
 
 	if (pi->dir == IMPORT)
@@ -227,6 +227,13 @@ print_rule(FILE *fh, struct policy_item *pi, char *sourceas,
 		if (snprintf(pbuf + offset, sizeof(pbuf) - offset,
 		    "/%u", prefix->len) == -1)
 			err(1, "print_rule snprintf");
+
+		if (prefix->maxlen > prefix->len) {
+			offset = strlen(pbuf);
+			if (snprintf(pbuf + offset, sizeof(pbuf) - offset,
+			    " prefixlen <= %u", prefix->maxlen) == -1)
+				err(1, "print_rule snprintf");
+		}
 
 		if (pi->dir == IMPORT) {
 			srcas[0] = " source-as ";
