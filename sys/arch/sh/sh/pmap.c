@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.4 2007/03/05 21:39:22 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.5 2007/03/05 21:47:55 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -964,9 +964,11 @@ __pmap_pte_lookup(pmap_t pmap, vaddr_t va)
 pt_entry_t *
 __pmap_kpte_lookup(vaddr_t va)
 {
-	return (__pmap_kernel.pm_ptp
-	    [__PMAP_PTP_INDEX(va - VM_MIN_KERNEL_ADDRESS)] +
-	    __PMAP_PTP_OFSET(va));
+	pt_entry_t *ptp;
+
+	ptp =
+	    __pmap_kernel.pm_ptp[__PMAP_PTP_INDEX(va - VM_MIN_KERNEL_ADDRESS)];
+	return (ptp ? ptp + __PMAP_PTP_OFSET(va) : NULL);
 }
 
 /*
