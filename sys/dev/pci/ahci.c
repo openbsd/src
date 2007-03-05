@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.65 2007/03/05 06:06:13 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.66 2007/03/05 09:12:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -293,13 +293,6 @@ struct ahci_cmd_table {
 
 #define AHCI_MAX_PORTS		32
 
-static const struct pci_matchid ahci_devices[] = {
-	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB361 }
-};
-
-int			ahci_match(struct device *, void *, void *);
-void			ahci_attach(struct device *, struct device *, void *);
-
 struct ahci_dmamem {
 	bus_dmamap_t		adm_map;
 	bus_dma_segment_t	adm_seg;
@@ -365,6 +358,26 @@ struct ahci_softc {
 	struct atascsi		*sc_atascsi;
 };
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
+
+struct ahci_device {
+	pci_vendor_id_t		ad_vendor;
+	pci_product_id_t	ad_product;
+	int			(*ad_match)(struct pci_attach_args *);
+	int			(*ad_attach)(struct pci_attach_args *);
+};
+
+const struct ahci_device *ahci_lookup_device(struct pci_attach_args *);
+
+int			ahci_jmicron_match(struct pci_attach_args *);
+int			ahci_jmicron_attach(struct pci_attach_args *);
+
+static const struct ahci_device ahci_devices[] = {
+	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB361,
+	    ahci_jmicron_match, ahci_jmicron_attach }
+};
+
+int			ahci_match(struct device *, void *, void *);
+void			ahci_attach(struct device *, struct device *, void *);
 
 struct cfattach ahci_ca = {
 	sizeof(struct ahci_softc), ahci_match, ahci_attach
@@ -433,11 +446,46 @@ struct atascsi_methods ahci_atascsi_methods = {
 	ahci_ata_cmd
 };
 
+const struct ahci_device *
+ahci_lookup_device(struct pci_attach_args *pa)
+{
+	int				i;
+	const struct ahci_device	*ad;
+
+	for (i = 0; i < (sizeof(ahci_devices) / sizeof(ahci_devices[0])); i++) {
+		ad = &ahci_devices[i];
+		if (ad->ad_vendor == PCI_VENDOR(pa->pa_id) &&
+		    ad->ad_product == PCI_PRODUCT(pa->pa_id))
+			return (ad);
+	}
+
+	return (NULL);
+}
+
 int
 ahci_match(struct device *parent, void *match, void *aux)
 {
-	return (pci_matchbyid((struct pci_attach_args *)aux, ahci_devices,
-	    sizeof(ahci_devices) / sizeof(ahci_devices[0])));
+	struct pci_attach_args		*pa = aux;
+	const struct ahci_device	*ad;
+
+	ad = ahci_lookup_device(pa);
+	if (ad == NULL)
+		return (0);
+
+	/* the device may need special checks to see if it matches */
+	if (ad->ad_match != NULL)
+		return (ad->ad_match(pa));
+
+	return (2); /* match higher than pciide */
+}
+
+int
+ahci_jmicron_match(struct pci_attach_args *pa)
+{
+	if (pa->pa_function != 0)
+		return (0);
+
+	return (1);
 }
 
 void
@@ -445,21 +493,17 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ahci_softc		*sc = (struct ahci_softc *)self;
 	struct pci_attach_args		*pa = aux;
+	const struct ahci_device	*ad;
 	struct atascsi_attach_args	aaa;
 	u_int32_t			reg;
 	int				i;
 
-	/* Switch JMICRON ports to AHCI mode */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_JMICRON) {
-		u_int32_t ccr;
+	ad = ahci_lookup_device(pa);
+	if (ad == NULL)
+		panic("ahci attach cant find a device it matched on");
 
-		ccr = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40);
-		ccr &= ~0x0000ff00;
-		ccr |=  0x0000a100;
-		pci_conf_write(pa->pa_pc, pa->pa_tag, 0x40, ccr);
-
-		/* Only function 0 is SATA */
-		if (pa->pa_function != 0)
+	if (ad->ad_attach != NULL) {
+		if (ad->ad_attach(pa) != 0)
 			return;
 	}
 
@@ -536,6 +580,20 @@ freeports:
 			ahci_port_free(sc, i);
 unmap:
 	ahci_unmap_regs(sc, pa);
+}
+
+int
+ahci_jmicron_attach(struct pci_attach_args *pa)
+{
+	u_int32_t			ccr;
+
+	/* Switch JMICRON ports to AHCI mode */
+	ccr = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40);
+	ccr &= ~0x0000ff00;
+	ccr |=  0x0000a100;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, 0x40, ccr);
+
+	return (0);
 }
 
 int
