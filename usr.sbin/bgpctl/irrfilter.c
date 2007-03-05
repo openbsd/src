@@ -1,4 +1,4 @@
-/*	$OpenBSD: irrfilter.c,v 1.1 2007/03/03 11:45:30 henning Exp $ */
+/*	$OpenBSD: irrfilter.c,v 1.2 2007/03/05 16:43:24 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -41,12 +41,12 @@ irr_main(u_int32_t AS, int flags, char *outdir)
 	if (asprintf(&query, "AS%u", AS) == -1)
 		err(1, "parse_policy asprintf");
 	if ((r = whois(query, QTYPE_OWNAS)) == -1)
-		exit (1);
+		exit(1);
 	if (r == 0)
 		errx(1, "aut-num object %s not found", query);
 	free(query);
 
 	write_filters(outdir);
 
-	exit (0);
+	exit(0);
 }

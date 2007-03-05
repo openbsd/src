@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_prefix.c,v 1.10 2007/03/05 16:40:10 henning Exp $ */
+/*	$OpenBSD: irr_prefix.c,v 1.11 2007/03/05 16:43:24 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -132,7 +132,7 @@ prefixset_aggregate(struct prefix_set *pfxs)
 					free(pfxs->prefix[i]);
 					pfxs->prefix[i] = cur = NULL;
 				}
-			}	
+			}
 
 			if (cur != NULL) {
 				pfxs->prefix[newcnt++] = cur;

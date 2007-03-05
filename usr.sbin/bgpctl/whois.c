@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.2 2007/03/05 12:42:13 henning Exp $ */
+/*	$OpenBSD: whois.c,v 1.3 2007/03/05 16:43:24 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -101,8 +101,9 @@ whois(const char *query, enum qtype qtype)
 		do {
 			attempt++;
 			if (s != -1)
-				close (s);
-			s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+				close(s);
+			s = socket(ai->ai_family, ai->ai_socktype,
+			    ai->ai_protocol);
 			if (s == -1) {
 				error = errno;
 				reason = "socket";
