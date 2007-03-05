@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.66 2007/03/05 09:12:39 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.67 2007/03/05 09:13:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -503,8 +503,10 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 		panic("ahci attach cant find a device it matched on");
 
 	if (ad->ad_attach != NULL) {
-		if (ad->ad_attach(pa) != 0)
+		if (ad->ad_attach(pa) != 0) {
+			/* error should be printed by ad_attach */
 			return;
+		}
 	}
 
 	if (ahci_map_regs(sc, pa) != 0) {
