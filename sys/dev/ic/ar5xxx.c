@@ -1,7 +1,7 @@
-/*	$OpenBSD: ar5xxx.c,v 1.36 2006/11/06 08:48:49 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.37 2007/03/05 15:13:26 reyk Exp $	*/
 
 /*
- * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

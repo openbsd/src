@@ -1,7 +1,7 @@
-/*	$OpenBSD: ar5xxx.h,v 1.35 2006/09/19 17:49:13 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.36 2007/03/05 15:13:26 reyk Exp $	*/
 
 /*
- * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1026,11 +1026,6 @@ struct ath_desc {
 	_t HAL_BOOL (_a _n##_is_cipher_supported)(struct ath_hal*, \
 	    HAL_CIPHER); \
 	_t HAL_RFGAIN (_a _n##_get_rf_gain)(struct ath_hal*); \
-	/*								\
-	    u_int32_t (_a _n##_getCurRssi)(struct ath_hal*);		\
-	    u_int32_t (_a _n##_getDefAntenna)(struct ath_hal*);	\
-	    void (_a _n##_setDefAntenna)(struct ath_hal*, u_int32_t ant); \
-	*/								\
 	_t HAL_BOOL (_a _n##_set_slot_time)(struct ath_hal*, u_int);	\
 	_t u_int (_a _n##_get_slot_time)(struct ath_hal*);		\
 	_t HAL_BOOL (_a _n##_set_ack_timeout)(struct ath_hal *, u_int); \
@@ -1079,7 +1074,17 @@ struct ath_desc {
 	_t int (_a _n##_eeprom_read)(struct ath_hal *, u_int32_t offset, \
 	    u_int16_t *data); \
 	_t int (_a _n##_eeprom_write)(struct ath_hal *, u_int32_t offset, \
-	    u_int16_t data);
+	    u_int16_t data); \
+	/* Unused functions */ \
+	_t HAL_BOOL (_a _n##_get_tx_queueprops)(struct ath_hal *, int, \
+	    HAL_TXQ_INFO *); \
+	_t u_int32_t  (_a _n##_num_tx_pending)(struct ath_hal *, u_int); \
+	_t HAL_BOOL (_a _n##_phy_disable)(struct ath_hal *); \
+	_t HAL_BOOL (_a _n##_set_txpower_limit)(struct ath_hal *, u_int); \
+	_t void (_a _n##_set_def_antenna)(struct ath_hal *, u_int); \
+	_t u_int  (_a _n ##_get_def_antenna)(struct ath_hal *); \
+	_t HAL_BOOL (_a _n##_set_bssid_mask)(struct ath_hal *, \
+	    const u_int8_t*);
 
 #define AR5K_MAX_GPIO		10
 #define AR5K_MAX_RF_BANKS	8
