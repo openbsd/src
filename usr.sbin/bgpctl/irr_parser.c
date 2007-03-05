@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_parser.c,v 1.6 2007/03/05 17:28:59 henning Exp $ */
+/*	$OpenBSD: irr_parser.c,v 1.8 2007/03/05 22:34:08 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -263,7 +263,7 @@ parse_policy(char *key, char *val)
 			while (ISWS(*p))
 				p++;
 		}
-			
+
 		switch (st) {
 		case PO_NONE:
 			if (nextst != PO_PEER_KEY)
@@ -292,10 +292,12 @@ parse_policy(char *key, char *val)
 					if (!strcasecmp(tok, "and") ||
 					    !strcasecmp(tok, "or") ||
 					    !strcasecmp(tok, "not"))
-						fprintf(stderr, "compound peering "
-						    "statements are not supported");
+						fprintf(stderr, "compound "
+						    "peering statements are "
+						    "not supported");
 					 else	/* peer address */
-						if ((pi->peer_addr = strdup(tok)) == NULL)
+						if ((pi->peer_addr =
+						    strdup(tok)) == NULL)
 							err(1, NULL);
 					break;
 				case PO_RTR_KEY:
@@ -408,5 +410,9 @@ parse_route(char *key, char *val)
 	if (strcmp(key, "route"))	/* ignore everything else */
 		return (0);
 
-	return(prefixset_addmember(val));
+	/* route is single-value, but seen trailing , in the wild */
+	if (strlen(val) > 0 && val[strlen(val) - 1] == ',')
+		val[strlen(val) - 1] = '\0';
+
+	return (prefixset_addmember(val));
 }
