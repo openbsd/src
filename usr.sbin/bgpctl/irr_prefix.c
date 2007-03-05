@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_prefix.c,v 1.4 2007/03/04 20:36:39 deraadt Exp $ */
+/*	$OpenBSD: irr_prefix.c,v 1.5 2007/03/05 12:57:56 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -29,6 +29,8 @@
 
 #include "irrfilter.h"
 
+void	 prefixset_aggregate(struct prefix_set *);
+int	 prefix_aggregate(struct irr_prefix *, const struct irr_prefix *);
 int	 prefix_compare(const void *, const void *);
 int	 prefix_set_compare(struct prefix_set *, struct prefix_set *);
 struct prefix_set
@@ -61,6 +63,8 @@ prefixset_get(char *as)
 		errx(1, "whois error, prefixset_get %s", as);
 	curpfxs = NULL;
 
+	prefixset_aggregate(pfxs);
+
 	return (pfxs);
 }
 
@@ -87,7 +91,7 @@ prefixset_addmember(char *s)
 
 	/* yes, there are dupes... e. g. from multiple sources */
 	for (i = 0; i < curpfxs->prefixcnt; i++)
-		if (prefix_compare(curpfxs->prefix[i], pfx) == 0) {
+		if (prefix_compare(&curpfxs->prefix[i], &pfx) == 0) {
 			free(pfx);
 			return (0);
 		}
@@ -102,19 +106,88 @@ prefixset_addmember(char *s)
 	return (1);
 }
 
+void
+prefixset_aggregate(struct prefix_set *pfxs)
+{
+	u_int			 i, newcnt;
+	int			 res;
+	struct irr_prefix	*cur, *last;
+	void			*p;
+
+	qsort(pfxs->prefix, pfxs->prefixcnt, sizeof(void *), prefix_compare);
+
+	last = cur = NULL;
+	for (i = 0, newcnt = 0; i < pfxs->prefixcnt; i++) {
+		cur = pfxs->prefix[i];
+		if (last != NULL && last->af == cur->af) {
+			if (cur->af == AF_INET)
+				res = prefix_aggregate(last, cur);
+			else
+				res = 0;
+
+			if (res == 1) {	/* cur is covered by last */
+				if (cur->len > last->maxlen)
+					last->maxlen = cur->len;
+				free(pfxs->prefix[i]);
+				pfxs->prefix[i] = cur = NULL;
+			}
+		}
+
+		if (cur != NULL) {
+			pfxs->prefix[newcnt++] = cur;
+			last = cur;
+		}
+	}
+
+	if (newcnt == pfxs->prefixcnt)
+		return;
+
+	if (0)
+		printf("%s: prefix aggregation: %u -> %u\n",
+		    pfxs->as, pfxs->prefixcnt, newcnt);
+
+	if ((p = realloc(pfxs->prefix, newcnt * sizeof(void *))) == NULL)
+		err(1, "prefixset_aggregate realloc");
+	pfxs->prefix = p;
+	pfxs->prefixcnt = newcnt;
+}
+
+int
+prefix_aggregate(struct irr_prefix *a, const struct irr_prefix *b)
+{
+	in_addr_t	mask;
+
+	if (a->len == 0)
+		return (1);
+
+	mask = 0xffffffff << (32 - a->len);
+
+	if ((ntohl(a->addr.in.s_addr) & mask) == (ntohl(b->addr.in.s_addr) & mask))
+		return (1);
+
+	return (0);
+}
+
 int
 prefix_compare(const void *a, const void *b)
 {
-	const struct irr_prefix	*pa = a;
-	const struct irr_prefix	*pb = b;
+	const struct irr_prefix	*pa;
+	const struct irr_prefix	*pb;
 	int			 r;
+
+	pa = *((const struct irr_prefix	* const *)a);
+	pb = *((const struct irr_prefix	* const *)b);
 
 	if ((r = pa->af - pb->af) != 0)
 		return (r);
+
 	if (pa->af == AF_INET) {
-		if ((r = ntohl(pa->addr.in.s_addr) -
-		    ntohl(pb->addr.in.s_addr)) != 0)
-			return (r);
+		if (ntohl(pa->addr.in.s_addr) <
+		    ntohl(pb->addr.in.s_addr))
+			return (-1);
+		if (ntohl(pa->addr.in.s_addr) >
+		    ntohl(pb->addr.in.s_addr))
+			return (1);
 	} else
 		errx(1, "prefix_compare unknown af %u", pa->af);
 
