@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.93 2007/03/04 03:19:41 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.94 2007/03/05 02:06:14 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -127,7 +127,7 @@ size_t cbs, cbu;
 
 time_t t;
 
-#define MAXCON 1800
+#define MAXCON 800
 int maxcon = MAXCON;
 int maxblack = MAXCON;
 int blackcount;
