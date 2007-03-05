@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_asset.c,v 1.4 2007/03/05 19:30:46 henning Exp $ */
+/*	$OpenBSD: irr_asset.c,v 1.5 2007/03/05 21:08:22 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -34,9 +34,16 @@ RB_HEAD(as_set_h, as_set)	as_set_h;
 RB_PROTOTYPE(as_set_h, as_set, entry, as_set_compare)
 RB_GENERATE(as_set_h, as_set, entry, as_set_compare)
 
+enum obj_type {
+	T_UNKNOWN,
+	T_ASSET,
+	T_AUTNUM
+};
+
 struct as_set	*curass;
 
 struct as_set	*asset_get(char *);
+enum obj_type	 asset_membertype(char *);
 void		 asset_resolve(struct as_set *);
 int		 asset_merge(struct as_set *, struct as_set *);
 int		 asset_add_as(struct as_set *, char *);
@@ -82,24 +89,26 @@ asset_get(char *name)
 		err(1, "expand_as_set strdup");
 	RB_INSERT(as_set_h, &as_set_h, ass);
 
-	if (!strncmp(name, "AS", 2) &&
-	    strlen(name) > 2 && isdigit(name[2])) {
-		/* 
-		 * this must be an aut-num
-		 * make a dummy as-set with the the AS both as name
-		 * and its only member
-		 */
-		asset_add_as(ass, name);
-		return (ass);
-
-	} else if (!strncmp(name, "AS-", 3)) {
+	switch (asset_membertype(name)) {
+	case T_ASSET:
 		/* as-set */
 		curass = ass;
 		if (whois(name, QTYPE_ASSET) == -1)
 			errx(1, "whois error, asset_get %s", name);
 		curass = NULL;
-	} else
+		break;
+	case T_AUTNUM:
+		/*
+		 * make a dummy as-set with the the AS both as name
+		 * and its only member
+		 */
+		asset_add_as(ass, name);
+		return (ass);
+	default:
 		fprintf(stderr, "asset_get: %s: unknown object type\n", name);
+		break;
+	}
+
 
 	for (i = 0; i < ass->n_members; i++) {
 		mas = asset_get(ass->members[i]);
@@ -111,6 +120,30 @@ asset_get(char *name)
 	}
 
 	return (ass);
+}
+
+enum obj_type
+asset_membertype(char *name)
+{
+	char	*s;
+
+	if (!strncmp(name, "AS-", 3))
+		return (T_ASSET);
+
+	if ((s = strchr(name, ':')) != NULL) {
+		/* this must be an as-set. one component has to start w/ AS- */
+		for (s = name; s != NULL; s = strchr(s, ':'))
+			if (!strncmp(++s, "AS-", 3))
+				return (T_ASSET);
+		return (T_UNKNOWN);
+	}
+
+	/* neither plain nor hierachical set definition, might be aut-num */
+	if (!strncmp(name, "AS", 2) && strlen(name) > 2 && isdigit(name[2]))
+		return (T_AUTNUM);
+
+	return (T_UNKNOWN);
+	
 }
 
 void
