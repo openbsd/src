@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.18 2007/03/05 14:53:42 beck Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.19 2007/03/05 14:55:09 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -271,10 +271,8 @@ dbupdate(char *dbname, char *ip)
 	}
 	db->close(db);
 	db = NULL;
-	if (syncsend) {
-		syslog_r(LOG_DEBUG, &sdata, "sync_white %s,", ip);
+	if (syncsend)
 		sync_white(now, now + WHITEEXP, ip);
-	}
 	return (0);
  bad:
 	db->close(db);
