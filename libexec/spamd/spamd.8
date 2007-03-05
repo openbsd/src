@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.88 2007/03/05 16:59:54 reyk Exp $
+.\"	$OpenBSD: spamd.8,v 1.89 2007/03/05 21:25:29 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -42,7 +42,6 @@
 .Op Fl l Ar address
 .Op Fl n Ar name
 .Op Fl p Ar port
-.Op Fl r Ar reply
 .Op Fl S Ar secs
 .Op Fl s Ar secs
 .Op Fl w Ar window
@@ -160,10 +159,6 @@ The default port is found by looking for the named service
 .Dq spamd
 using
 .Xr getservbyname 3 .
-.It Fl r Ar reply
-For blacklisted entries, the SMTP error to return to the spammer,
-e.g. 450, 451, 550.
-This defaults to 450.
 .It Fl S Ar secs
 Stutter at greylisted connections for the specified amount
 of seconds, after which the connection is not stuttered at.

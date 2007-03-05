@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.94 2007/03/05 02:06:14 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.95 2007/03/05 21:25:29 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -102,7 +102,6 @@ void     handlew(struct con *, int one);
 
 char hostname[MAXHOSTNAMELEN];
 struct syslog_data sdata = SYSLOG_DATA_INIT;
-char *reply = NULL;
 char *nreply = "450";
 char *spamd = "spamd IP-based SPAM blocker";
 int greypipe[2];
@@ -151,8 +150,8 @@ usage(void)
 	    "usage: %s [-45bdv] [-B maxblack] [-c maxcon] "
 	    "[-G passtime:greyexp:whiteexp]\n"
 	    "\t[-h hostname] [-l address] [-n name] [-p port] "
-	    "[-r reply] [-S secs]\n"
-	    "\t[-s secs] [-w window] [-Y synctarget] [-y synclisten]\n",
+	    "[-S secs] [-s secs]\n"
+	    "\t[-w window] [-Y synctarget] [-y synclisten]\n",
 	    __progname);
 
 	exit(1);
@@ -531,8 +530,6 @@ bad:
 void
 doreply(struct con *cp)
 {
-	if (reply)
-		snprintf(cp->obuf, cp->osize, "%s %s\n", nreply, reply);
 	build_reply(cp);
 }
 
@@ -1044,9 +1041,6 @@ main(int argc, char *argv[])
 			if (strlcpy(hostname, optarg, sizeof(hostname)) >=
 			    sizeof(hostname))
 				errx(1, "-h arg too long");
-			break;
-		case 'r':
-			reply = optarg;
 			break;
 		case 's':
 			i = atoi(optarg);
