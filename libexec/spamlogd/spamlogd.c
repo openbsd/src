@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.17 2007/03/04 03:25:54 deraadt Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.18 2007/03/05 14:53:42 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -187,7 +187,10 @@ logpkt_handler(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 	}
 
 	if (ipstraddr[0] != '\0') {
-		logmsg(LOG_DEBUG,"add %s to db", ipstraddr);
+		if (hdr->dir == PF_IN)
+			logmsg(LOG_DEBUG,"inbound %s", ipstraddr);
+		else 
+			logmsg(LOG_DEBUG,"outbound %s", ipstraddr);
 		dbupdate(PATH_SPAMD_DB, ipstraddr);
 	}
 }
