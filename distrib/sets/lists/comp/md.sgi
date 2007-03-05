@@ -1,3 +1,4 @@
+./usr/bin/addr2line
 ./usr/bin/objcopy
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h

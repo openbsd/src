@@ -46,7 +46,6 @@
 ./sbin/iopctl
 ./sbin/kbd
 ./sbin/wsconsctl
-./usr/bin/addr2line
 ./usr/bin/gccbug
 ./usr/bin/readelf
 ./usr/lib/apache/modules/libproxy.so

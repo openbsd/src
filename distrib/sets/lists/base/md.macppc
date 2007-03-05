@@ -48,7 +48,6 @@
 ./sbin/kbd
 ./sbin/pdisk
 ./sbin/wsconsctl
-./usr/bin/addr2line
 ./usr/bin/gccbug
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so
