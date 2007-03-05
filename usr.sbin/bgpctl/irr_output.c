@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.9 2007/03/04 20:31:22 henning Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.10 2007/03/05 10:10:40 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -216,6 +216,7 @@ print_rule(FILE *fh, struct policy_item *pi, char *sourceas,
 	if (pi->action)
 		action = action_torule(pi->action);
 
+	pbuf[0] = '\0';
 	if (prefix != NULL) {
 		strlcpy(pbuf, " prefix ", sizeof(pbuf));
 		offset = strlen(pbuf);
