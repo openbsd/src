@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.32 2007/03/05 02:10:46 deraadt Exp $	*/
+/*	$OpenBSD: grey.c,v 1.33 2007/03/05 15:09:01 beck Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -890,6 +890,7 @@ greyreader(void)
 				    "Got Grey HELO %s, IP %s from %s to %s\n",
 				    helo, ip, from, to);
 			greyupdate(PATH_SPAMD_DB, helo, ip, from, to, sync);
+			sync = 1;
 			state = 0;
 			break;
 		}
