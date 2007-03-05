@@ -1,4 +1,4 @@
-/*	$OpenBSD: upa.c,v 1.4 2003/06/02 20:02:49 jason Exp $	*/
+/*	$OpenBSD: upa.c,v 1.5 2007/03/05 18:58:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -83,8 +83,10 @@ struct cfdriver upa_cd = {
 
 int upa_print(void *, const char *);
 bus_space_tag_t upa_alloc_bus_tag(struct upa_softc *);
-int __upa_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
+int upa_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
     bus_size_t, int, bus_space_handle_t *);
+paddr_t upa_bus_mmap(bus_space_tag_t, bus_space_tag_t,
+    bus_addr_t, off_t, int, int);
 
 int
 upa_match(struct device *parent, void *match, void *aux)
@@ -172,14 +174,14 @@ upa_alloc_bus_tag(struct upa_softc *sc)
 	bt->parent = sc->sc_bt;
 	bt->asi = bt->parent->asi;
 	bt->sasi = bt->parent->sasi;
-	bt->sparc_bus_map = __upa_bus_map;
-	/* XXX bt->sparc_bus_mmap = upa_bus_mmap; */
+	bt->sparc_bus_map = upa_bus_map;
+	bt->sparc_bus_mmap = upa_bus_mmap;
 	/* XXX bt->sparc_intr_establish = upa_intr_establish; */
 	return (bt);
 }
 
 int
-__upa_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
+upa_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
     bus_size_t size, int flags, bus_space_handle_t *hp)
 {
 	struct upa_softc *sc = t->cookie;
@@ -211,7 +213,39 @@ __upa_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 	offset -= sc->sc_range[i].ur_space;
 	offset += sc->sc_range[i].ur_addr;
 
-
 	return ((*t->sparc_bus_map)(t, t0, offset, size, flags, hp));
 }
 
+paddr_t
+upa_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
+    off_t off, int prot, int flags)
+{
+	struct upa_softc *sc = t->cookie;
+	int i;
+
+	if (t->parent == 0 || t->parent->sparc_bus_map == 0) {
+		printf("\n__upa_bus_map: invalid parent");
+		return (EINVAL);
+	}
+
+	t = t->parent;
+
+        if (flags & BUS_SPACE_MAP_PROMADDRESS)
+		return ((*t->sparc_bus_mmap)(t, t0, paddr, off, prot, flags));
+
+	for (i = 0; i < sc->sc_nrange; i++) {
+		if (paddr + off < sc->sc_range[i].ur_space)
+			continue;
+		if (paddr + off >= (sc->sc_range[i].ur_space +
+		    sc->sc_range[i].ur_space))
+			continue;
+		break;
+	}
+	if (i == sc->sc_nrange)
+		return (EINVAL);
+
+	paddr -= sc->sc_range[i].ur_space;
+	paddr += sc->sc_range[i].ur_addr;
+
+	return ((*t->sparc_bus_mmap)(t, t0, paddr, off, prot, flags));
+}
