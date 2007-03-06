@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.16 2007/03/05 11:44:50 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.17 2007/03/06 19:26:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1020,7 +1020,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	struct protocol		*proto = rlay->proto;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	struct protonode	*pn, pk, *pnv, pkv;
-	char			*line, buf[READ_BUF_SIZE], *ptr, *url, *method;
+	char			*line, buf[READ_BUF_SIZE], *ptr, *val, *method;
 	int			 header = 0, ret;
 	const char		*errstr;
 	size_t			 size;
@@ -1125,15 +1125,19 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		if ((pn = RB_FIND(proto_tree, cre->tree, &pk)) == NULL)
 			goto next;
 
-		/* Decode the URL */
-		if (pn->flags & PNFLAG_LOOKUP_URL &&
-		    cre->dir == RELAY_DIR_REQUEST) {
-			url = strdup(pk.value);
-			if (url == NULL)
+		if (cre->dir == RELAY_DIR_RESPONSE)
+			goto handle;
+
+		if (pn->flags & PNFLAG_LOOKUP_URL) {
+			/*
+			 * Decode the URL
+			 */
+			val = strdup(pk.value);
+			if (val == NULL)
 				goto next;
-			if ((ptr = strchr(url, '?')) == NULL ||
+			if ((ptr = strchr(val, '?')) == NULL ||
 			    strlen(ptr) < 2) {
-				free(url);
+				free(val);
 				goto next;
 			}
 			*ptr++ = '\0';
@@ -1150,6 +1154,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				    strlen(pkv.value) < 1)
 					continue;
 				*pkv.value++ = '\0';
+
 				if ((pnv = RB_FIND(proto_tree,
 				    cre->tree, &pkv)) == NULL)
 					continue;
@@ -1157,14 +1162,60 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				if (ret == PN_PASS)
 					continue;
 				else if (ret == PN_FAIL) {
-					free(url);
+					free(val);
 					free(line);
 					return;
 				}
 			}
-			free(url);
+			free(val);
+		} else if (pn->flags & PNFLAG_LOOKUP_COOKIE) {
+			/*
+			 * Decode the HTTP cookies
+			 */
+			val = strdup(pk.value);
+			if (val == NULL)
+				goto next;
+
+			for (ptr = val; ptr != NULL && strlen(ptr);) {
+				if (*ptr == ' ')
+					*ptr++ = '\0';
+				pkv.key = ptr;
+				pkv.type = NODE_TYPE_COOKIE;
+				if ((ptr = strchr(ptr, ';')) != NULL)
+					*ptr++ = '\0';
+				/*
+				 * XXX We do not handle attributes
+				 * ($Path, $Domain, or $Port)
+				 */
+				if (*pkv.key == '$')
+					continue;
+
+				if ((pkv.value =
+				    strchr(pkv.key, '=')) == NULL ||
+				    strlen(pkv.value) < 1)
+					continue;
+				*pkv.value++ = '\0';
+				if (*pkv.value == '"')
+					*pkv.value++ = '\0';
+				if (pkv.value[strlen(pkv.value) - 1] == '"')
+					pkv.value[strlen(pkv.value) - 1] = '\0';
+
+				if ((pnv = RB_FIND(proto_tree,
+				    cre->tree, &pkv)) == NULL)
+					continue;
+				ret = relay_handle_http(cre, pnv, &pkv, 0);
+				if (ret == PN_PASS)
+					continue;
+				else if (ret == PN_FAIL) {
+					free(val);
+					free(line);
+					return;
+				}
+			}
+			free(val);
 		}
 
+ handle:
 		ret = relay_handle_http(cre, pn, &pk, header);
 		if (ret == PN_PASS)
 			goto next;
@@ -1173,7 +1224,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			return;
 		continue;
 
-next:
+ next:
 		if (relay_bufferevent_print(cre->dst, pk.key) == -1 ||
 		    relay_bufferevent_print(cre->dst,
 		    header ? ": " : " ") == -1 ||

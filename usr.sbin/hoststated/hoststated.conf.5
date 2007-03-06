@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.36 2007/02/27 18:04:51 jmc Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.37 2007/03/06 19:26:46 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -451,6 +451,12 @@ Look up the entity as a GET variable in the URL when using the
 protocol.
 This type is only available with the direction
 .Ic request .
+.It Ic cookie
+Look up the entity as a value in the Cookie header when using the
+.Ic http
+protocol.
+This type is only available with the direction
+.Ic request .
 .El
 .Pp
 The following actions are available:
@@ -667,6 +673,7 @@ protocol http_ssl {
 	header append "$SERVER_ADDR:$SERVER_PORT" to "X-Forwarded-By"
 	header change "Keep-Alive" to "$TIMEOUT"
 	url hash "sessid"
+	cookie hash "sessid"
 
 	ssl { sslv2, ciphers "MEDIUM:HIGH" }
 }

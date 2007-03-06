@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.33 2007/02/27 13:38:58 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.34 2007/03/06 19:26:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -107,7 +107,7 @@ typedef struct {
 %token  CHECK TCP ICMP EXTERNAL REQUEST RESPONSE
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
 %token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG
-%token	SEND EXPECT NOTHING SSL LOADBALANCE ROUNDROBIN CIPHERS
+%token	SEND EXPECT NOTHING SSL LOADBALANCE ROUNDROBIN CIPHERS COOKIE
 %token	RELAY LISTEN ON FORWARD TO NAT LOOKUP PREFORK NO MARK MARKED
 %token	PROTO SESSION CACHE APPEND CHANGE REMOVE FROM FILTER HASH HEADER
 %token	LOG UPDATES ALL DEMOTE NODELAY SACK SOCKET BUFFER URL RETRY
@@ -606,15 +606,18 @@ protoptsl	: SSL sslflags
 			}
 			RB_INSERT(proto_tree, tree, pn);
 
-			if (node.type != NODE_TYPE_HEADER) {
+			if (node.type == NODE_TYPE_COOKIE)	
+				pk.key = "Cookie";
+			else
 				pk.key = "GET";
+			if (node.type != NODE_TYPE_HEADER) {
 				pk.type = NODE_TYPE_HEADER;
 				pn = RB_FIND(proto_tree, tree, &pk);
 				if (pn == NULL) {
 					if ((pn = (struct protonode *)
 					    calloc(1, sizeof(*pn))) == NULL)
 						fatal("out of memory");
-					pn->key = strdup("GET");
+					pn->key = strdup(pk.key);
 					if (pn->key == NULL)
 						fatal("out of memory");
 					pn->value = NULL;
@@ -783,6 +786,7 @@ marked		: /* empty */
 
 nodetype	: HEADER			{ node.type = NODE_TYPE_HEADER; }
 		| URL				{ node.type = NODE_TYPE_URL; }
+		| COOKIE			{ node.type = NODE_TYPE_COOKIE; }
 		;
 
 sslcache	: number			{ $$ = $1; }
@@ -1065,6 +1069,7 @@ lookup(char *s)
 		{ "check",		CHECK },
 		{ "ciphers",		CIPHERS },
 		{ "code",		CODE },
+		{ "cookie",		COOKIE },
 		{ "demote",		DEMOTE },
 		{ "digest",		DIGEST },
 		{ "disable",		DISABLE },
