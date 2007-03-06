@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.13 2006/10/17 22:08:31 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.14 2007/03/06 23:35:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -147,10 +147,10 @@ sub compile_stemlist
 	bless $hash, "OpenBSD::PackageLocator::_compiled_stemlist";
 }
 
-sub available_stems
+sub avail2stems
 {
 	my $state = shift;
-	my @avail = OpenBSD::PackageLocator::available();
+	my @avail = @_;
 	if (@avail == 0) {
 		require OpenBSD::Error;
 
@@ -160,6 +160,12 @@ sub available_stems
 	    @avail = OpenBSD::PackageName::keep_most_recent(@avail);
 	}
 	return OpenBSD::PackageName::compile_stemlist(@avail);
+}
+
+sub available_stems
+{
+	my $state = shift;
+	return avail2stems($state, OpenBSD::PackageLocator::available());
 }
 
 package OpenBSD::PackageLocator::_compiled_stemlist;

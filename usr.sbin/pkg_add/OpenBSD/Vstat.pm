@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.15 2007/02/24 18:45:11 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.16 2007/03/06 23:35:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -42,6 +42,24 @@ sub create_device($)
 		$devinfo->{$dev} = $n;
 	}
 	return $n;
+}
+
+sub remember_used
+{
+	my $h = {};
+	while (my ($k, $v) = each %$devinfo) {
+		$h->{$k} = $v->{used};
+		$v->{used} = 0;
+	}
+	return $h;
+}
+
+sub restore_used
+{
+	my $h = shift;
+	while (my ($k, $v) = each %$h) {
+		$devinfo->{$k}->{used} += $v;
+	}
 }
 
 sub init_devices()

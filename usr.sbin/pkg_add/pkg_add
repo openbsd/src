@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.221 2007/02/04 12:46:54 espie Exp $
+# $OpenBSD: pkg_add,v 1.222 2007/03/06 23:35:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -280,7 +280,9 @@ sub really_add($$)
 	    }
 	    print "\n";
 	}
+	my $x = OpenBSD::Vstat::remember_used();
 	my $totsize = OpenBSD::Add::validate_plist($plist, $state);
+	OpenBSD::Vstat::restore_used($x);
 
 	if (!defined $handle) {
 		Fatal "Archive in $pkgname broken";
@@ -606,12 +608,20 @@ sub find_truenames
 {
 	my ($old, $new, $state) = @_;
 
-	my $h;
+	my $allstems;
 
 	for my $pkgname (@$old) {
 		if (OpenBSD::PackageName::is_stem($pkgname)) {
-		    if (!defined $h) {
-		    	$h = OpenBSD::PackageName::available_stems($state);
+		    my ($h, $path, $repo);
+		    if ($pkgname =~ m/\//) {
+			($repo, $path, $pkgname) = OpenBSD::PackageLocator::path_parse($pkgname);
+			$h = OpenBSD::PackageName::avail2stems($state, $repo->available);
+		    } else {
+			if (!defined $allstems) {
+			    $allstems = OpenBSD::PackageName::available_stems($state);
+			}
+			$h = $allstems;
+			$path = "";
 		    }
 		    my @l = $h->findstem($pkgname);
 		    if (@l > 1) {
@@ -619,6 +629,9 @@ sub find_truenames
 		    }
 		    my $result = OpenBSD::Interactive::choose1($pkgname, $state->{interactive}, sort @l);
 		    if (defined $result) {
+			    if (defined $path) {
+				$result = $path.$result;
+			    }
 			    push(@$new, $result);
 		    } else {
 			    $bad = 1;
