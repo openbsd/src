@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.16 2007/02/22 03:32:39 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.17 2007/03/06 19:37:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -223,11 +223,10 @@ hce_notify_done(struct host *host, const char *msg)
 	u_long			 duration;
 	u_int			 logopt;
 
-
 	if (host->up == HOST_DOWN && host->retry_cnt) {
 		log_debug("hce_notify_done: host %s retry %d",
 		    host->name, host->retry_cnt);
-		host->up = HOST_UP;
+		host->up = host->last_up;
 		host->retry_cnt--;
 	} else
 		host->retry_cnt = host->retry;
