@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.75 2007/03/06 14:15:51 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.76 2007/03/06 14:24:24 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1232,8 +1232,10 @@ ahci_poll(struct ahci_ccb *ccb, int timeout)
 	s = splbio();
 	ahci_start(ccb);
 	do {
-		if (ahci_port_intr(ap, 1 << ccb->ccb_slot))
+		if (ahci_port_intr(ap, 1 << ccb->ccb_slot)) {
+			splx(s);
 			return (0);
+		}
 
 		delay(1000);
 	} while (--timeout > 0);
