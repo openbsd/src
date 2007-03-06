@@ -1,4 +1,4 @@
-.\"	$OpenBSD: encrypt.1,v 1.19 2007/03/06 11:16:55 jmc Exp $
+.\"	$OpenBSD: encrypt.1,v 1.20 2007/03/06 11:19:18 jmc Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -44,14 +44,18 @@ prints the encrypted form of
 to the standard output.
 This is mostly useful for encrypting passwords from within scripts.
 .Pp
+When invoked as
+.Nm makekey ,
+a single combined key and salt are read from standard
+input and the DES encrypted result is written to standard output without a
+terminating newline.
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl k
 Run in
 .Nm makekey
-compatible mode; a single combined key and salt are read from standard
-input and the DES encrypted result is written to standard output without a
-terminating newline.
+compatible mode.
 .It Fl b Ar rounds
 Encrypt the string using Blowfish hashing with the specified
 .Ar rounds .
