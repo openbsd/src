@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.39 2006/10/11 20:56:59 deraadt Exp $ */
+/*	$OpenBSD: lpr.c,v 1.40 2007/03/06 11:11:53 jmc Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.39 2006/10/11 20:56:59 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.40 2007/03/06 11:11:53 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -727,8 +727,9 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-cdfghlmnpqrstv] [-Pprinter] [-#num] [-C class] "
-	    "[-J job] [-T title]\n           [-U user] [-i [numcols]] "
-	    "[-1234 font] [-wnum] [name ...]\n", __progname);
+	    "usage: %s [-cdfghlmnpqrstv] [-#num] [-1234 font] "
+	    "[-C class] [-i [numcols]]\n"
+	    "\t[-J job] [-Pprinter] [-T title] [-U user] "
+	    "[-wnum] [name ...]\n", __progname);
 	exit(1);
 }
