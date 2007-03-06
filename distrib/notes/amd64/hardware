@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.77 2007/02/15 13:57:53 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.78 2007/03/06 15:59:56 jasper Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -767,7 +767,9 @@ dnl		    See above
 		"PS/2"-style mice
 		Serial mice (uses serial port driver)
 	Sound Devices
+		ALI M5461
 		ATI IXP series integrated AC'97 
+		ATI SB450/SB600
 		C-Media CMI8[37]38
 		Cirrus Logic CrystalClear CS4280, CS4281
 		Ensoniq AudioPCI
@@ -776,14 +778,18 @@ dnl		    See above
 		ESS Maestro 3 and Allegro 1
 		Forte Media FM801 audio
 		Intel i810/i820 and 440MX AC'97
+		Intel 82801FB/GB/HB audio
 		NeoMagic 256AV/ZX
 		NVIDIA nForce and nForce AC'97
+		NVIDIA MCP51/55/61/65
+		SiS 966/966L
 		SiS 7012 AC'97
 		SoundBlaster PCI128
 		SoundBlaster Live! and PCI512 (EMU10k1)
 		Trident 4DWAVE-DX/NX and clones (SiS 7018, ALi M5451)
 		VIA VT82C686A, VT8233, VT8235, VT8237 SouthBridge
 		    integrated AC'97 audio
+		VIA VT8237A/VT8251
 		Yamaha DS-XG
 		[The following driver has not been extensively tested:]
 		S3 SonicVibes
