@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.68 2007/03/06 05:38:55 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.69 2007/03/06 05:40:34 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -767,8 +767,8 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	/* Setup RFIS base address */
 	ap->ap_rfis = (struct ahci_rfis *) AHCI_DMA_KVA(ap->ap_dmamem_rfis);
 	dva = AHCI_DMA_DVA(ap->ap_dmamem_rfis);
-	ahci_pwrite(ap, AHCI_PREG_FBU, htole32((u_int32_t)(dva >> 32)));
-	ahci_pwrite(ap, AHCI_PREG_FB, htole32((u_int32_t)dva));
+	ahci_pwrite(ap, AHCI_PREG_FBU, (u_int32_t)(dva >> 32));
+	ahci_pwrite(ap, AHCI_PREG_FB, (u_int32_t)dva);
 
 	/* Enable FIS reception and activate port. */
 	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
@@ -806,8 +806,8 @@ nomem:
 
 	/* Setup command list base address */
 	dva = AHCI_DMA_DVA(ap->ap_dmamem_cmd_list);
-	ahci_pwrite(ap, AHCI_PREG_CLBU, htole32((u_int32_t)(dva >> 32)));
-	ahci_pwrite(ap, AHCI_PREG_CLB, htole32((u_int32_t)dva));
+	ahci_pwrite(ap, AHCI_PREG_CLBU, (u_int32_t)(dva >> 32));
+	ahci_pwrite(ap, AHCI_PREG_CLB, (u_int32_t)dva);
 
 	/* Split CCB allocation into CCBs and assign to command header/table */
 	TAILQ_INIT(&ap->ap_ccb_free);
