@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.112 2007/02/19 14:20:46 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.113 2007/03/06 18:26:34 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -557,11 +557,15 @@ Use of DES or Skipjack as an encryption algorithm is not recommended
 Furthermore, attacks on Skipjack have shown severe weaknesses
 in its structure.
 .Pp
-Note that DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
+DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
 to form its 168-bit key.
 This is because the most significant bit of each byte is used for parity.
 .Pp
-Note that using NULL with ESP will only provide authentication.
+The keysize of AES-CTR is actually 128-bit.
+However as well as the key, a 32-bit nonce has to be supplied.
+Thus 160 bits of key material have to be supplied.
+.Pp
+Using NULL with ESP will only provide authentication.
 This is useful in setups where AH can not be used, e.g. when NAT is involved.
 .Pp
 The following group types are permitted with the
