@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.91 2007/03/06 08:56:32 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.92 2007/03/06 09:00:13 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -120,7 +120,9 @@ Run in blacklist-only mode.
 .It Fl c Ar maxcon
 The maximum number of concurrent connections to allow.
 .Ar maxcon
-may not exceed kern.maxfiles - 200, and defaults to 800.
+may not exceed
+.Va kern.maxfiles
+\- 200, and defaults to 800.
 .It Fl d
 Debug mode.
 .Nm
@@ -515,12 +517,12 @@ The file needs to be copied to all hosts
 sending or receiving synchronisation messages.
 .Sh FILES
 .Bl -tag -width "/etc/mail/spamd.alloweddomainsXX" -compact
+.It /etc/mail/spamd.alloweddomains
+Optional required suffixes for greytrapping.
 .It /etc/mail/spamd.conf
 Default configuration file.
 .It /etc/mail/spamd.key
 Authentication key for synchronisation messages.
-.It /etc/mail/spamd.alloweddomains
-Optional required suffixes for greytrapping.
 .It /var/db/spamd
 Greylisting database.
 .El
