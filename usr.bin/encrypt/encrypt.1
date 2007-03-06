@@ -1,4 +1,4 @@
-.\"	$OpenBSD: encrypt.1,v 1.18 2003/06/14 23:19:18 millert Exp $
+.\"	$OpenBSD: encrypt.1,v 1.19 2007/03/06 11:16:55 jmc Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -31,12 +31,11 @@
 .Nd encrypt passwords from the command line or standard input
 .Sh SYNOPSIS
 .Nm encrypt
-.Op Fl k
+.Op Fl km
 .Op Fl b Ar rounds
 .Op Fl c Ar class
-.Op Fl m
-.Op Fl s Ar salt
 .Op Fl p | Ar string
+.Op Fl s Ar salt
 .Nm makekey
 .Sh DESCRIPTION
 .Nm
