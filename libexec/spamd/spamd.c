@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.95 2007/03/05 21:25:29 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.96 2007/03/06 01:59:43 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -28,6 +28,7 @@
 #include <sys/file.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
 #include <sys/resource.h>
 
 #include <netinet/in.h>
@@ -127,6 +128,7 @@ size_t cbs, cbu;
 time_t t;
 
 #define MAXCON 800
+int maxfiles;
 int maxcon = MAXCON;
 int maxblack = MAXCON;
 int blackcount;
@@ -961,6 +963,24 @@ handled:
 	}
 }
 
+static int
+get_maxfiles(void)
+{
+	int mib[2], maxfiles;
+	size_t len;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_MAXFILES;
+	len = sizeof(maxfiles);
+	if (sysctl(mib, 2, &maxfiles, &len, NULL, 0) == -1)
+		return(MAXCON);
+	if ((maxfiles - 200) < 10)
+		errx(1, "kern.maxfiles is only %d, can not continue\n",
+		    maxfiles);
+	else
+		return(maxfiles - 200);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -992,7 +1012,11 @@ main(int argc, char *argv[])
 
 	if (gethostname(hostname, sizeof hostname) == -1)
 		err(1, "gethostname");
-
+	maxfiles = get_maxfiles();
+	if (maxcon > maxfiles)
+		maxcon = maxfiles;
+	if (maxblack > maxfiles)
+		maxblack = maxfiles;
 	while ((ch =
 	    getopt(argc, argv, "45l:c:B:p:bdG:h:r:s:S:n:vw:y:Y:")) != -1) {
 		switch (ch) {
@@ -1011,8 +1035,12 @@ main(int argc, char *argv[])
 			break;
 		case 'c':
 			i = atoi(optarg);
-			if (i > MAXCON)
+			if (i > maxfiles) {
+				fprintf(stderr,
+				    "%d > system max of %d connections\n",
+				    i, maxfiles);
 				usage();
+			}
 			maxcon = i;
 			break;
 		case 'p':
