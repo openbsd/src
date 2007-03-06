@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.18 2007/03/04 22:36:54 deraadt Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.19 2007/03/06 03:27:14 ray Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static const char rcsid[] = "$OpenBSD: traverse.c,v 1.18 2007/03/04 22:36:54 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: traverse.c,v 1.19 2007/03/06 03:27:14 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -176,6 +176,7 @@ mapfiles(ino_t maxino, off_t *tapesize, char *disk, char * const *dirv)
 			case FTS_NS:
 				msg("Can't fts_read %s: %s\n", entry->fts_path,
 				    strerror(errno));
+				/* FALLTHROUGH */
 			case FTS_DP:		/* already seen dir */
 				continue;
 			}
@@ -429,13 +430,13 @@ dumpino(struct ufs1_dinode *dp, ino_t ino)
 			writerec(buf, 0);
 			return;
 		}
-		/* fall through */
+		/* FALLTHROUGH */
 
 	case IFDIR:
 	case IFREG:
 		if (dp->di_size > 0)
 			break;
-		/* fall through */
+		/* FALLTHROUGH */
 
 	case IFIFO:
 	case IFSOCK:
