@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.74 2007/03/06 12:25:00 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.75 2007/03/06 14:15:51 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -102,7 +102,7 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_PREG_IS_DHRS		(1<<0) /* Device to Host FIS */
 #define  AHCI_PREG_IS_PSS		(1<<1) /* PIO Setup FIS */
 #define  AHCI_PREG_IS_DSS		(1<<2) /* DMA Setup FIS */
-#define  AHCI_PREG_IS_SDBS		(1<<3) /* Set Devince Bits FIS */
+#define  AHCI_PREG_IS_SDBS		(1<<3) /* Set Device Bits FIS */
 #define  AHCI_PREG_IS_UFS		(1<<4) /* Unknown FIS */
 #define  AHCI_PREG_IS_DPS		(1<<5) /* Descriptor Processed */
 #define  AHCI_PREG_IS_PCS		(1<<6) /* Port Change */
@@ -125,7 +125,7 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_PREG_IE_DHRE		(1<<0) /* Device to Host FIS */
 #define  AHCI_PREG_IE_PSE		(1<<1) /* PIO Setup FIS */
 #define  AHCI_PREG_IE_DSE		(1<<2) /* DMA Setup FIS */
-#define  AHCI_PREG_IE_SDBE		(1<<3) /* Set Devince Bits FIS */
+#define  AHCI_PREG_IE_SDBE		(1<<3) /* Set Device Bits FIS */
 #define  AHCI_PREG_IE_UFE		(1<<4) /* Unknown FIS */
 #define  AHCI_PREG_IE_DPE		(1<<5) /* Descriptor Processed */
 #define  AHCI_PREG_IE_PCE		(1<<6) /* Port Change */
@@ -150,7 +150,7 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_PREG_CMD_POD		(1<<2) /* Power On Device */
 #define  AHCI_PREG_CMD_CLO		(1<<3) /* Command List Override */
 #define  AHCI_PREG_CMD_FRE		(1<<4) /* FIS Receive Enable */
-#define  AHCI_PREG_CMD_CCS		0x1f00 /* Current Command Slot */
+#define  AHCI_PREG_CMD_CCS(_r)		(((_r) >> 8) & 0x1f) /* Curr CmdSlot# */
 #define  AHCI_PREG_CMD_MPSS		(1<<13) /* Mech Presence State */
 #define  AHCI_PREG_CMD_FR		(1<<14) /* FIS Receive Running */
 #define  AHCI_PREG_CMD_CR		(1<<15) /* Command List Running */
@@ -391,23 +391,24 @@ int			ahci_map_regs(struct ahci_softc *,
 			    struct pci_attach_args *);
 void			ahci_unmap_regs(struct ahci_softc *,
 			    struct pci_attach_args *);
-int			ahci_init(struct ahci_softc *);
 int			ahci_map_intr(struct ahci_softc *,
 			    struct pci_attach_args *);
 void			ahci_unmap_intr(struct ahci_softc *,
 			    struct pci_attach_args *);
+
+int			ahci_init(struct ahci_softc *);
 int			ahci_port_alloc(struct ahci_softc *, u_int);
 void			ahci_port_free(struct ahci_softc *, u_int);
 
 int			ahci_port_start(struct ahci_port *, int);
 int			ahci_port_stop(struct ahci_port *, int);
 int			ahci_port_clo(struct ahci_port *);
-int			ahci_port_portreset(struct ahci_port *);
 int			ahci_port_softreset(struct ahci_port *);
+int			ahci_port_portreset(struct ahci_port *);
 
 int			ahci_load_prdt(struct ahci_ccb *);
-void			ahci_start(struct ahci_ccb *);
 int			ahci_poll(struct ahci_ccb *, int);
+void			ahci_start(struct ahci_ccb *);
 
 int			ahci_intr(void *);
 int			ahci_port_intr(struct ahci_port *, u_int32_t);
@@ -469,6 +470,29 @@ ahci_lookup_device(struct pci_attach_args *pa)
 }
 
 int
+ahci_jmicron_match(struct pci_attach_args *pa)
+{
+	if (pa->pa_function != 0)
+		return (0);
+
+	return (1);
+}
+
+int
+ahci_jmicron_attach(struct pci_attach_args *pa)
+{
+	u_int32_t			ccr;
+
+	/* Switch JMICRON ports to AHCI mode */
+	ccr = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40);
+	ccr &= ~0x0000ff00;
+	ccr |=  0x0000a100;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, 0x40, ccr);
+
+	return (0);
+}
+
+int
 ahci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args		*pa = aux;
@@ -483,15 +507,6 @@ ahci_match(struct device *parent, void *match, void *aux)
 		return (ad->ad_match(pa));
 
 	return (2); /* match higher than pciide */
-}
-
-int
-ahci_jmicron_match(struct pci_attach_args *pa)
-{
-	if (pa->pa_function != 0)
-		return (0);
-
-	return (1);
 }
 
 void
@@ -588,20 +603,6 @@ freeports:
 			ahci_port_free(sc, i);
 unmap:
 	ahci_unmap_regs(sc, pa);
-}
-
-int
-ahci_jmicron_attach(struct pci_attach_args *pa)
-{
-	u_int32_t			ccr;
-
-	/* Switch JMICRON ports to AHCI mode */
-	ccr = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40);
-	ccr &= ~0x0000ff00;
-	ccr |=  0x0000a100;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, 0x40, ccr);
-
-	return (0);
 }
 
 int
