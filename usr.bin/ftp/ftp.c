@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.65 2006/06/23 20:35:25 steven Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.66 2007/03/06 05:16:01 beck Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: ftp.c,v 1.65 2006/06/23 20:35:25 steven Exp $";
+static const char rcsid[] = "$OpenBSD: ftp.c,v 1.66 2007/03/06 05:16:01 beck Exp $";
 #endif /* not lint and not SMALL */
 
 #include <sys/types.h>
@@ -1164,7 +1164,16 @@ reinit:
 		switch (data_addr.su_family) {
 		case AF_INET:
 			if (epsv4 && !epsv4bad) {
+				int ov;
+				/* shut this command up in case it fails */
+				ov = verbose;
+				verbose = -1;
 				result = command(pasvcmd = "EPSV");
+				/* 
+				 * now back to whatever verbosity we had before
+				 * and we can try PASV
+				 */
+				verbose = ov;
 				if (code / 10 == 22 && code != 229) {
 					fputs(
 "wrong server: return code must be 229\n",
