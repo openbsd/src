@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.71 2007/03/06 06:43:56 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.72 2007/03/06 09:00:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -711,8 +711,10 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	struct ahci_port		*ap;
 	struct ahci_ccb			*ccb;
 	u_int64_t			dva;
-	int				i, rc = ENOMEM;
 	u_int32_t			cmd;
+	struct ahci_cmd_hdr		*hdr;
+	struct ahci_cmd_table		*table;
+	int				i, rc = ENOMEM;
 
 	ap = malloc(sizeof(struct ahci_port), M_DEVBUF, M_NOWAIT);
 	if (ap == NULL) {
@@ -811,6 +813,8 @@ nomem:
 
 	/* Split CCB allocation into CCBs and assign to command header/table */
 	TAILQ_INIT(&ap->ap_ccb_free);
+	hdr = AHCI_DMA_KVA(ap->ap_dmamem_cmd_list);
+	table = AHCI_DMA_KVA(ap->ap_dmamem_cmd_table);
 	for (i = 0; i < sc->sc_ncmds; i++) {
 		ccb = &ap->ap_ccbs[i];
 
@@ -823,10 +827,8 @@ nomem:
 
 		ccb->ccb_slot = i;
 		ccb->ccb_port = ap;
-		ccb->ccb_cmd_hdr = AHCI_DMA_KVA(ap->ap_dmamem_cmd_list) +
-		    ccb->ccb_slot * sizeof(struct ahci_cmd_hdr);
-		ccb->ccb_cmd_table = AHCI_DMA_KVA(ap->ap_dmamem_cmd_table) +
-		    ccb->ccb_slot * sizeof(struct ahci_cmd_table);
+		ccb->ccb_cmd_hdr = &hdr[i];
+		ccb->ccb_cmd_table = &table[i];
 		dva = AHCI_DMA_DVA(ap->ap_dmamem_cmd_table) +
 		    ccb->ccb_slot * sizeof(struct ahci_cmd_table);
 		ccb->ccb_cmd_hdr->ctba_hi = htole32((u_int32_t)(dva >> 32));
