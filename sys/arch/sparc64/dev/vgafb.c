@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.49 2007/01/13 21:03:23 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.50 2007/03/06 19:13:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -115,6 +115,9 @@ static const struct pci_matchid ifb_devices[] = {
 	{ PCI_VENDOR_INTERGRAPH, 0x108 },	/* XXX */
 	{ PCI_VENDOR_INTERGRAPH, 0x140 },	/* XXX */
 	{ PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_EXPERT3D },
+	{ PCI_VENDOR_3DLABS,	 0x7a1 },	/* Wildcat III 6210 */
+	{ PCI_VENDOR_3DLABS,	 0x7a2 },	/* Sun XVR-500 */
+	{ PCI_VENDOR_3DLABS,	 0x7a3 },	/* Wildcat IV 7210 */
 };
 
 int
