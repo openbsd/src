@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.73 2007/03/06 09:01:28 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.74 2007/03/06 12:25:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -310,12 +310,12 @@ struct ahci_ccb {
 	int			ccb_slot;
 	struct ahci_port	*ccb_port;
 
-	struct ata_xfer		*ccb_xa;
-
+	bus_dmamap_t		ccb_dmamap;
 	struct ahci_cmd_hdr	*ccb_cmd_hdr;
 	struct ahci_cmd_table	*ccb_cmd_table;
 
-	bus_dmamap_t		ccb_dmamap;
+	struct ata_xfer		*ccb_xa;
+	void			(*ccb_done)(struct ahci_ccb *);
 
 	TAILQ_ENTRY(ahci_ccb)	ccb_entry;
 };
@@ -330,6 +330,7 @@ struct ahci_port {
 	struct ahci_dmamem	*ap_dmamem_cmd_list;
 	struct ahci_dmamem	*ap_dmamem_cmd_table;
 
+	volatile u_int32_t	ap_active;
 	struct ahci_ccb		*ap_ccbs;
 	TAILQ_HEAD(, ahci_ccb)	ap_ccb_free;
 
@@ -405,9 +406,11 @@ int			ahci_port_portreset(struct ahci_port *);
 int			ahci_port_softreset(struct ahci_port *);
 
 int			ahci_load_prdt(struct ahci_ccb *);
-int			ahci_start(struct ahci_ccb *);
+void			ahci_start(struct ahci_ccb *);
+int			ahci_poll(struct ahci_ccb *, int);
 
 int			ahci_intr(void *);
+int			ahci_port_intr(struct ahci_port *, u_int32_t);
 
 struct ahci_ccb		*ahci_get_ccb(struct ahci_port *);
 void			ahci_put_ccb(struct ahci_port *, struct ahci_ccb *);
@@ -444,6 +447,10 @@ struct atascsi_methods ahci_atascsi_methods = {
 	ahci_ata_probe,
 	ahci_ata_cmd
 };
+
+/* ccb completions */
+void			ahci_ata_cmd_done(struct ahci_ccb *);
+void			ahci_empty_done(struct ahci_ccb *);
 
 const struct ahci_device *
 ahci_lookup_device(struct pci_attach_args *pa)
@@ -1009,7 +1016,6 @@ ahci_port_softreset(struct ahci_port *ap)
 	u_int8_t			*fis;
 	int				s, rc = EIO;
 	u_int32_t			cmd;
-	struct ata_xfer			xa;
 
 	DPRINTF(AHCI_D_VERBOSE, "%s: soft reset\n", PORTNAME(ap));
 
@@ -1018,6 +1024,7 @@ ahci_port_softreset(struct ahci_port *ap)
 	splx(s);
 	if (ccb == NULL)
 		goto err;
+	ccb->ccb_done = ahci_empty_done;
 
 	/* Save previous command register state */
 	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
@@ -1055,9 +1062,6 @@ ahci_port_softreset(struct ahci_port *ap)
 	}
 
 	/* Prep first D2H command with SRST feature & clear busy/reset flags */
-	bzero(&xa, sizeof(struct ata_xfer));
-	xa.flags = ATA_F_POLL | ATA_F_WRITE;
-	ccb->ccb_xa = &xa;
 	cmd_slot = ccb->ccb_cmd_hdr;
 	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
 
@@ -1065,34 +1069,27 @@ ahci_port_softreset(struct ahci_port *ap)
 	fis[0] = 0x27;	/* Host to device */
 	fis[15] = 0x04;	/* SRST DEVCTL */
 
-	if (ahci_load_prdt(ccb))
-		goto err;
-
+	cmd_slot->prdtl = 0;
 	cmd_slot->flags = htole16(5);	/* FIS length: 5 DWORDS */
 	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_C); /* Clear busy on OK */
 	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_R); /* Reset */
 	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W); /* Write */
 
-	if (ahci_start(ccb) != ATA_COMPLETE)
+	if (ahci_poll(ccb, 1000) != 0)
 		goto err;
 
 	/* Prep second D2H command to read status and complete reset sequence */
-	bzero(&xa, sizeof(struct ata_xfer));
-	xa.flags = ATA_F_POLL | ATA_F_WRITE;
-	ccb->ccb_xa = &xa;
 	cmd_slot = ccb->ccb_cmd_hdr;
 	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
 
 	fis = ccb->ccb_cmd_table->cfis;
 	fis[0] = 0x27;	/* Host to device */
 
-	if (ahci_load_prdt(ccb))
-		goto err;
-
+	cmd_slot->prdtl = 0;
 	cmd_slot->flags = htole16(5);	/* FIS length: 5 DWORDS */
 	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
 
-	if (ahci_start(ccb) != ATA_COMPLETE)
+	if (ahci_poll(ccb, 1000) != 0)
 		goto err;
 
 	if (ahci_pwait_clr(ap, AHCI_PREG_TFD, AHCI_PREG_TFD_STS_BSY |
@@ -1226,12 +1223,31 @@ ahci_load_prdt(struct ahci_ccb *ccb)
 }
 
 int
+ahci_poll(struct ahci_ccb *ccb, int timeout)
+{
+	struct ahci_port		*ap = ccb->ccb_port;
+	int				s;
+
+	s = splbio();
+	ahci_start(ccb);
+	do {
+		if (ahci_port_intr(ap, 1 << ccb->ccb_slot))
+			return (0);
+
+		delay(1000);
+	} while (--timeout > 0);
+	splx(s);
+
+	/* XXX cleanup! */
+
+	return (1);
+}
+
+void
 ahci_start(struct ahci_ccb *ccb)
 {
 	struct ahci_port		*ap = ccb->ccb_port;
 	struct ahci_softc		*sc = ap->ap_sc;
-	int				rc = ATA_QUEUED;
-	int				s;
 
 	/* Zero transferred byte count before transfer */
 	ccb->ccb_cmd_hdr->prdbc = 0;
@@ -1248,28 +1264,51 @@ ahci_start(struct ahci_ccb *ccb)
 	bus_dmamap_sync(sc->sc_dmat, AHCI_DMA_MAP(ap->ap_dmamem_rfis), 0,
 	    sizeof(struct ahci_rfis), BUS_DMASYNC_PREREAD);
 
-	s = splbio();
+	ap->ap_active |= 1 << ccb->ccb_slot;
 	ahci_pwrite(ap, AHCI_PREG_CI, 1 << ccb->ccb_slot);
-	if (ccb->ccb_xa->flags & ATA_F_POLL) {
-		if (ahci_pwait_clr(ap, AHCI_PREG_CI, 1 << ccb->ccb_slot)) {
-			/* Command didn't go inactive.  XXX: wait longer? */
-			printf("%s: polled command didn't go inactive\n",
-			    PORTNAME(ap));
-			/* Shutdown port.  XXX: recover via port reset? */
-			ahci_port_stop(ap, 0);
-			rc = ATA_ERROR;
-		} else
-			rc = ATA_COMPLETE;
-	}
-	splx(s);
-
-	return (rc);
 }
 
 int
 ahci_intr(void *arg)
 {
 	return (0);
+}
+
+int
+ahci_port_intr(struct ahci_port *ap, u_int32_t ci_mask)
+{
+	struct ahci_softc		*sc = ap->ap_sc;
+	struct ahci_ccb			*ccb;
+	u_int32_t			ci;
+	int				i, intr = 0;
+
+	ci = ~ahci_pread(ap, AHCI_PREG_CI) & ap->ap_active & ci_mask;
+	for (i = 0; i < sc->sc_ncmds; i++) {
+		if (ISSET(ci, 1 << i)) {
+			ccb = &ap->ap_ccbs[i];
+
+			bus_dmamap_sync(sc->sc_dmat,
+			    AHCI_DMA_MAP(ap->ap_dmamem_cmd_list),
+			    ccb->ccb_slot * sizeof(struct ahci_cmd_hdr),
+			    sizeof(struct ahci_cmd_hdr),
+			    BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_sync(sc->sc_dmat,
+			    AHCI_DMA_MAP(ap->ap_dmamem_cmd_table),
+			    ccb->ccb_slot * sizeof(struct ahci_cmd_table),
+			    sizeof(struct ahci_cmd_table),
+			    BUS_DMASYNC_POSTWRITE);
+
+			bus_dmamap_sync(sc->sc_dmat,
+			    AHCI_DMA_MAP(ap->ap_dmamem_rfis), 0,
+			    sizeof(struct ahci_rfis), BUS_DMASYNC_POSTREAD);
+
+			ap->ap_active &= ~(1 << ccb->ccb_slot);
+			ccb->ccb_done(ccb);
+			intr = 1;
+		}
+	}
+
+	return (intr);
 }
 
 struct ahci_ccb *
@@ -1474,6 +1513,7 @@ ahci_ata_cmd(void *xsc, struct ata_xfer *xa)
 		return (ATA_ERROR);
 
 	ccb->ccb_xa = xa;
+	ccb->ccb_done = ahci_ata_cmd_done;
 	cmd_slot = ccb->ccb_cmd_hdr;
 	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
 
@@ -1510,5 +1550,41 @@ ahci_ata_cmd(void *xsc, struct ata_xfer *xa)
 	if (xa->flags & ATA_F_WRITE)
 		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
 
-	return (ahci_start(ccb));
+	if (1 || xa->flags & ATA_F_POLL) {
+		if (ahci_poll(ccb, 1000) != 0)
+			return (ATA_ERROR);
+		return (ATA_COMPLETE);
+	}
+
+	s = splbio();
+	ahci_start(ccb);
+	splx(s);
+	return (ATA_QUEUED);
+}
+
+void
+ahci_ata_cmd_done(struct ahci_ccb *ccb)
+{
+	struct ahci_port		*ap = ccb->ccb_port;
+	struct ahci_softc		*sc = ap->ap_sc;
+	struct ata_xfer			*xa = ccb->ccb_xa;
+	bus_dmamap_t			dmap = ccb->ccb_dmamap;
+
+	if (xa->datalen != 0) {
+		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
+		    (xa->flags & ATA_F_READ) ? BUS_DMASYNC_POSTREAD :
+		    BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_unload(sc->sc_dmat, dmap);
+	}
+
+	ahci_put_ccb(ap, ccb);
+	xa->state = ATA_S_COMPLETE;
+	xa->complete(xa);
+}
+
+void
+ahci_empty_done(struct ahci_ccb *ccb)
+{
+	/* do nothing */
 }

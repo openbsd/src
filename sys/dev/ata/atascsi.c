@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.9 2007/02/28 13:38:04 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.10 2007/03/06 12:25:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -32,6 +32,32 @@
 
 #include <dev/ata/atascsi.h>
 
+/* XXX ata_identify should be in atareg.h */
+
+#define ATA_C_IDENTIFY		0xec
+
+struct ata_identify {
+	u_int16_t	config;		/*  0 */
+	u_int16_t	ncyls;		/*  1 (OBSOLETE) */
+	u_int16_t	reserved1;	/*  2 */
+	u_int16_t	nheads;		/*  3 (OBSOLETE) */
+	u_int16_t	track_size;	/*  4 (OBSOLETE) */
+	u_int16_t	sector_size;	/*  5 (OBSOLETE) */
+	u_int16_t	nsectors;	/*  6 (OBSOLETE) */
+	u_int16_t	reserved2[3];	/*  7 vendor unique */
+	u_int8_t	serial[20];	/* 10 */
+	u_int16_t	buffer_type;	/* 20 */
+	u_int16_t	buffer_size;	/* 21 */
+	u_int16_t	ecc;		/* 22 */
+	u_int8_t	firmware[8];	/* 23 */
+	u_int8_t	model[40];	/* 27 */
+	u_int16_t	multi;		/* 47 */
+	u_int16_t	dwcap;		/* 48 */
+	u_int16_t	cap;		/* 49 */
+	u_int16_t	reserved3;	/* 50 */
+	/* XXX there's a LOT more of this */
+} __packed;
+
 struct atascsi {
 	struct device		*as_dev;
 	void			*as_cookie;
@@ -61,9 +87,16 @@ struct scsi_device atascsi_device = {
 
 int		atascsi_probe(struct atascsi *, int);
 
+struct ata_xfer *ata_setup_identify(struct ata_port *, int);
+void		ata_free_identify(struct ata_xfer *);
+void		ata_complete_identify(struct ata_xfer *,
+		    struct ata_identify *);
+
 int		atascsi_disk_cmd(struct scsi_xfer *);
 int		atascsi_disk_inq(struct scsi_xfer *);
+void		atascsi_disk_inq_done(struct ata_xfer *);
 int		atascsi_disk_capacity(struct scsi_xfer *);
+void		atascsi_disk_capacity_done(struct ata_xfer *);
 int		atascsi_disk_sync(struct scsi_xfer *);
 int		atascsi_disk_sense(struct scsi_xfer *);
 
@@ -141,14 +174,84 @@ atascsi_detach(struct atascsi *as)
 int
 atascsi_probe(struct atascsi *as, int port)
 {
+	struct ata_port		*ap;
+	int			type;
+
 	if (port > as->as_link.adapter_buswidth)
 		return (ENXIO);
 
-#if 0
-	as->as_ports[port] = as->as_methods->probe(as->as_cookie, port);
-#endif
+	type = as->as_methods->probe(as->as_cookie, port);
+	if (type != ATA_PORT_T_DISK) /* XXX ATAPI too one day */
+		return (ENXIO);
+
+	ap = malloc(sizeof(struct ata_port), M_DEVBUF, M_WAITOK);
+	ap->ap_as = as;
+	ap->ap_port = port;
+	ap->ap_type = type;
+
+	as->as_ports[port] = ap;
 
 	return (0);
+}
+
+struct ata_xfer *
+ata_setup_identify(struct ata_port *ap, int nosleep)
+{
+	struct ata_xfer		*xa;
+	int			s;
+
+	s = splbio();
+	xa = ata_get_xfer(ap, nosleep);
+	splx(s);
+	if (xa == NULL)
+		return (NULL);
+
+	xa->data = malloc(512, M_TEMP, nosleep ? M_NOWAIT : M_WAITOK);
+	if (xa->data == NULL) {
+		s = splbio();
+		ata_put_xfer(xa);
+		splx(s);
+		return (NULL);
+	}
+	bzero(xa->data, 512);
+	xa->datalen = 512;
+
+	xa->cmd.command = ATA_C_IDENTIFY;
+	xa->cmd.st_bmask = 0x40; /* XXX magic WDCS_DRDY */;
+	xa->cmd.st_pmask = 0x00;
+
+	xa->flags = ATA_F_READ;
+
+	return (xa);
+}
+
+void
+ata_free_identify(struct ata_xfer *xa)
+{
+	free(xa->data, M_TEMP);
+	ata_put_xfer(xa);
+}
+
+void
+ata_complete_identify(struct ata_xfer *xa, struct ata_identify *id)
+{
+	u_int16_t		*swap;
+	int			i;
+
+	bcopy(xa->data, id, sizeof(struct ata_identify));
+	ata_free_identify(xa);
+
+	swap = (u_int16_t *)id->serial;
+	for (i = 0; i < sizeof(id->serial) / sizeof(u_int16_t); i++)
+		swap[i] = swap16(swap[i]);
+
+	swap = (u_int16_t *)id->firmware;
+	for (i = 0; i < sizeof(id->firmware) / sizeof(u_int16_t); i++)
+		swap[i] = swap16(swap[i]);
+
+	swap = (u_int16_t *)id->model;
+	for (i = 0; i < sizeof(id->model) / sizeof(u_int16_t); i++)
+		swap[i] = swap16(swap[i]);
 }
 
 int
@@ -215,7 +318,59 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 int
 atascsi_disk_inq(struct scsi_xfer *xs)
 {
-	return (atascsi_stuffup(xs));
+	struct scsi_link	*link = xs->sc_link;
+	struct atascsi		*as = link->adapter_softc;
+	struct ata_port		*ap = as->as_ports[link->target];
+	struct ata_xfer		*xa;
+	int			s;
+
+	xa = ata_setup_identify(ap, xs->flags & SCSI_NOSLEEP);
+	if (xa == NULL)
+		return (atascsi_stuffup(xs));
+
+	xa->complete = atascsi_disk_inq_done;
+	xa->atascsi_private = xs;
+	if (xs->flags & SCSI_POLL)
+		xa->flags |= ATA_F_POLL;
+
+	switch (ata_exec(as, xa)) {
+	case ATA_COMPLETE:
+		return (COMPLETE);
+	case ATA_QUEUED:
+		return (SUCCESSFULLY_QUEUED);
+	case ATA_ERROR:
+		s = splbio();
+		ata_free_identify(xa);
+		splx(s);
+		return (atascsi_stuffup(xs));
+	default:
+		panic("unexpected return from ata_exec");
+	}
+}
+
+void
+atascsi_disk_inq_done(struct ata_xfer *xa)
+{
+	struct scsi_xfer	*xs = xa->atascsi_private;
+	struct ata_identify	id;
+	struct scsi_inquiry_data inq;
+
+	ata_complete_identify(xa, &id);
+
+	bzero(&inq, sizeof(inq));
+
+	inq.device = T_DIRECT;
+	inq.version = 2;
+	inq.response_format = 2;
+	inq.additional_length = 32;
+	bcopy("ATA     ", inq.vendor, sizeof(inq.vendor));
+	bcopy(id.model, inq.product, sizeof(inq.product));
+	bcopy(id.firmware, inq.revision, sizeof(inq.revision));
+
+	bcopy(&inq, xs->data, MIN(sizeof(inq), xs->datalen));
+	xs->error = XS_NOERROR;
+
+	scsi_done(xs);
 }
 
 int
@@ -227,7 +382,53 @@ atascsi_disk_sync(struct scsi_xfer *xs)
 int
 atascsi_disk_capacity(struct scsi_xfer *xs)
 {
-	return (atascsi_stuffup(xs));
+	struct scsi_link	*link = xs->sc_link;
+	struct atascsi		*as = link->adapter_softc;
+	struct ata_port		*ap = as->as_ports[link->target];
+	struct ata_xfer		*xa;
+	int			s;
+
+	xa = ata_setup_identify(ap, xs->flags & SCSI_NOSLEEP);
+	if (xa == NULL)
+		return (atascsi_stuffup(xs));
+
+	xa->complete = atascsi_disk_capacity_done;
+	xa->atascsi_private = xs;
+	if (xs->flags & SCSI_POLL)
+		xa->flags |= ATA_F_POLL;
+
+	switch (ata_exec(as, xa)) {
+	case ATA_COMPLETE:
+		return (COMPLETE);
+	case ATA_QUEUED:
+		return (SUCCESSFULLY_QUEUED);
+	case ATA_ERROR:
+		s = splbio();
+		ata_free_identify(xa);
+		splx(s);
+		return (atascsi_stuffup(xs));
+	default:
+		panic("unexpected return from ata_exec");
+	}
+}
+
+void
+atascsi_disk_capacity_done(struct ata_xfer *xa)
+{
+	struct scsi_xfer	*xs = xa->atascsi_private;
+	struct ata_identify	id;
+	struct scsi_read_cap_data rcd;
+
+	ata_complete_identify(xa, &id);
+
+	bzero(&rcd, sizeof(rcd));
+	_lto4b(1024 * 1024 * 1024, rcd.addr);
+	_lto4b(512, rcd.length);
+
+	bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
+	xs->error = XS_NOERROR;
+
+	scsi_done(xs);
 }
 
 int
