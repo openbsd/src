@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.67 2007/03/05 09:13:44 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.68 2007/03/06 05:38:55 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -280,7 +280,7 @@ struct ahci_prdt {
 #define AHCI_PRDT_FLAG_INTR		(1<<31) /* interrupt on completion */
 } __packed;
 
-/* this makes ahci_cmd_table 512 bytes, which is good for alignment */
+/* this makes ahci_cmd_table 512 bytes, supporting 128-byte alignment */
 #define AHCI_MAX_PRDT		24
 
 struct ahci_cmd_table {
@@ -312,6 +312,7 @@ struct ahci_ccb {
 
 	struct ata_xfer		*ccb_xa;
 
+	struct ahci_cmd_hdr	*ccb_cmd_hdr;
 	struct ahci_cmd_table	*ccb_cmd_table;
 	u_int64_t		ccb_cmd_table_dva;
 
@@ -327,7 +328,6 @@ struct ahci_port {
 	struct ahci_rfis	*ap_rfis;
 	struct ahci_dmamem	*ap_dmamem_rfis;
 
-	struct ahci_cmd_hdr	*ap_cmd_list;
 	struct ahci_dmamem	*ap_dmamem_cmd_list;
 	struct ahci_dmamem	*ap_dmamem_cmd_table;
 
@@ -710,7 +710,6 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 {
 	struct ahci_port		*ap;
 	struct ahci_ccb			*ccb;
-	u_int8_t			*kva;
 	u_int64_t			dva;
 	int				i, rc = ENOMEM;
 	u_int32_t			cmd;
@@ -766,9 +765,8 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 		goto nomem;
 
 	/* Setup RFIS base address */
-	kva = AHCI_DMA_KVA(ap->ap_dmamem_rfis);
+	ap->ap_rfis = (struct ahci_rfis *) AHCI_DMA_KVA(ap->ap_dmamem_rfis);
 	dva = AHCI_DMA_DVA(ap->ap_dmamem_rfis);
-	ap->ap_rfis = (struct ahci_rfis *)kva;
 	ahci_pwrite(ap, AHCI_PREG_FBU, htole32((u_int32_t)(dva >> 32)));
 	ahci_pwrite(ap, AHCI_PREG_FB, htole32((u_int32_t)dva));
 
@@ -807,16 +805,12 @@ nomem:
 	}
 
 	/* Setup command list base address */
-	kva = AHCI_DMA_KVA(ap->ap_dmamem_cmd_list);
 	dva = AHCI_DMA_DVA(ap->ap_dmamem_cmd_list);
-	ap->ap_cmd_list = (struct ahci_cmd_hdr *)kva;
 	ahci_pwrite(ap, AHCI_PREG_CLBU, htole32((u_int32_t)(dva >> 32)));
 	ahci_pwrite(ap, AHCI_PREG_CLB, htole32((u_int32_t)dva));
 
-	/* Split CCB allocation into CCBs and assign command table entries */
+	/* Split CCB allocation into CCBs and assign to command header/table */
 	TAILQ_INIT(&ap->ap_ccb_free);
-	kva = AHCI_DMA_KVA(ap->ap_dmamem_cmd_table);
-	dva = AHCI_DMA_DVA(ap->ap_dmamem_cmd_table);
 	for (i = 0; i < sc->sc_ncmds; i++) {
 		ccb = &ap->ap_ccbs[i];
 
@@ -827,17 +821,14 @@ nomem:
 			goto freeport;
 		}
 
-		/*
-		 * NB: ahci_start assumes a 1:1 mapping of CCB slot number
-		 * to command slot and command table positions in its
-		 * bus_dmasync_calls.
-		 */
 		ccb->ccb_slot = i;
 		ccb->ccb_port = ap;
-		ccb->ccb_cmd_table = (struct ahci_cmd_table *)
-		    (kva + i * sizeof(struct ahci_cmd_table));
-		ccb->ccb_cmd_table_dva =
-		    dva + i * sizeof(struct ahci_cmd_table);
+		ccb->ccb_cmd_hdr = AHCI_DMA_KVA(ap->ap_dmamem_cmd_list) +
+		    ccb->ccb_slot * sizeof(struct ahci_cmd_hdr);
+		ccb->ccb_cmd_table = AHCI_DMA_KVA(ap->ap_dmamem_cmd_table) +
+		    ccb->ccb_slot * sizeof(struct ahci_cmd_table);
+		ccb->ccb_cmd_table_dva = AHCI_DMA_DVA(ap->ap_dmamem_cmd_table) +
+		    ccb->ccb_slot * sizeof(struct ahci_cmd_table);
 
 		ahci_put_ccb(ap, ccb);
 	}
@@ -1064,8 +1055,7 @@ ahci_port_softreset(struct ahci_port *ap)
 	bzero(&xa, sizeof(struct ata_xfer));
 	xa.flags = ATA_F_POLL | ATA_F_WRITE;
 	ccb->ccb_xa = &xa;
-	cmd_slot = &ap->ap_cmd_list[ccb->ccb_slot];
-	bzero(cmd_slot, sizeof(struct ahci_cmd_hdr));
+	cmd_slot = ccb->ccb_cmd_hdr;
 	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
 
 	fis = ccb->ccb_cmd_table->cfis;
@@ -1086,8 +1076,7 @@ ahci_port_softreset(struct ahci_port *ap)
 	bzero(&xa, sizeof(struct ata_xfer));
 	xa.flags = ATA_F_POLL | ATA_F_WRITE;
 	ccb->ccb_xa = &xa;
-	cmd_slot = &ap->ap_cmd_list[ccb->ccb_slot];
-	bzero(cmd_slot, sizeof(struct ahci_cmd_hdr));
+	cmd_slot = ccb->ccb_cmd_hdr;
 	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
 
 	fis = ccb->ccb_cmd_table->cfis;
@@ -1205,7 +1194,7 @@ ahci_load_prdt(struct ahci_ccb *ccb, struct ata_xfer *xa)
 	}
 	prd->flags |= htole32(AHCI_PRDT_FLAG_INTR);
 
-	cmd_slot = &ap->ap_cmd_list[ccb->ccb_slot];
+	cmd_slot = ccb->ccb_cmd_hdr;
 	cmd_slot->prdtl = htole16(ccb->ccb_dmamap->dm_nsegs);
 	cmd_slot->prdbc = 0;
 
@@ -1228,7 +1217,6 @@ ahci_start(struct ahci_ccb *ccb)
 	bus_dmamap_sync(sc->sc_dmat, AHCI_DMA_MAP(ap->ap_dmamem_cmd_list),
 	    ccb->ccb_slot * sizeof(struct ahci_cmd_hdr),
 	    sizeof(struct ahci_cmd_hdr), BUS_DMASYNC_PREWRITE);
-	/* NB this assumes a 1:1 mapping of ccb slot to command table entry */
 	bus_dmamap_sync(sc->sc_dmat, AHCI_DMA_MAP(ap->ap_dmamem_cmd_table),
 	    ccb->ccb_slot * sizeof(struct ahci_cmd_table),
 	    sizeof(struct ahci_cmd_table), BUS_DMASYNC_PREWRITE);
@@ -1464,7 +1452,7 @@ ahci_ata_cmd(void *xsc, struct ata_xfer *xa)
 		return (ATA_ERROR);
 
 	ccb->ccb_xa = xa;
-	cmd_slot = &ap->ap_cmd_list[ccb->ccb_slot];
+	cmd_slot = ccb->ccb_cmd_hdr;
 	bzero(cmd_slot, sizeof(struct ahci_cmd_hdr));
 	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
 
