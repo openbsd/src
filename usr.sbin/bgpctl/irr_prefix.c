@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_prefix.c,v 1.13 2007/03/06 00:27:33 henning Exp $ */
+/*	$OpenBSD: irr_prefix.c,v 1.14 2007/03/06 16:45:34 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -58,10 +58,16 @@ prefixset_get(char *as)
 		err(1, "get_prefixset strdup");
 	RB_INSERT(prefix_set_h, &prefix_set_h, pfxs);
 
+	if (irrverbose >= 3) {
+		fprintf(stdout, "query routes for %s... ", as);
+		fflush(stdout);
+	}
 	curpfxs = pfxs;
 	if (whois(as, QTYPE_ROUTE) == -1)
 		errx(1, "whois error, prefixset_get %s", as);
 	curpfxs = NULL;
+	if (irrverbose >= 3)
+		fprintf(stdout, "done\n");
 
 	prefixset_aggregate(pfxs);
 
@@ -156,7 +162,7 @@ prefixset_aggregate(struct prefix_set *pfxs)
 	if (newcnt == pfxs->prefixcnt)
 		return;
 
-	if (0)
+	if (irrverbose >= 2)
 		printf("%s: prefix aggregation: %u -> %u\n",
 		    pfxs->as, pfxs->prefixcnt, newcnt);
 

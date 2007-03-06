@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_asset.c,v 1.5 2007/03/05 21:08:22 henning Exp $ */
+/*	$OpenBSD: irr_asset.c,v 1.6 2007/03/06 16:45:34 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -92,10 +92,16 @@ asset_get(char *name)
 	switch (asset_membertype(name)) {
 	case T_ASSET:
 		/* as-set */
+		if (irrverbose >= 3) {
+			fprintf(stdout, "query AS-SET %s... ", name);
+			fflush(stdout);
+		}
 		curass = ass;
 		if (whois(name, QTYPE_ASSET) == -1)
 			errx(1, "whois error, asset_get %s", name);
 		curass = NULL;
+		if (irrverbose >= 3)
+			fprintf(stdout, "done\n");
 		break;
 	case T_AUTNUM:
 		/*
