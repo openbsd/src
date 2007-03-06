@@ -1,4 +1,4 @@
-.\"	$OpenBSD: encrypt.1,v 1.20 2007/03/06 11:19:18 jmc Exp $
+.\"	$OpenBSD: encrypt.1,v 1.21 2007/03/06 11:26:14 jmc Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -52,10 +52,6 @@ terminating newline.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl k
-Run in
-.Nm makekey
-compatible mode.
 .It Fl b Ar rounds
 Encrypt the string using Blowfish hashing with the specified
 .Ar rounds .
@@ -64,6 +60,10 @@ Use the cipher type specified in the given user login class.
 See
 .Xr login.conf 5
 for more information.
+.It Fl k
+Run in
+.Nm makekey
+compatible mode.
 .It Fl m
 Encrypt the string using MD5.
 .It Fl p
