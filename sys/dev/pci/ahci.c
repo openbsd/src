@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.70 2007/03/06 05:59:21 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.71 2007/03/06 06:43:56 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -815,7 +815,7 @@ nomem:
 		ccb = &ap->ap_ccbs[i];
 
 		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, AHCI_MAX_PRDT,
-		    MAXPHYS, 0, 0, &ccb->ccb_dmamap) != 0) {
+		    (4 * 1024 * 1024), 0, 0, &ccb->ccb_dmamap) != 0) {
 			printf("%s: unable to create dmamap for port %d "
 			    "ccb %d\n", DEVNAME(sc), port, i);
 			goto freeport;
@@ -1209,10 +1209,6 @@ ahci_load_prdt(struct ahci_ccb *ccb)
 			printf("%s: requested DMA length %d is not even\n",
 			    PORTNAME(ap), dmap->dm_segs[i].ds_len);
 			return (1);
-		}
-		if (dmap->dm_segs[i].ds_len > 0x1fffff) {
-			printf("%s: requested DMA length %d is too long\n",
-			    PORTNAME(ap), dmap->dm_segs[i].ds_len);
 		}
 #endif
 		prd->flags = htole32(dmap->dm_segs[i].ds_len - 1);
