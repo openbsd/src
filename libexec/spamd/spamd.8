@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.90 2007/03/06 02:00:25 beck Exp $
+.\"	$OpenBSD: spamd.8,v 1.91 2007/03/06 08:56:32 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -185,16 +185,31 @@ level.
 .It Fl w Ar window
 Set the socket receive buffer to this many bytes, adjusting the window size.
 .It Fl Y Ar synctarget
-Add a target to receive synchronisation messages; see
-.Sx SYNCHRONISATION
-below.
+Add target
+.Ar synctarget
+to receive synchronisation messages.
+.Ar synctarget
+can be either an IPv4 address for unicast messages
+or a network interface and optional TTL value for multicast messages
+to the group 224.0.1.240.
+If the multicast TTL is not specified, a default value of 1 is used.
 This option can be specified multiple times.
-.It Fl y Ar synclisten
-Listen for incoming synchronisation messages on the specified address
-or interface; see
+See also
 .Sx SYNCHRONISATION
 below.
+.It Fl y Ar synclisten
+Listen on
+.Ar synclisten
+for incoming synchronisation messages.
+The format for
+.Ar synclisten
+is the same as for
+.Ar synctarget ,
+above.
 This option can be specified only once.
+See also
+.Sx SYNCHRONISATION
+below.
 .El
 .Pp
 When run in default mode,
@@ -292,6 +307,22 @@ can be used to examine and alter the contents of
 See
 .Xr spamdb 8
 for further information.
+.Pp
+.Nm
+sends log messages to
+.Xr syslogd 8
+using
+.Em facility
+daemon and, with increasing verbosity,
+.Em level
+err, warn, info, and debug.
+The following
+.Xr syslog.conf 5
+section can be used to log connection details to a dedicated file:
+.Bd -literal -offset indent
+!spamd
+daemon.err;daemon.warn;daemon.info	/var/log/spamd
+.Ed
 .Sh GREYTRAPPING
 When running
 .Nm
@@ -435,48 +466,17 @@ will reject mail by displaying all the messages from all blacklists in which
 a connecting address is matched.
 .Xr spamd-setup 8
 is normally used to configure this information.
-.Sh LOGGING
-.Nm
-sends log messages to
-.Xr syslogd 8
-using
-.Em facility
-daemon and, with increasing verbosity,
-.Em level
-err, warn, info and debug.
-The following
-.Xr syslog.conf 5
-section can be used to log connection details to a dedicated file:
-.Bd -literal -offset indent
-!spamd
-daemon.err;daemon.warn;daemon.info	/var/log/spamd
-.Ed
 .Sh SYNCHRONISATION
 .Nm
 supports realtime synchronisation of greylisting states between
 a number of
 .Nm
-daemons running on multiple machines.
-To enable synchronisation, use the command line options
-.Fl y
-and
-.Fl Y .
-.Pp
-If the
-.Fl y
-option is specified,
-.Nm
-will listen for incoming synchronisation messages to synchronize
-the local
-.Pa /var/db/spamd
-database.
-The
+daemons running on multiple machines,
+using the
 .Fl Y
-option will add a target for outgoing messages.
-A target can be either an IPv4 address for unicast messages or a
-network interface and optional TTL value for multicast messages
-to the group 224.0.1.240.
-If the multicast TTL is not specified, a default value of 1 is used.
+and
+.Fl y
+options.
 .Pp
 The following example will accept incoming multicast and unicast
 synchronisation messages, and send outgoing multicast messages through
@@ -505,13 +505,14 @@ exists,
 .Nm
 will calculate the message-digest fingerprint (checksum) for the file
 and use it as a shared key to authenticate the synchronisation messages.
-The file can contain any data.
-For example, create a secure random key:
+The file itself can contain any data.
+For example, to create a secure random key:
 .Bd -literal -offset indent
 # dd if=/dev/arandom of=/etc/mail/spamd.key bs=2048 count=1
 .Ed
 .Pp
-The file needs to be copied to all synchronised hosts.
+The file needs to be copied to all hosts
+sending or receiving synchronisation messages.
 .Sh FILES
 .Bl -tag -width "/etc/mail/spamd.alloweddomainsXX" -compact
 .It /etc/mail/spamd.conf
