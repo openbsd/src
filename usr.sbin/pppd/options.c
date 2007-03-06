@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.20 2006/01/25 22:41:54 moritz Exp $	*/
+/*	$OpenBSD: options.c,v 1.21 2007/03/06 03:06:41 ray Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -46,7 +46,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.42 1998/03/26 04:46:06 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.20 2006/01/25 22:41:54 moritz Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.21 2007/03/06 03:06:41 ray Exp $";
 #endif
 #endif
 
@@ -175,9 +175,6 @@ static int setnovjccomp(char **);
 static int setvjslots(char **);
 static int reqpap(char **);
 static int nopap(char **);
-#ifdef OLD_OPTIONS
-static int setupapfile(char **);
-#endif
 static int nochap(char **);
 static int reqchap(char **);
 static int noaccomp(char **);
@@ -317,9 +314,6 @@ static struct cmd {
     {"-p", 0, setpassive},	/* Set passive mode */
     {"nopcomp", 0, nopcomp},	/* Disable protocol field compression */
     {"-pc", 0, nopcomp},	/* Disable protocol field compress */
-#if OLD_OPTIONS
-    {"+ua", 1, setupapfile},	/* Get PAP user and password from file */
-#endif
     {"require-pap", 0, reqpap},	/* Require PAP authentication from peer */
     {"+pap", 0, reqpap},	/* Require PAP auth from peer */
     {"refuse-pap", 0, nopap},	/* Don't agree to auth to peer with PAP */
@@ -1385,50 +1379,6 @@ reqpap(argv)
     setauth(NULL);
     return 1;
 }
-
-#if OLD_OPTIONS
-/*
- * setupapfile - specifies UPAP info for authenticating with peer.
- */
-static int
-setupapfile(argv)
-    char **argv;
-{
-    FILE * ufile;
-    int l;
-
-    lcp_allowoptions[0].neg_upap = 1;
-
-    /* open user info file */
-    if ((ufile = fopen(*argv, "r")) == NULL) {
-	option_error("unable to open user login data file %s", *argv);
-	return 0;
-    }
-    if (!readable(fileno(ufile))) {
-	option_error("%s: access denied", *argv);
-	return 0;
-    }
-    check_access(ufile, *argv);
-
-    /* get username */
-    if (fgets(user, MAXNAMELEN - 1, ufile) == NULL
-	|| fgets(passwd, MAXSECRETLEN - 1, ufile) == NULL){
-	option_error("unable to read user login data file %s", *argv);
-	return 0;
-    }
-    fclose(ufile);
-
-    /* get rid of newlines */
-    l = strlen(user);
-    if (l > 0 && user[l-1] == '\n')
-	user[l-1] = 0;
-    l = strlen(passwd);
-    if (l > 0 && passwd[l-1] == '\n')
-	passwd[l-1] = 0;
-
-    return (1);
-}
-#endif
 
 /*
  * nochap - Disable CHAP authentication with peer.
