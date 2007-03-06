@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.89 2007/03/05 21:25:29 beck Exp $
+.\"	$OpenBSD: spamd.8,v 1.90 2007/03/06 02:00:25 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -120,7 +120,7 @@ Run in blacklist-only mode.
 .It Fl c Ar maxcon
 The maximum number of concurrent connections to allow.
 .Ar maxcon
-may not exceed 800 (the default).
+may not exceed kern.maxfiles - 200, and defaults to 800.
 .It Fl d
 Debug mode.
 .Nm
