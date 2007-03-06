@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.h,v 1.8 2007/03/04 03:19:41 beck Exp $	*/
+/*	$OpenBSD: grey.h,v 1.9 2007/03/06 23:38:36 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -24,6 +24,7 @@
 #define PATH_PFCTL "/sbin/pfctl"
 #define PATH_SPAMD_ALLOWEDDOMAINS "/etc/mail/spamd.alloweddomains"
 #define DB_SCAN_INTERVAL 60
+#define DB_TRAP_INTERVAL 60 * 10
 #define PATH_SPAMD_DB "/var/db/spamd"
 
 struct gdata {
@@ -35,4 +36,4 @@ struct gdata {
 };
 
 extern int greywatcher(void);
-extern int greyupdate(char *, char *, char *, char *, char *, int);
+extern int greyupdate(char *, char *, char *, char *, char *, int, char *);

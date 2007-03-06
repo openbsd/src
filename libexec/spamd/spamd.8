@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.92 2007/03/06 09:00:13 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.93 2007/03/06 23:38:36 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -40,6 +40,7 @@
 .Oc
 .Op Fl h Ar hostname
 .Op Fl l Ar address
+.Op Fl M Ar address
 .Op Fl n Ar name
 .Op Fl p Ar port
 .Op Fl S Ar secs
@@ -151,6 +152,10 @@ is to
 By default
 .Nm
 listens on all local addresses.
+.It Fl M Ar address
+Specify a local address which is listed as a low priority
+MX record, used to identify and trap hosts that connect to MX
+hosts out of order. See GREYTRAPPING below for details.
 .It Fl n Ar name
 The SMTP version banner that is reported upon initial connection.
 .It Fl p Ar port
@@ -387,6 +392,29 @@ However the addresses
 or
 .Em bigbutts@bofh.ucs.ualberta.ca
 would cause the sending host to be trapped.
+.Pp
+A low priority MX ip address may be specified with the -M option. 
+When
+.Nm
+has such an address specified, no host may enter new greylist
+tuples when connecting to this address, only existing entries
+may be updated. Any host attempting to make new deliveries to
+the low priority MX for which a tuple has not previously
+been seen will be trapped. 
+.Pp
+Note that is is important to ensure that a host running
+.Nm
+with the low priorty MX address active must see all the greylist
+changes for a higher priority MX host for the same domains, either by
+being synchonised with it, or by receiving the connections itself to
+the higher priority MX on another ip address.
+This will ensure that hosts are not trapped erroneously if the higher
+priority MX is unavailable.
+For example, on a host which is an existing MX record for a domain of
+value 10, A second IP address with MX of value 99 (a higher number, and
+therfore lower priority) would ensure that any RFC conformant client
+would attempt delivery to the IP address with the MX value of 10
+first, and should not attempt to deliver to the address with MV value 99. 
 .Sh BLACKLISTING
 The normal way that spam has been dealt with in the past is to either
 accept and drop, or outright block.

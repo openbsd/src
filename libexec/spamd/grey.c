@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.33 2007/03/05 15:09:01 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.34 2007/03/06 23:38:36 beck Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -53,6 +53,14 @@ extern FILE *grey;
 extern int debug;
 extern int syncsend;
 
+/* From netinet/in.h, but only _KERNEL_ gets them. */
+#define satosin(sa)	((struct sockaddr_in *)(sa))
+#define satosin6(sa)	((struct sockaddr_in6 *)(sa))
+int server_lookup4(struct sockaddr_in *, struct sockaddr_in *,
+    struct sockaddr_in *);
+int server_lookup6(struct sockaddr_in6 *, struct sockaddr_in6 *,
+    struct sockaddr_in6 *);
+
 size_t whitecount, whitealloc;
 size_t trapcount, trapalloc;
 char **whitelist;
@@ -86,6 +94,8 @@ struct mail_addr {
 /* list of suffixes that must match TO: */
 SLIST_HEAD(, mail_addr) match_suffix = SLIST_HEAD_INITIALIZER(match_suffix);
 char *alloweddomains_file = PATH_SPAMD_ALLOWEDDOMAINS;
+
+char *low_prio_mx_ip;
 
 static char *pargv[11]= {
 	"pfctl", "-p", "/dev/pf", "-q", "-t",
@@ -122,6 +132,80 @@ configure_spamd(char **addrs, int count, FILE *sdc)
 	if (fflush(sdc) == EOF)
 		syslog_r(LOG_DEBUG, &sdata, "configure_spamd: fflush failed (%m)");
 	return(0);
+}
+
+
+/* Stolen from ftp-proxy */
+int
+server_lookup(struct sockaddr *client, struct sockaddr *proxy,
+    struct sockaddr *server)
+{
+	if (client->sa_family == AF_INET)
+		return (server_lookup4(satosin(client), satosin(proxy),
+		    satosin(server)));
+	
+	if (client->sa_family == AF_INET6)
+		return (server_lookup6(satosin6(client), satosin6(proxy),
+		    satosin6(server)));
+
+	errno = EPROTONOSUPPORT;
+	return (-1);
+}
+
+int
+server_lookup4(struct sockaddr_in *client, struct sockaddr_in *proxy,
+    struct sockaddr_in *server)
+{
+	struct pfioc_natlook pnl;
+
+	memset(&pnl, 0, sizeof pnl);
+	pnl.direction = PF_OUT;
+	pnl.af = AF_INET;
+	pnl.proto = IPPROTO_TCP;
+	memcpy(&pnl.saddr.v4, &client->sin_addr.s_addr, sizeof pnl.saddr.v4);
+	memcpy(&pnl.daddr.v4, &proxy->sin_addr.s_addr, sizeof pnl.daddr.v4);
+	pnl.sport = client->sin_port;
+	pnl.dport = proxy->sin_port;
+	
+	if (ioctl(pfdev, DIOCNATLOOK, &pnl) == -1)
+		return (-1);
+
+	memset(server, 0, sizeof(struct sockaddr_in));
+	server->sin_len = sizeof(struct sockaddr_in);
+	server->sin_family = AF_INET;
+	memcpy(&server->sin_addr.s_addr, &pnl.rdaddr.v4,
+	    sizeof server->sin_addr.s_addr);
+	server->sin_port = pnl.rdport;
+		
+	return (0);
+}
+
+int
+server_lookup6(struct sockaddr_in6 *client, struct sockaddr_in6 *proxy,
+    struct sockaddr_in6 *server)
+{
+	struct pfioc_natlook pnl;
+
+	memset(&pnl, 0, sizeof pnl);
+	pnl.direction = PF_OUT;
+	pnl.af = AF_INET6;
+	pnl.proto = IPPROTO_TCP;
+	memcpy(&pnl.saddr.v6, &client->sin6_addr.s6_addr, sizeof pnl.saddr.v6);
+	memcpy(&pnl.daddr.v6, &proxy->sin6_addr.s6_addr, sizeof pnl.daddr.v6);
+	pnl.sport = client->sin6_port;
+	pnl.dport = proxy->sin6_port;
+	
+	if (ioctl(pfdev, DIOCNATLOOK, &pnl) == -1)
+		return (-1);
+
+	memset(server, 0, sizeof(struct sockaddr_in6));
+	server->sin6_len = sizeof(struct sockaddr_in6);
+	server->sin6_family = AF_INET6;
+	memcpy(&server->sin6_addr.s6_addr, &pnl.rdaddr.v6,
+	    sizeof server->sin6_addr);
+	server->sin6_port = pnl.rdport;
+
+	return (0);
 }
 
 int
@@ -636,6 +720,9 @@ twupdate(char *dbname, char *what, char *ip, char *source, char *expires)
 		if (debug)
 			fprintf(stderr, "added %s %s\n",
 			    spamtrap ? "trap entry for" : "", ip);
+		syslog_r(LOG_DEBUG, &sdata,
+		    "New %s from %s for %s, expires %s", what, source, ip,
+		    expires);
 	} else {
 		/* existing entry */
 		if (dbd.size != sizeof(gd)) {
@@ -664,8 +751,6 @@ twupdate(char *dbname, char *what, char *ip, char *source, char *expires)
 			fprintf(stderr, "updated %s\n", ip);
 	}
 	db->close(db);
-	syslog_r(LOG_DEBUG, &sdata, "Update from %s for %s %s, expires %s",
-	    source, what, ip, expires);
 	return(0);
  bad:
 	db->close(db);
@@ -674,7 +759,8 @@ twupdate(char *dbname, char *what, char *ip, char *source, char *expires)
 }
 
 int
-greyupdate(char *dbname, char *helo, char *ip, char *from, char *to, int sync)
+greyupdate(char *dbname, char *helo, char *ip, char *from, char *to, int sync,
+    char *cip)
 {
 	HASHINFO	hashinfo;
 	DBT		dbk, dbd;
@@ -721,6 +807,19 @@ greyupdate(char *dbname, char *helo, char *ip, char *from, char *to, int sync)
 		goto bad;
 	if (r) {
 		/* new entry */
+		if (sync && low_prio_mx_ip && (strcmp(cip, low_prio_mx_ip) == 0)) {
+			/* we haven't seen a greylist entry for this tuple, 
+			 * and yet the connection was to a low priority MX
+			 * which we know can't be hit first if the client
+			 * is adhering to the RFC's - soo.. kill it!
+			 */
+			spamtrap = 1;
+			lookup = ip;
+			expire = trapexp;
+			syslog_r(LOG_DEBUG, &sdata,
+			    "Trapping %s for trying %s first for tuple %s",
+			    ip, low_prio_mx_ip, key);
+		}
 		memset(&gd, 0, sizeof(gd));
 		gd.first = now;
 		gd.bcount = 1;
@@ -773,8 +872,11 @@ greyupdate(char *dbname, char *helo, char *ip, char *from, char *to, int sync)
 
 	/* Entry successfully update, sent out sync message */
 	if (syncsend && sync) {
-		if (spamtrap)
+		if (spamtrap) {
+			syslog_r(LOG_DEBUG, &sdata,
+			    "sync_trap %s", ip);
 			sync_trapped(now, now + expire, ip);
+		}
 		else
 			sync_update(now, helo, ip, from, to);
 	}
@@ -813,7 +915,8 @@ twread(char *buf)
 int
 greyreader(void)
 {
-	char ip[32], helo[MAX_MAIL], from[MAX_MAIL], to[MAX_MAIL], *buf;
+	char cip[32], ip[32], helo[MAX_MAIL], from[MAX_MAIL], to[MAX_MAIL];
+	char *buf;
 	size_t len;
 	int state, sync;
 	struct addrinfo hints, *res;
@@ -855,6 +958,8 @@ greyreader(void)
 				break;
 			}
 			if (strncmp(buf, "HE:", 3) != 0) {
+				if (strncmp(buf, "CO:", 3) == 0)
+					strlcpy(cip, buf+3, sizeof(cip));
 				state = 0;
 				break;
 			}
@@ -889,7 +994,7 @@ greyreader(void)
 				fprintf(stderr,
 				    "Got Grey HELO %s, IP %s from %s to %s\n",
 				    helo, ip, from, to);
-			greyupdate(PATH_SPAMD_DB, helo, ip, from, to, sync);
+			greyupdate(PATH_SPAMD_DB, helo, ip, from, to, sync, cip);
 			sync = 1;
 			state = 0;
 			break;
@@ -1044,12 +1149,6 @@ greywatcher(void)
 {
 	struct sigaction sa;
 
-	pfdev = open("/dev/pf", O_RDWR);
-	if (pfdev == -1) {
-		syslog_r(LOG_ERR, &sdata, "open of /dev/pf failed (%m)");
-		exit(1);
-	}
-
 	check_spamd_db();
 
 	db_pid = fork();
@@ -1069,11 +1168,13 @@ greywatcher(void)
 		_exit(1);
 	}
 
+
+	fclose(grey);
 	/*
 	 * parent, scans db periodically for changes and updates
 	 * pf whitelist table accordingly.
 	 */
-	fclose(grey);
+
 	sigfillset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = sig_term_chld;

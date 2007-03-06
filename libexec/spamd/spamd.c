@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.96 2007/03/06 01:59:43 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.97 2007/03/06 23:38:36 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -50,6 +50,9 @@
 #include "grey.h"
 #include "sync.h"
 
+extern int server_lookup(struct sockaddr *, struct sockaddr *,
+    struct sockaddr *);
+
 struct con {
 	int fd;
 	int state;
@@ -58,6 +61,7 @@ struct con {
 	struct sockaddr_storage ss;
 	void *ia;
 	char addr[32];
+	char caddr[32];
 	char helo[MAX_MAIL], mail[MAX_MAIL], rcpt[MAX_MAIL];
 	struct sdlist **blacklists;
 
@@ -119,6 +123,8 @@ u_short cfg_port;
 u_short sync_port;
 
 extern struct sdlist *blacklists;
+extern int pfdev;
+extern char *low_prio_mx_ip; 
 
 int conffd = -1;
 int trapfd = -1;
@@ -557,6 +563,31 @@ setlog(char *p, size_t len, char *f)
 		*s = '\0';
 }
 
+/* 
+ * Get address client connected to, by doing a DIOCNATLOOK call.
+ * Uses server_lookup code from ftp-proxy.
+ */
+void
+getcaddr(struct con *cp) {
+	struct sockaddr_storage spamd_end;
+	struct sockaddr *sep = (struct sockaddr *) &spamd_end;
+	struct sockaddr_storage original_destination;
+	struct sockaddr *odp = (struct sockaddr *) &original_destination;
+	socklen_t len = sizeof(struct sockaddr_storage);
+	int error;
+
+	cp->caddr[0] = '\0';
+	if (getsockname(cp->fd, sep, &len) == -1)
+		return;
+	if (server_lookup((struct sockaddr *)&cp->ss, sep, odp) != 0)
+		return;
+	error = getnameinfo(odp, odp->sa_len, cp->caddr, sizeof(cp->caddr),
+	    NULL, 0, NI_NUMERICHOST);
+	if (error) 
+		cp->caddr[0] = '\0';
+}
+	
+
 void
 gethelo(char *p, size_t len, char *f)
 {
@@ -779,10 +810,11 @@ nextstate(struct con *cp)
 					    cp->addr, cp->mail, cp->rcpt);
 				if (greylist && cp->blacklists == NULL) {
 					/* send this info to the greylister */
+					getcaddr(cp);
 					fprintf(grey,
-					    "HE:%s\nIP:%s\nFR:%s\nTO:%s\n",
-					    cp->helo, cp->addr, cp->mail,
-					    cp->rcpt);
+					    "CO:%s\nHE:%s\nIP:%s\nFR:%s\nTO:%s\n",
+					    cp->caddr, cp->helo, cp->addr,
+					    cp->mail, cp->rcpt);
 					fflush(grey);
 				}
 			}
@@ -1018,7 +1050,7 @@ main(int argc, char *argv[])
 	if (maxblack > maxfiles)
 		maxblack = maxfiles;
 	while ((ch =
-	    getopt(argc, argv, "45l:c:B:p:bdG:h:r:s:S:n:vw:y:Y:")) != -1) {
+	    getopt(argc, argv, "45l:c:B:p:bdG:h:r:s:S:M:n:vw:y:Y:")) != -1) {
 		switch (ch) {
 		case '4':
 			nreply = "450";
@@ -1081,6 +1113,9 @@ main(int argc, char *argv[])
 			if (errstr)
 				usage();
 			grey_stutter = i;
+			break;
+		case 'M':
+			low_prio_mx_ip = optarg;
 			break;
 		case 'n':
 			spamd = optarg;
@@ -1190,6 +1225,12 @@ main(int argc, char *argv[])
 	}
 
 	if (greylist) {
+		pfdev = open("/dev/pf", O_RDWR);
+		if (pfdev == -1) {
+			syslog_r(LOG_ERR, &sdata, "open /dev/pf: %m");
+			exit(1);
+		}
+
 		maxblack = (maxblack >= maxcon) ? maxcon - 100 : maxblack;
 		if (maxblack < 0)
 			maxblack = 0;
