@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.82 2007/03/04 17:41:40 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.83 2007/03/06 16:52:48 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -800,6 +800,8 @@ is one of the following operators:
 .Bl -tag -width transmit-as -compact
 .It Ic AS
 (any part)
+.It Ic peer-as
+(leftmost AS number)
 .It Ic source-as
 (rightmost AS number)
 .It Ic transit-as

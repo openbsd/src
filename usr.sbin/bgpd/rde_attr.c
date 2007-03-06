@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.69 2007/02/22 08:34:18 henning Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.70 2007/03/06 16:52:48 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -671,7 +671,7 @@ int
 aspath_match(struct aspath *a, enum as_spec type, u_int16_t as)
 {
 	u_int8_t	*seg;
-	int		 final;
+	int		 final, first;
 	u_int16_t	 len, seg_size;
 	u_int8_t	 i, seg_type, seg_len;
 
@@ -683,6 +683,7 @@ aspath_match(struct aspath *a, enum as_spec type, u_int16_t as)
 	}
 
 	final = 0;
+	first = 1;
 	seg = a->data;
 	for (len = a->len; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
@@ -695,9 +696,14 @@ aspath_match(struct aspath *a, enum as_spec type, u_int16_t as)
 			/* not yet in the final segment */
 			continue;
 
-		for (i = 0; i < seg_len; i++)
+		for (i = 0; i < seg_len; i++) {
 			if (as == aspath_extract(seg, i)) {
-				if (final && i + 1 >= seg_len)
+				if (type == AS_PEER) {
+					if (first)
+						return (1);
+					else
+						return (0);
+				} else if (final && i + 1 >= seg_len)
 					/* the final (rightmost) as */
 					if (type == AS_TRANSIT)
 						return (0);
@@ -706,6 +712,8 @@ aspath_match(struct aspath *a, enum as_spec type, u_int16_t as)
 				else if (type != AS_SOURCE)
 					return (1);
 			}
+			first = 0;
+		}
 	}
 	return (0);
 }

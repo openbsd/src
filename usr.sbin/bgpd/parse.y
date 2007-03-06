@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.200 2007/02/22 08:34:18 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.201 2007/03/06 16:52:48 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -163,7 +163,7 @@ typedef struct {
 %token	QUICK
 %token	FROM TO ANY
 %token	CONNECTED STATIC
-%token	PREFIX PREFIXLEN SOURCEAS TRANSITAS COMMUNITY DELETE
+%token	PREFIX PREFIXLEN SOURCEAS TRANSITAS PEERAS COMMUNITY DELETE
 %token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY SELF
 %token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL
 %token	ERROR INCLUDE
@@ -1293,6 +1293,7 @@ prefixlenop	: unaryop number		{
 filter_as_type	: AS		{ $$ = AS_ALL; }
 		| SOURCEAS	{ $$ = AS_SOURCE; }
 		| TRANSITAS	{ $$ = AS_TRANSIT; }
+		| PEERAS	{ $$ = AS_PEER; }
 		;
 
 filter_set	: /* empty */					{ $$ = NULL; }
@@ -1660,6 +1661,7 @@ lookup(char *s)
 		{ "out",		OUT},
 		{ "passive",		PASSIVE},
 		{ "password",		PASSWORD},
+		{ "peer-as",		PEERAS},
 		{ "pftable",		PFTABLE},
 		{ "prefix",		PREFIX},
 		{ "prefixlen",		PREFIXLEN},
