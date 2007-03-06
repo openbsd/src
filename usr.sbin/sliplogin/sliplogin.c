@@ -35,7 +35,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.25 2004/09/14 22:29:04 deraadt Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.26 2007/03/06 03:22:11 ray Exp $";
 #endif /* not lint */
 
 /*
@@ -117,7 +117,7 @@ findid(char *name)
 		syslog(LOG_ERR, "%s: %m", _PATH_ACCESS);
 		err(1, "%s", _PATH_ACCESS);
 	}
-	while (fgets(loginargs, sizeof(loginargs) - 1, fp)) {
+	while (fgets(loginargs, sizeof(loginargs), fp)) {
 		if (ferror(fp))
 			break;
 		if ((p = strchr(loginargs, '#')))

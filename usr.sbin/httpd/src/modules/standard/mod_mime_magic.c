@@ -931,13 +931,13 @@ static int apprentice(server_rec *s, pool *p)
     conf->magic = conf->last = NULL;
 
     /* parse it */
-    for (lineno = 1; fgets(line, BUFSIZ, f) != NULL; lineno++) {
+    for (lineno = 1; fgets(line, sizeof(line), f) != NULL; lineno++) {
 	int ws_offset;
+	char *p;
 
 	/* delete newline */
-	if (line[0]) {
-	    line[strlen(line) - 1] = '\0';
-	}
+	if ((p = strchr(line, '\n')) != NULL)
+	    *p = '\0';
 
 	/* skip leading whitespace */
 	ws_offset = 0;
