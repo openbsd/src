@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.69 2007/03/06 05:40:34 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.70 2007/03/06 05:59:21 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -405,7 +405,7 @@ int			ahci_port_clo(struct ahci_port *);
 int			ahci_port_portreset(struct ahci_port *);
 int			ahci_port_softreset(struct ahci_port *);
 
-int			ahci_load_prdt(struct ahci_ccb *, struct ata_xfer *);
+int			ahci_load_prdt(struct ahci_ccb *);
 int			ahci_start(struct ahci_ccb *);
 
 int			ahci_intr(void *);
@@ -827,8 +827,10 @@ nomem:
 		    ccb->ccb_slot * sizeof(struct ahci_cmd_hdr);
 		ccb->ccb_cmd_table = AHCI_DMA_KVA(ap->ap_dmamem_cmd_table) +
 		    ccb->ccb_slot * sizeof(struct ahci_cmd_table);
-		ccb->ccb_cmd_table_dva = AHCI_DMA_DVA(ap->ap_dmamem_cmd_table) +
+		dva = AHCI_DMA_DVA(ap->ap_dmamem_cmd_table) +
 		    ccb->ccb_slot * sizeof(struct ahci_cmd_table);
+		ccb->ccb_cmd_hdr->ctba_hi = htole32((u_int32_t)(dva >> 32));
+		ccb->ccb_cmd_hdr->ctba_lo = htole32((u_int32_t)dva);
 
 		ahci_put_ccb(ap, ccb);
 	}
@@ -1062,12 +1064,13 @@ ahci_port_softreset(struct ahci_port *ap)
 	fis[0] = 0x27;	/* Host to device */
 	fis[15] = 0x04;	/* SRST DEVCTL */
 
+	if (ahci_load_prdt(ccb))
+		goto err;
+
 	cmd_slot->flags = htole16(5);	/* FIS length: 5 DWORDS */
 	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_C); /* Clear busy on OK */
 	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_R); /* Reset */
 	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W); /* Write */
-	cmd_slot->ctba_hi = htole32((u_int32_t)(ccb->ccb_cmd_table_dva >> 32));
-	cmd_slot->ctba_lo = htole32((u_int32_t)ccb->ccb_cmd_table_dva);
 
 	if (ahci_start(ccb) != ATA_COMPLETE)
 		goto err;
@@ -1082,10 +1085,11 @@ ahci_port_softreset(struct ahci_port *ap)
 	fis = ccb->ccb_cmd_table->cfis;
 	fis[0] = 0x27;	/* Host to device */
 
+	if (ahci_load_prdt(ccb))
+		goto err;
+
 	cmd_slot->flags = htole16(5);	/* FIS length: 5 DWORDS */
 	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
-	cmd_slot->ctba_hi = htole32((u_int32_t)(ccb->ccb_cmd_table_dva >> 32));
-	cmd_slot->ctba_lo = htole32((u_int32_t)ccb->ccb_cmd_table_dva);
 
 	if (ahci_start(ccb) != ATA_COMPLETE)
 		goto err;
@@ -1100,8 +1104,11 @@ ahci_port_softreset(struct ahci_port *ap)
 
 	rc = 0;
 err:
-	if (ccb != NULL)
+	if (ccb != NULL) {
+		s = splbio();
 		ahci_put_ccb(ap, ccb);
+		splx(s);
+	}
 
 	/* Restore saved CMD register state */
 	ahci_pwrite(ap, AHCI_PREG_CMD, cmd);
@@ -1162,18 +1169,21 @@ err:
 }
 
 int
-ahci_load_prdt(struct ahci_ccb *ccb, struct ata_xfer *xa)
+ahci_load_prdt(struct ahci_ccb *ccb)
 {
 	struct ahci_port		*ap = ccb->ccb_port;
 	struct ahci_softc		*sc = ap->ap_sc;
+	struct ata_xfer			*xa = ccb->ccb_xa;
 	struct ahci_prdt		*prdt = ccb->ccb_cmd_table->prdt, *prd;
 	bus_dmamap_t			dmap = ccb->ccb_dmamap;
-	struct ahci_cmd_hdr		*cmd_slot;
+	struct ahci_cmd_hdr		*cmd_slot = ccb->ccb_cmd_hdr;
 	u_int64_t			addr;
 	int				i, error;
 
-	if (xa->datalen == 0)
+	if (xa->datalen == 0) {
+		ccb->ccb_cmd_hdr->prdtl = 0;
 		return (0);
+	}
 
 	error = bus_dmamap_load(sc->sc_dmat, dmap,
 	    xa->data, xa->datalen, NULL,
@@ -1189,14 +1199,27 @@ ahci_load_prdt(struct ahci_ccb *ccb, struct ata_xfer *xa)
 		addr = dmap->dm_segs[i].ds_addr;
 		prd->dba_hi = htole32((u_int32_t)(addr >> 32));
 		prd->dba_lo = htole32((u_int32_t)addr);
-
+#ifdef DIAGNOSTIC
+		if (addr & 1) {
+			printf("%s: requested DMA at an odd address %llx\n",
+			    PORTNAME(ap), (unsigned long long)addr);
+			return (1);
+		}
+		if (dmap->dm_segs[i].ds_len & 1) {
+			printf("%s: requested DMA length %d is not even\n",
+			    PORTNAME(ap), dmap->dm_segs[i].ds_len);
+			return (1);
+		}
+		if (dmap->dm_segs[i].ds_len > 0x1fffff) {
+			printf("%s: requested DMA length %d is too long\n",
+			    PORTNAME(ap), dmap->dm_segs[i].ds_len);
+		}
+#endif
 		prd->flags = htole32(dmap->dm_segs[i].ds_len - 1);
 	}
 	prd->flags |= htole32(AHCI_PRDT_FLAG_INTR);
 
-	cmd_slot = ccb->ccb_cmd_hdr;
-	cmd_slot->prdtl = htole16(ccb->ccb_dmamap->dm_nsegs);
-	cmd_slot->prdbc = 0;
+	cmd_slot->prdtl = htole16(dmap->dm_nsegs);
 
 	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    (xa->flags & ATA_F_READ) ? BUS_DMASYNC_PREREAD :
@@ -1212,6 +1235,9 @@ ahci_start(struct ahci_ccb *ccb)
 	struct ahci_softc		*sc = ap->ap_sc;
 	int				rc = ATA_QUEUED;
 	int				s;
+
+	/* Zero transferred byte count before transfer */
+	ccb->ccb_cmd_hdr->prdbc = 0;
 
 	/* Sync command list entry and corresponding command table entry */
 	bus_dmamap_sync(sc->sc_dmat, AHCI_DMA_MAP(ap->ap_dmamem_cmd_list),
@@ -1264,7 +1290,6 @@ ahci_get_ccb(struct ahci_port *ap)
 void
 ahci_put_ccb(struct ahci_port *ap, struct ahci_ccb *ccb)
 {
-	/* scrub bits */
 	TAILQ_INSERT_TAIL(&ap->ap_ccb_free, ccb, ccb_entry);
 }
 
@@ -1453,7 +1478,6 @@ ahci_ata_cmd(void *xsc, struct ata_xfer *xa)
 
 	ccb->ccb_xa = xa;
 	cmd_slot = ccb->ccb_cmd_hdr;
-	bzero(cmd_slot, sizeof(struct ahci_cmd_hdr));
 	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
 
 	fis = ccb->ccb_cmd_table->cfis;
@@ -1478,7 +1502,7 @@ ahci_ata_cmd(void *xsc, struct ata_xfer *xa)
 	fis[18] = 0;
 	fis[19] = 0;
 
-	if (ahci_load_prdt(ccb, xa) != 0) {
+	if (ahci_load_prdt(ccb) != 0) {
 		s = splbio();
 		ahci_put_ccb(ap, ccb);
 		splx(s);
@@ -1488,8 +1512,6 @@ ahci_ata_cmd(void *xsc, struct ata_xfer *xa)
 	cmd_slot->flags = htole16(5); /* FIS length (in DWORDs) */
 	if (xa->flags & ATA_F_WRITE)
 		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
-	cmd_slot->ctba_hi = htole32((u_int32_t)(ccb->ccb_cmd_table_dva >> 32));
-	cmd_slot->ctba_lo = htole32((u_int32_t)ccb->ccb_cmd_table_dva);
 
 	return (ahci_start(ccb));
 }
