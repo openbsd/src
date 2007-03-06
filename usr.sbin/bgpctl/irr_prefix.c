@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_prefix.c,v 1.12 2007/03/05 22:10:50 henning Exp $ */
+/*	$OpenBSD: irr_prefix.c,v 1.13 2007/03/06 00:27:33 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -75,16 +76,25 @@ prefixset_addmember(char *s)
 	struct irr_prefix	*pfx;
 	int			 len;
 
-	if (strchr(s, '/') == NULL)
-		errx(1, "prefix %s does not have the len specified", s);
+	if (strchr(s, '/') == NULL) {
+		fprintf(stderr, "%s: prefix %s does not have the len "
+		    "specified, ignoring\n", curpfxs->as, s);
+		return (0);
+	}
 
 	if ((pfx = calloc(1, sizeof(*pfx))) == NULL)
 		err(1, "prefixset_addmember calloc");
 
 	if ((len = inet_net_pton(AF_INET, s, &pfx->addr.in,
-	    sizeof(pfx->addr.in))) == -1)
-		err(1, "prefixset_addmember %s inet_net_pton \"%s\"",
-		    curpfxs->as, s);
+	    sizeof(pfx->addr.in))) == -1) {
+		if (errno == ENOENT) {
+			fprintf(stderr, "%s: prefix \"%s\": parse error\n",
+			    curpfxs->as, s);
+			return (0);
+		} else
+			err(1, "prefixset_addmember %s inet_net_pton \"%s\"",
+			    curpfxs->as, s);
+	}
 
 	pfx->af = AF_INET;
 	pfx->len = len;
