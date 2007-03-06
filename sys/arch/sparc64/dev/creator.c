@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.38 2006/12/17 22:18:16 miod Exp $	*/
+/*	$OpenBSD: creator.c,v 1.39 2007/03/06 23:10:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -240,6 +240,9 @@ creator_ioctl(v, cmd, data, flags, p)
 		wdf->width  = sc->sc_sunfb.sf_width;
 		wdf->depth  = 32;
 		wdf->cmsize = 0;
+		break;
+	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
+		*(u_int *)data = WSDISPLAYIO_DEPTH_24_32;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
