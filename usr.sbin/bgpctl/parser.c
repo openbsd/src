@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.39 2007/03/03 11:45:30 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.40 2007/03/07 11:55:54 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -133,6 +133,7 @@ static const struct token t_show_rib[] = {
 	{ ASTYPE,	"as",		AS_ALL,		t_show_as},
 	{ ASTYPE,	"source-as",	AS_SOURCE,	t_show_as},
 	{ ASTYPE,	"transit-as",	AS_TRANSIT,	t_show_as},
+	{ ASTYPE,	"peer-as",	AS_PEER,	t_show_as},
 	{ ASTYPE,	"empty-as",	AS_EMPTY,	t_show_rib},
 	{ FLAG,		"detail",	F_CTL_DETAIL,	t_show_rib},
 	{ FLAG,		"in",		F_CTL_ADJ_IN,	t_show_rib},

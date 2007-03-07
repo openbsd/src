@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.41 2007/03/03 23:18:19 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.42 2007/03/07 11:55:54 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -181,6 +181,10 @@ as rightmost AS.
 Show all entries with
 .Ar as
 anywhere but rightmost.
+.It Cm peer-as Ar as
+Show all entries with
+.Ar as
+as leftmost AS.
 .It Cm empty-as
 Show all entries that are internal routes with no AS's in the AS path.
 .It Cm neighbor Ar peer
