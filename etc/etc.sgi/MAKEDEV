@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.sgi/MAKEDEV.md,v 1.12 2006/04/16 11:34:02 todd Exp 
-#	OpenBSD: MAKEDEV.common,v 1.32 2007/02/16 02:16:20 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.33 2007/03/07 02:51:17 krw Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -244,7 +244,7 @@ pf*)
 
 pci*)
 	M pci$U	c 29 $U 600
-	MKlist[${#MKlist[*]}]=";[ -e pci ] || ln -s pci0 pci"
+	MKlist[${#MKlist[*]}]=";[ -h pci ] || ln -sf pci0 pci"
 	;;
 
 fd)

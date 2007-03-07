@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.zaurus/MAKEDEV.md,v 1.9 2006/07/25 20:22:27 kettenis Exp 
-#	OpenBSD: MAKEDEV.common,v 1.32 2007/02/16 02:16:20 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.33 2007/03/07 02:51:17 krw Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
