@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.17 2007/03/07 00:09:46 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.18 2007/03/07 11:24:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -37,7 +37,7 @@ sub create_device($)
 	my $dev = shift;
 	my $n = $devinfo->{$dev};
 	if (!defined $n) {
-		$n = { dev => $dev, used => 0, problems => 0 };
+		$n = { dev => $dev, used => 0, delayed => 0, problems => 0 };
 		bless $n, "OpenBSD::Vstat::MountPoint";
 		$devinfo->{$dev} = $n;
 	}
@@ -143,6 +143,22 @@ sub account_for($$)
 	return $e;
 }
 
+sub account_later($$)
+{
+	my ($name, $size) = @_;
+	my $e = filestat($name);
+	$e->{delayed} += $size;
+	return $e;
+}
+
+sub synchronize
+{
+	while (my ($k, $v) = each %$devinfo) {
+		$v->{used} += $v->{delayed};
+		$v->{delayed} = 0;
+	}
+}
+
 sub add($$;$)
 {
 	my ($name, $size, $value) = @_;
@@ -158,7 +174,7 @@ sub remove($$)
 {
 	my ($name, $size) = @_;
 	$virtual->{$name} = 0;
-	return defined($size) ? account_for($name, -$size) : undef;
+	return defined($size) ? account_later($name, -$size) : undef;
 }
 
 sub tally()

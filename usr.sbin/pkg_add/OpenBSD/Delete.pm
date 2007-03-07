@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.33 2006/10/18 16:40:40 sturm Exp $
+# $OpenBSD: Delete.pm,v 1.34 2007/03/07 11:24:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -147,6 +147,7 @@ sub delete_package
 	}
 
 	validate_plist($plist, $state);
+	OpenBSD::Vstat::synchronize();
 
 	delete_plist($plist, $state);
 }

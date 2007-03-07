@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.223 2007/03/07 00:09:46 espie Exp $
+# $OpenBSD: pkg_add,v 1.224 2007/03/07 11:24:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -281,6 +281,7 @@ sub really_add($$)
 	    print "\n";
 	}
 	my $totsize = OpenBSD::Add::validate_plist($plist, $state);
+	OpenBSD::Vstat::synchronize();
 
 	if (!defined $handle) {
 		Fatal "Archive in $pkgname broken";
