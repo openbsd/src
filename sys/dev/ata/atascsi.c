@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.10 2007/03/06 12:25:00 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.11 2007/03/07 03:04:28 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -369,6 +369,7 @@ atascsi_disk_inq_done(struct ata_xfer *xa)
 
 	bcopy(&inq, xs->data, MIN(sizeof(inq), xs->datalen));
 	xs->error = XS_NOERROR;
+	xs->flags |= ITSDONE;
 
 	scsi_done(xs);
 }
@@ -427,6 +428,7 @@ atascsi_disk_capacity_done(struct ata_xfer *xa)
 
 	bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
 	xs->error = XS_NOERROR;
+	xs->flags |= ITSDONE;
 
 	scsi_done(xs);
 }
@@ -443,6 +445,8 @@ atascsi_disk_sense(struct scsi_xfer *xs)
 	sd->flags = SKEY_NO_SENSE;
 
 	xs->error = XS_NOERROR;
+	xs->flags |= ITSDONE;
+
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
@@ -462,6 +466,8 @@ atascsi_stuffup(struct scsi_xfer *xs)
 	int			s;
 
 	xs->error = XS_DRIVER_STUFFUP;
+	xs->flags |= ITSDONE;
+
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
