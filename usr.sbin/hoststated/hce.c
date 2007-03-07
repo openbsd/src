@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.17 2007/03/06 19:37:31 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.18 2007/03/07 17:40:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -141,7 +141,7 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	    ibuf_main->handler, ibuf_main);
 	event_add(&ibuf_main->ev, NULL);
 
-	if (!TAILQ_EMPTY(&env->services)) {
+	if (!TAILQ_EMPTY(&env->tables)) {
 		evtimer_set(&env->ev, hce_launch_checks, env);
 		bzero(&tv, sizeof(tv));
 		evtimer_add(&env->ev, &tv);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.17 2007/03/06 19:26:46 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.18 2007/03/07 17:40:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1723,6 +1723,7 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 	struct host		*host;
 	struct table		*table;
 	struct ctl_status	 st;
+	objid_t			 id;
 
 	ibuf = ptr;
 	switch (event) {
@@ -1748,13 +1749,32 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_HOST_DISABLE:
+			memcpy(&id, imsg.data, sizeof(id));
+			if ((host = host_find(env, id)) == NULL)
+				fatalx("relay_dispatch_pfe: desynchronized");
+			if ((table = table_find(env, host->tableid)) == NULL)
+				fatalx("relay_dispatch_pfe: invalid table id");
+			if (host->up == HOST_UP)
+				table->up--;
+			host->flags |= F_DISABLE;
+			host->up = HOST_UNKNOWN;
+			break;
+		case IMSG_HOST_ENABLE:
+			memcpy(&id, imsg.data, sizeof(id));
+			if ((host = host_find(env, id)) == NULL)
+				fatalx("relay_dispatch_pfe: desynchronized");
+			host->flags &= ~(F_DISABLE);
+			host->up = HOST_UNKNOWN;
+			break;
 		case IMSG_HOST_STATUS:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(st))
 				fatalx("relay_dispatch_pfe: invalid request");
 			memcpy(&st, imsg.data, sizeof(st));
 			if ((host = host_find(env, st.id)) == NULL)
 				fatalx("relay_dispatch_pfe: invalid host id");
-
+			if (host->flags & F_DISABLE)
+				break;
 			if (host->up == st.up) {
 				log_debug("relay_dispatch_pfe: host %d => %d",
 				    host->id, host->up);

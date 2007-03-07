@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.18 2007/02/26 16:10:24 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.19 2007/03/07 17:40:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -215,7 +215,8 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 			memcpy(&st, imsg.data, sizeof(st));
 			if ((host = host_find(env, st.id)) == NULL)
 				fatalx("pfe_dispatch_imsg: invalid host id");
-
+			if (host->flags & F_DISABLE)
+				break;
 			host->retry_cnt = st.retry_cnt;
 			if (st.up != HOST_UNKNOWN) {
 				host->check_cnt++;
@@ -416,6 +417,15 @@ show(struct ctl_conn *c)
 		    rlay, sizeof(*rlay));
 		imsg_compose(&c->ibuf, IMSG_CTL_STATISTICS, 0, 0,
 		    &rlay->stats, sizeof(rlay->stats));
+
+		if (rlay->dsttable == NULL)
+			continue;
+		imsg_compose(&c->ibuf, IMSG_CTL_TABLE, 0, 0,
+		    rlay->dsttable, sizeof(*rlay->dsttable));
+		if (!(rlay->dsttable->flags & F_DISABLE))
+			TAILQ_FOREACH(host, &rlay->dsttable->hosts, entry)
+				imsg_compose(&c->ibuf, IMSG_CTL_HOST, 0, 0,
+				    host, sizeof(*host));
 	}
 
 	imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, NULL, 0);
@@ -550,6 +560,7 @@ disable_host(struct ctl_conn *c, struct ctl_id *id)
 {
 	struct host	*host;
 	struct table	*table;
+	int		 n;
 
 	if (id->id == EMPTY_ID)
 		host = host_findbyname(env, id->name);
@@ -578,6 +589,10 @@ disable_host(struct ctl_conn *c, struct ctl_id *id)
 
 	imsg_compose(ibuf_hce, IMSG_HOST_DISABLE, 0, 0,
 	    &host->id, sizeof(host->id));
+	/* Forward to relay engine(s) */
+	for (n = 0; n < env->prefork_relay; n++)
+		imsg_compose(&ibuf_relay[n],
+		    IMSG_HOST_DISABLE, 0, 0, &host->id, sizeof(host->id));
 	log_debug("disable_host: disabled host %d", host->id);
 	pfe_sync();
 	return (0);
@@ -587,6 +602,7 @@ int
 enable_host(struct ctl_conn *c, struct ctl_id *id)
 {
 	struct host	*host;
+	int		 n;
 
 	if (id->id == EMPTY_ID)
 		host = host_findbyname(env, id->name);
@@ -606,6 +622,10 @@ enable_host(struct ctl_conn *c, struct ctl_id *id)
 
 	imsg_compose(ibuf_hce, IMSG_HOST_ENABLE, 0, 0,
 	    &host->id, sizeof (host->id));
+	/* Forward to relay engine(s) */
+	for (n = 0; n < env->prefork_relay; n++)
+		imsg_compose(&ibuf_relay[n],
+		    IMSG_HOST_ENABLE, 0, 0, &host->id, sizeof(host->id));
 	log_debug("enable_host: enabled host %d", host->id);
 	pfe_sync();
 	return (0);

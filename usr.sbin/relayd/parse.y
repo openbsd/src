@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.34 2007/03/06 19:26:46 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.35 2007/03/07 17:40:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -929,6 +929,7 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			rlay->dsttable = dsttable;
 			rlay->dstmode = $3;
 			rlay->dstcheck = $4;
+			rlay->dsttable->flags |= F_USED;
 		}
 		| PROTO STRING {
 			struct protocol *p;
