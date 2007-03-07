@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.96 2007/03/07 09:10:10 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.97 2007/03/07 21:35:25 millert Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -380,7 +380,8 @@ obtuse.com
 .Ed
 .Pp
 The following destination addresses
-would not cause the sending host to be trapped:
+.Em would not
+cause the sending host to be trapped:
 .Bd -literal -offset indent
 beardedclams@humpingforjesus.com
 beck@obtuse.com
@@ -388,7 +389,8 @@ beck@snouts.obtuse.com
 .Ed
 .Pp
 However the following addresses
-would cause the sending host to be trapped:
+.Em would
+cause the sending host to be trapped:
 .Bd -literal -offset indent
 peter@apostles.humpingforjesus.com
 bigbutts@bofh.ucs.ualberta.ca
@@ -411,7 +413,7 @@ Note that is is important to ensure that a host running
 with the low priority MX address active must see all the greylist
 changes for a higher priority MX host for the same domains, either by
 being synchronised with it, or by receiving the connections itself to
-the higher priority MX on another IP address.
+the higher priority MX on another IP address (which may be an IP alias).
 This will ensure that hosts are not trapped erroneously if the higher
 priority MX is unavailable.
 For example, on a host which is an existing MX record for a domain of
