@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.76 2007/02/03 20:08:50 miod Exp $
+#	$OpenBSD: files.sparc64,v 1.77 2007/03/07 06:23:02 miod Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -34,10 +34,6 @@ device	clkbrd
 attach	clkbrd at fhc
 file	arch/sparc64/dev/clkbrd.c		clkbrd
 
-device	pcons
-attach	pcons at mainbus
-file	arch/sparc64/dev/pcons.c		pcons needs-flag
-
 # Sun HME Ethernet controllers
 device	hme: ether, ifnet, mii, ifmedia
 file	dev/ic/hme.c			hme
@@ -51,6 +47,10 @@ file	arch/sparc64/dev/fb.c
 include	"dev/wscons/files.wscons"
 include	"dev/rasops/files.rasops"
 include	"dev/wsfont/files.wsfont"
+
+device	pcons: wsemuldisplaydev
+attach	pcons at mainbus
+file	arch/sparc64/dev/pcons.c		pcons needs-flag
 
 include	"dev/sbus/files.sbus"
 include	"dev/i2o/files.i2o"

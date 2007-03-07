@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.59 2007/02/25 22:29:41 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.60 2007/03/07 06:23:02 miod Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -30,6 +30,7 @@ option		BOOT_CONFIG	# add support for boot -c
 
 option		WSEMUL_SUN	# provide sun terminal emulation; required
 option		WSEMUL_NO_VT100	# do not provide vt100 terminal emulation
+option		WSEMUL_DUMB
 
 # Generic swap; second partition of root disk or network.
 config		bsd	root on rd0a
@@ -228,6 +229,7 @@ sbus*		at xbox?
 
 ## PROM console driver -- if all else fails
 pcons0	at mainbus0			# PROM console
+wsdisplay* at pcons?
 
 pseudo-device	rd	2	# ramdisk
 pseudo-device	loop	1	# network loopback

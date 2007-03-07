@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_dumb.c,v 1.3 2007/02/14 01:12:16 jsg Exp $ */
+/* $OpenBSD: wsemul_dumb.c,v 1.4 2007/03/07 06:23:04 miod Exp $ */
 /* $NetBSD: wsemul_dumb.c,v 1.7 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -68,6 +68,7 @@ struct wsemul_dumb_emuldata {
 	const struct wsdisplay_emulops *emulops;
 	void *emulcookie;
 	void *cbcookie;
+	int crippled;
 	u_int nrows, ncols, crow, ccol;
 	long defattr;
 };
@@ -82,10 +83,11 @@ wsemul_dumb_cnattach(type, cookie, ccol, crow, defattr)
 	long defattr;
 {
 	struct wsemul_dumb_emuldata *edp;
+	const struct wsdisplay_emulops *emulops;
 
 	edp = &wsemul_dumb_console_emuldata;
 
-	edp->emulops = type->textops;
+	edp->emulops = emulops = type->textops;
 	edp->emulcookie = cookie;
 	edp->nrows = type->nrows;
 	edp->ncols = type->ncols;
@@ -93,6 +95,9 @@ wsemul_dumb_cnattach(type, cookie, ccol, crow, defattr)
 	edp->ccol = ccol;
 	edp->defattr = defattr;
 	edp->cbcookie = NULL;
+	edp->crippled = emulops->cursor == NULL ||
+	    emulops->copycols == NULL || emulops->copyrows == NULL ||
+	    emulops->erasecols == NULL || emulops->eraserows == NULL;
 
 	return (edp);
 }
@@ -138,10 +143,24 @@ wsemul_dumb_output(cookie, data, count, kernel)
 	u_char c;
 	int n;
 
+	if (edp->crippled) {
+		while (count-- > 0) {
+			c = *data++;
+
+			if (c == ASCII_BEL)
+				wsdisplay_emulbell(edp->cbcookie);
+			else
+				(*edp->emulops->putchar)(edp->emulcookie, 0,
+				    0, c, 0);
+		}
+		return;
+	}
+
 	/* XXX */
 	(*edp->emulops->cursor)(edp->emulcookie, 0, edp->crow, edp->ccol);
 	while (count-- > 0) {
 		c = *data++;
+
 		switch (c) {
 		case ASCII_BEL:
 			wsdisplay_emulbell(edp->cbcookie);
@@ -237,6 +256,9 @@ wsemul_dumb_resetop(cookie, op)
 	enum wsemul_resetops op;
 {
 	struct wsemul_dumb_emuldata *edp = cookie;
+
+	if (edp->crippled)
+		return;
 
 	switch (op) {
 	case WSEMUL_CLEARSCREEN:

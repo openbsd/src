@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.76 2007/02/14 00:53:48 jsg Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.77 2007/03/07 06:23:04 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -777,6 +777,7 @@ wsdisplay_cnattach(const struct wsscreen_descr *type, void *cookie, int ccol,
     int crow, long defattr)
 {
 	const struct wsemul_ops *wsemul;
+	const struct wsdisplay_emulops *emulops;
 
 	KASSERT(!wsdisplay_console_initted);
 	KASSERT(type->nrows > 0);
@@ -784,11 +785,21 @@ wsdisplay_cnattach(const struct wsscreen_descr *type, void *cookie, int ccol,
 	KASSERT(crow < type->nrows);
 	KASSERT(ccol < type->ncols);
 
-	wsdisplay_console_conf.emulops = type->textops;
+	wsdisplay_console_conf.emulops = emulops = type->textops;
 	wsdisplay_console_conf.emulcookie = cookie;
 	wsdisplay_console_conf.scrdata = type;
 
-	wsemul = wsemul_pick(""); /* default */
+#ifdef WSEMUL_DUMB
+	/*
+	 * If the emulops structure is crippled, force a dumb emulation.
+	 */
+	if (emulops->cursor == NULL ||
+	    emulops->copycols == NULL || emulops->copyrows == NULL ||
+	    emulops->erasecols == NULL || emulops->eraserows == NULL)
+		wsemul = wsemul_pick("dumb");
+	else
+#endif
+		wsemul = wsemul_pick("");
 	wsdisplay_console_conf.wsemul = wsemul;
 	wsdisplay_console_conf.wsemulcookie =
 	    (*wsemul->cnattach)(type, cookie, ccol, crow, defattr);

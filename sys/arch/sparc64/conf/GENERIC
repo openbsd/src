@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.169 2007/02/28 23:02:24 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.170 2007/03/07 06:23:02 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -20,6 +20,7 @@ option		USBVERBOSE
 
 option		WSEMUL_SUN	# provide sun terminal emulation; required
 option		WSEMUL_NO_VT100	# do not provide vt100 terminal emulation
+option		WSEMUL_DUMB
 
 config		bsd	swap generic
 
@@ -239,6 +240,7 @@ uperf*	at sbus?
 
 ## PROM console driver -- if all else fails
 pcons0	at mainbus0			# PROM console
+wsdisplay* at pcons?
 
 ## Mostek/DS1287 clocks
 clock*	at sbus?

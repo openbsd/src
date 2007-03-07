@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.h,v 1.2 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: cons.h,v 1.3 2007/03/07 06:23:04 miod Exp $	*/
 /*	$NetBSD: cons.h,v 1.3 2000/05/19 05:26:17 eeh Exp $	*/
 
 /*-
@@ -28,23 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/*
- * PROM console driver.
- *
- * This is the default fallback console driver if nothing else attaches.
- */
-
-struct pconssoftc {
-	struct device of_dev;
-	struct tty *of_tty;
-	struct timeout sc_poll_to;
-	int of_flags;
-};
-/* flags: */
-#define	OFPOLL		1
-
-#define	OFBURSTLEN	128	/* max number of bytes to write in one chunk */
 
 /* These are shared with the consinit OBP console */
 extern int stdin, stdout;
