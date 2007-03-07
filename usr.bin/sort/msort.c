@@ -1,4 +1,4 @@
-/*	$OpenBSD: msort.c,v 1.17 2006/10/29 18:40:34 millert Exp $	*/
+/*	$OpenBSD: msort.c,v 1.18 2007/03/07 18:11:03 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)msort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: msort.c,v 1.17 2006/10/29 18:40:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: msort.c,v 1.18 2007/03/07 18:11:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,13 +56,10 @@ typedef struct mfile {
 	short flno;
 	RECHEADER rec[1];
 } MFILE;
-typedef struct tmfile {
-	u_char *end;
-	short flno;
-	TRECHEADER rec[1];
-} TMFILE;
-u_char *wts, *wts1 = 0;
-struct mfile *cfilebuf;
+static u_char *wts, *wts1;
+static struct mfile *cfilebuf;
+static void *buffer;
+static size_t bufsize;
 
 static int cmp(RECHEADER *, RECHEADER *);
 static int insert(struct mfile **, struct mfile **, int, int);
@@ -80,21 +77,17 @@ fmerge(int binno, union f_handle files, int nfiles,
 	wts = ftbl->weights;
 	if (!UNIQUE && SINGL_FLD && (ftbl->flags & F))
 		wts1 = (ftbl->flags & R) ? Rascii : ascii;
-	if (!cfilebuf) {
-		cfilebuf = malloc(MAXLLEN + sizeof(TMFILE));
+	if (cfilebuf == NULL) {
+		cfilebuf = malloc(MAXLLEN + sizeof(MFILE));
 		if (cfilebuf == NULL)
 			errx(2, "cannot allocate memory");
 	}
 
-	i = min(16, nfiles) * LALIGN(MAXLLEN+sizeof(TMFILE));
+	i = min(16, nfiles) * LALIGN(MAXLLEN + sizeof(MFILE));
 	if (i > bufsize) {
-		do {
-			bufsize *= 2;
-		} while  (i > bufsize);
-		buffer = realloc(buffer, bufsize);
-		if (!buffer)
-			errx(2, "cannot allocate memory");
-		bufend = buffer + bufsize - 1;
+		bufsize = i;
+		if ((buffer = realloc(buffer, bufsize)) == NULL)
+			err(2, NULL);
 	}
 
 	if (binno >= 0)
@@ -148,7 +141,7 @@ merge(int infl0, int nfiles,
 
 	for (i = j = 0; i < nfiles; i++) {
 		cfile = (MFILE *) (buffer +
-		    i * LALIGN(MAXLLEN + sizeof(TMFILE)));
+		    i * LALIGN(MAXLLEN + sizeof(MFILE)));
 		cfile->flno = j + infl0;
 		cfile->end = cfile->rec->data + MAXLLEN;
 		for (c = 1; c == 1;) {
@@ -253,18 +246,15 @@ order(union f_handle infile,
 	int c;
 	RECHEADER *crec, *prec, *trec;
 
-	if (bufsize < 2 * ALIGN(MAXLLEN + sizeof(TRECHEADER))) {
-		do {
-			bufsize *= 2;
-		} while (bufsize < 2 * ALIGN(MAXLLEN + sizeof(TRECHEADER)));
+	if (bufsize < 2 * ALIGN(MAXLLEN + sizeof(RECHEADER))) {
+		bufsize = 2 * ALIGN(MAXLLEN + sizeof(RECHEADER));
 		if ((buffer = realloc(buffer, bufsize)) == NULL)
 			err(2, NULL);
-		bufend = buffer + bufsize - 1;
 	}
 	crec = (RECHEADER *) buffer;
-	crec_end = ((char *)crec) + ALIGN(MAXLLEN + sizeof(TRECHEADER));
+	crec_end = ((char *)crec) + ALIGN(MAXLLEN + sizeof(RECHEADER));
 	prec = (RECHEADER *) crec_end;
-	prec_end = ((char *)prec) + ALIGN(MAXLLEN + sizeof(TRECHEADER));
+	prec_end = ((char *)prec) + ALIGN(MAXLLEN + sizeof(RECHEADER));
 	wts = ftbl->weights;
 	if (SINGL_FLD && (ftbl->flags & F))
 		wts1 = ftbl->flags & R ? Rascii : ascii;
