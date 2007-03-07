@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.76 2007/03/06 14:24:24 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.77 2007/03/07 03:25:24 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -38,7 +38,8 @@
 #ifdef AHCI_DEBUG
 #define DPRINTF(m, f...) do { if (ahcidebug & (m)) printf(f); } while (0)
 #define AHCI_D_VERBOSE		0x01
-int ahcidebug = AHCI_D_VERBOSE;
+#define AHCI_D_INTR		0x02
+int ahcidebug = AHCI_D_VERBOSE | AHCI_D_INTR;
 #else
 #define DPRINTF(m, f...)
 #endif
@@ -356,6 +357,10 @@ struct ahci_softc {
 	struct ahci_port	*sc_ports[AHCI_MAX_PORTS];
 
 	struct atascsi		*sc_atascsi;
+
+#ifdef AHCI_COALESCE
+	u_int32_t		sc_ccc_mask;
+#endif
 };
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
 
@@ -595,6 +600,9 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_atascsi = atascsi_attach(self, &aaa);
 
+	/* Enable interrupts */
+	ahci_write(sc, AHCI_REG_GHC, AHCI_REG_GHC_AE | AHCI_REG_GHC_IE);
+
 	return;
 
 freeports:
@@ -602,6 +610,9 @@ freeports:
 		if (sc->sc_ports[i] != NULL)
 			ahci_port_free(sc, i);
 unmap:
+	/* Disable controller */
+	ahci_write(sc, AHCI_REG_GHC, 0);
+
 	ahci_unmap_regs(sc, pa);
 }
 
@@ -894,6 +905,12 @@ nomem:
 	/* Flush interrupts for port */
 	ahci_pwrite(ap, AHCI_PREG_IS, ahci_pread(ap, AHCI_PREG_IS));
 	ahci_write(sc, AHCI_REG_IS, 1 << port);
+
+	/* Enable port interrupts */
+	ahci_pwrite(ap, AHCI_PREG_IE, AHCI_PREG_IE_TFEE | AHCI_PREG_IE_HBFE |
+	     AHCI_PREG_IE_IFE | AHCI_PREG_IE_OFE | AHCI_PREG_IE_DPE |
+	     AHCI_PREG_IE_UFE);
+
 freeport:
 	if (rc != 0)
 		ahci_port_free(sc, port);
@@ -1206,7 +1223,7 @@ ahci_load_prdt(struct ahci_ccb *ccb)
 		}
 		if (dmap->dm_segs[i].ds_len & 1) {
 			printf("%s: requested DMA length %d is not even\n",
-			    PORTNAME(ap), dmap->dm_segs[i].ds_len);
+			    PORTNAME(ap), (int)dmap->dm_segs[i].ds_len);
 			return (1);
 		}
 #endif
@@ -1274,44 +1291,111 @@ ahci_start(struct ahci_ccb *ccb)
 int
 ahci_intr(void *arg)
 {
-	return (0);
+	struct ahci_softc		*sc = arg;
+	u_int32_t			is, ack = 0;
+	int				port;
+
+	/* Read global interrupt status */
+	is = ahci_read(sc, AHCI_REG_IS);
+	if (is == 0)
+		return (0);
+	ack = is;
+
+#ifdef AHCI_COALESCE
+	/* Check coalescing interrupt first */
+	if (is & sc->sc_ccc_mask) {
+		DPRINTF(AHCI_D_INTR, "%s: command coalescing interrupt\n",
+		    DEVNAME(sc));
+		is &= ~sc->sc_ccc_mask;
+	}
+#endif
+
+	/* Process interrupts for each port */
+	while (is) {
+		port = ffs(is) - 1;
+		if (sc->sc_ports[port])
+			ahci_port_intr(sc->sc_ports[port], 0xffffffff);
+		is &= ~(1 << port);
+	}
+
+	/* Finally, acknowledge global interrupt */
+	ahci_write(sc, AHCI_REG_IS, ack);
+
+	return (1);
 }
 
 int
 ahci_port_intr(struct ahci_port *ap, u_int32_t ci_mask)
 {
 	struct ahci_softc		*sc = ap->ap_sc;
+	u_int32_t			is, ci, cmd, tfd;
+	int				slot, processed = 0;
 	struct ahci_ccb			*ccb;
-	u_int32_t			ci;
-	int				i, intr = 0;
 
-	ci = ~ahci_pread(ap, AHCI_PREG_CI) & ap->ap_active & ci_mask;
-	for (i = 0; i < sc->sc_ncmds; i++) {
-		if (ISSET(ci, 1 << i)) {
-			ccb = &ap->ap_ccbs[i];
+	is = ahci_pread(ap, AHCI_PREG_IS);
 
-			bus_dmamap_sync(sc->sc_dmat,
-			    AHCI_DMA_MAP(ap->ap_dmamem_cmd_list),
-			    ccb->ccb_slot * sizeof(struct ahci_cmd_hdr),
-			    sizeof(struct ahci_cmd_hdr),
-			    BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_sync(sc->sc_dmat,
-			    AHCI_DMA_MAP(ap->ap_dmamem_cmd_table),
-			    ccb->ccb_slot * sizeof(struct ahci_cmd_table),
-			    sizeof(struct ahci_cmd_table),
-			    BUS_DMASYNC_POSTWRITE);
+	/* Ack port interrupt only if checking all command slots. */
+	if (ci_mask == 0xffffffff)
+		ahci_pwrite(ap, AHCI_PREG_IS, is);
 
-			bus_dmamap_sync(sc->sc_dmat,
-			    AHCI_DMA_MAP(ap->ap_dmamem_rfis), 0,
-			    sizeof(struct ahci_rfis), BUS_DMASYNC_POSTREAD);
+	if (is)
+		DPRINTF(AHCI_D_INTR, "%s: interrupt: %b\n", PORTNAME(ap),
+		    is, AHCI_PFMT_IS);
 
-			ap->ap_active &= ~(1 << ccb->ccb_slot);
-			ccb->ccb_done(ccb);
-			intr = 1;
+	/* Check for fatal errors, shut down if any. */
+	if (is & (AHCI_PREG_IS_TFES | AHCI_PREG_IS_HBFS | AHCI_PREG_IS_IFS |
+	    AHCI_PREG_IS_OFS | AHCI_PREG_IS_UFS)) {
+		printf("%s: unrecoverable errors (IS: %b), disabling port.\n",
+		    PORTNAME(ap), is, AHCI_PFMT_IS);
+		if (is & AHCI_PREG_IS_TFES) {
+			cmd = ahci_pread(ap, AHCI_PREG_CMD);
+			tfd = ahci_pread(ap, AHCI_PREG_TFD);
+			DPRINTF(AHCI_D_INTR, "%s: current slot %d, TFD: %b\n",
+			    PORTNAME(ap), AHCI_PREG_CMD_CCS(cmd), tfd,
+			    AHCI_PFMT_TFD_STS);
 		}
+		ahci_port_stop(ap, 0);
+
+		/*
+		 * XXX reissue commands individually and/or notify callbacks
+		 *     about the failure.
+		 */
 	}
 
-	return (intr);
+	/*
+	 * CCB completion is detected by noticing its slot's bit in CI has
+	 * changed to zero some time after we activated it.
+	 * If we are polling, we may only be interested in particular slot(s).
+	 */
+	ci = ~ahci_pread(ap, AHCI_PREG_CI) & ap->ap_active & ci_mask;
+	while (ci) {
+		slot = ffs(ci) - 1;
+		DPRINTF(AHCI_D_INTR, "%s: slot %d is complete\n", PORTNAME(ap),
+		    slot);
+		ccb = &ap->ap_ccbs[slot];
+		ci &= ~(1 << slot);
+
+		bus_dmamap_sync(sc->sc_dmat,
+		    AHCI_DMA_MAP(ap->ap_dmamem_cmd_list),
+		    ccb->ccb_slot * sizeof(struct ahci_cmd_hdr),
+		    sizeof(struct ahci_cmd_hdr), BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_sync(sc->sc_dmat,
+		    AHCI_DMA_MAP(ap->ap_dmamem_cmd_table),
+		    ccb->ccb_slot * sizeof(struct ahci_cmd_table),
+		    sizeof(struct ahci_cmd_table), BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_sync(sc->sc_dmat,
+		    AHCI_DMA_MAP(ap->ap_dmamem_rfis), 0,
+		    sizeof(struct ahci_rfis), BUS_DMASYNC_POSTREAD);
+
+		ap->ap_active &= ~(1 << ccb->ccb_slot);
+		ccb->ccb_done(ccb);
+
+		processed |= 1 << ccb->ccb_slot;
+	}
+
+	return (processed);
 }
 
 struct ahci_ccb *
@@ -1553,7 +1637,7 @@ ahci_ata_cmd(void *xsc, struct ata_xfer *xa)
 	if (xa->flags & ATA_F_WRITE)
 		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
 
-	if (1 || xa->flags & ATA_F_POLL) {
+	if (xa->flags & ATA_F_POLL) {
 		if (ahci_poll(ccb, 1000) != 0)
 			return (ATA_ERROR);
 		return (ATA_COMPLETE);
