@@ -1285,6 +1285,7 @@
 ./usr/share/man/cat4/kue.0
 ./usr/share/man/cat4/landisk
 ./usr/share/man/cat4/landisk/intro.0
+./usr/share/man/cat4/landisk/kmem.0
 ./usr/share/man/cat4/landisk/mainbus.0
 ./usr/share/man/cat4/landisk/mem.0
 ./usr/share/man/cat4/landisk/obio.0
