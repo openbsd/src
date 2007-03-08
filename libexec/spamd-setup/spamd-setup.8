@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.13 2007/02/27 15:42:14 jmc Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.14 2007/03/08 07:55:05 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -35,21 +35,27 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility adds blacklists by adding addresses to the
+utility sends blacklist data to
+.Xr spamd 8 ,
+as well as configuring mail rejection messages for
+blacklist entries.
+.Pp
+When
+.Nm
+is run in blacklist only mode,
+instead of sending blacklist data directly to
+.Xr spamd 8 ,
+it sends it to the
 .Xr pf 4
 table
-.Em <spamd> ,
-as well as configuring mail rejection messages for
-the added list of addresses in
-.Xr spamd 8 .
+.Aq Ar spamd .
 The
-.Em spamd
-table is used in conjunction with a
+.Aq Ar spamd
+table must then be used in conjunction with a
 .Xr pf 4
 redirection rule to selectively redirect mail connections
-to the
-.Xr spamd 8
-daemon.
+to
+.Xr spamd 8 .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -61,23 +67,26 @@ With this flag, data is stored in both
 .Xr spamd 8
 and
 .Xr pf 4 .
+Use this flag if
+.Xr spamd 8
+is running with the
+.Fl b
+flag too.
 .It Fl d
 Debug mode reports a few pieces of information.
 .It Fl n
 Dry-run mode.
-No data is shipped to
-.Xr pf 4 .
+No data is shipped.
 .El
 .Pp
-Blacklists and whitelists are specified in the configuration file
+Lists are specified in the configuration file
 .Pa /etc/mail/spamd.conf
 and are processed in the order specified in the
 .Ar all
 tag.
-Output is concatenated to build up a table for
-.Xr pf 4 .
-Then the blacklist addresses are sent to a running
-.Xr spamd 8
+Output is concatenated and sent to a running
+.Xr spamd 8 .
+Addresses are sent
 along with the message spamd will give on mail rejection when a
 matching client connects.
 The configuration port for
@@ -88,7 +97,7 @@ by looking for the named service
 .Em spamd-cfg .
 .Pp
 .Nm
-reads all configuration information from a
+reads all configuration information from the
 .Xr spamd.conf 5
 file.
 .Sh FILES
@@ -96,8 +105,7 @@ file.
 /etc/mail/spamd.conf
 .Ed
 .Sh SEE ALSO
-.Xr ftp 1 ,
-.Xr pf 4 ,
+.Xr pf.conf 5 ,
 .Xr services 5 ,
 .Xr spamd.conf 5 ,
 .Xr spamd 8
