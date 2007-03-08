@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.4 2006/12/03 00:28:49 drahn Exp $
+dnl	$OpenBSD: prep,v 1.5 2007/03/08 05:21:29 david Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of RedBoot, the low-level
 process that controls the microprocessor after hardware initialization.
@@ -223,7 +223,7 @@ How to boot/install IOData HDL-G:
 The hda1 partition is the boot partition for linux, it contains
 zImage and initrd. Since RedBoot only can boot from the ext2fs partition
 it is very important that this partition be present and not be reformatted.
-If this parition is destroyed, it will be necessary to remove the HD and
+If this partition is destroyed, it will be necessary to remove the HD and
 recreate the partition on another machine. Note: RedBoot should be able
 to boot from the network, however that has been unsuccessful on IODATA HDL-G
 so far.

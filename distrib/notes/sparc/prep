@@ -74,7 +74,7 @@ and then to enable it later use:
 
     ok setenv auto-boot? true
 
-or on an installed system use the eeprom(8) commmand:
+or on an installed system use the eeprom(8) command:
 
     # eeprom 'auto-boot?=true'
 

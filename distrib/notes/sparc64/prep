@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.20 2006/05/15 10:07:16 robert Exp $
+dnl	$OpenBSD: prep,v 1.21 2007/03/08 05:21:29 david Exp $
 If your UltraSPARC machine is somewhat old, it might need a firmware update
 before it can be used under OpenBSD. You are advised to try to install
 OpenBSD first; if it can't boot or fails mysteriously, you might need to
@@ -64,7 +64,7 @@ and then to enable it later use:
 
     ok setenv auto-boot? true
 
-or on an installed system use the eeprom(8) commmand:
+or on an installed system use the eeprom(8) command:
 
     # eeprom 'auto-boot?=true'
 
