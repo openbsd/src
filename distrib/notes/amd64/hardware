@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.78 2007/03/06 15:59:56 jasper Exp $
+dnl	$OpenBSD: hardware,v 1.79 2007/03/09 22:43:37 deraadt Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -152,14 +152,55 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    USB Open Host Controller
 		PCI `universal' communication cards, providing serial
 		  and parallel ports, including:
+		    AT&T/Lucent Venus Modem (found on IBM 33L4618
+			card, Actiontec 56K, and others)
+		    Avlab Low Profile PCI 4S Quartet (4 port serial)
+		    Avlab PCI 2S (2 port serial)
+		    Boca Research Turbo Serial 654 PCI (4 port serial)
+		    Boca Research Turbo Serial 658 PCI (8 port serial)
+		    Decision Computer Inc PCCOM PCI 2 Port (serial)
+		    Decision Computer Inc PCCOM PCI 4 Port (serial)
+		    Decision Computer Inc PCCOM PCI 8 Port (serial)
+		    Digi International Digi Neo 4 (4 port serial)
 		    Dolphin Peripherals 4014 (dual parallel) and
 			4035 (dual serial)
+		    Exsys EX-41098 (4 port serial)
+		    Koutech IOFLEX-2S (dual serial
+		    Kouwell Model-223 (2-port serial, 1 port parallel)
+		    Lava Computers 2SP-PCI (parallel port)
+		    Lava Computers 2SP-PCI and Quattro-PCI (dual serial)
+		    Lava Computers Octopus-550
+		    Lava LavaPort-650
+		    Moxa Technologies Co., Ltd. PCI I/O Card 4S (4 port
+			serial)
+		    Moxa Technologies Co., Ltd. C104H/PCI (4 port serial)
+		    Moxa Technologies Co., Ltd. CP104/PCI (4 port serial)
+		    NEC PK-UG-X008 (serial)
+		    NEC PK-UG-X001 K56flex PCI (modem)
+		    NetMos 1P (1 port parallel)
+		    NetMos 2S1P (2 port serial and 1 port parallel)
+		    NetMos 4S (4 port serial)
+		    Oxford OX16PCI952 (2 port serial, 1 port parallel)
+		    Oxford OX16PCI954 (4 port serial, 1 port parallel)
 		    SIIG Cyber 2P1S (dual parallel, single serial)
 			and 2S1P (dual serial, single parallel)
 		    SIIG Cyber 4S (quad serial)
 		    SIIG Cyber I/O (single parallel, single serial)
 		    SIIG Cyber Parallel, Parallel Dual, Serial,
 			Serial Dual
+		    SIIG Cyber 8S PCI 16C850
+		    SUNIX 400x (1 port parallel)
+		    SUNIX 401x (2 port parallel)
+		    SUNIX 402x (1 port serial)
+		    SUNIX 403x (2 port serial)
+		    SUNIX 405x (4 port serial)
+		    SUNIX 406x (8 port serial)
+		    SUNIX 407x (2 port serial and 1 port parallel)
+		    SUNIX 408x (2 port serial and 2 port parallel)
+		    SUNIX 409x (4 port serial and 2 port parallel)
+		    Syba Tech Ltd. PCI-4S2P-550-ECP (4 port serial, 2
+			port parallel)
+		    US Robotics 3CP5609 PCI (modem)
 		    VScom PCI 800  (8 port serial)
 		    VScom PCI 011H (1 port parallel)
 		    VScom PCI 100H (1 port serial)
@@ -174,32 +215,6 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    VScom PCI 210L (2 port serial and 1 port parallel)
 		    VScom PCI 400L (4 port serial)
 		    VScom PCI 800L (8 port serial)
-		    AT&T/Lucent Venus Modem (found on IBM 33L4618
-			card, Actiontec 56K, and others)
-		    US Robotics 3CP5609 PCI (modem)
-		    Lava Computers 2SP-PCI (parallel port)
-		    Lava Computers 2SP-PCI and Quattro-PCI (dual
-			serial)
-		    NEC PK-UG-X008 (serial)
-		    NEC PK-UG-X001 K56flex PCI (modem)
-		    Koutech IOFLEX-2S (dual serial)
-		    Syba Tech Ltd. PCI-4S2P-550-ECP (4 port serial, 2
-			port parallel)
-		    Moxa Technologies Co., Ltd. PCI I/O Card 4S (4 port
-			serial)
-		    Moxa Technologies Co., Ltd. C104H/PCI (4 port serial)
-		    NetMos 2S1P (2 port serial and 1 port parallel)
-		    Boca Research Turbo Serial 654 PCI (4 port serial)
-		    Boca Research Turbo Serial 658 PCI (8 port serial)
-		    SUNIX 400x (1 port parallel)
-		    SUNIX 401x (2 port parallel)
-		    SUNIX 402x (1 port serial)
-		    SUNIX 403x (2 port serial)
-		    SUNIX 405x (4 port serial)
-		    SUNIX 406x (8 port serial)
-		    SUNIX 407x (2 port serial and 1 port parallel)
-		    SUNIX 408x (2 port serial and 2 port parallel)
-		    SUNIX 409x (4 port serial and 2 port parallel)
 	Ethernet Adapters
 		3Com 3c590 and 3c595
 		3Com 3c9xx Etherlink XL adapters, including:
@@ -248,7 +263,8 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    SMC 2202USB/ETH
 		    SMC 2206USB/ETH
 		    SOHOware NUB100
-		ASIX Electronics AX88172 USB Ethernet adapters, including:
+		ASIX Electronics AX88172/AX88178/AX88772 USB Ethernet adapters,
+		including:
 		    ATEN UC210T
 		    BAFO BF-320
 		    Billionton Systems USB2AR
@@ -258,9 +274,13 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    Good Way GWUSB2E
 		    Hawking UF200
 		    Intellinet USB 2.0 to Ethernet (rev A)
+		    IO-Data ETG-US2
 		    JVC MP-PRX1
+		    Level One USB-0200
 		    Linksys USB200M
 		    Netgear FA120
+		    Nintendo Wii USB Lan Ethernet Adapter RVL-015
+		    OQO model 01+ Ethernet
 		    Sitecom LN-029
 		    SMC 2209USB/ETH
 		    SnapPort USB 2.0 LAN Adapter
@@ -283,6 +303,8 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    Jaton XpressNet
 		Davicom DM9601 based USB adapters, including:
 		    Corega FEther USB-TXC
+		    HenTong WK-668
+		    ShanTou ST268
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 		    Older SMC PCI EtherPower 10, 10/100 (models
 		      8432, 9332, and 9334)
@@ -429,6 +451,23 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    Proxim Skyline 4032
 		    Senao NL-5354MP
 		    Wistron CM9
+		Atheros USB IEEE 802.11a/b/g adapters
+		    Compex WLU108AG
+		    Compex WLU108G
+		    D-Link DWL-G132
+		    Netgear WG111T
+		    Netgear WG111U
+		    Netgear WPN111
+		    Olitec 000544
+		    PLANET WDL-U357
+		    Siemens Gigaset 108
+		    SMC SMCWUSBT-G
+		    SparkLAN WL-785A
+		    TP-Link TL-WN620G
+		    TRENDware International TEW-444UB
+		    TRENDware International TEW-504UB
+		    Unex Technology UR054ag
+		    ZyXEL XtremeMIMO M-202
 		Atmel AT76C50x based USB IEEE 802.11b adapters
 		    3Com 3CRSHEW696
 		    AboCom BWU613
@@ -523,6 +562,127 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    Z-Com XI-725/726
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200
+		Intersil/Conexant Prism GT CardBus Full-MAC IEEE 802.11a/b/g
+		    3COM 3CRWE154G72
+		    NETGEAR WG511
+		    SMC EZ Connect g 2.4GHz SMC2835W-v2
+		    Soyo Aerielink
+		    Zyxel ZyAIR G-100 
+		Intersil/Conexant Prism GT PCI Full-MAC IEEE 802.11a/b/g
+		    D-Link DWL-g650 A1
+		    I-O Data WN-G54/CB
+		    I4 Z-Com XG-600
+		    I4 Z-Com XG-900
+		    Intersil PRISM Indigo
+		    Intersil PRISM Duette
+		    PLANEX GW-DS54G
+		    SMC EZ Connect g 2.4GHz SMC2802W
+		    SMC 2802Wv2
+		Marvell Libertas CardBus IEEE 802.11b/g wireless adapters
+		    Netgear WG511v2
+		Marvell Libertas PCI IEEE 802.11b/g wireless adapters
+		    Netgear WG311v3
+		Ralink RT2500 based CardBus IEEE 802.11b/g adapters
+		    A-Link WL54PC
+		    Alfa AWPC036
+		    Amigo AWI-914W
+		    AMIT WL531C
+		    ASUS WL-107G
+		    Atlantis Land A02-PCM-W54
+		    Belkin F5D7010 v2
+		    Canyon CN-WF513
+		    CC&C WL-2102
+		    CNet CWC-854
+		    Compex WL54
+		    Conceptronic C54RC
+		    Corega CG-WLCB54GL
+		    Digiconnect WL591C
+		    Digitus DN-7001G-RA
+		    Dynalink WLG25CARDBUS
+		    E-Tech WGPC02
+		    E-Tech WGPC03
+		    Edimax EW-7108PCg
+		    Eminent EM3036
+		    Encore ENPWI-G-RLAM
+		    Eusso UGL2454-01R
+		    Fibreline WL-400X
+		    Gigabyte GN-WMKG
+		    Hawking HWC54GR
+		    Hercules HWGPCMCIA-54
+		    JAHT WN-4054P
+		    KCORP LifeStyle KLS-611
+		    LevelOne WPC-0301 v2
+		    Micronet SP908GK V3
+		    Minitar MN54GCB-R
+		    MSI CB54G2
+		    MSI MS-6835
+		    Pro-Nets CB80211G
+		    Repotec RP-WB7108
+		    SATech SN-54C
+		    Sitecom WL-112
+		    SparkLAN WL-685R
+		    Surecom EP-9428-g
+		    Sweex LC500050
+		    TekComm NE-9428-g
+		    Tonze PW-6200C
+		    Unex MR054g-R02
+		    Zinwell ZWX-G160
+		    Zonet ZEW1500
+		Ralink RT2500 based Mini PCI IEEE 802.11b/g adapters
+		    Amigo AWI-922W
+		    Billionton MIWLGRL
+		    Gigabyte GN-WIKG
+		    MSI MP54G2
+		    MSI MS-6833
+		    Tonze PC-620C
+		    Zinwell ZWX-G360
+		Ralink RT2500 based PCI IEEE 802.11b/g adapters
+		    A-Link WL54H
+		    Amigo AWI-926W
+		    AMIT WL531P
+		    AOpen AOI-831
+		    ASUS WL-130g
+		    ASUS WIFI-G-AAY
+		    Atlantis Land A02-PCI-W54
+		    Belkin F5D7000 v3
+		    Canyon CN-WF511
+		    CNet CWP-854
+		    Compex WLP54G
+		    Conceptronic C54Ri
+		    Corega CG-WLPCI54GL
+		    Digitus DN-7006G-RA
+		    Dynalink WLG25PCI
+		    E-Tech WGPI02
+		    Edimax EW-7128g
+		    Eminent EM3037
+		    Encore ENLWI-G-RLAM
+		    Eusso UGL2454-VPR
+		    Fiberline WL-400P
+		    Foxconn WLL-3350
+		    Gigabyte GN-WPKG
+		    Hawking HWP54GR
+		    Hercules HWGPCI-54
+		    iNexQ CR054g-009 (R03)
+		    JAHT WN-4054PCI
+		    LevelOne WNC-0301 v2
+		    Linksys WMP54G v4
+		    Micronet SP906GK
+		    Minitar MN54GPC-R
+		    MSI MS-6834
+		    MSI PC54G2
+		    OvisLink EVO-W54PCI
+		    PheeNet HWL-PCIG/RA
+		    Pro-Nets PC80211G
+		    Repotec RP-WP0854
+		    SATech SN-54P
+		    Sitecom WL-115
+		    Surecom EP-9321-g1
+		    Sweex LC700030
+		    TekComm NE-9321-g
+		    Tonze PC-6200C
+		    Unex CR054g-R02
+		    Zinwell ZWX-G361
+		    Zonet ZEW1600
 		Ralink RT2500 based USB 2.0 IEEE 802.11b/g adapters
 		    AMIT WL532U
 		    ASUS WL-167g
@@ -553,6 +713,97 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    Zaapa ZNWUSB-54
 		    Zinwell ZWX-G261
 		    Zonet ZEW2500P
+		Ralink RT2501USB/RT2601USB USB 2.0 IEEE 802.11/a/b/g adapters
+		    3Com Aolynk WUB320g
+		    Abocom WUG2700
+		    Airlink101 AWLL5025
+		    Belkin F5D7050 ver 3
+		    Belkin F5D9050 ver 3
+		    Buffalo WLI-U2-SG54HP
+		    Buffalo WLI-U2-G54HP
+		    CNet CWD-854 ver F
+		    Conceptronic C54RU ver 2
+		    Corega CG-WLUSB2GO
+		    D-Link DWL-G122 rev C1
+		    D-Link WUA-1340
+		    Digitus DN-7003GR
+		    Edimax EW-7318USG
+		    Gigabyte GN-WB01GS
+		    Hawking HWUG1
+		    Hawking HWU54DM
+		    Hercules HWGUSB2-54-LB
+		    Hercules HWGUSB2-54V2-AP
+		    LevelOne WNC-0301USB v3
+		    Linksys WUSB54G rev C
+		    Linksys WUSB54GR
+		    Planex GW-US54HP
+		    Planex GW-US54Mini2
+		    Planex GW-USMM
+		    Senao NUB-3701
+		    Sitecom WL-113 ver 2
+		    Sitecom WL-172
+		    Sweex LW053
+		    TP-LINK TL-WN321G
+		Texas Instruments ACX100/ACX111 CardBus IEEE 802.11a/b/g
+		adapters
+		    D-Link DWL-650+
+		    D-Link DWL-G630+
+		    D-Link DWL-G650+
+		    Ergenic ERG WL-003
+		    Hamlet HNWP254
+		    Linksys WPC54Gv2
+		    Microcom Travelcard
+		    Sceptre SC254W+
+		    USR USR5410
+		    Zyxel G-160
+		Texas Instruments ACX100/ACX111 PCI IEEE 802.11a/b/g adapters
+		    D-Link DWL-520+
+		    D-Link DWL-G520+
+		    Hawking HWP54G
+		    Netgear WG311v2
+		    Tornado/ADT 211g
+		    USR USR5416
+		    Zyxel G-360 EE
+		ZyDAS ZD1211/ZD1211B USB IEEE 802.11b/g adapters
+		    3COM 3CRUSB10075
+		    Acer WLAN-G-US1
+		    Airlink+ AWLL3025
+		    Airlink 101 AWLL3026
+		    AOpen 802.11g WL54
+		    Asus A9T integrated wirless
+		    Asus WL-159g
+		    Belkin F5D7050 v.4000
+		    Billion BiPAC 3011G
+		    Buffalo WLI-U2-KG54L
+		    CC&C WL-2203B
+		    DrayTek Vigor 550
+		    Edimax EW-7317UG
+		    Fiberline Networks WL-43OU
+		    iNexQ UR055g
+		    Linksys WUSBF54G
+		    Longshine LCS-8131G3
+		    MSI US54SE
+		    Philips SNU5600
+		    Planet WL-U356
+		    Planex GW-US54GZL
+		    Planex GW-US54Mini
+		    Safecom SWMULZ-5400
+		    Sagem XG 760A
+		    Sagem XG 76NA
+		    Sandberg Wireless G54 USB
+		    Sitecom  WL-113
+		    SMC SMCWUSB-G
+		    Sweex wireless USB 54 Mbps
+		    Tekram/Siemens USB adapter
+		    Telegent TG54USB
+		    Trendnet TEW-424UB
+		    Trendnet TEW-429UB
+		    TwinMOS G240
+		    US Robotics 5423
+		    X-Micro XWL-11GUZX
+		    Yakumo QuickWLAN USB
+		    Zonet ZEW2501
+		    Zyxel ZyAIR G-220
 	Gigabit Ethernet Adapters
 		Alteon Tigon I/II PCI Gigabit Ethernet boards, including:
 		    3Com 3c985 and 3c985B
@@ -569,8 +820,8 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    HP ProLiant NC6136 PCI Gigabit NIC (SX Fiber)
 		    HP ProLiant NC6170 PCI-X Gigabit NIC (SX Fiber)
 		    HP ProLiant NC7131 PCI Gigabit NIC
-		    HP ProLiant NC7170 PCI-X Gigabit NIC
-		    HP ProLiant NC7170LP PCI-X Gigabit NIC
+		    HP ProLiant NC7170 PCI-X Dual Port Gigabit NIC
+		    HP ProLiant NC7170LP PCI-X Dual Port Gigabit NIC
 		    Intel PRO/1000 Gigabit Server Adapter (SX Fiber)
 		      (PWLA8490)
 		    Intel PRO/1000F Gigabit Server Adapter (SX Fiber)
@@ -615,6 +866,7 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    Gigabyte 7N400 Pro2 Integrated Gigabit Ethernet (8110S)
 		    LevelOne GNC-0105T (8169S)
 		    Linksys EG1032v3 (8169S)
+		    Netgear GA311 (8169S)
 		    Netgear GA511 PC Card (8169)
 		    PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
 		    Surecom EP-320G-TX1 (8169S)
@@ -811,6 +1063,7 @@ dnl		    See above
 		    I/O DATA GV-BCTV3/PCI
 		    KISS TV/FM PCI
 		    Leadtek Winfast TV 2000
+		    Leadtek Winfast TV 2000 XP
 		    Miro PC TV
 		    MMAC Osprey
 		    NEC PK-UG-X017

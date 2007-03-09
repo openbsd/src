@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.121 2007/02/28 22:22:19 kettenis Exp $
+dnl	$OpenBSD: hardware,v 1.122 2007/03/09 22:43:37 deraadt Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -118,12 +118,16 @@ Supported devices {:-include-:}:
 		i82547, i82571, i82572 and i82573 based adapters, including:
 		    HP ProLiant NC310F PCI-X Gigabit NIC (SX Fiber)
 		    HP ProLiant NC340T PCI-X Gigabit NIC
+		    HP ProLiant NC360T PCI Express Dual Port Gigabit NIC
+		    HP ProLiant NC6132 Upgrade Module (SX Fiber)
+		    HP ProLiant NC6133 Upgrade Module (LX Fiber)
 		    HP ProLiant NC6134 PCI Gigabit NIC (SX Fiber)
 		    HP ProLiant NC6136 PCI Gigabit NIC (SX Fiber)
 		    HP ProLiant NC6170 PCI-X Gigabit NIC (SX Fiber)
 		    HP ProLiant NC7131 PCI Gigabit NIC
-		    HP ProLiant NC7170 PCI-X Gigabit NIC
-		    HP ProLiant NC7170LP PCI-X Gigabit NIC
+		    HP ProLiant NC7132 Upgrade Module
+		    HP ProLiant NC7170 PCI-X Dual Port Gigabit NIC
+		    HP ProLiant NC7170LP PCI-X Dual Port Gigabit NIC
 		    Intel PRO/1000 Gigabit Server Adapter (SX Fiber)
 		      (PWLA8490)
 		    Intel PRO/1000F Gigabit Server Adapter (SX Fiber)
@@ -132,7 +136,7 @@ Supported devices {:-include-:}:
 		    Intel PRO/1000XT Server Adapter (PWLA8490XT)
 		    Intel PRO/1000XS Server Adapter (SX Fiber) (PWLA8490XF)
 		    Intel PRO/1000T Desktop Adapter (PWLA8390T)
-		    Intel PRO/1000XTL Low Profile PCI Server (PWLA8490XTL)
+		    Intel PRO/1000XTL Lo Profile PCI Server (PWLA8490XTL)
 		    Intel PRO/1000MT Desktop Adapter (PWLA8390MT)
 		    Intel PRO/1000MT Server Adapter (PWLA8490MT)
 		    Intel PRO/1000MT Dual Port Server Adapter (PWLA8492MT)
@@ -141,6 +145,13 @@ Supported devices {:-include-:}:
 		      (PWLA8492MF)
 		    Intel PRO/1000MF Server Adapter (LX Fiber) (PWLA8490LX)
 		    Intel PRO/1000MT Quad PCI-X Adapter (PWLA8494MT)
+		    Intel PRO/1000GT Quad PCI-X Adapter (PWLA8494GT)
+		    Intel PRO/1000PT Desktop Adapter
+		    Intel PRO/1000PT Server Adapter
+		    Intel PRO/1000PT Dual Port Server Adapter
+		    Intel PRO/1000PT Quad Port Server Adapter
+		    Intel PRO/1000PF Server Adapter (SX Fiber)
+		    Intel PRO/1000PF Dual Port Server Adapter (SX Fiber)
 		Broadcom BCM570x (Tigon3) based PCI adapters 
 		    3Com 3c996-T (10/100/1000baseT) 
 		    3Com 3c996-SX (1000baseSX) 
@@ -182,6 +193,7 @@ Supported devices {:-include-:}:
                     Gigabyte 7N400 Pro2 Integrated Gigabit Ethernet (8110S)
                     LevelOne GNC-0105T (8169S)
                     Linksys EG1032v3 (8169S)
+		    Netgear GA311 (8169S)
                     Netgear GA511 PC Card (8169)
                     PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
                     Surecom EP-320G-TX1 (8169S)
@@ -216,7 +228,8 @@ Supported devices {:-include-:}:
 		    SMC 2202USB/ETH
 		    SMC 2206USB/ETH
 		    SOHOware NUB100, NUB110
-		ASIX Electronics AX88172 USB Ethernet adapters, including:
+		ASIX Electronics AX88172/AX88178/AX88772 USB Ethernet adapters,
+		including:
 		    ATEN UC210T
 		    BAFO BF-320
 		    Billionton Systems USB2AR
@@ -226,9 +239,13 @@ Supported devices {:-include-:}:
 		    Good Way GWUSB2E
 		    Hawking UF200
 		    Intellinet USB 2.0 to Ethernet (rev A)
+		    IO-Data ETG-US2
 		    JVC MP-PRX1
+		    Level One USB-0200
 		    Linksys USB200M
 		    Netgear FA120
+		    Nintendo Wii USB Lan Ethernet Adapter RVL-015
+		    OQO model 01+ Ethernet
 		    Sitecom LN-029
 		    SMC 2209USB/ETH
 		    SnapPort USB 2.0 LAN Adapter
@@ -243,6 +260,8 @@ Supported devices {:-include-:}:
 		    SmartBridges SmartLink 
 		Davicom DM9601 based USB adapters, including:
 		    Corega FEther USB-TXC
+		    HenTong WK-668
+		    ShanTou ST268
 		Kawasaki LSI KL5KUSB101B-based USB adapters, including:
 		    3Com 3c19250
 		    3Com 3c460 HomeConnect
@@ -488,74 +507,77 @@ Supported devices {:-include-:}:
 		    Z-Com XI-725/726
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200
-		Ralink Technology IEEE 802.11a/b/g USB adapters
-		    AMIT WL532U 
-		    ASUS WL-167g 
-		    Belkin F5D7050 
-		    Buffalo WLI-U2-KG54 
-		    Buffalo WLI-U2-KG54-AI 
-		    Buffalo WLI-U2-KG54-YB 
-		    CNet CWD-854 
-		    Compex WLU54G 
-		    Conceptronic C54RU 
-		    D-Link DWL-G122 (b1) 
-		    Dynalink WLG25USB 
-		    E-Tech WGUS02 
-		    Eminent 3035 
-		    Gigabyte GN-WBKG 
-		    Hercules HWGUSB2-54 
-		    KCORP LifeStyle KLS-685 
-		    Linksys WUSB54G v4 
-		    Linksys WUSB54GP v4 
-		    MSI MS-6861 
-		    MSI MS-6865 
-		    MSI MS-6869 
-		    Nintendo Wi-Fi USB Connector 
-		    Nova Tech NV-902W 
-		    OvisLink Evo-W54USB 
-		    SerComm UB801R 
-		    SparkLAN WL-685R 
-		    Sphairon UB801R 
-		    Surecom EP-9001-g rev 3A 
-		    Sweex LC100060 
-		    Tonze UW-6200C 
-		    Zaapa ZNWUSB-54 
-		    Zinwell ZPlus-G250 
-		    Zinwell ZWX-G261 
-		    Zonet ZEW2500 
-		Ralink Technology USB IEEE 802.11a/b/g USB adapters
-		    3Com Aolynk WUB320g 
-		    Abocom WUG2700 
-		    Airlink101 AWLL5025 
-		    ASUS WL-167g ver 2 
-		    Belkin F5D7050 ver 3 
-		    Belkin F5D9050 ver 3 
-		    Buffalo WLI-U2-SG54HP 
-		    Buffalo WLI-U2-G54HP 
-		    CNet CWD-854 ver F 
-		    Conceptronic C54RU ver 2 
-		    Corega CG-WLUSB2GO 
-		    D-Link DWL-G122 rev C1 
-		    D-Link WUA-1340 
-		    Digitus DN-7003GR 
-		    Edimax EW-7318USG 
-		    Gigabyte GN-WB01GS 
-		    Gigabyte GN-WI05GS 
-		    Hawking HWUG1 
-		    Hawking HWU54DM 
-		    Hercules HWGUSB2-54-LB 
-		    Hercules HWGUSB2-54V2-AP 
-		    LevelOne WNC-0301USB v3 
-		    Linksys WUSB54G rev C 
-		    Linksys WUSB54GR 
-		    Planex GW-US54HP 
-		    Planex GW-US54Mini2 
-		    Planex GW-USMM 
-		    Senao NUB-3701 
-		    Sitecom WL-113 ver 2 
-		    Sitecom WL-172 
-		    Sweex LW053 
-		    TP-LINK TL-WN321G 
+		Intersil/Conexant Prism GT PCI Full-MAC IEEE 802.11a/b/g
+		    D-Link DWL-g650 A1
+		    I-O Data WN-G54/CB
+		    I4 Z-Com XG-600
+		    I4 Z-Com XG-900
+		    Intersil PRISM Indigo
+		    Intersil PRISM Duette
+		    PLANEX GW-DS54G
+		    SMC EZ Connect g 2.4GHz SMC2802W
+		    SMC 2802Wv2
+		Ralink RT2500 based USB 2.0 IEEE 802.11b/g adapters
+		    AMIT WL532U
+		    ASUS WL-167g
+		    Belkin F5D7050
+		    Buffalo WLI-U2-KG54
+		    Buffalo WLI-U2-KG54-AI
+		    Buffalo WLI-U2-KG54-YB
+		    CNet CWD-854
+		    Compex WLU54G
+		    Conceptronic C54RU
+		    D-Link DWL-G122 (b1)
+		    Dynalink WLG25USB
+		    E-Tech WGUS02
+		    Eminent 3035
+		    Gigabyte GN-WBKG
+		    Hercules HWGUSB2-54
+		    KCORP LifeStyle KLS-685
+		    Linksys WUSB54G v4
+		    Linksys WUSB54GP v4
+		    MSI MS-6861
+		    MSI MS-6865
+		    MSI MS-6869
+		    SerComm UB801R
+		    SparkLAN WL-685R
+		    Sphairon UB801R
+		    Surecom EP-9001-g rev 3A
+		    Tonze UW-6200C
+		    Zaapa ZNWUSB-54
+		    Zinwell ZWX-G261
+		    Zonet ZEW2500P
+		Ralink RT2501USB/RT2601USB USB 2.0 IEEE 802.11/a/b/g adapters
+		    3Com Aolynk WUB320g
+		    Abocom WUG2700
+		    Airlink101 AWLL5025
+		    Belkin F5D7050 ver 3
+		    Belkin F5D9050 ver 3
+		    Buffalo WLI-U2-SG54HP
+		    Buffalo WLI-U2-G54HP
+		    CNet CWD-854 ver F
+		    Conceptronic C54RU ver 2
+		    Corega CG-WLUSB2GO
+		    D-Link DWL-G122 rev C1
+		    D-Link WUA-1340
+		    Digitus DN-7003GR
+		    Edimax EW-7318USG
+		    Gigabyte GN-WB01GS
+		    Hawking HWUG1
+		    Hawking HWU54DM
+		    Hercules HWGUSB2-54-LB
+		    Hercules HWGUSB2-54V2-AP
+		    LevelOne WNC-0301USB v3
+		    Linksys WUSB54G rev C
+		    Linksys WUSB54GR
+		    Planex GW-US54HP
+		    Planex GW-US54Mini2
+		    Planex GW-USMM
+		    Senao NUB-3701
+		    Sitecom WL-113 ver 2
+		    Sitecom WL-172
+		    Sweex LW053
+		    TP-LINK TL-WN321G
 		TI ACX100/ACX111 IEEE 802.11a/b/g PCI adapters
 		    D-Link DWL-520+ 
 		    D-Link DWL-G520+ 
@@ -595,13 +617,57 @@ Supported devices {:-include-:}:
 		Aurora SBus sio2 Serial Interface (asio)
 		PCI `universal' communication cards, providing serial
 		  and parallel ports, including:
-		    Dolphin Peripherals 4035 (dual serial)
+		    AT&T/Lucent Venus Modem (found on IBM 33L4618
+			card, Actiontec 56K, and others)
+		    Avlab Low Profile PCI 4S Quartet (4 port serial)
+		    Avlab PCI 2S (2 port serial)
+		    Boca Research Turbo Serial 654 PCI (4 port serial)
+		    Boca Research Turbo Serial 658 PCI (8 port serial)
+		    Decision Computer Inc PCCOM PCI 2 Port (serial)
+		    Decision Computer Inc PCCOM PCI 4 Port (serial)
+		    Decision Computer Inc PCCOM PCI 8 Port (serial)
+		    Digi International Digi Neo 4 (4 port serial)
+		    Dolphin Peripherals 4014 (dual parallel) and
+			4035 (dual serial)
+		    Exsys EX-41098 (4 port serial)
+		    Koutech IOFLEX-2S (dual serial
+		    Kouwell Model-223 (2-port serial, 1 port parallel)
+		    Lava Computers 2SP-PCI (parallel port)
+		    Lava Computers 2SP-PCI and Quattro-PCI (dual serial)
+		    Lava Computers Octopus-550
+		    Lava LavaPort-650
+		    Moxa Technologies Co., Ltd. PCI I/O Card 4S (4 port
+			serial)
+		    Moxa Technologies Co., Ltd. C104H/PCI (4 port serial)
+		    Moxa Technologies Co., Ltd. CP104/PCI (4 port serial)
+		    NEC PK-UG-X008 (serial)
+		    NEC PK-UG-X001 K56flex PCI (modem)
+		    NetMos 1P (1 port parallel)
+		    NetMos 2S1P (2 port serial and 1 port parallel)
+		    NetMos 4S (4 port serial)
+		    Oxford OX16PCI952 (2 port serial, 1 port parallel)
+		    Oxford OX16PCI954 (4 port serial, 1 port parallel)
 		    SIIG Cyber 2P1S (dual parallel, single serial)
 			and 2S1P (dual serial, single parallel)
 		    SIIG Cyber 4S (quad serial)
 		    SIIG Cyber I/O (single parallel, single serial)
-		    SIIG Cyber Serial, Serial Dual
+		    SIIG Cyber Parallel, Parallel Dual, Serial,
+			Serial Dual
+		    SIIG Cyber 8S PCI 16C850
+		    SUNIX 400x (1 port parallel)
+		    SUNIX 401x (2 port parallel)
+		    SUNIX 402x (1 port serial)
+		    SUNIX 403x (2 port serial)
+		    SUNIX 405x (4 port serial)
+		    SUNIX 406x (8 port serial)
+		    SUNIX 407x (2 port serial and 1 port parallel)
+		    SUNIX 408x (2 port serial and 2 port parallel)
+		    SUNIX 409x (4 port serial and 2 port parallel)
+		    Syba Tech Ltd. PCI-4S2P-550-ECP (4 port serial, 2
+			port parallel)
+		    US Robotics 3CP5609 PCI (modem)
 		    VScom PCI 800  (8 port serial)
+		    VScom PCI 011H (1 port parallel)
 		    VScom PCI 100H (1 port serial)
 		    VScom PCI 110H (1 port serial and 1 port parallel)
 		    VScom PCI 200H (2 port serial)
@@ -614,29 +680,6 @@ Supported devices {:-include-:}:
 		    VScom PCI 210L (2 port serial and 1 port parallel)
 		    VScom PCI 400L (4 port serial)
 		    VScom PCI 800L (8 port serial)
-		    AT&T/Lucent Venus Modem (found on IBM 33L4618
-			card, Actiontec 56K, and others)
-		    US Robotics 3CP5609 PCI (modem)
-		    Lava Computers 2SP-PCI and Quattro-PCI (dual
-			serial)
-		    NEC PK-UG-X008 (serial)
-		    NEC PK-UG-X001 K56flex PCI (modem)
-		    Koutech IOFLEX-2S (dual serial)
-		    Syba Tech Ltd. PCI-4S2P-550-ECP (4 port serial, 2
-			port parallel)
-		    Moxa Technologies Co., Ltd. PCI I/O Card 4S (4 port
-			serial)
-		    Moxa Technologies Co., Ltd. C104H/PCI (4 port serial)
-		    NetMos 2S1P (2 port serial and 1 port parallel)
-		    Boca Research Turbo Serial 654 PCI (4 port serial)
-		    Boca Research Turbo Serial 658 PCI (8 port serial)
-		    SUNIX 402x (1 port serial)
-		    SUNIX 403x (2 port serial)
-		    SUNIX 405x (4 port serial)
-		    SUNIX 406x (8 port serial)
-		    SUNIX 407x (2 port serial and 1 port parallel)
-		    SUNIX 408x (2 port serial and 2 port parallel)
-		    SUNIX 409x (4 port serial and 2 port parallel)
 
 	Sound devices:
 		onboard SBus CS4321 (audiocs)

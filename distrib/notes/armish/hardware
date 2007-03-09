@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.3 2007/02/15 13:57:53 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.4 2007/03/09 22:43:37 deraadt Exp $
 dnl When more than one model is supported, turn this into a list...
 OpenBSD/MACHINE runs on the Thecus N2100 and IOData HDL-G models at the moment.
 
@@ -50,6 +50,8 @@ Supported devices {:-include-:}:
 		    Belkin F5U011/F5U111
 		Davicom DM9601 based USB adapters, including:
 		    Corega FEther USB-TXC
+		    HenTong WK-668
+		    ShanTou ST268
 		Kawasaki LSI KL5KUSB101B-based USB adapters, including:
 		    3Com 3c19250
 		    3Com 3c460 HomeConnect
@@ -202,6 +204,38 @@ Supported devices {:-include-:}:
 		    Zaapa ZNWUSB-54
 		    Zinwell ZWX-G261
 		    Zonet ZEW2500P
+		Ralink RT2501USB/RT2601USB USB 2.0 IEEE 802.11/a/b/g adapters
+		    3Com Aolynk WUB320g
+		    Abocom WUG2700
+		    Airlink101 AWLL5025
+		    Belkin F5D7050 ver 3
+		    Belkin F5D9050 ver 3
+		    Buffalo WLI-U2-SG54HP
+		    Buffalo WLI-U2-G54HP
+		    CNet CWD-854 ver F
+		    Conceptronic C54RU ver 2
+		    Corega CG-WLUSB2GO
+		    D-Link DWL-G122 rev C1
+		    D-Link WUA-1340
+		    Digitus DN-7003GR
+		    Edimax EW-7318USG
+		    Gigabyte GN-WB01GS
+		    Hawking HWUG1
+		    Hawking HWU54DM
+		    Hercules HWGUSB2-54-LB
+		    Hercules HWGUSB2-54V2-AP
+		    LevelOne WNC-0301USB v3
+		    Linksys WUSB54G rev C
+		    Linksys WUSB54GR
+		    Planex GW-US54HP
+		    Planex GW-US54Mini2
+		    Planex GW-USMM
+		    Senao NUB-3701
+		    Sitecom WL-113 ver 2
+		    Sitecom WL-172
+		    Sweex LW053
+		    TP-LINK TL-WN321G
+
 	Serial ports
 		On-board serial (com) ports
 	Universal Serial Bus (USB) Devices

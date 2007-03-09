@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.4 2007/02/28 22:30:05 miod Exp $
+dnl	$OpenBSD: hardware,v 1.5 2007/03/09 22:43:37 deraadt Exp $
 OpenBSD/MACHINE runs on the following SH4-based IO-DATA made models:
 	IO-DATA USL-5P, using CF storage (Japan)
 	IO-DATA HDL-U, HDL-AV, HDL-W and HDLM-U series (Japan)
@@ -28,7 +28,8 @@ Supported devices {:-include-:}:
 		    SMC 2202USB/ETH
 		    SMC 2206USB/ETH
 		    SOHOware NUB100
-		ASIX Electronics AX88172 USB Ethernet adapters, including:
+		ASIX Electronics AX88172/AX88178/AX88772 USB Ethernet adapters,
+		including:
 		    ATEN UC210T
 		    BAFO BF-320
 		    Billionton Systems USB2AR
@@ -38,9 +39,13 @@ Supported devices {:-include-:}:
 		    Good Way GWUSB2E
 		    Hawking UF200
 		    Intellinet USB 2.0 to Ethernet (rev A)
+		    IO-Data ETG-US2
 		    JVC MP-PRX1
+		    Level One USB-0200
 		    Linksys USB200M
 		    Netgear FA120
+		    Nintendo Wii USB Lan Ethernet Adapter RVL-015
+		    OQO model 01+ Ethernet
 		    Sitecom LN-029
 		    SMC 2209USB/ETH
 		    SnapPort USB 2.0 LAN Adapter
@@ -54,6 +59,8 @@ Supported devices {:-include-:}:
 		    Belkin F5U011/F5U111
 		Davicom DM9601 based USB adapters, including:
 		    Corega FEther USB-TXC
+		    HenTong WK-668
+		    ShanTou ST268
 		Kawasaki LSI KL5KUSB101B-based USB adapters, including:
 		    3Com 3c19250
 		    3Com 3c460 HomeConnect
@@ -99,6 +106,23 @@ Supported devices {:-include-:}:
 		    Zt USB10/100
 		    Z-TEK ZK-R02
 	Wireless Ethernet Adapters
+		Atheros USB IEEE 802.11a/b/g adapters
+		    Compex WLU108AG
+		    Compex WLU108G
+		    D-Link DWL-G132
+		    Netgear WG111T
+		    Netgear WG111U
+		    Netgear WPN111
+		    Olitec 000544
+		    PLANET WDL-U357
+		    Siemens Gigaset 108
+		    SMC SMCWUSBT-G
+		    SparkLAN WL-785A
+		    TP-Link TL-WN620G
+		    TRENDware International TEW-444UB
+		    TRENDware International TEW-504UB
+		    Unex Technology UR054ag
+		    ZyXEL XtremeMIMO M-202
 		Atmel AT76C50x based USB IEEE 802.11b adapters
 		    3Com 3CRSHEW696
 		    AboCom BWU613
@@ -206,6 +230,77 @@ Supported devices {:-include-:}:
 		    Zaapa ZNWUSB-54
 		    Zinwell ZWX-G261
 		    Zonet ZEW2500P
+		Ralink RT2501USB/RT2601USB USB 2.0 IEEE 802.11/a/b/g adapters
+		    3Com Aolynk WUB320g
+		    Abocom WUG2700
+		    Airlink101 AWLL5025
+		    Belkin F5D7050 ver 3
+		    Belkin F5D9050 ver 3
+		    Buffalo WLI-U2-SG54HP
+		    Buffalo WLI-U2-G54HP
+		    CNet CWD-854 ver F
+		    Conceptronic C54RU ver 2
+		    Corega CG-WLUSB2GO
+		    D-Link DWL-G122 rev C1
+		    D-Link WUA-1340
+		    Digitus DN-7003GR
+		    Edimax EW-7318USG
+		    Gigabyte GN-WB01GS
+		    Hawking HWUG1
+		    Hawking HWU54DM
+		    Hercules HWGUSB2-54-LB
+		    Hercules HWGUSB2-54V2-AP
+		    LevelOne WNC-0301USB v3
+		    Linksys WUSB54G rev C
+		    Linksys WUSB54GR
+		    Planex GW-US54HP
+		    Planex GW-US54Mini2
+		    Planex GW-USMM
+		    Senao NUB-3701
+		    Sitecom WL-113 ver 2
+		    Sitecom WL-172
+		    Sweex LW053
+		    TP-LINK TL-WN321G
+		ZyDAS ZD1211/ZD1211B USB IEEE 802.11b/g adapters
+		    3COM 3CRUSB10075
+		    Acer WLAN-G-US1
+		    Airlink+ AWLL3025
+		    Airlink 101 AWLL3026
+		    AOpen 802.11g WL54
+		    Asus A9T integrated wirless
+		    Asus WL-159g
+		    Belkin F5D7050 v.4000
+		    Billion BiPAC 3011G
+		    Buffalo WLI-U2-KG54L
+		    CC&C WL-2203B
+		    DrayTek Vigor 550
+		    Edimax EW-7317UG
+		    Fiberline Networks WL-43OU
+		    iNexQ UR055g
+		    Linksys WUSBF54G
+		    Longshine LCS-8131G3
+		    MSI US54SE
+		    Philips SNU5600
+		    Planet WL-U356
+		    Planex GW-US54GZL
+		    Planex GW-US54Mini
+		    Safecom SWMULZ-5400
+		    Sagem XG 760A
+		    Sagem XG 76NA
+		    Sandberg Wireless G54 USB
+		    Sitecom  WL-113
+		    SMC SMCWUSB-G
+		    Sweex wireless USB 54 Mbps
+		    Tekram/Siemens USB adapter
+		    Telegent TG54USB
+		    Trendnet TEW-424UB
+		    Trendnet TEW-429UB
+		    TwinMOS G240
+		    US Robotics 5423
+		    X-Micro XWL-11GUZX
+		    Yakumo QuickWLAN USB
+		    Zonet ZEW2501
+		    Zyxel ZyAIR G-220
 	Serial ports
 		On-board serial (scif) port
 	Universal Serial Bus (USB) Devices

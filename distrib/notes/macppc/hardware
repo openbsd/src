@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.78 2007/02/15 13:57:53 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.79 2007/03/09 22:43:37 deraadt Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -137,7 +137,8 @@ Supported devices {:-include-:}:
 			Farallon PN9000SX
 			Netgear GA620 and GA620T
 			SGI Tigon
-		ASIX Electronics AX88172 USB Ethernet adapters (axe), including:
+		ASIX Electronics AX88172/AX88178/AX88772 USB Ethernet adapters (axe),
+		including:
 			ATEN UC210T
 			BAFO BF-320
 			Billionton Systems USB2AR
@@ -147,9 +148,13 @@ Supported devices {:-include-:}:
 			Good Way GWUSB2E
 			Hawking UF200
 			Intellinet USB 2.0 to Ethernet (rev A)
+			IO-Data ETG-US2
 			JVC MP-PRX1
+			Level One USB-0200
 			Linksys USB200M
 			Netgear FA120
+			Nintendo Wii USB Lan Ethernet Adapter RVL-015
+			OQO model 01+ Ethernet
 			Sitecom LN-029
 			SMC 2209USB/ETH
 			SnapPort USB 2.0 LAN Adapter
@@ -172,6 +177,8 @@ Supported devices {:-include-:}:
 			SmartBridges SmartLink
 		Davicom DM9601 USB Ethernet adapters (udav), including:
 			Corega FEther USB-TXC 
+			HenTong WK-668
+			ShanTou ST268
 		Digital DC21x4x-based PCI Ethernet adapters (de), including:
 			Znyx ZX34X
 		Digital DC21x43 clone-based PCI Ethernet adapters (dc)
@@ -188,31 +195,42 @@ Supported devices {:-include-:}:
 
 		Intel i82540, i82541, i82542, i82543, i82544, i82545, i82546,
 		i82547, i82571, i82572 and i82573 based adapters (em), including:
-			HP ProLiant NC310F PCI-X Gigabit NIC (SX Fiber)
-			HP ProLiant NC340T PCI-X Gigabit NIC
-			HP ProLiant NC6134 PCI Gigabit NIC (SX Fiber)
-			HP ProLiant NC6136 PCI Gigabit NIC (SX Fiber)
-			HP ProLiant NC6170 PCI-X Gigabit NIC (SX Fiber)
-			HP ProLiant NC7131 PCI Gigabit NIC
-			HP ProLiant NC7170 PCI-X Gigabit NIC
-			HP ProLiant NC7170LP PCI-X Gigabit NIC
-			Intel PRO/1000 Gigabit Server Adapter (SX Fiber)
-			(PWLA8490)
-			Intel PRO/1000F Gigabit Server Adapter (SX Fiber)
-			(PWLA8490SX)
-			Intel PRO/1000T Server Adapter (PWLA8490T)
-			Intel PRO/1000XT Server Adapter (PWLA8490XT)
-			Intel PRO/1000XS Server Adapter (SX Fiber) (PWLA8490XF)
-			Intel PRO/1000T Desktop Adapter (PWLA8390T)
-			Intel PRO/1000XTL Lo Profile PCI Server (PWLA8490XTL)
-			Intel PRO/1000MT Desktop Adapter (PWLA8390MT)
-			Intel PRO/1000MT Server Adapter (PWLA8490MT)
-			Intel PRO/1000MT Dual Port Server Adapter (PWLA8492MT)
-			Intel PRO/1000MF Server Adapter (SX Fiber) (PWLA8490MF)
-			Intel PRO/1000MF Dual Port Server Adapter (SX Fiber)
-			(PWLA8492MF)
-			Intel PRO/1000MF Server Adapter (LX Fiber) (PWLA8490LX)
-			Intel PRO/1000MT Quad PCI-X Adapter (PWLA8494MT)
+		    HP ProLiant NC310F PCI-X Gigabit NIC (SX Fiber)
+		    HP ProLiant NC340T PCI-X Gigabit NIC
+		    HP ProLiant NC360T PCI Express Dual Port Gigabit NIC
+		    HP ProLiant NC6132 Upgrade Module (SX Fiber)
+		    HP ProLiant NC6133 Upgrade Module (LX Fiber)
+		    HP ProLiant NC6134 PCI Gigabit NIC (SX Fiber)
+		    HP ProLiant NC6136 PCI Gigabit NIC (SX Fiber)
+		    HP ProLiant NC6170 PCI-X Gigabit NIC (SX Fiber)
+		    HP ProLiant NC7131 PCI Gigabit NIC
+		    HP ProLiant NC7132 Upgrade Module
+		    HP ProLiant NC7170 PCI-X Dual Port Gigabit NIC
+		    HP ProLiant NC7170LP PCI-X Dual Port Gigabit NIC
+		    Intel PRO/1000 Gigabit Server Adapter (SX Fiber)
+		      (PWLA8490)
+		    Intel PRO/1000F Gigabit Server Adapter (SX Fiber)
+		      (PWLA8490SX)
+		    Intel PRO/1000T Server Adapter (PWLA8490T)
+		    Intel PRO/1000XT Server Adapter (PWLA8490XT)
+		    Intel PRO/1000XS Server Adapter (SX Fiber) (PWLA8490XF)
+		    Intel PRO/1000T Desktop Adapter (PWLA8390T)
+		    Intel PRO/1000XTL Lo Profile PCI Server (PWLA8490XTL)
+		    Intel PRO/1000MT Desktop Adapter (PWLA8390MT)
+		    Intel PRO/1000MT Server Adapter (PWLA8490MT)
+		    Intel PRO/1000MT Dual Port Server Adapter (PWLA8492MT)
+		    Intel PRO/1000MF Server Adapter (SX Fiber) (PWLA8490MF)
+		    Intel PRO/1000MF Dual Port Server Adapter (SX Fiber)
+		      (PWLA8492MF)
+		    Intel PRO/1000MF Server Adapter (LX Fiber) (PWLA8490LX)
+		    Intel PRO/1000MT Quad PCI-X Adapter (PWLA8494MT)
+		    Intel PRO/1000GT Quad PCI-X Adapter (PWLA8494GT)
+		    Intel PRO/1000PT Desktop Adapter
+		    Intel PRO/1000PT Server Adapter
+		    Intel PRO/1000PT Dual Port Server Adapter
+		    Intel PRO/1000PT Quad Port Server Adapter
+		    Intel PRO/1000PF Server Adapter (SX Fiber)
+		    Intel PRO/1000PF Dual Port Server Adapter (SX Fiber)
 		Kawasaki LSI KL5KUSB101B-based USB adapters (kue), including:
 			3Com 3c19250
 			3Com 3c460 HomeConnect
@@ -280,6 +298,7 @@ Supported devices {:-include-:}:
 			Gigabyte 7N400 Pro2 Integrated Gigabit Ethernet (8110S) 
 			LevelOne GNC-0105T (8169S)
 			Linksys EG1032v3 (8169S)
+			Netgear GA311 (8169S)
 			Netgear GA511 PC Card (8169)
 			PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
 			Surecom EP-320G-TX1 (8169S)
@@ -295,127 +314,162 @@ Supported devices {:-include-:}:
 
 	Wireless Ethernet Adapters
 		PCMCIA Adapters
-			Aironet IEEE 802.11FH/b PCMCIA and PCI (an)
-			WaveLAN IEEE 802.11b PCMCIA (wi)
+		    Aironet IEEE 802.11FH/b PCMCIA and PCI (an)
+		    WaveLAN IEEE 802.11b PCMCIA (wi)
 		Atmel AT76C50x based USB IEEE 802.11b adapters
-			3Com 3CRSHEW696
-			AboCom BWU613
-			Accton 2664W
-			Acer Peripherals AWL300
-			Acer Peripherals AWL400
-			Actiontec 802UAT1
-			Addtron AWU120
-			Aincomm AWU2000B
-			Askey Computer Voyager 1010
-			Askey Computer WLL013 (Intersil Radio)
-			Askey Computer WLL013 (RFMD Radio)
-			Belkin F5D6050
-			Bluetake BW002
-			Compaq iPAQ h54xx/h55xx Internal WLAN
-			Conceptronic C11U
-			Conceptronic WL210
-			Corega WLAN USB Stick 11
-			Dick Smith Electronics CHUSB 611G
-			Dick Smith Electronics WL200U
-			Dick Smith Electronics WL240U
-			Dick Smith Electronics XH1153
-			D-Link DWL-120 rev E
-			Geowave GW-US11S
-			Gigabyte GN-WLBM101
-			Gigaset WLAN
-			Hewlett-Packard HN210W
-			Intel AP310 AnyPoint II
-			I/O DATA USB WN-B11
-			Lexar 2662W-AR
-			Linksys WUSB11
-			Linksys WUSB11 v2.8
-			MSI WLAN
-			Netgear MA101
-			Netgear MA101 rev B
-			Ovislink AirLive WL-1120USB
-			OvisLink AirLive WL-1130USB
-			Planex Communications GW-US11S
-			Samsung SWL2100W
-			Siemens WLL013
-			SMC 2662W-AR
-			SMC 2662W-V4
-			Tekram U-300C
-			Z-Com M4Y-750
+		    3Com 3CRSHEW696
+		    AboCom BWU613
+		    Accton 2664W
+		    Acer Peripherals AWL300
+		    Acer Peripherals AWL400
+		    Actiontec 802UAT1
+		    Addtron AWU120
+		    Aincomm AWU2000B
+		    Askey Computer Voyager 1010
+		    Askey Computer WLL013 (Intersil Radio)
+		    Askey Computer WLL013 (RFMD Radio)
+		    Belkin F5D6050
+		    Bluetake BW002
+		    Compaq iPAQ h54xx/h55xx Internal WLAN
+		    Conceptronic C11U
+		    Conceptronic WL210
+		    Corega WLAN USB Stick 11
+		    Dick Smith Electronics CHUSB 611G
+		    Dick Smith Electronics WL200U
+		    Dick Smith Electronics WL240U
+		    Dick Smith Electronics XH1153
+		    D-Link DWL-120 rev E
+		    Geowave GW-US11S
+		    Gigabyte GN-WLBM101
+		    Gigaset WLAN
+		    Hewlett-Packard HN210W
+		    Intel AP310 AnyPoint II
+		    I/O DATA USB WN-B11
+		    Lexar 2662W-AR
+		    Linksys WUSB11
+		    Linksys WUSB11 v2.8
+		    MSI WLAN
+		    Netgear MA101
+		    Netgear MA101 rev B
+		    Ovislink AirLive WL-1120USB
+		    OvisLink AirLive WL-1130USB
+		    Planex Communications GW-US11S
+		    Samsung SWL2100W
+		    Siemens WLL013
+		    SMC 2662W-AR
+		    SMC 2662W-V4
+		    Tekram U-300C
+		    Z-Com M4Y-750
 		Intersil PRISM 2.5/3 based USB IEEE 802.11b adapters
-			Acer Warplink USB-400
-			Actiontec HWU01170
-			AirVast WM168b
-			Ambit WLAN
-			Apacer Wireless Steno MB112
-			ASUS WL-140
-			Compaq W100
-			Corega WLUSB-11
-			Corega WLUSB-11 Key
-			D-Link DWL-120 (rev F)
-			D-Link DWL-122
-			I-O DATA WN-B11/USB
-			Intel PRO/Wireless 2011B
-			Intersil Prism 2X
-			JVC MP-XP7250
-			Linksys WUSB11 v3.0
-			Linksys WUSB12
-			Melco WLI-USB-KB11
-			Melco WLI-USB-KS11G
-			Melco WLI-USB-S11
-			Microsoft MN510
-			Netgear MA111 (version 1)
-			Pheenet WL-503IA
-			Planex GW-US11H
-			Siemens SpeedStream SS1022
-			Sitecom WL-022
-			Syntax USB-400
-			US Robotics 1120
-			ViewSonic Airsync
-			Z-Com XI-725/726
-			Z-Com XI-735
-			ZyXEL ZyAIR B-200
+		    Acer Warplink USB-400
+		    Actiontec HWU01170
+		    AirVast WM168b
+		    Ambit WLAN
+		    Apacer Wireless Steno MB112
+		    ASUS WL-140
+		    Compaq W100
+		    Corega WLUSB-11
+		    Corega WLUSB-11 Key
+		    D-Link DWL-120 (rev F)
+		    D-Link DWL-122
+		    I-O DATA WN-B11/USB
+		    Intel PRO/Wireless 2011B
+		    Intersil Prism 2X
+		    JVC MP-XP7250
+		    Linksys WUSB11 v3.0
+		    Linksys WUSB12
+		    Melco WLI-USB-KB11
+	 	    Melco WLI-USB-KS11G
+		    Melco WLI-USB-S11
+		    Microsoft MN510
+		    Netgear MA111 (version 1)
+		    Pheenet WL-503IA
+		    Planex GW-US11H
+		    Siemens SpeedStream SS1022
+		    Sitecom WL-022
+		    Syntax USB-400
+		    US Robotics 1120
+		    ViewSonic Airsync
+		    Z-Com XI-725/726
+		    Z-Com XI-735
+		    ZyXEL ZyAIR B-200
+		Marvell Libertas CardBus IEEE 802.11b/g wireless adapters [*]
+		    Netgear WG511v2
+		Marvell Libertas PCI IEEE 802.11b/g wireless adapters [*]
+		    Netgear WG311v3
 		Ralink RT2500 based USB 2.0 IEEE 802.11b/g adapters
-			AMIT WL532U
-			ASUS WL-167g
-			Belkin F5D7050
-			Buffalo WLI-U2-KG54
-			Buffalo WLI-U2-KG54-AI
-			Buffalo WLI-U2-KG54-YB
-			CNet CWD-854
-			Compex WLU54G
-			Conceptronic C54RU
-			D-Link DWL-G122 (b1)
-			Dynalink WLG25USB
-			E-Tech WGUS02
-			Eminent 3035
-			Gigabyte GN-WBKG
-			Hercules HWGUSB2-54
-			KCORP LifeStyle KLS-685
-			Linksys WUSB54G v4
-			Linksys WUSB54GP v4
-			MSI MS-6861
-			MSI MS-6865
-			MSI MS-6869
-			SerComm UB801R
-			SparkLAN WL-685R
-			Sphairon UB801R
-			Surecom EP-9001-g rev 3A
-			Tonze UW-6200C
-			Zaapa ZNWUSB-54
-			Zinwell ZWX-G261
-			Zonet ZEW2500P
+		    AMIT WL532U
+		    ASUS WL-167g v1
+		    Belkin F5D7050
+		    Buffalo WLI-U2-KG54
+		    Buffalo WLI-U2-KG54-AI
+		    Buffalo WLI-U2-KG54-YB
+		    CNet CWD-854
+		    Compex WLU54G
+		    Conceptronic C54RU
+		    D-Link DWL-G122 (b1)
+		    Dynalink WLG25USB
+		    E-Tech WGUS02
+		    Eminent 3035
+		    Gigabyte GN-WBKG
+		    Hercules HWGUSB2-54
+		    KCORP LifeStyle KLS-685
+		    Linksys WUSB54G v4
+		    Linksys WUSB54GP v4
+		    MSI MS-6861
+		    MSI MS-6865
+		    MSI MS-6869
+		    SerComm UB801R
+		    SparkLAN WL-685R
+		    Sphairon UB801R
+		    Surecom EP-9001-g rev 3A
+		    Tonze UW-6200C
+		    Zaapa ZNWUSB-54
+		    Zinwell ZWX-G261
+		    Zonet ZEW2500P
+		Ralink RT2501USB/RT2601USB USB 2.0 IEEE 802.11/a/b/g adapters
+		    3Com Aolynk WUB320g
+		    Abocom WUG2700
+		    Airlink101 AWLL5025
+		    Belkin F5D7050 ver 3
+		    Belkin F5D9050 ver 3
+		    Buffalo WLI-U2-SG54HP
+		    Buffalo WLI-U2-G54HP
+		    CNet CWD-854 ver F
+		    Conceptronic C54RU ver 2
+		    Corega CG-WLUSB2GO
+		    D-Link DWL-G122 rev C1
+		    D-Link WUA-1340
+		    Digitus DN-7003GR
+		    Edimax EW-7318USG
+		    Gigabyte GN-WB01GS
+		    Hawking HWUG1
+		    Hawking HWU54DM
+		    Hercules HWGUSB2-54-LB
+		    Hercules HWGUSB2-54V2-AP
+		    LevelOne WNC-0301USB v3
+		    Linksys WUSB54G rev C
+		    Linksys WUSB54GR
+		    Planex GW-US54HP
+		    Planex GW-US54Mini2
+		    Planex GW-USMM
+		    Senao NUB-3701
+		    Sitecom WL-113 ver 2
+		    Sitecom WL-172
+		    Sweex LW053
+		    TP-LINK TL-WN321G
 		Realtek RTL8180L based CardBus IEEE 802.11b adapters
-			Belkin F5D6020 V3
-			Buffalo WLI-CB-B11
-			Corega CG-WLCB11V3
-			D-Link DWL-610
-			Level-One WPC-0101
-			Linksys WPC11 v4
-			Netgear MA521
-			Ovislink AirLive WL-1120PCM
-			Planet WL-3553
-			TRENDnet TEW-226PC
-			VCTnet PC-11B1
+		    Belkin F5D6020 V3
+		    Buffalo WLI-CB-B11
+		    Corega CG-WLCB11V3
+		    D-Link DWL-610
+		    Level-One WPC-0101
+		    Linksys WPC11 v4
+		    Netgear MA521
+		    Ovislink AirLive WL-1120PCM
+		    Planet WL-3553
+		    TRENDnet TEW-226PC
+		    VCTnet PC-11B1
 
 	Tape drives
 		SCSI Tape drives (st)
@@ -465,6 +519,7 @@ Supported devices {:-include-:}:
 			I/O DATA GV-BCTV3/PCI
 			KISS TV/FM PCI
 			Leadtek Winfast TV 2000
+			Leadtek Winfast TV 2000 XP
 			Miro PC TV
 			MMAC Osprey
 			NEC PK-UG-X017
