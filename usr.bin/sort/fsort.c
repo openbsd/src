@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsort.c,v 1.16 2007/03/07 18:11:03 millert Exp $	*/
+/*	$OpenBSD: fsort.c,v 1.17 2007/03/11 00:38:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)fsort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fsort.c,v 1.16 2007/03/07 18:11:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsort.c,v 1.17 2007/03/11 00:38:01 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,9 +53,10 @@ static char rcsid[] = "$OpenBSD: fsort.c,v 1.16 2007/03/07 18:11:03 millert Exp 
 #include <stdlib.h>
 #include <string.h>
 
-u_char *linebuf;
-size_t linebuf_size = MAXLLEN;
+u_char *buffer = NULL, *bufend = NULL, *linebuf = NULL;
+size_t bufsize = BUFSIZE, linebuf_size = MAXLLEN;
 struct tempfile fstack[MAXFCT];
+extern char toutpath[];
 #define FSORTMAX 4
 int PANIC = FSORTMAX;
 
@@ -63,9 +64,8 @@ void
 fsort(int binno, int depth, union f_handle infiles, int nfiles, FILE *outfp,
     struct field *ftbl)
 {
-	u_char *weights, **keypos, *bufend, *tmpbuf;
-	static u_char *buffer, **keylist;
-	static size_t bufsize;
+	u_char *weights, **keypos, *tmpbuf;
+	static u_char **keylist;
 	int ntfiles, mfct = 0, total, i, maxb, lastb, panic = 0;
 	int c, nelem;
 	long sizes[NBINS+1];
@@ -85,13 +85,10 @@ fsort(int binno, int depth, union f_handle infiles, int nfiles, FILE *outfp,
 		tfield[0].weights = ascii;
 	tfield[0].icol.num = 1;
 	weights = ftbl[0].weights;
-	if (buffer == NULL) {
-		bufsize = BUFSIZE;
-		if ((buffer = malloc(bufsize)) == NULL ||
-		    (keylist = calloc(MAXNUM, sizeof(u_char *))) == NULL)
+	if (keylist == NULL) {
+		if ((keylist = calloc(MAXNUM, sizeof(u_char *))) == NULL)
 			err(2, NULL);
 	}
-	bufend = buffer + bufsize - 1;
 	if (binno >= 0) {
 		tfiles.top = infiles.top + nfiles;
 		get = getnext;
