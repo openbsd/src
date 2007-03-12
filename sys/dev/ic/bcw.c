@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.69 2007/03/12 06:51:16 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.70 2007/03/12 22:29:38 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -1812,7 +1812,7 @@ bcw_init(struct ifnet *ifp)
 		BCW_WRITE16(sc, 0x005e, val16);
 	}
 	BCW_WRITE(sc, 0x0100, 0x01000000);
-	if (1) /* XXX current_core->rev */
+	if (sc->sc_core[sc->sc_currentcore].rev < 5)
 		BCW_WRITE(sc, 0x010c, 0x01000000);
 
 	val32 = BCW_READ(sc, BCW_SBF);
@@ -1836,14 +1836,14 @@ bcw_init(struct ifnet *ifp)
 
 	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0074, 0);
 
-	if (1) { /* XXX core_rev */
+	if (sc->sc_core[sc->sc_currentcore].rev < 3) {
 		BCW_WRITE16(sc, 0x060e, 0);
 		BCW_WRITE16(sc, 0x0610, 0x8000);
 		BCW_WRITE16(sc, 0x0604, 0);
 		BCW_WRITE16(sc, 0x0606, 0x0200);
 	} else {
 		BCW_WRITE(sc, 0x0188, 0x80000000);
-		BCW_WRITE(sc, 0x0606, 0x02000000);
+		BCW_WRITE(sc, 0x018c, 0x02000000);
 	}
 	BCW_WRITE(sc, BCW_GIR, 0x00004000);
 	BCW_WRITE(sc, BCW_DMA0_INT_MASK, 0x0001dc00);
@@ -1856,6 +1856,7 @@ bcw_init(struct ifnet *ifp)
 	val32 = BCW_READ(sc, BCW_CIR_SBTMSTATELOW);
 	val32 |= 0x00100000;
 	BCW_WRITE(sc, BCW_CIR_SBTMSTATELOW, val32);
+	/* TODO bcw_pctl_powerup_delay(sc) */
 
 	DPRINTF(("%s: Chip initialized\n", sc->sc_dev.dv_xname));
 
