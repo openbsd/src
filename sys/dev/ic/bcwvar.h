@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.27 2007/03/04 00:43:26 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.28 2007/03/12 06:51:16 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -73,7 +73,12 @@ enum {
 	BCW_LED_BCM4303_3 = 0x19,
 };
 
+#define BCW_RADIO_TXANTENNA_LASTPLCP	3
+#define BCW_RADIO_TXANTENNA_DEFAULT	BCW_RADIO_TXANTENNA_LASTPLCP
+#define BCW_RADIO_INTERFMODE_NONE	0
 #define BCW_RADIO_INTERFMODE_NONWLAN	1
+#define BCW_RADIO_INTERFMODE_MANUALWLAN	2
+#define BCW_RADIO_INTERFMODE_AUTOWLAN	3
 #define BCW_RADIO_DEFAULT_CHANNEL_A	36
 #define BCW_RADIO_DEFAULT_CHANNEL_BG	6
 #define BCW_RADIO_MAX			2
@@ -155,6 +160,9 @@ struct bcw_lopair {
 #define CTRL_IOC	0x20000000	/* interrupt on completion */
 #define CTRL_EOF	0x40000000	/* end of frame */
 #define CTRL_SOF	0x80000000	/* start of frame */
+
+/* radio */
+#define BCW_INTERFSTACK_SIZE		26
                 
 /* ilt */
 #define BCW_ILT_FINEFREQA_SIZE		256
@@ -233,6 +241,7 @@ struct bcw_softc {
 	uint16_t		sc_prodid;	/* Product ID */
 	struct bcw_core		sc_core[BCW_MAX_CORES];
 //	struct bcw_radio	radio[BCW_RADIO_MAX];
+	uint16_t		sc_using_pio:1;
 	uint16_t		sc_phy_ver;
 	uint16_t		sc_phy_type;
 	uint16_t		sc_phy_rev;
@@ -280,6 +289,7 @@ struct bcw_softc {
 	uint16_t		sc_radio_txctl2;
 	uint8_t			sc_radio_channel;
 	int8_t			sc_radio_nrssi_lt[64];
+	uint32_t		sc_radio_interfstack[BCW_INTERFSTACK_SIZE];
 	uint8_t			sc_idletssi;
 	uint8_t			sc_spromrev;
 	uint16_t		sc_boardflags;

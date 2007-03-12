@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.68 2007/03/04 19:04:31 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.69 2007/03/12 06:51:16 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -78,6 +78,10 @@ void		bcw_dummy_transmission(struct bcw_softc *);
 struct bcw_lopair *
 		bcw_get_lopair(struct bcw_softc *sc, uint16_t radio_atten,
 		    uint16_t baseband_atten);
+void		bcw_stack_save(uint32_t *, size_t *, uint8_t, uint16_t,
+		    uint16_t);
+uint16_t	bcw_stack_restore(uint32_t *, uint8_t, uint16_t);
+int		bcw_using_pio(struct bcw_softc *);
 
 void		bcw_reset(struct bcw_softc *);
 int		bcw_init(struct ifnet *);
@@ -151,6 +155,7 @@ struct bcw_lopair *
 struct bcw_lopair *
 		bcw_phy_current_lopair(struct bcw_softc *);
 void		bcw_phy_prepare_init(struct bcw_softc *);
+void		bcw_phy_set_antenna_diversity(struct bcw_softc *);
 /* radio */
 void		bcw_radio_off(struct bcw_softc *);
 void		bcw_radio_on(struct bcw_softc *);
@@ -183,6 +188,10 @@ uint16_t	bcw_radio_get_txgain_freq_power_amp(uint16_t);
 uint16_t	bcw_radio_get_txgain_dac(uint16_t);
 uint16_t	bcw_radio_freq_r3a_value(uint16_t);
 void		bcw_radio_prepare_init(struct bcw_softc *);
+int		bcw_radio_set_interference_mitigation(struct bcw_softc *, int);
+int		bcw_radio_interference_mitigation_enable(struct bcw_softc *,
+		    int);
+void		bcw_radio_set_txantenna(struct bcw_softc *, uint32_t);
 /* ilt */
 void		bcw_ilt_write(struct bcw_softc *, uint16_t, uint16_t);
 uint16_t	bcw_ilt_read(struct bcw_softc *, uint16_t);
@@ -190,6 +199,17 @@ uint16_t	bcw_ilt_read(struct bcw_softc *, uint16_t);
 struct cfdriver bcw_cd = {
 	NULL, "bcw", DV_IFNET
 };
+
+#define BCW_PHY_STACKSAVE(offset)				\
+	do {							\
+		bcw_stack_save(stack, &stackidx, 0x1, (offset),	\
+		    bcw_phy_read16(sc, (offset)));		\
+	} while (0)
+#define BCW_ILT_STACKSAVE(offset)				\
+	do {							\
+		bcw_stack_save(stack, &stackidx, 0x3, (offset), \
+		    bcw_ilt_read(sc, (offset)));		\
+	} while (0)
 
 /*
  * Table for bcw_radio_calibrationvalue()
@@ -677,6 +697,48 @@ bcw_get_lopair(struct bcw_softc *sc, uint16_t radio_atten,
 {
 	return (sc->sc_phy_lopairs + (radio_atten + 14 *
 	    (baseband_atten / 2)));
+}
+
+void
+bcw_stack_save(uint32_t *_stackptr, size_t *stackidx, uint8_t id,
+    uint16_t offset, uint16_t val)
+{
+	uint32_t *stackptr = &(_stackptr[*stackidx]);
+
+	/* XXX assert() */
+
+	*stackptr = offset;
+	*stackptr |= ((uint32_t)id) << 12;
+	*stackptr |= ((uint32_t)val) << 16;
+	(*stackidx)++;
+
+	/* XXX assert() */
+}
+
+uint16_t
+bcw_stack_restore(uint32_t *stackptr, uint8_t id, uint16_t offset)
+{
+	size_t i;
+
+	/* XXX assert() */
+
+	for (i = 0; i < BCW_INTERFSTACK_SIZE; i++, stackptr++) {
+		if ((*stackptr & 0x00000fff) != offset)
+			continue;
+		if (((*stackptr & 0x0000f000) >> 12) != id)
+			continue;
+		return (((*stackptr & 0xffff0000) >> 16));
+	}
+
+	/* XXX assert() */
+
+	return (0);
+}
+
+int
+bcw_using_pio(struct bcw_softc *sc)
+{
+	return (sc->sc_using_pio);
 }
 
 void
@@ -1672,7 +1734,8 @@ bcw_init(struct ifnet *ifp)
 {
 	struct bcw_softc *sc = ifp->if_softc;
 	uint16_t val16;
-	int error, i;
+	uint32_t val32;
+	int error, i, tmp;
 
 	BCW_WRITE(sc, BCW_SBF, BCW_SBF_CORE_READY | BCW_SBF_400_MAGIC);
 
@@ -1736,8 +1799,67 @@ bcw_init(struct ifnet *ifp)
 	if ((error = bcw_phy_init(sc)))
 		return (error);
 
-	return (0);
+	/* select initial interference mitigation */
+	tmp = sc->sc_radio_interfmode;
+	sc->sc_radio_interfmode = BCW_RADIO_INTERFMODE_NONE;
+	bcw_radio_set_interference_mitigation(sc, tmp);
 
+	bcw_phy_set_antenna_diversity(sc);
+	bcw_radio_set_txantenna(sc, BCW_RADIO_TXANTENNA_DEFAULT);
+	if (sc->sc_phy_type == BCW_PHY_TYPEB) {
+		val16 = BCW_READ16(sc, 0x005e);
+		val16 |= 0x0004;
+		BCW_WRITE16(sc, 0x005e, val16);
+	}
+	BCW_WRITE(sc, 0x0100, 0x01000000);
+	if (1) /* XXX current_core->rev */
+		BCW_WRITE(sc, 0x010c, 0x01000000);
+
+	val32 = BCW_READ(sc, BCW_SBF);
+	val32 &= ~BCW_SBF_ADHOC;
+	BCW_WRITE(sc, BCW_SBF, val32);
+	val32 = BCW_READ(sc, BCW_SBF);
+	val32 |= BCW_SBF_ADHOC;
+	BCW_WRITE(sc, BCW_SBF, val32);
+
+	val32 = BCW_READ(sc, BCW_SBF);
+	val32 |= 0x100000;
+	BCW_WRITE(sc, BCW_SBF, val32);
+
+	if (bcw_using_pio(sc)) {
+		BCW_WRITE(sc, 0x0210, 0x00000100);
+		BCW_WRITE(sc, 0x0230, 0x00000100);
+		BCW_WRITE(sc, 0x0250, 0x00000100);
+		BCW_WRITE(sc, 0x0270, 0x00000100);
+		bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0034, 0);
+	}
+
+	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0074, 0);
+
+	if (1) { /* XXX core_rev */
+		BCW_WRITE16(sc, 0x060e, 0);
+		BCW_WRITE16(sc, 0x0610, 0x8000);
+		BCW_WRITE16(sc, 0x0604, 0);
+		BCW_WRITE16(sc, 0x0606, 0x0200);
+	} else {
+		BCW_WRITE(sc, 0x0188, 0x80000000);
+		BCW_WRITE(sc, 0x0606, 0x02000000);
+	}
+	BCW_WRITE(sc, BCW_GIR, 0x00004000);
+	BCW_WRITE(sc, BCW_DMA0_INT_MASK, 0x0001dc00);
+	BCW_WRITE(sc, BCW_DMA1_INT_MASK, 0x0000dc00);
+	BCW_WRITE(sc, BCW_DMA2_INT_MASK, 0x0000dc00);
+	BCW_WRITE(sc, BCW_DMA3_INT_MASK, 0x0001dc00);
+	BCW_WRITE(sc, BCW_DMA4_INT_MASK, 0x0000dc00);
+	BCW_WRITE(sc, BCW_DMA5_INT_MASK, 0x0000dc00);
+
+	val32 = BCW_READ(sc, BCW_CIR_SBTMSTATELOW);
+	val32 |= 0x00100000;
+	BCW_WRITE(sc, BCW_CIR_SBTMSTATELOW, val32);
+
+	DPRINTF(("%s: Chip initialized\n", sc->sc_dev.dv_xname));
+
+#if 0
 	/* Cancel any pending I/O. */
 	bcw_stop(ifp, 0);
 
@@ -1751,7 +1873,6 @@ bcw_init(struct ifnet *ifp)
 	/* enable pci interrupts, bursts, and prefetch */
 
 	/* remap the pci registers to the Sonics config registers */
-#if 0
 	/* XXX - use (sc->sc_conf_read/write) */
 	/* save the current map, so it can be restored */
 	reg_win = BCW_READ(sc, BCW_REG0_WIN);
@@ -1771,14 +1892,12 @@ bcw_init(struct ifnet *ifp)
 
 	/* Reset the chip to a known state. */
 	bcw_reset(sc);
-#endif
 
-#if 0 /* FIXME */
+	/* FIXME */
 	/* Initialize transmit descriptors */
 	memset(sc->bcw_tx_ring, 0, BCW_NTXDESC * sizeof(struct bcw_dma_slot));
 	sc->sc_txsnext = 0;
 	sc->sc_txin = 0;
-#endif
 
 	/* enable crc32 generation and set proper LED modes */
 	BCW_WRITE(sc, BCW_MACCTL,
@@ -1817,16 +1936,14 @@ bcw_init(struct ifnet *ifp)
 	    I_XI | I_RI | I_XU | I_RO | I_RU | I_DE | I_PD | I_PC | I_TO;
 	BCW_WRITE(sc, BCW_INT_MASK, sc->sc_intmask);
 	    
-#if 0
 	/* FIXME */
 	/* start the receive dma */
 	BCW_WRITE(sc, BCW_DMA_RXDPTR,
 	    BCW_NRXDESC * sizeof(struct bcw_dma_slot));
-#endif
 
 	/* set media */
 	//mii_mediachg(&sc->bcw_mii);
-#if 0
+
 	/* turn on the ethernet mac */
 	BCW_WRITE(sc, BCW_ENET_CTL, BCW_READ(sc, BCW_ENET_CTL) | EC_EE);
 	    
@@ -1915,7 +2032,7 @@ bcw_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 
 	/* Disable interrupts. */
-	BCW_WRITE(sc, BCW_INT_MASK, 0);
+	BCW_WRITE(sc, BCW_DMA0_INT_MASK, 0);
 	sc->sc_intmask = 0;
 	delay(10);
 
@@ -4999,6 +5116,112 @@ bcw_phy_prepare_init(struct bcw_softc *sc)
 	memset(sc->sc_phy_loopback_gain, 0, sizeof(sc->sc_phy_loopback_gain));
 }
 
+void
+bcw_phy_set_antenna_diversity(struct bcw_softc *sc)
+{
+	uint16_t antennadiv;
+	uint16_t offset;
+	uint16_t val;
+	uint32_t ucodeflags;
+
+	if (antennadiv == 0xffff)
+		antennadiv = 3;
+	/* XXX assert() */
+
+	ucodeflags = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED,
+	    BCW_SHM_MICROCODEFLAGSLOW);
+	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, BCW_SHM_MICROCODEFLAGSLOW,
+	    ucodeflags & ~BCW_SHM_MICROCODEFLAGSAUTODIV);
+
+	switch (sc->sc_phy_type) {
+	case BCW_PHY_TYPEA:
+	case BCW_PHY_TYPEG:
+		if (sc->sc_phy_type == BCW_PHY_TYPEA)
+			offset = 0;
+		else
+			offset = 0x0400;
+
+		if (antennadiv == 2)
+			val = (3 << 7);
+		else
+			val = (antennadiv << 7);
+		bcw_phy_write16(sc, offset + 1,
+		    (bcw_phy_read16(sc, offset + 1) & 0x7e7f) | val);
+
+		if (antennadiv >= 2) {
+			if (antennadiv == 2)
+				val = (antennadiv << 7);
+			else
+				val = (0 << 7);
+			bcw_phy_write16(sc, offset + 0x2b,
+			    (bcw_phy_read16(sc, offset + 0x2b) & 0xfeff) | val);
+		}
+
+		if (sc->sc_phy_type == BCW_PHY_TYPEG) {
+			if (antennadiv >= 2)
+				bcw_phy_write16(sc, 0x048c,
+				    bcw_phy_read16(sc, 0x048c) | 0x2000);
+			else
+				bcw_phy_write16(sc, 0x048c,
+				    bcw_phy_read16(sc, 0x048c) | ~0x2000);
+			if (sc->sc_phy_rev >= 2) {
+				bcw_phy_write16(sc, 0x0461,
+				    bcw_phy_read16(sc, 0x0461) | 0x0010);
+				bcw_phy_write16(sc, 0x04ad,
+				    (bcw_phy_read16(sc, 0x04ad) & 0x00ff) |
+				    0x0015);
+				if (sc->sc_phy_rev == 2)
+					bcw_phy_write16(sc, 0x0427, 0x0008);
+				else
+					bcw_phy_write16(sc, 0x0427,
+					    (bcw_phy_read16(sc, 0x0427) &
+					    0x00ff) | 0x0008);
+			} else if (sc->sc_phy_rev >= 6)
+				bcw_phy_write16(sc, 0x049b, 0x00dc);
+		} else {
+			if (sc->sc_phy_rev < 3)
+				bcw_phy_write16(sc, 0x002b,
+				    (bcw_phy_read16(sc, 0x002b) & 0x00ff) |
+				    0x0024);
+			else {
+				bcw_phy_write16(sc, 0x0061,
+				    bcw_phy_read16(sc, 0x0061) | 0x0010);
+				if (sc->sc_phy_rev == 3) {
+					bcw_phy_write16(sc, 0x0093, 0x001d);
+					bcw_phy_write16(sc, 0x0027, 0x0008);
+				} else {
+					bcw_phy_write16(sc, 0x0093, 0x003a);
+					bcw_phy_write16(sc, 0x0027,
+					    (bcw_phy_read16(sc, 0x0027) &
+					    0x00ff) | 0x0008);	
+				}
+			}
+		}
+		break;
+	case BCW_PHY_TYPEB:
+		if (1) /* XXX current_core->rev */
+			val = (3 << 7);
+		else
+			val = (antennadiv << 7);
+		bcw_phy_write16(sc, 0x03e2, (bcw_phy_read16(sc, 0x03e2) &
+		    0xfe7f) | val);
+		break;
+	default:
+		/* XXX assert() */
+		break;
+	}
+
+	if (antennadiv >= 2) {
+		ucodeflags = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED,
+		    BCW_SHM_MICROCODEFLAGSLOW);
+		bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED,
+		    BCW_SHM_MICROCODEFLAGSLOW, ucodeflags |
+		    BCW_SHM_MICROCODEFLAGSAUTODIV);
+	}
+
+	sc->sc_phy_antenna_diversity = antennadiv;
+}
+
 /*
  * Radio
  */
@@ -6158,6 +6381,268 @@ bcw_radio_prepare_init(struct bcw_softc *sc)
 	sc->sc_radio_aci_enable = 0;
 	sc->sc_radio_aci_wlan_automatic = 0;
 	sc->sc_radio_aci_hw_rssi = 0;
+}
+
+int
+bcw_radio_set_interference_mitigation(struct bcw_softc *sc, int mode)
+{
+	int currentmode;
+
+	if (sc->sc_phy_type != BCW_PHY_TYPEG || sc->sc_phy_type == 0 ||
+	    sc->sc_phy_connected == 0)
+		return (ENODEV);
+
+	sc->sc_radio_aci_wlan_automatic = 0;
+	switch (mode) {
+	case BCW_RADIO_INTERFMODE_AUTOWLAN:
+		sc->sc_radio_aci_wlan_automatic = 1;
+		if (sc->sc_radio_aci_enable)
+			mode = BCW_RADIO_INTERFMODE_MANUALWLAN;
+		else
+			mode = BCW_RADIO_INTERFMODE_NONE;
+		break;
+	case BCW_RADIO_INTERFMODE_NONE:
+	case BCW_RADIO_INTERFMODE_NONWLAN:
+	case BCW_RADIO_INTERFMODE_MANUALWLAN:
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	currentmode = sc->sc_radio_interfmode;
+	if (currentmode == mode)
+		return (0);
+	if (currentmode != BCW_RADIO_INTERFMODE_NONE) {
+		sc->sc_radio_aci_enable = 0;
+		sc->sc_radio_aci_hw_rssi = 0;
+	} else
+		bcw_radio_interference_mitigation_enable(sc, mode);
+	sc->sc_radio_interfmode = mode;
+
+	return (0);
+}
+
+int
+bcw_radio_interference_mitigation_enable(struct bcw_softc *sc, int mode)
+{
+	uint16_t tmp, flipped;
+	uint32_t tmp32;
+	size_t stackidx = 0;
+	uint32_t *stack = sc->sc_radio_interfstack;
+
+	switch (mode) {
+	case BCW_RADIO_INTERFMODE_NONWLAN:
+		if (sc->sc_phy_rev != 1) {
+			bcw_phy_write16(sc, 0x042b,
+			    bcw_phy_read16(sc, 0x042b) | 0x0800);
+			bcw_phy_write16(sc, BCW_PHY_G_CRS,
+			    bcw_phy_read16(sc, BCW_PHY_G_CRS) & ~0x4000);
+			break;
+		}
+		/* XXX radio_stacksave() */
+		tmp = (bcw_radio_read16(sc, 0x0078) & 0x001e);
+		flipped = tmp; /* XXX flip_4bit(tmp) */
+		if (flipped < 10 && flipped >= 8)
+			flipped = 7;
+		else if (flipped >= 10)
+			flipped -= 3;
+		flipped = flipped; /* XXX flip_4bit(flipped) */
+		flipped = (flipped << 1) | 0x0020;
+		bcw_radio_write16(sc, 0x0078, flipped);
+
+		bcw_radio_calc_nrssi_threshold(sc);
+
+		BCW_PHY_STACKSAVE(0x0406);
+		bcw_phy_write16(sc, 0x0406, 0x7e28);
+
+		bcw_phy_write16(sc, 0x042b,
+		    bcw_phy_read16(sc, 0x042b) | 0x08000);
+		bcw_phy_write16(sc, BCW_PHY_RADIO_BITFIELD,
+		    bcw_phy_read16(sc, BCW_PHY_RADIO_BITFIELD) | 0x1000);
+		BCW_PHY_STACKSAVE(0x04a0);
+		bcw_phy_write16(sc, 0x04a0,
+		    (bcw_phy_read16(sc, 0x04a0) & 0xc0c0) | 0x0008);
+		BCW_PHY_STACKSAVE(0x04a1);
+		bcw_phy_write16(sc, 0x04a1,
+		    (bcw_phy_read16(sc, 0x04a1) & 0xc0c0) | 0x0605);
+		BCW_PHY_STACKSAVE(0x04a2);
+		bcw_phy_write16(sc, 0x04a2,
+		    (bcw_phy_read16(sc, 0x04a2) & 0xc0c0) | 0x0204);
+		BCW_PHY_STACKSAVE(0x04a8);
+		bcw_phy_write16(sc, 0x04a8,
+		    (bcw_phy_read16(sc, 0x04a8) & 0xc0c0) | 0x0803);
+		BCW_PHY_STACKSAVE(0x04ab);
+		bcw_phy_write16(sc, 0x04ab,
+		    (bcw_phy_read16(sc, 0x04ab) & 0xc0c0) | 0x0605);
+
+		BCW_PHY_STACKSAVE(0x04a7);
+		bcw_phy_write16(sc, 0x04a7, 0x0002);
+		BCW_PHY_STACKSAVE(0x04a3);
+		bcw_phy_write16(sc, 0x04a3, 0x287a);
+		BCW_PHY_STACKSAVE(0x04a9);
+		bcw_phy_write16(sc, 0x04a9, 0x2027);
+		BCW_PHY_STACKSAVE(0x0493);
+		bcw_phy_write16(sc, 0x0493, 0x32f5);
+		BCW_PHY_STACKSAVE(0x04aa);
+		bcw_phy_write16(sc, 0x04aa, 0x2027);
+		BCW_PHY_STACKSAVE(0x04ac);
+		bcw_phy_write16(sc, 0x04ac, 0x32f5);
+		break;
+	case BCW_RADIO_INTERFMODE_MANUALWLAN:
+		if (bcw_phy_read16(sc, 0x0033) & 0x0800)
+			break;
+
+		sc->sc_radio_aci_enable = 1;
+
+		BCW_PHY_STACKSAVE(BCW_PHY_RADIO_BITFIELD);
+		BCW_PHY_STACKSAVE(BCW_PHY_G_CRS);
+		if (sc->sc_phy_rev < 2)
+			BCW_PHY_STACKSAVE(0x0406);
+		else {
+			BCW_PHY_STACKSAVE(0x04c0);
+			BCW_PHY_STACKSAVE(0x04c1);
+		}
+		BCW_PHY_STACKSAVE(0x0033);
+		BCW_PHY_STACKSAVE(0x04a7);
+		BCW_PHY_STACKSAVE(0x04a3);
+		BCW_PHY_STACKSAVE(0x04a9);
+		BCW_PHY_STACKSAVE(0x04aa);
+		BCW_PHY_STACKSAVE(0x04ac);
+		BCW_PHY_STACKSAVE(0x0493);
+		BCW_PHY_STACKSAVE(0x04a1);
+		BCW_PHY_STACKSAVE(0x04a0);
+		BCW_PHY_STACKSAVE(0x04a2);
+		BCW_PHY_STACKSAVE(0x048a);
+		BCW_PHY_STACKSAVE(0x04a8);
+		BCW_PHY_STACKSAVE(0x04ab);
+		if (sc->sc_phy_rev == 2) {
+			BCW_PHY_STACKSAVE(0x04ad);
+			BCW_PHY_STACKSAVE(0x04ae);
+		} else if (sc->sc_phy_rev >= 3) {
+			BCW_PHY_STACKSAVE(0x04ad);
+			BCW_PHY_STACKSAVE(0x0415);
+			BCW_PHY_STACKSAVE(0x0416);
+			BCW_PHY_STACKSAVE(0x0417);
+			BCW_ILT_STACKSAVE(0x1a00 + 0x2);
+			BCW_ILT_STACKSAVE(0x1a00 + 0x3);
+		}
+		BCW_PHY_STACKSAVE(0x042b);
+		BCW_PHY_STACKSAVE(0x048c);
+
+		bcw_phy_write16(sc, BCW_PHY_RADIO_BITFIELD,
+		    bcw_phy_read16(sc, BCW_PHY_RADIO_BITFIELD) & ~0x1000);
+		bcw_phy_write16(sc, BCW_PHY_G_CRS,
+		    (bcw_phy_read16(sc, BCW_PHY_G_CRS) & 0xfffc) | 0x0002);
+
+		bcw_phy_write16(sc, 0x0033, 0x0800);
+		bcw_phy_write16(sc, 0x04a3, 0x2027);
+		bcw_phy_write16(sc, 0x04a9, 0x1ca8);
+		bcw_phy_write16(sc, 0x0493, 0x287a);
+		bcw_phy_write16(sc, 0x04aa, 0x1ca8);
+		bcw_phy_write16(sc, 0x04ac, 0x287a);
+
+		bcw_phy_write16(sc, 0x04a0,
+		    (bcw_phy_read16(sc, 0x04a0) & 0xffc0) | 0x001a);
+		bcw_phy_write16(sc, 0x04a7, 0x000d);
+
+		if (sc->sc_phy_rev < 2) {
+			bcw_phy_write16(sc, 0x0406, 0xff0d);
+		} else if (sc->sc_phy_rev == 2) {
+			bcw_phy_write16(sc, 0x04c0, 0xffff);
+			bcw_phy_write16(sc, 0x04c1, 0x00a9);
+		} else {
+			bcw_phy_write16(sc, 0x04c0, 0x00c1);
+			bcw_phy_write16(sc, 0x04c1, 0x0059);
+		}
+
+		bcw_phy_write16(sc, 0x04a1,
+		    (bcw_phy_read16(sc, 0x04a1) & 0xc0ff) | 0x1800);
+		bcw_phy_write16(sc, 0x04a1,
+		    (bcw_phy_read16(sc, 0x04a1) & 0xc0ff) | 0x0015);
+		bcw_phy_write16(sc, 0x04a8,
+		    (bcw_phy_read16(sc, 0x04a8) & 0xcfff) | 0x1000);
+		bcw_phy_write16(sc, 0x04a8,
+		    (bcw_phy_read16(sc, 0x04a8) & 0xf0ff) | 0x0a00);
+		bcw_phy_write16(sc, 0x04ab,
+		    (bcw_phy_read16(sc, 0x04a8) & 0xcfff) | 0x1000);
+		bcw_phy_write16(sc, 0x04ab,
+		    (bcw_phy_read16(sc, 0x04ab) & 0xf0ff) | 0x0800);
+		bcw_phy_write16(sc, 0x04ab,
+		    (bcw_phy_read16(sc, 0x04ab) & 0xf0ff) | 0x0010);
+		bcw_phy_write16(sc, 0x04ab,
+		    (bcw_phy_read16(sc, 0x04ab) & 0xfff0) | 0x0005);
+		bcw_phy_write16(sc, 0x04a8,
+		    (bcw_phy_read16(sc, 0x04a8) & 0xffcf) | 0x0010);
+		bcw_phy_write16(sc, 0x04a8,
+		    (bcw_phy_read16(sc, 0x04a8) & 0xfff0) | 0x0006);
+		bcw_phy_write16(sc, 0x04a2,
+		    (bcw_phy_read16(sc, 0x04a2) & 0xf0ff) | 0x0800);
+		bcw_phy_write16(sc, 0x04a0,
+		    (bcw_phy_read16(sc, 0x04a0) & 0xf0ff) | 0x0500);
+		bcw_phy_write16(sc, 0x04a2,
+		    (bcw_phy_read16(sc, 0x04a2) & 0xfff0) | 0x000b);
+
+		if (sc->sc_phy_rev >= 3) {
+			bcw_phy_write16(sc, 0x048a,
+			    bcw_phy_read16(sc, 0x048a) & ~0x8000);
+			bcw_phy_write16(sc, 0x0415,
+			    (bcw_phy_read16(sc, 0x0415) & 0x8000) | 0x36d8);
+			bcw_phy_write16(sc, 0x0416,
+			    (bcw_phy_read16(sc, 0x0416) & 0x8000) | 0x36d8);
+			bcw_phy_write16(sc, 0x0417,
+			    (bcw_phy_read16(sc, 0x0417) & 0xfe00) | 0x016d);
+		} else {
+			bcw_phy_write16(sc, 0x048a,
+			    bcw_phy_read16(sc, 0x048a) | 0x1000);
+			bcw_phy_write16(sc, 0x048a,
+			    (bcw_phy_read16(sc, 0x048a) & 0x9fff) | 0x2000);
+			tmp32 = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED,
+			    BCW_SHM_MICROCODEFLAGSLOW);
+			if (!(tmp32 & 0x800)) {
+				tmp32 |= 0x800;
+				bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED,
+				    BCW_SHM_MICROCODEFLAGSLOW, tmp32);
+			}
+		}
+		if (sc->sc_phy_rev >= 2) {
+			bcw_phy_write16(sc, 0x042b, bcw_phy_read16(sc, 0x042b) |
+			    0x0800);
+		}
+		bcw_phy_write16(sc, 0x048c, (bcw_phy_read16(sc, 0x048c) &
+		    0xff00) | 0x007f);
+		if (sc->sc_phy_rev == 2) {
+			bcw_phy_write16(sc, 0x04ae,
+			    (bcw_phy_read16(sc, 0x04ae) & 0xff00) | 0x007f);
+			bcw_phy_write16(sc, 0x04ad,
+			    (bcw_phy_read16(sc, 0x04ad) & 0x00ff) | 0x1300);
+		} else if (sc->sc_phy_rev >= 6) {
+			bcw_ilt_write(sc, 0x1a00 + 0x3, 0x007f);
+			bcw_ilt_write(sc, 0x1a00 + 0x2, 0x007f);
+			bcw_phy_write16(sc, 0x04ad,
+			    bcw_phy_read16(sc, 0x04ad) & 0x00ff);
+		}
+		bcw_radio_calc_nrssi_slope(sc);
+		break;
+	default:
+		 /* XXX assert () */
+		break;
+	}
+
+	return (0);
+}
+
+void
+bcw_radio_set_txantenna(struct bcw_softc *sc, uint32_t val)
+{
+	uint16_t tmp;
+
+	val <<= 8;
+	tmp = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, 0x0022) & 0xfcff;
+	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0022, tmp | val);
+	tmp = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, 0x03a8) & 0xfcff;
+	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x03a8, tmp | val);
+	tmp = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, 0x0054) & 0xfcff;
+	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0054, tmp | val);
 }
 
 /*

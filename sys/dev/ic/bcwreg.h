@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.16 2007/03/04 14:27:27 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.17 2007/03/12 06:51:16 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -48,6 +48,10 @@
 /* Core select address macro */
 #define BCW_CORE_SELECT(x)		(0x18000000 + (x * 0x1000))
 
+/* Core information registers */
+#define BCW_CIR_BASE			0xf00
+#define BCW_CIR_SBTMSTATELOW		(BCW_CIR_BASE + 0x98)
+
 /* Some Core Types */
 #define BCW_CORE_COMMON			0x800
 #define BCW_CORE_PCI			0x804
@@ -80,8 +84,14 @@
 #define BCW_DC_IP			0x00000400	/* internal phy present */
 #define BCW_DC_ER			0x00008000	/* ephy reset */
 /* Interrupt Control */
-#define BCW_INT_STS			0x0020
-#define BCW_INT_MASK			0x0024
+#define BCW_INT_STS			0x20
+#define BCW_DMA0_INT_MASK		0x24
+#define BCW_DMA1_INT_MASK		0x2c
+#define BCW_DMA2_INT_MASK		0x34
+#define BCW_DMA3_INT_MASK		0x3c
+#define BCW_DMA4_INT_MASK		0x44
+#define BCW_DMA5_INT_MASK		0x4c
+
 /* bits for both status, and mask */
 #define I_TO				0x00000080	/* general timeout */
 #define I_PC				0x00000400	/* descriptor error */
@@ -220,6 +230,7 @@
 /* SHM Addresses */
 #define BCW_SHM_MICROCODEFLAGSLOW	0x005e	/* Flags for Microcode ops */
 #define BCW_SHM_MICROCODEFLAGSHIGH	0x0060	/* Flags for Microcode ops */
+#define BCW_SHM_MICROCODEFLAGSAUTODIV	0x0001
 /* http://bcm-specs.sipsolutions.net/MicrocodeFlagsBitfield */
 
 /* 0x200 DMA Register space, there are 6 controllers */
@@ -335,6 +346,8 @@
 #define BCW_UCODE_DATE			0x0004
 #define BCW_UCODE_TIME			0x0006
 #define BCW_UCODE_STATUS		0x0040
+
+#define BCW_PHY_RADIO_BITFIELD		0x0401
 
 /* GPIO */
 #define BCW_GPIO_MASK			0x49e
