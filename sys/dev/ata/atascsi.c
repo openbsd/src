@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.11 2007/03/07 03:04:28 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.12 2007/03/12 00:31:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -37,25 +37,90 @@
 #define ATA_C_IDENTIFY		0xec
 
 struct ata_identify {
-	u_int16_t	config;		/*  0 */
-	u_int16_t	ncyls;		/*  1 (OBSOLETE) */
-	u_int16_t	reserved1;	/*  2 */
-	u_int16_t	nheads;		/*  3 (OBSOLETE) */
-	u_int16_t	track_size;	/*  4 (OBSOLETE) */
-	u_int16_t	sector_size;	/*  5 (OBSOLETE) */
-	u_int16_t	nsectors;	/*  6 (OBSOLETE) */
-	u_int16_t	reserved2[3];	/*  7 vendor unique */
-	u_int8_t	serial[20];	/* 10 */
-	u_int16_t	buffer_type;	/* 20 */
-	u_int16_t	buffer_size;	/* 21 */
-	u_int16_t	ecc;		/* 22 */
-	u_int8_t	firmware[8];	/* 23 */
-	u_int8_t	model[40];	/* 27 */
-	u_int16_t	multi;		/* 47 */
-	u_int16_t	dwcap;		/* 48 */
-	u_int16_t	cap;		/* 49 */
-	u_int16_t	reserved3;	/* 50 */
-	/* XXX there's a LOT more of this */
+	u_int16_t	config;		/*   0 */
+	u_int16_t	ncyls;		/*   1 */
+	u_int16_t	reserved1;	/*   2 */
+	u_int16_t	nheads;		/*   3 */
+	u_int16_t	track_size;	/*   4 */
+	u_int16_t	sector_size;	/*   5 */
+	u_int16_t	nsectors;	/*   6 */
+	u_int16_t	reserved2[3];	/*   7 vendor unique */
+	u_int8_t	serial[20];	/*  10 */
+	u_int16_t	buffer_type;	/*  20 */
+	u_int16_t	buffer_size;	/*  21 */
+	u_int16_t	ecc;		/*  22 */
+	u_int8_t	firmware[8];	/*  23 */
+	u_int8_t	model[40];	/*  27 */
+	u_int16_t	multi;		/*  47 */
+	u_int16_t	dwcap;		/*  48 */
+	u_int16_t	cap;		/*  49 */
+	u_int16_t	reserved3;	/*  50 */
+	u_int16_t	piomode;	/*  51 */
+	u_int16_t	dmamode;	/*  52 */
+	u_int16_t	validinfo;	/*  53 */
+	u_int16_t	curcyls;	/*  54 */
+	u_int16_t	curheads;	/*  55 */
+	u_int16_t	cursectrk;	/*  56 */
+	u_int16_t	curseccp[2];	/*  57 */
+	u_int16_t	mult2;		/*  59 */
+	u_int16_t	addrsec[2];	/*  60 */
+	u_int16_t	worddma;	/*  62 */
+	u_int16_t	dworddma;	/*  63 */
+	u_int16_t	advpiomode;	/*  64 */
+	u_int16_t	minmwdma;	/*  65 */
+	u_int16_t	recmwdma;	/*  66 */
+	u_int16_t	minpio;		/*  67 */
+	u_int16_t	minpioflow;	/*  68 */
+	u_int16_t	reserved4[2];	/*  69 */
+	u_int16_t	typtime[2];	/*  71 */
+	u_int16_t	reserved5[2];	/*  73 */
+	u_int16_t	qdepth;		/*  75 */
+	u_int16_t	satacap;	/*  76 */
+	u_int16_t	reserved6;	/*  77 */
+	u_int16_t	satafsup;	/*  78 */
+	u_int16_t	satafen;	/*  79 */
+	u_int16_t	majver;		/*  80 */
+	u_int16_t	minver;		/*  81 */
+	u_int16_t	cmdset82;	/*  82 */
+	u_int16_t	cmdset83;	/*  83 */
+	u_int16_t	cmdset84;	/*  84 */
+	u_int16_t	features85;	/*  85 */
+	u_int16_t	features86;	/*  86 */
+	u_int16_t	features87;	/*  87 */
+	u_int16_t	ultradma;	/*  88 */
+	u_int16_t	erasetime;	/*  89 */
+	u_int16_t	erasetimex;	/*  90 */
+	u_int16_t	apm;		/*  91 */
+	u_int16_t	masterpw;	/*  92 */
+	u_int16_t	hwreset;	/*  93 */
+	u_int16_t	acoustic;	/*  94 */
+	u_int16_t	stream_min;	/*  95 */
+	u_int16_t	stream_xfer_d;	/*  96 */
+	u_int16_t	stream_lat;	/*  97 */
+	u_int16_t	streamperf[2];	/*  98 */
+	u_int16_t	addrsecxt[4];	/* 100 */
+	u_int16_t	stream_xfer_p;	/* 104 */
+	u_int16_t	padding1;	/* 105 */
+	u_int16_t	phys_sect_sz;	/* 106 */
+	u_int16_t	seek_delay;	/* 107 */
+	u_int16_t	naa_ieee_oui;	/* 108 */
+	u_int16_t	ieee_oui_uid;	/* 109 */
+	u_int16_t	uid_mid;	/* 110 */
+	u_int16_t	uid_low;	/* 111 */
+	u_int16_t	resv_wwn[4];	/* 112 */
+	u_int16_t	incits;		/* 116 */
+	u_int16_t	words_lsec[2];	/* 117 */
+	u_int16_t	cmdset119;	/* 119 */
+	u_int16_t	features120;	/* 120 */
+	u_int16_t	padding2[6];
+	u_int16_t	rmsn;		/* 127 */
+	u_int16_t	securestatus;	/* 128 */
+	u_int16_t	vendor[31];	/* 129 */
+	u_int16_t	padding3[16];	/* 160 */
+	u_int16_t	curmedser[30];	/* 176 */
+	u_int16_t	sctsupport;	/* 206 */
+	u_int16_t	padding4[48];	/* 207 */
+	u_int16_t	integrity;	/* 255 */
 } __packed;
 
 struct atascsi {
