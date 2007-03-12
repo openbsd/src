@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printcap.5,v 1.18 2007/03/12 17:29:48 stevesk Exp $
+.\"	$OpenBSD: printcap.5,v 1.19 2007/03/12 19:25:36 stevesk Exp $
 .\"	$NetBSD: printcap.5,v 1.7 1998/02/20 12:24:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -95,7 +95,7 @@ format)
 .It "lp	str" Ta Pa /dev/lp Ta No "local printer device, or port@host for remote"
 .It "mc	num	0	maximum number of copies allowed; 0=unlimited"
 .It "ms	str" Ta Dv NULL Ta No "list of terminal modes to set or clear"
-.It "mx	num	1000	max file size (in"
+.It "mx	num	0	max file size (in"
 .Dv BUFSIZ
 blocks); 0=unlimited
 .It "nd	str" Ta Dv NULL Ta No "next directory for queues list (unimplemented)"
