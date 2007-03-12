@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.22 2006/07/26 00:38:38 jsg Exp $ */
+/*	$OpenBSD: umodem.c,v 1.23 2007/03/12 05:43:34 deraadt Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -230,16 +230,16 @@ USB_ATTACH(umodem)
 				cmd = (usb_cdc_cm_descriptor_t *)desc;
 				sc->sc_cm_cap = cmd->bmCapabilities;
 				sc->sc_data_iface_no = cmd->bDataInterface;
-			break;
+				break;
 			case UDESCSUB_CDC_ACM:
 				acmd = (usb_cdc_acm_descriptor_t *)desc;
 				sc->sc_acm_cap = acmd->bmCapabilities;
-			break;
+				break;
 			case UDESCSUB_CDC_UNION:
 				uniond = (usb_cdc_union_descriptor_t *)desc;
 				sc->sc_data_iface_no =
 				    uniond->bSlaveInterface[0];
-			break;
+				break;
 			}
 		}
 		desc = usb_desc_iter_next(&iter);
