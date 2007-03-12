@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.37 2007/03/05 16:54:33 deraadt Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.38 2007/03/12 00:41:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -1404,6 +1404,11 @@ typedef HAL_BOOL (ar5k_rfgain_t)
 #define AR5K_Q_DISABLE_BITS(_reg, _queue) do {				\
 	_reg &= ~(1 << _queue);						\
 } while (0)
+
+#define AR5K_LOW_ID(_a)		(					\
+	(_a)[0] | (_a)[1] << 8 | (_a)[2] << 16 | (_a)[3] << 24		\
+)
+#define AR5K_HIGH_ID(_a)	((_a)[4] | (_a)[5] << 8)
 
 /*
  * Unaligned little endian access

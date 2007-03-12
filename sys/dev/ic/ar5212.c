@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.37 2007/03/05 16:54:33 deraadt Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.38 2007/03/12 00:41:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -821,8 +821,8 @@ ar5k_ar5212_set_opmode(struct ath_hal *hal)
 	/*
 	 * Set PCU registers
 	 */
-	bcopy(&(hal->ah_sta_id[0]), &low_id, 4);
-	bcopy(&(hal->ah_sta_id[4]), &high_id, 2);
+	low_id = AR5K_LOW_ID(hal->ah_sta_id);
+	high_id = AR5K_HIGH_ID(hal->ah_sta_id);
 	AR5K_REG_WRITE(AR5K_AR5212_STA_ID0, low_id);
 	AR5K_REG_WRITE(AR5K_AR5212_STA_ID1, pcu_reg | high_id);
 
@@ -1822,9 +1822,8 @@ ar5k_ar5212_set_lladdr(struct ath_hal *hal, const u_int8_t *mac)
 	/* Set new station ID */
 	bcopy(mac, hal->ah_sta_id, IEEE80211_ADDR_LEN);
 
-	bcopy(mac, &low_id, 4);
-	bcopy(mac + 4, &high_id, 2);
-	high_id = 0x0000ffff & high_id;
+	low_id = AR5K_LOW_ID(mac);
+	high_id = 0x0000ffff & AR5K_HIGH_ID(mac);
 
 	AR5K_REG_WRITE(AR5K_AR5212_STA_ID0, low_id);
 	AR5K_REG_WRITE(AR5K_AR5212_STA_ID1, high_id);
@@ -1904,8 +1903,8 @@ ar5k_ar5212_set_associd(struct ath_hal *hal, const u_int8_t *bssid,
 	/*
 	 * Set BSSID which triggers the "SME Join" operation
 	 */
-	bcopy(bssid, &low_id, 4);
-	bcopy(bssid + 4, &high_id, 2);
+	low_id = AR5K_LOW_ID(bssid);
+	high_id = AR5K_HIGH_ID(bssid);
 	AR5K_REG_WRITE(AR5K_AR5212_BSS_ID0, low_id);
 	AR5K_REG_WRITE(AR5K_AR5212_BSS_ID1, high_id |
 	    ((assoc_id & 0x3fff) << AR5K_AR5212_BSS_ID1_AID_S));
@@ -2280,9 +2279,8 @@ ar5k_ar5212_set_key_lladdr(struct ath_hal *hal, u_int16_t entry,
 	/* MAC may be NULL if it's a broadcast key */
 	mac_v = mac == NULL ? etherbroadcastaddr : mac;
 
-	bcopy(mac_v, &low_id, 4);
-	bcopy(mac_v + 4, &high_id, 2);
-	high_id |= AR5K_AR5212_KEYTABLE_VALID;
+	low_id = AR5K_LOW_ID(mac_v);
+	high_id = AR5K_HIGH_ID(mac_v) | AR5K_AR5212_KEYTABLE_VALID;
 
 	AR5K_REG_WRITE(AR5K_AR5212_KEYTABLE_MAC0(entry), low_id);
 	AR5K_REG_WRITE(AR5K_AR5212_KEYTABLE_MAC1(entry), high_id);
