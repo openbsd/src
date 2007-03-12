@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.13 2007/03/12 00:33:09 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.14 2007/03/12 00:35:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -501,7 +501,7 @@ atascsi_disk_capacity_done(struct ata_xfer *xa)
 		capacity += id.addrsec[0];
 	}
 
-	_lto4b(capacity, rcd.addr);
+	_lto4b(capacity - 1, rcd.addr);
 	_lto4b(512, rcd.length);
 
 	bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
