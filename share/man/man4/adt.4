@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adt.4,v 1.10 2006/12/26 19:45:44 deraadt Exp $
+.\"	$OpenBSD: adt.4,v 1.11 2007/03/12 17:45:02 jasper Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -26,10 +26,11 @@
 The
 .Nm
 driver provides support for the Analog Devices ADT7460,
-Analog Devices ADT7465, Analog Devices ADT7476,
-Analog Devices ADT7477, Analog Devices ADM1027,
-National Semiconductor LM85, National Semiconductor LM96000,
-SMSC EMC6D10x, and SMSC SCH5017 temperature sensors.
+Analog Devices ADT7465, Analog Devices ADT7475,
+Analog Devices ADT7476, Analog Devices ADT7477,
+Analog Devices ADM1027, National Semiconductor LM85,
+National Semiconductor LM96000, SMSC EMC6D10x, and SMSC
+SCH5017 temperature sensors.
 The sensor possesses a collection of sensor values which are
 made available through the
 .Xr sysctl 8
