@@ -1,7 +1,7 @@
-/*     $OpenBSD: ar5210.c,v 1.37 2007/03/12 00:41:32 reyk Exp $        */
+/*     $OpenBSD: ar5210.c,v 1.38 2007/03/12 01:04:52 reyk Exp $        */
 
 /*
- * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -171,6 +171,22 @@ ar5k_ar5210_fill(struct ath_hal *hal)
 	AR5K_HAL_FUNCTION(hal, ar5210, eeprom_is_busy);
 	AR5K_HAL_FUNCTION(hal, ar5210, eeprom_read);
 	AR5K_HAL_FUNCTION(hal, ar5210, eeprom_write);
+
+	/*
+	 * Unused functions or functions not implemented
+	 */
+	AR5K_HAL_FUNCTION(hal, ar5210, set_bssid_mask);
+	AR5K_HAL_FUNCTION(hal, ar5210, get_tx_queueprops);
+	AR5K_HAL_FUNCTION(hal, ar5210, num_tx_pending);
+	AR5K_HAL_FUNCTION(hal, ar5210, phy_disable);
+	AR5K_HAL_FUNCTION(hal, ar5210, set_txpower_limit);
+	AR5K_HAL_FUNCTION(hal, ar5210, set_def_antenna);
+	AR5K_HAL_FUNCTION(hal, ar5210, get_def_antenna);
+#ifdef notyet
+	AR5K_HAL_FUNCTION(hal, ar5210, set_capability);
+	AR5K_HAL_FUNCTION(hal, ar5210, proc_mib_event);
+	AR5K_HAL_FUNCTION(hal, ar5210, get_tx_inter_queue);
+#endif
 }
 
 struct ath_hal *
@@ -341,6 +357,13 @@ ar5k_ar5210_detach(struct ath_hal *hal)
 }
 
 HAL_BOOL
+ar5k_ar5210_phy_disable(struct ath_hal *hal)
+{
+	AR5K_REG_WRITE(AR5K_AR5210_PHY_ACTIVE, AR5K_AR5210_PHY_DISABLE);
+	return (AH_TRUE);
+}
+
+HAL_BOOL
 ar5k_ar5210_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
     HAL_BOOL change_channel, HAL_STATUS *status)
 {
@@ -431,6 +454,19 @@ ar5k_ar5210_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	    AR5K_AR5210_BEACON_EN | AR5K_AR5210_BEACON_RESET_TSF);
 
 	return (AH_TRUE);
+}
+
+void
+ar5k_ar5210_set_def_antenna(struct ath_hal *hal, u_int ant)
+{
+	/* Not available */
+	return;
+}
+
+u_int
+ar5k_ar5210_get_def_antenna(struct ath_hal *hal)
+{
+	return (0);
 }
 
 void
@@ -738,6 +774,15 @@ ar5k_ar5210_setup_tx_queueprops(struct ath_hal *hal, int queue,
 }
 
 HAL_BOOL
+ar5k_ar5210_get_tx_queueprops(struct ath_hal *hal, int queue,
+    HAL_TXQ_INFO *queue_info)
+{
+	AR5K_ASSERT_ENTRY(queue, hal->ah_capabilities.cap_queues.q_tx_num);
+	bcopy(&hal->ah_txq[queue], queue_info, sizeof(HAL_TXQ_INFO));
+	return (AH_TRUE);
+}
+
+HAL_BOOL
 ar5k_ar5210_release_tx_queue(struct ath_hal *hal, u_int queue)
 {
 	AR5K_ASSERT_ENTRY(queue, hal->ah_capabilities.cap_queues.q_tx_num);
@@ -871,6 +916,12 @@ ar5k_ar5210_put_tx_buf(struct ath_hal *hal, u_int queue, u_int32_t phys_addr)
 	AR5K_REG_WRITE(tx_reg, phys_addr);
 
 	return (AH_TRUE);
+}
+
+u_int32_t
+ar5k_ar5210_num_tx_pending(struct ath_hal *hal, u_int queue)
+{
+	return (AH_FALSE);
 }
 
 HAL_BOOL
@@ -1529,6 +1580,13 @@ ar5k_ar5210_set_associd(struct ath_hal *hal, const u_int8_t *bssid,
 	    tim_offset ? tim_offset + 4 : 0);
 
 	ar5k_ar5210_enable_pspoll(hal, NULL, 0);
+}
+
+HAL_BOOL
+ar5k_ar5210_set_bssid_mask(struct ath_hal *hal, const u_int8_t* mask)
+{
+	/* Not supported in 5210 */
+	return (AH_FALSE);
 }
 
 HAL_BOOL
@@ -2319,3 +2377,9 @@ ar5k_ar5210_eeprom_write(struct ath_hal *hal, u_int32_t offset, u_int16_t data)
 	return (ETIMEDOUT);
 }
 
+HAL_BOOL
+ar5k_ar5210_set_txpower_limit(struct ath_hal *hal, u_int power)
+{
+	/* Not implemented */
+	return (AH_FALSE);
+}
