@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.139 2007/02/20 17:42:47 deraadt Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.140 2007/03/12 19:25:58 mickey Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -118,6 +118,7 @@ void printlockedvnodes(void);
 	KNOTE((struct klist *)&vp->v_selectinfo.vsi_selinfo.si_note, (b))
 
 struct pool vnode_pool;
+int desiredvnodes;
 
 /*
  * Initialize the vnode management data structures.
@@ -126,6 +127,8 @@ void
 vntblinit(void)
 {
 
+	/* every buffer needs its vnode! */
+	desiredvnodes = nbuf;
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodes",
 	    &pool_allocator_nointr);
 	simple_lock_init(&mntvnode_slock);
