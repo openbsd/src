@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.219 2007/02/22 08:34:18 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.220 2007/03/12 15:49:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -73,6 +73,7 @@ void		 rde_dump_prefix(struct ctl_show_rib_request *);
 void		 rde_dump_ctx_new(struct ctl_show_rib_request *, pid_t,
 		     enum imsg_type);
 void		 rde_dump_runner(void);
+int		 rde_dump_pending(void);
 
 void		 rde_up_dump_upcall(struct pt_entry *, void *);
 void		 rde_softreconfig_out(struct pt_entry *, void *);
@@ -151,7 +152,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	struct filter_rule	*f;
 	struct filter_set	*set;
 	struct nexthop		*nh;
-	int			 i;
+	int			 i, timeout;
 
 	switch (pid = fork()) {
 	case -1:
@@ -239,6 +240,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	}
 
 	while (rde_quit == 0) {
+		timeout = INFTIM;
 		bzero(pfd, sizeof(pfd));
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main->fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
@@ -254,6 +256,8 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 		pfd[PFD_PIPE_SESSION_CTL].events = POLLIN;
 		if (ibuf_se_ctl->w.queued > 0)
 			pfd[PFD_PIPE_SESSION_CTL].events |= POLLOUT;
+		else if (rde_dump_pending())
+			timeout = 0;
 
 		i = 3;
 		if (mrt && mrt->queued) {
@@ -262,7 +266,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 			i++;
 		}
 
-		if (poll(pfd, i, INFTIM) == -1) {
+		if (poll(pfd, i, timeout) == -1) {
 			if (errno != EINTR)
 				fatal("poll error");
 			continue;
@@ -1795,6 +1799,12 @@ rde_dump_runner(void)
 		if (ctx->ptc.done && ctx->req.af == AF_UNSPEC)
 			ctx->af = AF_INET6;
 	}
+}
+
+int
+rde_dump_pending(void)
+{
+	return (!TAILQ_EMPTY(&rde_dump_h));
 }
 
 /*
