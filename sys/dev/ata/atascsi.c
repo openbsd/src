@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.14 2007/03/12 00:35:15 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.15 2007/03/13 11:20:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -394,6 +394,7 @@ atascsi_disk_inq(struct scsi_xfer *xs)
 		return (atascsi_stuffup(xs));
 
 	xa->complete = atascsi_disk_inq_done;
+	xa->timeout = xs->timeout;
 	xa->atascsi_private = xs;
 	if (xs->flags & SCSI_POLL)
 		xa->flags |= ATA_F_POLL;
@@ -459,6 +460,7 @@ atascsi_disk_capacity(struct scsi_xfer *xs)
 		return (atascsi_stuffup(xs));
 
 	xa->complete = atascsi_disk_capacity_done;
+	xa->timeout = xs->timeout;
 	xa->atascsi_private = xs;
 	if (xs->flags & SCSI_POLL)
 		xa->flags |= ATA_F_POLL;
