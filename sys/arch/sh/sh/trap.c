@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.10 2007/03/05 21:47:30 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.11 2007/03/13 19:29:33 miod Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -163,7 +163,7 @@ void
 general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 {
 	int expevt = tf->tf_expevt;
-	int tra, s;
+	int tra;
 	boolean_t usermode = !KERNELMODE(tf->tf_ssr);
 	union sigval sv;
 
@@ -171,10 +171,9 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 
 	/*
 	 * This function is entered at splhigh. Restore the interrupt
-	 * level to what it was when the trap occureh.
+	 * level to what it was when the trap occured.
 	 */
-	s = tf->tf_ssr & PSL_IMASK;
-	splx(s);
+	splx(tf->tf_ssr & PSL_IMASK);
 
 	if (usermode) {
 		if (p == NULL)
@@ -335,6 +334,11 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 			}				\
 		} while(/*CONSTCOND*/0)
 
+	/*
+	 * This function is entered at splhigh. Restore the interrupt
+	 * level to what it was when the trap occured.
+	 */
+	splx(tf->tf_ssr & PSL_IMASK);
 
 	usermode = !KERNELMODE(tf->tf_ssr);
 	if (usermode) {
