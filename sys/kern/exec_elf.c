@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.56 2006/12/29 13:04:37 pedro Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.57 2007/03/13 19:34:44 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -197,6 +197,7 @@ ELFNAME(check_header)(Elf_Ehdr *ehdr, int type)
 	return (0);
 }
 
+#ifndef	SMALL_KERNEL
 /*
  * Check header for validity; return 0 for ok, ENOEXEC if error.
  * Remember OS tag for callers sake.
@@ -242,6 +243,7 @@ os_ok:
 	*os = ehdr->e_ident[OI_OS];
 	return (0);
 }
+#endif	/* !SMALL_KERNEL */
 
 /*
  * Load a psection at the appropriate address
@@ -387,8 +389,11 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 				    (caddr_t)&eh, sizeof(eh))) != 0)
 		goto bad1;
 
-	if (ELFNAME(check_header)(&eh, ET_DYN) &&
-	    ELFNAME(olf_check_header)(&eh, ET_DYN, &os)) {
+	if (ELFNAME(check_header)(&eh, ET_DYN)
+#ifndef SMALL_KERNEL
+	    && ELFNAME(olf_check_header)(&eh, ET_DYN, &os)
+#endif
+	    ) {
 		error = ENOEXEC;
 		goto bad1;
 	}
@@ -545,8 +550,11 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	if (epp->ep_hdrvalid < sizeof(Elf_Ehdr))
 		return (ENOEXEC);
 
-	if (ELFNAME(check_header)(eh, ET_EXEC) &&
-	    ELFNAME(olf_check_header)(eh, ET_EXEC, &os))
+	if (ELFNAME(check_header)(eh, ET_EXEC)
+#ifndef SMALL_KERNEL
+	    && ELFNAME(olf_check_header)(eh, ET_EXEC, &os)
+#endif
+	    )
 		return (ENOEXEC);
 
 	/*
