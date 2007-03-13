@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.24 2006/12/09 21:22:30 pedro Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.25 2007/03/13 06:23:45 steven Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.67 2004/06/28 07:49:16 mycroft Exp $	*/
 
 /*
@@ -524,6 +524,7 @@ umass_fixup_sony(struct umass_softc *sc)
 		 * revision number is used to distinguish between them.
 		 */
 		switch (UGETW(dd->bcdDevice)) {
+		case 0x611: /* Sony DSC-T10, rev 6.11 */
 		case 0x600: /* Sony DSC-W50, rev 6.00 */
 		case 0x500: /* Sony DSC-P41, rev 5.00 */
 			sc->sc_cmd = UMASS_CPROTO_UFI;
