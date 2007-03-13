@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.7 2007/03/13 11:20:57 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.8 2007/03/13 11:22:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -58,6 +58,7 @@ struct ata_xfer {
 	struct ata_cmd		cmd;
 	u_int8_t		*data;
 	size_t			datalen;
+	size_t			resid;
 
 	void			(*complete)(struct ata_xfer *);
 	struct timeout		stimeout;
