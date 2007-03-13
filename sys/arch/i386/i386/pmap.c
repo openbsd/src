@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.97 2007/02/20 21:15:01 tom Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.98 2007/03/13 15:11:41 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2847,8 +2847,8 @@ pmap_change_attrs(struct vm_page *pg, int setbits, int clearbits)
 		if (ptes[atop(pve->pv_va)] != npte) {
 			opte = i386_atomic_testset_ul(
 			    &ptes[atop(pve->pv_va)], npte);
-			pmap_tlb_shootdown(pve->pv_pmap,
-			    atop(pve->pv_va), opte, &cpumask);
+			pmap_tlb_shootdown(pve->pv_pmap, pve->pv_va,
+			    opte, &cpumask);
 		}
 		pmap_unmap_ptes(pve->pv_pmap);	/* unlocks pmap */
 	}
