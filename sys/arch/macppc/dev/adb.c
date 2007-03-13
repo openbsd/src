@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.23 2007/03/04 15:33:31 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.24 2007/03/13 20:56:55 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -216,40 +216,40 @@ struct adbCommand {
  */
 int	adbHardware = ADB_HW_UNKNOWN;
 int	adbActionState = ADB_ACTION_NOTREADY;
-int	adbWaiting = 0;		/* waiting for return data from the device */
-int	adbWriteDelay = 0;	/* working on (or waiting to do) a write */
-int	adbSoftPower = 0;	/* machine supports soft power */
+int	adbWaiting;		/* waiting for return data from the device */
+int	adbWriteDelay;		/* working on (or waiting to do) a write */
+int	adbSoftPower;		/* machine supports soft power */
 
-int	adbWaitingCmd = 0;	/* ADB command we are waiting for */
-u_char	*adbBuffer = (long)0;	/* pointer to user data area */
-void	*adbCompRout = (long)0;	/* pointer to the completion routine */
-void	*adbCompData = (long)0;	/* pointer to the completion routine data */
+int	adbWaitingCmd;		/* ADB command we are waiting for */
+u_char	*adbBuffer;		/* pointer to user data area */
+void	*adbCompRout;		/* pointer to the completion routine */
+void	*adbCompData;		/* pointer to the completion routine data */
 int	adbStarting = 1;	/* doing adb_reinit so do polling differently */
 
 u_char	adbInputBuffer[ADB_MAX_MSG_LENGTH];	/* data input buffer */
 u_char	adbOutputBuffer[ADB_MAX_MSG_LENGTH];	/* data output buffer */
 struct	adbCmdHoldEntry adbOutQueue;		/* our 1 entry output queue */
 
-int	adbSentChars = 0;	/* how many characters we have sent */
+int	adbSentChars;		/* how many characters we have sent */
 
 struct	ADBDevEntry ADBDevTable[16];	/* our ADB device table */
 int	ADBNumDevices;		/* num. of ADB devices found with adb_reinit */
 
 struct	adbCommand adbInbound[ADB_QUEUE];	/* incoming queue */
-int	adbInCount = 0;			/* how many packets in in queue */
-int	adbInHead = 0;			/* head of in queue */
-int	adbInTail = 0;			/* tail of in queue */
+int	adbInCount;			/* how many packets in in queue */
+int	adbInHead;			/* head of in queue */
+int	adbInTail;			/* tail of in queue */
 struct	adbCommand adbOutbound[ADB_QUEUE]; /* outgoing queue - not used yet */
-int	adbOutCount = 0;		/* how many packets in out queue */
-int	adbOutHead = 0;			/* head of out queue */
-int	adbOutTail = 0;			/* tail of out queue */
+int	adbOutCount;			/* how many packets in out queue */
+int	adbOutHead;			/* head of out queue */
+int	adbOutTail;			/* tail of out queue */
 
-int	tickle_count = 0;		/* how many tickles seen for this packet? */
-int	tickle_serial = 0;		/* the last packet tickled */
-int	adb_cuda_serial = 0;		/* the current packet */
+int	tickle_count;			/* how many tickles seen for this packet? */
+int	tickle_serial;			/* the last packet tickled */
+int	adb_cuda_serial;		/* the current packet */
 struct	timeout adb_cuda_timeout;
 struct	timeout adb_softintr_timeout;
-int	adbempty = 0;			/* nonzero if no adb devices */
+int	adbempty;			/* nonzero if no adb devices */
 
 volatile u_char *Via1Base;
 
@@ -269,7 +269,6 @@ void	adb_reinit(void);
 int	count_adbs(void);
 int	get_ind_adb_info(ADBDataBlock *, int);
 int	get_adb_info(ADBDataBlock *, int);
-int	set_adb_info(ADBSetInfoBlock *, int);
 void	adb_setup_hw_type(void);
 int	adb_op(Ptr, Ptr, Ptr, short);
 void	adb_hw_setup(void);
@@ -293,11 +292,11 @@ print_single(str)
 {
 	int x;
 
-	if (str == 0) {
+	if (str == NULL) {
 		printf_intr("no data - null pointer\n");
 		return;
 	}
-	if (*str == 0) {
+	if (*str == '\0') {
 		printf_intr("nothing returned\n");
 		return;
 	}
@@ -353,7 +352,7 @@ adb_intr_cuda(void)
 	struct adbCommand packet;
 
 	s = splhigh();		/* can't be too careful - might be called */
-	/* from a routine, NOT an interrupt */
+				/* from a routine, NOT an interrupt */
 
 	ADB_VIA_CLR_INTR();	/* clear interrupt */
 	ADB_VIA_INTR_DISABLE();	/* disable ADB interrupt on IIs. */
@@ -423,9 +422,9 @@ switch_start:
 
 				adbWaitingCmd = 0;	/* reset "waiting" vars */
 				adbWaiting = 0;
-				adbBuffer = (long)0;
-				adbCompRout = (long)0;
-				adbCompData = (long)0;
+				adbBuffer = NULL;
+				adbCompRout = NULL;
+				adbCompData = NULL;
 			} else {
 				packet.unsol = 1;
 				packet.ack_only = 0;
@@ -523,9 +522,9 @@ switch_start:
 
 				/* reset "waiting" vars, just in case */
 				adbWaitingCmd = 0;
-				adbBuffer = (long)0;
-				adbCompRout = (long)0;
-				adbCompData = (long)0;
+				adbBuffer = NULL;
+				adbCompRout = NULL;
+				adbCompData = NULL;
 			}
 
 			adbWriteDelay = 0;	/* done writing */
@@ -705,11 +704,6 @@ adb_pass_up(struct adbCommand *in)
 	int start = 0, len = 0, cmd = 0;
 	ADBDataBlock block;
 
-	/* temp for testing */
-	/*u_char *buffer = 0;*/
-	/*u_char *compdata = 0;*/
-	/*u_char *comprout = 0;*/
-
 	if (adbInCount >= ADB_QUEUE) {
 #ifdef ADB_DEBUG
 		if (adb_debug)
@@ -817,9 +811,9 @@ adb_soft_intr(void)
 {
 	int s;
 	int cmd = 0;
-	u_char *buffer = 0;
-	u_char *comprout = 0;
-	u_char *compdata = 0;
+	u_char *buffer;
+	u_char *comprout;
+	u_char *compdata;
 
 /*delay(2*ADB_DELAY);*/
 
@@ -1017,7 +1011,7 @@ adb_reinit(void)
 	delay(1000);
 
 	/* send an ADB reset first */
-	adb_op_sync((Ptr)0, (Ptr)0, (Ptr)0, (short)0x00);
+	adb_op_sync((Ptr)0, (short)0x00);
 	delay(200000);
 
 	/*
@@ -1041,8 +1035,7 @@ adb_reinit(void)
 	for (i = 1; i < 16; i++) {
 		send_string[0] = 0;
 		command = ADBTALK(i, 3);
-		result = adb_op_sync((Ptr)send_string, (Ptr)0,
-		    (Ptr)0, (short)command);
+		result = adb_op_sync((Ptr)send_string, (short)command);
 
 		if (send_string[0] != 0) {
 			/* check for valid device handler */
@@ -1061,9 +1054,8 @@ adb_reinit(void)
 				(int)send_string[2];
 			ADBDevTable[ADBNumDevices].origAddr = i;
 			ADBDevTable[ADBNumDevices].currentAddr = i;
-			ADBDevTable[ADBNumDevices].DataAreaAddr =
-			    (long)0;
-			ADBDevTable[ADBNumDevices].ServiceRtPtr = (void *)0;
+			ADBDevTable[ADBNumDevices].DataAreaAddr = NULL;
+			ADBDevTable[ADBNumDevices].ServiceRtPtr = NULL;
 		}
 	}
 
@@ -1091,22 +1083,19 @@ adb_reinit(void)
 
 			/* send TALK R3 to address */
 			command = ADBTALK(device, 3);
-			adb_op_sync((Ptr)send_string, (Ptr)0,
-			    (Ptr)0, (short)command);
+			adb_op_sync((Ptr)send_string, (short)command);
 
 			/* move device to higher address */
 			command = ADBLISTEN(device, 3);
 			send_string[0] = 2;
 			send_string[1] = (u_char)(saveptr | 0x60);
 			send_string[2] = 0xfe;
-			adb_op_sync((Ptr)send_string, (Ptr)0,
-			    (Ptr)0, (short)command);
+			adb_op_sync((Ptr)send_string, (short)command);
 			delay(500);
 
 			/* send TALK R3 - anything at new address? */
 			command = ADBTALK(saveptr, 3);
-			adb_op_sync((Ptr)send_string, (Ptr)0,
-			    (Ptr)0, (short)command);
+			adb_op_sync((Ptr)send_string, (short)command);
 			delay(500);
 
 			if (send_string[0] == 0) {
@@ -1119,8 +1108,7 @@ adb_reinit(void)
 
 			/* send TALK R3 - anything at old address? */
 			command = ADBTALK(device, 3);
-			result = adb_op_sync((Ptr)send_string, (Ptr)0,
-			    (Ptr)0, (short)command);
+			result = adb_op_sync((Ptr)send_string, (short)command);
 			if (send_string[0] != 0) {
 				/* check for valid device handler */
 				switch (send_string[2]) {
@@ -1153,10 +1141,8 @@ adb_reinit(void)
 				ADBDevTable[ADBNumDevices].currentAddr = device;
 				/* These will be set correctly in adbsys.c */
 				/* Until then, unsol. data will be ignored. */
-				ADBDevTable[ADBNumDevices].DataAreaAddr =
-				    (long)0;
-				ADBDevTable[ADBNumDevices].ServiceRtPtr =
-				    (void *)0;
+				ADBDevTable[ADBNumDevices].DataAreaAddr = NULL;
+				ADBDevTable[ADBNumDevices].ServiceRtPtr = NULL;
 				/* find next unused address */
 				for (x = saveptr; x > 0; x--) {
 					if (-1 == get_adb_info(&data, x)) {
@@ -1182,8 +1168,7 @@ adb_reinit(void)
 				send_string[0] = 2;
 				send_string[1] = (u_char)(device | 0x60);
 				send_string[2] = 0xfe;
-				adb_op_sync((Ptr)send_string, (Ptr)0,
-				    (Ptr)0, (short)command);
+				adb_op_sync((Ptr)send_string, (short)command);
 				delay(1000);
 			}
 		}
@@ -1260,13 +1245,9 @@ adb_cmd_result(u_char *in)
  * This routine does exactly what the adb_op routine does, except that after
  * the adb_op is called, it waits until the return value is present before
  * returning.
- *
- * NOTE: The user specified compRout is ignored, since this routine specifies
- * it's own to adb_op, which is why you really called this in the first place
- * anyway.
  */
 int
-adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
+adb_op_sync(Ptr buffer, short command)
 {
 	int tmout;
 	int result;
@@ -1311,13 +1292,9 @@ adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
  * function is done.
  */
 void
-adb_op_comprout(buffer, compdata, cmd)
-	caddr_t buffer, compdata;
-	int cmd;
+adb_op_comprout(caddr_t buffer, caddr_t compdata, int cmd)
 {
-	short *p = (short *)compdata;
-
-	*p = 1;
+	*(int *)compdata = 0x01;		/* update flag value */
 }
 
 void

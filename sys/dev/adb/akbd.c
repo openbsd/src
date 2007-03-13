@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.5 2006/03/23 21:54:26 miod Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.6 2007/03/13 20:56:56 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 	case ADB_EXTKBD:
 		cmd = ADBTALK(sc->adbaddr, 1);
 		kbd_done =
-		    (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) == 0);
+		    (adb_op_sync((Ptr)buffer, cmd) == 0);
 
 		/* Ignore Logitech MouseMan/Trackman pseudo keyboard */
 		if (kbd_done && buffer[1] == 0x9a && buffer[2] == 0x20) {
@@ -305,7 +305,7 @@ getleds(int addr)
 	buffer[0] = 0;
 
 	cmd = ADBTALK(addr, 2);
-	if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) == 0 &&
+	if (adb_op_sync((Ptr)buffer, cmd) == 0 &&
 	    buffer[0] > 0)
 		leds = ~(buffer[2]) & 0x07;
 
@@ -329,7 +329,7 @@ setleds(struct akbd_softc *sc, u_char leds)
 	buffer[0] = 0;
 
 	cmd = ADBTALK(addr, 2);
-	if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) || buffer[0] == 0)
+	if (adb_op_sync((Ptr)buffer, cmd) || buffer[0] == 0)
 		return (EIO);
 
 	leds = ~leds & 0x07;
@@ -337,11 +337,11 @@ setleds(struct akbd_softc *sc, u_char leds)
 	buffer[2] |= leds;
 
 	cmd = ADBLISTEN(addr, 2);
-	adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
+	adb_op_sync((Ptr)buffer, cmd);
 
 	/* talk R2 */
 	cmd = ADBTALK(addr, 2);
-	if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) || buffer[0] == 0)
+	if (adb_op_sync((Ptr)buffer, cmd) || buffer[0] == 0)
 		return (EIO);
 
 	if ((buffer[2] & 0xf8) != leds)

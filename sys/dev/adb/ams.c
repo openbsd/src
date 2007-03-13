@@ -1,4 +1,4 @@
-/*	$OpenBSD: ams.c,v 1.3 2006/02/12 18:06:24 miod Exp $	*/
+/*	$OpenBSD: ams.c,v 1.4 2007/03/13 20:56:56 miod Exp $	*/
 /*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ ems_init(struct ams_softc *sc)
 		buffer[4] = 0x07;	/* Locking mask = 0000b,
 					 * enable buttons = 0111b
 					 */
-		adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
+		adb_op_sync((Ptr)buffer, cmd);
 
 		sc->sc_buttons = 3;
 		sc->sc_res = 200;
@@ -249,21 +249,21 @@ ems_init(struct ams_softc *sc)
 			{ 8, 0xa5, 0x14, 0, 0, 0x69, 0xff, 0xff, 0x27 };
 
 		buffer[0] = 0;
-		adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, ADBFLUSH(adbaddr));
+		adb_op_sync((Ptr)buffer, ADBFLUSH(adbaddr));
 
-		adb_op_sync((Ptr)data1, (Ptr)0, (Ptr)0, ADBLISTEN(adbaddr, 2));
+		adb_op_sync((Ptr)data1, ADBLISTEN(adbaddr, 2));
 
 		buffer[0] = 0;
-		adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, ADBFLUSH(adbaddr));
+		adb_op_sync((Ptr)buffer, ADBFLUSH(adbaddr));
 
-		adb_op_sync((Ptr)data2, (Ptr)0, (Ptr)0, ADBLISTEN(adbaddr, 2));
+		adb_op_sync((Ptr)data2, ADBLISTEN(adbaddr, 2));
 		return;
 	}
 	if ((sc->handler_id == ADBMS_100DPI) ||
 	    (sc->handler_id == ADBMS_200DPI)) {
 		/* found a mouse */
 		cmd = ADBTALK(adbaddr, 3);
-		if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd)) {
+		if (adb_op_sync((Ptr)buffer, cmd)) {
 #ifdef ADB_DEBUG
 			if (adb_debug)
 				printf("adb: ems_init timed out\n");
@@ -274,7 +274,7 @@ ems_init(struct ams_softc *sc)
 		/* Attempt to initialize Extended Mouse Protocol */
 		buffer[2] = 4; /* make handler ID 4 */
 		cmd = ADBLISTEN(adbaddr, 3);
-		if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd)) {
+		if (adb_op_sync((Ptr)buffer, cmd)) {
 #ifdef ADB_DEBUG
 			if (adb_debug)
 				printf("adb: ems_init timed out\n");
@@ -287,11 +287,11 @@ ems_init(struct ams_softc *sc)
 		 * try to initialize it as other types
 		 */
 		cmd = ADBTALK(adbaddr, 3);
-		if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) == 0 &&
+		if (adb_op_sync((Ptr)buffer, cmd) == 0 &&
 		    buffer[2] == ADBMS_EXTENDED) {
 			sc->handler_id = ADBMS_EXTENDED;
 			cmd = ADBTALK(adbaddr, 1);
-			if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd)) {
+			if (adb_op_sync((Ptr)buffer, cmd)) {
 #ifdef ADB_DEBUG
 				if (adb_debug)
 					printf("adb: ems_init timed out\n");
@@ -313,25 +313,25 @@ ems_init(struct ams_softc *sc)
 				buffer[0]=2;
 				buffer[1]=0x00;
 				buffer[2]=0x81;
-				adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
+				adb_op_sync((Ptr)buffer, cmd);
 
 				cmd = ADBLISTEN(adbaddr, 1);
 				buffer[0]=2;
 				buffer[1]=0x01;
 				buffer[2]=0x81;
-				adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
+				adb_op_sync((Ptr)buffer, cmd);
 
 				cmd = ADBLISTEN(adbaddr, 1);
 				buffer[0]=2;
 				buffer[1]=0x02;
 				buffer[2]=0x81;
-				adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
+				adb_op_sync((Ptr)buffer, cmd);
 
 				cmd = ADBLISTEN(adbaddr, 1);
 				buffer[0]=2;
 				buffer[1]=0x03;
 				buffer[2]=0x38;
-				adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
+				adb_op_sync((Ptr)buffer, cmd);
 
 				sc->sc_buttons = 3;
 				sc->sc_res = 400;
@@ -345,7 +345,7 @@ ems_init(struct ams_softc *sc)
 			/* Attempt to initialize as an A3 mouse */
 			buffer[2] = 0x03; /* make handler ID 3 */
 			cmd = ADBLISTEN(adbaddr, 3);
-			if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd)) {
+			if (adb_op_sync((Ptr)buffer, cmd)) {
 #ifdef ADB_DEBUG
 				if (adb_debug)
 					printf("adb: ems_init timed out\n");
@@ -358,7 +358,7 @@ ems_init(struct ams_softc *sc)
 			 * try to initialize it as other types
 			 */
 			cmd = ADBTALK(adbaddr, 3);
-			if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) == 0
+			if (adb_op_sync((Ptr)buffer, cmd) == 0
 			    && buffer[2] == ADBMS_MSA3) {
 				sc->handler_id = ADBMS_MSA3;
 				/* Initialize as above */
@@ -372,7 +372,7 @@ ems_init(struct ams_softc *sc)
 				 * enable 3 button mode = 0111b,
 				 * speed = normal
 				 */
-				adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
+				adb_op_sync((Ptr)buffer, cmd);
 				sc->sc_buttons = 3;
 				sc->sc_res = 300;
 			} else {
