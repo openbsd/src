@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.29 2007/02/18 18:40:35 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.30 2007/03/13 19:40:48 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -277,6 +277,12 @@ tcx_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		wdf->width = sc->sc_sunfb.sf_width;
 		wdf->depth = sc->sc_sunfb.sf_depth;
 		wdf->cmsize = sc->sc_cplane == NULL ? 256 : 0;
+		break;
+	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
+		if (sc->sc_cplane != NULL)
+			*(u_int *)data = WSDISPLAYIO_DEPTH_24_32;
+		else
+			return (-1);
 		break;
 	case WSDISPLAYIO_LINEBYTES:
 		if (sc->sc_cplane == NULL)

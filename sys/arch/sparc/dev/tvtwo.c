@@ -1,4 +1,4 @@
-/*	$OpenBSD: tvtwo.c,v 1.13 2006/08/14 12:24:30 miod Exp $	*/
+/*	$OpenBSD: tvtwo.c,v 1.14 2007/03/13 19:40:48 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2006, Miodrag Vallat.
  * All rights reserved.
@@ -293,6 +293,9 @@ tvtwo_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		wdf->width = sc->sc_sunfb.sf_width;
 		wdf->depth = 32;
 		wdf->cmsize = 0;
+		break;
+	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
+		*(u_int *)data = WSDISPLAYIO_DEPTH_24_32;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_sunfb.sf_linebytes * 4;
