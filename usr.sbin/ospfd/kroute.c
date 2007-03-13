@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.42 2007/02/25 18:10:47 deraadt Exp $ */
+/*	$OpenBSD: kroute.c,v 1.43 2007/03/13 16:48:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1089,13 +1089,13 @@ dispatch_rtmsg(void)
 		flags = F_KERNEL;
 		nexthop.s_addr = 0;
 
-		if (rtm->rtm_tableid != 0)
-			continue;
-
 		if (rtm->rtm_type == RTM_ADD || rtm->rtm_type == RTM_CHANGE ||
 		    rtm->rtm_type == RTM_DELETE) {
 			sa = (struct sockaddr *)(rtm + 1);
 			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+
+			if (rtm->rtm_tableid != 0)
+				continue;
 
 			if (rtm->rtm_pid == kr_state.pid)	/* cause by us */
 				continue;
