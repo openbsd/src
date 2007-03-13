@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.10 2007/03/03 21:37:27 miod Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.11 2007/03/13 19:30:38 miod Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -104,6 +104,7 @@
 #include <sys/conf.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -375,6 +376,14 @@ sh_startup()
 	    ptoa(uvmexp.free) / 1024);
 	printf("using %d buffers containing %u bytes (%uK) of memory\n",
 	    nbuf, bufpages * PAGE_SIZE, bufpages * PAGE_SIZE / 1024);
+
+	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif 
+	}
 }
 
 /*
