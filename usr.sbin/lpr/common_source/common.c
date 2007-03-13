@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.29 2004/11/17 02:31:30 itojun Exp $	*/
+/*	$OpenBSD: common.c,v 1.30 2007/03/13 15:09:51 stevesk Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.29 2004/11/17 02:31:30 itojun Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.30 2007/03/13 15:09:51 stevesk Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ char	*AF;		/* accounting file */
 long	 BR;		/* baud rate if lp is a tty */
 char	*CF;		/* name of cifplot filter (per job) */
 char	*DF;		/* name of tex filter (per job) */
-long	 DU;		/* daeomon user-id */
+long	 DU;		/* daemon user-id */
 long	 FC;		/* flags to clear if lp is a tty */
 char	*FF;		/* form feed string */
 long	 FS;		/* flags to set if lp is a tty */
@@ -94,7 +94,7 @@ long	 PW;		/* page width */
 long	 PX;		/* page width in pixels */
 long	 PY;		/* page length in pixels */
 char	*RF;		/* name of fortran text filter (per job) */
-char    *RG;		/* resricted group */
+char    *RG;		/* restricted group */
 char	*RM;		/* remote machine name */
 char	*RP;		/* remote printer name */
 long	 RS;		/* restricted to those with local accounts */
