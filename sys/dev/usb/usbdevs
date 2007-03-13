@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.268 2007/03/03 12:40:31 deraadt Exp $
+$OpenBSD: usbdevs,v 1.269 2007/03/13 15:52:46 robert Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1133,6 +1133,7 @@ product FTDI MHAM_DB9		0xeeed	DB9
 product FTDI MHAM_RS232		0xeeee	RS232
 product FTDI MHAM_Y9		0xeeef	Y9
 product FTDI COASTAL_TNCX	0xf448	Coastal ChipWorks TNC-X
+product FTDI ITM_TOUCH		0xf9e9	ITM Touchscreen 
 product FTDI LCD_MX200		0xfa01	Matrix Orbital MX200 Series LCD
 product FTDI LCD_LK202_24	0xfa03	Matrix Orbital LK202-24 LCD
 product FTDI LCD_LK204_24	0xfa04	Matrix Orbital LK204-24 LCD
