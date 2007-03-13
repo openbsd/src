@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.10 2006/10/27 19:59:14 kettenis Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.11 2007/03/13 19:27:50 kettenis Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -309,26 +309,28 @@
 #define	TAG_TARGET(c,v)		((((uint64_t)c)<<48)|(((uint64_t)v)&TAG_TARGET_VA_MASK))
 
 /* SFSR bits for both D_SFSR and I_SFSR */
+#define	SFSR_NF			0x1000000	/* Non-faulting load */
 #define	SFSR_ASI(x)		((x)>>16)
-#define	SFSR_FT_VA_OOR_2	0x02000 /* IMMU: jumpl or return to unsupportd VA */
-#define	SFSR_FT_VA_OOR_1	0x01000 /* fault at unsupported VA */
-#define	SFSR_FT_NFO		0x00800	/* DMMU: Access to page marked NFO */
-#define	SFSR_ILL_ASI		0x00400	/* DMMU: Illegal (unsupported) ASI */
-#define	SFSR_FT_IO_ATOMIC	0x00200	/* DMMU: Atomic access to noncacheable page */
-#define	SFSR_FT_ILL_NF		0x00100	/* DMMU: NF load or flush to page marked E (has side effects) */
-#define	SFSR_FT_PRIV		0x00080	/* Privilege violation */
-#define	SFSR_FT_E		0x00040	/* DMUU: value of E bit associated address */
+#define	SFSR_TM			0x0008000	/* TLB miss  */
+#define	SFSR_FT_VA_OOR_2	0x0002000	/* IMMU: jumpl or return to unsupportd VA */
+#define	SFSR_FT_VA_OOR_1	0x0001000	/* fault at unsupported VA */
+#define	SFSR_FT_NFO		0x0000800	/* DMMU: Access to page marked NFO */
+#define	SFSR_ILL_ASI		0x0000400	/* DMMU: Illegal (unsupported) ASI */
+#define	SFSR_FT_IO_ATOMIC	0x0000200	/* DMMU: Atomic access to noncacheable page */
+#define	SFSR_FT_ILL_NF		0x0000100	/* DMMU: NF load or flush to page marked E (has side effects) */
+#define	SFSR_FT_PRIV		0x0000080	/* Privilege violation */
+#define	SFSR_FT_E		0x0000040	/* DMUU: value of E bit associated address */
 #define	SFSR_CTXT(x)		(((x)>>4)&0x3)
 #define	SFSR_CTXT_IS_PRIM(x)	(SFSR_CTXT(x)==0x00)
 #define	SFSR_CTXT_IS_SECOND(x)	(SFSR_CTXT(x)==0x01)
 #define	SFSR_CTXT_IS_NUCLEUS(x)	(SFSR_CTXT(x)==0x02)
-#define	SFSR_PRIV		0x00008	/* value of PSTATE.PRIV for faulting access */
-#define	SFSR_W			0x00004 /* DMMU: attempted write */
-#define	SFSR_OW			0x00002 /* Overwrite; prev vault was still valid */
-#define	SFSR_FV			0x00001	/* Fault is valid */
+#define	SFSR_PRIV		0x0000008	/* value of PSTATE.PRIV for faulting access */
+#define	SFSR_W			0x0000004 	/* DMMU: attempted write */
+#define	SFSR_OW			0x0000002 	/* Overwrite; prev fault was still valid */
+#define	SFSR_FV			0x0000001	/* Fault is valid */
 #define	SFSR_FT	(SFSR_FT_VA_OOR_2|SFSR_FT_VA_OOR_1|SFSR_FT_NFO|SFSR_ILL_ASI|SFSR_FT_IO_ATOMIC|SFSR_FT_ILL_NF|SFSR_FT_PRIV)
 
-#define	SFSR_BITS "\20\16VAT\15VAD\14NFO\13ASI\12A\11NF\10PRIV\7E\6NUCLEUS\5SECONDCTX\4PRIV\3W\2OW\1FV"
+#define	SFSR_BITS "\20\31NF\20TM\16VAT\15VAD\14NFO\13ASI\12A\11NF\10PRIV\7E\6NUCLEUS\5SECONDCTX\4PRIV\3W\2OW\1FV"
 
 /* ASFR bits */
 #define	ASFR_ME			0x100000000LL
