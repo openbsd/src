@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.18 2007/03/07 17:40:32 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.19 2007/03/13 12:04:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -517,6 +517,10 @@ relay_socket(struct sockaddr_storage *ss, in_port_t port,
 
 	if ((s = socket(ss->ss_family, SOCK_STREAM, IPPROTO_TCP)) == -1)
 		goto bad;
+
+	/*
+	 * Socket options
+	 */
 	bzero(&lng, sizeof(lng));
 	if (setsockopt(s, SOL_SOCKET, SO_LINGER, &lng, sizeof(lng)) == -1)
 		goto bad;
@@ -525,7 +529,36 @@ relay_socket(struct sockaddr_storage *ss, in_port_t port,
 		goto bad;
 	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
 		goto bad;
+	if (proto->tcpflags & TCPFLAG_BUFSIZ) {
+		val = proto->tcpbufsiz;
+		if (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
+		    &val, sizeof(val)) == -1)
+			goto bad;
+		val = proto->tcpbufsiz;
+		if (setsockopt(s, SOL_SOCKET, SO_SNDBUF,
+		    &val, sizeof(val)) == -1)
+			goto bad;
+	}
 
+	/*
+	 * IP options
+	 */
+	if (proto->tcpflags & TCPFLAG_IPTTL) {
+		val = (int)proto->tcpipttl;
+		if (setsockopt(s, IPPROTO_IP, IP_TTL,
+		    &val, sizeof(val)) == -1)
+			goto bad;
+	}
+	if (proto->tcpflags & TCPFLAG_IPMINTTL) {
+		val = (int)proto->tcpipminttl;
+		if (setsockopt(s, IPPROTO_IP, IP_MINTTL,
+		    &val, sizeof(val)) == -1)
+			goto bad;
+	}
+
+	/*
+	 * TCP options
+	 */
 	if (proto->tcpflags & (TCPFLAG_NODELAY|TCPFLAG_NNODELAY)) {
 		if (proto->tcpflags & TCPFLAG_NNODELAY)
 			val = 0;
@@ -541,16 +574,6 @@ relay_socket(struct sockaddr_storage *ss, in_port_t port,
 		else
 			val = 1;
 		if (setsockopt(s, IPPROTO_TCP, TCP_SACK_ENABLE,
-		    &val, sizeof(val)) == -1)
-			goto bad;
-	}
-	if (proto->tcpflags & TCPFLAG_BUFSIZ) {
-		val = proto->tcpbufsiz;
-		if (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
-		    &val, sizeof(val)) == -1)
-			goto bad;
-		val = proto->tcpbufsiz;
-		if (setsockopt(s, SOL_SOCKET, SO_SNDBUF,
 		    &val, sizeof(val)) == -1)
 			goto bad;
 	}

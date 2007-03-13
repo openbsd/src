@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.35 2007/03/07 17:40:32 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.36 2007/03/13 12:04:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -110,7 +110,7 @@ typedef struct {
 %token	SEND EXPECT NOTHING SSL LOADBALANCE ROUNDROBIN CIPHERS COOKIE
 %token	RELAY LISTEN ON FORWARD TO NAT LOOKUP PREFORK NO MARK MARKED
 %token	PROTO SESSION CACHE APPEND CHANGE REMOVE FROM FILTER HASH HEADER
-%token	LOG UPDATES ALL DEMOTE NODELAY SACK SOCKET BUFFER URL RETRY
+%token	LOG UPDATES ALL DEMOTE NODELAY SACK SOCKET BUFFER URL RETRY IP
 %token	ERROR
 %token	<v.string>	STRING
 %type	<v.string>	interface
@@ -675,6 +675,20 @@ tcpflags	: SACK 			{ proto->tcpflags |= TCPFLAG_SACK; }
 			proto->tcpflags |= TCPFLAG_BUFSIZ;
 			proto->tcpbufsiz = $3;
 		}
+		| IP STRING number	{
+			if (strcasecmp("ttl", $2) == 0) {
+				proto->tcpflags |= TCPFLAG_IPTTL;
+				proto->tcpipttl = $3;
+			} else if (strcasecmp("minttl", $2) == 0) {
+				proto->tcpflags |= TCPFLAG_IPMINTTL;
+				proto->tcpipminttl = $3;
+			} else {
+				yyerror("invalid TCP/IP flag: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
 		;
 
 sslflags_l	: sslflags comma sslflags_l
@@ -1085,6 +1099,7 @@ lookup(char *s)
 		{ "icmp",		ICMP },
 		{ "interface",		INTERFACE },
 		{ "interval",		INTERVAL },
+		{ "ip",			IP },
 		{ "listen",		LISTEN },
 		{ "loadbalance",	LOADBALANCE },
 		{ "log",		LOG },

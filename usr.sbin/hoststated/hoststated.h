@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.36 2007/03/05 11:44:50 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.37 2007/03/13 12:04:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -406,6 +406,8 @@ enum prototype {
 #define TCPFLAG_SACK		0x04
 #define TCPFLAG_NSACK		0x08
 #define TCPFLAG_BUFSIZ		0x10
+#define TCPFLAG_IPTTL		0x20
+#define TCPFLAG_IPMINTTL	0x40
 #define TCPFLAG_DEFAULT		0x00
 
 #define SSLFLAG_SSLV2		0x01
@@ -422,6 +424,8 @@ struct protocol {
 	u_int8_t		 tcpflags;
 	int			 tcpbufsiz;
 	int			 tcpbacklog;
+	u_int8_t		 tcpipttl;
+	u_int8_t		 tcpipminttl;
 	u_int8_t		 sslflags;
 	char			*sslciphers;
 	char			 name[MAX_NAME_SIZE];

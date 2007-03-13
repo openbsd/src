@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.38 2007/03/12 12:21:09 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.39 2007/03/13 12:04:52 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -505,9 +505,11 @@ section above.
 Log the name and the value of the entity.
 .El
 .It Ic tcp Ar option
-Enable or disable the specified TCP option; see
+Enable or disable the specified TCP/IP options; see
 .Xr tcp 4
-for details about TCP options.
+and
+.Xr ip 4
+for more information about the options.
 Valid options are:
 .Bl -tag -width Ds
 .It Ic backlog Ar number
@@ -516,6 +518,14 @@ The backlog option is 10 by default and is limited by the
 .Ic kern.somaxconn
 .Xr sysctl 8
 variable.
+.It Ic ip minttl Ar number
+This option for the underlying IP connection may be used to discard packets
+with a TTL lower than the specified value.
+This can be used to implement the
+.Ar Generalized TTL Security Mechanism (GTSM)
+according to RFC 3682.
+.It Ic ip ttl
+Change the default time-to-live value in the IP headers.
 .It Xo
 .Op Ic no
 .Ic nodelay
