@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.107 2007/03/02 02:29:13 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.108 2007/03/13 19:25:31 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.107 2007/03/02 02:29:13 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.108 2007/03/13 19:25:31 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -810,22 +810,27 @@ next_offset(struct disklabel *lp, u_int32_t *sizep)
 
 	new_offset = starting_sector;
 	for (i = 0; i < npartitions; i++ ) {
+		u_int32_t pstart = spp[i]->p_offset;
+		u_int32_t pend = pstart + spp[i]->p_size;
+		u_int32_t newend = new_offset + *sizep;
+		
 		/*
 		 * Is new_offset inside this partition?  If so,
 		 * make it the next sector after the partition ends.
 		 */
-		if (spp[i]->p_offset + spp[i]->p_size < ending_sector &&
-		    ((new_offset >= spp[i]->p_offset &&
-		    new_offset < spp[i]->p_offset + spp[i]->p_size) ||
-		    (new_offset + *sizep >= spp[i]->p_offset && new_offset
-		    + *sizep <= spp[i]->p_offset + spp[i]->p_size)))
-			new_offset = spp[i]->p_offset + spp[i]->p_size;
+		if (pend < ending_sector &&
+		    ((new_offset >= pstart && new_offset < pend) ||
+		    (newend > pstart && newend <= pend)))
+			new_offset = pend;
 	}
 
 	/* Did we find a suitable offset? */
 	for (good_offset = 1, i = 0; i < npartitions; i++ ) {
-		if (new_offset + *sizep >= spp[i]->p_offset &&
-		    new_offset + *sizep <= spp[i]->p_offset + spp[i]->p_size) {
+		u_int32_t pstart = spp[i]->p_offset;
+		u_int32_t pend = pstart + spp[i]->p_size;
+		u_int32_t newend = new_offset + *sizep;
+
+		if (newend > pstart && newend <= pend) {
 			/* Nope */
 			good_offset = 0;
 			break;
