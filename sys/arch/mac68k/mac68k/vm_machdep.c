@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.37 2006/06/24 13:24:21 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.38 2007/03/13 19:38:23 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.29 1998/07/28 18:34:55 thorpej Exp $	*/
 
 /*
@@ -114,6 +114,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcb->pcb_regs[6] = (int)func;		/* A2 */
 	pcb->pcb_regs[7] = (int)arg;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
+	pcb->pcb_ps = PSL_LOWIPL;		/* start kthreads at IPL 0 */
 }
 
 /*
