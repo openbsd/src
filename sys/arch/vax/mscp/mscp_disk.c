@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.18 2007/02/15 00:53:26 krw Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.19 2007/03/13 21:05:24 miod Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -369,9 +369,6 @@ raioctl(dev, cmd, data, flag, p)
 	struct disklabel *lp, *tp;
 	struct ra_softc *ra = ra_cd.cd_devs[unit];
 	int error = 0;
-#ifdef __HAVE_OLD_DISKLABEL
-	struct disklabel newlabel;
-#endif
 
 	lp = ra->ra_disk.dk_label;
 
@@ -380,14 +377,6 @@ raioctl(dev, cmd, data, flag, p)
 	case DIOCGDINFO:
 		bcopy(lp, data, sizeof (struct disklabel));
 		break;
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDINFO:
-		bcopy(lp, &newlabel, sizeof disklabel);
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		bcopy(&newlabel, data, sizeof (struct olddisklabel));
-		break;
-#endif
 
 	case DIOCGPART:
 		((struct partinfo *)data)->disklab = lp;
@@ -397,27 +386,13 @@ raioctl(dev, cmd, data, flag, p)
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCWDINFO:
-	case ODIOCSDINFO:
-		if (cmd == ODIOCSDINFO || xfer == ODIOCWDINFO) {
-			memset(&newlabel, 0, sizeof newlabel);
-			memcpy(&newlabel, data, sizeof (struct olddisklabel));
-			tp = &newlabel;
-		} else
-#endif
 		tp = (struct disklabel *)data;
 
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
 		else {
 			error = setdisklabel(lp, tp, 0, 0);
-			if ((error == 0) && (cmd == DIOCWDINFO
-#ifdef __HAVE_OLD_DISKLABEL
-			    || cmd == ODIOCWDINFO
-#else
-			    )) {
-#endif
+			if (error == 0 && cmd == DIOCWDINFO) {
 				ra->ra_wlabel = 1;
 				error = writedisklabel(dev, rastrategy, lp,0);
 				ra->ra_wlabel = 0;
@@ -431,36 +406,6 @@ raioctl(dev, cmd, data, flag, p)
 		else
 			ra->ra_wlabel = 1;
 		break;
-
-#ifdef __NetBSD__
-	case DIOCGDEFLABEL:
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDEFLABEL:
-		if (cmd == ODIOCGDEFLABEL)
-			tp = &newlabel;
-		else
-#else
-		tp = (struct disklabel *)data;
-#endif
-		bzero(tp, sizeof(struct disklabel));
-		tp->d_secsize = lp->d_secsize;
-		tp->d_nsectors = lp->d_nsectors;
-		tp->d_ntracks = lp->d_ntracks;
-		tp->d_ncylinders = lp->d_ncylinders;
-		tp->d_secpercyl = lp->d_secpercyl;
-		tp->d_secperunit = lp->d_secperunit;
-		tp->d_type = DTYPE_MSCP;
-		tp->d_rpm = 3600;
-		rrmakelabel(tp, ra->ra_mediaid);
-#ifdef __HAVE_OLD_DISKLABEL
-		if (cmd == ODIOCGDEFLABEL) {
-			if (tp->d_npartitions > OLDMAXPARTITIONS)
-				return ENOTTY;
-			memcpy(data, tp, sizeof (struct olddisklabel));
-		}
-#endif
-		break;
-#endif /* __NetBSD__ */
 
 	default:
 		error = ENOTTY;
