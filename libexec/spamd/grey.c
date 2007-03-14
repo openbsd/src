@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.35 2007/03/12 03:14:44 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.36 2007/03/14 19:13:35 beck Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -567,7 +567,6 @@ greyscan(char *dbname)
 			char *cp;
 
 			/*
-			 * remove this tuple-keyed  entry from db
 			 * add address to whitelist
 			 * add an address-keyed entry to db
 			 */
@@ -585,10 +584,6 @@ greyscan(char *dbname)
 			}
 
 			if (tuple) {
-				if (cp != NULL)
-					*cp = '\n';
-				if (queue_change(a, NULL, 0, DBC_DEL) == -1)
-					goto bad;
 				if (cp != NULL)
 					*cp = '\0';
 				/* re-add entry, keyed only by ip */
