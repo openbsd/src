@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.301 2007/02/27 16:24:29 beck Exp $
+#	$OpenBSD: rc,v 1.302 2007/03/14 20:47:17 ckuethe Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -401,6 +401,10 @@ fi
 
 if [ X"${timed_flags}" != X"NO" ]; then
 	echo -n ' timed'; timed $timed_flags
+fi
+
+if [ X"${nmeaattach_flags}" != X"NO" -a -n "${nmeaattach_flags}" ]; then
+	echo -n ' nmeaattach';	nmeaattach ${nmeaattach_flags}
 fi
 
 if [ X"${ntpd_flags}" != X"NO" ]; then
