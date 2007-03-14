@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.36 2007/03/14 19:13:35 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.37 2007/03/14 19:39:55 beck Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -96,6 +96,7 @@ SLIST_HEAD(, mail_addr) match_suffix = SLIST_HEAD_INITIALIZER(match_suffix);
 char *alloweddomains_file = PATH_SPAMD_ALLOWEDDOMAINS;
 
 char *low_prio_mx_ip;
+time_t startup;
 
 static char *pargv[11]= {
 	"pfctl", "-p", "/dev/pf", "-q", "-t",
@@ -804,7 +805,9 @@ greyupdate(char *dbname, char *helo, char *ip, char *from, char *to, int sync,
 		goto bad;
 	if (r) {
 		/* new entry */
-		if (sync && low_prio_mx_ip && (strcmp(cip, low_prio_mx_ip) == 0)) {
+		if (sync &&  low_prio_mx_ip &&
+		    (strcmp(cip, low_prio_mx_ip) == 0) &&
+		    ((startup + 60)  < now)) {
 			/* we haven't seen a greylist entry for this tuple, 
 			 * and yet the connection was to a low priority MX
 			 * which we know can't be hit first if the client
@@ -1148,6 +1151,7 @@ greywatcher(void)
 
 	check_spamd_db();
 
+	startup = time(NULL);
 	db_pid = fork();
 	switch (db_pid) {
 	case -1:
