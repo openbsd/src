@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.15 2007/03/01 21:39:27 kettenis Exp $	*/
+/*	$OpenBSD: smu.c,v 1.16 2007/03/14 22:49:00 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -253,9 +253,9 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 	time_write = smu_time_write;
 
 	/* Fans */
-	node = OF_getnodebyname(ca->ca_node, "fans");
+	node = OF_getnodebyname(ca->ca_node, "rpm-fans");
 	if (node == 0)
-		node = OF_getnodebyname(ca->ca_node, "rpm-fans");
+		node = OF_getnodebyname(ca->ca_node, "fans");
 	for (node = OF_child(node); node; node = OF_peer(node)) {
 		if (OF_getprop(node, "reg", &reg, sizeof reg) <= 0 ||
 		    OF_getprop(node, "device_type", type, sizeof type) <= 0)
@@ -518,12 +518,18 @@ smu_fan_set_rpm(struct smu_softc *sc, struct smu_fan *fan, u_int16_t rpm)
 {
 	struct smu_cmd *cmd = (struct smu_cmd *)sc->sc_cmd;
 
+	/*
+	 * On the PowerMac8,2 this command expects the requested fan
+	 * speed at a different location in the command block than on
+	 * the PowerMac8,1.  We simply store the value at both
+	 * locations.
+	 */
 	cmd->cmd = SMU_FAN;
-	cmd->len = 4;
+	cmd->len = 14;
 	cmd->data[0] = 0x00;	/* fan-rpm-control */
 	cmd->data[1] = 0x01 << fan->reg;
-	cmd->data[2] = (rpm >> 8) & 0xff;
-	cmd->data[3] = (rpm & 0xff);
+	cmd->data[2] = cmd->data[2 + fan->reg * 2] = (rpm >> 8) & 0xff;
+	cmd->data[3] = cmd->data[3 + fan->reg * 2] = (rpm & 0xff);
 	return smu_do_cmd(sc, 800);
 }
 
