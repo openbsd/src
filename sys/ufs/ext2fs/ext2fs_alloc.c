@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.20 2005/12/11 20:46:28 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.21 2007/03/14 13:56:42 pedro Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -341,7 +341,7 @@ ext2fs_alloccg(ip, cg, bpref, size)
 	error = bread(ip->i_devvp, fsbtodb(fs,
 		fs->e2fs_gd[cg].ext2bgd_b_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
-	if (error) {
+	if (error || fs->e2fs_gd[cg].ext2bgd_nbfree == 0) {
 		brelse(bp);
 		return (0);
 	}
