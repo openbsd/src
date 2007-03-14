@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.25 2007/02/23 11:00:02 grunk Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.26 2007/03/14 17:59:41 grunk Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -44,6 +44,7 @@
 
 #include <dev/vndioctl.h>
 
+#include <blf.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -135,7 +136,7 @@ main(int argc, char **argv)
 				errx(1, "Need an encryption key");
 		} else if (opt_K) {
 			key = get_pkcs_key(rounds, saltopt);
-			keylen = 128;
+			keylen = BLF_MAXUTILIZED;
 		}
 		rv = config(argv[0], argv[1], action, key, keylen);
 	} else if (action == VND_UNCONFIG && argc == 1)
@@ -207,8 +208,8 @@ get_pkcs_key(char *arg, char *saltopt)
 	} else {
 		memset(saltbuf, 0, sizeof(saltbuf));
 	}
-	if (pkcs5_pbkdf2((u_int8_t**)&key, 128, keybuf, sizeof(keybuf),
-	    saltbuf, sizeof(saltbuf), rounds, 0))
+	if (pkcs5_pbkdf2((u_int8_t**)&key, BLF_MAXUTILIZED, keybuf,
+	    sizeof(keybuf), saltbuf, sizeof(saltbuf), rounds, 0))
 		errx(1, "pkcs5_pbkdf2 failed");
 
 	return (key);
