@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.57 2007/03/13 19:34:44 miod Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.58 2007/03/14 16:41:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -357,7 +357,9 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 	char *bp = NULL;
 	Elf_Addr addr;
 	struct vnode *vp;
+#ifndef SMALL_KERNEL
 	u_int8_t os;			/* Just a dummy in this routine */
+#endif
 	Elf_Phdr *base_ph = NULL;
 	struct interp_ld_sec {
 		Elf_Addr vaddr;
