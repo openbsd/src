@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.11 2006/05/26 17:26:33 jmc Exp $
+.\"	$OpenBSD: less.1,v 1.12 2007/03/15 22:34:53 jmc Exp $
 .\"
 .\" Copyright (C) 2002  Mark Nudelman
 .\"
@@ -40,16 +40,16 @@
 .Fl -version
 .Nm less No | Nm more
 .Bk -words
-.Op Fl Oo Cm + Oc Ns Cm aBcCdeEfFgGiIJLmMnNqQrRsSuUVwWX~
+.Op Fl Oo Cm + Oc Ns Cm aBCcdEeFfGgIiJLMmNnQqRrSsUuVWwX~
 .Op Fl b Ar space
 .Op Fl h Ar lines
 .Op Fl j Ar line
 .Op Fl k Ar keyfile
-.Op Fl o | O Ar logfile
-.Op Fl p Ar pattern
+.Op Fl O | o Ar logfile
 .Op Fl P Ar prompt
-.Op Fl t Ar tag
+.Op Fl p Ar pattern
 .Op Fl T Ar tagsfile
+.Op Fl t Ar tag
 .Op Fl x Ar tab,...
 .Op Fl y Ar lines
 .Op Fl Oo Cm z Oc Ar \ \&lines
@@ -526,6 +526,17 @@ Causes searches to start after the last line displayed on the screen,
 thus skipping all lines displayed on the screen.
 By default, searches start at the second line on the screen
 (or after the last found line; see the -j option).
+.It Fl B | -auto-buffers
+By default, when data is read from a pipe,
+buffers are allocated automatically as needed.
+If a large amount of data is read from the pipe, this can cause
+a large amount of memory to be allocated.
+The -B option disables this automatic allocation of buffers for pipes,
+so that only 64K (or the amount of space specified by the -b option)
+is used for the pipe.
+Warning: use of -B can result in erroneous display, since only the
+most recently viewed part of the file is kept in memory;
+any earlier data is lost.
 .It Xo
 .Fl b Ns Ar n |
 .Fl -buffers Ns = Ns Ar n
@@ -539,23 +550,12 @@ The -b option specifies instead that n kilobytes of
 buffer space should be used for each file.
 If n is -1, buffer space is unlimited; that is,
 the entire file is read into memory.
-.It Fl B | -auto-buffers
-By default, when data is read from a pipe,
-buffers are allocated automatically as needed.
-If a large amount of data is read from the pipe, this can cause
-a large amount of memory to be allocated.
-The -B option disables this automatic allocation of buffers for pipes,
-so that only 64K (or the amount of space specified by the -b option)
-is used for the pipe.
-Warning: use of -B can result in erroneous display, since only the
-most recently viewed part of the file is kept in memory;
-any earlier data is lost.
+.It Fl C | -CLEAR-SCREEN
+The -C option is like -c, but the screen is cleared before it is repainted.
 .It Fl c | -clear-screen
 Causes full screen repaints to be painted from the top line down.
 By default,
 full screen repaints are done by scrolling from the bottom of the screen.
-.It Fl C | -CLEAR-SCREEN
-The -C option is like -c, but the screen is cleared before it is repainted.
 .It Fl d | -dumb No (less only)
 The -d option suppresses the error message
 normally displayed if the terminal is dumb;
@@ -582,6 +582,10 @@ with pagers.
 .\" The first number selects the foreground color and the second selects
 .\" the background color of the text.
 .\" A single number N is the same as N.0.
+.It Fl E | -QUIT-AT-EOF
+Causes
+.Nm
+to automatically exit the first time it reaches end-of-file.
 .It Fl e | -quit-at-eof
 Causes
 .Nm
@@ -589,10 +593,10 @@ to automatically exit the second time it reaches end-of-file.
 By default, the only way to exit
 .Nm
 is via the "q" command.
-.It Fl E | -QUIT-AT-EOF
+.It Fl F | -quit-if-one-screen
 Causes
 .Nm
-to automatically exit the first time it reaches end-of-file.
+to automatically exit if the entire file can be displayed on the first screen.
 .It Fl f | -force
 Forces non-regular files to be opened.
 (A non-regular file is a directory or a device special file.)
@@ -600,10 +604,8 @@ Also suppresses the warning message when a binary file is opened.
 By default,
 .Nm
 will refuse to open non-regular files.
-.It Fl F | -quit-if-one-screen
-Causes
-.Nm
-to automatically exit if the entire file can be displayed on the first screen.
+.It Fl G | -HILITE-SEARCH
+The -G option suppresses all highlighting of strings found by search commands.
 .It Fl g | -hilite-search
 Normally,
 .Nm
@@ -613,8 +615,6 @@ which was found by the last search command.
 This can cause
 .Nm
 to run somewhat faster than the default.
-.It Fl G | -HILITE-SEARCH
-The -G option suppresses all highlighting of strings found by search commands.
 .It Xo
 .Fl h Ns Ar n |
 .Fl -max-back-scroll Ns = Ns Ar n
@@ -623,15 +623,19 @@ Specifies a maximum number of lines to scroll backward.
 If it is necessary to scroll backward more than n lines,
 the screen is repainted in a forward direction instead.
 (If the terminal does not have the ability to scroll backward, -h0 is implied.)
+.It Fl I | -IGNORE-CASE
+Like -i, but searches ignore case even if the pattern contains uppercase
+letters.
 .It Fl i | -ignore-case
 Causes searches to ignore case; that is,
 uppercase and lowercase are considered identical.
 This option is ignored if any uppercase letters appear in the search pattern;
 in other words,
 if a pattern contains uppercase letters, then that search does not ignore case.
-.It Fl I | -IGNORE-CASE
-Like -i, but searches ignore case even if the pattern contains uppercase
-letters.
+.It Fl J | -status-column
+Displays a status column at the left edge of the screen.
+The status column shows the lines that matched the current search.
+The status column is also used if the -w or -W option is in effect.
 .It Xo
 .Fl j Ns Ar n |
 .Fl -jump-target Ns = Ns Ar n
@@ -649,10 +653,6 @@ If the -j option is used, searches begin at the line immediately
 after the target line.
 For example, if "-j4" is used, the target line is the
 fourth line on the screen, so searches begin at the fifth line on the screen.
-.It Fl J | -status-column
-Displays a status column at the left edge of the screen.
-The status column shows the lines that matched the current search.
-The status column is also used if the -w or -W option is in effect.
 .It Xo
 .Fl k Ns Ar filename |
 .Fl -lesskey-file Ns = Ns Ar filename
@@ -686,6 +686,11 @@ When invoked as
 the
 .Ev LESSOPEN
 environment variable is ignored by default.
+.It Fl M | -LONG-PROMPT
+Causes
+.Nm
+to prompt even more verbosely than
+.Nm more .
 .It Fl m | -long-prompt
 Causes
 .Nm
@@ -693,11 +698,9 @@ to prompt verbosely (like more), with the percent into the file.
 By default,
 .Nm
 prompts with a colon.
-.It Fl M | -LONG-PROMPT
-Causes
-.Nm
-to prompt even more verbosely than
-.Nm more .
+.It Fl N | -LINE-NUMBERS
+Causes a line number to be displayed at the beginning of each line in the
+display.
 .It Fl n | -line-numbers
 Suppresses line numbers.
 The default (to use line numbers) may cause
@@ -709,20 +712,6 @@ prompt and in the = command, and the v command will pass the current line
 number to the editor (see also the discussion of LESSEDIT in
 .Sx PROMPTS
 below).
-.It Fl N | -LINE-NUMBERS
-Causes a line number to be displayed at the beginning of each line in the
-display.
-.It Xo
-.Fl o Ns Ar filename |
-.Fl -log-file Ns = Ns Ar filename
-.Xc
-Causes
-.Nm
-to copy its input to the named file as it is being viewed.
-This applies only when the input file is a pipe, not an ordinary file.
-If the file already exists,
-.Nm
-will ask for confirmation before overwriting it.
 .It Xo
 .Fl O Ns Ar filename |
 .Fl -LOG-FILE Ns = Ns Ar filename
@@ -738,13 +727,16 @@ Without a file name, they will simply report the name of the log file.
 The "s" command is equivalent to specifying -o from within
 .Nm less .
 .It Xo
-.Fl p Ns Ar pattern |
-.Fl -pattern Ns = Ns Ar pattern
+.Fl o Ns Ar filename |
+.Fl -log-file Ns = Ns Ar filename
 .Xc
-The -p option on the command line is equivalent to specifying +/pattern;
-that is, it tells
+Causes
 .Nm
-to start at the first occurrence of pattern in the file.
+to copy its input to the named file as it is being viewed.
+This applies only when the input file is a pipe, not an ordinary file.
+If the file already exists,
+.Nm
+will ask for confirmation before overwriting it.
 .It Xo
 .Fl P Ns Ar prompt |
 .Fl -prompt Ns = Ns Ar prompt
@@ -769,6 +761,16 @@ sequences.
 See the section on
 .Sx PROMPTS
 for more details.
+.It Xo
+.Fl p Ns Ar pattern |
+.Fl -pattern Ns = Ns Ar pattern
+.Xc
+The -p option on the command line is equivalent to specifying +/pattern;
+that is, it tells
+.Nm
+to start at the first occurrence of pattern in the file.
+.It Fl Q | -QUIET | -SILENT
+Causes totally "quiet" operation: the terminal bell is never rung.
 .It Fl q | -quiet | -silent
 Causes moderately "quiet" operation:
 the terminal bell is not rung if an attempt is made to scroll past the end
@@ -777,19 +779,6 @@ If the terminal has a "visual bell", it is used instead.
 The bell will be rung on certain other errors,
 such as typing an invalid character.
 The default is to ring the terminal bell in all such cases.
-.It Fl Q | -QUIET | -SILENT
-Causes totally "quiet" operation: the terminal bell is never rung.
-.It Fl r | -raw-control-chars
-Causes "raw" control characters to be displayed.
-The default is to display control characters using the caret notation;
-for example, a control-A (octal 001) is displayed as "^A".
-Warning: when the -r option is used,
-.Nm
-cannot keep track of the actual appearance of the screen
-(since this depends on how the screen responds to
-each type of control character).
-Thus, various display problems may result,
-such as long lines being split in the wrong place.
 .It Fl R | -RAW-CONTROL-CHARS
 Like -r, but tries to keep track of the screen appearance where possible.
 This works only if the input consists of normal text and possibly some
@@ -807,17 +796,33 @@ think that characters other than "m" can end ANSI color escape sequences
 by setting the environment variable
 .Ev LESSANSIENDCHARS
 to the list of characters which can end a color escape sequence.
-.It Fl s | -squeeze-blank-lines
-Causes consecutive blank lines to be squeezed into a single blank line.
-This is useful when viewing
-.Xr nroff 1
-output.
+.It Fl r | -raw-control-chars
+Causes "raw" control characters to be displayed.
+The default is to display control characters using the caret notation;
+for example, a control-A (octal 001) is displayed as "^A".
+Warning: when the -r option is used,
+.Nm
+cannot keep track of the actual appearance of the screen
+(since this depends on how the screen responds to
+each type of control character).
+Thus, various display problems may result,
+such as long lines being split in the wrong place.
 .It Fl S | -chop-long-lines
 Causes lines longer than the screen width to be chopped rather than folded.
 That is, the portion of a long line that does not fit in
 the screen width is not shown.
 The default is to fold long lines; that is, display the remainder
 on the next line.
+.It Fl s | -squeeze-blank-lines
+Causes consecutive blank lines to be squeezed into a single blank line.
+This is useful when viewing
+.Xr nroff 1
+output.
+.It Xo
+.Fl T Ns Ar tagsfile |
+.Fl -tag-file Ns = Ns Ar tagsfile
+.Xc
+Specifies a tags file to be used instead of "tags".
 .It Xo
 .Fl t Ns Ar tag |
 .Fl -tag Ns = Ns Ar tag
@@ -840,14 +845,6 @@ The -t option may also be specified from within
 (using the \- command) as a way of examining a new file.
 The command ":t" is equivalent to specifying -t from within
 .Nm less .
-.It Xo
-.Fl T Ns Ar tagsfile |
-.Fl -tag-file Ns = Ns Ar tagsfile
-.Xc
-Specifies a tags file to be used instead of "tags".
-.It Fl u | -underline-special
-Causes backspaces and carriage returns to be treated as printable characters;
-that is, they are sent to the terminal when they appear in the input.
 .It Fl U | -UNDERLINE-SPECIAL
 Causes backspaces, tabs and carriage returns to be
 treated as control characters;
@@ -866,9 +863,15 @@ Carriage returns immediately followed by a newline are deleted.
 Other carriage returns are handled as specified by the -r option.
 Text which is overstruck or underlined can be searched for
 if neither -u nor -U is in effect.
+.It Fl u | -underline-special
+Causes backspaces and carriage returns to be treated as printable characters;
+that is, they are sent to the terminal when they appear in the input.
 .It Fl V | -version
 Displays the version number of
 .Nm less .
+.It Fl W | -HILITE-UNREAD
+Like -w, but temporarily highlights the first new line after any
+forward movement command larger than one line.
 .It Fl w | -hilite-unread
 Temporarily highlights the first "new" line after a forward movement
 of a full page.
@@ -878,9 +881,11 @@ Also highlights the target line after a g or p command.
 The highlight is removed at the next command which causes movement.
 The entire line is highlighted, unless the -J option is in effect,
 in which case only the status column is highlighted.
-.It Fl W | -HILITE-UNREAD
-Like -w, but temporarily highlights the first new line after any
-forward movement command larger than one line.
+.It Fl X | -no-init
+Disables sending the termcap initialization and deinitialization strings
+to the terminal.
+This is sometimes desirable if the deinitialization string does
+something unnecessary, like clearing the screen.
 .It Xo
 .Fl x Ns Ar n,... |
 .Fl -tabs Ns = Ns Ar n,...
@@ -891,16 +896,6 @@ If multiple values separated by commas are specified, tab stops are set at
 those positions, and then continue with the same spacing as the last two.
 For example, -x9,17 will set tabs at positions 9, 17, 25, 33, etc.
 The default for n is 8.
-.It Fl X | -no-init
-Disables sending the termcap initialization and deinitialization strings
-to the terminal.
-This is sometimes desirable if the deinitialization string does
-something unnecessary, like clearing the screen.
-.It Fl -no-keypad
-Disables sending the keypad initialization and deinitialization strings
-to the terminal.
-This is sometimes useful if the keypad strings make the numeric
-keypad behave in an undesirable manner.
 .It Xo
 .Fl y Ns Ar n |
 .Fl -max-forw-scroll Ns = Ns Ar n
@@ -929,6 +924,11 @@ For example, if the screen is 24 lines, -z-4 sets the
 scrolling window to 20 lines.
 If the screen is resized to 40 lines,
 the scrolling window automatically changes to 36 lines.
+.It Fl -no-keypad
+Disables sending the keypad initialization and deinitialization strings
+to the terminal.
+This is sometimes useful if the keypad strings make the numeric
+keypad behave in an undesirable manner.
 .It Xo
 .Ar -cc |
 .Fl -quotes Ns = Ns Ar cc
