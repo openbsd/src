@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1214 2007/02/17 11:41:49 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1215 2007/03/15 04:22:22 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6885,7 +6885,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB368,
-	    "JMB368 IDE/SATA",
+	    "JMB368 IDE",
 	},
 	{
 	    PCI_VENDOR_KTI, PCI_PRODUCT_KTI_KTIE,
