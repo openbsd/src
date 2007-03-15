@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg-config.1,v 1.11 2007/02/18 07:49:42 jmc Exp $
+.\"	$OpenBSD: pkg-config.1,v 1.12 2007/03/15 22:00:15 jmc Exp $
 .\"
 .\"	Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 .\"
@@ -63,7 +63,7 @@ The options are as follows:
 .It Cm --atleast-pkgconfig-version Ar version
 Exit with error if the version of
 .Nm
-is greater than or equal to the specified version.
+is not greater than or equal to the specified version.
 .It Cm --atleast-version Ar version
 Exit with error if the specified package's version is not greater than
 or equal to the specified version.
@@ -85,12 +85,12 @@ This is the default operation.
 Print a help message and exit.
 .It Cm --libs
 Return all linker flags required to link against the package.
-.It Cm --libs-only-l
-Return only the library (-lwhatever) flags required to link against
-the package.
 .It Cm --libs-only-L
 Return only the library path (-L/path/to/lib) flags required to link
 against the package.
+.It Cm --libs-only-l
+Return only the library (-lwhatever) flags required to link against
+the package.
 .It Cm --libs-only-other
 Return linker flags, other than the library and path flags, required to
 compile against the package.
