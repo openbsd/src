@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: updatedb.sh,v 1.11 2003/09/29 16:03:16 deraadt Exp $
+#	$OpenBSD: updatedb.sh,v 1.12 2007/03/15 22:24:18 jmc Exp $
 #
 # Copyright (c) September 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -28,7 +28,7 @@
 #
 # updatedb - update locate database for local mounted filesystems
 #
-# $Id: updatedb.sh,v 1.11 2003/09/29 16:03:16 deraadt Exp $
+# $Id: updatedb.sh,v 1.12 2007/03/15 22:24:18 jmc Exp $
 
 LOCATE_CONFIG="/etc/locate.rc"
 if [ -f "$LOCATE_CONFIG" -a -r "$LOCATE_CONFIG" ]; then
@@ -41,7 +41,7 @@ TMPDIR=${TMPDIR:-/tmp}; export TMPDIR;
 
 PATH=$LIBEXECDIR:/bin:/usr/bin:$PATH; export PATH
 
-USAGE="Usage: $0 [--tmpdir=dir] [--fcodes=dbfile] [--searchpaths='dir1 dir2...'] [--prunepaths='dir1 dir2...'] [--filesystems='type1 type2...']"
+USAGE="usage: $0 [--fcodes=dbfile] [--filesystems='type ...'] [--prunepaths='dir ...'] [--searchpaths='dir ...'] [--tmpdir=dir]"
 
 : ${mklocatedb=locate.mklocatedb}	 # make locate database program
 : ${FCODES=/var/db/locate.database}	 # the database
