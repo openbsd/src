@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctags.1,v 1.13 2003/06/10 09:12:10 jmc Exp $
+.\"	$OpenBSD: ctags.1,v 1.14 2007/03/15 22:41:17 jmc Exp $
 .\"	$NetBSD: ctags.1,v 1.4 1995/03/26 20:14:04 glass Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -38,9 +38,9 @@
 .Nd create a tags file
 .Sh SYNOPSIS
 .Nm ctags
-.Op Fl BFadtuwvx
+.Op Fl aBdFtuvwx
 .Op Fl f Ar tagsfile
-.Ar name ...
+.Ar
 .Sh DESCRIPTION
 .Nm
 makes a tags file for
@@ -66,23 +66,23 @@ enums, and unions.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl B
-Use backward searching patterns
-.Pq Li ?...? .
-.It Fl F
-Use forward searching patterns
-.Pq Li /.../
-(the default).
 .It Fl a
 Append to
 .Ar tags
 file.
+.It Fl B
+Use backward searching patterns
+.Pq Li ?...? .
 .It Fl d
 Create tags for
 .Li #defines
 that don't take arguments;
 .Li #defines
 that take arguments are tagged automatically.
+.It Fl F
+Use forward searching patterns
+.Pq Li /.../
+(the default).
 .It Fl f Ar tagsfile
 Places the tag descriptions in a file called
 .Ar tagsfile .
