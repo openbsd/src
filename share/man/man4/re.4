@@ -1,4 +1,4 @@
-.\" $OpenBSD: re.4,v 1.27 2007/01/14 07:08:56 weingart Exp $
+.\" $OpenBSD: re.4,v 1.28 2007/03/15 22:08:10 jmc Exp $
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -88,9 +88,11 @@ over CAT5 cable.
 NICs based on the 8169, 816xS and 811xS are capable of 10, 100 and
 1000Mbps operation.
 .Pp
-All NICs supported by the
+All
 .Nm
-driver have IPv4 transmit/receive IP/TCP/UDP checksum offload
+NICs support
+IPv4 transmit/receive IP/TCP/UDP checksum offload
+and VLAN tag insertion,
 and use a descriptor-based DMA mechanism.
 .Pp
 The 8139C+ is a single-chip solution combining both a 10/100 MAC and PHY.
