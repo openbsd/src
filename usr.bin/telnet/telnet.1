@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.37 2003/12/28 21:53:01 otto Exp $
+.\"	$OpenBSD: telnet.1,v 1.38 2007/03/15 22:51:16 jmc Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -41,13 +41,13 @@ protocol
 .Sh SYNOPSIS
 .Nm telnet
 .Bk -words
-.Op Fl 468EFKLacdfrx
-.Op Fl X Ar authtype
+.Op Fl 468acdEFfKLrx
 .Op Fl b Ar hostalias
 .Op Fl e Ar escapechar
 .Op Fl k Ar realm
 .Op Fl l Ar user
 .Op Fl n Ar tracefile
+.Op Fl X Ar authtype
 .Oo
 .Ar host
 .Op Ar port
@@ -87,23 +87,6 @@ Specifies an 8-bit data path.
 This causes an attempt to negotiate the
 .Dv TELNET BINARY
 option on both input and output.
-.It Fl E
-Stops any character from being recognized as an escape character.
-.It Fl F
-If Kerberos authentication is being used, the
-.Fl F
-option allows the local credentials to be forwarded
-to the remote system, including any credentials that
-have already been forwarded into the local environment.
-.It Fl K
-Specifies no automatic login to the remote system.
-.It Fl L
-Specifies an 8-bit data path on output.
-This causes the BINARY option to be negotiated on output.
-.It Fl X Ar atype
-Disables the
-.Ar atype
-type of authentication.
 .It Fl a
 Attempt automatic login.
 Currently, this sends the user name via the
@@ -139,6 +122,8 @@ Sets the initial value of the
 .Ic debug
 toggle to
 .Dv TRUE .
+.It Fl E
+Stops any character from being recognized as an escape character.
 .It Fl e Ar escapechar
 Sets the initial
 .Nm
@@ -148,10 +133,18 @@ If
 .Ar escapechar
 is omitted, then
 there will be no escape character.
+.It Fl F
+If Kerberos authentication is being used, the
+.Fl F
+option allows the local credentials to be forwarded
+to the remote system, including any credentials that
+have already been forwarded into the local environment.
 .It Fl f
 If Kerberos authentication is being used, the
 .Fl f
 option allows the local credentials to be forwarded to the remote system.
+.It Fl K
+Specifies no automatic login to the remote system.
 .It Fl k Ar realm
 If Kerberos authentication is being used, the
 .Fl k
@@ -161,6 +154,9 @@ obtain tickets for the remote host in
 realm
 .Ar realm
 instead of the remote host's realm.
+.It Fl L
+Specifies an 8-bit data path on output.
+This causes the BINARY option to be negotiated on output.
 .It Fl l Ar user
 When connecting to the remote system, if the remote system
 understands the
@@ -189,6 +185,10 @@ mode, the escape character is set to the tilde (~) character,
 unless modified by the
 .Fl e
 option.
+.It Fl X Ar authtype
+Disables the
+.Ar authtype
+type of authentication.
 .It Fl x
 Turn on encryption of the data stream.
 When this option is turned on,
@@ -457,7 +457,7 @@ variable is also exported if the
 or
 .Fl l
 options are used.
-.br
+.Pp
 Valid arguments for the
 .Ic environ
 command are:

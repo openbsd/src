@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2003/12/28 21:53:01 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2007/03/15 22:51:16 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -83,29 +83,18 @@ tninit()
 	void
 usage()
 {
-	fprintf(stderr, "Usage: %s %s%s%s%s\n",
-	    prompt,
-#ifdef	AUTHENTICATION
-	    "[-4] [-6] [-8] [-E] [-K] [-L] [-S tos] [-X atype] [-a] [-c] [-d]",
-	    "\n\t[-e char] [-k realm] [-l user] [-f/-F] [-n tracefile] [-b hostalias] ",
-#else
-	    "[-4] [-6] [-8] [-E] [-L] [-S tos] [-a] [-c] [-d] [-e char]",
-	    "\n\t[-l user][-n tracefile] [-b hostalias] ",
-#endif
-	    "\n\t"
-#if defined(TN3270) && defined(unix)
-# ifdef AUTHENTICATION
-	    "[-noasynch] [-noasynctty] [-noasyncnet] [-r] [-t transcom]\n\t",
+	extern char *__progname;
+
+	(void)fprintf(stderr,
+#if defined(TN3270)
+	    "usage: %s [-d] [-n filename] [-t commandname] [sysname [port]]\n",
 # else
-	    "[-noasynch] [-noasynctty] [-noasyncnet] [-r] [-t transcom]\n\t",
-# endif
-#else
-	    "[-r] ",
+	    "usage: %s [-468acdEFfKLrx] [-b hostalias] [-e escapechar] "
+	    "[-k realm]\n"
+	    "\t[-l user] [-n tracefile] [-X authtype] [host [port]]\n",
 #endif
-#ifdef ENCRYPTION
-	    "[-x] "
-#endif
-	    "[host-name [port]]");
+	    __progname);
+
 	exit(1);
 }
 
