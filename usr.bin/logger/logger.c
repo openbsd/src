@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.8 2006/03/15 03:08:34 dhill Exp $	*/
+/*	$OpenBSD: logger.c,v 1.9 2007/03/15 23:09:51 jmc Exp $	*/
 /*	$NetBSD: logger.c,v 1.4 1994/12/22 06:27:00 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)logger.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: logger.c,v 1.8 2006/03/15 03:08:34 dhill Exp $";
+static char rcsid[] = "$OpenBSD: logger.c,v 1.9 2007/03/15 23:09:51 jmc Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -184,6 +184,6 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "logger: [-is] [-f file] [-p pri] [-t tag] [ message ... ]\n");
+	    "usage: logger [-is] [-f file] [-p pri] [-t tag] [message ... ]\n");
 	exit(1);
 }

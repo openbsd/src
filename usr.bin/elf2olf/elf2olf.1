@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf2olf.1,v 1.13 2003/06/10 09:12:10 jmc Exp $
+.\"	$OpenBSD: elf2olf.1,v 1.14 2007/03/15 23:06:01 jmc Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Erik Theisen.
 .\"	All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"     @(#)$Id: elf2olf.1,v 1.13 2003/06/10 09:12:10 jmc Exp $
+.\"     @(#)$Id: elf2olf.1,v 1.14 2007/03/15 23:06:01 jmc Exp $
 .\"
 .Dd May 5, 1997
 .Dt ELF2OLF 1
@@ -38,10 +38,10 @@
 .Nm elf2olf
 .Op Fl v
 .Op Fl o Ar opsys
-.Ar module Op Ar ...
+.Ar module ...
 .Nm olf2elf
 .Op Fl v
-.Ar file Op Ar ...
+.Ar
 .Sh DESCRIPTION
 The
 .Nm elf2olf
@@ -60,8 +60,6 @@ operands are processed in command line order.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl v
-Operate in verbose mode.
 .It Fl o Ar opsys
 Specifies the operating system
 .Em OLF
@@ -83,6 +81,8 @@ as follows:
 .It Ta Pa "dell" Ta "Dell SVR4"
 .It Ta Pa "ncr  " Ta "NCR SVR4"
 .El
+.It Fl v
+Operate in verbose mode.
 .El
 .Pp
 The

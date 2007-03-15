@@ -1,4 +1,4 @@
-.\"	$OpenBSD: logger.1,v 1.11 2004/02/14 18:55:31 jmc Exp $
+.\"	$OpenBSD: logger.1,v 1.12 2007/03/15 23:09:51 jmc Exp $
 .\"	$NetBSD: logger.1,v 1.4 1994/12/22 06:26:59 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -52,11 +52,11 @@ system log module.
 .Pp
 The options are as follows:
 .Bl -tag -width "-f file"
+.It Fl f Ar file
+Log the specified file.
 .It Fl i
 Log the process ID of the logger process
 with each line.
-.It Fl f Ar file
-Log the specified file.
 .It Fl p Ar pri
 Enter the message with the specified priority.
 The priority may be specified numerically or as a
