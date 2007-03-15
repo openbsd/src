@@ -531,8 +531,11 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/asm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/asm_macro.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/atomic.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/autoconf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/av400.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/avcommon.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/board.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/bus.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/cdefs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/cmmu.ph
@@ -1563,6 +1566,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/asm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/asm_macro.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/atomic.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/cdefs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/cmmu.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/cpu.ph
@@ -2184,3 +2188,4 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/zlib.ph
 ./usr/local/libdata/perl5/site_perl/m88k-openbsd
 ./usr/mdec/a2coff
+./usr/mdec/netboot

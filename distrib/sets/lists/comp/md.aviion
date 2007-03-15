@@ -2,8 +2,11 @@
 ./usr/include/aviion/_types.h
 ./usr/include/aviion/asm.h
 ./usr/include/aviion/asm_macro.h
+./usr/include/aviion/atomic.h
 ./usr/include/aviion/autoconf.h
 ./usr/include/aviion/av400.h
+./usr/include/aviion/avcommon.h
+./usr/include/aviion/board.h
 ./usr/include/aviion/bus.h
 ./usr/include/aviion/cdefs.h
 ./usr/include/aviion/cmmu.h
@@ -160,6 +163,7 @@
 ./usr/include/m88k/_types.h
 ./usr/include/m88k/asm.h
 ./usr/include/m88k/asm_macro.h
+./usr/include/m88k/atomic.h
 ./usr/include/m88k/cdefs.h
 ./usr/include/m88k/cmmu.h
 ./usr/include/m88k/cpu.h
