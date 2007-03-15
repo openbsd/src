@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.59 2007/02/12 19:53:36 gwk Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.60 2007/03/15 20:50:35 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1056,6 +1056,25 @@ extern bus_space_tag_t mainbus_space_tag;
 	bootpath_store(1, bootpath);
 
 	/* the first early device to be configured is the cpu */
+
+	{
+		/* 
+		 * UltraSPARC-IV cpus appear as two "cpu" nodes below
+		 * a "cmp" node.  Lookup the first "cmp" node, such
+		 * that we find the "cpu" node in the code below.
+		 */
+
+		for (node = OF_child(node); node; node = OF_peer(node)) {
+			if (OF_getprop(node, "name", buf, sizeof(buf)) <= 0)
+				continue;
+			if (strcmp(buf, "cmp") == 0)
+				break;
+		}
+
+		if (node == 0)
+			node = findroot();
+	}
+
 	{
 		/* XXX - what to do on multiprocessor machines? */
 
