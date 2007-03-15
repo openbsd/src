@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1217 2007/03/15 06:00:35 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1218 2007/03/15 23:49:45 reyk Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5017,6 +5017,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_QUAD_CPR,
+	    "PRO/1000 QP (82571EB)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_QUAD_FBR,
 	    "PRO/1000 QP (82571EB)",
 	},
 	{
