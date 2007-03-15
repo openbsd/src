@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.101 2007/03/01 11:18:40 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.102 2007/03/15 10:22:30 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -267,7 +267,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 * Cheap solution to complicated problems.
 	 * Mark this process as "leave me alone, I'm execing".
 	 */
-	p->p_flag |= P_INEXEC;
+	atomic_setbits_int(&p->p_flag, P_INEXEC);
 
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
@@ -464,9 +464,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	VREF(pack.ep_vp);
 	p->p_textvp = pack.ep_vp;
 
-	p->p_flag |= P_EXEC;
+	atomic_setbits_int(&p->p_flag, P_EXEC);
 	if (p->p_flag & P_PPWAIT) {
-		p->p_flag &= ~P_PPWAIT;
+		atomic_clearbits_int(&p->p_flag, P_PPWAIT);
 		wakeup((caddr_t)p->p_pptr);
 	}
 
@@ -478,9 +478,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	    p->p_ucred->cr_uid != p->p_cred->p_svuid ||
 	    p->p_ucred->cr_gid != p->p_cred->p_rgid ||
 	    p->p_ucred->cr_gid != p->p_cred->p_svgid)
-		p->p_flag |= P_SUGIDEXEC;
+		atomic_setbits_int(&p->p_flag, P_SUGIDEXEC);
 	else
-		p->p_flag &= ~P_SUGIDEXEC;
+		atomic_clearbits_int(&p->p_flag, P_SUGIDEXEC);
 
 	/*
 	 * deal with set[ug]id.
@@ -489,8 +489,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	if ((attr.va_mode & (VSUID | VSGID)) && proc_cansugid(p)) {
 		int i;
 
-		p->p_flag |= P_SUGID;
-		p->p_flag |= P_SUGIDEXEC;
+		atomic_setbits_int(&p->p_flag, P_SUGID|P_SUGIDEXEC);
 
 #ifdef KTRACE
 		/*
@@ -571,7 +570,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 			}
 		}
 	} else
-		p->p_flag &= ~P_SUGID;
+		atomic_clearbits_int(&p->p_flag, P_SUGID);
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
 	p->p_cred->p_svgid = p->p_ucred->cr_gid;
 
@@ -652,7 +651,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		ktremul(p, p->p_emul->e_name);
 #endif
 
-	p->p_flag &= ~P_INEXEC;
+	atomic_clearbits_int(&p->p_flag, P_INEXEC);
 
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE) &&
@@ -688,7 +687,7 @@ bad:
 #if NSYSTRACE > 0
  clrflag:
 #endif
-	p->p_flag &= ~P_INEXEC;
+	atomic_clearbits_int(&p->p_flag, P_INEXEC);
 
 	if (pathbuf != NULL)
 		pool_put(&namei_pool, pathbuf);
@@ -716,7 +715,7 @@ free_pack_abort:
 	exit1(p, W_EXITCODE(0, SIGABRT), EXIT_NORMAL);
 
 	/* NOTREACHED */
-	p->p_flag &= ~P_INEXEC;
+	atomic_clearbits_int(&p->p_flag, P_INEXEC);
 	if (pathbuf != NULL)
 		pool_put(&namei_pool, pathbuf);
 

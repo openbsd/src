@@ -1,4 +1,4 @@
-/*      $OpenBSD: cpu.h,v 1.22 2006/12/24 20:30:35 miod Exp $      */
+/*      $OpenBSD: cpu.h,v 1.23 2007/03/15 10:22:30 art Exp $      */
 /*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
 
 /*
@@ -112,7 +112,7 @@ extern	int     want_resched;   /* resched() was called */
  * buffer pages are invalid.  On the vax, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define need_proftick(p) {(p)->p_flag |= P_OWEUPC; mtpr(AST_OK,PR_ASTLVL); }
+#define need_proftick(p) mtpr(AST_OK,PR_ASTLVL)
 
 /*
  * This defines the I/O device register space size in pages.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.8 2006/12/24 20:30:35 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.9 2007/03/15 10:22:29 art Exp $	*/
 /*	OpenBSD: trap.c,v 1.42 2004/12/06 20:12:25 miod Exp 	*/
 
 /*
@@ -348,7 +348,6 @@ badtrap:
 	case T_AST:
 		want_ast = 0;
 		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
 		if (want_resched)

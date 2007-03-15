@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.37 2006/11/29 12:24:18 miod Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.38 2007/03/15 10:22:30 art Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -231,7 +231,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 	switch (SCARG(uap, req)) {
 	case  PT_TRACE_ME:
 		/* Just set the trace flag. */
-		SET(t->p_flag, P_TRACED);
+		atomic_setbits_int(&t->p_flag, P_TRACED);
 		t->p_oppid = t->p_pptr->p_pid;
 		if (t->p_ptstat == NULL)
 			t->p_ptstat = malloc(sizeof(*t->p_ptstat),
@@ -373,7 +373,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 
 		/* not being traced any more */
 		t->p_oppid = 0;
-		CLR(t->p_flag, P_TRACED|P_WAITED);
+		atomic_clearbits_int(&t->p_flag, P_TRACED|P_WAITED);
 
 	sendsig:
 		bzero(t->p_ptstat, sizeof(*t->p_ptstat));
@@ -408,7 +408,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 *   proc gets to see all the action.
 		 * Stop the target.
 		 */
-		SET(t->p_flag, P_TRACED);
+		atomic_setbits_int(&t->p_flag, P_TRACED);
 		t->p_oppid = t->p_pptr->p_pid;
 		if (t->p_pptr != p)
 			proc_reparent(t, p);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.10 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.11 2007/03/15 10:22:29 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -334,7 +334,6 @@ copyfault:
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		uvmexp.softs++;
 		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
 			KERNEL_PROC_LOCK(p);
 			ADDUPROF(p);
 			KERNEL_PROC_UNLOCK(p);

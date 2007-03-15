@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.25 2007/02/17 17:35:43 tom Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.26 2007/03/15 10:22:29 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -227,7 +227,7 @@ extern u_int32_t cpus_attached;
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston(p))
+#define	need_proftick(p)	aston(p)
 
 void signotify(struct proc *);
 

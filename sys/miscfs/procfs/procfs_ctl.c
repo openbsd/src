@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_ctl.c,v 1.19 2006/11/29 12:24:18 miod Exp $	*/
+/*	$OpenBSD: procfs_ctl.c,v 1.20 2007/03/15 10:22:30 art Exp $	*/
 /*	$NetBSD: procfs_ctl.c,v 1.14 1996/02/09 22:40:48 christos Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ procfs_control(curp, p, op)
 		 *   proc gets to see all the action.
 		 * Stop the target.
 		 */
-		p->p_flag |= P_TRACED;
+		atomic_setbits_int(&p->p_flag, P_TRACED);
 		p->p_xstat = 0;		/* XXX ? */
 		if (p->p_pptr != curp) {
 			p->p_oppid = p->p_pptr->p_pid;
@@ -186,7 +186,7 @@ procfs_control(curp, p, op)
 			return (0);
 
 		/* not being traced any more */
-		CLR(p->p_flag, P_TRACED);
+		atomic_clearbits_int(&p->p_flag, P_TRACED);
 
 		/* give process back to original parent */
 		if (p->p_oppid != p->p_pptr->p_pid) {
@@ -198,7 +198,7 @@ procfs_control(curp, p, op)
 		}
 
 		p->p_oppid = 0;
-		CLR(p->p_flag, P_WAITED); /* XXX ? */
+		atomic_clearbits_int(&p->p_flag, P_WAITED);
 		wakeup(curp);	/* XXX for CTL_WAIT below ? */
 
 		break;

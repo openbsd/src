@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.52 2006/12/24 20:30:33 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.53 2007/03/15 10:22:29 art Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -768,7 +768,6 @@ ast(framep)
 	uvmexp.softs++;
 
 	if (p->p_flag & P_OWEUPC) {
-		p->p_flag &= ~P_OWEUPC;
 		ADDUPROF(p);
 	}
 

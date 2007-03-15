@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.83 2007/02/04 10:36:05 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.84 2007/03/15 10:22:30 art Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -5285,12 +5285,12 @@ request_cleanup(resource, islocked)
 	 * to avoid recursively processing the worklist.
 	 */
 	if (num_on_worklist > max_softdeps / 10) {
-		p->p_flag |= P_SOFTDEP;
+		atomic_setbits_int(&p->p_flag, P_SOFTDEP);
 		if (islocked)
 			FREE_LOCK(&lk);
 		process_worklist_item(NULL, LK_NOWAIT);
 		process_worklist_item(NULL, LK_NOWAIT);
-		p->p_flag &= ~P_SOFTDEP;
+		atomic_clearbits_int(&p->p_flag, P_SOFTDEP);
 		stat_worklist_push += 2;
 		if (islocked)
 			ACQUIRE_LOCK(&lk);

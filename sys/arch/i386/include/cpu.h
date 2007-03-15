@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.87 2007/02/20 21:15:01 tom Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.88 2007/03/15 10:22:29 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -224,7 +224,7 @@ extern void need_resched(struct cpu_info *);
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
+#define	need_proftick(p)	setsoftast()
 
 /*
  * Notify the current process (p) that it has a signal pending,

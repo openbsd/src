@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.27 2006/12/24 20:30:35 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.28 2007/03/15 10:22:29 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -141,7 +141,7 @@ extern int	want_ast;
  * buffer pages are invalid.  On the sparc, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, want_ast = 1)
+#define	need_proftick(p)	do { want_ast = 1; } while (0)
 
 /*
  * Notify the current process (p) that it has a signal pending,

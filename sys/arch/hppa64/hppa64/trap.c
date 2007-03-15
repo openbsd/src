@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 2005/10/26 18:35:45 martin Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 2007/03/15 10:22:29 art Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -128,7 +128,6 @@ userret(struct proc *p, register_t pc, u_quad_t oticks)
 	if (astpending) {
 		astpending = 0;
 		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
 	}

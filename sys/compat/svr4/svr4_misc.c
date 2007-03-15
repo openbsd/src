@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.46 2006/05/23 20:34:22 miod Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.47 2007/03/15 10:22:30 art Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -1111,7 +1111,7 @@ loop:
 		    (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED)))) {
 			DPRINTF(("jobcontrol %d\n", p->p_pid));
 			if (((SCARG(uap, options) & SVR4_WNOWAIT)) == 0)
-				p->p_flag |= P_WAITED;
+				atomic_setbits_int(&p->p_flag, P_WAITED);
 			*retval = 0;
 			return (svr4_setinfo(p, W_STOPCODE(p->p_xstat),
 			   SCARG(uap, info)));

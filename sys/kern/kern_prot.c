@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.28 2005/12/03 18:09:08 tedu Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.29 2007/03/15 10:22:30 art Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -391,7 +391,7 @@ sys_setresuid(struct proc *p, void *v, register_t *retval)
 	if (suid != (uid_t)-1 && suid != pc->p_svuid)
 		pc->p_svuid = suid;
 
-	p->p_flag |= P_SUGID;
+	atomic_setbits_int(&p->p_flag, P_SUGID);
 	return (0);
 }
 
@@ -485,7 +485,7 @@ sys_setresgid(struct proc *p, void *v, register_t *retval)
 	if (sgid != (gid_t)-1)
 		pc->p_svgid = sgid;
 
-	p->p_flag |= P_SUGID;
+	atomic_setbits_int(&p->p_flag, P_SUGID);
 	return (0);
 }
 
@@ -594,7 +594,7 @@ sys_setuid(struct proc *p, void *v, register_t *retval)
 	 */
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_uid = uid;
-	p->p_flag |= P_SUGID;
+	atomic_setbits_int(&p->p_flag, P_SUGID);
 	return (0);
 }
 
@@ -623,7 +623,7 @@ sys_seteuid(struct proc *p, void *v, register_t *retval)
 	 */
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_uid = euid;
-	p->p_flag |= P_SUGID;
+	atomic_setbits_int(&p->p_flag, P_SUGID);
 	return (0);
 }
 
@@ -662,7 +662,7 @@ sys_setgid(struct proc *p, void *v, register_t *retval)
 	 */
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_gid = gid;
-	p->p_flag |= P_SUGID;
+	atomic_setbits_int(&p->p_flag, P_SUGID);
 	return (0);
 }
 
@@ -691,7 +691,7 @@ sys_setegid(struct proc *p, void *v, register_t *retval)
 	 */
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_gid = egid;
-	p->p_flag |= P_SUGID;
+	atomic_setbits_int(&p->p_flag, P_SUGID);
 	return (0);
 }
 
@@ -718,7 +718,7 @@ sys_setgroups(struct proc *p, void *v, register_t *retval)
 	if (error)
 		return (error);
 	pc->pc_ucred->cr_ngroups = ngrp;
-	p->p_flag |= P_SUGID;
+	atomic_setbits_int(&p->p_flag, P_SUGID);
 	return (0);
 }
 

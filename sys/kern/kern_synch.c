@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.75 2006/11/29 12:24:17 miod Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.76 2007/03/15 10:22:30 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	 * stopped, p->p_wchan will be 0 upon return from CURSIG.
 	 */
 	if (catch) {
-		p->p_flag |= P_SINTR;
+		atomic_setbits_int(&p->p_flag, P_SINTR);
 		if ((sig = CURSIG(p)) != 0) {
 			if (p->p_wchan)
 				unsleep(p);
@@ -204,9 +204,9 @@ resume:
 #else
 	curpriority = p->p_usrpri;
 #endif
-	p->p_flag &= ~P_SINTR;
+	atomic_clearbits_int(&p->p_flag, P_SINTR);
 	if (p->p_flag & P_TIMEOUT) {
-		p->p_flag &= ~P_TIMEOUT;
+		atomic_clearbits_int(&p->p_flag, P_TIMEOUT);
 		if (sig == 0) {
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_CSW))
@@ -258,7 +258,7 @@ endtsleep(void *arg)
 			setrunnable(p);
 		else
 			unsleep(p);
-		p->p_flag |= P_TIMEOUT;
+		atomic_setbits_int(&p->p_flag, P_TIMEOUT);
 	}
 	SCHED_UNLOCK(s);
 }

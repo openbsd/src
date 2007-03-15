@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.38 2007/02/11 12:49:37 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.39 2007/03/15 10:22:29 art Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -538,7 +538,6 @@ user_fault:
 		uvmexp.softs++;
 		p->p_md.md_astpending = 0;
 		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
 			KERNEL_PROC_LOCK(p);
 			ADDUPROF(p);
 			KERNEL_PROC_UNLOCK(p);
@@ -1055,7 +1054,6 @@ m88110_user_fault:
 		uvmexp.softs++;
 		p->p_md.md_astpending = 0;
 		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
 			KERNEL_PROC_LOCK(p);
 			ADDUPROF(p);
 			KERNEL_PROC_UNLOCK(p);

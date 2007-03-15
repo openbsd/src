@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.25 2006/11/29 12:26:13 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.26 2007/03/15 10:22:29 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -121,7 +121,7 @@ extern int want_resched;
  * buffer pages are invalid.  On the m68k, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	{ (p)->p_flag |= P_OWEUPC; aston(); }
+#define	need_proftick(p)	aston()
 
 /*
  * Notify the current process (p) that it has a signal pending,

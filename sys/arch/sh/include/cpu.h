@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.6 2007/03/03 21:37:27 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.7 2007/03/15 10:22:29 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -88,11 +88,7 @@ do {									\
  * buffer pages are invalid.  On the MIPS, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)						\
-do {									\
-	(p)->p_flag |= P_OWEUPC;					\
-	aston(p);							\
-} while (/*CONSTCOND*/0)
+#define	need_proftick(p)	aston(p)
 
 /*
  * Notify the current process (p) that it has a signal pending,

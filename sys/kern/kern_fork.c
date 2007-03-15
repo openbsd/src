@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.86 2007/01/17 13:51:52 mickey Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.87 2007/03/15 10:22:30 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -238,9 +238,9 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	p2->p_emul = p1->p_emul;
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
-	p2->p_flag |= (p1->p_flag & (P_SUGID | P_SUGIDEXEC));
+	atomic_setbits_int(&p2->p_flag, p1->p_flag & (P_SUGID | P_SUGIDEXEC));
 	if (flags & FORK_PTRACE)
-		p2->p_flag |= (p1->p_flag & P_TRACED);
+		atomic_setbits_int(&p2->p_flag, p1->p_flag & P_TRACED);
 	p2->p_cred = pool_get(&pcred_pool, PR_WAITOK);
 	bcopy(p1->p_cred, p2->p_cred, sizeof(*p2->p_cred));
 	p2->p_cred->p_refcnt = 1;
@@ -272,17 +272,17 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	}
 
 	if (p1->p_session->s_ttyvp != NULL && p1->p_flag & P_CONTROLT)
-		p2->p_flag |= P_CONTROLT;
+		atomic_setbits_int(&p2->p_flag, P_CONTROLT);
 	if (flags & FORK_PPWAIT)
-		p2->p_flag |= P_PPWAIT;
+		atomic_setbits_int(&p2->p_flag, P_PPWAIT);
 	p2->p_pptr = p1;
 	if (flags & FORK_NOZOMBIE)
-		p2->p_flag |= P_NOZOMBIE;
+		atomic_setbits_int(&p2->p_flag, P_NOZOMBIE);
 	LIST_INIT(&p2->p_children);
 
 #ifdef RTHREADS
 	if (flags & FORK_THREAD) {
-		p2->p_flag |= P_THREAD;
+		atomic_setbits_int(&p2->p_flag, P_THREAD);
 		p2->p_thrparent = p1->p_thrparent;
 	} else {
 		p2->p_thrparent = p2;

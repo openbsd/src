@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.75 2006/11/14 18:00:27 jmc Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.76 2007/03/15 10:22:30 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -430,7 +430,7 @@ restart:
 				error = EBADF;
 				goto out;
 			}
-			p->p_flag |= P_ADVLOCK;
+			atomic_setbits_int(&p->p_flag, P_ADVLOCK);
 			error = (VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg));
 			goto out;
 
@@ -439,7 +439,7 @@ restart:
 				error = EBADF;
 				goto out;
 			}
-			p->p_flag |= P_ADVLOCK;
+			atomic_setbits_int(&p->p_flag, P_ADVLOCK);
 			error = (VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg));
 			goto out;
 

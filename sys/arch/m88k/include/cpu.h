@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.18 2007/01/12 21:41:53 aoyama Exp $ */
+/*	$OpenBSD: cpu.h,v 1.19 2007/03/15 10:22:29 art Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -229,7 +229,7 @@ do {									\
  * buffer pages are invalid.  On the m88k, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston(p))
+#define	need_proftick(p)	aston(p)
 
 /*
  * Notify the current process (p) that it has a signal pending,

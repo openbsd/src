@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.36 2006/12/24 20:30:35 miod Exp $     */
+/*	$OpenBSD: trap.c,v 1.37 2007/03/15 10:22:30 art Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -291,7 +291,6 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		mtpr(AST_NO,PR_ASTLVL);
 		trapsig = 0;
 		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
 		if (want_resched)

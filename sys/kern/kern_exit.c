@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.62 2006/06/23 13:46:05 mickey Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.63 2007/03/15 10:22:30 art Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -131,17 +131,17 @@ exit1(struct proc *p, int rv, int flags)
 		 * we are one of the threads.  we SIGKILL the parent,
 		 * it will wake us up again, then we proceed.
 		 */
-		p->p_thrparent->p_flag |= P_IGNEXITRV;
+		atomic_setbits_int(&p->p_thrparent->p_flag, P_IGNEXITRV);
 		p->p_thrparent->p_xstat = rv;
 		psignal(p->p_thrparent, SIGKILL);
 		tsleep(&p->p_thrparent->p_thrchildren, PUSER, "thrdying", 0);
 	} else if (p == p->p_thrparent) {
-		p->p_flag |= P_WEXIT;
+		atomic_setbits_int(&p->p_flag, P_WEXIT);
 		if (flags == EXIT_NORMAL) {
 			q = LIST_FIRST(&p->p_thrchildren);
 			for (; q != NULL; q = nq) {
 				nq = LIST_NEXT(q, p_thrsib);
-				q->p_flag |= P_IGNEXITRV;
+				atomic_setbits_int(&q->p_flag, P_IGNEXITRV);
 				q->p_xstat = rv;
 				psignal(q, SIGKILL);
 			}
@@ -159,10 +159,10 @@ exit1(struct proc *p, int rv, int flags)
 	 * If parent is waiting for us to exit or exec, P_PPWAIT is set; we
 	 * wake up the parent early to avoid deadlock.
 	 */
-	p->p_flag |= P_WEXIT;
-	p->p_flag &= ~P_TRACED;
+	atomic_setbits_int(&p->p_flag, P_WEXIT);
+	atomic_clearbits_int(&p->p_flag, P_TRACED);
 	if (p->p_flag & P_PPWAIT) {
-		p->p_flag &= ~P_PPWAIT;
+		atomic_clearbits_int(&p->p_flag, P_PPWAIT);
 		wakeup(p->p_pptr);
 	}
 	p->p_sigignore = ~0;
@@ -258,7 +258,7 @@ exit1(struct proc *p, int rv, int flags)
 		 * since their existence means someone is screwing up.
 		 */
 		if (q->p_flag & P_TRACED) {
-			q->p_flag &= ~P_TRACED;
+			atomic_clearbits_int(&q->p_flag, P_TRACED);
 			psignal(q, SIGKILL);
 		}
 	}
@@ -523,7 +523,7 @@ loop:
 		}
 		if (p->p_stat == SSTOP && (p->p_flag & P_WAITED) == 0 &&
 		    (p->p_flag & P_TRACED || SCARG(uap, options) & WUNTRACED)) {
-			p->p_flag |= P_WAITED;
+			atomic_setbits_int(&p->p_flag, P_WAITED);
 			retval[0] = p->p_pid;
 
 			if (SCARG(uap, status)) {
@@ -535,7 +535,7 @@ loop:
 			return (error);
 		}
 		if ((SCARG(uap, options) & WCONTINUED) && (p->p_flag & P_CONTINUED)) {
-			p->p_flag &= ~P_CONTINUED;
+			atomic_clearbits_int(&p->p_flag, P_CONTINUED);
 			retval[0] = p->p_pid;
 
 			if (SCARG(uap, status)) {

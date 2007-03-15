@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.28 2006/11/29 12:26:13 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.29 2007/03/15 10:22:29 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ extern volatile int want_resched;
 extern volatile int astpending;
 
 #define	need_resched(ci)	(want_resched = 1, astpending = 1)
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
+#define	need_proftick(p)	do { astpending = 1; } while (0)
 #define	signotify(p)		(astpending = 1)
 
 extern char *bootpath;

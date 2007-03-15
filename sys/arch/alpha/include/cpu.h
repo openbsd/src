@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.26 2006/12/24 20:30:35 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.27 2007/03/15 10:22:29 art Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -296,13 +296,11 @@ do {									\
 #ifdef notyet
 #define	need_proftick(p)						\
 do {									\
-	(p)->p_flag |= P_OWEUPC;					\
 	aston((p)->p_cpu);						\
 } while (/*CONSTCOND*/0)
 #else
 #define	need_proftick(p)						\
 do {									\
-	(p)->p_flag |= P_OWEUPC;					\
 	aston(curcpu());						\
 } while (/*CONSTCOND*/0)
 #endif

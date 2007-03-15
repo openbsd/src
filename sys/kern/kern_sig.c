@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.87 2007/02/06 18:42:37 art Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.88 2007/03/15 10:22:30 art Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -288,9 +288,9 @@ setsigvec(struct proc *p, int signum, struct sigaction *sa)
 	ps->ps_catchmask[signum] = sa->sa_mask &~ sigcantmask;
 	if (signum == SIGCHLD) {
 		if (sa->sa_flags & SA_NOCLDSTOP)
-			p->p_flag |= P_NOCLDSTOP;
+			atomic_setbits_int(&p->p_flag, P_NOCLDSTOP);
 		else
-			p->p_flag &= ~P_NOCLDSTOP;
+			atomic_clearbits_int(&p->p_flag, P_NOCLDSTOP);
 		/*
 		 * If the SA_NOCLDWAIT flag is set or the handler
 		 * is SIG_IGN we reparent the dying child to PID 1
@@ -300,9 +300,9 @@ setsigvec(struct proc *p, int signum, struct sigaction *sa)
 		 */
 		if (p->p_pid != 1 && ((sa->sa_flags & SA_NOCLDWAIT) ||
 		    sa->sa_handler == SIG_IGN))
-			p->p_flag |= P_NOCLDWAIT;
+			atomic_setbits_int(&p->p_flag, P_NOCLDWAIT);
 		else
-			p->p_flag &= ~P_NOCLDWAIT;
+			atomic_clearbits_int(&p->p_flag, P_NOCLDWAIT);
 	}
 	if ((sa->sa_flags & SA_RESETHAND) != 0)
 		ps->ps_sigreset |= bit;
@@ -403,7 +403,7 @@ execsigs(struct proc *p)
 	ps->ps_sigstk.ss_size = 0;
 	ps->ps_sigstk.ss_sp = 0;
 	ps->ps_flags = 0;
-	p->p_flag &= ~P_NOCLDWAIT;
+	atomic_clearbits_int(&p->p_flag, P_NOCLDWAIT);
 	if (ps->ps_sigact[SIGCHLD] == SIG_IGN)
 		ps->ps_sigact[SIGCHLD] = SIG_DFL;
 }
@@ -851,7 +851,7 @@ psignal(struct proc *p, int signum)
 			psignal(q, signum);
 #endif
 		atomic_clearbits_int(&p->p_siglist, contsigmask);
-		p->p_flag &= ~P_CONTINUED;
+		atomic_clearbits_int(&p->p_flag, P_CONTINUED);
 	}
 
 	atomic_setbits_int(&p->p_siglist, mask);
@@ -942,7 +942,7 @@ psignal(struct proc *p, int signum)
 			 * an event, then it goes back to run state.
 			 * Otherwise, process goes back to sleep state.
 			 */
-			p->p_flag |= P_CONTINUED;
+			atomic_setbits_int(&p->p_flag, P_CONTINUED);
 			wakeup(p->p_pptr);
 			if (action == SIG_DFL)
 				atomic_clearbits_int(&p->p_siglist, mask);
@@ -1159,7 +1159,7 @@ proc_stop(struct proc *p)
 #endif
 
 	p->p_stat = SSTOP;
-	p->p_flag &= ~P_WAITED;
+	atomic_clearbits_int(&p->p_flag, P_WAITED);
 	wakeup(p->p_pptr);
 }
 
@@ -1279,7 +1279,7 @@ void
 sigexit(struct proc *p, int signum)
 {
 	/* Mark process as going away */
-	p->p_flag |= P_WEXIT;
+	atomic_setbits_int(&p->p_flag, P_WEXIT);
 
 	p->p_acflag |= AXSIG;
 	if (sigprop[signum] & SA_CORE) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.11 2007/03/13 19:29:33 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.12 2007/03/15 10:22:29 art Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -488,7 +488,6 @@ ast(struct proc *p, struct trapframe *tf)
 		p->p_md.md_astpending = 0;
 
 		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
 

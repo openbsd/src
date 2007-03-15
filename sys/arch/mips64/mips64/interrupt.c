@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.22 2006/12/24 20:30:35 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.23 2007/03/15 10:22:29 art Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -267,7 +267,6 @@ softintr()
 
 	astpending = 0;
 	if (p->p_flag & P_OWEUPC) {
-		p->p_flag &= ~P_OWEUPC;
 		ADDUPROF(p);
 	}
 	if (want_resched)

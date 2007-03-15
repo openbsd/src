@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.54 2006/04/15 20:02:19 miod Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.55 2007/03/15 10:22:30 art Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -684,7 +684,7 @@ sys_select(struct proc *p, void *v, register_t *retval)
 
 retry:
 	ncoll = nselcoll;
-	p->p_flag |= P_SELECT;
+	atomic_setbits_int(&p->p_flag, P_SELECT);
 	error = selscan(p, pibits[0], pobits[0], nd, ni, retval);
 	if (error || *retval)
 		goto done;
@@ -702,13 +702,13 @@ retry:
 		splx(s);
 		goto retry;
 	}
-	p->p_flag &= ~P_SELECT;
+	atomic_clearbits_int(&p->p_flag, P_SELECT);
 	error = tsleep(&selwait, PSOCK | PCATCH, "select", timo);
 	splx(s);
 	if (error == 0)
 		goto retry;
 done:
-	p->p_flag &= ~P_SELECT;
+	atomic_clearbits_int(&p->p_flag, P_SELECT);
 	/* select is not restarted after signals... */
 	if (error == ERESTART)
 		error = EINTR;
@@ -820,7 +820,7 @@ selwakeup(struct selinfo *sip)
 			else
 				unsleep(p);
 		} else if (p->p_flag & P_SELECT)
-			p->p_flag &= ~P_SELECT;
+			atomic_clearbits_int(&p->p_flag, P_SELECT);
 		SCHED_UNLOCK(s);
 	}
 }
@@ -907,7 +907,7 @@ sys_poll(struct proc *p, void *v, register_t *retval)
 
 retry:
 	ncoll = nselcoll;
-	p->p_flag |= P_SELECT;
+	atomic_setbits_int(&p->p_flag, P_SELECT);
 	pollscan(p, pl, nfds, retval);
 	if (*retval)
 		goto done;
@@ -925,14 +925,14 @@ retry:
 		splx(s);
 		goto retry;
 	}
-	p->p_flag &= ~P_SELECT;
+	atomic_clearbits_int(&p->p_flag, P_SELECT);
 	error = tsleep(&selwait, PSOCK | PCATCH, "poll", timo);
 	splx(s);
 	if (error == 0)
 		goto retry;
 
 done:
-	p->p_flag &= ~P_SELECT;
+	atomic_clearbits_int(&p->p_flag, P_SELECT);
 	/*
 	 * NOTE: poll(2) is not restarted after a signal and EWOULDBLOCK is
 	 *       ignored (since the whole point is to see what would block).

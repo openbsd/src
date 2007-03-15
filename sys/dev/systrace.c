@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.43 2006/10/06 05:47:27 djm Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.44 2007/03/15 10:22:30 art Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -648,7 +648,7 @@ systrace_exit(struct proc *proc)
 		rw_exit_write(&fst->lock);
 	} else
 		systrace_unlock();
-	CLR(proc->p_flag, P_SYSTRACE);
+	atomic_clearbits_int(&proc->p_flag, P_SYSTRACE);
 }
 
 void
@@ -926,7 +926,7 @@ systrace_seteuid(struct proc *p,  uid_t euid)
 	 */
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_uid = euid;
-	p->p_flag |= P_SUGID;
+	atomic_setbits_int(&p->p_flag, P_SUGID);
 
 	return (oeuid);
 }
@@ -945,7 +945,7 @@ systrace_setegid(struct proc *p,  gid_t egid)
 	 */
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_gid = egid;
-	p->p_flag |= P_SUGID;
+	atomic_setbits_int(&p->p_flag, P_SUGID);
 
 	return (oegid);
 }
@@ -1579,7 +1579,7 @@ systrace_detach(struct str_process *strp)
 	DPRINTF(("%s: Trying to detach from %d\n", __func__, strp->pid));
 
 	if ((proc = systrace_find(strp)) != NULL) {
-		CLR(proc->p_flag, P_SYSTRACE);
+		atomic_clearbits_int(&proc->p_flag, P_SYSTRACE);
 		proc->p_systrace = NULL;
 	} else
 		error = ESRCH;
@@ -1641,7 +1641,7 @@ systrace_insert_process(struct fsystrace *fst, struct proc *proc)
 	fst->nprocesses++;
 
 	proc->p_systrace = strp;
-	SET(proc->p_flag, P_SYSTRACE);
+	atomic_setbits_int(&proc->p_flag, P_SYSTRACE);
 
 	return (0);
 }

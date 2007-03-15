@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.16 2006/12/24 20:28:43 miod Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.17 2007/03/15 10:22:30 art Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -201,6 +201,7 @@ addupc_intr(struct proc *p, u_long pc)
 
 	prof->pr_addr = pc;
 	prof->pr_ticks++;
+	atomic_setbits_int(&p->p_flag, P_OWEUPC);
 	need_proftick(p);
 }
 

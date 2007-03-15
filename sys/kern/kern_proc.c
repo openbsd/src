@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.31 2005/12/22 06:55:03 tedu Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.32 2007/03/15 10:22:30 art Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ enterpgrp(struct proc *p, pid_t pgid, int mksess)
 			sess->s_ttyp = NULL;
 			bcopy(p->p_session->s_login, sess->s_login,
 			    sizeof(sess->s_login));
-			p->p_flag &= ~P_CONTROLT;
+			atomic_clearbits_int(&p->p_flag, P_CONTROLT);
 			pgrp->pg_session = sess;
 #ifdef DIAGNOSTIC
 			if (p != curproc)

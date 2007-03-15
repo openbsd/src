@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.9 2005/12/21 12:43:49 jsg Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.10 2007/03/15 10:22:30 art Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		return (EINVAL);
 	if (cmd == TIOCNOTTY) {
 		if (!SESS_LEADER(p)) {
-			p->p_flag &= ~P_CONTROLT;
+			atomic_clearbits_int(&p->p_flag, P_CONTROLT);
 			return (0);
 		} else
 			return (EINVAL);

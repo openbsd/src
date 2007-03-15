@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.60 2006/12/24 20:29:45 miod Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.61 2007/03/15 10:22:30 art Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -446,7 +446,7 @@ startprofclock(struct proc *p)
 	int s;
 
 	if ((p->p_flag & P_PROFIL) == 0) {
-		p->p_flag |= P_PROFIL;
+		atomic_setbits_int(&p->p_flag, P_PROFIL);
 		if (++profprocs == 1 && stathz != 0) {
 			s = splstatclock();
 			psdiv = pscnt = psratio;
@@ -465,7 +465,7 @@ stopprofclock(struct proc *p)
 	int s;
 
 	if (p->p_flag & P_PROFIL) {
-		p->p_flag &= ~P_PROFIL;
+		atomic_clearbits_int(&p->p_flag, P_PROFIL);
 		if (--profprocs == 0 && stathz != 0) {
 			s = splstatclock();
 			psdiv = pscnt = 1;

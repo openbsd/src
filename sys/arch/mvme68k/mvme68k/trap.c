@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.64 2007/01/28 16:38:48 miod Exp $ */
+/*	$OpenBSD: trap.c,v 1.65 2007/03/15 10:22:29 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -491,7 +491,6 @@ copyfault:
 		}
 		spl0();
 		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
 		if (type == (T_ASTFLT | T_USER) && want_resched) {

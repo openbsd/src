@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.49 2007/01/28 16:38:45 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.50 2007/03/15 10:22:29 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -556,7 +556,6 @@ dopanic:
 		}
 		spl0();
 		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
 		if (type == (T_ASTFLT | T_USER) && want_resched) {

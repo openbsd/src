@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.26 2006/11/29 12:24:17 miod Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.27 2007/03/15 10:22:30 art Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -83,7 +83,7 @@ kthread_create(void (*func)(void *), void *arg,
 	/*
 	 * Mark it as a system process.
 	 */
-	p2->p_flag |= P_SYSTEM;
+	atomic_setbits_int(&p2->p_flag, P_SYSTEM);
 
 	/* Name it as specified. */
 	va_start(ap, fmt);

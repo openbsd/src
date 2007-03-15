@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.51 2007/01/28 16:38:48 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.52 2007/03/15 10:22:29 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -511,7 +511,6 @@ copyfault:
 		}
 		spl0();
 		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
 		if (type == (T_ASTFLT | T_USER) && want_resched) {
