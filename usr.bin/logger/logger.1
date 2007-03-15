@@ -1,4 +1,4 @@
-.\"	$OpenBSD: logger.1,v 1.12 2007/03/15 23:09:51 jmc Exp $
+.\"	$OpenBSD: logger.1,v 1.13 2007/03/15 23:12:12 jmc Exp $
 .\"	$NetBSD: logger.1,v 1.4 1994/12/22 06:26:59 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -63,7 +63,7 @@ The priority may be specified numerically or as a
 .Dq facility.level
 pair.
 For example,
-.Dq \-p local3.info
+.Dq -p local3.info
 logs the message(s) as
 .Ar info Ns rmational
 level in the
@@ -83,14 +83,12 @@ flag is not
 provided, standard input is logged.
 .El
 .Pp
-The
-.Nm logger
-utility exits 0 on success or >0 if an error occurred.
+.Ex -std logger
 .Sh EXAMPLES
 .Bd -literal -offset indent
 $ logger System rebooted
 
-$ logger \-p local0.notice \-t HOSTIDM \-f /dev/idmc
+$ logger -p local0.notice -t HOSTIDM -f /dev/idmc
 .Ed
 .Sh SEE ALSO
 .Xr syslog 3 ,
