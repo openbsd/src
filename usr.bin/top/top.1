@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.44 2007/02/14 08:29:28 jmc Exp $
+.\"	$OpenBSD: top.1,v 1.45 2007/03/15 22:02:22 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -31,14 +31,16 @@
 .Nd display and update information about the top CPU processes
 .Sh SYNOPSIS
 .Nm top
+.Bk -words
 .Op Fl bCIinqSTu
 .Op Fl d Ar count
-.Op Fl g Ar command
+.Op Fl g Ar string
 .Op Fl o Ar field
 .Op Fl p Ar pid
 .Op Fl s Ar time
-.Op Fl U Ar username
+.Op Fl U Ar user
 .Op Ar number
+.Ek
 .Sh DESCRIPTION
 .Nm
 displays the top processes on the system and periodically updates this
@@ -97,9 +99,9 @@ to be shown before
 automatically exits.
 For intelligent terminals, no upper limit is set.
 The default is 1 for dumb terminals.
-.It Fl g Ar command
-Show only processes that contain the string
-.Ar command
+.It Fl g Ar string
+Display only processes that contain
+.Ar string
 in their command name.
 .It Fl I
 Do not display idle processes.
@@ -126,7 +128,9 @@ This is identical to
 .Em batch
 mode.
 .It Fl o Ar field
-Sort the process display area using the specified field as the primary key.
+Sort the process display area using the specified
+.Ar field
+as the primary key.
 The field name is the name of the column as seen in the output,
 but in lower case.
 The
@@ -164,9 +168,9 @@ The default delay between updates is 5 seconds.
 Show process threads in the display.
 Normally, only the main process is shown.
 This option makes all threads visible.
-.It Fl U Ar username
+.It Fl U Ar user
 Show only those processes owned by
-.Ar username .
+.Ar user .
 This option currently only accepts usernames and will not understand
 UID numbers.
 .It Fl u
@@ -307,13 +311,14 @@ Show
 .Ar count
 processes.
 .It o Ar field
-Change the sorting order of the processes, selected by
-.Ar field .
+Sort the process display area using the specified
+.Ar field
+as the primary key.
 Values are the same as for the
 .Fl o
 flag, as detailed above.
 .It p Ar pid
-Display a specific process, selected by
+Show only the process
 .Ar pid .
 .Sq p+
 shows all processes.
@@ -335,7 +340,7 @@ seconds.
 .It T
 Toggle the display of process threads.
 .It u Ar user
-Display only processes owned by a specific
+Show only those processes owned by
 .Ar user .
 .Sq u+
 shows processes belonging to all users.
