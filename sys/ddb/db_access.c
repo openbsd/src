@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_access.c,v 1.9 2006/03/13 06:23:20 jsg Exp $	*/
+/*	$OpenBSD: db_access.c,v 1.10 2007/03/15 17:10:22 miod Exp $	*/
 /*	$NetBSD: db_access.c,v 1.8 1994/10/09 08:37:35 mycroft Exp $	*/
 
 /* 
@@ -51,6 +51,11 @@ db_get_value(db_addr_t addr, size_t size, boolean_t is_signed)
 	db_expr_t value, extend;
 	int i;
 
+#ifdef DIAGNOSTIC
+	if (size > sizeof data)
+		size = sizeof data;
+#endif
+
 	db_read_bytes(addr, size, data);
 
 	value = 0;
@@ -72,6 +77,11 @@ db_put_value(db_addr_t addr, size_t size, db_expr_t value)
 {
 	char data[sizeof(db_expr_t)];
 	int i;
+
+#ifdef DIAGNOSTIC
+	if (size > sizeof data)
+		size = sizeof data;
+#endif
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	for (i = 0; i < size; i++)

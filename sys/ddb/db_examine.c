@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.12 2006/03/13 06:23:20 jsg Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.13 2007/03/15 17:10:22 miod Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -101,10 +101,12 @@ db_examine(db_addr_t addr, char *fmt, int count)
 				size = 4;
 				width = 12;
 				break;
+#ifdef __LP64__
 			case 'q':	/* quad-word */
 				size = 8;
 				width = 20;
 				break;
+#endif
 			case 'a':	/* address */
 				db_printf("= 0x%lx\n", (long)addr);
 				break;
