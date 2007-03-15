@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.29 2007/02/20 11:24:32 henning Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.30 2007/03/15 05:18:32 djm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -395,24 +395,24 @@ open_pipe(char *cmd)
 	argp[2] = cmd;
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fd) == -1) {
-		logerror("open_pipe");
+		warnx("open_pipe");
 		return (-1);
 	}
 
 	/* make the fd on syslogd's side nonblocking */
 	if ((flags = fcntl(fd[1], F_GETFL, 0)) == -1) {
-		logerror("fcntl");
+		warnx("fcntl");
 		return (-1);
 	}
 	flags |= O_NONBLOCK;
 	if ((flags = fcntl(fd[1], F_SETFL, flags)) == -1) {
-		logerror("fcntl");
+		warnx("fcntl");
 		return (-1);
 	}
 
 	switch (pid = fork()) {
 	case -1:
-		logerror("fork error");
+		warnx("fork error");
 		return (-1);
 	case 0:
 		break;
@@ -441,6 +441,8 @@ open_pipe(char *cmd)
 		err(1, "dup2 failed");
 	if (execv("/bin/sh", argp) == -1)
 		err(1, "execv %s", cmd);
+	/* NOTREACHED */
+	return (-1);
 }
 
 /* Check that the terminal device is ok, and if not, rewrite to /dev/null.
