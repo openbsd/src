@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tput.1,v 1.13 2003/06/03 02:56:20 millert Exp $
+.\"	$OpenBSD: tput.1,v 1.14 2007/03/15 23:14:37 jmc Exp $
 .\"	$NetBSD: tput.1,v 1.4 1994/12/07 08:49:10 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -53,6 +53,8 @@ applications.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl S
+The attributes are read from stdin instead of the command line.
 .It Fl T
 The terminal name as found in the
 .Xr terminfo
@@ -65,10 +67,6 @@ If not specified,
 retrieves the
 .Ev TERM
 variable from the environment.
-.It Fl S
-The
-.Ar attributes
-are read from stdin instead of the command line.
 .El
 .Pp
 .Nm
