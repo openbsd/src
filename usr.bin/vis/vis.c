@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.10 2005/04/10 13:53:39 jmc Exp $	*/
+/*	$OpenBSD: vis.c,v 1.11 2007/03/15 23:17:20 jmc Exp $	*/
 /*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: vis.c,v 1.10 2005/04/10 13:53:39 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: vis.c,v 1.11 2007/03/15 23:17:20 jmc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -182,7 +182,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-cbflnostw] [-F foldwidth] [file ...]\n",
+	fprintf(stderr, "usage: %s [-bcflnostw] [-F foldwidth] [file ...]\n",
 	    __progname);
 	exit(1);
 }
