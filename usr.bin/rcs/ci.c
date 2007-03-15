@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.196 2007/03/03 21:07:23 deraadt Exp $	*/
+/*	$OpenBSD: ci.c,v 1.197 2007/03/15 13:05:23 bluhm Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -115,6 +115,7 @@ checkin_main(int argc, char **argv)
 {
 	int fd;
 	int i, ch, status;
+	int base_flags, base_openflags;
 	char *rev_str;
 	struct checkin_params pb;
 
@@ -124,10 +125,10 @@ checkin_main(int argc, char **argv)
 	pb.description = pb.symbol = NULL;
 	pb.deltatext = NULL;
 	pb.newrev =  NULL;
-	pb.flags = status = 0;
 	pb.fmode = S_IRUSR|S_IRGRP|S_IROTH;
-	pb.flags = INTERACTIVE;
-	pb.openflags = RCS_RDWR|RCS_CREATE|RCS_PARSE_FULLY;
+	status = 0;
+	base_flags = INTERACTIVE;
+	base_openflags = RCS_RDWR|RCS_CREATE|RCS_PARSE_FULLY;
 	rev_str = NULL;
 
 	while ((ch = rcs_getopt(argc, argv, CI_OPTSTRING)) != -1) {
@@ -140,42 +141,42 @@ checkin_main(int argc, char **argv)
 			break;
 		case 'f':
 			rcs_setrevstr(&rev_str, rcs_optarg);
-			pb.flags |= FORCE;
+			base_flags |= FORCE;
 			break;
 		case 'I':
 			rcs_setrevstr(&rev_str, rcs_optarg);
-			pb.flags |= INTERACTIVE;
+			base_flags |= INTERACTIVE;
 			break;
 		case 'i':
 			rcs_setrevstr(&rev_str, rcs_optarg);
-			pb.openflags |= RCS_CREATE;
-			pb.flags |= CI_INIT;
+			base_openflags |= RCS_CREATE;
+			base_flags |= CI_INIT;
 			break;
 		case 'j':
 			rcs_setrevstr(&rev_str, rcs_optarg);
-			pb.openflags &= ~RCS_CREATE;
-			pb.flags &= ~CI_INIT;
+			base_openflags &= ~RCS_CREATE;
+			base_flags &= ~CI_INIT;
 			break;
 		case 'k':
 			rcs_setrevstr(&rev_str, rcs_optarg);
-			pb.flags |= CI_KEYWORDSCAN;
+			base_flags |= CI_KEYWORDSCAN;
 			break;
 		case 'l':
 			rcs_setrevstr(&rev_str, rcs_optarg);
-			pb.flags |= CO_LOCK;
+			base_flags |= CO_LOCK;
 			break;
 		case 'M':
 			rcs_setrevstr(&rev_str, rcs_optarg);
-			pb.flags |= CO_REVDATE;
+			base_flags |= CO_REVDATE;
 			break;
 		case 'm':
 			pb.rcs_msg = rcs_optarg;
 			if (pb.rcs_msg == NULL)
 				errx(1, "missing message for -m option");
-			pb.flags &= ~INTERACTIVE;
+			base_flags &= ~INTERACTIVE;
 			break;
 		case 'N':
-			pb.flags |= CI_SYMFORCE;
+			base_flags |= CI_SYMFORCE;
 			/* FALLTHROUGH */
 		case 'n':
 			pb.symbol = rcs_optarg;
@@ -183,11 +184,11 @@ checkin_main(int argc, char **argv)
 				errx(1, "invalid symbol `%s'", pb.symbol);
 			break;
 		case 'q':
-			pb.flags |= QUIET;
+			base_flags |= QUIET;
 			break;
 		case 'r':
 			rcs_setrevstr(&rev_str, rcs_optarg);
-			pb.flags |= CI_DEFAULT;
+			base_flags |= CI_DEFAULT;
 			break;
 		case 's':
 			pb.state = rcs_optarg;
@@ -195,18 +196,18 @@ checkin_main(int argc, char **argv)
 				errx(1, "invalid state `%s'", pb.state);
 			break;
 		case 'T':
-			pb.flags |= PRESERVETIME;
+			base_flags |= PRESERVETIME;
 			break;
 		case 't':
 			/* Ignore bare -t; kept for backwards compatibility. */
 			if (rcs_optarg == NULL)
 				break;
 			pb.description = rcs_optarg;
-			pb.flags |= DESCRIPTION;
+			base_flags |= DESCRIPTION;
 			break;
 		case 'u':
 			rcs_setrevstr(&rev_str, rcs_optarg);
-			pb.flags |= CO_UNLOCK;
+			base_flags |= CO_UNLOCK;
 			break;
 		case 'V':
 			printf("%s\n", rcs_version);
@@ -246,6 +247,13 @@ checkin_main(int argc, char **argv)
 		rcs_suffixes = RCS_DEFAULT_SUFFIX;
 
 	for (i = 0; i < argc; i++) {
+		/*
+		 * The pb.flags and pb.openflags may change during
+		 * loop iteration so restore them for each file.
+		 */
+		pb.flags = base_flags;
+		pb.openflags = base_openflags;
+
 		pb.filename = argv[i];
 		rcs_strip_suffix(pb.filename);
 
@@ -315,14 +323,11 @@ checkin_main(int argc, char **argv)
 				status = 1;
 		}
 
-		/* reset NEWFILE flag */
-		pb.flags &= ~NEWFILE;
-
 		rcs_close(pb.file);
 		pb.newrev = NULL;
 	}
 
-	if (!(pb.flags & QUIET) && status == 0)
+	if (!(base_flags & QUIET) && status == 0)
 		(void)fprintf(stderr, "done\n");
 
 	return (status);

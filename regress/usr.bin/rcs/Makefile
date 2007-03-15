@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 2007/02/22 02:42:50 ray Exp $
+#	$OpenBSD: Makefile,v 1.40 2007/03/15 13:05:23 bluhm Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -15,7 +15,8 @@ RLOG?=		rlog
 DIFF=		diff -u
 
 CLEANFILES=	RCS blah.c blah.c,v description file1 file2 file3 \
-		file file,v newfile newfile,v test test,v test-truncated truncated.out
+		file file,v newfile newfile,v test test,v \
+		test-truncated truncated.out foo foo,v bar bar,v
 
 # XXX - These may need to be done in order.
 #	(At least start with ci-initial.)
@@ -72,6 +73,7 @@ LTESTS= ci-initial \
 	ci-parse-keywords \
 	ci-parse-keywords2 \
 	co-parse-truncated \
+	ci-2files \
 
 .for t in ${LTESTS}
 REGRESS_TARGETS+=test-${t}
@@ -594,6 +596,13 @@ test-co-parse-truncated: clean
 	@sh -c 'ulimit -d 5000 && ${CO} -q ${.CURDIR}/test-truncated > truncated.out 2>&1' || \
 	    case "$$?" in 1) exit 0;; esac && exit 1
 	@grep -q 'co: problem parsing deltatexts' truncated.out
+
+test-ci-2files: clean
+	@touch foo bar
+	@${CI} -q -t-first -l foo
+	@test -f foo,v -a ! -f bar,v
+	@${CI} -q -t-second -l foo bar
+	@test -f foo,v -a -f bar,v
 
 clean:
 	@rm -rf ${CLEANFILES}
