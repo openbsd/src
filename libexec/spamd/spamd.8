@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.97 2007/03/07 21:35:25 millert Exp $
+.\"	$OpenBSD: spamd.8,v 1.98 2007/03/15 21:56:25 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -527,11 +527,11 @@ add the unicast targets
 .Ar foo.somewhere.org
 and
 .Ar bar.somewhere.org ,
-and accept incoming unicast messages from
-.Ar foo.somewhere.org
+and accept incoming unicast messages sent to
+.Ar example.somewhere.org
 only.
 .Bd -literal -offset indent
-# /usr/libexec/spamd -y foo.somewhere.org -Y em0:2 \e
+# /usr/libexec/spamd -y example.somewhere.org -Y em0:2 \e
 	-Y foo.somewhere.org -Y bar.somewhere.org
 .Ed
 .Pp
