@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.79 2006/12/29 13:04:37 pedro Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.80 2007/03/15 11:48:09 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -221,6 +221,9 @@ m_prepend(struct mbuf *m, int len, int how)
 {
 	struct mbuf *mn;
 
+	if (len > MHLEN)
+		panic("mbuf prepend length too big");
+
 	MGET(mn, how, m->m_type);
 	if (mn == NULL) {
 		m_freem(m);
@@ -230,8 +233,7 @@ m_prepend(struct mbuf *m, int len, int how)
 		M_MOVE_PKTHDR(mn, m);
 	mn->m_next = m;
 	m = mn;
-	if (len < MHLEN)
-		MH_ALIGN(m, len);
+	MH_ALIGN(m, len);
 	m->m_len = len;
 	return (m);
 }
