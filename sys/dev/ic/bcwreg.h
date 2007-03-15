@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.17 2007/03/12 06:51:16 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.18 2007/03/15 14:30:49 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -214,6 +214,8 @@
 #define BCW_SBF_TIME_UPDATE		0x10000000	/* Related to TSF updates */
 
 #define BCW_GIR				0x128	/* MIMO - Generic Interrupt Reason */
+#define BCW_GIM				0x12c	/* MMIO - Generic Interrupt Mask */
+
 #define BCW_MMIO_RAM_CONTROL		0x130
 #define BCW_MMIO_RAM_DATA		0x134
 
@@ -339,6 +341,26 @@
 
 /* generic interrupt reasons */
 #define BCW_INTR_READY			(1 << 0)
+#define BCW_INTR_BEACON			(1 << 1)
+#define BCW_INTR_PS			(1 << 2)
+#define BCW_INTR_REG124			(1 << 5)
+#define BCW_INTR_PMQ			(1 << 6)
+#define BCW_INTR_PIO_WORKAROUND		(1 << 8)
+#define BCW_INTR_XMIT_ERROR		(1 << 11)
+#define BCW_INTR_RX			(1 << 15)
+#define BCW_INTR_SCAN			(1 << 16)
+#define BCW_INTR_NOISE			(1 << 18)
+#define BCW_INTR_XMIT_STATUS		(1 << 29)
+
+#define BCW_INTR_ALL			0xffffffff
+#define BCW_INTR_INITIAL		(BCW_INTR_PS |		\
+					 BCW_INTR_REG124 |	\
+					 BCW_INTR_PMQ |		\
+					 BCW_INTR_XMIT_ERROR |	\
+					 BCW_INTR_RX |		\
+					 BCW_INTR_SCAN |	\
+					 BCW_INTR_NOISE |	\
+					 BCW_INTR_XMIT_STATUS)
 
 /* firmware revision informations */
 #define BCW_UCODE_REVISION		0x0000

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.70 2007/03/12 22:29:38 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.71 2007/03/15 14:30:49 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -67,6 +67,7 @@ void		bcw_shm_ctl_word(struct bcw_softc *, uint16_t, uint16_t);
 uint16_t	bcw_shm_read16(struct bcw_softc *, uint16_t, uint16_t);
 void		bcw_shm_write16(struct bcw_softc *, uint16_t, uint16_t,
 		    uint16_t);
+uint32_t	bcw_shm_read32(struct bcw_softc *, uint16_t, uint16_t);
 void		bcw_radio_write16(struct bcw_softc *, uint16_t, uint16_t);
 int		bcw_radio_read16(struct bcw_softc *, uint16_t);
 void		bcw_phy_write16(struct bcw_softc *, uint16_t, uint16_t);
@@ -88,6 +89,10 @@ int		bcw_init(struct ifnet *);
 void		bcw_start(struct ifnet *);
 void		bcw_stop(struct ifnet *, int);
 void		bcw_watchdog(struct ifnet *);
+void		bcw_set_opmode(struct ifnet *);
+void		bcw_mac_enable(struct bcw_softc *);
+uint32_t	bcw_intr_enable(struct bcw_softc *, uint32_t);
+uint32_t	bcw_intr_disable(struct bcw_softc *, uint32_t);
 void		bcw_rxintr(struct bcw_softc *);
 void		bcw_txintr(struct bcw_softc *);
 //void		bcw_add_mac(struct bcw_softc *, uint8_t *, unsigned long);
@@ -195,6 +200,8 @@ void		bcw_radio_set_txantenna(struct bcw_softc *, uint32_t);
 /* ilt */
 void		bcw_ilt_write(struct bcw_softc *, uint16_t, uint16_t);
 uint16_t	bcw_ilt_read(struct bcw_softc *, uint16_t);
+/* power */
+void		bcw_power_saving_ctl_bits(struct bcw_softc *, int, int);
 
 struct cfdriver bcw_cd = {
 	NULL, "bcw", DV_IFNET
@@ -547,6 +554,29 @@ bcw_shm_write16(struct bcw_softc *sc, uint16_t routing, uint16_t offset,
 	}
 	bcw_shm_ctl_word(sc, routing, offset);
 	BCW_WRITE16(sc, BCW_SHM_DATA, val);
+}
+
+uint32_t
+bcw_shm_read32(struct bcw_softc *sc, uint16_t routing, uint16_t offset)
+{
+	uint32_t r;
+
+	if (routing == BCW_SHM_CONTROL_SHARED) {
+		if (offset & 0x003) {
+			/* unaligned acccess */
+			bcw_shm_ctl_word(sc, routing, offset >> 2);
+			r = BCW_READ16(sc, BCW_SHM_DATAHIGH);
+			r <<= 16;
+			bcw_shm_ctl_word(sc, routing, (offset >> 2) + 1);
+			r |= BCW_READ16(sc, BCW_SHM_DATA);
+			return (r);
+		}
+		offset >>= 2;
+	}
+	bcw_shm_ctl_word(sc, routing, offset);
+	r = BCW_READ(sc, BCW_SHM_DATA);
+
+	return (r);
 }
 
 void
@@ -1499,16 +1529,104 @@ bcw_watchdog(struct ifnet *ifp)
 	bcw_start(ifp);
 }
 
-int
-bcw_intr(void *xsc)
+void
+bcw_set_opmode(struct ifnet *ifp)
 {
-	struct bcw_softc *sc;
+	struct bcw_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	uint32_t status;
+	uint16_t val;
+
+	/* TODO */
+
+	status = BCW_READ(sc, BCW_SBF);
+	/* reset status to infrastructure mode */
+	status &= ~(BCW_SBF_AP | BCW_SBF_MONITOR);
+	status &= ~BCW_SBF_PROMISC;
+	status |= BCW_SBF_ADHOC;
+	status |= BCW_SBF_PROMISC; /* XXX */
+
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_MONITOR:
+		status |= BCW_SBF_MONITOR;
+		status |= BCW_SBF_PROMISC;
+		break;
+	case IEEE80211_M_IBSS:
+		status &= ~BCW_SBF_ADHOC;
+		break;
+	case IEEE80211_M_HOSTAP:
+		status |= BCW_SBF_AP;
+		break;
+	case IEEE80211_M_STA:
+		/* nothing todo here */
+		break;
+	default:
+		printf("%s: unknown mode in bcw_set_opmode()\n",
+		    sc->sc_dev.dv_xname);
+		break;
+	}
+	if (ifp->if_flags & IFF_PROMISC)
+		status |= BCW_SBF_PROMISC;
+
+	val = 0x0002;
+	if (ic->ic_opmode != IEEE80211_M_IBSS &&
+	    ic->ic_opmode != IEEE80211_M_HOSTAP) {
+		if (sc->sc_chip_id == 0x4306 && sc->sc_chip_rev == 3)
+			val = 0x0064;
+		else
+			val = 0x0032;
+	}
+	BCW_WRITE16(sc, 0x0612, val);
+}
+
+void
+bcw_mac_enable(struct bcw_softc *sc)
+{
+	BCW_WRITE(sc, BCW_SBF, BCW_READ(sc, BCW_SBF) | BCW_SBF_MAC_ENABLED);
+	BCW_WRITE(sc, BCW_GIR, BCW_INTR_READY);
+	BCW_READ(sc, BCW_SBF); /* dummy read */
+	BCW_READ(sc, BCW_GIR); /* dummy read */
+	bcw_power_saving_ctl_bits(sc, -1, -1);
+}
+
+uint32_t
+bcw_intr_enable(struct bcw_softc *sc, uint32_t mask)
+{
+	uint32_t old_mask;
+
+	old_mask = BCW_READ(sc, BCW_GIM);
+	BCW_WRITE(sc, BCW_GIM, old_mask | mask);
+
+	DPRINTF(("%s: interrupts enabled\n", sc->sc_dev.dv_xname));
+
+	return (old_mask);
+}
+
+uint32_t
+bcw_intr_disable(struct bcw_softc *sc, uint32_t mask)
+{
+	uint32_t old_mask;
+
+	old_mask = BCW_READ(sc, BCW_GIM);
+	BCW_WRITE(sc, BCW_GIM, old_mask & ~mask);
+
+	DPRINTF(("%s: interrupts disabled\n", sc->sc_dev.dv_xname));
+
+	return (old_mask);
+}
+
+int
+bcw_intr(void *arg)
+{
+	//struct bcw_softc *sc = arg;
+	//uint32_t reason;
+
+	return (0);
+#if 0
 	struct ifnet *ifp;
 	uint32_t intstatus;
 	int wantinit;
 	int handled = 0;
-
-	sc = xsc;
 
 	for (wantinit = 0; wantinit == 0;) {
 		intstatus = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_INT_STS);
@@ -1566,6 +1684,7 @@ bcw_intr(void *xsc)
 	}
 
 	return (handled);
+#endif
 }
 
 /* Receive interrupt handler */
@@ -1834,7 +1953,11 @@ bcw_init(struct ifnet *ifp)
 		bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0034, 0);
 	}
 
+	/* probe response timeout value */
 	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0074, 0);
+
+	/* initially set the wireless operation mode */
+	bcw_set_opmode(ifp);
 
 	if (sc->sc_core[sc->sc_currentcore].rev < 3) {
 		BCW_WRITE16(sc, 0x060e, 0);
@@ -6671,4 +6794,40 @@ bcw_ilt_read(struct bcw_softc *sc, uint16_t offset)
                 bcw_phy_write16(sc, BCW_PHY_ILT_G_CTRL, offset);
                 return (bcw_phy_read16(sc, BCW_PHY_ILT_G_DATA1));
         }
+}
+
+/*
+ * Power
+ */
+void
+bcw_power_saving_ctl_bits(struct bcw_softc *sc, int bit25, int bit26)
+{
+	int i;
+	uint32_t status;
+
+	if (bit25 == -1) {
+		/* TODO */
+	}
+	if (bit26 == -1) {
+		/* TODO */
+	}
+
+	status = BCW_READ(sc, BCW_SBF);
+	if (bit25)
+		status |= BCW_SBF_PS1;
+	else
+		status &= ~BCW_SBF_PS1;
+	if (bit26)
+		status |= BCW_SBF_PS2;
+	else
+		status &= ~BCW_SBF_PS2;
+	BCW_WRITE(sc, BCW_SBF, status);
+	if (bit26 && sc->sc_core[sc->sc_currentcore].rev >= 5) {
+		for (i = 0; i < 100; i++) {
+			if (bcw_shm_read32(sc, BCW_SHM_CONTROL_SHARED, 0x0040)
+			    != 4)
+				break;
+			delay(10);
+		}
+	}
 }
