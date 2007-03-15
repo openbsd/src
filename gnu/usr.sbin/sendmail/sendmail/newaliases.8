@@ -20,18 +20,18 @@
 .Sh SYNOPSIS
 .Nm newaliases
 .Sh DESCRIPTION
-.Nm Newaliases
+.Nm
 rebuilds the random access data base for the mail aliases file
 .Pa /etc/mail/aliases .
 It must be run each time this file is changed
 in order for the change to take effect.
 .Pp
-.Nm Newaliases
+.Nm
 is identical to
 .Dq Li "sendmail -bi" .
 .Pp
 The
-.Nm newaliases
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Pp
 Notice: do
@@ -54,6 +54,6 @@ The mail aliases file
 .Xr sendmail 8
 .Sh HISTORY
 The
-.Nm newaliases
+.Nm
 command appeared in
 .Bx 4.0 .

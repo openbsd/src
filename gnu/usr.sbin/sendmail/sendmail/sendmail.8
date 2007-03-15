@@ -25,24 +25,24 @@
 .Nm hoststat
 .Nm purgestat
 .Sh DESCRIPTION
-.Nm Sendmail
+.Nm
 sends a message to one or more
 .Em recipients ,
 routing the message over whatever networks
 are necessary.
-.Nm Sendmail
+.Nm
 does internetwork forwarding as necessary
 to deliver the message to the correct place.
 .Pp
-.Nm Sendmail
+.Nm
 is not intended as a user interface routine;
 other programs provide user-friendly
 front ends;
-.Nm sendmail
+.Nm
 is used only to deliver pre-formatted messages.
 .Pp
 With no flags,
-.Nm sendmail
+.Nm
 reads its standard input
 up to an end-of-file
 or a line consisting only of a single dot
@@ -95,13 +95,13 @@ the ``From:'' and ``Sender:''
 fields are examined for the name of the sender.
 .It Fl bd
 Run as a daemon.
-.Nm Sendmail
+.Nm
 will fork and run in the background
 listening on socket 25 for incoming
 .Tn SMTP
 connections.
 By default,
-.Nm Sendmail
+.Nm
 will also listen on socket 587 for RFC 2476 message submission.
 This is normally run from
 .Pa /etc/rc .
@@ -141,7 +141,7 @@ Verify mode is normally used for validating
 users or mailing lists.
 .It Fl C Ns Ar file
 Use alternate configuration file.
-.Nm Sendmail
+.Nm
 gives up any enhanced (set-user-ID or set-group-ID) privileges
 if an alternate configuration file is specified.
 .It Fl D Ar logfile
@@ -166,11 +166,11 @@ in the sendmail source distribution.
 The option
 .Fl d Ns Ar 0.1
 prints the version of
-.Nm sendmail
+.Nm
 and the options it was compiled with.
 .br
 Most other categories are only useful with, and documented in,
-.Nm sendmail 's
+.Nm Ns 's
 source code.
 .It Fl F Ns Ar fullname
 Set the full name of the sender.
@@ -199,7 +199,7 @@ will be added to the message.
 Relay (gateway) submission of a message, e.g., when
 .Nm rmail
 calls
-.Nm sendmail .
+.Nm .
 .It Fl h Ns Ar N
 Set the hop count to
 .Ar N .
@@ -252,6 +252,11 @@ for details.
 Set the name of the protocol used to receive the message.
 This can be a simple protocol name such as ``UUCP''
 or a protocol and hostname, such as ``UUCP:ucbvax''.
+.It Fl Q Op Ar reason
+Quarantine a normal queue items with the given reason or
+unquarantine quarantined queue items if no reason is given.
+This should only be used with some sort of item matching using
+as described above.
 .It Fl q Ns Bq Ar time
 Process saved messages in the queue at given intervals.
 If
@@ -277,7 +282,7 @@ or
 .Ql \-q90m
 would both set the timeout to one hour thirty minutes.
 By default,
-.Nm sendmail
+.Nm
 will run in the background.
 This option can be used safely with
 .Fl bd .
@@ -329,11 +334,6 @@ Limit processed jobs to those containing
 as a substring of the sender or not when
 .Em !\&
 is specified.
-.It Fl Q Op Ar reason
-Quarantine a normal queue items with the given reason or
-unquarantine quarantined queue items if no reason is given.
-This should only be used with some sort of item matching using
-as described above.
 .It Fl R Ar return
 Set the amount of the message to be returned
 if the message bounces.
@@ -555,7 +555,7 @@ the rest of the name as a command
 to pipe the mail to.
 It may be necessary to quote the name
 to keep
-.Nm sendmail
+.Nm
 from suppressing the blanks from between arguments.
 For example, a common alias is:
 .Bd -literal -offset indent
@@ -565,7 +565,7 @@ msgs: "|/usr/bin/msgs -s"
 Aliases may also have the syntax
 .Dq :include: Ns Ar filename
 to ask
-.Nm sendmail
+.Nm
 to read the named file for a list of recipients.
 For example, an alias such as:
 .Bd -literal -offset indent
@@ -576,7 +576,7 @@ would read
 .Pa /usr/local/lib/poets.list
 for the list of addresses making up the group.
 .Pp
-.Nm Sendmail
+.Nm
 returns an exit status
 describing what it did.
 The codes are defined in
@@ -608,27 +608,27 @@ but was queued.
 .Pp
 If invoked as
 .Nm newaliases ,
-.Nm sendmail
+.Nm
 will rebuild the alias database.
 If invoked as
 .Nm mailq ,
-.Nm sendmail
+.Nm
 will print the contents of the mail queue.
 If invoked as
 .Nm hoststat ,
-.Nm sendmail
+.Nm
 will print the persistent host status database.
 If invoked as
 .Nm purgestat ,
-.Nm sendmail
+.Nm
 will purge expired entries from the persistent host status database.
 .Sh NOTES
-.Nm sendmail
+.Nm
 often gets blamed for many problems
 that are actually the result of other problems,
 such as overly permissive modes on directories.
 For this reason,
-.Nm sendmail
+.Nm
 checks the modes on system directories and files
 to determine if they can be trusted.
 Although these checks can be turned off
