@@ -1,0 +1,23 @@
+dnl	$OpenBSD: hardware,v 1.1 2007/03/15 20:18:23 miod Exp $
+OpenBSD/MACHINE OSREV runs on the following Data General AViiON systems:
+
+	- AV100/200/300/400, AV3000/4000 and AV4300 series
+dnl	- AV4600 and AV530 series
+dnl	- AV5000 and AV6000 series
+dnl	- AV6280 and AV8000-8 series
+
+The minimal configuration requires 16MB of RAM.
+dnl The minimal configuration requires 16MB of RAM and ~250MB of disk space.
+dnl To install the entire system requires much more disk space, and to
+dnl compile the system, more RAM is recommended.
+
+Supported devices:
+
+On-board devices:
+	- serial ports (dart)
+	- 2KB NVRAM (/dev/nvram0)
+	- Ethernet interface (le)
+
+Additional VMEbus devices:
+
+	Interphase Hawk 3207 Ethernet interface (le)

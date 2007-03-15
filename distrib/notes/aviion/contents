@@ -1,0 +1,41 @@
+dnl	$OpenBSD: contents,v 1.1 2007/03/15 20:18:23 miod Exp $
+TopPart
+
+OpenBSDdistsets
+
+dnl not with the default text yes
+dnl OpenBSDbsd
+	bsd		A stock GENERIC MACHINE kernel.
+
+dnl not yet
+dnl OpenBSDrd
+dnl
+dnl	installboot	The OpenBSD/MACHINE boot loader installation
+dnl			program.
+dnl	bootxx		The OpenBSD/MACHINE boot block.
+dnl	bootsd		The OpenBSD/MACHINE disk boot loader.
+dnl	bootst		The OpenBSD/MACHINE tape boot loader.
+	netboot		The OpenBSD/MACHINE Sun-compatible network boot
+			loader.
+dnl	stboot		A VID tape block.
+dnl	tftpboot	The OpenBSD/MACHINE tftp-compatible network boot
+dnl			loader.
+
+dnl These files can be used to make a bootable tape suitable for installation.
+dnl They can also be used to configure an NFS server to support installation
+dnl over the network. See the section "Getting the OpenBSD system onto Useful
+dnl Media" for more information.
+
+DistributionDescription(six)
+
+OpenBSDbase(82256499,203198142)
+
+OpenBSDcomp(39873329,141571234)
+
+OpenBSDetc(1152254,3995885)
+
+OpenBSDgame(7097975,15193395)
+
+OpenBSDman(6838594,24373480)
+
+OpenBSDmisc(2276390,7482328)

@@ -1,0 +1,101 @@
+dnl	$OpenBSD: install,v 1.1 2007/03/15 20:18:23 miod Exp $
+OpenBSDInstallPrelude
+
+There is currently no support for disk controllers in OpenBSD/MACHINE.
+Because of this, the only way to use OpenBSD/MACHINE is to run as a
+diskless system, with the whole system installed on an NFS filesystem.
+
+Booting from Network:
+
+OpenBSD/MACHINE can boot off any network interface supported by the machine
+PROM (SCM), even if the device itself is not supported by OpenBSD.
+The OpenSBD network boot loader, netboot, expects a Sun-compatible diskless
+setup (bootparams and NFS root). Thus it will be necessary to set up a
+complete diskless client configuration on a server. If the boot server is
+an OpenBSD system, the diskless(8) manual page will provide detailed
+information on the process.
+
+If the server runs another operating system, the setup instructions will
+likely be available as part of the documentation that came with it (on
+SunOS systems, add_client(8) and the Sun System/Networks administrators
+guide constitute a good start; on Solaris systems, share(1M) is a good
+starting point as well).
+
+The set up is similar to SunOS diskless setup, but not identical, because
+the Sun setup assumes that the bootblocks load a kernel image, which then
+uses NFS to access the exported root partition, while the OpenBSD bootblocks
+use internal NFS routines to load the kernel image directly from the
+exported root partition.
+
+Please understand that no one gets this right the first try, since
+there is a lot of setup and all the host daemons must be running and
+configured correctly.  If you have problems, extract the diskless(8)
+manpage, find someone who's been through it before and use the host
+syslog and tcpdump(8) to get visibility of what's happening (or not).
+
+Your MACHINE expects to be able to download a second stage bootstrap
+program via TFTP after having acquired its IP address through RevARP when
+instructed to boot "over the net". It will look for a filename composed of
+the machine's IP address in hexadecimal. For example, a machine which has
+been assigned IP address 130.115.144.11, will make a TFTP request for
+`8273900B'.
+
+Normally, this file is a symbolic link to the OpenBSD network boot loader,
+which should be located in a place where the TFTP daemon can find it
+(remember, many TFTP daemons run in a chroot'ed environment).
+
+After the boot program has been loaded into memory and given control by
+the PROM, it starts locating the machine's remote root directory through
+the BOOTPARAM protocol. First a BOOTPARAM WHOAMI request is broadcast
+on the local net. The answer to this request (if it comes in) contains
+the client's name. This name is used in the next step, a BOOTPARAM GETFILE
+request -- sent to the server that responded to the WHOAMI request --
+requesting the name and address of the machine that will serve the client's
+root directory, as well as the path of the client's root on that server.
+
+Finally, this information (if it comes in) is used to issue a REMOTE MOUNT
+request to the client's root filesystem server, asking for an NFS file
+handle corresponding to the root filesystem. If successful, the boot
+program starts reading from the remote root filesystem in search of the
+kernel which is then read into memory.
+
+Unpack `base{:--:}OSrev.tgz' and `etc{:--:}OSrev.tgz' on the server in the root directory
+for your target machine. If you elect to use a separately NFS-mounted
+filesystem for `/usr' with your diskless setup, make sure the "./usr" base
+files in base{:--:}OSrev.tgz end up in the correct location. One way to do this is
+to temporarily use a loopback mount on the server, re-routing <root>/usr to
+your server's exported OpenBSD "/usr" directory. Also put the kernel and
+the install/upgrade scripts into the root directory.
+
+A few configuration files need to be edited:
+
+	<root>/etc/hosts
+		Add the IP addresses of both server and client.
+
+	<root>/etc/myname
+		This files contains the client's hostname; use the same
+		name as in <root>/etc/hosts.
+
+	<root>/etc/mygate
+		This files contains the client's default gateway. It should
+		be either an IP address or a name found in the `hosts' file.
+
+	<root>/etc/fstab
+		Enter the entries for the remotely mounted filesystems.
+		For example:
+			server:/export/root/client       /     nfs  rw 0 0
+			server:/export/exec/MACHINE.OpenBSD /usr  nfs  rw 0 0
+
+OpenBSDInstNFS
+
+You can now boot the machine from the network by specifying the Ethernet
+interface as the boot device, as in
+
+    SCM> b inen()
+
+to boot from the onboard interface, or
+
+    SCM> b hken()
+
+to boot from the Hawk Ethernet card.
+

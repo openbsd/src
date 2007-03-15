@@ -1,0 +1,3 @@
+dnl	$OpenBSD: xfer,v 1.1 2007/03/15 20:18:23 miod Exp $
+As long as OpenBSD/MACHINE only runs diskless, there is no real installation
+media to prepare.

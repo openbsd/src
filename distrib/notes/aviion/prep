@@ -1,0 +1,6 @@
+dnl	$OpenBSD: prep,v 1.1 2007/03/15 20:18:23 miod Exp $
+Data General AViiON systems do not require any specific preparation
+steps to be able to run OpenBSD.
+
+dnl XXX write an SCM primer
+You might want to become familiar with the PROM boot commands, though.
