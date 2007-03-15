@@ -1,4 +1,4 @@
-.\" $OpenBSD: tokenadm.8,v 1.4 2003/02/14 23:20:36 jmc Exp $
+.\" $OpenBSD: tokenadm.8,v 1.5 2007/03/15 22:31:14 jmc Exp $
 .\"
 .\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -42,12 +42,9 @@
 .Nd manage the ActivCard, CRYPTOCard and SNK-004 token databases
 .Sh SYNOPSIS
 .Nm tokenadm
-.Op Fl 1BDERT
-.Op Fl d
-.Op Fl e
-.Op Fl m Ar [-]mode
-.Op Fl r
-.Op Ar user Op ...
+.Op Fl 1BDdEeRrT
+.Op Fl m Oo - Oc Ns Ar mode
+.Op Ar user ...
 .Sh DESCRIPTION
 The
 .Nm tokenadm
@@ -65,15 +62,6 @@ Display users, one per line.
 Display users with no banner.
 .It Fl D
 Display disabled users.
-.It Fl E
-Display enabled users.
-.It Fl R
-Display users in reverse order.
-.It Fl T
-Display users in terse format (only the user names).
-Unless
-.Fl 1
-is also specified, four users will be displayed per line.
 .It Fl d
 Disable users without removing them from the database.
 This prevents the users from authenticating, but does not lose their
@@ -83,6 +71,8 @@ The
 flag may also be used with the
 .Fl d
 flag.
+.It Fl E
+Display enabled users.
 .It Fl e
 Enable users.
 This should be used to re-enable users who were disabled by the
@@ -93,7 +83,9 @@ The
 flag may also be used with the
 .Fl e
 flag.
-.It Fl m
+.It Xo Fl m
+.Oo - Oc Ns Ar mode
+.Xc
 Add
 [or remove]
 the specified mode of authentication for the user.
@@ -110,10 +102,17 @@ flags.
 Whenever reduced-input mode is set the reduced-input state is reset.
 This should be done if a paper copy of challenge/responses had been
 produced and then misplaced.
+.It Fl R
+Display users in reverse order.
 .It Fl r
 Remove users from the database.
+.It Fl T
+Display users in terse format (only the user names).
+Unless
+.Fl 1
+is also specified, four users will be displayed per line.
 .El
-.sp
+.Pp
 Use of any of the
 .Fl 1BDERT
 flags precludes the use of any of the

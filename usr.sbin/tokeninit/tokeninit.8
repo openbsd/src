@@ -1,4 +1,4 @@
-.\" $OpenBSD: tokeninit.8,v 1.7 2003/11/26 20:25:27 jmc Exp $
+.\" $OpenBSD: tokeninit.8,v 1.8 2007/03/15 22:33:22 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Migration Associates Corporation. All rights reserved.
 .\"
@@ -42,12 +42,9 @@
 .Nd "modify or add user in ActivCard, CRYPTOCard, or SNK-004 authentication system"
 .Sh SYNOPSIS
 .Nm tokeninit
-.Op Fl f
-.Op Fl h
+.Op Fl fhsv
 .Op Fl m Ar mode
-.Op Fl s
-.Op Fl v
-.Ar user_ID
+.Ar user
 .Op Ar ...
 .Sh DESCRIPTION
 The
@@ -99,7 +96,7 @@ Read the shared secret as a 16 digit hexadecimal integer rather than
 a sequence of 8 octets.
 This is not supported when invoked as
 .Nm snkinit .
-.It Fl m
+.It Fl m Ar mode
 Specify the input modes allowed for this user.
 Possible modes are decimal (dec), hexadecimal (hex), phonebook (phone),
 and reduced-input (rim).
