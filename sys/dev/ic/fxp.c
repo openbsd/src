@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.84 2006/12/26 17:02:09 krw Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.85 2007/03/16 15:36:45 claudio Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -377,6 +377,7 @@ fxp_attach(struct fxp_softc *sc, const char *intrstr)
 		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_ctrl,
 		    sizeof(struct fxp_ctrl));
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_cb_seg, sc->sc_cb_nseg);
+		goto fail;
 	}
 
 	for (i = 0; i < FXP_NTXCB; i++) {
