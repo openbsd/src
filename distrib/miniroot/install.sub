@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.412 2007/03/13 00:14:21 krw Exp $
+#	$OpenBSD: install.sub,v 1.413 2007/03/16 22:33:39 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1437,9 +1437,10 @@ __EOT
 #
 # Exit if any fsck's fail (but do them all before exiting!).
 check_fs() {
-	local _dev _mp _fstype _rest _fail
+	local _dev _mp _fstype _rest _fail _f
 
-	echo "Checking non-root filesystems..."
+	ask_yn "Force checking of non-root filesystems?"
+	[[ $resp == y ]] && _f=-f
 
 	while read _dev _mp _fstype _rest; do
 		[ "$_dev" != /dev/"$ROOTDEV" ] || continue
@@ -1447,16 +1448,14 @@ check_fs() {
 		# Make sure device exists before fsck'ing it.
 		_rest=${_dev#/dev/}
 		makedev ${_rest%[a-p]} || continue
-		echo -n "fsck -p ${_dev}..."
-		if ! fsck -fp ${_dev} >/dev/null 2>&1; then
+		echo -n "fsck -${_f}p $_dev..."
+		if ! fsck -${_f}p $_dev >/dev/null 2>&1; then
 			echo "FAILED. You must fsck $_dev manually."
 			_fail=y
 		else
 			echo "OK."
 		fi
 	done </etc/fstab
-
-	echo "...done."
 
 	[ "$_fail" ] && exit
 }
