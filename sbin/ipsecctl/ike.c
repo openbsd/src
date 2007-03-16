@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.60 2007/02/19 09:00:46 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.61 2007/03/16 20:51:01 markus Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -35,7 +35,6 @@
 static void	ike_section_general(struct ipsec_rule *, FILE *);
 static void	ike_section_peer(struct ipsec_rule *, FILE *);
 static void	ike_section_ids(struct ipsec_rule *, FILE *);
-static int	ike_get_id_type(char *);
 static void	ike_section_ipsec(struct ipsec_rule *, FILE *);
 static int	ike_section_p1(struct ipsec_rule *, FILE *);
 static int	ike_section_p2(struct ipsec_rule *, FILE *);
@@ -121,8 +120,6 @@ ike_section_ids(struct ipsec_rule *r, FILE *fd)
 			err(1, "ike_section_ids: strdup");
 	}
 	if (r->auth->srcid) {
-		int idtype = ike_get_id_type(r->auth->srcid);
-
 		if (r->peer)
 			fprintf(fd, SET "[peer-%s]:ID=%s-ID force\n",
 			    r->peer->name, r->auth->srcid);
@@ -131,38 +128,27 @@ ike_section_ids(struct ipsec_rule *r, FILE *fd)
 			    r->auth->srcid);
 
 		fprintf(fd, SET "[%s-ID]:ID-type=%s force\n", r->auth->srcid,
-		    ike_id_types[idtype]);
+		    ike_id_types[r->auth->srcid_type]);
 		fprintf(fd, SET "[%s-ID]:Name=%s force\n", r->auth->srcid,
 		    r->auth->srcid);
 	}
 	if (r->auth->dstid) {
-		int idtype = ike_get_id_type(r->auth->dstid);
-
 		if (r->peer) {
 			fprintf(fd, SET "[peer-%s]:Remote-ID=%s-ID force\n",
 			    r->peer->name, r->peer->name);
 			fprintf(fd, SET "[%s-ID]:ID-type=%s force\n",
-			    r->peer->name, ike_id_types[idtype]);
+			    r->peer->name, ike_id_types[r->auth->dstid_type]);
 			fprintf(fd, SET "[%s-ID]:Name=%s force\n", r->peer->name,
 			    r->auth->dstid);
 		} else {
 			fprintf(fd, SET
 			    "[peer-default]:Remote-ID=default-ID force\n");
 			fprintf(fd, SET "[default-ID]:ID-type=%s force\n",
-			    ike_id_types[idtype]);
+			    ike_id_types[r->auth->dstid_type]);
 			fprintf(fd, SET "[default-ID]:Name=%s force\n",
 			    r->auth->dstid);
 		}
 	}
-}
-
-static int
-ike_get_id_type(char *string)
-{
-	if (strchr(string, '@'))
-		return ID_UFQDN;
-	else
-		return ID_FQDN;
 }
 
 static void

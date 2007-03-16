@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.121 2007/02/26 14:40:09 todd Exp $	*/
+/*	$OpenBSD: parse.y,v 1.122 2007/03/16 20:51:01 markus Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -181,6 +181,7 @@ struct ipsec_rule	*create_ike(u_int8_t, struct ipsec_hosts *,
 			     struct ike_mode *, u_int8_t, u_int8_t, u_int8_t,
 			     char *, char *, struct ike_auth *, char *);
 int			 add_sagroup(struct ipsec_rule *);
+int			 get_id_type(char *);
 
 struct ipsec_transforms *ipsec_transforms;
 
@@ -1277,6 +1278,14 @@ parsekeyfile(char *filename)
 	return (parsekey(hex, sb.st_size));
 }
 
+int
+get_id_type(char *string)
+{
+	if (string && strchr(string, '@'))
+		return (ID_UFQDN);
+	return (ID_FQDN);
+}
+
 struct ipsec_addr_wrap *
 host(const char *s)
 {
@@ -1771,7 +1780,8 @@ copyipsecauth(const struct ipsec_auth *auth)
 	    asprintf(&newauth->dstid, "%s", auth->dstid) == -1)
 		err(1, "asprintf");
 
-	newauth->idtype = auth->idtype;
+	newauth->srcid_type = auth->srcid_type;
+	newauth->dstid_type = auth->dstid_type;
 	newauth->type = auth->type;
 
 	return (newauth);
@@ -2195,8 +2205,8 @@ create_flow(u_int8_t dir, u_int8_t proto, struct ipsec_hosts *hosts,
 		err(1, "create_flow: calloc");
 	r->auth->srcid = srcid;
 	r->auth->dstid = dstid;
-	r->auth->idtype = ID_FQDN;	/* XXX For now only FQDN. */
-
+	r->auth->srcid_type = get_id_type(srcid);
+	r->auth->dstid_type = get_id_type(dstid);
 	return r;
 
 errout:
@@ -2342,7 +2352,8 @@ reverse_rule(struct ipsec_rule *rule)
 		if (rule->auth->srcid && (reverse->auth->srcid =
 		    strdup(rule->auth->srcid)) == NULL)
 			err(1, "reverse_rule: strdup");
-		reverse->auth->idtype = rule->auth->idtype;
+		reverse->auth->srcid_type = rule->auth->srcid_type;
+		reverse->auth->dstid_type = rule->auth->dstid_type;
 		reverse->auth->type = rule->auth->type;
 	}
 
@@ -2437,7 +2448,8 @@ create_ike(u_int8_t proto, struct ipsec_hosts *hosts, struct ipsec_hosts *peers,
 		err(1, "create_ike: calloc");
 	r->auth->srcid = srcid;
 	r->auth->dstid = dstid;
-	r->auth->idtype = ID_FQDN;	/* XXX For now only FQDN. */
+	r->auth->srcid_type = get_id_type(srcid);
+	r->auth->dstid_type = get_id_type(dstid);
 	r->ikeauth = calloc(1, sizeof(struct ike_auth));
 	if (r->ikeauth == NULL)
 		err(1, "create_ike: calloc");

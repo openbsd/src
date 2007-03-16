@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.53 2007/01/03 12:17:43 markus Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.54 2007/03/16 20:51:01 markus Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -118,7 +118,8 @@ struct ipsec_hosts {
 struct ipsec_auth {
 	char		*srcid;
 	char		*dstid;
-	u_int8_t	 idtype;
+	u_int8_t	 srcid_type;
+	u_int8_t	 dstid_type;
 	u_int16_t	 type;
 };
 
