@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.41 2007/02/01 13:25:28 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.42 2007/03/16 10:56:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -511,8 +511,10 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 	SIMPLEQ_FOREACH(r, &ospfd_conf->redist_list, entry) {
 		switch (r->type & ~REDIST_NO) {
 		case REDIST_LABEL:
-			if (kr->rtlabel == r->label)
+			if (kr->rtlabel == r->label) {
+				*metric = r->metric;
 				return (r->type & REDIST_NO ? 0 : 1);
+			}
 			break;
 		case REDIST_STATIC:
 			/*
