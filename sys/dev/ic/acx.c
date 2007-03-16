@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.67 2007/03/14 08:12:30 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.68 2007/03/16 11:06:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -174,6 +174,7 @@ int	 acx_reset(struct acx_softc *);
 int	 acx_set_null_tmplt(struct acx_softc *);
 int	 acx_set_probe_req_tmplt(struct acx_softc *, const char *, int);
 int	 acx_set_probe_resp_tmplt(struct acx_softc *, struct ieee80211_node *);
+int	 acx_beacon_locate(struct mbuf *, u_int8_t);
 int	 acx_set_beacon_tmplt(struct acx_softc *, struct ieee80211_node *);
 
 int	 acx_read_eeprom(struct acx_softc *, uint32_t, uint8_t *);
@@ -1830,15 +1831,6 @@ acx_init_tmplt_ordered(struct acx_softc *sc)
 	    sizeof(data.presp)) != 0)
 		return (1);
 
-	/* Setup TIM template */
-	data.tim.tim_eid = IEEE80211_ELEMID_TIM;
-	data.tim.tim_len = ACX_TIM_LEN(ACX_TIM_BITMAP_LEN);
-	if (acx_set_tmplt(sc, ACXCMD_TMPLT_TIM, &data.tim,
-	    ACX_TMPLT_TIM_SIZ(ACX_TIM_BITMAP_LEN)) != 0) {
-		printf("%s: can't set tim tmplt\n", sc->sc_dev.dv_xname);
-		return (1);
-	}
-
 	return (0);
 }
 
@@ -2350,22 +2342,73 @@ acx_set_probe_resp_tmplt(struct acx_softc *sc, struct ieee80211_node *ni)
 }
 
 int
+acx_beacon_locate(struct mbuf *m, u_int8_t type)
+{
+	int off;
+	u_int8_t *frm;
+	/*
+	 * beacon frame format
+	 *	[8] time stamp
+	 *	[2] beacon interval
+	 *	[2] cabability information
+	 *	from here on [tlv] values
+	 */
+
+	if (m->m_len != m->m_pkthdr.len)
+		panic("beacon not in contiguous mbuf");
+
+	off = sizeof(struct ieee80211_frame) + 8 + 2 + 2;
+	frm = mtod(m, u_int8_t *);
+	for (; off + 1 < m->m_len; off += frm[off + 1] + 2) {
+		printf("acx_beacon_locate: off %d type %x len %x\n",
+		    off, frm[off], frm[off + 1]);
+		if (frm[off] == type)
+			return (off);
+	}
+	/* type not found */
+	return (m->m_len);
+}
+
+int
 acx_set_beacon_tmplt(struct acx_softc *sc, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct acx_tmplt_beacon beacon;
+	struct acx_tmplt_tim tim;
 	struct mbuf *m;
-	int len;
+	int len, off;
+
+	bzero(&beacon, sizeof(beacon));
+	bzero(&tim, sizeof(tim));
 
 	m = ieee80211_beacon_alloc(ic, ni);
 	if (m == NULL)
 		return (1);
-	bzero(&beacon, sizeof(beacon));
-	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)&beacon.data);
-	len = m->m_pkthdr.len + sizeof(beacon.size);
+
+	off = acx_beacon_locate(m, IEEE80211_ELEMID_TIM);
+	printf("acx_set_beacon_tmplt: acx_beacon_locate TIM off %d len %d\n",
+	    off, m->m_pkthdr.len);
+
+	m_copydata(m, 0, off, (caddr_t)&beacon.data);
+	len = off + sizeof(beacon.size);
+
+	if (acx_set_tmplt(sc, ACXCMD_TMPLT_BEACON, &beacon, len) != 0) {
+		m_freem(m);
+		return (1);
+	}
+
+	len = m->m_pkthdr.len - off;
+	if (len == 0) {
+		/* no TIM field */
+		m_freem(m);
+		return (0);
+	}
+
+	m_copydata(m, off, len, (caddr_t)&tim.data);
+	len += sizeof(beacon.size);
 	m_freem(m);
 
-	return (acx_set_tmplt(sc, ACXCMD_TMPLT_BEACON, &beacon, len));
+	return (acx_set_tmplt(sc, ACXCMD_TMPLT_TIM, &tim, len));
 }
 
 void
