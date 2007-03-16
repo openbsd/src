@@ -1,4 +1,4 @@
-/*	$OpenBSD: rev.c,v 1.8 2006/07/30 06:25:43 ray Exp $	*/
+/*	$OpenBSD: rev.c,v 1.9 2007/03/16 17:16:28 jasper Exp $	*/
 /*	$NetBSD: rev.c,v 1.5 1995/09/28 08:49:40 tls Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rev.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: rev.c,v 1.8 2006/07/30 06:25:43 ray Exp $";
+static char rcsid[] = "$OpenBSD: rev.c,v 1.9 2007/03/16 17:16:28 jasper Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,6 +105,8 @@ main(int argc, char *argv[])
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: rev [file ...]\n");
+	extern char *__progname;
+
+	(void)fprintf(stderr, "usage: %s [file ...]\n", __progname);
 	exit(1);
 }
