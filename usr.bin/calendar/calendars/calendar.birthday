@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.45 2006/11/28 21:35:56 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.46 2007/03/16 16:24:19 pedro Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -147,7 +147,7 @@
 04/15	Leonardo da Vinci born, 1452
 04/15	Jean Genet died in Paris, 1986
 04/16	Charles (Charlie) Chaplin (Sir) born in London, 1889
-04/19	Andre Rene the Giant (Roussimoff) born in Grunoble, France, 1946
+04/19	Andre Rene the Giant (Roussimoff) born in Grenoble, France, 1946
 04/20	Adolph Hitler born, 1889
 04/22	Kant born, 1724
 04/22	Lenin born, the best friend of all the children, 1870
