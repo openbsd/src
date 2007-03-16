@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.85 2007/03/09 22:43:37 deraadt Exp $
+dnl	$OpenBSD: hardware,v 1.86 2007/03/16 23:41:12 robert Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -64,7 +64,7 @@ Supported hardware:
 		ISA IDE controller on the EB164.
 		ISA devices that require DMA operation.
 
-    AlphaServer 800, 1000 and 1000A
+    AlphaServer 800, 1000, 1000A, 1200 and 4100
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21040 Ethernet.
