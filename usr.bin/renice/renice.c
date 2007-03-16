@@ -1,4 +1,4 @@
-/*	$OpenBSD: renice.c,v 1.11 2003/07/10 00:06:51 david Exp $	*/
+/*	$OpenBSD: renice.c,v 1.12 2007/03/16 16:36:06 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)renice.c	8.1 (Berkeley) 6/9/93";
 #else
-static char rcsid[] = "$OpenBSD: renice.c,v 1.11 2003/07/10 00:06:51 david Exp $";
+static char rcsid[] = "$OpenBSD: renice.c,v 1.12 2007/03/16 16:36:06 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s priority [[-p] pid ...] [[-g] pgrp ...] "
+	fprintf(stderr, "usage: %s priority [[-g] pgrp ...] [[-p] pid ...] "
 	    "[[-u] user ...]\n", __progname);
 	exit(1);
 }
