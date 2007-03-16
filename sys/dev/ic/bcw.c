@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.74 2007/03/16 15:28:54 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.75 2007/03/16 22:22:24 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -130,6 +130,7 @@ int			bcw_write_initvals(struct bcw_softc *,
 int			bcw_load_initvals(struct bcw_softc *);
 void			bcw_leds_switch_all(struct bcw_softc *, int);
 int			bcw_gpio_init(struct bcw_softc *);
+int			bcw_chip_init(struct bcw_softc *);
 
 /*
  * PHY
@@ -1555,141 +1556,18 @@ bcw_txintr(struct bcw_softc *sc)
 
 }
 
-/* initialize the interface */
+/*
+ * Initialize the interface
+ */
 int
 bcw_init(struct ifnet *ifp)
 {
-	struct bcw_softc *sc = ifp->if_softc;
-	uint16_t val16;
-	uint32_t val32;
-	int error, i, tmp;
+        struct bcw_softc *sc = ifp->if_softc;
+        int error;
 
-	BCW_WRITE(sc, BCW_MMIO_SBF, BCW_SBF_CORE_READY | BCW_SBF_400_MAGIC);
-
-	/* load firmware */
-	if ((error = bcw_load_firmware(sc)))
+	/* initialize chip */
+	if ((error = bcw_chip_init(sc)))
 		return (error);
-
-	/*
-	 * verify firmware revision
-	 */
-	BCW_WRITE(sc, BCW_MMIO_GIR, 0xffffffff);
-	BCW_WRITE(sc, BCW_MMIO_SBF, 0x00020402);
-	for (i = 0; i < 50; i++) {
-		if (BCW_READ(sc, BCW_MMIO_GIR) == BCW_INTR_READY)
-			break;
-		delay(10);
-	}
-	if (i == 50) {
-		printf("%s: interrupt-ready timeout!\n", sc->sc_dev.dv_xname);
-		return (1);
-	}
-	BCW_READ(sc, BCW_MMIO_GIR);	/* dummy read */
-
-	val16 = bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_REVISION);
-
-	DPRINTF(("%s: Firmware revision 0x%x, patchlevel 0x%x "
-            "(20%.2i-%.2i-%.2i %.2i:%.2i:%.2i)\n",
-	    sc->sc_dev.dv_xname, val16,
-	    bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_PATCHLEVEL),
-            (bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_DATE) >> 12)
-            & 0xf,
-            (bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_DATE) >> 8)
-            & 0xf,
-            bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_DATE)
-            & 0xff,
-            (bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_TIME) >> 11)
-            & 0x1f,
-            (bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_TIME) >> 5)
-            & 0x3f,
-            bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_TIME)
-	    & 0x1f));
-
-	if (val16 > 0x128) {
-		printf("%s: no support for this firmware revision!\n",
-		    sc->sc_dev.dv_xname);
-		return (1);
-	}
-
-	/* initialize GPIO */
-	if ((error = bcw_gpio_init(sc)))
-		return (error);
-
-	/* load init values */
-	if ((error = bcw_load_initvals(sc)))
-		return (error);
-
-	/* turn radio on */
-	bcw_radio_on(sc);
-
-	BCW_WRITE16(sc, 0x03e6, 0);
-	if ((error = bcw_phy_init(sc)))
-		return (error);
-
-	/* select initial interference mitigation */
-	tmp = sc->sc_radio_interfmode;
-	sc->sc_radio_interfmode = BCW_RADIO_INTERFMODE_NONE;
-	bcw_radio_set_interf_mitigation(sc, tmp);
-
-	bcw_phy_set_antenna_diversity(sc);
-	bcw_radio_set_txantenna(sc, BCW_RADIO_TXANTENNA_DEFAULT);
-	if (sc->sc_phy_type == BCW_PHY_TYPEB) {
-		val16 = BCW_READ16(sc, 0x005e);
-		val16 |= 0x0004;
-		BCW_WRITE16(sc, 0x005e, val16);
-	}
-	BCW_WRITE(sc, 0x0100, 0x01000000);
-	if (sc->sc_core[sc->sc_currentcore].rev < 5)
-		BCW_WRITE(sc, 0x010c, 0x01000000);
-
-	val32 = BCW_READ(sc, BCW_MMIO_SBF);
-	val32 &= ~BCW_SBF_ADHOC;
-	BCW_WRITE(sc, BCW_MMIO_SBF, val32);
-	val32 = BCW_READ(sc, BCW_MMIO_SBF);
-	val32 |= BCW_SBF_ADHOC;
-	BCW_WRITE(sc, BCW_MMIO_SBF, val32);
-
-	val32 = BCW_READ(sc, BCW_MMIO_SBF);
-	val32 |= 0x100000;
-	BCW_WRITE(sc, BCW_MMIO_SBF, val32);
-
-	if (bcw_using_pio(sc)) {
-		BCW_WRITE(sc, 0x0210, 0x00000100);
-		BCW_WRITE(sc, 0x0230, 0x00000100);
-		BCW_WRITE(sc, 0x0250, 0x00000100);
-		BCW_WRITE(sc, 0x0270, 0x00000100);
-		bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0034, 0);
-	}
-
-	/* probe response timeout value */
-	bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0074, 0);
-
-	/* initially set the wireless operation mode */
-	bcw_set_opmode(ifp);
-
-	if (sc->sc_core[sc->sc_currentcore].rev < 3) {
-		BCW_WRITE16(sc, 0x060e, 0);
-		BCW_WRITE16(sc, 0x0610, 0x8000);
-		BCW_WRITE16(sc, 0x0604, 0);
-		BCW_WRITE16(sc, 0x0606, 0x0200);
-	} else {
-		BCW_WRITE(sc, 0x0188, 0x80000000);
-		BCW_WRITE(sc, 0x018c, 0x02000000);
-	}
-	BCW_WRITE(sc, BCW_MMIO_GIR, 0x00004000);
-	BCW_WRITE(sc, BCW_MMIO_DMA0_INT_MASK, 0x0001dc00);
-	BCW_WRITE(sc, BCW_MMIO_DMA1_INT_MASK, 0x0000dc00);
-	BCW_WRITE(sc, BCW_MMIO_DMA2_INT_MASK, 0x0000dc00);
-	BCW_WRITE(sc, BCW_MMIO_DMA3_INT_MASK, 0x0001dc00);
-	BCW_WRITE(sc, BCW_MMIO_DMA4_INT_MASK, 0x0000dc00);
-	BCW_WRITE(sc, BCW_MMIO_DMA5_INT_MASK, 0x0000dc00);
-
-	val32 = BCW_READ(sc, BCW_CIR_SBTMSTATELOW);
-	val32 |= 0x00100000;
-	BCW_WRITE(sc, BCW_CIR_SBTMSTATELOW, val32);
-	/* TODO bcw_pctl_powerup_delay(sc) */
-
-	DPRINTF(("%s: Chip initialized\n", sc->sc_dev.dv_xname));
 
 	/* start timer */
 	timeout_add(&sc->sc_timeout, hz);
@@ -2817,6 +2695,149 @@ bcw_gpio_init(struct bcw_softc *sc)
 	error = bcw_change_core(sc, sc->sc_lastcore);
 
 	return (error);
+}
+
+/*
+ * Initialize the chip
+ *
+ * http://bcm-specs.sipsolutions.net/ChipInit
+ */
+int
+bcw_chip_init(struct bcw_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	uint16_t val16;
+	uint32_t val32;
+	int error, i, tmp;
+
+	BCW_WRITE(sc, BCW_MMIO_SBF, BCW_SBF_CORE_READY | BCW_SBF_400_MAGIC);
+
+	/* load firmware */
+	if ((error = bcw_load_firmware(sc)))
+		return (error);
+
+	/*
+	 * verify firmware revision
+	 */
+	BCW_WRITE(sc, BCW_MMIO_GIR, 0xffffffff);
+	BCW_WRITE(sc, BCW_MMIO_SBF, 0x00020402);
+	for (i = 0; i < 50; i++) {
+		if (BCW_READ(sc, BCW_MMIO_GIR) == BCW_INTR_READY)
+			break;
+		delay(10);
+	}
+	if (i == 50) {
+		printf("%s: interrupt-ready timeout!\n", sc->sc_dev.dv_xname);
+		return (1);
+	}
+	BCW_READ(sc, BCW_MMIO_GIR);	/* dummy read */
+
+	val16 = bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_REVISION);
+
+	DPRINTF(("%s: Firmware revision 0x%x, patchlevel 0x%x "
+            "(20%.2i-%.2i-%.2i %.2i:%.2i:%.2i)\n",
+	    sc->sc_dev.dv_xname, val16,
+	    bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_PATCHLEVEL),
+            (bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_DATE) >> 12)
+            & 0xf,
+            (bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_DATE) >> 8)
+            & 0xf,
+            bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_DATE)
+            & 0xff,
+            (bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_TIME) >> 11)
+            & 0x1f,
+            (bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_TIME) >> 5)
+            & 0x3f,
+            bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_TIME)
+	    & 0x1f));
+
+	if (val16 > 0x128) {
+		printf("%s: no support for this firmware revision!\n",
+		    sc->sc_dev.dv_xname);
+		return (1);
+	}
+
+	/* initialize GPIO */
+	if ((error = bcw_gpio_init(sc)))
+		return (error);
+
+	/* load init values */
+	if ((error = bcw_load_initvals(sc)))
+		return (error);
+
+	/* turn radio on */
+	bcw_radio_on(sc);
+
+	BCW_WRITE16(sc, 0x03e6, 0);
+	if ((error = bcw_phy_init(sc)))
+		return (error);
+
+	/* select initial interference mitigation */
+	tmp = sc->sc_radio_interfmode;
+	sc->sc_radio_interfmode = BCW_RADIO_INTERFMODE_NONE;
+	bcw_radio_set_interf_mitigation(sc, tmp);
+
+	bcw_phy_set_antenna_diversity(sc);
+	bcw_radio_set_txantenna(sc, BCW_RADIO_TXANTENNA_DEFAULT);
+	if (sc->sc_phy_type == BCW_PHY_TYPEB) {
+		val16 = BCW_READ16(sc, 0x005e);
+		val16 |= 0x0004;
+		BCW_WRITE16(sc, 0x005e, val16);
+	}
+	BCW_WRITE(sc, 0x0100, 0x01000000);
+	if (sc->sc_core[sc->sc_currentcore].rev < 5)
+		BCW_WRITE(sc, 0x010c, 0x01000000);
+
+	val32 = BCW_READ(sc, BCW_MMIO_SBF);
+	val32 &= ~BCW_SBF_ADHOC;
+	BCW_WRITE(sc, BCW_MMIO_SBF, val32);
+	val32 = BCW_READ(sc, BCW_MMIO_SBF);
+	val32 |= BCW_SBF_ADHOC;
+	BCW_WRITE(sc, BCW_MMIO_SBF, val32);
+
+	val32 = BCW_READ(sc, BCW_MMIO_SBF);
+	val32 |= 0x100000;
+	BCW_WRITE(sc, BCW_MMIO_SBF, val32);
+
+	if (bcw_using_pio(sc)) {
+		BCW_WRITE(sc, 0x0210, 0x00000100);
+		BCW_WRITE(sc, 0x0230, 0x00000100);
+		BCW_WRITE(sc, 0x0250, 0x00000100);
+		BCW_WRITE(sc, 0x0270, 0x00000100);
+		bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0034, 0);
+	}
+
+	/* probe response timeout value */
+	bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0074, 0);
+
+	/* initially set the wireless operation mode */
+	bcw_set_opmode(ifp);
+
+	if (sc->sc_core[sc->sc_currentcore].rev < 3) {
+		BCW_WRITE16(sc, 0x060e, 0);
+		BCW_WRITE16(sc, 0x0610, 0x8000);
+		BCW_WRITE16(sc, 0x0604, 0);
+		BCW_WRITE16(sc, 0x0606, 0x0200);
+	} else {
+		BCW_WRITE(sc, 0x0188, 0x80000000);
+		BCW_WRITE(sc, 0x018c, 0x02000000);
+	}
+	BCW_WRITE(sc, BCW_MMIO_GIR, 0x00004000);
+	BCW_WRITE(sc, BCW_MMIO_DMA0_INT_MASK, 0x0001dc00);
+	BCW_WRITE(sc, BCW_MMIO_DMA1_INT_MASK, 0x0000dc00);
+	BCW_WRITE(sc, BCW_MMIO_DMA2_INT_MASK, 0x0000dc00);
+	BCW_WRITE(sc, BCW_MMIO_DMA3_INT_MASK, 0x0001dc00);
+	BCW_WRITE(sc, BCW_MMIO_DMA4_INT_MASK, 0x0000dc00);
+	BCW_WRITE(sc, BCW_MMIO_DMA5_INT_MASK, 0x0000dc00);
+
+	val32 = BCW_READ(sc, BCW_CIR_SBTMSTATELOW);
+	val32 |= 0x00100000;
+	BCW_WRITE(sc, BCW_CIR_SBTMSTATELOW, val32);
+	/* TODO bcw_pctl_powerup_delay(sc) */
+
+	DPRINTF(("%s: Chip initialized\n", sc->sc_dev.dv_xname));
+
+	return (0);
 }
 
 /*
