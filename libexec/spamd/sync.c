@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.1 2007/03/04 03:19:41 beck Exp $	*/
+/*	$OpenBSD: sync.c,v 1.2 2007/03/16 23:08:06 beck Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -497,6 +497,7 @@ sync_update(time_t now, char *helo, char *ip, char *from, char *to)
 
 	/* Send message to the target hosts */
 	sync_send(iov, i);
+	HMAC_CTX_cleanup(&ctx);
 }
 
 void
@@ -552,6 +553,7 @@ sync_addr(time_t now, time_t expire, char *ip, u_int16_t type)
 
 	/* Send message to the target hosts */
 	sync_send(iov, i);
+	HMAC_CTX_cleanup(&ctx);
 }
 
 void
