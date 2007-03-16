@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.221 2007/03/16 13:52:30 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.222 2007/03/16 14:06:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -790,7 +790,7 @@ rde_update_dispatch(struct imsg *imsg)
 		if ((pos = rde_update_get_prefix(p, len, &prefix,
 		    &prefixlen)) == -1) {
 			/*
-			 * the rfc does not mention what we should do in
+			 * the RFC does not mention what we should do in
 			 * this case. Let's do the same as in the NLRI case.
 			 */
 			log_peer_warnx(&peer->conf, "bad withdraw prefix");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.213 2007/03/16 13:52:30 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.214 2007/03/16 14:06:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -220,7 +220,7 @@ struct peer_auth {
 };
 
 struct capabilities {
-	u_int8_t	mp_v4;		/* multiprotocol extensions, RFC 2858 */
+	u_int8_t	mp_v4;		/* multiprotocol extensions, RFC 4760 */
 	u_int8_t	mp_v6;
 	u_int8_t	refresh;	/* route refresh, RFC 2918 */
 	u_int8_t	restart;	/* draft-ietf-idr-restart */
@@ -588,7 +588,7 @@ struct filter_peers {
 #define	COMMUNITY_NO_EXPORT		0xff01
 #define	COMMUNITY_NO_ADVERTISE		0xff02
 #define	COMMUNITY_NO_EXPSUBCONFED	0xff03
-#define	COMMUNITY_NO_PEER		0xff04	/* rfc3765 */
+#define	COMMUNITY_NO_PEER		0xff04	/* RFC 3765 */
 
 struct filter_prefix {
 	struct bgpd_addr	addr;
@@ -683,12 +683,12 @@ struct rde_memstats {
 	int64_t		attr_dcnt;
 };
 
-/* Address Family Numbers as per rfc1700 */
+/* Address Family Numbers as per RFC 1700 */
 #define	AFI_IPv4	1
 #define	AFI_IPv6	2
 #define	AFI_ALL		0xffff
 
-/* Subsequent Address Family Identifier as per rfc4760 */
+/* Subsequent Address Family Identifier as per RFC 4760 */
 #define	SAFI_NONE	0x00
 #define	SAFI_UNICAST	0x01
 #define	SAFI_MULTICAST	0x02

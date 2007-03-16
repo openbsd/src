@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.270 2007/02/22 08:34:18 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.271 2007/03/16 14:06:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1061,7 +1061,7 @@ session_connect(struct peer *peer)
 	struct sockaddr		*sa;
 
 	/*
-	 * we do not need the overcomplicated collision detection rfc1771
+	 * we do not need the overcomplicated collision detection RFC 1771
 	 * describes; we simply make sure there is only ever one concurrent
 	 * tcp connection per peer.
 	 */
@@ -1184,7 +1184,7 @@ session_setup_socket(struct peer *p)
 		return (-1);
 	}
 
-	/* set precedence, see rfc1771 appendix 5 */
+	/* set precedence, see RFC 1771 appendix 5 */
 	if (p->conf.remote_addr.af == AF_INET &&
 	    setsockopt(p->fd, IPPROTO_IP, IP_TOS, &pre, sizeof(pre)) == -1) {
 		log_peer_warn(&p->conf,
@@ -1356,7 +1356,7 @@ session_open(struct peer *p)
 		return;
 	}
 
-	/* multiprotocol extensions, RFC 2858 */
+	/* multiprotocol extensions, RFC 4760 */
 	if (p->capa.ann.mp_v4) {	/* 4 bytes data */
 		errs += session_capa_add(p, opb, CAPA_MP, 4, &optparamlen);
 		errs += session_capa_add_mp(opb, AFI_IPv4, p->capa.ann.mp_v4);
@@ -2163,7 +2163,7 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen)
 			capa_val = NULL;
 
 		switch (capa_code) {
-		case CAPA_MP:			/* RFC 2858 */
+		case CAPA_MP:			/* RFC 4760 */
 			if (capa_len != 4) {
 				log_peer_warnx(&peer->conf,
 				    "parse_capabilities: "
