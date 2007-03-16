@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_swiz_bus_mem_chipdep.c,v 1.3 2002/03/14 01:26:27 millert Exp $	*/
+/*	$OpenBSD: pci_swiz_bus_mem_chipdep.c,v 1.4 2007/03/16 21:22:27 robert Exp $	*/
 /*	$NetBSD: pcs_bus_mem_common.c,v 1.15 1996/12/02 22:19:36 cgd Exp $	*/
 
 /*
@@ -42,6 +42,25 @@
 
 #define	__C(A,B)	__CONCAT(A,B)
 #define	__S(S)		__STRING(S)
+
+#ifndef	CHIP_EXTENT_DNAME
+#define	CHIP_EXTENT_DNAME(v)	__S(__C(CHIP,_bus_dmem))
+#endif
+#ifndef CHIP_EXTENT_SNAME
+#define CHIP_EXTENT_SNAME(v)	__S(__C(CHIP,_bus_smem))
+#endif
+
+#ifndef	CHIP_EXTENT_DSTORAGE
+#define CHIP_EXTENT_DSTORAGE(v)	__C(CHIP,_dmem_ex_storage)
+static long
+    __C(CHIP,_dmem_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+#endif
+#ifndef CHIP_EXTENT_SSTORAGE
+#define CHIP_EXTENT_SSTORAGE(v)	__C(CHIP,_smem_ex_storage)
+static long
+    __C(CHIP,_smem_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+
+#endif
 
 /* mapping/unmapping */
 int		__C(CHIP,_mem_map)(void *, bus_addr_t, bus_size_t, int,
@@ -171,11 +190,6 @@ void		__C(CHIP,_mem_write_raw_multi_8)(void *,
 		    bus_space_handle_t, bus_size_t, const u_int8_t *,
 		    bus_size_t);
 
-static long
-    __C(CHIP,_dmem_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-static long
-    __C(CHIP,_smem_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-
 void
 __C(CHIP,_bus_mem_init)(t, v)
 	bus_space_tag_t t;
@@ -267,10 +281,10 @@ __C(CHIP,_bus_mem_init)(t, v)
 	t->abs_wrm_8 =		__C(CHIP,_mem_write_raw_multi_8);
 
 	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
-	dex = extent_create(__S(__C(CHIP,_bus_dmem)), 0x0UL,
+	dex = extent_create(CHIP_EXTENT_DNAME(v), 0x0UL,
 	    0xffffffffffffffffUL, M_DEVBUF,
-	    (caddr_t)__C(CHIP,_dmem_ex_storage),
-	    sizeof(__C(CHIP,_dmem_ex_storage)), EX_NOWAIT);
+	    (caddr_t)CHIP_EXTENT_DSTORAGE(v),
+	    sizeof(CHIP_EXTENT_DSTORAGE(v)), EX_NOWAIT);
 	extent_alloc_region(dex, 0, 0xffffffffffffffffUL, EX_NOWAIT);
 
 #ifdef CHIP_D_MEM_W1_BUS_START
@@ -289,10 +303,10 @@ __C(CHIP,_bus_mem_init)(t, v)
         CHIP_D_MEM_EXTENT(v) = dex;
 
 	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
-	sex = extent_create(__S(__C(CHIP,_bus_smem)), 0x0UL,
+	sex = extent_create(CHIP_EXTENT_SNAME(v), 0x0UL,
 	    0xffffffffffffffffUL, M_DEVBUF,
-	    (caddr_t)__C(CHIP,_smem_ex_storage),
-	    sizeof(__C(CHIP,_smem_ex_storage)), EX_NOWAIT);
+	    (caddr_t)CHIP_EXTENT_SSTORAGE(v),
+	    sizeof(CHIP_EXTENT_SSTORAGE(v)), EX_NOWAIT);
 	extent_alloc_region(sex, 0, 0xffffffffffffffffUL, EX_NOWAIT);
 
 #ifdef CHIP_S_MEM_W1_BUS_START

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.77 2006/09/27 06:33:03 grange Exp $
+#	$OpenBSD: files.alpha,v 1.78 2007/03/16 21:22:27 robert Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -12,7 +12,8 @@ maxusers 2 8 64
 define	alpha_shared_intr
 file	arch/alpha/dev/shared_intr.c	alpha_shared_intr | dec_eb164 |
 					dec_kn20aa | dec_6600 | dec_550 |
-					dec_1000 | dec_1000a | dec_eb64plus
+					dec_1000 | dec_1000a | dec_eb64plus |
+					dec_kn300
 
 define	alpha_sgmap
 file	arch/alpha/dev/sgmap_common.c		alpha_sgmap | dec_3000_500
@@ -67,8 +68,18 @@ include	"dev/dec/files.dec"
 #
 # TURBOchannel Devices
 #
-
 include	"dev/tc/files.tc"
+
+#
+# MCBUS bus Devices
+#
+device	mcbus { mid = -1 }
+attach	mcbus at mainbus
+file	arch/alpha/mcbus/mcbus.c		mcbus & dec_kn300
+
+device	mcmem: mcbus
+attach	mcmem at mcbus
+file	arch/alpha/mcbus/mcmem.c		mcmem
 
 # TC attachment is MD
 attach	tc at tcbus
@@ -210,6 +221,14 @@ file	arch/alpha/pci/tsp_pci.c		tsp
 file	arch/alpha/pci/tsp_bus_io.c		tsp
 file	arch/alpha/pci/tsp_bus_mem.c		tsp
 
+device	mcpcia: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
+attach	mcpcia at mcbus
+file	arch/alpha/pci/mcpcia.c		mcpcia
+file	arch/alpha/pci/mcpcia_bus_io.c	mcpcia
+file	arch/alpha/pci/mcpcia_bus_mem.c	mcpcia
+file	arch/alpha/pci/mcpcia_dma.c	mcpcia
+file	arch/alpha/pci/mcpcia_pci.c	mcpcia
+
 file	arch/alpha/pci/pci_2100_a50.c		dec_2100_a50
 file	arch/alpha/pci/pci_axppci_33.c		dec_axppci_33
 file	arch/alpha/pci/pci_eb164.c		dec_eb164
@@ -217,6 +236,7 @@ file	arch/alpha/pci/pci_eb164_intr.s		dec_eb164
 file	arch/alpha/pci/pci_eb64plus.c		dec_eb64plus
 file	arch/alpha/pci/pci_eb64plus_intr.s	dec_eb64plus
 file	arch/alpha/pci/pci_kn20aa.c		dec_kn20aa
+file	arch/alpha/pci/pci_kn300.c		dec_kn300
 file	arch/alpha/pci/pci_550.c		dec_550
 file	arch/alpha/pci/pci_1000a.c		dec_1000a
 file	arch/alpha/pci/pci_1000.c		dec_1000
@@ -304,6 +324,7 @@ file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33	needs-flag
 file	arch/alpha/alpha/dec_eb164.c		dec_eb164	needs-flag
 file	arch/alpha/alpha/dec_eb64plus.c		dec_eb64plus	needs-flag
 file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa	needs-flag
+file	arch/alpha/alpha/dec_kn300.c		dec_kn300	needs-flag
 file	arch/alpha/alpha/dec_550.c		dec_550		needs-flag
 file	arch/alpha/alpha/dec_1000a.c		dec_1000 | dec_1000a	needs-flag
 file	arch/alpha/alpha/dec_6600.c		dec_6600	needs-flag

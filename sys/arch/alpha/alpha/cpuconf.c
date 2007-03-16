@@ -1,4 +1,4 @@
-/* $OpenBSD: cpuconf.c,v 1.10 2005/04/28 17:19:14 deraadt Exp $ */
+/* $OpenBSD: cpuconf.c,v 1.11 2007/03/16 21:22:27 robert Exp $ */
 /* $NetBSD: cpuconf.c,v 1.27 2000/06/26 02:42:04 enami Exp $ */
 
 /*-
@@ -172,7 +172,7 @@ static const struct cpuinit cpuinit[] = {
 	cpu_notsupp(ST_EB66, "DEC_EB66"),
 	cpu_init(ST_EB64P, dec_eb64plus_init, "DEC_EB64PLUS"),
 	cpu_notsupp(ST_ALPHABOOK1, "DEC_ALPHABOOK1"),
-	cpu_notsupp(ST_DEC_4100, "DEC_KN300"),
+	cpu_init(ST_DEC_4100, dec_kn300_init, "DEC_KN300"),
 	cpu_notsupp(ST_DEC_EV45_PBP, "EV45 Passive Backplane Board"),
 	cpu_notsupp(ST_DEC_2100A_A500, "DEC_2100A_A500"),
 	cpu_init(ST_EB164, dec_eb164_init, "DEC_EB164"),

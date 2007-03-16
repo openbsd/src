@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.189 2007/02/28 21:54:43 grange Exp $
+#	$OpenBSD: GENERIC,v 1.190 2007/03/16 21:22:27 robert Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -18,6 +18,7 @@ option		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 option		DEC_3000_300	# Pelican etc:	3000/300*
 option		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 option		DEC_KN20AA	# KN20AA:	AlphaStation 600
+option		DEC_KN300	# KN300:	AlphaServer 4100 and 1200
 option		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 option		DEC_EB164	# EB164:	AlphaPC 164
 option		DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
@@ -131,6 +132,10 @@ tsc*	at	mainbus0
 # TURBOchannel host bus adapter support
 tcasic*	at	mainbus0
 
+# MCBUS bus support
+mcbus*	at	mainbus0
+mcmem*	at	mcbus? mid ? 
+
 # TURBOchannel bus support
 tc*	at	tcasic?
 
@@ -155,6 +160,7 @@ cia*	at	mainbus?
 irongate* at	mainbus?
 lca*	at	mainbus?
 tsp*	at	tsc?
+mcpcia*	at	mcbus? mid ?
 
 # PCI bus support
 pci*	at	apecs?
@@ -163,6 +169,7 @@ pci*	at	irongate?
 pci*	at	lca?
 pci*	at	ppb?
 pci*	at	tsp?
+pci*	at	mcpcia?
 
 # PCI devices
 ppb*	at pci?				# PCI-PCI bridges
