@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.19 2007/03/16 07:05:13 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.20 2007/03/16 12:16:31 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -31,39 +31,37 @@
 /*
  * MMIO offsets
  */
-#define BCW_INT_STS			0x20
-#define BCW_DMA0_INT_MASK		0x24
-#define BCW_DMA1_INT_MASK		0x2c
-#define BCW_DMA2_INT_MASK		0x34
-#define BCW_DMA3_INT_MASK		0x3c
-#define BCW_DMA4_INT_MASK		0x44
-#define BCW_DMA5_INT_MASK		0x4c
-#define BCW_SBF				0x120	/* Status Bit Field */
-#define BCW_GIR				0x128	/* Generic Interrupt Reason */
-#define BCW_GIM				0x12c	/* Generic Interrupt Mask */
+#define BCW_MMIO_DMA0_INT_MASK		0x24
+#define BCW_MMIO_DMA1_INT_MASK		0x2c
+#define BCW_MMIO_DMA2_INT_MASK		0x34
+#define BCW_MMIO_DMA3_INT_MASK		0x3c
+#define BCW_MMIO_DMA4_INT_MASK		0x44
+#define BCW_MMIO_DMA5_INT_MASK		0x4c
+#define BCW_MMIO_SBF			0x120	/* Status Bit Field */
+#define BCW_MMIO_GIR			0x128	/* Generic Interrupt Reason */
+#define BCW_MMIO_GIM			0x12c	/* Generic Interrupt Mask */
 #define BCW_MMIO_RAM_CONTROL		0x130
 #define BCW_MMIO_RAM_DATA		0x134
-#define BCW_SHM_CONTROL			0x160	/* Control */
-#define BCW_SHM_DATA			0x164	/* Data - 32bit */
-#define BCW_SHM_DATALOW			0x164	/* Data Low - 16bit */
-#define BCW_SHM_DATAHIGH		0x166	/* Data High - 16 bit */
+#define BCW_MMIO_SHM_CONTROL		0x160	/* Control */
+#define BCW_MMIO_SHM_DATA		0x164	/* Data - 32bit */
+#define BCW_MMIO_SHM_DATALOW		0x164	/* Data Low - 16bit */
+#define BCW_MMIO_SHM_DATAHIGH		0x166	/* Data High - 16 bit */
 
 #define BCW_MMIO_PHY_RADIO		0x3e2
 #define BCW_MMIO_CHANNEL		0x3f0
 #define BCW_MMIO_CHANNEL_EXT		0x3f4
-#define BCW_RADIO_DATA			0x3fa
-#define BCW_RADIO_DATALOW		0x3fa
-#define BCW_RADIO_CONTROL		0x3f6
-#define BCW_RADIO_DATAHIGH		0x3f8
-#define BCW_PHY_CONTROL			0x3fc
-#define BCW_PHY_DATA			0x3fe
+#define BCW_MMIO_RADIO_DATA_LOW		0x3fa
+#define BCW_MMIO_RADIO_CONTROL		0x3f6
+#define BCW_MMIO_RADIO_DATA_HIGH	0x3f8
+#define BCW_MMIO_PHY_CONTROL		0x3fc
+#define BCW_MMIO_PHY_DATA		0x3fe
 #define BCW_MMIO_GPIO_CONTROL		0x49c
-#define BCW_GPIO_MASK			0x49e
+#define BCW_MMIO_GPIO_MASK		0x49e
 
 /*
  * XXX SPROM registers are 16 bit and based at MMIO offset 0x1000
  */
-#define BCW_MMIO_BASE			0x1000
+#define BCW_SPROM_BASE			0x1000
 #define BCW_SPROM_SUBPRODID		0x1004	/* Subsystem Product ID */
 #define BCW_SPROM_SUBVENID		0x1006	/* Subsystem Vendor ID */
 #define BCW_SPROM_PRODID		0x1008	/* Product ID */
@@ -108,20 +106,20 @@
 /*
  * SHM Routing
  */
-#define BCW_SHM_CONTROL_SHARED		0x0001
-#define BCW_SHM_CONTROL_80211		0x0002
-#define BCW_SHM_CONTROL_PCM		0x0003
-#define BCW_SHM_CONTROL_HWMAC		0x0004
-#define BCW_SHM_CONTROL_MCODE		0x0300
+#define BCW_SHM_SHARED			0x0001
+#define BCW_SHM_80211			0x0002
+#define BCW_SHM_PCM			0x0003
+#define BCW_SHM_HWMAC			0x0004
+#define BCW_SHM_UCODE			0x0300
 
 /*
  * Power control
  */
-#define BCW_PCICI			0xb0
-#define BCW_PCICO			0xb4
-#define BCW_PCICOE			0xb8
-#define BCW_XTALPOWERUP			0x40
-#define BCW_PLLPOWERDOWN		0x80
+#define BCW_PCTL_IN			0xb0
+#define BCW_PCTL_OUT			0xb4
+#define BCW_PCTL_OUTENABLE		0xb8
+#define BCW_PCTL_XTAL_POWERUP		0x40
+#define BCW_PCTL_PLL_POWERDOWN		0x80
 
 /*
  * Core IDs
@@ -153,18 +151,18 @@
 /*
  * PHY registers
  */
-#define BCW_PHY_G_LO_CONTROL		0x0810
 #define BCW_PHY_ILT_A_CTRL		0x0072
 #define BCW_PHY_ILT_A_DATA1		0x0073
+#define BCW_PHY_G_LO_CONTROL		0x0810
 #define BCW_PHY_ILT_G_CTRL		0x0472
 #define BCW_PHY_ILT_G_DATA1		0x0473
 #define BCW_PHY_G_CRS			0x0429
 #define BCW_PHY_A_CRS			0x0029
 #define BCW_PHY_RADIO_BITFIELD		0x0401
-#define BCW_PHY_NRSSILT_CTRL		0x0803
-#define BCW_PHY_NRSSILT_DATA		0x0804
 #define BCW_PHY_A_PCTL			0x007b
 #define BCW_PHY_G_PCTL			0x0029
+#define BCW_PHY_NRSSILT_CTRL		0x0803
+#define BCW_PHY_NRSSILT_DATA		0x0804
 
 /*
  * Radio Registers
@@ -277,6 +275,7 @@
  * XXX Dead code (also dead in bcw.c), please remove me soon
  */
 #if 0
+#define BCW_INT_STS			0x20
 #define BCW_REG0_WIN			0x80			/* XXX */
 #define BCW_PCICR			0x94			/* XXX */
 #define BCW_SONICS_WIN			0x18002000		/* XXX */

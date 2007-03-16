@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.71 2007/03/15 14:30:49 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.72 2007/03/16 12:16:31 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -521,39 +521,39 @@ bcw_shm_ctl_word(struct bcw_softc *sc, uint16_t routing, uint16_t offset)
 	control <<= 16;
 	control |= offset;
 
-	BCW_WRITE(sc, BCW_SHM_CONTROL, control);
+	BCW_WRITE(sc, BCW_MMIO_SHM_CONTROL, control);
 }
 
 uint16_t
 bcw_shm_read16(struct bcw_softc *sc, uint16_t routing, uint16_t offset)
 {
-	if (routing == BCW_SHM_CONTROL_SHARED) {
+	if (routing == BCW_SHM_SHARED) {
 		if (offset & 0x0003) {
 			bcw_shm_ctl_word(sc, routing, offset >> 2);
 
-			return (BCW_READ16(sc, BCW_SHM_DATAHIGH));
+			return (BCW_READ16(sc, BCW_MMIO_SHM_DATAHIGH));
 		}
 		offset >>= 2;
 	}
 	bcw_shm_ctl_word(sc, routing, offset);
 
-	return (BCW_READ16(sc, BCW_SHM_DATA));
+	return (BCW_READ16(sc, BCW_MMIO_SHM_DATA));
 }
 
 void
 bcw_shm_write16(struct bcw_softc *sc, uint16_t routing, uint16_t offset,
     uint16_t val)
 {
-	if (routing == BCW_SHM_CONTROL_SHARED) {
+	if (routing == BCW_SHM_SHARED) {
 		if (offset & 0x0003) {
 			bcw_shm_ctl_word(sc, routing, offset >> 2);
-			BCW_WRITE16(sc, BCW_SHM_DATAHIGH, val);
+			BCW_WRITE16(sc, BCW_MMIO_SHM_DATAHIGH, val);
 			return;
 		}
 		offset >>= 2;
 	}
 	bcw_shm_ctl_word(sc, routing, offset);
-	BCW_WRITE16(sc, BCW_SHM_DATA, val);
+	BCW_WRITE16(sc, BCW_MMIO_SHM_DATA, val);
 }
 
 uint32_t
@@ -561,20 +561,20 @@ bcw_shm_read32(struct bcw_softc *sc, uint16_t routing, uint16_t offset)
 {
 	uint32_t r;
 
-	if (routing == BCW_SHM_CONTROL_SHARED) {
+	if (routing == BCW_SHM_SHARED) {
 		if (offset & 0x003) {
 			/* unaligned acccess */
 			bcw_shm_ctl_word(sc, routing, offset >> 2);
-			r = BCW_READ16(sc, BCW_SHM_DATAHIGH);
+			r = BCW_READ16(sc, BCW_MMIO_SHM_DATAHIGH);
 			r <<= 16;
 			bcw_shm_ctl_word(sc, routing, (offset >> 2) + 1);
-			r |= BCW_READ16(sc, BCW_SHM_DATA);
+			r |= BCW_READ16(sc, BCW_MMIO_SHM_DATA);
 			return (r);
 		}
 		offset >>= 2;
 	}
 	bcw_shm_ctl_word(sc, routing, offset);
-	r = BCW_READ(sc, BCW_SHM_DATA);
+	r = BCW_READ(sc, BCW_MMIO_SHM_DATA);
 
 	return (r);
 }
@@ -582,8 +582,8 @@ bcw_shm_read32(struct bcw_softc *sc, uint16_t routing, uint16_t offset)
 void
 bcw_radio_write16(struct bcw_softc *sc, uint16_t offset, uint16_t val)
 {
-	BCW_WRITE16(sc, BCW_RADIO_CONTROL, offset);
-	BCW_WRITE16(sc, BCW_RADIO_DATALOW, val);
+	BCW_WRITE16(sc, BCW_MMIO_RADIO_CONTROL, offset);
+	BCW_WRITE16(sc, BCW_MMIO_RADIO_DATA_LOW, val);
 }
 
 int
@@ -609,24 +609,24 @@ bcw_radio_read16(struct bcw_softc *sc, uint16_t offset)
 		break;
 	}
 
-	BCW_WRITE16(sc, BCW_RADIO_CONTROL, offset);
+	BCW_WRITE16(sc, BCW_MMIO_RADIO_CONTROL, offset);
 
-	return (BCW_READ16(sc, BCW_RADIO_DATALOW));
+	return (BCW_READ16(sc, BCW_MMIO_RADIO_DATA_LOW));
 }
 
 void
 bcw_phy_write16(struct bcw_softc *sc, uint16_t offset, uint16_t val)
 {
-	BCW_WRITE16(sc, BCW_PHY_CONTROL, offset);
-	BCW_WRITE16(sc, BCW_PHY_DATA, val);
+	BCW_WRITE16(sc, BCW_MMIO_PHY_CONTROL, offset);
+	BCW_WRITE16(sc, BCW_MMIO_PHY_DATA, val);
 }
 
 int
 bcw_phy_read16(struct bcw_softc *sc, uint16_t offset)
 {
-	BCW_WRITE16(sc, BCW_PHY_CONTROL, offset);
+	BCW_WRITE16(sc, BCW_MMIO_PHY_CONTROL, offset);
 
-	return (BCW_READ16(sc, BCW_PHY_DATA));
+	return (BCW_READ16(sc, BCW_MMIO_PHY_DATA));
 }
 
 void
@@ -634,7 +634,7 @@ bcw_ram_write(struct bcw_softc *sc, uint16_t offset, uint32_t val)
 {
 	uint32_t status;
 
-	status = BCW_READ(sc, BCW_SBF);
+	status = BCW_READ(sc, BCW_MMIO_SBF);
 	if (!(status & BCW_SBF_REGISTER_BYTESWAP))
 		val = htobe32(val); /* XXX swab32() */
 
@@ -683,7 +683,7 @@ bcw_dummy_transmission(struct bcw_softc *sc)
 	for (i = 0; i < 5; i++)
 		bcw_ram_write(sc, i * 4, buffer[i]);
 
-	BCW_READ(sc, BCW_SBF);
+	BCW_READ(sc, BCW_MMIO_SBF);
 
 	BCW_WRITE16(sc, 0x0568, 0x0000);
 	BCW_WRITE16(sc, 0x07c0, 0x0000);
@@ -1042,11 +1042,12 @@ bcw_attach(struct bcw_softc *sc)
 	 * and the high data addresses.
 	 */
 	if (sc->sc_chip_id != 0x4317) {
-		BCW_WRITE16(sc, BCW_RADIO_CONTROL, BCW_RADIO_ID);
-		sbval = BCW_READ16(sc, BCW_RADIO_DATAHIGH);
+		BCW_WRITE16(sc, BCW_MMIO_RADIO_CONTROL, BCW_RADIO_ID);
+		sbval = BCW_READ16(sc, BCW_MMIO_RADIO_DATA_HIGH);
 		sbval <<= 16;
-		BCW_WRITE16(sc, BCW_RADIO_CONTROL, BCW_RADIO_ID);
-		sc->sc_radio_mnf = sbval | BCW_READ16(sc, BCW_RADIO_DATALOW);
+		BCW_WRITE16(sc, BCW_MMIO_RADIO_CONTROL, BCW_RADIO_ID);
+		sc->sc_radio_mnf =
+		    sbval | BCW_READ16(sc, BCW_MMIO_RADIO_DATA_LOW);
 	} else {
 		switch (sc->sc_chip_rev) {
 		case 0:	
@@ -1209,10 +1210,10 @@ bcw_attach(struct bcw_softc *sc)
 	 * This explanation could make more sense, but an SHM read/write
 	 * wrapper of some sort would be better.
 	 */
-	BCW_WRITE(sc, BCW_SHM_CONTROL,
-	    (BCW_SHM_CONTROL_SHARED << 16) + BCW_SHM_MICROCODEFLAGSLOW - 2);
-	BCW_WRITE16(sc, BCW_SHM_DATAHIGH, sbval & 0x00ff);
-	BCW_WRITE16(sc, BCW_SHM_DATALOW, (sbval & 0xff00) >> 16);
+	BCW_WRITE(sc, BCW_MMIO_SHM_CONTROL,
+	    (BCW_SHM_SHARED << 16) + BCW_SHM_MICROCODEFLAGSLOW - 2);
+	BCW_WRITE16(sc, BCW_MMIO_SHM_DATAHIGH, sbval & 0x00ff);
+	BCW_WRITE16(sc, BCW_MMIO_SHM_DATALOW, (sbval & 0xff00) >> 16);
 
 	/*
 	 * Initialize the TSSI to DBM table
@@ -1539,7 +1540,7 @@ bcw_set_opmode(struct ifnet *ifp)
 
 	/* TODO */
 
-	status = BCW_READ(sc, BCW_SBF);
+	status = BCW_READ(sc, BCW_MMIO_SBF);
 	/* reset status to infrastructure mode */
 	status &= ~(BCW_SBF_AP | BCW_SBF_MONITOR);
 	status &= ~BCW_SBF_PROMISC;
@@ -1582,10 +1583,11 @@ bcw_set_opmode(struct ifnet *ifp)
 void
 bcw_mac_enable(struct bcw_softc *sc)
 {
-	BCW_WRITE(sc, BCW_SBF, BCW_READ(sc, BCW_SBF) | BCW_SBF_MAC_ENABLED);
-	BCW_WRITE(sc, BCW_GIR, BCW_INTR_READY);
-	BCW_READ(sc, BCW_SBF); /* dummy read */
-	BCW_READ(sc, BCW_GIR); /* dummy read */
+	BCW_WRITE(sc, BCW_MMIO_SBF,
+	    BCW_READ(sc, BCW_MMIO_SBF) | BCW_SBF_MAC_ENABLED);
+	BCW_WRITE(sc, BCW_MMIO_GIR, BCW_INTR_READY);
+	BCW_READ(sc, BCW_MMIO_SBF); /* dummy read */
+	BCW_READ(sc, BCW_MMIO_GIR); /* dummy read */
 	bcw_power_saving_ctl_bits(sc, -1, -1);
 }
 
@@ -1594,8 +1596,8 @@ bcw_intr_enable(struct bcw_softc *sc, uint32_t mask)
 {
 	uint32_t old_mask;
 
-	old_mask = BCW_READ(sc, BCW_GIM);
-	BCW_WRITE(sc, BCW_GIM, old_mask | mask);
+	old_mask = BCW_READ(sc, BCW_MMIO_GIM);
+	BCW_WRITE(sc, BCW_MMIO_GIM, old_mask | mask);
 
 	DPRINTF(("%s: interrupts enabled\n", sc->sc_dev.dv_xname));
 
@@ -1607,8 +1609,8 @@ bcw_intr_disable(struct bcw_softc *sc, uint32_t mask)
 {
 	uint32_t old_mask;
 
-	old_mask = BCW_READ(sc, BCW_GIM);
-	BCW_WRITE(sc, BCW_GIM, old_mask & ~mask);
+	old_mask = BCW_READ(sc, BCW_MMIO_GIM);
+	BCW_WRITE(sc, BCW_MMIO_GIM, old_mask & ~mask);
 
 	DPRINTF(("%s: interrupts disabled\n", sc->sc_dev.dv_xname));
 
@@ -1856,7 +1858,7 @@ bcw_init(struct ifnet *ifp)
 	uint32_t val32;
 	int error, i, tmp;
 
-	BCW_WRITE(sc, BCW_SBF, BCW_SBF_CORE_READY | BCW_SBF_400_MAGIC);
+	BCW_WRITE(sc, BCW_MMIO_SBF, BCW_SBF_CORE_READY | BCW_SBF_400_MAGIC);
 
 	/* load firmware */
 	if ((error = bcw_load_firmware(sc)))
@@ -1865,10 +1867,10 @@ bcw_init(struct ifnet *ifp)
 	/*
 	 * verify firmware revision
 	 */
-	BCW_WRITE(sc, BCW_GIR, 0xffffffff);
-	BCW_WRITE(sc, BCW_SBF, 0x00020402);
+	BCW_WRITE(sc, BCW_MMIO_GIR, 0xffffffff);
+	BCW_WRITE(sc, BCW_MMIO_SBF, 0x00020402);
 	for (i = 0; i < 50; i++) {
-		if (BCW_READ(sc, BCW_GIR) == BCW_INTR_READY)
+		if (BCW_READ(sc, BCW_MMIO_GIR) == BCW_INTR_READY)
 			break;
 		delay(10);
 	}
@@ -1876,25 +1878,25 @@ bcw_init(struct ifnet *ifp)
 		printf("%s: interrupt-ready timeout!\n", sc->sc_dev.dv_xname);
 		return (1);
 	}
-	BCW_READ(sc, BCW_GIR);	/* dummy read */
+	BCW_READ(sc, BCW_MMIO_GIR);	/* dummy read */
 
-	val16 = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_REVISION);
+	val16 = bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_REVISION);
 
 	DPRINTF(("%s: Firmware revision 0x%x, patchlevel 0x%x "
             "(20%.2i-%.2i-%.2i %.2i:%.2i:%.2i)\n",
 	    sc->sc_dev.dv_xname, val16,
-	    bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_PATCHLEVEL),
-            (bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_DATE) >> 12)
+	    bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_PATCHLEVEL),
+            (bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_DATE) >> 12)
             & 0xf,
-            (bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_DATE) >> 8)
+            (bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_DATE) >> 8)
             & 0xf,
-            bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_DATE)
+            bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_DATE)
             & 0xff,
-            (bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_TIME) >> 11)
+            (bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_TIME) >> 11)
             & 0x1f,
-            (bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_TIME) >> 5)
+            (bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_TIME) >> 5)
             & 0x3f,
-            bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, BCW_UCODE_TIME)
+            bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODE_TIME)
 	    & 0x1f));
 
 	if (val16 > 0x128) {
@@ -1934,27 +1936,27 @@ bcw_init(struct ifnet *ifp)
 	if (sc->sc_core[sc->sc_currentcore].rev < 5)
 		BCW_WRITE(sc, 0x010c, 0x01000000);
 
-	val32 = BCW_READ(sc, BCW_SBF);
+	val32 = BCW_READ(sc, BCW_MMIO_SBF);
 	val32 &= ~BCW_SBF_ADHOC;
-	BCW_WRITE(sc, BCW_SBF, val32);
-	val32 = BCW_READ(sc, BCW_SBF);
+	BCW_WRITE(sc, BCW_MMIO_SBF, val32);
+	val32 = BCW_READ(sc, BCW_MMIO_SBF);
 	val32 |= BCW_SBF_ADHOC;
-	BCW_WRITE(sc, BCW_SBF, val32);
+	BCW_WRITE(sc, BCW_MMIO_SBF, val32);
 
-	val32 = BCW_READ(sc, BCW_SBF);
+	val32 = BCW_READ(sc, BCW_MMIO_SBF);
 	val32 |= 0x100000;
-	BCW_WRITE(sc, BCW_SBF, val32);
+	BCW_WRITE(sc, BCW_MMIO_SBF, val32);
 
 	if (bcw_using_pio(sc)) {
 		BCW_WRITE(sc, 0x0210, 0x00000100);
 		BCW_WRITE(sc, 0x0230, 0x00000100);
 		BCW_WRITE(sc, 0x0250, 0x00000100);
 		BCW_WRITE(sc, 0x0270, 0x00000100);
-		bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0034, 0);
+		bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0034, 0);
 	}
 
 	/* probe response timeout value */
-	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0074, 0);
+	bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0074, 0);
 
 	/* initially set the wireless operation mode */
 	bcw_set_opmode(ifp);
@@ -1968,13 +1970,13 @@ bcw_init(struct ifnet *ifp)
 		BCW_WRITE(sc, 0x0188, 0x80000000);
 		BCW_WRITE(sc, 0x018c, 0x02000000);
 	}
-	BCW_WRITE(sc, BCW_GIR, 0x00004000);
-	BCW_WRITE(sc, BCW_DMA0_INT_MASK, 0x0001dc00);
-	BCW_WRITE(sc, BCW_DMA1_INT_MASK, 0x0000dc00);
-	BCW_WRITE(sc, BCW_DMA2_INT_MASK, 0x0000dc00);
-	BCW_WRITE(sc, BCW_DMA3_INT_MASK, 0x0001dc00);
-	BCW_WRITE(sc, BCW_DMA4_INT_MASK, 0x0000dc00);
-	BCW_WRITE(sc, BCW_DMA5_INT_MASK, 0x0000dc00);
+	BCW_WRITE(sc, BCW_MMIO_GIR, 0x00004000);
+	BCW_WRITE(sc, BCW_MMIO_DMA0_INT_MASK, 0x0001dc00);
+	BCW_WRITE(sc, BCW_MMIO_DMA1_INT_MASK, 0x0000dc00);
+	BCW_WRITE(sc, BCW_MMIO_DMA2_INT_MASK, 0x0000dc00);
+	BCW_WRITE(sc, BCW_MMIO_DMA3_INT_MASK, 0x0001dc00);
+	BCW_WRITE(sc, BCW_MMIO_DMA4_INT_MASK, 0x0000dc00);
+	BCW_WRITE(sc, BCW_MMIO_DMA5_INT_MASK, 0x0000dc00);
 
 	val32 = BCW_READ(sc, BCW_CIR_SBTMSTATELOW);
 	val32 |= 0x00100000;
@@ -2156,7 +2158,7 @@ bcw_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 
 	/* Disable interrupts. */
-	BCW_WRITE(sc, BCW_DMA0_INT_MASK, 0);
+	BCW_WRITE(sc, BCW_MMIO_DMA0_INT_MASK, 0);
 	sc->sc_intmask = 0;
 	delay(10);
 
@@ -2246,9 +2248,9 @@ bcw_reset(struct bcw_softc *sc)
 	BCW_WRITE16(sc, BCW_RADIO_BASEBAND, 0);
 
 	/* Set 0x400 in the MMIO StatusBitField reg */
-	sbval = BCW_READ(sc, BCW_SBF);
+	sbval = BCW_READ(sc, BCW_MMIO_SBF);
 	sbval |= BCW_SBF_400_MAGIC;
-	BCW_WRITE(sc, BCW_SBF, sbval);
+	BCW_WRITE(sc, BCW_MMIO_SBF, sbval);
 
 	/* XXX Clear saved interrupt status for DMA controllers */
 
@@ -2404,32 +2406,32 @@ bcw_validatechipaccess(struct bcw_softc *sc)
 	 */
 
 	/* Backup SHM uCode Revision before we clobber it */
-	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
-	save = BCW_READ(sc, BCW_SHM_DATA);
+	BCW_WRITE(sc, BCW_MMIO_SHM_CONTROL, (BCW_SHM_SHARED << 16) + 0);
+	save = BCW_READ(sc, BCW_MMIO_SHM_DATA);
 
 	/* write test value */
-	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
-	BCW_WRITE(sc, BCW_SHM_DATA, 0xaa5555aa);
+	BCW_WRITE(sc, BCW_MMIO_SHM_CONTROL, (BCW_SHM_SHARED << 16) + 0);
+	BCW_WRITE(sc, BCW_MMIO_SHM_DATA, 0xaa5555aa);
 	/* Read it back */
-	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
+	BCW_WRITE(sc, BCW_MMIO_SHM_CONTROL, (BCW_SHM_SHARED << 16) + 0);
 
-	val = BCW_READ(sc, BCW_SHM_DATA);
+	val = BCW_READ(sc, BCW_MMIO_SHM_DATA);
 	if (val != 0xaa5555aa)
 		return (1);
 
 	/* write 2nd test value */
-	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
-	BCW_WRITE(sc, BCW_SHM_DATA, 0x55aaaa55);
+	BCW_WRITE(sc, BCW_MMIO_SHM_CONTROL, (BCW_SHM_SHARED << 16) + 0);
+	BCW_WRITE(sc, BCW_MMIO_SHM_DATA, 0x55aaaa55);
 	/* Read it back */
-	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
+	BCW_WRITE(sc, BCW_MMIO_SHM_CONTROL, (BCW_SHM_SHARED << 16) + 0);
 
-	val = BCW_READ(sc, BCW_SHM_DATA);
+	val = BCW_READ(sc, BCW_MMIO_SHM_DATA);
 	if (val != 0x55aaaa55)
 		return 2;
 
 	/* Restore the saved value now that we're done */
-	BCW_WRITE(sc, BCW_SHM_CONTROL, (BCW_SHM_CONTROL_SHARED << 16) + 0);
-	BCW_WRITE(sc, BCW_SHM_DATA, save);
+	BCW_WRITE(sc, BCW_MMIO_SHM_CONTROL, (BCW_SHM_SHARED << 16) + 0);
+	BCW_WRITE(sc, BCW_MMIO_SHM_DATA, save);
 	if (sc->sc_core_80211->rev >= 3) {
 		/* do some test writes and reads against the TSF */
 		/*
@@ -2449,7 +2451,7 @@ bcw_validatechipaccess(struct bcw_softc *sc)
 	}
 
 	/* Check the Status Bit Field for some unknown bits */
-	val = BCW_READ(sc, BCW_SBF);
+	val = BCW_READ(sc, BCW_MMIO_SBF);
 	if ((val | 0x80000000) != 0x80000400 ) {
 		printf("%s: Warning, SBF is 0x%x, expected 0x80000400\n",
 		    sc->sc_dev.dv_xname, val);
@@ -2457,7 +2459,7 @@ bcw_validatechipaccess(struct bcw_softc *sc)
 		//return (5);
 	}
 	/* Verify there are no interrupts active on the core */
-	val = BCW_READ(sc, BCW_GIR);
+	val = BCW_READ(sc, BCW_MMIO_GIR);
 	if (val != 0) {
 		DPRINTF(("Failed Pending Interrupt test with val=0x%x\n", val));
 		return (6);
@@ -2843,13 +2845,13 @@ bcw_powercontrol_crystal_on(struct bcw_softc *sc)
 	uint32_t sbval;
 
 	sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOI);
-	if ((sbval & BCW_XTALPOWERUP) != BCW_XTALPOWERUP) {
+	if ((sbval & BCW_PCTL_XTAL_POWERUP) != BCW_PCTL_XTAL_POWERUP) {
 		sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
-		sbval |= (BCW_XTALPOWERUP & BCW_PLLPOWERDOWN);
+		sbval |= (BCW_PCTL_XTAL_POWERUP & BCW_PCTL_PLL_POWERDOWN);
 		(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, sbval);
 		delay(1000);
 		sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
-		sbval &= ~BCW_PLLPOWERDOWN;
+		sbval &= ~BCW_PCTL_PLL_POWERDOWN;
 		(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, sbval);
 		delay(5000);
 	}
@@ -2869,11 +2871,11 @@ bcw_powercontrol_crystal_off(struct bcw_softc *sc)
 	/* XXX bcw_powercontrol_clock_slow() */
 
 	sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
-	sbval |= BCW_PLLPOWERDOWN;
-	sbval &= ~BCW_XTALPOWERUP;
+	sbval |= BCW_PCTL_PLL_POWERDOWN;
+	sbval &= ~BCW_PCTL_XTAL_POWERUP;
 	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, sbval);
 	sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOE);
-	sbval |= BCW_PLLPOWERDOWN | BCW_XTALPOWERUP;
+	sbval |= BCW_PCTL_PLL_POWERDOWN | BCW_PCTL_XTAL_POWERUP;
 	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOE, sbval);
 }
 
@@ -3115,9 +3117,9 @@ bcw_load_firmware(struct bcw_softc *sc)
 	/* upload microcode */
 	data = (uint32_t *)(ucode + off_micro);
 	len = size_micro / sizeof(uint32_t);
-	bcw_shm_ctl_word(sc, BCW_SHM_CONTROL_MCODE, 0);
+	bcw_shm_ctl_word(sc, BCW_SHM_UCODE, 0);
 	for (i = 0; i < len; i++) {
-		BCW_WRITE(sc, BCW_SHM_DATA, betoh32(data[i]));
+		BCW_WRITE(sc, BCW_MMIO_SHM_DATA, betoh32(data[i]));
 		delay(10);
 	}
 	DPRINTF(("%s: uploaded microcode\n", sc->sc_dev.dv_xname));
@@ -3125,11 +3127,11 @@ bcw_load_firmware(struct bcw_softc *sc)
 	/* upload pcm */
 	data = (uint32_t *)(ucode + off_pcm);
 	len = size_pcm / sizeof(uint32_t);
-	bcw_shm_ctl_word(sc, BCW_SHM_CONTROL_PCM, 0x01ea);
-	BCW_WRITE(sc, BCW_SHM_DATA, 0x00004000);
-	bcw_shm_ctl_word(sc, BCW_SHM_CONTROL_PCM, 0x01eb);
+	bcw_shm_ctl_word(sc, BCW_SHM_PCM, 0x01ea);
+	BCW_WRITE(sc, BCW_MMIO_SHM_DATA, 0x00004000);
+	bcw_shm_ctl_word(sc, BCW_SHM_PCM, 0x01eb);
 	for (i = 0; i < len; i++) {
-		BCW_WRITE(sc, BCW_SHM_DATA, betoh32(data[i]));
+		BCW_WRITE(sc, BCW_MMIO_SHM_DATA, betoh32(data[i]));
 		delay(10);
 	}
 	DPRINTF(("%s: uploaded pcm\n", sc->sc_dev.dv_xname));
@@ -3322,11 +3324,12 @@ bcw_gpio_init(struct bcw_softc *sc)
 	uint32_t mask, set;
 	int error = 0;
 
-	BCW_WRITE(sc, BCW_SBF, BCW_READ(sc, BCW_SBF) & 0xffff3fff);
+	BCW_WRITE(sc, BCW_MMIO_SBF, BCW_READ(sc, BCW_MMIO_SBF) & 0xffff3fff);
 
 	bcw_leds_switch_all(sc, 0);
 
-	BCW_WRITE16(sc, BCW_GPIO_MASK, BCW_READ16(sc, BCW_GPIO_MASK) | 0x000f);
+	BCW_WRITE16(sc, BCW_MMIO_GPIO_MASK,
+	    BCW_READ16(sc, BCW_MMIO_GPIO_MASK) | 0x000f);
 
 	mask = 0x0000001f;
 	set = 0x0000000f;
@@ -3336,14 +3339,14 @@ bcw_gpio_init(struct bcw_softc *sc)
 		set |= 0x0060;
 	}
 	if (0) { /* FIXME conditional unknown */
-		BCW_WRITE16(sc, BCW_GPIO_MASK, BCW_READ16(sc, BCW_GPIO_MASK) |
-		    0x0100);
+		BCW_WRITE16(sc, BCW_MMIO_GPIO_MASK,
+		    BCW_READ16(sc, BCW_MMIO_GPIO_MASK) | 0x0100);
 		mask |= 0x0180;
 		set |= 0x0180;
 	}
 	if (sc->sc_boardflags & BCW_BF_PACTRL) {
-		BCW_WRITE16(sc, BCW_GPIO_MASK, BCW_READ16(sc, BCW_GPIO_MASK) |
-		    0x0200);
+		BCW_WRITE16(sc, BCW_MMIO_GPIO_MASK,
+		    BCW_READ16(sc, BCW_MMIO_GPIO_MASK) | 0x0200);
 		mask |= 0x0200;
 		set |= 0x0200;
 	}
@@ -4571,20 +4574,20 @@ bcw_phy_xmitpower(struct bcw_softc *sc)
 		int16_t radio_att_delta, baseband_att_delta;
 		int16_t radio_attenuation, baseband_attenuation;
 
-		tmp = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, 0x0058);
+		tmp = bcw_shm_read16(sc, BCW_SHM_SHARED, 0x0058);
 		v0 = (int8_t)(tmp & 0x00ff);
 		v1 = (int8_t)((tmp & 0xff00) >> 8);
-		tmp = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, 0x005a);
+		tmp = bcw_shm_read16(sc, BCW_SHM_SHARED, 0x005a);
 		v2 = (int8_t)(tmp & 0x00ff);
 		v3 = (int8_t)((tmp & 0xff00) >> 8);
 		tmp = 0;
 
 		if (v0 == 0x7f || v1 == 0x7f || v2 == 0x7f || v3 == 0x07) {
-			tmp = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED,
+			tmp = bcw_shm_read16(sc, BCW_SHM_SHARED,
 			    0x0070);
 			v0 = (int8_t)(tmp & 0x00ff);
 			v1 = (int8_t)((tmp & 0xff00) >> 8);
-			tmp = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED,
+			tmp = bcw_shm_read16(sc, BCW_SHM_SHARED,
 			    0x0072);
 
 			v2 = (int8_t)(tmp & 0x00ff);
@@ -4602,7 +4605,7 @@ bcw_phy_xmitpower(struct bcw_softc *sc)
 
 		average = (v0 + v1 + v2 + v3 + 2) / 4;
 
-		if (tmp && (bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, 0x005e) &
+		if (tmp && (bcw_shm_read16(sc, BCW_SHM_SHARED, 0x005e) &
 		    0x8))
 			average -= 13;
 
@@ -5252,9 +5255,9 @@ bcw_phy_set_antenna_diversity(struct bcw_softc *sc)
 		antennadiv = 3;
 	/* XXX assert() */
 
-	ucodeflags = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED,
+	ucodeflags = bcw_shm_read16(sc, BCW_SHM_SHARED,
 	    BCW_SHM_MICROCODEFLAGSLOW);
-	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, BCW_SHM_MICROCODEFLAGSLOW,
+	bcw_shm_write16(sc, BCW_SHM_SHARED, BCW_SHM_MICROCODEFLAGSLOW,
 	    ucodeflags & ~BCW_SHM_MICROCODEFLAGSAUTODIV);
 
 	switch (sc->sc_phy_type) {
@@ -5336,9 +5339,9 @@ bcw_phy_set_antenna_diversity(struct bcw_softc *sc)
 	}
 
 	if (antennadiv >= 2) {
-		ucodeflags = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED,
+		ucodeflags = bcw_shm_read16(sc, BCW_SHM_SHARED,
 		    BCW_SHM_MICROCODEFLAGSLOW);
-		bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED,
+		bcw_shm_write16(sc, BCW_SHM_SHARED,
 		    BCW_SHM_MICROCODEFLAGSLOW, ucodeflags |
 		    BCW_SHM_MICROCODEFLAGSAUTODIV);
 	}
@@ -5908,7 +5911,7 @@ bcw_radio_set_txpower_bg(struct bcw_softc *sc, uint16_t baseband_atten,
 
 	bcw_phy_set_baseband_atten(sc, baseband_atten);
 	bcw_radio_write16(sc, 0x0043, radio_atten);
-	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0064, radio_atten);
+	bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0064, radio_atten);
 	if (sc->sc_radio_ver == 0x2050)
 		bcw_radio_write16(sc, 0x0052, (bcw_radio_read16(sc, 0x0052) &
 		    ~0x0070) | ((txpower << 4) & 0x0070));
@@ -6362,15 +6365,15 @@ bcw_radio_clear_tssi(struct bcw_softc *sc)
 {
 	switch (sc->sc_phy_type) {
 	case BCW_PHY_TYPEA:
-		bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0068, 0x7f7f);
-		bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x006a, 0x7f7f);
+		bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0068, 0x7f7f);
+		bcw_shm_write16(sc, BCW_SHM_SHARED, 0x006a, 0x7f7f);
 		break;
 	case BCW_PHY_TYPEB:
 	case BCW_PHY_TYPEG:
-		bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0058, 0x7f7f);
-		bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x005a, 0x7f7f);
-		bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0070, 0x7f7f);
-		bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0072, 0x7f7f);
+		bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0058, 0x7f7f);
+		bcw_shm_write16(sc, BCW_SHM_SHARED, 0x005a, 0x7f7f);
+		bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0070, 0x7f7f);
+		bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0072, 0x7f7f);
 		break;
 	}
 }
@@ -6720,11 +6723,11 @@ bcw_radio_interference_mitigation_enable(struct bcw_softc *sc, int mode)
 			    bcw_phy_read16(sc, 0x048a) | 0x1000);
 			bcw_phy_write16(sc, 0x048a,
 			    (bcw_phy_read16(sc, 0x048a) & 0x9fff) | 0x2000);
-			tmp32 = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED,
+			tmp32 = bcw_shm_read16(sc, BCW_SHM_SHARED,
 			    BCW_SHM_MICROCODEFLAGSLOW);
 			if (!(tmp32 & 0x800)) {
 				tmp32 |= 0x800;
-				bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED,
+				bcw_shm_write16(sc, BCW_SHM_SHARED,
 				    BCW_SHM_MICROCODEFLAGSLOW, tmp32);
 			}
 		}
@@ -6761,12 +6764,12 @@ bcw_radio_set_txantenna(struct bcw_softc *sc, uint32_t val)
 	uint16_t tmp;
 
 	val <<= 8;
-	tmp = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, 0x0022) & 0xfcff;
-	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0022, tmp | val);
-	tmp = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, 0x03a8) & 0xfcff;
-	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x03a8, tmp | val);
-	tmp = bcw_shm_read16(sc, BCW_SHM_CONTROL_SHARED, 0x0054) & 0xfcff;
-	bcw_shm_write16(sc, BCW_SHM_CONTROL_SHARED, 0x0054, tmp | val);
+	tmp = bcw_shm_read16(sc, BCW_SHM_SHARED, 0x0022) & 0xfcff;
+	bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0022, tmp | val);
+	tmp = bcw_shm_read16(sc, BCW_SHM_SHARED, 0x03a8) & 0xfcff;
+	bcw_shm_write16(sc, BCW_SHM_SHARED, 0x03a8, tmp | val);
+	tmp = bcw_shm_read16(sc, BCW_SHM_SHARED, 0x0054) & 0xfcff;
+	bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0054, tmp | val);
 }
 
 /*
@@ -6812,7 +6815,7 @@ bcw_power_saving_ctl_bits(struct bcw_softc *sc, int bit25, int bit26)
 		/* TODO */
 	}
 
-	status = BCW_READ(sc, BCW_SBF);
+	status = BCW_READ(sc, BCW_MMIO_SBF);
 	if (bit25)
 		status |= BCW_SBF_PS1;
 	else
@@ -6821,10 +6824,10 @@ bcw_power_saving_ctl_bits(struct bcw_softc *sc, int bit25, int bit26)
 		status |= BCW_SBF_PS2;
 	else
 		status &= ~BCW_SBF_PS2;
-	BCW_WRITE(sc, BCW_SBF, status);
+	BCW_WRITE(sc, BCW_MMIO_SBF, status);
 	if (bit26 && sc->sc_core[sc->sc_currentcore].rev >= 5) {
 		for (i = 0; i < 100; i++) {
-			if (bcw_shm_read32(sc, BCW_SHM_CONTROL_SHARED, 0x0040)
+			if (bcw_shm_read32(sc, BCW_SHM_SHARED, 0x0040)
 			    != 4)
 				break;
 			delay(10);
