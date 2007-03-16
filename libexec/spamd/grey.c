@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.37 2007/03/14 19:39:55 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.38 2007/03/16 01:03:04 beck Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -516,6 +516,29 @@ do_changes(DB *db)
 }
 
 int
+db_notin(DB *db, char *key)
+{
+	int			i;
+	DBT			dbk, dbd;
+
+	memset(&dbk, 0, sizeof(dbk));
+	dbk.size = strlen(key);
+	dbk.data = key;
+	memset(&dbd, 0,
+ sizeof(dbd));
+	i = db->get(db, &dbk, &dbd, 0);
+	if (i == -1)
+		return (-1);
+	if (i)
+		/* not in the database */
+		return (1);
+	else
+		/* it is in the database */
+		return (0);
+}
+
+
+int
 greyscan(char *dbname)
 {
 	HASHINFO	hashinfo;
@@ -584,7 +607,7 @@ greyscan(char *dbname)
 					goto bad;
 			}
 
-			if (tuple) {
+			if (tuple && db_notin(db, a)) {
 				if (cp != NULL)
 					*cp = '\0';
 				/* re-add entry, keyed only by ip */
@@ -596,7 +619,6 @@ greyscan(char *dbname)
 					goto bad;
 				syslog_r(LOG_DEBUG, &sdata,
 				    "whitelisting %s in %s", a, dbname);
-
 			}
 			if (debug)
 				fprintf(stderr, "whitelisted %s\n", a);
