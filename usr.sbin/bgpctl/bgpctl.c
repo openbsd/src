@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.117 2007/03/03 12:43:08 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.118 2007/03/16 20:48:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -596,9 +596,6 @@ print_neighbor_capa_mp_safi(u_int8_t safi)
 		break;
 	case SAFI_MULTICAST:
 		printf(" Multicast");
-		break;
-	case SAFI_BOTH:
-		printf(" Unicast and Multicast");
 		break;
 	default:
 		printf(" unknown (%u)", safi);
