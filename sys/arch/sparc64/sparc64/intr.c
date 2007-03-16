@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.23 2005/04/26 18:54:39 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.24 2007/03/16 09:28:38 art Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -105,12 +105,12 @@ strayintr(fp, vectored)
 	    (unsigned long long)fp->tf_npc, fp->tf_tstate>>TSTATE_PSTATE_SHIFT,
 	    PSTATE_BITS, vectored);
 
-	timesince = time.tv_sec - straytime;
+	timesince = time_second - straytime;
 	if (timesince <= 10) {
 		if (++nstray > 500)
 			panic("crazy interrupts");
 	} else {
-		straytime = time.tv_sec;
+		straytime = time_second;
 		nstray = 1;
 	}
 #ifdef DDB

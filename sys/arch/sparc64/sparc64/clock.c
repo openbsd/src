@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.26 2006/07/01 20:05:11 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.27 2007/03/16 09:28:38 art Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -74,6 +74,7 @@
 #include <sys/gmon.h>
 #endif
 #include <sys/sched.h>
+#include <sys/timetc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -96,7 +97,6 @@
 #include <sparc64/dev/ebusvar.h>
 #include <sparc64/dev/fhcvar.h>
 
-static u_int64_t lasttick;
 extern u_int64_t cpu_clockrate;
 
 struct rtc_info {
@@ -112,6 +112,12 @@ struct clock_wenable_info {
 
 struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL
+};
+
+u_int tick_get_timecount(struct timecounter *);
+
+struct timecounter tick_timecounter = {
+	tick_get_timecount, NULL, ~0u, 0, "tick", 0, NULL
 };
 
 /*
@@ -665,7 +671,6 @@ void
 cpu_initclocks()
 {
 	int statint, minint;
-	static u_int64_t start_time;
 #ifdef DEBUG
 	extern int intrdebug;
 #endif
@@ -689,21 +694,10 @@ cpu_initclocks()
 	if (!cpu_clockrate) 
 		/* Default to 200MHz clock XXXXX */
 		cpu_clockrate = 200000000;
-	
-	/*
-	 * Calculate the starting %tick value.  We set that to the same
-	 * as time, scaled for the CPU clockrate.  This gets nasty, but
-	 * we can handle it.  time.tv_usec is in microseconds.  
-	 * cpu_clockrate is in MHz.  
-	 */
-	start_time = time.tv_sec * cpu_clockrate;
-	/* Now fine tune the usecs */
-	start_time += cpu_clockrate / 1000000 * time.tv_usec;
-	
-	/* Initialize the %tick register */
-	lasttick = start_time;
-	__asm __volatile("wrpr %0, 0, %%tick" : : "r" (start_time));
 
+	tick_timecounter.tc_frequency = cpu_clockrate;
+	tc_init(&tick_timecounter);
+	
 	/*
 	 * Now handle machines w/o counter-timers.
 	 */
@@ -818,7 +812,7 @@ clockintr(cap)
 	t = tick() & TICK_TICKS;
 
 	if (!tick_base) {
-		tick_base = (time.tv_sec * 1000000LL + time.tv_usec) 
+		tick_base = (time_second * 1000000LL + time.tv_usec) 
 			* 1000000LL / cpu_clockrate;
 		tick_base -= t;
 	} else if (clockcheck) {
@@ -840,8 +834,6 @@ clockintr(cap)
 #endif
 	/* Let locore.s clear the interrupt for us. */
 	hardclock((struct clockframe *)cap);
-
-	lasttick = tick() & TICK_TICKS;
 
 	level10.ih_count.ec_count++;
 
@@ -865,8 +857,6 @@ tickintr(cap)
 	hardclock((struct clockframe *)cap);
 
 	s = splhigh();
-	__asm __volatile("rd %%tick, %0" : "=r" (lasttick) :);
-	lasttick &= TICK_TICKS;
 	/* Reset the interrupt */
 	next_tick(tick_increment);
 	level0.ih_count.ec_count++;
@@ -945,6 +935,8 @@ inittodr(base)
 {
 	int badbase = 0, waszero = base == 0;
 	char *bad = NULL;
+	struct timeval tv;
+	struct timespec ts;
 
 	if (base < 5 * SECYR) {
 		/*
@@ -958,32 +950,39 @@ inittodr(base)
 		badbase = 1;
 	}
 
-	if (todr_handle &&
-	    (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
-	    time.tv_sec == 0)) {
+	if (todr_handle && (todr_gettime(todr_handle, &tv) != 0 ||
+	    tv.tv_sec == 0)) {
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the clock.
 		 */
 		bad = "WARNING: bad date in battery clock";
-		time.tv_sec = base;
+		tv.tv_sec = base;
+		tv.tv_usec = 0;
 		if (!badbase)
 			resettodr();
 	} else {
-		int deltat = time.tv_sec - base;
+		int deltat = tv.tv_sec - base;
 
 		sparc_clock_time_is_ok = 1;
 
 		if (deltat < 0)
 			deltat = -deltat;
-		if (waszero || deltat < 2 * SECDAY)
-			return;
+		if (!(waszero || deltat < 2 * SECDAY)) {
 #ifndef SMALL_KERNEL
-		printf("WARNING: clock %s %ld days",
-		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
-		bad = "";
+			printf("WARNING: clock %s %ld days",
+			    tv.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
+			bad = "";
+		}
 #endif
 	}
+
+printf("setting time to: %d\n", tv.tv_sec);
+
+	ts.tv_sec = tv.tv_sec;
+	ts.tv_nsec = tv.tv_usec * 1000;
+	tc_setclock(&ts);
+
 	if (bad) {
 		printf("%s", bad);
 		printf(" -- CHECK AND RESET THE DATE!\n");
@@ -999,13 +998,15 @@ inittodr(base)
 void
 resettodr()
 {
+	struct timeval tv;
 
-	if (time.tv_sec == 0)
+	if (time_second == 0)
 		return;
 
+	microtime(&tv);
+
 	sparc_clock_time_is_ok = 1;
-	if (todr_handle == 0 ||
-		todr_settime(todr_handle, (struct timeval *)&time) != 0)
+	if (todr_handle == 0 || todr_settime(todr_handle, &tv) != 0)
 		printf("Cannot set time in time-of-day clock\n");
 }
 
@@ -1140,28 +1141,12 @@ rtc_setcal(handle, v)
 
 #define	USECPERSEC	1000000
 
-void
-microtime(tvp)
-	struct timeval *tvp;
+u_int
+tick_get_timecount(struct timecounter *tc)
 {
-	int s;
 	u_int64_t tick;
 
-	s = splhigh();
 	__asm __volatile("rd %%tick, %0" : "=r" (tick) :);
-	tick &= TICK_TICKS;
-	tick -= lasttick;
-	tvp->tv_sec = time.tv_sec;
-	tvp->tv_usec = time.tv_usec;
-	splx(s);
 
-	tick = (tick * USECPERSEC) / cpu_clockrate;
-
-	tvp->tv_sec += tick / USECPERSEC;
-	tvp->tv_usec += tick % USECPERSEC;
-
-	while (tvp->tv_usec >= USECPERSEC) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= USECPERSEC;
-	}
+	return (tick & ~0u);
 }
