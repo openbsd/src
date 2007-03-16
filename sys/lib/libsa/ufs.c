@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.c,v 1.17 2003/08/25 23:27:44 tedu Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.18 2007/03/16 21:48:59 tsi Exp $	*/
 /*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
 
 /*-
@@ -145,6 +145,7 @@ read_inode(ino_t inumber, struct open_file *f)
 		for (level = 0; level < NIADDR; level++)
 			fp->f_blkno[level] = -1;
 		fp->f_buf_blkno = -1;
+		fp->f_seekp = 0;
 	}
 out:
 	free(buf, fs->fs_bsize);
