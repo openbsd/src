@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.220 2007/03/12 15:49:54 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.221 2007/03/16 13:52:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1366,14 +1366,11 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int16_t afi,
 		 */
 		asp->nexthop->refcnt++;
 
-		totlen += nhlen;
-		data += nhlen;
+		/* ignore reserved (old SNPA) field as per RFC 4760 */
+		totlen += nhlen + 1;
+		data += nhlen + 1;
 
-		if (*data != 0) {
-			log_warnx("SNPA are not supported for IPv6");
-			return (-1);
-		}
-		return (++totlen);
+		return (totlen);
 	default:
 		log_warnx("bad multiprotocol nexthop, bad AF");
 		break;
@@ -2429,8 +2426,7 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 	}
 
 	if (afi == AFI_ALL || afi == AFI_IPv4)
-		if (safi == SAFI_ALL || safi == SAFI_UNICAST ||
-		    safi == SAFI_BOTH) {
+		if (safi == SAFI_ALL || safi == SAFI_UNICAST) {
 			if (peer->conf.announce_type ==
 			    ANNOUNCE_DEFAULT_ROUTE)
 				up_generate_default(rules_l, peer, AF_INET);
@@ -2438,8 +2434,7 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 				pt_dump(rde_up_dump_upcall, peer, AF_INET);
 		}
 	if (afi == AFI_ALL || afi == AFI_IPv6)
-		if (safi == SAFI_ALL || safi == SAFI_UNICAST ||
-		    safi == SAFI_BOTH) {
+		if (safi == SAFI_ALL || safi == SAFI_UNICAST) {
 			if (peer->conf.announce_type ==
 			    ANNOUNCE_DEFAULT_ROUTE)
 				up_generate_default(rules_l, peer, AF_INET6);

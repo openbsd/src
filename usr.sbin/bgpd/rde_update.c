@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.53 2007/01/31 15:23:19 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.54 2007/03/16 13:52:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -554,7 +554,7 @@ up_generate_mp_reach(struct rde_peer *peer, struct update_attr *upa,
 
 	switch (af) {
 	case AF_INET6:
-		upa->mpattr_len = 21; /* AFI + SAFI + NH LEN + NH + SNPA LEN */
+		upa->mpattr_len = 21; /* AFI + SAFI + NH LEN + NH + Reserved */
 		upa->mpattr = malloc(upa->mpattr_len);
 		if (upa->mpattr == NULL)
 			fatal("up_generate_mp_reach");
@@ -562,7 +562,7 @@ up_generate_mp_reach(struct rde_peer *peer, struct update_attr *upa,
 		memcpy(upa->mpattr, &tmp, sizeof(tmp));
 		upa->mpattr[2] = SAFI_UNICAST;
 		upa->mpattr[3] = sizeof(struct in6_addr);
-		upa->mpattr[20] = 0; /* SNPA always 0 */
+		upa->mpattr[20] = 0; /* Reserved must be 0 */
 
 		/* nexthop dance see also up_get_nexthop() */
 		if (peer->conf.ebgp == 0) {
