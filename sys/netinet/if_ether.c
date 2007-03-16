@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.65 2006/08/21 21:36:53 mpf Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.66 2007/03/16 16:58:40 deraadt Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -773,9 +773,6 @@ arplookup(addr, create, proxy)
 	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
 	    rt->rt_gateway->sa_family != AF_LINK) {
 		if (create) {
-			log(LOG_DEBUG,
-			    "arplookup: unable to enter address for %s\n",
-			    inet_ntoa(sin.sin_addr));
 			if (rt->rt_refcnt <= 0 &&
 			    (rt->rt_flags & RTF_CLONED) != 0) {
 				rtrequest(RTM_DELETE,
