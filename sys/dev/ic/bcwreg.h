@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.20 2007/03/16 12:16:31 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.21 2007/03/16 13:49:11 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -270,52 +270,6 @@
 #define BCW_CIR_SBID_LO_INITIATOR	0x80
 #define BCW_CIR_SBID_HI			0xffc
 #define BCW_SPROM_ANTGAIN		0x1074
-
-/*
- * XXX Dead code (also dead in bcw.c), please remove me soon
- */
-#if 0
-#define BCW_INT_STS			0x20
-#define BCW_REG0_WIN			0x80			/* XXX */
-#define BCW_PCICR			0x94			/* XXX */
-#define BCW_SONICS_WIN			0x18002000		/* XXX */
-#define BCW_SPCI_TR2			0x0108			/* XXX */
-#define SBTOPCI_PREF			0x4			/* XXX */
-#define SBTOPCI_BURST			0x8			/* XXX */
-#define BCW_SBINTVEC			0x0f94			/* XXX */
-#define SBIV_ENET0			0x02			/* XXX */
-#define I_TO				0x00000080		/* XXX */
-#define I_PC				0x00000400		/* XXX */
-#define I_PD				0x00000800		/* XXX */
-#define I_DE				0x00001000		/* XXX */
-#define I_RU				0x00002000 		/* XXX */
-#define I_RO				0x00004000		/* XXX */
-#define I_XU				0x00008000		/* XXX */
-#define I_RI				0x00010000		/* XXX */
-#define I_XI				0x01000000		/* XXX */
-#define BCW_MACCTL			0x00A8			/* XXX */
-#define BCW_EMC_CRC32_ENAB		0x00000001		/* XXX */
-#define BCW_EMC_PDOWN			0x00000004		/* XXX */
-#define BCW_EMC_LED			0x000000e0		/* XXX */
-#define BCW_DMAI_CTL			0x0100			/* XXX */
-#define BCW_DMA_TXCTL			0x0200			/* XXX */
-#define XC_XE				0x1			/* XXX */
-#define BCW_DMA_DPTR			0x0208			/* XXX */
-#define BCW_DMA_RXCTL			0x0210			/* XXX */
-#define BCW_DMA_RXDPTR			0x0218			/* XXX */
-#define BCW_RX_CTL			0x0400			/* XXX */
-#define ERC_DB				0x00000001		/* XXX */
-#define ERC_AM				0x00000002		/* XXX */
-#define ERC_PE				0x00000008		/* XXX */
-#define BCW_RX_MAX			0x0404			/* XXX */
-#define BCW_TX_MAX			0x0408			/* XXX */
-#define BCW_FILT_CTL			0x0428			/* XXX */
-#define BCW_ENET_CTL			0x042C			/* XXX */
-#define EC_EE				0x00000001		/* XXX */
-#define EC_ED				0x00000002		/* XXX */
-#define BCW_TX_WATER			0x0434			/* XXX */
-#define BCW_DMA_TXSTATUS(x)		(0x20c + (x * 0x20))	/* XXX */
-#endif
 
 /*
  * XXX Do we really need those ...

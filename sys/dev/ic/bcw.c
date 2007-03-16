@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.72 2007/03/16 12:16:31 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.73 2007/03/16 13:49:11 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -98,7 +98,6 @@ void		bcw_txintr(struct bcw_softc *);
 //void		bcw_add_mac(struct bcw_softc *, uint8_t *, unsigned long);
 int		bcw_add_rxbuf(struct bcw_softc *, int);
 void		bcw_rxdrain(struct bcw_softc *);
-void		bcw_set_filter(struct ifnet *); 
 void		bcw_tick(void *);
 int		bcw_ioctl(struct ifnet *, u_long, caddr_t);
 int		bcw_alloc_rx_ring(struct bcw_softc *, struct bcw_rx_ring *,
@@ -1379,140 +1378,22 @@ bcw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
-/* Start packet transmission on the interface. */
+/*
+ * Start packet transmission on the interface
+ */
 void
 bcw_start(struct ifnet *ifp)
 {
 #if 0
-	struct bcw_softc *sc = ifp->if_softc;
-	struct mbuf    *m0;
-	bus_dmamap_t    dmamap;
-	int		txstart;
-	int		txsfree;
-	int		error;
+	struct malo_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni;
+	struct mbuf *m;
 #endif
-	int		newpkts = 0;
 
-	/*
-	 * do not start another if currently transmitting, and more
-	 * descriptors(tx slots) are needed for next packet.
-	 */
+	/* if device is not up return directly */
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
-
-#if 0   /* FIXME */
-	/* determine number of descriptors available */
-	if (sc->sc_txsnext >= sc->sc_txin)
-		txsfree = BCW_NTXDESC - 1 + sc->sc_txin - sc->sc_txsnext;
-	else
-		txsfree = sc->sc_txin - sc->sc_txsnext - 1;
-
-	/*
-	 * Loop through the send queue, setting up transmit descriptors
-	 * until we drain the queue, or use up all available transmit
-	 * descriptors.
-	 */
-	while (txsfree > 0) {
-		int	seg;
-
-		/* Grab a packet off the queue. */
-		IFQ_POLL(&ifp->if_snd, m0);
-		if (m0 == NULL)
-			break;
-
-		/* get the transmit slot dma map */
-		dmamap = sc->sc_cdata.bcw_tx_map[sc->sc_txsnext];
-
-		/*
-		 * Load the DMA map.  If this fails, the packet either
-		 * didn't fit in the alloted number of segments, or we
-		 * were short on resources. If the packet will not fit,
-		 * it will be dropped. If short on resources, it will
-		 * be tried again later.
-		 */
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
-		if (error == EFBIG) {
-			printf("%s: Tx packet consumes too many DMA segments, "
-			    "dropping...\n", sc->sc_dev.dv_xname);
-			IFQ_DEQUEUE(&ifp->if_snd, m0);
-			m_freem(m0);
-			ifp->if_oerrors++;
-			continue;
-		} else if (error) {
-			/* short on resources, come back later */
-			printf("%s: unable to load Tx buffer, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
-			break;
-		}
-		/* If not enough descriptors available, try again later */
-		if (dmamap->dm_nsegs > txsfree) {
-			ifp->if_flags |= IFF_OACTIVE;
-			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			break;
-		}
-		/* WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET. */
-
-		/* So take it off the queue */
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
-
-		/* save the pointer so it can be freed later */
-		sc->sc_cdata.bcw_tx_chain[sc->sc_txsnext] = m0;
-
-		/* Sync the data DMA map. */
-		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
-		    BUS_DMASYNC_PREWRITE);
-
-		/* Initialize the transmit descriptor(s). */
-		txstart = sc->sc_txsnext;
-		for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
-			uint32_t ctrl;
-
-			ctrl = dmamap->dm_segs[seg].ds_len & CTRL_BC_MASK;
-			if (seg == 0)
-				ctrl |= CTRL_SOF;
-			if (seg == dmamap->dm_nsegs - 1)
-				ctrl |= CTRL_EOF;
-			if (sc->sc_txsnext == BCW_NTXDESC - 1)
-				ctrl |= CTRL_EOT;
-			ctrl |= CTRL_IOC;
-			sc->bcw_tx_ring[sc->sc_txsnext].ctrl = htole32(ctrl);
-			/* MAGIC */
-			sc->bcw_tx_ring[sc->sc_txsnext].addr =
-			    htole32(dmamap->dm_segs[seg].ds_addr + 0x40000000);
-			if (sc->sc_txsnext + 1 > BCW_NTXDESC - 1)
-				sc->sc_txsnext = 0;
-			else
-				sc->sc_txsnext++;
-			txsfree--;
-		}
-		/* sync descriptors being used */
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_ring_map,
-		    sizeof(struct bcw_dma_slot) * txstart + PAGE_SIZE,
-		    sizeof(struct bcw_dma_slot) * dmamap->dm_nsegs,
-		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-		/* Give the packet to the chip. */
-		BCW_WRITE(sc, BCW_DMA_DPTR,
-		    sc->sc_txsnext * sizeof(struct bcw_dma_slot));
-
-		newpkts++;
-
-#if NBPFILTER > 0
-		/* Pass the packet to any BPF listeners. */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
-#endif				/* NBPFILTER > 0 */
-	}
-	if (txsfree == 0) {
-		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
-	}
-#endif /* FIXME */
-	if (newpkts) {
-		/* Set a watchdog timer in case the chip flakes out. */
-		ifp->if_timer = 5;
-	}
 }
 
 /* Watchdog timer handler. */
@@ -1620,233 +1501,36 @@ bcw_intr_disable(struct bcw_softc *sc, uint32_t mask)
 int
 bcw_intr(void *arg)
 {
-	//struct bcw_softc *sc = arg;
-	//uint32_t reason;
-
-	return (0);
 #if 0
-	struct ifnet *ifp;
-	uint32_t intstatus;
-	int wantinit;
-	int handled = 0;
-
-	for (wantinit = 0; wantinit == 0;) {
-		intstatus = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_INT_STS);
-
-		/* ignore if not ours, or unsolicited interrupts */
-		intstatus &= sc->sc_intmask;
-		if (intstatus == 0)
-			break;
-
-		handled = 1;
-
-		/* Ack interrupt */
-		(sc->sc_conf_write)(sc->sc_dev_softc, BCW_INT_STS, intstatus);
-
-		/* Receive interrupts. */
-		if (intstatus & I_RI)
-			bcw_rxintr(sc);
-		/* Transmit interrupts. */
-		if (intstatus & I_XI)
-			bcw_txintr(sc);
-		/* Error interrupts */
-		if (intstatus & ~(I_RI | I_XI)) {
-			if (intstatus & I_XU)
-				printf("%s: transmit fifo underflow\n",
-				    sc->sc_dev.dv_xname);
-			if (intstatus & I_RO) {
-				printf("%s: receive fifo overflow\n",
-				    sc->sc_dev.dv_xname);
-				ifp->if_ierrors++;
-			}
-			if (intstatus & I_RU)
-				printf("%s: receive descriptor underflow\n",
-				    sc->sc_dev.dv_xname);
-			if (intstatus & I_DE)
-				printf("%s: descriptor protocol error\n",
-				    sc->sc_dev.dv_xname);
-			if (intstatus & I_PD)
-				printf("%s: data error\n",
-				    sc->sc_dev.dv_xname);
-			if (intstatus & I_PC)
-				printf("%s: descriptor error\n",
-				    sc->sc_dev.dv_xname);
-			if (intstatus & I_TO)
-				printf("%s: general purpose timeout\n",
-				    sc->sc_dev.dv_xname);
-			wantinit = 1;
-		}
-	}
-
-	if (handled) {
-		if (wantinit)
-			bcw_init(ifp);
-		/* Try to get more packets going. */
-		bcw_start(ifp);
-	}
-
-	return (handled);
+	struct bcw_softc *sc = arg;
+	uint32_t reason;
 #endif
+	return (0);
 }
 
-/* Receive interrupt handler */
+/*
+ * Receive interrupt handler
+ */
 void
 bcw_rxintr(struct bcw_softc *sc)
 {
 #if 0
-	struct rx_pph *pph;
-	struct mbuf *m;
-	int len;
-	int i;
-#endif
-	int curr;
-
-	/* get pointer to active receive slot */
-	curr = BCW_READ(sc, BCW_DMA_RXSTATUS(0)) & RS_CD_MASK;
-	curr = curr / sizeof(struct bcw_dma_slot);
-	if (curr >= BCW_RX_RING_COUNT)
-		curr = BCW_RX_RING_COUNT - 1;
-
-#if 0
-	/* process packets up to but not current packet being worked on */
-	for (i = sc->sc_rxin; i != curr;
-	    i + 1 > BCW_NRXDESC - 1 ? i = 0 : i++) {
-		/* complete any post dma memory ops on packet */
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_cdata.bcw_rx_map[i], 0,
-		    sc->sc_cdata.bcw_rx_map[i]->dm_mapsize,
-		    BUS_DMASYNC_POSTREAD);
-
-		/*
-		 * If the packet had an error, simply recycle the buffer,
-		 * resetting the len, and flags.
-		 */
-		pph = mtod(sc->sc_cdata.bcw_rx_chain[i], struct rx_pph *);
-		if (pph->flags & (RXF_NO | RXF_RXER | RXF_CRC | RXF_OV)) {
-			/* XXX Increment input error count */
-			pph->len = 0;
-			pph->flags = 0;
-			continue;
-		}
-		/* receive the packet */
-		len = pph->len;
-		if (len == 0)
-			continue;	/* no packet if empty */
-		pph->len = 0;
-		pph->flags = 0;
-		/* bump past pre header to packet */
-		sc->sc_cdata.bcw_rx_chain[i]->m_data +=
-		    BCW_PREPKT_HEADER_SIZE;
-
- 		/*
-		 * The chip includes the CRC with every packet.  Trim
-		 * it off here.
-		 */
-		len -= ETHER_CRC_LEN;
-
-		/*
-		 * If the packet is small enough to fit in a
-		 * single header mbuf, allocate one and copy
-		 * the data into it.  This greatly reduces
-		 * memory consumption when receiving lots
-		 * of small packets.
-		 *
-		 * Otherwise, add a new buffer to the receive
-		 * chain.  If this fails, drop the packet and
-		 * recycle the old buffer.
-		 */
-		if (len <= (MHLEN - 2)) {
-			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			if (m == NULL)
-				goto dropit;
-			m->m_data += 2;
-			memcpy(mtod(m, caddr_t),
-			    mtod(sc->sc_cdata.bcw_rx_chain[i], caddr_t), len);
-			sc->sc_cdata.bcw_rx_chain[i]->m_data -=
-			    BCW_PREPKT_HEADER_SIZE;
-		} else {
-			m = sc->sc_cdata.bcw_rx_chain[i];
-			if (bcw_add_rxbuf(sc, i) != 0) {
-		dropit:
-				/* XXX increment wireless input error counter */
-				/* continue to use old buffer */
-				sc->sc_cdata.bcw_rx_chain[i]->m_data -=
-				    BCW_PREPKT_HEADER_SIZE;
-				bus_dmamap_sync(sc->sc_dmat,
-				    sc->sc_cdata.bcw_rx_map[i], 0,
-				    sc->sc_cdata.bcw_rx_map[i]->dm_mapsize,
-				    BUS_DMASYNC_PREREAD);
-				continue;
-			}
-		}
-
-		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = m->m_len = len;
-		/* XXX Increment input packet count */
-
-#if NBPFILTER > 0
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it's for us.
-		 *
-		 * if (ifp->if_bpf)
-		 *	bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-		 */
-#endif				/* NBPFILTER > 0 */
-
-		/* XXX Pass it on. */
-		//ether_input_mbuf(ifp, m);
-
-		/* re-check current in case it changed */
-		curr = (BCW_READ(sc, BCW_DMA_RXSTATUS) & RS_CD_MASK) /
-		    sizeof(struct bcw_dma_slot);
-		if (curr >= BCW_NRXDESC)
-			curr = BCW_NRXDESC - 1;
-	}
-	sc->sc_rxin = curr;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 #endif
 }
 
-/* Transmit interrupt handler */
+/*
+ * Transmit interrupt handler
+ */
 void
 bcw_txintr(struct bcw_softc *sc)
 {
-//	struct ifnet *ifp = &sc->bcw_ac.ac_if;
-	int curr;
-//	int i;
-
-//	ifp->if_flags &= ~IFF_OACTIVE;
-
 #if 0
-	/*
-	 * Go through the Tx list and free mbufs for those
-	 * frames which have been transmitted.
-	 */
-	curr = BCW_READ(sc, BCW_DMA_TXSTATUS) & RS_CD_MASK;
-	curr = curr / sizeof(struct bcw_dma_slot);
-	if (curr >= BCW_NTXDESC)
-		curr = BCW_NTXDESC - 1;
-	for (i = sc->sc_txin; i != curr;
-	    i + 1 > BCW_NTXDESC - 1 ? i = 0 : i++) {
-		/* do any post dma memory ops on transmit data */
-		if (sc->sc_cdata.bcw_tx_chain[i] == NULL)
-			continue;
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_cdata.bcw_tx_map[i], 0,
-		    sc->sc_cdata.bcw_tx_map[i]->dm_mapsize,
-		    BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat, sc->sc_cdata.bcw_tx_map[i]);
-		m_freem(sc->sc_cdata.bcw_tx_chain[i]);
-		sc->sc_cdata.bcw_tx_chain[i] = NULL;
-		ifp->if_opackets++;
-	}
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 #endif
-	sc->sc_txin = curr;
 
-	/*
-	 * If there are no more pending transmissions, cancel the watchdog
-	 * timer
-	 */
-//	if (sc->sc_txsnext == sc->sc_txin)
-//		ifp->if_timer = 0;
 }
 
 /* initialize the interface */
@@ -1985,95 +1669,6 @@ bcw_init(struct ifnet *ifp)
 
 	DPRINTF(("%s: Chip initialized\n", sc->sc_dev.dv_xname));
 
-#if 0
-	/* Cancel any pending I/O. */
-	bcw_stop(ifp, 0);
-
-	/*
-	 * Most of this needs to be rewritten to take into account the
-	 * possible single/multiple core nature of the BCM43xx, and the
-	 * differences from the BCM44xx ethernet chip that if_bce.c is
-	 * written for.
-	 */
-
-	/* enable pci interrupts, bursts, and prefetch */
-
-	/* remap the pci registers to the Sonics config registers */
-	/* XXX - use (sc->sc_conf_read/write) */
-	/* save the current map, so it can be restored */
-	reg_win = BCW_READ(sc, BCW_REG0_WIN);
-
-	/* set register window to Sonics registers */
-	BCW_WRITE(sc, BCW_REG0_WIN, BCW_SONICS_WIN);
-
-	/* enable SB to PCI interrupt */
-	BCW_WRITE(sc, BCW_SBINTVEC, BCW_READ(sc, BCW_SBINTVEC) | SBIV_ENET0);
-
-	/* enable prefetch and bursts for sonics-to-pci translation 2 */
-	BCW_WRITE(sc, BCW_SPCI_TR2,
-	    BCW_READ(sc, BCW_SPCI_TR2) | SBTOPCI_PREF | SBTOPCI_BURST);
-
-	/* restore to ethernet register space */
-	BCW_WRITE(sc, BCW_REG0_WIN, reg_win);
-
-	/* Reset the chip to a known state. */
-	bcw_reset(sc);
-
-	/* FIXME */
-	/* Initialize transmit descriptors */
-	memset(sc->bcw_tx_ring, 0, BCW_NTXDESC * sizeof(struct bcw_dma_slot));
-	sc->sc_txsnext = 0;
-	sc->sc_txin = 0;
-
-	/* enable crc32 generation and set proper LED modes */
-	BCW_WRITE(sc, BCW_MACCTL,
-	    BCW_READ(sc, BCW_MACCTL) | BCW_EMC_CRC32_ENAB | BCW_EMC_LED);
-	    
-	/* reset or clear powerdown control bit  */
-	BCW_WRITE(sc, BCW_MACCTL, BCW_READ(sc, BCW_MACCTL) & ~BCW_EMC_PDOWN);
-
-	/* setup DMA interrupt control */
-	BCW_WRITE(sc, BCW_DMAI_CTL, 1 << 24);	/* MAGIC */
-
-	/* setup packet filter */
-	bcw_set_filter(ifp);
-
-	/* set max frame length, account for possible VLAN tag */
-	BCW_WRITE(sc, BCW_RX_MAX, ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
-	BCW_WRITE(sc, BCW_TX_MAX, ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
-
-	/* set tx watermark */
-	BCW_WRITE(sc, BCW_TX_WATER, 56);
-
-	/* enable transmit */
-	BCW_WRITE(sc, BCW_DMA_TXCTL, XC_XE);
-
-	/*
-	 * Give the receive ring to the chip, and
-	 * start the receive DMA engine.
-	 */
-	sc->sc_rxin = 0;
-
-	/* enable receive */
-	BCW_WRITE(sc, BCW_DMA_RXCTL, BCW_PREPKT_HEADER_SIZE << 1 | 1);
-
-	/* Enable interrupts */
-	sc->sc_intmask =
-	    I_XI | I_RI | I_XU | I_RO | I_RU | I_DE | I_PD | I_PC | I_TO;
-	BCW_WRITE(sc, BCW_INT_MASK, sc->sc_intmask);
-	    
-	/* FIXME */
-	/* start the receive dma */
-	BCW_WRITE(sc, BCW_DMA_RXDPTR,
-	    BCW_NRXDESC * sizeof(struct bcw_dma_slot));
-
-	/* set media */
-	//mii_mediachg(&sc->bcw_mii);
-
-	/* turn on the ethernet mac */
-	BCW_WRITE(sc, BCW_ENET_CTL, BCW_READ(sc, BCW_ENET_CTL) | EC_EE);
-	    
-#endif
 	/* start timer */
 	timeout_add(&sc->sc_timeout, hz);
 
@@ -2084,63 +1679,22 @@ bcw_init(struct ifnet *ifp)
 	return (0);
 }
 
-/* Add a receive buffer to the indicated descriptor. */
+/*
+ * Add a receive buffer to the indicated descriptor
+ */
 int
 bcw_add_rxbuf(struct bcw_softc *sc, int idx)
 {
-#if 0
-	struct mbuf *m;
-	int error;
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-		return (ENOBUFS);
-
-	MCLGET(m, M_DONTWAIT);
-	if ((m->m_flags & M_EXT) == 0) {
-		m_freem(m);
-		return (ENOBUFS);
-	}
-	if (sc->sc_cdata.bcw_rx_chain[idx] != NULL)
-		bus_dmamap_unload(sc->sc_dmat,
-		    sc->sc_cdata.bcw_rx_map[idx]);
-
-	sc->sc_cdata.bcw_rx_chain[idx] = m;
-
-	error = bus_dmamap_load(sc->sc_dmat, sc->sc_cdata.bcw_rx_map[idx],
-	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
-	    BUS_DMA_READ | BUS_DMA_NOWAIT);
-	if (error)
-		return (error);
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_cdata.bcw_rx_map[idx], 0,
-	    sc->sc_cdata.bcw_rx_map[idx]->dm_mapsize, BUS_DMASYNC_PREREAD);
-
-	BCW_INIT_RXDESC(sc, idx);
-
 	return (0);
-#endif
-	return (1);
-
 }
 
-/* Drain the receive queue. */
+/*
+ * Drain the receive queue
+ */
 void
 bcw_rxdrain(struct bcw_softc *sc)
 {
-#if 0
-	/* FIXME */
-	int i;
 
-	for (i = 0; i < BCW_NRXDESC; i++) {
-		if (sc->sc_cdata.bcw_rx_chain[i] != NULL) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    sc->sc_cdata.bcw_rx_map[i]);
-			m_freem(sc->sc_cdata.bcw_rx_chain[i]);
-			sc->sc_cdata.bcw_rx_chain[i] = NULL;
-		}
-	}
-#endif
 }
 
 /* Stop transmission on the interface */
@@ -2148,7 +1702,6 @@ void
 bcw_stop(struct ifnet *ifp, int disable)
 {
 	struct bcw_softc *sc = ifp->if_softc;
-	//uint32_t val;
 
 	/* Stop the 1 second timer */
 	timeout_del(&sc->sc_timeout);
@@ -2162,33 +1715,10 @@ bcw_stop(struct ifnet *ifp, int disable)
 	sc->sc_intmask = 0;
 	delay(10);
 
-	/* Disable emac */
-#if 0
-	BCW_WRITE(sc, BCW_ENET_CTL, EC_ED);
-	for (i = 0; i < 200; i++) {
-		val = BCW_READ(sc, BCW_ENET_CTL);
-		    
-		if (!(val & EC_ED))
-			break;
-		delay(10);
-	}
-#endif
 	/* Stop the DMA */
 	BCW_WRITE(sc, BCW_DMA_RXCONTROL(0), 0);
 	BCW_WRITE(sc, BCW_DMA_TXCONTROL(0), 0);
 	delay(10);
-
-#if 0	/* FIXME */
-	/* Release any queued transmit buffers. */
-	for (i = 0; i < BCW_NTXDESC; i++) {
-		if (sc->sc_cdata.bcw_tx_chain[i] != NULL) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    sc->sc_cdata.bcw_tx_map[i]);
-			m_freem(sc->sc_cdata.bcw_tx_chain[i]);
-			sc->sc_cdata.bcw_tx_chain[i] = NULL;
-		}
-	}
-#endif
 
 	/* drain receive queue */
 	if (disable)
@@ -2229,20 +1759,6 @@ bcw_reset(struct bcw_softc *sc)
 	bcw_change_core(sc, sc->sc_core_80211->num);
 
 	sbval = BCW_READ(sc, BCW_SBTMSTATELOW);
-#if 0
-	if ((sbval & (SBTML_RESET | reject | SBTML_CLK)) == SBTML_CLK) {
-		/* XXX Stop all DMA */
-		/* XXX reset the dma engines */
-	}
-	/* XXX Cores are reset manually elsewhere for now */
-	/* Reset the wireless core, attaching the PHY */
-	bcw_reset_core(sc, SBTML_80211FLAG | SBTML_80211PHY );
-	bcw_change_core(sc, sc->sc_core_common->num);
-	bcw_reset_core(sc, 0);
-	bcw_change_core(sc, sc->sc_core_bus->num);
-	bcw_reset_core(sc, 0);
-#endif
-	/* XXX update PHYConnected to requested value */
 
 	/* Clear Baseband Attenuation, might only work for B/G rev < 0 */
 	BCW_WRITE16(sc, BCW_RADIO_BASEBAND, 0);
@@ -2252,75 +1768,13 @@ bcw_reset(struct bcw_softc *sc)
 	sbval |= BCW_SBF_400_MAGIC;
 	BCW_WRITE(sc, BCW_MMIO_SBF, sbval);
 
-	/* XXX Clear saved interrupt status for DMA controllers */
-
-	/*
-	 * XXX Attach cores to the backplane, if we have more than one
-	 * Don't attach PCMCIA cores on a PCI card, and reverse?
-	 * OR together the bus flags of the 3 cores and write to PCICR
-	 */
-#if 0
-	if (sc->sc_havecommon == 1) {
-		sbval = (sc->sc_conf_read)(sc, BCW_PCICR);
-		sbval |= 0x1 << 8; /* XXX hardcoded bitmask of single core */
-		(sc->sc_conf_write)(sc, BCW_PCICR, sbval);
-	}
-#endif
 	/* Change back to the Wireless core */
 	bcw_change_core(sc, sc->sc_core_80211->num);
-}
-
-/* Set up the receive filter. */
-void
-bcw_set_filter(struct ifnet *ifp)
-{
-#if 0
-	struct bcw_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_PROMISC) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		BCW_WRITE(sc, BCW_RX_CTL, BCW_READ(sc, BCW_RX_CTL) | ERC_PE);
-	} else {
-		ifp->if_flags &= ~IFF_ALLMULTI;
-
-		/* turn off promiscuous */
-		BCW_WRITE(sc, BCW_RX_CTL, BCW_READ(sc, BCW_RX_CTL) & ~ERC_PE);
-
-		/* enable/disable broadcast */
-		if (ifp->if_flags & IFF_BROADCAST)
-			BCW_WRITE(sc, BCW_RX_CTL,
-			    BCW_READ(sc, BCW_RX_CTL) & ~ERC_DB);
-		else
-			BCW_WRITE(sc, BCW_RX_CTL,
-			    BCW_READ(sc, BCW_RX_CTL) | ERC_DB);
-
-		/* disable the filter */
-		BCW_WRITE(sc, BCW_FILT_CTL, 0);
-
-		/* add our own address */
-		// bcw_add_mac(sc, sc->bcw_ac.ac_enaddr, 0);
-
-		/* for now accept all multicast */
-		BCW_WRITE(sc, BCW_RX_CTL, BCW_READ(sc, BCW_RX_CTL) | ERC_AM);
-
-		ifp->if_flags |= IFF_ALLMULTI;
-
-		/* enable the filter */
-		BCW_WRITE(sc, BCW_FILT_CTL, BCW_READ(sc, BCW_FILT_CTL) | 1);
-	}
-#endif
 }
 
 int
 bcw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
-#if 0
-	struct bcw_softc *sc = ic->ic_softc;
-	enum ieee80211_state ostate;
-	uint32_t tmp;
-
-	ostate = ic->ic_state;
-#endif
 	return (0);
 }
 
@@ -2344,7 +1798,6 @@ bcw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
 	struct bcw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	//uint32_t val;
 	int rate;
 
 	imr->ifm_status = IFM_AVALID;
@@ -2377,12 +1830,15 @@ bcw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	}
 }
 
-/* One second timer, checks link status */
+/*
+ * One second timer, checks link status
+ */
 void
 bcw_tick(void *v)
 {
 #if 0
 	struct bcw_softc *sc = v;
+
 	/* http://bcm-specs.sipsolutions.net/PeriodicTasks */
 	timeout_add(&sc->bcw_timeout, hz);
 #endif
@@ -2496,37 +1952,6 @@ bcw_detach(void *arg)
 
 	return (0);
 }
-
-#if 0
-void
-bcw_free_ring(struct bcw_softc *sc, struct bcw_dma_slot *ring)
-{
-	struct bcw_chain data *data;
-	struct bcw_dma_slot *bcwd;
-	int i;
-
-	if (sc->bcw_rx_chain != NULL) {
-		for (i = 0; i < BCW_NRXDESC; i++) {
-			bcwd = &sc->bcw_rx_ring[i];
-
-			if (sc->bcw_rx_chain[i] != NULL) {
-				bus_dmamap_sync(sc->sc_dmat,
-				    sc->bcw_ring_map,
-				    sizeof(struct bcw_dma_slot) * x,
-				    sizeof(struct bcw_dma_slot),
-				    BUS_DMASYNC_POSTREAD);
-				bus_dmamap_unload(sc->sc_dmat,
-				    sc->bcw_ring_map);
-				m_freem(sc->bcw_rx_chain[i]);
-			}
-
-			if (sc->bcw_ring_map != NULL)
-				bus_dmamap_destroy(sc->sc_dmat,
-				    sc->bcw_ring_map);
-		}
-	}
-}
-#endif
 
 int
 bcw_alloc_rx_ring(struct bcw_softc *sc, struct bcw_rx_ring *ring, int count)
