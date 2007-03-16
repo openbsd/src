@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.28 2007/03/12 06:51:16 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.29 2007/03/16 07:05:13 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -37,6 +37,7 @@ struct bcw_initval {
         uint32_t	value;
 } __packed;
 
+#define BCW_NR_LEDS	4
 struct bcw_led {
 	uint8_t		behaviour:7;
 	uint8_t		activelow:1;
