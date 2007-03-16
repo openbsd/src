@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.73 2007/03/16 13:49:11 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.74 2007/03/16 15:28:54 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -21,8 +21,6 @@
  * SiliconBackplane is technology from Sonics, Inc.(sonicsinc.com)
  */
  
-/* standard includes, probably some extras */
-
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -62,145 +60,169 @@
 
 #include <uvm/uvm_extern.h>
 
-/* helper routines */
-void		bcw_shm_ctl_word(struct bcw_softc *, uint16_t, uint16_t);
-uint16_t	bcw_shm_read16(struct bcw_softc *, uint16_t, uint16_t);
-void		bcw_shm_write16(struct bcw_softc *, uint16_t, uint16_t,
-		    uint16_t);
-uint32_t	bcw_shm_read32(struct bcw_softc *, uint16_t, uint16_t);
-void		bcw_radio_write16(struct bcw_softc *, uint16_t, uint16_t);
-int		bcw_radio_read16(struct bcw_softc *, uint16_t);
-void		bcw_phy_write16(struct bcw_softc *, uint16_t, uint16_t);
-int		bcw_phy_read16(struct bcw_softc *, uint16_t);
-void		bcw_ram_write(struct bcw_softc *, uint16_t, uint32_t);
-int		bcw_lv(int, int, int);
+/*
+ * Helper Routines
+ */
+void			bcw_shm_ctl_word(struct bcw_softc *, uint16_t,
+			    uint16_t);
+uint16_t		bcw_shm_read16(struct bcw_softc *, uint16_t, uint16_t);
+void			bcw_shm_write16(struct bcw_softc *, uint16_t, uint16_t,
+			    uint16_t);
+uint32_t		bcw_shm_read32(struct bcw_softc *, uint16_t, uint16_t);
+void			bcw_radio_write16(struct bcw_softc *, uint16_t,
+			    uint16_t);
+int			bcw_radio_read16(struct bcw_softc *, uint16_t);
+void			bcw_phy_write16(struct bcw_softc *, uint16_t, uint16_t);
+int			bcw_phy_read16(struct bcw_softc *, uint16_t);
+void			bcw_ram_write(struct bcw_softc *, uint16_t, uint32_t);
+int			bcw_lv(int, int, int);
+void			bcw_dummy_transmission(struct bcw_softc *);
+struct bcw_lopair *	bcw_get_lopair(struct bcw_softc *sc, uint16_t,
+			    uint16_t);
+void			bcw_stack_save(uint32_t *, size_t *, uint8_t, uint16_t,
+			    uint16_t);
+uint16_t		bcw_stack_restore(uint32_t *, uint8_t, uint16_t);
+int			bcw_using_pio(struct bcw_softc *);
 
-void		bcw_dummy_transmission(struct bcw_softc *);
-struct bcw_lopair *
-		bcw_get_lopair(struct bcw_softc *sc, uint16_t radio_atten,
-		    uint16_t baseband_atten);
-void		bcw_stack_save(uint32_t *, size_t *, uint8_t, uint16_t,
-		    uint16_t);
-uint16_t	bcw_stack_restore(uint32_t *, uint8_t, uint16_t);
-int		bcw_using_pio(struct bcw_softc *);
+/*
+ * 80211
+ */
+void			bcw_reset(struct bcw_softc *);
+int			bcw_init(struct ifnet *);
+void			bcw_start(struct ifnet *);
+void			bcw_stop(struct ifnet *, int);
+void			bcw_watchdog(struct ifnet *);
+void			bcw_set_opmode(struct ifnet *);
+void			bcw_mac_enable(struct bcw_softc *);
+uint32_t		bcw_intr_enable(struct bcw_softc *, uint32_t);
+uint32_t		bcw_intr_disable(struct bcw_softc *, uint32_t);
+void			bcw_rxintr(struct bcw_softc *);
+void			bcw_txintr(struct bcw_softc *);
+int			bcw_add_rxbuf(struct bcw_softc *, int);
+void			bcw_rxdrain(struct bcw_softc *);
+void			bcw_tick(void *);
+int			bcw_ioctl(struct ifnet *, u_long, caddr_t);
+int			bcw_alloc_rx_ring(struct bcw_softc *,
+			    struct bcw_rx_ring *, int);
+void			bcw_reset_rx_ring(struct bcw_softc *,
+			    struct bcw_rx_ring *);
+void			bcw_free_rx_ring(struct bcw_softc *,
+			    struct bcw_rx_ring *);
+int			bcw_alloc_tx_ring(struct bcw_softc *,
+			    struct bcw_tx_ring *, int);
+void			bcw_reset_tx_ring(struct bcw_softc *,
+			    struct bcw_tx_ring *);
+void			bcw_free_tx_ring(struct bcw_softc *,
+			    struct bcw_tx_ring *);
+int			bcw_newstate(struct ieee80211com *,
+			    enum ieee80211_state, int);
+int			bcw_media_change(struct ifnet *);
+void			bcw_media_status(struct ifnet *, struct ifmediareq *);
+int			bcw_validatechipaccess(struct bcw_softc *);
+void			bcw_powercontrol_crystal_off(struct bcw_softc *);
+int			bcw_change_core(struct bcw_softc *, int);
+int			bcw_reset_core(struct bcw_softc *, uint32_t);
+int			bcw_get_firmware(const char *, const uint8_t *, size_t,
+			    size_t *, size_t *);
+int			bcw_load_firmware(struct bcw_softc *);
+int			bcw_write_initvals(struct bcw_softc *,
+			    const struct bcw_initval *, const unsigned int);
+int			bcw_load_initvals(struct bcw_softc *);
+void			bcw_leds_switch_all(struct bcw_softc *, int);
+int			bcw_gpio_init(struct bcw_softc *);
 
-void		bcw_reset(struct bcw_softc *);
-int		bcw_init(struct ifnet *);
-void		bcw_start(struct ifnet *);
-void		bcw_stop(struct ifnet *, int);
-void		bcw_watchdog(struct ifnet *);
-void		bcw_set_opmode(struct ifnet *);
-void		bcw_mac_enable(struct bcw_softc *);
-uint32_t	bcw_intr_enable(struct bcw_softc *, uint32_t);
-uint32_t	bcw_intr_disable(struct bcw_softc *, uint32_t);
-void		bcw_rxintr(struct bcw_softc *);
-void		bcw_txintr(struct bcw_softc *);
-//void		bcw_add_mac(struct bcw_softc *, uint8_t *, unsigned long);
-int		bcw_add_rxbuf(struct bcw_softc *, int);
-void		bcw_rxdrain(struct bcw_softc *);
-void		bcw_tick(void *);
-int		bcw_ioctl(struct ifnet *, u_long, caddr_t);
-int		bcw_alloc_rx_ring(struct bcw_softc *, struct bcw_rx_ring *,
-		    int);
-void		bcw_reset_rx_ring(struct bcw_softc *, struct bcw_rx_ring *);
-void		bcw_free_rx_ring(struct bcw_softc *, struct bcw_rx_ring *);
-int		bcw_alloc_tx_ring(struct bcw_softc *, struct bcw_tx_ring *,
-		    int);
-void		bcw_reset_tx_ring(struct bcw_softc *, struct bcw_tx_ring *);
-void		bcw_free_tx_ring(struct bcw_softc *, struct bcw_tx_ring *);
-/* 80211 functions copied from iwi */
-int		bcw_newstate(struct ieee80211com *, enum ieee80211_state, int);
-int		bcw_media_change(struct ifnet *);
-void		bcw_media_status(struct ifnet *, struct ifmediareq *);
-/* fashionably new functions */
-int		bcw_validatechipaccess(struct bcw_softc *);
-void		bcw_powercontrol_crystal_off(struct bcw_softc *);
-int		bcw_change_core(struct bcw_softc *, int);
-int		bcw_reset_core(struct bcw_softc *, uint32_t);
-int		bcw_get_firmware(const char *, const uint8_t *, size_t,
-		    size_t *, size_t *);
-int		bcw_load_firmware(struct bcw_softc *);
-int		bcw_write_initvals(struct bcw_softc *,
-		    const struct bcw_initval *, const unsigned int);
-int		bcw_load_initvals(struct bcw_softc *);
-void		bcw_leds_switch_all(struct bcw_softc *, int);
-int		bcw_gpio_init(struct bcw_softc *);
-/* phy */
-int		bcw_phy_init(struct bcw_softc *);
-void		bcw_phy_initg(struct bcw_softc *);
-void		bcw_phy_initb2(struct bcw_softc *);
-void		bcw_phy_initb4(struct bcw_softc *);
-void		bcw_phy_initb5(struct bcw_softc *);
-void		bcw_phy_initb6(struct bcw_softc *);
-void		bcw_phy_inita(struct bcw_softc *);
-void		bcw_phy_setupa(struct bcw_softc *);
-void		bcw_phy_setupg(struct bcw_softc *);
-void		bcw_phy_calc_loopback_gain(struct bcw_softc *);
-void		bcw_phy_agcsetup(struct bcw_softc *);
-void		bcw_phy_init_pctl(struct bcw_softc *);
-void		bcw_phy_init_noisescaletbl(struct bcw_softc *);
-void		bcw_phy_set_baseband_atten(struct bcw_softc *, uint16_t);
-int8_t		bcw_phy_estimate_powerout(struct bcw_softc *, int8_t tssi);
-void		bcw_phy_xmitpower(struct bcw_softc *);
-uint16_t	bcw_phy_lo_b_r15_loop(struct bcw_softc *);
-void		bcw_phy_lo_b_measure(struct bcw_softc *);
-void		bcw_phy_lo_g_state(struct bcw_softc *,  struct bcw_lopair *,
-		    struct bcw_lopair *, uint16_t);
-void		bcw_phy_lo_g_measure(struct bcw_softc *);
-void		bcw_phy_lo_g_measure_txctl2(struct bcw_softc *);
-uint32_t	bcw_phy_lo_g_singledeviation(struct bcw_softc *, uint16_t);
-uint16_t	bcw_phy_lo_g_deviation_subval(struct bcw_softc *, uint16_t);
-void		bcw_phy_lo_adjust(struct bcw_softc *, int fixed);
-void		bcw_phy_lo_mark_current_used(struct bcw_softc *);
-void		bcw_phy_lo_write(struct bcw_softc *, struct bcw_lopair *);
-struct bcw_lopair *
-		bcw_phy_find_lopair(struct bcw_softc *, uint16_t, uint16_t,
-		    uint16_t);
-struct bcw_lopair *
-		bcw_phy_current_lopair(struct bcw_softc *);
-void		bcw_phy_prepare_init(struct bcw_softc *);
-void		bcw_phy_set_antenna_diversity(struct bcw_softc *);
-/* radio */
-void		bcw_radio_off(struct bcw_softc *);
-void		bcw_radio_on(struct bcw_softc *);
-void		bcw_radio_nrssi_hw_write(struct bcw_softc *, uint16_t, int16_t);
-int16_t		bcw_radio_nrssi_hw_read(struct bcw_softc *, uint16_t);
-void		bcw_radio_nrssi_hw_update(struct bcw_softc *, uint16_t);
-void		bcw_radio_calc_nrssi_threshold(struct bcw_softc *);
-void		bcw_radio_calc_nrssi_slope(struct bcw_softc *);
-void		bcw_radio_calc_nrssi_offset(struct bcw_softc *);
-void		bcw_radio_set_all_gains(struct bcw_softc *, int16_t, int16_t,
-		    int16_t);
-void		bcw_radio_set_original_gains(struct bcw_softc *);
-uint16_t	bcw_radio_calibrationvalue(struct bcw_softc *);
-void		bcw_radio_set_txpower_a(struct bcw_softc *, uint16_t);
-void		bcw_radio_set_txpower_bg(struct bcw_softc *, uint16_t, uint16_t,
-		    uint16_t);
-uint16_t	bcw_radio_init2050(struct bcw_softc *);
-void		bcw_radio_init2060(struct bcw_softc *);
-void		bcw_radio_spw(struct bcw_softc *, uint8_t);
-int		bcw_radio_select_channel(struct bcw_softc *, uint8_t, int );
-uint16_t	bcw_radio_chan2freq_a(uint8_t);
-uint16_t	bcw_radio_chan2freq_bg(uint8_t);
-uint16_t	bcw_radio_default_baseband_attenuation(struct bcw_softc *);
-uint16_t	bcw_radio_default_radio_attenuation(struct bcw_softc *);
-uint16_t	bcw_radio_default_txctl1(struct bcw_softc *);
-void		bcw_radio_clear_tssi(struct bcw_softc *);
-void		bcw_radio_set_tx_iq(struct bcw_softc *);
-uint16_t	bcw_radio_get_txgain_baseband(uint16_t);
-uint16_t	bcw_radio_get_txgain_freq_power_amp(uint16_t);
-uint16_t	bcw_radio_get_txgain_dac(uint16_t);
-uint16_t	bcw_radio_freq_r3a_value(uint16_t);
-void		bcw_radio_prepare_init(struct bcw_softc *);
-int		bcw_radio_set_interference_mitigation(struct bcw_softc *, int);
-int		bcw_radio_interference_mitigation_enable(struct bcw_softc *,
-		    int);
-void		bcw_radio_set_txantenna(struct bcw_softc *, uint32_t);
-/* ilt */
-void		bcw_ilt_write(struct bcw_softc *, uint16_t, uint16_t);
-uint16_t	bcw_ilt_read(struct bcw_softc *, uint16_t);
-/* power */
-void		bcw_power_saving_ctl_bits(struct bcw_softc *, int, int);
+/*
+ * PHY
+ */
+int			bcw_phy_init(struct bcw_softc *);
+void			bcw_phy_initg(struct bcw_softc *);
+void			bcw_phy_initb2(struct bcw_softc *);
+void			bcw_phy_initb4(struct bcw_softc *);
+void			bcw_phy_initb5(struct bcw_softc *);
+void			bcw_phy_initb6(struct bcw_softc *);
+void			bcw_phy_inita(struct bcw_softc *);
+void			bcw_phy_setupa(struct bcw_softc *);
+void			bcw_phy_setupg(struct bcw_softc *);
+void			bcw_phy_calc_loopback_gain(struct bcw_softc *);
+void			bcw_phy_agcsetup(struct bcw_softc *);
+void			bcw_phy_init_pctl(struct bcw_softc *);
+void			bcw_phy_init_noisescaletbl(struct bcw_softc *);
+void			bcw_phy_set_baseband_atten(struct bcw_softc *,
+			    uint16_t);
+int8_t			bcw_phy_estimate_powerout(struct bcw_softc *, int8_t);
+void			bcw_phy_xmitpower(struct bcw_softc *);
+uint16_t		bcw_phy_lo_b_r15_loop(struct bcw_softc *);
+void			bcw_phy_lo_b_measure(struct bcw_softc *);
+void			bcw_phy_lo_g_state(struct bcw_softc *,
+			    struct bcw_lopair *, struct bcw_lopair *, uint16_t);
+void			bcw_phy_lo_g_measure(struct bcw_softc *);
+void			bcw_phy_lo_g_measure_txctl2(struct bcw_softc *);
+uint32_t		bcw_phy_lo_g_singledeviation(struct bcw_softc *,
+			    uint16_t);
+uint16_t		bcw_phy_lo_g_deviation_subval(struct bcw_softc *,
+			    uint16_t);
+void			bcw_phy_lo_adjust(struct bcw_softc *, int);
+void			bcw_phy_lo_mark_current_used(struct bcw_softc *);
+void			bcw_phy_lo_write(struct bcw_softc *,
+			    struct bcw_lopair *);
+struct bcw_lopair *	bcw_phy_find_lopair(struct bcw_softc *, uint16_t,
+			    uint16_t, uint16_t);
+struct bcw_lopair *	bcw_phy_current_lopair(struct bcw_softc *);
+void			bcw_phy_prepare_init(struct bcw_softc *);
+void			bcw_phy_set_antenna_diversity(struct bcw_softc *);
+
+/*
+ * Radio
+ */
+void			bcw_radio_off(struct bcw_softc *);
+void			bcw_radio_on(struct bcw_softc *);
+void			bcw_radio_nrssi_hw_write(struct bcw_softc *,
+			    uint16_t, int16_t);
+int16_t			bcw_radio_nrssi_hw_read(struct bcw_softc *, uint16_t);
+void			bcw_radio_nrssi_hw_update(struct bcw_softc *, uint16_t);
+void			bcw_radio_calc_nrssi_threshold(struct bcw_softc *);
+void			bcw_radio_calc_nrssi_slope(struct bcw_softc *);
+void			bcw_radio_calc_nrssi_offset(struct bcw_softc *);
+void			bcw_radio_set_all_gains(struct bcw_softc *, int16_t,
+			    int16_t, int16_t);
+void			bcw_radio_set_original_gains(struct bcw_softc *);
+uint16_t		bcw_radio_calibrationvalue(struct bcw_softc *);
+void			bcw_radio_set_txpower_a(struct bcw_softc *, uint16_t);
+void			bcw_radio_set_txpower_bg(struct bcw_softc *, uint16_t,
+			    uint16_t, uint16_t);
+uint16_t		bcw_radio_init2050(struct bcw_softc *);
+void			bcw_radio_init2060(struct bcw_softc *);
+void			bcw_radio_spw(struct bcw_softc *, uint8_t);
+int			bcw_radio_select_channel(struct bcw_softc *, uint8_t,
+			    int);
+uint16_t		bcw_radio_chan2freq_a(uint8_t);
+uint16_t		bcw_radio_chan2freq_bg(uint8_t);
+uint16_t		bcw_radio_default_baseband_atten(struct bcw_softc *);
+uint16_t		bcw_radio_default_radio_atten(struct bcw_softc *);
+uint16_t		bcw_radio_default_txctl1(struct bcw_softc *);
+void			bcw_radio_clear_tssi(struct bcw_softc *);
+void			bcw_radio_set_tx_iq(struct bcw_softc *);
+uint16_t		bcw_radio_get_txgain_baseband(uint16_t);
+uint16_t		bcw_radio_get_txgain_freq_power_amp(uint16_t);
+uint16_t		bcw_radio_get_txgain_dac(uint16_t);
+uint16_t		bcw_radio_freq_r3a_value(uint16_t);
+void			bcw_radio_prepare_init(struct bcw_softc *);
+int			bcw_radio_set_interf_mitigation(struct bcw_softc *,
+			    int);
+int			bcw_radio_interf_mitigation_enable(struct bcw_softc *,
+			    int);
+void			bcw_radio_set_txantenna(struct bcw_softc *, uint32_t);
+
+/*
+ * ILT
+ */
+void			bcw_ilt_write(struct bcw_softc *, uint16_t, uint16_t);
+uint16_t		bcw_ilt_read(struct bcw_softc *, uint16_t);
+
+/*
+ * Power
+ */
+void			bcw_power_saving_ctl_bits(struct bcw_softc *, int, int);
 
 struct cfdriver bcw_cd = {
 	NULL, "bcw", DV_IFNET
@@ -1607,7 +1629,7 @@ bcw_init(struct ifnet *ifp)
 	/* select initial interference mitigation */
 	tmp = sc->sc_radio_interfmode;
 	sc->sc_radio_interfmode = BCW_RADIO_INTERFMODE_NONE;
-	bcw_radio_set_interference_mitigation(sc, tmp);
+	bcw_radio_set_interf_mitigation(sc, tmp);
 
 	bcw_phy_set_antenna_diversity(sc);
 	bcw_radio_set_txantenna(sc, BCW_RADIO_TXANTENNA_DEFAULT);
@@ -5668,7 +5690,7 @@ bcw_radio_chan2freq_bg(uint8_t channel)
 }
 
 uint16_t
-bcw_radio_default_baseband_attenuation(struct bcw_softc *sc)
+bcw_radio_default_baseband_atten(struct bcw_softc *sc)
 {
 	if (sc->sc_radio_ver == 0x2050 && sc->sc_radio_rev < 6)
 		return (0);
@@ -5677,7 +5699,7 @@ bcw_radio_default_baseband_attenuation(struct bcw_softc *sc)
 }
 
 uint16_t
-bcw_radio_default_radio_attenuation(struct bcw_softc *sc)
+bcw_radio_default_radio_atten(struct bcw_softc *sc)
 {
 	uint16_t att = 0xffff;
 
@@ -5913,9 +5935,9 @@ bcw_radio_prepare_init(struct bcw_softc *sc)
 
 	/* set default attenuation values */
 	sc->sc_radio_baseband_atten =
-	    bcw_radio_default_baseband_attenuation(sc);
+	    bcw_radio_default_baseband_atten(sc);
 	sc->sc_radio_radio_atten =
-	    bcw_radio_default_radio_attenuation(sc);
+	    bcw_radio_default_radio_atten(sc);
 	sc->sc_radio_txctl1 = bcw_radio_default_txctl1(sc);
 	sc->sc_radio_txctl2 = 0xffff;
 	sc->sc_radio_txpwr_offset = 0;
@@ -5936,7 +5958,7 @@ bcw_radio_prepare_init(struct bcw_softc *sc)
 }
 
 int
-bcw_radio_set_interference_mitigation(struct bcw_softc *sc, int mode)
+bcw_radio_set_interf_mitigation(struct bcw_softc *sc, int mode)
 {
 	int currentmode;
 
@@ -5968,14 +5990,14 @@ bcw_radio_set_interference_mitigation(struct bcw_softc *sc, int mode)
 		sc->sc_radio_aci_enable = 0;
 		sc->sc_radio_aci_hw_rssi = 0;
 	} else
-		bcw_radio_interference_mitigation_enable(sc, mode);
+		bcw_radio_interf_mitigation_enable(sc, mode);
 	sc->sc_radio_interfmode = mode;
 
 	return (0);
 }
 
 int
-bcw_radio_interference_mitigation_enable(struct bcw_softc *sc, int mode)
+bcw_radio_interf_mitigation_enable(struct bcw_softc *sc, int mode)
 {
 	uint16_t tmp, flipped;
 	uint32_t tmp32;
