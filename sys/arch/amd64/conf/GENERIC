@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.174 2007/02/28 21:54:43 grange Exp $
+#	$OpenBSD: GENERIC,v 1.175 2007/03/17 03:12:22 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -388,6 +388,7 @@ an*	at pcmcia?			# Aironet IEEE 802.11DS
 cnw*	at pcmcia?			# Xircom Netwave
 ray*	at pcmcia?			# Raylink Aviator2.4/Pro 802.11FH
 iwi*	at pci?				# Intel PRO/Wireless 2200BG/2915ABG
+wpi*	at pci?				# Intel PRO/Wireless 3945ABG
 ral*	at pci?				# Ralink RT2500/RT2501/RT2600
 ral*	at cardbus?			# Ralink RT2500/RT2501/RT2600
 rtw*	at pci?				# Realtek 8180
