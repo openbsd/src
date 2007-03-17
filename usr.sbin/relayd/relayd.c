@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.20 2007/02/26 16:10:24 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.21 2007/03/17 22:54:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -506,11 +506,9 @@ session_find(struct hoststated *env, objid_t id)
 	struct session		*con;
 
 	TAILQ_FOREACH(rlay, &env->relays, entry)
-		TAILQ_FOREACH(con, &rlay->sessions, entry) {
-			log_debug("session_find: %d : %d", id, con->id);
+		TAILQ_FOREACH(con, &rlay->sessions, entry)
 			if (con->id == id)
 				return (con);
-		}
 	return (NULL);
 }
 
