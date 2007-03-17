@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.20 2007/03/17 22:22:23 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.21 2007/03/17 22:25:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -221,7 +221,7 @@ relay(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	for (i = 0; i < env->prefork_relay; i++) {
 		if (i == proc_id)
 			continue;
-		close(pipe_pfe2relay[i][1]);
+		close(pipe_pfe2relay[i][0]);
 		close(pipe_pfe2relay[i][1]);
 	}
 	close(pipe_pfe2relay[proc_id][1]);
