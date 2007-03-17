@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.12 2006/01/22 15:25:30 miod Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.13 2007/03/17 20:01:44 miod Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.25 2005/10/28 21:54:52 christos Exp $	*/
 
 /*
@@ -238,30 +238,30 @@ void
 pm_setup_adb(void)
 {
 	switch (mac68k_machine.machineid) {
-		case MACH_MACPB140:
-		case MACH_MACPB145:
-		case MACH_MACPB160:
-		case MACH_MACPB165:
-		case MACH_MACPB165C:
-		case MACH_MACPB170:
-		case MACH_MACPB180:
-		case MACH_MACPB180C:
-			pmHardware = PM_HW_PB1XX;
-			break;
-		case MACH_MACPB150:
-		case MACH_MACPB210:
-		case MACH_MACPB230:
-		case MACH_MACPB250:
-		case MACH_MACPB270:
-		case MACH_MACPB280:
-		case MACH_MACPB280C:
-		case MACH_MACPB500:
-		case MACH_MACPB190:
-		case MACH_MACPB190CS:
-			pmHardware = PM_HW_PB5XX;
-			break;
-		default:
-			break;
+	case MACH_MACPB140:
+	case MACH_MACPB145:
+	case MACH_MACPB160:
+	case MACH_MACPB165:
+	case MACH_MACPB165C:
+	case MACH_MACPB170:
+	case MACH_MACPB180:
+	case MACH_MACPB180C:
+		pmHardware = PM_HW_PB1XX;
+		break;
+	case MACH_MACPB150:
+	case MACH_MACPB210:
+	case MACH_MACPB230:
+	case MACH_MACPB250:
+	case MACH_MACPB270:
+	case MACH_MACPB280:
+	case MACH_MACPB280C:
+	case MACH_MACPB500:
+	case MACH_MACPB190:
+	case MACH_MACPB190CS:
+		pmHardware = PM_HW_PB5XX;
+		break;
+	default:
+		break;
 	}
 }
 
@@ -329,19 +329,19 @@ pm_receive_pm1(u_char *data)
 	via_reg(VIA2, vDirA) = 0x00;
 
 	switch (1) {
-		default:
-			if (pm_wait_busy(0x40) != 0)
-				break;			/* timeout */
+	default:
+		if (pm_wait_busy(0x40) != 0)
+			break;			/* timeout */
 
-			PM_SET_STATE_ACKOFF();
-			*data = via_reg(VIA2, 0x200);
+		PM_SET_STATE_ACKOFF();
+		*data = via_reg(VIA2, 0x200);
 
-			rval = 0xffffcd33;
-			if (pm_wait_free(0x40) == 0)
-				break;			/* timeout */
+		rval = 0xffffcd33;
+		if (pm_wait_free(0x40) == 0)
+			break;			/* timeout */
 
-			rval = 0x00;
-			break;
+		rval = 0x00;
+		break;
 	}
 
 	PM_SET_STATE_ACKON();
@@ -407,115 +407,117 @@ pm_pmgrop_pm1(PMData *pmdata)
 	via1_vDirA = via_reg(VIA1, vDirA);
 
 	switch (pmdata->command) {
-		default:
-			for (i = 0; i < 7; i++) {
-				via_reg(VIA2, vDirA) = 0x00;	
+	default:
+		for (i = 0; i < 7; i++) {
+			via_reg(VIA2, vDirA) = 0x00;	
 
-				/* wait until PM is free */
-				if (pm_wait_free(ADBDelay) == 0) {	/* timeout */
-					via_reg(VIA2, vDirA) = 0x00;
-					/* restore formar value */
-					via_reg(VIA1, vDirA) = via1_vDirA;
-					via_reg(VIA1, vIER) = via1_vIER;
-					return 0xffffcd38;
-				}
-
-				switch (mac68k_machine.machineid) {
-					case MACH_MACPB160:
-					case MACH_MACPB165:
-					case MACH_MACPB165C:
-					case MACH_MACPB170:
-					case MACH_MACPB180:
-					case MACH_MACPB180C:
-						{
-							int xdelay = ADBDelay * 16;
-
-							via_reg(VIA2, vDirA) = 0x00;
-							while ((via_reg(VIA2, 0x200) == 0x7f) && (xdelay >= 0))
-								xdelay--;
-
-							if (xdelay < 0) {	/* timeout */
-								via_reg(VIA2, vDirA) = 0x00;
-								/* restore formar value */
-								via_reg(VIA1, vIER) = via1_vIER;
-								return 0xffffcd38;
-							}
-						}
-				} /* end switch */
-
-				s = splhigh();
-
-				via1_vDirA = via_reg(VIA1, vDirA);
-				via_reg(VIA1, vDirA) &= 0x7f;
-
-				pm_cmd = (u_char)(pmdata->command & 0xff);
-				if ((rval = pm_send_pm1(pm_cmd, ADBDelay * 8)) == 0)
-					break;	/* send command succeeded */
-
-				via_reg(VIA1, vDirA) = via1_vDirA;
-				splx(s);
-			} /* end for */
-
-			/* failed to send a command */
-			if (i == 7) {
+			/* wait until PM is free */
+			if (pm_wait_free(ADBDelay) == 0) {	/* timeout */
 				via_reg(VIA2, vDirA) = 0x00;
-				/* restore formar value */
+				/* restore former value */
 				via_reg(VIA1, vDirA) = via1_vDirA;
 				via_reg(VIA1, vIER) = via1_vIER;
-				if (s != 0x81815963)
-					splx(s);
 				return 0xffffcd38;
 			}
 
-			/* send # of PM data */
-			num_pm_data = pmdata->num_data;
-			if ((rval = pm_send_pm1((u_char)(num_pm_data & 0xff), ADBDelay * 8)) != 0)
-				break;			/* timeout */
+			switch (mac68k_machine.machineid) {
+			/* XXX what about 140 and 145? -- miod */
+			case MACH_MACPB160:
+			case MACH_MACPB165:
+			case MACH_MACPB165C:
+			case MACH_MACPB170:
+			case MACH_MACPB180:
+			case MACH_MACPB180C:
+			{
+				int xdelay = ADBDelay * 16;
 
-			/* send PM data */
-			pm_buf = (u_char *)pmdata->s_buf;
-			for (i = 0; i < num_pm_data; i++)
-				if ((rval = pm_send_pm1(pm_buf[i], ADBDelay * 8)) != 0)
-					break;		/* timeout */
-			if ((i != num_pm_data) && (num_pm_data != 0))
-				break;			/* timeout */
+				via_reg(VIA2, vDirA) = 0x00;
+				while ((via_reg(VIA2, 0x200) == 0x7f) && (xdelay >= 0))
+					xdelay--;
 
-			/* Will PM IC return data? */
-			if ((pm_cmd & 0x08) == 0) {
-				rval = 0;
-				break;			/* no returned data */
+				if (xdelay < 0) {	/* timeout */
+					via_reg(VIA2, vDirA) = 0x00;
+					/* restore former value */
+					via_reg(VIA1, vIER) = via1_vIER;
+					return 0xffffcd38;
+				}
 			}
-
-			rval = 0xffffcd37;
-			if (pm_wait_busy(ADBDelay) != 0)
-				break;			/* timeout */
-
-			/* receive PM command */
-			if ((rval = pm_receive_pm1(&pm_data)) != 0)
 				break;
+			} /* end switch */
 
-			pmdata->command = pm_data;
+			s = splhigh();
 
-			/* receive number of PM data */
-			if ((rval = pm_receive_pm1(&pm_data)) != 0)
-				break;			/* timeout */
-			num_pm_data = pm_data;
-			pmdata->num_data = num_pm_data;
+			via1_vDirA = via_reg(VIA1, vDirA);
+			via_reg(VIA1, vDirA) &= 0x7f;
 
-			/* receive PM data */
-			pm_buf = (u_char *)pmdata->r_buf;
-			for (i = 0; i < num_pm_data; i++) {
-				if ((rval = pm_receive_pm1(&pm_data)) != 0)
-					break;		/* timeout */
-				pm_buf[i] = pm_data;
-			}
+			pm_cmd = (u_char)(pmdata->command & 0xff);
+			if ((rval = pm_send_pm1(pm_cmd, ADBDelay * 8)) == 0)
+				break;	/* send command succeeded */
 
+			via_reg(VIA1, vDirA) = via1_vDirA;
+			splx(s);
+		} /* end for */
+
+		/* failed to send a command */
+		if (i == 7) {
+			via_reg(VIA2, vDirA) = 0x00;
+			/* restore former value */
+			via_reg(VIA1, vDirA) = via1_vDirA;
+			via_reg(VIA1, vIER) = via1_vIER;
+			if (s != 0x81815963)
+				splx(s);
+			return 0xffffcd38;
+		}
+
+		/* send # of PM data */
+		num_pm_data = pmdata->num_data;
+		if ((rval = pm_send_pm1((u_char)(num_pm_data & 0xff), ADBDelay * 8)) != 0)
+			break;			/* timeout */
+
+		/* send PM data */
+		pm_buf = (u_char *)pmdata->s_buf;
+		for (i = 0; i < num_pm_data; i++)
+			if ((rval = pm_send_pm1(pm_buf[i], ADBDelay * 8)) != 0)
+				break;		/* timeout */
+		if ((i != num_pm_data) && (num_pm_data != 0))
+			break;			/* timeout */
+
+		/* Will PM IC return data? */
+		if ((pm_cmd & 0x08) == 0) {
 			rval = 0;
+			break;			/* no returned data */
+		}
+
+		rval = 0xffffcd37;
+		if (pm_wait_busy(ADBDelay) != 0)
+			break;			/* timeout */
+
+		/* receive PM command */
+		if ((rval = pm_receive_pm1(&pm_data)) != 0)
+			break;
+
+		pmdata->command = pm_data;
+
+		/* receive number of PM data */
+		if ((rval = pm_receive_pm1(&pm_data)) != 0)
+			break;			/* timeout */
+		num_pm_data = pm_data;
+		pmdata->num_data = num_pm_data;
+
+		/* receive PM data */
+		pm_buf = (u_char *)pmdata->r_buf;
+		for (i = 0; i < num_pm_data; i++) {
+			if ((rval = pm_receive_pm1(&pm_data)) != 0)
+				break;		/* timeout */
+			pm_buf[i] = pm_data;
+		}
+
+		rval = 0;
 	}
 
 	via_reg(VIA2, vDirA) = 0x00;	
 
-	/* restore formar value */
+	/* restore former value */
 	via_reg(VIA1, vDirA) = via1_vDirA;
 	via_reg(VIA1, vIER) = via1_vIER;
 	if (s != 0x81815963)
@@ -596,25 +598,25 @@ pm_receive_pm2(u_char *data)
 	rval = 0xffffcd34;
 
 	switch (1) {
-		default:
-			/* set VIA SR to input mode */
-			via_reg(VIA1, vACR) |= 0x0c;
-			via_reg(VIA1, vACR) &= ~0x10;
-			i = PM_SR();
+	default:
+		/* set VIA SR to input mode */
+		via_reg(VIA1, vACR) |= 0x0c;
+		via_reg(VIA1, vACR) &= ~0x10;
+		i = PM_SR();
 
-			PM_SET_STATE_ACKOFF();
-			if (pm_wait_busy((int)ADBDelay*32) != 0)
-				break;		/* timeout */
+		PM_SET_STATE_ACKOFF();
+		if (pm_wait_busy((int)ADBDelay*32) != 0)
+			break;		/* timeout */
 
-			PM_SET_STATE_ACKON();
-			rval = 0xffffcd33;
-			if (pm_wait_free((int)ADBDelay*32) == 0)
-				break;		/* timeout */
+		PM_SET_STATE_ACKON();
+		rval = 0xffffcd33;
+		if (pm_wait_free((int)ADBDelay*32) == 0)
+			break;		/* timeout */
 
-			*data = PM_SR();
-			rval = 0;
+		*data = PM_SR();
+		rval = 0;
 
-			break;
+		break;
 	}
 
 	PM_SET_STATE_ACKON();
@@ -681,104 +683,104 @@ pm_pmgrop_pm2(PMData *pmdata)
 		via1_vIER |= 0x80;
 
 	switch (pmdata->command) {
-		default:
-			/* wait until PM is free */
-			pm_cmd = (u_char)(pmdata->command & 0xff);
-			rval = 0xcd38;
-			if (pm_wait_free(ADBDelay * 4) == 0)
-				break;			/* timeout */
+	default:
+		/* wait until PM is free */
+		pm_cmd = (u_char)(pmdata->command & 0xff);
+		rval = 0xcd38;
+		if (pm_wait_free(ADBDelay * 4) == 0)
+			break;			/* timeout */
 
-			if (HwCfgFlags3 & 0x00200000) {	
-				/* PB 160, PB 165(c), PB 180(c)? */
-				int xdelay = ADBDelay * 16;
+		if (HwCfgFlags3 & 0x00200000) {	
+			/* PB 160, PB 165(c), PB 180(c)? */
+			int xdelay = ADBDelay * 16;
 
-				via_reg(VIA2, vDirA) = 0x00;
-				while ((via_reg(VIA2, 0x200) == 0x07) &&
-				    (xdelay >= 0))
-					xdelay--;
+			via_reg(VIA2, vDirA) = 0x00;
+			while ((via_reg(VIA2, 0x200) == 0x07) &&
+			    (xdelay >= 0))
+				xdelay--;
 
-				if (xdelay < 0) {
-					rval = 0xffffcd38;
-					break;		/* timeout */
-				}
+			if (xdelay < 0) {
+				rval = 0xffffcd38;
+				break;		/* timeout */
 			}
+		}
 
-			/* send PM command */
-			if ((rval = pm_send_pm2((u_char)(pm_cmd & 0xff))))
-				break;				/* timeout */
+		/* send PM command */
+		if ((rval = pm_send_pm2((u_char)(pm_cmd & 0xff))))
+			break;				/* timeout */
 
-			/* send number of PM data */
-			num_pm_data = pmdata->num_data;
-			if (HwCfgFlags3 & 0x00020000) {		/* PB Duo, PB 5XX */
-				if (pm_send_cmd_type[pm_cmd] < 0) {
-					if ((rval = pm_send_pm2((u_char)(num_pm_data & 0xff))) != 0)
-						break;		/* timeout */
-					pmdata->command = 0;
-				}
-			} else {				/* PB 1XX series ? */
+		/* send number of PM data */
+		num_pm_data = pmdata->num_data;
+		if (HwCfgFlags3 & 0x00020000) {		/* PB Duo, PB 5XX */
+			if (pm_send_cmd_type[pm_cmd] < 0) {
 				if ((rval = pm_send_pm2((u_char)(num_pm_data & 0xff))) != 0)
-					break;			/* timeout */
-			}			
-			/* send PM data */
-			pm_buf = (u_char *)pmdata->s_buf;
-			for (i = 0 ; i < num_pm_data; i++)
-				if ((rval = pm_send_pm2(pm_buf[i])) != 0)
-					break;			/* timeout */
-			if (i != num_pm_data)
-				break;				/* timeout */
-
-
-			/* check if PM will send me data  */
-			pm_num_rx_data = pm_receive_cmd_type[pm_cmd];
-			pmdata->num_data = pm_num_rx_data;
-			if (pm_num_rx_data == 0) {
-				rval = 0;
-				break;				/* no return data */
+					break;		/* timeout */
+				pmdata->command = 0;
 			}
+		} else {				/* PB 1XX series ? */
+			if ((rval = pm_send_pm2((u_char)(num_pm_data & 0xff))) != 0)
+				break;			/* timeout */
+		}			
+		/* send PM data */
+		pm_buf = (u_char *)pmdata->s_buf;
+		for (i = 0 ; i < num_pm_data; i++)
+			if ((rval = pm_send_pm2(pm_buf[i])) != 0)
+				break;			/* timeout */
+		if (i != num_pm_data)
+			break;				/* timeout */
 
-			/* receive PM command */
-			pm_data = pmdata->command;
-			if (HwCfgFlags3 & 0x00020000) {		/* PB Duo, PB 5XX */
-				pm_num_rx_data--;
-				if (pm_num_rx_data == 0)
-					if ((rval = pm_receive_pm2(&pm_data)) != 0) {
-						rval = 0xffffcd37;
-						break;
-					}
-				pmdata->command = pm_data;
-			} else {				/* PB 1XX series ? */
+
+		/* check if PM will send me data  */
+		pm_num_rx_data = pm_receive_cmd_type[pm_cmd];
+		pmdata->num_data = pm_num_rx_data;
+		if (pm_num_rx_data == 0) {
+			rval = 0;
+			break;				/* no return data */
+		}
+
+		/* receive PM command */
+		pm_data = pmdata->command;
+		if (HwCfgFlags3 & 0x00020000) {		/* PB Duo, PB 5XX */
+			pm_num_rx_data--;
+			if (pm_num_rx_data == 0)
 				if ((rval = pm_receive_pm2(&pm_data)) != 0) {
 					rval = 0xffffcd37;
 					break;
 				}
-				pmdata->command = pm_data;
+			pmdata->command = pm_data;
+		} else {				/* PB 1XX series ? */
+			if ((rval = pm_receive_pm2(&pm_data)) != 0) {
+				rval = 0xffffcd37;
+				break;
 			}
+			pmdata->command = pm_data;
+		}
 
-			/* receive number of PM data */
-			if (HwCfgFlags3 & 0x00020000) {		/* PB Duo, PB 5XX */
-				if (pm_num_rx_data < 0) {
-					if ((rval = pm_receive_pm2(&pm_data)) != 0)
-						break;		/* timeout */
-					num_pm_data = pm_data;
-				} else
-					num_pm_data = pm_num_rx_data;
-				pmdata->num_data = num_pm_data;
-			} else {				/* PB 1XX serias ? */
+		/* receive number of PM data */
+		if (HwCfgFlags3 & 0x00020000) {		/* PB Duo, PB 5XX */
+			if (pm_num_rx_data < 0) {
 				if ((rval = pm_receive_pm2(&pm_data)) != 0)
-					break;			/* timeout */
+					break;		/* timeout */
 				num_pm_data = pm_data;
-				pmdata->num_data = num_pm_data;
-			}
+			} else
+				num_pm_data = pm_num_rx_data;
+			pmdata->num_data = num_pm_data;
+		} else {				/* PB 1XX serias ? */
+			if ((rval = pm_receive_pm2(&pm_data)) != 0)
+				break;			/* timeout */
+			num_pm_data = pm_data;
+			pmdata->num_data = num_pm_data;
+		}
 
-			/* receive PM data */
-			pm_buf = (u_char *)pmdata->r_buf;
-			for (i = 0; i < num_pm_data; i++) {
-				if ((rval = pm_receive_pm2(&pm_data)) != 0)
-					break;			/* timeout */
-				pm_buf[i] = pm_data;
-			}
+		/* receive PM data */
+		pm_buf = (u_char *)pmdata->r_buf;
+		for (i = 0; i < num_pm_data; i++) {
+			if ((rval = pm_receive_pm2(&pm_data)) != 0)
+				break;			/* timeout */
+			pm_buf[i] = pm_data;
+		}
 
-			rval = 0;
+		rval = 0;
 	}
 
 	/* restore former value */
@@ -817,55 +819,55 @@ pm_intr_pm2(void *arg)
 	}
 
 	switch ((u_int)(pmdata.data[2] & 0xff)) {
-		case 0x00:			/* 1 sec interrupt? */
-			break;
-		case 0x80:			/* 1 sec interrupt? */
-			pm_counter++;
-			break;
-		case 0x08:			/* Brightness/Contrast button on LCD panel */
-			/* get brightness and contrast of the LCD */
-			pm_LCD_brightness = (u_int)pmdata.data[3] & 0xff;
-			pm_LCD_contrast = (u_int)pmdata.data[4] & 0xff;
+	case 0x00:			/* 1 sec interrupt? */
+		break;
+	case 0x80:			/* 1 sec interrupt? */
+		pm_counter++;
+		break;
+	case 0x08:			/* Brightness/Contrast button on LCD panel */
+		/* get brightness and contrast of the LCD */
+		pm_LCD_brightness = (u_int)pmdata.data[3] & 0xff;
+		pm_LCD_contrast = (u_int)pmdata.data[4] & 0xff;
 /*
-			pm_printerr("#08", rval, pmdata.num_data, pmdata.data);
-			pmdata.command = 0x33;
-			pmdata.num_data = 1;
-			pmdata.s_buf = pmdata.data;
-			pmdata.r_buf = pmdata.data;
-			pmdata.data[0] = pm_LCD_contrast;
-			rval = pm_pmgrop_pm2(&pmdata);
-			pm_printerr("#33", rval, pmdata.num_data, pmdata.data);
+		pm_printerr("#08", rval, pmdata.num_data, pmdata.data);
+		pmdata.command = 0x33;
+		pmdata.num_data = 1;
+		pmdata.s_buf = pmdata.data;
+		pmdata.r_buf = pmdata.data;
+		pmdata.data[0] = pm_LCD_contrast;
+		rval = pm_pmgrop_pm2(&pmdata);
+		pm_printerr("#33", rval, pmdata.num_data, pmdata.data);
 */
-			/* this is an experimental code */
-			pmdata.command = 0x41;
-			pmdata.num_data = 1;
-			pmdata.s_buf = pmdata.data;
-			pmdata.r_buf = pmdata.data;
-			pm_LCD_brightness = 0x7f - pm_LCD_brightness / 2;
-			if (pm_LCD_brightness < 0x25)
-				pm_LCD_brightness = 0x25;
-			if (pm_LCD_brightness > 0x5a)
-				pm_LCD_brightness = 0x7f;
-			pmdata.data[0] = pm_LCD_brightness;
-			rval = pm_pmgrop_pm2(&pmdata);
-			break;
-		case 0x10:			/* ADB data that were requested by TALK command */
-		case 0x14:
-			pm_adb_get_TALK_result(&pmdata);
-			break;
-		case 0x16:			/* ADB device event */
-		case 0x18:
-		case 0x1e:
-			pm_adb_get_ADB_data(&pmdata);
-			break;
-		default:
+		/* this is an experimental code */
+		pmdata.command = 0x41;
+		pmdata.num_data = 1;
+		pmdata.s_buf = pmdata.data;
+		pmdata.r_buf = pmdata.data;
+		pm_LCD_brightness = 0x7f - pm_LCD_brightness / 2;
+		if (pm_LCD_brightness < 0x25)
+			pm_LCD_brightness = 0x25;
+		if (pm_LCD_brightness > 0x5a)
+			pm_LCD_brightness = 0x7f;
+		pmdata.data[0] = pm_LCD_brightness;
+		rval = pm_pmgrop_pm2(&pmdata);
+		break;
+	case 0x10:			/* ADB data that were requested by TALK command */
+	case 0x14:
+		pm_adb_get_TALK_result(&pmdata);
+		break;
+	case 0x16:			/* ADB device event */
+	case 0x18:
+	case 0x1e:
+		pm_adb_get_ADB_data(&pmdata);
+		break;
+	default:
 #ifdef ADB_DEBUG
-			if (adb_debug)
-				pm_printerr("driver does not supported this event.",
-				    pmdata.data[2], pmdata.num_data,
-				    pmdata.data);
+		if (adb_debug)
+			pm_printerr("driver does not supported this event.",
+			    pmdata.data[2], pmdata.num_data,
+			    pmdata.data);
 #endif
-			break;
+		break;
 	}
 
 	splx(s);
@@ -881,14 +883,14 @@ int
 pmgrop(PMData *pmdata)
 {
 	switch (pmHardware) {
-		case PM_HW_PB1XX:
-			return (pm_pmgrop_pm1(pmdata));
-			break;
-		case PM_HW_PB5XX:
-			return (pm_pmgrop_pm2(pmdata));
-			break;
-		default:
-			return 1;
+	case PM_HW_PB1XX:
+		return (pm_pmgrop_pm1(pmdata));
+		break;
+	case PM_HW_PB5XX:
+		return (pm_pmgrop_pm2(pmdata));
+		break;
+	default:
+		return 1;
 	}
 }
 
