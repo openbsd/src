@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.548 2007/03/16 21:41:19 robert Exp $
+#	$OpenBSD: GENERIC,v 1.549 2007/03/17 00:10:51 robert Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -255,8 +255,6 @@ zyd*	at uhub?		# Zydas ZD1211
 udcf*	at uhub?		# Gude Expert mouseCLOCK
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
-uts*	at uhub?		# USB Touchscreen
-wsmouse* at uts? mux 0
 puc*	at pci?			# PCI "universal" communication device
 #puc*	at cardbus?
 
