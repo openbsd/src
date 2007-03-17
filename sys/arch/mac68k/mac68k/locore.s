@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.56 2006/07/06 17:49:45 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.57 2007/03/17 20:05:22 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -1708,6 +1708,18 @@ short_format:
 	movql	#0,d0		| return short-format
 	jra	get_pte_success
 
+#ifndef DEBUG
+get_pte_fail1:
+get_pte_fail2:
+get_pte_fail3:
+get_pte_fail4:
+get_pte_fail5:
+get_pte_fail6:
+get_pte_fail7:
+get_pte_fail8:
+get_pte_fail9:
+get_pte_fail10:
+#endif
 get_pte_fail:
 	movql	#-1,d0		| return failure
 
@@ -1719,81 +1731,29 @@ get_pte_success:
 	addql	#4,sp		| return temporary space
 	rts
 
+#ifdef DEBUG
+get_pte_fail10:
+	jbsr	_C_LABEL(printstar)
+get_pte_fail9:
+	jbsr	_C_LABEL(printstar)
+get_pte_fail8:
+	jbsr	_C_LABEL(printstar)
+get_pte_fail7:
+	jbsr	_C_LABEL(printstar)
+get_pte_fail6:
+	jbsr	_C_LABEL(printstar)
+get_pte_fail5:
+	jbsr	_C_LABEL(printstar)
+get_pte_fail4:
+	jbsr	_C_LABEL(printstar)
+get_pte_fail3:
+	jbsr	_C_LABEL(printstar)
+get_pte_fail2:
+	jbsr	_C_LABEL(printstar)
 get_pte_fail1:
 	jbsr	_C_LABEL(printstar)
 	jra	get_pte_fail
-get_pte_fail2:
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jra	get_pte_fail
-get_pte_fail3:
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jra	get_pte_fail
-get_pte_fail4:
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jra	get_pte_fail
-get_pte_fail5:
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jra	get_pte_fail
-get_pte_fail6:
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jra	get_pte_fail
-get_pte_fail7:
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jra	get_pte_fail
-get_pte_fail8:
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jra	get_pte_fail
-get_pte_fail9:
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jra	get_pte_fail
-get_pte_fail10:
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jbsr	_C_LABEL(printstar)
-	jra	get_pte_fail
+#endif
 
 /*
  * Misc. global variables.

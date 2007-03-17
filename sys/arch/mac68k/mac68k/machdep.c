@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.135 2007/03/03 21:21:25 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.136 2007/03/17 20:05:22 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -2135,6 +2135,7 @@ get_mapping(void)
 	return load_addr;	/* Return physical address of logical 0 */
 }
 
+#ifdef DEBUG
 /*
  * Debugging code for locore page-traversal routine.
  */
@@ -2158,6 +2159,7 @@ printstar(void)
 				movl sp@+,a1;
 				movl sp@+,a0");
 }
+#endif
 
 /*
  * Console bell callback; modularizes the console terminal emulator
