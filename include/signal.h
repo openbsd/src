@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.10 2005/12/21 19:09:01 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.11 2007/03/17 21:38:14 espie Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -63,7 +63,12 @@ int	sigprocmask(int, const sigset_t *, sigset_t *);
 int	sigsuspend(const sigset_t *);
 
 #if defined(__GNUC__)
-extern __inline int sigaddset(sigset_t *set, int signo) {
+#  if  defined(__GNUC_STDC_INLINE__)
+#define __SIGNAL_INLINE	extern __inline __attribute((__gnu_inline__))
+#  else
+#define __SIGNAL_INLINE	extern __inline
+#  endif
+__SIGNAL_INLINE int sigaddset(sigset_t *set, int signo) {
 	int *__errno(void);
 
 	if (signo <= 0 || signo >= _NSIG) {
@@ -74,7 +79,7 @@ extern __inline int sigaddset(sigset_t *set, int signo) {
 	return (0);
 }
 
-extern __inline int sigdelset(sigset_t *set, int signo) {
+__SIGNAL_INLINE int sigdelset(sigset_t *set, int signo) {
 	int *__errno(void);
 
 	if (signo <= 0 || signo >= _NSIG) {
@@ -85,7 +90,7 @@ extern __inline int sigdelset(sigset_t *set, int signo) {
 	return (0);
 }
 
-extern __inline int sigismember(const sigset_t *set, int signo) {
+__SIGNAL_INLINE int sigismember(const sigset_t *set, int signo) {
 	int *__errno(void);
 
 	if (signo <= 0 || signo >= _NSIG) {

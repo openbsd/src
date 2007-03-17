@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.19 2005/12/13 00:35:22 millert Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.20 2007/03/17 21:38:14 espie Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*
@@ -59,7 +59,11 @@ extern const short	*_toupper_tab_;
 
 /* extern __inline is a GNU C extension */
 #ifdef __GNUC__
+#  if defined(__GNUC_STDC_INLINE__)
+#define	__CTYPE_INLINE	extern __inline __attribute__((__gnu_inline__))
+#  else
 #define	__CTYPE_INLINE	extern __inline
+#  endif
 #else
 #define	__CTYPE_INLINE	static __inline
 #endif
