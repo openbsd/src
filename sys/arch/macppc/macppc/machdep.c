@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.87 2007/02/27 01:04:03 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.88 2007/03/17 21:11:58 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -976,11 +976,7 @@ softnet(int isr)
 int
 lcsplx(int ipl)
 {
-	int oldcpl;
-
-	oldcpl = cpl;
-	splx(ipl);
-	return oldcpl;
+	return spllower(ipl);
 }
 
 /*
