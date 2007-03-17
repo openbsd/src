@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.42 2007/03/16 10:56:31 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.43 2007/03/17 22:28:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -765,7 +765,7 @@ merge_interfaces(struct area *a, struct area *xa)
 		i->linkstate = xi->linkstate; /* needed? */
 
 		i->auth_type = xi->auth_type;
-		strlcpy(i->auth_key, xi->auth_key, MAX_SIMPLE_AUTH_LEN);
+		strncpy(i->auth_key, xi->auth_key, MAX_SIMPLE_AUTH_LEN);
 		md_list_clr(&i->auth_md_list);
 		md_list_copy(&i->auth_md_list, &xi->auth_md_list);
 
