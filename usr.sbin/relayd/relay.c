@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.19 2007/03/13 12:04:52 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.20 2007/03/17 22:22:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1476,6 +1476,7 @@ relay_accept(int fd, short sig, void *arg)
 		bzero(cnl, sizeof(*cnl));
 		cnl->in = -1;
 		cnl->id = con->id;
+		cnl->proc = proc_id;
 		bcopy(&con->in.ss, &cnl->src, sizeof(cnl->src));
 		bcopy(&rlay->ss, &cnl->dst, sizeof(cnl->dst));
 		imsg_compose(ibuf_pfe, IMSG_NATLOOK, 0, 0, cnl, sizeof(*cnl));
@@ -1575,12 +1576,14 @@ void
 relay_natlook(int fd, short event, void *arg)
 {
 	struct session		*con = (struct session *)arg;
+	struct relay		*rlay = (struct relay *)con->relay;
 	struct ctl_natlook	*cnl = con->cnl;
 
 	if (cnl == NULL)
 		fatalx("invalid NAT lookup");
 
-	if (con->out.ss.ss_family == AF_UNSPEC && cnl->in == -1) {
+	if (con->out.ss.ss_family == AF_UNSPEC && cnl->in == -1 &&
+	    rlay->dstss.ss_family == AF_UNSPEC && rlay->dsttable == NULL) {
 		relay_close(con, "session NAT lookup failed");
 		return;
 	}
@@ -1631,7 +1634,7 @@ relay_connect(struct session *con)
 	if (rlay->dsttable != NULL) {
 		if (relay_from_table(con) != 0)
 			return (-1);
-	} else {
+	} else if (con->out.ss.ss_family == AF_UNSPEC) {
 		bcopy(&rlay->dstss, &con->out.ss, sizeof(con->out.ss));
 		con->out.port = rlay->dstport;
 	}
