@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.19 2007/03/07 17:40:32 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.20 2007/03/17 22:46:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -72,6 +72,7 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	struct event	 ev_sigterm;
 	int		 i;
 	struct imsgbuf	*ibuf;
+	size_t		 size;
 
 	switch (pid = fork()) {
 	case -1:
@@ -124,9 +125,10 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	for (i = 0; i < env->prefork_relay; i++)
 		close(pipe_pfe2relay[i][0]);
 
-	if ((ibuf_hce = calloc(1, sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_relay = calloc(i, sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_main = calloc(1, sizeof(struct imsgbuf))) == NULL)
+	size = sizeof(struct imsgbuf);
+	if ((ibuf_hce = calloc(1, size)) == NULL ||
+	    (ibuf_relay = calloc(env->prefork_relay, size)) == NULL ||
+	    (ibuf_main = calloc(1, size)) == NULL)
 		fatal("pfe");
 	imsg_init(ibuf_hce, pipe_pfe2hce[1], pfe_dispatch_imsg);
 	imsg_init(ibuf_main, pipe_parent2pfe[1], pfe_dispatch_parent);
@@ -145,7 +147,7 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 		ibuf = &ibuf_relay[i];
 		imsg_init(ibuf, pipe_pfe2relay[i][1], pfe_dispatch_relay);
 
-		ibuf_relay->events = EV_READ;
+		ibuf->events = EV_READ;
 		event_set(&ibuf->ev, ibuf->fd, ibuf->events,
 		    ibuf->handler, ibuf);
 		event_add(&ibuf->ev, NULL);
@@ -354,6 +356,9 @@ pfe_dispatch_relay(int fd, short event, void * ptr)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(cnl))
 				fatalx("invalid imsg header len");
 			bcopy(imsg.data, &cnl, sizeof(cnl));
+			if (cnl.proc > env->prefork_relay)
+				fatalx("pfe_dispatch_relay: "
+				    "invalid relay proc");
 			if (natlook(env, &cnl) != 0)
 				cnl.in = -1;
 			imsg_compose(&ibuf_relay[cnl.proc], IMSG_NATLOOK, 0, 0,
