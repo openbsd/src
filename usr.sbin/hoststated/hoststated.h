@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.37 2007/03/13 12:04:52 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.38 2007/03/17 22:28:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -218,6 +218,8 @@ struct ctl_relay_event {
 
 struct ctl_natlook {
 	objid_t			 id;
+	int			 proc;
+
 	struct sockaddr_storage	 src;
 	struct sockaddr_storage	 dst;
 	struct sockaddr_storage	 rsrc;
@@ -225,19 +227,17 @@ struct ctl_natlook {
 	in_port_t		 rsport;
 	in_port_t		 rdport;
 	int			 in;
-	int			 proc;
 };
 
 struct ctl_stats {
 	objid_t			 id;
 	int			 proc;
+
 	u_int			 interval;
 	u_long			 cnt;
 	u_long			 tick;
-
 	u_long			 avg;
 	u_long			 last;
-
 	u_long			 avg_hour;
 	u_long			 last_hour;
 	u_long			 avg_day;
