@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.82 2006/11/28 23:59:45 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.83 2007/03/17 10:25:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1672,7 +1672,7 @@ mpi_iocfacts(struct mpi_softc *sc)
 	sc->sc_maxcmds = letoh16(ifp.global_credits);
 	sc->sc_maxchdepth = ifp.max_chain_depth;
 	sc->sc_ioc_number = ifp.ioc_number;
-	if (sc->sc_flags & MPI_F_VMWARE)
+	if (sc->sc_flags & MPI_F_SPI)
 		sc->sc_buswidth = 16;
 	else
 		sc->sc_buswidth =

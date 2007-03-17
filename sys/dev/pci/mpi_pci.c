@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi_pci.c,v 1.13 2006/10/08 04:54:36 brad Exp $ */
+/*	$OpenBSD: mpi_pci.c,v 1.14 2007/03/17 10:25:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -139,9 +139,9 @@ mpi_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s", intrstr);
 
-	/* vmware doesn't fill in the pci subsystem register */
-	if (pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG) == 0x0)
-		sc->sc_flags |= MPI_F_VMWARE;
+	if (pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ID_REG) ==
+	    PCI_ID_CODE(PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030))
+		sc->sc_flags |= MPI_F_SPI;
 
 	if (mpi_attach(sc) != 0) {
 		/* error printed by mpi_attach */
