@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.23 2007/03/18 06:08:24 pascoe Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.24 2007/03/18 20:14:51 mglocker Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.24 2002/10/02 16:51:58 thorpej Exp $	*/
 
 /*
@@ -59,7 +59,6 @@
 
 int	uhci_pci_match(struct device *, void *, void *);
 void	uhci_pci_attach(struct device *, struct device *, void *);
-void	uhci_pci_attach_deferred(struct device *);
 int	uhci_pci_detach(struct device *, int);
 
 struct uhci_pci_softc {
@@ -98,6 +97,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *vendor;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
+	usbd_status r;
 	int s;
 
 #if defined(__NetBSD__)
@@ -172,32 +172,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	else
 		snprintf(sc->sc.sc_vendor, sizeof (sc->sc.sc_vendor),
 			"vendor 0x%04x", PCI_VENDOR(pa->pa_id));
-
-	config_defer(self, uhci_pci_attach_deferred);
 	
-	/* Ignore interrupts for now */
-	sc->sc.sc_dying = 1;
-
-	splx(s);
-
-	return;
-
-unmap_ret:
-	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
-	splx(s);
-}
-
-void
-uhci_pci_attach_deferred(struct device *self)
-{
-	struct uhci_pci_softc *sc = (struct uhci_pci_softc *)self;
-	char *devname = sc->sc.sc_bus.bdev.dv_xname;
-	usbd_status r;
-	int s;
-
-	s = splhardusb();
-	
-	sc->sc.sc_dying = 0;
 	r = uhci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", devname, r);
