@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glxsb.4,v 1.1 2006/10/26 08:37:14 tom Exp $
+.\"	$OpenBSD: glxsb.4,v 1.2 2007/03/18 13:49:40 tom Exp $
 .\"
 .\"Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
 .\"
@@ -20,7 +20,7 @@
 .Os
 .Sh NAME
 .Nm glxsb
-.Nd Geode LX Security Block device
+.Nd Geode LX Security Block crypto accelerator
 .Sh SYNOPSIS
 .Cd "glxsb* at pci?"
 .Sh DESCRIPTION
@@ -36,8 +36,15 @@ Driven by periodic checks for available data from the generator,
 supplies entropy to the
 .Xr random 4
 driver for common usage.
+.Pp
+.Nm
+also supports acceleration of AES-CBC operations for
+.Xr crypto 4 .
 .Sh SEE ALSO
-.Xr random 4
+.Xr crypto 4 ,
+.Xr intro 4 ,
+.Xr random 4 ,
+.Xr crypto 9
 .Sh HISTORY
 Support for the
 .Nm
@@ -51,5 +58,6 @@ driver was written by
 .Sh BUGS
 The
 .Nm
-driver does not yet use the AES acceleration provided by the security block;
-it only uses the random number generator.
+driver only provides random numbers and AES acceleration.
+Since it does not provide HMACs, IPSec will not currently use it;
+it will however be used by OpenSSH.
