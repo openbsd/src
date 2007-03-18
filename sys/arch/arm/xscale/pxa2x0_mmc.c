@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_mmc.c,v 1.1 2007/03/18 20:53:10 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_mmc.c,v 1.2 2007/03/18 22:14:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -19,7 +19,7 @@
 /*
  * MMC/SD/SDIO controller driver for Intel PXA27x processors
  *
- * Power management is beond control of the processor's SD/SDIO/MMC
+ * Power management is beyond control of the processor's SD/SDIO/MMC
  * block, so this driver depends on the attachment driver to provide
  * us with some callback functions via the "tag" member in our softc.
  * Bus power management calls are then dispatched to the attachment
@@ -263,7 +263,7 @@ pxammc_bus_power(sdmmc_chipset_handle_t sch, u_int32_t ocr)
 	struct pxammc_softc *sc = sch;
 
 	/*
-	 * Bus power management is beond control of the SD/SDIO/MMC
+	 * Bus power management is beyond control of the SD/SDIO/MMC
 	 * block of the PXA2xx processors, so we have to hand this
 	 * task off to the attachment driver.
 	 */
