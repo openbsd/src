@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2004/12/30 01:52:48 millert Exp $
+#	$OpenBSD: Makefile,v 1.8 2007/03/18 15:37:06 mickey Exp $
 
 PROG=	awk
 LINKS=	${BINDIR}/awk ${BINDIR}/nawk
@@ -7,6 +7,7 @@ LDADD=	-lm
 DPADD=	${LIBM}
 CLEANFILES+=proctab.c maketab ytab.c ytab.h
 CFLAGS+=-I. -I${.CURDIR} -DHAS_ISBLANK -DNDEBUG
+HOSTCFLAGS+=-I. -I${.CURDIR} -DHAS_ISBLANK -DNDEBUG
 MLINKS=	awk.1 nawk.1
 
 # This just gets installed verbatim
@@ -23,6 +24,6 @@ proctab.c: maketab
 	./maketab >proctab.c
 
 maketab: ytab.h maketab.c
-	${HOSTCC} ${CFLAGS} ${.CURDIR}/maketab.c -o $@
+	${HOSTCC} ${HOSTCFLAGS} ${.CURDIR}/maketab.c -o $@
 
 .include <bsd.prog.mk>
