@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.76 2007/03/18 14:40:47 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.77 2007/03/18 15:00:28 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -123,7 +123,7 @@ int			bcw_newstate(struct ieee80211com *,
 			    enum ieee80211_state, int);
 int			bcw_media_change(struct ifnet *);
 void			bcw_media_status(struct ifnet *, struct ifmediareq *);
-int			bcw_validatechipaccess(struct bcw_softc *);
+int			bcw_validate_chip_access(struct bcw_softc *);
 void			bcw_powercontrol_crystal_off(struct bcw_softc *);
 int			bcw_change_core(struct bcw_softc *, int);
 int			bcw_reset_core(struct bcw_softc *, uint32_t);
@@ -1180,7 +1180,7 @@ bcw_attach(struct bcw_softc *sc)
 	    sc->sc_dev.dv_xname, sc->sc_radio_rev, sc->sc_radio_ver,
 	    sc->sc_radio_mnf & 0xfff));
 
-	error = bcw_validatechipaccess(sc);
+	error = bcw_validate_chip_access(sc);
 	if (error) {
 		printf("%s: failed Chip Access Validation at %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -1836,9 +1836,14 @@ bcw_tick(void *v)
 
 /*
  * Validate Chip Access
+ *
+ * This function ensures that the chip is setup correctly and is ready
+ * for use.
+ *
+ * http://bcm-specs.sipsolutions.net/ValidateChipAccess
  */
 int
-bcw_validatechipaccess(struct bcw_softc *sc)
+bcw_validate_chip_access(struct bcw_softc *sc)
 {
 	uint32_t save,val;
 
