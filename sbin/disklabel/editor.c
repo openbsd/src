@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.108 2007/03/13 19:25:31 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.109 2007/03/18 20:00:02 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.108 2007/03/13 19:25:31 otto Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.109 2007/03/18 20:00:02 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1109,7 +1109,8 @@ getuint(struct disklabel *lp, int partno, char *prompt, char *helpstring,
 			}
 		}
 	}
-	if ((flags & DO_ROUNDING) && rval < UINT_MAX) {
+	if ((flags & DO_ROUNDING) && rval < UINT_MAX - lp->d_secpercyl / 2 &&
+	    lp->d_secpercyl != 0) {
 #ifndef CYLCHECK
 		/* Round to nearest cylinder unless given in sectors */
 		if (mult != 1)
@@ -1118,8 +1119,7 @@ getuint(struct disklabel *lp, int partno, char *prompt, char *helpstring,
 			u_int32_t cyls;
 
 			/* If we round up past the end, round down instead */
-			cyls = (u_int32_t)((rval / (double)lp->d_secpercyl)
-			    + 0.5);
+			cyls = (rval + lp->d_secpercyl / 2) / lp->d_secpercyl;
 			if (cyls != 0 && lp->d_secpercyl != 0) {
 				if ((cyls * lp->d_secpercyl) - offset > maxval)
 					cyls--;
