@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.29 2007/03/16 07:05:13 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.30 2007/03/18 14:40:47 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -24,6 +24,9 @@
  */
 
 #define BCW_ARRAY_SIZE(array)	(sizeof(array) / sizeof(array[0]))
+
+#define BCW_DEFAULT_SHORT_RETRY_LIMIT	7
+#define BCW_DEFAULT_LONG_RETRY_LIMIT	4
 
 struct fwheader {
 	char	filename[64];

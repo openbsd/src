@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.21 2007/03/16 13:49:11 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.22 2007/03/18 14:40:47 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -45,7 +45,7 @@
 #define BCW_MMIO_SHM_CONTROL		0x160	/* Control */
 #define BCW_MMIO_SHM_DATA		0x164	/* Data - 32bit */
 #define BCW_MMIO_SHM_DATALOW		0x164	/* Data Low - 16bit */
-#define BCW_MMIO_SHM_DATAHIGH		0x166	/* Data High - 16 bit */
+#define BCW_MMIO_SHM_DATA_UNALIGNED	0x166	/* Data High - 16 bit */
 
 #define BCW_MMIO_PHY_RADIO		0x3e2
 #define BCW_MMIO_CHANNEL		0x3f0
@@ -138,7 +138,41 @@
  * Core information registers
  */
 #define BCW_CIR_BASE			0xf00
+#define BCW_CIR_SBTPSFLAG		(BCW_CIR_BASE + 0x18)
+#define BCW_CIR_SBIMSTATE		(BCW_CIR_BASE + 0x90)
+#define BCW_CIR_SBINTVEC		(BCW_CIR_BASE + 0x94)
 #define BCW_CIR_SBTMSTATELOW		(BCW_CIR_BASE + 0x98)
+#define BCW_CIR_SBTMSTATEHIGH		(BCW_CIR_BASE + 0x9c)
+#define BCW_CIR_SBIMCONFIGLOW		(BCW_CIR_BASE + 0xa8)
+#define BCW_CIR_SB_ID_HI		(BCW_CIR_BASE + 0xfc)
+
+/* sbimconfiglow values/masks */
+#define BCW_SBIMCONFIGLOW_STM		0x00000007
+#define BCW_SBIMCONFIGLOW_STS		0
+#define BCW_SBIMCONFIGLOW_RTM		0x00000070
+#define BCW_SBIMCONFIGLOW_RTS		4
+#define BCW_SBIMCONFIGLOW_CM		0x00ff0000
+#define BCW_SBIMCONFIGLOW_CS		16
+
+/* sbtmstatelow state flags */
+#define BCW_SBTMSTATELOW_RESET		0x01
+#define BCW_SBTMSTATELOW_REJECT		0x02
+#define BCW_SBTMSTATELOW_CLOCK		0x10000
+#define BCW_SBTMSTATELOW_FGCLOCK	0x20000
+
+/* sbtmstatehigh state flags */
+#define BCW_SBTMSTATEHIGH_SERROR	0x00000001
+#define BCW_SBTMSTATEHIGH_BUSY		0x00000004
+#define BCW_SBTMSTATEHIGH_TIMEOUT	0x00000020
+#define BCW_SBTMSTATEHIGH_COREFLAGS	0x1FFF0000
+#define BCW_SBTMSTATEHIGH_DMA64BIT	0x10000000
+#define BCW_SBTMSTATEHIGH_GATEDCLK	0x20000000
+#define BCW_SBTMSTATEHIGH_BISTFAILED	0x40000000
+#define BCW_SBTMSTATEHIGH_BISTCOMPLETE	0x80000000
+
+/* sbimstate flags */
+#define BCW_SBIMSTATE_IB_ERROR		0x20000
+#define BCW_SBIMSTATE_TIMEOUT		0x40000
 
 /*
  * PHY Versioning
@@ -200,8 +234,14 @@
  *
  * http://bcm-specs.sipsolutions.net/MicrocodeFlagsBitfield
  */
-#define BCW_SHM_MICROCODEFLAGSLOW	0x005e
-#define BCW_SHM_MICROCODEFLAGSAUTODIV	0x0001
+#define BCW_UCODEFLAGS_OFFSET		0x005e
+
+#define BCW_UCODEFLAG_AUTODIV		0x0001
+#define BCW_UCODEFLAG_UNKBGPHY		0x0002
+#define BCW_UCODEFLAG_UNKBPHY		0x0004
+#define BCW_UCODEFLAG_UNKGPHY		0x0020
+#define BCW_UCODEFLAG_UNKPACTRL		0x0040
+#define BCW_UCODEFLAG_JAPAN		0x0080
 
 /*
  * Generic interrupt reasons

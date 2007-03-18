@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.75 2007/03/16 22:22:24 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.76 2007/03/18 14:40:47 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -69,6 +69,8 @@ uint16_t		bcw_shm_read16(struct bcw_softc *, uint16_t, uint16_t);
 void			bcw_shm_write16(struct bcw_softc *, uint16_t, uint16_t,
 			    uint16_t);
 uint32_t		bcw_shm_read32(struct bcw_softc *, uint16_t, uint16_t);
+void			bcw_shm_write32(struct bcw_softc *, uint16_t, uint16_t,
+			    uint32_t);
 void			bcw_radio_write16(struct bcw_softc *, uint16_t,
 			    uint16_t);
 int			bcw_radio_read16(struct bcw_softc *, uint16_t);
@@ -83,6 +85,9 @@ void			bcw_stack_save(uint32_t *, size_t *, uint8_t, uint16_t,
 			    uint16_t);
 uint16_t		bcw_stack_restore(uint32_t *, uint8_t, uint16_t);
 int			bcw_using_pio(struct bcw_softc *);
+void			bcw_rate_memory_write(struct bcw_softc *, uint16_t,
+			    int);
+void			bcw_rate_memory_init(struct bcw_softc *);
 
 /*
  * 80211
@@ -122,6 +127,9 @@ int			bcw_validatechipaccess(struct bcw_softc *);
 void			bcw_powercontrol_crystal_off(struct bcw_softc *);
 int			bcw_change_core(struct bcw_softc *, int);
 int			bcw_reset_core(struct bcw_softc *, uint32_t);
+int			bcw_core_enable(struct bcw_softc *, uint32_t);
+int			bcw_core_disable(struct bcw_softc *, uint32_t);
+void			bcw_80211_core_reset(struct bcw_softc *, int);
 int			bcw_get_firmware(const char *, const uint8_t *, size_t,
 			    size_t *, size_t *);
 int			bcw_load_firmware(struct bcw_softc *);
@@ -131,6 +139,7 @@ int			bcw_load_initvals(struct bcw_softc *);
 void			bcw_leds_switch_all(struct bcw_softc *, int);
 int			bcw_gpio_init(struct bcw_softc *);
 int			bcw_chip_init(struct bcw_softc *);
+int			bcw_80211_core_init(struct bcw_softc *, int);
 
 /*
  * PHY
@@ -171,6 +180,8 @@ struct bcw_lopair *	bcw_phy_find_lopair(struct bcw_softc *, uint16_t,
 struct bcw_lopair *	bcw_phy_current_lopair(struct bcw_softc *);
 void			bcw_phy_prepare_init(struct bcw_softc *);
 void			bcw_phy_set_antenna_diversity(struct bcw_softc *);
+void			bcw_phy_calibrate(struct bcw_softc *);
+int			bcw_phy_connect(struct bcw_softc *, int);
 
 /*
  * Radio
@@ -224,6 +235,12 @@ uint16_t		bcw_ilt_read(struct bcw_softc *, uint16_t);
  * Power
  */
 void			bcw_power_saving_ctl_bits(struct bcw_softc *, int, int);
+
+/*
+ * XMIT
+ */
+uint8_t			bcw_xmit_plcp_get_ratecode_cck(const uint8_t);
+uint8_t			bcw_xmit_plcp_get_ratecode_ofdm(const uint8_t);
 
 struct cfdriver bcw_cd = {
 	NULL, "bcw", DV_IFNET
@@ -553,7 +570,7 @@ bcw_shm_read16(struct bcw_softc *sc, uint16_t routing, uint16_t offset)
 		if (offset & 0x0003) {
 			bcw_shm_ctl_word(sc, routing, offset >> 2);
 
-			return (BCW_READ16(sc, BCW_MMIO_SHM_DATAHIGH));
+			return (BCW_READ16(sc, BCW_MMIO_SHM_DATA_UNALIGNED));
 		}
 		offset >>= 2;
 	}
@@ -569,7 +586,7 @@ bcw_shm_write16(struct bcw_softc *sc, uint16_t routing, uint16_t offset,
 	if (routing == BCW_SHM_SHARED) {
 		if (offset & 0x0003) {
 			bcw_shm_ctl_word(sc, routing, offset >> 2);
-			BCW_WRITE16(sc, BCW_MMIO_SHM_DATAHIGH, val);
+			BCW_WRITE16(sc, BCW_MMIO_SHM_DATA_UNALIGNED, val);
 			return;
 		}
 		offset >>= 2;
@@ -587,7 +604,7 @@ bcw_shm_read32(struct bcw_softc *sc, uint16_t routing, uint16_t offset)
 		if (offset & 0x003) {
 			/* unaligned acccess */
 			bcw_shm_ctl_word(sc, routing, offset >> 2);
-			r = BCW_READ16(sc, BCW_MMIO_SHM_DATAHIGH);
+			r = BCW_READ16(sc, BCW_MMIO_SHM_DATA_UNALIGNED);
 			r <<= 16;
 			bcw_shm_ctl_word(sc, routing, (offset >> 2) + 1);
 			r |= BCW_READ16(sc, BCW_MMIO_SHM_DATA);
@@ -599,6 +616,26 @@ bcw_shm_read32(struct bcw_softc *sc, uint16_t routing, uint16_t offset)
 	r = BCW_READ(sc, BCW_MMIO_SHM_DATA);
 
 	return (r);
+}
+
+void
+bcw_shm_write32(struct bcw_softc *sc, uint16_t routing, uint16_t offset,
+    uint32_t val)
+{
+	if (routing == BCW_SHM_SHARED) {
+		if (offset & 0x0003) {
+			/* unaligned access */
+			bcw_shm_ctl_word(sc, routing, offset >> 2);
+			BCW_WRITE16(sc, BCW_MMIO_SHM_DATA_UNALIGNED,
+			    (val >> 16) & 0xffff);
+			bcw_shm_ctl_word(sc, routing, (offset >> 2) + 1);
+			BCW_WRITE16(sc, BCW_MMIO_SHM_DATA, val & 0xffff);
+			return;
+		}
+		offset >>= 2;
+	}
+	bcw_shm_ctl_word(sc, routing, offset);
+	BCW_WRITE(sc, BCW_MMIO_SHM_DATA, val);
 }
 
 void
@@ -791,6 +828,59 @@ int
 bcw_using_pio(struct bcw_softc *sc)
 {
 	return (sc->sc_using_pio);
+}
+
+void
+bcw_rate_memory_write(struct bcw_softc *sc, uint16_t rate, int is_ofdm)
+{
+	uint16_t offset;
+
+	if (is_ofdm) {
+		offset = 0x480;
+		offset += (bcw_xmit_plcp_get_ratecode_ofdm(rate) & 0x000f) * 2;
+	} else {
+		offset = 0x4c0;
+		offset += (bcw_xmit_plcp_get_ratecode_cck(rate) & 0x000f) * 2;
+	}
+	bcw_shm_write16(sc, BCW_SHM_SHARED, offset + 0x20,
+	    bcw_shm_read16(sc, BCW_SHM_SHARED, offset));
+}
+
+void
+bcw_rate_memory_init(struct bcw_softc *sc)
+{
+	switch (sc->sc_phy_type) {
+	case BCW_PHY_TYPEA:
+	case BCW_PHY_TYPEG:
+		bcw_rate_memory_write(sc,
+		    ieee80211_std_rateset_11g.rs_rates[0], 1);
+		bcw_rate_memory_write(sc,
+		    ieee80211_std_rateset_11g.rs_rates[1], 1);
+		bcw_rate_memory_write(sc,
+		    ieee80211_std_rateset_11g.rs_rates[2], 1);
+		bcw_rate_memory_write(sc,
+		    ieee80211_std_rateset_11g.rs_rates[3], 1);
+		bcw_rate_memory_write(sc,
+		    ieee80211_std_rateset_11g.rs_rates[4], 1);
+		bcw_rate_memory_write(sc,
+		    ieee80211_std_rateset_11g.rs_rates[5], 1);
+		bcw_rate_memory_write(sc,
+		    ieee80211_std_rateset_11g.rs_rates[6], 1);
+		bcw_rate_memory_write(sc,
+		    ieee80211_std_rateset_11g.rs_rates[7], 1);
+	case BCW_PHY_TYPEB:
+		bcw_rate_memory_write(sc,
+		    ieee80211_std_rateset_11b.rs_rates[0], 0);
+		bcw_rate_memory_write(sc,
+		    ieee80211_std_rateset_11b.rs_rates[1], 0);
+		bcw_rate_memory_write(sc,
+		    ieee80211_std_rateset_11b.rs_rates[2], 0);
+		bcw_rate_memory_write(sc,
+		    ieee80211_std_rateset_11b.rs_rates[3], 0);
+	default:
+		/* XXX assert() */
+		break;
+	}
 }
 
 void
@@ -1233,8 +1323,8 @@ bcw_attach(struct bcw_softc *sc)
 	 * wrapper of some sort would be better.
 	 */
 	BCW_WRITE(sc, BCW_MMIO_SHM_CONTROL,
-	    (BCW_SHM_SHARED << 16) + BCW_SHM_MICROCODEFLAGSLOW - 2);
-	BCW_WRITE16(sc, BCW_MMIO_SHM_DATAHIGH, sbval & 0x00ff);
+	    (BCW_SHM_SHARED << 16) + BCW_UCODEFLAGS_OFFSET - 2);
+	BCW_WRITE16(sc, BCW_MMIO_SHM_DATA_UNALIGNED, sbval & 0x00ff);
 	BCW_WRITE16(sc, BCW_MMIO_SHM_DATALOW, (sbval & 0xff00) >> 16);
 
 	/*
@@ -1565,8 +1655,8 @@ bcw_init(struct ifnet *ifp)
         struct bcw_softc *sc = ifp->if_softc;
         int error;
 
-	/* initialize chip */
-	if ((error = bcw_chip_init(sc)))
+	/* initialize 80211 core */
+	if ((error = bcw_80211_core_init(sc, 1))) /* XXX */
 		return (error);
 
 	/* start timer */
@@ -2364,6 +2454,158 @@ disabled:
 	return 0;
 }
 
+/*
+ * Enable current core
+ */
+int
+bcw_core_enable(struct bcw_softc *sc, uint32_t core_flags)
+{
+	uint32_t sbtmstatelow;
+	uint32_t sbtmstatehigh;
+	uint32_t sbimstate;
+	int error;
+
+	if ((error = bcw_core_disable(sc, core_flags)))
+		return (error);
+
+	sbtmstatelow =
+	    BCW_SBTMSTATELOW_CLOCK |
+	    BCW_SBTMSTATELOW_RESET |
+	    BCW_SBTMSTATELOW_FGCLOCK |
+	    core_flags;
+	BCW_WRITE(sc, BCW_CIR_SBTMSTATELOW, sbtmstatelow);
+	delay(1);
+
+	sbtmstatehigh = BCW_READ(sc, BCW_CIR_SBTMSTATEHIGH);
+	if (sbtmstatehigh & BCW_SBTMSTATEHIGH_SERROR) {
+		sbtmstatehigh = 0;
+		BCW_WRITE(sc, BCW_CIR_SBTMSTATEHIGH, sbtmstatehigh);
+	}
+
+	sbimstate = BCW_READ(sc, BCW_CIR_SBIMSTATE);
+	if (sbimstate & (BCW_SBIMSTATE_IB_ERROR | BCW_SBIMSTATE_TIMEOUT)) {
+		sbimstate &= ~(BCW_SBIMSTATE_IB_ERROR | BCW_SBIMSTATE_TIMEOUT);
+		BCW_WRITE(sc, BCW_CIR_SBIMSTATE, sbimstate);
+	}
+
+	sbtmstatelow =
+	    BCW_SBTMSTATELOW_CLOCK |
+	    BCW_SBTMSTATELOW_FGCLOCK |
+	    core_flags;
+	BCW_WRITE(sc, BCW_CIR_SBTMSTATELOW, sbtmstatelow);
+	delay(1);
+
+	sbtmstatelow = BCW_SBTMSTATELOW_CLOCK | core_flags;
+	BCW_WRITE(sc, BCW_CIR_SBTMSTATELOW, sbtmstatelow);
+	delay(1);
+
+	/* TODO sc->sc_current_core_enabled = 1; */
+
+	/* XXX assert() */
+
+	return (0);
+}
+
+/*
+ * Disable current core
+ */
+int
+bcw_core_disable(struct bcw_softc *sc, uint32_t core_flags)
+{
+	uint32_t sbtmstatelow;
+	uint32_t sbtmstatehigh;
+	int i;
+
+	/* fetch sbtmstatelow from core information registers */
+	sbtmstatelow = BCW_READ(sc, BCW_CIR_SBTMSTATELOW);
+
+	/* core is already in reset */
+	if (sbtmstatelow & BCW_SBTMSTATELOW_RESET)
+		goto out;
+
+	if (sbtmstatelow & BCW_SBTMSTATELOW_CLOCK) {
+		sbtmstatelow =
+		    BCW_SBTMSTATELOW_CLOCK |
+		    BCW_SBTMSTATELOW_REJECT;
+		BCW_WRITE(sc, BCW_CIR_SBTMSTATELOW, sbtmstatelow);
+
+		for (i = 0; i < 1000; i++) {
+			sbtmstatelow = BCW_READ(sc, BCW_CIR_SBTMSTATELOW);
+			if (sbtmstatelow & BCW_SBTMSTATELOW_REJECT) {
+				i = -1;
+				break;
+			}
+			delay(10);
+		}
+		if (i != -1) {
+			DPRINTF(("%s: can not disable core, REJECT timeout!\n",
+			   sc->sc_dev.dv_xname));
+			return (EBUSY);
+		}
+
+		for (i = 0; i < 1000; i++) {
+			sbtmstatehigh = BCW_READ(sc, BCW_CIR_SBTMSTATEHIGH);
+			if (!(sbtmstatehigh & BCW_SBTMSTATEHIGH_BUSY)) {
+				i = -1;
+				break;
+			}
+			delay(10);
+		}
+		if (i != -1) {
+			DPRINTF(("%s: can not disable, core, BUSY timeout!\n",
+			    sc->sc_dev.dv_xname));
+			return (EBUSY);
+		}
+
+		sbtmstatelow =
+		    BCW_SBTMSTATELOW_FGCLOCK |
+		    BCW_SBTMSTATELOW_REJECT |
+		    BCW_SBTMSTATELOW_RESET |
+		    BCW_SBTMSTATELOW_CLOCK |
+		    core_flags;
+		BCW_WRITE(sc, BCW_CIR_SBTMSTATELOW, sbtmstatelow);
+		delay(10); 
+	}
+
+	sbtmstatelow =
+	    BCW_SBTMSTATELOW_RESET |
+	    BCW_SBTMSTATELOW_REJECT |
+	    core_flags;
+	BCW_WRITE(sc, BCW_CIR_SBTMSTATELOW, sbtmstatelow);
+
+out:
+	/* XXX sc_current_core_enabled = 0 */
+
+	return (0);
+}
+
+/*
+ * Reset the 80211 core
+ *
+ * http://bcm-specs.sipsolutions.net/80211CoreReset
+ */
+void
+bcw_80211_core_reset(struct bcw_softc *sc, int connect_phy)
+{
+	uint32_t flags = 0x00040000;
+#if 0
+	if (1) { /* XXX */
+		BCW_WRITE(sc, BCW_MMIO_SBF, BCW_READ(sc, BCW_MMIO_SBF) &
+		    ~(BCW_SBF_MAC_ENABLED | 0x00000002));
+	} else {
+#endif
+		if (connect_phy)
+			flags |= 0x20000000;
+		bcw_phy_connect(sc, connect_phy);
+		bcw_core_enable(sc, flags);
+		BCW_WRITE16(sc, 0x03e6, 0);
+		BCW_WRITE(sc, BCW_MMIO_SBF, BCW_READ(sc, BCW_MMIO_SBF) |
+		    BCW_SBF_400_MAGIC);
+#if 0
+	}
+#endif
+}
+
 int
 bcw_get_firmware(const char *name, const uint8_t *ucode, size_t size_ucode,
     size_t *size, size_t *offset)
@@ -2836,6 +3078,109 @@ bcw_chip_init(struct bcw_softc *sc)
 	/* TODO bcw_pctl_powerup_delay(sc) */
 
 	DPRINTF(("%s: Chip initialized\n", sc->sc_dev.dv_xname));
+
+	return (0);
+}
+
+/*
+ * Initialize the 80211 core
+ *
+ * http://bcm-specs.sipsolutions.net/80211Init
+ */
+int
+bcw_80211_core_init(struct bcw_softc *sc, int active_80211_core)
+{
+	uint8_t limit;
+	uint32_t ucodeflags;
+	uint32_t sbimconfiglow;
+	int error;
+
+	if (sc->sc_core_bus->rev <= 5 && sc->sc_core_bus->id != BCW_CORE_PCIE) {
+		sbimconfiglow = BCW_READ(sc, BCW_CIR_SBIMCONFIGLOW);
+		sbimconfiglow &= ~BCW_SBIMCONFIGLOW_RTM;
+		sbimconfiglow &= ~BCW_SBIMCONFIGLOW_STM;
+		if (1) /* XXX find out the bus type (PCI, CARDBUS, PCMCIA */
+			sbimconfiglow |= 0x32;
+		else
+			sbimconfiglow |= 0x53;
+		BCW_WRITE(sc, BCW_CIR_SBIMCONFIGLOW, sbimconfiglow);
+	}
+
+	bcw_phy_calibrate(sc);
+	if ((error = bcw_chip_init(sc)))
+		return (error);
+
+	bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0016,
+	    sc->sc_core[sc->sc_currentcore].rev);
+
+	ucodeflags = bcw_shm_read32(sc, BCW_SHM_SHARED, BCW_UCODEFLAGS_OFFSET);
+
+	if (0) /* XXX */
+		ucodeflags |= 0x00000010;
+
+	/* HW decryption needs to be set now */
+	ucodeflags |= 0x40000000;
+
+	if (sc->sc_phy_type == BCW_PHY_TYPEG) {
+		ucodeflags |= BCW_UCODEFLAG_UNKBGPHY;
+		if (sc->sc_phy_rev == 1)
+			ucodeflags |= BCW_UCODEFLAG_UNKGPHY;
+		if (sc->sc_boardflags & BCW_BF_PACTRL)
+			ucodeflags |= BCW_UCODEFLAG_UNKPACTRL;
+	} else if (sc->sc_phy_type == BCW_PHY_TYPEB) {
+		ucodeflags |= BCW_UCODEFLAG_UNKBGPHY;
+		if (sc->sc_phy_rev >= 2 && sc->sc_radio_ver == 0x2050)
+			ucodeflags &= ~BCW_UCODEFLAG_UNKGPHY;
+	}
+
+	if (ucodeflags != bcw_shm_read32(sc, BCW_SHM_SHARED,
+	    BCW_UCODEFLAGS_OFFSET)) {
+		bcw_shm_write32(sc, BCW_SHM_SHARED, BCW_UCODEFLAGS_OFFSET,
+		    ucodeflags);
+	}
+
+	/* short/long retry limit */
+	limit = bcw_lv(BCW_DEFAULT_SHORT_RETRY_LIMIT, 0, 0xf);
+	bcw_shm_write32(sc, BCW_SHM_80211, 0x0006, limit);
+	limit = bcw_lv(BCW_DEFAULT_LONG_RETRY_LIMIT, 0, 0xf);
+	bcw_shm_write32(sc, BCW_SHM_80211, 0x0007, limit);
+
+	bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0044, 3);
+	bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0046, 2);
+
+	bcw_rate_memory_init(sc);
+
+	/* minimum contention window */
+	if (sc->sc_phy_type == BCW_PHY_TYPEB)
+		bcw_shm_write32(sc, BCW_SHM_80211, 0x0003, 0x0000001f);
+	else
+		bcw_shm_write32(sc, BCW_SHM_80211, 0x0003, 0x0000000f);
+
+	/* maximum contention window */
+	bcw_shm_write32(sc, BCW_SHM_80211, 0x0004, 0x000003ff);
+
+	/* TODO bcw_gen_bssid(), bcw_write_mac_bssid_templates() */
+
+	if (sc->sc_core[sc->sc_currentcore].rev >= 5)
+		BCW_WRITE16(sc, 0x043c, 0x000c);
+
+	if (active_80211_core) {
+		if (bcw_using_pio(sc)) {
+			/* TODO bcw_pio_init() */
+		} else {
+			/* TODO bcw_dma_init() */
+		}
+	}
+	BCW_WRITE16(sc, 0x0612, 0x0050);
+	bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0416, 0x0050);
+	bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0414, 0x01f4);
+
+	if (active_80211_core) {
+		if (1) /* XXX initial channel */
+			bcw_radio_select_channel(sc, 0, 0);
+	}
+
+	/* TODO sc->sc_current_core_initialized = 1; */
 
 	return (0);
 }
@@ -4723,10 +5068,9 @@ bcw_phy_set_antenna_diversity(struct bcw_softc *sc)
 		antennadiv = 3;
 	/* XXX assert() */
 
-	ucodeflags = bcw_shm_read16(sc, BCW_SHM_SHARED,
-	    BCW_SHM_MICROCODEFLAGSLOW);
-	bcw_shm_write16(sc, BCW_SHM_SHARED, BCW_SHM_MICROCODEFLAGSLOW,
-	    ucodeflags & ~BCW_SHM_MICROCODEFLAGSAUTODIV);
+	ucodeflags = bcw_shm_read16(sc, BCW_SHM_SHARED, BCW_UCODEFLAGS_OFFSET);
+	bcw_shm_write16(sc, BCW_SHM_SHARED, BCW_UCODEFLAGS_OFFSET,
+	    ucodeflags & ~BCW_UCODEFLAG_AUTODIV);
 
 	switch (sc->sc_phy_type) {
 	case BCW_PHY_TYPEA:
@@ -4808,13 +5152,66 @@ bcw_phy_set_antenna_diversity(struct bcw_softc *sc)
 
 	if (antennadiv >= 2) {
 		ucodeflags = bcw_shm_read16(sc, BCW_SHM_SHARED,
-		    BCW_SHM_MICROCODEFLAGSLOW);
+		    BCW_UCODEFLAGS_OFFSET);
 		bcw_shm_write16(sc, BCW_SHM_SHARED,
-		    BCW_SHM_MICROCODEFLAGSLOW, ucodeflags |
-		    BCW_SHM_MICROCODEFLAGSAUTODIV);
+		    BCW_UCODEFLAGS_OFFSET, ucodeflags |
+		    BCW_UCODEFLAG_AUTODIV);
 	}
 
 	sc->sc_phy_antenna_diversity = antennadiv;
+}
+
+void
+bcw_phy_calibrate(struct bcw_softc *sc)
+{
+	BCW_READ(sc, BCW_MMIO_SBF);
+
+	if (sc->sc_phy_calibrated)
+		return;
+	if (sc->sc_phy_type == BCW_PHY_TYPEG && sc->sc_phy_rev == 1) {
+		bcw_80211_core_reset(sc, 0);
+		bcw_phy_initg(sc);
+		bcw_80211_core_reset(sc, 1);
+	}
+	sc->sc_phy_calibrated = 1;
+}
+
+/*
+ * Connect the PHY
+ *
+ * http://bcm-specs.sipsolutions.net/SetPHY
+ */
+int
+bcw_phy_connect(struct bcw_softc *sc, int connect)
+{
+	uint32_t flags;
+
+	if (sc->sc_core[sc->sc_currentcore].rev < 5)
+		goto out;
+
+	flags = BCW_READ(sc, BCW_CIR_SBTMSTATEHIGH);
+	if (connect) {
+		if (!(flags & 0x00010000))
+			return (ENODEV);
+		flags = BCW_READ(sc, BCW_CIR_SBTMSTATELOW);
+		flags |= (0x8000 << 18);
+		BCW_WRITE(sc, BCW_CIR_SBTMSTATELOW, flags);
+	} else {
+		if (!(flags & 0x00020000))
+			return (ENODEV);
+		flags = BCW_READ(sc, BCW_CIR_SBTMSTATELOW);
+		flags &= ~(0x800 << 18);
+		BCW_WRITE(sc, BCW_CIR_SBTMSTATELOW, flags);
+	}
+
+out:
+	sc->sc_phy_connected = connect;
+	if (connect)
+		DPRINTF(("%s: PHY connected\n", sc->sc_dev.dv_xname));
+	else
+		DPRINTF(("%s: PHY disconnected\n", sc->sc_dev.dv_xname));
+
+	return (0);
 }
 
 /*
@@ -6192,11 +6589,11 @@ bcw_radio_interf_mitigation_enable(struct bcw_softc *sc, int mode)
 			bcw_phy_write16(sc, 0x048a,
 			    (bcw_phy_read16(sc, 0x048a) & 0x9fff) | 0x2000);
 			tmp32 = bcw_shm_read16(sc, BCW_SHM_SHARED,
-			    BCW_SHM_MICROCODEFLAGSLOW);
+			    BCW_UCODEFLAGS_OFFSET);
 			if (!(tmp32 & 0x800)) {
 				tmp32 |= 0x800;
 				bcw_shm_write16(sc, BCW_SHM_SHARED,
-				    BCW_SHM_MICROCODEFLAGSLOW, tmp32);
+				    BCW_UCODEFLAGS_OFFSET, tmp32);
 			}
 		}
 		if (sc->sc_phy_rev >= 2) {
@@ -6301,4 +6698,49 @@ bcw_power_saving_ctl_bits(struct bcw_softc *sc, int bit25, int bit26)
 			delay(10);
 		}
 	}
+}
+
+/*
+ * XMIT
+ */
+uint8_t
+bcw_xmit_plcp_get_ratecode_cck(const uint8_t bitrate)
+{
+	if (ieee80211_std_rateset_11b.rs_rates[0] == bitrate)
+		return (0x0a);
+	else if (ieee80211_std_rateset_11b.rs_rates[1] == bitrate)
+		return (0x14);
+	else if (ieee80211_std_rateset_11b.rs_rates[2] == bitrate)
+		return (0x37);
+	else if (ieee80211_std_rateset_11b.rs_rates[3] == bitrate)
+		return (0x6e);
+
+	/* XXX assert() */
+
+	return (0);
+}
+
+uint8_t
+bcw_xmit_plcp_get_ratecode_ofdm(const uint8_t bitrate)
+{
+	if (ieee80211_std_rateset_11g.rs_rates[0] == bitrate)
+		return (0xb);
+	else if (ieee80211_std_rateset_11g.rs_rates[1] == bitrate)
+		return (0xf);
+	else if (ieee80211_std_rateset_11g.rs_rates[2] == bitrate)
+		return (0xa);
+	else if (ieee80211_std_rateset_11g.rs_rates[3] == bitrate)
+		return (0xe);
+	else if (ieee80211_std_rateset_11g.rs_rates[4] == bitrate)
+		return (0x9);
+	else if (ieee80211_std_rateset_11g.rs_rates[5] == bitrate)
+		return (0xd);
+	else if (ieee80211_std_rateset_11g.rs_rates[6] == bitrate)
+		return (0x8);
+	else if (ieee80211_std_rateset_11g.rs_rates[7] == bitrate)
+		return (0xc);
+
+	/* XXX assert() */
+
+	return (0);
 }
