@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.49 2007/03/15 17:10:20 miod Exp $
+.\"	$OpenBSD: ddb.4,v 1.50 2007/03/18 15:27:56 mickey Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -598,6 +598,21 @@ Prints a list of all breakpoints that have been set with the
 .Ic break
 command.
 .\" --------------------
+.It Xo
+.Ic show buf
+.Op Cm /f
+.Ar addr
+.Xc
+Prints the
+.Li struct buf
+at
+.Ar addr .
+If the
+.Cm /f
+modifier is specified output will also include
+.Li softdep
+printout, if those are available.
+.\" --------------------
 .It Ic show extents
 Prints a detailed list of all extents.
 .\" --------------------
@@ -618,6 +633,27 @@ at
 If the
 .Cm /f
 modifier is specified the complete map is printed.
+.\" --------------------
+.It Xo
+.Ic show mount
+.Op Cm /f
+.Ar addr
+.Xc
+Prints the
+.Li struct mount
+at
+.Ar addr .
+If the
+.Cm /f
+modifier is specified prints out all
+.Li vnodes
+(see also
+.Cm show vnode )
+and also all
+.Li bufs
+(see also
+.Cm show buf )
+on all those vnodes.
 .\" --------------------
 .It Xo
 .Ic show object
@@ -689,6 +725,24 @@ incorrect information may be displayed.
 .\" --------------------
 .It Ic show uvmexp
 Displays a selection of uvm counters and statistics.
+.\" --------------------
+.It Xo
+.Ic show vnode
+.Op Cm /f
+.Ar addr
+.Xc
+Prints the
+.Li struct vnode
+at
+.Ar addr .
+If the
+.Cm /f
+prints all
+.Li bufs
+(see also
+.Cm show buf )
+currently attached to this
+.Li vnode .
 .\" --------------------
 .It Ic show watches
 Displays all watchpoints set with the
