@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.35 2006/11/28 15:25:10 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.36 2007/03/18 21:47:25 uwe Exp $
 
 machine	zaurus	arm
 
@@ -97,6 +97,11 @@ upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
 #ugen*		at uhub?		# USB Generic driver
 umass*		at uhub?		# USB Mass Storage devices
 scsibus*	at umass?
+
+# SD/MMC support
+pxammc0		at pxaip?		# MMC/SD/SDIO controller
+sdmmc*		at pxammc?		# SD/MMC bus
+scsibus*	at sdmmc?		# SCSI emulation
 
 sd*		at scsibus?
 #st*		at scsibus?
