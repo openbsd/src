@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.38 2007/03/16 01:03:04 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.39 2007/03/18 18:38:57 beck Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -1084,6 +1084,8 @@ convert_spamd_db(void)
 		syslog_r(LOG_ERR, &sdata,
 		    "can't convert %s:  can't dbopen %s (%m)", PATH_SPAMD_DB,
 		sfn);
+		db1->close(db1);
+		exit(1);
 	}
 
 	memset(&dbk, 0, sizeof(dbk));
