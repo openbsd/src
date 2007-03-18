@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.86 2007/03/16 23:41:12 robert Exp $
+dnl	$OpenBSD: hardware,v 1.87 2007/03/18 10:11:34 martin Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -21,7 +21,8 @@ Supported hardware:
 		Floppy drive.
 		ISA devices that require DMA operation.
 
-    API UP1000 machines and other EV6 machines using the Irongate chipset
+    API UP1000, UP2000, and UP2000+ and other EV6 machines using the
+    Irongate chipset
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21040 Ethernet.
@@ -143,7 +144,6 @@ Supported hardware:
 		Other TURBOchannel cards.
 
     At this time none of the following systems are supported:
-	API UP2000, UP2000+ (mostly because we don't have any to test on)
 	DECpc AXP150 (2000/300) systems (EISA-bus PC-like systems)
 	AlphaServer systems, other than models 400 and 500, which seem to
 	  be disguised AlphaStation machines
