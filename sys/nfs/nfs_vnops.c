@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.72 2007/02/23 14:27:06 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.73 2007/03/18 15:05:33 mickey Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -122,7 +122,6 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_islocked_desc, nfs_islocked },	/* islocked */
 	{ &vop_pathconf_desc, nfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, nfs_advlock },	/* advlock */
-	{ &vop_reallocblks_desc, nfs_reallocblks },	/* reallocblks */
 	{ &vop_bwrite_desc, nfs_bwrite },
 	{ NULL, NULL }
 };

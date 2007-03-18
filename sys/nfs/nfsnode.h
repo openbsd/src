@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.23 2007/01/16 17:52:18 thib Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.24 2007/03/18 15:05:33 mickey Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -207,8 +207,6 @@ int	nfs_pathconf(void *);
 int	nfs_advlock(void *);
 int	nfs_bwrite(void *);
 int	nfs_vget(struct mount *, ino_t, struct vnode **);
-#define nfs_reallocblks \
-	((int (*)(void *))eopnotsupp)
 
 /* other stuff */
 int	nfs_removeit(struct sillyrename *);

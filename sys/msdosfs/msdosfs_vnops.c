@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.59 2007/01/16 17:52:18 thib Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.60 2007/03/18 15:05:33 mickey Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1807,21 +1807,6 @@ msdosfs_bmap(v)
 }
 
 int
-msdosfs_reallocblks(v)
-	void *v;
-{
-#if 0
-	struct vop_reallocblks_args /* {
-		struct vnode *a_vp;
-		struct cluster_save *a_buflist;
-	} */ *ap = v;
-#endif
-
-	/* Currently no support for clustering */		/* XXX */
-	return (ENOSPC);
-}
-
-int
 msdosfs_strategy(v)
 	void *v;
 {
@@ -1999,7 +1984,6 @@ struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, msdosfs_islocked },	/* islocked */
 	{ &vop_pathconf_desc, msdosfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, msdosfs_advlock },		/* advlock */
-	{ &vop_reallocblks_desc, msdosfs_reallocblks },	/* reallocblks */
 	{ &vop_bwrite_desc, vop_generic_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc *)NULL, (int (*)(void *))NULL }
 };
