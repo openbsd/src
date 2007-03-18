@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.76 2007/03/15 10:22:30 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.77 2007/03/18 10:46:51 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -395,6 +395,9 @@ sys_thrsleep(struct proc *p, void *v, register_t *revtal)
 	if (timo < 0)
 		timo = 0;
 	error = tsleep(&p->p_thrslpid, PUSER | PCATCH, "thrsleep", timo);
+
+	if (error == ERESTART)
+		error = EINTR;
 
 	return (error);
 
