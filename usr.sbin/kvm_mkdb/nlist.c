@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.35 2003/09/25 16:52:11 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.36 2007/03/18 16:28:10 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: nlist.c,v 1.35 2003/09/25 16:52:11 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: nlist.c,v 1.36 2007/03/18 16:28:10 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -297,12 +297,11 @@ __elf_knlist(int fd, DB *db, int ksyms)
 {
 	caddr_t strtab;
 	off_t symstroff, symoff;
-	u_long symsize;
+	u_long symsize, symstrsize;
 	u_long kernvma, kernoffs;
-	int i;
+	int i, j;
 	Elf_Sym sbuf;
-	size_t symstrsize;
-	char *shstr, buf[1024];
+	char buf[1024];
 	Elf_Ehdr eh;
 	Elf_Shdr *sh = NULL;
 	DBT data, key;
@@ -333,41 +332,31 @@ __elf_knlist(int fd, DB *db, int ksyms)
 		return (-1);
 	}
 
-	shstr = (char *)malloc(sh[eh.e_shstrndx].sh_size);
-	if (shstr == NULL)
-		errx(1, "cannot allocate %d bytes for symbol string",
-		    sh[eh.e_shstrndx].sh_size);
-	if (fseek (fp, sh[eh.e_shstrndx].sh_offset, SEEK_SET) < 0) {
-		fmterr = "corrupt file";
-		return (-1);
-	}
-	if (fread(shstr, sh[eh.e_shstrndx].sh_size, 1, fp) != 1) {
-		fmterr = "corrupt file";
-		return (-1);
-	}
 
+	symstrsize = symsize = kernvma = 0;
 	for (i = 0; i < eh.e_shnum; i++) {
-		if (strcmp (shstr + sh[i].sh_name, ".strtab") == 0) {
-			symstroff = sh[i].sh_offset;
-			symstrsize = sh[i].sh_size;
-		}
-		else if (strcmp (shstr + sh[i].sh_name, ".symtab") == 0) {
+		if (sh[i].sh_type == SHT_STRTAB) {
+			for (j = 0; j < eh.e_shnum; j++)
+				if (sh[j].sh_type == SHT_SYMTAB &&
+				    sh[j].sh_link == (unsigned)i) {
+					symstroff = sh[i].sh_offset;
+					symstrsize = sh[i].sh_size;
+			}
+		} else if (sh[i].sh_type == SHT_SYMTAB) {
 			symoff = sh[i].sh_offset;
 			symsize = sh[i].sh_size;
-		}
-		else if (strcmp (shstr + sh[i].sh_name, ".text") == 0) {
+		} else if (sh[i].sh_type == SHT_PROGBITS &&
+		    (sh[i].sh_flags & SHF_EXECINSTR)) {
 			kernvma = sh[i].sh_addr;
 			kernoffs = sh[i].sh_offset;
 		}
 	}
 
-
-	/* Check for files too large to mmap. */
-	/* XXX is this really possible? */
-	if (symstrsize > SIZE_T_MAX) {
+	if (!symstrsize || !symsize || !kernvma) {
 		fmterr = "corrupt file";
 		return (-1);
 	}
+
 	/*
 	 * Map string table into our address space.  This gives us
 	 * an easy way to randomly access all the strings, without
