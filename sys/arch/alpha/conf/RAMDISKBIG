@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.70 2006/11/25 20:44:30 dlg Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.71 2007/03/18 22:39:30 martin Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -10,6 +10,7 @@ option		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 option		DEC_3000_300	# Pelican etc:	3000/300*
 option		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 option		DEC_KN20AA	# KN20AA:	AlphaStation 600
+option		DEC_KN300	# KN300:	AlphaServer 4100 and 1200
 option		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 option		DEC_EB164	# EB164:	AlphaPC 164
 option		DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
@@ -103,6 +104,10 @@ wi*	at uhub?			# WaveLAN IEEE 802.11DS
 # USB Generic driver
 ugen*	at uhub?
 
+# MCBUS bus support
+mcbus*	at	mainbus0
+mcmem*	at	mcbus? mid ?
+
 # TurboChannel host bus adapter support
 tcasic*	at mainbus0
 
@@ -131,6 +136,7 @@ irongate* at mainbus?
 lca*	at mainbus?
 tsc*	at mainbus0
 tsp*	at tsc?
+mcpcia*	at mcbus? mid?
 
 # PCI bus support
 pci*	at apecs?
@@ -139,6 +145,7 @@ pci*	at irongate?
 pci*	at lca?
 pci*	at ppb?
 pci*	at tsp?
+pci*	at mcpcia?
 
 # PCI devices
 ppb*	at pci?				# PCI-PCI bridges

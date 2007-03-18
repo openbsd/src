@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.65 2006/03/12 17:29:48 martin Exp $
+#	$OpenBSD: RAMDISK,v 1.66 2007/03/18 22:39:30 martin Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -11,6 +11,7 @@ option		NO_PROPOLICE
 #option		DEC_3000_300	# Pelican etc:	3000/300*
 option		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 option		DEC_KN20AA	# KN20AA:	AlphaStation 600
+option		DEC_KN300	# KN300:	AlphaServer 4100 and 1200
 option		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 option		DEC_EB164	# EB164:	AlphaPC 164
 #option		DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
@@ -49,6 +50,10 @@ config	bsd	swap generic
 mainbus0 at root
 cpu*	at mainbus0
 
+# MCBUS bus support
+mcbus*	at mainbus?
+mcmem*	at mcbus? mid?
+
 # PCI host bus adapter support
 apecs*	at mainbus?
 cia*	at mainbus?
@@ -56,6 +61,7 @@ lca*	at mainbus?
 #irongate* at mainbus?
 #tsc*	at mainbus0
 #tsp*	at tsc?
+mcpcia*	at mcbus? mid?
 
 # PCI bus support
 pci*	at apecs?
@@ -64,6 +70,7 @@ pci*	at lca?
 pci*	at ppb?
 #pci*	at irongate?
 #pci*	at tsp?
+pci*	at mcpcia?
 
 # PCI devices
 #ahc*	at pci?				# AHA-28xx SCSI (NOT 64-BIT)
