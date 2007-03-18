@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.bigram.c,v 1.10 2003/09/29 16:03:16 deraadt Exp $
+ *	$OpenBSD: locate.bigram.c,v 1.11 2007/03/18 20:13:49 otto Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.bigram.c,v 1.10 2003/09/29 16:03:16 deraadt Exp $
+ * 	$Id: locate.bigram.c,v 1.11 2007/03/18 20:13:49 otto Exp $
  */
 
 #ifndef lint
@@ -41,7 +41,7 @@ static char copyright[] =
 "@(#) Copyright (c) 1989, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #else
-static char rcsid[] = "$OpenBSD: locate.bigram.c,v 1.10 2003/09/29 16:03:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: locate.bigram.c,v 1.11 2007/03/18 20:13:49 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ main(void)
 	for (i = ASCII_MIN; i <= ASCII_MAX; i++)
 		for (j = ASCII_MIN; j <= ASCII_MAX; j++)
 			if (bigram[i][j] != 0)
-				(void)printf("%4u %c%c\n", bigram[i][j], i, j);
+				(void)printf("%4u\t%c%c\n", bigram[i][j], i, j);
 
 	exit(0);
 }
