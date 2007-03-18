@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.66 2007/02/23 08:03:19 espie Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.67 2007/03/18 21:12:27 espie Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.66 2007/02/23 08:03:19 espie Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.67 2007/03/18 21:12:27 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -195,7 +195,7 @@ static struct context_vec *context_vec_start;
 static struct context_vec *context_vec_end;
 static struct context_vec *context_vec_ptr;
 
-#define FUNCTION_CONTEXT_SIZE	41
+#define FUNCTION_CONTEXT_SIZE	55
 static char lastbuf[FUNCTION_CONTEXT_SIZE];
 static int lastline;
 static int lastmatchline;
@@ -1303,6 +1303,8 @@ static __inline int max(int a, int b)
 	return (a > b ? a : b);
 }
 
+#define begins_with(s, pre) (strncmp(s, pre, sizeof(pre)-1) == 0)
+
 static char *
 match_function(const long *f, int pos, FILE *file)
 {
@@ -1310,6 +1312,7 @@ match_function(const long *f, int pos, FILE *file)
 	size_t nc;
 	int last = lastline;
 	char *p;
+	char *state = NULL;
 
 	lastline = pos;
 	while (pos > last) {
@@ -1324,9 +1327,23 @@ match_function(const long *f, int pos, FILE *file)
 			if (p != NULL)
 				*p = '\0';
 			if (isalpha(buf[0]) || buf[0] == '_' || buf[0] == '$') {
-				strlcpy(lastbuf, buf, sizeof lastbuf);
-				lastmatchline = pos;
-				return lastbuf;
+				if (begins_with(buf, "private:")) {
+					if (!state)
+						state = " (private)";
+				} else if (begins_with(buf, "protected:")) {
+					if (!state)
+						state = " (protected)";
+				} else if (begins_with(buf, "public:")) {
+					if (!state)
+						state = " (public)";
+				} else {
+					strlcpy(lastbuf, buf, sizeof lastbuf);
+					if (state)
+						strlcat(lastbuf, state, 
+						    sizeof lastbuf);
+					lastmatchline = pos;
+					return lastbuf;
+				}
 			}
 		}
 		pos--;
