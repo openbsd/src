@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcreg.h,v 1.2 2006/06/01 21:53:41 uwe Exp $	*/
+/*	$OpenBSD: sdmmcreg.h,v 1.3 2007/03/18 22:21:21 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -26,6 +26,7 @@
 #define MMC_SET_RELATIVE_ADDR   	3	/* R1 */
 #define MMC_SELECT_CARD			7	/* R1 */
 #define MMC_SEND_CSD			9	/* R2 */
+#define MMC_STOP_TRANSMISSION		12	/* R1B */
 #define MMC_SEND_STATUS			13	/* R1 */
 #define MMC_SET_BLOCKLEN		16	/* R1 */
 #define MMC_READ_BLOCK_SINGLE		17	/* R1 */
