@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioctl.c,v 1.4 2005/11/17 10:18:18 grange Exp $	*/
+/*	$OpenBSD: gpioctl.c,v 1.5 2007/03/18 16:16:56 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <sys/gpio.h>
 #include <sys/ioctl.h>
+#include <sys/limits.h>
 
 #include <err.h>
 #include <fcntl.h>
@@ -61,7 +62,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
-	char *ep;
+	const char *errstr;
 	int do_ctl = 0;
 	int pin = 0, value = 0;
 
@@ -84,8 +85,8 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (argc > 0) {
-		pin = strtol(argv[0], &ep, 10);
-		if (*argv[0] == '\0' || *ep != '\0' || pin < 0)
+		pin = strtonum(argv[0], 0, INT_MAX, &errstr);
+		if (errstr)
 			errx(1, "%s: invalid pin", argv[0]);
 	}
 
@@ -103,8 +104,8 @@ main(int argc, char *argv[])
 		if (do_ctl) {
 			pinctl(pin, argv + 1, argc - 1);
 		} else {
-			value = strtol(argv[1], &ep, 10);
-			if (*argv[1] == '\0' || *ep != '\0')
+			value = strtonum(argv[1], INT_MIN, INT_MAX, &errstr);
+			if (errstr)
 				errx(1, "%s: invalid value", argv[1]);
 			pinwrite(pin, value);
 		}
