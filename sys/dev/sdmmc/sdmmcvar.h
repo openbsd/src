@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.6 2007/03/18 20:53:10 uwe Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.7 2007/03/18 22:07:16 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -90,6 +90,7 @@ struct sdmmc_command {
 /* response types */
 #define SCF_RSP_R0	 0 /* none */
 #define SCF_RSP_R1	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
+#define SCF_RSP_R1B	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX|SCF_RSP_BSY)
 #define SCF_RSP_R2	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_136)
 #define SCF_RSP_R3	 (SCF_RSP_PRESENT)
 #define SCF_RSP_R4	 (SCF_RSP_PRESENT)
