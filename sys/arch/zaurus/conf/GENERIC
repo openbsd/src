@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.61 2007/02/28 21:54:43 grange Exp $
+#	$OpenBSD: GENERIC,v 1.62 2007/03/18 20:53:10 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -201,6 +201,10 @@ audio*		at zaudio?
 zrc0		at pxaip?		# Zaurus remote control
 wskbd*		at zrc? mux 1
 flash0		at pxaip?		# NAND flash memory
+
+pxammc0		at pxaip?		# MMC/SD/SDIO controller
+sdmmc*		at pxammc?		# SD/MMC bus
+scsibus*	at sdmmc?		# SCSI emulation
 
 # 1-Wire devices
 option ONEWIREVERBOSE

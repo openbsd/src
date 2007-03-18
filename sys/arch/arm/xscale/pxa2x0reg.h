@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.28 2006/10/19 10:55:56 tom Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.29 2007/03/18 20:53:10 uwe Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -114,8 +114,8 @@
 #define PXA2X0_SSP1_BASE	0x41700000 /* PXA270 */
 #define PXA2X0_SSP2_BASE	0x41900000 /* PXA270 */
 #define PXA2X0_SSP_SIZE		0x40
-#define PXA2X0_MMC_BASE 	0x41100000 /* MultiMediaCard */
-#define PXA2X0_MMC_SIZE		0x48
+#define PXA2X0_MMC_BASE 	0x41100000 /* MultiMediaCard/SD/SDIO */
+#define PXA2X0_MMC_SIZE		0x50
 #define PXA2X0_CLKMAN_BASE  	0x41300000 /* Clock Manager */
 #define PXA2X0_CLKMAN_SIZE	12
 #define PXA2X0_LCDC_BASE	0x44000000 /* LCD Controller */
@@ -584,8 +584,8 @@ struct pxa2x0_dma_desc {
 #define  STAT_CRC_READ_ERROR		(1<<3)
 #define  STAT_SPI_READ_ERROR_TOKEN	(1<<4)
 #define  STAT_RES_CRC_ERR		(1<<5)
-#define  STAT_XMIT_FIFO_EMPTY		(1<<6)
-#define  STAT_RECV_FIFO_FULL		(1<<7)
+#define  STAT_XMIT_FIFO_EMPTY		(1<<6) /* (PXA27x: reserved) */
+#define  STAT_RECV_FIFO_FULL		(1<<7) /* (PXA27x: reserved) */
 #define  STAT_CLK_EN			(1<<8)
 #define  STAT_DATA_TRAN_DONE		(1<<11)
 #define  STAT_PRG_DONE			(1<<12)
@@ -606,7 +606,7 @@ struct pxa2x0_dma_desc {
 #define MMC_CMDAT	0x10	/* command/response/data */
 #define  CMDAT_RESPONSE_FORMAT	0x03
 #define  CMDAT_RESPONSE_FORMAT_NO 0 /* no response */
-#define  CMDAT_RESPONSE_FORMAT_R1 1 /* R1, R1b, R4, R5 */
+#define  CMDAT_RESPONSE_FORMAT_R1 1 /* R1, R1b, R4, R5, R5b, R6 */
 #define  CMDAT_RESPONSE_FORMAT_R2 2
 #define  CMDAT_RESPONSE_FORMAT_R3 3
 #define  CMDAT_DATA_EN		(1<<2)
@@ -618,7 +618,7 @@ struct pxa2x0_dma_desc {
 #define MMC_RESTO	0x14	/* expected response time out */
 #define MMC_RDTO 	0x18	/* expected data read time out */
 #define MMC_BLKLEN	0x1c	/* block length of data transaction */
-#define MMC_NOB  	0x20	/* number of blocks (block mode) */
+#define MMC_NUMBLK  	0x20	/* number of blocks (block mode) */
 #define MMC_PRTBUF	0x24	/* partial MMC_TXFIFO written */
 #define  PRTBUF_BUF_PART_FULL (1<<0) /* buffer partially full */
 #define MMC_I_MASK	0x28	/* interrupt mask */
@@ -630,6 +630,9 @@ struct pxa2x0_dma_desc {
 #define  MMC_I_CLK_IS_OFF	(1<<4)
 #define  MMC_I_RXFIFO_RD_REQ	(1<<5)
 #define  MMC_I_TXFIFO_WR_REQ	(1<<6)
+#define  MMC_I_DAT_ERR		(1<<8)	/* PXA27x */
+#define  MMC_I_RES_ERR		(1<<9)	/* PXA27x */
+#define  MMC_I_SDIO_INT		(1<<11)	/* PXA27x */
 #define MMC_CMD  	0x30	/* index of current command */
 #define MMC_ARGH 	0x34	/* MSW part of the current command arg */
 #define MMC_ARGL 	0x38	/* LSW part of the current command arg */

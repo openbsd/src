@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.5 2006/11/29 14:16:43 uwe Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.6 2007/03/18 20:53:10 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -76,6 +76,7 @@ struct sdmmc_command {
 	int		 c_blklen;	/* block length */
 	int		 c_flags;	/* see below */
 #define SCF_ITSDONE	 0x0001		/* command is complete */
+#define SCF_CMD(flags)	 ((flags) & 0x00f0)
 #define SCF_CMD_AC	 0x0000
 #define SCF_CMD_ADTC	 0x0010
 #define SCF_CMD_BC	 0x0020
@@ -94,8 +95,12 @@ struct sdmmc_command {
 #define SCF_RSP_R4	 (SCF_RSP_PRESENT)
 #define SCF_RSP_R5	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
 #define SCF_RSP_R5B	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX|SCF_RSP_BSY)
-#define SCF_RSP_R6	 (SCF_RSP_PRESENT|SCF_RSP_CRC)
+#define SCF_RSP_R6	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
 	int		 c_error;	/* errno value on completion */
+
+	/* Host controller owned fields for data xfer in progress */
+	int c_resid;			/* remaining I/O */
+	u_char *c_buf;			/* remaining data */
 };
 
 /*

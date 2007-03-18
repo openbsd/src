@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pxa2x0,v 1.19 2006/11/25 18:10:29 uwe Exp $
+#	$OpenBSD: files.pxa2x0,v 1.20 2007/03/18 20:53:10 uwe Exp $
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
@@ -79,3 +79,7 @@ file	arch/arm/xscale/pxa2x0_pcic.c		pxapcic
 
 # XXX this is a hack to use dev/pcmcia without fdc.c
 device	fdc
+
+# MMC/SD/SDIO controller
+device	pxammc: sdmmcbus
+file	arch/arm/xscale/pxa2x0_mmc.c		pxammc
