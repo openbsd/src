@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.12 2005/11/17 05:26:31 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.13 2007/03/18 20:50:23 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -49,10 +49,15 @@ struct cfdriver scoop_cd = {
 	NULL, "scoop", DV_DULL
 };
 
+enum card {
+	SD_CARD,
+	CF_CARD			/* socket 0 (external) */
+};
+
 int	scoop_gpio_pin_read(struct scoop_softc *sc, int);
 void	scoop_gpio_pin_write(struct scoop_softc *sc, int, int);
 void	scoop_gpio_pin_ctl(struct scoop_softc *sc, int, int);
-
+void	scoop0_set_card_power(enum card, int);
 
 int
 scoopmatch(struct device *parent, void *match, void *aux)
@@ -219,6 +224,54 @@ scoop_set_headphone(int on)
 		    GPIO_PIN_LOW);
 		scoop_gpio_pin_write(scoop_cd.cd_devs[0], SCOOP0_MUTE_R,
 		    GPIO_PIN_LOW);
+	}
+}
+
+/*
+ * Enable or disable 3.3V power to the SD/MMC card slot.
+ */
+void
+scoop_set_sdmmc_power(int on)
+{
+	scoop0_set_card_power(SD_CARD, on ? SCP_CPR_SD_3V : SCP_CPR_OFF);
+}
+
+/*
+ * The Card Power Register of the first SCOOP unit controls the power
+ * for the first CompactFlash slot and the SD/MMC card slot as well.
+ */
+void
+scoop0_set_card_power(enum card slot, int new_cpr)
+{
+	struct scoop_softc *sc = scoop_cd.cd_devs[0];
+	u_int16_t cpr;
+
+	cpr = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SCOOP_CPR);
+	if (new_cpr & SCP_CPR_VOLTAGE_MSK) {
+		if (slot == CF_CARD)
+			cpr |= SCP_CPR_5V;
+		else if (slot == SD_CARD)
+			cpr |= SCP_CPR_SD_3V;
+
+		scoop_gpio_pin_write(sc, SCOOP0_CF_POWER_C3000, 1);
+		if (!ISSET(cpr, SCP_CPR_5V) && !ISSET(cpr, SCP_CPR_SD_3V))
+			delay(5000);
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_CPR,
+		    cpr | new_cpr);
+	} else {
+		if (slot == CF_CARD)
+			cpr &= ~SCP_CPR_5V;
+		else if (slot == SD_CARD)
+			cpr &= ~SCP_CPR_SD_3V;
+
+		if (!ISSET(cpr, SCP_CPR_5V) && !ISSET(cpr, SCP_CPR_SD_3V)) {
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_CPR,
+			    SCP_CPR_OFF);
+			delay(1000);
+			scoop_gpio_pin_write(sc, SCOOP0_CF_POWER_C3000, 0);
+		} else
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_CPR,
+			    cpr | new_cpr);
 	}
 }
 
