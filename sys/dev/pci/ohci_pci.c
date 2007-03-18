@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.29 2006/05/22 16:09:21 dlg Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.30 2007/03/18 06:08:24 pascoe Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
@@ -64,8 +64,17 @@
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
 
+#ifdef OHCI_DEBUG
+#define DPRINTF(x)	do { if (ohcidebug) logprintf x; } while (0)
+extern int ohcidebug;
+#else
+#define DPRINTF(x)
+#define DPRINTFN(n,x)
+#endif
+
 int	ohci_pci_match(struct device *, void *, void *);
 void	ohci_pci_attach(struct device *, struct device *, void *);
+void	ohci_pci_attach_deferred(struct device *);
 int	ohci_pci_detach(struct device *, int);
 
 struct ohci_pci_softc {
@@ -100,10 +109,10 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	usbd_status r;
-	int s;
+	int s, i;
 	const char *vendor;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
+	u_int32_t ctl, sts;
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
@@ -158,6 +167,49 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	else
 		snprintf(sc->sc.sc_vendor, sizeof (sc->sc.sc_vendor),
 		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
+
+	/* Ignore interrupts for now */
+	sc->sc.sc_dying = 1;
+
+	/* Perform legacy handover if required. */
+	ctl = bus_space_read_4(sc->sc.iot, sc->sc.ioh, OHCI_CONTROL);
+	if (ctl & OHCI_IR) {
+		/* SMM active, request change */
+		DPRINTF(("ohci_init: SMM active, request owner change\n"));
+		if ((sc->sc.sc_intre & (OHCI_OC | OHCI_MIE)) == 
+		    (OHCI_OC | OHCI_MIE))
+			bus_space_write_4(sc->sc.iot, sc->sc.ioh,
+			    OHCI_INTERRUPT_ENABLE, OHCI_MIE);
+		sts = bus_space_read_4(sc->sc.iot, sc->sc.ioh,
+		    OHCI_COMMAND_STATUS);
+		bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_COMMAND_STATUS,
+		    sts | OHCI_OCR);
+		for (i = 0; i < 100 && (ctl & OHCI_IR); i++) {
+			usb_delay_ms(&sc->sc.sc_bus, 1);
+			ctl = bus_space_read_4(sc->sc.iot, sc->sc.ioh,
+			    OHCI_CONTROL);
+		}
+		bus_space_write_4(sc->sc.iot, sc->sc.ioh,
+		    OHCI_INTERRUPT_DISABLE, OHCI_MIE);
+	}
+
+	config_defer(self, ohci_pci_attach_deferred);
+
+	splx(s);
+
+	return;
+}
+
+void
+ohci_pci_attach_deferred(struct device *self)
+{
+	struct ohci_pci_softc *sc = (struct ohci_pci_softc *)self;
+	usbd_status r;
+	int s;
+
+	s = splusb();
+
+	sc->sc.sc_dying = 1;
 	
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
