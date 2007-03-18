@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.74 2006/12/28 20:08:15 deraadt Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.75 2007/03/18 23:23:17 mpf Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
  */
 
 #include "pf.h"
+#include "carp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +108,11 @@
 
 #if NPF > 0
 #include <net/pfvar.h>
+#endif
+
+#if NCARP > 0
+#include <netinet/in_var.h>
+#include <netinet/ip_carp.h>
 #endif
 
 extern struct domain inet6domain;
@@ -246,6 +252,14 @@ ip6_input(m)
 		goto bad;
 	}
 
+#if NCARP > 0
+	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
+	    m->m_pkthdr.rcvif->if_flags & IFF_LINK0 &&
+	    ip6->ip6_nxt != IPPROTO_ICMPV6 &&
+	    carp_lsdrop(m, AF_INET6, ip6->ip6_src.s6_addr32,
+	    ip6->ip6_dst.s6_addr32))
+		goto bad;
+#endif
 	ip6stat.ip6s_nxthist[ip6->ip6_nxt]++;
 
 	/*
@@ -523,6 +537,14 @@ ip6_input(m)
     }
 #endif
 
+#if NCARP > 0
+	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
+	    m->m_pkthdr.rcvif->if_flags & IFF_LINK0 &&
+	    ip6->ip6_nxt == IPPROTO_ICMPV6 &&
+	    carp_lsdrop(m, AF_INET6, ip6->ip6_src.s6_addr32,
+	    ip6->ip6_dst.s6_addr32))
+		goto bad;
+#endif
 	/*
 	 * Now there is no reason to process the packet if it's not our own
 	 * and we're not a router.

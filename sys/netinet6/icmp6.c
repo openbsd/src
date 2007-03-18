@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.92 2007/01/16 11:05:25 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.93 2007/03/18 23:23:17 mpf Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -61,6 +61,9 @@
  *	@(#)ip_icmp.c	8.2 (Berkeley) 1/4/94
  */
 
+#include "faith.h"
+#include "carp.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -91,7 +94,9 @@
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/ip6protosw.h>
 
-#include "faith.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
+#endif
 
 /* inpcb members */
 #define in6pcb		inpcb
@@ -474,6 +479,14 @@ icmp6_input(mp, offp, proto)
 	}
 #endif
 
+#if NCARP > 0
+	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
+	    m->m_pkthdr.rcvif->if_flags & IFF_LINK0 &&
+	    icmp6->icmp6_type == ICMP6_ECHO_REQUEST &&
+	    carp_lsdrop(m, AF_INET6, ip6->ip6_src.s6_addr32,
+	    ip6->ip6_dst.s6_addr32))
+		goto freeit;
+#endif
 	icmp6stat.icp6s_inhist[icmp6->icmp6_type]++;
 
 	switch (icmp6->icmp6_type) {

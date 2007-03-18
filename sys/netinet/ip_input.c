@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.146 2006/12/28 20:06:10 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.147 2007/03/18 23:23:17 mpf Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
  */
 
 #include "pf.h"
+#include "carp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +65,11 @@
 #ifdef IPSEC
 #include <netinet/ip_ipsp.h>
 #endif /* IPSEC */
+
+#if NCARP > 0
+#include <net/if_types.h>
+#include <netinet/ip_carp.h>
+#endif
 
 #define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
 
@@ -370,6 +376,15 @@ ipv4_input(m)
 			m_adj(m, len - m->m_pkthdr.len);
 	}
 
+#if NCARP > 0
+	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
+	    m->m_pkthdr.rcvif->if_flags & IFF_LINK0 &&
+	    ip->ip_p != IPPROTO_ICMP &&
+	    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr,
+	    &ip->ip_dst.s_addr))
+		goto bad;
+#endif
+
 #if NPF > 0
 	/*
 	 * Packet filter
@@ -462,6 +477,14 @@ ipv4_input(m)
 	    ip->ip_dst.s_addr == INADDR_ANY)
 		goto ours;
 
+#if NCARP > 0
+	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
+	    m->m_pkthdr.rcvif->if_flags & IFF_LINK0 &&
+	    ip->ip_p == IPPROTO_ICMP &&
+	    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr,
+	    &ip->ip_dst.s_addr))
+		goto bad;
+#endif
 	/*
 	 * Not for us; forward if possible and desirable.
 	 */

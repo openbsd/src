@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.66 2007/03/16 16:58:40 deraadt Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.67 2007/03/18 23:23:17 mpf Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -720,7 +720,14 @@ reply:
 	ea->arp_pro = htons(ETHERTYPE_IP); /* let's be sure! */
 	eh = (struct ether_header *)sa.sa_data;
 	bcopy(ea->arp_tha, eh->ether_dhost, sizeof(eh->ether_dhost));
-	bcopy(enaddr, eh->ether_shost, sizeof(eh->ether_shost));
+#if NCARP > 0
+	if (ac->ac_if.if_type == IFT_CARP && ac->ac_if.if_flags & IFF_LINK1)
+		bcopy(((struct arpcom *)ac->ac_if.if_carpdev)->ac_enaddr,
+		    eh->ether_shost, sizeof(eh->ether_shost));
+	else
+#endif
+		bcopy(enaddr, eh->ether_shost, sizeof(eh->ether_shost));
+
 	eh->ether_type = htons(ETHERTYPE_ARP);
 	sa.sa_family = pseudo_AF_HDRCMPLT;
 	sa.sa_len = sizeof(sa);

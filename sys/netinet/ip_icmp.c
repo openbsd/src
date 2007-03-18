@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.72 2007/01/03 18:39:56 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.73 2007/03/18 23:23:17 mpf Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -68,6 +68,8 @@
  * Research Laboratory (NRL).
  */
 
+#include "carp.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -85,6 +87,11 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_var.h>
 #include <netinet/icmp_var.h>
+
+#if NCARP > 0
+#include <net/if_types.h>
+#include <netinet/ip_carp.h>
+#endif
 
 /*
  * ICMP routines: error generation, receive packet processing, and
@@ -450,6 +457,13 @@ icmp_input(struct mbuf *m, ...)
 			printf("deliver to protocol %d\n", icp->icmp_ip.ip_p);
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
+#if NCARP > 0
+		if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
+		    m->m_pkthdr.rcvif->if_flags & IFF_LINK0 &&
+		    carp_lsdrop(m, AF_INET, &icmpsrc.sin_addr.s_addr,
+		    &ip->ip_dst.s_addr))
+			goto freeit;
+#endif
 		/*
 		 * XXX if the packet contains [IPv4 AH TCP], we can't make a
 		 * notification to TCP layer.
@@ -521,6 +535,13 @@ icmp_input(struct mbuf *m, ...)
 				ip->ip_src = ia->ia_dstaddr.sin_addr;
 		}
 reflect:
+#if NCARP > 0
+		if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
+		    m->m_pkthdr.rcvif->if_flags & IFF_LINK0 &&
+		    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr,
+		    &ip->ip_dst.s_addr))
+			goto freeit;
+#endif
 		/* Free packet atttributes */
 		if (m->m_flags & M_PKTHDR)
 			m_tag_delete_chain(m);
@@ -563,6 +584,13 @@ reflect:
 		}
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
+#if NCARP > 0
+		if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
+		    m->m_pkthdr.rcvif->if_flags & IFF_LINK0 &&
+		    carp_lsdrop(m, AF_INET, &icmpsrc.sin_addr.s_addr,
+		    &ip->ip_dst.s_addr))
+			goto freeit;
+#endif
 		rt = NULL;
 		rtredirect(sintosa(&icmpsrc), sintosa(&icmpdst),
 		    (struct sockaddr *)0, RTF_GATEWAY | RTF_HOST,
