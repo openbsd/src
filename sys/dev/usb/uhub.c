@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.34 2006/06/26 19:12:38 mjc Exp $ */
+/*	$OpenBSD: uhub.c,v 1.35 2007/03/18 06:00:45 pascoe Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -338,9 +338,11 @@ USB_ATTACH(uhub)
 			       USBDEVNAME(sc->sc_dev), port,
 			       usbd_errstr(err));
 		DPRINTF(("usb_init_port: turn on port %d power\n", port));
-		/* Wait for stable power. */
-		usbd_delay_ms(dev, pwrdly);
 	}
+
+	/* Wait for stable power.  Root hubs delay in their event thread. */
+	if (dev->powersrc->parent != NULL)
+		usbd_delay_ms(dev, pwrdly);
 
 	/* The usual exploration will finish the setup. */
 

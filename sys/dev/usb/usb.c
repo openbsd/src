@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.35 2006/11/01 03:37:24 tedu Exp $	*/
+/*	$OpenBSD: usb.c,v 1.36 2007/03/18 06:00:45 pascoe Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -304,8 +304,14 @@ void
 usb_event_thread(void *arg)
 {
 	struct usb_softc *sc = arg;
+	int pwrdly;
 
 	DPRINTF(("usb_event_thread: start\n"));
+
+	/* Wait for power to come good. */
+	pwrdly = sc->sc_bus->root_hub->hub->hubdesc.bPwrOn2PwrGood * 
+	    UHD_PWRON_FACTOR + USB_EXTRA_POWER_UP_TIME;
+	usb_delay_ms(sc->sc_bus, pwrdly);
 
 	/* USB1 threads wait for USB2 threads to finish their first probe. */
 	while (sc->sc_bus->usbrev != USBREV_2_0 && threads_pending)
