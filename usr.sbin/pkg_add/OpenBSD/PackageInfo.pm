@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.20 2007/02/22 21:31:41 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.21 2007/03/18 10:57:12 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -57,26 +57,13 @@ for my $i (@info) {
 sub _init_list
 {
 	$list = {};
-	my @bad=();
 
 	opendir(my $dir, $pkg_db) or die "Bad pkg_db: $!";
 	while (my $e = readdir($dir)) {
 		next if $e eq '.' or $e eq '..';
-		next unless -d "$pkg_db/$e";
-		if (! -r _) {
-			push(@bad, $e);
-			next;
-		}
-		if (-f "$pkg_db/$e/+CONTENTS") {
-			$list->{$e} = 1;
-		} else {
-			print "Warning: $e is not really a package\n";
-		}
+		$list->{$e} = 1;
 	}
 	close($dir);
-	if (@bad > 0) {
-		print "Warning: can't access information for ", join(", ", @bad), "\n";
-	}
 }
 
 sub add_installed
