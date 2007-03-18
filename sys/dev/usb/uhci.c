@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.48 2006/06/23 06:27:11 miod Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.49 2007/03/18 05:55:24 pascoe Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -409,9 +409,15 @@ uhci_init(uhci_softc_t *sc)
 		uhci_dumpregs(sc);
 #endif
 
+	/* Save SOF over HC reset. */
+	sc->sc_saved_sof = UREAD1(sc, UHCI_SOF);
+
 	UWRITE2(sc, UHCI_INTR, 0);		/* disable interrupts */
 	uhci_globalreset(sc);			/* reset the controller */
 	uhci_reset(sc);
+
+	/* Restore saved SOF. */
+	UWRITE1(sc, UHCI_SOF, sc->sc_saved_sof);
 
 	/* Allocate and initialize real frame array. */
 	err = usb_allocmem(&sc->sc_bus,
@@ -720,7 +726,6 @@ uhci_power(int why, void *v)
 
 		/* save some state if BIOS doesn't */
 		sc->sc_saved_frnum = UREAD2(sc, UHCI_FRNUM);
-		sc->sc_saved_sof = UREAD1(sc, UHCI_SOF);
 
 		UWRITE2(sc, UHCI_INTR, 0); /* disable intrs */
 
