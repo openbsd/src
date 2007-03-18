@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.98 2007/03/13 15:11:41 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.99 2007/03/18 14:23:57 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -332,8 +332,7 @@ static vaddr_t pv_cachedva;		/* cached VA for later use */
  * linked list of all non-kernel pmaps
  */
 
-static struct pmap_head pmaps;
-static struct pmap *pmaps_hand = NULL;	/* used by pmap_steal_ptp */
+struct pmap_head pmaps;
 
 /*
  * pool that pmap structures are allocated from
@@ -397,7 +396,6 @@ boolean_t	 pmap_remove_pte(struct pmap *, struct vm_page *, pt_entry_t *,
     vaddr_t, int32_t *);
 void		 pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t,
     vaddr_t, vaddr_t, int32_t *);
-struct vm_page	*pmap_steal_ptp(struct uvm_object *, vaddr_t);
 vaddr_t		 pmap_tmpmap_pa(paddr_t);
 pt_entry_t	*pmap_tmpmap_pvepte(struct pv_entry *);
 void		 pmap_tmpunmap_pa(void);
@@ -1627,8 +1625,6 @@ pmap_remove_pv(struct pv_head *pvh, struct pmap *pmap, vaddr_t va)
  * => we use the ptp's wire_count to count the number of active mappings
  *	in the PTP (we start it at one to prevent any chance this PTP
  *	will ever leak onto the active/inactive queues)
- * => we should not be holding any pv_head locks (in case we are forced
- *	to call pmap_steal_ptp())
  * => we may need to lock pv_head's if we have to steal a PTP
  * => just_try: true if we want a PTP, but not enough to steal one
  * 	from another pmap (e.g. during optional functions like pmap_copy)
@@ -1641,16 +1637,8 @@ pmap_alloc_ptp(struct pmap *pmap, int pde_index, boolean_t just_try)
 
 	ptp = uvm_pagealloc(&pmap->pm_obj, ptp_i2o(pde_index), NULL,
 			    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
-	if (ptp == NULL) {
-		if (just_try)
-			return(NULL);
-		ptp = pmap_steal_ptp(&pmap->pm_obj, ptp_i2o(pde_index));
-		if (ptp == NULL) {
-			return (NULL);
-		}
-		/* stole one; zero it. */
-		pmap_zero_page(ptp);
-	}
+	if (ptp == NULL)
+		return (NULL);
 
 	/* got one! */
 	ptp->flags &= ~PG_BUSY;	/* never busy */
@@ -1659,112 +1647,6 @@ pmap_alloc_ptp(struct pmap *pmap, int pde_index, boolean_t just_try)
 		(pd_entry_t) (VM_PAGE_TO_PHYS(ptp) | PG_u | PG_RW | PG_V);
 	pmap->pm_stats.resident_count++;	/* count PTP as resident */
 	pmap->pm_ptphint = ptp;
-	return(ptp);
-}
-
-/*
- * pmap_steal_ptp: steal a PTP from any pmap that we can access
- *
- * => obj is locked by caller.
- * => we can throw away mappings at this level (except in the kernel's pmap)
- * => stolen PTP is placed in <obj,offset> pmap
- * => we lock pv_head's
- * => hopefully, this function will be seldom used [much better to have
- *	enough free pages around for us to allocate off the free page list]
- */
-
-struct vm_page *
-pmap_steal_ptp(struct uvm_object *obj, vaddr_t offset)
-{
-	struct vm_page *ptp = NULL;
-	struct pmap *firstpmap;
-	struct uvm_object *curobj;
-	pt_entry_t *ptes;
-	int idx, lcv;
-	boolean_t caller_locked, we_locked;
-	int32_t cpumask = 0;
-
-	simple_lock(&pmaps_lock);
-	if (pmaps_hand == NULL)
-		pmaps_hand = LIST_FIRST(&pmaps);
-	firstpmap = pmaps_hand;
-
-	do { /* while we haven't looped back around to firstpmap */
-
-		curobj = &pmaps_hand->pm_obj;
-		we_locked = FALSE;
-		caller_locked = (curobj == obj);
-		if (!caller_locked) {
-			we_locked = simple_lock_try(&curobj->vmobjlock);
-		}
-		if (caller_locked || we_locked) {
-			TAILQ_FOREACH(ptp, &curobj->memq, listq) {
-
-				/*
-				 * might have found a PTP we can steal
-				 * (unless it has wired pages).
-				 */
-
-				idx = ptp_o2i(ptp->offset);
-#ifdef DIAGNOSTIC
-				if (VM_PAGE_TO_PHYS(ptp) !=
-				    (pmaps_hand->pm_pdir[idx] & PG_FRAME))
-					panic("pmap_steal_ptp: PTP mismatch!");
-#endif
-
-				ptes = (pt_entry_t *)
-				    pmap_tmpmap_pa(VM_PAGE_TO_PHYS(ptp));
-				for (lcv = 0 ; lcv < PTES_PER_PTP ; lcv++)
-					if ((ptes[lcv] & (PG_V|PG_W)) ==
-					    (PG_V|PG_W))
-						break;
-				if (lcv == PTES_PER_PTP)
-					pmap_remove_ptes(pmaps_hand, ptp,
-					    (vaddr_t)ptes, ptp_i2v(idx),
-					    ptp_i2v(idx+1), &cpumask);
-				pmap_tmpunmap_pa();
-
-				if (lcv != PTES_PER_PTP)
-					/* wired, try next PTP */
-					continue;
-
-				/*
-				 * got it!!!
-				 */
-
-				pmaps_hand->pm_pdir[idx] = 0;	/* zap! */
-				pmaps_hand->pm_stats.resident_count--;
-#ifdef MULTIPROCESSOR
-				pmap_apte_flush(pmaps_hand);
-#else
-				if (pmap_is_curpmap(pmaps_hand))
-					pmap_apte_flush(pmaps_hand);
-				else if (pmap_valid_entry(*APDP_PDE) &&
-				    (*APDP_PDE & PG_FRAME) ==
-				    pmaps_hand->pm_pdirpa)
-					pmap_update_pg(((vaddr_t)APTE_BASE) +
-						       ptp->offset);
-#endif
-
-				/* put it in our pmap! */
-				uvm_pagerealloc(ptp, obj, offset);
-				break;	/* break out of "for" loop */
-			}
-			if (we_locked) {
-				simple_unlock(&curobj->vmobjlock);
-			}
-		}
-
-		/* advance the pmaps_hand */
-		pmaps_hand = LIST_NEXT(pmaps_hand, pm_list);
-		if (pmaps_hand == NULL) {
-			pmaps_hand = LIST_FIRST(&pmaps);
-		}
-
-	} while (ptp == NULL && pmaps_hand != firstpmap);
-
-	simple_unlock(&pmaps_lock);
-	pmap_tlb_shootnow(cpumask);
 	return(ptp);
 }
 
@@ -1798,7 +1680,7 @@ pmap_get_ptp(struct pmap *pmap, int pde_index, boolean_t just_try)
 	}
 
 	/* allocate a new PTP (updates ptphint) */
-	return(pmap_alloc_ptp(pmap, pde_index, just_try));
+	return (pmap_alloc_ptp(pmap, pde_index, just_try));
 }
 
 /*
@@ -1926,8 +1808,6 @@ pmap_release(struct pmap *pmap)
 	 */
 
 	simple_lock(&pmaps_lock);
-	if (pmap == pmaps_hand)
-		pmaps_hand = LIST_NEXT(pmaps_hand, pm_list);
 	LIST_REMOVE(pmap, pm_list);
 	simple_unlock(&pmaps_lock);
 
@@ -3282,9 +3162,8 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		 * INVOKED WHILE pmap_init() IS RUNNING!
 		 */
 
-		if (pmap_alloc_ptp(kpm, PDSLOT_KERN+nkpde, FALSE) == NULL) {
-			panic("pmap_growkernel: alloc ptp failed");
-		}
+		while (!pmap_alloc_ptp(kpm, PDSLOT_KERN + nkpde, FALSE))
+			uvm_wait("pmap_growkernel");
 
 		/* PG_u not for kernel */
 		kpm->pm_pdir[PDSLOT_KERN + nkpde] &= ~PG_u;
