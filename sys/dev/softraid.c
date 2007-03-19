@@ -1,4 +1,4 @@
-/* $OpenBSD $ */
+/* $OpenBSD: softraid.c,v 1.3 2007/03/19 15:00:08 mk Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
