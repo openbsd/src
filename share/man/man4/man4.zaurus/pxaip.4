@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: pxaip.4,v 1.9 2005/11/17 05:31:09 uwe Exp $
+.\" 	$OpenBSD: pxaip.4,v 1.10 2007/03/19 20:50:33 jmc Exp $
 .\"
 .\" Copyright (c) 2005, Miodrag Vallat.
 .\" All rights reserved.
@@ -45,11 +45,14 @@
 .Cd "ohci0    at pxaip?"
 .Cd "com0     at pxaip? addr 0x40100000 intr 22"
 .Cd "com1     at pxaip? addr 0x40200000 intr 21"
-.Cd "zaudio0  at pxaip?"
+.Cd "com2     at pxaip? addr 0x40700000 intr 20"
 .Cd "pxapcic0 at pxaip?"
 .Cd "lcd0     at pxaip?"
 .Cd "zssp0    at pxaip?"
 .Cd "apm0     at pxaip?"
+.Cd "zaudio0  at pxaip?"
+.Cd "zrc0     at pxaip?"
+.Cd "pxammc0  at pxaip?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -58,59 +61,45 @@ on the Intel PXA210, PXA250, PXA260 and PXA270 processors.
 .Pp
 Companion drivers provide access to the various resources:
 .Pp
-.Bl -tag -compact -width tenletters -offset indent
+.Bl -tag -compact -width "pxadmac(4)XXX" -offset indent
 .It Xr apm 4
-Power manager.
+advanced power management device interface
 .It Xr com 4
-NS16550-compatible asynchronous serial ports.
+serial communications interface
 .It Xr lcd 4
-On-board LCD display.
+Zaurus LCD Display
 .It Xr ohci 4
-OHCI USB controller.
+USB Open Host Controller Interface
 .It Xr pxadmac 4
-DMA controller.
+PXA2x0 DMA Controller
 .It Xr pxagpio 4
-GPIO controller.
+PXA2x0 GPIO interface
 .It Xr pxaintc 4
-Interrupt controller.
+PXA2x0 Interrupt Controller
+.It Xr pxammc 4
+MMC/SD/SDIO controller
 .It Xr pxapcic 4
-CF/PCMCIA controller.
+PXA2x0 PCMCIA Interface
 .It Xr pxaudc 4
-USB client controller.
+PXA27x USB Device Controller
 .It Xr saost 4
-Built-in timer, compatible with the SA-1110 processor timer.
+SA-11x0 OS Timer
 .It Xr scoop 4
-Compact Flash slot and GPIO controller.
+Compact Flash and GPIO controller
 .It Xr zaudio 4
-Audio controller.
+Zaurus audio device
 .It Xr zkbd 4
-System keyboard.
+Zaurus keyboard support
 .It Xr zrc 4
-Remote control.
+Zaurus remote control support
 .It Xr zssp 4
-SSP for inter-chip communication.
+SSP for inter-chip communication
 .It Xr zts 4
-Touch screen.
+Zaurus touchscreen support
 .El
 .Sh SEE ALSO
-.Xr apm 4 ,
 .Xr autoconf 4 ,
-.Xr com 4 ,
 .Xr intro 4 ,
-.Xr lcd 4 ,
-.Xr ohci 4 ,
-.Xr pxadmac 4 ,
-.Xr pxagpio 4 ,
-.Xr pxaintc 4 ,
-.Xr pxapcic 4 ,
-.Xr pxaudc 4 ,
-.Xr saost 4 ,
-.Xr scoop 4 ,
-.Xr zaudio 4 ,
-.Xr zkbd 4 ,
-.Xr zrc 4 ,
-.Xr zssp 4 ,
-.Xr zts 4 ,
 .Xr config 8
 .Sh HISTORY
 Support for the PXA2x0 family appeared in
