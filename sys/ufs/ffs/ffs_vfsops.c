@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.99 2007/03/19 13:27:47 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.100 2007/03/19 19:57:58 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -580,6 +580,7 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
 	mountp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
+	ffs1_compat_read(fs, VFSTOUFS(mountp), SBOFF);
 	ffs_oldfscompat(fs);
 	(void)ffs_statfs(mountp, &mountp->mnt_stat, p);
 	/*
