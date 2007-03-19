@@ -1,4 +1,4 @@
-.\"	$OpenBSD: evdns.3,v 1.2 2007/03/19 20:12:45 jmc Exp $
+.\"	$OpenBSD: evdns.3,v 1.3 2007/03/19 20:30:22 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -30,20 +30,20 @@
 .Dt EVDNS 3
 .Os
 .Sh NAME
-.Nm evdns_init
-.Nm evdns_shutdown
-.Nm evdns_err_to_string
-.Nm evdns_nameserver_add
-.Nm evdns_count_nameservers
-.Nm evdns_clear_nameservers_and_suspend
-.Nm evdns_resume
-.Nm evdns_nameserver_ip_add
-.Nm evdns_resolve_ipv4
-.Nm evdns_resolve_reverse
-.Nm evdns_resolv_conf_parse
-.Nm evdns_search_clear
-.Nm evdns_search_add
-.Nm evdns_search_ndots_set
+.Nm evdns_init ,
+.Nm evdns_shutdown ,
+.Nm evdns_err_to_string ,
+.Nm evdns_nameserver_add ,
+.Nm evdns_count_nameservers ,
+.Nm evdns_clear_nameservers_and_suspend ,
+.Nm evdns_resume ,
+.Nm evdns_nameserver_ip_add ,
+.Nm evdns_resolve_ipv4 ,
+.Nm evdns_resolve_reverse ,
+.Nm evdns_resolv_conf_parse ,
+.Nm evdns_search_clear ,
+.Nm evdns_search_add ,
+.Nm evdns_search_ndots_set ,
 .Nm evdns_set_log_fn
 .Nd asynchronous functions for DNS resolution
 .Sh SYNOPSIS
@@ -65,7 +65,7 @@
 .Ft int
 .Fn evdns_resume
 .Ft int
-.Fn evdns_nameserver_ip_add(const char *ip_as_string);
+.Fn evdns_nameserver_ip_add "const char *ip_as_string"
 .Ft int
 .Fn evdns_resolve_ipv4 "const char *name" "int flags" "evdns_callback_type callback" "void *ptr"
 .Ft int
@@ -182,7 +182,6 @@ or by calling
 .Pp
 For example, with ndots set to 1 (the default) and a search domain list of
 ["myhome.net"]:
-.Pp
 .Bd -literal -offset indent
 Query: www
 Order: www.myhome.net, www.
