@@ -82,7 +82,7 @@
 ./usr/lib/libcurses.so.10.0
 ./usr/lib/libdes.so.9.0
 ./usr/lib/libedit.so.3.0
-./usr/lib/libevent.so.1.3
+./usr/lib/libevent.so.1.4
 ./usr/lib/libform.so.3.0
 ./usr/lib/libg2c.so.8.1
 ./usr/lib/libgssapi.so.5.0
@@ -1679,6 +1679,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/kcore.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/limits.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/loadfile_machdep.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/lock.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/param.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/pcb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/pio.ph
@@ -1981,6 +1982,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ipkdb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/kcore.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/limits.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/lock.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/param.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/pcb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/pio.ph
