@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.135 2007/03/15 10:22:30 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.136 2007/03/19 14:33:28 dlg Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -96,6 +96,8 @@
 #if defined(NFSSERVER) || defined(NFSCLIENT)
 extern void nfs_init(void);
 #endif
+
+#include "softraid.h"
 
 const char	copyright[] =
 "Copyright (c) 1982, 1986, 1989, 1991, 1993\n"
@@ -435,6 +437,10 @@ main(void *framep)
 		(void) tsleep((void *)&config_pending, PWAIT, "cfpend", 0);
 
 	dostartuphooks();
+
+#if NSOFTRAID > 0
+	config_rootfound("softraid", NULL);
+#endif
 
 	/* Configure root/swap devices */
 	if (md_diskconf)

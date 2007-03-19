@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.1 2007/03/19 03:02:08 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.2 2007/03/19 14:33:28 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -251,10 +251,6 @@ struct sr_softc {
 	 */
 #define SR_MAXSCSIBUS		256
 	struct sr_discipline	*sc_dis[SR_MAXSCSIBUS]; /* scsibus is u_int8_t */
-};
-
-struct sr_attach_args {
-	char 			*maa_name;
 };
 
 int		sr_probe(struct device *, void *, void *);

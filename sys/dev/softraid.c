@@ -122,12 +122,6 @@ struct scsi_device sr_dev = {
 int
 sr_probe(struct device *parent, void *match, void *aux)
 {
-	struct sr_attach_args	*maa = aux;
-	struct cfdata		*cf = match;
-
-	if (strcmp(maa->maa_name, cf->cf_driver->cd_name))
-		return (0);
-
 	return (1);
 }
 

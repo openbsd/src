@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.394 2007/03/19 03:02:09 marco Exp $
+#	$OpenBSD: files,v 1.395 2007/03/19 14:33:28 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -431,7 +431,9 @@ file dev/radio.c			radio	needs-flag
 device	ipmi
 file	dev/ipmi.c			ipmi	needs-flag
 
-device softraid: scsi
+# Software RAID
+device	softraid: scsi
+attach	softraid at root
 file	dev/softraid.c			softraid	needs-flag
 
 # legitimate pseudo-devices
