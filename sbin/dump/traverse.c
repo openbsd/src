@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.19 2007/03/06 03:27:14 ray Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.20 2007/03/19 13:27:47 pedro Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static const char rcsid[] = "$OpenBSD: traverse.c,v 1.19 2007/03/06 03:27:14 ray Exp $";
+static const char rcsid[] = "$OpenBSD: traverse.c,v 1.20 2007/03/19 13:27:47 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -607,7 +607,7 @@ loop:
 		msg("bread: lseek fails\n");
 	if ((cnt = read(diskfd, buf, size)) == size)
 		return;
-	if (blkno + (size / dev_bsize) > fsbtodb(sblock, sblock->fs_size)) {
+	if (blkno + (size / dev_bsize) > fsbtodb(sblock, sblock->fs_ffs1_size)) {
 		/*
 		 * Trying to read the final fragment.
 		 *

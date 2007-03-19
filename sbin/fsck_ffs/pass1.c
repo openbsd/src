@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.21 2007/02/12 16:35:55 otto Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.22 2007/03/19 13:27:47 pedro Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass1.c,v 1.21 2007/02/12 16:35:55 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pass1.c,v 1.22 2007/03/19 13:27:47 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ pass1(void)
 		for (; i < cgd; i++)
 			setbmap(i);
 	}
-	i = sblock.fs_csaddr;
+	i = sblock.fs_ffs1_csaddr;
 	cgd = i + howmany(sblock.fs_cssize, sblock.fs_fsize);
 	for (; i < cgd; i++)
 		setbmap(i);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.25 2007/03/15 10:27:00 pedro Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.26 2007/03/19 13:27:47 pedro Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass5.c,v 1.25 2007/03/15 10:27:00 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: pass5.c,v 1.26 2007/03/19 13:27:47 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -179,8 +179,8 @@ pass5(void)
 			idesc[i].id_fix = FIX;
 	}
 	memset(&cstotal, 0, sizeof(struct csum));
-	j = blknum(fs, fs->fs_size + fs->fs_frag - 1);
-	for (i = fs->fs_size; i < j; i++)
+	j = blknum(fs, fs->fs_ffs1_size + fs->fs_frag - 1);
+	for (i = fs->fs_ffs1_size; i < j; i++)
 		setbmap(i);
 	info_cg = 0;
 	info_maxcg = fs->fs_ncg;
@@ -192,8 +192,8 @@ pass5(void)
 			pfatal("CG %d: BAD MAGIC NUMBER\n", c);
 		dbase = cgbase(fs, c);
 		dmax = dbase + fs->fs_fpg;
-		if (dmax > fs->fs_size)
-			dmax = fs->fs_size;
+		if (dmax > fs->fs_ffs1_size)
+			dmax = fs->fs_ffs1_size;
 		newcg->cg_time = cg->cg_time;
 		newcg->cg_ffs2_time = cg->cg_ffs2_time;
 		newcg->cg_cgx = c;
@@ -372,9 +372,9 @@ pass5(void)
 	info_fn = NULL;
 	if (fs->fs_postblformat == FS_42POSTBLFMT)
 		fs->fs_nrpos = savednrpos;
-	if (memcmp(&cstotal, &fs->fs_cstotal, sizeof *cs) != 0
+	if (memcmp(&cstotal, &fs->fs_ffs1_cstotal, sizeof *cs) != 0
 	    && dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
-		memcpy(&fs->fs_cstotal, &cstotal, sizeof *cs);
+		memcpy(&fs->fs_ffs1_cstotal, &cstotal, sizeof *cs);
 		fs->fs_ronly = 0;
 		fs->fs_fmod = 0;
 		sbdirty();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.31 2007/02/13 20:37:07 otto Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.32 2007/03/19 13:27:47 pedro Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.31 2007/02/13 20:37:07 otto Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.32 2007/03/19 13:27:47 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -227,7 +227,7 @@ flush(int fd, struct bufarea *bp)
 		return;
 	for (i = 0, j = 0; i < sblock.fs_cssize; i += sblock.fs_bsize, j++) {
 		bwrite(fswritefd, (char *)sblock.fs_csp + i,
-		    fsbtodb(&sblock, sblock.fs_csaddr + j * sblock.fs_frag),
+		    fsbtodb(&sblock, sblock.fs_ffs1_csaddr + j * sblock.fs_frag),
 		    sblock.fs_cssize - i < sblock.fs_bsize ?
 		    sblock.fs_cssize - i : sblock.fs_bsize);
 	}
@@ -261,7 +261,8 @@ ckfini(int markclean)
 		sigprocmask(SIG_SETMASK, &oset, NULL);
 		return;
 	}
-	sblock.fs_flags &= ~FS_FLAGS_UPDATED; /* Force update on next mount */
+	/* Force update on next mount */
+	sblock.fs_ffs1_flags &= ~FS_FLAGS_UPDATED;
 	flush(fswritefd, &sblk);
 	if (havesb && sblk.b_bno != SBOFF / dev_bsize &&
 	    !preen && reply("UPDATE STANDARD SUPERBLOCK")) {

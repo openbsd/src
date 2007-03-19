@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.4 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: debug.c,v 1.5 2007/03/19 13:27:47 pedro Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: debug.c,v 1.4 2003/08/25 23:28:15 tedu Exp $";
+  "$OpenBSD: debug.c,v 1.5 2007/03/19 13:27:47 pedro Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -161,11 +161,11 @@ dbg_dump_fs(struct fs *sb, const char *comment)
 	fprintf(dbg_log, "cgmask        int32_t           0x%08x\n",
 	    sb->fs_cgmask);
 	fprintf(dbg_log, "time          time_t            %10u\n",
-	    (unsigned int)sb->fs_time);
+	    (unsigned int)sb->fs_ffs1_time);
 	fprintf(dbg_log, "size          int32_t           0x%08x\n",
-	    sb->fs_size);
+	    sb->fs_ffs1_size);
 	fprintf(dbg_log, "dsize         int32_t           0x%08x\n",
-	    sb->fs_dsize);
+	    sb->fs_ffs1_dsize);
 	fprintf(dbg_log, "ncg           int32_t           0x%08x\n",
 	    sb->fs_ncg);
 	fprintf(dbg_log, "bsize         int32_t           0x%08x\n",
@@ -227,7 +227,7 @@ dbg_dump_fs(struct fs *sb, const char *comment)
 	    sb->fs_id[0], sb->fs_id[1]);
 
 	fprintf(dbg_log, "csaddr        ufs_daddr_t       0x%08x\n",
-	    sb->fs_csaddr);
+	    sb->fs_ffs1_csaddr);
 	fprintf(dbg_log, "cssize        int32_t           0x%08x\n",
 	    sb->fs_cssize);
 	fprintf(dbg_log, "cgsize        int32_t           0x%08x\n",
@@ -250,7 +250,7 @@ dbg_dump_fs(struct fs *sb, const char *comment)
 	fprintf(dbg_log, "fpg           int32_t           0x%08x\n",
 	    sb->fs_fpg);
 
-	dbg_dump_csum("internal cstotal", &sb->fs_cstotal);
+	dbg_dump_csum("internal cstotal", &sb->fs_ffs1_cstotal);
 
 	fprintf(dbg_log, "fmod          int8_t            0x%02x\n",
 	    sb->fs_fmod);
@@ -259,7 +259,7 @@ dbg_dump_fs(struct fs *sb, const char *comment)
 	fprintf(dbg_log, "ronly         int8_t            0x%02x\n",
 	    sb->fs_ronly);
 	fprintf(dbg_log, "flags         int8_t            0x%02x\n",
-	    sb->fs_flags);
+	    sb->fs_ffs1_flags);
 	fprintf(dbg_log, "fsmnt         u_char[MAXMNTLEN] \"%s\"\n",
 	    sb->fs_fsmnt);
 

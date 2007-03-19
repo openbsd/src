@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.30 2007/03/18 21:44:01 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.31 2007/03/19 13:27:47 pedro Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.30 2007/03/18 21:44:01 otto Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.31 2007/03/19 13:27:47 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ setup(char *dev)
 		if (!preen)
 			pwarn("** File system is already clean\n");
 	}
-	maxfsblock = sblock.fs_size;
+	maxfsblock = sblock.fs_ffs1_size;
 	maxino = sblock.fs_ncg * sblock.fs_ipg;
 	sizepb = sblock.fs_bsize;
 	maxfilesize = sblock.fs_bsize * NDADDR - 1;
@@ -327,7 +327,7 @@ setup(char *dev)
 		sblock.fs_postblformat = FS_DYNAMICPOSTBLFMT;
 		sblock.fs_nrpos = 8;
 		sblock.fs_postbloff =
-		    (char *)(&sblock.fs_opostbl_start) -
+		    (char *)(&sblock.fs_maxbsize) -
 		    (char *)(&sblock.fs_firstfield);
 		sblock.fs_rotbloff = &sblock.fs_space[0] -
 		    (u_char *)(&sblock.fs_firstfield);
@@ -384,7 +384,7 @@ setup(char *dev)
 		size = sblock.fs_cssize - i < sblock.fs_bsize ?
 		    sblock.fs_cssize - i : sblock.fs_bsize;
 		if (bread(fsreadfd, (char *)sblock.fs_csp + i,
-		    fsbtodb(&sblock, sblock.fs_csaddr + j * sblock.fs_frag),
+		    fsbtodb(&sblock, sblock.fs_ffs1_csaddr + j * sblock.fs_frag),
 		    size) != 0 && !asked) {
 			pfatal("BAD SUMMARY INFORMATION");
 			if (reply("CONTINUE") == 0) {
@@ -422,7 +422,7 @@ setup(char *dev)
 		    (unsigned long)(maxino + 1) * sizeof(int16_t));
 		goto badsblabel;
 	}
-	numdirs = sblock.fs_cstotal.cs_ndir;
+	numdirs = sblock.fs_ffs1_cstotal.cs_ndir;
 	inplast = 0;
 	listmax = numdirs + 10;
 	inpsort = calloc((unsigned)listmax, sizeof(struct inoinfo *));
@@ -433,7 +433,7 @@ setup(char *dev)
 		goto badsblabel;
 	}
 	bufinit();
-	if (sblock.fs_flags & FS_DOSOFTDEP)
+	if (sblock.fs_ffs1_flags & FS_DOSOFTDEP)
 		usedsoftdep = 1;
 	else
 		usedsoftdep = 0;
@@ -581,7 +581,7 @@ calcsb(char *dev, int devfd, struct fs *fs)
 	fs->fs_cpg = pp->p_cpg;
 	fs->fs_nspf = fs->fs_fsize / lp->d_secsize;
 	/* unit for fs->fs_size is fragments, for pp->p_size it is sectors */
-	fs->fs_size = pp->p_size / fs->fs_nspf;
+	fs->fs_ffs1_size = pp->p_size / fs->fs_nspf;
 	fs->fs_ntrak = lp->d_ntracks;
 	fs->fs_nsect = lp->d_nsectors;
 	fs->fs_spc = lp->d_secpercyl;

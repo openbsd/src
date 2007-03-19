@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.16 2006/04/02 00:48:35 deraadt Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.17 2007/03/19 13:27:47 pedro Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -46,7 +46,7 @@ static const char copyright[] =
 Copyright (c) 1980, 1989, 1993 The Regents of the University of California.\n\
 All rights reserved.\n";
 
-static const char rcsid[] = "$OpenBSD: growfs.c,v 1.16 2006/04/02 00:48:35 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: growfs.c,v 1.17 2007/03/19 13:27:47 pedro Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -180,7 +180,7 @@ growfs(char *fsys, int fsi, int fso, unsigned int Nflag)
 	if (fscs == NULL)
 		errx(1, "calloc failed");
 	for (i = 0; i < osblock.fs_cssize; i += osblock.fs_bsize) {
-		rdfs(fsbtodb(&osblock, osblock.fs_csaddr +
+		rdfs(fsbtodb(&osblock, osblock.fs_ffs1_csaddr +
 		    numfrags(&osblock, i)), (size_t)MIN(osblock.fs_cssize - i,
 		    osblock.fs_bsize), (((char *)fscs) + i), fsi);
 	}
@@ -212,11 +212,11 @@ growfs(char *fsys, int fsi, int fso, unsigned int Nflag)
 	 * Dump out summary information about filesystem.
 	 */
 	printf("%s:\t%d sectors in %d %s of %d tracks, %d sectors\n",
-	    fsys, sblock.fs_size * NSPF(&sblock), sblock.fs_ncyl,
+	    fsys, sblock.fs_ffs1_size * NSPF(&sblock), sblock.fs_ncyl,
 	    "cylinders", sblock.fs_ntrak, sblock.fs_nsect);
 #define B2MBFACTOR (1 / (1024.0 * 1024.0))
 	printf("\t%.1fMB in %d cyl groups (%d c/g, %.2fMB/g, %d i/g)\n",
-	    (float)sblock.fs_size * sblock.fs_fsize * B2MBFACTOR,
+	    (float)sblock.fs_ffs1_size * sblock.fs_fsize * B2MBFACTOR,
 	    sblock.fs_ncg, sblock.fs_cpg,
 	    (float)sblock.fs_fpg * sblock.fs_fsize * B2MBFACTOR,
 	    sblock.fs_ipg);
@@ -264,7 +264,7 @@ growfs(char *fsys, int fsi, int fso, unsigned int Nflag)
 	 * Now write the cylinder summary back to disk.
 	 */
 	for (i = 0; i < sblock.fs_cssize; i += sblock.fs_bsize) {
-		wtfs(fsbtodb(&sblock, sblock.fs_csaddr + numfrags(&sblock, i)),
+		wtfs(fsbtodb(&sblock, sblock.fs_ffs1_csaddr + numfrags(&sblock, i)),
 		    (size_t)MIN(sblock.fs_cssize - i, sblock.fs_bsize),
 		    (((char *)fscs) + i), fso, Nflag);
 	}
@@ -285,12 +285,13 @@ growfs(char *fsys, int fsi, int fso, unsigned int Nflag)
 }
 #endif /* FS_DEBUG */
 
-	sblock.fs_flags &= ~FS_FLAGS_UPDATED; /* Force update on next mount */
+	/* Force update on next mount */
+	sblock.fs_ffs1_flags &= ~FS_FLAGS_UPDATED;
 
 	/*
 	 * Now write the new superblock back to disk.
 	 */
-	sblock.fs_time = utime;
+	sblock.fs_ffs1_time = utime;
 	wtfs((daddr_t)(SBOFF / DEV_BSIZE), (size_t)SBSIZE, &sblock,
 	    fso, Nflag);
 	DBG_PRINT0("sblock written\n");
@@ -305,7 +306,7 @@ growfs(char *fsys, int fsi, int fso, unsigned int Nflag)
 	sblock.fs_cgrotor = 0;
 	sblock.fs_state = 0;
 	memset(&sblock.fs_fsmnt, 0, sizeof(sblock.fs_fsmnt));
-	sblock.fs_flags &= FS_DOSOFTDEP;
+	sblock.fs_ffs1_flags &= FS_DOSOFTDEP;
 
 	/*
 	 * XXX
@@ -317,7 +318,7 @@ growfs(char *fsys, int fsi, int fso, unsigned int Nflag)
 	 *     fs_maxbpg
 	 *     fs_minfree,
 	 *     fs_optim
-	 *     fs_flags regarding SOFTUPDATES
+	 *     fs_ffs1_flags regarding SOFTUPDATES
 	 *
 	 * We probably should rather change the summary for the cylinder group
 	 * statistics here to the value of what would be in there, if the file
@@ -364,8 +365,8 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 	 */
 	cbase = cgbase(&sblock, cylno);
 	dmax = cbase + sblock.fs_fpg;
-	if (dmax > sblock.fs_size)
-		dmax = sblock.fs_size;
+	if (dmax > sblock.fs_ffs1_size)
+		dmax = sblock.fs_ffs1_size;
 	dlower = cgsblock(&sblock, cylno) - cbase;
 	dupper = cgdmin(&sblock, cylno) - cbase;
 	if (cylno == 0) /* XXX fscs may be relocated */
@@ -432,8 +433,8 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 		cg_blks(&sblock, &acg, cbtocylno(&sblock, d))
 		    [cbtorpos(&sblock, d)]++;
 	}
-	sblock.fs_dsize += dlower;
-	sblock.fs_dsize += acg.cg_ndblk - dupper;
+	sblock.fs_ffs1_dsize += dlower;
+	sblock.fs_ffs1_dsize += acg.cg_ndblk - dupper;
 	if ((i = dupper % sblock.fs_frag)) {
 		acg.cg_frsum[sblock.fs_frag - i]++;
 		for (d = dupper + sblock.fs_frag - i; dupper < d; dupper++) {
@@ -490,10 +491,10 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 			sump[run]++;
 		}
 	}
-	sblock.fs_cstotal.cs_ndir += acg.cg_cs.cs_ndir;
-	sblock.fs_cstotal.cs_nffree += acg.cg_cs.cs_nffree;
-	sblock.fs_cstotal.cs_nbfree += acg.cg_cs.cs_nbfree;
-	sblock.fs_cstotal.cs_nifree += acg.cg_cs.cs_nifree;
+	sblock.fs_ffs1_cstotal.cs_ndir += acg.cg_cs.cs_ndir;
+	sblock.fs_ffs1_cstotal.cs_nffree += acg.cg_cs.cs_nffree;
+	sblock.fs_ffs1_cstotal.cs_nbfree += acg.cg_cs.cs_nbfree;
+	sblock.fs_ffs1_cstotal.cs_nifree += acg.cg_cs.cs_nifree;
 	*cs = acg.cg_cs;
 	wtfs(fsbtodb(&sblock, cgtod(&sblock, cylno)),
 	    (size_t)sblock.fs_bsize, &acg, fso, Nflag);
@@ -670,7 +671,7 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 	 * cylinder group we have to change that value now to fs_cpg.
 	 */
 
-	if (cgbase(&osblock, cylno + 1) == osblock.fs_size) {
+	if (cgbase(&osblock, cylno + 1) == osblock.fs_ffs1_size) {
 		acg.cg_ncyl = sblock.fs_cpg;
 
 		wtfs(fsbtodb(&sblock, cgtod(&sblock, cylno)),
@@ -686,8 +687,8 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 	 */
 	cbase = cgbase(&sblock, cylno);
 	dmax = cbase + sblock.fs_fpg;
-	if (dmax > sblock.fs_size)
-		dmax = sblock.fs_size;
+	if (dmax > sblock.fs_ffs1_size)
+		dmax = sblock.fs_ffs1_size;
 	dupper = cgdmin(&sblock, cylno) - cbase;
 	if (cylno == 0) /* XXX fscs may be relocated */
 		dupper += howmany(sblock.fs_cssize, sblock.fs_fsize);
@@ -713,7 +714,7 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 	DBG_PRINT4("jcg dbg: %d %u %d %u\n", cylno, sblock.fs_ncg, acg.cg_ncyl,
 	    sblock.fs_cpg);
 	acg.cg_ndblk = dmax - cbase;
-	sblock.fs_dsize += acg.cg_ndblk - aocg.cg_ndblk;
+	sblock.fs_ffs1_dsize += acg.cg_ndblk - aocg.cg_ndblk;
 	if (sblock.fs_contigsumsize > 0)
 		acg.cg_nclusterblks = acg.cg_ndblk / sblock.fs_frag;
 
@@ -729,15 +730,15 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 	 * Handle the first new block here if it was partially available
 	 * before.
 	 */
-	if (osblock.fs_size % sblock.fs_frag) {
-		if (roundup(osblock.fs_size, sblock.fs_frag)<=sblock.fs_size) {
+	if (osblock.fs_ffs1_size % sblock.fs_frag) {
+		if (roundup(osblock.fs_ffs1_size, sblock.fs_frag)<=sblock.fs_ffs1_size) {
 			/*
 			 * The new space is enough to fill at least this
 			 * block
 			 */
 			j = 0;
-			for (i = roundup(osblock.fs_size - cbase, sblock.fs_frag)-1;
-			    i >= osblock.fs_size - cbase; i--) {
+			for (i = roundup(osblock.fs_ffs1_size - cbase, sblock.fs_frag)-1;
+			    i >= osblock.fs_ffs1_size - cbase; i--) {
 				setbit(cg_blksfree(&acg), i);
 				acg.cg_cs.cs_nffree++;
 				j++;
@@ -749,21 +750,21 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 			 * filesystem.
 			 */
 			if (isblock(&sblock, cg_blksfree(&acg),
-			    ((osblock.fs_size - cgbase(&sblock, cylno))/
+			    ((osblock.fs_ffs1_size - cgbase(&sblock, cylno))/
 			    sblock.fs_frag))) {
 				/*
 				 * The block is now completely available
 				 */
 				DBG_PRINT0("block was\n");
-				acg.cg_frsum[osblock.fs_size % sblock.fs_frag]--;
+				acg.cg_frsum[osblock.fs_ffs1_size % sblock.fs_frag]--;
 				acg.cg_cs.cs_nbfree++;
 				acg.cg_cs.cs_nffree-=sblock.fs_frag;
-				k = rounddown(osblock.fs_size - cbase,
+				k = rounddown(osblock.fs_ffs1_size - cbase,
 				    sblock.fs_frag);
 				cg_blktot(&acg)[cbtocylno(&sblock, k)]++;
 				cg_blks(&sblock, &acg, cbtocylno(&sblock, k))
 				    [cbtorpos(&sblock, k)]++;
-				updclst((osblock.fs_size - cbase)/sblock.fs_frag);
+				updclst((osblock.fs_ffs1_size - cbase)/sblock.fs_frag);
 			} else {
 				/*
 				 * Lets rejoin a possible partially growed
@@ -771,7 +772,7 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 				 */
 				k = 0;
 				while (isset(cg_blksfree(&acg), i) &&
-				    (i >= rounddown(osblock.fs_size - cbase,
+				    (i >= rounddown(osblock.fs_ffs1_size - cbase,
 				    sblock.fs_frag))) {
 					i--;
 					k++;
@@ -785,8 +786,8 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 			 * We only grow by some fragments within this last
 			 * block.
 			 */
-			for (i = sblock.fs_size - cbase - 1;
-			    i >= osblock.fs_size - cbase; i--) {
+			for (i = sblock.fs_ffs1_size - cbase - 1;
+			    i >= osblock.fs_ffs1_size - cbase; i--) {
 				setbit(cg_blksfree(&acg), i);
 				acg.cg_cs.cs_nffree++;
 				j++;
@@ -796,7 +797,7 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 			 */
 			k = 0;
 			while (isset(cg_blksfree(&acg), i) &&
-			    (i >= rounddown(osblock.fs_size - cbase,
+			    (i >= rounddown(osblock.fs_ffs1_size - cbase,
 			    sblock.fs_frag))) {
 				i--;
 				k++;
@@ -810,7 +811,7 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 	/*
 	 * Handle all new complete blocks here.
 	 */
-	for (i = roundup(osblock.fs_size - cbase, sblock.fs_frag);
+	for (i = roundup(osblock.fs_ffs1_size - cbase, sblock.fs_frag);
 	    i + sblock.fs_frag<=dmax-cbase;	/* XXX <= or only < ? */
 	    i += sblock.fs_frag) {
 		j = i / sblock.fs_frag;
@@ -835,14 +836,14 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 		}
 	}
 
-	sblock.fs_cstotal.cs_nffree +=
+	sblock.fs_ffs1_cstotal.cs_nffree +=
 	    (acg.cg_cs.cs_nffree - aocg.cg_cs.cs_nffree);
-	sblock.fs_cstotal.cs_nbfree +=
+	sblock.fs_ffs1_cstotal.cs_nbfree +=
 	    (acg.cg_cs.cs_nbfree - aocg.cg_cs.cs_nbfree);
 	/*
 	 * The following statistics are not changed here:
-	 *     sblock.fs_cstotal.cs_ndir
-	 *     sblock.fs_cstotal.cs_nifree
+	 *     sblock.fs_ffs1_cstotal.cs_ndir
+	 *     sblock.fs_ffs1_cstotal.cs_nifree
 	 * As the statistics for this cylinder group are ready, copy it to
 	 * the summary information array.
 	 */
@@ -903,7 +904,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 		DBG_LEAVE;
 		return;
 	}
-	ocscg = dtog(&osblock, osblock.fs_csaddr);
+	ocscg = dtog(&osblock, osblock.fs_ffs1_csaddr);
 	cs = fscs + ocscg;
 	blocks = 1+howmany(sblock.fs_cssize, sblock.fs_bsize)-
 	    howmany(osblock.fs_cssize, osblock.fs_bsize);
@@ -935,7 +936,8 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 	 *	also  up to 8*3 blocks for indirect blocks for all  possible
 	 *	references.
 	 */
-	if (/* ((int)sblock.fs_time & 0x3) > 0 || */ cs->cs_nbfree < blocks) {
+	if (/* ((int)sblock.fs_ffs1_time & 0x3) > 0 || */
+	    cs->cs_nbfree < blocks) {
 		/*
 		 * There  is  not enough space in the old cylinder  group  to
 		 * relocate  all blocks as needed, so we relocate  the  whole
@@ -963,7 +965,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 		 * Point "d" to the first fragment not used by the cylinder
 		 * summary.
 		 */
-		d = osblock.fs_csaddr+(osblock.fs_cssize/osblock.fs_fsize);
+		d = osblock.fs_ffs1_csaddr+(osblock.fs_cssize/osblock.fs_fsize);
 
 		/*
 		 * Set up last cluster size ("lcs") already here. Calculate
@@ -997,7 +999,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 				    d);
 				setbit(cg_blksfree(&acg), d % sblock.fs_fpg);
 				acg.cg_cs.cs_nffree++;
-				sblock.fs_cstotal.cs_nffree++;
+				sblock.fs_ffs1_cstotal.cs_nffree++;
 			}
 			/*
 			 * Point  "d" to the last fragment of the  last
@@ -1012,8 +1014,8 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 				    d);
 				acg.cg_cs.cs_nffree-=sblock.fs_frag;
 				acg.cg_cs.cs_nbfree++;
-				sblock.fs_cstotal.cs_nffree-=sblock.fs_frag;
-				sblock.fs_cstotal.cs_nbfree++;
+				sblock.fs_ffs1_cstotal.cs_nffree-=sblock.fs_frag;
+				sblock.fs_ffs1_cstotal.cs_nbfree++;
 				cg_blktot(&acg)[cbtocylno(&sblock,
 				    d % sblock.fs_fpg)]++;
 				cg_blks(&sblock, &acg, cbtocylno(&sblock,
@@ -1039,7 +1041,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 
 		DBG_PRINT1("d=%d\n",
 		    d);
-		for (d = rounddown(d, sblock.fs_frag); d >= osblock.fs_csaddr;
+		for (d = rounddown(d, sblock.fs_frag); d >= osblock.fs_ffs1_csaddr;
 		    d -= sblock.fs_frag) {
 			DBG_TRC;
 			DBG_PRINT1("d=%d\n",
@@ -1047,7 +1049,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 			setblock(&sblock, cg_blksfree(&acg),
 			    (d % sblock.fs_fpg)/sblock.fs_frag);
 			acg.cg_cs.cs_nbfree++;
-			sblock.fs_cstotal.cs_nbfree++;
+			sblock.fs_ffs1_cstotal.cs_nbfree++;
 			cg_blktot(&acg)[cbtocylno(&sblock, d % sblock.fs_fpg)]++;
 			cg_blks(&sblock, &acg, cbtocylno(&sblock,
 			    d % sblock.fs_fpg))[cbtorpos(&sblock,
@@ -1081,8 +1083,8 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 		 * Find the beginning of the new cylinder group containing the
 		 * cylinder summary.
 		 */
-		sblock.fs_csaddr = cgdmin(&sblock, osblock.fs_ncg);
-		ncscg = dtog(&sblock, sblock.fs_csaddr);
+		sblock.fs_ffs1_csaddr = cgdmin(&sblock, osblock.fs_ncg);
+		ncscg = dtog(&sblock, sblock.fs_ffs1_csaddr);
 		cs = fscs + ncscg;
 
 
@@ -1114,13 +1116,13 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 		 * Allocate all complete blocks used by the new cylinder
 		 * summary.
 		 */
-		for (d = sblock.fs_csaddr; d + sblock.fs_frag <=
-		    sblock.fs_csaddr+(sblock.fs_cssize/sblock.fs_fsize);
+		for (d = sblock.fs_ffs1_csaddr; d + sblock.fs_frag <=
+		    sblock.fs_ffs1_csaddr+(sblock.fs_cssize/sblock.fs_fsize);
 		    d+=sblock.fs_frag) {
 			clrblock(&sblock, cg_blksfree(&acg),
 			    (d%sblock.fs_fpg)/sblock.fs_frag);
 			acg.cg_cs.cs_nbfree--;
-			sblock.fs_cstotal.cs_nbfree--;
+			sblock.fs_ffs1_cstotal.cs_nbfree--;
 			cg_blktot(&acg)[cbtocylno(&sblock, d%sblock.fs_fpg)]--;
 			cg_blks(&sblock, &acg, cbtocylno(&sblock,
 			    d%sblock.fs_fpg))[cbtorpos(&sblock,
@@ -1135,18 +1137,18 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 		 * Allocate all fragments used by the cylinder summary in the
 		 * last block.
 		 */
-		if (d < sblock.fs_csaddr+(sblock.fs_cssize/sblock.fs_fsize)) {
-			for (; d - sblock.fs_csaddr<
+		if (d < sblock.fs_ffs1_csaddr+(sblock.fs_cssize/sblock.fs_fsize)) {
+			for (; d - sblock.fs_ffs1_csaddr<
 			    sblock.fs_cssize/sblock.fs_fsize;
 			    d++) {
 				clrbit(cg_blksfree(&acg), d%sblock.fs_fpg);
 				acg.cg_cs.cs_nffree--;
-				sblock.fs_cstotal.cs_nffree--;
+				sblock.fs_ffs1_cstotal.cs_nffree--;
 			}
 			acg.cg_cs.cs_nbfree--;
 			acg.cg_cs.cs_nffree+=sblock.fs_frag;
-			sblock.fs_cstotal.cs_nbfree--;
-			sblock.fs_cstotal.cs_nffree+=sblock.fs_frag;
+			sblock.fs_ffs1_cstotal.cs_nbfree--;
+			sblock.fs_ffs1_cstotal.cs_nffree+=sblock.fs_frag;
 			cg_blktot(&acg)[cbtocylno(&sblock, d%sblock.fs_fpg)]--;
 			cg_blks(&sblock, &acg, cbtocylno(&sblock,
 			    d%sblock.fs_fpg))[cbtorpos(&sblock,
@@ -1195,12 +1197,12 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 	DBG_TRC;
 
 	cbase = cgbase(&osblock, ocscg);	/* old and new are equal */
-	dupper = sblock.fs_csaddr - cbase +
+	dupper = sblock.fs_ffs1_csaddr - cbase +
 	    howmany(sblock.fs_cssize, sblock.fs_fsize);
-	odupper = osblock.fs_csaddr - cbase +
+	odupper = osblock.fs_ffs1_csaddr - cbase +
 	    howmany(osblock.fs_cssize, osblock.fs_fsize);
 
-	sblock.fs_dsize -= dupper - odupper;
+	sblock.fs_ffs1_dsize -= dupper - odupper;
 
 	/*
 	 * Allocate the space for the array of blocks to be relocated.
@@ -1235,7 +1237,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 		} else {
 			clrbit(cg_blksfree(&acg), d);
 			acg.cg_cs.cs_nffree--;
-			sblock.fs_cstotal.cs_nffree--;
+			sblock.fs_ffs1_cstotal.cs_nffree--;
 		}
 		/*
 		 * No cluster handling is needed here, as there was at least
@@ -1257,7 +1259,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 			for (f = d; f < d + sblock.fs_frag; f++) {
 				if (isset(cg_blksfree(&aocg), f)) {
 					acg.cg_cs.cs_nffree--;
-					sblock.fs_cstotal.cs_nffree--;
+					sblock.fs_ffs1_cstotal.cs_nffree--;
 				}
 			}
 			clrblock(&sblock, cg_blksfree(&acg), d/sblock.fs_frag);
@@ -1266,7 +1268,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 		} else {
 			clrblock(&sblock, cg_blksfree(&acg), d/sblock.fs_frag);
 			acg.cg_cs.cs_nbfree--;
-			sblock.fs_cstotal.cs_nbfree--;
+			sblock.fs_ffs1_cstotal.cs_nbfree--;
 			cg_blktot(&acg)[cbtocylno(&sblock, d)]--;
 			cg_blks(&sblock, &acg, cbtocylno(&sblock, d))
 			    [cbtorpos(&sblock, d)]--;
@@ -1299,9 +1301,9 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 
 		if (isblock(&sblock, cg_blksfree(&acg), d/sblock.fs_frag)) {
 			acg.cg_cs.cs_nbfree--;
-			sblock.fs_cstotal.cs_nbfree--;
+			sblock.fs_ffs1_cstotal.cs_nbfree--;
 			acg.cg_cs.cs_nffree+=sblock.fs_frag;
-			sblock.fs_cstotal.cs_nffree+=sblock.fs_frag;
+			sblock.fs_ffs1_cstotal.cs_nffree+=sblock.fs_frag;
 			cg_blktot(&acg)[cbtocylno(&sblock, d)]--;
 			cg_blks(&sblock, &acg, cbtocylno(&sblock, d))
 			    [cbtorpos(&sblock, d)]--;
@@ -1329,7 +1331,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 			} else {
 				clrbit(cg_blksfree(&acg), d);
 				acg.cg_cs.cs_nffree--;
-				sblock.fs_cstotal.cs_nffree--;
+				sblock.fs_ffs1_cstotal.cs_nffree--;
 			}
 		}
 		if (bp[ind].flags & GFS_FL_LAST) /* we have to advance here */
@@ -1367,7 +1369,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 				if (isset(cg_blksfree(&aocg), f)) {
 					setbit(cg_blksfree(&acg), g);
 					acg.cg_cs.cs_nffree++;
-					sblock.fs_cstotal.cs_nffree++;
+					sblock.fs_ffs1_cstotal.cs_nffree++;
 				}
 			}
 
@@ -1385,7 +1387,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 				    f < odupper; f++, g++) {
 					setbit(cg_blksfree(&acg), g);
 					acg.cg_cs.cs_nffree++;
-					sblock.fs_cstotal.cs_nffree++;
+					sblock.fs_ffs1_cstotal.cs_nffree++;
 				}
 				if (!(bp[i].flags & GFS_FL_LAST))
 					frag_adjust(bp[i].new * sblock.fs_frag,1);
@@ -1404,7 +1406,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 					if (isclr(cg_blksfree(&acg), f)) {
 						setbit(cg_blksfree(&acg), f);
 						acg.cg_cs.cs_nffree++;
-						sblock.fs_cstotal.cs_nffree++;
+						sblock.fs_ffs1_cstotal.cs_nffree++;
 					}
 				}
 				frag_adjust(bp[i].old * sblock.fs_frag, 1);
@@ -1461,11 +1463,11 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 	}
 	/*
 	 * The following statistics are not changed here:
-	 *     sblock.fs_cstotal.cs_ndir
-	 *     sblock.fs_cstotal.cs_nifree
+	 *     sblock.fs_ffs1_cstotal.cs_ndir
+	 *     sblock.fs_ffs1_cstotal.cs_nifree
 	 * The following statistics were already updated on the fly:
-	 *     sblock.fs_cstotal.cs_nffree
-	 *     sblock.fs_cstotal.cs_nbfree
+	 *     sblock.fs_ffs1_cstotal.cs_nffree
+	 *     sblock.fs_ffs1_cstotal.cs_nbfree
 	 * As the statistics for this cylinder group are ready, copy it to
 	 * the summary information array.
 	 */
@@ -1571,11 +1573,11 @@ alloc(void)
 	dlower = cgsblock(&sblock, acg.cg_cgx) - cgbase(&sblock, acg.cg_cgx);
 	dupper = cgdmin(&sblock, acg.cg_cgx) - cgbase(&sblock, acg.cg_cgx);
 	dmax = cgbase(&sblock, acg.cg_cgx) + sblock.fs_fpg;
-	if (dmax > sblock.fs_size) {
-		dmax = sblock.fs_size;
+	if (dmax > sblock.fs_ffs1_size) {
+		dmax = sblock.fs_ffs1_size;
 	}
 	dmax -= cgbase(&sblock, acg.cg_cgx); /* retransform into cg */
-	csmin = sblock.fs_csaddr - cgbase(&sblock, acg.cg_cgx);
+	csmin = sblock.fs_ffs1_csaddr - cgbase(&sblock, acg.cg_cgx);
 	csmax = csmin + howmany(sblock.fs_cssize, sblock.fs_fsize);
 	DBG_PRINT3("seek range: dl=%d, du=%d, dm=%d\n",
 	    dlower, dupper, dmax);
@@ -1653,7 +1655,7 @@ alloc(void)
 	 * Update all statistics based on blocks.
 	 */
 	acg.cg_cs.cs_nbfree--;
-	sblock.fs_cstotal.cs_nbfree--;
+	sblock.fs_ffs1_cstotal.cs_nbfree--;
 	cg_blktot(&acg)[cbtocylno(&sblock, d)]--;
 	cg_blks(&sblock, &acg, cbtocylno(&sblock, d))[cbtorpos(&sblock, d)]--;
 
@@ -1967,21 +1969,21 @@ main(int argc, char **argv)
 	 * Determine size to grow to. Default to the full size specified in
 	 * the disk label.
 	 */
-	sblock.fs_size = dbtofsb(&osblock, pp->p_size);
+	sblock.fs_ffs1_size = dbtofsb(&osblock, pp->p_size);
 	if (size != 0) {
 		if (size > pp->p_size) {
 			errx(1, "There is not enough space (%d < %d)",
 			    pp->p_size, size);
 		}
-		sblock.fs_size = dbtofsb(&osblock, size);
+		sblock.fs_ffs1_size = dbtofsb(&osblock, size);
 	}
 
 	/*
 	 * Are we really growing ?
 	 */
-	if (osblock.fs_size >= sblock.fs_size) {
-		errx(1, "we are not growing (%d->%d)", osblock.fs_size,
-		    sblock.fs_size);
+	if (osblock.fs_ffs1_size >= sblock.fs_ffs1_size) {
+		errx(1, "we are not growing (%d->%d)", osblock.fs_ffs1_size,
+		    sblock.fs_ffs1_size);
 	}
 
 
@@ -2014,7 +2016,7 @@ main(int argc, char **argv)
 	}
 
 	if (!quiet)
-		printf("new file system size is: %d frags\n", sblock.fs_size);
+		printf("new file system size is: %d frags\n", sblock.fs_ffs1_size);
 
 	/*
 	 * Try to access our new last block in the filesystem. Even if we
@@ -2027,18 +2029,18 @@ main(int argc, char **argv)
 	/*
 	 * Now calculate new superblock values and check for reasonable
 	 * bound for new filesystem size:
-	 *     fs_size:    is derived from label or user input
-	 *     fs_dsize:   should get updated in the routines creating or
+	 *     fs_ffs1_size:    is derived from label or user input
+	 *     fs_ffs1_dsize:   should get updated in the routines creating or
 	 *                 updating the cylinder groups on the fly
-	 *     fs_cstotal: should get updated in the routines creating or
+	 *     fs_ffs1_cstotal: should get updated in the routines creating or
 	 *                 updating the cylinder groups
 	 */
 
 	/*
 	 * Update the number of cylinders in the filesystem.
 	 */
-	sblock.fs_ncyl = sblock.fs_size * NSPF(&sblock) / sblock.fs_spc;
-	if (sblock.fs_size * NSPF(&sblock) > sblock.fs_ncyl * sblock.fs_spc)
+	sblock.fs_ncyl = sblock.fs_ffs1_size * NSPF(&sblock) / sblock.fs_spc;
+	if (sblock.fs_ffs1_size * NSPF(&sblock) > sblock.fs_ncyl * sblock.fs_spc)
 		sblock.fs_ncyl++;
 
 	/*
@@ -2048,9 +2050,9 @@ main(int argc, char **argv)
 	if (sblock.fs_ncyl % sblock.fs_cpg)
 		sblock.fs_ncg++;
 
-	if ((sblock.fs_size - (sblock.fs_ncg - 1) * sblock.fs_fpg) <
+	if ((sblock.fs_ffs1_size - (sblock.fs_ncg - 1) * sblock.fs_fpg) <
 	    sblock.fs_fpg && cgdmin(&sblock, (sblock.fs_ncg - 1))-
-	    cgbase(&sblock, (sblock.fs_ncg - 1)) > (sblock.fs_size -
+	    cgbase(&sblock, (sblock.fs_ncg - 1)) > (sblock.fs_ffs1_size -
 	    (sblock.fs_ncg - 1) * sblock.fs_fpg)) {
 		/*
 		 * The space in the new last cylinder group is too small,
@@ -2065,9 +2067,9 @@ main(int argc, char **argv)
 		sblock.fs_ncyl -= sblock.fs_ncyl % sblock.fs_cpg;
 		if (!quiet)
 			printf("Warning: %d sector(s) cannot be allocated.\n",
-			    (sblock.fs_size-(sblock.fs_ncg)*sblock.fs_fpg) *
+			    (sblock.fs_ffs1_size-(sblock.fs_ncg)*sblock.fs_fpg) *
 			    NSPF(&sblock));
-		sblock.fs_size = sblock.fs_ncyl * sblock.fs_spc / NSPF(&sblock);
+		sblock.fs_ffs1_size = sblock.fs_ncyl * sblock.fs_spc / NSPF(&sblock);
 	}
 
 	/*
@@ -2077,7 +2079,7 @@ main(int argc, char **argv)
 	sblock.fs_cssize =
 	    fragroundup(&sblock, sblock.fs_ncg * sizeof(struct csum));
 
-	if (osblock.fs_size >= sblock.fs_size) {
+	if (osblock.fs_ffs1_size >= sblock.fs_ffs1_size) {
 		errx(1, "not enough new space");
 	}
 

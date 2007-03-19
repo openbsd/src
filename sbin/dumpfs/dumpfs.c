@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.19 2006/03/09 13:35:02 pedro Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.20 2007/03/19 13:27:47 pedro Exp $	*/
 /*	$NetBSD: dumpfs.c,v 1.12 1997/04/26 05:41:33 lukem Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.19 2006/03/09 13:35:02 pedro Exp $";
+static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.20 2007/03/19 13:27:47 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ dumpfs(char *name)
 		afs.fs_nrpos = 8;
 	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
 	printf("magic\t%x\ttime\t%s", afs.fs_magic,
-	    ctime(&afs.fs_time));
+	    ctime(&afs.fs_ffs1_time));
 	i = 0;
 	if (afs.fs_postblformat != FS_42POSTBLFMT) {
 		i++;
@@ -150,12 +150,12 @@ dumpfs(char *name)
 	}
 	printf("cylgrp\t%s\tinodes\t%s\tfslevel %d%s\n",
 	    i < 1 ? "static" : "dynamic", i < 2 ? "4.2/4.3BSD" : "4.4BSD", i,
-	    (afs.fs_flags & FS_DOSOFTDEP) ? "\tsoft updates" : "");
+	    (afs.fs_ffs1_flags & FS_DOSOFTDEP) ? "\tsoft updates" : "");
 	printf("nbfree\t%d\tndir\t%d\tnifree\t%d\tnffree\t%d\n",
-	    afs.fs_cstotal.cs_nbfree, afs.fs_cstotal.cs_ndir,
-	    afs.fs_cstotal.cs_nifree, afs.fs_cstotal.cs_nffree);
+	    afs.fs_ffs1_cstotal.cs_nbfree, afs.fs_ffs1_cstotal.cs_ndir,
+	    afs.fs_ffs1_cstotal.cs_nifree, afs.fs_ffs1_cstotal.cs_nffree);
 	printf("ncg\t%d\tncyl\t%d\tsize\t%d\tblocks\t%d\n",
-	    afs.fs_ncg, afs.fs_ncyl, afs.fs_size, afs.fs_dsize);
+	    afs.fs_ncg, afs.fs_ncyl, afs.fs_ffs1_size, afs.fs_ffs1_dsize);
 	printf("bsize\t%d\tshift\t%d\tmask\t0x%08x\n",
 	    afs.fs_bsize, afs.fs_bshift, afs.fs_bmask);
 	printf("fsize\t%d\tshift\t%d\tmask\t0x%08x\n",
@@ -180,19 +180,19 @@ dumpfs(char *name)
 	printf("sbsize\t%d\tcgsize\t%d\tcgoffset %d\tcgmask\t0x%08x\n",
 	    afs.fs_sbsize, afs.fs_cgsize, afs.fs_cgoffset, afs.fs_cgmask);
 	printf("csaddr\t%d\tcssize\t%d\tshift\t%d\tmask\t0x%08x\n",
-	    afs.fs_csaddr, afs.fs_cssize, afs.fs_csshift, afs.fs_csmask);
+	    afs.fs_ffs1_csaddr, afs.fs_cssize, afs.fs_csshift, afs.fs_csmask);
 	printf("cgrotor\t%d\tfmod\t%d\tronly\t%d\tclean\t0x%02x\n",
 	    afs.fs_cgrotor, afs.fs_fmod, afs.fs_ronly, afs.fs_clean);
 	printf("flags\t");
-	if (afs.fs_flags == 0)
+	if (afs.fs_ffs1_flags == 0)
 		printf("none");
-	if (afs.fs_flags & FS_UNCLEAN)
+	if (afs.fs_ffs1_flags & FS_UNCLEAN)
 		printf("unclean ");
-	if (afs.fs_flags & FS_DOSOFTDEP)
+	if (afs.fs_ffs1_flags & FS_DOSOFTDEP)
 		printf("soft-updates ");
-	if ((afs.fs_flags & ~(FS_UNCLEAN | FS_DOSOFTDEP)) != 0)
+	if ((afs.fs_ffs1_flags & ~(FS_UNCLEAN | FS_DOSOFTDEP)) != 0)
 		printf("unknown flags (%#x)",
-		    afs.fs_flags & ~(FS_UNCLEAN | FS_DOSOFTDEP));
+		    afs.fs_ffs1_flags & ~(FS_UNCLEAN | FS_DOSOFTDEP));
 	printf("\n");
 	if (afs.fs_cpc != 0)
 		printf("blocks available in each of %d rotational positions",
@@ -205,7 +205,7 @@ dumpfs(char *name)
 		size = afs.fs_cssize - i < afs.fs_bsize ?
 		    afs.fs_cssize - i : afs.fs_bsize;
 		if (lseek(fd,
-		    (off_t)(fsbtodb(&afs, (afs.fs_csaddr + j * afs.fs_frag))) *
+		    (off_t)(fsbtodb(&afs, (afs.fs_ffs1_csaddr + j * afs.fs_frag))) *
 		    dev_bsize, SEEK_SET) == (off_t)-1)
 			goto err;
 		if (read(fd, (char *)afs.fs_csp + i, size) != size)

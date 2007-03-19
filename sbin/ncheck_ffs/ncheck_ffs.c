@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.26 2006/04/02 00:48:35 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.27 2007/03/19 13:27:47 pedro Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -26,7 +26,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.26 2006/04/02 00:48:35 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.27 2007/03/19 13:27:47 pedro Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -221,7 +221,7 @@ loop:
 		warnx("bread: lseek fails");
 	if ((cnt = read(diskfd, buf, size)) == size)
 		return;
-	if (blkno + (size / dev_bsize) > fsbtodb(sblock, sblock->fs_size)) {
+	if (blkno + (size / dev_bsize) > fsbtodb(sblock, sblock->fs_ffs1_size)) {
 		/*
 		 * Trying to read the final fragment.
 		 *

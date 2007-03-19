@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.50 2006/03/09 13:35:02 pedro Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.51 2007/03/19 13:27:47 pedro Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.50 2006/03/09 13:35:02 pedro Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.51 2007/03/19 13:27:47 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -483,9 +483,9 @@ recalc:
 	 * Now have size for file system and nsect and ntrak.
 	 * Determine number of cylinders and blocks in the file system.
 	 */
-	sblock.fs_size = dbtofsb(&sblock, fssize);
-	sblock.fs_ncyl = sblock.fs_size * NSPF(&sblock) / sblock.fs_spc;
-	if (sblock.fs_size * NSPF(&sblock) > sblock.fs_ncyl * sblock.fs_spc) {
+	sblock.fs_ffs1_size = dbtofsb(&sblock, fssize);
+	sblock.fs_ncyl = sblock.fs_ffs1_size * NSPF(&sblock) / sblock.fs_spc;
+	if (sblock.fs_ffs1_size * NSPF(&sblock) > sblock.fs_ncyl * sblock.fs_spc) {
 		sblock.fs_ncyl++;
 		warn = 1;
 	}
@@ -553,7 +553,7 @@ next:
 		exit(29);
 	}
 	j = sblock.fs_ncg - 1;
-	if ((i = sblock.fs_size - j * sblock.fs_fpg) < sblock.fs_fpg &&
+	if ((i = sblock.fs_ffs1_size - j * sblock.fs_fpg) < sblock.fs_fpg &&
 	    cgdmin(&sblock, j) - cgbase(&sblock, j) > i) {
 		if (j == 0) {
 			errx(30, "filesystem must have at least %d sectors",
@@ -567,8 +567,8 @@ next:
 		    i * NSPF(&sblock));
 		sblock.fs_ncg--;
 		sblock.fs_ncyl -= sblock.fs_ncyl % sblock.fs_cpg;
-		sblock.fs_size = sblock.fs_ncyl * sblock.fs_spc / NSPF(&sblock);
-		fssize = fsbtodb(&sblock, sblock.fs_size);
+		sblock.fs_ffs1_size = sblock.fs_ncyl * sblock.fs_spc / NSPF(&sblock);
+		fssize = fsbtodb(&sblock, sblock.fs_ffs1_size);
 		warn = 0;
 	}
 	if (!quiet && warn && !mfs) {
@@ -580,7 +580,7 @@ next:
 	/*
 	 * fill in remaining fields of the super block
 	 */
-	sblock.fs_csaddr = cgdmin(&sblock, 0);
+	sblock.fs_ffs1_csaddr = cgdmin(&sblock, 0);
 	sblock.fs_cssize =
 	    fragroundup(&sblock, sblock.fs_ncg * sizeof(struct csum));
 
@@ -603,10 +603,10 @@ next:
 	sblock.fs_rps = rpm / 60;
 	sblock.fs_optim = opt;
 	sblock.fs_cgrotor = 0;
-	sblock.fs_cstotal.cs_ndir = 0;
-	sblock.fs_cstotal.cs_nbfree = 0;
-	sblock.fs_cstotal.cs_nifree = 0;
-	sblock.fs_cstotal.cs_nffree = 0;
+	sblock.fs_ffs1_cstotal.cs_ndir = 0;
+	sblock.fs_ffs1_cstotal.cs_nbfree = 0;
+	sblock.fs_ffs1_cstotal.cs_nifree = 0;
+	sblock.fs_ffs1_cstotal.cs_nffree = 0;
 	sblock.fs_fmod = 0;
 	sblock.fs_ronly = 0;
 	sblock.fs_clean = FS_ISCLEAN;
@@ -618,11 +618,11 @@ next:
 	 */
 	if (!mfs) {
 		printf("%s:\t%d sectors in %d %s of %d tracks, %d sectors\n",
-		    fsys, sblock.fs_size * NSPF(&sblock), sblock.fs_ncyl,
+		    fsys, sblock.fs_ffs1_size * NSPF(&sblock), sblock.fs_ncyl,
 		    "cylinders", sblock.fs_ntrak, sblock.fs_nsect);
 #define B2MBFACTOR (1 / (1024.0 * 1024.0))
 		printf("\t%.1fMB in %d cyl groups (%d c/g, %.2fMB/g, %d i/g)\n",
-		    (float)sblock.fs_size * sblock.fs_fsize * B2MBFACTOR,
+		    (float)sblock.fs_ffs1_size * sblock.fs_fsize * B2MBFACTOR,
 		    sblock.fs_ncg, sblock.fs_cpg,
 		    (float)sblock.fs_fpg * sblock.fs_fsize * B2MBFACTOR,
 		    sblock.fs_ipg);
@@ -669,13 +669,13 @@ next:
 	 */
 	if (fsinit(utime, mfsmode, mfsuid, mfsgid) != 0)
 		errx(32, "fsinit failed");
-	sblock.fs_time = utime;
+	sblock.fs_ffs1_time = utime;
 	/* don't write magic until we are done */
 	sblock.fs_magic = 0;
 	wtfs((int)SBOFF / sectorsize, sbsize, (char *)&sblock);
 	sblock.fs_magic = FS_MAGIC;
 	for (i = 0; i < sblock.fs_cssize; i += sblock.fs_bsize)
-		wtfs(fsbtodb(&sblock, sblock.fs_csaddr + numfrags(&sblock, i)),
+		wtfs(fsbtodb(&sblock, sblock.fs_ffs1_csaddr + numfrags(&sblock, i)),
 			sblock.fs_cssize - i < sblock.fs_bsize ?
 			    sblock.fs_cssize - i : sblock.fs_bsize,
 			((char *)fscs) + i);
@@ -714,8 +714,8 @@ initcg(int cylno, time_t utime)
 	 */
 	cbase = cgbase(&sblock, cylno);
 	dmax = cbase + sblock.fs_fpg;
-	if (dmax > sblock.fs_size)
-		dmax = sblock.fs_size;
+	if (dmax > sblock.fs_ffs1_size)
+		dmax = sblock.fs_ffs1_size;
 	dlower = cgsblock(&sblock, cylno) - cbase;
 	dupper = cgdmin(&sblock, cylno) - cbase;
 	if (cylno == 0)
@@ -781,9 +781,9 @@ initcg(int cylno, time_t utime)
 			cg_blks(&sblock, &acg, cbtocylno(&sblock, d))
 			    [cbtorpos(&sblock, d)]++;
 		}
-		sblock.fs_dsize += dlower;
+		sblock.fs_ffs1_dsize += dlower;
 	}
-	sblock.fs_dsize += acg.cg_ndblk - dupper;
+	sblock.fs_ffs1_dsize += acg.cg_ndblk - dupper;
 	if ((i = dupper % sblock.fs_frag)) {
 		acg.cg_frsum[sblock.fs_frag - i]++;
 		for (d = dupper + sblock.fs_frag - i; dupper < d; dupper++) {
@@ -838,10 +838,10 @@ initcg(int cylno, time_t utime)
 			sump[run]++;
 		}
 	}
-	sblock.fs_cstotal.cs_ndir += acg.cg_cs.cs_ndir;
-	sblock.fs_cstotal.cs_nffree += acg.cg_cs.cs_nffree;
-	sblock.fs_cstotal.cs_nbfree += acg.cg_cs.cs_nbfree;
-	sblock.fs_cstotal.cs_nifree += acg.cg_cs.cs_nifree;
+	sblock.fs_ffs1_cstotal.cs_ndir += acg.cg_cs.cs_ndir;
+	sblock.fs_ffs1_cstotal.cs_nffree += acg.cg_cs.cs_nffree;
+	sblock.fs_ffs1_cstotal.cs_nbfree += acg.cg_cs.cs_nbfree;
+	sblock.fs_ffs1_cstotal.cs_nifree += acg.cg_cs.cs_nifree;
 	*cs = acg.cg_cs;
 	wtfs(fsbtodb(&sblock, cgtod(&sblock, cylno)),
 	    sblock.fs_bsize, (char *)&acg);
@@ -1004,11 +1004,11 @@ goth:
 	if (sblock.fs_contigsumsize > 0)
 		clrbit(cg_clustersfree(&acg), blkno);
 	acg.cg_cs.cs_nbfree--;
-	sblock.fs_cstotal.cs_nbfree--;
+	sblock.fs_ffs1_cstotal.cs_nbfree--;
 	fscs[0].cs_nbfree--;
 	if (mode & IFDIR) {
 		acg.cg_cs.cs_ndir++;
-		sblock.fs_cstotal.cs_ndir++;
+		sblock.fs_ffs1_cstotal.cs_ndir++;
 		fscs[0].cs_ndir++;
 	}
 	cg_blktot(&acg)[cbtocylno(&sblock, d)]--;
@@ -1016,7 +1016,7 @@ goth:
 	if (size != sblock.fs_bsize) {
 		frag = howmany(size, sblock.fs_fsize);
 		fscs[0].cs_nffree += sblock.fs_frag - frag;
-		sblock.fs_cstotal.cs_nffree += sblock.fs_frag - frag;
+		sblock.fs_ffs1_cstotal.cs_nffree += sblock.fs_frag - frag;
 		acg.cg_cs.cs_nffree += sblock.fs_frag - frag;
 		acg.cg_frsum[sblock.fs_frag - frag]++;
 		for (i = frag; i < sblock.fs_frag; i++)
@@ -1047,7 +1047,7 @@ iput(struct ufs1_dinode *ip, ino_t ino)
 	setbit(cg_inosused(&acg), ino);
 	wtfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize,
 	    (char *)&acg);
-	sblock.fs_cstotal.cs_nifree--;
+	sblock.fs_ffs1_cstotal.cs_nifree--;
 	fscs[0].cs_nifree--;
 	if (ino >= sblock.fs_ipg * sblock.fs_ncg) {
 		errx(32, "fsinit: inode value %d out of range", ino);

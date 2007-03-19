@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.98 2006/12/28 20:33:24 thib Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.99 2007/03/19 13:27:47 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -68,6 +68,9 @@ int ffs_sbupdate(struct ufsmount *, int);
 int ffs_reload_vnode(struct vnode *, void *);
 int ffs_sync_vnode(struct vnode *, void *);
 int ffs_validate(struct fs *);
+
+void ffs1_compat_read(struct fs *, struct ufsmount *, ufs2_daddr_t);
+void ffs1_compat_write(struct fs *, struct ufsmount *);
 
 const struct vfsops ffs_vfsops = {
 	ffs_mount,
@@ -719,11 +722,13 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		fs = (struct fs *) bp->b_data;
 		sbloc = sbtry[i];
 
+#if 0
 		if (fs->fs_magic == FS_UFS2_MAGIC) {
 			printf("ffs_mountfs(): Sorry, no UFS2 support (yet)\n");
 			error = EFTYPE;
 			goto out;
 		}
+#endif
 
 		/*
 		 * Do not look for an FFS1 file system at SBLOCK_UFS2. Doing so
@@ -799,6 +804,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	brelse(bp);
 	bp = NULL;
 	fs = ump->um_fs;
+
+	ffs1_compat_read(fs, ump, sbloc);
 
 	fs->fs_ronly = ronly;
 	size = fs->fs_cssize;
@@ -944,6 +951,48 @@ ffs_oldfscompat(struct fs *fs)
 	if (fs->fs_avgfpdir <= 0)				/* XXX */
 		fs->fs_avgfpdir = AFPDIR;			/* XXX */
 	return (0);
+}
+
+/*
+ * Auxiliary function for reading FFS1 super blocks.
+ */
+void
+ffs1_compat_read(struct fs *fs, struct ufsmount *ump, ufs2_daddr_t sbloc)
+{
+	if (fs->fs_magic == FS_UFS2_MAGIC)
+		return; /* UFS2 */
+#if 0
+	if (fs->fs_ffs1_flags & FS_FLAGS_UPDATED)
+		return; /* Already updated */
+#endif
+	fs->fs_flags = fs->fs_ffs1_flags;
+	fs->fs_sblockloc = sbloc;
+	fs->fs_maxbsize = fs->fs_bsize;
+	fs->fs_time = fs->fs_ffs1_time;
+	fs->fs_size = fs->fs_ffs1_size;
+	fs->fs_dsize = fs->fs_ffs1_dsize;
+	fs->fs_csaddr = fs->fs_ffs1_csaddr;
+	fs->fs_cstotal.cs_ndir = fs->fs_ffs1_cstotal.cs_ndir;
+	fs->fs_cstotal.cs_nbfree = fs->fs_ffs1_cstotal.cs_nbfree;
+	fs->fs_cstotal.cs_nifree = fs->fs_ffs1_cstotal.cs_nifree;
+	fs->fs_cstotal.cs_nffree = fs->fs_ffs1_cstotal.cs_nffree;
+	fs->fs_ffs1_flags |= FS_FLAGS_UPDATED;
+}
+
+/*
+ * Auxiliary function for writing FFS1 super blocks.
+ */
+void
+ffs1_compat_write(struct fs *fs, struct ufsmount *ump)
+{
+	if (fs->fs_magic != FS_UFS1_MAGIC)
+		return; /* UFS2 */
+
+	fs->fs_ffs1_time = fs->fs_time;
+	fs->fs_ffs1_cstotal.cs_ndir = fs->fs_cstotal.cs_ndir;
+	fs->fs_ffs1_cstotal.cs_nbfree = fs->fs_cstotal.cs_nbfree;
+	fs->fs_ffs1_cstotal.cs_nifree = fs->fs_cstotal.cs_nifree;
+	fs->fs_ffs1_cstotal.cs_nffree = fs->fs_cstotal.cs_nffree;
 }
 
 /*
@@ -1422,6 +1471,8 @@ ffs_sbupdate(struct ufsmount *mp, int waitfor)
 		lp[0] = tmp;					/* XXX */
 	}							/* XXX */
 	dfs->fs_maxfilesize = mp->um_savedmaxfilesize;		/* XXX */
+
+	ffs1_compat_write(dfs, mp);
 
 	if (waitfor != MNT_WAIT)
 		bawrite(bp);
