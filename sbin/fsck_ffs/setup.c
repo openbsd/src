@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.31 2007/03/19 13:27:47 pedro Exp $	*/
+/*	$OpenBSD: setup.c,v 1.32 2007/03/19 22:13:36 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.31 2007/03/19 13:27:47 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.32 2007/03/19 22:13:36 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -483,13 +483,13 @@ readsb(int listerr)
 
 	if (!POWEROF2(sblock.fs_bsize) || sblock.fs_bsize < MINBSIZE ||
 	    sblock.fs_bsize > MAXBSIZE) {
-		badsb(listerr, "ILLEGAL BLOCK SIZE");
+		badsb(listerr, "ILLEGAL BLOCK SIZE IN SUPERBLOCK");
 		return (0);
 	}
 
 	if (!POWEROF2(sblock.fs_fsize) || sblock.fs_fsize > sblock.fs_bsize ||
 	    sblock.fs_fsize < sblock.fs_bsize / MAXFRAG) {
-		badsb(listerr, "ILLEGAL FRAGMENT SIZE");
+		badsb(listerr, "ILLEGAL FRAGMENT SIZE IN SUPERBLOCK");
 		return (0);
 	}
 
