@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.408 2007/03/16 21:42:51 robert Exp $
+#	$OpenBSD: Makefile,v 1.409 2007/03/19 04:48:23 deraadt Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -11,8 +11,8 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	auich.4 autri.4 auixp.4 auvia.4 awi.4 axe.4 az.4 azalia.4 \
 	bce.4 bcw.4 bge.4 bha.4 \
 	bio.4 bktr.4 bmtphy.4 bnx.4 boca.4 bpf.4 brgphy.4 bridge.4 cac.4 \
-	cardbus.4 carp.4 ccd.4 cd.4 cdce.4 cdcef.4 cfxga.4 ch.4 ciphy.4 \
-	ciss.4 clcs.4 clct.4 cmpci.4 cnw.4 \
+	cas.4 cardbus.4 carp.4 ccd.4 cd.4 cdce.4 cdcef.4 cfxga.4 ch.4 \
+	ciphy.4 ciss.4 clcs.4 clct.4 cmpci.4 cnw.4 \
 	com.4 crypto.4 cue.4 cy.4 cz.4 dc.4 dcphy.4 ddb.4 de.4 dpt.4 \
 	drum.4 eap.4 ec.4 eephy.4 ef.4 eg.4 ehci.4 eisa.4 el.4 em.4 \
 	emu.4 enc.4 ep.4 epic.4 esa.4 eso.4 ess.4 exphy.4 \
@@ -30,7 +30,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	moscom.4 mpi.4 mpu.4 msk.4 mtd.4 mtdphy.4 multicast.4 mtio.4 ne.4 \
 	neo.4 netintro.4 nfe.4 nge.4 nmea.4 noct.4 nofn.4 nsclpcsio.4 \
 	nsgphy.4 nsphy.4 nsphyter.4 null.4 nviic.4 ohci.4 opl.4 options.4 \
-	onewire.4 oosiop.4 osiop.4 owid.4 owtemp.4 \
+	onewire.4 oosiop.4 osiop.4 owid.4 owsbm.4 owtemp.4 \
 	pcagpio.4 pcaled.4 pcdisplay.4 pchb.4 pci.4 pcib.4 pcfadc.4 \
 	pcfiic.4 pciide.4 pckbc.4 pckbd.4 pcmcia.4 pcn.4 pcppi.4 pcscp.4 \
 	pf.4 pflog.4 pfsync.4 pgt.4 piixpm.4 pim.4 \
