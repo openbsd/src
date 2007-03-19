@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.46 2007/02/14 00:53:48 jsg Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.47 2007/03/19 23:31:14 mpf Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -363,7 +363,7 @@ HIDE void sppp_chap_scr(struct sppp *sp);
 
 HIDE const char *sppp_auth_type_name(u_short proto, u_char type);
 HIDE const char *sppp_cp_type_name(u_char type);
-HIDE const char *sppp_dotted_quad(u_long addr);
+HIDE const char *sppp_dotted_quad(u_int32_t addr);
 HIDE const char *sppp_ipcp_opt_name(u_char opt);
 HIDE const char *sppp_lcp_opt_name(u_char opt);
 HIDE const char *sppp_phase_name(enum ppp_phase phase);
@@ -371,14 +371,14 @@ HIDE const char *sppp_proto_name(u_short proto);
 HIDE const char *sppp_state_name(int state);
 HIDE int sppp_params(struct sppp *sp, u_long cmd, void *data);
 HIDE int sppp_strnlen(u_char *p, int max);
-HIDE void sppp_get_ip_addrs(struct sppp *sp, u_long *src, u_long *dst,
-			      u_long *srcmask);
+HIDE void sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst,
+			      u_int32_t *srcmask);
 HIDE void sppp_keepalive(void *dummy);
 HIDE void sppp_phase_network(struct sppp *sp);
 HIDE void sppp_print_bytes(const u_char *p, u_short len);
 HIDE void sppp_print_string(const char *p, u_short len);
 HIDE void sppp_qflush(struct ifqueue *ifq);
-HIDE void sppp_set_ip_addr(struct sppp *sp, u_long src);
+HIDE void sppp_set_ip_addr(struct sppp *sp, u_int32_t src);
 HIDE void sppp_set_phase(struct sppp *sp);
 
 /* our control protocol descriptors */
@@ -1059,7 +1059,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 {
 	STDDCL;
 	struct cisco_packet *h;
-	u_long me, mymask;
+	u_int32_t me, mymask;
 
 	if (m->m_pkthdr.len < CISCO_PACKET_LEN) {
 		if (debug)
@@ -1120,7 +1120,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 		break;
 	case CISCO_ADDR_REQ:
 		sppp_get_ip_addrs(sp, &me, 0, &mymask);
-		if (me != 0L)
+		if (me != 0)
 			sppp_cisco_send(sp, CISCO_ADDR_REPLY, me, mymask);
 		break;
 	}
@@ -2568,7 +2568,7 @@ HIDE void
 sppp_ipcp_open(struct sppp *sp)
 {
 	STDDCL;
-	u_long myaddr, hisaddr;
+	u_int32_t myaddr, hisaddr;
 
 	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, 0);
 	/*
@@ -2577,7 +2577,7 @@ sppp_ipcp_open(struct sppp *sp)
 	 * be the case if somebody wants to speak only IPX, for
 	 * example.)  Don't open IPCP in this case.
 	 */
-	if (hisaddr == 0L) {
+	if (hisaddr == 0) {
 		/* XXX this message should go away */
 		if (debug)
 			log(LOG_DEBUG, SPP_FMT "ipcp_open(): no IP interface\n",
@@ -2585,7 +2585,7 @@ sppp_ipcp_open(struct sppp *sp)
 		return;
 	}
 
-	if (myaddr == 0L) {
+	if (myaddr == 0) {
 		/*
 		 * I don't have an assigned address, so i need to
 		 * negotiate my address.
@@ -2604,7 +2604,7 @@ sppp_ipcp_close(struct sppp *sp)
 		/*
 		 * My address was dynamic, clear it again.
 		 */
-		sppp_set_ip_addr(sp, 0L);
+		sppp_set_ip_addr(sp, 0);
 }
 
 HIDE void
@@ -2625,7 +2625,7 @@ sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	u_char *buf, *r, *p;
 	struct ifnet *ifp = &sp->pp_if;
 	int rlen, origlen, debug = ifp->if_flags & IFF_DEBUG;
-	u_long hisaddr, desiredaddr;
+	u_int32_t hisaddr, desiredaddr;
 
 	len -= 4;
 	origlen = len;
@@ -2838,7 +2838,7 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 	u_char *p;
 	struct ifnet *ifp = &sp->pp_if;
 	int debug = ifp->if_flags & IFF_DEBUG;
-	u_long wantaddr;
+	u_int32_t wantaddr;
 
 	len -= 4;
 
@@ -2921,7 +2921,7 @@ HIDE void
 sppp_ipcp_scr(struct sppp *sp)
 {
 	char opt[6 /* compression */ + 6 /* address */];
-	u_long ouraddr;
+	u_int32_t ouraddr;
 	int i = 0;
 
 #ifdef notyet
@@ -3935,15 +3935,16 @@ sppp_keepalive(void *dummy)
  * Get both IP addresses.
  */
 HIDE void
-sppp_get_ip_addrs(struct sppp *sp, u_long *src, u_long *dst, u_long *srcmask)
+sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst,
+    u_int32_t *srcmask)
 {
 	struct ifnet *ifp = &sp->pp_if;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *sm = 0;
-	u_long ssrc, ddst;
+	u_int32_t ssrc, ddst;
 
 	sm = NULL;
-	ssrc = ddst = 0L;
+	ssrc = ddst = 0;
 	/*
 	 * Pick the first AF_INET address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
@@ -3984,7 +3985,7 @@ sppp_get_ip_addrs(struct sppp *sp, u_long *src, u_long *dst, u_long *srcmask)
  * Set my IP address.  Must be called at splnet.
  */
 HIDE void
-sppp_set_ip_addr(struct sppp *sp, u_long src)
+sppp_set_ip_addr(struct sppp *sp, u_int32_t src)
 {
 	struct ifnet *ifp = &sp->pp_if;
 	struct ifaddr *ifa;
@@ -4283,7 +4284,7 @@ sppp_print_string(const char *p, u_short len)
 }
 
 HIDE const char *
-sppp_dotted_quad(u_long addr)
+sppp_dotted_quad(u_int32_t addr)
 {
 	static char s[16];
 	snprintf(s, sizeof s, "%d.%d.%d.%d",
