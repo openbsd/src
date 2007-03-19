@@ -1,4 +1,4 @@
-.\"	$OpenBSD: evdns.3,v 1.1 2007/03/19 15:12:49 millert Exp $
+.\"	$OpenBSD: evdns.3,v 1.2 2007/03/19 20:12:45 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -45,7 +45,7 @@
 .Nm evdns_search_add
 .Nm evdns_search_ndots_set
 .Nm evdns_set_log_fn
-.Nd asynchronous functions for DNS resolution.
+.Nd asynchronous functions for DNS resolution
 .Sh SYNOPSIS
 .Fd #include <sys/time.h>
 .Fd #include <event.h>
@@ -81,17 +81,21 @@
 .Ft void
 .Fn evdns_set_log_fn "evdns_debug_log_fn_type fn"
 .Sh DESCRIPTION
-Welcome, gentle reader
+Welcome, gentle reader.
 .Pp
-Async DNS lookups are really a whole lot harder than they should be,
+Asynchronous DNS lookups are really a whole lot harder
+than they should be,
 mostly stemming from the fact that the libc resolver has never been
 very good at them.
 Before you use this library you should see if libc
-can do the job for you with the modern async call getaddrinfo_a
+can do the job for you with the modern async call
+.Fn getaddrinfo_a
 (see http://www.imperialviolet.org/page25.html#e498).
 Otherwise, please continue.
 .Pp
-This code is based on libevent and you must call event_init before
+This code is based on libevent and
+.Fn event_init
+must be called before
 any of the APIs in this file.
 .Pp
 The library keeps track of the state of nameservers and will avoid
@@ -108,17 +112,26 @@ evdns_resolve("www.hostname.com", 0, callback, NULL);
 .Ed
 .Pp
 When the lookup is complete, the callback function is called.
-The first argument will be one of the DNS_ERR_* defines in evdns.h.
-Hopefully it will be DNS_ERR_NONE, in which case type will be
-DNS_IPv4_A, count will be the number of IP addresses, ttl is the time
-which the data can be cached for (in seconds), addresses will point
-to an array of uint32_t's and arg will be whatever you passed to
-evdns_resolve.
+The first argument will be one of the DNS_ERR_* defines in
+.Aq Pa evdns.h .
+Hopefully it will be
+.Dv DNS_ERR_NONE ,
+in which case type will be
+.Dv DNS_IPv4_A ,
+.Fa count
+will be the number of IP addresses,
+.Fa ttl
+is the time which the data can be cached for (in seconds),
+.Fa addresses
+will point to an array of uint32_t's and
+.Fa arg
+will be whatever was passed to
+.Fn evdns_resolve .
 .Pp
 Searching:
 .Pp
-In order for this library to be a good replacement for the libc resolver it
-supports searching.
+In order for this library to be a good replacement for the libc resolver,
+it supports searching.
 This involves setting a list of default domains, in
 which names will be queried for.
 The number of dots in the query name
@@ -126,32 +139,34 @@ determines the order in which this list is used.
 .Pp
 Searching appears to be a single lookup from the point of view of the API,
 although many DNS queries may be generated from a single call to
-evdns_resolve.
+.Fn evdns_resolve .
 Searching can also drastically slow down the resolution of names.
 .Pp
 To disable searching:
+.Pp
 .Bl -enum -compact -offset indent
 .It
 Never set it up.
-If you never call
-.Fn evdns_resolv_conf_parse,
-.Fn evdns_init,
-or
+If
+.Fn evdns_resolv_conf_parse ,
+.Fn evdns_init ,
+and
 .Fn evdns_search_add
+are never called
 then no searching will occur.
 .It
 If you do call
 .Fn evdns_resolv_conf_parse
 then don't pass
-.Va DNS_OPTION_SEARCH
+.Dv DNS_OPTION_SEARCH
 (or
-.Va DNS_OPTIONS_ALL,
+.Dv DNS_OPTIONS_ALL ,
 which implies it).
 .It
 When calling
-.Fn evdns_resolve,
+.Fn evdns_resolve ,
 pass the
-.Va DNS_QUERY_NO_SEARCH
+.Dv DNS_QUERY_NO_SEARCH
 flag.
 .El
 .Pp
@@ -160,89 +175,103 @@ If the number is greater than the ndots setting then the names is first tried
 globally.
 Otherwise each search domain is appended in turn.
 .Pp
-The ndots setting can either be set from a resolv.conf, or by calling
-evdns_search_ndots_set.
+The ndots setting can either be set from a
+.Xr resolv.conf 5 ,
+or by calling
+.Fn evdns_search_ndots_set .
 .Pp
 For example, with ndots set to 1 (the default) and a search domain list of
 ["myhome.net"]:
- Query: www
- Order: www.myhome.net, www.
 .Pp
- Query: www.abc
- Order: www.abc., www.abc.myhome.net
-.Pp
-.Sh API reference
-.Pp
+.Bd -literal -offset indent
+Query: www
+Order: www.myhome.net, www.
+
+Query: www.abc
+Order: www.abc., www.abc.myhome.net
+.Ed
+.Sh API REFERENCE
 .Bl -tag -width 0123456
-.It Ft int Fn evdns_init
+.It Fn int evdns_init
 Initializes support for non-blocking name resolution by calling
 .Fn evdns_resolv_conf_parse .
-.It Ft int Fn evdns_nameserver_add "unsigned long int address"
+.It Fn int evdns_nameserver_add "unsigned long int address"
 Add a nameserver.
 The address should be an IP address in network byte order.
 The type of address is chosen so that
 it matches in_addr.s_addr.
 Returns non-zero on error.
-.It Ft int Fn evdns_nameserver_ip_add "const char *ip_as_string"
+.It Fn int evdns_nameserver_ip_add "const char *ip_as_string"
 This wraps the above function by parsing a string as an IP
 address and adds it as a nameserver.
 Returns non-zero on error
-.It Ft int Fn evdns_resolve "const char *name" "int flags" "evdns_callback_type callback" "void *ptr"
+.It Fn int evdns_resolve "const char *name" "int flags" "evdns_callback_type callback" "void *ptr"
 Resolve a name.
 The name parameter should be a DNS name.
-The flags parameter should be 0, or DNS_QUERY_NO_SEARCH
-which disables searching for this query.
-(see defn of searching above).
+The flags parameter should be 0, or
+.Dv DNS_QUERY_NO_SEARCH
+which disables searching for this query
+(see the definition of searching, above).
 .Pp
-The callback argument is a function which is called when
-this query completes and ptr is an argument which is passed
+The
+.Fa callback
+argument is a function which is called when
+this query completes and
+.Fa ptr
+is an argument which is passed
 to that callback function.
 .Pp
-Returns non-zero on error
-.It Ft void Fn evdns_search_clear
+Returns non-zero on error.
+.It Fn void evdns_search_clear
 Clears the list of search domains
-.It Ft void Fn evdns_search_add "const char *domain"
+.It Fn void evdns_search_add "const char *domain"
 Add a domain to the list of search domains
-.It Ft void Fn evdns_search_ndots_set "int ndots"
+.It Fn void evdns_search_ndots_set "int ndots"
 Set the number of dots which, when found in a name, causes
 the first query to be without any search domain.
-.It Ft int Fn evdns_count_nameservers "void"
+.It Fn int evdns_count_nameservers "void"
 Return the number of configured nameservers (not necessarily the
 number of running nameservers).
-This is useful for double-checking whether our calls to the various
+This is useful for double checking whether calls to the various
 nameserver configuration functions have been successful.
-.It Ft int Fn evdns_clear_nameservers_and_suspend "void"
+.It Fn int evdns_clear_nameservers_and_suspend "void"
 Remove all currently configured nameservers, and suspend all pending
 resolves.
 Resolves will not necessarily be re-attempted until
-evdns_resume() is called.
-.It Ft int Fn evdns_resume "void"
+.Fn evdns_resume
+is called.
+.It Fn int evdns_resume "void"
 Re-attempt resolves left in limbo after an earlier call to
-evdns_clear_nameservers_and_suspend().
-.It Ft int Fn evdns_resolv_conf_parse "int flags" "const char *filename"
-Parse a resolv.conf like file from the given filename.
+.Fn evdns_clear_nameservers_and_suspend .
+.It Fn int evdns_resolv_conf_parse "int flags" "const char *filename"
+Parse a resolv.conf-like file from the given filename.
 .Pp
-See the man page for resolv.conf for the format of this file.
+See the man page for
+.Xr resolv.conf 5
+for the format of this file.
 The flags argument determines what information is parsed from
 this file:
-.Bl -tag -width "DNS_OPTION_NAMESERVERS" -offset indent -compact -nested
-.It DNS_OPTION_SEARCH
-domain, search and ndots options
-.It DNS_OPTION_NAMESERVERS
-nameserver lines
-.It DNS_OPTION_MISC
-timeout and attempts options
-.It DNS_OPTIONS_ALL
-all of the above
+.Pp
+.Bl -tag -width "DNS_OPTION_NAMESERVERS" -offset indent -compact
+.It Dv DNS_OPTION_SEARCH
+Domain, search, and ndots options.
+.It Dv DNS_OPTION_NAMESERVERS
+Nameserver lines.
+.It Dv DNS_OPTION_MISC
+Timeout and attempts options.
+.It Dv DNS_OPTIONS_ALL
+All of the above.
 .El
 .Pp
-The following directives are not parsed from the file: lookup, sortlist.
+The following directives are not parsed from the file:
+lookup and sortlist.
 Additionally, the following
 .Dq options
-are ignored: debug, edns0, inet6, insecure1, insecure2.
+are ignored: debug, edns0, inet6, insecure1, and insecure2.
 .Pp
 Returns non-zero on error:
-.Bl -tag -width "0" -offset indent -compact -nested
+.Pp
+.Bl -tag -width "0XXX" -offset indent -compact
 .It 0
 no errors
 .It 1
@@ -257,23 +286,28 @@ out of memory
 short read from file
 .El
 .El
-.Sh Internals:
-Requests are kept in two queues. The first is the inflight queue. In
-this queue requests have an allocated transaction id and nameserver.
-They will soon be transmitted if they haven't already been.
+.Sh INTERNALS
+Requests are kept in two queues.
+The first is the inflight queue.
+In this queue requests have an allocated transaction ID and nameserver.
+They will soon be transmitted if they haven't already.
 .Pp
-The second is the waiting queue. The size of the inflight ring is
-limited and all other requests wait in waiting queue for space. This
-bounds the number of concurrent requests so that we don't flood the
-nameserver. Several algorithms require a full walk of the inflight
-queue and so bounding its size keeps thing going nicely under huge
+The second is the waiting queue.
+The size of the inflight ring is
+limited and all other requests wait in waiting queue for space.
+This limits the number of concurrent requests
+so that the nameserver does not get flooded.
+Several algorithms require a full walk of the inflight
+queue so limiting its size keeps thing going nicely under huge
 (many thousands of requests) loads.
 .Pp
 If a nameserver loses too many requests it is considered down and we
-try not to use it. After a while we send a probe to that nameserver
+try not to use it.
+After a while a probe is sent to that nameserver
 (a lookup for google.com) and, if it replies, we consider it working
-again. If the nameserver fails a probe we wait longer to try again
-with the next probe.
+again.
+If the nameserver fails a probe,
+we wait longer to try again with the next probe.
 .Sh SEE ALSO
 .Xr event 3 ,
 .Xr gethostbyname 3 ,
@@ -284,7 +318,7 @@ The
 API was developed by Adam Langley on top of the
 .Nm libevent
 API.
-The code was integrate into
+The code was integrated into
 .Nm Tor
 by Nick Mathewson and finally put into
 .Nm libevent
