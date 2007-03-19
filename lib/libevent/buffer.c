@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.13 2007/02/04 18:59:12 millert Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.14 2007/03/19 15:12:49 millert Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -63,7 +63,7 @@ struct evbuffer *
 evbuffer_new(void)
 {
 	struct evbuffer *buffer;
-	
+
 	buffer = calloc(1, sizeof(struct evbuffer));
 
 	return (buffer);
@@ -114,7 +114,7 @@ evbuffer_add_buffer(struct evbuffer *outbuf, struct evbuffer *inbuf)
 			(*inbuf->cb)(inbuf, oldoff, inbuf->off, inbuf->cbarg);
 		if (oldoff && outbuf->cb != NULL)
 			(*outbuf->cb)(outbuf, 0, oldoff, outbuf->cbarg);
-		
+
 		return (0);
 	}
 
@@ -140,6 +140,9 @@ evbuffer_add_vprintf(struct evbuffer *buf, const char *fmt, va_list ap)
 		buffer = (char *)buf->buffer + buf->off;
 		space = buf->totallen - buf->misalign - buf->off;
 
+#ifndef va_copy
+#define	va_copy(dst, src)	memcpy(&(dst), &(src), sizeof(va_list))
+#endif
 		va_copy(aq, ap);
 
 #ifdef WIN32
@@ -161,7 +164,7 @@ evbuffer_add_vprintf(struct evbuffer *buf, const char *fmt, va_list ap)
 		}
 		if (evbuffer_expand(buf, sz + 1) == -1)
 			return (-1);
- 
+
 	}
 	/* NOTREACHED */
 }
@@ -190,7 +193,7 @@ evbuffer_remove(struct evbuffer *buf, void *data, size_t datlen)
 
 	memcpy(data, buf->buffer, nread);
 	evbuffer_drain(buf, nread);
-	
+
 	return (nread);
 }
 
@@ -205,7 +208,7 @@ evbuffer_readline(struct evbuffer *buffer)
 	u_char *data = EVBUFFER_DATA(buffer);
 	size_t len = EVBUFFER_LENGTH(buffer);
 	char *line;
-	u_int i;
+	unsigned int i;
 
 	for (i = 0; i < len; i++) {
 		if (data[i] == '\r' || data[i] == '\n')
@@ -290,7 +293,7 @@ evbuffer_expand(struct evbuffer *buf, size_t datlen)
 }
 
 int
-evbuffer_add(struct evbuffer *buf, void *data, size_t datlen)
+evbuffer_add(struct evbuffer *buf, const void *data, size_t datlen)
 {
 	size_t need = buf->misalign + buf->off + datlen;
 	size_t oldoff = buf->off;
@@ -365,7 +368,7 @@ evbuffer_read(struct evbuffer *buf, int fd, int howmuch)
 		if (n < EVBUFFER_MAX_READ)
 			n = EVBUFFER_MAX_READ;
 	}
-#endif	
+#endif
 	if (howmuch < 0 || howmuch > n)
 		howmuch = n;
 

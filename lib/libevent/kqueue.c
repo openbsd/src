@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.21 2006/11/05 17:07:07 brad Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.22 2007/03/19 15:12:49 millert Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -101,7 +101,7 @@ kq_init(void)
 		return (NULL);
 
 	/* Initalize the kernel queue */
-	
+
 	if ((kq = kqueue()) == -1) {
 		event_warn("kqueue");
 		free (kqueueop);
@@ -295,7 +295,7 @@ kq_add(void *arg, struct event *ev)
 		if (!(ev->ev_events & EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
 		kev.udata = INTPTR(ev);
-		
+
 		if (kq_insert(kqop, &kev) == -1)
 			return (-1);
 
@@ -318,7 +318,7 @@ kq_add(void *arg, struct event *ev)
 		if (!(ev->ev_events & EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
 		kev.udata = INTPTR(ev);
-		
+
 		if (kq_insert(kqop, &kev) == -1)
 			return (-1);
 
@@ -333,7 +333,7 @@ kq_add(void *arg, struct event *ev)
 		if (!(ev->ev_events & EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
 		kev.udata = INTPTR(ev);
-		
+
 		if (kq_insert(kqop, &kev) == -1)
 			return (-1);
 
@@ -359,7 +359,7 @@ kq_del(void *arg, struct event *ev)
 		kev.ident = nsignal;
 		kev.filter = EVFILT_SIGNAL;
 		kev.flags = EV_DELETE;
-		
+
 		if (kq_insert(kqop, &kev) == -1)
 			return (-1);
 
@@ -375,7 +375,7 @@ kq_del(void *arg, struct event *ev)
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_READ;
 		kev.flags = EV_DELETE;
-		
+
 		if (kq_insert(kqop, &kev) == -1)
 			return (-1);
 
@@ -387,7 +387,7 @@ kq_del(void *arg, struct event *ev)
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_WRITE;
 		kev.flags = EV_DELETE;
-		
+
 		if (kq_insert(kqop, &kev) == -1)
 			return (-1);
 

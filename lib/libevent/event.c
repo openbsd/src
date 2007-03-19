@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.16 2007/02/13 20:10:57 millert Exp $	*/
+/*	$OpenBSD: event.c,v 1.17 2007/03/19 15:12:49 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -58,6 +58,9 @@
 #include "event-internal.h"
 #include "log.h"
 
+#ifdef HAVE_EVENT_PORTS
+extern const struct eventop evportops;
+#endif
 #ifdef HAVE_SELECT
 extern const struct eventop selectops;
 #endif
@@ -82,6 +85,9 @@ extern const struct eventop win32ops;
 
 /* In order of preference */
 const struct eventop *eventops[] = {
+#ifdef HAVE_EVENT_PORTS
+	&evportops,
+#endif
 #ifdef HAVE_WORKING_KQUEUE
 	&kqops,
 #endif
@@ -145,8 +151,12 @@ gettime(struct timeval *tp)
 {
 #ifdef HAVE_CLOCK_GETTIME
 	struct timespec	ts;
-	
+
+#ifdef HAVE_CLOCK_MONOTONIC
 	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
+#else
+	if (clock_gettime(CLOCK_REALTIME, &ts) == -1)
+#endif
 		return (-1);
 	tp->tv_sec = ts.tv_sec;
 	tp->tv_usec = ts.tv_nsec / 1000;
@@ -173,11 +183,11 @@ event_init(void)
 	event_sigcb = NULL;
 	event_gotsig = 0;
 	gettime(&current_base->event_tv);
-	
+
 	RB_INIT(&current_base->timetree);
 	TAILQ_INIT(&current_base->eventqueue);
 	TAILQ_INIT(&signalqueue);
-	
+
 	current_base->evbase = NULL;
 	for (i = 0; eventops[i] && !current_base->evbase; i++) {
 		current_base->evsel = eventops[i];
@@ -205,7 +215,7 @@ event_base_free(struct event_base *base)
 
 	if (base == NULL && current_base)
 		base = current_base;
-	if (base == current_base)
+        if (base == current_base)
 		current_base = NULL;
 
 	assert(base);
@@ -293,9 +303,11 @@ event_process_active(struct event_base *base)
 		}
 	}
 
+	assert(activeq != NULL);
+
 	for (ev = TAILQ_FIRST(activeq); ev; ev = TAILQ_FIRST(activeq)) {
 		event_queue_remove(base, ev, EVLIST_ACTIVE);
-		
+
 		/* Allows deletes to work */
 		ncalls = ev->ev_ncalls;
 		ev->ev_pncalls = &ncalls;
@@ -403,7 +415,7 @@ event_base_loop(struct event_base *base, int flags)
 			timeout_next(base, &tv);
 		else
 			timerclear(&tv);
-		
+
 		/* If we have no events, we just exit */
 		if (!event_haveevents(base)) {
 			event_debug(("%s: no events registered.", __func__));
@@ -613,7 +625,7 @@ event_add(struct event *ev, struct timeval *tv)
 				/* Abort loop */
 				*ev->ev_pncalls = 0;
 			}
-			
+
 			event_queue_remove(base, ev, EVLIST_ACTIVE);
 		}
 

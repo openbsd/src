@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.3 2005/04/22 00:56:25 brad Exp $	*/
+/*	$OpenBSD: log.h,v 1.4 2007/03/19 15:12:49 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -39,7 +39,7 @@ void _event_debugx(const char *fmt, ...);
 #ifdef USE_DEBUG
 #define event_debug(x) _event_debugx x
 #else
-#define event_debug(x)
+#define event_debug(x) do {;} while (0)
 #endif
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.17 2007/02/13 20:08:38 millert Exp $	*/
+/*	$OpenBSD: event.h,v 1.18 2007/03/19 15:12:49 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -40,9 +40,10 @@ extern "C" {
 #include <windows.h>
 #undef WIN32_LEAN_AND_MEAN
 typedef unsigned char u_char;
+typedef unsigned short u_short;
 #endif
 
-#define LIBEVENT_VERSION	"1.1b"
+#define LIBEVENT_VERSION	"1.3b"
 
 #define EVLIST_TIMEOUT	0x01
 #define EVLIST_INSERTED	0x02
@@ -104,14 +105,28 @@ struct event {
 	int ev_flags;
 };
 
-#define EVENT_SIGNAL(ev)	(int)ev->ev_fd
-#define EVENT_FD(ev)		(int)ev->ev_fd
+#define EVENT_SIGNAL(ev)	(int)(ev)->ev_fd
+#define EVENT_FD(ev)		(int)(ev)->ev_fd
+
+/*
+ * Key-Value pairs.  Can be used for HTTP headers but also for
+ * query argument parsing.
+ */
+struct evkeyval {
+	TAILQ_ENTRY(evkeyval) next;
+
+	char *key;
+	char *value;
+};
 
 #ifdef _EVENT_DEFINED_TQENTRY
 #undef TAILQ_ENTRY
+struct event_list;
+struct evkeyvalq;
 #undef _EVENT_DEFINED_TQENTRY
 #else
 TAILQ_HEAD (event_list, event);
+TAILQ_HEAD (evkeyvalq, evkeyval);
 #endif /* _EVENT_DEFINED_TQENTRY */
 #ifdef _EVENT_DEFINED_RBENTRY
 #undef RB_ENTRY
@@ -175,7 +190,7 @@ void event_active(struct event *, int, short);
 int event_pending(struct event *, short, struct timeval *);
 
 #ifdef WIN32
-#define event_initialized(ev)		((ev)->ev_flags & EVLIST_INIT && (ev)->ev_fd != INVALID_HANDLE_VALUE)
+#define event_initialized(ev)		((ev)->ev_flags & EVLIST_INIT && (ev)->ev_fd != (int)INVALID_HANDLE_VALUE)
 #else
 #define event_initialized(ev)		((ev)->ev_flags & EVLIST_INIT)
 #endif
@@ -262,7 +277,7 @@ void bufferevent_settimeout(struct bufferevent *bufev,
 struct evbuffer *evbuffer_new(void);
 void evbuffer_free(struct evbuffer *);
 int evbuffer_expand(struct evbuffer *, size_t);
-int evbuffer_add(struct evbuffer *, void *, size_t);
+int evbuffer_add(struct evbuffer *, const void *, size_t);
 int evbuffer_remove(struct evbuffer *, void *, size_t);
 char *evbuffer_readline(struct evbuffer *);
 int evbuffer_add_buffer(struct evbuffer *, struct evbuffer *);
@@ -273,6 +288,49 @@ int evbuffer_write(struct evbuffer *, int);
 int evbuffer_read(struct evbuffer *, int, int);
 u_char *evbuffer_find(struct evbuffer *, const u_char *, size_t);
 void evbuffer_setcb(struct evbuffer *, void (*)(struct evbuffer *, size_t, size_t, void *), void *);
+
+/*
+ * Marshaling tagged data - We assume that all tags are inserted in their
+ * numeric order - so that unknown tags will always be higher than the
+ * known ones - and we can just ignore the end of an event buffer.
+ */
+
+void evtag_init(void);
+
+void evtag_marshal(struct evbuffer *evbuf, u_int8_t tag, const void *data,
+    u_int32_t len);
+
+void encode_int(struct evbuffer *evbuf, u_int32_t number);
+
+void evtag_marshal_int(struct evbuffer *evbuf, u_int8_t tag,
+    u_int32_t integer);
+
+void evtag_marshal_string(struct evbuffer *buf, u_int8_t tag,
+    const char *string);
+
+void evtag_marshal_timeval(struct evbuffer *evbuf, u_int8_t tag,
+    struct timeval *tv);
+
+void evtag_test(void);
+
+int evtag_unmarshal(struct evbuffer *src, u_int8_t *ptag,
+    struct evbuffer *dst);
+int evtag_peek(struct evbuffer *evbuf, u_int8_t *ptag);
+int evtag_peek_length(struct evbuffer *evbuf, u_int32_t *plength);
+int evtag_payload_length(struct evbuffer *evbuf, u_int32_t *plength);
+int evtag_consume(struct evbuffer *evbuf);
+
+int evtag_unmarshal_int(struct evbuffer *evbuf, u_int8_t need_tag,
+    u_int32_t *pinteger);
+
+int evtag_unmarshal_fixed(struct evbuffer *src, u_int8_t need_tag, void *data,
+    size_t len);
+
+int evtag_unmarshal_string(struct evbuffer *evbuf, u_int8_t need_tag,
+    char **pstring);
+
+int evtag_unmarshal_timeval(struct evbuffer *evbuf, u_int8_t need_tag,
+    struct timeval *ptv);
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.10 2005/12/02 16:54:25 deraadt Exp $	*/
+/*	$OpenBSD: signal.c,v 1.11 2007/03/19 15:12:49 millert Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -197,16 +197,14 @@ evsignal_process(void)
 	struct event *ev;
 	sig_atomic_t ncalls;
 
+	evsignal_caught = 0;
 	TAILQ_FOREACH(ev, &signalqueue, ev_signal_next) {
 		ncalls = evsigcaught[EVENT_SIGNAL(ev)];
 		if (ncalls) {
 			if (!(ev->ev_events & EV_PERSIST))
 				event_del(ev);
 			event_active(ev, EV_SIGNAL, ncalls);
+			evsigcaught[EVENT_SIGNAL(ev)] = 0;
 		}
 	}
-
-	memset(evsigcaught, 0, sizeof(evsigcaught));
-	evsignal_caught = 0;
 }
-
