@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.68 2007/03/16 11:06:39 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.69 2007/03/19 23:28:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -2105,7 +2105,8 @@ acx_newbuf(struct acx_softc *sc, struct acx_rxbuf *rb, int wait)
 	}
 
 	/* Unload originally mapped mbuf */
-	bus_dmamap_unload(sc->sc_dmat, rb->rb_mbuf_dmamap);
+	if (rb->rb_mbuf != NULL)
+		bus_dmamap_unload(sc->sc_dmat, rb->rb_mbuf_dmamap);
 
 	/* Swap this dmamap with tmp dmamap */
 	map = rb->rb_mbuf_dmamap;
