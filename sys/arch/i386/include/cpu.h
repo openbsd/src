@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.88 2007/03/15 10:22:29 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.89 2007/03/19 09:29:33 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -237,30 +237,15 @@ extern void need_resched(struct cpu_info *);
  */
 extern void (*delay_func)(int);
 struct timeval;
-extern void (*microtime_func)(struct timeval *);
 
 #define	DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
-#define microtime(tv)		(*microtime_func)(tv)
 
 #if defined(I586_CPU) || defined(I686_CPU)
 /*
  * High resolution clock support (Pentium only)
  */
 void	calibrate_cyclecounter(void);
-#ifndef	HZ
-extern u_quad_t pentium_base_tsc;
-#define CPU_CLOCKUPDATE()						\
-	do {								\
-		if (cpuspeed) {						\
-			__asm __volatile("cli\n"			\
-					 "rdtsc\n"			\
-					 : "=A" (pentium_base_tsc)	\
-					 : );				\
-			__asm __volatile("sti"); 			\
-		}							\
-	} while (0)
-#endif
 #endif
 
 /*
@@ -357,8 +342,10 @@ void	initrtclock(void);
 void	startrtclock(void);
 void	rtcdrain(void *);
 void	i8254_delay(int);
-void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
+void	i8254_inittimecounter(void);
+void	i8254_inittimecounter_simple(void);
+
 
 /* est.c */
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
