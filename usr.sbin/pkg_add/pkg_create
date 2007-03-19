@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.51 2007/03/18 18:48:20 espie Exp $
+# $OpenBSD: pkg_create,v 1.52 2007/03/19 09:57:40 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -47,21 +47,24 @@ sub archive
 	    my $o = $arc->prepare_long($self);
 	    if (!defined $self->{owner} && !$o->isSymLink()) {
 		if ($o->{uname} ne 'root' && $o->{uname} ne 'bin') {
-			print STDERR "Warning: no \@owner for ",
+			print STDERR "Error: no \@owner for ",
 			    $self->fullname(), " (", $o->{uname}, ")\n";
+			$main::errors++;
 		}
 	    }
 	    if (!defined $self->{group} && !$o->isSymLink()) {
 		if ($o->{gname} ne 'bin' && $o->{gname} ne 'wheel') {
 			print STDERR "Warning: no \@group for ",
 			    $self->fullname(), " (", $o->{gname}, ")\n";
+#			$main::errors++;
 		}
 	    }
 	    if (!defined $self->{mode} && $o->isFile()) {
 		if (($o->{mode} & (S_ISUID | S_ISGID | S_IWOTH)) != 0) {
-			print STDERR "Warning: weird mode for ", 
+			print STDERR "Error: weird mode for ", 
 			    $self->fullname(), ": ", 
 			    sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)), "\n";
+			$main::errors++;
 		}
 	    }
 	    $o->write() unless $main::errors;
@@ -96,8 +99,9 @@ my $warned;
 sub compute_checksum
 {
 	if (!$warned) {
-		print STDERR "Warning: \@dirrm is deprecated\n";
+		print STDERR "Error: \@dirrm is deprecated\n";
 		$warned=1;
+		$main::errors++;
 	}
 }
 
