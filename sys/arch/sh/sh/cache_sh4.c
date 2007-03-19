@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_sh4.c,v 1.2 2007/03/05 21:48:23 miod Exp $	*/
+/*	$OpenBSD: cache_sh4.c,v 1.3 2007/03/19 20:12:43 miod Exp $	*/
 /*	$NetBSD: cache_sh4.c,v 1.15 2005/12/24 23:24:02 perry Exp $	*/
 
 /*-
@@ -111,6 +111,10 @@ sh4_cache_config(void)
 #endif
 #if defined(SH4_CACHE_DISABLE_DCACHE)
 	r &= ~SH4_CCR_OCE;
+#endif
+#if !defined (SH4_CACHE_WT)
+#define	SH4_CACHE_WB_U0_P0_P3
+#define	SH4_CACHE_WB_P1
 #endif
 #if defined(SH4_CACHE_WB_U0_P0_P3)
 	r &= ~SH4_CCR_WT;
