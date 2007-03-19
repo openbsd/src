@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.36 2007/02/20 21:15:01 tom Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.37 2007/03/19 05:32:05 deraadt Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -371,7 +371,7 @@ pcibios_get_status(struct pcibios_softc *sc, u_int32_t *rev_maj,
 		return (PCIBIOS_SERVICE_NOT_PRESENT);	/* XXX */
 
 	/*
-	 * Fill in the various pieces if info we're looking for.
+	 * Fill in the various pieces of info we're looking for.
 	 */
 	*mech1 = ax & 1;
 	*mech2 = ax & (1 << 1);
