@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.28 2007/03/19 12:45:01 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.29 2007/03/19 14:04:04 art Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -976,8 +976,6 @@ inittodr(base)
 #endif
 		}
 	}
-
-printf("setting time to: %d\n", tv.tv_sec);
 
 	ts.tv_sec = tv.tv_sec;
 	ts.tv_nsec = tv.tv_usec * 1000;
