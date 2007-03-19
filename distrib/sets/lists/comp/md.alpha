@@ -275,4 +275,6 @@
 ./usr/libdata/ldscripts/elf64alpha_obsd.xu
 ./usr/libdata/ldscripts/elf64alpha_obsd.xz
 ./usr/libdata/lint/llib-lalpha.ln
+./usr/share/man/cat1/addr2line.0
 ./usr/share/man/cat1/objcopy.0
+./usr/share/man/cat1/readelf.0

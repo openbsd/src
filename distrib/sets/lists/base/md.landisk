@@ -23,7 +23,6 @@
 ./etc/firmware/zd1211-licence
 ./etc/firmware/zd1211b
 ./sbin/fdisk
-./usr/bin/addr2line
 ./usr/libdata/perl5/sh-openbsd
 ./usr/libdata/perl5/sh-openbsd/5.8.8
 ./usr/libdata/perl5/sh-openbsd/5.8.8/.packlist

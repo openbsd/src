@@ -1,5 +1,6 @@
 ./usr/bin/addr2line
 ./usr/bin/objcopy
+./usr/bin/readelf
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/dis-asm.h
@@ -307,4 +308,6 @@
 ./usr/libdata/ldscripts/elf64ltsmip.xsc
 ./usr/libdata/ldscripts/elf64ltsmip.xu
 ./usr/libdata/ldscripts/elf64ltsmip.xz
+./usr/share/man/cat1/addr2line.0
 ./usr/share/man/cat1/objcopy.0
+./usr/share/man/cat1/readelf.0

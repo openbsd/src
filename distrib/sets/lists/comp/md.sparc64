@@ -282,4 +282,6 @@
 ./usr/libdata/ldscripts/elf64_sparc_obsd.xsc
 ./usr/libdata/ldscripts/elf64_sparc_obsd.xu
 ./usr/libdata/ldscripts/elf64_sparc_obsd.xz
+./usr/share/man/cat1/addr2line.0
 ./usr/share/man/cat1/objcopy.0
+./usr/share/man/cat1/readelf.0

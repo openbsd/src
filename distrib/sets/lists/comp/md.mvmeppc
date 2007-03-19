@@ -244,4 +244,6 @@
 ./usr/libdata/ldscripts/elf32ppcsim.xs
 ./usr/libdata/ldscripts/elf32ppcsim.xu
 ./usr/libdata/ldscripts/elf32ppcsim.xz
+./usr/share/man/cat1/addr2line.0
 ./usr/share/man/cat1/objcopy.0
+./usr/share/man/cat1/readelf.0

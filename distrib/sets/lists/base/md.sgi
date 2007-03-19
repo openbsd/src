@@ -47,7 +47,6 @@
 ./sbin/kbd
 ./sbin/wsconsctl
 ./usr/bin/gccbug
-./usr/bin/readelf
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so
 ./usr/lib/apache/modules/mod_auth_db.so

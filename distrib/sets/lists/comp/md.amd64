@@ -328,4 +328,6 @@
 ./usr/libdata/ldscripts/elf_x86_64_obsd.xu
 ./usr/libdata/ldscripts/elf_x86_64_obsd.xz
 ./usr/libdata/lint/llib-lamd64.ln
+./usr/share/man/cat1/addr2line.0
 ./usr/share/man/cat1/objcopy.0
+./usr/share/man/cat1/readelf.0
