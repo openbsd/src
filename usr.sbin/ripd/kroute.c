@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.6 2007/03/13 16:50:58 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.7 2007/03/19 10:23:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -178,6 +178,8 @@ kr_change(struct kroute *kroute)
 			action = RTM_CHANGE;
 			kr->r.flags = kroute->flags | F_RIPD_INSERTED;
 			kr->r.ifindex = 0;
+			rtlabel_unref(kr->r.rtlabel);
+			kr->r.rtlabel = 0;
 		}
 	}
 
@@ -454,6 +456,7 @@ kroute_remove(struct kroute_node *kr)
 	}
 
 	kr_redistribute(IMSG_NETWORK_DEL, &kr->r);
+	rtlabel_unref(kr->r.rtlabel);
 
 	free(kr);
 	return (0);
@@ -778,6 +781,7 @@ fetchtable(void)
 	struct rt_msghdr	*rtm;
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_in	*sa_in;
+	struct sockaddr_rtlabel	*label;
 	struct kroute_node	*kr;
 	struct iface		*iface = NULL;
 
@@ -880,8 +884,13 @@ fetchtable(void)
 		if (rtm->rtm_flags & RTF_PROTO3)  {
 			send_rtmsg(kr_state.fd, RTM_DELETE, &kr->r);
 			free(kr);
-		} else
+		} else {
+			if ((label = (struct sockaddr_rtlabel *)
+			    rti_info[RTAX_LABEL]) != NULL)
+				kr->r.rtlabel =
+				    rtlabel_name2id(label->sr_label);
 			kroute_insert(kr);
+		}
 
 	}
 	free(buf);
@@ -973,6 +982,7 @@ dispatch_rtmsg(void)
 	struct if_msghdr	 ifm;
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_in	*sa_in;
+	struct sockaddr_rtlabel	*label;
 	struct kroute_node	*kr;
 	struct in_addr		 prefix, nexthop, netmask;
 	int			 flags;
@@ -1079,6 +1089,13 @@ dispatch_rtmsg(void)
 				kr->r.flags = flags;
 				kr->r.ifindex = ifindex;
 
+				rtlabel_unref(kr->r.rtlabel);
+				kr->r.rtlabel = 0;
+				if ((label = (struct sockaddr_rtlabel *)
+				    rti_info[RTAX_LABEL]) != NULL)
+					kr->r.rtlabel =
+					    rtlabel_name2id(label->sr_label);
+
 				if (kif_validate(kr->r.ifindex))
 					kr->r.flags &= ~F_DOWN;
 				else
@@ -1097,6 +1114,11 @@ dispatch_rtmsg(void)
 				kr->r.nexthop.s_addr = nexthop.s_addr;
 				kr->r.flags = flags;
 				kr->r.ifindex = ifindex;
+
+				if ((label = (struct sockaddr_rtlabel *)
+				    rti_info[RTAX_LABEL]) != NULL)
+					kr->r.rtlabel =
+					    rtlabel_name2id(label->sr_label);
 
 				kroute_insert(kr);
 			}
