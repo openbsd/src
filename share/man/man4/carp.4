@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.24 2007/03/18 23:29:31 mpf Exp $
+.\"	$OpenBSD: carp.4,v 1.25 2007/03/19 07:28:43 jmc Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -240,7 +240,7 @@ Please note that activating stealth mode on a
 interface that has already been running might not work instantly.
 As a workaround the VHID can be changed to a previously unused
 one, or just wait until the MAC table entry in the switch times out.
-
+.Pp
 Some Layer-3 switches do port learning based on ARP packets.
 Therefore the stealth mode cannot hide the virtual MAC address
 from these kind of devices.
