@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.67 2006/10/06 20:58:17 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.68 2007/03/19 05:32:43 deraadt Exp $
 
 NEW_BINUTILS=alpha amd64 arm hppa hppa64 i386 mips64 powerpc sh sparc sparc64
 
@@ -40,8 +40,8 @@ MAN+=		gdb/gdb.1
 SUBDIRS+=	binutils ld gas
 CONF_SUBDIRS+=	binutils ld gas
 INST_SUBDIRS+=	binutils ld gas
-MAN+=		binutils/ar.1 binutils/ranlib.1 \
-		binutils/objcopy.1 \
+MAN+=		binutils/addr2line.1 binutils/ar.1 binutils/ranlib.1 \
+		binutils/objcopy.1 binutils/doc/readelf.1 \
 		binutils/strings.1 binutils/strip.1 \
 		gas/doc/as.1 ld/ld.1
 .  else
