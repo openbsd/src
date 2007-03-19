@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.53 2006/08/23 08:13:04 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.54 2007/03/19 10:03:25 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -209,7 +209,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 	if (!(pfd->revents & POLLIN))
 		return (0);
 
-	if (imsg_read(&c->ibuf) <= 0) {
+	if ((n = imsg_read(&c->ibuf)) == -1 || n == 0) {
 		*ctl_cnt -= control_close(pfd->fd);
 		return (1);
 	}
