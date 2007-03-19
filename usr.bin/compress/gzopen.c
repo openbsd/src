@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.23 2005/06/26 18:20:26 otto Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.24 2007/03/19 13:02:18 pedro Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -60,7 +60,7 @@
 
 #ifndef SMALL
 const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.23 2005/06/26 18:20:26 otto Exp $";
+    "$OpenBSD: gzopen.c,v 1.24 2007/03/19 13:02:18 pedro Exp $";
 #endif
 
 #include <sys/param.h>
@@ -284,7 +284,7 @@ get_byte(gz_stream *s)
 	if (s->z_stream.avail_in == 0) {
 		errno = 0;
 		s->z_stream.avail_in = read(s->z_fd, s->z_buf, Z_BUFSIZE);
-		if (s->z_stream.avail_in <= 0) {
+		if ((int)s->z_stream.avail_in <= 0) {
 			s->z_eof = 1;
 			return EOF;
 		}
@@ -431,8 +431,9 @@ gz_read(void *cookie, char *buf, int len)
 		if (s->z_stream.avail_in == 0) {
 
 			errno = 0;
-			if ((s->z_stream.avail_in =
-			    read(s->z_fd, s->z_buf, Z_BUFSIZE)) == 0)
+			s->z_stream.avail_in = read(s->z_fd, s->z_buf,
+			    Z_BUFSIZE);
+			if ((int)s->z_stream.avail_in <= 0)
 				s->z_eof = 1;
 			s->z_stream.next_in = s->z_buf;
 		}
