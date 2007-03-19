@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2007/03/19 15:12:49 millert Exp $
+#	$OpenBSD: Makefile,v 1.22 2007/03/19 19:41:40 jmc Exp $
 
 LIB=	event
 WANTLINT=
@@ -23,6 +23,7 @@ MLINKS=	event.3 event_init.3 event.3 event_dispatch.3 event.3 event_loop.3 \
 	evbuffer_add_printf.3 event.3 evbuffer_add_vprintf.3 event.3 evbuffer_drain.3 \
 	event.3 evbuffer_write.3 event.3 evbuffer_read.3 event.3 evbuffer_find.3 \
 	event.3 evbuffer_readline.3 \
+	event.3 evhttp_start.3 event.3 evhttp_free.3 \
 	evdns.3 evdns_init.3 evdns.3 evdns_shutdown.3 \
 	evdns.3 evdns_count_nameservers.3 \
 	evdns.3 evdns_clear_nameservers_and_suspend.3 \
