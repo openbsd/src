@@ -1019,6 +1019,9 @@
 ./usr/share/man/cat4/alpha/kmem.0
 ./usr/share/man/cat4/alpha/lca.0
 ./usr/share/man/cat4/alpha/le.0
+./usr/share/man/cat4/alpha/mcbus.0
+./usr/share/man/cat4/alpha/mcmem.0
+./usr/share/man/cat4/alpha/mcpcia.0
 ./usr/share/man/cat4/alpha/mem.0
 ./usr/share/man/cat4/alpha/scc.0
 ./usr/share/man/cat4/alpha/tcasic.0
@@ -1694,6 +1697,7 @@
 ./usr/share/man/cat4/uscanner.0
 ./usr/share/man/cat4/uslcom.0
 ./usr/share/man/cat4/usscanner.0
+./usr/share/man/cat4/uts.0
 ./usr/share/man/cat4/uvisor.0
 ./usr/share/man/cat4/uvscom.0
 ./usr/share/man/cat4/uyap.0
