@@ -745,6 +745,7 @@
 ./usr/include/dev/sdmmc/sdmmcreg.h
 ./usr/include/dev/sdmmc/sdmmcvar.h
 ./usr/include/dev/sequencervar.h
+./usr/include/dev/softraidvar.h
 ./usr/include/dev/sun
 ./usr/include/dev/sun/disklabel.h
 ./usr/include/dev/sun/sunkbdreg.h
@@ -860,6 +861,7 @@
 ./usr/include/err.h
 ./usr/include/errno.h
 ./usr/include/eti.h
+./usr/include/evdns.h
 ./usr/include/event.h
 ./usr/include/f2c.h
 ./usr/include/fcntl.h

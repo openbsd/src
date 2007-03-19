@@ -1290,6 +1290,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sdmmc/sdmmcreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sdmmc/sdmmcvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sequencervar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/softraidvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun/disklabel.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun/sunkbdreg.ph
@@ -1405,6 +1406,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/eti.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/evdns.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/event.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/fcntl.ph

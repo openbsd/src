@@ -1222,6 +1222,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sdmmc/sdmmcreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sdmmc/sdmmcvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sequencervar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/softraidvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sun
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sun/disklabel.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sun/sunkbdreg.ph
@@ -1337,6 +1338,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/eti.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/evdns.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/event.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/fcntl.ph

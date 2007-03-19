@@ -1429,6 +1429,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sdmmc/sdmmcreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sdmmc/sdmmcvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sequencervar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/softraidvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sun
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sun/disklabel.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sun/sunkbdreg.ph
@@ -1545,6 +1546,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/eti.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/evdns.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/event.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/fcntl.ph
