@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.23 2007/02/20 13:55:17 jmc Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.24 2007/03/19 13:30:55 pedro Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -15,10 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.23 2007/02/20 13:55:17 jmc Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
@@ -45,6 +41,11 @@ int fsirand(char *);
 extern char *__progname;
 
 int printonly = 0, force = 0, ignorelabel = 0;
+
+/*
+ * Possible locations for the superblock.
+ */
+static const int sbtry[] = SBLOCKSEARCH;
 
 int
 main(int argc, char *argv[])
@@ -92,14 +93,16 @@ main(int argc, char *argv[])
 int
 fsirand(char *device)
 {
-	static struct ufs1_dinode *inodebuf;
+	struct ufs1_dinode *dp1 = NULL;
+	struct ufs2_dinode *dp2 = NULL;
+	static char *inodebuf;
 	static size_t oldibufsize;
 	size_t ibufsize;
 	struct fs *sblock, *tmpsblock;
 	ino_t inumber;
-	daddr_t dblk;
+	ufs2_daddr_t sblockloc, dblk;
 	char sbuf[SBSIZE], sbuftmp[SBSIZE];
-	int devfd, n, cg;
+	int devfd, n, cg, i;
 	char *devpath;
 	u_int32_t bsize = DEV_BSIZE;
 	struct disklabel label;
@@ -122,29 +125,50 @@ fsirand(char *device)
 	/* Read in master superblock */
 	(void)memset(&sbuf, 0, sizeof(sbuf));
 	sblock = (struct fs *)&sbuf;
-	if (lseek(devfd, (off_t)SBOFF, SEEK_SET) == -1) {
-		warn("Can't seek to superblock (%qd) on %s", SBOFF, devpath);
-		return (1);
+
+	for (i = 0; sbtry[i] != -1; i++) {
+		sblockloc = sbtry[i];
+
+		if (lseek(devfd, (off_t)sblockloc, SEEK_SET) == -1) {
+			warn("Can't seek to superblock (%qd) on %s", sblockloc,
+			    devpath);
+			return (1);
+		}
+
+		if ((n = read(devfd, (void *)sblock, SBSIZE)) != SBSIZE) {
+			warnx("Can't read superblock on %s: %s", devpath,
+			    (n < SBSIZE) ? "short read" : strerror(errno));
+			return (1);
+		}
+
+		/* Find a suitable superblock */
+		if (sblock->fs_magic != FS_UFS1_MAGIC &&
+		    sblock->fs_magic != FS_UFS2_MAGIC)
+			continue; /* Not a superblock */
+
+		if (sblock->fs_magic == FS_UFS2_MAGIC &&
+		    sblock->fs_sblockloc != sbtry[i])
+		    	continue; /* Not a superblock */
+
+		break;
 	}
-	if ((n = read(devfd, (void *)sblock, SBSIZE)) != SBSIZE) {
-		warnx("Can't read superblock on %s: %s", devpath,
-		    (n < SBSIZE) ? "short read" : strerror(errno));
+
+	if (sbtry[i] == -1) {
+		warnx("Cannot find file system superblock");
 		return (1);
 	}
 
 	/* Simple sanity checks on the superblock */
-	if (sblock->fs_magic != FS_MAGIC) {
-		warnx("Bad magic number in superblock");
-		return (1);
-	}
 	if (sblock->fs_sbsize > SBSIZE) {
 		warnx("Superblock size is preposterous");
 		return (1);
 	}
+
 	if (sblock->fs_postblformat == FS_42POSTBLFMT) {
 		warnx("Filesystem format is too old, sorry");
 		return (1);
 	}
+
 	if (!force && !printonly && sblock->fs_clean != FS_ISCLEAN) {
 		warnx("Filesystem is not clean, fsck %s first.", devpath);
 		return (1);
@@ -163,7 +187,8 @@ fsirand(char *device)
 			    : strerror(errno));
 			return (1);
 		}
-		if (tmpsblock->fs_magic != FS_MAGIC) {
+		if (tmpsblock->fs_magic != FS_UFS1_MAGIC &&
+		    tmpsblock->fs_magic != FS_UFS2_MAGIC) {
 			warnx("Bad magic number in backup superblock %d on %s",
 			    cg + 1, devpath);
 			return (1);
@@ -176,9 +201,12 @@ fsirand(char *device)
 	}
 
 	/* XXX - should really cap buffer at 512kb or so */
-	ibufsize = sizeof(struct ufs1_dinode) * sblock->fs_ipg;
+	if (sblock->fs_magic == FS_UFS1_MAGIC)
+		ibufsize = sizeof(struct ufs1_dinode) * sblock->fs_ipg;
+	else
+		ibufsize = sizeof(struct ufs2_dinode) * sblock->fs_ipg;
 	if (oldibufsize < ibufsize) {
-		struct ufs1_dinode *ib;
+		char *ib;
 
 		if ((ib = realloc(inodebuf, ibufsize)) == NULL)
 			errx(1, "Can't allocate memory for inode buffer");
@@ -242,12 +270,19 @@ fsirand(char *device)
 		}
 
 		for (n = 0; n < sblock->fs_ipg; n++, inumber++) {
+			if (sblock->fs_magic == FS_UFS1_MAGIC)
+				dp1 = &((struct ufs1_dinode *)inodebuf)[n];
+			else
+				dp2 = &((struct ufs2_dinode *)inodebuf)[n];
 			if (inumber >= ROOTINO) {
 				if (printonly)
 					(void)printf("ino %d gen %x\n", inumber,
-					    inodebuf[n].di_gen);
+					    sblock->fs_magic == FS_UFS1_MAGIC ?
+					    dp1->di_gen : dp2->di_gen);
+				else if (sblock->fs_magic == FS_UFS1_MAGIC)
+					dp1->di_gen = arc4random();
 				else
-					inodebuf[n].di_gen = arc4random();
+					dp2->di_gen = arc4random();
 			}
 		}
 
