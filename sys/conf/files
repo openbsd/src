@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.393 2007/02/19 11:44:24 dlg Exp $
+#	$OpenBSD: files,v 1.394 2007/03/19 03:02:09 marco Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -431,6 +431,9 @@ file dev/radio.c			radio	needs-flag
 device	ipmi
 file	dev/ipmi.c			ipmi	needs-flag
 
+device softraid: scsi
+file	dev/softraid.c			softraid	needs-flag
+
 # legitimate pseudo-devices
 pseudo-device vnd: disk
 pseudo-device ccd: disk
@@ -484,7 +487,6 @@ file	dev/hotplug.c			hotplug	needs-flag
 
 pseudo-device pppoe: ifnet, ether, sppp
 file 	net/if_pppoe.c			pppoe	needs-flag
-
 
 # XXX machine-independent SCSI files should live somewhere here, maybe
 

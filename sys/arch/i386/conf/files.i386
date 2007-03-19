@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.154 2007/02/20 21:15:01 tom Exp $
+#	$OpenBSD: files.i386,v 1.155 2007/03/19 03:02:09 marco Exp $
 #
 # new style config file for i386 architecture
 #
@@ -415,6 +415,11 @@ include "../../../dev/acpi/files.acpi"
 file	arch/i386/i386/acpi_machdep.c		acpi
 
 #
+# SOFTRAID
+#
+attach softraid at mainbus
+
+#
 # IPMI
 #
 attach	ipmi at mainbus
@@ -424,13 +429,9 @@ device	esm
 attach	esm at mainbus
 file	arch/i386/i386/esm.c			esm needs-flag
 
-
 #
 # VESA
 #
 include "dev/vesa/files.vesa"
 
-
 #include "dev/rasops/files.rasops"
-
-

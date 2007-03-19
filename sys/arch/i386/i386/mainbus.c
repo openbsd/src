@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.33 2007/02/13 12:52:07 dim Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.34 2007/03/19 03:02:09 marco Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include "acpi.h"
 #include "ipmi.h"
 #include "esm.h"
+#include "softraid.h"
 #include "vesabios.h"
 
 #include <machine/cpuvar.h>
@@ -74,6 +75,10 @@
 
 #if NESM > 0
 #include <arch/i386/i386/esmvar.h>
+#endif
+
+#if NSOFTRAID > 0
+#include <dev/softraidvar.h>
 #endif
 
 #if NVESABIOS > 0
@@ -117,6 +122,9 @@ union mainbus_attach_args {
 #endif
 #if NESM > 0
 	struct esm_attach_args mba_eaa;
+#endif
+#if NSOFTRAID > 0
+	struct sr_attach_args mba_maa;
 #endif
 };
 
@@ -278,6 +286,12 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 		config_found(self, &mba.mba_iba, mainbus_print);
 	}
+
+#if NSOFTRAID > 0
+	memset(&mba.mba_maa, 0, sizeof(mba.mba_maa));
+	mba.mba_maa.maa_name = "softraid";
+	config_found(self, &mba.mba_maa, mainbus_print);
+#endif
 }
 
 int

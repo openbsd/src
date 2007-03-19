@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.549 2007/03/17 00:10:51 robert Exp $
+#	$OpenBSD: GENERIC,v 1.550 2007/03/19 03:02:09 marco Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -49,6 +49,9 @@ apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
 pcibios0 at bios0 flags 0x0000	# use 0x30 for a total verbose
 ipmi0	at mainbus?		# IPMI
 esm0	at mainbus? 		# Dell Embedded Server Management
+
+#softraid0 at mainbus?		# Software RAID
+#scsibus* at softraid?
 
 isa0	at mainbus0
 isa0	at pcib?

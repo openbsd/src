@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.48 2006/08/28 12:36:08 mickey Exp $       */
+/* $OpenBSD: bioctl.c,v 1.49 2007/03/19 03:02:09 marco Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -60,6 +60,7 @@ void bio_alarm(char *);
 void bio_setstate(char *);
 void bio_setblink(char *, char *, int);
 void bio_blink(char *, int, int);
+void bio_createraid(u_int16_t, char *);
 
 int devh = -1;
 int debug;
@@ -76,13 +77,14 @@ main(int argc, char *argv[])
 	/* u_int64_t subfunc = 0; */
 	char *bioc_dev = NULL, *sd_dev = NULL;
 	char *realname = NULL, *al_arg = NULL;
-	char *bl_arg = NULL;
+	char *bl_arg = NULL, *dev_list = NULL;
 	int ch, rv, blink;
+	u_int16_t cr_level;
 
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "b:u:H:ha:Div")) != -1) {
+	while ((ch = getopt(argc, argv, "b:c:l:u:H:ha:Div")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
@@ -92,6 +94,10 @@ main(int argc, char *argv[])
 			func |= BIOC_BLINK;
 			blink = BIOC_SBBLINK;
 			bl_arg = optarg;
+			break;
+		case 'c': /* create */
+			func |= BIOC_CREATERAID;
+			cr_level = atoi(optarg);
 			break;
 		case 'u': /* unblink */
 			func |= BIOC_BLINK;
@@ -110,6 +116,10 @@ main(int argc, char *argv[])
 			break;
 		case 'i': /* inquiry */
 			func |= BIOC_INQ;
+			break;
+		case 'l': /* device list */
+			func |= BIOC_DEVLIST;
+			dev_list = optarg;
 			break;
 		case 'v':
 			verbose = 1;
@@ -163,6 +173,14 @@ main(int argc, char *argv[])
 		bio_setblink(sd_dev, bl_arg, blink);
 	} else if (func == BIOC_SETSTATE) {
 		bio_setstate(al_arg);
+	} else if (func & BIOC_CREATERAID || func & BIOC_DEVLIST) {
+		if (!(func & BIOC_CREATERAID))
+			errx(1, "need -c parameter");
+		if (!(func & BIOC_DEVLIST))
+			errx(1, "need -l parameter");
+		if (sd_dev)
+			errx(1, "can't use sd device");
+		bio_createraid(cr_level, dev_list);
 	}
 
 	return (0);
@@ -565,4 +583,56 @@ bio_blink(char *enclosure, int target, int blinktype)
 		warn("BIOCBLINK");
 
 	close(bioh);
+}
+
+void
+bio_createraid(u_int16_t level, char *dev_list)
+{
+	struct bio_locate	bio;
+	struct bioc_createraid	create;
+	int			rv;
+	u_int16_t		min_disks = 0;
+
+	if (debug)
+		printf("bio_createraid\n");
+
+	if (!dev_list)
+		errx(1, "no devices specified");
+
+	switch (level) {
+	case 0:
+		min_disks = 1;
+		break;
+	case 1:
+		min_disks = 2;
+		break;
+	default:
+		errx(1, "unsuported raid level");
+	}
+
+	/* XXX validate device list for real */
+#if 0
+	if (strncmp(dev_list, "sd", 2) == 0 && strlen(dev_list) > 2 &&
+	    isdigit(dev_list[2])) {
+	    	if (strlen(dev_list) != 3)
+			errx(1, "only one device supported");
+
+		if (debug)
+			printf("bio_createraid: dev_list: %s\n", dev_list);
+	}
+	else
+		errx(1, "no sd device specified");
+#endif
+
+	memset(&create, 0, sizeof(create));
+	create.bc_cookie = bl.bl_cookie;
+	create.bc_level = level;
+	create.bc_dev_list_len = strlen(dev_list);
+	create.bc_dev_list = dev_list;
+
+	rv = ioctl(devh, BIOCCREATERAID, &create);
+	if (rv == -1) {
+		warn("BIOCCREATERAID");
+		return;
+	}
 }
