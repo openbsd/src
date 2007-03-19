@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.3 2007/03/19 15:00:08 mk Exp $ */
+/* $OpenBSD: softraid.c,v 1.4 2007/03/19 22:33:15 dlg Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -59,11 +59,13 @@ uint32_t	sr_debug = 0
 		;
 #endif
 
+int		sr_match(struct device *, void *, void *);
+void		sr_attach(struct device *, struct device *, void *);
+int		sr_detach(struct device *, int);
+int		sr_activate(struct device *, enum devact);
+
 struct cfattach softraid_ca = {
-	sizeof(struct sr_softc),
-	sr_probe,
-	sr_attach,
-	sr_detach,
+	sizeof(struct sr_softc), sr_match, sr_attach, sr_detach,
 	sr_activate
 };
 
@@ -120,19 +122,7 @@ struct scsi_device sr_dev = {
 };
 
 int
-sr_probe(struct device *parent, void *match, void *aux)
-{
-	return (1);
-}
-
-int
-sr_detach(struct device *self, int flags)
-{
-	return (0);
-}
-
-int
-sr_activate(struct device *self, enum devact act)
+sr_match(struct device *parent, void *match, void *aux)
 {
 	return (1);
 }
@@ -152,6 +142,18 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ioctl = sr_ioctl;
 
 	printf("\n");
+}
+
+int
+sr_detach(struct device *self, int flags)
+{
+	return (0);
+}
+
+int
+sr_activate(struct device *self, enum devact act)
+{
+	return (1);
 }
 
 void
