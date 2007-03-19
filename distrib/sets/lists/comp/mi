@@ -3328,7 +3328,9 @@
 ./usr/share/man/cat3/evdns.0
 ./usr/share/man/cat3/evdns_clear_nameservers_and_suspend.0
 ./usr/share/man/cat3/evdns_count_nameservers.0
+./usr/share/man/cat3/evdns_err_to_string.0
 ./usr/share/man/cat3/evdns_init.0
+./usr/share/man/cat3/evdns_nameserver_add.0
 ./usr/share/man/cat3/evdns_nameserver_ip_add.0
 ./usr/share/man/cat3/evdns_resolv_conf_parse.0
 ./usr/share/man/cat3/evdns_resolve_ipv4.0
