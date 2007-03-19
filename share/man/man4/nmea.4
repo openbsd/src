@@ -1,6 +1,6 @@
-.\"	$OpenBSD: nmea.4,v 1.12 2006/11/29 07:32:08 jmc Exp $
+.\"	$OpenBSD: nmea.4,v 1.13 2007/03/19 06:42:36 mbalmer Exp $
 .\"
-.\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
+.\" Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -53,8 +53,8 @@ If the attached device sends the GPRMC message in the 13-field format,
 the operation mode of the GPS device is reported in the sensor description.
 The sensor timestamp is copied from the tty timestamp if a device with PPS
 is being used and tty timestamping has been turned on.
-Otherwise the sensor timestamp is taken when the initial `$' character is
-received from the NMEA device.
+Otherwise the sensor timestamp is taken when the initial `$' character of
+a message block is received from the NMEA device.
 .El
 .Sh SENSOR STATES
 The quality of the timedelta is reported as the sensor status:
@@ -66,6 +66,10 @@ The timedelta is safe to use for applications like
 .It WARN
 The attached GPS receiver indicates a warning condition.
 The timedelta should be used with care.
+.It CRITICAL
+tty timestamping has been turned on but there is no PPS signal present.
+Check you hardware.
+Some GPS units need PPS to be manually turned on.
 .El
 .Sh SEE ALSO
 .Xr tty 4 ,
