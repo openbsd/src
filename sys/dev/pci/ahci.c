@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.82 2007/03/20 07:09:42 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.83 2007/03/20 07:36:21 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1614,9 +1614,9 @@ ahci_ata_probe(void *xsc, int port)
 
 	sig = ahci_pread(ap, AHCI_PREG_SIG);
 	if ((sig & 0xffff0000) == 0xeb140000)
-		return ATA_PORT_T_ATAPI;
+		return (ATA_PORT_T_ATAPI);
 	else
-		return ATA_PORT_T_DISK;
+		return (ATA_PORT_T_DISK);
 }
 
 struct ata_xfer *
