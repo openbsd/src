@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.89 2007/03/20 13:00:42 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.90 2007/03/20 13:18:16 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -861,7 +861,8 @@ nomem:
 		ccb = &ap->ap_ccbs[i];
 
 		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, AHCI_MAX_PRDT,
-		    (4 * 1024 * 1024), 0, 0, &ccb->ccb_dmamap) != 0) {
+		    (4 * 1024 * 1024), 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    &ccb->ccb_dmamap) != 0) {
 			printf("%s: unable to create dmamap for port %d "
 			    "ccb %d\n", DEVNAME(sc), port, i);
 			goto freeport;
@@ -1233,8 +1234,7 @@ ahci_load_prdt(struct ahci_ccb *ccb)
 		return (0);
 	}
 
-	error = bus_dmamap_load(sc->sc_dmat, dmap,
-	    xa->data, xa->datalen, NULL,
+	error = bus_dmamap_load(sc->sc_dmat, dmap, xa->data, xa->datalen, NULL,
 	    (xa->flags & ATA_F_NOWAIT) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 	if (error != 0) {
 		printf("%s: error %d loading dmamap\n", PORTNAME(ap), error);
