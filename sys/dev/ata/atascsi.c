@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.18 2007/03/20 06:41:38 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.19 2007/03/20 06:43:06 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -461,6 +461,7 @@ atascsi_disk_cmd_done(struct ata_xfer *xa)
 		    xa->state);
 	}
 
+	xs->resid = xa->resid;
 	ata_put_xfer(xa);
 
 	xs->flags |= ITSDONE;
