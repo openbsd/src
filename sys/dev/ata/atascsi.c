@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.20 2007/03/20 07:09:42 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.21 2007/03/20 07:45:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -31,11 +31,13 @@
 
 #include <dev/ata/atascsi.h>
 
-#include <dev/ic/wdcreg.h>
-
 /* XXX ata_identify should be in atareg.h */
 
 #define ATA_C_IDENTIFY		0xec
+#define ATA_C_READDMA		0xc8
+#define ATA_C_WRITEDMA		0xca
+#define ATA_C_READDMA_EXT	0x25
+#define ATA_C_WRITEDMA_EXT	0x35
 
 struct ata_identify {
 	u_int16_t	config;		/*   0 */
@@ -410,8 +412,8 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 	if (sector_count > 0x100 || lba > 0xfffffff) {
 		/* Use LBA48 */
 		regs[H2D_COMMAND] = (xa->flags & ATA_F_WRITE) ?
-		    WDCC_WRITEDMA_EXT : WDCC_READDMA_EXT;
-		regs[DEVICE] = WDSD_LBA;
+		    ATA_C_WRITEDMA_EXT : ATA_C_READDMA_EXT;
+		regs[DEVICE] = H2D_DEVICE_LBA;
 		regs[LBA_LOW_EXP] = (lba >> 24) & 0xff;
 		regs[LBA_MID_EXP] = (lba >> 32) & 0xff;
 		regs[LBA_HIGH_EXP] = (lba >> 40) & 0xff;
@@ -420,8 +422,8 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 	} else {
 		/* Use LBA */
 		regs[H2D_COMMAND] = (xa->flags & ATA_F_WRITE) ?
-		    WDCC_WRITEDMA : WDCC_READDMA;
-		regs[DEVICE] = WDSD_LBA | ((lba >> 24) & 0x0f);
+		    ATA_C_WRITEDMA : ATA_C_READDMA;
+		regs[DEVICE] = H2D_DEVICE_LBA | ((lba >> 24) & 0x0f);
 		regs[SECTOR_COUNT] = sector_count & 0xff;
 	}
 

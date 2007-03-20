@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.11 2007/03/20 07:09:42 pascoe Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.12 2007/03/20 07:45:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -69,6 +69,7 @@ enum ata_register_map {
 	LBA_HIGH = 6,
 	DEVICE_HEAD = 7,
 	DEVICE = 7,
+#define H2D_DEVICE_LBA			0x40
 	SECTOR_NUM_EXP = 8,
 	LBA_LOW_EXP = 8,
 	CYL_LOW_EXP = 9,
