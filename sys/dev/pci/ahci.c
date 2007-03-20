@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.87 2007/03/20 12:01:18 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.88 2007/03/20 12:46:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -386,7 +386,15 @@ int			ahci_jmicron_match(struct pci_attach_args *);
 int			ahci_jmicron_attach(struct pci_attach_args *);
 
 static const struct ahci_device ahci_devices[] = {
+	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB360,
+	    ahci_jmicron_match, ahci_jmicron_attach },
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB361,
+	    ahci_jmicron_match, ahci_jmicron_attach },
+	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB363,
+	    ahci_jmicron_match, ahci_jmicron_attach },
+	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB365,
+	    ahci_jmicron_match, ahci_jmicron_attach },
+	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB366,
 	    ahci_jmicron_match, ahci_jmicron_attach }
 };
 
