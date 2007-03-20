@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.38 2006/12/12 23:14:27 dim Exp $ */
+/*	$OpenBSD: cpu.c,v 1.39 2007/03/20 20:59:54 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -73,6 +73,8 @@
 #define PSR_CMD_COMPLETED	0x1000000000000000LL
 #define PSR_FREQ_MASK		0x0300000000000000LL
 #define PSR_FREQ_HALF		0x0100000000000000LL
+
+struct cpu_info cpu_info[PPC_MAXPROCS];
 
 char cpu_model[80];
 char machine[] = MACHINE;	/* cpu architecture */
@@ -234,6 +236,12 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	char name[32];
 	int qhandle, phandle;
 	u_int32_t clock_freq = 0;
+	struct cpu_info *ci;
+
+	ci = &cpu_info[dev->dv_unit];
+	ci->ci_cpuid = dev->dv_unit;
+	ci->ci_intrdepth = -1;
+	ci->ci_dev = dev;
 
 	pvr = ppc_mfpvr();
 	cpu = pvr >> 16;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.9 2005/10/09 14:52:12 drahn Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.10 2007/03/20 20:59:53 kettenis Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 1996/09/30 16:34:44 ws Exp $	*/
 
 /*
@@ -41,9 +41,10 @@
 void
 enable_fpu(struct proc *p)
 {
-	int msr;
+	struct cpu_info *ci = curcpu();
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct trapframe *tf = trapframe(p);
+	int msr;
 	
 	if (!(pcb->pcb_flags & PCB_FPU)) {
 		bzero(&pcb->pcb_fpu, sizeof pcb->pcb_fpu);
@@ -86,7 +87,7 @@ enable_fpu(struct proc *p)
 	     "lfd 29,232(%0);"
 	     "lfd 30,240(%0);"
 	     "lfd 31,248(%0)" :: "b"(&pcb->pcb_fpu.fpr[0]));
-	fpuproc = p;
+	ci->ci_fpuproc = p;
 	tf->srr1 |= PSL_FP;
 	ppc_mtmsr(msr);
 	__asm volatile("isync");
@@ -95,15 +96,16 @@ enable_fpu(struct proc *p)
 void
 save_fpu()
 {
-	int msr;
+	struct cpu_info *ci = curcpu();
 	struct pcb *pcb;
 	struct proc *p;
 	struct trapframe *tf;
+	int msr;
 		
 	msr = ppc_mfmsr();
 	ppc_mtmsr((msr  & ~PSL_EE) | PSL_FP);
 
-	p = fpuproc;
+	p = ci->ci_fpuproc;
 
 	if (p == NULL) {
 		ppc_mtmsr(msr);
@@ -149,9 +151,9 @@ save_fpu()
 	asm volatile ("mffs 0; stfd 0,0(%0)" :: "b"(&pcb->pcb_fpu.fpcsr));
 	asm ("lfd 0,0(%0);" :: "b"(&pcb->pcb_fpu.fpr[0]));
 
-	tf = trapframe(fpuproc);
+	tf = trapframe(ci->ci_fpuproc);
 	tf->srr1 &= ~PSL_FP;
-	fpuproc = NULL;
+	ci->ci_fpuproc = NULL;
 
 	ppc_mtmsr(msr);
 	__asm volatile("isync");

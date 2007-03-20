@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.31 2007/03/01 15:00:57 mickey Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.32 2007/03/20 20:59:53 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -500,10 +500,11 @@ mac_ext_intr()
 	int irq = 0;
 	int o_imen, r_imen;
 	int pcpl;
+	struct cpu_info *ci = curcpu();
 	struct intrhand *ih;
 	volatile unsigned long int_state;
 
-	pcpl = cpl;	/* Turn off all */
+	pcpl = ci->ci_cpl;	/* Turn off all */
 
 	int_state = read_irq();
 	if (int_state == 0)
@@ -515,8 +516,9 @@ start:
 	o_imen = imen_m;
 	r_imen = 1 << irq;
 
-	if ((cpl & r_imen) != 0) {
-		ipending |= r_imen;	/* Masked! Mark this as pending */
+	if ((ci->ci_cpl & r_imen) != 0) {
+		/* Masked! Mark this as pending. */
+		ci->ci_ipending |= r_imen;
 		imen_m |= r_imen;
 		enable_irq(~imen_m);
 	} else {
@@ -542,21 +544,21 @@ out:
 void
 mac_intr_do_pending_int()
 {
+	struct cpu_info *ci = curcpu();
 	struct intrhand *ih;
 	int irq;
 	int pcpl;
 	int hwpend;
 	int s;
-	static int processing;
 
-	if (processing)
+	if (ci->ci_iactive)
 		return;
 
-	processing = 1;
+	ci->ci_iactive = 1;
 	pcpl = splhigh();		/* Turn off all */
 	s = ppc_intr_disable();
 
-	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
+	hwpend = ci->ci_ipending & ~pcpl;	/* Do now unmasked pendings */
 	imen_m &= ~hwpend;
 	enable_irq(~imen_m);
 	hwpend &= HWIRQ_MASK;
@@ -574,26 +576,26 @@ mac_intr_do_pending_int()
 	/*out32rb(INT_ENABLE_REG, ~imen_m);*/
 
 	do {
-		if((ipending & SINT_CLOCK) & ~pcpl) {
-			ipending &= ~SINT_CLOCK;
+		if((ci->ci_ipending & SINT_CLOCK) & ~pcpl) {
+			ci->ci_ipending &= ~SINT_CLOCK;
 			softclock();
 		}
-		if((ipending & SINT_NET) & ~pcpl) {
+		if((ci->ci_ipending & SINT_NET) & ~pcpl) {
 			extern int netisr;
 			int pisr = netisr;
 			netisr = 0;
-			ipending &= ~SINT_NET;
+			ci->ci_ipending &= ~SINT_NET;
 			softnet(pisr);
 		}
-		if((ipending & SINT_TTY) & ~pcpl) {
-			ipending &= ~SINT_TTY;
+		if((ci->ci_ipending & SINT_TTY) & ~pcpl) {
+			ci->ci_ipending &= ~SINT_TTY;
 			softtty();
 		}
-	} while (ipending & (SINT_NET|SINT_CLOCK|SINT_TTY) & ~pcpl);
-	ipending &= pcpl;
-	cpl = pcpl;	/* Don't use splx... we are here already! */
+	} while ((ci->ci_ipending & SINT_MASK) & ~pcpl);
+	ci->ci_ipending &= pcpl;
+	ci->ci_cpl = pcpl;	/* Don't use splx... we are here already! */
 	ppc_intr_enable(s);
-	processing = 0;
+	ci->ci_iactive = 0;
 }
 
 static int

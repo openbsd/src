@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.2 2006/01/13 17:50:06 millert Exp $	*/
+/*	$OpenBSD: _types.h,v 1.3 2007/03/20 20:59:53 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -114,5 +114,8 @@ typedef int			__wint_t;
 typedef	int			__rune_t;
 typedef	void *			__wctrans_t;
 typedef	void *			__wctype_t;
+
+/* Feature test macros */
+#define __HAVE_CPUINFO
 
 #endif	/* _POWERPC__TYPES_H_ */

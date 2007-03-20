@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.17 2006/06/19 15:13:35 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.18 2007/03/20 20:59:54 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -209,7 +209,7 @@ decr_intr(struct clockframe *frame)
 	 */
 	ppc_mtdec(nextevent - tb);
 
-	if (cpl & SPL_CLOCK) {
+	if (curcpu()->ci_cpl & SPL_CLOCK) {
 		statspending += nstats;
 	} else {
 		nstats += statspending;

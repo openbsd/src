@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.29 2007/03/15 10:22:29 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.30 2007/03/20 20:59:53 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -36,7 +36,85 @@
 
 #include <machine/frame.h>
 
-#include <machine/psl.h>
+#include <sys/device.h>
+#include <sys/lock.h>
+#include <sys/sched.h>
+
+struct cpu_info {
+	struct device *ci_dev;		/* our device */
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+
+	struct proc *ci_curproc;
+
+	struct pcb *ci_curpcb;
+	struct pmap *ci_curpm;
+	struct proc *ci_fpuproc;
+	struct proc *ci_vecproc;
+	struct pcb *ci_idle_pcb;	/* PA of our idle pcb */
+	int ci_cpuid;
+
+	volatile int ci_astpending;
+	volatile int ci_want_resched;
+	volatile int ci_cpl;
+	volatile int ci_iactive;
+	volatile int ci_ipending;
+	int ci_intrdepth;
+	char *ci_intstk;
+#define CPUSAVE_LEN	8
+	register_t ci_tempsave[CPUSAVE_LEN];
+	register_t ci_ddbsave[CPUSAVE_LEN];
+#define DISISAVE_LEN	4
+	register_t ci_disisave[DISISAVE_LEN];
+};
+
+static __inline struct cpu_info *
+curcpu(void)
+{
+	struct cpu_info *ci;
+
+	__asm volatile ("mfsprg %0,0" : "=r"(ci));
+	return ci;
+}
+
+#define	curpcb			(curcpu()->ci_curpcb)
+#define	curpm			(curcpu()->ci_curpm)
+
+#define CPU_INFO_UNIT(ci)	((ci)->ci_dev->dv_unit)
+
+#ifdef MULTIPROCESSOR
+
+#define PPC_MAXPROCS		4
+
+static __inline int
+cpu_number(void)
+{
+	int pir;
+
+	__asm ("mfspr %0,1023" : "=r"(pir));
+	return pir;
+}
+
+void	cpu_boot_secondary_processors(void);
+
+#define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
+#define CPU_INFO_ITERATOR		int
+#define CPU_INFO_FOREACH(cii, ci)					\
+	for (cii = 0, ci = &cpu_info[0]; cii < PPC_MAXPROCS; cii++, ci++)
+
+#else
+
+#define PPC_MAXPROCS		1
+
+#define cpu_number()		0
+
+#define CPU_IS_PRIMARY(ci)	1
+#define CPU_INFO_ITERATOR		int
+#define CPU_INFO_FOREACH(cii, ci)					\
+	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
+
+#endif
+
+extern struct cpu_info cpu_info[PPC_MAXPROCS];
 
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_PC(frame)		((frame)->srr0)
@@ -47,12 +125,9 @@
 void	delay(unsigned);
 #define	DELAY(n)		delay(n)
 
-extern volatile int want_resched;
-extern volatile int astpending;
-
-#define	need_resched(ci)	(want_resched = 1, astpending = 1)
-#define	need_proftick(p)	do { astpending = 1; } while (0)
-#define	signotify(p)		(astpending = 1)
+#define	need_resched(ci)	(ci->ci_want_resched = 1, ci->ci_astpending = 1)
+#define	need_proftick(p)	do { curcpu()->ci_astpending = 1; } while (0)
+#define	signotify(p)		(curcpu()->ci_astpending = 1)
 
 extern char *bootpath;
 
@@ -200,6 +275,8 @@ void ppc64_mtscomc(u_int64_t);
 u_int64_t ppc64_mfscomd(void);
 void ppc_mtscomd(u_int32_t);
 
+#include <machine/psl.h>
+
 /*
  * General functions to enable and disable interrupts
  * without having inlined assembly code in many functions.
@@ -249,5 +326,13 @@ extern int ppc_proc_is_64b;
 #define	PPC_CPU_MPC7450		0x8000
 #define	PPC_CPU_MPC7455		0x8001
 #define	PPC_CPU_MPC7457		0x8002
+
+/*
+ * This needs to be included late since it relies on definitions higher
+ * up in this file.
+ */
+#if defined(MULTIPROCESSOR) && defined(_KERNEL)
+#include <sys/mplock.h>
+#endif
 
 #endif	/* _POWERPC_CPU_H_ */

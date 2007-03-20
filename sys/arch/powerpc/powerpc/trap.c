@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.74 2007/03/15 10:22:29 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.75 2007/03/20 20:59:53 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -70,10 +70,6 @@ void trap(struct trapframe *frame);
 #define	FIRSTARG	3		/* first argument is in reg 3 */
 #define	NARGREG		8		/* 8 args are in registers */
 #define	MOREARGS(sp)	((caddr_t)((int)(sp) + 8)) /* more args go here */
-
-volatile int want_resched;
-struct proc *ppc_vecproc;
-struct proc *fpuproc;
 
 #ifdef DDB
 void ppc_dumpbt(struct trapframe *frame);
@@ -261,12 +257,13 @@ userret(struct proc *p, int pc, u_quad_t oticks)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 void
 trap(struct trapframe *frame)
 {
+	struct cpu_info *ci = curcpu();
 	struct proc *p = curproc;
 	int type = frame->exc;
 	u_quad_t sticks;
@@ -283,7 +280,9 @@ trap(struct trapframe *frame)
 	case EXC_TRC|EXC_USER:		
 		{
 			sv.sival_int = frame->srr0;
+			KERNEL_PROC_LOCK(p);
 			trapsignal(p, SIGTRAP, type, TRAP_TRACE, sv);
+			KERNEL_PROC_UNLOCK(p);
 		}
 		break;
 
@@ -353,6 +352,7 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 			    frame->dar, frame->dsisr, 0))
 				break;
 
+			KERNEL_PROC_LOCK(p);
 			if (frame->dsisr & DSISR_STORE) {
 				ftype = VM_PROT_READ | VM_PROT_WRITE;
 				vftype = VM_PROT_WRITE;
@@ -361,6 +361,7 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 			if (uvm_fault(&p->p_vmspace->vm_map,
 				     trunc_page(frame->dar), 0, ftype) == 0) {
 				uvm_grow(p, trunc_page(frame->dar));
+				KERNEL_PROC_UNLOCK(p);
 				break;
 			}
 
@@ -372,6 +373,7 @@ printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 */
 			sv.sival_int = frame->dar;
 			trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+			KERNEL_PROC_UNLOCK(p);
 		}
 		break;
 	case EXC_ISI|EXC_USER:
@@ -383,12 +385,15 @@ printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 			    frame->srr0, 0, 1))
 				break;
 
+			KERNEL_PROC_LOCK(p);
 			ftype = VM_PROT_READ | VM_PROT_EXECUTE;
 			if (uvm_fault(&p->p_vmspace->vm_map,
 			    trunc_page(frame->srr0), 0, ftype) == 0) {
 				uvm_grow(p, trunc_page(frame->srr0));
+				KERNEL_PROC_UNLOCK(p);
 				break;
 			}
+			KERNEL_PROC_UNLOCK(p);
 		}
 #if 0
 printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
@@ -398,7 +403,9 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 /* XXX Likely that returning from this trap is bogus... */
 /* XXX Have to make sure that sigreturn does the right thing. */
 		sv.sival_int = frame->srr0;
+		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGSEGV, VM_PROT_EXECUTE, SEGV_MAPERR, sv);
+		KERNEL_PROC_UNLOCK(p);
 		break;
 	case EXC_SC|EXC_USER:
 		{
@@ -461,6 +468,8 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 				}
 				params = args;
 			}
+
+			KERNEL_PROC_LOCK(p);
 #ifdef	KTRACE
 			if (KTRPOINT(p, KTR_SYSCALL))
 				ktrsyscall(p, code, argsize, params);
@@ -480,6 +489,7 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 			else
 #endif
 				error = (*callp->sy_call)(p, params, rval);
+			KERNEL_PROC_UNLOCK(p);
 			switch (error) {
 			case 0:
 				frame->fixreg[0] = error;
@@ -507,17 +517,22 @@ syscall_bad:
 				break;
 			}
 #ifdef SYSCALL_DEBUG
-        scdebug_ret(p, code, error, rval); 
+			KERNEL_PROC_LOCK(p);
+			scdebug_ret(p, code, error, rval); 
+			KERNEL_PROC_UNLOCK(p);
 #endif  
 #ifdef	KTRACE
-			if (KTRPOINT(p, KTR_SYSRET))
+			if (KTRPOINT(p, KTR_SYSRET)) {
+				KERNEL_PROC_LOCK(p);
 				ktrsysret(p, code, error, rval[0]);
+				KERNEL_PROC_UNLOCK(p);
+			}
 #endif
 		}
 		break;
 
 	case EXC_FPU|EXC_USER:
-		if (fpuproc)
+		if (ci->ci_fpuproc)
 			save_fpu();
 		uvmexp.fpswtch++;
 		enable_fpu(p);
@@ -533,8 +548,10 @@ syscall_bad:
 			frame->srr0 += 4;
 		else {
 			sv.sival_int = frame->srr0;
+			KERNEL_PROC_LOCK(p);
 			trapsignal(p, SIGSEGV, VM_PROT_EXECUTE, SEGV_MAPERR,
 				sv);
+			KERNEL_PROC_UNLOCK(p);
 		}
 		break;
 
@@ -588,7 +605,9 @@ mpc_print_pci_stat();
 			errnum++;
 #endif
 			sv.sival_int = frame->srr0;
+			KERNEL_PROC_LOCK(p);
 			trapsignal(p, SIGTRAP, type, TRAP_BRKPT, sv);
+			KERNEL_PROC_UNLOCK(p);
 			break;
 		}
 #if 0
@@ -607,7 +626,9 @@ for (i = 0; i < errnum; i++) {
 }
 #endif
 		sv.sival_int = frame->srr0;
+		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
+		KERNEL_PROC_UNLOCK(p);
 		break;
 	}
 	case EXC_PGM:
@@ -628,25 +649,29 @@ for (i = 0; i < errnum; i++) {
 	case EXC_PERF|EXC_USER:
 #ifdef ALTIVEC 
 	case EXC_VEC|EXC_USER:
-		if (ppc_vecproc)
-			save_vec(ppc_vecproc);
+		if (ci->ci_vecproc)
+			save_vec(ci->ci_vecproc);
 
-		ppc_vecproc = p;
+		ci->ci_vecproc = p;
 		enable_vec(p);
 		break;
 #else  /* ALTIVEC */
 		sv.sival_int = frame->srr0;
+		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
+		KERNEL_PROC_UNLOCK(p);
 		break;
 #endif
 
 	case EXC_AST|EXC_USER:
 		uvmexp.softs++;
-		astpending = 0;		/* we are about to do it */
+		ci->ci_astpending = 0;		/* we are about to do it */
 		if (p->p_flag & P_OWEUPC) {
+			KERNEL_PROC_LOCK(p);
 			ADDUPROF(p);
+			KERNEL_PROC_UNLOCK(p);
 		}
-		if (want_resched)
+		if (ci->ci_want_resched)
 			preempt(NULL);
 		break;
 	}
@@ -656,7 +681,7 @@ for (i = 0; i < errnum; i++) {
 	/*
 	 * If someone stole the fpu while we were away, disable it
 	 */
-	if (p != fpuproc)
+	if (p != ci->ci_fpuproc)
 		frame->srr1 &= ~PSL_FP;
 	else if (p->p_addr->u_pcb.pcb_flags & PCB_FPU)
 		frame->srr1 |= PSL_FP;
@@ -665,7 +690,7 @@ for (i = 0; i < errnum; i++) {
 	/*
 	 * If someone stole the vector unit while we were away, disable it
 	 */
-	if (p == ppc_vecproc)
+	if (p == ci->ci_vecproc)
 		frame->srr1 |= PSL_VEC;
 	else 
 		frame->srr1 &= ~PSL_VEC;
@@ -685,12 +710,17 @@ child_return(void *arg)
 	/* Disable FPU, VECT, as we can't be fpuproc */
 	tf->srr1 &= ~(PSL_FP|PSL_VEC);
 
+	KERNEL_PROC_UNLOCK(p);
+
 	userret(p, tf->srr0, 0);
 
 #ifdef	KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p,
 		    (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 }
 
@@ -733,6 +763,7 @@ static int
 fix_unaligned(struct proc *p, struct trapframe *frame)
 {
 	int indicator = EXC_ALI_OPCODE_INDICATOR(frame->dsisr);
+	struct cpu_info *ci = curcpu();
 
 	switch (indicator) {
 	case EXC_ALI_LFD:
@@ -745,8 +776,8 @@ fix_unaligned(struct proc *p, struct trapframe *frame)
 			 * the FPRs, and that their current state is in
 			 * the PCB.
 			 */
-			if (fpuproc != p) {
-				if (fpuproc)
+			if (ci->ci_fpuproc != p) {
+				if (ci->ci_fpuproc)
 					save_fpu();
 				enable_fpu(p);
 			}
