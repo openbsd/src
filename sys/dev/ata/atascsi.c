@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.19 2007/03/20 06:43:06 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.20 2007/03/20 07:09:42 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -281,7 +281,7 @@ ata_setup_identify(struct ata_port *ap, int nosleep)
 	xa->cmd.st_bmask = 0x40; /* XXX magic WDCS_DRDY */;
 	xa->cmd.st_pmask = 0x00;
 
-	xa->flags = ATA_F_READ;
+	xa->flags = ATA_F_READ | ATA_F_PIO;
 
 	return (xa);
 }

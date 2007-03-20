@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.81 2007/03/20 06:43:06 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.82 2007/03/20 07:09:42 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -40,7 +40,7 @@
 #define AHCI_D_VERBOSE		0x01
 #define AHCI_D_INTR		0x02
 #define AHCI_D_XFER		0x08
-int ahcidebug = AHCI_D_VERBOSE | AHCI_D_INTR;
+int ahcidebug = AHCI_D_VERBOSE;
 #else
 #define DPRINTF(m, f...)
 #endif
@@ -922,7 +922,7 @@ nomem:
 	/* Enable port interrupts */
 	ahci_pwrite(ap, AHCI_PREG_IE, AHCI_PREG_IE_TFEE | AHCI_PREG_IE_HBFE |
 	     AHCI_PREG_IE_IFE | AHCI_PREG_IE_OFE | AHCI_PREG_IE_DPE |
-	     AHCI_PREG_IE_UFE);
+	     AHCI_PREG_IE_UFE | AHCI_PREG_IE_DHRE);
 
 freeport:
 	if (rc != 0)
@@ -1242,7 +1242,8 @@ ahci_load_prdt(struct ahci_ccb *ccb)
 #endif
 		prd->flags = htole32(dmap->dm_segs[i].ds_len - 1);
 	}
-	prd->flags |= htole32(AHCI_PRDT_FLAG_INTR);
+	if (xa->flags & ATA_F_PIO)
+		prd->flags |= htole32(AHCI_PRDT_FLAG_INTR);
 
 	cmd_slot->prdtl = htole16(dmap->dm_nsegs);
 
