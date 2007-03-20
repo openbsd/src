@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.8 2007/03/13 11:22:36 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.9 2007/03/20 04:38:11 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -21,7 +21,8 @@ struct ata_xfer;
 
 struct atascsi_methods {
 	int			(*probe)(void *, int);
-	int			(*ata_cmd)(void *, struct ata_xfer *);
+	struct ata_xfer *	(*ata_get_xfer)(void *, int );
+	int			(*ata_cmd)(struct ata_xfer *);
 };
 
 struct atascsi_attach_args {
@@ -64,7 +65,6 @@ struct ata_xfer {
 	struct timeout		stimeout;
 	u_int			timeout;
 
-	struct ata_port		*port;
 	int			flags;
 #define ATA_F_READ			(1<<0)
 #define ATA_F_WRITE			(1<<1)
@@ -75,8 +75,11 @@ struct ata_xfer {
 #define ATA_S_PENDING			1
 #define ATA_S_COMPLETE			2
 #define ATA_S_ERROR			3
+#define ATA_S_PUT			6
 
 	void			*atascsi_private;
+
+	void			(*ata_put_xfer)(struct ata_xfer *);
 };
 
 #define ATA_QUEUED		0

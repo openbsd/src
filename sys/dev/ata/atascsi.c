@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.15 2007/03/13 11:20:57 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.16 2007/03/20 04:38:11 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/pool.h>
 #include <sys/queue.h>
 
 #include <scsi/scsi_all.h>
@@ -171,10 +170,6 @@ int		atascsi_stuffup(struct scsi_xfer *);
 
 
 int		ata_running = 0;
-struct pool	ata_xfer_pool;
-
-void		ata_init(void);
-void		ata_destroy(void);
 
 int		ata_exec(struct atascsi *, struct ata_xfer *);
 
@@ -187,8 +182,6 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	struct scsibus_attach_args	saa;
 	struct atascsi			*as;
 	int				i;
-
-	ata_init();
 
 	as = malloc(sizeof(struct atascsi), M_DEVBUF, M_WAITOK);
 	bzero(as, sizeof(struct atascsi));
@@ -231,8 +224,6 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 int
 atascsi_detach(struct atascsi *as)
 {
-	ata_destroy();
-
 	return (0);
 }
 
@@ -391,7 +382,7 @@ atascsi_disk_inq(struct scsi_xfer *xs)
 
 	xa = ata_setup_identify(ap, xs->flags & SCSI_NOSLEEP);
 	if (xa == NULL)
-		return (atascsi_stuffup(xs));
+		return (NO_CCB);
 
 	xa->complete = atascsi_disk_inq_done;
 	xa->timeout = xs->timeout;
@@ -457,7 +448,7 @@ atascsi_disk_capacity(struct scsi_xfer *xs)
 
 	xa = ata_setup_identify(ap, xs->flags & SCSI_NOSLEEP);
 	if (xa == NULL)
-		return (atascsi_stuffup(xs));
+		return (NO_CCB);
 
 	xa->complete = atascsi_disk_capacity_done;
 	xa->timeout = xs->timeout;
@@ -554,49 +545,22 @@ atascsi_stuffup(struct scsi_xfer *xs)
 	return (COMPLETE);
 }
 
-void
-ata_init(void)
-{
-	if (ata_running++)
-		return;
-
-	pool_init(&ata_xfer_pool, sizeof(struct ata_xfer), 0, 0, 0, "xapl",
-	    NULL);
-}
-
-void
-ata_destroy(void)
-{
-	if (--ata_running)
-		return;
-
-	pool_destroy(&ata_xfer_pool);
-}
- 
 int
 ata_exec(struct atascsi *as, struct ata_xfer *xa)
 {
-	xa->state = ATA_S_PENDING;
-	return (as->as_methods->ata_cmd(as->as_cookie, xa));
+	return (as->as_methods->ata_cmd(xa));
 }
 
+
 struct ata_xfer *
-ata_get_xfer(struct ata_port *ap, int nosleep)
+ata_get_xfer(struct ata_port *ap, int nosleep /* XXX unused */)
 {
-	struct ata_xfer		*xa;
-
-	xa = pool_get(&ata_xfer_pool, nosleep ? PR_NOWAIT : PR_WAITOK);
-	if (xa != NULL) {
-		bzero(&xa->cmd, sizeof(xa->cmd));
-		xa->port = ap;
-		xa->state = ATA_S_SETUP;
-	}
-
-	return (xa);
+	return (ap->ap_as->as_methods->ata_get_xfer(ap->ap_as->as_cookie,
+	    ap->ap_port));
 }
 
 void
 ata_put_xfer(struct ata_xfer *xa)
 {
-	pool_put(&ata_xfer_pool, xa);
+	xa->ata_put_xfer(xa);
 }

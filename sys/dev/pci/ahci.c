@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.77 2007/03/07 03:25:24 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.78 2007/03/20 04:38:11 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -39,6 +39,7 @@
 #define DPRINTF(m, f...) do { if (ahcidebug & (m)) printf(f); } while (0)
 #define AHCI_D_VERBOSE		0x01
 #define AHCI_D_INTR		0x02
+#define AHCI_D_XFER		0x08
 int ahcidebug = AHCI_D_VERBOSE | AHCI_D_INTR;
 #else
 #define DPRINTF(m, f...)
@@ -308,6 +309,9 @@ struct ahci_softc;
 struct ahci_port;
 
 struct ahci_ccb {
+	/* ATA xfer associated with this CCB.  Must be 1st struct member. */
+	struct ata_xfer		ccb_xa;
+
 	int			ccb_slot;
 	struct ahci_port	*ccb_port;
 
@@ -315,7 +319,6 @@ struct ahci_ccb {
 	struct ahci_cmd_hdr	*ccb_cmd_hdr;
 	struct ahci_cmd_table	*ccb_cmd_table;
 
-	struct ata_xfer		*ccb_xa;
 	void			(*ccb_done)(struct ahci_ccb *);
 
 	TAILQ_ENTRY(ahci_ccb)	ccb_entry;
@@ -419,7 +422,7 @@ int			ahci_intr(void *);
 int			ahci_port_intr(struct ahci_port *, u_int32_t);
 
 struct ahci_ccb		*ahci_get_ccb(struct ahci_port *);
-void			ahci_put_ccb(struct ahci_port *, struct ahci_ccb *);
+void			ahci_put_ccb(struct ahci_ccb *);
 
 struct ahci_dmamem	*ahci_dmamem_alloc(struct ahci_softc *, size_t);
 void			ahci_dmamem_free(struct ahci_softc *,
@@ -447,10 +450,14 @@ int			ahci_pwait_ne(struct ahci_port *, bus_size_t,
 
 /* provide methods for atascsi to call */
 int			ahci_ata_probe(void *, int);
-int			ahci_ata_cmd(void *, struct ata_xfer *);
+struct ata_xfer *	ahci_ata_get_xfer(void *, int);
+void			ahci_ata_put_xfer(struct ata_xfer *);
+int			ahci_ata_cmd(struct ata_xfer *);
+
 
 struct atascsi_methods ahci_atascsi_methods = {
 	ahci_ata_probe,
+	ahci_ata_get_xfer,
 	ahci_ata_cmd
 };
 
@@ -852,7 +859,9 @@ nomem:
 		ccb->ccb_cmd_hdr->ctba_hi = htole32((u_int32_t)(dva >> 32));
 		ccb->ccb_cmd_hdr->ctba_lo = htole32((u_int32_t)dva);
 
-		ahci_put_ccb(ap, ccb);
+		ccb->ccb_xa.ata_put_xfer = ahci_ata_put_xfer;
+
+		ahci_put_ccb(ccb);
 	}
 
 	/* Wait for ICC change to complete */
@@ -1122,7 +1131,7 @@ ahci_port_softreset(struct ahci_port *ap)
 err:
 	if (ccb != NULL) {
 		s = splbio();
-		ahci_put_ccb(ap, ccb);
+		ahci_put_ccb(ccb);
 		splx(s);
 	}
 
@@ -1189,7 +1198,7 @@ ahci_load_prdt(struct ahci_ccb *ccb)
 {
 	struct ahci_port		*ap = ccb->ccb_port;
 	struct ahci_softc		*sc = ap->ap_sc;
-	struct ata_xfer			*xa = ccb->ccb_xa;
+	struct ata_xfer			*xa = &ccb->ccb_xa;
 	struct ahci_prdt		*prdt = ccb->ccb_cmd_table->prdt, *prd;
 	bus_dmamap_t			dmap = ccb->ccb_dmamap;
 	struct ahci_cmd_hdr		*cmd_slot = ccb->ccb_cmd_hdr;
@@ -1404,15 +1413,20 @@ ahci_get_ccb(struct ahci_port *ap)
 	struct ahci_ccb			*ccb;
 
 	ccb = TAILQ_FIRST(&ap->ap_ccb_free);
-	if (ccb != NULL)
+	if (ccb != NULL) {
 		TAILQ_REMOVE(&ap->ap_ccb_free, ccb, ccb_entry);
+		ccb->ccb_xa.state = ATA_S_SETUP;
+	}
 
 	return (ccb);
 }
 
 void
-ahci_put_ccb(struct ahci_port *ap, struct ahci_ccb *ccb)
+ahci_put_ccb(struct ahci_ccb *ccb)
 {
+	struct ahci_port		*ap = ccb->ccb_port;
+
+	ccb->ccb_xa.state = ATA_S_PUT;
 	TAILQ_INSERT_TAIL(&ap->ap_ccb_free, ccb, ccb_entry);
 }
 
@@ -1580,26 +1594,48 @@ ahci_ata_probe(void *xsc, int port)
 		return ATA_PORT_T_DISK;
 }
 
-int
-ahci_ata_cmd(void *xsc, struct ata_xfer *xa)
+struct ata_xfer *
+ahci_ata_get_xfer(void *aaa_cookie, int port)
 {
-	struct ahci_softc		*sc = xsc;
-	struct ahci_port		*ap = sc->sc_ports[xa->port->ap_port];
+	struct ahci_softc		*sc = aaa_cookie;
+	struct ahci_port		*ap = sc->sc_ports[port];
 	struct ahci_ccb			*ccb;
+
+	splassert(IPL_BIO);
+
+	ccb = ahci_get_ccb(ap);
+	if (ccb == NULL) {
+		DPRINTF(AHCI_D_XFER, "%s: ahci_ata_get_xfer: NULL ccb\n",
+		    PORTNAME(ap));
+		return (NULL);
+	}
+
+	DPRINTF(AHCI_D_XFER, "%s: ahci_ata_get_xfer got slot %d\n",
+	    PORTNAME(ap), ccb->ccb_slot);
+
+	return ((struct ata_xfer *)ccb);
+}
+
+void
+ahci_ata_put_xfer(struct ata_xfer *xa)
+{
+	struct ahci_ccb			*ccb = (struct ahci_ccb *)xa;
+
+	splassert(IPL_BIO);
+
+	DPRINTF(AHCI_D_XFER, "ahci_ata_put_xfer slot %d\n", ccb->ccb_slot);
+
+	ahci_put_ccb(ccb);
+}
+
+int
+ahci_ata_cmd(struct ata_xfer *xa)
+{
+	struct ahci_ccb			*ccb = (struct ahci_ccb *)xa;
 	struct ahci_cmd_hdr		*cmd_slot;
 	u_int8_t			*fis;
 	int				s;
 
-	if (ap == NULL)
-		return (ATA_ERROR);
-
-	s = splbio();
-	ccb = ahci_get_ccb(ap);
-	splx(s);
-	if (ccb == NULL)
-		return (ATA_ERROR);
-
-	ccb->ccb_xa = xa;
 	ccb->ccb_done = ahci_ata_cmd_done;
 	cmd_slot = ccb->ccb_cmd_hdr;
 	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
@@ -1626,16 +1662,14 @@ ahci_ata_cmd(void *xsc, struct ata_xfer *xa)
 	fis[18] = 0;
 	fis[19] = 0;
 
-	if (ahci_load_prdt(ccb) != 0) {
-		s = splbio();
-		ahci_put_ccb(ap, ccb);
-		splx(s);
-		return (ATA_ERROR);
-	}
+	if (ahci_load_prdt(ccb) != 0)
+		goto failcmd;
 
 	cmd_slot->flags = htole16(5); /* FIS length (in DWORDs) */
 	if (xa->flags & ATA_F_WRITE)
 		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
+
+	xa->state = ATA_S_PENDING;
 
 	if (xa->flags & ATA_F_POLL) {
 		if (ahci_poll(ccb, 1000) != 0)
@@ -1647,6 +1681,13 @@ ahci_ata_cmd(void *xsc, struct ata_xfer *xa)
 	ahci_start(ccb);
 	splx(s);
 	return (ATA_QUEUED);
+
+failcmd:
+	s = splbio();
+	xa->state = ATA_S_ERROR;
+	xa->complete(xa);
+	splx(s);
+	return (ATA_ERROR);
 }
 
 void
@@ -1654,7 +1695,7 @@ ahci_ata_cmd_done(struct ahci_ccb *ccb)
 {
 	struct ahci_port		*ap = ccb->ccb_port;
 	struct ahci_softc		*sc = ap->ap_sc;
-	struct ata_xfer			*xa = ccb->ccb_xa;
+	struct ata_xfer			*xa = &ccb->ccb_xa;
 	bus_dmamap_t			dmap = ccb->ccb_dmamap;
 
 	if (xa->datalen != 0) {
@@ -1665,7 +1706,6 @@ ahci_ata_cmd_done(struct ahci_ccb *ccb)
 		bus_dmamap_unload(sc->sc_dmat, dmap);
 	}
 
-	ahci_put_ccb(ap, ccb);
 	xa->state = ATA_S_COMPLETE;
 	xa->complete(xa);
 }
