@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.79 2007/03/20 05:33:02 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.80 2007/03/20 05:46:50 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -415,6 +415,8 @@ int			ahci_port_softreset(struct ahci_port *);
 int			ahci_port_portreset(struct ahci_port *);
 
 int			ahci_load_prdt(struct ahci_ccb *);
+void			ahci_unload_prdt(struct ahci_ccb *);
+
 int			ahci_poll(struct ahci_ccb *, int);
 void			ahci_start(struct ahci_ccb *);
 
@@ -1251,6 +1253,24 @@ ahci_load_prdt(struct ahci_ccb *ccb)
 	return (0);
 }
 
+void
+ahci_unload_prdt(struct ahci_ccb *ccb)
+{
+	struct ahci_port		*ap = ccb->ccb_port;
+	struct ahci_softc		*sc = ap->ap_sc;
+	struct ata_xfer			*xa = &ccb->ccb_xa;
+	bus_dmamap_t			dmap = ccb->ccb_dmamap;
+
+	if (xa->datalen != 0) {
+		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
+		    (xa->flags & ATA_F_READ) ? BUS_DMASYNC_POSTREAD :
+		    BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_unload(sc->sc_dmat, dmap);
+	}
+}
+
+
 int
 ahci_poll(struct ahci_ccb *ccb, int timeout)
 {
@@ -1673,18 +1693,9 @@ failcmd:
 void
 ahci_ata_cmd_done(struct ahci_ccb *ccb)
 {
-	struct ahci_port		*ap = ccb->ccb_port;
-	struct ahci_softc		*sc = ap->ap_sc;
 	struct ata_xfer			*xa = &ccb->ccb_xa;
-	bus_dmamap_t			dmap = ccb->ccb_dmamap;
 
-	if (xa->datalen != 0) {
-		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
-		    (xa->flags & ATA_F_READ) ? BUS_DMASYNC_POSTREAD :
-		    BUS_DMASYNC_POSTWRITE);
-
-		bus_dmamap_unload(sc->sc_dmat, dmap);
-	}
+	ahci_unload_prdt(ccb);
 
 	xa->state = ATA_S_COMPLETE;
 	xa->complete(xa);
