@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.58 2006/10/03 02:59:36 kurt Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.59 2007/03/20 21:28:31 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -394,9 +394,6 @@ enum pthread_susp {
  * almost entirely on this stack.
  */
 #define PTHREAD_STACK_INITIAL			0x100000
-
-/* Address immediately beyond the beginning of the initial thread stack. */
-#define _POSIX_THREAD_ATTR_STACKSIZE
 
 /*
  * Define the different priority ranges.  All applications have thread
