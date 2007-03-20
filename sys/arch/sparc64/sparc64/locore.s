@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.70 2007/01/12 22:09:08 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.71 2007/03/20 12:47:46 todd Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -8376,7 +8376,7 @@ Lbzero_cleanup:
 	 stb	%o1, [%o0]		!	*addr = 0;
 Lbzero_done:
 	retl
-	 mov	%o4, %o0		! Restore ponter for memset (ugh)
+	 mov	%o4, %o0		! Restore pointer for memset (ugh)
 
 #if 1
 Lbzero_block:
