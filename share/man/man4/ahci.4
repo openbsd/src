@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ahci.4,v 1.2 2007/03/20 10:56:59 dlg Exp $
+.\"	$OpenBSD: ahci.4,v 1.3 2007/03/20 14:33:59 dlg Exp $
 .\"
 .\" Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
 .\"
@@ -22,14 +22,14 @@
 .Nd Advanced Host Controller Interface for Serial ATA
 .Sh SYNOPSIS
 .Cd "ahci* at pci?"
-.Cd "scsibus* at pci*"
+.Cd "scsibus* at ahci?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for Serial ATA controllers conforming to the
 Advanced Host Controller Interface specification.
 .Pp
-Several AHCI capable controllers also provide a compatality mode that
+Several AHCI capable controllers also provide a compatability mode that
 causes them to appear as a traditional ATA controller supported by
 .Xr pciide 4 .
 .Pp
