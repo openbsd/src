@@ -1,4 +1,4 @@
-.\"	$OpenBSD: changelist.5,v 1.1 2003/09/25 09:19:11 jmc Exp $
+.\"	$OpenBSD: changelist.5,v 1.2 2007/03/20 21:14:58 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -135,9 +135,13 @@ Removal of the
 file itself could cause confusion.
 .Pp
 .Nm
-cannot warn about files being added to the system.
+cannot warn about files being added to the system, although
+.Xr security 8
+will pick up on any files listed in
+.Pa /etc/changelist
+being added or deleted.
 .Pp
 If you hose your system configuration files,
 you just might be able to find the information you need in
 .Pa /var/backups .
-This is not a CAVEAT, but we had to warn you somehow!
+This is not a CAVEAT, but we had to let you know somehow!
