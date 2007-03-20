@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.39 2007/02/17 18:53:28 deanna Exp $ */
+/* $OpenBSD: acpibat.c,v 1.40 2007/03/20 15:17:21 mk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -77,7 +77,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if ((sc->sc_bat_present = res.v_integer & STA_BATTERY) != 0) {
+	if ((sc->sc_bat_present = aml_val2int(&res) & STA_BATTERY) != 0) {
 		acpibat_getbif(sc);
 		acpibat_getbst(sc);
 		printf(": %s: model: %s serial: %s type: %s oem: %s\n",
