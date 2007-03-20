@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.19 2007/03/19 06:37:01 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.20 2007/03/20 20:14:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -410,7 +410,7 @@ nmea_time_to_nano(char *s, int64_t *nano)
 	if (fac)
 		return -1;
 
-	/* Handle the fractions of a second, up to a maxmimum of 6 digits. */
+	/* Handle the fractions of a second, up to a maximum of 6 digits. */
 	div = 1L;
 	if (*s == '.') {
 		for (++s; div < 1000000 && *s && *s >= '0' && *s <= '9'; s++) {
