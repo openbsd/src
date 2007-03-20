@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.4 2007/03/19 22:33:15 dlg Exp $ */
+/* $OpenBSD: softraid.c,v 1.5 2007/03/20 02:48:22 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -603,6 +603,7 @@ sr_ioctl_disk(struct sr_softc *sc, struct bioc_disk *bd)
 		mc = sc->sc_dis[i]->sd_vol.sv_chunks[bd->bd_diskid];
 		bd->bd_status = mc->src_meta.scm_status;
 		bd->bd_size = mc->src_meta.scm_size;
+		bd->bd_target = bd->bd_diskid;
 		strlcpy(bd->bd_vendor, mc->src_meta.scm_devname,
 		    sizeof(bd->bd_vendor));
 		rv = 0;
