@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.26 2007/03/20 12:44:04 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.27 2007/03/20 13:01:04 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -555,13 +555,14 @@ atascsi_atapi_cmd(struct scsi_xfer *xs)
 
 	switch (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
 	case SCSI_DATA_IN:
-		xa->flags = ATA_F_READ | ATA_F_PACKET;
+		xa->flags = ATA_F_READ;
 		break;
 	case SCSI_DATA_OUT:
-		xa->flags = ATA_F_WRITE | ATA_F_PACKET;
+		xa->flags = ATA_F_WRITE;
 		break;
 	}
 
+	xa->flags |= ATA_F_PACKET;
 	xa->data = xs->data;
 	xa->datalen = xs->datalen;
 	xa->complete = atascsi_atapi_cmd_done;
