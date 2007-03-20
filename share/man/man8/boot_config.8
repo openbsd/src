@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_config.8,v 1.23 2004/12/20 22:12:43 jsg Exp $
+.\"	$OpenBSD: boot_config.8,v 1.24 2007/03/20 20:34:36 jmc Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson
 .\" All rights reserved.
@@ -95,6 +95,10 @@ has the value
 Change the
 .Va tz
 timezone structure.
+.Va minuteswest
+is the number of minutes west of GMT and
+.Va dst
+is non-zero if Daylight Saving Time is in effect.
 Without arguments, displays its current value.
 .It Ic verbose
 Toggle the autoconfig verbose variable.
