@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lint.1,v 1.22 2006/05/29 20:47:22 cloder Exp $
+.\"	$OpenBSD: lint.1,v 1.23 2007/03/20 16:16:44 jmc Exp $
 .\"	$NetBSD: lint.1,v 1.3 1995/10/23 13:45:31 jpo Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,17 +38,17 @@
 .Nd a C program verifier
 .Sh SYNOPSIS
 .Nm lint
-.Op Fl cefghprsvxzHFV
-.Op Fl i Ns | Ns Fl nu
+.Op Fl ceFfgHhprsVvxz
+.Op Fl i | nu
 .Op Fl D Ns Ar name Ns Op =def
-.Op Fl U Ns Ar name
 .Op Fl I Ns Ar directory
 .Op Fl L Ns Ar directory
 .Op Fl l Ns Ar library
 .Op Fl o Ns Ar outputfile
+.Op Fl U Ns Ar name
 .Ar
 .Nm lint
-.Op Fl cefghprsvzHFV
+.Op Fl ceFfgHhprsVvz
 .Fl C Ns Ar library
 .Op Fl D Ns Ar name Ns Op =def
 .Op Fl I Ns Ar directory
@@ -148,8 +148,35 @@ will be printed followed by a question mark.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl C Ns Ar library
+Create a
+.Nm
+library with the name
+.Pa llib-l Ns Ar library Ns Pa .ln .
+This library is built from all
+.Pa \&.c
+and
+.Pa \&.ln
+input files.
+After all global definitions of functions and
+variables in these files are written to the newly created library,
+.Nm
+checks all input files, including libraries specified with the
+.Fl l
+option, for mutual compatibility.
 .It Fl c
 Complain about casts which have questionable portability.
+.It Fl D Ns Ar name Ns Op =def
+Define
+.Ar name
+for
+.Xr cpp 1 ,
+as if by a
+.Li #define
+directive.
+If no definition is given,
+.Ar name
+is defined as 1.
 .It Fl e
 Complain about unusual operations on
 .Sy enum Ns -Types
@@ -157,6 +184,10 @@ and combinations of
 .Sy enum Ns -
 and
 .Sy integer Ns -Types.
+.It Fl F
+Print pathnames of files.
+.Nm
+normally prints the filename without the path.
 .It Fl f
 For each warning or error, print the offending line of the
 corresponding source code file.
@@ -180,9 +211,18 @@ and
 and
 .Sy inline
 are always available).
+.It Fl H
+If a complaint stems from an included file
+.Nm
+prints the name of the included file instead of the source file name
+followed by a question mark.
 .It Fl h
 Apply a number of heuristic tests to attempt to intuit
 bugs, improve style, and reduce waste.
+.It Fl I Ns Ar directory
+Add
+.Ar directory
+to the list of directories in which to search for include files.
 .It Fl i
 Produce a
 .Pa \&.ln
@@ -195,88 +235,17 @@ files are the product of
 .Nm lint Ns 's
 first pass only, and are not checked for compatibility
 between functions.
-.It Fl n
-Do not check compatibility against the standard library.
-.It Fl p
-Attempt to check portability of code to other dialects of C.
-.It Fl r
-In case of redeclarations report the position of the
-previous declaration.
-.It Fl s
-Strict ANSI C mode.
-Issue warnings and errors required by ANSI C.
-Also do not produce warnings for constructs which behave
-differently in traditional C and ANSI C.
-With the
-.Fl s
-flag,
-.Li __STRICT_ANSI__
-is a predefined preprocessor macro.
-.It Fl u
-Do not complain about functions and external variables used
-and not defined, or defined and not used (this is suitable
-for running
-.Nm
-on a subset of files comprising part of a larger program).
-.It Fl v
-Suppress complaints about unused arguments in functions.
-.It Fl x
-Report variables referred to by
-.Sy extern
-declarations, but never used.
-.It Fl z
-Do not complain about structures that are never defined
-(for example, using a structure pointer without knowing
-its contents).
-.It Fl C Ns Ar library
-Create a
-.Nm
-library with the name
-.Pa llib-l Ns Ar library Ns Pa .ln .
-This library is built from all
-.Pa \&.c
-and
-.Pa \&.ln
-input files.
-After all global definitions of functions and
-variables in these files are written to the newly created library,
-.Nm
-checks all input files, including libraries specified with the
-.Fl l
-option, for mutual compatibility.
-.It Fl D Ns Ar name Ns Op =def
-Define
-.Ar name
-for
-.Xr cpp 1 ,
-as if by a
-.Li #define
-directive.
-If no definition is given,
-.Ar name
-is defined as 1.
-.It Fl I Ns Ar directory
-Add
-.Ar directory
-to the list of directories in which to search for include files.
-.It Fl l Ns Ar library
-Include the lint library
-.Pa llib-l Ns Ar library Ns Pa \&.ln .
 .It Fl L Ns Ar directory
 Search for lint libraries in
 .Ar directory
 and
 .Ar directory Ns Pa /lint
 before searching the standard place.
-.It Fl F
-Print pathnames of files.
-.Nm
-normally prints the filename without the path.
-.It Fl H
-If a complaint stems from an included file
-.Nm
-prints the name of the included file instead of the source file name
-followed by a question mark.
+.It Fl l Ns Ar library
+Include the lint library
+.Pa llib-l Ns Ar library Ns Pa \&.ln .
+.It Fl n
+Do not check compatibility against the standard library.
 .It Fl o Ns Ar outputfile
 Name the output file
 .Ar outputfile .
@@ -298,15 +267,46 @@ The
 .Fl v
 option is useful if the source file(s) for the lint library
 are just external interfaces.
+.It Fl p
+Attempt to check portability of code to other dialects of C.
+.It Fl r
+In case of redeclarations report the position of the
+previous declaration.
+.It Fl s
+Strict ANSI C mode.
+Issue warnings and errors required by ANSI C.
+Also do not produce warnings for constructs which behave
+differently in traditional C and ANSI C.
+With the
+.Fl s
+flag,
+.Li __STRICT_ANSI__
+is a predefined preprocessor macro.
 .It Fl U Ns Ar name
 Remove any initial definition of
 .Ar name
 for the preprocessor.
+.It Fl u
+Do not complain about functions and external variables used
+and not defined, or defined and not used (this is suitable
+for running
+.Nm
+on a subset of files comprising part of a larger program).
 .It Fl V
 Print the command lines constructed by the controller program to
 run the C preprocessor and
 .Nm lint Ns 's
 first and second pass.
+.It Fl v
+Suppress complaints about unused arguments in functions.
+.It Fl x
+Report variables referred to by
+.Sy extern
+declarations, but never used.
+.It Fl z
+Do not complain about structures that are never defined
+(for example, using a structure pointer without knowing
+its contents).
 .El
 .Pp
 .Sy Input Grammar
