@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.16 2007/03/20 04:38:11 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.17 2007/03/20 05:33:02 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -272,7 +272,9 @@ ata_setup_identify(struct ata_port *ap, int nosleep)
 	bzero(xa->data, 512);
 	xa->datalen = 512;
 
-	xa->cmd.command = ATA_C_IDENTIFY;
+	xa->cmd.tx->regs[H2D_DEVCTL_OR_COMMAND] = H2D_DEVCTL_OR_COMMAND_COMMAND;
+	xa->cmd.tx->regs[H2D_COMMAND] = ATA_C_IDENTIFY;
+
 	xa->cmd.st_bmask = 0x40; /* XXX magic WDCS_DRDY */;
 	xa->cmd.st_pmask = 0x00;
 

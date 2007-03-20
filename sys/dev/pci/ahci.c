@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.78 2007/03/20 04:38:11 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.79 2007/03/20 05:33:02 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -859,6 +859,8 @@ nomem:
 		ccb->ccb_cmd_hdr->ctba_hi = htole32((u_int32_t)(dva >> 32));
 		ccb->ccb_cmd_hdr->ctba_lo = htole32((u_int32_t)dva);
 
+		ccb->ccb_xa.cmd.tx = (struct ata_regs *)ccb->ccb_cmd_table->cfis;
+
 		ccb->ccb_xa.ata_put_xfer = ahci_ata_put_xfer;
 
 		ahci_put_ccb(ccb);
@@ -1633,41 +1635,19 @@ ahci_ata_cmd(struct ata_xfer *xa)
 {
 	struct ahci_ccb			*ccb = (struct ahci_ccb *)xa;
 	struct ahci_cmd_hdr		*cmd_slot;
-	u_int8_t			*fis;
 	int				s;
 
 	ccb->ccb_done = ahci_ata_cmd_done;
-	cmd_slot = ccb->ccb_cmd_hdr;
-	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
+	ccb->ccb_cmd_table->cfis[0] = REGS_TYPE_REG_H2D;
 
-	fis = ccb->ccb_cmd_table->cfis;
-	fis[0] = 0x27;
-	fis[1] = 0x80;
-	fis[2] = xa->cmd.command;
-	fis[3] = xa->cmd.features;
-	fis[4] = xa->cmd.sector;
-	fis[5] = (xa->cmd.cyl & 0xff);
-	fis[6] = (xa->cmd.cyl >> 8) & 0xff;
-	fis[7] = xa->cmd.head & 0x0f;
-	fis[8] = 0;
-	fis[9] = 0;
-	fis[10] = 0;
-	fis[11] = 0;
-	fis[12] = xa->cmd.count;
-	fis[13] = 0;
-	fis[14] = 0;
-	fis[15] = 0x08;
-	fis[16] = 0;
-	fis[17] = 0;
-	fis[18] = 0;
-	fis[19] = 0;
+	cmd_slot = ccb->ccb_cmd_hdr;
+	cmd_slot->flags = htole16(5); /* FIS length (in DWORDs) */
+
+	if (xa->flags & ATA_F_WRITE)
+		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
 
 	if (ahci_load_prdt(ccb) != 0)
 		goto failcmd;
-
-	cmd_slot->flags = htole16(5); /* FIS length (in DWORDs) */
-	if (xa->flags & ATA_F_WRITE)
-		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
 
 	xa->state = ATA_S_PENDING;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.9 2007/03/20 04:38:11 pascoe Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.10 2007/03/20 05:33:02 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -43,16 +43,60 @@ struct ata_port {
 #define ATA_PORT_T_ATAPI		2
 };
 
+/* These offsets correspond with the layout of the SATA Host to Device
+ * and Device to Host FISes.  Do not change them. */
+enum ata_register_map {
+	REGS_TYPE = 0,
+	FIS_TYPE = 0,
+#define REGS_TYPE_REG_H2D		0x27
+#define REGS_TYPE_REG_D2H		0x34
+#define REGS_TYPE_SDB_D2H		0xA1
+	H2D_DEVCTL_OR_COMMAND = 1,
+#define H2D_DEVCTL_OR_COMMAND_DEVCTL	0x00
+#define H2D_DEVCTL_OR_COMMAND_COMMAND	0x80
+#define H2D_DEVCTL_OR_COMMAND_PMULT_MSK	0x0f
+	D2H_INTERRUPT = 1,
+#define D2H_INTERRUPT_INTERRUPT		0x40
+	H2D_COMMAND = 2,
+	D2H_STATUS = 2,
+	H2D_FEATURES = 3,
+	D2H_ERROR = 3,
+	SECTOR_NUM = 4,
+	LBA_LOW = 4,
+	CYL_LOW = 5,
+	LBA_MID = 5,
+	CYL_HIGH = 6,
+	LBA_HIGH = 6,
+	DEVICE_HEAD = 7,
+	DEVICE = 7,
+	SECTOR_NUM_EXP = 8,
+	LBA_LOW_EXP = 8,
+	CYL_LOW_EXP = 9,
+	LBA_MID_EXP = 9,
+	CYL_HIGH_EXP = 10,
+	LBA_HIGH_EXP = 10,
+	FEATURES_EXP = 11,
+	SECTOR_COUNT = 12,
+	SECTOR_COUNT_EXP = 13,
+	RESERVED_14 = 14,
+	CONTROL = 15,
+	RESERVED_16 = 16,
+	RESERVED_17 = 17,
+	RESERVED_18 = 18,
+	RESERVED_19 = 19,
+	MAX_ATA_REGS = 20
+};
+
+struct ata_regs {
+	u_int8_t		regs[MAX_ATA_REGS];
+};
+
 struct ata_cmd {
-	u_int8_t		command;
-	u_int8_t		head;
-	u_int16_t		cyl;
-	u_int8_t		sector;
-	u_int8_t		count;
-	u_int8_t		features;
+	struct ata_regs		*tx;
+	struct ata_regs		rx_err;
+
 	u_int8_t		st_bmask;
 	u_int8_t		st_pmask;
-	u_int8_t		error;
 };
 
 struct ata_xfer {
