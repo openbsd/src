@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.25 2007/03/20 12:31:49 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.26 2007/03/20 12:44:04 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -383,7 +383,6 @@ atascsi_disk_inq(struct scsi_xfer *xs)
 	struct atascsi		*as = link->adapter_softc;
 	struct ata_port		*ap = as->as_ports[link->target];
 	struct ata_xfer		*xa;
-	int			s;
 
 	xa = ata_setup_identify(ap, xs->flags & SCSI_NOSLEEP);
 	if (xa == NULL)
@@ -452,7 +451,6 @@ atascsi_disk_capacity(struct scsi_xfer *xs)
 	struct atascsi		*as = link->adapter_softc;
 	struct ata_port		*ap = as->as_ports[link->target];
 	struct ata_xfer		*xa;
-	int			s;
 
 	xa = ata_setup_identify(ap, xs->flags & SCSI_NOSLEEP);
 	if (xa == NULL)
@@ -642,7 +640,7 @@ atascsi_stuffup(struct scsi_xfer *xs)
 int
 ata_exec(struct atascsi *as, struct ata_xfer *xa)
 {
-	switch (as->as_methods->ata_issue_cmd(xa)) {
+	switch (as->as_methods->ata_cmd(xa)) {
 	case ATA_COMPLETE:
 	case ATA_ERROR:
 		return (COMPLETE);
