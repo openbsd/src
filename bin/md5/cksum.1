@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.12 2007/02/27 21:41:58 millert Exp $
+.\"	$OpenBSD: cksum.1,v 1.13 2007/03/20 12:06:48 thib Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -133,7 +133,9 @@ Use historic algorithms instead of the (superior) default one
 Echoes stdin to stdout and appends the
 checksum to stdout.
 .It Fl q
-Only print the checksum (quiet mode).
+Only print the checksum (quiet mode) or if used in conjunction with the
+.Fl c
+flag, only print the failed cases.
 .It Fl r
 Reverse the format of the hash algorithm output, making
 it match the checksum output format.

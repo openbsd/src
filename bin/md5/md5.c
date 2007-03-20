@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.39 2007/01/09 18:06:07 deraadt Exp $	*/
+/*	$OpenBSD: md5.c,v 1.40 2007/03/20 12:06:48 thib Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -165,13 +165,14 @@ void digest_test(struct hash_functions **);
 void digest_time(struct hash_functions **);
 
 extern char *__progname;
+int qflag = 0;
 
 int
 main(int argc, char **argv)
 {
 	struct hash_functions *hf, *hashes[NHASHES + 1];
 	int fl, i, error;
-	int cflag, pflag, qflag, rflag, tflag, xflag;
+	int cflag, pflag, rflag, tflag, xflag;
 	char *cp, *input_string;
 
 	input_string = NULL;
@@ -249,8 +250,6 @@ main(int argc, char **argv)
 		if (hashes[1] != NULL)
 			errx(1, "only a single algorithm may be specified "
 			    "in -c mode");
-		if (qflag)
-			errx(1, "the -q and -c flags are mutually exclusive");
 	}
 
 	/* No algorithm specified, check the name we were called as. */
@@ -523,9 +522,10 @@ digest_filelist(const char *file, struct hash_functions *defhash)
 		close(fd);
 		(void)hf->end(&context, digest);
 
-		if (strcasecmp(checksum, digest) == 0)
-			(void)printf("(%s) %s: OK\n", algorithm, filename);
-		else {
+		if (strcasecmp(checksum, digest) == 0) {
+			if (qflag == 0)
+				(void)printf("(%s) %s: OK\n", algorithm, filename);
+		} else {
 			(void)printf("(%s) %s: FAILED\n", algorithm, filename);
 			error = 1;
 		}
