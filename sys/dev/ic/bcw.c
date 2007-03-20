@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.78 2007/03/20 11:55:36 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.79 2007/03/20 13:52:48 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -1497,6 +1497,11 @@ bcw_set_opmode(struct ifnet *ifp)
 	BCW_WRITE16(sc, 0x0612, val);
 }
 
+/*
+ * Enable MAC on a PHY
+ *
+ * http://bcm-specs.sipsolutions.net/EnableMAC
+ */
 void
 bcw_mac_enable(struct bcw_softc *sc)
 {
@@ -3191,6 +3196,11 @@ bcw_sprom_read(struct bcw_softc *sc, uint16_t *sprom)
 	return (0);
 }
 
+/*
+ * Extract whole SPROM content
+ *
+ * http://bcm-specs.sipsolutions.net/SPROM
+ */
 int
 bcw_sprom_extract(struct bcw_softc *sc)
 {
