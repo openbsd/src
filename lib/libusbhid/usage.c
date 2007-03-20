@@ -1,4 +1,4 @@
-/*	$OpenBSD: usage.c,v 1.11 2006/10/27 15:26:25 deraadt Exp $	*/
+/*	$OpenBSD: usage.c,v 1.12 2007/03/20 03:42:52 tedu Exp $	*/
 /*	$NetBSD: usage.c,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ hid_start(const char *hidname)
 			break;
 		if (line[0] == '#')
 			continue;
-		for (p = line; *p && isspace(*p); p++)
+		for (p = line; isspace(*p); p++)
 			;
 		if (!*p)
 			continue;

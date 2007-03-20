@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt_scaled.c,v 1.8 2005/10/19 18:48:11 deraadt Exp $	*/
+/*	$OpenBSD: fmt_scaled.c,v 1.9 2007/03/20 03:42:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Ian F. Darwin.  All rights reserved.
@@ -77,7 +77,7 @@ scan_scaled(char *scaled, long long *result)
 	long long scale_fact = 1, whole = 0, fpart = 0;
 
 	/* Skip leading whitespace */
-	while (*p && isascii(*p) && isspace(*p))
+	while (isascii(*p) && isspace(*p))
 		++p;
 
 	/* Then at most one leading + or - */
@@ -104,7 +104,7 @@ scan_scaled(char *scaled, long long *result)
 	 * (but note that E for Exa might look like e to some!).
 	 * Advance 'p' to end, to get scale factor.
 	 */
-	for (; *p && isascii(*p) && (isdigit(*p) || *p=='.'); ++p) {
+	for (; isascii(*p) && (isdigit(*p) || *p=='.'); ++p) {
 		if (*p == '.') {
 			if (fract_digits > 0) {	/* oops, more than one '.' */
 				errno = EINVAL;
@@ -151,7 +151,7 @@ scan_scaled(char *scaled, long long *result)
 			*p == tolower(scale_chars[i])) {
 
 			/* If it ends with alphanumerics after the scale char, bad. */
-			if (*(p+1) != '\0' && isalnum(*(p+1))) {
+			if (isalnum(*(p+1))) {
 				errno = EINVAL;
 				return -1;
 			}
