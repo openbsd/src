@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.38 2005/07/04 01:54:10 djm Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.39 2007/03/20 15:48:10 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@ static const char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static const char rcsid[] = "$OpenBSD: rsh.c,v 1.38 2005/07/04 01:54:10 djm Exp $";
+static const char rcsid[] = "$OpenBSD: rsh.c,v 1.39 2007/03/20 15:48:10 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -311,6 +311,6 @@ __dead void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: rsh [-Kdn] [-l username] hostname [command]\n");
+	    "usage: rsh [-dn] [-l username] hostname [command]\n");
 	exit(1);
 }
