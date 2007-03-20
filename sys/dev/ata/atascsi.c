@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.24 2007/03/20 12:24:02 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.25 2007/03/20 12:31:49 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -473,7 +473,7 @@ atascsi_disk_capacity_done(struct ata_xfer *xa)
 	struct scsi_xfer	*xs = xa->atascsi_private;
 	struct ata_identify	id;
 	struct scsi_read_cap_data rcd;
-	u_int32_t		capacity;
+	u_int64_t		capacity;
 	int			i;
 
 	switch (xa->state) {
@@ -491,6 +491,10 @@ atascsi_disk_capacity_done(struct ata_xfer *xa)
 			capacity <<= 16;
 			capacity += id.addrsec[0];
 		}
+
+		/* XXX SCSI layer can't handle a device this big yet */
+		if (capacity > 0xffffffff)
+			capacity = 0xffffffff;
 
 		_lto4b(capacity - 1, rcd.addr);
 		_lto4b(512, rcd.length);
