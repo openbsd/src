@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio.c,v 1.8 2006/05/29 09:34:38 mk Exp $	*/
+/*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -132,7 +132,7 @@ bio_lookup(char *name)
 {
 	struct bio_mapping *bm;
 
-	for (bm = LIST_FIRST(&bios); bm != NULL; bm = LIST_NEXT(bm, bm_link))
+	LIST_FOREACH(bm, &bios, bm_link)
 		if (strcmp(name, bm->bm_dev->dv_xname) == 0)
 			return (bm);
 	return (NULL);
@@ -143,7 +143,7 @@ bio_validate(void *cookie)
 {
 	struct bio_mapping *bm;
 
-	for (bm = LIST_FIRST(&bios); bm != NULL; bm = LIST_NEXT(bm, bm_link))
+	LIST_FOREACH(bm, &bios, bm_link)
 		if (bm == cookie)
 			return (1);
 	return (0);
