@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.45 2006/05/17 12:44:16 markus Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.46 2007/03/20 18:50:11 jmc Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: rcp.c,v 1.45 2006/05/17 12:44:16 markus Exp $";
+static const char rcsid[] = "$OpenBSD: rcp.c,v 1.46 2007/03/20 18:50:11 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -871,16 +871,10 @@ response(void)
 void
 usage(void)
 {
-#ifdef KERBEROS
-	(void)fprintf(stderr, "usage: %s [-Kpx] [-k realm] f1 f2\n",
-	    __progname);
- 	(void)fprintf(stderr, "       %s [-Kprx] [-k realm] f1 ... fn directory\n",
-	    __progname);
-#else
 	(void)fprintf(stderr,
-	    "usage: %s [-p] f1 f2; or: rcp [-pr] f1 ... fn directory\n",
-	    __progname);
-#endif
+	    "usage: %s [-p] file1 file2\n"
+	    "       %s [-pr] file ...  directory\n",
+	    __progname, __progname);
 	exit(1);
 }
 
