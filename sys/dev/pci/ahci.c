@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.84 2007/03/20 07:38:45 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.85 2007/03/20 08:47:46 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -36,7 +36,8 @@
 #define AHCI_DEBUG
 
 #ifdef AHCI_DEBUG
-#define DPRINTF(m, f...) do { if (ahcidebug & (m)) printf(f); } while (0)
+#define DPRINTF(m, f...) do { if ((ahcidebug & (m)) == (m)) printf(f); } while (0)
+#define AHCI_D_TIMEOUT		0x00
 #define AHCI_D_VERBOSE		0x01
 #define AHCI_D_INTR		0x02
 #define AHCI_D_XFER		0x08
@@ -417,7 +418,7 @@ int			ahci_port_portreset(struct ahci_port *);
 int			ahci_load_prdt(struct ahci_ccb *);
 void			ahci_unload_prdt(struct ahci_ccb *);
 
-int			ahci_poll(struct ahci_ccb *, int);
+int			ahci_poll(struct ahci_ccb *, int, void (*)(void *));
 void			ahci_start(struct ahci_ccb *);
 
 int			ahci_intr(void *);
@@ -465,6 +466,7 @@ struct atascsi_methods ahci_atascsi_methods = {
 
 /* ccb completions */
 void			ahci_ata_cmd_done(struct ahci_ccb *);
+void			ahci_ata_cmd_timeout(void *);
 void			ahci_empty_done(struct ahci_ccb *);
 
 const struct ahci_device *
@@ -1106,7 +1108,8 @@ ahci_port_softreset(struct ahci_port *ap)
 	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_R); /* Reset */
 	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W); /* Write */
 
-	if (ahci_poll(ccb, 1000) != 0)
+	ccb->ccb_xa.state = ATA_S_PENDING;
+	if (ahci_poll(ccb, 1000, NULL) != 0)
 		goto err;
 
 	/* Prep second D2H command to read status and complete reset sequence */
@@ -1120,7 +1123,8 @@ ahci_port_softreset(struct ahci_port *ap)
 	cmd_slot->flags = htole16(5);	/* FIS length: 5 DWORDS */
 	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
 
-	if (ahci_poll(ccb, 1000) != 0)
+	ccb->ccb_xa.state = ATA_S_PENDING;
+	if (ahci_poll(ccb, 1000, NULL) != 0)
 		goto err;
 
 	if (ahci_pwait_clr(ap, AHCI_PREG_TFD, AHCI_PREG_TFD_STS_BSY |
@@ -1275,7 +1279,7 @@ ahci_unload_prdt(struct ahci_ccb *ccb)
 
 
 int
-ahci_poll(struct ahci_ccb *ccb, int timeout)
+ahci_poll(struct ahci_ccb *ccb, int timeout, void (*timeout_fn)(void *))
 {
 	struct ahci_port		*ap = ccb->ccb_port;
 	int				s;
@@ -1290,9 +1294,12 @@ ahci_poll(struct ahci_ccb *ccb, int timeout)
 
 		delay(1000);
 	} while (--timeout > 0);
-	splx(s);
 
-	/* XXX cleanup! */
+	/* Run timeout while at splbio, otherwise ahci_intr could interfere. */
+	if (timeout_fn != NULL)
+		timeout_fn(ccb);
+	
+	splx(s);
 
 	return (1);
 }
@@ -1318,6 +1325,7 @@ ahci_start(struct ahci_ccb *ccb)
 	bus_dmamap_sync(sc->sc_dmat, AHCI_DMA_MAP(ap->ap_dmamem_rfis), 0,
 	    sizeof(struct ahci_rfis), BUS_DMASYNC_PREREAD);
 
+	ccb->ccb_xa.state = ATA_S_ONCHIP;
 	ap->ap_active |= 1 << ccb->ccb_slot;
 	ahci_pwrite(ap, AHCI_PREG_CI, 1 << ccb->ccb_slot);
 }
@@ -1672,13 +1680,17 @@ ahci_ata_cmd(struct ata_xfer *xa)
 	if (ahci_load_prdt(ccb) != 0)
 		goto failcmd;
 
+	timeout_set(&xa->stimeout, ahci_ata_cmd_timeout, ccb);
+
 	xa->state = ATA_S_PENDING;
 
 	if (xa->flags & ATA_F_POLL) {
-		if (ahci_poll(ccb, 1000) != 0)
+		if (ahci_poll(ccb, 1000, ahci_ata_cmd_timeout) != 0)
 			return (ATA_ERROR);
 		return (ATA_COMPLETE);
 	}
+
+	timeout_add(&xa->stimeout, (xa->timeout * hz) / 1000);
 
 	s = splbio();
 	ahci_start(ccb);
@@ -1698,10 +1710,78 @@ ahci_ata_cmd_done(struct ahci_ccb *ccb)
 {
 	struct ata_xfer			*xa = &ccb->ccb_xa;
 
+	timeout_del(&xa->stimeout);
+
 	ahci_unload_prdt(ccb);
 
-	xa->state = ATA_S_COMPLETE;
+	if (xa->state == ATA_S_ONCHIP)
+		xa->state = ATA_S_COMPLETE;
+	if (xa->state != ATA_S_TIMEOUT)
+		xa->complete(xa);
+}
+
+void
+ahci_ata_cmd_timeout(void *arg)
+{
+	struct ahci_ccb			*ccb = arg;
+	struct ata_xfer			*xa = &ccb->ccb_xa;
+	struct ahci_port		*ap = ccb->ccb_port;
+	int				s;
+
+	s = splbio();
+
+	if (ccb->ccb_xa.state == ATA_S_PENDING) {
+		DPRINTF(AHCI_D_TIMEOUT, "%s: command for slot %d timed out "
+		    "before it got on chip\n", PORTNAME(ap), ccb->ccb_slot);
+	} else if (ccb->ccb_xa.state == ATA_S_ONCHIP && ahci_port_intr(ap,
+	    1 << ccb->ccb_slot)) {
+		DPRINTF(AHCI_D_TIMEOUT, "%s: final poll of port completed "
+		    "command in slot %d\n", PORTNAME(ap), ccb->ccb_slot);
+		goto ret;
+	} else if (ccb->ccb_xa.state != ATA_S_ONCHIP) {
+		DPRINTF(AHCI_D_TIMEOUT, "%s: command slot %d already "
+		    "handled%s\n", PORTNAME(ap), ccb->ccb_slot, 
+		    ISSET(ap->ap_active, 1 << ccb->ccb_slot) ? 
+		    " but slot is still active?" : ".");
+		goto ret;
+	} else if (!ISSET(ahci_pread(ap, AHCI_PREG_CI), 1 << ccb->ccb_slot) &&
+	    ISSET(ap->ap_active, 1 << ccb->ccb_slot)) {
+		DPRINTF(AHCI_D_TIMEOUT, "%s: command slot %d completed but "
+		    "IRQ handler didn't detect it.  Why?\n", PORTNAME(ap),
+		    ccb->ccb_slot);
+		ap->ap_active &= ~(1 << ccb->ccb_slot);
+		ccb->ccb_done(ccb);
+		goto ret;
+	}
+
+	/* Complete the slot with timeout flag set. */
+	ccb->ccb_xa.state = ATA_S_TIMEOUT;
+	ap->ap_active &= ~(1 << ccb->ccb_slot);
+	DPRINTF(AHCI_D_TIMEOUT, "%s: run completion (1)\n", PORTNAME(ap));
+	ccb->ccb_done(ccb);
+
+	/* Reset port. */
+	DPRINTF(AHCI_D_TIMEOUT, "%s: resetting port to abort command in slot %d, "
+	    "active %08x\n", PORTNAME(ap), ccb->ccb_slot, ap->ap_active);
+	if (ahci_port_softreset(ap) != 0 && ahci_port_portreset(ap) != 0) {
+		DPRINTF(AHCI_D_TIMEOUT, "%s: failed to reset port\n",
+		    PORTNAME(ap));
+	}
+
+	/* Restart any outstanding commands that were stopped by the reset. */
+	if (ap->ap_active) {
+		DPRINTF(AHCI_D_TIMEOUT, "%s: re-enabling slots %08x\n",
+		    PORTNAME(ap), ap->ap_active);
+		ahci_pwrite(ap, AHCI_PREG_CI, ap->ap_active);
+	}
+
+	/* Complete the timed out ata_xfer I/O (may generate new I/O). */
+	DPRINTF(AHCI_D_TIMEOUT, "%s: run completion (2)\n", PORTNAME(ap));
 	xa->complete(xa);
+
+	DPRINTF(AHCI_D_TIMEOUT, "%s: splx\n", PORTNAME(ap));
+ret:
+	splx(s);
 }
 
 void
