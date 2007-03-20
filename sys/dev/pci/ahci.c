@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.83 2007/03/20 07:36:21 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.84 2007/03/20 07:38:45 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -702,12 +702,12 @@ ahci_init(struct ahci_softc *sc)
 		}
 	}
 
+	/* enable ahci (global interrupts disabled) */
+	ahci_write(sc, AHCI_REG_GHC, AHCI_REG_GHC_AE);
+
 	/* restore parameters */
 	ahci_write(sc, AHCI_REG_CAP, cap);
 	ahci_write(sc, AHCI_REG_PI, pi);
-
-	/* enable ahci (global interrupts disabled) */
-	ahci_write(sc, AHCI_REG_GHC, AHCI_REG_GHC_AE);
 
 	/* check the revision */
 	reg = ahci_read(sc, AHCI_REG_VS);
