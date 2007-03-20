@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.42 2007/03/20 03:40:38 todd Exp $
+.\"	$OpenBSD: bioctl.8,v 1.43 2007/03/20 06:12:11 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -85,7 +85,9 @@ Create a
 .Xr softraid 4
 device of level
 .Ar raidlevel .
-The device must begin with 'softraid' followed by a number.
+The device must begin with
+.Dq softraid
+followed by a number.
 .It Fl D
 Enable debug output.
 .It Fl H Ar channel:target[.lun]
@@ -106,8 +108,10 @@ Enumerate the selected RAID devices.
 Use
 .Ar special
 device list to create within the
-.Xr softraid 4 framework.  Requires
-.Fl -c .
+.Xr softraid 4
+framework.
+Requires
+.Fl c .
 .It Fl u Ar channel:target[.lun]
 Instruct the device at
 .Ar channel:target[.lun]
@@ -131,8 +135,8 @@ enclosures, it is also possible to directly specify the enclosure name
 The following command, executed from the command line, would configure
 the device softraid0 with 4 special devices
 (/dev/sd2e, /dev/sd3e, /dev/sd4e, /dev/sd5e) and
-a raid level of 1.
-.Bd -literal -offset indent
+a raid level of 1:
+.Bd -literal -offset 3n
 # bioctl -c 1 -l /dev/sd2e,/dev/sd3e,/dev/sd4e,/dev/sd5e softraid0
 .Ed
 .Sh SEE ALSO
@@ -144,7 +148,7 @@ a raid level of 1.
 .Xr safte 4 ,
 .Xr scsi 4 ,
 .Xr ses 4 ,
-.Xr softraid 4 .
+.Xr softraid 4
 .Sh HISTORY
 The
 .Nm
