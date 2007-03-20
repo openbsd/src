@@ -1,0 +1,91 @@
+.\"	$OpenBSD: softraid.4,v 1.1 2007/03/20 03:40:38 todd Exp $
+.\"
+.\" Copyright (c) 2007 Todd T. Fries <todd@OpenBSD.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd March 19, 2007
+.Dt SOFTRAID 4
+.Os
+.Sh NAME
+.Nm softraid
+.Nd Software RAID
+.Sh SYNOPSIS
+.Cd "softraid0 at root"
+.Cd "scsibus*  at softraid?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides RAID 1 capabilities to
+.Ox .
+.Pp
+It provides a single RAID level:
+.Bl -tag -width indent -offset indent
+.\" .It RAID 0
+.\" provides simple data striping across the components.
+.It RAID 1
+provides mirroring.
+.\" .It RAID 5
+.\" provides data striping across the components, with parity
+.\" distributed across all the components.
+.El
+.Pp
+See
+.Xr bioctl 8
+for more information on configuration of RAID sets.
+.Pp
+The first step to using the
+.Nm
+driver is to ensure that it is suitably configured in the kernel.
+This is done by adding the following lines
+to the kernel configuration file:
+.Bd -literal -offset indent
+softraid0       at root         # Software RAID
+scsibus*        at softraid?
+.Ed
+.Pp
+All component partitions must be of type
+.Dv RAID .
+Some platforms, such as SUN, are not capable of using the
+.Dv RAID
+partition type.  The
+.Dv 4.2BSD
+partition type should be used on such platforms.
+.Sh SEE ALSO
+.Xr sd 4 ,
+.Xr wd 4 ,
+.Xr bioctl 8 ,
+.Xr config 8 ,
+.Xr fsck 8 ,
+.Xr MAKEDEV 8 ,
+.Xr mount 8 ,
+.Xr newfs 8
+.Sh HISTORY
+The
+.Nm
+driver in
+.Ox
+is an original work by Marco Peereboom.
+It first appeared in
+.Ox 4.2 .
+.Sh CAVEATS
+RAID level 1 can protect against some
+data loss due to component failure.
+However the loss of all components of a RAID 0 system
+will result in the entire filesystems on that RAID device
+being lost.
+RAID is
+.Em not
+a substitute for good backup practices.
+.Sh BUGS
+The driver is currently unable to handle drive failures.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.41 2006/09/03 18:37:44 marco Exp $
+.\"	$OpenBSD: bioctl.8,v 1.42 2007/03/20 03:40:38 todd Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -35,7 +35,9 @@
 .Op Fl Dhiv
 .Op Fl a Ar alarm-function
 .Op Fl b Ar channel:target[.lun]
+.Op Fl c Ar raidlevel
 .Op Fl H Ar channel:target[.lun]
+.Op Fl l Ar special[,special[,...]]
 .Op Fl u Ar channel:target[.lun]
 .Ar device
 .Ek
@@ -78,6 +80,12 @@ to start blinking, if there is
 or
 .Xr safte 4
 support in the enclosure.
+.It Fl c Ar raidlevel
+Create a
+.Xr softraid 4
+device of level
+.Ar raidlevel .
+The device must begin with 'softraid' followed by a number.
 .It Fl D
 Enable debug output.
 .It Fl H Ar channel:target[.lun]
@@ -94,6 +102,12 @@ Gigabyte, Terabyte, Petabyte, Exabyte in order to reduce the number of
 digits to four or less.
 .It Fl i
 Enumerate the selected RAID devices.
+.It Fl l Ar special[,special[,...]]
+Use
+.Ar special
+device list to create within the
+.Xr softraid 4 framework.  Requires
+.Fl -c .
 .It Fl u Ar channel:target[.lun]
 Instruct the device at
 .Ar channel:target[.lun]
@@ -113,6 +127,14 @@ or
 enclosures, it is also possible to directly specify the enclosure name
 (e.g. safte0).
 .El
+.Sh EXAMPLES
+The following command, executed from the command line, would configure
+the device softraid0 with 4 special devices
+(/dev/sd2e, /dev/sd3e, /dev/sd4e, /dev/sd5e) and
+a raid level of 1.
+.Bd -literal -offset indent
+# bioctl -c 1 -l /dev/sd2e,/dev/sd3e,/dev/sd4e,/dev/sd5e softraid0
+.Ed
 .Sh SEE ALSO
 .Xr ami 4 ,
 .Xr arc 4 ,
@@ -121,7 +143,8 @@ enclosures, it is also possible to directly specify the enclosure name
 .Xr mfi 4 ,
 .Xr safte 4 ,
 .Xr scsi 4 ,
-.Xr ses 4
+.Xr ses 4 ,
+.Xr softraid 4 .
 .Sh HISTORY
 The
 .Nm
