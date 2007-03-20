@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.30 2007/03/18 14:40:47 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.31 2007/03/20 11:55:36 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -200,6 +200,39 @@ struct bcw_chain_data {
 struct bcw_rx_ring;
 struct bcw_tx_ring;
 
+#define BCW_SPROM_SIZE			64	/* in 16-bit words */
+struct bcw_sprom {
+	uint16_t	boardflags2;
+	uint8_t		il0macaddr[6];
+	uint8_t		et0macaddr[6];
+	uint8_t		et1macaddr[6];
+	uint8_t		et1phyaddr:5;
+	uint8_t		et0phyaddr:5;
+	uint8_t		et0mdcport:1;
+	uint8_t		et1mdcport:1;
+	uint8_t		boardrev;
+	uint8_t		locale:4;
+	uint8_t		antennas_aphy:2;
+	uint8_t		antennas_bgphy:2;
+	uint16_t	pa0b0;
+	uint16_t	pa0b1;
+	uint16_t	pa0b2;
+	uint8_t		wl0gpio0;
+	uint8_t		wl0gpio1;
+	uint8_t		wl0gpio2;
+	uint8_t		wl0gpio3;
+	uint8_t		maxpower_aphy;
+	uint8_t		maxpower_bgphy;
+	uint16_t	pa1b0;
+	uint16_t	pa1b1;
+	uint16_t	pa1b2;
+	uint8_t		idle_tssi_tgt_aphy;
+	uint8_t		idle_tssi_tgt_bgphy;
+	uint16_t	boardflags;
+	uint16_t	antennagain_aphy;
+	uint16_t	antennagain_bgphy;
+};
+
 /* Needs to have garbage removed */
 struct bcw_softc {
 	struct device		sc_dev;
@@ -280,7 +313,6 @@ struct bcw_softc {
 	uint16_t		sc_havecommon;
 	int			sc_currentcore;
 	int			sc_lastcore;
-	uint8_t			sc_radio_gain;
 	uint16_t		sc_radio_pa0b0;
 	uint16_t		sc_radio_pa0b1;
 	uint16_t		sc_radio_pa0b2;
@@ -298,6 +330,7 @@ struct bcw_softc {
 	uint8_t			sc_spromrev;
 	uint16_t		sc_boardflags;
 	uint8_t			sc_sbrev; /* Sonics Backplane Revision */
+	struct bcw_sprom	sc_sprom;
 	/* Core locations */
 	struct bcw_core		*sc_core_common;
 	struct bcw_core		*sc_core_80211;

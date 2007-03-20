@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.77 2007/03/18 15:00:28 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.78 2007/03/20 11:55:36 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -140,6 +140,10 @@ void			bcw_leds_switch_all(struct bcw_softc *, int);
 int			bcw_gpio_init(struct bcw_softc *);
 int			bcw_chip_init(struct bcw_softc *);
 int			bcw_80211_core_init(struct bcw_softc *, int);
+uint8_t			bcw_sprom_crc8(uint8_t, uint8_t);
+uint8_t			bcw_sprom_crc(const uint16_t *);
+int			bcw_sprom_read(struct bcw_softc *, uint16_t *);
+int			bcw_sprom_extract(struct bcw_softc *);
 
 /*
  * PHY
@@ -902,39 +906,6 @@ bcw_attach(struct bcw_softc *sc)
 	    sc->sc_board_vendor, sc->sc_board_type, sc->sc_board_rev));
 
 	/*
-	 * Don't reset the chip here, we can only reset each core and we
-	 * haven't identified the cores yet.
-	 */
-	//bcw_reset(sc);
-
-	/*
-	 * Attach to the Backplane and start the card up
-	 */
-
-	/*
-	 * Get a copy of the BoardFlags and fix for broken boards.
-	 * This needs to be done as soon as possible to determine if the
-	 * board supports power control settings. If so, the board has to
-	 * be powered on and the clock started. This may even need to go
-	 * before the initial chip reset above.
-	 */
-	sc->sc_boardflags = BCW_READ16(sc, BCW_SPROM_BOARDFLAGS);
-
-	/*
-	 * Dell, Product ID 0x4301 Revision 0x74, set BCW_BF_BTCOEXIST
-	 * Apple Board Type 0x4e Revision > 0x40, set BCW_BF_PACTRL
-	 */
-
-	/*
-	 * Should just about everything below here be moved to external files
-	 * to keep this file sane? The BCM43xx chips have so many exceptions
-	 * based on the version of the chip, the radio, cores and phys that
-	 * it would be a huge mess to inline it all here. See the 100 lines
-	 * below for an example of just figuring out what the chip id is and
-	 * how many cores it has.
-	 */
-
-	/*
 	 * Try and change to the ChipCommon Core
 	 */
 	if (bcw_change_core(sc, 0) == 0)
@@ -1252,37 +1223,19 @@ bcw_attach(struct bcw_softc *sc)
 
 	bcw_radio_off(sc);
 
-	/* Read antenna gain from SPROM and multiply by 4 */
-	sbval = BCW_READ16(sc, BCW_SPROM_ANTGAIN);
-	/* If unset, assume 2 */
-	if ((sbval == 0) || (sbval == 0xffff))
-		sbval = 0x0202;
-	if (sc->sc_phy_type == BCW_PHY_TYPEA)
-		sc->sc_radio_gain = (sbval & 0xff);
-	else
-		sc->sc_radio_gain = ((sbval & 0xff00) >> 8);
-	sc->sc_radio_gain *= 4;
-
 	/*
-	 * Set the paXbY vars, X=0 for PHY A, X=1 for B/G, but we'll
-	 * just grab them all while we're here
+	 * Extract SPROM values and save them where they belong
 	 */
-	sc->sc_radio_pa0b0 = BCW_READ16(sc, BCW_SPROM_PA0B0);
-	sc->sc_radio_pa0b1 = BCW_READ16(sc, BCW_SPROM_PA0B1);
-	    
-	sc->sc_radio_pa0b2 = BCW_READ16(sc, BCW_SPROM_PA0B2);
-	sc->sc_radio_pa1b0 = BCW_READ16(sc, BCW_SPROM_PA1B0);
-	    
-	sc->sc_radio_pa1b1 = BCW_READ16(sc, BCW_SPROM_PA1B1);
-	sc->sc_radio_pa1b2 = BCW_READ16(sc, BCW_SPROM_PA1B2);
+	bcw_sprom_extract(sc);
 
-	/* Get the idle TSSI */
-	sbval = BCW_READ16(sc, BCW_SPROM_IDLETSSI);
-	if (sc->sc_phy_type == BCW_PHY_TYPEA)
-		sc->sc_idletssi = (sbval & 0xff);
-	else
-		sc->sc_idletssi = ((sbval & 0xff00) >> 8);
-	
+        /* MAC address */
+        if (!IEEE80211_IS_MULTICAST(sc->sc_sprom.et1macaddr))
+		memcpy(ic->ic_myaddr, sc->sc_sprom.et1macaddr, ETHER_ADDR_LEN);
+        else
+		memcpy(ic->ic_myaddr, sc->sc_sprom.il0macaddr, ETHER_ADDR_LEN);
+
+        printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
+
 	/* Init the Microcode Flags Bitfield */
 	/* http://bcm-specs.sipsolutions.net/MicrocodeFlagsBitfield */
 	sbval = 0;
@@ -1294,12 +1247,12 @@ bcw_attach(struct bcw_softc *sc)
 	    (sc->sc_phy_rev == 1))
 		sbval |= 0x20;
 	if ((sc->sc_phy_type == BCW_PHY_TYPEG) &&
-	    ((sc->sc_boardflags & BCW_BF_PACTRL) == BCW_BF_PACTRL))
+	    ((sc->sc_sprom.boardflags & BCW_BF_PACTRL) == BCW_BF_PACTRL))
 		sbval |= 0x40;
 	if ((sc->sc_phy_type == BCW_PHY_TYPEG) &&
 	    (sc->sc_phy_rev < 3))
 		sbval |= 0x8; /* MAGIC */
-	if ((sc->sc_boardflags & BCW_BF_XTAL) == BCW_BF_XTAL)
+	if ((sc->sc_sprom.boardflags & BCW_BF_XTAL) == BCW_BF_XTAL)
 		sbval |= 0x400;
 	if (sc->sc_phy_type == BCW_PHY_TYPEB)
 		sbval |= 0x4;
@@ -1354,36 +1307,6 @@ bcw_attach(struct bcw_softc *sc)
 
 	/* set device capabilities - keep it simple */
 	ic->ic_caps = IEEE80211_C_IBSS; /* IBSS mode supported */
-
-	/* MAC address */
-	if (sc->sc_phy_type == BCW_PHY_TYPEA) {
-		i = BCW_READ16(sc, BCW_SPROM_ET1MACADDR);
-		ic->ic_myaddr[0] = (i & 0xff00) >> 8;
-		ic->ic_myaddr[1] = i & 0xff;
-		i = BCW_READ16(sc, BCW_SPROM_ET1MACADDR + 2);
-		    
-		ic->ic_myaddr[2] = (i & 0xff00) >> 8;
-		ic->ic_myaddr[3] = i & 0xff;
-		i = BCW_READ16(sc, BCW_SPROM_ET1MACADDR + 4);
-		    
-		ic->ic_myaddr[4] = (i & 0xff00) >> 8;
-		ic->ic_myaddr[5] = i & 0xff;
-	} else { /* assume B or G PHY */
-		i = BCW_READ16(sc, BCW_SPROM_IL0MACADDR);
-		    
-		ic->ic_myaddr[0] = (i & 0xff00) >> 8;
-		ic->ic_myaddr[1] = i & 0xff;
-		i = BCW_READ16(sc, BCW_SPROM_IL0MACADDR + 2);
-		    
-		ic->ic_myaddr[2] = (i & 0xff00) >> 8;
-		ic->ic_myaddr[3] = i & 0xff;
-		i = BCW_READ16(sc, BCW_SPROM_IL0MACADDR + 4);
-		    
-		ic->ic_myaddr[4] = (i & 0xff00) >> 8;
-		ic->ic_myaddr[5] = i & 0xff;
-	}
-	
-	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	/* Set supported rates */
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
@@ -2285,7 +2208,7 @@ bcw_powercontrol_crystal_off(struct bcw_softc *sc)
 	/* XXX Return if radio is hardware disabled */
 	if (sc->sc_chip_rev < 5)
 		return;
-	if ((sc->sc_boardflags & BCW_BF_XTAL) == BCW_BF_XTAL)
+	if ((sc->sc_sprom.boardflags & BCW_BF_XTAL) == BCW_BF_XTAL)
 		return;
 
 	/* XXX bcw_powercontrol_clock_slow() */
@@ -2916,7 +2839,7 @@ bcw_gpio_init(struct bcw_softc *sc)
 		mask |= 0x0180;
 		set |= 0x0180;
 	}
-	if (sc->sc_boardflags & BCW_BF_PACTRL) {
+	if (sc->sc_sprom.boardflags & BCW_BF_PACTRL) {
 		BCW_WRITE16(sc, BCW_MMIO_GPIO_MASK,
 		    BCW_READ16(sc, BCW_MMIO_GPIO_MASK) | 0x0200);
 		mask |= 0x0200;
@@ -3130,7 +3053,7 @@ bcw_80211_core_init(struct bcw_softc *sc, int active_80211_core)
 		ucodeflags |= BCW_UCODEFLAG_UNKBGPHY;
 		if (sc->sc_phy_rev == 1)
 			ucodeflags |= BCW_UCODEFLAG_UNKGPHY;
-		if (sc->sc_boardflags & BCW_BF_PACTRL)
+		if (sc->sc_sprom.boardflags & BCW_BF_PACTRL)
 			ucodeflags |= BCW_UCODEFLAG_UNKPACTRL;
 	} else if (sc->sc_phy_type == BCW_PHY_TYPEB) {
 		ucodeflags |= BCW_UCODEFLAG_UNKBGPHY;
@@ -3186,6 +3109,190 @@ bcw_80211_core_init(struct bcw_softc *sc, int active_80211_core)
 	}
 
 	/* TODO sc->sc_current_core_initialized = 1; */
+
+	return (0);
+}
+
+uint8_t
+bcw_sprom_crc8(uint8_t crc, uint8_t data)
+{
+        static const uint8_t t[] = {
+	    0x00, 0xF7, 0xB9, 0x4E, 0x25, 0xD2, 0x9C, 0x6B,
+	    0x4A, 0xBD, 0xF3, 0x04, 0x6F, 0x98, 0xD6, 0x21,
+	    0x94, 0x63, 0x2D, 0xDA, 0xB1, 0x46, 0x08, 0xFF,
+	    0xDE, 0x29, 0x67, 0x90, 0xFB, 0x0C, 0x42, 0xB5,
+	    0x7F, 0x88, 0xC6, 0x31, 0x5A, 0xAD, 0xE3, 0x14,
+	    0x35, 0xC2, 0x8C, 0x7B, 0x10, 0xE7, 0xA9, 0x5E,
+	    0xEB, 0x1C, 0x52, 0xA5, 0xCE, 0x39, 0x77, 0x80,
+	    0xA1, 0x56, 0x18, 0xEF, 0x84, 0x73, 0x3D, 0xCA,
+	    0xFE, 0x09, 0x47, 0xB0, 0xDB, 0x2C, 0x62, 0x95,
+	    0xB4, 0x43, 0x0D, 0xFA, 0x91, 0x66, 0x28, 0xDF,
+	    0x6A, 0x9D, 0xD3, 0x24, 0x4F, 0xB8, 0xF6, 0x01,
+	    0x20, 0xD7, 0x99, 0x6E, 0x05, 0xF2, 0xBC, 0x4B,
+	    0x81, 0x76, 0x38, 0xCF, 0xA4, 0x53, 0x1D, 0xEA,
+	    0xCB, 0x3C, 0x72, 0x85, 0xEE, 0x19, 0x57, 0xA0,
+	    0x15, 0xE2, 0xAC, 0x5B, 0x30, 0xC7, 0x89, 0x7E,
+	    0x5F, 0xA8, 0xE6, 0x11, 0x7A, 0x8D, 0xC3, 0x34,
+	    0xAB, 0x5C, 0x12, 0xE5, 0x8E, 0x79, 0x37, 0xC0,
+	    0xE1, 0x16, 0x58, 0xAF, 0xC4, 0x33, 0x7D, 0x8A,
+	    0x3F, 0xC8, 0x86, 0x71, 0x1A, 0xED, 0xA3, 0x54,
+	    0x75, 0x82, 0xCC, 0x3B, 0x50, 0xA7, 0xE9, 0x1E,
+	    0xD4, 0x23, 0x6D, 0x9A, 0xF1, 0x06, 0x48, 0xBF,
+	    0x9E, 0x69, 0x27, 0xD0, 0xBB, 0x4C, 0x02, 0xF5,
+	    0x40, 0xB7, 0xF9, 0x0E, 0x65, 0x92, 0xDC, 0x2B,
+	    0x0A, 0xFD, 0xB3, 0x44, 0x2F, 0xD8, 0x96, 0x61,
+	    0x55, 0xA2, 0xEC, 0x1B, 0x70, 0x87, 0xC9, 0x3E,
+	    0x1F, 0xE8, 0xA6, 0x51, 0x3A, 0xCD, 0x83, 0x74,
+	    0xC1, 0x36, 0x78, 0x8F, 0xE4, 0x13, 0x5D, 0xAA,
+	    0x8B, 0x7C, 0x32, 0xC5, 0xAE, 0x59, 0x17, 0xE0,
+	    0x2A, 0xDD, 0x93, 0x64, 0x0F, 0xF8, 0xB6, 0x41,
+	    0x60, 0x97, 0xD9, 0x2E, 0x45, 0xB2, 0xFC, 0x0B,
+	    0xBE, 0x49, 0x07, 0xF0, 0x9B, 0x6C, 0x22, 0xD5,
+	    0xF4, 0x03, 0x4D, 0xBA, 0xD1, 0x26, 0x68, 0x9F,
+        };
+
+        return (t[crc ^ data]);
+}
+
+uint8_t
+bcw_sprom_crc(const uint16_t *sprom)
+{
+	int word;
+	uint8_t crc = 0xff;
+
+	for (word = 0; word < BCW_SPROM_SIZE - 1; word++) {
+		crc = bcw_sprom_crc8(crc, sprom[word] & 0x00ff);
+		crc = bcw_sprom_crc8(crc, (sprom[word] & 0xff00) >> 8);
+	}
+	crc = bcw_sprom_crc8(crc, sprom[BCW_SPROM_VERSION] & 0x00ff);
+	crc ^= 0xff;
+
+	return (crc);
+}
+
+int
+bcw_sprom_read(struct bcw_softc *sc, uint16_t *sprom)
+{
+	int i;
+	uint8_t crc, expected_crc;
+
+	for (i = 0; i < BCW_SPROM_SIZE; i++)
+		sprom[i] = BCW_READ16(sc, BCW_SPROM_BASE + (i * 2));
+
+	/* CRC-8 check */
+	crc = bcw_sprom_crc(sprom);
+	expected_crc = (sprom[BCW_SPROM_VERSION] & 0xff00) >> 8;
+	if (crc != expected_crc) {
+		printf("%s: invalid SPROM checksum! (0x%02x, expected 0x%02x\n",
+		    sc->sc_dev.dv_xname, crc, expected_crc);
+		return (EINVAL);
+	}
+
+	return (0);
+}
+
+int
+bcw_sprom_extract(struct bcw_softc *sc)
+{
+	uint16_t val;
+	uint16_t *sprom;
+
+	sprom = malloc(BCW_SPROM_SIZE * sizeof(uint16_t), M_DEVBUF, M_NOWAIT);
+	if (sprom == NULL) {
+		printf("%s: malloc in SPROM extract failed!\n",
+		    sc->sc_dev.dv_xname);
+		return (ENOMEM);
+	}
+
+	bcw_sprom_read(sc, sprom);
+
+	/* boardflags */
+	val = sprom[BCW_SPROM_BOARDFLAGS];
+	sc->sc_sprom.boardflags2 = val;
+
+	/* il0macaddr */
+	val = sprom[BCW_SPROM_IL0MACADDR];
+	*((uint16_t *)sc->sc_sprom.il0macaddr) = htobe16(val);
+	val = sprom[BCW_SPROM_IL0MACADDR + 1];
+	*(((uint16_t *)sc->sc_sprom.il0macaddr) + 1) = htobe16(val);
+	val = sprom[BCW_SPROM_IL0MACADDR + 2];
+	*(((uint16_t *)sc->sc_sprom.il0macaddr) + 2) = htobe16(val);
+
+	/* et0macaddr */
+	val = sprom[BCW_SPROM_ET0MACADDR];
+	*((uint16_t *)sc->sc_sprom.et0macaddr) = htobe16(val);
+	val = sprom[BCW_SPROM_ET0MACADDR + 1];
+	*(((uint16_t *)sc->sc_sprom.et0macaddr) + 1) = htobe16(val);
+	val = sprom[BCW_SPROM_ET0MACADDR + 2];
+	*(((uint16_t *)sc->sc_sprom.et0macaddr) + 2) = htobe16(val);
+
+	/* et1macaddr */
+	val = sprom[BCW_SPROM_ET1MACADDR];
+	*((uint16_t *)sc->sc_sprom.et1macaddr) = htobe16(val);
+	val = sprom[BCW_SPROM_ET1MACADDR + 1];
+	*(((uint16_t *)sc->sc_sprom.et1macaddr) + 1) = htobe16(val);
+	val = sprom[BCW_SPROM_ET1MACADDR + 2];
+	*(((uint16_t *)sc->sc_sprom.et1macaddr) + 2) = htobe16(val);
+
+	/* ethernet phy settigns */
+	val = sprom[BCW_SPROM_ETHPHY];
+	sc->sc_sprom.et0phyaddr = (val & 0x001f);
+	sc->sc_sprom.et1phyaddr = (val & 0x03e0);
+	sc->sc_sprom.et0mdcport = (val & (1 << 14)) >> 14;
+	sc->sc_sprom.et1mdcport = (val & (1 << 15)) >> 15;
+
+	/* boardrev, antennas, locale */
+	val = sprom[BCW_SPROM_BOARDREV];
+	sc->sc_sprom.boardrev = (val & 0x00ff);
+	sc->sc_sprom.locale = (val & 0x0f00);
+	sc->sc_sprom.antennas_aphy = (val & 0x3000) >> 12;
+	sc->sc_sprom.antennas_bgphy = (val & 0xc000) >> 14;
+
+	/* pa0b */
+	sc->sc_sprom.pa0b0 = sprom[BCW_SPROM_PA0B0];
+	sc->sc_sprom.pa0b1 = sprom[BCW_SPROM_PA0B1];
+	sc->sc_sprom.pa0b2 = sprom[BCW_SPROM_PA0B2];
+
+	/* wl0gpio */
+	val = sprom[BCW_SPROM_WL0GPIO0];
+	if (val == 0)
+		val = 0xffff;
+	sc->sc_sprom.wl0gpio0 = val & 0x00ff;
+	sc->sc_sprom.wl0gpio1 = (val & 0xff00) >> 8;
+	val = sprom[BCW_SPROM_WL0GPIO2];
+	if (val == 0)
+		val = 0xffff;
+	sc->sc_sprom.wl0gpio2 = val & 0x00ff;
+	sc->sc_sprom.wl0gpio3 = (val & 0xff00) >> 8;
+
+	/* maxpower */
+	val = sprom[BCW_SPROM_MAXPWR];
+	sc->sc_sprom.maxpower_aphy = (val & 0xff00) >> 8;
+	sc->sc_sprom.maxpower_bgphy = val & 0xff00;
+
+	/* pa1b */
+	sc->sc_sprom.pa1b0 = sprom[BCW_SPROM_PA1B0];
+	sc->sc_sprom.pa1b1 = sprom[BCW_SPROM_PA1B1];
+	sc->sc_sprom.pa1b2 = sprom[BCW_SPROM_PA1B2];
+
+	/* idle tssi target */
+	val = sprom[BCW_SPROM_IDL_TSSI_TGT];
+	sc->sc_sprom.idle_tssi_tgt_aphy = val & 0x00ff;
+	sc->sc_sprom.idle_tssi_tgt_bgphy = (val & 0xff00) >> 8;
+
+	/* boardflags */
+	val = sprom[BCW_SPROM_BOARDFLAGS];
+	if (val == 0xffff)
+		val = 0;
+	sc->sc_sprom.boardflags = val;
+	/* TODO boardflags workarounds */
+
+	/* antenna gain */
+	val = sprom[BCW_SPROM_ANTENNA_GAIN];
+	if (val == 0 || val == 0xffff)
+		val = 0x0202;
+	sc->sc_sprom.antennagain_aphy = ((val & 0xff00) >> 8) * 4;
+	sc->sc_sprom.antennagain_bgphy = (val & 0x00ff) * 4;
 
 	return (0);
 }
@@ -3300,7 +3407,7 @@ bcw_phy_initg(struct bcw_softc *sc)
 			bcw_phy_write16(sc, 0x0036,
 			    (bcw_phy_read16(sc, 0x0036) & 0xf000) |
 			    (sc->sc_radio_txctl2 << 12));
-		if (sc->sc_boardflags & BCW_BF_PACTRL)
+		if (sc->sc_sprom.boardflags & BCW_BF_PACTRL)
 			bcw_phy_write16(sc, 0x002e, 0x8075);
 		else
 			bcw_phy_write16(sc, 0x002e, 0x807f);
@@ -3314,7 +3421,7 @@ bcw_phy_initg(struct bcw_softc *sc)
 		bcw_phy_write16(sc, 0x080f, 0x8078);
 	}
 
-	if (!(sc->sc_boardflags & BCW_BF_RSSI)) {
+	if (!(sc->sc_sprom.boardflags & BCW_BF_RSSI)) {
 		bcw_radio_nrssi_hw_update(sc, 0xffff);
 		bcw_radio_calc_nrssi_threshold(sc);
 	} else if (sc->sc_phy_connected) {
@@ -3529,7 +3636,7 @@ bcw_phy_initb4(struct bcw_softc *sc)
 	if (sc->sc_radio_ver == 0x2050)
 		bcw_phy_write16(sc, 0x002a, 0x88c2);
 	bcw_radio_set_txpower_bg(sc, 0xffff, 0xffff, 0xffff);
-	if (sc->sc_boardflags & BCW_BF_RSSI) {
+	if (sc->sc_sprom.boardflags & BCW_BF_RSSI) {
 		bcw_radio_calc_nrssi_slope(sc);
 		bcw_radio_calc_nrssi_threshold(sc);
 	}
@@ -3600,7 +3707,7 @@ bcw_phy_initb6(struct bcw_softc *sc)
 		bcw_radio_write16(sc, 0x005a, 0x0088);
 		bcw_radio_write16(sc, 0x005b, 0x006b);
 		bcw_radio_write16(sc, 0x005c, 0x000f);
-		if (sc->sc_boardflags & 0x8000) {
+		if (sc->sc_sprom.boardflags & 0x8000) {
 			bcw_radio_write16(sc, 0x005d, 0x00fa);
 			bcw_radio_write16(sc, 0x005e, 0x00d8);
 		} else {
@@ -3692,7 +3799,7 @@ bcw_phy_initb6(struct bcw_softc *sc)
 		bcw_phy_write16(sc, 0x0062, 0x0007);
 		(void)bcw_radio_calibrationvalue(sc);
 		bcw_phy_lo_b_measure(sc);
-		if (sc->sc_boardflags & BCW_BF_RSSI) {
+		if (sc->sc_sprom.boardflags & BCW_BF_RSSI) {
 			bcw_radio_calc_nrssi_slope(sc);
 			bcw_radio_calc_nrssi_threshold(sc);
 		}
@@ -3710,7 +3817,7 @@ bcw_phy_inita(struct bcw_softc *sc)
 		bcw_phy_setupa(sc);
 	else {
 		bcw_phy_setupg(sc);
-		if (sc->sc_boardflags & BCW_BF_PACTRL)
+		if (sc->sc_sprom.boardflags & BCW_BF_PACTRL)
 			bcw_phy_write16(sc, 0x046e, 0x03cf);
 		return;
 	}
@@ -4061,7 +4168,7 @@ bcw_phy_calc_loopback_gain(struct bcw_softc *sc)
 	    0x0800);
 	bcw_phy_write16(sc, 0x0811, bcw_phy_read16(sc, 0x0811) | 0x0100);
 	bcw_phy_write16(sc, 0x0812, bcw_phy_read16(sc, 0x0812) | 0xcfff);
-	if (sc->sc_boardflags & BCW_BF_EXTLNA) {
+	if (sc->sc_sprom.boardflags & BCW_BF_EXTLNA) {
 		if (sc->sc_phy_rev >= 7) {
 			bcw_phy_write16(sc, 0x0811, bcw_phy_read16(sc, 0x0811) |
 			    0x0800);
@@ -4429,7 +4536,7 @@ bcw_phy_xmitpower(struct bcw_softc *sc)
 
 		bcw_phy_estimate_powerout(sc, average);
 
-		if ((sc->sc_boardflags & BCW_BF_PACTRL) &&
+		if ((sc->sc_sprom.boardflags & BCW_BF_PACTRL) &&
 		    (sc->sc_phy_type == BCW_PHY_TYPEG))
 			max_pwr -= 0x3;
 
@@ -4476,7 +4583,8 @@ bcw_phy_xmitpower(struct bcw_softc *sc)
 					txpower = 3;
 					radio_attenuation += 2;
 					baseband_attenuation += 2;
-				} else if (sc->sc_boardflags & BCW_BF_PACTRL) {
+				} else if (sc->sc_sprom.boardflags &
+				    BCW_BF_PACTRL) {
 					baseband_attenuation += 4 *
 					    (radio_attenuation - 2);
 					radio_attenuation = 2;
@@ -5318,7 +5426,7 @@ bcw_radio_calc_nrssi_threshold(struct bcw_softc *sc)
 	case BCW_PHY_TYPEB:
 		if (sc->sc_radio_ver != 0x2050)
 			return;
-		if (!(sc->sc_boardflags & BCW_BF_RSSI))
+		if (!(sc->sc_sprom.boardflags & BCW_BF_RSSI))
 			return;
 
 		if (sc->sc_radio_rev >= 6) {
@@ -5347,7 +5455,7 @@ bcw_radio_calc_nrssi_threshold(struct bcw_softc *sc)
 		break;
 	case BCW_PHY_TYPEG:
 		if (!sc->sc_phy_connected ||
-		    !(sc->sc_boardflags & BCW_BF_RSSI)) {
+		    !(sc->sc_sprom.boardflags & BCW_BF_RSSI)) {
 			tmp16 = bcw_radio_nrssi_hw_read(sc, 0x20);
 			if (tmp16 >= 0x20)
 				tmp16 -= 0x40;

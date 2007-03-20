@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.22 2007/03/18 14:40:47 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.23 2007/03/20 11:55:36 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -59,24 +59,28 @@
 #define BCW_MMIO_GPIO_MASK		0x49e
 
 /*
- * XXX SPROM registers are 16 bit and based at MMIO offset 0x1000
+ * SPROM registers are 16 bit and based at MMIO offset 0x1000
  */
 #define BCW_SPROM_BASE			0x1000
-#define BCW_SPROM_SUBPRODID		0x1004	/* Subsystem Product ID */
-#define BCW_SPROM_SUBVENID		0x1006	/* Subsystem Vendor ID */
-#define BCW_SPROM_PRODID		0x1008	/* Product ID */
-#define BCW_SPROM_IL0MACADDR		0x1048	/* 802.11b/g MAC */
-#define BCW_SPROM_ET0MACADDR		0x104e	/* ethernet MAC */
-#define BCW_SPROM_ET1MACADDR		0x1054	/* 802.11a MAC */
-#define BCW_SPROM_PA0B0			0x105e
-#define BCW_SPROM_PA0B1			0x1060
-#define BCW_SPROM_PA0B2			0x1062
-#define BCW_SPROM_PAMAXPOWER		0x1066	/* 7-0 for A, 15-8 for B/G */
-#define BCW_SPROM_PA1B0			0x106a
-#define BCW_SPROM_PA1B1			0x106c
-#define BCW_SPROM_PA1B2			0x106e
-#define BCW_SPROM_IDLETSSI		0x1070  /* As below */
-#define BCW_SPROM_BOARDFLAGS		0x1072	/* lower 16 bits */
+#define BCW_SPROM_BOARDFLAGS2		0x1c
+#define BCW_SPROM_IL0MACADDR		0x24
+#define BCW_SPROM_ET0MACADDR		0x27
+#define BCW_SPROM_ET1MACADDR		0x2a
+#define BCW_SPROM_ETHPHY		0x2d
+#define BCW_SPROM_BOARDREV		0x2e
+#define BCW_SPROM_PA0B0			0x2f
+#define BCW_SPROM_PA0B1			0x30
+#define BCW_SPROM_PA0B2			0x31
+#define BCW_SPROM_WL0GPIO0		0x32
+#define BCW_SPROM_WL0GPIO2		0x33
+#define BCW_SPROM_MAXPWR		0x34
+#define BCW_SPROM_PA1B0			0x35
+#define BCW_SPROM_PA1B1			0x36
+#define BCW_SPROM_PA1B2			0x37
+#define BCW_SPROM_IDL_TSSI_TGT		0x38
+#define BCW_SPROM_BOARDFLAGS		0x39
+#define BCW_SPROM_ANTENNA_GAIN		0x3a
+#define BCW_SPROM_VERSION		0x3f
 
 /*
  * SPROM Board Flags
@@ -309,7 +313,6 @@
 #define BCW_CIR_SBID_LO			0xff8
 #define BCW_CIR_SBID_LO_INITIATOR	0x80
 #define BCW_CIR_SBID_HI			0xffc
-#define BCW_SPROM_ANTGAIN		0x1074
 
 /*
  * XXX Do we really need those ...
