@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.15 2006/12/14 00:58:45 gwk Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.16 2007/03/20 08:55:20 gwk Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -177,7 +177,7 @@ struct mesh_softc {
 	struct scsi_link sc_link;
 
 	struct scsibus_softc *sc_scsibus;
-	
+
 	u_char *sc_reg;			/* MESH base address */
 	bus_dmamap_t sc_dmamap;
 	bus_dma_tag_t sc_dmat;
@@ -205,7 +205,7 @@ struct mesh_softc {
 	TAILQ_HEAD(, mesh_scb) free_scb;
 	TAILQ_HEAD(, mesh_scb) ready_scb;
 	struct mesh_scb sc_scb[16];
-	
+
 	struct timeout sc_tmo;
 };
 
@@ -303,25 +303,32 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 	reg = ca->ca_reg;
 	reg[0] += ca->ca_baseaddr;
 	reg[2] += ca->ca_baseaddr;
-	sc->sc_reg = mapiodev(reg[0], reg[1]);
+	if ((sc->sc_reg = mapiodev(reg[0], reg[1])) == NULL) {
+		printf(": cannot map device registers\n");
+		return;
+	}
+
 	sc->sc_irq = ca->ca_intr[0];
-	sc->sc_dmareg = mapiodev(reg[2], reg[3]);
+	if ((sc->sc_dmareg = mapiodev(reg[2], reg[3])) == NULL) {
+		printf(": cannot map DMA registers\n");
+		goto noreg;
+	}
 
 	sc->sc_cfflags = sc->sc_dev.dv_cfdata->cf_flags;
 
 	if (OF_getprop(ca->ca_node, "clock-frequency", &sc->sc_freq, 4) != 4) {
 		printf(": cannot get clock-frequency\n");
-		return;
+		goto nofreq;
 	}
 
 	sc->sc_dmat = ca->ca_dmat;
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    MESH_DMALIST_MAX * DBDMA_COUNT_MAX, MESH_DMALIST_MAX,
 	    DBDMA_COUNT_MAX, NBPG, BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
-		printf(": cannot create dma map, error = %d\n", error);
-		return;
-	}	
-	
+		printf(": cannot create DMA map, error = %d\n", error);
+		goto nofreq;
+	}
+
 	sc->sc_freq /= 1000000;	/* in MHz */
 	sc->sc_minsync = 25;	/* maximum sync rate = 10MB/sec */
 	sc->sc_id = 7;
@@ -330,9 +337,14 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 	TAILQ_INIT(&sc->ready_scb);
 	for (i = 0; i < sizeof(sc->sc_scb)/sizeof(sc->sc_scb[0]); i++)
 		TAILQ_INSERT_TAIL(&sc->free_scb, &sc->sc_scb[i], chain);
-	
-	sc->sc_dbdma = dbdma_alloc(sc->sc_dmat, MESH_DMALIST_MAX);
-	sc->sc_dmacmd = sc->sc_dbdma->d_addr;	
+
+	if ((sc->sc_dbdma = dbdma_alloc(sc->sc_dmat, MESH_DMALIST_MAX))
+	    == NULL) {
+		printf(": cannot alloc dma descriptors\n");
+		goto nodbdma;
+	}
+
+	sc->sc_dmacmd = sc->sc_dbdma->d_addr;
 	timeout_set(&sc->sc_tmo, mesh_timeout, sc);
 
 	mesh_reset(sc);
@@ -357,6 +369,14 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Reset SCSI bus when halt. */
 	shutdownhook_establish(mesh_shutdownhook, sc);
+
+	return;
+nodbdma:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
+nofreq:
+	unmapiodev((void *)reg[2], reg[3]);
+noreg:
+	unmapiodev((void *)reg[0], reg[1]);
 }
 
 #define MESH_SET_XFER(sc, count) do {					\
@@ -674,14 +694,14 @@ mesh_dma_setup(struct mesh_softc *sc, struct mesh_scb *scb)
 	DBDMA_BUILD(cmdp, DBDMA_CMD_STOP, 0, 0, 0,
 	    DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 
-	return(0);	
+	return(0);
 }
 
 int
 mesh_dataio(struct mesh_softc *sc, struct mesh_scb *scb)
 {
 	int error;
-	
+
 	if ((error = mesh_dma_setup(sc, scb)))
 		return(error);
 
@@ -698,7 +718,7 @@ mesh_dataio(struct mesh_softc *sc, struct mesh_scb *scb)
 	dbdma_start(sc->sc_dmareg, sc->sc_dbdma);
 	sc->sc_flags |= MESH_DMA_ACTIVE;
 	sc->sc_nextstate = MESH_STATUS;
-	
+
 	return(0);
 }
 
@@ -1023,7 +1043,7 @@ mesh_scsi_cmd(struct scsi_xfer *xs)
 	struct mesh_scb *scb;
 	u_int flags;
 	int s;
-	
+
 	flags = xs->flags;
 	s = splbio();
 	scb = mesh_get_scb(sc);
@@ -1041,7 +1061,7 @@ mesh_scsi_cmd(struct scsi_xfer *xs)
 	scb->cmdlen = xs->cmdlen;
 	scb->target = sc_link->target;
 	sc->sc_imsglen = 0;	/* XXX ? */
-	
+
 	if (flags & SCSI_POLL)
 		scb->flags |= MESH_POLL;
 
@@ -1053,12 +1073,12 @@ mesh_scsi_cmd(struct scsi_xfer *xs)
 	if (sc->sc_nexus == NULL)
 		mesh_sched(sc);
 	splx(s);
-			
+
 	if (xs->flags & SCSI_POLL) {
 		if (mesh_poll(xs)) {
 			printf("%s: poll timeout\n",
 			    sc->sc_dev.dv_xname);
-			
+
 		}
 		return COMPLETE;
 	}
@@ -1137,7 +1157,7 @@ mesh_done(struct mesh_softc *sc, struct mesh_scb *scb)
 void
 mesh_timeout(void *arg)
 {
-	
+
 	struct mesh_softc *sc = arg;
 	struct mesh_scb *scb = sc->sc_nexus;
 	int s;
