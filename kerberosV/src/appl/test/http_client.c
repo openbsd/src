@@ -375,7 +375,7 @@ main(int argc, char **argv)
 		}
 
 		i = 9;
-		while(h[i] && isspace((unsigned char)h[i]))
+		while(isspace((unsigned char)h[i]))
 		    i++;
 		if (h[i] != '\0') {
 		    int len = strlen(&h[i]);
