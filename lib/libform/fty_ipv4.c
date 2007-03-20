@@ -1,4 +1,4 @@
-/*	$OpenBSD: fty_ipv4.c,v 1.4 2001/01/22 18:02:17 millert Exp $	*/
+/*	$OpenBSD: fty_ipv4.c,v 1.5 2007/03/20 03:40:05 tedu Exp $	*/
 
 
 /*
@@ -40,7 +40,7 @@ static bool Check_IPV4_Field(FIELD * field, const void * argp GCC_UNUSED)
       if (num == 4)
         {
           bp += len;            /* Make bp point to what sscanf() left */
-          while (*bp && isspace((unsigned char)*bp))
+          while (isspace((unsigned char)*bp))
             bp++;               /* Allow trailing whitespace */
         }
     }

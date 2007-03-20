@@ -1,4 +1,4 @@
-/*	$OpenBSD: arithmetic.c,v 1.15 2004/07/09 15:59:26 deraadt Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.16 2007/03/20 03:43:50 tedu Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.15 2004/07/09 15:59:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.16 2007/03/20 03:43:50 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -236,7 +236,7 @@ retry:
 			(void)printf("\n");
 			return(EOF);
 		}
-		for (p = line; *p && isspace(*p); ++p);
+		for (p = line; isspace(*p); ++p);
 		if (!isdigit(*p)) {
 			(void)printf("Please type a number.\n");
 			continue;

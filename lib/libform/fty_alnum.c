@@ -1,4 +1,4 @@
-/*	$OpenBSD: fty_alnum.c,v 1.6 2001/01/22 18:02:16 millert Exp $	*/
+/*	$OpenBSD: fty_alnum.c,v 1.7 2007/03/20 03:40:05 tedu Exp $	*/
 
 
 /*
@@ -90,15 +90,15 @@ static bool Check_AlphaNumeric_Field(FIELD * field, const void * argp)
   int  l = -1;
   unsigned char *s;
 
-  while(*bp && *bp==' ') 
+  while(*bp==' ') 
     bp++;
   if (*bp)
     {
       s = bp;
-      while(*bp && isalnum(*bp)) 
+      while(isalnum(*bp)) 
 	bp++;
       l = (int)(bp-s);
-      while(*bp && *bp==' ') 
+      while(*bp==' ') 
 	bp++;
     }
   return ((*bp || (l < width)) ? FALSE : TRUE);

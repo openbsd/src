@@ -120,7 +120,7 @@ Content-Length: %d\r\n\r\n";
 		goto err;
 	}
 	/* Skip past white space to start of response code */
-	while(*p && isspace((unsigned char)*p)) p++;
+	while(isspace((unsigned char)*p)) p++;
 	if(!*p) {
 		OCSPerr(OCSP_F_OCSP_SENDREQ_BIO,OCSP_R_SERVER_RESPONSE_PARSE_ERROR);
 		goto err;
@@ -137,7 +137,7 @@ Content-Length: %d\r\n\r\n";
 	retcode = strtoul(p, &r, 10);
 	if(*r) goto err;
 	/* Skip over any leading white space in message */
-	while(*q && isspace((unsigned char)*q))  q++;
+	while(isspace((unsigned char)*q))  q++;
 	if(*q) {
 	/* Finally zap any trailing white space in message (include CRLF) */
 	/* We know q has a non white space character so this is OK */
@@ -156,7 +156,7 @@ Content-Length: %d\r\n\r\n";
 	/* Find blank line marking beginning of content */	
 	while(BIO_gets(mem, tmpbuf, 512) > 0)
 	{
-		for(p = tmpbuf; *p && isspace((unsigned char)*p); p++) continue;
+		for(p = tmpbuf; isspace((unsigned char)*p); p++) continue;
 		if(!*p) break;
 	}
 	if(*p) {

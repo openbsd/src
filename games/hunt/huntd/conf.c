@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 2004/01/16 00:13:19 espie Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 2007/03/20 03:43:50 tedu Exp $	*/
 /* David Leonard <d@openbsd.org>, 1999. Public domain. */
 
 #include <stdio.h>
@@ -137,7 +137,7 @@ parse_int(p, kvp, fnm, linep)
 	if (*p == '-') 
 		p++;
 	digitstart = p;
-	while (*p && isdigit(*p))
+	while (isdigit(*p))
 		p++;
 	if ((*p == '\0' || isspace(*p) || *p == '#') && digitstart != p) {
 		savec = *p;
@@ -190,7 +190,7 @@ parse_line(buf, fnm, line)
 	p = buf;
 
 	/* skip leading white */
-	while (*p && isspace(*p))
+	while (isspace(*p))
 		p++;
 	/* allow blank lines and comment lines */
 	if (*p == '\0' || *p == '#')
@@ -198,9 +198,9 @@ parse_line(buf, fnm, line)
 
 	/* walk to the end of the word: */
 	word = p;
-	if (*p && (isalpha(*p) || *p == '_')) {
+	if (isalpha(*p) || *p == '_') {
 		p++;
-		while (*p && (isalpha(*p) || isdigit(*p) || *p == '_'))
+		while (isalpha(*p) || isdigit(*p) || *p == '_')
 			p++;
 	}
 	endword = p;
@@ -227,7 +227,7 @@ parse_line(buf, fnm, line)
 	}
 
 	/* skip whitespace */
-	while (*p && isspace(*p))
+	while (isspace(*p))
 		p++;
 
 	if (*p++ != '=') {
@@ -236,7 +236,7 @@ parse_line(buf, fnm, line)
 	}
 
 	/* skip whitespace */
-	while (*p && isspace(*p))
+	while (isspace(*p))
 		p++;
 
 	/* parse the value */
@@ -245,7 +245,7 @@ parse_line(buf, fnm, line)
 		return;
 
 	/* skip trailing whitespace */
-	while (*p && isspace(*p))
+	while (isspace(*p))
 		p++;
 
 	if (*p && *p != '#') {

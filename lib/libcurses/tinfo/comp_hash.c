@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_hash.c,v 1.6 2003/03/18 16:55:54 millert Exp $	*/
+/*	$OpenBSD: comp_hash.c,v 1.7 2007/03/20 03:40:06 tedu Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -216,7 +216,7 @@ static char **parse_columns(char *buffer)
 				col++;
 				if (mark == '\0')
 					break;
-				while (*++s && isspace(*s))
+				while (isspace(*++s))
 					/*EMPTY*/;
 				buffer = s;
 			} else
