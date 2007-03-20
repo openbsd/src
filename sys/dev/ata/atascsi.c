@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.27 2007/03/20 13:01:04 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.28 2007/03/20 13:42:05 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -72,6 +72,7 @@ void		atascsi_disk_inq_done(struct ata_xfer *);
 int		atascsi_disk_capacity(struct scsi_xfer *);
 void		atascsi_disk_capacity_done(struct ata_xfer *);
 int		atascsi_disk_sync(struct scsi_xfer *);
+void		atascsi_disk_sync_done(struct ata_xfer *);
 int		atascsi_disk_sense(struct scsi_xfer *);
 
 int		atascsi_atapi_cmd(struct scsi_xfer *);
@@ -441,7 +442,59 @@ atascsi_disk_inq_done(struct ata_xfer *xa)
 int
 atascsi_disk_sync(struct scsi_xfer *xs)
 {
-	return (atascsi_stuffup(xs));
+	struct scsi_link	*link = xs->sc_link;
+	struct atascsi		*as = link->adapter_softc;
+	struct ata_port		*ap = as->as_ports[link->target];
+	struct ata_xfer		*xa;
+	int			s;
+
+	s = splbio();
+	xa = ata_get_xfer(ap, xs->flags & SCSI_NOSLEEP);
+	splx(s);
+	if (xa == NULL)
+		return (NO_CCB);
+
+	xa->datalen = 0;
+	xa->flags = ATA_F_READ;
+	if (xs->flags & SCSI_POLL)
+		xa->flags |= ATA_F_POLL;
+	xa->complete = atascsi_disk_sync_done;
+
+	/* Spec says flush cache can take >30 sec, so give it at least 45. */
+	xa->timeout = (xs->timeout < 45000) ? 45000 : xs->timeout;
+
+	xa->cmd.tx->regs[H2D_DEVCTL_OR_COMMAND] =
+	    H2D_DEVCTL_OR_COMMAND_COMMAND;
+	xa->cmd.tx->regs[H2D_COMMAND] = ATA_C_FLUSH_CACHE;
+
+	return (ata_exec(as, xa));
+}
+
+void
+atascsi_disk_sync_done(struct ata_xfer *xa)
+{
+	struct scsi_xfer	*xs = xa->atascsi_private;
+
+	switch (xa->state) {
+	case ATA_S_COMPLETE:
+		xs->error = XS_NOERROR;
+		break;
+
+	case ATA_S_ERROR:
+	case ATA_S_TIMEOUT:
+		xs->error = (xa->state == ATA_S_TIMEOUT ? XS_TIMEOUT :
+		    XS_DRIVER_STUFFUP);
+		break;
+
+	default:
+		panic("atascsi_disk_sync_done: unexpected ata_xfer state (%d)",
+		    xa->state);
+	}
+
+	ata_put_xfer(xa);
+
+	xs->flags |= ITSDONE;
+	scsi_done(xs);
 }
 
 int
