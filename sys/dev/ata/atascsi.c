@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.22 2007/03/20 11:07:02 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.23 2007/03/20 12:01:18 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -75,6 +75,7 @@ int		atascsi_disk_sync(struct scsi_xfer *);
 int		atascsi_disk_sense(struct scsi_xfer *);
 
 int		atascsi_atapi_cmd(struct scsi_xfer *);
+void		atascsi_atapi_cmd_done(struct ata_xfer *);
 
 int		atascsi_stuffup(struct scsi_xfer *);
 
@@ -147,8 +148,16 @@ atascsi_probe(struct atascsi *as, int port)
 		return (ENXIO);
 
 	type = as->as_methods->probe(as->as_cookie, port);
-	if (type != ATA_PORT_T_DISK) /* XXX ATAPI too one day */
-		return (ENXIO);
+	switch (type) {
+	case ATA_PORT_T_DISK:
+		break;
+	case ATA_PORT_T_ATAPI:
+		as->as_link.flags |= SDEV_ATAPI;
+		as->as_link.quirks |= SDEV_ONLYBIG;
+		break;
+	default:
+		return (ENODEV);
+	}
 
 	ap = malloc(sizeof(struct ata_port), M_DEVBUF, M_WAITOK);
 	ap->ap_as = as;
@@ -528,11 +537,98 @@ atascsi_disk_sense(struct scsi_xfer *xs)
 	return (COMPLETE);
 }
 
-
 int
 atascsi_atapi_cmd(struct scsi_xfer *xs)
 {
-	return (atascsi_stuffup(xs));
+	struct scsi_link	*link = xs->sc_link;
+	struct atascsi		*as = link->adapter_softc;
+	struct ata_port		*ap = as->as_ports[link->target];
+	int			s;
+	struct ata_xfer		*xa;
+	u_int8_t		*regs;
+
+	s = splbio();
+	xa = ata_get_xfer(ap, xs->flags & SCSI_NOSLEEP);
+	splx(s);
+	if (xa == NULL)
+		return (NO_CCB);
+
+	switch (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
+	case SCSI_DATA_IN:
+		xa->flags = ATA_F_READ | ATA_F_PACKET;
+		break;
+	case SCSI_DATA_OUT:
+		xa->flags = ATA_F_WRITE | ATA_F_PACKET;
+		break;
+	}
+
+	xa->data = xs->data;
+	xa->datalen = xs->datalen;
+	xa->complete = atascsi_atapi_cmd_done;
+	xa->timeout = xs->timeout;
+	xa->atascsi_private = xs;
+	if (xs->flags & SCSI_POLL)
+		xa->flags |= ATA_F_POLL;
+
+	regs = xa->cmd.tx->regs;
+	regs[H2D_DEVCTL_OR_COMMAND] = H2D_DEVCTL_OR_COMMAND_COMMAND;
+	regs[H2D_COMMAND] = ATA_C_PACKET;
+	regs[SECTOR_COUNT] = xa->cmd.tag << 3;
+	regs[H2D_FEATURES] = 0x01 /* DMA */ |
+	    ((xa->flags & ATA_F_WRITE) ? 0x00 : 0x04) /* direction */;
+	regs[LBA_MID]  = 0x00;	/* byte count low */
+	regs[LBA_HIGH] = 0x20;	/* byte count high, limit to 8K per data FIS */
+
+	/* Copy SCSI command into ATAPI packet. */
+	memcpy(xa->cmd.packetcmd, xs->cmd, xs->cmdlen);
+
+	switch (ata_exec(as, xa)) {
+	case ATA_COMPLETE:
+	case ATA_ERROR:
+		return (COMPLETE);
+	case ATA_QUEUED:
+		return (SUCCESSFULLY_QUEUED);
+	default:
+		panic("unexpected return from ata_exec");
+	}
+}
+
+void
+atascsi_atapi_cmd_done(struct ata_xfer *xa)
+{
+	struct scsi_xfer	*xs = xa->atascsi_private;
+	struct scsi_sense_data  *sd = &xs->sense;
+
+	switch (xa->state) {
+	case ATA_S_COMPLETE:
+		xs->error = XS_NOERROR;
+		break;
+	case ATA_S_ERROR:
+		/* Return PACKET sense data */
+		sd->error_code = SSD_ERRCODE_CURRENT;
+		sd->flags = (xa->cmd.rx_err.regs[D2H_ERROR] & 0xf0) >> 4;
+		if (xa->cmd.rx_err.regs[D2H_ERROR] & 0x04)
+			sd->flags = SKEY_ILLEGAL_REQUEST;
+		if (xa->cmd.rx_err.regs[D2H_ERROR] & 0x02)
+			sd->flags |= SSD_EOM;
+		if (xa->cmd.rx_err.regs[D2H_ERROR] & 0x01)
+			sd->flags |= SSD_ILI;
+		xs->error = XS_SENSE;
+		break;
+	case ATA_S_TIMEOUT:
+		printf("atascsi_atapi_cmd_done, timeout\n");
+		xs->error = XS_TIMEOUT;
+		break;
+	default:
+		panic("atascsi_atapi_cmd_done: unexpected ata_xfer state (%d)",
+		    xa->state);
+	}
+
+	xs->resid = xa->resid;
+	ata_put_xfer(xa);
+
+	xs->flags |= ITSDONE;
+	scsi_done(xs);
 }
 
 int

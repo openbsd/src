@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.15 2007/03/20 11:07:02 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.16 2007/03/20 12:01:18 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -27,6 +27,7 @@ struct atascsi;
 #define ATA_C_WRITEDMA		0xca
 #define ATA_C_READDMA_EXT	0x25
 #define ATA_C_WRITEDMA_EXT	0x35
+#define ATA_C_PACKET		0xa0
 
 struct ata_identify {
 	u_int16_t	config;		/*   0 */
@@ -180,6 +181,8 @@ struct ata_regs {
 struct ata_cmd {
 	struct ata_regs		*tx;
 	struct ata_regs		rx_err;
+	u_int8_t		*packetcmd;
+	u_int8_t		tag;
 
 	u_int8_t		st_bmask;
 	u_int8_t		st_pmask;
@@ -201,6 +204,7 @@ struct ata_xfer {
 #define ATA_F_NOWAIT			(1<<2)
 #define ATA_F_POLL			(1<<3)
 #define ATA_F_PIO			(1<<4)
+#define ATA_F_PACKET			(1<<5)
 	volatile int		state;
 #define ATA_S_SETUP			0
 #define ATA_S_PENDING			1

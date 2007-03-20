@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.86 2007/03/20 11:22:40 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.87 2007/03/20 12:01:18 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -869,6 +869,8 @@ nomem:
 		ccb->ccb_cmd_hdr->ctba_lo = htole32((u_int32_t)dva);
 
 		ccb->ccb_xa.cmd.tx = (struct ata_regs *)ccb->ccb_cmd_table->cfis;
+		ccb->ccb_xa.cmd.packetcmd = ccb->ccb_cmd_table->acmd;
+		ccb->ccb_xa.cmd.tag = i;
 
 		ccb->ccb_xa.ata_put_xfer = ahci_ata_put_xfer;
 
@@ -1780,6 +1782,9 @@ ahci_ata_cmd(struct ata_xfer *xa)
 
 	if (xa->flags & ATA_F_WRITE)
 		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
+
+	if (xa->flags & ATA_F_PACKET)
+		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_A);
 
 	if (ahci_load_prdt(ccb) != 0)
 		goto failcmd;
