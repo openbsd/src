@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.5 2007/03/20 02:48:22 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.6 2007/03/20 03:31:24 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -480,7 +480,7 @@ sr_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
 	DNPRINTF(SR_D_IOCTL, "%s: sr_scsi_ioctl cmd: %#x\n",
 	    DEVNAME((struct sr_softc *)link->adapter_softc), cmd);
 
-	return (ENOTTY);
+	return (sr_ioctl(link->adapter_softc, cmd, addr));
 }
 
 int
