@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.23 2007/03/20 12:01:18 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.24 2007/03/20 12:24:02 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -347,15 +347,7 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 	xa->timeout = xs->timeout;
 	xa->atascsi_private = xs;
 
-	switch (ata_exec(as, xa)) {
-	case ATA_COMPLETE:
-	case ATA_ERROR:
-		return (COMPLETE);
-	case ATA_QUEUED:
-		return (SUCCESSFULLY_QUEUED);
-	default:
-		panic("unexpected return from ata_exec");
-	}
+	return (ata_exec(as, xa));
 }
 
 void
@@ -403,19 +395,7 @@ atascsi_disk_inq(struct scsi_xfer *xs)
 	if (xs->flags & SCSI_POLL)
 		xa->flags |= ATA_F_POLL;
 
-	switch (ata_exec(as, xa)) {
-	case ATA_COMPLETE:
-		return (COMPLETE);
-	case ATA_QUEUED:
-		return (SUCCESSFULLY_QUEUED);
-	case ATA_ERROR:
-		s = splbio();
-		ata_free_identify(xa);
-		splx(s);
-		return (atascsi_stuffup(xs));
-	default:
-		panic("unexpected return from ata_exec");
-	}
+	return (ata_exec(as, xa));
 }
 
 void
@@ -425,22 +405,37 @@ atascsi_disk_inq_done(struct ata_xfer *xa)
 	struct ata_identify	id;
 	struct scsi_inquiry_data inq;
 
-	ata_complete_identify(xa, &id);
+	switch (xa->state) {
+	case ATA_S_COMPLETE:
+		ata_complete_identify(xa, &id);
 
-	bzero(&inq, sizeof(inq));
+		bzero(&inq, sizeof(inq));
 
-	inq.device = T_DIRECT;
-	inq.version = 2;
-	inq.response_format = 2;
-	inq.additional_length = 32;
-	bcopy("ATA     ", inq.vendor, sizeof(inq.vendor));
-	bcopy(id.model, inq.product, sizeof(inq.product));
-	bcopy(id.firmware, inq.revision, sizeof(inq.revision));
+		inq.device = T_DIRECT;
+		inq.version = 2;
+		inq.response_format = 2;
+		inq.additional_length = 32;
+		bcopy("ATA     ", inq.vendor, sizeof(inq.vendor));
+		bcopy(id.model, inq.product, sizeof(inq.product));
+		bcopy(id.firmware, inq.revision, sizeof(inq.revision));
 
-	bcopy(&inq, xs->data, MIN(sizeof(inq), xs->datalen));
-	xs->error = XS_NOERROR;
+		bcopy(&inq, xs->data, MIN(sizeof(inq), xs->datalen));
+		xs->error = XS_NOERROR;
+		break;
+
+	case ATA_S_ERROR:
+	case ATA_S_TIMEOUT:
+		ata_free_identify(xa);
+		xs->error = (xa->state == ATA_S_TIMEOUT ? XS_TIMEOUT :
+		    XS_DRIVER_STUFFUP);
+		break;
+
+	default:
+		panic("atascsi_disk_inq_done: unexpected ata_xfer state (%d)",
+		    xa->state);
+	}
+
 	xs->flags |= ITSDONE;
-
 	scsi_done(xs);
 }
 
@@ -469,19 +464,7 @@ atascsi_disk_capacity(struct scsi_xfer *xs)
 	if (xs->flags & SCSI_POLL)
 		xa->flags |= ATA_F_POLL;
 
-	switch (ata_exec(as, xa)) {
-	case ATA_COMPLETE:
-		return (COMPLETE);
-	case ATA_QUEUED:
-		return (SUCCESSFULLY_QUEUED);
-	case ATA_ERROR:
-		s = splbio();
-		ata_free_identify(xa);
-		splx(s);
-		return (atascsi_stuffup(xs));
-	default:
-		panic("unexpected return from ata_exec");
-	}
+	return (ata_exec(as, xa));
 }
 
 void
@@ -493,27 +476,42 @@ atascsi_disk_capacity_done(struct ata_xfer *xa)
 	u_int32_t		capacity;
 	int			i;
 
-	ata_complete_identify(xa, &id);
+	switch (xa->state) {
+	case ATA_S_COMPLETE:
+		ata_complete_identify(xa, &id);
 
-	bzero(&rcd, sizeof(rcd));
-	if (id.cmdset83 & 0x0400) {
-		for (i = 3; i >= 0; --i) {
+		bzero(&rcd, sizeof(rcd));
+		if (id.cmdset83 & 0x0400) { /* LBA48 feature set supported */
+			for (i = 3; i >= 0; --i) {
+				capacity <<= 16;
+				capacity += id.addrsecxt[i];
+			}
+		} else {
+			capacity = id.addrsec[1];
 			capacity <<= 16;
-			capacity += id.addrsecxt[i];
+			capacity += id.addrsec[0];
 		}
-	} else {
-		capacity = id.addrsec[1];
-		capacity <<= 16;
-		capacity += id.addrsec[0];
+
+		_lto4b(capacity - 1, rcd.addr);
+		_lto4b(512, rcd.length);
+
+		bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
+		xs->error = XS_NOERROR;
+		break;
+
+	case ATA_S_ERROR:
+	case ATA_S_TIMEOUT:
+		ata_free_identify(xa);
+		xs->error = (xa->state == ATA_S_TIMEOUT ? XS_TIMEOUT :
+		    XS_DRIVER_STUFFUP);
+		break;
+
+	default:
+		panic("atascsi_disk_capacity_done: "
+		    "unexpected ata_xfer state (%d)", xa->state);
 	}
 
-	_lto4b(capacity - 1, rcd.addr);
-	_lto4b(512, rcd.length);
-
-	bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
-	xs->error = XS_NOERROR;
 	xs->flags |= ITSDONE;
-
 	scsi_done(xs);
 }
 
@@ -582,15 +580,7 @@ atascsi_atapi_cmd(struct scsi_xfer *xs)
 	/* Copy SCSI command into ATAPI packet. */
 	memcpy(xa->cmd.packetcmd, xs->cmd, xs->cmdlen);
 
-	switch (ata_exec(as, xa)) {
-	case ATA_COMPLETE:
-	case ATA_ERROR:
-		return (COMPLETE);
-	case ATA_QUEUED:
-		return (SUCCESSFULLY_QUEUED);
-	default:
-		panic("unexpected return from ata_exec");
-	}
+	return (ata_exec(as, xa));
 }
 
 void
@@ -648,9 +638,17 @@ atascsi_stuffup(struct scsi_xfer *xs)
 int
 ata_exec(struct atascsi *as, struct ata_xfer *xa)
 {
-	return (as->as_methods->ata_cmd(xa));
+	switch (as->as_methods->ata_issue_cmd(xa)) {
+	case ATA_COMPLETE:
+	case ATA_ERROR:
+		return (COMPLETE);
+	case ATA_QUEUED:
+		if (!(xa->flags & ATA_F_POLL))
+			return (SUCCESSFULLY_QUEUED);
+	default:
+		panic("unexpected return from ata_exec");
+	}
 }
-
 
 struct ata_xfer *
 ata_get_xfer(struct ata_port *ap, int nosleep /* XXX unused */)
