@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.17 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: send.c,v 1.18 2007/03/20 21:01:08 millert Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: send.c,v 1.17 2003/06/03 02:56:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: send.c,v 1.18 2007/03/20 21:01:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -558,8 +558,12 @@ savemail(char *name, FILE *fi)
 	FILE *fo;
 	char buf[BUFSIZ];
 	time_t now;
+	mode_t m;
 
-	if ((fo = Fopen(name, "a")) == NULL) {
+	m = umask(077);
+	fo = Fopen(name, "a");
+	(void)umask(m);
+	if (fo == NULL) {
 		warn("%s", name);
 		return(-1);
 	}
