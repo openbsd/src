@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.79 2007/03/20 13:52:48 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.80 2007/03/20 21:14:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -98,6 +98,9 @@ void			bcw_start(struct ifnet *);
 void			bcw_stop(struct ifnet *, int);
 void			bcw_watchdog(struct ifnet *);
 void			bcw_set_opmode(struct ifnet *);
+void			bcw_macfilter_set(struct bcw_softc *, uint16_t,
+			    const uint8_t *);
+void			bcw_macfilter_clear(struct bcw_softc *, uint16_t);
 void			bcw_mac_enable(struct bcw_softc *);
 uint32_t		bcw_intr_enable(struct bcw_softc *, uint32_t);
 uint32_t		bcw_intr_disable(struct bcw_softc *, uint32_t);
@@ -906,6 +909,11 @@ bcw_attach(struct bcw_softc *sc)
 	    sc->sc_board_vendor, sc->sc_board_type, sc->sc_board_rev));
 
 	/*
+	 * Turn crystal on
+	 */
+	bcw_powercontrol_crystal_on(sc);
+
+	/*
 	 * Try and change to the ChipCommon Core
 	 */
 	if (bcw_change_core(sc, 0) == 0)
@@ -1288,15 +1296,13 @@ bcw_attach(struct bcw_softc *sc)
 	 */
 
 	/*
-	 * XXX TODO still for the card attach:
-	 * - Disable the 80211 Core (and wrapper for on/off)
-	 * - Setup LEDs to blink in whatever fashionable manner
+	 * Turn crystal off
 	 */
-	//bcw_powercontrol_crystal_off(sc);	/* TODO Fix panic! */
+	bcw_powercontrol_crystal_off(sc);
 
 	/*
 	 * Allocate DMA-safe memory for ring descriptors.
-	 * The receive and transmit rings are 4k aligned
+	 * The receive and transmit rings are 4k aligned.
 	 */
 	bcw_alloc_rx_ring(sc, &sc->sc_rxring, BCW_RX_RING_COUNT);
 	bcw_alloc_tx_ring(sc, &sc->sc_txring, BCW_TX_RING_COUNT);
@@ -1305,7 +1311,7 @@ bcw_attach(struct bcw_softc *sc)
 	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
 	ic->ic_state = IEEE80211_S_INIT;
 
-	/* set device capabilities - keep it simple */
+	/* Set device capabilities - keep it simple */
 	ic->ic_caps = IEEE80211_C_IBSS; /* IBSS mode supported */
 
 	/* Set supported rates */
@@ -1497,6 +1503,33 @@ bcw_set_opmode(struct ifnet *ifp)
 	BCW_WRITE16(sc, 0x0612, val);
 }
 
+void
+bcw_macfilter_set(struct bcw_softc *sc, uint16_t offset, const uint8_t *mac)
+{
+	uint16_t data;
+
+	offset |= 0x0020;
+	BCW_WRITE16(sc, BCW_MMIO_MACFILTER_CONTROL, offset);
+
+	data = mac[0];
+	data |= mac[1] << 8;
+	BCW_WRITE16(sc, BCW_MMIO_MACFILTER_DATA, data);
+	data = mac[2];
+	data |= mac[3] << 8;
+	BCW_WRITE16(sc, BCW_MMIO_MACFILTER_DATA, data);
+	data = mac[4];
+	data |= mac[5] << 8;
+	BCW_WRITE16(sc, BCW_MMIO_MACFILTER_DATA, data);
+}
+
+void
+bcw_macfilter_clear(struct bcw_softc *sc, uint16_t offset)
+{
+	const uint8_t zero_addr[ETHER_ADDR_LEN] = { 0 };
+
+	bcw_macfilter_set(sc, offset, zero_addr);
+}
+
 /*
  * Enable MAC on a PHY
  *
@@ -1546,6 +1579,7 @@ bcw_intr(void *arg)
 	struct bcw_softc *sc = arg;
 	uint32_t reason;
 #endif
+
 	return (0);
 }
 
@@ -1581,11 +1615,19 @@ int
 bcw_init(struct ifnet *ifp)
 {
         struct bcw_softc *sc = ifp->if_softc;
+	//struct ieee80211com *ic = &sc->sc_ic;
         int error;
 
 	/* initialize 80211 core */
 	if ((error = bcw_80211_core_init(sc, 1))) /* XXX */
 		return (error);
+
+#if 0
+	bcw_macfilter_clear(sc, BCW_MACFILTER_ASSOC);
+	bcw_macfilter_set(sc, BCW_MACFILTER_SELF, ic->ic_myaddr);
+	bcw_mac_enable(sc);
+	bcw_intr_enable(sc, BCW_INTR_INITIAL);
+#endif
 
 	/* start timer */
 	timeout_add(&sc->sc_timeout, hz);
@@ -2190,41 +2232,47 @@ bcw_free_tx_ring(struct bcw_softc *sc, struct bcw_tx_ring *ring)
 void
 bcw_powercontrol_crystal_on(struct bcw_softc *sc)
 {
-	uint32_t sbval;
+	uint32_t val;
 
-	sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOI);
-	if ((sbval & BCW_PCTL_XTAL_POWERUP) != BCW_PCTL_XTAL_POWERUP) {
-		sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
-		sbval |= (BCW_PCTL_XTAL_POWERUP & BCW_PCTL_PLL_POWERDOWN);
-		(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, sbval);
-		delay(1000);
-		sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
-		sbval &= ~BCW_PCTL_PLL_POWERDOWN;
-		(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, sbval);
-		delay(5000);
-	}
+	val = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOI);
+	if ((val & BCW_PCTL_XTAL_POWERUP) == BCW_PCTL_XTAL_POWERUP)
+		return; /* crystal is already on */
+
+	val = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
+	val |= (BCW_PCTL_XTAL_POWERUP | BCW_PCTL_PLL_POWERDOWN);
+	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, val);
+	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOE, val);
+
+	delay(1000);
+
+	val = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
+	val &= ~BCW_PCTL_PLL_POWERDOWN;
+	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, val);
+
+	delay(5000);
 }
 
 void
 bcw_powercontrol_crystal_off(struct bcw_softc *sc)
 {
-	uint32_t sbval;
+	uint32_t val;
 
-	/* XXX Return if radio is hardware disabled */
+	/* TODO return if radio is hardware disabled */
 	if (sc->sc_chip_rev < 5)
 		return;
-	if ((sc->sc_sprom.boardflags & BCW_BF_XTAL) == BCW_BF_XTAL)
+	if ((sc->sc_sprom.boardflags & BCW_BF_XTAL))
 		return;
 
-	/* XXX bcw_powercontrol_clock_slow() */
+	/* TODO bcw_powercontrol_clock_slow() */
 
-	sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
-	sbval |= BCW_PCTL_PLL_POWERDOWN;
-	sbval &= ~BCW_PCTL_XTAL_POWERUP;
-	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, sbval);
-	sbval = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOE);
-	sbval |= BCW_PCTL_PLL_POWERDOWN | BCW_PCTL_XTAL_POWERUP;
-	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOE, sbval);
+	val = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
+	val |= BCW_PCTL_PLL_POWERDOWN;
+	val &= ~BCW_PCTL_XTAL_POWERUP;
+	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, val);
+
+	val = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOE);
+	val |= (BCW_PCTL_PLL_POWERDOWN | BCW_PCTL_XTAL_POWERUP);
+	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOE, val);
 }
 
 int

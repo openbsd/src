@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.23 2007/03/20 11:55:36 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.24 2007/03/20 21:14:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -55,6 +55,8 @@
 #define BCW_MMIO_RADIO_DATA_HIGH	0x3f8
 #define BCW_MMIO_PHY_CONTROL		0x3fc
 #define BCW_MMIO_PHY_DATA		0x3fe
+#define BCW_MMIO_MACFILTER_CONTROL	0x420
+#define BCW_MMIO_MACFILTER_DATA		0x422
 #define BCW_MMIO_GPIO_CONTROL		0x49c
 #define BCW_MMIO_GPIO_MASK		0x49e
 
@@ -115,6 +117,12 @@
 #define BCW_SHM_PCM			0x0003
 #define BCW_SHM_HWMAC			0x0004
 #define BCW_SHM_UCODE			0x0300
+
+/*
+ * MAC filter offsets
+ */
+#define BCW_MACFILTER_SELF		0
+#define BCW_MACFILTER_ASSOC		0x0003
 
 /*
  * Power control
