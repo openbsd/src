@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.16 2007/03/20 12:01:18 pascoe Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.17 2007/03/20 14:10:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -23,6 +23,8 @@ struct atascsi;
  */
 
 #define ATA_C_IDENTIFY		0xec
+#define ATA_C_FLUSH_CACHE	0xe7
+#define ATA_C_FLUSH_CACHE_EXT	0xea /* lba48 */
 #define ATA_C_READDMA		0xc8
 #define ATA_C_WRITEDMA		0xca
 #define ATA_C_READDMA_EXT	0x25
