@@ -504,7 +504,7 @@ API_EXPORT(int) ap_scan_script_header_err_core(request_rec *r, char *buffer,
 	}
 
 	*l++ = '\0';
-	while (*l && ap_isspace(*l)) {
+	while (ap_isspace(*l)) {
 	    ++l;
 	}
 

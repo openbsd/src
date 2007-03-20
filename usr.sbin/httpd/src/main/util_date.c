@@ -232,7 +232,7 @@ API_EXPORT(time_t) ap_parseHTTPdate(const char *date)
     if (!date)
 	return BAD_DATE;
 
-    while (*date && ap_isspace(*date))	/* Find first non-whitespace char */
+    while (ap_isspace(*date))			/* Find first non-whitespace char */
 	++date;
 
     if (*date == '\0')

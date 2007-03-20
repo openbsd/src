@@ -165,7 +165,7 @@ bind_ttl(isc_textregion_t *source, isc_uint32_t *ttl) {
 		isc_result_t result;
 
 		char *np = nbuf;
-		while (*s != '\0' && isdigit((unsigned char)*s))
+		while (isdigit((unsigned char)*s))
 			*np++ = *s++;
 		*np++ = '\0';
 		INSIST(np - nbuf <= (int)sizeof(nbuf));

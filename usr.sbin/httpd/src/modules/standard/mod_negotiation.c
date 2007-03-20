@@ -369,7 +369,7 @@ static const char *get_entry(pool *p, accept_rec *result,
         }
 
         *cp++ = '\0';           /* Delimit var */
-        while (*cp && (ap_isspace(*cp) || *cp == '=')) {
+        while (ap_isspace(*cp) || *cp == '=') {
             ++cp;
         }
 
@@ -652,7 +652,7 @@ static enum header_state get_header_line(char *buffer, int len, FILE *map)
 
     /* If blank, just return it --- this ends information on this variant */
 
-    for (cp = buffer; (*cp && ap_isspace(*cp)); ++cp) {
+    for (cp = buffer; ap_isspace(*cp); ++cp) {
         continue;
     }
 
@@ -758,7 +758,7 @@ static char *lcase_header_name_return_body(char *header, request_rec *r)
 
     do {
         ++cp;
-    } while (*cp && ap_isspace(*cp));
+    } while (ap_isspace(*cp));
 
     if (!*cp) {
         ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,

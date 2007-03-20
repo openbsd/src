@@ -997,7 +997,7 @@ int ap_proxy_cache_check(request_rec *r, char *url, struct cache_conf * conf,
             /* isolate header name */
             while (*vary && !ap_isspace(*vary) && (*vary != ','))
                 ++vary;
-            while (*vary && (ap_isspace(*vary) || (*vary == ','))) {
+            while (ap_isspace(*vary) || (*vary == ',')) {
                 *vary = '\0';
                 ++vary;
             }

@@ -136,8 +136,6 @@ parse_list(FILE *f, unsigned *lineno, kconf_config_binding **parent,
 	    ++p;
 	if (*p == '#' || *p == ';' || *p == '\0')
 	    continue;
-	while(isspace((unsigned char)*p))
-	    ++p;
 	if (*p == '}')
 	    return 0;
 	if (*p == '\0')

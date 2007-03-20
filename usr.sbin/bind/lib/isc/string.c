@@ -38,7 +38,7 @@ isc_string_touint64(char *source, char **end, int base) {
 		return (0);
 	}
 
-	while (*s != 0 && isascii(*s&0xff) && isspace(*s&0xff))
+	while (isascii(*s&0xff) && isspace(*s&0xff))
 		s++;
 	if (*s == '+' /* || *s == '-' */)
 		s++;

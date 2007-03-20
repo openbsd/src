@@ -632,7 +632,7 @@ parse_word (Log_method *m, char **str, Log_unit **u, char **log_str)
     char *first;
 
     if (**str == '\0') return 1;
-    while (**str != '\0' && (isspace((unsigned char)**str) || **str == ';'))
+    while (isspace((unsigned char)**str) || **str == ';')
 	(*str)++;
     if (**str == '\0') return 1;
 

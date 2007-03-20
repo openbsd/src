@@ -699,7 +699,7 @@ static int imap_handler(request_rec *r)
 	if (!*string_pos) {		/* need at least two fields */
 	    goto need_2_fields;
 	}
-	while(*string_pos && ap_isspace(*string_pos)) { /* past whitespace */
+	while(ap_isspace(*string_pos)) { /* past whitespace */
 	    ++string_pos;
 	}
 

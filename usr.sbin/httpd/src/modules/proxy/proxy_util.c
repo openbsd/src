@@ -1373,7 +1373,7 @@ void ap_proxy_clear_connection(pool *p, table *headers)
             name = next;
             while (*next && !ap_isspace(*next) && (*next != ','))
                 ++next;
-            while (*next && (ap_isspace(*next) || (*next == ','))) {
+            while (ap_isspace(*next) || (*next == ',')) {
                 *next = '\0';
                 ++next;
             }

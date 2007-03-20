@@ -63,7 +63,7 @@ estrntoll(const char *str, size_t len, int base)
     num = strtol(p, &endptr, base);
 #endif
 
-    while(*endptr != '\0' && isspace((int)*endptr))
+    while(isspace((int)*endptr))
 	    endptr++;
 
     if (*endptr != '\0')

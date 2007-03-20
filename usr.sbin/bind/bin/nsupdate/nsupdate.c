@@ -720,7 +720,7 @@ parse_rdata(char **cmdlinep, dns_rdataclass_t rdataclass,
 	dns_rdatacallbacks_t callbacks;
 	isc_result_t result;
 
-	while (*cmdline != 0 && isspace((unsigned char)*cmdline))
+	while (isspace((unsigned char)*cmdline))
 		cmdline++;
 
 	if (*cmdline != 0) {
