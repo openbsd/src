@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2006/10/09 00:23:57 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2007/03/20 06:07:57 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@ static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 /* from: static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94"; */
-static const char rcsid[] = "$OpenBSD: main.c,v 1.10 2006/10/09 00:23:57 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.11 2007/03/20 06:07:57 ray Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -104,7 +104,7 @@ main(int argc, char *argv[])
 	int c, fflag;
 
 	fflag = 0;
-	while ((c = getopt(argc, argv, "ae:f:n")) != -1)
+	while ((c = getopt(argc, argv, "ae:f:nu")) != -1)
 		switch (c) {
 		case 'a':
 			aflag = 1;
@@ -120,10 +120,13 @@ main(int argc, char *argv[])
 		case 'n':
 			nflag = 1;
 			break;
+		case 'u':
+			setlinebuf(stdout);
+			break;
 		default:
 		case '?':
 			(void)fprintf(stderr,
-"usage:\tsed script [-an] [file ...]\n\tsed [-an] [-e script] ... [-f script_file] ... [file ...]\n");
+"usage:\tsed script [-anu] [file ...]\n\tsed [-anu] [-e script] ... [-f script_file] ... [file ...]\n");
 			exit(1);
 		}
 	argc -= optind;

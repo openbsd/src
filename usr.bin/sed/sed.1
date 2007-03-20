@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.25 2006/10/26 20:19:12 jmc Exp $
+.\"	$OpenBSD: sed.1,v 1.26 2007/03/20 06:07:57 ray Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,11 +40,11 @@
 .Nd stream editor
 .Sh SYNOPSIS
 .Nm sed
-.Op Fl an
+.Op Fl anu
 .Ar command
 .Op Ar file ...
 .Nm sed
-.Op Fl an
+.Op Fl anu
 .Op Fl e Ar command
 .Op Fl f Ar command_file
 .Op Ar file ...
@@ -97,6 +97,14 @@ all of the commands have been applied to it.
 The
 .Fl n
 option suppresses this behavior.
+.It Fl u
+Force output to be line buffered,
+printing each line as it becomes available.
+By default, output is line buffered when standard output is a terminal
+and block buffered otherwise.
+See
+.Xr setbuf 3
+for a more detailed explanation.
 .El
 .Pp
 The form of a
@@ -497,6 +505,7 @@ option on the command line.
 .Xr ed 1 ,
 .Xr grep 1 ,
 .Xr regex 3 ,
+.Xr setbuf 3 ,
 .Xr re_format 7
 .Pp
 "SED \(em A Non-interactive Text Editor",
@@ -508,9 +517,9 @@ utility is compliant with the
 .St -p1003.1-2004
 specification.
 .Pp
-The flag
-.Op Fl a
-is an extension to the specification.
+The flags
+.Op Fl au
+are extensions to the specification.
 .Pp
 The use of newlines to separate multiple commands on the command line
 is non-portable;
