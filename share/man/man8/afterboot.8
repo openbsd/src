@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.113 2006/05/19 13:13:52 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.114 2007/03/20 20:51:08 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -776,73 +776,10 @@ yet, or because licensing restrictions make binary redistribution
 impossible.
 Sometimes checking the mailing lists for
 past problems that people have encountered will result in a fix posted.
-.Sh COMPILING A KERNEL
-Note:
-The standard
-.Ox
-kernel configuration (GENERIC) is suitable for most purposes.
-Use of an alternative kernel configuration is not recommended.
-.Pp
-First, review the system message buffer using the
-.Xr dmesg 8
-command to find out information on your system's devices as probed by the
-kernel at boot.
-In particular, note which devices were not configured.
-This information will prove useful when editing kernel configuration files.
-.Pp
-To compile a kernel inside a writable source tree, do the following:
-.Bd -literal -offset indent
-# cd /usr/src/sys/arch/somearch/conf
-# vi SOMEFILE  (to make any changes)
-# config SOMEFILE
-# cd ../compile/SOMEFILE
-# make depend
-# make
-.Ed
-.Pp
-where
-.Ar somearch
-is the architecture (e.g. i386), and
-.Ar SOMEFILE
-should be a name indicative of a particular configuration
-(often that of the hostname).
-.Pp
-If you are building your kernel again, before you do a
-.Ic make
-you should do a
-.Ic make depend
-after making changes (including updates or patches) to your kernel source,
-or a
-.Ic make clean
-after making changes to your kernel options.
-.Pp
-The new kernel (called
-.Pa bsd )
-can be placed in
-.Pa /
-(i.e.\&
-.Pa /bsd )
-and the system will boot it next time.
-Many people save their backup kernels as
-.Pa /bsd.1 ,
-.Pa /bsd.2 ,
-etc.
-.Pp
-It is not always necessary to recompile the kernel if only
-configuration changes are required.
-With
-.Xr config 8 ,
-you can change the device configuration in the kernel file directly:
-.Bd -literal -offset indent
-# config -e -o bsd.new /bsd
-OpenBSD 2.7-beta (GENERIC.rz0) #0: Mon Oct  4 03:57:22 MEST 1999
-    root@winona:/usr/src/sys/arch/pmax/compile/GENERIC.rz0
-Enter 'help' for information
-ukc>
-.Ed
-.Pp
-Additionally, you can permanently save the changes made with UKC during
-boot time in the kernel image.
+.Ss Compiling a kernel
+Information on building and modifying kernels
+is contained within
+.Xr config 8 .
 .Sh SEE ALSO
 .Xr chgrp 1 ,
 .Xr chmod 1 ,
