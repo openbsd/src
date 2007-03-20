@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.17 2007/03/20 05:33:02 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.18 2007/03/20 06:41:38 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -30,6 +30,8 @@
 #include <scsi/scsiconf.h>
 
 #include <dev/ata/atascsi.h>
+
+#include <dev/ic/wdcreg.h>
 
 /* XXX ata_identify should be in atareg.h */
 
@@ -157,6 +159,7 @@ void		ata_complete_identify(struct ata_xfer *,
 		    struct ata_identify *);
 
 int		atascsi_disk_cmd(struct scsi_xfer *);
+void		atascsi_disk_cmd_done(struct ata_xfer *);
 int		atascsi_disk_inq(struct scsi_xfer *);
 void		atascsi_disk_inq_done(struct ata_xfer *);
 int		atascsi_disk_capacity(struct scsi_xfer *);
@@ -337,18 +340,25 @@ atascsi_cmd(struct scsi_xfer *xs)
 int
 atascsi_disk_cmd(struct scsi_xfer *xs)
 {
-#if 0
 	struct scsi_link	*link = xs->sc_link;
 	struct atascsi		*as = link->adapter_softc;
 	struct ata_port		*ap = as->as_ports[link->target];
-	int			s;
-#endif
+	int			s, flags = 0;
+	struct scsi_rw		*rw;
+	struct scsi_rw_big	*rwb;
+	struct ata_xfer		*xa;
+	u_int64_t		lba;
+	u_int32_t		sector_count;
+	u_int8_t		*regs;
 
 	switch (xs->cmd->opcode) {
 	case READ_BIG:
-	case WRITE_BIG:
 	case READ_COMMAND:
+		flags = ATA_F_READ;
+		break;
+	case WRITE_BIG:
 	case WRITE_COMMAND:
+		flags = ATA_F_WRITE;
 		/* deal with io outside the switch */
 		break;
 
@@ -370,7 +380,91 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 		return (atascsi_stuffup(xs));
 	}
 
-	return (atascsi_stuffup(xs));
+	s = splbio();
+	xa = ata_get_xfer(ap, xs->flags & SCSI_NOSLEEP);
+	splx(s);
+	if (xa == NULL)
+		return (NO_CCB);
+
+	xa->flags = flags;
+	if (xs->cmdlen == 6) {
+		rw = (struct scsi_rw *)xs->cmd;
+		lba = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
+		sector_count = rw->length ? rw->length : 0x100;
+	} else {
+		rwb = (struct scsi_rw_big *)xs->cmd;
+		lba = _4btol(rwb->addr);
+		sector_count = _2btol(rwb->length);
+	}
+
+	regs = xa->cmd.tx->regs;
+
+	regs[H2D_DEVCTL_OR_COMMAND] = H2D_DEVCTL_OR_COMMAND_COMMAND;
+	regs[LBA_LOW] = lba & 0xff;
+	regs[LBA_MID] = (lba >> 8) & 0xff;
+	regs[LBA_HIGH] = (lba >> 16) & 0xff;
+
+	if (xs->flags & SCSI_POLL)
+		xa->flags |= ATA_F_POLL;
+
+	if (sector_count > 0x100 || lba > 0xfffffff) {
+		/* Use LBA48 */
+		regs[H2D_COMMAND] = (xa->flags & ATA_F_WRITE) ?
+		    WDCC_WRITEDMA_EXT : WDCC_READDMA_EXT;
+		regs[DEVICE] = WDSD_LBA;
+		regs[LBA_LOW_EXP] = (lba >> 24) & 0xff;
+		regs[LBA_MID_EXP] = (lba >> 32) & 0xff;
+		regs[LBA_HIGH_EXP] = (lba >> 40) & 0xff;
+		regs[SECTOR_COUNT] = sector_count & 0xff;
+		regs[SECTOR_COUNT_EXP] = (sector_count >> 8) & 0xff;
+	} else {
+		/* Use LBA */
+		regs[H2D_COMMAND] = (xa->flags & ATA_F_WRITE) ?
+		    WDCC_WRITEDMA : WDCC_READDMA;
+		regs[DEVICE] = WDSD_LBA | ((lba >> 24) & 0x0f);
+		regs[SECTOR_COUNT] = sector_count & 0xff;
+	}
+
+	xa->data = xs->data;
+	xa->datalen = xs->datalen;
+	xa->complete = atascsi_disk_cmd_done;
+	xa->timeout = xs->timeout;
+	xa->atascsi_private = xs;
+
+	switch (ata_exec(as, xa)) {
+	case ATA_COMPLETE:
+	case ATA_ERROR:
+		return (COMPLETE);
+	case ATA_QUEUED:
+		return (SUCCESSFULLY_QUEUED);
+	default:
+		panic("unexpected return from ata_exec");
+	}
+}
+
+void
+atascsi_disk_cmd_done(struct ata_xfer *xa)
+{
+	struct scsi_xfer	*xs = xa->atascsi_private;
+
+	switch (xa->state) {
+	case ATA_S_COMPLETE:
+		xs->error = XS_NOERROR;
+		break;
+	case ATA_S_ERROR:
+		/* fake sense? */
+		printf("%s: error\n", __FUNCTION__);
+		xs->error = XS_DRIVER_STUFFUP;
+		break;
+	default:
+		panic("atascsi_disk_cmd_done: unexpected ata_xfer state (%d)",
+		    xa->state);
+	}
+
+	ata_put_xfer(xa);
+
+	xs->flags |= ITSDONE;
+	scsi_done(xs);
 }
 
 int
