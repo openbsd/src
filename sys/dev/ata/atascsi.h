@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.13 2007/03/20 08:47:46 pascoe Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.14 2007/03/20 10:02:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -17,22 +17,10 @@
  */
 
 struct atascsi;
-struct ata_xfer;
 
-struct atascsi_methods {
-	int			(*probe)(void *, int);
-	struct ata_xfer *	(*ata_get_xfer)(void *, int );
-	int			(*ata_cmd)(struct ata_xfer *);
-};
-
-struct atascsi_attach_args {
-	void			*aaa_cookie;
-
-	struct atascsi_methods	*aaa_methods;
-	void			(*aaa_minphys)(struct buf *);
-	int			aaa_nports;
-	int			aaa_ncmds;
-};
+/*
+ * ATA interface
+ */
 
 struct ata_port {
 	struct atascsi		*ap_as;
@@ -133,6 +121,25 @@ struct ata_xfer {
 #define ATA_QUEUED		0
 #define ATA_COMPLETE		1
 #define ATA_ERROR		2
+
+/*
+ * atascsi
+ */
+
+struct atascsi_methods {
+	int			(*probe)(void *, int);
+	struct ata_xfer *	(*ata_get_xfer)(void *, int );
+	int			(*ata_cmd)(struct ata_xfer *);
+};
+
+struct atascsi_attach_args {
+	void			*aaa_cookie;
+
+	struct atascsi_methods	*aaa_methods;
+	void			(*aaa_minphys)(struct buf *);
+	int			aaa_nports;
+	int			aaa_ncmds;
+};
 
 struct atascsi	*atascsi_attach(struct device *, struct atascsi_attach_args *);
 int		atascsi_detach(struct atascsi *);
