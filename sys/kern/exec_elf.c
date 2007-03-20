@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.58 2007/03/14 16:41:15 kettenis Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.59 2007/03/20 12:32:07 thib Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -354,7 +354,6 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 	Elf_Ehdr eh;
 	Elf_Phdr *ph = NULL;
 	u_long phsize;
-	char *bp = NULL;
 	Elf_Addr addr;
 	struct vnode *vp;
 #ifndef SMALL_KERNEL
@@ -369,7 +368,6 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 	Elf_Addr pos = *last;
 	int file_align;
 
-	bp = path;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path, p);
 	if ((error = namei(&nd)) != 0) {
 		return (error);
