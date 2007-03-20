@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.88 2007/03/20 12:46:26 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.89 2007/03/20 13:00:42 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1802,8 +1802,7 @@ ahci_ata_cmd(struct ata_xfer *xa)
 	xa->state = ATA_S_PENDING;
 
 	if (xa->flags & ATA_F_POLL) {
-		if (ahci_poll(ccb, 1000, ahci_ata_cmd_timeout) != 0)
-			return (ATA_ERROR);
+		ahci_poll(ccb, xa->timeout, ahci_ata_cmd_timeout);
 		return (ATA_COMPLETE);
 	}
 
