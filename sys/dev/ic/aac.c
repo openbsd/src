@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.34 2006/12/18 14:44:33 mpf Exp $	*/
+/*	$OpenBSD: aac.c,v 1.35 2007/03/20 10:30:32 mickey Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -53,6 +53,7 @@
 #include <sys/kthread.h>
 #include <sys/malloc.h>
 #include <sys/rwlock.h>
+#include <sys/time.h>
 
 #include <machine/bus.h>
 
@@ -1485,7 +1486,7 @@ aac_init(struct aac_softc *sc)
 	/*
 	 * First wait for the adapter to come ready.
 	 */
-	then = time_second;
+	then = time_uptime;
 	for (i = 0; i < AAC_BOOT_TIMEOUT * 1000; i++) {
 		code = AAC_GET_FWSTATUS(sc);
 		if (code & AAC_SELF_TEST_FAILED) {
@@ -1596,7 +1597,7 @@ aac_init(struct aac_softc *sc)
 		ip->HostPhysMemPages =
 		    (ip->HostPhysMemPages + AAC_PAGE_SIZE) / AAC_PAGE_SIZE;
 	}
-	ip->HostElapsedSeconds = time_second; /* reset later if invalid */
+	ip->HostElapsedSeconds = time_uptime; /* reset later if invalid */
 
 	/*
 	 * Initialise FIB queues.  Note that it appears that the layout of the
@@ -1739,9 +1740,9 @@ aac_sync_command(struct aac_softc *sc, u_int32_t command, u_int32_t arg0,
 
 #if 0
 	/* spin waiting for the command to complete */
-	then = time_second;
+	then = time_uptime;
 	do {
-		if (time_second > (then + AAC_IMMEDIATE_TIMEOUT)) {
+		if (time_uptime > (then + AAC_IMMEDIATE_TIMEOUT)) {
 			AAC_DPRINTF(AAC_D_MISC, ("timed out"));
 			return(EIO);
 		}
@@ -2079,7 +2080,7 @@ aac_command_timeout(struct aac_command *cm)
 
 	printf("%s: COMMAND %p (flags=%#x) TIMEOUT AFTER %d SECONDS\n",
 	       sc->aac_dev.dv_xname, cm, cm->cm_flags,
-	       (int)(time_second - cm->cm_timestamp));
+	       (int)(time_uptime - cm->cm_timestamp));
 
 	if (cm->cm_flags & AAC_CMD_TIMEDOUT)
 		return;
@@ -2111,7 +2112,7 @@ aac_timeout(struct aac_softc *sc)
 	 * Traverse the busy command list and timeout any commands
 	 * that are past their deadline.
 	 */
-	deadline = time_second - AAC_CMD_TIMEOUT;
+	deadline = time_uptime - AAC_CMD_TIMEOUT;
 	TAILQ_FOREACH(cm, &sc->aac_busy, cm_link) {
 		if (cm->cm_timestamp  < deadline)
 			aac_command_timeout(cm);
@@ -2647,7 +2648,7 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 		cm->cm_datalen = xs->datalen;
 		cm->cm_complete = aac_bio_complete;
 		cm->cm_private = xs;
-		cm->cm_timestamp = time_second;
+		cm->cm_timestamp = time_uptime;
 		cm->cm_queue = AAC_ADAP_NORM_CMD_QUEUE;
 		cm->cm_blkno = blockno;
 		cm->cm_bcount = blockcnt;
