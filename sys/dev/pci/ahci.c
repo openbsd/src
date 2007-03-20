@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.85 2007/03/20 08:47:46 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.86 2007/03/20 11:22:40 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -241,6 +241,7 @@ int ahcidebug = AHCI_D_VERBOSE;
 				    "\001N"
 #define AHCI_PREG_ACT		0x34 /* SATA Active */
 #define AHCI_PREG_CI		0x38 /* Command Issue */
+#define  AHCI_PREG_CI_ALL_SLOTS	0xffffffff
 #define AHCI_PREG_SNTF		0x3c /* SNotification */
 
 struct ahci_cmd_hdr {
@@ -339,6 +340,10 @@ struct ahci_port {
 	struct ahci_ccb		*ap_ccbs;
 	TAILQ_HEAD(, ahci_ccb)	ap_ccb_free;
 
+	u_int32_t		ap_state;
+#define AP_S_NORMAL			0
+#define AP_S_FATAL_ERROR		1
+
 #ifdef AHCI_DEBUG
 	char			ap_name[16];
 #define PORTNAME(_ap)	((_ap)->ap_name)
@@ -422,7 +427,7 @@ int			ahci_poll(struct ahci_ccb *, int, void (*)(void *));
 void			ahci_start(struct ahci_ccb *);
 
 int			ahci_intr(void *);
-int			ahci_port_intr(struct ahci_port *, u_int32_t);
+u_int32_t		ahci_port_intr(struct ahci_port *, u_int32_t);
 
 struct ahci_ccb		*ahci_get_ccb(struct ahci_port *);
 void			ahci_put_ccb(struct ahci_ccb *);
@@ -1356,7 +1361,8 @@ ahci_intr(void *arg)
 	while (is) {
 		port = ffs(is) - 1;
 		if (sc->sc_ports[port])
-			ahci_port_intr(sc->sc_ports[port], 0xffffffff);
+			ahci_port_intr(sc->sc_ports[port],
+			    AHCI_PREG_CI_ALL_SLOTS);
 		is &= ~(1 << port);
 	}
 
@@ -1366,56 +1372,136 @@ ahci_intr(void *arg)
 	return (1);
 }
 
-int
+u_int32_t
 ahci_port_intr(struct ahci_port *ap, u_int32_t ci_mask)
 {
 	struct ahci_softc		*sc = ap->ap_sc;
-	u_int32_t			is, ci, cmd, tfd;
-	int				slot, processed = 0;
+	u_int32_t			is, ci_saved, ci_masked, processed = 0;
+	int				slot, need_restart = 0;
 	struct ahci_ccb			*ccb;
 
 	is = ahci_pread(ap, AHCI_PREG_IS);
 
 	/* Ack port interrupt only if checking all command slots. */
-	if (ci_mask == 0xffffffff)
+	if (ci_mask == AHCI_PREG_CI_ALL_SLOTS)
 		ahci_pwrite(ap, AHCI_PREG_IS, is);
 
 	if (is)
 		DPRINTF(AHCI_D_INTR, "%s: interrupt: %b\n", PORTNAME(ap),
 		    is, AHCI_PFMT_IS);
 
-	/* Check for fatal errors, shut down if any. */
+	/* Save CI */
+	ci_saved = ahci_pread(ap, AHCI_PREG_CI);
+
+	/* Command failed.  See AHCI 1.1 spec 6.2.2.1. */
+	if (is & AHCI_PREG_IS_TFES) {
+		u_int32_t		tfd, serr;
+		int			err_slot;
+
+		tfd = ahci_pread(ap, AHCI_PREG_TFD);
+		serr = ahci_pread(ap, AHCI_PREG_SERR);
+
+		err_slot = AHCI_PREG_CMD_CCS(ahci_pread(ap,
+		    AHCI_PREG_CMD));
+		ccb = &ap->ap_ccbs[err_slot];
+
+		/* Preserve received taskfile data from the RFIS. */
+		memcpy(&ccb->ccb_xa.cmd.rx_err.regs, ap->ap_rfis->rfis,
+		    sizeof(struct ata_regs));
+
+		DPRINTF(AHCI_D_VERBOSE, "%s: errored slot %d, TFD: %b, SERR:"
+		    " %b, DIAG: %b\n", PORTNAME(ap), err_slot, tfd,
+		    AHCI_PFMT_TFD_STS, AHCI_PREG_SERR_ERR(serr),
+		    AHCI_PFMT_SERR_ERR, AHCI_PREG_SERR_DIAG(serr),
+		    AHCI_PFMT_SERR_DIAG);
+
+		/* Turn off ST to clear CI and SACT. */
+		ahci_port_stop(ap, 0);
+		need_restart = 1;
+
+		/* Clear SERR to enable capturing new errors. */
+		ahci_pwrite(ap, AHCI_PREG_SERR, serr);
+
+		/* Acknowledge the interrupts we can recover from. */
+		ahci_pwrite(ap, AHCI_PREG_IS, AHCI_PREG_IS_TFES |
+		    AHCI_PREG_IS_IFS);
+		is = ahci_pread(ap, AHCI_PREG_IS);
+
+		/* If device hasn't cleared its busy status, try to idle it. */
+		if (ISSET(tfd, AHCI_PREG_TFD_STS_BSY | AHCI_PREG_TFD_STS_DRQ)) {
+			printf("%s: attempting to idle device\n", PORTNAME(ap));
+			if (ahci_port_softreset(ap)) {
+				printf("%s: failed to soft reset device\n",
+				    PORTNAME(ap));
+				if (ahci_port_portreset(ap)) {
+					printf("%s: failed to port reset "
+					    "device, give up on it\n",
+					    PORTNAME(ap));
+					goto fatal;
+				}
+			}
+
+			/* Had to reset device, can't gather extended info. */
+		} else {
+			/* Didn't reset, could gather extended info from log. */
+		}
+
+		/* Clear the failed command in saved CI so completion runs. */
+		ci_saved &= ~(1 << err_slot);
+
+		/* Note the error in the ata_xfer. */
+		KASSERT(ccb->ccb_xa.state == ATA_S_ONCHIP);
+		ccb->ccb_xa.state = ATA_S_ERROR;
+	}
+
+	/* Check for remaining errors - they are fatal. */
 	if (is & (AHCI_PREG_IS_TFES | AHCI_PREG_IS_HBFS | AHCI_PREG_IS_IFS |
 	    AHCI_PREG_IS_OFS | AHCI_PREG_IS_UFS)) {
 		printf("%s: unrecoverable errors (IS: %b), disabling port.\n",
 		    PORTNAME(ap), is, AHCI_PFMT_IS);
-		if (is & AHCI_PREG_IS_TFES) {
-			cmd = ahci_pread(ap, AHCI_PREG_CMD);
-			tfd = ahci_pread(ap, AHCI_PREG_TFD);
-			DPRINTF(AHCI_D_INTR, "%s: current slot %d, TFD: %b\n",
-			    PORTNAME(ap), AHCI_PREG_CMD_CCS(cmd), tfd,
-			    AHCI_PFMT_TFD_STS);
-		}
-		ahci_port_stop(ap, 0);
 
-		/*
-		 * XXX reissue commands individually and/or notify callbacks
-		 *     about the failure.
-		 */
+		/* XXX try recovery first */
+		goto fatal;
 	}
+
+	/* Fail all outstanding commands if we know the port won't recover. */
+	if (ap->ap_state == AP_S_FATAL_ERROR) {
+fatal:
+		ap->ap_state = AP_S_FATAL_ERROR;
+
+		/* Ensure port is shut down. */
+		ahci_port_stop(ap, 1);
+
+		/* Error all the active slots. */
+		ci_masked = ~ci_saved & ap->ap_active;
+		while (ci_masked) {
+			slot = ffs(ci_masked) - 1;
+			ccb = &ap->ap_ccbs[slot];
+			ci_masked &= ~(1 << slot);
+			ccb->ccb_xa.state = ATA_S_ERROR;
+		}
+
+		/* Run completion for all slots. */
+		ci_saved = 0;
+
+		/* Don't restart the port if our problems were deemed fatal. */
+		if (ap->ap_state == AP_S_FATAL_ERROR)
+			need_restart = 0;
+	}
+
 
 	/*
 	 * CCB completion is detected by noticing its slot's bit in CI has
 	 * changed to zero some time after we activated it.
 	 * If we are polling, we may only be interested in particular slot(s).
 	 */
-	ci = ~ahci_pread(ap, AHCI_PREG_CI) & ap->ap_active & ci_mask;
-	while (ci) {
-		slot = ffs(ci) - 1;
+	ci_masked = ~ci_saved & ap->ap_active & ci_mask;
+	while (ci_masked) {
+		slot = ffs(ci_masked) - 1;
 		DPRINTF(AHCI_D_INTR, "%s: slot %d is complete\n", PORTNAME(ap),
 		    slot);
 		ccb = &ap->ap_ccbs[slot];
-		ci &= ~(1 << slot);
+		ci_masked &= ~(1 << slot);
 
 		bus_dmamap_sync(sc->sc_dmat,
 		    AHCI_DMA_MAP(ap->ap_dmamem_cmd_list),
@@ -1435,6 +1521,21 @@ ahci_port_intr(struct ahci_port *ap, u_int32_t ci_mask)
 		ccb->ccb_done(ccb);
 
 		processed |= 1 << ccb->ccb_slot;
+	}
+
+	if (need_restart) {
+		/* Restart command DMA on the port */
+		ahci_port_start(ap, 0);
+
+		/* Re-enable outstanding commands on port. */
+		if (ci_saved) {
+			DPRINTF(AHCI_D_VERBOSE, "%s: ahci_port_intr "
+			    "re-enabling slots %08x\n", PORTNAME(ap),
+			    ci_saved);
+
+			ahci_pwrite(ap, AHCI_PREG_CI, ci_saved);
+		}
+		
 	}
 
 	return (processed);
@@ -1668,6 +1769,9 @@ ahci_ata_cmd(struct ata_xfer *xa)
 	struct ahci_cmd_hdr		*cmd_slot;
 	int				s;
 
+	if (ccb->ccb_port->ap_state == AP_S_FATAL_ERROR)
+		goto failcmd;
+
 	ccb->ccb_done = ahci_ata_cmd_done;
 	ccb->ccb_cmd_table->cfis[0] = REGS_TYPE_REG_H2D;
 
@@ -1764,8 +1868,9 @@ ahci_ata_cmd_timeout(void *arg)
 	DPRINTF(AHCI_D_TIMEOUT, "%s: resetting port to abort command in slot %d, "
 	    "active %08x\n", PORTNAME(ap), ccb->ccb_slot, ap->ap_active);
 	if (ahci_port_softreset(ap) != 0 && ahci_port_portreset(ap) != 0) {
-		DPRINTF(AHCI_D_TIMEOUT, "%s: failed to reset port\n",
-		    PORTNAME(ap));
+		printf("%s: failed to reset port during error recovery, "
+		    "disabling it\n", PORTNAME(ap));
+		ap->ap_state = AP_S_FATAL_ERROR;
 	}
 
 	/* Restart any outstanding commands that were stopped by the reset. */
