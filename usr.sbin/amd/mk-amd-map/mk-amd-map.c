@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mk-amd-map.c	8.1 (Berkeley) 6/28/93
- *	$Id: mk-amd-map.c,v 1.8 2004/05/07 15:51:12 millert Exp $
+ *	$Id: mk-amd-map.c,v 1.9 2007/03/20 04:00:32 tedu Exp $
  */
 
 /*
@@ -48,7 +48,7 @@ char copyright[] = "\
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: mk-amd-map.c,v 1.8 2004/05/07 15:51:12 millert Exp $";
+static char rcsid[] = "$Id: mk-amd-map.c,v 1.9 2007/03/20 04:00:32 tedu Exp $";
 static char sccsid[] = "@(#)mk-amd-map.c	8.1 (Berkeley) 6/28/93";
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ read_file(FILE *fp, char *map, void *db)
 		/*
 		 * Find start of key
 		 */
-		for (kp = key_val; *kp && isascii(*kp) && isspace(*kp); kp++)
+		for (kp = key_val; isascii(*kp) && isspace(*kp); kp++)
 			;
 
 		/*
@@ -176,7 +176,7 @@ read_file(FILE *fp, char *map, void *db)
 		 */
 		if (*cp)
 			*cp++ = '\0';
-		while (*cp && isascii(*cp) && isspace(*cp))
+		while (isascii(*cp) && isspace(*cp))
 			cp++;
 		if (*kp == '+') {
 			fprintf(stderr, "Can't interpolate %s\n", kp);

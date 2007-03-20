@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cscope.c,v 1.12 2006/01/08 21:05:40 miod Exp $	*/
+/*	$OpenBSD: ex_cscope.c,v 1.13 2007/03/20 03:56:13 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -137,7 +137,7 @@ ex_cscope(sp, cmdp)
 			break;
 	if (*p != '\0') {
 		*p++ = '\0';
-		for (; *p && isspace(*p); ++p);
+		for (; isspace(*p); ++p);
 	}
 
 	if ((ccp = lookup_ccmd(cmd)) == NULL) {
@@ -613,7 +613,7 @@ create_cs_cmd(sp, pattern, searchp)
 	}
 
 	/* Skip <blank> characters to the pattern. */
-	for (p = pattern + 1; *p != '\0' && isblank(*p); ++p);
+	for (p = pattern + 1; isblank(*p); ++p);
 	if (*p == '\0') {
 usage:		(void)csc_help(sp, "find");
 		return (NULL);

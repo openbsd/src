@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_file.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_file.c,v 1.5 2003/06/02 23:36:51 millert Exp $
+ *	$Id: info_file.c,v 1.6 2007/03/20 04:00:32 tedu Exp $
  */
 
 /*
@@ -119,7 +119,7 @@ search_or_reload_file(FILE *fp, char *map, char *key, char **val, mnt_map *m,
 		/*
 		 * Find start of key
 		 */
-		for (kp = key_val; *kp && isascii(*kp) && isspace(*kp); kp++)
+		for (kp = key_val; isascii(*kp) && isspace(*kp); kp++)
 			;
 
 		/*
@@ -141,7 +141,7 @@ search_or_reload_file(FILE *fp, char *map, char *key, char **val, mnt_map *m,
 			*cp++ = '\0';
 
 		if (fn || (*key == *kp && strcmp(key, kp) == 0)) {
-			while (*cp && isascii(*cp) && isspace(*cp))
+			while (isascii(*cp) && isspace(*cp))
 				cp++;
 			if (*cp) {
 				/*

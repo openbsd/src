@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.14 2005/03/16 05:07:48 itojun Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.15 2007/03/20 04:00:32 tedu Exp $	*/
 /*	$KAME: ftp.c,v 1.20 2002/09/08 01:12:30 itojun Exp $	*/
 
 /*
@@ -395,7 +395,7 @@ ftp_copyresult(int src, int dst, enum state state)
 	code = atoi(rbuf);
 	param = p;
 	/* param points to first non-command token, if any */
-	while (*param && isspace(*param))
+	while (isspace(*param))
 		param++;
 	if (!*param)
 		param = NULL;
@@ -635,7 +635,7 @@ ftp_copycommand(int src, int dst, enum state *state)
 	*q = '\0';
 	param = p;
 	/* param points to first non-command token, if any */
-	while (*param && isspace(*param))
+	while (isspace(*param))
 		param++;
 	if (!*param)
 		param = NULL;

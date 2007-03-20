@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.16 2006/03/11 06:58:00 ray Exp $	*/
+/*	$OpenBSD: msg.c,v 1.17 2007/03/20 03:56:13 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -202,7 +202,7 @@ retry:		FREE_SPACE(sp, bp, blen);
 				++p;
 			continue;
 		}
-		for (u = p; *++p != '\0' && isdigit(*p););
+		for (u = p; isdigit(*++p););
 		if (*p != '$')
 			continue;
 

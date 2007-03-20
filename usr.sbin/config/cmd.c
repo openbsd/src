@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.13 2004/06/08 20:59:28 mcbride Exp $ */
+/*	$OpenBSD: cmd.c,v 1.14 2007/03/20 04:00:32 tedu Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: cmd.c,v 1.13 2004/06/08 20:59:28 mcbride Exp $";
+static char rcsid[] = "$OpenBSD: cmd.c,v 1.14 2007/03/20 04:00:32 tedu Exp $";
 #endif
 
 #include <sys/types.h>
@@ -269,7 +269,7 @@ Xtimezone(cmd_t *cmd)
 			c = cmd->args;
 			while ((*c != '\0') && !isspace(*c))
 				c++;
-			while ((*c != '\0') && isspace(*c))
+			while (isspace(*c))
 				c++;
 			if (strlen(c) != 0 && number(c, &num) == 0)
 				tz->tz_dsttime = num;

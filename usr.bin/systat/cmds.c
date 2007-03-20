@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.13 2006/03/31 04:10:59 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.14 2007/03/20 03:56:13 tedu Exp $	*/
 /*	$NetBSD: cmds.c,v 1.4 1996/05/10 23:16:32 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.13 2006/03/31 04:10:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.14 2007/03/20 03:56:13 tedu Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -62,7 +62,7 @@ command(char *cmd)
 		*cp++ = '\0';
 	if (*cmd == '\0')
 		return;
-	for (; *cp && isspace(*cp); cp++)
+	for (; isspace(*cp); cp++)
 		;
 	if (strcmp(cmd, "quit") == 0 || strcmp(cmd, "q") == 0)
 		die();

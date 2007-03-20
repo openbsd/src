@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_write.c,v 1.9 2006/05/30 19:43:27 pvalchev Exp $	*/
+/*	$OpenBSD: ex_write.c,v 1.10 2007/03/20 03:56:13 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -151,7 +151,7 @@ exwr(sp, cmdp, cmd)
 
 	/* Skip any leading whitespace. */
 	if (cmdp->argc != 0)
-		for (p = cmdp->argv[0]->bp; *p != '\0' && isblank(*p); ++p)
+		for (p = cmdp->argv[0]->bp; isblank(*p); ++p)
 			;
 
 	/* If "write !" it's a pipe to a utility. */
@@ -163,7 +163,7 @@ exwr(sp, cmdp, cmd)
 		}
 
 		/* Expand the argument. */
-		for (++p; *p && isblank(*p); ++p);
+		for (++p; isblank(*p); ++p);
 		if (*p == '\0') {
 			ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 			return (1);
@@ -204,7 +204,7 @@ exwr(sp, cmdp, cmd)
 		LF_SET(FS_APPEND);
 
 		/* Skip ">>" and whitespace. */
-		for (p += 2; *p && isblank(*p); ++p);
+		for (p += 2; isblank(*p); ++p);
 	}
 
 	/* If no other arguments, just write the file back. */
