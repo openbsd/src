@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.21 2006/08/12 17:54:38 krw Exp $	*/
+/*	$OpenBSD: param.h,v 1.22 2007/03/20 14:42:52 deanna Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -92,7 +92,6 @@
  */
 #define	ALIGNBYTES		0xf
 #define	ALIGN(p)		(((u_long)(p) + ALIGNBYTES) & ~ALIGNBYTES)
-#define ALIGN32(p)		(((u_long)(p) + ALIGNBYTES32) & ~ALIGNBYTES32)
 #define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 
