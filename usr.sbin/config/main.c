@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.38 2005/11/12 15:40:09 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.39 2007/03/20 19:42:14 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -89,9 +89,11 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-p] [-s srcdir] [-b builddir] [sysname]\n",
-	    __progname);
-	fprintf(stderr, "       %s -e [-u] [-f | -o newkernel] kernel\n", __progname);
+	fprintf(stderr,
+		"usage: %s [-p] [-b builddir] [-s srcdir] [config-file]\n"
+		"       %s [-u] [-f | -o outfile] -e infile\n",
+		__progname, __progname);
+
 	exit(1);
 }
 
