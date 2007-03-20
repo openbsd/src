@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.55 2006/01/20 23:10:19 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.56 2007/03/20 03:50:39 tedu Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -261,7 +261,7 @@ Arch_ParseArchive(char **linePtr,   /* Pointer to start of specification */
 	 * a close paren).  */
 	bool doSubst = false; /* true if need to substitute in memberName */
 
-	while (*cp != '\0' && *cp != ')' && isspace(*cp))
+	while (isspace(*cp))
 	    cp++;
 	memberName = cp;
 	while (*cp != '\0' && *cp != ')' && !isspace(*cp)) {
@@ -383,7 +383,7 @@ Arch_ParseArchive(char **linePtr,   /* Pointer to start of specification */
      * entrance to the loop, cp is guaranteed to point at a ')') */
     do {
 	cp++;
-    } while (*cp != '\0' && isspace(*cp));
+    } while (isspace(*cp));
 
     *linePtr = cp;
     return true;

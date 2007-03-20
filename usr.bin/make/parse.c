@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.70 2007/01/18 17:49:51 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.71 2007/03/20 03:50:39 tedu Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -838,7 +838,7 @@ ParseDoDependency(char *line)	/* the line to parse */
 		Parse_Error(PARSE_WARNING, "Extra target ignored");
 	    }
 	} else {
-	    while (*cp && isspace(*cp)) {
+	    while (isspace(*cp)) {
 		cp++;
 	    }
 	}
@@ -885,7 +885,7 @@ ParseDoDependency(char *line)	/* the line to parse */
     /*
      * Get to the first source
      */
-    while (*cp && isspace(*cp)) {
+    while (isspace(*cp)) {
 	cp++;
     }
     line = cp;
@@ -997,7 +997,7 @@ ParseDoDependency(char *line)	/* the line to parse */
 	    if (savec != '\0') {
 		cp++;
 	    }
-	    while (*cp && isspace(*cp)) {
+	    while (isspace(*cp)) {
 		cp++;
 	    }
 	    line = cp;
@@ -1047,7 +1047,7 @@ ParseDoDependency(char *line)	/* the line to parse */
 
 		ParseDoSrc(tOp, line);
 	    }
-	    while (*cp && isspace(*cp)) {
+	    while (isspace(*cp)) {
 		cp++;
 	    }
 	    line = cp;
@@ -1378,7 +1378,7 @@ ParseIsCond(Buffer linebuf, Buffer copy, char *line)
 
     char	*stripped;
 
-    while (*line != '\0' && isspace(*line))
+    while (isspace(*line))
 	line++;
 
     /* The line might be a conditional. Ask the conditional module
@@ -1389,7 +1389,7 @@ ParseIsCond(Buffer linebuf, Buffer copy, char *line)
 	do {
 	    line = Parse_ReadNextConditionalLine(linebuf);
 	    if (line != NULL) {
-		while (*line != '\0' && isspace(*line))
+		while (isspace(*line))
 		    line++;
 		    stripped = strip_comments(copy, line);
 	    }
@@ -1425,7 +1425,7 @@ ParseIsCond(Buffer linebuf, Buffer copy, char *line)
 	char *cp;
 
 	line+=5;
-	while (*line != '\0' && isspace(*line))
+	while (isspace(*line))
 	    line++;
 	for (cp = line; !isspace(*cp) && *cp != '\0';)
 	    cp++;

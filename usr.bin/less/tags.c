@@ -715,7 +715,7 @@ getentry(buf, tag, file, line)
 	if (*p == 0)
 		return (-1);
 	*p++ = 0;
-	for ( ;  *p && isspace(*p);  p++)		/* (skip blanks) */
+	for ( ;  isspace(*p);  p++)			/* (skip blanks) */
 		;
 	if (*p == 0)
 		return (-1);
@@ -727,7 +727,7 @@ getentry(buf, tag, file, line)
 	{
 		for ( ;  *p && !isspace(*p);  p++)	/* (skip tag type) */
 			;
-		for (;  *p && isspace(*p);  p++)	/* (skip blanks) */
+		for (;  isspace(*p);  p++)		/* (skip blanks) */
 			;
 	}
 	if (!isdigit(*p))
@@ -738,7 +738,7 @@ getentry(buf, tag, file, line)
 	if (*p == 0)
 		return (-1);
 	*p++ = 0;
-	for ( ; *p && isspace(*p);  p++)		/* (skip blanks) */
+	for ( ; isspace(*p);  p++)			/* (skip blanks) */
 		;
 	if (*p == 0)
 		return (-1);

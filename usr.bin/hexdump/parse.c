@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.15 2006/08/23 03:13:09 ray Exp $	*/
+/*	$OpenBSD: parse.c,v 1.16 2007/03/20 03:50:39 tedu Exp $	*/
 /*	$NetBSD: parse.c,v 1.12 2001/12/07 13:37:39 bjh21 Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parse.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: parse.c,v 1.15 2006/08/23 03:13:09 ray Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.16 2007/03/20 03:50:39 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,7 +72,7 @@ addfile(char *name)
 			lbuf[len] = '\0';
 			buf = lbuf;
 		}
-		for (p = buf; *p && isspace((unsigned char)*p); ++p);
+		for (p = buf; isspace((unsigned char)*p); ++p);
 		if (!*p || *p == '#')
 			continue;
 		add(p);

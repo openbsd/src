@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.25 2006/11/29 21:59:04 jmc Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.26 2007/03/20 03:50:39 tedu Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -170,7 +170,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: fmt.c,v 1.25 2006/11/29 21:59:04 jmc Exp $";
+  "$OpenBSD: fmt.c,v 1.26 2007/03/20 03:50:39 tedu Exp $";
 static const char copyright[] =
   "Copyright (c) 1997 Gareth McCaughan. All rights reserved.\n";
 #endif /* not lint */
@@ -497,7 +497,7 @@ might_be_header(const unsigned char *line)
 
 	if (!isupper(*line++))
 		return 0;
-	while (*line && (isalnum(*line) || *line == '-'))
+	while (isalnum(*line) || *line == '-')
 		++line;
 	return (*line == ':' && isspace(line[1]));
 }

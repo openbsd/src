@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.7 2005/10/17 19:08:46 otto Exp $	*/
+/*	$OpenBSD: config.c,v 1.8 2007/03/20 03:50:39 tedu Exp $	*/
 /*	$NetBSD: config.c,v 1.7 1995/09/28 06:05:21 tls Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: config.c,v 1.7 2005/10/17 19:08:46 otto Exp $";
+static char rcsid[] = "$OpenBSD: config.c,v 1.8 2007/03/20 03:50:39 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ config(char *fname)
 		p[len - 1] = '\0';		/* Terminate the line. */
 
 						/* Skip leading space. */
-		while (*p != '\0' && isspace(*p))
+		while (isspace(*p))
 			p++;
 						/* Skip empty/comment lines. */
 		if (*p == '\0' || *p == '#')
@@ -114,7 +114,7 @@ config(char *fname)
 		 * has only a single token on it.
 		 */
 		if (!strcmp(p, "_build")) {
-			while (*++t && isspace(*t));
+			while (isspace(*++t));
 			if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 			    (ep->s = strdup(t)) == NULL)
 				err(1, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.11 2006/03/10 19:14:58 otto Exp $	*/
+/*	$OpenBSD: column.c,v 1.12 2007/03/20 03:50:39 tedu Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: column.c,v 1.11 2006/03/10 19:14:58 otto Exp $";
+static char rcsid[] = "$OpenBSD: column.c,v 1.12 2007/03/20 03:50:39 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -264,7 +264,7 @@ input(FILE *fp)
 	if (!list)
 		list = emalloc((maxentry = DEFNUM) * sizeof(char *));
 	while (fgets(buf, MAXLINELEN, fp)) {
-		for (p = buf; *p && isspace(*p); ++p);
+		for (p = buf; isspace(*p); ++p);
 		if (!*p)
 			continue;
 		if (!(p = strchr(p, '\n'))) {

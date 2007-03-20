@@ -1,4 +1,4 @@
-/* $OpenBSD: new_pwd.c,v 1.6 2005/05/01 02:56:28 deraadt Exp $ */
+/* $OpenBSD: new_pwd.c,v 1.7 2007/03/20 03:50:39 tedu Exp $ */
 /* $KTH: new_pwd.c,v 1.11 1997/05/02 14:28:54 assar Exp $ */
 
 /*
@@ -73,7 +73,7 @@ check_pw(char *pword)
 		return "That password collides with a system feature. Choose another.\n";
 
 	/* Don't allow all lower case passwords regardless of length */
-	for (t = pword; *t && islower(*t); t++)
+	for (t = pword; islower(*t); t++)
 		;
 	if (*t == 0)
 		return "Please don't use an all-lower case password.\n"

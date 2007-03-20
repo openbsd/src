@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.83 2006/12/11 20:50:54 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.84 2007/03/20 03:50:39 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -72,7 +72,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.83 2006/12/11 20:50:54 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.84 2007/03/20 03:50:39 tedu Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -938,7 +938,9 @@ age_old_log(struct conf_entry *ent)
 char *
 sob(char *p)
 {
-	while (p && *p && isspace(*p))
+	if (p == NULL)
+		return(p);
+	while (isspace(*p))
 		p++;
 	return (p);
 }

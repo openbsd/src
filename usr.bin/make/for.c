@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: for.c,v 1.30 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.31 2007/03/20 03:50:39 tedu Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -139,7 +139,7 @@ For_Eval(const char *line)
     For 	*arg;
     unsigned long n;
 
-    while (*ptr && isspace(*ptr))
+    while (isspace(*ptr))
 	ptr++;
 
     /* Parse loop.  */
@@ -157,7 +157,7 @@ For_Eval(const char *line)
 	    return 0;
 	}
 	endVar = ptr++;
-	while (*ptr && isspace(*ptr))
+	while (isspace(*ptr))
 	    ptr++;
 	/* End of variable list ? */
 	if (endVar - wrd == 2 && wrd[0] == 'i' && wrd[1] == 'n')
@@ -204,7 +204,7 @@ For_Accumulate(For *arg, const char *line)
 
     if (*ptr == '.') {
 
-	for (ptr++; *ptr && isspace(*ptr); ptr++)
+	for (ptr++; isspace(*ptr); ptr++)
 	    continue;
 
 	if (strncmp(ptr, "endfor", 6) == 0 &&
