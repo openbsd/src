@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_subr.c,v 1.9 2007/03/20 10:34:52 mickey Exp $	*/
+/*	$OpenBSD: com_subr.c,v 1.10 2007/03/20 17:37:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -323,10 +323,6 @@ com_attach_subr(sc)
 	default:
 		panic("comattach: bad fifo type");
 	}
-#ifdef COM_CONSOLE
-	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
-		delay(10000);			/* wait for output to finish */
-#endif
 
 #ifdef notyet
 	com_fifo_probe(sc);
