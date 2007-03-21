@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.21 2006/12/08 09:21:08 claudio Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.22 2007/03/21 12:47:34 claudio Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -87,10 +87,9 @@ Setting
 .Ic fib-update
 to
 .Ic \&no
-may result in routing loops and could cause major routing issues in the
-complete OSPF cloud.
-Only routers with just one link to the OSPF cloud may safely set it to
-.Ic no .
+will implicitly set the
+.Ic stub Ic router
+option to ensure that no trafic tries to transit via this router.
 .Pp
 .It Xo
 .Op Ic no
@@ -181,6 +180,23 @@ Set the SPF holdtime in seconds.
 The minimum time between two consecutive
 shortest path first calculations.
 The default value is 5 seconds; the valid is range 1\-5 seconds.
+.Pp
+.It Xo
+.Ic stub Ic router
+.Pq Ic yes Ns \&| Ns Ic no
+.Xc
+If set to
+.Ic yes ,
+all interfaces with active neighbors will have a metric of infinity.
+This ensures that the other routers prefer routes around this router while
+still being able to reach directly connected IP prefixes.
+The
+.Ic stub Ic router
+option is automaticaly enabled if either the
+.Xr sysctl 8
+variable
+.Va net.inet.ip.forwarding
+is set to value different from 1 or if the FIB is not coupled.
 .El
 .Sh AREAS
 Areas are used for grouping interfaces.
