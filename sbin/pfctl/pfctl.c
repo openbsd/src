@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.262 2007/03/01 17:20:53 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.263 2007/03/21 03:01:31 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1954,7 +1954,7 @@ main(int argc, char *argv[])
 	int	 ch;
 	int	 mode = O_RDONLY;
 	int	 opts = 0;
-	int	 optimize = 0;
+	int	 optimize = PF_OPTIMIZE_BASIC;
 	char	 anchorname[MAXPATHLEN];
 	char	*path;
 	FILE	*fin = NULL;
