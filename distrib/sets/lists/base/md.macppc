@@ -1185,6 +1185,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/pciide_i31244_reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/pciide_ite_reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/pciide_ixp_reg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/pciide_jmicron_reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/pciide_natsemi_reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/pciide_nforce_reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/pciide_opti_reg.ph
@@ -1682,6 +1683,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/limits.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/lock.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/mutex.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/param.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/pcb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/pio.ph
@@ -1985,6 +1987,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/kcore.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/limits.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/lock.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/mutex.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/param.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/pcb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/pio.ph

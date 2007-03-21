@@ -587,6 +587,7 @@
 ./usr/include/dev/pci/pciide_i31244_reg.h
 ./usr/include/dev/pci/pciide_ite_reg.h
 ./usr/include/dev/pci/pciide_ixp_reg.h
+./usr/include/dev/pci/pciide_jmicron_reg.h
 ./usr/include/dev/pci/pciide_natsemi_reg.h
 ./usr/include/dev/pci/pciide_nforce_reg.h
 ./usr/include/dev/pci/pciide_opti_reg.h
@@ -3346,6 +3347,7 @@
 ./usr/share/man/cat3/event.0
 ./usr/share/man/cat3/event_add.0
 ./usr/share/man/cat3/event_base_dispatch.0
+./usr/share/man/cat3/event_base_free.0
 ./usr/share/man/cat3/event_base_loop.0
 ./usr/share/man/cat3/event_base_loopexit.0
 ./usr/share/man/cat3/event_base_set.0

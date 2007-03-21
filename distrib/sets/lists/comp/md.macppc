@@ -182,6 +182,7 @@
 ./usr/include/macppc/limits.h
 ./usr/include/macppc/loadfile_machdep.h
 ./usr/include/macppc/lock.h
+./usr/include/macppc/mutex.h
 ./usr/include/macppc/param.h
 ./usr/include/macppc/pcb.h
 ./usr/include/macppc/pio.h
@@ -227,6 +228,7 @@
 ./usr/include/powerpc/kcore.h
 ./usr/include/powerpc/limits.h
 ./usr/include/powerpc/lock.h
+./usr/include/powerpc/mutex.h
 ./usr/include/powerpc/param.h
 ./usr/include/powerpc/pcb.h
 ./usr/include/powerpc/pio.h
