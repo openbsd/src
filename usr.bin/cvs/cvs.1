@@ -1,7 +1,7 @@
-.\"	$OpenBSD: cvs.1,v 1.103 2007/02/06 15:24:18 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.104 2007/03/21 21:40:01 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
-.\" Copyright (c) 2004-2006 Xavier Santolaria <xsa@openbsd.org>
+.\" Copyright (c) 2004-2007 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -1772,6 +1772,27 @@ This file is read on startup unless the
 option is specified.
 .It Pa $CVSROOT/CVSROOT
 Directory containing repository administrative files.
+.It Pa $CVSROOT/CVSROOT/config
+File containing various configuration options.
+The format of each line is as follows:
+.Pp
+.Dl keyword=value
+.Pp
+Extraneous spaces or tabs are not permitted.
+A line beginning with a hash character
+.Pq Sq #
+is considered a comment and ignored.
+.Pp
+The following options are available:
+.Pp
+.Bl -tag -width "dlimit=XvalueXXX" -offset indent -compact
+.It dlimit='value'
+Set the process data size limit.
+.It tag='value'
+Set the name of a local tag to use in addition to Id.
+.It umask='value'
+Set the default umask to use when creating files and directories.
+.El
 .It Pa $CVSROOT/CVSROOT/history
 File containing reports of
 .Ic checkout ,
