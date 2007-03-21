@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.12 2004/07/30 11:43:02 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.13 2007/03/21 00:33:39 uwe Exp $
 .\"
 .\" Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
 .\"
@@ -59,8 +59,12 @@ operands are processed in command line order.
 If a Sun .au header is
 detected it is skipped over and not copied to
 .Pa /dev/audio .
-Otherwise, the
-entire file is copied to
+If a Microsoft .wav header (RIFF) is detected it is interpreted to
+select the right audio encoding for playback and the data chunk of the
+file is copied to
+.Pa /dev/audio ,
+given that the audio driver directly supports the encoding.
+Otherwise, the entire file is copied to
 .Pa /dev/audio .
 .Pp
 The options are as follows:
