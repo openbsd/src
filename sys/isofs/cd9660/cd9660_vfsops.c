@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.42 2006/08/07 15:50:42 pedro Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.43 2007/03/21 13:44:04 pedro Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -236,7 +236,7 @@ iso_mountfs(devvp, mp, p, argp)
 	struct iso_supplementary_descriptor *sup = NULL;
 	struct iso_directory_record *rootp;
 	int logical_block_size;
-	int sess = 0;
+	int sess;
 	
 	if (!ronly)
 		return (EROFS);
@@ -259,16 +259,25 @@ iso_mountfs(devvp, mp, p, argp)
 		return (error);
 	needclose = 1;
 	
-	/* This is the "logical sector size".  The standard says this
+	/*
+	 * This is the "logical sector size".  The standard says this
 	 * should be 2048 or the physical sector size on the device,
 	 * whichever is greater.  For now, we'll just use a constant.
 	 */
 	iso_bsize = ISO_DEFAULT_BLOCK_SIZE;
 
-	error = VOP_IOCTL(devvp, CDIOREADMSADDR, (caddr_t)&sess, 0, FSCRED, p);
-	if (error)
+	if (argp->flags & ISOFSMNT_SESS) {
+		sess = argp->sess;
+		if (sess < 0)
+			sess = 0;
+	} else {
 		sess = 0;
-	
+		error = VOP_IOCTL(devvp, CDIOREADMSADDR, (caddr_t)&sess, 0,
+		    FSCRED, p);
+		if (error)
+			sess = 0;
+	}
+
 	joliet_level = 0;
 	for (iso_blknum = 16; iso_blknum < 100; iso_blknum++) {
 		if ((error = bread(devvp,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.77 2006/12/15 03:04:24 krw Exp $	*/
+/*	$OpenBSD: mount.h,v 1.78 2007/03/21 13:44:04 pedro Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -94,11 +94,14 @@ struct iso_args {
 	char	*fspec;			/* block special device to mount */
 	struct	export_args export_info;/* network export info */
 	int	flags;			/* mounting flags, see below */
+	int	sess;			/* start sector of session */
 };
-#define	ISOFSMNT_NORRIP	0x00000001	/* disable Rock Ridge Ext.*/
-#define	ISOFSMNT_GENS	0x00000002	/* enable generation numbers */
-#define	ISOFSMNT_EXTATT	0x00000004	/* enable extended attributes */
-#define	ISOFSMNT_NOJOLIET 0x00000008	/* disable Joliet Ext.*/
+
+#define	ISOFSMNT_NORRIP		0x00000001	/* disable Rock Ridge Ext.*/
+#define	ISOFSMNT_GENS		0x00000002	/* enable generation numbers */
+#define	ISOFSMNT_EXTATT		0x00000004	/* enable extended attr. */
+#define	ISOFSMNT_NOJOLIET	0x00000008	/* disable Joliet Ext.*/
+#define	ISOFSMNT_SESS		0x00000010	/* use iso_args.sess */
 
 /*
  * Arguments to mount NFS

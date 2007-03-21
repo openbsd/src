@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_cd9660.c,v 1.17 2005/04/08 20:09:36 jaredy Exp $	*/
+/*	$OpenBSD: mount_cd9660.c,v 1.18 2007/03/21 13:44:04 pedro Exp $	*/
 /*	$NetBSD: mount_cd9660.c,v 1.3 1996/04/13 01:31:08 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.4 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_cd9660.c,v 1.17 2005/04/08 20:09:36 jaredy Exp $";
+static char rcsid[] = "$OpenBSD: mount_cd9660.c,v 1.18 2007/03/21 13:44:04 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ static char rcsid[] = "$OpenBSD: mount_cd9660.c,v 1.17 2005/04/08 20:09:36 jared
 
 #include <err.h>
 #include <errno.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -74,11 +75,12 @@ int
 main(int argc, char *argv[])
 {
 	struct iso_args args;
-	int ch, mntflags, opts;
+	int ch, mntflags, opts, sess = 0;
 	char *dev, dir[MAXPATHLEN];
+	const char *errstr;
 
 	mntflags = opts = 0;
-	while ((ch = getopt(argc, argv, "egjo:R")) != -1)
+	while ((ch = getopt(argc, argv, "egjo:Rs:")) != -1)
 		switch (ch) {
 		case 'e':
 			opts |= ISOFSMNT_EXTATT;
@@ -94,6 +96,13 @@ main(int argc, char *argv[])
 			break;
 		case 'R':
 			opts |= ISOFSMNT_NORRIP;
+			break;
+		case 's':
+			opts |= ISOFSMNT_SESS;
+			sess = strtonum(optarg, 0, INT32_MAX, &errstr);
+			if (errstr)
+				errx(1, "session number is %s: %s", errstr,
+				    optarg);
 			break;
 		case '?':
 		default:
@@ -121,6 +130,7 @@ main(int argc, char *argv[])
 	else
 		args.export_info.ex_flags = 0;
 	args.flags = opts;
+	args.sess = sess;
 
 	if (mount(MOUNT_CD9660, dir, mntflags, &args) < 0) {
 		if (errno == EOPNOTSUPP)
@@ -135,6 +145,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-		"usage: mount_cd9660 [-egjR] [-o options] special node\n");
+		"usage: mount_cd9660 [-egjR] [-o options] [-s offset] "
+		"special node\n");
 	exit(1);
 }
