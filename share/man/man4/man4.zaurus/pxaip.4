@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: pxaip.4,v 1.11 2007/03/19 20:55:36 jmc Exp $
+.\" 	$OpenBSD: pxaip.4,v 1.12 2007/03/21 00:19:55 uwe Exp $
 .\"
 .\" Copyright (c) 2005, Miodrag Vallat.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Cd "pxadmac0 at pxaip?"
 .Cd "scoop0   at pxaip?"
 .Cd "scoop1   at pxaip?"
-.Cd "saost0   at pxaip? addr 0x40a00000 size 0x20"
+.Cd "pxaost0  at pxaip? addr 0x40a00000 size 0x20"
 .Cd "zts0     at pxaip?"
 .Cd "zkbd0    at pxaip?"
 .Cd "pxaudc0  at pxaip?"
@@ -78,12 +78,12 @@ PXA2x0 GPIO interface
 PXA2x0 interrupt controller
 .It Xr pxammc 4
 MMC/SD/SDIO controller
+.It Xr pxaost 4
+PXA2x0 OS timer
 .It Xr pxapcic 4
 PXA2x0 PCMCIA interface
 .It Xr pxaudc 4
 PXA27x USB device controller
-.It Xr saost 4
-SA-11x0 OS timer
 .It Xr scoop 4
 Compact Flash and GPIO controller
 .It Xr zaudio 4
