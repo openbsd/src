@@ -1,4 +1,4 @@
-/*	$OpenBSD: evdns.c,v 1.1 2007/03/19 15:12:49 millert Exp $	*/
+/*	$OpenBSD: evdns.c,v 1.2 2007/03/21 12:26:37 millert Exp $	*/
 
 /* The original version of this module was written by Adam Langley; for
  * a history of modifications, check out the subversion logs.
@@ -46,8 +46,10 @@
 #ifndef DNS_USE_CPU_CLOCK_FOR_ID
 #ifndef DNS_USE_GETTIMEOFDAY_FOR_ID
 #ifndef DNS_USE_OPENSSL_FOR_ID
+#ifndef DNS_USE_ARC4RANDOM_FOR_ID
 #error Must configure at least one id generation method.
 #error Please see the documentation.
+#endif
 #endif
 #endif
 #endif
@@ -1029,6 +1031,11 @@ transaction_id_pick(void) {
 			trans_id = tv.tv_usec & 0xffff; */
 			abort();
 		}
+#endif
+
+#ifdef DNS_USE_ARC4RANDOM_FOR_ID
+		u16 trans_id;
+		trans_id = arc4random() & 0xffff;
 #endif
 
 		if (trans_id == 0xffff) continue;
