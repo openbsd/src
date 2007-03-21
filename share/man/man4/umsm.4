@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umsm.4,v 1.14 2007/03/18 22:09:17 stevesk Exp $
+.\"	$OpenBSD: umsm.4,v 1.15 2007/03/21 13:59:27 stevesk Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -86,6 +86,52 @@ default:
 In this example the phone number is (451) 765-4321: replace this with
 the number issued for the card or your phone's number if a handset is being
 used.
+.Pp
+An example demand dial configuration for Cingular Wireless using
+.Xr pppd 8
+appears below.
+.Pp
+.Pa /etc/ppp/cingular-chat :
+.Bd -literal -offset indent
+TIMEOUT 10
+REPORT CONNECT
+ABORT BUSY
+ABORT 'NO CARRIER'
+ABORT ERROR
+'' ATZ OK AT&F OK
+AT+CGDCONT=1,"IP","isp.cingular" OK
+ATD*99***1# CONNECT
+.Ed
+.Pp
+.Pa /etc/ppp/peers/ac875 :
+.Bd -literal -offset indent
+cuaU0
+115200
+debug
+noauth
+nocrtscts
+:10.254.254.1
+ipcp-accept-remote
+defaultroute
+user isp@cingulargprs.com
+demand
+active-filter 'not udp port 123'
+persist
+idle 600
+connect "/usr/sbin/chat -v -f /etc/ppp/cingular-chat"
+.Ed
+.Pp
+.Pa /etc/ppp/chap-secrets :
+.Bd -literal -offset indent
+# Secrets for authentication using CHAP
+# client		server	secret		IP addresses
+isp@cingulargprs.com	*	CINGULAR1
+.Ed
+.Pp
+.Xr pppd 8
+is then started using:
+.Pp
+.Dl # pppd call ac875
 .Sh SEE ALSO
 .Xr ucom 4 ,
 .Xr uhub 4 ,
