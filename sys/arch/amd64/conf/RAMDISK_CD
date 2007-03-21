@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.70 2007/02/20 11:42:41 tom Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.71 2007/03/21 02:14:06 dlg Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -152,6 +152,8 @@ com2	at isa? port 0x3e8 irq 5
 #scsibus* at bha?
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
+ahci*	at pci?			# AHCI SATA controllers
+scsibus* at ahci?
 ahd*	at pci?			# Adaptec 79?? SCSI controllers
 scsibus* at ahd?
 arc*	at pci?			# Areca RAID Controller
