@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.53 2007/02/26 12:16:18 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.54 2007/03/21 10:54:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -51,6 +51,7 @@ struct iface	*find_vlink(struct abr_rtr *);
 struct ospfd_conf	*oeconf = NULL, *nconf;
 struct imsgbuf		*ibuf_main;
 struct imsgbuf		*ibuf_rde;
+int			 oe_nofib;
 
 /* ARGSUSED */
 void
@@ -106,6 +107,8 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	if_set_recvbuf(xconf->ospf_socket);
 
 	oeconf = xconf;
+	if (oeconf->flags & OSPFD_FLAG_NO_FIB_UPDATE)
+		oe_nofib = 1;
 
 	if ((pw = getpwnam(OSPFD_USER)) == NULL)
 		fatal("getpwnam");
@@ -252,7 +255,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 	struct iface	*iface = NULL;
 	struct kif	*kif;
 	struct auth_md	 md;
-	int		 n, link_ok;
+	int		 n, link_ok, stub_changed;
 
 	switch (event) {
 	case EV_READ:
@@ -350,8 +353,15 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			md_list_add(&niface->auth_md_list, md.keyid, md.key);
 			break;
 		case IMSG_RECONF_END:
+			if ((oeconf->flags & OSPFD_FLAG_STUB_ROUTER) !=
+			    (nconf->flags & OSPFD_FLAG_STUB_ROUTER))
+				stub_changed = 1;
+			else
+				stub_changed = 0;
 			merge_config(oeconf, nconf);
 			nconf = NULL;
+			if (stub_changed)
+				orig_rtr_lsa_all(NULL);
 			break;
 		case IMSG_CTL_KROUTE:
 		case IMSG_CTL_KROUTE_ADDR:
@@ -723,7 +733,12 @@ orig_rtr_lsa(struct area *area)
 				rtr_link.id = nbr->id.s_addr;
 				rtr_link.data = iface->addr.s_addr;
 				rtr_link.type = LINK_TYPE_POINTTOPOINT;
-				rtr_link.metric = htons(iface->metric);
+				/* RFC 3137: stub router support */
+				if (oeconf->flags & OSPFD_FLAG_STUB_ROUTER ||
+				    oe_nofib)
+					rtr_link.metric = 0xffff;
+				else
+					rtr_link.metric = htons(iface->metric);
 				num_links++;
 				if (buf_add(buf, &rtr_link, sizeof(rtr_link)))
 					fatalx("orig_rtr_lsa: buf_add failed");
@@ -739,8 +754,8 @@ orig_rtr_lsa(struct area *area)
 					rtr_link.id = iface->addr.s_addr;
 					rtr_link.data = iface->mask.s_addr;
 				}
-				rtr_link.metric = htons(iface->metric);
 				rtr_link.type = LINK_TYPE_STUB_NET;
+				rtr_link.metric = htons(iface->metric);
 				num_links++;
 				if (buf_add(buf, &rtr_link, sizeof(rtr_link)))
 					fatalx("orig_rtr_lsa: buf_add failed");
@@ -793,7 +808,12 @@ orig_rtr_lsa(struct area *area)
 				rtr_link.id = nbr->id.s_addr;
 				rtr_link.data = iface->addr.s_addr;
 				rtr_link.type = LINK_TYPE_VIRTUAL;
-				rtr_link.metric = htons(iface->metric);
+				/* RFC 3137: stub router support */
+				if (oeconf->flags & OSPFD_FLAG_STUB_ROUTER ||
+				    oe_nofib)
+					rtr_link.metric = 0xffff;
+				else
+					rtr_link.metric = htons(iface->metric);
 				num_links++;
 				virtual = 1;
 				if (buf_add(buf, &rtr_link, sizeof(rtr_link)))
@@ -809,6 +829,7 @@ orig_rtr_lsa(struct area *area)
 			rtr_link.id = iface->addr.s_addr;
 			rtr_link.data = 0xffffffff;
 			rtr_link.type = LINK_TYPE_STUB_NET;
+			rtr_link.metric = htons(iface->metric);
 			num_links++;
 			if (buf_add(buf, &rtr_link, sizeof(rtr_link)))
 				fatalx("orig_rtr_lsa: buf_add failed");
@@ -818,12 +839,18 @@ orig_rtr_lsa(struct area *area)
 				    nbr->state & NBR_STA_FULL) {
 					bzero(&rtr_link, sizeof(rtr_link));
 					log_debug("orig_rtr_lsa: "
-					    "point-to-point, interface %s",
+					    "point-to-multipoint, interface %s",
 					    iface->name);
 					rtr_link.id = nbr->addr.s_addr;
 					rtr_link.data = iface->addr.s_addr;
 					rtr_link.type = LINK_TYPE_POINTTOPOINT;
-					rtr_link.metric = htons(iface->metric);
+					/* RFC 3137: stub router support */
+					if (oe_nofib || oeconf->flags &
+					    OSPFD_FLAG_STUB_ROUTER)
+						rtr_link.metric = 0xffff;
+					else
+						rtr_link.metric =
+						    htons(iface->metric);
 					num_links++;
 					if (buf_add(buf, &rtr_link,
 					    sizeof(rtr_link)))
@@ -837,7 +864,12 @@ orig_rtr_lsa(struct area *area)
 		}
 
 		rtr_link.num_tos = 0;
-		rtr_link.metric = htons(iface->metric);
+		/* RFC 3137: stub router support */
+		if ((oeconf->flags & OSPFD_FLAG_STUB_ROUTER || oe_nofib) &&
+		    rtr_link.type != LINK_TYPE_STUB_NET)
+			rtr_link.metric = 0xffff;
+		else
+			rtr_link.metric = htons(iface->metric);
 		num_links++;
 		if (buf_add(buf, &rtr_link, sizeof(rtr_link)))
 			fatalx("orig_rtr_lsa: buf_add failed");
@@ -860,11 +892,11 @@ orig_rtr_lsa(struct area *area)
 
 	if (oeconf->border)
 		lsa_rtr.flags |= OSPF_RTR_B;
+	/* TODO set V flag if a active virtual link ends here and the
+	 * area is the tranist area for this link. */
 	if (virtual)
 		lsa_rtr.flags |= OSPF_RTR_V;
 
-	/* TODO set V flag if a active virtual link ends here and the
-	 * area is the tranist area for this link. */
 	lsa_rtr.dummy = 0;
 	lsa_rtr.nlinks = htons(num_links);
 	memcpy(buf_seek(buf, sizeof(lsa_hdr), sizeof(lsa_rtr)),
@@ -959,6 +991,19 @@ u_int32_t
 ospfe_router_id(void)
 {
 	return (oeconf->rtr_id.s_addr);
+}
+
+void
+ospfe_fip_update(int type)
+{
+	int	old = oe_nofib;
+
+	if (type == IMSG_CTL_FIB_COUPLE)
+		oe_nofib = 0;
+	if (type == IMSG_CTL_FIB_DECOUPLE)
+		oe_nofib = 1;
+	if (old != oe_nofib)
+		orig_rtr_lsa_all(NULL);
 }
 
 void

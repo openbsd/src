@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.6 2006/11/09 03:59:54 joel Exp $ */
+/*	$OpenBSD: printconf.c,v 1.7 2007/03/21 10:54:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -47,6 +47,9 @@ print_mainconf(struct ospfd_conf *conf)
 		printf("rfc1583compat yes\n");
 	else
 		printf("rfc1583compat no\n");
+
+	if (conf->flags & OSPFD_FLAG_STUB_ROUTER)
+		printf("stub router yes\n");
 
 	print_redistribute(conf);
 

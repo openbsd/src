@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.43 2007/03/17 22:28:58 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.44 2007/03/21 10:54:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -169,8 +169,12 @@ main(int argc, char *argv[])
 	if (sysctl(mib, 4, &ipforwarding, &len, NULL, 0) == -1)
 		err(1, "sysctl");
 
-	if (!ipforwarding)
-		log_warnx("WARNING: IP forwarding NOT enabled");
+	if (ipforwarding != 1) {
+		log_warnx("WARNING: IP forwarding NOT enabled, "
+		    "running as stub router");
+		opts |= OSPFD_OPT_STUB_ROUTER;
+	}
+
 
 	/* fetch interfaces early */
 	kif_init();
@@ -622,7 +626,8 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 	struct iface		*iface;
 	struct redistribute	*r;
 
-	/* change of rtr_id needs a restart and flags are ignored */
+	/* change of rtr_id needs a restart */
+	conf->flags = xconf->flags;
 	conf->spf_delay = xconf->spf_delay;
 	conf->spf_hold_time = xconf->spf_hold_time;
 	conf->redistribute = xconf->redistribute;

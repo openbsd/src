@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.44 2007/03/16 10:54:43 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.45 2007/03/21 10:54:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -106,7 +106,7 @@ typedef struct {
 %}
 
 %token	AREA INTERFACE ROUTERID FIBUPDATE REDISTRIBUTE RTLABEL
-%token	RFC1583COMPAT SPFDELAY SPFHOLDTIME
+%token	RFC1583COMPAT STUB ROUTER SPFDELAY SPFHOLDTIME
 %token	AUTHKEY AUTHTYPE AUTHMD AUTHMDKEYID
 %token	METRIC PASSIVE
 %token	HELLOINTERVAL TRANSMITDELAY
@@ -259,6 +259,13 @@ conf_main	: ROUTERID STRING {
 				YYERROR;
 			}
 			conf->spf_hold_time = $2;
+		}
+		| STUB ROUTER yesno {
+			if ($3)
+				conf->flags |= OSPFD_FLAG_STUB_ROUTER;
+			else
+				/* allow to force non stub mode */
+				conf->flags &= ~OSPFD_FLAG_STUB_ROUTER;
 		}
 		| defaults
 		;
@@ -589,12 +596,14 @@ lookup(char *s)
 		{"retransmit-interval",	RETRANSMITINTERVAL},
 		{"rfc1583compat",	RFC1583COMPAT},
 		{"router-dead-time",	ROUTERDEADTIME},
+		{"router",		ROUTER},
 		{"router-id",		ROUTERID},
 		{"router-priority",	ROUTERPRIORITY},
 		{"rtlabel",		RTLABEL},
 		{"set",			SET},
 		{"spf-delay",		SPFDELAY},
 		{"spf-holdtime",	SPFHOLDTIME},
+		{"stub",		STUB},
 		{"transmit-delay",	TRANSMITDELAY},
 		{"type",		TYPE},
 		{"yes",			YES}
@@ -826,6 +835,8 @@ parse_config(char *filename, int opts)
 	infile = filename;
 
 	conf->opts = opts;
+	if (conf->opts & OSPFD_OPT_STUB_ROUTER)
+		conf->flags |= OSPFD_FLAG_STUB_ROUTER;
 	LIST_INIT(&conf->area_list);
 	LIST_INIT(&conf->cand_list);
 	SIMPLEQ_INIT(&conf->redist_list);

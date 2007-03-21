@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.65 2007/02/01 13:02:04 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.66 2007/03/21 10:54:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -47,6 +47,7 @@
 #define	MAX_RTSOCK_BUF		128 * 1024
 
 #define	OSPFD_FLAG_NO_FIB_UPDATE	0x0001
+#define	OSPFD_FLAG_STUB_ROUTER		0x0002
 
 #define	F_OSPFD_INSERTED	0x0001
 #define	F_KERNEL		0x0002
@@ -394,6 +395,7 @@ struct ospfd_conf {
 #define OSPFD_OPT_VERBOSE	0x00000001
 #define OSPFD_OPT_VERBOSE2	0x00000002
 #define OSPFD_OPT_NOACTION	0x00000004
+#define OSPFD_OPT_STUB_ROUTER	0x00000008
 	u_int32_t		spf_delay;
 	u_int32_t		spf_hold_time;
 	time_t			uptime;
