@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.conf.8,v 1.12 2003/07/10 08:30:36 jmc Exp $
+.\"	$OpenBSD: rc.conf.8,v 1.13 2007/03/21 22:07:52 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Ian F. Darwin
 .\" All rights reserved.
@@ -31,7 +31,8 @@
 .Dt RC.CONF 8
 .Os
 .Sh NAME
-.Nm rc.conf
+.Nm rc.conf ,
+.Nm rc.conf.local
 .Nd system daemon configuration database
 .Sh DESCRIPTION
 This file contains a series of Bourne-shell syntax assignments
@@ -101,10 +102,8 @@ to start four copies of the server.
 On a busy file server, 8 (or more) copies are recommended.
 .Sh SEE ALSO
 .Xr init 8 ,
+.Xr intro 8 ,
 .Xr rc 8
-.Pp
-and the detailed documentation given for each server that is
-configurable in this fashion.
 .Sh HISTORY
 The
 .Nm
