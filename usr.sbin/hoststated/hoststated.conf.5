@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.39 2007/03/13 12:04:52 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.40 2007/03/21 00:08:08 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -325,9 +325,15 @@ is the specified IP address of the relay to listen on.
 See
 .Xr ssl 8
 for details about SSL server certificates.
-.It Ic forward to Ar address Ic port Ar port
+.It Xo
+.Ic forward to Ar address Ic port Ar port
+.Op Ic retry Ar number
+.Xc
 Specify the address and port of the target host to connect to.
-.It Ic service Ar name
+.It Xo
+.Ic service Ar name
+.Op Ic retry Ar number
+.Xc
 Use the first virtual IP address and port from the specified service
 as the target host to connect to.
 This is exclusive to the
@@ -369,7 +375,10 @@ more times.
 See the
 .Sx TABLES
 section for details about host entries.
-.It Ic nat lookup
+.It Xo
+.Ic nat lookup
+.Op Ic retry Ar number
+.Xc
 When redirecting connections with an
 .Ar rdr
 rule in

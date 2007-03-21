@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.36 2007/03/13 12:04:52 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.37 2007/03/21 00:08:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -831,6 +831,7 @@ relay		: RELAY STRING	{
 			r->timeout.tv_sec = RELAY_TIMEOUT;
 			r->proto = NULL;
 			r->dsttable = NULL;
+			r->dstretry = 0;
 			if (last_relay_id == INT_MAX) {
 				yyerror("too many relays defined");
 				YYERROR;
@@ -886,7 +887,7 @@ relayoptsl	: LISTEN ON STRING port optssl {
 				conf->flags |= F_SSL;
 			}
 		}
-		| FORWARD TO STRING port {
+		| FORWARD TO STRING port retry {
 			struct addresslist 	 al;
 			struct address		*h;
 
@@ -907,8 +908,9 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			h = TAILQ_FIRST(&al);
 			bcopy(&h->ss, &rlay->dstss, sizeof(rlay->dstss));
 			rlay->dstport = h->port;
+			rlay->dstretry = $5;
 		}
-		| SERVICE STRING {
+		| SERVICE STRING retry {
 			struct service	*svc;
 			struct address	*h;
 
@@ -929,6 +931,7 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			h = TAILQ_FIRST(&svc->virts);
 			bcopy(&h->ss, &rlay->dstss, sizeof(rlay->dstss));
 			rlay->dstport = h->port;
+			rlay->dstretry = $3;
 		}
 		| TABLE STRING dstmode docheck {
 			struct table	*dsttable;
@@ -960,7 +963,10 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			rlay->proto = p;
 			free($2);
 		}
-		| NAT LOOKUP			{ rlay->flags |= F_NATLOOK; }
+		| NAT LOOKUP retry	{
+			rlay->flags |= F_NATLOOK;
+			rlay->dstretry = $3;
+		}
 		| TIMEOUT number		{ rlay->timeout.tv_sec = $2; }
 		| DISABLE			{ rlay->flags |= F_DISABLE; }
 		;

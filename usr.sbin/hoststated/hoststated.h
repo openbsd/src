@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.38 2007/03/17 22:28:42 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.39 2007/03/21 00:08:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -463,6 +463,7 @@ struct relay {
 	int			 dstnhosts;
 	int			 dstmode;
 	int			 dstcheck;
+	int			 dstretry;
 
 	struct event		 ev;
 	struct timeval		 timeout;

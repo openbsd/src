@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.21 2007/03/17 22:25:08 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.22 2007/03/21 00:08:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1440,6 +1440,7 @@ relay_accept(int fd, short sig, void *arg)
 	con->out.tree = &proto->response_tree;
 	con->in.dir = RELAY_DIR_REQUEST;
 	con->out.dir = RELAY_DIR_RESPONSE;
+	con->retry = rlay->dstretry;
 	if (gettimeofday(&con->tv_start, NULL))
 		goto err;
 	bcopy(&con->tv_start, &con->tv_last, sizeof(con->tv_last));
