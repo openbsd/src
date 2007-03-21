@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.3 2007/01/29 13:38:59 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.4 2007/03/21 19:33:48 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -23,6 +23,7 @@
 #include <arpa/inet.h>
 #include <err.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "igmp.h"
 #include "dvmrp.h"
@@ -37,9 +38,30 @@ void	 rt_invalidate(void);
 void	 rt_expire_timer(int, short, void *);
 int	 rt_start_expire_timer(struct rt_node *);
 
+void	 srt_set_upstream(struct rt_node *, u_int32_t);
+
+/* Designated forwarder */
+void	 srt_set_forwarder_self(struct src_node *, struct iface *,
+	    struct rt_node *);
+void	 srt_update_ds_forwarders(struct src_node *, struct rt_node *,
+	    struct iface *, u_int32_t);
+void	 srt_current_forwarder(struct src_node *, struct rt_node *,
+	    struct iface *, u_int32_t, u_int32_t);
+
+void		 srt_add_ds(struct src_node *, struct rt_node *, u_int32_t,
+		    u_int32_t);
+struct ds	*srt_find_ds(struct src_node *, u_int32_t);
+void		 srt_delete_ds(struct src_node *, struct rt_node *, struct ds *,
+		    struct iface *);
+struct src_node	*srt_find_src(struct in_addr, struct in_addr);
+struct src_node	*srt_add_src(struct in_addr, struct in_addr);
+void		 srt_delete_src(struct src_node *); 
+
 RB_HEAD(rt_tree, rt_node)	 rt;
 RB_PROTOTYPE(rt_tree, rt_node, entry, rt_compare)
 RB_GENERATE(rt_tree, rt_node, entry, rt_compare)
+
+RB_GENERATE(src_head, src_node, entry, src_compare);
 
 extern struct dvmrpd_conf	*rdeconf;
 
@@ -95,6 +117,20 @@ rt_compare(struct rt_node *a, struct rt_node *b)
 	return (0);
 }
 
+int
+src_compare(struct src_node *a, struct src_node *b)
+{
+	if (ntohl(a->origin.s_addr) < ntohl(b->origin.s_addr))
+		return (-1);
+	if (ntohl(a->origin.s_addr) > ntohl(b->origin.s_addr))
+		return (1);
+	if (ntohl(a->mask.s_addr) < ntohl(b->mask.s_addr))
+		return (-1);
+	if (ntohl(a->mask.s_addr) > ntohl(b->mask.s_addr))
+		return (1);
+	return (0);
+}
+
 struct rt_node *
 rt_find(in_addr_t prefix, u_int8_t prefixlen)
 {
@@ -111,6 +147,7 @@ rr_new_rt(struct route_report *rr, int adj_metric, int connected)
 {
 	struct timespec	 now;
 	struct rt_node  *rn;
+	int i;
 
 	clock_gettime(CLOCK_MONOTONIC, &now);
 
@@ -122,6 +159,10 @@ rr_new_rt(struct route_report *rr, int adj_metric, int connected)
 	rn->nexthop.s_addr = rr->nexthop.s_addr;
 	rn->cost = adj_metric;
 	rn->ifindex = rr->ifindex;
+
+	for (i = 0; i < MAXVIFS; i++)
+		rn->ttls[i] = 0;
+
 	rn->flags = F_DVMRPD_INSERTED;
 	rn->connected = connected;
 	rn->uptime = now.tv_sec;
@@ -215,7 +256,6 @@ rt_dump(pid_t pid)
 
 		rtctl.prefix.s_addr = r->prefix.s_addr;
 		rtctl.nexthop.s_addr = r->nexthop.s_addr;
-		rtctl.adv_rtr.s_addr = r->adv_rtr.s_addr;
 		rtctl.cost = r->cost;
 		rtctl.flags = r->flags;
 		rtctl.prefixlen = r->prefixlen;
@@ -241,15 +281,19 @@ rt_update(struct rt_node *rn)
 }
 
 int
-rde_check_route(struct route_report *rr, int connected)
+srt_check_route(struct route_report *rr, int connected)
 {
 	struct rt_node		*rn;
 	struct iface		*iface;
+	struct src_node		*src;
+	struct ds		*ds_nbr;
 	u_int32_t		 adj_metric;
-	u_int32_t		 nbr_ip, nbr_report;
+	u_int32_t		 nbr_ip, nbr_report, ifindex;
 
 	if ((iface = if_find_index(rr->ifindex)) == NULL)
 		return (-1);
+
+	ifindex = iface->ifindex;
 
 	/* Interpret special case 0.0.0.0/8 as 0.0.0.0/0 */
 	if (rr->net.s_addr == 0)
@@ -270,35 +314,242 @@ rde_check_route(struct route_report *rr, int connected)
 		if (adj_metric < INFINITY_METRIC) {
 			rn = rr_new_rt(rr, adj_metric, connected);
 			rt_insert(rn);
+			src = srt_add_src(rr->net, rr->mask);
 		}
 		return (0);
 	}
 
-	nbr_ip = rr->nexthop.s_addr;
-	nbr_report = rn->nexthop.s_addr;
+	nbr_ip = rn->nexthop.s_addr;
+	nbr_report = rr->nexthop.s_addr;
+
+	if ((src = srt_find_src(rr->net, rr->mask)) == NULL)
+		fatal("srt_check_route");
 
 	if (rr->metric < INFINITY_METRIC) {
-		if (adj_metric > rn->cost) {	
-			if (nbr_ip == nbr_report) {
-				rn->cost = adj_metric;	
-			}
+		/* If it is our current nexthop it cannot be a
+		 * downstream router */ 
+		if (nbr_ip != nbr_report)
+			if ((ds_nbr = srt_find_ds(src, nbr_report)))
+				srt_delete_ds(src, rn, ds_nbr, iface);
+
+		if (adj_metric > rn->cost) {
+			if (nbr_ip == nbr_report)
+				rn->cost = adj_metric;
 		} else if (adj_metric < rn->cost) {
 			rn->cost = adj_metric;
-			if (nbr_ip != nbr_report)
+			if (nbr_ip != nbr_report) {
 				rn->nexthop.s_addr = nbr_report;
+				srt_set_upstream(rn, ifindex);
+			}
+			/* We have a new best route to source, update the
+			 * designated forwarders on downstream interfaces to
+			 * reflect the new metric */
+			srt_update_ds_forwarders(src, rn, iface, nbr_report);
 		} else {
-			if (nbr_report < nbr_ip)
+			if (nbr_report < nbr_ip) {
 				rn->nexthop.s_addr = nbr_report;
+				srt_set_upstream(rn, ifindex);
+			}
 		}
+		/* Update forwarder of current interface if necessary and
+		 * refresh the route */
+		srt_current_forwarder(src, rn, iface, rr->metric, nbr_report);
 		rt_update(rn);
 	} else if (rr->metric == INFINITY_METRIC) {
+		if (nbr_report == src->adv_rtr[ifindex].addr.s_addr)
+			srt_set_forwarder_self(src, iface, rn);
+infinity:
 		if (nbr_ip == nbr_report) {
-			rt_remove(rn);
-		}
+			if (rn->cost < INFINITY_METRIC) {
+				rt_remove(rn);
+				srt_delete_src(src);
+			}
+		} else
+			if ((ds_nbr = srt_find_ds(src, nbr_report)))
+				srt_delete_ds(src, rn, ds_nbr, iface);
 	} else if (INFINITY_METRIC < rr->metric &&
 	    rr->metric < 2 * INFINITY_METRIC) {
-		/* XXX */
+		/* Neighbor is reporting his depenency for that source */
+		if (nbr_report == src->adv_rtr[ifindex].addr.s_addr)
+			srt_set_forwarder_self(src, iface, rn);
+
+		if (rn->ifindex == ifindex)
+			goto infinity;
+		else
+			if (srt_find_ds(src, nbr_report) == NULL)
+				srt_add_ds(src, rn, nbr_report, ifindex);
 	}
 
 	return (0);
+}
+
+void
+srt_current_forwarder(struct src_node *src_node, struct rt_node *rn,
+    struct iface *iface, u_int32_t metric, u_int32_t nbr_report)
+{
+	if (nbr_report == src_node->adv_rtr[iface->ifindex].addr.s_addr) {
+		if (metric > rn->cost || (metric == rn->cost &&
+		    iface->addr.s_addr < nbr_report)) {
+			src_node->adv_rtr[iface->ifindex].addr.s_addr =
+			    iface->addr.s_addr;
+			src_node->adv_rtr[iface->ifindex].metric = rn->cost;
+
+			/* XXX: check if there are groups with this source */
+			if (group_list_empty(iface))
+				rn->ttls[iface->ifindex] = 1;
+		}
+	} else if (metric < src_node->adv_rtr[iface->ifindex].metric ||
+	    (metric == src_node->adv_rtr[iface->ifindex].metric &&
+	    nbr_report < src_node->adv_rtr[iface->ifindex].addr.s_addr)) {
+		if (src_node->adv_rtr[iface->ifindex].addr.s_addr ==
+		    iface->addr.s_addr && !src_node->ds_cnt[iface->ifindex])
+			rn->ttls[iface->ifindex] = 0; 
+
+		src_node->adv_rtr[iface->ifindex].addr.s_addr = nbr_report;
+		src_node->adv_rtr[iface->ifindex].metric = metric;
+	}	
+}
+
+void
+srt_update_ds_forwarders(struct src_node *src_node, struct rt_node *rn,
+    struct iface *iface, u_int32_t nbr_report)
+{
+	struct iface	*ifa;
+	int	i;
+
+	for (i = 0; i < MAXVIFS; i++) {
+		if (src_node->adv_rtr[i].addr.s_addr &&
+		    (rn->cost < src_node->adv_rtr[i].metric ||
+		    (rn->cost == src_node->adv_rtr[i].metric &&
+		    iface->addr.s_addr < nbr_report))) {
+			ifa = if_find_index(i);
+			src_node->adv_rtr[i].metric = rn->cost;
+			src_node->adv_rtr[i].addr.s_addr = iface->addr.s_addr;
+
+			/* XXX: check if there are groups with this source */
+			if (group_list_empty(ifa))
+				rn->ttls[i] = 1;
+		}
+	}
+}
+
+void
+srt_set_forwarder_self(struct src_node *src, struct iface *iface,
+    struct rt_node *rn)
+{
+	src->adv_rtr[iface->ifindex].addr.s_addr = iface->addr.s_addr;
+	src->adv_rtr[iface->ifindex].metric = rn->cost;
+
+	/* XXX: check if there are groups with this source */
+	if (group_list_empty(iface))
+		rn->ttls[iface->ifindex] = 1;
+}
+
+void
+srt_set_upstream(struct rt_node *rn, u_int32_t ifindex)
+{
+	if (rn->ifindex != ifindex) {	
+		rn->ttls[rn->ifindex] = 1;
+		rn->ifindex = ifindex;
+	}
+}
+
+void
+srt_add_ds(struct src_node *src_node, struct rt_node *rn, u_int32_t nbr_report,
+    u_int32_t ifindex)
+{
+	struct ds	*ds_nbr;
+
+	if ((ds_nbr = malloc(sizeof(struct ds))) == NULL)
+		fatal("srt_add_ds");
+
+	ds_nbr->addr.s_addr = nbr_report;
+
+	LIST_INSERT_HEAD(&src_node->ds_list, ds_nbr, entry); 
+	src_node->ds_cnt[ifindex]++;
+	rn->ttls[ifindex] = 1;
+}
+
+struct ds *
+srt_find_ds(struct src_node *src_node, u_int32_t nbr_report)
+{
+	struct ds	*ds_nbr;
+
+	LIST_FOREACH(ds_nbr, &src_node->ds_list, entry)
+		if (ds_nbr->addr.s_addr == nbr_report)
+			return (ds_nbr);
+
+	return (NULL);	
+}
+
+void
+srt_delete_ds(struct src_node *src_node, struct rt_node *rn, struct ds *ds_nbr,
+    struct iface *iface)
+{
+	LIST_REMOVE(ds_nbr, entry);
+	free(ds_nbr);
+	src_node->ds_cnt[iface->ifindex]--;
+
+	/* XXX: check if there are group with this source */
+	if (!src_node->ds_cnt[iface->ifindex] && group_list_empty(iface))
+		rn->ttls[iface->ifindex] = 0;
+}
+
+struct src_node *
+srt_find_src(struct in_addr net, struct in_addr mask)
+{
+	struct src_node		*src_node;
+
+	RB_FOREACH(src_node, src_head, &rdeconf->src_list)
+		if (src_node->origin.s_addr == net.s_addr &&
+		    src_node->mask.s_addr == mask.s_addr)
+			return (src_node);
+
+	return (NULL);
+}
+
+struct src_node *
+srt_add_src(struct in_addr net, struct in_addr mask)
+{
+	struct src_node		*src_node;
+	struct iface		*iface;
+	u_int32_t		 i;
+
+	if ((src_node = malloc(sizeof(struct src_node))) == NULL)
+		fatal("srt_add_src");
+
+	src_node->origin.s_addr = net.s_addr;
+	src_node->mask.s_addr = mask.s_addr;
+
+	for (i = 0; i < MAXVIFS; i++) {
+		bzero(&src_node->adv_rtr[i], sizeof(struct adv_rtr));
+		src_node->ds_cnt[i] = 0;
+	}
+
+	LIST_FOREACH(iface, &rdeconf->iface_list, entry)
+		for (i = 0; i < MAXVIFS; i++)
+			if (iface->ifindex == i) {
+				src_node->adv_rtr[i].addr.s_addr =
+				    iface->addr.s_addr;
+				break;
+			}
+
+	LIST_INIT(&src_node->ds_list);
+	RB_INSERT(src_head, &rdeconf->src_list, src_node);
+
+	return (src_node);
+}
+
+void
+srt_delete_src(struct src_node *src_node)
+{
+	struct ds	*ds_nbr;
+
+	LIST_FOREACH(ds_nbr, &src_node->ds_list, entry) {
+		LIST_REMOVE(ds_nbr, entry);
+		free(ds_nbr);
+	}
+
+	RB_REMOVE(src_head, &rdeconf->src_list, src_node);
+	free(src_node); 
 }

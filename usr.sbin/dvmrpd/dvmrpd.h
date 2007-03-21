@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.h,v 1.5 2006/12/03 20:14:37 michele Exp $ */
+/*	$OpenBSD: dvmrpd.h,v 1.6 2007/03/21 19:33:48 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -188,6 +188,7 @@ struct mfc {
 };
 
 TAILQ_HEAD(rr_head, rr_entry);
+RB_HEAD(src_head, src_node);
 
 struct iface {
 	LIST_ENTRY(iface)	 entry;
@@ -261,6 +262,7 @@ struct dvmrpd_conf {
 #define DVMRPD_OPT_NOACTION	 0x00000004
 	int			 maxdepth;
 	LIST_HEAD(, iface)	 iface_list;
+	struct src_head		 src_list;
 	int			 dvmrp_socket;
 	int			 mroute_socket;
 	int			 flags;

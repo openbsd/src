@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2006/10/25 18:55:41 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.4 2007/03/21 19:33:48 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -631,6 +631,7 @@ parse_config(char *filename, int opts)
 	gettimeofday(&now, NULL);
 	conf->gen_id = now.tv_sec;
 	conf->opts = opts;
+	RB_INIT(&conf->src_list);
 
 	if (check_file_secrecy(fileno(fin), filename)) {
 		fclose(fin);

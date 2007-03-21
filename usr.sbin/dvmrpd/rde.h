@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.2 2006/12/03 20:14:37 michele Exp $ */
+/*	$OpenBSD: rde.h,v 1.3 2007/03/21 19:33:48 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -29,9 +29,9 @@
 struct rt_node {
 	RB_ENTRY(rt_node)	 entry;
 	struct event		 expiration_timer;
+	u_int8_t		 ttls[MAXVIFS];	/* downstream vif(s) */
 	struct in_addr		 prefix;
 	struct in_addr		 nexthop;
-	struct in_addr		 adv_rtr;
 	u_int32_t		 cost;
 	u_short			 ifindex;	/* learned from this iface */
 	time_t			 uptime;
@@ -49,6 +49,25 @@ struct mfc_node {
 	struct in_addr		 group;
 	u_short			 ifindex;	/* incoming vif */
 	time_t			 uptime;
+};
+
+struct ds {
+	LIST_ENTRY(ds)		 entry;
+	struct in_addr		 addr;
+};
+
+struct adv_rtr {
+	struct in_addr		 addr;
+	u_int32_t		 metric;
+};
+
+struct src_node {
+	RB_ENTRY(src_node)	 entry;
+	struct in_addr		 origin;
+	struct in_addr		 mask;
+	struct adv_rtr		 adv_rtr[MAXVIFS];
+	u_int16_t		 ds_cnt[MAXVIFS];
+	LIST_HEAD(, ds)		 ds_list;
 };
 
 /* rde.c */
@@ -78,6 +97,10 @@ int		 rt_remove(struct rt_node *);
 void		 rt_clear(void);
 void		 rt_snap(u_int32_t);
 void		 rt_dump(pid_t);
-int		 rde_check_route(struct route_report *, int);
+
+int		 srt_check_route(struct route_report *, int);
+int		 src_compare(struct src_node *, struct src_node *);
+
+RB_PROTOTYPE(src_head, src_node, entry, src_compare);
 
 #endif	/* _RDE_H_ */

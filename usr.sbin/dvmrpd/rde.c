@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.4 2007/01/24 09:57:51 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.5 2007/03/21 19:33:48 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -234,7 +234,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			if (imsg.hdr.peerid == 0)
 				connected = 1;
 
-			if (rde_check_route(&rr, connected) == -1)
+			if (srt_check_route(&rr, connected) == -1)
 				log_debug("rde_dispatch_imsg: "
 				    "packet malformed");
 			break;
