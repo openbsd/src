@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.30 2007/03/21 00:09:16 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.31 2007/03/21 03:42:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -710,7 +710,7 @@ ata_get_xfer(struct ata_port *ap, int nosleep /* XXX unused */)
 
 	xa = as->as_methods->ata_get_xfer(as->as_cookie, ap->ap_port);
 	if (xa != NULL)
-		xa->fis->type = ATA_FIS_TYPE_D2H;
+		xa->fis->type = ATA_FIS_TYPE_H2D;
 
 	return (xa);
 }
