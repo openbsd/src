@@ -1,4 +1,4 @@
-/*	$OpenBSD: emit1.c,v 1.6 2005/11/29 19:38:09 cloder Exp $	*/
+/*	$OpenBSD: emit1.c,v 1.7 2007/03/21 03:31:19 tedu Exp $	*/
 /*	$NetBSD: emit1.c,v 1.4 1995/10/02 17:21:28 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: emit1.c,v 1.6 2005/11/29 19:38:09 cloder Exp $";
+static char rcsid[] = "$OpenBSD: emit1.c,v 1.7 2007/03/21 03:31:19 tedu Exp $";
 #endif
 
 #include <ctype.h>
@@ -489,7 +489,7 @@ outfstrg(strg_t *strg)
 		}
 
 		/* numeric field width */
-		while (c != '\0' && isdigit(c)) {
+		while (isdigit(c)) {
 			outqchar(c);
 			c = *cp++;
 		}
@@ -501,7 +501,7 @@ outfstrg(strg_t *strg)
 				outqchar(c);
 				c = *cp++;
 			} else {
-				while (c != '\0' && isdigit(c)) {
+				while (isdigit(c)) {
 					outqchar(c);
 					c = *cp++;
 				}

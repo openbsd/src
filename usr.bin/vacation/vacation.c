@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.28 2007/02/27 15:51:17 deraadt Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.29 2007/03/21 03:31:19 tedu Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.28 2007/02/27 15:51:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.29 2007/03/21 03:31:19 tedu Exp $";
 #endif /* not lint */
 
 /*
@@ -211,7 +211,7 @@ readheaders(void)
 			cont = 0;
 			if (strncasecmp(buf, "Auto-Submitted:", 15))
 				break;
-			for (p = buf + 15; *p && isspace(*p); ++p)
+			for (p = buf + 15; isspace(*p); ++p)
 				;
 			/*
 			 * RFC 3834 section 2:
@@ -221,7 +221,7 @@ readheaders(void)
 			 */
 			if ((p[0] == 'n' || p[0] == 'N') &&
 			    (p[1] == 'o' || p[1] == 'O')) {
-				for (p += 2; *p && isspace(*p); ++p)
+				for (p += 2; isspace(*p); ++p)
 					;
 				if (*p == '\0')
 					break;	/* Auto-Submitted: no */
@@ -258,7 +258,7 @@ readheaders(void)
 			    sizeof("Return-Path:")-1) ||
 			    (buf[12] != ' ' && buf[12] != '\t'))
 				break;
-			for (p = buf + 12; *p && isspace(*p); ++p)
+			for (p = buf + 12; isspace(*p); ++p)
 				;
 			if (strlcpy(from, p, sizeof(from)) >= sizeof(from)) {
 				syslog(LOG_NOTICE,
@@ -275,7 +275,7 @@ readheaders(void)
 			cont = 0;
 			if (strncasecmp(buf, "Precedence:", 11))
 				break;
-			for (p = buf + 11; *p && isspace(*p); ++p)
+			for (p = buf + 11; isspace(*p); ++p)
 				;
 			if (!strncasecmp(p, "junk", 4) ||
 			    !strncasecmp(p, "bulk", 4) ||
@@ -289,7 +289,7 @@ readheaders(void)
 			    sizeof("Subject:")-1) ||
 			    (buf[8] != ' ' && buf[8] != '\t'))
 				break;
-			for (p = buf + 8; *p && isspace(*p); ++p)
+			for (p = buf + 8; isspace(*p); ++p)
 				;
 			if (strlcpy(subj, p, sizeof(subj)) >= sizeof(subj)) {
 				syslog(LOG_NOTICE,
