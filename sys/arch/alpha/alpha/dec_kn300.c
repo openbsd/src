@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_kn300.c,v 1.1 2007/03/16 21:22:27 robert Exp $ */
+/* $OpenBSD: dec_kn300.c,v 1.2 2007/03/21 22:10:57 martin Exp $ */
 /* $NetBSD: dec_kn300.c,v 1.34 2007/03/04 15:18:10 yamt Exp $ */
 
 /*
@@ -53,8 +53,6 @@
 #include <dev/ic/pckbcvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <alpha/mcbus/mcbusreg.h>
 #include <alpha/mcbus/mcbusvar.h>
