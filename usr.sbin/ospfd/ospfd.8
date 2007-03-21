@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.8,v 1.12 2006/08/28 14:59:02 stevesk Exp $
+.\"	$OpenBSD: ospfd.8,v 1.13 2007/03/21 12:55:55 claudio Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -71,16 +71,13 @@ Unix-domain socket used for communication with
 .%T "OSPF Version 2"
 .%D April 1998
 .Re
+.Rs
+.%R RFC 3137
+.%T "OSPF Stub Router Advertisement"
+.%D June 2001
+.Re
 .Sh HISTORY
 The
 .Nm
 program first appeared in
 .Ox 3.7 .
-.Sh CAVEATS
-For correct operation,
-.Nm
-setups with more than one configured interface require that the
-.Xr sysctl 8
-variable
-.Va net.inet.ip.forwarding
-is set to 1.
