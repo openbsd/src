@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.77 2007/03/18 10:46:51 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.78 2007/03/21 09:09:52 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -93,23 +93,15 @@ int safepri;
  * signal needs to be delivered, ERESTART is returned if the current system
  * call should be restarted if possible, and EINTR is returned if the system
  * call should be interrupted by the signal (return EINTR).
- *
- * The interlock is held until the scheduler_slock (XXX) is held.  The
- * interlock will be locked before returning back to the caller
- * unless the PNORELOCK flag is specified, in which case the
- * interlock will always be unlocked upon return.
  */
 int
-ltsleep(void *ident, int priority, const char *wmesg, int timo,
-    volatile struct simplelock *interlock)
+tsleep(void *ident, int priority, const char *wmesg, int timo)
 {
-	struct proc *p = curproc;
-	struct slpque *qp;
-	int s, sig;
-	int catch = priority & PCATCH;
-	int relock = (priority & PNORELOCK) == 0;
+	struct sleep_state sls;
+	int error, error1;
 
 	if (cold || panicstr) {
+		int s;
 		/*
 		 * After a panic, or during autoconfiguration,
 		 * just give interrupts a chance, then just return;
@@ -119,17 +111,29 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 		s = splhigh();
 		splx(safepri);
 		splx(s);
-		if (interlock != NULL && relock == 0)
-			simple_unlock(interlock);
 		return (0);
 	}
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p, 1, 0);
-#endif
+	sleep_setup(&sls, ident, priority, wmesg);
+	sleep_setup_timeout(&sls, timo);
+	sleep_setup_signal(&sls, priority);
 
-	SCHED_LOCK(s);
+	sleep_finish(&sls, 1);
+	error1 = sleep_finish_timeout(&sls);
+	error = sleep_finish_signal(&sls);
+
+	/* Signal errors are higher priority than timeouts. */
+	if (error == 0 && error1 != 0)
+		error = error1;
+
+	return (error);
+}
+
+void
+sleep_setup(struct sleep_state *sls, void *ident, int prio, const char *wmesg)
+{
+	struct proc *p = curproc;
+	struct slpque *qp;
 
 #ifdef DIAGNOSTIC
 	if (ident == NULL)
@@ -140,29 +144,95 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 		panic("tsleep: p_back not NULL");
 #endif
 
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_CSW))
+		ktrcsw(p, 1, 0);
+#endif
+
+	sls->sls_catch = 0;
+	sls->sls_do_sleep = 1;
+	sls->sls_sig = 1;
+
+	SCHED_LOCK(sls->sls_s);
+
 	p->p_wchan = ident;
 	p->p_wmesg = wmesg;
 	p->p_slptime = 0;
-	p->p_priority = priority & PRIMASK;
+	p->p_priority = prio & PRIMASK;
 	qp = &slpque[LOOKUP(ident)];
 	if (qp->sq_head == 0)
 		qp->sq_head = p;
 	else
 		*qp->sq_tailp = p;
-	*(qp->sq_tailp = &p->p_forw) = 0;
-	if (timo)
-		timeout_add(&p->p_sleep_to, timo);
+	*(qp->sq_tailp = &p->p_forw) = NULL;
+}
+
+void
+sleep_finish(struct sleep_state *sls, int do_sleep)
+{
+	struct proc *p = curproc;
+
+	if (sls->sls_do_sleep && do_sleep) {
+		p->p_stat = SSLEEP;
+		p->p_stats->p_ru.ru_nvcsw++;
+		SCHED_ASSERT_LOCKED();
+		mi_switch();
+	} else if (!do_sleep) {
+		unsleep(p);
+#ifdef DIAGNOSTIC
+		if (p->p_stat != SONPROC)
+			panic("sleep_finish !SONPROC");
+#endif
+	}
+
+#ifdef __HAVE_CPUINFO
+	p->p_cpu->ci_schedstate.spc_curpriority = p->p_usrpri;
+#else
+	curpriority = p->p_usrpri;
+#endif
+	SCHED_UNLOCK(sls->sls_s);
+
 	/*
-	 * We can now release the interlock; the scheduler_slock
-	 * is held, so a thread can't get in to do wakeup() before
-	 * we do the switch.
-	 *
-	 * XXX We leave the code block here, after inserting ourselves
-	 * on the sleep queue, because we might want a more clever
-	 * data structure for the sleep queues at some point.
+	 * Even though this belongs to the signal handling part of sleep,
+	 * we need to clear it before the ktrace.
 	 */
-	if (interlock != NULL)
-		simple_unlock(interlock);
+	atomic_clearbits_int(&p->p_flag, P_SINTR);
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_CSW))
+		ktrcsw(p, 0, 0);
+#endif
+}
+
+void
+sleep_setup_timeout(struct sleep_state *sls, int timo)
+{
+	if (timo)
+		timeout_add(&curproc->p_sleep_to, timo);
+}
+
+int
+sleep_finish_timeout(struct sleep_state *sls)
+{
+	struct proc *p = curproc;
+
+	if (p->p_flag & P_TIMEOUT) {
+		atomic_clearbits_int(&p->p_flag, P_TIMEOUT);
+		return (EWOULDBLOCK);
+	} else if (timeout_pending(&p->p_sleep_to)) {
+		timeout_del(&p->p_sleep_to);
+	}
+
+	return (0);
+}
+
+void
+sleep_setup_signal(struct sleep_state *sls, int prio)
+{
+	struct proc *p = curproc;
+
+	if ((sls->sls_catch = (prio & PCATCH)) == 0)
+		return;
 
 	/*
 	 * We put ourselves on the sleep queue and start our timeout
@@ -173,69 +243,31 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	 * when CURSIG is called.  If the wakeup happens while we're
 	 * stopped, p->p_wchan will be 0 upon return from CURSIG.
 	 */
-	if (catch) {
-		atomic_setbits_int(&p->p_flag, P_SINTR);
-		if ((sig = CURSIG(p)) != 0) {
-			if (p->p_wchan)
-				unsleep(p);
-			p->p_stat = SONPROC;
-			goto resume;
-		}
-		if (p->p_wchan == 0) {
-			catch = 0;
-			goto resume;
-		}
-	} else
-		sig = 0;
-	p->p_stat = SSLEEP;
-	p->p_stats->p_ru.ru_nvcsw++;
-	SCHED_ASSERT_LOCKED();
-	mi_switch();
-#ifdef	DDB
-	/* handy breakpoint location after process "wakes" */
-	__asm(".globl bpendtsleep\nbpendtsleep:");
-#endif
-
-resume:
-	SCHED_UNLOCK(s);
-
-#ifdef __HAVE_CPUINFO
-	p->p_cpu->ci_schedstate.spc_curpriority = p->p_usrpri;
-#else
-	curpriority = p->p_usrpri;
-#endif
-	atomic_clearbits_int(&p->p_flag, P_SINTR);
-	if (p->p_flag & P_TIMEOUT) {
-		atomic_clearbits_int(&p->p_flag, P_TIMEOUT);
-		if (sig == 0) {
-#ifdef KTRACE
-			if (KTRPOINT(p, KTR_CSW))
-				ktrcsw(p, 0, 0);
-#endif
-			if (interlock != NULL && relock)
-				simple_lock(interlock);
-			return (EWOULDBLOCK);
-		}
-	} else if (timo)
-		timeout_del(&p->p_sleep_to);
-	if (catch && (sig != 0 || (sig = CURSIG(p)) != 0)) {
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_CSW))
-			ktrcsw(p, 0, 0);
-#endif
-		if (interlock != NULL && relock)
-			simple_lock(interlock);
-		if (p->p_sigacts->ps_sigintr & sigmask(sig))
-			return (EINTR);
-		return (ERESTART);
+	atomic_setbits_int(&p->p_flag, P_SINTR);
+	if ((sls->sls_sig = CURSIG(p)) != 0) {
+		if (p->p_wchan)
+			unsleep(p);
+		p->p_stat = SONPROC;
+		sls->sls_do_sleep = 0;
+	} else if (p->p_wchan == 0) {
+		sls->sls_catch = 0;
+		sls->sls_do_sleep = 0;
 	}
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p, 0, 0);
-#endif
+}
 
-	if (interlock != NULL && relock)
-		simple_lock(interlock);
+int
+sleep_finish_signal(struct sleep_state *sls)
+{
+	struct proc *p = curproc;
+
+	if (sls->sls_catch != 0) {
+		if (sls->sls_sig != 0 || (sls->sls_sig = CURSIG(p)) != 0) {
+			if (p->p_sigacts->ps_sigintr & sigmask(sls->sls_sig))
+				return (EINTR);
+			return (ERESTART);
+		}
+	}
+
 	return (0);
 }
 
@@ -248,10 +280,9 @@ resume:
 void
 endtsleep(void *arg)
 {
-	struct proc *p;
+	struct proc *p = arg;
 	int s;
 
-	p = (struct proc *)arg;
 	SCHED_LOCK(s);
 	if (p->p_wchan) {
 		if (p->p_stat == SSLEEP)
@@ -271,15 +302,7 @@ unsleep(struct proc *p)
 {
 	struct slpque *qp;
 	struct proc **hp;
-#if 0
-	int s;
 
-	/*
-	 * XXX we cannot do recursive SCHED_LOCKing yet.  All callers lock
-	 * anyhow.
-	 */
-	SCHED_LOCK(s);
-#endif
 	if (p->p_wchan) {
 		hp = &(qp = &slpque[LOOKUP(p->p_wchan)])->sq_head;
 		while (*hp != p)
@@ -289,9 +312,6 @@ unsleep(struct proc *p)
 			qp->sq_tailp = hp;
 		p->p_wchan = 0;
 	}
-#if 0
-	SCHED_UNLOCK(s);
-#endif
 }
 
 /*
