@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.20 2006/12/23 15:00:15 miod Exp $	*/
+/*	$OpenBSD: pool.h,v 1.21 2007/03/21 17:57:40 pedro Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@ struct pool_cache {
 	struct pool_cache_group
 			*pc_allocfrom;	/* group to allocate from */
 	struct pool_cache_group
-			*pc_freeto;	/* grop to free to */
+			*pc_freeto;	/* group to free to */
 	struct pool	*pc_pool;	/* parent pool */
 	struct simplelock pc_slock;	/* mutex */
 
