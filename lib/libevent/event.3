@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.32 2007/03/21 12:22:30 millert Exp $
+.\"	$OpenBSD: event.3,v 1.33 2007/03/21 13:41:21 millert Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -32,6 +32,7 @@
 .Nm event_loop ,
 .Nm event_loopexit ,
 .Nm event_set ,
+.\".Nm event_set_log_callback ,
 .Nm event_base_dispatch ,
 .Nm event_base_loop ,
 .Nm event_base_loopexit ,
@@ -40,10 +41,14 @@
 .Nm event_add ,
 .Nm event_del ,
 .Nm event_once ,
+.\".Nm event_active ,
 .Nm event_pending ,
 .Nm event_initialized ,
 .Nm event_priority_init ,
 .Nm event_priority_set ,
+.\".Nm event_base_priority_init ,
+.\".Nm event_get_version ,
+.\".Nm event_get_method ,
 .Nm evtimer_set ,
 .Nm evtimer_add ,
 .Nm evtimer_del ,
@@ -63,12 +68,16 @@
 .Nm bufferevent_disable ,
 .Nm bufferevent_settimeout ,
 .Nm bufferevent_base_set ,
+.\".Nm bufferevent_priority_set ,
 .Nm evbuffer_new ,
 .Nm evbuffer_free ,
 .Nm evbuffer_add ,
 .Nm evbuffer_add_buffer ,
 .Nm evbuffer_add_printf ,
 .Nm evbuffer_add_vprintf ,
+.\".Nm evbuffer_expand ,
+.\".Nm evbuffer_remove ,
+.\".Nm evbuffer_setcb ,
 .Nm evbuffer_drain ,
 .Nm evbuffer_write ,
 .Nm evbuffer_read ,
@@ -76,14 +85,30 @@
 .Nm evbuffer_readline ,
 .Nm evhttp_start ,
 .Nm evhttp_free
+.\".Nm evtag_init ,
+.\".Nm evtag_marshal ,
+.\".Nm encode_int ,
+.\".Nm evtag_marshal_int ,
+.\".Nm evtag_marshal_string ,
+.\".Nm evtag_marshal_timeval ,
+.\".Nm evtag_test ,
+.\".Nm evtag_unmarshal ,
+.\".Nm evtag_peek ,
+.\".Nm evtag_peek_length ,
+.\".Nm evtag_payload_length ,
+.\".Nm evtag_consume ,
+.\".Nm evtag_unmarshal_int ,
+.\".Nm evtag_unmarshal_fixed ,
+.\".Nm evtag_unmarshal_string ,
+.\".Nm evtag_unmarshal_timeval ,
 .Nd execute a function when a specific event occurs
 .Sh SYNOPSIS
 .Fd #include <sys/time.h>
 .Fd #include <event.h>
 .Ft "struct event_base *"
-.Fn "event_init"
+.Fn "event_init" "void"
 .Ft int
-.Fn "event_dispatch"
+.Fn "event_dispatch" "void"
 .Ft int
 .Fn "event_loop" "int flags"
 .Ft int
