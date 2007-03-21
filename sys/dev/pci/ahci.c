@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.90 2007/03/20 13:18:16 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.91 2007/03/21 00:07:29 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -620,7 +620,7 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	aaa.aaa_methods = &ahci_atascsi_methods;
 	aaa.aaa_minphys = minphys;
 	aaa.aaa_nports = AHCI_MAX_PORTS;
-	aaa.aaa_ncmds = sc->sc_ncmds;
+	aaa.aaa_ncmds = sc->sc_ncmds - 1; /* Reserve a slot for soft resets. */
 
 	sc->sc_atascsi = atascsi_attach(self, &aaa);
 
@@ -1129,11 +1129,8 @@ ahci_port_softreset(struct ahci_port *ap)
 		goto err;
 
 	/* Prep second D2H command to read status and complete reset sequence */
-	cmd_slot = ccb->ccb_cmd_hdr;
-	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
-
-	fis = ccb->ccb_cmd_table->cfis;
 	fis[0] = 0x27;	/* Host to device */
+	fis[15] = 0;
 
 	cmd_slot->prdtl = 0;
 	cmd_slot->flags = htole16(5);	/* FIS length: 5 DWORDS */
@@ -1148,12 +1145,19 @@ ahci_port_softreset(struct ahci_port *ap)
 		printf("%s: device didn't come ready after reset, TFD: 0x%b\n",
 		    PORTNAME(ap), ahci_pread(ap, AHCI_PREG_TFD),
 		    AHCI_PFMT_TFD_STS);
+		rc = EBUSY;
 		goto err;
 	}
 
 	rc = 0;
 err:
 	if (ccb != NULL) {
+		/* Abort our command, if it failed, by stopping command DMA. */
+		if (rc != 0 && ISSET(ap->ap_active, 1 << ccb->ccb_slot)) {
+			printf("%s: stopping the port, softreset slot %d was "
+			    "still active.\n", PORTNAME(ap), ccb->ccb_slot);
+			ahci_port_stop(ap, 0);
+		}
 		s = splbio();
 		ahci_put_ccb(ccb);
 		splx(s);
