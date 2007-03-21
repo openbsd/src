@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.94 2007/03/21 12:41:28 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.95 2007/03/21 13:08:44 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -952,7 +952,7 @@ nomem:
 	/* Enable port interrupts */
 	ahci_pwrite(ap, AHCI_PREG_IE, AHCI_PREG_IE_TFEE | AHCI_PREG_IE_HBFE |
 	     AHCI_PREG_IE_IFE | AHCI_PREG_IE_OFE | AHCI_PREG_IE_DPE |
-	     AHCI_PREG_IE_UFE | AHCI_PREG_IE_DHRE);
+	     AHCI_PREG_IE_UFE | AHCI_PREG_IE_SDBE | AHCI_PREG_IE_DHRE);
 
 freeport:
 	if (rc != 0)
