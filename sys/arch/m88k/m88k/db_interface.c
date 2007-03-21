@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.5 2006/05/08 14:36:09 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.6 2007/03/21 19:32:17 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -531,7 +531,7 @@ void
 db_write_bytes(db_addr_t addr, size_t size, char *data)
 {
 	extern pt_entry_t *pmap_pte(pmap_t, vaddr_t);
-	char *dst;
+	char *dst = (char *)addr;
 	vaddr_t va;
 	paddr_t pa;
 	pt_entry_t *pte, opte;
