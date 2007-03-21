@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.29 2007/03/20 15:03:22 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.30 2007/03/21 00:09:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -192,11 +192,8 @@ ata_setup_identify(struct ata_port *ap, int nosleep)
 	bzero(xa->data, 512);
 	xa->datalen = 512;
 
-	xa->cmd.tx->regs[H2D_DEVCTL_OR_COMMAND] = H2D_DEVCTL_OR_COMMAND_COMMAND;
-	xa->cmd.tx->regs[H2D_COMMAND] = ATA_C_IDENTIFY;
-
-	xa->cmd.st_bmask = 0x40; /* XXX magic WDCS_DRDY */;
-	xa->cmd.st_pmask = 0x00;
+	xa->fis->flags = ATA_H2D_FLAGS_CMD;
+	xa->fis->command = ATA_C_IDENTIFY;
 
 	xa->flags = ATA_F_READ | ATA_F_PIO;
 
@@ -264,9 +261,9 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 	struct scsi_rw		*rw;
 	struct scsi_rw_big	*rwb;
 	struct ata_xfer		*xa;
+	struct ata_fis_h2d	*fis;
 	u_int64_t		lba;
 	u_int32_t		sector_count;
-	u_int8_t		*regs;
 
 	switch (xs->cmd->opcode) {
 	case READ_BIG:
@@ -314,32 +311,29 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 		sector_count = _2btol(rwb->length);
 	}
 
-	regs = xa->cmd.tx->regs;
+	fis = xa->fis;
 
-	regs[H2D_DEVCTL_OR_COMMAND] = H2D_DEVCTL_OR_COMMAND_COMMAND;
-	regs[LBA_LOW] = lba & 0xff;
-	regs[LBA_MID] = (lba >> 8) & 0xff;
-	regs[LBA_HIGH] = (lba >> 16) & 0xff;
-
-	if (xs->flags & SCSI_POLL)
-		xa->flags |= ATA_F_POLL;
+	fis->flags = ATA_H2D_FLAGS_CMD;
+	fis->lba_low = lba & 0xff;
+	fis->lba_mid = (lba >> 8) & 0xff;
+	fis->lba_high = (lba >> 16) & 0xff;
 
 	if (sector_count > 0x100 || lba > 0xfffffff) {
 		/* Use LBA48 */
-		regs[H2D_COMMAND] = (xa->flags & ATA_F_WRITE) ?
+		fis->command = (xa->flags & ATA_F_WRITE) ?
 		    ATA_C_WRITEDMA_EXT : ATA_C_READDMA_EXT;
-		regs[DEVICE] = H2D_DEVICE_LBA;
-		regs[LBA_LOW_EXP] = (lba >> 24) & 0xff;
-		regs[LBA_MID_EXP] = (lba >> 32) & 0xff;
-		regs[LBA_HIGH_EXP] = (lba >> 40) & 0xff;
-		regs[SECTOR_COUNT] = sector_count & 0xff;
-		regs[SECTOR_COUNT_EXP] = (sector_count >> 8) & 0xff;
+		fis->device = ATA_H2D_DEVICE_LBA;
+		fis->lba_low_exp = (lba >> 24) & 0xff;
+		fis->lba_mid_exp = (lba >> 32) & 0xff;
+		fis->lba_high_exp = (lba >> 40) & 0xff;
+		fis->sector_count = sector_count & 0xff;
+		fis->sector_count_exp = (sector_count >> 8) & 0xff;
 	} else {
 		/* Use LBA */
-		regs[H2D_COMMAND] = (xa->flags & ATA_F_WRITE) ?
+		fis->command = (xa->flags & ATA_F_WRITE) ?
 		    ATA_C_WRITEDMA : ATA_C_READDMA;
-		regs[DEVICE] = H2D_DEVICE_LBA | ((lba >> 24) & 0x0f);
-		regs[SECTOR_COUNT] = sector_count & 0xff;
+		fis->device = ATA_H2D_DEVICE_LBA | ((lba >> 24) & 0x0f);
+		fis->sector_count = sector_count & 0xff;
 	}
 
 	xa->data = xs->data;
@@ -347,6 +341,8 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 	xa->complete = atascsi_disk_cmd_done;
 	xa->timeout = xs->timeout;
 	xa->atascsi_private = xs;
+	if (xs->flags & SCSI_POLL)
+		xa->flags |= ATA_F_POLL;
 
 	return (ata_exec(as, xa));
 }
@@ -463,9 +459,8 @@ atascsi_disk_sync(struct scsi_xfer *xs)
 	/* Spec says flush cache can take >30 sec, so give it at least 45. */
 	xa->timeout = (xs->timeout < 45000) ? 45000 : xs->timeout;
 
-	xa->cmd.tx->regs[H2D_DEVCTL_OR_COMMAND] =
-	    H2D_DEVCTL_OR_COMMAND_COMMAND;
-	xa->cmd.tx->regs[H2D_COMMAND] = ATA_C_FLUSH_CACHE;
+	xa->fis->flags = ATA_H2D_FLAGS_CMD;
+	xa->fis->command = ATA_C_FLUSH_CACHE;
 
 	return (ata_exec(as, xa));
 }
@@ -598,7 +593,7 @@ atascsi_atapi_cmd(struct scsi_xfer *xs)
 	struct ata_port		*ap = as->as_ports[link->target];
 	int			s;
 	struct ata_xfer		*xa;
-	u_int8_t		*regs;
+	struct ata_fis_h2d	*fis;
 
 	s = splbio();
 	xa = ata_get_xfer(ap, xs->flags & SCSI_NOSLEEP);
@@ -625,17 +620,17 @@ atascsi_atapi_cmd(struct scsi_xfer *xs)
 	if (xs->flags & SCSI_POLL)
 		xa->flags |= ATA_F_POLL;
 
-	regs = xa->cmd.tx->regs;
-	regs[H2D_DEVCTL_OR_COMMAND] = H2D_DEVCTL_OR_COMMAND_COMMAND;
-	regs[H2D_COMMAND] = ATA_C_PACKET;
-	regs[SECTOR_COUNT] = xa->cmd.tag << 3;
-	regs[H2D_FEATURES] = 0x01 /* DMA */ |
-	    ((xa->flags & ATA_F_WRITE) ? 0x00 : 0x04) /* direction */;
-	regs[LBA_MID]  = 0x00;	/* byte count low */
-	regs[LBA_HIGH] = 0x20;	/* byte count high, limit to 8K per data FIS */
+	fis = xa->fis;
+	fis->flags = ATA_H2D_FLAGS_CMD;
+	fis->command = ATA_C_PACKET;
+	fis->sector_count = xa->tag << 3;
+	fis->features = ATA_H2D_FEATURES_DMA | ((xa->flags & ATA_F_WRITE) ?
+	    ATA_H2D_FEATURES_DIR_WRITE : ATA_H2D_FEATURES_DIR_READ);
+	fis->lba_mid = 0x00;
+	fis->lba_high = 0x20;
 
 	/* Copy SCSI command into ATAPI packet. */
-	memcpy(xa->cmd.packetcmd, xs->cmd, xs->cmdlen);
+	memcpy(xa->packetcmd, xs->cmd, xs->cmdlen);
 
 	return (ata_exec(as, xa));
 }
@@ -653,12 +648,12 @@ atascsi_atapi_cmd_done(struct ata_xfer *xa)
 	case ATA_S_ERROR:
 		/* Return PACKET sense data */
 		sd->error_code = SSD_ERRCODE_CURRENT;
-		sd->flags = (xa->cmd.rx_err.regs[D2H_ERROR] & 0xf0) >> 4;
-		if (xa->cmd.rx_err.regs[D2H_ERROR] & 0x04)
+		sd->flags = (xa->rfis.error & 0xf0) >> 4;
+		if (xa->rfis.error & 0x04)
 			sd->flags = SKEY_ILLEGAL_REQUEST;
-		if (xa->cmd.rx_err.regs[D2H_ERROR] & 0x02)
+		if (xa->rfis.error & 0x02)
 			sd->flags |= SSD_EOM;
-		if (xa->cmd.rx_err.regs[D2H_ERROR] & 0x01)
+		if (xa->rfis.error & 0x01)
 			sd->flags |= SSD_ILI;
 		xs->error = XS_SENSE;
 		break;
@@ -710,8 +705,14 @@ ata_exec(struct atascsi *as, struct ata_xfer *xa)
 struct ata_xfer *
 ata_get_xfer(struct ata_port *ap, int nosleep /* XXX unused */)
 {
-	return (ap->ap_as->as_methods->ata_get_xfer(ap->ap_as->as_cookie,
-	    ap->ap_port));
+	struct atascsi		*as = ap->ap_as;
+	struct ata_xfer		*xa;
+
+	xa = as->as_methods->ata_get_xfer(as->as_cookie, ap->ap_port);
+	if (xa != NULL)
+		xa->fis->type = ATA_FIS_TYPE_D2H;
+
+	return (xa);
 }
 
 void

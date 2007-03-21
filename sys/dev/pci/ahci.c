@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.91 2007/03/21 00:07:29 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.92 2007/03/21 00:09:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -877,9 +877,10 @@ nomem:
 		ccb->ccb_cmd_hdr->ctba_hi = htole32((u_int32_t)(dva >> 32));
 		ccb->ccb_cmd_hdr->ctba_lo = htole32((u_int32_t)dva);
 
-		ccb->ccb_xa.cmd.tx = (struct ata_regs *)ccb->ccb_cmd_table->cfis;
-		ccb->ccb_xa.cmd.packetcmd = ccb->ccb_cmd_table->acmd;
-		ccb->ccb_xa.cmd.tag = i;
+		ccb->ccb_xa.fis =
+		    (struct ata_fis_h2d *)ccb->ccb_cmd_table->cfis;
+		ccb->ccb_xa.packetcmd = ccb->ccb_cmd_table->acmd;
+		ccb->ccb_xa.tag = i;
 
 		ccb->ccb_xa.ata_put_xfer = ahci_ata_put_xfer;
 
@@ -1420,8 +1421,8 @@ ahci_port_intr(struct ahci_port *ap, u_int32_t ci_mask)
 		ccb = &ap->ap_ccbs[err_slot];
 
 		/* Preserve received taskfile data from the RFIS. */
-		memcpy(&ccb->ccb_xa.cmd.rx_err.regs, ap->ap_rfis->rfis,
-		    sizeof(struct ata_regs));
+		memcpy(&ccb->ccb_xa.rfis, ap->ap_rfis->rfis,
+		    sizeof(struct ata_fis_d2h));
 
 		DPRINTF(AHCI_D_VERBOSE, "%s: errored slot %d, TFD: %b, SERR:"
 		    " %b, DIAG: %b\n", PORTNAME(ap), err_slot, tfd,
@@ -1787,7 +1788,6 @@ ahci_ata_cmd(struct ata_xfer *xa)
 		goto failcmd;
 
 	ccb->ccb_done = ahci_ata_cmd_done;
-	ccb->ccb_cmd_table->cfis[0] = REGS_TYPE_REG_H2D;
 
 	cmd_slot = ccb->ccb_cmd_hdr;
 	cmd_slot->flags = htole16(5); /* FIS length (in DWORDs) */

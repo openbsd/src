@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.17 2007/03/20 14:10:53 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.18 2007/03/21 00:09:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -119,6 +119,75 @@ struct ata_identify {
 } __packed;
 
 /*
+ * Frame Information Structures
+ */
+
+#define ATA_FIS_LENGTH		20
+
+struct ata_fis_h2d {
+	u_int8_t		type;
+#define ATA_FIS_TYPE_H2D		0x27
+	u_int8_t		flags;
+#define ATA_H2D_FLAGS_CMD		(1<<7)
+	u_int8_t		command;
+	u_int8_t		features;
+#define ATA_H2D_FEATURES_DMA		(1<<0)
+#define ATA_H2D_FEATURES_DIR		(1<<2)
+#define ATA_H2D_FEATURES_DIR_READ	(1<<2)
+#define ATA_H2D_FEATURES_DIR_WRITE	(0<<2)
+
+	u_int8_t		lba_low;
+	u_int8_t		lba_mid;
+	u_int8_t		lba_high;
+	u_int8_t		device;
+#define ATA_H2D_DEVICE_LBA		0x40
+
+	u_int8_t		lba_low_exp;
+	u_int8_t		lba_mid_exp;
+	u_int8_t		lba_high_exp;
+	u_int8_t		features_exp;
+
+	u_int8_t		sector_count;
+	u_int8_t		sector_count_exp;
+	u_int8_t		reserved0;
+	u_int8_t		control;
+
+	u_int8_t		reserved1;
+	u_int8_t		reserved2;
+	u_int8_t		reserved3;
+	u_int8_t		reserved4;
+} __packed;
+
+struct ata_fis_d2h {
+	u_int8_t		type;
+#define ATA_FIS_TYPE_D2H		0x34
+	u_int8_t		flags;
+#define ATA_D2H_FLAGS_INTR		(1<<6)
+	u_int8_t		status;
+	u_int8_t		error;
+
+	u_int8_t		lba_low;
+	u_int8_t		lba_mid;
+	u_int8_t		lba_high;
+	u_int8_t		device;
+
+	u_int8_t		lba_low_exp;
+	u_int8_t		lba_mid_exp;
+	u_int8_t		lba_high_exp;
+	u_int8_t		reserved0;
+
+	u_int8_t		sector_count;
+	u_int8_t		sector_count_exp;
+	u_int8_t		reserved1;
+	u_int8_t		reserved2;
+
+	u_int8_t		reserved3;
+	u_int8_t		reserved4;
+	u_int8_t		reserved5;
+	u_int8_t		reserved6;
+} __packed;
+
+/*
  * ATA interface
  */
 
@@ -131,67 +200,12 @@ struct ata_port {
 #define ATA_PORT_T_ATAPI		2
 };
 
-/* These offsets correspond with the layout of the SATA Host to Device
- * and Device to Host FISes.  Do not change them. */
-enum ata_register_map {
-	REGS_TYPE = 0,
-	FIS_TYPE = 0,
-#define REGS_TYPE_REG_H2D		0x27
-#define REGS_TYPE_REG_D2H		0x34
-#define REGS_TYPE_SDB_D2H		0xA1
-	H2D_DEVCTL_OR_COMMAND = 1,
-#define H2D_DEVCTL_OR_COMMAND_DEVCTL	0x00
-#define H2D_DEVCTL_OR_COMMAND_COMMAND	0x80
-#define H2D_DEVCTL_OR_COMMAND_PMULT_MSK	0x0f
-	D2H_INTERRUPT = 1,
-#define D2H_INTERRUPT_INTERRUPT		0x40
-	H2D_COMMAND = 2,
-	D2H_STATUS = 2,
-	H2D_FEATURES = 3,
-	D2H_ERROR = 3,
-	SECTOR_NUM = 4,
-	LBA_LOW = 4,
-	CYL_LOW = 5,
-	LBA_MID = 5,
-	CYL_HIGH = 6,
-	LBA_HIGH = 6,
-	DEVICE_HEAD = 7,
-	DEVICE = 7,
-#define H2D_DEVICE_LBA			0x40
-	SECTOR_NUM_EXP = 8,
-	LBA_LOW_EXP = 8,
-	CYL_LOW_EXP = 9,
-	LBA_MID_EXP = 9,
-	CYL_HIGH_EXP = 10,
-	LBA_HIGH_EXP = 10,
-	FEATURES_EXP = 11,
-	SECTOR_COUNT = 12,
-	SECTOR_COUNT_EXP = 13,
-	RESERVED_14 = 14,
-	CONTROL = 15,
-	RESERVED_16 = 16,
-	RESERVED_17 = 17,
-	RESERVED_18 = 18,
-	RESERVED_19 = 19,
-	MAX_ATA_REGS = 20
-};
-
-struct ata_regs {
-	u_int8_t		regs[MAX_ATA_REGS];
-};
-
-struct ata_cmd {
-	struct ata_regs		*tx;
-	struct ata_regs		rx_err;
+struct ata_xfer {
+	struct ata_fis_h2d	*fis;
+	struct ata_fis_d2h	rfis;
 	u_int8_t		*packetcmd;
 	u_int8_t		tag;
 
-	u_int8_t		st_bmask;
-	u_int8_t		st_pmask;
-};
-
-struct ata_xfer {
-	struct ata_cmd		cmd;
 	u_int8_t		*data;
 	size_t			datalen;
 	size_t			resid;
