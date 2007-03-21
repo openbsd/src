@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.33 2007/03/21 13:41:21 millert Exp $
+.\"	$OpenBSD: event.3,v 1.34 2007/03/21 13:52:01 millert Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -101,6 +101,33 @@
 .\".Nm evtag_unmarshal_fixed ,
 .\".Nm evtag_unmarshal_string ,
 .\".Nm evtag_unmarshal_timeval ,
+.\".Nm evhttp_start ,
+.\".Nm evhttp_free ,
+.\".Nm evhttp_set_cb ,
+.\".Nm evhttp_set_gencb ,
+.\".Nm evhttp_set_timeout ,
+.\".Nm evhttp_send_error ,
+.\".Nm evhttp_send_reply ,
+.\".Nm evhttp_send_reply_start ,
+.\".Nm evhttp_send_reply_chunk ,
+.\".Nm evhttp_send_reply_end ,
+.\".Nm evhttp_request_new ,
+.\".Nm evhttp_request_set_chunked_cb ,
+.\".Nm evhttp_connection_new ,
+.\".Nm evhttp_connection_free ,
+.\".Nm evhttp_connection_set_timeout ,
+.\".Nm evhttp_connection_set_retries ,
+.\".Nm evhttp_connection_set_closecb ,
+.\".Nm evhttp_connection_get_peer ,
+.\".Nm evhttp_make_request ,
+.\".Nm evhttp_request_uri ,
+.\".Nm evhttp_remove_header ,
+.\".Nm evhttp_add_header ,
+.\".Nm evhttp_clear_headers ,
+.\".Nm evhttp_encode_uri ,
+.\".Nm evhttp_decode_uri ,
+.\".Nm evhttp_parse_query ,
+.\".Nm evhttp_htmlescape ,
 .Nd execute a function when a specific event occurs
 .Sh SYNOPSIS
 .Fd #include <sys/time.h>
@@ -186,7 +213,7 @@
 .Ft int
 .Fn "evbuffer_add_buffer" "struct evbuffer *dst" "struct evbuffer *src"
 .Ft int
-.Fn "evbuffer_add_printf" "struct evbuffer *buf" "char *fmt" "..."
+.Fn "evbuffer_add_printf" "struct evbuffer *buf" "const char *fmt" "..."
 .Ft int
 .Fn "evbuffer_add_vprintf" "struct evbuffer *buf" "const char *fmt" "va_list ap"
 .Ft void
