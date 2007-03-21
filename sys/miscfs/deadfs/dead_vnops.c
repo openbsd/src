@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.15 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.16 2007/03/21 17:29:32 thib Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -279,16 +279,8 @@ dead_lock(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	/*
-	 * Since we are not using the lock manager, we must clear
-	 * the interlock here.
-	 */
-	if (ap->a_flags & LK_INTERLOCK) {
-		simple_unlock(&vp->v_interlock);
-		ap->a_flags &= ~LK_INTERLOCK;
-	}
 	if (ap->a_flags & LK_DRAIN || !chkvnlock(vp))
- 		return (0);
+		return (0);
 
 	return (VCALL(vp, VOFFSET(vop_lock), ap));
 }

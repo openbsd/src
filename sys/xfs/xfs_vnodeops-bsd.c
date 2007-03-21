@@ -803,7 +803,7 @@ xfs_lock(struct vop_lock_args * ap)
     ret = lockmgr(l, flags, &vp->v_interlock, ap->a_p);
 #endif
 #else
-    ret = lockmgr(l, flags, &vp->v_interlock);
+    ret = lockmgr(l, flags, NULL);
 #endif
 #else
 #ifdef HAVE_FREEBSD_THREAD
@@ -857,7 +857,7 @@ xfs_unlock(struct vop_unlock_args * ap)
     ret = lockmgr (l, flags | LK_RELEASE, &vp->v_interlock, ap->a_p);
 #endif
 #else
-    ret = lockmgr (l, flags | LK_RELEASE, &vp->v_interlock);
+    ret = lockmgr (l, flags | LK_RELEASE, NULL);
 #endif
 #else
 #ifdef HAVE_FREEBSD_THREAD

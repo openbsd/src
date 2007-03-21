@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.73 2006/12/29 13:04:37 pedro Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.74 2007/03/21 17:29:32 thib Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -226,14 +226,12 @@ ufs_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 
-	simple_lock(&vp->v_interlock);
 	if (vp->v_usecount > 1) {
 		struct timeval tv;
 
 		getmicrotime(&tv);
 		ITIMES(ip, &tv, &tv);
 	}
-	simple_unlock(&vp->v_interlock);
 	return (0);
 }
 
@@ -1623,7 +1621,7 @@ ufs_lock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags, &vp->v_interlock));
+	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags, NULL));
 }
 
 /*
@@ -1639,8 +1637,7 @@ ufs_unlock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags | LK_RELEASE,
-		&vp->v_interlock));
+	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags | LK_RELEASE, NULL));
 }
 
 /*
@@ -1791,14 +1788,12 @@ ufsspec_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 
-	simple_lock(&vp->v_interlock);
 	if (ap->a_vp->v_usecount > 1) {
 		struct timeval tv;
 
 		getmicrotime(&tv);
 		ITIMES(ip, &tv, &tv);
 	}
-	simple_unlock(&vp->v_interlock);
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
@@ -1863,14 +1858,12 @@ ufsfifo_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 
-	simple_lock(&vp->v_interlock);
 	if (ap->a_vp->v_usecount > 1) {
 		struct timeval tv;
 
 		getmicrotime(&tv);
 		ITIMES(ip, &tv, &tv);
 	}
-	simple_unlock(&vp->v_interlock);
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }
 #endif /* FIFO */

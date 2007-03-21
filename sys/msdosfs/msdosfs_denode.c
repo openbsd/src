@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.28 2006/01/09 12:43:16 pedro Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.29 2007/03/21 17:29:32 thib Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -105,8 +105,7 @@ msdosfs_hashget(dev, dirclust, diroff)
 			    dep->de_refcnt != 0) {
 				struct vnode *vp = DETOV(dep);
 
-				simple_lock(&vp->v_interlock);
-				if (!vget(vp, LK_EXCLUSIVE  | LK_INTERLOCK, p))
+				if (!vget(vp, LK_EXCLUSIVE, p))
 					return (dep);
 				break;
 			}

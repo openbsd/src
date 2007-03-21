@@ -1,4 +1,4 @@
-/*	$OpenBSD: adutil.c,v 1.15 2005/11/19 02:18:00 pedro Exp $	*/
+/*	$OpenBSD: adutil.c,v 1.16 2007/03/21 17:29:31 thib Exp $	*/
 /*	$NetBSD: adutil.c,v 1.15 1996/10/13 02:52:07 christos Exp $	*/
 
 /*
@@ -71,7 +71,6 @@ adosfs_ahashget(mp, an)
 				return (NULL);
 			if (ABLKTOINO(ap->block) == an) {
 				vp = ATOV(ap);
-				simple_lock(&vp->v_interlock);
 				if (!vget(vp, LK_EXCLUSIVE, p))
 					return (vp);
 				break;

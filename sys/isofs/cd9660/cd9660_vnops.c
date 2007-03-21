@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.38 2007/01/16 17:52:18 thib Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.39 2007/03/21 17:29:31 thib Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -880,7 +880,7 @@ cd9660_lock(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags, &vp->v_interlock));
+	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags, NULL));
 }
 
 /*
@@ -895,8 +895,7 @@ cd9660_unlock(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags | LK_RELEASE,
-	    &vp->v_interlock));
+	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags | LK_RELEASE, NULL));
 }
 
 /*

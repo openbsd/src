@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.100 2007/03/19 19:57:58 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.101 2007/03/21 17:29:32 thib Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -480,7 +480,7 @@ ffs_reload_vnode(struct vnode *vp, void *args)
 	/*
 	 * Step 5: invalidate all cached file data.
 	 */
-	if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, fra->p))
+	if (vget(vp, LK_EXCLUSIVE, fra->p))
 		return (0);
 
 	if (vinvalbuf(vp, 0, fra->cred, fra->p, 0, 0))
@@ -1145,11 +1145,10 @@ ffs_sync_vnode(struct vnode *vp, void *arg) {
 	    ((ip->i_flag &
 		(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0	&&
 		LIST_EMPTY(&vp->v_dirtyblkhd)) ) {
-		simple_unlock(&vp->v_interlock);
 		return (0);
 	}
 
-	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, fsa->p))
+	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT, fsa->p))
 		return (0);
 
 	if ((error = VOP_FSYNC(vp, fsa->cred, fsa->waitfor, fsa->p)))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.46 2006/12/16 12:44:05 krw Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.47 2007/03/21 17:29:32 thib Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -678,11 +678,10 @@ msdosfs_sync_vnode(struct vnode *vp, void *arg)
 	    ((dep->de_flag & (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0
 	      && LIST_EMPTY(&vp->v_dirtyblkhd)) ||
 	    msa->waitfor == MNT_LAZY) {
-		simple_unlock(&vp->v_interlock);
 		return (0);
 	}
 
-	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, msa->p))
+	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT, msa->p))
 		return (0);
 
 	if ((error = VOP_FSYNC(vp, msa->cred, msa->waitfor, msa->p)) != 0)

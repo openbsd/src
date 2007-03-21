@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.12 2005/11/19 02:18:02 pedro Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.13 2007/03/21 17:29:32 thib Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -96,9 +96,8 @@ loop:
 	LIST_FOREACH(ip, INOHASH(dev, inum), i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
-			simple_lock(&vp->v_interlock);
 			simple_unlock(&ufs_ihash_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, p))
+			if (vget(vp, LK_EXCLUSIVE, p))
 				goto loop;
 			return (vp);
  		}

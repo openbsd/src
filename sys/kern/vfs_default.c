@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.31 2007/01/16 17:52:18 thib Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.32 2007/03/21 17:29:31 thib Exp $  */
 
 /*
  * Portions of this code are:
@@ -73,7 +73,6 @@ vop_generic_revoke(void *v)
 #endif
 
 	vp = ap->a_vp;
-	simple_lock(&vp->v_interlock);
  
 	if (vp->v_flag & VALIASED) {
 		/*
@@ -82,7 +81,6 @@ vop_generic_revoke(void *v)
 		 */
 		if (vp->v_flag & VXLOCK) {
 			vp->v_flag |= VXWANT;
-			simple_unlock(&vp->v_interlock);
 			tsleep(vp, PINOD, "vop_generic_revokeall", 0);
 
 			return(0);
@@ -93,7 +91,6 @@ vop_generic_revoke(void *v)
 		 * are eliminating its aliases.
 		 */
 		vp->v_flag |= VXLOCK;
-		simple_unlock(&vp->v_interlock);
 		while (vp->v_flag & VALIASED) {
 			simple_lock(&spechash_slock);
 			for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
@@ -112,7 +109,6 @@ vop_generic_revoke(void *v)
 		 * really eliminate the vnode after which time
 		 * vgone will awaken any sleepers.
 		 */
-		simple_lock(&vp->v_interlock);
 		vp->v_flag &= ~VXLOCK;
 	}
 
@@ -154,20 +150,6 @@ vop_generic_abortop(void *v)
 int
 vop_generic_lock(void *v)
 {
-	struct vop_lock_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-
-	/*
-	 * Since we are not using the lock manager, we must clear
-	 * the interlock here.
-	 */
-	if (ap->a_flags & LK_INTERLOCK)
-		simple_unlock(&ap->a_vp->v_interlock);
-
 	return (0);
 }
  
