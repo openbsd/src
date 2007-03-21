@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.31 2007/03/19 20:32:41 jmc Exp $
+.\"	$OpenBSD: event.3,v 1.32 2007/03/21 12:22:30 millert Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -36,6 +36,7 @@
 .Nm event_base_loop ,
 .Nm event_base_loopexit ,
 .Nm event_base_set ,
+.Nm event_base_free ,
 .Nm event_add ,
 .Nm event_del ,
 .Nm event_once ,
@@ -97,6 +98,8 @@
 .Fn "event_base_loopexit" "struct event_base *base" "struct timeval *tv"
 .Ft int
 .Fn "event_base_set" "struct event_base *base" "struct event *"
+.Ft void
+.Fn "event_base_free" "struct event_base *base"
 .Ft int
 .Fn "event_add" "struct event *ev" "struct timeval *tv"
 .Ft int
@@ -450,8 +453,9 @@ This event base can be used in conjunction with calls to
 .Fn event_base_dispatch ,
 .Fn event_base_loop ,
 .Fn event_base_loopexit ,
+.Fn bufferevent_base_set
 and
-.Fn bufferevent_base_set .
+.Fn event_base_free .
 .Fn event_base_set
 should be called after preparing an event with
 .Fn event_set ,
@@ -461,6 +465,9 @@ assigns the provided event to the most recently created event base.
 .Fn bufferevent_base_set
 should be called after preparing a bufferevent with
 .Fn bufferevent_new .
+.Fn event_base_free
+should be used to free memory associated with the event base
+when it is no longer needed.
 .Sh BUFFERED EVENTS
 .Nm libevent
 provides an abstraction on top of the regular event callbacks.

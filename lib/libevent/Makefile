@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2007/03/19 20:20:06 jmc Exp $
+#	$OpenBSD: Makefile,v 1.24 2007/03/21 12:22:30 millert Exp $
 
 LIB=	event
 WANTLINT=
@@ -8,7 +8,7 @@ HDRS=	event.h evdns.h
 MAN=	evdns.3 event.3
 MLINKS=	event.3 event_init.3 event.3 event_dispatch.3 event.3 event_loop.3 \
 	event.3 event_loopexit.3 event.3 event_set.3 event.3 event_base_dispatch.3 \
-	event.3 event_base_loop.3 event.3 event_base_loopexit.3 event.3 \
+	event.3 event_base_free.3 event.3 event_base_loop.3 event.3 event_base_loopexit.3 event.3 \
 	event_base_set.3 event.3 event_add.3 event.3 event_del.3 event.3 event_once.3 \
 	event.3 event_pending.3 event.3 event_initialized.3 event.3 \
 	event_priority_init.3 event.3 event_priority_set.3 event.3 evtimer_set.3 \
