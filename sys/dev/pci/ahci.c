@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.92 2007/03/21 00:09:16 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.93 2007/03/21 12:08:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -33,7 +33,7 @@
 
 #include <dev/ata/atascsi.h>
 
-#define AHCI_DEBUG
+#define NO_AHCI_DEBUG
 
 #ifdef AHCI_DEBUG
 #define DPRINTF(m, f...) do { if ((ahcidebug & (m)) == (m)) printf(f); } while (0)
@@ -894,30 +894,32 @@ nomem:
 	rc = ahci_port_portreset(ap);
 	switch (rc) {
 	case ENODEV:
-		printf("%s: ", DEVNAME(sc));
 		switch (ahci_pread(ap, AHCI_PREG_SSTS) & AHCI_PREG_SSTS_DET) {
 		case AHCI_PREG_SSTS_DET_DEV_NE:
-			printf("device not communicating");
+			printf("%s: device not communicating on port %d\n",
+			    DEVNAME(sc), port);
 			break;
 		case AHCI_PREG_SSTS_DET_PHYOFFLINE:
-			printf("PHY offline");
+			printf("%s: PHY offline on port %d\n", DEVNAME(sc),
+			    port);
 			break;
 		default:
-			printf("no device detected");
+			DPRINTF(AHCI_D_VERBOSE, "%s: no device detected"
+			    "on port %d\n", DEVNAME(sc), port);
+			break;
 		}
-		printf(" on port %d, disabling.\n", port);
 		goto freeport;
 
 	case EBUSY:
-		printf("%s: device on port %d didn't come ready, TFD: 0x%b\n",
-		    DEVNAME(sc), port, ahci_pread(ap, AHCI_PREG_TFD),
-		    AHCI_PFMT_TFD_STS);
+		printf("%s: device on port %d didn't come ready, "
+		    "TFD: 0x%b\n", DEVNAME(sc), port,
+		    ahci_pread(ap, AHCI_PREG_TFD), AHCI_PFMT_TFD_STS);
 
 		/* Try a soft reset to clear busy */
 		rc = ahci_port_softreset(ap);
 		if (rc) {
-			printf("%s: unable to communicate with device on port "
-			    "%d, disabling\n", DEVNAME(sc), port);
+			printf("%s: unable to communicate "
+			    "with device on port %d\n", DEVNAME(sc), port);
 			goto freeport;
 		}
 		break;
@@ -925,7 +927,8 @@ nomem:
 	default:
 		break;
 	}
-	printf("%s: detected device on port %d\n", DEVNAME(sc), port);
+	DPRINTF(AHCI_D_VERBOSE, "%s: detected device on port %d\n",
+	    DEVNAME(sc), port);
 
 	/* Enable command transfers on port */
 	if (ahci_port_start(ap, 0)) {
