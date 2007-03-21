@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.18 2007/03/21 00:09:16 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.19 2007/03/21 12:41:28 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -221,6 +221,7 @@ struct ata_xfer {
 #define ATA_F_POLL			(1<<3)
 #define ATA_F_PIO			(1<<4)
 #define ATA_F_PACKET			(1<<5)
+#define ATA_F_NCQ			(1<<6)
 	volatile int		state;
 #define ATA_S_SETUP			0
 #define ATA_S_PENDING			1
