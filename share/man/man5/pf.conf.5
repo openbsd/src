@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.376 2006/12/01 07:23:26 camield Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.377 2007/03/21 03:04:16 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -402,9 +402,10 @@ set limit { states 20000, frags 20000, src-nodes 2000 }
 .Bl -tag -width xxxxxxxx -compact
 .It Ar none
 Disable the ruleset optimizer.
-This is the default behaviour.
 .It Ar basic
-Enable basic ruleset optimization, which does four things to improve the
+Enable basic ruleset optimization.
+This is the default behaviour.
+Basic ruleset optimization does four things to improve the
 performance of ruleset evaluations:
 .Pp
 .Bl -enum -compact
