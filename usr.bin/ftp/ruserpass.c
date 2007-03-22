@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruserpass.c,v 1.21 2007/03/22 11:35:02 moritz Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.22 2007/03/22 15:25:17 moritz Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
 #ifndef SMALL
-static const char rcsid[] = "$OpenBSD: ruserpass.c,v 1.21 2007/03/22 11:35:02 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: ruserpass.c,v 1.22 2007/03/22 15:25:17 moritz Exp $";
 #endif /* SMALL */
 #endif
 #endif /* not lint */
@@ -91,9 +91,8 @@ ruserpass(const char *host, char **aname, char **apass, char **aacct)
 	hdir = getenv("HOME");
 	if (hdir == NULL || *hdir == '\0')
 		return (0);
-	if (strlen(hdir) + sizeof(".netrc") < sizeof(buf)) {
-		(void)snprintf(buf, sizeof buf, "%s/.netrc", hdir);
-	} else {
+	i = snprintf(buf, sizeof(buf), "%s/.netrc", hdir);
+	if (i < 0 || i >= sizeof(buf)) {
 		warnx("%s/.netrc: %s", hdir, strerror(ENAMETOOLONG));
 		return (0);
 	}
