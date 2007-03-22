@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.134 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.135 2007/03/22 17:18:19 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -48,7 +48,7 @@
 #define CVS_HIST_CACHE	128
 #define CVS_HIST_NBFLD	6
 
-#define CVS_CKSUM_LEN	33	/* length of a CVS checksum string */
+#define CVS_CKSUM_LEN	MD5_DIGEST_STRING_LENGTH
 
 /* operations */
 #define CVS_OP_UNKNOWN		0
