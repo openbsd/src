@@ -1,4 +1,4 @@
-/*	$OpenBSD: silireg.h,v 1.2 2007/03/22 06:32:14 dlg Exp $ */
+/*	$OpenBSD: silireg.h,v 1.3 2007/03/22 06:54:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -19,5 +19,3 @@
 #define SILI_PCI_BAR_GLOBAL	0x10
 #define SILI_PCI_BAR_PORT	0x14
 #define SILI_PCI_BAR_INDIRECT	0x18
-
-

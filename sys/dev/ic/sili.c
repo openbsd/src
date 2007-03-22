@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.1 2007/03/22 02:48:42 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.2 2007/03/22 06:54:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -35,6 +35,9 @@ struct cfdriver sili_cd = {
 	NULL, "sili", DV_DULL
 };
 
+u_int32_t		sili_read(struct sili_softc *, bus_size_t);
+void			sili_write(struct sili_softc *, bus_size_t, u_int32_t);
+
 int
 sili_attach(struct sili_softc *sc)
 {
@@ -59,3 +62,22 @@ sili_intr(void *arg)
 	return (0);
 }
 
+u_int32_t
+sili_read(struct sili_softc *sc, bus_size_t r)
+{
+	u_int32_t			rv;
+
+	bus_space_barrier(sc->sc_iot_global, sc->sc_ioh_global, r, 4,
+	    BUS_SPACE_BARRIER_READ);
+	rv = bus_space_read_4(sc->sc_iot_global, sc->sc_ioh_global, r);
+
+	return (rv);
+}
+
+void
+sili_write(struct sili_softc *sc, bus_size_t r, u_int32_t v)
+{
+	bus_space_write_4(sc->sc_iot_global, sc->sc_ioh_global, r, v);
+	bus_space_barrier(sc->sc_iot_global, sc->sc_ioh_global, r, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
