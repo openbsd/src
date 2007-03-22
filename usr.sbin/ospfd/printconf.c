@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.7 2007/03/21 10:54:30 claudio Exp $ */
+/*	$OpenBSD: printconf.c,v 1.8 2007/03/22 16:00:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -87,7 +87,7 @@ print_redistribute(struct ospfd_conf *conf)
 			    print_no(r->type), rtlabel_id2name(r->label));
 			break;
 		case REDIST_ADDR:
-			printf("%ssredistribute %s/%d\n",
+			printf("%sredistribute %s/%d\n",
 			    print_no(r->type), inet_ntoa(r->addr),
 			    mask2prefixlen(r->mask.s_addr));
 			break;
