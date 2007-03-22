@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.9 2005/05/22 19:40:51 art Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.10 2007/03/22 18:55:20 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -408,9 +408,9 @@ done:
 
 	if (subr == (long)k_intr || subr == (long)k_general) {
 		if (subr == (long)k_intr)
-			(*pr)("<-> KERNEL INTERRUPT <->\n");
+			(*pr)("(KERNEL INTERRUPT)\n");
 		else
-			(*pr)("<-> KERNEL TRAP <->\n");
+			(*pr)("(KERNEL TRAP)\n");
 		sp = *(register_t *)sp;
 		pc = ((struct trap_frame *)sp)->pc;
 		ra = ((struct trap_frame *)sp)->ra;
