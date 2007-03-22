@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.33 2007/02/21 22:37:38 deanna Exp $ */
+/*	$OpenBSD: safte.c,v 1.34 2007/03/22 16:55:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -50,7 +50,7 @@ void	safte_attach(struct device *, struct device *, void *);
 int	safte_detach(struct device *, int);
 
 struct safte_sensor {
-	struct sensor		se_sensor;
+	struct ksensor		se_sensor;
 	enum {
 		SAFTE_T_FAN,
 		SAFTE_T_PWRSUP,
@@ -71,7 +71,7 @@ struct safte_softc {
 
 	int			sc_nsensors;
 	struct safte_sensor	*sc_sensors;
-	struct sensordev	sc_sensordev;
+	struct ksensordev	sc_sensordev;
 
 	int			sc_celsius;
 	int			sc_ntemps;

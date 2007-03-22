@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.16 2007/03/14 22:49:00 kettenis Exp $	*/
+/*	$OpenBSD: smu.c,v 1.17 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -43,14 +43,14 @@ struct smu_fan {
 	u_int16_t	min_rpm;
 	u_int16_t	max_rpm;
 	u_int16_t	unmanaged_rpm;
-	struct sensor	sensor;
+	struct ksensor	sensor;
 };
 
 #define SMU_MAXSENSORS	3
 
 struct smu_sensor {
 	u_int8_t	reg;
-	struct sensor	sensor;
+	struct ksensor	sensor;
 };
 
 struct smu_softc {
@@ -75,7 +75,7 @@ struct smu_softc {
 	struct smu_sensor sc_sensors[SMU_MAXSENSORS];
 	int		sc_num_sensors;
 
-	struct sensordev sc_sensordev;
+	struct ksensordev sc_sensordev;
 
 	u_int16_t	sc_cpu_diode_scale;
 	int16_t		sc_cpu_diode_offset;

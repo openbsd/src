@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.176 2007/01/27 05:09:51 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.177 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2442,11 +2442,11 @@ ami_create_sensors(struct ami_softc *sc)
 	if (ssc == NULL)
 		return (1);
 
-	sc->sc_sensors = malloc(sizeof(struct sensor) * sc->sc_nunits,
+	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_nunits,
 	    M_DEVBUF, M_WAITOK);
 	if (sc->sc_sensors == NULL)
 		return (1);
-	bzero(sc->sc_sensors, sizeof(struct sensor) * sc->sc_nunits);	
+	bzero(sc->sc_sensors, sizeof(struct ksensor) * sc->sc_nunits);	
 
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensordev.xname));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.58 2007/02/20 17:06:23 thib Exp $ */
+/*	$OpenBSD: arc.c,v 1.59 2007/03/22 16:55:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -384,8 +384,8 @@ struct arc_softc {
 	struct rwlock		sc_lock;
 	volatile int		sc_talking;
 
-	struct sensor		*sc_sensors;
-	struct sensordev	sc_sensordev;
+	struct ksensor		*sc_sensors;
+	struct ksensordev	sc_sensordev;
 	int			sc_nsensors;
 };
 #define DEVNAME(_s)		((_s)->sc_dev.dv_xname)
@@ -1536,9 +1536,9 @@ arc_create_sensors(void *xsc, void *arg)
 	}
 	sc->sc_nsensors = bi.bi_novol;
 
-	sc->sc_sensors = malloc(sizeof(struct sensor) * sc->sc_nsensors,
+	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_nsensors,
 	    M_DEVBUF, M_WAITOK);
-	bzero(sc->sc_sensors, sizeof(struct sensor) * sc->sc_nsensors);
+	bzero(sc->sc_sensors, sizeof(struct ksensor) * sc->sc_nsensors);
 
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensordev.xname));

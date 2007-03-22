@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad741x.c,v 1.9 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: ad741x.c,v 1.10 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -48,8 +48,8 @@ struct adc_softc {
 	int		sc_chip;
 	u_int8_t	sc_config;
 
-	struct sensor sc_sensor[ADC_MAX_SENSORS];
-	struct sensordev sc_sensordev;
+	struct ksensor sc_sensor[ADC_MAX_SENSORS];
+	struct ksensordev sc_sensordev;
 };
 
 int	adc_match(struct device *, void *, void *);

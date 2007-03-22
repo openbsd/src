@@ -1,4 +1,4 @@
-/*	$OpenBSD: owtemp.c,v 1.6 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: owtemp.c,v 1.7 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -51,8 +51,8 @@ struct owtemp_softc {
 	void *			sc_onewire;
 	u_int64_t		sc_rom;
 
-	struct sensor		sc_sensor;
-	struct sensordev	sc_sensordev;
+	struct ksensor		sc_sensor;
+	struct ksensordev	sc_sensordev;
 	struct rwlock		sc_lock;
 };
 

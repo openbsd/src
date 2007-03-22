@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.29 2007/01/02 22:40:22 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.30 2007/03/22 16:55:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -98,11 +98,11 @@ struct udcf_softc {
 	time_t			sc_last;
 	int			sc_nrecv;	/* consecutive valid times */
 	struct timeval		sc_last_tv;	/* uptime of last valid time */
-	struct sensor		sc_sensor;
+	struct ksensor		sc_sensor;
 #ifdef UDCF_DEBUG
-	struct sensor		sc_skew;	/* recv vs local skew */
+	struct ksensor		sc_skew;	/* recv vs local skew */
 #endif
-	struct sensordev	sc_sensordev;
+	struct ksensordev	sc_sensordev;
 };
 
 /*

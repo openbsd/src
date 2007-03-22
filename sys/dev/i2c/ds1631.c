@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds1631.c,v 1.7 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: ds1631.c,v 1.8 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -40,8 +40,8 @@ struct maxds_softc {
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
 
-	struct sensor	sc_sensor[MAXDS_NUM_SENSORS];
-	struct sensordev sc_sensordev;
+	struct ksensor	sc_sensor[MAXDS_NUM_SENSORS];
+	struct ksensordev sc_sensordev;
 };
 
 int	maxds_match(struct device *, void *, void *);

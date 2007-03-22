@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.15 2007/02/14 01:31:12 deanna Exp $ */
+/* $OpenBSD: acpitz.c,v 1.16 2007/03/22 16:55:31 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -51,8 +51,8 @@ struct acpitz_softc {
 	int			sc_tc1;
 	int			sc_tc2;
 	int			sc_lasttmp;
-	struct sensor		sc_sens;
-	struct sensordev	sc_sensdev;
+	struct ksensor		sc_sens;
+	struct ksensordev	sc_sensdev;
 };
 
 int	acpitz_match(struct device *, void *, void *);

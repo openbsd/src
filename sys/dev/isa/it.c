@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.21 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: it.c,v 1.22 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
@@ -61,9 +61,9 @@ void it_setup_volt(struct it_softc *, int, int);
 void it_setup_temp(struct it_softc *, int, int);
 void it_setup_fan(struct it_softc *, int, int);
 
-void it_generic_stemp(struct it_softc *, struct sensor *);
-void it_generic_svolt(struct it_softc *, struct sensor *);
-void it_generic_fanrpm(struct it_softc *, struct sensor *);
+void it_generic_stemp(struct it_softc *, struct ksensor *);
+void it_generic_svolt(struct it_softc *, struct ksensor *);
+void it_generic_fanrpm(struct it_softc *, struct ksensor *);
 
 void it_refresh_sensor_data(struct it_softc *);
 void it_refresh(void *);
@@ -236,7 +236,7 @@ it_setup_fan(struct it_softc *sc, int start, int n)
 }
 
 void
-it_generic_stemp(struct it_softc *sc, struct sensor *sensors)
+it_generic_stemp(struct it_softc *sc, struct ksensor *sensors)
 {
 	int i, sdata;
 
@@ -248,7 +248,7 @@ it_generic_stemp(struct it_softc *sc, struct sensor *sensors)
 }
 
 void
-it_generic_svolt(struct it_softc *sc, struct sensor *sensors)
+it_generic_svolt(struct it_softc *sc, struct ksensor *sensors)
 {
 	int i, sdata;
 
@@ -270,7 +270,7 @@ it_generic_svolt(struct it_softc *sc, struct sensor *sensors)
 }
 
 void
-it_generic_fanrpm(struct it_softc *sc, struct sensor *sensors)
+it_generic_fanrpm(struct it_softc *sc, struct ksensor *sensors)
 {
 	int i, sdata, divisor, odivisor, ndivisor;
 

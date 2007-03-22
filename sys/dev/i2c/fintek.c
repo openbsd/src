@@ -1,4 +1,4 @@
-/*	$OpenBSD: fintek.c,v 1.4 2006/12/24 01:26:20 deraadt Exp $ */
+/*	$OpenBSD: fintek.c,v 1.5 2007/03/22 16:55:31 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
  *
@@ -38,8 +38,8 @@ struct fintek_softc {
 	i2c_tag_t sc_tag;
 	i2c_addr_t sc_addr;
 
-	struct sensor sc_sensor[F_NUM_SENSORS];
-	struct sensordev sc_sensordev;
+	struct ksensor sc_sensor[F_NUM_SENSORS];
+	struct ksensordev sc_sensordev;
 };
 
 int	fintek_match(struct device *, void *, void *);

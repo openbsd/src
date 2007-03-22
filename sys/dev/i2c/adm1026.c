@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1026.c,v 1.8 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: adm1026.c,v 1.9 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -78,8 +78,8 @@ struct admcts_softc {
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
 
-	struct sensor	sc_sensor[ADMCTS_NUM_SENSORS];
-	struct sensordev sc_sensordev;
+	struct ksensor	sc_sensor[ADMCTS_NUM_SENSORS];
+	struct ksensordev sc_sensordev;
 	int		sc_fanmul[8];
 };
 
@@ -226,7 +226,7 @@ admcts_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-fanval(struct sensor *sens, int mul, u_int8_t data)
+fanval(struct ksensor *sens, int mul, u_int8_t data)
 {
 	int tmp = data * mul;
 

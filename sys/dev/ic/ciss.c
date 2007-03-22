@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.24 2007/01/18 14:46:24 mickey Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.25 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -418,10 +418,10 @@ ciss_attach(struct ciss_softc *sc)
 		    sc->sc_dev.dv_xname);
 
 	sc->sc_flags |= CISS_BIO;
-	sc->sensors = malloc(sizeof(struct sensor) * sc->maxunits,
+	sc->sensors = malloc(sizeof(struct ksensor) * sc->maxunits,
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->sensors) {
-		bzero(sc->sensors, sizeof(struct sensor) * sc->maxunits);
+		bzero(sc->sensors, sizeof(struct ksensor) * sc->maxunits);
 		strlcpy(sc->sensordev.xname, sc->sc_dev.dv_xname,
 		    sizeof(sc->sensordev.xname));
 		for (i = 0; i < sc->maxunits;

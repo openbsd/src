@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.17 2006/12/23 17:46:39 deraadt Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.18 2007/03/22 16:55:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -104,7 +104,7 @@ struct ipmi_softc {
 	struct ipmi_bmc_args	*sc_iowait_args;
 
 	struct ipmi_sensor	*current_sensor;
-	struct sensordev	sc_sensordev;
+	struct ksensordev	sc_sensordev;
 };
 
 struct ipmi_thread {

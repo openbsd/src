@@ -1,4 +1,4 @@
-/*	$OpenBSD: owsbm.c,v 1.1 2007/02/28 21:54:43 grange Exp $	*/
+/*	$OpenBSD: owsbm.c,v 1.2 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Aaron Linville <aaron@linville.org>
@@ -62,12 +62,12 @@ struct owsbm_softc {
 	void *			sc_onewire;
 	u_int64_t		sc_rom;
 
-	struct sensordev	sc_sensordev;
+	struct ksensordev	sc_sensordev;
 
-	struct sensor		sc_temp;
-	struct sensor		sc_voltage_vdd; /* Battery, AD = 1*/
-	struct sensor		sc_voltage_vad; /* General purpose, AD = 0 */
-	struct sensor		sc_voltage_cr; /* Current Register */
+	struct ksensor		sc_temp;
+	struct ksensor		sc_voltage_vdd; /* Battery, AD = 1*/
+	struct ksensor		sc_voltage_vad; /* General purpose, AD = 0 */
+	struct ksensor		sc_voltage_cr; /* Current Register */
 
 	struct rwlock		sc_lock;
 };

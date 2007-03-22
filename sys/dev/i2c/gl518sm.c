@@ -1,4 +1,4 @@
-/*	$OpenBSD: gl518sm.c,v 1.4 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: gl518sm.c,v 1.5 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -59,8 +59,8 @@ struct glenv_softc {
 	i2c_tag_t sc_tag;
 	i2c_addr_t sc_addr;
 
-	struct sensor sc_sensor[GLENV_NUM_SENSORS];
-	struct sensordev sc_sensordev;
+	struct ksensor sc_sensor[GLENV_NUM_SENSORS];
+	struct ksensordev sc_sensordev;
 	int	sc_fan1_div, sc_fan2_div;
 };
 

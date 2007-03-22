@@ -1,4 +1,4 @@
-/*	$OpenBSD: viaenv.c,v 1.9 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: viaenv.c,v 1.10 2007/03/22 16:55:31 deraadt Exp $	*/
 /*	$NetBSD: viaenv.c,v 1.9 2002/10/02 16:51:59 thorpej Exp $	*/
 
 /*
@@ -69,8 +69,8 @@ struct viaenv_softc {
 
 	int     sc_fan_div[2];	/* fan RPM divisor */
 
-	struct sensor sc_data[VIANUMSENSORS];
-	struct sensordev sc_sensordev;
+	struct ksensor sc_data[VIANUMSENSORS];
+	struct ksensordev sc_sensordev;
 };
 
 int  viaenv_match(struct device *, void *, void *);

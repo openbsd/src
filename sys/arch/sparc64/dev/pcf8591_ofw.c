@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8591_ofw.c,v 1.2 2006/12/23 17:46:39 deraadt Exp $ */
+/*	$OpenBSD: pcf8591_ofw.c,v 1.3 2007/03/22 16:55:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Damien Miller <djm@openbsd.org>
@@ -28,7 +28,7 @@
 
 struct pcfadc_channel {
 	u_int		chan_num;
-	struct sensor	chan_sensor;
+	struct ksensor	chan_sensor;
 };
 
 struct pcfadc_softc {
@@ -38,7 +38,7 @@ struct pcfadc_softc {
 	u_char			sc_xlate[256];
 	u_int			sc_nchan;
 	struct pcfadc_channel	sc_channels[PCF8591_CHANNELS];
-	struct sensordev	sc_sensordev;
+	struct ksensordev	sc_sensordev;
 };
 
 int	pcfadc_match(struct device *, void *, void *);

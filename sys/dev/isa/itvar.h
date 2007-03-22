@@ -1,4 +1,4 @@
-/*	$OpenBSD: itvar.h,v 1.3 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: itvar.h,v 1.4 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
@@ -80,8 +80,8 @@ struct it_softc {
 	bus_space_tag_t it_iot;
 	bus_space_handle_t it_ioh;
 
-	struct sensor sensors[IT_NUM_SENSORS];
-	struct sensordev sensordev;
+	struct ksensor sensors[IT_NUM_SENSORS];
+	struct ksensordev sensordev;
 	u_int numsensors;
 	void (*refresh_sensor_data)(struct it_softc *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.13 2007/01/05 07:00:37 jsg Exp $	*/
+/*	$OpenBSD: aps.c,v 1.14 2007/03/22 16:55:31 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -90,8 +90,8 @@ struct aps_softc {
 	bus_space_tag_t aps_iot;
 	bus_space_handle_t aps_ioh;
 
-	struct sensor sensors[APS_NUM_SENSORS];
-	struct sensordev sensordev;
+	struct ksensor sensors[APS_NUM_SENSORS];
+	struct ksensordev sensordev;
 	void (*refresh_sensor_data)(struct aps_softc *);
 
 	struct sensor_rec aps_data;

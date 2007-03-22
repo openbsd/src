@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.13 2007/02/22 20:44:51 kettenis Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.14 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -575,7 +575,7 @@ lm_refresh_sensor_data(struct lm_softc *sc)
 void
 lm_refresh_volt(struct lm_softc *sc, int n)
 {
-	struct sensor *sensor = &sc->sensors[n];
+	struct ksensor *sensor = &sc->sensors[n];
 	int data;
 
 	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
@@ -587,7 +587,7 @@ lm_refresh_volt(struct lm_softc *sc, int n)
 void
 lm_refresh_temp(struct lm_softc *sc, int n)
 {
-	struct sensor *sensor = &sc->sensors[n];
+	struct ksensor *sensor = &sc->sensors[n];
 	int sdata;
 
 	/*
@@ -609,7 +609,7 @@ lm_refresh_temp(struct lm_softc *sc, int n)
 void
 lm_refresh_fanrpm(struct lm_softc *sc, int n)
 {
-	struct sensor *sensor = &sc->sensors[n];
+	struct ksensor *sensor = &sc->sensors[n];
 	int data, divisor = 1;
 
 	/*
@@ -661,7 +661,7 @@ wb_refresh_sensor_data(struct lm_softc *sc)
 void
 wb_w83637hf_refresh_vcore(struct lm_softc *sc, int n)
 {
-	struct sensor *sensor = &sc->sensors[n];
+	struct ksensor *sensor = &sc->sensors[n];
 	int data;
 
 	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
@@ -681,7 +681,7 @@ wb_w83637hf_refresh_vcore(struct lm_softc *sc, int n)
 void
 wb_refresh_nvolt(struct lm_softc *sc, int n)
 {
-	struct sensor *sensor = &sc->sensors[n];
+	struct ksensor *sensor = &sc->sensors[n];
 	int data;
 
 	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
@@ -694,7 +694,7 @@ wb_refresh_nvolt(struct lm_softc *sc, int n)
 void
 wb_w83627ehf_refresh_nvolt(struct lm_softc *sc, int n)
 {
-	struct sensor *sensor = &sc->sensors[n];
+	struct ksensor *sensor = &sc->sensors[n];
 	int data;
 
 	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
@@ -707,7 +707,7 @@ wb_w83627ehf_refresh_nvolt(struct lm_softc *sc, int n)
 void
 wb_refresh_temp(struct lm_softc *sc, int n)
 {
-	struct sensor *sensor = &sc->sensors[n];
+	struct ksensor *sensor = &sc->sensors[n];
 	int sdata;
 
 	/*
@@ -733,7 +733,7 @@ wb_refresh_temp(struct lm_softc *sc, int n)
 void
 wb_refresh_fanrpm(struct lm_softc *sc, int n)
 {
-	struct sensor *sensor = &sc->sensors[n];
+	struct ksensor *sensor = &sc->sensors[n];
 	int fan, data, divisor = 0;
 
 	/* 
@@ -782,7 +782,7 @@ wb_refresh_fanrpm(struct lm_softc *sc, int n)
 void
 wb_w83792d_refresh_fanrpm(struct lm_softc *sc, int n)
 {
-	struct sensor *sensor = &sc->sensors[n];
+	struct ksensor *sensor = &sc->sensors[n];
 	int reg, shift, data, divisor = 1;
 
 	switch (sc->lm_sensors[n].reg) {
@@ -827,7 +827,7 @@ wb_w83792d_refresh_fanrpm(struct lm_softc *sc, int n)
 void
 as_refresh_temp(struct lm_softc *sc, int n)
 {
-	struct sensor *sensor = &sc->sensors[n];
+	struct ksensor *sensor = &sc->sensors[n];
 	int sdata;
 
 	/*

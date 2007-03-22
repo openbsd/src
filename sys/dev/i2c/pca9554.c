@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9554.c,v 1.9 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: pca9554.c,v 1.10 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -45,8 +45,8 @@ struct pcagpio_softc {
 	struct gpio_chipset_tag sc_gpio_gc;
         gpio_pin_t sc_gpio_pins[PCAGPIO_NPINS];
 
-	struct sensor sc_sensor[PCAGPIO_NPINS];
-	struct sensordev sc_sensordev;
+	struct ksensor sc_sensor[PCAGPIO_NPINS];
+	struct ksensordev sc_sensordev;
 };
 
 int	pcagpio_match(struct device *, void *, void *);

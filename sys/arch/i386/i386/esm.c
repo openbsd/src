@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.45 2007/01/10 15:41:27 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.46 2007/03/22 16:55:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -104,7 +104,7 @@ struct esm_sensor {
 		u_int16_t		th_hi_crit;
 	}			es_thresholds;
 
-	struct sensor		*es_sensor;
+	struct ksensor		*es_sensor;
 	TAILQ_ENTRY(esm_sensor)	es_entry;
 };
 
@@ -115,7 +115,7 @@ struct esm_softc {
 
 	TAILQ_HEAD(, esm_sensor) sc_sensors;
 	struct esm_sensor	*sc_nextsensor;
-	struct sensordev	sc_sensordev;
+	struct ksensordev	sc_sensordev;
 	int			sc_retries;
 	volatile int		sc_step;
 	struct timeout		sc_timeout;
@@ -822,7 +822,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 	struct esm_smb_resp	resp;
 	struct esm_smb_resp_val	*val = &resp.resp_val;
 	struct esm_sensor	*es;
-	struct sensor		*s;
+	struct ksensor		*s;
 	int			nsensors, i, j;
 	const char		*psulabels[] = {
 				    "AC", "SW", "OK", "ON", "FFAN", "OTMP"
@@ -873,13 +873,13 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 			 * go through these hoops to deal with it.
 			 */
 			nsensors = 4;
-			s = malloc(sizeof(struct sensor) * nsensors, M_DEVBUF,
+			s = malloc(sizeof(struct ksensor) * nsensors, M_DEVBUF,
 			    M_NOWAIT);
 			if (s == NULL) {
 				free(es, M_DEVBUF);
 				return;
 			}
-			memset(s, 0, sizeof(struct sensor) * nsensors);
+			memset(s, 0, sizeof(struct ksensor) * nsensors);
 
 			for (j = 0; j < nsensors; j++) {
 				snprintf(s[j].desc, sizeof(s[j].desc), "%s %d",
@@ -892,13 +892,13 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 			 * this expands it out to 6 separate indicators
 			 */
 			nsensors = 6;
-			s = malloc(sizeof(struct sensor) * nsensors, M_DEVBUF,
+			s = malloc(sizeof(struct ksensor) * nsensors, M_DEVBUF,
 			    M_NOWAIT);
 			if (s == NULL) {
 				free(es, M_DEVBUF);
 				return;
 			}
-			memset(s, 0, sizeof(struct sensor) * nsensors);
+			memset(s, 0, sizeof(struct ksensor) * nsensors);
 
 			for (j = 0; j < nsensors; j++) {
 				snprintf(s[j].desc, sizeof(s[j].desc), "%s %s",
@@ -919,12 +919,12 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 
 		default:
 			nsensors = 1;
-			s = malloc(sizeof(struct sensor), M_DEVBUF, M_NOWAIT);
+			s = malloc(sizeof(struct ksensor), M_DEVBUF, M_NOWAIT);
 			if (s == NULL) {
 				free(es, M_DEVBUF);
 				return;
 			}
-			memset(s, 0, sizeof(struct sensor));
+			memset(s, 0, sizeof(struct ksensor));
 
 			strlcpy(s->desc, sensor_map[i].name, sizeof(s->desc));
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: viasio.c,v 1.8 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: viasio.c,v 1.9 2007/03/22 16:55:31 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -52,8 +52,8 @@ struct viasio_softc {
 	/* Hardware monitor */
 	bus_space_handle_t	sc_hm_ioh;
 	int			sc_hm_clock;
-	struct sensor		sc_hm_sensors[VT1211_HM_NSENSORS];
-	struct sensordev	sc_sensordev;
+	struct ksensor		sc_hm_sensors[VT1211_HM_NSENSORS];
+	struct ksensordev	sc_sensordev;
 	struct timeout		sc_hm_timo;
 
 	/* Watchdog timer */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.25 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.26 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -45,8 +45,8 @@ struct admtemp_softc {
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
 
-	struct sensor	sc_sensor[ADMTEMP_NUM_SENSORS];
-	struct sensordev sc_sensordev;
+	struct ksensor	sc_sensor[ADMTEMP_NUM_SENSORS];
+	struct ksensordev sc_sensordev;
 	int		sc_noexternal;
 };
 

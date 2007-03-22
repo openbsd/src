@@ -1,4 +1,4 @@
-/* $OpenBSD: nsclpcsio_isa.c,v 1.10 2006/12/23 17:46:39 deraadt Exp $ */
+/* $OpenBSD: nsclpcsio_isa.c,v 1.11 2007/03/22 16:55:31 deraadt Exp $ */
 /* $NetBSD: nsclpcsio_isa.c,v 1.5 2002/10/22 16:18:26 drochner Exp $ */
 
 /*
@@ -176,8 +176,8 @@ struct nsclpcsio_softc {
 	struct gpio_pin sc_gpio_pins[SIO_GPIO_NPINS];
 
 	/* TMS and VLM */
-	struct sensor sensors[SIO_NUM_SENSORS];
-	struct sensordev sensordev;
+	struct ksensor sensors[SIO_NUM_SENSORS];
+	struct ksensordev sensordev;
 };
 
 #define GPIO_READ(sc, reg) \

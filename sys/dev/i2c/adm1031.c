@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1031.c,v 1.6 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: adm1031.c,v 1.7 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -47,8 +47,8 @@ struct admtt_softc {
 	i2c_addr_t	sc_addr;
 	int		sc_fanmul;
 
-	struct sensor	sc_sensor[ADMTT_NUM_SENSORS];
-	struct sensordev sc_sensordev;
+	struct ksensor	sc_sensor[ADMTT_NUM_SENSORS];
+	struct ksensordev sc_sensordev;
 };
 
 int	admtt_match(struct device *, void *, void *);

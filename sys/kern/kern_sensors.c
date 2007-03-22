@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.16 2006/12/23 17:41:26 deraadt Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.17 2007/03/22 16:55:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -32,7 +32,7 @@
 #include "hotplug.h"
 
 int			sensordev_count = 0;
-SLIST_HEAD(, sensordev)	sensordev_list = SLIST_HEAD_INITIALIZER(sensordev_list);
+SLIST_HEAD(, ksensordev) sensordev_list = SLIST_HEAD_INITIALIZER(sensordev_list);
 
 struct sensor_task {
 	void				*arg;
@@ -51,9 +51,9 @@ void	sensor_task_schedule(struct sensor_task *);
 TAILQ_HEAD(, sensor_task) tasklist = TAILQ_HEAD_INITIALIZER(tasklist);
 
 void
-sensordev_install(struct sensordev *sensdev)
+sensordev_install(struct ksensordev *sensdev)
 {
-	struct sensordev *v, *nv;
+	struct ksensordev *v, *nv;
 	int s;
 
 	s = splhigh();
@@ -77,10 +77,10 @@ sensordev_install(struct sensordev *sensdev)
 }
 
 void
-sensor_attach(struct sensordev *sensdev, struct sensor *sens)
+sensor_attach(struct ksensordev *sensdev, struct ksensor *sens)
 {
-	struct sensor *v, *nv;
-	struct sensors_head *sh;
+	struct ksensor *v, *nv;
+	struct ksensors_head *sh;
 	int s, i;
 
 	s = splhigh();
@@ -113,13 +113,13 @@ sensor_attach(struct sensordev *sensdev, struct sensor *sens)
 }
 
 void
-sensordev_deinstall(struct sensordev *sensdev)
+sensordev_deinstall(struct ksensordev *sensdev)
 {
 	int s;
 
 	s = splhigh();
 	sensordev_count--;
-	SLIST_REMOVE(&sensordev_list, sensdev, sensordev, list);
+	SLIST_REMOVE(&sensordev_list, sensdev, ksensordev, list);
 	splx(s);
 
 #if NHOTPLUG > 0
@@ -128,15 +128,15 @@ sensordev_deinstall(struct sensordev *sensdev)
 }
 
 void
-sensor_detach(struct sensordev *sensdev, struct sensor *sens)
+sensor_detach(struct ksensordev *sensdev, struct ksensor *sens)
 {
-	struct sensors_head *sh;
+	struct ksensors_head *sh;
 	int s;
 
 	s = splhigh();
 	sh = &sensdev->sensors_list;
 	sensdev->sensors_count--;
-	SLIST_REMOVE(sh, sens, sensor, list);
+	SLIST_REMOVE(sh, sens, ksensor, list);
 	/* we only decrement maxnumt[] if this is the tail 
 	 * sensor of this type
 	 */
@@ -145,10 +145,10 @@ sensor_detach(struct sensordev *sensdev, struct sensor *sens)
 	splx(s);
 }
 
-struct sensordev *
+struct ksensordev *
 sensordev_get(int num)
 {
-	struct sensordev *sd;
+	struct ksensordev *sd;
 
 	SLIST_FOREACH(sd, &sensordev_list, list)
 		if (sd->num == num)
@@ -157,12 +157,12 @@ sensordev_get(int num)
 	return (NULL);
 }
 
-struct sensor *
+struct ksensor *
 sensor_find(int dev, enum sensor_type type, int numt)
 {
-	struct sensor *s;
-	struct sensordev *sensdev;
-	struct sensors_head *sh;
+	struct ksensor *s;
+	struct ksensordev *sensdev;
+	struct ksensors_head *sh;
 
 	sensdev = sensordev_get(dev);
 	if (sensdev == NULL)

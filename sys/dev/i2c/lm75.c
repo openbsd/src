@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75.c,v 1.14 2006/12/23 17:46:39 deraadt Exp $	*/
+/*	$OpenBSD: lm75.c,v 1.15 2007/03/22 16:55:31 deraadt Exp $	*/
 /*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -61,8 +61,8 @@ struct lmtemp_softc {
 	int	sc_model;
 	int	sc_bits;
 
-	struct sensor sc_sensor;
-	struct sensordev sc_sensordev;
+	struct ksensor sc_sensor;
+	struct ksensordev sc_sensordev;
 };
 
 int  lmtemp_match(struct device *, void *, void *);

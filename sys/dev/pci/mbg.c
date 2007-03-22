@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.12 2007/01/03 13:27:12 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.13 2007/03/22 16:55:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -37,9 +37,9 @@ struct mbg_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
-	struct sensor		sc_timedelta;
-	struct sensor		sc_signal;
-	struct sensordev	sc_sensordev;
+	struct ksensor		sc_timedelta;
+	struct ksensor		sc_signal;
+	struct ksensordev	sc_sensordev;
 	u_int8_t		sc_status;
 
 	int			(*sc_read)(struct mbg_softc *, int cmd,

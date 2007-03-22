@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.20 2007/03/20 20:14:29 deraadt Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.21 2007/03/22 16:55:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -48,8 +48,8 @@ int nmea_count;	/* this is wrong, it should really be a SLIST */
 
 struct nmea {
 	char			cbuf[NMEAMAX];	/* receive buffer */
-	struct sensor		time;		/* the timedelta sensor */
-	struct sensordev	timedev;
+	struct ksensor		time;		/* the timedelta sensor */
+	struct ksensordev	timedev;
 	struct timespec		ts;		/* current timestamp */
 	struct timespec		lts;		/* timestamp of last '$' seen */
 	int64_t			gap;		/* gap between two sentences */
