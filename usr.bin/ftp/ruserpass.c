@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruserpass.c,v 1.20 2006/05/16 23:43:16 ray Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.21 2007/03/22 11:35:02 moritz Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
 #ifndef SMALL
-static const char rcsid[] = "$OpenBSD: ruserpass.c,v 1.20 2006/05/16 23:43:16 ray Exp $";
+static const char rcsid[] = "$OpenBSD: ruserpass.c,v 1.21 2007/03/22 11:35:02 moritz Exp $";
 #endif /* SMALL */
 #endif
 #endif /* not lint */
@@ -108,7 +108,7 @@ ruserpass(const char *host, char **aname, char **apass, char **aacct)
 	if ((mydomain = strchr(myname, '.')) == NULL)
 		mydomain = "";
 next:
-	while ((t = token())) switch(t) {
+	while ((t = token()) > 0) switch(t) {
 
 	case DEFAULT:
 		usedefault = 1;
@@ -116,7 +116,9 @@ next:
 
 	case MACH:
 		if (!usedefault) {
-			if (token() != ID)
+			if ((t = token()) == -1)
+				goto bad;
+			if (t != ID)
 				continue;
 			/*
 			 * Allow match either for user's input host name
@@ -142,10 +144,13 @@ next:
 			continue;
 		}
 	match:
-		while ((t = token()) && t != MACH && t != DEFAULT) switch(t) {
+		while ((t = token()) > 0 &&
+		    t != MACH && t != DEFAULT) switch(t) {
 
 		case LOGIN:
-			if (token()) {
+			if ((t = token()) == -1)
+				goto bad;
+			if (t) {
 				if (*aname == 0)
 					*aname = strdup(tokval);
 				else {
@@ -162,7 +167,9 @@ next:
 	warnx("Remove password or make file unreadable by others.");
 				goto bad;
 			}
-			if (token() && *apass == 0)
+			if ((t = token()) == -1)
+				goto bad;
+			if (t && *apass == 0)
 				*apass = strdup(tokval);
 			break;
 		case ACCOUNT:
@@ -172,7 +179,9 @@ next:
 	warnx("Remove account or make file unreadable by others.");
 				goto bad;
 			}
-			if (token() && *aacct == 0)
+			if ((t = token()) == -1)
+				goto bad;
+			if (t && *aacct == 0)
 				*aacct = strdup(tokval);
 			break;
 		case MACDEF:
@@ -248,6 +257,8 @@ next:
 		goto done;
 	}
 done:
+	if (t == -1)
+		goto bad;
 	(void)fclose(cfile);
 	return (0);
 bad:
@@ -275,6 +286,10 @@ token(void)
 			if (c == '\\')
 				c = fgetc(cfile);
 			*cp++ = c;
+			if (cp == tokval + sizeof(tokval)) {
+				warnx("Token in .netrc too long");
+				return (-1);
+			}
 		}
 	} else {
 		*cp++ = c;
@@ -283,6 +298,10 @@ token(void)
 			if (c == '\\')
 				c = fgetc(cfile);
 			*cp++ = c;
+			if (cp == tokval + sizeof(tokval)) {
+				warnx("Token in .netrc too long");
+				return (-1);
+			}
 		}
 	}
 	*cp = 0;
