@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.395 2007/03/19 14:33:28 dlg Exp $
+#	$OpenBSD: files,v 1.396 2007/03/22 02:48:42 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -184,6 +184,10 @@ file	dev/ic/isp_openbsd.c		isp
 # LSI Logic Fusion-MPT Message Passing Interface
 device	mpi: scsi
 file	dev/ic/mpi.c			mpi
+
+# Silicon Image 3124/3132/3531 SATALink
+device	sili: scsi, atascsi
+file	dev/ic/sili.c			sili
 
 # UltraStor SCSI controllers
 device	uha: scsi

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.226 2007/02/24 20:18:08 kettenis Exp $
+#	$OpenBSD: files.pci,v 1.227 2007/03/22 02:48:42 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -206,6 +206,10 @@ file	dev/pci/isp_pci.c		isp_pci
 # LSI Logic Fusion-MPT Message Passing Interface
 attach	mpi at pci with mpi_pci
 file	dev/pci/mpi_pci.c		mpi_pci
+
+# Silicon Image 3124/3132/3531 SATALink
+attach	sili at pci with sili_pci
+file	dev/pci/sili_pci.c		sili_pci
 
 # Ethernet driver for DC21040-based boards
 device	de: ether, ifnet, ifmedia
