@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.45 2007/03/21 10:54:30 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.46 2007/03/22 15:56:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -595,8 +595,8 @@ lookup(char *s)
 		{"redistribute",	REDISTRIBUTE},
 		{"retransmit-interval",	RETRANSMITINTERVAL},
 		{"rfc1583compat",	RFC1583COMPAT},
-		{"router-dead-time",	ROUTERDEADTIME},
 		{"router",		ROUTER},
+		{"router-dead-time",	ROUTERDEADTIME},
 		{"router-id",		ROUTERID},
 		{"router-priority",	ROUTERPRIORITY},
 		{"rtlabel",		RTLABEL},
