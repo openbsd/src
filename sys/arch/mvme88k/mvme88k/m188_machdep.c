@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.24 2006/11/20 21:51:33 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.25 2007/03/22 18:52:39 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -478,13 +478,22 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 
 				 */
 				{
-					printf("%s: timeout getting VME "
-					    "interrupt vector, "
-					    "level %d, mask 0x%b\n",
-					    __func__, level,
-					   cur_mask, IST_STRING); 
-					ign_mask |=  1 << intbit;
-					continue;
+					/*
+					 * If only one VME interrupt is
+					 * registered with this IPL,
+					 * we can reasonably safely
+					 * assume that this is our vector.
+					 */
+					vec = vmevec_hints[level];
+					if (vec == (u_int)-1) {
+						printf("%s: timeout getting VME"
+						    " interrupt vector, "
+						    "level %d, mask 0x%b\n",
+						    __func__, level,
+						   cur_mask, IST_STRING); 
+						ign_mask |=  1 << intbit;
+						continue;
+					}
 				}
 			}
 			if (vec == 0) {

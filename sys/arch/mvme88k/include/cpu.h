@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.35 2006/05/13 16:05:50 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.36 2007/03/22 18:52:39 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -74,6 +74,15 @@ int	intr_findvec(int, int, int);
 #define	NVMEINTR	256
 typedef SLIST_HEAD(, intrhand) intrhand_t;
 extern intrhand_t intr_handlers[NVMEINTR];
+
+#ifdef MVME188
+/*
+ * Currently registered VME interrupt vectors for a given IPL, if they
+ * are unique. Used to help the MVME188 interrupt handler when it's getting
+ * behind.
+ */
+extern u_int vmevec_hints[8];
+#endif
 
 void	doboot(void);
 void	nmihand(void *);
