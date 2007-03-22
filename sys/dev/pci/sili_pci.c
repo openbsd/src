@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili_pci.c,v 1.1 2007/03/22 02:48:42 dlg Exp $ */
+/*	$OpenBSD: sili_pci.c,v 1.2 2007/03/22 06:32:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -66,7 +66,7 @@ sili_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct sili_pci_softc		*psc = (void *)self;
 	struct sili_softc		*sc = &psc->psc_sili;
 	struct pci_attach_args		*pa = aux;
-//	pcireg_t			memtype;
+	pcireg_t			memtype;
 	pci_intr_handle_t		ih;
 	const char			*intrstr;
 
@@ -74,31 +74,31 @@ sili_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_tag = pa->pa_tag;
 	psc->psc_ih = NULL;
 	sc->sc_dmat = pa->pa_dmat;
-	sc->sc_ios = 0;
+	sc->sc_ios_global = 0;
+	sc->sc_ios_port = 0;
 
-#if 0
-	/* find the appropriate memory base */
-	for (r = PCI_MAPREG_START; r < PCI_MAPREG_END; r += sizeof(memtype)) {
-		memtype = pci_mapreg_type(psc->psc_pc, psc->psc_tag, r);
-		if ((memtype & PCI_MAPREG_TYPE_MASK) == PCI_MAPREG_TYPE_MEM)
-			break;
-	}
-	if (r >= PCI_MAPREG_END) {
-		printf(": unable to locate system interface registers\n");
+	memtype = pci_mapreg_type(psc->psc_pc, psc->psc_tag,
+	    SILI_PCI_BAR_GLOBAL);
+	if (pci_mapreg_map(pa, SILI_PCI_BAR_GLOBAL, memtype, 0,
+	    &sc->sc_iot_global, &sc->sc_ioh_global,
+	    NULL, &sc->sc_ios_global, 0) != 0) {
+		printf(": unable to map global registers\n");
 		return;
 	}
 
-	if (pci_mapreg_map(pa, r, memtype, 0, &sc->sc_iot, &sc->sc_ioh,
-	    NULL, &sc->sc_ios, 0) != 0) {
-		printf(": unable to map system interface registers\n");
-		return;
+	memtype = pci_mapreg_type(psc->psc_pc, psc->psc_tag,
+	    SILI_PCI_BAR_PORT);
+	if (pci_mapreg_map(pa, SILI_PCI_BAR_PORT, memtype, 0,
+	    &sc->sc_iot_port, &sc->sc_ioh_port,
+	    NULL, &sc->sc_ios_port, 0) != 0) {
+		printf(": unable to map port registers\n");
+		goto unmap_global;
 	}
-#endif
 
 	/* hook up the interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": unable to map interrupt\n");
-		goto unmap;
+		goto unmap_port;
 	}
 	intrstr = pci_intr_string(psc->psc_pc, ih);
 	psc->psc_ih = pci_intr_establish(psc->psc_pc, ih, IPL_BIO,
@@ -107,7 +107,7 @@ sili_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unable to map interrupt%s%s\n",
 		    intrstr == NULL ? "" : " at ",
 		    intrstr == NULL ? "" : intrstr);
-		goto unmap;
+		goto unmap_port;
 	}
 	printf(": %s", intrstr);
 
@@ -121,9 +121,13 @@ sili_pci_attach(struct device *parent, struct device *self, void *aux)
 deintr:
 	pci_intr_disestablish(psc->psc_pc, psc->psc_ih);
 	psc->psc_ih = NULL;
-unmap:
-//	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
-	sc->sc_ios = 0;
+unmap_port:
+	bus_space_unmap(sc->sc_iot_port, sc->sc_ioh_port, sc->sc_ios_port);
+	sc->sc_ios_port = 0;
+unmap_global:
+	bus_space_unmap(sc->sc_iot_global, sc->sc_ioh_global,
+	    sc->sc_ios_global);
+	sc->sc_ios_global = 0;
 }
 
 int
@@ -141,9 +145,15 @@ sili_pci_detach(struct device *self, int flags)
 		pci_intr_disestablish(psc->psc_pc, psc->psc_ih);
 		psc->psc_ih = NULL;
 	}
-	if (sc->sc_ios != 0) {
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
-		sc->sc_ios = 0;
+	if (sc->sc_ios_port != 0) {
+		bus_space_unmap(sc->sc_iot_port, sc->sc_ioh_port,
+		    sc->sc_ios_port);
+		sc->sc_ios_port = 0;
+	}
+	if (sc->sc_ios_global != 0) {
+		bus_space_unmap(sc->sc_iot_global, sc->sc_ioh_global,
+		    sc->sc_ios_global);
+		sc->sc_ios_global = 0;
 	}
 
 	return (0);
