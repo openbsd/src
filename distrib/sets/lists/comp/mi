@@ -349,6 +349,8 @@
 ./usr/include/dev/ic/s3_617.h
 ./usr/include/dev/ic/sa2400reg.h
 ./usr/include/dev/ic/si4136reg.h
+./usr/include/dev/ic/silireg.h
+./usr/include/dev/ic/silivar.h
 ./usr/include/dev/ic/siopreg.h
 ./usr/include/dev/ic/siopvar.h
 ./usr/include/dev/ic/siopvar_common.h

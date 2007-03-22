@@ -1033,6 +1033,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/s3_617.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/sa2400reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/si4136reg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/silireg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/silivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/siopreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/siopvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/siopvar_common.ph
