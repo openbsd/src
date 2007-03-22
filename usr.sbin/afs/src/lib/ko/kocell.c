@@ -429,14 +429,14 @@ readdb (char *line, cell_entry* c, int *dbnum, int maxdbs,
 	  return -1;
      }
      
-     while (isspace((unsigned char)*line))
+     while (*line && isspace((unsigned char)*line))
 	    ++line;
 
      if (inet_aton (line, &numaddr) == 0) {
 	  return -1;
      }
 
-     while (!isspace((unsigned char)*line) && *line != '#')
+     while (*line && !isspace((unsigned char)*line) && *line != '#')
 	 ++line;
 
      hostname = line;
@@ -446,7 +446,7 @@ readdb (char *line, cell_entry* c, int *dbnum, int maxdbs,
 
      eh = hostname;
 
-     while (!isspace((unsigned char)*eh) && *eh != '#')
+     while (*eh && !isspace((unsigned char)*eh) && *eh != '#')
 	 ++eh;
 
      *eh = '\0';
@@ -487,7 +487,7 @@ readcellservdb (const char *filename)
 	  ++lineno;
 	  i = 0;
 	  line[strcspn(line, "\n")] = '\0';
-	  while (isspace((unsigned char)line[i]))
+	  while (line[0] && isspace((unsigned char)line[i]))
 		 i++;
 	  if (line[i] == '#' || line[i] == '\0')
 	       continue;
