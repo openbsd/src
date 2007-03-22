@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.75 2007/03/18 20:14:51 mglocker Exp $ */
+/*	$OpenBSD: ohci.c,v 1.76 2007/03/22 05:53:36 pascoe Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -611,14 +611,10 @@ ohci_free_sitd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 }
 
 usbd_status
-ohci_init(ohci_softc_t *sc)
+ohci_checkrev(ohci_softc_t *sc)
 {
-	ohci_soft_ed_t *sed, *psed;
-	usbd_status err;
-	int i;
-	u_int32_t s, ctl, rwc, ival, hcr, fm, per, rev, desca, descb;
+	u_int32_t rev;
 
-	DPRINTF(("ohci_init: start\n"));
 	printf(",");
 	rev = OREAD4(sc, OHCI_REVISION);
 	printf(" version %d.%d%s\n", OHCI_REV_HI(rev), OHCI_REV_LO(rev),
@@ -631,6 +627,48 @@ ohci_init(ohci_softc_t *sc)
 		return (USBD_INVAL);
 	}
 	sc->sc_bus.usbrev = USBREV_1_0;
+
+	return (USBD_NORMAL_COMPLETION);
+}
+
+usbd_status
+ohci_handover(ohci_softc_t *sc)
+{
+	u_int32_t s, ctl;
+	int i;
+
+	ctl = OREAD4(sc, OHCI_CONTROL);
+	if (ctl & OHCI_IR) {
+		/* SMM active, request change */
+		DPRINTF(("ohci_handover: SMM active, request owner change\n"));
+		if ((sc->sc_intre & (OHCI_OC | OHCI_MIE)) == 
+		    (OHCI_OC | OHCI_MIE))
+			OWRITE4(sc, OHCI_INTERRUPT_ENABLE, OHCI_MIE);
+		s = OREAD4(sc, OHCI_COMMAND_STATUS);
+		OWRITE4(sc, OHCI_COMMAND_STATUS, s | OHCI_OCR);
+		for (i = 0; i < 100 && (ctl & OHCI_IR); i++) {
+			usb_delay_ms(&sc->sc_bus, 1);
+			ctl = OREAD4(sc, OHCI_CONTROL);
+		}
+		OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_MIE);
+		if (ctl & OHCI_IR) {
+			printf("%s: SMM does not respond, will reset\n",
+			    USBDEVNAME(sc->sc_bus.bdev));
+		}
+	}
+
+	return (USBD_NORMAL_COMPLETION);
+}
+
+usbd_status
+ohci_init(ohci_softc_t *sc)
+{
+	ohci_soft_ed_t *sed, *psed;
+	usbd_status err;
+	int i;
+	u_int32_t ctl, rwc, ival, hcr, fm, per, desca, descb;
+
+	DPRINTF(("ohci_init: start\n"));
 
 	for (i = 0; i < OHCI_HASH_SIZE; i++)
 		LIST_INIT(&sc->sc_hash_tds[i]);
@@ -720,24 +758,8 @@ ohci_init(ohci_softc_t *sc)
 
 	/* Determine in what context we are running. */
 	if (ctl & OHCI_IR) {
-		/* SMM active, request change */
-		DPRINTF(("ohci_init: SMM active, request owner change\n"));
-		if ((sc->sc_intre & (OHCI_OC | OHCI_MIE)) == 
-		    (OHCI_OC | OHCI_MIE))
-			OWRITE4(sc, OHCI_INTERRUPT_ENABLE, OHCI_MIE);
-		s = OREAD4(sc, OHCI_COMMAND_STATUS);
-		OWRITE4(sc, OHCI_COMMAND_STATUS, s | OHCI_OCR);
-		for (i = 0; i < 100 && (ctl & OHCI_IR); i++) {
-			usb_delay_ms(&sc->sc_bus, 1);
-			ctl = OREAD4(sc, OHCI_CONTROL);
-		}
-		OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_MIE);
-		if (ctl & OHCI_IR) {
-			printf("%s: SMM does not respond, resetting\n",
-			       USBDEVNAME(sc->sc_bus.bdev));
-			OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET | rwc);
-			goto reset;
-		}
+		OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET | rwc);
+		goto reset;
 #if 0
 /* Don't bother trying to reuse the BIOS init, we'll reset it anyway. */
 	} else if ((ctl & OHCI_HCFS_MASK) != OHCI_HCFS_RESET) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_cardbus.c,v 1.8 2006/10/12 16:35:52 grange Exp $ */
+/*	$OpenBSD: ohci_cardbus.c,v 1.9 2007/03/22 05:53:36 pascoe Exp $ */
 /*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
@@ -159,7 +159,15 @@ ohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	else
 		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
 		    "vendor 0x%04x", CARDBUS_VENDOR(ca->ca_id));
-	
+
+	/* Display revision and perform legacy emulation handover. */
+	if (ohci_checkrev(&sc->sc) != USBD_NORMAL_COMPLETION ||
+	    ohci_handover(&sc->sc) != USBD_NORMAL_COMPLETION) {
+		cardbus_intr_disestablish(sc->sc_cc, sc->sc_cf, sc->sc_ih);
+		sc->sc_ih = 0;
+		return;
+	}
+
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", devname, r);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.31 2007/03/18 20:14:51 mglocker Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.32 2007/03/22 05:53:36 pascoe Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 
 int	ohci_pci_match(struct device *, void *, void *);
 void	ohci_pci_attach(struct device *, struct device *, void *);
+void	ohci_pci_attach_deferred(struct device *);
 int	ohci_pci_detach(struct device *, int);
 
 struct ohci_pci_softc {
@@ -100,7 +101,6 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	usbd_status r;
 	int s;
 	const char *vendor;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
@@ -158,6 +158,35 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	else
 		snprintf(sc->sc.sc_vendor, sizeof (sc->sc.sc_vendor),
 		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
+
+	/* Display revision and perform legacy emulation handover. */
+	if (ohci_checkrev(&sc->sc) != USBD_NORMAL_COMPLETION ||
+	    ohci_handover(&sc->sc) != USBD_NORMAL_COMPLETION) {
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+		splx(s);
+		return;
+	}
+
+	/* Ignore interrupts for now */
+	sc->sc.sc_dying = 1;
+
+	config_defer(self, ohci_pci_attach_deferred);
+
+	splx(s);
+
+	return;
+}
+
+void
+ohci_pci_attach_deferred(struct device *self)
+{
+	struct ohci_pci_softc *sc = (struct ohci_pci_softc *)self;
+	usbd_status r;
+	int s;
+
+	s = splusb();
+
+	sc->sc.sc_dying = 0;
 	
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
