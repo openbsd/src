@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.45 2006/07/28 14:07:22 henning Exp $ */
+/* $OpenBSD: http_main.c,v 1.46 2007/03/22 20:08:18 pyr Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -295,7 +295,7 @@ static char *server_version = NULL;
 static int version_locked = 0;
 
 /* Global, alas, so http_core can talk to us */
-enum server_token_type ap_server_tokens = SrvTk_FULL;
+enum server_token_type ap_server_tokens = SrvTk_PRODUCT_ONLY;
 
 /* Also global, for http_core and http_protocol */
 API_VAR_EXPORT int ap_protocol_req_check = 1;
@@ -310,7 +310,7 @@ API_VAR_EXPORT int ap_change_shmem_uid = 0;
 static void reset_version(void *dummy)
 {
     version_locked = 0;
-    ap_server_tokens = SrvTk_FULL;
+    ap_server_tokens = SrvTk_PRODUCT_ONLY;
     server_version = NULL;
 }
 
