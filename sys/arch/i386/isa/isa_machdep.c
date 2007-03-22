@@ -1,7 +1,5 @@
-/*	$OpenBSD: isa_machdep.c,v 1.57 2006/12/29 13:04:37 pedro Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.58 2007/03/22 19:31:59 miod Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
-
-#define ISA_DMA_STATS
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
