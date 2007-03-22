@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.95 2007/03/21 13:08:44 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.96 2007/03/22 05:15:39 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -552,7 +552,7 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args		*pa = aux;
 	const struct ahci_device	*ad;
 	struct atascsi_attach_args	aaa;
-	u_int32_t			reg;
+	u_int32_t			cap, pi;
 	int				i;
 
 	ad = ahci_lookup_device(pa);
@@ -585,13 +585,13 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	reg = ahci_read(sc, AHCI_REG_CAP);
-	sc->sc_ncmds = AHCI_REG_CAP_NCS(reg);
+	cap = ahci_read(sc, AHCI_REG_CAP);
+	sc->sc_ncmds = AHCI_REG_CAP_NCS(cap);
 #ifdef AHCI_DEBUG
 	if (ahcidebug & AHCI_D_VERBOSE) {
 		const char *gen;
 
-		switch (reg & AHCI_REG_CAP_ISS) {
+		switch (cap & AHCI_REG_CAP_ISS) {
 		case AHCI_REG_CAP_ISS_G1:
 			gen = "1 (1.5Gbps)";
 			break;
@@ -604,16 +604,16 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		printf("%s: capabilities: 0x%b ports: %d ncmds: %d gen: %s\n",
-		    DEVNAME(sc), reg, AHCI_FMT_CAP,
-		    AHCI_REG_CAP_NP(reg), sc->sc_ncmds, gen);
+		    DEVNAME(sc), cap, AHCI_FMT_CAP,
+		    AHCI_REG_CAP_NP(cap), sc->sc_ncmds, gen);
 	}
 #endif
 
-	reg = ahci_read(sc, AHCI_REG_PI);
+	pi = ahci_read(sc, AHCI_REG_PI);
 	DPRINTF(AHCI_D_VERBOSE, "%s: ports implemented: 0x%08x\n",
-	    DEVNAME(sc), reg);
+	    DEVNAME(sc), pi);
 	for (i = 0; i < AHCI_MAX_PORTS; i++) {
-		if (!ISSET(reg, 1 << i)) {
+		if (!ISSET(pi, 1 << i)) {
 			/* dont allocate stuff if the port isnt implemented */
 			continue;
 		}
@@ -627,7 +627,10 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	aaa.aaa_methods = &ahci_atascsi_methods;
 	aaa.aaa_minphys = minphys;
 	aaa.aaa_nports = AHCI_MAX_PORTS;
-	aaa.aaa_ncmds = sc->sc_ncmds - 1; /* Reserve a slot for soft resets. */
+	aaa.aaa_ncmds = sc->sc_ncmds;
+	aaa.aaa_capability = ASAA_CAP_NEEDS_RESERVED;
+	if (cap & AHCI_REG_CAP_SNCQ)
+		aaa.aaa_capability |= ASAA_CAP_NCQ;
 
 	sc->sc_atascsi = atascsi_attach(self, &aaa);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.32 2007/03/21 23:40:30 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.33 2007/03/22 05:15:39 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -41,6 +41,8 @@ struct atascsi {
 	struct scsi_adapter	as_switch;
 	struct scsi_link	as_link;
 	struct scsibus_softc	*as_scsibus;
+
+	int			as_capability;
 };
 
 int		atascsi_cmd(struct scsi_xfer *);
@@ -101,6 +103,7 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	as->as_dev = self;
 	as->as_cookie = aaa->aaa_cookie;
 	as->as_methods = aaa->aaa_methods;
+	as->as_capability = aaa->aaa_capability;
 
 	/* copy from template and modify for ourselves */
 	as->as_switch = atascsi_switch;
@@ -114,6 +117,8 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	as->as_link.luns = 1; /* XXX port multiplier as luns */
 	as->as_link.adapter_target = aaa->aaa_nports;
 	as->as_link.openings = aaa->aaa_ncmds;
+	if (as->as_capability & ASAA_CAP_NEEDS_RESERVED)
+		as->as_link.openings--;
 
 	as->as_ports = malloc(sizeof(struct ata_port *) * aaa->aaa_nports,
 	    M_DEVBUF, M_WAITOK);
@@ -128,7 +133,7 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 
 	/* stash the scsibus so we can do hotplug on it */
 	as->as_scsibus = (struct scsibus_softc *)config_found(self, &saa,
-            scsiprint);
+	    scsiprint);
 
 	return (as);
 }
@@ -161,6 +166,7 @@ atascsi_probe(struct atascsi *as, int port)
 	}
 
 	ap = malloc(sizeof(struct ata_port), M_DEVBUF, M_WAITOK);
+	bzero(ap, sizeof(struct ata_port));
 	ap->ap_as = as;
 	ap->ap_port = port;
 	ap->ap_type = type;
@@ -318,7 +324,19 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 	fis->lba_mid = (lba >> 8) & 0xff;
 	fis->lba_high = (lba >> 16) & 0xff;
 
-	if (sector_count > 0x100 || lba > 0xfffffff) {
+	if (ap->ap_ncqdepth && !(xs->flags & SCSI_POLL)) {
+		/* Use NCQ */
+		xa->flags |= ATA_F_NCQ;
+		fis->command = (xa->flags & ATA_F_WRITE) ?
+		    ATA_C_WRITE_FPDMA : ATA_C_READ_FPDMA;
+		fis->device = ATA_H2D_DEVICE_LBA;
+		fis->lba_low_exp = (lba >> 24) & 0xff;
+		fis->lba_mid_exp = (lba >> 32) & 0xff;
+		fis->lba_high_exp = (lba >> 40) & 0xff;
+		fis->sector_count = xa->tag << 3;
+		fis->features = sector_count & 0xff;
+		fis->features_exp = (sector_count >> 8) & 0xff;
+	} else if (sector_count > 0x100 || lba > 0xfffffff) {
 		/* Use LBA48 */
 		fis->command = (xa->flags & ATA_F_WRITE) ?
 		    ATA_C_WRITEDMA_EXT : ATA_C_READDMA_EXT;
@@ -398,8 +416,12 @@ void
 atascsi_disk_inq_done(struct ata_xfer *xa)
 {
 	struct scsi_xfer	*xs = xa->atascsi_private;
+	struct scsi_link        *link = xs->sc_link;
+	struct atascsi          *as = link->adapter_softc;
+	struct ata_port		*ap = as->as_ports[link->target];
 	struct ata_identify	id;
 	struct scsi_inquiry_data inq;
+	int			host_ncqdepth, complete = 0;
 
 	switch (xa->state) {
 	case ATA_S_COMPLETE:
@@ -417,6 +439,7 @@ atascsi_disk_inq_done(struct ata_xfer *xa)
 
 		bcopy(&inq, xs->data, MIN(sizeof(inq), xs->datalen));
 		xs->error = XS_NOERROR;
+		complete = 1;
 		break;
 
 	case ATA_S_ERROR:
@@ -433,6 +456,41 @@ atascsi_disk_inq_done(struct ata_xfer *xa)
 
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
+
+	if (!complete || (ap->ap_features & ATA_PORT_F_PROBED))
+		return;
+
+	ap->ap_features = ATA_PORT_F_PROBED;
+
+	if (as->as_capability & ASAA_CAP_NCQ && (letoh16(id.satacap) &
+	    (1 << 8))) {
+		/*
+		 * At this point, openings should be the number of commands the
+		 * host controller supports, less the one that is outstanding
+		 * as a result of this inquiry, less any reserved slot the 
+		 * host controller needs for recovery.
+		 */
+		host_ncqdepth = link->openings + 1 + ((as->as_capability &
+		    ASAA_CAP_NEEDS_RESERVED) ? 1 : 0);
+
+		ap->ap_ncqdepth = (letoh16(id.qdepth) & 0x1f) + 1;
+
+		/* Limit the number of openings to what the device supports. */
+		if (host_ncqdepth > ap->ap_ncqdepth)
+			link->openings -= (host_ncqdepth - ap->ap_ncqdepth);
+
+		/*
+		 * XXX throw away any xfers that have tag numbers higher than
+		 * what the device supports.
+		 */
+		while (host_ncqdepth--) {
+			struct ata_xfer *xa;
+
+			xa = ata_get_xfer(ap, 1);
+			if (xa->tag < ap->ap_ncqdepth)
+				ata_put_xfer(xa);
+		}
+	}
 }
 
 int

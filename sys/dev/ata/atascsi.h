@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.19 2007/03/21 12:41:28 pascoe Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.20 2007/03/22 05:15:39 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -30,6 +30,8 @@ struct atascsi;
 #define ATA_C_READDMA_EXT	0x25
 #define ATA_C_WRITEDMA_EXT	0x35
 #define ATA_C_PACKET		0xa0
+#define ATA_C_READ_FPDMA	0x60
+#define ATA_C_WRITE_FPDMA	0x61
 
 struct ata_identify {
 	u_int16_t	config;		/*   0 */
@@ -198,6 +200,9 @@ struct ata_port {
 #define ATA_PORT_T_NONE			0
 #define ATA_PORT_T_DISK			1
 #define ATA_PORT_T_ATAPI		2
+	int			ap_features;
+#define ATA_PORT_F_PROBED		(1 << 0)
+	int			ap_ncqdepth;
 };
 
 struct ata_xfer {
@@ -257,6 +262,9 @@ struct atascsi_attach_args {
 	void			(*aaa_minphys)(struct buf *);
 	int			aaa_nports;
 	int			aaa_ncmds;
+	int			aaa_capability;
+#define ASAA_CAP_NCQ		(1 << 0)
+#define ASAA_CAP_NEEDS_RESERVED	(1 << 1)
 };
 
 struct atascsi	*atascsi_attach(struct device *, struct atascsi_attach_args *);
