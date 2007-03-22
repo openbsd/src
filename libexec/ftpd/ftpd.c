@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.175 2007/03/01 20:06:27 otto Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.176 2007/03/22 15:53:10 cloder Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.175 2007/03/01 20:06:27 otto Exp $";
+    "$OpenBSD: ftpd.c,v 1.176 2007/03/22 15:53:10 cloder Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,8 +124,6 @@ static const char rcsid[] =
 #include "pathnames.h"
 #include "extern.h"
 #include "monitor.h"
-
-static char version[] = "Version 6.6/OpenBSD";
 
 extern	off_t restart_point;
 extern	char cbuf[];
@@ -634,10 +632,10 @@ main(int argc, char *argv[])
 	}
 
 	if (error != 0)
-		reply(220, "FTP server (%s) ready.", version);
+		reply(220, "FTP server ready.");
 	else
-		reply(220, "%s FTP server (%s) ready.",
-		    (multihome ? dhostname : hostname), version);
+		reply(220, "%s FTP server ready.",
+		    (multihome ? dhostname : hostname));
 
 	monitor_init();
 
@@ -1797,7 +1795,6 @@ statcmd(void)
 	int error;
 
 	lreply(211, "%s FTP server status:", hostname);
-	printf("     %s\r\n", version);
 	error = getnameinfo((struct sockaddr *)&his_addr, his_addr.su_len,
 	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
 	printf("     Connected to %s", remotehost);
