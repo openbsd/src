@@ -1,4 +1,4 @@
-.\" $OpenBSD: sendbug.1,v 1.1.1.1 2007/03/23 01:47:11 ray Exp $
+.\" $OpenBSD: sendbug.1,v 1.2 2007/03/23 02:45:40 deraadt Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
@@ -8,6 +8,7 @@
 .Os
 .Sh NAME
 .Nm sendbug
+.Op Fl LVP
 .Nd report a bug in
 .Ox
 .Sh SYNOPSIS
@@ -27,6 +28,22 @@ Once the bug report is filled out,
 it is e-mailed to the
 .Ox
 developers.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl L
+Print the list of available catagories and do nothing else.
+.It Fl P
+Prints the template and do nothing else.
+.It Fl V
+Prints the version number.
+.El
+.Pp
+The bugs database can be queried using the online bug tracking system
+available at
+.Pa http://www.openbsd.org/query-pr.html .
+This allows users to search for PRs based on either their PR number
+or content.
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev EDITOR
