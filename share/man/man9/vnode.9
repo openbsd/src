@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnode.9,v 1.24 2007/02/11 13:32:28 bluhm Exp $
+.\"     $OpenBSD: vnode.9,v 1.25 2007/03/23 16:19:38 thib Exp $
 .\"
 .\" Copyright (c) 2001 Constantine Sapuntzakis
 .\" All rights reserved.
@@ -90,7 +90,6 @@ struct vnode {
 	  struct fifoinfo *vu_fifoinfo;	/* fifo (VFIFO) */
 	} v_un;
 
-	struct	simplelock v_interlock;	/* lock on usecount and flag */
 	enum	vtagtype v_tag;		/* type of underlying data */
 	void	*v_data;		/* private data for fs */
 	struct {
@@ -187,8 +186,8 @@ method.
 File systems use this method to free any file-system-specific data
 they attached to the vnode.
 .Ss Vnode locks
-The vnode actually has three different types of lock: the vnode lock,
-the vnode interlock, and the vnode reclamation lock
+The vnode actually has two different types of locks: the vnode lock
+and the vnode reclamation lock
 .Pq Dv VXLOCK .
 .Ss The vnode lock
 The vnode lock and its consistent use accomplishes the following:
@@ -242,26 +241,6 @@ Not all file systems implement it.
 .Pp
 To prevent deadlocks, when acquiring locks on multiple vnodes, the lock
 of parent directory must be acquired before the lock on the child directory.
-.Ss Vnode interlock
-The vnode interlock
-.Pq Va v_interlock
-is a simplelock (see
-.Xr simple_lock 9 ) .
-It is useful on multi-processor systems for acquiring a quick exclusive
-lock on the contents of the vnode.
-It MUST NOT be held while sleeping.
-.Pp
-This field protects the
-.Va v_flag , v_writecount , v_usecount ,
-and
-.Va v_holdcnt
-fields from concurrent access.
-See
-.Xr lock 9
-for more details on lock synchronization in interrupt context.
-.\" Other splbio/interrupt issues?
-.Pp
-Operations on this lock are a no-op on uniprocessor systems.
 .Ss Other vnode synchronization
 The vnode reclamation lock
 .Pq Dv VXLOCK
