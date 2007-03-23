@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.10 2007/03/23 03:35:01 deraadt Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.11 2007/03/23 03:43:46 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -31,12 +31,14 @@ int send_file(const char *, int dst);
 int sendmail(const char *);
 void template(FILE *);
 
-struct passwd *pw;
 const char *categories = "system user library documentation ports kernel "
     "alpha amd64 arm i386 m68k m88k mips ppc sgi sparc sparc64 vax";
+char *version = "4.2";
+
+struct passwd *pw;
 char os[BUFSIZ], rel[BUFSIZ], mach[BUFSIZ];
 char *fullname;
-char *version = "4.2";
+
 void
 usage(void)
 {
