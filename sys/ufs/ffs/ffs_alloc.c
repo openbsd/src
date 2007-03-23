@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.70 2007/01/26 11:08:39 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.71 2007/03/23 13:21:39 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -68,15 +68,15 @@
 	    (fs)->fs_fsmnt, (cp));				\
 } while (0)
 
-static daddr_t	ffs_alloccg(struct inode *, int, daddr_t, int);
-static daddr_t	ffs_alloccgblk(struct inode *, struct buf *, daddr_t);
-static daddr_t	ffs_clusteralloc(struct inode *, int, daddr_t, int);
-static ino_t	ffs_dirpref(struct inode *);
-static daddr_t	ffs_fragextend(struct inode *, int, long, int, int);
-static u_long	ffs_hashalloc(struct inode *, int, long, int,
-		    daddr_t (*)(struct inode *, int, daddr_t, int));
-static daddr_t	ffs_nodealloccg(struct inode *, int, daddr_t, int);
-static daddr_t	ffs_mapsearch(struct fs *, struct cg *, daddr_t, int);
+daddr_t	ffs_alloccg(struct inode *, int, daddr_t, int);
+daddr_t	ffs_alloccgblk(struct inode *, struct buf *, daddr_t);
+daddr_t	ffs_clusteralloc(struct inode *, int, daddr_t, int);
+ino_t	ffs_dirpref(struct inode *);
+daddr_t	ffs_fragextend(struct inode *, int, long, int, int);
+u_long	ffs_hashalloc(struct inode *, int, long, int,
+    daddr_t (*)(struct inode *, int, daddr_t, int));
+daddr_t	ffs_nodealloccg(struct inode *, int, daddr_t, int);
+daddr_t	ffs_mapsearch(struct fs *, struct cg *, daddr_t, int);
 
 int ffs1_reallocblks(void *);
 #ifdef FFS2
@@ -84,7 +84,7 @@ int ffs2_reallocblks(void *);
 #endif
 
 #ifdef DIAGNOSTIC
-static int      ffs_checkblk(struct inode *, daddr_t, long);
+int      ffs_checkblk(struct inode *, daddr_t, long);
 #endif
 
 /*
@@ -904,7 +904,7 @@ noinodes:
  * If we allocate a first level directory then force allocation
  * in another cylinder group.
  */
-static ino_t
+ino_t
 ffs_dirpref(struct inode *pip)
 {
 	struct fs *fs;
@@ -1127,7 +1127,7 @@ ffs2_blkpref(struct inode *ip, daddr_t lbn, int indx, ufs2_daddr_t *bap)
  *   3) brute force search for a free block.
  */
 /*VARARGS5*/
-static u_long
+u_long
 ffs_hashalloc(struct inode *ip, int cg, long pref, int size,
     daddr_t (*allocator)(struct inode *, int, daddr_t, int))
 {
@@ -1176,7 +1176,7 @@ ffs_hashalloc(struct inode *ip, int cg, long pref, int size,
  * Check to see if the necessary fragments are available, and
  * if they are, allocate them.
  */
-static daddr_t
+daddr_t
 ffs_fragextend(struct inode *ip, int cg, long bprev, int osize, int nsize)
 {
 	struct fs *fs;
@@ -1247,7 +1247,7 @@ ffs_fragextend(struct inode *ip, int cg, long bprev, int osize, int nsize)
  * Check to see if a block of the appropriate size is available,
  * and if it is, allocate it.
  */
-static daddr_t
+daddr_t
 ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 {
 	struct fs *fs;
@@ -1340,7 +1340,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
  * Note that this routine only allocates fs_bsize blocks; these
  * blocks may be fragmented by the routine that allocates them.
  */
-static daddr_t
+daddr_t
 ffs_alloccgblk(struct inode *ip, struct buf *bp, daddr_t bpref)
 {
 	struct fs *fs;
@@ -1404,7 +1404,7 @@ gotit:
  * are multiple choices in the same cylinder group. Instead we just
  * take the first one that we find following bpref.
  */
-static daddr_t
+daddr_t
 ffs_clusteralloc(struct inode *ip, int cg, daddr_t bpref, int len)
 {
 	struct fs *fs;
@@ -1508,7 +1508,7 @@ fail:
 }
 
 /* inode allocation routine */
-static daddr_t
+daddr_t
 ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 {
 	struct fs *fs;
@@ -1854,7 +1854,7 @@ ffs_freefile(struct inode *pip, ino_t ino, mode_t mode)
  * Verify allocation of a block or fragment. Returns true if block or
  * fragment is allocated, false if it is free.
  */
-static int
+int
 ffs_checkblk(struct inode *ip, daddr_t bno, long size)
 {
 	struct fs *fs;
@@ -1906,7 +1906,7 @@ ffs_checkblk(struct inode *ip, daddr_t bno, long size)
  * It is a panic if a request is made to find a block if none are
  * available.
  */
-static daddr_t
+daddr_t
 ffs_mapsearch(struct fs *fs, struct cg *cgp, daddr_t bpref, int allocsiz)
 {
 	daddr_t bno;
