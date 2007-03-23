@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.4 2006/12/29 10:09:09 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.5 2007/03/23 10:59:38 pyr Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -246,12 +246,15 @@ p_rtentry(struct rt_msghdr *rtm)
 	if (sa->sa_family == AF_KEY)
 		return;
 
+	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+	if (Fflag && rti_info[RTAX_GATEWAY]->sa_family != sa->sa_family) {
+		return;
+	}
 	if (old_af != sa->sa_family) {
 		old_af = sa->sa_family;
 		pr_family(sa->sa_family);
 		pr_rthdr(sa->sa_family, 0);
 	}
-	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
 	mask = rti_info[RTAX_NETMASK];
 	if ((sa = rti_info[RTAX_DST]) == NULL)
