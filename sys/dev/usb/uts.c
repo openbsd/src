@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.1 2007/03/16 21:40:32 robert Exp $ */
+/*	$OpenBSD: uts.c,v 1.2 2007/03/23 14:35:19 robert Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -53,6 +53,7 @@ struct uts_softc {
 	usbd_pipe_handle	sc_intr_pipe;
 	u_char			*sc_ibuf;
 	int			sc_isize;
+	u_int8_t		sc_pkts;
 
 	device_ptr_t		sc_wsmousedev;
 
@@ -327,12 +328,14 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 		down = (p[7] & 0x20);	
 		x = ((p[0] & 0x1f) << 7) | (p[3] & 0x7f);  
 		y = ((p[1] & 0x1f) << 7) | (p[4] & 0x7f);
+		sc->sc_pkts = 8;
 		break;
 	case USB_PRODUCT_EGALAX_TPANEL:
 	case USB_PRODUCT_EGALAX_TPANEL2:
 		down = (p[0] & 0x01);
 		x = ((p[3] & 0x0f) << 7) | (p[4] & 0x7f);
 		y = ((p[1] & 0x0f) << 7) | (p[2] & 0x7f);
+		sc->sc_pkts = 5;
 		break;
 	}
 
@@ -384,13 +387,13 @@ uts_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		return;
 	}
 
-	if (len != 8) {
+	tp = uts_get_pos(sc, tp);
+
+	if (len != sc->sc_pkts) {
 		printf("%s: bad input length %d != %d\n",
 			USBDEVNAME(sc->sc_dev), len, sc->sc_isize);
 		return;
 	}
-
-	tp = uts_get_pos(sc, tp);
 
 	wsmouse_input(sc->sc_wsmousedev, tp.z, tp.x, tp.y, 0,
 		WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
