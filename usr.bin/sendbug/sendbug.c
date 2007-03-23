@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.8 2007/03/23 03:19:30 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.9 2007/03/23 03:30:52 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -79,7 +79,8 @@ main(int argc, char *argv[])
 
 	if ((tmpdir = getenv("TMPDIR")) == NULL || tmpdir[0] == '\0')
 		tmpdir = _PATH_TMP;
-	if (asprintf(&tmppath, "%s/p.XXXXXXXXXX", tmpdir) == -1) {
+	if (asprintf(&tmppath, "%s%sp.XXXXXXXXXX", tmpdir,
+	    tmpdir[strlen(tmpdir) - 1] == '/' ? "" : "/") == -1) {
 		warn("asprintf");
 		goto quit;
 	}
