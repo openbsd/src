@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.2 2007/03/23 02:11:00 deraadt Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.3 2007/03/23 02:28:14 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -37,15 +37,42 @@ const char *categories = "system user library documentation ports kernel "
 char os[BUFSIZ], rel[BUFSIZ], mach[BUFSIZ];
 char *fullname;
 
+void
+usage(void)
+{
+	fprintf(stderr, "usage: sendbug [-LP]\n");
+}
+
 int
 main(int argc, char *argv[])
 {
 	const char *editor, *tmpdir;
 	char *tmppath = NULL;
-	int c, fd, ret = 1;
+	int ch, c, fd, ret = 1;
 	struct stat sb;
 	time_t mtime;
 	FILE *fp;
+
+	while ((ch = getopt(argc, argv, "LP")) != -1)
+		switch (ch) {
+		case 'L':
+			printf("Known categories:\n");
+			printf("%s\n\n", categories);
+			exit(0);
+		case 'P':
+			if (init() == -1)
+				exit(1);
+			template(stdout);
+			exit(0);
+		default:
+			usage();
+			exit(1);
+		}		
+	
+	if (argc > 1) {
+		usage();
+		exit(1);
+	}
 
 	if ((tmpdir = getenv("TMPDIR")) == NULL || tmpdir[0] == '\0')
 		tmpdir = _PATH_TMP;
