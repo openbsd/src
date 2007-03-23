@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.14 2007/03/23 15:46:40 deraadt Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.15 2007/03/23 17:18:07 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -19,6 +19,7 @@
 #include <limits.h>
 #include <paths.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,6 +27,7 @@
 
 #include "atomicio.h"
 
+int editit(char *);
 void init(void);
 int prompt(void);
 int send_file(const char *, int dst);
@@ -60,8 +62,8 @@ cleanup()
 int
 main(int argc, char *argv[])
 {
-	const char *editor, *tmpdir;
-	char *argp[] = {"sh", "-c", NULL, NULL}, *pr_form;
+	const char *tmpdir;
+	char *pr_form;
 	int ch, c, fd, ret = 1;
 	struct stat sb;
 	time_t mtime;
@@ -135,21 +137,7 @@ main(int argc, char *argv[])
 	mtime = sb.st_mtime;
 
  edit:
-	if ((editor = getenv("EDITOR")) == NULL)
-		editor = "vi";
-	switch (fork()) {
-	case -1:
-		err(1, "fork");
-	case 0:
-		wantcleanup = 0;
-		if (asprintf(&argp[2], "%s %s", editor, tmppath) == -1)
-			err(1, "asprintf");
-		execv(_PATH_BSHELL, argp);
-		err(1, "execv");
-	default:
-		wait(NULL);
-		break;
-	}
+	editit(tmppath);
 
 	if (stat(tmppath, &sb) == -1) {
 		err(1, "stat");
@@ -180,6 +168,63 @@ quit:
 	return (ret);
 }
 
+int
+editit(char *tmpfile)
+{
+	pid_t pid, xpid;
+	char *argp[] = {"sh", "-c", NULL, NULL};
+	char *ed, *p;
+	int stat;
+
+	if ((ed = getenv("EDITOR")) == (char *)0)
+		ed = _PATH_VI;
+	if (asprintf(&p, "%s %s", ed, tmpfile) == -1)
+		return (0);
+	argp[2] = p;
+
+ top:
+	(void)signal(SIGHUP, SIG_IGN);
+	(void)signal(SIGINT, SIG_IGN);
+	(void)signal(SIGQUIT, SIG_IGN);
+	if ((pid = fork()) < 0) {
+		(void)signal(SIGHUP, SIG_DFL);
+		(void)signal(SIGINT, SIG_DFL);
+		(void)signal(SIGQUIT, SIG_DFL);
+		if (errno == EPROCLIM) {
+			warnx("you have too many processes");
+			free(p);
+			return(0);
+		}
+		if (errno == EAGAIN) {
+			sleep(1);
+			goto top;
+		}
+		perror("fork");
+		free(p);
+		return(0);
+	}
+	if (pid == 0) {
+		(void)signal(SIGHUP, SIG_DFL);
+		(void)signal(SIGINT, SIG_DFL);
+		(void)signal(SIGQUIT, SIG_DFL);
+		execv(_PATH_BSHELL, argp);
+		_exit(127);
+	}
+	free(p);
+	for (;;) {
+		xpid = waitpid(pid, (int *)&stat, WUNTRACED);
+		if (WIFSTOPPED(stat))
+			raise(WSTOPSIG(stat));
+		else if (WIFEXITED(stat))
+			break;
+	}
+	(void)signal(SIGHUP, SIG_DFL);
+	(void)signal(SIGINT, SIG_DFL);
+	(void)signal(SIGQUIT, SIG_DFL);
+	if (!WIFEXITED(stat) || WEXITSTATUS(stat) != 0)
+		return(0);
+	return(1);
+}
 
 int
 prompt(void)
