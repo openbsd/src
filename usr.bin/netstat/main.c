@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.64 2007/03/23 10:59:38 pyr Exp $	*/
+/*	$OpenBSD: main.c,v 1.65 2007/03/23 15:37:57 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.64 2007/03/23 10:59:38 pyr Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.65 2007/03/23 15:37:57 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -648,7 +648,7 @@ usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n"
-	    "       %s [-bdgilmnqrstu] [-f address_family] [-M core] [-N system]\n"
+	    "       %s [-bdFgilmnqrstu] [-f address_family] [-M core] [-N system]\n"
 	    "       %s [-bdn] [-I interface] [-M core] [-N system] [-w wait]\n"
 	    "       %s [-M core] [-N system] -P pcbaddr\n"
 	    "       %s [-s] [-M core] [-N system] [-p protocol]\n"
