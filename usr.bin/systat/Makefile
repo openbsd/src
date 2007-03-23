@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2007/02/23 22:02:58 deanna Exp $
+#	$OpenBSD: Makefile,v 1.18 2007/03/23 01:39:39 deraadt Exp $
 
 PROG=	systat
 
@@ -11,11 +11,6 @@ DPADD=	${LIBCURSES} ${LIBM} ${LIBKVM}
 LDADD=	-lcurses -lm -lkvm
 BINGRP=	kmem
 BINMODE=2555
-
-.if (${MACHINE_ARCH} == "vax")
-cmds.o:
-	${CC} ${CFLAGS} ${CPPFLAGS} -O0 -c $<
-.endif
 
 .include <bsd.prog.mk>
 
