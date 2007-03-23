@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.11 2007/03/23 03:43:46 deraadt Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.12 2007/03/23 05:08:03 tedu Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -25,7 +25,7 @@
 
 #include "atomicio.h"
 
-int init(void);
+void init(void);
 int prompt(void);
 int send_file(const char *, int dst);
 int sendmail(const char *);
@@ -38,18 +38,29 @@ char *version = "4.2";
 struct passwd *pw;
 char os[BUFSIZ], rel[BUFSIZ], mach[BUFSIZ];
 char *fullname;
+char *tmppath;
+int wantcleanup;
 
-void
+__dead void
 usage(void)
 {
 	fprintf(stderr, "usage: sendbug [-LPV]\n");
+	exit(1);
 }
+
+void
+cleanup()
+{
+	if (wantcleanup && tmppath && unlink(tmppath) == -1)
+		warn("unlink");
+}
+
 
 int
 main(int argc, char *argv[])
 {
 	const char *editor, *tmpdir;
-	char *argp[] = {"sh", "-c", NULL, NULL}, *tmppath = NULL, *pr_form;
+	char *argp[] = {"sh", "-c", NULL, NULL}, *pr_form;
 	int ch, c, fd, ret = 1;
 	struct stat sb;
 	time_t mtime;
@@ -62,8 +73,7 @@ main(int argc, char *argv[])
 			printf("%s\n\n", categories);
 			exit(0);
 		case 'P':
-			if (init() == -1)
-				exit(1);
+			init();
 			template(stdout);
 			exit(0);
 		case 'V':
@@ -71,30 +81,27 @@ main(int argc, char *argv[])
 			exit(0);
 		default:
 			usage();
-			exit(1);
 		}
 
 	if (argc > 1) {
 		usage();
-		exit(1);
 	}
 
 	if ((tmpdir = getenv("TMPDIR")) == NULL || tmpdir[0] == '\0')
 		tmpdir = _PATH_TMP;
 	if (asprintf(&tmppath, "%s%sp.XXXXXXXXXX", tmpdir,
 	    tmpdir[strlen(tmpdir) - 1] == '/' ? "" : "/") == -1) {
-		warn("asprintf");
-		goto quit;
+		err(1, "asprintf");
 	}
 	if ((fd = mkstemp(tmppath)) == -1)
 		err(1, "mkstemp");
+	wantcleanup = 1;
+	atexit(cleanup);
 	if ((fp = fdopen(fd, "w+")) == NULL) {
-		warn("fdopen");
-		goto cleanup;
+		err(1, "fdopen");
 	}
 
-	if (init() == -1)
-		goto cleanup;
+	init();
 
 	pr_form = getenv("PR_FORM");
 	if (pr_form) {
@@ -122,8 +129,7 @@ main(int argc, char *argv[])
 		template(fp);
 
 	if (fflush(fp) == EOF || fstat(fd, &sb) == -1 || fclose(fp) == EOF) {
-		warn("error creating template");
-		goto cleanup;
+		err(1, "error creating template");
 	}
 	mtime = sb.st_mtime;
 
@@ -132,9 +138,9 @@ main(int argc, char *argv[])
 		editor = "vi";
 	switch (fork()) {
 	case -1:
-		warn("fork");
-		goto cleanup;
+		err(1, "fork");
 	case 0:
+		wantcleanup = 0;
 		if (asprintf(&argp[2], "%s %s", editor, tmppath) == -1)
 			err(1, "asprintf");
 		execv(_PATH_BSHELL, argp);
@@ -145,12 +151,10 @@ main(int argc, char *argv[])
 	}
 
 	if (stat(tmppath, &sb) == -1) {
-		warn("stat");
-		goto cleanup;
+		err(1, "stat");
 	}
 	if (mtime == sb.st_mtime) {
-		warnx("report unchanged, nothing sent");
-		goto cleanup;
+		errx(1, "report unchanged, nothing sent");
 	}
 
  prompt:
@@ -158,8 +162,8 @@ main(int argc, char *argv[])
 	switch (c) {
 	case 'a':
 	case EOF:
-		warnx("unsent report in %s", tmppath);
-		goto quit;
+		wantcleanup = 0;
+		errx(1, "unsent report in %s", tmppath);
 	case 'e':
 		goto edit;
 	case 's':
@@ -171,14 +175,10 @@ main(int argc, char *argv[])
 	}
 
 	ret = 0;
-
- cleanup:
-	if (tmppath && unlink(tmppath) == -1)
-		warn("unlink");
-
- quit:
+quit:
 	return (ret);
 }
+
 
 int
 prompt(void)
@@ -239,22 +239,20 @@ sendmail(const char *tmppath)
 	return (0);
 }
 
-int
+void
 init(void)
 {
 	size_t len;
 	int sysname[2];
 
 	if ((pw = getpwuid(getuid())) == NULL) {
-		warn("getpwuid");
-		return (-1);
+		err(1, "getpwuid");
 	}
 
 	/* Get full name. */
 	len = strcspn(pw->pw_gecos, ",");
 	if ((fullname = malloc(len + 1)) == NULL) {
-		warn("malloc");
-		return (-1);
+		err(1, "malloc");
 	}
 	memcpy(fullname, pw->pw_gecos, len);
 	fullname[len] = '\0';
@@ -263,27 +261,23 @@ init(void)
 	sysname[1] = KERN_OSTYPE;
 	len = sizeof(os) - 1;
 	if (sysctl(sysname, 2, &os, &len, NULL, 0) == -1) {
-		warn("sysctl");
-		return (-1);
+		err(1, "sysctl");
 	}
 
 	sysname[0] = CTL_KERN;
 	sysname[1] = KERN_OSRELEASE;
 	len = sizeof(rel) - 1;
 	if (sysctl(sysname, 2, &rel, &len, NULL, 0) == -1) {
-		warn("sysctl");
-		return (-1);
+		err(1, "sysctl");
 	}
 
 	sysname[0] = CTL_HW;
 	sysname[1] = HW_MACHINE;
 	len = sizeof(mach) - 1;
 	if (sysctl(sysname, 2, &mach, &len, NULL, 0) == -1) {
-		warn("sysctl");
-		return (-1);
+		err(1, "sysctl");
 	}
 
-	return (0);
 }
 
 int
