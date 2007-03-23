@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.5 2007/03/23 02:45:21 deraadt Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.6 2007/03/23 02:46:32 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -40,7 +40,7 @@ char *version = "4.2";
 void
 usage(void)
 {
-	fprintf(stderr, "usage: sendbug [-LP]\n");
+	fprintf(stderr, "usage: sendbug [-LPV]\n");
 }
 
 int
