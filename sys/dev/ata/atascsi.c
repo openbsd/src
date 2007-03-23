@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.36 2007/03/23 05:27:16 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.37 2007/03/23 05:28:34 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -191,6 +191,7 @@ ata_setup_identify(struct ata_port *ap, int nosleep)
 	xa->data = malloc(512, M_TEMP, nosleep ? M_NOWAIT : M_WAITOK);
 	if (xa->data == NULL) {
 		s = splbio();
+		xa->state = ATA_S_ERROR;
 		ata_put_xfer(xa);
 		splx(s);
 		return (NULL);
@@ -491,8 +492,10 @@ atascsi_disk_inq_done(struct ata_xfer *xa)
 			struct ata_xfer *xa;
 
 			xa = ata_get_xfer(ap, 1);
-			if (xa->tag < ap->ap_ncqdepth)
+			if (xa->tag < ap->ap_ncqdepth) {
+				xa->state = ATA_S_COMPLETE;
 				ata_put_xfer(xa);
+			}
 		}
 	}
 }
@@ -540,6 +543,8 @@ atascsi_disk_sync_done(struct ata_xfer *xa)
 
 	case ATA_S_ERROR:
 	case ATA_S_TIMEOUT:
+		printf("atascsi_disk_sync_done: %s\n",
+		    xa->state == ATA_S_TIMEOUT ? "timeout" : "error");
 		xs->error = (xa->state == ATA_S_TIMEOUT ? XS_TIMEOUT :
 		    XS_DRIVER_STUFFUP);
 		break;

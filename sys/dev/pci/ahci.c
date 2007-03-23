@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.96 2007/03/22 05:15:39 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.97 2007/03/23 05:28:34 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -895,6 +895,7 @@ nomem:
 
 		ccb->ccb_xa.ata_put_xfer = ahci_ata_put_xfer;
 
+		ccb->ccb_xa.state = ATA_S_COMPLETE;
 		ahci_put_ccb(ccb);
 	}
 
@@ -1174,6 +1175,7 @@ err:
 			ahci_port_stop(ap, 0);
 		}
 		s = splbio();
+		ccb->ccb_xa.state = ATA_S_ERROR;
 		ahci_put_ccb(ccb);
 		splx(s);
 	}
@@ -1745,6 +1747,16 @@ void
 ahci_put_ccb(struct ahci_ccb *ccb)
 {
 	struct ahci_port		*ap = ccb->ccb_port;
+
+#ifdef DIAGNOSTIC
+	if (ccb->ccb_xa.state != ATA_S_COMPLETE &&
+	    ccb->ccb_xa.state != ATA_S_TIMEOUT &&
+	    ccb->ccb_xa.state != ATA_S_ERROR) {
+		printf("%s: invalid ata_xfer state %02x in ahci_put_ccb, "
+		    "slot %d\n", PORTNAME(ccb->ccb_port), ccb->ccb_xa.state,
+		    ccb->ccb_slot);
+	}
+#endif
 
 	ccb->ccb_xa.state = ATA_S_PUT;
 	TAILQ_INSERT_TAIL(&ap->ap_ccb_free, ccb, ccb_entry);
