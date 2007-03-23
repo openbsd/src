@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.1 2007/01/15 22:22:18 martin Exp $	*/
+/*	$OpenBSD: power.c,v 1.2 2007/03/23 21:27:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Martin Reindl.
@@ -77,7 +77,7 @@ power_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = extintr_establish(LANDISK_INTR_PWRSW, IPL_TTY,
 	    power_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf(": couldn't map interrupt");
+		printf(": couldn't map interrupt\n");
 		return;
 	}
 
@@ -99,8 +99,8 @@ power_intr(void *arg)
 	if ((status & BTN_POWER_BIT) && (kbd_reset == 1)) {
 #ifdef DEBUG
 		printf("%s switched\n", sc->sc_dev.dv_xname);
-#endif
 		Debugger();
+#endif
 		kbd_reset = 0;
 		_reg_write_1(LANDISK_PWRSW_INTCLR, 1);
 		psignal(initproc, SIGUSR1);
