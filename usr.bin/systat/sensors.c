@@ -1,4 +1,4 @@
-/* $OpenBSD: sensors.c,v 1.8 2007/03/04 21:17:37 deanna Exp $ */
+/*	$OpenBSD: sensors.c,v 1.9 2007/03/23 01:10:38 ckuethe Exp $	*/
 
 /*
  * Copyright (c) 2007 Deanna Phillips <deanna@openbsd.org>
@@ -36,6 +36,7 @@ struct sensor sensor;
 struct sensordev sensordev;
 int row, sensor_cnt;
 void printline(void);
+static char * fmttime(double);
 
 WINDOW *
 opensensors(void)
@@ -133,8 +134,6 @@ initsensors(void)
 void
 printline(void)
 {
-	wmove(wnd, row, 0);
-	wclrtoeol(wnd);
 	mvwprintw(wnd, row, 0, "%s.%s%d", sensordev.xname,
 	    sensor_type_s[sensor.type], sensor.numt);
 	switch (sensor.type) {
@@ -172,8 +171,7 @@ printline(void)
 		}
 		break;
 	case SENSOR_TIMEDELTA:
-		mvwprintw(wnd, row, 24, "%10.6f secs",
-		    sensor.value / 1000000000.0);
+		mvwprintw(wnd, row, 24, "%15s", fmttime(sensor.value / 1000000000.0));
 		break;
 	case SENSOR_WATTHOUR:
 		mvwprintw(wnd, row, 24, "%12.2f Wh", sensor.value / 1000000.0);
@@ -205,4 +203,57 @@ printline(void)
 		break;
 	}
 	row++;
+}
+
+#define SECS_PER_DAY 86400
+#define SECS_PER_HOUR 3600
+#define SECS_PER_MIN 60
+
+static char *
+fmttime(double in)
+{
+	int signbit = 1;
+	int tiny = 0;
+	char *unit;
+#define LEN 32
+	static char outbuf[LEN];
+
+	if (in < 0){
+		signbit = -1;
+		in *= -1;
+	}
+
+	if (in >= SECS_PER_DAY ){
+		unit = "days";
+		in /= SECS_PER_DAY;
+	} else if (in >= SECS_PER_HOUR ){
+		unit = "hr";
+		in /= SECS_PER_HOUR;
+	} else if (in >= SECS_PER_MIN ){
+		unit = "min";
+		in /= SECS_PER_MIN;
+	} else if (in >= 1 ){
+		unit = "sec";
+		/* in *= 1; */ /* no op */
+	} else if (in >= 1e-3 ){
+		unit = "mS";
+		in *= 1e3;
+	} else if (in >= 1e-6 ){
+		unit = "uS";
+		in *= 1e6;
+	} else if (in >= 1e-9 ){
+		unit = "nS";
+		in *= 1e9;
+	} else {
+		unit = "pS";
+		if (in < 1e-13)
+			tiny = 1;
+		in *= 1e12;
+	}
+
+	snprintf(outbuf, LEN, 
+	    tiny ? "%s%lf %s" : "%s%.3lf %s", 
+	    signbit == -1 ? "-" : "", in, unit);
+
+	return outbuf;
 }
