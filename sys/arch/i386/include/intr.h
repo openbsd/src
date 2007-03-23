@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.27 2006/05/29 09:54:20 mickey Exp $	*/
+/*	$OpenBSD: intr.h,v 1.28 2007/03/23 16:03:52 art Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -133,17 +133,6 @@ void splassert_check(int, const char *);
 #define	setsoftclock()	softintr(1 << SIR_CLOCK, IPL_SOFTCLOCK)
 #define	setsoftnet()	softintr(1 << SIR_NET, IPL_SOFTNET)
 #define	setsofttty()	softintr(1 << SIR_TTY, IPL_SOFTTTY)
-
-#define I386_IPI_HALT		0x00000001
-#define I386_IPI_MICROSET	0x00000002
-#define I386_IPI_FLUSH_FPU	0x00000004
-#define I386_IPI_SYNCH_FPU	0x00000008
-#define I386_IPI_TLB		0x00000010
-#define I386_IPI_MTRR		0x00000020
-#define I386_IPI_GDT		0x00000040
-#define I386_IPI_DDB		0x00000080	/* synchronize while in ddb */
-
-#define I386_NIPI	8
 
 struct cpu_info;
 
