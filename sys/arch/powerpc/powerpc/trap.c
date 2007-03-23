@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.75 2007/03/20 20:59:53 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.76 2007/03/23 21:06:06 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
 
 static int fix_unaligned(struct proc *p, struct trapframe *frame);
 int badaddr(char *addr, u_int32_t len);
-static __inline void userret(struct proc *, int, u_quad_t);
+static __inline void userret(struct proc *);
 void trap(struct trapframe *frame);
 
 /* These definitions should probably be somewhere else				XXX */
@@ -239,24 +239,13 @@ enable_vec(struct proc *p)
 #endif /* ALTIVEC */
 
 static __inline void
-userret(struct proc *p, int pc, u_quad_t oticks)
+userret(struct proc *p)
 {
 	int sig;
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
-	p->p_priority = p->p_usrpri;
-
-	/*
-	 * If profiling, charge recent system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}
-
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
@@ -676,7 +665,7 @@ for (i = 0; i < errnum; i++) {
 		break;
 	}
 
-	userret(p, frame->srr0, sticks);
+	userret(p);
 
 	/*
 	 * If someone stole the fpu while we were away, disable it
@@ -712,7 +701,7 @@ child_return(void *arg)
 
 	KERNEL_PROC_UNLOCK(p);
 
-	userret(p, tf->srr0, 0);
+	userret(p);
 
 #ifdef	KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {

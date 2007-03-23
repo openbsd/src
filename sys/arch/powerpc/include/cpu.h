@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.30 2007/03/20 20:59:53 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.31 2007/03/23 21:06:05 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -120,7 +120,12 @@ extern struct cpu_info cpu_info[PPC_MAXPROCS];
 #define	CLKF_PC(frame)		((frame)->srr0)
 #define	CLKF_INTR(frame)	((frame)->depth != 0)
 
-#define	cpu_wait(p)
+/*
+ * This is used during profiling to integrate system time.
+ */
+#define	PROC_PC(p)		(trapframe(p)->srr0)
+
+#define	cpu_wait(p)		do { /* nothing */ } while (0)
 
 void	delay(unsigned);
 #define	DELAY(n)		delay(n)
