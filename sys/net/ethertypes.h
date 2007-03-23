@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethertypes.h,v 1.5 2005/04/25 01:34:27 brad Exp $	*/
+/*	$OpenBSD: ethertypes.h,v 1.6 2007/03/23 04:10:59 tedu Exp $	*/
 /*	$NetBSD: ethertypes.h,v 1.13 2002/02/10 01:28:32 thorpej Exp $	*/
 
 /*
@@ -297,6 +297,7 @@
 #define	ETHERTYPE_PPPOEDISC	0x8863	/* PPP Over Ethernet Discovery Stage */
 #define	ETHERTYPE_PPPOE		0x8864	/* PPP Over Ethernet Session Stage */
 #define	ETHERTYPE_LANPROBE	0x8888	/* HP LanProbe test? */
+#define	ETHERTYPE_AOE		0x88A2	/* ATA over Ethernet */
 #define	ETHERTYPE_LOOPBACK	0x9000	/* Loopback */
 #define	ETHERTYPE_LBACK		ETHERTYPE_LOOPBACK	/* DEC MOP loopback */
 #define	ETHERTYPE_XNSSM		0x9001	/* 3Com (Formerly Bridge Communications), XNS Systems Management */
