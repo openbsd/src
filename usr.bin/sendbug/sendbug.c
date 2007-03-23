@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.12 2007/03/23 05:08:03 tedu Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.13 2007/03/23 06:16:24 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -12,6 +12,7 @@
 #include <sys/sysctl.h>
 #include <sys/wait.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -242,20 +243,46 @@ sendmail(const char *tmppath)
 void
 init(void)
 {
-	size_t len;
+	size_t len = 0, namelen;
 	int sysname[2];
+	const char *src;
+	char *dst;
 
 	if ((pw = getpwuid(getuid())) == NULL) {
 		err(1, "getpwuid");
 	}
+	namelen = strlen(pw->pw_name);
 
-	/* Get full name. */
-	len = strcspn(pw->pw_gecos, ",");
+	/* Add length of expanded '&', minus existing '&'. */
+	src = pw->pw_gecos;
+	src += strcspn(src, ",&");
+	while (*src == '&') {
+		len += namelen - 1;
+		/* Look for next '&', skipping the one we just found. */
+		src += 1 + strcspn(src, ",&");
+	}
+	/* Add full name length, including all those '&' we skipped. */
+	len += src - pw->pw_gecos;
 	if ((fullname = malloc(len + 1)) == NULL) {
 		err(1, "malloc");
 	}
-	memcpy(fullname, pw->pw_gecos, len);
-	fullname[len] = '\0';
+	dst = fullname;
+	src = pw->pw_gecos;
+	while (*src != ',' && *src != '\0') {
+		/* Copy text up to ',' or '&' and skip. */
+		len = strcspn(src, ",&");
+		memcpy(dst, src, len);
+		dst += len;
+		src += len;
+		/* Replace '&' with login. */
+		if (*src == '&') {
+			memcpy(dst, pw->pw_name, namelen);
+			*dst = toupper((unsigned char)*dst);
+			dst += namelen;
+			++src;
+		}
+	}
+	*dst = '\0';
 
 	sysname[0] = CTL_KERN;
 	sysname[1] = KERN_OSTYPE;
