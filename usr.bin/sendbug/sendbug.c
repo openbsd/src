@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.1.1.1 2007/03/23 01:47:11 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.2 2007/03/23 02:11:00 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -40,12 +40,12 @@ char *fullname;
 int
 main(int argc, char *argv[])
 {
-	struct stat sb;
-	FILE *fp;
 	const char *editor, *tmpdir;
 	char *tmppath = NULL;
-	time_t mtime;
 	int c, fd, ret = 1;
+	struct stat sb;
+	time_t mtime;
+	FILE *fp;
 
 	if ((tmpdir = getenv("TMPDIR")) == NULL || tmpdir[0] == '\0')
 		tmpdir = _PATH_TMP;
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 		warn("fork");
 		goto cleanup;
 	case 0:
-		execlp(editor, editor, tmppath, NULL);
+		execlp(editor, editor, tmppath, (void *)NULL);
 		err(1, "execlp");
 	default:
 		wait(NULL);
@@ -161,7 +161,7 @@ sendmail(const char *tmppath)
 		}
 		close(filedes[0]);
 		execl("/usr/sbin/sendmail", "sendmail",
-		    "-oi", "-t", NULL);
+		    "-oi", "-t", (void *)NULL);
 		warn("sendmail error: unsent report in %s",
 		    tmppath);
 		return (-1);
@@ -230,10 +230,10 @@ init(void)
 int
 send_file(const char *file, int dst)
 {
-	FILE *fp;
-	char *buf;
-	size_t len;
 	int blank = 0;
+	size_t len;
+	char *buf;
+	FILE *fp;
 
 	if ((fp = fopen(file, "r")) == NULL)
 		return (-1);
