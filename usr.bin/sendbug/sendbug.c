@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.6 2007/03/23 02:46:32 deraadt Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.7 2007/03/23 03:13:22 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -70,8 +70,8 @@ main(int argc, char *argv[])
 		default:
 			usage();
 			exit(1);
-		}		
-	
+		}
+
 	if (argc > 1) {
 		usage();
 		exit(1);
