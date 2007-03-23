@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.9 2007/03/23 03:30:52 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.10 2007/03/23 03:35:01 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -47,7 +47,7 @@ int
 main(int argc, char *argv[])
 {
 	const char *editor, *tmpdir;
-	char *argp[] = {"sh", "-c", NULL, NULL}, *tmppath = NULL;
+	char *argp[] = {"sh", "-c", NULL, NULL}, *tmppath = NULL, *pr_form;
 	int ch, c, fd, ret = 1;
 	struct stat sb;
 	time_t mtime;
@@ -94,7 +94,30 @@ main(int argc, char *argv[])
 	if (init() == -1)
 		goto cleanup;
 
-	template(fp);
+	pr_form = getenv("PR_FORM");
+	if (pr_form) {
+		char buf[BUFSIZ];
+		size_t len;
+		FILE *frfp;
+
+		frfp = fopen(pr_form, "r");
+		if (frfp == NULL) {
+			fprintf(stderr, "sendbug: can't seem to read your"
+			    " template file (`%s'), ignoring PR_FORM\n",
+			    pr_form);
+			template(fp);
+		} else {
+			while (!feof(frfp)) {
+				len = fread(buf, 1, sizeof buf, frfp);
+				if (len == 0)
+					break;
+				if (fwrite(buf, 1, len, fp) != len)
+					break;
+			}
+			fclose(frfp);
+		}
+	} else
+		template(fp);
 
 	if (fflush(fp) == EOF || fstat(fd, &sb) == -1 || fclose(fp) == EOF) {
 		warn("error creating template");
