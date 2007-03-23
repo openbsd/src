@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.10 2007/03/23 06:56:40 ckuethe Exp $	*/
+/*	$OpenBSD: sensors.c,v 1.11 2007/03/23 14:48:22 ckuethe Exp $	*/
 
 /*
  * Copyright (c) 2007 Deanna Phillips <deanna@openbsd.org>
@@ -233,21 +233,21 @@ fmttime(double in)
 		unit = "min";
 		in /= SECS_PER_MIN;
 	} else if (in >= 1 ){
-		unit = "sec";
+		unit = "s";
 		/* in *= 1; */ /* no op */
 	} else if (in == 0 ){ /* direct comparisons to floats are scary */
-		unit = "sec";
+		unit = "s";
 	} else if (in >= 1e-3 ){
-		unit = "mS";
+		unit = "ms";
 		in *= 1e3;
 	} else if (in >= 1e-6 ){
-		unit = "uS";
+		unit = "us";
 		in *= 1e6;
 	} else if (in >= 1e-9 ){
-		unit = "nS";
+		unit = "ns";
 		in *= 1e9;
 	} else {
-		unit = "pS";
+		unit = "ps";
 		if (in < 1e-13)
 			tiny = 1;
 		in *= 1e12;
