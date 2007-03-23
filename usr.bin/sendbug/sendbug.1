@@ -1,4 +1,4 @@
-.\" $OpenBSD: sendbug.1,v 1.3 2007/03/23 03:35:01 deraadt Exp $
+.\" $OpenBSD: sendbug.1,v 1.4 2007/03/23 06:27:30 ray Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
@@ -8,7 +8,7 @@
 .Os
 .Sh NAME
 .Nm sendbug
-.Op Fl LVP
+.Op Fl LPV
 .Nd report a bug in
 .Ox
 .Sh SYNOPSIS
@@ -53,14 +53,14 @@ If
 is not set,
 the default is
 .Xr vi 1 .
-.It Ev TMPDIR
-Specifies a directory for temporary files to be created.
-The default is
-.Pa /tmp .
 .It Ev PR_FORM
 Filename of PR form to use instead of using the built-in form.
 Such a PR form can be partially pre-completed to make the
 process faster.
+.It Ev TMPDIR
+Specifies a directory for temporary files to be created.
+The default is
+.Pa /tmp .
 .El
 .Sh AUTHORS
 .Nm
