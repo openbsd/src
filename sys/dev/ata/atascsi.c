@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.34 2007/03/23 05:18:47 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.35 2007/03/23 05:25:02 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -200,6 +200,7 @@ ata_setup_identify(struct ata_port *ap, int nosleep)
 
 	xa->fis->flags = ATA_H2D_FLAGS_CMD;
 	xa->fis->command = ATA_C_IDENTIFY;
+	xa->fis->device = 0;
 
 	xa->flags = ATA_F_READ | ATA_F_PIO;
 
@@ -684,6 +685,7 @@ atascsi_atapi_cmd(struct scsi_xfer *xs)
 	fis = xa->fis;
 	fis->flags = ATA_H2D_FLAGS_CMD;
 	fis->command = ATA_C_PACKET;
+	fis->device = 0;
 	fis->sector_count = xa->tag << 3;
 	fis->features = ATA_H2D_FEATURES_DMA | ((xa->flags & ATA_F_WRITE) ?
 	    ATA_H2D_FEATURES_DIR_WRITE : ATA_H2D_FEATURES_DIR_READ);
