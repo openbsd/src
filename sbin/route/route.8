@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.50 2007/01/19 20:49:30 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.51 2007/03/23 16:02:26 pyr Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -75,6 +75,9 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
 Run in debug-only mode, i.e., don't actually modify the routing table.
+.It Fl F
+When showing routes, only show routes whose gateway are in the
+same address family as the destination.
 .It Fl n
 Bypass attempts to print host and network names symbolically
 when reporting actions.

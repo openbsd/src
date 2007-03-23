@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.105 2007/03/23 13:43:32 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.106 2007/03/23 16:02:26 pyr Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ union	sockunion {
 typedef union sockunion *sup;
 pid_t	pid;
 int	rtm_addrs, s;
-int	forcehost, forcenet, nflag, af, qflag, tflag;
+int	forcehost, forcenet, Fflag, nflag, af, qflag, tflag;
 int	iflag, verbose, aflen = sizeof(struct sockaddr_in);
 int	locking, lockrest, debugonly;
 u_long	rtm_inits;
@@ -137,8 +137,11 @@ main(int argc, char **argv)
 	if (argc < 2)
 		usage(NULL);
 
-	while ((ch = getopt(argc, argv, "dnqtT:v")) != -1)
+	while ((ch = getopt(argc, argv, "dFnqtT:v")) != -1)
 		switch (ch) {
+		case 'F':
+			Fflag = 1;
+			break;
 		case 'n':
 			nflag = 1;
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.56 2006/12/29 10:04:36 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.57 2007/03/23 16:02:26 pyr Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -63,6 +63,7 @@ char	*ipx_print(struct sockaddr *);
 char	*link_print(struct sockaddr *);
 
 extern int nflag;
+extern int Fflag;
 
 #define PLEN  (LONG_BIT / 4 + 2) /* XXX this is also defined in netstat.h */
 
@@ -250,12 +251,15 @@ p_rtentry(struct rt_msghdr *rtm)
 	if (sa->sa_family == AF_KEY)
 		return;
 
+	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+	if (Fflag && rti_info[RTAX_GATEWAY]->sa_family != sa->sa_family) {
+		return;
+	}
 	if (old_af != sa->sa_family) {
 		old_af = sa->sa_family;
 		pr_family(sa->sa_family);
 		pr_rthdr(sa->sa_family);
 	}
-	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
 	mask = rti_info[RTAX_NETMASK];
 	if ((sa = rti_info[RTAX_DST]) == NULL)
