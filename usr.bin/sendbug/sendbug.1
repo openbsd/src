@@ -1,4 +1,4 @@
-.\" $OpenBSD: sendbug.1,v 1.6 2007/03/23 06:47:37 ray Exp $
+.\" $OpenBSD: sendbug.1,v 1.7 2007/03/23 06:58:55 ray Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
@@ -64,6 +64,10 @@ Specifies a directory for temporary files to be created.
 The default is
 .Pa /tmp .
 .El
+.Sh FILES
+.Bl -tag -width "/tmp/p.XXXXXXXXXX" -compact
+.It Pa /tmp/p.XXXXXXXXXX
+temporary PR report
 .Sh AUTHORS
 .Nm
 was written from scratch for the public domain by
