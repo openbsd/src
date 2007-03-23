@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.33 2007/03/22 05:15:39 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.34 2007/03/23 05:18:47 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -378,6 +378,9 @@ atascsi_disk_cmd_done(struct ata_xfer *xa)
 		/* fake sense? */
 		printf("%s: error\n", __FUNCTION__);
 		xs->error = XS_DRIVER_STUFFUP;
+		break;
+	case ATA_S_TIMEOUT:
+		xs->error = XS_TIMEOUT;
 		break;
 	default:
 		panic("atascsi_disk_cmd_done: unexpected ata_xfer state (%d)",
