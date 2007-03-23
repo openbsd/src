@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.104 2006/11/28 19:21:15 reyk Exp $	*/
+/*	$OpenBSD: route.c,v 1.105 2007/03/23 13:43:32 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1136,8 +1136,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		    rtm->rtm_version);
 		return;
 	}
-	printf("%s: len %d, table %u, ", msgtypes[rtm->rtm_type],
-	    rtm->rtm_msglen, rtm->rtm_tableid);
+	printf("%s: len %d, ", msgtypes[rtm->rtm_type], rtm->rtm_msglen);
 	switch (rtm->rtm_type) {
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
@@ -1175,8 +1174,9 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		printf("\n");
 		break;
 	default:
-		printf("pid: %ld, seq %d, errno %d, flags:",
-		    (long)rtm->rtm_pid, rtm->rtm_seq, rtm->rtm_errno);
+		printf("table: %u, pid: %ld, seq %d, errno %d, flags:",
+		    rtm->rtm_tableid, (long)rtm->rtm_pid, rtm->rtm_seq,
+		    rtm->rtm_errno);
 		bprintf(stdout, rtm->rtm_flags, routeflags);
 		pmsg_common(rtm);
 	}
