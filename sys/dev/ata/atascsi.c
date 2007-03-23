@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.35 2007/03/23 05:25:02 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.36 2007/03/23 05:27:16 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -523,6 +523,7 @@ atascsi_disk_sync(struct scsi_xfer *xs)
 
 	xa->fis->flags = ATA_H2D_FLAGS_CMD;
 	xa->fis->command = ATA_C_FLUSH_CACHE;
+	xa->fis->device = 0;
 
 	return (ata_exec(as, xa));
 }
