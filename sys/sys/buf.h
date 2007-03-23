@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.54 2007/02/24 11:59:47 miod Exp $	*/
+/*	$OpenBSD: buf.h,v 1.55 2007/03/23 22:04:16 pedro Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,6 @@ struct buf {
 	LIST_ENTRY(buf) b_hash;		/* Hash chain. */
 	LIST_ENTRY(buf) b_vnbufs;	/* Buffer's associated vnode. */
 	TAILQ_ENTRY(buf) b_freelist;	/* Free list position if not active. */
-	TAILQ_ENTRY(buf) b_synclist;	/* List of dirty buffers to be written out */
 	time_t	b_synctime;		/* Time this buffer should be flushed */
 	struct	buf *b_actf, **b_actb;	/* Device driver queue when active. */
 	struct  proc *b_proc;		/* Associated proc; NULL if kernel. */
