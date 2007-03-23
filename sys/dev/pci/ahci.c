@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.97 2007/03/23 05:28:34 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.98 2007/03/23 06:34:58 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -33,7 +33,7 @@
 
 #include <dev/ata/atascsi.h>
 
-#define NO_AHCI_DEBUG
+#define AHCI_DEBUG
 
 #ifdef AHCI_DEBUG
 #define DPRINTF(m, f...) do { if ((ahcidebug & (m)) == (m)) printf(f); } while (0)
