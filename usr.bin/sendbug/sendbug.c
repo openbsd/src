@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.7 2007/03/23 03:13:22 deraadt Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.8 2007/03/23 03:19:30 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -47,7 +47,7 @@ int
 main(int argc, char *argv[])
 {
 	const char *editor, *tmpdir;
-	char *tmppath = NULL;
+	char *argp[] = {"sh", "-c", NULL, NULL}, *tmppath = NULL;
 	int ch, c, fd, ret = 1;
 	struct stat sb;
 	time_t mtime;
@@ -109,8 +109,10 @@ main(int argc, char *argv[])
 		warn("fork");
 		goto cleanup;
 	case 0:
-		execlp(editor, editor, tmppath, (void *)NULL);
-		err(1, "execlp");
+		if (asprintf(&argp[2], "%s %s", editor, tmppath) == -1)
+			err(1, "asprintf");
+		execv(_PATH_BSHELL, argp);
+		err(1, "execv");
 	default:
 		wait(NULL);
 		break;
