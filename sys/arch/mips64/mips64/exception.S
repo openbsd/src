@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.8 2005/12/20 07:06:26 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.9 2007/03/23 21:07:38 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -350,37 +350,6 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	eret
 	.set	at
 END(u_intr)
-
-/*---------------------------------------------------------------- set_ipending
- *  Atomic ipending set
- */
-LEAF(set_ipending, 0)
-	LA	a1, ipending
-1:
-	ll	v0, 0(a1)
-	or	v1, v0, a0
-	sc	v1, 0(a1)
-	beqz	v1, 1b
-	nop
-	j	ra
-	nop
-END(set_ipending)
-
-/*---------------------------------------------------------------- set_ipending
- *  Atomic ipending clear
- */
-LEAF(clr_ipending, 0)
-	LA	a1, ipending
-	not	a0, a0
-1:
-	ll	v0, 0(a1)
-	and	v1, v0, a0
-	sc	v1, 0(a1)
-	beqz	v1, 1b
-	nop
-	j	ra
-	nop
-END(clr_ipending)
 
 /*---------------------------------------------------------------- k_general
  *	Handle a kernel general trap. This is very much like
