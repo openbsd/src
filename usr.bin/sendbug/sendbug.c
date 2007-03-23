@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.4 2007/03/23 02:41:02 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.5 2007/03/23 02:45:21 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -36,7 +36,7 @@ const char *categories = "system user library documentation ports kernel "
     "alpha amd64 arm i386 m68k m88k mips ppc sgi sparc sparc64 vax";
 char os[BUFSIZ], rel[BUFSIZ], mach[BUFSIZ];
 char *fullname;
-
+char *version = "4.2";
 void
 usage(void)
 {
@@ -53,7 +53,7 @@ main(int argc, char *argv[])
 	time_t mtime;
 	FILE *fp;
 
-	while ((ch = getopt(argc, argv, "LP")) != -1)
+	while ((ch = getopt(argc, argv, "LPV")) != -1)
 		switch (ch) {
 		case 'L':
 			printf("Known categories:\n");
@@ -63,6 +63,9 @@ main(int argc, char *argv[])
 			if (init() == -1)
 				exit(1);
 			template(stdout);
+			exit(0);
+		case 'V':
+			printf("%s\n", version);
 			exit(0);
 		default:
 			usage();
@@ -125,7 +128,8 @@ main(int argc, char *argv[])
  prompt:
 	c = prompt();
 	switch (c) {
-	case 'a': case EOF:
+	case 'a':
+	case EOF:
 		warnx("unsent report in %s", tmppath);
 		goto quit;
 	case 'e':
@@ -318,7 +322,7 @@ template(FILE *fp)
 	fprintf(fp, "From: %s\n", pw->pw_name);
 	fprintf(fp, "Cc: \n");
 	fprintf(fp, "Reply-To: %s\n", pw->pw_name);
-	fprintf(fp, "X-sendbug-version: 4.2\n");
+	fprintf(fp, "X-sendbug-version: %s\n", version);
 	fprintf(fp, "\n");
 	fprintf(fp, "\n");
 	fprintf(fp, ">Submitter-Id:\tnet\n");
