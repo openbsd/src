@@ -1,4 +1,4 @@
-.\" $OpenBSD: sendbug.1,v 1.5 2007/03/23 06:28:49 ray Exp $
+.\" $OpenBSD: sendbug.1,v 1.6 2007/03/23 06:47:37 ray Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
@@ -25,18 +25,20 @@ below,
 for details of which editor, if any, is invoked.
 .Pp
 Once the bug report is filled out,
-it is e-mailed to the
+it can be sent to the
 .Ox
-developers.
+developers, re-edited, or aborted.
+If aborted,
+the report is not deleted and the pathname of the report is printed.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl L
-Print the list of available catagories and do nothing else.
+Print the list of available categories.
 .It Fl P
-Prints the template and do nothing else.
+Generate and print the template with system information filled out.
 .It Fl V
-Prints the version number.
+Print the version number.
 .El
 .Pp
 The bugs database can be queried using the online bug tracking system
