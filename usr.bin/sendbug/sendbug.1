@@ -1,0 +1,47 @@
+.\" $OpenBSD: sendbug.1,v 1.1.1.1 2007/03/23 01:47:11 ray Exp $
+.\"
+.\" Written by Raymond Lai <ray@cyth.net>.
+.\" Public domain.
+.\"
+.Dd March 22, 2007
+.Dt SENDBUG 1
+.Os
+.Sh NAME
+.Nm sendbug
+.Nd report a bug in
+.Ox
+.Sh SYNOPSIS
+.Nm
+.Sh DESCRIPTION
+.Nm
+is used to send bug reports to
+.Ox .
+Some system information is filled out in a temporary file,
+which is then opened by an editor.
+See
+.Ev EDITOR
+below,
+for details of which editor, if any, is invoked.
+.Pp
+Once the bug report is filled out,
+it is e-mailed to the
+.Ox
+developers.
+.Sh ENVIRONMENT
+.Bl -tag -width Ds
+.It Ev EDITOR
+Specifies an editor to use.
+If
+.Ev EDITOR
+is not set,
+the default is
+.Xr vi 1 .
+.It Ev TMPDIR
+Specifies a directory for temporary files to be created.
+The default is
+.Pa /tmp .
+.El
+.Sh AUTHORS
+.Nm
+was written from scratch for the public domain by
+.An Ray Lai Aq ray@cyth.net .
