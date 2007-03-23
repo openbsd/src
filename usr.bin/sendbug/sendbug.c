@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.13 2007/03/23 06:16:24 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.14 2007/03/23 15:46:40 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -37,7 +37,7 @@ const char *categories = "system user library documentation ports kernel "
 char *version = "4.2";
 
 struct passwd *pw;
-char os[BUFSIZ], rel[BUFSIZ], mach[BUFSIZ];
+char os[BUFSIZ], rel[BUFSIZ], mach[BUFSIZ], details[BUFSIZ];
 char *fullname;
 char *tmppath;
 int wantcleanup;
@@ -246,7 +246,7 @@ init(void)
 	size_t len = 0, namelen;
 	int sysname[2];
 	const char *src;
-	char *dst;
+	char *dst, *cp;
 
 	if ((pw = getpwuid(getuid())) == NULL) {
 		err(1, "getpwuid");
@@ -298,6 +298,24 @@ init(void)
 		err(1, "sysctl");
 	}
 
+	sysname[0] = CTL_KERN;
+	sysname[1] = KERN_VERSION;
+	len = sizeof(details) - 1;
+	if (sysctl(sysname, 2, &details, &len, NULL, 0) == -1) {
+		err(1, "sysctl");
+	}
+
+	cp = strchr(details, '\n');
+	if (cp) {
+		cp++;
+		if (*cp)
+			*cp++ = '\t';
+		if (*cp)
+			*cp++ = '\t';
+		if (*cp)
+			*cp++ = '\t';
+	}
+
 	sysname[0] = CTL_HW;
 	sysname[1] = HW_MACHINE;
 	len = sizeof(mach) - 1;
@@ -326,7 +344,7 @@ send_file(const char *file, int dst)
 			blank = 1;
 		/* Skip comments, but only if we encountered a blank line. */
 		while (len) {
-			char *sp, *ep = NULL;
+			char *sp = NULL, *ep = NULL;
 			size_t copylen;
 
 			if (blank && (sp = memchr(buf, '<', len)) != NULL)
@@ -387,6 +405,7 @@ template(FILE *fp)
 	fprintf(fp, ">Environment:\n");
 	fprintf(fp, "\t<machine, os, target, libraries (multiple lines)>\n");
 	fprintf(fp, "\tSystem      : %s %s\n", os, rel);
+	fprintf(fp, "\tDetails     : %s\n", details);
 	fprintf(fp, "\tArchitecture: %s.%s\n", os, mach);
 	fprintf(fp, "\tMachine     : %s\n", mach);
 	fprintf(fp, ">Description:\n");
