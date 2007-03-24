@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.6 2007/03/20 03:31:24 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.7 2007/03/24 05:15:19 tedu Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -862,7 +862,7 @@ sr_parse_chunks(struct sr_softc *sc, char *lst, struct sr_chunk_head *cl)
 		/* partition already in use? */
 		if (nd.ni_vp->v_usecount > 1) {
 			printf("%s: %s in use\n", DEVNAME(sc), name);
-			goto unwind;
+			goto unlock;
 		}
 
 		/* get attributes */
@@ -870,21 +870,21 @@ sr_parse_chunks(struct sr_softc *sc, char *lst, struct sr_chunk_head *cl)
 		if (error) {
 			printf("%s: %s can't retrieve attributes\n",
 			    DEVNAME(sc), name);
-			goto unwind;
+			goto unlock;
 		}
 
 		/* is partition VBLK? */
 		if (va.va_type != VBLK) {
 			printf("%s: %s not of VBLK type\n",
 			    DEVNAME(sc), name);
-			goto unwind;
+			goto unlock;
 		}
 
 		/* make sure we are not a raw partition */
 		if (DISKPART(nd.ni_vp->v_rdev) == RAW_PART) {
 			printf("%s: %s can not use raw partitions\n",
 			    DEVNAME(sc), name);
-			goto unwind;
+			goto unlock;
 		}
 
 		/* get disklabel */
@@ -893,7 +893,7 @@ sr_parse_chunks(struct sr_softc *sc, char *lst, struct sr_chunk_head *cl)
 		if (error) {
 			printf("%s: %s could not read disklabel err %d\n",
 			    DEVNAME(sc), name, error);
-			goto unwind; /* disklabel failed */
+			goto unlock; /* disklabel failed */
 		}
 
 		/* get partition size */
@@ -903,14 +903,14 @@ sr_parse_chunks(struct sr_softc *sc, char *lst, struct sr_chunk_head *cl)
 		if (ch_entry->src_meta.scm_size == 0) {
 			printf("%s: %s partition size = 0\n",
 			    DEVNAME(sc), name);
-			goto unwind;
+			goto unlock;
 		}
 
 		/* make sure the partition is of the right type */
 		if (label.d_partitions['a' - ss].p_fstype != FS_RAID) {
 			printf("%s: %s partition not of type RAID\n",
 			    DEVNAME(sc), name);
-			goto unwind;
+			goto unlock;
 		}
 
 		/* XXX check for stale metadata */
@@ -930,6 +930,8 @@ sr_parse_chunks(struct sr_softc *sc, char *lst, struct sr_chunk_head *cl)
 
 	return (i);
 
+unlock:
+	VOP_UNLOCK(ch_entry->src_dev_vn, 0, curproc);
 unwind:
 	sr_unwind_chunks(sc, cl);
 bad:
@@ -1140,9 +1142,11 @@ sr_raid1_sync(struct sr_workunit *wu)
 		DNPRINTF(SR_D_DIS, "%s: %s: %s: sync\n", DEVNAME(sd->sd_sc),
 		    sd->sd_vol.sv_meta.svm_devname,
 		    ch_entry->src_meta.scm_devname);
+		vn_lock(ch_entry->src_dev_vn, LK_EXCLUSIVE | LK_RETRY, curproc);
 		/* XXX we want MNT_WAIT but that hangs in fdisk */
 		VOP_FSYNC(ch_entry->src_dev_vn, curproc->p_ucred,
 		    0 /* MNT_WAIT */, curproc);
+		VOP_UNLOCK(ch_entry->src_dev_vn, 0, curproc);
 	}
 
 	return (0);
