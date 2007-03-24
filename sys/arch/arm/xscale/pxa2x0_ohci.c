@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.20 2007/03/24 03:33:10 pascoe Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -107,10 +107,15 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	strlcpy(sc->sc.sc_vendor, "PXA27x", sizeof(sc->sc.sc_vendor));
+
+	if (ohci_checkrev(&sc->sc) != USBD_NORMAL_COMPLETION)
+		goto unsupported;
+
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n",
 		    sc->sc.sc_bus.bdev.dv_xname, r);
+unsupported:
 		pxa2x0_intr_disestablish(sc->sc_ih);
 		sc->sc_ih = NULL;
 		pxaohci_disable(sc);
