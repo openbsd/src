@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.37 2007/03/23 05:28:34 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.38 2007/03/24 22:03:18 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -517,12 +517,12 @@ atascsi_disk_sync(struct scsi_xfer *xs)
 
 	xa->datalen = 0;
 	xa->flags = ATA_F_READ;
-	if (xs->flags & SCSI_POLL)
-		xa->flags |= ATA_F_POLL;
 	xa->complete = atascsi_disk_sync_done;
-
 	/* Spec says flush cache can take >30 sec, so give it at least 45. */
 	xa->timeout = (xs->timeout < 45000) ? 45000 : xs->timeout;
+	xa->atascsi_private = xs;
+	if (xs->flags & SCSI_POLL)
+		xa->flags |= ATA_F_POLL;
 
 	xa->fis->flags = ATA_H2D_FLAGS_CMD;
 	xa->fis->command = ATA_C_FLUSH_CACHE;
