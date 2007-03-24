@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.9 2006/11/29 14:16:43 uwe Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.10 2007/03/24 00:44:26 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -69,6 +69,7 @@ int	sdmmc_ioctl(struct device *, u_long, caddr_t);
 #ifdef SDMMC_DEBUG
 int sdmmcdebug = 0;
 extern int sdhcdebug;	/* XXX should have a sdmmc_chip_debug() function */
+void sdmmc_dump_command(struct sdmmc_softc *, struct sdmmc_command *);
 #define DPRINTF(n,s)	do { if ((n) <= sdmmcdebug) printf s; } while (0)
 #else
 #define DPRINTF(n,s)	do {} while (0)
@@ -540,9 +541,9 @@ sdmmc_mmc_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 
 	sdmmc_chip_exec_command(sc->sct, sc->sch, cmd);
 
-	DPRINTF(2,("%s: mmc cmd=%p opcode=%d proc=\"%s\" (error %d)\n",
-	    DEVNAME(sc), cmd, cmd->c_opcode, curproc ? curproc->p_comm :
-	    "", cmd->c_error));
+#ifdef SDMMC_DEBUG
+	sdmmc_dump_command(sc, cmd);
+#endif
 
 	error = cmd->c_error;
 	wakeup(cmd);
@@ -720,5 +721,30 @@ sdmmc_ioctl(struct device *self, u_long request, caddr_t addr)
 		return ENOTTY;
 	}
 	return 0;
+}
+#endif
+
+#ifdef SDMMC_DEBUG
+void
+sdmmc_dump_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
+{
+	int i;
+
+	DPRINTF(1,("%s: cmd %u arg=%#x data=%#x dlen=%d flags=%#x "
+	    "proc=\"%s\" (error %d)\n", DEVNAME(sc), cmd->c_opcode,
+	    cmd->c_arg, cmd->c_data, cmd->c_datalen, cmd->c_flags,
+	    curproc ? curproc->p_comm : "", cmd->c_error));
+
+	if (cmd->c_error || sdmmcdebug < 1)
+		return;
+
+	printf("%s: resp=", DEVNAME(sc));
+	if (ISSET(cmd->c_flags, SCF_RSP_136))
+		for (i = 0; i < sizeof cmd->c_resp; i++)
+			printf("%02x ", ((u_char *)cmd->c_resp)[i]);
+	else if (ISSET(cmd->c_flags, SCF_RSP_PRESENT))
+		for (i = 0; i < 4; i++)
+			printf("%02x ", ((u_char *)cmd->c_resp)[i]);
+	printf("\n");
 }
 #endif
