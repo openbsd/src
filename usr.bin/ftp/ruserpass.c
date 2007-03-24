@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruserpass.c,v 1.22 2007/03/22 15:25:17 moritz Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.23 2007/03/24 14:29:02 moritz Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
 #ifndef SMALL
-static const char rcsid[] = "$OpenBSD: ruserpass.c,v 1.22 2007/03/22 15:25:17 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: ruserpass.c,v 1.23 2007/03/24 14:29:02 moritz Exp $";
 #endif /* SMALL */
 #endif
 #endif /* not lint */
@@ -83,7 +83,7 @@ static struct toktab {
 int
 ruserpass(const char *host, char **aname, char **apass, char **aacct)
 {
-	char *hdir, buf[BUFSIZ], *tmp;
+	char *hdir, buf[MAXPATHLEN], *tmp;
 	char myname[MAXHOSTNAMELEN], *mydomain;
 	int t, i, c, usedefault = 0;
 	struct stat stb;
@@ -236,9 +236,13 @@ next:
 				}
 				*tmp = c;
 				if (*tmp == '\n') {
-					if (*(tmp-1) == '\0') {
-					   macros[macnum++].mac_end = tmp - 1;
-					   break;
+					if (tmp == macros[macnum].mac_start) {
+						macros[macnum++].mac_end = tmp;
+						break;
+					} else if (*(tmp-1) == '\0') {
+						macros[macnum++].mac_end =
+						    tmp - 1;
+						break;
 					}
 					*tmp = '\0';
 				}
