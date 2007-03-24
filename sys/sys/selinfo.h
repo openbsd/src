@@ -1,4 +1,4 @@
-/*	$OpenBSD: selinfo.h,v 1.1 2005/11/21 18:16:46 millert Exp $	*/
+/*	$OpenBSD: selinfo.h,v 1.2 2007/03/24 16:01:22 art Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,9 +41,10 @@
  * notified when I/O becomes possible.
  */
 struct selinfo {
-	pid_t	si_selpid;	/* process to be notified */
-	struct	klist si_note;	/* kernel note list */
-	short	si_flags;	/* see below */
+	struct proc *si_selproc;
+	TAILQ_ENTRY(selinfo) si_list;	/* list of selinfo for a process */
+	struct	klist si_note;		/* kernel note list */
+	short	si_flags;		/* see below */
 };
 #define	SI_COLL	0x0001		/* collision occurred */
 

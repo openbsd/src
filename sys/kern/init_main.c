@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.136 2007/03/19 14:33:28 dlg Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.137 2007/03/24 16:01:22 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -295,6 +295,8 @@ main(void *framep)
 
 	/* Create the file descriptor table. */
 	p->p_fd = fdinit(NULL);
+
+	TAILQ_INIT(&p->p_selects);
 
 	/* Create the limits structures. */
 	p->p_limit = &limit0;
