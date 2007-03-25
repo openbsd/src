@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpdrop.c,v 1.5 2006/01/03 01:46:27 stevesk Exp $ */
+/* $OpenBSD: tcpdrop.c,v 1.6 2007/03/25 17:20:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
@@ -44,26 +44,60 @@ main(int argc, char **argv)
 	struct addrinfo hints, *ail, *aif, *laddr, *faddr;
 	char fhbuf[NI_MAXHOST], fsbuf[NI_MAXSERV];
 	char lhbuf[NI_MAXHOST], lsbuf[NI_MAXSERV];
+	char *laddr1, *addr1, *port1, *laddr2, *addr2, *port2;
 	struct tcp_ident_mapping tir;
 	int gaierr, rval = 0;
-
-	if (argc != 5) {
-		fprintf(stderr, "usage: %s laddr lport faddr fport\n",
-		    __progname);
-		exit(1);
-	}
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if ((gaierr = getaddrinfo(argv[1], argv[2], &hints, &laddr)) != 0)
-		errx(1, "%s port %s: %s", argv[1], argv[2],
+	if (argc == 3) {
+		laddr1 = addr1 = strdup(argv[1]);
+		port1 = strrchr(addr1, ':');
+		if (port1)
+			*port1++ = '\0';
+		else
+			goto fail;
+
+		laddr2 = addr2 = strdup(argv[2]);
+		port2 = strrchr(addr2, ':');
+		if (port2)
+			*port2++ = '\0';
+		else
+			goto fail;
+	} else if (argc == 5) {
+		laddr1 = addr1 = argv[1];
+		port1 = argv[2];
+		laddr2 = addr2 = argv[3];
+		port2 = argv[4];
+	} else {
+fail:
+		fprintf(stderr, "usage: %s laddr lport faddr fport\n",
+		    __progname);
+		fprintf(stderr, "       %s laddr:lport faddr:fport\n",
+		    __progname);
+		exit(1);
+	}
+
+	if (addr1[0] == '[' && addr1[strlen(addr1) - 1] == ']') {
+		laddr1 = strdup(addr1);
+		laddr1[strlen(laddr1) - 1] = '\0';
+		laddr1++;
+	}
+	if (addr2[0] == '[' && addr2[strlen(addr2) - 1] == ']') {
+		laddr2 = strdup(addr2);
+		laddr2[strlen(laddr2) - 1] = '\0';
+		laddr2++;
+	}
+
+	if ((gaierr = getaddrinfo(laddr1, port1, &hints, &laddr)) != 0)
+		errx(1, "%s port %s: %s", addr1, port1,
 		    gai_strerror(gaierr));
 
-	if ((gaierr = getaddrinfo(argv[3], argv[4], &hints, &faddr)) != 0) {
+	if ((gaierr = getaddrinfo(laddr2, port2, &hints, &faddr)) != 0) {
 		freeaddrinfo(laddr);
-		errx(1, "%s port %s: %s", argv[3], argv[4],
+		errx(1, "%s port %s: %s", addr2, port2,
 		    gai_strerror(gaierr));
 	}
 
@@ -75,13 +109,11 @@ main(int argc, char **argv)
 			memcpy(&tir.laddr, ail->ai_addr, ail->ai_addrlen);
 
 			if ((gaierr = getnameinfo(aif->ai_addr, aif->ai_addrlen,
-			    fhbuf, sizeof(fhbuf),
-			    fsbuf, sizeof(fsbuf),
+			    fhbuf, sizeof(fhbuf), fsbuf, sizeof(fsbuf),
 			    NI_NUMERICHOST | NI_NUMERICSERV)) != 0)
 				errx(1, "getnameinfo: %s", gai_strerror(gaierr));
 			if ((gaierr = getnameinfo(ail->ai_addr, ail->ai_addrlen,
-			    lhbuf, sizeof(lhbuf),
-			    lsbuf, sizeof(lsbuf),
+			    lhbuf, sizeof(lhbuf), lsbuf, sizeof(lsbuf),
 			    NI_NUMERICHOST | NI_NUMERICSERV)) != 0)
 				errx(1, "getnameinfo: %s", gai_strerror(gaierr));
 
@@ -89,10 +121,14 @@ main(int argc, char **argv)
 			    NULL, &tir, sizeof(tir)) == -1) {
 				rval = 1;
 				warn("%s %s %s %s", lhbuf, lsbuf, fhbuf, fsbuf);
-			} else
-				printf("%s %s %s %s: dropped\n",
-				    lhbuf, lsbuf, fhbuf, fsbuf);
-
+			} else {
+				if (aif->ai_family == PF_INET6)
+					printf("[%s]:%s [%s]:%s dropped\n",
+					    lhbuf, lsbuf, fhbuf, fsbuf);
+				else
+					printf("%s:%s %s:%s dropped\n",
+					    lhbuf, lsbuf, fhbuf, fsbuf);
+			}
 		}
 	}
 	freeaddrinfo(laddr);
