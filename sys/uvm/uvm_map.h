@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.35 2007/01/12 21:11:38 mickey Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.36 2007/03/25 13:02:51 thib Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /* 
@@ -230,7 +230,6 @@ struct vm_map {
 	simple_lock_data_t	hint_lock;	/* lock for hint storage */
 	vm_map_entry_t		first_free;	/* First free space hint */
 	int			flags;		/* flags */
-	simple_lock_data_t	flags_lock;	/* Lock for flags field */
 	unsigned int		timestamp;	/* Version number */
 #define	min_offset		header.start
 #define max_offset		header.end
@@ -252,9 +251,7 @@ struct vm_map {
 #ifdef _KERNEL
 #define	vm_map_modflags(map, set, clear)				\
 do {									\
-	simple_lock(&(map)->flags_lock);				\
 	(map)->flags = ((map)->flags | (set)) & ~(clear);		\
-	simple_unlock(&(map)->flags_lock);				\
 } while (0)
 #endif /* _KERNEL */
 
@@ -400,13 +397,10 @@ vm_map_lock_try(map)
 	if (map->flags & VM_MAP_INTRSAFE)
 		rv = simple_lock_try(&map->lock.lk_interlock);
 	else {
-		simple_lock(&map->flags_lock);
 		if (map->flags & VM_MAP_BUSY) {
-			simple_unlock(&map->flags_lock);
 			return (FALSE);
 		}
-		rv = (lockmgr(&map->lock, LK_EXCLUSIVE|LK_NOWAIT|LK_INTERLOCK,
-		    &map->flags_lock) == 0);
+		rv = (lockmgr(&map->lock, LK_EXCLUSIVE|LK_NOWAIT, NULL) == 0);
 	}
 
 	if (rv)
@@ -427,14 +421,12 @@ vm_map_lock(map)
 	}
 
  try_again:
-	simple_lock(&map->flags_lock);
 	while (map->flags & VM_MAP_BUSY) {
 		map->flags |= VM_MAP_WANTLOCK;
-		ltsleep(&map->flags, PVM, (char *)vmmapbsy, 0, &map->flags_lock);
+		ltsleep(&map->flags, PVM, (char *)vmmapbsy, 0, NULL);
 	}
 
-	error = lockmgr(&map->lock, LK_EXCLUSIVE|LK_SLEEPFAIL|LK_INTERLOCK,
-	    &map->flags_lock);
+	error = lockmgr(&map->lock, LK_EXCLUSIVE|LK_SLEEPFAIL, NULL);
 
 	if (error) {
 		goto try_again;
@@ -482,19 +474,15 @@ do {									\
 
 #define	vm_map_busy(map)						\
 do {									\
-	simple_lock(&(map)->flags_lock);				\
 	(map)->flags |= VM_MAP_BUSY;					\
-	simple_unlock(&(map)->flags_lock);				\
 } while (0)
 
 #define	vm_map_unbusy(map)						\
 do {									\
 	int oflags;							\
 									\
-	simple_lock(&(map)->flags_lock);				\
 	oflags = (map)->flags;						\
 	(map)->flags &= ~(VM_MAP_BUSY|VM_MAP_WANTLOCK);			\
-	simple_unlock(&(map)->flags_lock);				\
 	if (oflags & VM_MAP_WANTLOCK)					\
 		wakeup(&(map)->flags);					\
 } while (0)
