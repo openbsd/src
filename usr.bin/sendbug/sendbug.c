@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.18 2007/03/25 23:23:29 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.19 2007/03/25 23:27:38 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -62,10 +62,10 @@ cleanup()
 int
 main(int argc, char *argv[])
 {
-	const char *tmpdir;
-	char *pr_form;
 	int ch, c, fd, ret = 1;
+	const char *tmpdir;
 	struct stat sb;
+	char *pr_form;
 	time_t mtime;
 	FILE *fp;
 
@@ -93,16 +93,14 @@ main(int argc, char *argv[])
 	if ((tmpdir = getenv("TMPDIR")) == NULL || tmpdir[0] == '\0')
 		tmpdir = _PATH_TMP;
 	if (asprintf(&tmppath, "%s%sp.XXXXXXXXXX", tmpdir,
-	    tmpdir[strlen(tmpdir) - 1] == '/' ? "" : "/") == -1) {
+	    tmpdir[strlen(tmpdir) - 1] == '/' ? "" : "/") == -1)
 		err(1, "asprintf");
-	}
 	if ((fd = mkstemp(tmppath)) == -1)
 		err(1, "mkstemp");
 	wantcleanup = 1;
 	atexit(cleanup);
-	if ((fp = fdopen(fd, "w+")) == NULL) {
+	if ((fp = fdopen(fd, "w+")) == NULL)
 		err(1, "fdopen");
-	}
 
 	init();
 
@@ -131,20 +129,17 @@ main(int argc, char *argv[])
 	} else
 		template(fp);
 
-	if (fflush(fp) == EOF || fstat(fd, &sb) == -1 || fclose(fp) == EOF) {
+	if (fflush(fp) == EOF || fstat(fd, &sb) == -1 || fclose(fp) == EOF)
 		err(1, "error creating template");
-	}
 	mtime = sb.st_mtime;
 
  edit:
 	editit(tmppath);
 
-	if (stat(tmppath, &sb) == -1) {
+	if (stat(tmppath, &sb) == -1)
 		err(1, "stat");
-	}
-	if (mtime == sb.st_mtime) {
+	if (mtime == sb.st_mtime)
 		errx(1, "report unchanged, nothing sent");
-	}
 
  prompt:
 	c = prompt();
@@ -171,9 +166,8 @@ quit:
 int
 editit(char *tmpfile)
 {
+	char *argp[] = {"sh", "-c", NULL, NULL}, *ed, *p;
 	pid_t pid, xpid;
-	char *argp[] = {"sh", "-c", NULL, NULL};
-	char *ed, *p;
 	int stat;
 
 	if ((ed = getenv("EDITOR")) == (char *)0)
@@ -291,13 +285,12 @@ void
 init(void)
 {
 	size_t len = 0, namelen;
-	int sysname[2];
 	const char *src;
+	int sysname[2];
 	char *dst, *cp;
 
-	if ((pw = getpwuid(getuid())) == NULL) {
+	if ((pw = getpwuid(getuid())) == NULL)
 		err(1, "getpwuid");
-	}
 	namelen = strlen(pw->pw_name);
 
 	/* Add length of expanded '&', minus existing '&'. */
@@ -310,9 +303,9 @@ init(void)
 	}
 	/* Add full name length, including all those '&' we skipped. */
 	len += src - pw->pw_gecos;
-	if ((fullname = malloc(len + 1)) == NULL) {
+	if ((fullname = malloc(len + 1)) == NULL)
 		err(1, "malloc");
-	}
+
 	dst = fullname;
 	src = pw->pw_gecos;
 	while (*src != ',' && *src != '\0') {
@@ -334,23 +327,20 @@ init(void)
 	sysname[0] = CTL_KERN;
 	sysname[1] = KERN_OSTYPE;
 	len = sizeof(os) - 1;
-	if (sysctl(sysname, 2, &os, &len, NULL, 0) == -1) {
+	if (sysctl(sysname, 2, &os, &len, NULL, 0) == -1)
 		err(1, "sysctl");
-	}
 
 	sysname[0] = CTL_KERN;
 	sysname[1] = KERN_OSRELEASE;
 	len = sizeof(rel) - 1;
-	if (sysctl(sysname, 2, &rel, &len, NULL, 0) == -1) {
+	if (sysctl(sysname, 2, &rel, &len, NULL, 0) == -1)
 		err(1, "sysctl");
-	}
 
 	sysname[0] = CTL_KERN;
 	sysname[1] = KERN_VERSION;
 	len = sizeof(details) - 1;
-	if (sysctl(sysname, 2, &details, &len, NULL, 0) == -1) {
+	if (sysctl(sysname, 2, &details, &len, NULL, 0) == -1)
 		err(1, "sysctl");
-	}
 
 	cp = strchr(details, '\n');
 	if (cp) {
@@ -366,10 +356,8 @@ init(void)
 	sysname[0] = CTL_HW;
 	sysname[1] = HW_MACHINE;
 	len = sizeof(mach) - 1;
-	if (sysctl(sysname, 2, &mach, &len, NULL, 0) == -1) {
+	if (sysctl(sysname, 2, &mach, &len, NULL, 0) == -1)
 		err(1, "sysctl");
-	}
-
 }
 
 int
@@ -423,8 +411,9 @@ void
 template(FILE *fp)
 {
 	fprintf(fp, "SENDBUG: -*- sendbug -*-\n");
-	fprintf(fp, "SENDBUG: Lines starting with `SENDBUG' will be removed automatically, as\n");
-	fprintf(fp, "SENDBUG: will all comments (text enclosed in `<' and `>').              \n");
+	fprintf(fp, "SENDBUG: Lines starting with `SENDBUG' will"
+	    " be removed automatically, as\n");
+	fprintf(fp, "SENDBUG: will all comments (text enclosed in `<' and `>').\n");
 	fprintf(fp, "SENDBUG:\n");
 	fprintf(fp, "SENDBUG: Choose from the following categories:\n");
 	fprintf(fp, "SENDBUG:\n");
@@ -444,10 +433,12 @@ template(FILE *fp)
 	fprintf(fp, ">Organization:\n");
 	fprintf(fp, "net\n");
 	fprintf(fp, ">Synopsis:\t<synopsis of the problem (one line)>\n");
-	fprintf(fp, ">Severity:\t<[ non-critical | serious | critical ] (one line)>\n");
+	fprintf(fp, ">Severity:\t"
+	    "<[ non-critical | serious | critical ] (one line)>\n");
 	fprintf(fp, ">Priority:\t<[ low | medium | high ] (one line)>\n");
 	fprintf(fp, ">Category:\t<PR category (one line)>\n");
-	fprintf(fp, ">Class:\t\t<[ sw-bug | doc-bug | change-request | support ] (one line)>\n");
+	fprintf(fp, ">Class:\t\t"
+	    "<[ sw-bug | doc-bug | change-request | support ] (one line)>\n");
 	fprintf(fp, ">Release:\t<release number or tag (one line)>\n");
 	fprintf(fp, ">Environment:\n");
 	fprintf(fp, "\t<machine, os, target, libraries (multiple lines)>\n");
@@ -458,7 +449,9 @@ template(FILE *fp)
 	fprintf(fp, ">Description:\n");
 	fprintf(fp, "\t<precise description of the problem (multiple lines)>\n");
 	fprintf(fp, ">How-To-Repeat:\n");
-	fprintf(fp, "\t<code/input/activities to reproduce the problem (multiple lines)>\n");
+	fprintf(fp, "\t<code/input/activities to reproduce the problem"
+	    " (multiple lines)>\n");
 	fprintf(fp, ">Fix:\n");
-	fprintf(fp, "\t<how to correct or work around the problem, if known (multiple lines)>\n");
+	fprintf(fp, "\t<how to correct or work around the problem,"
+	    " if known (multiple lines)>\n");
 }
