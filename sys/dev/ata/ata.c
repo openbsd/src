@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.26 2006/12/21 02:44:55 krw Exp $      */
+/*      $OpenBSD: ata.c,v 1.27 2007/03/25 10:33:52 deraadt Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -231,10 +231,10 @@ ata_perror(struct ata_drive_datas *drvp, int errno, char *buf, size_t buf_len)
 
 	for (i = 0; i < 8; i++) {
 		if (errno & (1 << i)) {
-			snprintf(buf + len, buf_len - len, "%s %s", sep,
+			snprintf(buf + len, buf_len - len, "%s%s", sep,
 			    errstr[i]);
 			len = strlen(buf);
-			sep = ",";
+			sep = ", ";
 		}
 	}
 }
