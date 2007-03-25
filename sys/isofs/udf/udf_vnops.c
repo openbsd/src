@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.22 2007/03/21 17:29:31 thib Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.23 2007/03/25 18:38:20 thib Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -106,7 +106,7 @@ loop:
 	LIST_FOREACH(up, lh, u_le) {
 		if (up->u_ino == id) {
 			mtx_leave(&ump->um_hashmtx);
-			error = vget(up->u_vnode, flags | LK_INTERLOCK, p);
+			error = vget(up->u_vnode, flags, p);
 			if (error == ENOENT)
 				goto loop;
 			if (error)
