@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.66 2007/01/12 07:41:31 art Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.67 2007/03/25 02:38:11 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ malloc(unsigned long size, int type, int flags)
 
 #ifdef MALLOC_DEBUG
 	if (debug_malloc(size, type, flags, (void **)&va))
-		return ((void *) va);
+		return (va);
 #endif
 
 	if (size > 65535 * PAGE_SIZE) {
@@ -177,7 +177,7 @@ malloc(unsigned long size, int type, int flags)
 	while (ksp->ks_memuse >= ksp->ks_limit) {
 		if (flags & M_NOWAIT) {
 			splx(s);
-			return ((void *) NULL);
+			return (NULL);
 		}
 		if (ksp->ks_limblocks < 65535)
 			ksp->ks_limblocks++;
@@ -325,7 +325,7 @@ out:
 out:
 #endif
 	splx(s);
-	return ((void *) va);
+	return (va);
 }
 
 /*
