@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.44 2007/03/21 10:54:30 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.45 2007/03/25 15:48:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -60,7 +60,7 @@ void	ospf_redistribute_default(int);
 
 int	ospf_reload(void);
 int	ospf_sendboth(enum imsg_type, void *, u_int16_t);
-void	merge_interfaces(struct area *, struct area *);
+int	merge_interfaces(struct area *, struct area *);
 struct iface *iface_lookup(struct area *, struct iface *);
 
 int	pipe_parent2ospfe[2];
@@ -685,10 +685,13 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 		 */
 		a->stub = xa->stub;
 		a->stub_default_cost = xa->stub_default_cost;
-		a->dirty = 1; /* force SPF tree recalculation */
+		if (ospfd_process == PROC_RDE_ENGINE)
+			a->dirty = 1; /* force SPF tree recalculation */
 
 		/* merge interfaces */
-		merge_interfaces(a, xa);
+		if (merge_interfaces(a, xa) &&
+		    ospfd_process == PROC_OSPF_ENGINE)
+			a->dirty = 1; /* force rtr LSA update */
 	}
 
 	if (ospfd_process == PROC_OSPF_ENGINE) {
@@ -704,6 +707,10 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 					}
 				}
 			}
+			if (a->dirty) {
+				a->dirty = 0;
+				orig_rtr_lsa(a);
+			}
 		}
 	}
 
@@ -715,10 +722,11 @@ done:
 	free(xconf);
 }
 
-void
+int
 merge_interfaces(struct area *a, struct area *xa)
 {
 	struct iface	*i, *xi, *ni;
+	int		 dirty = 0;
 
 	/* problems:
 	 * - new interfaces (easy)
@@ -762,6 +770,8 @@ merge_interfaces(struct area *a, struct area *xa)
 		i->transmit_delay = xi->transmit_delay;
 		i->hello_interval = xi->hello_interval;
 		i->rxmt_interval = xi->rxmt_interval;
+		if (i->metric != xi->metric)
+			dirty = 1;
 		i->metric = xi->metric;
 		i->priority = xi->priority;
 		i->flags = xi->flags; /* needed? */
@@ -783,6 +793,7 @@ merge_interfaces(struct area *a, struct area *xa)
 				if_fsm(i, IF_EVT_UP);
 		}
 	}
+	return (dirty);
 }
 
 struct iface *
