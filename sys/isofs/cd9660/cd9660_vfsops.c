@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.43 2007/03/21 13:44:04 pedro Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.44 2007/03/25 10:20:50 pedro Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -359,7 +359,11 @@ iso_mountfs(devvp, mp, p, argp)
 	isomp->root_extent = isonum_733 (rootp->extent);
 	isomp->root_size = isonum_733 (rootp->size);
 	isomp->joliet_level = 0;
-	
+	/*                                                                  
+	 * Since an ISO9660 multi-session CD can also access previous sessions,
+	 * we have to include them into the space considerations.
+	 */
+	isomp->volume_space_size += sess;
 	isomp->im_bmask = logical_block_size - 1;
 	isomp->im_bshift = ffs(logical_block_size) - 1;
 
