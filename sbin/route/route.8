@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.52 2007/03/23 20:29:35 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.53 2007/03/25 16:10:35 claudio Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -38,7 +38,7 @@
 .Nd manually manipulate the routing tables
 .Sh SYNOPSIS
 .Nm route
-.Op Fl dFnqtv
+.Op Fl dnqtv
 .Op Fl T Ar tableid
 .Ar command
 .Oo
@@ -75,9 +75,6 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
 Run in debug-only mode, i.e., don't actually modify the routing table.
-.It Fl F
-When showing routes, only show routes whose gateway are in the
-same address family as the destination.
 .It Fl n
 Bypass attempts to print host and network names symbolically
 when reporting actions.
@@ -168,7 +165,13 @@ command has the syntax:
 .Nm route Op Fl n
 .Cm show
 .Op Ar family
+.Op Fl gateway
 .Ed
+.Pp
+If
+.Fl gateway
+is specified, only routes whose gateway are in the
+same address family as the destination are shown.
 .Pp
 The other commands have the syntax:
 .Bd -filled -offset indent

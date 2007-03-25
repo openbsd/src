@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.107 2007/03/23 20:33:10 jmc Exp $	*/
+/*	$OpenBSD: route.c,v 1.108 2007/03/25 16:10:35 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ usage(char *cp)
 	if (cp)
 		warnx("botched keyword: %s", cp);
 	fprintf(stderr,
-	    "usage: %s [-dFnqtv] [-T tableid] command [[modifiers] args]\n",
+	    "usage: %s [-dnqtv] [-T tableid] command [[modifiers] args]\n",
 	    __progname);
 	fprintf(stderr,
 	    "commands: add, change, delete, flush, get, monitor, show\n");
@@ -137,11 +137,8 @@ main(int argc, char **argv)
 	if (argc < 2)
 		usage(NULL);
 
-	while ((ch = getopt(argc, argv, "dFnqtT:v")) != -1)
+	while ((ch = getopt(argc, argv, "dnqtT:v")) != -1)
 		switch (ch) {
-		case 'F':
-			Fflag = 1;
-			break;
 		case 'n':
 			nflag = 1;
 			break;
@@ -582,9 +579,8 @@ show(int argc, char *argv[])
 {
 	int	af = 0;
 
-	if (argc > 1) {
-		argv++;
-		if (argc == 2 && **argv == '-')
+	while (--argc > 0) {
+		if (**(++argv)== '-')
 			switch (keyword(*argv + 1)) {
 			case K_INET:
 				af = AF_INET;
@@ -600,6 +596,9 @@ show(int argc, char *argv[])
 				break;
 			case K_ENCAP:
 				af = PF_KEY;
+				break;
+			case K_GATEWAY:
+				Fflag = 1;
 				break;
 			default:
 				usage(*argv);
