@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.133 2007/03/18 23:23:17 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.134 2007/03/25 18:26:23 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -193,6 +193,7 @@ void	carp_send_arp(struct carp_softc *);
 void	carp_master_down(void *);
 int	carp_ioctl(struct ifnet *, u_long, caddr_t);
 void	carp_ifgroup_ioctl(struct ifnet *, u_long, caddr_t);
+void	carp_ifgattr_ioctl(struct ifnet *, u_long, caddr_t);
 void	carp_start(struct ifnet *);
 void	carp_setrun(struct carp_softc *, sa_family_t);
 void	carp_set_state(struct carp_softc *, int);
@@ -2218,6 +2219,9 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		if (sc->sc_suppress)
 			carp_ifgroup_ioctl(ifp, cmd, addr);
 		break;
+	case SIOCSIFGATTR:
+		carp_ifgattr_ioctl(ifp, cmd, addr);
+		break;
 	default:
 		error = EINVAL;
 	}
@@ -2244,6 +2248,18 @@ carp_ifgroup_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 			    ifgl->ifgl_group->ifg_carp_demoted)
 				ifgl->ifgl_group->ifg_carp_demoted--;
 		}
+}
+
+void
+carp_ifgattr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
+{
+	struct ifgroupreq *ifgr = (struct ifgroupreq *)addr;
+	struct carp_softc *sc = ifp->if_softc;
+
+	if (ifgr->ifgr_attrib.ifg_carp_demoted > 0 && (sc->sc_if.if_flags &
+	    (IFF_UP|IFF_RUNNING)) == (IFF_UP|IFF_RUNNING) &&
+	    sc->sc_state == MASTER)
+		carp_send_ad(sc);
 }
 
 /*
