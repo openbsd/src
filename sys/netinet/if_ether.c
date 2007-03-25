@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.67 2007/03/18 23:23:17 mpf Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.68 2007/03/25 16:43:22 claudio Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -385,14 +385,20 @@ arpresolve(ac, rt, m, dst, desten)
 		ETHER_MAP_IP_MULTICAST(&SIN(dst)->sin_addr, desten);
 		return (1);
 	}
-	if (rt)
+	if (rt) {
 		la = (struct llinfo_arp *)rt->rt_llinfo;
-	else {
+		if (la == NULL)
+			log(LOG_DEBUG, "arpresolve: %s: route without link "
+			    "local address\n", inet_ntoa(SIN(dst)->sin_addr));
+	} else {
 		if ((la = arplookup(SIN(dst)->sin_addr.s_addr, 1, 0)) != NULL)
 			rt = la->la_rt;
+		else
+			log(LOG_DEBUG,
+			    "arpresolve: %s: can't allocate llinfo\n",
+			    inet_ntoa(SIN(dst)->sin_addr));
 	}
 	if (la == 0 || rt == 0) {
-		log(LOG_DEBUG, "arpresolve: can't allocate llinfo\n");
 		m_freem(m);
 		return (0);
 	}
