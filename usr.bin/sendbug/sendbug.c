@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.15 2007/03/23 17:18:07 deraadt Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.16 2007/03/25 23:18:56 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -187,15 +187,17 @@ editit(char *tmpfile)
 	(void)signal(SIGINT, SIG_IGN);
 	(void)signal(SIGQUIT, SIG_IGN);
 	if ((pid = fork()) < 0) {
+		int saved_errno = errno;
+
 		(void)signal(SIGHUP, SIG_DFL);
 		(void)signal(SIGINT, SIG_DFL);
 		(void)signal(SIGQUIT, SIG_DFL);
-		if (errno == EPROCLIM) {
+		if (saved_errno == EPROCLIM) {
 			warnx("you have too many processes");
 			free(p);
 			return(0);
 		}
-		if (errno == EAGAIN) {
+		if (saved_errno == EAGAIN) {
 			sleep(1);
 			goto top;
 		}
