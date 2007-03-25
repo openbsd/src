@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.39 2006/07/31 11:51:29 mickey Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.40 2007/03/25 11:31:07 art Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ ReStart:
 	kva = 0;			/* let system choose VA */
 
 	if (uvm_map(pager_map, &kva, size, NULL, 
-	      UVM_UNKNOWN_OFFSET, 0, UVM_FLAG_NOMERGE) != KERN_SUCCESS) {
+	      UVM_UNKNOWN_OFFSET, 0, UVM_FLAG_NOMERGE) != 0) {
 		if (curproc == uvm.pagedaemon_proc) {
 			simple_lock(&pager_map_wanted_lock);
 			if (emerginuse) {

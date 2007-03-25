@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.82 2006/07/31 11:51:29 mickey Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.83 2007/03/25 11:31:07 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -876,7 +876,7 @@ uvm_map_p(map, startp, size, uobj, uoffset, align, flags, p)
 
 		UVMHIST_LOG(maphist,"<- done (via backmerge)!", 0, 0, 0, 0);
 		vm_map_unlock(map);
-		return (KERN_SUCCESS);
+		return (0);
 
 	}
 step3:
@@ -952,7 +952,7 @@ step3:
 
 	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
 	vm_map_unlock(map);
-	return(KERN_SUCCESS);
+	return (0);
 }
 
 /*
@@ -1658,7 +1658,7 @@ uvm_map_reserve(map, size, offset, align, raddr)
 
 	if (uvm_map(map, raddr, size, NULL, offset, 0,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	    UVM_ADV_RANDOM, UVM_FLAG_NOMERGE)) != KERN_SUCCESS) {
+	    UVM_ADV_RANDOM, UVM_FLAG_NOMERGE)) != 0) {
 	    UVMHIST_LOG(maphist, "<- done (no VM)", 0,0,0,0);
 		return (FALSE);
 	}     
@@ -2182,7 +2182,7 @@ uvm_map_submap(map, start, end, submap)
 		entry->object.sub_map = submap;
 		entry->offset = 0;
 		uvm_map_reference(submap);
-		result = KERN_SUCCESS;
+		result = 0;
 	} else {
 		result = KERN_INVALID_ARGUMENT;
 	}
@@ -2210,7 +2210,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 	boolean_t set_max;
 {
 	vm_map_entry_t current, entry;
-	int rv = KERN_SUCCESS;
+	int rv = 0;
 	UVMHIST_FUNC("uvm_map_protect"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_prot=0x%lx)",
 		    map, start, end, new_prot);
@@ -2282,9 +2282,8 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 		    VM_MAPENT_ISWIRED(entry) == 0 &&
 		    old_prot == VM_PROT_NONE &&
 		    new_prot != VM_PROT_NONE) {
-			if (uvm_map_pageable(map, entry->start,
-			    entry->end, FALSE,
-			    UVM_LK_ENTER|UVM_LK_EXIT) != KERN_SUCCESS) {
+			if (uvm_map_pageable(map, entry->start, entry->end,
+			    FALSE, UVM_LK_ENTER|UVM_LK_EXIT) != 0) {
 				/*
 				 * If locking the entry fails, remember the
 				 * error if it's the first one.  Note we
@@ -2364,7 +2363,7 @@ uvm_map_inherit(map, start, end, new_inheritance)
 
 	vm_map_unlock(map);
 	UVMHIST_LOG(maphist,"<- done (OK)",0,0,0,0);
-	return(KERN_SUCCESS);
+	return (0);
 }
 
 /* 
@@ -2419,7 +2418,7 @@ uvm_map_advice(map, start, end, new_advice)
 
 	vm_map_unlock(map);
 	UVMHIST_LOG(maphist,"<- done (OK)",0,0,0,0);
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 /*
@@ -2517,7 +2516,7 @@ uvm_map_pageable(map, start, end, new_pageable, lockflags)
 		if ((lockflags & UVM_LK_EXIT) == 0)
 			vm_map_unlock(map);
 		UVMHIST_LOG(maphist,"<- done (OK UNWIRE)",0,0,0,0);
-		return(KERN_SUCCESS);
+		return (0);
 	}
 
 	/*
@@ -2678,7 +2677,7 @@ uvm_map_pageable(map, start, end, new_pageable, lockflags)
 	}
 
 	UVMHIST_LOG(maphist,"<- done (OK WIRE)",0,0,0,0);
-	return(KERN_SUCCESS);
+	return (0);
 }
 
 /*
@@ -2726,7 +2725,7 @@ uvm_map_pageable_all(map, flags, limit)
 		vm_map_modflags(map, 0, VM_MAP_WIREFUTURE);
 		vm_map_unlock(map);
 		UVMHIST_LOG(maphist,"<- done (OK UNWIRE)",0,0,0,0);
-		return (KERN_SUCCESS);
+		return (0);
 
 		/*
 		 * end of unwire case!
@@ -2746,7 +2745,7 @@ uvm_map_pageable_all(map, flags, limit)
 		 */
 		UVMHIST_LOG(maphist,"<- done (OK no wire)",0,0,0,0);
 		vm_map_unlock(map);
-		return (KERN_SUCCESS);
+		return (0);
 	}
 
 	/*
@@ -2833,7 +2832,7 @@ uvm_map_pageable_all(map, flags, limit)
 	vm_map_busy(map);
 	vm_map_downgrade(map);
 
-	rv = KERN_SUCCESS;
+	rv = 0;
 	for (entry = map->header.next; entry != &map->header;
 	     entry = entry->next) {
 		if (entry->wired_count == 1) {
@@ -2900,7 +2899,7 @@ uvm_map_pageable_all(map, flags, limit)
 	vm_map_unlock_read(map);
 
 	UVMHIST_LOG(maphist,"<- done (OK WIRE)",0,0,0,0);
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 /*
@@ -2965,7 +2964,7 @@ uvm_map_clean(map, start, end, flags)
 		}
 	}
 
-	error = KERN_SUCCESS;
+	error = 0;
 
 	for (current = entry; current->start < end; current = current->next) {
 		amap = current->aref.ar_amap;	/* top layer */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.41 2006/07/31 11:51:29 mickey Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.42 2007/03/25 11:31:07 art Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -897,7 +897,7 @@ ReFault:
 		/* locked: nothing, pgo_fault has unlocked everything */
 
 		if (result == VM_PAGER_OK)
-			return (KERN_SUCCESS);	/* pgo_fault did pmap enter */
+			return (0);		/* pgo_fault did pmap enter */
 		else if (result == VM_PAGER_REFAULT)
 			goto ReFault;		/* try again! */
 		else
@@ -1251,7 +1251,7 @@ ReFault:
 	    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, 0);
 	if (pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
 	    enter_prot, access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0))
-	    != KERN_SUCCESS) {
+	    != 0) {
 		/*
 		 * No need to undo what we did; we can simply think of
 		 * this as the pmap throwing away the mapping information.
@@ -1303,7 +1303,7 @@ ReFault:
 
 	uvmfault_unlockall(&ufi, amap, uobj, oanon);
 	pmap_update(ufi.orig_map->pmap);
-	return (KERN_SUCCESS);
+	return (0);
 
 
 Case2:
@@ -1699,7 +1699,7 @@ Case2:
 	    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, promote);
 	if (pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
 	    enter_prot, access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0))
-	    != KERN_SUCCESS) {
+	    != 0) {
 
 		/*
 		 * No need to undo what we did; we can simply think of
@@ -1768,7 +1768,7 @@ Case2:
 	pmap_update(ufi.orig_map->pmap);
 
 	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 
@@ -1809,7 +1809,7 @@ uvm_fault_wire(map, start, end, access_type)
 		}
 	}
 
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 /*

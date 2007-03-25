@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_loan.c,v 1.22 2006/07/13 22:51:26 deraadt Exp $	*/
+/*	$OpenBSD: uvm_loan.c,v 1.23 2007/03/25 11:31:07 art Exp $	*/
 /*	$NetBSD: uvm_loan.c,v 1.22 2000/06/27 17:29:25 mrg Exp $	*/
 
 /*
@@ -290,7 +290,7 @@ uvm_loan(map, start, len, result, flags)
 	 * got it!   return success.
 	 */
 
-	return(KERN_SUCCESS);
+	return (0);
 
 fail:
 	/*

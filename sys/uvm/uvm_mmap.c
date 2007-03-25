@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.64 2007/02/25 19:24:59 millert Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.65 2007/03/25 11:31:07 art Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -829,7 +829,7 @@ sys_mprotect(p, v, retval)
 	rv = uvm_map_protect(&p->p_vmspace->vm_map, 
 			   addr, addr+size, prot, FALSE);
 
-	if (rv == KERN_SUCCESS)
+	if (rv == 0)
 		return (0);
 	if (rv == KERN_PROTECTION_FAILURE)
 		return (EACCES);
@@ -868,7 +868,7 @@ sys_minherit(p, v, retval)
 	
 	switch (uvm_map_inherit(&p->p_vmspace->vm_map, addr, addr+size,
 			 inherit)) {
-	case KERN_SUCCESS:
+	case 0:
 		return (0);
 	case KERN_PROTECTION_FAILURE:
 		return (EACCES);
@@ -1012,7 +1012,7 @@ sys_mlock(p, v, retval)
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, FALSE,
 	    0);
-	return (error == KERN_SUCCESS ? 0 : ENOMEM);
+	return (error == 0 ? 0 : ENOMEM);
 }
 
 /*
@@ -1054,7 +1054,7 @@ sys_munlock(p, v, retval)
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, TRUE,
 	    0);
-	return (error == KERN_SUCCESS ? 0 : ENOMEM);
+	return (error == 0 ? 0 : ENOMEM);
 }
 
 /*
@@ -1086,7 +1086,7 @@ sys_mlockall(p, v, retval)
 	error = uvm_map_pageable_all(&p->p_vmspace->vm_map, flags,
 	    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 	switch (error) {
-	case KERN_SUCCESS:
+	case 0:
 		error = 0;
 		break;
 
@@ -1270,7 +1270,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit, p)
 
 	retval = uvm_map_p(map, addr, size, uobj, foff, align, uvmflag, p);
 
-	if (retval == KERN_SUCCESS) {
+	if (retval == 0) {
 		/*
 		 * POSIX 1003.1b -- if our address space was configured
 		 * to lock all future mappings, wire the one we just made.
@@ -1304,7 +1304,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit, p)
 			 */
 			retval = uvm_map_pageable(map, *addr, *addr + size,
 			    FALSE, UVM_LK_ENTER);
-			if (retval != KERN_SUCCESS) {
+			if (retval != 0) {
 				/* unmap the region! */
 				uvm_unmap(map, *addr, *addr + size);
 				goto bad;
