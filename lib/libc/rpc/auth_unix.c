@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_unix.c,v 1.20 2006/11/10 17:29:31 grunk Exp $ */
+/*	$OpenBSD: auth_unix.c,v 1.21 2007/03/25 18:49:13 otto Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -136,7 +136,7 @@ authunix_create(char *machname, int uid, int gid, int len, int *aup_gids)
 	 */
 	xdrmem_create(&xdrs, mymem, MAX_AUTH_BYTES, XDR_ENCODE);
 	if (!xdr_authunix_parms(&xdrs, &aup)) 
-		abort();	/* XXX abort illegal in library */
+		goto authfail;	
 	au->au_origcred.oa_length = len = XDR_GETPOS(&xdrs);
 	au->au_origcred.oa_flavor = AUTH_UNIX;
 #ifdef KERNEL
@@ -144,10 +144,7 @@ authunix_create(char *machname, int uid, int gid, int len, int *aup_gids)
 #else
 	if ((au->au_origcred.oa_base = mem_alloc((u_int) len)) == NULL) {
 		(void)fprintf(stderr, "authunix_create: out of memory\n");
-		XDR_DESTROY(&xdrs);
-		free(au);
-		free(auth);
-		return (NULL);
+		goto authfail;	
 	}
 #endif
 	memcpy(au->au_origcred.oa_base, mymem, (u_int)len);
@@ -158,6 +155,12 @@ authunix_create(char *machname, int uid, int gid, int len, int *aup_gids)
 	auth->ah_cred = au->au_origcred;
 	marshal_new_auth(auth);
 	return (auth);
+
+authfail:
+	XDR_DESTROY(&xdrs);
+	free(au);
+	free(auth);
+	return (NULL);
 }
 
 
