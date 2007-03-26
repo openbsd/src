@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.21 2007/03/26 01:35:36 deraadt Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.22 2007/03/26 05:17:53 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -194,9 +194,6 @@ editit(char *tmpfile)
 		return (-1);
 	}
 	if (pid == 0) {
-		(void)signal(SIGHUP, SIG_DFL);
-		(void)signal(SIGINT, SIG_DFL);
-		(void)signal(SIGQUIT, SIG_DFL);
 		execv(_PATH_BSHELL, argp);
 		_exit(127);
 	}
