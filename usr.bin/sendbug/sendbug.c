@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.24 2007/03/26 05:39:51 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.25 2007/03/26 05:50:18 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -166,6 +166,7 @@ int
 editit(char *tmpfile)
 {
 	char *argp[] = {"sh", "-c", NULL, NULL}, *ed, *p;
+	sig_t sighup, sigint, sigquit;
 	pid_t pid, xpid;
 	int st;
 
@@ -176,15 +177,15 @@ editit(char *tmpfile)
 	argp[2] = p;
 
  top:
-	(void)signal(SIGHUP, SIG_IGN);
-	(void)signal(SIGINT, SIG_IGN);
-	(void)signal(SIGQUIT, SIG_IGN);
+	sighup = signal(SIGHUP, SIG_IGN);
+	sigint = signal(SIGINT, SIG_IGN);
+	sigquit = signal(SIGQUIT, SIG_IGN);
 	if ((pid = fork()) == -1) {
 		int saved_errno = errno;
 
-		(void)signal(SIGHUP, SIG_DFL);
-		(void)signal(SIGINT, SIG_DFL);
-		(void)signal(SIGQUIT, SIG_DFL);
+		(void)signal(SIGHUP, sighup);
+		(void)signal(SIGINT, sigint);
+		(void)signal(SIGQUIT, sigquit);
 		if (saved_errno == EAGAIN) {
 			sleep(1);
 			goto top;
@@ -211,9 +212,9 @@ editit(char *tmpfile)
 		else if (WIFEXITED(st))
 			break;
 	}
-	(void)signal(SIGHUP, SIG_DFL);
-	(void)signal(SIGINT, SIG_DFL);
-	(void)signal(SIGQUIT, SIG_DFL);
+	(void)signal(SIGHUP, sighup);
+	(void)signal(SIGINT, sigint);
+	(void)signal(SIGQUIT, sigquit);
 	if (!WIFEXITED(st) || WEXITSTATUS(st) != 0)
 		return (-1);
 	return (0);
