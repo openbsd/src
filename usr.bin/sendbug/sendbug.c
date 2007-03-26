@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.29 2007/03/26 07:06:03 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.30 2007/03/26 07:16:11 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -204,7 +204,7 @@ editit(char *tmpfile)
 	}
 	free(p);
 	for (;;) {
-		xpid = waitpid(pid, (int *)&st, WUNTRACED);
+		xpid = waitpid(pid, &st, WUNTRACED);
 		if (xpid == -1) {
 			if (errno != EINTR)
 				return (-1);
