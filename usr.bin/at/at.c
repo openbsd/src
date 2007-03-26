@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.46 2006/04/26 03:01:48 cloder Exp $	*/
+/*	$OpenBSD: at.c,v 1.47 2007/03/26 13:55:42 jmc Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -42,7 +42,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.46 2006/04/26 03:01:48 cloder Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.47 2007/03/26 13:55:42 jmc Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -892,9 +892,9 @@ usage(void)
 	case AT:
 	case CAT:
 		(void)fprintf(stderr,
-		    "usage: at [-blm] [-f file] [-q queue] -t time_arg\n"
-		    "       at [-blm] [-f file] [-q queue] timespec\n"
-		    "       at -c | -r job [job ...]\n");
+		    "usage: at [-bm] [-f file] [-l [user ...]] [-q queue] "
+		    "-t time_arg | timespec\n"
+		    "       at -c | -r job ...\n");
 		break;
 	case ATQ:
 		(void)fprintf(stderr,

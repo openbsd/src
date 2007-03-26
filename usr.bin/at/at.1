@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.33 2005/09/30 20:34:25 jaredy Exp $
+.\" $OpenBSD: at.1,v 1.34 2007/03/26 13:55:42 jmc Exp $
 .\"
 .\" Copyright (C) 1993, 1994  Thomas Koenig
 .\" Copyright (C) 1993  David Parsons
@@ -33,18 +33,14 @@
 .Nd queue, examine or delete jobs for later execution
 .Sh SYNOPSIS
 .Nm at
-.Op Fl blm
+.Op Fl bm
 .Op Fl f Ar file
+.Op Fl l Op Ar user ...
 .Op Fl q Ar queue
-.Fl t Ar time_arg
-.Nm at
-.Op Fl blm
-.Op Fl f Ar file
-.Op Fl q Ar queue
-.Ar timespec
+.Fl t Ar time_arg | timespec
 .Nm at
 .Fl c | r
-.Ar job Op Ar job ...
+.Ar job ...
 .Nm batch
 .Op Fl m
 .Op Fl f Ar file
@@ -83,16 +79,20 @@ The options are as follows:
 .It Fl b
 An alias for
 .Nm batch .
-.It Fl c
+.It Fl c Ar job ...
 Prints the jobs listed on the command line to standard output.
 .It Fl f Ar file
 Reads the job from
 .Ar file
 rather than standard input.
-.It Fl l
-Lists the user's pending jobs, unless the user is the superuser.
-In that case, all users' jobs are listed.
-.\" XXX - should document that user names may be specified (like atq)
+.It Fl l Op Ar user ...
+Displays the queue of jobs which are currently awaiting execution.
+If a
+.Ar user
+argument is specified, only jobs belonging to that user will
+be displayed.
+Unless the user is the superuser, only the user's own jobs will be
+displayed.
 .It Fl m
 Send mail to the user when the job has completed, even if there was no
 output.
@@ -123,7 +123,7 @@ If the user specified the
 option and
 .Nm at
 is given a specific queue, only jobs pending in that queue will be shown.
-.It Fl r
+.It Fl r Ar job ...
 Remove the specified job(s) from the
 .Nm at
 queue.
@@ -307,6 +307,8 @@ allow permission control
 deny permission control
 .El
 .Sh SEE ALSO
+.Xr atq 1 ,
+.Xr atrm 1 ,
 .Xr nice 1 ,
 .Xr sh 1 ,
 .Xr touch 1 ,
