@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.16 2006/12/12 23:14:27 dim Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.17 2007/03/26 00:27:43 gwk Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -82,7 +82,7 @@ struct cfdriver ichpcib_cd = {
 
 #ifndef SMALL_KERNEL
 static const char p4hint[] = "Mobile Intel(R) Pentium(R) 4";
-static void *ichss_cookie;	/* XXX */
+struct ichpcib_softc *ichss_sc;
 extern int setperf_prio;
 #endif	/* !SMALL_KERNEL */
 
@@ -159,7 +159,7 @@ ichpcib_attach(struct device *parent, struct device *self, void *aux)
 			ICH_GEN_PMCON1_SS_EN);
 
 		/* Hook into hw.setperf sysctl */
-		ichss_cookie = sc;
+		ichss_sc = sc;
 		cpu_setperf = ichss_setperf;
 		setperf_prio = 2;
 	}
@@ -232,13 +232,13 @@ ichss_present(struct pci_attach_args *pa)
 void
 ichss_setperf(int level)
 {
-	struct ichpcib_softc *sc = ichss_cookie;
+	struct ichpcib_softc *sc = ichss_sc;
 	u_int8_t state, ostate, cntl;
 	int s;
 
 #ifdef DIAGNOSTIC
 	if (sc == NULL) {
-		printf("%s: no cookie", __func__);
+		printf("%s: no ichss_sc", __func__);
 		return;
 	}
 #endif
