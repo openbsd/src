@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.83 2007/03/25 11:31:07 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.84 2007/03/26 08:43:34 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -749,7 +749,7 @@ uvm_map_p(map, startp, size, uobj, uoffset, align, flags, p)
 	if ((prot & maxprot) != prot) {
 		UVMHIST_LOG(maphist, "<- prot. failure: prot=0x%lx, max=0x%lx",
 		    prot, maxprot,0,0);
-		return(KERN_PROTECTION_FAILURE);
+		return (EACCES);
 	}
 
 	/*
@@ -758,14 +758,14 @@ uvm_map_p(map, startp, size, uobj, uoffset, align, flags, p)
 
 	if (vm_map_lock_try(map) == FALSE) {
 		if (flags & UVM_FLAG_TRYLOCK)
-			return(KERN_FAILURE);
+			return (EFAULT);
 		vm_map_lock(map); /* could sleep here */
 	}
 	if ((prev_entry = uvm_map_findspace(map, *startp, size, startp, 
 	    uobj, uoffset, align, flags)) == NULL) {
 		UVMHIST_LOG(maphist,"<- uvm_map_findspace failed!",0,0,0,0);
 		vm_map_unlock(map);
-		return (KERN_NO_SPACE);
+		return (ENOMEM);
 	}
 
 #ifdef PMAP_GROWKERNEL
@@ -2184,7 +2184,7 @@ uvm_map_submap(map, start, end, submap)
 		uvm_map_reference(submap);
 		result = 0;
 	} else {
-		result = KERN_INVALID_ARGUMENT;
+		result = EINVAL;
 	}
 	vm_map_unlock(map);
 	return(result);
@@ -2232,11 +2232,11 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 	current = entry;
 	while ((current != &map->header) && (current->start < end)) {
 		if (UVM_ET_ISSUBMAP(current)) {
-			rv = KERN_INVALID_ARGUMENT;
+			rv = EINVAL;
 			goto out;
 		}
 		if ((new_prot & current->max_protection) != new_prot) {
-			rv = KERN_PROTECTION_FAILURE;
+			rv = EACCES;
 			goto out;
 		}
 		current = current->next;
@@ -2297,7 +2297,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 				 * XXX what uvm_map_protect() itself would
 				 * XXX normally return.
 				 */
-				rv = KERN_RESOURCE_SHORTAGE;
+				rv = ENOMEM;
 			}
 		}
 
@@ -2341,7 +2341,7 @@ uvm_map_inherit(map, start, end, new_inheritance)
 		break;
 	default:
 		UVMHIST_LOG(maphist,"<- done (INVALID ARG)",0,0,0,0);
-		return (KERN_INVALID_ARGUMENT);
+		return (EINVAL);
 	}
 
 	vm_map_lock(map);
@@ -2410,7 +2410,7 @@ uvm_map_advice(map, start, end, new_advice)
 		default:
 			vm_map_unlock(map);
 			UVMHIST_LOG(maphist,"<- done (INVALID ARG)",0,0,0,0);
-			return (KERN_INVALID_ARGUMENT);
+			return (EINVAL);
 		}
 		entry->advice = new_advice;
 		entry = entry->next;
@@ -2470,7 +2470,7 @@ uvm_map_pageable(map, start, end, new_pageable, lockflags)
 			vm_map_unlock(map);
 
 		UVMHIST_LOG(maphist,"<- done (INVALID ARG)",0,0,0,0);
-		return (KERN_INVALID_ADDRESS);
+		return (EFAULT);
 	}
 	entry = start_entry;
 
@@ -2495,7 +2495,7 @@ uvm_map_pageable(map, start, end, new_pageable, lockflags)
 					vm_map_unlock(map);
 				UVMHIST_LOG(maphist,
 				    "<- done (INVALID UNWIRE ARG)",0,0,0,0);
-				return (KERN_INVALID_ARGUMENT);
+				return (EINVAL);
 			}
 			entry = entry->next;
 		}
@@ -2586,7 +2586,7 @@ uvm_map_pageable(map, start, end, new_pageable, lockflags)
 			if ((lockflags & UVM_LK_EXIT) == 0)
 				vm_map_unlock(map);
 			UVMHIST_LOG(maphist,"<- done (INVALID WIRE)",0,0,0,0);
-			return (KERN_INVALID_ARGUMENT);
+			return (EINVAL);
 		}
 		entry = entry->next;
 	}
@@ -2781,7 +2781,7 @@ uvm_map_pageable_all(map, flags, limit)
 
 	if (atop(size) + uvmexp.wired > uvmexp.wiredmax) {
 		vm_map_unlock(map);
-		return (KERN_NO_SPACE);		/* XXX overloaded */
+		return (ENOMEM);		/* XXX overloaded */
 	}
 
 	/* XXX non-pmap_wired_count case must be handled by caller */
@@ -2789,7 +2789,7 @@ uvm_map_pageable_all(map, flags, limit)
 	if (limit != 0 &&
 	    (size + ptoa(pmap_wired_count(vm_map_pmap(map))) > limit)) {
 		vm_map_unlock(map);
-		return (KERN_NO_SPACE);		/* XXX overloaded */
+		return (ENOMEM);		/* XXX overloaded */
 	}
 #endif
 
@@ -2945,7 +2945,7 @@ uvm_map_clean(map, start, end, flags)
 	VM_MAP_RANGE_CHECK(map, start, end);
 	if (uvm_map_lookup_entry(map, start, &entry) == FALSE) {
 		vm_map_unlock_read(map);
-		return(KERN_INVALID_ADDRESS);
+		return (EFAULT);
 	}
 
 	/*
@@ -2955,12 +2955,12 @@ uvm_map_clean(map, start, end, flags)
 	for (current = entry; current->start < end; current = current->next) {
 		if (UVM_ET_ISSUBMAP(current)) {
 			vm_map_unlock_read(map);
-			return (KERN_INVALID_ARGUMENT);
+			return (EINVAL);
 		}
 		if (end > current->end && (current->next == &map->header ||
 		    current->end != current->next->start)) {
 			vm_map_unlock_read(map);
-			return (KERN_INVALID_ADDRESS);
+			return (EFAULT);
 		}
 	}
 
@@ -3102,7 +3102,7 @@ uvm_map_clean(map, start, end, flags)
 			simple_unlock(&uobj->vmobjlock);
 
 			if (rv == FALSE)
-				error = KERN_FAILURE;
+				error = EFAULT;
 		}
 		start += size;
 	}

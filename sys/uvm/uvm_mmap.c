@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.65 2007/03/25 11:31:07 art Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.66 2007/03/26 08:43:34 art Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -831,7 +831,7 @@ sys_mprotect(p, v, retval)
 
 	if (rv == 0)
 		return (0);
-	if (rv == KERN_PROTECTION_FAILURE)
+	if (rv == EACCES)
 		return (EACCES);
 	return (EINVAL);
 }
@@ -870,7 +870,7 @@ sys_minherit(p, v, retval)
 			 inherit)) {
 	case 0:
 		return (0);
-	case KERN_PROTECTION_FAILURE:
+	case EACCES:
 		return (EACCES);
 	}
 	return (EINVAL);
@@ -1090,7 +1090,7 @@ sys_mlockall(p, v, retval)
 		error = 0;
 		break;
 
-	case KERN_NO_SPACE:	/* XXX overloaded */
+	case ENOMEM:
 		error = ENOMEM;
 		break;
 
@@ -1292,7 +1292,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit, p)
 			        locklimit)
 #endif
 			) {
-				retval = KERN_RESOURCE_SHORTAGE;
+				retval = ENOMEM;
 				vm_map_unlock(map);
 				/* unmap the region! */
 				uvm_unmap(map, *addr, *addr + size);

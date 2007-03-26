@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_loan.c,v 1.23 2007/03/25 11:31:07 art Exp $	*/
+/*	$OpenBSD: uvm_loan.c,v 1.24 2007/03/26 08:43:34 art Exp $	*/
 /*	$NetBSD: uvm_loan.c,v 1.22 2000/06/27 17:29:25 mrg Exp $	*/
 
 /*
@@ -234,7 +234,7 @@ uvm_loan(map, start, len, result, flags)
 	if ((flags & (UVM_LOAN_TOANON|UVM_LOAN_TOPAGE)) == 
 	    (UVM_LOAN_TOANON|UVM_LOAN_TOPAGE) ||
 	    (flags & (UVM_LOAN_TOANON|UVM_LOAN_TOPAGE)) == 0)
-		return(KERN_FAILURE);
+		return (EFAULT);
 
 	/*
 	 * "output" is a pointer to the current place to put the loaned
@@ -304,7 +304,7 @@ fail:
 			uvm_unloanpage((struct vm_page **)result,
 			    output - result);
 	}
-	return(KERN_FAILURE);
+	return (EFAULT);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.42 2007/03/25 11:31:07 art Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.43 2007/03/26 08:43:34 art Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -608,7 +608,7 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 	if (orig_map == kernel_map && uvmfault_check_intrsafe(&ufi)) {
 		UVMHIST_LOG(maphist, "<- VA 0x%lx in intrsafe map %p",
 		    ufi.orig_rvaddr, ufi.map, 0, 0);
-		return (KERN_FAILURE);
+		return (EFAULT);
 	}
 
 	/*
@@ -622,7 +622,7 @@ ReFault:
 
 	if (uvmfault_lookup(&ufi, FALSE) == FALSE) {
 		UVMHIST_LOG(maphist, "<- no mapping @ 0x%lx", vaddr, 0,0,0);
-		return (KERN_INVALID_ADDRESS);
+		return (EFAULT);
 	}
 	/* locked: maps(read) */
 
@@ -635,7 +635,7 @@ ReFault:
 		    "<- protection failure (prot=0x%lx, access=0x%lx)",
 		    ufi.entry->protection, access_type, 0, 0);
 		uvmfault_unlockmaps(&ufi, FALSE);
-		return (KERN_PROTECTION_FAILURE);
+		return (EACCES);
 	}
 
 	/*
@@ -646,7 +646,7 @@ ReFault:
 		UVMHIST_LOG(maphist,
 		    "<- map %p not pageable", ufi.map, 0, 0, 0);
 		uvmfault_unlockmaps(&ufi, FALSE);
-		return (KERN_FAILURE);
+		return (EFAULT);
 	}
 
 	/*
@@ -705,7 +705,7 @@ ReFault:
 	if (amap == NULL && uobj == NULL) {
 		uvmfault_unlockmaps(&ufi, FALSE);
 		UVMHIST_LOG(maphist,"<- no backing store, no overlay",0,0,0,0);
-		return (KERN_INVALID_ADDRESS);
+		return (EFAULT);
 	}
 
 	/*
@@ -901,7 +901,7 @@ ReFault:
 		else if (result == VM_PAGER_REFAULT)
 			goto ReFault;		/* try again! */
 		else
-			return (KERN_PROTECTION_FAILURE);
+			return (EACCES);
 	}
 
 	/*
@@ -1075,13 +1075,13 @@ ReFault:
 		 * page -- this is the only error we return right
 		 * now.
 		 */
-		return (KERN_PROTECTION_FAILURE);	/* XXX */
+		return (EACCES);	/* XXX */
 
 	default:
 #ifdef DIAGNOSTIC
 		panic("uvm_fault: uvmfault_anonget -> %d", result);
 #else
-		return (KERN_PROTECTION_FAILURE);
+		return (EACCES);
 #endif
 	}
 
@@ -1203,7 +1203,7 @@ ReFault:
 				UVMHIST_LOG(maphist,
 				    "<- failed.  out of VM",0,0,0,0);
 				uvmexp.fltnoanon++;
-				return (KERN_RESOURCE_SHORTAGE);
+				return (ENOMEM);
 			}
 
 			uvmexp.fltnoram++;
@@ -1265,7 +1265,7 @@ ReFault:
 			UVMHIST_LOG(maphist,
 			    "<- failed.  out of VM",0,0,0,0);
 			/* XXX instrumentation */
-			return (KERN_RESOURCE_SHORTAGE);
+			return (ENOMEM);
 		}
 		/* XXX instrumentation */
 		uvm_wait("flt_pmfail1");
@@ -1379,7 +1379,7 @@ Case2:
 
 			UVMHIST_LOG(maphist, "<- pgo_get failed (code %ld)",
 			    result, 0,0,0);
-			return (KERN_PROTECTION_FAILURE); /* XXX i/o error */
+			return (EACCES); /* XXX i/o error */
 		}
 
 		/* locked: uobjpage */
@@ -1619,7 +1619,7 @@ Case2:
 				UVMHIST_LOG(maphist, "  promote: out of VM",
 				    0,0,0,0);
 				uvmexp.fltnoanon++;
-				return (KERN_RESOURCE_SHORTAGE);
+				return (ENOMEM);
 			}
 
 			UVMHIST_LOG(maphist, "  out of RAM, waiting for more",
@@ -1725,7 +1725,7 @@ Case2:
 			UVMHIST_LOG(maphist,
 			    "<- failed.  out of VM",0,0,0,0);
 			/* XXX instrumentation */
-			return (KERN_RESOURCE_SHORTAGE);
+			return (ENOMEM);
 		}
 		/* XXX instrumentation */
 		uvm_wait("flt_pmfail2");

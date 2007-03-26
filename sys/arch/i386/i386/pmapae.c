@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.8 2007/03/18 14:23:57 mickey Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.9 2007/03/26 08:43:34 art Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -1976,7 +1976,7 @@ pmap_enter_pae(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		ptp = pmap_get_ptp_pae(pmap, pdei(va), FALSE);
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
-				error = KERN_RESOURCE_SHORTAGE;
+				error = ENOMEM;
 				goto out;
 			}
 			panic("pmap_enter: get ptp failed");
@@ -2077,7 +2077,7 @@ pmap_enter_pae(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			pve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
 			if (pve == NULL) {
 				if (flags & PMAP_CANFAIL) {
-					error = KERN_RESOURCE_SHORTAGE;
+					error = ENOMEM;
 					goto out;
 				}
 				panic("pmap_enter: no pv entries available");
