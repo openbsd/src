@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.23 2007/03/26 05:34:30 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.24 2007/03/26 05:39:51 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -189,6 +189,7 @@ editit(char *tmpfile)
 			sleep(1);
 			goto top;
 		}
+		errno = saved_errno;
 		perror("fork");
 		free(p);
 		return (-1);
