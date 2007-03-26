@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.29 2007/03/25 13:14:41 pedro Exp $
+.\"	$OpenBSD: uvm.9,v 1.30 2007/03/26 08:28:09 art Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -296,7 +296,7 @@ If
 is non-zero and
 .Fn pmap_wired_count
 is implemented,
-.Dv KERN_NO_SPACE
+.Dv ENOMEM
 is returned if the amount of wired pages exceed
 .Fa limit .
 The map is locked on entry if
@@ -996,28 +996,6 @@ with credentials
 .Fa cred
 and core header description in
 .Fa chdr .
-.Sh STANDARD UVM RETURN VALUES
-This section documents the standard return values that callers of UVM
-functions can expect.
-They are derived from the Mach VM values of the same function.
-The full list of values can be seen below.
-.Bd -literal
-#define KERN_INVALID_ADDRESS    1
-#define KERN_PROTECTION_FAILURE 2
-#define KERN_NO_SPACE           3
-#define KERN_INVALID_ARGUMENT   4
-#define KERN_FAILURE            5
-#define KERN_RESOURCE_SHORTAGE  6
-#define KERN_NOT_RECEIVER       7
-#define KERN_NO_ACCESS          8
-#define KERN_PAGES_LOCKED       9
-.Ed
-.Pp
-Note that
-.Dv KERN_NOT_RECEIVER
-and
-.Dv KERN_PAGES_LOCKED
-values are not actually returned by the UVM code.
 .Sh NOTES
 The structure and types whose names begin with
 .Dq vm_
