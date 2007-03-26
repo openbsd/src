@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.25 2007/03/26 05:50:18 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.26 2007/03/26 06:22:12 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -170,7 +170,10 @@ editit(char *tmpfile)
 	pid_t pid, xpid;
 	int st;
 
-	if ((ed = getenv("EDITOR")) == (char *)0)
+	ed = getenv("VISUAL");
+	if (ed == NULL || ed[0] == '\0')
+		ed = getenv("EDITOR");
+	if (ed == NULL || ed[0] == '\0')
 		ed = _PATH_VI;
 	if (asprintf(&p, "%s %s", ed, tmpfile) == -1)
 		return (-1);

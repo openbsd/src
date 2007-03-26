@@ -1,4 +1,4 @@
-.\" $OpenBSD: sendbug.1,v 1.8 2007/03/23 15:40:12 jmc Exp $
+.\" $OpenBSD: sendbug.1,v 1.9 2007/03/26 06:22:12 ray Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
@@ -48,11 +48,20 @@ This allows users to search for PRs based on either their PR number
 or content.
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
-.It Ev EDITOR
+.It Ev EDITOR , VISUAL
 Specifies an editor to use.
-If
+If both
 .Ev EDITOR
-is not set,
+and
+.Ev VISUAL
+are set,
+.Ev VISUAL
+takes precedence.
+If neither
+.Ev EDITOR
+nor
+.Ev VISUAL
+are set,
 the default is
 .Xr vi 1 .
 .It Ev PR_FORM
