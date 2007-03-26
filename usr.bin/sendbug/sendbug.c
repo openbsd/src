@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.22 2007/03/26 05:17:53 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.23 2007/03/26 05:34:30 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -179,7 +179,7 @@ editit(char *tmpfile)
 	(void)signal(SIGHUP, SIG_IGN);
 	(void)signal(SIGINT, SIG_IGN);
 	(void)signal(SIGQUIT, SIG_IGN);
-	if ((pid = fork()) < 0) {
+	if ((pid = fork()) == -1) {
 		int saved_errno = errno;
 
 		(void)signal(SIGHUP, SIG_DFL);
