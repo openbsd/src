@@ -1,4 +1,4 @@
-/*	$OpenBSD: silireg.h,v 1.6 2007/03/26 00:33:38 dlg Exp $ */
+/*	$OpenBSD: silireg.h,v 1.7 2007/03/26 01:55:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -27,6 +27,20 @@
 #define SILI_REG_PORT2_STATUS	0x08 /* Port 2 Slot Status */
 #define SILI_REG_PORT3_STATUS	0x0c /* Port 3 Slot Status */
 #define SILI_REG_GC		0x40 /* Global Control */
+#define  SILI_REG_GC_GR			(1<<31) /* Global Reset */
+#define  SILI_REG_GC_MSIACK		(1<<30) /* MSI Acknowledge */
+#define  SILI_REG_GC_I2CINT		(1<<29) /* I2C Interrupt Enable */
+#define  SILI_REG_GC_PERRDIS		(1<<28) /* PCI Error Report Disable */
+#define  SILI_REG_GC_REQ64		(1<<20) /* latched PCI REQ64 */
+#define  SILI_REG_GC_DEVSEL		(1<<19) /* latched PCI DEVSEL */
+#define  SILI_REG_GC_STOP		(1<<18) /* latched PCI STOP */
+#define  SILI_REG_GC_TRDY		(1<<17) /* latched PCI TRDY */   
+#define  SILI_REG_GC_M66EN		(1<<16) /* M66EN PCI bus signal */
+#define  SILI_REG_GC_PIE_MASK		0x0f
+#define SILI_FMT_GC		"\020" "\040GR" "\037MSIACK" "\036I2CINT" \
+				    "\035PERRDIS" "\025REQ64" "\024DEVSEL" \
+				    "\023STOP" "\022TRDY" "\021M66EN" \
+				    "\004P3IE" "\003P2IE" "\002P1IE" "\001P0IE"
 #define SILI_REG_GIS		0x40 /* Global Interrupt Status */
 #define SILI_REG_PHYCONF	0x48 /* PHY Configuration */
 #define SILI_REG_BISTCTL	0x50 /* BIST Control */
