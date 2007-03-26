@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.98 2007/03/15 21:56:25 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.99 2007/03/26 15:20:43 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -104,6 +104,18 @@ flag,
 it will consult a pre-defined set of blacklist addresses
 to decide whether to tarpit the host or not.
 .Pp
+When a sending hosts talks to  
+.Nm ,
+the reply will be
+.Em stuttered .
+That is,
+the response will be sent back a character at a time, slowly.
+For blacklisted hosts,
+the entire dialogue is stuttered.
+For greylisted hosts,
+the default is to stutter for the first 10 seconds
+of dialogue only.
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl 4
@@ -111,11 +123,13 @@ For blacklisted entries, return error code 450 to the spammer (default).
 .It Fl 5
 For blacklisted entries, return error code 550 to the spammer.
 .It Fl B Ar maxblack
-The maximum number of concurrent blacklisted connections to allow.
+The maximum number of concurrent blacklisted connections to stutter at.
 This value may not be greater than maxcon (see below).
 The default is
 .Ar maxcon
 \- 100.
+When this value is exceeded new blacklisted connections will not be stuttered
+at.
 .It Fl b
 Run in blacklist-only mode.
 .It Fl c Ar maxcon

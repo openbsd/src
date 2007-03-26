@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.98 2007/03/07 11:30:43 jmc Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.99 2007/03/26 15:20:43 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -658,10 +658,8 @@ initcon(struct con *cp, int fd, struct sockaddr *sa)
 	clients++;
 	if (cp->blacklists != NULL) {
 		blackcount++;
-		if (greylist && blackcount > maxblack) {
-			closecon(cp); /* close and free */
-			return;
-		}
+		if (greylist && blackcount > maxblack)
+			cp->stutter = 0;
 		cp->lists = strdup(loglists(cp));
 	}
 	else
@@ -842,20 +840,29 @@ nextstate(struct con *cp)
 				syslog_r(LOG_DEBUG, &sdata,"setsockopt: %m");
 				/* don't fail if this doesn't work. */
 			}
+			cp->ip = cp->ibuf;
+			cp->il = sizeof(cp->ibuf) - 1;
+			cp->op = cp->obuf;
+			cp->ol = strlen(cp->op);
+			cp->w = t + cp->stutter;
+			if (greylist && cp->blacklists == NULL) {
+				cp->laststate = cp->state;
+				cp->state = 98;
+				goto done;
+			}
 		} else {
-			snprintf(cp->obuf, cp->osize,
-			    "500 5.5.1 Command unrecognized\r\n");
+			if (match(cp->ibuf, "NOOP")) 
+				snprintf(cp->obuf, cp->osize,
+				    "250 2.0.0 OK I did nothing\r\n");
+			else
+                        	snprintf(cp->obuf, cp->osize,
+				    "500 5.5.1 Command unrecognized\r\n");
 			cp->state = cp->laststate;
-		}
-		cp->ip = cp->ibuf;
-		cp->il = sizeof(cp->ibuf) - 1;
-		cp->op = cp->obuf;
-		cp->ol = strlen(cp->op);
-		cp->w = t + cp->stutter;
-		if (greylist && cp->blacklists == NULL) {
-			cp->laststate = cp->state;
-			cp->state = 98;
-			goto done;
+			cp->ip = cp->ibuf;
+			cp->il = sizeof(cp->ibuf) - 1;
+			cp->op = cp->obuf;
+			cp->ol = strlen(cp->op);
+			cp->w = t + cp->stutter;
 		}
 		break;
 	case 60:
