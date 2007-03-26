@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.27 2007/03/26 06:40:01 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.28 2007/03/26 06:47:00 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -133,7 +133,8 @@ main(int argc, char *argv[])
 	mtime = sb.st_mtime;
 
  edit:
-	editit(tmppath);
+	if (editit(tmppath) == -1 && errno != ECHILD)
+		err(1, "error running editor");
 
 	if (stat(tmppath, &sb) == -1)
 		err(1, "stat");
