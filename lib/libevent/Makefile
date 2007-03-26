@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.26 2007/03/22 12:59:56 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.27 2007/03/26 18:43:18 deraadt Exp $
 
 LIB=	event
 WANTLINT=
-SRCS=	buffer.c evbuffer.c evdns.c event.c event_tagging.c http.c kqueue.c \
+SRCS=	buffer.c evbuffer.c evdns.c event.c event_tagging.c kqueue.c \
 	log.c poll.c select.c signal.c
 HDRS=	event.h evdns.h
 MAN=	evdns.3 event.3
@@ -27,7 +27,6 @@ MLINKS=	event.3 event_init.3 event.3 event_dispatch.3 event.3 event_loop.3 \
 	event.3 evbuffer_add_vprintf.3 event.3 evbuffer_drain.3 \
 	event.3 evbuffer_write.3 event.3 evbuffer_read.3 \
 	event.3 evbuffer_find.3 event.3 evbuffer_readline.3 \
-	event.3 evhttp_start.3 event.3 evhttp_free.3 \
 	evdns.3 evdns_init.3 evdns.3 evdns_shutdown.3 \
 	evdns.3 evdns_err_to_string.3 evdns.3 evdns_nameserver_add.3 \
 	evdns.3 evdns_count_nameservers.3 \
