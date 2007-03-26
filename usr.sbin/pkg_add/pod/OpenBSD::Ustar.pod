@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Ustar.pod,v 1.10 2007/03/26 23:26:50 espie Exp $
+$OpenBSD: OpenBSD::Ustar.pod,v 1.11 2007/03/26 23:36:26 espie Exp $
 
 =head1 NAME
 
@@ -83,18 +83,20 @@ C<$v = $o-E<gt>contents()>.
 Actual writing is performed through C<$o-E<gt>write()> and is not mandatory
 either.
 
-Archives should be closed using C<$wrarc-E<gt>close()>.
+Archives should be closed using C<$wrarc-E<gt>close()>, which will
+pad the archive as needed and close the underlying file handle.
 In particular, this is mandatory for write access, since valid archives
 require blank-filled blocks.
 
-Alternately, calling C<$wrarc-E<gt>pad()> after archiving
-all the entries will complete the archive with blank-filled blocks,
-in case one wants to close the associated file handle manually.
+This is equivalent to calling C<$wrarc-E<gt>pad()>, which will
+complete the archive with blank-filled blocks, then closing the
+associated file handle manually.
 
 Client code may decide to abort archive extraction early, or to run it through
 until C<$arc-E<gt>next()> returns false.  The C<OpenBSD::Ustar> object doesn't
-hold any resources and doesn't need any specific clean-up. However, client
-code is responsible for closing the underlying filehandle and 
+hold any hidden resources and doesn't need any specific clean-up.
+
+Client code is only responsible for closing the underlying filehandle and 
 terminating any associated pipe process.
 
 An object C<$o> returned through C<next> or through C<prepare> holds all 
