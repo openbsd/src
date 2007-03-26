@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.7 2006/06/23 21:53:01 reyk Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.8 2007/03/26 16:41:33 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -65,6 +65,7 @@ int	 ieee80211_elements(struct ieee80211_frame *, u_int);
 int	 ieee80211_frame(struct ieee80211_frame *, u_int);
 int	 ieee80211_print(struct ieee80211_frame *, u_int);
 u_int	 ieee80211_any2ieee(u_int, u_int);
+void	 ieee80211_reason(u_int16_t);
 
 #define TCARR(a)	TCHECK2(*a, sizeof(a))
 
@@ -398,6 +399,11 @@ ieee80211_frame(struct ieee80211_frame *wh, u_int len)
 				break;
 			}
 			break;
+		case IEEE80211_FC0_SUBTYPE_DEAUTH:
+		case IEEE80211_FC0_SUBTYPE_DISASSOC:
+			TCHECK2(*frm, 2);		/* Reason Code */
+			ieee80211_reason(frm[0] | (frm[1] << 8));
+			break;
 		}
 		break;
 	default:
@@ -666,5 +672,56 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
 		if (xflag)
 			default_print(p, h->caplen);
 		putchar('\n');
+	}
+}
+
+void
+ieee80211_reason(u_int16_t reason)
+{
+	if (!vflag)
+		return;
+
+	switch (reason) {
+	case IEEE80211_REASON_UNSPECIFIED:
+		printf(", unspecified failure");
+		break;
+	case IEEE80211_REASON_AUTH_EXPIRE:
+		printf(", authentication expired");
+		break;
+	case IEEE80211_REASON_AUTH_LEAVE:
+		printf(", deauth - station left");
+		break;
+	case IEEE80211_REASON_ASSOC_EXPIRE:
+		printf(", association expired");
+		break;
+	case IEEE80211_REASON_ASSOC_TOOMANY:
+		printf(", too many associated stations");
+		break;
+	case IEEE80211_REASON_NOT_AUTHED:
+		printf(", not authenticated");
+		break;
+	case IEEE80211_REASON_NOT_ASSOCED:
+		printf(", not associated");
+		break;
+	case IEEE80211_REASON_ASSOC_LEAVE:
+		printf(", disassociated - station left");
+		break;
+	case IEEE80211_REASON_ASSOC_NOT_AUTHED:
+		printf(", association but not authenticated");
+		break;
+	case IEEE80211_REASON_RSN_REQUIRED:
+		printf(", rsn required");
+		break;
+	case IEEE80211_REASON_RSN_INCONSISTENT:
+		printf(", rsn inconsistent");
+		break;
+	case IEEE80211_REASON_IE_INVALID:
+		printf(", ie invalid");
+		break;
+	case IEEE80211_REASON_MIC_FAILURE:
+		printf(", mic failure");
+		break;
+	default:
+		printf(", unknown reason %u", reason);
 	}
 }
