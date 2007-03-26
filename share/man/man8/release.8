@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.45 2006/02/04 09:28:59 jmc Exp $
+.\"	$OpenBSD: release.8,v 1.46 2007/03/26 12:10:49 matthieu Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -31,9 +31,9 @@ Build a new system.
 .It
 Make and validate the system release.
 .It
-Build and install XF4.
+Build and install xenocara.
 .It
-Make and validate the XF4 release.
+Make and validate the xenocara release.
 .It
 Make the third party packages.
 .El
@@ -95,12 +95,12 @@ To update your sources to the versions identified by one of the above
 tags use the commands:
 .Bd -literal -offset indent
 $ cd /usr/src && cvs up -r TAG -Pd
-$ cd XF4SRC && cvs up -r TAG -Pd
+$ cd XENOCARA_TOP && cvs up -r TAG -Pd
 $ cd PORTSPATH && cvs up -r TAG -Pd
 .Ed
 .Pp
 Replace
-.Va XF4SRC
+.Va XENOCARA_TOP
 with the path to your X Window System sources.
 Replace
 .Va PORTSPATH
@@ -293,53 +293,19 @@ At this point you have most of an
 release.
 The only thing missing is the X Window System
 (which is covered in the next section).
-.Ss 5. Build and install XF4
-The
-.Va XF4
-tree is primarily
-.Xr imake 1 Ns -based
-and doesn't contain the
-.Dq obj
-directory mechanism that comes with Berkeley
-.Xr make 1 .
-While the tree can be built in place, it's better to refrain from
-polluting the cvs sources.
-An alternate build location needs to be selected, large enough to hold the
-X Window System object files, libraries, and binaries.
-Call this location
-.Va XF4BLD .
-.Va XF4SRC
-is the path to your X Window System source files.
-Once you've selected
-.Va XF4BLD
-the build process is:
+.Ss 5. Build and install xenocara
+.Va Xenocara
+is based on the X.Org modular build system.
+The following steps will build and install everything for the first time.
 .Bd -literal -offset indent
 $ su
-# test -d XF4BLD && mv XF4BLD XF4BLD- && rm -rf XF4BLD- &
-# mkdir -p XF4BLD
-# cd XF4BLD && lndir XF4SRC && nice make build
+# mkdir -p /usr/obj/xenocara
+# cd XENOCARA_TOP
+# make bootstrap
+# make obj
+# make build
 .Ed
 .Pp
-.Sy Note (only for i386) :
-.Pa XF86Setup ,
-built and installed above, requires version 8.4 of the
-.Pa tcl/tk
-libraries.
-They must be installed to do a proper build.
-Version 8.4 of
-.Pa tcl/tk
-can be found in the ports tree at
-.Pa /usr/ports/lang/tcl/8.4/
-and
-.Pa /usr/ports/x11/tk/8.4/ .
-Version 8.4 is required to build XF4.
-Version 8.4 may coexist with version 8.0.
-.Pp
-The above method mimics a
-.Ic "make build"
-in the
-.Pa /usr/src
-directory.
 The X Window System is created and installed in
 .Pa /usr/X11R6 .
 However, the install phase of the build does
@@ -354,8 +320,8 @@ before the build and copy any local configuration from
 to
 .Pa xdm
 after the build.
-.Ss 6. Make and validate the XF4 release
-.Va XF4
+.Ss 6. Make and validate the xenocara release
+.Va xenocara
 uses
 .Va DESTDIR
 and
@@ -364,11 +330,11 @@ as described above.
 While they may be set to the values used to build the rest of the
 system, be aware that the existing contents of
 .Va DESTDIR
-will be removed as part of the XF4 build (this is necessary for
+will be removed as part of the xenocara build (this is necessary for
 release checklist processing).
 .Pp
 The steps to build the release are (assuming you are still root, and still in
-.Va XF4BLD ) :
+.Va XENOCARA_TOP ) :
 .Bd -literal -offset indent
 # export DESTDIR=your-destdir; export RELEASEDIR=your-releasedir
 # test -d ${DESTDIR} && mv ${DESTDIR} ${DESTDIR}- && \e
