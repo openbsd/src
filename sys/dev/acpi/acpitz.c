@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.16 2007/03/22 16:55:31 deraadt Exp $ */
+/* $OpenBSD: acpitz.c,v 1.17 2007/03/26 12:30:48 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -224,8 +224,10 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 			    NULL, &res2))
 				printf("%s: %s[%d.%d] _STA fails\n",
 				    DEVNAME(sc), name, x, y);
-			else
+			else {
 				sc->sc_ac_stat[i] = aml_val2int(&res2);
+				aml_freevalue(&res2);
+			}
 		}
 		aml_freevalue(&res1);
 	}
