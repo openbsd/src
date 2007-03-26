@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpcinfo.8,v 1.11 2003/06/10 09:12:11 jmc Exp $
+.\"	$OpenBSD: rpcinfo.8,v 1.12 2007/03/26 14:20:03 jmc Exp $
 .\"	from: @(#)rpcinfo.8c	2.2 88/08/03 4.0 RPCSRC; from 1.24 88/02/25 SMI
 .\"
 .\" Copyright (C) 1986, Sun Microsystems, Inc.
@@ -39,27 +39,21 @@
 .Nd report RPC information
 .Sh SYNOPSIS
 .Nm rpcinfo
-.Fl p
-.Op Ar host
+.Fl b Ar program version
+.Nm rpcinfo
+.Fl d Ar program version
+.Nm rpcinfo
+.Fl p Op Ar host
+.Nm rpcinfo
+.Fl s Ar program version port
 .Nm rpcinfo
 .Op Fl n Ar portnum
-.Fl u Ar host
-.Ar program
+.Fl t Ar host program
 .Op Ar version
 .Nm rpcinfo
 .Op Fl n Ar portnum
-.Fl t Ar host
-.Ar program
+.Fl u Ar host program
 .Op Ar version
-.Nm rpcinfo
-.Fl b
-.Ar program version
-.Nm rpcinfo
-.Fl d
-.Ar program version
-.Nm rpcinfo
-.Fl s
-.Ar program version port
 .Sh DESCRIPTION
 .Nm
 makes an
@@ -70,44 +64,6 @@ server and reports what it finds.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl p
-Probe the portmapper on
-.Ar host ,
-and print a list of all registered
-.Tn RPC
-programs.
-If
-.Ar host
-is not specified, it defaults to the value returned by
-.Xr hostname 1 .
-.It Fl u
-Make an
-.Tn RPC
-call to procedure 0 of
-.Ar program
-on the specified
-.Ar host
-using
-.Tn UDP ,
-and report whether a response was received.
-.It Fl t
-Make an
-.Tn RPC
-call to procedure 0 of
-.Ar program
-on the specified
-.Ar host
-using
-.Tn TCP ,
-and report whether a response was received.
-.It Fl n
-Use
-.Ar portnum
-as the port number for the
-.Fl t
-and
-.Fl u
-options instead of the port number given by the portmapper.
 .It Fl b
 Make an
 .Tn RPC
@@ -127,6 +83,24 @@ and
 .Ar version .
 Registrations which point at ports numbered below 1024 can only be
 deleted by the superuser.
+.It Fl n Ar portnum
+Use
+.Ar portnum
+as the port number for the
+.Fl t
+and
+.Fl u
+options instead of the port number given by the portmapper.
+.It Fl p
+Probe the portmapper on
+.Ar host ,
+and print a list of all registered
+.Tn RPC
+programs.
+If
+.Ar host
+is not specified, it defaults to the value returned by
+.Xr hostname 1 .
 .It Fl s
 Create a registration for the
 .Tn RPC
@@ -138,6 +112,26 @@ located at port
 .Ar port .
 Registrations which point at ports numbered below 1024 can only be
 created (or changed) by the superuser.
+.It Fl t
+Make an
+.Tn RPC
+call to procedure 0 of
+.Ar program
+on the specified
+.Ar host
+using
+.Tn TCP ,
+and report whether a response was received.
+.It Fl u
+Make an
+.Tn RPC
+call to procedure 0 of
+.Ar program
+on the specified
+.Ar host
+using
+.Tn UDP ,
+and report whether a response was received.
 .El
 .Pp
 The

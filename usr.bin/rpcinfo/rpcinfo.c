@@ -1,9 +1,9 @@
-/*	$OpenBSD: rpcinfo.c,v 1.11 2006/01/20 00:01:20 millert Exp $	*/
+/*	$OpenBSD: rpcinfo.c,v 1.12 2007/03/26 14:20:03 jmc Exp $	*/
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpcinfo.c 1.22 87/08/12 SMI";*/
 /*static char sccsid[] = "from: @(#)rpcinfo.c	2.2 88/08/11 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rpcinfo.c,v 1.11 2006/01/20 00:01:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: rpcinfo.c,v 1.12 2007/03/26 14:20:03 jmc Exp $";
 #endif
 
 /*
@@ -645,14 +645,14 @@ usage(char *msg)
 	if (msg)
 		fprintf(stderr,
 		    "rpcinfo: %s\n", msg);
+	fprintf(stderr, "usage: rpcinfo -b program version\n");
+	fprintf(stderr, "       rpcinfo -d program version\n");
+	fprintf(stderr, "       rpcinfo -p [host]\n");
+	fprintf(stderr, "       rpcinfo -s program version port\n");
 	fprintf(stderr,
-	    "Usage: rpcinfo [ -n portnum ] -u host prognum [ versnum ]\n");
+	    "       rpcinfo [-n portnum] -t host program [version]\n");
 	fprintf(stderr,
-	    "       rpcinfo [ -n portnum ] -t host prognum [ versnum ]\n");
-	fprintf(stderr, "       rpcinfo -p [ host ]\n");
-	fprintf(stderr, "       rpcinfo -b prognum versnum\n");
-	fprintf(stderr, "       rpcinfo -d prognum versnum\n");
-	fprintf(stderr, "       rpcinfo -s prognum versnum portnum\n");
+	    "       rpcinfo [-n portnum] -u host program [version]\n");
 	exit(1);
 }
 
