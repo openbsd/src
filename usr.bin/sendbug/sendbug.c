@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.28 2007/03/26 06:47:00 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.29 2007/03/26 07:06:03 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -210,7 +210,7 @@ editit(char *tmpfile)
 				return (-1);
 		} else if (WIFSTOPPED(st))
 			raise(WSTOPSIG(st));
-		else if (WIFEXITED(st))
+		else
 			break;
 	}
 	(void)signal(SIGHUP, sighup);
