@@ -238,14 +238,6 @@ static int usage(void)
     fprintf(stderr, "\thtpasswd -b [-c] [-d | -l | -m | -p | -s] passwordfile username password\n");
     fprintf(stderr, "\thtpasswd -n [-d | -l | -m | -p | -s] username\n");
     fprintf(stderr, "\thtpasswd -bn [-d | -l | -m | -p | -s] username password\n");
-    fprintf(stderr, " -b  Use the password from the command line rather than prompting for it.\n");
-    fprintf(stderr, " -c  Create a new file.\n");
-    fprintf(stderr, " -l  Force Blowfish-based CRYPT encryption of the password(default).\n");
-    fprintf(stderr, " -d  Force DES-based CRYPT encryption of the password.\n");
-    fprintf(stderr, " -m  Force MD5 encryption of the password.\n");
-    fprintf(stderr, " -n  Don't update file; display results on stdout.\n");
-    fprintf(stderr, " -p  Do not encrypt the password (plaintext).\n");
-    fprintf(stderr, " -s  Force SHA encryption of the password.\n");
     return ERR_SYNTAX;
 }
 
