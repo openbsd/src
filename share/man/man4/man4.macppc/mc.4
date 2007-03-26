@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mc.4,v 1.2 2006/11/08 03:56:52 brad Exp $
+.\"	$OpenBSD: mc.4,v 1.3 2007/03/26 09:21:57 xsa Exp $
 .\"	$NetBSD: mc.4,v 1.1 1997/12/18 06:22:45 ender Exp $
 .\"
 .\" Copyright (c) 1997 David Huang <khym@bga.com>
@@ -41,6 +41,15 @@ The
 .Nm
 interface supports the on-board Ethernet of most old world
 Power Macintosh systems.
+.Pp
+Machines supported by the
+.Nm
+driver include:
+.Pp
+.Bl -dash -offset indent -compact
+.It
+Power Macintosh 7600, 8500, 9500 and 9600.
+.El
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
@@ -50,6 +59,11 @@ Power Macintosh systems.
 .Xr netintro 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.1 .
 .Sh AUTHORS
 The
 .Nm
