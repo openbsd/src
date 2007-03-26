@@ -1,4 +1,4 @@
-/*	$OpenBSD:	*/
+/*	$OpenBSD: vendor.c,v 1.3 2007/03/26 12:57:43 pedro Exp $	*/
 /*
  * Copyright (c) 2006 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
