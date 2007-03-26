@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.55 2004/08/30 23:00:22 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.56 2007/03/26 14:29:37 jmc Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static const char rcsid[] = "$OpenBSD: login.c,v 1.55 2004/08/30 23:00:22 millert Exp $";
+static const char rcsid[] = "$OpenBSD: login.c,v 1.56 2007/03/26 14:29:37 jmc Exp $";
 #endif /* not lint */
 
 /*
@@ -263,8 +263,8 @@ main(int argc, char *argv[])
 			if (!uid)
 				syslog(LOG_ERR, "invalid flag %c", ch);
 			(void)fprintf(stderr,
-			    "usage: login [-fp] [-h hostname] [-L lipaddr] "
-			    "[-R ripaddr] [-u username] [user]\n");
+			    "usage: login [-fp] [-h hostname] [-L local-ip] "
+			    "[-R remote-ip] [-u username]\n\t[user]\n");
 			quickexit(1);
 		}
 	argc -= optind;
