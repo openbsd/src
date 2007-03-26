@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.414 2007/03/26 12:09:13 krw Exp $
+#	$OpenBSD: install.sub,v 1.415 2007/03/26 20:13:24 otto Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1439,7 +1439,7 @@ __EOT
 check_fs() {
 	local _dev _mp _fstype _rest _fail _f
 
-	ask_yn "Force checking of non-root filesystems?"
+	ask_yn "Force checking of non-root filesystems?" yes
 	[[ $resp == y ]] && _f=f
 
 	while read _dev _mp _fstype _rest; do
