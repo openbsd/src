@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.4 2007/03/21 19:33:48 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.5 2007/03/26 10:11:10 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -301,9 +301,6 @@ srt_check_route(struct route_report *rr, int connected)
 
 	adj_metric = rr->metric + iface->metric;
 
-	if (rr->metric >= INFINITY_METRIC)
-		return (0);
-
 	if (adj_metric > INFINITY_METRIC)
 		adj_metric = INFINITY_METRIC;
 
@@ -369,7 +366,7 @@ infinity:
 				srt_delete_ds(src, rn, ds_nbr, iface);
 	} else if (INFINITY_METRIC < rr->metric &&
 	    rr->metric < 2 * INFINITY_METRIC) {
-		/* Neighbor is reporting his depenency for that source */
+		/* Neighbor is reporting his dependency for this source */
 		if (nbr_report == src->adv_rtr[ifindex].addr.s_addr)
 			srt_set_forwarder_self(src, iface, rn);
 
