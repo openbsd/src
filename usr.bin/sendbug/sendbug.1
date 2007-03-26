@@ -1,4 +1,4 @@
-.\" $OpenBSD: sendbug.1,v 1.9 2007/03/26 06:22:12 ray Exp $
+.\" $OpenBSD: sendbug.1,v 1.10 2007/03/26 21:15:49 jmc Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
@@ -15,14 +15,11 @@
 .Op Fl LPV
 .Sh DESCRIPTION
 .Nm
-is used to send bug reports to
-.Ox .
+is used to submit problem reports (PRs) to the
+.Ox
+bugs database.
 Some system information is filled out in a temporary file,
-which is then opened by an editor.
-See
-.Ev EDITOR
-below,
-for details of which editor, if any, is invoked.
+which is then opened by a text editor.
 .Pp
 Once the bug report is filled out,
 it can be sent to the
@@ -30,6 +27,11 @@ it can be sent to the
 developers, re-edited, or aborted.
 If aborted,
 the report is not deleted and the pathname of the report is printed.
+.Pp
+The content of the PR is not confidential; it is sent out to a public
+mailing list.
+Sensitive, security-related issues should be sent via email to
+.Aq security@OpenBSD.org .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
