@@ -1,4 +1,4 @@
-/*	$OpenBSD: silireg.h,v 1.5 2007/03/24 02:42:21 dlg Exp $ */
+/*	$OpenBSD: silireg.h,v 1.6 2007/03/26 00:33:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -18,8 +18,8 @@
 
 /* PCI Registers */
 #define SILI_PCI_BAR_GLOBAL	0x10 /* Global Registers address */
-#define SILI_PCI_BAR_PORT	0x14 /* Port Registers address */
-#define SILI_PCI_BAR_INDIRECT	0x18 /* Indirect IO Registers address */
+#define SILI_PCI_BAR_PORT	0x18 /* Port Registers address */
+#define SILI_PCI_BAR_INDIRECT	0x20 /* Indirect IO Registers address */
 
 /* Global Registers */
 #define SILI_REG_PORT0_STATUS	0x00 /* Port 0 Slot Status */
