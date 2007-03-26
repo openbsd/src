@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.13 2007/03/18 20:50:23 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.14 2007/03/26 20:18:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -17,8 +17,12 @@
  */
 
 #include <sys/param.h>
+#include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/disk.h>
+#include <sys/timeout.h>
 #include <sys/gpio.h>
 
 #include <machine/bus.h>
@@ -58,6 +62,9 @@ int	scoop_gpio_pin_read(struct scoop_softc *sc, int);
 void	scoop_gpio_pin_write(struct scoop_softc *sc, int, int);
 void	scoop_gpio_pin_ctl(struct scoop_softc *sc, int, int);
 void	scoop0_set_card_power(enum card, int);
+
+struct timeout	scoop_checkdisk;
+void	scoop_timeout(void *);
 
 int
 scoopmatch(struct device *parent, void *match, void *aux)
@@ -104,6 +111,8 @@ scoopattach(struct device *parent, struct device *self, void *aux)
 		scoop_gpio_pin_ctl(sc, SCOOP0_AKIN_PULLUP, GPIO_PIN_OUTPUT);
 		scoop_gpio_pin_write(sc, SCOOP0_AKIN_PULLUP, GPIO_PIN_LOW);
 	}
+
+	timeout_set(&scoop_checkdisk, scoop_timeout, sc);
 
 	printf(": PCMCIA/GPIO controller\n");
 }
@@ -392,4 +401,23 @@ scoop_resume(void)
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR,
 		    sc->sc_gpwr);
 	}
+}
+
+void
+scoop_timeout(void *v)
+{
+	extern struct disklist_head disklist;
+	static struct disk *dk;
+
+	if (dk == NULL) {
+		for (dk = TAILQ_FIRST(&disklist); dk;
+		    dk = TAILQ_NEXT(dk, dk_link))
+			if (dk->dk_name &&
+			    strcmp(dk->dk_name, "wd0") == 0)
+				break;
+	}
+
+	if (dk)
+		scoop_led_set(SCOOP_LED_GREEN, dk->dk_busy ? 1 : 0);
+	timeout_add(&scoop_checkdisk, hz/25);
 }

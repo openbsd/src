@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.6 2006/05/25 22:40:18 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.7 2007/03/26 20:18:10 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
+#include <sys/timeout.h>
 #include <sys/malloc.h>
 #include <machine/bootconfig.h>
 #include <machine/intr.h>
@@ -177,6 +178,8 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 void
 diskconf()
 {
+	extern struct timeout	scoop_checkdisk;
+
 	/*
 	 * Configure root, swap, and dump area.  This is
 	 * currently done by running the same checksum
@@ -192,6 +195,8 @@ diskconf()
 #if 0
 	dumpconf();
 #endif
+
+	timeout_add(&scoop_checkdisk, hz/25);
 }
 
 
