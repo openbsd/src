@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.34 2007/03/21 13:52:01 millert Exp $
+.\"	$OpenBSD: event.3,v 1.35 2007/03/26 18:43:32 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -83,8 +83,8 @@
 .Nm evbuffer_read ,
 .Nm evbuffer_find ,
 .Nm evbuffer_readline ,
-.Nm evhttp_start ,
-.Nm evhttp_free
+.\".Nm evhttp_start ,
+.\".Nm evhttp_free
 .\".Nm evtag_init ,
 .\".Nm evtag_marshal ,
 .\".Nm encode_int ,
@@ -226,10 +226,10 @@
 .Fn "evbuffer_find" "struct evbuffer *buf" "const u_char *data" "size_t size"
 .Ft "char *"
 .Fn "evbuffer_readline" "struct evbuffer *buf"
-.Ft "struct evhttp *"
-.Fn "evhttp_start" "const char *address" "u_short port"
-.Ft "void"
-.Fn "evhttp_free" "struct evhttp* http"
+.\".Ft "struct evhttp *"
+.\".Fn "evhttp_start" "const char *address" "u_short port"
+.\".Ft "void"
+.\".Fn "evhttp_free" "struct evhttp* http"
 .Ft int
 .Fa (*event_sigcb)(void) ;
 .Ft volatile sig_atomic_t
@@ -580,23 +580,23 @@ returning the amount of data read.
 .Pp
 If multiple bases are in use, bufferevent_base_set() must be called before
 enabling the bufferevent for the first time.
-.Sh NON-BLOCKING HTTP SUPPORT
-.Nm libevent
-provides a very thin HTTP layer that can be used both to host an HTTP
-server and also to make HTTP requests.
-An HTTP server can be created by calling
-.Fn evhttp_start .
-When the HTTP server is no longer used, it can be freed via
-.Fn evhttp_free .
-.Pp
-To be notified of HTTP requests, a user needs to register callbacks with the
-HTTP server.
-This can be done by calling
-.Fn evhttp_set_cb .
-The second argument is the URI for which a callback is being registered.
-The corresponding callback will receive an
-.Va struct evhttp_request
-object that contains all information about the request.
+.\".Sh NON-BLOCKING HTTP SUPPORT
+.\".Nm libevent
+.\"provides a very thin HTTP layer that can be used both to host an HTTP
+.\"server and also to make HTTP requests.
+.\"An HTTP server can be created by calling
+.\".Fn evhttp_start .
+.\"When the HTTP server is no longer used, it can be freed via
+.\".Fn evhttp_free .
+.\".Pp
+.\"To be notified of HTTP requests, a user needs to register callbacks with the
+.\"HTTP server.
+.\"This can be done by calling
+.\".Fn evhttp_set_cb .
+.\"The second argument is the URI for which a callback is being registered.
+.\"The corresponding callback will receive an
+.\".Va struct evhttp_request
+.\"object that contains all information about the request.
 .Pp
 This section does not document all the possible function calls; please
 check
