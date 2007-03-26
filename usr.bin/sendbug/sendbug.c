@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.26 2007/03/26 06:22:12 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.27 2007/03/26 06:40:01 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -193,9 +193,8 @@ editit(char *tmpfile)
 			sleep(1);
 			goto top;
 		}
-		errno = saved_errno;
-		perror("fork");
 		free(p);
+		errno = saved_errno;
 		return (-1);
 	}
 	if (pid == 0) {
@@ -206,10 +205,8 @@ editit(char *tmpfile)
 	for (;;) {
 		xpid = waitpid(pid, (int *)&st, WUNTRACED);
 		if (xpid == -1) {
-			if (errno != EINTR) {
-				warn("waidpid");
+			if (errno != EINTR)
 				return (-1);
-			}
 		} else if (WIFSTOPPED(st))
 			raise(WSTOPSIG(st));
 		else if (WIFEXITED(st))
@@ -218,8 +215,10 @@ editit(char *tmpfile)
 	(void)signal(SIGHUP, sighup);
 	(void)signal(SIGINT, sigint);
 	(void)signal(SIGQUIT, sigquit);
-	if (!WIFEXITED(st) || WEXITSTATUS(st) != 0)
+	if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
+		errno = ECHILD;
 		return (-1);
+	}
 	return (0);
 }
 
