@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.7 2007/03/24 05:15:19 tedu Exp $ */
+/* $OpenBSD: softraid.c,v 1.8 2007/03/26 01:44:06 tedu Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -804,7 +804,7 @@ sr_parse_chunks(struct sr_softc *sc, char *lst, struct sr_chunk_head *cl)
 
 	s = e = lst;
 	ch_prev = NULL;
-	/* make sure we have a valid device lst like /dev/sdNa,/dev/sdNNa */
+	/* make sure we have a valid device list like /dev/sdNa,/dev/sdNNa */
 	while (*e != '\0') {
 		if (*e == ',')
 			s = e + 1;
@@ -1113,7 +1113,7 @@ sr_raid1_start_stop(struct sr_workunit *wu)
 		/* START */
 		if (sd->sd_vol.sv_meta.svm_status == BIOC_SVOFFLINE) {
 			/* bring volume online */
-			/* XXX check to see if volume can be brough online */
+			/* XXX check to see if volume can be brought online */
 			sd->sd_vol.sv_meta.svm_status = BIOC_SVONLINE;
 		}
 		rv = 0;
