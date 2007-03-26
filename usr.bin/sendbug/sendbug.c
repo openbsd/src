@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.20 2007/03/25 23:35:59 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.21 2007/03/26 01:35:36 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -27,12 +27,12 @@
 
 #include "atomicio.h"
 
-int editit(char *);
-void init(void);
-int prompt(void);
-int send_file(const char *, int dst);
-int sendmail(const char *);
-void template(FILE *);
+int	editit(char *);
+void	init(void);
+int	prompt(void);
+int	send_file(const char *, int dst);
+int	sendmail(const char *);
+void	template(FILE *);
 
 const char *categories = "system user library documentation ports kernel "
     "alpha amd64 arm i386 m68k m88k mips ppc sgi sparc sparc64 vax";
@@ -40,8 +40,7 @@ char *version = "4.2";
 
 struct passwd *pw;
 char os[BUFSIZ], rel[BUFSIZ], mach[BUFSIZ], details[BUFSIZ];
-char *fullname;
-char *tmppath;
+char *fullname, *tmppath;
 int wantcleanup;
 
 __dead void
@@ -168,7 +167,7 @@ editit(char *tmpfile)
 {
 	char *argp[] = {"sh", "-c", NULL, NULL}, *ed, *p;
 	pid_t pid, xpid;
-	int stat;
+	int st;
 
 	if ((ed = getenv("EDITOR")) == (char *)0)
 		ed = _PATH_VI;
@@ -203,16 +202,21 @@ editit(char *tmpfile)
 	}
 	free(p);
 	for (;;) {
-		xpid = waitpid(pid, (int *)&stat, WUNTRACED);
-		if (WIFSTOPPED(stat))
-			raise(WSTOPSIG(stat));
-		else if (WIFEXITED(stat))
+		xpid = waitpid(pid, (int *)&st, WUNTRACED);
+		if (xpid == -1) {
+			if (errno != EINTR) {
+				warn("waidpid");
+				return (-1);
+			}
+		} else if (WIFSTOPPED(st))
+			raise(WSTOPSIG(st));
+		else if (WIFEXITED(st))
 			break;
 	}
 	(void)signal(SIGHUP, SIG_DFL);
 	(void)signal(SIGINT, SIG_DFL);
 	(void)signal(SIGQUIT, SIG_DFL);
-	if (!WIFEXITED(stat) || WEXITSTATUS(stat) != 0)
+	if (!WIFEXITED(st) || WEXITSTATUS(st) != 0)
 		return (-1);
 	return (0);
 }
