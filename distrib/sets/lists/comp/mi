@@ -3364,8 +3364,6 @@
 ./usr/share/man/cat3/event_priority_init.0
 ./usr/share/man/cat3/event_priority_set.0
 ./usr/share/man/cat3/event_set.0
-./usr/share/man/cat3/evhttp_free.0
-./usr/share/man/cat3/evhttp_start.0
 ./usr/share/man/cat3/evtimer_add.0
 ./usr/share/man/cat3/evtimer_del.0
 ./usr/share/man/cat3/evtimer_initialized.0
