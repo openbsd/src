@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.30 2007/03/26 07:16:11 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.31 2007/03/26 18:13:08 moritz Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -285,7 +285,7 @@ sendmail(const char *tmppath)
 void
 init(void)
 {
-	size_t len = 0, namelen;
+	size_t amp, len, namelen;
 	const char *src;
 	int sysname[2];
 	char *dst, *cp;
@@ -294,16 +294,12 @@ init(void)
 		err(1, "getpwuid");
 	namelen = strlen(pw->pw_name);
 
-	/* Add length of expanded '&', minus existing '&'. */
-	src = pw->pw_gecos;
-	src += strcspn(src, ",&");
-	while (*src == '&') {
-		len += namelen - 1;
-		/* Look for next '&', skipping the one we just found. */
-		src += 1 + strcspn(src, ",&");
-	}
-	/* Add full name length, including all those '&' we skipped. */
-	len += src - pw->pw_gecos;
+	/* Count number of '&'. */
+	for (amp = 0, src = pw->pw_gecos; *src && *src != ','; ++src)
+		if (*src == '&')
+			++amp;
+	/* Expanded str = orig str - '&' chars + concatenated logins. */
+	len = (src - pw->pw_gecos) - amp + (amp * namelen);
 	if ((fullname = malloc(len + 1)) == NULL)
 		err(1, "malloc");
 
