@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.30 2007/03/26 08:28:09 art Exp $
+.\"	$OpenBSD: uvm.9,v 1.31 2007/03/26 16:03:20 art Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -276,7 +276,7 @@ and
 macros return the protection, inheritance, maximum protection and advice,
 respectively.
 .Fn uvm_map
-returns a standard UVM return value.
+returns a standard errno.
 .Pp
 The
 .Fn uvm_map_pageable
@@ -310,7 +310,7 @@ contain
 .Fn uvm_map_pageable
 and
 .Fn uvm_map_pageable_all
-return a standard UVM return value.
+return a standard errno.
 .Pp
 The
 .Fn uvm_map_checkprot
@@ -342,7 +342,7 @@ also setting the maximum protection to the region to
 if
 .Fa set_max
 is non-zero.
-This function returns a standard UVM return value.
+This function returns a standard errno.
 .Pp
 The
 .Fn uvm_deallocate
@@ -420,7 +420,7 @@ describing the type of fault, and
 .Fa access_type
 describing the type of access requested.
 .Fn uvm_fault
-returns a standard UVM return value.
+returns a standard errno.
 .Sh MEMORY MAPPING FILES AND DEVICES
 .nr nS 1
 .Ft struct uvm_object *
