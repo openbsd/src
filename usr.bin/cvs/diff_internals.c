@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.4 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.5 2007/03/27 07:21:21 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -226,7 +226,7 @@ static struct context_vec *context_vec_start;
 static struct context_vec *context_vec_end;
 static struct context_vec *context_vec_ptr;
 
-#define FUNCTION_CONTEXT_SIZE	41
+#define FUNCTION_CONTEXT_SIZE	55
 static char lastbuf[FUNCTION_CONTEXT_SIZE];
 static int  lastline;
 static int  lastmatchline;
@@ -1164,6 +1164,8 @@ asciifile(FILE *f)
 	return (1);
 }
 
+#define begins_with(s, pre) (strncmp(s, pre, sizeof(pre)-1) == 0)
+
 static char*
 match_function(const long *f, int pos, FILE *fp)
 {
@@ -1171,6 +1173,7 @@ match_function(const long *f, int pos, FILE *fp)
 	size_t nc;
 	int last = lastline;
 	char *p;
+	char *state = NULL;
 
 	lastline = pos;
 	while (pos > last) {
@@ -1185,10 +1188,24 @@ match_function(const long *f, int pos, FILE *fp)
 			if (p != NULL)
 				*p = '\0';
 			if (isalpha(buf[0]) || buf[0] == '_' || buf[0] == '$') {
-				strlcpy(lastbuf, (const char *)buf,
-				    sizeof lastbuf);
-				lastmatchline = pos;
-				return lastbuf;
+				if (begins_with(buf, "private:")) {
+					if (!state)
+						state = " (private)";
+				} else if (begins_with(buf, "protected:")) {
+					if (!state)
+						state = " (protected)";
+				} else if (begins_with(buf, "public:")) {
+					if (!state)
+						state = " (public)";
+				} else {
+					strlcpy(lastbuf, (const char *)buf,
+					    sizeof lastbuf);
+					if (state)
+						strlcat(lastbuf, state,
+						    sizeof lastbuf);
+					lastmatchline = pos;
+					return lastbuf;
+				}
 			}
 		}
 		pos--;
