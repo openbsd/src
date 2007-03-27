@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.5 2007/03/26 10:11:10 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.6 2007/03/27 09:04:33 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -299,7 +299,10 @@ srt_check_route(struct route_report *rr, int connected)
 	if (rr->net.s_addr == 0)
 		rr->mask.s_addr = 0;
 
-	adj_metric = rr->metric + iface->metric;
+	if (connected)
+		adj_metric = rr->metric;
+	else
+		adj_metric = rr->metric + iface->metric;
 
 	if (adj_metric > INFINITY_METRIC)
 		adj_metric = INFINITY_METRIC;
@@ -315,6 +318,10 @@ srt_check_route(struct route_report *rr, int connected)
 		}
 		return (0);
 	}
+
+	/* If the route is connected accept only downstream neighbors reports */
+	if (rn->connected && rr->metric <= INFINITY_METRIC)
+		return (0);
 
 	nbr_ip = rn->nexthop.s_addr;
 	nbr_report = rr->nexthop.s_addr;
