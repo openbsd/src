@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.44 2007/03/13 17:01:15 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.45 2007/03/27 09:43:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -50,6 +50,7 @@ struct {
 struct kroute_node {
 	RB_ENTRY(kroute_node)	 entry;
 	struct kroute		 r;
+	struct kroute_node	*next;
 };
 
 struct kif_node {
@@ -58,11 +59,14 @@ struct kif_node {
 	struct kif		 k;
 };
 
-void	kr_redistribute(int, struct kroute *);
+void	kr_redist_remove(struct kroute_node *, struct kroute_node *);
+int	kr_redist_eval(struct kroute *, struct rroute *);
+void	kr_redistribute(struct kroute_node *);
 int	kroute_compare(struct kroute_node *, struct kroute_node *);
 int	kif_compare(struct kif_node *, struct kif_node *);
 
 struct kroute_node	*kroute_find(in_addr_t, u_int8_t);
+struct kroute_node	*kroute_matchgw(struct kroute_node *, struct in_addr);
 int			 kroute_insert(struct kroute_node *);
 int			 kroute_remove(struct kroute_node *);
 void			 kroute_clear(void);
@@ -166,9 +170,16 @@ kr_change(struct kroute *kroute)
 			action = RTM_CHANGE;
 		else {	/* a non-ospf route already exists. not a problem */
 			if (!(kr->r.flags & F_BGPD_INSERTED)) {
-				kr->r.flags |= F_OSPFD_INSERTED;
+				do {
+					kr->r.flags |= F_OSPFD_INSERTED;
+					kr = kr->next;
+				} while (kr);
 				return (0);
 			}
+			/*
+			 * XXX as long as there is no multipath support in
+			 * bgpd this is safe else we end up in a bad situation.
+			 */
 			/*
 			 * ospf route has higher pref
 			 * - reset flags to the ospf ones
@@ -223,7 +234,10 @@ kr_delete(struct kroute *kroute)
 
 	if (kr->r.flags & F_KERNEL) {
 		/* remove F_OSPFD_INSERTED flag, route still exists in kernel */
-		kr->r.flags &= ~F_OSPFD_INSERTED;
+		do {
+			kr->r.flags &= ~F_OSPFD_INSERTED;
+			kr = kr->next;
+		} while (kr);
 		return (0);
 	}
 
@@ -341,24 +355,33 @@ kr_ifinfo(char *ifname, pid_t pid)
 }
 
 void
-kr_redistribute(int type, struct kroute *kr)
+kr_redist_remove(struct kroute_node *kh, struct kroute_node *kn)
 {
-	u_int32_t	a, metric = 0;
-	struct rroute	rr;
+	struct rroute	 rr;
 
-	if (type == IMSG_NETWORK_DEL) {
-dont_redistribute:
-		/* was the route redistributed? */
-		if (kr->flags & F_REDISTRIBUTED) {
-			/* remove redistributed flag and inform the RDE */
-			kr->flags &= ~F_REDISTRIBUTED;
-			rr.kr = *kr;
-			rr.metric = 0;
-			main_imsg_compose_rde(IMSG_NETWORK_DEL, 0, &rr,
-			    sizeof(struct rroute));
-		}
+	/* was the route redistributed? */
+	if ((kn->r.flags & F_REDISTRIBUTED) == 0)
 		return;
-	}
+
+	/* remove redistributed flag */
+	kn->r.flags &= ~F_REDISTRIBUTED;
+	rr.kr = kn->r;
+	rr.metric = 0;
+
+	/* probably inform the RDE (check if no other path is redistributed) */
+	for (kn = kh; kn; kn = kn->next)
+		if (kn->r.flags & F_REDISTRIBUTED)
+			break;
+
+	if (kn == NULL)
+		main_imsg_compose_rde(IMSG_NETWORK_DEL, 0, &rr,
+		    sizeof(struct rroute));
+}
+
+int
+kr_redist_eval(struct kroute *kr, struct rroute *rr)
+{
+	u_int32_t	 a, metric = 0;
 
 	/* Only non-ospfd routes are considered for redistribution. */
 	if (!(kr->flags & F_KERNEL))
@@ -390,28 +413,75 @@ dont_redistribute:
 	if (!ospf_redistribute(kr, &metric))
 		goto dont_redistribute;
 
-	/* Does not matter if we resend the kr, the RDE will cope. */
+	/* prefix should be redistributed */
 	kr->flags |= F_REDISTRIBUTED;
+	/*
+	 * only on of all multipath routes can be redistributed so
+	 * redistribute the best one.
+	 */
+	if (rr->metric > metric) {
+		rr->kr = *kr;
+		rr->metric = metric;
+	}
+	return (1);
 
-	rr.kr = *kr;
-	rr.metric = metric;
-	main_imsg_compose_rde(type, 0, &rr, sizeof(struct rroute));
+dont_redistribute:
+	/* was the route redistributed? */
+	if ((kr->flags & F_REDISTRIBUTED) == 0)
+		return (0);
+
+	kr->flags &= ~F_REDISTRIBUTED;
+	return (1);
+}
+
+void
+kr_redistribute(struct kroute_node *kh)
+{
+	struct kroute_node	*kn;
+	struct rroute		 rr;
+	int			 redistribute = 0;
+
+	bzero(&rr, sizeof(rr));
+	for (kn = kh; kn; kn = kn->next)
+		if (kr_redist_eval(&kn->r, &rr))
+			redistribute = 1;
+
+	if (!redistribute)
+		return;
+
+	if (rr.kr.flags & F_REDISTRIBUTED) {
+		main_imsg_compose_rde(IMSG_NETWORK_ADD, 0, &rr,
+		    sizeof(struct rroute));
+	} else {
+		rr.kr = kh->r;
+		main_imsg_compose_rde(IMSG_NETWORK_DEL, 0, &rr,
+		    sizeof(struct rroute));
+	}
 }
 
 void
 kr_reload(void)
 {
-	struct kroute_node	*kr;
+	struct kroute_node	*kr, *kn;
 	u_int32_t		 dummy;
 	int			 r;
 
 	RB_FOREACH(kr, kroute_tree, &krt) {
-		r = ospf_redistribute(&kr->r, &dummy);
-		if (kr->r.flags & F_REDISTRIBUTED && !r) {
-			kr_redistribute(IMSG_NETWORK_DEL, &kr->r);
-		} else if (r) {
-			/* RIB will cope with duplicates */
-			kr_redistribute(IMSG_NETWORK_ADD, &kr->r);
+		for (kn = kr; kn; kn = kn->next) {
+			r = ospf_redistribute(&kn->r, &dummy);
+			/*
+			 * if it is redistributed, redistribute again metric
+			 * may have changed.
+			 */
+			if ((kn->r.flags & F_REDISTRIBUTED && !r) || r)
+				break;
+		}
+		if (kn) {
+			/*
+			 * kr_redistribute copes with removes and RDE with
+			 * duplicates
+			 */
+			kr_redistribute(kr);
 		}
 	}
 }
@@ -449,15 +519,40 @@ kroute_find(in_addr_t prefix, u_int8_t prefixlen)
 	return (RB_FIND(kroute_tree, &krt, &s));
 }
 
+struct kroute_node *
+kroute_matchgw(struct kroute_node *kr, struct in_addr nh)
+{
+	in_addr_t	nexthop;
+
+	nexthop = nh.s_addr;
+
+	while (kr) {
+		if (kr->r.nexthop.s_addr == nexthop)
+			return (kr);
+		kr = kr->next;
+	}
+
+	return (NULL);
+}
+
+
 int
 kroute_insert(struct kroute_node *kr)
 {
-	if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
-		log_warnx("kroute_tree insert failed for %s/%u",
-		    inet_ntoa(kr->r.prefix), kr->r.prefixlen);
-		free(kr);
-		return (-1);
-	}
+	struct kroute_node	*krm;
+
+	if ((krm = RB_INSERT(kroute_tree, &krt, kr)) != NULL) {
+		/*
+		 * Multipath route, add at end of list and clone the
+		 * ospfd inserted flag.
+		 */
+		kr->r.flags |= krm->r.flags & F_OSPFD_INSERTED;
+		while (krm->next != NULL)
+			krm = krm->next;
+		krm->next = kr;
+		kr->next = NULL; /* to be sure */
+	} else
+		krm = kr;
 
 	if (!(kr->r.flags & F_KERNEL)) {
 		/* don't validate or redistribute ospf route */
@@ -470,21 +565,49 @@ kroute_insert(struct kroute_node *kr)
 	else
 		kr->r.flags |= F_DOWN;
 
-	kr_redistribute(IMSG_NETWORK_ADD, &kr->r);
-
+	kr_redistribute(krm);
 	return (0);
 }
 
 int
 kroute_remove(struct kroute_node *kr)
 {
-	if (RB_REMOVE(kroute_tree, &krt, kr) == NULL) {
-		log_warnx("kroute_remove failed for %s/%u",
+	struct kroute_node	*krm;
+
+	if ((krm = RB_FIND(kroute_tree, &krt, kr)) == NULL) {
+		log_warnx("kroute_remove failed to find %s/%u",
 		    inet_ntoa(kr->r.prefix), kr->r.prefixlen);
 		return (-1);
 	}
 
-	kr_redistribute(IMSG_NETWORK_DEL, &kr->r);
+	if (krm == kr) {
+		/* head element */
+		if (RB_REMOVE(kroute_tree, &krt, kr) == NULL) {
+			log_warnx("kroute_remove failed for %s/%u",
+			    inet_ntoa(kr->r.prefix), kr->r.prefixlen);
+			return (-1);
+		}
+	       	if (kr->next != NULL) {
+			if (RB_INSERT(kroute_tree, &krt, kr->next) != NULL) {
+				log_warnx("kroute_remove failed to add %s/%u",
+				    inet_ntoa(kr->r.prefix), kr->r.prefixlen);
+				return (-1);
+			}
+		}
+	} else {
+		/* somewhere in the list */
+		while (krm->next != kr && krm->next != NULL)
+			krm = krm->next;
+		if (krm->next == NULL) {
+			log_warnx("kroute_remove multipath list corrupted "
+			    "for %s/%u", inet_ntoa(kr->r.prefix),
+			    kr->r.prefixlen);
+			return (-1);
+		}
+		krm->next = kr->next;
+	}
+
+	kr_redist_remove(krm, kr);
 	rtlabel_unref(kr->r.rtlabel);
 
 	free(kr);
@@ -682,8 +805,7 @@ void
 if_change(u_short ifindex, int flags, struct if_data *ifd)
 {
 	struct kif_node		*kif;
-	struct kroute_node	*kr;
-	int			 type;
+	struct kroute_node	*kr, *tkr;
 	u_int8_t		 reachable;
 
 	if ((kif = kif_find(ifindex)) == NULL) {
@@ -703,21 +825,24 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 		return;		/* nothing changed wrt nexthop validity */
 
 	kif->k.nh_reachable = reachable;
-	type = reachable ? IMSG_NETWORK_ADD : IMSG_NETWORK_DEL;
 
 	/* notify ospfe about interface link state */
 	main_imsg_compose_ospfe(IMSG_IFINFO, 0, &kif->k, sizeof(kif->k));
 
 	/* update redistribute list */
-	RB_FOREACH(kr, kroute_tree, &krt)
-		if (kr->r.ifindex == ifindex) {
-			if (reachable)
-				kr->r.flags &= ~F_DOWN;
-			else
-				kr->r.flags |= F_DOWN;
+	RB_FOREACH(kr, kroute_tree, &krt) {
+		for (tkr = kr; tkr != NULL; tkr = tkr->next) {
+			if (tkr->r.ifindex == ifindex) {
+				if (reachable)
+					tkr->r.flags &= ~F_DOWN;
+				else
+					tkr->r.flags |= F_DOWN;
 
-			kr_redistribute(type, &kr->r);
+			}
 		}
+		kr_redistribute(kr);
+	}
+			
 }
 
 void
@@ -860,11 +985,6 @@ fetchtable(void)
 
 		if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
 			continue;
-
-#ifdef RTF_MPATH
-		if (rtm->rtm_flags & RTF_MPATH)		/* multipath */
-			continue;
-#endif
 
 		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
 			log_warn("fetchtable");
@@ -1064,10 +1184,10 @@ dispatch_rtmsg(void)
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_in	*sa_in;
 	struct sockaddr_rtlabel	*label;
-	struct kroute_node	*kr;
+	struct kroute_node	*kr, *okr;
 	struct in_addr		 prefix, nexthop;
 	u_int8_t		 prefixlen;
-	int			 flags;
+	int			 flags, mpath;
 	u_short			 ifindex = 0;
 
 	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
@@ -1088,6 +1208,7 @@ dispatch_rtmsg(void)
 		prefixlen = 0;
 		flags = F_KERNEL;
 		nexthop.s_addr = 0;
+		mpath = 0;
 
 		if (rtm->rtm_type == RTM_ADD || rtm->rtm_type == RTM_CHANGE ||
 		    rtm->rtm_type == RTM_DELETE) {
@@ -1097,15 +1218,19 @@ dispatch_rtmsg(void)
 			if (rtm->rtm_tableid != 0)
 				continue;
 
-			if (rtm->rtm_pid == kr_state.pid)	/* cause by us */
+			if (rtm->rtm_pid == kr_state.pid) /* caused by us */
 				continue;
 
-			if (rtm->rtm_errno)			/* failed attempts... */
+			if (rtm->rtm_errno)		/* failed attempts... */
 				continue;
 
 			if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
 				continue;
 
+#ifdef RTF_MPATH
+			if (rtm->rtm_flags & RTF_MPATH)
+				mpath = 1;
+#endif
 			switch (sa->sa_family) {
 			case AF_INET:
 				prefix.s_addr =
@@ -1155,10 +1280,26 @@ dispatch_rtmsg(void)
 				continue;
 			}
 
-			if ((kr = kroute_find(prefix.s_addr, prefixlen)) !=
+			if ((okr = kroute_find(prefix.s_addr, prefixlen)) !=
 			    NULL) {
-				/* ospf route overridden by kernel */
-				/* pref is not checked because this is forced */
+				/* just add new multipath routes */
+				if (mpath && rtm->rtm_type == RTM_ADD)
+					goto add;
+				/* get the correct route */
+				kr = okr;
+				if (mpath && (kr = kroute_matchgw(okr,
+				    nexthop)) == NULL) {
+					log_warnx("dispatch_rtmsg mpath route"
+					    " not found");
+					/* add routes we missed out earlier */
+					goto add;
+				}
+
+				/*
+				 * ospf route overridden by kernel. Preference
+				 * of the route is not checked because this is
+				 * forced -- most probably by a user.
+				 */
 				if (kr->r.flags & F_OSPFD_INSERTED)
 					flags |= F_OSPFD_INSERTED;
 				if (kr->r.flags & F_REDISTRIBUTED)
@@ -1180,8 +1321,9 @@ dispatch_rtmsg(void)
 					kr->r.flags |= F_DOWN;
 
 				/* just readd, the RDE will care */
-				kr_redistribute(IMSG_NETWORK_ADD, &kr->r);
+				kr_redistribute(okr);
 			} else {
+add:
 				if ((kr = calloc(1,
 				    sizeof(struct kroute_node))) == NULL) {
 					log_warn("dispatch_rtmsg");
@@ -1207,7 +1349,20 @@ dispatch_rtmsg(void)
 				continue;
 			if (!(kr->r.flags & F_KERNEL))
 				continue;
-			if (kr->r.flags & F_OSPFD_INSERTED)
+			/* get the correct route */
+			okr = kr;
+			if (mpath &&
+			    (kr = kroute_matchgw(kr, nexthop)) == NULL) {
+				log_warnx("dispatch_rtmsg mpath route"
+				    " not found");
+				return (-1);
+			}
+			/* 
+			 * last route is getting removed request the
+			 * ospf route from the RDE to insert instead
+			 */
+			if (okr == kr && kr->next == NULL &&
+			    kr->r.flags & F_OSPFD_INSERTED)
 				main_imsg_compose_rde(IMSG_KROUTE_GET, 0,
 				    &kr->r, sizeof(struct kroute));
 			if (kroute_remove(kr) == -1)
