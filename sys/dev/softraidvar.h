@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.3 2007/03/19 22:33:15 dlg Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.4 2007/03/27 04:05:22 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -40,6 +40,7 @@ extern u_int32_t		sr_debug;
 #define	SR_D_WU			0x0020
 #define	SR_D_META		0x0040
 #define	SR_D_DIS		0x0080
+#define	SR_D_STATE		0x0100
 #else
 #define DPRINTF(x...)
 #define DNPRINTF(n,x...)
@@ -48,6 +49,7 @@ extern u_int32_t		sr_debug;
 #define	SR_MAXFER		MAXPHYS
 #define	SR_MAX_LD		1
 #define	SR_MAX_CMDS		16
+#define	SR_MAX_STATES		6
 
 /* forward define to prevent dependency goo */
 struct sr_softc;
@@ -222,6 +224,9 @@ struct sr_discipline {
 	int			(*sd_shutdown_volume)(void *);
 	int			(*sd_free_resources)(struct sr_discipline *);
 	int			(*sd_quiesce_io)(struct sr_discipline *);
+	void			(*sd_set_chunk_state)(struct sr_discipline *,
+				    int, int);
+	void			(*sd_set_vol_state)(struct sr_discipline *);
 
 	/* SCSI emulation */
 	struct scsi_sense_data	sd_scsi_sense;
