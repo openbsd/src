@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.59 2007/03/22 16:55:31 deraadt Exp $ */
+/*	$OpenBSD: arc.c,v 1.60 2007/03/27 11:22:59 jmc Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -710,7 +710,7 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 
 	bcopy(xs->cmd, cmd->cdb, xs->cmdlen);
 
-	/* we've built the command, lets put it on the hw */
+	/* we've built the command, let's put it on the hw */
 	bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
 	    ccb->ccb_offset, ARC_MAX_IOCMDLEN,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.86 2007/02/09 09:16:59 jmc Exp $	*/
+/*	$OpenBSD: if.h,v 1.87 2007/03/27 11:22:59 jmc Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
  * packet input routine.
  *
  * Routines exist for locating interfaces by their addresses
- * or for locating a interface on a certain network, as well as more general
+ * or for locating an interface on a certain network, as well as more general
  * routing and gateway routines maintaining information used to locate
  * interfaces.  These routines live in the files if.c and route.c
  */
