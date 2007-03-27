@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.60 2007/03/27 11:22:59 jmc Exp $ */
+/*	$OpenBSD: arc.c,v 1.61 2007/03/27 11:25:17 jmc Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1102,9 +1102,9 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 			goto out;
 
 		/*
-		 * i cant find an easy way to see if the volume exists or not
-		 * except to say that if it has no capacity then it isnt there.
-		 * ignore passthru volumes, bioc_vol doesnt understand them.
+		 * I can't find an easy way to see if the volume exists or not
+		 * except to say that if it has no capacity then it isn't there.
+		 * Ignore passthru volumes, bioc_vol doesn't understand them.
 		 */
 		if (volinfo->capacity != 0 &&
 		    volinfo->raid_level != ARC_FW_VOL_RAIDLEVEL_PASSTHRU)
