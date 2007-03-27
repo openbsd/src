@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.8 2007/03/26 16:41:33 claudio Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.9 2007/03/27 12:39:24 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -114,8 +114,10 @@ ieee80211_hdr(struct ieee80211_frame *wh)
 		break;
 	}
 	if (vflag) {
+		u_int16_t seq;
 		TCARR(wh->i_seq);
-		printf(" (seq %u): ", letoh16(*(u_int16_t *)&wh->i_seq[0]));
+		bcopy(wh->i_seq, &seq, sizeof(u_int16_t));
+		printf(" (seq %u): ", letoh16(seq));
 	} else
 		printf(": ");
 
@@ -195,32 +197,33 @@ int
 ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 {
 	u_int8_t *buf, *frm;
-	u_int8_t *tstamp, *bintval, *capinfo;
+	u_int64_t tstamp;
+	u_int16_t bintval, capinfo;
 	int i;
 
 	buf = (u_int8_t *)wh;
 	frm = (u_int8_t *)&wh[1];
 
-	tstamp = frm;
-	TCHECK2(*tstamp, 8);
+	TCHECK2(frm, 8);
+	bcopy(frm, &tstamp, sizeof(u_int64_t));
 	frm += 8;
 
 	if (vflag > 1)
-		printf(", timestamp %llu", letoh64(*(u_int64_t *)tstamp));
+		printf(", timestamp %llu", letoh64(tstamp));
 
-	bintval = frm;
-	TCHECK2(*bintval, 2);
+	TCHECK2(frm, 2);
+	bcopy(frm, &bintval, sizeof(u_int16_t));
 	frm += 2;
 
 	if (vflag > 1)
-		printf(", interval %u", letoh16(*(u_int16_t *)bintval));
+		printf(", interval %u", letoh16(bintval));
 
-	capinfo = frm;
-	TCHECK2(*capinfo, 2);
+	TCHECK2(frm, 2);
+	bcopy(frm, &capinfo, sizeof(u_int16_t));
 	frm += 2;
 
 	if (vflag)
-		printb(", caps", letoh16(*(u_int16_t *)capinfo),
+		printb(", caps", letoh16(capinfo),
 		    IEEE80211_CAPINFO_BITS);
 
 	while (TTEST2(*frm, 2)) {
@@ -483,6 +486,7 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
 	u_int8_t *t;
 	u_int32_t present;
 	u_int len, rh_len;
+	u_int16_t tmp;
 
 	if (!ieee80211_encap)
 		ts_print(&h->ts);
@@ -514,9 +518,12 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
 	(present & (1 << IEEE80211_RADIOTAP_##_x))
 
 	if (RADIOTAP(TSFT)) {
+		u_int64_t tsf;
+
 		TCHECK2(*t, 8);
+		bcopy(t, &tsf, sizeof(u_int64_t));
 		if (vflag > 1)
-			printf(", tsf %llu", letoh64(*(u_int64_t*)t));
+			printf(", tsf %llu", letoh64(tsf));
 		t += 8;
 	}
 
@@ -546,10 +553,12 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
 		u_int16_t freq, flags;
 		TCHECK2(*t, 2);
 
-		freq = letoh16(*(u_int16_t*)t);
+		bcopy(t, &freq, sizeof(u_int16_t));
+		freq = letoh16(freq);
 		t += 2;
 		TCHECK2(*t, 2);
-		flags = letoh16(*(u_int16_t*)t);
+		bcopy(t, &flags, sizeof(u_int16_t));
+		flags = letoh16(flags);
 		t += 2;
 
 		printf(", chan %u", ieee80211_any2ieee(freq, flags));
@@ -593,24 +602,28 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
 
 	if (RADIOTAP(LOCK_QUALITY)) {
 		TCHECK2(*t, 2);
-		if (vflag)
-			printf(", quality %u", letoh16(*(u_int16_t*)t));
+		if (vflag) {
+			bcopy(t, &tmp, sizeof(u_int16_t));
+			printf(", quality %u", letoh16(tmp));
+		}
 		t += 2;
 	}
 
 	if (RADIOTAP(TX_ATTENUATION)) {
 		TCHECK2(*t, 2);
-		if (vflag)
-			printf(", txatt %u",
-			    letoh16(*(u_int16_t*)t));
+		if (vflag) {
+			bcopy(t, &tmp, sizeof(u_int16_t));
+			printf(", txatt %u", letoh16(tmp));
+		}
 		t += 2;
 	}
 
 	if (RADIOTAP(DB_TX_ATTENUATION)) {
 		TCHECK2(*t, 2);
-		if (vflag)
-			printf(", txatt %udB",
-			    letoh16(*(u_int16_t*)t));
+		if (vflag) {
+			bcopy(t, &tmp, sizeof(u_int16_t));
+			printf(", txatt %udB", letoh16(tmp));
+		}
 		t += 2;
 	}
 
@@ -641,8 +654,11 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
 
 	if (RADIOTAP(FCS)) {
 		TCHECK2(*t, 4);
-		if (vflag)
-			printf(", fcs %08x", letoh32(*(u_int32_t*)t));
+		if (vflag) {
+			u_int32_t fcs;
+			bcopy(t, &fcs, sizeof(u_int32_t));
+			printf(", fcs %08x", letoh32(fcs));
+		}
 		t += 4;
 	}
 
