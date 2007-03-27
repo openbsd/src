@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.98 2007/03/23 06:34:58 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.99 2007/03/27 07:31:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -47,6 +47,7 @@ int ahcidebug = AHCI_D_VERBOSE;
 #endif
 
 #define AHCI_PCI_BAR		0x24
+#define AHCI_PCI_INTERFACE	0x01
 
 #define AHCI_REG_CAP		0x000 /* HBA Capabilities */
 #define  AHCI_REG_CAP_NP(_r)		(((_r) & 0x1f)+1) /* Number of Ports */
@@ -535,14 +536,20 @@ ahci_match(struct device *parent, void *match, void *aux)
 	const struct ahci_device	*ad;
 
 	ad = ahci_lookup_device(pa);
-	if (ad == NULL)
-		return (0);
+	if (ad != NULL) {
+		/* the device may need special checks to see if it matches */
+		if (ad->ad_match != NULL)
+			return (ad->ad_match(pa));
 
-	/* the device may need special checks to see if it matches */
-	if (ad->ad_match != NULL)
-		return (ad->ad_match(pa));
+		return (2); /* match higher than pciide */
+	}
 
-	return (2); /* match higher than pciide */
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA &&
+	    PCI_INTERFACE(pa->pa_class) == AHCI_PCI_INTERFACE)
+		return (2);
+
+	return (0);
 }
 
 void
@@ -556,10 +563,7 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	int				i;
 
 	ad = ahci_lookup_device(pa);
-	if (ad == NULL)
-		panic("ahci attach cant find a device it matched on");
-
-	if (ad->ad_attach != NULL) {
+	if (ad != NULL && ad->ad_attach != NULL) {
 		if (ad->ad_attach(pa) != 0) {
 			/* error should be printed by ad_attach */
 			return;
