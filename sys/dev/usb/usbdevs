@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.269 2007/03/13 15:52:46 robert Exp $
+$OpenBSD: usbdevs,v 1.270 2007/03/27 03:06:18 ckuethe Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -465,6 +465,7 @@ vendor RALINK		0x148f	Ralink Technology
 vendor CONCEPTRONIC2	0x14b2	Conceptronic
 vendor PLANEX3		0x14ea	Planex Communications
 vendor SILICONPORTALS	0x1527	Silicon Portals
+vendor UBLOX		0x1546	U-blox
 vendor OQO		0x1557	OQO
 vendor UMEDIA		0x157e	U-MEDIA Communications
 vendor FIBERLINE	0x1582	Fiberline
@@ -2233,6 +2234,9 @@ product TSUNAMI SM2000		0x1111	SM-2000
 
 /* TwinMOS products */
 product TWINMOS G240		0xa006	G240
+
+/* U-blox AG */
+product UBLOX ANTARIS4		0x01a4	ANTARIS4 GPS
 
 /* U-MEDIA Communications products */
 product UMEDIA AR5523_1		0x3006	AR5523
