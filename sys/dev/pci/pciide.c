@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.263 2007/03/21 12:20:30 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.264 2007/03/27 07:16:09 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -847,10 +847,12 @@ const struct pciide_product_desc pciide_serverworks_products[] =  {
 	  0,
 	  serverworks_chip_map,
 	},
+#if 0
 	{ PCI_PRODUCT_RCC_K2_SATA,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  svwsata_chip_map,
 	},
+#endif
 	{ PCI_PRODUCT_RCC_FRODO4_SATA,
 	  0,
 	  svwsata_chip_map,
