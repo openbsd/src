@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.h,v 1.4 2007/01/23 21:10:10 michele Exp $ */
+/*	$OpenBSD: ripe.h,v 1.5 2007/03/27 20:19:04 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -127,7 +127,7 @@ void	 md_list_clr(struct auth_md_head *);
 
 /* neighbor.c */
 void		 nbr_init(u_int32_t);
-struct nbr	*nbr_new(u_int32_t, struct iface *, int);
+struct nbr	*nbr_new(u_int32_t, struct iface *);
 void		 nbr_act_del(struct nbr *);
 
 struct nbr		*nbr_find_ip(struct iface *, u_int32_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.6 2007/01/23 21:10:10 michele Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.7 2007/03/27 20:19:04 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -169,7 +169,7 @@ nbr_init(u_int32_t hashsize)
 }
 
 struct nbr *
-nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
+nbr_new(u_int32_t nbr_id, struct iface *iface)
 {
 	struct nbr_head	*head;
 	struct nbr	*nbr = NULL;

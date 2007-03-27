@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.5 2007/01/23 21:10:10 michele Exp $ */
+/*	$OpenBSD: packet.c,v 1.6 2007/03/27 20:19:04 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -172,7 +172,7 @@ recv_packet(int fd, short event, void *bula)
 			return;
 
 		if (nbr == NULL) {
-			nbr = nbr_new(src.sin_addr.s_addr, iface, 0);
+			nbr = nbr_new(src.sin_addr.s_addr, iface);
 			nbr->addr = src.sin_addr;
 		}
 		nbr->port = srcport;
@@ -195,7 +195,7 @@ recv_packet(int fd, short event, void *bula)
 		}
 
 		if (nbr == NULL) {
-			nbr = nbr_new(src.sin_addr.s_addr, iface, 0);
+			nbr = nbr_new(src.sin_addr.s_addr, iface);
 			if (nbr_failed != NULL)
 				nbr_failed_delete(nbr_failed);
 			nbr->addr = src.sin_addr;
