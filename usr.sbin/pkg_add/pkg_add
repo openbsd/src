@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.224 2007/03/07 11:24:07 espie Exp $
+# $OpenBSD: pkg_add,v 1.225 2007/03/27 22:41:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -485,9 +485,6 @@ sub clue
 	my $h = shift;
 	Warn "Even by looking in the dependency tree:\n";
 	Warn "\t", join(", ", keys %$h), "\n";
-	Warn "Maybe it's in a dependent package, but not tagged with \@lib ?\n";
-	Warn "(check with pkg_info -K -L)\n";
-	Warn "If you are still running 3.6 packages, update them.\n";
 }
 
 
