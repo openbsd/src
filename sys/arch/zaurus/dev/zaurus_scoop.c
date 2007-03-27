@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.14 2007/03/26 20:18:09 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.15 2007/03/27 23:23:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -408,6 +408,7 @@ scoop_timeout(void *v)
 {
 	extern struct disklist_head disklist;
 	static struct disk *dk;
+	static int state = 0;
 
 	if (dk == NULL) {
 		for (dk = TAILQ_FIRST(&disklist); dk;
@@ -417,7 +418,13 @@ scoop_timeout(void *v)
 				break;
 	}
 
-	if (dk)
-		scoop_led_set(SCOOP_LED_GREEN, dk->dk_busy ? 1 : 0);
+	if (dk) {
+		int newstate = (dk->dk_busy ? 1 : 0);
+
+		if (newstate != state) {
+			state = newstate;
+			scoop_led_set(SCOOP_LED_GREEN, newstate);
+		}
+	}
 	timeout_add(&scoop_checkdisk, hz/25);
 }
