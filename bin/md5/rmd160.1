@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.1,v 1.20 2006/11/17 21:13:16 jmc Exp $
+.\"	$OpenBSD: rmd160.1,v 1.21 2007/03/27 13:12:41 millert Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -26,7 +26,7 @@
 .Nd calculate a message-digest fingerprint (checksum) for a file
 .Sh SYNOPSIS
 .Nm rmd160
-.Op Fl pqrtx
+.Op Fl bpqrtx
 .Op Fl c Op Ar checklist ...
 .Op Fl s Ar string
 .Op Ar
@@ -48,6 +48,8 @@ such as
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl b
+Output checksums in base64 notation, not hexidecimal.
 .It Xo
 .Fl c
 .Op Ar checklist ...

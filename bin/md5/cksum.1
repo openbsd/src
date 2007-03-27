@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.13 2007/03/20 12:06:48 thib Exp $
+.\"	$OpenBSD: cksum.1,v 1.14 2007/03/27 13:12:41 millert Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Sh SYNOPSIS
 .Nm cksum
 .Bk -words
-.Op Fl pqrtx
+.Op Fl bpqrtx
 .Op Fl a Ar algorithms
 .Op Fl c Op Ar checklist ...
 .Op Fl o Ar 1 | 2
@@ -111,8 +111,39 @@ Multiple algorithms may be specified, separated by a comma or whitespace.
 Additionally, multiple
 .Fl a
 options may be specified on the command line.
-If an algorithm is repeated, only the first instance is used.
 Case is ignored when matching algorithms.
+The output format may be specified on a per-algorithm basis
+by using a single-character suffix, e.g.\&
+.Dq sha256b .
+If the algorithm has a
+.Sq b
+suffix, the checksum will be output in base64 format.
+If the algorithm has an
+.Sq x
+suffix, the checksum will be output in hex format.
+If an algorithm with the same output format is repeated,
+only the first instance is used.
+Note that output format suffixes are not supported
+for the
+.Ar cksum ,
+.Ar sum
+and
+.Ar sysvsum
+algorithms.
+.It Fl b
+Output checksums in base64 notation, not hexadecimal by
+default.
+A
+.Sq b
+or
+.Sq x
+suffix on the algorithm will override this default.
+This option is ignored for the
+.Ar cksum ,
+.Ar sum
+and
+.Ar sysvsum
+algorithms, which do not use hexadecimal output.
 .It Fl c Op Ar checklist ...
 Compares all checksums contained in the file
 .Ar checklist
