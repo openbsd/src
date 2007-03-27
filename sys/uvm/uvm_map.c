@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.84 2007/03/26 08:43:34 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.85 2007/03/27 16:13:45 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -2203,14 +2203,11 @@ uvm_map_submap(map, start, end, submap)
 #define max(a,b)        ((a) > (b) ? (a) : (b))
 
 int
-uvm_map_protect(map, start, end, new_prot, set_max)
-	vm_map_t map;
-	vaddr_t start, end;
-	vm_prot_t new_prot;
-	boolean_t set_max;
+uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
+    vm_prot_t new_prot, boolean_t set_max)
 {
-	vm_map_entry_t current, entry;
-	int rv = 0;
+	struct vm_map_entry *current, *entry;
+	int error = 0;
 	UVMHIST_FUNC("uvm_map_protect"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_prot=0x%lx)",
 		    map, start, end, new_prot);
@@ -2232,11 +2229,11 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 	current = entry;
 	while ((current != &map->header) && (current->start < end)) {
 		if (UVM_ET_ISSUBMAP(current)) {
-			rv = EINVAL;
+			error = EINVAL;
 			goto out;
 		}
 		if ((new_prot & current->max_protection) != new_prot) {
-			rv = EACCES;
+			error = EACCES;
 			goto out;
 		}
 		current = current->next;
@@ -2297,7 +2294,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 				 * XXX what uvm_map_protect() itself would
 				 * XXX normally return.
 				 */
-				rv = ENOMEM;
+				error = ENOMEM;
 			}
 		}
 
@@ -2308,7 +2305,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
  out:
 	vm_map_unlock(map);
 	UVMHIST_LOG(maphist, "<- done, rv=%ld",rv,0,0,0);
-	return (rv);
+	return (error);
 }
 
 #undef  max
@@ -2323,13 +2320,10 @@ uvm_map_protect(map, start, end, new_prot, set_max)
  */
 
 int
-uvm_map_inherit(map, start, end, new_inheritance)
-	vm_map_t map;
-	vaddr_t start;
-	vaddr_t end;
-	vm_inherit_t new_inheritance;
+uvm_map_inherit(struct vm_map *map, vaddr_t start, vaddr_t end,
+    vm_inherit_t new_inheritance)
 {
-	vm_map_entry_t entry, temp_entry;
+	struct vm_map_entry *entry, *temp_entry;
 	UVMHIST_FUNC("uvm_map_inherit"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_inh=0x%lx)",
 	    map, start, end, new_inheritance);
@@ -2690,14 +2684,11 @@ uvm_map_pageable(map, start, end, new_pageable, lockflags)
  */
 
 int
-uvm_map_pageable_all(map, flags, limit)
-	vm_map_t map;
-	int flags;
-	vsize_t limit;
+uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 {
-	vm_map_entry_t entry, failed_entry;
+	struct vm_map_entry *entry, *failed_entry;
 	vsize_t size;
-	int rv;
+	int error;
 #ifdef DIAGNOSTIC
 	u_int timestamp_save;
 #endif
@@ -2832,24 +2823,16 @@ uvm_map_pageable_all(map, flags, limit)
 	vm_map_busy(map);
 	vm_map_downgrade(map);
 
-	rv = 0;
-	for (entry = map->header.next; entry != &map->header;
-	     entry = entry->next) {
+	for (error = 0, entry = map->header.next;
+	    entry != &map->header && error == 0;
+	    entry = entry->next) {
 		if (entry->wired_count == 1) {
-			rv = uvm_fault_wire(map, entry->start, entry->end,
+			error = uvm_fault_wire(map, entry->start, entry->end,
 			     entry->protection);
-			if (rv) {
-				/*
-				 * wiring failed.  break out of the loop.
-				 * we'll clean up the map below, once we
-				 * have a write lock again.
-				 */
-				break;
-			}
 		}
 	}
 
-	if (rv) {	/* failed? */
+	if (error) {	/* failed? */
 		/*
 		 * Get back an exclusive (write) lock.
 		 */
@@ -2891,7 +2874,7 @@ uvm_map_pageable_all(map, flags, limit)
 		}
 		vm_map_unlock(map);
 		UVMHIST_LOG(maphist,"<- done (RV=%ld)", rv,0,0,0);
-		return (rv);
+		return (error);
 	}
 
 	/* We are holding a read lock here. */

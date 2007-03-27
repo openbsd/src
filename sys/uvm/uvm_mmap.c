@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.66 2007/03/26 08:43:34 art Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.67 2007/03/27 16:13:46 art Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -651,9 +651,9 @@ sys_msync(p, v, retval)
 	if ((flags & ~(MS_ASYNC | MS_SYNC | MS_INVALIDATE)) != 0 ||
 			(flags & (MS_ASYNC | MS_SYNC | MS_INVALIDATE)) == 0 ||
 			(flags & (MS_ASYNC | MS_SYNC)) == (MS_ASYNC | MS_SYNC))
-	  return (EINVAL);
+		return (EINVAL);
 	if ((flags & (MS_ASYNC | MS_SYNC)) == 0)
-	  flags |= MS_SYNC;
+		flags |= MS_SYNC;
 
 	/*
 	 * align the address to a page boundary, and adjust the size accordingly
@@ -703,15 +703,7 @@ sys_msync(p, v, retval)
 	else
 		uvmflags |= PGO_SYNCIO;	 /* XXXCDC: force sync for now! */
 
-	/*
-	 * doit!
-	 */
-	rv = uvm_map_clean(map, addr, addr+size, uvmflags);
-
-	/*
-	 * and return... 
-	 */
-	return (rv);
+	return (uvm_map_clean(map, addr, addr+size, uvmflags));
 }
 
 /*
@@ -802,7 +794,6 @@ sys_mprotect(p, v, retval)
 	vaddr_t addr;
 	vsize_t size, pageoff;
 	vm_prot_t prot;
-	int rv;
 
 	/*
 	 * extract syscall args from uap
@@ -822,18 +813,8 @@ sys_mprotect(p, v, retval)
 	if (addr > SIZE_MAX - size)
 		return (EINVAL);		/* disallow wrap-around. */
 
-	/*
-	 * doit
-	 */
-
-	rv = uvm_map_protect(&p->p_vmspace->vm_map, 
-			   addr, addr+size, prot, FALSE);
-
-	if (rv == 0)
-		return (0);
-	if (rv == EACCES)
-		return (EACCES);
-	return (EINVAL);
+	return (uvm_map_protect(&p->p_vmspace->vm_map, addr, addr+size,
+	    prot, FALSE));
 }
 
 /*
@@ -866,14 +847,8 @@ sys_minherit(p, v, retval)
 	if (addr > SIZE_MAX - size)
 		return (EINVAL);		/* disallow wrap-around. */
 	
-	switch (uvm_map_inherit(&p->p_vmspace->vm_map, addr, addr+size,
-			 inherit)) {
-	case 0:
-		return (0);
-	case EACCES:
-		return (EACCES);
-	}
-	return (EINVAL);
+	return (uvm_map_inherit(&p->p_vmspace->vm_map, addr, addr+size,
+	    inherit));
 }
 
 /*
@@ -894,7 +869,7 @@ sys_madvise(p, v, retval)
 	} */ *uap = v;
 	vaddr_t addr;
 	vsize_t size, pageoff;
-	int advice, rv;
+	int advice, error;
 	
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
@@ -911,8 +886,8 @@ sys_madvise(p, v, retval)
 	case MADV_NORMAL:
 	case MADV_RANDOM:
 	case MADV_SEQUENTIAL:
-		rv = uvm_map_advice(&p->p_vmspace->vm_map, addr, addr + size,
-		    advice);
+		error = uvm_map_advice(&p->p_vmspace->vm_map, addr,
+		    addr + size, advice);
 		break;
 
 	case MADV_WILLNEED:
@@ -933,7 +908,7 @@ sys_madvise(p, v, retval)
 		 * any more.  We don't, however, toss the data in
 		 * the pages.
 		 */
-		rv = uvm_map_clean(&p->p_vmspace->vm_map, addr, addr + size,
+		error = uvm_map_clean(&p->p_vmspace->vm_map, addr, addr + size,
 		    PGO_DEACTIVATE);
 		break;
 
@@ -943,7 +918,7 @@ sys_madvise(p, v, retval)
 		 * garbage-collected.  Toss all resources, including
 		 * any swap space in use.
 		 */
-		rv = uvm_map_clean(&p->p_vmspace->vm_map, addr, addr + size,
+		error = uvm_map_clean(&p->p_vmspace->vm_map, addr, addr + size,
 		    PGO_FREE);
 		break;
 
@@ -964,7 +939,7 @@ sys_madvise(p, v, retval)
 		return (EINVAL);
 	}
 
-	return (rv);
+	return (error);
 }
 
 /*
@@ -1085,23 +1060,8 @@ sys_mlockall(p, v, retval)
 
 	error = uvm_map_pageable_all(&p->p_vmspace->vm_map, flags,
 	    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
-	switch (error) {
-	case 0:
-		error = 0;
-		break;
-
-	case ENOMEM:
-		error = ENOMEM;
-		break;
-
-	default:
-		/*
-		 * "Some or all of the memory could not be locked when
-		 * the call was made."
-		 */
-		error = EAGAIN;
-	}
-
+	if (error != 0 && error != ENOMEM)
+		return (EAGAIN);
 	return (error);
 }
 
@@ -1143,7 +1103,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit, p)
 {
 	struct uvm_object *uobj;
 	struct vnode *vp;
-	int retval;
+	int error;
 	int advice = UVM_ADV_NORMAL;
 	uvm_flag_t uvmflag = 0;
 	vsize_t align = 0;	/* userland page size */
@@ -1264,13 +1224,9 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit, p)
 			(flags & MAP_SHARED) ? UVM_INH_SHARE : UVM_INH_COPY,
 			advice, uvmflag);
 
-	/*
-	 * do it!
-	 */
+	error = uvm_map_p(map, addr, size, uobj, foff, align, uvmflag, p);
 
-	retval = uvm_map_p(map, addr, size, uobj, foff, align, uvmflag, p);
-
-	if (retval == 0) {
+	if (error == 0) {
 		/*
 		 * POSIX 1003.1b -- if our address space was configured
 		 * to lock all future mappings, wire the one we just made.
@@ -1292,7 +1248,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit, p)
 			        locklimit)
 #endif
 			) {
-				retval = ENOMEM;
+				error = ENOMEM;
 				vm_map_unlock(map);
 				/* unmap the region! */
 				uvm_unmap(map, *addr, *addr + size);
@@ -1302,9 +1258,9 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit, p)
 			 * uvm_map_pageable() always returns the map
 			 * unlocked.
 			 */
-			retval = uvm_map_pageable(map, *addr, *addr + size,
+			error = uvm_map_pageable(map, *addr, *addr + size,
 			    FALSE, UVM_LK_ENTER);
-			if (retval != 0) {
+			if (error != 0) {
 				/* unmap the region! */
 				uvm_unmap(map, *addr, *addr + size);
 				goto bad;
@@ -1324,6 +1280,6 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit, p)
 	if (uobj)
 		uobj->pgops->pgo_detach(uobj);
 
- bad:
-	return (retval);
+bad:
+	return (error);
 }
