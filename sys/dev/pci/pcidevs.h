@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1221 2007/03/18 15:29:55 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.1222 2007/03/27 01:12:25 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1221,8 +1221,10 @@
 #define	PCI_PRODUCT_CMDTECH_3112	0x3112		/* SiI3112 SATA */
 #define	PCI_PRODUCT_CMDTECH_3114	0x3114		/* SiI3114 SATA */
 #define	PCI_PRODUCT_CMDTECH_3124	0x3124		/* SiI3124 SATA */
+#define	PCI_PRODUCT_CMDTECH_3131	0x3131		/* SiI3131 SATA */
 #define	PCI_PRODUCT_CMDTECH_3132	0x3132		/* SiI3132 SATA */
 #define	PCI_PRODUCT_CMDTECH_3512	0x3512		/* SiI3512 SATA */
+#define	PCI_PRODUCT_CMDTECH_3531	0x3531		/* SiI3531 SATA */
 
 /* CNet produts */
 #define	PCI_PRODUCT_CNET_GIGACARD	0x434e		/* GigaCard */

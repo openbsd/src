@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1221 2007/03/18 15:29:55 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.1222 2007/03/27 01:12:25 dlg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3172,12 +3172,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SiI3124 SATA",
 	},
 	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3131,
+	    "SiI3131 SATA",
+	},
+	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3132,
 	    "SiI3132 SATA",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3512,
 	    "SiI3512 SATA",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3531,
+	    "SiI3531 SATA",
 	},
 	{
 	    PCI_VENDOR_CNET, PCI_PRODUCT_CNET_GIGACARD,
