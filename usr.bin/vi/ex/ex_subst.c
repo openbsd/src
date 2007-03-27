@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.15 2006/04/22 03:09:15 ray Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.16 2007/03/27 18:24:06 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -1228,6 +1228,8 @@ re_tag_conv(sp, ptrnp, plenp, replacedp)
 		} else if (strchr("^.[]$*", p[0]))
 			*t++ = '\\';
 		*t++ = *p++;
+		if (len == 0)
+			break;
 	}
 	if (lastdollar)
 		*t++ = '$';
