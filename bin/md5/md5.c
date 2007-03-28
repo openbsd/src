@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.41 2007/03/27 13:12:41 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.42 2007/03/28 11:30:15 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -214,7 +214,7 @@ main(int argc, char **argv)
 	error = bflag = cflag = pflag = qflag = rflag = tflag = xflag = 0;
 
 	/* Check for -b option early since it changes behavior. */
-	while ((fl = getopt(argc, argv, OPTSTRING)) != -1) {
+	while ((fl = getopt(argc, argv, ":" OPTSTRING)) != -1) {
 		if (fl == 'b')
 			bflag = 1;
 	}
