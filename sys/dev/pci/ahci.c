@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.102 2007/03/28 06:29:27 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.103 2007/03/28 06:40:19 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -349,6 +349,14 @@ struct ahci_port {
 #define AP_S_NORMAL			0
 #define AP_S_FATAL_ERROR		1
 
+	/* For error recovery. */
+#ifdef DIAGNOSTIC
+	int			ap_err_busy;
+#endif
+	u_int32_t		ap_err_saved_sactive;
+	u_int32_t		ap_err_saved_active;
+	u_int32_t		ap_err_saved_active_cnt;
+
 #ifdef AHCI_DEBUG
 	char			ap_name[16];
 #define PORTNAME(_ap)	((_ap)->ap_name)
@@ -447,6 +455,9 @@ u_int32_t		ahci_port_intr(struct ahci_port *, u_int32_t);
 
 struct ahci_ccb		*ahci_get_ccb(struct ahci_port *);
 void			ahci_put_ccb(struct ahci_ccb *);
+
+struct ahci_ccb 	*ahci_get_err_ccb(struct ahci_port *);
+void			ahci_put_err_ccb(struct ahci_ccb *);
 
 struct ahci_dmamem	*ahci_dmamem_alloc(struct ahci_softc *, size_t);
 void			ahci_dmamem_free(struct ahci_softc *,
@@ -1089,11 +1100,7 @@ ahci_port_softreset(struct ahci_port *ap)
 	DPRINTF(AHCI_D_VERBOSE, "%s: soft reset\n", PORTNAME(ap));
 
 	s = splbio();
-	ccb = ahci_get_ccb(ap);
-	splx(s);
-	if (ccb == NULL)
-		goto err;
-	ccb->ccb_done = ahci_empty_done;
+	ccb = ahci_get_err_ccb(ap);
 
 	/* Save previous command register state */
 	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
@@ -1178,14 +1185,14 @@ err:
 			    "still active.\n", PORTNAME(ap), ccb->ccb_slot);
 			ahci_port_stop(ap, 0);
 		}
-		s = splbio();
 		ccb->ccb_xa.state = ATA_S_ERROR;
-		ahci_put_ccb(ccb);
-		splx(s);
+		ahci_put_err_ccb(ccb);
 	}
 
 	/* Restore saved CMD register state */
 	ahci_pwrite(ap, AHCI_PREG_CMD, cmd);
+
+	splx(s);
 
 	return (rc);
 }
@@ -1607,8 +1614,17 @@ ahci_port_intr(struct ahci_port *ap, u_int32_t ci_mask)
 			/* Didn't reset, could gather extended info from log. */
 		}
 
-		/* If we couldn't determine the errored slot, fail all. */
+		/*
+		 * If we couldn't determine the errored slot, reset the port
+		 * and fail all the active slots.
+		 */
 		if (err_slot == -1) {
+			if (ahci_port_softreset(ap) != 0 &&
+			    ahci_port_portreset(ap) != 0) {
+				printf("%s: couldn't reset after NCQ error, "
+				    "disabling device.\n", PORTNAME(ap));
+				goto fatal;
+			}
 			printf("%s: couldn't recover from NCQ error, failing "
 			    "all outstanding commands.\n", PORTNAME(ap));
 			goto failall;
@@ -1767,6 +1783,74 @@ ahci_put_ccb(struct ahci_ccb *ccb)
 
 	ccb->ccb_xa.state = ATA_S_PUT;
 	TAILQ_INSERT_TAIL(&ap->ap_ccb_free, ccb, ccb_entry);
+}
+
+struct ahci_ccb *
+ahci_get_err_ccb(struct ahci_port *ap)
+{
+	struct ahci_ccb *err_ccb;
+	u_int32_t sact;
+
+	splassert(IPL_BIO);
+
+	/* No commands may be active on the chip. */
+	sact = ahci_pread(ap, AHCI_PREG_SACT);
+	if (sact != 0)
+		printf("ahci_get_err_ccb but SACT %08x != 0?\n", sact);
+	KASSERT(ahci_pread(ap, AHCI_PREG_CI) == 0);
+
+#ifdef DIAGNOSTIC
+	KASSERT(ap->ap_err_busy == 0);
+	ap->ap_err_busy = 1;
+#endif
+	/* Save outstanding command state. */
+	ap->ap_err_saved_active = ap->ap_active;
+	ap->ap_err_saved_active_cnt = ap->ap_active_cnt;
+	ap->ap_err_saved_sactive = ap->ap_sactive;
+
+	/* 
+	 * Pretend we have no commands outstanding, so that completions won't
+	 * run prematurely.
+	 */
+	ap->ap_active = ap->ap_active_cnt = ap->ap_sactive = 0;
+
+	/*
+	 * Grab a CCB to use for error recovery.  This should never fail, as 
+	 * we ask atascsi to reserve one for us at init time.
+	 */
+	err_ccb = ahci_get_ccb(ap);
+	KASSERT(err_ccb != NULL);
+	err_ccb->ccb_xa.flags = 0;
+	err_ccb->ccb_done = ahci_empty_done;
+
+	return err_ccb;
+}
+
+void
+ahci_put_err_ccb(struct ahci_ccb *ccb)
+{
+	struct ahci_port *ap = ccb->ccb_port;
+	u_int32_t sact;
+
+	splassert(IPL_BIO);
+
+#ifdef DIAGNOSTIC
+	KASSERT(ap->ap_err_busy);
+#endif
+	/* No commands may be active on the chip */
+	sact = ahci_pread(ap, AHCI_PREG_SACT);
+	if (sact != 0)
+		printf("ahci_port_err_ccb_restore but SACT %08x != 0?\n", sact);
+	KASSERT(ahci_pread(ap, AHCI_PREG_CI) == 0);
+
+	/* Restore outstanding command state */
+	ap->ap_sactive = ap->ap_err_saved_sactive;
+	ap->ap_active_cnt = ap->ap_err_saved_active_cnt;
+	ap->ap_active = ap->ap_err_saved_active;
+
+#ifdef DIAGNOSTIC
+	ap->ap_err_busy = 0;
+#endif
 }
 
 struct ahci_dmamem *
