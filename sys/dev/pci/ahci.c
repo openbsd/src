@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.100 2007/03/28 06:19:48 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.101 2007/03/28 06:24:22 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1678,10 +1678,12 @@ failall:
 	ci_masked = ~ci_saved & *active & ci_mask;
 	while (ci_masked) {
 		slot = ffs(ci_masked) - 1;
-		DPRINTF(AHCI_D_INTR, "%s: slot %d is complete\n", PORTNAME(ap),
-		    slot);
 		ccb = &ap->ap_ccbs[slot];
 		ci_masked &= ~(1 << slot);
+
+		DPRINTF(AHCI_D_INTR, "%s: slot %d is complete%s\n",
+		    PORTNAME(ap), slot, ccb->ccb_xa.state == ATA_S_ERROR ?
+		    " (error)" : "");
 
 		bus_dmamap_sync(sc->sc_dmat,
 		    AHCI_DMA_MAP(ap->ap_dmamem_cmd_list),
@@ -2097,8 +2099,8 @@ ahci_ata_cmd_timeout(void *arg)
 		    "", ccb->ccb_slot, *active);
 		if (ahci_port_softreset(ap) != 0 && ahci_port_portreset(ap)
 		    != 0) {
-			printf("%s: failed to reset port during error "
-			    "recovery, disabling it\n", PORTNAME(ap));
+			printf("%s: failed to reset port during timeout "
+			    "handling, disabling it\n", PORTNAME(ap));
 			ap->ap_state = AP_S_FATAL_ERROR;
 		}
 
