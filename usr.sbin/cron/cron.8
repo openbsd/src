@@ -17,7 +17,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.\" $OpenBSD: cron.8,v 1.28 2007/02/18 23:59:03 jmc Exp $
+.\" $OpenBSD: cron.8,v 1.29 2007/03/28 16:49:25 millert Exp $
 .\"
 .Dd July 6, 2002
 .Dt CRON 8
@@ -212,14 +212,11 @@ to check for crontab changes immediately
 .Sh AUTHORS
 .An Paul Vixie Aq vixie@isc.org
 .Sh CAVEATS
-All
 .Xr crontab 5
-files must not be readable or writable by any user other than their owner,
-including
-.Pa /etc/crontab .
-In practice this means they should be mode 0600.
-This restriction is enforced automatically by
-.Xr crontab 1
-but if
+files will be ignored if they do not have the proper file mode.
+For user crontab files created by
+.Xr crontab 1 ,
+the mode must be 0400 or 0600.
+If the system crontab file is used,
 .Pa /etc/crontab
-is used, the mode must be set manually on that file.
+must not be writable by any user other than root.

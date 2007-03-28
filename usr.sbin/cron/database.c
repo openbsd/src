@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.16 2004/06/22 03:15:33 avsm Exp $	*/
+/*	$OpenBSD: database.c,v 1.17 2007/03/28 16:49:25 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: database.c,v 1.16 2004/06/22 03:15:33 avsm Exp $";
+static char const rcsid[] = "$OpenBSD: database.c,v 1.17 2007/03/28 16:49:25 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the log]
@@ -209,15 +209,18 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 		goto next_crontab;
 	}
 	if ((statbuf->st_mode & 07577) != 0400) {
-		log_it(fname, getpid(), "BAD FILE MODE", tabname);
-		goto next_crontab;
+		/* Looser permissions on system crontab. */
+		if (pw != NULL || (statbuf->st_mode & 022) != 0) {
+			log_it(fname, getpid(), "BAD FILE MODE", tabname);
+			goto next_crontab;
+		}
 	}
 	if (statbuf->st_uid != ROOT_UID && (pw == NULL ||
 	    statbuf->st_uid != pw->pw_uid || strcmp(uname, pw->pw_name) != 0)) {
 		log_it(fname, getpid(), "WRONG FILE OWNER", tabname);
 		goto next_crontab;
 	}
-	if (statbuf->st_nlink != 1) {
+	if (pw != NULL && statbuf->st_nlink != 1) {
 		log_it(fname, getpid(), "BAD LINK COUNT", tabname);
 		goto next_crontab;
 	}
