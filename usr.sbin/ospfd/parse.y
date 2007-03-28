@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.46 2007/03/22 15:56:52 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.47 2007/03/28 14:17:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -45,7 +45,6 @@ static FILE			*fin = NULL;
 static int			 lineno = 1;
 static int			 errors = 0;
 char				*infile;
-char				*start_state;
 
 struct area	*area = NULL;
 struct iface	*iface = NULL;
