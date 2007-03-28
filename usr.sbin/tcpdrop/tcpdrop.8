@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdrop.8,v 1.7 2007/03/25 17:20:27 deraadt Exp $
+.\"	$OpenBSD: tcpdrop.8,v 1.8 2007/03/28 17:04:03 deraadt Exp $
 .\"
 .\" Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
 .\"
@@ -22,24 +22,24 @@
 .Nd drop a TCP connection
 .Sh SYNOPSIS
 .Nm tcpdrop
-.Ar laddr
-.Ar lport
-.Ar faddr
-.Ar fport
+.Ar local-addr
+.Ar local-port
+.Ar remote-addr
+.Ar remote-port
 .Nm tcpdrop
-.Ar laddr : Ns Ar lport
-.Ar faddr : Ns Ar fport
+.Ar local-addr : Ns Ar local-port
+.Ar remote-addr : Ns Ar remote-port
 .Sh DESCRIPTION
 The
 .Nm
 command drops the TCP connection specified by the local address
-.Ar laddr ,
+.Ar local-addr ,
 port
-.Ar lport
+.Ar local-port
 and the foreign address
-.Ar faddr ,
+.Ar remote-addr ,
 port
-.Ar fport .
+.Ar remote-port .
 Addresses and ports can be specified by name or numeric value.
 .Sh EXAMPLES
 If a connection to
