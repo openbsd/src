@@ -1,4 +1,4 @@
-.\" $OpenBSD: mesh.4,v 1.1 2006/10/12 21:21:51 gwk Exp $
+.\" $OpenBSD: mesh.4,v 1.2 2007/03/28 11:56:40 xsa Exp $
 .\" Copyright (c) 2006 Gordon Willem Klok <gwk@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -27,6 +27,15 @@ The
 .Nm
 driver provides support for the onboard SCSI/2 (fast SCSI) controller
 found on many old world Apple Power Macintosh systems and clones.
+.Pp
+Machines supported by the
+.Nm
+driver include:
+.Pp
+.Bl -dash -offset indent -compact
+.It
+Power Macintosh 7600, 8500, 9500 and 9600.
+.El
 .Sh DEVICE FLAGS
 The
 .Nm
@@ -45,6 +54,11 @@ performance may be degraded.
 .Xr intro 4 ,
 .Xr macobio 4 ,
 .Xr scsi 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.1 .
 .Sh BUGS
 No support for tagged queueing.
 Synchronous transfers and disconnect/reconnect are disabled by default.
