@@ -1,4 +1,4 @@
-.\" $OpenBSD: sendbug.1,v 1.11 2007/03/28 19:34:34 jmc Exp $
+.\" $OpenBSD: sendbug.1,v 1.12 2007/03/28 20:52:27 jmc Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
@@ -18,20 +18,35 @@
 is used to submit problem reports (PRs) to the
 .Ox
 bugs database.
-Some system information is filled out in a temporary file,
-which is then opened by a text editor.
+A template PR is opened in a text editor
+with some system information,
+such as machine architecture,
+already filled in.
+Fields enclosed in
+.Sq \*(Lt\*(Gt
+should be completed by the user.
 .Pp
-Once the bug report is filled out,
-it can be sent to the
-.Ox
-developers, re-edited, or aborted.
-If aborted,
+Once the PR is filled out,
+the user exits the editor and is presented with a choice:
+a)bort, e)dit, or s)end.
+If abort is selected,
 the report is not deleted and the pathname of the report is printed.
+If edit is selected,
+the user is given a chance to re-edit the report.
 .Pp
-The content of the PR is not confidential; it is sent out to a public
-mailing list.
-Sensitive, security-related issues should be sent via email to
-.Aq security@OpenBSD.org .
+If send is selected,
+the report is mailed to the bugs database,
+with a Cc to the author.
+An auto-generated reply will be sent
+confirming the mail has been received.
+Any follow up mail to the PR
+should keep the same mail subject.
+.Pp
+The bugs database can be queried using the online bug tracking system
+available at
+.Pa http://www.openbsd.org/query-pr.html .
+This allows users to search for PRs based on either PR number
+or content.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -42,12 +57,6 @@ Generate and print the template with system information filled out.
 .It Fl V
 Print the version number.
 .El
-.Pp
-The bugs database can be queried using the online bug tracking system
-available at
-.Pa http://www.openbsd.org/query-pr.html .
-This allows users to search for PRs based on either their PR number
-or content.
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev EDITOR , VISUAL
@@ -86,3 +95,8 @@ temporary PR report
 .Nm
 was written from scratch for the public domain by
 .An Ray Lai Aq ray@cyth.net .
+.Sh CAVEATS
+The content of the PR is not confidential; it is sent out to a public
+mailing list.
+Sensitive, security related issues should be sent via email to
+.Aq security@OpenBSD.org .
