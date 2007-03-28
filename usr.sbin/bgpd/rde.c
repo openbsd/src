@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.222 2007/03/16 14:06:57 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.223 2007/03/28 12:33:32 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -70,6 +70,7 @@ void		 rde_dump_upcall(struct pt_entry *, void *);
 void		 rde_dump_as(struct ctl_show_rib_request *);
 void		 rde_dump_prefix_upcall(struct pt_entry *, void *);
 void		 rde_dump_prefix(struct ctl_show_rib_request *);
+void		 rde_dump_community(struct ctl_show_rib_request *);
 void		 rde_dump_ctx_new(struct ctl_show_rib_request *, pid_t,
 		     enum imsg_type);
 void		 rde_dump_runner(void);
@@ -494,6 +495,17 @@ badnet:
 			memcpy(&req, imsg.data, sizeof(req));
 			req.pid = imsg.hdr.pid;
 			rde_dump_prefix(&req);
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, req.pid, -1,
+			    NULL, 0);
+			break;
+		case IMSG_CTL_SHOW_RIB_COMMUNITY:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			memcpy(&req, imsg.data, sizeof(req));
+			req.pid = imsg.hdr.pid;
+			rde_dump_community(&req);
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, req.pid, -1,
 			    NULL, 0);
 			break;
@@ -1739,6 +1751,26 @@ rde_dump_prefix(struct ctl_show_rib_request *req)
 	} else {
 		if ((pt = pt_get(&req->prefix, req->prefixlen)) != NULL)
 			rde_dump_upcall(pt, req);
+	}
+}
+
+void
+rde_dump_community(struct ctl_show_rib_request *req)
+{
+	extern struct path_table	 pathtable;
+	struct rde_aspath		*asp;
+	struct prefix			*p;
+	u_int32_t			 i;
+
+	for (i = 0; i <= pathtable.path_hashmask; i++) {
+		LIST_FOREACH(asp, &pathtable.path_hashtbl[i], path_l) {
+			if (!rde_filter_community(asp, req->community.as,
+			    req->community.type))
+				continue;
+			/* match found */
+			LIST_FOREACH(p, &asp->prefix_h, path_l)
+				rde_dump_filter(p, req);
+		}
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.214 2007/03/16 14:06:57 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.215 2007/03/28 12:33:32 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -339,6 +339,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_RIB_AS,
 	IMSG_CTL_SHOW_RIB_PREFIX,
 	IMSG_CTL_SHOW_RIB_ATTR,
+	IMSG_CTL_SHOW_RIB_COMMUNITY,
 	IMSG_CTL_SHOW_NETWORK,
 	IMSG_CTL_SHOW_NETWORK6,
 	IMSG_CTL_SHOW_RIB_MEM,
@@ -533,10 +534,16 @@ struct filter_as {
 	u_int16_t	as;
 };
 
+struct filter_community {
+	int			as;
+	int			type;
+};
+
 struct ctl_show_rib_request {
 	struct ctl_neighbor	neighbor;
 	struct bgpd_addr	prefix;
 	struct filter_as	as;
+	struct filter_community community;
 	u_int32_t		peerid;
 	pid_t			pid;
 	u_int16_t		flags;
@@ -600,11 +607,6 @@ struct filter_prefixlen {
 	sa_family_t		af;
 	u_int8_t		len_min;
 	u_int8_t		len_max;
-};
-
-struct filter_community {
-	int			as;
-	int			type;
 };
 
 struct filter_match {
