@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.42 2007/03/07 11:55:54 henning Exp $
+.\" $OpenBSD: bgpctl.8,v 1.43 2007/03/28 12:34:08 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -187,6 +187,9 @@ Show all entries with
 as leftmost AS.
 .It Cm empty-as
 Show all entries that are internal routes with no AS's in the AS path.
+.It Cm community Ar community
+Show all entries with community
+.Ar community .
 .It Cm neighbor Ar peer
 Show only entries from the specified peer.
 .It Cm summary

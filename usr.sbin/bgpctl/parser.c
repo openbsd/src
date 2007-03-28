@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.40 2007/03/07 11:55:54 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.41 2007/03/28 12:34:08 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -73,6 +73,7 @@ static const struct token t_neighbor_modifiers[];
 static const struct token t_show_as[];
 static const struct token t_show_prefix[];
 static const struct token t_show_ip[];
+static const struct token t_show_community[];
 static const struct token t_network[];
 static const struct token t_network_show[];
 static const struct token t_prefix[];
@@ -135,6 +136,7 @@ static const struct token t_show_rib[] = {
 	{ ASTYPE,	"transit-as",	AS_TRANSIT,	t_show_as},
 	{ ASTYPE,	"peer-as",	AS_PEER,	t_show_as},
 	{ ASTYPE,	"empty-as",	AS_EMPTY,	t_show_rib},
+	{ KEYWORD, 	"community", 	NONE, 		t_show_community},
 	{ FLAG,		"detail",	F_CTL_DETAIL,	t_show_rib},
 	{ FLAG,		"in",		F_CTL_ADJ_IN,	t_show_rib},
 	{ FLAG,		"out",		F_CTL_ADJ_OUT,	t_show_rib},
@@ -201,6 +203,11 @@ static const struct token t_show_prefix[] = {
 static const struct token t_show_ip[] = {
 	{ KEYWORD,	"bgp",		SHOW_RIB,	t_show_rib},
 	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_show_community[] = {
+	{ COMMUNITY, 	"", 		NONE, 		t_show_rib},
+	{ ENDTOKEN, 	"", 		NONE, 		NULL}
 };
 
 static const struct token t_network[] = {
@@ -772,6 +779,9 @@ done:
 	fs->type = ACTION_SET_COMMUNITY;
 	fs->action.community.as = as;
 	fs->action.community.type = type;
+
+	r->community.as = as;
+	r->community.type = type;
 
 	TAILQ_INSERT_TAIL(&r->set, fs, entry);
 	return (1);
