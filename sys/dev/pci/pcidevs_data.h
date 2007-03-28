@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1222 2007/03/27 01:12:25 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1223 2007/03/28 12:40:05 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -7428,8 +7428,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "88SX6081 SATA",
 	},
 	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SATA,
-	    "SATA",
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SE6101,
+	    "88SE6101 IDE",
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SATA_2,
