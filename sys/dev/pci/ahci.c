@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.101 2007/03/28 06:24:22 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.102 2007/03/28 06:29:27 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1654,7 +1654,7 @@ failall:
 		ahci_port_stop(ap, 1);
 
 		/* Error all the active slots. */
-		ci_masked = ~ci_saved & *active;
+		ci_masked = ci_saved & *active;
 		while (ci_masked) {
 			slot = ffs(ci_masked) - 1;
 			ccb = &ap->ap_ccbs[slot];
@@ -1662,8 +1662,8 @@ failall:
 			ccb->ccb_xa.state = ATA_S_ERROR;
 		}
 
-		/* Run completion for all slots. */
-		ci_saved = 0;
+		/* Run completion for all active slots. */
+		ci_saved &= ~*active;
 
 		/* Don't restart the port if our problems were deemed fatal. */
 		if (ap->ap_state == AP_S_FATAL_ERROR)
