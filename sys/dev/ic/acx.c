@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.69 2007/03/19 23:28:23 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.70 2007/03/29 12:27:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -2249,7 +2249,7 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 	ctrl |= sc->chip_fw_txdesc_ctrl; /* extra chip specific flags */
 	ctrl &= ~(DESC_CTRL_HOSTOWN | DESC_CTRL_ACXDONE);
 
-	FW_TXDESC_SETFIELD_4(sc, txbuf, f_tx_len, m->m_pkthdr.len);
+	FW_TXDESC_SETFIELD_2(sc, txbuf, f_tx_len, m->m_pkthdr.len);
 	FW_TXDESC_SETFIELD_1(sc, txbuf, f_tx_error, 0);
 	FW_TXDESC_SETFIELD_1(sc, txbuf, f_tx_ack_fail, 0);
 	FW_TXDESC_SETFIELD_1(sc, txbuf, f_tx_rts_fail, 0);
