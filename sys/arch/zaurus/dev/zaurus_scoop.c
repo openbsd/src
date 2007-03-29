@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.15 2007/03/27 23:23:22 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.16 2007/03/29 18:42:38 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -40,6 +40,8 @@ struct scoop_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	u_int16_t sc_gpwr;	/* GPIO state before suspend */
+	void *sc_powerhook;
+	int sc_suspended;
 };
 
 int	scoopmatch(struct device *, void *, void *);
@@ -65,6 +67,7 @@ void	scoop0_set_card_power(enum card, int);
 
 struct timeout	scoop_checkdisk;
 void	scoop_timeout(void *);
+void	scoop_power(int, void *);
 
 int
 scoopmatch(struct device *parent, void *match, void *aux)
@@ -112,9 +115,15 @@ scoopattach(struct device *parent, struct device *self, void *aux)
 		scoop_gpio_pin_write(sc, SCOOP0_AKIN_PULLUP, GPIO_PIN_LOW);
 	}
 
-	timeout_set(&scoop_checkdisk, scoop_timeout, sc);
+	if (sc->sc_dev.dv_unit == 0)
+		timeout_set(&scoop_checkdisk, scoop_timeout, sc);
 
 	printf(": PCMCIA/GPIO controller\n");
+
+	sc->sc_powerhook = powerhook_establish(scoop_power, sc);
+	if (sc->sc_powerhook == NULL)
+		panic("Unable to establish %s powerhook",
+		    sc->sc_dev.dv_xname);
 }
 
 int
@@ -132,10 +141,13 @@ scoop_gpio_pin_write(struct scoop_softc *sc, int pin, int level)
 {
 	u_int16_t rv;
 	u_int16_t bit = (1 << pin);
+	int s;
 
+	s = splhigh();
 	rv = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR,
 	    level == GPIO_PIN_LOW ? (rv & ~bit) : (rv | bit));
+	splx(s);
 }
 
 void
@@ -358,6 +370,8 @@ scoop_suspend(void)
 	struct scoop_softc *sc;
 	u_int32_t rv;
 
+	scoop_check_mcr();
+
 	if (scoop_cd.cd_ndevs > 0 && scoop_cd.cd_devs[0] != NULL) {
 		sc = scoop_cd.cd_devs[0];
 		sc->sc_gpwr = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
@@ -390,6 +404,8 @@ scoop_resume(void)
 {
 	struct scoop_softc *sc;
 
+	scoop_check_mcr();
+
 	if (scoop_cd.cd_ndevs > 0 && scoop_cd.cd_devs[0] != NULL) {
 		sc = scoop_cd.cd_devs[0];
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR,
@@ -407,6 +423,7 @@ void
 scoop_timeout(void *v)
 {
 	extern struct disklist_head disklist;
+	struct scoop_softc *sc = v;
 	static struct disk *dk;
 	static int state = 0;
 
@@ -418,7 +435,9 @@ scoop_timeout(void *v)
 				break;
 	}
 
-	if (dk) {
+	if (sc->sc_suspended)
+		state = -1;
+	else if (dk) {
 		int newstate = (dk->dk_busy ? 1 : 0);
 
 		if (newstate != state) {
@@ -427,4 +446,32 @@ scoop_timeout(void *v)
 		}
 	}
 	timeout_add(&scoop_checkdisk, hz/25);
+}
+
+void
+scoop_power(int why, void *arg)
+{
+	struct scoop_softc *sc = arg;
+
+	switch (why) {
+	case PWR_STANDBY:
+	case PWR_SUSPEND:
+		/*
+		 * Nothing should use the scoop from this point on.
+		 * No timeouts, no interrupts (even though interrupts
+		 * are still enabled).  scoop_timeout() respects the
+		 * sc_suspended flag.
+		 */
+		if (sc->sc_dev.dv_unit == 0) {
+			sc->sc_suspended = 1;
+			scoop_suspend();
+		}
+		break;
+	case PWR_RESUME:
+		if (sc->sc_dev.dv_unit == 0) {
+			scoop_resume();
+			sc->sc_suspended = 0;
+		}
+		break;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.27 2006/12/12 23:14:27 dim Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.28 2007/03/29 18:42:38 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -234,11 +234,6 @@ void	pxa27x_cpu_speed_high(void);
 void	pxa27x_cpu_speed_low(void);
 void	pxa27x_cpu_speed_91(void);
 void	pxa27x_cpu_speed_208(void);
-
-/* XXX */
-void	scoop_check_mcr(void);
-void	scoop_suspend(void);
-void	scoop_resume(void);
 
 void
 apm_power_print(struct pxa2x0_apm_softc *sc, struct apm_power_info *powerp)
@@ -905,8 +900,6 @@ suspend_again:
 	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PKSR,
 	    0xffffffff);
 
-	scoop_check_mcr();
-
 	/* XXX control battery charging in sleep mode. */
 
 	/* XXX schedule RTC alarm to check the battery, or schedule
@@ -923,9 +916,6 @@ suspend_again:
 	    &pxa2x0_memcfg);
 #endif
 	pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh, PI2C_VOLTAGE_LOW);
-
-	scoop_check_mcr();
-	scoop_suspend();
 
 	sd.sd_gpdr0 = bus_space_read_4(sc->sc_iot, pxa2x0_gpio_ioh, GPIO_GPDR0);
 	sd.sd_gpdr1 = bus_space_read_4(sc->sc_iot, pxa2x0_gpio_ioh, GPIO_GPDR1);
@@ -1123,9 +1113,6 @@ suspend_again:
 
 	if ((read_icu(INTCTL_ICIP) & 0x1) != 0)
 		bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PEDR, 0x1);
-
-	scoop_check_mcr();
-	scoop_resume();
 
 	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR0, sd.sd_osmr0);
 	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR1, sd.sd_osmr1);
