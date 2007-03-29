@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.42 2007/03/28 11:30:15 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.43 2007/03/29 13:02:17 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -526,8 +526,9 @@ digest_filelist(const char *file, struct hash_function *defhash)
 		algorithm_min = MIN(algorithm_min, len);
 	}
 
-	base64 = error = found = 0;
+	error = found = 0;
 	while ((buf = fgetln(fp, &len))) {
+		base64 = 0;
 		if (buf[len - 1] == '\n')
 			buf[len - 1] = '\0';
 		else {
@@ -614,6 +615,7 @@ digest_filelist(const char *file, struct hash_function *defhash)
 			if (p != NULL)
 				*p = '\0';
 		}
+		found = 1;
 
 		if ((fd = open(filename, O_RDONLY, 0)) == -1) {
 			warn("cannot open %s", filename);
@@ -622,7 +624,6 @@ digest_filelist(const char *file, struct hash_function *defhash)
 			continue;
 		}
 
-		found = 1;
 		hf->init(&context);
 		while ((nread = read(fd, data, sizeof(data))) > 0)
 			hf->update(&context, data, (unsigned int)nread);
