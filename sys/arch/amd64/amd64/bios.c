@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.10 2006/08/22 19:40:19 tom Exp $	*/
+/*	$OpenBSD: bios.c,v 1.11 2007/03/29 15:00:15 gwk Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -131,9 +131,9 @@ bios_attach(struct device *parent, struct device *self, void *aux)
  * smbios_find_table() takes a caller supplied smbios struct type and
  * a pointer to a handle (struct smbtable) returning one if the structure
  * is sucessfully located and zero otherwise. Callers should take care
- * to initilize the cookie field of the smbtable structure to zero before
+ * to initialize the cookie field of the smbtable structure to zero before
  * the first invocation of this function.
- * Multiple tables of the same type can be located by repeadtly calling
+ * Multiple tables of the same type can be located by repeatedly calling
  * smbios_find_table with the same arguments.
  */
 int
@@ -269,7 +269,7 @@ smbios_info(char * str)
 	 * some have very uninformative data which is harder to work around
 	 * and we must rely upon various heuristics to detect this. In both
 	 * cases we attempt to fall back on the base board information in the
-	 * perhaps naieve belief that motherboard vendors will supply this
+	 * perhaps naive belief that motherboard vendors will supply this
 	 * information.
 	 */
 	sminfop = NULL;
@@ -332,7 +332,7 @@ smbios_info(char * str)
 	    smbios_entry.min >= 1)) {
 		/*
 		 * If the uuid value is all 0xff the uuid is present but not
-		 * set, if its all 0 then the uuid isnt present at all.
+		 * set, if its all 0 then the uuid isn't present at all.
 		 */
 		uuidf |= SMBIOS_UUID_NPRESENT|SMBIOS_UUID_NSET;
 		for (i = 0; i < sizeof(sys->uuid); i++) {

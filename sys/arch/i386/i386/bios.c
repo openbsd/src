@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.68 2007/01/18 18:32:10 gwk Exp $	*/
+/*	$OpenBSD: bios.c,v 1.69 2007/03/29 15:00:15 gwk Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -163,7 +163,34 @@ biosattach(struct device *parent, struct device *self, void *aux)
 	printf(": %s BIOS, date %c%c/%c%c/%c%c",
 	    str, va[5], va[6], va[8], va[9], va[11], va[12]);
 
-	/* see if we have BIOS32 extensions */
+	/*
+	 * Determining whether BIOS32 extensions are available is
+	 * done by searching for the BIOS32 service directory.
+	 * This 16-byte structure can be found somewhere in the
+	 * range 0E0000h - 0FFFFFh and must be 16-byte aligned.
+	 *
+	 *  _______________________________________________________
+	 * | Offset | Bytes | Description                          |
+	 * |-------------------------------------------------------|
+	 * |    0   |   4   | ASCII signature string of "_32_".    |
+	 * |    4   |   4   | 32-bit entry point.                  |
+	 * |    8   |   1   | Revision Level. Typically 00h.       |
+	 * |    9   |   1   | Header length in 16-byte units. So   |
+	 * |        |       | would have the value of 01h.         |
+	 * |    A   |   1   | Checksum. The sum of all bytes in    |
+	 * |        |       | this header must be zero.            |
+	 * |    B   |   5   | Reserved. Set to zero.               |
+	 *  -------------------------------------------------------
+	 *
+	 * To find the service directory, we first search for the
+	 * signature. If we find a match, we must also verify the
+	 * checksum. This service directory may then be used to
+	 * determine whether a PCI BIOS is present.
+	 *
+	 * For more information see the PCI BIOS Specification,
+	 * Revision 2.1 (August 26, 1994).
+	 */
+
 	if (!(flags & BIOSF_BIOS32)) {
 		for (va = ISA_HOLE_VADDR(BIOS32_START);
 		    va < (u_int8_t *)ISA_HOLE_VADDR(BIOS32_END); va += 16) {
@@ -190,7 +217,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	/* see if we have SMBIOS extentions */
+	/* see if we have SMBIOS extensions */
 	if (!(flags & BIOSF_SMBIOS)) {
 		for (va = ISA_HOLE_VADDR(SMBIOS_START);
 		    va < (u_int8_t *)ISA_HOLE_VADDR(SMBIOS_END); va+= 16) {
@@ -229,7 +256,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 			smbios_entry.min = sh->minrev;
 			smbios_entry.count = sh->count;
 
-	    		for (; pa < end; pa+= NBPG, eva+= NBPG)
+			for (; pa < end; pa+= NBPG, eva+= NBPG)
 				pmap_kenter_pa(eva, pa, VM_PROT_READ);
 
 			printf(", SMBIOS rev. %d.%d @ 0x%lx (%d entries)",
@@ -273,7 +300,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/*
-	 * now, that we've gave 'em a chance to attach,
+	 * now that we gave 'em a chance to attach,
 	 * scan and map all the proms we can find
 	 */
 	if (!(flags & BIOSF_PROMSCAN)) {
@@ -404,7 +431,7 @@ bios_getopt()
 		case BOOTARG_BOOTMAC:
 			bios_bootmac = (bios_bootmac_t *)q->ba_arg;
 			break;
-#endif			
+#endif
 
 		default:
 #ifdef BIOS_DEBUG
@@ -634,9 +661,9 @@ bios_getdiskinfo(dev_t dev)
  * smbios_find_table() takes a caller supplied smbios struct type and
  * a pointer to a handle (struct smbtable) returning one if the structure
  * is sucessfully located and zero otherwise. Callers should take care
- * to initilize the cookie field of the smbtable structure to zero before
+ * to initialize the cookie field of the smbtable structure to zero before
  * the first invocation of this function.
- * Multiple tables of the same type can be located by repeadtly calling
+ * Multiple tables of the same type can be located by repeatedly calling
  * smbios_find_table with the same arguments.
  */
 int
@@ -772,7 +799,7 @@ smbios_info(char * str)
 	 * some have very uninformative data which is harder to work around
 	 * and we must rely upon various heuristics to detect this. In both
 	 * cases we attempt to fall back on the base board information in the
-	 * perhaps naieve belief that motherboard vendors will supply this
+	 * perhaps naive belief that motherboard vendors will supply this
 	 * information.
 	 */
 	sminfop = NULL;
@@ -835,7 +862,7 @@ smbios_info(char * str)
 	    smbios_entry.min >= 1)) {
 		/*
 		 * If the uuid value is all 0xff the uuid is present but not
-		 * set, if its all 0 then the uuid isnt present at all.
+		 * set, if its all 0 then the uuid isn't present at all.
 		 */
 		uuidf |= SMBIOS_UUID_NPRESENT|SMBIOS_UUID_NSET;
 		for (i = 0; i < sizeof(sys->uuid); i++) {
