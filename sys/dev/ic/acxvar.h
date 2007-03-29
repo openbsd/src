@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxvar.h,v 1.14 2006/08/19 23:17:12 mglocker Exp $ */
+/*	$OpenBSD: acxvar.h,v 1.15 2007/03/29 12:31:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -121,9 +121,9 @@ extern int acxdebug;
 #define FW_TXDESC_SETFIELD_1(sc, mb, field, val)	\
 	FW_TXDESC_SETFIELD(sc, mb, field, val, 1)
 #define FW_TXDESC_SETFIELD_2(sc, mb, field, val)	\
-	FW_TXDESC_SETFIELD(sc, mb, field, htole16(val), 2)
+	FW_TXDESC_SETFIELD(sc, mb, field, val, 2)
 #define FW_TXDESC_SETFIELD_4(sc, mb, field, val)	\
-	FW_TXDESC_SETFIELD(sc, mb, field, htole32(val), 4)
+	FW_TXDESC_SETFIELD(sc, mb, field, val, 4)
 
 #define FW_TXDESC_GETFIELD_1(sc, mb, field)		\
 	FW_TXDESC_GETFIELD(sc, mb, field, 1)
