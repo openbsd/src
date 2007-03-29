@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxreg.h,v 1.10 2007/02/28 09:26:26 claudio Exp $ */
+/*	$OpenBSD: acxreg.h,v 1.11 2007/03/29 12:37:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -486,7 +486,7 @@ struct bss_join_hdr {
 #define BSS_JOIN_BUFLEN		\
 	(sizeof(struct bss_join_hdr) + IEEE80211_NWID_LEN - 1)
 #define BSS_JOIN_PARAM_SIZE(bj)	\
-	(sizeof(struct bss_join_hdr) + (bj)->esslen)
+	(sizeof(struct bss_join_hdr) + (bj)->esslen - 1)
 
 
 #define PCIR_BAR(x)     (PCI_MAPS + (x) * 4)
