@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.103 2007/03/28 06:40:19 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.104 2007/03/29 02:35:41 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -931,7 +931,7 @@ nomem:
 			    port);
 			break;
 		default:
-			DPRINTF(AHCI_D_VERBOSE, "%s: no device detected"
+			DPRINTF(AHCI_D_VERBOSE, "%s: no device detected "
 			    "on port %d\n", DEVNAME(sc), port);
 			break;
 		}
@@ -970,8 +970,8 @@ nomem:
 
 	/* Enable port interrupts */
 	ahci_pwrite(ap, AHCI_PREG_IE, AHCI_PREG_IE_TFEE | AHCI_PREG_IE_HBFE |
-	     AHCI_PREG_IE_IFE | AHCI_PREG_IE_OFE | AHCI_PREG_IE_DPE |
-	     AHCI_PREG_IE_UFE | AHCI_PREG_IE_SDBE | AHCI_PREG_IE_DHRE);
+	    AHCI_PREG_IE_IFE | AHCI_PREG_IE_OFE | AHCI_PREG_IE_DPE |
+	    AHCI_PREG_IE_UFE | AHCI_PREG_IE_SDBE | AHCI_PREG_IE_DHRE);
 
 freeport:
 	if (rc != 0)
@@ -1808,14 +1808,14 @@ ahci_get_err_ccb(struct ahci_port *ap)
 	ap->ap_err_saved_active_cnt = ap->ap_active_cnt;
 	ap->ap_err_saved_sactive = ap->ap_sactive;
 
-	/* 
+	/*
 	 * Pretend we have no commands outstanding, so that completions won't
 	 * run prematurely.
 	 */
 	ap->ap_active = ap->ap_active_cnt = ap->ap_sactive = 0;
 
 	/*
-	 * Grab a CCB to use for error recovery.  This should never fail, as 
+	 * Grab a CCB to use for error recovery.  This should never fail, as
 	 * we ask atascsi to reserve one for us at init time.
 	 */
 	err_ccb = ahci_get_ccb(ap);
