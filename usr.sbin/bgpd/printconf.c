@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.60 2007/03/06 16:52:48 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.61 2007/03/29 13:09:26 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -446,6 +446,13 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 	if (r->match.prefix.addr.af)
 		printf("prefix %s/%u ", log_addr(&r->match.prefix.addr),
 		    r->match.prefix.len);
+
+	if (r->match.prefix.addr.af == 0 && r->match.prefixlen.af) {
+		if (r->match.prefixlen.af == AF_INET)
+			printf("inet ");
+		if (r->match.prefixlen.af == AF_INET6)
+			printf("inet6 ");
+	}
 
 	if (r->match.prefixlen.op) {
 		if (r->match.prefixlen.op == OP_RANGE ||

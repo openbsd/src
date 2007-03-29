@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.201 2007/03/06 16:52:48 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.202 2007/03/29 13:09:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -89,6 +89,7 @@ struct filter_match_l {
 	struct filter_match	 m;
 	struct filter_prefix_l	*prefix_l;
 	struct filter_as_l	*as_l;
+	sa_family_t		 af;
 } fmopts;
 
 struct file	*include_file(const char *);
@@ -1027,13 +1028,6 @@ encspec		: /* nada */	{
 filterrule	: action quick direction filter_peer_h filter_match_h filter_set
 		{
 			struct filter_rule	 r;
-			struct filter_prefix_l	*l;
-
-			for (l = $5.prefix_l; l != NULL; l = l->next)
-				if (l->p.addr.af && l->p.addr.af != AF_INET) {
-					yyerror("king bula sez: AF_INET only");
-					YYERROR;
-				}
 
 			bzero(&r, sizeof(r));
 			r.action = $1;
@@ -1146,6 +1140,12 @@ filter_prefix_l	: filter_prefix				{ $$ = $1; }
 		;
 
 filter_prefix	: prefix				{
+			if (fmopts.af && fmopts.af != $1.prefix.af) {
+				yyerror("rules with mixed address families "
+				    "are not allowed");
+				YYERROR;
+			} else
+				fmopts.af = $1.prefix.af;
 			if (($$ = calloc(1, sizeof(struct filter_prefix_l))) ==
 			    NULL)
 				fatal(NULL);
@@ -1235,13 +1235,18 @@ filter_elm	: filter_prefix_h	{
 			fmopts.prefix_l = $1;
 		}
 		| PREFIXLEN prefixlenop		{
+			if (fmopts.af == 0) {
+				yyerror("address family needs to be specified "
+				    "before \"prefixlen\"");
+				YYERROR;
+			}
 			if (fmopts.m.prefixlen.af) {
 				yyerror("\"prefixlen\" already specified");
 				YYERROR;
 			}
 			memcpy(&fmopts.m.prefixlen, &$2,
 			    sizeof(fmopts.m.prefixlen));
-			fmopts.m.prefixlen.af = AF_INET;
+			fmopts.m.prefixlen.af = fmopts.af;
 		}
 		| filter_as_h		{
 			if (fmopts.as_l != NULL) {
@@ -1262,6 +1267,20 @@ filter_elm	: filter_prefix_h	{
 				YYERROR;
 			}
 			free($2);
+		}
+		| IPV4			{
+			if (fmopts.af) {
+				yyerror("address family already specified");
+				YYERROR;
+			}
+			fmopts.af = AF_INET;
+		}
+		| IPV6			{
+			if (fmopts.af) {
+				yyerror("address family already specified");
+				YYERROR;
+			}
+			fmopts.af = AF_INET6;
 		}
 		;
 
@@ -1639,6 +1658,8 @@ lookup(char *s)
 		{ "ike",		IKE},
 		{ "in",			IN},
 		{ "include",		INCLUDE},
+		{ "inet",		IPV4},
+		{ "inet6",		IPV6},
 		{ "ipsec",		IPSEC},
 		{ "key",		KEY},
 		{ "listen",		LISTEN},
