@@ -1,7 +1,7 @@
-/*	$OpenBSD: sdl.h,v 1.4 2007/03/26 16:55:45 beck Exp $ */
+/*	$OpenBSD: sdl.h,v 1.5 2007/03/29 17:39:53 kjell Exp $ */
 
 /*
- * Copyright (c) 2003-2007 Bob Beck, Kjell Wooding.  All rights reserved.
+ * Copyright (c) 2003-2007 Bob Beck.  All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
