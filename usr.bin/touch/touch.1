@@ -1,4 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.10 2005/04/20 19:13:53 otto Exp $
+.\"	$OpenBSD: touch.1,v 1.11 2007/03/29 11:06:44 jmc Exp $
 .\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -70,10 +70,10 @@ Change the modification time of the file.
 The access time of the file is not changed unless the
 .Fl a
 flag is also specified.
-.It Fl r
+.It Fl r Ar file
 Use the access and modification times from the specified file
 instead of the current time of day.
-.It Fl t
+.It Fl t Ar [[CC]YY]MMDDhhmm[.SS]
 Change the access and modification times to the specified time.
 The argument should be in the form
 .Dq [[CC]YY]MMDDhhmm[.SS]
