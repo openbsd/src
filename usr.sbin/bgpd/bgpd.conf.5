@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.83 2007/03/06 16:52:48 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.84 2007/03/29 13:10:32 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -889,6 +889,14 @@ if enclosed in curly brackets:
 .Bd -literal -offset indent
 deny from { 128.251.16.1, 251.128.16.2, group hojo }
 .Ed
+.Pp
+.It Pq Ic inet Ns \&| Ns Ic inet6
+This rule applies only to routes matching the stated address family.
+The address family needs to be set only in rules that use
+.Ic prefixlen
+without specifying a
+.Ic prefix
+beforehand.
 .Pp
 .It Xo
 .Ic prefix
