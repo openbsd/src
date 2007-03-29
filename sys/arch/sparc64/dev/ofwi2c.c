@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofwi2c.c,v 1.4 2006/06/14 01:15:19 deraadt Exp $	*/
+/*	$OpenBSD: ofwi2c.c,v 1.5 2007/03/29 17:41:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Theo de Raadt
@@ -82,6 +82,11 @@ ofwiic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 
 		if (strncmp(ia.ia_name, "i2c-", strlen("i2c-")) == 0)
 			ia.ia_name += strlen("i2c-");
+
+		/* skip totally boring devices */
+		if (strcmp(ia.ia_name, "at24c64") == 0 ||
+		    strcmp(ia.ia_name, "at34c02") == 0)
+			continue;
 
 		config_found(self, &ia, iic_print);
 	}
