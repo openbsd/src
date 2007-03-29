@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.43 2007/03/29 13:02:17 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.44 2007/03/29 15:20:51 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -108,7 +108,7 @@ struct hash_function {
 		(char *(*)(void *, char *))SYSVSUM_End
 	}, {
 		"MD4",
-		MD5_DIGEST_LENGTH,
+		MD4_DIGEST_LENGTH,
 		&style_hash,
 		0,
 		NULL,
@@ -587,9 +587,16 @@ digest_filelist(const char *file, struct hash_function *defhash)
 			 */
 			len = strlen(checksum);
 			if (len != hf->digestlen * 2) {
-				size_t len2 = (8 * hf->digestlen + 5) / 6;
-				if (len != len2 &&
-				    (len != len2 + 1 || checksum[len - 1] != '='))
+				size_t len2;
+
+				if (checksum[len - 1] == '=') {
+					/* use padding */
+					len2 = 4 * ((hf->digestlen + 2) / 3);
+				} else {
+					/* no padding */
+					len2 = (4 * hf->digestlen + 2) / 3;
+				}
+				if (len != len2)
 					continue;
 				base64 = 1;
 			}
@@ -636,10 +643,9 @@ digest_filelist(const char *file, struct hash_function *defhash)
 		close(fd);
 		digest_end(hf, &context, digest, sizeof(digest), base64);
 
-		if (base64) {
-			len = strlen(digest) - 1;	/* remove padding '=' */
+		if (base64)
 			error = strncmp(checksum, digest, len);
-		} else
+		else
 			error = strcasecmp(checksum, digest);
 		if (error == 0) {
 			if (qflag == 0)
