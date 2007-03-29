@@ -1,4 +1,4 @@
-/*	$OpenBSD: x99token.c,v 1.6 2003/06/13 17:27:41 millert Exp $	*/
+/*	$OpenBSD: x99token.c,v 1.7 2007/03/29 10:59:13 jmc Exp $	*/
 
 /*
  * X9.9 calculator
@@ -62,9 +62,10 @@ main(int argc, char **argv)
 				err(1, "invalid count: %s", optarg);
 			break;
 		default:
-			fprintf(stderr, "usage: %s [-n cnt] [-h] [-k keyfile]\n"
-			    "       %s -i [-k keyfile]\n", __progname,
-			    __progname);
+			fprintf(stderr,
+			    "usage: %s [-d] [-k keyfile] [-n count]\n"
+			    "       %s -i [-k keyfile]\n",
+			    __progname, __progname);
 			exit(1);
 		}
 	}
