@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tn3270.1,v 1.13 2004/02/19 22:20:05 jmc Exp $
+.\"	$OpenBSD: tn3270.1,v 1.14 2007/03/29 11:18:43 jmc Exp $
 .\"
 .\" Copyright (c) 1986, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -76,7 +76,7 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
 Turn on socket-level tracing (for superuser only).
-.It Fl n Ns Ar filename
+.It Fl n Ar filename
 Specify a file to receive network trace data
 output (from commands
 .Ic toggle netdata
@@ -86,7 +86,7 @@ see
 .Xr telnet 1 ) ;
 the default is for output
 to be directed to the standard error file.
-.It Fl t Ns Ar commandname
+.It Fl t Ar commandname
 Specify a
 .Tn UNIX
 command to process
