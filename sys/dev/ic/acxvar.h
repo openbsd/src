@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxvar.h,v 1.15 2007/03/29 12:31:57 claudio Exp $ */
+/*	$OpenBSD: acxvar.h,v 1.16 2007/03/29 12:59:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -127,8 +127,6 @@ extern int acxdebug;
 
 #define FW_TXDESC_GETFIELD_1(sc, mb, field)		\
 	FW_TXDESC_GETFIELD(sc, mb, field, 1)
-#define FW_TXDESC_GETFIELD_4(sc, mb, field)		\
-	letoh32(FW_TXDESC_GETFIELD(sc, mb, field, 4))
 
 /*
  * Firmware TX descriptor
