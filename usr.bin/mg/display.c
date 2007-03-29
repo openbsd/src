@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.33 2006/12/24 01:07:59 kjell Exp $	*/
+/*	$OpenBSD: display.c,v 1.34 2007/03/29 17:37:15 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -105,6 +105,9 @@ struct score *score;			/* [NROW * NROW] */
 #define LINENOMODE TRUE
 #endif /* !LINENOMODE */
 static int	 linenos = LINENOMODE;
+
+/* Is macro recording enabled? */
+extern int macrodef;
 
 /*
  * Since we don't have variables (we probably should) this is a command
@@ -823,6 +826,9 @@ modeline(struct mgwin *wp)
 		vtputc('-');
 		++n;
 	}
+	/* XXX This should eventually move to a real mode */
+	if (macrodef == TRUE)
+		n += vtputs("-def");
 	vtputc(')');
 	++n;
 

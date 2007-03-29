@@ -1,4 +1,4 @@
-/*	$OpenBSD: macro.c,v 1.11 2005/12/20 06:17:36 kjell Exp $	*/
+/*	$OpenBSD: macro.c,v 1.12 2007/03/29 17:37:15 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -54,9 +54,12 @@ definemacro(int f, int n)
 int
 finishmacro(int f, int n)
 {
-	macrodef = FALSE;
-	ewprintf("End Keyboard Macro Definition");
-	return (TRUE);
+	if (macrodef == TRUE) {
+		macrodef = FALSE;
+		ewprintf("End Keyboard Macro Definition");
+		return (TRUE);
+	}
+	return (FALSE);
 }
 
 /* ARGSUSED */
