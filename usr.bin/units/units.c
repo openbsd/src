@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.13 2007/02/24 03:28:16 ray Exp $	*/
+/*	$OpenBSD: units.c,v 1.14 2007/03/29 20:13:57 jmc Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -652,10 +652,8 @@ showanswer(struct unittype *have, struct unittype *want)
 void
 usage(void)
 {
-	fprintf(stderr, "units [-f unitsfile] [-q] [-v] [from-unit to-unit]\n");
-	fprintf(stderr, "    -f specify units file\n");
-	fprintf(stderr, "    -q suppress prompting (quiet)\n");
-	fprintf(stderr, "    -v print version number\n");
+	fprintf(stderr,
+	    "usage: units [-qv] [-f filename] [from-unit to-unit]\n");
 	exit(3);
 }
 
