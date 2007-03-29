@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypwhich.1,v 1.12 2003/01/16 18:28:10 millert Exp $
+.\"	$OpenBSD: ypwhich.1,v 1.13 2007/03/29 11:03:54 jmc Exp $
 .\"	$NetBSD: ypwhich.1,v 1.3 1996/05/13 02:43:46 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ypwhich.1,v 1.12 2003/01/16 18:28:10 millert Exp $
+.\"	$Id: ypwhich.1,v 1.13 2007/03/29 11:03:54 jmc Exp $
 .\"
 .Dd February 23, 1994
 .Dt YPWHICH 1
@@ -74,9 +74,6 @@ Specify a domain other than the default domain.
 Specify which host to ask when
 .Fl m
 is given.
-.It Fl t
-Inhibit translation of map nicknames
-to their corresponding map names.
 .It Fl m Op Ar mname
 Find the master
 .Tn YP
@@ -93,6 +90,9 @@ If
 is omitted,
 .Nm
 will produce a list of available maps.
+.It Fl t
+Inhibit translation of map nicknames
+to their corresponding map names.
 .It Fl x
 Display the map nickname table.
 .El
