@@ -1,4 +1,4 @@
-.\"	$OpenBSD: accept.2,v 1.18 2005/08/10 00:54:38 jaredy Exp $
+.\"	$OpenBSD: accept.2,v 1.19 2007/03/30 12:46:39 kurt Exp $
 .\"	$NetBSD: accept.2,v 1.7 1996/01/31 20:14:42 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -155,6 +155,8 @@ The descriptor references a file, not a socket.
 .It Bq Er EOPNOTSUPP
 The referenced socket is not of type
 .Dv SOCK_STREAM .
+.It Bq Er EINTR
+A signal was caught before a connection arrived.
 .It Bq Er EINVAL
 The referenced socket is not listening for connections (that is,
 .Xr listen 2
