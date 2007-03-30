@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.190 2007/02/06 19:01:24 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.191 2007/03/30 13:46:24 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -877,6 +877,14 @@ Used to display
 .Sq ===> Configuring for foo
 and similar informative messages.
 Override to turn off, for instance.
+.It Ev ECHO_REORDER
+User settings.
+Set it to
+.Sq echo
+to see
+.Ev REORDER_DEPENDENCIES
+actions.
+Silent by default.
 .It Ev ERRORS
 List of errors found while parsing the port's Makefile.
 Display the errors before making any target, and if any error starts with
