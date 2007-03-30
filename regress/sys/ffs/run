@@ -1,0 +1,60 @@
+#!/bin/sh
+# $OpenBSD: run,v 1.1 2007/03/30 19:02:51 pedro Exp $
+# Heavily inspired on FreeBSD's misc.sh.
+
+totntest=0
+totnfail=0
+
+name253="_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_12"
+name255="${name253}34"
+name256="${name255}5"
+path1021="${name255}/${name255}/${name255}/${name253}"
+path1023="${path1021}/x"
+path1024="${path1023}x"
+
+# Run a single test, calling fstest to do the job.
+expect()
+{
+  e="${1}"
+  shift
+  echo -n "Running test #${ntest}... "
+#  echo ${FSTEST} $*
+  r=`${FSTEST} $* 2>/dev/null | tail -1`
+  echo "${r}" | egrep '^'${e}'$' >/dev/null 2>&1
+  if [ $? -eq 0 ]; then
+    echo "okay."
+  else
+    nfail=`expr $nfail + 1`
+    echo "failed."
+  fi
+  ntest=`expr $ntest + 1`
+}
+
+test_check()
+{
+  echo -n "Running test #${ntest}... "
+  if [ $* ]; then
+    echo "okay."
+  else
+    nfail=`expr $nfail + 1`
+    echo "failed."
+  fi
+  ntest=`expr $ntest + 1`
+}
+
+# Generate a random file/directory name.
+namegen()
+{
+  echo "fstest_`dd if=/dev/urandom bs=1k count=1 2>/dev/null | openssl md5`"
+}
+
+for arg in $*; do
+  ntest=0
+  nfail=0
+  echo $arg:
+  . $arg
+  totntest=`expr $totntest + $ntest`
+  totnfail=`expr $totnfail + $nfail`
+done
+
+echo "${totntest} tests completed, ${totnfail} failed."
