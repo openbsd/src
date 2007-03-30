@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.13 2006/03/15 20:20:42 miod Exp $	*/
+/*	$OpenBSD: disk.h,v 1.14 2007/03/30 00:38:56 dlg Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 
 #include <sys/time.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 
 struct buf;
 struct disklabel;
@@ -73,7 +73,7 @@ struct diskstats {
 
 struct disk {
 	TAILQ_ENTRY(disk) dk_link;	/* link in global disklist */
-	struct lock	dk_lock;	/* disk lock */
+	struct rwlock	dk_lock;	/* disk lock */
 	char		*dk_name;	/* disk name */
 	int		dk_flags;	/* disk flags */
 #define DKF_CONSTRUCTED  0x0001
