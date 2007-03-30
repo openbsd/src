@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.77 2007/03/07 06:23:02 miod Exp $
+#	$OpenBSD: files.sparc64,v 1.78 2007/03/30 22:24:56 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -87,7 +87,12 @@ file	arch/sparc64/dev/psycho.c		psycho
 device	schizo: pcibus
 attach	schizo at mainbus
 file	arch/sparc64/dev/schizo.c		schizo
-file	arch/sparc64/dev/pci_machdep.c		psycho | schizo
+
+device	pyro: pcibus
+attach	pyro at mainbus
+file	arch/sparc64/dev/pyro.c			pyro
+
+file	arch/sparc64/dev/pci_machdep.c		psycho | schizo | pyro
 
 attach	hme at pci with hme_pci
 file	dev/pci/if_hme_pci.c			hme_pci
