@@ -1,4 +1,4 @@
-.\"     $OpenBSD: schizo.4,v 1.4 2003/06/02 18:51:34 jason Exp $
+.\"     $OpenBSD: schizo.4,v 1.5 2007/03/30 22:15:28 kettenis Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -36,10 +36,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-device provides support for the
+device provides support for the Schizo, Schizo+ and Tomatillo
 .Xr pci 4
-bus on sparc64
-systems, most often found on UltraSPARC III based systems.
+bus, as found on UltraSPARC III and UltraSPARC IV based sparc64 systems.
 It supports the
 .Xr ioctl 2
 interface in
@@ -49,8 +48,7 @@ interface in
 .Xr pci 4 ,
 .Xr psycho 4
 .Sh HISTORY
-.Ox
-support for the
+The
 .Nm
-first appeared in
+driver first appeared in
 .Ox 3.2 .
