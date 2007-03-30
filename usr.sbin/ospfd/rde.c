@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.60 2007/02/12 13:23:13 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.61 2007/03/30 14:12:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1066,7 +1066,7 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 		type = LSA_TYPE_SUM_ROUTER;
 		v = lsa_find(area, type, rte->adv_rtr.s_addr, rde_router_id());
 	} else
-		fatalx("orig_sum_lsa: unknown route type");
+		fatalx("rde_summary_update: unknown route type");
 
 	lsa = orig_sum_lsa(rte, type);
 	lsa_merge(rde_nbr_self(area), lsa, v);
