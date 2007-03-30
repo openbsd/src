@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.105 2007/03/29 07:40:10 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.106 2007/03/30 06:59:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -395,6 +395,7 @@ struct ahci_device {
 
 const struct ahci_device *ahci_lookup_device(struct pci_attach_args *);
 
+int			ahci_no_match(struct pci_attach_args *);
 int			ahci_jmicron_match(struct pci_attach_args *);
 int			ahci_jmicron_attach(struct pci_attach_args *);
 
@@ -408,7 +409,9 @@ static const struct ahci_device ahci_devices[] = {
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB365,
 	    ahci_jmicron_match, ahci_jmicron_attach },
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB366,
-	    ahci_jmicron_match, ahci_jmicron_attach }
+	    ahci_jmicron_match, ahci_jmicron_attach },
+	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8251_SATA,
+	    ahci_no_match,	NULL }
 };
 
 int			ahci_match(struct device *, void *, void *);
@@ -515,6 +518,12 @@ ahci_lookup_device(struct pci_attach_args *pa)
 	}
 
 	return (NULL);
+}
+
+int
+ahci_no_match(struct pci_attach_args *pa)
+{
+	return (0);
 }
 
 int
