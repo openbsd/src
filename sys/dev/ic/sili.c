@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.2 2007/03/22 06:54:01 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.3 2007/03/30 04:50:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -35,13 +35,29 @@ struct cfdriver sili_cd = {
 	NULL, "sili", DV_DULL
 };
 
+struct sili_port {
+	struct sili_softc	*sp_sc;
+	bus_space_handle_t	sp_ioh;
+};
+
+int			sili_ports_alloc(struct sili_softc *);
+void			sili_ports_free(struct sili_softc *);
+
 u_int32_t		sili_read(struct sili_softc *, bus_size_t);
 void			sili_write(struct sili_softc *, bus_size_t, u_int32_t);
+u_int32_t		sili_pread(struct sili_port *, bus_size_t);
+void			sili_pwrite(struct sili_port *, bus_size_t, u_int32_t);
 
 int
 sili_attach(struct sili_softc *sc)
 {
 	printf("\n");
+
+	sc->sc_nports = 4; /* XXX magic */
+	if (sili_ports_alloc(sc) != 0) {
+		/* error already printed by sili_port_alloc */
+		return (1);
+	}
 
 	return (0);
 }
@@ -62,6 +78,44 @@ sili_intr(void *arg)
 	return (0);
 }
 
+int
+sili_ports_alloc(struct sili_softc *sc)
+{
+	struct sili_port		*sp;
+	int				i;
+
+	sc->sc_ports = malloc(sizeof(struct sili_port) * sc->sc_nports,
+	    M_DEVBUF, M_WAITOK);
+	bzero(sc->sc_ports, sizeof(struct sili_port) * sc->sc_nports);
+
+	for (i = 0; i < sc->sc_nports; i++) {
+		sp = &sc->sc_ports[i];
+
+		sp->sp_sc = sc;
+		if (bus_space_subregion(sc->sc_iot_port, sc->sc_ioh_port,
+		    SILI_PORT_OFFSET(i), SILI_PORT_SIZE, &sp->sp_ioh) != 0) {
+			printf("%s: unable to create register window "
+			    "for port %d\n", DEVNAME(sc), i);
+			goto freeports;
+		}
+	}
+
+	return (0);
+
+freeports:
+	/* bus_space(9) says subregions dont have to be freed */
+	free(sp, M_DEVBUF);
+	sc->sc_ports = NULL;
+	return (1);
+}
+
+void
+sili_ports_free(struct sili_softc *sc)
+{
+	/* bus_space(9) says subregions dont have to be freed */
+	free(sc->sc_ports, M_DEVBUF);
+}
+
 u_int32_t
 sili_read(struct sili_softc *sc, bus_size_t r)
 {
@@ -79,5 +133,25 @@ sili_write(struct sili_softc *sc, bus_size_t r, u_int32_t v)
 {
 	bus_space_write_4(sc->sc_iot_global, sc->sc_ioh_global, r, v);
 	bus_space_barrier(sc->sc_iot_global, sc->sc_ioh_global, r, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+u_int32_t
+sili_pread(struct sili_port *sp, bus_size_t r)
+{
+	u_int32_t			rv;
+
+	bus_space_barrier(sp->sp_sc->sc_iot_port, sp->sp_ioh, r, 4,
+	    BUS_SPACE_BARRIER_READ);
+	rv = bus_space_read_4(sp->sp_sc->sc_iot_port, sp->sp_ioh, r);
+
+	return (rv);
+}
+
+void
+sili_pwrite(struct sili_port *sp, bus_size_t r, u_int32_t v)
+{
+	bus_space_write_4(sp->sp_sc->sc_iot_port, sp->sp_ioh, r, v);
+	bus_space_barrier(sp->sp_sc->sc_iot_port, sp->sp_ioh, r, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 }

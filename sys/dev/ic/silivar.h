@@ -1,4 +1,4 @@
-/*	$OpenBSD: silivar.h,v 1.2 2007/03/22 06:32:14 dlg Exp $ */
+/*	$OpenBSD: silivar.h,v 1.3 2007/03/30 04:50:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+struct sili_port;
+
 struct sili_softc {
 	struct device		sc_dev;
 
@@ -28,6 +30,10 @@ struct sili_softc {
 	bus_space_tag_t		sc_iot_port;
 	bus_space_handle_t	sc_ioh_port;
 	bus_size_t		sc_ios_port;
+
+	u_int			sc_nports;
+	struct sili_port	*sc_ports;
+
 };
 #define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
 
