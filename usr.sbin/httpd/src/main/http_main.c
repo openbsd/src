@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.46 2007/03/22 20:08:18 pyr Exp $ */
+/* $OpenBSD: http_main.c,v 1.47 2007/03/30 09:54:19 pyr Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -3224,10 +3224,12 @@ int REALMAIN(int argc, char *argv[])
 	    ap_cpystrn(ap_server_confname, optarg, sizeof(ap_server_confname));
 	    break;
 	case 'v':
+	    ap_server_tokens = SrvTk_FULL;
 	    ap_set_version();
 	    printf("Server version: %s\n", ap_get_server_version());
 	    exit(0);
 	case 'V':
+	    ap_server_tokens = SrvTk_FULL;
 	    ap_set_version();
 	    show_compile_settings();
 	    exit(0);
