@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.9 2007/03/27 04:05:22 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.10 2007/03/30 20:12:28 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -919,7 +919,7 @@ sr_parse_chunks(struct sr_softc *sc, char *lst, struct sr_chunk_head *cl)
 		/* get partition size */
 		ss = name[strlen(name) - 1];
 		ch_entry->src_meta.scm_size =
-		    label.d_partitions['a' - ss].p_size;
+		    label.d_partitions[ss - 'a'].p_size;
 		if (ch_entry->src_meta.scm_size == 0) {
 			printf("%s: %s partition size = 0\n",
 			    DEVNAME(sc), name);
@@ -927,9 +927,10 @@ sr_parse_chunks(struct sr_softc *sc, char *lst, struct sr_chunk_head *cl)
 		}
 
 		/* make sure the partition is of the right type */
-		if (label.d_partitions['a' - ss].p_fstype != FS_RAID) {
-			printf("%s: %s partition not of type RAID\n",
-			    DEVNAME(sc), name);
+		if (label.d_partitions[ss - 'a'].p_fstype != FS_RAID) {
+			printf("%s: %s partition not of type RAID (%d)\n",
+			    DEVNAME(sc), name,
+			    label.d_partitions[ss - 'a'].p_fstype);
 			goto unlock;
 		}
 
