@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.4 2007/03/27 04:05:22 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.5 2007/03/30 23:15:30 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -49,7 +49,7 @@ extern u_int32_t		sr_debug;
 #define	SR_MAXFER		MAXPHYS
 #define	SR_MAX_LD		1
 #define	SR_MAX_CMDS		16
-#define	SR_MAX_STATES		6
+#define	SR_MAX_STATES		7
 
 /* forward define to prevent dependency goo */
 struct sr_softc;

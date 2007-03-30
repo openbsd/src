@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.10 2007/03/30 20:12:28 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.11 2007/03/30 23:15:30 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -599,6 +599,8 @@ sr_ioctl_disk(struct sr_softc *sc, struct bioc_disk *bd)
 	int			i, vol, rv = EINVAL;
 	struct sr_chunk		*src;
 
+	/* FIXME, wrong disk lookup */
+
 	for (i = 0, vol = -1; i < SR_MAXSCSIBUS; i++) {
 		/* XXX this will not work when we stagger disciplines */
 		if (sc->sc_dis[i])
@@ -625,9 +627,49 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 {
 	int			rv = EINVAL;
 
-#ifdef SR_UNIT_TEST
-#endif
+#if SR_UNIT_TEST
+	int			i, vol, disk, state;
 
+	for (i = 0, vol = -1, disk = -1; i < SR_MAXSCSIBUS; i++) {
+		/* XXX this will not work when we stagger disciplines */
+		if (sc->sc_dis[i])
+			vol++;
+		if (vol != bs->bs_channel)
+			continue;
+		if (++disk != bs->bs_target)
+			continue;
+
+		switch (bs->bs_status) {
+		case BIOC_SSONLINE:
+			state = BIOC_SDONLINE;
+			break;
+		case BIOC_SSOFFLINE:
+			state = BIOC_SDOFFLINE;
+			break;
+		case BIOC_SSHOTSPARE:
+			state = BIOC_SDHOTSPARE;
+			break;
+		case BIOC_SSREBUILD:
+			state = BIOC_SDREBUILD;
+			break;
+		default:
+			printf("invalid state %d\n", bs->bs_status);
+			goto done;
+		}
+
+		printf("status change for %u:%u -> %u %u\n",
+		    bs->bs_channel, bs->bs_target, bs->bs_status, state);
+
+		sc->sc_dis[vol]->sd_set_chunk_state(sc->sc_dis[vol],
+		    bs->bs_target, bs->bs_status);
+
+		rv = 0;
+
+		break;
+	}
+
+done:
+#endif
 	return (rv);
 }
 
@@ -1425,7 +1467,8 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 
 	nd = sd->sd_vol.sv_meta.svm_no_chunk;
 
-	for (i = 0; i < nd; i++)
+
+	for (i = 0; i < SR_MAX_STATES; i++)
 		states[i] = 0;
 
 	for (i = 0; i < nd; i++) {
@@ -1438,21 +1481,19 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 		states[s]++;
 	}
 
-	if (states[BIOC_SVONLINE] == nd)
+	if (states[BIOC_SDONLINE] == nd)
 		new_state = BIOC_SVONLINE;
-	else if (states[BIOC_SVSCRUB] != 0)
+	else if (states[BIOC_SDSCRUB] != 0)
 		new_state = BIOC_SVSCRUB;
-	else if (states[BIOC_SVBUILDING] != 0)
-		new_state = BIOC_SVBUILDING;
-	else if (states[BIOC_SVREBUILD] != 0)
+	else if (states[BIOC_SDREBUILD] != 0)
 		new_state = BIOC_SVREBUILD;
-	else if (states[BIOC_SVDEGRADED] != 0)
+	else if (states[BIOC_SDOFFLINE] != 0)
 		new_state = BIOC_SVDEGRADED;
-	else if (states[BIOC_SVONLINE] == 0)
+	else if (states[BIOC_SDONLINE] == 0)
 		new_state = BIOC_SVOFFLINE;
 	else {
 		printf("old_state = %d, ", old_state);
-		for (i = 0; i < SR_MAX_STATES; i++)
+		for (i = 0; i < nd; i++)
 			printf("%d = %d, ", i,
 			    sd->sd_vol.sv_chunks[i]->src_meta.scm_status);
 		panic("invalid new_state");
@@ -1530,4 +1571,6 @@ die:
 		    old_state, new_state);
 		/* NOTREACHED */
 	}
+
+	sd->sd_vol.sv_meta.svm_status = new_state;
 }
