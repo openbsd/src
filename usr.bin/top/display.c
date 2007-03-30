@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.23 2006/03/04 06:58:11 otto Exp $	 */
+/* $OpenBSD: display.c,v 1.24 2007/03/30 19:21:19 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -46,7 +46,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/sched.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -55,7 +54,6 @@
 #include <string.h>
 #include <signal.h>
 #include <term.h>
-#include <time.h>
 #include <unistd.h>
 #include <stdarg.h>
 
@@ -63,7 +61,6 @@
 #include "layout.h"		/* defines for screen position layout */
 #include "display.h"
 #include "top.h"
-#include "top.local.h"
 #include "boolean.h"
 #include "machine.h"		/* we should eliminate this!!! */
 #include "utils.h"

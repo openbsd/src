@@ -1,4 +1,4 @@
-/*	$OpenBSD: layout.h,v 1.4 2007/02/22 06:36:59 otto Exp $	*/
+/*	$OpenBSD: layout.h,v 1.5 2007/03/30 19:21:19 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -31,7 +31,7 @@
 /*
  *  Top - a top users display for Berkeley Unix
  *
- *  This file defines the locations on tne screen for various parts of the
+ *  This file defines the locations on the screen for various parts of the
  *  display.  These definitions are used by the routines in "display.c" for
  *  cursor addressing.
  */
