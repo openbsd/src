@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.96 2007/02/21 18:10:31 mpf Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.97 2007/03/30 18:25:44 canacar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.96 2007/02/21 18:10:31 mpf Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.97 2007/03/30 18:25:44 canacar Exp $";
 #endif
 #endif /* not lint */
 
@@ -150,6 +150,7 @@ struct filed {
 			struct ringbuf *f_rb;
 			int	f_overflow;
 			int	f_attached;
+			size_t	f_len;
 		} f_mb;		/* Memory buffer */
 	} f_un;
 	char	f_prevline[MAXSVLINE];		/* last message logged */
@@ -1158,7 +1159,7 @@ void
 init(void)
 {
 	char cline[LINE_MAX], prog[NAME_MAX+1], *p;
-	struct filed *f, *next, **nextp;
+	struct filed *f, *next, **nextp, *mb, *m;
 	FILE *cf;
 	int i;
 
@@ -1174,6 +1175,7 @@ init(void)
 	 *  Close all open log files.
 	 */
 	Initialized = 0;
+	mb = NULL;
 	for (f = Files; f != NULL; f = next) {
 		/* flush any pending output */
 		if (f->f_prevcount)
@@ -1188,14 +1190,17 @@ init(void)
 			break;
 		case F_FORW:
 			break;
-		case F_MEMBUF:
-			ringbuf_free(f->f_un.f_mb.f_rb);
-			break;
 		}
 		next = f->f_next;
 		if (f->f_program)
 			free(f->f_program);
-		free((char *)f);
+		if (f->f_type == F_MEMBUF) {
+			f->f_next = mb;
+			f->f_program = NULL;
+			dprintf("add %p to mb: %p\n", f, mb);
+			mb = f;
+		} else
+			free((char *)f);
 	}
 	Files = NULL;
 	nextp = &Files;
@@ -1252,6 +1257,46 @@ init(void)
 			*nextp = f;
 			nextp = &f->f_next;
 		}
+	}
+
+	/* Match and initialize the memory buffers */
+	for (f = Files; f != NULL; f = f->f_next) {
+		if (f->f_type != F_MEMBUF)
+			continue;
+		dprintf("Initialize membuf %s at %p\n", f->f_un.f_mb.f_mname, f);
+
+		for (m = mb; m != NULL; m = m->f_next) {
+			if (m->f_un.f_mb.f_rb == NULL)
+				continue;
+			if (strcmp(m->f_un.f_mb.f_mname,
+			    f->f_un.f_mb.f_mname) == 0)
+				break;
+		}
+		if (m == NULL) {
+			dprintf("Membuf no match\n");
+			f->f_un.f_mb.f_rb = ringbuf_init(f->f_un.f_mb.f_len);
+			if (f->f_un.f_mb.f_rb == NULL) {
+				f->f_type = F_UNUSED;
+				logerror("Failed to allocate membuf");
+			}
+		} else {
+			dprintf("Membuf match f:%p, m:%p\n", f, m);
+			f->f_un = m->f_un;
+			m->f_un.f_mb.f_rb = NULL;
+		}
+	}
+
+	/* make sure remaining buffers are freed */
+	while (mb != NULL) {
+		m = mb;
+		if (m->f_un.f_mb.f_rb != NULL) {
+			logerror("Mismatched membuf");
+			ringbuf_free(m->f_un.f_mb.f_rb);
+		}
+		dprintf("Freeing membuf %p\n", m);
+
+		mb = m->f_next;
+		free(m);
 	}
 
 	/* close the configuration file */
@@ -1535,13 +1580,9 @@ cfline(char *line, char *prog)
 			break;
 		}
 
-		/* Allocate buffer */
+		/* Set buffer length */
 		rb_len = MAX(rb_len, MIN_MEMBUF);
-		if ((f->f_un.f_mb.f_rb = ringbuf_init(rb_len)) == NULL) {
-			f->f_type = F_UNUSED;
-			logerror(p);
-			break;
-		}
+		f->f_un.f_mb.f_len = rb_len;
 		f->f_un.f_mb.f_overflow = 0;
 		f->f_un.f_mb.f_attached = 0;
 		break;
