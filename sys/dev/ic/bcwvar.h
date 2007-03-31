@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.31 2007/03/20 11:55:36 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.32 2007/03/31 09:48:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -24,6 +24,8 @@
  */
 
 #define BCW_ARRAY_SIZE(array)	(sizeof(array) / sizeof(array[0]))
+
+#define BCW_FLAGS_INITIALIZED		0x00000001
 
 #define BCW_DEFAULT_SHORT_RETRY_LIMIT	7
 #define BCW_DEFAULT_LONG_RETRY_LIMIT	4
@@ -95,7 +97,7 @@ struct bcw_radio {
 #define BCW_MAX_CORES		10
 struct bcw_core {
 	uint16_t	id;
-	uint8_t		num;
+	uint8_t		index;
 	uint8_t		rev;
 	uint8_t		backplane_flag;
 };
@@ -254,6 +256,7 @@ struct bcw_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
+	uint32_t		sc_flags;
 	void			*bcw_intrhand;
 	const char		*bcw_intrstr;	/* interrupt description */
 	void			*sc_dev_softc;
@@ -274,7 +277,7 @@ struct bcw_softc {
 	uint16_t		sc_board_rev;
 	uint16_t		sc_chip_id;		/* Chip ID */
 	uint16_t		sc_chip_rev;		/* Chip Revision */
-	uint16_t		sc_chip_package;	/* Chip Package */
+	uint16_t		sc_chip_pkg;		/* Chip Package */
 	uint16_t		sc_prodid;	/* Product ID */
 	struct bcw_core		sc_core[BCW_MAX_CORES];
 //	struct bcw_radio	radio[BCW_RADIO_MAX];
@@ -311,6 +314,7 @@ struct bcw_softc {
 	uint32_t		sc_phyinfo;
 	uint16_t		sc_numcores;
 	uint16_t		sc_havecommon;
+	uint32_t		sc_chip_common_capa;
 	int			sc_currentcore;
 	int			sc_lastcore;
 	uint16_t		sc_radio_pa0b0;

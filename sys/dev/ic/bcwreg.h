@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.24 2007/03/20 21:14:39 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.25 2007/03/31 09:48:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -29,13 +29,24 @@
 #define BCW_SPROM_CONTROL		0x88
 
 /*
+ * PCI Interrupt Configuration Register
+ */
+#define BCW_PCICFG_ICR			0x94
+
+/*
  * MMIO offsets
  */
+#define BCW_MMIO_DMA0_REASON		0x20
 #define BCW_MMIO_DMA0_INT_MASK		0x24
+#define BCW_MMIO_DMA1_REASON		0x28
 #define BCW_MMIO_DMA1_INT_MASK		0x2c
+#define BCW_MMIO_DMA2_REASON		0x30
 #define BCW_MMIO_DMA2_INT_MASK		0x34
+#define BCW_MMIO_DMA3_REASON		0x38
 #define BCW_MMIO_DMA3_INT_MASK		0x3c
+#define BCW_MMIO_DMA4_REASON		0x40
 #define BCW_MMIO_DMA4_INT_MASK		0x44
+#define BCW_MMIO_DMA5_REASON		0x48
 #define BCW_MMIO_DMA5_INT_MASK		0x4c
 #define BCW_MMIO_SBF			0x120	/* Status Bit Field */
 #define BCW_MMIO_GIR			0x128	/* Generic Interrupt Reason */
@@ -125,6 +136,45 @@
 #define BCW_MACFILTER_ASSOC		0x0003
 
 /*
+ * Chip Common registers
+ */
+#define BCW_CHIPCOMMON_CAPABILITIES	0x04
+#define BCW_CHIPCOMMON_CTL		0x28
+#define BCW_CHIPCOMMON_PLLONDELAY	0xB0
+#define BCW_CHIPCOMMON_FREFSELDELAY	0xB4
+#define BCW_CHIPCOMMON_SLOWCLKCTL	0xB8
+#define BCW_CHIPCOMMON_SYSCLKCTL	0xC0
+
+/*
+ * PCI core registers
+ */
+#define BCW_PCICORE_BCAST_ADDR		0x50
+#define BCW_PCICORE_BCAST_DATA		0x54
+#define BCW_PCICORE_SBTOPCI2		0x108
+
+/*
+ * SBTOPCI2 values
+ */
+#define BCW_SBTOPCI2_PREFETCH		0x4
+#define BCW_SBTOPCI2_BURST		0x8
+#define BCW_SBTOPCI2_MEMREAD_MULTI	0x20
+
+/*
+ * Chip Common capabilities
+ */
+#define BCW_CAPABILITIES_PCTL		0x00040000
+#define BCW_CAPABILITIES_PLLMASK	0x00030000
+#define BCW_CAPABILITIES_PLLSHIFT	16
+#define BCW_CAPABILITIES_FLASHMASK	0x00000700
+#define BCW_CAPABILITIES_FLASHSHIFT	8
+#define BCW_CAPABILITIES_EXTBUSPRESENT	0x00000040
+#define BCW_CAPABILITIES_UARTGPIO	0x00000020
+#define BCW_CAPABILITIES_UARTCLOCKMASK	0x00000018
+#define BCW_CAPABILITIES_UARTCLOCKSHIFT	3
+#define BCW_CAPABILITIES_MIPSBIGENDIAN	0x00000004
+#define BCW_CAPABILITIES_NRUARTSMASK	0x00000003
+
+/*
  * Power control
  */
 #define BCW_PCTL_IN			0xb0
@@ -132,6 +182,16 @@
 #define BCW_PCTL_OUTENABLE		0xb8
 #define BCW_PCTL_XTAL_POWERUP		0x40
 #define BCW_PCTL_PLL_POWERDOWN		0x80
+
+/*
+ * Power control clock modes
+ */
+#define BCW_PCTL_CLK_FAST		0x00
+#define BCW_PCTL_CLK_SLOW		0x01
+#define BCW_PCTL_CLK_DYNAMIC		0x02
+#define BCW_PCTL_FORCE_SLOW		0x0800
+#define BCW_PCTL_FORCE_PLL		0x1000
+#define BCW_PCTL_DYN_XTAL		0x2000
 
 /*
  * Core IDs

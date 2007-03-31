@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_pci.c,v 1.14 2007/03/04 11:04:18 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_pci.c,v 1.15 2007/03/31 09:48:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -111,17 +111,14 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	struct bcw_softc *sc = &psc->psc_bcw;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pcireg_t memtype;
-	bus_addr_t memaddr;
 	bus_size_t memsize;
-	int pmreg;
-	pcireg_t pmode;
+	int error;
 
 	sc->sc_dmat = pa->pa_dmat;
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
 	sc->sc_dev_softc = psc;
-
+#if 0
 	/* Get it out of power save mode if needed. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
 		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + 4) & 0x3;
@@ -140,47 +137,36 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
 		}
 	}
-
-	/*
-	 * Map control/status registers.
-	 */
-	/* Copied from pre-abstraction, via if_bce.c */
-	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BCW_PCI_BAR0);
-	switch (memtype) {
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		if (pci_mapreg_map(pa, BCW_PCI_BAR0, memtype, 0, &sc->sc_iot,
-		    &sc->sc_ioh, &memaddr, &memsize, 0) == 0)
-			break;
-	default:
-		printf("%s: unable to find mem space\n",
-		    sc->sc_dev.dv_xname);
+#endif
+	/* map control / status registers */
+	error = pci_mapreg_map(pa, BCW_PCI_BAR0,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &sc->sc_iot, &sc->sc_ioh, NULL, &memsize, 0);
+	if (error != 0) {
+		printf(": could not map memory space\n");
 		return;
 	}
 
-	/* Map the PCI interrupt */
-	if (pci_intr_map(pa, &psc->psc_ih)) {
-		printf("%s: couldn't map interrupt\n",
-		    sc->sc_dev.dv_xname);
+	/* map interrupt */
+	if (pci_intr_map(pa, &psc->psc_ih) != 0) {
+		printf(": couldn't map interrupt\n");
 		return;
 	}
 
+	/* establish interrupt */
 	sc->bcw_intrstr = pci_intr_string(pc, psc->psc_ih);
-
 	psc->psc_intrcookie = pci_intr_establish(pc, psc->psc_ih, IPL_NET, 
 	    bcw_intr, sc, sc->sc_dev.dv_xname);
-
 	if (psc->psc_intrcookie == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		printf("%s: couldn't establish interrupt");
 		if (sc->bcw_intrstr != NULL)
 			printf(" at %s", sc->bcw_intrstr);
 		printf("\n");
 		return;
 	}
-
 	printf(": %s", sc->bcw_intrstr);
 
+	/* map function pointers which we need later in the device code */
 	sc->sc_conf_write = bcw_pci_conf_write;
 	sc->sc_conf_read = bcw_pci_conf_read;
 
@@ -191,23 +177,6 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_prodid = PCI_PRODUCT(pa->pa_id); /* XXX */
 	sc->sc_board_type = sc->sc_prodid; /* XXX */
 	sc->sc_board_rev = PCI_REVISION(pa->pa_class);
-
-	/*
-	 * Start the card up while we're in PCI land
-	 */
-
-	/* Turn the Crystal On */
-	bcw_powercontrol_crystal_on(sc);
-
-	/*
-	 * Clear PCI_STATUS_TARGET_TARGET_ABORT, Docs and Linux call it 
-	 * PCI_STATUS_SIG_TARGET_ABORT - should use pci_conf_read/write?
-	 */
-	pci_conf_write(pa->pa_pc, pa->pa_tag,
-	    PCI_COMMAND_STATUS_REG,
-	    pci_conf_read(pa->pa_pc, pa->pa_tag,
-	    PCI_COMMAND_STATUS_REG)
-	    & ~PCI_STATUS_TARGET_TARGET_ABORT);
 
 	/*
 	 * Finish the attach
