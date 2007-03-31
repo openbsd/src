@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.81 2007/03/31 09:48:02 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.82 2007/03/31 23:38:03 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -149,11 +149,13 @@ int			bcw_80211_core_init(struct bcw_softc *, int);
 uint8_t			bcw_sprom_crc8(uint8_t, uint8_t);
 uint8_t			bcw_sprom_crc(const uint16_t *);
 int			bcw_sprom_read(struct bcw_softc *, uint16_t *);
-int			bcw_sprom_extract(struct bcw_softc *);
+int			bcw_sprom_get(struct bcw_softc *);
+void			bcw_microcode_init_fbf(struct bcw_softc *);
 
 /*
  * PHY
  */
+int			bcw_phy_get(struct bcw_softc *);
 int			bcw_phy_init(struct bcw_softc *);
 void			bcw_phy_initg(struct bcw_softc *);
 void			bcw_phy_initb2(struct bcw_softc *);
@@ -196,6 +198,7 @@ int			bcw_phy_connect(struct bcw_softc *, int);
 /*
  * Radio
  */
+int			bcw_radio_get(struct bcw_softc *);
 void			bcw_radio_off(struct bcw_softc *);
 void			bcw_radio_on(struct bcw_softc *);
 void			bcw_radio_nrssi_hw_write(struct bcw_softc *,
@@ -904,7 +907,6 @@ bcw_attach(struct bcw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	int error;
 	int i;
 	uint32_t sbval;
 	uint32_t core_id, core_rev, core_vendor;
@@ -958,8 +960,6 @@ bcw_attach(struct bcw_softc *sc)
 
 		/* powercontrol init is done if a common core exists */
 		bcw_pc_init(sc);
-
-		bcw_pc_set_clock(sc, BCW_PCTL_CLK_FAST);
 
 		sbval = BCW_READ(sc, BCW_CORE_COMMON_CHIPID);
 		sc->sc_chip_id = (sbval & 0x0000ffff);
@@ -1045,54 +1045,65 @@ bcw_attach(struct bcw_softc *sc)
 	    sc->sc_chip_id, sc->sc_chip_rev, sc->sc_chip_pkg,
 	    sc->sc_numcores));
 
-	bcw_iocore_enable(sc, (1 << 1));
+	bcw_pc_set_clock(sc, BCW_PCTL_CLK_FAST);
 
-       /* Reset and Identify each core */
+	/*
+	 * Get SPROM values and save them where they belong
+	 */
+	bcw_sprom_get(sc);
+
+       /* Identify each core and reset the 802.11 cores */
        for (i = 0; i < sc->sc_numcores; i++) {
-		if (bcw_change_core(sc, i) == 0) {
-			sbval = BCW_READ(sc, BCW_CIR_SBID_HI);
+		if (bcw_change_core(sc, i)) {
+			printf("%s: Failed change to core %d\n",
+			    sc->sc_dev.dv_xname, i);
+			continue;
+		}
 
-			sc->sc_core[i].id = (sbval & 0x00008ff0) >> 4;
-			sc->sc_core[i].rev =
-			    ((sbval & 0x00007000) >> 8 | (sbval & 0x0000000f));
+		sbval = BCW_READ(sc, BCW_CIR_SBID_HI);
+		sc->sc_core[i].id = (sbval & 0x00008ff0) >> 4;
+		sc->sc_core[i].rev = ((sbval & 0x00007000) >> 8 |
+		    (sbval & 0x0000000f));
 
-			switch (sc->sc_core[i].id) {
+		switch (sc->sc_core[i].id) {
+		case BCW_CORE_COMMON:
+			sc->sc_core_common = &sc->sc_core[i];
+			break;
 #if 0
-			case BCW_CORE_COMMON:
-				sc->sc_core_common = &sc->sc_core[i];
-				break;
-			case BCW_CORE_PCI:
-				(sc->sc_ca == NULL)
+		case BCW_CORE_PCI:
+			(sc->sc_ca == NULL)
+			sc->sc_core_bus = &sc->sc_core[i];
+			break;
+		case BCW_CORE_PCMCIA:
+			if (sc->sc_pa == NULL)
 				sc->sc_core_bus = &sc->sc_core[i];
-				break;
-			case BCW_CORE_PCMCIA:
-				if (sc->sc_pa == NULL)
-					sc->sc_core_bus = &sc->sc_core[i];
-				break;
+			break;
 #endif
-			case BCW_CORE_80211:
-				bcw_80211_core_reset(sc, 1);
-				bcw_radio_off(sc);
-				sc->sc_core_80211 = &sc->sc_core[i];
-				break;
-			case BCW_CORE_NONEXIST:
-				sc->sc_numcores = i + 1;
-				break;
-			default:
-				/* Ignore all other core types */
-				break;
-			}
-			DPRINTF(("%s: core %d is type 0x%x rev %d\n",
-			    sc->sc_dev.dv_xname, i, 
-			    sc->sc_core[i].id, sc->sc_core[i].rev));
-			/* XXX Fill out the core location vars */
-			sbval = BCW_READ(sc, BCW_SBTPSFLAG);
-			sc->sc_core[i].backplane_flag =
-			sbval & SBTPS_BACKPLANEFLAGMASK;
-			sc->sc_core[i].index = i;
-		} else
-			DPRINTF(("%s: Failed change to core %d",
-			    sc->sc_dev.dv_xname, i));
+		case BCW_CORE_80211:
+			sc->sc_core_80211 = &sc->sc_core[i];
+			bcw_80211_core_reset(sc, 1);
+			if (bcw_phy_get(sc))
+				return;
+			if (bcw_radio_get(sc))
+				return;
+			if (bcw_validate_chip_access(sc))
+				return;
+			bcw_radio_off(sc);
+			bcw_microcode_init_fbf(sc);
+			break;
+		case BCW_CORE_NONEXIST:
+			sc->sc_numcores = i + 1;
+			break;
+		default:
+			/* ignore all other core types */
+			break;
+		}
+
+		sc->sc_core[i].index = i;
+
+		DPRINTF(("%s: core %d is type 0x%x rev %d\n",
+		    sc->sc_dev.dv_xname, sc->sc_core[i].index,
+		    sc->sc_core[i].id, sc->sc_core[i].rev));
 	}
 
 	/* turn crystal off */
@@ -1106,150 +1117,12 @@ bcw_attach(struct bcw_softc *sc)
 	 */
 	bcw_change_core(sc, sc->sc_core_80211->index);
 
-	sbval = BCW_READ16(sc, 0x3E0);
-	sc->sc_phy_ver = (sbval & 0xf000) >> 12;
-	sc->sc_phy_rev = sbval & 0xf;
-	sc->sc_phy_type = (sbval & 0xf00) >> 8;
-
-	DPRINTF(("%s: PHY version %d revision %d ",
-	    sc->sc_dev.dv_xname, sc->sc_phy_ver, sc->sc_phy_rev));
-
-	switch (sc->sc_phy_type) {
-	case BCW_PHY_TYPEA:
-		DPRINTF(("PHY %d (A)\n", sc->sc_phy_type));
-		break;
-	case BCW_PHY_TYPEB:
-		DPRINTF(("PHY %d (B)\n", sc->sc_phy_type));
-		break;
-	case BCW_PHY_TYPEG:
-		DPRINTF(("PHY %d (G)\n", sc->sc_phy_type));
-		break;
-	case BCW_PHY_TYPEN:
-		DPRINTF(("PHY %d (N)\n", sc->sc_phy_type));
-		break;
-	default:
-		DPRINTF(("Unrecognizeable PHY type %d\n",
-		    sc->sc_phy_type));
-		break;
-	}
-
-	/*
-	 * Initialize softc vars
-	 */
+#if 0
 	sc->sc_phy_lopairs = malloc(sizeof(struct bcw_lopair) * BCW_LO_COUNT,
 	    M_DEVBUF, M_NOWAIT);
 	bcw_phy_prepare_init(sc);
 	bcw_radio_prepare_init(sc);
-
-	/*
-	 * Query the RadioID register, on a 4317 use a lookup instead
-	 * XXX Different PHYs have different radio register layouts, so
-	 * a wrapper func should be written.
-	 * Getting the RadioID is the only 32bit operation done with the
-	 * Radio registers, and requires seperate 16bit reads from the low
-	 * and the high data addresses.
-	 */
-	if (sc->sc_chip_id != 0x4317) {
-		BCW_WRITE16(sc, BCW_MMIO_RADIO_CONTROL, BCW_RADIO_ID);
-		sbval = BCW_READ16(sc, BCW_MMIO_RADIO_DATA_HIGH);
-		sbval <<= 16;
-		BCW_WRITE16(sc, BCW_MMIO_RADIO_CONTROL, BCW_RADIO_ID);
-		sc->sc_radio_mnf =
-		    sbval | BCW_READ16(sc, BCW_MMIO_RADIO_DATA_LOW);
-	} else {
-		switch (sc->sc_chip_rev) {
-		case 0:	
-			sc->sc_radio_mnf = 0x3205017F;
-			break;
-		case 1:
-			sc->sc_radio_mnf = 0x4205017f;
-			break;
-		default:
-			sc->sc_radio_mnf = 0x5205017f;
-		}
-	}
-
-	sc->sc_radio_rev = (sc->sc_radio_mnf & 0xf0000000) >> 28;
-	sc->sc_radio_ver = (sc->sc_radio_mnf & 0x0ffff000) >> 12;
-
-	DPRINTF(("%s: Radio Rev %d, Ver 0x%x, Manuf 0x%x\n",
-	    sc->sc_dev.dv_xname, sc->sc_radio_rev, sc->sc_radio_ver,
-	    sc->sc_radio_mnf & 0xfff));
-
-	error = bcw_validate_chip_access(sc);
-	if (error) {
-		printf("%s: failed Chip Access Validation at %d\n",
-		    sc->sc_dev.dv_xname, error);
-		return;
-	}
-
-	/* Test for valid PHY/revision combinations, probably a simpler way */
-	if (sc->sc_phy_type == BCW_PHY_TYPEA) {
-		switch (sc->sc_phy_rev) {
-		case 2:
-		case 3:
-		case 5:
-		case 6:
-		case 7:
-			break;
-		default:
-			printf("%s: invalid PHY A revision %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_phy_rev);
-			return;
-		}
-	}
-	if (sc->sc_phy_type == BCW_PHY_TYPEB) {
-		switch (sc->sc_phy_rev) {
-		case 2:
-		case 4:
-		case 7:
-			break;
-		default:
-			printf("%s: invalid PHY B revision %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_phy_rev);
-			return;
-		}
-	}
-	if (sc->sc_phy_type == BCW_PHY_TYPEG) {
-		switch(sc->sc_phy_rev) {
-		case 1:
-		case 2:
-		case 4:
-		case 6:
-		case 7:
-		case 8:
-			break;
-		default:
-			printf("%s: invalid PHY G revision %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_phy_rev);
-			return;
-		}
-	}
-
-	/* test for valid radio revisions */
-	if ((sc->sc_phy_type == BCW_PHY_TYPEA) &
-	    (sc->sc_radio_ver != 0x2060)) {
-		    	printf("%s: invalid PHY A radio 0x%x\n",
-		    	    sc->sc_dev.dv_xname, sc->sc_radio_ver);
-		    	return;
-	}
-	if ((sc->sc_phy_type == BCW_PHY_TYPEB) &
-	    ((sc->sc_radio_ver & 0xfff0) != 0x2050)) {
-		    	printf("%s: invalid PHY B radio 0x%x\n",
-		    	    sc->sc_dev.dv_xname, sc->sc_radio_ver);
-		    	return;
-	}
-	if ((sc->sc_phy_type == BCW_PHY_TYPEG) &
-	    (sc->sc_radio_ver != 0x2050)) {
-		    	printf("%s: invalid PHY G radio 0x%x\n",
-		    	    sc->sc_dev.dv_xname, sc->sc_radio_ver);
-		    	return;
-	}
-
-	/*
-	 * Extract SPROM values and save them where they belong
-	 */
-	bcw_sprom_extract(sc);
+#endif
 
         /*
 	 * Set MAC address
@@ -1259,32 +1132,6 @@ bcw_attach(struct bcw_softc *sc)
         else
 		memcpy(ic->ic_myaddr, sc->sc_sprom.il0macaddr, ETHER_ADDR_LEN);
         printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
-
-	/*
-	 * Init the Microcode Flags Bitfield
-	 *
-	 * http://bcm-specs.sipsolutions.net/MicrocodeFlagsBitfield
-	 */
-	sbval = 0;
-	if (sc->sc_phy_type == BCW_PHY_TYPEA ||
-	    sc->sc_phy_type == BCW_PHY_TYPEB ||
-	    sc->sc_phy_type == BCW_PHY_TYPEG)
-		sbval |= 2;
-	if (sc->sc_phy_type == BCW_PHY_TYPEG && sc->sc_phy_rev == 1)
-		sbval |= 0x20;
-	if (sc->sc_phy_type == BCW_PHY_TYPEG &&
-	    sc->sc_sprom.boardflags & BCW_BF_PACTRL)
-		sbval |= 0x40;
-	if (sc->sc_phy_type == BCW_PHY_TYPEG && sc->sc_phy_rev < 3)
-		sbval |= 0x8;
-	if (sc->sc_sprom.boardflags & BCW_BF_XTAL)
-		sbval |= 0x400;
-	if (sc->sc_phy_type == BCW_PHY_TYPEB)
-		sbval |= 0x4;
-	if (sc->sc_radio_ver == 0x2050 && sc->sc_radio_rev <= 5)
-	    	sbval |= 0x40000;
-	/* XXX device not up and PCI bus with rev =< 10 set 0x80000 */
-	bcw_shm_write32(sc, BCW_SHM_SHARED, BCW_UCODEFLAGS_OFFSET, sbval);
 
 	/*
 	 * Initialize the TSSI to DBM table
@@ -1671,6 +1518,11 @@ bcw_init(struct ifnet *ifp)
         int error;
 	uint32_t coremask = 0;
 
+	sc->sc_phy_lopairs = malloc(sizeof(struct bcw_lopair) * BCW_LO_COUNT,
+	    M_DEVBUF, M_NOWAIT);
+	bcw_phy_prepare_init(sc);	/* XXX probably unpack function */
+	bcw_radio_prepare_init(sc);	/* XXX probably unpack function */
+
 	bcw_pc_crystal_on(sc);
 
 	bcw_pc_init(sc);
@@ -1834,93 +1686,71 @@ bcw_tick(void *v)
 /*
  * Validate Chip Access
  *
- * This function ensures that the chip is setup correctly and is ready
- * for use.
+ * This function ensures that the 80211 core is setup correctly and
+ * and is read for use.
  *
  * http://bcm-specs.sipsolutions.net/ValidateChipAccess
  */
 int
 bcw_validate_chip_access(struct bcw_softc *sc)
 {
-	uint32_t save,val;
+	uint32_t save, val;
 
-	/* Make sure we're dealing with the wireless core */
-	bcw_change_core(sc, sc->sc_core_80211->index);
+	/* test 1 (this test is just for the 80211 core) */
+	if (sc->sc_core[sc->sc_currentcore].id != BCW_CORE_80211)
+		goto fail;
 
-	/*
-	 * We use the offset of zero a lot here to reset the SHM pointer to the
-	 * beginning of it's memory area, as it automatically moves on every
-	 * access to the SHM DATA registers
-	 */
+	/* save value */
+	save = bcw_shm_read32(sc, BCW_SHM_SHARED, 0);
 
-	/* Backup SHM uCode Revision before we clobber it */
-	BCW_WRITE(sc, BCW_MMIO_SHM_CONTROL, (BCW_SHM_SHARED << 16) + 0);
-	save = BCW_READ(sc, BCW_MMIO_SHM_DATA);
-
-	/* write test value */
-	BCW_WRITE(sc, BCW_MMIO_SHM_CONTROL, (BCW_SHM_SHARED << 16) + 0);
-	BCW_WRITE(sc, BCW_MMIO_SHM_DATA, 0xaa5555aa);
-	/* Read it back */
-	BCW_WRITE(sc, BCW_MMIO_SHM_CONTROL, (BCW_SHM_SHARED << 16) + 0);
-
-	val = BCW_READ(sc, BCW_MMIO_SHM_DATA);
+	/* test 2 */
+	bcw_shm_write32(sc, BCW_SHM_SHARED, 0, 0xaa5555aa);
+	val = bcw_shm_read32(sc, BCW_SHM_SHARED, 0);
 	if (val != 0xaa5555aa)
-		return (1);
+		goto fail;
 
-	/* write 2nd test value */
-	BCW_WRITE(sc, BCW_MMIO_SHM_CONTROL, (BCW_SHM_SHARED << 16) + 0);
-	BCW_WRITE(sc, BCW_MMIO_SHM_DATA, 0x55aaaa55);
-	/* Read it back */
-	BCW_WRITE(sc, BCW_MMIO_SHM_CONTROL, (BCW_SHM_SHARED << 16) + 0);
-
-	val = BCW_READ(sc, BCW_MMIO_SHM_DATA);
+	/* test 3 */
+	bcw_shm_write32(sc, BCW_SHM_SHARED, 0, 0x55aaaa55);
+	val = bcw_shm_read32(sc, BCW_SHM_SHARED, 0);
 	if (val != 0x55aaaa55)
-		return 2;
+		goto fail;
 
-	/* Restore the saved value now that we're done */
-	BCW_WRITE(sc, BCW_MMIO_SHM_CONTROL, (BCW_SHM_SHARED << 16) + 0);
-	BCW_WRITE(sc, BCW_MMIO_SHM_DATA, save);
+	/* restore value */
+	bcw_shm_write32(sc, BCW_SHM_SHARED, 0, save);
+
 	if (sc->sc_core_80211->rev >= 3) {
-		/* do some test writes and reads against the TSF */
-		/*
-		 * This works during the attach, but the spec at
-		 * http://bcm-specs.sipsolutions.net/Timing
-		 * say that we're reading/writing silly places, so these regs
-		 * are not quite documented yet
-		 */
+		/* test 4 */
 		BCW_WRITE16(sc, 0x18c, 0xaaaa);
 		BCW_WRITE(sc, 0x18c, 0xccccbbbb);
 		val = BCW_READ16(sc, 0x604);
-		if (val != 0xbbbb) return 3;
+		if (val != 0xbbbb)
+			goto fail;
+		/* test 5 */
 		val = BCW_READ16(sc, 0x606);
-		if (val != 0xcccc) return 4;
-		/* re-clear the TSF since we just filled it with garbage */
-		BCW_WRITE(sc, 0x18c, 0x0);
+		if (val != 0xcccc)
+			goto fail;
+		BCW_WRITE(sc, 0x18c, 0);
 	}
 
-	/* Check the Status Bit Field for some unknown bits */
+	/* test 6 */
 	val = BCW_READ(sc, BCW_MMIO_SBF);
-	if ((val | 0x80000000) != 0x80000400 ) {
-		printf("%s: Warning, SBF is 0x%x, expected 0x80000400\n",
-		    sc->sc_dev.dv_xname, val);
-		/* May not be a critical failure, just warn for now */
-		//return (5);
-	}
-	/* Verify there are no interrupts active on the core */
-	val = BCW_READ(sc, BCW_MMIO_GIR);
-	if (val != 0) {
-		DPRINTF(("Failed Pending Interrupt test with val=0x%x\n", val));
-		return (6);
-	}
+	if ((val | 0x80000000) != 0x80000400)
+		goto fail;
 
-	/* Above G means it's unsupported currently, like N */
-	if (sc->sc_phy_type > BCW_PHY_TYPEG) {
-		DPRINTF(("PHY type %d greater than supported type %d\n",
-		    sc->sc_phy_type, BCW_PHY_TYPEG));
-		return (7);
-	}
-	
+	/* test 7 */
+	val = BCW_READ(sc, BCW_MMIO_GIR);
+	if (val != 0)
+		goto fail;
+
+	/* test 8 */
+	if (sc->sc_phy_type > BCW_PHY_TYPEG)
+		goto fail;
+
 	return (0);
+
+fail:
+	printf("%s: Chip Access Validation failed!\n", sc->sc_dev.dv_xname);
+	return (1);
 }
 
 int
@@ -3222,12 +3052,12 @@ bcw_sprom_read(struct bcw_softc *sc, uint16_t *sprom)
 }
 
 /*
- * Extract whole SPROM content
+ * Get whole SPROM content
  *
  * http://bcm-specs.sipsolutions.net/SPROM
  */
 int
-bcw_sprom_extract(struct bcw_softc *sc)
+bcw_sprom_get(struct bcw_softc *sc)
 {
 	uint16_t val;
 	uint16_t *sprom;
@@ -3333,8 +3163,97 @@ bcw_sprom_extract(struct bcw_softc *sc)
 }
 
 /*
+ * Init the Microcode Flags Bitfield
+ *
+ * http://bcm-specs.sipsolutions.net/MicrocodeFlagsBitfield
+ */
+void
+bcw_microcode_init_fbf(struct bcw_softc *sc)
+{
+	uint32_t val;
+
+	val = 0;
+	if (sc->sc_phy_type == BCW_PHY_TYPEA ||
+	    sc->sc_phy_type == BCW_PHY_TYPEB ||
+	    sc->sc_phy_type == BCW_PHY_TYPEG)
+		val |= 2;
+	if (sc->sc_phy_type == BCW_PHY_TYPEG && sc->sc_phy_rev == 1)
+		val |= 0x20;
+	if (sc->sc_phy_type == BCW_PHY_TYPEG &&
+	    sc->sc_sprom.boardflags & BCW_BF_PACTRL)
+		val |= 0x40;
+	if (sc->sc_phy_type == BCW_PHY_TYPEG && sc->sc_phy_rev < 3)
+		val |= 0x8;
+	if (sc->sc_sprom.boardflags & BCW_BF_XTAL)
+		val |= 0x400;
+	if (sc->sc_phy_type == BCW_PHY_TYPEB)
+		val |= 0x4;
+	if (sc->sc_radio_ver == 0x2050 && sc->sc_radio_rev <= 5)
+	    	val |= 0x40000;
+	/* XXX device not up and PCI bus with rev =< 10 set 0x80000 */
+
+	bcw_shm_write32(sc, BCW_SHM_SHARED, BCW_UCODEFLAGS_OFFSET, val);
+}
+
+/*
  * PHY
  */
+int
+bcw_phy_get(struct bcw_softc *sc)
+{
+	uint32_t val;
+
+	val = BCW_READ16(sc, 0x3E0);
+	sc->sc_phy_ver = (val & 0xf000) >> 12;
+	sc->sc_phy_rev = val & 0xf;
+	sc->sc_phy_type = (val & 0xf00) >> 8;
+
+	switch (sc->sc_phy_type) {
+	case BCW_PHY_TYPEA:
+		DPRINTF(("%s: PHY %d (A) ",
+		    sc->sc_dev.dv_xname, sc->sc_phy_type));
+		if (sc->sc_phy_rev != 2 &&
+		    sc->sc_phy_rev != 3 &&
+		    sc->sc_phy_rev != 5 &&
+		    sc->sc_phy_rev != 6 &&
+		    sc->sc_phy_rev != 7) {
+			printf("has invalid revision %d!\n", sc->sc_phy_rev);
+			return (1);
+		}
+		break;
+	case BCW_PHY_TYPEB:
+		DPRINTF(("%s: PHY %d (B) ",
+		    sc->sc_dev.dv_xname, sc->sc_phy_type));
+		if (sc->sc_phy_rev != 2 &&
+		    sc->sc_phy_rev != 4 &&
+		    sc->sc_phy_rev != 7) {
+			printf("has invalid revision %d!\n", sc->sc_phy_rev);
+			return (1);
+		}
+		break;
+	case BCW_PHY_TYPEG:
+		DPRINTF(("%s: PHY %d (G) ",
+		    sc->sc_dev.dv_xname, sc->sc_phy_type));
+		if (sc->sc_phy_rev != 1 &&
+		    sc->sc_phy_rev != 2 &&
+		    sc->sc_phy_rev != 4 &&
+		    sc->sc_phy_rev != 6 &&
+		    sc->sc_phy_rev != 7 &&
+		    sc->sc_phy_rev != 8) {
+			printf("has invalid revision %d!\n", sc->sc_phy_rev);
+			return (1);
+		}
+		break;
+	default:
+		DPRINTF(("Unknown PHY type %d!\n", sc->sc_phy_type));
+		return (1);
+	}
+
+	DPRINTF(("ver %d rev %d\n", sc->sc_phy_ver, sc->sc_phy_rev));
+
+	return (0);
+}
+
 int
 bcw_phy_init(struct bcw_softc *sc)
 {
@@ -5365,6 +5284,73 @@ out:
 /*
  * Radio
  */
+int
+bcw_radio_get(struct bcw_softc *sc)
+{
+	uint32_t val;
+
+	/*
+	 * Query the RadioID register, on a 4317 use a lookup instead
+	 * XXX Different PHYs have different radio register layouts, so
+	 * a wrapper func should be written.
+	 * Getting the RadioID is the only 32bit operation done with the
+	 * Radio registers, and requires seperate 16bit reads from the low
+	 * and the high data addresses.
+	 */
+	if (sc->sc_chip_id != 0x4317) {
+		BCW_WRITE16(sc, BCW_MMIO_RADIO_CONTROL, BCW_RADIO_ID);
+		val = BCW_READ16(sc, BCW_MMIO_RADIO_DATA_HIGH);
+		val <<= 16;
+		BCW_WRITE16(sc, BCW_MMIO_RADIO_CONTROL, BCW_RADIO_ID);
+		sc->sc_radio_mnf =
+		    val | BCW_READ16(sc, BCW_MMIO_RADIO_DATA_LOW);
+	} else {
+		switch (sc->sc_chip_rev) {
+		case 0:	
+			sc->sc_radio_mnf = 0x3205017F;
+			break;
+		case 1:
+			sc->sc_radio_mnf = 0x4205017f;
+			break;
+		default:
+			sc->sc_radio_mnf = 0x5205017f;
+		}
+	}
+
+	sc->sc_radio_rev = (sc->sc_radio_mnf & 0xf0000000) >> 28;
+        sc->sc_radio_ver = (sc->sc_radio_mnf & 0x0ffff000) >> 12;
+
+	switch (sc->sc_phy_type) {
+	case BCW_PHY_TYPEA:
+		if (sc->sc_radio_ver != 0x2060) {
+			printf("%s: invalid PHY A radio 0x%x!\n",
+			    sc->sc_dev.dv_xname, sc->sc_radio_ver);
+			return (1);
+		}
+		break;
+	case BCW_PHY_TYPEB:
+		if ((sc->sc_radio_ver & 0xfff0) != 0x2050) {
+			printf("%s: invalid PHY B radio 0x%x!\n",
+			    sc->sc_dev.dv_xname, sc->sc_radio_ver);
+			return (1);
+		}
+		break;
+	case BCW_PHY_TYPEG:
+		if (sc->sc_radio_ver != 0x2050) {
+			printf("%s: invalid PHY G radio 0x%x!\n",
+			    sc->sc_dev.dv_xname, sc->sc_radio_ver);
+			return (1);
+		}
+		break;
+	}
+
+	DPRINTF(("%s: Radio rev %d ver 0x%x mnf 0x%x\n",
+	    sc->sc_dev.dv_xname, sc->sc_radio_rev, sc->sc_radio_ver,
+	    sc->sc_radio_mnf & 0xfff));
+
+	return (0);
+}
+
 void
 bcw_radio_off(struct bcw_softc *sc)
 {
