@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.106 2007/03/30 06:59:46 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.107 2007/03/31 07:42:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -375,6 +375,9 @@ struct ahci_softc {
 	bus_size_t		sc_ios;
 	bus_dma_tag_t		sc_dmat;
 
+	int			sc_flags;
+#define AHCI_F_NO_NCQ			(1<<0)
+
 	u_int			sc_ncmds;
 	struct ahci_port	*sc_ports[AHCI_MAX_PORTS];
 
@@ -390,14 +393,18 @@ struct ahci_device {
 	pci_vendor_id_t		ad_vendor;
 	pci_product_id_t	ad_product;
 	int			(*ad_match)(struct pci_attach_args *);
-	int			(*ad_attach)(struct pci_attach_args *);
+	int			(*ad_attach)(struct ahci_softc *,
+				    struct pci_attach_args *);
 };
 
 const struct ahci_device *ahci_lookup_device(struct pci_attach_args *);
 
 int			ahci_no_match(struct pci_attach_args *);
 int			ahci_jmicron_match(struct pci_attach_args *);
-int			ahci_jmicron_attach(struct pci_attach_args *);
+int			ahci_jmicron_attach(struct ahci_softc *,
+			    struct pci_attach_args *);
+int			ahci_vt8251_attach(struct ahci_softc *,
+			    struct pci_attach_args *);
 
 static const struct ahci_device ahci_devices[] = {
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB360,
@@ -411,7 +418,7 @@ static const struct ahci_device ahci_devices[] = {
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB366,
 	    ahci_jmicron_match, ahci_jmicron_attach },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8251_SATA,
-	    ahci_no_match,	NULL }
+	    NULL,		ahci_vt8251_attach }
 };
 
 int			ahci_match(struct device *, void *, void *);
@@ -536,7 +543,7 @@ ahci_jmicron_match(struct pci_attach_args *pa)
 }
 
 int
-ahci_jmicron_attach(struct pci_attach_args *pa)
+ahci_jmicron_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
 	u_int32_t			ccr;
 
@@ -545,6 +552,14 @@ ahci_jmicron_attach(struct pci_attach_args *pa)
 	ccr &= ~0x0000ff00;
 	ccr |=  0x0000a100;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, 0x40, ccr);
+
+	return (0);
+}
+
+int
+ahci_vt8251_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
+{
+	sc->sc_flags |= AHCI_F_NO_NCQ;
 
 	return (0);
 }
@@ -584,7 +599,7 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 
 	ad = ahci_lookup_device(pa);
 	if (ad != NULL && ad->ad_attach != NULL) {
-		if (ad->ad_attach(pa) != 0) {
+		if (ad->ad_attach(sc, pa) != 0) {
 			/* error should be printed by ad_attach */
 			return;
 		}
@@ -653,7 +668,7 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	aaa.aaa_nports = AHCI_MAX_PORTS;
 	aaa.aaa_ncmds = sc->sc_ncmds;
 	aaa.aaa_capability = ASAA_CAP_NEEDS_RESERVED;
-	if (cap & AHCI_REG_CAP_SNCQ)
+	if (!(sc->sc_flags & AHCI_F_NO_NCQ) && (cap & AHCI_REG_CAP_SNCQ))
 		aaa.aaa_capability |= ASAA_CAP_NCQ;
 
 	sc->sc_atascsi = atascsi_attach(self, &aaa);
