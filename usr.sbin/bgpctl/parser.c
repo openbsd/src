@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.41 2007/03/28 12:34:08 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.42 2007/03/31 12:46:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -136,7 +136,7 @@ static const struct token t_show_rib[] = {
 	{ ASTYPE,	"transit-as",	AS_TRANSIT,	t_show_as},
 	{ ASTYPE,	"peer-as",	AS_PEER,	t_show_as},
 	{ ASTYPE,	"empty-as",	AS_EMPTY,	t_show_rib},
-	{ KEYWORD, 	"community", 	NONE, 		t_show_community},
+	{ KEYWORD,	"community",	NONE,		t_show_community},
 	{ FLAG,		"detail",	F_CTL_DETAIL,	t_show_rib},
 	{ FLAG,		"in",		F_CTL_ADJ_IN,	t_show_rib},
 	{ FLAG,		"out",		F_CTL_ADJ_OUT,	t_show_rib},
@@ -206,8 +206,8 @@ static const struct token t_show_ip[] = {
 };
 
 static const struct token t_show_community[] = {
-	{ COMMUNITY, 	"", 		NONE, 		t_show_rib},
-	{ ENDTOKEN, 	"", 		NONE, 		NULL}
+	{ COMMUNITY,	"",		NONE,		t_show_rib},
+	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_network[] = {

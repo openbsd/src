@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_asset.c,v 1.6 2007/03/06 16:45:34 henning Exp $ */
+/*	$OpenBSD: irr_asset.c,v 1.7 2007/03/31 12:46:55 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -149,7 +149,6 @@ asset_membertype(char *name)
 		return (T_AUTNUM);
 
 	return (T_UNKNOWN);
-	
 }
 
 void
