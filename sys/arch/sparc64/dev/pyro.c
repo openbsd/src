@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.2 2007/03/31 19:05:31 kettenis Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.3 2007/03/31 22:14:52 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -149,6 +149,9 @@ pyro_init(struct pyro_softc *sc, int busa)
 #if 0
 	pbm->pp_dmat = pyro_alloc_dma_tag(pbm);
 #endif
+
+	if (bus_space_map(pbm->pp_cfgt, 0, 0x10000000, 0, &pbm->pp_cfgh))
+		panic("pyro: could not map config space");
 
 	pbm->pp_pc = pyro_alloc_chipset(pbm, sc->sc_node, &_sparc_pci_chipset);
 
