@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.6 2006/11/11 15:55:52 michele Exp $ */
+/*	$OpenBSD: message.c,v 1.7 2007/03/31 09:49:20 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -37,6 +37,7 @@ extern struct ripd_conf	*oeconf;
 void	 delete_entry(struct rip_route *);
 
 /* timers */
+/* ARGSUSED */
 void
 report_timer(int fd, short event, void *arg)
 {
@@ -259,8 +260,10 @@ send_response(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 		nentries = 0;
 
 		if (iface->auth_type != AUTH_NONE) {
-			if (auth_gen(buf, iface) < 0)
+			if (auth_gen(buf, iface) == -1) {
+				buf_free(buf);
 				return (-1);
+			}
 			nentries++;
 		}
 

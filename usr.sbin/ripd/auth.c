@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.4 2006/11/27 15:02:34 stevesk Exp $ */
+/*	$OpenBSD: auth.c,v 1.5 2007/03/31 09:49:20 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -198,7 +198,7 @@ auth_gen(struct buf *buf, struct iface *iface)
 
 	switch (iface->auth_type) {
 	case AUTH_SIMPLE:
-		return (buf_add(buf, &iface->auth_key, MAX_SIMPLE_AUTH_LEN));
+		buf_add(buf, &iface->auth_key, MAX_SIMPLE_AUTH_LEN);
 		break;
 	case AUTH_CRYPT:
 		if ((md = md_list_find(&iface->auth_md_list,
@@ -212,11 +212,12 @@ auth_gen(struct buf *buf, struct iface *iface)
 		a.auth_seq = htonl(auth_get_seq_num(md));
 		a.auth_length = MD5_DIGEST_LENGTH + AUTH_TRLR_HDR_LEN;
 
-		return (buf_add(buf, &a, sizeof(a)));
+		buf_add(buf, &a, sizeof(a));
 		break;
 	default:
-		/* NOTREACHED */
-		break;
+		log_debug("auth_gen: unknown auth type, interface %s",
+		    iface->name);
+		return (-1);
 	}
 
 	return (0);
