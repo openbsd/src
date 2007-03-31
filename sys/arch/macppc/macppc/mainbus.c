@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.17 2007/02/25 04:13:48 gwk Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.18 2007/03/31 08:31:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -78,6 +78,7 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs nca;
 	char name[64], *t = NULL;
+	int reg[4], cpucnt;
 	int node, len, slen;
 
 	node = OF_peer(0);
@@ -117,17 +118,30 @@ mbattach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Try to find and attach all of the CPUs in the machine.
-	 * ( Right now only one CPU so code is simple )
 	 */
 
-	nca.ca_name = "cpu";
-	nca.ca_bus = &sc->sc_bus;
-	config_found(self, &nca, mbprint);
-
-	/* Set up Openfirmware.*/
-	{ /* legacy? */
-		nca.ca_name = "ofroot";
+	cpucnt = 0;
+	node = OF_finddevice("/cpus");
+	if (node != -1) {
+		for (node = OF_child(node); node != 0; node = OF_peer(node)) {
+			u_int32_t cpunum;
+			int len;
+			len = OF_getprop(node, "reg", &cpunum, sizeof cpunum);
+			if (len == 4 && cpucnt == cpunum) {
+				nca.ca_name = "cpu";
+				nca.ca_bus = &sc->sc_bus;
+				nca.ca_reg = reg;
+				reg[0] = cpucnt;
+				config_found(self, &nca, mbprint);
+				cpucnt++;
+			}
+		}
+	}
+	if (cpucnt == 0) {
+		nca.ca_name = "cpu";
 		nca.ca_bus = &sc->sc_bus;
+		nca.ca_reg = reg;
+		reg[0] = 0;
 		config_found(self, &nca, mbprint);
 	}
 
@@ -171,8 +185,10 @@ mbattach(struct device *parent, struct device *self, void *aux)
 static int
 mbprint(void *aux, const char *pnp)
 {
+	struct confargs *ca = aux;
 	if (pnp)
-		return (QUIET);
+		printf("%s at %s", ca->ca_name, pnp);
+
 	return (UNCONF);
 }
 
