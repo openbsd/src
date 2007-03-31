@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.86 2006/12/30 16:25:41 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.87 2007/03/31 22:16:48 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -364,8 +364,8 @@ allocsys(caddr_t v)
 	}
 	/* Restrict to at most 30% filled kvm */
 	if (nbuf * MAXBSIZE >
-	    (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) * 3 / 10)
-		nbuf = (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) /
+	    (KERNEND - KERNBASE) * 3 / 10)
+		nbuf = (KERNEND - KERNBASE) /
 		    MAXBSIZE * 3 / 10;
 
 	/* More buffer pages than fits into the buffers is senseless.  */
