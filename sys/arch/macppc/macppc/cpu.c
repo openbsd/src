@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.39 2007/03/20 20:59:54 kettenis Exp $ */
+/*	$OpenBSD: cpu.c,v 1.40 2007/03/31 09:44:21 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -101,9 +101,13 @@ int
 cpumatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct confargs *ca = aux;
+	int *reg = ca->ca_reg;
 
 	/* make sure that we're looking for a CPU. */
 	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
+		return (0);
+
+	if (reg[0] >= PPC_MAXPROCS)
 		return (0);
 
 	return (1);
