@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $OpenBSD: kern_tc.c,v 1.7 2006/11/15 17:25:40 jmc Exp $
+ * $OpenBSD: kern_tc.c,v 1.8 2007/03/31 14:46:48 kettenis Exp $
  * $FreeBSD: src/sys/kern/kern_tc.c,v 1.148 2003/03/18 08:45:23 phk Exp $
  */
 
@@ -326,6 +326,7 @@ tc_setclock(struct timespec *ts)
 	/* XXX fiddle all the little crinkly bits around the fiords... */
 	tc_windup();
 	if (timestepwarnings) {
+		bintime2timespec(&bt2, &ts2);
 		log(LOG_INFO, "Time stepped from %ld.%09ld to %ld.%09ld\n",
 		    (long)ts2.tv_sec, ts2.tv_nsec,
 		    (long)ts->tv_sec, ts->tv_nsec);
