@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.12 2007/03/31 12:07:50 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.13 2007/03/31 12:31:27 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -596,10 +596,8 @@ sr_ioctl_vol(struct sr_softc *sc, struct bioc_vol *bv)
 int
 sr_ioctl_disk(struct sr_softc *sc, struct bioc_disk *bd)
 {
-	int			i, vol, rv = EINVAL;
+	int			i, vol, rv = EINVAL, id;
 	struct sr_chunk		*src;
-
-	/* FIXME, wrong disk lookup */
 
 	for (i = 0, vol = -1; i < SR_MAXSCSIBUS; i++) {
 		/* XXX this will not work when we stagger disciplines */
@@ -608,11 +606,15 @@ sr_ioctl_disk(struct sr_softc *sc, struct bioc_disk *bd)
 		if (vol != bd->bd_volid)
 			continue;
 
-		src = sc->sc_dis[i]->sd_vol.sv_chunks[bd->bd_diskid];
+		id = bd->bd_diskid;
+		if (id > sc->sc_dis[vol]->sd_vol.sv_meta.svm_no_chunk)
+			break;
+
+		src = sc->sc_dis[vol]->sd_vol.sv_chunks[id];
 		bd->bd_status = src->src_meta.scm_status;
 		bd->bd_size = src->src_meta.scm_size;
-		bd->bd_channel = i;
-		bd->bd_target = bd->bd_diskid;
+		bd->bd_channel = vol;
+		bd->bd_target = id;
 		strlcpy(bd->bd_vendor, src->src_meta.scm_devname,
 		    sizeof(bd->bd_vendor));
 		rv = 0;
