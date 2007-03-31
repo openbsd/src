@@ -4,6 +4,7 @@
  * generated from:
  *	OpenBSD: pcidevs,v 1.1224 2007/03/31 11:42:05 reyk Exp 
  */
+
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -36,6 +37,18 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/* Descriptions of known vendors and devices. */
+struct pci_known_vendor {
+	pci_vendor_id_t vendor;
+	const char *vendorname;
+};
+
+struct pci_known_product {
+	pci_vendor_id_t vendor;
+	pci_product_id_t product;
+	const char *productname;
+};
 
 static const struct pci_known_product pci_known_products[] = {
 	{
