@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.13 2007/03/31 12:31:27 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.14 2007/03/31 12:57:08 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -607,7 +607,7 @@ sr_ioctl_disk(struct sr_softc *sc, struct bioc_disk *bd)
 			continue;
 
 		id = bd->bd_diskid;
-		if (id > sc->sc_dis[vol]->sd_vol.sv_meta.svm_no_chunk)
+		if (id >= sc->sc_dis[vol]->sd_vol.sv_meta.svm_no_chunk)
 			break;
 
 		src = sc->sc_dis[vol]->sd_vol.sv_chunks[id];
@@ -629,17 +629,20 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 {
 	int			rv = EINVAL;
 
-#if SR_UNIT_TEST
-	int			i, vol, disk, state;
+#ifdef SR_UNIT_TEST
+	int			i, vol, state;
+	struct sr_discipline	*sd;
 
-	for (i = 0, vol = -1, disk = -1; i < SR_MAXSCSIBUS; i++) {
+	for (i = 0, vol = -1; i < SR_MAXSCSIBUS; i++) {
 		/* XXX this will not work when we stagger disciplines */
 		if (sc->sc_dis[i])
 			vol++;
 		if (vol != bs->bs_channel)
 			continue;
-		if (++disk != bs->bs_target)
-			continue;
+
+		sd = sc->sc_dis[vol];
+		if (bs->bs_target >= sd->sd_vol.sv_meta.svm_no_chunk)
+			goto done;
 
 		switch (bs->bs_status) {
 		case BIOC_SSONLINE:
@@ -662,8 +665,7 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 		printf("status change for %u:%u -> %u %u\n",
 		    bs->bs_channel, bs->bs_target, bs->bs_status, state);
 
-		sc->sc_dis[vol]->sd_set_chunk_state(sc->sc_dis[vol],
-		    bs->bs_target, bs->bs_status);
+		sd->sd_set_chunk_state(sd, bs->bs_target, bs->bs_status);
 
 		rv = 0;
 
@@ -1483,14 +1485,14 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 
 	if (states[BIOC_SDONLINE] == nd)
 		new_state = BIOC_SVONLINE;
+	else if (states[BIOC_SDONLINE] == 0)
+		new_state = BIOC_SVOFFLINE;
 	else if (states[BIOC_SDSCRUB] != 0)
 		new_state = BIOC_SVSCRUB;
 	else if (states[BIOC_SDREBUILD] != 0)
 		new_state = BIOC_SVREBUILD;
 	else if (states[BIOC_SDOFFLINE] != 0)
 		new_state = BIOC_SVDEGRADED;
-	else if (states[BIOC_SDONLINE] == 0)
-		new_state = BIOC_SVOFFLINE;
 	else {
 		printf("old_state = %d, ", old_state);
 		for (i = 0; i < nd; i++)
