@@ -1,4 +1,4 @@
-/*	$OpenBSD: silireg.h,v 1.8 2007/03/30 04:45:30 dlg Exp $ */
+/*	$OpenBSD: silireg.h,v 1.9 2007/03/31 03:59:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -81,3 +81,5 @@
 #define SILI_PREG_SERR		0x1f08 /* SError */
 #define SILI_PREG_SACT		0x1f0c /* SActive */
 
+
+#define SILI_MAX_CMDS		31

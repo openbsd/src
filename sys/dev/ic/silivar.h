@@ -1,4 +1,4 @@
-/*	$OpenBSD: silivar.h,v 1.3 2007/03/30 04:50:54 dlg Exp $ */
+/*	$OpenBSD: silivar.h,v 1.4 2007/03/31 03:59:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -34,6 +34,7 @@ struct sili_softc {
 	u_int			sc_nports;
 	struct sili_port	*sc_ports;
 
+	struct atascsi		*sc_atascsi;
 };
 #define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
 

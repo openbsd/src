@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.4 2007/03/31 03:11:38 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.5 2007/03/31 03:59:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -48,15 +48,40 @@ void			sili_write(struct sili_softc *, bus_size_t, u_int32_t);
 u_int32_t		sili_pread(struct sili_port *, bus_size_t);
 void			sili_pwrite(struct sili_port *, bus_size_t, u_int32_t);
 
+/* atascsi interface */
+int			sili_ata_probe(void *, int);
+struct ata_xfer		*sili_ata_get_xfer(void *, int);
+void			sili_ata_put_xfer(struct ata_xfer *);
+int			sili_ata_cmd(struct ata_xfer *);
+
+struct atascsi_methods sili_atascsi_methods = {
+	sili_ata_probe,
+	sili_ata_get_xfer,
+	sili_ata_cmd
+};
+
 int
 sili_attach(struct sili_softc *sc)
 {
+	struct atascsi_attach_args	aaa;
+
 	printf("\n");
 
 	if (sili_ports_alloc(sc) != 0) {
 		/* error already printed by sili_port_alloc */
 		return (1);
 	}
+
+	sili_write(sc, SILI_REG_GC, 0x0);
+
+	bzero(&aaa, sizeof(aaa));
+	aaa.aaa_cookie = sc;
+	aaa.aaa_methods = &sili_atascsi_methods;
+	aaa.aaa_minphys = minphys;
+	aaa.aaa_nports = sc->sc_nports;
+	aaa.aaa_ncmds = SILI_MAX_CMDS;
+
+	sc->sc_atascsi = atascsi_attach(&sc->sc_dev, &aaa);
 
 	return (0);
 }
@@ -154,4 +179,22 @@ sili_pwrite(struct sili_port *sp, bus_size_t r, u_int32_t v)
 	bus_space_write_4(sp->sp_sc->sc_iot_port, sp->sp_ioh, r, v);
 	bus_space_barrier(sp->sp_sc->sc_iot_port, sp->sp_ioh, r, 4,
 	    BUS_SPACE_BARRIER_WRITE);
+}
+
+int
+sili_ata_probe(void *xsc, int port)
+{
+	return (ATA_PORT_T_NONE);
+}
+
+int
+sili_ata_cmd(struct ata_xfer *xa)
+{
+	return (ATA_ERROR);
+}
+
+struct ata_xfer *
+sili_ata_get_xfer(void *xsc, int port)
+{
+	return (NULL);
 }
