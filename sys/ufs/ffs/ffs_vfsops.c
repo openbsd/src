@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.101 2007/03/21 17:29:32 thib Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.102 2007/03/31 15:30:07 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1239,8 +1239,8 @@ ffs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 int
 ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
-	register struct fs *fs;
-	register struct inode *ip;
+	struct fs *fs;
+	struct inode *ip;
 	struct ufs1_dinode *dp1;
 #ifdef FFS2
 	struct ufs2_dinode *dp2;
