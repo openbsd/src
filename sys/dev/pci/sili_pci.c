@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili_pci.c,v 1.2 2007/03/22 06:32:14 dlg Exp $ */
+/*	$OpenBSD: sili_pci.c,v 1.3 2007/03/31 03:11:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -49,15 +49,38 @@ struct cfattach sili_pci_ca = {
 	sili_pci_detach
 };
 
-static const struct pci_matchid sili_devices[] = {
-	{ PCI_VENDOR_CMDTECH,	PCI_PRODUCT_CMDTECH_3124 }
+struct sili_device {
+	pci_vendor_id_t		sd_vendor;
+	pci_product_id_t	sd_product;
+	u_int			sd_nports;
 };
+
+const struct sili_device *sili_lookup(struct pci_attach_args *);
+
+static const struct sili_device sili_devices[] = {
+	{ PCI_VENDOR_CMDTECH,	PCI_PRODUCT_CMDTECH_3124, 4 }
+};
+
+const struct sili_device *
+sili_lookup(struct pci_attach_args *pa)
+{
+	int				i;
+	const struct sili_device	*sd;
+
+	for (i = 0; i < (sizeof(sili_devices) / sizeof(sili_devices[0])); i++) {
+		sd = &sili_devices[i];
+		if (sd->sd_vendor == PCI_VENDOR(pa->pa_id) &&
+		    sd->sd_product == PCI_PRODUCT(pa->pa_id))
+			return (sd);
+	}
+
+	return (NULL);
+}
 
 int
 sili_pci_match(struct device *parent, void *match, void *aux)
 {
-	return (pci_matchbyid((struct pci_attach_args *)aux, sili_devices,
-	    sizeof(sili_devices) / sizeof(sili_devices[0])));
+	return (sili_lookup((struct pci_attach_args *)aux) != NULL);
 }
 
 void
@@ -66,9 +89,12 @@ sili_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct sili_pci_softc		*psc = (void *)self;
 	struct sili_softc		*sc = &psc->psc_sili;
 	struct pci_attach_args		*pa = aux;
+	const struct sili_device	*sd;
 	pcireg_t			memtype;
 	pci_intr_handle_t		ih;
 	const char			*intrstr;
+
+	sd = sili_lookup(pa);
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_tag = pa->pa_tag;
@@ -76,6 +102,7 @@ sili_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_ios_global = 0;
 	sc->sc_ios_port = 0;
+	sc->sc_nports = sd->sd_nports;
 
 	memtype = pci_mapreg_type(psc->psc_pc, psc->psc_tag,
 	    SILI_PCI_BAR_GLOBAL);

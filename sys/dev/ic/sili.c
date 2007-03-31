@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.3 2007/03/30 04:50:54 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.4 2007/03/31 03:11:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -53,7 +53,6 @@ sili_attach(struct sili_softc *sc)
 {
 	printf("\n");
 
-	sc->sc_nports = 4; /* XXX magic */
 	if (sili_ports_alloc(sc) != 0) {
 		/* error already printed by sili_port_alloc */
 		return (1);
@@ -114,6 +113,7 @@ sili_ports_free(struct sili_softc *sc)
 {
 	/* bus_space(9) says subregions dont have to be freed */
 	free(sc->sc_ports, M_DEVBUF);
+	sc->sc_ports = NULL;
 }
 
 u_int32_t
