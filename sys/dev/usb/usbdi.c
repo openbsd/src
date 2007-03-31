@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.27 2006/08/14 00:32:10 pascoe Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.28 2007/03/31 19:46:44 bluhm Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -538,7 +538,7 @@ usbd_abort_pipe(usbd_pipe_handle pipe)
 
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
-		printf("usbd_close_pipe: pipe==NULL\n");
+		printf("usbd_abort_pipe: pipe==NULL\n");
 		return (USBD_NORMAL_COMPLETION);
 	}
 #endif
