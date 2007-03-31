@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.11 2007/03/30 23:15:30 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.12 2007/03/31 12:07:50 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1383,7 +1383,6 @@ sr_raid1_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 	s = splbio();
 	old_state = sd->sd_vol.sv_chunks[c]->src_meta.scm_status;
 
-	/* there is a race on status here but we don't care for now */
 	switch (old_state) {
 	case BIOC_SDONLINE:
 		switch (new_state) {
@@ -1466,7 +1465,6 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 	int			old_state = sd->sd_vol.sv_meta.svm_status;
 
 	nd = sd->sd_vol.sv_meta.svm_no_chunk;
-
 
 	for (i = 0; i < SR_MAX_STATES; i++)
 		states[i] = 0;
