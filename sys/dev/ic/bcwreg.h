@@ -1,7 +1,9 @@
-/*	$OpenBSD: bcwreg.h,v 1.25 2007/03/31 09:48:02 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.26 2007/03/31 23:50:59 mglocker Exp $ */
 
 /*
+ * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
+ *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
