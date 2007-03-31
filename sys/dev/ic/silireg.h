@@ -1,4 +1,4 @@
-/*	$OpenBSD: silireg.h,v 1.9 2007/03/31 03:59:53 dlg Exp $ */
+/*	$OpenBSD: silireg.h,v 1.10 2007/03/31 08:08:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -59,6 +59,25 @@
 #define SILI_PREG_LRAM		0x0000 /* Port LRAM */
 	/* XXX 31 slots and port multiplier stuff sits in here */
 #define SILI_PREG_PCS		0x1000 /* Port Control Set / Status */
+#define  SILI_PREG_PCS_OOBB		(1<<25) /* OOB Bypass */
+#define  SILI_PREG_PCS_LED_ON		(1<<15) /* LED On */
+#define  SILI_PREG_PCS_AIA		(1<<14) /* Auto Interlock Accept */
+#define  SILI_PREG_PCS_PMEN		(1<<13) /* Port Mult Enable */
+#define  SILI_PREG_PCS_IA		(1<<12) /* Interlock Accept */
+#define  SILI_PREG_PCS_IR		(1<<11) /* Interlock Reject */
+#define  SILI_PREG_PCS_A32B		(1<<10) /* 32-bit Activation */
+#define  SILI_PREG_PCS_SD		(1<<9) /* Scrambler Disable */
+#define  SILI_PREG_PCS_CD		(1<<8) /* CONT Disable */
+#define  SILI_PREG_PCS_TB		(1<<7) /* Transmit BIST */
+#define  SILI_PREG_PCS_RESUME		(1<<6) /* Resume */
+#define  SILI_PREG_PCS_PLEN		(1<<5) /* Packet Length */
+#define  SILI_PREG_PCS_PLEN_12		(0<<5)
+#define  SILI_PREG_PCS_PLEN_16		(1<<5)
+#define  SILI_PREG_PCS_LEDDISABLE	(1<<4) /* LED Disable */
+#define  SILI_PREG_PCS_NOINTCLR		(1<<3) /* No Intr Clear on Read */
+#define  SILI_PREG_PCS_PORTINIT		(1<<2) /* Port Initialize */
+#define  SILI_PREG_PCS_DEVRESET		(1<<1) /* Device Reset */
+#define  SILI_PREG_PCS_PORTRESET	(1<<0) /* Port Reset */
 #define SILI_PREG_PCC		0x1004 /* Port Control Clear */
 #define SILI_PREG_IS		0x1008 /* Interrupt Status */
 #define SILI_PREG_IES		0x1008 /* Interrupt Enable Set */
