@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.33 2007/03/31 23:50:59 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.34 2007/04/01 00:08:17 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -19,9 +19,7 @@
 
 /*
  * Broadcom BCM43xx Wireless network chipsets (broadcom.com)
- * SiliconBackplane is technology from Sonics, Inc.(sonicsinc.com)
- *
- * Cliff Wright cliff@snipe444.org
+ * SiliconBackplane is technology from Sonics, Inc. (sonicsinc.com)
  */
 
 #define BCW_ARRAY_SIZE(array)	(sizeof(array) / sizeof(array[0]))

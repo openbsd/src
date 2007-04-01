@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.83 2007/03/31 23:50:59 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.84 2007/04/01 00:08:17 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -19,7 +19,7 @@
 
 /*
  * Broadcom BCM43xx Wireless network chipsets (broadcom.com)
- * SiliconBackplane is technology from Sonics, Inc.(sonicsinc.com)
+ * SiliconBackplane is technology from Sonics, Inc. (sonicsinc.com)
  */
  
 #include "bpfilter.h"
@@ -903,6 +903,11 @@ bcw_rate_memory_init(struct bcw_softc *sc)
 	}
 }
 
+/*
+ * Attach device
+ *
+ * http://bcm-specs.sipsolutions.net/DeviceAttach
+ */
 void
 bcw_attach(struct bcw_softc *sc)
 {
@@ -1111,19 +1116,9 @@ bcw_attach(struct bcw_softc *sc)
 	bcw_pc_crystal_off(sc);
 
 	/*
-	 * XXX Select the 802.11 core, then
-	 * Get and display the PHY info from the MIMO
-	 * This probably won't work for cards with multiple radio cores, as
-	 * the spec suggests that there is one PHY for each core
+	 * Switch to the 80211 core
 	 */
 	bcw_change_core(sc, sc->sc_core_80211->index);
-
-#if 0
-	sc->sc_phy_lopairs = malloc(sizeof(struct bcw_lopair) * BCW_LO_COUNT,
-	    M_DEVBUF, M_NOWAIT);
-	bcw_phy_prepare_init(sc);
-	bcw_radio_prepare_init(sc);
-#endif
 
         /*
 	 * Set MAC address
@@ -1510,6 +1505,8 @@ bcw_txintr(struct bcw_softc *sc)
 
 /*
  * Initialize the interface
+ *
+ * http://bcm-specs.sipsolutions.net/DeviceUp
  */
 int
 bcw_init(struct ifnet *ifp)
@@ -1523,6 +1520,8 @@ bcw_init(struct ifnet *ifp)
 	    M_DEVBUF, M_NOWAIT);
 	bcw_phy_prepare_init(sc);	/* XXX probably unpack function */
 	bcw_radio_prepare_init(sc);	/* XXX probably unpack function */
+
+	bcw_change_core(sc, sc->sc_core_80211->index);
 
 	bcw_pc_crystal_on(sc);
 
