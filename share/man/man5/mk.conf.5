@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mk.conf.5,v 1.10 2007/02/06 15:33:53 jmc Exp $
+.\"	$OpenBSD: mk.conf.5,v 1.11 2007/04/01 16:12:07 matthieu Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre
 .\"
@@ -164,6 +164,12 @@ National Language Support files owner.
 .It Ev NONBINMODE
 Mode for non-executable files.
 .Bq 444
+.It Ev XOBJDIR
+The real path to the 'obj' tree for building the X window system.
+.Bq Pa /usr/xobj
+.It Ev XSRCDIR
+The real path to the X window system sources.
+.Bq Pa /usr/src/xenocara
 .El
 .Sh ADDITIONAL VARIABLES
 Additionally, the following variables may be set by
@@ -243,6 +249,12 @@ Adds appropriate warning flags (defined in
 e.g.\&
 .Fl Wall . . . )
 to compiles.
+.Bq no
+.It Ev XENOCARA_RERUN_AUTOCONF
+Forces X builds to re-run automake and autoconf in each module before
+configuring them.
+This option requires that the automake, autoconf and libtool 
+packages are installed.
 .Bq no
 .El
 .Sh FILES
