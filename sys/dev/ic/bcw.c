@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.84 2007/04/01 00:08:17 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.85 2007/04/01 12:16:28 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -128,8 +128,6 @@ int			bcw_newstate(struct ieee80211com *,
 int			bcw_media_change(struct ifnet *);
 void			bcw_media_status(struct ifnet *, struct ifmediareq *);
 int			bcw_validate_chip_access(struct bcw_softc *);
-void			bcw_pc_crystal_on(struct bcw_softc *);
-void			bcw_pc_crystal_off(struct bcw_softc *);
 int			bcw_change_core(struct bcw_softc *, int);
 int			bcw_core_enable(struct bcw_softc *, uint32_t);
 int			bcw_core_disable(struct bcw_softc *, uint32_t);
@@ -248,6 +246,8 @@ uint16_t		bcw_ilt_read(struct bcw_softc *, uint16_t);
 /*
  * Power Control
  */
+void			bcw_pc_crystal_on(struct bcw_softc *);
+void			bcw_pc_crystal_off(struct bcw_softc *);
 int			bcw_pc_init(struct bcw_softc *);
 int			bcw_pc_set_clock(struct bcw_softc *, uint16_t);
 void			bcw_pc_saving_ctl_bits(struct bcw_softc *, int, int);
@@ -1167,13 +1167,13 @@ bcw_attach(struct bcw_softc *sc)
 	ic->ic_ibss_chan = &ic->ic_channels[0];
 
 	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_init = bcw_init;
 	ifp->if_ioctl = bcw_ioctl;
 	ifp->if_start = bcw_start;
 	ifp->if_watchdog = bcw_watchdog;
+	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
+	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	IFQ_SET_READY(&ifp->if_snd);
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	/* Attach the interface */
 	if_attach(ifp);
@@ -1182,6 +1182,7 @@ bcw_attach(struct bcw_softc *sc)
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = bcw_newstate;
+
 	ieee80211_media_init(ifp, bcw_media_change, bcw_media_status);
 
 	timeout_set(&sc->sc_timeout, bcw_tick, sc);
@@ -1574,7 +1575,11 @@ bcw_rxdrain(struct bcw_softc *sc)
 
 }
 
-/* Stop transmission on the interface */
+/*
+ * Stop transmission on the interface
+ *
+ * http://bcm-specs.sipsolutions.net/DeviceDown
+ */
 void
 bcw_stop(struct ifnet *ifp, int disable)
 {
@@ -2084,52 +2089,6 @@ bcw_free_tx_ring(struct bcw_softc *sc, struct bcw_tx_ring *ring)
 		}
 		free(ring->data, M_DEVBUF);
 	}
-}
-
-void
-bcw_pc_crystal_on(struct bcw_softc *sc)
-{
-	uint32_t val;
-
-	val = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOI);
-	if (val & BCW_PCTL_XTAL_POWERUP)
-		return; /* crystal is already on */
-
-	val = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
-	val |= (BCW_PCTL_XTAL_POWERUP | BCW_PCTL_PLL_POWERDOWN);
-	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, val);
-	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOE, val);
-
-	delay(1000);
-
-	val = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
-	val &= ~BCW_PCTL_PLL_POWERDOWN;
-	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, val);
-
-	delay(5000);
-}
-
-void
-bcw_pc_crystal_off(struct bcw_softc *sc)
-{
-	uint32_t val;
-
-	/* TODO return if radio is hardware disabled */
-	if (sc->sc_chip_rev < 5)
-		return;
-	if (sc->sc_sprom.boardflags & BCW_BF_XTAL)
-		return;
-
-	bcw_pc_set_clock(sc, BCW_PCTL_CLK_SLOW);
-
-	val = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
-	val |= BCW_PCTL_PLL_POWERDOWN;
-	val &= ~BCW_PCTL_XTAL_POWERUP;
-	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, val);
-
-	val = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOE);
-	val |= (BCW_PCTL_PLL_POWERDOWN | BCW_PCTL_XTAL_POWERUP);
-	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOE, val);
 }
 
 int
@@ -6801,6 +6760,52 @@ bcw_ilt_read(struct bcw_softc *sc, uint16_t offset)
 /*
  * Power Control
  */
+void
+bcw_pc_crystal_on(struct bcw_softc *sc)
+{
+	uint32_t val;
+
+	val = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOI);
+	if (val & BCW_PCTL_XTAL_POWERUP)
+		return; /* crystal is already on */
+
+	val = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
+	val |= (BCW_PCTL_XTAL_POWERUP | BCW_PCTL_PLL_POWERDOWN);
+	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, val);
+	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOE, val);
+
+	delay(1000);
+
+	val = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
+	val &= ~BCW_PCTL_PLL_POWERDOWN;
+	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, val);
+
+	delay(5000);
+}
+
+void
+bcw_pc_crystal_off(struct bcw_softc *sc)
+{
+	uint32_t val;
+
+	/* TODO return if radio is hardware disabled */
+	if (sc->sc_chip_rev < 5)
+		return;
+	if (sc->sc_sprom.boardflags & BCW_BF_XTAL)
+		return;
+
+	bcw_pc_set_clock(sc, BCW_PCTL_CLK_SLOW);
+
+	val = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOO);
+	val |= BCW_PCTL_PLL_POWERDOWN;
+	val &= ~BCW_PCTL_XTAL_POWERUP;
+	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOO, val);
+
+	val = (sc->sc_conf_read)(sc->sc_dev_softc, BCW_GPIOE);
+	val |= (BCW_PCTL_PLL_POWERDOWN | BCW_PCTL_XTAL_POWERUP);
+	(sc->sc_conf_write)(sc->sc_dev_softc, BCW_GPIOE, val);
+}
+
 int
 bcw_pc_init(struct bcw_softc *sc)
 {
