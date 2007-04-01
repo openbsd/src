@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.4 2007/04/01 12:48:07 kettenis Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.5 2007/04/01 12:50:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -312,6 +312,7 @@ pyro_alloc_chipset(struct pyro_pbm *pbm, int node, pci_chipset_tag_t pc)
 	memcpy(npc, pc, sizeof *pc);
 	npc->cookie = pbm;
 	npc->rootnode = node;
+	npc->tagshift = 4;	/* PCIe has a larger config space */
 	return (npc);
 }
 
