@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.3 2007/03/31 22:14:52 kettenis Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.4 2007/04/01 12:48:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -70,6 +70,7 @@ bus_space_tag_t pyro_alloc_io_tag(struct pyro_pbm *);
 bus_space_tag_t pyro_alloc_config_tag(struct pyro_pbm *);
 bus_space_tag_t _pyro_alloc_bus_tag(struct pyro_pbm *, const char *,
     int, int, int);
+bus_dma_tag_t pyro_alloc_dma_tag(struct pyro_pbm *);
 
 int pyro_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 int _pyro_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
@@ -78,6 +79,9 @@ paddr_t _pyro_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t, off_t,
     int, int);
 void *_pyro_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
     int (*)(void *), void *, const char *);
+
+int pyro_dmamap_create(bus_dma_tag_t, bus_dma_tag_t, bus_size_t, int,
+    bus_size_t, bus_size_t, int, bus_dmamap_t *);
 
 int
 pyro_match(struct device *parent, void *match, void *aux)
@@ -146,9 +150,7 @@ pyro_init(struct pyro_softc *sc, int busa)
 	pbm->pp_memt = pyro_alloc_mem_tag(pbm);
 	pbm->pp_iot = pyro_alloc_io_tag(pbm);
 	pbm->pp_cfgt = pyro_alloc_config_tag(pbm);
-#if 0
 	pbm->pp_dmat = pyro_alloc_dma_tag(pbm);
-#endif
 
 	if (bus_space_map(pbm->pp_cfgt, 0, 0x10000000, 0, &pbm->pp_cfgh))
 		panic("pyro: could not map config space");
@@ -272,6 +274,33 @@ _pyro_alloc_bus_tag(struct pyro_pbm *pbm, const char *name, int ss,
 	return (bt);
 }
 
+bus_dma_tag_t
+pyro_alloc_dma_tag(struct pyro_pbm *pbm)
+{
+	struct pyro_softc *sc = pbm->pp_sc;
+	bus_dma_tag_t dt, pdt = sc->sc_dmat;
+
+	dt = (bus_dma_tag_t)malloc(sizeof(struct sparc_bus_dma_tag),
+	    M_DEVBUF, M_NOWAIT);
+	if (dt == NULL)
+		panic("pyro: could not alloc dma tag");
+
+	bzero(dt, sizeof(*dt));
+	dt->_cookie = pbm;
+	dt->_parent = pdt;
+	dt->_dmamap_create	= pyro_dmamap_create;
+	dt->_dmamap_destroy	= iommu_dvmamap_destroy;
+	dt->_dmamap_load	= iommu_dvmamap_load;
+	dt->_dmamap_load_raw	= iommu_dvmamap_load_raw;
+	dt->_dmamap_unload	= iommu_dvmamap_unload;
+	dt->_dmamap_sync	= iommu_dvmamap_sync;
+	dt->_dmamem_alloc	= iommu_dvmamem_alloc;
+	dt->_dmamem_free	= iommu_dvmamem_free;
+	dt->_dmamem_map		= iommu_dvmamem_map;
+	dt->_dmamem_unmap	= iommu_dvmamem_unmap;
+	return (dt);
+}
+
 pci_chipset_tag_t
 pyro_alloc_chipset(struct pyro_pbm *pbm, int node, pci_chipset_tag_t pc)
 {
@@ -284,6 +313,14 @@ pyro_alloc_chipset(struct pyro_pbm *pbm, int node, pci_chipset_tag_t pc)
 	npc->cookie = pbm;
 	npc->rootnode = node;
 	return (npc);
+}
+
+int
+pyro_dmamap_create(bus_dma_tag_t t, bus_dma_tag_t t0, bus_size_t size,
+    int nsegments, bus_size_t maxsegsz, bus_size_t boundary, int flags,
+    bus_dmamap_t *dmamp)
+{
+	return (ENOMEM);
 }
 
 int
