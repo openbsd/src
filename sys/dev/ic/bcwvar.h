@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.35 2007/04/01 11:21:40 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.36 2007/04/01 11:58:00 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -234,109 +234,104 @@ struct bcw_sprom {
 	uint16_t	antennagain_bgphy;
 };
 
-/* Needs to have garbage removed */
 struct bcw_softc {
-	struct device		sc_dev;
-	struct ieee80211com	sc_ic;
-	struct bcw_rx_ring	sc_rxring;
-	struct bcw_tx_ring	sc_txring;
+	struct device		 sc_dev;
+	struct ieee80211com	 sc_ic;
+	struct bcw_rx_ring	 sc_rxring;
+	struct bcw_tx_ring	 sc_txring;
+	/* function pointers */
+	int			 (*sc_newstate)(struct ieee80211com *,
+				     enum ieee80211_state, int);
+	int			 (*sc_enable)(struct bcw_softc *);
+	void			 (*sc_disable)(struct bcw_softc *);
+	void			 (*sc_power)(struct bcw_softc *, int);
+	void			 (*sc_conf_write)(void *, uint32_t, uint32_t);
+	uint32_t		 (*sc_conf_read)(void *, uint32_t);
 
-	int			(*sc_newstate)(struct ieee80211com *,
-				    enum ieee80211_state, int);
-	int			(*sc_enable)(struct bcw_softc *);
-	void			(*sc_disable)(struct bcw_softc *);
-	void			(*sc_power)(struct bcw_softc *, int);
-	void			(*sc_conf_write)(void *, uint32_t, uint32_t);
-	uint32_t		(*sc_conf_read)(void *, uint32_t);
+	bus_dma_tag_t		 sc_dmat;
+	bus_space_tag_t		 sc_iot;
+	bus_space_handle_t	 sc_ioh;
 
-	struct timeout		sc_scan_to;
-
-	bus_dma_tag_t		sc_dmat;
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-
-	uint32_t		sc_flags;
 	void			*sc_dev_softc;
-	uint32_t		sc_phy;		/* eeprom indicated phy */
-	struct bcw_dma_slot	*bcw_rx_ring;	/* receive ring */
-	struct bcw_dma_slot	*bcw_tx_ring;	/* transmit ring */
-//	struct bcw_chain_data	sc_cdata;	/* mbufs */
-	bus_dmamap_t		sc_ring_map;
-	uint32_t		sc_intmask;	/* current intr mask */
-	uint32_t		sc_rxin;	/* last rx descriptor seen */
-	uint32_t		sc_txin;	/* last tx descriptor seen */
-	int			sc_txsfree;	/* no. tx slots available */
-	int			sc_txsnext;	/* next available tx slot */
-	struct timeout		sc_timeout;
-	/* Break these out into seperate structs */
-	uint16_t		sc_board_vendor;
-	uint16_t		sc_board_type;
-	uint16_t		sc_board_rev;
-	uint16_t		sc_chip_id;		/* Chip ID */
-	uint16_t		sc_chip_rev;		/* Chip Revision */
-	uint16_t		sc_chip_pkg;		/* Chip Package */
-	uint16_t		sc_prodid;		/* Product ID */
-	struct bcw_core		sc_core[BCW_MAX_CORES];
-//	struct bcw_radio	radio[BCW_RADIO_MAX];
-	uint16_t		sc_using_pio:1;
-	uint16_t		sc_phy_ver;
-	uint16_t		sc_phy_type;
-	uint16_t		sc_phy_rev;
-	uint8_t			sc_phy_connected:1, /* XXX */
-				    sc_phy_calibrated:1,
-				    sc_phy_is_locked:1,
-				    sc_phy_dyn_tssi_tbl:1;
-	uint16_t		sc_phy_loopback_gain[2];
-	struct bcw_lopair	*sc_phy_lopairs;
-	uint16_t		sc_phy_savedpctlreg;
-	uint16_t		sc_phy_minlowsig[2];
-	uint16_t		sc_phy_minlowsigpos[2];
-	int8_t			sc_phy_idle_tssi;
-	const int8_t		sc_phy_tssi2dbm;
-	uint16_t		sc_phy_antenna_diversity;
-//	uint16_t		sc_corerev;
-	uint32_t		sc_radio_mnf;
-	uint16_t		sc_radio_rev;
-	uint16_t		sc_radio_ver;
-	uint16_t		sc_radio_initval;
-	int16_t			sc_radio_nrssi[2];
-	int			sc_radio_interfmode;
-	uint8_t			sc_radio_aci_enable:1,
-				    sc_radio_aci_wlan_automatic:1,
-				    sc_radio_aci_hw_rssi;
-	int32_t			sc_radio_nrssislope;
-	uint16_t		sc_radio_txpwr_offset;
-	uint16_t		sc_radio_lofcal;
-	uint16_t		sc_radio_txpower_desired;
-	uint32_t		sc_phyinfo;
-	uint16_t		sc_numcores;
-	uint16_t		sc_havecommon;
-	uint32_t		sc_chip_common_capa;
-	int			sc_currentcore;
-	int			sc_lastcore;
-	uint16_t		sc_radio_pa0b0;
-	uint16_t		sc_radio_pa0b1;
-	uint16_t		sc_radio_pa0b2;
-	uint16_t		sc_radio_pa1b0;
-	uint16_t		sc_radio_pa1b1;
-	uint16_t		sc_radio_pa1b2;
-	uint16_t		sc_radio_baseband_atten;
-	uint16_t		sc_radio_radio_atten;
-	uint16_t		sc_radio_txctl1;
-	uint16_t		sc_radio_txctl2;
-	uint8_t			sc_radio_channel;
-	int8_t			sc_radio_nrssi_lt[64];
-	uint32_t		sc_radio_interfstack[BCW_INTERFSTACK_SIZE];
-	uint8_t			sc_idletssi;
-	uint8_t			sc_spromrev;
-	uint16_t		sc_boardflags;
-	uint8_t			sc_sbrev;	/* Sonics Backplane Revision */
-	struct bcw_sprom	sc_sprom;
-	/* Core locations */
+	uint32_t		 sc_flags;
+	uint32_t		 sc_intmask;		/* current intr mask */
+	uint32_t		 sc_rxin;		/* last rx desc seen */
+	uint32_t		 sc_txin;		/* last tx desc seen */
+	int			 sc_txsfree;		/* no. tx slots avail */
+	int			 sc_txsnext;		/* next avail tx slot */
+	bus_dmamap_t		 sc_ring_map;
+	struct bcw_dma_slot	*bcw_rx_ring;		/* receive ring */
+	struct bcw_dma_slot	*bcw_tx_ring;		/* transmit ring */
+	struct timeout		 sc_timeout;
+	struct timeout		 sc_scan_to;
+	//struct bcw_chain_data	 sc_cdata;		/* mbufs */
+
+	uint16_t		 sc_board_vendor;	/* Board vendor */
+	uint16_t		 sc_board_type;		/* Board type */
+	uint16_t		 sc_board_rev;		/* Board revision */
+	uint16_t		 sc_chip_id;		/* Chip ID */
+	uint16_t		 sc_chip_rev;		/* Chip revision */
+	uint16_t		 sc_chip_pkg;		/* Chip package */
+	uint16_t		 sc_prodid;		/* Product ID */
+	uint8_t			 sc_idletssi;
+	uint16_t		 sc_boardflags;
+	uint16_t		 sc_using_pio:1;
+	struct bcw_sprom	 sc_sprom;
+	struct bcw_led		 leds[BCW_NR_LEDS];
+	/* cores */
+	uint16_t		 sc_numcores;
+	uint16_t		 sc_havecommon;
+	int			 sc_currentcore;
+	int			 sc_lastcore;
+	uint32_t		 sc_chip_common_capa;
+	struct bcw_core		 sc_core[BCW_MAX_CORES];
 	struct bcw_core		*sc_core_common;
 	struct bcw_core		*sc_core_80211;
-	struct bcw_core		*sc_core_bus;	/* PCI or cardbus */
-	struct bcw_led		leds[BCW_NR_LEDS];
+	struct bcw_core		*sc_core_bus;		/* PCI or cardbus */
+	/* PHY */
+	uint16_t		 sc_phy_ver;
+	uint16_t		 sc_phy_rev;
+	uint16_t		 sc_phy_type;
+	uint8_t			 sc_phy_connected:1,	/* XXX */
+				     sc_phy_calibrated:1,
+				     sc_phy_is_locked:1,
+				     sc_phy_dyn_tssi_tbl:1;
+	uint16_t		 sc_phy_loopback_gain[2];
+	uint16_t		 sc_phy_savedpctlreg;
+	uint16_t		 sc_phy_minlowsig[2];
+	uint16_t		 sc_phy_minlowsigpos[2];
+	int8_t			 sc_phy_idle_tssi;
+	const int8_t		 sc_phy_tssi2dbm;
+	uint16_t		 sc_phy_antenna_diversity;
+	struct bcw_lopair	*sc_phy_lopairs;
+	/* radio */
+	uint16_t		 sc_radio_ver;
+	uint16_t		 sc_radio_rev;
+	uint32_t		 sc_radio_mnf;
+	uint16_t		 sc_radio_initval;
+	int16_t			 sc_radio_nrssi[2];
+	int			 sc_radio_interfmode;
+	uint8_t			 sc_radio_aci_enable:1,
+				     sc_radio_aci_wlan_automatic:1,
+				     sc_radio_aci_hw_rssi;
+	int32_t			 sc_radio_nrssislope;
+	uint16_t		 sc_radio_txpwr_offset;
+	uint16_t		 sc_radio_lofcal;
+	uint16_t		 sc_radio_txpower_desired;
+	uint16_t		 sc_radio_pa0b0;
+	uint16_t		 sc_radio_pa0b1;
+	uint16_t		 sc_radio_pa0b2;
+	uint16_t		 sc_radio_pa1b0;
+	uint16_t		 sc_radio_pa1b1;
+	uint16_t		 sc_radio_pa1b2;
+	uint16_t		 sc_radio_baseband_atten;
+	uint16_t		 sc_radio_radio_atten;
+	uint16_t		 sc_radio_txctl1;
+	uint16_t		 sc_radio_txctl2;
+	uint8_t			 sc_radio_channel;
+	int8_t			 sc_radio_nrssi_lt[64];
+	uint32_t		 sc_radio_interfstack[BCW_INTERFSTACK_SIZE];
+	//struct bcw_radio	 radio[BCW_RADIO_MAX];
 };
 
 void	bcw_attach(struct bcw_softc *);
