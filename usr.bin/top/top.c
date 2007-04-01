@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.49 2007/02/27 16:27:39 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.50 2007/04/01 19:07:48 jmc Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -137,7 +137,8 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-bCIinqSTu] [-d count] [-g command] [-o field] [-p pid] [-s time]\n\t[-U username] [number]\n",
+	    "usage: %s [-bCIinqSTu] [-d count] [-g string] [-o field] "
+	    "[-p pid] [-s time]\n\t[-U user] [number]\n",
 	    __progname);
 }
 
