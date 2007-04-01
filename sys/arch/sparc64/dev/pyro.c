@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.5 2007/04/01 12:50:18 kettenis Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.6 2007/04/01 21:41:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -109,12 +109,26 @@ pyro_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = ma->ma_node;
 	sc->sc_dmat = ma->ma_dmatag;
 	sc->sc_bust = ma->ma_bustag;
+	sc->sc_csr = ma->ma_reg[0].ur_paddr;
+	sc->sc_xbc = ma->ma_reg[1].ur_paddr;
 	sc->sc_ign = INTIGN(ma->ma_upaid << INTMAP_IGN_SHIFT);
 
 	if ((ma->ma_reg[0].ur_paddr & 0x00700000) == 0x00600000)
 		busa = 1;
 	else
 		busa = 0;
+
+	if (bus_space_map(sc->sc_bust, sc->sc_csr,
+	    ma->ma_reg[0].ur_len, 0, &sc->sc_csrh)) {
+		printf(": failed to map csr registers\n");
+		return;
+	}
+
+	if (bus_space_map(sc->sc_bust, sc->sc_xbc,
+	    ma->ma_reg[1].ur_len, 0, &sc->sc_xbch)) {
+		printf(": failed to map xbc registers\n");
+		return;
+	}
 
 	pyro_init(sc, busa);
 }
@@ -402,7 +416,50 @@ void *
 _pyro_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
     int level, int flags, int (*handler)(void *), void *arg, const char *what)
 {
-	return (NULL);
+	struct pyro_pbm *pbm = t->cookie;
+	struct pyro_softc *sc = pbm->pp_sc;
+	struct intrhand *ih = NULL;
+	volatile u_int64_t *intrmapptr = NULL, *intrclrptr = NULL;
+	int ino;
+
+	ino = INTINO(ihandle);
+
+	if (level == IPL_NONE)
+		level = INTLEV(ihandle);
+	if (level == IPL_NONE) {
+		printf(": no IPL, setting IPL 2.\n");
+		level = 2;
+	}
+
+	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) == 0) {
+		u_int64_t *imap, *iclr;
+
+		imap = bus_space_vaddr(sc->sc_bust, sc->sc_csrh) + 0x1000;
+		iclr = bus_space_vaddr(sc->sc_bust, sc->sc_csrh) + 0x1400;
+		intrmapptr = &imap[ino];
+		intrclrptr = &iclr[ino];
+		ino |= INTVEC(ihandle);
+	}
+
+	ih = bus_intr_allocate(t0, handler, arg, ino, level, intrmapptr,
+	    intrclrptr, what);
+	if (ih == NULL)
+		return (NULL);
+
+	intr_establish(ih->ih_pil, ih);
+
+	if (intrmapptr != NULL) {
+		u_int64_t intrmap;
+
+		intrmap = *intrmapptr;
+		intrmap |= (1LL << 6);
+		intrmap |= INTMAP_V;
+		*intrmapptr = intrmap;
+		intrmap = *intrmapptr;
+		ih->ih_number |= intrmap & INTMAP_INR;
+	}
+
+	return (ih);
 }
 
 const struct cfattach pyro_ca = {

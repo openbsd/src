@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyrovar.h,v 1.1 2007/03/30 22:24:56 kettenis Exp $	*/
+/*	$OpenBSD: pyrovar.h,v 1.2 2007/04/01 21:41:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -57,6 +57,8 @@ struct pyro_softc {
 	int sc_ign;
 	bus_dma_tag_t sc_dmat;
 	bus_space_tag_t sc_bust;
+	bus_addr_t sc_csr, sc_xbc;
+	bus_space_handle_t sc_csrh, sc_xbch;
 
 	int sc_oberon;
 };
