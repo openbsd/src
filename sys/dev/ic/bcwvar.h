@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.34 2007/04/01 00:08:17 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.35 2007/04/01 11:21:40 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -256,10 +256,8 @@ struct bcw_softc {
 	bus_space_handle_t	sc_ioh;
 
 	uint32_t		sc_flags;
-	void			*bcw_intrhand;
-	const char		*bcw_intrstr;	/* interrupt description */
 	void			*sc_dev_softc;
-	uint32_t		sc_phy;	/* eeprom indicated phy */
+	uint32_t		sc_phy;		/* eeprom indicated phy */
 	struct bcw_dma_slot	*bcw_rx_ring;	/* receive ring */
 	struct bcw_dma_slot	*bcw_tx_ring;	/* transmit ring */
 //	struct bcw_chain_data	sc_cdata;	/* mbufs */
@@ -277,7 +275,7 @@ struct bcw_softc {
 	uint16_t		sc_chip_id;		/* Chip ID */
 	uint16_t		sc_chip_rev;		/* Chip Revision */
 	uint16_t		sc_chip_pkg;		/* Chip Package */
-	uint16_t		sc_prodid;	/* Product ID */
+	uint16_t		sc_prodid;		/* Product ID */
 	struct bcw_core		sc_core[BCW_MAX_CORES];
 //	struct bcw_radio	radio[BCW_RADIO_MAX];
 	uint16_t		sc_using_pio:1;
@@ -332,7 +330,7 @@ struct bcw_softc {
 	uint8_t			sc_idletssi;
 	uint8_t			sc_spromrev;
 	uint16_t		sc_boardflags;
-	uint8_t			sc_sbrev; /* Sonics Backplane Revision */
+	uint8_t			sc_sbrev;	/* Sonics Backplane Revision */
 	struct bcw_sprom	sc_sprom;
 	/* Core locations */
 	struct bcw_core		*sc_core_common;

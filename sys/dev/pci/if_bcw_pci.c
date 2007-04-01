@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bcw_pci.c,v 1.15 2007/03/31 09:48:02 mglocker Exp $ */
+/*	$OpenBSD: if_bcw_pci.c,v 1.16 2007/04/01 11:21:40 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jon Simola <jsimola@gmail.com>
@@ -82,8 +82,7 @@ const struct pci_matchid bcw_pci_devices[]  = {
 
 struct bcw_pci_softc {
 	struct bcw_softc	 psc_bcw;		/* Real softc */
-	pci_intr_handle_t	 psc_ih;		/* interrupt handle */
-	void			*psc_intrcookie;
+	void			*psc_ih;
 	pci_chipset_tag_t	 psc_pc;		/* our PCI chipset */
 	pcitag_t		 psc_pcitag;		/* our PCI tag */
 };
@@ -112,6 +111,8 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct bcw_softc *sc = &psc->psc_bcw;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	bus_size_t memsize;
+	const char *intrstr = NULL;
+	pci_intr_handle_t ih;
 	int error;
 
 	sc->sc_dmat = pa->pa_dmat;
@@ -148,23 +149,23 @@ bcw_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* map interrupt */
-	if (pci_intr_map(pa, &psc->psc_ih) != 0) {
+	if (pci_intr_map(pa, &ih) != 0) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}
 
 	/* establish interrupt */
-	sc->bcw_intrstr = pci_intr_string(pc, psc->psc_ih);
-	psc->psc_intrcookie = pci_intr_establish(pc, psc->psc_ih, IPL_NET, 
-	    bcw_intr, sc, sc->sc_dev.dv_xname);
-	if (psc->psc_intrcookie == NULL) {
+	intrstr = pci_intr_string(pc, ih);
+	psc->psc_ih = pci_intr_establish(pc, ih, IPL_NET, bcw_intr, sc,
+	    sc->sc_dev.dv_xname);
+	if (psc->psc_ih == NULL) {
 		printf("%s: couldn't establish interrupt");
-		if (sc->bcw_intrstr != NULL)
-			printf(" at %s", sc->bcw_intrstr);
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf(": %s", sc->bcw_intrstr);
+	printf(": %s", intrstr);
 
 	/* map function pointers which we need later in the device code */
 	sc->sc_conf_write = bcw_pci_conf_write;
