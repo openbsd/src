@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.26 2006/07/10 21:38:01 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.27 2007/04/01 12:26:15 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -367,7 +367,7 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
                 (long)PCITAG_OFFSET(tag), reg));
         if (PCITAG_NODE(tag) != -1) {
                 val = bus_space_read_4(pc->bustag, pc->bushandle,
-                        PCITAG_OFFSET(tag) + reg);
+                        (PCITAG_OFFSET(tag) << pc->tagshift) + reg);
         } else
 		DPRINTF(SPDB_CONF, ("pci_conf_read: bogus pcitag %x\n",
 	            (int)PCITAG_OFFSET(tag)));
@@ -389,7 +389,7 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
         }
 
         bus_space_write_4(pc->bustag, pc->bushandle,
-                PCITAG_OFFSET(tag) + reg, data);
+                (PCITAG_OFFSET(tag) << pc->tagshift) + reg, data);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.15 2006/03/19 02:43:38 brad Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.16 2007/04/01 12:26:15 kettenis Exp $	*/
 /* $NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
 
 /*
@@ -63,10 +63,11 @@ typedef u_int pci_intr_handle_t;
 typedef u_int64_t pcitag_t; 
 
 struct sparc_pci_chipset {
-	void			*cookie;	/* psycho_pbm, but sssh! */
+	void			*cookie;
 	bus_space_tag_t		bustag;
 	bus_space_handle_t	bushandle;
 	int			rootnode;	/* PCI controller */
+	int			tagshift;
 	int (*intr_map)(struct pci_attach_args *, pci_intr_handle_t *);
 };
 
