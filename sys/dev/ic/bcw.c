@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.85 2007/04/01 12:16:28 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.86 2007/04/01 19:15:48 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -101,6 +101,7 @@ void			bcw_set_opmode(struct ifnet *);
 void			bcw_macfilter_set(struct bcw_softc *, uint16_t,
 			    const uint8_t *);
 void			bcw_macfilter_clear(struct bcw_softc *, uint16_t);
+void			bcw_templateram_set(struct bcw_softc *);
 void			bcw_mac_enable(struct bcw_softc *);
 void			bcw_mac_disable(struct bcw_softc *);
 uint32_t		bcw_intr_enable(struct bcw_softc *, uint32_t);
@@ -1365,6 +1366,33 @@ bcw_macfilter_clear(struct bcw_softc *sc, uint16_t offset)
 	const uint8_t zero_addr[ETHER_ADDR_LEN] = { 0 };
 
 	bcw_macfilter_set(sc, offset, zero_addr);
+}
+
+/*
+ * Write MAC and BSSID into template RAM
+ *
+ * http://bcm-specs.sipsolutions.net/TemplateRam
+ */
+void
+bcw_templateram_set(struct bcw_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	uint8_t mac_bssid[ETHER_ADDR_LEN * 2];
+	int i;
+
+	bcopy(ic->ic_myaddr, mac_bssid, ETHER_ADDR_LEN);
+	bcopy(ic->ic_bss->ni_bssid, mac_bssid + ETHER_ADDR_LEN, ETHER_ADDR_LEN);
+
+	/*
+	 * We write our MAC and BSSID at three different addresses in the
+	 * template RAM, in 4 byte blocks.
+	 */
+	for (i = 0; i < sizeof(mac_bssid); i += sizeof(uint32_t))
+		bcw_ram_write(sc, 0x20 + i, *((int32_t *)(mac_bssid + i)));
+	for (i = 0; i < sizeof(mac_bssid); i += sizeof(uint32_t))
+		bcw_ram_write(sc, 0x78 + i, *((int32_t *)(mac_bssid + i)));
+	for (i = 0; i < sizeof(mac_bssid); i += sizeof(uint32_t))
+		bcw_ram_write(sc, 0x478 + i, *((int32_t *)(mac_bssid + i)));
 }
 
 /*
@@ -2801,7 +2829,13 @@ bcw_chip_init(struct bcw_softc *sc)
 	bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0044, 3);
 	bcw_shm_write16(sc, BCW_SHM_SHARED, 0x0046, 2);
 
+	bcw_macfilter_clear(sc, BCW_MACFILTER_SELF);
 	bcw_macfilter_set(sc, BCW_MACFILTER_SELF, ic->ic_myaddr);
+
+	bcw_macfilter_clear(sc, BCW_MACFILTER_ASSOC);
+	bcw_macfilter_set(sc, BCW_MACFILTER_ASSOC, ic->ic_bss->ni_bssid);
+
+	bcw_templateram_set(sc);
 
 	DPRINTF(("%s: Chip initialized\n", sc->sc_dev.dv_xname));
 
