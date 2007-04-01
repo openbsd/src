@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.76 2007/03/23 21:06:06 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.77 2007/04/01 09:29:27 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -255,14 +255,12 @@ trap(struct trapframe *frame)
 	struct cpu_info *ci = curcpu();
 	struct proc *p = curproc;
 	int type = frame->exc;
-	u_quad_t sticks;
 	union sigval sv;
 	char *name;
 	db_expr_t offset;
 
 	if (frame->srr1 & PSL_PR) {
 		type |= EXC_USER;
-		sticks = p->p_sticks;
 	}
 
 	switch (type) {

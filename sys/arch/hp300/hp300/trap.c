@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.50 2007/03/15 10:22:29 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.51 2007/04/01 09:29:27 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -259,7 +259,6 @@ trap(type, code, v, frame)
 	struct proc *p;
 	int i, s;
 	u_int ucode;
-	u_quad_t sticks;
 	int typ = 0;
 	union sigval sv;
 
@@ -277,7 +276,6 @@ trap(type, code, v, frame)
 
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
-		sticks = p->p_sticks;
 		p->p_md.md_regs = frame.f_regs;
 	}
 	switch (type) {
@@ -1024,13 +1022,11 @@ syscall(code, frame)
 	int error, opc, nsys;
 	size_t argsize;
 	register_t args[8], rval[2];
-	u_quad_t sticks;
 
 	uvmexp.syscalls++;
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 	p = curproc;
-	sticks = p->p_sticks;
 	p->p_md.md_regs = frame.f_regs;
 	opc = frame.f_pc;
 
