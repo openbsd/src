@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.29 2007/03/19 14:04:04 art Exp $	*/
+/*	$OpenBSD: clock.c,v 1.30 2007/04/01 12:22:24 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -807,17 +807,19 @@ clockintr(cap)
 {
 #ifdef DEBUG
 	static int64_t tick_base = 0;
+	struct timeval ctime;
 	int64_t t;
 
 	t = tick() & TICK_TICKS;
 
+	microtime(&ctime);
 	if (!tick_base) {
-		tick_base = (time_second * 1000000LL + time.tv_usec) 
+		tick_base = (ctime.tv_sec * 1000000LL + ctime.tv_usec) 
 			* 1000000LL / cpu_clockrate;
 		tick_base -= t;
 	} else if (clockcheck) {
 		int64_t tk = t;
-		int64_t clk = (time.tv_sec * 1000000LL + time.tv_usec);
+		int64_t clk = (ctime.tv_sec * 1000000LL + ctime.tv_usec);
 		t -= tick_base;
 		t = t * 1000000LL / cpu_clockrate;
 		if (t - clk > hz) {
