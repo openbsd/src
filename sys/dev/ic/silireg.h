@@ -1,4 +1,4 @@
-/*	$OpenBSD: silireg.h,v 1.11 2007/03/31 08:13:40 dlg Exp $ */
+/*	$OpenBSD: silireg.h,v 1.12 2007/04/01 00:13:17 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -85,8 +85,8 @@
 				    "\002PORTINIT" "\001PORTRESET"
 #define SILI_PREG_PCC		0x1004 /* Port Control Clear */
 #define SILI_PREG_IS		0x1008 /* Interrupt Status */
-#define SILI_PREG_IES		0x1008 /* Interrupt Enable Set */
-#define SILI_PREG_IEC		0x1008 /* Interrupt Enable Clear */
+#define SILI_PREG_IES		0x1010 /* Interrupt Enable Set */
+#define SILI_PREG_IEC		0x1014 /* Interrupt Enable Clear */
 #define SILI_PREG_AUA		0x101c /* Activation Upper Address */
 #define SILI_PREG_FIFO		0x1020 /* Command Execution FIFO */
 #define SILI_PREG_CE		0x1024 /* Command Error */
