@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wump.6,v 1.7 2003/06/03 03:01:42 millert Exp $
+.\"	$OpenBSD: wump.6,v 1.8 2007/04/02 15:27:13 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,10 +60,10 @@ arrows.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl a
+.It Fl a Ar arrows
 Specifies the number of magic arrows the adventurer gets.
 The default is five.
-.It Fl b
+.It Fl b Ar bats
 Specifies the number of rooms in the cave which contain bats.
 The default is three.
 .It Fl h
@@ -73,13 +73,13 @@ dangerous cave.
 Play the original version, where there are twenty rooms arranged on the
 vertices of a dodecahedron, connected by the edges.
 In this case, the default is two pits and two bat rooms.
-.It Fl p
+.It Fl p Ar pits
 Specifies the number of rooms in the cave which contain bottomless pits.
 The default is three.
-.It Fl r
+.It Fl r Ar rooms
 Specifies the number of rooms in the cave.
 The default cave size is twenty-five rooms.
-.It Fl t
+.It Fl t Ar tunnels
 Specifies the number of tunnels connecting each room in the cave to
 another room.
 Beware, too many tunnels in a small cave can easily cause it to collapse!

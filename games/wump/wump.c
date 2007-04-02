@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.23 2004/07/10 07:26:24 deraadt Exp $	*/
+/*	$OpenBSD: wump.c,v 1.24 2007/04/02 15:27:13 jmc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: wump.c,v 1.23 2004/07/10 07:26:24 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: wump.c,v 1.24 2007/04/02 15:27:13 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -915,7 +915,8 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-"usage: wump [-ho] [-a arrows] [-b bats] [-p pits] [-r rooms] [-t tunnels]\n");
+	    "usage: wump [-ho] [-a arrows] [-b bats] [-p pits] "
+	    "[-r rooms] [-t tunnels]\n");
 	exit(1);
 }
 
