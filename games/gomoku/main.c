@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2006/12/24 14:14:02 martin Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2007/04/02 14:33:37 jmc Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.19 2006/12/24 14:14:02 martin Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.20 2007/04/02 14:33:37 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,16 +126,9 @@ main(argc, argv)
 			break;
 		case 'h':
 		default:
-			fprintf(stderr,"usage:  %s [-bcdu] [-D debugfile] [inputfile]\n",
-					prog);
-			fprintf(stderr,"\tWhere the options are:\n\t-b : background\n");
-			fprintf(stderr,"\t-c : computer vs itself\n");
-			fprintf(stderr,"\t-d : print debugging information\n");
-			fprintf(stderr,"\t-u : user vs user\n");
 			fprintf(stderr,
-	"\t-D : print debugging information to debugfile\n");
-			fprintf(stderr,
-	"\t  The game will be restored from inputfile if one is specified.\n");
+			    "usage:  %s [-bcdu] [-D debugfile] [inputfile]\n",
+			    prog);
 			exit(1);
 		}
 	}
