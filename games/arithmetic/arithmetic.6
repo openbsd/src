@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arithmetic.6,v 1.9 2004/07/13 23:10:47 jmc Exp $
+.\"	$OpenBSD: arithmetic.6,v 1.10 2007/04/02 14:21:16 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@ You can quit at any time by typing the interrupt or end-of-file character.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl o
+.It Fl o Ar +\-x/
 By default,
 .Nm
 asks questions on addition of numbers from 0 to 10, and corresponding
@@ -62,7 +62,7 @@ you can ask for problems in addition, subtraction, multiplication, and
 division, respectively.
 If you give one of these characters more than once, that kind of problem
 will be asked correspondingly more often.
-.It Fl r
+.It Fl r Ar range
 If a
 .Ar range
 is supplied,
