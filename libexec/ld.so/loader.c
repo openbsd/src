@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.109 2007/01/28 21:28:23 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.110 2007/04/02 15:24:19 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -412,7 +412,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	phdp = (Elf_Phdr *)dl_data[AUX_phdr];
 	for (loop = 0; loop < dl_data[AUX_phnum]; loop++) {
 		if (phdp->p_type == PT_DYNAMIC) {
-			exe_obj = _dl_finalize_object(argv[0],
+			exe_obj = _dl_finalize_object(argv[0] ? argv[0] : "",
 			    (Elf_Dyn *)phdp->p_vaddr, dl_data, OBJTYPE_EXE,
 			    0, 0);
 			_dl_add_object(exe_obj);
