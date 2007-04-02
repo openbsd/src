@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.66 2006/07/24 11:45:44 ho Exp $	 */
+/* $OpenBSD: monitor.c,v 1.67 2007/04/02 08:11:59 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -396,7 +396,7 @@ set_monitor_signals(void)
 {
 	int n;
 
-	for (n = 0; n < _NSIG; n++)
+	for (n = 1; n < _NSIG; n++)
 		signal(n, SIG_DFL);
 
 	/* Forward some signals to the child. */
