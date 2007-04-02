@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.93 2007/02/22 08:34:18 henning Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.94 2007/04/02 12:51:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -292,7 +292,7 @@ path_link(struct rde_aspath *asp, struct rde_peer *peer)
 }
 
 /*
- * copy asp to a new UNLINKED one manly for filtering
+ * copy asp to a new UNLINKED one mainly for filtering
  */
 struct rde_aspath *
 path_copy(struct rde_aspath *asp)
