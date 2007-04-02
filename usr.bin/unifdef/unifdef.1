@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unifdef.1,v 1.14 2003/10/23 09:09:13 jmc Exp $
+.\"	$OpenBSD: unifdef.1,v 1.15 2007/04/02 14:12:51 jmc Exp $
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -42,16 +42,19 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl ceklst
+.Sm off
 .Oo
-.Fl I Ns Ar path
-.Fl D Ns Ar sym
-.Ns Op = Ns Ar val
-.Fl U Ns Ar sym
-.Fl iD Ns Ar sym
-.Ns Op = Ns Ar val
-.Fl iU Ns Ar sym
+.Fl D Ar sym
+.Op = Ar val
 .Oc
-.Ar ...
+.Op Fl I Ar path
+.Oo
+.Fl iD Ar sym
+.Op = Ar val
+.Oc
+.Op Fl iU Ar sym
+.Op Fl U Ar sym
+.Sm on
 .Op Ar file
 .Sh DESCRIPTION
 The
@@ -114,23 +117,9 @@ or affected by a backslash-continued line.
 It spots unusually-formatted preprocessor directives
 and knows when the layout is too odd to handle.
 .Pp
-Available options:
+The options are as follows:
+.Pp
 .Bl -tag -width indent -compact
-.It Fl D Ns Ar sym
-.Ns Op = Ns Ar val
-Specify that a symbol is defined,
-and optionally specify what value to give it
-for the purpose of handling
-.Ic #if
-and
-.Ic #elif
-directives.
-.Pp
-.It Fl U Ns Ar sym
-Specify that a symbol is undefined.
-If the same symbol appears in more than one argument,
-the last occurrence dominates.
-.Pp
 .It Fl c
 If the
 .Fl c
@@ -140,6 +129,20 @@ then the operation of
 is complemented,
 i.e., the lines that would have been removed or blanked
 are retained and vice versa.
+.Pp
+.Sm off
+.It Xo
+.Fl D Ar sym
+.Op = Ar val
+.Xc
+.Sm on
+Specify that a symbol is defined,
+and optionally specify what value to give it
+for the purpose of handling
+.Ic #if
+and
+.Ic #elif
+directives.
 .Pp
 .It Fl e
 Because
@@ -158,6 +161,39 @@ The
 option changes the behavior so that,
 where possible,
 such lines are left unprocessed instead of reporting an error.
+.Pp
+.Sm off
+.It Xo
+.Fl iD Ar sym
+.Op = Ar val
+.Xc
+.Sm on
+.It Fl iU Ns Ar sym
+Ignore
+.Ic #ifdef Ns s .
+If your C code uses
+.Ic #ifdef Ns s
+to delimit non-C lines,
+such as comments
+or code which is under construction,
+then you must tell
+.Nm
+which symbols are used for that purpose so that it will not try to parse
+comments and line continuations
+inside those
+.Ic #ifdef Ns s .
+One specifies ignored symbols with
+.Sm off
+.Fl iD Ar sym Op = Ar val
+.Sm on
+and
+.Fl iU Ns Ar sym ,
+similar to
+.Sm off
+.Fl D Ar sym Op = Ar val
+.Sm on
+and
+.Fl U Ns Ar sym .
 .Pp
 .It Fl k
 Process
@@ -197,33 +233,11 @@ and line continuations,
 which is useful
 for plain text.
 .Pp
-.It Fl iD Ns Ar sym
-.Ns Op = Ns Ar val
-.It Fl iU Ns Ar sym
-Ignore
-.Ic #ifdef Ns s .
-If your C code uses
-.Ic #ifdef Ns s
-to delimit non-C lines,
-such as comments
-or code which is under construction,
-then you must tell
-.Nm
-which symbols are used for that purpose so that it will not try to parse
-comments and line continuations
-inside those
-.Ic #ifdef Ns s .
-One specifies ignored symbols with
-.Fl iD Ns Ar sym
-.Ns Oo = Ns Ar val Oc
-and
-.Fl iU Ns Ar sym
-similar to
-.Fl D Ns Ar sym
-.Ns Op = Ns Ar val
-and
-.Fl U Ns Ar sym
-above.
+.It Fl U Ns Ar sym
+Specify that a symbol is undefined.
+If the same symbol appears in more than one argument,
+the last occurrence dominates.
+.Pp
 .El
 .Pp
 The

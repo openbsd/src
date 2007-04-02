@@ -1,4 +1,4 @@
-/*	$OpenBSD: unifdef.c,v 1.11 2003/06/30 18:37:48 avsm Exp $	*/
+/*	$OpenBSD: unifdef.c,v 1.12 2007/04/02 14:12:51 jmc Exp $	*/
 /*
  * Copyright (c) 2002, 2003 Tony Finch <dot@dotat.at>
  * Copyright (c) 1985, 1993
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)unifdef.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: unifdef.c,v 1.11 2003/06/30 18:37:48 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: unifdef.c,v 1.12 2007/04/02 14:12:51 jmc Exp $";
 #endif
 
 /*
@@ -293,8 +293,10 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: unifdef [-cdeklst]"
-	    " [-Dsym[=val]] [-Usym] [-iDsym[=val]] [-iUsym] ... [file]\n");
+	fprintf(stderr,
+	    "usage: unifdef [-ceklst] [-Dsym[=val]] [-Ipath] [-iDsym[=val]] "
+	    "[-iUsym] [-Usym]\n"
+	    "\t[file]\n");
 	exit(2);
 }
 
