@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hack.6,v 1.12 2004/06/01 08:46:37 jmc Exp $	-*- nroff -*-
+.\"	$OpenBSD: hack.6,v 1.13 2007/04/02 14:38:05 jmc Exp $	-*- nroff -*-
 .\"	$NetBSD: hack.6,v 1.5 1995/07/03 19:44:30 jtc Exp $	-*- nroff -*-
 .\"
 .\" Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -67,13 +67,12 @@
 .Nd Exploring The Dungeons of Doom
 .Sh SYNOPSIS
 .Nm hack
-.Op Fl d Ar directory
 .Op Fl n
+.Op Fl d Ar directory
 .Op Fl u Ar playername
 .Nm hack
+.Op Fl sX
 .Op Fl d Ar directory
-.Op Fl s
-.Op Fl X
 .Op Ar playername ...
 .Sh DESCRIPTION
 .Nm
@@ -201,9 +200,9 @@ Lock file for record.
 .Sh AUTHORS
 Jay Fenlason (+ Kenny Woodland, Mike Thome and Jon Payne) wrote the
 original hack, very much like rogue (but full of bugs).
-.br
+.Pp
 Andries Brouwer continuously deformed their sources into the current
-version - in fact an entirely different game.
+version \(en in fact an entirely different game.
 .Sh BUGS
 Probably infinite.
 Mail complaints to mcvax!aeb .
