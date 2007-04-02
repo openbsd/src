@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.58 2007/01/29 13:23:05 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.59 2007/04/02 16:26:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -758,7 +758,7 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 
 	if ((rte = rt_find(prefix.s_addr, prefixlen, d_type)) == NULL) {
 		if ((rte = calloc(1, sizeof(struct rt_node))) == NULL)
-			fatalx("rt_update");
+			fatal("rt_update");
 		rte->prefix.s_addr = prefix.s_addr;
 		rte->prefixlen = prefixlen;
 		rte->nexthop.s_addr = nexthop.s_addr;
