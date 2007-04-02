@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.44 2007/01/26 16:53:28 tsi Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.45 2007/04/02 13:23:46 claudio Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -790,6 +790,8 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 
 			err = iommu_dvmamap_append_range(t, map, pgstart,
 			    pglen, flags, boundary);
+			if (err == EFBIG)
+				return (err);
 			if (err) {
 				printf("iomap load seg page: %d for "
 				    "va 0x%llx pa %lx (%llx - %llx) "
@@ -1096,10 +1098,8 @@ iommu_dvmamap_append_range(bus_dma_tag_t t, bus_dmamap_t map, paddr_t pa,
 	if (seg == NULL) {
 		seg = &map->dm_segs[i];
 		if (++i > map->_dm_segcnt) {
-			printf("append range, out of segments (%d)\n", i);
-			iommu_dvmamap_print_map(t, NULL, map);
 			map->dm_nsegs = 0;
-			return (ENOMEM);
+			return (EFBIG);
 		}
 	}
 
@@ -1130,8 +1130,6 @@ iommu_dvmamap_append_range(bus_dma_tag_t t, bus_dmamap_t map, paddr_t pa,
 
 			seg = &map->dm_segs[i];
 			if (++i > map->_dm_segcnt) {
-				printf("append range, out of segments\n");
-				iommu_dvmamap_print_map(t, NULL, map);
 				map->dm_nsegs = 0;
 				return (EFBIG);
 			}
@@ -1207,6 +1205,8 @@ iommu_dvmamap_load_seg(bus_dma_tag_t t, struct iommu_state *is,
 
 			err = iommu_dvmamap_append_range(t, map, pgstart,
 			    pglen, flags, boundary);
+			if (err == EFBIG)
+				return (err);
 			if (err) {
 				printf("iomap load seg page: %d for "
 				    "pa 0x%llx (%llx - %llx for %d/%x\n",
@@ -1243,6 +1243,8 @@ iommu_dvmamap_load_mlist(bus_dma_tag_t t, struct iommu_state *is,
 
 		err = iommu_dvmamap_append_range(t, map, pa, PAGE_SIZE,
 		    flags, boundary);
+		if (err == EFBIG)
+			return (err);
 		if (err) {
 			printf("iomap load seg page: %d for pa 0x%lx "
 			    "(%lx - %lx for %d/%x\n", err, pa, pa,
