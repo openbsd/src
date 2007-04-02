@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.9 2006/11/16 00:14:34 ray Exp $	*/
+/*	$OpenBSD: init.c,v 1.10 2007/04/02 08:04:52 moritz Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.9 2006/11/16 00:14:34 ray Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.10 2007/04/02 08:04:52 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,9 @@ setcolumn(char *pos, struct field *cur_fld, int gflag)
 	int tmp;
 
 	col = cur_fld->icol.num ? (&(*cur_fld).tcol) : (&(*cur_fld).icol);
-	pos += sscanf(pos, "%d", &(col->num));
+	if (sscanf(pos, "%d", &(col->num)) != 1)
+		errx(2, "missing field number");
+	pos++;
 	while (isdigit(*pos))
 		pos++;
 	if (col->num <= 0 && !(col->num == 0 && col == &(cur_fld->tcol)))
@@ -124,7 +126,9 @@ setcolumn(char *pos, struct field *cur_fld, int gflag)
 		if (!col->num)
 			errx(2, "cannot indent end of line");
 		pos++;
-		pos += sscanf(pos, "%d", &(col->indent));
+		if (sscanf(pos, "%d", &(col->indent)) != 1)
+			errx(2, "missing offset");
+		pos++;
 		while (isdigit(*pos))
 			pos++;
 		if (&cur_fld->icol == col)
