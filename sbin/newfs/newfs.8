@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.49 2006/11/14 10:28:11 otto Exp $
+.\"	$OpenBSD: newfs.8,v 1.50 2007/04/02 20:20:39 millert Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -53,13 +53,11 @@
 .Op Fl l Ar interleave
 .Op Fl m Ar free-space
 .Op Fl o Ar optimization
-.Op Fl p Ar sectors
 .Op Fl r Ar revolutions
 .Op Fl S Ar sector-size
 .Op Fl s Ar size
 .Op Fl t Ar fstype
 .Op Fl u Ar sectors
-.Op Fl x Ar sectors
 .Op Fl z Ar tracks
 .Ar special
 .Ek
@@ -256,10 +254,6 @@ specified as the denominator of the ratio:
 .Dl sectors read/sectors passed over
 Thus an interleave of 1/1 implies contiguous layout, while 1/2 implies
 logical sector 0 is separated by one sector from logical sector 1.
-.It Fl p Ar sectors
-Spare sectors (bad sector replacements) are physical sectors that occupy
-space at the end of each track.
-They are not counted as part of the sectors/track
 .Pq Fl u
 since they are not available to the file system for data allocation.
 .It Fl r Ar revolutions
@@ -273,14 +267,6 @@ will be smart enough to run the alternate newfs_XXX program instead.
 .It Fl u Ar sectors
 The number of sectors per track available for data allocation by the file
 system.
-This does not include sectors reserved at the end of each track for bad
-block replacement (see the
-.Fl p
-option).
-.It Fl x Ar sectors
-Spare sectors (bad sector replacements) are physical sectors that occupy
-space at the end of the last track in the cylinder.
-They are deducted from the sectors/track
 .Pq Fl u
 of the last track of each cylinder since they are not available to the file
 system for data allocation.

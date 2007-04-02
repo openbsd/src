@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.52 2006/03/09 13:35:02 pedro Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.53 2007/04/02 20:20:39 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.52 2006/03/09 13:35:02 pedro Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.53 2007/04/02 20:20:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,10 +138,7 @@ int	Oflag;			/* format as an 4.3BSD file system */
 int	fssize;			/* file system size */
 int	ntracks;		/* # tracks/cylinder */
 int	nsectors;		/* # sectors/track */
-int	nphyssectors;		/* # sectors/track including spares */
 int	secpercyl;		/* sectors per cylinder */
-int	trackspares = -1;	/* spare sectors per track */
-int	cylspares = -1;		/* spare sectors per cylinder */
 int	sectorsize;		/* bytes/sector */
 int	realsectorsize;		/* bytes/sector in hardware */
 int	rpm;			/* revolutions/minute of drive */
@@ -220,7 +217,7 @@ main(int argc, char *argv[])
 
 	opstring = mfs ?
 	    "P:T:a:b:c:d:e:f:i:m:o:s:" :
-	    "NOS:T:a:b:c:d:e:f:g:h:i:k:l:m:o:p:qr:s:t:u:x:z:";
+	    "NOS:T:a:b:c:d:e:f:g:h:i:k:l:m:o:qr:s:t:u:z:";
 	while ((ch = getopt(argc, argv, opstring)) != -1) {
 		switch (ch) {
 		case 'N':
@@ -302,11 +299,6 @@ main(int argc, char *argv[])
 					    "preference: use `space' or `time'.");
 			}
 			break;
-		case 'p':
-			if ((trackspares = atoi(optarg)) < 0)
-				fatal("%s: bad spare sectors per track",
-				    optarg);
-			break;
 		case 'q':
 			quiet = 1;
 			break;
@@ -330,11 +322,6 @@ main(int argc, char *argv[])
 		case 'u':
 			if ((nsectors = atoi(optarg)) <= 0)
 				fatal("%s: bad sectors/track", optarg);
-			break;
-		case 'x':
-			if ((cylspares = atoi(optarg)) < 0)
-				fatal("%s: bad spare sectors per cylinder",
-				    optarg);
 			break;
 #ifdef MFS
 		case 'P':
@@ -542,18 +529,7 @@ havelabel:
 		fprintf(stderr, "because minfree is less than %d%%\n", MINFREE);
 		opt = FS_OPTSPACE;
 	}
-	if (trackspares == -1) {
-		trackspares = lp->d_sparespertrack;
-		if (trackspares < 0)
-			trackspares = 0;
-	}
-	nphyssectors = nsectors + trackspares;
-	if (cylspares == -1) {
-		cylspares = lp->d_sparespercyl;
-		if (cylspares < 0)
-			cylspares = 0;
-	}
-	secpercyl = nsectors * ntracks - cylspares;
+	secpercyl = nsectors * ntracks;
 	if (secpercyl != lp->d_secpercyl)
 		fprintf(stderr, "%s (%d) %s (%lu)\n",
 		    "Warning: calculated sectors per cylinder", secpercyl,
@@ -572,7 +548,6 @@ havelabel:
 
 		sectorsize = DEV_BSIZE;
 		nsectors /= secperblk;
-		nphyssectors /= secperblk;
 		secpercyl /= secperblk;
 		fssize /= secperblk;
 		pp->p_size /= secperblk;
@@ -581,7 +556,6 @@ havelabel:
 
 		sectorsize = DEV_BSIZE;
 		nsectors *= blkpersec;
-		nphyssectors *= blkpersec;
 		secpercyl *= blkpersec;
 		fssize *= blkpersec;
 		pp->p_size *= blkpersec;
@@ -817,12 +791,10 @@ struct fsoptions {
 	{ "-m minimum free space %%", 1 },
 	{ "-n number of distinguished rotational positions", 0 },
 	{ "-o optimization preference (`space' or `time')", 1 },
-	{ "-p spare sectors per track", 0 },
 	{ "-r revolutions/minute", 0 },
 	{ "-s file system size (sectors)", 1 },
 	{ "-t file system type", 0 },
 	{ "-u sectors/track", 0 },
-	{ "-x spare sectors per cylinder", 0 },
 	{ "-z tracks/cylinder", 0 },
 	{ NULL, NULL }
 };

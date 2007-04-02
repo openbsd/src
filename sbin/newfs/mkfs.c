@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.51 2007/03/19 13:27:47 pedro Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.52 2007/04/02 20:20:39 millert Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.51 2007/03/19 13:27:47 pedro Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.52 2007/04/02 20:20:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,6 @@ extern int	Oflag;		/* format as an 4.3BSD file system */
 extern int	fssize;		/* file system size */
 extern int	ntracks;	/* # tracks/cylinder */
 extern int	nsectors;	/* # sectors/track */
-extern int	nphyssectors;	/* # sectors/track including spares */
 extern int	secpercyl;	/* sectors per cylinder */
 extern int	sectorsize;	/* bytes/sector */
 extern int	rpm;		/* revolutions/minute of drive */
@@ -507,7 +506,7 @@ recalc:
 	 */
 	sblock.fs_interleave = interleave;
 	sblock.fs_trackskew = trackskew;
-	sblock.fs_npsect = nphyssectors;
+	sblock.fs_npsect = sblock.fs_nsect;
 	sblock.fs_postblformat = FS_DYNAMICPOSTBLFMT;
 	sblock.fs_sbsize = fragroundup(&sblock, sizeof(struct fs));
 	if (sblock.fs_sbsize > SBSIZE)
