@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.95 2006/09/01 00:24:06 mpf Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.96 2007/04/02 08:08:32 moritz Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -207,8 +207,8 @@ parse_args(int argc, char *argv[])
 			regrand = 1;
 #else
 			usage();
-			break;
 #endif
+			break;
 		case 'R':
 			report_file = optarg;
 			break;
