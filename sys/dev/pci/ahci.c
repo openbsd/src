@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.108 2007/03/31 10:14:53 jasper Exp $ */
+/*	$OpenBSD: ahci.c,v 1.109 2007/04/02 05:14:52 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -357,6 +357,8 @@ struct ahci_port {
 	u_int32_t		ap_err_saved_active;
 	u_int32_t		ap_err_saved_active_cnt;
 
+	u_int8_t		ap_err_scratch[512];
+
 #ifdef AHCI_DEBUG
 	char			ap_name[16];
 #define PORTNAME(_ap)	((_ap)->ap_name)
@@ -468,6 +470,8 @@ void			ahci_put_ccb(struct ahci_ccb *);
 
 struct ahci_ccb 	*ahci_get_err_ccb(struct ahci_port *);
 void			ahci_put_err_ccb(struct ahci_ccb *);
+
+int			ahci_port_read_ncq_error(struct ahci_port *, int *);
 
 struct ahci_dmamem	*ahci_dmamem_alloc(struct ahci_softc *, size_t);
 void			ahci_dmamem_free(struct ahci_softc *,
@@ -1632,8 +1636,14 @@ ahci_port_intr(struct ahci_port *ap, u_int32_t ci_mask)
 			/* Had to reset device, can't gather extended info. */
 		} else if (ap->ap_sactive) {
 			/* Recover the NCQ error from log page 10h. */
+			ahci_port_read_ncq_error(ap, &err_slot);
+			if (err_slot < 0)
+				goto failall;
 
-			/* XXX recover NCQ error here */
+			DPRINTF(AHCI_D_VERBOSE, "%s: NCQ errored slot %d\n",
+				PORTNAME(ap), err_slot);
+
+			ccb = &ap->ap_ccbs[err_slot];
 		} else {
 			/* Didn't reset, could gather extended info from log. */
 		}
@@ -1649,7 +1659,7 @@ ahci_port_intr(struct ahci_port *ap, u_int32_t ci_mask)
 				    "disabling device.\n", PORTNAME(ap));
 				goto fatal;
 			}
-			printf("%s: couldn't recover from NCQ error, failing "
+			printf("%s: couldn't recover NCQ error, failing "
 			    "all outstanding commands.\n", PORTNAME(ap));
 			goto failall;
 		}
@@ -1878,6 +1888,96 @@ ahci_put_err_ccb(struct ahci_ccb *ccb)
 #ifdef DIAGNOSTIC
 	ap->ap_err_busy = 0;
 #endif
+}
+
+int
+ahci_port_read_ncq_error(struct ahci_port *ap, int *err_slotp)
+{
+	struct ahci_ccb			*ccb;
+	struct ahci_cmd_hdr		*cmd_slot;
+	u_int32_t			cmd;
+	struct ata_fis_h2d		*fis;
+	int				rc = EIO;
+
+	DPRINTF(AHCI_D_VERBOSE, "%s: read log page\n", PORTNAME(ap));
+
+	/* Save command register state. */
+	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
+
+	/* Port should have been idled already.  Start it. */
+	KASSERT((cmd & AHCI_PREG_CMD_CR) == 0);
+	ahci_port_start(ap, 0);
+
+	/* Prep error CCB for READ LOG EXT, page 10h, 1 sector. */
+	ccb = ahci_get_err_ccb(ap);
+	ccb->ccb_xa.flags = ATA_F_NOWAIT | ATA_F_READ | ATA_F_POLL;
+	ccb->ccb_xa.data = ap->ap_err_scratch;
+	ccb->ccb_xa.datalen = 512;
+	cmd_slot = ccb->ccb_cmd_hdr;
+	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
+
+	fis = (struct ata_fis_h2d *)ccb->ccb_cmd_table->cfis;
+	fis->type = ATA_FIS_TYPE_H2D;
+	fis->flags = ATA_H2D_FLAGS_CMD;
+	fis->command = ATA_C_READ_LOG_EXT;
+	fis->lba_low = 0x10;		/* queued error log page (10h) */
+	fis->sector_count = 1;		/* number of sectors (1) */
+	fis->sector_count_exp = 0;
+	fis->lba_mid = 0;		/* starting offset */
+	fis->lba_mid_exp = 0;
+	fis->device = 0;
+
+	cmd_slot->flags = htole16(5);	/* FIS length: 5 DWORDS */
+
+	if (ahci_load_prdt(ccb) != 0) {
+		rc = ENOMEM;	/* XXX caller must abort all commands */
+		goto err;
+	}
+
+	ccb->ccb_xa.state = ATA_S_PENDING;
+	if (ahci_poll(ccb, 1000, NULL) != 0)
+		goto err;
+
+	rc = 0;
+err:
+	/* Abort our command, if it failed, by stopping command DMA. */
+	if (rc != 0 && ISSET(ap->ap_active, 1 << ccb->ccb_slot)) {
+		printf("%s: log page read failed, slot %d was still active.\n",
+		    PORTNAME(ap), ccb->ccb_slot);
+		ahci_port_stop(ap, 0);
+	}
+
+	/* Done with the error CCB now. */
+	ahci_put_err_ccb(ccb);
+
+	/* Extract failed register set and tags from the scratch space. */
+	if (rc == 0) {
+		struct ata_log_page_10h		*log;
+		int				err_slot;
+
+		log = (struct ata_log_page_10h *)ap->ap_err_scratch;
+		if (ISSET(log->err_regs.type, ATA_LOG_10H_TYPE_NOTQUEUED)) {
+			/* Not queued bit was set - wasn't an NCQ error? */
+			printf("%s: read NCQ error page, but not an NCQ "
+			    "error?\n", PORTNAME(ap));
+			rc = ESRCH;
+		} else {
+			/* Copy back the log record as a D2H register FIS. */
+			*err_slotp = err_slot = log->err_regs.type & 
+			    ATA_LOG_10H_TYPE_TAG_MASK;
+
+			ccb = &ap->ap_ccbs[err_slot];
+			memcpy(&ccb->ccb_xa.rfis, &log->err_regs,
+			    sizeof(struct ata_fis_d2h));
+			ccb->ccb_xa.rfis.type = ATA_FIS_TYPE_D2H;
+			ccb->ccb_xa.rfis.flags = 0;
+		}
+	}
+
+	/* Restore saved CMD register state */
+	ahci_pwrite(ap, AHCI_PREG_CMD, cmd);
+
+	return (rc);
 }
 
 struct ahci_dmamem *

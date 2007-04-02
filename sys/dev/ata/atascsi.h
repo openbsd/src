@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.20 2007/03/22 05:15:39 pascoe Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.21 2007/04/02 05:14:52 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -32,6 +32,7 @@ struct atascsi;
 #define ATA_C_PACKET		0xa0
 #define ATA_C_READ_FPDMA	0x60
 #define ATA_C_WRITE_FPDMA	0x61
+#define ATA_C_READ_LOG_EXT	0x2f
 
 struct ata_identify {
 	u_int16_t	config;		/*   0 */
@@ -187,6 +188,19 @@ struct ata_fis_d2h {
 	u_int8_t		reserved4;
 	u_int8_t		reserved5;
 	u_int8_t		reserved6;
+} __packed;
+
+/*
+ * SATA log page 10h - 
+ * looks like a D2H FIS, with errored tag number in first byte.
+ */
+struct ata_log_page_10h {
+	struct ata_fis_d2h	err_regs;
+#define ATA_LOG_10H_TYPE_NOTQUEUED	0x80
+#define ATA_LOG_10H_TYPE_TAG_MASK	0x1f
+	u_int8_t		reserved[256 - sizeof(struct ata_fis_d2h)];
+	u_int8_t		vendor_specific[255];
+	u_int8_t		checksum;
 } __packed;
 
 /*
