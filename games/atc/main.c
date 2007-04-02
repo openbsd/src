@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2006/11/02 02:06:05 ray Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2007/04/02 14:28:56 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.15 2006/11/02 02:06:05 ray Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.16 2007/04/02 14:28:56 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ main(int ac, char *av[])
 
 	if (f_usage)
 		fprintf(stderr, 
-		    "Usage: %s -[u?lstpq] [-[gf] game_name] [-r random seed]\n",
+		    "usage: %s [-lpqstu?] [-fg game] [-r seed]\n",
 			name);
 	if (f_showscore)
 		log_score(1);

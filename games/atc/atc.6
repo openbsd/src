@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atc.6,v 1.15 2004/01/02 14:45:50 jmc Exp $
+.\"	$OpenBSD: atc.6,v 1.16 2007/04/02 14:28:56 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,8 +43,8 @@
 .Sh SYNOPSIS
 .Nm atc
 .Op Fl lpqstu?
-.Op Fl fg Ar "game name"
-.Op Fl r Ar "random seed"
+.Op Fl fg Ar game
+.Op Fl r Ar seed
 .Sh DESCRIPTION
 .Nm
 lets you try your hand at the nerve-wracking duties of an air traffic
@@ -58,7 +58,8 @@ and frequency of the planes depend on the
 difficulty of the chosen arena.
 .Bl -tag -width "-g gamex"
 .It Fl f Ar game
-Play the named game.
+Play the named
+.Ar game .
 If the game listed is not one of the ones printed by the
 .Fl l
 option, the default game is played.
@@ -76,6 +77,9 @@ This is used during the installation of the program.
 .It Fl q
 Play quietly
 .Pq no bells .
+.It Fl r Ar seed
+Set the random seed.
+This option can be used to replay a specific game.
 .It Fl s
 Print the score list
 .Pq formerly the Top Ten list .
@@ -86,9 +90,6 @@ successfully dealt with.
 .It Fl t
 Same as
 .Fl s .
-.It Fl r Ar seed
-Set the random seed.
-This option can be used to replay a specific game.
 .It Fl u
 Print the usage line and exit.
 .It Fl \&?
