@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.18 2006/04/02 23:37:21 deraadt Exp $	*/
+/*	$OpenBSD: ypwhich.c,v 1.19 2007/04/02 15:34:39 jmc Exp $	*/
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ypwhich.c,v 1.18 2006/04/02 23:37:21 deraadt Exp $";
+static char rcsid[] = "$Id: ypwhich.c,v 1.19 2007/04/02 15:34:39 jmc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -72,8 +72,9 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: ypwhich [-d domain] [[-h host] [-t] -m [mname] | host]\n");
-	fprintf(stderr, "       ypwhich -x\n");
+	    "usage: ypwhich [-t] [-d domain] [[-h] host]\n"
+	    "       ypwhich [-t] [-d domain] [-h host] -m [mname]\n"
+	    "       ypwhich -x\n");
 	exit(1);
 }
 
