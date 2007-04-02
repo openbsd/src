@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.58 2007/02/14 04:59:55 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.59 2007/04/02 08:41:04 claudio Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -1342,6 +1342,14 @@ next:
 	rdb->rdb_next = next;
 
 	KASSERT(rdb->rdb_next < rdb->rdb_ndesc);
+
+	/*
+	 * In HostAP mode, ieee80211_input() will enqueue packets in if_snd
+	 * without calling if_start().
+	 */
+	if (!IFQ_IS_EMPTY(&sc->sc_if.if_snd) &&
+	    !(sc->sc_if.if_flags & IFF_OACTIVE))
+		(*sc->sc_if.if_start)(&sc->sc_if);
 
 	return;
 #undef IS_BEACON
