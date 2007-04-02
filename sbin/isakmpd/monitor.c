@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.67 2007/04/02 08:11:59 moritz Exp $	 */
+/* $OpenBSD: monitor.c,v 1.68 2007/04/02 08:16:32 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -182,8 +182,7 @@ monitor_pf_key_v2_open(void)
 	}
 	pf_key_v2_socket = mm_receive_fd(m_state.s);
 	if (pf_key_v2_socket < 0) {
-		log_error("monitor_pf_key_v2_open: mm_receive_fd() failed: %s",
-		    strerror(errno));
+		log_error("monitor_pf_key_v2_open: mm_receive_fd() failed");
 		return -1;
 	}
 
