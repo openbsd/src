@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.54 2006/12/15 05:52:06 itojun Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.55 2007/04/02 20:13:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.54 2006/12/15 05:52:06 itojun Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.55 2007/04/02 20:13:17 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -160,7 +160,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	int		 n = 0, on = 1, fd = 0, i, c;
+	int		 n = 0, on = 1, fd = 0, i, c, dobind = 1;
 	struct tftphdr	*tp;
 	struct passwd	*pw;
 	char		 cbuf[CMSG_SPACE(sizeof(struct sockaddr_storage))];
@@ -354,6 +354,9 @@ main(int argc, char *argv[])
 		    cmsg->cmsg_type == IP_RECVDSTADDR) {
 			memcpy(&((struct sockaddr_in *)&s_in)->sin_addr,
 			    CMSG_DATA(cmsg), sizeof(struct in_addr));
+			if (((struct sockaddr_in *)&s_in)->sin_addr.s_addr ==
+			    INADDR_BROADCAST)
+				dobind = 0;
 			break;
 		}
 		if (cmsg->cmsg_level == IPPROTO_IPV6 &&
@@ -372,8 +375,14 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (bind(peer, (struct sockaddr *)&s_in, s_in.ss_len) < 0) {
-		syslog(LOG_ERR, "bind: %m");
+	(void) setsockopt(peer, SOL_SOCKET, SO_REUSEADDR, &on,
+	    sizeof(on));
+	(void) setsockopt(peer, SOL_SOCKET, SO_REUSEPORT, &on,
+	    sizeof(on));
+
+	if (dobind && bind(peer, (struct sockaddr *)&s_in, s_in.ss_len) < 0) {
+		syslog(LOG_ERR, "bind to %s: %m",
+		    inet_ntoa(((struct sockaddr_in *)&s_in)->sin_addr));
 		exit(1);
 	}
 	if (connect(peer, (struct sockaddr *)&from, from.ss_len) < 0) {
