@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.11 2006/03/15 17:57:57 dhill Exp $	*/
+/*	$OpenBSD: snake.c,v 1.12 2007/04/02 15:23:48 jmc Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: snake.c,v 1.11 2006/03/15 17:57:57 dhill Exp $";
+static char rcsid[] = "$OpenBSD: snake.c,v 1.12 2007/04/02 15:23:48 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -190,7 +190,7 @@ main(int argc, char *argv[])
 		case '?':
 		case 'h':
 		default:
-			fputs("usage: snake [-w width] [-l length] [-s]\n",
+			fputs("usage: snake [-st] [-l length] [-w width]\n",
 			    stderr);
 			exit(1);
 		}
