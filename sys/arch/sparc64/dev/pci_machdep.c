@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.27 2007/04/01 12:26:15 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.28 2007/04/02 18:10:14 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -277,21 +277,6 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc,
 	KASSERT((cacheline/64)*64 == cacheline &&
 	    (cacheline/cacheinfo.ec_linesize)*cacheinfo.ec_linesize == cacheline &&
 	    (cacheline/4)*4 == cacheline);
-
-	/* Turn on parity for the bus. */
-	tag = PCITAG_CREATE(node, sc->sc_bus, 0, 0);
-	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	csr |= PCI_COMMAND_PARITY_ENABLE;
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
-
-	/*
-	 * Initialize the latency timer register.
-	 * The value 0x40 is from Solaris.
-	 */
-	bhlc = pci_conf_read(pc, tag, PCI_BHLC_REG);
-	bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
-	bhlc |= 0x40 << PCI_LATTIMER_SHIFT;
-	pci_conf_write(pc, tag, PCI_BHLC_REG, bhlc);
 
 	for (node = OF_child(node); node != 0 && node != -1;
 	     node = OF_peer(node)) {
