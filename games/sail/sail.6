@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sail.6,v 1.13 2005/03/12 12:21:08 jmc Exp $
+.\"	$OpenBSD: sail.6,v 1.14 2007/04/02 15:21:09 jmc Exp $
 .\"	$NetBSD: sail.6,v 1.4 1995/04/22 10:37:24 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1993
@@ -38,9 +38,8 @@
 .Nd multi-user wooden ships and iron men
 .Sh SYNOPSIS
 .Nm sail
+.Op Fl bx
 .Op Fl s Op Fl l
-.Op Fl x
-.Op Fl b
 .Op Ar num
 .Sh DESCRIPTION
 .Nm
@@ -67,16 +66,16 @@ ability of one captain to hold the
 .Pp
 The flags are:
 .Bl -tag -width flag
-.It Fl s
-Print the names and ships of the top ten sailors.
+.It Fl b
+No bells.
 .It Fl l
 Show the login name.
 Only effective with
 .Fl s .
+.It Fl s
+Print the names and ships of the top ten sailors.
 .It Fl x
 Play the first available ship instead of prompting for a choice.
-.It Fl b
-No bells.
 .El
 .Sh IMPLEMENTATION
 .Nm
