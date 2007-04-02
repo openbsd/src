@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.61 2007/03/21 17:29:32 thib Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.62 2007/04/02 21:18:59 pedro Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1480,7 +1480,7 @@ msdosfs_readdir(v)
 	struct uio *uio = ap->a_uio;
 	u_long *cookies = NULL;
 	int ncookies = 0;
-	off_t offset;
+	off_t offset, wlast = -1;
 	int chksum = -1;
 
 #ifdef MSDOSFS_DEBUG
@@ -1616,6 +1616,7 @@ msdosfs_readdir(v)
 			 */
 			if (dentp->deName[0] == SLOT_DELETED) {
 				chksum = -1;
+				wlast = -1;
 				continue;
 			}
 
@@ -1623,9 +1624,13 @@ msdosfs_readdir(v)
 			 * Handle Win95 long directory entries
 			 */
 			if (dentp->deAttributes == ATTR_WIN95) {
+				struct winentry *wep;
 				if (pmp->pm_flags & MSDOSFSMNT_SHORTNAME)
 					continue;
-				chksum = win2unixfn((struct winentry *)dentp, &dirbuf, chksum);
+				wep = (struct winentry *)dentp;
+				chksum = win2unixfn(wep, &dirbuf, chksum);
+				if (wep->weCnt & WIN_LAST)
+					wlast = offset;
 				continue;
 			}
 
@@ -1634,6 +1639,7 @@ msdosfs_readdir(v)
 			 */
 			if (dentp->deAttributes & ATTR_VOLUME) {
 				chksum = -1;
+				wlast = -1;
 				continue;
 			}
 
@@ -1683,8 +1689,12 @@ msdosfs_readdir(v)
 			dirbuf.d_reclen = DIRENT_SIZE(&dirbuf);
 			if (uio->uio_resid < dirbuf.d_reclen) {
 				brelse(bp);
+				/* Remember long-name offset. */
+				if (wlast != -1)
+					offset = wlast;
 				goto out;
 			}
+			wlast = -1;
 			error = uiomove((caddr_t) &dirbuf,
 					dirbuf.d_reclen, uio);
 			if (error) {
