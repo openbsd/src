@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.8 2007/03/23 17:17:23 gwk Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.9 2007/04/02 21:46:30 kettenis Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
@@ -484,11 +484,11 @@ nodmamem:
 norxdbdma:
 	dbdma_free(sc->sc_txdbdma);
 notxdbdma:
-	unmapiodev((void *)ca->ca_reg[4], ca->ca_reg[5]);
+	unmapiodev((void *)sc->sc_rxdma, ca->ca_reg[5]);
 norxdma:
-	unmapiodev((void *)ca->ca_reg[2], ca->ca_reg[3]);
+	unmapiodev((void *)sc->sc_txdma, ca->ca_reg[3]);
 notxdma:
-	unmapiodev((void *)ca->ca_reg[0], ca->ca_reg[1]);
+	unmapiodev(sc->sc_reg, ca->ca_reg[1]);
 }
 
 int

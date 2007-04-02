@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.16 2007/03/20 08:55:20 gwk Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.17 2007/04/02 21:46:30 kettenis Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -374,9 +374,9 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 nodbdma:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
 nofreq:
-	unmapiodev((void *)reg[2], reg[3]);
+	unmapiodev(sc->sc_dmareg, reg[3]);
 noreg:
-	unmapiodev((void *)reg[0], reg[1]);
+	unmapiodev(sc->sc_reg, reg[1]);
 }
 
 #define MESH_SET_XFER(sc, count) do {					\
