@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.74 2007/03/21 17:29:32 thib Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.75 2007/04/02 10:57:17 pedro Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -936,8 +936,10 @@ abortit:
 		 */
 		vref(tdvp);
 		/* Only tdvp is locked */
-		if ((error = ufs_checkpath(ip, dp, tcnp->cn_cred)) != 0)
+		if ((error = ufs_checkpath(ip, dp, tcnp->cn_cred)) != 0) {
+			vrele(tdvp);
 			goto out;
+		}
 		if ((tcnp->cn_flags & SAVESTART) == 0)
 			panic("ufs_rename: lost to startdir");
 		if ((error = relookup(tdvp, &tvp, tcnp)) != 0)
