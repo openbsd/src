@@ -1,5 +1,5 @@
 .\"	$NetBSD: huntd.6,v 1.3 1998/01/09 08:03:42 perry Exp $
-.\"	$OpenBSD: huntd.6,v 1.16 2003/05/20 03:18:05 pjanzen Exp $
+.\"	$OpenBSD: huntd.6,v 1.17 2007/04/02 14:55:16 jmc Exp $
 .\"
 .\"  Hunt
 .\"  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -18,34 +18,18 @@
 .Sh SYNOPSIS
 .Nm huntd
 .Op Fl s
-.Op Fl p Ar port
 .Op Fl a Ar addr
+.Sm off
 .Oo
-.Fl D Ns Ar var Ns = Ns value ...
+.Fl D Ar var No = Ar value \ \&...
 .Oc
+.Sm on
+.Op Fl p Ar port
 .Sh DESCRIPTION
 .Nm
 controls the multi-player
 .Xr hunt 6
 game.
-.Pp
-The
-.Fl s
-option is for running
-.Nm
-forever
-.Pq server mode .
-This is similar to running it under the control of
-.Xr inetd 8
-.Pq see below ,
-but it consumes a process table entry when no one is playing,
-and monitor clients are not disconnected.
-.Pp
-The
-.Fl p Ar port
-option changes the UDP port number used to rendezvous with the player
-process and thus allows for private games of
-.Xr hunt 6 .
 .Pp
 The
 .Fl a Ar addr
@@ -63,6 +47,24 @@ see
 .Sx CONFIGURATION ,
 below
 .Pc .
+.Pp
+The
+.Fl p Ar port
+option changes the UDP port number used to rendezvous with the player
+process and thus allows for private games of
+.Xr hunt 6 .
+.Pp
+The
+.Fl s
+option is for running
+.Nm
+forever
+.Pq server mode .
+This is similar to running it under the control of
+.Xr inetd 8
+.Pq see below ,
+but it consumes a process table entry when no one is playing,
+and monitor clients are not disconnected.
 .Ss INETD
 To run
 .Nm
