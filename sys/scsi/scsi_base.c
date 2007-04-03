@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.118 2007/04/03 04:15:50 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.119 2007/04/03 04:47:59 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -402,6 +402,31 @@ scsi_inquire(struct scsi_link *sc_link, struct scsi_inquiry_data *inqbuf,
 	    SCSI_DATA_IN | flags);
 
 	return (error);
+}
+
+/*
+ * Query a VPD inquiry page
+ */
+int
+scsi_inquire_vpd(struct scsi_link *sc_link, void *buf, u_int buflen,
+    u_int8_t page, int flags)
+{
+	struct scsi_inquiry scsi_cmd;
+	int error;
+
+	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	scsi_cmd.opcode = INQUIRY;
+	scsi_cmd.flags = SI_EVPD;
+	scsi_cmd.pagecode = page;
+	_lto2b(buflen, scsi_cmd.length);
+
+	bzero(buf, buflen);
+
+	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
+	    sizeof(scsi_cmd), buf, buflen, 2, 10000, NULL,
+ 	    SCSI_DATA_IN | flags);
+ 
+ 	return (error);
 }
 
 /*
