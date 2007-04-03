@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hardclock.9,v 1.6 2003/11/08 19:17:28 jmc Exp $
+.\"	$OpenBSD: hardclock.9,v 1.7 2007/04/03 06:37:37 jasper Exp $
 .\"
 .\" Copyright (c) 2001 Kenneth R Westerback
 .\" All rights reserved.
@@ -65,6 +65,10 @@ Update the real-time timeout queue, calling
 .Fn softclock
 directly if the current interrupt priority is low enough.
 .El
+.Sh CODE REFERENCES
+.Fn hardclock
+is implemented in the file
+.Pa sys/kern/kern_clock.c .
 .Sh SEE ALSO
 .Xr adjtime 2 ,
 .Xr hz 9 ,
@@ -72,7 +76,3 @@ directly if the current interrupt priority is low enough.
 .Xr spl 9 ,
 .Xr time 9 ,
 .Xr timeout 9
-.Sh CODE REFERENCES
-.Fn hardclock
-is implemented in the file
-.Pa sys/kern/kern_clock.c .

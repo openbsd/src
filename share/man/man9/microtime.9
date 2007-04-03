@@ -1,4 +1,4 @@
-.\"	$OpenBSD: microtime.9,v 1.8 2004/07/07 21:29:40 jmc Exp $
+.\"	$OpenBSD: microtime.9,v 1.9 2007/04/03 06:37:37 jasper Exp $
 .\"     $NetBSD: microtime.9,v 1.2 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,13 +123,13 @@ They should be used where a precision of 10 msec is acceptable and where
 performance is critical.
 The functions without the "get" prefix return the best timestamp that can
 be produced in the given format.
+.Sh CODE REFERENCES
+The implementation of these functions is partly machine dependent, but
+the bulk of the code is in the file
+.Pa sys/kern/kern_clock.c .
 .Sh SEE ALSO
 .Xr settimeofday 2 ,
 .Xr hardclock 9 ,
 .Xr hz 9 ,
 .Xr inittodr 9 ,
 .Xr time 9
-.Sh CODE REFERENCES
-The implementation of these functions is partly machine dependent, but
-the bulk of the code is in the file
-.Pa sys/kern/kern_clock.c .

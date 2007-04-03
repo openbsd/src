@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.9,v 1.13 2007/01/26 00:20:47 jason Exp $
+.\"	$OpenBSD: printf.9,v 1.14 2007/04/03 06:37:37 jasper Exp $
 .\"     $NetBSD: kprintf.9,v 1.6 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -218,10 +218,10 @@ printf("enablereg=%b\en", 0xe860,
        "\ex06IOCACHE\ex05LOOPBACK\ex04DBGCACHE")
 \(rA "enablereg=e860<NOTBOOT,FPP,SDVMA,VIDEO,CACHE,IOCACHE>"
 .Ed
+.Sh CODE REFERENCES
+.Pa sys/kern/subr_prf.c
 .Sh SEE ALSO
 .Xr revoke 2 ,
 .Xr printf 3 ,
 .Xr ddb 4 ,
 .Xr log 9
-.Sh CODE REFERENCES
-.Pa sys/kern/subr_prf.c

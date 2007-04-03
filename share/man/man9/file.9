@@ -1,4 +1,4 @@
-.\"     $OpenBSD: file.9,v 1.8 2006/11/08 08:23:33 jmc Exp $
+.\"     $OpenBSD: file.9,v 1.9 2007/04/03 06:37:37 jasper Exp $
 .\"
 .\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -110,8 +110,6 @@ and
 .Fn FRELE
 are cheap to use, there is no reason to risk introducing bugs by
 not using them.
-.Sh SEE ALSO
-.Xr vnode 9
 .Sh CODE REFERENCES
 The majority of those functions are implemented in
 .Pa sys/kern/kern_descrip.c .
@@ -119,3 +117,5 @@ The function prototypes and the macros are located in
 .Pa sys/sys/file.h
 and
 .Pa sys/sys/filedesc.h .
+.Sh SEE ALSO
+.Xr vnode 9
