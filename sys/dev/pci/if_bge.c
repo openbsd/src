@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.208 2007/03/19 02:27:40 krw Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.209 2007/04/03 22:12:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1860,19 +1860,29 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 
 	bge_chipinit(sc);
 
+#ifdef __sparc64__
+	if (!gotenaddr) {
+		if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
+		    sc->arpcom.ac_enaddr, ETHER_ADDR_LEN) == ETHER_ADDR_LEN)
+			gotenaddr = 1;
+	}
+#endif
+
 	/*
 	 * Get station address from the EEPROM.
 	 */
-	mac_addr = bge_readmem_ind(sc, 0x0c14);
-	if ((mac_addr >> 16) == 0x484b) {
-		sc->arpcom.ac_enaddr[0] = (u_char)(mac_addr >> 8);
-		sc->arpcom.ac_enaddr[1] = (u_char)mac_addr;
-		mac_addr = bge_readmem_ind(sc, 0x0c18);
-		sc->arpcom.ac_enaddr[2] = (u_char)(mac_addr >> 24);
-		sc->arpcom.ac_enaddr[3] = (u_char)(mac_addr >> 16);
-		sc->arpcom.ac_enaddr[4] = (u_char)(mac_addr >> 8);
-		sc->arpcom.ac_enaddr[5] = (u_char)mac_addr;
-		gotenaddr = 1;
+	if (!gotenaddr) {
+		mac_addr = bge_readmem_ind(sc, 0x0c14);
+		if ((mac_addr >> 16) == 0x484b) {
+			sc->arpcom.ac_enaddr[0] = (u_char)(mac_addr >> 8);
+			sc->arpcom.ac_enaddr[1] = (u_char)mac_addr;
+			mac_addr = bge_readmem_ind(sc, 0x0c18);
+			sc->arpcom.ac_enaddr[2] = (u_char)(mac_addr >> 24);
+			sc->arpcom.ac_enaddr[3] = (u_char)(mac_addr >> 16);
+			sc->arpcom.ac_enaddr[4] = (u_char)(mac_addr >> 8);
+			sc->arpcom.ac_enaddr[5] = (u_char)mac_addr;
+			gotenaddr = 1;
+		}
 	}
 	if (!gotenaddr && (!(sc->bge_flags & BGE_NO_EEPROM))) {
 		if (bge_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
@@ -1881,11 +1891,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #ifdef __sparc64__
-	if (!gotenaddr) {
-		if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
-		    sc->arpcom.ac_enaddr, ETHER_ADDR_LEN) == ETHER_ADDR_LEN)
-			gotenaddr = 1;
-	}
 	if (!gotenaddr) {
 		extern void myetheraddr(u_char *);
 
