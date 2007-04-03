@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.53 2007/04/03 17:08:30 millert Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.54 2007/04/03 18:42:32 millert Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -74,9 +74,6 @@ extern int	ntracks;	/* # tracks/cylinder */
 extern int	nsectors;	/* # sectors/track */
 extern int	secpercyl;	/* sectors per cylinder */
 extern int	sectorsize;	/* bytes/sector */
-extern int	rpm;		/* revolutions/minute of drive */
-extern int	interleave;	/* hardware sector interleave */
-extern int	trackskew;	/* sector 0 skew, per track */
 extern int	fsize;		/* fragment size */
 extern int	bsize;		/* block size */
 extern int	cpg;		/* cylinders/cylinder group */
@@ -85,7 +82,6 @@ extern int	minfree;	/* free space threshold */
 extern int	opt;		/* optimization preference (space or time) */
 extern int	density;	/* number of bytes per inode */
 extern int	maxcontig;	/* max contiguous blocks to allocate */
-extern int	rotdelay;	/* rotational delay between blocks */
 extern int	maxbpg;		/* maximum blocks per file in a cyl group */
 extern int	bbsize;		/* boot block size */
 extern int	sbsize;		/* superblock size */
@@ -481,8 +477,8 @@ recalc:
 	 * are not powers of two, because more cylinders must be described
 	 * by the tables before the rotational pattern repeats (fs_cpc).
 	 */
-	sblock.fs_interleave = interleave;
-	sblock.fs_trackskew = trackskew;
+	sblock.fs_interleave = 1;
+	sblock.fs_trackskew = 0;
 	sblock.fs_npsect = sblock.fs_nsect;
 	sblock.fs_postblformat = FS_DYNAMICPOSTBLFMT;
 	sblock.fs_sbsize = fragroundup(&sblock, sizeof(struct fs));
@@ -572,11 +568,11 @@ next:
 	if ((fscs = calloc(1, sblock.fs_cssize)) == NULL)
 		err(1, "cg summary");
 	sblock.fs_magic = FS_MAGIC;
-	sblock.fs_rotdelay = rotdelay;
+	sblock.fs_rotdelay = 0;
 	sblock.fs_minfree = minfree;
 	sblock.fs_maxcontig = maxcontig;
 	sblock.fs_maxbpg = maxbpg;
-	sblock.fs_rps = rpm / 60;
+	sblock.fs_rps = 3600 / 60;
 	sblock.fs_optim = opt;
 	sblock.fs_cgrotor = 0;
 	sblock.fs_ffs1_cstotal.cs_ndir = 0;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.50 2007/04/02 20:20:39 millert Exp $
+.\"	$OpenBSD: newfs.8,v 1.51 2007/04/03 18:42:32 millert Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -43,17 +43,13 @@
 .Op Fl a Ar maxcontig
 .Op Fl b Ar block-size
 .Op Fl c Ar cylinders
-.Op Fl d Ar rotdelay
 .Op Fl e Ar maxbpg
 .Op Fl f Ar frag-size
 .Op Fl g Ar avgfilesize
 .Op Fl h Ar avgfpdir
 .Op Fl i Ar bytes
-.Op Fl k Ar skew
-.Op Fl l Ar interleave
 .Op Fl m Ar free-space
 .Op Fl o Ar optimization
-.Op Fl r Ar revolutions
 .Op Fl S Ar sector-size
 .Op Fl s Ar size
 .Op Fl t Ar fstype
@@ -67,7 +63,6 @@
 .Op Fl a Ar maxcontig
 .Op Fl b Ar block-size
 .Op Fl c Ar cylinders
-.Op Fl d Ar rotdelay
 .Op Fl e Ar maxbpg
 .Op Fl f Ar frag-size
 .Op Fl i Ar bytes
@@ -152,13 +147,6 @@ The default is 16KB.
 .It Fl c Ar cylinders
 The number of cylinders per cylinder group in a file system.
 The default is to use as many as fit with the other parameters given.
-.It Fl d Ar rotdelay
-This specifies the expected time (in milliseconds) to service a transfer
-completion interrupt and initiate a new transfer on the same disk.
-The default is 0 milliseconds.
-See
-.Xr tunefs 8
-for more details on how to set this option.
 .It Fl e Ar maxbpg
 This indicates the maximum number of blocks any single file can
 allocate out of a cylinder group before it is forced to begin
@@ -241,23 +229,6 @@ it impossible for
 .Xr fsck 8
 to find the alternate superblocks if the standard superblock is lost.
 .Bl -tag -width Fl
-.It Fl k Ar skew
-Used to describe perturbations in the media format to compensate for
-a slow controller.
-Track skew is the offset of sector 0 on track N relative to sector 0
-on track N\-1 on the same cylinder.
-.It Fl l Ar interleave
-Used to describe perturbations in the media format to compensate for
-a slow controller.
-Interleave is physical sector interleave on each track,
-specified as the denominator of the ratio:
-.Dl sectors read/sectors passed over
-Thus an interleave of 1/1 implies contiguous layout, while 1/2 implies
-logical sector 0 is separated by one sector from logical sector 1.
-.Pq Fl u
-since they are not available to the file system for data allocation.
-.It Fl r Ar revolutions
-The speed of the disk in revolutions per minute.
 .It Fl S Ar sector-size
 The size of a sector in bytes (almost never anything but 512).
 .It Fl t Ar fstype

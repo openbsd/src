@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.54 2007/04/03 17:08:30 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.55 2007/04/03 18:42:32 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -114,9 +114,6 @@ int	nsectors;		/* # sectors/track */
 int	secpercyl;		/* sectors per cylinder */
 int	sectorsize;		/* bytes/sector */
 int	realsectorsize;		/* bytes/sector in hardware */
-int	rpm;			/* revolutions/minute of drive */
-int	interleave;		/* hardware sector interleave */
-int	trackskew = -1;		/* sector 0 skew, per track */
 int	fsize = 0;		/* fragment size */
 int	bsize = 0;		/* block size */
 int	cpg;			/* cylinders/cylinder group */
@@ -126,7 +123,6 @@ int	opt = DEFAULTOPT;	/* optimization preference (space or time) */
 int	reqopt = -1;		/* opt preference has not been specified */
 int	density;		/* number of bytes per inode */
 int	maxcontig = 0;		/* max contiguous blocks to allocate */
-int	rotdelay = 0;		/* rotational delay between blocks */
 int	maxbpg;			/* maximum blocks per file in a cyl group */
 int	avgfilesize = AVFILESIZ;/* expected average file size */
 int	avgfilesperdir = AFPDIR;/* expected number of files per directory */
@@ -186,8 +182,8 @@ main(int argc, char *argv[])
 		fatal("insane maxpartitions value %d", maxpartitions);
 
 	opstring = mfs ?
-	    "P:T:a:b:c:d:e:f:i:m:o:s:" :
-	    "NOS:T:a:b:c:d:e:f:g:h:i:k:l:m:o:qr:s:t:u:z:";
+	    "P:T:a:b:c:e:f:i:m:o:s:" :
+	    "NOS:T:a:b:c:e:f:g:h:i:m:o:qs:t:u:z:";
 	while ((ch = getopt(argc, argv, opstring)) != -1) {
 		switch (ch) {
 		case 'N':
@@ -217,10 +213,6 @@ main(int argc, char *argv[])
 				fatal("%s: bad cylinders/group", optarg);
 			cpgflg++;
 			break;
-		case 'd':
-			if ((rotdelay = atoi(optarg)) < 0)
-				fatal("%s: bad rotational delay\n", optarg);
-			break;
 		case 'e':
 			if ((maxbpg = atoi(optarg)) <= 0)
 		fatal("%s: bad blocks per file in a cylinder group\n",
@@ -242,14 +234,6 @@ main(int argc, char *argv[])
 			if ((density = atoi(optarg)) <= 0)
 				fatal("%s: bad bytes per inode\n", optarg);
 			break;
-		case 'k':
-			if ((trackskew = atoi(optarg)) < 0)
-				fatal("%s: bad track skew", optarg);
-			break;
-		case 'l':
-			if ((interleave = atoi(optarg)) <= 0)
-				fatal("%s: bad interleave", optarg);
-			break;
 		case 'm':
 			if ((minfree = atoi(optarg)) < 0 || minfree > 99)
 				fatal("%s: bad free space %%\n", optarg);
@@ -269,10 +253,6 @@ main(int argc, char *argv[])
 			break;
 		case 'q':
 			quiet = 1;
-			break;
-		case 'r':
-			if ((rpm = atoi(optarg)) <= 0)
-				fatal("%s: bad revolutions/minute\n", optarg);
 			break;
 		case 's':
 			if ((fssize = atoi(optarg)) <= 0)
@@ -439,11 +419,6 @@ havelabel:
 	if (fssize > pp->p_size && !mfs)
 	       fatal("%s: maximum file system size on the `%c' partition is %d",
 			argv[0], *cp, pp->p_size);
-	if (rpm == 0) {
-		rpm = lp->d_rpm;
-		if (rpm <= 0)
-			rpm = 3600;
-	}
 	if (ntracks == 0) {
 		ntracks = lp->d_ntracks;
 		if (ntracks <= 0)
@@ -458,16 +433,6 @@ havelabel:
 		sectorsize = lp->d_secsize;
 		if (sectorsize <= 0)
 			fatal("%s: no default sector size", argv[0]);
-	}
-	if (trackskew == -1) {
-		trackskew = lp->d_trackskew;
-		if (trackskew < 0)
-			trackskew = 0;
-	}
-	if (interleave == 0) {
-		interleave = lp->d_interleave;
-		if (interleave <= 0)
-			interleave = 1;
 	}
 	if (fsize == 0) {
 		fsize = pp->p_fsize;
@@ -732,18 +697,14 @@ struct fsoptions {
 	{ "-a maximum contiguous blocks", 1 },
 	{ "-b block size", 1 },
 	{ "-c cylinders/group", 1 },
-	{ "-d rotational delay between contiguous blocks", 1 },
 	{ "-e maximum blocks per file in a cylinder group", 1 },
 	{ "-f frag size", 1 },
 	{ "-g average file size", 0 },
 	{ "-h average files per directory", 0 },
 	{ "-i number of bytes per inode", 1 },
-	{ "-k sector 0 skew, per track", 0 },
-	{ "-l hardware sector interleave", 0 },
 	{ "-m minimum free space %%", 1 },
 	{ "-n number of distinguished rotational positions", 0 },
 	{ "-o optimization preference (`space' or `time')", 1 },
-	{ "-r revolutions/minute", 0 },
 	{ "-s file system size (sectors)", 1 },
 	{ "-t file system type", 0 },
 	{ "-u sectors/track", 0 },
