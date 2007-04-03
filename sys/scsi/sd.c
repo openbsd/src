@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.119 2007/02/21 01:32:21 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.120 2007/04/03 04:58:21 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -107,6 +107,8 @@ int	sd_get_parms(struct sd_softc *, struct disk_parms *, int);
 void	sd_flush(struct sd_softc *, int);
 
 void	viscpy(u_char *, u_char *, int);
+
+int	sd_ioctl_inquiry(struct sd_softc *, struct dk_inquiry *);
 
 struct cfattach sd_ca = {
 	sizeof(struct sd_softc), sdmatch, sdattach,
@@ -953,6 +955,13 @@ sdioctl(dev, cmd, addr, flag, p)
 		sd->sc_link->flags |= SDEV_EJECTING;
 		goto exit;
 
+	case DIOCINQ:
+		error = scsi_do_ioctl(sd->sc_link, dev, cmd, addr, flag, p);
+		if (error == ENOTTY)
+			error = sd_ioctl_inquiry(sd,
+			    (struct dk_inquiry *)addr);
+		goto exit;
+
 	default:
 		if (part != RAW_PART) {
 			error = ENOTTY;
@@ -964,6 +973,27 @@ sdioctl(dev, cmd, addr, flag, p)
  exit:
 	device_unref(&sd->sc_dev);
 	return (error);
+}
+
+int
+sd_ioctl_inquiry(struct sd_softc *sd, struct dk_inquiry *di)
+{
+	struct scsi_inquiry_vpd vpd;
+
+	bzero(di, sizeof(struct dk_inquiry));
+	scsi_strvis(di->vendor, sd->sc_link->inqdata.vendor,
+	    sizeof(sd->sc_link->inqdata.vendor));
+	scsi_strvis(di->product, sd->sc_link->inqdata.product,
+	    sizeof(sd->sc_link->inqdata.product));
+	scsi_strvis(di->revision, sd->sc_link->inqdata.revision,
+	    sizeof(sd->sc_link->inqdata.revision));
+
+	/* the serial vpd page is optional */
+	if (scsi_inquire_vpd(sd->sc_link, &vpd, sizeof(vpd),
+	    SI_PG_SERIAL, 0) == 0)
+		scsi_strvis(di->serial, vpd.serial, sizeof(vpd.serial));
+
+	return (0);
 }
 
 /*
