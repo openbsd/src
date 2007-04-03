@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.51 2007/04/03 18:42:32 millert Exp $
+.\"	$OpenBSD: newfs.8,v 1.52 2007/04/03 19:11:55 millert Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -238,9 +238,6 @@ will be smart enough to run the alternate newfs_XXX program instead.
 .It Fl u Ar sectors
 The number of sectors per track available for data allocation by the file
 system.
-.Pq Fl u
-of the last track of each cylinder since they are not available to the file
-system for data allocation.
 .It Fl z Ar tracks
 The number of tracks/cylinder available for data allocation by the file
 system.
