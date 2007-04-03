@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.380 2007/03/19 09:29:33 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.381 2007/04/03 10:14:47 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3300,8 +3300,16 @@ cpu_initclocks(void)
 void
 need_resched(struct cpu_info *ci)
 {
+	struct proc *p;
+
 	ci->ci_want_resched = 1;
-	ci->ci_astpending = 1;
+
+	/*
+	 * Need to catch the curproc in case it's cleared just
+	 * between the check and the aston().
+	 */
+	if ((p = ci->ci_curproc) != NULL)
+		aston(p);
 }
 
 #ifdef MULTIPROCESSOR

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.89 2007/03/19 09:29:33 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.90 2007/04/03 10:14:47 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -124,7 +124,6 @@ struct cpu_info {
 	void (*cpu_setup)(struct cpu_info *);	/* proc-dependant init */
 
 	int		ci_want_resched;
-	int		ci_astpending;
 
 	union descriptor *ci_gdt;
 	union descriptor *ci_ldt;	/* per-cpu default LDT */
@@ -202,7 +201,6 @@ extern void cpu_init_idle_pcbs(void);
 #define curpcb			curcpu()->ci_curpcb
 
 #define want_resched (curcpu()->ci_want_resched)
-#define astpending (curcpu()->ci_astpending)
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -219,18 +217,20 @@ extern void need_resched(struct cpu_info *);
  */
 #define	PROC_PC(p)		((p)->p_md.md_regs->tf_eip)
 
+#define aston(p)		((p)->p_md.md_astpending = 1)
+
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	setsoftast()
+#define	need_proftick(p)	aston(p)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)		setsoftast()
+#define	signotify(p)		aston(p)
 
 /*
  * We need a machine-independent name for this.

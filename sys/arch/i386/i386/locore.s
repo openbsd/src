@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.106 2007/02/20 21:15:01 tom Exp $	*/
+/*	$OpenBSD: locore.s,v 1.107 2007/04/03 10:14:47 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -125,10 +125,14 @@
 
 #define	CHECK_ASTPENDING(treg)				\
 	GET_CPUINFO(treg)			;	\
-	cmpl	$0,CPU_INFO_ASTPENDING(treg)
+	movl	CPU_INFO_CURPROC(treg), treg	;	\
+	cmpl	$0, treg			;	\
+	je	1f				;	\
+	cmpl	$0,P_MD_ASTPENDING(treg)	;	\
+	1:
 
-#define	CLEAR_ASTPENDING(cireg)				\
-	movl	$0,CPU_INFO_ASTPENDING(cireg)
+#define	CLEAR_ASTPENDING(cpreg)				\
+	movl	$0,P_MD_ASTPENDING(cpreg)
 
 /*
  * These are used on interrupt or trap entry or exit.

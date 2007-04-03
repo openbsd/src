@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.25 2007/02/20 21:15:01 tom Exp $
+#	$OpenBSD: genassym.cf,v 1.26 2007/04/03 10:14:47 art Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -96,6 +96,7 @@ member	p_wchan
 member	p_vmspace
 member	p_flag
 member	p_cpu
+member	P_MD_ASTPENDING	p_md.md_astpending
 
 export	P_SYSTEM
 
@@ -198,7 +199,6 @@ define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_level)
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
 define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
-define	CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
 define	CPU_INFO_IMASK		offsetof(struct cpu_info, ci_imask)

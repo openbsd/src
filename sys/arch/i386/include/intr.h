@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.28 2007/03/23 16:03:52 art Exp $	*/
+/*	$OpenBSD: intr.h,v 1.29 2007/04/03 10:14:47 art Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -129,7 +129,6 @@ void splassert_check(int, const char *);
 #define spllock() 	splhigh()
 #define	spl0()		spllower(IPL_NONE)
 
-#define	setsoftast()	(astpending = 1)
 #define	setsoftclock()	softintr(1 << SIR_CLOCK, IPL_SOFTCLOCK)
 #define	setsoftnet()	softintr(1 << SIR_NET, IPL_SOFTNET)
 #define	setsofttty()	softintr(1 << SIR_TTY, IPL_SOFTTTY)
