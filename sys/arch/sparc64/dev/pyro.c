@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.6 2007/04/01 21:41:09 kettenis Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.7 2007/04/03 19:59:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -61,6 +61,7 @@ extern struct sparc_pci_chipset _sparc_pci_chipset;
 int pyro_match(struct device *, void *, void *);
 void pyro_attach(struct device *, struct device *, void *);
 void pyro_init(struct pyro_softc *, int);
+void pyro_init_iommu(struct pyro_softc *, struct pyro_pbm *);
 int pyro_print(void *, const char *);
 
 pci_chipset_tag_t pyro_alloc_chipset(struct pyro_pbm *, int,
@@ -161,6 +162,9 @@ pyro_init(struct pyro_softc *sc, int busa)
 	    getpropint(sc->sc_node, "module-revision#", 0), sc->sc_ign,
 	    busa ? 'A' : 'B', busranges[0], busranges[1]);
 
+	printf("%s: ", sc->sc_dv.dv_xname);
+	pyro_init_iommu(sc, pbm);
+
 	pbm->pp_memt = pyro_alloc_mem_tag(pbm);
 	pbm->pp_iot = pyro_alloc_io_tag(pbm);
 	pbm->pp_cfgt = pyro_alloc_config_tag(pbm);
@@ -190,6 +194,32 @@ pyro_init(struct pyro_softc *sc, int busa)
 	free(busranges, M_DEVBUF);
 
 	config_found(&sc->sc_dv, &pba, pyro_print);
+}
+
+void
+pyro_init_iommu(struct pyro_softc *sc, struct pyro_pbm *pbm)
+{
+	struct iommu_state *is = &pbm->pp_is;
+	int tsbsize = 7;
+	u_int32_t iobase = -1;
+	char *name;
+
+	is->is_bustag = sc->sc_bust;
+
+	if (bus_space_subregion(is->is_bustag, sc->sc_csrh,
+	    0x40000, 0x100, &is->is_iommu)) {
+		panic("pyro: unable to create iommu handle");
+	}
+
+	is->is_sb[0] = &pbm->pp_sb;
+	is->is_sb[0]->sb_bustag = is->is_bustag;
+
+	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
+	if (name == NULL)
+		panic("couldn't malloc iommu name");
+	snprintf(name, 32, "%s dvma", sc->sc_dv.dv_xname);
+
+	iommu_init(name, is, tsbsize, iobase);
 }
 
 int
@@ -335,7 +365,10 @@ pyro_dmamap_create(bus_dma_tag_t t, bus_dma_tag_t t0, bus_size_t size,
     int nsegments, bus_size_t maxsegsz, bus_size_t boundary, int flags,
     bus_dmamap_t *dmamp)
 {
-	return (ENOMEM);
+	struct pyro_pbm *pp = t->_cookie;
+
+	return (iommu_dvmamap_create(t, t0, &pp->pp_sb, size, nsegments,
+	    maxsegsz, boundary, flags, dmamp));
 }
 
 int

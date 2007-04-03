@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyrovar.h,v 1.2 2007/04/01 21:41:09 kettenis Exp $	*/
+/*	$OpenBSD: pyrovar.h,v 1.3 2007/04/03 19:59:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -49,6 +49,8 @@ struct pyro_pbm {
 	bus_space_handle_t	pp_cfgh;
 	bus_dma_tag_t		pp_dmat;
 	int			pp_bus_a;
+	struct iommu_state	pp_is;
+	struct strbuf_ctl	pp_sb;
 };
 
 struct pyro_softc {
