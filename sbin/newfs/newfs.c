@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.55 2007/04/03 18:42:32 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.56 2007/04/03 20:59:34 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -173,6 +173,7 @@ main(int argc, char *argv[])
 	char *fstype = NULL;
 	char **saveargv = argv;
 	int ffs = 1;
+	const char *errstr;
 
 	if (strstr(__progname, "mfs"))
 		mfs = Nflag = quiet = 1;
@@ -193,50 +194,67 @@ main(int argc, char *argv[])
 			Oflag = 1;
 			break;
 		case 'S':
-			if ((sectorsize = atoi(optarg)) <= 0)
-				fatal("%s: bad sector size", optarg);
+			sectorsize = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				fatal("sector size is %s: %s", errstr, optarg);
 			break;
 		case 'T':
 			disktype = optarg;
 			break;
 		case 'a':
-			if ((maxcontig = atoi(optarg)) <= 0)
-				fatal("%s: bad maximum contiguous blocks\n",
-				    optarg);
+			maxcontig = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				fatal("maximum contiguous blocks %s: %s",
+				    errstr, optarg);
 			break;
 		case 'b':
-			if ((bsize = atoi(optarg)) < 0)
-				fatal("%s: bad block size", optarg);
+			bsize = strtonum(optarg, MINBSIZE, MAXBSIZE, &errstr);
+			if (errstr)
+				fatal("block size is %s: %s", errstr, optarg);
 			break;
 		case 'c':
-			if ((cpg = atoi(optarg)) <= 0)
-				fatal("%s: bad cylinders/group", optarg);
+			cpg = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				fatal("cylinders/group is %s: %s",
+				    errstr, optarg);
 			cpgflg++;
 			break;
 		case 'e':
-			if ((maxbpg = atoi(optarg)) <= 0)
-		fatal("%s: bad blocks per file in a cylinder group\n",
-				    optarg);
+			maxbpg = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				fatal("blocks per file in a cylinder group is"
+				    " %s: %s", errstr, optarg);
 			break;
 		case 'f':
-			if ((fsize = atoi(optarg)) <= 0)
-				fatal("%s: bad fragment size", optarg);
+			fsize = strtonum(optarg, MINBSIZE / MAXFRAG, MAXBSIZE,
+			    &errstr);
+			if (errstr)
+				fatal("fragment size is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'g':
-			if ((avgfilesize = atoi(optarg)) <= 0)
-				fatal("%s: bad average file size", optarg);
+			avgfilesize = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				fatal("average file size is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'h':
-			if ((avgfilesperdir = atoi(optarg)) <= 0)
-				fatal("%s: bad average files per dir", optarg);
+			avgfilesperdir = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				fatal("average files per dir is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'i':
-			if ((density = atoi(optarg)) <= 0)
-				fatal("%s: bad bytes per inode\n", optarg);
+			density = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				fatal("bytes per inode is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'm':
-			if ((minfree = atoi(optarg)) < 0 || minfree > 99)
-				fatal("%s: bad free space %%\n", optarg);
+			minfree = strtonum(optarg, 0, 99, &errstr);
+			if (errstr)
+				fatal("free space %% is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'o':
 			if (mfs)
@@ -255,12 +273,15 @@ main(int argc, char *argv[])
 			quiet = 1;
 			break;
 		case 's':
-			if ((fssize = atoi(optarg)) <= 0)
-				fatal("%s: bad file system size", optarg);
+			fssize = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				fatal("file system size is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'z':
-			if ((ntracks = atoi(optarg)) <= 0)
-				fatal("%s: bad total tracks", optarg);
+			ntracks = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				fatal("total tracks is %s: %s", errstr, optarg);
 			break;
 		case 't':
 			fstype = optarg;
@@ -268,8 +289,10 @@ main(int argc, char *argv[])
 				ffs = 0;
 			break;
 		case 'u':
-			if ((nsectors = atoi(optarg)) <= 0)
-				fatal("%s: bad sectors/track", optarg);
+			nsectors = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				fatal("sectors/track is %s: %s",
+				    errstr, optarg);
 			break;
 #ifdef MFS
 		case 'P':
