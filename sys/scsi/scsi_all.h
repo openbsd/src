@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.41 2007/04/03 04:15:50 dlg Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.42 2007/04/03 04:55:34 dlg Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -82,6 +82,7 @@ struct scsi_inquiry {
 	u_int8_t flags;
 #define SI_EVPD		0x01
 	u_int8_t pagecode;
+#define SI_PG_SERIAL	0x80
 	u_int8_t length[2];
 	u_int8_t control;
 };
