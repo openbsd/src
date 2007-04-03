@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.73 2006/05/08 20:34:36 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.74 2007/04/03 14:33:07 jason Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -37,6 +37,7 @@
 #include "syscall.h"
 #include "archdep.h"
 #include "resolve.h"
+#include "sod.h"
 
 int _dl_errno;
 
@@ -339,12 +340,107 @@ dlerror(void)
 }
 
 void
+_dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
+    const char *objtypename)
+{
+	const char *fmt;
+	struct sod sd;
+	int i;
+	char *s;
+
+	s = _dl_strrchr(object->load_name, '/');
+	if (s != NULL)
+		s++;
+	else
+		s = object->load_name;
+	_dl_build_sod(s, &sd);
+	fmt = sd.sod_library ? fmt1 : fmt2;
+	
+	for (i = 0; fmt[i]; i++) {
+		if (fmt[i] != '%' && fmt[i] != '\\') {
+			_dl_fdprintf(fd, "%c", fmt[i]);
+			continue;
+		}
+		if (fmt[i] == '%') {
+			i++;
+			switch (fmt[i]) {
+			case '\0':
+				return;
+			case '%':
+				_dl_fdprintf(fd, "%c", '%');
+				break;
+			case 'A':
+				_dl_fdprintf(fd, "%s", _dl_traceprog ?
+				    _dl_traceprog : "");
+				break;
+			case 'a':
+				_dl_fdprintf(fd, "%s", _dl_progname);
+				break;
+			case 'e':
+				_dl_fdprintf(fd, "%lX",
+				    (void *)(object->load_addr +
+				    object->load_size));
+				break;
+			case 'g':
+				_dl_fdprintf(fd, "%d", object->grprefcount);
+				break;
+			case 'm':
+				_dl_fdprintf(fd, "%d", sd.sod_major);
+				break;
+			case 'n':
+				_dl_fdprintf(fd, "%d", sd.sod_minor);
+				break;
+			case 'O':
+				_dl_fdprintf(fd, "%d", object->opencount);
+				break;
+			case 'o':
+				_dl_fdprintf(fd, "%s", sd.sod_name);
+				break;
+			case 'p':
+				_dl_fdprintf(fd, "%s", object->load_name);
+				break;
+			case 'r':
+				_dl_fdprintf(fd, "%d", object->refcount);
+				break;
+			case 't':
+				_dl_fdprintf(fd, "%s", objtypename);
+				break;
+			case 'x':
+				_dl_fdprintf(fd, "%lX", object->load_addr);
+				break;
+			}
+		}
+		if (fmt[i] == '\\') {
+			i++;
+			switch (fmt[i]) {
+			case '\0':
+				return;
+			case 'n':
+				_dl_fdprintf(fd, "%c", '\n');
+				break;
+			case 'r':
+				_dl_fdprintf(fd, "%c", '\r');
+				break;
+			case 't':
+				_dl_fdprintf(fd, "%c", '\t');
+				break;
+			default:
+				_dl_fdprintf(fd, "%c", fmt[i]);
+				break;
+			}
+		}
+	}
+	_dl_free((void *)sd.sod_name);
+}
+
+void
 _dl_show_objects(void)
 {
 	elf_object_t *object;
 	char *objtypename;
 	int outputfd;
 	char *pad;
+	const char *fmt1, *fmt2;
 
 	object = _dl_objects;
 	if (_dl_traceld)
@@ -356,10 +452,17 @@ _dl_show_objects(void)
 		pad = "        ";
 	else
 		pad = "";
-	_dl_fdprintf(outputfd, "\tStart   %s End     %s Type Open Ref GrpRef Name\n",
-	    pad, pad);
 
-	while (object) {
+	fmt1 = _dl_tracefmt1 ? _dl_tracefmt1 :
+	    "\t%x %e %t %O    %r   %g      %p\n";
+	fmt2 = _dl_tracefmt2 ? _dl_tracefmt2 :
+	    "\t%x %e %t %O    %r   %g      %p\n";
+
+	if (_dl_tracefmt1 == NULL && _dl_tracefmt2 == NULL)
+		_dl_fdprintf(outputfd, "\tStart   %s End     %s Type Open Ref GrpRef Name\n",
+		    pad, pad);
+
+	for (; object != NULL; object = object->next) {
 		switch (object->obj_type) {
 		case OBJTYPE_LDR:
 			objtypename = "rtld";
@@ -377,12 +480,7 @@ _dl_show_objects(void)
 			objtypename = "????";
 			break;
 		}
-		_dl_fdprintf(outputfd, "\t%lX %lX %s %d    %d   %d      %s\n",
-		    (void *)object->load_addr,
-		    (void *)(object->load_addr + object->load_size),
-		    objtypename, object->opencount, object->refcount,
-		    object->grprefcount, object->load_name);
-		object = object->next;
+		_dl_tracefmt(outputfd, object, fmt1, fmt2, objtypename);
 	}
 
 	if (_dl_symcachestat_lookups != 0)
