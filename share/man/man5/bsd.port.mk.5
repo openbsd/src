@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.191 2007/03/30 13:46:24 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.192 2007/04/03 10:17:00 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -695,6 +695,15 @@ Many ports ignore it.
 See also
 .Ev COPTS ,
 .Ev CDIAGFLAGS .
+.It Ev CHECK_LIB_DEPENDS
+Use settings.
+If set to
+.Sq Yes ,
+every package build will verify that shared libraries are correctly
+registered.
+Defaults to 
+.Sq \&No ,
+as this can be a big performance hit.
 .It Ev CHECKSUM_FILE
 Location for this port's checksums, used by
 .Ar addsum ,
