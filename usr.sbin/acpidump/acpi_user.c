@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_user.c,v 1.4 2007/01/05 14:13:29 otto Exp $	*/
+/*	$OpenBSD: acpi_user.c,v 1.5 2007/04/03 10:43:33 jsg Exp $	*/
 /*-
  * Copyright (c) 1999 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: acpi_user.c,v 1.4 2007/01/05 14:13:29 otto Exp $
+ *	$Id: acpi_user.c,v 1.5 2007/04/03 10:43:33 jsg Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpi_user.c,v 1.3 2000/11/08 02:37:00 iwasaki Exp $
  */
 #include <sys/types.h>
@@ -153,7 +153,7 @@ acpi_load_dsdt(char *dumpfile, u_int8_t **dpp, u_int8_t **endp)
 		errx(1, "mmap %s", dumpfile);
 	}
 
-	if (strncmp(dp, "DSDT", 4) == 0) {
+	if (sb.st_size >= SIZEOF_SDT_HDR && strncmp(dp, "DSDT", 4) == 0) {
 		memcpy(&dsdt_header, dp, SIZEOF_SDT_HDR);
 		dp += SIZEOF_SDT_HDR;
 		sb.st_size -= SIZEOF_SDT_HDR;
