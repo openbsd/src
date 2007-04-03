@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.18 2007/03/31 08:31:02 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.19 2007/04/03 14:48:53 gwk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -55,6 +55,8 @@ struct cfdriver mainbus_cd = {
 
 /* hw.product sysctl see sys/kern/kern_sysctl.c */
 extern char *hw_prod, *hw_ver, *hw_vendor;
+
+#define HH_REG_CONF 	0x90
 
 void	mb_intr_establish(struct confargs *, int (*)(void *), void *);
 void	mb_intr_disestablish(struct confargs *);
@@ -143,6 +145,31 @@ mbattach(struct device *parent, struct device *self, void *aux)
 		nca.ca_reg = reg;
 		reg[0] = 0;
 		config_found(self, &nca, mbprint);
+	}
+
+	/*
+	 * Special hack for SMP old world macs which lack /cpus and only have
+	 * one cpu node.
+	 */
+	node = OF_finddevice("/hammerhead");
+	if (node != -1) {
+		len = OF_getprop(node, "reg", reg, sizeof(reg));
+		if (len >= 2) {
+			u_char *hh_base;
+			int twoway = 0;
+
+			if ((hh_base = mapiodev(reg[0], reg[1])) != NULL) {
+				twoway = in32rb(hh_base + HH_REG_CONF) & 0x02;
+				unmapiodev(hh_base, reg[1]);
+			}
+			if (twoway) {
+				nca.ca_name = "cpu";
+				nca.ca_bus = &sc->sc_bus;
+				nca.ca_reg = reg;
+				reg[0] = 1;
+				config_found(self, &nca, mbprint);
+			}
+		}
 	}
 
 	for (node = OF_child(OF_peer(0)); node; node=OF_peer(node)) {
