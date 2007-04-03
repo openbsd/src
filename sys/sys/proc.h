@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.92 2007/03/24 16:01:22 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.93 2007/04/03 08:05:43 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -117,18 +117,39 @@ extern int nemuls;			/* Number of emuls */
 /*
  * Description of a process.
  *
- * This structure contains the information needed to manage a thread of
+ * These structures contain the information needed to manage a thread of
  * control, known in UN*X as a process; it has references to substructures
  * containing descriptions of things that the process uses, but may share
  * with related processes.  The process structure and the substructures
  * are always addressable except for those marked "(PROC ONLY)" below,
  * which might be addressable only on a processor on which the process
  * is running.
+ *
+ * struct process is the higher level process containing information
+ * shared by all threads in a process, while struct proc contains the
+ * run-time information needed by threads.
  */
-struct	proc {
+struct process {
+	/*
+	 * ps_mainproc is the main thread in the process.
+	 * Ultimately, we shouldn't need that, threads should be able to exit
+	 * at will. Unfortunately until the pid is moved into struct process
+	 * we'll have to remember the main threads and abouse its pid as the
+	 * the pid of the process. This is gross, but considering the horrible
+	 * pid semantics we have right now, it's unavoidable.
+	 */
+	struct proc *ps_mainproc;
+
+	TAILQ_HEAD(,proc) ps_threads;	/* Threads in this process. */
+};
+
+struct proc {
 	struct	proc *p_forw;		/* Doubly-linked run/sleep queue. */
 	struct	proc *p_back;
 	LIST_ENTRY(proc) p_list;	/* List of all processes. */
+
+	struct	process *p_p;		/* The process of this thread. */
+	TAILQ_ENTRY(proc) p_thr_link;/* Threads in a process linkage. */
 
 	/* substructures: */
 	struct	pcred *p_cred;		/* Process owner's identity. */
@@ -161,12 +182,7 @@ struct	proc {
 	pid_t	p_oppid;	 /* Save parent pid during ptrace. XXX */
 	int	p_dupfd;	 /* Sideways return value from filedescopen. XXX */
 
-	/* threads are processes that sometimes use the parent thread's
-	 * info for userland visibility */
-	struct	proc *p_thrparent;
-	LIST_ENTRY(proc) p_thrsib;
-	LIST_HEAD(, proc) p_thrchildren;
-	long p_thrslpid;	/* for thrsleep syscall */
+	long 	p_thrslpid;	/* for thrsleep syscall */
 
 
 	/* scheduling */
@@ -396,6 +412,7 @@ extern struct proclist zombproc;	/* List of zombie processes. */
 extern struct proc *initproc;		/* Process slots for init, pager. */
 extern struct proc *syncerproc;		/* filesystem syncer daemon */
 
+extern struct pool process_pool;	/* memory pool for processes */
 extern struct pool proc_pool;		/* memory pool for procs */
 extern struct pool rusage_pool;		/* memory pool for zombies */
 extern struct pool ucred_pool;		/* memory pool for ucreds */

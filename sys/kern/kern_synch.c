@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.78 2007/03/21 09:09:52 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.79 2007/04/03 08:05:43 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -432,14 +432,7 @@ sys_thrwakeup(struct proc *p, void *v, register_t *retval)
 	struct proc *q;
 	int found = 0;
 	
-	/* have to check the parent, it's not in the thread list */
-	if (p->p_thrparent->p_thrslpid == ident) {
-		wakeup(&p->p_thrparent->p_thrslpid);
-		p->p_thrparent->p_thrslpid = 0;
-		if (++found == n)
-			return (0);
-	}
-	LIST_FOREACH(q, &p->p_thrparent->p_thrchildren, p_thrsib) {
+	TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
 		if (q->p_thrslpid == ident) {
 			wakeup(&q->p_thrslpid);
 			q->p_thrslpid = 0;

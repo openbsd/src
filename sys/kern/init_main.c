@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.137 2007/03/24 16:01:22 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.138 2007/04/03 08:05:43 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ const char	copyright[] =
 struct	session session0;
 struct	pgrp pgrp0;
 struct	proc proc0;
+struct	process process0;
 struct	pcred cred0;
 struct	plimit limit0;
 struct	vmspace vmspace0;
@@ -258,6 +259,12 @@ main(void *framep)
 	/*
 	 * Create process 0 (the swapper).
 	 */
+
+	process0.ps_mainproc = p;
+	TAILQ_INIT(&process0.ps_threads);
+	TAILQ_INSERT_TAIL(&process0.ps_threads, p, p_thr_link);
+	p->p_p = &process0;
+
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 	p->p_pgrp = &pgrp0;
 	LIST_INSERT_HEAD(PIDHASH(0), p, p_hash);
@@ -268,9 +275,6 @@ main(void *framep)
 	pgrp0.pg_session = &session0;
 	session0.s_count = 1;
 	session0.s_leader = p;
-
-	p->p_thrparent = p;
-	LIST_INIT(&p->p_thrchildren);
 
 	atomic_setbits_int(&p->p_flag, P_SYSTEM | P_NOCLDWAIT);
 	p->p_stat = SONPROC;

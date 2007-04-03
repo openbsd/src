@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.88 2007/03/24 16:01:22 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.89 2007/04/03 08:05:43 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -72,6 +72,8 @@ struct	forkstat forkstat;
 
 void fork_return(void *);
 int pidtaken(pid_t);
+
+void process_new(struct proc *, struct proc *);
 
 void
 fork_return(void *arg)
@@ -147,6 +149,21 @@ sys_rfork(struct proc *p, void *v, register_t *retval)
 	return (fork1(p, SIGCHLD, flags, NULL, 0, NULL, NULL, retval, NULL));
 }
 
+/*
+ * Allocate and initialize a new process.
+ */
+void
+process_new(struct proc *newproc, struct proc *parent)
+{
+	struct process *pr;
+
+	pr = pool_get(&process_pool, PR_WAITOK);
+	pr->ps_mainproc = newproc;
+	TAILQ_INIT(&pr->ps_threads);
+	TAILQ_INSERT_TAIL(&pr->ps_threads, newproc, p_thr_link);
+	newproc->p_p = pr;
+}
+
 /* print the 'table full' message once per 10 seconds */
 struct timeval fork_tfmrate = { 10, 0 };
 
@@ -208,6 +225,18 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	p2->p_stat = SIDL;			/* protect against others */
 	p2->p_exitsig = exitsig;
 	p2->p_forw = p2->p_back = NULL;
+
+#ifdef RTHREADS
+	if (flags & FORK_THREAD) {
+		atomic_setbits_int(&p2->p_flag, P_THREAD);
+		p2->p_p = p1->p_p;
+		TAILQ_INSERT_TAIL(&p2->p_p->ps_threads, p2, p_thr_link);
+	} else {
+		process_new(p2, p1);
+	}
+#else
+	process_new(p2, p1);
+#endif
 
 	/*
 	 * Make a proc table entry for the new process.
@@ -282,19 +311,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 		atomic_setbits_int(&p2->p_flag, P_NOZOMBIE);
 	LIST_INIT(&p2->p_children);
 
-#ifdef RTHREADS
-	if (flags & FORK_THREAD) {
-		atomic_setbits_int(&p2->p_flag, P_THREAD);
-		p2->p_thrparent = p1->p_thrparent;
-	} else {
-		p2->p_thrparent = p2;
-	}
-#else
-	p2->p_thrparent = p2;
-#endif
-
-	LIST_INIT(&p2->p_thrchildren);
-
 #ifdef KTRACE
 	/*
 	 * Copy traceflag and tracefile if enabled.
@@ -366,10 +382,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
 	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
-#ifdef RTHREADS
-	if (flags & FORK_THREAD)
-		LIST_INSERT_HEAD(&p1->p_thrparent->p_thrchildren, p2, p_thrsib);
-#endif
 	if (p2->p_flag & P_TRACED) {
 		p2->p_oppid = p1->p_pid;
 		if (p2->p_pptr != p1->p_pptr)

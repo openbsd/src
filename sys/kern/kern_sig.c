@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.88 2007/03/15 10:22:30 art Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.89 2007/04/03 08:05:43 art Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -97,8 +97,9 @@ cansignal(struct proc *p, struct pcred *pc, struct proc *q, int signum)
 
 #ifdef RTHREADS
 	/* a thread can only be signalled from within the same process */
-	if (q->p_flag & P_THREAD)
-		return (p->p_thrparent == q->p_thrparent);
+	if (q->p_flag & P_THREAD) {
+		return (p->p_p == q->p_p);
+	}
 #endif
 
 	if (signum == SIGCONT && q->p_session == p->p_session)
@@ -787,7 +788,9 @@ psignal(struct proc *p, int signum)
 		return;
 
 #ifdef RTHREADS
-	LIST_FOREACH(q, &p->p_thrchildren, p_thrsib) {
+	TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
+		if (q == p)
+			continue;
 		if (q->p_sigdivert & (1 << signum)) {
 			q->p_sigdivert = 0;
 			psignal(q, signum);
@@ -839,16 +842,21 @@ psignal(struct proc *p, int signum)
 
 	if (prop & SA_CONT) {
 #ifdef RTHREADS
-		LIST_FOREACH(q, &p->p_thrchildren, p_thrsib)
-			psignal(q, signum);
+		TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
+			if (q != p)
+				psignal(q, signum);
+		 }
 #endif
 		atomic_clearbits_int(&p->p_siglist, stopsigmask);
 	}
 
 	if (prop & SA_STOP) {
 #ifdef RTHREADS
-		LIST_FOREACH(q, &p->p_thrchildren, p_thrsib)
-			psignal(q, signum);
+		
+		TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
+			if (q != p)
+				psignal(q, signum);
+		 }
 #endif
 		atomic_clearbits_int(&p->p_siglist, contsigmask);
 		atomic_clearbits_int(&p->p_flag, P_CONTINUED);

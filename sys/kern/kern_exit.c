@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.63 2007/03/15 10:22:30 art Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.64 2007/04/03 08:05:43 art Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -125,30 +125,36 @@ exit1(struct proc *p, int rv, int flags)
 	 * we have to be careful not to get recursively caught.
 	 * this is kinda sick.
 	 */
-	if (flags == EXIT_NORMAL && p != p->p_thrparent &&
-	    (p->p_thrparent->p_flag & P_WEXIT) == 0) {
+	if (flags == EXIT_NORMAL && p->p_p->ps_mainproc != p &&
+	    (p->p_p->ps_mainproc->p_flag & P_WEXIT) == 0) {
 		/*
 		 * we are one of the threads.  we SIGKILL the parent,
 		 * it will wake us up again, then we proceed.
 		 */
 		atomic_setbits_int(&p->p_thrparent->p_flag, P_IGNEXITRV);
-		p->p_thrparent->p_xstat = rv;
-		psignal(p->p_thrparent, SIGKILL);
-		tsleep(&p->p_thrparent->p_thrchildren, PUSER, "thrdying", 0);
-	} else if (p == p->p_thrparent) {
+		p->p_p->ps_mainproc->p_xstat = rv;
+		psignal(p->p_p->ps_mainproc, SIGKILL);
+		tsleep(p->p_p, PUSER, "thrdying", 0);
+	} else if (p == p->p_p->ps_mainproc) {
 		atomic_setbits_int(&p->p_flag, P_WEXIT);
 		if (flags == EXIT_NORMAL) {
-			q = LIST_FIRST(&p->p_thrchildren);
+			q = TAILQ_FIRST(&p->p_p->ps_threads);
 			for (; q != NULL; q = nq) {
-				nq = LIST_NEXT(q, p_thrsib);
+				nq = TAILQ_NEXT(q, p_thr_link);
+
+				/*
+				 * Don't shoot ourselves again.
+				 */
+				if (q == p)
+					continue;
 				atomic_setbits_int(&q->p_flag, P_IGNEXITRV);
 				q->p_xstat = rv;
 				psignal(q, SIGKILL);
 			}
 		}
-		wakeup(&p->p_thrchildren);
-		while (!LIST_EMPTY(&p->p_thrchildren))
-			tsleep(&p->p_thrchildren, PUSER, "thrdeath", 0);
+		wakeup(p->p_p);
+		while (!TAILQ_EMPTY(&p->p_p->ps_threads))
+			tsleep(&p->p_p->ps_threads, PUSER, "thrdeath", 0);
 	}
 #endif
 
@@ -263,13 +269,11 @@ exit1(struct proc *p, int rv, int flags)
 		}
 	}
 
-#ifdef RTHREADS
 	/* unlink oursleves from the active threads */
-	if (p != p->p_thrparent) {
-		LIST_REMOVE(p, p_thrsib);
-		if (LIST_EMPTY(&p->p_thrparent->p_thrchildren))
-			wakeup(&p->p_thrparent->p_thrchildren);
-	}
+	TAILQ_REMOVE(&p->p_p->ps_threads, p, p_thr_link);
+#ifdef RTHREADS
+	if (TAILQ_EMPTY(&p->p_p->ps_threads))
+		wakeup(&p->p_p->ps_threads);
 #endif
 
 	/*
@@ -609,6 +613,15 @@ proc_zap(struct proc *p)
 	 */
 	if (p->p_textvp)
 		vrele(p->p_textvp);
+
+	/*
+	 * Remove us from our process list, possibly killing the process
+	 * in the process (pun intended).
+	 */
+
+	TAILQ_REMOVE(&p->p_p->ps_threads, p, p_thr_link);
+	if (TAILQ_EMPTY(&p->p_p->ps_threads))
+		pool_put(&process_pool, p->p_p);
 
 	pool_put(&proc_pool, p);
 	nprocs--;
