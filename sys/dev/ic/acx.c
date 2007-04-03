@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.70 2007/03/29 12:27:59 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.71 2007/04/03 18:57:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -886,16 +886,17 @@ acx_start(struct ifnet *ifp)
 		} else if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 			struct ether_header *eh;
 
+			IFQ_DEQUEUE(&ifp->if_snd, m);
+			if (m == NULL)
+				break;
+
 			if (ic->ic_state != IEEE80211_S_RUN) {
 				DPRINTF(("%s: data packet dropped due to "
 				    "not RUN.  Current state %d\n",
 				    ifp->if_xname, ic->ic_state));
+				m_freem(m);
 				break;
 			}
-
-			IFQ_DEQUEUE(&ifp->if_snd, m);
-			if (m == NULL)
-				break;
 
 			if (m->m_len < sizeof(struct ether_header)) {
 				m = m_pullup(m, sizeof(struct ether_header));
