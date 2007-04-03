@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.117 2006/12/12 02:44:36 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.118 2007/04/03 04:15:50 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -378,6 +378,7 @@ scsi_inquire(struct scsi_link *sc_link, struct scsi_inquiry_data *inqbuf,
     int flags)
 {
 	struct scsi_inquiry			scsi_cmd;
+	int					length;
 	int					error;
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
@@ -394,9 +395,10 @@ scsi_inquire(struct scsi_link *sc_link, struct scsi_inquiry_data *inqbuf,
 	 * Ask for only the basic 36 bytes of SCSI2 inquiry information. This
 	 * avoids problems with devices that choke trying to supply more.
 	 */
-	scsi_cmd.length = SID_INQUIRY_HDR + SID_SCSI2_ALEN;
+	length = SID_INQUIRY_HDR + SID_SCSI2_ALEN;
+	_lto2b(length, scsi_cmd.length);
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)inqbuf, scsi_cmd.length, 2, 10000, NULL,
+	    sizeof(scsi_cmd), (u_char *)inqbuf, length, 2, 10000, NULL,
 	    SCSI_DATA_IN | flags);
 
 	return (error);
