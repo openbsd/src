@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.52 2007/04/02 20:20:39 millert Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.53 2007/04/03 17:08:30 millert Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -30,14 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
-#else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.52 2007/04/02 20:20:39 millert Exp $";
-#endif
-#endif /* not lint */
-
 #include <sys/param.h>
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
@@ -59,10 +51,6 @@ static char rcsid[] = "$OpenBSD: mkfs.c,v 1.52 2007/04/02 20:20:39 millert Exp $
 #endif
 
 /*
- * make file system for cylinder-group style file systems
- */
-
-/*
  * We limit the size of the inode map to be no more than a
  * third of the cylinder group space, since we must leave at
  * least an equal amount of space for the block map.
@@ -74,17 +62,6 @@ static char rcsid[] = "$OpenBSD: mkfs.c,v 1.52 2007/04/02 20:20:39 millert Exp $
 #define UMASK		0755
 #define MAXINOPB	(MAXBSIZE / sizeof(struct ufs1_dinode))
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
-
-/*
- * For each cylinder we keep track of the availability of blocks at different
- * rotational positions, so that we can lay out the data to be picked
- * up with minimum rotational latency. NRPOS is the default number of
- * rotational positions that we distinguish. With NRPOS of 8 the resolution
- * of our summary information is 2ms for a typical 3600 rpm drive. Caching
- * and zoning pretty much defeats rotational optimization, so we now use a
- * default of 1.
- */
-#define	NRPOS		1	/* number distinct rotational positions */
 
 /*
  * variables set up by front end.
@@ -285,7 +262,7 @@ recalc:
 		    sblock.fs_fsize, sblock.fs_bsize,
 		    sblock.fs_bsize / MAXFRAG);
 	}
-	sblock.fs_nrpos = NRPOS;
+	sblock.fs_nrpos = 1;
 	sblock.fs_nindir = sblock.fs_bsize / sizeof(daddr_t);
 	sblock.fs_inopb = sblock.fs_bsize / sizeof(struct ufs1_dinode);
 	sblock.fs_nspf = sblock.fs_fsize / sectorsize;
@@ -851,18 +828,11 @@ initcg(int cylno, time_t utime)
  */
 struct ufs1_dinode node;
 
-#ifdef LOSTDIR
-#define PREDEFDIR 3
-#else
 #define PREDEFDIR 2
-#endif
 
 struct direct root_dir[] = {
 	{ ROOTINO, sizeof(struct direct), DT_DIR, 1, "." },
 	{ ROOTINO, sizeof(struct direct), DT_DIR, 2, ".." },
-#ifdef LOSTDIR
-	{ LOSTFOUNDINO, sizeof(struct direct), DT_DIR, 10, "lost+found" },
-#endif
 };
 struct odirect {
 	u_int32_t d_ino;
@@ -872,22 +842,7 @@ struct odirect {
 } oroot_dir[] = {
 	{ ROOTINO, sizeof(struct direct), 1, "." },
 	{ ROOTINO, sizeof(struct direct), 2, ".." },
-#ifdef LOSTDIR
-	{ LOSTFOUNDINO, sizeof(struct direct), 10, "lost+found" },
-#endif
 };
-#ifdef LOSTDIR
-struct direct lost_found_dir[] = {
-	{ LOSTFOUNDINO, sizeof(struct direct), DT_DIR, 1, "." },
-	{ ROOTINO, sizeof(struct direct), DT_DIR, 2, ".." },
-	{ 0, DIRBLKSIZ, 0, 0, 0 },
-};
-struct odirect olost_found_dir[] = {
-	{ LOSTFOUNDINO, sizeof(struct direct), 1, "." },
-	{ ROOTINO, sizeof(struct direct), 2, ".." },
-	{ 0, DIRBLKSIZ, 0, 0 },
-};
-#endif
 
 int
 fsinit(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
@@ -898,34 +853,6 @@ fsinit(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 	node.di_atime = utime;
 	node.di_mtime = utime;
 	node.di_ctime = utime;
-#ifdef LOSTDIR
-	/*
-	 * create the lost+found directory
-	 */
-	if (Oflag) {
-		int i;
-
-		(void)makedir((struct direct *)olost_found_dir, 2);
-		for (i = DIRBLKSIZ; i < sblock.fs_bsize; i += DIRBLKSIZ)
-			memcpy(&buf[i], &olost_found_dir[2],
-			    DIRSIZ(0, &olost_found_dir[2]));
-	} else {
-		int i;
-
-		(void)makedir(lost_found_dir, 2);
-		for (i = DIRBLKSIZ; i < sblock.fs_bsize; i += DIRBLKSIZ)
-			memcpy(&buf[i], &lost_found_dir[2],
-			    DIRSIZ(0, &lost_found_dir[2]));
-	}
-	node.di_mode = IFDIR | 1700;
-	node.di_nlink = 2;
-	node.di_size = sblock.fs_bsize;
-	if ((node.di_db[0] = alloc(node.di_size, node.di_mode)) == 0)
-		return (1);
-	node.di_blocks = btodb(fragroundup(&sblock, node.di_size));
-	wtfs(fsbtodb(&sblock, node.di_db[0]), node.di_size, buf);
-	iput(&node, LOSTFOUNDINO);
-#endif
 	/*
 	 * create the root directory
 	 */

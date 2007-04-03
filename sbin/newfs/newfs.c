@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.53 2007/04/02 20:20:39 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.54 2007/04/03 17:08:30 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -30,23 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
-#else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.53 2007/04/02 20:20:39 millert Exp $";
-#endif
-#endif /* not lint */
-
-/*
- * newfs: friendly front end to mkfs
- */
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -90,8 +73,6 @@ void	mkfs(struct partition *, char *, int, int, mode_t, uid_t, gid_t);
 void	rewritelabel(char *, int, struct disklabel *);
 u_short	dkcksum(struct disklabel *);
 
-#define	COMPAT			/* allow non-labeled disks */
-
 /*
  * The following two constants set the default block and fragment sizes.
  * Both constants must be a power of 2 and meet the following constraints:
@@ -109,14 +90,6 @@ u_short	dkcksum(struct disklabel *);
  * possible.
  */
 #define	DESCPG		65536	/* desired fs_cpg */
-
-/*
- * ROTDELAY gives the minimum number of milliseconds to initiate
- * another disk transfer on the same cylinder. It is used in
- * determining the rotationally optimal layout for disk blocks
- * within a file; the default of fs_rotdelay is 0ms.
- */
-#define ROTDELAY	0
 
 /*
  * MAXBLKPG determines the maximum number of data blocks which are
@@ -153,7 +126,7 @@ int	opt = DEFAULTOPT;	/* optimization preference (space or time) */
 int	reqopt = -1;		/* opt preference has not been specified */
 int	density;		/* number of bytes per inode */
 int	maxcontig = 0;		/* max contiguous blocks to allocate */
-int	rotdelay = ROTDELAY;	/* rotational delay between blocks */
+int	rotdelay = 0;		/* rotational delay between blocks */
 int	maxbpg;			/* maximum blocks per file in a cyl group */
 int	avgfilesize = AVFILESIZ;/* expected average file size */
 int	avgfilesperdir = AFPDIR;/* expected number of files per directory */
@@ -163,11 +136,8 @@ int	mntflags = MNT_ASYNC;	/* flags to be passed to mount */
 int	quiet = 0;		/* quiet flag */
 u_long	memleft;		/* virtual memory available */
 caddr_t	membase;		/* start address of memory based filesystem */
-#ifdef COMPAT
 char	*disktype;
 int	unlabeled;
-#endif
-
 char	device[MAXPATHLEN];
 
 extern	char *__progname;
@@ -201,9 +171,9 @@ main(int argc, char *argv[])
 	struct stat mountpoint;
 	int status;
 #endif
-	uid_t mfsuid;
-	gid_t mfsgid;
-	mode_t mfsmode;
+	uid_t mfsuid = 0;
+	gid_t mfsgid = 0;
+	mode_t mfsmode = 0;
 	char *fstype = NULL;
 	char **saveargv = argv;
 	int ffs = 1;
@@ -230,11 +200,9 @@ main(int argc, char *argv[])
 			if ((sectorsize = atoi(optarg)) <= 0)
 				fatal("%s: bad sector size", optarg);
 			break;
-#ifdef COMPAT
 		case 'T':
 			disktype = optarg;
 			break;
-#endif
 		case 'a':
 			if ((maxcontig = atoi(optarg)) <= 0)
 				fatal("%s: bad maximum contiguous blocks\n",
@@ -434,15 +402,12 @@ main(int argc, char *argv[])
 			++mp;
 		}
 	}
-#ifdef COMPAT
 	if (mfs && disktype != NULL) {
 		lp = (struct disklabel *)getdiskbyname(disktype);
 		if (lp == NULL)
 			fatal("%s: unknown disk type", disktype);
 		pp = &lp->d_partitions[1];
-	} else
-#endif
-	{
+	} else {
 		fsi = open(special, O_RDONLY);
 		if (fsi < 0)
 			fatal("%s: %s", special, strerror(errno));
@@ -537,10 +502,6 @@ havelabel:
 		    (unsigned long)lp->d_secpercyl);
 	if (maxbpg == 0)
 		maxbpg = MAXBLKPG(bsize);
-#ifdef notdef /* label may be 0 if faked up by kernel */
-	bbsize = lp->d_bbsize;
-	sbsize = lp->d_sbsize;
-#endif
 	oldpartition = *pp;
 	realsectorsize = sectorsize;
 	if (sectorsize < DEV_BSIZE) {
@@ -664,11 +625,7 @@ havelabel:
 	exit(0);
 }
 
-#ifdef COMPAT
 char lmsg[] = "%s: can't read disk label; disk type must be specified";
-#else
-char lmsg[] = "%s: can't read disk label";
-#endif
 
 struct disklabel *
 getdisklabel(char *s, int fd)
@@ -676,8 +633,7 @@ getdisklabel(char *s, int fd)
 	static struct disklabel lab;
 
 	if (ioctl(fd, DIOCGDINFO, (char *)&lab) < 0) {
-#ifdef COMPAT
-		if (disktype) {
+		if (disktype != NULL) {
 			struct disklabel *lp;
 
 			unlabeled++;
@@ -686,7 +642,6 @@ getdisklabel(char *s, int fd)
 				fatal("%s: unknown disk type", disktype);
 			return (lp);
 		}
-#endif
 		warn("ioctl (GDINFO)");
 		fatal(lmsg, s);
 	}
@@ -696,10 +651,9 @@ getdisklabel(char *s, int fd)
 void
 rewritelabel(char *s, int fd, struct disklabel *lp)
 {
-#ifdef COMPAT
 	if (unlabeled)
 		return;
-#endif
+
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
 	if (ioctl(fd, DIOCWDINFO, (char *)lp) < 0) {
@@ -774,9 +728,7 @@ struct fsoptions {
 	{ "-P src populate mfs filesystem", 2 },
 #endif
 	{ "-S sector size", 0 },
-#ifdef COMPAT
 	{ "-T disktype", 0 },
-#endif
 	{ "-a maximum contiguous blocks", 1 },
 	{ "-b block size", 1 },
 	{ "-c cylinders/group", 1 },
