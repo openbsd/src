@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.13 2007/01/18 04:36:57 jsg Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.14 2007/04/03 00:56:16 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -81,7 +81,7 @@
 #define AXE_172_CMD_READ_NODEID			0x6017
 #define AXE_172_CMD_WRITE_NODEID		0x6118
 #define AXE_178_CMD_READ_NODEID			0x6013
-#define AXE_178_CMD_WRITE_NODEID		0x6014
+#define AXE_178_CMD_WRITE_NODEID		0x6114
 #define AXE_CMD_READ_PHYID			0x2019
 #define AXE_172_CMD_READ_MEDIA			0x101A
 #define AXE_178_CMD_READ_MEDIA			0x201A
