@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.25 2003/12/03 20:59:45 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.26 2007/04/03 18:01:49 martynas Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: cmd1.c,v 1.25 2003/12/03 20:59:45 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmd1.c,v 1.26 2007/04/03 18:01:49 martynas Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ headers(void *v)
 
 	size = screensize();
 	n = msgvec[0];
-	if (n != 0)
+	if (n != 0 && size > 0)
 		screen = (n-1)/size;
 	if (screen < 0)
 		screen = 0;
@@ -122,7 +122,9 @@ scroll(void *v)
 
 	cur[0] = 0;
 	size = screensize();
-	maxscreen = (msgCount - 1) / size;
+	maxscreen = 0;
+	if (size > 0)
+		maxscreen = (msgCount - 1) / size;
 	switch (*arg) {
 	case 0:
 	case '+':
