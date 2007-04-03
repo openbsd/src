@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sd.4,v 1.15 2004/12/09 17:41:01 miod Exp $
+.\"	$OpenBSD: sd.4,v 1.16 2007/04/03 06:57:06 dlg Exp $
 .\"	$NetBSD: sd.4,v 1.3 1996/10/20 23:15:23 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -172,6 +172,8 @@ locked.
 Used to prevent user and software eject while the media is in use.
 .It Dv DIOCEJECT
 Eject the media cartridge from a removable device.
+.It Dv DIOCINQ
+Read the devices product information.
 .El
 .Pp
 In addition, the
