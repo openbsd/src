@@ -1,4 +1,4 @@
-/*	$OpenBSD: silireg.h,v 1.12 2007/04/01 00:13:17 jsg Exp $ */
+/*	$OpenBSD: silireg.h,v 1.13 2007/04/04 11:16:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -84,6 +84,23 @@
 				    "\004NOINTCLR" "\003PORTINIT" \
 				    "\002PORTINIT" "\001PORTRESET"
 #define SILI_PREG_PCC		0x1004 /* Port Control Clear */
+#define  SILI_PREG_PCC_OOBB		(1<<25) /* OOB Bypass */
+#define  SILI_PREG_PCC_LED_ON		(1<<15) /* LED On */
+#define  SILI_PREG_PCC_AIA		(1<<14) /* Auto Interlock Accept */
+#define  SILI_PREG_PCC_PMEN		(1<<13) /* Port Mult Enable */
+#define  SILI_PREG_PCC_IA		(1<<12) /* Interlock Accept */
+#define  SILI_PREG_PCC_IR		(1<<11) /* Interlock Reject */
+#define  SILI_PREG_PCC_A32B		(1<<10) /* 32-bit Activation */
+#define  SILI_PREG_PCC_SD		(1<<9) /* Scrambler Disable */
+#define  SILI_PREG_PCC_CD		(1<<8) /* CONT Disable */
+#define  SILI_PREG_PCC_TB		(1<<7) /* Transmit BIST */
+#define  SILI_PREG_PCC_RESUME		(1<<6) /* Resume */
+#define  SILI_PREG_PCC_PLEN		(1<<5) /* Packet Length */
+#define  SILI_PREG_PCC_LEDDISABLE	(1<<4) /* LED Disable */
+#define  SILI_PREG_PCC_NOINTCLR		(1<<3) /* No Intr Clear on Read */
+#define  SILI_PREG_PCC_PORTINIT		(1<<2) /* Port Initialize */
+#define  SILI_PREG_PCC_DEVRESET		(1<<1) /* Device Reset */
+#define  SILI_PREG_PCC_PORTRESET	(1<<0) /* Port Reset */
 #define SILI_PREG_IS		0x1008 /* Interrupt Status */
 #define SILI_PREG_IES		0x1010 /* Interrupt Enable Set */
 #define SILI_PREG_IEC		0x1014 /* Interrupt Enable Clear */
