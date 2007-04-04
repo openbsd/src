@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.18 2005/04/28 06:58:07 otto Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.19 2007/04/04 21:55:10 millert Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: gen_subs.c,v 1.18 2005/04/28 06:58:07 otto Exp $";
+static const char rcsid[] = "$OpenBSD: gen_subs.c,v 1.19 2007/04/04 21:55:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,7 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 		fputs(" == ", fp);
 		safe_print(arcn->ln_name, fp);
 	} else if (arcn->type == PAX_SLK) {
-		fputs(" => ", fp);
+		fputs(" -> ", fp);
 		safe_print(arcn->ln_name, fp);
 	}
 	(void)putc(term, fp);
