@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.65 2007/04/04 14:34:56 pedro Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.66 2007/04/04 14:40:55 pedro Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -269,7 +269,7 @@ exit1(struct proc *p, int rv, int flags)
 		}
 	}
 
-	/* unlink oursleves from the active threads */
+	/* unlink ourselves from the active threads */
 	TAILQ_REMOVE(&p->p_p->ps_threads, p, p_thr_link);
 #ifdef RTHREADS
 	if (TAILQ_EMPTY(&p->p_p->ps_threads))
