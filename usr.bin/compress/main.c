@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.69 2007/04/03 20:25:35 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.70 2007/04/04 13:29:45 millert Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.69 2007/04/03 20:25:35 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.70 2007/04/04 13:29:45 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -58,9 +58,7 @@ static const char main_rcsid[] = "$OpenBSD: main.c,v 1.69 2007/04/03 20:25:35 mi
 
 #define min(a,b) ((a) < (b)? (a) : (b))
 
-int pipin, force, verbose, testmode, list, nosave;
-int savename, recurse;
-int cat, decomp;
+int cat, decomp, pipin, force, verbose, testmode, list, recurse, storename;
 extern char *__progname;
 
 const struct compressor {
@@ -145,7 +143,7 @@ main(int argc, char *argv[])
 	int bits, ch, error, i, rc, cflag, oflag;
 
 	bits = cflag = oflag = 0;
-	nosave = -1;
+	storename = -1;
 	p = __progname;
 	if (p[0] == 'g') {
 		method = M_DEFLATE;
@@ -240,10 +238,10 @@ main(int argc, char *argv[])
 			decomp++;
 			break;
 		case 'n':
-			nosave = 1;
+			storename = 0;
 			break;
 		case 'N':
-			nosave = 0;
+			storename = 1;
 			break;
 #ifndef SMALL
 		case 'O':
@@ -311,8 +309,13 @@ main(int argc, char *argv[])
 
 	if ((cat && argc) + testmode + oflag > 1)
 		errx(1, "may not mix -o, -c, or -t options");
-	if (nosave == -1)
-		nosave = decomp;
+	/*
+	 * By default, when compressing store the original name and timestamp
+	 * in the header.  Do not restore these when decompressing unless
+	 * the -N option is given.
+	 */
+	if (storename == -1)
+		storename = !decomp;
 
 	if ((ftsp = fts_open(argv, FTS_PHYSICAL|FTS_NOCHDIR, 0)) == NULL)
 		err(1, NULL);
@@ -490,7 +493,7 @@ docompress(const char *in, char *out, const struct compressor *method,
 		return (FAILURE);
 	}
 
-	if (!pipin && !nosave) {
+	if (!pipin && storename) {
 		name = basename(in);
 		mtime = (u_int32_t)sb->st_mtime;
 	}
@@ -622,7 +625,7 @@ dodecompress(const char *in, char *out, const struct compressor *method,
 		close (ifd);
 		return (FAILURE);
 	}
-	if (!nosave && oldname[0] != '\0') {
+	if (storename && oldname[0] != '\0') {
 		strlcpy(out, oldname, MAXPATHLEN);
 		cat = 0;			/* XXX should -c override? */
 	}
@@ -671,14 +674,14 @@ dodecompress(const char *in, char *out, const struct compressor *method,
 			warnx("%s", in);
 		error = FAILURE;
 	}
-	if (!nosave && !cat) {
+	if (storename && !cat) {
 		if (info.mtime != 0) {
 			sb->st_mtimespec.tv_sec =
 			    sb->st_atimespec.tv_sec = info.mtime;
 			sb->st_mtimespec.tv_nsec =
 			    sb->st_atimespec.tv_nsec = 0;
 		} else
-			nosave = 1;		/* no timestamp to restore */
+			storename = 0;		/* no timestamp to restore */
 	}
 	if (error == SUCCESS)
 		setfile(out, ofd, sb);
