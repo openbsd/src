@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.120 2007/04/03 04:58:21 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.121 2007/04/04 12:44:17 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -148,9 +148,7 @@ const struct scsi_inquiry_pattern sd_patterns[] = {
 #define sdlookup(unit) (struct sd_softc *)device_lookup(&sd_cd, (unit))
 
 int
-sdmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+sdmatch(struct device *parent, void *match, void *aux)
 {
 	struct scsi_attach_args *sa = aux;
 	int priority;
@@ -158,6 +156,7 @@ sdmatch(parent, match, aux)
 	(void)scsi_inqmatch(sa->sa_inqbuf,
 	    sd_patterns, sizeof(sd_patterns)/sizeof(sd_patterns[0]),
 	    sizeof(sd_patterns[0]), &priority);
+
 	return (priority);
 }
 
@@ -166,9 +165,7 @@ sdmatch(parent, match, aux)
  * a device suitable for this driver.
  */
 void
-sdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sdattach(struct device *parent, struct device *self, void *aux)
 {
 	int error, result;
 	struct sd_softc *sd = (void *)self;
@@ -265,9 +262,7 @@ sdattach(parent, self, aux)
 }
 
 int
-sdactivate(self, act)
-	struct device *self;
-	enum devact act;
+sdactivate(struct device *self, enum devact act)
 {
 	int rv = 0;
 
@@ -281,14 +276,13 @@ sdactivate(self, act)
 		 */
 		break;
 	}
+
 	return (rv);
 }
 
 
 int
-sddetach(self, flags)
-	struct device *self;
-	int flags;
+sddetach(struct device *self, int flags)
 {
 	struct sd_softc *sc = (struct sd_softc *)self;
 	struct buf *dp, *bp;
@@ -329,10 +323,7 @@ sddetach(self, flags)
  * Open the device. Make sure the partition info is as up-to-date as can be.
  */
 int
-sdopen(dev, flag, fmt, p)
-	dev_t dev;
-	int flag, fmt;
-	struct proc *p;
+sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct scsi_link *sc_link;
 	struct sd_softc *sd;
@@ -460,10 +451,7 @@ bad:
  * device.  Convenient now but usually a pain.
  */
 int
-sdclose(dev, flag, fmt, p)
-	dev_t dev;
-	int flag, fmt;
-	struct proc *p;
+sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct sd_softc *sd;
 	int part = SDPART(dev);
@@ -517,8 +505,7 @@ sdclose(dev, flag, fmt, p)
  * only one physical transfer.
  */
 void
-sdstrategy(bp)
-	struct buf *bp;
+sdstrategy(struct buf *bp)
 {
 	struct sd_softc *sd;
 	int s;
@@ -613,11 +600,10 @@ done:
  * sdstart() is called at splbio from sdstrategy, sdrestart and scsi_done
  */
 void
-sdstart(v)
-	void *v;
+sdstart(void *v)
 {
 	struct sd_softc *sd = v;
-	struct	scsi_link *sc_link = sd->sc_link;
+	struct scsi_link *sc_link = sd->sc_link;
 	struct buf *bp = 0;
 	struct buf *dp;
 	struct scsi_rw_big cmd_big;
@@ -750,8 +736,7 @@ sdstart(v)
 }
 
 void
-sdrestart(v)
-	void *v;
+sdrestart(void *v)
 {
 	int s;
 
@@ -761,8 +746,7 @@ sdrestart(v)
 }
 
 void
-sddone(xs)
-	struct scsi_xfer *xs;
+sddone(struct scsi_xfer *xs)
 {
 	struct sd_softc *sd = xs->sc_link->device_softc;
 
@@ -777,8 +761,7 @@ sddone(xs)
 }
 
 void
-sdminphys(bp)
-	struct buf *bp;
+sdminphys(struct buf *bp)
 {
 	struct sd_softc *sd;
 	long max;
@@ -811,22 +794,14 @@ sdminphys(bp)
 }
 
 int
-sdread(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+sdread(dev_t dev, struct uio *uio, int ioflag)
 {
-
 	return (physio(sdstrategy, NULL, dev, B_READ, sdminphys, uio));
 }
 
 int
-sdwrite(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+sdwrite(dev_t dev, struct uio *uio, int ioflag)
 {
-
 	return (physio(sdstrategy, NULL, dev, B_WRITE, sdminphys, uio));
 }
 
@@ -835,12 +810,7 @@ sdwrite(dev, uio, ioflag)
  * Knows about the internals of this device
  */
 int
-sdioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct sd_softc *sd;
 	int error = 0;
@@ -1000,12 +970,8 @@ sd_ioctl_inquiry(struct sd_softc *sd, struct dk_inquiry *di)
  * Load the label information on the named device
  */
 void
-sdgetdisklabel(dev, sd, lp, clp, spoofonly)
-	dev_t dev;
-	struct sd_softc *sd;
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
-	int spoofonly;
+sdgetdisklabel(dev_t dev, struct sd_softc *sd, struct disklabel *lp,
+    struct cpu_disklabel *clp, int spoofonly)
 {
 	size_t len;
 	char *errstring, packname[sizeof(lp->d_packname) + 1];
@@ -1082,8 +1048,7 @@ sdgetdisklabel(dev, sd, lp, clp, spoofonly)
 
 
 void
-sd_shutdown(arg)
-	void *arg;
+sd_shutdown(void *arg)
 {
 	struct sd_softc *sd = arg;
 
@@ -1102,9 +1067,7 @@ sd_shutdown(arg)
  * Tell the device to map out a defective block
  */
 int
-sd_reassign_blocks(sd, blkno)
-	struct sd_softc *sd;
-	u_long blkno;
+sd_reassign_blocks(struct sd_softc *sd, u_long blkno)
 {
 	struct scsi_reassign_blocks scsi_cmd;
 	struct scsi_reassign_blocks_data rbdata;
@@ -1125,8 +1088,7 @@ sd_reassign_blocks(sd, blkno)
  * Check Errors
  */
 int
-sd_interpret_sense(xs)
-	struct scsi_xfer *xs;
+sd_interpret_sense(struct scsi_xfer *xs)
 {
 	struct scsi_sense_data *sense = &xs->sense;
 	struct scsi_link *sc_link = xs->sc_link;
@@ -1170,8 +1132,7 @@ sd_interpret_sense(xs)
 }
 
 int
-sdsize(dev)
-	dev_t dev;
+sdsize(dev_t dev)
 {
 	struct sd_softc *sd;
 	int part, omask;
@@ -1212,11 +1173,7 @@ static int sddoingadump;
  * at offset 'dumplo' into the partition.
  */
 int
-sddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
+sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	struct sd_softc *sd;	/* disk unit to do the I/O */
 	struct disklabel *lp;	/* disk's disklabel */
@@ -1331,10 +1288,7 @@ sddump(dev, blkno, va, size)
  * Does not assume src is NUL-terminated.
  */
 void
-viscpy(dst, src, len)
-	u_char *dst;
-	u_char *src;
-	int len;
+viscpy(u_char *dst, u_char *src, int len)
 {
 	while (len > 0 && *src != '\0') {
 		if (*src < 0x20 || *src >= 0x80) {
@@ -1354,10 +1308,7 @@ viscpy(dst, src, len)
  * cannot be completed.
  */
 int
-sd_get_parms(sd, dp, flags)
-	struct sd_softc *sd;
-	struct disk_parms *dp;
-	int flags;
+sd_get_parms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 {
 	union scsi_mode_sense_buf *buf = NULL;
 	struct page_rigid_geometry *rigid;
@@ -1489,9 +1440,7 @@ validate:
 }
 
 void
-sd_flush(sd, flags)
-	struct sd_softc *sd;
-	int flags;
+sd_flush(struct sd_softc *sd, int flags)
 {
 	struct scsi_link *sc_link = sd->sc_link;
 	struct scsi_synchronize_cache sync_cmd;
