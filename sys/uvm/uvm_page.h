@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.22 2006/06/16 23:05:23 miod Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.23 2007/04/04 17:44:45 art Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -128,8 +128,8 @@ struct vm_page {
 	struct uvm_object	*uobject;	/* object (O,P) */
 	voff_t			offset;		/* offset into object (O,P) */
 
-	u_short			flags;		/* object flags [O] */
-	u_short			version;	/* version count [O] */
+	u_short			pg_flags;	/* object flags [O] */
+	u_short			pg_version;	/* version count [O] */
 	u_short			wire_count;	/* wired down map refs [P] */
 	u_short			pqflags;	/* page queue flags [P] */
 	u_int			loan_count;	/* number of active loans

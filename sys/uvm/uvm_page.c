@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.56 2006/07/31 11:51:29 mickey Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.57 2007/04/04 17:44:45 art Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -151,14 +151,13 @@ static void uvm_pageremove(struct vm_page *);
  */
 
 __inline static void
-uvm_pageinsert(pg)
-	struct vm_page *pg;
+uvm_pageinsert(struct vm_page *pg)
 {
 	struct pglist *buck;
 	int s;
 	UVMHIST_FUNC("uvm_pageinsert"); UVMHIST_CALLED(pghist);
 
-	KASSERT((pg->flags & PG_TABLED) == 0);
+	KASSERT((pg->pg_flags & PG_TABLED) == 0);
 	buck = &uvm.page_hash[uvm_pagehash(pg->uobject,pg->offset)];
 	s = splvm();
 	simple_lock(&uvm.hashlock);
@@ -167,7 +166,7 @@ uvm_pageinsert(pg)
 	splx(s);
 
 	TAILQ_INSERT_TAIL(&pg->uobject->memq, pg, listq); /* put in object */
-	pg->flags |= PG_TABLED;
+	pg->pg_flags |= PG_TABLED;
 	pg->uobject->uo_npages++;
 }
 
@@ -179,14 +178,13 @@ uvm_pageinsert(pg)
  */
 
 static __inline void
-uvm_pageremove(pg)
-	struct vm_page *pg;
+uvm_pageremove(struct vm_page *pg)
 {
 	struct pglist *buck;
 	int s;
 	UVMHIST_FUNC("uvm_pageremove"); UVMHIST_CALLED(pghist);
 
-	KASSERT(pg->flags & PG_TABLED);
+	KASSERT(pg->pg_flags & PG_TABLED);
 	buck = &uvm.page_hash[uvm_pagehash(pg->uobject,pg->offset)];
 	s = splvm();
 	simple_lock(&uvm.hashlock);
@@ -203,10 +201,10 @@ uvm_pageremove(pg)
 	/* object should be locked */
 	TAILQ_REMOVE(&pg->uobject->memq, pg, listq);
 
-	pg->flags &= ~PG_TABLED;
+	pg->pg_flags &= ~PG_TABLED;
 	pg->uobject->uo_npages--;
 	pg->uobject = NULL;
-	pg->version++;
+	pg->pg_version++;
 }
 
 /*
@@ -1017,7 +1015,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	uvmexp.free--;
 
 	/* update zero'd page count */
-	if (pg->flags & PG_ZERO)
+	if (pg->pg_flags & PG_ZERO)
 		uvmexp.zeropages--;
 
 	/*
@@ -1025,7 +1023,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	 * zero the page
 	 */
 	if (flags & UVM_PGA_ZERO) {
-		if (pg->flags & PG_ZERO) {
+		if (pg->pg_flags & PG_ZERO) {
 			uvmexp.pga_zerohit++;
 			zeroit = 0;
 		} else {
@@ -1039,8 +1037,8 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	pg->offset = off;
 	pg->uobject = obj;
 	pg->uanon = anon;
-	pg->flags = PG_BUSY|PG_CLEAN|PG_FAKE;
-	pg->version++;
+	pg->pg_flags = PG_BUSY|PG_CLEAN|PG_FAKE;
+	pg->pg_version++;
 	if (anon) {
 		anon->u.an_page = pg;
 		pg->pqflags = PQ_ANON;
@@ -1062,7 +1060,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 		 * A zero'd page is not clean.  If we got a page not already
 		 * zero'd, then we have to zero it ourselves.
 		 */
-		pg->flags &= ~PG_CLEAN;
+		pg->pg_flags &= ~PG_CLEAN;
 		if (zeroit)
 			pmap_zero_page(pg);
 	}
@@ -1107,7 +1105,7 @@ uvm_pagerealloc(pg, newobj, newoff)
 	if (newobj) {
 		pg->uobject = newobj;
 		pg->offset = newoff;
-		pg->version++;
+		pg->pg_version++;
 		uvm_pageinsert(pg);
 	}
 }
@@ -1146,7 +1144,7 @@ uvm_pagefree(pg)
 	 * from the object.
 	 */
 
-	if (pg->flags & PG_TABLED) {
+	if (pg->pg_flags & PG_TABLED) {
 
 		/*
 		 * if the object page is on loan we are going to drop ownership.
@@ -1157,7 +1155,7 @@ uvm_pagefree(pg)
 		 */
 
 		if (saved_loan_count)
-			pg->flags &= ~PG_CLEAN;	/* in case an anon takes over */
+			pg->pg_flags &= ~PG_CLEAN;/* in case an anon takes over */
 		uvm_pageremove(pg);
 		
 		/*
@@ -1172,7 +1170,6 @@ uvm_pagefree(pg)
 		if (saved_loan_count) 
 			return;
 	} else if (saved_loan_count && (pg->pqflags & PQ_ANON)) {
-
 		/*
 		 * if our page is owned by an anon and is loaned out to the
 		 * kernel then we just want to drop ownership and return.
@@ -1223,7 +1220,7 @@ uvm_pagefree(pg)
 	 * and put on free queue
 	 */
 
-	pg->flags &= ~PG_ZERO;
+	pg->pg_flags &= ~PG_ZERO;
 
 	s = uvm_lock_fpageq();
 	TAILQ_INSERT_TAIL(&uvm.page_free[
@@ -1266,22 +1263,22 @@ uvm_page_unbusy(pgs, npgs)
 		if (pg == NULL || pg == PGO_DONTCARE) {
 			continue;
 		}
-		if (pg->flags & PG_WANTED) {
+		if (pg->pg_flags & PG_WANTED) {
 			wakeup(pg);
 		}
-		if (pg->flags & PG_RELEASED) {
+		if (pg->pg_flags & PG_RELEASED) {
 			UVMHIST_LOG(pdhist, "releasing pg %p", pg,0,0,0);
 			uobj = pg->uobject;
 			if (uobj != NULL) {
 				uobj->pgops->pgo_releasepg(pg, NULL);
 			} else {
-				pg->flags &= ~(PG_BUSY);
+				pg->pg_flags &= ~(PG_BUSY);
 				UVM_PAGE_OWN(pg, NULL);
 				uvm_anfree(pg->uanon);
 			}
 		} else {
 			UVMHIST_LOG(pdhist, "unbusying pg %p", pg,0,0,0);
-			pg->flags &= ~(PG_WANTED|PG_BUSY);
+			pg->pg_flags &= ~(PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
 		}
 	}
@@ -1394,7 +1391,7 @@ uvm_pageidlezero()
 		 */
 		pmap_zero_page(pg);
 #endif
-		pg->flags |= PG_ZERO;
+		pg->pg_flags |= PG_ZERO;
 
 		s = uvm_lock_fpageq();
 		TAILQ_INSERT_HEAD(&pgfl->pgfl_queues[PGFL_ZEROS], pg, pageq);

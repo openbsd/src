@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page_i.h,v 1.15 2002/09/10 18:29:44 art Exp $	*/
+/*	$OpenBSD: uvm_page_i.h,v 1.16 2007/04/04 17:44:45 art Exp $	*/
 /*	$NetBSD: uvm_page_i.h,v 1.14 2000/11/27 07:47:42 chs Exp $	*/
 
 /* 
@@ -89,7 +89,7 @@
  */
 
 PAGE_INLINE int
-uvm_lock_fpageq()
+uvm_lock_fpageq(void)
 {
 	int s;
 
@@ -106,8 +106,7 @@ uvm_lock_fpageq()
  */
 
 PAGE_INLINE void
-uvm_unlock_fpageq(s)
-	int s;
+uvm_unlock_fpageq(int s)
 {
 
 	simple_unlock(&uvm.fpageqlock);
@@ -122,9 +121,7 @@ uvm_unlock_fpageq(s)
  */
 
 struct vm_page *
-uvm_pagelookup(obj, off)
-	struct uvm_object *obj;
-	voff_t off;
+uvm_pagelookup(struct uvm_object *obj, voff_t off)
 {
 	struct vm_page *pg;
 	struct pglist *buck;
@@ -151,8 +148,7 @@ uvm_pagelookup(obj, off)
  */
 
 PAGE_INLINE void
-uvm_pagewire(pg)
-	struct vm_page *pg;
+uvm_pagewire(struct vm_page *pg)
 {
 	if (pg->wire_count == 0) {
 		if (pg->pqflags & PQ_ACTIVE) {
@@ -181,8 +177,7 @@ uvm_pagewire(pg)
  */
  
 PAGE_INLINE void
-uvm_pageunwire(pg)
-	struct vm_page *pg;
+uvm_pageunwire(struct vm_page *pg)
 {
 	pg->wire_count--;
 	if (pg->wire_count == 0) {
@@ -202,8 +197,7 @@ uvm_pageunwire(pg)
  */
 
 PAGE_INLINE void
-uvm_pagedeactivate(pg)
-	struct vm_page *pg;
+uvm_pagedeactivate(struct vm_page *pg)
 {
 	if (pg->pqflags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
@@ -227,9 +221,9 @@ uvm_pagedeactivate(pg)
 		 * re-sync it after we zap all mappings when
 		 * scanning the inactive list.
 		 */
-		if ((pg->flags & PG_CLEAN) != 0 &&
+		if ((pg->pg_flags & PG_CLEAN) != 0 &&
 		    pmap_is_modified(pg))
-			pg->flags &= ~PG_CLEAN;
+			pg->pg_flags &= ~PG_CLEAN;
 	}
 }
 
@@ -240,8 +234,7 @@ uvm_pagedeactivate(pg)
  */
 
 PAGE_INLINE void
-uvm_pageactivate(pg)
-	struct vm_page *pg;
+uvm_pageactivate(struct vm_page *pg)
 {
 	if (pg->pqflags & PQ_INACTIVE) {
 		if (pg->pqflags & PQ_SWAPBACKED)
@@ -277,11 +270,9 @@ uvm_pageactivate(pg)
  */
 
 PAGE_INLINE void
-uvm_pagezero(pg)
-	struct vm_page *pg;
+uvm_pagezero(struct vm_page *pg)
 {
-
-	pg->flags &= ~PG_CLEAN;
+	pg->pg_flags &= ~PG_CLEAN;
 	pmap_zero_page(pg);
 }
 
@@ -293,11 +284,9 @@ uvm_pagezero(pg)
  */
 
 PAGE_INLINE void
-uvm_pagecopy(src, dst)
-	struct vm_page *src, *dst;
+uvm_pagecopy(struct vm_page *src, struct vm_page *dst)
 {
-
-	dst->flags &= ~PG_CLEAN;
+	dst->pg_flags &= ~PG_CLEAN;
 	pmap_copy_page(src, dst);
 }
 
@@ -306,8 +295,7 @@ uvm_pagecopy(src, dst)
  */
 
 PAGE_INLINE int
-uvm_page_lookup_freelist(pg)
-	struct vm_page *pg;
+uvm_page_lookup_freelist(struct vm_page *pg)
 {
 	int lcv;
 

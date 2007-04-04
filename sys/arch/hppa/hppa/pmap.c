@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.128 2005/12/25 21:39:04 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.129 2007/04/04 17:44:45 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -195,7 +195,7 @@ pmap_pde_alloc(struct pmap *pm, vaddr_t va, struct vm_page **pdep)
 
 	DPRINTF(PDB_FOLLOW|PDB_VP, ("pmap_pde_alloc: pde %x\n", pa));
 
-	pg->flags &= ~PG_BUSY;		/* never busy */
+	pg->pg_flags &= ~PG_BUSY;		/* never busy */
 	pg->wire_count = 1;		/* no mappings yet */
 	pmap_pde_set(pm, va, pa);
 	pm->pm_stats.resident_count++;	/* count PTP as resident */
@@ -235,7 +235,7 @@ pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 			pmap->pm_ptphint = TAILQ_FIRST(&pmap->pm_obj.memq);
 		ptp->wire_count = 0;
 #ifdef DIAGNOSTIC
-		if (ptp->flags & PG_BUSY)
+		if (ptp->pg_flags & PG_BUSY)
 			panic("pmap_pde_release: busy page table page");
 #endif
 		uvm_pagefree(ptp);

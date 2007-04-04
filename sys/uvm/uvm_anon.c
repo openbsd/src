@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.25 2006/07/31 11:51:29 mickey Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.26 2007/04/04 17:44:45 art Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -231,9 +231,9 @@ uvm_anfree(anon)
 			 * free it now.
 			 */
 
-			if ((pg->flags & PG_BUSY) != 0) {
+			if ((pg->pg_flags & PG_BUSY) != 0) {
 				/* tell them to dump it when done */
-				pg->flags |= PG_RELEASED;
+				pg->pg_flags |= PG_RELEASED;
 				UVMHIST_LOG(maphist,
 				    "  anon %p, page %p: BUSY (released!)", 
 				    anon, pg, 0, 0);
@@ -508,7 +508,7 @@ anon_pagein(anon)
 	uobj = pg->uobject;
 	uvm_swap_free(anon->an_swslot, 1);
 	anon->an_swslot = 0;
-	pg->flags &= ~(PG_CLEAN);
+	pg->pg_flags &= ~(PG_CLEAN);
 
 	/*
 	 * deactivate the page (to put it on a page queue)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.99 2007/03/18 14:23:57 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.100 2007/04/04 17:44:45 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1246,7 +1246,7 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 			   vm_map_min(kernel_map),
 			   NULL, UVM_PGA_USERESERVE);
 	if (pg)
-		pg->flags &= ~PG_BUSY;	/* never busy */
+		pg->pg_flags &= ~PG_BUSY;	/* never busy */
 
 	simple_unlock(&uvmexp.kmem_object->vmobjlock);
 	splx(s);
@@ -1641,7 +1641,7 @@ pmap_alloc_ptp(struct pmap *pmap, int pde_index, boolean_t just_try)
 		return (NULL);
 
 	/* got one! */
-	ptp->flags &= ~PG_BUSY;	/* never busy */
+	ptp->pg_flags &= ~PG_BUSY;	/* never busy */
 	ptp->wire_count = 1;	/* no mappings yet */
 	pmap->pm_pdir[pde_index] =
 		(pd_entry_t) (VM_PAGE_TO_PHYS(ptp) | PG_u | PG_RW | PG_V);
@@ -1818,7 +1818,7 @@ pmap_release(struct pmap *pmap)
 	while (!TAILQ_EMPTY(&pmap->pm_obj.memq)) {
 		pg = TAILQ_FIRST(&pmap->pm_obj.memq);
 #ifdef DIAGNOSTIC
-		if (pg->flags & PG_BUSY)
+		if (pg->pg_flags & PG_BUSY)
 			panic("pmap_release: busy page table page");
 #endif
 		/* pmap_page_protect?  currently no need for it. */

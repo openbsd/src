@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_loan.c,v 1.24 2007/03/26 08:43:34 art Exp $	*/
+/*	$OpenBSD: uvm_loan.c,v 1.25 2007/04/04 17:44:45 art Exp $	*/
 /*	$NetBSD: uvm_loan.c,v 1.22 2000/06/27 17:29:25 mrg Exp $	*/
 
 /*
@@ -485,7 +485,7 @@ uvm_loanuobj(ufi, output, flags, va)
 		 * drop our lock (thus force a lookup refresh/retry).
 		 */
 			
-		if ((pg->flags & PG_RELEASED) != 0 ||
+		if ((pg->pg_flags & PG_RELEASED) != 0 ||
 		    (locked && amap && amap_lookup(&ufi->entry->aref,
 		    ufi->orig_rvaddr - ufi->entry->start))) {
 			
@@ -500,11 +500,11 @@ uvm_loanuobj(ufi, output, flags, va)
 
 		if (locked == FALSE) {
 
-			if (pg->flags & PG_WANTED)
+			if (pg->pg_flags & PG_WANTED)
 				/* still holding object lock */
 				wakeup(pg);
 
-			if (pg->flags & PG_RELEASED) {
+			if (pg->pg_flags & PG_RELEASED) {
 #ifdef DIAGNOSTIC
 				if (uobj->pgops->pgo_releasepg == NULL)
 			panic("uvm_loanuobj: object has no releasepg function");
@@ -518,7 +518,7 @@ uvm_loanuobj(ufi, output, flags, va)
 			uvm_lock_pageq();
 			uvm_pageactivate(pg); /* make sure it is in queues */
 			uvm_unlock_pageq();
-			pg->flags &= ~(PG_BUSY|PG_WANTED);
+			pg->pg_flags &= ~(PG_BUSY|PG_WANTED);
 			UVM_PAGE_OWN(pg, NULL);
 			simple_unlock(&uobj->vmobjlock);
 			return (0);
@@ -540,9 +540,9 @@ uvm_loanuobj(ufi, output, flags, va)
 		uvm_unlock_pageq();
 		**output = pg;
 		*output = (*output) + 1;
-		if (pg->flags & PG_WANTED)
+		if (pg->pg_flags & PG_WANTED)
 			wakeup(pg);
-		pg->flags &= ~(PG_WANTED|PG_BUSY);
+		pg->pg_flags &= ~(PG_WANTED|PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
 		return(1);		/* got it! */
 	}
@@ -564,9 +564,9 @@ uvm_loanuobj(ufi, output, flags, va)
 		uvm_lock_pageq();
 		uvm_pageactivate(pg);	/* reactivate */
 		uvm_unlock_pageq();
-		if (pg->flags & PG_WANTED)
+		if (pg->pg_flags & PG_WANTED)
 			wakeup(pg);
-		pg->flags &= ~(PG_WANTED|PG_BUSY);
+		pg->pg_flags &= ~(PG_WANTED|PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
 		return(1);
 	}
@@ -577,9 +577,9 @@ uvm_loanuobj(ufi, output, flags, va)
 
 	anon = uvm_analloc();
 	if (anon == NULL) {		/* out of VM! */
-		if (pg->flags & PG_WANTED)
+		if (pg->pg_flags & PG_WANTED)
 			wakeup(pg);
-		pg->flags &= ~(PG_WANTED|PG_BUSY);
+		pg->pg_flags &= ~(PG_WANTED|PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
 		uvmfault_unlockall(ufi, amap, uobj, NULL);
 		return(-1);
@@ -594,9 +594,9 @@ uvm_loanuobj(ufi, output, flags, va)
 	uvm_unlock_pageq();
 	**output = anon;
 	*output = (*output) + 1;
-	if (pg->flags & PG_WANTED)
+	if (pg->pg_flags & PG_WANTED)
 		wakeup(pg);
-	pg->flags &= ~(PG_WANTED|PG_BUSY);
+	pg->pg_flags &= ~(PG_WANTED|PG_BUSY);
 	UVM_PAGE_OWN(pg, NULL);
 	return(1);
 }
@@ -638,7 +638,7 @@ uvm_loanzero(ufi, output, flags)
 		}
 		
 		/* got a zero'd page; return */
-		pg->flags &= ~(PG_BUSY|PG_FAKE);
+		pg->pg_flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
 		**output = pg;
 		*output = (*output) + 1;
@@ -678,7 +678,7 @@ uvm_loanzero(ufi, output, flags)
 	}
 
 	/* got a zero'd page; return */
-	pg->flags &= ~(PG_BUSY|PG_FAKE);
+	pg->pg_flags &= ~(PG_BUSY|PG_FAKE);
 	UVM_PAGE_OWN(pg, NULL);
 	uvm_lock_pageq();
 	uvm_pageactivate(pg);
@@ -747,7 +747,7 @@ uvm_unloanpage(ploans, npages)
 		if (pg->loan_count == 0 && pg->uobject == NULL &&
 		    pg->uanon == NULL) {
 
-			if (pg->flags & PG_BUSY)
+			if (pg->pg_flags & PG_BUSY)
 	panic("uvm_unloanpage: page %p unowned but PG_BUSY!", pg);
 
 			/* be safe */

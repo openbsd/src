@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.50 2007/03/04 16:59:03 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.51 2007/04/04 17:44:45 art Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2679,7 +2679,7 @@ pmap_enter_ptpage(pmap, va)
 		    UVM_PGA_ZERO)) == NULL) {
 			uvm_wait("ptpage");
 		}
-		pg->flags &= ~(PG_BUSY|PG_FAKE);
+		pg->pg_flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
 		ptpa = VM_PAGE_TO_PHYS(pg);
 		pmap_enter(pmap_kernel(), va, ptpa,

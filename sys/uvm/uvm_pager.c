@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.40 2007/03/25 11:31:07 art Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.41 2007/04/04 17:44:45 art Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ enter:
 	for (cva = kva ; size != 0 ; size -= PAGE_SIZE, cva += PAGE_SIZE) {
 		pp = *pps++;
 		KASSERT(pp);
-		KASSERT(pp->flags & PG_BUSY);
+		KASSERT(pp->pg_flags & PG_BUSY);
 		pmap_enter(vm_map_pmap(pager_map), cva, VM_PAGE_TO_PHYS(pp),
 		    prot, PMAP_WIRED | prot);
 	}
@@ -330,23 +330,23 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 				}
 
 				/* make sure "clean" bit is sync'd */
-				if ((pclust->flags & PG_CLEANCHK) == 0) {
-					if ((pclust->flags & (PG_CLEAN|PG_BUSY))
+				if ((pclust->pg_flags & PG_CLEANCHK) == 0) {
+					if ((pclust->pg_flags & (PG_CLEAN|PG_BUSY))
 					   == PG_CLEAN &&
 					   pmap_is_modified(pclust))
-						pclust->flags &= ~PG_CLEAN;
+						pclust->pg_flags &= ~PG_CLEAN;
 					/* now checked */
-					pclust->flags |= PG_CLEANCHK;
+					pclust->pg_flags |= PG_CLEANCHK;
 				}
 			}
 
 			/* is page available for cleaning and does it need it */
-			if ((pclust->flags & (PG_CLEAN|PG_BUSY)) != 0) {
+			if ((pclust->pg_flags & (PG_CLEAN|PG_BUSY)) != 0) {
 				break;	/* page is already clean or is busy */
 			}
 
 			/* yes!   enroll the page in our array */
-			pclust->flags |= PG_BUSY;		/* busy! */
+			pclust->pg_flags |= PG_BUSY;		/* busy! */
 			UVM_PAGE_OWN(pclust, "uvm_mk_pcluster");
 
 			/* XXX: protect wired page?   see above comment. */
@@ -651,17 +651,17 @@ uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags)
 		}
 
 		/* did someone want the page while we had it busy-locked? */
-		if (ppsp[lcv]->flags & PG_WANTED) {
+		if (ppsp[lcv]->pg_flags & PG_WANTED) {
 			/* still holding obj lock */
 			wakeup(ppsp[lcv]);
 		}
 
 		/* if page was released, release it.  otherwise un-busy it */
-		if (ppsp[lcv]->flags & PG_RELEASED) {
+		if (ppsp[lcv]->pg_flags & PG_RELEASED) {
 
 			if (ppsp[lcv]->pqflags & PQ_ANON) {
 				/* so that anfree will free */
-				ppsp[lcv]->flags &= ~(PG_BUSY);
+				ppsp[lcv]->pg_flags &= ~(PG_BUSY);
 				UVM_PAGE_OWN(ppsp[lcv], NULL);
 
 				pmap_page_protect(ppsp[lcv], VM_PROT_NONE);
@@ -697,7 +697,7 @@ uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags)
 			continue;		/* next page */
 
 		} else {
-			ppsp[lcv]->flags &= ~(PG_BUSY|PG_WANTED|PG_FAKE);
+			ppsp[lcv]->pg_flags &= ~(PG_BUSY|PG_WANTED|PG_FAKE);
 			UVM_PAGE_OWN(ppsp[lcv], NULL);
 		}
 
@@ -708,7 +708,7 @@ uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags)
 		if (flags & PGO_PDFREECLUST) {
 			pmap_clear_reference(ppsp[lcv]);
 			pmap_clear_modify(ppsp[lcv]);
-			ppsp[lcv]->flags |= PG_CLEAN;
+			ppsp[lcv]->pg_flags |= PG_CLEAN;
 		}
 
 		/* if anonymous cluster, unlock object and move on */
@@ -839,10 +839,10 @@ uvm_aio_aiodone(bp)
 		 */
 
 		if (!write && error) {
-			pg->flags |= PG_RELEASED;
+			pg->pg_flags |= PG_RELEASED;
 			continue;
 		}
-		KASSERT(!write || (pgs[i]->flags & PG_FAKE) == 0);
+		KASSERT(!write || (pgs[i]->pg_flags & PG_FAKE) == 0);
 
 		/*
 		 * if this is a read and the page is PG_FAKE,
@@ -850,11 +850,11 @@ uvm_aio_aiodone(bp)
 		 * mark the page PG_CLEAN and not PG_FAKE.
 		 */
 
-		if ((pgs[i]->flags & PG_FAKE) || (write && error != ENOMEM)) {
+		if ((pgs[i]->pg_flags & PG_FAKE) || (write && error != ENOMEM)) {
 			pmap_clear_reference(pgs[i]);
 			pmap_clear_modify(pgs[i]);
-			pgs[i]->flags |= PG_CLEAN;
-			pgs[i]->flags &= ~PG_FAKE;
+			pgs[i]->pg_flags |= PG_CLEAN;
+			pgs[i]->pg_flags &= ~PG_FAKE;
 		}
 		if (swap) {
 			if (pg->pqflags & PQ_ANON) {

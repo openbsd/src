@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.33 2006/07/31 11:51:29 mickey Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.34 2007/04/04 17:44:45 art Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -797,8 +797,8 @@ ReStart:
 			 * if the page is busy then we have to unlock, wait for
 			 * it and then restart.
 			 */
-			if (pg->flags & PG_BUSY) {
-				pg->flags |= PG_WANTED;
+			if (pg->pg_flags & PG_BUSY) {
+				pg->pg_flags |= PG_WANTED;
 				amap_unlock(amap);
 				UVM_UNLOCK_AND_WAIT(pg, &anon->an_lock, FALSE,
 				    "cownow", 0);
@@ -843,7 +843,7 @@ ReStart:
 			 * owner locked the whole time it can't be
 			 * PG_RELEASED | PG_WANTED.
 			 */
-			npg->flags &= ~(PG_BUSY|PG_FAKE);
+			npg->pg_flags &= ~(PG_BUSY|PG_FAKE);
 			UVM_PAGE_OWN(npg, NULL);
 			uvm_lock_pageq();
 			uvm_pageactivate(npg);

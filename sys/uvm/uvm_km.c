@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.55 2007/03/25 11:31:07 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.56 2007/04/04 17:44:45 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -332,12 +332,12 @@ uvm_km_pgremove(uobj, start, end)
 			continue;
 
 		UVMHIST_LOG(maphist,"  page %p, busy=%ld", pp,
-		    pp->flags & PG_BUSY, 0, 0);
+		    pp->pg_flags & PG_BUSY, 0, 0);
 
 		/* now do the actual work */
-		if (pp->flags & PG_BUSY) {
+		if (pp->pg_flags & PG_BUSY) {
 			/* owner must check for this when done */
-			pp->flags |= PG_RELEASED;
+			pp->pg_flags |= PG_RELEASED;
 		} else {
 			/* free the swap slot... */
 			uao_dropswap(uobj, curoff >> PAGE_SHIFT);
@@ -363,11 +363,11 @@ loop_by_list:
 		}
 
 		UVMHIST_LOG(maphist,"  page %p, busy=%ld", pp,
-		    pp->flags & PG_BUSY, 0, 0);
+		    pp->pg_flags & PG_BUSY, 0, 0);
 
-		if (pp->flags & PG_BUSY) {
+		if (pp->pg_flags & PG_BUSY) {
 			/* owner must check for this when done */
-			pp->flags |= PG_RELEASED;
+			pp->pg_flags |= PG_RELEASED;
 		} else {
 			/* free the swap slot... */
 			uao_dropswap(uobj, pp->offset >> PAGE_SHIFT);
@@ -425,8 +425,8 @@ uvm_km_pgremove_intrsafe(uobj, start, end)
 		}
 
 		UVMHIST_LOG(maphist,"  page %p, busy=%ld", pp,
-		    pp->flags & PG_BUSY, 0, 0);
-		KASSERT((pp->flags & PG_BUSY) == 0);
+		    pp->pg_flags & PG_BUSY, 0, 0);
+		KASSERT((pp->pg_flags & PG_BUSY) == 0);
 		KASSERT((pp->pqflags & PQ_ACTIVE) == 0);
 		KASSERT((pp->pqflags & PQ_INACTIVE) == 0);
 		uvm_pagefree(pp);
@@ -444,7 +444,7 @@ loop_by_list:
 
 		UVMHIST_LOG(maphist,"  page %p, busy=%ld", pp,
 		    pp->flags & PG_BUSY, 0, 0);
-		KASSERT((pp->flags & PG_BUSY) == 0);
+		KASSERT((pp->pg_flags & PG_BUSY) == 0);
 		KASSERT((pp->pqflags & PQ_ACTIVE) == 0);
 		KASSERT((pp->pqflags & PQ_INACTIVE) == 0);
 		uvm_pagefree(pp);
@@ -525,7 +525,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 		simple_lock(&obj->vmobjlock);
 		pg = uvm_pagealloc(obj, offset, NULL, 0);
 		if (pg) {
-			pg->flags &= ~PG_BUSY;	/* new page */
+			pg->pg_flags &= ~PG_BUSY;	/* new page */
 			UVM_PAGE_OWN(pg, NULL);
 		}
 		simple_unlock(&obj->vmobjlock);
@@ -661,9 +661,9 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 		 * released
 		 */
 		if (pg) {
-			if ((pg->flags & PG_RELEASED) == 0)
+			if ((pg->pg_flags & PG_RELEASED) == 0)
 				panic("uvm_km_alloc1: non-released page");
-			pg->flags |= PG_WANTED;
+			pg->pg_flags |= PG_WANTED;
 			UVM_UNLOCK_AND_WAIT(pg, &uvm.kernel_object->vmobjlock,
 			    FALSE, "km_alloc", 0);
 			continue;   /* retry */
@@ -672,7 +672,7 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 		/* allocate ram */
 		pg = uvm_pagealloc(uvm.kernel_object, offset, NULL, 0);
 		if (pg) {
-			pg->flags &= ~PG_BUSY;	/* new page */
+			pg->pg_flags &= ~PG_BUSY;	/* new page */
 			UVM_PAGE_OWN(pg, NULL);
 		}
 		simple_unlock(&uvm.kernel_object->vmobjlock);

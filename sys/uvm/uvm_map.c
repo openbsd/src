@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.85 2007/03/27 16:13:45 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.86 2007/04/04 17:44:45 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3770,15 +3770,15 @@ uvm_page_printit(pg, full, pr)
 	char pqbuf[128];
 
 	(*pr)("PAGE %p:\n", pg);
-	snprintf(pgbuf, sizeof(pgbuf), "%b", pg->flags, page_flagbits);
+	snprintf(pgbuf, sizeof(pgbuf), "%b", pg->pg_flags, page_flagbits);
 	snprintf(pqbuf, sizeof(pqbuf), "%b", pg->pqflags, page_pqflagbits);
 	(*pr)("  flags=%s, pqflags=%s, vers=%d, wire_count=%d, pa=0x%llx\n",
-	    pgbuf, pqbuf, pg->version, pg->wire_count,
+	    pgbuf, pqbuf, pg->pg_version, pg->wire_count,
 	    (long long)pg->phys_addr);
 	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx loan_count=%d\n",
 	    pg->uobject, pg->uanon, (long long)pg->offset, pg->loan_count);
 #if defined(UVM_PAGE_TRKOWN)
-	if (pg->flags & PG_BUSY)
+	if (pg->pg_flags & PG_BUSY)
 		(*pr)("  owning process = %d, tag=%s\n",
 		    pg->owner, pg->owner_tag);
 	else
@@ -3818,7 +3818,7 @@ uvm_page_printit(pg, full, pr)
 	/* cross-verify page queue */
 	if (pg->pqflags & PQ_FREE) {
 		int fl = uvm_page_lookup_freelist(pg);
-		pgl = &uvm.page_free[fl].pgfl_queues[((pg)->flags & PG_ZERO) ?
+		pgl = &uvm.page_free[fl].pgfl_queues[((pg)->pg_flags & PG_ZERO) ?
 		    PGFL_ZEROS : PGFL_UNKNOWN];
 	} else if (pg->pqflags & PQ_INACTIVE) {
 		pgl = (pg->pqflags & PQ_SWAPBACKED) ?

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.3 2005/12/25 21:39:06 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.4 2007/04/04 17:44:45 art Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -166,7 +166,7 @@ pmap_pde_alloc(struct pmap *pm, vaddr_t va, struct vm_page **pdep)
 
 	DPRINTF(PDB_FOLLOW|PDB_VP, ("pmap_pde_alloc: pde %lx\n", pa));
 
-	pg->flags &= ~PG_BUSY;		/* never busy */
+	pg->pg_flags &= ~PG_BUSY;		/* never busy */
 	pg->wire_count = 1;		/* no mappings yet */
 	pmap_pde_set(pm, va, pa);
 	pm->pm_stats.resident_count++;	/* count PTP as resident */
@@ -206,7 +206,7 @@ pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 			pmap->pm_ptphint = NULL;
 		ptp->wire_count = 0;
 #ifdef DIAGNOSTIC
-		if (ptp->flags & PG_BUSY)
+		if (ptp->pg_flags & PG_BUSY)
 			panic("pmap_pde_release: busy page table page");
 #endif
 		pdcache(HPPA_SID_KERNEL, (vaddr_t)ptp, PAGE_SIZE);
@@ -626,13 +626,13 @@ pmap_create()
 		panic("pmap_create: no pages");
 
 	pg = TAILQ_FIRST(&pmap->pm_pglist);
-	pg->flags &= ~(PG_BUSY|PG_CLEAN);
+	pg->pg_flags &= ~(PG_BUSY|PG_CLEAN);
 	pmap->pm_pdir = (u_int32_t *)(pa = VM_PAGE_TO_PHYS(pg));
 	bzero((void *)pa, PAGE_SIZE);
 
 	/* set the first PIE that's covering low 2g of the address space */
 	pg = TAILQ_LAST(&pmap->pm_pglist, pglist);
-	pg->flags &= ~(PG_BUSY|PG_CLEAN);
+	pg->pg_flags &= ~(PG_BUSY|PG_CLEAN);
 	*pmap->pm_pdir = (pa = VM_PAGE_TO_PHYS(pg)) >> PAGE_SHIFT;
 	bzero((void *)pa, PAGE_SIZE);
 
