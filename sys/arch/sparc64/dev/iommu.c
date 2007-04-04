@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.45 2007/04/02 13:23:46 claudio Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.46 2007/04/04 20:09:37 kettenis Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, u_int32_t iovabase)
 	 * be hard-wired, so we read the start and size from the PROM and
 	 * just use those values.
 	 */
-	is->is_cr = (tsbsize << 16) | IOMMUCR_EN;
+	is->is_cr = IOMMUCR_EN;
 	is->is_tsbsize = tsbsize;
 	if (iovabase == (u_int32_t)-1) {
 		is->is_dvmabase = IOTSB_VSTART(is->is_tsbsize);
@@ -220,7 +220,16 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, u_int32_t iovabase)
 	    M_DEVBUF, 0, 0, EX_NOWAIT);
 
 	/*
-	 * now actually start up the IOMMU
+	 * Set the TSB size.  The relevant bits were moved to the TSB
+	 * base register in the PCIe host bridges.
+	 */
+	if (strncmp(name, "pyro", 4) == 0)
+		is->is_ptsb |= is->is_tsbsize;
+	else
+		is->is_cr |= (is->is_tsbsize << 16);
+
+	/*
+	 * Now actually start up the IOMMU.
 	 */
 	iommu_reset(is);
 	printf("\n");
