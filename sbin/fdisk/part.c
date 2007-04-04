@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.42 2006/06/09 17:01:47 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.43 2007/04/04 14:36:05 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -68,7 +68,7 @@ static const struct part_type {
 	{ 0x17, "OS/2 hidden "},   /* OS/2 BM: hidden IFS */
 	{ 0x18, "AST swap    "},   /* AST Windows swapfile */
 	{ 0x19, "Willowtech  "},   /* Willowtech Photon coS */
-	{ 0x1C, "Thinkpad Rec"},   /* IBM Thinkpad recovery partition */
+	{ 0x1C, "ThinkPad Rec"},   /* IBM ThinkPad recovery partition */
 	{ 0x20, "Willowsoft  "},   /* Willowsoft OFS1 */
 	{ 0x24, "NEC DOS     "},   /* NEC DOS */
 	{ 0x38, "Theos       "},   /* Theos */
