@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcw.c,v 1.87 2007/04/04 19:36:41 mglocker Exp $ */
+/*	$OpenBSD: bcw.c,v 1.88 2007/04/04 20:48:12 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -2897,6 +2897,7 @@ bcw_chip_init(struct bcw_softc *sc)
 int
 bcw_bs_init(struct bcw_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	uint32_t ucodeflags;
 
 	BCW_WRITE16(sc, 0x03e6, 0);
@@ -2904,6 +2905,8 @@ bcw_bs_init(struct bcw_softc *sc)
 	bcw_radio_on(sc);
 
 	bcw_phy_init(sc);
+
+	bcw_radio_set_interf_mitigation(sc, sc->sc_radio_interfmode);
 
 	bcw_phy_set_antenna_diversity(sc);
 
@@ -2933,12 +2936,16 @@ bcw_bs_init(struct bcw_softc *sc)
 	else
 		bcw_shm_write16(sc, BCW_SHM_SHARED, 0x3c, 0x1e);
 
-	if (sc->sc_phy_type == BCW_PHY_TYPEA) {
-		bcw_shm_write16(sc, BCW_SHM_SHARED, 0x612, 0x2);
+	if (ic->ic_opmode != IEEE80211_M_IBSS &&
+	    ic->ic_opmode == IEEE80211_M_HOSTAP) {
+		BCW_WRITE16(sc, 0x612, 0x2);
 		bcw_shm_write16(sc, BCW_SHM_SHARED, 0x416, 0x2);
-
-		bcw_shm_write16(sc, BCW_SHM_SHARED, 0x612, 0x78);
+	} else if (sc->sc_phy_type == BCW_PHY_TYPEA) {
+		BCW_WRITE16(sc, 0x612, 0x78);
 		bcw_shm_write16(sc, BCW_SHM_SHARED, 0x416, 0x78);
+	} else {
+		BCW_WRITE16(sc, 0x612, 0xfa);
+		bcw_shm_write16(sc, BCW_SHM_SHARED, 0x416, 0xfa);
 	}
 
 	return (0);
