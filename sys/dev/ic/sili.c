@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.6 2007/04/04 10:49:42 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.7 2007/04/04 12:42:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -47,6 +47,10 @@ u_int32_t		sili_read(struct sili_softc *, bus_size_t);
 void			sili_write(struct sili_softc *, bus_size_t, u_int32_t);
 u_int32_t		sili_pread(struct sili_port *, bus_size_t);
 void			sili_pwrite(struct sili_port *, bus_size_t, u_int32_t);
+int			sili_pwait_eq(struct sili_port *, bus_size_t,
+			    u_int32_t, u_int32_t, int);
+int			sili_pwait_ne(struct sili_port *, bus_size_t,
+			    u_int32_t, u_int32_t, int);
 
 /* atascsi interface */
 int			sili_ata_probe(void *, int);
@@ -184,8 +188,49 @@ sili_pwrite(struct sili_port *sp, bus_size_t r, u_int32_t v)
 }
 
 int
+sili_pwait_eq(struct sili_port *sp, bus_size_t r, u_int32_t mask, 
+    u_int32_t value, int timeout)
+{
+	while ((sili_pread(sp, r) & mask) != value) {
+		if (timeout-- == 0)
+			return (0);
+
+		delay(1000);
+	}
+
+	return (1);
+}
+
+int
+sili_pwait_ne(struct sili_port *sp, bus_size_t r, u_int32_t mask, 
+    u_int32_t value, int timeout)
+{
+	while ((sili_pread(sp, r) & mask) == value) {
+		if (timeout-- == 0)
+			return (0);
+
+		delay(1000);
+	}
+
+	return (1);
+}
+
+int
 sili_ata_probe(void *xsc, int port)
 {
+	struct sili_softc		*sc = xsc;
+	struct sili_port		*sp = &sc->sc_ports[port];
+
+	sili_pwrite(sp, SILI_PREG_PCC, SILI_PREG_PCC_PORTRESET);
+	sili_pwrite(sp, SILI_PREG_PCS, SILI_PREG_PCS_A32B);
+
+	if (!sili_pwait_eq(sp, SILI_PREG_SSTS, SATA_SStatus_DET,
+	    SATA_SStatus_DET_DEV, 1000))
+		return (ATA_PORT_T_NONE);
+
+	printf("%s.%d: SSTS 0x%08x\n", DEVNAME(sc), port,
+	    sili_pread(sp, SILI_PREG_SSTS));
+
 	return (ATA_PORT_T_NONE);
 }
 
