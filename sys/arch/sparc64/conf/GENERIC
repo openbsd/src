@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.171 2007/03/30 22:28:57 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.172 2007/04/04 20:47:54 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -28,24 +28,21 @@ config		bsd	swap generic
 mainbus0 at root
 cpu0	at mainbus0
 
-upa0	at mainbus0
-
-# e4500/e5500
+# Bus types found on SPARC systems.
+sbus*	at mainbus0
 central0 at mainbus0
 fhc0	at central0
 fhc*	at mainbus0
-
-# Bus types found on SPARC systems.
-
-sbus*	at mainbus0
+upa0	at mainbus0
 psycho*	at mainbus0
 pci*	at psycho?
 schizo*	at mainbus0
 pci*	at schizo?
-#pyro*	at mainbus0
-#pci*	at pyro?
+pyro*	at mainbus0
+pci*	at pyro?
 pci*	at ppb?
 ppb*	at pci?
+ebus*	at mainbus0
 ebus*	at pci?
 
 # PCI Ethernet

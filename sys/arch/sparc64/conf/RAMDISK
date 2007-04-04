@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.60 2007/03/07 06:23:02 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.61 2007/04/04 20:47:54 kettenis Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -39,19 +39,21 @@ config		bsd	root on rd0a
 mainbus0 at root
 cpu0	at mainbus0
 
+# Bus types found on SPARC systems.
+sbus*	at mainbus0
+upa0	at mainbus0
 central0 at mainbus0
 fhc0	at central0
 fhc*	at mainbus0
-
-# Bus types found on SPARC systems.
+psycho*	at mainbus0
+pci*	at psycho?
 schizo*	at mainbus0
 pci*	at schizo?
-sbus*	at mainbus0		# Ultra 1/E4500
-psycho*	at mainbus0
-upa0	at mainbus0
-pci*	at psycho?		# Ultra 5
+pyro*	at mainbus0
+pci*	at pyro?
 pci*	at ppb?
 ppb*	at pci?
+ebus*	at mainbus0
 ebus*	at pci?
 
 # PCI Ethernet
