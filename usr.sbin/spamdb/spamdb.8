@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamdb.8,v 1.13 2007/03/06 10:51:16 jmc Exp $
+.\"	$OpenBSD: spamdb.8,v 1.14 2007/04/04 13:45:14 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -113,9 +113,13 @@ will be the IP address blacklisted due to hitting a spamtrap, and
 .Em expire
 will be when the IP is due to be removed from the blacklist.
 .Pp
-For GREY or WHITE entries, the format is:
+For GREY entries, the format is:
 .Pp
 .Dl type|source IP|helo|from|to|first|pass|expire|block|pass
+.Pp
+For WHITE entries, the format is:
+.Pp
+.Dl type|source IP|||first|pass|expire|block|pass
 .Pp
 The fields are as follows:
 .Pp
