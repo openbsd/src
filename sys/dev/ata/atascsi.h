@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.21 2007/04/02 05:14:52 pascoe Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.22 2007/04/04 12:39:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -202,6 +202,27 @@ struct ata_log_page_10h {
 	u_int8_t		vendor_specific[255];
 	u_int8_t		checksum;
 } __packed;
+
+/*
+ * SATA registers
+ */
+
+#define SATA_SStatus_DET		0x00f
+#define SATA_SStatus_DET_NODEV		0x000
+#define SATA_SStatus_DET_NOPHY		0x001
+#define SATA_SStatus_DET_DEV		0x003
+#define SATA_SStatus_DET_OFFLINE	0x008
+
+#define SATA_SStatus_SPD		0x0f0
+#define SATA_SStatus_SPD_NONE		0x000
+#define SATA_SStatus_SPD_1_5		0x010
+#define SATA_SStatus_SPD_3_0		0x020
+
+#define SATA_SStatus_IPM		0xf00
+#define SATA_SStatus_IPM_NODEV		0x000
+#define SATA_SStatus_IPM_ACTIVE		0x100
+#define SATA_SStatus_IPM_PARTIAL	0x200
+#define SATA_SStatus_IPM_SLUMBER	0x600
 
 /*
  * ATA interface
