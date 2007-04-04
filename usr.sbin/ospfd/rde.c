@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.61 2007/03/30 14:12:55 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.62 2007/04/04 12:40:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1050,6 +1050,9 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 		return;
 	/* no need for summary LSA in the originating area */
 	if (rte->area.s_addr == area->id.s_addr)
+		return;
+	/* no need to originate inter-area routes to the backbone */
+	if (rte->p_type == PT_INTER_AREA && area->id.s_addr == INADDR_ANY)
 		return;
 	/* TODO nexthop check, nexthop part of area -> no summary */
 	if (rte->cost >= LS_INFINITY)
