@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.93 2007/04/03 08:05:43 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.94 2007/04/04 13:53:26 pedro Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -134,7 +134,7 @@ struct process {
 	 * ps_mainproc is the main thread in the process.
 	 * Ultimately, we shouldn't need that, threads should be able to exit
 	 * at will. Unfortunately until the pid is moved into struct process
-	 * we'll have to remember the main threads and abouse its pid as the
+	 * we'll have to remember the main threads and abuse its pid as the
 	 * the pid of the process. This is gross, but considering the horrible
 	 * pid semantics we have right now, it's unavoidable.
 	 */
