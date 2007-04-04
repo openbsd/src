@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.15 2007/01/09 22:37:18 kettenis Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.16 2007/04/04 18:38:54 kettenis Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -89,10 +89,6 @@ struct cfdriver ebus_cd = {
 };
 
 
-int	ebus_setup_attach_args(struct ebus_softc *, int,
-	    struct ebus_attach_args *);
-void	ebus_destroy_attach_args(struct ebus_attach_args *);
-int	ebus_print(void *, const char *);
 void	ebus_find_ino(struct ebus_softc *, struct ebus_attach_args *);
 int	ebus_find_node(struct pci_attach_args *);
 
@@ -196,7 +192,7 @@ ebus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	error = getprop(node, "ranges", sizeof(struct ebus_ranges),
-	    &sc->sc_nrange, (void **)&sc->sc_range);
+	    &sc->sc_nrange, &sc->sc_range);
 	if (error)
 		panic("ebus ranges: error %d", error);
 
@@ -421,6 +417,7 @@ _ebus_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
     bus_size_t size, int flags, bus_space_handle_t *hp)
 {
 	struct ebus_softc *sc = t->cookie;
+	struct ebus_ranges *range = sc->sc_range;
 	bus_addr_t hi, lo;
 	int i;
 
@@ -448,24 +445,22 @@ _ebus_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 	for (i = 0; i < sc->sc_nrange; i++) {
 		bus_addr_t pciaddr;
 
-		if (hi != sc->sc_range[i].child_hi)
+		if (hi != range[i].child_hi)
 			continue;
-		if (lo < sc->sc_range[i].child_lo ||
-		    (lo + size) >
-		      (sc->sc_range[i].child_lo + sc->sc_range[i].size))
-			continue;
-
-		if(((sc->sc_range[i].phys_hi >> 24) & 3) != t->default_type)
+		if (lo < range[i].child_lo ||
+		    (lo + size) > (range[i].child_lo + range[i].size))
 			continue;
 
-		pciaddr = ((bus_addr_t)sc->sc_range[i].phys_mid << 32UL) |
-				       sc->sc_range[i].phys_lo;
+		if(((range[i].phys_hi >> 24) & 3) != t->default_type)
+			continue;
+
+		pciaddr = ((bus_addr_t)range[i].phys_mid << 32UL) |
+				       range[i].phys_lo;
 		pciaddr += lo;
 		DPRINTF(EDB_BUSMAP,
 		    ("\n_ebus_bus_map: mapping space %x paddr offset %qx "
 		    "pciaddr %qx\n", (int)t->default_type,
 		    (unsigned long long)offset, (unsigned long long)pciaddr));
-		/* pass it onto the psycho */
                 return ((*t->sparc_bus_map)(t, t0, pciaddr, size, flags, hp));
 	}
 	DPRINTF(EDB_BUSMAP, (": FAILED\n"));
@@ -478,6 +473,7 @@ ebus_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 {
 	bus_addr_t offset = paddr;
 	struct ebus_softc *sc = t->cookie;
+	struct ebus_ranges *range = sc->sc_range;
 	int i;
 
 	if (t->parent == 0 || t->parent->sparc_bus_mmap == 0) {
@@ -488,9 +484,8 @@ ebus_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 	t = t->parent;
 
 	for (i = 0; i < sc->sc_nrange; i++) {
-		bus_addr_t paddr =
-		    ((bus_addr_t)sc->sc_range[i].child_hi << 32) |
-		    sc->sc_range[i].child_lo;
+		bus_addr_t paddr = ((bus_addr_t)range[i].child_hi << 32) |
+					        range[i].child_lo;
 
 		if (offset != paddr)
 			continue;
@@ -502,4 +497,3 @@ ebus_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 
 	return (-1);
 }
-

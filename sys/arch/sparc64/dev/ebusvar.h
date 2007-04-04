@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebusvar.h,v 1.5 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: ebusvar.h,v 1.6 2007/04/04 18:38:54 kettenis Exp $	*/
 /*	$NetBSD: ebusvar.h,v 1.5 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -63,16 +63,28 @@ struct ebus_softc {
 	bus_space_tag_t			sc_iotag;	/* from pci */
 	bus_dma_tag_t			sc_dmatag;	/* XXX */
 
-	struct ebus_ranges		*sc_range;
+	void				*sc_range;
 	struct ebus_interrupt_map	*sc_intmap;
 	struct ebus_interrupt_map_mask	sc_intmapmask;
 
 	int				sc_nrange;	/* counters */
 	int				sc_nintmap;
+
+	int				sc_ign;
+
+	bus_space_tag_t			sc_bust;
+	bus_addr_t			sc_csr;
+	bus_space_handle_t		sc_csrh;
 };
 
+
+int ebus_setup_attach_args(struct ebus_softc *, int,
+    struct ebus_attach_args *);
+void ebus_destroy_attach_args(struct ebus_attach_args *);
+int ebus_print(void *, const char *);
+
+
 bus_dma_tag_t ebus_alloc_dma_tag(struct ebus_softc *, bus_dma_tag_t);
-bus_space_tag_t ebus_alloc_bus_tag(struct ebus_softc *, int);
 
 #define ebus_bus_map(t, bt, a, s, f, v, hp) \
 	bus_space_map(t, a, s, f, hp)
