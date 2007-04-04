@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwreg.h,v 1.26 2007/03/31 23:50:59 mglocker Exp $ */
+/*	$OpenBSD: bcwreg.h,v 1.27 2007/04/04 19:36:42 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -72,6 +72,7 @@
 #define BCW_MMIO_MACFILTER_DATA		0x422
 #define BCW_MMIO_GPIO_CONTROL		0x49c
 #define BCW_MMIO_GPIO_MASK		0x49e
+#define BCW_MMIO_POWERUP_DELAY		0x6a8
 
 /*
  * SPROM registers are 16 bit and based at MMIO offset 0x1000

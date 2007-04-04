@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwvar.h,v 1.36 2007/04/01 11:58:00 mglocker Exp $ */
+/*	$OpenBSD: bcwvar.h,v 1.37 2007/04/04 19:36:42 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -57,7 +57,7 @@ enum {
 	BCW_LED_MODE_BG,
 	BCW_LED_TRANSFER,
 	BCW_LED_APTRANSFER,
-	BCW_LED_WEIRD, /* FIXME */
+	BCW_LED_WEIRD, /* XXX */
 	BCW_LED_ASSOC,
 	BCW_LED_INACTIVE,
 
