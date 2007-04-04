@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.35 2007/01/24 10:53:43 jmc Exp $
+.\"	$OpenBSD: compress.1,v 1.36 2007/04/04 13:09:14 millert Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -127,6 +127,19 @@ If either the input or output files are not regular files, the checks for
 reduction in size and file overwriting are not performed, the input file is
 not removed, and the attributes of the input file are not retained.
 .Pp
+By default, when compressing using the deflate scheme
+.Pf ( Fl g ) ,
+the original file name and time stamp is stored in the compressed file.
+When uncompressing, this information is not used.
+Instead, the uncompressed file inherits the time stamp of the
+compressed version and the uncompressed file name is generated from
+the name of the compressed file as described above.
+These defaults may be overridden by the
+.Fl N
+and
+.Fl n
+flags, described below.
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl 1...9
@@ -214,22 +227,14 @@ option is specified, the time stamp stored in the compressed file
 is printed instead).
 .El
 .It Fl N
-When compressing, save the original file name and time stamp in the
-compressed file.
-This information is saved by default when the deflate scheme
-.Pf ( Fl g )
-is used.
 When uncompressing or listing, use the time stamp and file name stored
 in the compressed file, if any, for the uncompressed version.
-.It Fl n
-When compressing, do not save the original file name and time stamp.
-This information is saved by default when the deflate scheme
+This information is only available when the deflate scheme
 .Pf ( Fl g )
 is used.
-When uncompressing, do not restore the original file name and time stamp.
-By default, the uncompressed file inherits the time stamp of the
-compressed version and the uncompressed file name is generated from
-the name of the compressed file name as described above.
+.It Fl n
+When compressing, do not store the original file name and time stamp
+in the header of the compressed file.
 .It Fl O
 Use compress mode
 (the default).

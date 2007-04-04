@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gzip.1,v 1.2 2007/01/31 04:25:52 ray Exp $
+.\"	$OpenBSD: gzip.1,v 1.3 2007/04/04 13:09:14 millert Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -126,6 +126,18 @@ If either the input or output files are not regular files, the checks for
 reduction in size and file overwriting are not performed, the input file is
 not removed, and the attributes of the input file are not retained.
 .Pp
+By default, when compressing, the original file name and time stamp
+is stored in the compressed file.
+When uncompressing, this information is not used.
+Instead, the uncompressed file inherits the time stamp of the
+compressed version and the uncompressed file name is generated from
+the name of the compressed file as described above.
+These defaults may be overridden by the
+.Fl N
+and
+.Fl n
+flags, described below.
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl 1...9
@@ -211,18 +223,13 @@ option is specified, the time stamp stored in the compressed file
 is printed instead).
 .El
 .It Fl N
-When compressing, save the original file name and time stamp in the
-compressed file.
-This information is saved by default.
 When uncompressing or listing, use the time stamp and file name stored
 in the compressed file, if any, for the uncompressed version.
 .It Fl n
-When compressing, do not save the original file name and time stamp.
-This information is saved by default.
-When uncompressing, do not restore the original file name and time stamp.
-By default, the uncompressed file inherits the time stamp of the
-compressed version and the uncompressed file name is generated from
-the name of the compressed file name as described above.
+When compressing, do not store the original file name and time stamp
+in the
+.Nm
+header.
 .It Fl O
 Use old compression method
 (force
