@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.61 2007/01/10 07:58:08 art Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.62 2007/04/04 17:32:20 art Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -175,6 +175,10 @@ sys_clock_gettime(struct proc *p, void *v, register_t *retval)
 	case CLOCK_MONOTONIC:
 		nanouptime(&ats);
 		break;
+	case CLOCK_PROF:
+		ats.tv_sec = p->p_rtime.tv_sec;
+		ats.tv_nsec = p->p_rtime.tv_usec * 1000;
+		break;
 	default:
 		return (EINVAL);
 	}
@@ -206,9 +210,7 @@ sys_clock_settime(struct proc *p, void *v, register_t *retval)
 		if ((error = settime(&ats)) != 0)
 			return (error);
 		break;
-	case CLOCK_MONOTONIC:
-		return (EINVAL);	/* read-only clock */
-	default:
+	default:	/* Other clocks are read-only */
 		return (EINVAL);
 	}
 
