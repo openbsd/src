@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.62 2007/04/04 12:40:13 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.63 2007/04/04 12:45:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1061,27 +1061,21 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 	/* TODO inter-area network route stuff */
 	/* TODO intra-area stuff -- condense LSA ??? */
 
-	/* update lsa but only if it was changed */
 	if (rte->d_type == DT_NET) {
 		type = LSA_TYPE_SUM_NETWORK;
-		v = lsa_find(area, type, rte->prefix.s_addr, rde_router_id());
 	} else if (rte->d_type == DT_RTR) {
 		type = LSA_TYPE_SUM_ROUTER;
-		v = lsa_find(area, type, rte->adv_rtr.s_addr, rde_router_id());
 	} else
 		fatalx("rde_summary_update: unknown route type");
 
+	/* update lsa but only if it was changed */
+	v = lsa_find(area, type, rte->prefix.s_addr, rde_router_id());
 	lsa = orig_sum_lsa(rte, type);
 	lsa_merge(rde_nbr_self(area), lsa, v);
 
-	if (v == NULL) {
-		if (rte->d_type == DT_NET)
-			v = lsa_find(area, type, rte->prefix.s_addr,
-			    rde_router_id());
-		else
-			v = lsa_find(area, type, rte->adv_rtr.s_addr,
-			    rde_router_id());
-	}
+	if (v == NULL)
+		v = lsa_find(area, type, rte->prefix.s_addr, rde_router_id());
+
 	/* suppressed/deleted routes are not found in the second lsa_find */ 
 	if (v)
 		v->cost = rte->cost;
@@ -1164,13 +1158,11 @@ orig_sum_lsa(struct rt_node *rte, u_int8_t type)
 	 * not be true. In this case a hack needs to be done to
 	 * make the ls_id unique.
 	 */
-	if (type == LSA_TYPE_SUM_NETWORK) {
-		lsa->hdr.ls_id = rte->prefix.s_addr;
+	lsa->hdr.ls_id = rte->prefix.s_addr;
+	if (type == LSA_TYPE_SUM_NETWORK)
 		lsa->data.sum.mask = prefixlen2mask(rte->prefixlen);
-	} else {
-		lsa->hdr.ls_id = rte->adv_rtr.s_addr;
+	else
 		lsa->data.sum.mask = 0;	/* must be zero per RFC */
-	}
 
 	lsa->data.sum.metric = htonl(rte->cost & LSA_METRIC_MASK);
 
