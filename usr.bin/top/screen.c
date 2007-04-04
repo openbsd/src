@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.15 2007/03/30 19:21:19 otto Exp $	 */
+/* $OpenBSD: screen.c,v 1.16 2007/04/04 19:12:15 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -57,7 +57,6 @@ char	string_buffer[1024], home[15], lower_left[15];
 char	*clear_line, *clear_scr, *clear_to_end;
 char	*cursor_motion, *start_standout, *end_standout;
 char	*terminal_init, *terminal_end;
-short	ospeed;
 
 static struct termios old_settings, new_settings;
 
