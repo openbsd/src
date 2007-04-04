@@ -2,7 +2,7 @@
 <HEAD><TITLE>smfi_getsymval</TITLE></HEAD>
 <BODY>
 <!--
-$Sendmail: smfi_getsymval.html,v 1.12 2006/12/21 18:30:35 ca Exp $
+$Sendmail: smfi_getsymval.html,v 1.15 2007/03/19 16:49:11 ca Exp $
 -->
 <H1>smfi_getsymval</H1>
 
@@ -69,18 +69,24 @@ By default, the following macros are valid in the given contexts:
 <TR><TD>xxfi_envfrom</TD>    <TD>i, auth_type, auth_authen, auth_ssf, auth_author,
                 mail_mailer, mail_host, mail_addr</TD></TR>
 <TR><TD>xxfi_envrcpt</TD>    <TD>rcpt_mailer, rcpt_host, rcpt_addr</TD></TR>
+
+<TR><TD>xxfi_data</TD>   <TD>(none)</TD></TR>
+<TR><TD>xxfi_eoh</TD>    <TD>(none)</TD></TR>
+<TR><TD>xxfi_eom</TD>    <TD>msg_id</TD></TR>
 </TABLE>
 <P>
-All macros stay in effect from the point they are received until the
-end of the connection for the first two sets, the end of the message
-for the third (xxfi_envfrom), and just for each recipient for the
-final set (xxfi_envrcpt).
+All macros stay in effect from the point they are received
+until the end of the connection for the first two sets,
+the end of the message for the third (xxfi_envfrom) and last (xxfi_eom),
+and just for each recipient for xxfi_envrcpt.
 <P>
 The macro list can be changed using the confMILTER_MACROS_* options in
-sendmail.mc.  The scopes of such macros will be determined by when
-they are set by sendmail.  For descriptions of macros' values, please
-see the "Sendmail Installation and Operation Guide" provided with your
-sendmail distribution.
+sendmail.mc.
+The scopes of such macros will be determined by when they are set by sendmail.
+For descriptions of macros' values,
+please see the
+"Sendmail Installation and Operation Guide"
+provided with your sendmail distribution.
 
 </TD>
 </TR>
@@ -89,7 +95,7 @@ sendmail distribution.
 
 <HR size="1">
 <FONT size="-1">
-Copyright (c) 2000, 2002-2003 Sendmail, Inc. and its suppliers.
+Copyright (c) 2000, 2002-2003, 2007 Sendmail, Inc. and its suppliers.
 All rights reserved.
 <BR>
 By using this file, you agree to the terms and conditions set

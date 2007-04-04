@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2006 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2007 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -14,7 +14,7 @@
 #include <sendmail.h>
 #include <sm/sem.h>
 
-SM_RCSID("@(#)$Sendmail: queue.c,v 8.970 2006/12/19 01:15:07 ca Exp $")
+SM_RCSID("@(#)$Sendmail: queue.c,v 8.972 2007/03/29 22:55:17 ca Exp $")
 
 #include <dirent.h>
 
@@ -795,6 +795,8 @@ queueup(e, announce, msync)
 		{
 			(void) expand(h->h_value, buf, sizeof(buf), e);
 			if (buf[0] == '\0')
+				continue;
+			if (buf[0] == ' ' && buf[1] == '\0')
 				continue;
 		}
 
@@ -3910,6 +3912,7 @@ readqf(e, openonly)
 	**  Read and process the file.
 	*/
 
+	SM_REQUIRE(e != NULL);
 	bp = NULL;
 	(void) sm_strlcpy(qf, queuename(e, ANYQFL_LETTER), sizeof(qf));
 	qfp = sm_io_open(SmFtStdio, SM_TIME_DEFAULT, qf, SM_IO_RDWR_B, NULL);
@@ -4503,6 +4506,17 @@ readqf(e, openonly)
 		(void) sm_io_close(qfp, SM_TIME_DEFAULT);
 		return false;
 	}
+ 
+#if _FFR_QF_PARANOIA
+	/* Check to make sure key fields were read */
+	if (e->e_from.q_mailer == NULL)
+	{
+		syserr("readqf: %s: sender not specified in queue file", qf);
+		(void) sm_io_close(qfp, SM_TIME_DEFAULT);
+		return false;
+	}
+	/* other checks? */
+#endif /* _FFR_QF_PARANOIA */
 
 	/* possibly set ${dsn_ret} macro */
 	if (bitset(EF_RET_PARAM, e->e_flags))

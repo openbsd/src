@@ -10,7 +10,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: milter.c,v 8.266 2006/11/29 00:20:41 ca Exp $")
+SM_RCSID("@(#)$Sendmail: milter.c,v 8.267 2007/02/27 22:21:12 ca Exp $")
 
 #if MILTER
 # include <sm/sendmail.h>
@@ -1242,11 +1242,11 @@ milter_setup(line)
 	m->mf_timeout[SMFTO_WRITE] = (time_t) 10;
 	m->mf_timeout[SMFTO_READ] = (time_t) 10;
 	m->mf_timeout[SMFTO_EOM] = (time_t) 300;
-#if MILTER_CHECK
+#if _FFR_MILTER_CHECK
 	m->mf_mta_prot_version = SMFI_PROT_VERSION;
 	m->mf_mta_prot_flags = SMFI_CURR_PROT;
 	m->mf_mta_actions = SMFI_CURR_ACTS;
-#endif /* MILTER_CHECK */
+#endif /* _FFR_MILTER_CHECK */
 
 	/* now scan through and assign info from the fields */
 	while (*p != '\0')
@@ -1294,7 +1294,7 @@ milter_setup(line)
 			milter_parse_timeouts(p, m);
 			break;
 
-#if MILTER_CHECK
+#if _FFR_MILTER_CHECK
 		  case 'a':
 			m->mf_mta_actions = strtoul(p, NULL, 0);
 			break;
@@ -1304,7 +1304,7 @@ milter_setup(line)
 		  case 'v':
 			m->mf_mta_prot_version = strtoul(p, NULL, 0);
 			break;
-#endif /* MILTER_CHECK */
+#endif /* _FFR_MILTER_CHECK */
 
 		  default:
 			syserr("X%s: unknown filter equate %c=",
@@ -2434,15 +2434,15 @@ milter_negotiate(m, e)
 		return -1;
 	}
 
-#if MILTER_CHECK
+#if _FFR_MILTER_CHECK
 	mta_prot_vers = m->mf_mta_prot_version;
 	mta_prot_flags = m->mf_mta_prot_flags;
 	mta_actions = m->mf_mta_actions;
-#else /* MILTER_CHECK */
+#else /* _FFR_MILTER_CHECK */
 	mta_prot_vers = SMFI_PROT_VERSION;
 	mta_prot_flags = SMFI_CURR_PROT;
 	mta_actions = SMFI_CURR_ACTS;
-#endif /* MILTER_CHECK */
+#endif /* _FFR_MILTER_CHECK */
 
 	fvers = htonl(mta_prot_vers);
 	pflags = htonl(mta_prot_flags);

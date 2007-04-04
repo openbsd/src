@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2006 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2007 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: conf.c,v 8.1119 2006/12/19 00:58:56 ca Exp $")
+SM_RCSID("@(#)$Sendmail: conf.c,v 8.1128 2007/04/03 21:32:29 ca Exp $")
 
 #include <sm/sendmail.h>
 #include <sendmail/pathnames.h>
@@ -1295,7 +1295,7 @@ init_md(argc, argv)
 	/* keep gethostby*() from stripping the local domain name */
 	set_domain_trim_off();
 #endif /* _CONVEX_SOURCE */
-#ifdef __QNX__
+#if defined(__QNX__) && !defined(__QNXNTO__)
 	/*
 	**  Due to QNX's network distributed nature, you can target a tcpip
 	**  stack on a different node in the qnx network; this patch lets
@@ -3887,11 +3887,8 @@ vendor_post_defaults(e)
 	ENVELOPE *e;
 {
 #ifdef __QNX__
-	char *p;
-
 	/* Makes sure the SOCK environment variable remains */
-	if (p = getextenv("SOCK"))
-		sm_setuserenv("SOCK", p);
+	sm_setuserenv("SOCK", NULL);
 #endif /* __QNX__ */
 #if defined(SUN_EXTENSIONS) && defined(SUN_DEFAULT_VALUES)
 	sun_post_defaults(e);
@@ -6084,6 +6081,21 @@ char	*FFRCompileOptions[] =
 	/* Allow usernames with '.' */
 	"_FFR_DOTTED_USERNAMES",
 #endif /* _FFR_DOTTED_USERNAMES */
+#if _FFR_DPO_CS
+	/*
+	**  Make DaemonPortOptions case sensitive.
+	**  For some unknown reasons the code converted every option
+	**  to uppercase (first letter only, as that's the only one that
+	**  is actually checked). This prevented all new lower case options
+	**  from working...
+	**  The documentation doesn't say anything about case (in)sensitivity,
+	**  which means it should be case sensitive by default,
+	**  but it's not a good idea to change this within a patch release,
+	**  so let's delay this to 8.15.
+	*/
+
+	"_FFR_DPO_CS",
+#endif /* _FFR_DPO_CS */
 #if _FFR_DROP_TRUSTUSER_WARNING
 	/*
 	**  Don't issue this warning:
@@ -6179,6 +6191,9 @@ char	*FFRCompileOptions[] =
 	/* Check free memory */
 	"_FFR_MEMSTAT",
 #endif /* _FFR_MEMSTAT */
+#if _FFR_MILTER_CHECK
+	"_FFR_MILTER_CHECK",
+#endif /* _FFR_MILTER_CHECK */
 #if _FFR_MILTER_CONVERT_ALL_LF_TO_CRLF
 	/*
 	**  milter_body() uses the same conversion algorithm as putbody()
@@ -6197,6 +6212,14 @@ char	*FFRCompileOptions[] =
 
 	"_FFR_MILTER_CONVERT_ALL_LF_TO_CRLF",
 #endif /* _FFR_MILTER_CONVERT_ALL_LF_TO_CRLF */
+#if _FFR_MILTER_CHECK_REJECTIONS_TOO
+	/*
+	**  Also send RCPTs that are rejected by check_rcpt to a milter
+	**  (if requested during option negotiation).
+	*/
+
+	"_FFR_MILTER_CHECK_REJECTIONS_TOO",
+#endif /* _FFR_MILTER_CHECK_REJECTIONS_TOO */
 #if _FFR_MIME7TO8_OLD
 	/* Old mime7to8 code, the new is broken for at least one example. */
 	"_FFR_MIME7TO8_OLD",
@@ -6218,6 +6241,9 @@ char	*FFRCompileOptions[] =
 	/* log ntries=, from Nik Clayton of FreeBSD */
 	"_FFR_LOG_NTRIES",
 #endif /* _FFR_LOG_NTRIES */
+#if _FFR_QF_PARANOIA
+	"_FFR_QF_PARANOIA",
+#endif /* _FFR_QF_PARANOIA */
 #if _FFR_QUEUEDELAY
 	/* Exponential queue delay; disabled in 8.13 since it isn't used. */
 	"_FFR_QUEUEDELAY",

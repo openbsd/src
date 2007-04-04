@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2005-2007 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -8,7 +8,7 @@
  */
 
 #include <sm/gen.h>
-SM_IDSTR(id, "@(#)$Sendmail: t-memstat.c,v 1.7 2006/06/28 23:57:59 ca Exp $")
+SM_IDSTR(id, "@(#)$Sendmail: t-memstat.c,v 1.9 2007/03/14 21:41:09 ca Exp $")
 
 #include <sm/misc.h>
 
@@ -24,6 +24,18 @@ SM_IDSTR(id, "@(#)$Sendmail: t-memstat.c,v 1.7 2006/06/28 23:57:59 ca Exp $")
 
 extern char *optarg;
 extern int optind;
+
+void
+usage(prg)
+	char *prg;
+{
+	fprintf(stderr, "usage: %s [options]\n", prg);
+	fprintf(stderr, "options:\n");
+	fprintf(stderr, "-l n    loop n times\n");
+	fprintf(stderr, "-m n    allocate n bytes per iteration\n");
+	fprintf(stderr, "-r name use name as resource to query\n");
+	fprintf(stderr, "-s n    sleep n seconds per iteration\n");
+}
 
 int
 main(argc, argv)
@@ -58,7 +70,8 @@ main(argc, argv)
 			break;
 
 		  default:
-			break;
+			usage(argv[0]);
+			exit(1);
 		}
 	}
 

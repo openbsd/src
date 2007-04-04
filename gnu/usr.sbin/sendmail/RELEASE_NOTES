@@ -1,10 +1,56 @@
 			SENDMAIL RELEASE NOTES
-      $Sendmail: RELEASE_NOTES,v 8.1872 2007/02/01 00:37:43 ca Exp $
+      $Sendmail: RELEASE_NOTES,v 8.1888 2007/04/03 23:28:40 ca Exp $
 
 
 This listing shows the version of the sendmail binary, the version
 of the sendmail configuration files, the date of release, and a
 summary of the changes in that release.
+
+8.14.1/8.14.1	2007/04/03
+	Even though a milter rejects a recipient the MTA will still keep
+		it in its list of recipients and deliver to it if the
+		transaction is accepted. This is a regression introduced
+		in 8.14.0 due to the change for SMFIP_RCPT_REJ.  Bug
+		found by Andy Fiddaman.
+	The new DaemonPortOptions which begin with a lower case character
+		could not be set in 8.14.0.
+	If a server shut down the connection in response to a STARTTLS
+		command, sendmail would log a misleading error message
+		due to an internal inconsistency.  Problem found by
+		Werner Wiethege.
+	Document how some sendmail.cf options change the behavior of mailq.
+		Noted by Paul Menchini of the North Carolina School of
+		Science and Mathematics.
+	CONFIG: Add confSOFT_BOUNCE m4 option for setting SoftBounce.
+	CONFIG: 8.14.0's RELEASE_NOTES failed to mention the addition
+		of the confMAX_NOOP_COMMANDS and confSHARED_MEMORY_KEY_FILE
+		m4 options for setting MaxNOOPCommands and
+		SharedMemoryKeyFile.
+	CONFIG: Add confMILTER_MACROS_EOH and confMILTER_MACROS_DATA m4
+		options for setting Milter.macros.eoh and Milter.macros.data.
+	CONTRIB: Use flock() and fcntl() in qtool.pl if necessary.
+		Patch from Daniel Carroll of Mesa State College.
+	LIBMILTER: Make sure an unknown command does not affect the
+		currently available macros.  Problem found by Andy Fiddaman.
+	LIBMILTER: The MTA did not offer SMFIF_SETSYMLIST during option
+		negotiation.  Problem reported by Bryan Costales.
+	LIBMILTER: Fix several minor errors in the documentation.
+		Patches from Bryan Costales.
+	PORTABILITY FIXES:
+		AIX 5.{1,2}: libsm/util.c failed to compile due to
+			redefinition of several macros, e.g., SIG_ERR.
+			Patch from Jim Pirzyk with assistance by Bob
+			Booth, University of Illinois at Urbana-Champaign.
+		Add support for QNX.6.  Patch from Sean Boudreau of QNX
+			Software Systems.
+	New Files:
+		devtools/M4/depend/QNX6.m4
+		devtools/OS/QNX.6.x
+		include/sm/os/sm_os_qnx.h
+
+	New Files added in 8.14.0, but not shown in the release notes entry:
+		libmilter/docs/smfi_chgfrom.html
+		libmilter/docs/smfi_version.html
 
 8.14.0/8.14.0	2007/01/31
 	Header field values are now 8 bit clean.  Notes:

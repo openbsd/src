@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2006 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2007 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -14,7 +14,7 @@
 #include <sendmail.h>
 #include <sm/time.h>
 
-SM_RCSID("@(#)$Sendmail: deliver.c,v 8.1010 2006/12/19 01:15:06 ca Exp $")
+SM_RCSID("@(#)$Sendmail: deliver.c,v 8.1012 2007/03/29 21:20:15 ca Exp $")
 
 #if HASSETUSERCONTEXT
 # include <login_cap.h>
@@ -1334,11 +1334,13 @@ deliver(e, firstto)
 	char cbuf[MAXPATHLEN];
 
 	errno = 0;
+	SM_REQUIRE(firstto != NULL);	/* same as to */
 	if (!QS_IS_OK(to->q_state))
 		return 0;
 
 	suidwarn = geteuid() == 0;
 
+	SM_REQUIRE(e != NULL);
 	m = to->q_mailer;
 	host = to->q_host;
 	CurEnv = e;			/* just in case */
@@ -1383,6 +1385,7 @@ deliver(e, firstto)
 
 	/* rewrite from address, using rewriting rules */
 	rcode = EX_OK;
+	SM_ASSERT(e->e_from.q_mailer != NULL);
 	if (bitnset(M_UDBENVELOPE, e->e_from.q_mailer->m_flags))
 		p = e->e_sender;
 	else
@@ -3085,6 +3088,16 @@ reconnect:	/* after switching to an encrypted connection */
 				(void) sm_strlcpy(SmtpError, p,
 						  sizeof(SmtpError));
 			}
+			else if (mci->mci_state == MCIS_CLOSED)
+			{
+				/* connection close caused by 421 */
+				mci->mci_errno = 0;
+				rcode = EX_TEMPFAIL;
+				mci_setstat(mci, rcode, NULL, "421");
+			}
+			else
+				rcode = 0;
+
 			QuickAbort = saveQuickAbort;
 			SuprErrs = saveSuprErrs;
 			if (DONE_STARTTLS(mci->mci_flags) &&

@@ -1,6 +1,6 @@
 divert(-1)
 #
-# Copyright (c) 1998-2006 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2007 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 # Copyright (c) 1983, 1995 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1988, 1993
@@ -13,7 +13,7 @@ divert(-1)
 #
 divert(0)
 
-VERSIONID(`$Sendmail: proto.m4,v 8.726 2007/01/04 18:27:46 ca Exp $')
+VERSIONID(`$Sendmail: proto.m4,v 8.730 2007/02/01 18:50:03 ca Exp $')
 
 # level CF_LEVEL config file format
 V`'CF_LEVEL/ifdef(`VENDOR_NAME', `VENDOR_NAME', `Berkeley')
@@ -564,6 +564,9 @@ ifdef(`confUNSAFE_GROUP_WRITES',
 # where do errors that occur when sending errors get sent?
 _OPTION(DoubleBounceAddress, `confDOUBLE_BOUNCE_ADDRESS', `postmaster')
 
+# issue temporary errors (4xy) instead of permanent errors (5xy)?
+_OPTION(SoftBounce, `confSOFT_BOUNCE', `False')
+
 # where to save bounces if all else fails
 _OPTION(DeadLetterDrop, `confDEAD_LETTER_DROP', `/var/tmp/dead.letter')
 
@@ -647,7 +650,9 @@ _OPTION(Milter.macros.connect, `confMILTER_MACROS_CONNECT', `')
 _OPTION(Milter.macros.helo, `confMILTER_MACROS_HELO', `')
 _OPTION(Milter.macros.envfrom, `confMILTER_MACROS_ENVFROM', `')
 _OPTION(Milter.macros.envrcpt, `confMILTER_MACROS_ENVRCPT', `')
-_OPTION(Milter.macros.eom, `confMILTER_MACROS_EOM', `')')
+_OPTION(Milter.macros.eom, `confMILTER_MACROS_EOM', `')
+_OPTION(Milter.macros.eoh, `confMILTER_MACROS_EOH', `')
+_OPTION(Milter.macros.data, `confMILTER_MACROS_DATA', `')')
 
 # CA directory
 _OPTION(CACertPath, `confCACERT_PATH', `')

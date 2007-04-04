@@ -1242,7 +1242,7 @@ dnsbl		Turns on rejection, discarding, or quarantining of hosts
 		found in a DNS based list.  The first argument is used as
 		the domain in which blocked hosts are listed.  A second
 		argument can be used to change the default error message,
-		or select one of the operations `discard' and 'quarantine'.
+		or select one of the operations `discard' and `quarantine'.
 		Without that second argument, the error message will be
 
 			Rejected: IP-ADDRESS listed at SERVER
@@ -1488,9 +1488,20 @@ greet_pause	Adds the greet_pause ruleset which enables open proxy
 block_bad_helo	Reject messages from SMTP clients which provide a HELO/EHLO
 		argument which is either unqualified, or is one of our own
 		names (i.e., the server name instead of the client name).
+		This check is performed at RCPT stage and disabled for the
+		following cases:
+		- authenticated sessions,
+		- connections from IP addresses in class $={R}.
+		Currently access_db lookups can not be used to
+		(selectively) disable this test, moreover,
+		FEATURE(`delay_checks')
+		is required.
 
 require_rdns	Reject mail from connecting SMTP clients without proper
 		rDNS (reverse DNS), functional gethostbyaddr() resolution.
+		Note: this feature will cause false positives, i.e., there
+		are legitimate MTAs that do not have proper DNS entries.
+		Rejecting mails from those MTAs is a local policy decision.
 
 		The basic policy is to reject message with a 5xx error if
 		the IP address fails to resolve.  However, if this is a
@@ -4111,6 +4122,11 @@ confDOUBLE_BOUNCE_ADDRESS  DoubleBounceAddress
 					"double bounce" error message to this
 					address.  If it expands to an empty
 					string, double bounces are dropped.
+confSOFT_BOUNCE		SoftBounce	[False] If set, issue temporary errors
+					(4xy) instead of permanent errors
+					(5xy).  This can be useful during
+					testing of a new configuration to
+					avoid erroneous bouncing of mails.
 confDEAD_LETTER_DROP	DeadLetterDrop	[undefined] Filename to save bounce
 					messages which could not be returned
 					to the user or sent to postmaster.
@@ -4329,7 +4345,14 @@ confMILTER_MACROS_ENVRCPT	Milter.macros.envrcpt
 					milters after RCPT TO command.
 confMILTER_MACROS_EOM		Milter.macros.eom
 					[{msg_id}] Macros to transmit to
-					milters after DATA command.
+					milters after the terminating
+					DATA '.' is received.
+confMILTER_MACROS_EOH		Milter.macros.eoh
+					Macros to transmit to milters
+					after the end of headers.
+confMILTER_MACROS_DATA		Milter.macros.data
+					Macros to transmit to milters
+					after DATA command is received.
 
 
 See also the description of OSTYPE for some parameters that can be
@@ -4676,4 +4699,4 @@ M4 DIVERSIONS
    8	DNS based blacklists
    9	special local rulesets (1 and 2)
 
-$Revision: 1.26 $, Last updated $Date: 2007/02/04 13:17:34 $
+$Revision: 1.27 $, Last updated $Date: 2007/04/04 14:43:48 $

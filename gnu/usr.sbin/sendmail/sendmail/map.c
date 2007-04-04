@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: map.c,v 8.693 2006/12/19 00:58:56 ca Exp $")
+SM_RCSID("@(#)$Sendmail: map.c,v 8.696 2007/04/03 21:33:14 ca Exp $")
 
 #if LDAPMAP
 # include <sm/ldap.h>
@@ -4698,7 +4698,7 @@ ldapmap_set_defaults(spec)
 /*
 **  Support for the CCSO Nameserver (ph/qi).
 **  This code is intended to replace the so-called "ph mailer".
-**  Contributed by Mark D. Roth <roth@uiuc.edu>.  Contact him for support.
+**  Contributed by Mark D. Roth.  Contact him for support.
 */
 
 /* what version of the ph map code we're running */

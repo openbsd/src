@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2006 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1999-2007 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -7,7 +7,7 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: mfdef.h,v 8.36 2006/11/28 18:31:00 ca Exp $
+ *	$Sendmail: mfdef.h,v 8.38 2007/03/27 18:53:48 ca Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 /* These apply to SMFIF_* flags */
 #define SMFI_V1_ACTS	0x0000000FL	/* The actions of V1 filter */
 #define SMFI_V2_ACTS	0x0000003FL	/* The actions of V2 filter */
-#define SMFI_CURR_ACTS	0x000000FFL	/* actions of current version */
+#define SMFI_CURR_ACTS	0x000001FFL	/* actions of current version */
 
 /* address families */
 #define SMFIA_UNKNOWN		'U'	/* unknown */

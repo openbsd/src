@@ -9,7 +9,7 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"	$Sendmail: op.me,v 8.734 2007/02/01 00:40:54 ca Exp $
+.\"	$Sendmail: op.me,v 8.739 2007/03/22 17:56:01 ca Exp $
 .\"
 .\" eqn op.me | pic | troff -me
 .\"
@@ -90,10 +90,10 @@ Sendmail, Inc.
 .de Ve
 Version \\$2
 ..
-.Ve $Revision: 1.25 $
+.Ve $Revision: 1.26 $
 .rm Ve
 .sp
-For Sendmail Version 8.13
+For Sendmail Version 8.14
 .)l
 .(f
 Sendmail is a trademark of Sendmail, Inc.
@@ -4259,6 +4259,13 @@ It can accept or reject mail transfer between these two addresses
 much like the
 .i checkcompat()
 function.
+Note:
+while other
+.i check_*
+rulesets are invoked during the SMTP mail receiption stage
+(i.e., in the SMTP server),
+.i check_compat
+is invoked during the mail delivery stage.
 .sh 4 "check_eoh"
 .pp
 The
@@ -7412,6 +7419,16 @@ highest priority jobs)
 this should be set as high as possible to avoid
 .q losing
 jobs that happen to fall late in the queue directory.
+Note: this option also restricts the number of entries printed by
+.i mailq .
+That is, if
+.i MaxQueueRunSize
+is set to a value
+.b N
+larger than zero,
+then only
+.b N
+entries are printed per queue group.
 .ip MaxRecipientsPerMessage=\fIN\fP
 [no short name]
 The maximum number of recipients that will be accepted per message
@@ -7589,7 +7606,7 @@ The
 .i opt ions
 can be selected from:
 .(b
-.ta \w'needvrfyhelo'u+3n
+.ta \w'noactualrecipient'u+3n
 public	Allow open access
 needmailhelo	Insist on HELO or EHLO command before MAIL
 needexpnhelo	Insist on HELO or EHLO command before EXPN
@@ -11407,7 +11424,7 @@ replace it with a blank sheet for double-sided output.
 .\".sz 10
 .\"Eric Allman
 .\".sp
-.\"Version $Revision: 1.25 $
+.\"Version $Revision: 1.26 $
 .\".ce 0
 .bp 3
 .ce

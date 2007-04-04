@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2006 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2007 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -14,7 +14,7 @@
 #include <sendmail.h>
 #include "map.h"
 
-SM_RCSID("@(#)$Sendmail: daemon.c,v 8.676 2006/12/19 01:15:06 ca Exp $")
+SM_RCSID("@(#)$Sendmail: daemon.c,v 8.678 2007/03/08 00:33:40 ca Exp $")
 
 #if defined(SOCK_STREAM) || defined(__GNU_LIBRARY__)
 # define USE_SOCK_STREAM	1
@@ -1468,12 +1468,13 @@ setsockaddroptions(p, d)
 			continue;
 		while (isascii(*++v) && isspace(*v))
 			continue;
-		if (isascii(*f) && islower(*f))
-			*f = toupper(*f);
 
 		switch (*f)
 		{
 		  case 'A':		/* address */
+#if !_FFR_DPO_CS
+		  case 'a':
+#endif /* !_FFR_DPO_CS */
 			addr = v;
 			break;
 
@@ -1502,6 +1503,9 @@ setsockaddroptions(p, d)
 			break;
 
 		  case 'F':		/* address family */
+#if !_FFR_DPO_CS
+		  case 'f':
+#endif /* !_FFR_DPO_CS */
 			if (isascii(*v) && isdigit(*v))
 				d->d_addr.sa.sa_family = atoi(v);
 #if _FFR_DAEMON_NETUNIX
@@ -1538,23 +1542,38 @@ setsockaddroptions(p, d)
 
 #if MILTER
 		  case 'I':
+# if !_FFR_DPO_CS
+		  case 'i':
+# endif /* !_FFR_DPO_CS */
 			d->d_inputfilterlist = v;
 			break;
 #endif /* MILTER */
 
 		  case 'L':		/* listen queue size */
+#if !_FFR_DPO_CS
+		  case 'l':
+#endif /* !_FFR_DPO_CS */
 			d->d_listenqueue = atoi(v);
 			break;
 
 		  case 'M':		/* modifiers (flags) */
+#if !_FFR_DPO_CS
+		  case 'm':
+#endif /* !_FFR_DPO_CS */
 			d->d_mflags = getmodifiers(v, d->d_flags);
 			break;
 
 		  case 'N':		/* name */
+#if !_FFR_DPO_CS
+		  case 'n':
+#endif /* !_FFR_DPO_CS */
 			d->d_name = v;
 			break;
 
 		  case 'P':		/* port */
+#if !_FFR_DPO_CS
+		  case 'p':
+#endif /* !_FFR_DPO_CS */
 			port = v;
 			break;
 
@@ -1571,6 +1590,9 @@ setsockaddroptions(p, d)
 			break;
 
 		  case 'S':		/* send buffer size */
+#if !_FFR_DPO_CS
+		  case 's':
+#endif /* !_FFR_DPO_CS */
 			d->d_tcpsndbufsize = atoi(v);
 			break;
 

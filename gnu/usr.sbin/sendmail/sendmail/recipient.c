@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: recipient.c,v 8.344 2007/02/01 05:12:14 ca Exp $")
+SM_RCSID("@(#)$Sendmail: recipient.c,v 8.348 2007/03/19 21:33:09 ca Exp $")
 
 static void	includetimeout __P((int));
 static ADDRESS	*self_reference __P((ADDRESS *));
@@ -427,8 +427,7 @@ removefromlist(list, sendq, e)
 
 /*
 **  RECIPIENT -- Designate a message recipient
-**
-**	Saves the named person for future mailing.
+**	Saves the named person for future mailing (after some checks).
 **
 **	Parameters:
 **		new -- the (preparsed) address header for the recipient.
@@ -1876,12 +1875,16 @@ resetuid:
 		sm_dprintf("include: read error: %s\n", sm_errstring(errno));
 	if (nincludes > 0 && !bitset(QSELFREF, ctladdr->q_flags))
 	{
-		if (tTd(27, 5))
+		if (aliaslevel <= MaxAliasRecursion ||
+		    ctladdr->q_state != QS_BADADDR)
 		{
-			sm_dprintf("include: QS_DONTSEND ");
-			printaddr(sm_debug_file(), ctladdr, false);
+			ctladdr->q_state = QS_DONTSEND;
+			if (tTd(27, 5))
+			{
+				sm_dprintf("include: QS_DONTSEND ");
+				printaddr(sm_debug_file(), ctladdr, false);
+			}
 		}
-		ctladdr->q_state = QS_DONTSEND;
 	}
 
 	(void) sm_io_close(fp, SM_TIME_DEFAULT);

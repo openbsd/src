@@ -170,7 +170,7 @@ Kresolve sequence dnsmx canon
 
   When sendmail is doing 8->7 bit MIME conversions, and the message
   contains certain MIME body types that cannot be converted to 7-bit,
-  sendmail will strip the message to 7-bit.
+  sendmail will pass the message as 8-bit.
 
 * 7->8 bit MIME conversion
 
@@ -247,4 +247,4 @@ Kresolve sequence dnsmx canon
   be used if set instead of LOCAL_RELAY ($R).  This will be fixed in a
   future version.
 
-$Revision: 1.10 $, Last updated $Date: 2007/02/04 13:17:34 $
+$Revision: 1.11 $, Last updated $Date: 2007/04/04 14:43:48 $

@@ -52,7 +52,7 @@
 
 #ifdef _DEFINE
 # ifndef lint
-SM_UNUSED(static char SmailId[]) = "@(#)$Sendmail: sendmail.h,v 8.1040 2006/12/19 19:47:38 ca Exp $";
+SM_UNUSED(static char SmailId[]) = "@(#)$Sendmail: sendmail.h,v 8.1042 2007/02/27 22:21:13 ca Exp $";
 # endif /* ! lint */
 #endif /* _DEFINE */
 
@@ -1628,7 +1628,7 @@ extern void	set_delivery_mode __P((int, ENVELOPE *));
 #define PRIV_NORECEIPTS		0x00200000	/* disallow return receipts */
 #define PRIV_NOACTUALRECIPIENT	0x00400000 /* no X-Actual-Recipient in DSNs */
 
-/* don't give no info, anyway, anyhow */
+/* don't give no info, anyway, anyhow (in the main SMTP transaction) */
 #define PRIV_GOAWAY		0x0000ffff
 
 /* struct defining such things */
@@ -1717,12 +1717,12 @@ struct milter
 	int		mf_sock;	/* connected socket */
 	char		mf_state;	/* state of filter */
 	time_t		mf_timeout[SMFTO_NUM_TO]; /* timeouts */
-#if MILTER_CHECK
+#if _FFR_MILTER_CHECK
 	/* for testing only */
 	mi_int32	mf_mta_prot_version;
 	mi_int32	mf_mta_prot_flags;
 	mi_int32	mf_mta_actions;
-#endif /* MILTER_CHECK */
+#endif /* _FFR_MILTER_CHECK */
 };
 
 /* MTA flags */

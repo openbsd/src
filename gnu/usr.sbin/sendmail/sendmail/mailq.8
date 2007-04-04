@@ -1,4 +1,4 @@
-.\" Copyright (c) 1998-2000, 2002 Sendmail, Inc. and its suppliers.
+.\" Copyright (c) 1998-2000, 2002, 2007 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
 .\" Copyright (c) 1983, 1997 Eric P. Allman.  All rights reserved.
 .\" Copyright (c) 1985, 1990, 1993
@@ -9,9 +9,9 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     $Sendmail: mailq.1,v 8.20 2002/06/27 22:47:34 gshapiro Exp $
+.\"     $Sendmail: mailq.1,v 8.21 2007/03/22 18:21:27 ca Exp $
 .\"
-.Dd September 26, 2002
+.Dd March 22, 2007
 .Dt MAILQ 8
 .Os
 .Sh NAME
@@ -105,6 +105,26 @@ and the name of the alias this command expanded from, if any.
 Moreover, status messages for each recipient are printed
 if available.
 .El
+.Pp
+Several sendmail.cf options influence the behavior of the
+.Nm
+utility.
+The number of items printed per queue group is restricted by
+.Li MaxQueueRunSize
+if that value is set.
+The status character
+.Sq *
+is not printed for some values of
+.Li QueueSortOrder ,
+e.g.,
+.Ar filename ,
+.Ar random ,
+.Ar modification ,
+and
+.Ar none ,
+unless a
+.Fl q
+option is used to limit the processed jobs.
 .Pp
 The
 .Nm

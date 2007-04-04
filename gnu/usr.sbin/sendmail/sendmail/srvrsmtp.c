@@ -17,7 +17,7 @@
 # include <libmilter/mfdef.h>
 #endif /* MILTER */
 
-SM_RCSID("@(#)$Sendmail: srvrsmtp.c,v 8.957 2006/12/19 01:15:07 ca Exp $")
+SM_RCSID("@(#)$Sendmail: srvrsmtp.c,v 8.960 2007/02/07 20:18:47 ca Exp $")
 
 #include <sm/time.h>
 #include <sm/fdset.h>
@@ -370,6 +370,7 @@ static bool	smtp_data __P((SMTP_T *, ENVELOPE *));
 	{								\
 		int savelogusrerrs = LogUsrErrs;			\
 									\
+		milter_cmd_fail = true;					\
 		switch (state)						\
 		{							\
 		  case SMFIR_SHUTDOWN:					\
@@ -430,6 +431,7 @@ static bool	smtp_data __P((SMTP_T *, ENVELOPE *));
 					  "Milter: %s=%s, discard",	\
 					  str, addr);			\
 			e->e_flags |= EF_DISCARD;			\
+			milter_cmd_fail = false;			\
 			break;						\
 									\
 		  case SMFIR_TEMPFAIL:					\
@@ -441,6 +443,9 @@ static bool	smtp_data __P((SMTP_T *, ENVELOPE *));
 				LogUsrErrs = false;			\
 			}						\
 			usrerr(MSG_TEMPFAIL);				\
+			break;						\
+		  default:						\
+			milter_cmd_fail = false;			\
 			break;						\
 		}							\
 		LogUsrErrs = savelogusrerrs;				\
@@ -621,6 +626,7 @@ smtp(nullserver, d_flags, e)
 	volatile time_t log_delay = (time_t) 0;
 #if MILTER
 	volatile bool milter_cmd_done, milter_cmd_safe;
+	volatile bool milter_rcpt_added, milter_cmd_fail;
 	ADDRESS addr_st;
 # define p_addr_st	&addr_st
 #else /* MILTER */
@@ -1139,6 +1145,9 @@ smtp(nullserver, d_flags, e)
 		LogUsrErrs = false;
 		OnlyOneError = true;
 		e->e_flags &= ~(EF_VRFYONLY|EF_GLOBALERRS);
+#if MILTER
+		milter_cmd_fail = false;
+#endif /* MILTER */
 
 		/* setup for the read */
 		e->e_to = NULL;
@@ -2493,6 +2502,7 @@ smtp(nullserver, d_flags, e)
 #if MILTER
 			(void) memset(&addr_st, '\0', sizeof(addr_st));
 			a = NULL;
+			milter_rcpt_added = false;
 #endif
 			if (BadRcptThrottle > 0 &&
 			    n_badrcpts >= BadRcptThrottle)
@@ -2547,16 +2557,14 @@ smtp(nullserver, d_flags, e)
 
 #if MILTER
 			/*
-			**  If the filter will be deleting recipients,
-			**  don't expand them at RCPT time (in the call
+			**  Do not expand recipients at RCPT time (in the call
 			**  to recipient()).  If they are expanded, it
 			**  is impossible for removefromlist() to figure
 			**  out the expanded members of the original
 			**  recipient and mark them as QS_DONTSEND.
 			*/
 
-			if (milter_can_delrcpts())
-				e->e_flags |= EF_VRFYONLY;
+			e->e_flags |= EF_VRFYONLY;
 			milter_cmd_done = false;
 			milter_cmd_safe = false;
 #endif /* MILTER */
@@ -2611,6 +2619,23 @@ smtp(nullserver, d_flags, e)
 			if (Errors > 0)
 				goto rcpt_done;
 
+#if MILTER
+			/*
+			**  rscheck() can trigger an "exception"
+			**  in which case the execution continues at
+			**  SM_EXCEPT(exc, "[!F]*")
+			**  This means milter_cmd_safe is not set
+			**  and hence milter is not invoked.
+			**  Would it be "safe" to change that, i.e., use
+			**  milter_cmd_safe = true;
+			**  here so a milter is informed (if requested)
+			**  about RCPTs that are rejected by check_rcpt?
+			*/
+# if _FFR_MILTER_CHECK_REJECTIONS_TOO
+			milter_cmd_safe = true;
+# endif
+#endif
+
 			/* do config file checking of the recipient */
 			macdefine(&e->e_macro, A_PERM,
 				macid("{addr_type}"), "e r");
@@ -2632,6 +2657,10 @@ smtp(nullserver, d_flags, e)
 			/* save in recipient list after ESMTP mods */
 			a = recipient(a, &e->e_sendqueue, 0, e);
 			/* may trigger exception... */
+
+#if MILTER
+			milter_rcpt_added = true;
+#endif
 
 			if(!(Errors > 0) && QS_IS_BADADDR(a->q_state))
 			{
@@ -2763,6 +2792,13 @@ smtp(nullserver, d_flags, e)
 					macid("{rcpt_host}"), NULL);
 				macdefine(&e->e_macro, A_PERM,
 					macid("{rcpt_addr}"), NULL);
+			}
+			if (smtp.sm_milterlist && smtp.sm_milterize &&
+			    milter_rcpt_added && milter_cmd_done &&
+			    milter_cmd_fail)
+			{
+				(void) removefromlist(addr, &e->e_sendqueue, e);
+				milter_cmd_fail = false;
 			}
 #endif /* MILTER */
 		    }
