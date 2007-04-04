@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.5 2007/03/31 03:59:53 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.6 2007/04/04 10:49:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -72,6 +72,8 @@ sili_attach(struct sili_softc *sc)
 		return (1);
 	}
 
+	/* bounce the controller */
+	sili_write(sc, SILI_REG_GC, SILI_REG_GC_GR);
 	sili_write(sc, SILI_REG_GC, 0x0);
 
 	bzero(&aaa, sizeof(aaa));
