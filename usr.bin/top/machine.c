@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.57 2007/02/04 14:58:45 otto Exp $	 */
+/* $OpenBSD: machine.c,v 1.58 2007/04/04 19:24:18 otto Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -59,6 +59,8 @@
 #include "loadavg.h"
 
 static int	swapmode(int *, int *);
+static char	*state_abbr(struct kinfo_proc2 *);
+static char	*format_comm(struct kinfo_proc2 *);
 
 /* get_process_info passes back a handle.  This is what it looks like: */
 
@@ -413,7 +415,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
 
 char fmt[MAX_COLS];	/* static area where result is built */
 
-char *
+static char *
 state_abbr(struct kinfo_proc2 *pp)
 {
 	static char buf[10];
@@ -427,7 +429,7 @@ state_abbr(struct kinfo_proc2 *pp)
 	return buf;
 }
 
-char *
+static char *
 format_comm(struct kinfo_proc2 *kp)
 {
 #define ARG_SIZE 60
