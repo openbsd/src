@@ -1,4 +1,4 @@
-/*	$OpenBSD: silireg.h,v 1.13 2007/04/04 11:16:23 dlg Exp $ */
+/*	$OpenBSD: silireg.h,v 1.14 2007/04/04 11:38:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -104,6 +104,15 @@
 #define SILI_PREG_IS		0x1008 /* Interrupt Status */
 #define SILI_PREG_IES		0x1010 /* Interrupt Enable Set */
 #define SILI_PREG_IEC		0x1014 /* Interrupt Enable Clear */
+#define  SILI_PREG_IE_SDB		(1<<11) /* SDB Notify */
+#define  SILI_PREG_IE_DEVXCHG		(1<<7) /* Device Exchange */
+#define  SILI_PREG_IE_UNRECFIS		(1<<6) /* Unrecognized FIS Type */
+#define  SILI_PREG_IE_COMWAKE		(1<<5) /* ComWake */
+#define  SILI_PREG_IE_PHYRDYCHG		(1<<4) /* Phy Ready Change */
+#define  SILI_PREG_IE_PMCHG		(1<<3) /* Power Mmgt Change */
+#define  SILI_PREG_IE_PORTRDY		(1<<2) /* Port Ready */
+#define  SILI_PREG_IE_CMDERR		(1<<1) /* Command Error */
+#define  SILI_PREG_IE_CMDCOMP		(1<<0) /* Command Completion */
 #define SILI_PREG_AUA		0x101c /* Activation Upper Address */
 #define SILI_PREG_FIFO		0x1020 /* Command Execution FIFO */
 #define SILI_PREG_CE		0x1024 /* Command Error */
