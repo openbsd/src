@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.78 2007/03/30 22:24:56 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.79 2007/04/04 18:48:25 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -106,7 +106,9 @@ file	arch/sparc64/dev/iommu.c		sbus | psycho
 
 device	ebus {[addr = -1]}: pcibus
 attach	ebus at pci
+attach	ebus at mainbus with ebus_mainbus
 file	arch/sparc64/dev/ebus.c			ebus
+file	arch/sparc64/dev/ebus_mainbus.c		ebus_mainbus
 
 attach	uperf at ebus with uperf_ebus
 file	arch/sparc64/dev/uperf_ebus.c		uperf_ebus
