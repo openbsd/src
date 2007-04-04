@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.55 2007/04/02 20:13:17 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.56 2007/04/04 18:31:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.55 2007/04/02 20:13:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.56 2007/04/04 18:31:03 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -375,15 +375,17 @@ main(int argc, char *argv[])
 		}
 	}
 
-	(void) setsockopt(peer, SOL_SOCKET, SO_REUSEADDR, &on,
-	    sizeof(on));
-	(void) setsockopt(peer, SOL_SOCKET, SO_REUSEPORT, &on,
-	    sizeof(on));
+	if (dobind) {
+		(void) setsockopt(peer, SOL_SOCKET, SO_REUSEADDR, &on,
+		    sizeof(on));
+		(void) setsockopt(peer, SOL_SOCKET, SO_REUSEPORT, &on,
+		    sizeof(on));
 
-	if (dobind && bind(peer, (struct sockaddr *)&s_in, s_in.ss_len) < 0) {
-		syslog(LOG_ERR, "bind to %s: %m",
-		    inet_ntoa(((struct sockaddr_in *)&s_in)->sin_addr));
-		exit(1);
+		if (bind(peer, (struct sockaddr *)&s_in, s_in.ss_len) < 0) {
+			syslog(LOG_ERR, "bind to %s: %m",
+			    inet_ntoa(((struct sockaddr_in *)&s_in)->sin_addr));
+			exit(1);
+		}
 	}
 	if (connect(peer, (struct sockaddr *)&from, from.ss_len) < 0) {
 		syslog(LOG_ERR, "connect: %m");
