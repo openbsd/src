@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.270 2007/03/27 03:06:18 ckuethe Exp $
+$OpenBSD: usbdevs,v 1.271 2007/04/05 02:32:45 tedu Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -676,6 +676,7 @@ product ALTEC ASC495		0xff05	ASC495 Speakers
 
 /* Ambit Microsystems products */
 product AMBIT WLAN		0x0302	WLAN
+product AMBIT NTL_250		0x6098	NTL 250 cable modem
 
 /* American Power Conversion products */
 product APC UPSPRO500		0x0002	Back-UPS Pro 500
