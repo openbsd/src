@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.5 2006/06/02 17:39:58 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.6 2007/04/05 17:31:47 miod Exp $	*/
 /* 	$NetBSD: intr.h,v 1.1 1998/08/18 23:55:00 matt Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
 #define	IST_LEVEL	3	/* level-triggered */
 
 #ifndef lint
-#define splx(reg)						\
+#define _splset(reg)						\
 ({								\
 	register int val;					\
 	__asm __volatile ("mfpr $0x12,%0;mtpr %1,$0x12"		\
@@ -78,9 +78,12 @@
 	}							\
 	val;							\
 })
+
+#define	splx(reg)						\
+	__asm __volatile ("mtpr %0,$0x12" : : "g" (reg))
 #endif
 
-#define	spl0()		splx(IPL_NONE)
+#define	spl0()		_splset(IPL_NONE)
 #define splsoftclock()	_splraise(IPL_SOFTCLOCK)
 #define splsoftnet()	_splraise(IPL_SOFTNET)
 #define splbio()	_splraise(IPL_BIO)
@@ -89,7 +92,7 @@
 #define splvm()		_splraise(IPL_VM)
 #define splclock()	_splraise(IPL_CLOCK)
 #define splstatclock()	_splraise(IPL_STATCLOCK)
-#define splhigh()	splx(IPL_HIGH)
+#define splhigh()	_splset(IPL_HIGH)
 
 /* These are better to use when playing with VAX buses */
 #define	spl4()		_splraise(0x14)
