@@ -1,4 +1,4 @@
-/*      $OpenBSD: cpu.h,v 1.23 2007/03/15 10:22:30 art Exp $      */
+/*      $OpenBSD: cpu.h,v 1.24 2007/04/05 17:32:37 miod Exp $      */
 /*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
 
 /*
@@ -45,6 +45,7 @@
 #include <machine/uvax.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
+#include <machine/intr.h>
 
 #define	cpu_wait(p)
 #define	cpu_number()			0
@@ -80,8 +81,8 @@ extern struct device *booted_from;
 extern int mastercpu;
 extern int bootdev;
 
-#define	setsoftnet()	mtpr(12,PR_SIRR)
-#define setsoftclock()	mtpr(8,PR_SIRR)
+#define	setsoftnet()	mtpr(IPL_SOFTNET,PR_SIRR)
+#define setsoftclock()	mtpr(IPL_SOFTCLOCK,PR_SIRR)
 #define	todr()		mfpr(PR_TODR)
 /*
  * Preempt the current process if in interrupt from user mode,
