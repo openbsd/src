@@ -1,4 +1,4 @@
-/*	$OpenBSD: silireg.h,v 1.14 2007/04/04 11:38:35 dlg Exp $ */
+/*	$OpenBSD: silireg.h,v 1.15 2007/04/05 02:38:28 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -133,3 +133,52 @@
 
 
 #define SILI_MAX_CMDS		31
+
+
+struct sili_sge {
+	u_int32_t		addr_lo;
+	u_int32_t		addr_hi;
+	u_int32_t		data_count;
+	u_int32_t		flags;
+#define SILI_SGE_TRM			(1<<31)
+#define SILI_SGE_LNK			(1<<30)
+#define SILI_SGE_DRD			(1<<29)
+#define SILI_SGE_XCF			(1<<28)
+} __packed;
+
+struct sili_prb_ata {
+	u_int16_t		control;
+	u_int16_t		protocol_override;
+	u_int32_t		rx_count;
+
+	u_int8_t		fis[ATA_FIS_LENGTH];
+
+	u_int32_t		reserved;
+
+	struct sili_sge		sgl[2];
+} __packed;
+
+struct sili_prb_packet {
+	u_int16_t		control;
+	u_int16_t		protocol_override;
+	u_int32_t		rx_count;
+
+	u_int8_t		fis[ATA_FIS_LENGTH];
+
+	u_int32_t		reserved;
+
+	u_int8_t		cdb[16];
+
+	struct sili_sge		sgl[1];
+} __packed;
+
+struct sili_prb_softreset {
+	u_int16_t		control;
+	u_int16_t		reserved1;
+	u_int32_t		reserved2;
+
+	u_int8_t		fis[ATA_FIS_LENGTH];
+
+	u_int32_t		reserved3[9];
+} __packed;
+
