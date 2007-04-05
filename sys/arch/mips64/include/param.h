@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.14 2006/03/19 01:47:24 martin Exp $ */
+/*      $OpenBSD: param.h,v 1.15 2007/04/05 16:04:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -131,9 +131,6 @@
 void delay(int);
 void nanodelay(int);
 #endif
-
-#else /* !_KERNEL */
-#define	DELAY(n)	{ int N = (n); while (--N > 0); }
 #endif /* !_KERNEL */
 
 #endif /* !_MIPS_PARAM_H_ */
