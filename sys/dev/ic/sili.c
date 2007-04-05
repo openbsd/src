@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.8 2007/04/05 10:00:02 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.9 2007/04/05 10:02:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -204,10 +204,11 @@ sili_pwait_eq(struct sili_port *sp, bus_size_t r, u_int32_t mask,
     u_int32_t value, int timeout)
 {
 	while ((sili_pread(sp, r) & mask) != value) {
-		if (timeout-- == 0)
+		if (timeout == 0)
 			return (0);
 
 		delay(1000);
+		timeout--;
 	}
 
 	return (1);
@@ -218,10 +219,11 @@ sili_pwait_ne(struct sili_port *sp, bus_size_t r, u_int32_t mask,
     u_int32_t value, int timeout)
 {
 	while ((sili_pread(sp, r) & mask) == value) {
-		if (timeout-- == 0)
+		if (timeout == 0)
 			return (0);
 
 		delay(1000);
+		timeout--;
 	}
 
 	return (1);
