@@ -162,6 +162,9 @@ do { \
 	  (DECL) && TREE_CODE (DECL) == FUNCTION_DECL ? "ax" : \
 	  (DECL) && DECL_READONLY_SECTION (DECL, RELOC) ? "a" : "aw")
 
+/* Use the default.  */
+#undef TARGET_ASM_GLOBALIZE_LABEL
+
 /* FIXME: Hacked from the <elfos.h> one so that we avoid multiple
    labels in a function declaration (since pa.c seems determined to do
    it differently)  */
@@ -170,12 +173,6 @@ do { \
 #define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL)		\
   do								\
     {								\
-      if (TREE_PUBLIC (DECL))					\
-      {								\
-	fputs ("\t.export ", FILE);				\
-	assemble_name (FILE, NAME);				\
-	fputs (", entry\n", FILE);				\
-      }								\
       ASM_OUTPUT_TYPE_DIRECTIVE (FILE, NAME, "function");	\
       ASM_DECLARE_RESULT (FILE, DECL_RESULT (DECL));		\
     }								\
