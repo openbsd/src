@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.66 2007/04/04 14:40:55 pedro Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.67 2007/04/05 02:31:48 tedu Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ exit1(struct proc *p, int rv, int flags)
 		 * we are one of the threads.  we SIGKILL the parent,
 		 * it will wake us up again, then we proceed.
 		 */
-		atomic_setbits_int(&p->p_thrparent->p_flag, P_IGNEXITRV);
+		atomic_setbits_int(&p->p_p->ps_mainproc->p_flag, P_IGNEXITRV);
 		p->p_p->ps_mainproc->p_xstat = rv;
 		psignal(p->p_p->ps_mainproc, SIGKILL);
 		tsleep(p->p_p, PUSER, "thrdying", 0);
