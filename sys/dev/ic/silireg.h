@@ -1,4 +1,4 @@
-/*	$OpenBSD: silireg.h,v 1.15 2007/04/05 02:38:28 dlg Exp $ */
+/*	$OpenBSD: silireg.h,v 1.16 2007/04/05 09:57:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -57,7 +57,9 @@
 
 /* Port Registers */
 #define SILI_PREG_LRAM		0x0000 /* Port LRAM */
-	/* XXX 31 slots and port multiplier stuff sits in here */
+#define SILI_PREG_SLOT_WIDTH	0x80
+#define SILI_PREG_SLOT(_s)	(SILI_PREG_LRAM + (_s) * SILI_PREG_SLOT_WIDTH)
+/* XXX PMP Bits */
 #define SILI_PREG_PCS		0x1000 /* Port Control Set / Status */
 #define  SILI_PREG_PCS_OOBB		(1<<25) /* OOB Bypass */
 #define  SILI_PREG_PCS_ACTIVE(_x)	(((_x)>>16) & 0xf) /* Active Slot */
@@ -132,9 +134,6 @@
 #define SILI_PREG_SACT		0x1f0c /* SActive */
 
 
-#define SILI_MAX_CMDS		31
-
-
 struct sili_sge {
 	u_int32_t		addr_lo;
 	u_int32_t		addr_hi;
@@ -145,6 +144,19 @@ struct sili_sge {
 #define SILI_SGE_DRD			(1<<29)
 #define SILI_SGE_XCF			(1<<28)
 } __packed;
+
+struct sili_sgt {
+	struct sili_sge		sgl[4];
+} __packed;
+
+#define SILI_PRB_PROTOCOL_OVERRIDE	(1<<0)
+#define SILI_PRB_RETRANSMIT		(1<<1)
+#define SILI_PRB_EXTERNAL_COMMAND	(1<<2)
+#define SILI_PRB_RECEIVE		(1<<3)
+#define SILI_PRB_PACKET_READ		(1<<4)
+#define SILI_PRB_PACKET_WRITE		(1<<5)
+#define SILI_PRB_INTERRUPT_MASK		(1<<6)
+#define SILI_PRB_SOFT_RESET		(1<<7)
 
 struct sili_prb_ata {
 	u_int16_t		control;
@@ -182,3 +194,6 @@ struct sili_prb_softreset {
 	u_int32_t		reserved3[9];
 } __packed;
 
+#define SILI_MAX_CMDS		31
+#define SILI_PRB_LENGTH		64
+#define SILI_SGT_LENGTH		64
