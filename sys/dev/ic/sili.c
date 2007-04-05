@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.10 2007/04/05 10:15:27 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.11 2007/04/05 10:45:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -65,6 +65,7 @@ int			sili_pwait_ne(struct sili_port *, bus_size_t,
 			    u_int32_t, u_int32_t, int);
 void			sili_post_direct(struct sili_port *, u_int,
 			    void *, size_t buflen);
+u_int32_t		sili_signature(struct sili_port *, u_int);
 
 /* atascsi interface */
 int			sili_ata_probe(void *, int);
@@ -249,11 +250,26 @@ sili_post_direct(struct sili_port *sp, u_int slot, void *buf, size_t buflen)
 	sili_pwrite(sp, SILI_PREG_FIFO, slot);
 }
 
+u_int32_t
+sili_signature(struct sili_port *sp, u_int slot)
+{
+	u_int32_t			sig_hi, sig_lo;
+
+	sig_hi = sili_pread(sp, SILI_PREG_SIG_HI(slot));
+	sig_hi <<= SILI_PREG_SIG_HI_SHIFT;
+	sig_lo = sili_pread(sp, SILI_PREG_SIG_LO(slot));
+	sig_lo &= SILI_PREG_SIG_LO_MASK;
+
+	return (sig_hi | sig_lo);
+}
+
 int
 sili_ata_probe(void *xsc, int port)
 {
 	struct sili_softc		*sc = xsc;
 	struct sili_port		*sp = &sc->sc_ports[port];
+	struct sili_prb_softreset	sreset;
+	u_int32_t			signature;
 
 	sili_pwrite(sp, SILI_PREG_PCC, SILI_PREG_PCC_PORTRESET);
 	sili_pwrite(sp, SILI_PREG_PCS, SILI_PREG_PCS_A32B);
@@ -262,8 +278,25 @@ sili_ata_probe(void *xsc, int port)
 	    SATA_SStatus_DET_DEV, 1000))
 		return (ATA_PORT_T_NONE);
 
-	printf("%s.%d: SSTS 0x%08x\n", DEVNAME(sc), port,
+	DPRINTF(SILI_D_VERBOSE, "%s.%d: SSTS 0x%08x\n", DEVNAME(sc), port,
 	    sili_pread(sp, SILI_PREG_SSTS));
+
+	bzero(&sreset, sizeof(sreset));
+	sreset.control = htole16(SILI_PRB_SOFT_RESET | SILI_PRB_INTERRUPT_MASK);
+	/* XXX sreset fis pmp field */
+
+	/* we use slot 0 */
+	sili_post_direct(sp, 0, &sreset, sizeof(sreset));
+	if (!sili_pwait_eq(sp, SILI_PREG_PSS, (1 << 0), 0, 1000)) {
+		/* DPRINTF timeout waiting for soft reset */
+		return (ATA_PORT_T_NONE);
+	}
+
+        /* Read device signature from command slot. */
+	signature = sili_signature(sp, 0);
+
+	DPRINTF(SILI_D_VERBOSE, "%s.%d: signature 0x%08x\n", DEVNAME(sc), port,
+	    signature);
 
 	return (ATA_PORT_T_NONE);
 }

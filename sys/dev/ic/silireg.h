@@ -1,4 +1,4 @@
-/*	$OpenBSD: silireg.h,v 1.16 2007/04/05 09:57:50 dlg Exp $ */
+/*	$OpenBSD: silireg.h,v 1.17 2007/04/05 10:45:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -59,6 +59,10 @@
 #define SILI_PREG_LRAM		0x0000 /* Port LRAM */
 #define SILI_PREG_SLOT_WIDTH	0x80
 #define SILI_PREG_SLOT(_s)	(SILI_PREG_LRAM + (_s) * SILI_PREG_SLOT_WIDTH)
+#define SILI_PREG_SIG_HI(_s)	(SILI_PREG_SLOT(_s) + 0x0c)
+#define SILI_PREG_SIG_HI_SHIFT	8
+#define SILI_PREG_SIG_LO(_s)	(SILI_PREG_SLOT(_s) + 0x14)
+#define SILI_PREG_SIG_LO_MASK	0xff
 /* XXX PMP Bits */
 #define SILI_PREG_PCS		0x1000 /* Port Control Set / Status */
 #define  SILI_PREG_PCS_OOBB		(1<<25) /* OOB Bypass */
