@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.7 2007/04/04 12:42:23 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.8 2007/04/05 10:00:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -30,6 +30,18 @@
 
 #include <dev/ic/silireg.h>
 #include <dev/ic/silivar.h>
+
+#define SILI_DEBUG
+
+#ifdef SILI_DEBUG
+#define SILI_D_VERBOSE		(1<<0)
+
+int silidebug = SILI_D_VERBOSE;
+
+#define DPRINTF(m, a...)	do { if ((m) & silidebug) printf(a); } while (0)
+#else
+#define DPRINTF(m, a...)
+#endif
 
 struct cfdriver sili_cd = {
 	NULL, "sili", DV_DULL
