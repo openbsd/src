@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.9 2007/04/05 10:02:07 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.10 2007/04/05 10:15:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -63,6 +63,8 @@ int			sili_pwait_eq(struct sili_port *, bus_size_t,
 			    u_int32_t, u_int32_t, int);
 int			sili_pwait_ne(struct sili_port *, bus_size_t,
 			    u_int32_t, u_int32_t, int);
+void			sili_post_direct(struct sili_port *, u_int,
+			    void *, size_t buflen);
 
 /* atascsi interface */
 int			sili_ata_probe(void *, int);
@@ -227,6 +229,24 @@ sili_pwait_ne(struct sili_port *sp, bus_size_t r, u_int32_t mask,
 	}
 
 	return (1);
+}
+
+void
+sili_post_direct(struct sili_port *sp, u_int slot, void *buf, size_t buflen)
+{
+	bus_size_t			r = SILI_PREG_SLOT(slot);
+
+#ifdef DIAGNOSTIC
+	if (buflen != 64 && buflen != 128)
+		panic("sili_pcopy: buflen of %d is not 64 or 128", buflen);
+#endif
+
+	bus_space_write_raw_region_4(sp->sp_sc->sc_iot_port, sp->sp_ioh, r,
+	    buf, buflen);
+	bus_space_barrier(sp->sp_sc->sc_iot_port, sp->sp_ioh, r, buflen,
+	    BUS_SPACE_BARRIER_WRITE);
+
+	sili_pwrite(sp, SILI_PREG_FIFO, slot);
 }
 
 int
