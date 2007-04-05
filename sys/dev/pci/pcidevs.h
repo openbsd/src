@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1225 2007/04/05 22:25:05 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1226 2007/04/05 23:08:25 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1205,6 +1205,8 @@
 /* CMD Technology products -- info gleaned from www.cmd.com */
 /* Fake product id for SiI3112 found on Adaptec 1210SA */
 #define	PCI_PRODUCT_CMDTECH_AAR_1210SA	0x0240		/* AAR-1210SA */
+/* Adaptec 1220SA is really a 3132 also */
+#define	PCI_PRODUCT_CMDTECH_AAR_1220SA	0x0242		/* AAR-1220SA */
 #define	PCI_PRODUCT_CMDTECH_640	0x0640		/* PCI0640 */
 #define	PCI_PRODUCT_CMDTECH_642	0x0642		/* PCI0642 */
 #define	PCI_PRODUCT_CMDTECH_643	0x0643		/* PCI0643 */
@@ -2156,6 +2158,7 @@
 #define	PCI_PRODUCT_INTEL_82965_PT_IDER	0x29a6		/* 82865 PT IDER */
 #define	PCI_PRODUCT_INTEL_82965_KT	0x29a7		/* 82865 KT */
 #define	PCI_PRODUCT_INTEL_RCU32	0x3092		/* RCU32 I2O RAID */
+#define	PCI_PRODUCT_INTEL_3124	0x3124		/* 3124 SATA */
 #define	PCI_PRODUCT_INTEL_31244	0x3200		/* 31244 SATA */
 #define	PCI_PRODUCT_INTEL_82855PE	0x3340		/* 82855PE Hub */
 #define	PCI_PRODUCT_INTEL_82855PE_AGP	0x3341		/* 82855PE AGP */

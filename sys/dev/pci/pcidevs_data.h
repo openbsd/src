@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1225 2007/04/05 22:25:05 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1226 2007/04/05 23:08:25 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3114,6 +3114,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_AAR_1210SA,
 	    "AAR-1210SA",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_AAR_1220SA,
+	    "AAR-1220SA",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640,
@@ -6482,6 +6486,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RCU32,
 	    "RCU32 I2O RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3124,
+	    "3124 SATA",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
