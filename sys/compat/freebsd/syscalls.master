@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.30 2006/09/22 15:29:57 pedro Exp $
+	$OpenBSD: syscalls.master,v 1.31 2007/04/05 15:33:42 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.3 1995/10/10 18:28:40 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -367,8 +367,8 @@
 195	NOARGS		{ int sys_setrlimit(u_int which, struct rlimit *rlp); }
 196	NOARGS		{ int sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
-197	NOARGS		{ caddr_t sys_mmap(caddr_t addr, size_t len, int prot, \
-			    int flags, int fd, long pad, off_t pos); }
+197	STD		{ caddr_t freebsd_sys_mmap(caddr_t addr, size_t len, \
+			    int prot, int flags, int fd, long pad, off_t pos); }
 198	NOARGS		{ int sys_nosys(void); } __syscall
 199	NOARGS		{ off_t sys_lseek(int fd, int pad, off_t offset, \
 			    int whence); }

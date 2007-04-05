@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_misc.c,v 1.9 2005/02/19 21:19:28 matthieu Exp $	*/
+/*	$OpenBSD: freebsd_misc.c,v 1.10 2007/04/05 15:33:42 tedu Exp $	*/
 /*	$NetBSD: freebsd_misc.c,v 1.2 1996/05/03 17:03:10 christos Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/file.h>
 #include <sys/dirent.h>
 #include <sys/filedesc.h>
+#include <sys/mman.h>
 #include <sys/vnode.h>
 
 #include <sys/syscallargs.h>
@@ -160,4 +161,21 @@ freebsd_sys_getdents(struct proc *p, void *v, register_t *retval)
 	
 	*retval = SCARG(uap, count) - args.resid;
 	return (0);
+}
+
+#define FBSD_MAP_NOCORE	0x20000
+int
+freebsd_sys_mmap(struct proc *p, void *v, register_t *retval)
+{
+	struct freebsd_sys_mmap_args /* {
+		syscallarg(caddr_t) addr;
+		syscallarg(size_t) len;
+		syscallarg(int) prot;
+		syscallarg(int) flags;
+		syscallarg(int) fd;
+		syscallarg(long) pad;
+		syscallarg(off_t) pos;
+	} */ *uap = v;
+	SCARG(uap, flags) &= ~FBSD_MAP_NOCORE;
+	return (sys_mmap(p, uap, retval));
 }
