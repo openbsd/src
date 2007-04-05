@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2004/03/12 00:04:57 miod Exp $
+# $OpenBSD: Makefile,v 1.4 2007/04/05 23:41:20 drahn Exp $
 # $NetBSD: Makefile,v 1.1 2000/04/21 17:57:01 bouyer Exp $
 
 all: siop.out osiop.out oosiop.out
@@ -6,6 +6,7 @@ all: siop.out osiop.out oosiop.out
 PROG=	ncr53cxxx
 MKSHARE=no
 MAN=
+CC=${HOSTCC}
 
 .include <bsd.prog.mk>
 

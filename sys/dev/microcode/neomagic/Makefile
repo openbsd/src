@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.2 2005/06/16 08:23:49 markus Exp $
+# $OpenBSD: Makefile,v 1.3 2007/04/05 23:41:20 drahn Exp $
 
 NOPROG=
 NOMAN=
+CC=${HOSTCC}
 
 .if (${MACHINE} == "i386")
 

@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.5 2004/12/31 00:28:31 deraadt Exp $
+# $OpenBSD: Makefile,v 1.6 2007/04/05 23:41:20 drahn Exp $
 
 NOPROG=
 NOMAN=
+CC=${HOSTCC}
 
 # pcmcia capable systems only
 .if (${MACHINE} == "i386") || (${MACHINE} == "macppc") || \
