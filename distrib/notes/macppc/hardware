@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.79 2007/03/09 22:43:37 deraadt Exp $
+dnl	$OpenBSD: hardware,v 1.80 2007/04/05 14:33:18 claudio Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -393,9 +393,9 @@ Supported devices {:-include-:}:
 		    Z-Com XI-725/726
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200
-		Marvell Libertas CardBus IEEE 802.11b/g wireless adapters [*]
+		Marvell Libertas CardBus IEEE 802.11b/g wireless adapters
 		    Netgear WG511v2
-		Marvell Libertas PCI IEEE 802.11b/g wireless adapters [*]
+		Marvell Libertas PCI IEEE 802.11b/g wireless adapters
 		    Netgear WG311v3
 		Ralink RT2500 based USB 2.0 IEEE 802.11b/g adapters
 		    AMIT WL532U
@@ -470,6 +470,27 @@ Supported devices {:-include-:}:
 		    Planet WL-3553
 		    TRENDnet TEW-226PC
 		    VCTnet PC-11B1
+		Texas Instruments ACX100/ACX111 CardBus IEEE 802.11a/b/g
+		  adapters
+		    D-Link DWL-650+
+		    D-Link DWL-G630+
+		    D-Link DWL-G650+
+		    Ergenic ERG WL-003
+		    Hamlet HNWP254
+		    Linksys WPC54Gv2
+		    Microcom Travelcard
+		    Sceptre SC254W+
+		    USR USR5410
+		    Zyxel G-160
+		Texas Instruments ACX100/ACX111 PCI IEEE 802.11a/b/g
+		  adapters
+		    D-Link DWL-520+
+		    D-Link DWL-G520+
+		    Hawking HWP54G
+		    Netgear WG311v2
+		    Tornado/ADT 211g
+		    USR USR5416
+		    Zyxel G-360 EE
 
 	Tape drives
 		SCSI Tape drives (st)
