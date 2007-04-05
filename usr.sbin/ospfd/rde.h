@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.31 2007/01/29 13:04:13 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.32 2007/04/05 18:50:45 pyr Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -94,7 +94,6 @@ extern struct lsa_tree	asext_tree;
 
 /* rde.c */
 pid_t		 rde(struct ospfd_conf *, int [2], int [2], int [2]);
-int		 rde_imsg_compose_parent(int, pid_t, void *, u_int16_t);
 int		 rde_imsg_compose_ospfe(int, u_int32_t, pid_t, void *,
 		     u_int16_t);
 u_int32_t	 rde_router_id(void);

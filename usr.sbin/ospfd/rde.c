@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.63 2007/04/04 12:45:44 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.64 2007/04/05 18:50:45 pyr Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -209,13 +209,6 @@ rde_shutdown(void)
 
 	log_info("route decision engine exiting");
 	_exit(0);
-}
-
-/* imesg */
-int
-rde_imsg_compose_parent(int type, pid_t pid, void *data, u_int16_t datalen)
-{
-	return (imsg_compose(ibuf_main, type, 0, pid, data, datalen));
 }
 
 int
