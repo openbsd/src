@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.24 2006/11/22 15:12:50 mglocker Exp $
+#	$OpenBSD: files.cardbus,v 1.25 2007/04/05 16:25:25 mglocker Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -87,12 +87,6 @@ file	dev/cardbus/if_acx_cardbus.c		acx_cardbus
 #
 attach	pgt at cardbus with pgt_cardbus
 file	dev/cardbus/if_pgt_cardbus.c		pgt_cardbus
-
-#
-# Broadcom BCM43xx wireless
-#
-attach	bcw at cardbus with bcw_cardbus
-file	dev/cardbus/if_bcw_cardbus.c		bcw_cardbus
 
 #
 # EHCI USB controller
