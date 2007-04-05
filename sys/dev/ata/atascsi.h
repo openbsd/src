@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.22 2007/04/04 12:39:16 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.23 2007/04/05 11:13:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -223,6 +223,10 @@ struct ata_log_page_10h {
 #define SATA_SStatus_IPM_ACTIVE		0x100
 #define SATA_SStatus_IPM_PARTIAL	0x200
 #define SATA_SStatus_IPM_SLUMBER	0x600
+
+#define SATA_SIGNATURE_PORT_MULTIPLIER	0x96690101
+#define SATA_SIGNATURE_ATAPI		0xeb140101
+#define SATA_SIGNATURE_DISK		0x00000101
 
 /*
  * ATA interface
