@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus_mainbus.c,v 1.1 2007/04/04 18:38:54 kettenis Exp $	*/
+/*	$OpenBSD: ebus_mainbus.c,v 1.2 2007/04/05 19:14:00 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -43,10 +43,14 @@ extern int ebus_debug;
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
 
+#include <dev/pci/pcivar.h>
+
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
-#include <sparc64/sparc64/cache.h>
+#include <sparc64/dev/pyrovar.h>
+
+extern struct cfdriver pyro_cd;
 
 int	ebus_mainbus_match(struct device *, void *, void *);
 void	ebus_mainbus_attach(struct device *, struct device *, void *);
@@ -85,24 +89,34 @@ ebus_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	struct ebus_attach_args eba;
 	struct ebus_interrupt_map_mask *immp;
 	int node, nmapmask, error;
+	struct pyro_softc *psc;
+	int i;
 
-	sc->sc_ign = INTIGN((ma->ma_upaid & 0x1e) << INTMAP_IGN_SHIFT);
+	sc->sc_node = node = ma->ma_node;
+	sc->sc_ign = INTIGN((ma->ma_upaid) << INTMAP_IGN_SHIFT);
 
-	printf(": ign %x\n", sc->sc_ign);
+	printf(": ign %x", sc->sc_ign);
+
+	for (i = 0; i < pyro_cd.cd_ndevs; i++) {
+		psc = pyro_cd.cd_devs[i];
+		if (psc && psc->sc_ign == sc->sc_ign) {
+			sc->sc_bust = psc->sc_bust;
+			sc->sc_csr = psc->sc_csr;
+			sc->sc_csrh = psc->sc_csrh;
+			break;
+		}
+	}
+
+	if (sc->sc_csr == 0) {
+		printf(": can't find matching host bridge leaf\n");
+		return;
+	}
+
+	printf("\n");
 
 	sc->sc_memtag = ebus_alloc_bus_tag(sc, ma->ma_bustag);
 	sc->sc_iotag = ebus_alloc_bus_tag(sc, ma->ma_bustag);
 	sc->sc_dmatag = ebus_alloc_dma_tag(sc, ma->ma_dmatag);
-
-	sc->sc_node = node = ma->ma_node;
-
-	/* XXX double mapping? */
-	sc->sc_bust = ma->ma_bustag;
-	sc->sc_csr = ma->ma_reg[0].ur_paddr + 0x600000 - 0x464000;
-	if (bus_space_map(sc->sc_bust, sc->sc_csr, 0x2000, 0, &sc->sc_csrh)) {
-		printf(": failed to map csr registers\n");
-		return;
-	}
 
 	/*
 	 * fill in our softc with information from the prom
