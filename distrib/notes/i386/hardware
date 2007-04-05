@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.246 2007/03/09 22:43:37 deraadt Exp $
+dnl	$OpenBSD: hardware,v 1.247 2007/04/05 14:36:39 claudio Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -604,7 +604,7 @@ Supported hardware {:-include-:}:
 		    Proxim Skyline 4032
 		    Senao NL-5354MP
 		    Wistron CM9
-		Atheros USB IEEE 802.11a/b/g adapters [*]
+		Atheros USB IEEE 802.11a/b/g adapters [G]
 		    Compex WLU108AG
 		    Compex WLU108G
 		    D-Link DWL-G132
@@ -782,13 +782,13 @@ Supported hardware {:-include-:}:
 		    Z-Com XI-725/726
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200
-		Intersil/Conexant Prism GT CardBus Full-MAC IEEE 802.11a/b/g [*]
+		Intersil/Conexant Prism GT CardBus Full-MAC IEEE 802.11a/b/g [G]
 		    3COM 3CRWE154G72
 		    NETGEAR WG511
 		    SMC EZ Connect g 2.4GHz SMC2835W-v2
 		    Soyo Aerielink
 		    Zyxel ZyAIR G-100 
-		Intersil/Conexant Prism GT PCI Full-MAC IEEE 802.11a/b/g [*]
+		Intersil/Conexant Prism GT PCI Full-MAC IEEE 802.11a/b/g [G]
 		    D-Link DWL-g650 A1
 		    I-O Data WN-G54/CB
 		    I4 Z-Com XG-600
@@ -798,9 +798,9 @@ Supported hardware {:-include-:}:
 		    PLANEX GW-DS54G
 		    SMC EZ Connect g 2.4GHz SMC2802W
 		    SMC 2802Wv2
-		Marvell Libertas CardBus IEEE 802.11b/g wireless adapters [*]
+		Marvell Libertas CardBus IEEE 802.11b/g wireless adapters [G]
 		    Netgear WG511v2
-		Marvell Libertas PCI IEEE 802.11b/g wireless adapters [*]
+		Marvell Libertas PCI IEEE 802.11b/g wireless adapters [G]
 		    Netgear WG311v3
 		Ralink RT2500 based CardBus IEEE 802.11b/g adapters [A] [B]
 		    A-Link WL54PC
