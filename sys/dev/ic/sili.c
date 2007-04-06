@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.13 2007/04/06 04:48:54 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.14 2007/04/06 04:50:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -431,7 +431,7 @@ sili_ata_probe(void *xsc, int port)
 		return (ATA_PORT_T_NONE);
 	}
 
-        /* Read device signature from command slot. */
+	/* Read device signature from command slot. */
 	signature = sili_signature(sp, 0);
 
 	DPRINTF(SILI_D_VERBOSE, "%s.%d: signature 0x%08x\n", DEVNAME(sc), port,
