@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.35 2007/04/06 01:32:39 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.36 2007/04/06 03:24:08 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -29,6 +29,7 @@
 
 #define _PATH_DMESG "/var/run/dmesg.boot"
 
+void	dmesg(FILE *);
 int	editit(char *);
 void	init(void);
 int	prompt(void);
@@ -133,30 +134,8 @@ main(int argc, char *argv[])
 		}
 	} else {
 		template(fp);
-		if (!Dflag) {
-			char buf[BUFSIZ];
-			size_t len;
-			FILE *dfp;
-
-			dfp = fopen(_PATH_DMESG, "r");
-			if (dfp == NULL) {
-				warn("can't read dmesg");
-			} else {
-				fputs("\n"
-				    "<dmesg is attached.>\n"
-				    "<Feel free to delete or use the -D"
-				    " flag if it contains sensitive "
-				    "information.>\n", fp);
-				while (!feof(dfp)) {
-					len = fread(buf, 1, sizeof buf, dfp);
-					if (len == 0)
-						break;
-					if (fwrite(buf, 1, len, fp) != len)
-						break;
-				}
-				fclose(dfp);
-			}
-		}
+		if (!Dflag)
+			dmesg(fp);
 	}
 
 	if (fflush(fp) == EOF || fstat(fd, &sb) == -1 || fclose(fp) == EOF)
@@ -192,6 +171,49 @@ main(int argc, char *argv[])
 	ret = 0;
 quit:
 	return (ret);
+}
+
+void
+dmesg(FILE *fp)
+{
+	char buf[BUFSIZ];
+	FILE *dfp;
+	off_t offset = -1;
+
+	dfp = fopen(_PATH_DMESG, "r");
+	if (dfp == NULL) {
+		warn("can't read dmesg");
+		return;
+	}
+
+	fputs("\n"
+	    "<dmesg is attached.>\n"
+	    "<Feel free to delete or use the -D flag if it contains "
+	    "sensitive information.>\n", fp);
+	/* Find last line starting with "OpenBSD". */
+	for (;;) {
+		off_t o;
+
+		o = ftello(dfp);
+		if (fgets(buf, sizeof(buf), dfp) == NULL)
+			break;
+		if (!strncmp("OpenBSD ", buf, sizeof("OpenBSD ") - 1))
+			offset = o;
+	}
+	if (offset != -1) {
+		size_t len;
+
+		clearerr(dfp);
+		fseeko(dfp, offset, SEEK_SET);
+		while (offset != -1 && !feof(dfp)) {
+			len = fread(buf, 1, sizeof buf, dfp);
+			if (len == 0)
+				break;
+			if (fwrite(buf, 1, len, fp) != len)
+				break;
+		}
+	}
+	fclose(dfp);
 }
 
 int
