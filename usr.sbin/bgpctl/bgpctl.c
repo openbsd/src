@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.121 2007/04/06 18:14:48 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.122 2007/04/06 18:36:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -49,6 +49,7 @@ char		*fmt_peer(const char *, const struct bgpd_addr *, int, int);
 void		 show_summary_head(void);
 int		 show_summary_msg(struct imsg *, int);
 int		 show_summary_terse_msg(struct imsg *, int);
+int		 show_neighbor_terse(struct imsg *);
 int		 show_neighbor_msg(struct imsg *, enum neighbor_views);
 void		 print_neighbor_capa_mp_safi(u_int8_t);
 void		 print_neighbor_msgstats(struct peer *);
@@ -194,6 +195,7 @@ main(int argc, char *argv[])
 		break;
 	case SHOW_NEIGHBOR:
 	case SHOW_NEIGHBOR_TIMERS:
+	case SHOW_NEIGHBOR_TERSE:
 		if (res->peeraddr.af || res->peerdesc[0])
 			imsg_compose(ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
 			    &neighbor, sizeof(neighbor));
@@ -340,6 +342,9 @@ main(int argc, char *argv[])
 			case SHOW_NEIGHBOR_TIMERS:
 				done = show_neighbor_msg(&imsg, NV_TIMERS);
 				break;
+			case SHOW_NEIGHBOR_TERSE:
+				done = show_neighbor_terse(&imsg);
+				break;
 			case SHOW_RIB:
 				if (res->flags & F_CTL_DETAIL)
 					done = show_rib_detail_msg(&imsg,
@@ -468,6 +473,36 @@ show_summary_terse_msg(struct imsg *imsg, int nodescr)
 		printf("%s %u %s\n", s, p->conf.remote_as,
 		    p->conf.template ? "Template" : statenames[p->state]);
 		free(s);
+		break;
+	case IMSG_CTL_END:
+		return (1);
+	default:
+		break;
+	}
+
+	return (0);
+}
+
+int
+show_neighbor_terse(struct imsg *imsg)
+{
+	struct peer		*p;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_NEIGHBOR:
+		p = imsg->data;
+		printf("%llu %llu %llu %llu %llu %llu %llu "
+		    "%llu %llu %llu %u %u %llu %llu %llu %llu\n",
+		    p->stats.msg_sent_open, p->stats.msg_rcvd_open,
+		    p->stats.msg_sent_notification,
+		    p->stats.msg_rcvd_notification,
+		    p->stats.msg_sent_update, p->stats.msg_rcvd_update,
+		    p->stats.msg_sent_keepalive, p->stats.msg_rcvd_keepalive,
+		    p->stats.msg_sent_rrefresh, p->stats.msg_rcvd_rrefresh,
+		    p->stats.prefix_cnt, p->conf.max_prefix,
+		    p->stats.prefix_sent_update, p->stats.prefix_rcvd_update,
+		    p->stats.prefix_sent_withdraw,
+		    p->stats.prefix_rcvd_withdraw);
 		break;
 	case IMSG_CTL_END:
 		return (1);

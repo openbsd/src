@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.42 2007/03/31 12:46:55 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.43 2007/04/06 18:36:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -141,7 +141,7 @@ static const struct token t_show_rib[] = {
 	{ FLAG,		"in",		F_CTL_ADJ_IN,	t_show_rib},
 	{ FLAG,		"out",		F_CTL_ADJ_OUT,	t_show_rib},
 	{ KEYWORD,	"neighbor",	NONE,		t_show_rib_neigh},
-	{ KEYWORD,	"summary",	SHOW_SUMMARY,	NULL},
+	{ KEYWORD,	"summary",	SHOW_SUMMARY,	t_show_summary},
 	{ KEYWORD,	"memory",	SHOW_RIB_MEM,	NULL},
 	{ FAMILY,	"",		NONE,		t_show_rib},
 	{ PREFIX,	"",		NONE,		t_show_prefix},
@@ -165,6 +165,7 @@ static const struct token t_show_neighbor_modifiers[] = {
 	{ NOTOKEN,	"",		NONE,			NULL},
 	{ KEYWORD,	"timers",	SHOW_NEIGHBOR_TIMERS,	NULL},
 	{ KEYWORD,	"messages",	SHOW_NEIGHBOR,		NULL},
+	{ KEYWORD,	"terse",	SHOW_NEIGHBOR_TERSE,	NULL},
 	{ ENDTOKEN,	"",		NONE,			NULL}
 };
 
