@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.36 2007/04/06 03:24:08 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.37 2007/04/06 07:24:53 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -93,7 +93,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 1)
+	if (argc > 0)
 		usage();
 
 	if ((tmpdir = getenv("TMPDIR")) == NULL || tmpdir[0] == '\0')
