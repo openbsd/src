@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili_pci.c,v 1.5 2007/04/05 02:38:28 dlg Exp $ */
+/*	$OpenBSD: sili_pci.c,v 1.6 2007/04/06 01:04:52 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -62,7 +62,11 @@ const struct sili_device *sili_lookup(struct pci_attach_args *);
 
 static const struct sili_device sili_devices[] = {
 	{ PCI_VENDOR_CMDTECH,	PCI_PRODUCT_CMDTECH_3124, 4 },
-	{ PCI_VENDOR_CMDTECH,	PCI_PRODUCT_CMDTECH_3132, 2 }
+	{ PCI_VENDOR_CMDTECH,	PCI_PRODUCT_CMDTECH_3131, 1 },
+	{ PCI_VENDOR_CMDTECH,	PCI_PRODUCT_CMDTECH_3132, 2 },
+	{ PCI_VENDOR_CMDTECH,	PCI_PRODUCT_CMDTECH_3531, 1 },
+	{ PCI_VENDOR_CMDTECH,	PCI_PRODUCT_CMDTECH_AAR_1220SA, 2 },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3124, 4 }
 };
 
 const struct sili_device *
