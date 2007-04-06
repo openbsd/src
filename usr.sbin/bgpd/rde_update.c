@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.55 2007/03/16 14:06:57 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.56 2007/04/06 18:03:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -756,10 +756,13 @@ up_dump_prefix(u_char *buf, int len, struct uplist_prefix *prefix_head,
 		TAILQ_REMOVE(upp->prefix_h, upp, prefix_l);
 		peer->up_pcnt--;
 		if (upp->prefix_h == &peer->withdraws ||
-		    upp->prefix_h == &peer->withdraws6)
+		    upp->prefix_h == &peer->withdraws6) {
 			peer->up_wcnt--;
-		else
+			peer->prefix_sent_withdraw++;
+		} else {
 			peer->up_nlricnt--;
+			peer->prefix_sent_update++;
+		}
 		free(upp);
 	}
 	return (wpos);

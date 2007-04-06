@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.90 2007/01/26 17:40:49 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.91 2007/04/06 18:03:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -152,6 +152,10 @@ struct peer_stats {
 	u_int64_t		 msg_sent_notification;
 	u_int64_t		 msg_sent_keepalive;
 	u_int64_t		 msg_sent_rrefresh;
+	u_int64_t		 prefix_rcvd_update;
+	u_int64_t		 prefix_rcvd_withdraw;
+	u_int64_t		 prefix_sent_update;
+	u_int64_t		 prefix_sent_withdraw;
 	time_t			 last_updown;
 	time_t			 last_read;
 	u_int32_t		 prefix_cnt;

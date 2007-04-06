@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.223 2007/03/28 12:33:32 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.224 2007/04/06 18:03:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -517,8 +517,17 @@ badnet:
 			}
 			memcpy(&p, imsg.data, sizeof(struct peer));
 			peer = peer_get(p.conf.id);
-			if (peer != NULL)
+			if (peer != NULL) {
 				p.stats.prefix_cnt = peer->prefix_cnt;
+				p.stats.prefix_rcvd_update =
+				    peer->prefix_rcvd_update;
+				p.stats.prefix_rcvd_withdraw =
+				    peer->prefix_rcvd_withdraw;
+				p.stats.prefix_sent_update =
+				    peer->prefix_sent_update;
+				p.stats.prefix_sent_withdraw =
+				    peer->prefix_sent_withdraw;
+			}
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NEIGHBOR, 0,
 			    imsg.hdr.pid, -1, &p, sizeof(struct peer));
 			break;
@@ -828,6 +837,7 @@ rde_update_dispatch(struct imsg *imsg)
 			goto done;
 		}
 
+		peer->prefix_rcvd_withdraw++;
 		rde_update_log("withdraw", peer, NULL, &prefix, prefixlen);
 		prefix_remove(peer, &prefix, prefixlen, F_LOCAL);
 		prefix_remove(peer, &prefix, prefixlen, F_ORIGINAL);
@@ -877,6 +887,7 @@ rde_update_dispatch(struct imsg *imsg)
 				mpp += pos;
 				mplen -= pos;
 
+				peer->prefix_rcvd_withdraw++;
 				rde_update_log("withdraw", peer, NULL,
 				    &prefix, prefixlen);
 				prefix_remove(peer, &prefix, prefixlen,
@@ -932,6 +943,7 @@ rde_update_dispatch(struct imsg *imsg)
 			goto done;
 		}
 
+		peer->prefix_rcvd_update++;
 		/* add original path to the Adj-RIB-In */
 		if (peer->conf.softreconfig_in)
 			path_update(peer, asp, &prefix, prefixlen, F_ORIGINAL);
@@ -1024,6 +1036,7 @@ rde_update_dispatch(struct imsg *imsg)
 				mpp += pos;
 				mplen -= pos;
 
+				peer->prefix_rcvd_update++;
 				/* add original path to the Adj-RIB-In */
 				if (peer->conf.softreconfig_in)
 					path_update(peer, asp, &prefix,
