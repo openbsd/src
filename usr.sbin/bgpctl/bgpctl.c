@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.120 2007/03/31 12:46:55 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.121 2007/04/06 18:14:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -624,13 +624,19 @@ print_neighbor_msgstats(struct peer *p)
 	    p->stats.msg_sent_keepalive, p->stats.msg_rcvd_keepalive);
 	printf("  %-15s %10llu %10llu\n", "Route Refresh",
 	    p->stats.msg_sent_rrefresh, p->stats.msg_rcvd_rrefresh);
-	printf("  %-15s %10llu %10llu\n", "Total",
+	printf("  %-15s %10llu %10llu\n\n", "Total",
 	    p->stats.msg_sent_open + p->stats.msg_sent_notification +
 	    p->stats.msg_sent_update + p->stats.msg_sent_keepalive +
 	    p->stats.msg_sent_rrefresh,
 	    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
 	    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive +
 	    p->stats.msg_rcvd_rrefresh);
+	printf("  Update statistics:\n");
+	printf("  %-15s %-10s %-10s\n", "", "Sent", "Received");
+	printf("  %-15s %10llu %10llu\n", "Updates",
+	    p->stats.prefix_sent_update, p->stats.prefix_rcvd_update);
+	printf("  %-15s %10llu %10llu\n", "Withdraws",
+	    p->stats.prefix_sent_withdraw, p->stats.prefix_rcvd_withdraw);
 }
 
 void
