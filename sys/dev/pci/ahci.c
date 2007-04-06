@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.109 2007/04/02 05:14:52 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.110 2007/04/06 04:04:29 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1119,7 +1119,7 @@ ahci_port_clo(struct ahci_port *ap)
 int
 ahci_port_softreset(struct ahci_port *ap)
 {
-	struct ahci_ccb			*ccb;
+	struct ahci_ccb			*ccb = NULL;
 	struct ahci_cmd_hdr		*cmd_slot;
 	u_int8_t			*fis;
 	int				s, rc = EIO;
@@ -1128,7 +1128,6 @@ ahci_port_softreset(struct ahci_port *ap)
 	DPRINTF(AHCI_D_VERBOSE, "%s: soft reset\n", PORTNAME(ap));
 
 	s = splbio();
-	ccb = ahci_get_err_ccb(ap);
 
 	/* Save previous command register state */
 	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
@@ -1166,6 +1165,7 @@ ahci_port_softreset(struct ahci_port *ap)
 	}
 
 	/* Prep first D2H command with SRST feature & clear busy/reset flags */
+	ccb = ahci_get_err_ccb(ap);
 	cmd_slot = ccb->ccb_cmd_hdr;
 	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
 
