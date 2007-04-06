@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.32 2006/12/08 10:26:38 joel Exp $
+.\"	$OpenBSD: pflogd.8,v 1.33 2007/04/06 16:30:49 canacar Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -36,6 +36,7 @@
 .Op Fl d Ar delay
 .Op Fl f Ar filename
 .Op Fl i Ar interface
+.Op Fl p Ar pidfile
 .Op Fl s Ar snaplen
 .Op Ar expression
 .Sh DESCRIPTION
@@ -106,6 +107,12 @@ If not specified, the default is 60 seconds.
 Log output filename.
 Default is
 .Pa /var/log/pflog .
+.It Fl p Ar pidname
+Writes a file containing the process ID of the program.
+The file name has the form
+.Pa /var/run/pidname.pid .
+If the option is not given, pidname name defaults to
+.Pa pflogd .
 .It Fl i Ar interface
 Specifies the
 .Xr pflog 4

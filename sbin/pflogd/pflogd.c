@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.37 2006/10/26 13:34:47 jmc Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.38 2007/04/06 16:30:49 canacar Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -531,10 +531,11 @@ main(int argc, char **argv)
 	int ch, np, Xflag = 0;
 	pcap_handler phandler = dump_packet;
 	const char *errstr = NULL;
+	char *pidf = NULL;
 
 	closefrom(STDERR_FILENO + 1);
 
-	while ((ch = getopt(argc, argv, "Dxd:f:i:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "Dxd:f:i:p:s:")) != -1) {
 		switch (ch) {
 		case 'D':
 			Debug = 1;
@@ -549,6 +550,9 @@ main(int argc, char **argv)
 			break;
 		case 'i':
 			interface = optarg;
+			break;
+		case 'p':
+			pidf = optarg;
 			break;
 		case 's':
 			snaplen = strtonum(optarg, 0, PFLOGD_MAXSNAPLEN,
@@ -577,7 +581,7 @@ main(int argc, char **argv)
 			logmsg(LOG_WARNING, "Failed to become daemon: %s",
 			    strerror(errno));
 		}
-		pidfile(NULL);
+		pidfile(pidf);
 	}
 
 	tzset();
