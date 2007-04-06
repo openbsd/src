@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.59 2007/04/02 08:41:04 claudio Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.60 2007/04/06 12:20:59 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -5006,6 +5006,6 @@ void
 rtw_barrier(void *arg, u_int32_t reg0, u_int32_t reg1, int flags)
 {
 	struct rtw_regs *regs = (struct rtw_regs *)arg;
-	bus_space_barrier(regs->r_bh, regs->r_bt, MIN(reg0, reg1),
+	bus_space_barrier(regs->r_bt, regs->r_bh, MIN(reg0, reg1),
 	    MAX(reg0, reg1) - MIN(reg0, reg1) + 4, flags);
 }
