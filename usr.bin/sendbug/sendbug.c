@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.34 2007/03/28 04:05:52 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.35 2007/04/06 01:32:39 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -27,6 +27,8 @@
 
 #include "atomicio.h"
 
+#define _PATH_DMESG "/var/run/dmesg.boot"
+
 int	editit(char *);
 void	init(void);
 int	prompt(void);
@@ -46,7 +48,7 @@ int wantcleanup;
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: sendbug [-LPV]\n");
+	fprintf(stderr, "usage: sendbug [-DLPV]\n");
 	exit(1);
 }
 
@@ -61,15 +63,18 @@ cleanup()
 int
 main(int argc, char *argv[])
 {
-	int ch, c, fd, ret = 1;
+	int ch, c, Dflag = 0, fd, ret = 1;
 	const char *tmpdir;
 	struct stat sb;
 	char *pr_form;
 	time_t mtime;
 	FILE *fp;
 
-	while ((ch = getopt(argc, argv, "LPV")) != -1)
+	while ((ch = getopt(argc, argv, "DLPV")) != -1)
 		switch (ch) {
+		case 'D':
+			Dflag = 1;
+			break;
 		case 'L':
 			printf("Known categories:\n");
 			printf("%s\n\n", categories);
@@ -84,10 +89,11 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
+	argc -= optind;
+	argv += optind;
 
-	if (argc > 1) {
+	if (argc > 1)
 		usage();
-	}
 
 	if ((tmpdir = getenv("TMPDIR")) == NULL || tmpdir[0] == '\0')
 		tmpdir = _PATH_TMP;
@@ -125,8 +131,33 @@ main(int argc, char *argv[])
 			}
 			fclose(frfp);
 		}
-	} else
+	} else {
 		template(fp);
+		if (!Dflag) {
+			char buf[BUFSIZ];
+			size_t len;
+			FILE *dfp;
+
+			dfp = fopen(_PATH_DMESG, "r");
+			if (dfp == NULL) {
+				warn("can't read dmesg");
+			} else {
+				fputs("\n"
+				    "<dmesg is attached.>\n"
+				    "<Feel free to delete or use the -D"
+				    " flag if it contains sensitive "
+				    "information.>\n", fp);
+				while (!feof(dfp)) {
+					len = fread(buf, 1, sizeof buf, dfp);
+					if (len == 0)
+						break;
+					if (fwrite(buf, 1, len, fp) != len)
+						break;
+				}
+				fclose(dfp);
+			}
+		}
+	}
 
 	if (fflush(fp) == EOF || fstat(fd, &sb) == -1 || fclose(fp) == EOF)
 		err(1, "error creating template");

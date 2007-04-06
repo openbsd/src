@@ -1,4 +1,4 @@
-.\" $OpenBSD: sendbug.1,v 1.12 2007/03/28 20:52:27 jmc Exp $
+.\" $OpenBSD: sendbug.1,v 1.13 2007/04/06 01:32:39 ray Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
@@ -12,7 +12,7 @@
 .Ox
 .Sh SYNOPSIS
 .Nm
-.Op Fl LPV
+.Op Fl DLPV
 .Sh DESCRIPTION
 .Nm
 is used to submit problem reports (PRs) to the
@@ -50,6 +50,15 @@ or content.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl D
+Do not attach
+.Xr dmesg 8
+to report.
+The
+.Xr dmesg 8
+output is very helpful in reports,
+but may contain sensitive information about the sender.
+This flag helps protect users' privacy in those cases.
 .It Fl L
 Print the list of available categories.
 .It Fl P
