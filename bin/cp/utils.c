@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.26 2004/12/10 10:23:30 jmc Exp $	*/
+/*	$OpenBSD: utils.c,v 1.27 2007/04/06 06:50:00 tedu Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: utils.c,v 1.26 2004/12/10 10:23:30 jmc Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.27 2007/04/06 06:50:00 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,12 +57,25 @@ static char rcsid[] = "$OpenBSD: utils.c,v 1.26 2004/12/10 10:23:30 jmc Exp $";
 int
 copy_file(FTSENT *entp, int dne)
 {
-	static char buf[MAXBSIZE];
+	static char *buf;
+	static char *zeroes;
 	struct stat to_stat, *fs;
 	int ch, checkch, from_fd, rcount, rval, to_fd, wcount;
 #ifdef VM_AND_BUFFER_CACHE_SYNCHRONIZED
 	char *p;
 #endif
+
+	if (!buf) {
+		buf = malloc(MAXBSIZE);
+		if (!buf)
+			err(1, "malloc");
+	}
+	if (!zeroes) {
+		zeroes = malloc(MAXBSIZE);
+		if (!zeroes)
+			err(1, "malloc");
+		memset(zeroes, 0, MAXBSIZE);
+	}
 
 	if ((from_fd = open(entp->fts_path, O_RDONLY, 0)) == -1) {
 		warn("%s", entp->fts_path);
@@ -136,14 +149,23 @@ copy_file(FTSENT *entp, int dne)
 	} else
 #endif
 	{
+		int skipholes = 0;
+		struct stat tosb;
+		if (!fstat(to_fd, &tosb) && S_ISREG(tosb.st_mode))
+			skipholes = 1;
 		while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
-			wcount = write(to_fd, buf, rcount);
+			if (skipholes && memcmp(buf, zeroes, rcount) == 0)
+				wcount = lseek(to_fd, rcount, SEEK_CUR) == -1 ? -1 : rcount;
+			else
+				wcount = write(to_fd, buf, rcount);
 			if (rcount != wcount || wcount == -1) {
 				warn("%s", to.p_path);
 				rval = 1;
 				break;
 			}
 		}
+		if (skipholes && rcount >= 0)
+			rcount = ftruncate(to_fd, fs->st_size);
 		if (rcount < 0) {
 			warn("%s", entp->fts_path);
 			rval = 1;

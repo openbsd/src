@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cp.1,v 1.25 2004/12/10 10:23:30 jmc Exp $
+.\"	$OpenBSD: cp.1,v 1.26 2007/04/06 06:50:00 tedu Exp $
 .\"	$NetBSD: cp.1,v 1.9 1995/07/25 19:36:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -165,6 +165,10 @@ If both the set-user-ID and set-group-ID bits are set, all of the above
 conditions must be fulfilled or both bits are removed.
 .Pp
 Appropriate permissions are required for file creation or overwriting.
+.Pp
+When a file containing large blocks of zero-valued bytes is copied,
+.Nm
+will attempt to create a sparse file.
 .Pp
 Symbolic links are always followed unless the
 .Fl R
