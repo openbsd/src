@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.17 2007/02/15 21:02:17 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.18 2007/04/06 01:12:06 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -141,7 +141,7 @@ acpidock_docklock(struct acpidock_softc *sc, int lock)
 	cmd.type = AML_OBJTYPE_INTEGER;
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_LCK", 1, &cmd,
 	    &res) != 0) {
-		dnprintf(20, "%s: _LCD %d failed\n", DEVNAME(sc), lock);
+		dnprintf(20, "%s: _LCK %d failed\n", DEVNAME(sc), lock);
 
 		rv = 0;
 	} else {
@@ -178,8 +178,6 @@ acpidock_dockctl(struct acpidock_softc *sc, int dock)
 	}
 
 	aml_freevalue(&res);
-
-	sc->sc_docked = rv;
 
 	return rv;
 }
