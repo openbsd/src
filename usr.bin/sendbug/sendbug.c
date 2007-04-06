@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.37 2007/04/06 07:24:53 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.38 2007/04/06 20:29:18 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -217,7 +217,7 @@ dmesg(FILE *fp)
 }
 
 int
-editit(char *tmpfile)
+editit(char *pathname)
 {
 	char *argp[] = {"sh", "-c", NULL, NULL}, *ed, *p;
 	sig_t sighup, sigint, sigquit;
@@ -229,7 +229,7 @@ editit(char *tmpfile)
 		ed = getenv("EDITOR");
 	if (ed == NULL || ed[0] == '\0')
 		ed = _PATH_VI;
-	if (asprintf(&p, "%s %s", ed, tmpfile) == -1)
+	if (asprintf(&p, "%s %s", ed, pathname) == -1)
 		return (-1);
 	argp[2] = p;
 
@@ -294,38 +294,38 @@ prompt(void)
 }
 
 int
-sendmail(const char *tmppath)
+sendmail(const char *pathname)
 {
 	int filedes[2];
 
 	if (pipe(filedes) == -1) {
-		warn("pipe: unsent report in %s", tmppath);
+		warn("pipe: unsent report in %s", pathname);
 		return (-1);
 	}
 	switch (fork()) {
 	case -1:
 		warn("fork error: unsent report in %s",
-		    tmppath);
+		    pathname);
 		return (-1);
 	case 0:
 		close(filedes[1]);
 		if (dup2(filedes[0], STDIN_FILENO) == -1) {
 			warn("dup2 error: unsent report in %s",
-			    tmppath);
+			    pathname);
 			return (-1);
 		}
 		close(filedes[0]);
 		execl("/usr/sbin/sendmail", "sendmail",
 		    "-oi", "-t", (void *)NULL);
 		warn("sendmail error: unsent report in %s",
-		    tmppath);
+		    pathname);
 		return (-1);
 	default:
 		close(filedes[0]);
 		/* Pipe into sendmail. */
-		if (send_file(tmppath, filedes[1]) == -1) {
+		if (send_file(pathname, filedes[1]) == -1) {
 			warn("send_file error: unsent report in %s",
-			    tmppath);
+			    pathname);
 			return (-1);
 		}
 		close(filedes[1]);
