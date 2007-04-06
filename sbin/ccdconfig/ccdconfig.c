@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.29 2006/03/26 18:06:00 grunk Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.30 2007/04/06 06:41:42 tedu Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -54,6 +54,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+
+#ifndef SMALL
+/* this kvm nonsense doesn't belong here */
+#define SMALL
+#endif
+
 #ifndef SMALL
 #include <kvm.h>
 #include <nlist.h>
