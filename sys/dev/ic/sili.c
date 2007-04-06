@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.12 2007/04/05 14:09:36 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.13 2007/04/06 04:48:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -46,6 +46,22 @@ int silidebug = SILI_D_VERBOSE;
 struct cfdriver sili_cd = {
 	NULL, "sili", DV_DULL
 };
+
+/* wrapper around dma memory */
+struct sili_dmamem {
+	bus_dmamap_t		sdm_map;
+	bus_dma_segment_t	sdm_seg;
+	size_t			sdm_size;
+	caddr_t			sdm_kva;
+};
+#define SILI_DMA_MAP(_sdm)      ((_sdm)->sdm_map)
+#define SILI_DMA_DVA(_sdm)      ((_sdm)->sdm_map->dm_segs[0].ds_addr)
+#define SILI_DMA_KVA(_sdm)      ((void *)(_sdm)->sdm_kva)
+
+struct sili_dmamem	*sili_dmamem_alloc(struct sili_softc *, bus_size_t,
+			    bus_size_t);
+void			sili_dmamem_free(struct sili_softc *,
+			    struct sili_dmamem *);
 
 /* per port goo */
 struct sili_ccb;
@@ -230,6 +246,58 @@ sili_ccb_free(struct sili_port *sp)
 
 	free(sp->sp_ccbs, M_DEVBUF);
 	sp->sp_ccbs = NULL;
+}
+
+struct sili_dmamem *
+sili_dmamem_alloc(struct sili_softc *sc, bus_size_t size, bus_size_t align)
+{
+	struct sili_dmamem		*sdm;
+	int				nsegs;
+
+	sdm = malloc(sizeof(struct sili_dmamem), M_DEVBUF, M_WAITOK);
+	bzero(sdm, sizeof(struct sili_dmamem));
+	sdm->sdm_size = size;
+
+	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &sdm->sdm_map) != 0)
+		goto sdmfree;
+
+	if (bus_dmamem_alloc(sc->sc_dmat, size, align, 0, &sdm->sdm_seg,
+	    1, &nsegs, BUS_DMA_NOWAIT) != 0)
+		goto destroy;
+
+	if (bus_dmamem_map(sc->sc_dmat, &sdm->sdm_seg, nsegs, size,
+	    &sdm->sdm_kva, BUS_DMA_NOWAIT) != 0)
+		goto free;
+
+	if (bus_dmamap_load(sc->sc_dmat, sdm->sdm_map, sdm->sdm_kva, size,
+	    NULL, BUS_DMA_NOWAIT) != 0)
+		goto unmap;
+
+	bzero(sdm->sdm_kva, size);
+
+	return (sdm);
+
+unmap:
+	bus_dmamem_unmap(sc->sc_dmat, sdm->sdm_kva, size);
+free:
+	bus_dmamem_free(sc->sc_dmat, &sdm->sdm_seg, 1);
+destroy:
+	bus_dmamap_destroy(sc->sc_dmat, sdm->sdm_map);
+sdmfree:
+	free(sdm, M_DEVBUF);
+
+	return (NULL);
+}
+
+void
+sili_dmamem_free(struct sili_softc *sc, struct sili_dmamem *sdm)
+{
+	bus_dmamap_unload(sc->sc_dmat, sdm->sdm_map);
+	bus_dmamem_unmap(sc->sc_dmat, sdm->sdm_kva, sdm->sdm_size);
+	bus_dmamem_free(sc->sc_dmat, &sdm->sdm_seg, 1);
+	bus_dmamap_destroy(sc->sc_dmat, sdm->sdm_map);
+	free(sdm, M_DEVBUF);
 }
 
 u_int32_t
