@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.38 2007/04/06 20:29:18 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.39 2007/04/06 21:51:09 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -29,9 +29,11 @@
 
 #define _PATH_DMESG "/var/run/dmesg.boot"
 
+int	checkfile(const char *);
 void	dmesg(FILE *);
 int	editit(char *);
 void	init(void);
+int	matchline(const char *, const unsigned char *, size_t);
 int	prompt(void);
 int	send_file(const char *, int);
 int	sendmail(const char *);
@@ -152,6 +154,8 @@ main(int argc, char *argv[])
 		errx(1, "report unchanged, nothing sent");
 
  prompt:
+	if (!checkfile(tmppath))
+		fprintf(stderr, "fields are blank, must be filled in\n");
 	c = prompt();
 	switch (c) {
 	case 'a':
@@ -460,6 +464,75 @@ send_file(const char *file, int dst)
 	}
 	fclose(fp);
 	return (0);
+}
+
+/*
+ * Does line start with `s' and end with non-comment and non-whitespace?
+ */
+int
+matchline(const char *s, const unsigned char *line, size_t linelen)
+{
+	size_t slen;
+	int comment;
+
+	slen = strlen(s);
+	/* Is line shorter than string? */
+	if (linelen <= slen)
+		return (0);
+	/* Does line start with string? */
+	if (memcmp(line, s, slen) != 0)
+		return (0);
+	/* Does line contain anything but comments and whitespace? */
+	line += slen;
+	linelen -= slen;
+	comment = 0;
+	while (linelen) {
+		if (comment) {
+			if (*line == '>')
+				comment = 0;
+		} else if (*line == '<')
+			comment = 1;
+		else if (!isspace(*line))
+			return (1);
+		++line;
+		--linelen;
+	}
+	return (0);
+}
+
+/*
+ * Are all required fields filled out?
+ */
+int
+checkfile(const char *pathname)
+{
+	FILE *fp;
+	size_t len;
+	int category, class, priority, release, severity, synopsis;
+	char *buf;
+
+	if ((fp = fopen(pathname, "r")) == NULL) {
+		warn("%s", pathname);
+		return (0);
+	}
+	category = class = priority = release = severity = synopsis = 0;
+	while ((buf = fgetln(fp, &len))) {
+		if (matchline(">Category:", buf, len))
+			category = 1;
+		else if (matchline(">Class:", buf, len))
+			class = 1;
+		else if (matchline(">Priority:", buf, len))
+			priority = 1;
+		else if (matchline(">Release:", buf, len))
+			release = 1;
+		else if (matchline(">Severity:", buf, len))
+			severity = 1;
+		else if (matchline(">Synopsis:", buf, len))
+			synopsis = 1;
+	}
+	fclose(fp);
+	return (category && class && priority && release && severity &&
+	    synopsis);
 }
 
 void
