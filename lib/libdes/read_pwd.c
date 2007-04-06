@@ -223,7 +223,8 @@ FILE *in;
 	char buf[SIZE+1];
 
 	do	{
-		fgets(buf,SIZE,in);
+		if (fgets(buf,sizeof(buf),in) == NULL)
+			break;
 		} while (strchr(buf,'\n') == NULL);
 	}
 
@@ -316,9 +317,7 @@ int verify;
 		fflush(stderr);
 
 		buf[0]='\0';
-		fgets(buf,size,tty);
-		if (feof(tty)) goto error;
-		if (ferror(tty)) goto error;
+		if (fgets(buf,size,tty) == NULL) goto error;
 		if ((p=(char *)strchr(buf,'\n')) != NULL)
 			*p='\0';
 		else	read_till_nl(tty);
@@ -327,8 +326,7 @@ int verify;
 			fprintf(stderr,"\nVerifying password - %s",prompt);
 			fflush(stderr);
 			buff[0]='\0';
-			fgets(buff,size,tty);
-			if (feof(tty)) goto error;
+			if (fgets(buff,size,tty) == NULL) goto error;
 			if ((p=(char *)strchr(buff,'\n')) != NULL)
 				*p='\0';
 			else	read_till_nl(tty);

@@ -383,7 +383,8 @@ static void read_till_nl(FILE *in)
 	char buf[SIZE+1];
 
 	do	{
-		fgets(buf,SIZE,in);
+		if (fgets(buf,sizeof(buf),in) == NULL)
+			break;
 		} while (strchr(buf,'\n') == NULL);
 	}
 
