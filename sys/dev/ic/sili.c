@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.15 2007/04/07 06:10:09 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.16 2007/04/07 09:24:12 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -72,6 +72,8 @@ struct sili_port {
 
 	struct sili_ccb		*sp_ccbs;
 	struct sili_dmamem	*sp_cmds;
+
+	TAILQ_HEAD(, sili_ccb)	sp_free_ccbs;
 };
 
 int			sili_ports_alloc(struct sili_softc *);
@@ -102,10 +104,14 @@ struct sili_ccb {
 	bus_dmamap_t		ccb_dmamap;
 
 	struct sili_port	*ccb_port;
+
+	TAILQ_ENTRY(sili_ccb)	ccb_entry;
 };
 
 int			sili_ccb_alloc(struct sili_port *);
 void			sili_ccb_free(struct sili_port *);
+struct sili_ccb 	*sili_get_ccb(struct sili_port *);
+void			sili_put_ccb(struct sili_ccb *);
 
 /* bus space ops */
 u_int32_t		sili_read(struct sili_softc *, bus_size_t);
@@ -159,7 +165,7 @@ sili_attach(struct sili_softc *sc)
 	aaa.aaa_methods = &sili_atascsi_methods;
 	aaa.aaa_minphys = minphys;
 	aaa.aaa_nports = sc->sc_nports;
-	aaa.aaa_ncmds = 1 /* XXX SILI_MAX_CMDS */;
+	aaa.aaa_ncmds = SILI_MAX_CMDS;
 
 	sc->sc_atascsi = atascsi_attach(&sc->sc_dev, &aaa);
 
@@ -236,31 +242,46 @@ sili_ccb_alloc(struct sili_port *sp)
 {
 	struct sili_softc		*sc = sp->sp_sc;
 	struct sili_ccb			*ccb;
+	struct sili_prb			*prb;
+	int				i;
 
-	/* XXX this should allocate multiple ccbs */
+	TAILQ_INIT(&sp->sp_free_ccbs);
 
-	sp->sp_ccbs = malloc(sizeof(struct sili_ccb), M_DEVBUF, M_WAITOK);
-	sp->sp_cmds = sili_dmamem_alloc(sc, SILI_CMD_LEN /* * SILI_MAX_CMDS */,
+	sp->sp_ccbs = malloc(sizeof(struct sili_ccb) * SILI_MAX_CMDS,
+	    M_DEVBUF, M_WAITOK);
+	sp->sp_cmds = sili_dmamem_alloc(sc, SILI_CMD_LEN * SILI_MAX_CMDS,
 	    SILI_PRB_ALIGN);
 	if (sp->sp_cmds == NULL)
 		goto free_ccbs;
 
-	ccb = sp->sp_ccbs;
-	bzero(ccb, sizeof(struct sili_ccb));
-	ccb->ccb_port = sp;
-	ccb->ccb_cmd = SILI_DMA_KVA(sp->sp_cmds);
-	ccb->ccb_cmd_dva = SILI_DMA_DVA(sp->sp_cmds);
-	if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, SILI_DMA_SEGS,
-	    MAXPHYS, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
-	    &sp->sp_ccbs->ccb_dmamap) != 0)
-		goto free_cmds;
+	bzero(sp->sp_ccbs, sizeof(struct sili_ccb) * SILI_MAX_CMDS);
+
+	for (i = 0; i < SILI_MAX_CMDS; i++) {
+		ccb = &sp->sp_ccbs[i];
+		ccb->ccb_port = sp;
+		ccb->ccb_cmd = SILI_DMA_KVA(sp->sp_cmds) + i * SILI_CMD_LEN;
+		ccb->ccb_cmd_dva = SILI_DMA_DVA(sp->sp_cmds) + i * SILI_CMD_LEN;
+		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, SILI_DMA_SEGS,
+		    MAXPHYS, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    &ccb->ccb_dmamap) != 0)
+			goto free_cmds;
+
+		prb = ccb->ccb_cmd;
+		ccb->ccb_xa.fis = (struct ata_fis_h2d *)&prb->fis;
+		ccb->ccb_xa.packetcmd = ((struct sili_prb_packet *)prb)->cdb;
+		ccb->ccb_xa.tag = i;
+		ccb->ccb_xa.ata_put_xfer = sili_ata_put_xfer;
+		ccb->ccb_xa.state = ATA_S_COMPLETE;
+
+		sili_put_ccb(ccb);
+	}
 
 	return (0);
 
 free_cmds:
 	sili_dmamem_free(sc, sp->sp_cmds);
 free_ccbs:
-	free(sp->sp_ccbs, M_DEVBUF);
+	sili_ccb_free(sp);
 	return (1);
 }
 
@@ -270,11 +291,45 @@ sili_ccb_free(struct sili_port *sp)
 	struct sili_softc		*sc = sp->sp_sc;
 	struct sili_ccb			*ccb;
 
-	ccb = sp->sp_ccbs;
-	bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
+	while ((ccb = sili_get_ccb(sp)) != NULL)
+		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
 
 	free(sp->sp_ccbs, M_DEVBUF);
 	sp->sp_ccbs = NULL;
+}
+
+struct sili_ccb *
+sili_get_ccb(struct sili_port *sp)
+{
+	struct sili_ccb			*ccb;
+
+	ccb = TAILQ_FIRST(&sp->sp_free_ccbs);
+	if (ccb != NULL) {
+		KASSERT(ccb->ccb_xa.state == ATA_S_PUT);
+		TAILQ_REMOVE(&sp->sp_free_ccbs, ccb, ccb_entry);
+		ccb->ccb_xa.state = ATA_S_SETUP;
+	}
+
+	return (ccb);
+}
+
+void
+sili_put_ccb(struct sili_ccb *ccb)
+{
+	struct sili_port		*sp = ccb->ccb_port;
+
+#ifdef DIAGNOSTIC
+	if (ccb->ccb_xa.state != ATA_S_COMPLETE &&
+	    ccb->ccb_xa.state != ATA_S_TIMEOUT &&
+	    ccb->ccb_xa.state != ATA_S_ERROR) {
+		printf("%s: invalid ata_xfer state %02x in sili_put_ccb, "
+		    "slot %d\n", DEVNAME(sp->sp_sc), ccb->ccb_xa.state,
+		    ccb->ccb_xa.tag);
+	}
+#endif
+
+	ccb->ccb_xa.state = ATA_S_PUT;
+	TAILQ_INSERT_TAIL(&sp->sp_free_ccbs, ccb, ccb_entry);
 }
 
 struct sili_dmamem *
@@ -512,6 +567,7 @@ sili_ata_cmd(struct ata_xfer *xa)
 		sgl = atapi->sgl;
 		sgllen = sizeofa(atapi->sgl);
 
+		xa->state = ATA_S_ERROR;
 		return (ATA_ERROR);
 	} else {
 		ata = ccb->ccb_cmd;
@@ -522,8 +578,10 @@ sili_ata_cmd(struct ata_xfer *xa)
 		sgllen = sizeofa(ata->sgl);
 	}
 
-	if (sili_load(ccb, sgl, sgllen) != 0)
+	if (sili_load(ccb, sgl, sgllen) != 0) {
+		xa->state = ATA_S_ERROR;
 		return (ATA_ERROR);
+	}
 	bus_dmamap_sync(sc->sc_dmat, SILI_DMA_MAP(sp->sp_cmds),
             0, SILI_CMD_LEN, BUS_DMASYNC_PREWRITE);
 
@@ -531,8 +589,10 @@ sili_ata_cmd(struct ata_xfer *xa)
 	sili_post_direct(sp, 0, &ccb->ccb_prb, sizeof(ccb->ccb_prb));
 #endif
 	sili_post_indirect(sp, ccb);
-	if (!sili_pwait_eq(sp, SILI_PREG_PSS, (1 << 0), 0, 1000)) {
+	if (!sili_pwait_eq(sp, SILI_PREG_PSS, (1 << ccb->ccb_xa.tag), 0,
+	    ccb->ccb_xa.timeout)) {
 		printf("%s: cmd failed\n", DEVNAME(sp->sp_sc));
+		xa->state = ATA_S_ERROR;
 		return (ATA_ERROR);
 	}
 
@@ -635,21 +695,23 @@ sili_ata_get_xfer(void *xsc, int port)
 {
 	struct sili_softc		*sc = xsc;
 	struct sili_port		*sp = &sc->sc_ports[port];
-	struct sili_ccb			*ccb = sp->sp_ccbs;
-	struct sili_prb			*prb = ccb->ccb_cmd;
-	struct ata_xfer			*xa;
+	struct sili_ccb			*ccb;
+
+	ccb = sili_get_ccb(sp);
+	if (ccb == NULL) {
+		printf("sili_ata_get_xfer: NULL ccb\n");
+		return (NULL);
+	}
 
 	bzero(ccb->ccb_cmd, SILI_CMD_LEN);
 
-	xa = &ccb->ccb_xa;
-	xa->fis = (struct ata_fis_h2d *)&prb->fis;
-	xa->ata_put_xfer = sili_ata_put_xfer;
-
-	return (xa);
+	return ((struct ata_xfer *)ccb);
 }
 
 void
 sili_ata_put_xfer(struct ata_xfer *xa)
 {
-	/* this does nothing (yet) */
+	struct sili_ccb			*ccb = (struct sili_ccb *)xa;
+
+	sili_put_ccb(ccb);
 }
