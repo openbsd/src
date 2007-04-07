@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.21 2007/04/07 13:37:24 pascoe Exp $ */
+/*	$OpenBSD: sili.c,v 1.22 2007/04/07 14:15:14 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -150,6 +150,9 @@ struct atascsi_methods sili_atascsi_methods = {
 	sili_ata_get_xfer,
 	sili_ata_cmd
 };
+
+/* completion paths */
+void			sili_ata_cmd_done(struct sili_ccb *);
 
 int
 sili_attach(struct sili_softc *sc)
@@ -486,6 +489,7 @@ sili_post_direct(struct sili_port *sp, u_int slot, void *buf, size_t buflen)
 void
 sili_post_indirect(struct sili_port *sp, struct sili_ccb *ccb)
 {
+	ccb->ccb_xa.state = ATA_S_ONCHIP;
 	sili_pwrite(sp, SILI_PREG_CAR_LO(ccb->ccb_xa.tag),
 	    (u_int32_t)ccb->ccb_cmd_dva);
 	sili_pwrite(sp, SILI_PREG_CAR_HI(ccb->ccb_xa.tag),
@@ -573,6 +577,8 @@ sili_ata_cmd(struct ata_xfer *xa)
 	int				sgllen;
 	int				s;
 
+	KASSERT(xa->state == ATA_S_SETUP);
+
 	if (xa->flags & ATA_F_PACKET) {
 		atapi = ccb->ccb_cmd;
 
@@ -592,22 +598,45 @@ sili_ata_cmd(struct ata_xfer *xa)
 		sgllen = sizeofa(ata->sgl);
 	}
 
-	if (sili_load(ccb, sgl, sgllen) != 0) {
-		xa->state = ATA_S_ERROR;
-		return (ATA_ERROR);
-	}
+	if (sili_load(ccb, sgl, sgllen) != 0)
+		goto failcmd;
+
 	bus_dmamap_sync(sc->sc_dmat, SILI_DMA_MAP(sp->sp_cmds),
 	    xa->tag * SILI_CMD_LEN, SILI_CMD_LEN, BUS_DMASYNC_PREWRITE);
+
+	xa->state = ATA_S_PENDING;
 
 #if 0
 	sili_post_direct(sp, 0, &ccb->ccb_prb, sizeof(ccb->ccb_prb));
 #endif
+	s = splbio();
 	sili_post_indirect(sp, ccb);
+	sili_ata_cmd_done(ccb);
+	splx(s);
+
+	return (ATA_COMPLETE);
+
+failcmd:
+	s = splbio();
+	xa->state = ATA_S_ERROR;
+	xa->complete(xa);
+	splx(s);
+	return (ATA_ERROR);
+}
+
+void
+sili_ata_cmd_done(struct sili_ccb *ccb)
+{
+	struct sili_port		*sp = ccb->ccb_port;
+	struct sili_softc		*sc = sp->sp_sc;
+	struct ata_xfer			*xa = &ccb->ccb_xa;
+
+	splassert(IPL_BIO);
+
 	if (!sili_pwait_eq(sp, SILI_PREG_PSS, (1 << ccb->ccb_xa.tag), 0,
 	    ccb->ccb_xa.timeout)) {
 		printf("%s: cmd failed\n", PORTNAME(sp));
 		xa->state = ATA_S_ERROR;
-		return (ATA_ERROR);
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, SILI_DMA_MAP(sp->sp_cmds),
@@ -615,13 +644,10 @@ sili_ata_cmd(struct ata_xfer *xa)
 
 	sili_unload(ccb);
 
-	xa->state = ATA_S_COMPLETE;
+	if (xa->state == ATA_S_ONCHIP)
+		xa->state = ATA_S_COMPLETE;
 
-	s = splbio();
 	xa->complete(xa);
-	splx(s);
-
-	return (ATA_COMPLETE);
 }
 
 int
