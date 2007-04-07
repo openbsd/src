@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.20 2007/04/07 13:23:30 pascoe Exp $ */
+/*	$OpenBSD: sili.c,v 1.21 2007/04/07 13:37:24 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -531,7 +531,8 @@ sili_ata_probe(void *xsc, int port)
 	/* we use slot 0 */
 	sili_post_direct(sp, 0, &sreset, sizeof(sreset));
 	if (!sili_pwait_eq(sp, SILI_PREG_PSS, (1 << 0), 0, 1000)) {
-		/* DPRINTF timeout waiting for soft reset */
+		DPRINTF(SILI_D_VERBOSE, "%s: timed out while waiting for soft "
+		    "reset\n", PORTNAME(sp));
 		return (ATA_PORT_T_NONE);
 	}
 
@@ -582,9 +583,6 @@ sili_ata_cmd(struct ata_xfer *xa)
 
 		sgl = atapi->sgl;
 		sgllen = sizeofa(atapi->sgl);
-
-		xa->state = ATA_S_ERROR;
-		return (ATA_ERROR);
 	} else {
 		ata = ccb->ccb_cmd;
 
