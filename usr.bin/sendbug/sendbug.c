@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.40 2007/04/07 00:24:59 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.41 2007/04/07 00:40:43 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -51,7 +51,9 @@ int wantcleanup;
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: sendbug [-DLPV]\n");
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s [-DLPV]\n", __progname);
 	exit(1);
 }
 
@@ -120,9 +122,8 @@ main(int argc, char *argv[])
 
 		frfp = fopen(pr_form, "r");
 		if (frfp == NULL) {
-			fprintf(stderr, "sendbug: can't seem to read your"
-			    " template file (`%s'), ignoring PR_FORM\n",
-			    pr_form);
+			warn("can't seem to read your template file "
+			    "(`%s'), ignoring PR_FORM", pr_form);
 			template(fp);
 		} else {
 			while (!feof(frfp)) {
