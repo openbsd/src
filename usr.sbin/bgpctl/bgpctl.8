@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.43 2007/03/28 12:34:08 henning Exp $
+.\" $OpenBSD: bgpctl.8,v 1.44 2007/04/07 10:08:46 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -142,6 +142,12 @@ according to the given
 .Bl -tag -width messages -compact
 .It Cm messages
 Show statistics about sent and received BGP messages.
+.It Cm terse
+Show statistics in an easy parseable terse format.
+The printed numbers are the sent and received open, sent and received
+notifications, sent and received updates, sent and received keepalives and
+sent and received route refresh messages plus the current and maximum
+prefix count, the number of sent and received updates, and withdraws.
 .It Cm timers
 Show the BGP timers.
 .El
@@ -228,6 +234,9 @@ filter can be combined with other filters.
 .It Cm show summary
 Show a list of all neighbors, including information about the session state
 and message counters.
+.It Cm show summary terse
+Show a list of all neighbors, including information about the session state,
+in a terse format.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/bgpd.sockXXX" -compact
