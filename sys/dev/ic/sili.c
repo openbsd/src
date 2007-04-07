@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.16 2007/04/07 09:24:12 pascoe Exp $ */
+/*	$OpenBSD: sili.c,v 1.17 2007/04/07 10:07:12 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -583,7 +583,7 @@ sili_ata_cmd(struct ata_xfer *xa)
 		return (ATA_ERROR);
 	}
 	bus_dmamap_sync(sc->sc_dmat, SILI_DMA_MAP(sp->sp_cmds),
-            0, SILI_CMD_LEN, BUS_DMASYNC_PREWRITE);
+	    xa->tag * SILI_CMD_LEN, SILI_CMD_LEN, BUS_DMASYNC_PREWRITE);
 
 #if 0
 	sili_post_direct(sp, 0, &ccb->ccb_prb, sizeof(ccb->ccb_prb));
@@ -597,7 +597,7 @@ sili_ata_cmd(struct ata_xfer *xa)
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, SILI_DMA_MAP(sp->sp_cmds),
-            0, SILI_CMD_LEN, BUS_DMASYNC_POSTWRITE);
+	    xa->tag * SILI_CMD_LEN, SILI_CMD_LEN, BUS_DMASYNC_POSTWRITE);
 
 	sili_unload(ccb);
 
