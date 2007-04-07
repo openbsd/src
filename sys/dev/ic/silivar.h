@@ -1,4 +1,4 @@
-/*	$OpenBSD: silivar.h,v 1.4 2007/03/31 03:59:53 dlg Exp $ */
+/*	$OpenBSD: silivar.h,v 1.5 2007/04/07 05:59:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#define sizeofa(_a)	(sizeof(_a) / sizeof((_a)[0]))
 
 struct sili_port;
 
