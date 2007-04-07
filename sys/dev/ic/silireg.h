@@ -1,4 +1,4 @@
-/*	$OpenBSD: silireg.h,v 1.19 2007/04/07 06:12:19 pascoe Exp $ */
+/*	$OpenBSD: silireg.h,v 1.20 2007/04/07 13:02:52 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -34,7 +34,7 @@
 #define  SILI_REG_GC_REQ64		(1<<20) /* latched PCI REQ64 */
 #define  SILI_REG_GC_DEVSEL		(1<<19) /* latched PCI DEVSEL */
 #define  SILI_REG_GC_STOP		(1<<18) /* latched PCI STOP */
-#define  SILI_REG_GC_TRDY		(1<<17) /* latched PCI TRDY */   
+#define  SILI_REG_GC_TRDY		(1<<17) /* latched PCI TRDY */
 #define  SILI_REG_GC_M66EN		(1<<16) /* M66EN PCI bus signal */
 #define  SILI_REG_GC_PIE_MASK		0x0f
 #define SILI_FMT_GC		"\020" "\040GR" "\037MSIACK" "\036I2CINT" \
@@ -42,6 +42,8 @@
 				    "\023STOP" "\022TRDY" "\021M66EN" \
 				    "\004P3IE" "\003P2IE" "\002P1IE" "\001P0IE"
 #define SILI_REG_GIS		0x44 /* Global Interrupt Status */
+#define  SILI_REG_GIS_I2C		(1 << 29)
+#define  SILI_REG_GIS_PIS_MASK		0x0f
 #define SILI_REG_PHYCONF	0x48 /* PHY Configuration */
 #define SILI_REG_BISTCTL	0x50 /* BIST Control */
 #define SILI_REG_BISTPATTERN	0x54 /* BIST Pattern */
@@ -59,14 +61,16 @@
 #define SILI_PREG_LRAM		0x0000 /* Port LRAM */
 #define SILI_PREG_SLOT_WIDTH	0x80
 #define SILI_PREG_SLOT(_s)	(SILI_PREG_LRAM + (_s) * SILI_PREG_SLOT_WIDTH)
+#define SILI_PREG_RX_COUNT(_s)	(SILI_PREG_SLOT(_s) + 0x04)
 #define SILI_PREG_SIG_HI(_s)	(SILI_PREG_SLOT(_s) + 0x0c)
 #define SILI_PREG_SIG_HI_SHIFT	8
 #define SILI_PREG_SIG_LO(_s)	(SILI_PREG_SLOT(_s) + 0x14)
 #define SILI_PREG_SIG_LO_MASK	0xff
 /* XXX PMP Bits */
 #define SILI_PREG_PCS		0x1000 /* Port Control Set / Status */
+#define  SILI_PREG_PCS_PORTRDY		(1<<31) /* Port Ready */
 #define  SILI_PREG_PCS_OOBB		(1<<25) /* OOB Bypass */
-#define  SILI_PREG_PCS_ACTIVE(_x)	(((_x)>>16) & 0xf) /* Active Slot */
+#define  SILI_PREG_PCS_ACTIVE(_x)	(((_x)>>16) & 0x1f) /* Active Slot */
 #define  SILI_PREG_PCS_LED_ON		(1<<15) /* LED On */
 #define  SILI_PREG_PCS_AIA		(1<<14) /* Auto Interlock Accept */
 #define  SILI_PREG_PCS_PMEN		(1<<13) /* Port Mult Enable */
@@ -108,6 +112,24 @@
 #define  SILI_PREG_PCC_DEVRESET		(1<<1) /* Device Reset */
 #define  SILI_PREG_PCC_PORTRESET	(1<<0) /* Port Reset */
 #define SILI_PREG_IS		0x1008 /* Interrupt Status */
+#define  SILI_PREG_IS_SDB		(1<<11) /* SDB Notify */
+#define  SILI_PREG_IS_HANDSHAKE		(1<<10) /* Handshake error threshold */
+#define  SILI_PREG_IS_CRC		(1<<9) /* CRC error threshold */
+#define  SILI_PREG_IS_DEC		(1<<8) /* 8b/10b decode error thresh */
+#define  SILI_PREG_IS_DEVXCHG		(1<<7) /* Device Exchanged */
+#define  SILI_PREG_IS_UNRECFIS		(1<<6) /* Unrecognized FIS Type */
+#define  SILI_PREG_IS_COMWAKE		(1<<5) /* ComWake */
+#define  SILI_PREG_IS_PHYRDYCHG		(1<<4) /* Phy Ready Change */
+#define  SILI_PREG_IS_PMCHG		(1<<3) /* Power Mmgt Change */
+#define  SILI_PREG_IS_PORTRDY		(1<<2) /* Port Ready */
+#define  SILI_PREG_IS_CMDERR		(1<<1) /* Command Error */
+#define  SILI_PREG_IS_CMDCOMP		(1<<0) /* Command Completion */
+#define SILI_PFMT_IS		"\020" "\014SDB" "\013HANDSHAKE" \
+				    "\012CRC" "\011DECODE" \
+				    "\010DEVXCHG" "\007UNRECFIS" \
+				    "\006COMWAKE" "\005PHYRDYCHG" \
+				    "\004PMCHG" "\003PORTRDY" \
+				    "\002CMDERR" "\001CMDCOMP"
 #define SILI_PREG_IES		0x1010 /* Interrupt Enable Set */
 #define SILI_PREG_IEC		0x1014 /* Interrupt Enable Clear */
 #define  SILI_PREG_IE_SDB		(1<<11) /* SDB Notify */
@@ -119,9 +141,13 @@
 #define  SILI_PREG_IE_PORTRDY		(1<<2) /* Port Ready */
 #define  SILI_PREG_IE_CMDERR		(1<<1) /* Command Error */
 #define  SILI_PREG_IE_CMDCOMP		(1<<0) /* Command Completion */
+#define  SILI_PREG_IE_ALL		0x08ff
 #define SILI_PREG_AUA		0x101c /* Activation Upper Address */
 #define SILI_PREG_FIFO		0x1020 /* Command Execution FIFO */
 #define SILI_PREG_CE		0x1024 /* Command Error */
+#define  SILI_PREG_CE_DEVICEERROR		1
+#define  SILI_PREG_CE_SDBERROR			2
+#define  SILI_PREG_CE_DATAFISERROR		3
 #define SILI_PREG_FC		0x1028 /* FIS Configuration */
 #define SILI_PREG_RFT		0x102c /* Request FIFO Threshold */
 #define SILI_PREG_DEC		0x1040 /* 8b/10b Decode Error Counter */
@@ -129,6 +155,8 @@
 #define SILI_PREG_HEC		0x1048 /* Handshake Error Counter */
 #define SILI_PREG_PHYCONF	0x1050 /* Port PHY Configuration */
 #define SILI_PREG_PSS		0x1800 /* Port Slot Status */
+#define SILI_PREG_PSS_ATTENTION		(1 << 31)
+#define SILI_PREG_PSS_ALL_SLOTS		0x7fffffff
 #define SILI_PREG_CAR_LO(_s)	(0x1c00 + ((_s) * 0x8)) /* Cmd Activate Reg */
 #define SILI_PREG_CAR_HI(_s)	(0x1c00 + ((_s) * 0x8) + 0x4)
 #define SILI_PREG_CONTEXT	0x1e0f /* Port Context Register */
