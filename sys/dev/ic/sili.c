@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.24 2007/04/07 14:46:34 pascoe Exp $ */
+/*	$OpenBSD: sili.c,v 1.25 2007/04/07 15:44:22 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -55,9 +55,9 @@ struct sili_dmamem {
 	size_t			sdm_size;
 	caddr_t			sdm_kva;
 };
-#define SILI_DMA_MAP(_sdm)      ((_sdm)->sdm_map)
-#define SILI_DMA_DVA(_sdm)      ((_sdm)->sdm_map->dm_segs[0].ds_addr)
-#define SILI_DMA_KVA(_sdm)      ((void *)(_sdm)->sdm_kva)
+#define SILI_DMA_MAP(_sdm)	((_sdm)->sdm_map)
+#define SILI_DMA_DVA(_sdm)	((_sdm)->sdm_map->dm_segs[0].ds_addr)
+#define SILI_DMA_KVA(_sdm)	((void *)(_sdm)->sdm_kva)
 
 struct sili_dmamem	*sili_dmamem_alloc(struct sili_softc *, bus_size_t,
 			    bus_size_t);
@@ -120,7 +120,7 @@ struct sili_ccb {
 
 int			sili_ccb_alloc(struct sili_port *);
 void			sili_ccb_free(struct sili_port *);
-struct sili_ccb 	*sili_get_ccb(struct sili_port *);
+struct sili_ccb		*sili_get_ccb(struct sili_port *);
 void			sili_put_ccb(struct sili_ccb *);
 
 /* bus space ops */
@@ -242,8 +242,8 @@ sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
 		case SILI_PREG_CE_DATAFISERROR:
 			need_restart = 1;
 			/* Extract error from command slot in LRAM. */
-	 		r = SILI_PREG_SLOT(err_slot) + 8;
-			bus_space_barrier(sp->sp_sc->sc_iot_port, sp->sp_ioh, 
+			r = SILI_PREG_SLOT(err_slot) + 8;
+			bus_space_barrier(sp->sp_sc->sc_iot_port, sp->sp_ioh,
 			    r, sizeof(struct ata_fis_d2h),
 			    BUS_SPACE_BARRIER_READ);
 			bus_space_read_region_1(sp->sp_sc->sc_iot_port,
@@ -347,7 +347,7 @@ sili_ports_alloc(struct sili_softc *sc)
 #ifdef SILI_DEBUG
 		snprintf(sp->sp_name, sizeof(sp->sp_name), "%s.%d",
 		    DEVNAME(sc), i);
-#endif		
+#endif
 		if (bus_space_subregion(sc->sc_iot_port, sc->sc_ioh_port,
 		    SILI_PORT_OFFSET(i), SILI_PORT_SIZE, &sp->sp_ioh) != 0) {
 			printf("%s: unable to create register window "
@@ -571,7 +571,7 @@ sili_pwrite(struct sili_port *sp, bus_size_t r, u_int32_t v)
 }
 
 int
-sili_pwait_eq(struct sili_port *sp, bus_size_t r, u_int32_t mask, 
+sili_pwait_eq(struct sili_port *sp, bus_size_t r, u_int32_t mask,
     u_int32_t value, int timeout)
 {
 	while ((sili_pread(sp, r) & mask) != value) {
@@ -586,7 +586,7 @@ sili_pwait_eq(struct sili_port *sp, bus_size_t r, u_int32_t mask,
 }
 
 int
-sili_pwait_ne(struct sili_port *sp, bus_size_t r, u_int32_t mask, 
+sili_pwait_ne(struct sili_port *sp, bus_size_t r, u_int32_t mask,
     u_int32_t value, int timeout)
 {
 	while ((sili_pread(sp, r) & mask) == value) {
