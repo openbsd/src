@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.41 2006/12/11 20:50:55 deraadt Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.42 2007/04/07 21:57:27 stevesk Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -1010,7 +1010,7 @@ banner(char *name1, char *name2)
 		(void)write(ofd, "\n\n", 2);
 		scan_out(ofd, name2, '\0');
 		if (class[0]) {
-			(void)write(ofd,"\n\n\n",3);
+			(void)write(ofd, "\n\n\n", 3);
 			scan_out(ofd, class, '\0');
 		}
 		(void)write(ofd, "\n\n\n\n\t\t\t\t\tJob:  ", 15);
@@ -1275,7 +1275,7 @@ init(void)
 		SD = _PATH_DEFSPOOL;
 	if (cgetnum(bp, "du", &DU) < 0)
 		DU = DEFUID;
-	if (cgetstr(bp,"ff", &FF) == -1)
+	if (cgetstr(bp, "ff", &FF) == -1)
 		FF = DEFFF;
 	if (cgetnum(bp, "pw", &PW) < 0)
 		PW = DEFWIDTH;
@@ -1283,7 +1283,7 @@ init(void)
 	if (cgetnum(bp, "pl", &PL) < 0)
 		PL = DEFLENGTH;
 	(void)snprintf(&length[2], sizeof(length) - 2, "%ld", PL);
-	if (cgetnum(bp,"px", &PX) < 0)
+	if (cgetnum(bp, "px", &PX) < 0)
 		PX = 0;
 	(void)snprintf(&pxwidth[2], sizeof(pxwidth) - 2, "%ld", PX);
 	if (cgetnum(bp, "py", &PY) < 0)

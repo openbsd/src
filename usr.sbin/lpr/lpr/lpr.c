@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.40 2007/03/06 11:11:53 jmc Exp $ */
+/*	$OpenBSD: lpr.c,v 1.41 2007/04/07 21:57:27 stevesk Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.40 2007/03/06 11:11:53 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.41 2007/04/07 21:57:27 stevesk Exp $";
 #endif
 #endif /* not lint */
 
@@ -438,7 +438,7 @@ copy(int f, char *n)
 		}
 	}
 	(void)close(fd);
-	if (nc==0 && nr==0) 
+	if (nc == 0 && nr == 0) 
 		warnx("%s: empty input file", f ? n : "stdin");
 	else
 		nact++;
@@ -658,7 +658,7 @@ chkprinter(char *s)
 	cgetstr(bp, "rg", &RG);
 	if (cgetnum(bp, "mx", &MX) < 0)
 		MX = DEFMX;
-	if (cgetnum(bp,"mc", &MC) < 0)
+	if (cgetnum(bp, "mc", &MC) < 0)
 		MC = DEFMAXCOPIES;
 	if (cgetnum(bp, "du", &DU) < 0)
 		DU = DEFUID;

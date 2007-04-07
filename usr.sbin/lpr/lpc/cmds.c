@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.18 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.19 2007/04/07 21:57:26 stevesk Exp $	*/
 /*	$NetBSD: cmds.c,v 1.12 1997/10/05 15:12:06 mrg Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.18 2003/06/02 23:36:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.19 2007/04/07 21:57:26 stevesk Exp $";
 #endif
 #endif /* not lint */
 
@@ -559,7 +559,7 @@ down(int argc, char **argv)
 		printf("unknown printer %s\n", printer);
 		return;
 	} else if (status == -3)
-			fatal("potential reference loop detected in printcap file");
+		fatal("potential reference loop detected in printcap file");
 
 	putmsg(argc - 2, argv + 2);
 }
