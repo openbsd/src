@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.14 2006/11/08 01:32:00 brad Exp $ */
+/* $OpenBSD: if_bce.c,v 1.15 2007/04/07 13:40:36 krw Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -217,16 +217,10 @@ struct cfdriver bce_cd = {
 #define APRINT_NORMAL	printf
 #endif
 
-static int
-bce_lookup(const struct pci_attach_args *pa)
-{
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM4401 ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM4401B0))
-		return 1;
-
-	return 0;
-}
+const struct pci_matchid bce_devices[] = {
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401B0 }
+};
 
 int
 bce_probe(parent, match, aux)
@@ -234,9 +228,8 @@ bce_probe(parent, match, aux)
 	void           *match;
 	void           *aux;
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-
-	return bce_lookup(pa);
+	return (pci_matchbyid((struct pci_attach_args *)aux, bce_devices,
+	    sizeof(bce_devices)/sizeof(bce_devices[0])));
 }
 
 void
@@ -260,8 +253,6 @@ bce_attach(parent, self, aux)
 	pcireg_t        pmode;
 	int             error;
 	int             i;
-
-	KASSERT(bce_lookup(pa));
 
 	sc->bce_pa = *pa;
 	sc->bce_dmatag = pa->pa_dmat;
