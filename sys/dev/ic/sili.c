@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.23 2007/04/07 14:38:47 pascoe Exp $ */
+/*	$OpenBSD: sili.c,v 1.24 2007/04/07 14:46:34 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -203,7 +203,7 @@ sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
 	u_int32_t			is, pss_saved, pss_masked;
 	u_int32_t			processed = 0;
 	volatile u_int32_t		*active = &sp->sp_active;
-	int				slot;
+	int				slot, need_restart = 0;
 	struct sili_ccb			*ccb;
 
 	is = sili_pread(sp, SILI_PREG_IS);
@@ -225,6 +225,48 @@ sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
 	/* Only interested in slot status bits. */
 	pss_saved &= SILI_PREG_PSS_ALL_SLOTS;
 
+	if (is & SILI_PREG_IS_CMDERR) {
+		int			err_slot;
+		bus_size_t		r;
+
+		/* XXX Non-NCQ error path. */
+		err_slot = SILI_PREG_PCS_ACTIVE(sili_pread(sp, SILI_PREG_PCS));
+
+		ccb = &sp->sp_ccbs[err_slot];
+
+		DPRINTF(SILI_D_VERBOSE, "%s: error, code %d, slot %d\n",
+		    PORTNAME(sp), sili_pread(sp, SILI_PREG_CE), err_slot);
+
+		switch (sili_pread(sp, SILI_PREG_CE)) {
+		case SILI_PREG_CE_DEVICEERROR:
+		case SILI_PREG_CE_DATAFISERROR:
+			need_restart = 1;
+			/* Extract error from command slot in LRAM. */
+	 		r = SILI_PREG_SLOT(err_slot) + 8;
+			bus_space_barrier(sp->sp_sc->sc_iot_port, sp->sp_ioh, 
+			    r, sizeof(struct ata_fis_d2h),
+			    BUS_SPACE_BARRIER_READ);
+			bus_space_read_region_1(sp->sp_sc->sc_iot_port,
+			    sp->sp_ioh, r, &ccb->ccb_xa.rfis,
+			    sizeof(struct ata_fis_d2h));
+			break;
+		case SILI_PREG_CE_SDBERROR:
+			/* An NCQ error? */
+			if (1 /* no_ncq_commands_outstanding */)
+				need_restart = 1;
+			break;
+		default:
+			printf("%s: fatal error\n", PORTNAME(sp));
+			break;
+		}
+
+		/* Clear the failed commmand in saved PSS so completion runs. */
+		pss_saved &= ~(1 << err_slot);
+
+		KASSERT(ccb->ccb_xa.state == ATA_S_ONCHIP);
+		ccb->ccb_xa.state = ATA_S_ERROR;
+	}
+
 	/* Command slot is complete if its bit in PSS is 0 but 1 in active. */
 	pss_masked = ~pss_saved & *active;
 	while (pss_masked) {
@@ -240,6 +282,27 @@ sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
 		sili_ata_cmd_done(ccb);
 
 		processed |= 1 << slot;
+	}
+
+	/* Restart port and reissue outstanding commands. */
+	if (need_restart) {
+		sili_pwrite(sp, SILI_PREG_PCS, SILI_PREG_PCS_PORTINIT);
+		if (!sili_pwait_eq(sp, SILI_PREG_PCS, SILI_PREG_PCS_PORTRDY,
+		    SILI_PREG_PCS_PORTRDY, 1000)) {
+			printf("%s: couldn't restart port after error\n",
+			    PORTNAME(sp));
+		}
+
+		while (pss_saved) {
+			slot = ffs(pss_saved) - 1;
+			ccb = &sp->sp_ccbs[slot];
+			pss_saved &= ~(1 << slot);
+
+			DPRINTF(SILI_D_VERBOSE, "%s: restarting slot %d "
+			    "after error\n", PORTNAME(sp), slot);
+			KASSERT(ccb->ccb_xa.state == ATA_S_ONCHIP);
+			sili_post_indirect(sp, ccb);
+		}
 	}
 
 	return processed;
