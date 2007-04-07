@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmjob.c,v 1.16 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: rmjob.c,v 1.17 2007/04/07 21:12:12 stevesk Exp $	*/
 /*	$NetBSD: rmjob.c,v 1.16 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: rmjob.c,v 1.16 2003/06/02 23:36:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rmjob.c,v 1.17 2007/04/07 21:12:12 stevesk Exp $";
 #endif
 #endif /* not lint */
 
@@ -152,7 +152,7 @@ rmjob(void)
 	 * Restart the printer daemon if it was killed
 	 */
 	if (assasinated && !startdaemon(printer))
-		fatal("cannot restart printer daemon\n");
+		fatal("cannot restart printer daemon");
 	exit(0);
 }
 

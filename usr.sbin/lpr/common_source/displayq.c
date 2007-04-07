@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.27 2006/04/08 02:16:06 ray Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.28 2007/04/07 21:12:11 stevesk Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: displayq.c,v 1.27 2006/04/08 02:16:06 ray Exp $";
+static const char rcsid[] = "$OpenBSD: displayq.c,v 1.28 2007/04/07 21:12:11 stevesk Exp $";
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ displayq(int format)
 		fatal("cannot chdir to spooling directory");
 	PRIV_END;
 	if ((nitems = getq(&queue)) < 0)
-		fatal("cannot examine spooling area\n");
+		fatal("cannot examine spooling area");
 	PRIV_START;
 	ret = stat(LO, &statb);
 	PRIV_END;
