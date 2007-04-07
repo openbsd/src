@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.22 2007/04/07 14:15:14 pascoe Exp $ */
+/*	$OpenBSD: sili.c,v 1.23 2007/04/07 14:38:47 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -35,6 +35,7 @@
 
 #ifdef SILI_DEBUG
 #define SILI_D_VERBOSE		(1<<0)
+#define SILI_D_INTR		(1<<1)
 
 int silidebug = SILI_D_VERBOSE;
 
@@ -74,6 +75,8 @@ struct sili_port {
 	struct sili_dmamem	*sp_cmds;
 
 	TAILQ_HEAD(, sili_ccb)	sp_free_ccbs;
+
+	volatile u_int32_t	sp_active;
 
 #ifdef SILI_DEBUG
 	char			sp_name[16];
@@ -138,6 +141,11 @@ void			sili_post_indirect(struct sili_port *,
 u_int32_t		sili_signature(struct sili_port *, u_int);
 int			sili_load(struct sili_ccb *, struct sili_sge *, int);
 void			sili_unload(struct sili_ccb *);
+int			sili_poll(struct sili_ccb *, int, void (*)(void *));
+void			sili_start(struct sili_port *, struct sili_ccb *);
+
+/* port interrupt handler */
+u_int32_t		sili_port_intr(struct sili_port *, u_int32_t);
 
 /* atascsi interface */
 int			sili_ata_probe(void *, int);
@@ -153,6 +161,7 @@ struct atascsi_methods sili_atascsi_methods = {
 
 /* completion paths */
 void			sili_ata_cmd_done(struct sili_ccb *);
+void			sili_ata_cmd_timeout(void *);
 
 int
 sili_attach(struct sili_softc *sc)
@@ -188,14 +197,74 @@ sili_detach(struct sili_softc *sc, int flags)
 	return (0);
 }
 
+u_int32_t
+sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
+{
+	u_int32_t			is, pss_saved, pss_masked;
+	u_int32_t			processed = 0;
+	volatile u_int32_t		*active = &sp->sp_active;
+	int				slot;
+	struct sili_ccb			*ccb;
+
+	is = sili_pread(sp, SILI_PREG_IS);
+	pss_saved = sili_pread(sp, SILI_PREG_PSS);
+
+	/* Ack port interrupt only if checking all command slots. */
+	if (slotmask == SILI_PREG_PSS_ALL_SLOTS)
+		sili_pwrite(sp, SILI_PREG_IS, is);
+
+#ifdef SILI_DEBUG
+	if ((pss_saved & SILI_PREG_PSS_ALL_SLOTS) != *active ||
+	    ((is >> 16) & ~SILI_PREG_IS_CMDCOMP)) {
+		DPRINTF(SILI_D_INTR, "%s: IS: 0x%08x (0x%b), PSS: %08x, "
+		    "active: %08x\n", PORTNAME(sp), is, is >> 16, SILI_PFMT_IS,
+			pss_saved, *active);
+	}
+#endif
+
+	/* Only interested in slot status bits. */
+	pss_saved &= SILI_PREG_PSS_ALL_SLOTS;
+
+	/* Command slot is complete if its bit in PSS is 0 but 1 in active. */
+	pss_masked = ~pss_saved & *active;
+	while (pss_masked) {
+		slot = ffs(pss_masked) - 1;
+		ccb = &sp->sp_ccbs[slot];
+		pss_masked &= ~(1 << slot);
+
+		DPRINTF(SILI_D_INTR, "%s: slot %d is complete%s\n",
+		    PORTNAME(sp), slot, ccb->ccb_xa.state == ATA_S_ERROR ?
+		    " (error)" : "");
+
+		*active &= ~(1 << slot);
+		sili_ata_cmd_done(ccb);
+
+		processed |= 1 << slot;
+	}
+
+	return processed;
+}
+
 int
 sili_intr(void *arg)
 {
-#if 0
 	struct sili_softc		*sc = arg;
-#endif
+	u_int32_t			is;
+	int				port;
 
-	return (0);
+	is = sili_read(sc, SILI_REG_GIS);
+	if (is == 0)
+		return (0);
+	sili_write(sc, SILI_REG_GIS, is);
+	DPRINTF(SILI_D_INTR, "sili_intr, GIS: %08x\n", is);
+
+	while (is & SILI_REG_GIS_PIS_MASK) {
+		port = ffs(is) - 1;
+		sili_port_intr(&sc->sc_ports[port], SILI_PREG_PSS_ALL_SLOTS);
+		is &= ~(1 << port);
+	}
+
+	return (1);
 }
 
 int
@@ -520,6 +589,7 @@ sili_ata_probe(void *xsc, int port)
 
 	sili_pwrite(sp, SILI_PREG_PCC, SILI_PREG_PCC_PORTRESET);
 	sili_pwrite(sp, SILI_PREG_PCC, SILI_PREG_PCC_A32B);
+	sili_pwrite(sp, SILI_PREG_PCS, SILI_PREG_PCS_NOINTCLR);
 
 	if (!sili_pwait_eq(sp, SILI_PREG_SSTS, SATA_SStatus_DET,
 	    SATA_SStatus_DET_DEV, 1000))
@@ -562,6 +632,11 @@ sili_ata_probe(void *xsc, int port)
 	if (sili_ccb_alloc(sp) != 0)
 		return (ATA_PORT_T_NONE);
 
+	/* enable port interrupts */
+	sili_write(sc, SILI_REG_GC, sili_read(sc, SILI_REG_GC) | 1 << port);
+	sili_pwrite(sp, SILI_PREG_IES, SILI_PREG_IE_CMDERR |
+	    SILI_PREG_IE_CMDCOMP);
+
 	return (port_type);
 }
 
@@ -592,7 +667,7 @@ sili_ata_cmd(struct ata_xfer *xa)
 	} else {
 		ata = ccb->ccb_cmd;
 
-		ata->control = htole16(SILI_PRB_INTERRUPT_MASK);
+		ata->control = 0;
 
 		sgl = ata->sgl;
 		sgllen = sizeofa(ata->sgl);
@@ -604,17 +679,21 @@ sili_ata_cmd(struct ata_xfer *xa)
 	bus_dmamap_sync(sc->sc_dmat, SILI_DMA_MAP(sp->sp_cmds),
 	    xa->tag * SILI_CMD_LEN, SILI_CMD_LEN, BUS_DMASYNC_PREWRITE);
 
+	timeout_set(&xa->stimeout, sili_ata_cmd_timeout, ccb);
+
 	xa->state = ATA_S_PENDING;
 
-#if 0
-	sili_post_direct(sp, 0, &ccb->ccb_prb, sizeof(ccb->ccb_prb));
-#endif
-	s = splbio();
-	sili_post_indirect(sp, ccb);
-	sili_ata_cmd_done(ccb);
-	splx(s);
+	if (xa->flags & ATA_F_POLL) {
+		sili_poll(ccb, xa->timeout, sili_ata_cmd_timeout);
+		return (ATA_COMPLETE);
+	}
 
-	return (ATA_COMPLETE);
+	timeout_add(&xa->stimeout, (xa->timeout * hz) / 1000);
+
+	s = splbio();
+	sili_start(sp, ccb);
+	splx(s);
+	return (ATA_QUEUED);
 
 failcmd:
 	s = splbio();
@@ -633,11 +712,7 @@ sili_ata_cmd_done(struct sili_ccb *ccb)
 
 	splassert(IPL_BIO);
 
-	if (!sili_pwait_eq(sp, SILI_PREG_PSS, (1 << ccb->ccb_xa.tag), 0,
-	    ccb->ccb_xa.timeout)) {
-		printf("%s: cmd failed\n", PORTNAME(sp));
-		xa->state = ATA_S_ERROR;
-	}
+	timeout_del(&xa->stimeout);
 
 	bus_dmamap_sync(sc->sc_dmat, SILI_DMA_MAP(sp->sp_cmds),
 	    xa->tag * SILI_CMD_LEN, SILI_CMD_LEN, BUS_DMASYNC_POSTWRITE);
@@ -646,8 +721,21 @@ sili_ata_cmd_done(struct sili_ccb *ccb)
 
 	if (xa->state == ATA_S_ONCHIP)
 		xa->state = ATA_S_COMPLETE;
+#ifdef DIAGNOSTIC
+	else if (xa->state != ATA_S_ERROR && xa->state != ATA_S_TIMEOUT)
+		printf("%s: invalid ata_xfer state %02x in sili_ata_cmd_done, "
+		    "slot %d\n", PORTNAME(sp), xa->state, xa->tag);
+#endif
+	if (xa->state != ATA_S_TIMEOUT)
+		xa->complete(xa);
+}
 
-	xa->complete(xa);
+void
+sili_ata_cmd_timeout(void *xccb)
+{
+	struct sili_ccb			*ccb = xccb;
+
+	printf("%s: ccb %p timed out\n", PORTNAME(ccb->ccb_port), ccb);
 }
 
 int
@@ -728,6 +816,45 @@ sili_unload(struct sili_ccb *ccb)
 	bus_dmamap_unload(sc->sc_dmat, dmap);
 
 	xa->resid = xa->datalen - sili_pread(sp, SILI_PREG_RX_COUNT(xa->tag));
+}
+
+int
+sili_poll(struct sili_ccb *ccb, int timeout, void (*timeout_fn)(void *))
+{
+	struct sili_port		*sp = ccb->ccb_port;
+	int				s;
+
+	s = splbio();
+	sili_start(sp, ccb);
+	do {
+		if (ISSET(sili_port_intr(sp, SILI_PREG_PSS_ALL_SLOTS),
+		    1 << ccb->ccb_xa.tag)) {
+			splx(s);
+			return (0);
+		}
+
+		delay(1000);
+	} while (--timeout > 0);
+
+	/* Run timeout while at splbio, otherwise sili_intr could interfere. */
+	if (timeout_fn != NULL)
+		timeout_fn(ccb);
+
+	splx(s);
+
+	return (1);
+}
+
+void
+sili_start(struct sili_port *sp, struct sili_ccb *ccb)
+{
+	int				slot = ccb->ccb_xa.tag;
+
+	splassert(IPL_BIO);
+	KASSERT(ccb->ccb_xa.state == ATA_S_PENDING);
+
+	sp->sp_active |= 1 << slot;
+	sili_post_indirect(sp, ccb);
 }
 
 struct ata_xfer *
