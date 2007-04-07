@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.39 2007/04/06 21:51:09 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.40 2007/04/07 00:24:59 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -33,7 +33,7 @@ int	checkfile(const char *);
 void	dmesg(FILE *);
 int	editit(char *);
 void	init(void);
-int	matchline(const char *, const unsigned char *, size_t);
+int	matchline(const char *, const char *, size_t);
 int	prompt(void);
 int	send_file(const char *, int);
 int	sendmail(const char *);
@@ -468,9 +468,10 @@ send_file(const char *file, int dst)
 
 /*
  * Does line start with `s' and end with non-comment and non-whitespace?
+ * Note: Does not treat `line' as a C string.
  */
 int
-matchline(const char *s, const unsigned char *line, size_t linelen)
+matchline(const char *s, const char *line, size_t linelen)
 {
 	size_t slen;
 	int comment;
@@ -492,7 +493,7 @@ matchline(const char *s, const unsigned char *line, size_t linelen)
 				comment = 0;
 		} else if (*line == '<')
 			comment = 1;
-		else if (!isspace(*line))
+		else if (!isspace((unsigned char)*line))
 			return (1);
 		++line;
 		--linelen;
