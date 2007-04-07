@@ -1,4 +1,4 @@
-/*	$OpenBSD: fold.c,v 1.10 2003/09/26 22:22:50 tedu Exp $	*/
+/*	$OpenBSD: fold.c,v 1.11 2007/04/07 23:20:18 tedu Exp $	*/
 /*	$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: fold.c,v 1.10 2003/09/26 22:22:50 tedu Exp $";
+static char rcsid[] = "$OpenBSD: fold.c,v 1.11 2007/04/07 23:20:18 tedu Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -51,6 +51,7 @@ static char rcsid[] = "$OpenBSD: fold.c,v 1.10 2003/09/26 22:22:50 tedu Exp $";
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
+#include <limits.h>
 
 #define	DEFLINEWIDTH	80
 
@@ -65,6 +66,8 @@ main(int argc, char *argv[])
 	int ch;
 	int width;
 	char *p;
+	char *w;
+	const char *errstr;
 
 	width = -1;
 	while ((ch = getopt(argc, argv, "0123456789bsw:")) != -1)
@@ -76,17 +79,24 @@ main(int argc, char *argv[])
 			split_words = 1;
 			break;
 		case 'w':
-			if ((width = atoi(optarg)) <= 0)
-				errx(1, "illegal width value.");
+			width = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "illegal width value, %s: %s", errstr, 
+					optarg);
 			break;
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
 			if (width == -1) {
 				p = argv[optind - 1];
 				if (p[0] == '-' && p[1] == ch && !p[2])
-					width = atoi(++p);
+					w = ++p;
 				else
-					width = atoi(argv[optind] + 1);
+					w = argv[optind] + 1;
+
+				width = strtonum(w, 1, INT_MAX, &errstr);
+				if (errstr != NULL)
+					errx(1, "illegal width value, %s: %s", 
+						errstr, optarg);
 			}
 			break;
 		default:

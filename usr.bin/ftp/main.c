@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.61 2006/05/16 16:20:42 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.62 2007/04/07 23:20:18 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: main.c,v 1.61 2006/05/16 16:20:42 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.62 2007/04/07 23:20:18 tedu Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -96,6 +96,7 @@ main(volatile int argc, char *argv[])
 	struct passwd *pw = NULL;
 	char *cp, homedir[MAXPATHLEN];
 	char *outfile = NULL;
+	const char *errstr;
 	int dumb_terminal = 0;
 
 	ftpport = "ftp";
@@ -239,10 +240,10 @@ main(volatile int argc, char *argv[])
 			break;
 
 		case 'r':
-			if (isdigit(*optarg))
-				retry_connect = atoi(optarg);
-			else
-				errx(1, "-r requires numeric argument");
+			retry_connect = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "retry amount is %s: %s", errstr, 
+					optarg);
 			break;
 
 		case 't':

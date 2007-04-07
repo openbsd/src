@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.57 2006/06/19 22:31:20 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.58 2007/04/07 23:20:19 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.57 2006/06/19 22:31:20 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.58 2007/04/07 23:20:19 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -174,6 +174,7 @@ main(int argc, char *argv[])
 	int arg, ch, what;
 	char *memf, *nlistf;
 	char buf[_POSIX2_LINE_MAX];
+	const char *errstr;
 	int cnt;
 	gid_t gid;
 
@@ -201,12 +202,13 @@ main(int argc, char *argv[])
 		case 'p':
 			if (pflg++)
 				usage();
-			if (!isdigit(*optarg)) {
-				warnx( "-p requires a process id");
+			arg = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr != NULL) {
+				warnx("-p requires a process id, %s: %s", 
+					errstr, optarg);
 				usage();
 			}
 			what = KERN_PROC_PID;
-			arg = atoi(optarg);
 			break;
 		case 's':
 			sflg = 1;
