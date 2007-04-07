@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.19 2007/04/07 13:15:03 pascoe Exp $ */
+/*	$OpenBSD: sili.c,v 1.20 2007/04/07 13:23:30 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -574,6 +574,11 @@ sili_ata_cmd(struct ata_xfer *xa)
 
 	if (xa->flags & ATA_F_PACKET) {
 		atapi = ccb->ccb_cmd;
+
+		if (xa->flags & ATA_F_WRITE)
+			atapi->control = htole16(SILI_PRB_PACKET_WRITE);
+		else
+			atapi->control = htole16(SILI_PRB_PACKET_READ);
 
 		sgl = atapi->sgl;
 		sgllen = sizeofa(atapi->sgl);
