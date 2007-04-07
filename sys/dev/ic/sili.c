@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.18 2007/04/07 13:05:18 pascoe Exp $ */
+/*	$OpenBSD: sili.c,v 1.19 2007/04/07 13:15:03 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -74,6 +74,13 @@ struct sili_port {
 	struct sili_dmamem	*sp_cmds;
 
 	TAILQ_HEAD(, sili_ccb)	sp_free_ccbs;
+
+#ifdef SILI_DEBUG
+	char			sp_name[16];
+#define PORTNAME(_sp)	((_sp)->sp_name)
+#else
+#define PORTNAME(_sp)	DEVNAME((_sp)->sp_sc)
+#endif
 };
 
 int			sili_ports_alloc(struct sili_softc *);
@@ -202,6 +209,10 @@ sili_ports_alloc(struct sili_softc *sc)
 		sp = &sc->sc_ports[i];
 
 		sp->sp_sc = sc;
+#ifdef SILI_DEBUG
+		snprintf(sp->sp_name, sizeof(sp->sp_name), "%s.%d",
+		    DEVNAME(sc), i);
+#endif		
 		if (bus_space_subregion(sc->sc_iot_port, sc->sc_ioh_port,
 		    SILI_PORT_OFFSET(i), SILI_PORT_SIZE, &sp->sp_ioh) != 0) {
 			printf("%s: unable to create register window "
@@ -323,7 +334,7 @@ sili_put_ccb(struct sili_ccb *ccb)
 	    ccb->ccb_xa.state != ATA_S_TIMEOUT &&
 	    ccb->ccb_xa.state != ATA_S_ERROR) {
 		printf("%s: invalid ata_xfer state %02x in sili_put_ccb, "
-		    "slot %d\n", DEVNAME(sp->sp_sc), ccb->ccb_xa.state,
+		    "slot %d\n", PORTNAME(sp), ccb->ccb_xa.state,
 		    ccb->ccb_xa.tag);
 	}
 #endif
@@ -510,7 +521,7 @@ sili_ata_probe(void *xsc, int port)
 	    SATA_SStatus_DET_DEV, 1000))
 		return (ATA_PORT_T_NONE);
 
-	DPRINTF(SILI_D_VERBOSE, "%s.%d: SSTS 0x%08x\n", DEVNAME(sc), port,
+	DPRINTF(SILI_D_VERBOSE, "%s: SSTS 0x%08x\n", PORTNAME(sp),
 	    sili_pread(sp, SILI_PREG_SSTS));
 
 	bzero(&sreset, sizeof(sreset));
@@ -527,7 +538,7 @@ sili_ata_probe(void *xsc, int port)
 	/* Read device signature from command slot. */
 	signature = sili_signature(sp, 0);
 
-	DPRINTF(SILI_D_VERBOSE, "%s.%d: signature 0x%08x\n", DEVNAME(sc), port,
+	DPRINTF(SILI_D_VERBOSE, "%s: signature 0x%08x\n", PORTNAME(sp),
 	    signature);
 
 	switch (signature) {
@@ -591,7 +602,7 @@ sili_ata_cmd(struct ata_xfer *xa)
 	sili_post_indirect(sp, ccb);
 	if (!sili_pwait_eq(sp, SILI_PREG_PSS, (1 << ccb->ccb_xa.tag), 0,
 	    ccb->ccb_xa.timeout)) {
-		printf("%s: cmd failed\n", DEVNAME(sp->sp_sc));
+		printf("%s: cmd failed\n", PORTNAME(sp));
 		xa->state = ATA_S_ERROR;
 		return (ATA_ERROR);
 	}
@@ -628,7 +639,7 @@ sili_load(struct sili_ccb *ccb, struct sili_sge *sgl, int sgllen)
 	error = bus_dmamap_load(sc->sc_dmat, dmap, xa->data, xa->datalen, NULL,
 	    (xa->flags & ATA_F_NOWAIT) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 	if (error != 0) {
-		printf("%s: error %d loading dmamap\n", DEVNAME(sc), error);
+		printf("%s: error %d loading dmamap\n", PORTNAME(sp), error);
 		return (1);
 	}
 
