@@ -1,4 +1,4 @@
-/*	$OpenBSD: silireg.h,v 1.18 2007/04/07 06:10:09 dlg Exp $ */
+/*	$OpenBSD: silireg.h,v 1.19 2007/04/07 06:12:19 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -41,7 +41,7 @@
 				    "\035PERRDIS" "\025REQ64" "\024DEVSEL" \
 				    "\023STOP" "\022TRDY" "\021M66EN" \
 				    "\004P3IE" "\003P2IE" "\002P1IE" "\001P0IE"
-#define SILI_REG_GIS		0x40 /* Global Interrupt Status */
+#define SILI_REG_GIS		0x44 /* Global Interrupt Status */
 #define SILI_REG_PHYCONF	0x48 /* PHY Configuration */
 #define SILI_REG_BISTCTL	0x50 /* BIST Control */
 #define SILI_REG_BISTPATTERN	0x54 /* BIST Pattern */
