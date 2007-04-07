@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.25 2007/04/07 15:44:22 pascoe Exp $ */
+/*	$OpenBSD: sili.c,v 1.26 2007/04/07 15:58:26 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -878,7 +878,11 @@ sili_unload(struct sili_ccb *ccb)
 	    BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, dmap);
 
-	xa->resid = xa->datalen - sili_pread(sp, SILI_PREG_RX_COUNT(xa->tag));
+	if (xa->flags & ATA_F_READ)
+		xa->resid = xa->datalen - sili_pread(sp,
+		    SILI_PREG_RX_COUNT(xa->tag));
+	else
+		xa->resid = 0;
 }
 
 int
