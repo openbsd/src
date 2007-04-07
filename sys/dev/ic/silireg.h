@@ -1,4 +1,4 @@
-/*	$OpenBSD: silireg.h,v 1.17 2007/04/05 10:45:25 dlg Exp $ */
+/*	$OpenBSD: silireg.h,v 1.18 2007/04/07 06:10:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -129,8 +129,8 @@
 #define SILI_PREG_HEC		0x1048 /* Handshake Error Counter */
 #define SILI_PREG_PHYCONF	0x1050 /* Port PHY Configuration */
 #define SILI_PREG_PSS		0x1800 /* Port Slot Status */
-#define SILI_PREG_CAR		0x1c00 /* Command Activation Registers */
-	/* XXX up to 0x1cf7 is more of these */
+#define SILI_PREG_CAR_LO(_s)	(0x1c00 + ((_s) * 0x8)) /* Cmd Activate Reg */
+#define SILI_PREG_CAR_HI(_s)	(0x1c00 + ((_s) * 0x8) + 0x4)
 #define SILI_PREG_CONTEXT	0x1e0f /* Port Context Register */
 #define SILI_PREG_SCTL		0x1f00 /* SControl */
 #define SILI_PREG_SSTS		0x1f04 /* SStatus */
@@ -149,8 +149,10 @@ struct sili_sge {
 #define SILI_SGE_XCF			(1<<28)
 } __packed;
 
+#define SILI_SGT_SGLLEN		4
+
 struct sili_sgt {
-	struct sili_sge		sgl[4];
+	struct sili_sge		sgl[SILI_SGT_SGLLEN];
 } __packed;
 
 #define SILI_PRB_PROTOCOL_OVERRIDE	(1<<0)
@@ -161,6 +163,16 @@ struct sili_sgt {
 #define SILI_PRB_PACKET_WRITE		(1<<5)
 #define SILI_PRB_INTERRUPT_MASK		(1<<6)
 #define SILI_PRB_SOFT_RESET		(1<<7)
+
+struct sili_prb { /* this is just a useful template */
+	u_int16_t		control;
+	u_int16_t		reserved1;
+	u_int32_t		reserved2;
+
+	u_int8_t		fis[ATA_FIS_LENGTH];
+
+	u_int32_t		reserved3[9];
+} __packed;
 
 struct sili_prb_ata {
 	u_int16_t		control;
@@ -200,4 +212,5 @@ struct sili_prb_softreset {
 
 #define SILI_MAX_CMDS		31
 #define SILI_PRB_LENGTH		64
+#define SILI_PRB_ALIGN		8
 #define SILI_SGT_LENGTH		64

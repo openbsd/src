@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.14 2007/04/06 04:50:27 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.15 2007/04/07 06:10:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -71,16 +71,34 @@ struct sili_port {
 	bus_space_handle_t	sp_ioh;
 
 	struct sili_ccb		*sp_ccbs;
+	struct sili_dmamem	*sp_cmds;
 };
 
 int			sili_ports_alloc(struct sili_softc *);
 void			sili_ports_free(struct sili_softc *);
 
 /* ccb shizz */
+
+/*
+ * the dma memory for each command will be made up of a prb followed by
+ * 7 sgts, this is a neat 512 bytes.
+ */
+#define SILI_CMD_LEN		512
+
+/*
+ * you can fit 22 sge's into 7 sgts and a prb:
+ * there's 1 sgl in an atapi prb (two in the ata one, but we cant over
+ * advertise), but that's needed for the chain element. you get three sges
+ * per sgt cos you lose the 4th sge for the chaining, but you keep it in
+ * the last sgt. so 3 x 6 + 4 is 22.
+ */
+#define SILI_DMA_SEGS		22
+
 struct sili_ccb {
 	struct ata_xfer		ccb_xa;
 
-	struct sili_prb_ata	ccb_prb;
+	void			*ccb_cmd;
+	u_int64_t		ccb_cmd_dva;
 	bus_dmamap_t		ccb_dmamap;
 
 	struct sili_port	*ccb_port;
@@ -102,8 +120,10 @@ int			sili_pwait_ne(struct sili_port *, bus_size_t,
 /* command handling */
 void			sili_post_direct(struct sili_port *, u_int,
 			    void *, size_t buflen);
+void			sili_post_indirect(struct sili_port *,
+			    struct sili_ccb *);
 u_int32_t		sili_signature(struct sili_port *, u_int);
-int			sili_load(struct sili_ccb *);
+int			sili_load(struct sili_ccb *, struct sili_sge *, int);
 void			sili_unload(struct sili_ccb *);
 
 /* atascsi interface */
@@ -220,16 +240,25 @@ sili_ccb_alloc(struct sili_port *sp)
 	/* XXX this should allocate multiple ccbs */
 
 	sp->sp_ccbs = malloc(sizeof(struct sili_ccb), M_DEVBUF, M_WAITOK);
+	sp->sp_cmds = sili_dmamem_alloc(sc, SILI_CMD_LEN /* * SILI_MAX_CMDS */,
+	    SILI_PRB_ALIGN);
+	if (sp->sp_cmds == NULL)
+		goto free_ccbs;
 
 	ccb = sp->sp_ccbs;
+	bzero(ccb, sizeof(struct sili_ccb));
 	ccb->ccb_port = sp;
-	if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, 2 /* XXX */,
+	ccb->ccb_cmd = SILI_DMA_KVA(sp->sp_cmds);
+	ccb->ccb_cmd_dva = SILI_DMA_DVA(sp->sp_cmds);
+	if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, SILI_DMA_SEGS,
 	    MAXPHYS, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 	    &sp->sp_ccbs->ccb_dmamap) != 0)
-		goto free_ccbs;
+		goto free_cmds;
 
 	return (0);
 
+free_cmds:
+	sili_dmamem_free(sc, sp->sp_cmds);
 free_ccbs:
 	free(sp->sp_ccbs, M_DEVBUF);
 	return (1);
@@ -388,6 +417,15 @@ sili_post_direct(struct sili_port *sp, u_int slot, void *buf, size_t buflen)
 	sili_pwrite(sp, SILI_PREG_FIFO, slot);
 }
 
+void
+sili_post_indirect(struct sili_port *sp, struct sili_ccb *ccb)
+{
+	sili_pwrite(sp, SILI_PREG_CAR_LO(ccb->ccb_xa.tag),
+	    (u_int32_t)ccb->ccb_cmd_dva);
+	sili_pwrite(sp, SILI_PREG_CAR_HI(ccb->ccb_xa.tag),
+	    (u_int32_t)(ccb->ccb_cmd_dva >> 32));
+}
+
 u_int32_t
 sili_signature(struct sili_port *sp, u_int slot)
 {
@@ -411,7 +449,7 @@ sili_ata_probe(void *xsc, int port)
 	int				port_type;
 
 	sili_pwrite(sp, SILI_PREG_PCC, SILI_PREG_PCC_PORTRESET);
-	sili_pwrite(sp, SILI_PREG_PCS, SILI_PREG_PCS_A32B);
+	sili_pwrite(sp, SILI_PREG_PCC, SILI_PREG_PCC_A32B);
 
 	if (!sili_pwait_eq(sp, SILI_PREG_SSTS, SATA_SStatus_DET,
 	    SATA_SStatus_DET_DEV, 1000))
@@ -461,18 +499,45 @@ sili_ata_cmd(struct ata_xfer *xa)
 {
 	struct sili_ccb			*ccb = (struct sili_ccb *)xa;
 	struct sili_port		*sp = ccb->ccb_port;
+	struct sili_softc		*sc = sp->sp_sc;
+	struct sili_prb_ata		*ata;
+	struct sili_prb_packet		*atapi;
+	struct sili_sge			*sgl;
+	int				sgllen;
 	int				s;
 
-	ccb->ccb_prb.control = htole16(SILI_PRB_INTERRUPT_MASK);
+	if (xa->flags & ATA_F_PACKET) {
+		atapi = ccb->ccb_cmd;
 
-	if (sili_load(ccb) != 0)
+		sgl = atapi->sgl;
+		sgllen = sizeofa(atapi->sgl);
+
 		return (ATA_ERROR);
+	} else {
+		ata = ccb->ccb_cmd;
 
+		ata->control = htole16(SILI_PRB_INTERRUPT_MASK);
+
+		sgl = ata->sgl;
+		sgllen = sizeofa(ata->sgl);
+	}
+
+	if (sili_load(ccb, sgl, sgllen) != 0)
+		return (ATA_ERROR);
+	bus_dmamap_sync(sc->sc_dmat, SILI_DMA_MAP(sp->sp_cmds),
+            0, SILI_CMD_LEN, BUS_DMASYNC_PREWRITE);
+
+#if 0
 	sili_post_direct(sp, 0, &ccb->ccb_prb, sizeof(ccb->ccb_prb));
+#endif
+	sili_post_indirect(sp, ccb);
 	if (!sili_pwait_eq(sp, SILI_PREG_PSS, (1 << 0), 0, 1000)) {
 		printf("%s: cmd failed\n", DEVNAME(sp->sp_sc));
 		return (ATA_ERROR);
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, SILI_DMA_MAP(sp->sp_cmds),
+            0, SILI_CMD_LEN, BUS_DMASYNC_POSTWRITE);
 
 	sili_unload(ccb);
 
@@ -486,12 +551,12 @@ sili_ata_cmd(struct ata_xfer *xa)
 }
 
 int
-sili_load(struct sili_ccb *ccb)
+sili_load(struct sili_ccb *ccb, struct sili_sge *sgl, int sgllen)
 {
 	struct sili_port		*sp = ccb->ccb_port;
 	struct sili_softc		*sc = sp->sp_sc;
 	struct ata_xfer			*xa = &ccb->ccb_xa;
-	struct sili_sge			*sge;
+	struct sili_sge			*nsge = sgl, *ce = NULL;
 	bus_dmamap_t			dmap = ccb->ccb_dmamap;
 	u_int64_t			addr;
 	int				error;
@@ -507,15 +572,37 @@ sili_load(struct sili_ccb *ccb)
 		return (1);
 	}
 
+	if (dmap->dm_nsegs > sgllen)
+		ce = &sgl[sgllen - 1];
+
 	for (i = 0; i < dmap->dm_nsegs; i++) {
-		sge = &ccb->ccb_prb.sgl[i];
+		if (nsge == ce) {
+			nsge++;
+
+			addr = ccb->ccb_cmd_dva;
+			addr += ((u_int8_t *)nsge - (u_int8_t *)ccb->ccb_cmd);
+
+			ce->addr_lo = htole32((u_int32_t)addr);
+			ce->addr_hi = htole32((u_int32_t)(addr >> 32));
+			ce->flags = htole32(SILI_SGE_LNK);
+
+			if ((dmap->dm_nsegs - i) > SILI_SGT_SGLLEN)
+				ce += SILI_SGT_SGLLEN;
+			else
+				ce = NULL;
+		}
+
+		sgl = nsge;
 
 		addr = dmap->dm_segs[i].ds_addr;
-		sge->addr_lo = htole32((u_int32_t)addr);
-		sge->addr_hi = htole32((u_int32_t)(addr >> 32));
-		sge->data_count = htole32(dmap->dm_segs[i].ds_len);
+		sgl->addr_lo = htole32((u_int32_t)addr);
+		sgl->addr_hi = htole32((u_int32_t)(addr >> 32));
+		sgl->data_count = htole32(dmap->dm_segs[i].ds_len);
+		sgl->flags = 0;
+
+		nsge++;
 	}
-	sge->flags |= htole32(SILI_SGE_TRM);
+	sgl->flags |= htole32(SILI_SGE_TRM);
 
 	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    (xa->flags & ATA_F_READ) ? BUS_DMASYNC_PREREAD :
@@ -549,12 +636,13 @@ sili_ata_get_xfer(void *xsc, int port)
 	struct sili_softc		*sc = xsc;
 	struct sili_port		*sp = &sc->sc_ports[port];
 	struct sili_ccb			*ccb = sp->sp_ccbs;
+	struct sili_prb			*prb = ccb->ccb_cmd;
 	struct ata_xfer			*xa;
 
-	bzero(&ccb->ccb_prb, sizeof(struct sili_prb_ata));
+	bzero(ccb->ccb_cmd, SILI_CMD_LEN);
 
 	xa = &ccb->ccb_xa;
-	xa->fis = (struct ata_fis_h2d *)&ccb->ccb_prb.fis;
+	xa->fis = (struct ata_fis_h2d *)&prb->fis;
 	xa->ata_put_xfer = sili_ata_put_xfer;
 
 	return (xa);
