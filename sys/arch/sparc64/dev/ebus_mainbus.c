@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus_mainbus.c,v 1.2 2007/04/05 19:14:00 kettenis Exp $	*/
+/*	$OpenBSD: ebus_mainbus.c,v 1.3 2007/04/07 20:15:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -57,10 +57,6 @@ void	ebus_mainbus_attach(struct device *, struct device *, void *);
 
 struct cfattach ebus_mainbus_ca = {
 	sizeof(struct ebus_softc), ebus_mainbus_match, ebus_mainbus_attach
-};
-
-struct cfdriver ebus_mainbus_cd = {
-	NULL, "ebus", DV_DULL
 };
 
 
