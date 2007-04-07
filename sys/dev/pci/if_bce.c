@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.15 2007/04/07 13:40:36 krw Exp $ */
+/* $OpenBSD: if_bce.c,v 1.16 2007/04/07 22:11:05 krw Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -209,14 +209,6 @@ struct cfdriver bce_cd = {
 	0, "bce", DV_IFNET
 };
 
-#if __NetBSD_Version__ >= 106120000
-#define APRINT_ERROR	aprint_error
-#define APRINT_NORMAL	aprint_normal
-#else
-#define APRINT_ERROR	printf
-#define APRINT_NORMAL	printf
-#endif
-
 const struct pci_matchid bce_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401B0 }
@@ -268,7 +260,7 @@ bce_attach(parent, self, aux)
 		    &sc->bce_bhandle, &memaddr, &memsize, 0) == 0)
 			break;
 	default:
-		APRINT_ERROR("%s: unable to find mem space\n",
+		printf("%s: unable to find mem space\n",
 		    sc->bce_dev.dv_xname);
 		return;
 	}
@@ -292,7 +284,7 @@ bce_attach(parent, self, aux)
 		}
 	}
 	if (pci_intr_map(pa, &ih)) {
-		APRINT_ERROR("%s: couldn't map interrupt\n",
+		printf("%s: couldn't map interrupt\n",
 		    sc->bce_dev.dv_xname);
 		return;
 	}
@@ -302,11 +294,11 @@ bce_attach(parent, self, aux)
 	    self->dv_xname);
 
 	if (sc->bce_intrhand == NULL) {
-		APRINT_ERROR("%s: couldn't establish interrupt",
+		printf("%s: couldn't establish interrupt",
 		    sc->bce_dev.dv_xname);
 		if (intrstr != NULL)
-			APRINT_NORMAL(" at %s", intrstr);
-		APRINT_NORMAL("\n");
+			printf(" at %s", intrstr);
+		printf("\n");
 		return;
 	}
 
