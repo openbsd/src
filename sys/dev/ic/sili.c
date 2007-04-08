@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.26 2007/04/07 15:58:26 pascoe Exp $ */
+/*	$OpenBSD: sili.c,v 1.27 2007/04/08 00:47:50 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -202,7 +202,6 @@ sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
 {
 	u_int32_t			is, pss_saved, pss_masked;
 	u_int32_t			processed = 0;
-	volatile u_int32_t		*active = &sp->sp_active;
 	int				slot, need_restart = 0;
 	struct sili_ccb			*ccb;
 
@@ -214,11 +213,11 @@ sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
 		sili_pwrite(sp, SILI_PREG_IS, is);
 
 #ifdef SILI_DEBUG
-	if ((pss_saved & SILI_PREG_PSS_ALL_SLOTS) != *active ||
+	if ((pss_saved & SILI_PREG_PSS_ALL_SLOTS) != sp->sp_active ||
 	    ((is >> 16) & ~SILI_PREG_IS_CMDCOMP)) {
 		DPRINTF(SILI_D_INTR, "%s: IS: 0x%08x (0x%b), PSS: %08x, "
 		    "active: %08x\n", PORTNAME(sp), is, is >> 16, SILI_PFMT_IS,
-			pss_saved, *active);
+		    pss_saved, sp->sp_active);
 	}
 #endif
 
@@ -268,7 +267,7 @@ sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
 	}
 
 	/* Command slot is complete if its bit in PSS is 0 but 1 in active. */
-	pss_masked = ~pss_saved & *active;
+	pss_masked = ~pss_saved & sp->sp_active;
 	while (pss_masked) {
 		slot = ffs(pss_masked) - 1;
 		ccb = &sp->sp_ccbs[slot];
@@ -278,7 +277,7 @@ sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
 		    PORTNAME(sp), slot, ccb->ccb_xa.state == ATA_S_ERROR ?
 		    " (error)" : "");
 
-		*active &= ~(1 << slot);
+		sp->sp_active &= ~(1 << slot);
 		sili_ata_cmd_done(ccb);
 
 		processed |= 1 << slot;
