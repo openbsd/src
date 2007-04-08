@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.111 2007/04/08 09:05:48 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.112 2007/04/08 09:13:31 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -36,7 +36,8 @@
 #define AHCI_DEBUG
 
 #ifdef AHCI_DEBUG
-#define DPRINTF(m, f...) do { if ((ahcidebug & (m)) == (m)) printf(f); } while (0)
+#define DPRINTF(m, f...) do { if ((ahcidebug & (m)) == (m)) printf(f); } \
+    while (0)
 #define AHCI_D_TIMEOUT		0x00
 #define AHCI_D_VERBOSE		0x01
 #define AHCI_D_INTR		0x02
@@ -475,7 +476,7 @@ u_int32_t		ahci_port_intr(struct ahci_port *, u_int32_t);
 struct ahci_ccb		*ahci_get_ccb(struct ahci_port *);
 void			ahci_put_ccb(struct ahci_ccb *);
 
-struct ahci_ccb 	*ahci_get_err_ccb(struct ahci_port *);
+struct ahci_ccb		*ahci_get_err_ccb(struct ahci_port *);
 void			ahci_put_err_ccb(struct ahci_ccb *);
 
 int			ahci_port_read_ncq_error(struct ahci_port *, int *);
@@ -509,7 +510,6 @@ int			ahci_ata_probe(void *, int);
 struct ata_xfer *	ahci_ata_get_xfer(void *, int);
 void			ahci_ata_put_xfer(struct ata_xfer *);
 int			ahci_ata_cmd(struct ata_xfer *);
-
 
 struct atascsi_methods ahci_atascsi_methods = {
 	ahci_ata_probe,
@@ -679,7 +679,7 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 		if (pi & sc->sc_ccc_mask) {
 			/* A conflict with the implemented port list? */
 			printf("%s: coalescing interrupt/implemented port list "
-			    "conflict, PI: %08x, ccc_mask: %08x\n", 
+			    "conflict, PI: %08x, ccc_mask: %08x\n",
 			    DEVNAME(sc), pi, sc->sc_ccc_mask);
 			sc->sc_ccc_mask = 0;
 			goto noccc;
@@ -1135,7 +1135,8 @@ ahci_port_stop(struct ahci_port *ap, int stop_fis_rx)
 	/* Disable coalescing on the port while it is stopped. */
 	if (ap->ap_sc->sc_ccc_ports & (1 << ap->ap_num)) {
 		ap->ap_sc->sc_ccc_ports_cur &= ~(1 << ap->ap_num);
-		ahci_write(ap->ap_sc, AHCI_REG_CCC_PORTS, ap->ap_sc->sc_ccc_ports_cur);
+		ahci_write(ap->ap_sc, AHCI_REG_CCC_PORTS,
+		    ap->ap_sc->sc_ccc_ports_cur);
 	}
 #endif
 
@@ -1421,7 +1422,8 @@ ahci_unload_prdt(struct ahci_ccb *ccb)
 		if (ccb->ccb_xa.flags & ATA_F_NCQ)
 			xa->resid = 0;
 		else
-			xa->resid = xa->datalen - letoh32(ccb->ccb_cmd_hdr->prdbc);
+			xa->resid = xa->datalen -
+			    letoh32(ccb->ccb_cmd_hdr->prdbc);
 	}
 }
 
@@ -1578,7 +1580,6 @@ ahci_issue_pending_commands(struct ahci_port *ap, int last_was_ncq)
 		/* NCQ command finished. */
 	}
 }
-
 
 int
 ahci_intr(void *arg)
@@ -2034,7 +2035,7 @@ err:
 			rc = ESRCH;
 		} else {
 			/* Copy back the log record as a D2H register FIS. */
-			*err_slotp = err_slot = log->err_regs.type & 
+			*err_slotp = err_slot = log->err_regs.type &
 			    ATA_LOG_10H_TYPE_TAG_MASK;
 
 			ccb = &ap->ap_ccbs[err_slot];
@@ -2377,8 +2378,8 @@ ahci_ata_cmd_timeout(void *arg)
 	/* Reset port to abort running command. */
 	if (ccb_was_started) {
 		DPRINTF(AHCI_D_TIMEOUT, "%s: resetting port to abort%s command "
-		    "in slot %d, active %08x\n", PORTNAME(ap), ncq_cmd ? " NCQ" :
-		    "", ccb->ccb_slot, *active);
+		    "in slot %d, active %08x\n", PORTNAME(ap), ncq_cmd ? " NCQ"
+		    : "", ccb->ccb_slot, *active);
 		if (ahci_port_softreset(ap) != 0 && ahci_port_portreset(ap)
 		    != 0) {
 			printf("%s: failed to reset port during timeout "
