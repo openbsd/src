@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.172 2007/04/04 20:47:54 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.173 2007/04/08 07:44:43 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -73,6 +73,7 @@ re*	at pci?			# RealTek 8169/8169S/8110S
 
 pgt*	at pci?			# Prism54 (only full-mac varients)
 acx*	at pci?			# TI ACX100/ACX111 (802.11b/g)
+ral*	at pci?			# Ralink RT2500/RT2501/RT2600
 
 # PCI SCSI
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
