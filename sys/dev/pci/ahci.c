@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.110 2007/04/06 04:04:29 pascoe Exp $ */
+/*	$OpenBSD: ahci.c,v 1.111 2007/04/08 09:05:48 pascoe Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -91,6 +91,7 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_REG_VS_1_0		0x00010000 /* 1.0 */
 #define  AHCI_REG_VS_1_1		0x00010100 /* 1.1 */
 #define AHCI_REG_CCC_CTL	0x014 /* Coalescing Control */
+#define  AHCI_REG_CCC_CTL_INT(_r)	(((_r) & 0xf8) >> 3) /* CCC INT slot */
 #define AHCI_REG_CCC_PORTS	0x018 /* Coalescing Ports */
 #define AHCI_REG_EM_LOC		0x01c /* Enclosure Mgmt Location */
 #define AHCI_REG_EM_CTL		0x020 /* Enclosure Mgmt Control */
@@ -331,6 +332,10 @@ struct ahci_port {
 	struct ahci_softc	*ap_sc;
 	bus_space_handle_t	ap_ioh;
 
+#ifdef AHCI_COALESCE
+	int			ap_num;
+#endif
+
 	struct ahci_rfis	*ap_rfis;
 	struct ahci_dmamem	*ap_dmamem_rfis;
 
@@ -387,6 +392,8 @@ struct ahci_softc {
 
 #ifdef AHCI_COALESCE
 	u_int32_t		sc_ccc_mask;
+	u_int32_t		sc_ccc_ports;
+	u_int32_t		sc_ccc_ports_cur;
 #endif
 };
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
@@ -655,6 +662,42 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	pi = ahci_read(sc, AHCI_REG_PI);
 	DPRINTF(AHCI_D_VERBOSE, "%s: ports implemented: 0x%08x\n",
 	    DEVNAME(sc), pi);
+
+#ifdef AHCI_COALESCE
+	/* Naive coalescing support - enable for all ports. */
+	if (cap & AHCI_REG_CAP_CCCS) {
+		u_int16_t		ccc_timeout = 20;
+		u_int8_t		ccc_numcomplete = 12;
+		u_int32_t		ccc_ctl;
+
+		/* disable coalescing during reconfiguration. */
+		ccc_ctl = ahci_read(sc, AHCI_REG_CCC_CTL);
+		ccc_ctl &= ~0x00000001;
+		ahci_write(sc, AHCI_REG_CCC_CTL, ccc_ctl);
+
+		sc->sc_ccc_mask = 1 << AHCI_REG_CCC_CTL_INT(ccc_ctl);
+		if (pi & sc->sc_ccc_mask) {
+			/* A conflict with the implemented port list? */
+			printf("%s: coalescing interrupt/implemented port list "
+			    "conflict, PI: %08x, ccc_mask: %08x\n", 
+			    DEVNAME(sc), pi, sc->sc_ccc_mask);
+			sc->sc_ccc_mask = 0;
+			goto noccc;
+		}
+
+		/* ahci_port_start will enable each port when it starts. */
+		sc->sc_ccc_ports = pi;
+		sc->sc_ccc_ports_cur = 0;
+
+		/* program thresholds and enable overall coalescing. */
+		ccc_ctl &= ~0xffffff00;
+		ccc_ctl |= (ccc_timeout << 16) | (ccc_numcomplete << 8);
+		ahci_write(sc, AHCI_REG_CCC_CTL, ccc_ctl);
+		ahci_write(sc, AHCI_REG_CCC_PORTS, 0);
+		ahci_write(sc, AHCI_REG_CCC_CTL, ccc_ctl | 1);
+	}
+noccc:
+#endif
 	for (i = 0; i < AHCI_MAX_PORTS; i++) {
 		if (!ISSET(pi, 1 << i)) {
 			/* dont allocate stuff if the port isnt implemented */
@@ -833,6 +876,9 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	}
 
 	ap->ap_sc = sc;
+#ifdef AHCI_COALESCE
+	ap->ap_num = port;
+#endif
 	TAILQ_INIT(&ap->ap_ccb_free);
 	TAILQ_INIT(&ap->ap_ccb_pending);
 
@@ -999,7 +1045,14 @@ nomem:
 	/* Enable port interrupts */
 	ahci_pwrite(ap, AHCI_PREG_IE, AHCI_PREG_IE_TFEE | AHCI_PREG_IE_HBFE |
 	    AHCI_PREG_IE_IFE | AHCI_PREG_IE_OFE | AHCI_PREG_IE_DPE |
-	    AHCI_PREG_IE_UFE | AHCI_PREG_IE_SDBE | AHCI_PREG_IE_DHRE);
+	    AHCI_PREG_IE_UFE |
+#ifdef AHCI_COALESCE
+	    ((sc->sc_ccc_ports & (1 << port)) ? 0 : (AHCI_PREG_IE_SDBE |
+	    AHCI_PREG_IE_DHRE))
+#else
+	    AHCI_PREG_IE_SDBE | AHCI_PREG_IE_DHRE
+#endif
+	    );
 
 freeport:
 	if (rc != 0)
@@ -1053,6 +1106,15 @@ ahci_port_start(struct ahci_port *ap, int fre_only)
 		r |= AHCI_PREG_CMD_ST;
 	ahci_pwrite(ap, AHCI_PREG_CMD, r);
 
+#ifdef AHCI_COALESCE
+	/* (Re-)enable coalescing on the port. */
+	if (ap->ap_sc->sc_ccc_ports & (1 << ap->ap_num)) {
+		ap->ap_sc->sc_ccc_ports_cur |= (1 << ap->ap_num);
+		ahci_write(ap->ap_sc, AHCI_REG_CCC_PORTS,
+		    ap->ap_sc->sc_ccc_ports_cur);
+	}
+#endif
+
 	/* Wait for FR to come on */
 	if (ahci_pwait_set(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_FR))
 		return (2);
@@ -1068,6 +1130,14 @@ int
 ahci_port_stop(struct ahci_port *ap, int stop_fis_rx)
 {
 	u_int32_t			r;
+
+#ifdef AHCI_COALESCE
+	/* Disable coalescing on the port while it is stopped. */
+	if (ap->ap_sc->sc_ccc_ports & (1 << ap->ap_num)) {
+		ap->ap_sc->sc_ccc_ports_cur &= ~(1 << ap->ap_num);
+		ahci_write(ap->ap_sc, AHCI_REG_CCC_PORTS, ap->ap_sc->sc_ccc_ports_cur);
+	}
+#endif
 
 	/* Turn off ST (and FRE) */
 	r = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
@@ -1529,6 +1599,7 @@ ahci_intr(void *arg)
 		DPRINTF(AHCI_D_INTR, "%s: command coalescing interrupt\n",
 		    DEVNAME(sc));
 		is &= ~sc->sc_ccc_mask;
+		is |= sc->sc_ccc_ports_cur;
 	}
 #endif
 
