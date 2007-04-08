@@ -1,4 +1,4 @@
-#	$OpenBSD: audio,v 1.8 2005/09/06 21:05:55 fgsch Exp $
+#	$OpenBSD: audio,v 1.9 2007/04/08 06:11:39 sturm Exp $
 
 #------------------------------------------------------------------------------
 # audio:  file(1) magic for sound formats (see also "iff")
@@ -263,3 +263,8 @@
 >>21	byte&0xf		0		\b
 >>>22	belong			>0		\b, %u samples
 >>>22	belong			0		\b, length unknown
+
+# ID3 version 2 tags <waschk@informatik.uni-rostock.de>
+0       string                  ID3             MP3 file with ID3 version 2.
+>3      ubyte                   <0xff           \b%d.
+>4      ubyte                   <0xff           \b%d tag
