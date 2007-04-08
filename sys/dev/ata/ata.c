@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.27 2007/03/25 10:33:52 deraadt Exp $      */
+/*      $OpenBSD: ata.c,v 1.28 2007/04/08 14:20:26 pedro Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -134,7 +134,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 			prms->atap_model[1] == 'E') ||
 		     (prms->atap_model[0] == 'F' &&
 			 prms->atap_model[1] == 'X')))
-			return 0;
+			return CMD_OK;
 		for (i = 0; i < sizeof(prms->atap_model); i += 2) {
 			p = (u_short *)(prms->atap_model + i);
 			*p = swap16(*p);
