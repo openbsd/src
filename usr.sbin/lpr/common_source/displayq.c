@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.28 2007/04/07 21:12:11 stevesk Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.29 2007/04/08 23:11:37 stevesk Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: displayq.c,v 1.28 2007/04/07 21:12:11 stevesk Exp $";
+static const char rcsid[] = "$OpenBSD: displayq.c,v 1.29 2007/04/08 23:11:37 stevesk Exp $";
 #endif
 #endif /* not lint */
 
@@ -282,6 +282,7 @@ displayq(int format)
 	else {
 		struct sigaction osa, nsa;
 		char *visline;
+		int n = 0;
 
 		i = strlen(line);
 		if (write(fd, line, i) != i)
@@ -295,10 +296,13 @@ displayq(int format)
 		if ((visline = (char *)malloc(4 * sizeof(line) + 1)) == NULL)
 			fatal("Out of memory");
 		while ((i = read(fd, line, sizeof(line))) > 0) {
-			i = strvisx(visline, line, i, VIS_SAFE|VIS_NOSLASH);
-			(void)fwrite(visline, 1, i, stdout);
+			n = strvisx(visline, line, i, VIS_SAFE|VIS_NOSLASH);
+			(void)fwrite(visline, 1, n, stdout);
 			alarm(wait_time);
 		}
+		/* XXX some LPR implementations may not end stream with '\n' */
+		if (n > 0 && visline[n-1] != '\n')
+			putchar('\n');
 		alarm(0);
 		(void)sigaction(SIGALRM, &osa, NULL);
 		free(visline);
