@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.27 2007/04/08 00:47:50 pascoe Exp $ */
+/*	$OpenBSD: sili.c,v 1.28 2007/04/08 04:45:40 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -77,6 +77,8 @@ struct sili_port {
 	TAILQ_HEAD(, sili_ccb)	sp_free_ccbs;
 
 	volatile u_int32_t	sp_active;
+	TAILQ_HEAD(, sili_ccb)	sp_active_ccbs;
+	TAILQ_HEAD(, sili_ccb)	sp_deferred_ccbs;
 
 #ifdef SILI_DEBUG
 	char			sp_name[16];
@@ -160,7 +162,7 @@ struct atascsi_methods sili_atascsi_methods = {
 };
 
 /* completion paths */
-void			sili_ata_cmd_done(struct sili_ccb *);
+void			sili_ata_cmd_done(struct sili_ccb *, int);
 void			sili_ata_cmd_timeout(void *);
 
 int
@@ -233,13 +235,13 @@ sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
 
 		ccb = &sp->sp_ccbs[err_slot];
 
-		DPRINTF(SILI_D_VERBOSE, "%s: error, code %d, slot %d\n",
-		    PORTNAME(sp), sili_pread(sp, SILI_PREG_CE), err_slot);
+		DPRINTF(SILI_D_VERBOSE, "%s: error, code %d, slot %d, "
+		    "active %08x\n", PORTNAME(sp), sili_pread(sp, SILI_PREG_CE),
+		    err_slot, sp->sp_active);
 
 		switch (sili_pread(sp, SILI_PREG_CE)) {
 		case SILI_PREG_CE_DEVICEERROR:
 		case SILI_PREG_CE_DATAFISERROR:
-			need_restart = 1;
 			/* Extract error from command slot in LRAM. */
 			r = SILI_PREG_SLOT(err_slot) + 8;
 			bus_space_barrier(sp->sp_sc->sc_iot_port, sp->sp_ioh,
@@ -259,11 +261,13 @@ sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
 			break;
 		}
 
-		/* Clear the failed commmand in saved PSS so completion runs. */
+		/* Clear the failed commmand in saved PSS so cmd_done runs. */
 		pss_saved &= ~(1 << err_slot);
 
 		KASSERT(ccb->ccb_xa.state == ATA_S_ONCHIP);
 		ccb->ccb_xa.state = ATA_S_ERROR;
+
+		need_restart = 1;
 	}
 
 	/* Command slot is complete if its bit in PSS is 0 but 1 in active. */
@@ -277,14 +281,13 @@ sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
 		    PORTNAME(sp), slot, ccb->ccb_xa.state == ATA_S_ERROR ?
 		    " (error)" : "");
 
-		sp->sp_active &= ~(1 << slot);
-		sili_ata_cmd_done(ccb);
+		sili_ata_cmd_done(ccb, need_restart);
 
 		processed |= 1 << slot;
 	}
 
-	/* Restart port and reissue outstanding commands. */
 	if (need_restart) {
+		/* Re-enable transfers on port. */
 		sili_pwrite(sp, SILI_PREG_PCS, SILI_PREG_PCS_PORTINIT);
 		if (!sili_pwait_eq(sp, SILI_PREG_PCS, SILI_PREG_PCS_PORTRDY,
 		    SILI_PREG_PCS_PORTRDY, 1000)) {
@@ -292,15 +295,36 @@ sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
 			    PORTNAME(sp));
 		}
 
-		while (pss_saved) {
-			slot = ffs(pss_saved) - 1;
-			ccb = &sp->sp_ccbs[slot];
-			pss_saved &= ~(1 << slot);
-
+		/* Restart CCBs in the order they were originally queued. */
+		pss_masked = pss_saved;
+		TAILQ_FOREACH(ccb, &sp->sp_active_ccbs, ccb_entry) {
 			DPRINTF(SILI_D_VERBOSE, "%s: restarting slot %d "
-			    "after error\n", PORTNAME(sp), slot);
+			    "after error, state %02x\n", PORTNAME(sp),
+			    ccb->ccb_xa.tag, ccb->ccb_xa.state);
+			if (!(pss_masked & (1 << ccb->ccb_xa.tag))) {
+				panic("sili_intr: slot %d not active in "
+				    "pss_masked: %08x, state %02x",
+				    ccb->ccb_xa.tag, pss_masked,
+				    ccb->ccb_xa.state);
+			}
+			pss_masked &= ~(1 << ccb->ccb_xa.tag);
+
 			KASSERT(ccb->ccb_xa.state == ATA_S_ONCHIP);
 			sili_post_indirect(sp, ccb);
+		}
+		KASSERT(pss_masked == 0);
+
+		/*
+		 * Finally, run atascsi completion for any finished CCBs.  If
+		 * we had run these during cmd_done above, any ccbs that their
+		 * completion generated would have been activated out of order.
+		 */
+		while ((ccb = TAILQ_FIRST(&sp->sp_deferred_ccbs)) != NULL) {
+			TAILQ_REMOVE(&sp->sp_deferred_ccbs, ccb, ccb_entry);
+
+			KASSERT(ccb->ccb_xa.state == ATA_S_COMPLETE ||
+			    ccb->ccb_xa.state == ATA_S_ERROR);
+			ccb->ccb_xa.complete(&ccb->ccb_xa);
 		}
 	}
 
@@ -391,6 +415,8 @@ sili_ccb_alloc(struct sili_port *sp)
 	int				i;
 
 	TAILQ_INIT(&sp->sp_free_ccbs);
+	TAILQ_INIT(&sp->sp_active_ccbs);
+	TAILQ_INIT(&sp->sp_deferred_ccbs);
 
 	sp->sp_ccbs = malloc(sizeof(struct sili_ccb) * SILI_MAX_CMDS,
 	    M_DEVBUF, M_WAITOK);
@@ -620,7 +646,6 @@ sili_post_direct(struct sili_port *sp, u_int slot, void *buf, size_t buflen)
 void
 sili_post_indirect(struct sili_port *sp, struct sili_ccb *ccb)
 {
-	ccb->ccb_xa.state = ATA_S_ONCHIP;
 	sili_pwrite(sp, SILI_PREG_CAR_LO(ccb->ccb_xa.tag),
 	    (u_int32_t)ccb->ccb_cmd_dva);
 	sili_pwrite(sp, SILI_PREG_CAR_HI(ccb->ccb_xa.tag),
@@ -766,7 +791,7 @@ failcmd:
 }
 
 void
-sili_ata_cmd_done(struct sili_ccb *ccb)
+sili_ata_cmd_done(struct sili_ccb *ccb, int defer_completion)
 {
 	struct sili_port		*sp = ccb->ccb_port;
 	struct sili_softc		*sc = sp->sp_sc;
@@ -781,6 +806,9 @@ sili_ata_cmd_done(struct sili_ccb *ccb)
 
 	sili_unload(ccb);
 
+	TAILQ_REMOVE(&sp->sp_active_ccbs, ccb, ccb_entry);
+	sp->sp_active &= ~(1 << xa->tag);
+
 	if (xa->state == ATA_S_ONCHIP)
 		xa->state = ATA_S_COMPLETE;
 #ifdef DIAGNOSTIC
@@ -788,7 +816,9 @@ sili_ata_cmd_done(struct sili_ccb *ccb)
 		printf("%s: invalid ata_xfer state %02x in sili_ata_cmd_done, "
 		    "slot %d\n", PORTNAME(sp), xa->state, xa->tag);
 #endif
-	if (xa->state != ATA_S_TIMEOUT)
+	if (defer_completion)
+		TAILQ_INSERT_TAIL(&sp->sp_deferred_ccbs, ccb, ccb_entry);
+	else if (xa->state == ATA_S_COMPLETE)
 		xa->complete(xa);
 }
 
@@ -919,7 +949,10 @@ sili_start(struct sili_port *sp, struct sili_ccb *ccb)
 	splassert(IPL_BIO);
 	KASSERT(ccb->ccb_xa.state == ATA_S_PENDING);
 
+	TAILQ_INSERT_TAIL(&sp->sp_active_ccbs, ccb, ccb_entry);
 	sp->sp_active |= 1 << slot;
+	ccb->ccb_xa.state = ATA_S_ONCHIP;
+
 	sili_post_indirect(sp, ccb);
 }
 
