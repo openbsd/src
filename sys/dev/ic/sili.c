@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.29 2007/04/08 06:51:25 pascoe Exp $ */
+/*	$OpenBSD: sili.c,v 1.30 2007/04/08 08:13:30 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -152,7 +152,7 @@ void			sili_start(struct sili_port *, struct sili_ccb *);
 int			sili_read_ncq_error(struct sili_port *, int *);
 
 /* port interrupt handler */
-u_int32_t		sili_port_intr(struct sili_port *, u_int32_t);
+u_int32_t		sili_port_intr(struct sili_port *, int);
 
 /* atascsi interface */
 int			sili_ata_probe(void *, int);
@@ -206,7 +206,7 @@ sili_detach(struct sili_softc *sc, int flags)
 }
 
 u_int32_t
-sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
+sili_port_intr(struct sili_port *sp, int timeout_slot)
 {
 	u_int32_t			is, pss_saved, pss_masked;
 	u_int32_t			processed = 0, need_restart = 0;
@@ -214,11 +214,7 @@ sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
 	struct sili_ccb			*ccb;
 
 	is = sili_pread(sp, SILI_PREG_IS);
-	pss_saved = sili_pread(sp, SILI_PREG_PSS);
-
-	/* Ack port interrupt only if checking all command slots. */
-	if (slotmask == SILI_PREG_PSS_ALL_SLOTS)
-		sili_pwrite(sp, SILI_PREG_IS, is);
+	pss_saved = sili_pread(sp, SILI_PREG_PSS); /* reading acks CMDCOMP */
 
 #ifdef SILI_DEBUG
 	if ((pss_saved & SILI_PREG_PSS_ALL_SLOTS) != sp->sp_active ||
@@ -237,6 +233,7 @@ sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
 		u_int32_t		sactive = 0;
 		bus_size_t		r;
 
+		sili_pwrite(sp, SILI_PREG_IS, SILI_PREG_IS_CMDERR);
 		err_slot = SILI_PREG_PCS_ACTIVE(sili_pread(sp, SILI_PREG_PCS));
 		err_code = sili_pread(sp, SILI_PREG_CE);
 
@@ -298,6 +295,22 @@ sili_port_intr(struct sili_port *sp, u_int32_t slotmask)
 	}
 fatal:
 
+	/* Process command timeout request only if command is still active. */
+	if (timeout_slot >= 0 && (pss_saved & (1 << timeout_slot))) {
+		DPRINTF(SILI_D_VERBOSE, "%s: timing out slot %d, active %08x\n",
+		    PORTNAME(sp), timeout_slot, sp->sp_active);
+
+		/* Clear the failed commmand in saved PSS so cmd_done runs. */
+		pss_saved &= ~(1 << timeout_slot);
+
+		ccb = &sp->sp_ccbs[timeout_slot];
+		KASSERT(ccb->ccb_xa.state == ATA_S_ONCHIP);
+		ccb->ccb_xa.state = ATA_S_TIMEOUT;
+
+		/* Reset device to abort all commands (including this one). */
+		need_restart = SILI_PREG_PCS_DEVRESET;
+	}
+
 	/* Command slot is complete if its bit in PSS is 0 but 1 in active. */
 	pss_masked = ~pss_saved & sp->sp_active;
 	while (pss_masked) {
@@ -307,7 +320,8 @@ fatal:
 
 		DPRINTF(SILI_D_INTR, "%s: slot %d is complete%s\n",
 		    PORTNAME(sp), slot, ccb->ccb_xa.state == ATA_S_ERROR ?
-		    " (error)" : "");
+		    " (error)" : (ccb->ccb_xa.state == ATA_S_TIMEOUT ?
+		    " (timeout)" : ""));
 
 		sili_ata_cmd_done(ccb, need_restart);
 
@@ -351,7 +365,8 @@ fatal:
 			TAILQ_REMOVE(&sp->sp_deferred_ccbs, ccb, ccb_entry);
 
 			KASSERT(ccb->ccb_xa.state == ATA_S_COMPLETE ||
-			    ccb->ccb_xa.state == ATA_S_ERROR);
+			    ccb->ccb_xa.state == ATA_S_ERROR ||
+			    ccb->ccb_xa.state == ATA_S_TIMEOUT);
 			ccb->ccb_xa.complete(&ccb->ccb_xa);
 		}
 	}
@@ -374,7 +389,7 @@ sili_intr(void *arg)
 
 	while (is & SILI_REG_GIS_PIS_MASK) {
 		port = ffs(is) - 1;
-		sili_port_intr(&sc->sc_ports[port], SILI_PREG_PSS_ALL_SLOTS);
+		sili_port_intr(&sc->sc_ports[port], -1);
 		is &= ~(1 << port);
 	}
 
@@ -709,7 +724,6 @@ sili_ata_probe(void *xsc, int port)
 
 	sili_pwrite(sp, SILI_PREG_PCC, SILI_PREG_PCC_PORTRESET);
 	sili_pwrite(sp, SILI_PREG_PCC, SILI_PREG_PCC_A32B);
-	sili_pwrite(sp, SILI_PREG_PCS, SILI_PREG_PCS_NOINTCLR);
 
 	if (!sili_pwait_eq(sp, SILI_PREG_SSTS, SATA_SStatus_DET,
 	    SATA_SStatus_DET_DEV, 1000))
@@ -853,14 +867,23 @@ sili_ata_cmd_done(struct sili_ccb *ccb, int defer_completion)
 		TAILQ_INSERT_TAIL(&sp->sp_deferred_ccbs, ccb, ccb_entry);
 	else if (xa->state == ATA_S_COMPLETE)
 		xa->complete(xa);
+#ifdef DIAGNOSTIC
+	else
+		printf("%s: completion not deferred, but xa->state is %02x?\n",
+		    PORTNAME(sp), xa->state);
+#endif
 }
 
 void
 sili_ata_cmd_timeout(void *xccb)
 {
 	struct sili_ccb			*ccb = xccb;
+	struct sili_port		*sp = ccb->ccb_port;
+	int				s;
 
-	printf("%s: ccb %p timed out\n", PORTNAME(ccb->ccb_port), ccb);
+	s = splbio();
+	sili_port_intr(sp, ccb->ccb_xa.tag);
+	splx(s);
 }
 
 int
@@ -956,8 +979,7 @@ sili_poll(struct sili_ccb *ccb, int timeout, void (*timeout_fn)(void *))
 	s = splbio();
 	sili_start(sp, ccb);
 	do {
-		if (ISSET(sili_port_intr(sp, SILI_PREG_PSS_ALL_SLOTS),
-		    1 << ccb->ccb_xa.tag)) {
+		if (sili_port_intr(sp, -1) & (1 << ccb->ccb_xa.tag)) {
 			splx(s);
 			return (0);
 		}
