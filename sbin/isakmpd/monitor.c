@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.68 2007/04/02 08:16:32 moritz Exp $	 */
+/* $OpenBSD: monitor.c,v 1.69 2007/04/08 11:15:30 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -220,8 +220,7 @@ monitor_open(const char *path, int flags, mode_t mode)
 
 	fd = mm_receive_fd(m_state.s);
 	if (fd < 0) {
-		log_error("monitor_open: mm_receive_fd () failed: %s",
-		    strerror(errno));
+		log_error("monitor_open: mm_receive_fd () failed");
 		return -1;
 	}
 
@@ -521,19 +520,17 @@ m_priv_getfd(void)
 		err = EACCES;
 		v = -1;
 	} else {
-		v = open(path, flags, mode);
-		if (v < 0)
+		if ((v = open(path, flags, mode)) == -1)
 			err = errno;
 	}
 
 	must_write(&err, sizeof err);
 
-	if (v > 0 && mm_send_fd(m_state.s, v)) {
-		log_error("m_priv_getfd: read/write operation failed");
+	if (v != -1) {
+		if (mm_send_fd(m_state.s, v) == -1)
+			log_error("m_priv_getfd: sending fd failed");
 		close(v);
-		return;
 	}
-	close(v);
 }
 
 /* Privileged: called by monitor_loop.  */
@@ -710,9 +707,7 @@ m_priv_local_sanitize_path(char *path, size_t pmax, int flags)
 		return 0;
 
 bad_path:
-	log_print("m_priv_local_sanitize_path: illegal path \"%.1023s\", "
-		  "replaced with \"/dev/null\"", path);
-	strlcpy(path, "/dev/null", pmax);
+	log_print("m_priv_local_sanitize_path: illegal path \"%.1023s\"", path);
 	return 1;
 }
 
