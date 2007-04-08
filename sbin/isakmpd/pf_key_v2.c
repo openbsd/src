@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.178 2007/02/19 09:43:34 hshoexer Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.179 2007/04/08 11:20:31 moritz Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -2821,7 +2821,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 
 		case SADB_IDENTTYPE_FQDN:
 			prefstring = "FQDN";
-			/* Fall through */
+			/*FALLTHROUGH*/
 		case SADB_IDENTTYPE_USERFQDN:
 			if (!prefstring) {
 				prefstring = "USER_FQDN";
@@ -2970,8 +2970,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 
 		case SADB_IDENTTYPE_FQDN:
 			prefstring = "FQDN";
-			/* Fall through */
-
+			/*FALLTHROUGH*/
 		case SADB_IDENTTYPE_USERFQDN:
 			if (!prefstring) {
 				prefstring = "USER_FQDN";
@@ -3431,8 +3430,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 					conf_end(af, 0);
 					goto fail;
 				}
-			} else	/* Fall through */
-			{
+			} else {
 				xform = conf_get_str(
 				    "Default-phase-1-configuration",
 				    "Transforms");
