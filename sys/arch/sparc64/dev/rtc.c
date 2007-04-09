@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtc.c,v 1.1 2007/04/09 19:59:06 kettenis Exp $	*/
+/*	$OpenBSD: rtc.c,v 1.2 2007/04/09 20:03:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -159,8 +159,7 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 	 * Turn interrupts off, just in case. (Although they shouldn't
 	 * be wired to an interrupt controller on sparcs).
 	 */
-	rtc_write_reg(sc->sc_iot, sc->sc_ioh,
-	    MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
+	rtc_write_reg(sc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
 
 	/*
 	 * On ds1287 models (which really are ns87317 chips), the
