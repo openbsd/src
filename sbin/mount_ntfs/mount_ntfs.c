@@ -1,4 +1,4 @@
-/* $OpenBSD: mount_ntfs.c,v 1.10 2006/12/15 12:53:59 jmc Exp $ */
+/* $OpenBSD: mount_ntfs.c,v 1.11 2007/04/09 20:22:41 pedro Exp $ */
 /* $NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $ */
 
 /*
@@ -65,6 +65,7 @@ static const struct mntopt mopts[] = {
 #endif
 
 static void	usage(void) __dead2;
+mode_t a_mask(char *);
 int main(int, char **);
 
 int
@@ -89,7 +90,7 @@ main(int argc, char *argv[])
 			set_gid = 1;
 			break;
 		case 'm':
-			args.mode = atoi(optarg);
+			args.mode =  a_mask(optarg);
 			set_mask = 1;
 			break;
 		case 'i':
@@ -144,6 +145,22 @@ main(int argc, char *argv[])
 	}
 #endif
 	exit (0);
+}
+
+mode_t
+a_mask(char *s)
+{
+	int done, rv;
+	char *ep;
+
+	done = 0;
+	if (*s >= '0' && *s <= '7') {
+		done = 1;
+		rv = strtol(optarg, &ep, 8);
+	}
+	if (!done || rv < 0 || *ep)
+		errx(1, "invalid file mode: %s", s);
+	return (rv);
 }
 
 static void
