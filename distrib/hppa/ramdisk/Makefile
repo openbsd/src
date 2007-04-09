@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2007/02/16 16:56:22 tsi Exp $
+#	$OpenBSD: Makefile,v 1.9 2007/04/09 14:55:11 millert Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -36,7 +36,7 @@ CDBOOT?=	${DESTDIR}/usr/mdec/cdboot
 
 STRIP?=		strip
 GZIPCMD?=	gzip
-GZIPFLAGS?=	-9
+GZIPFLAGS?=	-9n
 
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSOPTS=	-t ffs -m 0 -o space -f 1024 -b 8192

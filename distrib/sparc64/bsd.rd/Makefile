@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2007/02/16 16:56:22 tsi Exp $
+#	$OpenBSD: Makefile,v 1.13 2007/04/09 14:55:11 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -19,7 +19,7 @@ REALIMAGE!=	echo /var/tmp/image.${PID}
 
 STRIP?=		strip
 GZIPCMD?=	gzip
-GZIPFLAGS?=	-9f
+GZIPFLAGS?=	-9fn
 INSTALLBOOT?=	/usr/mdec/installboot -v
 MTREE=		${UTILS}/mtree.conf
 

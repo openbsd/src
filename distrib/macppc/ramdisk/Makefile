@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2005/03/11 15:40:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2007/04/09 14:55:11 millert Exp $
 
 REV=	${OSrev}
 
@@ -45,7 +45,7 @@ cd: ${BSD_RD}
 	-@mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/macppc/
 	cp bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
 	strip ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
-	gzip -9 ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
+	gzip -9n ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
 	mv ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd.gz ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
 	# On HFS, doing the following means COPIES of the files.. therefore
 	# we skip doing so.

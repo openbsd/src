@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2004/02/27 16:53:24 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2007/04/09 14:55:11 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -56,7 +56,7 @@ bsd.gz: bsd.rd
 	cp bsd.rd bsd.strip
 	strip bsd.strip
 	strip -R .comment bsd.strip
-	gzip -c9 bsd.strip > bsd.gz
+	gzip -c9n bsd.strip > bsd.gz
 
 bsd.rd:	${IMAGE} bsd rdsetroot
 	cp bsd bsd.rd

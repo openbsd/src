@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.14 2007/03/20 20:28:36 pedro Exp $
+#	$OpenBSD: Makefile.inc,v 1.15 2007/04/09 14:55:11 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -16,7 +16,7 @@ REALIMAGE!=	echo /var/tmp/image.${PID}
 
 STRIP?=		strip
 GZIPCMD?=	gzip
-GZIPFLAGS?=	-9f
+GZIPFLAGS?=	-9fn
 INSTALLBOOT?=	/usr/mdec/installboot -v
 
 XNAME?=		floppy
