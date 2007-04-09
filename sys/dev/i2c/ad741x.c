@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad741x.c,v 1.10 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: ad741x.c,v 1.11 2007/04/09 19:31:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -154,8 +154,6 @@ adc_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 }
-
-void	adc_readport(struct adc_softc *, u_int8_t, u_int8_t, int);
 
 void
 adc_refresh(void *arg)
