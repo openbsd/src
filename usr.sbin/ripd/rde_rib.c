@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.1 2006/10/18 16:11:58 norby Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.2 2007/04/09 20:45:52 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -44,7 +44,6 @@ RB_GENERATE(rt_tree, rt_node, entry, rt_compare)
 
 void	 route_action_timeout(int, short, void *);
 void	 route_action_garbage(int, short, void *);
-int	 route_start_timeout(struct rt_node *);
 
 /* timers */
 int
@@ -56,6 +55,21 @@ route_start_timeout(struct rt_node *rn)
 	tv.tv_sec = ROUTE_TIMEOUT;
 
 	return (evtimer_add(&rn->timeout_timer, &tv));
+}
+
+void
+route_start_garbage(struct rt_node *rn)
+{
+	struct timeval	 tv;
+
+	timerclear(&tv);
+	tv.tv_sec = ROUTE_GARBAGE;
+
+	if (evtimer_pending(&rn->timeout_timer, NULL)) {
+		if (evtimer_del(&rn->timeout_timer) == -1)
+			fatal("route_start_garbage");
+		evtimer_add(&rn->garbage_timer, &tv);
+	}
 }
 
 /* ARGSUSED */
@@ -95,7 +109,7 @@ route_reset_timers(struct rt_node *r)
 	evtimer_del(&r->timeout_timer);
 	evtimer_del(&r->garbage_timer);
 
-	event_add(&r->timeout_timer, &tv);
+	evtimer_add(&r->timeout_timer, &tv);
 }
 
 /* route table */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.h,v 1.5 2007/03/27 20:19:04 michele Exp $ */
+/*	$OpenBSD: ripe.h,v 1.6 2007/04/09 20:45:52 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -73,12 +73,12 @@ struct nbr {
 	int			 flags;
 };
 
-/* packet */
+/* packet.c */
 int	 send_packet(struct iface *, void *, size_t, struct sockaddr_in *);
 void	 recv_packet(int, short, void *);
 int	 gen_rip_hdr(struct buf *, u_int8_t);
 
-/* interface */
+/* interface.c */
 void			 if_init(struct ripd_conf *, struct iface *);
 int			 if_fsm(struct iface *, enum iface_event);
 int			 if_set_mcast(struct iface *);

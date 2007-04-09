@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.1 2006/10/18 16:11:58 norby Exp $ */
+/*	$OpenBSD: rde.h,v 1.2 2007/04/09 20:45:52 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -46,7 +46,7 @@ void		 rde_send_delete_kroute(struct rt_node *);
 int              rde_imsg_compose_ripe(int, u_int32_t, pid_t, void *,
 		     u_int16_t);
 
-/* rde_routes.c */
+/* rde_rib.c */
 void		 rt_init(void);
 int		 rt_compare(struct rt_node *, struct rt_node *);
 struct rt_node	*rt_find(in_addr_t, in_addr_t);
@@ -59,6 +59,7 @@ void		 rt_snap(u_int32_t);
 void             rt_clear(void);
 void		 route_reset_timers(struct rt_node *);
 int		 route_start_timeout(struct rt_node *);
+void		 route_start_garbage(struct rt_node *);
 void		 rt_dump(pid_t);
 
 #endif /* _RDE_H_ */

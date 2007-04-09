@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.5 2007/03/31 09:49:20 michele Exp $ */
+/*	$OpenBSD: rde.c,v 1.6 2007/04/09 20:45:52 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -383,6 +383,7 @@ rde_send_delete_kroute(struct rt_node *r)
 int
 rde_check_route(struct rip_route *e)
 {
+	struct timeval	 tv, now;
 	struct rt_node	*rn;
 	struct iface	*iface;
 	int		 metric;
@@ -396,17 +397,14 @@ rde_check_route(struct rip_route *e)
 	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET))
 		return (-1);
 
-	if (e->metric > INFINITY)
-		return (-1);
-
 	if ((iface = if_find_index(e->ifindex)) == NULL)
 		return (-1);
 
 	metric = MIN(INFINITY, e->metric + iface->cost);
-	if (metric >= INFINITY)
-		return (0);
 
 	if ((rn = rt_find(e->address.s_addr, e->mask.s_addr)) == NULL) {
+		if (metric >= INFINITY)
+			return (0);
 		rn = rt_new_rr(e, metric);
 		rt_insert(rn);
 		rde_send_change_kroute(rn);
@@ -427,13 +425,31 @@ rde_check_route(struct rip_route *e)
 			rde_send_change_kroute(rn);
 			triggered_update(rn);
 		} else if (e->nexthop.s_addr == rn->nexthop.s_addr &&
-		    e->metric > metric) {
-			rn->metric = metric;
-			rde_send_change_kroute(rn);
-			triggered_update(rn);
+		    metric > rn->metric) { 
+				rn->metric = metric;
+				rde_send_change_kroute(rn);
+				triggered_update(rn);
+				if (rn->metric == INFINITY)
+					route_start_garbage(rn);
+		} else if (e->nexthop.s_addr != rn->nexthop.s_addr &&
+		    metric == rn->metric) {
+			/* If the new metric is the same as the old one,
+			 * examine the timeout for the existing route.  If it
+			 * is at least halfway to the expiration point, switch
+			 * to the new route.
+			 */
+			timerclear(&tv);
+			gettimeofday(&now, NULL);
+			evtimer_pending(&rn->timeout_timer, &tv);
+			if (tv.tv_sec - now.tv_sec < ROUTE_TIMEOUT / 2) {
+				rn->nexthop.s_addr = e->nexthop.s_addr;
+				rn->ifindex = e->ifindex;
+				rde_send_change_kroute(rn);
+			}
 		}
 
-		if (e->nexthop.s_addr == rn->nexthop.s_addr)
+		if (e->nexthop.s_addr == rn->nexthop.s_addr &&
+		    rn->metric < INFINITY)
 			route_reset_timers(rn);
 	}
 
