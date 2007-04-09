@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.4 2006/11/21 21:01:52 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.5 2007/04/09 13:23:25 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -137,7 +137,7 @@ extintr_establish(int irq, int level, int (*ih_fun)(void *), void *ih_arg,
 	int evtcode;
 	int s;
 
-	KDASSERT(irq >= 5 && irq <= 12);
+	KDASSERT(irq >= 5 && irq < 13);
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL)
@@ -189,7 +189,7 @@ extintr_establish(int irq, int level, int (*ih_fun)(void *), void *ih_arg,
 	ih->ih_next = NULL;
 	ih->ih_enable = 1;
 	ih->ih_level = level;
-	ih->ih_irq = irq - 5;
+	ih->ih_irq = irq;
 	ih->ih_name = ih_name;
 
 	if (ih_name != NULL)
@@ -220,9 +220,8 @@ extintr_disestablish(void *aux)
 
 	s = _cpu_intr_suspend();
 
-	irq = ih->ih_irq;
+	irq = ih->ih_irq - 5;
 	eih = &extintr_handler[irq];
-
 	/*
 	 * Remove the handler from the chain.
 	 * This is O(n^2), too.
@@ -265,7 +264,7 @@ extintr_enable(void *aux)
 
 	s = _cpu_intr_suspend();
 
-	irq = ih->ih_irq;
+	irq = ih->ih_irq - 5;
 	KDASSERT(irq >= 0 && irq < 8);
 	eih = &extintr_handler[irq];
 	for (cnt = 0, p = eih->eih_ih, q = NULL; p != NULL; p = p->ih_next) {
@@ -301,7 +300,7 @@ extintr_disable(void *aux)
 
 	s = _cpu_intr_suspend();
 
-	irq = ih->ih_irq;
+	irq = ih->ih_irq - 5;
 	KDASSERT(irq >= 0 && irq < 8);
 	eih = &extintr_handler[irq];
 	for (cnt = 0, p = eih->eih_ih, q = NULL; p != NULL; p = p->ih_next) {
@@ -330,10 +329,11 @@ extintr_disable_by_num(int irq)
 	struct intrhand *ih;
 	int s;
 
-	KDASSERT(irq >= 5 && irq <= 12);
+	irq -= 5;
+	KDASSERT(irq >= 0 && irq < 8);
 
 	s = _cpu_intr_suspend();
-	eih = &extintr_handler[irq - 5];
+	eih = &extintr_handler[irq];
 	for (ih = eih->eih_ih; ih != NULL; ih = ih->ih_next) {
 		ih->ih_enable = 0;
 	}
