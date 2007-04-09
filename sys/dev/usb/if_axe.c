@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.60 2007/02/17 02:19:59 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.61 2007/04/09 08:12:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -442,6 +442,8 @@ axe_ax88178_init(struct axe_softc *sc)
 	/* XXX magic */
 	axe_cmd(sc, AXE_CMD_SROM_READ, 0, 0x0017, &eeprom);
 	axe_cmd(sc, AXE_CMD_SROM_WR_DISABLE, 0, 0, NULL);
+
+	eeprom = letoh16(eeprom);
 
 	DPRINTF((" EEPROM is 0x%x\n", eeprom));
 
