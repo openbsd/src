@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.61 2007/04/09 08:12:59 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.62 2007/04/09 08:42:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -950,9 +950,6 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 				goto done;
 			}
 
-			if ((pktlen % 2) != 0)
-				pktlen++;
-
 			buf += pktlen;
 
 			memcpy(&hdr, buf, sizeof(hdr));
@@ -969,7 +966,14 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			}
 
 			buf += sizeof(hdr);
-			total_len -= pktlen + (pktlen % 2);
+
+			if ((pktlen % 2) != 0)
+				pktlen++;
+
+			if ((total_len - pktlen) < 0)
+				total_len = 0;
+			else
+				total_len -= pktlen;
 		} else {
 			pktlen = total_len; /* crc on the end? */
 			total_len = 0;
