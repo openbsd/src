@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.79 2007/04/04 18:48:25 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.80 2007/04/09 19:59:06 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -118,9 +118,6 @@ attach	clock at mainbus, sbus with clock_sbus
 attach	clock at ebus with clock_ebus
 attach	clock at fhc with clock_fhc
 
-device	rtc
-attach	rtc at ebus with rtc_ebus
-
 device	timer
 attach	timer at mainbus, sbus
 
@@ -152,6 +149,10 @@ file	arch/sparc64/dev/ppm.c			ppm
 device	power
 attach	power at ebus
 file	arch/sparc64/dev/power.c		power
+
+device	rtc
+attach	rtc at ebus
+file	arch/sparc64/dev/rtc.c			rtc
 
 device	sab {}
 attach	sab at ebus
