@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.38 2007/03/24 22:03:18 pascoe Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.39 2007/04/10 23:37:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -595,15 +595,16 @@ atascsi_disk_capacity_done(struct ata_xfer *xa)
 		ata_complete_identify(xa, &id);
 
 		bzero(&rcd, sizeof(rcd));
-		if (id.cmdset83 & 0x0400) { /* LBA48 feature set supported */
+		if (letoh16(id.cmdset83) & 0x0400) {
+			/* LBA48 feature set supported */
 			for (i = 3; i >= 0; --i) {
 				capacity <<= 16;
-				capacity += id.addrsecxt[i];
+				capacity += letoh16(id.addrsecxt[i]);
 			}
 		} else {
-			capacity = id.addrsec[1];
+			capacity = letoh16(id.addrsec[1]);
 			capacity <<= 16;
-			capacity += id.addrsec[0];
+			capacity += letoh16(id.addrsec[0]);
 		}
 
 		/* XXX SCSI layer can't handle a device this big yet */
