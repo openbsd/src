@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.23 2007/04/10 18:14:17 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.24 2007/04/10 18:18:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1266,9 +1266,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 					continue;
 				cre->nodes[pn->id] = 0;
 				break;
-			case NODE_ACTION_APPEND:
-			case NODE_ACTION_CHANGE:
-			case NODE_ACTION_EXPECT:
+			default:
 				if (cre->nodes[pn->id]) {
 					cre->nodes[pn->id] = 0;
 					continue;
