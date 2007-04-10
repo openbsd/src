@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.h,v 1.2 2006/12/25 00:02:25 claudio Exp $	*/
+/*	$OpenBSD: bgplg.h,v 1.3 2007/04/10 11:51:37 henning Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
@@ -35,7 +35,7 @@ struct cmd {
 };
 
 #define CMDS	{							\
-	{ "show ip bgp", 0, 1, NULL,					\
+	{ "show ip bgp", 1, 1, "&lt;prefix&gt;",					\
 	    { BGPCTL, "show", "ip", "bgp", NULL } },			\
 	{ "show ip bgp as", 1, 1, "&lt;asnum&gt;",			\
 	    { BGPCTL, "show", "ip", "bgp", "as", NULL } },		\
@@ -47,11 +47,11 @@ struct cmd {
 	    { BGPCTL, "show", "ip", "bgp", "empty-as", NULL } },	\
 	{ "show ip bgp summary", 0, 0, NULL,				\
 	    { BGPCTL, "show", "ip", "bgp", "summary", NULL } },		\
-	{ "show ip bgp detail", 0, 1, NULL,				\
+	{ "show ip bgp detail", 1, 1, "&lt;prefix&gt;",				\
 	    { BGPCTL, "show","ip", "bgp", "detail", NULL } },		\
-	{ "show ip bgp in", 0, 1, NULL,					\
+	{ "show ip bgp in", 1, 1, "&lt;prefix&gt;",					\
 	    { BGPCTL, "show","ip", "bgp", "in", NULL } },		\
-	{ "show ip bgp out", 0, 1, NULL,				\
+	{ "show ip bgp out", 1, 1, "&lt;prefix&gt;",				\
 	    { BGPCTL, "show","ip", "bgp", "out", NULL } },		\
 	{ "show ip bgp memory", 0, 0, NULL,				\
 	    { BGPCTL, "show", "ip", "bgp", "memory", NULL } },		\
