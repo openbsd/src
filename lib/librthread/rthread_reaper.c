@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_reaper.c,v 1.1 2006/01/04 19:48:52 otto Exp $	*/
+/*	$OpenBSD: rthread_reaper.c,v 1.2 2007/04/10 17:25:08 tedu Exp $	*/
 /*
  * Copyright (c) 2006 Otto Moerbeek <otto@drijf.net>
  *
@@ -35,7 +35,7 @@ _rthread_add_to_reaper(pid_t t, struct stack *s)
 	EV_SET(&kc, t, EVFILT_PROC, EV_ADD|EV_CLEAR, NOTE_EXIT, 0, s);
 	n = kevent(_rthread_kq, &kc, 1, NULL, 0, NULL);
 	if (n)
-		_rthread_debug(0, "_rthread_add_to_reaper(): kevent %d", n);
+		_rthread_debug(0, "_rthread_add_to_reaper(): kevent %d\n", n);
 }
 
 /* ARGSUSED */
@@ -52,7 +52,7 @@ _rthread_reaper(void)
 	for (;;) {
 		n = kevent(_rthread_kq, NULL, 0, &ke, 1, &t);
 		if (n < 0)
-			_rthread_debug(0, "_rthread_reaper(): kevent %d", n);
+			_rthread_debug(0, "_rthread_reaper(): kevent %d\n", n);
 		else if (n == 0)
 			break;
 		else {
