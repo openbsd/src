@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.40 2007/03/21 00:08:08 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.41 2007/04/10 21:45:11 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -449,6 +449,12 @@ HTTP server replies.
 .Pp
 The following entity types for the actions are available:
 .Bl -tag -width Ds
+.It Ic cookie
+Look up the entity as a value in the Cookie header when using the
+.Ic http
+protocol.
+This type is only available with the direction
+.Ic request .
 .It Ic header
 Look up the entity in the application protocol headers, like HTTP
 headers in
@@ -456,12 +462,6 @@ headers in
 mode.
 .It Ic url
 Look up the entity as a GET variable in the URL when using the
-.Ic http
-protocol.
-This type is only available with the direction
-.Ic request .
-.It Ic cookie
-Look up the entity as a value in the Cookie header when using the
 .Ic http
 protocol.
 This type is only available with the direction
