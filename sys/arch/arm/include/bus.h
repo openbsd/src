@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.6 2006/05/27 20:36:05 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.7 2007/04/10 18:02:46 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.12 2003/10/23 15:03:24 scw Exp $	*/
 
 /*-
@@ -751,8 +751,6 @@ bs_c_1_proto(f);		\
 bs_c_2_proto(f);		\
 bs_c_4_proto(f);		\
 bs_c_8_proto(f);
-
-#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 /* Bus Space DMA macros */
 

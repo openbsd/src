@@ -1,5 +1,5 @@
 /*	$NetBSD: bus.h,v 1.1 2001/06/06 17:37:37 matt Exp $	*/
-/*	$OpenBSD: bus_mi.h,v 1.7 2003/12/04 21:13:37 miod Exp $	*/
+/*	$OpenBSD: bus_mi.h,v 1.8 2007/04/10 18:02:48 miod Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -957,8 +957,6 @@ bus_space_copy_region_4(t, h1, o1, h2, o2, c)
      ((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
 #define BUS_SPACE_BARRIER_READ	0x01	/* force read barrier */
 #define BUS_SPACE_BARRIER_WRITE	0x02	/* force write barrier */
-
-#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 /*
  * Bus DMA methods.

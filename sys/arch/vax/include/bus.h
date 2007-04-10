@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.7 2005/05/25 18:29:58 jason Exp $	*/
+/*	$OpenBSD: bus.h,v 1.8 2007/04/10 18:02:48 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.14 2000/06/26 04:56:13 simonb Exp $	*/
 
 /*-
@@ -71,32 +71,6 @@
 
 #ifndef _VAX_BUS_H_
 #define _VAX_BUS_H_
-
-#ifdef BUS_SPACE_DEBUG
-#include <sys/systm.h> /* for printf() prototype */
-/*
- * Macros for sanity-checking the aligned-ness of pointers passed to
- * bus space ops.  These are not strictly necessary on the VAX, but
- * could lead to performance improvements, and help catch problems
- * with drivers that would creep up on other architectures.
- */
-#define	__BUS_SPACE_ALIGNED_ADDRESS(p, t)				\
-	((((u_long)(p)) & (sizeof(t)-1)) == 0)
-
-#define	__BUS_SPACE_ADDRESS_SANITY(p, t, d)				\
-({									\
-	if (__BUS_SPACE_ALIGNED_ADDRESS((p), t) == 0) {			\
-		printf("%s 0x%lx not aligned to %d bytes %s:%d\n",	\
-		    d, (u_long)(p), sizeof(t), __FILE__, __LINE__);	\
-	}								\
-	(void) 0;							\
-})
-
-#define BUS_SPACE_ALIGNED_POINTER(p, t) __BUS_SPACE_ALIGNED_ADDRESS(p, t)
-#else
-#define	__BUS_SPACE_ADDRESS_SANITY(p,t,d)	(void) 0
-#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
-#endif /* BUS_SPACE_DEBUG */
 
 /*
  * Bus address and size types

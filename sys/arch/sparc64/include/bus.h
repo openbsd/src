@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.20 2006/12/30 21:19:24 claudio Exp $	*/
+/*	$OpenBSD: bus.h,v 1.21 2007/04/10 18:02:48 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -349,8 +349,6 @@ bus_space_barrier(t, h, o, s, f)
 /* flags for bus_space_barrier() */
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
-
-#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 /*
  * Flags used in various bus DMA methods.

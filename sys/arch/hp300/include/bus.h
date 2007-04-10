@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.4 2007/01/06 20:11:01 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.5 2007/04/10 18:02:48 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
 
 /*-
@@ -284,7 +284,5 @@ typedef const struct hp300_bus_space_tag *bus_space_tag_t;
 	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
-
-#define	BUS_SPACE_ALIGNED_POINTER(p, t)	ALIGNED_POINTER(p, t)
 
 #endif /* _HP300_BUS_H_ */
