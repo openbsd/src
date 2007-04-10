@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.6 2007/03/27 09:04:33 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.7 2007/04/10 09:37:25 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -55,7 +55,7 @@ void		 srt_delete_ds(struct src_node *, struct rt_node *, struct ds *,
 		    struct iface *);
 struct src_node	*srt_find_src(struct in_addr, struct in_addr);
 struct src_node	*srt_add_src(struct in_addr, struct in_addr);
-void		 srt_delete_src(struct src_node *); 
+void		 srt_delete_src(struct src_node *);
 
 RB_HEAD(rt_tree, rt_node)	 rt;
 RB_PROTOTYPE(rt_tree, rt_node, entry, rt_compare)
@@ -407,11 +407,11 @@ srt_current_forwarder(struct src_node *src_node, struct rt_node *rn,
 	    nbr_report < src_node->adv_rtr[iface->ifindex].addr.s_addr)) {
 		if (src_node->adv_rtr[iface->ifindex].addr.s_addr ==
 		    iface->addr.s_addr && !src_node->ds_cnt[iface->ifindex])
-			rn->ttls[iface->ifindex] = 0; 
+			rn->ttls[iface->ifindex] = 0;
 
 		src_node->adv_rtr[iface->ifindex].addr.s_addr = nbr_report;
 		src_node->adv_rtr[iface->ifindex].metric = metric;
-	}	
+	}
 }
 
 void
@@ -452,7 +452,7 @@ srt_set_forwarder_self(struct src_node *src, struct iface *iface,
 void
 srt_set_upstream(struct rt_node *rn, u_int32_t ifindex)
 {
-	if (rn->ifindex != ifindex) {	
+	if (rn->ifindex != ifindex) {
 		rn->ttls[rn->ifindex] = 1;
 		rn->ifindex = ifindex;
 	}
@@ -469,7 +469,7 @@ srt_add_ds(struct src_node *src_node, struct rt_node *rn, u_int32_t nbr_report,
 
 	ds_nbr->addr.s_addr = nbr_report;
 
-	LIST_INSERT_HEAD(&src_node->ds_list, ds_nbr, entry); 
+	LIST_INSERT_HEAD(&src_node->ds_list, ds_nbr, entry);
 	src_node->ds_cnt[ifindex]++;
 	rn->ttls[ifindex] = 1;
 }
@@ -483,7 +483,7 @@ srt_find_ds(struct src_node *src_node, u_int32_t nbr_report)
 		if (ds_nbr->addr.s_addr == nbr_report)
 			return (ds_nbr);
 
-	return (NULL);	
+	return (NULL);
 }
 
 void
@@ -555,5 +555,5 @@ srt_delete_src(struct src_node *src_node)
 	}
 
 	RB_REMOVE(src_head, &rdeconf->src_list, src_node);
-	free(src_node); 
+	free(src_node);
 }

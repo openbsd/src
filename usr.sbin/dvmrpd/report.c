@@ -1,4 +1,4 @@
-/*	$OpenBSD: report.c,v 1.6 2006/12/03 20:14:37 michele Exp $ */
+/*	$OpenBSD: report.c,v 1.7 2007/04/10 09:37:25 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -207,7 +207,7 @@ rr_list_remove(struct route_report *rr)
 {
 	if (--rr->refcount == 0)
 		free(rr);
-} 
+}
 
 void
 rr_list_clr(struct rr_head *rr_list)
@@ -216,7 +216,7 @@ rr_list_clr(struct rr_head *rr_list)
 
 	while ((le = TAILQ_FIRST(rr_list)) != NULL) {
 		TAILQ_REMOVE(rr_list, le, entry);
-		rr_list_remove(le->re);	
+		rr_list_remove(le->re);
 		free(le);
 	}
 }
