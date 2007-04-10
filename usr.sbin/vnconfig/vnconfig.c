@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.26 2007/03/14 17:59:41 grunk Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.27 2007/04/10 15:28:55 tedu Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -234,8 +234,12 @@ getinfo(const char *vname)
 
 query:
 	if (ioctl(vd, VNDIOCGET, &vnu) == -1) {
-		close(vd);
-		return (!(errno == ENXIO && print_all));
+		if (print_all && errno == ENXIO && vnu.vnu_unit > 0) {
+			close(vd);
+			return (0);
+		} else {
+			err(1, "ioctl: %s", vname);
+		}
 	}
 
 	fprintf(stdout, "vnd%d: ", vnu.vnu_unit);
