@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.16 2006/10/03 19:49:06 pedro Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.17 2007/04/10 15:21:04 pedro Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -115,7 +115,7 @@ msdosfs_lookup(v)
 	int flags;
 	int nameiop = cnp->cn_nameiop;
 	int wincnt = 1;
-	int chksum = -1;
+	int chksum = -1, chksum_ok;
 	int olddos = 1;
 
 	cnp->cn_flags &= ~PDIRUNLOCK; /* XXX why this ?? */
@@ -303,7 +303,8 @@ msdosfs_lookup(v)
 				/*
 				 * Check for a checksum or name match
 				 */
-				if (chksum != winChksum(dep->deName)
+				chksum_ok = (chksum == winChksum(dep->deName));
+				if (!chksum_ok
 				    && (!olddos || bcmp(dosfilename, dep->deName, 11))) {
 					chksum = -1;
 					continue;
@@ -318,8 +319,21 @@ msdosfs_lookup(v)
 				 * this lookup.
 				 */
 				dp->de_fndoffset = diroff;
-				dp->de_fndcnt = 0;	/* unused anyway */
-				
+				if (chksum_ok && nameiop == RENAME) {
+					/*
+					 * Target had correct long name
+					 * directory entries, reuse them as
+					 * needed.
+					 */
+					dp->de_fndcnt = wincnt - 1;
+				} else {
+					/*
+					 * Long name directory entries not
+					 * present or corrupt, can only reuse
+					 * dos directory entry.
+					 */
+					dp->de_fndcnt = 0;
+				}
 				goto found;
 			}
 		}	/* for (blkoff = 0; .... */
