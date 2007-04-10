@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.4 2007/01/11 12:06:46 art Exp $
+.\" $OpenBSD: rwlock.9,v 1.5 2007/04/10 21:07:48 art Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@openbsd.org>
 .\" All rights reserved.
@@ -73,6 +73,9 @@ The possible flags are:
 Acquire a shared lock.
 .It Dv RW_WRITE
 Acquire an exclusive lock.
+.It Dv RW_DOWNGRADE
+Safely release an exclusive lock and acquire a shared lock without
+letting other exclusive locks in between.
 .It Dv RW_INTR
 When waiting for a lock, allow signals to interrupt the sleep.
 .It Dv RW_NOSLEEP
