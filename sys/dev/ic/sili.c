@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.30 2007/04/08 08:13:30 pascoe Exp $ */
+/*	$OpenBSD: sili.c,v 1.31 2007/04/10 09:08:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -144,6 +144,8 @@ void			sili_post_direct(struct sili_port *, u_int,
 			    void *, size_t buflen);
 void			sili_post_indirect(struct sili_port *,
 			    struct sili_ccb *);
+void			sili_pread_fis(struct sili_port *, u_int,
+			    struct ata_fis_d2h *);
 u_int32_t		sili_signature(struct sili_port *, u_int);
 int			sili_load(struct sili_ccb *, struct sili_sge *, int);
 void			sili_unload(struct sili_ccb *);
@@ -231,7 +233,6 @@ sili_port_intr(struct sili_port *sp, int timeout_slot)
 	if (is & SILI_PREG_IS_CMDERR) {
 		int			err_slot, err_code;
 		u_int32_t		sactive = 0;
-		bus_size_t		r;
 
 		sili_pwrite(sp, SILI_PREG_IS, SILI_PREG_IS_CMDERR);
 		err_slot = SILI_PREG_PCS_ACTIVE(sili_pread(sp, SILI_PREG_PCS));
@@ -241,13 +242,7 @@ sili_port_intr(struct sili_port *sp, int timeout_slot)
 		case SILI_PREG_CE_DEVICEERROR:
 		case SILI_PREG_CE_DATAFISERROR:
 			/* Extract error from command slot in LRAM. */
-			r = SILI_PREG_SLOT(err_slot) + 8;
-			bus_space_barrier(sp->sp_sc->sc_iot_port, sp->sp_ioh,
-			    r, sizeof(struct ata_fis_d2h),
-			    BUS_SPACE_BARRIER_READ);
-			bus_space_read_region_1(sp->sp_sc->sc_iot_port,
-			    sp->sp_ioh, r, &ccb->ccb_xa.rfis,
-			    sizeof(struct ata_fis_d2h));
+			sili_pread_fis(sp, err_slot, &ccb->ccb_xa.rfis);
 			break;
 
 		case SILI_PREG_CE_SDBERROR:
@@ -689,6 +684,17 @@ sili_post_direct(struct sili_port *sp, u_int slot, void *buf, size_t buflen)
 	    BUS_SPACE_BARRIER_WRITE);
 
 	sili_pwrite(sp, SILI_PREG_FIFO, slot);
+}
+
+void
+sili_pread_fis(struct sili_port *sp, u_int slot, struct ata_fis_d2h *fis)
+{
+	bus_size_t			r = SILI_PREG_SLOT(slot) + 8;
+
+	bus_space_barrier(sp->sp_sc->sc_iot_port, sp->sp_ioh, r,
+	    sizeof(struct ata_fis_d2h), BUS_SPACE_BARRIER_READ);
+	bus_space_read_raw_region_4(sp->sp_sc->sc_iot_port, sp->sp_ioh, r,
+	    fis, sizeof(struct ata_fis_d2h));
 }
 
 void
