@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.119 2007/02/03 23:47:18 bluhm Exp $	*/
+/*	$OpenBSD: cd.c,v 1.120 2007/04/10 10:48:57 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ cdattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct cd_softc *cd = (void *)self;
+	struct cd_softc *cd = (struct cd_softc *)self;
 	struct scsi_attach_args *sa = aux;
 	struct scsi_link *sc_link = sa->sa_sc_link;
 
@@ -260,13 +260,13 @@ cddetach(self, flags)
 	struct device *self;
 	int flags;
 {
-	struct cd_softc *sc = (struct cd_softc *)self;
+	struct cd_softc *cd = (struct cd_softc *)self;
 	struct buf *dp, *bp;
 	int s, bmaj, cmaj, mn;
 
 	/* Remove unprocessed buffers from queue */
 	s = splbio();
-	for (dp = &sc->buf_queue; (bp = dp->b_actf) != NULL; ) {
+	for (dp = &cd->buf_queue; (bp = dp->b_actf) != NULL; ) {
 		dp->b_actf = bp->b_actf;
 		
 		bp->b_error = ENXIO;
@@ -286,11 +286,11 @@ cddetach(self, flags)
 			vdevgone(cmaj, mn, mn + MAXPARTITIONS - 1, VCHR);
 
 	/* Get rid of the power hook. */
-	if (sc->sc_cdpwrhook != NULL)
-		powerhook_disestablish(sc->sc_cdpwrhook);
+	if (cd->sc_cdpwrhook != NULL)
+		powerhook_disestablish(cd->sc_cdpwrhook);
 
 	/* Detach disk. */
-	disk_detach(&sc->sc_dk);
+	disk_detach(&cd->sc_dk);
 
 	return (0);
 }
