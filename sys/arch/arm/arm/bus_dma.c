@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.8 2006/07/16 00:18:33 drahn Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.9 2007/04/10 18:22:07 miod Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -595,10 +595,6 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		_bus_dmamap_sync_uio(t, map, offset, len, ops);
 		break;
 
-	case ARM32_BUFTYPE_RAW:
-		panic("_bus_dmamap_sync: ARM32_BUFTYPE_RAW");
-		break;
-
 	case ARM32_BUFTYPE_INVALID:
 		panic("_bus_dmamap_sync: ARM32_BUFTYPE_INVALID");
 		break;
@@ -733,7 +729,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			 * cache then we must make the memory uncacheable
 			 * in order to maintain virtual cache coherency.
 			 * We must also guarantee the cache does not already
-			 * contain the virtal addresses we are making
+			 * contain the virtual addresses we are making
 			 * uncacheable.
 			 */
 			if (flags & BUS_DMA_COHERENT) {
