@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.38 2007/01/16 17:52:18 thib Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.39 2007/04/10 19:02:26 thib Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -261,8 +261,6 @@ spec_read(v)
 		return (error);
 
 	case VBLK:
-		if (uio->uio_resid == 0)
-			return (0);
 		if (uio->uio_offset < 0)
 			return (EINVAL);
 		bsize = BLKDEV_IOSIZE;
