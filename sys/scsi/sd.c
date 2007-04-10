@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.121 2007/04/04 12:44:17 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.122 2007/04/10 16:41:45 bluhm Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -168,7 +168,7 @@ void
 sdattach(struct device *parent, struct device *self, void *aux)
 {
 	int error, result;
-	struct sd_softc *sd = (void *)self;
+	struct sd_softc *sd = (struct sd_softc *)self;
 	struct disk_parms *dp = &sd->params;
 	struct scsi_attach_args *sa = aux;
 	struct scsi_link *sc_link = sa->sa_sc_link;
@@ -284,13 +284,13 @@ sdactivate(struct device *self, enum devact act)
 int
 sddetach(struct device *self, int flags)
 {
-	struct sd_softc *sc = (struct sd_softc *)self;
+	struct sd_softc *sd = (struct sd_softc *)self;
 	struct buf *dp, *bp;
 	int s, bmaj, cmaj, mn;
 
 	/* Remove unprocessed buffers from queue */
 	s = splbio();
-	for (dp = &sc->buf_queue; (bp = dp->b_actf) != NULL; ) {
+	for (dp = &sd->buf_queue; (bp = dp->b_actf) != NULL; ) {
 		dp->b_actf = bp->b_actf;
 
 		bp->b_error = ENXIO;
@@ -310,11 +310,11 @@ sddetach(struct device *self, int flags)
 			vdevgone(cmaj, mn, mn + MAXPARTITIONS - 1, VCHR);
 
 	/* Get rid of the shutdown hook. */
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
+	if (sd->sc_sdhook != NULL)
+		shutdownhook_disestablish(sd->sc_sdhook);
 
 	/* Detach disk. */
-	disk_detach(&sc->sc_dk);
+	disk_detach(&sd->sc_dk);
 
 	return (0);
 }
@@ -602,7 +602,7 @@ done:
 void
 sdstart(void *v)
 {
-	struct sd_softc *sd = v;
+	struct sd_softc *sd = (struct sd_softc *)v;
 	struct scsi_link *sc_link = sd->sc_link;
 	struct buf *bp = 0;
 	struct buf *dp;
@@ -1050,7 +1050,7 @@ sdgetdisklabel(dev_t dev, struct sd_softc *sd, struct disklabel *lp,
 void
 sd_shutdown(void *arg)
 {
-	struct sd_softc *sd = arg;
+	struct sd_softc *sd = (struct sd_softc *)arg;
 
 	/*
 	 * If the disk cache needs to be flushed, and the disk supports
