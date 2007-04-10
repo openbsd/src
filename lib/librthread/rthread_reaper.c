@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_reaper.c,v 1.2 2007/04/10 17:25:08 tedu Exp $	*/
+/*	$OpenBSD: rthread_reaper.c,v 1.3 2007/04/10 17:39:21 tedu Exp $	*/
 /*
  * Copyright (c) 2006 Otto Moerbeek <otto@drijf.net>
  *
@@ -18,6 +18,8 @@
 #include <sys/types.h>
 #include <sys/event.h>
 
+#include <errno.h>
+
 #include <machine/spinlock.h>
 #include <pthread.h>
 
@@ -34,8 +36,8 @@ _rthread_add_to_reaper(pid_t t, struct stack *s)
 	_rthread_debug(1, "Adding %d to reaper\n", t);
 	EV_SET(&kc, t, EVFILT_PROC, EV_ADD|EV_CLEAR, NOTE_EXIT, 0, s);
 	n = kevent(_rthread_kq, &kc, 1, NULL, 0, NULL);
-	if (n)
-		_rthread_debug(0, "_rthread_add_to_reaper(): kevent %d\n", n);
+	if (n == -1)
+		_rthread_debug(0, "_rthread_add_to_reaper(): kevent %d\n", errno);
 }
 
 /* ARGSUSED */
@@ -51,8 +53,8 @@ _rthread_reaper(void)
 
 	for (;;) {
 		n = kevent(_rthread_kq, NULL, 0, &ke, 1, &t);
-		if (n < 0)
-			_rthread_debug(0, "_rthread_reaper(): kevent %d\n", n);
+		if (n == -1)
+			_rthread_debug(0, "_rthread_reaper(): kevent %d\n", errno);
 		else if (n == 0)
 			break;
 		else {
