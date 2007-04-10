@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.23 2007/04/05 11:13:05 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.24 2007/04/10 07:57:21 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -22,17 +22,17 @@ struct atascsi;
  * ATA commands
  */
 
-#define ATA_C_IDENTIFY		0xec
-#define ATA_C_FLUSH_CACHE	0xe7
-#define ATA_C_FLUSH_CACHE_EXT	0xea /* lba48 */
-#define ATA_C_READDMA		0xc8
-#define ATA_C_WRITEDMA		0xca
 #define ATA_C_READDMA_EXT	0x25
+#define ATA_C_READ_LOG_EXT	0x2f
 #define ATA_C_WRITEDMA_EXT	0x35
-#define ATA_C_PACKET		0xa0
 #define ATA_C_READ_FPDMA	0x60
 #define ATA_C_WRITE_FPDMA	0x61
-#define ATA_C_READ_LOG_EXT	0x2f
+#define ATA_C_PACKET		0xa0
+#define ATA_C_READDMA		0xc8
+#define ATA_C_WRITEDMA		0xca
+#define ATA_C_FLUSH_CACHE	0xe7
+#define ATA_C_FLUSH_CACHE_EXT	0xea /* lba48 */
+#define ATA_C_IDENTIFY		0xec
 
 struct ata_identify {
 	u_int16_t	config;		/*   0 */
