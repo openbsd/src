@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.64 2007/04/05 18:50:45 pyr Exp $ */
+/*	$OpenBSD: rde.c,v 1.65 2007/04/10 13:26:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -60,7 +60,7 @@ struct lsa	*rde_asext_get(struct rroute *);
 struct lsa	*rde_asext_put(struct rroute *);
 
 struct lsa	*orig_asext_lsa(struct rroute *, u_int16_t);
-struct lsa	*orig_sum_lsa(struct rt_node *, u_int8_t);
+struct lsa	*orig_sum_lsa(struct rt_node *, struct rt_nexthop *, u_int8_t);
 
 struct ospfd_conf	*rdeconf = NULL, *nconf = NULL;
 struct imsgbuf		*ibuf_ospfe;
@@ -703,11 +703,19 @@ rde_router_id(void)
 void
 rde_send_change_kroute(struct rt_node *r)
 {
-	struct kroute	 kr;
+	struct kroute	 	 kr;
+	struct rt_nexthop	*rn;
+
+	TAILQ_FOREACH(rn, &r->nexthop, entry) {
+		if (!rn->invalid)
+			break;
+	}
+	if (!rn)
+		fatalx("rde_send_change_kroute: no valid nexthop found");
 
 	bzero(&kr, sizeof(kr));
 	kr.prefix.s_addr = r->prefix.s_addr;
-	kr.nexthop.s_addr = r->nexthop.s_addr;
+	kr.nexthop.s_addr = rn->nexthop.s_addr;
 	kr.prefixlen = r->prefixlen;
 
 	imsg_compose(ibuf_main, IMSG_KROUTE_CHANGE, 0, 0, &kr, sizeof(kr));
@@ -720,7 +728,6 @@ rde_send_delete_kroute(struct rt_node *r)
 
 	bzero(&kr, sizeof(kr));
 	kr.prefix.s_addr = r->prefix.s_addr;
-	kr.nexthop.s_addr = r->nexthop.s_addr;
 	kr.prefixlen = r->prefixlen;
 
 	imsg_compose(ibuf_main, IMSG_KROUTE_DELETE, 0, 0, &kr, sizeof(kr));
@@ -1031,9 +1038,17 @@ rde_asext_put(struct rroute *rr)
 void
 rde_summary_update(struct rt_node *rte, struct area *area)
 {
-	struct vertex	*v = NULL;
-	struct lsa	*lsa;
-	u_int8_t	 type = 0;
+	struct vertex		*v = NULL;
+	struct lsa		*lsa;
+	struct rt_nexthop	*rn;
+	u_int8_t		 type = 0;
+
+	TAILQ_FOREACH(rn, &rte->nexthop, entry) {
+		if (!rn->invalid)
+			break;
+	}
+	if (!rn)
+		rn = TAILQ_FIRST(&rte->nexthop);
 
 	/* first check if we actually need to announce this route */
 	if (!(rte->d_type == DT_NET || rte->flags & OSPF_RTR_E))
@@ -1063,7 +1078,7 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 
 	/* update lsa but only if it was changed */
 	v = lsa_find(area, type, rte->prefix.s_addr, rde_router_id());
-	lsa = orig_sum_lsa(rte, type);
+	lsa = orig_sum_lsa(rte, rn, type);
 	lsa_merge(rde_nbr_self(area), lsa, v);
 
 	if (v == NULL)
@@ -1128,7 +1143,7 @@ orig_asext_lsa(struct rroute *rr, u_int16_t age)
 }
 
 struct lsa *
-orig_sum_lsa(struct rt_node *rte, u_int8_t type)
+orig_sum_lsa(struct rt_node *rte, struct rt_nexthop *rn, u_int8_t type)
 {
 	struct lsa	*lsa;
 	u_int16_t	 len;
@@ -1138,7 +1153,7 @@ orig_sum_lsa(struct rt_node *rte, u_int8_t type)
 		fatal("orig_sum_lsa");
 
 	/* LSA header */
-	lsa->hdr.age = htons(rte->invalid ? MAX_AGE : DEFAULT_AGE);
+	lsa->hdr.age = htons(rn->invalid ? MAX_AGE : DEFAULT_AGE);
 	lsa->hdr.opts = rdeconf->options;	/* XXX not updated */
 	lsa->hdr.type = type;
 	lsa->hdr.adv_rtr = rdeconf->rtr_id.s_addr;

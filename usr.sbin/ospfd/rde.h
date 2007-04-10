@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.32 2007/04/05 18:50:45 pyr Exp $ */
+/*	$OpenBSD: rde.h,v 1.33 2007/04/10 13:26:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -26,12 +26,19 @@
 #include <event.h>
 #include <limits.h>
 
+struct v_nexthop {
+	TAILQ_ENTRY(v_nexthop)	 entry;
+	struct vertex		*prev;
+	struct in_addr		 nexthop;
+};
+
+TAILQ_HEAD(v_nexthead, v_nexthop);
+
 struct vertex {
 	RB_ENTRY(vertex)	 entry;
 	TAILQ_ENTRY(vertex)	 cand;
+	struct v_nexthead	 nexthop;
 	struct event		 ev;
-	struct in_addr		 nexthop;
-	struct vertex		*prev;
 	struct area		*area;
 	struct lsa		*lsa;
 	time_t			 changed;
@@ -65,21 +72,27 @@ struct rde_nbr {
 	int				 self;
 };
 
+struct rt_nexthop {
+	TAILQ_ENTRY(rt_nexthop)	entry;
+	struct in_addr		nexthop;
+	struct in_addr		adv_rtr;
+	time_t			uptime;
+	u_int8_t		connected;
+	u_int8_t		invalid;
+};
+
 struct rt_node {
-	RB_ENTRY(rt_node)	 entry;
-	struct in_addr		 prefix;
-	struct in_addr		 nexthop;
-	struct in_addr		 area;
-	struct in_addr		 adv_rtr;
-	u_int32_t		 cost;
-	u_int32_t		 cost2;
-	time_t			 uptime;
-	enum path_type		 p_type;
-	enum dst_type		 d_type;
-	u_int8_t		 flags;
-	u_int8_t		 prefixlen;
-	u_int8_t		 invalid;
-	u_int8_t		 connected;
+	RB_ENTRY(rt_node)	entry;
+	TAILQ_HEAD(,rt_nexthop)	nexthop;
+	struct in_addr		prefix;
+	struct in_addr		area;
+	u_int32_t		cost;
+	u_int32_t		cost2;
+	enum path_type		p_type;
+	enum dst_type		d_type;
+	u_int8_t		flags;
+	u_int8_t		prefixlen;
+	u_int8_t		invalid;
 };
 
 struct abr_rtr {

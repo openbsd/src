@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.59 2007/04/02 16:26:03 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.60 2007/04/10 13:26:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -35,10 +35,15 @@ RB_PROTOTYPE(rt_tree, rt_node, entry, rt_compare)
 RB_GENERATE(rt_tree, rt_node, entry, rt_compare)
 struct vertex			*spf_root = NULL;
 
-void		 calc_next_hop(struct vertex *, struct vertex *);
-void		 rt_update(struct in_addr, u_int8_t, struct in_addr, u_int32_t,
-		     u_int32_t, struct in_addr, struct in_addr, enum path_type,
-		     enum dst_type, u_int8_t, u_int8_t);
+void		 calc_nexthop_clear(struct vertex *);
+void		 calc_nexthop_add(struct vertex *, struct vertex *, u_int32_t);
+void		 calc_nexthop(struct vertex *, struct vertex *);
+void		 rt_nexthop_clear(struct rt_node *);
+void		 rt_nexthop_add(struct rt_node *, struct v_nexthead *,
+		     struct in_addr);
+void		 rt_update(struct in_addr, u_int8_t, struct v_nexthead *,
+		     u_int32_t, u_int32_t, struct in_addr, struct in_addr,
+		     enum path_type, enum dst_type, u_int8_t);
 struct rt_node	*rt_lookup(enum dst_type, in_addr_t);
 void		 rt_invalidate(struct area *);
 int		 linked(struct vertex *, struct vertex *);
@@ -126,23 +131,24 @@ spf_calc(struct area *area)
 			if (cand_list_present(w)) {
 				if (d > w->cost)
 					continue;
-
 				if (d < w->cost) {
 					w->cost = d;
-					w->prev = v;
-					calc_next_hop(w, v);
+					calc_nexthop_clear(w);
+					calc_nexthop(w, v);
 					/*
 					 * need to readd to candidate list
 					 * because the list is sorted
 					 */
 					TAILQ_REMOVE(&cand_list, w, cand);
 					cand_list_add(w);
-				}
+				} else
+					/* equal cost path */
+					calc_nexthop(w, v);
 			} else if (w->cost == LS_INFINITY && d < LS_INFINITY) {
 				w->cost = d;
-				w->prev = v;
 
-				calc_next_hop(w, v);
+				calc_nexthop_clear(w);
+				calc_nexthop(w, v);
 				cand_list_add(w);
 			}
 		}
@@ -150,7 +156,6 @@ spf_calc(struct area *area)
 		/* get next vertex */
 		v = cand_list_pop();
 		w = NULL;
-
 	} while (v != NULL);
 
 	/* spf_dump(area); */
@@ -165,6 +170,7 @@ void
 rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 {
 	struct vertex		*w;
+	struct v_nexthop	*vn;
 	struct lsa_rtr_link	*rtr_link = NULL;
 	int			 i;
 	struct in_addr		 addr, adv_rtr;
@@ -176,7 +182,7 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 	switch (v->type) {
 	case LSA_TYPE_ROUTER:
 		/* stub networks */
-		if (v->cost >= LS_INFINITY || v->nexthop.s_addr == 0)
+		if (v->cost >= LS_INFINITY || TAILQ_EMPTY(&v->nexthop))
 			return;
 
 		for (i = 0; i < lsa_num_links(v); i++) {
@@ -188,9 +194,9 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 			adv_rtr.s_addr = htonl(v->adv_rtr);
 
 			rt_update(addr, mask2prefixlen(rtr_link->data),
-			    v->nexthop, v->cost + ntohs(rtr_link->metric), 0,
+			    &v->nexthop, v->cost + ntohs(rtr_link->metric), 0,
 			    area->id, adv_rtr, PT_INTRA_AREA, DT_NET,
-			    v->lsa->data.rtr.flags, v->prev == spf_root);
+			    v->lsa->data.rtr.flags);
 		}
 
 		/* router, only add border and as-external routers */
@@ -200,18 +206,18 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 		addr.s_addr = htonl(v->ls_id);
 		adv_rtr.s_addr = htonl(v->adv_rtr);
 
-		rt_update(addr, 32, v->nexthop, v->cost, 0, area->id,
-		    adv_rtr, PT_INTRA_AREA, DT_RTR, v->lsa->data.rtr.flags, 0);
+		rt_update(addr, 32, &v->nexthop, v->cost, 0, area->id,
+		    adv_rtr, PT_INTRA_AREA, DT_RTR, v->lsa->data.rtr.flags);
 		break;
 	case LSA_TYPE_NETWORK:
-		if (v->cost >= LS_INFINITY || v->nexthop.s_addr == 0)
+		if (v->cost >= LS_INFINITY || TAILQ_EMPTY(&v->nexthop))
 			return;
 
 		addr.s_addr = htonl(v->ls_id) & v->lsa->data.net.mask;
 		adv_rtr.s_addr = htonl(v->adv_rtr);
 		rt_update(addr, mask2prefixlen(v->lsa->data.net.mask),
-		    v->nexthop, v->cost, 0, area->id, adv_rtr, PT_INTRA_AREA,
-		    DT_NET, 0, v->prev == spf_root);
+		    &v->nexthop, v->cost, 0, area->id, adv_rtr, PT_INTRA_AREA,
+		    DT_NET, 0);
 		break;
 	case LSA_TYPE_SUM_NETWORK:
 	case LSA_TYPE_SUM_ROUTER:
@@ -230,24 +236,28 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 		    htonl(v->adv_rtr))) == NULL)
 			return;
 
-		v->nexthop = w->nexthop;
+		/* copy nexthops */
+		calc_nexthop_clear(v);	/* XXX needed ??? */
+		TAILQ_FOREACH(vn, &w->nexthop, entry)
+			calc_nexthop_add(v, w, vn->nexthop.s_addr);
+
 		v->cost = w->cost +
 		    (ntohl(v->lsa->data.sum.metric) & LSA_METRIC_MASK);
 
-		if (v->cost >= LS_INFINITY || v->nexthop.s_addr == 0)
+		if (v->cost >= LS_INFINITY || TAILQ_EMPTY(&v->nexthop))
 			return;
 
 		adv_rtr.s_addr = htonl(v->adv_rtr);
 		if (v->type == LSA_TYPE_SUM_NETWORK) {
 			addr.s_addr = htonl(v->ls_id) & v->lsa->data.sum.mask;
 			rt_update(addr, mask2prefixlen(v->lsa->data.sum.mask),
-			    v->nexthop, v->cost, 0, area->id, adv_rtr,
-			    PT_INTER_AREA, DT_NET, 0, 0);
+			    &v->nexthop, v->cost, 0, area->id, adv_rtr,
+			    PT_INTER_AREA, DT_NET, 0);
 		} else {
 			addr.s_addr = htonl(v->ls_id);
-			rt_update(addr, 32, v->nexthop, v->cost, 0, area->id,
+			rt_update(addr, 32, &v->nexthop, v->cost, 0, area->id,
 			    adv_rtr, PT_INTER_AREA, DT_RTR,
-			    v->lsa->data.rtr.flags, 0);
+			    v->lsa->data.rtr.flags);
 		}
 
 		break;
@@ -261,6 +271,7 @@ void
 asext_calc(struct vertex *v)
 {
 	struct rt_node		*r;
+	struct rt_nexthop	*rn;
 	u_int32_t		 cost2;
 	struct in_addr		 addr, adv_rtr, a;
 	enum path_type		 type;
@@ -290,24 +301,13 @@ asext_calc(struct vertex *v)
 		    r->p_type != PT_INTER_AREA)
 			return;
 
-		if (r->connected) {
-			if (v->lsa->data.asext.fw_addr != 0)
-				v->nexthop.s_addr =
-				    v->lsa->data.asext.fw_addr;
-			else
-				v->nexthop.s_addr = htonl(v->adv_rtr);
-		} else
-			v->nexthop = r->nexthop;
-
-		if (ntohl(v->lsa->data.asext.metric) &
-		    LSA_ASEXT_E_FLAG) {
+		if (ntohl(v->lsa->data.asext.metric) & LSA_ASEXT_E_FLAG) {
 			v->cost = r->cost;
 			cost2 = ntohl(v->lsa->data.asext.metric) &
 			    LSA_METRIC_MASK;
 			type = PT_TYPE2_EXT;
 		} else {
-			v->cost = r->cost +
-			    (ntohl(v->lsa->data.asext.metric) &
+			v->cost = r->cost + (ntohl(v->lsa->data.asext.metric) &
 			     LSA_METRIC_MASK);
 			cost2 = 0;
 			type = PT_TYPE1_EXT;
@@ -316,9 +316,26 @@ asext_calc(struct vertex *v)
 		a.s_addr = 0;
 		adv_rtr.s_addr = htonl(v->adv_rtr);
 		addr.s_addr = htonl(v->ls_id) & v->lsa->data.asext.mask;
+
+		calc_nexthop_clear(v);
+		TAILQ_FOREACH(rn, &r->nexthop, entry) {
+			if (rn->invalid)
+				continue;
+
+			if (rn->connected) {
+				if (v->lsa->data.asext.fw_addr != 0)
+					calc_nexthop_add(v, NULL, 
+					    v->lsa->data.asext.fw_addr);
+				else
+					calc_nexthop_add(v, NULL, 
+					    htonl(v->adv_rtr));
+			} else
+				calc_nexthop_add(v, NULL, rn->nexthop.s_addr);
+		}
+
 		rt_update(addr, mask2prefixlen(v->lsa->data.asext.mask),
-		    v->nexthop, v->cost, cost2, a, adv_rtr, type,
-		    DT_NET, 0, 0);
+		    &v->nexthop, v->cost, cost2, a, adv_rtr, type,
+		    DT_NET, 0);
 		break;
 	default:
 		fatalx("asext_calc: invalid LSA type");
@@ -333,15 +350,44 @@ spf_tree_clr(struct area *area)
 
 	RB_FOREACH(v, lsa_tree, tree) {
 		v->cost = LS_INFINITY;
-		v->prev = NULL;
-		v->nexthop.s_addr = 0;
+		calc_nexthop_clear(v);
 	}
 }
 
 void
-calc_next_hop(struct vertex *dst, struct vertex *parent)
+calc_nexthop_clear(struct vertex *v)
+{
+	struct v_nexthop	*vn;
+
+	while ((vn = TAILQ_FIRST(&v->nexthop))) {
+		TAILQ_REMOVE(&v->nexthop, vn, entry);
+		free(vn);
+	}
+}
+
+void
+calc_nexthop_add(struct vertex *dst, struct vertex *parent, u_int32_t nexthop)
+{
+	struct v_nexthop	*vn;
+
+	if (nexthop == 0)
+		/* invalid nexthop, skip it */
+		return;
+
+	if ((vn = calloc(1, sizeof(*vn))) == NULL)
+		fatal("calc_nexthop_add");
+
+	vn->prev = parent;
+	vn->nexthop.s_addr = nexthop;
+
+	TAILQ_INSERT_TAIL(&dst->nexthop, vn, entry);
+}
+
+void
+calc_nexthop(struct vertex *dst, struct vertex *parent)
 {
 	struct lsa_rtr_link	*rtr_link = NULL;
+	struct v_nexthop	*vn;
 	int			 i;
 
 	/* case 1 */
@@ -352,7 +398,8 @@ calc_next_hop(struct vertex *dst, struct vertex *parent)
 				rtr_link = get_rtr_link(dst, i);
 				if (rtr_link->type == LINK_TYPE_POINTTOPOINT &&
 				    ntohl(rtr_link->id) == parent->ls_id) {
-					dst->nexthop.s_addr = rtr_link->data;
+					calc_nexthop_add(dst, parent,
+					    rtr_link->data);
 					break;
 				}
 			}
@@ -369,39 +416,50 @@ calc_next_hop(struct vertex *dst, struct vertex *parent)
 					    dst->lsa->data.net.mask) ==
 					    (rtr_link->data &
 					     dst->lsa->data.net.mask)) {
-						dst->nexthop.s_addr =
-						    rtr_link->data;
+						calc_nexthop_add(dst, parent,
+						    rtr_link->data);
 					}
 					break;
 				case LINK_TYPE_STUB_NET:
 					break;
 
 				default:
-					fatalx("calc_next_hop: invalid link "
+					fatalx("calc_nexthop: invalid link "
 					    "type");
 				}
 			}
 			return;
 		default:
-			fatalx("calc_next_hop: invalid dst type");
+			fatalx("calc_nexthop: invalid dst type");
 		}
 	}
 
 	/* case 2 */
-	if (parent->type == LSA_TYPE_NETWORK && dst->type == LSA_TYPE_ROUTER &&
-	    dst->prev == parent && parent->prev == spf_root) {
-		for (i = 0; i < lsa_num_links(dst); i++) {
-			rtr_link = get_rtr_link(dst, i);
-			if ((rtr_link->type == LINK_TYPE_TRANSIT_NET) &&
-			    (rtr_link->data & parent->lsa->data.net.mask) ==
-			    (htonl(parent->ls_id) & parent->lsa->data.net.mask))
-				dst->nexthop.s_addr = rtr_link->data;
+	if (parent->type == LSA_TYPE_NETWORK && dst->type == LSA_TYPE_ROUTER) {
+		TAILQ_FOREACH(vn, &parent->nexthop, entry) {
+			if (vn->prev == spf_root) {
+				for (i = 0; i < lsa_num_links(dst); i++) {
+					rtr_link = get_rtr_link(dst, i);
+					if ((rtr_link->type ==
+					    LINK_TYPE_TRANSIT_NET) &&
+					    (rtr_link->data &
+					    parent->lsa->data.net.mask) ==
+					    (htonl(parent->ls_id) &
+					    parent->lsa->data.net.mask))
+						calc_nexthop_add(dst, parent,
+						    rtr_link->data);
+				}
+			} else {
+				calc_nexthop_add(dst, parent,
+				    vn->nexthop.s_addr);
+			}
 		}
-
 		return;
 	}
+
 	/* case 3 */
-	dst->nexthop = parent->nexthop;
+	TAILQ_FOREACH(vn, &parent->nexthop, entry)
+	    calc_nexthop_add(dst, parent, vn->nexthop.s_addr);
 }
 
 /* candidate list */
@@ -645,6 +703,7 @@ rt_remove(struct rt_node *r)
 		return (-1);
 	}
 
+	rt_nexthop_clear(r);
 	free(r);
 	return (0);
 }
@@ -652,7 +711,8 @@ rt_remove(struct rt_node *r)
 void
 rt_invalidate(struct area *area)
 {
-	struct rt_node	*r, *nr;
+	struct rt_node		*r, *nr;
+	struct rt_nexthop	*rn, *nrn;
 
 	for (r = RB_MIN(rt_tree, &rt); r != NULL; r = nr) {
 		nr = RB_NEXT(rt_tree, &rt, r);
@@ -671,10 +731,64 @@ rt_invalidate(struct area *area)
 			if (r->area.s_addr != area->id.s_addr)
 				continue;
 		}
-		if (r->invalid)
+		r->invalid = 1;
+		for (rn = TAILQ_FIRST(&r->nexthop); rn != NULL; rn = nrn) {
+			nrn = TAILQ_NEXT(rn, entry);
+			if (rn->invalid) {
+				TAILQ_REMOVE(&r->nexthop, rn, entry);
+				free(rn);
+			} else
+				rn->invalid = 1;
+		}
+		if (TAILQ_EMPTY(&r->nexthop))
 			rt_remove(r);
-		else
-			r->invalid = 1;
+	}
+}
+
+void
+rt_nexthop_clear(struct rt_node *r)
+{
+	struct rt_nexthop	*rn;
+
+	while ((rn = TAILQ_FIRST(&r->nexthop)) != NULL) {
+		TAILQ_REMOVE(&r->nexthop, rn, entry);
+		free(rn);
+	}
+}
+
+void
+rt_nexthop_add(struct rt_node *r, struct v_nexthead *vnh,
+    struct in_addr adv_rtr)
+{
+	struct v_nexthop	*vn;
+	struct rt_nexthop	*rn;
+	struct timespec		 now;
+
+	TAILQ_FOREACH(vn, vnh, entry) {
+		TAILQ_FOREACH(rn, &r->nexthop, entry) {
+			if (rn->nexthop.s_addr != vn->nexthop.s_addr)
+				continue;
+
+			rn->adv_rtr.s_addr = adv_rtr.s_addr;
+			rn->connected = vn->prev == spf_root;
+			rn->invalid = 0;
+
+			r->invalid = 0;
+			return;
+		}
+
+		if ((rn = calloc(1, sizeof(struct rt_nexthop))) == NULL)
+			fatal("rt_nexthop_add");
+
+		clock_gettime(CLOCK_MONOTONIC, &now);
+		rn->nexthop.s_addr = vn->nexthop.s_addr;
+		rn->adv_rtr.s_addr = adv_rtr.s_addr;
+		rn->uptime = now.tv_sec;
+		rn->connected = vn->prev == spf_root;
+		rn->invalid = 0;
+
+		r->invalid = 0;
+		TAILQ_INSERT_TAIL(&r->nexthop, rn, entry);
 	}
 }
 
@@ -693,6 +807,7 @@ rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
 	static struct ctl_rt	 rtctl;
 	struct timespec		 now;
 	struct rt_node		*r;
+	struct rt_nexthop	*rn;
 
 	clock_gettime(CLOCK_MONOTONIC, &now);
 
@@ -724,116 +839,113 @@ rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
 			fatalx("rt_dump: invalid RIB type");
 		}
 
-		rtctl.prefix.s_addr = r->prefix.s_addr;
-		rtctl.nexthop.s_addr = r->nexthop.s_addr;
-		rtctl.area.s_addr = r->area.s_addr;
-		rtctl.adv_rtr.s_addr = r->adv_rtr.s_addr;
-		rtctl.cost = r->cost;
-		rtctl.cost2 = r->cost2;
-		rtctl.p_type = r->p_type;
-		rtctl.d_type = r->d_type;
-		rtctl.flags = r->flags;
-		rtctl.prefixlen = r->prefixlen;
-		rtctl.uptime = now.tv_sec - r->uptime;
+		TAILQ_FOREACH(rn, &r->nexthop, entry) {
+			if (rn->invalid)
+				continue;
 
-		rde_imsg_compose_ospfe(IMSG_CTL_SHOW_RIB, 0, pid, &rtctl,
-		    sizeof(rtctl));
+			rtctl.prefix.s_addr = r->prefix.s_addr;
+			rtctl.nexthop.s_addr = rn->nexthop.s_addr;
+			rtctl.area.s_addr = r->area.s_addr;
+			rtctl.adv_rtr.s_addr = rn->adv_rtr.s_addr;
+			rtctl.cost = r->cost;
+			rtctl.cost2 = r->cost2;
+			rtctl.p_type = r->p_type;
+			rtctl.d_type = r->d_type;
+			rtctl.flags = r->flags;
+			rtctl.prefixlen = r->prefixlen;
+			rtctl.uptime = now.tv_sec - rn->uptime;
+
+			rde_imsg_compose_ospfe(IMSG_CTL_SHOW_RIB, 0, pid,
+			    &rtctl, sizeof(rtctl));
+		}
 	}
 }
 
 void
-rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
+rt_update(struct in_addr prefix, u_int8_t prefixlen, struct v_nexthead *vnh,
      u_int32_t cost, u_int32_t cost2, struct in_addr area,
      struct in_addr adv_rtr, enum path_type p_type, enum dst_type d_type,
-     u_int8_t flags, u_int8_t connected)
+     u_int8_t flags)
 {
-	struct timespec	 now;
 	struct rt_node	*rte;
-	int		 better = 0;
+	int		 better = 0, equal = 0;
 
-	if (nexthop.s_addr == 0)	/* XXX remove */
+	if (vnh == NULL || TAILQ_EMPTY(vnh))	/* XXX remove */
 		fatalx("rt_update: invalid nexthop");
-
-	clock_gettime(CLOCK_MONOTONIC, &now);
 
 	if ((rte = rt_find(prefix.s_addr, prefixlen, d_type)) == NULL) {
 		if ((rte = calloc(1, sizeof(struct rt_node))) == NULL)
 			fatal("rt_update");
+
+		TAILQ_INIT(&rte->nexthop);
 		rte->prefix.s_addr = prefix.s_addr;
 		rte->prefixlen = prefixlen;
-		rte->nexthop.s_addr = nexthop.s_addr;
-		rte->adv_rtr.s_addr = adv_rtr.s_addr;
 		rte->cost = cost;
 		rte->cost2 = cost2;
 		rte->area = area;
 		rte->p_type = p_type;
 		rte->d_type = d_type;
 		rte->flags = flags;
-		rte->invalid = 0;
-		rte->connected = connected;
-		rte->uptime = now.tv_sec;
+
+		rt_nexthop_add(rte, vnh, adv_rtr);
 
 		rt_insert(rte);
 	} else {
-		if (rte->invalid) {
-			/* invalidated entry - just update */
-			if (rte->nexthop.s_addr != nexthop.s_addr ||
-			    rte->cost != cost || rte->cost2 != cost2)
-				rte->uptime = now.tv_sec;
-			rte->nexthop.s_addr = nexthop.s_addr;
-			rte->adv_rtr.s_addr = adv_rtr.s_addr;
+		/* order:
+		 * 1. intra-area
+		 * 2. inter-area
+		 * 3. type 1 as ext
+		 * 4. type 2 as ext
+		 */
+		if (rte->invalid)	/* everything is better than invalid */
+			better = 1;
+		else if (p_type < rte->p_type)
+			better = 1;
+		else if (p_type == rte->p_type)
+			switch (p_type) {
+			case PT_INTRA_AREA:
+			case PT_INTER_AREA:
+				if (cost < rte->cost)
+					better = 1;
+				else if (cost == rte->cost &&
+				    rte->area.s_addr == area.s_addr)
+					equal = 1;
+				break;
+			case PT_TYPE1_EXT:
+				/* XXX rfc1583 compat */
+				if (cost < rte->cost)
+					better = 1;
+				else if (cost == rte->cost)
+					equal = 1;
+				break;
+			case PT_TYPE2_EXT:
+				if (cost2 < rte->cost2)
+					better = 1;
+				/* XXX rfc1583 compat */
+				else if (cost2 == rte->cost2 &&
+				    cost < rte->cost)
+					better = 1;
+				else if (cost2 == rte->cost2 &&
+				    cost == rte->cost)
+					equal = 1;
+				break;
+			}
+
+		if (!better && !equal)
+			return;
+
+		if (better) {
+			rt_nexthop_clear(rte);
+
+			rte->area = area;
 			rte->cost = cost;
 			rte->cost2 = cost2;
-			rte->area = area;
 			rte->p_type = p_type;
 			rte->flags = flags;
-			rte->invalid = 0;
-			rte->connected = connected;
-		} else {
-			/* order:
-			 * 1. intra-area
-			 * 2. inter-area
-			 * 3. type 1 as ext
-			 * 4. type 2 as ext
-			 */
-			if (p_type < rte->p_type)
-				better = 1;
-			else if (p_type == rte->p_type)
-				switch (p_type) {
-				case PT_INTRA_AREA:
-				case PT_INTER_AREA:
-					if (cost < rte->cost)
-						better = 1;
-					/* ignore equal pathes */
-					break;
-				case PT_TYPE1_EXT:
-					/* XXX rfc1583 compat */
-					if (cost < rte->cost)
-						better = 1;
-					break;
-				case PT_TYPE2_EXT:
-					if (cost2 < rte->cost2)
-						better = 1;
-					/* XXX rfc1583 compat */
-					else if (cost2 == rte->cost2 &&
-					    cost < rte->cost)
-						better = 1;
-					break;
-				}
-			if (better) {
-				if (rte->nexthop.s_addr != nexthop.s_addr)
-					rte->uptime = now.tv_sec;
-				rte->nexthop.s_addr = nexthop.s_addr;
-				rte->adv_rtr.s_addr = adv_rtr.s_addr;
-				rte->cost = cost;
-				rte->cost2 = cost2;
-				rte->area = area;
-				rte->p_type = p_type;
-				rte->flags = flags;
-				rte->invalid = 0;
-				rte->connected = connected;
-			}
 		}
+
+		if (equal || better)
+			rt_nexthop_add(rte, vnh, adv_rtr);
 	}
 }
 

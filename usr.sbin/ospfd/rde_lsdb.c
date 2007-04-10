@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.37 2007/01/29 13:04:13 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.38 2007/04/10 13:26:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -69,6 +69,7 @@ vertex_get(struct lsa *lsa, struct rde_nbr *nbr)
 
 	if ((v = calloc(1, sizeof(struct vertex))) == NULL)
 		fatal(NULL);
+	TAILQ_INIT(&v->nexthop);
 	v->area = nbr->area;
 	v->peerid = nbr->peerid;
 	v->lsa = lsa;
