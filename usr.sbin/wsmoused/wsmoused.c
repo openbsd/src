@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.20 2006/04/17 08:42:41 deraadt Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.21 2007/04/10 22:37:17 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -355,6 +355,11 @@ split_event(mousestatus_t *act)
 	if (act->dz != 0) {
 		event.type = WSCONS_EVENT_MOUSE_DELTA_Z;
 		event.value = act->dz;
+		treat_event(&event);
+	}
+	if (act->dw != 0) {
+		event.type = WSCONS_EVENT_MOUSE_DELTA_W;
+		event.value = act->dw;
 		treat_event(&event);
 	}
 

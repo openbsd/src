@@ -1,4 +1,4 @@
-/*	$OpenBSD: tpms.c,v 1.4 2006/03/16 06:57:23 miod Exp $	*/
+/*	$OpenBSD: tpms.c,v 1.5 2007/04/10 22:37:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -503,7 +503,7 @@ tpms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 	if ((dx != 0 || dy != 0 || dz != 0 || buttons != sc->sc_buttons) &&
 	    sc->sc_wsmousedev != NULL) {
 		s = spltty();
-		wsmouse_input(sc->sc_wsmousedev, buttons, dx, -dy, dz,
+		wsmouse_input(sc->sc_wsmousedev, buttons, dx, -dy, dz, 0,
 		    WSMOUSE_INPUT_DELTA);
 		splx(s);
 	}

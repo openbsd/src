@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.18 2006/11/01 03:37:24 tedu Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.19 2007/04/10 22:37:17 miod Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -117,6 +117,7 @@ extern int wsmuxdebug;
 #define	INVALID_X	INT_MAX
 #define	INVALID_Y	INT_MAX
 #define	INVALID_Z	INT_MAX
+#define	INVALID_W	INT_MAX
 
 struct wsmouse_softc {
 	struct wsevsrc	sc_base;
@@ -129,9 +130,11 @@ struct wsmouse_softc {
 	int		sc_dx;		/* delta-x */
 	int		sc_dy;		/* delta-y */
 	int		sc_dz;		/* delta-z */
+	int		sc_dw;		/* delta-w */
 	int		sc_x;		/* absolute-x */
 	int		sc_y;		/* absolute-y */
 	int		sc_z;		/* absolute-z */
+	int		sc_w;		/* absolute-w */
 
 	int		sc_refcnt;
 	u_char		sc_dying;	/* device is being detached */
@@ -285,14 +288,14 @@ wsmouse_detach(struct device *self, int flags)
 
 void
 wsmouse_input(struct device *wsmousedev, u_int btns, /* 0 is up */
-    int x, int y, int z, u_int flags)
+    int x, int y, int z, int w, u_int flags)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)wsmousedev;
 	struct wscons_event *ev;
 	struct wseventvar *evar;
 	int mb, ub, d, get, put, any;
 
-	add_mouse_randomness(x ^ y ^ z ^ btns);
+	add_mouse_randomness(x ^ y ^ z ^ w ^ btns);
 
 	/*
 	 * Discard input if not ready.
@@ -320,6 +323,8 @@ wsmouse_input(struct device *wsmousedev, u_int btns, /* 0 is up */
 		sc->sc_dy += y;
 	if (!(flags & WSMOUSE_INPUT_ABSOLUTE_Z))
 		sc->sc_dz += z;
+	if (!(flags & WSMOUSE_INPUT_ABSOLUTE_W))
+		sc->sc_dw += w;
 
 	/*
 	 * We have at least one event (mouse button, delta-X, or
@@ -409,6 +414,25 @@ wsmouse_input(struct device *wsmousedev, u_int btns, /* 0 is up */
 			TIMESTAMP;
 			ADVANCE;
 			sc->sc_dz = 0;
+		}
+	}
+	if (flags & WSMOUSE_INPUT_ABSOLUTE_W) {
+		if (sc->sc_w != w) {
+			NEXT;
+			ev->type = WSCONS_EVENT_MOUSE_ABSOLUTE_W;
+			ev->value = w;
+			TIMESTAMP;
+			ADVANCE;
+			sc->sc_w = w;
+		}
+	} else {
+		if (sc->sc_dw) {
+			NEXT;
+			ev->type = WSCONS_EVENT_MOUSE_DELTA_W;
+			ev->value = sc->sc_dw;
+			TIMESTAMP;
+			ADVANCE;
+			sc->sc_dw = 0;
 		}
 	}
 
@@ -527,6 +551,7 @@ wsmousedoopen(struct wsmouse_softc *sc, struct wseventvar *evp)
 	sc->sc_x = INVALID_X;
 	sc->sc_y = INVALID_Y;
 	sc->sc_z = INVALID_Z;
+	sc->sc_w = INVALID_W;
 
 	/* enable the device, and punt if that's not possible */
 	return (*sc->sc_accessops->enable)(sc->sc_accesscookie);

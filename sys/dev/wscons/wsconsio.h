@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.43 2006/11/27 18:04:28 gwk Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.44 2007/04/10 22:37:17 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -76,6 +76,9 @@ struct wscons_event {
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_Y	9	/* Y location */
 #define	WSCONS_EVENT_MOUSE_DELTA_Z	10	/* Z delta amount */
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_Z	11	/* Z location */
+				     /*	12-15, see below */
+#define	WSCONS_EVENT_MOUSE_DELTA_W	16	/* W delta amount */
+#define	WSCONS_EVENT_MOUSE_ABSOLUTE_W	17	/* W location */
 /* 
  * Following events are not real wscons_event but are used as parameters of the
  * WSDISPLAYIO_WSMOUSED ioctl 
@@ -88,7 +91,8 @@ struct wscons_event {
 
 #define IS_MOTION_EVENT(type) (((type) == WSCONS_EVENT_MOUSE_DELTA_X) || \
 			       ((type) == WSCONS_EVENT_MOUSE_DELTA_Y) || \
-			       ((type) == WSCONS_EVENT_MOUSE_DELTA_Z))
+			       ((type) == WSCONS_EVENT_MOUSE_DELTA_Z) || \
+			       ((type) == WSCONS_EVENT_MOUSE_DELTA_W))
 #define IS_BUTTON_EVENT(type) (((type) == WSCONS_EVENT_MOUSE_UP) || \
 			       ((type) == WSCONS_EVENT_MOUSE_DOWN))
 #define IS_CTRL_EVENT(type) ((type == WSCONS_EVENT_WSMOUSED_ON) || \

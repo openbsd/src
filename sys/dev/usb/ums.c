@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.17 2006/06/23 06:27:12 miod Exp $ */
+/*	$OpenBSD: ums.c,v 1.18 2007/04/10 22:37:17 miod Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ int	umsdebug = 0;
 struct ums_softc {
 	struct uhidev sc_hdev;
 
-	struct hid_location sc_loc_x, sc_loc_y, sc_loc_z;
+	struct hid_location sc_loc_x, sc_loc_y, sc_loc_z, sc_loc_w;
 	struct hid_location sc_loc_btn[MAX_BUTTONS];
 
 	int sc_enabled;
@@ -149,7 +149,7 @@ USB_ATTACH(ums)
 	int size;
 	void *desc;
 	u_int32_t flags, quirks;
-	int i, wheel;
+	int i;
 	struct hid_location loc_btn;
 
 	sc->sc_hdev.sc_intr = ums_intr;
@@ -188,20 +188,41 @@ USB_ATTACH(ums)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	/* Try to guess the Z activator: first check Z, then WHEEL. */
-	wheel = 0;
-	if (hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z),
-	       uha->reportid, hid_input, &sc->sc_loc_z, &flags) ||
-	    (wheel = hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP,
-						       HUG_WHEEL),
-	       uha->reportid, hid_input, &sc->sc_loc_z, &flags))) {
+	/* Try the wheel as Z activator first */
+	if (hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL),
+	    uha->reportid, hid_input, &sc->sc_loc_z, &flags)) {
 		if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
-			sc->sc_loc_z.size = 0;	/* Bad Z coord, ignore it */
+			DPRINTF(("\n%s: Wheel report 0x%04x not supported\n",
+				USBDEVNAME(sc->sc_hdev.sc_dev), flags));
+			sc->sc_loc_z.size = 0; /* Bad Z coord, ignore it */
 		} else {
 			sc->flags |= UMS_Z;
 			/* Wheels need the Z axis reversed. */
-			if (wheel)
-				sc->flags ^= UMS_REVZ;
+			sc->flags ^= UMS_REVZ;
+		}
+		/*
+		 * We might have both a wheel and Z direction; in this case,
+		 * report the Z direction on the W axis.
+		*/
+		if (hid_locate(desc, size,
+		    HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z),
+		    uha->reportid, hid_input, &sc->sc_loc_w, &flags)) {
+			if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
+				DPRINTF(("\n%s: Z report 0x%04x not supported\n",
+					USBDEVNAME(sc->sc_hdev.sc_dev), flags));
+				/* Bad Z coord, ignore it */
+				sc->sc_loc_w.size = 0;
+			}
+		}
+	} else if (hid_locate(desc, size,
+	    HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z),
+	    uha->reportid, hid_input, &sc->sc_loc_z, &flags)) {
+		if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
+			DPRINTF(("\n%s: Z report 0x%04x not supported\n",
+				USBDEVNAME(sc->sc_hdev.sc_dev), flags));
+			sc->sc_loc_z.size = 0; /* Bad Z coord, ignore it */
+		} else {
+			sc->flags |= UMS_Z;
 		}
 	}
 
@@ -281,7 +302,7 @@ void
 ums_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
 	struct ums_softc *sc = (struct ums_softc *)addr;
-	int dx, dy, dz;
+	int dx, dy, dz, dw;
 	u_int32_t buttons = 0;
 	int i;
 	int s;
@@ -291,20 +312,22 @@ ums_intr(struct uhidev *addr, void *ibuf, u_int len)
 	dx =  hid_get_data(ibuf, &sc->sc_loc_x);
 	dy = -hid_get_data(ibuf, &sc->sc_loc_y);
 	dz =  hid_get_data(ibuf, &sc->sc_loc_z);
+	dw =  hid_get_data(ibuf, &sc->sc_loc_w);
 	if (sc->flags & UMS_REVZ)
 		dz = -dz;
 	for (i = 0; i < sc->nbuttons; i++)
 		if (hid_get_data(ibuf, &sc->sc_loc_btn[i]))
 			buttons |= (1 << UMS_BUT(i));
 
-	if (dx != 0 || dy != 0 || dz != 0 || buttons != sc->sc_buttons) {
-		DPRINTFN(10, ("ums_intr: x:%d y:%d z:%d buttons:0x%x\n",
-			dx, dy, dz, buttons));
+	if (dx != 0 || dy != 0 || dz != 0 || dw != 0 ||
+	    buttons != sc->sc_buttons) {
+		DPRINTFN(10, ("ums_intr: x:%d y:%d z:%d w:%d buttons:0x%x\n",
+			dx, dy, dz, dw, buttons));
 		sc->sc_buttons = buttons;
 		if (sc->sc_wsmousedev != NULL) {
 			s = spltty();
-			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy, dz,
-				      WSMOUSE_INPUT_DELTA);
+			wsmouse_input(sc->sc_wsmousedev, buttons,
+			    dx, dy, dz, dw, WSMOUSE_INPUT_DELTA);
 			splx(s);
 		}
 	}

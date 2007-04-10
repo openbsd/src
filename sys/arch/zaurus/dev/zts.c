@@ -1,4 +1,4 @@
-/* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
+/* $OpenBSD: zts.c,v 1.10 2007/04/10 22:37:17 miod Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -542,7 +542,8 @@ zts_irq(void *v)
 	}
 
 	if (down || sc->sc_buttons != down) {
-		wsmouse_input(sc->sc_wsmousedev, down, tp.x, tp.y, 0 /* z */,
+		wsmouse_input(sc->sc_wsmousedev, down, tp.x, tp.y,
+		    0 /* z */, 0 /* w */,
 		    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
 		    WSMOUSE_INPUT_ABSOLUTE_Z);
 		sc->sc_buttons = down;

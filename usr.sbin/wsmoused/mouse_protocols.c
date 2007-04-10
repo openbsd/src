@@ -1,4 +1,4 @@
-/* $OpenBSD: mouse_protocols.c,v 1.11 2006/04/17 08:42:41 deraadt Exp $ */
+/* $OpenBSD: mouse_protocols.c,v 1.12 2007/04/10 22:37:17 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -985,15 +985,15 @@ mouse_protocol(u_char rBuf, mousestatus_t * act)
 			break;
 
 		default:
-			act->dx = act->dy = act->dz = 0;
+			act->dx = act->dy = act->dz = act->dw = 0;
 			act->obutton = act->button;
 			act->button = butmapmss2[(rBuf & MOUSE_MSS_BUTTONS) >> 4]
 				| (act->obutton & (MOUSE_BUTTON1DOWN | MOUSE_BUTTON3DOWN));
 			break;
 		}
 
-		act->flags = ((act->dx || act->dy || act->dz) ? MOUSE_POSCHANGED : 0)
-			| (act->obutton ^ act->button);
+		act->flags = ((act->dx || act->dy || act->dz || act->dw) ?
+		    MOUSE_POSCHANGED : 0) | (act->obutton ^ act->button);
 		pBufP = 0;
 		return act->flags;
 	}
@@ -1013,6 +1013,7 @@ mouse_protocol(u_char rBuf, mousestatus_t * act)
 	    pBuf[4], pBuf[5], pBuf[6], pBuf[7]);
 
 	act->dz = 0;
+	act->dw = 0;
 	act->obutton = act->button;
 	switch (mouse.proto) {
 	case P_MS:		/* Microsoft */
@@ -1060,7 +1061,7 @@ mouse_protocol(u_char rBuf, mousestatus_t * act)
          * byte in some protocols. See above.
          */
 	/* has something changed? */
-	act->flags = ((act->dx || act->dy || act->dz) ? MOUSE_POSCHANGED : 0) |
-	    (act->obutton ^ act->button);
+	act->flags = ((act->dx || act->dy || act->dz || act->dw) ?
+	    MOUSE_POSCHANGED : 0) | (act->obutton ^ act->button);
 	return act->flags;
 }

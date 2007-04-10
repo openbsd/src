@@ -1,4 +1,4 @@
-/* $OpenBSD: mouse_protocols.h,v 1.4 2003/11/08 19:17:30 jmc Exp $ */
+/* $OpenBSD: mouse_protocols.h,v 1.5 2007/04/10 22:37:17 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -193,6 +193,7 @@ typedef struct mousestatus {
     int     dx;			/* x movement */
     int     dy;			/* y movement */
     int     dz;			/* z movement */
+    int     dw;			/* w movement */
 } mousestatus_t;
 
 /* Prototypes */

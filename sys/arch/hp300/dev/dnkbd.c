@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbd.c,v 1.14 2007/01/07 15:12:50 miod Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.15 2007/04/10 22:37:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -734,7 +734,7 @@ dnevent_mouse(struct dnkbd_softc *sc, u_int8_t *dat)
 	
 	wsmouse_input(sc->sc_wsmousedev,
 	    (~dat[0] & (DNBUTTON_L | DNBUTTON_M | DNBUTTON_R)) >> 4,
-	    (int8_t)dat[1], (int8_t)dat[2], 0, WSMOUSE_INPUT_DELTA);
+	    (int8_t)dat[1], (int8_t)dat[2], 0, 0, WSMOUSE_INPUT_DELTA);
 }
 #endif
 

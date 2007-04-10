@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.2 2007/03/23 14:35:19 robert Exp $ */
+/*	$OpenBSD: uts.c,v 1.3 2007/04/10 22:37:17 miod Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -395,7 +395,7 @@ uts_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		return;
 	}
 
-	wsmouse_input(sc->sc_wsmousedev, tp.z, tp.x, tp.y, 0,
+	wsmouse_input(sc->sc_wsmousedev, tp.z, tp.x, tp.y, 0, 0,
 		WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
 		WSMOUSE_INPUT_ABSOLUTE_Z); 
 	sc->sc_oldy = tp.y;

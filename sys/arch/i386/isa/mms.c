@@ -1,4 +1,4 @@
-/* $OpenBSD: mms.c,v 1.18 2006/09/19 11:06:34 jsg Exp $ */
+/* $OpenBSD: mms.c,v 1.19 2007/04/10 22:37:17 miod Exp $ */
 /*	$NetBSD: mms.c,v 1.35 2000/01/08 02:57:25 takemura Exp $	*/
 
 /*-
@@ -230,7 +230,7 @@ mmsintr(void *arg)
 
 	if (dx || dy || changed)
 		wsmouse_input(sc->sc_wsmousedev,
-			      buttons, dx, dy, 0, WSMOUSE_INPUT_DELTA);
+			      buttons, dx, dy, 0, 0, WSMOUSE_INPUT_DELTA);
 
 	return -1;
 }

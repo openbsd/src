@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilms.c,v 1.4 2006/12/16 20:08:44 miod Exp $	*/
+/*	$OpenBSD: hilms.c,v 1.5 2007/04/10 22:37:17 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -334,5 +334,5 @@ hilms_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 	
 	if (sc->sc_wsmousedev != NULL)
 		wsmouse_input(sc->sc_wsmousedev,
-		    sc->sc_buttonstate, dx, dy, dz, flags);
+		    sc->sc_buttonstate, dx, dy, dz, 0, flags);
 }

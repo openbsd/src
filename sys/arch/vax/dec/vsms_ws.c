@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsms_ws.c,v 1.1 2006/08/27 16:52:15 miod Exp $	*/
+/*	$OpenBSD: vsms_ws.c,v 1.2 2007/04/10 22:37:17 miod Exp $	*/
 /*	$NetBSD: dzms.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ lkms_input(void *vsc, int data)
 		else
 			sc->dy = data;
 		wsmouse_input(sc->sc_wsmousedev, sc->buttons,
-		    sc->dx, sc->dy, 0, WSMOUSE_INPUT_DELTA);
+		    sc->dx, sc->dy, 0, 0, WSMOUSE_INPUT_DELTA);
 	}
 
 	return (1);
