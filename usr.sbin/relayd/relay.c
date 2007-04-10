@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.24 2007/04/10 18:18:26 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.25 2007/04/10 21:33:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1042,7 +1042,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	struct protocol		*proto = rlay->proto;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	struct protonode	*pn, pk, *pnv, pkv;
-	char			*line, buf[READ_BUF_SIZE], *ptr, *val, *method;
+	char			*line, buf[READ_BUF_SIZE], *ptr, *val;
 	int			 header = 0, ret;
 	const char		*errstr;
 	size_t			 size;
@@ -1102,9 +1102,10 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		 * Identify and handle specific HTTP request methods
 		 */
 		if (cre->line == 1) {
-			if (cre->dir == RELAY_DIR_RESPONSE)
+			if (cre->dir == RELAY_DIR_RESPONSE) {
 				cre->method = HTTP_METHOD_RESPONSE;
-			else if (strcmp("GET", pk.key) == 0)
+				goto lookup;
+			} else if (strcmp("GET", pk.key) == 0)
 				cre->method = HTTP_METHOD_GET;
 			else if (strcmp("HEAD", pk.key) == 0)
 				cre->method = HTTP_METHOD_HEAD;
@@ -1120,6 +1121,29 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				cre->method = HTTP_METHOD_TRACE;
 			else if (strcmp("CONNECT", pk.key) == 0)
 				cre->method = HTTP_METHOD_CONNECT;
+
+			/*
+			 * Decode the URL
+			 */
+			cre->path = strdup(pk.value);
+			if (cre->path == NULL) {
+				free(line);
+				goto fail;
+			}
+			cre->version = strchr(cre->path, ' ');
+			if (cre->version != NULL)
+				*cre->version++ = '\0';
+			cre->args = strchr(cre->path, '?');
+			if (cre->args != NULL)
+				*cre->args++ = '\0';
+#ifdef DEBUG
+			if (snprintf(buf, sizeof(buf), " \"%s\"",
+			    cre->path) == -1 ||
+			    evbuffer_add(con->log, buf, strlen(buf)) == -1) {
+				free(line);
+				goto fail;
+			}
+#endif
 		} else if ((cre->method == HTTP_METHOD_POST ||
 		    cre->method == HTTP_METHOD_PUT ||
 		    cre->method == HTTP_METHOD_RESPONSE) &&
@@ -1139,6 +1163,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				return;
 			}
 		}
+ lookup:
 		if (strcasecmp("Transfer-Encoding", pk.key) == 0 &&
 		    strcasecmp("chunked", pk.value) == 0)
 			cre->chunked = 1;
@@ -1151,21 +1176,11 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			goto handle;
 
 		if (pn->flags & PNFLAG_LOOKUP_URL) {
-			/*
-			 * Decode the URL
-			 */
-			val = strdup(pk.value);
-			if (val == NULL)
+			if (cre->path == NULL || cre->args == NULL ||
+			    strlen(cre->args) < 2 ||
+			    (val = strdup(cre->args)) == NULL)
 				goto next;
-			if ((ptr = strchr(val, '?')) == NULL ||
-			    strlen(ptr) < 2) {
-				free(val);
-				goto next;
-			}
-			*ptr++ = '\0';
-			method = strchr(ptr, ' ');
-			if (method != NULL)
-				*method++ = '\0';
+			ptr = val;
 			while (ptr != NULL && strlen(ptr)) {
 				pkv.key = ptr;
 				pkv.type = NODE_TYPE_URL;
