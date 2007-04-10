@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.18 2006/11/15 18:59:37 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.19 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -653,7 +653,7 @@ ieee80211_find_txnode(struct ieee80211com *ic, u_int8_t *macaddr)
 		 * Fake up a node; this handles node discovery in
 		 * adhoc mode.  Note that for the driver's benefit
 		 * we we treat this like an association so the driver
-		 * has an opportunity to setup it's private state.
+		 * has an opportunity to setup its private state.
 		 *
 		 * XXX need better way to handle this; issue probe
 		 *     request so we can deduce rate set, etc.

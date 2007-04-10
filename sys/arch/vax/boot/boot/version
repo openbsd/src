@@ -1,4 +1,4 @@
-$OpenBSD: version,v 1.3 2006/08/30 20:02:13 miod Exp $
+$OpenBSD: version,v 1.4 2007/04/10 17:47:55 miod Exp $
 $NetBSD: version,v 1.4 2001/11/09 19:53:15 scw Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
@@ -21,7 +21,7 @@ is taken as the current.
 	Create a fake RPB if either netbooted (on machine without RPB) or
 	loaded from console storage (without VMB intervention).
 1.7:	Add support for loading a 2nd stage boot in either a.out or ELF.
-	Add support for loading a 2nd stage boot directly to it's desired
+	Add support for loading a 2nd stage boot directly to its desired
 	address if possible.
 	Cleanup use of u_int/size_t.
 1.8:	Switch to loadfile instead of exec.  Now we can load a.out or ELF

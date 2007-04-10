@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.23 2006/12/21 02:44:55 krw Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.24 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -417,7 +417,7 @@ ahb_send_immed(sc, target, cmd)
 
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.38 2007/03/15 10:22:30 art Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.39 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -147,7 +147,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 *      [Note: once P_SUGID or P_SUGIDEXEC gets set in
 		 *	execve(), they stay set until the process does
 		 *	another execve().  Hence this prevents a setuid
-		 *	process which revokes it's special privileges using
+		 *	process which revokes its special privileges using
 		 *	setuid() from being traced.  This is good security.]
 		 */
 		if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||

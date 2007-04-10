@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.96 2007/01/05 19:25:45 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.97 2007/04/10 17:47:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -253,7 +253,7 @@ lm75probe(void)
 		thigh = iicprobew(LM77Thigh) & mask;
 	}
 
-	/* a real LM75/LM75A/LM77 repeats it's registers.... */
+	/* a real LM75/LM75A/LM77 repeats its registers.... */
 	for (i = 0x08; i <= 0xf8; i += 8) {
 		if (conf != iicprobenc(LM75CONF + i) ||
 		    thyst != (iicprobew(LM75Thyst + i) & mask) ||

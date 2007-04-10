@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.120 2007/04/10 10:48:57 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.121 2007/04/10 17:47:56 miod Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1271,7 +1271,7 @@ done:
 }
 
 /*
- * Find out from the device what it's capacity is
+ * Find out from the device what its capacity is
  */
 u_long
 cd_size(cd, flags)

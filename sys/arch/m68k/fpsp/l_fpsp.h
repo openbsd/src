@@ -1,4 +1,4 @@
-*	$OpenBSD: l_fpsp.h,v 1.2 1996/05/29 21:05:30 niklas Exp $
+*	$OpenBSD: l_fpsp.h,v 1.3 2007/04/10 17:47:54 miod Exp $
 *	$NetBSD: l_fpsp.h,v 1.2 1994/10/26 07:49:14 cgd Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -38,7 +38,7 @@
 *	l_fpsp.h --- stack frame offsets for library version of FPSP
 *
 *	This file is derived from fpsp.h.  All equates that refer
-*	to the fsave frame and it's bits are removed with the
+*	to the fsave frame and its bits are removed with the
 *	exception of ETEMP, WBTEMP, DTAG and STAG which are simulated
 *	in the library version.  Equates for the exception frame are
 *	also not needed.  Some of the equates that are only used in

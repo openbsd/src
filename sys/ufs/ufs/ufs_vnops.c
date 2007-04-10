@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.76 2007/04/10 11:21:17 pedro Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.77 2007/04/10 17:47:56 miod Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1279,7 +1279,7 @@ ufs_mkdir(void *v)
 	}
 
 	/*
-         * Directory set up, now install it's entry in the parent directory.
+         * Directory set up, now install its entry in the parent directory.
          *
          * If we are not doing soft dependencies, then we must write out the
          * buffer containing the new directory body before entering the new

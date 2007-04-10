@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw_pci.c,v 1.13 2005/08/09 04:10:10 mickey Exp $ */
+/*	$OpenBSD: adw_pci.c,v 1.14 2007/04/10 17:47:55 miod Exp $ */
 /* $NetBSD: adw_pci.c,v 1.7 2000/05/26 15:13:46 dante Exp $	 */
 
 /*
@@ -94,7 +94,7 @@ const struct pci_matchid adw_pci_devices[] = {
 /******************************************************************************/
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 int

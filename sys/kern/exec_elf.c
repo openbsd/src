@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.59 2007/03/20 12:32:07 thib Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.60 2007/04/10 17:47:55 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -159,7 +159,7 @@ ELFNAME(copyargs)(struct exec_package *pack, struct ps_strings *arginfo,
 	 */
 	if (pack->ep_interp != NULL) {
 		pack->ep_emul_argp = stack;
-		(char *)stack += ELF_AUX_ENTRIES * sizeof (AuxInfo);
+		stack = (char *)stack + ELF_AUX_ENTRIES * sizeof (AuxInfo);
 	}
 	return (stack);
 }
@@ -739,7 +739,7 @@ native:
 
 	/*
 	 * Check if we found a dynamically linked binary and arrange to load
-	 * it's interpreter when the exec file is released.
+	 * its interpreter when the exec file is released.
 	 */
 	if (interp) {
 		struct elf_args *ap;

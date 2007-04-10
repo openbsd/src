@@ -1,4 +1,4 @@
-/*	$OpenBSD: twereg.h,v 1.7 2003/06/02 19:24:22 mickey Exp $	*/
+/*	$OpenBSD: twereg.h,v 1.8 2007/04/10 17:47:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -28,7 +28,7 @@
 /*
  * most of the meaning for registers were taken from
  * freebsd driver, which in turn got 'em from linux.
- * it seems those got 'em from windows driver, in it's turn.
+ * it seems those got 'em from windows driver, in turn.
  */
 
 

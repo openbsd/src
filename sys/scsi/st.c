@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.72 2007/01/20 18:21:51 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.73 2007/04/10 17:47:56 miod Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1275,7 +1275,7 @@ st_read(st, buf, size, flags)
 }
 
 /*
- * Ask the drive what it's min and max blk sizes are.
+ * Ask the drive what its min and max blk sizes are.
  */
 int
 st_read_block_limits(st, flags)

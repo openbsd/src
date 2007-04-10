@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.seq,v 1.6 2005/03/23 23:47:22 deraadt Exp $	*/
+/*	$OpenBSD: aic79xx.seq,v 1.7 2007/04/10 17:47:55 miod Exp $	*/
 /*
  * Adaptec U320 device driver firmware for Linux and FreeBSD.
  *
@@ -41,7 +41,7 @@
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.seq,v 1.17 2004/08/04 17:55:34 gibbs Exp $
  */
 
-VERSION = "$Id: aic79xx.seq,v 1.6 2005/03/23 23:47:22 deraadt Exp $"
+VERSION = "$Id: aic79xx.seq,v 1.7 2007/04/10 17:47:55 miod Exp $"
 PATCH_ARG_LIST = "struct ahd_softc *ahd"
 PREFIX = "ahd_"
 
@@ -1037,7 +1037,7 @@ p_mesgin:
 
 /*
  * Pushed message loop to allow the kernel to
- * run it's own message state engine.  To avoid an
+ * run its own message state engine.  To avoid an
  * extra nop instruction after signaling the kernel,
  * we perform the phase_lock before checking to see
  * if we should exit the loop and skip the phase_lock

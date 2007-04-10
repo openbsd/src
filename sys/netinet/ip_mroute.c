@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.46 2007/02/14 00:53:48 jsg Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.47 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -1850,7 +1850,7 @@ encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 	}
 
 	/*
-	 * copy the old packet & pullup it's IP header into the
+	 * copy the old packet & pullup its IP header into the
 	 * new mbuf so we can modify it.  Try to fill the new
 	 * mbuf since if we don't the ethernet driver will.
 	 */

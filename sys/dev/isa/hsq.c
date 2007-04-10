@@ -1,4 +1,4 @@
-/*	$OpenBSD: hsq.c,v 1.3 2003/06/02 19:37:56 deraadt Exp $	*/
+/*	$OpenBSD: hsq.c,v 1.4 2007/04/10 17:47:55 miod Exp $	*/
 
 /*-
  * Copyright (c) 1999 Denis A. Doroshenko. All rights reserved.
@@ -66,7 +66,7 @@
  *
  * Shitty feature: UER's value upon power up is absolutely random,
  * so that UARTs can work and can not and you don't uderstand what's up...
- * Thus, we have to set it's value to 0x0f to get all four UARTs 
+ * Thus, we have to set its value to 0x0f to get all four UARTs 
  * interrupting, just after we've attached the mux...
  *
  * Use it and share my fun!

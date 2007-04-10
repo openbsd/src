@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.c,v 1.32 2006/04/14 09:36:49 martin Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.33 2007/04/10 17:47:54 miod Exp $	*/
 /*	$NetBSD: nubus.c,v 1.53 2002/04/13 17:49:41 briggs Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ nubus_video_resource(slot)
 
 /*
  * Probe a given nubus slot.  If a card is there and we can get the
- * format block from it's clutching decl. ROMs, fill the format block
+ * format block from its clutching decl. ROMs, fill the format block
  * and return non-zero.  If we can't find a card there with a valid
  * decl. ROM, return 0.
  *

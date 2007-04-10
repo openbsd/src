@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.80 2006/04/11 14:31:52 djm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.81 2007/04/10 17:47:55 miod Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -487,7 +487,7 @@ void arc4maybeinit(void);
  * package.
  *
  * The initialization function here has been modified to not discard
- * the old state, and it's input always includes the time of day in
+ * the old state, and its input always includes the time of day in
  * microseconds.  Moreover, bytes from the stream may at any point be
  * diverted to multiple processes or even kernel functions desiring
  * random numbers.  This increases the strength of the random stream,

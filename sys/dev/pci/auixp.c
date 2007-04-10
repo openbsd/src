@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.7 2007/02/14 01:12:16 jsg Exp $ */
+/* $OpenBSD: auixp.c,v 1.8 2007/04/10 17:47:55 miod Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -805,7 +805,7 @@ auixp_allocate_dma_chain(struct auixp_softc *sc, struct auixp_dma **dmap)
 }
 
 
-/* program dma chain in it's link address descriptor */
+/* program dma chain in its link address descriptor */
 void
 auixp_program_dma_chain(struct auixp_softc *sc, struct auixp_dma *dma)
 {
@@ -935,7 +935,7 @@ auixp_trigger_output(void *hdl, void *start, void *end, int blksize,
 }
 
 
-/* halt output of audio, just disable it's dma and update bus state */
+/* halt output of audio, just disable its dma and update bus state */
 int
 auixp_halt_output(void *hdl)
 {
@@ -1010,7 +1010,7 @@ auixp_trigger_input(void *hdl, void *start, void *end, int blksize,
 }
 
 
-/* halt sampling audio, just disable it's dma and update bus state */
+/* halt sampling audio, just disable its dma and update bus state */
 int
 auixp_halt_input(void *hdl)
 {

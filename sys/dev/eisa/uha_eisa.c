@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_eisa.c,v 1.5 2005/11/23 11:30:14 mickey Exp $	*/
+/*	$OpenBSD: uha_eisa.c,v 1.6 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: uha_eisa.c,v 1.5 1996/10/21 22:31:07 thorpej Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ void u24_init(struct uha_softc *);
 
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 int

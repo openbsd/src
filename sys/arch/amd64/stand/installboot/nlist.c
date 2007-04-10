@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.2 2004/02/09 20:59:52 mickey Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.3 2007/04/10 17:47:54 miod Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -277,7 +277,7 @@ out:
  * is ELF and valid for the target platform.
  *
  * WARNING:  This is NOT a ELF ABI function and
- * as such it's use should be restricted.
+ * as such its use should be restricted.
  */
 int
 __elf_is_okay__(ehdr)
@@ -344,7 +344,7 @@ __elf_fdnlist(fd, list)
 	}
 
 	/*
-	 * Find the symbol table entry and it's corresponding
+	 * Find the symbol table entry and its corresponding
 	 * string table entry.	Version 1.1 of the ABI states
 	 * that there is only one symbol table but that this
 	 * could change in the future.

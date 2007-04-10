@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.45 2007/01/16 17:52:18 thib Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.46 2007/04/10 17:47:56 miod Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1037,7 +1037,7 @@ ext2fs_mkdir(v)
 		ip->i_flag |= IN_CHANGE;
 	}
 
-	/* Directory set up, now install it's entry in the parent directory. */
+	/* Directory set up, now install its entry in the parent directory. */
 	error = ext2fs_direnter(ip, dvp, cnp);
 	if (error != 0) {
 		dp->i_e2fs_nlink--;

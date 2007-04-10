@@ -1,4 +1,4 @@
-/* $OpenBSD: aic7xxx.seq,v 1.19 2006/12/23 21:08:01 krw Exp $ */
+/* $OpenBSD: aic7xxx.seq,v 1.20 2007/04/10 17:47:55 miod Exp $ */
 /*-
  * Adaptec 274x/284x/294x device driver firmware for Linux and FreeBSD.
  *
@@ -41,7 +41,7 @@
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.seq,v 1.128 2005/01/06 01:42:26 imp Exp $
  */
 
-VERSION = "$Id: aic7xxx.seq,v 1.19 2006/12/23 21:08:01 krw Exp $"
+VERSION = "$Id: aic7xxx.seq,v 1.20 2007/04/10 17:47:55 miod Exp $"
 PATCH_ARG_LIST = "struct ahc_softc *ahc"
 PREFIX = "ahc_"
 
@@ -322,7 +322,7 @@ ident_messages_done_msg_pending:
 
 		/*
 		 * Pushed message loop to allow the kernel to
-		 * run it's own target mode message state engine.
+		 * run its own target mode message state engine.
 		 */
 host_target_message_loop:
 		mvi	HOST_MSG_LOOP call set_seqint;
@@ -1447,7 +1447,7 @@ p_command_xfer:
 		test	SSTAT0, SDONE jnz . + 2;
 		test    SSTAT1, PHASEMIS jz . - 1;
 		/*
-		 * Wait for our ACK to go-away on it's own
+		 * Wait for our ACK to go-away on its own
 		 * instead of being killed by SCSIEN getting cleared.
 		 */
 		test	SCSISIGI, ACKI jnz .;
@@ -1569,7 +1569,7 @@ p_mesgin:
 
 /*
  * Pushed message loop to allow the kernel to
- * run it's own message state engine.  To avoid an
+ * run its own message state engine.  To avoid an
  * extra nop instruction after signaling the kernel,
  * we perform the phase_lock before checking to see
  * if we should exit the loop and skip the phase_lock

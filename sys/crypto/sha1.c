@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.5 2004/04/28 20:39:35 hshoexer Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.6 2007/04/10 17:47:55 miod Exp $	*/
 
 /*
  * SHA-1 in C
@@ -171,7 +171,7 @@ SHA1Final(unsigned char digest[SHA1_DIGEST_LENGTH], SHA1_CTX *context)
     bzero(context->state, 20);
     bzero(context->count, 8);
     bzero(&finalcount, 8);
-#ifdef SHA1HANDSOFF  /* make SHA1Transform overwrite it's own static vars */
+#ifdef SHA1HANDSOFF  /* make SHA1Transform overwrite its own static vars */
     SHA1Transform(context->state, context->buffer);
 #endif
 #endif

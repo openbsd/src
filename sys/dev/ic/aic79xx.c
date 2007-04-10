@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.37 2006/10/19 10:55:56 tom Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.38 2007/04/10 17:47:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -1915,7 +1915,7 @@ ahd_handle_transmission_error(struct ahd_softc *ahd)
 		 * ignore a perfectly valid "unexpected busfree"
 		 * after our "initiator detected error" message is
 		 * sent.  A busfree is the expected response after
-		 * we tell the target that it's L_Q was corrupted.
+		 * we tell the target that its L_Q was corrupted.
 		 * (SPI4R09 10.7.3.3.3)
 		 */
 		ahd_outb(ahd, LQCTL2, LQIRETRY);

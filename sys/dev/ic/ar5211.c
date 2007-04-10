@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.33 2007/03/12 01:04:52 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.34 2007/04/10 17:47:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -203,7 +203,7 @@ ar5k_ar5211_attach(u_int16_t device, void *sc, bus_space_tag_t st,
 
 	ar5k_ar5211_fill(hal);
 
-	/* Bring device out of sleep and reset it's units */
+	/* Bring device out of sleep and reset its units */
 	if (ar5k_ar5211_nic_wakeup(hal, AR5K_INIT_MODE) != AH_TRUE)
 		return (NULL);
 

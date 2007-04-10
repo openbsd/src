@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.20 2006/03/04 22:40:15 brad Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.21 2007/04/10 17:47:52 miod Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -291,7 +291,7 @@ cbq_add_queue(struct pf_altq *a)
 		borrow = NULL;
 
 	/*
-	 * A class must borrow from it's parent or it can not
+	 * A class must borrow from its parent or it can not
 	 * borrow at all.  Hence, borrow can be null.
 	 */
 	if (parent == NULL && (opts->flags & CBQCLF_ROOTCLASS) == 0) {

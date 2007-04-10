@@ -1,4 +1,4 @@
-/*     $OpenBSD: ispvar.h,v 1.22 2003/03/03 18:37:25 mjacob Exp $ */
+/*     $OpenBSD: ispvar.h,v 1.23 2007/04/10 17:47:55 miod Exp $ */
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -774,7 +774,7 @@ void isp_prt(struct ispsoftc *, int level, const char *, ...);
 #define	ISP_LOGTDEBUG2	0x800	/* log all debug messages (target) */
 
 /*
- * Each Platform provides it's own isposinfo substructure of the ispsoftc
+ * Each Platform provides its own isposinfo substructure of the ispsoftc
  * defined above.
  *
  * Each platform must also provide the following macros/defines:

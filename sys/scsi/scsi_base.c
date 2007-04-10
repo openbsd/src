@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.119 2007/04/03 04:47:59 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.120 2007/04/10 17:47:56 miod Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1085,7 +1085,7 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 #endif	/* SCSIDEBUG */
 
 	/*
-	 * If the device has it's own error handler, call it first.
+	 * If the device has its own error handler, call it first.
 	 * If it returns a legit error value, return that, otherwise
 	 * it wants us to continue with normal error processing.
 	 */
@@ -1975,7 +1975,7 @@ scsi_decode_sense(struct scsi_sense_data *sense, int flag)
 
 #ifdef SCSIDEBUG
 /*
- * Given a scsi_xfer, dump the request, in all it's glory
+ * Given a scsi_xfer, dump the request, in all its glory
  */
 void
 show_scsi_xs(struct scsi_xfer *xs)

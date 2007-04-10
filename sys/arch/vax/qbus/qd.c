@@ -1,4 +1,4 @@
-/*	$OpenBSD: qd.c,v 1.11 2006/01/01 11:59:39 miod Exp $	*/
+/*	$OpenBSD: qd.c,v 1.12 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: qd.c,v 1.17 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
@@ -199,7 +199,7 @@ struct DMAreq_header *DMAheader[NQD];  /* DMA buffer header pntrs */
 /*
  * The driver assists a client in scroll operations by loading dragon
  * registers from an interrupt service routine.	The loading is done using
- * parameters found in memory shrade between the driver and it's client.
+ * parameters found in memory shrade between the driver and its client.
  * The scroll parameter structures are ALL loacted in the same memory page
  * for reasons of memory economy.  
  */
@@ -576,7 +576,7 @@ qd_match(parent, match, aux)
 	 * is found via an array of pte ptrs called "QVmap[]" (ubavar.h)
 	 * which is also loaded at config time.   These are the
 	 * variables used below to find a vacant 64kb boundary in
-	 * Qbus memory, and load it's corresponding physical adrs
+	 * Qbus memory, and load its corresponding physical adrs
 	 * into the QDSS's I/O page CSR.  
 	 */
 

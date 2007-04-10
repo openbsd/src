@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.83 2007/04/03 04:47:59 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.84 2007/04/10 17:47:56 miod Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@
  * each individual scsi bus has an array that points to all the scsi_link
  *    structs associated with that scsi bus. Slots with no device have
  *    a NULL pointer.
- * each individual device also knows the address of it's own scsi_link
+ * each individual device also knows the address of its own scsi_link
  *    structure.
  *
  *				-------------

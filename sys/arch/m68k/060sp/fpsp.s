@@ -1,5 +1,5 @@
 #
-# $OpenBSD: fpsp.s,v 1.8 2005/02/17 18:07:36 jfb Exp $
+# $OpenBSD: fpsp.s,v 1.9 2007/04/10 17:47:54 miod Exp $
 # $NetBSD: fpsp.s,v 1.2 1996/05/15 19:48:03 is Exp $
 #
 
@@ -2211,7 +2211,7 @@ fu_snan_s_p:
 	mov.l		LOCAL_SIZE+2+EXC_PC(%sp),LOCAL_SIZE+2+EXC_PC-0xc(%sp)
 	mov.l		LOCAL_SIZE+EXC_EA(%sp),LOCAL_SIZE+EXC_EA-0xc(%sp)
 
-# now, we copy the default result to it's proper location
+# now, we copy the default result to its proper location
 	mov.l		LOCAL_SIZE+FP_DST_EX(%sp),LOCAL_SIZE+0x4(%sp)
 	mov.l		LOCAL_SIZE+FP_DST_HI(%sp),LOCAL_SIZE+0x8(%sp)
 	mov.l		LOCAL_SIZE+FP_DST_LO(%sp),LOCAL_SIZE+0xc(%sp)
@@ -2251,7 +2251,7 @@ fu_operr_p_s:
 	mov.l		LOCAL_SIZE+2+EXC_PC(%sp),LOCAL_SIZE+2+EXC_PC-0xc(%sp)
 	mov.l		LOCAL_SIZE+EXC_EA(%sp),LOCAL_SIZE+EXC_EA-0xc(%sp)
 
-# now, we copy the default result to it's proper location
+# now, we copy the default result to its proper location
 	mov.l		LOCAL_SIZE+FP_DST_EX(%sp),LOCAL_SIZE+0x4(%sp)
 	mov.l		LOCAL_SIZE+FP_DST_HI(%sp),LOCAL_SIZE+0x8(%sp)
 	mov.l		LOCAL_SIZE+FP_DST_LO(%sp),LOCAL_SIZE+0xc(%sp)
@@ -2291,7 +2291,7 @@ fu_inex_s_p2:
 	mov.l		LOCAL_SIZE+2+EXC_PC(%sp),LOCAL_SIZE+2+EXC_PC-0xc(%sp)
 	mov.l		LOCAL_SIZE+EXC_EA(%sp),LOCAL_SIZE+EXC_EA-0xc(%sp)
 
-# now, we copy the default result to it's proper location
+# now, we copy the default result to its proper location
 	mov.l		LOCAL_SIZE+FP_DST_EX(%sp),LOCAL_SIZE+0x4(%sp)
 	mov.l		LOCAL_SIZE+FP_DST_HI(%sp),LOCAL_SIZE+0x8(%sp)
 	mov.l		LOCAL_SIZE+FP_DST_LO(%sp),LOCAL_SIZE+0xc(%sp)

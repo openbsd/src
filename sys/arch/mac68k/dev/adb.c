@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.25 2007/03/13 20:56:54 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.26 2007/04/10 17:47:54 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.47 2005/06/16 22:43:36 jmc Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.51 2005/06/16 22:43:36 jmc Exp $	*/
 
@@ -1533,7 +1533,7 @@ send_adb_IIsi(u_char *in, u_char *buffer, void *compRout, void *data, int
  *
  * If in->unsol is 1, then this packet was unsolicited and
  * so we look up the device in the ADB device table to determine
- * what it's default service routine is.
+ * what its default service routine is.
  *
  * If in->ack_only is 1, then we really only need to call
  * the completion routine, so don't do any other stuff.

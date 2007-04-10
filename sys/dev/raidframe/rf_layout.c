@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_layout.c,v 1.6 2002/12/16 07:01:04 tdeval Exp $	*/
+/*	$OpenBSD: rf_layout.c,v 1.7 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: rf_layout.c,v 1.6 2000/04/17 19:35:12 oster Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ static RF_AccessState_t DefaultStates[] = {
 #if	(defined(__NetBSD__) || defined(__OpenBSD__)) && !defined(_KERNEL)
 /*
  * XXX Gross hack to shutup gcc -- It complains that DefaultStates is not
- * used when compiling this in userland... I hate to burst it's bubble, but
+ * used when compiling this in userland... I hate to burst its bubble, but
  * DefaultStates is used all over the place here in the initialization of
  * lots of data structures. GO
  */

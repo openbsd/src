@@ -1,4 +1,4 @@
-/*	$OpenBSD: in4_cksum.c,v 1.1 2005/05/02 03:22:10 brad Exp $	*/
+/*	$OpenBSD: in4_cksum.c,v 1.2 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: in4_cksum.c,v 1.5 2003/10/13 14:22:20 agc Exp $ */
 
 /*
@@ -9,7 +9,7 @@
  * All advertising materials mentioning features or use of this software
  * must display the following acknowledgement:
  *	This product includes software developed by the University of
- *	California, and it's contributors.
+ *	California, and its contributors.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,7 +46,7 @@
  * All advertising materials mentioning features or use of this software
  * must display the following acknowledgement:
  *	This product includes software developed by the University of
- *	California, and it's contributors.
+ *	California, and its contributors.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

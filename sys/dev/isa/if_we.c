@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.17 2006/10/20 17:02:24 brad Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.18 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -264,7 +264,7 @@ we_probe(struct device *parent, void *match, void *aux)
 	bus_space_write_1(asict, asich, WE_MSR,
 	    bus_space_read_1(asict, asich, WE_MSR) & ~WE_MSR_RST);
 
-	/* Wait in case the card is reading it's EEPROM. */
+	/* Wait in case the card is reading its EEPROM. */
 	delay(5000);
 
 	/*

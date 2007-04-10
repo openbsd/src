@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.16 2007/04/04 18:38:54 kettenis Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.17 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ ebus_match(struct device *parent, void *match, void *aux)
 }
 
 /*
- * attach an ebus and all it's children.  this code is modeled
+ * attach an ebus and all its children.  this code is modeled
  * after the sbus code which does similar things.
  */
 void
@@ -292,7 +292,7 @@ ebus_print(void *aux, const char *p)
 /*
  * find the INO values for each interrupt and fill them in.
  *
- * for each "reg" property of this device, mask it's hi and lo
+ * for each "reg" property of this device, mask its hi and lo
  * values with the "interrupt-map-mask"'s hi/lo values, and also
  * mask the interrupt number with the interrupt mask.  search the
  * "interrupt-map" list for matching values of hi, lo and interrupt

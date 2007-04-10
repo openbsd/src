@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha_isa.c,v 1.2 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: bha_isa.c,v 1.3 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: bha_isa.c,v 1.14 1998/08/15 10:10:51 mycroft Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ struct cfattach bha_isa_ca = {
 
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 int

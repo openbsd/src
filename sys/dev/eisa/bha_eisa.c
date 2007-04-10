@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha_eisa.c,v 1.3 2002/03/14 01:26:53 millert Exp $	*/
+/*	$OpenBSD: bha_eisa.c,v 1.4 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: bha_eisa.c,v 1.16 1998/08/15 10:10:49 mycroft Exp $	*/
 
 /*-
@@ -105,7 +105,7 @@ bha_eisa_address(iot, ioh, portp)
 
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 int

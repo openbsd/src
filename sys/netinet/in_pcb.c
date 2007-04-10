@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.88 2006/06/18 11:47:45 pascoe Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.89 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ in_pcballoc(so, v)
 	/*
 	 * Small change in this function to set the INP_IPV6 flag so routines
 	 * outside pcb-specific routines don't need to use sotopf(), and all
-	 * of it's pointer chasing, later.
+	 * of its pointer chasing, later.
 	 */
 	if (sotopf(so) == PF_INET6)
 		inp->inp_flags = INP_IPV6;

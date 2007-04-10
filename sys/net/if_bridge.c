@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.157 2007/01/08 13:52:38 michele Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.158 2007/04/10 17:47:55 miod Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1237,7 +1237,7 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 
 	/*
 	 * If interface is learning, and if source address
-	 * is not broadcast or multicast, record it's address.
+	 * is not broadcast or multicast, record its address.
 	 */
 	if ((ifl->bif_flags & IFBIF_LEARNING) &&
 	    (eh.ether_shost[0] & 1) == 0 &&

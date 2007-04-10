@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdlink.h,v 1.8 2003/06/02 23:28:02 millert Exp $	*/
+/*	$OpenBSD: fdlink.h,v 1.9 2007/04/10 17:47:55 miod Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -41,7 +41,7 @@
  */
 
 /*
- * The goo that binds the floppy controller to it's devices.
+ * The goo that binds the floppy controller to its devices.
  */
 
 enum fdc_state {

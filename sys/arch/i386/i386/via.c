@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
+/*	$OpenBSD: via.c,v 1.9 2007/04/10 17:47:54 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -510,7 +510,7 @@ out:
  * store random data, and can be accessed a lot quicker than waiting
  * for new data to be generated.  As we are using every 8th bit only
  * due to whitening. Since the RNG generates in excess of 21KB/s at
- * it's worst, collecting 64 bytes worth of entropy should not affect
+ * its worst, collecting 64 bytes worth of entropy should not affect
  * things significantly.
  *
  * Note, due to some weirdness in the RNG, we need at least 7 bytes

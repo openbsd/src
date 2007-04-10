@@ -1,5 +1,5 @@
 #
-# $OpenBSD: ilsp.doc,v 1.2 1996/05/30 22:14:37 niklas Exp $
+# $OpenBSD: ilsp.doc,v 1.3 2007/04/10 17:47:54 miod Exp $
 # $NetBSD: ilsp.doc,v 1.2 1996/05/15 19:48:36 is Exp $
 #
 
@@ -136,7 +136,7 @@ An example of using the "cmp2" instruction is as follows:
 Exception reporting:
 --------------------
 If the instruction being emulated is a divide and the source
-operand is a zero, then the library routine, as it's last
+operand is a zero, then the library routine, as its last
 instruction, executes an implemented divide using a zero
 source operand so that an "Integer Divide-by-Zero" exception
 will be taken. Although the exception stack frame will not

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.78 2007/03/24 16:01:22 art Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.79 2007/04/10 17:47:55 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -2111,7 +2111,7 @@ wsdisplay_unset_cons_kbd()
 }
 
 /*
- * Switch the console display to it's first screen.
+ * Switch the console display to its first screen.
  */
 void
 wsdisplay_switchtoconsole()

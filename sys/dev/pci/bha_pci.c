@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha_pci.c,v 1.7 2005/08/09 04:10:10 mickey Exp $	*/
+/*	$OpenBSD: bha_pci.c,v 1.8 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: bha_pci.c,v 1.16 1998/08/15 10:10:53 mycroft Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@ const struct pci_matchid bha_pci_devices[] = {
 
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 int

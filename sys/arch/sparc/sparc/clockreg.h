@@ -1,4 +1,4 @@
-/*	$OpenBSD: clockreg.h,v 1.4 2006/06/23 19:54:30 kettenis Exp $	*/
+/*	$OpenBSD: clockreg.h,v 1.5 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: clockreg.h,v 1.5 1994/11/20 20:54:07 deraadt Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  *
  * This is used in the Sun 4m machines. It is identical to the MK48T02,
  * except for being 8K in size. The following structure, then, describes
- * the last 2K of it's 8K address space. We simply ignore the first 6K..
+ * the last 2K of its 8K address space. We simply ignore the first 6K..
  */
 struct clockreg {
 	char	cl_nvram[2008];		/* `free' nonvolatile memory */

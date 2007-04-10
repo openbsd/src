@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.50 2007/01/26 16:53:28 tsi Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.51 2007/04/10 17:47:55 miod Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ psycho_match(struct device *parent, void *match, void *aux)
  *	- get interrupt-map and interrupt-map-mask
  *	- setup the chipsets.
  *	- if we're the first of the pair, initialise the IOMMU, otherwise
- *	  just copy it's tags and addresses.
+ *	  just copy its tags and addresses.
  */
 void
 psycho_attach(struct device *parent, struct device *self, void *aux)
@@ -643,7 +643,7 @@ psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
  */
 
 /*
- * allocate a PCI chipset tag and set it's cookie.
+ * allocate a PCI chipset tag and set its cookie.
  */
 pci_chipset_tag_t
 psycho_alloc_chipset(struct psycho_pbm *pp, int node, pci_chipset_tag_t pc)
