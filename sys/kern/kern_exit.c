@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.68 2007/04/10 16:54:48 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.69 2007/04/10 21:09:42 tedu Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -119,11 +119,7 @@ exit1(struct proc *p, int rv, int flags)
 		panic("init died (signal %d, exit %d)",
 		    WTERMSIG(rv), WEXITSTATUS(rv));
 	
-	/* unlink ourselves from the active threads */
-	TAILQ_REMOVE(&p->p_p->ps_threads, p, p_thr_link);
 #ifdef RTHREADS
-	if (TAILQ_EMPTY(&p->p_p->ps_threads))
-		wakeup(&p->p_p->ps_threads);
 	/*
 	 * if one thread calls exit, we take down everybody.
 	 * we have to be careful not to get recursively caught.
@@ -145,6 +141,12 @@ exit1(struct proc *p, int rv, int flags)
 			q = TAILQ_FIRST(&p->p_p->ps_threads);
 			for (; q != NULL; q = nq) {
 				nq = TAILQ_NEXT(q, p_thr_link);
+
+				/*
+				 * Don't shoot ourselves again.
+				 */
+				if (q == p)
+					continue;
 				atomic_setbits_int(&q->p_flag, P_IGNEXITRV);
 				q->p_xstat = rv;
 				psignal(q, SIGKILL);
@@ -267,6 +269,12 @@ exit1(struct proc *p, int rv, int flags)
 		}
 	}
 
+	/* unlink ourselves from the active threads */
+	TAILQ_REMOVE(&p->p_p->ps_threads, p, p_thr_link);
+#ifdef RTHREADS
+	if (TAILQ_EMPTY(&p->p_p->ps_threads))
+		wakeup(&p->p_p->ps_threads);
+#endif
 
 	/*
 	 * Save exit status and final rusage info, adding in child rusage
