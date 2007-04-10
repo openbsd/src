@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.15 2007/03/15 10:22:29 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.16 2007/04/10 21:44:56 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -316,8 +316,6 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
-
 #define	cpu_wait(p)		/* nothing */
 
 #ifndef _LOCORE
@@ -476,9 +474,7 @@ void	tlb_write_indexed(int, struct tlb_entry *);
 int	tlb_update(vaddr_t, unsigned);
 void	tlb_read(int, struct tlb_entry *);
 
-void	wbflush(void);
 void	savectx(struct user *, int);
-int	copykstack(struct user *);
 void	switch_exit(struct proc *);
 void	MipsSaveCurFPState(struct proc *);
 void	MipsSaveCurFPState16(struct proc *);
