@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.14 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: dump.h,v 1.15 2007/04/10 04:45:37 moritz Exp $	*/
 /*	$NetBSD: dump.h,v 1.11 1997/06/05 11:13:20 lukem Exp $	*/
 
 /*-
@@ -173,7 +173,7 @@ void	initdumptimes(void);
 void	getdumptime(void);
 void	putdumptime(void);
 #define	ITITERATE(i, ddp) \
-	for (ddp = ddatev[i = 0]; i < nddates; ddp = ddatev[++i])
+	for (i = 0; i < nddates && (ddp = ddatev[i]); i++)
 
 void	sig(int signo);
 
