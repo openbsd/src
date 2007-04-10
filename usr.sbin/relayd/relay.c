@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.22 2007/03/21 00:08:08 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.23 2007/04/10 18:14:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -863,8 +863,7 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *pn,
 	case NODE_ACTION_FILTER:
 		DPRINTF("relay_handle_http: filter '%s: %s'",
 		    pn->key, pn->value);
-		if (fnmatch(pn->value, pk->value, FNM_CASEFOLD) ==
-		    FNM_NOMATCH) {
+		if (fnmatch(pn->value, pk->value, FNM_CASEFOLD) == 0) {
 			if (pn->flags & PNFLAG_MARK)
 				cre->marked++;
 			cre->nodes[pn->id] = 1;
@@ -1261,9 +1260,20 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	}
 	if (cre->done) {
 		RB_FOREACH(pn, proto_tree, cre->tree) {
-			if (cre->nodes[pn->id]) {
+			switch (pn->action) {
+			case NODE_ACTION_FILTER:
+				if (!cre->nodes[pn->id])
+					continue;
 				cre->nodes[pn->id] = 0;
-				continue;
+				break;
+			case NODE_ACTION_APPEND:
+			case NODE_ACTION_CHANGE:
+			case NODE_ACTION_EXPECT:
+				if (cre->nodes[pn->id]) {
+					cre->nodes[pn->id] = 0;
+					continue;
+				}
+				break;
 			}
 			switch (pn->action) {
 			case NODE_ACTION_APPEND:
