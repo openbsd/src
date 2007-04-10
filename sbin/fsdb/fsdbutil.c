@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdbutil.c,v 1.11 2005/12/19 15:18:01 pedro Exp $	*/
+/*	$OpenBSD: fsdbutil.c,v 1.12 2007/04/10 17:17:25 millert Exp $	*/
 /*	$NetBSD: fsdbutil.c,v 1.5 1996/09/28 19:30:37 christos Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fsdbutil.c,v 1.11 2005/12/19 15:18:01 pedro Exp $";
+static char rcsid[] = "$OpenBSD: fsdbutil.c,v 1.12 2007/04/10 17:17:25 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -94,7 +94,7 @@ argcount(struct cmdtable *cmdp, int argc, char *argv[])
 }
 
 void
-printstat(const char *cp, ino_t inum, struct ufs1_dinode *dp)
+printstat(const char *cp, ino_t inum, union dinode *dp)
 {
 	struct group *grp;
 	struct passwd *pw;
@@ -102,7 +102,7 @@ printstat(const char *cp, ino_t inum, struct ufs1_dinode *dp)
 	char *p;
 
 	printf("%s: ", cp);
-	switch (dp->di_mode & IFMT) {
+	switch (DIP(dp, di_mode) & IFMT) {
 	case IFDIR:
 		puts("directory");
 		break;
@@ -111,19 +111,22 @@ printstat(const char *cp, ino_t inum, struct ufs1_dinode *dp)
 		break;
 	case IFBLK:
 		printf("block special (%d,%d)",
-		    major(dp->di_rdev), minor(dp->di_rdev));
+		    (int)major(DIP(dp, di_rdev)), (int)minor(DIP(dp, di_rdev)));
 		break;
 	case IFCHR:
 		printf("character special (%d,%d)",
-		    major(dp->di_rdev), minor(dp->di_rdev));
+		    (int)major(DIP(dp, di_rdev)), (int)minor(DIP(dp, di_rdev)));
 		break;
 	case IFLNK:
 		fputs("symlink",stdout);
-		if (dp->di_size > 0 && dp->di_size < MAXSYMLINKLEN_UFS1 &&
-		    dp->di_blocks == 0)
-			printf(" to `%.*s'\n", (int) dp->di_size,
-			    (char *)dp->di_shortlink);
-		else
+		if (DIP(dp, di_size) > 0 &&
+		    DIP(dp, di_size) < sblock.fs_maxsymlinklen &&
+		    DIP(dp, di_blocks) == 0) {
+			char *p = sblock.fs_magic == FS_UFS1_MAGIC ?
+			    (char *)dp->dp1.di_shortlink :
+			    (char *)dp->dp2.di_shortlink;
+			printf(" to `%.*s'\n", (int)DIP(dp, di_size), p);
+		} else
 			putchar('\n');
 		break;
 	case IFSOCK:
@@ -134,31 +137,31 @@ printstat(const char *cp, ino_t inum, struct ufs1_dinode *dp)
 		break;
 	}
 
-	printf("I=%u MODE=%o SIZE=%llu", inum, dp->di_mode, dp->di_size);
-	t = dp->di_mtime;
+	printf("I=%u MODE=%o SIZE=%llu", inum, DIP(dp, di_mode), DIP(dp, di_size));
+	t = DIP(dp, di_mtime);
 	p = ctime(&t);
 	printf("\n\tMTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
-	    dp->di_mtimensec);
-	t = dp->di_ctime;
+	    DIP(dp, di_mtimensec));
+	t = DIP(dp, di_ctime);
 	p = ctime(&t);
 	printf("\n\tCTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
-	    dp->di_ctimensec);
-	t = dp->di_atime;
+	    DIP(dp, di_ctimensec));
+	t = DIP(dp, di_atime);
 	p = ctime(&t);
 	printf("\n\tATIME=%15.15s %4.4s [%d nsec]\n", &p[4], &p[20],
-	    dp->di_atimensec);
+	    DIP(dp, di_atimensec));
 
-	if ((pw = getpwuid(dp->di_uid)))
+	if ((pw = getpwuid(DIP(dp, di_uid))))
 		printf("OWNER=%s ", pw->pw_name);
 	else
-		printf("OWNUID=%u ", dp->di_uid);
-	if ((grp = getgrgid(dp->di_gid)))
+		printf("OWNUID=%u ", DIP(dp, di_uid));
+	if ((grp = getgrgid(DIP(dp, di_gid))))
 		printf("GRP=%s ", grp->gr_name);
 	else
-		printf("GID=%u ", dp->di_gid);
+		printf("GID=%u ", DIP(dp, di_gid));
 
-	printf("LINKCNT=%hd FLAGS=%#x BLKCNT=%x GEN=%x\n", dp->di_nlink,
-	    dp->di_flags, dp->di_blocks, dp->di_gen);
+	printf("LINKCNT=%hd FLAGS=%#x BLKCNT=%x GEN=%x\n", DIP(dp, di_nlink),
+	    DIP(dp, di_flags), (unsigned)DIP(dp, di_blocks), DIP(dp, di_gen));
 }
 
 int
@@ -178,7 +181,7 @@ checkactivedir(void)
 		warnx("no current inode");
 		return 0;
 	}
-	if ((curinode->di_mode & IFMT) != IFDIR) {
+	if ((DIP(curinode, di_mode) & IFMT) != IFDIR) {
 		warnx("inode %d not a directory", curinum);
 		return 0;
 	}
@@ -190,7 +193,7 @@ printactive(void)
 {
 	if (!checkactive())
 		return 1;
-	switch (curinode->di_mode & IFMT) {
+	switch (DIP(curinode, di_mode) & IFMT) {
 	case IFDIR:
 	case IFREG:
 	case IFBLK:
@@ -205,7 +208,8 @@ printactive(void)
 		break;
 	default:
 		printf("current inode %d: screwy itype 0%o (mode 0%o)?\n",
-		    curinum, curinode->di_mode & IFMT, curinode->di_mode);
+		    curinum, DIP(curinode, di_mode) & IFMT,
+		    DIP(curinode, di_mode));
 		break;
 	}
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.19 2007/02/20 22:23:57 jmc Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.20 2007/04/10 17:17:25 millert Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: fsdb.c,v 1.19 2007/02/20 22:23:57 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: fsdb.c,v 1.20 2007/04/10 17:17:25 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -80,7 +80,7 @@ static int chnamefunc(struct inodesc *);
 static int dotime(char *, int32_t *, int32_t *);
 
 int returntosingle = 0;
-struct ufs1_dinode *curinode;
+union dinode *curinode;
 ino_t curinum;
 
 static void
@@ -328,7 +328,7 @@ CMDFUNCSTART(back)
 CMDFUNCSTART(zapi)
 {
 	ino_t inum;
-	struct ufs1_dinode *dp;
+	union dinode *dp;
 	char *cp;
 
 	GETINUM(1,inum);
@@ -356,7 +356,8 @@ CMDFUNCSTART(uplink)
 {
 	if (!checkactive())
 		return 1;
-	printf("inode %d link count now %d\n", curinum, ++curinode->di_nlink);
+	DIP_SET(curinode, di_nlink, DIP(curinode, di_nlink) + 1);
+	printf("inode %d link count now %d\n", curinum, DIP(curinode, di_nlink));
 	inodirty();
 	return 0;
 }
@@ -365,7 +366,8 @@ CMDFUNCSTART(downlink)
 {
 	if (!checkactive())
 		return 1;
-	printf("inode %d link count now %d\n", curinum, --curinode->di_nlink);
+	DIP_SET(curinode, di_nlink, DIP(curinode, di_nlink) - 1);
+	printf("inode %d link count now %d\n", curinum, DIP(curinode, di_nlink));
 	inodirty();
 	return 0;
 }
@@ -621,7 +623,7 @@ CMDFUNCSTART(newtype)
 
 	if (!checkactive())
 		return 1;
-	type = curinode->di_mode & IFMT;
+	type = DIP(curinode, di_mode) & IFMT;
 	for (tp = typenamemap;
 	    tp < &typenamemap[sizeof(typemap)/sizeof(*typemap)];
 	    tp++) {
@@ -636,8 +638,8 @@ CMDFUNCSTART(newtype)
 		warnx("try one of `file', `dir', `socket', `fifo'");
 		return 1;
 	}
-	curinode->di_mode &= ~IFMT;
-	curinode->di_mode |= type;
+	DIP_SET(curinode, di_mode, DIP(curinode, di_mode) & ~IFMT);
+	DIP_SET(curinode, di_mode, DIP(curinode, di_mode) | type);
 	inodirty();
 	printactive();
 	return 0;
@@ -658,8 +660,8 @@ CMDFUNCSTART(chmode)
 		return 1;
 	}
 
-	curinode->di_mode &= ~07777;
-	curinode->di_mode |= modebits;
+	DIP_SET(curinode, di_mode, DIP(curinode, di_mode) & ~07777);
+	DIP_SET(curinode, di_mode, DIP(curinode, di_mode) | modebits);
 	inodirty();
 	printactive();
 	return rval;
@@ -680,7 +682,7 @@ CMDFUNCSTART(chlen)
 		return 1;
 	}
 
-	curinode->di_size = len;
+	DIP_SET(curinode, di_size, len);
 	inodirty();
 	printactive();
 	return rval;
@@ -705,7 +707,7 @@ CMDFUNCSTART(chaflags)
 		warnx("flags set beyond 32-bit range of field (%lx)", flags);
 		return(1);
 	}
-	curinode->di_flags = flags;
+	DIP_SET(curinode, di_flags, flags);
 	inodirty();
 	printactive();
 	return rval;
@@ -730,7 +732,7 @@ CMDFUNCSTART(chgen)
 		warnx("gen set beyond 32-bit range of field (%lx)", gen);
 		return(1);
 	}
-	curinode->di_gen = gen;
+	DIP_SET(curinode, di_gen, gen);
 	inodirty();
 	printactive();
 	return rval;
@@ -755,7 +757,7 @@ CMDFUNCSTART(linkcount)
 		return 1;
 	}
 
-	curinode->di_nlink = lcnt;
+	DIP_SET(curinode, di_nlink, lcnt);
 	inodirty();
 	printactive();
 	return rval;
@@ -782,7 +784,7 @@ CMDFUNCSTART(chowner)
 		}
 	}
 
-	curinode->di_uid = uid;
+	DIP_SET(curinode, di_uid, uid);
 	inodirty();
 	printactive();
 	return rval;
@@ -808,7 +810,7 @@ CMDFUNCSTART(chgroup)
 		}
 	}
 
-	curinode->di_gid = gid;
+	DIP_SET(curinode, di_gid, gid);
 	inodirty();
 	printactive();
 	return rval;
@@ -873,8 +875,12 @@ badformat:
 
 CMDFUNCSTART(chmtime)
 {
-	if (dotime(argv[1], &curinode->di_mtime, &curinode->di_mtimensec))
+	int32_t rsec, nsec;
+
+	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
+	DIP_SET(curinode, di_mtime, rsec);
+	DIP_SET(curinode, di_mtimensec, nsec);
 	inodirty();
 	printactive();
 	return 0;
@@ -882,8 +888,12 @@ CMDFUNCSTART(chmtime)
 
 CMDFUNCSTART(chatime)
 {
-	if (dotime(argv[1], &curinode->di_atime, &curinode->di_atimensec))
+	int32_t rsec, nsec;
+
+	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
+	DIP_SET(curinode, di_atime, rsec);
+	DIP_SET(curinode, di_atimensec, nsec);
 	inodirty();
 	printactive();
 	return 0;
@@ -891,8 +901,12 @@ CMDFUNCSTART(chatime)
 
 CMDFUNCSTART(chctime)
 {
-	if (dotime(argv[1], &curinode->di_ctime, &curinode->di_ctimensec))
+	int32_t rsec, nsec;
+
+	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
+	DIP_SET(curinode, di_ctime, rsec);
+	DIP_SET(curinode, di_ctimensec, nsec);
 	inodirty();
 	printactive();
 	return 0;
