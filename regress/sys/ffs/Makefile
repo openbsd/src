@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2007/03/30 19:28:25 pedro Exp $
+# $OpenBSD: Makefile,v 1.3 2007/04/10 11:23:38 pedro Exp $
 
 PROG=	fstest
 
@@ -9,7 +9,7 @@ mount:
 	mount /dev/svnd0c /mnt
 
 clean:
-	-umount -f /mnt
+	-umount /mnt
 	-vnconfig -u svnd0
 	-vnconfig -u svnd1
 	-rm -f ${.CURDIR}/fakeobj
