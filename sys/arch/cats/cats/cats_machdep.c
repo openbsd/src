@@ -1,4 +1,4 @@
-/*	$OpenBSD: cats_machdep.c,v 1.14 2006/07/13 10:35:04 martin Exp $	*/
+/*	$OpenBSD: cats_machdep.c,v 1.15 2007/04/10 16:43:34 miod Exp $	*/
 /*	$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $	*/
 
 /*
@@ -755,7 +755,7 @@ initarm(bootargs)
 	 * Until then we will use a handler that just panics but tells us
 	 * why.
 	 * Initialisation of the vectors will just panic on a data abort.
-	 * This just fills in a slighly better one.
+	 * This just fills in a slightly better one.
 	 */
 #ifdef VERBOSE_INIT_ARM
 	printf("vectors ");

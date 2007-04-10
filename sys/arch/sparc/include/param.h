@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.37 2006/08/12 17:54:38 krw Exp $	*/
+/*	$OpenBSD: param.h,v 1.38 2007/04/10 16:43:37 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
@@ -174,7 +174,7 @@ extern int mmumod;
  * early in locore.s after the machine type has been detected.
  *
  * Note that whenever the macros defined below evaluate to expressions
- * involving variables, the kernel will perform slighly worse due to the
+ * involving variables, the kernel will perform slightly worse due to the
  * extra memory references they'll generate.
  */
 #if   defined(SUN4M) && defined(SUN4C) && defined(SUN4)

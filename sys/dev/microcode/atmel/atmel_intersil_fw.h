@@ -1,5 +1,5 @@
 /*
- * The following firmware has been taken (and reformatted slighly) from the
+ * The following firmware has been taken (and reformatted slightly) from the
  * Atmel (atmelwlandriver) driver source.
  *
  *   Target:  AT76C503 with Intersil 3861 radio

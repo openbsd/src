@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.22 2007/03/20 14:42:52 deanna Exp $	*/
+/*	$OpenBSD: param.h,v 1.23 2007/04/10 16:43:37 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -239,7 +239,7 @@ extern void	delay(unsigned int);
  * On a sun4u machine, the page size is 8192.
  *
  * Note that whenever the macros defined below evaluate to expressions
- * involving variables, the kernel will perform slighly worse due to the
+ * involving variables, the kernel will perform slightly worse due to the
  * extra memory references they'll generate.
  */
 
