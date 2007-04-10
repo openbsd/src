@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.75 2007/04/02 10:57:17 pedro Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.76 2007/04/10 11:21:17 pedro Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -944,6 +944,7 @@ abortit:
 			panic("ufs_rename: lost to startdir");
 		if ((error = relookup(tdvp, &tvp, tcnp)) != 0)
 			goto out;
+		vrele(tdvp); /* relookup() acquired a reference */
 		dp = VTOI(tdvp);
 		xp = NULL;
 		if (tvp)
