@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.552 2007/03/21 11:27:54 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.553 2007/04/10 00:44:50 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -350,6 +350,8 @@ ahc*	at pci?			# Adaptec 2940/3940/78?? SCSI controllers
 scsibus* at ahc?
 ahci*	at pci?			# AHCI SATA controllers
 scsibus* at ahci?
+sili*	at pci?			# Silicon Image 3124/3132/3531 SATA controllers
+scsibus* at sili?
 ahd*	at pci?			# Adaptec 79?? SCSI controllers
 scsibus* at ahd?
 arc*	at pci?			# Areca RAID Controllers

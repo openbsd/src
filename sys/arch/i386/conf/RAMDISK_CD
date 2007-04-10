@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.137 2007/03/26 01:38:06 dlg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.138 2007/04/10 00:44:50 dlg Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -199,6 +199,8 @@ ahc*	at pci?			# Adaptec 2940/3940/78?? SCSI controllers
 scsibus* at ahc?
 ahci*	at pci?			# AHCI SATA controllers
 scsibus* at ahci?
+sili*	at pci?			# Silicon Image 3124/3132/3531 SATA controllers
+scsibus* at sili?
 ahd*	at pci?			# Adaptec 79?? SCSI controllers
 scsibus* at ahd?
 arc*	at pci?			# Areca RAID Controllers
