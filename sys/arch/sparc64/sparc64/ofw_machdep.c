@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.17 2007/04/06 22:38:14 kettenis Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.18 2007/04/10 14:26:17 kettenis Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -866,11 +866,10 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 		}
 
 		/* Get reg for the next level search. */
-		if ((len = OF_getprop(node, "reg", &reg, sizeof(reg))) <= 0) {
+		if ((len = OF_getprop(node, "reg", &reg, sizeof(reg))) <= 0)
 			DPRINTF(("OF_mapintr: no reg property?\n"));
-			continue;
-		}
-		DPRINTF(("reg len %d\n", len));
+		else
+			DPRINTF(("reg len %d\n", len));
 
 		node = OF_parent(node);
 	} 
