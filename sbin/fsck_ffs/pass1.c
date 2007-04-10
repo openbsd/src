@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.22 2007/03/19 13:27:47 pedro Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.23 2007/04/10 16:08:17 millert Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass1.c,v 1.22 2007/03/19 13:27:47 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: pass1.c,v 1.23 2007/04/10 16:08:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ void
 pass1(void)
 {
 	struct inodesc idesc;
-	ino_t inumber;
+	ino_t inumber, inosused;
 	int c, i, cgd;
 
 	/*
@@ -84,7 +84,7 @@ pass1(void)
 		for (; i < cgd; i++)
 			setbmap(i);
 	}
-	i = sblock.fs_ffs1_csaddr;
+	i = sblock.fs_csaddr;
 	cgd = i + howmany(sblock.fs_cssize, sblock.fs_fsize);
 	for (; i < cgd; i++)
 		setbmap(i);
@@ -94,13 +94,19 @@ pass1(void)
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = ADDR;
 	idesc.id_func = pass1check;
-	inumber = 0;
 	n_files = n_blks = 0;
-	resetinodebuf();
 	info_inumber = 0;
 	info_fn = pass1_info;
 	for (c = 0; c < sblock.fs_ncg; c++) {
-		for (i = 0; i < sblock.fs_ipg; i++, inumber++) {
+		inumber = c * sblock.fs_ipg;
+		setinodebuf(inumber);
+		getblk(&cgblk, cgtod(&sblock, c), sblock.fs_cgsize);
+		if (sblock.fs_magic == FS_UFS2_MAGIC)
+			inosused = cgrp.cg_initediblk;
+		else
+			inosused = sblock.fs_ipg;
+		cginosused[c] = inosused;
+		for (i = 0; i < inosused; i++, inumber++) {
 			info_inumber = inumber;
 			if (inumber < ROOTINO)
 				continue;
@@ -114,7 +120,7 @@ pass1(void)
 static void
 checkinode(ino_t inumber, struct inodesc *idesc)
 {
-	struct ufs1_dinode *dp;
+	union dinode *dp;
 	struct zlncnt *zlnp;
 	int ndb, j;
 	mode_t mode;
@@ -122,11 +128,20 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	u_int64_t lndb;
 
 	dp = getnextinode(inumber);
-	mode = dp->di_mode & IFMT;
+	mode = DIP(dp, di_mode) & IFMT;
 	if (mode == 0) {
-		if (memcmp(dp->di_db, zino.di_db, NDADDR * sizeof(daddr_t)) ||
-		    memcmp(dp->di_ib, zino.di_ib, NIADDR * sizeof(daddr_t)) ||
-		    dp->di_mode || dp->di_size) {
+		if ((sblock.fs_magic == FS_UFS1_MAGIC &&
+		     (memcmp(dp->dp1.di_db, ufs1_zino.di_db,
+			NDADDR * sizeof(ufs1_daddr_t)) ||
+		      memcmp(dp->dp1.di_ib, ufs1_zino.di_ib,
+			NIADDR * sizeof(ufs1_daddr_t)) ||
+		      dp->dp1.di_mode || dp->dp1.di_size)) ||
+		    (sblock.fs_magic == FS_UFS2_MAGIC &&
+		     (memcmp(dp->dp2.di_db, ufs2_zino.di_db,
+			NDADDR * sizeof(ufs2_daddr_t)) ||
+		      memcmp(dp->dp2.di_ib, ufs2_zino.di_ib,
+			NIADDR * sizeof(ufs2_daddr_t)) ||
+		      dp->dp2.di_mode || dp->dp2.di_size))) {
 			pfatal("PARTIALLY ALLOCATED INODE I=%u", inumber);
 			if (reply("CLEAR") == 1) {
 				dp = ginode(inumber);
@@ -138,24 +153,25 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		return;
 	}
 	lastino = inumber;
-	if (/* dp->di_size < 0 || */
-	    dp->di_size + sblock.fs_bsize - 1 < dp->di_size) {
+	if (/* DIP(dp, di_size) < 0 || */
+	    DIP(dp, di_size) + sblock.fs_bsize - 1 < DIP(dp, di_size)) {
 		if (debug)
-			printf("bad size %llu:", (unsigned long long)dp->di_size);
+			printf("bad size %llu:",
+			    (unsigned long long)DIP(dp, di_size));
 		goto unknown;
 	}
 	if (!preen && mode == IFMT && reply("HOLD BAD BLOCK") == 1) {
 		dp = ginode(inumber);
-		dp->di_size = sblock.fs_fsize;
-		dp->di_mode = IFREG|0600;
+		DIP_SET(dp, di_size, sblock.fs_fsize);
+		DIP_SET(dp, di_mode, IFREG|0600);
 		inodirty();
 	}
-	lndb = howmany(dp->di_size, sblock.fs_bsize);
+	lndb = howmany(DIP(dp, di_size), sblock.fs_bsize);
 	ndb = lndb > (u_int64_t)INT_MAX ? -1 : (int)lndb;
 	if (ndb < 0) {
 		if (debug)
 			printf("bad size %llu ndb %d:",
-			    (unsigned long long)dp->di_size, ndb);
+			    (unsigned long long)DIP(dp, di_size), ndb);
 		goto unknown;
 	}
 	if (mode == IFBLK || mode == IFCHR)
@@ -168,32 +184,39 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		 * new format is the same as the old.  We simply ignore the
 		 * conversion altogether.  - mycroft, 19MAY1994
 		 */
-		if (doinglevel2 &&
-		    dp->di_size > 0 && dp->di_size < MAXSYMLINKLEN_UFS1 &&
-		    dp->di_blocks != 0) {
+		if (sblock.fs_magic == FS_UFS1_MAGIC && doinglevel2 &&
+		    DIP(dp, di_size) > 0 &&
+		    DIP(dp, di_size) < MAXSYMLINKLEN_UFS1 &&
+		    DIP(dp, di_blocks) != 0) {
 			symbuf = alloca(secsize);
 			if (bread(fsreadfd, symbuf,
-			    fsbtodb(&sblock, dp->di_db[0]),
+			    fsbtodb(&sblock, DIP(dp, di_db[0])),
 			    (long)secsize) != 0)
 				errexit("cannot read symlink\n");
 			if (debug) {
-				symbuf[dp->di_size] = 0;
+				symbuf[DIP(dp, di_size)] = 0;
 				printf("convert symlink %d(%s) of size %llu\n",
 					inumber, symbuf,
-					(unsigned long long)dp->di_size);
+					(unsigned long long)DIP(dp, di_size));
 			}
 			dp = ginode(inumber);
-			memcpy(dp->di_shortlink, symbuf, (long)dp->di_size);
-			dp->di_blocks = 0;
+			memcpy(dp->dp1.di_shortlink, symbuf,
+			    (long)DIP(dp, di_size));
+			DIP_SET(dp, di_blocks, 0);
 			inodirty();
 		}
 		/*
 		 * Fake ndb value so direct/indirect block checks below
 		 * will detect any garbage after symlink string.
 		 */
-		if (dp->di_size < sblock.fs_maxsymlinklen ||
-		    (sblock.fs_maxsymlinklen == 0 && dp->di_blocks == 0)) {
-			ndb = howmany(dp->di_size, sizeof(daddr_t));
+		if (DIP(dp, di_size) < sblock.fs_maxsymlinklen ||
+		    (sblock.fs_maxsymlinklen == 0 && DIP(dp, di_blocks) == 0)) {
+			if (sblock.fs_magic == FS_UFS1_MAGIC)
+				ndb = howmany(DIP(dp, di_size),
+				    sizeof(ufs1_daddr_t));
+			else
+				ndb = howmany(DIP(dp, di_size),
+				    sizeof(ufs2_daddr_t));
 			if (ndb > NDADDR) {
 				j = ndb - NDADDR;
 				for (ndb = 1; j > 1; j--)
@@ -203,25 +226,26 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		}
 	}
 	for (j = ndb; j < NDADDR; j++)
-		if (dp->di_db[j] != 0) {
+		if (DIP(dp, di_db[j]) != 0) {
 			if (debug)
-				printf("bad direct addr: %d\n", dp->di_db[j]);
+				printf("bad direct addr: %ld\n",
+				    (long)DIP(dp, di_db[j]));
 			goto unknown;
 		}
 	for (j = 0, ndb -= NDADDR; ndb > 0; j++)
 		ndb /= NINDIR(&sblock);
 	for (; j < NIADDR; j++)
-		if (dp->di_ib[j] != 0) {
+		if (DIP(dp, di_ib[j]) != 0) {
 			if (debug)
-				printf("bad indirect addr: %d\n",
-					dp->di_ib[j]);
+				printf("bad indirect addr: %ld\n",
+				    (long)DIP(dp, di_ib[j]));
 			goto unknown;
 		}
 	if (ftypeok(dp) == 0)
 		goto unknown;
 	n_files++;
-	lncntp[inumber] = dp->di_nlink;
-	if (dp->di_nlink <= 0) {
+	lncntp[inumber] = DIP(dp, di_nlink);
+	if (DIP(dp, di_nlink) <= 0) {
 		zlnp =  malloc(sizeof *zlnp);
 		if (zlnp == NULL) {
 			pfatal("LINK COUNT TABLE OVERFLOW");
@@ -236,7 +260,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		}
 	}
 	if (mode == IFDIR) {
-		if (dp->di_size == 0)
+		if (DIP(dp, di_size) == 0)
 			statemap[inumber] = DCLEAR;
 		else
 			statemap[inumber] = DSTATE;
@@ -244,27 +268,29 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	} else
 		statemap[inumber] = FSTATE;
 	typemap[inumber] = IFTODT(mode);
-	if (doinglevel2 && (dp->di_ouid != (u_short)-1 || dp->di_ogid != (u_short)-1)) {
+	if (sblock.fs_magic == FS_UFS1_MAGIC && doinglevel2 &&
+	   (dp->dp1.di_ouid != (u_short)-1 ||
+	    dp->dp1.di_ogid != (u_short)-1)) {
 		dp = ginode(inumber);
-		dp->di_uid = dp->di_ouid;
-		dp->di_ouid = -1;
-		dp->di_gid = dp->di_ogid;
-		dp->di_ogid = -1;
+		DIP_SET(dp, di_uid, dp->dp1.di_ouid);
+		dp->dp1.di_ouid = -1;
+		DIP_SET(dp, di_gid, dp->dp1.di_ogid);
+		dp->dp1.di_ogid = -1;
 		inodirty();
 	}
 	badblk = dupblk = 0;
 	idesc->id_number = inumber;
 	(void)ckinode(dp, idesc);
 	idesc->id_entryno *= btodb(sblock.fs_fsize);
-	if (dp->di_blocks != idesc->id_entryno) {
-		pwarn("INCORRECT BLOCK COUNT I=%u (%d should be %d)",
-		    inumber, dp->di_blocks, idesc->id_entryno);
+	if (DIP(dp, di_blocks) != idesc->id_entryno) {
+		pwarn("INCORRECT BLOCK COUNT I=%u (%ld should be %d)",
+		    inumber, (long)DIP(dp, di_blocks), idesc->id_entryno);
 		if (preen)
 			printf(" (CORRECTED)\n");
 		else if (reply("CORRECT") == 0)
 			return;
 		dp = ginode(inumber);
-		dp->di_blocks = idesc->id_entryno;
+		DIP_SET(dp, di_blocks, idesc->id_entryno);
 		inodirty();
 	}
 	return;

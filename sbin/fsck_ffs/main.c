@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2007/03/19 13:27:47 pedro Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2007/04/10 16:08:17 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.30 2007/03/19 13:27:47 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.31 2007/04/10 16:08:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -265,15 +265,15 @@ checkfilesys(char *filesys, char *mntpt, long auxdata, int child)
 	/*
 	 * print out summary statistics
 	 */
-	n_ffree = sblock.fs_ffs1_cstotal.cs_nffree;
-	n_bfree = sblock.fs_ffs1_cstotal.cs_nbfree;
+	n_ffree = sblock.fs_cstotal.cs_nffree;
+	n_bfree = sblock.fs_cstotal.cs_nbfree;
 	pwarn("%d files, %d used, %d free ",
 	    n_files, n_blks, n_ffree + sblock.fs_frag * n_bfree);
-	printf("(%d frags, %d blocks, %d.%d%% fragmentation)\n",
-	    n_ffree, n_bfree, (n_ffree * 100) / sblock.fs_ffs1_dsize,
-	    ((n_ffree * 1000 + sblock.fs_ffs1_dsize / 2) / sblock.fs_ffs1_dsize) % 10);
+	printf("(%d frags, %d blocks, %lld.%lld%% fragmentation)\n",
+	    n_ffree, n_bfree, (n_ffree * 100) / sblock.fs_dsize,
+	    ((n_ffree * 1000 + sblock.fs_dsize / 2) / sblock.fs_dsize) % 10);
 	if (debug &&
-	    (n_files -= maxino - ROOTINO - sblock.fs_ffs1_cstotal.cs_nifree))
+	    (n_files -= maxino - ROOTINO - sblock.fs_cstotal.cs_nifree))
 		printf("%d files missing\n", n_files);
 	if (debug) {
 		n_blks += sblock.fs_ncg *
@@ -300,7 +300,7 @@ checkfilesys(char *filesys, char *mntpt, long auxdata, int child)
 	muldup = NULL;
 	inocleanup();
 	if (fsmodified) {
-		(void)time(&sblock.fs_ffs1_time);
+		sblock.fs_time = (time_t)time(NULL);
 		sbdirty();
 	}
 	if (cvtlevel && sblk.b_dirty) {

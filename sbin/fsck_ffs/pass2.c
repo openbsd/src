@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.25 2006/03/22 20:24:32 deraadt Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.26 2007/04/10 16:08:17 millert Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass2.c,v 1.25 2006/03/22 20:24:32 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pass2.c,v 1.26 2007/04/10 16:08:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,12 +79,13 @@ pass2_info2(char *buf, size_t buflen)
 void
 pass2(void)
 {
-	struct ufs1_dinode *dp;
+	union dinode *dp;
 	struct inoinfo **inpp, *inp, *pinp;
 	struct inoinfo **inpend;
 	struct inodesc curino;
-	struct ufs1_dinode dino;
+	union dinode dino;
 	char pathbuf[MAXPATHLEN + 1];
+	int i;
 
 	switch (statemap[ROOTINO]) {
 
@@ -126,8 +127,8 @@ pass2(void)
 			errexit("%s", "");
 		}
 		dp = ginode(ROOTINO);
-		dp->di_mode &= ~IFMT;
-		dp->di_mode |= IFDIR;
+		DIP_SET(dp, di_mode, DIP(dp, di_mode) & ~IFMT);
+		DIP_SET(dp, di_mode, DIP(dp, di_mode) | IFDIR);
 		inodirty();
 		break;
 
@@ -162,7 +163,7 @@ pass2(void)
 			inp->i_isize = roundup(MINDIRSIZE, DIRBLKSIZ);
 			if (reply("FIX") == 1) {
 				dp = ginode(inp->i_number);
-				dp->di_size = inp->i_isize;
+				DIP_SET(dp, di_size, inp->i_isize);
 				inodirty();
 			}
 		} else if ((inp->i_isize & (DIRBLKSIZ - 1)) != 0) {
@@ -181,17 +182,24 @@ pass2(void)
 			inp->i_isize = roundup(inp->i_isize, DIRBLKSIZ);
 			if (preen || reply("ADJUST") == 1) {
 				dp = ginode(inp->i_number);
-				dp->di_size = inp->i_isize;
+				DIP_SET(dp, di_size, inp->i_isize);
 				inodirty();
 			}
 		}
-		memset(&dino, 0, sizeof(struct ufs1_dinode));
-		dino.di_mode = IFDIR;
-		dino.di_size = inp->i_isize;
-		memcpy(&dino.di_db[0], &inp->i_blks[0], (size_t)inp->i_numblks);
+		memset(&dino, 0, sizeof(union dinode));
+		dp = &dino;
+		DIP_SET(dp, di_mode, IFDIR);
+		DIP_SET(dp, di_size, inp->i_isize);
+		for (i = 0;
+		     i < (inp->i_numblks<NDADDR ? inp->i_numblks : NDADDR);
+		     i++)
+			DIP_SET(dp, di_db[i], inp->i_blks[i]);
+		if (inp->i_numblks > NDADDR)
+			for (i = 0; i < NIADDR; i++)
+				DIP_SET(dp, di_ib[i], inp->i_blks[NDADDR + i]);
 		curino.id_number = inp->i_number;
 		curino.id_parent = inp->i_parent;
-		(void)ckinode(&dino, &curino);
+		(void)ckinode(dp, &curino);
 	}
 	/*
 	 * Now that the parents of all directories have been found,
@@ -252,7 +260,7 @@ pass2check(struct inodesc *idesc)
 	struct direct *dirp = idesc->id_dirp;
 	struct inoinfo *inp;
 	int n, entrysize, ret = 0;
-	struct ufs1_dinode *dp;
+	union dinode *dp;
 	char *errmsg;
 	struct direct proto;
 	char namebuf[MAXPATHLEN + 1];
@@ -445,8 +453,8 @@ again:
 				break;
 			dp = ginode(dirp->d_ino);
 			statemap[dirp->d_ino] =
-			    (dp->di_mode & IFMT) == IFDIR ? DSTATE : FSTATE;
-			lncntp[dirp->d_ino] = dp->di_nlink;
+			    (DIP(dp, di_mode) & IFMT) == IFDIR ? DSTATE : FSTATE;
+			lncntp[dirp->d_ino] = DIP(dp, di_nlink);
 			goto again;
 
 		case DSTATE:

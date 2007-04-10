@@ -1,7 +1,16 @@
-/*	$OpenBSD: fsck.h,v 1.17 2007/02/08 19:02:23 otto Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.18 2007/04/10 16:08:17 millert Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 2002 Networks Associates Technology, Inc.
+ * All rights reserved.
+ *
+ * This software was developed for the FreeBSD Project by Marshall
+ * Kirk McKusick and Network Associates Laboratories, the Security
+ * Research Division of Network Associates, Inc. under DARPA/SPAWAR
+ * contract N66001-01-C-8035 ("CBOSS"), as part of the DARPA CHATS
+ * research program.
+ *
  * Copyright (c) 1980, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -37,6 +46,22 @@
 #define	MAXBUFSPACE	40*1024	/* maximum space to allocate to buffers */
 #define	INOBUFSIZE	56*1024	/* size of buffer to read inodes in pass1 */
 
+union dinode {
+	struct ufs1_dinode dp1;
+	struct ufs2_dinode dp2;
+};
+
+#define	DIP(dp, field)				\
+	((sblock.fs_magic == FS_UFS1_MAGIC) ?	\
+	(dp)->dp1.field : (dp)->dp2.field)
+
+#define	DIP_SET(dp, field, val) do { \
+	if (sblock.fs_magic == FS_UFS1_MAGIC)	\
+		(dp)->dp1.field = (val);	\
+	else					\
+		(dp)->dp2.field = (val);	\
+	} while (0)
+
 #ifndef BUFSIZ
 #define BUFSIZ 1024
 #endif
@@ -60,13 +85,26 @@ struct bufarea {
 	int	b_flags;
 	union {
 		char	*b_buf;			/* buffer space */
-		daddr_t	*b_indir;		/* indirect block */
+		ufs1_daddr_t	*b_indir1;	/* FFS1 indirect block */
+		ufs2_daddr_t	*b_indir2;	/* FFS2 indirect block */
 		struct	fs *b_fs;		/* super block */
 		struct	cg *b_cg;		/* cylinder group */
-		struct	ufs1_dinode *b_dinode;	/* inode block */
+		struct	ufs1_dinode *b_dinode1;	/* FFS1 inode block */
+		struct	ufs2_dinode *b_dinode2;	/* FFS2 inode block */
 	} b_un;
 	char	b_dirty;
 };
+
+#define IBLK(bp, i)				\
+	((sblock.fs_magic == FS_UFS1_MAGIC) ?	\
+	(bp)->b_un.b_indir1[i] : (bp)->b_un.b_indir2[i])
+
+#define IBLK_SET(bp, i, val) do {		\
+	if (sblock.fs_magic == FS_UFS1_MAGIC)	\
+		(bp)->b_un.b_indir1[i] = (val);	\
+	else					\
+		(bp)->b_un.b_indir2[i] = (val);	\
+	} while (0)
 
 #define	B_INUSE 1
 
@@ -198,9 +236,17 @@ int	lfmode;			/* lost & found directory creation mode */
 
 daddr_t	n_blks;			/* number of blocks in use */
 daddr_t	n_files;		/* number of files in use */
+long   *cginosused;		/* # of allocated inodes in each cg */
 
-#define	clearinode(dp)	(*(dp) = zino)
-struct	ufs1_dinode zino;
+#define	clearinode(dp)	\
+	if (sblock.fs_magic == FS_UFS1_MAGIC) {	\
+		(dp)->dp1 = ufs1_zino;		\
+	} else {				\
+		(dp)->dp2 = ufs2_zino;		\
+	}
+
+struct ufs1_dinode ufs1_zino;
+struct ufs2_dinode ufs2_zino;
 
 #define	setbmap(blkno)	setbit(blockmap, blkno)
 #define	testbmap(blkno)	isset(blockmap, blkno)
@@ -212,7 +258,7 @@ struct	ufs1_dinode zino;
 #define	ALTERED	0x08
 #define	FOUND	0x10
 
-struct ufs1_dinode *ginode(ino_t);
+union dinode *ginode(ino_t);
 struct inoinfo *getinoinfo(ino_t);
 void getblk(struct bufarea *, daddr_t, long);
 ino_t allocino(ino_t, int);

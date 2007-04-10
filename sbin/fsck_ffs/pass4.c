@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.15 2006/03/22 20:24:32 deraadt Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.16 2007/04/10 16:08:17 millert Exp $	*/
 /*	$NetBSD: pass4.c,v 1.11 1996/09/27 22:45:17 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass4.c,v 1.15 2006/03/22 20:24:32 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pass4.c,v 1.16 2007/04/10 16:08:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,25 +64,29 @@ pass4(void)
 {
 	ino_t inumber;
 	struct zlncnt *zlnp;
-	struct ufs1_dinode *dp;
+	union dinode *dp;
 	struct inodesc idesc;
-	int n;
+	int n, c, i;
 
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = ADDR;
 	idesc.id_func = pass4check;
 	info_fn = pass4_info;
-	for (inumber = ROOTINO; inumber <= lastino; inumber++) {
-		info_inumber = inumber;
-		idesc.id_number = inumber;
-		switch (statemap[inumber]) {
+	for (c = 0; c < sblock.fs_ncg; c++) {
+		inumber = c * sblock.fs_ipg;
+		for (i = 0; i < cginosused[c]; i++, inumber++) {
+			if (inumber < ROOTINO)
+				continue;
+ 			idesc.id_number = inumber;
+			switch (statemap[inumber]) {
 
-		case FSTATE:
-		case DFOUND:
-			n = lncntp[inumber];
-			if (n)
-				adjust(&idesc, (short)n);
-			else {
+			case FSTATE:
+			case DFOUND:
+				n = lncntp[inumber];
+				if (n) {
+					adjust(&idesc, (short)n);
+					break;
+				}
 				for (zlnp = zlnhead; zlnp; zlnp = zlnp->next)
 					if (zlnp->zlncnt == inumber) {
 						zlnp->zlncnt = zlnhead->zlncnt;
@@ -92,30 +96,30 @@ pass4(void)
 						clri(&idesc, "UNREF", 1);
 						break;
 					}
-			}
-			break;
-
-		case DSTATE:
-			clri(&idesc, "UNREF", 1);
-			break;
-
-		case DCLEAR:
-			dp = ginode(inumber);
-			if (dp->di_size == 0) {
-				clri(&idesc, "ZERO LENGTH", 1);
 				break;
+
+			case DSTATE:
+				clri(&idesc, "UNREF", 1);
+				break;
+
+			case DCLEAR:
+				dp = ginode(inumber);
+				if (DIP(dp, di_size) == 0) {
+					clri(&idesc, "ZERO LENGTH", 1);
+					break;
+				}
+				/* FALLTHROUGH */
+			case FCLEAR:
+				clri(&idesc, "BAD/DUP", 1);
+				break;
+
+			case USTATE:
+				break;
+
+			default:
+				errexit("BAD STATE %d FOR INODE I=%d\n",
+			    	statemap[inumber], inumber);
 			}
-			/* FALLTHROUGH */
-		case FCLEAR:
-			clri(&idesc, "BAD/DUP", 1);
-			break;
-
-		case USTATE:
-			break;
-
-		default:
-			errexit("BAD STATE %d FOR INODE I=%d\n",
-			    statemap[inumber], inumber);
 		}
 	}
 	info_fn = NULL;

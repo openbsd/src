@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.32 2007/03/19 22:13:36 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.33 2007/04/10 16:08:17 millert Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.32 2007/03/19 22:13:36 otto Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.33 2007/04/10 16:08:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,11 @@ static int cmpsb(struct fs *, struct fs *);
 
 long numdirs, listmax, inplast;
 
+/*
+ * Possible locations for the superblock.
+ */
+static const int sbtry[] = SBLOCKSEARCH;
+
 int
 setup(char *dev)
 {
@@ -78,6 +83,7 @@ setup(char *dev)
 	struct stat statb;
 	struct fs proto;
 	int doskipclean;
+	int32_t maxsymlinklen, nindir, inopb;
 	u_int64_t maxfilesize;
 
 	havesb = 0;
@@ -155,7 +161,7 @@ setup(char *dev)
 		if (!preen)
 			pwarn("** File system is already clean\n");
 	}
-	maxfsblock = sblock.fs_ffs1_size;
+	maxfsblock = sblock.fs_size;
 	maxino = sblock.fs_ncg * sblock.fs_ipg;
 	sizepb = sblock.fs_bsize;
 	maxfilesize = sblock.fs_bsize * NDADDR - 1;
@@ -179,18 +185,6 @@ setup(char *dev)
 		if (reply("SET TO DEFAULT") == 1) {
 			sblock.fs_minfree = 10;
 			sbdirty();
-		}
-	}
-	if (sblock.fs_interleave < 1 ||
-	    sblock.fs_interleave > sblock.fs_nsect) {
-		pwarn("IMPOSSIBLE INTERLEAVE=%d IN SUPERBLOCK",
-		    sblock.fs_interleave);
-		sblock.fs_interleave = 1;
-		if (preen)
-			printf(" (FIXED)\n");
-		if (preen || reply("SET TO DEFAULT") == 1) {
-			sbdirty();
-			dirty(&asblk);
 		}
 	}
 	if (sblock.fs_npsect < sblock.fs_nsect ||
@@ -259,10 +253,12 @@ setup(char *dev)
 				dirty(&asblk);
 			}
 		}
-		if (sblock.fs_maxsymlinklen != MAXSYMLINKLEN_UFS1) {
+		maxsymlinklen = sblock.fs_magic == FS_UFS1_MAGIC ?
+		    MAXSYMLINKLEN_UFS1 : MAXSYMLINKLEN_UFS2;
+		if (sblock.fs_maxsymlinklen != maxsymlinklen) {
 			pwarn("INCORRECT MAXSYMLINKLEN=%d IN SUPERBLOCK",
 			    sblock.fs_maxsymlinklen);
-			sblock.fs_maxsymlinklen = MAXSYMLINKLEN_UFS1;
+			sblock.fs_maxsymlinklen = maxsymlinklen;
 			if (preen)
 				printf(" (FIXED)\n");
 			if (preen || reply("FIX") == 1) {
@@ -346,9 +342,13 @@ setup(char *dev)
 			dirty(&asblk);
 		}
 	}
-	if (INOPB(&sblock) != sblock.fs_bsize / sizeof(struct ufs1_dinode)) {
+	if (sblock.fs_magic == FS_UFS2_MAGIC)
+		inopb = sblock.fs_bsize / sizeof(struct ufs2_dinode);
+	else
+		inopb = sblock.fs_bsize / sizeof(struct ufs1_dinode);
+	if (INOPB(&sblock) != inopb) {
 		pwarn("INCONSISTENT INOPB=%d\n", INOPB(&sblock));
-		sblock.fs_inopb = sblock.fs_bsize / sizeof(struct ufs1_dinode);
+		sblock.fs_inopb = inopb;
 		if (preen)
 			printf(" (FIXED)\n");
 		if (preen || reply("FIX") == 1) {
@@ -356,9 +356,13 @@ setup(char *dev)
 			dirty(&asblk);
 		}
 	}
-	if (NINDIR(&sblock) != sblock.fs_bsize / sizeof(ufs1_daddr_t)) {
+	if (sblock.fs_magic == FS_UFS2_MAGIC)
+		nindir = sblock.fs_bsize / sizeof(ufs2_daddr_t);
+	else
+		nindir = sblock.fs_bsize / sizeof(ufs1_daddr_t);
+	if (NINDIR(&sblock) != nindir) {
 		pwarn("INCONSISTENT NINDIR=%d\n", NINDIR(&sblock));
-		sblock.fs_nindir = sblock.fs_bsize / sizeof(daddr_t);
+		sblock.fs_nindir = nindir;
 		if (preen)
 			printf(" (FIXED)\n");
 		if (preen || reply("FIX") == 1) {
@@ -384,7 +388,7 @@ setup(char *dev)
 		size = sblock.fs_cssize - i < sblock.fs_bsize ?
 		    sblock.fs_cssize - i : sblock.fs_bsize;
 		if (bread(fsreadfd, (char *)sblock.fs_csp + i,
-		    fsbtodb(&sblock, sblock.fs_ffs1_csaddr + j * sblock.fs_frag),
+		    fsbtodb(&sblock, sblock.fs_csaddr + j * sblock.fs_frag),
 		    size) != 0 && !asked) {
 			pfatal("BAD SUMMARY INFORMATION");
 			if (reply("CONTINUE") == 0) {
@@ -422,7 +426,13 @@ setup(char *dev)
 		    (unsigned long)(maxino + 1) * sizeof(int16_t));
 		goto badsblabel;
 	}
-	numdirs = sblock.fs_ffs1_cstotal.cs_ndir;
+	cginosused = calloc((unsigned)sblock.fs_ncg, sizeof(long));
+	if (cginosused == NULL) {
+		printf("cannot alloc %u bytes for cginosused\n",
+		    (unsigned)sblock.fs_ncg);
+		goto badsblabel;
+	}
+	numdirs = MAX(sblock.fs_cstotal.cs_ndir, 128);
 	inplast = 0;
 	listmax = numdirs + 10;
 	inpsort = calloc((unsigned)listmax, sizeof(struct inoinfo *));
@@ -433,7 +443,7 @@ setup(char *dev)
 		goto badsblabel;
 	}
 	bufinit();
-	if (sblock.fs_ffs1_flags & FS_DOSOFTDEP)
+	if (sblock.fs_flags & FS_DOSOFTDEP)
 		usedsoftdep = 1;
 	else
 		usedsoftdep = 0;
@@ -444,25 +454,58 @@ badsblabel:
 	return (0);
 }
 
+
 /*
  * Read in the super block and its summary info.
  */
 static int
 readsb(int listerr)
 {
-	daddr_t super = bflag ? bflag : SBOFF / dev_bsize;
+	ufs2_daddr_t super = 0;
+	int i;
 
-	if (bread(fsreadfd, (char *)&sblock, super, (long)SBSIZE) != 0)
-		return (0);
+	if (bflag) {
+		super = bflag;
+
+		if (bread(fsreadfd, (char *)&sblock, super, (long)SBSIZE) != 0)
+			return (0);
+
+		if (sblock.fs_magic != FS_UFS1_MAGIC &&
+		    sblock.fs_magic != FS_UFS2_MAGIC) {
+			badsb(listerr, "MAGIC NUMBER WRONG");
+			return (0);
+		}
+	} else {
+		for (i = 0; sbtry[i] != -1; i++) {
+			super = sbtry[i] / dev_bsize;
+
+			if (bread(fsreadfd, (char *)&sblock, super,
+			    (long)SBSIZE) != 0)
+				return (0);
+
+			if (sblock.fs_magic != FS_UFS1_MAGIC &&
+			    sblock.fs_magic != FS_UFS2_MAGIC)
+				continue; /* Not a superblock */
+
+			if (sblock.fs_magic == FS_UFS2_MAGIC &&
+			    sblock.fs_sblockloc != sbtry[i])
+				continue; /* Not a superblock */
+
+			break;
+		}
+
+		if (sbtry[i] == -1) {
+			badsb(listerr, "MAGIC NUMBER WRONG");
+			return (0);
+		}
+	}
+
 	sblk.b_bno = super;
 	sblk.b_size = SBSIZE;
+
 	/*
 	 * run a few consistency checks of the super block
 	 */
-	if (sblock.fs_magic != FS_MAGIC) {
-		badsb(listerr, "MAGIC NUMBER WRONG");
-		return (0);
-	}
 	if (sblock.fs_ncg < 1) {
 		badsb(listerr, "NCG OUT OF RANGE");
 		return (0);
@@ -471,10 +514,12 @@ readsb(int listerr)
 		badsb(listerr, "CPG OUT OF RANGE");
 		return (0);
 	}
-	if (sblock.fs_ncg * sblock.fs_cpg < sblock.fs_ncyl ||
-	    (sblock.fs_ncg - 1) * sblock.fs_cpg >= sblock.fs_ncyl) {
-		badsb(listerr, "NCYL LESS THAN NCG*CPG");
-		return (0);
+	if (sblock.fs_magic == FS_UFS1_MAGIC) {
+		if (sblock.fs_ncg * sblock.fs_cpg < sblock.fs_ncyl ||
+		    (sblock.fs_ncg - 1) * sblock.fs_cpg >= sblock.fs_ncyl) {
+			badsb(listerr, "NCYL LESS THAN NCG*CPG");
+			return (0);
+		}
 	}
 	if (sblock.fs_sbsize > SBSIZE) {
 		badsb(listerr, "SBSIZE PREPOSTEROUSLY LARGE");
@@ -502,10 +547,8 @@ readsb(int listerr)
 	super *= dev_bsize;
 	dev_bsize = sblock.fs_fsize / fsbtodb(&sblock, 1);
 	sblk.b_bno = super / dev_bsize;
-	if (bflag) {
-		havesb = 1;
-		return (1);
-	}
+	if (bflag)
+		goto out;
 	getblk(&asblk, cgsblock(&sblock, sblock.fs_ncg - 1), sblock.fs_sbsize);
 	if (asblk.b_errs)
 		return (0);
@@ -527,6 +570,17 @@ readsb(int listerr)
 		badsb(listerr,
 		    "VALUES IN SUPER BLOCK DISAGREE WITH THOSE IN FIRST ALTERNATE");
 		return (0);
+	}
+out:
+	if (sblock.fs_magic == FS_UFS1_MAGIC) {
+		sblock.fs_time = sblock.fs_ffs1_time;
+		sblock.fs_size = sblock.fs_ffs1_size;
+		sblock.fs_dsize = sblock.fs_ffs1_dsize;
+		sblock.fs_csaddr = sblock.fs_ffs1_csaddr;
+		sblock.fs_cstotal.cs_ndir = sblock.fs_ffs1_cstotal.cs_ndir;
+		sblock.fs_cstotal.cs_nbfree = sblock.fs_ffs1_cstotal.cs_nbfree;
+		sblock.fs_cstotal.cs_nifree = sblock.fs_ffs1_cstotal.cs_nifree;
+		sblock.fs_cstotal.cs_nffree = sblock.fs_ffs1_cstotal.cs_nffree;
 	}
 	havesb = 1;
 	return (1);
@@ -581,7 +635,7 @@ calcsb(char *dev, int devfd, struct fs *fs)
 	fs->fs_cpg = pp->p_cpg;
 	fs->fs_nspf = fs->fs_fsize / lp->d_secsize;
 	/* unit for fs->fs_size is fragments, for pp->p_size it is sectors */
-	fs->fs_ffs1_size = pp->p_size / fs->fs_nspf;
+	fs->fs_size = pp->p_size / fs->fs_nspf;
 	fs->fs_ntrak = lp->d_ntracks;
 	fs->fs_nsect = lp->d_nsectors;
 	fs->fs_spc = lp->d_secpercyl;

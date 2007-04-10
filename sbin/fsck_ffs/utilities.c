@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.32 2007/03/19 13:27:47 pedro Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.33 2007/04/10 16:08:17 millert Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.32 2007/03/19 13:27:47 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.33 2007/04/10 16:08:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,9 +64,9 @@ long	diskreads, totalreads;	/* Disk cache statistics */
 static void rwerror(char *, daddr_t);
 
 int
-ftypeok(struct ufs1_dinode *dp)
+ftypeok(union dinode *dp)
 {
-	switch (dp->di_mode & IFMT) {
+	switch (DIP(dp, di_mode) & IFMT) {
 	case IFDIR:
 	case IFREG:
 	case IFBLK:
@@ -77,7 +77,7 @@ ftypeok(struct ufs1_dinode *dp)
 		return (1);
 	default:
 		if (debug)
-			printf("bad file type 0%o\n", dp->di_mode);
+			printf("bad file type 0%o\n", DIP(dp, di_mode));
 		return (0);
 	}
 }
@@ -227,7 +227,7 @@ flush(int fd, struct bufarea *bp)
 		return;
 	for (i = 0, j = 0; i < sblock.fs_cssize; i += sblock.fs_bsize, j++) {
 		bwrite(fswritefd, (char *)sblock.fs_csp + i,
-		    fsbtodb(&sblock, sblock.fs_ffs1_csaddr + j * sblock.fs_frag),
+		    fsbtodb(&sblock, sblock.fs_csaddr + j * sblock.fs_frag),
 		    sblock.fs_cssize - i < sblock.fs_bsize ?
 		    sblock.fs_cssize - i : sblock.fs_bsize);
 	}
@@ -250,6 +250,7 @@ ckfini(int markclean)
 	struct bufarea *bp, *nbp;
 	int cnt = 0;
 	sigset_t oset, nset;
+	int64_t sblockloc;
 
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGINT);
@@ -261,12 +262,24 @@ ckfini(int markclean)
 		sigprocmask(SIG_SETMASK, &oset, NULL);
 		return;
 	}
-	/* Force update on next mount */
-	sblock.fs_ffs1_flags &= ~FS_FLAGS_UPDATED;
+	if (sblock.fs_magic == FS_UFS1_MAGIC) {
+		sblockloc = SBLOCK_UFS1;
+		sblock.fs_ffs1_time = sblock.fs_time;
+		sblock.fs_ffs1_size = sblock.fs_size;
+		sblock.fs_ffs1_dsize = sblock.fs_dsize;
+		sblock.fs_ffs1_csaddr = sblock.fs_csaddr;
+		sblock.fs_ffs1_cstotal.cs_ndir = sblock.fs_cstotal.cs_ndir;
+		sblock.fs_ffs1_cstotal.cs_nbfree = sblock.fs_cstotal.cs_nbfree;
+		sblock.fs_ffs1_cstotal.cs_nifree = sblock.fs_cstotal.cs_nifree;
+		sblock.fs_ffs1_cstotal.cs_nffree = sblock.fs_cstotal.cs_nffree;
+		/* Force update on next mount */
+		sblock.fs_ffs1_flags &= ~FS_FLAGS_UPDATED;
+	} else
+		sblockloc = SBLOCK_UFS2;
 	flush(fswritefd, &sblk);
-	if (havesb && sblk.b_bno != SBOFF / dev_bsize &&
-	    !preen && reply("UPDATE STANDARD SUPERBLOCK")) {
-		sblk.b_bno = SBOFF / dev_bsize;
+	if (havesb && sblk.b_bno != sblockloc / dev_bsize && !preen &&
+	    reply("UPDATE STANDARD SUPERBLOCK")) {
+		sblk.b_bno = sblockloc / dev_bsize;
 		sbdirty();
 		flush(fswritefd, &sblk);
 	}
