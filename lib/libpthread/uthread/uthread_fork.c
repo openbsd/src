@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fork.c,v 1.15 2007/04/07 14:08:46 kurt Exp $	*/
+/*	$OpenBSD: uthread_fork.c,v 1.16 2007/04/10 13:04:37 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -185,11 +185,8 @@ fork(void)
 					_thread_fd_table[i]->w_lineno = 0;
 					_thread_fd_table[i]->r_lockcount = 0;
 					_thread_fd_table[i]->w_lockcount = 0;
-					if (_thread_fd_table[i]->status_flags != NULL) {
+					if (_thread_fd_table[i]->status_flags != NULL)
 						_SPINLOCK_INIT(&_thread_fd_table[i]->status_flags->lock);
-						/* make sure child doesn't set fd to blocking upon close */
-						_thread_fd_table[i]->status_flags->flags |= O_NONBLOCK;
-					}
 					/*
 					 * If a fd was in the process of closing
 					 * then finish closing it.
