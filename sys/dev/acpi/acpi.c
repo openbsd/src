@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.86 2007/03/26 03:52:49 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.87 2007/04/11 02:51:11 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -309,6 +309,37 @@ acpi_match(struct device *parent, void *match, void *aux)
 	return (1);
 }
 
+int acpi_add_device(struct aml_node *node, void *arg);
+
+int
+acpi_add_device(struct aml_node *node, void *arg)
+{
+	struct device *self = arg;
+	struct acpi_softc *sc = arg;
+	struct acpi_attach_args aaa;
+
+	memset(&aaa, 0, sizeof(aaa));
+	aaa.aaa_node = node;
+	aaa.aaa_dev = "";
+	aaa.aaa_iot = sc->sc_iot;
+	aaa.aaa_memt = sc->sc_memt;
+	if (node == NULL || node->value == NULL)
+		return 0;
+
+	switch (node->value->type) {
+	case AML_OBJTYPE_PROCESSOR:
+		aaa.aaa_name = "acpicpu";
+		break;
+	case AML_OBJTYPE_THERMZONE:
+		aaa.aaa_name = "acpitz";
+ 		break;
+        default:
+		return 0;
+	}
+	config_found(self, &aaa, acpi_print);
+	return 0;
+}
+
 void
 acpi_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -534,19 +565,15 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	 /* XXX EC needs to be attached first on some systems */
 	aml_find_node(aml_root.child, "_HID", acpi_foundec, sc);
 
+	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_add_device, sc);
+
 	/* attach battery, power supply and button devices */
 	aml_find_node(aml_root.child, "_HID", acpi_foundhid, sc);
-
-	/* attach cpu devices */
-	aml_find_node(aml_root.child, "_PSS", acpi_foundpss, sc);
 
 #if 0
 	/* attach docks */
 	aml_find_node(aml_root.child, "_DCK", acpi_founddock, sc);
 #endif
-
-	/* attach thermal zone devices, XXX MUST be last entry */
-	aml_find_node(aml_root.child, "_TMP", acpi_foundtmp, sc);
 
 	/* create list of devices we want to query when APM come in */
 	SLIST_INIT(&sc->sc_ac);
@@ -1589,46 +1616,6 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 
 	dnprintf(30, "acpi_writepm: %s = %.4x:%.4x %x\n",
 	    sc->sc_pmregs[reg].name, sc->sc_pmregs[reg].addr, offset, regval);
-}
-
-void
-acpi_foundtmp(struct aml_node *node, void *arg)
-{
-	struct acpi_softc	*sc = (struct acpi_softc *)arg;
-	struct device		*self = (struct device *)arg;
-	const char		*dev;
-	struct acpi_attach_args	aaa;
-
-	dnprintf(10, "found thermal zone entry: %s\n", node->parent->name);
-
-	memset(&aaa, 0, sizeof(aaa));
-	aaa.aaa_iot = sc->sc_iot;
-	aaa.aaa_memt = sc->sc_memt;
-	aaa.aaa_node = node->parent;
-	aaa.aaa_dev = dev;
-	aaa.aaa_name = "acpitz";
-
-	config_found(self, &aaa, acpi_print);
-}
-
-void
-acpi_foundpss(struct aml_node *node, void *arg)
-{
-	struct acpi_softc	*sc = (struct acpi_softc *)arg;
-	struct device		*self = (struct device *)arg;
-	const char		*dev;
-	struct acpi_attach_args	aaa;
-
-	dnprintf(10, "found pss entry: %s\n", node->parent->name);
-
-	memset(&aaa, 0, sizeof(aaa));
-	aaa.aaa_iot = sc->sc_iot;
-	aaa.aaa_memt = sc->sc_memt;
-	aaa.aaa_node = node->parent;
-	aaa.aaa_dev = dev;
-	aaa.aaa_name = "acpicpu";
-
-	config_found(self, &aaa, acpi_print);
 }
 
 void

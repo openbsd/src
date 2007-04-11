@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.19 2007/01/31 23:30:51 gwk Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.20 2007/04/11 02:51:11 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -22,6 +22,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/queue.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -41,8 +42,49 @@ void	acpicpu_attach(struct device *, struct device *, void *);
 int	acpicpu_notify(struct aml_node *, int, void *);
 void	acpicpu_setperf(int);
 
+#define ACPI_STATE_C0     0x00
+#define ACPI_STATE_C1     0x01
+#define ACPI_STATE_C2     0x02
+#define ACPI_STATE_C3     0x03
+
+#define FLAGS_NO_C2       0x01
+#define FLAGS_NO_C3       0x02
+#define FLAGS_BMCHECK     0x04
+#define FLAGS_NOTHROTTLE  0x08
+#define FLAGS_NOPSS       0x10
+
+#define CPU_THT_EN              (1L << 4)
+#define CPU_MAXSTATE(sc)  	(1L << (sc)->sc_duty_wid)
+#define CPU_STATE(sc,pct)	((pct * CPU_MAXSTATE(sc) / 100) << (sc)->sc_duty_off)
+#define CPU_STATEMASK(sc)       ((CPU_MAXSTATE(sc) - 1) << (sc)->sc_duty_off)
+
+#define ACPI_MAX_C2_LATENCY     100
+#define ACPI_MAX_C3_LATENCY     1000
+
+/* Make sure throttling bits are valid,a=addr,o=offset,w=width */
+#define valid_throttle(o,w,a) (a && w && (o+w)<=31 && (o>4 || (o+w)<=4))
+
+struct acpi_cstate
+{
+	int      type;
+	int      latency;
+	int      power;
+	int      address;
+
+	SLIST_ENTRY(acpi_cstate) link;
+};
+
 struct acpicpu_softc {
 	struct device		sc_dev;
+	int			sc_cpu;
+
+	int			sc_duty_wid;
+	int			sc_duty_off;
+	int			sc_pblk_addr;
+	int			sc_pblk_len;
+	int                     sc_flags;
+
+	SLIST_HEAD(,acpi_cstate) sc_cstates;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -56,8 +98,12 @@ struct acpicpu_softc {
 	struct acpicpu_pct	sc_pct;
 };
 
+void    acpicpu_set_throttle(struct acpicpu_softc *, int);
+void    acpicpu_add_cstatepkg(struct aml_value *, void *);
 int	acpicpu_getpct(struct acpicpu_softc *);
 int	acpicpu_getpss(struct acpicpu_softc *);
+struct acpi_cstate *acpicpu_add_cstate(struct acpicpu_softc *, int, int, int, int);
+struct acpi_cstate *acpicpu_find_cstate(struct acpicpu_softc *, int);
 
 struct cfattach acpicpu_ca = {
 	sizeof(struct acpicpu_softc), acpicpu_match, acpicpu_attach
@@ -74,6 +120,90 @@ struct acpicpu_softc *acpicpu_sc[I386_MAXPROCS];
 #elif __amd64__
 struct acpicpu_softc *acpicpu_sc[X86_MAXPROCS];
 #endif
+
+void
+acpicpu_set_throttle(struct acpicpu_softc *sc, int level)
+{
+	uint32_t pbval;
+
+	if (sc->sc_flags & FLAGS_NOTHROTTLE)
+		return;
+
+	/* Disable throttling control */
+	pbval = inl(sc->sc_pblk_addr);
+	outl(sc->sc_pblk_addr, pbval & ~CPU_THT_EN);
+	if (level < 100) {
+		pbval &= ~CPU_STATEMASK(sc);
+		pbval |= CPU_STATE(sc, level);
+		outl(sc->sc_pblk_addr, pbval & ~CPU_THT_EN);
+		outl(sc->sc_pblk_addr, pbval | CPU_THT_EN);
+	}
+}
+
+struct acpi_cstate *
+acpicpu_find_cstate(struct acpicpu_softc *sc, int type)
+{
+	struct acpi_cstate *cx;
+
+	SLIST_FOREACH(cx, &sc->sc_cstates, link) 
+		if (cx->type == type)
+			return cx;
+	return NULL;
+}
+
+struct acpi_cstate *
+acpicpu_add_cstate(struct acpicpu_softc *sc, int type, 
+		   int latency, int power, int address)
+{
+	struct acpi_cstate *cx;
+
+	dnprintf(10," C%d: latency:.%4x power:%.4x addr:%.8x\n",
+	       type, latency, power, address);
+
+	switch (type) {
+	case ACPI_STATE_C2:
+		if (latency > ACPI_MAX_C2_LATENCY || !address || (sc->sc_flags & FLAGS_NO_C2))
+			goto bad;
+		break;
+	case ACPI_STATE_C3:
+		if (latency > ACPI_MAX_C3_LATENCY || !address || (sc->sc_flags & FLAGS_NO_C3))
+			goto bad;
+		break;
+	}
+
+	cx = malloc(sizeof(struct acpi_cstate), M_DEVBUF, M_WAITOK);
+	memset(cx, 0, sizeof(struct acpi_cstate));
+
+	cx->type = type;
+	cx->power = power;
+	cx->latency = latency;
+	cx->address = address;
+
+	SLIST_INSERT_HEAD(&sc->sc_cstates, cx, link);
+
+	return cx;
+ bad:
+	printf("acpicpu%d: C%d not supported\n", sc->sc_cpu, type);
+	return NULL;
+}
+
+/* Found a _CST object, add new cstate for each entry */
+void
+acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
+{
+	struct acpicpu_softc *sc = arg;
+
+#ifdef ACPI_DEBUG
+	aml_showvalue(val, 0);
+#endif
+	if (val->type != AML_OBJTYPE_PACKAGE || val->length != 4)
+		return;
+	acpicpu_add_cstate(sc, val->v_package[1]->v_integer,
+			   val->v_package[2]->v_integer,
+			   val->v_package[3]->v_integer,
+			   -1);
+}
+
 
 int
 acpicpu_match(struct device *parent, void *match, void *aux)
@@ -95,18 +225,60 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpicpu_softc	*sc = (struct acpicpu_softc *)self;
 	struct acpi_attach_args *aa = aux;
+	struct                  aml_value res;
 	int			i;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
-	sc->sc_devnode = aa->aaa_node->child;
+	sc->sc_devnode = aa->aaa_node;
+
+	SLIST_INIT(&sc->sc_cstates);
 
 	sc->sc_pss = NULL;
 
-	printf(": %s: ", sc->sc_devnode->parent->name);
+	printf(": %s: ", sc->sc_devnode->name);
+	if (aml_evalnode(sc->sc_acpi, sc->sc_devnode, 0, NULL, &res) == 0) {
+		if (res.type == AML_OBJTYPE_PROCESSOR) {
+			sc->sc_cpu = res.v_processor.proc_id;
+			sc->sc_pblk_addr = res.v_processor.proc_addr;
+			sc->sc_pblk_len = res.v_processor.proc_len;
+		}
+		aml_freevalue(&res);
+	}
+	sc->sc_duty_off = sc->sc_acpi->sc_fadt->duty_offset;
+	sc->sc_duty_wid = sc->sc_acpi->sc_fadt->duty_width;
+	if (!valid_throttle(sc->sc_duty_off, sc->sc_duty_wid, sc->sc_pblk_addr)) 
+		sc->sc_flags |= FLAGS_NOTHROTTLE;
+
+#ifdef ACPI_DEBUG
+	printf(": %s: ", sc->sc_devnode->name);
+	printf("\n: hdr:%x pblk:%x,%x duty:%x,%x pstate:%x (%d throttling states)\n",
+		sc->sc_acpi->sc_fadt->hdr_revision,
+		sc->sc_pblk_addr, sc->sc_pblk_len, 
+		sc->sc_duty_off, sc->sc_duty_wid,
+		sc->sc_acpi->sc_fadt->pstate_cnt,
+		CPU_MAXSTATE(sc));
+#endif
+
+	/* Get C-States from _CST or FADT */
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CST", 0, NULL, &res) == 0) {
+		aml_foreachpkg(&res, 1, acpicpu_add_cstatepkg, sc);
+		aml_freevalue(&res);
+	}
+	else {
+		/* Some systems don't export a full PBLK, reduce functionality */
+		if (sc->sc_pblk_len < 5)
+			sc->sc_flags |= FLAGS_NO_C2;
+		if (sc->sc_pblk_len < 6)
+			sc->sc_flags |= FLAGS_NO_C3;
+		acpicpu_add_cstate(sc, ACPI_STATE_C2, sc->sc_acpi->sc_fadt->p_lvl2_lat, 
+				   -1, sc->sc_pblk_addr + 4);
+		acpicpu_add_cstate(sc, ACPI_STATE_C3, sc->sc_acpi->sc_fadt->p_lvl3_lat, 
+				   -1, sc->sc_pblk_addr + 5);
+	}
 	if (acpicpu_getpss(sc)) {
 		/* XXX not the right test but has to do for now */
-		printf("can't attach, no _PSS\n");
-		return;
+	  	sc->sc_flags |= FLAGS_NOPSS;
+		goto nopss;
 	}
 
 #ifdef ACPI_DEBUG
@@ -125,11 +297,16 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	if (acpicpu_getpct(sc))
 		return;
 
+	/* Notify BIOS we are handing p-states */
+	if (sc->sc_acpi->sc_fadt->pstate_cnt)
+		acpi_write_pmreg(sc->sc_acpi, ACPIREG_SMICMD, 0, 
+		    sc->sc_acpi->sc_fadt->pstate_cnt);
+
 	for (i = 0; i < sc->sc_pss_len; i++)
 		printf("%d%s", sc->sc_pss[i].pss_core_freq,
 		    i < sc->sc_pss_len - 1 ? ", " : " MHz\n");
 
-	aml_register_notify(sc->sc_devnode->parent, NULL,
+	aml_register_notify(sc->sc_devnode, NULL,
 	    acpicpu_notify, sc, ACPIDEV_NOPOLL);
 
 	if (setperf_prio < 30) {
@@ -138,6 +315,11 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		acpi_hasprocfvs = 1;
 	}
 	acpicpu_sc[sc->sc_dev.dv_unit] = sc;
+	return;
+
+nopss:
+	if (sc->sc_flags & FLAGS_NOTHROTTLE)
+		printf("no performance/throttling supported\n");
 }
 
 int
@@ -162,7 +344,7 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 
 	if (res.length != 2) {
 		printf("%s: %s: invalid _PCT length\n", DEVNAME(sc),
-		    sc->sc_devnode->parent->name);
+		    sc->sc_devnode->name);
 		return (1);
 	}
 
@@ -252,7 +434,7 @@ acpicpu_notify(struct aml_node *node, int notify_type, void *arg)
 	struct acpicpu_softc	*sc = arg;
 
 	dnprintf(10, "acpicpu_notify: %.2x %s\n", notify_type,
-	    sc->sc_devnode->parent->name);
+	    sc->sc_devnode->name);
 
 	switch (notify_type) {
 	case 0x80:	/* _PPC changed, retrieve new values */
@@ -279,11 +461,11 @@ acpicpu_setperf(int level) {
 	sc = acpicpu_sc[cpu_number()];
 
 	dnprintf(10, "%s: acpicpu setperf level %d\n",
-	    sc->sc_devnode->parent->name, level);
+	    sc->sc_devnode->>name, level);
 
 	if (level < 0 || level > 100) {
 		dnprintf(10, "%s: acpicpu setperf illegal percentage\n",
-		    sc->sc_devnode->parent->name);
+		    sc->sc_devnode->name);
 		return;
 	}
 
@@ -293,12 +475,12 @@ acpicpu_setperf(int level) {
 	if (idx > sc->sc_pss_len) {
 		/* XXX should never happen */
 		printf("%s: acpicpu setperf index out of range\n",
-		    sc->sc_devnode->parent->name);
+		    sc->sc_devnode->name);
 		return;
 	}
 
 	dnprintf(10, "%s: acpicpu setperf index %d\n",
-	    sc->sc_devnode->parent->name, idx);
+	    sc->sc_devnode->name, idx);
 
 	pss = &sc->sc_pss[idx];
 
@@ -353,5 +535,5 @@ acpicpu_setperf(int level) {
 		cpuspeed = pss->pss_core_freq;
 	else
 		printf("%s: acpicpu setperf failed to alter frequency\n",
-		    sc->sc_devnode->parent->name);
+		    sc->sc_devnode->name);
 }

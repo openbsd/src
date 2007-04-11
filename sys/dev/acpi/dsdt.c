@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.86 2007/03/23 05:43:46 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.87 2007/04/11 02:51:11 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -3453,9 +3453,6 @@ aml_parse_resource(int length, uint8_t *buffer,
 
 	return 0;
 }
-
-void	aml_foreachpkg(struct aml_value *, int,
-	    void (*fn)(struct aml_value *, void *), void *);
 
 void
 aml_foreachpkg(struct aml_value *pkg, int start, 
