@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.48 2006/11/17 11:50:09 jmc Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.49 2007/04/11 12:10:42 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -2032,8 +2032,7 @@ pool_page_alloc_kmem(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
-	return ((void *)uvm_km_alloc_poolpage1(kmem_map, uvmexp.kmem_object,
-	    waitok));
+	return ((void *)uvm_km_alloc_poolpage1(kmem_map, NULL, waitok));
 }
 
 void

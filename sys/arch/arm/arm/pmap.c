@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 2007/02/03 16:48:23 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.10 2007/04/11 12:10:42 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -4071,7 +4071,7 @@ pmap_init(void)
 
 	/*
 	 * Now we need to free enough pv_entry structures to allow us to get
-	 * the kmem_map/kmem_object allocated and inited (done after this
+	 * the kmem_map allocated and inited (done after this
 	 * function is finished).  to do this we allocate one bootstrap page out
 	 * of kernel_map and use it to provide an initial pool of pv_entry
 	 * structures.   we never free this page.

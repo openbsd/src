@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map_i.h,v 1.20 2007/04/04 18:02:59 art Exp $	*/
+/*	$OpenBSD: uvm_map_i.h,v 1.21 2007/04/11 12:10:42 art Exp $	*/
 /*	$NetBSD: uvm_map_i.h,v 1.18 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -92,10 +92,7 @@ uvm_map_create(pmap, min, max, flags)
 {
 	vm_map_t result;
 
-	MALLOC(result, vm_map_t,
-	    (flags & VM_MAP_INTRSAFE) ? sizeof(struct vm_map_intrsafe) :
-					sizeof(struct vm_map),
-	    M_VMMAP, M_WAITOK);
+	MALLOC(result, vm_map_t, sizeof(struct vm_map), M_VMMAP, M_WAITOK);
 	uvm_map_setup(result, min, max, flags);
 	result->pmap = pmap;
 	return(result);
@@ -128,23 +125,6 @@ uvm_map_setup(map, min, max, flags)
 	rw_init(&map->lock, "vmmaplk");
 	simple_lock_init(&map->ref_lock);
 	simple_lock_init(&map->hint_lock);
-
-	/*
-	 * If the map is interrupt safe, place it on the list
-	 * of interrupt safe maps, for uvm_fault().
-	 *
-	 * We almost never set up an interrupt-safe map, but we set
-	 * up quite a few regular ones (at every fork!), so put
-	 * interrupt-safe map setup in the slow path.
-	 */
-	if (__predict_false(flags & VM_MAP_INTRSAFE)) {
-		struct vm_map_intrsafe *vmi = (struct vm_map_intrsafe *)map;
-		int s;
-
-		s = vmi_list_lock();
-		LIST_INSERT_HEAD(&vmi_list, vmi, vmi_list);
-		vmi_list_unlock(s);
-	}
 }
 
 

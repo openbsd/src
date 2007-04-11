@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault_i.h,v 1.10 2002/03/14 01:27:18 millert Exp $	*/
+/*	$OpenBSD: uvm_fault_i.h,v 1.11 2007/04/11 12:10:42 art Exp $	*/
 /*	$NetBSD: uvm_fault_i.h,v 1.11 2000/06/26 14:21:17 mrg Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 /*
  * uvm_fault_i.h: fault inline functions
  */
-static boolean_t uvmfault_check_intrsafe(struct uvm_faultinfo *);
 static boolean_t uvmfault_lookup(struct uvm_faultinfo *, boolean_t);
 static boolean_t uvmfault_relock(struct uvm_faultinfo *);
 static void uvmfault_unlockall(struct uvm_faultinfo *, struct vm_amap *,
@@ -94,39 +93,6 @@ uvmfault_unlockall(ufi, amap, uobj, anon)
 	if (amap)
 		amap_unlock(amap);
 	uvmfault_unlockmaps(ufi, FALSE);
-}
-
-/*
- * uvmfault_check_intrsafe: check for a virtual address managed by
- * an interrupt-safe map.
- *
- * => caller must provide a uvm_faultinfo structure with the IN
- *	params properly filled in
- * => if we find an intersafe VA, we fill in ufi->map, and return TRUE
- */
-
-static __inline boolean_t
-uvmfault_check_intrsafe(ufi)
-	struct uvm_faultinfo *ufi;
-{
-	struct vm_map_intrsafe *vmi;
-	int s;
-
-	s = vmi_list_lock();
-	for (vmi = LIST_FIRST(&vmi_list); vmi != NULL;
-	     vmi = LIST_NEXT(vmi, vmi_list)) {
-		if (ufi->orig_rvaddr >= vm_map_min(&vmi->vmi_map) &&
-		    ufi->orig_rvaddr < vm_map_max(&vmi->vmi_map))
-			break;
-	}
-	vmi_list_unlock(s);
-
-	if (vmi != NULL) {
-		ufi->map = &vmi->vmi_map;
-		return (TRUE);
-	}
-
-	return (FALSE);
 }
 
 /*

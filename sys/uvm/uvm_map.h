@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.37 2007/04/04 18:02:59 art Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.38 2007/04/11 12:10:42 art Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /* 
@@ -257,34 +257,6 @@ struct vm_map_intrsafe {
 	struct vm_map	vmi_map;
 	LIST_ENTRY(vm_map_intrsafe) vmi_list;
 };
-
-LIST_HEAD(vmi_list, vm_map_intrsafe);
-#ifdef _KERNEL
-extern simple_lock_data_t vmi_list_slock;
-extern struct vmi_list vmi_list;
-
-static __inline int vmi_list_lock(void);
-static __inline void vmi_list_unlock(int);
-
-static __inline int
-vmi_list_lock()
-{
-	int s;
-
-	s = splhigh();
-	simple_lock(&vmi_list_slock);
-	return (s);
-}
-
-static __inline void
-vmi_list_unlock(s)
-	int s;
-{
-
-	simple_unlock(&vmi_list_slock);
-	splx(s);
-}
-#endif /* _KERNEL */
 
 /*
  * handle inline options

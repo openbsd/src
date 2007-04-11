@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.67 2007/03/25 02:38:11 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.68 2007/04/11 12:10:42 art Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 
 #include <uvm/uvm_extern.h>
 
-static struct vm_map_intrsafe kmem_map_store;
+static struct vm_map kmem_map_store;
 struct vm_map *kmem_map = NULL;
 
 #ifdef NKMEMCLUSTERS
@@ -195,7 +195,7 @@ malloc(unsigned long size, int type, int flags)
 		else
 			allocsize = 1 << indx;
 		npg = btoc(allocsize);
-		va = (caddr_t) uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
+		va = (caddr_t) uvm_km_kmemalloc(kmem_map, NULL,
 		    (vsize_t)ctob(npg), 
 		    ((flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0) |
 		    ((flags & M_CANFAIL) ? UVM_KMF_CANFAIL : 0));
@@ -515,7 +515,7 @@ kmeminit(void)
 	base = vm_map_min(kernel_map);
 	kmem_map = uvm_km_suballoc(kernel_map, &base, &limit,
 	    (vsize_t)(nkmempages * PAGE_SIZE), VM_MAP_INTRSAFE, FALSE,
-	    &kmem_map_store.vmi_map);
+	    &kmem_map_store);
 	kmembase = (char *)base;
 	kmemlimit = (char *)limit;
 	kmemusage = (struct kmemusage *) uvm_km_zalloc(kernel_map,

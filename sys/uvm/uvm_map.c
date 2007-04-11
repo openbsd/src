@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.86 2007/04/04 17:44:45 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.87 2007/04/11 12:10:42 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -1474,7 +1474,10 @@ uvm_unmap_remove(map, start, end, entry_list, p)
 		 * special case: handle mappings to anonymous kernel objects.
 		 * we want to free these pages right away...
 		 */
-		if (UVM_ET_ISOBJ(entry) &&
+		if (map->flags & VM_MAP_INTRSAFE) {
+			uvm_km_pgremove_intrsafe(entry->start, entry->end);
+			pmap_kremove(entry->start, len);
+		} else if (UVM_ET_ISOBJ(entry) &&
 		    UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj)) {
 			KASSERT(vm_map_pmap(map) == pmap_kernel());
 
@@ -1513,18 +1516,10 @@ uvm_unmap_remove(map, start, end, entry_list, p)
 			 * from the object.  offsets are always relative
 			 * to vm_map_min(kernel_map).
 			 */
-			if (UVM_OBJ_IS_INTRSAFE_OBJECT(entry->object.uvm_obj)) {
-				pmap_kremove(entry->start, len);
-				uvm_km_pgremove_intrsafe(entry->object.uvm_obj,
-				    entry->start - vm_map_min(kernel_map),
-				    entry->end - vm_map_min(kernel_map));
-			} else {
-				pmap_remove(pmap_kernel(), entry->start,
-				    entry->end);
-				uvm_km_pgremove(entry->object.uvm_obj,
-				    entry->start - vm_map_min(kernel_map),
-				    entry->end - vm_map_min(kernel_map));
-			}
+			pmap_remove(pmap_kernel(), entry->start, entry->end);
+			uvm_km_pgremove(entry->object.uvm_obj,
+			    entry->start - vm_map_min(kernel_map),
+			    entry->end - vm_map_min(kernel_map));
 
 			/*
 			 * null out kernel_object reference, we've just

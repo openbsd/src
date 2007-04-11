@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.100 2007/04/04 17:44:45 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.101 2007/04/11 12:10:42 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -170,9 +170,9 @@
  *		=> success: we have an unmapped VA, continue to [b]
  *		=> failure: unable to lock kmem_map or out of VA in it.
  *			move on to plan 3.
- *		[b] allocate a page in kmem_object for the VA
+ *		[b] allocate a page for the VA
  *		=> success: map it in, free the pv_entry's, DONE!
- *		=> failure: kmem_object locked, no free vm_pages, etc.
+ *		=> failure: no free vm_pages, etc.
  *			save VA for later call to [a], go to plan 3.
  *	If we fail, we simply let pmap_enter() tell UVM about it.
  */
@@ -1074,9 +1074,9 @@ pmap_init()
 
 	/*
 	 * now we need to free enough pv_entry structures to allow us to get
-	 * the kmem_map/kmem_object allocated and inited (done after this
-	 * function is finished).  to do this we allocate one bootstrap page out
-	 * of kernel_map and use it to provide an initial pool of pv_entry
+	 * the kmem_map allocated and inited (done after this function is
+	 * finished).  to do this we allocate one bootstrap page out of
+	 * kernel_map and use it to provide an initial pool of pv_entry
 	 * structures.   we never free this page.
 	 */
 
@@ -1222,37 +1222,19 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 	 * if not, try to allocate one.
 	 */
 
-	s = splvm();   /* must protect kmem_map/kmem_object with splvm! */
+	s = splvm();   /* must protect kmem_map with splvm! */
 	if (pv_cachedva == 0) {
-		pv_cachedva = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
+		pv_cachedva = uvm_km_kmemalloc(kmem_map, NULL,
 		    NBPG, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
-		if (pv_cachedva == 0) {
-			splx(s);
-			goto steal_one;
-		}
 	}
-
-	/*
-	 * we have a VA, now let's try and allocate a page in the object
-	 * note: we are still holding splvm to protect kmem_object
-	 */
-
-	if (!simple_lock_try(&uvmexp.kmem_object->vmobjlock)) {
-		splx(s);
+	splx(s);
+	if (pv_cachedva == 0)
 		goto steal_one;
-	}
 
-	pg = uvm_pagealloc(uvmexp.kmem_object, pv_cachedva -
-			   vm_map_min(kernel_map),
-			   NULL, UVM_PGA_USERESERVE);
+	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 	if (pg)
 		pg->pg_flags &= ~PG_BUSY;	/* never busy */
-
-	simple_unlock(&uvmexp.kmem_object->vmobjlock);
-	splx(s);
-	/* splvm now dropped */
-
-	if (pg == NULL)
+	else
 		goto steal_one;
 
 	/*
@@ -1505,9 +1487,6 @@ pmap_free_pvs(struct pmap *pmap, struct pv_entry *pvs)
  * => assume caller is holding the pvalloc_lock and that
  *	there is a page on the pv_unusedpgs list
  * => if we can't get a lock on the kmem_map we try again later
- * => note: analysis of MI kmem_map usage [i.e. malloc/free] shows
- *	that if we can lock the kmem_map then we are not already
- *	holding kmem_object's lock.
  */
 
 void

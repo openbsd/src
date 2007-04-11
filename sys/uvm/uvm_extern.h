@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.63 2006/11/29 12:39:50 miod Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.64 2007/04/11 12:10:42 art Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -356,9 +356,6 @@ struct uvmexp {
 	int pdrevnode;	/* vnode pages reactivated due to min threshold */
 	int pdrevtext;	/* vtext pages reactivated due to min threshold */
 
-	/* kernel memory objects: managed by uvm_km_kmemalloc() only! */
-	struct uvm_object *kmem_object;
-
 	int fpswtch;	/* FPU context switches */
 	int kmapent;	/* number of kernel map entries */
 };
@@ -507,9 +504,6 @@ vaddr_t			uvm_km_alloc_poolpage1(vm_map_t,
 				struct uvm_object *, boolean_t);
 void			uvm_km_free_poolpage1(vm_map_t, vaddr_t);
 
-#define	uvm_km_alloc_poolpage(waitok)	uvm_km_alloc_poolpage1(kmem_map, \
-						uvmexp.kmem_object, (waitok))
-#define	uvm_km_free_poolpage(addr)	uvm_km_free_poolpage1(kmem_map, (addr))
 void			*uvm_km_getpage(boolean_t);
 void			uvm_km_putpage(void *);
 

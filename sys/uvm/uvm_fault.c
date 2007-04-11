@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.44 2007/04/04 17:44:45 art Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.45 2007/04/11 12:10:42 art Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -599,19 +599,6 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 		narrow = FALSE;		/* normal fault */
 
 	/*
-	 * before we do anything else, if this is a fault on a kernel
-	 * address, check to see if the address is managed by an
-	 * interrupt-safe map.  If it is, we fail immediately.  Intrsafe
-	 * maps are never pageable, and this approach avoids an evil
-	 * locking mess.
-	 */
-	if (orig_map == kernel_map && uvmfault_check_intrsafe(&ufi)) {
-		UVMHIST_LOG(maphist, "<- VA 0x%lx in intrsafe map %p",
-		    ufi.orig_rvaddr, ufi.map, 0, 0);
-		return (EFAULT);
-	}
-
-	/*
 	 * "goto ReFault" means restart the page fault from ground zero.
 	 */
 ReFault:
@@ -626,6 +613,12 @@ ReFault:
 	}
 	/* locked: maps(read) */
 
+#ifdef DIAGNOSTIC
+	if ((ufi.map->flags & VM_MAP_PAGEABLE) == 0)
+		panic("uvm_fault: fault on non-pageable map (%p, 0x%lx)",
+		    ufi.map, vaddr);
+#endif
+
 	/*
 	 * check protection
 	 */
@@ -636,17 +629,6 @@ ReFault:
 		    ufi.entry->protection, access_type, 0, 0);
 		uvmfault_unlockmaps(&ufi, FALSE);
 		return (EACCES);
-	}
-
-	/*
-	 * if the map is not a pageable map, a page fault always fails.
-	 */
-
-	if ((ufi.map->flags & VM_MAP_PAGEABLE) == 0) {
-		UVMHIST_LOG(maphist,
-		    "<- map %p not pageable", ufi.map, 0, 0, 0);
-		uvmfault_unlockmaps(&ufi, FALSE);
-		return (EFAULT);
 	}
 
 	/*
