@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.15 2007/04/11 22:05:09 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.16 2007/04/11 22:52:33 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -624,10 +624,10 @@ sr_ioctl_disk(struct sr_softc *sc, struct bioc_disk *bd)
 			continue;
 
 		id = bd->bd_diskid;
-		if (id >= sc->sc_dis[vol]->sd_vol.sv_meta.svm_no_chunk)
+		if (id >= sc->sc_dis[i]->sd_vol.sv_meta.svm_no_chunk)
 			break;
 
-		src = sc->sc_dis[vol]->sd_vol.sv_chunks[id];
+		src = sc->sc_dis[i]->sd_vol.sv_chunks[id];
 		bd->bd_status = src->src_meta.scm_status;
 		bd->bd_size = src->src_meta.scm_size;
 		bd->bd_channel = vol;
