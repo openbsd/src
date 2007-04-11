@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.35 2006/12/28 20:33:24 thib Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.36 2007/04/11 16:08:50 thib Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	if (ip->i_din1 == NULL || DIP(ip, mode) == 0)
-		vrecycle(vp, NULL, p);
+		vrecycle(vp, p);
 
 	return (error);
 }

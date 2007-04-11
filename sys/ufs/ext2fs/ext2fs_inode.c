@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.33 2006/06/18 14:18:25 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.34 2007/04/11 16:08:50 thib Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	if (ip->i_e2din == NULL || ip->i_e2fs_dtime != 0)
-		vrecycle(vp, NULL, p);
+		vrecycle(vp, p);
 	return (error);
 }   
 

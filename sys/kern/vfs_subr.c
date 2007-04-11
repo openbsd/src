@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.141 2007/03/21 17:29:31 thib Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.142 2007/04/11 16:08:50 thib Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1021,11 +1021,9 @@ vclean(struct vnode *vp, int flags, struct proc *p)
  * Release the passed interlock if the vnode will be recycled.
  */
 int
-vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct proc *p)
+vrecycle(struct vnode *vp, struct proc *p)
 {
 	if (vp->v_usecount == 0) {
-		if (inter_lkp)
-			simple_unlock(inter_lkp);
 		vgonel(vp, p);
 		return (1);
 	}

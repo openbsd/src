@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vrecycle.9,v 1.6 2004/04/17 20:30:41 jmc Exp $
+.\"     $OpenBSD: vrecycle.9,v 1.7 2007/04/11 16:08:50 thib Exp $
 .\"-
 .\" Copyright (c) 2002 Peter Werner
 .\" All rights reserved.
@@ -37,7 +37,6 @@
 .Ft int
 .Fo vrecycle
 .Fa "struct vnode *vp"
-.Fa "struct simplelock *inter_lkp"
 .Fa "struct proc *p"
 .Fc
 .Sh DESCRIPTION
@@ -53,18 +52,10 @@ field is zero.
 If
 .Va v_usecount
 is non-zero, it simply returns.
-If
-.Va v_usecount
-is zero and an interlock
-.Fa inter_lkp
-was passed, this interlock will be unlocked before calling
-.Xr vgonel 9 .
 .Sh RETURN VALUES
 .Fn vrecycle
 will return 1 if the vnode was placed on the free list.
-It will return 0 if the reference count was non-zero, and any lock passed in
-.Fa inter_lkp
-will still be locked.
+It will return 0 if the reference count was non-zero.
 .Sh SEE ALSO
 .Xr vgonel 9 ,
 .Xr vnode 9

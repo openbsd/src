@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.29 2007/03/21 17:29:32 thib Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.30 2007/04/11 16:08:50 thib Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -681,6 +681,6 @@ out:
 	       dep->de_Name[0]);
 #endif
 	if (dep->de_Name[0] == SLOT_DELETED)
-		vrecycle(vp, (struct simplelock *)0, p);
+		vrecycle(vp, p);
 	return (error);
 }

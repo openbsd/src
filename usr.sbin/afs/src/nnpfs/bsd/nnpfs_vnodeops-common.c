@@ -1017,7 +1017,7 @@ nnpfs_inactive_common(struct vnode *vp, d_thread_t *p)
 #ifndef __osf__
 	nnpfs_vfs_unlock(vp, p);
         NNPFSDEB(XDEBVNOPS, ("nnpfs_inactive: vrecycle\n"));
-        vrecycle(vp, 0, p);
+        vrecycle(vp, p);
 #else /* __osf__ */
 	NNPFSDEB(XDEBVNOPS, ("nnpfs_inactive: vp = %lx vp->v_usecount= %d\n",
 			     (unsigned long)vp, vp?vp->v_usecount:0));

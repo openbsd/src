@@ -336,7 +336,7 @@ xfs_message_invalidnode(int fd,
 	if (vp->v_usecount == 0) {
 #ifndef __osf__
 	    NNPFSDEB(XDEBVNOPS, ("xfs_message_invalidnode: vrecycle\n"));
-	    vrecycle(vp, 0, p);
+	    vrecycle(vp, p);
 #else
 	    /* XXX */
 #endif /* __osf__ */

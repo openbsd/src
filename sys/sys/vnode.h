@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.75 2007/03/21 17:29:32 thib Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.76 2007/04/11 16:08:50 thib Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -430,7 +430,7 @@ void	vntblinit(void);
 int	vwaitforio(struct vnode *, int, char *, int);
 void	vwakeup(struct vnode *);
 void	vput(struct vnode *);
-int	vrecycle(struct vnode *, struct simplelock *, struct proc *);
+int	vrecycle(struct vnode *, struct proc *);
 void	vrele(struct vnode *);
 void	vprint(char *, struct vnode *);
 
