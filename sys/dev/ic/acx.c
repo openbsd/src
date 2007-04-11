@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.72 2007/04/11 19:49:11 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.73 2007/04/11 21:38:50 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -2375,8 +2375,6 @@ acx_beacon_locate(struct mbuf *m, u_int8_t type)
 	off = sizeof(struct ieee80211_frame) + 8 + 2 + 2;
 	frm = mtod(m, u_int8_t *);
 	for (; off + 1 < m->m_len; off += frm[off + 1] + 2) {
-		printf("acx_beacon_locate: off %d type %x len %x\n",
-		    off, frm[off], frm[off + 1]);
 		if (frm[off] == type)
 			return (off);
 	}
@@ -2401,8 +2399,6 @@ acx_set_beacon_tmplt(struct acx_softc *sc, struct ieee80211_node *ni)
 		return (1);
 
 	off = acx_beacon_locate(m, IEEE80211_ELEMID_TIM);
-	printf("acx_set_beacon_tmplt: acx_beacon_locate TIM off %d len %d\n",
-	    off, m->m_pkthdr.len);
 
 	m_copydata(m, 0, off, (caddr_t)&beacon.data);
 	len = off + sizeof(beacon.size);
