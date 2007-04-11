@@ -1,4 +1,4 @@
-.\"     $OpenBSD: lock.9,v 1.13 2007/02/03 16:58:30 pedro Exp $
+.\"     $OpenBSD: lock.9,v 1.14 2007/04/11 12:06:34 miod Exp $
 .\"     $NetBSD: lock.9,v 1.12 2001/11/01 01:13:43 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -200,18 +200,6 @@ process holding an exclusive-access lock may get additional
 exclusive-access locks if it explicitly sets the LK_CANRECURSE flag in
 the lock request, or if the LK_CANRECURSE flag was set when the lock
 was initialised.
-.It LK_UPGRADE
-The process must hold a shared-access lock that it wants to have
-upgraded to an exclusive-access lock.
-Other processes may get exclusive
-access to the protected resource between the time that the upgrade is
-requested and the time that it is granted.
-.It LK_DOWNGRADE
-The process must hold an exclusive-access lock that it wants to have
-downgraded to a shared-access lock.
-If the process holds multiple
-(recursive) exclusive-access locks, they will all be downgraded to
-shared-access locks.
 .It LK_RELEASE
 Release one instance of a lock.
 .It LK_DRAIN
@@ -289,9 +277,12 @@ in
 .Sh SEE ALSO
 .Xr mutex 9 ,
 .Xr pmap 9 ,
+.Xr rwlock 9 ,
 .Xr spl 9 ,
 .Xr tsleep 9 ,
 .Xr uvm 9
 .Sh HISTORY
 The kernel locking API first appeared in
 .Bx 4.4 -lite2 .
+It was progressively deprecated in favor of
+.Xr rwlock 9 .

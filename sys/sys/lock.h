@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.16 2007/02/03 16:48:23 miod Exp $	*/
+/*	$OpenBSD: lock.h,v 1.17 2007/04/11 12:06:37 miod Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -92,14 +92,6 @@ struct lock {
  *	locks if it explicitly sets the LK_CANRECURSE flag in the lock
  *	request, or if the LK_CANRECUSE flag was set when the lock was
  *	initialized.
- *   LK_UPGRADE - the process must hold a shared lock that it wants to
- *	have upgraded to an exclusive lock. Other processes may get
- *	exclusive access to the resource between the time that the upgrade
- *	is requested and the time that it is granted.
- *   LK_DOWNGRADE - the process must hold an exclusive lock that it wants
- *	to have downgraded to a shared lock. If the process holds multiple
- *	(recursive) exclusive locks, they will all be downgraded to shared
- *	locks.
  *   LK_RELEASE - release one instance of a lock.
  *   LK_DRAIN - wait for all activity on the lock to end, then mark it
  *	decommissioned. This feature is used before freeing a lock that
@@ -110,8 +102,6 @@ struct lock {
 #define LK_TYPE_MASK	0x0000000f	/* type of lock sought */
 #define LK_SHARED	0x00000001	/* shared lock */
 #define LK_EXCLUSIVE	0x00000002	/* exclusive lock */
-#define LK_UPGRADE	0x00000003	/* shared-to-exclusive upgrade */
-#define LK_DOWNGRADE	0x00000005	/* exclusive-to-shared downgrade */
 #define LK_RELEASE	0x00000006	/* release any type of lock */
 #define LK_DRAIN	0x00000007	/* wait for all lock activity to end */
 /*
@@ -120,7 +110,7 @@ struct lock {
  * The first three flags may be set in lock_init to set their mode permanently,
  * or passed in as arguments to the lock manager.
  */
-#define LK_EXTFLG_MASK	0x00700070	/* mask of external flags */
+#define LK_EXTFLG_MASK	0x00200070	/* mask of external flags */
 #define LK_NOWAIT	0x00000010	/* do not sleep to await lock */
 #define LK_SLEEPFAIL	0x00000020	/* sleep, then return failure */
 #define LK_CANRECURSE	0x00000040	/* allow recursive exclusive lock */
@@ -130,7 +120,6 @@ struct lock {
  *
  * These flags are used internally to the lock manager.
  */
-#define LK_WANT_UPGRADE	0x00001000	/* waiting for share-to-excl upgrade */
 #define LK_WANT_EXCL	0x00002000	/* exclusive lock sought */
 #define LK_HAVE_EXCL	0x00004000	/* exclusive lock obtained */
 #define LK_WAITDRAIN	0x00008000	/* process waiting for lock to drain */
@@ -150,16 +139,13 @@ struct lock {
  *
  * Successfully obtained locks return 0. Locks will always succeed
  * unless one of the following is true:
- *	LK_FORCEUPGRADE is requested and some other process has already
- *	    requested a lock upgrade (returns EBUSY).
  *	LK_NOWAIT is set and a sleep would be required (returns EBUSY).
  *	LK_SLEEPFAIL is set and a sleep was done (returns ENOLCK).
  *	PCATCH is set in lock priority and a signal arrives (returns
  *	    either EINTR or ERESTART if system calls is to be restarted).
  *	Non-null lock timeout and timeout expires (returns EWOULDBLOCK).
  * A failed lock attempt always returns a non-zero error value. No lock
- * is held after an error return (in particular, a failed LK_UPGRADE
- * or LK_FORCEUPGRADE will have released its shared access lock).
+ * is held after an error return.
  */
 
 /*
