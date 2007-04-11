@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.102 2007/03/31 15:30:07 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.103 2007/04/11 15:17:46 thib Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -560,11 +560,9 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	}
 
 	newfs = (struct fs *)bp->b_data;
-	if (newfs->fs_magic != FS_MAGIC || (u_int)newfs->fs_bsize > MAXBSIZE ||
-	    newfs->fs_bsize < sizeof(struct fs) ||
-	    (u_int)newfs->fs_sbsize > SBSIZE) {
+	if (ffs_validate(newfs) == 0) {
 		brelse(bp);
-		return (EIO);		/* XXX needs translation */
+		return (EINVAL);
 	}
 	fs = VFSTOUFS(mountp)->um_fs;
 	/*
