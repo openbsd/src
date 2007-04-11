@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.14 2007/03/31 12:57:08 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.15 2007/04/11 22:05:09 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -56,7 +56,7 @@ uint32_t	sr_debug = 0
 		    /* | SR_D_WU */
 		    /* | SR_D_META */
 		    /* | SR_D_DIS */
-		    | SR_D_STATE
+		    /* | SR_D_STATE */
 		;
 #endif
 
@@ -118,6 +118,7 @@ void			sr_raid1_intr(struct buf *);
 void			sr_raid1_set_chunk_state(struct sr_discipline *,
 			    int, int);
 void			sr_raid1_set_vol_state(struct sr_discipline *);
+void			sr_raid1_startwu(struct sr_workunit *);
 
 struct scsi_adapter sr_switch = {
 	sr_scsi_cmd, sr_minphys, NULL, NULL, sr_scsi_ioctl
@@ -293,6 +294,8 @@ sr_alloc_wu(struct sr_discipline *sd)
 	    M_DEVBUF, M_WAITOK);
 	memset(sd->sd_wu, 0, sizeof(struct sr_workunit) * no_wu);
 	TAILQ_INIT(&sd->sd_wu_freeq);
+	TAILQ_INIT(&sd->sd_wu_pendq);
+	TAILQ_INIT(&sd->sd_wu_defq);
 	for (i = 0; i < no_wu; i++) {
 		wu = &sd->sd_wu[i];
 		wu->swu_dis = sd;
@@ -314,6 +317,10 @@ sr_free_wu(struct sr_discipline *sd)
 
 	while ((wu = TAILQ_FIRST(&sd->sd_wu_freeq)) != NULL)
 		TAILQ_REMOVE(&sd->sd_wu_freeq, wu, swu_link);
+	while ((wu = TAILQ_FIRST(&sd->sd_wu_pendq)) != NULL)
+		TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
+	while ((wu = TAILQ_FIRST(&sd->sd_wu_defq)) != NULL)
+		TAILQ_REMOVE(&sd->sd_wu_defq, wu, swu_link);
 
 	if (sd->sd_wu)
 		free(sd->sd_wu, M_DEVBUF);
@@ -323,6 +330,8 @@ void
 sr_put_wu(struct sr_workunit *wu)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
+	struct sr_ccb		*ccb;
+
 	int			s;
 
 	DNPRINTF(SR_D_WU, "%s: sr_put_wu: %p\n", DEVNAME(sd->sd_sc), wu);
@@ -333,7 +342,15 @@ sr_put_wu(struct sr_workunit *wu)
 	wu->swu_state = SR_WU_FREE;
 	wu->swu_ios_complete = 0;
 	wu->swu_io_count = 0;
-	wu->swu_ios = NULL;
+	wu->swu_blk_start = 0;
+	wu->swu_blk_end = 0;
+	wu->swu_collider = NULL;
+
+	while ((ccb = TAILQ_FIRST(&wu->swu_ccb)) != NULL) {
+		TAILQ_REMOVE(&wu->swu_ccb, ccb, ccb_link);
+		sr_put_ccb(ccb);
+	}
+	TAILQ_INIT(&wu->swu_ccb);
 
 	TAILQ_INSERT_TAIL(&sd->sd_wu_freeq, wu, swu_link);
 	splx(s);
@@ -783,7 +800,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 	sd->sd_alloc_resources(sd);
 
 	/* metadata SHALL be fully filled in at this point */
-	sd->sd_link.openings = 1; /* sc->sc_max_cmds; */
+	sd->sd_link.openings = sd->sd_max_wu;
 	sd->sd_link.device = &sr_dev;
 	sd->sd_link.device_softc = sc;
 	sd->sd_link.adapter_softc = sc;
@@ -1224,9 +1241,10 @@ sr_raid1_rw(struct sr_workunit *wu)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
+	struct sr_workunit	*wup;
 	struct sr_ccb		*ccb;
-	int			rv = 1, ios, x, i;
-	daddr_t			blk;
+	int			rv = 1, ios, x, i, s;
+	daddr64_t		blk;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid1_rw 0x%02x\n", DEVNAME(sd->sd_sc),
 	    xs->cmd->opcode);
@@ -1252,6 +1270,9 @@ sr_raid1_rw(struct sr_workunit *wu)
 		ios = 1;
 	else
 		ios = sd->sd_vol.sv_meta.svm_no_chunk;
+
+	wu->swu_blk_start = blk;
+	wu->swu_blk_end = blk + xs->datalen - 1;
 
 	for (i = 0; i < ios; i++) {
 		ccb = sr_get_ccb(sd);
@@ -1299,12 +1320,15 @@ sr_raid1_rw(struct sr_workunit *wu)
 
 		ccb->ccb_wu = wu;
 
+		TAILQ_INSERT_TAIL(&wu->swu_ccb, ccb, ccb_link);
+
 		DNPRINTF(SR_D_DIS, "%s: %s: sr_raid1: b_bcount: %d "
 		    "b_blkno: %x b_flags 0x%0x b_data %p\n",
 		    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname,
 		    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
 		    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
 
+#if 0
 		/* vprint("despatch: ", ccb->ccb_buf.b_vp); */
 		ccb->ccb_buf.b_vp->v_numoutput++;
 		VOP_STRATEGY(&ccb->ccb_buf);
@@ -1321,23 +1345,66 @@ sr_raid1_rw(struct sr_workunit *wu)
 			}
 			sr_put_ccb(ccb);
 		}
+#endif
 	}
 
+	/* walk queue backwards and fill in collider if we have one */
+	s = splbio();
+	TAILQ_FOREACH_REVERSE(wup, &sd->sd_wu_pendq, sr_wu_list, swu_link) {
+		if (wu->swu_blk_end < wup->swu_blk_start ||
+		    wup->swu_blk_end < wu->swu_blk_start)
+			continue;
+
+		/* we have an LBA collision, defer wu */
+		wu->swu_state = SR_WU_DEFERRED;
+		if (wup->swu_collider)
+			/* wu is on deferred queue, append to last wu */
+			while (wup->swu_collider)
+				wup = wup->swu_collider;
+
+		wup->swu_collider = wu;
+		TAILQ_INSERT_TAIL(&sd->sd_wu_defq, wu, swu_link);
+		goto queued;
+	}
+
+	/* XXX deal with polling */
+
+	sr_raid1_startwu(wu);
+
+queued:
+	splx(s);
 	rv = 0;
 bad:
-
+	/* unwind the whole wu */
 	return (rv);
+}
+
+void
+sr_raid1_startwu(struct sr_workunit *wu)
+{
+	struct sr_discipline	*sd = wu->swu_dis;
+	struct sr_ccb		*ccb;
+
+	splassert(IPL_BIO);
+
+	/* move io to pending queue */
+	TAILQ_INSERT_TAIL(&sd->sd_wu_pendq, wu, swu_link);
+	/* XXX create function */
+	TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link) {
+		ccb->ccb_buf.b_vp->v_numoutput++;
+		VOP_STRATEGY(&ccb->ccb_buf);
+	}
 }
 
 void
 sr_raid1_intr(struct buf *bp)
 {
 	struct sr_ccb		*ccb = (struct sr_ccb *)bp;
-	struct sr_workunit	*wu = ccb->ccb_wu;
+	struct sr_workunit	*wu = ccb->ccb_wu, *wup;
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_softc		*sc = sd->sd_sc;
-	int			s;
+	int			s, pend = 0;
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr bp %x xs %x\n",
 	    DEVNAME(sc), bp, xs);
@@ -1346,13 +1413,13 @@ sr_raid1_intr(struct buf *bp)
 	    " b_flags: 0x%0x\n", DEVNAME(sc), ccb->ccb_buf.b_bcount,
 	    ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags);
 
+	s = splbio();
+
 	if (ccb->ccb_buf.b_flags & B_ERROR) {
-		printf("%s: i/o error on block %d\n", DEVNAME(sc),
+		printf("%s: i/o error on block %llu\n", DEVNAME(sc),
 		    ccb->ccb_buf.b_blkno);
 		wu->swu_state = SR_WU_FAILED;
 	}
-
-	sr_put_ccb(ccb);
 
 	wu->swu_ios_complete++;
 	DNPRINTF(SR_D_INTR, "%s: sr_intr: comp: %d count: %d\n",
@@ -1367,11 +1434,34 @@ sr_raid1_intr(struct buf *bp)
 		xs->resid = 0;
 		xs->flags |= ITSDONE;
 
-		s = splbio();
-		scsi_done(xs);
-		splx(s);
+
+		TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link) {
+			if (wu == wup) {
+				/* io on pendq, remove */
+				TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
+				pend = 1;
+
+				if (wu->swu_collider) {
+					/* restart deferred wu */
+					wu->swu_collider->swu_state =
+					    SR_WU_INPROGRESS;
+					TAILQ_REMOVE(&sd->sd_wu_defq,
+					    wu->swu_collider, swu_link);
+					sr_raid1_startwu(wu->swu_collider);
+				}
+				break;
+			}
+		}
+
+		if (!pend)
+			printf("wu: %p not on pending queue\n", wu);
+
+		/* do not change the order of these 2 functions */
 		sr_put_wu(wu);
+		scsi_done(xs);
 	}
+
+	splx(s);
 }
 
 void

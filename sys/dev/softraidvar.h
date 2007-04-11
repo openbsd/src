@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.5 2007/03/30 23:15:30 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.6 2007/04/11 22:05:09 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -86,6 +86,12 @@ struct sr_workunit {
 #define SR_WU_OK		2
 #define SR_WU_FAILED		3
 #define SR_WU_PARTIALLYFAILED	4
+#define SR_WU_DEFERRED		5
+#define SR_WU_PENDING		6
+
+	/* workunit io range */
+	daddr64_t		swu_blk_start;
+	daddr64_t		swu_blk_end;
 
 	/* in flight totals */
 	u_int32_t		swu_ios_complete;
@@ -95,9 +101,11 @@ struct sr_workunit {
 	/* number of ios that makes up the whole work unit */
 	u_int32_t		swu_io_count;
 
-	/* index into all ios */
-	/* XXX make this a list ? */
-	struct sr_ccb		**swu_ios;
+	/* colliding wu */
+	struct sr_workunit	*swu_collider;
+
+	/* all ios that make up this workunit */
+	struct sr_ccb_list	swu_ccb;
 
 	TAILQ_ENTRY(sr_workunit) swu_link;
 };
@@ -213,9 +221,12 @@ struct sr_discipline {
 	struct sr_ccb_list	sd_ccb_freeq;
 	u_int32_t		sd_max_ccb_per_wu;
 
-	struct sr_workunit	*sd_wu;
-	struct sr_wu_list	sd_wu_freeq;
+	struct sr_workunit	*sd_wu;		/* all workunits */
 	u_int32_t		sd_max_wu;
+
+	struct sr_wu_list	sd_wu_freeq;	/* free wu queue */
+	struct sr_wu_list	sd_wu_pendq;	/* pending wu queue */
+	struct sr_wu_list	sd_wu_defq;	/* deferred wu queue */
 
 	/* discipline functions */
 	int			(*sd_alloc_resources)(struct sr_discipline *);
