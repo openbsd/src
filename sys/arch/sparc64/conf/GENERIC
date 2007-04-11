@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.175 2007/04/10 19:13:13 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.176 2007/04/11 08:56:19 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -88,6 +88,8 @@ mpi*	at pci?			# LSI Logic Fusion MPT Message Passing Interface
 scsibus* at mpi?
 arc*	at pci?			# Areca RAID Controllers
 scsibus* at arc?
+sili*	at pci?			# Silicon Image 3124/3132/3531 SATA controllers
+scsibus* at sili?
 
 # PCI crypto
 hifn*	at pci?			# Hifn 7751/7811/7951
