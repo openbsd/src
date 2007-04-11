@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.47 2006/12/28 20:06:11 deraadt Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.48 2007/04/11 14:50:55 claudio Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -723,7 +723,6 @@ pppoutput(ifp, m0, dst, rtp)
     struct ifqueue *ifq;
     enum NPmode mode;
     int len;
-    struct mbuf *m;
 
     if (sc->sc_devp == NULL || (ifp->if_flags & IFF_RUNNING) == 0
 	|| ((ifp->if_flags & IFF_UP) == 0 && dst->sa_family != AF_UNSPEC)) {
@@ -780,26 +779,21 @@ pppoutput(ifp, m0, dst, rtp)
      * Add PPP header.  If no space in first mbuf, allocate another.
      * (This assumes M_LEADINGSPACE is always 0 for a cluster mbuf.)
      */
-    if (M_LEADINGSPACE(m0) < PPP_HDRLEN) {
-	m0 = m_prepend(m0, PPP_HDRLEN, M_DONTWAIT);
-	if (m0 == 0) {
-	    error = ENOBUFS;
-	    goto bad;
-	}
-	m0->m_len = 0;
-    } else
-	m0->m_data -= PPP_HDRLEN;
+    M_PREPEND(m0, PPP_HDRLEN, M_DONTWAIT);
+    if (m0 == 0) {
+	error = ENOBUFS;
+	goto bad;
+    }
 
     cp = mtod(m0, u_char *);
     *cp++ = address;
     *cp++ = control;
     *cp++ = protocol >> 8;
     *cp++ = protocol & 0xff;
-    m0->m_len += PPP_HDRLEN;
 
-    len = 0;
-    for (m = m0; m != 0; m = m->m_next)
-	len += m->m_len;
+    if ((m0->m_flags & M_PKTHDR) == 0)
+	    panic("mbuf packet without packet header!");
+    len = m0->m_pkthdr.len;
 
     if (sc->sc_flags & SC_LOG_OUTPKT) {
 	printf("%s output: ", ifp->if_xname);
