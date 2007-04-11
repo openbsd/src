@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.122 2007/04/10 16:41:45 bluhm Exp $	*/
+/*	$OpenBSD: sd.c,v 1.123 2007/04/11 10:54:57 bluhm Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -105,6 +105,7 @@ int	sd_reassign_blocks(struct sd_softc *, u_long);
 int	sd_interpret_sense(struct scsi_xfer *);
 int	sd_get_parms(struct sd_softc *, struct disk_parms *, int);
 void	sd_flush(struct sd_softc *, int);
+void	sd_kill_buffers(struct sd_softc *);
 
 void	viscpy(u_char *, u_char *, int);
 
@@ -285,19 +286,9 @@ int
 sddetach(struct device *self, int flags)
 {
 	struct sd_softc *sd = (struct sd_softc *)self;
-	struct buf *dp, *bp;
-	int s, bmaj, cmaj, mn;
+	int bmaj, cmaj, mn;
 
-	/* Remove unprocessed buffers from queue */
-	s = splbio();
-	for (dp = &sd->buf_queue; (bp = dp->b_actf) != NULL; ) {
-		dp->b_actf = bp->b_actf;
-
-		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
-		biodone(bp);
-	}
-	splx(s);
+	sd_kill_buffers(sd);
 
 	/* locate the minor number */
 	mn = SDMINOR(self->dv_unit, 0);
@@ -1473,4 +1464,24 @@ sd_flush(struct sd_softc *sd, int flags)
 		else
 			sd->flags |= SDF_FLUSHING;
 	}
+}
+
+/*
+ * Remove unprocessed buffers from queue.
+ */
+void
+sd_kill_buffers(struct sd_softc *sd)
+{
+	struct buf *dp, *bp;
+	int s;
+
+	s = splbio();
+	for (dp = &sd->buf_queue; (bp = dp->b_actf) != NULL; ) {
+		dp->b_actf = bp->b_actf;
+
+		bp->b_error = ENXIO;
+		bp->b_flags |= B_ERROR;
+		biodone(bp);
+	}
+	splx(s);
 }
