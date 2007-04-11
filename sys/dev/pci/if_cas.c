@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.4 2007/02/27 21:19:40 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.5 2007/04/11 21:39:14 kettenis Exp $	*/
 
 /*
  *
@@ -1126,22 +1126,26 @@ cas_rint(struct cas_softc *sc)
 
 			cp = rxs->rxs_kva + off * 256;
 			m = m_devget(cp, len + ETHER_ALIGN, 0, ifp, NULL);
-			m_adj(m, ETHER_ALIGN);
-
+			
 			if (word[0] & CAS_RC0_RELEASE_HDR)
 				cas_add_rxbuf(sc, idx);
 
+			if (m != NULL) {
+				m_adj(m, ETHER_ALIGN);
+
 #if NBPFILTER > 0
-			/*
-			 * Pass this up to any BPF listeners, but only
-			 * pass it up the stack if its for us.
-			 */
-			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+				/*
+				 * Pass this up to any BPF listeners, but only
+				 * pass it up the stack if its for us.
+				 */
+				if (ifp->if_bpf)
+					bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif /* NPBFILTER > 0 */
 
-			ifp->if_ipackets++;
-			ether_input_mbuf(ifp, m);
+				ifp->if_ipackets++;
+				ether_input_mbuf(ifp, m);
+			} else
+				ifp->if_ierrors++;
 		}
 
 		len = CAS_RC0_DATA_LEN(word[0]);
@@ -1159,22 +1163,26 @@ cas_rint(struct cas_softc *sc)
 			/* XXX We should not be copying the packet here. */
 			cp = rxs->rxs_kva + off;
 			m = m_devget(cp, len + ETHER_ALIGN, 0, ifp, NULL);
-			m_adj(m, ETHER_ALIGN);
 
 			if (word[0] & CAS_RC0_RELEASE_DATA)
 				cas_add_rxbuf(sc, idx);
 
+			if (m != NULL) {
+				m_adj(m, ETHER_ALIGN);
+
 #if NBPFILTER > 0
-			/*
-			 * Pass this up to any BPF listeners, but only
-			 * pass it up the stack if its for us.
-			 */
-			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+				/*
+				 * Pass this up to any BPF listeners, but only
+				 * pass it up the stack if its for us.
+				 */
+				if (ifp->if_bpf)
+					bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif /* NPBFILTER > 0 */
 
-			ifp->if_ipackets++;
-			ether_input_mbuf(ifp, m);
+				ifp->if_ipackets++;
+				ether_input_mbuf(ifp, m);
+			} else
+				ifp->if_ierrors++;
 		}
 
 		if (word[0] & CAS_RC0_SPLIT)
