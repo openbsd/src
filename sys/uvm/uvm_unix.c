@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.27 2005/07/26 07:11:55 art Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.28 2007/04/11 12:51:51 miod Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ sys_obreak(p, v, retval)
  * uvm_grow: enlarge the "stack segment" to include sp.
  */
 
-int
+void
 uvm_grow(p, sp)
 	struct proc *p;
 	vaddr_t sp;
@@ -128,7 +128,7 @@ uvm_grow(p, sp)
 	 * For user defined stacks (from sendsig).
 	 */
 	if (sp < (vaddr_t)vm->vm_maxsaddr)
-		return (0);
+		return;
 
 	/*
 	 * For common case of already allocated (from trap).
@@ -138,7 +138,7 @@ uvm_grow(p, sp)
 #else
 	if (sp >= USRSTACK - ctob(vm->vm_ssize))
 #endif
-		return (1);
+		return;
 
 	/*
 	 * Really need to check vs limit and increment stack size if ok.
@@ -146,12 +146,10 @@ uvm_grow(p, sp)
 #ifdef MACHINE_STACK_GROWS_UP
 	si = btoc(sp - USRSTACK) - vm->vm_ssize;
 #else
-	si = btoc(USRSTACK-sp) - vm->vm_ssize;
+	si = btoc(USRSTACK - sp) - vm->vm_ssize;
 #endif
-	if (vm->vm_ssize + si > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
-		return (0);
-	vm->vm_ssize += si;
-	return (1);
+	if (vm->vm_ssize + si <= btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
+		vm->vm_ssize += si;
 }
 
 /*
