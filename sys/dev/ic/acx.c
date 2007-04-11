@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.71 2007/04/03 18:57:34 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.72 2007/04/11 19:49:11 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -876,6 +876,19 @@ acx_start(struct ifnet *ifp)
 		if (m != NULL) {
 			ni = (struct ieee80211_node *)m->m_pkthdr.rcvif;
 			m->m_pkthdr.rcvif = NULL;
+
+			/*
+			 * probe response mgmt frames are handled by the
+			 * firmware already.  So, don't send them twice.
+			 */
+			wh = mtod(m, struct ieee80211_frame *);
+			if ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
+			    IEEE80211_FC0_SUBTYPE_PROBE_RESP) {
+				if (ni != NULL)
+					ieee80211_release_node(ic, ni);
+                                m_freem(m);
+                                continue;
+			}
 
 			/*
 			 * mgmt frames are sent at the lowest available
