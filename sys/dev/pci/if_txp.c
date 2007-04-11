@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.83 2006/06/29 21:36:40 deraadt Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.84 2007/04/11 14:41:15 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -657,6 +657,31 @@ txp_rx_reclaim(sc, r, dma)
 		free(sd, M_DEVBUF);
 		m->m_pkthdr.len = m->m_len = letoh16(rxd->rx_len);
 
+#if NVLAN > 0
+		/*
+		 * XXX Another firmware bug: the vlan encapsulation
+		 * is always removed, even when we tell the card not
+		 * to do that.  Restore the vlan encapsulation below.
+		 */
+		if (rxd->rx_stat & htole32(RX_STAT_VLAN)) {
+			struct ether_vlan_header vh;
+
+			if (m->m_pkthdr.len < ETHER_HDR_LEN) {
+				m_freem(m);
+				goto next;
+			}
+			m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&vh);
+			vh.evl_proto = vh.evl_encap_proto;
+			vh.evl_tag = rxd->rx_vlan >> 16;
+			vh.evl_encap_proto = htons(ETHERTYPE_VLAN);
+			m_adj(m, ETHER_HDR_LEN);
+			M_PREPEND(m, sizeof(vh), M_DONTWAIT);
+			if (m == NULL)
+				goto next;
+			m_copyback(m, 0, sizeof(vh), &vh);
+		}
+#endif
+
 #ifdef __STRICT_ALIGNMENT
 		{
 			/*
@@ -686,34 +711,6 @@ txp_rx_reclaim(sc, r, dma)
 			bcopy(m->m_data, mnew->m_data, m->m_len);
 			m_freem(m);
 			m = mnew;
-		}
-#endif
-
-#if NVLAN > 0
-		/*
-		 * XXX Another firmware bug: the vlan encapsulation
-		 * is always removed, even when we tell the card not
-		 * to do that.  Restore the vlan encapsulation below.
-		 */
-		if (rxd->rx_stat & htole32(RX_STAT_VLAN)) {
-			struct ether_vlan_header vh;
-
-			if (m->m_pkthdr.len < ETHER_HDR_LEN) {
-				m_freem(m);
-				goto next;
-			}
-			m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&vh);
-			vh.evl_proto = vh.evl_encap_proto;
-			vh.evl_tag = rxd->rx_vlan >> 16;
-			vh.evl_encap_proto = htons(ETHERTYPE_VLAN);
-			m_adj(m, ETHER_HDR_LEN);
-			if ((m = m_prepend(m, sizeof(vh), M_DONTWAIT)) == NULL)
-				goto next;
-			m->m_pkthdr.len += sizeof(vh);
-			if (m->m_len < sizeof(vh) &&
-			    (m = m_pullup(m, sizeof(vh))) == NULL)
-				goto next;
-			m_copyback(m, 0, sizeof(vh), &vh);
 		}
 #endif
 
@@ -795,8 +792,10 @@ txp_rxbuf_reclaim(sc)
 		MCLGET(sd->sd_mbuf, M_DONTWAIT);
 		if ((sd->sd_mbuf->m_flags & M_EXT) == 0)
 			goto err_mbuf;
+		/* reserve some space for a possible VLAN header */
+		sd->sd_mbuf->m_data += 8;
+		sd->sd_mbuf->m_pkthdr.len = sd->sd_mbuf->m_len = MCLBYTES - 8;
 		sd->sd_mbuf->m_pkthdr.rcvif = ifp;
-		sd->sd_mbuf->m_pkthdr.len = sd->sd_mbuf->m_len = MCLBYTES;
 		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_PKTLEN, 1,
 		    TXP_MAX_PKTLEN, 0, BUS_DMA_NOWAIT, &sd->sd_map))
 			goto err_mbuf;
@@ -1081,7 +1080,9 @@ txp_alloc_rings(sc)
 		if ((sd->sd_mbuf->m_flags & M_EXT) == 0) {
 			goto bail_rxbufring;
 		}
-		sd->sd_mbuf->m_pkthdr.len = sd->sd_mbuf->m_len = MCLBYTES;
+		/* reserve some space for a possible VLAN header */
+		sd->sd_mbuf->m_data += 8;
+		sd->sd_mbuf->m_pkthdr.len = sd->sd_mbuf->m_len = MCLBYTES - 8;
 		sd->sd_mbuf->m_pkthdr.rcvif = ifp;
 		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_PKTLEN, 1,
 		    TXP_MAX_PKTLEN, 0, BUS_DMA_NOWAIT, &sd->sd_map)) {
