@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.16 2007/04/11 22:52:33 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.17 2007/04/11 22:58:33 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1389,7 +1389,7 @@ sr_raid1_startwu(struct sr_workunit *wu)
 
 	/* move io to pending queue */
 	TAILQ_INSERT_TAIL(&sd->sd_wu_pendq, wu, swu_link);
-	/* XXX create function */
+	/* start all individual ios */
 	TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link) {
 		ccb->ccb_buf.b_vp->v_numoutput++;
 		VOP_STRATEGY(&ccb->ccb_buf);
