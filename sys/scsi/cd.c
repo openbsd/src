@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.121 2007/04/10 17:47:56 miod Exp $	*/
+/*	$OpenBSD: cd.c,v 1.122 2007/04/12 11:33:13 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ void	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *,
 			    struct cpu_disklabel *, int);
 void	cddone(struct scsi_xfer *);
 u_long	cd_size(struct cd_softc *, int);
+void	cd_kill_buffers(struct cd_softc *);
 void	lba2msf(u_long, u_char *, u_char *, u_char *);
 u_long	msf2lba(u_char, u_char, u_char);
 int	cd_setchan(struct cd_softc *, int, int, int, int, int);
@@ -261,19 +262,9 @@ cddetach(self, flags)
 	int flags;
 {
 	struct cd_softc *cd = (struct cd_softc *)self;
-	struct buf *dp, *bp;
-	int s, bmaj, cmaj, mn;
+	int bmaj, cmaj, mn;
 
-	/* Remove unprocessed buffers from queue */
-	s = splbio();
-	for (dp = &cd->buf_queue; (bp = dp->b_actf) != NULL; ) {
-		dp->b_actf = bp->b_actf;
-		
-		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
-		biodone(bp);
-	}
-	splx(s);
+	cd_kill_buffers(cd);
 
 	/* locate the minor number */
 	mn = CDMINOR(self->dv_unit, 0);
@@ -2123,4 +2114,24 @@ cd_interpret_sense(xs)
 		break;
 	}
 	return (EJUSTRETURN); /* use generic handler in scsi_base */
+}
+
+/*
+ * Remove unprocessed buffers from queue.
+ */
+void
+cd_kill_buffers(struct cd_softc *cd)
+{
+	struct buf *dp, *bp;
+	int s;
+
+	s = splbio();
+	for (dp = &cd->buf_queue; (bp = dp->b_actf) != NULL; ) {
+		dp->b_actf = bp->b_actf;
+
+		bp->b_error = ENXIO;
+		bp->b_flags |= B_ERROR;
+		biodone(bp);
+	}
+	splx(s);
 }
