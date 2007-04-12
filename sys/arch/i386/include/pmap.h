@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.43 2007/02/20 21:15:01 tom Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.44 2007/04/12 19:25:15 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -272,7 +272,7 @@ struct pmap {
 	union descriptor *pm_ldt;	/* user-set LDT */
 	int pm_ldt_len;			/* number of LDT entries */
 	int pm_ldt_sel;			/* LDT selector */
-	uint32_t pm_cpus;		/* mask oc CPUs using map */
+	uint32_t pm_cpus;		/* mask of CPUs using map */
 };
 
 /* pm_flags */
