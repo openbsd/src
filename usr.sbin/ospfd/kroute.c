@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.45 2007/03/27 09:43:20 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.46 2007/04/12 12:51:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -442,6 +442,7 @@ kr_redistribute(struct kroute_node *kh)
 	int			 redistribute = 0;
 
 	bzero(&rr, sizeof(rr));
+	rr.metric = UINT_MAX;
 	for (kn = kh; kn; kn = kn->next)
 		if (kr_redist_eval(&kn->r, &rr))
 			redistribute = 1;
