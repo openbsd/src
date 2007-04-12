@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_inode.h,v 1.2 2003/05/20 03:23:12 mickey Exp $	*/
+/*	$OpenBSD: ntfs_inode.h,v 1.3 2007/04/12 22:02:57 thib Exp $	*/
 /*	$NetBSD: ntfs_inode.h,v 1.1 2002/12/23 17:38:33 jdolecek Exp $	*/
 
 /*-
@@ -74,7 +74,6 @@ struct ntnode {
 
 	/* locking */
 	struct lock	i_lock;
-	struct simplelock i_interlock;
 	int		i_usecount;
 
 	LIST_HEAD(,fnode)	i_fnlist;

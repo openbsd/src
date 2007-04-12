@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.9 2006/03/05 21:48:57 miod Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.10 2007/04/12 22:02:57 thib Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -392,10 +392,9 @@ ntfs_ntget(
 	dprintf(("ntfs_ntget: get ntnode %d: %p, usecount: %d\n",
 		ip->i_number, ip, ip->i_usecount));
 
-	simple_lock(&ip->i_interlock);
 	ip->i_usecount++;
 
-	lockmgr(&ip->i_lock, LK_EXCLUSIVE | LK_INTERLOCK, &ip->i_interlock);
+	lockmgr(&ip->i_lock, LK_EXCLUSIVE, NULL);
 
 	return 0;
 }
@@ -452,7 +451,6 @@ ntfs_ntlookup(
 
 	/* init lock and lock the newborn ntnode */
 	lockinit(&ip->i_lock, PINOD, "ntnode", 0, LK_EXCLUSIVE);
-	simple_lock_init(&ip->i_interlock);
 #ifndef __OpenBSD__
 	ntfs_ntget(ip);
 #else
@@ -490,7 +488,6 @@ ntfs_ntput(
 	dprintf(("ntfs_ntput: rele ntnode %d: %p, usecount: %d\n",
 		ip->i_number, ip, ip->i_usecount));
 
-	simple_lock(&ip->i_interlock);
 	ip->i_usecount--;
 
 #ifdef DIAGNOSTIC
@@ -501,7 +498,7 @@ ntfs_ntput(
 #endif
 
 	if (ip->i_usecount > 0) {
-		lockmgr(&ip->i_lock, LK_RELEASE|LK_INTERLOCK, &ip->i_interlock);
+		lockmgr(&ip->i_lock, LK_RELEASE, NULL);
 		return;
 	}
 
@@ -528,9 +525,7 @@ void
 ntfs_ntref(ip)
 	struct ntnode *ip;
 {
-	simple_lock(&ip->i_interlock);
 	ip->i_usecount++;
-	simple_unlock(&ip->i_interlock);
 
 	dprintf(("ntfs_ntref: ino %d, usecount: %d\n",
 		ip->i_number, ip->i_usecount));
@@ -547,13 +542,11 @@ ntfs_ntrele(ip)
 	dprintf(("ntfs_ntrele: rele ntnode %d: %p, usecount: %d\n",
 		ip->i_number, ip, ip->i_usecount));
 
-	simple_lock(&ip->i_interlock);
 	ip->i_usecount--;
 
 	if (ip->i_usecount < 0)
 		panic("ntfs_ntrele: ino: %d usecount: %d ",
 		      ip->i_number,ip->i_usecount);
-	simple_unlock(&ip->i_interlock);
 }
 
 /*
