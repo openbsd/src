@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifmedia.4,v 1.13 2005/03/02 11:54:46 jmc Exp $
+.\"	$OpenBSD: ifmedia.4,v 1.14 2007/04/12 14:29:04 jmc Exp $
 .\"	$NetBSD: ifmedia.4,v 1.14 2001/06/30 17:57:56 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -294,6 +294,40 @@ Monitor mode.
 Turbo mode.
 [turbo]
 .El
+.Pp
+The channels detailed below are defined for IEEE802.11 Wireless LAN.
+The list of available frequencies is dependent on radio regulations
+specified by regional authorities.
+Recognized regulatory authorities include
+the FCC (United States), ETSI (Europe), France, and Japan.
+Frequencies in the table are specified in MHz.
+.Pp
+.Bd -ragged -offset indent
+.Bl -column "Channel " "FCC" "ETSI" "France" "Japan"
+.Em "Channel	FCC	ETSI	France	Japan"
+1	2412	2412	-	2412
+2	2417	2417	-	2417
+3	2422	2422	-	2422
+4	2427	2427	-	2427
+5	2432	2432	-	2432
+6	2437	2437	-	2437
+7	2442	2442	-	2442
+8	2447	2447	-	2447
+9	2452	2452	-	2452
+10	2457	2457	2457	2457
+11	2462	2462	2462	2462
+12	-	2467	2467	2467
+13	-	2472	2472	2472
+14	-	-	-	2484
+.El
+.Ed
+.Pp
+Note that the channels do overlap; the bandwidth required for
+each channel is about 20MHz.
+When using multiple channels in close proximity it is suggested
+that channels be separated by at least 25MHz.
+In the US, this means that only channels 1, 6, and 11 may be used
+simultaneously without interference.
 .Sh SEE ALSO
 .Xr netintro 4 ,
 .Xr ifconfig 8
