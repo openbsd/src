@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.31 2007/04/10 09:08:19 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.32 2007/04/12 04:40:59 pascoe Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -237,6 +237,7 @@ sili_port_intr(struct sili_port *sp, int timeout_slot)
 		sili_pwrite(sp, SILI_PREG_IS, SILI_PREG_IS_CMDERR);
 		err_slot = SILI_PREG_PCS_ACTIVE(sili_pread(sp, SILI_PREG_PCS));
 		err_code = sili_pread(sp, SILI_PREG_CE);
+		ccb = &sp->sp_ccbs[err_slot];
 
 		switch (err_code) {
 		case SILI_PREG_CE_DEVICEERROR:
@@ -252,8 +253,11 @@ sili_port_intr(struct sili_port *sp, int timeout_slot)
 				break;
 
 			/* Extract real NCQ error slot & RFIS from log page. */
-			if (!sili_read_ncq_error(sp, &err_slot))
+			if (!sili_read_ncq_error(sp, &err_slot)) {
+				/* got real err_slot */
+				ccb = &sp->sp_ccbs[err_slot];
 				break;
+			}
 
 			/* failed to get error or not NCQ */
 
@@ -282,7 +286,6 @@ sili_port_intr(struct sili_port *sp, int timeout_slot)
 		/* Clear the failed commmand in saved PSS so cmd_done runs. */
 		pss_saved &= ~(1 << err_slot);
 
-		ccb = &sp->sp_ccbs[err_slot];
 		KASSERT(ccb->ccb_xa.state == ATA_S_ONCHIP);
 		ccb->ccb_xa.state = ATA_S_ERROR;
 
