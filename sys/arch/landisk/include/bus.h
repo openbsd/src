@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.3 2007/04/10 18:02:48 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.4 2007/04/12 12:00:02 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -229,34 +229,19 @@ struct _bus_space {
 #define	__bs_opname(op,size)	__bs_c(__bs_c(__bs_c(bs_,op),_),size)
 
 #define	__bs_rs(sz, tn, t, h, o)					\
-	(__BUS_SPACE_ADDRESS_SANITY((h) + (o), tn, "bus addr"),		\
-	 (*(t)->__bs_opname(r,sz))((t)->bs_cookie, h, o))
+	(*(t)->__bs_opname(r,sz))((t)->bs_cookie, h, o)
 
 #define	__bs_ws(sz, tn, t, h, o, v)					\
-do {									\
-	__BUS_SPACE_ADDRESS_SANITY((h) + (o), tn, "bus addr");		\
-	(*(t)->__bs_opname(w,sz))((t)->bs_cookie, h, o, v);		\
-} while (0)
+	(*(t)->__bs_opname(w,sz))((t)->bs_cookie, h, o, v)
 
 #define	__bs_nonsingle(type, sz, tn, t, h, o, a, c)			\
-do {									\
-	__BUS_SPACE_ADDRESS_SANITY((a), tn, "buffer");			\
-	__BUS_SPACE_ADDRESS_SANITY((h) + (o), tn, "bus addr");		\
-	(*(t)->__bs_opname(type,sz))((t)->bs_cookie, h, o, a, c);	\
-} while (0)
+	(*(t)->__bs_opname(type,sz))((t)->bs_cookie, h, o, a, c)
 
 #define	__bs_set(type, sz, tn, t, h, o, v, c)				\
-do {									\
-	__BUS_SPACE_ADDRESS_SANITY((h) + (o), tn, "bus addr");		\
-	(*(t)->__bs_opname(type,sz))((t)->bs_cookie, h, o, v, c);	\
-} while (0)
+	(*(t)->__bs_opname(type,sz))((t)->bs_cookie, h, o, v, c)
 
 #define	__bs_copy(sz, tn, t, h1, o1, h2, o2, cnt)			\
-do {									\
-	__BUS_SPACE_ADDRESS_SANITY((h1) + (o1), tn, "bus addr 1");	\
-	__BUS_SPACE_ADDRESS_SANITY((h2) + (o2), tn, "bus addr 2");	\
-	(*(t)->__bs_opname(c,sz))((t)->bs_cookie, h1, o1, h2, o2, cnt); \
-} while (0)
+	(*(t)->__bs_opname(c,sz))((t)->bs_cookie, h1, o1, h2, o2, cnt)
 
 
 /*
