@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.20 2005/09/15 05:33:39 krw Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.21 2007/04/12 16:33:27 weingart Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -174,11 +174,38 @@ struct scsi_rw_big {
 	u_int8_t control;
 };
 
+struct scsi_rw_12 {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t addr[4];
+	u_int8_t length[4];
+	u_int8_t reserved;
+	u_int8_t control;
+};
+
+struct scsi_rw_16 {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t addr[8];
+	u_int8_t length[4];
+	u_int8_t reserved;
+	u_int8_t control;
+};
+
 struct scsi_read_capacity {
 	u_int8_t opcode;
 	u_int8_t byte2;
 	u_int8_t addr[4];
 	u_int8_t unused[3];
+	u_int8_t control;
+};
+
+struct scsi_read_capacity_16 {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t addr[8];
+	u_int8_t length[4];
+	u_int8_t reserved;
 	u_int8_t control;
 };
 
@@ -214,18 +241,32 @@ struct scsi_synchronize_cache {
 /*
  * Disk specific opcodes
  */
-#define	REASSIGN_BLOCKS		0x07
-#define	READ_COMMAND		0x08
+#define REASSIGN_BLOCKS		0x07
+#define READ_COMMAND		0x08
 #define WRITE_COMMAND		0x0a
-#define	READ_CAPACITY		0x25
-#define	READ_BIG		0x28
+#define READ_CAPACITY		0x25
+#define READ_CAPACITY_16	0x9e
+#define READ_BIG		0x28
 #define WRITE_BIG		0x2a
-#define	SYNCHRONIZE_CACHE	0x35
+#define READ_12			0xa8
+#define WRITE_12		0xaa
+#define READ_16			0x88
+#define WRITE_16		0x8a
+#define SYNCHRONIZE_CACHE	0x35
 
 
 struct scsi_read_cap_data {
 	u_int8_t addr[4];
 	u_int8_t length[4];
+};
+
+struct scsi_read_cap_data_16 {
+	u_int8_t addr[8];
+	u_int8_t length[4];
+	u_int8_t p_type_prot;
+	u_int8_t logical_per_phys;
+	u_int8_t lowest_aligned[2];
+	u_int8_t reserved[16];
 };
 
 struct scsi_reassign_blocks_data {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.42 2007/04/03 04:55:34 dlg Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.43 2007/04/12 16:33:27 weingart Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 struct scsi_generic {
 	u_int8_t opcode;
-	u_int8_t bytes[11];
+	u_int8_t bytes[15];
 };
 
 struct scsi_test_unit_ready {
