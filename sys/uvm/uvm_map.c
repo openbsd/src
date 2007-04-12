@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.87 2007/04/11 12:10:42 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.88 2007/04/12 18:59:55 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -2299,7 +2299,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 
  out:
 	vm_map_unlock(map);
-	UVMHIST_LOG(maphist, "<- done, rv=%ld",rv,0,0,0);
+	UVMHIST_LOG(maphist, "<- done, rv=%ld",error,0,0,0);
 	return (error);
 }
 
@@ -2868,7 +2868,7 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 				uvm_map_entry_unwire(map, entry);
 		}
 		vm_map_unlock(map);
-		UVMHIST_LOG(maphist,"<- done (RV=%ld)", rv,0,0,0);
+		UVMHIST_LOG(maphist,"<- done (RV=%ld)", error,0,0,0);
 		return (error);
 	}
 

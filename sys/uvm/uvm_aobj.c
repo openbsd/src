@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.32 2007/04/04 17:44:45 art Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.33 2007/04/12 18:59:55 art Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1126,7 +1126,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 				ptmp->pg_flags |= PG_WANTED;
 				UVMHIST_LOG(pdhist,
 				    "sleeping, ptmp->flags 0x%lx\n",
-				    ptmp->flags,0,0,0);
+				    ptmp->pg_flags,0,0,0);
 				UVM_UNLOCK_AND_WAIT(ptmp, &uobj->vmobjlock,
 				    FALSE, "uao_get", 0);
 				simple_lock(&uobj->vmobjlock);
