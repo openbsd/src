@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.27 2005/11/29 19:07:46 dhartmei Exp $	*/
+/*	$OpenBSD: date.c,v 1.28 2007/04/12 16:27:47 naddy Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: date.c,v 1.27 2005/11/29 19:07:46 dhartmei Exp $";
+static char rcsid[] = "$OpenBSD: date.c,v 1.28 2007/04/12 16:27:47 naddy Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 			tval = atol(optarg);
 			break;
 		case 'u':		/* do everything in UTC */
-			if (setenv("TZ", "GMT0", 1) == -1)
+			if (setenv("TZ", "UTC", 1) == -1)
 				err(1, "cannot unsetenv TZ");
 			break;
 		case 't':		/* minutes west of GMT */
