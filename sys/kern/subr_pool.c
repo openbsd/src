@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.49 2007/04/11 12:10:42 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.50 2007/04/12 21:47:45 miod Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -100,7 +100,11 @@ struct pool_item {
 #ifdef DIAGNOSTIC
 	int pi_magic;
 #endif
+#ifdef DEADBEEF1
+#define	PI_MAGIC DEADBEEF1
+#else
 #define	PI_MAGIC 0xdeafbeef
+#endif
 	/* Other entries use only this list entry */
 	TAILQ_ENTRY(pool_item)	pi_list;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.68 2007/04/11 12:10:42 art Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.69 2007/04/12 21:47:45 miod Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -101,7 +101,11 @@ const long addrmask[] = { 0,
  * The WEIRD_ADDR is used as known text to copy into free objects so
  * that modifications after frees can be detected.
  */
+#ifdef DEADBEEF0
+#define WEIRD_ADDR	((unsigned) DEADBEEF0)
+#else
 #define WEIRD_ADDR	((unsigned) 0xdeadbeef)
+#endif
 #define MAX_COPY	32
 
 /*
