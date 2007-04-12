@@ -1,4 +1,4 @@
-.\"     $OpenBSD: lock.9,v 1.14 2007/04/11 12:06:34 miod Exp $
+.\"     $OpenBSD: lock.9,v 1.15 2007/04/12 16:25:59 miod Exp $
 .\"     $NetBSD: lock.9,v 1.12 2001/11/01 01:13:43 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -239,14 +239,11 @@ Print out information about state of lock
 .Sh RETURN VALUES
 Successfully acquired locks return 0.
 A failed lock attempt always returns a non-zero error value.
-No lock is held after an error return (in particular, a failed LK_UPGRADE or
-LK_FORCEUPGRADE will have released its shared-access lock).
+No lock is held after an error return.
 Locks will always succeed unless one of the following is true:
 .Bl -tag -width Er
 .It Bq Er EBUSY
-LK_FORCEUPGRADE is requested and some other process has already
-requested a lock upgrade or LK_NOWAIT is set and a sleep would
-be required.
+LK_NOWAIT is set and a sleep would be required.
 .It Bq Er ENOLCK
 LK_SLEEPFAIL is set and a sleep was done.
 .It Bq Er EINTR
