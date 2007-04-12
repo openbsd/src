@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.27 2007/03/15 10:22:29 art Exp $ */
+/* $OpenBSD: cpu.h,v 1.28 2007/04/12 14:38:36 martin Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -106,6 +106,7 @@ typedef union alpha_t_float {
 
 #include <machine/bus.h>
 #include <sys/device.h>
+#include <sys/sched.h>
 
 struct pcb;
 struct proc;
@@ -182,6 +183,7 @@ struct cpu_info {
 	/*
 	 * Public members.
 	 */
+	struct schedstate_percpu ci_schedstate;	/* scheduler state */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
@@ -189,6 +191,7 @@ struct cpu_info {
 	struct proc *ci_curproc;	/* current owner of the processor */
 	struct simplelock ci_slock;	/* lock on this data structure */
 	cpuid_t ci_cpuid;		/* our CPU ID */
+	struct cpu_info *ci_next;
 
 	/*
 	 * Private members.
@@ -217,6 +220,11 @@ struct cpu_info {
 void	fpusave_cpu(struct cpu_info *, int);
 void	fpusave_proc(struct proc *, int);
 
+#define	CPU_INFO_UNIT(ci)		((ci)->ci_dev->dv_unit)
+#define	CPU_INFO_ITERATOR		int
+#define	CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = curcpu(); \
+					    ci != NULL; ci = ci->ci_next)
+
 #if defined(MULTIPROCESSOR)
 extern	__volatile u_long cpus_running;
 extern	__volatile u_long cpus_paused;
@@ -233,6 +241,7 @@ void	cpu_pause_resume_all(int);
 extern	struct cpu_info cpu_info_store;
 
 #define	curcpu()	(&cpu_info_store)
+#define	CPU_IS_PRIMARY(ci)	1
 #endif /* MULTIPROCESSOR */
 
 #define	curproc		curcpu()->ci_curproc

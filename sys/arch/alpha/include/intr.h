@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.23 2006/06/15 20:08:29 brad Exp $ */
+/* $OpenBSD: intr.h,v 1.24 2007/04/12 14:38:36 martin Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -162,6 +162,7 @@ int _splraise(int);
 #define splhigh()               _splraise(ALPHA_PSL_IPL_HIGH)
 
 #define spllpt()		spltty()
+#define splsched()		splhigh()
 
 /*
  * Interprocessor interrupts.  In order how we want them processed.
