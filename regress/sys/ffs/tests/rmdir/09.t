@@ -18,18 +18,6 @@ expect 0 chflags ${n0} none
 expect 0 rmdir ${n0}
 
 expect 0 mkdir ${n0} 0755
-expect 0 chflags ${n0} SF_NOUNLINK
-expect EPERM rmdir ${n0}
-expect 0 chflags ${n0} none
-expect 0 rmdir ${n0}
-
-expect 0 mkdir ${n0} 0755
-expect 0 chflags ${n0} UF_NOUNLINK
-expect EPERM rmdir ${n0}
-expect 0 chflags ${n0} none
-expect 0 rmdir ${n0}
-
-expect 0 mkdir ${n0} 0755
 expect 0 chflags ${n0} SF_APPEND
 expect EPERM rmdir ${n0}
 expect 0 chflags ${n0} none

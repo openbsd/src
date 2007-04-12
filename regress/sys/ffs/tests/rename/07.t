@@ -45,44 +45,4 @@ done
 expect 0 chflags ${n0} none
 expect 0 unlink ${n0}/${n1}
 
-expect 0 create ${n0}/${n1} 0644
-for flag in SF_NOUNLINK UF_NOUNLINK; do
-	expect 0 chflags ${n0} ${flag}
-	expect ${flag} stat ${n0} flags
-	expect 0 rename ${n0}/${n1} ${n2}
-	expect 0 rename ${n2} ${n0}/${n1}
-done
-expect 0 chflags ${n0} none
-expect 0 unlink ${n0}/${n1}
-
-expect 0 mkdir ${n0}/${n1} 0755
-for flag in SF_NOUNLINK UF_NOUNLINK; do
-	expect 0 chflags ${n0} ${flag}
-	expect ${flag} stat ${n0} flags
-	expect 0 rename ${n0}/${n1} ${n2}
-	expect 0 rename ${n2} ${n0}/${n1}
-done
-expect 0 chflags ${n0} none
-expect 0 rmdir ${n0}/${n1}
-
-expect 0 mkfifo ${n0}/${n1} 0644
-for flag in SF_NOUNLINK UF_NOUNLINK; do
-	expect 0 chflags ${n0} ${flag}
-	expect ${flag} stat ${n0} flags
-	expect 0 rename ${n0}/${n1} ${n2}
-	expect 0 rename ${n2} ${n0}/${n1}
-done
-expect 0 chflags ${n0} none
-expect 0 unlink ${n0}/${n1}
-
-expect 0 symlink ${n2} ${n0}/${n1}
-for flag in SF_NOUNLINK UF_NOUNLINK; do
-	expect 0 chflags ${n0} ${flag}
-	expect ${flag} stat ${n0} flags
-	expect 0 rename ${n0}/${n1} ${n2}
-	expect 0 rename ${n2} ${n0}/${n1}
-done
-expect 0 chflags ${n0} none
-expect 0 unlink ${n0}/${n1}
-
 expect 0 rmdir ${n0}

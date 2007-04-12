@@ -32,15 +32,3 @@ expect EPERM chown ${n0} 65534 65534
 expect 0 chflags ${n0} none
 expect 0 chown ${n0} 65534 65534
 expect 0 unlink ${n0}
-
-expect 0 create ${n0} 0644
-expect 0 chflags ${n0} SF_NOUNLINK
-expect 0 chown ${n0} 65534 65534
-expect 0 chflags ${n0} none
-expect 0 unlink ${n0}
-
-expect 0 create ${n0} 0644
-expect 0 chflags ${n0} UF_NOUNLINK
-expect 0 chown ${n0} 65534 65534
-expect 0 chflags ${n0} none
-expect 0 unlink ${n0}

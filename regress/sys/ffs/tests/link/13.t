@@ -35,15 +35,5 @@ expect 0 link ${n0}/${n1} ${n0}/${n2}
 expect 0 chflags ${n0} none
 expect 0 unlink ${n0}/${n2}
 
-expect 0 chflags ${n0} SF_NOUNLINK
-expect 0 link ${n0}/${n1} ${n0}/${n2}
-expect 0 chflags ${n0} none
-expect 0 unlink ${n0}/${n2}
-
-expect 0 chflags ${n0} UF_NOUNLINK
-expect 0 link ${n0}/${n1} ${n0}/${n2}
-expect 0 chflags ${n0} none
-expect 0 unlink ${n0}/${n2}
-
 expect 0 unlink ${n0}/${n1}
 expect 0 rmdir ${n0}

@@ -35,14 +35,4 @@ expect 0 chflags ${n0} none
 expect 0 link ${n0} ${n1}
 expect 0 unlink ${n1}
 
-expect 0 chflags ${n0} SF_NOUNLINK
-expect 0 link ${n0} ${n1}
-expect 0 chflags ${n0} none
-expect 0 unlink ${n1}
-
-expect 0 chflags ${n0} UF_NOUNLINK
-expect 0 link ${n0} ${n1}
-expect 0 chflags ${n0} none
-expect 0 unlink ${n1}
-
 expect 0 unlink ${n0}
