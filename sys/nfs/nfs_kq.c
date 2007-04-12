@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.2 2005/11/19 02:18:01 pedro Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.3 2007/04/12 18:21:19 thib Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -107,6 +107,7 @@ nfs_kqpoll(void *arg)
 	struct vattr attr;
 	struct proc *p = pnfskq;
 	u_quad_t osize;
+	int error;
 
 	for(;;) {
 		lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL);
@@ -131,7 +132,12 @@ nfs_kqpoll(void *arg)
 			/* save v_size, nfs_getattr() updates it */
 			osize = np->n_size;
 
-			(void) VOP_GETATTR(ke->vp, &attr, p->p_ucred, p);
+			error = VOP_GETATTR(ke->vp, &attr, p->p_ucred, p);
+			if (error == ESTALE) {
+				np->n_attrstamp = 0;
+				VN_KNOTE(ke->vp, NOTE_DELETE);
+				goto next;
+			}
 
 			/* following is a bit fragile, but about best
 			 * we can get */
@@ -157,6 +163,7 @@ nfs_kqpoll(void *arg)
 				ke->onlink = attr.va_nlink;
 			}
 
+next:
 			lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL);
 			ke->flags &= ~KEVQ_BUSY;
 			if (ke->flags & KEVQ_WANT) {
