@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.21 2006/07/06 19:05:56 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.22 2007/04/12 22:20:14 thib Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -714,9 +714,9 @@ db_lock(addr, have_addr, count, modif)
 	}
 
 	l = (struct lock *)addr;
-	db_printf("interlock=%x flags=%x\n waitcount=%x sharecount=%x "
+	db_printf("flags=%x\n waitcount=%x sharecount=%x "
 	    "exclusivecount=%x\n wmesg=%s recurselevel=%x\n",
-	    l->lk_interlock.lock_data, l->lk_flags, l->lk_waitcount,
+	    l->lk_flags, l->lk_waitcount,
 	    l->lk_sharecount, l->lk_exclusivecount, l->lk_wmesg,
 	    l->lk_recurselevel);
 #else

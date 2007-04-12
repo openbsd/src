@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.17 2007/04/11 12:06:37 miod Exp $	*/
+/*	$OpenBSD: lock.h,v 1.18 2007/04/12 22:20:14 thib Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -51,7 +51,6 @@ typedef struct lock             *lock_t;
  * can be gained. The simple locks are defined in <machine/param.h>.
  */
 struct lock {
-	struct	simplelock lk_interlock; /* lock on remaining fields */
 	u_int	lk_flags;		/* see below */
 	int	lk_sharecount;		/* # of accepted shared locks */
 	int	lk_waitcount;		/* # of processes sleeping for lock */
@@ -130,8 +129,6 @@ struct lock {
  *
  * Non-persistent external flags.
  */
-#define LK_INTERLOCK	0x00010000	/* unlock passed simple lock after
-					   getting lk_interlock */
 #define LK_RETRY	0x00020000	/* vn_lock: retry until locked */
 
 /*
