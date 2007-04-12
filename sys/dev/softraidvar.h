@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.6 2007/04/11 22:05:09 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.7 2007/04/12 03:31:54 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -65,6 +65,7 @@ struct sr_ccb {
 	struct sr_workunit	*ccb_wu;
 	struct sr_discipline	*ccb_dis;
 
+	int			ccb_target;
 	int			ccb_state;
 #define SR_CCB_FREE		0
 #define SR_CCB_INPROGRESS	1

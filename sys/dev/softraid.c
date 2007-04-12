@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.17 2007/04/11 22:58:33 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.18 2007/04/12 03:31:54 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -269,6 +269,7 @@ sr_put_ccb(struct sr_ccb *ccb)
 
 	ccb->ccb_wu = NULL;
 	ccb->ccb_state = SR_CCB_FREE;
+	ccb->ccb_target = -1;
 
 	TAILQ_INSERT_TAIL(&sd->sd_ccb_freeq, ccb, ccb_link);
 	splx(s);
@@ -341,6 +342,8 @@ sr_put_wu(struct sr_workunit *wu)
 	wu->swu_xs = NULL;
 	wu->swu_state = SR_WU_FREE;
 	wu->swu_ios_complete = 0;
+	wu->swu_ios_failed = 0;
+	wu->swu_ios_succeeded = 0;
 	wu->swu_io_count = 0;
 	wu->swu_blk_start = 0;
 	wu->swu_blk_end = 0;
@@ -1313,6 +1316,7 @@ sr_raid1_rw(struct sr_workunit *wu)
 			ccb->ccb_buf.b_flags |= B_WRITE;
 		}
 
+		ccb->ccb_target = x;
 		ccb->ccb_buf.b_dev = sd->sd_vol.sv_chunks[x]->src_dev_mm;
 		ccb->ccb_buf.b_vp = sd->sd_vol.sv_chunks[x]->src_dev_vn;
 
@@ -1387,7 +1391,7 @@ sr_raid1_startwu(struct sr_workunit *wu)
 
 	splassert(IPL_BIO);
 
-	/* move io to pending queue */
+	/* move wu to pending queue */
 	TAILQ_INSERT_TAIL(&sd->sd_wu_pendq, wu, swu_link);
 	/* start all individual ios */
 	TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link) {
@@ -1404,7 +1408,7 @@ sr_raid1_intr(struct buf *bp)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_softc		*sc = sd->sd_sc;
-	int			s, pend = 0;
+	int			s, pend;
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr bp %x xs %x\n",
 	    DEVNAME(sc), bp, xs);
@@ -1418,15 +1422,24 @@ sr_raid1_intr(struct buf *bp)
 	if (ccb->ccb_buf.b_flags & B_ERROR) {
 		printf("%s: i/o error on block %llu\n", DEVNAME(sc),
 		    ccb->ccb_buf.b_blkno);
-		wu->swu_state = SR_WU_FAILED;
+		wu->swu_ios_failed++;
+		ccb->ccb_state = SR_CCB_FAILED;
+		if (ccb->ccb_target != -1)
+			sd->sd_set_chunk_state(sd, ccb->ccb_target,
+			    BIOC_SDOFFLINE);
+		else
+			panic("%s: invalid target on wu: %p", DEVNAME(sc), wu);
+	} else {
+		ccb->ccb_state = SR_CCB_OK;
+		wu->swu_ios_succeeded++;
 	}
-
 	wu->swu_ios_complete++;
+
 	DNPRINTF(SR_D_INTR, "%s: sr_intr: comp: %d count: %d\n",
 	    DEVNAME(sc), wu->swu_ios_complete, wu->swu_io_count);
+
 	if (wu->swu_ios_complete == wu->swu_io_count) {
-		/* do something smarter here instead of failing the whole WU */
-		if (wu->swu_state == SR_WU_FAILED)
+		if (wu->swu_ios_failed == wu->swu_ios_complete)
 			xs->error = XS_DRIVER_STUFFUP;
 		else
 			xs->error = XS_NOERROR;
@@ -1434,7 +1447,7 @@ sr_raid1_intr(struct buf *bp)
 		xs->resid = 0;
 		xs->flags |= ITSDONE;
 
-
+		pend = 0;
 		TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link) {
 			if (wu == wup) {
 				/* io on pendq, remove */
@@ -1454,7 +1467,8 @@ sr_raid1_intr(struct buf *bp)
 		}
 
 		if (!pend)
-			printf("wu: %p not on pending queue\n", wu);
+			printf("%s: wu: %p not on pending queue\n",
+			    DEVNAME(sc), wu);
 
 		/* do not change the order of these 2 functions */
 		sr_put_wu(wu);
@@ -1482,8 +1496,6 @@ sr_raid1_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 		switch (new_state) {
 		case BIOC_SDOFFLINE:
 			break;
-		case BIOC_SDFAILED:
-			break;
 		case BIOC_SDSCRUB:
 			break;
 		default:
@@ -1498,33 +1510,18 @@ sr_raid1_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 			goto die;
 		break;
 
-	case BIOC_SDFAILED:
-		if (new_state == BIOC_SDREBUILD) {
+	case BIOC_SDSCRUB:
+		if (new_state == BIOC_SDONLINE) {
 			;
 		} else
 			goto die;
 		break;
 
-	case BIOC_SDSCRUB:
-		switch (new_state) {
-		case BIOC_SDONLINE:
-			break;
-		case BIOC_SDFAILED:
-			break;
-		default:
-			goto die;
-		}
-		break;
-
 	case BIOC_SDREBUILD:
-		switch (new_state) {
-		case BIOC_SDONLINE:
-			break;
-		case BIOC_SDFAILED:
-			break;
-		default:
+		if (new_state == BIOC_SDONLINE) {
+			;
+		} else
 			goto die;
-		}
 		break;
 
 	case BIOC_SDHOTSPARE:
