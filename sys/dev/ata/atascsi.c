@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.39 2007/04/10 23:37:06 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.40 2007/04/12 13:08:34 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -77,6 +77,8 @@ int		atascsi_disk_sync(struct scsi_xfer *);
 void		atascsi_disk_sync_done(struct ata_xfer *);
 int		atascsi_disk_sense(struct scsi_xfer *);
 
+void		atascsi_empty_done(struct ata_xfer *);
+
 int		atascsi_atapi_cmd(struct scsi_xfer *);
 void		atascsi_atapi_cmd_done(struct ata_xfer *);
 
@@ -148,7 +150,8 @@ int
 atascsi_probe(struct atascsi *as, int port)
 {
 	struct ata_port		*ap;
-	int			type;
+	struct ata_xfer		*xa;
+	int			type, s;
 
 	if (port > as->as_link.adapter_buswidth)
 		return (ENXIO);
@@ -172,6 +175,26 @@ atascsi_probe(struct atascsi *as, int port)
 	ap->ap_type = type;
 
 	as->as_ports[port] = ap;
+
+	s = splbio();
+	xa = ata_get_xfer(ap, 1);
+	splx(s);
+	if (xa == NULL)
+		return (EBUSY);
+
+	/*
+	 * FREEZE LOCK the device so malicous users can't lock it on us.
+	 * As there is no harm in issuing this to devices that don't
+	 * support the security feature set we just send it, and don't bother
+	 * checking if the device sends a command abort to tell us it doesn't
+	 * support it
+	 */
+	xa->fis->command = ATA_C_SEC_FREEZE_LOCK;
+	xa->fis->flags = ATA_H2D_FLAGS_CMD;
+	xa->complete = atascsi_empty_done;
+	xa->flags = ATA_F_POLL | ATA_F_PIO;
+	xa->timeout = 1000;
+	ata_exec(as, xa);
 
 	return (0);
 }
@@ -365,6 +388,12 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 		xa->flags |= ATA_F_POLL;
 
 	return (ata_exec(as, xa));
+}
+
+void
+atascsi_empty_done(struct ata_xfer *xa)
+{
+	ata_put_xfer(xa);
 }
 
 void

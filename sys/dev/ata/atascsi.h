@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.24 2007/04/10 07:57:21 jsg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.25 2007/04/12 13:08:34 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -33,6 +33,7 @@ struct atascsi;
 #define ATA_C_FLUSH_CACHE	0xe7
 #define ATA_C_FLUSH_CACHE_EXT	0xea /* lba48 */
 #define ATA_C_IDENTIFY		0xec
+#define ATA_C_SEC_FREEZE_LOCK	0xf5
 
 struct ata_identify {
 	u_int16_t	config;		/*   0 */
