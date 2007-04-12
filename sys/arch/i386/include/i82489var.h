@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489var.h,v 1.3 2006/03/29 15:02:27 mickey Exp $	*/
+/*	$OpenBSD: i82489var.h,v 1.4 2007/04/12 20:22:58 art Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1.2.2 2000/02/21 18:46:14 sommerfeld Exp $	*/
 
 /*-
@@ -102,10 +102,18 @@ extern void Xintrltimer(void);
 #define LAPIC_SOFTCLOCK_VECTOR		IPL_SOFTCLOCK
 #define LAPIC_SOFTNET_VECTOR		IPL_SOFTNET
 #define LAPIC_SOFTTTY_VECTOR		IPL_SOFTTTY
+#define LAPIC_SOFTAST_VECTOR		IPL_SOFTAST
+
+/*
+ * Special IPI vectors. We can use IDT 0xf0 - 0xff for this.
+ */
+#define LAPIC_IPI_OFFSET		0xf0
+#define LAPIC_IPI_AST			(LAPIC_IPI_OFFSET + 0)
 
 extern void Xintrsoftclock(void);
 extern void Xintrsoftnet(void);
 extern void Xintrsofttty(void);
+extern void Xintrsoftast(void);
 
 extern void (*apichandler[])(void);
 

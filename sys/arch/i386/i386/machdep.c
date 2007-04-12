@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.381 2007/04/03 10:14:47 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.382 2007/04/12 20:22:58 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2194,6 +2194,29 @@ ibcs2_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	sendsig(catcher, bsd_to_ibcs2_sig[sig], mask, code, type, val);
 }
 #endif
+
+/*
+ * To send an AST to a process on another cpu we send an IPI to that cpu,
+ * the IPI schedules a special soft interrupt (that does nothing) and then
+ * returns through the normal interrupt return path which in turn handles
+ * the AST.
+ *
+ * The IPI can't handle the AST because it usually requires grabbing the
+ * biglock and we can't afford spinning in the IPI handler with interrupts
+ * unlocked (so that we take further IPIs and grow our stack until it
+ * overflows).
+ */
+void
+aston(struct proc *p)
+{
+#ifdef MULTIPROCESSOR
+	if (i386_atomic_testset_i(&p->p_md.md_astpending, 1) == 0 &&
+	    p->p_cpu != curcpu())
+		i386_ipi(LAPIC_IPI_AST, p->p_cpu->ci_cpuid, LAPIC_DLMODE_FIXED);
+#else
+	p->p_md.md_astpending = 1;
+#endif
+}
 
 /*
  * Send an interrupt to process.

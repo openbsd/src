@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.14 2007/03/19 09:29:33 art Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.15 2007/04/12 20:22:58 art Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -122,6 +122,7 @@ lapic_set_softvectors()
 	idt_vec_set(LAPIC_SOFTCLOCK_VECTOR, Xintrsoftclock);
 	idt_vec_set(LAPIC_SOFTNET_VECTOR, Xintrsoftnet);
 	idt_vec_set(LAPIC_SOFTTTY_VECTOR, Xintrsofttty);
+	idt_vec_set(LAPIC_SOFTAST_VECTOR, Xintrsoftast);
 }
 
 void
@@ -176,9 +177,9 @@ lapic_set_lvt()
  * Initialize fixed idt vectors for use by local apic.
  */
 void
-lapic_boot_init(lapic_base)
-	paddr_t lapic_base;
+lapic_boot_init(paddr_t lapic_base)
 {
+	extern void Xintripi_ast(void);
 	static int clk_irq = 0;
 	static int ipi_irq = 0;
 
@@ -186,6 +187,7 @@ lapic_boot_init(lapic_base)
 
 #ifdef MULTIPROCESSOR
 	idt_vec_set(LAPIC_IPI_VECTOR, Xintripi);
+	idt_vec_set(LAPIC_IPI_AST, Xintripi_ast);
 #endif
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintrltimer);

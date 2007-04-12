@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.6 2006/03/12 02:04:16 brad Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.7 2007/04/12 20:22:58 art Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _i386_INTRDEFS_H
@@ -56,19 +56,20 @@
  * The level numbers are picked to fit into APIC vector priorities.
  */
 #define	IPL_NONE	0		/* nothing */
-#define	IPL_SOFTCLOCK	MAKEIPL(0)	/* timeouts */
-#define	IPL_SOFTNET	MAKEIPL(1)	/* protocol stacks */
-#define	IPL_BIO		MAKEIPL(2)	/* block I/O */
-#define	IPL_NET		MAKEIPL(3)	/* network */
-#define	IPL_SOFTTTY	MAKEIPL(4)	/* delayed terminal handling */
-#define	IPL_TTY		MAKEIPL(5)	/* terminal */
-#define	IPL_VM		MAKEIPL(6)	/* memory allocation */
-#define	IPL_AUDIO	MAKEIPL(7)	/* audio */
-#define	IPL_CLOCK	MAKEIPL(8)	/* clock */
-#define	IPL_STATCLOCK	MAKEIPL(9)	/* statclock */
+#define IPL_SOFTAST	MAKEIPL(0)	/* AST */
+#define	IPL_SOFTCLOCK	MAKEIPL(1)	/* timeouts */
+#define	IPL_SOFTNET	MAKEIPL(2)	/* protocol stacks */
+#define	IPL_BIO		MAKEIPL(3)	/* block I/O */
+#define	IPL_NET		MAKEIPL(4)	/* network */
+#define	IPL_SOFTTTY	MAKEIPL(5)	/* delayed terminal handling */
+#define	IPL_TTY		MAKEIPL(6)	/* terminal */
+#define	IPL_VM		MAKEIPL(7)	/* memory allocation */
+#define	IPL_AUDIO	MAKEIPL(8)	/* audio */
+#define	IPL_CLOCK	MAKEIPL(9)	/* clock */
+#define	IPL_STATCLOCK	MAKEIPL(10)	/* statclock */
 #define	IPL_SCHED	IPL_STATCLOCK
-#define	IPL_HIGH	MAKEIPL(9)	/* everything */
-#define	IPL_IPI		MAKEIPL(10)	/* interprocessor interrupt */
+#define	IPL_HIGH	MAKEIPL(11)	/* everything */
+#define	IPL_IPI		MAKEIPL(12)	/* interprocessor interrupt */
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -87,6 +88,7 @@
 #define	SIR_CLOCK	29
 #define	SIR_NET		28
 #define	SIR_TTY		27
+#define SIR_AST		26
 
 
 /*

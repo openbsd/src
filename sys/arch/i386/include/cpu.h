@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.90 2007/04/03 10:14:47 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.91 2007/04/12 20:22:58 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -217,7 +217,7 @@ extern void need_resched(struct cpu_info *);
  */
 #define	PROC_PC(p)		((p)->p_md.md_regs->tf_eip)
 
-#define aston(p)		((p)->p_md.md_astpending = 1)
+void aston(struct proc *);
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -230,7 +230,7 @@ extern void need_resched(struct cpu_info *);
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)		aston(p)
+#define signotify(p)		aston(p)
 
 /*
  * We need a machine-independent name for this.
