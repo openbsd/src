@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.62 2006/05/29 16:49:42 avsm Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.63 2007/04/12 13:24:39 thib Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -689,7 +689,6 @@ mountnfs(argp, mp, nam, pth, hst)
 	nmp->nm_numgrps = NFS_MAXGRPS;
 	nmp->nm_readahead = NFS_DEFRAHEAD;
 	nmp->nm_deadthresh = NQ_DEADTHRESH;
-	CIRCLEQ_INIT(&nmp->nm_timerhead);
 	nmp->nm_inprog = NULLVP;
 	nmp->nm_fhsize = argp->fhsize;
 	nmp->nm_acregmin = NFS_MINATTRTIMO;
