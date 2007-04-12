@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.31 2006/11/29 12:32:57 miod Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.32 2007/04/12 22:14:15 tedu Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.31 2006/11/29 12:32:57 miod Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.32 2007/04/12 22:14:15 tedu Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -269,6 +269,7 @@ kvm_proclist(kvm_t *kd, int what, int arg, struct proc *p,
 	struct session sess;
 	struct eproc eproc;
 	struct proc proc;
+	struct process process;
 	struct pgrp pgrp;
 	struct tty tty;
 	int cnt = 0;
@@ -278,7 +279,11 @@ kvm_proclist(kvm_t *kd, int what, int arg, struct proc *p,
 			_kvm_err(kd, kd->program, "can't read proc at %x", p);
 			return (-1);
 		}
-		if (KREAD(kd, (u_long)proc.p_cred, &eproc.e_pcred) == 0)
+		if (KREAD(kd, (u_long)proc.p_p, &process)) {
+			_kvm_err(kd, kd->program, "can't read process at %x", proc.p_p);
+			return (-1);
+		}
+		if (KREAD(kd, (u_long)process.ps_cred, &eproc.e_pcred) == 0)
 			KREAD(kd, (u_long)eproc.e_pcred.pc_ucred,
 			    &eproc.e_ucred);
 
@@ -478,7 +483,7 @@ kvm_getproc2(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			kp2p->p_addr = PTRTOINT64(kp->kp_proc.p_addr);
 			kp2p->p_fd = PTRTOINT64(kp->kp_proc.p_fd);
 			kp2p->p_stats = PTRTOINT64(kp->kp_proc.p_stats);
-			kp2p->p_limit = PTRTOINT64(kp->kp_proc.p_limit);
+			kp2p->p_limit = PTRTOINT64(kp->kp_eproc.e_limit);
 			kp2p->p_vmspace = PTRTOINT64(kp->kp_proc.p_vmspace);
 			kp2p->p_sigacts = PTRTOINT64(kp->kp_proc.p_sigacts);
 			kp2p->p_sess = PTRTOINT64(kp->kp_eproc.e_sess);

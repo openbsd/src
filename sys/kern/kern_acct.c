@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.20 2007/01/16 17:52:18 thib Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.21 2007/04/12 22:14:15 tedu Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -175,9 +175,9 @@ acct_process(struct proc *p)
 	 * Raise the file limit so that accounting can't be stopped by the
 	 * user. (XXX - we should think about the cpu limit too).
 	 */
-	if (p->p_limit->p_refcnt > 1) {
-		oplim = p->p_limit;
-		p->p_limit = limcopy(p->p_limit);
+	if (p->p_p->ps_limit->p_refcnt > 1) {
+		oplim = p->p_p->ps_limit;
+		p->p_p->ps_limit = limcopy(p->p_p->ps_limit);
 	}
 	p->p_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
 
@@ -231,8 +231,8 @@ acct_process(struct proc *p)
 	    (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT, p->p_ucred, NULL, p);
 
 	if (oplim) {
-		limfree(p->p_limit);
-		p->p_limit = oplim;
+		limfree(p->p_p->ps_limit);
+		p->p_p->ps_limit = oplim;
 	}
 
 	return error;

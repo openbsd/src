@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.89 2007/04/03 08:05:43 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.90 2007/04/12 22:14:15 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -270,10 +270,17 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	atomic_setbits_int(&p2->p_flag, p1->p_flag & (P_SUGID | P_SUGIDEXEC));
 	if (flags & FORK_PTRACE)
 		atomic_setbits_int(&p2->p_flag, p1->p_flag & P_TRACED);
-	p2->p_cred = pool_get(&pcred_pool, PR_WAITOK);
-	bcopy(p1->p_cred, p2->p_cred, sizeof(*p2->p_cred));
-	p2->p_cred->p_refcnt = 1;
-	crhold(p1->p_ucred);
+#ifdef RTHREADS
+	if (flags & FORK_THREAD) {
+		/* nothing */
+	} else
+#endif
+	{
+		p2->p_p->ps_cred = pool_get(&pcred_pool, PR_WAITOK);
+		bcopy(p1->p_p->ps_cred, p2->p_p->ps_cred, sizeof(*p2->p_p->ps_cred));
+		p2->p_p->ps_cred->p_refcnt = 1;
+		crhold(p1->p_ucred);
+	}
 
 	TAILQ_INIT(&p2->p_selects);
 
@@ -290,16 +297,23 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 		p2->p_fd = fdcopy(p1);
 
 	/*
-	 * If p_limit is still copy-on-write, bump refcnt,
+	 * If ps_limit is still copy-on-write, bump refcnt,
 	 * otherwise get a copy that won't be modified.
 	 * (If PL_SHAREMOD is clear, the structure is shared
 	 * copy-on-write.)
 	 */
-	if (p1->p_limit->p_lflags & PL_SHAREMOD)
-		p2->p_limit = limcopy(p1->p_limit);
-	else {
-		p2->p_limit = p1->p_limit;
-		p2->p_limit->p_refcnt++;
+#ifdef RTHREADS
+	if (flags & FORK_THREAD) {
+		/* nothing */
+	} else
+#endif
+	{
+		if (p1->p_p->ps_limit->p_lflags & PL_SHAREMOD)
+			p2->p_p->ps_limit = limcopy(p1->p_p->ps_limit);
+		else {
+			p2->p_p->ps_limit = p1->p_p->ps_limit;
+			p2->p_p->ps_limit->p_refcnt++;
+		}
 	}
 
 	if (p1->p_session->s_ttyvp != NULL && p1->p_flag & P_CONTROLT)

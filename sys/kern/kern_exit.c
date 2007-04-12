@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.70 2007/04/11 14:27:08 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.71 2007/04/12 22:14:15 tedu Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -325,8 +325,6 @@ exit1(struct proc *p, int rv, int flags)
 	 * Other substructures are freed from wait().
 	 */
 	curproc = NULL;
-	limfree(p->p_limit);
-	p->p_limit = NULL;
 
 	/*
 	 * If emulation has process exit hook, call it now.
@@ -593,14 +591,6 @@ proc_zap(struct proc *p)
 	(void)chgproccnt(p->p_cred->p_ruid, -1);
 
 	/*
-	 * Free up credentials.
-	 */
-	if (--p->p_cred->p_refcnt == 0) {
-		crfree(p->p_cred->pc_ucred);
-		pool_put(&pcred_pool, p->p_cred);
-	}
-
-	/*
 	 * Release reference to text vnode
 	 */
 	if (p->p_textvp)
@@ -613,8 +603,14 @@ proc_zap(struct proc *p)
 #if 0
 	TAILQ_REMOVE(&p->p_p->ps_threads, p, p_thr_link);
 #endif
-	if (TAILQ_EMPTY(&p->p_p->ps_threads))
+	if (TAILQ_EMPTY(&p->p_p->ps_threads)) {
+		limfree(p->p_p->ps_limit);
+		if (--p->p_p->ps_cred->p_refcnt == 0) {
+			crfree(p->p_p->ps_cred->pc_ucred);
+			pool_put(&pcred_pool, p->p_p->ps_cred);
+		}
 		pool_put(&process_pool, p->p_p);
+	}
 
 	pool_put(&proc_pool, p);
 	nprocs--;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.149 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.150 2007/04/12 22:14:15 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1175,6 +1175,7 @@ fill_eproc(struct proc *p, struct eproc *ep)
 	strncpy(ep->e_emul, p->p_emul->e_name, EMULNAMELEN);
 	ep->e_emul[EMULNAMELEN] = '\0';
 	ep->e_maxrss = p->p_rlimit ? p->p_rlimit[RLIMIT_RSS].rlim_cur : 0;
+	ep->e_limit = p->p_p->ps_limit;
 }
 
 #ifndef	SMALL_KERNEL
@@ -1193,7 +1194,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	ki->p_paddr = PTRTOINT64(p);
 	ki->p_fd = PTRTOINT64(p->p_fd);
 	ki->p_stats = PTRTOINT64(p->p_stats);
-	ki->p_limit = PTRTOINT64(p->p_limit);
+	ki->p_limit = PTRTOINT64(p->p_p->ps_limit);
 	ki->p_vmspace = PTRTOINT64(p->p_vmspace);
 	ki->p_sigacts = PTRTOINT64(p->p_sigacts);
 	ki->p_sess = PTRTOINT64(p->p_session);

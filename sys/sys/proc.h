@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.94 2007/04/04 13:53:26 pedro Exp $	*/
+/*	$OpenBSD: proc.h,v 1.95 2007/04/12 22:14:15 tedu Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -120,10 +120,7 @@ extern int nemuls;			/* Number of emuls */
  * These structures contain the information needed to manage a thread of
  * control, known in UN*X as a process; it has references to substructures
  * containing descriptions of things that the process uses, but may share
- * with related processes.  The process structure and the substructures
- * are always addressable except for those marked "(PROC ONLY)" below,
- * which might be addressable only on a processor on which the process
- * is running.
+ * with related processes.
  *
  * struct process is the higher level process containing information
  * shared by all threads in a process, while struct proc contains the
@@ -139,6 +136,8 @@ struct process {
 	 * pid semantics we have right now, it's unavoidable.
 	 */
 	struct proc *ps_mainproc;
+	struct	pcred *ps_cred;		/* Process owner's identity. */
+	struct	plimit *ps_limit;	/* Process limits. */
 
 	TAILQ_HEAD(,proc) ps_threads;	/* Threads in this process. */
 };
@@ -152,15 +151,13 @@ struct proc {
 	TAILQ_ENTRY(proc) p_thr_link;/* Threads in a process linkage. */
 
 	/* substructures: */
-	struct	pcred *p_cred;		/* Process owner's identity. */
 	struct	filedesc *p_fd;		/* Ptr to open files structure. */
-	struct	pstats *p_stats;	/* Accounting/statistics (PROC ONLY). */
-	struct	plimit *p_limit;	/* Process limits. */
+	struct	pstats *p_stats;	/* Accounting/statistics */
 	struct	vmspace *p_vmspace;	/* Address space. */
-	struct	sigacts *p_sigacts;	/* Signal actions, state (PROC ONLY). */
-
+	struct	sigacts *p_sigacts;	/* Signal actions, state */
+#define	p_cred		p_p->ps_cred
 #define	p_ucred		p_cred->pc_ucred
-#define	p_rlimit	p_limit->pl_rlimit
+#define	p_rlimit	p_p->ps_limit->pl_rlimit
 
 	int	p_exitsig;		/* Signal to send to parent on exit. */
 	int	p_flag;			/* P_* flags. */
@@ -250,7 +247,7 @@ struct proc {
 /* End area that is copied on creation. */
 #define	p_endcopy	p_addr
 
-	struct	user *p_addr;	/* Kernel virtual addr of u-area (PROC ONLY). */
+	struct	user *p_addr;	/* Kernel virtual addr of u-area */
 	struct	mdproc p_md;	/* Any machine-dependent fields. */
 
 	u_short	p_xstat;	/* Exit status for wait; also stop signal. */
