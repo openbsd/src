@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.41 2007/04/10 21:45:11 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.42 2007/04/12 14:45:45 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -460,6 +460,12 @@ Look up the entity in the application protocol headers, like HTTP
 headers in
 .Ic http
 mode.
+.It Ic path
+Look up the entity as a value in the URL path when using the
+.Ic http
+protocol.
+This type is only available with the direction
+.Ic request .
 .It Ic url
 Look up the entity as a GET variable in the URL when using the
 .Ic http
@@ -693,6 +699,7 @@ protocol http_ssl {
 	header change "Keep-Alive" to "$TIMEOUT"
 	url hash "sessid"
 	cookie hash "sessid"
+	path filter "*command=*" from "/cgi-bin/index.cgi"
 
 	ssl { sslv2, ciphers "MEDIUM:HIGH" }
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.25 2007/04/10 21:33:52 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.26 2007/04/12 14:45:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -306,6 +306,9 @@ relay_protodebug(struct relay *rlay)
 			break;
 		case NODE_TYPE_COOKIE:
 			fprintf(stderr, "cookie ");
+			break;
+		case NODE_TYPE_PATH:
+			fprintf(stderr, "path ");
 			break;
 		}
 
@@ -1144,6 +1147,29 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				goto fail;
 			}
 #endif
+
+			/*
+			 * Lookup protocol handlers in the URL path
+			 */
+			if ((proto->flags & F_LOOKUP_PATH) == 0)
+				goto lookup;
+
+			pkv.key = cre->path;
+			pkv.type = NODE_TYPE_PATH;
+			pkv.value = cre->args == NULL ? "" : cre->args;
+
+			DPRINTF("relay_read_http: "
+			    "lookup path '%s: %s'", pkv.key, pkv.value);
+
+			if ((pnv = RB_FIND(proto_tree,
+			    cre->tree, &pkv)) == NULL)
+				goto lookup;
+
+			ret = relay_handle_http(cre, pnv, &pkv, 0);
+			if (ret == PN_FAIL) {
+				free(line);
+				goto fail;
+			}
 		} else if ((cre->method == HTTP_METHOD_POST ||
 		    cre->method == HTTP_METHOD_PUT ||
 		    cre->method == HTTP_METHOD_RESPONSE) &&
@@ -1730,6 +1756,8 @@ relay_close(struct session *con, const char *msg)
 	}
 	if (con->in.s != -1)
 		close(con->in.s);
+	if (con->in.path != NULL)
+		free(con->in.path);
 	if (con->in.buf != NULL)
 		free(con->in.buf);
 	if (con->in.nodes != NULL)
@@ -1741,6 +1769,8 @@ relay_close(struct session *con, const char *msg)
 		evbuffer_free(con->out.output);
 	if (con->out.s != -1)
 		close(con->out.s);
+	if (con->out.path != NULL)
+		free(con->out.path);
 	if (con->out.buf != NULL)
 		free(con->out.buf);
 	if (con->out.nodes != NULL)

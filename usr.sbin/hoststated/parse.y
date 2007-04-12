@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.37 2007/03/21 00:08:08 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.38 2007/04/12 14:45:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -106,7 +106,7 @@ typedef struct {
 %token	SERVICE TABLE BACKUP HOST REAL
 %token  CHECK TCP ICMP EXTERNAL REQUEST RESPONSE
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
-%token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG
+%token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG PATH
 %token	SEND EXPECT NOTHING SSL LOADBALANCE ROUNDROBIN CIPHERS COOKIE
 %token	RELAY LISTEN ON FORWARD TO NAT LOOKUP PREFORK NO MARK MARKED
 %token	PROTO SESSION CACHE APPEND CHANGE REMOVE FROM FILTER HASH HEADER
@@ -801,6 +801,10 @@ marked		: /* empty */
 nodetype	: HEADER			{ node.type = NODE_TYPE_HEADER; }
 		| URL				{ node.type = NODE_TYPE_URL; }
 		| COOKIE			{ node.type = NODE_TYPE_COOKIE; }
+		| PATH				{
+				proto->flags |= F_LOOKUP_PATH;
+				node.type = NODE_TYPE_PATH;
+		}
 		;
 
 sslcache	: number			{ $$ = $1; }
@@ -1117,6 +1121,7 @@ lookup(char *s)
 		{ "nodelay",		NODELAY },
 		{ "nothing",		NOTHING },
 		{ "on",			ON },
+		{ "path",		PATH },
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },
 		{ "protocol",		PROTO },

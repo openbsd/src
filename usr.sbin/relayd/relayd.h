@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.40 2007/04/10 21:33:52 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.41 2007/04/12 14:45:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -270,6 +270,7 @@ TAILQ_HEAD(addresslist, address);
 #define F_SSL			0x0800
 #define F_NATLOOK		0x1000
 #define F_DEMOTE		0x2000
+#define F_LOOKUP_PATH		0x4000
 
 struct host {
 	u_int16_t		 flags;
@@ -373,7 +374,8 @@ enum nodeaction {
 enum nodetype {
 	NODE_TYPE_HEADER	= 0,
 	NODE_TYPE_URL		= 1,
-	NODE_TYPE_COOKIE	= 2
+	NODE_TYPE_COOKIE	= 2,
+	NODE_TYPE_PATH		= 3
 };
 
 #define PNFLAG_MACRO		0x01
