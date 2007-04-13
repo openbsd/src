@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.58 2007/04/04 19:24:18 otto Exp $	 */
+/* $OpenBSD: machine.c,v 1.59 2007/04/13 19:19:54 otto Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -34,20 +34,13 @@
  */
 
 #include <sys/types.h>
-#include <sys/signal.h>
 #include <sys/param.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
-#include <err.h>
 #include <unistd.h>
 #include <sys/sysctl.h>
-#include <sys/dir.h>
 #include <sys/dkstat.h>
-#include <sys/file.h>
-#include <sys/time.h>
-#include <sys/resource.h>
 #include <sys/swap.h>
 #include <err.h>
 #include <errno.h>
@@ -378,8 +371,8 @@ get_process_info(struct system_info *si, struct process_select *sel,
 		/*
 		 *  Place pointers to each valid proc structure in pref[].
 		 *  Process slots that are actually in use have a non-zero
-		 *  status field.  Processes with SSYS set are system
-		 *  processes---these get ignored unless show_sysprocs is set.
+		 *  status field.  Processes with P_SYSTEM set are system
+		 *  processes---these get ignored unless show_system is set.
 		 */
 		if (pp->p_stat != 0 &&
 		    (show_system || (pp->p_flag & P_SYSTEM) == 0) &&
