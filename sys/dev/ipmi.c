@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.54 2007/04/08 05:48:18 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.55 2007/04/13 18:57:56 reyk Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -58,7 +58,6 @@ struct ipmi_sensor {
 };
 
 int	ipmi_nintr;
-int	ipmi_dbg = 0;
 int	ipmi_poll = 1;
 int	ipmi_enabled = 0;
 
@@ -123,12 +122,18 @@ int	ipmi_enabled = 0;
 #define bitof(x)  (1L << ((x) & 0x7))
 #define TB(b,m)	  (data[2+byteof(b)] & bitof(b))
 
+#ifdef IPMI_DEBUG
+int	ipmi_dbg = 0;
 #define dbg_printf(lvl, fmt...) \
 	if (ipmi_dbg >= lvl) \
 		printf(fmt);
 #define dbg_dump(lvl, msg, len, buf) \
 	if (len && ipmi_dbg >= lvl) \
 		dumpb(msg, len, (const u_int8_t *)(buf));
+#else
+#define dbg_printf(lvl, fmt...)
+#define dbg_dump(lvl, msg, len, buf)
+#endif
 
 long signextend(unsigned long, int);
 
@@ -1051,9 +1056,12 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 	if (*rxlen > 0 && data)
 		memcpy(data, buf + IPMI_MSG_DATARCV, *rxlen);
 
-	if ((rc = buf[IPMI_MSG_CCODE]) != 0)
+	rc = buf[IPMI_MSG_CCODE];
+#ifdef IPMI_DEBUG
+	if (rc != 0)
 		dbg_printf(1, "ipmi_recvmsg: nfln=%.2x cmd=%.2x err=%.2x\n",
 		    buf[IPMI_MSG_NFLN], buf[IPMI_MSG_CMD], buf[IPMI_MSG_CCODE]);
+#endif
 
 	dbg_printf(50, "ipmi_recvcmd: nfln=%.2x cmd=%.2x err=%.2x len=%.2x\n",
 	    buf[IPMI_MSG_NFLN], buf[IPMI_MSG_CMD], buf[IPMI_MSG_CCODE],
@@ -1465,7 +1473,9 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
 {
 	int			typ, idx;
 	struct ipmi_sensor	*psensor;
+#ifdef IPMI_DEBUG
 	struct sdrtype1		*s1 = (struct sdrtype1 *)psdr;
+#endif
 
 	typ = ipmi_sensor_type(sensor_type, ext_type, entity);
 	if (typ == -1) {
@@ -1529,7 +1539,6 @@ ipmi_intr(void *arg)
 void
 ipmi_refresh_sensors(struct ipmi_softc *sc)
 {
-
 	if (!ipmi_poll)
 		return;
 
@@ -1540,9 +1549,11 @@ ipmi_refresh_sensors(struct ipmi_softc *sc)
 	if (sc->current_sensor == NULL)
 		sc->current_sensor = SLIST_FIRST(&ipmi_sensor_list);
 
-	if (read_sensor(sc, sc->current_sensor))
+	if (read_sensor(sc, sc->current_sensor)) {
 		dbg_printf(1, "%s: error reading: %s\n", DEVNAME(sc),
 		    sc->current_sensor->i_sensor.desc);
+		return;
+	}
 }
 
 int
