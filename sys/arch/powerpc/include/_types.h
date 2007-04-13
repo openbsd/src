@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.4 2007/03/22 19:26:28 kettenis Exp $	*/
+/*	$OpenBSD: _types.h,v 1.5 2007/04/13 18:48:38 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -118,5 +118,6 @@ typedef	void *			__wctype_t;
 /* Feature test macros */
 #define __HAVE_CPUINFO
 #define __HAVE_MUTEX
+#define __HAVE_TIMECOUNTER
 
 #endif	/* _POWERPC__TYPES_H_ */
