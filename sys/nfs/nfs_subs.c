@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.59 2006/12/29 13:04:37 pedro Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.60 2007/04/13 10:01:35 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -527,13 +527,6 @@ static short *nfsrv_v3errmap[] = {
 
 extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern struct nfsrtt nfsrtt;
-extern struct nfsstats nfsstats;
-extern nfstype nfsv2_type[9];
-extern nfstype nfsv3_type[9];
-extern struct nfsnodehashhead *nfsnodehashtbl;
-extern u_long nfsnodehash;
-
-LIST_HEAD(nfsnodehashhead, nfsnode);
 
 struct pool nfsreqpl;
 
