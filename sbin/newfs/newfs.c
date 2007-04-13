@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.57 2007/04/13 17:33:02 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.58 2007/04/13 20:04:38 jmc Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -652,50 +652,29 @@ fatal(const char *fmt, ...)
 	/*NOTREACHED*/
 }
 
-struct fsoptions {
-	char *str;
-	int mfs_too;
-} fsopts[] = {
-	{ "-N do not create file system, just print out parameters", 0 },
-	{ "-O file system format: 0 -> 4.3BSD, 1 -> FFS1, 2 -> FFS2", 0 },
-#ifdef MFS
-	{ "-P src populate mfs filesystem", 2 },
-#endif
-	{ "-S sector size", 0 },
-	{ "-T disktype", 0 },
-	{ "-b block size", 1 },
-	{ "-c blocks per cylinders group", 1 },
-	{ "-e maximum blocks per file in a cylinder group", 1 },
-	{ "-f frag size", 1 },
-	{ "-g average file size", 0 },
-	{ "-h average files per directory", 0 },
-	{ "-i number of bytes per inode", 1 },
-	{ "-m minimum free space %%", 1 },
-	{ "-n number of distinguished rotational positions", 0 },
-	{ "-o optimization preference (`space' or `time')", 1 },
-	{ "-s file system size (sectors)", 1 },
-	{ "-t file system type", 0 },
-	{ NULL, NULL }
-};
-
-void
+static void
 usage(void)
 {
-	struct fsoptions *fsopt;
+	extern char *__progname;
 
 	if (mfs) {
-		fprintf(stderr,
-		    "usage: %s [ -fsoptions ] special-device mount-point\n",
-			__progname);
+	    fprintf(stderr,
+	        "usage: %s [-b block-size] [-c blocks-per-cylinder-group] "
+		"[-e maxbpg]\n"
+		"\t[-f frag-size] [-i bytes] [-m free space] [-o options] "
+		"[-P file]\n"
+		"\t[-s size] special node\n",
+		__progname);
 	} else {
-		fprintf(stderr,
-		    "usage: %s [ -fsoptions ] special-device\n", __progname);
+	    fprintf(stderr,
+	        "usage: %s [-Nq] [-b block-size] "
+		"[-c blocks-per-cylinder-group] [-e maxbpg]\n"
+		"\t[-f frag-size] [-g avgfilesize] [-h avgfpdir] [-i bytes]\n"
+		"\t[-m free-space] [-O filesystem-format] [-o optimization]\n"
+		"\t[-S sector-size] [-s size] [-t fstype] special\n",
+		__progname);
 	}
-	fprintf(stderr, "where fsoptions are:\n");
-	for (fsopt = fsopts; fsopt->str; fsopt++) {
-		if (!mfs || fsopt->mfs_too == 1 || (mfs && fsopt->mfs_too == 2))
-			fprintf(stderr, "\t%s\n", fsopt->str);
-	}
+
 	exit(1);
 }
 
