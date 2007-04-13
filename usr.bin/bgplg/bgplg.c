@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.c,v 1.4 2006/12/12 14:18:05 reyk Exp $	*/
+/*	$OpenBSD: bgplg.c,v 1.5 2007/04/13 15:31:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
@@ -284,7 +284,7 @@ main(void)
 		cmd = lg_getarg("cmd=", query, query_length);
 	printf(
 	    "<form action='%s'>\n"
-"<div class=\"command\">\n"
+	    "<div class=\"command\">\n"
 	    "<select name='cmd'>\n",
 	    self);
 	for (i = 0; cmds[i].name != NULL; i++) {
