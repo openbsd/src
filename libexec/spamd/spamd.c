@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.101 2007/03/26 16:40:56 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.102 2007/04/13 22:05:43 beck Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
@@ -733,14 +733,22 @@ nextstate(struct con *cp)
 		/* received input: parse, and select next state */
 		if (match(cp->ibuf, "HELO") ||
 		    match(cp->ibuf, "EHLO")) {
+			int nextstate = 2;
+			cp->helo[0] = '\0'; 
 			gethelo(cp->helo, sizeof cp->helo, cp->ibuf);
-			snprintf(cp->obuf, cp->osize,
-			    "250 Hello, spam sender. "
-			    "Pleased to be wasting your time.\r\n");
+			if (cp->helo[0] == '\0') {
+				nextstate = 0;
+				snprintf(cp->obuf, cp->osize,
+				    "501 helo requires domain name.\r\n");
+			} else {
+				snprintf(cp->obuf, cp->osize,
+				    "250 Hello, spam sender. "
+				    "Pleased to be wasting your time.\r\n");
+			}
 			cp->op = cp->obuf;
 			cp->ol = strlen(cp->op);
 			cp->laststate = cp->state;
-			cp->state = 2;
+			cp->state = nextstate;
 			cp->w = t + cp->stutter;
 			break;
 		}
