@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.26 2006/11/29 12:34:19 miod Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.27 2007/04/13 19:20:23 miod Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: keyword.c,v 1.26 2006/11/29 12:34:19 miod Exp $";
+static char rcsid[] = "$OpenBSD: keyword.c,v 1.27 2007/04/13 19:20:23 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ VAR var[] = {
 	{"nswap", "NSWAP", NULL, USER, pvar, 4, 0, POFF(p_uru_nswap), UINT64, "lld"},
 	{"nvcsw", "NVCSW", NULL, USER, pvar, 5, 0, POFF(p_uru_nvcsw), UINT64, "lld"},
 	/* XXX */
-	{"nwchan", "WCHAN", NULL, 0, pvar, 6, 0, POFF(p_wchan), UINT64, "llx"},
+	{"nwchan", "WCHAN", NULL, 0, pvar, 7, 0, POFF(p_wchan), UINT64, "llx"},
 	{"oublk", "OUBLK", NULL, USER, pvar, 4, 0, POFF(p_uru_oublock), UINT64, "lld"},
 	{"oublock", "", "oublk"},
 	/* XXX */
@@ -179,7 +179,7 @@ VAR var[] = {
 	{"usrpri", "", "upr"},
 	{"vsize", "", "vsz"},
 	{"vsz", "VSZ", NULL, 0, vsize, 5},
-	{"wchan", "WCHAN", NULL, LJUST, wchan, 6},
+	{"wchan", "WCHAN", NULL, LJUST, wchan, 7},
 	{"xstat", "XSTAT", NULL, 0, pvar, 4, 0, POFF(p_xstat), UINT16, "x"},
 	{""},
 };
