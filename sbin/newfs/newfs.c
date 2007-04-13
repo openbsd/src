@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.58 2007/04/13 20:04:38 jmc Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.59 2007/04/13 20:08:30 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -180,7 +180,7 @@ main(int argc, char *argv[])
 
 	opstring = mfs ?
 	    "P:T:b:c:e:f:i:m:o:s:" :
-	    "NO:S:T:b:c:e:f:g:h:i:m:o:qs:t:z:";
+	    "NO:S:T:b:c:e:f:g:h:i:m:o:qs:t:";
 	while ((ch = getopt(argc, argv, opstring)) != -1) {
 		switch (ch) {
 		case 'N':
