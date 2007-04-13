@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.102 2007/04/13 10:36:03 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.103 2007/04/13 13:27:46 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2300,10 +2300,13 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	vaddr_t blkendva;
 	struct vm_page *ptp;
 	int32_t cpumask = 0;
+	TAILQ_HEAD(, vm_page) empty_ptps;
 
 	/*
 	 * we lock in the pmap => pv_head direction
 	 */
+
+	TAILQ_INIT(&empty_ptps);
 
  	PMAP_MAP_TO_HEAD_LOCK();
 	ptes = pmap_map_ptes(pmap);	/* locks pmap */
@@ -2378,12 +2381,18 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 					pmap->pm_ptphint =
 					    TAILQ_FIRST(&pmap->pm_obj.memq);
 				ptp->wire_count = 0;
-				uvm_pagefree(ptp);
+				/* Postpone free to after shootdown. */
+				uvm_pagerealloc(ptp, NULL, 0);
+				TAILQ_INSERT_TAIL(&empty_ptps, ptp, listq);
 			}
 		}
 		pmap_tlb_shootnow(cpumask);
 		pmap_unmap_ptes(pmap);		/* unlock pmap */
 		PMAP_MAP_TO_HEAD_UNLOCK();
+		while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
+			TAILQ_REMOVE(&empty_ptps, ptp, listq);
+			uvm_pagefree(ptp);
+		}
 		return;
 	}
 
@@ -2467,13 +2476,19 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 				pmap->pm_ptphint =
 				    TAILQ_FIRST(&pmap->pm_obj.memq);
 			ptp->wire_count = 0;
-			uvm_pagefree(ptp);
+			/* Postpone free to after shootdown. */
+			uvm_pagerealloc(ptp, NULL, 0);
+			TAILQ_INSERT_TAIL(&empty_ptps, ptp, listq);
 		}
 	}
 
 	pmap_tlb_shootnow(cpumask);
 	pmap_unmap_ptes(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
+	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
+		TAILQ_REMOVE(&empty_ptps, ptp, listq);
+		uvm_pagefree(ptp);
+	}
 }
 
 /*
@@ -2491,6 +2506,8 @@ pmap_page_remove(struct vm_page *pg)
 	struct pv_entry *pve;
 	pt_entry_t *ptes, opte;
 	int32_t cpumask = 0;
+	TAILQ_HEAD(, vm_page) empty_ptps;
+	struct vm_page *ptp;
 
 	/* XXX: vm_page should either contain pv_head or have a pointer to it */
 	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
@@ -2503,6 +2520,8 @@ pmap_page_remove(struct vm_page *pg)
 	if (pvh->pvh_list == NULL) {
 		return;
 	}
+
+	TAILQ_INIT(&empty_ptps);
 
 	/* set pv_head => pmap locking */
 	PMAP_HEAD_TO_MAP_LOCK();
@@ -2579,7 +2598,10 @@ pmap_page_remove(struct vm_page *pg)
 					pve->pv_pmap->pm_ptphint =
 					    TAILQ_FIRST(&pve->pv_pmap->pm_obj.memq);
 				pve->pv_ptp->wire_count = 0;
-				uvm_pagefree(pve->pv_ptp);
+				/* Postpone free to after shootdown. */
+				uvm_pagerealloc(pve->pv_ptp, NULL, 0);
+				TAILQ_INSERT_TAIL(&empty_ptps, pve->pv_ptp,
+				    listq);
 			}
 		}
 		pmap_unmap_ptes(pve->pv_pmap);	/* unlocks pmap */
@@ -2589,6 +2611,10 @@ pmap_page_remove(struct vm_page *pg)
 	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 	pmap_tlb_shootnow(cpumask);
+	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
+		TAILQ_REMOVE(&empty_ptps, ptp, listq);
+		uvm_pagefree(ptp);
+	}
 }
 
 /*
