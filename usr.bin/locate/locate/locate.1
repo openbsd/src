@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.1,v 1.22 2004/04/08 20:08:59 jmc Exp $
+.\"	$OpenBSD: locate.1,v 1.23 2007/04/13 13:14:16 sobrado Exp $
 .\"
 .\" Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" Copyright (c) 1990, 1993
@@ -29,7 +29,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)locate.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: locate.1,v 1.22 2004/04/08 20:08:59 jmc Exp $
+.\"	$Id: locate.1,v 1.23 2007/04/13 13:14:16 sobrado Exp $
 .\"
 .Dd June 6, 1993
 .Dt LOCATE 1
@@ -42,7 +42,7 @@
 .Op Fl cimSs
 .Op Fl d Ar database
 .Op Fl l Ar limit
-.Ar pattern Op Ar ...
+.Ar pattern ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -155,10 +155,8 @@ You can only use
 pattern for stdin.
 .It Fl i
 Ignore case distinctions in both the pattern and the database.
-.It Fl l Ar number
-Limit output to
-.Ar number
-of file names and exit.
+.It Fl l Ar limit
+Limit output to a specific number of files and exit.
 .It Fl m
 Use
 .Xr mmap 2
