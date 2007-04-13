@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.28 2007/04/12 14:38:36 martin Exp $ */
+/* $OpenBSD: cpu.h,v 1.29 2007/04/13 08:31:50 martin Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -101,10 +101,12 @@ typedef union alpha_t_float {
 
 #include <machine/alpha_cpu.h>
 #include <machine/frame.h>
+#include <machine/param.h>
 
 #ifdef _KERNEL
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <sys/device.h>
 #include <sys/sched.h>
 
@@ -205,6 +207,7 @@ struct cpu_info {
 	u_long ci_want_resched;		/* preempt current process */
 	u_long ci_astpending;		/* AST is pending */
 	u_long ci_intrdepth;		/* interrupt trap depth */
+	struct trapframe *ci_db_regs;	/* registers for debuggers */
 #if defined(MULTIPROCESSOR)
 	u_long ci_flags;		/* flags; see below */
 	u_long ci_ipis;			/* interprocessor interrupts pending */
@@ -230,8 +233,8 @@ extern	__volatile u_long cpus_running;
 extern	__volatile u_long cpus_paused;
 extern	struct cpu_info cpu_info[];
 
-#define	curcpu()		((struct cpu_info *)alpha_pal_rdval())
-#define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
+#define	curcpu()			((struct cpu_info *)alpha_pal_rdval())
+#define	CPU_IS_PRIMARY(ci)		((ci)->ci_flags & CPUF_PRIMARY)
 
 void	cpu_boot_secondary_processors(void);
 
@@ -405,6 +408,10 @@ int alpha_fp_complete(u_long, u_long, struct proc *, u_int64_t *);
 #endif
 
 void alpha_enable_fp(struct proc *, int);
+
+#ifdef MULTIPROCESSOR
+#include <sys/mplock.h>
+#endif
 
 #endif /* _KERNEL */
 #endif /* _ALPHA_CPU_H_ */

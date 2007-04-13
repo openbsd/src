@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.104 2007/02/26 21:30:16 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.105 2007/04/13 08:31:50 martin Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1855,9 +1855,6 @@ void
 fpusave_cpu(struct cpu_info *ci, int save)
 {
 	struct proc *p;
-#if defined(MULTIPROCESSOR)
-	int s;
-#endif
 
 	KDASSERT(ci == curcpu());
 
@@ -1896,7 +1893,7 @@ fpusave_proc(struct proc *p, int save)
 	struct cpu_info *oci;
 #if defined(MULTIPROCESSOR)
 	u_long ipi = save ? ALPHA_IPI_SYNCH_FPU : ALPHA_IPI_DISCARD_FPU;
-	int s, spincount;
+	int spincount;
 #endif
 
 	KDASSERT(p->p_addr != NULL);

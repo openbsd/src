@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.49 2007/02/03 16:48:21 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.50 2007/04/13 08:31:50 martin Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -4108,9 +4108,9 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 			 * TBIA[P].
 			 */
 			if (pq->pq_pte & PG_ASM)
-				ipinum = ALPHA_IPI_TBIA;
+				ipinum = ALPHA_IPI_SHOOTDOWN;
 			else
-				ipinum = ALPHA_IPI_TBIAP;
+				ipinum = ALPHA_IPI_IMB;
 			alpha_send_ipi(i, ipinum);
 		} else {
 			pj->pj_pmap = pmap;

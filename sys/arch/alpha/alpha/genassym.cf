@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.8 2006/04/13 14:41:08 brad Exp $
+#	$OpenBSD: genassym.cf,v 1.9 2007/04/13 08:31:50 martin Exp $
 
 # Copyright (c) 1994, 1995 Gordon W. Ross
 # Copyright (c) 1993 Adam Glass
@@ -114,6 +114,7 @@ member	p_vmspace
 member	p_stat
 member	P_MD_FLAGS	p_md.md_flags
 member	P_MD_PCBPADDR	p_md.md_pcbpaddr
+member	p_cpu
 struct	prochd
 member	ph_link
 member	ph_rlink

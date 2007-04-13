@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.24 2007/04/12 14:38:36 martin Exp $ */
+/* $OpenBSD: intr.h,v 1.25 2007/04/13 08:31:50 martin Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -162,6 +162,7 @@ int _splraise(int);
 #define splhigh()               _splraise(ALPHA_PSL_IPL_HIGH)
 
 #define spllpt()		spltty()
+#define spllock()		splhigh()
 #define splsched()		splhigh()
 
 /*
@@ -173,6 +174,9 @@ int _splraise(int);
 #define	ALPHA_IPI_SHOOTDOWN	0x0000000000000008UL
 #define	ALPHA_IPI_IMB		0x0000000000000010UL
 #define	ALPHA_IPI_AST		0x0000000000000020UL
+#define	ALPHA_IPI_SYNCH_FPU	0x0000000000000040UL
+#define	ALPHA_IPI_DISCARD_FPU	0x0000000000000080UL
+#define	ALPHA_IPI_PAUSE		0x0000000000000100UL
 
 #define	ALPHA_NIPIS		6	/* must not exceed 64 */
 
