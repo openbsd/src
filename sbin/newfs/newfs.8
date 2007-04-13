@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.53 2007/04/13 17:33:02 millert Exp $
+.\"	$OpenBSD: newfs.8,v 1.54 2007/04/13 19:46:18 jmc Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -166,8 +166,9 @@ for more details on how to set this option.
 .It Fl N
 Causes the file system parameters to be printed out
 without really creating the file system.
-.It Fl O
-Select the filesystem-format
+.It Fl O Ar filesystem-format
+Select the filesystem format:
+.Pp
 .Bl -tag -width 3n -offset indent -compact
 .It 0
 .Bx 4.3
@@ -186,21 +187,25 @@ or
 .Ar time .
 The file system can either be instructed to try to minimize the
 time spent allocating blocks, or to try to minimize the space
-fragmentation on the disk.  Unless an optimization has been specified,
+fragmentation on the disk.
+Unless an optimization has been specified,
 if the value of minfree (see above) is less than 5%, the default
 is to optimize for space; if the value of minfree is greater than
-or equal to 5%, the default is to optimize for time.  See
+or equal to 5%, the default is to optimize for time.
+See
 .Xr tunefs 8
 for more details on how to set this option.
 .It Fl q
-Operate in quiet mode.  With this option,
+Operate in quiet mode.
+With this option,
 .Nm
 will not print extraneous information like superblock backups.
 .It Fl s Ar size
-The size of the file system in sectors.  The maximum size of a file
+The size of the file system in sectors.
+The maximum size of a file
 system is 2,147,483,647 (2^31 \- 1) sectors, which is slightly less
-than 1TB, assuming a sector size of 512 bytes.  Note however that
-for
+than 1TB, assuming a sector size of 512 bytes.
+Note however that for
 .Nm mount_mfs
 the practical limit is based on
 .Va datasize
@@ -211,13 +216,14 @@ and ultimately depends on the per-arch
 limit.
 .El
 .Pp
-The following options override the standard sizes for the disk
-geometry.  Their default values are taken from the disk label.
+The following options override the standard sizes for the disk geometry.
+Their default values are taken from the disk label.
 Changing these defaults is useful only when using
 .Nm
 to build a file system whose raw image will eventually be used on
 a different type of disk than the one on which it is initially
-created (for example on a write-once disk).  Note that changing any
+created (for example on a write-once disk).
+Note that changing any
 of these values from their defaults will make it impossible for
 .Xr fsck 8
 to find the alternate superblocks if the standard superblock is
@@ -246,14 +252,16 @@ These options are as follows:
 .It Fl o Ar options
 Options are specified with a
 .Fl o
-flag followed by a comma separated string of options.  See the
+flag followed by a comma separated string of options.
+See the
 .Xr mount 8
 man page for possible options and their meanings.
 .It Fl P Ar file
 If
 .Ar file
 is a directory, populate the created mfs file system with the
-contents of the directory.  If
+contents of the directory.
+If
 .Ar file
 is a block device, populate the created mfs file system with the
 contents of the FFS file system contained on the device.
