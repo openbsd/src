@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1226 2007/04/05 23:08:25 jsg Exp $
+$OpenBSD: pcidevs,v 1.1227 2007/04/13 11:26:18 jasper Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -288,6 +288,7 @@ vendor	XGI		0x18ca	XGI Technology
 vendor	SANGOMA		0x1923	Sangoma
 vendor	OPTION		0x1931	Option
 vendor	ATTANSIC	0x1969	Attansic Technology
+vendor	AGEIA		0x1971	Ageia
 vendor	JMICRON		0x197b	JMicron
 vendor	ASPEED		0x1a03	ASPEED Technology
 vendor	SYMPHONY2	0x1c1c	Symphony Labs
@@ -600,6 +601,9 @@ product ATML WAIKATO		0x3200	Waikato Dag3.2
 product ATML DAG35		0x3500	Endace Dag3.5
 product ATML DAG422GE		0x422e	Endace Dag4.22GE
 product ATML DAG423		0x4230	Endace Dag4.23
+
+/* Ageia */
+product	AGEIA PHYSX		0x1011	PhysX
 
 /* Alliance products */
 product ALLIANCE AT22		0x6422	AT22
@@ -2863,6 +2867,7 @@ product NVIDIA GEFORCE4MX4000	0x0185	GeForce4 MX 4000
 product NVIDIA QUADRO4_580XGL	0x0188	Quadro4 580 XGL
 product NVIDIA QUADRO4NVS	0x018a	Quadro4 NVS
 product NVIDIA QUADRO4_380XGL	0x018b	Quadro4 380 XGL
+product NVIDIA GEFORCE8800GTX	0x0191	GeForce 8800 GTX
 product NVIDIA GEFORCE2_11	0x01a0	GeForce2 Crush11
 product NVIDIA NFORCE_PCHB	0x01a4	nForce PCI Host
 product NVIDIA NFORCE_DDR2	0x01aa	nForce 220 DDR
