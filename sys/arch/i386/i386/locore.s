@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.107 2007/04/03 10:14:47 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.108 2007/04/13 11:16:08 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -534,11 +534,11 @@ try586:	/* Use the `cpuid' instruction. */
 /*
  * Virtual address space of kernel:
  *
- * text | data | bss | [syms] | page dir | proc0 kstack | Sysmap
- *			      0          1       2      3
+ * text | data | bss | [syms] | proc0 stack | page dir     | Sysmap
+ *			      0             1       2      3
  */
-#define	PROC0PDIR	((0)		* NBPG)
-#define	PROC0STACK	((1)		* NBPG)
+#define	PROC0STACK	((0)		* NBPG)
+#define	PROC0PDIR	((  UPAGES)	* NBPG)
 #define	SYSMAP		((1+UPAGES)	* NBPG)
 #define	TABLESIZE	((1+UPAGES) * NBPG) /* + _C_LABEL(nkpde) * NBPG */
 
@@ -603,7 +603,7 @@ try586:	/* Use the `cpuid' instruction. */
 	leal	(RELOC(_C_LABEL(etext))+PGOFSET),%edx
 	andl	$~PGOFSET,%edx
 
-	/* Skip over the first 1MB. */
+	/* Skip over the first 2MB. */
 	movl	$RELOC(KERNTEXTOFF),%eax
 	movl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
@@ -657,10 +657,10 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%eax,(PROC0PDIR+PDSLOT_PTE*4)(%esi)	# recursive PD slot
 
 	/* Save phys. addr of PTD, for libkvm. */
-	movl	%esi,RELOC(_C_LABEL(PTDpaddr))
+	leal	(PROC0PDIR)(%esi),%eax		# phys address of ptd in proc 0
+	movl	%eax,RELOC(_C_LABEL(PTDpaddr))
 
 	/* Load base of page directory and enable mapping. */
-	movl	%esi,%eax		# phys address of ptd in proc 0
 	movl	%eax,%cr3		# load ptd addr into mmu
 	movl	%cr0,%eax		# get control word
 					# enable paging & NPX emulation
@@ -690,7 +690,8 @@ begin:
 	leal	(PROC0STACK+KERNBASE)(%esi),%eax
 	movl	%eax,_C_LABEL(proc0paddr)
 	leal	(USPACE-FRAMESIZE)(%eax),%esp
-	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
+	leal	(PROC0PDIR)(%esi),%ebx	# phys address of ptd in proc 0
+	movl	%ebx,PCB_CR3(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp		# mark end of frames
 
 	movl	_C_LABEL(nkpde),%eax
