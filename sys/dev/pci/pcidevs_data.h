@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1226 2007/04/05 23:08:25 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1227 2007/04/13 11:26:18 jasper Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1018,6 +1018,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATML, PCI_PRODUCT_ATML_DAG423,
 	    "Endace Dag4.23",
+	},
+	{
+	    PCI_VENDOR_AGEIA, PCI_PRODUCT_AGEIA_PHYSX,
+	    "PhysX",
 	},
 	{
 	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT22,
@@ -8848,6 +8852,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Quadro4 380 XGL",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE8800GTX,
+	    "GeForce 8800 GTX",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2_11,
 	    "GeForce2 Crush11",
 	},
@@ -14094,6 +14102,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ATTANSIC,
 	    "Attansic Technology",
+	},
+	{
+	    PCI_VENDOR_AGEIA,
+	    "Ageia",
 	},
 	{
 	    PCI_VENDOR_JMICRON,

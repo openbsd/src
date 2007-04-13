@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1226 2007/04/05 23:08:25 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1227 2007/04/13 11:26:18 jasper Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -293,6 +293,7 @@
 #define	PCI_VENDOR_SANGOMA	0x1923		/* Sangoma */
 #define	PCI_VENDOR_OPTION	0x1931		/* Option */
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technology */
+#define	PCI_VENDOR_AGEIA	0x1971		/* Ageia */
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron */
 #define	PCI_VENDOR_ASPEED	0x1a03		/* ASPEED Technology */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
@@ -605,6 +606,9 @@
 #define	PCI_PRODUCT_ATML_DAG35	0x3500		/* Endace Dag3.5 */
 #define	PCI_PRODUCT_ATML_DAG422GE	0x422e		/* Endace Dag4.22GE */
 #define	PCI_PRODUCT_ATML_DAG423	0x4230		/* Endace Dag4.23 */
+
+/* Ageia */
+#define	PCI_PRODUCT_AGEIA_PHYSX	0x1011		/* PhysX */
 
 /* Alliance products */
 #define	PCI_PRODUCT_ALLIANCE_AT22	0x6422		/* AT22 */
@@ -2868,6 +2872,7 @@
 #define	PCI_PRODUCT_NVIDIA_QUADRO4_580XGL	0x0188		/* Quadro4 580 XGL */
 #define	PCI_PRODUCT_NVIDIA_QUADRO4NVS	0x018a		/* Quadro4 NVS */
 #define	PCI_PRODUCT_NVIDIA_QUADRO4_380XGL	0x018b		/* Quadro4 380 XGL */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE8800GTX	0x0191		/* GeForce 8800 GTX */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE2_11	0x01a0		/* GeForce2 Crush11 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_PCHB	0x01a4		/* nForce PCI Host */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_DDR2	0x01aa		/* nForce 220 DDR */
