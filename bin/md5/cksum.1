@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.14 2007/03/27 13:12:41 millert Exp $
+.\"	$OpenBSD: cksum.1,v 1.15 2007/04/13 13:57:01 tedu Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -175,6 +175,10 @@ Prints a checksum of the given
 .Ar string .
 .It Fl t
 Runs a built-in time trial.
+Specifying
+.Fl t
+multiple times results in the number of rounds being multiplied
+by 10 for each additional flag.
 .It Fl x
 Runs a built-in test script.
 .El

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.26 2007/03/27 20:40:04 millert Exp $
+.\"	$OpenBSD: md5.1,v 1.27 2007/04/13 13:57:01 tedu Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -82,6 +82,10 @@ Prints a checksum of the given
 .Ar string .
 .It Fl t
 Runs a built-in time trial.
+Specifying
+.Fl t
+multiple times results in the number of rounds being multiplied
+by 10 for each additional flag.
 .It Fl x
 Runs a built-in test script.
 .El

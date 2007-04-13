@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.44 2007/03/29 15:20:51 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.45 2007/04/13 13:57:01 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -190,7 +190,7 @@ void digest_print(const struct hash_function *, const char *, const char *);
 void digest_printstr(const struct hash_function *, const char *, const char *);
 void digest_string(char *, struct hash_list *);
 void digest_test(struct hash_list *);
-void digest_time(struct hash_list *);
+void digest_time(struct hash_list *, int);
 void hash_insert(struct hash_list *, struct hash_function *, int);
 void usage(void) __attribute__((__noreturn__));
 
@@ -298,7 +298,7 @@ main(int argc, char **argv)
 			input_string = optarg;
 			break;
 		case 't':
-			tflag = 1;
+			tflag++;
 			break;
 		case 'x':
 			xflag = 1;
@@ -311,7 +311,7 @@ main(int argc, char **argv)
 	argv += optind;
 
 	/* Most arguments are mutually exclusive */
-	fl = pflag + tflag + xflag + cflag + (input_string != NULL);
+	fl = pflag + (tflag ? 1 : 0) + xflag + cflag + (input_string != NULL);
 	if (fl > 1 || (fl && argc && cflag == 0) || (rflag && qflag))
 		usage();
 	if (cflag != 0) {
@@ -339,7 +339,7 @@ main(int argc, char **argv)
 	}
 
 	if (tflag)
-		digest_time(&hl);
+		digest_time(&hl, tflag);
 	else if (xflag)
 		digest_test(&hl);
 	else if (input_string)
@@ -668,7 +668,7 @@ digest_filelist(const char *file, struct hash_function *defhash)
 #define TEST_BLOCK_COUNT 10000
 
 void
-digest_time(struct hash_list *hl)
+digest_time(struct hash_list *hl, int times)
 {
 	struct hash_function *hf;
 	struct timeval start, stop, res;
@@ -677,10 +677,13 @@ digest_time(struct hash_list *hl)
 	u_char data[TEST_BLOCK_LEN];
 	char digest[MAX_DIGEST_LEN + 1];
 	double elapsed;
+	int count = TEST_BLOCK_COUNT;
+	while (--times > 0)
+		count *= 10;
 
 	TAILQ_FOREACH(hf, hl, tailq) {
 		(void)printf("%s time trial.  Processing %d %d-byte blocks...",
-		    hf->name, TEST_BLOCK_COUNT, TEST_BLOCK_LEN);
+		    hf->name, count, TEST_BLOCK_LEN);
 		fflush(stdout);
 
 		/* Initialize data based on block number. */
@@ -689,7 +692,7 @@ digest_time(struct hash_list *hl)
 
 		gettimeofday(&start, NULL);
 		hf->init(&context);
-		for (i = 0; i < TEST_BLOCK_COUNT; i++)
+		for (i = 0; i < count; i++)
 			hf->update(&context, data, TEST_BLOCK_LEN);
 		digest_end(hf, &context, digest, sizeof(digest), hf->base64);
 		gettimeofday(&stop, NULL);
@@ -699,7 +702,7 @@ digest_time(struct hash_list *hl)
 		(void)printf("\nDigest = %s\n", digest);
 		(void)printf("Time   = %f seconds\n", elapsed);
 		(void)printf("Speed  = %f bytes/second\n",
-		    TEST_BLOCK_LEN * TEST_BLOCK_COUNT / elapsed);
+		    (double)TEST_BLOCK_LEN * count / elapsed);
 	}
 }
 
