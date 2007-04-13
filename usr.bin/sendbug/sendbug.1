@@ -1,4 +1,4 @@
-.\" $OpenBSD: sendbug.1,v 1.14 2007/04/13 20:25:57 jmc Exp $
+.\" $OpenBSD: sendbug.1,v 1.15 2007/04/13 20:39:09 jmc Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
@@ -21,7 +21,10 @@ bugs database.
 A template PR is opened in a text editor
 with some system information,
 such as machine architecture,
-already filled in.
+already filled in,
+and a
+.Xr dmesg 8
+attached.
 Fields enclosed in
 .Sq \*(Lt\*(Gt
 should be completed by the user.
@@ -51,7 +54,7 @@ or content.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl D
-Do not attach
+Do not attach a
 .Xr dmesg 8
 to report.
 The
