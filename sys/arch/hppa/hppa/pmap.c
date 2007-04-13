@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.129 2007/04/04 17:44:45 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.130 2007/04/13 18:57:49 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -195,7 +195,7 @@ pmap_pde_alloc(struct pmap *pm, vaddr_t va, struct vm_page **pdep)
 
 	DPRINTF(PDB_FOLLOW|PDB_VP, ("pmap_pde_alloc: pde %x\n", pa));
 
-	pg->pg_flags &= ~PG_BUSY;		/* never busy */
+	atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
 	pg->wire_count = 1;		/* no mappings yet */
 	pmap_pde_set(pm, va, pa);
 	pm->pm_stats.resident_count++;	/* count PTP as resident */

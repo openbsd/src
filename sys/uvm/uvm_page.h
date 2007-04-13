@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.23 2007/04/04 17:44:45 art Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.24 2007/04/13 18:57:49 art Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -103,18 +103,6 @@
  *	queues (P) [or both].
  */
 
-/*
- * locking note: the mach version of this data structure had bit
- * fields for the flags, and the bit fields were divided into two
- * items (depending on who locked what).  some time, in BSD, the bit
- * fields were dumped and all the flags were lumped into one short.
- * that is fine for a single threaded uniprocessor OS, but bad if you
- * want to actual make use of locking (simple_lock's).  so, we've
- * separated things back out again.
- *
- * note the page structure has no lock of its own.
- */
-
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pglist.h>
 
@@ -128,10 +116,11 @@ struct vm_page {
 	struct uvm_object	*uobject;	/* object (O,P) */
 	voff_t			offset;		/* offset into object (O,P) */
 
-	u_short			pg_flags;	/* object flags [O] */
-	u_short			pg_version;	/* version count [O] */
-	u_short			wire_count;	/* wired down map refs [P] */
-	u_short			pqflags;	/* page queue flags [P] */
+	u_int			pg_flags;	/* object flags [O or P] */
+
+	u_int			pg_version;	/* version count [O] */
+	u_int			wire_count;	/* wired down map refs [P] */
+
 	u_int			loan_count;	/* number of active loans
 						 * to read: [O or P]
 						 * to modify: [O _and_ P] */
@@ -158,33 +147,36 @@ struct vm_page {
  *   PG_ ==> locked by object lock
  *   PQ_ ==> lock by page queue lock 
  *   PQ_FREE is locked by free queue lock and is mutex with all other PQs
+ *   pg_flags may only be changed using the atomic operations.
  *
  * PG_ZERO is used to indicate that a page has been pre-zero'd.  This flag
  * is only set when the page is on no queues, and is cleared when the page
  * is placed on the free list.
  */
 
-#define	PG_BUSY		0x0001		/* page is locked */
-#define	PG_WANTED	0x0002		/* someone is waiting for page */
-#define	PG_TABLED	0x0004		/* page is in VP table  */
-#define	PG_CLEAN	0x0008		/* page has not been modified */
-#define PG_CLEANCHK	0x0010		/* clean bit has been checked */
-#define PG_RELEASED	0x0020		/* page released while paging */
-#define	PG_FAKE		0x0040		/* page is not yet initialized */
-#define PG_RDONLY	0x0080		/* page must be mapped read-only */
-#define PG_ZERO		0x0100		/* page is pre-zero'd */
+#define	PG_BUSY		0x00000001	/* page is locked */
+#define	PG_WANTED	0x00000002	/* someone is waiting for page */
+#define	PG_TABLED	0x00000004	/* page is in VP table  */
+#define	PG_CLEAN	0x00000008	/* page has not been modified */
+#define PG_CLEANCHK	0x00000010	/* clean bit has been checked */
+#define PG_RELEASED	0x00000020	/* page released while paging */
+#define	PG_FAKE		0x00000040	/* page is not yet initialized */
+#define PG_RDONLY	0x00000080	/* page must be mapped read-only */
+#define PG_ZERO		0x00000100	/* page is pre-zero'd */
 
-#define PG_PAGER1	0x1000		/* pager-specific flag */
+#define PG_PAGER1	0x00001000	/* pager-specific flag */
+#define PG_MASK		0x0000ffff
 
-#define PQ_FREE		0x0001		/* page is on free list */
-#define PQ_INACTIVE	0x0002		/* page is in inactive list */
-#define PQ_ACTIVE	0x0004		/* page is in active list */
-#define PQ_ANON		0x0010		/* page is part of an anon, rather
+#define PQ_FREE		0x00010000	/* page is on free list */
+#define PQ_INACTIVE	0x00020000	/* page is in inactive list */
+#define PQ_ACTIVE	0x00040000	/* page is in active list */
+#define PQ_ANON		0x00100000	/* page is part of an anon, rather
 					   than an uvm_object */
-#define PQ_AOBJ		0x0020		/* page is part of an anonymous
+#define PQ_AOBJ		0x00200000	/* page is part of an anonymous
 					   uvm_object */
 #define PQ_SWAPBACKED	(PQ_ANON|PQ_AOBJ)
-#define	PQ_ENCRYPT	0x0040		/* page needs {en,de}cryption */
+#define	PQ_ENCRYPT	0x00400000	/* page needs {en,de}cryption */
+#define PQ_MASK		0xffff0000
 
 /*
  * physical memory layout structure
@@ -409,7 +401,7 @@ PHYS_TO_VM_PAGE(pa)
 	return(NULL);
 }
 
-#define VM_PAGE_IS_FREE(entry)  ((entry)->pqflags & PQ_FREE)
+#define VM_PAGE_IS_FREE(entry)  ((entry)->pg_flags & PQ_FREE)
 
 #endif /* _KERNEL */
 

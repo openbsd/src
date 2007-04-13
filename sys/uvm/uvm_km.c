@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.57 2007/04/11 12:10:42 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.58 2007/04/13 18:57:49 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -283,7 +283,7 @@ uvm_km_pgremove(struct uvm_object *uobj, vaddr_t start, vaddr_t end)
 
 		if (pp->pg_flags & PG_BUSY) {
 			/* owner must check for this when done */
-			pp->pg_flags |= PG_RELEASED;
+			atomic_setbits_int(&pp->pg_flags, PG_RELEASED);
 		} else {
 			/* free the swap slot... */
 			uao_dropswap(uobj, curoff >> PAGE_SHIFT);
@@ -404,7 +404,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 	while (size) {
 		pg = uvm_pagealloc(obj, offset, NULL, 0);
 		if (pg) {
-			pg->pg_flags &= ~PG_BUSY;	/* new page */
+			atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
 		}
 		
@@ -532,7 +532,7 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 		if (pg) {
 			if ((pg->pg_flags & PG_RELEASED) == 0)
 				panic("uvm_km_alloc1: non-released page");
-			pg->pg_flags |= PG_WANTED;
+			atomic_setbits_int(&pg->pg_flags, PG_WANTED);
 			UVM_UNLOCK_AND_WAIT(pg, &uvm.kernel_object->vmobjlock,
 			    FALSE, "km_alloc", 0);
 			continue;   /* retry */
@@ -541,7 +541,7 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 		/* allocate ram */
 		pg = uvm_pagealloc(uvm.kernel_object, offset, NULL, 0);
 		if (pg) {
-			pg->pg_flags &= ~PG_BUSY;	/* new page */
+			atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
 		}
 		simple_unlock(&uvm.kernel_object->vmobjlock);

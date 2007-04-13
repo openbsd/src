@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.34 2007/04/04 17:44:45 art Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.35 2007/04/13 18:57:49 art Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -798,7 +798,7 @@ ReStart:
 			 * it and then restart.
 			 */
 			if (pg->pg_flags & PG_BUSY) {
-				pg->pg_flags |= PG_WANTED;
+				atomic_setbits_int(&pg->pg_flags, PG_WANTED);
 				amap_unlock(amap);
 				UVM_UNLOCK_AND_WAIT(pg, &anon->an_lock, FALSE,
 				    "cownow", 0);
@@ -843,7 +843,7 @@ ReStart:
 			 * owner locked the whole time it can't be
 			 * PG_RELEASED | PG_WANTED.
 			 */
-			npg->pg_flags &= ~(PG_BUSY|PG_FAKE);
+			atomic_clearbits_int(&npg->pg_flags, PG_BUSY|PG_FAKE);
 			UVM_PAGE_OWN(npg, NULL);
 			uvm_lock_pageq();
 			uvm_pageactivate(npg);

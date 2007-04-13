@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_loan.c,v 1.25 2007/04/04 17:44:45 art Exp $	*/
+/*	$OpenBSD: uvm_loan.c,v 1.26 2007/04/13 18:57:49 art Exp $	*/
 /*	$NetBSD: uvm_loan.c,v 1.22 2000/06/27 17:29:25 mrg Exp $	*/
 
 /*
@@ -335,7 +335,7 @@ uvm_loananon(ufi, output, flags, anon)
 	if (flags & UVM_LOAN_TOANON) {
 		simple_lock(&anon->an_lock);
 		pg = anon->u.an_page;
-		if (pg && (pg->pqflags & PQ_ANON) != 0 && anon->an_ref == 1)
+		if (pg && (pg->pg_flags & PQ_ANON) != 0 && anon->an_ref == 1)
 			/* read protect it */
 			pmap_page_protect(pg, VM_PROT_READ);
 		anon->an_ref++;
@@ -518,7 +518,7 @@ uvm_loanuobj(ufi, output, flags, va)
 			uvm_lock_pageq();
 			uvm_pageactivate(pg); /* make sure it is in queues */
 			uvm_unlock_pageq();
-			pg->pg_flags &= ~(PG_BUSY|PG_WANTED);
+			atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_WANTED);
 			UVM_PAGE_OWN(pg, NULL);
 			simple_unlock(&uobj->vmobjlock);
 			return (0);
@@ -542,7 +542,7 @@ uvm_loanuobj(ufi, output, flags, va)
 		*output = (*output) + 1;
 		if (pg->pg_flags & PG_WANTED)
 			wakeup(pg);
-		pg->pg_flags &= ~(PG_WANTED|PG_BUSY);
+		atomic_clearbits_int(&pg->pg_flags, PG_WANTED|PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
 		return(1);		/* got it! */
 	}
@@ -566,7 +566,7 @@ uvm_loanuobj(ufi, output, flags, va)
 		uvm_unlock_pageq();
 		if (pg->pg_flags & PG_WANTED)
 			wakeup(pg);
-		pg->pg_flags &= ~(PG_WANTED|PG_BUSY);
+		atomic_clearbits_int(&pg->pg_flags, PG_WANTED|PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
 		return(1);
 	}
@@ -579,7 +579,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	if (anon == NULL) {		/* out of VM! */
 		if (pg->pg_flags & PG_WANTED)
 			wakeup(pg);
-		pg->pg_flags &= ~(PG_WANTED|PG_BUSY);
+		atomic_clearbits_int(&pg->pg_flags, PG_WANTED|PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
 		uvmfault_unlockall(ufi, amap, uobj, NULL);
 		return(-1);
@@ -596,7 +596,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	*output = (*output) + 1;
 	if (pg->pg_flags & PG_WANTED)
 		wakeup(pg);
-	pg->pg_flags &= ~(PG_WANTED|PG_BUSY);
+	atomic_clearbits_int(&pg->pg_flags, PG_WANTED|PG_BUSY);
 	UVM_PAGE_OWN(pg, NULL);
 	return(1);
 }
@@ -638,7 +638,7 @@ uvm_loanzero(ufi, output, flags)
 		}
 		
 		/* got a zero'd page; return */
-		pg->pg_flags &= ~(PG_BUSY|PG_FAKE);
+		atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
 		**output = pg;
 		*output = (*output) + 1;
@@ -678,7 +678,7 @@ uvm_loanzero(ufi, output, flags)
 	}
 
 	/* got a zero'd page; return */
-	pg->pg_flags &= ~(PG_BUSY|PG_FAKE);
+	atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_FAKE);
 	UVM_PAGE_OWN(pg, NULL);
 	uvm_lock_pageq();
 	uvm_pageactivate(pg);

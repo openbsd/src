@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.67 2007/01/12 07:41:31 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.68 2007/04/13 18:57:49 art Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1899,7 +1899,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 			SWAP_KEY_GET(sdp, key);	/* add reference */
 
 			/* mark for async writes */
-			tpps[i]->pqflags |= PQ_ENCRYPT;
+			atomic_setbits_int(&tpps[i]->pg_flags, PQ_ENCRYPT);
 			swap_encrypt(key, src, dst, block, 1 << PAGE_SHIFT);
 			src += 1 << PAGE_SHIFT;
 			dst += 1 << PAGE_SHIFT;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.88 2007/04/12 18:59:55 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.89 2007/04/13 18:57:49 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3008,7 +3008,7 @@ uvm_map_clean(map, start, end, flags)
 				 * anon).
 				 */
 
-				if ((pg->pqflags & PQ_ANON) == 0) {
+				if ((pg->pg_flags & PQ_ANON) == 0) {
 					KASSERT(pg->uobject == NULL);
 					uvm_unlock_pageq();
 					simple_unlock(&anon->an_lock);
@@ -3766,8 +3766,8 @@ uvm_page_printit(pg, full, pr)
 
 	(*pr)("PAGE %p:\n", pg);
 	snprintf(pgbuf, sizeof(pgbuf), "%b", pg->pg_flags, page_flagbits);
-	snprintf(pqbuf, sizeof(pqbuf), "%b", pg->pqflags, page_pqflagbits);
-	(*pr)("  flags=%s, pqflags=%s, vers=%d, wire_count=%d, pa=0x%llx\n",
+	snprintf(pqbuf, sizeof(pqbuf), "%b", pg->pg_flags, page_pqflagbits);
+	(*pr)("  flags=%s, pg_flags=%s, vers=%d, wire_count=%d, pa=0x%llx\n",
 	    pgbuf, pqbuf, pg->pg_version, pg->wire_count,
 	    (long long)pg->phys_addr);
 	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx loan_count=%d\n",
@@ -3786,8 +3786,8 @@ uvm_page_printit(pg, full, pr)
 		return;
 
 	/* cross-verify object/anon */
-	if ((pg->pqflags & PQ_FREE) == 0) {
-		if (pg->pqflags & PQ_ANON) {
+	if ((pg->pg_flags & PQ_FREE) == 0) {
+		if (pg->pg_flags & PQ_ANON) {
 			if (pg->uanon == NULL || pg->uanon->u.an_page != pg)
 			    (*pr)("  >>> ANON DOES NOT POINT HERE <<< (%p)\n",
 				(pg->uanon) ? pg->uanon->u.an_page : NULL);
@@ -3811,14 +3811,14 @@ uvm_page_printit(pg, full, pr)
 	}
 
 	/* cross-verify page queue */
-	if (pg->pqflags & PQ_FREE) {
+	if (pg->pg_flags & PQ_FREE) {
 		int fl = uvm_page_lookup_freelist(pg);
 		pgl = &uvm.page_free[fl].pgfl_queues[((pg)->pg_flags & PG_ZERO) ?
 		    PGFL_ZEROS : PGFL_UNKNOWN];
-	} else if (pg->pqflags & PQ_INACTIVE) {
-		pgl = (pg->pqflags & PQ_SWAPBACKED) ?
+	} else if (pg->pg_flags & PQ_INACTIVE) {
+		pgl = (pg->pg_flags & PQ_SWAPBACKED) ?
 		    &uvm.page_inactive_swp : &uvm.page_inactive_obj;
-	} else if (pg->pqflags & PQ_ACTIVE) {
+	} else if (pg->pg_flags & PQ_ACTIVE) {
 		pgl = &uvm.page_active;
  	} else {
 		pgl = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.45 2007/04/11 12:10:42 art Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.46 2007/04/13 18:57:49 art Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -346,7 +346,7 @@ uvmfault_anonget(ufi, amap, anon)
 				UVMHIST_LOG(maphist, "<- OK",0,0,0,0);
 				return (VM_PAGER_OK);
 			}
-			pg->pg_flags |= PG_WANTED;
+			atomic_setbits_int(&pg->pg_flags, PG_WANTED);
 			uvmexp.fltpgwait++;
 
 			/*
@@ -440,7 +440,8 @@ uvmfault_anonget(ufi, amap, anon)
 				wakeup(pg);	
 			}
 			/* un-busy! */
-			pg->pg_flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
+			atomic_clearbits_int(&pg->pg_flags,
+			    PG_WANTED|PG_BUSY|PG_FAKE);
 			UVM_PAGE_OWN(pg, NULL);
 
 			/* 
@@ -981,7 +982,8 @@ ReFault:
 				 * we've had the handle.
 				 */
 
-				pages[lcv]->pg_flags &= ~(PG_BUSY); /* un-busy! */
+				atomic_clearbits_int(&pages[lcv]->pg_flags,
+				    PG_BUSY);
 				UVM_PAGE_OWN(pages[lcv], NULL);
 			}	/* for "lcv" loop */
 				pmap_update(ufi.orig_map->pmap);
@@ -1132,7 +1134,8 @@ ReFault:
 					anon->u.an_page->loan_count--;
 				anon->u.an_page->uanon = NULL;
 				/* in case we owned */
-				anon->u.an_page->pqflags &= ~PQ_ANON;
+				atomic_clearbits_int(
+				    &anon->u.an_page->pg_flags, PQ_ANON);
 				uvm_pageactivate(pg);
 				uvm_unlock_pageq();
 				if (uobj) {
@@ -1143,8 +1146,9 @@ ReFault:
 				/* install new page in anon */
 				anon->u.an_page = pg;
 				pg->uanon = anon;
-				pg->pqflags |= PQ_ANON;
-				pg->pg_flags &= ~(PG_BUSY|PG_FAKE);
+				atomic_setbits_int(&pg->pg_flags, PQ_ANON);
+				atomic_clearbits_int(&pg->pg_flags,
+				    PG_BUSY|PG_FAKE);
 				UVM_PAGE_OWN(pg, NULL);
 
 				/* done! */
@@ -1196,7 +1200,8 @@ ReFault:
 		/* got all resources, replace anon with nanon */
 
 		uvm_pagecopy(oanon->u.an_page, pg);	/* pg now !PG_CLEAN */
-		pg->pg_flags &= ~(PG_BUSY|PG_FAKE);	/* un-busy! new page */
+		/* un-busy! new page */
+		atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
 		amap_add(&ufi.entry->aref, ufi.orig_rvaddr - ufi.entry->start,
 		    anon, 1);
@@ -1269,8 +1274,7 @@ ReFault:
 		 * since an anon with no swap cannot be PG_CLEAN,
 		 * clear its clean flag now.
 		 */
-
-		pg->pg_flags &= ~(PG_CLEAN);
+		atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
 		uvm_anon_dropswap(anon);
 	} else {
 		/* activate it */
@@ -1423,7 +1427,8 @@ Case2:
 			uvm_pageactivate(uobjpage);
 
 			uvm_unlock_pageq();
-			uobjpage->pg_flags &= ~(PG_BUSY|PG_WANTED);
+			atomic_clearbits_int(&uobjpage->pg_flags,
+			    PG_BUSY|PG_WANTED);
 			UVM_PAGE_OWN(uobjpage, NULL);
 			simple_unlock(&uobj->vmobjlock);
 			goto ReFault;
@@ -1493,7 +1498,9 @@ Case2:
 					 */
 					if (uobjpage->pg_flags & PG_WANTED)
 						wakeup(uobjpage);
-					uobjpage->pg_flags &= ~(PG_BUSY|PG_WANTED);
+					atomic_clearbits_int(
+					    &uobjpage->pg_flags,
+					    PG_BUSY|PG_WANTED);
 					UVM_PAGE_OWN(uobjpage, NULL);
 
 					uvm_lock_pageq();
@@ -1520,12 +1527,14 @@ Case2:
 				 * rename the pages.
 				 */
 				uvm_pagecopy(uobjpage, pg);	/* old -> new */
-				pg->pg_flags &= ~(PG_FAKE|PG_CLEAN);
+				atomic_clearbits_int(&pg->pg_flags,
+				    PG_FAKE|PG_CLEAN);
 				pmap_page_protect(uobjpage, VM_PROT_NONE);
 				if (uobjpage->pg_flags & PG_WANTED)
 					wakeup(uobjpage);
 				/* uobj still locked */
-				uobjpage->pg_flags &= ~(PG_WANTED|PG_BUSY);
+				atomic_clearbits_int(&uobjpage->pg_flags,
+				    PG_BUSY|PG_WANTED);
 				UVM_PAGE_OWN(uobjpage, NULL);
 
 				uvm_lock_pageq();
@@ -1590,7 +1599,8 @@ Case2:
 				uvm_lock_pageq();
 				uvm_pageactivate(uobjpage);
 				uvm_unlock_pageq();
-				uobjpage->pg_flags &= ~(PG_BUSY|PG_WANTED);
+				atomic_clearbits_int(&uobjpage->pg_flags,
+				    PG_BUSY|PG_WANTED);
 				UVM_PAGE_OWN(uobjpage, NULL);
 			}
 
@@ -1638,7 +1648,8 @@ Case2:
 			if (uobjpage->pg_flags & PG_WANTED)
 				/* still have the obj lock */
 				wakeup(uobjpage);
-			uobjpage->pg_flags &= ~(PG_BUSY|PG_WANTED);
+			atomic_clearbits_int(&uobjpage->pg_flags,
+			    PG_BUSY|PG_WANTED);
 			UVM_PAGE_OWN(uobjpage, NULL);
 			uvm_lock_pageq();
 			uvm_pageactivate(uobjpage);
@@ -1699,7 +1710,7 @@ Case2:
 		 * the object lock since the last time we checked.
 		 */
  
-		pg->pg_flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
+		atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_FAKE|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
 		uvmfault_unlockall(&ufi, amap, uobj, NULL);
 		KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
@@ -1718,7 +1729,7 @@ Case2:
 
 	if (fault_type == VM_FAULT_WIRE) {
 		uvm_pagewire(pg);
-		if (pg->pqflags & PQ_AOBJ) {
+		if (pg->pg_flags & PQ_AOBJ) {
 
 			/*
 			 * since the now-wired page cannot be paged out,
@@ -1726,8 +1737,7 @@ Case2:
 			 * since an aobj page with no swap cannot be PG_CLEAN,
 			 * clear its clean flag now.
 			 */
-
-			pg->pg_flags &= ~(PG_CLEAN);
+			atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
 			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
 		}
 	} else {
@@ -1744,7 +1754,7 @@ Case2:
 	 * lock since the last time we checked.
 	 */
  
-	pg->pg_flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
+	atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_FAKE|PG_WANTED);
 	UVM_PAGE_OWN(pg, NULL);
 	uvmfault_unlockall(&ufi, amap, uobj, NULL);
 	pmap_update(ufi.orig_map->pmap);

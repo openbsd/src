@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page_i.h,v 1.16 2007/04/04 17:44:45 art Exp $	*/
+/*	$OpenBSD: uvm_page_i.h,v 1.17 2007/04/13 18:57:49 art Exp $	*/
 /*	$NetBSD: uvm_page_i.h,v 1.14 2000/11/27 07:47:42 chs Exp $	*/
 
 /* 
@@ -151,17 +151,17 @@ PAGE_INLINE void
 uvm_pagewire(struct vm_page *pg)
 {
 	if (pg->wire_count == 0) {
-		if (pg->pqflags & PQ_ACTIVE) {
+		if (pg->pg_flags & PQ_ACTIVE) {
 			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
-			pg->pqflags &= ~PQ_ACTIVE;
+			atomic_clearbits_int(&pg->pg_flags, PQ_ACTIVE);
 			uvmexp.active--;
 		}
-		if (pg->pqflags & PQ_INACTIVE) {
-			if (pg->pqflags & PQ_SWAPBACKED)
+		if (pg->pg_flags & PQ_INACTIVE) {
+			if (pg->pg_flags & PQ_SWAPBACKED)
 				TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
 			else
 				TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
-			pg->pqflags &= ~PQ_INACTIVE;
+			atomic_clearbits_int(&pg->pg_flags, PQ_INACTIVE);
 			uvmexp.inactive--;
 		}
 		uvmexp.wired++;
@@ -183,7 +183,7 @@ uvm_pageunwire(struct vm_page *pg)
 	if (pg->wire_count == 0) {
 		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
 		uvmexp.active++;
-		pg->pqflags |= PQ_ACTIVE;
+		atomic_setbits_int(&pg->pg_flags, PQ_ACTIVE);
 		uvmexp.wired--;
 	}
 }
@@ -199,22 +199,20 @@ uvm_pageunwire(struct vm_page *pg)
 PAGE_INLINE void
 uvm_pagedeactivate(struct vm_page *pg)
 {
-	if (pg->pqflags & PQ_ACTIVE) {
+	if (pg->pg_flags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
-		pg->pqflags &= ~PQ_ACTIVE;
+		atomic_clearbits_int(&pg->pg_flags, PQ_ACTIVE);
 		uvmexp.active--;
 	}
-	if ((pg->pqflags & PQ_INACTIVE) == 0) {
+	if ((pg->pg_flags & PQ_INACTIVE) == 0) {
 		KASSERT(pg->wire_count == 0);
-		if (pg->pqflags & PQ_SWAPBACKED)
+		if (pg->pg_flags & PQ_SWAPBACKED)
 			TAILQ_INSERT_TAIL(&uvm.page_inactive_swp, pg, pageq);
 		else
 			TAILQ_INSERT_TAIL(&uvm.page_inactive_obj, pg, pageq);
-		pg->pqflags |= PQ_INACTIVE;
+		atomic_setbits_int(&pg->pg_flags, PQ_INACTIVE);
 		uvmexp.inactive++;
-#ifndef UBC
 		pmap_clear_reference(pg);
-#endif
 		/*
 		 * update the "clean" bit.  this isn't 100%
 		 * accurate, and doesn't have to be.  we'll
@@ -223,7 +221,7 @@ uvm_pagedeactivate(struct vm_page *pg)
 		 */
 		if ((pg->pg_flags & PG_CLEAN) != 0 &&
 		    pmap_is_modified(pg))
-			pg->pg_flags &= ~PG_CLEAN;
+			atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
 	}
 }
 
@@ -236,12 +234,12 @@ uvm_pagedeactivate(struct vm_page *pg)
 PAGE_INLINE void
 uvm_pageactivate(struct vm_page *pg)
 {
-	if (pg->pqflags & PQ_INACTIVE) {
-		if (pg->pqflags & PQ_SWAPBACKED)
+	if (pg->pg_flags & PQ_INACTIVE) {
+		if (pg->pg_flags & PQ_SWAPBACKED)
 			TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
 		else
 			TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
-		pg->pqflags &= ~PQ_INACTIVE;
+		atomic_clearbits_int(&pg->pg_flags, PQ_INACTIVE);
 		uvmexp.inactive--;
 	}
 	if (pg->wire_count == 0) {
@@ -251,10 +249,10 @@ uvm_pageactivate(struct vm_page *pg)
 		 * can put it at tail.  if it wasn't active, then mark
 		 * it active and bump active count
 		 */
-		if (pg->pqflags & PQ_ACTIVE)
+		if (pg->pg_flags & PQ_ACTIVE)
 			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
 		else {
-			pg->pqflags |= PQ_ACTIVE;
+			atomic_setbits_int(&pg->pg_flags, PQ_ACTIVE);
 			uvmexp.active++;
 		}
 
@@ -272,7 +270,7 @@ uvm_pageactivate(struct vm_page *pg)
 PAGE_INLINE void
 uvm_pagezero(struct vm_page *pg)
 {
-	pg->pg_flags &= ~PG_CLEAN;
+	atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
 	pmap_zero_page(pg);
 }
 
@@ -286,7 +284,7 @@ uvm_pagezero(struct vm_page *pg)
 PAGE_INLINE void
 uvm_pagecopy(struct vm_page *src, struct vm_page *dst)
 {
-	dst->pg_flags &= ~PG_CLEAN;
+	atomic_clearbits_int(&dst->pg_flags, PG_CLEAN);
 	pmap_copy_page(src, dst);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.36 2007/04/05 20:08:30 claudio Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.37 2007/04/13 18:57:49 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -3679,7 +3679,7 @@ vm_page_alloc1()
 	struct vm_page *pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 	if (pg) {
 		pg->wire_count = 1;	/* no mappings yet */
-		pg->pg_flags &= ~PG_BUSY;	/* never busy */
+		atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
 	}
 	return pg;
 }
@@ -3702,7 +3702,7 @@ vm_page_free1(mem)
 		Debugger();
 		return;
 	}
-	mem->pg_flags |= PG_BUSY;
+	atomic_setbits_int(&mem->pg_flags, PG_BUSY);
 	mem->wire_count = 0;
 	uvm_pagefree(mem);
 }

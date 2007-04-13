@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.58 2007/04/11 12:10:42 art Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.59 2007/04/13 18:57:49 art Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -166,7 +166,7 @@ uvm_pageinsert(struct vm_page *pg)
 	splx(s);
 
 	TAILQ_INSERT_TAIL(&pg->uobject->memq, pg, listq); /* put in object */
-	pg->pg_flags |= PG_TABLED;
+	atomic_setbits_int(&pg->pg_flags, PG_TABLED);
 	pg->uobject->uo_npages++;
 }
 
@@ -201,7 +201,7 @@ uvm_pageremove(struct vm_page *pg)
 	/* object should be locked */
 	TAILQ_REMOVE(&pg->uobject->memq, pg, listq);
 
-	pg->pg_flags &= ~PG_TABLED;
+	atomic_clearbits_int(&pg->pg_flags, PG_TABLED);
 	pg->uobject->uo_npages--;
 	pg->uobject = NULL;
 	pg->pg_version++;
@@ -1041,14 +1041,13 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	pg->pg_version++;
 	if (anon) {
 		anon->u.an_page = pg;
-		pg->pqflags = PQ_ANON;
+		atomic_setbits_int(&pg->pg_flags, PQ_ANON);
 #ifdef UBC
 		uvm_pgcnt_anon++;
 #endif
 	} else {
 		if (obj)
 			uvm_pageinsert(pg);
-		pg->pqflags = 0;
 	}
 #if defined(UVM_PAGE_TRKOWN)
 	pg->owner_tag = NULL;
@@ -1060,7 +1059,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 		 * A zero'd page is not clean.  If we got a page not already
 		 * zero'd, then we have to zero it ourselves.
 		 */
-		pg->pg_flags &= ~PG_CLEAN;
+		atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
 		if (zeroit)
 			pmap_zero_page(pg);
 	}
@@ -1153,8 +1152,9 @@ uvm_pagefree(struct vm_page *pg)
 		 * page out. 
 		 */
 
+		/* in case an anon takes over */
 		if (saved_loan_count)
-			pg->pg_flags &= ~PG_CLEAN;/* in case an anon takes over */
+			atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
 		uvm_pageremove(pg);
 		
 		/*
@@ -1168,7 +1168,7 @@ uvm_pagefree(struct vm_page *pg)
 
 		if (saved_loan_count) 
 			return;
-	} else if (saved_loan_count && (pg->pqflags & PQ_ANON)) {
+	} else if (saved_loan_count && (pg->pg_flags & PQ_ANON)) {
 		/*
 		 * if our page is owned by an anon and is loaned out to the
 		 * kernel then we just want to drop ownership and return.
@@ -1176,8 +1176,7 @@ uvm_pagefree(struct vm_page *pg)
 		 * note that the kernel can't change the loan status of our
 		 * page as long as we are holding PQ lock.
 		 */
-
-		pg->pqflags &= ~PQ_ANON;
+		atomic_clearbits_int(&pg->pg_flags, PQ_ANON);
 		pg->uanon = NULL;
 		return;
 	}
@@ -1187,17 +1186,17 @@ uvm_pagefree(struct vm_page *pg)
 	 * now remove the page from the queues
 	 */
 
-	if (pg->pqflags & PQ_ACTIVE) {
+	if (pg->pg_flags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
-		pg->pqflags &= ~PQ_ACTIVE;
+		atomic_clearbits_int(&pg->pg_flags, PQ_ACTIVE);
 		uvmexp.active--;
 	}
-	if (pg->pqflags & PQ_INACTIVE) {
-		if (pg->pqflags & PQ_SWAPBACKED)
+	if (pg->pg_flags & PQ_INACTIVE) {
+		if (pg->pg_flags & PQ_SWAPBACKED)
 			TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
 		else
 			TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
-		pg->pqflags &= ~PQ_INACTIVE;
+		atomic_clearbits_int(&pg->pg_flags, PQ_INACTIVE);
 		uvmexp.inactive--;
 	}
 
@@ -1219,12 +1218,13 @@ uvm_pagefree(struct vm_page *pg)
 	 * and put on free queue
 	 */
 
-	pg->pg_flags &= ~PG_ZERO;
+	atomic_clearbits_int(&pg->pg_flags, PG_ZERO);
 
 	s = uvm_lock_fpageq();
 	TAILQ_INSERT_TAIL(&uvm.page_free[
 	    uvm_page_lookup_freelist(pg)].pgfl_queues[PGFL_UNKNOWN], pg, pageq);
-	pg->pqflags = PQ_FREE;
+	atomic_clearbits_int(&pg->pg_flags, PQ_MASK);
+	atomic_setbits_int(&pg->pg_flags, PQ_FREE);
 #ifdef DEBUG
 	pg->uobject = (void *)0xdeadbeef;
 	pg->offset = 0xdeadbeef;
@@ -1271,13 +1271,13 @@ uvm_page_unbusy(pgs, npgs)
 			if (uobj != NULL) {
 				uobj->pgops->pgo_releasepg(pg, NULL);
 			} else {
-				pg->pg_flags &= ~(PG_BUSY);
+				atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
 				UVM_PAGE_OWN(pg, NULL);
 				uvm_anfree(pg->uanon);
 			}
 		} else {
 			UVMHIST_LOG(pdhist, "unbusying pg %p", pg,0,0,0);
-			pg->pg_flags &= ~(PG_WANTED|PG_BUSY);
+			atomic_clearbits_int(&pg->pg_flags, PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
 		}
 	}
@@ -1390,7 +1390,7 @@ uvm_pageidlezero()
 		 */
 		pmap_zero_page(pg);
 #endif
-		pg->pg_flags |= PG_ZERO;
+		atomic_setbits_int(&pg->pg_flags, PG_ZERO);
 
 		s = uvm_lock_fpageq();
 		TAILQ_INSERT_HEAD(&pgfl->pgfl_queues[PGFL_ZEROS], pg, pageq);

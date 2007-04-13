@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.103 2007/04/13 13:27:46 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.104 2007/04/13 18:57:49 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1232,10 +1232,10 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 		goto steal_one;
 
 	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
-	if (pg)
-		pg->pg_flags &= ~PG_BUSY;	/* never busy */
-	else
+	if (pg == NULL)
 		goto steal_one;
+
+	atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
 
 	/*
 	 * add a mapping for our new pv_page and free its entries (save one!)
@@ -1620,7 +1620,7 @@ pmap_alloc_ptp(struct pmap *pmap, int pde_index, boolean_t just_try)
 		return (NULL);
 
 	/* got one! */
-	ptp->pg_flags &= ~PG_BUSY;	/* never busy */
+	atomic_clearbits_int(&ptp->pg_flags, PG_BUSY);
 	ptp->wire_count = 1;	/* no mappings yet */
 	pmap->pm_pdir[pde_index] =
 		(pd_entry_t) (VM_PAGE_TO_PHYS(ptp) | PG_u | PG_RW | PG_V);

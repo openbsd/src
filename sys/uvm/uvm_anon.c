@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.26 2007/04/04 17:44:45 art Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.27 2007/04/13 18:57:49 art Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -233,7 +233,7 @@ uvm_anfree(anon)
 
 			if ((pg->pg_flags & PG_BUSY) != 0) {
 				/* tell them to dump it when done */
-				pg->pg_flags |= PG_RELEASED;
+				atomic_setbits_int(&pg->pg_flags, PG_RELEASED);
 				UVMHIST_LOG(maphist,
 				    "  anon %p, page %p: BUSY (released!)", 
 				    anon, pg, 0, 0);
@@ -371,9 +371,9 @@ uvm_anon_lockloanpg(anon)
 		 * then we can take over as owner!
 		 */
 
-		if (pg->uobject == NULL && (pg->pqflags & PQ_ANON) == 0) {
+		if (pg->uobject == NULL && (pg->pg_flags & PQ_ANON) == 0) {
 			uvm_lock_pageq();
-			pg->pqflags |= PQ_ANON;		/* take ownership... */
+			atomic_setbits_int(&pg->pg_flags, PQ_ANON);
 			pg->loan_count--;	/* ... and drop our loan */
 			uvm_unlock_pageq();
 		}
@@ -508,16 +508,14 @@ anon_pagein(anon)
 	uobj = pg->uobject;
 	uvm_swap_free(anon->an_swslot, 1);
 	anon->an_swslot = 0;
-	pg->pg_flags &= ~(PG_CLEAN);
+	atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
 
 	/*
 	 * deactivate the page (to put it on a page queue)
 	 */
 
 	pmap_clear_reference(pg);
-#ifndef UBC
 	pmap_page_protect(pg, VM_PROT_NONE);
-#endif
 	uvm_lock_pageq();
 	uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();

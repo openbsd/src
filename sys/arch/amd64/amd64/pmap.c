@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.19 2007/04/13 10:36:00 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.20 2007/04/13 18:57:49 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -1169,7 +1169,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t **pdes)
 		if (ptp == NULL)
 			return NULL;
 
-		ptp->pg_flags &= ~PG_BUSY; /* never busy */
+		atomic_clearbits_int(&ptp->pg_flags, PG_BUSY);
 		ptp->wire_count = 1;
 		pmap->pm_ptphint[i - 2] = ptp;
 		pa = VM_PAGE_TO_PHYS(ptp);
@@ -2593,7 +2593,7 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 				    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 		if (ptp == NULL)
 			panic("pmap_get_physpage: out of memory");
-		ptp->pg_flags &= ~PG_BUSY;
+		atomic_clearbits_int(&ptp->pg_flags, PG_BUSY);
 		ptp->wire_count = 1;
 		*paddrp = VM_PAGE_TO_PHYS(ptp);
 	}
