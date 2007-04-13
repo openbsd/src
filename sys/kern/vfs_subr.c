@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.143 2007/04/13 10:44:07 bluhm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.144 2007/04/13 17:09:22 thib Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -113,9 +113,6 @@ int vflush_vnode(struct vnode *, void *);
 #ifdef DEBUG
 void printlockedvnodes(void);
 #endif
-
-#define VN_KNOTE(vp, b) \
-	KNOTE((struct klist *)&vp->v_selectinfo.vsi_selinfo.si_note, (b))
 
 struct pool vnode_pool;
 int desiredvnodes;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.76 2007/04/11 16:08:50 thib Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.77 2007/04/13 17:09:22 thib Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -251,6 +251,8 @@ vref(vp)
 #endif /* DIAGNOSTIC */
 
 #define	NULLVP	((struct vnode *)NULL)
+#define	VN_KNOTE(vp, b)					\
+	KNOTE(&vp->v_selectinfo.vsi_selinfo.si_note, (b))
 
 /*
  * Global vnode data.
