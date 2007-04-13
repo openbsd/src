@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.142 2007/04/11 16:08:50 thib Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.143 2007/04/13 10:44:07 bluhm Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -925,7 +925,6 @@ vflush(struct mount *mp, struct vnode *skipvp, int flags)
 
 /*
  * Disassociate the underlying file system from a vnode.
- * The vnode interlock is held on entry.
  */
 void
 vclean(struct vnode *vp, int flags, struct proc *p)
@@ -1018,7 +1017,6 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 
 /*
  * Recycle an unused vnode to the front of the free list.
- * Release the passed interlock if the vnode will be recycled.
  */
 int
 vrecycle(struct vnode *vp, struct proc *p)
@@ -1042,7 +1040,7 @@ vgone(struct vnode *vp)
 }
 
 /*
- * vgone, with the vp interlock held.
+ * vgone, with struct proc.
  */
 void
 vgonel(struct vnode *vp, struct proc *p)
