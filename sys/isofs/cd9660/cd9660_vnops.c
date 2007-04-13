@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.39 2007/03/21 17:29:31 thib Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.40 2007/04/13 18:07:36 thib Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -288,16 +288,6 @@ cd9660_getattr(v)
 	return (0);
 }
 
-#ifdef DEBUG
-extern int doclusterread;
-#else
-#define doclusterread 1
-#endif
-
-/* XXX until cluster routines can handle block sizes less than one page */
-#define cd9660_doclusterread \
-	(doclusterread && (ISO_DEFAULT_BLOCK_SIZE >= NBPG))
-
 /*
  * Vnode op for reading.
  */
@@ -341,35 +331,27 @@ cd9660_read(v)
 			n = diff;
 		size = blksize(imp, ip, lbn);
 		rablock = lbn + 1;
-		if (cd9660_doclusterread) {
-			if (lblktosize(imp, rablock) <= ip->i_size)
-				error = cluster_read(vp, &ip->i_ci,
-				    (off_t)ip->i_size, lbn, size, NOCRED, &bp);
-			else
-				error = bread(vp, lbn, size, NOCRED, &bp);
-		} else {
 #define MAX_RA 32
-			if (ci->ci_lastr + 1 == lbn) {
-				struct ra {
-					daddr64_t blks[MAX_RA];
-					int sizes[MAX_RA];
-				} *ra;
-				int i;
+		if (ci->ci_lastr + 1 == lbn) {
+			struct ra {
+				daddr64_t blks[MAX_RA];
+				int sizes[MAX_RA];
+			} *ra;
+			int i;
 
-				MALLOC(ra, struct ra *, sizeof *ra,
-				    M_TEMP, M_WAITOK);
-				for (i = 0; i < MAX_RA &&
-				    lblktosize(imp, (rablock + i)) < ip->i_size;
-				    i++) {
-					ra->blks[i] = rablock + i;
-					ra->sizes[i] = blksize(imp, ip, rablock + i);
-				}
-				error = breadn(vp, lbn, size, ra->blks,
-				    ra->sizes, i, NOCRED, &bp);
-				FREE(ra, M_TEMP);
-			} else
-				error = bread(vp, lbn, size, NOCRED, &bp);
-		}
+			MALLOC(ra, struct ra *, sizeof *ra,
+			    M_TEMP, M_WAITOK);
+			for (i = 0; i < MAX_RA &&
+			    lblktosize(imp, (rablock + i)) < ip->i_size;
+			    i++) {
+				ra->blks[i] = rablock + i;
+				ra->sizes[i] = blksize(imp, ip, rablock + i);
+			}
+			error = breadn(vp, lbn, size, ra->blks,
+			    ra->sizes, i, NOCRED, &bp);
+			FREE(ra, M_TEMP);
+		} else
+			error = bread(vp, lbn, size, NOCRED, &bp);
 		ci->ci_lastr = lbn;
 		n = min(n, size - bp->b_resid);
 		if (error) {
