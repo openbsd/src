@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiopvar.h,v 1.9 2003/11/16 20:30:06 avsm Exp $	*/
+/*	$OpenBSD: osiopvar.h,v 1.10 2007/04/13 18:34:48 krw Exp $	*/
 /*	$NetBSD: osiopvar.h,v 1.3 2002/05/14 02:58:35 matt Exp $	*/
 
 /*
@@ -111,9 +111,9 @@ struct osiop_ds {
 	u_int8_t msgout[8];
 	u_int8_t msgbuf[8];
 	u_int8_t stat[8];
-	
+
 	struct scsi_generic scsi_cmd;	/* DMA'able copy of xs->cmd */
-	u_int32_t pad[1+4];		/* pad to 256 bytes */
+	u_int32_t pad[1+3];		/* pad to 256 bytes */
 } __packed;
 
 /* status can hold the SCSI_* status values, and 2 additional values: */
