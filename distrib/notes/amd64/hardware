@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.79 2007/03/09 22:43:37 deraadt Exp $
+dnl	$OpenBSD: hardware,v 1.80 2007/04/13 12:10:41 claudio Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -580,8 +580,10 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    SMC 2802Wv2
 		Marvell Libertas CardBus IEEE 802.11b/g wireless adapters
 		    Netgear WG511v2
+		    Tenda TWL541C
 		Marvell Libertas PCI IEEE 802.11b/g wireless adapters
 		    Netgear WG311v3
+		    Tenda TWL542P
 		Ralink RT2500 based CardBus IEEE 802.11b/g adapters
 		    A-Link WL54PC
 		    Alfa AWPC036

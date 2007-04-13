@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.80 2007/04/05 14:33:18 claudio Exp $
+dnl	$OpenBSD: hardware,v 1.81 2007/04/13 12:10:41 claudio Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -395,8 +395,10 @@ Supported devices {:-include-:}:
 		    ZyXEL ZyAIR B-200
 		Marvell Libertas CardBus IEEE 802.11b/g wireless adapters
 		    Netgear WG511v2
+		    Tenda TWL541C
 		Marvell Libertas PCI IEEE 802.11b/g wireless adapters
 		    Netgear WG311v3
+		    Tenda TWL542P
 		Ralink RT2500 based USB 2.0 IEEE 802.11b/g adapters
 		    AMIT WL532U
 		    ASUS WL-167g v1
