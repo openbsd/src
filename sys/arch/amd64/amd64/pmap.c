@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 2007/04/04 17:44:45 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.19 2007/04/13 10:36:00 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -979,7 +979,7 @@ pmap_init(void)
 /*
  * main pv_entry manipulation functions:
  *   pmap_enter_pv: enter a mapping onto a pv_head list
- *   pmap_remove_pv: remove a mappiing from a pv_head list
+ *   pmap_remove_pv: remove a mapping from a pv_head list
  *
  * NOTE: pmap_enter_pv expects to lock the pvh itself
  *       pmap_remove_pv expects the caller to lock the pvh before calling
