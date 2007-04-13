@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.104 2007/03/21 21:40:01 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.105 2007/04/13 07:34:06 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004-2007 Xavier Santolaria <xsa@openbsd.org>
@@ -1754,22 +1754,6 @@ such as
 .El
 .Sh FILES
 .Bl -tag -width Ds
-.It Pa $HOME/.cvsignore
-File containing a list of files (or
-.Xr sh 1
-file name patterns) that should be ignored by
-.Nm
-during the
-.Ic import ,
-.Ic release ,
-and
-.Ic update
-commands.
-.It Pa $HOME/.cvsrc
-File containing a list of implicit options to pass to certain commands.
-This file is read on startup unless the
-.Fl f
-option is specified.
 .It Pa $CVSROOT/CVSROOT
 Directory containing repository administrative files.
 .It Pa $CVSROOT/CVSROOT/config
@@ -1990,6 +1974,32 @@ This description is used by
 when archiving this file with the
 .Ic commit
 command.
+.It Pa $HOME/.cvsignore
+File containing a list of files (or
+.Xr sh 1
+file name patterns) that should be ignored by
+.Nm
+during the
+.Ic import ,
+.Ic release ,
+and
+.Ic update
+commands.
+.It Pa $HOME/.cvsrc
+File containing a list of implicit options to pass to certain commands.
+This file is read on startup unless the
+.Fl f
+option is specified.
+.It Pa $TMPDIR/cvs-serv Ns Aq Pa pid
+Temporary directory created by the server where
+.Ar pid
+is the process ID of the server.
+It is located in the directory specified by the
+.Ev TMPDIR
+environment variable or the
+.Fl T
+global option.
+See above for more information.
 .El
 .Sh SEE ALSO
 .Xr diff 1 ,
