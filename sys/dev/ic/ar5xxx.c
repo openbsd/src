@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.39 2007/03/12 01:04:52 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.40 2007/04/13 14:44:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -22,7 +22,6 @@
  */
 
 #include <dev/pci/pcidevs.h>
-
 #include <dev/ic/ar5xxx.h>
 
 extern ar5k_attach_t ar5k_ar5210_attach;
@@ -148,9 +147,10 @@ ath_hal_probe(u_int16_t vendor, u_int16_t device)
  * Fills in the HAL structure and initialises the device
  */
 struct ath_hal *
-ath_hal_attach(u_int16_t device, void *sc, bus_space_tag_t st,
-    bus_space_handle_t sh, int *status)
+ath_hal_attach(u_int16_t device, void *arg, bus_space_tag_t st,
+    bus_space_handle_t sh, u_int is_64bit, int *status)
 {
+	struct ath_softc *sc = (struct ath_softc *)arg;
 	struct ath_hal *hal = NULL;
 	ar5k_attach_t *attach = NULL;
 	u_int8_t mac[IEEE80211_ADDR_LEN];
@@ -212,6 +212,22 @@ ath_hal_attach(u_int16_t device, void *sc, bus_space_tag_t st,
 		 * Known single chip solutions
 		 */
 		hal->ah_single_chip = AH_TRUE;
+		break;
+	case PCI_PRODUCT_ATHEROS_AR5212_IBM:
+		/*
+		 * IBM ThinkPads use the same device ID for different
+		 * chipset versions. Ugh.
+		 */
+		if (is_64bit) {
+			/*
+			 * PCI Express "Mini Card" interface based on the
+			 * AR5424 chipset
+			 */
+			hal->ah_single_chip = AH_TRUE;
+		} else {
+			/* Classic Mini PCI interface based on AR5212 */
+			hal->ah_single_chip = AH_FALSE;
+		}
 		break;
 	default:
 		/*

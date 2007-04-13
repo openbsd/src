@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.13 2006/08/03 02:29:33 brad Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.14 2007/04/13 14:44:41 reyk Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -148,6 +148,8 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf(": bad PCI register type %d\n", (int)mem_type);
 		goto bad;
 	}
+	if (mem_type == PCI_MAPREG_MEM_TYPE_64BIT)
+		sc->sc_64bit = 1;
 	if (pci_mapreg_map(pa, ATH_BAR0, mem_type, 0, &iot, &ioh,
 	    NULL, NULL, 0)) {
 		printf(": cannot map register space\n");

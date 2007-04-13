@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.39 2007/03/12 01:04:52 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.40 2007/04/13 14:44:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1937,7 +1937,7 @@ __BEGIN_DECLS
 const char		*ath_hal_probe(u_int16_t, u_int16_t);
 
 struct ath_hal		*ath_hal_attach(u_int16_t, void *, bus_space_tag_t,
-    bus_space_handle_t, HAL_STATUS *);
+    bus_space_handle_t, u_int, HAL_STATUS *);
 
 u_int16_t		 ath_hal_computetxtime(struct ath_hal *,
     const HAL_RATE_TABLE *, u_int32_t, u_int16_t, HAL_BOOL);
