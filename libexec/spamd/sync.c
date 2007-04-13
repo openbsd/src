@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.2 2007/03/16 23:08:06 beck Exp $	*/
+/*	$OpenBSD: sync.c,v 1.3 2007/04/13 05:55:03 otto Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -65,7 +65,7 @@ struct sync_host {
 	LIST_ENTRY(sync_host)	h_entry;
 
 	char			*h_name;
-	struct sockaddr_in	h_addr;
+	struct sockaddr_in	sh_addr;
 };
 LIST_HEAD(synchosts, sync_host) sync_hosts = LIST_HEAD_INITIALIZER(sync_hosts);
 
@@ -105,9 +105,9 @@ sync_addhost(const char *name, u_short port)
 		return (ENOMEM);
 	}
 
-	shost->h_addr.sin_family = AF_INET;
-	shost->h_addr.sin_port = htons(port);
-	shost->h_addr.sin_addr.s_addr = addr->sin_addr.s_addr;
+	shost->sh_addr.sin_family = AF_INET;
+	shost->sh_addr.sin_port = htons(port);
+	shost->sh_addr.sin_addr.s_addr = addr->sin_addr.s_addr;
 	freeaddrinfo(res0);
 
 	LIST_INSERT_HEAD(&sync_hosts, shost, h_entry);
@@ -115,7 +115,7 @@ sync_addhost(const char *name, u_short port)
 	if (debug)
 		fprintf(stderr, "added spam sync host %s "
 		    "(address %s, port %d)\n", shost->h_name,
-		    inet_ntoa(shost->h_addr.sin_addr), port);
+		    inet_ntoa(shost->sh_addr.sin_addr), port);
 
 	return (0);
 }
@@ -412,9 +412,9 @@ sync_send(struct iovec *iov, int iovlen)
 	LIST_FOREACH(shost, &sync_hosts, h_entry) {
 		if (debug)
 			fprintf(stderr, "sending sync message to %s (%s)\n",
-			    shost->h_name, inet_ntoa(shost->h_addr.sin_addr));
-		msg.msg_name = &shost->h_addr;
-		msg.msg_namelen = sizeof(shost->h_addr);
+			    shost->h_name, inet_ntoa(shost->sh_addr.sin_addr));
+		msg.msg_name = &shost->sh_addr;
+		msg.msg_namelen = sizeof(shost->sh_addr);
 		sendmsg(syncfd, &msg, 0);
 	}
 }
