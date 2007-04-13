@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.15 2007/04/09 14:55:11 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.16 2007/04/13 17:34:40 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -37,8 +37,8 @@ NBLKS=          5744
 
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS=	-t ffs -m 0 -o space
-NEWFSARGS_RD=	-i 16384 -c 80
-NEWFSARGS_FD=	-i 524288 -e 2000 -g 100000 -h 2 -a 10000
+NEWFSARGS_RD=	-i 16384
+NEWFSARGS_FD=	-i 524288 -c ${FLOPPYBLKS}
 
 ${FLOPPY}:	bsd.gz
 	dd if=/dev/zero of=${REALIMAGE} count=${FLOPPYBLKS}

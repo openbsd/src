@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2007/04/09 14:55:11 millert Exp $
+#	$OpenBSD: Makefile,v 1.17 2007/04/13 17:34:40 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -42,7 +42,7 @@ STRIP?=		strip
 DISKTYPE=       rdroot
 NBLKS=          6144
 # minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS= -m 0 -o space -c 16 -i 8192
+NEWFSARGS= -m 0 -o space -i 8192
 
 .ifndef DESTDIR
 all ${IMAGE}:
@@ -60,7 +60,7 @@ ${FLOPPY}:	bsd.gz ${BOOT} /usr/
 	dd if=/dev/zero of=${REALIMAGE} count=${FLOPPYSIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w ${RAWLABEL} ${VND} ${FLOPPYTYPE}
-	newfs -m 0 -o space -i 524288 -c 80 ${VND_RDEV}
+	newfs -m 0 -o space -i 524288 -c ${FLOPPYSIZE} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${DESTDIR}/usr/mdec/ofwboot ${MOUNT_POINT}/
 	cp bsd.gz ${MOUNT_POINT}/bsd

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2006/11/13 08:42:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2007/04/13 17:34:40 millert Exp $
 
 REV=	${OSrev}
 
@@ -25,7 +25,7 @@ DISKTYPE=       rdroot2.5M
 #NBLKS=		8192
 NBLKS=		5120
 # minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS= -m 0 -o space -c 16 -i 4096
+NEWFSARGS= -m 0 -o space -i 4096
 
 .ifndef DESTDIR
 all ${IMAGE}:

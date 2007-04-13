@@ -16,7 +16,7 @@ DISKTYPE=       miniroot2.5M
 #NBLKS=		8192
 NBLKS=		5120
 # minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS= -m 0 -o space -c 16 -i 4096
+NEWFSARGS= -m 0 -o space -i 4096
 
 
 .ifndef DESTDIR

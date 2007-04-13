@@ -1,4 +1,4 @@
-.\"	$OpenBSD: 2.t,v 1.3 2003/06/02 23:30:11 millert Exp $
+.\"	$OpenBSD: 2.t,v 1.4 2007/04/13 17:34:40 millert Exp $
 .\"
 .\" Copyright (c) 1988, 1993 The Regents of the University of California.
 .\" All rights reserved.
@@ -708,7 +708,7 @@ builds a filesystem that SunOS will not handle; if you
 plan to switch OSes back and forth you may want to sacrifice the
 performance gain from the new filesystem format for compatibility.)
 You can build an old-format filesystem on \*(4B by giving the \-O
-option to
+0 option to
 .Xr newfs (8).
 .Xr Fsck (8)
 can convert old format filesystems to new format

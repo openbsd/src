@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2007/04/09 14:55:11 millert Exp $
+#	$OpenBSD: Makefile,v 1.14 2007/04/13 17:34:40 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -40,8 +40,8 @@ NBLKS=          5744
 
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS=	-t ffs -m 0 -o space
-NEWFSARGS_RD=	-i 8192 -c 80
-NEWFSARGS_FD=	-i 524288 -c 80
+NEWFSARGS_RD=	-i 8192 -c ${NBLKS}
+NEWFSARGS_FD=	-i 524288 -c 2880
 
 bsd.rd:	bsd.rd_unz
 	objcopy -Sg -R .comment bsd.rd_unz bsd.strip
@@ -70,7 +70,7 @@ do_prep:
 	disklabel -w -r ${VND} ${DISKTYPE}
 	
 do_mount:
-	newfs ${NEWFSARGS} ${NEWFSARGS_RD} -s ${NBLKS} ${VND_RDEV}
+	newfs ${NEWFSARGS} ${NEWFSARGS_RD} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 
 do_umount:

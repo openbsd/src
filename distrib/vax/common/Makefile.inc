@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2002/04/30 07:23:29 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2007/04/13 17:34:40 millert Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -22,7 +22,7 @@ all: ${CBIN} bootroot
 	dd if=/dev/zero of=${IMAGE} bs=64k count=32
 	vnconfig -v -c ${VND} ${IMAGE}
 	disklabel -w ${VND} miniroot
-	newfs -O -m 0 -o space -i 8192 ${VND_RDEV}
+	newfs -O 0 -m 0 -o space -i 8192 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
@@ -39,7 +39,7 @@ bootroot: xxboot boot
 	dd if=/dev/zero of=${BOOTSYS} bs=512 count=8192
 	vnconfig -v -c ${VND} ${BOOTSYS}
 	disklabel -w ${VND} bootroot
-	newfs -O -m 0 -o space -i 8192 ${VND_RDEV}
+	newfs -O 0 -m 0 -o space -i 8192 ${VND_RDEV}
 	dd if=xxboot of=${VND_RDEV} count=16
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp boot ${MOUNT_POINT}

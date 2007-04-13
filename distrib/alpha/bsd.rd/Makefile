@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2007/04/09 14:55:11 millert Exp $
+#	$OpenBSD: Makefile,v 1.10 2007/04/13 17:34:39 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -36,8 +36,8 @@ NBLKS=          5744
 
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS=	-t ffs -m 0 -o space
-NEWFSARGS_RD=	-i 8192 -c 80
-NEWFSARGS_FD=	-i 524288 -c 80
+NEWFSARGS_RD=	-i 8192
+NEWFSARGS_FD=	-i 524288 -c ${FLOPPYBLKS}
 
 bsd.rd:	bsd.rd_unz
 	objcopy -Sg -R .comment bsd.rd_unz bsd.strip
