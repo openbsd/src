@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.377 2007/03/21 03:04:16 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.378 2007/04/14 07:24:18 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1915,7 +1915,7 @@ pool options.
 Note that by default these associations are destroyed as soon as there are
 no longer states which refer to them; in order to make the mappings last
 beyond the lifetime of the states, increase the global options with
-.Ar set timeout source-track
+.Ar set timeout src.track .
 See
 .Sx STATEFUL TRACKING OPTIONS
 for more ways to control the source tracking.
