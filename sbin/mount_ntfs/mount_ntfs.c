@@ -1,4 +1,4 @@
-/* $OpenBSD: mount_ntfs.c,v 1.11 2007/04/09 20:22:41 pedro Exp $ */
+/* $OpenBSD: mount_ntfs.c,v 1.12 2007/04/14 17:07:28 grunk Exp $ */
 /* $NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $ */
 
 /*
@@ -167,6 +167,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: mount_ntfs [-ai] [-g gid] [-m mask] [-u uid] special node\n");
+	    "usage: mount_ntfs [-ai] [-g gid] [-m mask] [-o options] [-u uid]"
+	    " special node\n");
 	exit(EX_USAGE);
 }
