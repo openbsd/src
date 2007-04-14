@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.44 2007/02/22 21:40:39 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.45 2007/04/14 12:38:12 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -431,7 +431,7 @@ sub create
 {
 	my $self = shift;
 	File::Path::mkpath($self->{destdir}.$self->{name});
-	$self->SUPER::set_modes();
+	$self->set_modes();
 }
 
 sub isDir() { 1 }
@@ -497,7 +497,7 @@ sub create
 	require POSIX;
 	POSIX::mkfifo($self->{destdir}.$self->{name}, $self->{mode}) or
 	    die "Can't create fifo $self->{name}: $!";
-	$self->SUPER::set_modes();
+	$self->set_modes();
 }
 
 sub isFifo() { 1 }
@@ -511,6 +511,7 @@ sub create
 	my $self = shift;
 	$self->make_basedir($self->{name});
 	system('/sbin/mknod', 'mknod', '-m', $self->{mode}, $self->{destdir}.$self->{name}, $self->devicetype(), $self->{major}, $self->{minor});
+	$self->set_modes();
 }
 
 sub isDevice() { 1 }
@@ -636,7 +637,7 @@ sub create
 		$toread -= $actual;
 	}
 	$out->close() or die "Error closing $self->{destdir}$self->{name}: $!";
-	$self->SUPER::set_modes();
+	$self->set_modes();
 }
 
 sub contents
