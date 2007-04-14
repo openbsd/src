@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 2007/04/14 14:52:39 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.22 2007/04/14 14:54:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -125,8 +125,7 @@ struct pmap	kernel_pmap_store;
 
 psize_t	mem_size;	/* memory size in bytes */
 vaddr_t	virtual_start;  /* VA of first avail page (after kernel bss)*/
-vaddr_t	virtual_end =	/* VA of last avail page (end of kernel AS) */
-	VM_MIN_KERNEL_ADDRESS + 65536 /* minimal Sysmapsize */ * PAGE_SIZE;
+vaddr_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 
 struct segtab	*free_segtab;		/* free list kept locally */
 u_int		tlbpid_gen = 1;		/* TLB PID generation count */
@@ -142,25 +141,23 @@ u_int		Sysmapsize;		/* number of pte's in Sysmap */
 void
 pmap_bootstrap()
 {
-	int i;
+	u_int i;
 	pt_entry_t *spte;
-
 
 	/*
 	 * Create a mapping table for kernel virtual memory. This
 	 * table is a linear table in contrast to the user process
 	 * mapping tables which are built with segment/page tables.
-	 * Create at least 256MB of map even if physmem is smaller.
+	 * Create 1GB of map (this will only use 1MB of memory).
 	 */
-	if (physmem < 65536)
-		Sysmapsize = 65536;
-	else
-		Sysmapsize = physmem;
-
 	virtual_start = VM_MIN_KERNEL_ADDRESS;
-	virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
+	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
-	Sysmap = (pt_entry_t *)uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
+	Sysmapsize = (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) /
+	    PAGE_SIZE + 1;	/* + 1 to be even */
+
+	Sysmap = (pt_entry_t *)
+	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0,"pmappl", NULL);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0,"pvpl", NULL);
@@ -176,7 +173,7 @@ pmap_bootstrap()
 	 * Entry HI G bits are ANDed together they will produce
 	 * a global bit to store in the tlb.
 	 */
-	for(i = 0, spte = Sysmap; i < Sysmapsize; i++, spte++)
+	for (i = 0, spte = Sysmap; i < Sysmapsize; i++, spte++)
 		spte->pt_entry = PG_G;
 }
 
@@ -423,7 +420,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 
 		/* remove entries from kernel pmap */
 #ifdef DIAGNOSTIC
-		if (sva < VM_MIN_KERNEL_ADDRESS || eva > virtual_end)
+		if (sva < VM_MIN_KERNEL_ADDRESS || eva < sva)
 			panic("pmap_remove: kva not in range");
 #endif
 		pte = kvtopte(sva);
@@ -571,7 +568,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		 * read-only.
 		 */
 #ifdef DIAGNOSTIC
-		if (sva < VM_MIN_KERNEL_ADDRESS || eva > virtual_end)
+		if (sva < VM_MIN_KERNEL_ADDRESS || eva < sva)
 			panic("pmap_protect: kva not in range");
 #endif
 		pte = kvtopte(sva);
@@ -644,7 +641,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 #ifdef DIAGNOSTIC
 	if (pmap == pmap_kernel()) {
 		stat_count(enter_stats.kernel);
-		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
+		if (va < VM_MIN_KERNEL_ADDRESS)
 			panic("pmap_enter: kva %p", va);
 	} else {
 		stat_count(enter_stats.user);
@@ -854,7 +851,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pa)
 			*pa = (long)KSEG0_TO_PHYS(va);
 		} else {
 #ifdef DIAGNOSTIC
-			if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end) {
+			if (va < VM_MIN_KERNEL_ADDRESS) {
 				panic("pmap_extract(%p, %p)", pmap, va);
 			}
 #endif
