@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.46 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.47 2007/04/14 23:04:28 tedu Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -74,32 +74,32 @@
  */
 
 LIST_HEAD(uvn_list_struct, uvm_vnode);
-static struct uvn_list_struct uvn_wlist;	/* writeable uvns */
-static simple_lock_data_t uvn_wl_lock;		/* locks uvn_wlist */
+struct uvn_list_struct uvn_wlist;	/* writeable uvns */
+simple_lock_data_t uvn_wl_lock;		/* locks uvn_wlist */
 
 SIMPLEQ_HEAD(uvn_sq_struct, uvm_vnode);
-static struct uvn_sq_struct uvn_sync_q;		/* sync'ing uvns */
+struct uvn_sq_struct uvn_sync_q;		/* sync'ing uvns */
 struct rwlock uvn_sync_lock;			/* locks sync operation */
 
 /*
  * functions
  */
 
-static void		   uvn_cluster(struct uvm_object *, voff_t,
+void		   uvn_cluster(struct uvm_object *, voff_t,
 					   voff_t *, voff_t *);
-static void                uvn_detach(struct uvm_object *);
-static boolean_t           uvn_flush(struct uvm_object *, voff_t,
+void                uvn_detach(struct uvm_object *);
+boolean_t           uvn_flush(struct uvm_object *, voff_t,
 					 voff_t, int);
-static int                 uvn_get(struct uvm_object *, voff_t,
+int                 uvn_get(struct uvm_object *, voff_t,
 					vm_page_t *, int *, int,
 					vm_prot_t, int, int);
-static void		   uvn_init(void);
-static int		   uvn_io(struct uvm_vnode *, vm_page_t *,
+void		   uvn_init(void);
+int		   uvn_io(struct uvm_vnode *, vm_page_t *,
 				      int, int, int);
-static int		   uvn_put(struct uvm_object *, vm_page_t *,
+int		   uvn_put(struct uvm_object *, vm_page_t *,
 					int, boolean_t);
-static void                uvn_reference(struct uvm_object *);
-static boolean_t	   uvn_releasepg(struct vm_page *,
+void                uvn_reference(struct uvm_object *);
+boolean_t	   uvn_releasepg(struct vm_page *,
 					      struct vm_page **);
 
 /*
@@ -129,7 +129,7 @@ struct uvm_pagerops uvm_vnodeops = {
  * init pager private data structures.
  */
 
-static void
+void
 uvn_init()
 {
 
@@ -330,7 +330,7 @@ uvn_attach(arg, accessprot)
  */
 
 
-static void
+void
 uvn_reference(uobj)
 	struct uvm_object *uobj;
 {
@@ -362,7 +362,7 @@ uvn_reference(uobj)
  * => this starts the detach process, but doesn't have to finish it
  *    (async i/o could still be pending).
  */
-static void
+void
 uvn_detach(uobj)
 	struct uvm_object *uobj;
 {
@@ -813,7 +813,7 @@ uvn_releasepg(pg, nextpgp)
 
 #define UVN_HASH_PENALTY 4	/* XXX: a guess */
 
-static boolean_t
+boolean_t
 uvn_flush(uobj, start, stop, flags)
 	struct uvm_object *uobj;
 	voff_t start, stop;
@@ -1247,7 +1247,7 @@ ReTry:
  * - currently doesn't matter if obj locked or not.
  */
 
-static void
+void
 uvn_cluster(uobj, offset, loffset, hoffset)
 	struct uvm_object *uobj;
 	voff_t offset;
@@ -1280,7 +1280,7 @@ uvn_cluster(uobj, offset, loffset, hoffset)
  *	[thus we never do async i/o!  see iodone comment]
  */
 
-static int
+int
 uvn_put(uobj, pps, npages, flags)
 	struct uvm_object *uobj;
 	struct vm_page **pps;
@@ -1307,7 +1307,7 @@ uvn_put(uobj, pps, npages, flags)
  * => NOTE: caller must check for released pages!!
  */
 
-static int
+int
 uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	struct uvm_object *uobj;
 	voff_t offset;
@@ -1558,7 +1558,7 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
  *	[thus we never do async i/o!  see iodone comment]
  */
 
-static int
+int
 uvn_io(uvn, pps, npages, flags, rw)
 	struct uvm_vnode *uvn;
 	vm_page_t *pps;
