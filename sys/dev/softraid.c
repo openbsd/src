@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.19 2007/04/14 15:50:28 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.20 2007/04/14 21:28:08 tedu Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -761,7 +761,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 		sd->sd_max_ccb_per_wu = no_chunk;
 		sd->sd_max_wu = SR_RAID1_NOWU;
 		strlcpy(sd->sd_name, "RAID 1", sizeof(sd->sd_name));
-		vol_size = min_chunk_sz - (1 + 1 + no_chunk + SR_META_FUDGE);
+		vol_size = min_chunk_sz;
 
 		/* XXX coerce all chunks here */
 
@@ -985,8 +985,8 @@ sr_parse_chunks(struct sr_softc *sc, char *lst, struct sr_chunk_head *cl)
 		/* get partition size */
 		ss = name[strlen(name) - 1];
 		ch_entry->src_meta.scm_size =
-		    label.d_partitions[ss - 'a'].p_size;
-		if (ch_entry->src_meta.scm_size == 0) {
+		    label.d_partitions[ss - 'a'].p_size - (SR_META_FUDGE * 512);
+		if (ch_entry->src_meta.scm_size <= 0) {
 			printf("%s: %s partition size = 0\n",
 			    DEVNAME(sc), name);
 			goto unlock;
@@ -1279,6 +1279,8 @@ sr_raid1_rw(struct sr_workunit *wu)
 		ios = 1;
 	else
 		ios = sd->sd_vol.sv_meta.svm_no_chunk;
+
+	blk += SR_META_FUDGE;
 
 	wu->swu_blk_start = blk;
 	wu->swu_blk_end = blk + xs->datalen - 1;
