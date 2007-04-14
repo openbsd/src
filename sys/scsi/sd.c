@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.124 2007/04/13 18:56:26 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.125 2007/04/14 16:32:30 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1412,12 +1412,11 @@ validate:
 	}
 
 	/*
-	 * Use Adaptec standard geometry values for anything we still don't
-	 * know.
+	 * Use standard geometry values for anything we still don't know.
 	 */
 
-	dp->heads = (heads == 0) ? 64 : heads;
-	dp->sectors = (sectors == 0) ? 32 : sectors;
+	dp->heads = (heads == 0) ? 255 : heads;
+	dp->sectors = (sectors == 0) ? 63 : sectors;
 	dp->rot_rate = (rpm == 0) ? 3600 : rpm;
 
 	/*
