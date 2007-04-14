@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.39 2007/01/30 09:54:24 reyk Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.40 2007/04/14 23:35:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -434,8 +434,8 @@ vic_map_pci(struct vic_softc *sc, struct pci_attach_args *pa)
 	}
 
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
-	vic_intr, sc, DEVNAME(sc));
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET,
+	    vic_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
 		printf(": unable to map interrupt%s%s\n",
 		    intrstr == NULL ? "" : " at ",
