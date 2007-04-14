@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.32 2007/04/12 22:14:15 tedu Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.33 2007/04/14 11:06:43 espie Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.32 2007/04/12 22:14:15 tedu Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.33 2007/04/14 11:06:43 espie Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,6 +84,7 @@ static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.32 2007/04/12 22:14:15 tedu Exp $
  * most other applications are interested only in open/close/read/nlist).
  */
 
+#define __need_process
 #include <sys/param.h>
 #include <sys/user.h>
 #include <sys/proc.h>

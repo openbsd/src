@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.95 2007/04/12 22:14:15 tedu Exp $	*/
+/*	$OpenBSD: proc.h,v 1.96 2007/04/14 11:06:43 espie Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -49,6 +49,9 @@
 
 #ifdef __HAVE_CPUINFO
 #define curproc curcpu()->ci_curproc
+#endif
+#ifdef _KERNEL
+#define __need_process
 #endif
 
 /*
@@ -126,6 +129,7 @@ extern int nemuls;			/* Number of emuls */
  * shared by all threads in a process, while struct proc contains the
  * run-time information needed by threads.
  */
+#ifdef __need_process
 struct process {
 	/*
 	 * ps_mainproc is the main thread in the process.
@@ -141,6 +145,9 @@ struct process {
 
 	TAILQ_HEAD(,proc) ps_threads;	/* Threads in this process. */
 };
+#else
+struct process;
+#endif
 
 struct proc {
 	struct	proc *p_forw;		/* Doubly-linked run/sleep queue. */
