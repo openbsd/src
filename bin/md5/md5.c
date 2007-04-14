@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.45 2007/04/13 13:57:01 tedu Exp $	*/
+/*	$OpenBSD: md5.c,v 1.46 2007/04/14 23:04:10 grunk Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -220,7 +220,7 @@ main(int argc, char **argv)
 	}
 	optind = 1;
 	optreset = 1;
-	while ((fl = getopt(argc, argv, "a:bco:pqrs:tx")) != -1) {
+	while ((fl = getopt(argc, argv, OPTSTRING)) != -1) {
 		switch (fl) {
 		case 'a':
 			while ((cp = strsep(&optarg, " \t,")) != NULL) {
