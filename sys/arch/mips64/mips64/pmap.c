@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.20 2006/06/06 17:34:21 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.21 2007/04/14 14:52:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1167,12 +1167,6 @@ pmap_page_alloc(vaddr_t *ret)
 
 	pv = pg_to_pvh(pg);
 	va = PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg));
-	if ((pv->pv_flags & PV_CACHED) &&
-	    ((pv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
-		Mips_SyncDCachePage(pv->pv_va);
-	}
-	pv->pv_va = va;
-	pv->pv_flags = PV_CACHED;
 
 	*ret = va;
 	return 0;
@@ -1340,11 +1334,12 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 	if (pmap == pv->pv_pmap && va == pv->pv_va) {
 		npv = pv->pv_next;
 		if (npv) {
-			npv->pv_flags |= pv->pv_flags & PV_PRESERVE;
+			npv->pv_flags = pv->pv_flags;
 			*pv = *npv;
 			pmap_pv_free(npv);
 		} else {
 			pv->pv_pmap = NULL;
+			pv->pv_flags &= PV_PRESERVE;
 			Mips_SyncDCachePage(pv->pv_va);
 		}
 		stat_count(remove_stats.pvfirst);
