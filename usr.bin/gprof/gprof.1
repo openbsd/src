@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gprof.1,v 1.18 2003/06/03 02:56:08 millert Exp $
+.\"	$OpenBSD: gprof.1,v 1.19 2007/04/14 11:16:28 sobrado Exp $
 .\"	$NetBSD: gprof.1,v 1.6 1995/11/21 22:24:55 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -38,8 +38,16 @@
 .Nd display call graph profile data
 .Sh SYNOPSIS
 .Nm gprof
-.Op options
+.Bk -words
+.Op Fl abcsz
+.Op Fl C Ar count
+.Op Fl E Ar name
+.Op Fl e Ar name
+.Op Fl F Ar name
+.Op Fl f Ar name
+.Op Fl k Ar from-name to-name
 .Op Ar a.out Op Ar gmon.out ...
+.Ek
 .Sh DESCRIPTION
 .Nm
 produces an execution profile of C, Pascal, or Fortran77 programs.
@@ -107,11 +115,6 @@ belongs to the function loaded just before the static function in the
 file.
 .It Fl b
 Suppresses the printing of a description of each field in the profile.
-.It Fl c
-The static call graph of the program is discovered by a heuristic
-that examines the text space of the object file.
-Static-only parents or children are shown
-with call counts of 0.
 .It Fl C Ar count
 Find a minimal set of arcs that can be broken to eliminate all cycles with
 .Ar count
@@ -120,19 +123,11 @@ Caution: the algorithm used to break cycles is exponential,
 so using this option may cause
 .Nm
 to run for a very long time.
-.It Fl e Ar name
-Suppresses the printing of the graph profile entry for routine
-.Ar name
-and all its descendants
-(unless they have other ancestors that aren't suppressed).
-More than one
-.Fl e
-option may be given.
-Only one
-.Ar name
-may be given with each
-.Fl e
-option.
+.It Fl c
+The static call graph of the program is discovered by a heuristic
+that examines the text space of the object file.
+Static-only parents or children are shown
+with call counts of 0.
 .It Fl E Ar name
 Suppresses the printing of the graph profile entry for routine
 .Ar name
@@ -147,17 +142,18 @@ above, and also excludes the time spent in
 .Fl E
 .Ar mcleanup
 is the default.)
-.It Fl f Ar name
-Prints the graph profile entry of only the specified routine
+.It Fl e Ar name
+Suppresses the printing of the graph profile entry for routine
 .Ar name
-and its descendants.
+and all its descendants
+(unless they have other ancestors that aren't suppressed).
 More than one
-.Fl f
+.Fl e
 option may be given.
 Only one
 .Ar name
 may be given with each
-.Fl f
+.Fl e
 option.
 .It Fl F Ar name
 Prints the graph profile entry of only the routine
@@ -181,11 +177,23 @@ overrides
 the
 .Fl E
 option.
-.It Fl k Ar fromname Ar toname
+.It Fl f Ar name
+Prints the graph profile entry of only the specified routine
+.Ar name
+and its descendants.
+More than one
+.Fl f
+option may be given.
+Only one
+.Ar name
+may be given with each
+.Fl f
+option.
+.It Fl k Ar from-name Ar to-name
 Will delete any arcs from routine
-.Ar fromname
+.Ar from-name
 to routine
-.Ar toname .
+.Ar to-name .
 This can be used to break undesired cycles.
 More than one
 .Fl k
