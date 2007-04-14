@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.77 2007/04/13 17:09:22 thib Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.78 2007/04/14 23:17:00 bluhm Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -224,7 +224,7 @@ extern int		vttoif_tab[];
 #define	V_SAVE		0x0001		/* vinvalbuf: sync file first */
 #define	V_SAVEMETA	0x0002		/* vinvalbuf: leave indirect blocks */
 
-#define REVOKEALL	0x0001		/* vop_reovke: revoke all aliases */
+#define REVOKEALL	0x0001		/* vop_revoke: revoke all aliases */
 
 
 TAILQ_HEAD(freelst, vnode);
