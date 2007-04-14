@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.89 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.90 2007/04/14 14:11:13 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -192,13 +192,14 @@ vaddr_t uvm_maxkaddr;
  * local prototypes
  */
 
-static vm_map_entry_t	uvm_mapent_alloc(vm_map_t);
-static void		uvm_mapent_copy(vm_map_entry_t,vm_map_entry_t);
-static void		uvm_mapent_free(vm_map_entry_t);
-static void		uvm_map_entry_unwire(vm_map_t, vm_map_entry_t);
-static void		uvm_map_reference_amap(vm_map_entry_t, int);
-static void		uvm_map_unreference_amap(vm_map_entry_t, int);
-int			uvm_map_spacefits(vm_map_t, vaddr_t *, vsize_t, vm_map_entry_t, voff_t, vsize_t);
+static void		uvm_mapent_copy(struct vm_map_entry *,
+    struct vm_map_entry *);
+static void		uvm_map_entry_unwire(struct vm_map *,
+    struct vm_map_entry *);
+static void		uvm_map_reference_amap(struct vm_map_entry *, int);
+static void		uvm_map_unreference_amap(struct vm_map_entry *, int);
+int			uvm_map_spacefits(struct vm_map *, vaddr_t *, vsize_t,
+    struct vm_map_entry *, voff_t, vsize_t);
 
 struct vm_map_entry	*uvm_mapent_alloc(struct vm_map *);
 void			uvm_mapent_free(struct vm_map_entry *);
@@ -212,12 +213,12 @@ void uvm_rb_remove(struct vm_map *, struct vm_map_entry *);
 vsize_t uvm_rb_space(struct vm_map *, struct vm_map_entry *);
 
 #ifdef DEBUG
-int _uvm_tree_sanity(vm_map_t map, const char *name);
+int _uvm_tree_sanity(struct vm_map *map, const char *name);
 #endif
 static vsize_t uvm_rb_subtree_space(struct vm_map_entry *);
 
 static __inline int
-uvm_compare(vm_map_entry_t a, vm_map_entry_t b)
+uvm_compare(struct vm_map_entry *a, struct vm_map_entry *b)
 {
 	if (a->start < b->start)
 		return (-1);
@@ -229,7 +230,7 @@ uvm_compare(vm_map_entry_t a, vm_map_entry_t b)
 
 
 static __inline void
-uvm_rb_augment(vm_map_entry_t entry)
+uvm_rb_augment(struct vm_map_entry *entry)
 {
 	entry->space = uvm_rb_subtree_space(entry);
 }
@@ -241,7 +242,7 @@ RB_GENERATE(uvm_tree, vm_map_entry, rb_entry, uvm_compare);
 vsize_t
 uvm_rb_space(struct vm_map *map, struct vm_map_entry *entry)
 {
-	vm_map_entry_t next;
+	struct vm_map_entry *next;
 	vaddr_t space;
 
 	if ((next = entry->next) == &map->header)
@@ -275,7 +276,7 @@ uvm_rb_subtree_space(struct vm_map_entry *entry)
 }
 
 static void
-uvm_rb_fixup(vm_map_t map, vm_map_entry_t entry)
+uvm_rb_fixup(struct vm_map *map, struct vm_map_entry *entry)
 {
 	/* We need to traverse to the very top */
 	do {
@@ -288,7 +289,7 @@ void
 uvm_rb_insert(struct vm_map *map, struct vm_map_entry *entry)
 {
 	vaddr_t space = uvm_rb_space(map, entry);
-	vm_map_entry_t tmp;
+	struct vm_map_entry *tmp;
 
 	entry->ownspace = entry->space = space;
 	tmp = RB_INSERT(uvm_tree, &(map)->rbhead, entry);
@@ -304,7 +305,7 @@ uvm_rb_insert(struct vm_map *map, struct vm_map_entry *entry)
 void
 uvm_rb_remove(struct vm_map *map, struct vm_map_entry *entry)
 {
-	vm_map_entry_t parent;
+	struct vm_map_entry *parent;
 
 	parent = RB_PARENT(entry, rb_entry);
 	RB_REMOVE(uvm_tree, &(map)->rbhead, entry);
@@ -322,9 +323,9 @@ uvm_rb_remove(struct vm_map *map, struct vm_map_entry *entry)
 
 #ifdef DEBUG
 int
-_uvm_tree_sanity(vm_map_t map, const char *name)
+_uvm_tree_sanity(struct vm_map *map, const char *name)
 {
-	vm_map_entry_t tmp, trtmp;
+	struct vm_map_entry *tmp, *trtmp;
 	int n = 0, i = 1;
 
 	RB_FOREACH(tmp, uvm_tree, &map->rbhead) {
@@ -467,9 +468,7 @@ uvm_mapent_free(struct vm_map_entry *me)
  */
 
 static __inline void
-uvm_mapent_copy(src, dst)
-	vm_map_entry_t src;
-	vm_map_entry_t dst;
+uvm_mapent_copy(struct vm_map_entry *src, struct vm_map_entry *dst)
 {
 
 	memcpy(dst, src, ((char *)&src->uvm_map_entry_stop_copy) - ((char *)src));
@@ -482,9 +481,7 @@ uvm_mapent_copy(src, dst)
  */
 
 static __inline void
-uvm_map_entry_unwire(map, entry)
-	vm_map_t map;
-	vm_map_entry_t entry;
+uvm_map_entry_unwire(struct vm_map *map, struct vm_map_entry *entry)
 {
 
 	entry->wired_count = 0;
@@ -496,9 +493,7 @@ uvm_map_entry_unwire(map, entry)
  * wrapper for calling amap_ref()
  */
 static __inline void
-uvm_map_reference_amap(entry, flags)
-	vm_map_entry_t entry;
-	int flags;
+uvm_map_reference_amap(struct vm_map_entry *entry, int flags)
 {
     amap_ref(entry->aref.ar_amap, entry->aref.ar_pageoff,
 	     (entry->end - entry->start) >> PAGE_SHIFT, flags);
@@ -509,9 +504,7 @@ uvm_map_reference_amap(entry, flags)
  * wrapper for calling amap_unref() 
  */
 static __inline void
-uvm_map_unreference_amap(entry, flags)
-	vm_map_entry_t entry;
-	int flags;
+uvm_map_unreference_amap(struct vm_map_entry *entry, int flags)
 {
     amap_unref(entry->aref.ar_amap, entry->aref.ar_pageoff,
 	     (entry->end - entry->start) >> PAGE_SHIFT, flags);
@@ -520,11 +513,11 @@ uvm_map_unreference_amap(entry, flags)
 
 /*
  * uvm_map_init: init mapping system at boot time.   note that we allocate
- * and init the static pool of vm_map_entry_t's for the kernel here.
+ * and init the static pool of structs vm_map_entry for the kernel here.
  */
 
 void
-uvm_map_init() 
+uvm_map_init(void)
 {
 	static struct vm_map_entry kernel_map_entry[MAX_KMAPENT];
 #if defined(UVMHIST)
@@ -585,12 +578,11 @@ uvm_map_init()
  * => map must be locked by caller
  */
 
-void uvm_map_clip_start(map, entry, start)
-	vm_map_t       map;
-	vm_map_entry_t entry;
-	vaddr_t    start;
+void
+uvm_map_clip_start(struct vm_map *map, struct vm_map_entry *entry,
+    vaddr_t start)
 {
-	vm_map_entry_t new_entry;
+	struct vm_map_entry *new_entry;
 	vaddr_t new_adj;
 
 	/* uvm_map_simplify_entry(map, entry); */ /* XXX */
@@ -644,12 +636,9 @@ void uvm_map_clip_start(map, entry, start)
  */
 
 void
-uvm_map_clip_end(map, entry, end)
-	vm_map_t	map;
-	vm_map_entry_t	entry;
-	vaddr_t	end;
+uvm_map_clip_end(struct vm_map *map, struct vm_map_entry *entry, vaddr_t end)
 {
-	vm_map_entry_t	new_entry;
+	struct vm_map_entry *new_entry;
 	vaddr_t new_adj; /* #bytes we move start forward */
 
 	uvm_tree_sanity(map, "clip_end entry");
@@ -717,17 +706,11 @@ uvm_map_clip_end(map, entry, end)
  */
 
 int
-uvm_map_p(map, startp, size, uobj, uoffset, align, flags, p)
-	vm_map_t map;
-	vaddr_t *startp;	/* IN/OUT */
-	vsize_t size;
-	struct uvm_object *uobj;
-	voff_t uoffset;
-	vsize_t align;
-	uvm_flag_t flags;
-	struct proc *p;
+uvm_map_p(struct vm_map *map, vaddr_t *startp, vsize_t size,
+    struct uvm_object *uobj, voff_t uoffset, vsize_t align, uvm_flag_t flags,
+    struct proc *p)
 {
-	vm_map_entry_t prev_entry, new_entry;
+	struct vm_map_entry *prev_entry, *new_entry;
 	vm_prot_t prot = UVM_PROTECTION(flags), maxprot =
 	    UVM_MAXPROTECTION(flags);
 	vm_inherit_t inherit = UVM_INHERIT(flags);
@@ -964,13 +947,11 @@ step3:
  */
 
 boolean_t
-uvm_map_lookup_entry(map, address, entry)
-	vm_map_t	map;
-	vaddr_t	address;
-	vm_map_entry_t		*entry;		/* OUT */
+uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
+    struct vm_map_entry **entry)
 {
-	vm_map_entry_t		cur;
-	vm_map_entry_t		last;
+	struct vm_map_entry *cur;
+	struct vm_map_entry *last;
 	int			use_tree = 0;
 	UVMHIST_FUNC("uvm_map_lookup_entry");
 	UVMHIST_CALLED(maphist);
@@ -1026,7 +1007,7 @@ uvm_map_lookup_entry(map, address, entry)
 	uvm_tree_sanity(map, __func__);
 
 	if (use_tree) {
-		vm_map_entry_t prev = &map->header;
+		struct vm_map_entry *prev = &map->header;
 		cur = RB_ROOT(&map->rbhead);
 
 		/*
@@ -1086,8 +1067,8 @@ uvm_map_lookup_entry(map, address, entry)
  */
 
 int
-uvm_map_spacefits(vm_map_t map, vaddr_t *phint, vsize_t length,
-    vm_map_entry_t after, voff_t uoffset, vsize_t align)
+uvm_map_spacefits(struct vm_map *map, vaddr_t *phint, vsize_t length,
+    struct vm_map_entry *after, voff_t uoffset, vsize_t align)
 {
 	vaddr_t hint = *phint;
 	vaddr_t end;
@@ -1158,19 +1139,13 @@ uvm_map_hint(struct proc *p, vm_prot_t prot)
  * => note this is a cross between the old vm_map_findspace and vm_map_find
  */
 
-vm_map_entry_t
-uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
-	vm_map_t map;
-	vaddr_t hint;
-	vsize_t length;
-	vaddr_t *result; /* OUT */
-	struct uvm_object *uobj;
-	voff_t uoffset;
-	vsize_t align;
-	int flags;
+struct vm_map_entry *
+uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
+    vaddr_t *result, struct uvm_object *uobj, voff_t uoffset, vsize_t align,
+    int flags)
 {
-	vm_map_entry_t entry, next, tmp;
-	vm_map_entry_t child, prev = NULL;
+	struct vm_map_entry *entry, *next, *tmp;
+	struct vm_map_entry *child, *prev = NULL;
 
 	vaddr_t end, orig_hint;
 	UVMHIST_FUNC("uvm_map_findspace");
@@ -1391,13 +1366,10 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
  */
 
 void
-uvm_unmap_remove(map, start, end, entry_list, p)
-	vm_map_t map;
-	vaddr_t start,end;
-	vm_map_entry_t *entry_list;	/* OUT */
-	struct proc *p;
+uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
+    struct vm_map_entry **entry_list, struct proc *p)
 {
-	vm_map_entry_t entry, first_entry, next;
+	struct vm_map_entry *entry, *first_entry, *next;
 	vaddr_t len;
 	UVMHIST_FUNC("uvm_unmap_remove");
 	UVMHIST_CALLED(maphist);
@@ -1573,11 +1545,9 @@ uvm_unmap_remove(map, start, end, entry_list, p)
  */
 
 void
-uvm_unmap_detach(first_entry, flags)
-	vm_map_entry_t first_entry;
-	int flags;
+uvm_unmap_detach(struct vm_map_entry *first_entry, int flags)
 {
-	vm_map_entry_t next_entry;
+	struct vm_map_entry *next_entry;
 	UVMHIST_FUNC("uvm_unmap_detach"); UVMHIST_CALLED(maphist);
 
 	while (first_entry) {
@@ -1631,12 +1601,8 @@ uvm_unmap_detach(first_entry, flags)
  */
 
 int
-uvm_map_reserve(map, size, offset, align, raddr)
-	vm_map_t map;
-	vsize_t size;
-	vaddr_t offset;	/* hint for pmap_prefer */
-	vsize_t align;	/* alignment hint */
-	vaddr_t *raddr;	/* IN:hint, OUT: reserved VA */
+uvm_map_reserve(struct vm_map *map, vsize_t size, vaddr_t offset,
+    vsize_t align, vaddr_t *raddr)
 {
 	UVMHIST_FUNC("uvm_map_reserve"); UVMHIST_CALLED(maphist); 
 
@@ -1674,13 +1640,10 @@ uvm_map_reserve(map, size, offset, align, raddr)
  */
 
 int
-uvm_map_replace(map, start, end, newents, nnewents)
-	struct vm_map *map;
-	vaddr_t start, end;
-	vm_map_entry_t newents;
-	int nnewents;
+uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
+    struct vm_map_entry *newents, int nnewents)
 {
-	vm_map_entry_t oldent, last;
+	struct vm_map_entry *oldent, *last;
 
 	uvm_tree_sanity(map, "map_replace entry");
 
@@ -1706,7 +1669,7 @@ uvm_map_replace(map, start, end, newents, nnewents)
 	 * sanity check the newents chain
 	 */
 	{
-		vm_map_entry_t tmpent = newents;
+		struct vm_map_entry *tmpent = newents;
 		int nent = 0;
 		vaddr_t cur = start;
 
@@ -1760,7 +1723,7 @@ uvm_map_replace(map, start, end, newents, nnewents)
 		/* Fixup the RB tree */
 		{
 			int i;
-			vm_map_entry_t tmp;
+			struct vm_map_entry *tmp;
 
 			tmp = newents;
 			for (i = 0; i < nnewents && tmp; i++) {
@@ -1809,16 +1772,13 @@ uvm_map_replace(map, start, end, newents, nnewents)
  */
 
 int
-uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
-	vm_map_t srcmap, dstmap;
-	vaddr_t start, *dstaddrp;
-	vsize_t len;
-	int flags;
+uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
+    struct vm_map *dstmap, vaddr_t *dstaddrp, int flags)
 {
 	vaddr_t dstaddr, end, newend, oldoffset, fudge, orig_fudge,
 	    oldstart;
-	vm_map_entry_t chain, endchain, entry, orig_entry, newentry, deadentry;
-	vm_map_entry_t oldentry;
+	struct vm_map_entry *chain, *endchain, *entry, *orig_entry, *newentry;
+	struct vm_map_entry *deadentry, *oldentry;
 	vsize_t elen;
 	int nchain, error, copy_ok;
 	UVMHIST_FUNC("uvm_map_extract"); UVMHIST_CALLED(maphist);
@@ -2151,11 +2111,10 @@ bad2:			/* src already unlocked */
  */
 
 int
-uvm_map_submap(map, start, end, submap)
-	vm_map_t map, submap;
-	vaddr_t start, end;
+uvm_map_submap(struct vm_map *map, vaddr_t start, vaddr_t end,
+    struct vm_map *submap)
 {
-	vm_map_entry_t entry;
+	struct vm_map_entry *entry;
 	int result;
 
 	vm_map_lock(map);
@@ -2362,13 +2321,9 @@ uvm_map_inherit(struct vm_map *map, vaddr_t start, vaddr_t end,
  */
 
 int
-uvm_map_advice(map, start, end, new_advice)
-	vm_map_t map;
-	vaddr_t start;
-	vaddr_t end;
-	int new_advice;
+uvm_map_advice(struct vm_map *map, vaddr_t start, vaddr_t end, int new_advice)
 {
-	vm_map_entry_t entry, temp_entry;
+	struct vm_map_entry *entry, *temp_entry;
 	UVMHIST_FUNC("uvm_map_advice"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_adv=0x%lx)",
 	    map, start, end, new_advice);
@@ -2425,13 +2380,10 @@ uvm_map_advice(map, start, end, new_advice)
  */
 
 int
-uvm_map_pageable(map, start, end, new_pageable, lockflags)
-	vm_map_t map;
-	vaddr_t start, end;
-	boolean_t new_pageable;
-	int lockflags;
+uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
+    boolean_t new_pageable, int lockflags)
 {
-	vm_map_entry_t entry, start_entry, failed_entry;
+	struct vm_map_entry *entry, *start_entry, *failed_entry;
 	int rv;
 #ifdef DIAGNOSTIC
 	u_int timestamp_save;
@@ -2899,12 +2851,9 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 int	amap_clean_works = 1;	/* XXX for now, just in case... */
 
 int
-uvm_map_clean(map, start, end, flags)
-	vm_map_t map;
-	vaddr_t start, end;
-	int flags;
+uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 {
-	vm_map_entry_t current, entry;
+	struct vm_map_entry *current, *entry;
 	struct uvm_object *uobj;
 	struct vm_amap *amap;
 	struct vm_anon *anon;
@@ -3097,45 +3046,43 @@ uvm_map_clean(map, start, end, flags)
  */
 
 boolean_t
-uvm_map_checkprot(map, start, end, protection)
-	vm_map_t       map;
-	vaddr_t    start, end;
-	vm_prot_t      protection;
+uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
+    vm_prot_t protection)
 {
-	 vm_map_entry_t entry;
-	 vm_map_entry_t tmp_entry;
+	struct vm_map_entry *entry;
+	struct vm_map_entry *tmp_entry;
 
-	 if (!uvm_map_lookup_entry(map, start, &tmp_entry)) {
-		 return(FALSE);
-	 }
-	 entry = tmp_entry;
-	 while (start < end) {
-		 if (entry == &map->header) {
-			 return(FALSE);
-		 }
+	if (!uvm_map_lookup_entry(map, start, &tmp_entry)) {
+		return(FALSE);
+	}
+	entry = tmp_entry;
+	while (start < end) {
+		if (entry == &map->header) {
+			return(FALSE);
+		}
 
 		/*
 		 * no holes allowed
 		 */
 
-		 if (start < entry->start) {
-			 return(FALSE);
-		 }
+		if (start < entry->start) {
+			return(FALSE);
+		}
 
 		/*
 		 * check protection associated with entry
 		 */
 
-		 if ((entry->protection & protection) != protection) {
-			 return(FALSE);
-		 }
+		if ((entry->protection & protection) != protection) {
+			return(FALSE);
+		}
 
-		 /* go to next entry */
+		/* go to next entry */
 
-		 start = entry->end;
-		 entry = entry->next;
-	 }
-	 return(TRUE);
+		start = entry->end;
+		entry = entry->next;
+	}
+	return(TRUE);
 }
 
 /*
@@ -3146,9 +3093,7 @@ uvm_map_checkprot(map, start, end, protection)
  * - refcnt set to 1, rest must be init'd by caller
  */
 struct vmspace *
-uvmspace_alloc(min, max, pageable)
-	vaddr_t min, max;
-	int pageable;
+uvmspace_alloc(vaddr_t min, vaddr_t max, int pageable)
 {
 	struct vmspace *vm;
 	UVMHIST_FUNC("uvmspace_alloc"); UVMHIST_CALLED(maphist);
@@ -3236,12 +3181,10 @@ uvmspace_unshare(p)
  */
 
 void
-uvmspace_exec(p, start, end)
-	struct proc *p;
-	vaddr_t start, end;
+uvmspace_exec(struct proc *p, vaddr_t start, vaddr_t end)
 {
 	struct vmspace *nvm, *ovm = p->p_vmspace;
-	vm_map_t map = &ovm->vm_map;
+	struct vm_map *map = &ovm->vm_map;
 
 	pmap_unuse_final(p);   /* before stack addresses go away */
 
@@ -3319,10 +3262,9 @@ uvmspace_exec(p, start, end)
  */
 
 void
-uvmspace_free(vm)
-	struct vmspace *vm;
+uvmspace_free(struct vmspace *vm)
 {
-	vm_map_entry_t dead_entries;
+	struct vm_map_entry *dead_entries;
 	UVMHIST_FUNC("uvmspace_free"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(vm=%p) ref=%ld", vm, vm->vm_refcnt,0,0);
@@ -3363,14 +3305,13 @@ uvmspace_free(vm)
  */
 
 struct vmspace *
-uvmspace_fork(vm1)
-	struct vmspace *vm1;
+uvmspace_fork(struct vmspace *vm1)
 {
 	struct vmspace *vm2;
-	vm_map_t        old_map = &vm1->vm_map;
-	vm_map_t        new_map;
-	vm_map_entry_t  old_entry;
-	vm_map_entry_t  new_entry;
+	struct vm_map *old_map = &vm1->vm_map;
+	struct vm_map *new_map;
+	struct vm_map_entry *old_entry;
+	struct vm_map_entry *new_entry;
 	pmap_t          new_pmap;
 	boolean_t	protect_child;
 	UVMHIST_FUNC("uvmspace_fork"); UVMHIST_CALLED(maphist);
@@ -3668,12 +3609,10 @@ uvmspace_fork(vm1)
  */
 
 void
-uvm_map_printit(map, full, pr)
-	vm_map_t map;
-	boolean_t full;
-	int (*pr)(const char *, ...);
+uvm_map_printit(struct vm_map *map, boolean_t full,
+    int (*pr)(const char *, ...))
 {
-	vm_map_entry_t entry;
+	struct vm_map_entry *entry;
 
 	(*pr)("MAP %p: [0x%lx->0x%lx]\n", map, map->min_offset,map->max_offset);
 	(*pr)("\t#ent=%d, sz=%u, ref=%d, version=%u, flags=0x%x\n",
