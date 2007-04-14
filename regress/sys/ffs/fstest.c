@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstest.c,v 1.1 2007/03/30 19:02:51 pedro Exp $	*/
+/*	$OpenBSD: fstest.c,v 1.2 2007/04/14 17:18:28 thib Exp $	*/
 
 /*
  * Copyright (c) 2006-2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -30,6 +30,8 @@
 
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -130,6 +132,7 @@ static struct flag chflags_flags[] = {
 };
 
 static const char *err2str(int error);
+int use_appimm;		/* use the SF_APPEND and SF_IMMUTABLE chflags */
 
 __dead static void
 usage(void)
@@ -278,6 +281,7 @@ call_syscall(struct syscall_desc *scall, char *argv[])
 		char *str;
 		long long num;
 	} args[MAX_ARGS];
+	unsigned int ch_flags;
 
 	/*
 	 * Verify correctness of the arguments.
@@ -371,7 +375,11 @@ call_syscall(struct syscall_desc *scall, char *argv[])
 		rval = lchown(STR(0), NUM(1), NUM(2));
 		break;
 	case ACTION_CHFLAGS:
-		rval = chflags(STR(0), str2flags(chflags_flags, STR(1)));
+		ch_flags = str2flags(chflags_flags, STR(1));
+		if (!use_appimm)
+			ch_flags &= ~(SF_APPEND|SF_IMMUTABLE);
+
+		rval = chflags(STR(0), ch_flags);
 		break;
 	case ACTION_TRUNCATE:
 		rval = truncate(STR(0), NUM(1));
@@ -447,6 +455,9 @@ main(int argc, char *argv[])
 	unsigned int n;
 	char *gids, *endp;
 	int uid, umsk, ch;
+	int mib[2];
+	size_t len;
+	int securelevel;
 
 	uid = -1;
 	gids = NULL;
@@ -497,6 +508,23 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 	}
+
+	/*
+	 * Find out if we should use the SF_IMMUTABLE and SF_APPEND flags;
+	 * Since we run by default on kern.securelevel=1 these cause false
+	 * positives.
+	 */
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_SECURELVL;
+	len = sizeof(securelevel);
+	if (sysctl(mib, 2, &securelevel, &len, NULL, 0) == -1) {
+		fprintf(stderr, "cannot get kernel securelevel\n");
+		exit(1);
+	}
+	if (securelevel == 0 || securelevel == -1)
+		use_appimm = 1;
+	else
+		use_appimm = 0;
 
 	/* Change umask to requested value or to 0, if not requested. */
 	umask(umsk);
