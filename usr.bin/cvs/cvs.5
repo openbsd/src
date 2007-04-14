@@ -1,0 +1,483 @@
+.\"	$OpenBSD: cvs.5,v 1.1 2007/04/14 13:34:44 jmc Exp $
+.\"
+.\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
+.\" Copyright (c) 2004-2007 Xavier Santolaria <xsa@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+.\" THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\" EXEMPLARY, OR CONSEQUENTIAL  DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+.\" OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+.\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 13, 2007
+.Dt CVS 5
+.Os
+.Sh NAME
+.Nm cvs
+.Nd OpenCVS files format
+.Sh DESCRIPTION
+This manual page documents the various support files for
+.Xr cvs 1
+and the format of those files.
+.Pp
+The location of a module's files are known as its
+.Dv CVSROOT .
+The files within CVSROOT are as follows:
+.Bl -tag -width Ds
+.It Pa $CVSROOT/CVSROOT
+Directory containing repository administrative files.
+.It Pa $CVSROOT/CVSROOT/config
+File containing various configuration options.
+The format of each line is as follows:
+.Pp
+.Dl keyword=value
+.Pp
+Extraneous spaces or tabs are not permitted.
+A line beginning with a hash character
+.Pq Sq #
+is considered a comment and ignored.
+.Pp
+The following options are available:
+.Pp
+.Bl -tag -width "dlimit=XvalueXXX" -offset indent -compact
+.It dlimit='value'
+Set the process data size limit.
+.It tag='value'
+Set the name of a local tag to use in addition to Id.
+.It umask='value'
+Set the default umask to use when creating files and directories.
+.El
+.It Pa $CVSROOT/CVSROOT/history
+File containing reports of
+.Ic checkout ,
+.Ic commit ,
+.Ic export ,
+.Ic release ,
+.Ic rtag ,
+and
+.Ic update
+commands that have been issued.
+By default, the
+.Ic init
+command creates the
+.Pa history
+file.
+To disable history logging, the
+.Pa history
+file should be removed manually.
+The
+.Ic history
+command shows these reports according to several criteria.
+.It Pa $CVSROOT/CVSROOT/loginfo
+File containing associations between modules and handlers for
+post-commit logging.
+.El
+.Pp
+Each directory that is managed by
+.Nm
+contains a
+.Pa CVS
+directory.
+This directory is used by various
+.Nm
+commands to record the status of files in the current working directory.
+These files should not be modified manually by the user but by the
+.Nm
+commands instead.
+Files that are always stored in every
+.Pa CVS
+directory are as follows:
+.Bl -tag -width Ds
+.It Pa CVS/Entries
+File containing a list of files managed by
+.Nm .
+.Pa Entries
+has one line per file or directory describing the state of it with
+regard to the source repository.
+These lines have the following format:
+.Pp
+.Dl /name/revision/timestamp/options/tag
+.Bl -tag -width Ds
+.It name
+Name of the file in the directory.
+.It revision
+Revision of the file in the working directory.
+The revision is equal to
+.Sq 0
+if the file has been added with the
+.Ic add
+command or preceded by the
+.Sq -
+character if the file has been removed with the
+.Ic remove
+command.
+.It timestamp
+Contains the timestamp of the file at the time
+.Nm
+created it.
+If the timestamp is different from the actual modification time of the file,
+it means that the file has been modified.
+.It options
+Contains the keyword substitution mode used for this file.
+.It tag
+Contains
+.Sq T
+followed by a tagname or
+.Sq D
+followed by a date.
+.El
+.Pp
+Entries corresponding to directories have the following format:
+.Pp
+.Dl D/name////
+.Pp
+The lines in the
+.Pa Entries
+file can be in any order.
+.It Pa CVS/Repository
+File containing the path to the corresponding directory in the
+source repository.
+.It Pa CVS/Root
+File containing the value of the
+.Ev CVSROOT
+variable at the time of checkout.
+This file is used by all
+.Nm
+commands instead of
+.Ev CVSROOT
+once
+.Nm
+has checked for its existence.
+.El
+.Pp
+Depending on the circumstances, other files may exist in the
+.Pa CVS
+directory:
+.Bl -tag -width Ds
+.It Pa CVS/Base
+If pseudo-lock mode is enabled in client-server mode,
+the
+.Pa Base
+directory contains a copy of the file on which the
+.Ic edit
+command has been issued.
+This allows the
+.Ic unedit
+command to operate even if the CVS server is unreachable.
+.It Pa CVS/Baserev
+File listing the revisions for each file contained in the
+.Pa Base
+directory under the following format:
+.Pp
+.Dl name/revision/
+.It Pa CVS/Baserev.tmp
+Temporary file used to write
+.Pa CVS/Baserev
+content then atomically renamed to
+.Pa Baserev .
+.It Pa CVS/Checkin.prog
+File containing the path to the command specified with the
+.Fl i
+option in the
+.Pa CVSROOT/modules
+file.
+.It Pa CVS/Entries.Backup
+Temporary file used to write
+.Pa CVS/Entries
+content then atomically renamed to
+.Pa Entries .
+.It Pa CVS/Entries.Static
+Tells
+.Nm
+to not add files to the directory unless the
+.Ic update
+command is issued with the
+.Fl d
+option.
+.It Pa CVS/Notify
+File containing the notifications that could not be sent to the
+CVS server but will be sent at the next successful connection.
+.It Pa CVS/Notify.tmp
+Temporary file used to write
+.Pa CVS/Notify
+content then atomically renamed to
+.Pa Notify .
+.It Pa CVS/Tag
+File containing the symbolic revision that was used at checkout.
+The first character of the line is a single letter indicating the
+type of tag:
+.Sq D ,
+.Sq N ,
+or
+.Sq T ,
+for date, non-branch tag, or branch tag, respectively.
+The rest of the line is the tag or date itself.
+The
+.Pa Tag
+file should not be removed manually:
+instead, use
+.Dq update -A .
+.It Pa CVS/Template
+File containing the template specified by the
+.Pa CVSROOT/rcsinfo
+file.
+It is only used in client-server mode.
+Locally,
+.Nm
+uses the
+.Pa rcsinfo
+file directly.
+.It Pa CVS/Update.prog
+File containing the path to the command specified with the
+.Fl u
+option in the
+.Pa CVSROOT/modules
+file.
+.It Pa CVS/<name>,t
+File containing the description of the file
+.Pa file
+that has been added with the
+.Ic add
+command.
+This description is used by
+.Nm
+when archiving this file with the
+.Ic commit
+command.
+.It Pa $HOME/.cvsignore
+This file provides a list of files (or
+.Xr sh 1
+file name patterns) that should be ignored by
+.Xr cvs 1
+during the
+.Ic import ,
+.Ic release ,
+and
+.Ic update
+commands.
+.Pp
+The syntax of the
+.Nm
+file consists of a series of lines, each of which contains a
+space-separated list of filenames.
+There is currently no way of using comments in this file.
+.Pp
+Default patterns that are ignored by
+.Xr cvs 1
+are as follows:
+.Bd -filled
+CVS,
+RCS,
+RCSLOG,
+SCCS,
+TAGS,
+tags,
+core,
+cvslog*,
+*.o,
+*.so,
+*.a,
+*.bak,
+*.orig,
+*.rej,
+*.old,
+*.exe,
+*.depend,
+*.obj,
+*.elc,
+*.ln,
+*.olb,
+*.core,
+.#*,
+*~,
+_$*,
+*$,
+#*,
+,*.
+.Ed
+.Pp
+The list can be modified using the methods described below:
+.Pp
+.Bl -enum -compact
+.It
+The
+.Pa $CVSROOT/CVSROOT/cvsignore
+file appends patterns to ignore for the whole repository.
+.It
+The
+.Pa $HOME/.cvsignore
+file appends patterns to ignore for user only.
+.It
+The content of the
+.Ev CVSIGNORE
+variable is appended to the list.
+.It
+Options to the command line
+.Fl I
+flag, available for the
+.Ic import
+and
+.Ic update
+commands, appends patterns for the current command line action only.
+.It
+.Pa .cvsignore
+files placed in the repository directories allow to add patterns to
+ignore locally.
+They do not take effect on sub-directories.
+.El
+.Pp
+The
+.Sq !\&
+character can be used to reset the list of patterns using any of these
+five methods.
+.Pp
+For the
+.Ic update
+command,
+.Xr cvs 1
+handles files that are already present in the repository even if they
+are in the list to ignore.
+Files that are in the list to ignore but not in the repository will not
+be listed.
+This way, files preceded by the
+.Sq ?\&
+character will not appear even if they should.
+.It Pa $HOME/.cvsrc
+This file provides a way to give the
+.Xr cvs 1
+program implicit global options and command-specific options.
+Unless the
+.Fl f
+option is specified,
+.Xr cvs 1
+reads its startup configuration file
+.Pa .cvsrc
+from the home directory of the user who invoked it.
+.Pp
+The format of each line is as follows:
+.Pp
+.Dl command [arg ...]
+.Pp
+where
+.Ar command
+is either the
+.Sq cvs
+keyword to specify global options, one of the supported
+.Xr cvs 1
+commands or a command alias.
+Arguments following
+.Ar command
+will be added implicitly to the appropriate command's argument vector if it is
+run.
+Lines whose
+.Ar command
+argument is not a valid command will generate a warning when running without
+the
+.Fl q
+or
+.Fl Q
+flags.
+.Pp
+Empty lines and lines specifying no optional arguments are ignored.
+A line beginning with a hash character
+.Pq Sq #
+is considered a comment and ignored.
+.Pp
+For example, to specify that
+.Xr cvs 1
+should always run in quiet mode and the
+.Ic diff
+internal command should always produce unified output:
+.Bd -literal -offset indent
+cvs -q
+diff -u
+.Ed
+.It Pa $HOME/.cvswrappers
+This file, located in
+.Pa $CVSROOT/CVSROOT
+and/or
+.Pa $HOME/.cvswrappers ,
+provides a way to configure filters for
+.Xr cvs 1
+based on file type (name).
+This works by specifying a pattern to match for varying file types.
+.Pp
+The format of each line is as follows:
+.Pp
+.Dl pattern [option 'value'] [option 'value'] ...
+.Pp
+The following options are supported:
+.Bl -tag -width Ds
+.It Fl f Ar filter
+Execute
+.Ar filter
+when the file is extracted from the repository (for the
+.Ic checkout ,
+.Ic export ,
+and
+.Ic update
+commands).
+.It Fl k Ar mode
+Specify the keyword substitution mode.
+See the
+.Sx KEYWORD SUBSTITUTION
+section of
+.Xr rcs 1
+for more information.
+.It Fl m Ar method
+Specify the merge methodology to be used when a file is updated.
+.Pp
+The methods are as follows:
+.Bl -tag -width Ds
+.It COPY
+When the
+.Ic update
+command is used,
+.Xr cvs 1
+will merely copy one version over another and let the user do the merge
+by himself.
+This method is used by default on binary files (see the
+.Fl k Ar b
+option).
+.It MERGE
+Try to merge the files.
+This method is the default.
+.El
+.It Fl t Ar filter
+Execute
+.Ar filter
+before the file is archived in the repository (for the
+.Ic commit ,
+and
+.Ic import
+commands).
+.El
+.It Pa $TMPDIR/cvs-serv Ns Aq Pa pid
+Temporary directory created by the server where
+.Ar pid
+is the process ID of the server.
+It is located in the directory specified by the
+.Ev TMPDIR
+environment variable or the
+.Fl T
+global option.
+See above for more information.
+.El
+.Sh SEE ALSO
+.Xr cvs 1 ,
+.Xr cvsintro 7
