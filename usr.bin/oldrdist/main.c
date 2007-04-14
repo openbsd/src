@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2007/04/14 21:44:06 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: main.c,v 1.18 2003/06/03 02:56:14 millert Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.19 2007/04/14 21:44:06 sobrado Exp $";
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -229,8 +229,9 @@ main(argc, argv)
 static void
 usage()
 {
-	printf("Usage: rdist [-nqbhirvwyD] [-f distfile] [-d var=value] [-m host] [file ...]\n");
-	printf("or: rdist [-nqbhirvwyD] -c source [...] machine[:dest]\n");
+	printf(
+	    "usage: rdist [-bhinqRvwy] [-d var=value] [-f distfile] [-m host] [name ...]\n"
+	    "       rdist [-bhinqRvwy] -c name ...  [login@]host[:dest]\n");
 	exit(1);
 }
 
