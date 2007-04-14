@@ -1,0 +1,137 @@
+.\"	$OpenBSD: mount_vnd.8,v 1.1 2007/04/14 11:54:00 grunk Exp $
+.\"
+.\" Copyright (c) 2007 Alexander von Gernler <grunk@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd April 11, 2007
+.Dt MOUNT_VND 8
+.Os
+.Sh NAME
+.Nm mount_vnd
+.Nd configure a vnd image
+.Sh SYNOPSIS
+.Nm mount_vnd
+.Op Fl k
+.Op Fl K Ar rounds
+.Op Fl o Ar options
+.Op Fl S Ar saltfile
+.Ar image
+.Ar node
+.Sh DESCRIPTION
+The
+.Nm
+command configures an image file named
+.Ar image
+using
+.Xr vnconfig 8 .
+.Pp
+This command is invoked by
+.Xr mount 8
+when using the following syntax:
+.Bd -ragged -offset 4n
+.Nm mount Op options
+-t vnd
+.Ar image Ar node
+.Ed
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl k
+Flag is passed on to
+.Xr vnconfig 8 .
+It is used to associate an encryption key with the vnd device.
+.It Fl K Ar rounds
+Flag is passed on to
+.Xr vnconfig 8 .
+It is used to associate an encryption key using a salt file
+and a specified number of
+.Ar rounds
+for PKCS #5 PBKDF2 with the vnd device.
+.It Fl o Ar options
+Options are specified with a
+.Fl o
+flag followed by a comma separated string of options.
+See the
+.Xr mount 8
+man page for possible options and their meanings.
+.Pp
+At the moment,
+.Fl o
+is only here for compatibility reasons, but no use is made of supplied
+options.
+.It Fl S Ar saltfile
+Flag is passed on to
+.Xr vnconfig 8 .
+It is used to specify the name of the saltfile used with
+.Fl K .
+If the salt filename is not specified using
+.Fl S ,
+it defaults to
+.Ar image Ns .slt .
+.El
+.Sh EXAMPLES
+Some possible vnd configurations for
+.Pa /etc/fstab
+are listed below.
+.Pp
+For lines with type
+.Dq ffs ,
+the
+.Dq noauto
+option must be set to prevent a
+.Xr mount 8
+of the FFS partitions
+before the necessary vnd devices are configured.
+Also, the
+.Dq fs_passno
+field has to be set to 0 to prevent
+.Xr fsck 8
+from checking the file system for the same reasons.
+.Bd -literal -offset indent
+/home/img1 /dev/svnd1c vnd rw             0 0
+/dev/svnd1a /home/mnt1 ffs rw,noauto,sync 0 0
+
+/home/img2 /dev/svnd2c vnd rw                          0 0
+/dev/svnd2a /home/mnt2 ffs rw,sync,noauto,nodev,nosuid 0 0
+
+/home/img3 /dev/svnd3c vnd rw,-k                       0 0
+/dev/svnd3a /home/mnt3 ffs rw,sync,noauto,nodev,nosuid 0 0
+
+/home/img4 /dev/svnd4c vnd rw,-K=20000                 0 0
+/dev/svnd4a /home/mnt4 ffs rw,sync,noauto,nodev,nosuid 0 0
+
+/home/img5 /dev/svnd5c vnd rw,-K=20000,-S=/home/img5.salt 0 0
+/dev/svnd5a /home/mnt5 ffs rw,noauto                      0 0
+/dev/svnd5d /home/mnt6 ffs rw,noauto                      0 0
+/dev/svnd5e /home/mnt7 ffs rw,noauto                      0 0
+.Ed
+.Sh SEE ALSO
+.Xr vnd 4 ,
+.Xr fstab 5 ,
+.Xr mount 8 ,
+.Xr umount 8
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Ox 4.2 .
+.Sh AUTHORS
+.An David Krause .
+.Sh BUGS
+Checking filesystems within svnd images using
+.Xr fsck 8
+at boot time, as well as mounting them at that point of time is not yet
+possible, because the mount option
+.Dq noauto
+still is necessary at the moment.
