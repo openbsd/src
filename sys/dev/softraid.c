@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.18 2007/04/12 03:31:54 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.19 2007/04/14 15:50:28 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1246,12 +1246,18 @@ sr_raid1_rw(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_workunit	*wup;
 	struct sr_ccb		*ccb;
-	int			rv = 1, ios, x, i, s;
+	struct sr_chunk		*scp;
+	int			ios, x, i, s, rt;
 	daddr64_t		blk;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid1_rw 0x%02x\n", DEVNAME(sd->sd_sc),
 	    xs->cmd->opcode);
 
+	if (sd->sd_vol.sv_meta.svm_status == BIOC_SVOFFLINE) {
+		DNPRINTF(SR_D_DIS, "%s: sr_raid1_rw device offline\n",
+		    DEVNAME(sd->sd_sc));
+		goto bad;
+	}
 
 	if (xs->datalen == 0) {
 		printf("%s: %s: illegal block count\n",
@@ -1287,14 +1293,56 @@ sr_raid1_rw(struct sr_workunit *wu)
 			goto bad;
 		}
 
-		if (xs->flags & SCSI_POLL) {
-			ccb->ccb_buf.b_flags = 0;
-			ccb->ccb_buf.b_iodone = NULL;
-		} else {
-			ccb->ccb_buf.b_flags = B_CALL;
-			ccb->ccb_buf.b_iodone = sr_raid1_intr;
-		}
+		if (xs->flags & SCSI_DATA_IN) {
+			rt = 0;
+ragain:
+			/* interleave reads */
+			x = sd->mds.mdd_raid1.sr1_counter++ %
+				sd->sd_vol.sv_meta.svm_no_chunk;
+			scp = sd->sd_vol.sv_chunks[x];
+			switch (scp->src_meta.scm_status) {
+			case BIOC_SDONLINE:
+			case BIOC_SDSCRUB:
+				ccb->ccb_buf.b_flags |= B_READ;
+				break;
 
+			case BIOC_SDOFFLINE:
+			case BIOC_SDREBUILD:
+			case BIOC_SDHOTSPARE:
+				if (rt++ < sd->sd_vol.sv_meta.svm_no_chunk)
+					goto ragain;
+
+				/* FALLTHROUGH */
+			default:
+				/* volume offline */
+				printf("%s: is offline, can't read\n",
+				    DEVNAME(sd->sd_sc));
+				sr_put_ccb(ccb);
+				goto bad;
+			}
+		} else {
+			/* writes go on all working disks */
+			x = i;
+			scp = sd->sd_vol.sv_chunks[x];
+			switch (scp->src_meta.scm_status) {
+			case BIOC_SDONLINE:
+			case BIOC_SDSCRUB:
+			case BIOC_SDREBUILD:
+				ccb->ccb_buf.b_flags |= B_WRITE;
+				break;
+
+			case BIOC_SDHOTSPARE: /* should never happen */
+			case BIOC_SDOFFLINE:
+				ios--;
+				sr_put_ccb(ccb);
+				continue;
+
+			default:
+				goto bad;
+			}
+
+		}
+		ccb->ccb_target = x;
 		ccb->ccb_buf.b_blkno = blk;
 		ccb->ccb_buf.b_bcount = xs->datalen;
 		ccb->ccb_buf.b_bufsize = xs->datalen;
@@ -1302,27 +1350,18 @@ sr_raid1_rw(struct sr_workunit *wu)
 		ccb->ccb_buf.b_data = xs->data;
 		ccb->ccb_buf.b_error = 0;
 		ccb->ccb_buf.b_proc = curproc;
-
-		wu->swu_io_count = ios;
-		if (xs->flags & SCSI_DATA_IN) {
-			/* interleave reads */
-			x = sd->mds.mdd_raid1.sr1_counter %
-			    sd->sd_vol.sv_meta.svm_no_chunk;
-			sd->mds.mdd_raid1.sr1_counter++;
-			ccb->ccb_buf.b_flags |= B_READ;
-		} else {
-			/* writes go on all disks */
-			x = i;
-			ccb->ccb_buf.b_flags |= B_WRITE;
-		}
-
-		ccb->ccb_target = x;
+		ccb->ccb_wu = wu;
 		ccb->ccb_buf.b_dev = sd->sd_vol.sv_chunks[x]->src_dev_mm;
 		ccb->ccb_buf.b_vp = sd->sd_vol.sv_chunks[x]->src_dev_vn;
-
 		LIST_INIT(&ccb->ccb_buf.b_dep);
 
-		ccb->ccb_wu = wu;
+		if (xs->flags & SCSI_POLL) {
+			ccb->ccb_buf.b_flags = 0;
+			ccb->ccb_buf.b_iodone = NULL;
+		} else {
+			ccb->ccb_buf.b_flags = B_CALL;
+			ccb->ccb_buf.b_iodone = sr_raid1_intr;
+		}
 
 		TAILQ_INSERT_TAIL(&wu->swu_ccb, ccb, ccb_link);
 
@@ -1351,6 +1390,7 @@ sr_raid1_rw(struct sr_workunit *wu)
 		}
 #endif
 	}
+	wu->swu_io_count = ios;
 
 	/* walk queue backwards and fill in collider if we have one */
 	s = splbio();
@@ -1377,10 +1417,10 @@ sr_raid1_rw(struct sr_workunit *wu)
 
 queued:
 	splx(s);
-	rv = 0;
+	return (0);
 bad:
-	/* unwind the whole wu */
-	return (rv);
+	/* wu is unwound by sr_put_wu */
+	return (1);
 }
 
 void
@@ -1450,7 +1490,7 @@ sr_raid1_intr(struct buf *bp)
 		pend = 0;
 		TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link) {
 			if (wu == wup) {
-				/* io on pendq, remove */
+				/* wu on pendq, remove */
 				TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
 				pend = 1;
 
