@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.85 2007/04/04 18:53:20 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.86 2007/04/15 10:48:35 pedro Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -3444,6 +3444,7 @@ initiate_write_inodeblock_ufs1(inodedep, bp)
 	struct fs *fs;
 #ifdef DIAGNOSTIC
 	ufs_lbn_t prevlbn = 0;
+	ufs1_daddr_t d1, d2;
 #endif
 	int i, deplist;
 
@@ -3490,18 +3491,18 @@ initiate_write_inodeblock_ufs1(inodedep, bp)
 		}
 		prevlbn = adp->ad_lbn;
 		if (adp->ad_lbn < NDADDR &&
-		    dp->di_db[adp->ad_lbn] != adp->ad_newblkno) {
+		    (d1 = dp->di_db[adp->ad_lbn]) != (d2 = adp->ad_newblkno)) {
 			FREE_LOCK(&lk);
 			panic("%s: direct pointer #%ld mismatch %d != %d",
-			    "softdep_write_inodeblock", adp->ad_lbn,
-			    dp->di_db[adp->ad_lbn], adp->ad_newblkno);
+			    "softdep_write_inodeblock", adp->ad_lbn, d1, d2);
 		}
 		if (adp->ad_lbn >= NDADDR &&
-		    dp->di_ib[adp->ad_lbn - NDADDR] != adp->ad_newblkno) {
+		    (d1 = dp->di_ib[adp->ad_lbn - NDADDR]) !=
+		    (d2 = adp->ad_newblkno)) {
 			FREE_LOCK(&lk);
 			panic("%s: indirect pointer #%ld mismatch %d != %d",
 			    "softdep_write_inodeblock", adp->ad_lbn - NDADDR,
-			    dp->di_ib[adp->ad_lbn - NDADDR], adp->ad_newblkno);
+			    d1, d2);
 		}
 		deplist |= 1 << adp->ad_lbn;
 		if ((adp->ad_state & ATTACHED) == 0) {
@@ -3590,7 +3591,7 @@ initiate_write_inodeblock_ufs2(inodedep, bp)
 	struct ufs2_dinode *dp;
 	struct fs *fs = inodedep->id_fs;
 #ifdef DIAGNOSTIC
-	ufs2_daddr_t prevlbn = -1;
+	ufs2_daddr_t prevlbn = -1, d1, d2;
 #endif
 	int deplist, i;
 
@@ -3636,11 +3637,11 @@ initiate_write_inodeblock_ufs2(inodedep, bp)
 			panic("softdep_write_inodeblock: lbn order");
 		}
 		prevlbn = adp->ad_lbn;
-		if (dp->di_extb[adp->ad_lbn] != adp->ad_newblkno) {
+		if ((d1 = dp->di_extb[adp->ad_lbn]) !=
+		    (d2 = adp->ad_newblkno)) {
 			FREE_LOCK(&lk);
 			panic("%s: direct pointer #%ld mismatch %ld != %ld",
-			    "softdep_write_inodeblock", adp->ad_lbn,
-			    dp->di_extb[adp->ad_lbn], adp->ad_newblkno);
+			    "softdep_write_inodeblock", adp->ad_lbn, d1, d2);
 		}
 		deplist |= 1 << adp->ad_lbn;
 		if ((adp->ad_state & ATTACHED) == 0) {
@@ -3704,18 +3705,18 @@ initiate_write_inodeblock_ufs2(inodedep, bp)
 		}
 		prevlbn = adp->ad_lbn;
 		if (adp->ad_lbn < NDADDR &&
-		    dp->di_db[adp->ad_lbn] != adp->ad_newblkno) {
+		    (d1 = dp->di_db[adp->ad_lbn]) != (d2 = adp->ad_newblkno)) {
 			FREE_LOCK(&lk);
 			panic("%s: direct pointer #%ld mismatch %ld != %ld",
-			    "softdep_write_inodeblock", adp->ad_lbn,
-			    dp->di_db[adp->ad_lbn], adp->ad_newblkno);
+			    "softdep_write_inodeblock", adp->ad_lbn, d1, d2);
 		}
 		if (adp->ad_lbn >= NDADDR &&
-		    dp->di_ib[adp->ad_lbn - NDADDR] != adp->ad_newblkno) {
+		    (d1 = dp->di_ib[adp->ad_lbn - NDADDR]) !=
+		    (d2 = adp->ad_newblkno)) {
 			FREE_LOCK(&lk);
 			panic("%s: indirect pointer #%ld mismatch %ld != %ld",
 			    "softdep_write_inodeblock", adp->ad_lbn - NDADDR,
-			   dp->di_ib[adp->ad_lbn - NDADDR], adp->ad_newblkno);
+			    d1, d2);
 		}
 		deplist |= 1 << adp->ad_lbn;
 		if ((adp->ad_state & ATTACHED) == 0) {
