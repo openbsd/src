@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.60 2007/04/15 11:29:33 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.61 2007/04/15 12:54:08 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -262,7 +262,7 @@ void
 uvm_km_pgremove(struct uvm_object *uobj, vaddr_t start, vaddr_t end)
 {
 	struct vm_page *pp;
-	vaddr_t curoff;
+	voff_t curoff;
 	UVMHIST_FUNC("uvm_km_pgremove"); UVMHIST_CALLED(maphist);
 
 	KASSERT(uobj->pgops == &aobj_pager);
