@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.5 2007/04/11 21:39:14 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.6 2007/04/15 16:31:30 kettenis Exp $	*/
 
 /*
  *
@@ -332,7 +332,7 @@ cas_config(struct cas_softc *sc)
 	 * DMA map for it.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmatag,
-	    sizeof(struct cas_control_data), PAGE_SIZE, 0, &sc->sc_cdseg,
+	    sizeof(struct cas_control_data), CAS_PAGE_SIZE, 0, &sc->sc_cdseg,
 	    1, &sc->sc_cdnseg, 0)) != 0) {
 		printf("\n%s: unable to allocate control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -372,8 +372,8 @@ cas_config(struct cas_softc *sc)
 		caddr_t kva;
 		int rseg;
 
-		if ((error = bus_dmamem_alloc(sc->sc_dmatag, PAGE_SIZE,
-		    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+		if ((error = bus_dmamem_alloc(sc->sc_dmatag, CAS_PAGE_SIZE,
+		    CAS_PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 			printf("\n%s: unable to alloc rx DMA mem %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
@@ -381,22 +381,22 @@ cas_config(struct cas_softc *sc)
 		sc->sc_rxsoft[i].rxs_dmaseg = seg;
 
 		if ((error = bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
-		    PAGE_SIZE, &kva, BUS_DMA_NOWAIT)) != 0) {
+		    CAS_PAGE_SIZE, &kva, BUS_DMA_NOWAIT)) != 0) {
 			printf("\n%s: unable to alloc rx DMA mem %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
 		}
 		sc->sc_rxsoft[i].rxs_kva = kva;
 
-		if ((error = bus_dmamap_create(sc->sc_dmatag, PAGE_SIZE, 1,
-		    PAGE_SIZE, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
+		if ((error = bus_dmamap_create(sc->sc_dmatag, CAS_PAGE_SIZE, 1,
+		    CAS_PAGE_SIZE, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
 			printf("\n%s: unable to create rx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
 		}
 
 		if ((error = bus_dmamap_load(sc->sc_dmatag,
-		   sc->sc_rxsoft[i].rxs_dmamap, kva, PAGE_SIZE, NULL,
+		   sc->sc_rxsoft[i].rxs_dmamap, kva, CAS_PAGE_SIZE, NULL,
 		   BUS_DMA_NOWAIT)) != 0) {
 			printf("\n%s: unable to load rx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);

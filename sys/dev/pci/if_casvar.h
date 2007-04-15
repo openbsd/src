@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_casvar.h,v 1.3 2007/02/27 21:19:40 kettenis Exp $	*/
+/*	$OpenBSD: if_casvar.h,v 1.4 2007/04/15 16:31:30 kettenis Exp $	*/
 
 /*
  *
@@ -39,6 +39,13 @@
 /*
  * Misc. definitions for Sun Cassini ethernet controllers.
  */
+
+/*
+ * Preferred page size.  Cassini has a configurable page size, but
+ * needs at least 8k to handle jumbo frames.  This happens to be the
+ * default anyway.
+ */
+#define	CAS_PAGE_SIZE		8192
 
 /*
  * Transmit descriptor ring size.  This is arbitrary, but allocate
