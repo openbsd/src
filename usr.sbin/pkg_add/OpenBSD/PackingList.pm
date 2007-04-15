@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.53 2007/04/08 12:35:40 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.54 2007/04/15 10:00:50 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -278,7 +278,6 @@ sub add2list
 {
 	my ($plist, $object) = @_;
 	my $category = $object->category();
-	$plist->{$category} = [] unless defined $plist->{$category};
 	push @{$plist->{$category}}, $object;
 }
 
