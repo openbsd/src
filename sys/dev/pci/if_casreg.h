@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_casreg.h,v 1.3 2007/02/27 21:45:35 kettenis Exp $	*/
+/*	$OpenBSD: if_casreg.h,v 1.4 2007/04/15 16:30:44 kettenis Exp $	*/
 
 /*
  *
@@ -180,7 +180,6 @@
 /* RX DMA registers */
 #define	CAS_RX_CONFIG		0x4000
 #define	CAS_RX_PAGE_SIZE	0x4004
-
 #define	CAS_RX_FIFO_WR_PTR	0x4008		/* FIFO write pointer */
 #define	CAS_RX_FIFO_RD_PTR	0x400c		/* FIFO read pointer */
 #define	CAS_RX_IPPFIFO_WR_PTR	0x4010		/* IPP FIFO write pointer */
@@ -217,6 +216,16 @@
 #define CAS_RX_CONFIG_RXDRNG_SZ_SHIFT	1
 #define CAS_RX_CONFIG_RXCRNG_SZ_SHIFT	5
 #define	CAS_RX_CONFIG_FBOFF_SHFT	10
+
+/* CAS_RX_PAGE_SIZE register bits. */
+#define	CAS_RX_PAGE_SIZE_SZ	0x00000003	/* Page size */
+#define	CAS_RX_PAGE_SIZE_COUNT	0x00007800	/* MTU buffers per page */
+#define	CAS_RX_PAGE_SIZE_STRIDE	0x18000000	/* MTU buffer seperation */
+#define	CAS_RX_PAGE_SIZE_FBOFF	0xc0000000	/* Firts byte offset */
+
+#define	CAS_RX_PAGE_SIZE_COUNT_SHIFT	11
+#define	CAS_RX_PAGE_SIZE_STRIDE_SHIFT	27
+#define	CAS_RX_PAGE_SIZE_FBOFF_SHIFT	30
 
 /* CAS_RX_PAUSE_THRESH register bits -- sizes in multiples of 64 bytes */
 #define	CAS_RX_PTH_XOFF_THRESH	0x000001ff
