@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.6 2007/04/15 16:31:30 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.7 2007/04/15 19:57:16 kettenis Exp $	*/
 
 /*
  *
@@ -176,13 +176,14 @@ static const u_int8_t cas_promdat2[] = {
 int
 cas_pci_enaddr(struct cas_softc *sc, struct pci_attach_args *pa)
 {
+	struct pci_vpd_largeres *res;
 	struct pci_vpd *vpd;
 	bus_space_handle_t romh;
 	bus_space_tag_t romt;
 	bus_size_t romsize;
-	u_int8_t buf[32];
+	u_int8_t buf[32], *desc;
 	pcireg_t address, mask;
-	int dataoff, vpdoff;
+	int dataoff, vpdoff, len;
 	int rv = -1;
 
 	address = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ROM_REG);
@@ -215,21 +216,68 @@ cas_pci_enaddr(struct cas_softc *sc, struct pci_attach_args *pa)
 	if (vpdoff < 0x1c)
 		goto fail;
 
+next:
 	bus_space_read_region_1(romt, romh, vpdoff, buf, sizeof(buf));
-
-	/*
-	 * The VPD is not in PCI 2.2 standard format.  The length in
-	 * the resource header is big endian.
-	 */
-	vpd = (struct pci_vpd *)(buf + 3);
-	if (!PCI_VPDRES_ISLARGE(buf[0]) ||
-	    PCI_VPDRES_LARGE_NAME(buf[0]) != PCI_VPDRES_TYPE_VPD)
-		goto fail;
-	if (vpd->vpd_key0 != 'N' || vpd->vpd_key1 != 'A')
+	if (!PCI_VPDRES_ISLARGE(buf[0]))
 		goto fail;
 
-	bcopy(buf + 6, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
-	rv = 0;
+	res = (struct pci_vpd_largeres *)buf;
+	vpdoff += sizeof(*res);
+
+	len = ((res->vpdres_len_msb << 8) + res->vpdres_len_lsb);
+	switch(PCI_VPDRES_LARGE_NAME(res->vpdres_byte0)) {
+	case PCI_VPDRES_TYPE_IDENTIFIER_STRING:
+		/* Skip identifier string. */
+		vpdoff += len;
+		goto next;
+
+	case PCI_VPDRES_TYPE_VPD:
+		while (len > 0) {
+			bus_space_read_region_1(romt, romh, vpdoff,
+			     buf, sizeof(buf));
+
+			vpd = (struct pci_vpd *)buf;
+			vpdoff += sizeof(*vpd) + vpd->vpd_len;
+			len -= sizeof(*vpd) + vpd->vpd_len;
+
+			/*
+			 * We're looking for an "Enhanced" VPD...
+			 */
+			if (vpd->vpd_key0 != 'Z')
+				continue;
+
+			desc = buf + sizeof(*vpd);
+
+			/* 
+			 * ...which is an instance property...
+			 */
+			if (desc[0] != 'I')
+				continue;
+			desc += 3;
+
+			/* 
+			 * ...that's a byte array with the proper
+			 * length for a MAC address...
+			 */
+			if (desc[0] != 'B' || desc[1] != ETHER_ADDR_LEN)
+				continue;
+			desc += 2;
+
+			/*
+			 * ...named "local-mac-address".
+			 */
+			if (strcmp(desc, "local-mac-address") != 0)
+				continue;
+			desc += strlen("local-mac-address") + 1;
+					
+			bcopy(desc, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
+			rv = 0;
+		}
+		break;
+
+	default:
+		goto fail;
+	}
 
  fail:
 	if (romsize != 0)
