@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.c,v 1.18 2006/03/31 04:10:59 deraadt Exp $	*/
+/*	$OpenBSD: keyboard.c,v 1.19 2007/04/15 16:25:08 matthieu Exp $	*/
 /*	$NetBSD: keyboard.c,v 1.2 1995/01/20 08:51:59 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: keyboard.c,v 1.18 2006/03/31 04:10:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: keyboard.c,v 1.19 2007/04/15 16:25:08 matthieu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -108,6 +108,9 @@ keyboard(void)
 					sigprocmask(SIG_SETMASK, &omask, NULL);
 					continue;
 				case ':':
+					break;
+				case 'q':
+					gotdie=1;
 					break;
 				default:
 					continue;
