@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.58 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.59 2007/04/15 11:23:16 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -144,7 +144,7 @@
  * global data structures
  */
 
-vm_map_t kernel_map = NULL;
+struct vm_map *kernel_map = NULL;
 
 /*
  * local data structues
@@ -162,8 +162,7 @@ static struct vm_map		kernel_map_store;
  */
 
 void
-uvm_km_init(start, end)
-	vaddr_t start, end;
+uvm_km_init(vaddr_t start, vaddr_t end)
 {
 	vaddr_t base = VM_MIN_KERNEL_ADDRESS;
 
@@ -206,13 +205,8 @@ uvm_km_init(start, end)
  *	alloc a new map
  */
 struct vm_map *
-uvm_km_suballoc(map, min, max, size, flags, fixed, submap)
-	struct vm_map *map;
-	vaddr_t *min, *max;		/* OUT, OUT */
-	vsize_t size;
-	int flags;
-	boolean_t fixed;
-	struct vm_map *submap;
+uvm_km_suballoc(struct vm_map *map, vaddr_t *min, vaddr_t *max, vsize_t size,
+    int flags, boolean_t fixed, struct vm_map *submap)
 {
 	int mapflags = UVM_FLAG_NOMERGE | (fixed ? UVM_FLAG_FIXED : 0);
 
@@ -342,11 +336,8 @@ uvm_km_pgremove_intrsafe(vaddr_t start, vaddr_t end)
  */
 
 vaddr_t
-uvm_km_kmemalloc(map, obj, size, flags)
-	vm_map_t map;
-	struct uvm_object *obj;
-	vsize_t size;
-	int flags;
+uvm_km_kmemalloc(struct vm_map *map, struct uvm_object *obj, vsize_t size,
+    int flags)
 {
 	vaddr_t kva, loopva;
 	vaddr_t offset;
@@ -462,12 +453,9 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size)
  */
 
 void
-uvm_km_free_wakeup(map, addr, size)
-	vm_map_t map;
-	vaddr_t addr;
-	vsize_t size;
+uvm_km_free_wakeup(struct vm_map *map, vaddr_t addr, vsize_t size)
 {
-	vm_map_entry_t dead_entries;
+	struct vm_map_entry *dead_entries;
 
 	vm_map_lock(map);
 	uvm_unmap_remove(map, trunc_page(addr), round_page(addr+size), 
@@ -582,18 +570,13 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
  */
 
 vaddr_t
-uvm_km_valloc(map, size)
-	vm_map_t map;
-	vsize_t size;
+uvm_km_valloc(struct vm_map *map, vsize_t size)
 {
 	return(uvm_km_valloc_align(map, size, 0));
 }
 
 vaddr_t
-uvm_km_valloc_align(map, size, align)
-	vm_map_t map;
-	vsize_t size;
-	vsize_t align;
+uvm_km_valloc_align(struct vm_map *map, vsize_t size, vsize_t align)
 {
 	vaddr_t kva;
 	UVMHIST_FUNC("uvm_km_valloc"); UVMHIST_CALLED(maphist);
@@ -628,10 +611,7 @@ uvm_km_valloc_align(map, size, align)
  */
 
 vaddr_t
-uvm_km_valloc_prefer_wait(map, size, prefer)
-	vm_map_t map;
-	vsize_t size;
-	voff_t prefer;
+uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t size, voff_t prefer)
 {
 	vaddr_t kva;
 	UVMHIST_FUNC("uvm_km_valloc_prefer_wait"); UVMHIST_CALLED(maphist);
@@ -669,9 +649,7 @@ uvm_km_valloc_prefer_wait(map, size, prefer)
 }
 
 vaddr_t
-uvm_km_valloc_wait(map, size)
-	vm_map_t map;
-	vsize_t size;
+uvm_km_valloc_wait(struct vm_map *map, vsize_t size)
 {
 	return uvm_km_valloc_prefer_wait(map, size, UVM_UNKNOWN_OFFSET);
 }
@@ -684,10 +662,8 @@ uvm_km_valloc_wait(map, size)
 
 /* ARGSUSED */
 vaddr_t
-uvm_km_alloc_poolpage1(map, obj, waitok)
-	vm_map_t map;
-	struct uvm_object *obj;
-	boolean_t waitok;
+uvm_km_alloc_poolpage1(struct vm_map *map, struct uvm_object *obj,
+    boolean_t waitok)
 {
 #if defined(__HAVE_PMAP_DIRECT)
 	struct vm_page *pg;
@@ -735,9 +711,7 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
 
 /* ARGSUSED */
 void
-uvm_km_free_poolpage1(map, addr)
-	vm_map_t map;
-	vaddr_t addr;
+uvm_km_free_poolpage1(struct vm_map *map, vaddr_t addr)
 {
 #if defined(__HAVE_PMAP_DIRECT)
 	uvm_pagefree(pmap_unmap_direct(addr));
