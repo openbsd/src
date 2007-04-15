@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.46 2007/03/16 16:24:19 pedro Exp $
+ * $OpenBSD: calendar.birthday,v 1.47 2007/04/15 11:21:16 mpf Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -145,6 +145,7 @@
 04/14	Christian Huygen born, 1629, physicist & astronomer;
 		discovered Saturn's rings
 04/15	Leonardo da Vinci born, 1452
+04/15	Leonhard Euler born in Basel, 1707
 04/15	Jean Genet died in Paris, 1986
 04/16	Charles (Charlie) Chaplin (Sir) born in London, 1889
 04/19	Andre Rene the Giant (Roussimoff) born in Grenoble, France, 1946
@@ -253,6 +254,7 @@
 09/18	Konstantin Eduardovich Tsiolkovsky born, 1857, father of rocket flight
 09/18	Greta Garbo born, 1905
 09/18	Jimi Hendrix dies from an overdose, 1970
+09/18	Leonhard Euler died in St. Petersburg, 1783
 09/19	President Garfield dies of wounds in Elberon, N.J., 1881
 09/19	Tsiolkovsky died, 1935
 09/20	Upton (Beall) Sinclair born, 1878
