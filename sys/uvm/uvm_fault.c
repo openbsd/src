@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.46 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.47 2007/04/15 11:15:08 art Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -986,7 +986,7 @@ ReFault:
 				    PG_BUSY);
 				UVM_PAGE_OWN(pages[lcv], NULL);
 			}	/* for "lcv" loop */
-				pmap_update(ufi.orig_map->pmap);
+			pmap_update(ufi.orig_map->pmap);
 		}   /* "gotpages" != 0 */
 		/* note: object still _locked_ */
 	} else {
