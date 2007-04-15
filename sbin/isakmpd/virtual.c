@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.26 2006/06/02 19:35:55 hshoexer Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.27 2007/04/15 19:37:46 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -627,10 +627,16 @@ virtual_send_message(struct message *msg, struct transport *t)
 	 *   - in other exchange (Aggressive, ), asap
 	 * XXX ISAKMP_EXCH_BASE etc?
 	 */
-	if (v->encap_is_active == 0 &&
+
+	if (msg->flags & MSG_NATT) {
+		msg->exchange->flags |= EXCHANGE_FLAG_NAT_T_ENABLE;
+		msg->exchange->flags |= EXCHANGE_FLAG_NAT_T_CAP_PEER;
+	}
+
+	if ((v->encap_is_active == 0 &&
 	    (msg->exchange->flags & EXCHANGE_FLAG_NAT_T_ENABLE) &&
 	    (msg->exchange->type != ISAKMP_EXCH_ID_PROT ||
-		msg->exchange->step > 4)) {
+		msg->exchange->step > 4)) || (msg->flags & MSG_NATT)) {
 		LOG_DBG((LOG_MESSAGE, 10, "virtual_send_message: "
 		    "enabling NAT-T encapsulation for this exchange"));
 		v->encap_is_active++;

@@ -1,4 +1,4 @@
-/* $OpenBSD: message.h,v 1.24 2005/05/26 06:11:09 hshoexer Exp $	 */
+/* $OpenBSD: message.h,v 1.25 2007/04/15 19:37:46 hshoexer Exp $	 */
 /* $EOM: message.h,v 1.51 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -165,6 +165,9 @@ struct message {
 
 /* This message has successfully been authenticated. */
 #define MSG_AUTHENTICATED	0x10
+
+/* The message was received on the NAT-T port. */
+#define MSG_NATT	0x20
 
 TAILQ_HEAD(msg_head, message);
 

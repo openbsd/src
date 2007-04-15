@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.19 2006/02/02 14:33:53 hshoexer Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.20 2007/04/15 19:37:46 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -404,6 +404,9 @@ udp_encap_handle_message(struct transport *t)
 		    "packet received on transport %p", u);
 		return;
 	}
+
+	msg->flags |= MSG_NATT;
+
 	message_recv(msg);
 }
 
