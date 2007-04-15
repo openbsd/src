@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.14 2007/03/06 23:35:01 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.15 2007/04/15 10:17:29 espie Exp $
 #
-# Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above

@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.5 2006/11/17 15:34:15 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.6 2007/04/15 10:17:29 espie Exp $
 #
-# Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above

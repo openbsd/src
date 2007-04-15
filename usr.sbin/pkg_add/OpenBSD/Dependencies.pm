@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.6 2007/02/04 12:18:39 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.7 2007/04/15 10:17:29 espie Exp $
 #
-# Copyright (c) 2005 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above

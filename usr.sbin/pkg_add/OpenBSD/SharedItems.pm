@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.6 2006/07/31 17:09:19 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.7 2007/04/15 10:17:29 espie Exp $
 #
-# Copyright (c) 2004 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above

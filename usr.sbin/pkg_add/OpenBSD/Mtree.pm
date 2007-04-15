@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Mtree.pm,v 1.2 2005/02/26 13:56:28 espie Exp $
+# $OpenBSD: Mtree.pm,v 1.3 2007/04/15 10:17:29 espie Exp $
 #
-# Copyright (c) 2004 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2004-2005 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above

@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.9 2006/05/04 08:36:07 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.10 2007/04/15 10:17:29 espie Exp $
 #
-# Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above

@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.11 2005/08/17 18:24:53 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.12 2007/04/15 10:17:29 espie Exp $
 #
-# Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
