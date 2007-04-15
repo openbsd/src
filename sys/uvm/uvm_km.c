@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.59 2007/04/15 11:23:16 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.60 2007/04/15 11:29:33 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -340,7 +340,7 @@ uvm_km_kmemalloc(struct vm_map *map, struct uvm_object *obj, vsize_t size,
     int flags)
 {
 	vaddr_t kva, loopva;
-	vaddr_t offset;
+	voff_t offset;
 	struct vm_page *pg;
 	UVMHIST_FUNC("uvm_km_kmemalloc"); UVMHIST_CALLED(maphist);
 
@@ -476,7 +476,8 @@ uvm_km_free_wakeup(struct vm_map *map, vaddr_t addr, vsize_t size)
 vaddr_t
 uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 {
-	vaddr_t kva, loopva, offset;
+	vaddr_t kva, loopva;
+	voff_t offset;
 	struct vm_page *pg;
 	UVMHIST_FUNC("uvm_km_alloc1"); UVMHIST_CALLED(maphist);
 
