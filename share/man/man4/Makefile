@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.413 2007/04/16 11:10:41 dlg Exp $
+#	$OpenBSD: Makefile,v 1.414 2007/04/16 16:52:52 reyk Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -29,8 +29,8 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	maestro.4 mainbus.4 malo.4 maxds.4 maxtmp.4 mbg.4 midi.4 mii.4 mfi.4 \
 	moscom.4 mpi.4 mpu.4 msk.4 mtd.4 mtdphy.4 multicast.4 mtio.4 ne.4 \
 	neo.4 netintro.4 nfe.4 nge.4 nmea.4 noct.4 nofn.4 nsclpcsio.4 \
-	nsgphy.4 nsphy.4 nsphyter.4 null.4 nviic.4 ohci.4 opl.4 options.4 \
-	onewire.4 oosiop.4 osiop.4 owid.4 owsbm.4 owtemp.4 \
+	nsgphy.4 nsphy.4 nsphyter.4 null.4 nviic.4 nx.4 ohci.4 opl.4 \
+	options.4 onewire.4 oosiop.4 osiop.4 owid.4 owsbm.4 owtemp.4 \
 	pcagpio.4 pcaled.4 pcdisplay.4 pchb.4 pci.4 pcib.4 pcfadc.4 \
 	pcfiic.4 pciide.4 pckbc.4 pckbd.4 pcmcia.4 pcn.4 pcppi.4 pcscp.4 \
 	pf.4 pflog.4 pfsync.4 pgt.4 piixpm.4 pim.4 \
@@ -63,6 +63,7 @@ MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=fpa.4 fea.4 fpa.4 fta.4
 MLINKS+=isapnp.4 pnp.4
 MLINKS+=netintro.4 networking.4
+MLINKS+=nx.4 nxb.4
 MLINKS+=pcmcia.4 pcic.4
 MLINKS+=pms.4 pmsi.4
 MLINKS+=pty.4 ptm.4
