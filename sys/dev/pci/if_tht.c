@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.6 2007/04/16 13:30:45 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.7 2007/04/16 14:01:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -58,6 +58,23 @@
 #define THT_REG_10G_SM_ADD	0x603c
 #define THT_REG_10G_STAT	0x6040
 
+/* port autoconf glue */
+
+struct tht_softc {
+	struct device		csc_dev;
+};
+
+int			tht_match(struct device *, void *, void *);
+void			tht_attach(struct device *, struct device *, void *);
+
+struct cfattach tht_ca = {
+	sizeof(struct tht_softc), tht_match, tht_attach
+};
+
+struct cfdriver tht_cd = {
+	NULL, "tht", DV_IFNET
+};
+
 /* pci controller autoconf glue */
 
 struct thtc_softc {
@@ -84,28 +101,13 @@ struct cfdriver thtc_cd = {
 	NULL, "thtc", DV_DULL
 };
 
-/* port autoconf glue */
+/* glue between the controller and the port */
 
 struct tht_attach_args {
 	int			taa_port;
 };
 
-struct tht_softc {
-	struct device		csc_dev;
-};
-
-int			tht_match(struct device *, void *, void *);
-void			tht_attach(struct device *, struct device *, void *);
-
-struct cfattach tht_ca = {
-	sizeof(struct tht_softc), tht_match, tht_attach
-};
-
-struct cfdriver tht_cd = {
-	NULL, "tht", DV_IFNET
-};
-
-/* misc goo */
+/* misc */
 int			thtc_intr(void *);
 
 #define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
