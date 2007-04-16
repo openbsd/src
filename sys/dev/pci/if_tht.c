@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.7 2007/04/16 14:01:26 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.8 2007/04/16 14:17:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -61,11 +61,14 @@
 /* port autoconf glue */
 
 struct tht_softc {
-	struct device		csc_dev;
+	struct device		sc_dev;
+
+	void			*sc_ih;
 };
 
 int			tht_match(struct device *, void *, void *);
 void			tht_attach(struct device *, struct device *, void *);
+int			tht_intr(void *);
 
 struct cfattach tht_ca = {
 	sizeof(struct tht_softc), tht_match, tht_attach
@@ -79,8 +82,6 @@ struct cfdriver tht_cd = {
 
 struct thtc_softc {
 	struct device		sc_dev;
-
-	void			*sc_ih;
 
 	bus_dma_tag_t		sc_dmat;
 
@@ -105,11 +106,12 @@ struct cfdriver thtc_cd = {
 
 struct tht_attach_args {
 	int			taa_port;
+
+	struct pci_attach_args	*taa_pa;
+	pci_intr_handle_t	taa_ih;
 };
 
 /* misc */
-int			thtc_intr(void *);
-
 #define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
 #define sizeofa(_a)	(sizeof(_a) / sizeof((_a)[0]))
 
@@ -160,12 +162,11 @@ thtc_attach(struct device *parent, struct device *self, void *aux)
 	struct thtc_softc		*sc = (struct thtc_softc *)self;
 	struct pci_attach_args		*pa = aux;
 	pcireg_t			memtype;
-	pci_intr_handle_t		ih;
-	const char			*intrstr;
 	const struct thtc_device	*td;
 	struct tht_attach_args		taa;
 	int				i;
 
+	bzero(&taa, sizeof(taa));
 	td = thtc_lookup(pa);
 
 	sc->sc_dmat = pa->pa_dmat;
@@ -177,25 +178,16 @@ thtc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pci_intr_map(pa, &ih) != 0) {
+	if (pci_intr_map(pa, &taa.taa_ih) != 0) {
 		printf(": unable to map interrupt\n");
 		goto unmap;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET,
-	    thtc_intr, sc, DEVNAME(sc));
-	if (sc->sc_ih == NULL) {
-		printf(": unable to map interrupt%s%s\n",
-		    intrstr == NULL ? "" : " at ",
-		    intrstr == NULL ? "" : intrstr);
-		goto unmap;
-	}
-	printf(": %s\n", intrstr);
+	printf(": %s\n", pci_intr_string(pa->pa_pc, taa.taa_ih));
 
+	taa.taa_pa = pa;
 	for (i = 0; i < td->td_nports; i++) {
-		bzero(&taa, sizeof(taa));
-
 		taa.taa_port = i;
+
 		config_found(self, &taa, thtc_print);
 	}
 
@@ -228,11 +220,21 @@ tht_match(struct device *parent, void *match, void *aux)
 void
 tht_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct tht_softc		*sc = (struct tht_softc *)self;
+	struct tht_attach_args		*taa = aux;
+
+	sc->sc_ih = pci_intr_establish(taa->taa_pa->pa_pc, taa->taa_ih,
+	    IPL_NET, tht_intr, sc, DEVNAME(sc));
+	if (sc->sc_ih == NULL) {
+		printf(": unable to establish interrupt\n");
+		return;
+	}
+
 	printf("\n");
 }
 
 int
-thtc_intr(void *arg)
+tht_intr(void *arg)
 {
 	return (0);
 }
