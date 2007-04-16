@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.228 2007/04/05 16:25:25 mglocker Exp $
+#	$OpenBSD: files.pci,v 1.229 2007/04/16 10:35:29 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -339,6 +339,13 @@ file	dev/pci/ixgb_hw.c		ixgb
 device	xge: ether, ifnet, ifmedia
 attach	xge  at pci
 file	dev/pci/if_xge.c		xge
+
+# Tehuti Networks 10Gb Ethernet
+device	thtc {}
+attach	thtc at pci
+device	tht: ether, ifnet
+attach	tht at thtc   
+file	dev/pci/if_tht.c		thtc | tht
 
 # DEC/Intel 21143 and "tulip" clone ethernet
 attach	dc at pci with dc_pci
