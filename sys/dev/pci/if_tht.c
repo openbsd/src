@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.9 2007/04/16 14:32:19 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.10 2007/04/16 14:33:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -61,28 +61,6 @@
 #define THT_PORT_SIZE		0x8000
 #define THT_PORT_REGION(_p)	((_p) * THT_PORT_SIZE)
 
-/* port autoconf glue */
-
-struct tht_softc {
-	struct device		sc_dev;
-
-	void			*sc_ih;
-
-	bus_space_handle_t	sc_memh;
-};
-
-int			tht_match(struct device *, void *, void *);
-void			tht_attach(struct device *, struct device *, void *);
-int			tht_intr(void *);
-
-struct cfattach tht_ca = {
-	sizeof(struct tht_softc), tht_match, tht_attach
-};
-
-struct cfdriver tht_cd = {
-	NULL, "tht", DV_IFNET
-};
-
 /* pci controller autoconf glue */
 
 struct thtc_softc {
@@ -105,6 +83,28 @@ struct cfattach thtc_ca = {
 
 struct cfdriver thtc_cd = {
 	NULL, "thtc", DV_DULL
+};
+
+/* port autoconf glue */
+
+struct tht_softc {
+	struct device		sc_dev;
+
+	void			*sc_ih;
+
+	bus_space_handle_t	sc_memh;
+};
+
+int			tht_match(struct device *, void *, void *);
+void			tht_attach(struct device *, struct device *, void *);
+int			tht_intr(void *);
+
+struct cfattach tht_ca = {
+	sizeof(struct tht_softc), tht_match, tht_attach
+};
+
+struct cfdriver tht_cd = {
+	NULL, "tht", DV_IFNET
 };
 
 /* glue between the controller and the port */
