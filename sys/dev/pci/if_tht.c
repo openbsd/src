@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.13 2007/04/16 15:14:38 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.14 2007/04/16 22:17:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -287,9 +287,15 @@ tht_intr(void *arg)
 void
 tht_read_lladdr(struct tht_softc *sc)
 {
-	sc->sc_lladdr[0] = tht_read(sc, THT_REG_RG_RX_UNC_MAC2);
-	sc->sc_lladdr[1] = tht_read(sc, THT_REG_RG_RX_UNC_MAC1);
-	sc->sc_lladdr[2] = tht_read(sc, THT_REG_RG_RX_UNC_MAC0);
+	const static bus_size_t		r[3] = {
+	    THT_REG_RG_RX_UNC_MAC2,
+	    THT_REG_RG_RX_UNC_MAC1,
+	    THT_REG_RG_RX_UNC_MAC0
+	};
+	int				i;
+
+	for (i = 0; i < sizeofa(r); i++)
+		sc->sc_lladdr[i] = swap16(tht_read(sc, r[i]));
 }
 
 u_int32_t
