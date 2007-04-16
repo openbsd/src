@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.4 2007/04/16 11:34:35 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.5 2007/04/16 12:13:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -106,18 +106,45 @@ int			thtc_intr(void *);
 #define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
 #define sizeofa(_a)	(sizeof(_a) / sizeof((_a)[0]))
 
-static const struct pci_matchid thtc_devices[] = {
-	{ PCI_VENDOR_TEHUTI,	PCI_PRODUCT_TEHUTI_TN3009 },
-	{ PCI_VENDOR_TEHUTI,	PCI_PRODUCT_TEHUTI_TN3010 },
-	{ PCI_VENDOR_TEHUTI,	PCI_PRODUCT_TEHUTI_TN3014 }
+struct thtc_device {
+	pci_vendor_id_t		td_vendor;
+	pci_vendor_id_t		td_product;
+	u_int			td_nports;
 };
+
+const struct thtc_device *thtc_lookup(struct pci_attach_args *);
+
+static const struct thtc_device thtc_devices[] = {
+	{ PCI_VENDOR_TEHUTI,	PCI_PRODUCT_TEHUTI_TN3009, 1 },
+	{ PCI_VENDOR_TEHUTI,	PCI_PRODUCT_TEHUTI_TN3010, 1 },
+	{ PCI_VENDOR_TEHUTI,	PCI_PRODUCT_TEHUTI_TN3014, 2 }
+};
+
+const struct thtc_device *
+thtc_lookup(struct pci_attach_args *pa)
+{
+	int				i;
+	const struct thtc_device	*td;
+
+	for (i = 0; i < sizeofa(thtc_devices); i++) {
+		td = &thtc_devices[i];
+		if (td->td_vendor == PCI_VENDOR(pa->pa_id) &&
+		    td->td_product == PCI_PRODUCT(pa->pa_id))
+			return (td);
+	}
+
+	return (NULL);
+}
 
 int
 thtc_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args		*pa = aux;
 
-	return (pci_matchbyid(pa, thtc_devices, sizeofa(thtc_devices)));
+	if (thtc_lookup(pa) != NULL)
+		return (1);
+
+	return (0);
 }
 
 void
