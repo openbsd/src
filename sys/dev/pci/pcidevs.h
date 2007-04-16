@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1228 2007/04/16 09:19:59 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1229 2007/04/16 13:50:22 reyk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2542,6 +2542,15 @@
 
 /* National Instruments */
 #define	PCI_PRODUCT_NATINST_PCIGPIB	0xc801		/* PCI-GPIB */
+
+/* NetXen Inc products */
+#define	PCI_PRODUCT_NETXEN_NXB_10GXxR	0x0001		/* NXB-10G XxR 10GbE (NX2031) */
+#define	PCI_PRODUCT_NETXEN_NXB_10GCX4	0x0002		/* NXB-10G CX4 10GbE (NX2031) */
+#define	PCI_PRODUCT_NETXEN_NXB_4GCU	0x0003		/* NXB-4GCU 4xGbE (NX2035) */
+#define	PCI_PRODUCT_NETXEN_NXB_10GBCH	0x0004		/* BladeCenter-H 10GbE (NX2035) */
+#define	PCI_PRODUCT_NETXEN_0005	0x0005		/* NIC (NX203x) */
+#define	PCI_PRODUCT_NETXEN_0024	0x0024		/* NIC (NX203x) */
+#define	PCI_PRODUCT_NETXEN_0025	0x0025		/* NIC (NX203x) */
 
 /* National Semiconductor products */
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 */

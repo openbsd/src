@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1228 2007/04/16 09:19:59 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1229 2007/04/16 13:50:22 reyk Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -7694,6 +7694,34 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NATINST, PCI_PRODUCT_NATINST_PCIGPIB,
 	    "PCI-GPIB",
+	},
+	{
+	    PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_10GXxR,
+	    "NXB-10G XxR 10GbE (NX2031)",
+	},
+	{
+	    PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_10GCX4,
+	    "NXB-10G CX4 10GbE (NX2031)",
+	},
+	{
+	    PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_4GCU,
+	    "NXB-4GCU 4xGbE (NX2035)",
+	},
+	{
+	    PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_10GBCH,
+	    "BladeCenter-H 10GbE (NX2035)",
+	},
+	{
+	    PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_0005,
+	    "NIC (NX203x)",
+	},
+	{
+	    PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_0024,
+	    "NIC (NX203x)",
+	},
+	{
+	    PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_0025,
+	    "NIC (NX203x)",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83810,
