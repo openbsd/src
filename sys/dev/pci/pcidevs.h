@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1227 2007/04/13 11:26:18 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1228 2007/04/16 09:19:59 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -298,6 +298,7 @@
 #define	PCI_VENDOR_ASPEED	0x1a03		/* ASPEED Technology */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
+#define	PCI_VENDOR_TEHUTI	0x1fc9		/* Tehuti Networks */
 #define	PCI_VENDOR_HINT	0x3388		/* Hint */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic */
@@ -3575,6 +3576,11 @@
 /* Tamarack Microelectronics */
 #define	PCI_PRODUCT_TAMARACK_TC9021	0x1021		/* TC9021 GigE */
 #define	PCI_PRODUCT_TAMARACK_TC9021_ALT	0x9021		/* TC9021 GigE (alt ID) */
+
+/* Tehuti Networks Ltd */
+#define	PCI_PRODUCT_TEHUTI_TN3009	0x3009		/* TN3009 */
+#define	PCI_PRODUCT_TEHUTI_TN3010	0x3010		/* TN3010 */
+#define	PCI_PRODUCT_TEHUTI_TN3014	0x3014		/* TN3014 */
 
 /* Tekram Technology products (1st ID)*/
 #define	PCI_PRODUCT_TEKRAM_DC290	0xdc29		/* DC-290(M) */

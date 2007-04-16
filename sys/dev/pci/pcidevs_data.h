@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1227 2007/04/13 11:26:18 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1228 2007/04/16 09:19:59 dlg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -11256,6 +11256,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "TC9021 GigE (alt ID)",
 	},
 	{
+	    PCI_VENDOR_TEHUTI, PCI_PRODUCT_TEHUTI_TN3009,
+	    "TN3009",
+	},
+	{
+	    PCI_VENDOR_TEHUTI, PCI_PRODUCT_TEHUTI_TN3010,
+	    "TN3010",
+	},
+	{
+	    PCI_VENDOR_TEHUTI, PCI_PRODUCT_TEHUTI_TN3014,
+	    "TN3014",
+	},
+	{
 	    PCI_VENDOR_TEKRAM, PCI_PRODUCT_TEKRAM_DC290,
 	    "DC-290(M)",
 	},
@@ -14122,6 +14134,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_TEKRAM2,
 	    "Tekram",
+	},
+	{
+	    PCI_VENDOR_TEHUTI,
+	    "Tehuti Networks",
 	},
 	{
 	    PCI_VENDOR_HINT,
