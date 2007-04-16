@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1229 2007/04/16 13:50:22 reyk Exp 
+ *	OpenBSD: pcidevs,v 1.1230 2007/04/16 13:59:18 reyk Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -7697,11 +7697,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_10GXxR,
-	    "NXB-10G XxR 10GbE (NX2031)",
+	    "NXB-10GXxR 10GbE (NX2031)",
 	},
 	{
 	    PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_10GCX4,
-	    "NXB-10G CX4 10GbE (NX2031)",
+	    "NXB-10GCX4 10GbE (NX2031)",
 	},
 	{
 	    PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_4GCU,
