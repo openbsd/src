@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.10 2007/04/16 14:33:35 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.11 2007/04/16 14:35:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -89,6 +89,7 @@ struct cfdriver thtc_cd = {
 
 struct tht_softc {
 	struct device		sc_dev;
+	struct thtc_softc	*sc_thtc;
 
 	void			*sc_ih;
 
@@ -228,6 +229,8 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 	struct thtc_softc		*csc = (struct thtc_softc *)parent;
 	struct tht_softc		*sc = (struct tht_softc *)self;
 	struct tht_attach_args		*taa = aux;
+
+	sc->sc_thtc = csc;
 
 	if (bus_space_subregion(csc->sc_memt, csc->sc_memh,
 	    THT_PORT_REGION(taa->taa_port), THT_PORT_SIZE,
