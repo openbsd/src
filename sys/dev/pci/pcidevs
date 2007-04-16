@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1228 2007/04/16 09:19:59 dlg Exp $
+$OpenBSD: pcidevs,v 1.1229 2007/04/16 13:50:22 reyk Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2537,6 +2537,15 @@ product NDC NCP130A2		0x0131	NCP130 Rev A2
 
 /* National Instruments */
 product NATINST PCIGPIB		0xc801	PCI-GPIB
+
+/* NetXen Inc products */
+product NETXEN NXB_10GXxR	0x0001	NXB-10G XxR 10GbE (NX2031)
+product NETXEN NXB_10GCX4	0x0002	NXB-10G CX4 10GbE (NX2031)
+product NETXEN NXB_4GCU		0x0003	NXB-4GCU 4xGbE (NX2035)
+product NETXEN NXB_10GBCH	0x0004	BladeCenter-H 10GbE (NX2035)
+product NETXEN 0005		0x0005	NIC (NX203x)
+product NETXEN 0024		0x0024	NIC (NX203x)
+product NETXEN 0025		0x0025	NIC (NX203x)
 
 /* National Semiconductor products */
 product NS DP83810		0x0001	DP83810 10/100
