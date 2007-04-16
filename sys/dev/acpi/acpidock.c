@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.18 2007/04/06 01:12:06 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.19 2007/04/16 23:51:15 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -214,20 +214,24 @@ acpidock_notify(struct aml_node *node, int notify_type, void *arg)
 {
 	struct acpidock_softc	*sc = arg;
 
-	printf("acpidock_notify: notify %d\n", notify_type);
+	dnprintf(5, "%s: acpidock_notify: notify %d\n", DEVNAME(sc),
+	    notify_type);
+
 	switch (notify_type) {
 	case ACPIDOCK_EVENT_INSERT:
-		dnprintf(10, "INSERT\n");
+		printf("%s: dock", DEVNAME(sc));
 		acpidock_docklock(sc, 1);
 		acpidock_dockctl(sc, 1);
+
 		break;
 	case ACPIDOCK_EVENT_EJECT:
-		dnprintf(10, "EJECT\n");
 		acpidock_dockctl(sc, 0);
 		acpidock_docklock(sc, 0);
 
 		/* now actually undock */
 		acpidock_eject(sc, sc->sc_devnode);
+
+		printf("%s: undock", DEVNAME(sc));
 		
 		break;
 	}
@@ -241,7 +245,7 @@ acpidock_notify(struct aml_node *node, int notify_type, void *arg)
 		strlcpy(sc->sc_sens[0].desc, "not docked",
 		    sizeof(sc->sc_sens[0].desc));
 
-	dnprintf(5, "acpidock_notify: status %s\n",
+	printf(": status %s\n",
 	    sc->sc_docked == ACPIDOCK_STATUS_DOCKED ? "docked" : "undocked");
 
 	return (0);
