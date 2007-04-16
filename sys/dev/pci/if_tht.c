@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.3 2007/04/16 11:07:23 reyk Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.4 2007/04/16 11:34:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -42,6 +42,21 @@
 /* registers */
 
 #define THT_PCI_BAR		0x10
+
+#define THT_REG_10G_REV		0x6000
+#define THT_REG_10G_SCR		0x6004
+#define THT_REG_10G_CTL		0x6008
+#define THT_REG_10G_FMT_LNG	0x6014
+#define THT_REG_10G_PAUSE	0x6018
+#define THT_REG_10G_RX_SEC	0x601c
+#define THT_REG_10G_TX_SEC	0x6020
+#define THT_REG_10G_RFIFO_AEF	0x6024
+#define THT_REG_10G_TFIFO_AEF	0x6028
+#define THT_REG_10G_SM_STAT	0x6030
+#define THT_REG_10G_SM_CMD	0x6034
+#define THT_REG_10G_SM_DAT	0x6038
+#define THT_REG_10G_SM_ADD	0x603c
+#define THT_REG_10G_STAT	0x6040
 
 /* pci controller autoconf glue */
 
