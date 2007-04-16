@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.1 2007/04/16 16:21:11 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.2 2007/04/16 16:28:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -90,7 +90,6 @@ struct nxb_softc {
 	u_int32_t		 sc_nrxbuf;
 	u_int32_t		 sc_ntxbuf;
 	volatile u_int		 sc_txpending;
-	struct timeout		 sc_tick;
 
 	struct nxb_port		 sc_nxp[NX_MAX_PORTS];	/* The nx ports */
 };
@@ -99,10 +98,9 @@ struct nx_softc {
 	struct device		 nx_dev;
 	struct arpcom		 nx_ac;
 	struct mii_data		 nx_mii;
-
 	struct nxb_softc	*nx_sc;			/* The nxb board */
 	struct nxb_port		*nx_port;		/* Port information */
-
+	struct timeout		 nx_tick;
 	u_int8_t		 nx_lladdr[ETHER_ADDR_LEN];
 };
 
@@ -111,9 +109,6 @@ void	 nxb_attach(struct device *, struct device *, void *);
 int	 nxb_query(struct nxb_softc *sc);
 int	 nxb_map_pci(struct nxb_softc *, struct pci_attach_args *);
 int	 nxb_intr(void *);
-void	 nxb_tick(void *);
-void	 nxb_iterate(struct nxb_softc *,
-	    void (*)(struct nx_softc *, void *), void *);
 
 int	 nx_match(struct device *, void *, void *);
 void	 nx_attach(struct device *, struct device *, void *);
@@ -121,13 +116,14 @@ int	 nx_print(void *, const char *);
 void	 nx_getlladdr(struct nx_softc *);
 int	 nx_media_change(struct ifnet *);
 void	 nx_media_status(struct ifnet *, struct ifmediareq *);
-void	 nx_link_state(struct nx_softc *, void *);
+void	 nx_link_state(struct nx_softc *);
 void	 nx_init(struct ifnet *);
 void	 nx_start(struct ifnet *);
 void	 nx_stop(struct ifnet *);
 void	 nx_watchdog(struct ifnet *);
 int	 nx_ioctl(struct ifnet *, u_long, caddr_t);
 void	 nx_iff(struct nx_softc *);
+void	 nx_tick(void *);
 
 struct cfdriver nxb_cd = {
 	0, "nxb", DV_DULL
@@ -184,8 +180,6 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; i < NX_MAX_PORTS; i++)
 		config_found(&sc->sc_dev, &sc->sc_nxp[i], nx_print);
-
-	timeout_set(&sc->sc_tick, nxb_tick, sc);
 }
 
 int
@@ -248,28 +242,6 @@ int
 nxb_intr(void *arg)
 {
 	return (0);
-}
-
-void
-nxb_tick(void *arg)
-{
-	struct nxb_softc	*sc = (struct nxb_softc *)arg;
-
-	nxb_iterate(sc, nx_link_state, NULL);
-
-	timeout_add(&sc->sc_tick, hz);
-}
-
-void
-nxb_iterate(struct nxb_softc *sc,
-    void (*func)(struct nx_softc *, void *), void *arg)
-{
-	struct nx_softc		*nx;
-	int			 i;
-
-	for (i = 0; i < NX_MAX_PORTS; i++)
-		if ((nx = sc->sc_nxp[i].nxp_nx) != NULL)
-			(func)(nx, arg);
 }
 
 /*
@@ -336,6 +308,8 @@ nx_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
+	timeout_set(&nx->nx_tick, nx_tick, sc);
+
 	return;
 }
 
@@ -387,7 +361,7 @@ nx_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	case NXNIU_MODE_XGE:
 		imr->ifm_active = IFM_ETHER | IFM_AUTO;
 		imr->ifm_status = IFM_AVALID;
-		nx_link_state(nx, NULL);
+		nx_link_state(nx);
 		if (LINK_STATE_IS_UP(ifp->if_link_state) &&
 		    ifp->if_flags & IFF_UP)
 			imr->ifm_status |= IFM_ACTIVE;
@@ -402,7 +376,7 @@ nx_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 }
 
 void
-nx_link_state(struct nx_softc *nx, void *arg)
+nx_link_state(struct nx_softc *nx)
 {
 	struct nxb_port		*nxp = nx->nx_port;
 	struct ifnet		*ifp = &nx->nx_ac.ac_if;
@@ -533,3 +507,14 @@ nx_iff(struct nx_softc *nx)
 {
 	return;
 }
+
+void
+nx_tick(void *arg)
+{
+	struct nx_softc		*nx = (struct nx_softc *)arg;
+
+	nx_link_state(nx);
+
+	timeout_add(&nx->nx_tick, hz);
+}
+
