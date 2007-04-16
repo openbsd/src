@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.2 2007/04/16 16:28:39 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.3 2007/04/16 16:37:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -85,7 +85,7 @@ struct nxb_softc {
 	bus_size_t		 sc_ios;
 	bus_dma_tag_t		 sc_dmat;
 
-	void			*sc_ih;
+	pci_intr_handle_t	 sc_ih;
 
 	u_int32_t		 sc_nrxbuf;
 	u_int32_t		 sc_ntxbuf;
@@ -98,8 +98,11 @@ struct nx_softc {
 	struct device		 nx_dev;
 	struct arpcom		 nx_ac;
 	struct mii_data		 nx_mii;
+
 	struct nxb_softc	*nx_sc;			/* The nxb board */
 	struct nxb_port		*nx_port;		/* Port information */
+	void			*nx_ih;
+
 	struct timeout		 nx_tick;
 	u_int8_t		 nx_lladdr[ETHER_ADDR_LEN];
 };
@@ -108,7 +111,6 @@ int	 nxb_match(struct device *, void *, void *);
 void	 nxb_attach(struct device *, struct device *, void *);
 int	 nxb_query(struct nxb_softc *sc);
 int	 nxb_map_pci(struct nxb_softc *, struct pci_attach_args *);
-int	 nxb_intr(void *);
 
 int	 nx_match(struct device *, void *, void *);
 void	 nx_attach(struct device *, struct device *, void *);
@@ -124,6 +126,7 @@ void	 nx_watchdog(struct ifnet *);
 int	 nx_ioctl(struct ifnet *, u_long, caddr_t);
 void	 nx_iff(struct nx_softc *);
 void	 nx_tick(void *);
+int	 nx_intr(void *);
 
 struct cfdriver nxb_cd = {
 	0, "nxb", DV_DULL
@@ -186,7 +189,6 @@ int
 nxb_map_pci(struct nxb_softc *sc, struct pci_attach_args *pa)
 {
 	pcireg_t		 memtype;
-	pci_intr_handle_t	 ih;
 	const char		*intrstr;
 
 	sc->sc_pc = pa->pa_pc;
@@ -208,20 +210,11 @@ nxb_map_pci(struct nxb_softc *sc, struct pci_attach_args *pa)
 		return (1);
 	}
 
-	if (pci_intr_map(pa, &ih) != 0) {
+	if (pci_intr_map(pa, &sc->sc_ih) != 0) {
 		printf(": unable to map interrupt\n");
 		goto unmap;
 	}
-
-	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET,
-	    nxb_intr, sc, sc->sc_dev.dv_xname);
-	if (sc->sc_ih == NULL) {
-		printf(": unable to map interrupt%s%s\n",
-		    intrstr == NULL ? "" : " at ",
-		    intrstr == NULL ? "" : intrstr);
-		goto unmap;
-	}
+	intrstr = pci_intr_string(pa->pa_pc, sc->sc_ih);
 	printf(": %s\n", intrstr);
 
 	return (0);
@@ -234,12 +227,6 @@ nxb_map_pci(struct nxb_softc *sc, struct pci_attach_args *pa)
 
 int
 nxb_query(struct nxb_softc *sc)
-{
-	return (0);
-}
-
-int
-nxb_intr(void *arg)
 {
 	return (0);
 }
@@ -280,7 +267,16 @@ nx_attach(struct device *parent, struct device *self, void *aux)
 	nx->nx_port = nxp;
 	nxp->nxp_nx = nx;
 
+	nx->nx_ih = pci_intr_establish(sc->sc_pc, sc->sc_ih, IPL_NET,
+	    nx_intr, nx, nx->nx_dev.dv_xname);
+	if (nx->nx_ih == NULL) {
+		printf(": unable to establish interrupt\n");
+		return;
+	}
+
 	nx_getlladdr(nx);
+	bcopy(nx->nx_lladdr, nx->nx_ac.ac_enaddr, ETHER_ADDR_LEN);
+	printf(" address %s\n", ether_sprintf(nx->nx_ac.ac_enaddr));
 
 	ifp = &nx->nx_ac.ac_if;
 	ifp->if_softc = nx;
@@ -516,5 +512,11 @@ nx_tick(void *arg)
 	nx_link_state(nx);
 
 	timeout_add(&nx->nx_tick, hz);
+}
+
+int
+nx_intr(void *arg)
+{
+	return (0);
 }
 
