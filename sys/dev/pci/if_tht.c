@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.8 2007/04/16 14:17:32 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.9 2007/04/16 14:32:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -58,12 +58,17 @@
 #define THT_REG_10G_SM_ADD	0x603c
 #define THT_REG_10G_STAT	0x6040
 
+#define THT_PORT_SIZE		0x8000
+#define THT_PORT_REGION(_p)	((_p) * THT_PORT_SIZE)
+
 /* port autoconf glue */
 
 struct tht_softc {
 	struct device		sc_dev;
 
 	void			*sc_ih;
+
+	bus_space_handle_t	sc_memh;
 };
 
 int			tht_match(struct device *, void *, void *);
@@ -220,13 +225,22 @@ tht_match(struct device *parent, void *match, void *aux)
 void
 tht_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct thtc_softc		*csc = (struct thtc_softc *)parent;
 	struct tht_softc		*sc = (struct tht_softc *)self;
 	struct tht_attach_args		*taa = aux;
+
+	if (bus_space_subregion(csc->sc_memt, csc->sc_memh,
+	    THT_PORT_REGION(taa->taa_port), THT_PORT_SIZE,
+	    &sc->sc_memh) != 0) {
+		printf(": unable to map port registers\n");
+		return;
+	}
 
 	sc->sc_ih = pci_intr_establish(taa->taa_pa->pa_pc, taa->taa_ih,
 	    IPL_NET, tht_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");
+		/* bus_space(9) says we dont have to free subregions */
 		return;
 	}
 
