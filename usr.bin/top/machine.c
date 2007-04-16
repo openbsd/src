@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.59 2007/04/13 19:19:54 otto Exp $	 */
+/* $OpenBSD: machine.c,v 1.60 2007/04/16 11:49:51 otto Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -69,13 +69,13 @@ struct handle {
  *  These definitions control the format of the per-process area
  */
 static char header[] =
-	"  PID X        PRI NICE  SIZE   RES STATE    WAIT     TIME    CPU COMMAND";
+	"  PID X        PRI NICE  SIZE   RES STATE    WAIT      TIME    CPU COMMAND";
 
 /* 0123456   -- field to fill in starts at header+6 */
 #define UNAME_START 6
 
 #define Proc_format \
-	"%5d %-8.8s %3d %4d %5s %5s %-8s %-6.6s %6s %5.2f%% %.51s"
+	"%5d %-8.8s %3d %4d %5s %5s %-8s %-7.7s %6s %5.2f%% %.50s"
 
 /* process state names for the "STATE" column of the display */
 /*
