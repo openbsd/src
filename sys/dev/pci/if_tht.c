@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.5 2007/04/16 12:13:16 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.6 2007/04/16 13:30:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -74,6 +74,7 @@ struct thtc_softc {
 
 int			thtc_match(struct device *, void *, void *);
 void			thtc_attach(struct device *, struct device *, void *);
+int			thtc_print(void *, const char *);
 
 struct cfattach thtc_ca = {
 	sizeof(struct thtc_softc), thtc_match, thtc_attach
@@ -84,6 +85,10 @@ struct cfdriver thtc_cd = {
 };
 
 /* port autoconf glue */
+
+struct tht_attach_args {
+	int			taa_port;
+};
 
 struct tht_softc {
 	struct device		csc_dev;
@@ -155,6 +160,11 @@ thtc_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t			memtype;
 	pci_intr_handle_t		ih;
 	const char			*intrstr;
+	const struct thtc_device	*td;
+	struct tht_attach_args		taa;
+	int				i;
+
+	td = thtc_lookup(pa);
 
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -180,6 +190,13 @@ thtc_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s\n", intrstr);
 
+	for (i = 0; i < td->td_nports; i++) {
+		bzero(&taa, sizeof(taa));
+
+		taa.taa_port = i;
+		config_found(self, &taa, thtc_print);
+	}
+
 	return;
 
 unmap:
@@ -188,9 +205,22 @@ unmap:
 }
 
 int
+thtc_print(void *aux, const char *pnp)
+{
+	struct tht_attach_args		*taa = aux;
+
+	if (pnp != NULL)
+		printf("\"%s\" at %s", tht_cd.cd_name, pnp);
+
+	printf(" port %d", taa->taa_port);
+
+	return (UNCONF);
+}
+
+int
 tht_match(struct device *parent, void *match, void *aux)
 {
-	return (0);
+	return (1);
 }
 
 void
@@ -204,4 +234,3 @@ thtc_intr(void *arg)
 {
 	return (0);
 }
-
