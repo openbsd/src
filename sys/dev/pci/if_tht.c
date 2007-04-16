@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.11 2007/04/16 14:35:07 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.12 2007/04/16 14:40:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -116,6 +116,10 @@ struct tht_attach_args {
 	struct pci_attach_args	*taa_pa;
 	pci_intr_handle_t	taa_ih;
 };
+
+/* bus space operations */
+u_int32_t		tht_read(struct tht_softc *, bus_size_t);
+void			tht_write(struct tht_softc *, bus_size_t, u_int32_t);
 
 /* misc */
 #define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
@@ -254,4 +258,20 @@ int
 tht_intr(void *arg)
 {
 	return (0);
+}
+
+u_int32_t
+tht_read(struct tht_softc *sc, bus_size_t r)
+{
+	bus_space_barrier(sc->sc_thtc->sc_memt, sc->sc_memh, r, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(sc->sc_thtc->sc_memt, sc->sc_memh, r));
+}
+
+void
+tht_write(struct tht_softc *sc, bus_size_t r, u_int32_t v)
+{
+	bus_space_write_4(sc->sc_thtc->sc_memt, sc->sc_memh, r, v);
+	bus_space_barrier(sc->sc_thtc->sc_memt, sc->sc_memh, r, 4,
+	    BUS_SPACE_BARRIER_WRITE);
 }
