@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.61 2007/04/13 09:32:41 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.62 2007/04/16 20:32:00 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -197,7 +197,7 @@ X11-specific C include files.
 .It lib/
 X11 archive libraries.
 .Pp
-.Bl -tag -width "modules/" -compact
+.Bl -tag -width "pkgconfig/" -compact
 .It X11/
 Default configuration files for X11 and companion applications (see
 .Xr xdm 1 ,
@@ -205,10 +205,17 @@ Default configuration files for X11 and companion applications (see
 .Xr twm 1 ) .
 .It modules/
 Various libraries and drivers for the X11 window system.
-.Pp
+.It pkgconfig/
+Package metadata for
+.Xr pkgconfig 1 .
+.It xserver/
+Data files used by the X server.
 .El
+.Pp
 .It man/
 X11 manual pages.
+.It share/
+Architecture independent data files.
 .El
 .Pp
 .It bin/
@@ -560,6 +567,8 @@ Source for files in
 .It usr.sbin/
 Source for files in
 .Pa /usr/sbin .
+.It xenocara/
+Source for the X11 window system.
 .El
 .El
 .It /var/
