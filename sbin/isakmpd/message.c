@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.124 2007/04/15 19:37:46 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.125 2007/04/16 13:01:39 moritz Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -186,8 +186,7 @@ message_free(struct message *msg)
 		if (msg->orig && msg->orig != (u_int8_t *)msg->iov[0].iov_base)
 			free(msg->orig);
 		for (i = 0; i < msg->iovlen; i++)
-			if (msg->iov[i].iov_base)
-				free(msg->iov[i].iov_base);
+			free(msg->iov[i].iov_base);
 		free(msg->iov);
 	}
 	if (msg->retrans)
@@ -1445,8 +1444,7 @@ message_recv(struct message *msg)
 	 */
 	if (GET_ISAKMP_HDR_NEXT_PAYLOAD(buf) != ISAKMP_PAYLOAD_NONE &&
 	    message_sort_payloads(msg, GET_ISAKMP_HDR_NEXT_PAYLOAD(buf))) {
-		if (ks)
-			free(ks);
+		free(ks);
 		return -1;
 	}
 	/*
@@ -1456,8 +1454,7 @@ message_recv(struct message *msg)
 	 * XXX Should SAs and even transports be cleaned up then too?
 	 */
 	if (message_validate_payloads(msg)) {
-		if (ks)
-			free(ks);
+		free(ks);
 		return -1;
 	}
 	/*
@@ -1467,8 +1464,7 @@ message_recv(struct message *msg)
 	if (!msg->exchange) {
 		log_print("message_recv: no exchange");
 		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
-		if (ks)
-			free(ks);
+		free(ks);
 		return -1;
 	}
 	/*
@@ -1493,8 +1489,7 @@ message_recv(struct message *msg)
 		    exch_type);
 		message_drop(msg, ISAKMP_NOTIFY_INVALID_EXCHANGE_TYPE, 0, 1,
 		    1);
-		if (ks)
-			free(ks);
+		free(ks);
 		return -1;
 	}
 	/* Make sure the IV we used gets saved in the proper SA.  */
@@ -1910,8 +1905,7 @@ message_drop(struct message *msg, int notify, struct proto *proto,
 	    "%s", address ? address : "<unknown>", htons(port),
 	    constant_name(isakmp_notify_cst, notify));
 
-	if (address)
-		free(address);
+	free(address);
 
 	/* If specified, return a notification.  */
 	if (notify)
@@ -2441,22 +2435,15 @@ message_add_sa_payload(struct message *msg)
 	return 0;
 
 cleanup:
-	if (sa_buf)
-		free(sa_buf);
+	free(sa_buf);
 	for (i = 0; i < nprotos; i++) {
-		if (transforms[i])
-			free(transforms[i]);
-		if (proposals[i])
-			free(proposals[i]);
+		free(transforms[i]);
+		free(proposals[i]);
 	}
-	if (transforms)
-		free(transforms);
-	if (transform_lens)
-		free(transform_lens);
-	if (proposals)
-		free(proposals);
-	if (proposal_lens)
-		free(proposal_lens);
+	free(transforms);
+	free(transform_lens);
+	free(proposals);
+	free(proposal_lens);
 	return -1;
 }
 

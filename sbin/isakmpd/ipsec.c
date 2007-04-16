@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.127 2006/11/24 13:52:14 reyk Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.128 2007/04/16 13:01:39 moritz Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -354,9 +354,8 @@ ipsec_sa_tag(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 
 	error = 0;
  fail:
-	if (id_string != NULL)
-		free(id_string);
-	if (error != 0 && sa->tag != NULL) {
+	free(id_string);
+	if (error != 0) {
 		free(sa->tag);
 		sa->tag = NULL;
 	}
@@ -488,14 +487,10 @@ ipsec_finalize_exchange(struct message *msg)
 				    isa->tproto, ntohs(isa->sport),
 				    ntohs(isa->dport)));
 
-				if (addr1)
-					free(addr1);
-				if (mask1)
-					free(mask1);
-				if (addr2)
-					free(addr2);
-				if (mask2)
-					free(mask2);
+				free(addr1);
+				free(mask1);
+				free(addr2);
+				free(mask2);
 
 				/*
 				 * If this is not an SA acquired by the
@@ -675,30 +670,18 @@ ipsec_free_exchange_data(void *vie)
 	struct ipsec_exch *ie = vie;
 	struct isakmp_cfg_attr *attr;
 
-	if (ie->sa_i_b)
-		free(ie->sa_i_b);
-	if (ie->id_ci)
-		free(ie->id_ci);
-	if (ie->id_cr)
-		free(ie->id_cr);
-	if (ie->g_xi)
-		free(ie->g_xi);
-	if (ie->g_xr)
-		free(ie->g_xr);
-	if (ie->g_xy)
-		free(ie->g_xy);
-	if (ie->skeyid)
-		free(ie->skeyid);
-	if (ie->skeyid_d)
-		free(ie->skeyid_d);
-	if (ie->skeyid_a)
-		free(ie->skeyid_a);
-	if (ie->skeyid_e)
-		free(ie->skeyid_e);
-	if (ie->hash_i)
-		free(ie->hash_i);
-	if (ie->hash_r)
-		free(ie->hash_r);
+	free(ie->sa_i_b);
+	free(ie->id_ci);
+	free(ie->id_cr);
+	free(ie->g_xi);
+	free(ie->g_xr);
+	free(ie->g_xy);
+	free(ie->skeyid);
+	free(ie->skeyid_d);
+	free(ie->skeyid_a);
+	free(ie->skeyid_e);
+	free(ie->hash_i);
+	free(ie->hash_r);
 	if (ie->group)
 		group_free(ie->group);
 	for (attr = LIST_FIRST(&ie->attrs); attr;
@@ -716,18 +699,12 @@ ipsec_free_sa_data(void *visa)
 {
 	struct ipsec_sa *isa = visa;
 
-	if (isa->src_net)
-		free(isa->src_net);
-	if (isa->src_mask)
-		free(isa->src_mask);
-	if (isa->dst_net)
-		free(isa->dst_net);
-	if (isa->dst_mask)
-		free(isa->dst_mask);
-	if (isa->skeyid_a)
-		free(isa->skeyid_a);
-	if (isa->skeyid_d)
-		free(isa->skeyid_d);
+	free(isa->src_net);
+	free(isa->src_mask);
+	free(isa->dst_net);
+	free(isa->dst_mask);
+	free(isa->skeyid_a);
+	free(isa->skeyid_d);
 }
 
 /* Free the DOI-specific protocol data of an SA pointed to by VIPROTO.  */
@@ -738,8 +715,7 @@ ipsec_free_proto_data(void *viproto)
 	int             i;
 
 	for (i = 0; i < 2; i++)
-		if (iproto->keymat[i])
-			free(iproto->keymat[i]);
+		free(iproto->keymat[i]);
 }
 
 /* Return exchange script based on TYPE.  */
@@ -2077,10 +2053,8 @@ ipsec_decode_id(char *buf, size_t size, u_int8_t *id, size_t id_len,
 		}
 	} else
 		snprintf(buf, size, "<no ipsec id>");
-	if (addr)
-		free(addr);
-	if (mask)
-		free(mask);
+	free(addr);
+	free(mask);
 }
 
 char *
@@ -2154,8 +2128,7 @@ ipsec_build_id(char *section, size_t *sz)
 int
 ipsec_clone_id(u_int8_t **did, size_t *did_len, u_int8_t *id, size_t id_len)
 {
-	if (*did)
-		free(*did);
+	free(*did);
 
 	if (!id_len || !id) {
 		*did = 0;
@@ -2517,14 +2490,11 @@ ipsec_id_string(u_int8_t *id, size_t id_len)
 		goto fail;
 	}
 
-	if (addrstr)
-		free(addrstr);
+	free(addrstr);
 	return buf;
 
 fail:
-	if (buf)
-		free(buf);
-	if (addrstr)
-		free(addrstr);
+	free(buf);
+	free(addrstr);
 	return 0;
 }

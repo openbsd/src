@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.27 2007/04/15 19:37:46 hshoexer Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.28 2007/04/16 13:01:39 moritz Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -341,8 +341,7 @@ virtual_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 	    if_addr->sa_family == AF_INET ? "v4" :
 	    (if_addr->sa_family == AF_INET6 ? "v6" : "<unknown>"),
 	    addr_str ? addr_str : "<invalid>"));
-	if (addr_str)
-		free(addr_str);
+	free(addr_str);
 
 	/*
 	 * Drop non-Internet stuff.

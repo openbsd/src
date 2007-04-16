@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.99 2006/06/10 21:09:45 msf Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.100 2007/04/16 13:01:39 moritz Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -352,8 +352,7 @@ policydone:
 		if (principal && principal[i])
 			free(principal[i]);
 
-	if (principal)
-		free(principal);
+	free(principal);
 
 	/* Remove the policies */
 	for (i = 0; i < policy_asserts_num; i++) {
@@ -362,11 +361,9 @@ policydone:
 			    keynote_ids[i]);
 	}
 
-	if (keynote_ids)
-		free(keynote_ids);
+	free(keynote_ids);
 
-	if (x509_ids)
-		free(x509_ids);
+	free(x509_ids);
 
 	/*
 	 * XXX Currently, check_policy() is only called from
@@ -973,21 +970,17 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 	return 0;
 
 bail_out:
-	if (sa_buf)
-		free(sa_buf);
+	free(sa_buf);
 	if (proposal) {
 		for (i = 0; i < prop_no; i++) {
-			if (proposal[i])
-				free(proposal[i]);
+			free(proposal[i]);
 			if (transform[i]) {
 				for (xf_no = 0; xf_no < transform_cnt[i];
 				    xf_no++)
-					if (transform[i][xf_no])
-						free(transform[i][xf_no]);
+					free(transform[i][xf_no]);
 				free(transform[i]);
 			}
-			if (transform_len[i])
-				free(transform_len[i]);
+			free(transform_len[i]);
 		}
 		free(proposal);
 		free(transforms_len);
@@ -1148,14 +1141,10 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 			    "calloc (%lu, %lu) failed",
 			    (unsigned long)ie->id_cr_sz,
 			    (unsigned long)sizeof(char));
-			if (ie->id_ci) {
-				free(ie->id_ci);
-				ie->id_ci = 0;
-			}
-			if (ie->id_cr) {
-				free(ie->id_cr);
-				ie->id_cr = 0;
-			}
+			free(ie->id_ci);
+			ie->id_ci = 0;
+			free(ie->id_cr);
+			ie->id_cr = 0;
 			return -1;
 		}
 		if (src->sa_family != dst->sa_family) {
@@ -1724,16 +1713,11 @@ cleanup:
 	    sa = TAILQ_NEXT(sa, next))
 		while ((proto = TAILQ_FIRST(&sa->protos)) != 0)
 			proto_free(proto);
-	if (my_hash)
-		free(my_hash);
-	if (ie->id_ci) {
-		free(ie->id_ci);
-		ie->id_ci = 0;
-	}
-	if (ie->id_cr) {
-		free(ie->id_cr);
-		ie->id_cr = 0;
-	}
+	free(my_hash);
+	free(ie->id_ci);
+	ie->id_ci = 0;
+	free(ie->id_cr);
+	ie->id_cr = 0;
 	return -1;
 }
 
@@ -1945,7 +1929,6 @@ responder_recv_HASH(struct message *msg)
 	return 0;
 
 cleanup:
-	if (my_hash)
-		free(my_hash);
+	free(my_hash);
 	return -1;
 }

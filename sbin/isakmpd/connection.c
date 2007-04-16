@@ -1,4 +1,4 @@
-/* $OpenBSD: connection.c,v 1.34 2006/09/01 00:24:06 mpf Exp $	 */
+/* $OpenBSD: connection.c,v 1.35 2007/04/16 13:01:39 moritz Exp $	 */
 /* $EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	 */
 
 /*
@@ -297,8 +297,7 @@ connection_setup(char *name)
 
 fail:
 	if (conn) {
-		if (conn->name)
-			free(conn->name);
+		free(conn->name);
 		free(conn);
 	}
 	return -1;
@@ -357,10 +356,8 @@ connection_record_passive(char *name)
 	return 0;
 
 fail:
-	if (conn->local_id)
-		free(conn->local_id);
-	if (conn->name)
-		free(conn->name);
+	free(conn->local_id);
+	free(conn->name);
 	free(conn);
 	return -1;
 }

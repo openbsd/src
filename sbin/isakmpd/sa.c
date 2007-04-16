@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.110 2006/11/24 13:52:14 reyk Exp $	 */
+/* $OpenBSD: sa.c,v 1.111 2007/04/16 13:01:39 moritz Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -766,8 +766,7 @@ proto_free(struct proto *proto)
 	}
 	if (proto->xf_cnt)
 		while ((pa = TAILQ_FIRST(&proto->xfs)) != NULL) {
-			if (pa->attrs)
-				free(pa->attrs);
+			free(pa->attrs);
 			TAILQ_REMOVE(&proto->xfs, pa, next);
 			free(pa);
 		}
@@ -837,10 +836,8 @@ sa_release(struct sa *sa)
 			sa->doi->free_sa_data(sa->data);
 		free(sa->data);
 	}
-	if (sa->id_i)
-		free(sa->id_i);
-	if (sa->id_r)
-		free(sa->id_r);
+	free(sa->id_i);
+	free(sa->id_r);
 	if (sa->recv_cert) {
 		handler = cert_get(sa->recv_certtype);
 		if (handler)
@@ -854,22 +851,18 @@ sa_release(struct sa *sa)
 	if (sa->recv_key)
 		key_free(sa->recv_keytype, ISAKMP_KEYTYPE_PUBLIC,
 		    sa->recv_key);
-	if (sa->keynote_key)
-		free(sa->keynote_key);	/* This is just a string */
+	free(sa->keynote_key);	/* This is just a string */
 	if (sa->policy_id != -1)
 		kn_close(sa->policy_id);
-	if (sa->name)
-		free(sa->name);
-	if (sa->keystate)
-		free(sa->keystate);
+	free(sa->name);
+	free(sa->keystate);
 	if (sa->nat_t_keepalive)
 		timer_remove_event(sa->nat_t_keepalive);
 	if (sa->dpd_event)
 		timer_remove_event(sa->dpd_event);
 	if (sa->transport)
 		transport_release(sa->transport);
-	if (sa->tag)
-		free(sa->tag);
+	free(sa->tag);
 	free(sa);
 }
 
@@ -1121,8 +1114,7 @@ sa_add_transform(struct sa *sa, struct payload *xf, int initiator,
 
 cleanup:
 	if (!initiator) {
-		if (proto->data)
-			free(proto->data);
+		free(proto->data);
 		free(proto);
 	}
 	*protop = 0;

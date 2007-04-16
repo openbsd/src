@@ -1,4 +1,4 @@
-/*	$OpenBSD: vendor.c,v 1.3 2007/03/26 12:57:43 pedro Exp $	*/
+/*	$OpenBSD: vendor.c,v 1.4 2007/04/16 13:01:39 moritz Exp $	*/
 /*
  * Copyright (c) 2006 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -68,8 +68,7 @@ setup_vendor_hashes(void)
 
 errout:
 	for (i = 0; i < n; i++)
-		if (openbsd_vendor_cap[i].hash)
-			free(openbsd_vendor_cap[i].hash);
+		free(openbsd_vendor_cap[i].hash);
 	return -1;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.93 2006/02/02 14:33:53 hshoexer Exp $	 */
+/* $OpenBSD: udp.c,v 1.94 2007/04/16 13:01:39 moritz Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -359,10 +359,8 @@ udp_remove(struct transport *t)
 	struct udp_transport *u = (struct udp_transport *)t;
 	struct transport *p;
 
-	if (u->src)
-		free(u->src);
-	if (u->dst)
-		free(u->dst);
+	free(u->src);
+	free(u->dst);
 	if ((t->flags & TRANSPORT_LISTEN) && u->s >= 0)
 		close(u->s);
 
@@ -395,10 +393,8 @@ udp_report(struct transport *t)
 	LOG_DBG((LOG_REPORT, 0, "udp_report: fd %d src %s:%u dst %s:%u", u->s,
 	    src, ntohs(sport), dst ? dst : "<none>", ntohs(dport)));
 
-	if (dst)
-		free(dst);
-	if (src)
-		free(src);
+	free(dst);
+	free(src);
 }
 
 /*

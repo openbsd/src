@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.93 2007/02/19 09:43:34 hshoexer Exp $	 */
+/* $OpenBSD: conf.c,v 1.94 2007/04/16 13:01:39 moritz Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -185,18 +185,12 @@ conf_set_now(char *section, char *tag, char *value, int override,
 	    node->tag, node->value));
 	return 0;
 fail:
-	if (node->value) {
-		free(node->value);
-		node->value = NULL;
-	}
-	if (node->tag) {
-		free(node->tag);
-		node->tag = NULL;
-	}
-	if (node->section) {
-		free(node->section);
-		node->section = NULL;
-	}
+	free(node->value);
+	node->value = NULL;
+	free(node->tag);
+	node->tag = NULL;
+	free(node->section);
+	node->section = NULL;
 	return 1;
 }
 
@@ -221,8 +215,7 @@ conf_parse_line(int trans, char *line, int ln, size_t sz)
 		for (i = 1; i < sz; i++)
 			if (line[i] == ']')
 				break;
-		if (section)
-			free(section);
+		free(section);
 		if (i == sz) {
 			log_print("conf_parse_line: %d:"
 			    "unmatched ']', ignoring until next section", ln);
@@ -629,8 +622,7 @@ conf_reinit(void)
 	return;
 
 fail:
-	if (new_conf_addr)
-		free(new_conf_addr);
+	free(new_conf_addr);
 	close(fd);
 }
 
@@ -760,12 +752,10 @@ conf_get_list(char *section, char *tag)
 	return list;
 
 cleanup:
-	if (node)
-		free(node);
+	free(node);
 	if (list)
 		conf_free_list(list);
-	if (liststr)
-		free(liststr);
+	free(liststr);
 	return 0;
 }
 
@@ -796,8 +786,7 @@ conf_get_tag_list(char *section)
 	return list;
 
 cleanup:
-	if (node)
-		free(node);
+	free(node);
 	if (list)
 		conf_free_list(list);
 	return 0;
@@ -810,8 +799,7 @@ conf_free_list(struct conf_list *list)
 
 	while (node) {
 		TAILQ_REMOVE(&list->fields, node, link);
-		if (node->field)
-			free(node->field);
+		free(node->field);
 		free(node);
 		node = TAILQ_FIRST(&list->fields);
 	}
@@ -873,12 +861,9 @@ conf_set(int transaction, char *section, char *tag, char *value, int override,
 	return 0;
 
 fail:
-	if (node->tag)
-		free(node->tag);
-	if (node->section)
-		free(node->section);
-	if (node)
-		free(node);
+	free(node->tag);
+	free(node->section);
+	free(node);
 	return 1;
 }
 
@@ -904,10 +889,8 @@ conf_remove(int transaction, char *section, char *tag)
 	return 0;
 
 fail:
-	if (node->section)
-		free(node->section);
-	if (node)
-		free(node);
+	free(node->section);
+	free(node);
 	return 1;
 }
 
@@ -929,8 +912,7 @@ conf_remove_section(int transaction, char *section)
 	return 0;
 
 fail:
-	if (node)
-		free(node);
+	free(node);
 	return 1;
 }
 
@@ -962,12 +944,9 @@ conf_end(int transaction, int commit)
 					    "operation: %d", node->op);
 				}
 			TAILQ_REMOVE(&conf_trans_queue, node, link);
-			if (node->section)
-				free(node->section);
-			if (node->tag)
-				free(node->tag);
-			if (node->value)
-				free(node->value);
+			free(node->section);
+			free(node->tag);
+			free(node->value);
 			free(node);
 		}
 	}
@@ -1065,8 +1044,7 @@ mem_fail:
 	log_error("conf_report: malloc/calloc failed");
 	while ((dnode = dumper) != 0) {
 		dumper = dumper->next;
-		if (dnode->s)
-			free(dnode->s);
+		free(dnode->s);
 		free(dnode);
 	}
 }

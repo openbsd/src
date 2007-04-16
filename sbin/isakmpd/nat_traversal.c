@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.c,v 1.18 2007/02/22 10:01:02 hshoexer Exp $	*/
+/*	$OpenBSD: nat_traversal.c,v 1.19 2007/04/16 13:01:39 moritz Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -131,8 +131,7 @@ nat_t_setup_hashes(void)
 
 errout:
 	for (i = 0; i < n; i++)
-		if (isakmp_nat_t_cap[i].hash)
-			free(isakmp_nat_t_cap[i].hash);
+		free(isakmp_nat_t_cap[i].hash);
 	return -1;
 }
 

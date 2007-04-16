@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.66 2006/07/02 13:19:00 hshoexer Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.67 2007/04/16 13:01:39 moritz Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -377,18 +377,15 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 	return 0;
 
 bail_out:
-	if (sa_buf)
-		free(sa_buf);
-	if (proposal)
-		free(proposal);
+	free(sa_buf);
+	free(proposal);
 	if (transform) {
 		for (i = 0; i < conf->cnt; i++)
 			if (transform[i])
 				free(transform[i]);
 		free(transform);
 	}
-	if (transform_len)
-		free(transform_len);
+	free(transform_len);
 	conf_free_list(conf);
 	return -1;
 }
@@ -1223,8 +1220,7 @@ ike_phase_1_validate_prop(struct exchange *exchange, struct sa *sa,
 		LOG_DBG((LOG_NEGOTIATION, 20, "ike_phase_1_validate_prop: "
 		    "success"));
 		conf_free_list(conf);
-		if (vs.life)
-			free(vs.life);
+		free(vs.life);
 		return 1;
 
 try_next:
@@ -1235,8 +1231,7 @@ try_next:
 			free(node);
 			node = LIST_FIRST(&vs.attrs);
 		}
-		if (vs.life)
-			free(vs.life);
+		free(vs.life);
 	}
 
 	LOG_DBG((LOG_NEGOTIATION, 20, "ike_phase_1_validate_prop: failure"));

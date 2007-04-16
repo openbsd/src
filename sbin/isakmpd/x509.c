@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.108 2007/03/03 20:03:03 tom Exp $	 */
+/* $OpenBSD: x509.c,v 1.109 2007/04/16 13:01:39 moritz Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -434,12 +434,9 @@ x509_generate_kn(int id, X509 *cert)
 	return 1;
 
 fail:
-	if (buf)
-		free(buf);
-	if (skey)
-		free(skey);
-	if (ikey)
-		free(ikey);
+	free(buf);
+	free(skey);
+	free(ikey);
 	if (key)
 		RSA_free(key);
 
@@ -1004,15 +1001,11 @@ x509_free_aca(void *blob)
 {
 	struct x509_aca *aca = blob;
 
-	if (aca->name1.type)
-		free(aca->name1.type);
-	if (aca->name1.val)
-		free(aca->name1.val);
+	free(aca->name1.type);
+	free(aca->name1.val);
 
-	if (aca->name2.type)
-		free(aca->name2.type);
-	if (aca->name2.val)
-		free(aca->name2.val);
+	free(aca->name2.type);
+	free(aca->name2.val);
 }
 
 X509 *
@@ -1232,14 +1225,10 @@ x509_cert_get_subjects(void *scert, int *cnt, u_int8_t ***id,
 
 fail:
 	for (i = 0; i < *cnt; i++)
-		if ((*id)[i])
-			free((*id)[i]);
-	if (*id)
-		free(*id);
-	if (*id_len)
-		free(*id_len);
-	if (buf)
-		free(buf);
+		free((*id)[i]);
+	free(*id);
+	free(*id_len);
+	free(buf);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.129 2007/03/03 10:29:18 tom Exp $	 */
+/* $OpenBSD: exchange.c,v 1.130 2007/04/16 13:01:39 moritz Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1205,22 +1205,15 @@ exchange_free_aux(void *v_exch)
 	if (exchange->in_transit &&
 	    exchange->in_transit != exchange->last_sent)
 		message_free(exchange->in_transit);
-	if (exchange->nonce_i)
-		free(exchange->nonce_i);
-	if (exchange->nonce_r)
-		free(exchange->nonce_r);
-	if (exchange->id_i)
-		free(exchange->id_i);
-	if (exchange->id_r)
-		free(exchange->id_r);
-	if (exchange->keystate)
-		free(exchange->keystate);
+	free(exchange->nonce_i);
+	free(exchange->nonce_r);
+	free(exchange->id_i);
+	free(exchange->id_r);
+	free(exchange->keystate);
 	if (exchange->doi && exchange->doi->free_exchange_data)
 		exchange->doi->free_exchange_data(exchange->data);
-	if (exchange->data)
-		free(exchange->data);
-	if (exchange->name)
-		free(exchange->name);
+	free(exchange->data);
+	free(exchange->name);
 	if (exchange->recv_cert) {
 		handler = cert_get(exchange->recv_certtype);
 		if (handler)
@@ -1234,8 +1227,7 @@ exchange_free_aux(void *v_exch)
 	if (exchange->recv_key)
 		key_free(exchange->recv_keytype, ISAKMP_KEYTYPE_PUBLIC,
 		    exchange->recv_key);
-	if (exchange->keynote_key)
-		free(exchange->keynote_key);	/* This is just a string */
+	free(exchange->keynote_key);	/* This is just a string */
 
 	if (exchange->policy_id != -1)
 		kn_close(exchange->policy_id);
@@ -1642,16 +1634,14 @@ exchange_add_certs(struct message *msg)
 		    &certlen)) {
 			log_print("exchange_add_certs: could not obtain cert "
 			    "for a type %d cert request", aca->id);
-			if (cert)
-				free(cert);
+			free(cert);
 			return -1;
 		}
 		new_cert = realloc(cert, ISAKMP_CERT_SZ + certlen);
 		if (!new_cert) {
 			log_error("exchange_add_certs: realloc (%p, %d) "
 			    "failed", cert, ISAKMP_CERT_SZ + certlen);
-			if (cert)
-				free(cert);
+			free(cert);
 			return -1;
 		}
 		cert = new_cert;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.109 2006/11/24 13:52:14 reyk Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.110 2007/04/16 13:01:39 moritz Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -235,8 +235,7 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 
 			if (!buf2 || kn_decode_key(&dc, buf2,
 			    KEYNOTE_PRIVATE_KEY) == -1) {
-				if (buf2)
-					free(buf2);
+				free(buf2);
 				log_print("ike_auth_get_key: failed decoding "
 				    "key in \"%s\"", keyfile);
 				free(keyfile);
@@ -299,15 +298,13 @@ ignorekeynote:
 		}
 
 		if (check_file_secrecy_fd(fd, keyfile, &fsize)) {
-			if (privkeyfile)
-				free(privkeyfile);
+			free(privkeyfile);
 			return 0;
 		}
 
 		if ((keyfp = fdopen(fd, "r")) == NULL) {
 			log_print("ike_auth_get_key: fdopen failed");
-			if (privkeyfile)
-				free(privkeyfile);
+			free(privkeyfile);
 			return 0;
 		}
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
@@ -317,8 +314,7 @@ ignorekeynote:
 #endif
 		fclose(keyfp);
 
-		if (privkeyfile)
-			free(privkeyfile);
+		free(privkeyfile);
 
 		if (!rsakey) {
 			log_print("ike_auth_get_key: "
@@ -391,8 +387,7 @@ pre_shared_gen_skeyid(struct exchange *exchange, size_t *sz)
          */
 	key = ike_auth_get_key(IKE_AUTH_PRE_SHARED, exchange->name,
 	    (char *)buf, &keylen);
-	if (buf)
-		free(buf);
+	free(buf);
 
 	/* Fail if no key could be found.  */
 	if (!key)
@@ -755,8 +750,7 @@ rsa_sig_decode_hash(struct message *msg)
 			log_print("rsa_sig_decode_hash: KEY to RSA key "
 			    "conversion failed");
 
-		if (rawkey)
-			free(rawkey);
+		free(rawkey);
 	}
 #endif				/* USE_DNSSEC */
 
@@ -1046,8 +1040,7 @@ skipcert:
 	if (sigsize == -1) {
 		log_print("rsa_sig_encode_hash: "
 		    "RSA_private_encrypt () failed");
-		if (data)
-			free(data);
+		free(data);
 		free(buf);
 		RSA_free(sent_key);
 		return -1;

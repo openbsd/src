@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.52 2006/11/30 11:24:49 markus Exp $	 */
+/* $OpenBSD: ui.c,v 1.53 2007/04/16 13:01:39 moritz Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -310,8 +310,7 @@ ui_config(char *cmd)
 				ret = v ?
 				    asprintf(&nv, "%s,%s", v, vnode->field) :
 				    asprintf(&nv, "%s", vnode->field);
-				if (v)
-					free(v);
+				free(v);
 				if (ret == -1) {
 					log_error("ui_config: malloc() failed");
 					if (trans)

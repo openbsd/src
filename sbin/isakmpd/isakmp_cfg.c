@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_cfg.c,v 1.37 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: isakmp_cfg.c,v 1.38 2007/04/16 13:01:39 moritz Exp $	 */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -344,8 +344,7 @@ cfg_initiator_send_ATTR(struct message *msg)
 	return 0;
 
 fail:
-	if (id_string)
-		free(id_string);
+	free(id_string);
 	return -1;
 }
 
