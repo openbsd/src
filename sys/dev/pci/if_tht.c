@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.1 2007/04/16 10:35:29 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.2 2007/04/16 10:53:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -31,12 +31,22 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+/* registers */
+
+#define THT_PCI_BAR		0x10
+
 /* pci controller autoconf glue */
 
 struct thtc_softc {
-	struct device		csc_dev;
+	struct device		sc_dev;
 
 	void			*sc_ih;
+
+	bus_dma_tag_t		sc_dmat;
+
+	bus_space_tag_t		sc_memt;
+	bus_space_handle_t	sc_memh;
+	bus_size_t		sc_mems;
 };
 
 int			thtc_match(struct device *, void *, void *);
@@ -68,6 +78,7 @@ struct cfdriver tht_cd = {
 };
 
 /* misc goo */
+int			thtc_intr(void *);
 
 #define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
 #define sizeofa(_a)	(sizeof(_a) / sizeof((_a)[0]))
@@ -89,7 +100,41 @@ thtc_match(struct device *parent, void *match, void *aux)
 void
 thtc_attach(struct device *parent, struct device *self, void *aux)
 {
-	printf("\n");
+	struct thtc_softc		*sc = (struct thtc_softc *)self;
+	struct pci_attach_args		*pa = aux;
+	pcireg_t			memtype;
+	pci_intr_handle_t		ih;
+	const char			*intrstr;
+
+	sc->sc_dmat = pa->pa_dmat;
+
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, THT_PCI_BAR);
+	if (pci_mapreg_map(pa, THT_PCI_BAR, memtype, 0, &sc->sc_memt,
+	    &sc->sc_memh, NULL, &sc->sc_mems, 0) != 0) {
+		printf(": unable to map host registers\n");
+		return;
+	}
+
+	if (pci_intr_map(pa, &ih) != 0) {
+		printf(": unable to map interrupt\n");
+		goto unmap;
+	}
+	intrstr = pci_intr_string(pa->pa_pc, ih);
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET,
+	    thtc_intr, sc, DEVNAME(sc));
+	if (sc->sc_ih == NULL) {
+		printf(": unable to map interrupt%s%s\n",
+		    intrstr == NULL ? "" : " at ",
+		    intrstr == NULL ? "" : intrstr);
+		goto unmap;
+	}
+	printf(": %s\n", intrstr);
+
+	return;
+
+unmap:
+	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
+	sc->sc_mems = 0;
 }
 
 int
@@ -103,3 +148,10 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 {
 	printf("\n");
 }
+
+int
+thtc_intr(void *arg)
+{
+	return (0);
+}
+
