@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.12 2007/04/16 14:40:18 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.13 2007/04/16 15:14:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -26,8 +26,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
+#include <sys/sockio.h>
+#include <sys/mbuf.h>
 #include <sys/kernel.h>
+#include <sys/socket.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -38,6 +40,14 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#include <net/if.h>
+#include <net/if_dl.h>
+
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+#endif
 
 /* registers */
 
@@ -57,6 +67,10 @@
 #define THT_REG_10G_SM_DAT	0x6038
 #define THT_REG_10G_SM_ADD	0x603c
 #define THT_REG_10G_STAT	0x6040
+
+#define THT_REG_RG_RX_UNC_MAC0	0x1250
+#define THT_REG_RG_RX_UNC_MAC1	0x1260
+#define THT_REG_RG_RX_UNC_MAC2	0x1270
 
 #define THT_PORT_SIZE		0x8000
 #define THT_PORT_REGION(_p)	((_p) * THT_PORT_SIZE)
@@ -94,6 +108,10 @@ struct tht_softc {
 	void			*sc_ih;
 
 	bus_space_handle_t	sc_memh;
+
+	struct arpcom		sc_ac;
+
+	u_int16_t		sc_lladdr[3];
 };
 
 int			tht_match(struct device *, void *, void *);
@@ -116,6 +134,9 @@ struct tht_attach_args {
 	struct pci_attach_args	*taa_pa;
 	pci_intr_handle_t	taa_ih;
 };
+
+/* port operations */
+void			tht_read_lladdr(struct tht_softc *);
 
 /* bus space operations */
 u_int32_t		tht_read(struct tht_softc *, bus_size_t);
@@ -251,13 +272,24 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf("\n");
+	tht_read_lladdr(sc);
+	bcopy(sc->sc_lladdr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
+
+	printf(" address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 }
 
 int
 tht_intr(void *arg)
 {
 	return (0);
+}
+
+void
+tht_read_lladdr(struct tht_softc *sc)
+{
+	sc->sc_lladdr[0] = tht_read(sc, THT_REG_RG_RX_UNC_MAC2);
+	sc->sc_lladdr[1] = tht_read(sc, THT_REG_RG_RX_UNC_MAC1);
+	sc->sc_lladdr[2] = tht_read(sc, THT_REG_RG_RX_UNC_MAC0);
 }
 
 u_int32_t
