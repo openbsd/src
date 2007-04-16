@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.412 2007/04/05 16:34:33 mglocker Exp $
+#	$OpenBSD: Makefile,v 1.413 2007/04/16 11:10:41 dlg Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -41,7 +41,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	sdmmc.4 sdhc.4 ses.4 \
 	sequencer.4 sf.4 sf2r.4 sfr.4 sili.4 siop.4 sis.4 sk.4 sl.4 sm.4 \
 	softraid.4 speaker.4 sppp.4 sqphy.4 ss.4 st.4 ste.4 stge.4 sti.4 \
-	stp.4 sv.4 systrace.4 tcic.4 tcp.4 termios.4 ti.4 tl.4 \
+	stp.4 sv.4 systrace.4 tcic.4 tcp.4 termios.4 tht.4 ti.4 tl.4 \
 	tlphy.4 tqphy.4 trm.4 trunk.4 tsl.4 tty.4 tun.4 twe.4 txp.4 \
 	txphy.4 uaudio.4 uark.4 uath.4 uberry.4 ubsa.4 ubsec.4 ubt.4 \
 	ucom.4 ucycom.4 udav.4 udcf.4 udp.4 udsbr.4 \
@@ -73,6 +73,7 @@ MLINKS+=scsi.4 scsibus.4
 MLINKS+=sequencer.4 music.4
 MLINKS+=sk.4 skc.4 msk.4 mskc.4
 MLINKS+=speaker.4 spkr.4
+MLINKS+=tht.4 thtc.4
 MLINKS+=tty.4 cua.4
 MLINKS+=usb.4 uhub.4
 MLINKS+=vnd.4 svnd.4
