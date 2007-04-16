@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.4 2007/04/16 17:11:14 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.5 2007/04/16 17:21:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -105,7 +105,6 @@ struct nx_softc {
 int	 nxb_match(struct device *, void *, void *);
 void	 nxb_attach(struct device *, struct device *, void *);
 int	 nxb_query(struct nxb_softc *sc);
-int	 nxb_map_pci(struct nxb_softc *, struct pci_attach_args *);
 
 int	 nx_match(struct device *, void *, void *);
 void	 nx_attach(struct device *, struct device *, void *);
@@ -165,26 +164,9 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct nxb_softc	*sc = (struct nxb_softc *)self;
 	struct pci_attach_args	*pa = aux;
-	int			 i;
-
-	if (nxb_map_pci(sc, pa) != 0)
-		return;
-	if (nxb_query(sc) != 0)
-		return;
-#if 0
-	if (nxb_alloc_data(sc) != 0)
-		return;
-#endif
-
-	for (i = 0; i < NX_MAX_PORTS; i++)
-		config_found(&sc->sc_dev, &sc->sc_nxp[i], nx_print);
-}
-
-int
-nxb_map_pci(struct nxb_softc *sc, struct pci_attach_args *pa)
-{
 	pcireg_t		 memtype;
 	const char		*intrstr;
+	int			 i;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
@@ -197,12 +179,12 @@ nxb_map_pci(struct nxb_softc *sc, struct pci_attach_args *pa)
 		break;
 	default:
 		printf(": invalid memory type\n");
-		return (1);
+		return;
 	}
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &sc->sc_iot,
 	    &sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
 		printf(": unable to map system interface register\n");
-		return (1);
+		return;
 	}
 
 	if (pci_intr_map(pa, &sc->sc_ih) != 0) {
@@ -212,12 +194,17 @@ nxb_map_pci(struct nxb_softc *sc, struct pci_attach_args *pa)
 	intrstr = pci_intr_string(pa->pa_pc, sc->sc_ih);
 	printf(": %s\n", intrstr);
 
-	return (0);
+	if (nxb_query(sc) != 0)
+		goto unmap;
+
+	for (i = 0; i < NX_MAX_PORTS; i++)
+		config_found(&sc->sc_dev, &sc->sc_nxp[i], nx_print);
+
+	return;
 
  unmap:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 	sc->sc_ios = 0;
-	return (1);
 }
 
 int
