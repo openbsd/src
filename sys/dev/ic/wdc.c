@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.93 2006/05/22 05:21:57 miod Exp $     */
+/*      $OpenBSD: wdc.c,v 1.94 2007/04/16 18:18:21 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -674,9 +674,9 @@ wdcprobe(chp)
 		    chp->channel, st0, WDCS_BITS, st1, WDCS_BITS),
 		    DEBUG_PROBE);
 
-		if ((st0 & 0x7f) == 0x7f || st0 == WDSD_IBM)
+		if (st0 == 0xff || st0 == WDSD_IBM)
 			ret_value &= ~0x01;
-		if ((st1 & 0x7f) == 0x7f || st1 == (WDSD_IBM | 0x10))
+		if (st1 == 0xff || st1 == (WDSD_IBM | 0x10))
 			ret_value &= ~0x02;
 		if (ret_value == 0)
 			return 0;
