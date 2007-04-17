@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.64 2007/03/14 08:23:09 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.65 2007/04/17 19:45:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1128,7 +1128,7 @@ malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	uint8_t chan;
 	int rate;
 
-	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+	DPRINTFN(2, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
 
 	ostate = ic->ic_state;
 	timeout_del(&sc->sc_scan_to);
