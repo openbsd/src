@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: spell.ksh,v 1.10 2007/02/16 13:47:03 jmc Exp $
+# $OpenBSD: spell.ksh,v 1.11 2007/04/17 16:56:23 millert Exp $
 #
 # Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 #
@@ -62,7 +62,7 @@ while getopts "biltvxd:h:m:s:" c; do
 		;;
 	m)	DEROFF="$DEROFF -m $OPTARG"
 		;;
-	t)	DEROFF="detex"
+	t)	DEROFF="detex -w"
 		;;
 	v)	VTMP=`mktemp /tmp/spell.XXXXXXXX` || {
 			rm -f ${TMP}
