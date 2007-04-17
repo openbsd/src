@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Vstat.pod,v 1.2 2006/02/07 11:34:32 espie Exp $
+$OpenBSD: OpenBSD::Vstat.pod,v 1.3 2007/04/17 00:00:55 espie Exp $
 
 =head1 NAME
 
@@ -62,6 +62,12 @@ the C<$tag> specified as an optional argument. Otherwise, it returns 1.
 
 C<OpenBSD::Vstat:tally> displays a summary of filesystem manipulations
 after a series of additions and removals.
+
+Due to the way packages get updated, size modifications through 
+C<OpenBSD::Vstat::remove> are delayed until the next call to
+C<OpenBSD::Vstat::synchronize>: old files must be removed before
+adding the new files in order to properly account for collisions,
+but the old files occupy disk space while the new package gets extracted.
 
 =head1 CAVEATS
 
