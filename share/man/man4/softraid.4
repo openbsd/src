@@ -1,6 +1,7 @@
-.\"	$OpenBSD: softraid.4,v 1.3 2007/03/26 00:31:50 tedu Exp $
+.\"	$OpenBSD: softraid.4,v 1.4 2007/04/17 22:47:53 marco Exp $
 .\"
-.\" Copyright (c) 2007 Todd T. Fries <todd@OpenBSD.org>
+.\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
+.\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -26,33 +27,92 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides RAID 1 capabilities to
-.Ox .
+device emulates an HBA that provides RAID and other IO related services.
+The idea is to tie chunks together into an IO discipline.
+A discipline can for example provide a volume that mirrors chunks (RAID 1).
 .Pp
-It provides a single RAID level:
-.Bl -tag -width indent -offset indent
-.\" .It RAID 0
-.\" provides simple data striping across the components.
-.It RAID 1
-provides mirroring.
-.\" .It RAID 5
-.\" provides data striping across the components, with parity
-.\" distributed across all the components.
-.El
+Currently
+.Nm
+only supports a mirroring discipline.
+.Sh TERMINOLOGY
+Discipline:
+.Bd -literal -offset indent
+A discipline is a collection of functions that provides specific IO
+functionality.
+This includes IO path, bring-up, failure recovery, statistical
+information gathering etc.  Essentially a discipline is a lower
+level driver that provides the IO transformation for the softraid
+device.
+.Ed
 .Pp
-See
-.Xr bioctl 8
-for more information on configuration of RAID sets.
+Volume:
+.Bd -literal -offset indent
+A virtual disk device that is made up of a collection of chunks.
+.Ed
+.Pp
+Chunk:
+.Bd -literal -offset indent
+A partition or storage area of the type RAID.
+.Ed
+.Sh EXAMPLES
 .Pp
 The first step to using the
 .Nm
 driver is to ensure that it is suitably configured in the kernel.
-This is done by adding the following lines
-to the kernel configuration file:
+This is done by uncommenting the softraid device in sys/conf/GENERIC and
+recompiling it.
+Uncomment the folowing lines:
 .Bd -literal -offset indent
-softraid0       at root         # Software RAID
-scsibus*        at softraid?
+#softraid0       at root         # Software RAID
+#scsibus*        at softraid?
 .Ed
+.Pp
+An example to create a 3 disk RAID 1 from scratch is as follows:
+.Pp
+Initialize the partition tables of all disks:
+.Bd -literal -offset indent
+echo y | fdisk -i wd1
+echo y | fdisk -i wd2
+echo y | fdisk -i wd3
+.Ed
+.Pp
+Now create RAID partitons on all disks:
+.Bd -literal -offset indent
+echo "d a\\na\\n\\n\\n\\nRAID\\nw\\nq\\n" | disklabel -E wd1
+echo "d a\\na\\n\\n\\n\\nRAID\\nw\\nq\\n" | disklabel -E wd2
+echo "d a\\na\\n\\n\\n\\nRAID\\nw\\nq\\n" | disklabel -E wd3
+.Ed
+.Pp
+Assemble the RAID volume:
+.Bd -literal -offset indent
+bioctl -c 1 -l /dev/wd1a,/dev/wd2a,/dev/wd3a softraid0
+.Ed
+.Pp
+The console will give away what device was added to the system:
+.Bd -literal -offset indent
+scsibus0 at softraid0: 1 targets
+sd0 at scsibus0 targ 0 lun 0: <OPENBSD, SR RAID 1, 001> SCSI2
+sd0: 1MB, 0 cyl, 255 head, 63 sec, 512 bytes/sec, 3714 sec total
+.Ed
+.Pp
+It is good practice to wipe the front of the disk before using it:
+.Bd -literal -offset indent
+dd if=/dev/zero of=/dev/rsd0c bs=1m count=1
+.Ed
+.Pp
+Initialize the partition table and create a filesystem on the
+new RAID volume:
+.Bd -literal -offset indent
+echo y | fdisk -i sd0
+echo "d a\\na\\n\\n\\n\\n4.2BSD\\nw\\nq\\n" | disklabel -E sd0
+newfs /dev/rsd0a
+.Ed
+.Pp
+The RAID volume is now ready to be used as a normal disk device.
+.Pp
+See
+.Xr bioctl 8
+for more information on configuration of RAID sets.
 .Pp
 All component partitions must be of type
 .Dv RAID .
@@ -75,18 +135,18 @@ partition type should be used on such platforms.
 The
 .Nm
 driver in
-.Ox
 is an original work by Marco Peereboom.
 It first appeared in
 .Ox 4.2 .
 .Sh CAVEATS
-RAID level 1 can protect against some
-data loss due to component failure.
-However the loss of any component of a RAID 0 system
-will result in the entire filesystems on that RAID device
-being lost.
+.Pp
+The driver relies on underlying hardware to properly fail chunks.
+Currently the RAID 1 support does not have the ability to recover a
+failed chunk.
+.Pp
+The RAID 1 discipline does not initialize the mirror upon creation.
+.Pp
+Certain RAID levels can protect against some data loss due to component failure.
 RAID is
 .Em not
 a substitute for good backup practices.
-.Sh BUGS
-The driver is currently unable to handle drive failures.
