@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.202 2007/03/29 13:09:26 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.203 2007/04/17 17:17:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -370,26 +370,32 @@ conf_main	: AS asnumber		{
 
 			TAILQ_INSERT_TAIL(netconf, n, entry);
 		}
-		| NETWORK STRING STATIC filter_set	{
-			if (!strcmp($2, "inet")) {
+		| NETWORK family STATIC filter_set	{
+			if ($2 == AFI_IPv4) {
 				conf->flags |= BGPD_FLAG_REDIST_STATIC;
 				move_filterset($4, &conf->staticset);
-			} else if (!strcmp($2, "inet6")) {
+			} else if ($2 == AFI_IPv6) {
 				conf->flags |= BGPD_FLAG_REDIST6_STATIC;
 				move_filterset($4, &conf->staticset6);
+			} else {
+				yyerror("unknown family");
+				free($4);
+				YYERROR;
 			}
-			free($2);
 			free($4);
 		}
-		| NETWORK STRING CONNECTED filter_set	{
-			if (!strcmp($2, "inet")) {
+		| NETWORK family CONNECTED filter_set	{
+			if ($2 == AFI_IPv4) {
 				conf->flags |= BGPD_FLAG_REDIST_CONNECTED;
 				move_filterset($4, &conf->connectset);
-			} else if (!strcmp($2, "inet6")) {
+			} else if ($2 == AFI_IPv6) {
 				conf->flags |= BGPD_FLAG_REDIST6_CONNECTED;
 				move_filterset($4, &conf->connectset6);
+			} else {
+				yyerror("unknown family");
+				free($4);
+				YYERROR;
 			}
-			free($2);
 			free($4);
 		}
 		| NETWORK STATIC filter_set	{
