@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.87 2007/04/11 02:51:11 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.88 2007/04/17 16:07:45 mk Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -570,10 +570,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* attach battery, power supply and button devices */
 	aml_find_node(aml_root.child, "_HID", acpi_foundhid, sc);
 
-#if 0
 	/* attach docks */
 	aml_find_node(aml_root.child, "_DCK", acpi_founddock, sc);
-#endif
 
 	/* create list of devices we want to query when APM come in */
 	SLIST_INIT(&sc->sc_ac);
