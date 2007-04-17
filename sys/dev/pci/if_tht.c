@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.15 2007/04/17 01:28:14 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.16 2007/04/17 02:15:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -112,6 +112,7 @@ struct tht_softc {
 	bus_space_handle_t	sc_memh;
 
 	struct arpcom		sc_ac;
+	struct ifmedia		sc_media;
 
 	u_int16_t		sc_lladdr[3];
 };
@@ -141,6 +142,8 @@ struct tht_attach_args {
 int			tht_ioctl(struct ifnet *, u_long, caddr_t);
 void			tht_start(struct ifnet *);
 void			tht_watchdog(struct ifnet *);
+int			tht_media_change(struct ifnet *);
+void			tht_media_status(struct ifnet *, struct ifmediareq *);
 void			tht_read_lladdr(struct tht_softc *);
 
 /* bus space operations */
@@ -293,6 +296,10 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, 400);
 	IFQ_SET_READY(&ifp->if_snd);
 
+	ifmedia_init(&sc->sc_media, 0, tht_media_change, tht_media_status);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_AUTO, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
+
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -309,6 +316,7 @@ int
 tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 {
 	struct tht_softc		*sc = ifp->if_softc;
+	struct ifreq			*ifr = (struct ifreq *)addr;
 	int				error;
 	int				s;
 
@@ -320,9 +328,20 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		return (error);
 	}
 
+	switch (cmd) {
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		break;
+
+	default:
+		error = ENOTTY;
+		break;
+	}
+
 	splx(s);
 
-	return (ENOTTY);
+	return (error);
 }
 
 void
@@ -335,6 +354,22 @@ void
 tht_watchdog(struct ifnet *ifp)
 {
 	/* do nothing */
+}
+
+int
+tht_media_change(struct ifnet *ifp)
+{
+	/* ignore */
+	return (0);
+}
+
+void
+tht_media_status(struct ifnet *ifp, struct ifmediareq *imr)
+{
+	imr->ifm_active = IFM_ETHER | IFM_AUTO;
+	imr->ifm_status = IFM_AVALID;
+
+	/* TODO: check link state */
 }
 
 void
