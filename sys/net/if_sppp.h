@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.10 2006/02/24 20:34:34 claudio Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.11 2007/04/17 21:36:58 mpf Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -66,6 +66,11 @@ struct sipcp {
 #define IPCP_HISADDR_SEEN 1	/* have seen his address already */
 #define IPCP_MYADDR_DYN   2	/* my address is dynamically assigned */
 #define IPCP_MYADDR_SEEN  4	/* have seen his address already */
+#define IPCP_HISADDR_DYN  8	/* his address is dynamically assigned */
+	u_int32_t saved_hisaddr; /* if hisaddr (IPv4) is dynamic, save
+				  * original one here, in network byte order */
+	u_int32_t req_hisaddr;	/* remote address requested */
+	u_int32_t req_myaddr;	/* local address requested */
 };
 
 #define AUTHNAMELEN	64
