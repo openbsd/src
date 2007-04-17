@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ccdconfig.8,v 1.19 2007/02/20 13:47:28 jmc Exp $
+.\"	$OpenBSD: ccdconfig.8,v 1.20 2007/04/17 15:52:24 tedu Exp $
 .\"	$NetBSD: ccdconfig.8,v 1.4 1996/02/28 01:01:17 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,14 +62,6 @@
 .Fl U
 .Op Fl v
 .Op Fl f Ar config_file
-.Nm ccdconfig
-.Fl g
-.Op Fl M Ar core
-.Op Fl N Ar system
-.Oo
-.Ar ccd Oo ...
-.Oc
-.Oc
 .Sh DESCRIPTION
 .Nm
 is used to dynamically configure and unconfigure concatenated disk
@@ -90,24 +82,6 @@ When configuring or unconfiguring all devices, read the file
 .Pa config_file
 instead of the default
 .Pa /etc/ccd.conf .
-.It Fl g
-Dump the current ccd configuration in a format suitable for use as the
-ccd configuration file.
-If no arguments are specified, every configured
-ccd is dumped.
-Otherwise, the configuration of each listed ccd is dumped.
-Only root can dump the configuration (unless
-.Nm
-is made setgid kmem).
-.It Fl M Ar core
-Extract values associated with the name list from
-.Ar core
-instead of the default
-.Pa /dev/mem .
-.It Fl N Ar system
-Extract the name list from
-.Ar system
-instead of the running kernel.
 .It Fl U
 Unconfigure all ccd devices listed in the ccd configuration file.
 .It Fl u
