@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.4 2007/04/17 22:47:53 marco Exp $
+.\"	$OpenBSD: softraid.4,v 1.5 2007/04/17 22:50:59 marco Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -67,7 +67,7 @@ Uncomment the folowing lines:
 #scsibus*        at softraid?
 .Ed
 .Pp
-An example to create a 3 disk RAID 1 from scratch is as follows:
+An example to create a 3 chunk RAID 1 from scratch is as follows:
 .Pp
 Initialize the partition tables of all disks:
 .Bd -literal -offset indent
@@ -76,7 +76,7 @@ echo y | fdisk -i wd2
 echo y | fdisk -i wd3
 .Ed
 .Pp
-Now create RAID partitons on all disks:
+Now create RAID partitions on all disks:
 .Bd -literal -offset indent
 echo "d a\\na\\n\\n\\n\\nRAID\\nw\\nq\\n" | disklabel -E wd1
 echo "d a\\na\\n\\n\\n\\nRAID\\nw\\nq\\n" | disklabel -E wd2
