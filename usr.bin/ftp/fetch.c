@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.72 2007/02/08 03:19:12 ray Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.73 2007/04/17 14:58:51 drahn Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.72 2007/02/08 03:19:12 ray Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.73 2007/04/17 14:58:51 drahn Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -69,6 +69,7 @@ static const char rcsid[] = "$OpenBSD: fetch.c,v 1.72 2007/02/08 03:19:12 ray Ex
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#include <resolv.h>
 
 #ifndef SMALL
 #include <openssl/ssl.h>
@@ -100,6 +101,7 @@ char		*SSL_readline(SSL *, size_t *);
 #define FTP_PROXY	"ftp_proxy"	/* env var with ftp proxy location */
 #define HTTP_PROXY	"http_proxy"	/* env var with http proxy location */
 
+#define COOKIE_MAX_LEN	42
 
 #define EMPTYSTRING(x)	((x) == NULL || (*(x) == '\0'))
 
@@ -124,6 +126,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	struct addrinfo hints, *res0, *res;
 	const char * volatile savefile;
 	char * volatile proxyurl = NULL;
+	char *cookie = NULL;
 	volatile int s = -1, out;
 	volatile sig_t oldintr;
 	FILE *fin = NULL;
@@ -215,7 +218,28 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 		*--path = '/';			/* add / back to real path */
 		path = strchr(host, '/');	/* remove trailing / on host */
 		if (!EMPTYSTRING(path))
+			*path++ = '\0';		/* i guess this ++ is useless */
+
+		path = strchr(host, '@');	/* look for credentials in proxy */
+		if (!EMPTYSTRING(path)) {
 			*path++ = '\0';
+			cookie = strchr(host, ':');
+			if (EMPTYSTRING(cookie)) {
+				warnx("Malformed proxy URL: %s", proxyenv);
+				goto cleanup_url_get;
+			}
+			cookie  = malloc(COOKIE_MAX_LEN);
+			b64_ntop(host, strlen(host), cookie, COOKIE_MAX_LEN);
+			/*
+			 * This removes the password from proxyenv,
+			 * filling with stars
+			 */
+			for (host = strchr(proxyenv + 5, ':');  *host != '@';
+			     host++)
+				*host = '*';
+
+			host = path;
+		}
 		path = newline;
 	}
 
@@ -431,8 +455,14 @@ again:
 		 * Host: directive must use the destination host address for
 		 * the original URI (path).  We do not attach it at this moment.
 		 */
-		ftp_printf(fin, ssl, "GET %s HTTP/1.0\r\n%s\r\n\r\n", path,
-		    HTTP_USER_AGENT);
+		if (cookie)
+			ftp_printf(fin, ssl, "GET %s HTTP/1.0\r\n"
+			    "Proxy-Authorization: Basic %s\r\n%s\r\n\r\n",
+			    path, cookie, HTTP_USER_AGENT);
+		else
+			ftp_printf(fin, ssl, "GET %s HTTP/1.0\r\n%s\r\n\r\n",
+			    path, HTTP_USER_AGENT);
+
 	} else {
 		ftp_printf(fin, ssl, "GET /%s HTTP/1.0\r\nHost: ", path);
 		if (strchr(host, ':')) {
