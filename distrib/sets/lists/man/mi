@@ -1419,6 +1419,8 @@
 ./usr/share/man/cat4/nsphyter.0
 ./usr/share/man/cat4/null.0
 ./usr/share/man/cat4/nviic.0
+./usr/share/man/cat4/nx.0
+./usr/share/man/cat4/nxb.0
 ./usr/share/man/cat4/ohci.0
 ./usr/share/man/cat4/onewire.0
 ./usr/share/man/cat4/oosiop.0
@@ -1644,6 +1646,8 @@
 ./usr/share/man/cat4/tcic.0
 ./usr/share/man/cat4/tcp.0
 ./usr/share/man/cat4/termios.0
+./usr/share/man/cat4/tht.0
+./usr/share/man/cat4/thtc.0
 ./usr/share/man/cat4/ti.0
 ./usr/share/man/cat4/tl.0
 ./usr/share/man/cat4/tlphy.0
