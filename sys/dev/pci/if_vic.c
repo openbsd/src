@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.40 2007/04/14 23:35:35 reyk Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.41 2007/04/17 02:07:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1114,8 +1114,8 @@ int
 vic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct vic_softc *sc = (struct vic_softc *)ifp->if_softc;
+	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	s = splnet();
