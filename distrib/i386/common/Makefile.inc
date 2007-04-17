@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.17 2007/04/13 17:34:40 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.18 2007/04/17 15:05:32 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -30,7 +30,7 @@ ${FS}:	bsd.gz
 	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${FLOPPYSIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w -r ${VND} ${FLOPPYTYPE}
-	newfs -m 0 -o space -i 81920 -c ${FLOPPYSIZE} ${VND_RDEV}
+	newfs -m 0 -o space -i 524288 -c ${FLOPPYSIZE} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${BOOT} ${.OBJDIR}/boot
 	strip ${.OBJDIR}/boot
