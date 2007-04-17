@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.21 2007/04/17 05:59:20 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.22 2007/04/17 23:18:23 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1535,6 +1535,10 @@ sr_raid1_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 	s = splbio();
 	old_state = sd->sd_vol.sv_chunks[c]->src_meta.scm_status;
 
+	/* multiple IOs to the same chunk that fail will come through here */
+	if (old_state == new_state)
+		goto done;
+
 	switch (old_state) {
 	case BIOC_SDONLINE:
 		switch (new_state) {
@@ -1589,6 +1593,7 @@ die:
 	sd->sd_vol.sv_chunks[c]->src_meta.scm_status = new_state;
 	sd->sd_set_vol_state(sd);
 
+done:
 	splx(s);
 }
 
