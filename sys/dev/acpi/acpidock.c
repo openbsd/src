@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.19 2007/04/16 23:51:15 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.20 2007/04/17 16:04:00 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -163,7 +163,7 @@ acpidock_dockctl(struct acpidock_softc *sc, int dock)
 	int rv;
 
 	memset(&cmd, 0, sizeof cmd);
-	cmd.v_integer = 1;
+	cmd.v_integer = dock;
 	cmd.type = AML_OBJTYPE_INTEGER;
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_DCK", 1, &cmd,
 	    &res) != 0) {
