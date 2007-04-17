@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.17 2007/04/17 10:34:54 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.18 2007/04/17 14:07:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -55,24 +55,84 @@
 
 #define THT_PCI_BAR		0x10
 
-#define THT_REG_10G_REV		0x6000
-#define THT_REG_10G_SCR		0x6004
-#define THT_REG_10G_CTL		0x6008
-#define THT_REG_10G_FMT_LNG	0x6014
-#define THT_REG_10G_PAUSE	0x6018
-#define THT_REG_10G_RX_SEC	0x601c
-#define THT_REG_10G_TX_SEC	0x6020
-#define THT_REG_10G_RFIFO_AEF	0x6024
-#define THT_REG_10G_TFIFO_AEF	0x6028
-#define THT_REG_10G_SM_STAT	0x6030
-#define THT_REG_10G_SM_CMD	0x6034
-#define THT_REG_10G_SM_DAT	0x6038
-#define THT_REG_10G_SM_ADD	0x603c
-#define THT_REG_10G_STAT	0x6040
+#define _Q(_q)			((_q) * 4)
 
-#define THT_REG_RG_RX_UNC_MAC0	0x1250
-#define THT_REG_RG_RX_UNC_MAC1	0x1260
-#define THT_REG_RG_RX_UNC_MAC2	0x1270
+/* General Configuration */
+#define THT_REG_END_SEL		0x5448 /* PCI Endian Select */
+#define THT_REG_CLKPLL		0x5000
+/* Descriptors and FIFO Registers */
+#define THT_REG_TXT_CFG0(_q)	(0x4040 + _Q(_q)) /* CFG0 TX Task queues */
+#define THT_REG_RXF_CFG0(_q)	(0x4050 + _Q(_q)) /* CFG0 RX Free queues */
+#define THT_REG_RXD_CFG0(_q)	(0x4060 + _Q(_q)) /* CFG0 RX DSC queues */
+#define THT_REG_TXF_CFG0(_q)	(0x4070 + _Q(_q)) /* CFG0 TX Free queues */
+#define THT_REG_TXT_CFG1(_q)	(0x4000 + _Q(_q)) /* CFG1 TX Task queues */
+#define THT_REG_RXF_CFG1(_q)	(0x4010 + _Q(_q)) /* CFG1 RX Free queues */
+#define THT_REG_RXD_CFG1(_q)	(0x4020 + _Q(_q)) /* CFG1 RX DSC queues */
+#define THT_REG_TXF_CFG1(_q)	(0x4030 + _Q(_q)) /* CFG1 TX Free queues */
+#define THT_REG_TXT_RPTR(_q)	(0x40c0 + _Q(_q)) /* TX Task read ptr */
+#define THT_REG_RXF_RPTR(_q)	(0x40d0 + _Q(_q)) /* RX Free read ptr */
+#define THT_REG_RXD_RPTR(_q)	(0x40e0 + _Q(_q)) /* RX DSC read ptr */
+#define THT_REG_TXF_RPTR(_q)	(0x40f0 + _Q(_q)) /* TX Free read ptr */
+#define THT_REG_TXT_WPTR(_q)	(0x4080 + _Q(_q)) /* TX Task write ptr */
+#define THT_REG_RXF_WPTR(_q)	(0x4090 + _Q(_q)) /* RX Free write ptr */
+#define THT_REG_RXD_WPTR(_q)	(0x40a0 + _Q(_q)) /* RX DSC write ptr */
+#define THT_REG_TXF_WPTR(_q)	(0x40b0 + _Q(_q)) /* TX Free write ptr */
+#define THT_REG_HTB_ADDR	0x4100 /* HTB Addressing Mechanism enable */
+#define THT_REG_HTB_ADDR_HI	0x4110 /* High HTB Address */
+#define THT_REG_HTB_ST_TMR	0x3290 /* HTB Timer */
+#define THT_REG_RDINTCM(_q)	(0x0120 + _Q(_q)) /* RX DSC Intr Coalescing */
+#define THT_REG_TDINTCM(_q)	(0x0120 + _Q(_q)) /* TX DSC Intr Coalescing */
+/* 10G Ethernet MAC */
+#define THT_REG_10G_REV		0x6000 /* Revision */
+#define THT_REG_10G_SCR		0x6004 /* Scratch */
+#define THT_REG_10G_CTL		0x6008 /* Control/Status */
+#define THT_REG_10G_FRM_LEN	0x6014 /* Fram Length */
+#define THT_REG_10G_PAUSE	0x6018 /* Pause Quanta */
+#define THT_REG_10G_RX_SEC	0x601c /* RX Section */
+#define THT_REG_10G_TX_SEC	0x6020 /* TX Section */
+#define THT_REG_10G_RFIFO_AEF	0x6024 /* RX FIFO Almost Empty/Full */
+#define THT_REG_10G_TFIFO_AEF	0x6028 /* TX FIFO Almost Empty/Full */
+#define THT_REG_10G_SM_STAT	0x6030 /* MDIO Status */
+#define THT_REG_10G_SM_CMD	0x6034 /* MDIO Command */
+#define THT_REG_10G_SM_DAT	0x6038 /* MDIO Data */
+#define THT_REG_10G_SM_ADD	0x603c /* MDIO Address */
+#define THT_REG_10G_STAT	0x6040 /* Status */
+/* Statistic Counters */
+/* XXX todo */
+/* Status Registers */
+#define THT_REG_MAC_LNK_STAT	0x0200 /* Link Status */
+/* Interrupt Registers */
+#define THT_REG_ISR		0x5100 /* Interrupt Status */
+#define THT_REG_ISR_GTI		0x5080 /* GTI Interrupt Status */
+#define THT_REG_IMR		0x5110 /* Interrupt Mask */
+#define THT_REG_IMR_GTI		0x5090 /* GTI Interrupt Mask */
+#define THT_REG_ISR_MSK		0x5140 /* ISR Masked */
+/* Global Counters */
+/* XXX todo */
+/* DDR2 SDRAM Controller Registers */
+/* XXX TBD */
+/* EEPROM Registers */
+/* XXX todo */
+/* Init arbitration and status registers */
+#define THT_REG_INIT_SEMAPHORE	0x5170 /* Init Semaphore */
+#define THT_REG_INIT_STATUS	0x5180 /* Init Status */
+/* PCI Credits Registers */
+/* XXX todo */
+/* TX Arbitration Registers */
+#define THT_REG_TXTSK_PR(_q)	(0x41b0 + _Q(_q)) /* TX Queue Priority */
+/* RX Part Registers */
+#define THT_REG_RX_FLT		0x1240 /* RX Filter Configuration */
+#define THT_REG_RX_MAX_FRAME	0x12c0 /* Max Frame Size */
+#define THT_REG_RX_UNC_MAC0	0x1250 /* MAC Address low word */
+#define THT_REG_RX_UNC_MAC1	0x1260 /* MAC Address mid word */
+#define THT_REG_RX_UNC_MAC2	0x1270 /* MAC Address high word */
+/* SW Reset Registers */
+#define THT_REG_RST_PRT		0x7000 /* Reset Port */
+#define THT_REG_DIS_PRT		0x7010 /* Disable Port */
+#define THT_REG_RST_QU_0	0x7020 /* Reset Queue 0 */
+#define THT_REG_RST_QU_1	0x7028 /* Reset Queue 1 */
+#define THT_REG_DIS_QU_0	0x7030 /* Disable Queue 0 */
+#define THT_REG_DIS_QU_1	0x7038 /* Disable Queue 1 */
 
 #define THT_PORT_SIZE		0x8000
 #define THT_PORT_REGION(_p)	((_p) * THT_PORT_SIZE)
@@ -449,9 +509,7 @@ void
 tht_read_lladdr(struct tht_softc *sc)
 {
 	const static bus_size_t		r[3] = {
-	    THT_REG_RG_RX_UNC_MAC2,
-	    THT_REG_RG_RX_UNC_MAC1,
-	    THT_REG_RG_RX_UNC_MAC0
+	    THT_REG_RX_UNC_MAC2, THT_REG_RX_UNC_MAC1, THT_REG_RX_UNC_MAC0
 	};
 	int				i;
 
