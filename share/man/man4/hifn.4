@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.44 2007/03/18 16:36:18 tom Exp $
+.\"	$OpenBSD: hifn.4,v 1.45 2007/04/17 08:17:46 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -39,31 +39,24 @@ driver supports various cards containing the Hifn 7751, Hifn 7811, Hifn 7951,
 Hifn 7955, Hifn 7956, or Hifn 9751 chipsets, such as
 .Bl -tag -width namenamenamena -offset indent
 .It Invertex AEON
-No longer being made.
-Came as 128KB SRAM model, or 2MB DRAM model.
+Comes as 128KB SRAM model, or 2MB DRAM model.
 .It Hifn 7751
 Reference board with 512KB SRAM.
 .It PowerCrypt
-See
-.Pa http://www.powercrypt.com/ .
 Comes with 512KB SRAM.
+.It PowerCrypt 5x
+Contains a 7956 and supports symmetric encryption (including AES),
+random number, and modular exponentation operations.
 .It XL-Crypt
-See
-.Pa http://www.powercrypt.com/ .
 Only board based on 7811 (which is faster than 7751 and has
 a random number generator).
 .It NetSec 7751
-See
-.Pa http://www.netsec.net/ .
 7751 board with 1MB of SRAM.
-No longer in production.
 .It Soekris Engineering vpn1201 and vpn1211
-See
-.Pa http://www.soekris.com/ .
-Contains a 7951 and supports symmetric and random number operations.
+Contains a 7951 and supports symmetric encryption and random number operations.
 .It Soekris Engineering vpn1401 and vpn1411
-Contains a 7955 and supports symmetric (including AES), random number,
-and modular exponentiation operations.
+Contains a 7955 and supports symmetric encryption (including AES),
+random number, and modular exponentiation operations.
 .It Hifn 9751
 Reference board with 512KB SRAM.
 This is really a Hifn 7751 which only supports compression.
