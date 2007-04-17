@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.20 2007/04/14 21:28:08 tedu Exp $ */
+/* $OpenBSD: softraid.c,v 1.21 2007/04/17 05:59:20 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1284,6 +1284,7 @@ sr_raid1_rw(struct sr_workunit *wu)
 
 	wu->swu_blk_start = blk;
 	wu->swu_blk_end = blk + xs->datalen - 1;
+	wu->swu_io_count = ios;
 
 	for (i = 0; i < ios; i++) {
 		ccb = sr_get_ccb(sd);
@@ -1294,6 +1295,23 @@ sr_raid1_rw(struct sr_workunit *wu)
 			    sd->sd_vol.sv_meta.svm_devname);
 			goto bad;
 		}
+
+		if (xs->flags & SCSI_POLL) {
+			ccb->ccb_buf.b_flags = 0;
+			ccb->ccb_buf.b_iodone = NULL;
+		} else {
+			ccb->ccb_buf.b_flags = B_CALL;
+			ccb->ccb_buf.b_iodone = sr_raid1_intr;
+		}
+
+		ccb->ccb_buf.b_blkno = blk;
+		ccb->ccb_buf.b_bcount = xs->datalen;
+		ccb->ccb_buf.b_bufsize = xs->datalen;
+		ccb->ccb_buf.b_resid = xs->datalen;
+		ccb->ccb_buf.b_data = xs->data;
+		ccb->ccb_buf.b_error = 0;
+		ccb->ccb_buf.b_proc = curproc;
+		ccb->ccb_wu = wu;
 
 		if (xs->flags & SCSI_DATA_IN) {
 			rt = 0;
@@ -1335,7 +1353,7 @@ ragain:
 
 			case BIOC_SDHOTSPARE: /* should never happen */
 			case BIOC_SDOFFLINE:
-				ios--;
+				wu->swu_io_count--;
 				sr_put_ccb(ccb);
 				continue;
 
@@ -1345,25 +1363,10 @@ ragain:
 
 		}
 		ccb->ccb_target = x;
-		ccb->ccb_buf.b_blkno = blk;
-		ccb->ccb_buf.b_bcount = xs->datalen;
-		ccb->ccb_buf.b_bufsize = xs->datalen;
-		ccb->ccb_buf.b_resid = xs->datalen;
-		ccb->ccb_buf.b_data = xs->data;
-		ccb->ccb_buf.b_error = 0;
-		ccb->ccb_buf.b_proc = curproc;
-		ccb->ccb_wu = wu;
 		ccb->ccb_buf.b_dev = sd->sd_vol.sv_chunks[x]->src_dev_mm;
 		ccb->ccb_buf.b_vp = sd->sd_vol.sv_chunks[x]->src_dev_vn;
-		LIST_INIT(&ccb->ccb_buf.b_dep);
 
-		if (xs->flags & SCSI_POLL) {
-			ccb->ccb_buf.b_flags = 0;
-			ccb->ccb_buf.b_iodone = NULL;
-		} else {
-			ccb->ccb_buf.b_flags = B_CALL;
-			ccb->ccb_buf.b_iodone = sr_raid1_intr;
-		}
+		LIST_INIT(&ccb->ccb_buf.b_dep);
 
 		TAILQ_INSERT_TAIL(&wu->swu_ccb, ccb, ccb_link);
 
@@ -1392,7 +1395,6 @@ ragain:
 		}
 #endif
 	}
-	wu->swu_io_count = ios;
 
 	/* walk queue backwards and fill in collider if we have one */
 	s = splbio();
