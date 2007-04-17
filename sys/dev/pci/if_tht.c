@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.14 2007/04/16 22:17:54 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.15 2007/04/17 01:28:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -43,6 +43,8 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_media.h>
+#include <net/if_types.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -136,6 +138,9 @@ struct tht_attach_args {
 };
 
 /* port operations */
+int			tht_ioctl(struct ifnet *, u_long, caddr_t);
+void			tht_start(struct ifnet *);
+void			tht_watchdog(struct ifnet *);
 void			tht_read_lladdr(struct tht_softc *);
 
 /* bus space operations */
@@ -254,6 +259,7 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 	struct thtc_softc		*csc = (struct thtc_softc *)parent;
 	struct tht_softc		*sc = (struct tht_softc *)self;
 	struct tht_attach_args		*taa = aux;
+	struct ifnet			*ifp;
 
 	sc->sc_thtc = csc;
 
@@ -275,6 +281,21 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 	tht_read_lladdr(sc);
 	bcopy(sc->sc_lladdr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
 
+	ifp = &sc->sc_ac.ac_if;
+	ifp->if_softc = sc;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_ioctl = tht_ioctl;
+	ifp->if_start = tht_start;
+	ifp->if_watchdog = tht_watchdog;
+	ifp->if_hardmtu = 1500; /* XXX */
+	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
+	IFQ_SET_MAXLEN(&ifp->if_snd, 400);
+	IFQ_SET_READY(&ifp->if_snd);
+
+	if_attach(ifp);
+	ether_ifattach(ifp);
+
 	printf(" address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 }
 
@@ -282,6 +303,38 @@ int
 tht_intr(void *arg)
 {
 	return (0);
+}
+
+int
+tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
+{
+	struct tht_softc		*sc = ifp->if_softc;
+	int				error;
+	int				s;
+
+	s = splnet();
+
+	error = ether_ioctl(ifp, &sc->sc_ac, cmd, addr);
+	if (error > 0) {
+		splx(s);
+		return (error);
+	}
+
+	splx(s);
+
+	return (ENOTTY);
+}
+
+void
+tht_start(struct ifnet *ifp)
+{
+	/* do nothing */
+}
+
+void
+tht_watchdog(struct ifnet *ifp)
+{
+	/* do nothing */
 }
 
 void
