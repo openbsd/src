@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.55 2007/04/13 17:33:02 millert Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.56 2007/04/17 14:24:14 millert Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -282,6 +282,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 		sblock.fs_trackskew = 0;
 		sblock.fs_cpc = 0;
 	} else {
+		sblock.fs_inodefmt = FS_44INODEFMT;
 		sblock.fs_sblockloc = SBLOCK_UFS2;
 		sblock.fs_nindir = sblock.fs_bsize / sizeof(ufs2_daddr_t);
 		sblock.fs_inopb = sblock.fs_bsize / sizeof(struct ufs2_dinode);
