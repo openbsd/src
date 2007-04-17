@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.16 2007/04/17 02:15:13 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.17 2007/04/17 10:34:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -76,6 +76,79 @@
 
 #define THT_PORT_SIZE		0x8000
 #define THT_PORT_REGION(_p)	((_p) * THT_PORT_SIZE)
+
+/* hardware structures (we're using the 64 bit variants) */
+
+/* physical buffer descriptor */
+struct tht_pbd {
+	u_int32_t		addr_lo;
+	u_int32_t		addr_hi;
+	u_int32_t		len;
+} __packed;
+
+/* rx free fifo */
+struct tht_rxf {
+	u_int32_t		flags;
+
+	u_int32_t		uid_lo;
+	u_int32_t		uid_hi;
+
+	/* followed by a pdb list */
+} __packed;
+
+/* rx descriptor type 2 */
+struct tht_rx_desc {
+	u_int32_t		flags;
+	u_int16_t		len;
+	u_int16_t		vlan;
+
+	u_int32_t		uid_lo;
+	u_int32_t		uid_hi;
+} __packed;
+
+/* rx decriptor type 3: data chain instruction */
+struct tht_rx_desc_dc {
+	/* preceded by tht_rx_desc */
+
+	u_int16_t		cd_offset;
+	u_int16_t		flags;
+
+	u_int8_t		data[4];
+} __packed;
+
+/* rx descriptor type 4: rss information */
+struct tht_rx_desc_rss {
+	/* preceded by tht_rx_desc */
+
+	u_int8_t		rss_hft;
+	u_int8_t		rss_type;
+	u_int8_t		rss_tcpu;
+	u_int8_t		reserved;
+
+	u_int32_t		rss_hash;
+} __packed;
+
+/* TX_TASK FIFO */
+struct tht_tx_task {
+	u_int32_t		flags;
+	u_int16_t		mss_mtu;
+	u_int16_t		len;
+
+	u_int32_t		uid_lo;
+	u_int32_t		uid_hi;
+
+	/* followed by a pbd list */
+} __packed;
+
+/* TX_FREE FIFO */
+struct tht_tx_free {
+	u_int32_t		status;
+
+	u_int32_t		uid_lo;
+	u_int32_t		uid_hi;
+
+	u_int32_t		pad;
+} __packed;
 
 /* pci controller autoconf glue */
 
