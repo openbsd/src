@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.19 2007/04/18 02:12:30 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.20 2007/04/18 06:54:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -144,6 +144,7 @@
 #define THT_REG_RX_UNC_MAC2	0x1270 /* MAC Address high word */
 /* SW Reset Registers */
 #define THT_REG_RST_PRT		0x7000 /* Reset Port */
+#define  THT_REG_RST_PRT_ACTIVE		0x1 /* port reset is active */
 #define THT_REG_DIS_PRT		0x7010 /* Disable Port */
 #define THT_REG_RST_QU_0	0x7020 /* Reset Queue 0 */
 #define THT_REG_RST_QU_1	0x7028 /* Reset Queue 1 */
@@ -152,6 +153,7 @@
 
 #define THT_PORT_SIZE		0x8000
 #define THT_PORT_REGION(_p)	((_p) * THT_PORT_SIZE)
+#define THT_NQUEUES		4
 
 /* hardware structures (we're using the 64 bit variants) */
 
@@ -172,7 +174,7 @@ struct tht_rxf {
 	/* followed by a pdb list */
 } __packed;
 
-/* rx descriptor type 2 */
+/* rx descriptor */
 struct tht_rx_desc {
 	u_int32_t		flags;
 	u_int16_t		len;
