@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.105 2007/04/13 08:31:50 martin Exp $ */
+/* $OpenBSD: machdep.c,v 1.106 2007/04/18 16:53:19 martin Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -204,6 +204,9 @@ int	alpha_unaligned_sigbus = 1;	/* SIGBUS on fixed-up accesses */
 #ifndef NO_IEEE
 int	alpha_fp_sync_complete = 0;	/* fp fixup if sync even without /s */
 #endif
+
+/* used by hw_sysctl */
+extern char *hw_serial;
 
 /*
  * XXX This should be dynamically sized, but we have the chicken-egg problem!
@@ -1049,6 +1052,7 @@ void
 identifycpu()
 {
 	char *s;
+	int slen;
 
 	/*
 	 * print out CPU identification information.
@@ -1059,15 +1063,19 @@ identifycpu()
 			goto skipMHz;
 	printf(", %ldMHz", hwrpb->rpb_cc_freq / 1000000);
 skipMHz:
+	/* fill in hw_serial if a serial number is known */
+	slen = strlen(hwrpb->rpb_ssn) + 1;
+	if (slen > 1) {
+		hw_serial = malloc(slen, M_SYSCTL, M_NOWAIT);
+		if (hw_serial)
+			strlcpy(hw_serial, (char *)hwrpb->rpb_ssn, slen);
+	}
+
 	printf("\n");
 	printf("%ld byte page size, %d processor%s.\n",
 	    hwrpb->rpb_page_size, alpha_cpus, alpha_cpus == 1 ? "" : "s");
 #if 0
-	/* this isn't defined for any systems that we run on? */
-	printf("serial number 0x%lx 0x%lx\n",
-	    ((long *)hwrpb->rpb_ssn)[0], ((long *)hwrpb->rpb_ssn)[1]);
-
-	/* and these aren't particularly useful! */
+	/* this is not particularly useful! */
 	printf("variation: 0x%lx, revision 0x%lx\n",
 	    hwrpb->rpb_variation, *(long *)hwrpb->rpb_revision);
 #endif
