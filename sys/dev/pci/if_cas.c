@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.7 2007/04/15 19:57:16 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.8 2007/04/18 21:08:35 kettenis Exp $	*/
 
 /*
  *
@@ -1167,7 +1167,7 @@ cas_rint(struct cas_softc *sc)
 			rxs = &sc->sc_rxsoft[idx];
 
 			DPRINTF(sc, ("hdr at idx %d, off %d, len %d\n",
-			    idx, len, off));
+			    idx, off, len));
 
 			bus_dmamap_sync(sc->sc_dmatag, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
