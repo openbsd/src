@@ -1,4 +1,4 @@
-/* $OpenBSD: cia_dma.c,v 1.7 2006/04/04 21:20:40 brad Exp $ */
+/* $OpenBSD: cia_dma.c,v 1.8 2007/04/18 16:56:34 martin Exp $ */
 /* $NetBSD: cia_dma.c,v 1.16 2000/06/29 08:58:46 mrg Exp $ */
 
 /*-
@@ -118,7 +118,7 @@ cia_dma_init(ccp)
 	t->_cookie = ccp;
 	t->_wbase = CIA_DIRECT_MAPPED_BASE;
 	t->_wsize = CIA_DIRECT_MAPPED_SIZE;
-	t->_next_window = NULL;
+	t->_next_window = &ccp->cc_dmat_sgmap;
 	t->_boundary = 0;
 	t->_sgmap = NULL;
 	t->_get_tag = cia_dma_get_tag;
@@ -273,6 +273,12 @@ cia_dma_get_tag(t, bustype)
 		 * Systems with a CIA can only support 1G
 		 * of memory, so we use the direct-mapped window
 		 * on busses that have 32-bit DMA.
+		 *
+		 * Ahem:  I have a PWS 500au with 1.5G of memory, and it
+		 * had problems doing DMA because it was not falling back
+		 * to using SGMAPs.  I've fixed that and my PWS now works with
+		 * 1.5G.  There have been other reports about failures with
+		 * more than 1.0G of memory.  Michael Hitch
 		 */
 		return (&ccp->cc_dmat_direct);
 
