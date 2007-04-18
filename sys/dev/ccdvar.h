@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdvar.h,v 1.9 2007/04/06 06:41:42 tedu Exp $	*/
+/*	$OpenBSD: ccdvar.h,v 1.10 2007/04/18 19:06:56 miod Exp $	*/
 /*	$NetBSD: ccdvar.h,v 1.11 1996/02/28 01:08:32 thorpej Exp $	*/
 
 /*-
@@ -112,7 +112,7 @@ struct ccd_ioctl {
 #define	CCDF_SWAP	0x01	/* interleave should be dmmax */
 #define CCDF_UNIFORM	0x02	/* use LCCD of sizes for uniform interleave */
 #define CCDF_MIRROR	0x04	/* enable data mirroring */
-#define CCDF_OLD	0x08	/* use slower but less restrictive I/O code */
+#define CCDF_OLD	0x08	/* legacy */
 #define	CCDF_BITS \
     "\020\01swap\02uniform\03mirror\04old"
 
