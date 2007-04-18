@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.24 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.25 2007/04/18 18:51:37 art Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -176,7 +176,12 @@ struct vm_page {
 					   uvm_object */
 #define PQ_SWAPBACKED	(PQ_ANON|PQ_AOBJ)
 #define	PQ_ENCRYPT	0x00400000	/* page needs {en,de}cryption */
-#define PQ_MASK		0xffff0000
+#define PQ_MASK		0x00ff0000
+
+#define PG_PMAP0	0x01000000	/* Used by some pmaps. */
+#define PG_PMAP1	0x02000000	/* Used by some pmaps. */
+#define PG_PMAP2	0x04000000	/* Used by some pmaps. */
+#define PG_PMAP3	0x08000000	/* Used by some pmaps. */
 
 /*
  * physical memory layout structure
