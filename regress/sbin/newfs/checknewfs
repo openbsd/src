@@ -1,0 +1,49 @@
+#!/bin/ksh
+#	$OpenBSD: checknewfs,v 1.1 2007/04/18 10:18:23 otto Exp $
+# Written by Otto Moerbeek, 2007,  Public domain
+
+
+cleanup() {
+	vnconfig -u svnd0
+	rm -f $image
+}
+
+trap 'cleanup' INT
+
+dotest() {
+	image=$(mktemp -t imageXXXXXXXXXX);
+	dd if=/dev/prandom of=$image bs=512 count=$1 2>/dev/null &&
+	vnconfig svnd0 $image &&
+	disklabel -w -r svnd0 $2 &&
+	newfs $3 /dev/rsvnd0a &&
+	fsck -nf /dev/svnd0a | fgrep SALVAGE
+	if [ $? == 0 ]; then
+		ret=$(($ret + 1))
+		echo TEST $1 $2 \"$3\" failed
+	else
+		echo TEST $1 $2 \"$3\" OK
+	fi
+	echo ==========================
+	if [ $clean = 1 ]; then
+		cleanup
+	fi
+}
+
+ret=0
+
+vnconfig -u svnd0 > /dev/null 2>&1
+if [ $# == 0 ]; then 
+	clean=1
+	dotest 3800 rdroot "-m 0 -o space -i 4096" 
+	dotest 5760 floppy288 "-m 0 -o space -i 81920 -c 5760" 
+	dotest 5760 floppy288 "-m 0 -o space -i 81920 -c 5752" 
+	dotest 5760 floppy288 "-m 0 -o space -i 524288 -c 5760" 
+	dotest 5760 floppy288 "-m 0 -o space -i 524288 -c 5761" 
+	dotest 2880 floppy3 "-m 0 -o space -i 81920"
+	dotest 2880 floppy3 "-m 0 -o space -i 81920 -c 2880"
+else
+	clean=0
+	dotest "${@}"
+fi
+
+exit $ret
