@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.18 2007/04/17 14:07:15 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.19 2007/04/18 02:12:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -122,6 +122,22 @@
 #define THT_REG_TXTSK_PR(_q)	(0x41b0 + _Q(_q)) /* TX Queue Priority */
 /* RX Part Registers */
 #define THT_REG_RX_FLT		0x1240 /* RX Filter Configuration */
+#define  THT_REG_RX_FLT_ATXER		(1<<15)
+#define  THT_REG_RX_FLT_ATRM		(1<<14)
+#define  THT_REG_RX_FLT_AFTSQ		(1<<13)
+#define  THT_REG_RX_FLT_OSEN		(1<<12)
+#define  THT_REG_RX_FLT_APHER		(1<<11)
+#define  THT_REG_RX_FLT_TXFC		(1<<10) /* TX flow control */
+#define  THT_REG_RX_FLT_FDA		(1<<8) /* filter direct address */
+#define  THT_REG_RX_FLT_AOF		(1<<7) /* accept overflow frame */
+#define  THT_REG_RX_FLT_ACF		(1<<6) /* accept control frame */
+#define  THT_REG_RX_FLT_ARUNT		(1<<5) /* accept runt */
+#define  THT_REG_RX_FLT_ACRC		(1<<4) /* accept crc error */
+#define  THT_REG_RX_FLT_AM		(1<<3) /* accept multicast */
+#define  THT_REG_RX_FLT_AB		(1<<2) /* accept broadcast */
+#define  THT_REG_RX_FLT_PRM_MASK	0x3 /* promiscuous mode */
+#define  THT_REG_RX_FLT_PRM_NORMAL	0x0 /* normal mode */
+#define  THT_REG_RX_FLT_PRM_ALL		0x1 /* pass all incoming frames */
 #define THT_REG_RX_MAX_FRAME	0x12c0 /* Max Frame Size */
 #define THT_REG_RX_UNC_MAC0	0x1250 /* MAC Address low word */
 #define THT_REG_RX_UNC_MAC1	0x1260 /* MAC Address mid word */
