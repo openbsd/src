@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.19 2007/03/15 10:22:29 art Exp $ */
+/*	$OpenBSD: cpu.h,v 1.20 2007/04/18 21:21:19 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -54,6 +54,7 @@
 
 #ifdef _KERNEL
 
+#include <machine/atomic.h>
 #include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/intr.h>
@@ -181,23 +182,11 @@ struct clockframe {
  */
 #include <machine/intr.h>
 
-#define SIR_NET		1
-#define SIR_CLOCK	2
+#define SIR_NET		0x01
+#define SIR_CLOCK	0x02
 
-#ifdef MULTIPROCESSOR
-extern void setsoftint(int);
-extern int clrsoftint(int);
-#else
-extern int ssir;
-#define setsoftint(x)	(ssir |= (x))
-#define	clrsoftint(x)	\
-({									\
-	int tmpsir = ssir & (x);					\
-	ssir ^= tmpsir;							\
-	tmpsir;								\
-})
-#endif	/* MULTIPROCESSOR */
-
+extern unsigned int ssir;
+#define setsoftint(x)	atomic_setbits_int(&ssir, x)
 #define setsoftnet()	setsoftint(SIR_NET)
 #define setsoftclock()	setsoftint(SIR_CLOCK)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.17 2006/11/22 22:47:46 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.18 2007/04/18 21:21:20 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -353,37 +353,13 @@ set_cpu_number(cpuid_t number)
  * Soft interrupt interface
  */
 
-int ssir;
+unsigned int ssir;
 int netisr;
-
-#ifdef MULTIPROCESSOR
-
-void
-setsoftint(int sir)
-{
-	__mp_lock(&sir_lock);
-	ssir |= sir;
-	__mp_unlock(&sir_lock);
-}
-
-int
-clrsoftint(int sir)
-{
-	int tmpsir;
-
-	__mp_lock(&sir_lock);
-	tmpsir = ssir & sir;
-	ssir ^= tmpsir;
-	__mp_unlock(&sir_lock);
-
-	return (tmpsir);
-}
-#endif
 
 void
 dosoftint()
 {
-	if (clrsoftint(SIR_NET)) {
+	if (ISSET(ssir, SIR_NET)) {
 		uvmexp.softs++;
 #define DONETISR(bit, fn) \
 	do { \
@@ -394,11 +370,13 @@ dosoftint()
 	} while (0)
 #include <net/netisr_dispatch.h>
 #undef DONETISR
+		atomic_clearbits_int(&ssir, SIR_NET);
 	}
 
-	if (clrsoftint(SIR_CLOCK)) {
+	if (ISSET(ssir, SIR_CLOCK)) {
 		uvmexp.softs++;
 		softclock();
+		atomic_clearbits_int(&ssir, SIR_CLOCK);
 	}
 }
 
