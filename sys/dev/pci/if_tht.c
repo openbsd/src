@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.22 2007/04/18 07:00:11 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.23 2007/04/18 07:13:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -438,6 +438,12 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 	    THT_PORT_REGION(taa->taa_port), THT_PORT_SIZE,
 	    &sc->sc_memh) != 0) {
 		printf(": unable to map port registers\n");
+		return;
+	}
+
+	if (tht_sw_reset(sc) != 0) {
+		printf(": unable to reset port\n");
+		/* bus_space(9) says we dont have to free subregions */
 		return;
 	}
 
