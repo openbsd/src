@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.16 2007/02/08 03:50:49 ray Exp $	*/
+/*	$OpenBSD: elf.c,v 1.17 2007/04/18 19:03:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: elf.c,v 1.16 2007/02/08 03:50:49 ray Exp $";
+static const char rcsid[] = "$OpenBSD: elf.c,v 1.17 2007/04/18 19:03:04 miod Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -518,6 +518,11 @@ elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 	char *shstr;
 
 	shstrsize = shdr[eh->e_shstrndx].sh_size;
+	if (shstrsize == 0) {
+		warnx("%s: no name list", name);
+		return (1);
+	}
+
 	if ((shstr = malloc(shstrsize)) == NULL) {
 		warn("%s: malloc shsrt", name);
 		return (1);
