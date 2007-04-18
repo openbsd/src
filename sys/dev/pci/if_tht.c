@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.24 2007/04/18 07:17:44 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.25 2007/04/18 11:19:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -252,7 +252,9 @@ struct cfdriver thtc_cd = {
 	NULL, "thtc", DV_DULL
 };
 
+
 /* port autoconf glue */
+struct tht_dmamem;
 
 struct tht_softc {
 	struct device		sc_dev;
@@ -301,6 +303,22 @@ void			tht_watchdog(struct ifnet *);
 /* ifmedia operations */
 int			tht_media_change(struct ifnet *);
 void			tht_media_status(struct ifnet *, struct ifmediareq *);
+
+/* wrapper around dma memory */
+struct tht_dmamem {
+	bus_dmamap_t		tdm_map;
+	bus_dma_segment_t	tdm_seg;
+	size_t			tdm_size;
+	caddr_t			tdm_kva;
+};
+#define THT_DMA_MAP(_tdm)	((_tdm)->tdm_map)
+#define THT_DMA_DVA(_tdm)	((_tdm)->tdm_map->dm_segs[0].ds_addr)
+#define THT_DMA_KVA(_tdm)	((void *)(_tdm)->tdm_kva)
+
+struct tht_dmamem	*tht_dmamem_alloc(struct tht_softc *, bus_size_t,
+			    bus_size_t);
+void			tht_dmamem_free(struct tht_softc *,
+			    struct tht_dmamem *);
 
 /* bus space operations */
 u_int32_t		tht_read(struct tht_softc *, bus_size_t);
@@ -673,4 +691,59 @@ tht_wait_ne(struct tht_softc *sp, bus_size_t r, u_int32_t m, u_int32_t v,
 	}
 
 	return (1);
+}
+
+struct tht_dmamem *
+tht_dmamem_alloc(struct tht_softc *sc, bus_size_t size, bus_size_t align)
+{
+	bus_dma_tag_t			dmat = sc->sc_thtc->sc_dmat;
+	struct tht_dmamem		*tdm;
+	int				nsegs;
+
+	tdm = malloc(sizeof(struct tht_dmamem), M_DEVBUF, M_WAITOK);
+	bzero(tdm, sizeof(struct tht_dmamem));
+	tdm->tdm_size = size;
+
+	if (bus_dmamap_create(dmat, size, 1, size, 0,
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &tdm->tdm_map) != 0)
+		goto tdmfree;
+
+	if (bus_dmamem_alloc(dmat, size, align, 0, &tdm->tdm_seg, 1, &nsegs,
+	    BUS_DMA_WAITOK) != 0)
+		goto destroy;
+
+	if (bus_dmamem_map(dmat, &tdm->tdm_seg, nsegs, size, &tdm->tdm_kva,
+	    BUS_DMA_WAITOK) != 0)
+		goto free;
+
+	if (bus_dmamap_load(dmat, tdm->tdm_map, tdm->tdm_kva, size,
+	    NULL, BUS_DMA_WAITOK) != 0)
+		goto unmap;
+
+	bzero(tdm->tdm_kva, size);
+
+	return (tdm);
+
+unmap:
+	bus_dmamem_unmap(dmat, tdm->tdm_kva, size);
+free:
+	bus_dmamem_free(dmat, &tdm->tdm_seg, 1);
+destroy:
+	bus_dmamap_destroy(dmat, tdm->tdm_map);
+tdmfree:
+	free(tdm, M_DEVBUF);
+
+	return (NULL);
+}
+
+void
+tht_dmamem_free(struct tht_softc *sc, struct tht_dmamem *tdm)
+{
+	bus_dma_tag_t			dmat = sc->sc_thtc->sc_dmat;
+
+	bus_dmamap_unload(dmat, tdm->tdm_map);
+	bus_dmamem_unmap(dmat, tdm->tdm_kva, tdm->tdm_size);
+	bus_dmamem_free(dmat, &tdm->tdm_seg, 1);
+	bus_dmamap_destroy(dmat, tdm->tdm_map);
+	free(tdm, M_DEVBUF);
 }
