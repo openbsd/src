@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.44 2006/03/11 19:41:30 otto Exp $	*/
+/*	$OpenBSD: patch.c,v 1.45 2007/04/18 21:52:24 sobrado Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.44 2006/03/11 19:41:30 otto Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.45 2007/04/18 21:52:24 sobrado Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -605,10 +605,11 @@ static __dead void
 usage(void)
 {
 	fprintf(stderr,
-"usage: patch [-bcCeEflnNRstuv] [-B backup-prefix] [-d directory] [-D symbol]\n"
+"usage: patch [-bCcEeflNnRstuv] [-B backup-prefix] [-D symbol] [-d directory]\n"
 "             [-F max-fuzz] [-i patchfile] [-o out-file] [-p strip-count]\n"
-"             [-r rej-name] [-V {numbered,existing,simple}] [-z backup-ext]\n"
-"             [origfile [patchfile]]\n");
+"             [-r rej-name] [-V t | nil | never] [-x number] [-z backup-ext]\n"
+"             [--posix] [origfile [patchfile]]\n"
+"       patch <patchfile\n");
 	my_exit(EXIT_SUCCESS);
 }
 
