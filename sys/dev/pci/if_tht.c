@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.23 2007/04/18 07:13:11 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.24 2007/04/18 07:17:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -578,10 +578,8 @@ tht_sw_reset(struct tht_softc *sc)
 	tht_swrst_set(sc, THT_REG_DIS_QU_1);
 
 	/* 4. wait for successful finish of previous tasks */
-	if (!tht_wait_set(sc, THT_REG_RST_PRT, THT_REG_RST_PRT_ACTIVE, 1000)) {
-		printf("%s: port reset didnt become active\n", DEVNAME(sc));
+	if (!tht_wait_set(sc, THT_REG_RST_PRT, THT_REG_RST_PRT_ACTIVE, 1000))
 		return (1);
-	}
 
 	/* 5. Reset interrupt registers */
 	tht_write(sc, THT_REG_IMR, 0x0); /* 5.a */
