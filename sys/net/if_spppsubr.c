@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.48 2007/04/17 21:36:58 mpf Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.49 2007/04/18 10:40:13 mpf Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -2603,7 +2603,7 @@ sppp_ipcp_open(struct sppp *sp)
 	if (hisaddr == 1) {
 		/*
 		 * XXX - remove this hack!
-		 * remote has no valid adress, we need to get one assigned.
+		 * remote has no valid address, we need to get one assigned.
 		 */
 		sp->ipcp.flags |= IPCP_HISADDR_DYN;
 	}
