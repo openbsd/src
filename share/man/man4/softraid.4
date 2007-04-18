@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.5 2007/04/17 22:50:59 marco Exp $
+.\"	$OpenBSD: softraid.4,v 1.6 2007/04/18 06:44:08 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -40,7 +40,8 @@ Discipline:
 A discipline is a collection of functions that provides specific IO
 functionality.
 This includes IO path, bring-up, failure recovery, statistical
-information gathering etc.  Essentially a discipline is a lower
+information gathering etc.\&
+Essentially a discipline is a lower
 level driver that provides the IO transformation for the softraid
 device.
 .Ed
@@ -55,7 +56,6 @@ Chunk:
 A partition or storage area of the type RAID.
 .Ed
 .Sh EXAMPLES
-.Pp
 The first step to using the
 .Nm
 driver is to ensure that it is suitably configured in the kernel.
@@ -78,9 +78,9 @@ echo y | fdisk -i wd3
 .Pp
 Now create RAID partitions on all disks:
 .Bd -literal -offset indent
-echo "d a\\na\\n\\n\\n\\nRAID\\nw\\nq\\n" | disklabel -E wd1
-echo "d a\\na\\n\\n\\n\\nRAID\\nw\\nq\\n" | disklabel -E wd2
-echo "d a\\na\\n\\n\\n\\nRAID\\nw\\nq\\n" | disklabel -E wd3
+echo "d a\ena\en\en\en\enRAID\enw\enq\en" | disklabel -E wd1
+echo "d a\ena\en\en\en\enRAID\enw\enq\en" | disklabel -E wd2
+echo "d a\ena\en\en\en\enRAID\enw\enq\en" | disklabel -E wd3
 .Ed
 .Pp
 Assemble the RAID volume:
@@ -104,7 +104,7 @@ Initialize the partition table and create a filesystem on the
 new RAID volume:
 .Bd -literal -offset indent
 echo y | fdisk -i sd0
-echo "d a\\na\\n\\n\\n\\n4.2BSD\\nw\\nq\\n" | disklabel -E sd0
+echo "d a\ena\en\en\en\en4.2BSD\enw\enq\en" | disklabel -E sd0
 newfs /dev/rsd0a
 .Ed
 .Pp
@@ -134,19 +134,19 @@ partition type should be used on such platforms.
 .Sh HISTORY
 The
 .Nm
-driver in
+driver
 is an original work by Marco Peereboom.
 It first appeared in
 .Ox 4.2 .
 .Sh CAVEATS
-.Pp
 The driver relies on underlying hardware to properly fail chunks.
 Currently the RAID 1 support does not have the ability to recover a
 failed chunk.
 .Pp
 The RAID 1 discipline does not initialize the mirror upon creation.
 .Pp
-Certain RAID levels can protect against some data loss due to component failure.
+Certain RAID levels can protect against some data loss
+due to component failure.
 RAID is
 .Em not
 a substitute for good backup practices.
