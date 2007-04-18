@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.20 2007/04/18 06:54:32 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.21 2007/04/18 06:57:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -300,6 +300,18 @@ void			tht_read_lladdr(struct tht_softc *);
 /* bus space operations */
 u_int32_t		tht_read(struct tht_softc *, bus_size_t);
 void			tht_write(struct tht_softc *, bus_size_t, u_int32_t);
+int			tht_wait_eq(struct tht_softc *, bus_size_t, u_int32_t,
+			    u_int32_t, int);
+int			tht_wait_ne(struct tht_softc *, bus_size_t, u_int32_t,
+			    u_int32_t, int);
+
+#define tht_set(_s, _r, _b)		tht_write((_s), (_r), \
+					    tht_read((_s), (_r)) | (_b))
+#define tht_clr(_s, _r, _b)		tht_write((_s), (_r), \
+					    tht_read((_s), (_r)) & ~(_b))
+#define tht_wait_set(_s, _r, _b, _t)	tht_wait_eq((_s), (_r), \
+					    (_b), (_b), (_t))
+
 
 /* misc */
 #define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
@@ -549,4 +561,34 @@ tht_write(struct tht_softc *sc, bus_size_t r, u_int32_t v)
 	bus_space_write_4(sc->sc_thtc->sc_memt, sc->sc_memh, r, v);
 	bus_space_barrier(sc->sc_thtc->sc_memt, sc->sc_memh, r, 4,
 	    BUS_SPACE_BARRIER_WRITE);
+}
+
+int
+tht_wait_eq(struct tht_softc *sp, bus_size_t r, u_int32_t m, u_int32_t v,
+    int timeout)
+{
+	while ((tht_read(sp, r) & m) != v) {
+		if (timeout == 0)
+			return (0);
+
+		delay(1000);
+		timeout--;
+	}
+
+	return (1);
+}
+
+int
+tht_wait_ne(struct tht_softc *sp, bus_size_t r, u_int32_t m, u_int32_t v,
+    int timeout)
+{
+	while ((tht_read(sp, r) & m) == v) {
+		if (timeout == 0)
+			return (0);
+
+		delay(1000);
+		timeout--;
+	}
+
+	return (1);
 }
