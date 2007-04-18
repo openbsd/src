@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.56 2007/04/17 14:24:14 millert Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.57 2007/04/18 14:13:31 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -371,8 +371,9 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	 * grow any larger, the number of cylinder groups drops below
 	 * mincylgrps, or we reach the requested size.
 	 */
-	for (; sblock.fs_fpg < maxblkspercg; sblock.fs_fpg += sblock.fs_frag) {
-		sblock.fs_spc = sblock.fs_fpg * sblock.fs_nspf;
+	for (; sblock.fs_fpg < maxblkspercg;
+	    sblock.fs_fpg += sblock.fs_frag,
+	    sblock.fs_spc = sblock.fs_fpg * sblock.fs_nspf) {
 		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
 		    INOPB(&sblock));
 
