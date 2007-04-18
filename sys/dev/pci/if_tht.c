@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.25 2007/04/18 11:19:35 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.26 2007/04/18 11:21:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -252,6 +252,14 @@ struct cfdriver thtc_cd = {
 	NULL, "thtc", DV_DULL
 };
 
+/* glue between the controller and the port */
+
+struct tht_attach_args {
+	int			taa_port;
+
+	struct pci_attach_args	*taa_pa;
+	pci_intr_handle_t	taa_ih;
+};
 
 /* port autoconf glue */
 struct tht_dmamem;
@@ -280,15 +288,6 @@ struct cfattach tht_ca = {
 
 struct cfdriver tht_cd = {
 	NULL, "tht", DV_IFNET
-};
-
-/* glue between the controller and the port */
-
-struct tht_attach_args {
-	int			taa_port;
-
-	struct pci_attach_args	*taa_pa;
-	pci_intr_handle_t	taa_ih;
 };
 
 /* port operations */
