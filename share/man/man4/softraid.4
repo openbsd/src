@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.6 2007/04/18 06:44:08 jmc Exp $
+.\"	$OpenBSD: softraid.4,v 1.7 2007/04/18 13:38:33 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -34,27 +34,24 @@ A discipline can for example provide a volume that mirrors chunks (RAID 1).
 Currently
 .Nm
 only supports a mirroring discipline.
-.Sh TERMINOLOGY
-Discipline:
-.Bd -literal -offset indent
-A discipline is a collection of functions that provides specific IO
+.Pp
+A
+.Em discipline
+is a collection of functions that provides specific IO
 functionality.
 This includes IO path, bring-up, failure recovery, statistical
 information gathering etc.\&
 Essentially a discipline is a lower
 level driver that provides the IO transformation for the softraid
 device.
-.Ed
 .Pp
-Volume:
-.Bd -literal -offset indent
-A virtual disk device that is made up of a collection of chunks.
-.Ed
+A
+.Em volume
+is a virtual disk device that is made up of a collection of chunks.
 .Pp
-Chunk:
-.Bd -literal -offset indent
-A partition or storage area of the type RAID.
-.Ed
+A
+.Em chunk
+is a partition or storage area of the type RAID.
 .Sh EXAMPLES
 The first step to using the
 .Nm
