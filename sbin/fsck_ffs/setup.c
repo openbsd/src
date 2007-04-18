@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.33 2007/04/10 16:08:17 millert Exp $	*/
+/*	$OpenBSD: setup.c,v 1.34 2007/04/18 20:49:46 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.33 2007/04/10 16:08:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.34 2007/04/18 20:49:46 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -486,6 +486,15 @@ readsb(int listerr)
 			if (sblock.fs_magic != FS_UFS1_MAGIC &&
 			    sblock.fs_magic != FS_UFS2_MAGIC)
 				continue; /* Not a superblock */
+
+			/*
+			 * Do not look for an FFS1 file system at SBLOCK_UFS2.
+			 * Doing so will find the wrong super-block for file
+			 * systems with 64k block size.
+			 */
+			if (sblock.fs_magic == FS_UFS1_MAGIC &&
+			    sbtry[i] == SBLOCK_UFS2)
+				continue;
 
 			if (sblock.fs_magic == FS_UFS2_MAGIC &&
 			    sblock.fs_sblockloc != sbtry[i])
