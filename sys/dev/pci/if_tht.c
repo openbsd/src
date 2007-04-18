@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.21 2007/04/18 06:57:14 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.22 2007/04/18 07:00:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -290,12 +290,17 @@ struct tht_attach_args {
 };
 
 /* port operations */
+void			tht_read_lladdr(struct tht_softc *);
+int			tht_sw_reset(struct tht_softc *);
+
+/* interface operations */
 int			tht_ioctl(struct ifnet *, u_long, caddr_t);
 void			tht_start(struct ifnet *);
 void			tht_watchdog(struct ifnet *);
+
+/* ifmedia operations */
 int			tht_media_change(struct ifnet *);
 void			tht_media_status(struct ifnet *, struct ifmediareq *);
-void			tht_read_lladdr(struct tht_softc *);
 
 /* bus space operations */
 u_int32_t		tht_read(struct tht_softc *, bus_size_t);
@@ -545,6 +550,79 @@ tht_read_lladdr(struct tht_softc *sc)
 
 	for (i = 0; i < sizeofa(r); i++)
 		sc->sc_lladdr[i] = swap16(tht_read(sc, r[i]));
+}
+
+#define tht_swrst_set(_s, _r) tht_write((_s), (_r), 0x1)
+#define tht_swrst_clr(_s, _r) tht_write((_s), (_r), 0x0)
+int
+tht_sw_reset(struct tht_softc *sc)
+{
+	int				i;
+
+	/* this follows SW Reset process in 8.8 of the doco */
+
+	/* 1. disable rx */
+	tht_clr(sc, THT_REG_RX_FLT, THT_REG_RX_FLT_OSEN);
+
+	/* 2. initiate port disable */
+	tht_swrst_set(sc, THT_REG_DIS_PRT);
+
+	/* 3. initiate queue disable */
+	tht_swrst_set(sc, THT_REG_DIS_QU_0);
+	tht_swrst_set(sc, THT_REG_DIS_QU_1);
+
+	/* 4. wait for successful finish of previous tasks */
+	if (!tht_wait_set(sc, THT_REG_RST_PRT, THT_REG_RST_PRT_ACTIVE, 1000)) {
+		printf("%s: port reset didnt become active\n", DEVNAME(sc));
+		return (1);
+	}
+
+	/* 5. Reset interrupt registers */
+	tht_write(sc, THT_REG_IMR, 0x0); /* 5.a */
+	tht_read(sc, THT_REG_ISR); /* 5.b */
+	for (i = 0; i < THT_NQUEUES; i++) {
+		tht_write(sc, THT_REG_RDINTCM(i), 0x0); /* 5.c/5.d */
+		tht_write(sc, THT_REG_TDINTCM(i), 0x0); /* 5.e */
+	}
+
+	/* 6. initiate queue reset */
+	tht_swrst_set(sc, THT_REG_RST_QU_0);
+	tht_swrst_set(sc, THT_REG_RST_QU_1);
+
+	/* 7. initiate port reset */
+	tht_swrst_set(sc, THT_REG_RST_PRT);
+
+	/* 8. clear txt/rxf/rxd/txf read and write ptrs */
+	for (i = 0; i < THT_NQUEUES; i++) {
+		tht_write(sc, THT_REG_TXT_RPTR(i), 0);
+		tht_write(sc, THT_REG_RXF_RPTR(i), 0);
+		tht_write(sc, THT_REG_RXD_RPTR(i), 0);
+		tht_write(sc, THT_REG_TXF_RPTR(i), 0);
+
+		tht_write(sc, THT_REG_TXT_WPTR(i), 0);
+		tht_write(sc, THT_REG_RXF_WPTR(i), 0);
+		tht_write(sc, THT_REG_RXD_WPTR(i), 0);
+		tht_write(sc, THT_REG_TXF_WPTR(i), 0);
+	}
+
+	/* 9. unset port disable */
+	tht_swrst_clr(sc, THT_REG_DIS_PRT);
+
+	/* 10. unset queue disable */
+	tht_swrst_clr(sc, THT_REG_DIS_QU_0);
+	tht_swrst_clr(sc, THT_REG_DIS_QU_1);
+
+	/* 11. unset queue reset */
+	tht_swrst_clr(sc, THT_REG_RST_QU_0);
+	tht_swrst_clr(sc, THT_REG_RST_QU_1);
+
+	/* 12. unset port reset */
+	tht_swrst_clr(sc, THT_REG_RST_PRT);
+
+	/* 13. enable rx */
+	tht_set(sc, THT_REG_RX_FLT, THT_REG_RX_FLT_OSEN);
+
+	return (0);
 }
 
 u_int32_t
