@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.26 2007/04/18 11:21:41 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.27 2007/04/18 13:35:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -155,6 +155,13 @@
 #define THT_PORT_REGION(_p)	((_p) * THT_PORT_SIZE)
 #define THT_NQUEUES		4
 
+#define THT_FIFO_ALIGN		4096
+#define THT_FIFO_SIZE_4k	0x0
+#define THT_FIFO_SIZE_8k	0x1
+#define THT_FIFO_SIZE_16k	0x2
+#define THT_FIFO_SIZE_32k	0x3
+#define THT_FIFO_SIZE(_r)	(4096 * (1<<(_r)))
+
 /* hardware structures (we're using the 64 bit variants) */
 
 /* physical buffer descriptor */
@@ -261,8 +268,12 @@ struct tht_attach_args {
 	pci_intr_handle_t	taa_ih;
 };
 
-/* port autoconf glue */
+/* tht itself */
 struct tht_dmamem;
+
+struct tht_fifo {
+	struct tht_dmamem	*tf_mem;
+};
 
 struct tht_softc {
 	struct device		sc_dev;
@@ -276,6 +287,11 @@ struct tht_softc {
 	struct ifmedia		sc_media;
 
 	u_int16_t		sc_lladdr[3];
+
+	struct tht_fifo		sc_txt_fifo;
+	struct tht_fifo		sc_rxf_fifo;
+	struct tht_fifo		sc_rxd_fifo;
+	struct tht_fifo		sc_txf_fifo;
 };
 
 int			tht_match(struct device *, void *, void *);
@@ -289,6 +305,35 @@ struct cfattach tht_ca = {
 struct cfdriver tht_cd = {
 	NULL, "tht", DV_IFNET
 };
+
+/* fifos */
+struct tht_fifo_desc {
+	bus_size_t		tfd_cfg0;
+	bus_size_t		tfd_cfg1;
+	bus_size_t		tfd_rptr;
+	bus_size_t		tfd_wptr;
+	u_int32_t		tfd_size;
+};
+
+const struct tht_fifo_desc tht_txt_fifo = {
+	THT_REG_TXT_CFG0(0),
+	THT_REG_TXT_CFG1(0),
+	THT_REG_TXT_RPTR(0),
+	THT_REG_TXT_WPTR(0),
+	THT_FIFO_SIZE_16k
+};
+
+const struct tht_fifo_desc tht_txf_fifo = {
+	THT_REG_TXF_CFG0(0),
+	THT_REG_TXF_CFG1(0),
+	THT_REG_TXF_RPTR(0),
+	THT_REG_TXF_WPTR(0),
+	THT_FIFO_SIZE_4k
+};
+
+int			tht_fifo_alloc(struct tht_softc *, struct tht_fifo *,
+			    const struct tht_fifo_desc *);
+void			tht_fifo_free(struct tht_softc *, struct tht_fifo *);
 
 /* port operations */
 void			tht_read_lladdr(struct tht_softc *);
@@ -561,6 +606,31 @@ tht_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	imr->ifm_status = IFM_AVALID;
 
 	/* TODO: check link state */
+}
+
+int
+tht_fifo_alloc(struct tht_softc *sc, struct tht_fifo *tf,
+    const struct tht_fifo_desc *tfd)
+{
+	bus_size_t			size;
+	u_int64_t			dva;
+
+	size = THT_FIFO_SIZE(tfd->tfd_size);
+	tf->tf_mem = tht_dmamem_alloc(sc, size, THT_FIFO_ALIGN);
+	if (tf->tf_mem == NULL)
+		return (1);
+
+	dva = THT_DMA_DVA(tf->tf_mem);
+	tht_write(sc, tfd->tfd_cfg0, (u_int32_t)dva | tfd->tfd_size);
+	tht_write(sc, tfd->tfd_cfg1, (u_int32_t)(dva >> 32));
+
+	return (0);
+}
+
+void
+tht_fifo_free(struct tht_softc *sc, struct tht_fifo *tf)
+{
+	tht_dmamem_free(sc, tf->tf_mem);
 }
 
 void
