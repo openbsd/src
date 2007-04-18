@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.150 2007/04/12 22:14:15 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.151 2007/04/18 16:57:06 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -188,6 +188,10 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 		if ((error = rw_enter(&sysctl_lock, RW_WRITE|RW_INTR)) != 0)
 			return (error);
 		if (dolock) {
+			if (atop(oldlen) > uvmexp.wiredmax - uvmexp.wired) {
+				rw_exit_write(&sysctl_lock);
+				return (ENOMEM);
+			}
 			error = uvm_vslock(p, SCARG(uap, old), oldlen,
 			    VM_PROT_READ|VM_PROT_WRITE);
 			if (error) {
