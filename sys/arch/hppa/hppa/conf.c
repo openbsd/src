@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.36 2006/01/11 21:57:53 martin Exp $	*/
+/*	$OpenBSD: conf.c,v 1.37 2007/04/18 19:49:53 todd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,13 +71,12 @@ struct bdevsw   bdevsw[] =
 	bdev_disk_init(NCD,cd),		/*  6: SCSI CD-ROM */
 	bdev_disk_init(NFD,fd),		/*  7: floppy drive */
 	bdev_disk_init(NWD,wd),		/*  8: ST506 drive */
-					/*  9: */
-	bdev_lkm_dummy(),
-	bdev_lkm_dummy(),
-	bdev_lkm_dummy(),
-	bdev_lkm_dummy(),
-	bdev_lkm_dummy(),
-	bdev_lkm_dummy(),
+	bdev_lkm_dummy(),		/*  9: */
+	bdev_lkm_dummy(),		/* 10: */
+	bdev_lkm_dummy(),		/* 11: */
+	bdev_lkm_dummy(),		/* 12: */
+	bdev_lkm_dummy(),		/* 13: */
+	bdev_lkm_dummy(),		/* 14: */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -159,7 +158,7 @@ struct cdevsw   cdevsw[] =
 #ifdef USER_PCICONF
 	cdev_pci_init(NPCI,pci),	/* 31: PCI user */
 #else
-	cdev_notdef(),
+	cdev_notdef(),			/* 31: */
 #endif
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 32: xfs communication device */
@@ -170,7 +169,7 @@ struct cdevsw   cdevsw[] =
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 34: system call tracing */
 	cdev_audio_init(NAUDIO,audio),	/* 35: /dev/audio */
 	cdev_crypto_init(NCRYPTO,crypto), /* 36: /dev/crypto */
-	cdev_notdef(),			/* 37 */
+	cdev_notdef(),			/* 37: */
 	cdev_ptm_init(NPTY,ptm),	/* 38: pseudo-tty ptm device */
 	cdev_disk_init(NWD,wd),		/* 39: ST506 disk */
 	cdev_usb_init(NUSB,usb),	/* 40: USB controller */
@@ -181,12 +180,12 @@ struct cdevsw   cdevsw[] =
 	cdev_tty_init(NUCOM,ucom),	/* 45: USB tty */
 	cdev_usbdev_init(NUSCANNER,uscanner), /* 46: USB scanners */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 47: devices hot plugging */
-	cdev_lkm_dummy(),
-	cdev_lkm_dummy(),
-	cdev_lkm_dummy(),
-	cdev_lkm_dummy(),
-	cdev_lkm_dummy(),
-	cdev_lkm_dummy(),
+	cdev_lkm_dummy(),		/* 48: */
+	cdev_lkm_dummy(),		/* 49: */
+	cdev_lkm_dummy(),		/* 50: */
+	cdev_lkm_dummy(),		/* 51: */
+	cdev_lkm_dummy(),		/* 52: */
+	cdev_lkm_dummy(),		/* 53: */
 };
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
