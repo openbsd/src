@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.42 2007/04/18 08:18:22 claudio Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.43 2007/04/19 09:28:40 claudio Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ gif_clone_create(ifc, unit)
 
 #if NBPFILTER > 0
 	bpfattach(&sc->gif_if.if_bpf, &sc->gif_if, DLT_NULL,
-		  sizeof(u_int));
+	    sizeof(u_int));
 #endif
 	s = splnet();
 	LIST_INSERT_HEAD(&gif_softc_list, sc, gif_list);
@@ -149,10 +149,10 @@ gif_clone_destroy(ifp)
 
 void
 gif_start(ifp)
-        struct ifnet *ifp;
+	struct ifnet *ifp;
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
-        struct mbuf *m;
+	struct mbuf *m;
 	struct m_tag *mtag;
 	int family;
 	int s;
@@ -177,7 +177,7 @@ gif_start(ifp)
 	splx(s);
 
 	while (1) {
-	        s = splnet();
+		s = splnet();
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		splx(s);
 
@@ -300,7 +300,7 @@ gif_output(ifp, m, dst, rt)
 		break;
 #endif
 	default:
-		m_freem(m);		
+		m_freem(m);
 		error = ENETDOWN;
 		goto end;
 	}
@@ -321,7 +321,7 @@ gif_output(ifp, m, dst, rt)
 	splx(s);
 	return (error);
 
-  end:
+end:
 	if (error)
 		ifp->if_oerrors++;
 	return (error);
@@ -340,11 +340,11 @@ gif_ioctl(ifp, cmd, data)
 	struct sockaddr *sa;
 	int s;
 	struct gif_softc *sc2;
-		
+
 	switch (cmd) {
 	case SIOCSIFADDR:
 		break;
-		
+
 	case SIOCSIFDSTADDR:
 		break;
 
@@ -523,7 +523,7 @@ gif_ioctl(ifp, cmd, data)
 		/* change the IFF_{UP, RUNNING} flag as well? */
 		break;
 #endif
-			
+
 	case SIOCGIFPSRCADDR:
 #ifdef INET6
 	case SIOCGIFPSRCADDR_IN6:
@@ -555,7 +555,7 @@ gif_ioctl(ifp, cmd, data)
 			return (EINVAL);
 		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
 		break;
-			
+
 	case SIOCGIFPDSTADDR:
 #ifdef INET6
 	case SIOCGIFPDSTADDR_IN6:
