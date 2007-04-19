@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.104 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.105 2007/04/19 18:34:23 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -392,18 +392,22 @@ boolean_t	 pmap_is_active(struct pmap *, int);
 pt_entry_t	*pmap_map_ptes(struct pmap *);
 struct pv_entry	*pmap_remove_pv(struct pv_head *, struct pmap *,
 					     vaddr_t);
+void		 pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
 boolean_t	 pmap_remove_pte(struct pmap *, struct vm_page *, pt_entry_t *,
-    vaddr_t, int32_t *);
+    vaddr_t, int32_t *, int);
 void		 pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t,
-    vaddr_t, vaddr_t, int32_t *);
+    vaddr_t, vaddr_t, int32_t *, int);
+
+#define PMAP_REMOVE_ALL		0
+#define PMAP_REMOVE_SKIPWIRED	1
+
 vaddr_t		 pmap_tmpmap_pa(paddr_t);
 pt_entry_t	*pmap_tmpmap_pvepte(struct pv_entry *);
 void		 pmap_tmpunmap_pa(void);
 void		 pmap_tmpunmap_pvepte(struct pv_entry *);
 void		 pmap_apte_flush(struct pmap *);
-boolean_t	 pmap_try_steal_pv(struct pv_head *,
-						struct pv_entry *,
-						struct pv_entry *);
+boolean_t	 pmap_try_steal_pv(struct pv_head *, struct pv_entry *,
+    struct pv_entry *);
 void		pmap_unmap_ptes(struct pmap *);
 void		pmap_exec_account(struct pmap *, vaddr_t, pt_entry_t,
 		    pt_entry_t);
@@ -2131,7 +2135,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 
 void
 pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
-    vaddr_t startva, vaddr_t endva, int32_t *cpumaskp)
+    vaddr_t startva, vaddr_t endva, int32_t *cpumaskp, int flags)
 {
 	struct pv_entry *pv_tofree = NULL;	/* list of pv_entrys to free */
 	struct pv_entry *pve;
@@ -2152,6 +2156,9 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 			     ; pte++, startva += NBPG) {
 		if (!pmap_valid_entry(*pte))
 			continue;			/* VA not mapped */
+
+		if ((flags & PMAP_REMOVE_SKIPWIRED) && (*pte & PG_W))
+			continue;
 
 		/* atomically save the old PTE and zap! it */
 		opte = i386_atomic_testset_ul(pte, 0);
@@ -2224,14 +2231,17 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 
 boolean_t
 pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
-    vaddr_t va, int32_t *cpumaskp)
+    vaddr_t va, int32_t *cpumaskp, int flags)
 {
 	pt_entry_t opte;
 	int bank, off;
 	struct pv_entry *pve;
 
 	if (!pmap_valid_entry(*pte))
-		return(FALSE);		/* VA not mapped */
+		return (FALSE);		/* VA not mapped */
+
+	if ((flags & PMAP_REMOVE_SKIPWIRED) && (*pte & PG_W))
+		return (FALSE);
 
 	opte = *pte;			/* save the old PTE */
 	*pte = 0;			/* zap! */
@@ -2294,6 +2304,12 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 void
 pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 {
+	pmap_do_remove(pmap, sva, eva, PMAP_REMOVE_ALL);
+}
+
+void
+pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
+{
 	pt_entry_t *ptes, opte;
 	boolean_t result;
 	paddr_t ptppa;
@@ -2344,7 +2360,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 
 			/* do it! */
 			result = pmap_remove_pte(pmap, ptp,
-			    &ptes[atop(sva)], sva, &cpumask);
+			    &ptes[atop(sva)], sva, &cpumask, flags);
 
 			/*
 			 * if mapping removed and the PTP is no longer
@@ -2446,7 +2462,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			}
 		}
 		pmap_remove_ptes(pmap, ptp, (vaddr_t)&ptes[atop(sva)],
-		    sva, blkendva, &cpumask);
+		    sva, blkendva, &cpumask, flags);
 
 		/* if PTP is no longer being used, free it! */
 		if (ptp && ptp->wire_count <= 1) {
@@ -2893,7 +2909,8 @@ pmap_collect(struct pmap *pmap)
 	 * for its entire address space.
 	 */
 
-	pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
+	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS,
+	    PMAP_REMOVE_SKIPWIRED);
 }
 
 /*
