@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.20 2007/04/19 07:45:20 art Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.21 2007/04/19 09:25:33 pedro Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -434,12 +434,13 @@ cache_purge(struct vnode *vp)
 void
 cache_purgevfs(struct mount *mp)
 {
-	struct namecache *ncp;
-
-	TAILQ_FOREACH(ncp, &nclruhead, nc_lru) {
-		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp) {
+	struct namecache *ncp, *nxtcp;
+   
+	for (ncp = TAILQ_FIRST(&nclruhead); ncp != TAILQ_END(&nclruhead);
+	    ncp = nxtcp) {
+		nxtcp = TAILQ_NEXT(ncp, nc_lru);
+		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp)
 			continue;
-		}
 		/* free the resources we had */
 		ncp->nc_vp = NULL;
 		ncp->nc_dvp = NULL;
