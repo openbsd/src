@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.23 2007/04/19 02:36:56 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.24 2007/04/19 02:44:29 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -119,6 +119,11 @@ void			sr_raid1_set_chunk_state(struct sr_discipline *,
 			    int, int);
 void			sr_raid1_set_vol_state(struct sr_discipline *);
 void			sr_raid1_startwu(struct sr_workunit *);
+
+/* utility functions */
+void			sr_get_uuid(struct sr_uuid *);
+u_int32_t		sr_checksum(char *, u_int32_t *, u_int32_t);
+int			sr_save_metadata(struct sr_discipline *);
 
 struct scsi_adapter sr_switch = {
 	sr_scsi_cmd, sr_minphys, NULL, NULL, sr_scsi_ioctl
@@ -846,7 +851,8 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 	sc->sc_dis[sd->sd_link.scsibus] = sd;
 	sb = sd->sd_link.scsibus;
 
-	rv = 0;
+	rv = sr_save_metadata(sd); /* save metadata to disk */
+
 	return (rv);
 
 unwind:
@@ -985,7 +991,7 @@ sr_parse_chunks(struct sr_softc *sc, char *lst, struct sr_chunk_head *cl)
 		/* get partition size */
 		ss = name[strlen(name) - 1];
 		ch_entry->src_meta.scm_size =
-		    label.d_partitions[ss - 'a'].p_size - SR_META_FUDGE;
+		    label.d_partitions[ss - 'a'].p_size - SR_META_SIZE;
 		if (ch_entry->src_meta.scm_size <= 0) {
 			printf("%s: %s partition size = 0\n",
 			    DEVNAME(sc), name);
@@ -1063,6 +1069,10 @@ sr_raid1_alloc_resources(struct sr_discipline *sd)
 	sr_alloc_wu(sd);
 	sr_alloc_ccb(sd);
 
+	sd->sd_meta = malloc(SR_META_SIZE * 512 , M_DEVBUF, M_WAITOK);
+	bzero(sd->sd_meta, SR_META_SIZE * 512);
+
+
 	rv = 0;
 	return (rv);
 }
@@ -1080,6 +1090,8 @@ sr_raid1_free_resources(struct sr_discipline *sd)
 
 	sr_free_wu(sd);
 	sr_free_ccb(sd);
+
+	free(sd->sd_meta, M_DEVBUF);
 
 	rv = 0;
 	return (rv);
@@ -1280,7 +1292,7 @@ sr_raid1_rw(struct sr_workunit *wu)
 	else
 		ios = sd->sd_vol.sv_meta.svm_no_chunk;
 
-	blk += SR_META_FUDGE;
+	blk += SR_META_SIZE;
 
 	wu->swu_blk_start = blk;
 	wu->swu_blk_end = blk + xs->datalen - 1;
@@ -1318,7 +1330,7 @@ sr_raid1_rw(struct sr_workunit *wu)
 ragain:
 			/* interleave reads */
 			x = sd->mds.mdd_raid1.sr1_counter++ %
-				sd->sd_vol.sv_meta.svm_no_chunk;
+			    sd->sd_vol.sv_meta.svm_no_chunk;
 			scp = sd->sd_vol.sv_chunks[x];
 			switch (scp->src_meta.scm_status) {
 			case BIOC_SDONLINE:
@@ -1711,4 +1723,116 @@ die:
 	}
 
 	sd->sd_vol.sv_meta.svm_status = new_state;
+}
+
+u_int32_t
+sr_checksum(char *s, u_int32_t *p, u_int32_t size)
+{
+	u_int32_t		chk = 0;
+	int			i;
+
+	DNPRINTF(SR_D_MISC, "%s: sr_checksum %p %d\n", s, p, size);
+
+	if (size % sizeof(u_int32_t))
+		return (0); /* 0 is failure */
+
+	for (i = 0; i < size / sizeof(u_int32_t); i++)
+		chk ^= p[i];
+
+	return (chk);
+}
+
+void
+sr_get_uuid(struct sr_uuid *uuid)
+{
+	int i;
+
+	for (i = 0; i < SR_UUID_MAX; i++)
+		uuid->sui_id[i] = arc4random();
+}
+
+int
+sr_save_metadata(struct sr_discipline *sd)
+{
+	struct sr_softc		*sc = sd->sd_sc;
+	struct sr_metadata	*sm = sd->sd_meta;
+	struct sr_chunk		*src;
+	struct buf		b;
+	int			i, rv = 1;
+	size_t			sz = SR_META_SIZE * 512;
+
+	DNPRINTF(SR_D_META, "%s: sr_save_metadata %s\n",
+	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
+
+	if (sm->ssd_magic == 0) {
+		/* initial metadata */
+		sm->ssd_magic = SR_MAGIC;
+		sm->ssd_version = SR_META_VERSION;
+		if (_BYTE_ORDER == _LITTLE_ENDIAN)
+			sm->ssd_big_endian = 0;
+		else
+			sm->ssd_big_endian = 1;
+		sm->ssd_size = sizeof(struct sr_metadata);
+		sm->ssd_ondisk = 1;
+		sr_get_uuid(&sm->ssd_uuid);
+
+		/* volume */
+		sm->ssd_vd_ver = SR_VOL_VERSION;
+		sm->ssd_vd_size = sizeof(struct sr_vol_meta);
+
+		/* chunk */
+		sm->ssd_chunk_ver = SR_CHUNK_VERSION;
+		sm->ssd_chunk_size = sizeof(struct sr_chunk_meta);
+		sm->ssd_chunk_no = sd->sd_vol.sv_meta.svm_no_chunk;
+	}
+
+#ifdef SR_DEBUG
+	/* metadata */
+	DNPRINTF(SR_D_META, "\tmagic 0x%llx\n", sm->ssd_magic);
+	DNPRINTF(SR_D_META, "\tversion %d\n", sm->ssd_version);
+	DNPRINTF(SR_D_META, "\tbig endian %d\n", sm->ssd_big_endian);
+	DNPRINTF(SR_D_META, "\tchecksum 0x%x\n", sm->ssd_checksum);
+	DNPRINTF(SR_D_META, "\tsize %d\n", sm->ssd_size);
+	DNPRINTF(SR_D_META, "\ton disk version %u\n", sm->ssd_ondisk);
+	DNPRINTF(SR_D_META, "\tuuid ");
+	for (i = 0; i < SR_UUID_MAX; i++)
+		DNPRINTF(SR_D_META, "%x%s", sm->ssd_uuid.sui_id[i],
+		    i < SR_UUID_MAX - 1 ? ":" : "\n");
+#endif
+
+	for (i = 0; i < sm->ssd_chunk_no; i++) {
+		memset(&b, 0, sizeof(b));
+
+		src = sd->sd_vol.sv_chunks[i];
+		b.b_flags = B_WRITE;
+		b.b_blkno = 2; /* skip past mbr and partition table */
+		b.b_bcount = sz;
+		b.b_bufsize = sz;
+		b.b_resid = sz;
+		b.b_data = (void *)sm;
+		b.b_error = 0;
+		b.b_proc = curproc;
+		b.b_dev = src->src_dev_mm;
+		b.b_vp = src->src_dev_vn;
+		b.b_iodone = NULL;
+		LIST_INIT(&b.b_dep);
+		b.b_vp->v_numoutput++;
+		VOP_STRATEGY(&b);
+		biowait(&b);
+
+		/* XXX do something smart here */
+		if (b.b_flags & B_ERROR) {
+			printf("%s: %s i/o error on block %d while writing "
+			    "metadata %d\n", DEVNAME(sc),
+			    src->src_meta.scm_devname, b.b_blkno, b.b_error);
+			goto bad;
+		}
+
+		DNPRINTF(SR_D_META, "%s: sr_save_metadata written to %s\n",
+		    DEVNAME(sc), src->src_meta.scm_devname);
+	}
+
+	rv = 0;
+bad:
+	return (rv);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.8 2007/04/14 21:28:08 tedu Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.9 2007/04/19 02:44:29 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -113,10 +113,7 @@ struct sr_workunit {
 
 TAILQ_HEAD(sr_wu_list, sr_workunit);
 
-#define SR_META_PD		1   /* only 1 PD per metadata block */
-#define SR_META_VD		1   /* only 1 VD per metadata block */
-#define SR_META_DATA		1   /* only 1 metadata block per disk */
-#define SR_META_FUDGE		32  /* save space at chunk beginning */
+#define SR_META_SIZE		32  /* save space at chunk beginning */
 #define SR_META_VERSION		1   /* bump when sr_metadata changes */
 struct sr_metadata {
 	/* do not change order of ssd_magic, ssd_version and ssd_big_endian */
@@ -213,6 +210,9 @@ struct sr_discipline {
 	    struct sr_raid1	mdd_raid1;
 	}			sd_dis_specific;/* dis specific members */
 #define mds			sd_dis_specific
+
+	/* discipline metadata */
+	struct sr_metadata	*sd_meta;	/* in memory copy of metadata */
 
 	/* discipline volume */
 	struct sr_volume	sd_vol;		/* volume associated */
