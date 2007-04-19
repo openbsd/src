@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.22 2007/04/17 23:18:23 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.23 2007/04/19 02:36:56 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -985,7 +985,7 @@ sr_parse_chunks(struct sr_softc *sc, char *lst, struct sr_chunk_head *cl)
 		/* get partition size */
 		ss = name[strlen(name) - 1];
 		ch_entry->src_meta.scm_size =
-		    label.d_partitions[ss - 'a'].p_size - (SR_META_FUDGE * 512);
+		    label.d_partitions[ss - 'a'].p_size - SR_META_FUDGE;
 		if (ch_entry->src_meta.scm_size <= 0) {
 			printf("%s: %s partition size = 0\n",
 			    DEVNAME(sc), name);
