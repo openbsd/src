@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tht.4,v 1.2 2007/04/16 16:58:26 reyk Exp $
+.\"	$OpenBSD: tht.4,v 1.3 2007/04/19 06:51:57 dlg Exp $
 .\"
 .\" Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
 .\"
@@ -45,6 +45,13 @@ TN7588-S 10 GbE Single 10GBASET Low Profile Server Adapter
 TN7588-D 10 GbE Dual 10GBASET Low Profile Server Adapter
 .It
 TN7589-S 10 GbE Single CX4 Low Profile Server Adapter
+.El
+.Sh FILES
+The adapter needs a firmware file, which is loaded on demand by the
+driver when the device is attached:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/tht
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
