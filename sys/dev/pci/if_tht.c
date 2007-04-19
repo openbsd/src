@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.27 2007/04/18 13:35:59 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.28 2007/04/19 14:07:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -161,6 +161,8 @@
 #define THT_FIFO_SIZE_16k	0x2
 #define THT_FIFO_SIZE_32k	0x3
 #define THT_FIFO_SIZE(_r)	(4096 * (1<<(_r)))
+#define THT_FIFO_GAP		8 /* keep 8 bytes between ptrs */
+#define THT_FIFO_PTR_MASK	0x00007ff8 /* rptr/wptr mask */
 
 /* hardware structures (we're using the 64 bit variants) */
 
@@ -269,10 +271,38 @@ struct tht_attach_args {
 };
 
 /* tht itself */
-struct tht_dmamem;
+
+struct tht_dmamem {
+	bus_dmamap_t		tdm_map;
+	bus_dma_segment_t	tdm_seg;
+	size_t			tdm_size;
+	caddr_t			tdm_kva;
+};
+#define THT_DMA_MAP(_tdm)	((_tdm)->tdm_map)
+#define THT_DMA_DVA(_tdm)	((_tdm)->tdm_map->dm_segs[0].ds_addr)
+#define THT_DMA_KVA(_tdm)	((void *)(_tdm)->tdm_kva)
+
+struct tht_fifo_desc {
+	bus_size_t		tfd_cfg0;
+	bus_size_t		tfd_cfg1;
+	bus_size_t		tfd_rptr;
+	bus_size_t		tfd_wptr;
+	u_int32_t		tfd_size;
+	int			tfd_write;
+};
+#define THT_FIFO_PRE_SYNC(_d)	((_d)->tfd_write ? \
+				    BUS_DMASYNC_PREWRITE : \
+				    BUS_DMASYNC_PREREAD)
+#define THT_FIFO_POST_SYNC(_d)	((_d)->tfd_write ? \
+				    BUS_DMASYNC_POSTWRITE : \
+				    BUS_DMASYNC_POSTREAD)
 
 struct tht_fifo {
+	struct tht_fifo_desc	*tf_desc;
 	struct tht_dmamem	*tf_mem;
+	int			tf_len;
+	int			tf_rptr;
+	int			tf_wptr;
 };
 
 struct tht_softc {
@@ -288,14 +318,15 @@ struct tht_softc {
 
 	u_int16_t		sc_lladdr[3];
 
-	struct tht_fifo		sc_txt_fifo;
-	struct tht_fifo		sc_rxf_fifo;
-	struct tht_fifo		sc_rxd_fifo;
-	struct tht_fifo		sc_txf_fifo;
+	struct tht_fifo		sc_txt;
+	struct tht_fifo		sc_rxf;
+	struct tht_fifo		sc_rxd;
+	struct tht_fifo		sc_txf;
 };
 
 int			tht_match(struct device *, void *, void *);
 void			tht_attach(struct device *, struct device *, void *);
+void			tht_mountroot(void *);
 int			tht_intr(void *);
 
 struct cfattach tht_ca = {
@@ -307,37 +338,42 @@ struct cfdriver tht_cd = {
 };
 
 /* fifos */
-struct tht_fifo_desc {
-	bus_size_t		tfd_cfg0;
-	bus_size_t		tfd_cfg1;
-	bus_size_t		tfd_rptr;
-	bus_size_t		tfd_wptr;
-	u_int32_t		tfd_size;
-};
 
-const struct tht_fifo_desc tht_txt_fifo = {
+struct tht_fifo_desc tht_txt_desc = {
 	THT_REG_TXT_CFG0(0),
 	THT_REG_TXT_CFG1(0),
 	THT_REG_TXT_RPTR(0),
 	THT_REG_TXT_WPTR(0),
-	THT_FIFO_SIZE_16k
+	THT_FIFO_SIZE_16k,
+	1
 };
 
-const struct tht_fifo_desc tht_txf_fifo = {
+struct tht_fifo_desc tht_txf_desc = {
 	THT_REG_TXF_CFG0(0),
 	THT_REG_TXF_CFG1(0),
 	THT_REG_TXF_RPTR(0),
 	THT_REG_TXF_WPTR(0),
-	THT_FIFO_SIZE_4k
+	THT_FIFO_SIZE_4k,
+	0
 };
 
 int			tht_fifo_alloc(struct tht_softc *, struct tht_fifo *,
-			    const struct tht_fifo_desc *);
+			    struct tht_fifo_desc *);
 void			tht_fifo_free(struct tht_softc *, struct tht_fifo *);
+
+size_t			tht_fifo_ready(struct tht_softc *,
+			    struct tht_fifo *);
+void			tht_fifo_pre(struct tht_softc *,
+			    struct tht_fifo *);
+void			tht_fifo_write(struct tht_softc *, struct tht_fifo *,
+			    void *, size_t);
+void			tht_fifo_post(struct tht_softc *,
+			    struct tht_fifo *);
 
 /* port operations */
 void			tht_read_lladdr(struct tht_softc *);
 int			tht_sw_reset(struct tht_softc *);
+int			tht_fw_load(struct tht_softc *);
 
 /* interface operations */
 int			tht_ioctl(struct ifnet *, u_long, caddr_t);
@@ -349,16 +385,6 @@ int			tht_media_change(struct ifnet *);
 void			tht_media_status(struct ifnet *, struct ifmediareq *);
 
 /* wrapper around dma memory */
-struct tht_dmamem {
-	bus_dmamap_t		tdm_map;
-	bus_dma_segment_t	tdm_seg;
-	size_t			tdm_size;
-	caddr_t			tdm_kva;
-};
-#define THT_DMA_MAP(_tdm)	((_tdm)->tdm_map)
-#define THT_DMA_DVA(_tdm)	((_tdm)->tdm_map->dm_segs[0].ds_addr)
-#define THT_DMA_KVA(_tdm)	((void *)(_tdm)->tdm_kva)
-
 struct tht_dmamem	*tht_dmamem_alloc(struct tht_softc *, bus_size_t,
 			    bus_size_t);
 void			tht_dmamem_free(struct tht_softc *,
@@ -540,6 +566,24 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	printf(" address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
+
+	mountroothook_establish(tht_mountroot, sc);
+}
+
+void
+tht_mountroot(void *arg)
+{
+	struct tht_softc		*sc = arg;
+
+	if (tht_fifo_alloc(sc, &sc->sc_txt, &tht_txt_desc) != 0)
+		return;
+
+	printf("%s: firmware load %s\n", DEVNAME(sc),
+	    (tht_fw_load(sc) == 0) ? "succeeded" : "failed");
+
+	tht_fifo_free(sc, &sc->sc_txt);
+
+	tht_sw_reset(sc);
 }
 
 int
@@ -610,15 +654,20 @@ tht_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 
 int
 tht_fifo_alloc(struct tht_softc *sc, struct tht_fifo *tf,
-    const struct tht_fifo_desc *tfd)
+    struct tht_fifo_desc *tfd)
 {
-	bus_size_t			size;
 	u_int64_t			dva;
 
-	size = THT_FIFO_SIZE(tfd->tfd_size);
-	tf->tf_mem = tht_dmamem_alloc(sc, size, THT_FIFO_ALIGN);
+	tf->tf_len = THT_FIFO_SIZE(tfd->tfd_size);
+	tf->tf_mem = tht_dmamem_alloc(sc, tf->tf_len, THT_FIFO_ALIGN);
 	if (tf->tf_mem == NULL)
 		return (1);
+
+	tf->tf_desc = tfd;
+	tf->tf_rptr = tf->tf_wptr = 0;
+
+	bus_dmamap_sync(sc->sc_thtc->sc_dmat, THT_DMA_MAP(tf->tf_mem),
+	    0, tf->tf_len, THT_FIFO_PRE_SYNC(tfd));
 
 	dva = THT_DMA_DVA(tf->tf_mem);
 	tht_write(sc, tfd->tfd_cfg0, (u_int32_t)dva | tfd->tfd_size);
@@ -630,7 +679,71 @@ tht_fifo_alloc(struct tht_softc *sc, struct tht_fifo *tf,
 void
 tht_fifo_free(struct tht_softc *sc, struct tht_fifo *tf)
 {
+	bus_dmamap_sync(sc->sc_thtc->sc_dmat, THT_DMA_MAP(tf->tf_mem),
+	    0, tf->tf_len, THT_FIFO_POST_SYNC(tf->tf_desc));
 	tht_dmamem_free(sc, tf->tf_mem);
+}
+
+size_t
+tht_fifo_ready(struct tht_softc *sc, struct tht_fifo *tf)
+{
+	int				ready;
+
+	if (tf->tf_desc->tfd_write) {
+		tf->tf_rptr = tht_read(sc, tf->tf_desc->tfd_rptr);
+		tf->tf_rptr &= THT_FIFO_PTR_MASK;
+		ready = tf->tf_rptr - tf->tf_wptr;
+	} else {
+		tf->tf_wptr = tht_read(sc, tf->tf_desc->tfd_wptr);
+		tf->tf_wptr &= THT_FIFO_PTR_MASK;
+		ready = tf->tf_wptr - tf->tf_rptr;
+	}
+
+	if (ready <= 0)
+		ready += tf->tf_len;
+
+	return (ready);
+}
+
+void
+tht_fifo_pre(struct tht_softc *sc, struct tht_fifo *tf)
+{
+	bus_dmamap_sync(sc->sc_thtc->sc_dmat, THT_DMA_MAP(tf->tf_mem),
+	    0, tf->tf_len, THT_FIFO_POST_SYNC(tf->tf_desc));
+}
+
+void
+tht_fifo_write(struct tht_softc *sc, struct tht_fifo *tf,
+    void *buf, size_t buflen)
+{
+	u_int8_t			*fifo = THT_DMA_KVA(tf->tf_mem);
+	u_int8_t			*desc = buf;
+	size_t				len;
+
+	len = tf->tf_len - tf->tf_wptr;
+
+	if (len < buflen) {
+		bcopy(desc, fifo + tf->tf_wptr, len);
+
+		buflen -= len;
+		desc += len;
+
+		tf->tf_wptr = 0;
+	}
+
+	bcopy(desc, fifo + tf->tf_wptr, buflen);
+	tf->tf_wptr += buflen;
+}
+
+void
+tht_fifo_post(struct tht_softc *sc, struct tht_fifo *tf)
+{
+	bus_dmamap_sync(sc->sc_thtc->sc_dmat, THT_DMA_MAP(tf->tf_mem),
+	    0, tf->tf_len, THT_FIFO_POST_SYNC(tf->tf_desc));
+	if (tf->tf_desc->tfd_write)
+		tht_write(sc, tf->tf_desc->tfd_wptr, tf->tf_wptr);
+	else
+		tht_write(sc, tf->tf_desc->tfd_rptr, tf->tf_rptr);
 }
 
 void
@@ -714,6 +827,48 @@ tht_sw_reset(struct tht_softc *sc)
 	tht_set(sc, THT_REG_RX_FLT, THT_REG_RX_FLT_OSEN);
 
 	return (0);
+}
+
+int
+tht_fw_load(struct tht_softc *sc)
+{
+	u_int8_t			*fw, *buf;
+	size_t				fwlen, wrlen;
+	int				error = 1;
+
+	if (loadfirmware("tht", &fw, &fwlen) != 0)
+		return (1);
+
+	if ((fwlen % 8) != 0)
+		goto err;
+
+	buf = fw;
+	while (fwlen > 0) {
+		while ((wrlen = tht_fifo_ready(sc, &sc->sc_txt) -
+		    THT_FIFO_GAP) <= 0) {
+			if (tsleep(sc, PCATCH, "thtfw", 1) == EINTR)
+				goto err;
+		}
+
+		wrlen = MIN(wrlen, fwlen);
+		tht_fifo_pre(sc, &sc->sc_txt);
+		tht_fifo_write(sc, &sc->sc_txt, buf, wrlen);
+		tht_fifo_post(sc, &sc->sc_txt);
+
+		fwlen -= wrlen;
+		buf += wrlen;
+	}
+
+	while (tht_read(sc, THT_REG_INIT_STATUS)) {
+		if (tsleep(sc, PCATCH, "thtinit", 1) == EINTR)
+			goto err;
+	}
+
+	error = 0;
+
+err:
+	free(fw, M_DEVBUF);
+	return (error);
 }
 
 u_int32_t
