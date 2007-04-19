@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.24 2007/04/19 02:44:29 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.25 2007/04/19 22:12:41 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -706,7 +706,7 @@ int
 sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 {
 	char			*devl;
-	int			i, s, no_chunk, rv = EINVAL, sb = -1;
+	int			i, s, no_chunk, rv = EINVAL, sb = -1, vol;
 	size_t			bytes = 0;
 	u_quad_t		vol_size, max_chunk_sz = 0, min_chunk_sz;
 	struct sr_chunk_head	*cl;
@@ -843,13 +843,19 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 	if (dev == NULL)
 		goto unwind;
 
+	/* fill out volume metadata */
+
 	strlcpy(sd->sd_vol.sv_meta.svm_devname, dev->dv_xname,
 	    sizeof(sd->sd_vol.sv_meta.svm_devname));
 	DNPRINTF(SR_D_IOCTL, "%s: sr device added: %s on scsibus: %d\n",
 	    DEVNAME(sc), dev->dv_xname, sd->sd_link.scsibus);
 
 	sc->sc_dis[sd->sd_link.scsibus] = sd;
-	sb = sd->sd_link.scsibus;
+	sb = sd->sd_link.scsibus; /* XXX remove this */
+	for (i = 0, vol = -1; i <= sd->sd_link.scsibus; i++)
+		if (sc->sc_dis[i])
+			vol++;
+	sd->sd_vol.sv_meta.svm_volid = vol;
 
 	rv = sr_save_metadata(sd); /* save metadata to disk */
 
@@ -1071,7 +1077,6 @@ sr_raid1_alloc_resources(struct sr_discipline *sd)
 
 	sd->sd_meta = malloc(SR_META_SIZE * 512 , M_DEVBUF, M_WAITOK);
 	bzero(sd->sd_meta, SR_META_SIZE * 512);
-
 
 	rv = 0;
 	return (rv);
@@ -1756,6 +1761,8 @@ sr_save_metadata(struct sr_discipline *sd)
 {
 	struct sr_softc		*sc = sd->sd_sc;
 	struct sr_metadata	*sm = sd->sd_meta;
+	struct sr_vol_meta	*sv = &sd->sd_vol.sv_meta, *im_sv;;
+	struct sr_chunk_meta	*im_sc;
 	struct sr_chunk		*src;
 	struct buf		b;
 	int			i, rv = 1;
@@ -1763,6 +1770,14 @@ sr_save_metadata(struct sr_discipline *sd)
 
 	DNPRINTF(SR_D_META, "%s: sr_save_metadata %s\n",
 	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
+
+	if (!sm) {
+		printf("%s: no in memory copy of metadata\n", DEVNAME(sc));
+		goto bad;
+	}
+
+	im_sv = (struct sr_vol_meta *)(sm + 1);
+	im_sc = (struct sr_chunk_meta *)(im_sv + 1);
 
 	if (sm->ssd_magic == 0) {
 		/* initial metadata */
@@ -1777,14 +1792,29 @@ sr_save_metadata(struct sr_discipline *sd)
 		sr_get_uuid(&sm->ssd_uuid);
 
 		/* volume */
+		bcopy(sv, im_sv, sizeof(struct sr_metadata));
+		bcopy(&sm->ssd_uuid, &im_sv->svm_uuid,
+		    sizeof(im_sv->svm_uuid));
 		sm->ssd_vd_ver = SR_VOL_VERSION;
 		sm->ssd_vd_size = sizeof(struct sr_vol_meta);
 
+
 		/* chunk */
+		/* XXX do some sanity to prevent too many disks */
+		for (i = 0; i < sd->sd_vol.sv_meta.svm_no_chunk; i++) {
+			bcopy(&sm->ssd_uuid,
+			    &sd->sd_vol.sv_chunks[i]->src_meta.scm_uuid,
+			    sizeof(struct sr_uuid));
+			bcopy(sd->sd_vol.sv_chunks[i], &im_sc[i],
+			    sizeof(struct sr_chunk_meta));
+		}
 		sm->ssd_chunk_ver = SR_CHUNK_VERSION;
 		sm->ssd_chunk_size = sizeof(struct sr_chunk_meta);
 		sm->ssd_chunk_no = sd->sd_vol.sv_meta.svm_no_chunk;
 	}
+
+	/* from here on out metadata is updated */
+	sm->ssd_ondisk++;
 
 #ifdef SR_DEBUG
 	/* metadata */
@@ -1804,6 +1834,11 @@ sr_save_metadata(struct sr_discipline *sd)
 		memset(&b, 0, sizeof(b));
 
 		src = sd->sd_vol.sv_chunks[i];
+
+		/* skip disks that are offline */
+		if (src->src_meta.scm_status == BIOC_SDOFFLINE)
+			continue;
+
 		b.b_flags = B_WRITE;
 		b.b_blkno = 2; /* skip past mbr and partition table */
 		b.b_bcount = sz;
@@ -1821,6 +1856,7 @@ sr_save_metadata(struct sr_discipline *sd)
 		biowait(&b);
 
 		/* XXX do something smart here */
+		/* marck chunk offline and restart metadata write */
 		if (b.b_flags & B_ERROR) {
 			printf("%s: %s i/o error on block %d while writing "
 			    "metadata %d\n", DEVNAME(sc),
