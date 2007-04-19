@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.190 2007/03/16 21:22:27 robert Exp $
+#	$OpenBSD: GENERIC,v 1.191 2007/04/19 04:52:22 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -191,6 +191,8 @@ twe*	at pci?				# 3ware Escalade RAID controllers
 scsibus* at twe?
 mpi*	at pci?				# LSI Logic Message Passing Interface
 scsibus* at mpi?
+sili*	at pci?				# Silicon Image 3124/3132/3531 SATA
+scsibus* at sili?
 
 #UNTESTED: the following drivers are untested.
 adw*	at pci?				# AdvanSys ULTRA WIDE SCSI
