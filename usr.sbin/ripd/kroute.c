@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.7 2007/03/19 10:23:42 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.8 2007/04/19 13:54:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/tree.h>
+#include <sys/uio.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
@@ -705,55 +706,82 @@ if_announce(void *msg)
 int
 send_rtmsg(int fd, int action, struct kroute *kroute)
 {
-	struct {
-		struct rt_msghdr	hdr;
-		struct sockaddr_in	prefix;
-		struct sockaddr_in	nexthop;
-		struct sockaddr_in	mask;
-	} r;
+	struct iovec		iov[4];
+	struct rt_msghdr	hdr;
+	struct sockaddr_in	prefix;
+	struct sockaddr_in	nexthop;
+	struct sockaddr_in	mask;
+	int			iovcnt = 0;
 
 	if (kr_state.fib_sync == 0)
 		return (0);
 
-	bzero(&r, sizeof(r));
-	r.hdr.rtm_msglen = sizeof(r);
-	r.hdr.rtm_version = RTM_VERSION;
-	r.hdr.rtm_type = action;
-	r.hdr.rtm_flags = RTF_PROTO3;
+	/* initialize header */
+	bzero(&hdr, sizeof(hdr));
+	hdr.rtm_version = RTM_VERSION;
+	hdr.rtm_type = action;
+	hdr.rtm_flags = RTF_PROTO3;
 	if (action == RTM_CHANGE)	/* force PROTO3 reset the other flags */
-		r.hdr.rtm_fmask =
+		hdr.rtm_fmask =
 		    RTF_PROTO3|RTF_PROTO2|RTF_PROTO1|RTF_REJECT|RTF_BLACKHOLE;
-	r.hdr.rtm_seq = kr_state.rtseq++;	/* overflow doesn't matter */
-	r.hdr.rtm_addrs = RTA_DST|RTA_GATEWAY|RTA_NETMASK;
-	r.prefix.sin_len = sizeof(r.prefix);
-	r.prefix.sin_family = AF_INET;
-	r.prefix.sin_addr.s_addr = kroute->prefix.s_addr;
+	hdr.rtm_seq = kr_state.rtseq++;	/* overflow doesn't matter */
+	hdr.rtm_msglen = sizeof(hdr);
+	/* adjust iovec */
+	iov[iovcnt].iov_base = &hdr;
+	iov[iovcnt++].iov_len = sizeof(hdr);
 
-	r.nexthop.sin_len = sizeof(r.nexthop);
-	r.nexthop.sin_family = AF_INET;
-	r.nexthop.sin_addr.s_addr = kroute->nexthop.s_addr;
-	if (kroute->nexthop.s_addr != 0)
-		r.hdr.rtm_flags |= RTF_GATEWAY;
+	bzero(&prefix, sizeof(prefix));
+	prefix.sin_len = sizeof(prefix);
+	prefix.sin_family = AF_INET;
+	prefix.sin_addr.s_addr = kroute->prefix.s_addr;
+	/* adjust header */
+	hdr.rtm_addrs |= RTA_DST;
+	hdr.rtm_msglen += sizeof(prefix);
+	/* adjust iovec */
+	iov[iovcnt].iov_base = &prefix;
+	iov[iovcnt++].iov_len = sizeof(prefix);
 
-	r.mask.sin_len = sizeof(r.mask);
-	r.mask.sin_family = AF_INET;
-	r.mask.sin_addr.s_addr = kroute->netmask.s_addr;
+	if (kroute->nexthop.s_addr != 0) {
+		bzero(&nexthop, sizeof(nexthop));
+		nexthop.sin_len = sizeof(nexthop);
+		nexthop.sin_family = AF_INET;
+		nexthop.sin_addr.s_addr = kroute->nexthop.s_addr;
+		/* adjust header */
+		hdr.rtm_flags |= RTF_GATEWAY;
+		hdr.rtm_addrs |= RTA_GATEWAY;
+		hdr.rtm_msglen += sizeof(nexthop);
+		/* adjust iovec */
+		iov[iovcnt].iov_base = &nexthop;
+		iov[iovcnt++].iov_len = sizeof(nexthop);
+	}
+
+	bzero(&mask, sizeof(mask));
+	mask.sin_len = sizeof(mask);
+	mask.sin_family = AF_INET;
+	mask.sin_addr.s_addr = kroute->netmask.s_addr;
+	/* adjust header */
+	hdr.rtm_addrs |= RTA_NETMASK;
+	hdr.rtm_msglen += sizeof(mask);
+	/* adjust iovec */
+	iov[iovcnt].iov_base = &mask;
+	iov[iovcnt++].iov_len = sizeof(mask);
+
 
 retry:
-	if (write(fd, &r, sizeof(r)) == -1) {
+	if (writev(fd, iov, iovcnt) == -1) {
 		switch (errno) {
 		case ESRCH:
-			if (r.hdr.rtm_type == RTM_CHANGE) {
-				r.hdr.rtm_type = RTM_ADD;
+			if (hdr.rtm_type == RTM_CHANGE) {
+				hdr.rtm_type = RTM_ADD;
 				goto retry;
-			} else if (r.hdr.rtm_type == RTM_DELETE) {
+			} else if (hdr.rtm_type == RTM_DELETE) {
 				log_info("route %s/%u vanished before delete",
 				    inet_ntoa(kroute->prefix),
 				    mask2prefixlen(kroute->netmask.s_addr));
 				return (0);
 			} else {
 				log_warnx("send_rtmsg: action %u, "
-				    "prefix %s/%u: %s", r.hdr.rtm_type,
+				    "prefix %s/%u: %s", hdr.rtm_type,
 				    inet_ntoa(kroute->prefix),
 				    mask2prefixlen(kroute->netmask.s_addr),
 				    strerror(errno));
@@ -762,7 +790,7 @@ retry:
 			break;
 		default:
 			log_warnx("send_rtmsg: action %u, prefix %s/%u: %s",
-			    r.hdr.rtm_type, inet_ntoa(kroute->prefix),
+			    hdr.rtm_type, inet_ntoa(kroute->prefix),
 			    mask2prefixlen(kroute->netmask.s_addr),
 			    strerror(errno));
 			return (0);
