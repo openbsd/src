@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.14 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.15 2007/04/19 12:23:24 robert Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -455,7 +455,7 @@ wb_match(struct lm_softc *sc)
 	sc->lm_writereg(sc, WB_BANKSEL, 0);
 	vendid |= sc->lm_readreg(sc, WB_VENDID);
 	sc->lm_writereg(sc, WB_BANKSEL, banksel);
-	DPRINTF((" winbond vend id 0x%x\n", j));
+	DPRINTF((" winbond vend id 0x%x\n", vendid));
 	if (vendid != WB_VENDID_WINBOND && vendid != WB_VENDID_ASUS)
 		return 0;
 
