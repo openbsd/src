@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.1 2007/04/19 04:04:58 dlg Exp $ */
+/*	$OpenBSD: build.c,v 1.2 2007/04/19 04:08:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -32,10 +32,14 @@ main(int argc, char *argv[])
 {
 	ssize_t		len;
 	int		fd;
+	int		i;
 
 	fd = open(THT_FW_NAME, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd == -1)
 		err(1, "%s", THT_FW_NAME);
+
+	for (i = 0; i < (sizeof(tht_fw) / sizeof(tht_fw[0])); i++)
+		tht_fw[i] = htole32(tht_fw[i]);
 
 	len = write(fd, tht_fw, sizeof(tht_fw));
 	if (len == -1)
