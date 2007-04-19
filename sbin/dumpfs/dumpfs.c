@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.20 2007/03/19 13:27:47 pedro Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.21 2007/04/19 10:53:36 otto Exp $	*/
 /*	$NetBSD: dumpfs.c,v 1.12 1997/04/26 05:41:33 lukem Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.20 2007/03/19 13:27:47 pedro Exp $";
+static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.21 2007/04/19 10:53:36 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -190,9 +190,12 @@ dumpfs(char *name)
 		printf("unclean ");
 	if (afs.fs_ffs1_flags & FS_DOSOFTDEP)
 		printf("soft-updates ");
-	if ((afs.fs_ffs1_flags & ~(FS_UNCLEAN | FS_DOSOFTDEP)) != 0)
-		printf("unknown flags (%#x)",
-		    afs.fs_ffs1_flags & ~(FS_UNCLEAN | FS_DOSOFTDEP));
+	if (afs.fs_ffs1_flags & FS_FLAGS_UPDATED)
+		printf("updated ");
+	if (afs.fs_ffs1_flags &
+	    ~(FS_UNCLEAN | FS_DOSOFTDEP | FS_FLAGS_UPDATED) != 0)
+		printf("unknown flags (%#x)", afs.fs_ffs1_flags &
+		    ~(FS_UNCLEAN | FS_DOSOFTDEP | FS_FLAGS_UPDATED));
 	printf("\n");
 	if (afs.fs_cpc != 0)
 		printf("blocks available in each of %d rotational positions",
