@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.16 2006/12/21 22:13:36 jason Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.17 2007/04/19 19:00:01 kettenis Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -140,24 +140,18 @@ struct gem_softc {
 	bus_space_handle_t sc_mif;	/* HME MIF registers */
 #endif
 	int		sc_burst;	/* DVMA burst size in effect */
-	int		sc_phys[2];	/* MII instance -> PHY map */
 
 	int		sc_if_flags;
 
 	int		sc_mif_config;	/* Selected MII reg setting */
-	u_int		sc_tcvr;
 
 	int		sc_pci;		/* XXXXX -- PCI buses are LE. */
 	u_int		sc_variant;	/* which GEM are we dealing with? */
 #define GEM_UNKNOWN			0	/* don't know */
 #define GEM_SUN_GEM			1	/* Sun GEM */
 #define GEM_SUN_ERI			2	/* Sun ERI */
-#define GEM_APPLE_INTREPID2_GMAC	3	/* Apple Intrepid 2 GMAC */
+#define GEM_APPLE_GMAC			3	/* Apple GMAC */
 #define GEM_APPLE_K2_GMAC		4	/* Apple K2 GMAC */
-#define GEM_APPLE_PANGEA_GMAC		5	/* Apple Pangea GMAC */
-#define GEM_APPLE_SHASTA_GMAC		6	/* Apple Shasta GMAC */
-#define GEM_APPLE_UNINORTHGMAC		7	/* Apple UniNorth GMAC */
-#define GEM_APPLE_UNINORTH2GMAC		8	/* Apple UniNorth 2 GMAC */
 
 	u_int		sc_flags;	/* */
 #define	GEM_GIGABIT		0x0001	/* has a gigabit PHY */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.27 2006/12/21 22:13:36 jason Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.28 2007/04/19 19:00:01 kettenis Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -232,17 +232,17 @@ gem_attach_pci(struct device *parent, struct device *self, void *aux)
 	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_ERINETWORK)
 		sc->sc_variant = GEM_SUN_ERI;
 	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_INTREPID2_GMAC)
-		sc->sc_variant = GEM_APPLE_INTREPID2_GMAC;
+		sc->sc_variant = GEM_APPLE_GMAC;
+	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PANGEA_GMAC)
+		sc->sc_variant = GEM_APPLE_GMAC;
+	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_SHASTA_GMAC)
+		sc->sc_variant = GEM_APPLE_GMAC;
+	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_UNINORTHGMAC)
+		sc->sc_variant = GEM_APPLE_GMAC;
+	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_UNINORTH2GMAC)
+		sc->sc_variant = GEM_APPLE_GMAC;
 	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_K2_GMAC)
 		sc->sc_variant = GEM_APPLE_K2_GMAC;
-	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PANGEA_GMAC)
-		sc->sc_variant = GEM_APPLE_PANGEA_GMAC;
-	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_SHASTA_GMAC)
-		sc->sc_variant = GEM_APPLE_SHASTA_GMAC;
-	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_UNINORTHGMAC)
-		sc->sc_variant = GEM_APPLE_UNINORTHGMAC;
-	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_UNINORTH2GMAC)
-		sc->sc_variant = GEM_APPLE_UNINORTH2GMAC;
 
 #define PCI_GEM_BASEADDR	0x10
 	if (pci_mapreg_map(pa, PCI_GEM_BASEADDR, type, 0,

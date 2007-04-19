@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.68 2006/12/21 22:13:36 jason Exp $	*/
+/*	$OpenBSD: gem.c,v 1.69 2007/04/19 19:00:01 kettenis Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -126,9 +126,7 @@ int		gem_pint(struct gem_softc *);
 #endif
 
 /*
- * gem_config:
- *
- *	Attach a Gem interface to the system.
+ * Attach a Gem interface to the system.
  */
 void
 gem_config(struct gem_softc *sc)
@@ -136,7 +134,7 @@ gem_config(struct gem_softc *sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mii_data *mii = &sc->sc_mii;
 	struct mii_softc *child;
-	int i, error;
+	int i, error, phyad;
 	struct ifmedia_entry *ifm;
 
 	/* Make sure the chip is stopped. */
@@ -240,22 +238,67 @@ gem_config(struct gem_softc *sc)
 
 	ifmedia_init(&mii->mii_media, 0, gem_mediachange, gem_mediastatus);
 
+	/* Bad things will happen if we touch this register on ERI. */
+	if (sc->sc_variant != GEM_SUN_ERI)
+		bus_space_write_4(sc->sc_bustag, sc->sc_h1,
+		    GEM_MII_DATAPATH_MODE, 0);
+
 	gem_mifinit(sc);
 
-	if (sc->sc_tcvr == -1)
-		mii_attach(&sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
-				MII_OFFSET_ANY, 0);
-	else
-		mii_attach(&sc->sc_dev, mii, 0xffffffff, sc->sc_tcvr,
-				MII_OFFSET_ANY, 0);
+	/* 
+	 * Look for an external PHY.
+	 */
+	if (sc->sc_mif_config & GEM_MIF_CONFIG_MDI1) {
+		sc->sc_mif_config |= GEM_MIF_CONFIG_PHY_SEL;
+		bus_space_write_4(sc->sc_bustag, sc->sc_h1,
+	            GEM_MIF_CONFIG, sc->sc_mif_config);
 
+		switch (sc->sc_variant) {
+		case GEM_SUN_ERI:
+			phyad = GEM_PHYAD_EXTERNAL;
+			break;
+		default:
+			phyad = MII_PHY_ANY;
+			break;
+		}
+
+		mii_attach(&sc->sc_dev, mii, 0xffffffff, phyad,
+		    MII_OFFSET_ANY, 0);
+	}
+
+	/* 
+	 * Fall back on an internal PHY if no external PHY was found.
+	 */
 	child = LIST_FIRST(&mii->mii_phys);
-	if (child == NULL &&
+	if (child == NULL && sc->sc_mif_config & GEM_MIF_CONFIG_MDI0) {
+		sc->sc_mif_config &= ~GEM_MIF_CONFIG_PHY_SEL;
+		bus_space_write_4(sc->sc_bustag, sc->sc_h1,
+	            GEM_MIF_CONFIG, sc->sc_mif_config);
+
+		switch (sc->sc_variant) {
+		case GEM_SUN_ERI:
+		case GEM_APPLE_K2_GMAC:
+			phyad = GEM_PHYAD_INTERNAL;
+			break;
+		case GEM_APPLE_GMAC:
+			phyad = GEM_PHYAD_EXTERNAL;
+			break;
+		default:
+			phyad = MII_PHY_ANY;
+			break;
+		}
+
+		mii_attach(&sc->sc_dev, mii, 0xffffffff, phyad,
+		    MII_OFFSET_ANY, 0);
+	}
+
+	/* 
+	 * Try the external PCS SERDES if we didn't find any MII
+	 * devices.
+	 */
+	child = LIST_FIRST(&mii->mii_phys);
+	if (child == NULL && sc->sc_variant != GEM_SUN_ERI &&
 	    sc->sc_mif_config & (GEM_MIF_CONFIG_MDI0|GEM_MIF_CONFIG_MDI1)) {
-		/* 
-		 * Try the external PCS SERDES if we didn't find any
-		 * MII devices.
-		 */
 		bus_space_write_4(sc->sc_bustag, sc->sc_h1,
 		    GEM_MII_DATAPATH_MODE, GEM_MII_DATAPATH_SERDES);
 
@@ -280,61 +323,13 @@ gem_config(struct gem_softc *sc)
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
 	} else {
 		/*
-		 * Walk along the list of attached MII devices and
-		 * establish an `MII instance' to `phy number'
-		 * mapping. We'll use this mapping in media change
-		 * requests to determine which phy to use to program
-		 * the MIF configuration register.
-		 */
-		for (; child != NULL; child = LIST_NEXT(child, mii_list)) {
-			/*
-			 * Note: we support just two PHYs: the built-in
-			 * internal device and an external on the MII
-			 * connector.
-			 */
-			if (child->mii_phy > 1 || child->mii_inst > 1) {
-				printf("%s: cannot accommodate MII device %s"
-				       " at phy %d, instance %d\n",
-				       sc->sc_dev.dv_xname,
-				       child->mii_dev.dv_xname,
-				       child->mii_phy, child->mii_inst);
-				continue;
-			}
-
-			sc->sc_phys[child->mii_inst] = child->mii_phy;
-		}
-
-		/*
-		 * Now select and activate the PHY we will use.
-		 *
-		 * The order of preference is External (MDI1),
-		 * Internal (MDI0), Serial Link (no MII).
-		 */
-		if (sc->sc_phys[1]) {
-#ifdef GEM_DEBUG
-			printf("using external phy\n");
-#endif
-			sc->sc_mif_config |= GEM_MIF_CONFIG_PHY_SEL;
-		} else {
-#ifdef GEM_DEBUG
-			printf("using internal phy\n");
-#endif
-			sc->sc_mif_config &= ~GEM_MIF_CONFIG_PHY_SEL;
-		}
-		bus_space_write_4(sc->sc_bustag, sc->sc_h1, GEM_MIF_CONFIG, 
-			sc->sc_mif_config);
-
-		/*
 		 * XXX - we can really do the following ONLY if the
 		 * phy indeed has the auto negotiation capability!!
 		 */
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
 	}
 
-	/*
-	 * If we support GigE media, we support jumbo frames too.
-	 * Unless we are Apple.
-	 */
+	/* Check if we support GigE media. */
 	TAILQ_FOREACH(ifm, &sc->sc_media.ifm_list, ifm_list) {
 		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_T ||
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_SX ||
@@ -451,9 +446,7 @@ gem_reset(struct gem_softc *sc)
 
 
 /*
- * gem_rxdrain:
- *
- *	Drain the receive queue.
+ * Drain the receive queue.
  */
 void
 gem_rxdrain(struct gem_softc *sc)
@@ -583,7 +576,7 @@ gem_reset_tx(struct gem_softc *sc)
 }
 
 /*
- * disable receiver.
+ * Disable receiver.
  */
 int
 gem_disable_rx(struct gem_softc *sc)
@@ -602,7 +595,7 @@ gem_disable_rx(struct gem_softc *sc)
 }
 
 /*
- * disable transmitter.
+ * Disable transmitter.
  */
 int
 gem_disable_tx(struct gem_softc *sc)
@@ -1009,9 +1002,7 @@ gem_rint(struct gem_softc *sc)
 
 
 /*
- * gem_add_rxbuf:
- *
- *	Add a receive buffer to the indicated descriptor.
+ * Add a receive buffer to the indicated descriptor.
  */
 int
 gem_add_rxbuf(struct gem_softc *sc, int idx)
@@ -1177,15 +1168,6 @@ gem_mifinit(struct gem_softc *sc)
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_h1;
 
-	if (GEM_IS_APPLE(sc)) {
-		if (sc->sc_variant == GEM_APPLE_K2_GMAC)
-			sc->sc_tcvr = 1;
-		else
-			sc->sc_tcvr = 0;
-	} else {
-		sc->sc_tcvr = -1;
-	}
-
 	/* Configure the MIF in frame mode */
 	sc->sc_mif_config = bus_space_read_4(t, mif, GEM_MIF_CONFIG);
 	sc->sc_mif_config &= ~GEM_MIF_CONFIG_BB_ENA;
@@ -1251,16 +1233,6 @@ gem_mii_writereg(struct device *self, int phy, int reg, int val)
 			phy, reg, val);
 #endif
 
-#if 0
-	/* Select the desired PHY in the MIF configuration register */
-	v = bus_space_read_4(t, mif, GEM_MIF_CONFIG);
-	/* Clear PHY select bit */
-	v &= ~GEM_MIF_CONFIG_PHY_SEL;
-	if (phy == GEM_PHYAD_EXTERNAL)
-		/* Set PHY select bit to get at external device */
-		v |= GEM_MIF_CONFIG_PHY_SEL;
-	bus_space_write_4(t, mif, GEM_MIF_CONFIG, v);
-#endif
 	/* Construct the frame command */
 	v = GEM_MIF_FRAME_WRITE			|
 	    (phy << GEM_MIF_PHY_SHIFT)		|
@@ -1291,10 +1263,8 @@ gem_mii_statchg(struct device *dev)
 
 #ifdef GEM_DEBUG
 	if (sc->sc_debug)
-		printf("gem_mii_statchg: status change: phy = %d\n",
-		    sc->sc_phys[instance]);
+		printf("gem_mii_statchg: status change: phy = %d\n", instance);
 #endif
-
 
 	/* Set tx full duplex options */
 	bus_space_write_4(t, mac, GEM_MAC_TX_CONFIG, 0);
