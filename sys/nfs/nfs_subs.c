@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.60 2007/04/13 10:01:35 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.61 2007/04/19 14:46:44 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1070,10 +1070,6 @@ nfs_init()
 
 	timeout_set(&nfs_timer_to, nfs_timer, &nfs_timer_to);
 	nfs_timer(&nfs_timer_to);
-
-#ifdef NFSCLIENT
-	nfs_kqinit();
-#endif	
 }
 
 #ifdef NFSCLIENT

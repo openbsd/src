@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.3 2007/04/12 18:21:19 thib Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.4 2007/04/19 14:46:44 thib Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $");
 #include <sys/unistd.h>
 #include <sys/file.h>
 #include <sys/kthread.h>
+#include <sys/rwlock.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
@@ -75,15 +76,9 @@ struct kevq {
 };
 SLIST_HEAD(kevqlist, kevq);
 
-static struct lock nfskevq_lock;
+struct rwlock nfskevq_lock = RWLOCK_INITIALIZER;
 static struct proc *pnfskq;
 static struct kevqlist kevlist = SLIST_HEAD_INITIALIZER(kevlist);
-
-void
-nfs_kqinit(void)
-{
-	lockinit(&nfskevq_lock, PSOCK, "nfskqlck", 0, 0);
-}
 
 /*
  * This quite simplistic routine periodically checks for server changes
@@ -110,7 +105,7 @@ nfs_kqpoll(void *arg)
 	int error;
 
 	for(;;) {
-		lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL);
+		rw_enter_write(&nfskevq_lock);
 		SLIST_FOREACH(ke, &kevlist, kev_link) {
 			struct nfsnode *np = VTONFS(ke->vp);
 
@@ -127,7 +122,7 @@ nfs_kqpoll(void *arg)
 			 * for changes.
 			 */
 			ke->flags |= KEVQ_BUSY;
-			lockmgr(&nfskevq_lock, LK_RELEASE, NULL);
+			rw_exit_write(&nfskevq_lock);
 
 			/* save v_size, nfs_getattr() updates it */
 			osize = np->n_size;
@@ -164,7 +159,7 @@ nfs_kqpoll(void *arg)
 			}
 
 next:
-			lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL);
+			rw_enter_write(&nfskevq_lock);
 			ke->flags &= ~KEVQ_BUSY;
 			if (ke->flags & KEVQ_WANT) {
 				ke->flags &= ~KEVQ_WANT;
@@ -175,10 +170,10 @@ next:
 		if (SLIST_EMPTY(&kevlist)) {
 			/* Nothing more to watch, exit */
 			pnfskq = NULL;
-			lockmgr(&nfskevq_lock, LK_RELEASE, NULL);
+			rw_exit_write(&nfskevq_lock);
 			kthread_exit(0);
 		}
-		lockmgr(&nfskevq_lock, LK_RELEASE, NULL);
+		rw_exit_write(&nfskevq_lock);
 
 		/* wait a while before checking for changes again */
 		tsleep(pnfskq, PSOCK, "nfskqpw",
@@ -204,14 +199,14 @@ filt_nfsdetach(struct knote *kn)
 	simple_unlock(&vp->v_selectinfo.vsi_lock);
 
 	/* Remove the vnode from watch list */
-	lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL);
+	rw_enter_write(&nfskevq_lock);
 	SLIST_FOREACH(ke, &kevlist, kev_link) {
 		if (ke->vp == vp) {
 			while (ke->flags & KEVQ_BUSY) {
 				ke->flags |= KEVQ_WANT;
-				lockmgr(&nfskevq_lock, LK_RELEASE, NULL);
+				rw_exit_write(&nfskevq_lock);
 				(void) tsleep(ke, PSOCK, "nfskqdet", 0);
-				lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL);
+				rw_enter_write(&nfskevq_lock);
 			}
 
 			if (ke->usecount > 1) {
@@ -225,7 +220,7 @@ filt_nfsdetach(struct knote *kn)
 			break;
 		}
 	}
-	lockmgr(&nfskevq_lock, LK_RELEASE, NULL);
+	rw_exit_write(&nfskevq_lock);
 }
 
 static int
@@ -316,7 +311,7 @@ nfs_kqfilter(void *v)
 	memset(&attr, 0, sizeof(attr));
 	(void) VOP_GETATTR(vp, &attr, p->p_ucred, p);
 
-	lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL);
+	rw_enter_write(&nfskevq_lock);
 
 	/* ensure the poller is running */
 	if (!pnfskq) {
@@ -358,8 +353,7 @@ nfs_kqfilter(void *v)
 	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
 #endif
 
-    out:
-	lockmgr(&nfskevq_lock, LK_RELEASE, NULL);
-
+out:
+	rw_exit_write(&nfskevq_lock);
 	return (error);
 }
