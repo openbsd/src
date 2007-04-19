@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.19 2006/01/21 00:00:55 pedro Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.20 2007/04/19 07:45:20 art Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -245,7 +245,8 @@ remove:
 		ncp->nc_vhash.le_prev = NULL;
 	}
 
-	TAILQ_INSERT_HEAD(&nclruhead, ncp, nc_lru);
+	pool_put(&nch_pool, ncp);
+	numcache--;
 	return (-1);
 }
 
@@ -394,7 +395,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
  * Name cache initialization, from vfs_init() when we are booting
  */
 void
-nchinit()
+nchinit(void)
 {
 
 	TAILQ_INIT(&nclruhead);
@@ -429,20 +430,14 @@ cache_purge(struct vnode *vp)
 /*
  * Cache flush, a whole filesystem; called when filesys is umounted to
  * remove entries that would now be invalid
- *
- * The line "nxtcp = nchhead" near the end is to avoid potential problems
- * if the cache lru chain is modified while we are dumping the
- * inode.  This makes the algorithm O(n^2), but do you think I care?
  */
 void
 cache_purgevfs(struct mount *mp)
 {
-	struct namecache *ncp, *nxtcp;
+	struct namecache *ncp;
 
-	for (ncp = TAILQ_FIRST(&nclruhead); ncp != TAILQ_END(&nclruhead);
-	    ncp = nxtcp) {
+	TAILQ_FOREACH(ncp, &nclruhead, nc_lru) {
 		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp) {
-			nxtcp = TAILQ_NEXT(ncp, nc_lru);
 			continue;
 		}
 		/* free the resources we had */
@@ -457,8 +452,7 @@ cache_purgevfs(struct mount *mp)
 			LIST_REMOVE(ncp, nc_vhash);
 			ncp->nc_vhash.le_prev = NULL;
 		}
-		/* cause rescan of list, it may have altered */
-		nxtcp = TAILQ_FIRST(&nclruhead);
-		TAILQ_INSERT_HEAD(&nclruhead, ncp, nc_lru);
+		pool_put(&nch_pool, ncp);
+		numcache--;
 	}
 }
