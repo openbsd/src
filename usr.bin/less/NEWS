@@ -13,6 +13,13 @@
 ======================================================================
 
 
+	Major changes between "less" versions 381 and 382
+
+* Removed some old copyrighted code.
+  This probably breaks OS/9 support.
+
+======================================================================
+
 	Major changes between "less" versions 378 and 381
 
 * New -L option to disable LESSOPEN processing.
