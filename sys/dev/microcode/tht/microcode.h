@@ -32,6 +32,7 @@
  *
  */
 
+u_int32_t tht_fw[] = {
 // Loading Firmware ,
 // INT_MEM Ver ,
 0x000f0002,
@@ -10732,3 +10733,4 @@
 0x807187c4,
 0x0000003d,
 0xf780006f 
+};
