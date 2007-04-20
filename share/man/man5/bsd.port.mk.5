@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.192 2007/04/03 10:17:00 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.193 2007/04/20 20:16:37 steven Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -309,7 +309,7 @@ See also
 .Ar unlink-categories .
 .It Ar makesum
 Create the ${CHECKSUM_FILE} list of recorded checksums by running the
-cryptographic fingerprints sha1, md5 and rmd160 on ${ALLFILES}.
+cryptographic fingerprints sha256, sha1, md5 and rmd160 on ${ALLFILES}.
 .Ev NO_CHECKSUM
 can be used to avoid all checksumming steps.
 .It Ar manpages-check
@@ -1435,7 +1435,7 @@ Defaults to empty.
 .It Ev PREFERRED_CIPHERS
 List of cryptographic ciphers to use, in order of preference.
 Default is
-.Sq sha1 rmd160 md5 .
+.Sq sha256 sha1 rmd160 md5 .
 The first cipher that matches in ${CHECKSUM_FILE} is verified.
 .It Ev PREFIX
 Base directory for the current port installation.
@@ -1782,11 +1782,10 @@ cache of all distribution files.
 .It Pa distinfo
 Checksum file.
 Holds the output of
-.Xr md5 1 ,
-.Xr sha1 1 ,
-and
-.Xr rmd160 1
-for the ports ${DISTFILES} and ${PATCHFILES}.
+.Xr cksum 1 ,
+using ${PREFERRED_CIPHERS},
+for the port's ${DISTFILES} and ${PATCHFILES},
+as well as the sizes of these files.
 .It Pa ${FULLDISTDIR}/${ALLFILES}
 cache of distribution files for a given port.
 .It Pa ${PKGDIR}/DESCR
