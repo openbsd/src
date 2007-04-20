@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.22 2007/04/14 14:54:30 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.23 2007/04/20 16:03:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -63,6 +63,7 @@ int	pmap_pv_lowat = PMAP_PV_LOWAT;
 int	pmap_alloc_tlbpid(struct proc *);
 int	pmap_enter_pv(pmap_t, vaddr_t, vm_page_t, u_int *);
 int	pmap_page_alloc(vaddr_t *);
+void	pmap_page_free(vaddr_t);
 void	pmap_page_cache(vm_page_t, int);
 void	pmap_remove_pv(pmap_t, vaddr_t, paddr_t);
 
@@ -127,7 +128,6 @@ psize_t	mem_size;	/* memory size in bytes */
 vaddr_t	virtual_start;  /* VA of first avail page (after kernel bss)*/
 vaddr_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 
-struct segtab	*free_segtab;		/* free list kept locally */
 u_int		tlbpid_gen = 1;		/* TLB PID generation count */
 int		tlbpid_cnt = 2;		/* next available TLB PID */
 
@@ -261,7 +261,7 @@ pmap_t
 pmap_create()
 {
 	pmap_t pmap;
-	int i;
+	vaddr_t va;
 extern struct vmspace vmspace0;
 extern struct user *proc0paddr;
 
@@ -272,28 +272,14 @@ extern struct user *proc0paddr;
 
 	simple_lock_init(&pmap->pm_lock);
 	pmap->pm_count = 1;
-	if (free_segtab) {
-		pmap->pm_segtab = free_segtab;
-		free_segtab = *(struct segtab **)free_segtab;
-		pmap->pm_segtab->seg_tab[0] = NULL;
-	} else {
-		struct segtab *stp;
-		vaddr_t va;
 
-		while (pmap_page_alloc(&va) != 0) {
-			/* XXX What else can we do?  Deadlocks?  */
-			uvm_wait("pmap_create");
-		}
-
-		pmap->pm_segtab = stp = (struct segtab *)va;
-
-		i = NBPG / sizeof(struct segtab);
-		while (--i != 0) {
-			stp++;
-			*(struct segtab **)stp = free_segtab;
-			free_segtab = stp;
-		}
+	while (pmap_page_alloc(&va) != 0) {
+		/* XXX What else can we do?  Deadlocks?  */
+		uvm_wait("pmap_create");
 	}
+
+	pmap->pm_segtab = (struct segtab *)va;
+
 	if (pmap == vmspace0.vm_map.pmap) {
 		/*
 		 * The initial process has already been allocated a TLBPID
@@ -347,12 +333,15 @@ pmap_destroy(pmap_t pmap)
 			}
 #endif
 			Mips_HitInvalidateDCache((vaddr_t)pte, PAGE_SIZE);
-			uvm_pagefree(PHYS_TO_VM_PAGE(KSEG0_TO_PHYS(pte)));
+			pmap_page_free((vaddr_t)pte);
+#ifdef PARANOIA
 			pmap->pm_segtab->seg_tab[i] = NULL;
+#endif
 		}
-		*(struct segtab **)pmap->pm_segtab = free_segtab;
-		free_segtab = pmap->pm_segtab;
+		pmap_page_free((vaddr_t)pmap->pm_segtab);
+#ifdef PARANOIA
 		pmap->pm_segtab = NULL;
+#endif
 	}
 
 	pool_put(&pmap_pmap_pool, pmap);
@@ -1155,18 +1144,22 @@ int
 pmap_page_alloc(vaddr_t *ret)
 {
 	vm_page_t pg;
-	pv_entry_t pv;
-	vaddr_t va;
 
 	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE | UVM_PGA_ZERO);
 	if (pg == NULL)
 		return ENOMEM;
 
-	pv = pg_to_pvh(pg);
-	va = PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg));
-
-	*ret = va;
+	*ret = PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg));
 	return 0;
+}
+
+void
+pmap_page_free(vaddr_t va)
+{
+	vm_page_t pg;
+
+	pg = PHYS_TO_VM_PAGE(KSEG0_TO_PHYS(va));
+	uvm_pagefree(pg);
 }
 
 /*
