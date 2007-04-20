@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.107 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.108 2007/04/20 08:36:00 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -367,30 +367,6 @@ cvs_freeargv(char **argv, int argc)
 	for (i = 0; i < argc; i++)
 		if (argv[i] != NULL)
 			xfree(argv[i]);
-}
-
-/*
- * cvs_exec()
- */
-int
-cvs_exec(int argc, char **argv)
-{
-	int ret;
-	pid_t pid;
-
-	if ((pid = fork()) == -1) {
-		cvs_log(LP_ERR, "failed to fork");
-		return (-1);
-	} else if (pid == 0) {
-		execvp(argv[0], argv);
-		cvs_log(LP_ERR, "failed to exec %s", argv[0]);
-		exit(1);
-	}
-
-	if (waitpid(pid, &ret, 0) == -1)
-		cvs_log(LP_ERR, "failed to waitpid");
-
-	return (ret);
 }
 
 /*

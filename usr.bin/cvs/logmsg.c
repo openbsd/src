@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.38 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.39 2007/04/20 08:36:00 xsa Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -16,9 +16,13 @@
  */
 
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
+#include <signal.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -27,6 +31,8 @@
 #define CVS_LOGMSG_PREFIX		"CVS:"
 #define CVS_LOGMSG_LINE		\
 "----------------------------------------------------------------------"
+
+int	cvs_logmsg_edit(const char *);
 
 char *
 cvs_logmsg_read(const char *path)
@@ -88,10 +94,10 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 	struct cvs_flisthead *modified)
 {
 	FILE *fp;
-	int c, fd, argc, saved_errno;
+	int c, fd, saved_errno;
 	struct cvs_filelist *cf;
 	struct stat st1, st2;
-	char *fpath, *logmsg, *argv[4];
+	char *fpath, *logmsg;
 
 	(void)xasprintf(&fpath, "%s/cvsXXXXXXXXXX", cvs_tmpdir);
 
@@ -143,15 +149,10 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 		fatal("cvs_logmsg_create: fstat %s", strerror(saved_errno));
 	}
 
-	argc = 0;
-	argv[argc++] = cvs_editor;
-	argv[argc++] = fpath;
-	argv[argc] = NULL;
-
 	logmsg = NULL;
 
 	for (;;) {
-		if (cvs_exec(argc, argv) < 0)
+		if (cvs_logmsg_edit(fpath) == -1 && errno != ECHILD)
 			break;
 
 		if (fstat(fd, &st2) == -1) {
@@ -189,4 +190,57 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 	xfree(fpath);
 
 	return (logmsg);
+}
+
+int
+cvs_logmsg_edit(const char *pathname)
+{
+	char *argp[] = {"sh", "-c", NULL, NULL}, *p;
+	sig_t sighup, sigint, sigquit;
+	pid_t pid;
+	int st;
+
+	(void)xasprintf(&p, "%s %s", cvs_editor, pathname);
+	argp[2] = p;
+
+top:
+	sighup = signal(SIGHUP, SIG_IGN);
+	sigint = signal(SIGINT, SIG_IGN);
+	sigquit = signal(SIGQUIT, SIG_IGN);
+	if ((pid = fork()) == -1) {
+		int saved_errno = errno;
+
+		(void)signal(SIGHUP, sighup);
+		(void)signal(SIGINT, sigint);
+		(void)signal(SIGQUIT, sigquit);
+		if (saved_errno == EAGAIN) {
+			sleep(1);
+			goto top;
+		}
+		xfree(p);
+		errno = saved_errno;
+		return (-1);
+	}
+	if (pid == 0) {
+		execv(_PATH_BSHELL, argp);
+		_exit(127);
+	}
+	xfree(p);
+	for (;;) {
+		if (waitpid(pid, &st, WUNTRACED) == -1) {
+			if (errno != EINTR)
+				return (-1);
+		} else if (WIFSTOPPED(st))
+			raise(WSTOPSIG(st));
+		else
+			break;
+	}
+	(void)signal(SIGHUP, sighup);
+	(void)signal(SIGINT, sigint);
+	(void)signal(SIGQUIT, sigquit);
+	if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
+		errno = ECHILD;
+		return (-1);
+	}
+	return (0);
 }
