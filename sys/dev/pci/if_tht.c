@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.29 2007/04/20 00:41:32 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.30 2007/04/20 01:38:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -378,6 +378,7 @@ void			tht_fifo_post(struct tht_softc *,
 void			tht_read_lladdr(struct tht_softc *);
 int			tht_sw_reset(struct tht_softc *);
 int			tht_fw_load(struct tht_softc *);
+void			tht_link_state(struct tht_softc *);
 
 /* interface operations */
 int			tht_ioctl(struct ifnet *, u_long, caddr_t);
@@ -617,7 +618,6 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
-
 	default:
 		error = ENOTTY;
 		break;
@@ -650,10 +650,15 @@ tht_media_change(struct ifnet *ifp)
 void
 tht_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
+	struct tht_softc		*sc = ifp->if_softc;
+
 	imr->ifm_active = IFM_ETHER | IFM_AUTO;
 	imr->ifm_status = IFM_AVALID;
 
-	/* TODO: check link state */
+	tht_link_state(sc);
+
+	if (LINK_STATE_IS_UP(ifp->if_link_state) && ifp->if_flags & IFF_UP)
+		imr->ifm_status |= IFM_ACTIVE;
 }
 
 int
@@ -873,6 +878,21 @@ tht_fw_load(struct tht_softc *sc)
 err:
 	free(fw, M_DEVBUF);
 	return (error);
+}
+
+void
+tht_link_state(struct tht_softc *sc)
+{
+	struct ifnet			*ifp = &sc->sc_ac.ac_if;
+	int				link_state = LINK_STATE_DOWN;
+
+	if (tht_read(sc, THT_REG_MAC_LNK_STAT) & THT_REG_MAC_LNK_STAT_LINK)
+		link_state = LINK_STATE_UP;
+
+	if (ifp->if_link_state != link_state) {
+		ifp->if_link_state = link_state;
+		if_link_state_change(ifp);
+	}
 }
 
 u_int32_t
