@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.32 2007/04/20 05:14:32 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.33 2007/04/20 07:10:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -387,6 +387,8 @@ size_t			tht_fifo_ready(struct tht_softc *,
 			    struct tht_fifo *);
 void			tht_fifo_pre(struct tht_softc *,
 			    struct tht_fifo *);
+void			tht_fifo_read(struct tht_softc *, struct tht_fifo *,
+			    void *, size_t);
 void			tht_fifo_write(struct tht_softc *, struct tht_fifo *,
 			    void *, size_t);
 void			tht_fifo_post(struct tht_softc *,
@@ -737,6 +739,29 @@ tht_fifo_pre(struct tht_softc *sc, struct tht_fifo *tf)
 {
 	bus_dmamap_sync(sc->sc_thtc->sc_dmat, THT_DMA_MAP(tf->tf_mem),
 	    0, tf->tf_len, THT_FIFO_POST_SYNC(tf->tf_desc));
+}
+
+void
+tht_fifo_read(struct tht_softc *sc, struct tht_fifo *tf,
+    void *buf, size_t buflen)
+{
+	u_int8_t			*fifo = THT_DMA_KVA(tf->tf_mem);
+	u_int8_t			*desc = buf;
+	size_t				len;
+
+	len = tf->tf_len - tf->tf_rptr;
+
+	if (len < buflen) {
+		bcopy(fifo + tf->tf_rptr, desc, len);
+
+		buflen -= len;
+		desc += len;
+
+		tf->tf_rptr = 0;
+	}
+
+	bcopy(fifo + tf->tf_rptr, desc, buflen);
+	tf->tf_rptr += buflen;
 }
 
 void
