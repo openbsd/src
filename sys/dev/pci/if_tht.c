@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.31 2007/04/20 02:24:28 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.32 2007/04/20 05:14:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -350,6 +350,24 @@ struct tht_fifo_desc tht_txt_desc = {
 	THT_REG_TXT_WPTR(0),
 	THT_FIFO_SIZE_16k,
 	1
+};
+
+struct tht_fifo_desc tht_rxf_desc = {
+	THT_REG_RXF_CFG0(0),
+	THT_REG_RXF_CFG1(0),
+	THT_REG_RXF_RPTR(0),
+	THT_REG_RXF_WPTR(0),
+	THT_FIFO_SIZE_16k,
+	1
+};
+
+struct tht_fifo_desc tht_rxd_desc = {
+	THT_REG_RXD_CFG0(0),
+	THT_REG_RXD_CFG1(0),
+	THT_REG_RXD_RPTR(0),
+	THT_REG_RXD_WPTR(0),
+	THT_FIFO_SIZE_16k,
+	0
 };
 
 struct tht_fifo_desc tht_txf_desc = {
