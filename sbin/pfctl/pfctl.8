@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.129 2007/03/21 03:01:31 mcbride Exp $
+.\" $OpenBSD: pfctl.8,v 1.130 2007/04/20 07:30:16 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -42,14 +42,14 @@
 .Op Fl i Ar interface
 .Op Fl K Ar host | network
 .Op Fl k Ar host | network
-.Op Fl o Op Ar level
+.Op Fl o Ns Op Ar level
 .Op Fl p Ar device
 .Op Fl s Ar modifier
-.Oo
-.Fl t Ar table
+.Xo
+.Oo Fl t Ar table
 .Fl T Ar command
-.Op Ar address ...
-.Oc
+.Op Ar address ... Oc
+.Xc
 .Op Fl x Ar level
 .Ek
 .Sh DESCRIPTION
@@ -296,16 +296,16 @@ Do not actually load rules, just parse them.
 .It Fl O
 Load only the options present in the rule file.
 Other rules and options are ignored.
-.It Fl o Op Ar level
+.It Fl o Ns Op Ar level
 Control the ruleset optimizer, overriding any rule file settings.
 .Pp
 .Bl -tag -width xxxxxxxxxxxx -compact
-.It Fl o Cm none
+.It Fl o Ns Cm none
 Disable the ruleset optimizer.
-.It Fl o Cm basic
+.It Fl o Ns Cm basic
 Enable basic ruleset optimizations.
 This is the default behaviour.
-.It Fl o Cm profile
+.It Fl o Ns Cm profile
 Enable basic ruleset optimizations with profiling.
 .El
 .Pp
