@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_floorf.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
+/*	$OpenBSD: s_floorf.S,v 1.3 2007/04/20 21:12:31 martynas Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -33,10 +33,10 @@ ENTRY(floorf)
 	andw	$0xf7ff,%dx  
 	movw	%dx,-12(%rsp)
 	fldcw	-12(%rsp)
-	fldl	-4(%rsp)
+	flds	-4(%rsp)
 	frndint
 	fldcw	-8(%rsp)
-	fstpl	-4(%rsp)
+	fstps	-4(%rsp)
 	movss	-4(%rsp),%xmm0
 #endif
 	ret
