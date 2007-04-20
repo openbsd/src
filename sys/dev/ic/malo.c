@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.65 2007/04/17 19:45:20 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.66 2007/04/20 17:08:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1880,7 +1880,7 @@ malo_load_firmware(struct malo_softc *sc)
 		malo_send_cmd(sc, sc->sc_cmd_dmaaddr);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 		    BUS_DMASYNC_POSTWRITE);
-		delay(100);
+		delay(500);
 	}
 	free(ucode, M_DEVBUF);
 
