@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.33 2007/04/20 07:10:56 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.34 2007/04/20 13:46:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -405,6 +405,9 @@ int			tht_ioctl(struct ifnet *, u_long, caddr_t);
 void			tht_start(struct ifnet *);
 void			tht_watchdog(struct ifnet *);
 
+void			tht_up(struct tht_softc *);
+void			tht_down(struct tht_softc *);
+
 /* ifmedia operations */
 int			tht_media_change(struct ifnet *);
 void			tht_media_status(struct ifnet *, struct ifmediareq *);
@@ -606,9 +609,9 @@ tht_mountroot(void *arg)
 	printf("%s: firmware load %s\n", DEVNAME(sc),
 	    (tht_fw_load(sc) == 0) ? "succeeded" : "failed");
 
-	tht_fifo_free(sc, &sc->sc_txt);
-
 	tht_sw_reset(sc);
+
+	tht_fifo_free(sc, &sc->sc_txt);
 }
 
 int
@@ -622,6 +625,7 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 {
 	struct tht_softc		*sc = ifp->if_softc;
 	struct ifreq			*ifr = (struct ifreq *)addr;
+	struct ifaddr			*ifa;
 	int				error;
 	int				s;
 
@@ -634,6 +638,28 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	}
 
 	switch (cmd) {
+	case SIOCSIFADDR:
+		ifa = (struct ifaddr *)addr;
+
+#ifdef INET
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			arp_ifinit(&sc->sc_ac, ifa);
+#endif
+
+		ifp->if_flags |= IFF_UP;
+		/* FALLTHROUGH */
+	case SIOCSIFFLAGS:
+		if (ifp->if_flags & IFF_UP) {
+			if (ifp->if_flags & IFF_RUNNING)
+				/* multicast/promisc change */;
+			else
+				tht_up(sc);
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				tht_down(sc);
+		}
+		break;
+
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
@@ -646,6 +672,66 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	splx(s);
 
 	return (error);
+}
+
+void
+tht_up(struct tht_softc *sc)
+{
+	struct ifnet			*ifp = &sc->sc_ac.ac_if;
+
+	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+		printf("%s: interface is already up\n");
+		return;
+	}
+
+	if (tht_fifo_alloc(sc, &sc->sc_txt, &tht_txt_desc) != 0)
+		return;
+	if (tht_fifo_alloc(sc, &sc->sc_rxf, &tht_rxf_desc) != 0)
+		goto free_txt;
+	if (tht_fifo_alloc(sc, &sc->sc_rxd, &tht_rxd_desc) != 0)
+		goto free_rxf;
+	if (tht_fifo_alloc(sc, &sc->sc_txf, &tht_txf_desc) != 0)
+		goto free_rxd;
+
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+	
+	/* enable interrupts */
+
+	return;
+
+free_rxd:
+	tht_fifo_free(sc, &sc->sc_rxd);
+free_rxf:
+	tht_fifo_free(sc, &sc->sc_rxf);
+free_txt:
+	tht_fifo_free(sc, &sc->sc_txt);
+
+	tht_sw_reset(sc);
+}
+
+void
+tht_down(struct tht_softc *sc)
+{
+	struct ifnet			*ifp = &sc->sc_ac.ac_if;
+
+	if (!ISSET(ifp->if_flags, IFF_RUNNING)) {
+		printf("%s: interface is already down\n");
+		return;
+	}
+
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	while (tht_fifo_ready(sc, &sc->sc_txt) < sc->sc_txt.tf_len &&
+	    tht_fifo_ready(sc, &sc->sc_txf) < sc->sc_txf.tf_len)
+		tsleep(sc, 0, "thtdown", hz);
+
+	tht_sw_reset(sc);
+
+	tht_fifo_free(sc, &sc->sc_txf);
+	tht_fifo_free(sc, &sc->sc_rxd);
+	tht_fifo_free(sc, &sc->sc_rxf);
+	tht_fifo_free(sc, &sc->sc_txt);
 }
 
 void
