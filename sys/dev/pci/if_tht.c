@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.30 2007/04/20 01:38:32 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.31 2007/04/20 02:24:28 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -657,7 +657,7 @@ tht_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 
 	tht_link_state(sc);
 
-	if (LINK_STATE_IS_UP(ifp->if_link_state) && ifp->if_flags & IFF_UP)
+	if (LINK_STATE_IS_UP(ifp->if_link_state))
 		imr->ifm_status |= IFM_ACTIVE;
 }
 
