@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.34 2007/04/20 13:46:40 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.35 2007/04/20 13:59:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -34,6 +34,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 
@@ -326,6 +327,8 @@ struct tht_softc {
 	struct tht_fifo		sc_rxf;
 	struct tht_fifo		sc_rxd;
 	struct tht_fifo		sc_txf;
+
+	struct rwlock		sc_lock;
 };
 
 int			tht_match(struct device *, void *, void *);
@@ -549,6 +552,7 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet			*ifp;
 
 	sc->sc_thtc = csc;
+	rw_init(&sc->sc_lock, "thtioc");
 
 	if (bus_space_subregion(csc->sc_memt, csc->sc_memh,
 	    THT_PORT_REGION(taa->taa_port), THT_PORT_SIZE,
@@ -629,13 +633,12 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	int				error;
 	int				s;
 
+	rw_enter_write(&sc->sc_lock);
 	s = splnet();
 
 	error = ether_ioctl(ifp, &sc->sc_ac, cmd, addr);
-	if (error > 0) {
-		splx(s);
-		return (error);
-	}
+	if (error > 0)
+		goto err;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -669,7 +672,9 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		break;
 	}
 
+err:
 	splx(s);
+	rw_exit_write(&sc->sc_lock);
 
 	return (error);
 }
