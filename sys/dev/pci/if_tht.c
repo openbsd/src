@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.28 2007/04/19 14:07:08 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.29 2007/04/20 00:41:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -101,6 +101,10 @@
 /* XXX todo */
 /* Status Registers */
 #define THT_REG_MAC_LNK_STAT	0x0200 /* Link Status */
+#define  THT_REG_MAC_LNK_STAT_DIS	(1<<4) /* Mac Stats read disable */
+#define  THT_REG_MAC_LNK_STAT_LINK	(1<<2) /* Link State */
+#define  THT_REG_MAC_LNK_STAT_REM_FAULT	(1<<1) /* Remote Fault */
+#define  THT_REG_MAC_LNK_STAT_LOC_FAULT	(1<<0) /* Local Fault */
 /* Interrupt Registers */
 #define THT_REG_ISR		0x5100 /* Interrupt Status */
 #define THT_REG_ISR_GTI		0x5080 /* GTI Interrupt Status */
