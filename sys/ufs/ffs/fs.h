@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.27 2007/03/19 13:27:47 pedro Exp $	*/
+/*	$OpenBSD: fs.h,v 1.28 2007/04/20 16:30:31 millert Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -197,7 +197,7 @@ struct fs {
 	int32_t	 fs_dblkno;		/* offset of first data / frags */
 	int32_t	 fs_cgoffset;		/* cylinder group offset in cylinder */
 	int32_t	 fs_cgmask;		/* used to calc mod fs_ntrak */
-	time_t	 fs_ffs1_time;		/* last time written */
+	int32_t	 fs_ffs1_time;		/* last time written */
 	int32_t	 fs_ffs1_size;		/* # of blocks in fs / frags */
 	int32_t	 fs_ffs1_dsize;		/* # of data blocks in fs */
 	int32_t	 fs_ncg;		/* # of cylinder groups */
@@ -283,7 +283,7 @@ struct fs {
 	int32_t	 fs_avgfpdir;		/* expected # of files per directory */
 	int32_t	 fs_sparecon[26];	/* reserved for future constants */
 	u_int32_t fs_flags;		/* see FS_ flags below */
-	time_t	 fs_fscktime;		/* last time fsck(8)ed */
+	int32_t	 fs_fscktime;		/* last time fsck(8)ed */
 	int32_t	 fs_contigsumsize;	/* size of cluster summary array */ 
 	int32_t	 fs_maxsymlinklen;	/* max length of an internal symlink */
 	int32_t	 fs_inodefmt;		/* format of on-disk inodes */
@@ -374,7 +374,7 @@ struct fs {
 struct cg {
 	int32_t	 cg_firstfield;		/* historic cyl groups linked list */
 	int32_t	 cg_magic;		/* magic number */
-	time_t	 cg_time;		/* time last written */
+	int32_t	 cg_time;		/* time last written */
 	int32_t	 cg_cgx;		/* we are the cgx'th cylinder group */
 	int16_t	 cg_ncyl;		/* number of cyl's this cg */
 	int16_t	 cg_niblk;		/* number of inode blocks this cg */
@@ -435,7 +435,7 @@ struct cg {
 struct ocg {
 	int32_t	 cg_firstfield;		/* historic linked list of cyl groups */
 	int32_t	 cg_unused_1;		/*     used for incore cyl groups */
-	time_t	 cg_time;		/* time last written */
+	int32_t	 cg_time;		/* time last written */
 	int32_t	 cg_cgx;		/* we are the cgx'th cylinder group */
 	int16_t	 cg_ncyl;		/* number of cyl's this cg */
 	int16_t	 cg_niblk;		/* number of inode blocks this cg */
