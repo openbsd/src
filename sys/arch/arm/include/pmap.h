@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.6 2006/05/27 20:36:05 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.7 2007/04/21 19:26:04 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -310,20 +310,6 @@ vtopte(vaddr_t va)
 }
 
 /*
- * Virtual address to physical address
- */
-static __inline paddr_t
-vtophys(vaddr_t va)
-{
-	paddr_t pa;
-
-	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
-		return (0);	/* XXXSCW: Panic? */
-
-	return (pa);
-}
-
-/*
  * The new pmap ensures that page-tables are always mapping Write-Thru.
  * Thus, on some platforms we can run fast and loose and avoid syncing PTEs
  * on every change.
@@ -585,11 +571,6 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 
 #define	L2_L_MAPPABLE_P(va, pa, size)					\
 	((((va) | (pa)) & L2_L_OFFSET) == 0 && (size) >= L2_L_SIZE)
-
-/*
- * Hooks for the pool allocator.
- */
-#define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.11 2007/04/13 10:36:03 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.12 2007/04/21 19:26:03 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -433,10 +433,10 @@ struct l2_dtable {
 static __inline pt_entry_t *
 pmap_alloc_l2_ptp(paddr_t *pap)		
 {
-	pt_entry_t * pted;
+	pt_entry_t *pted;
 
 	pted = pool_cache_get(&pmap_l2ptp_cache, PR_NOWAIT);
-	*pap  = vtophys((vaddr_t)pted);
+	(void)pmap_extract(pmap_kernel(), (vaddr_t)pted, pap);
 	return pted;
 }
 #endif /* POOL_CACHE_PADDR */
