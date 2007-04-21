@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.40 2007/04/21 12:40:42 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.41 2007/04/21 12:47:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1039,8 +1039,8 @@ tht_fw_load(struct tht_softc *sc)
 
 	buf = fw;
 	while (fwlen > 0) {
-		while ((wrlen = tht_fifo_ready(sc, &sc->sc_txt) -
-		    THT_FIFO_GAP) <= 0) {
+		while ((wrlen = tht_fifo_ready(sc, &sc->sc_txt)) <=
+		    THT_FIFO_GAP) {
 			if (tsleep(sc, PCATCH, "thtfw", 1) == EINTR)
 				goto err;
 		}
