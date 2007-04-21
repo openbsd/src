@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.6 2006/01/08 18:11:03 kettenis Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.7 2007/04/21 15:43:27 gwk Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -45,6 +45,7 @@
 #include <machine/pio.h>
 
 #include <macppc/dev/i2svar.h>
+#include <macppc/dev/i2sreg.h>
 
 #ifdef I2S_DEBUG
 # define DPRINTF(x) printf x 
@@ -83,24 +84,6 @@ static u_char *headphone_detect;
 static int headphone_detect_active;
 static u_char *lineout_detect;
 static int lineout_detect_active;
-
-
-/* I2S registers */
-#define I2S_INT		0x00
-#define I2S_FORMAT	0x10
-#define I2S_FRAMECOUNT	0x40
-#define I2S_FRAMEMATCH	0x50
-#define I2S_WORDSIZE	0x60
-
-/* I2S_INT register definitions */
-#define I2SClockOffset		0x3c
-#define I2S_INT_CLKSTOPPEND	0x01000000
-
-/* FCR(0x3c) bits */
-#define I2S0CLKEN	0x1000
-#define I2S0EN		0x2000
-#define I2S1CLKEN	0x080000
-#define I2S1EN		0x100000
 
 /* GPIO bits */
 #define GPIO_OUTSEL	0xf0	/* Output select */
@@ -824,33 +807,14 @@ i2s_trigger_input(h, start, end, bsize, intr, arg, param)
 	return 1;
 }
 
-#define CLKSRC_49MHz	0x80000000	/* Use 49152000Hz Osc. */
-#define CLKSRC_45MHz	0x40000000	/* Use 45158400Hz Osc. */
-#define CLKSRC_18MHz	0x00000000	/* Use 18432000Hz Osc. */
-#define MCLK_DIV	0x1f000000	/* MCLK = SRC / DIV */
-#define  MCLK_DIV1	0x14000000	/*  MCLK = SRC */
-#define  MCLK_DIV3	0x13000000	/*  MCLK = SRC / 3 */
-#define  MCLK_DIV5	0x12000000	/*  MCLK = SRC / 5 */
-#define SCLK_DIV	0x00f00000	/* SCLK = MCLK / DIV */
-#define  SCLK_DIV1	0x00800000
-#define  SCLK_DIV3	0x00900000
-#define SCLK_MASTER	0x00080000	/* Master mode */
-#define SCLK_SLAVE	0x00000000	/* Slave mode */
-#define SERIAL_FORMAT	0x00070000
-#define  SERIAL_SONY	0x00000000
-#define  SERIAL_64x	0x00010000
-#define  SERIAL_32x	0x00020000
-#define  SERIAL_DAV	0x00040000
-#define  SERIAL_SILICON	0x00050000
 
-// rate = fs = LRCLK
-// SCLK = 64*LRCLK (I2S)
-// MCLK = 256fs (typ. -- changeable)
-
-// MCLK = clksrc / mdiv
-// SCLK = MCLK / sdiv
-// rate = SCLK / 64    ( = LRCLK = fs)
-
+/* rate = fs = LRCLK
+ * SCLK = 64*LRCLK (I2S)
+ * MCLK = 256fs (typ. -- changeable)
+ * MCLK = clksrc / mdiv
+ *  SCLK = MCLK / sdiv
+ * rate = SCLK / 64    ( = LRCLK = fs)
+ */
 int
 i2s_set_rate(sc, rate)
 	struct i2s_softc *sc;
@@ -892,8 +856,8 @@ i2s_set_rate(sc, rate)
 	}
 
 	MCLK = rate * mclk_fs;
-	mdiv = clksrc / MCLK;			// 4
-	sdiv = mclk_fs / 64;			// 4
+	mdiv = clksrc / MCLK;			/* 4 */
+	sdiv = mclk_fs / 64;			/* 4 */
 
 	switch (mdiv) {
 	case 1:
