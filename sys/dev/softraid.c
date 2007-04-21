@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.25 2007/04/19 22:12:41 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.26 2007/04/21 23:05:19 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -32,8 +32,8 @@
 #include <sys/namei.h>
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
-
 #include <sys/mount.h>
+#include <sys/sensors.h>
 
 #include <machine/bus.h>
 
@@ -124,6 +124,8 @@ void			sr_raid1_startwu(struct sr_workunit *);
 void			sr_get_uuid(struct sr_uuid *);
 u_int32_t		sr_checksum(char *, u_int32_t *, u_int32_t);
 int			sr_save_metadata(struct sr_discipline *);
+void			sr_refresh_sensors(void *);
+int			sr_create_sensors(struct sr_discipline *);
 
 struct scsi_adapter sr_switch = {
 	sr_scsi_cmd, sr_minphys, NULL, NULL, sr_scsi_ioctl
@@ -858,6 +860,10 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 	sd->sd_vol.sv_meta.svm_volid = vol;
 
 	rv = sr_save_metadata(sd); /* save metadata to disk */
+
+	if (sr_create_sensors(sd) != 0)
+		printf("%s: unable to create sensor for %s\n", DEVNAME(sc),
+		    dev->dv_xname);
 
 	return (rv);
 
@@ -1621,6 +1627,9 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 	int			new_state, i, s, nd;
 	int			old_state = sd->sd_vol.sv_meta.svm_status;
 
+	DNPRINTF(SR_D_STATE, "%s: %s: sr_raid1_set_vol_state\n",
+	    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname);
+
 	nd = sd->sd_vol.sv_meta.svm_no_chunk;
 
 	for (i = 0; i < SR_MAX_STATES; i++)
@@ -1871,4 +1880,75 @@ sr_save_metadata(struct sr_discipline *sd)
 	rv = 0;
 bad:
 	return (rv);
+}
+
+int
+sr_create_sensors(struct sr_discipline *sd)
+{
+	struct sr_softc		*sc = sd->sd_sc;
+	int			rv = 1;
+
+	DNPRINTF(SR_D_STATE, "%s: %s: sr_create_sensors\n",
+	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
+
+	strlcpy(sd->sd_vol.sv_sensordev.xname, DEVNAME(sc),
+	    sizeof(sd->sd_vol.sv_sensordev.xname));
+
+	sd->sd_vol.sv_sensor.type = SENSOR_DRIVE;
+	sd->sd_vol.sv_sensor.status = SENSOR_S_UNKNOWN;
+	strlcpy(sd->sd_vol.sv_sensor.desc, sd->sd_vol.sv_meta.svm_devname,
+	    sizeof(sd->sd_vol.sv_sensor.desc));
+
+	sensor_attach(&sd->sd_vol.sv_sensordev, &sd->sd_vol.sv_sensor);
+
+	if (sc->sc_sensors_running == 0) {
+		if (sensor_task_register(sc, sr_refresh_sensors, 10) != 0)
+			goto bad;
+		sc->sc_sensors_running = 1;
+	}
+	sensordev_install(&sd->sd_vol.sv_sensordev);
+
+	rv = 0;
+bad:
+	return (rv);
+}
+void
+sr_refresh_sensors(void *arg)
+{
+	struct sr_softc		*sc = arg;
+	int			i, vol;
+	struct sr_volume	*sv;
+
+	DNPRINTF(SR_D_STATE, "%s: sr_refresh_sensors\n", DEVNAME(sc));
+
+	for (i = 0, vol = -1; i < SR_MAXSCSIBUS; i++) {
+		/* XXX this will not work when we stagger disciplines */
+		if (!sc->sc_dis[i])
+			continue;
+
+		sv = &sc->sc_dis[i]->sd_vol;
+
+		switch(sv->sv_meta.svm_status) {
+		case BIOC_SVOFFLINE:
+			sv->sv_sensor.value = SENSOR_DRIVE_FAIL;
+			sv->sv_sensor.status = SENSOR_S_CRIT;
+			break;
+
+		case BIOC_SVDEGRADED:
+			sv->sv_sensor.value = SENSOR_DRIVE_PFAIL;
+			sv->sv_sensor.status = SENSOR_S_WARN;
+			break;
+
+		case BIOC_SVSCRUB:
+		case BIOC_SVONLINE:
+			sv->sv_sensor.value = SENSOR_DRIVE_ONLINE;
+			sv->sv_sensor.status = SENSOR_S_OK;
+			break;
+
+		default:
+			sv->sv_sensor.value = 0; /* unknown */
+			sv->sv_sensor.status = SENSOR_S_UNKNOWN;
+		}
+
+	}
 }

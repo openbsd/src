@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.9 2007/04/19 02:44:29 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.10 2007/04/21 23:05:19 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -187,6 +187,10 @@ struct sr_volume {
 	/* runtime data */
 	struct sr_chunk_head	sv_chunk_list;	/* linked list of all chunks */
 	struct sr_chunk		**sv_chunks;	/* array to same chunks */
+
+	/* sensors */
+	struct ksensor		sv_sensor;
+	struct ksensordev	sv_sensordev;
 };
 
 /* RAID 1 */
@@ -257,11 +261,14 @@ struct sr_softc {
 	int			(*sc_ioctl)(struct device *, u_long, caddr_t);
 
 	struct rwlock		sc_lock;
+
+	int			sc_sensors_running;
 	/*
 	 * during scsibus attach this is the discipline that is in use
 	 * this variable is protected by sc_lock and splhigh
 	 */
 	struct sr_discipline	*sc_attach_dis;
+
 	/*
 	 * XXX expensive, alternative would be nice but has to be cheap
 	 * since the scsibus lookup happens on each IO
