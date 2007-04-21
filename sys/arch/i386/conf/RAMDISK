@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.148 2007/02/17 23:59:03 marco Exp $
+#	$OpenBSD: RAMDISK,v 1.149 2007/04/21 16:22:03 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -123,10 +123,10 @@ pccom*	at isapnp?
 #lpt2	at isa? port 0x3bc
 
 
-bha0	at isa? port 0x330	# BusLogic [57]4X SCSI controllers
-bha1	at isa? disable port 0x334 # BusLogic [57]4X SCSI controllers
-bha2	at isa? disable
-bha*	at pci?
+#bha0	at isa? port 0x330	# BusLogic [57]4X SCSI controllers
+#bha1	at isa? disable port 0x334 # BusLogic [57]4X SCSI controllers
+#bha2	at isa? disable
+#bha*	at pci?
 #bha*	at eisa?		# XXX eisa still runs in isa-compat
 scsibus* at bha?
 aha0	at isa? port 0x330	# Adaptec 154[02] SCSI controllers
