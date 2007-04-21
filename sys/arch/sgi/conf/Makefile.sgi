@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.14 2006/09/23 20:16:28 deraadt Exp $
+#	$OpenBSD: Makefile.sgi,v 1.15 2007/04/21 20:07:24 deraadt Exp $
 
 # Makefile for OpenBSD
 #
@@ -99,7 +99,7 @@ SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o \
 #
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	rm -f $@
-SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
+SYSTEM_LD=	@if [ X${DEBUG} = X-g ]; \
 		then strip=-X; \
 		else strip=-x; \
 		fi; \
