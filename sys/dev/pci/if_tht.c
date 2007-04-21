@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.42 2007/04/21 13:10:51 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.43 2007/04/21 13:58:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -329,7 +329,8 @@ struct tht_pkt {
 
 struct tht_pkt_list {
 	struct tht_pkt		*tpl_pkts;
-	TAILQ_HEAD(, tht_pkt)	tpl_list;
+	TAILQ_HEAD(, tht_pkt)	tpl_free;
+	TAILQ_HEAD(, tht_pkt)	tpl_used;
 };
 
 struct tht_softc {
@@ -376,6 +377,7 @@ void			tht_pkt_free(struct tht_softc *,
 			    struct tht_pkt_list *);
 void			tht_pkt_put(struct tht_pkt_list *, struct tht_pkt *);
 struct tht_pkt 		*tht_pkt_get(struct tht_pkt_list *);
+struct tht_pkt		*tht_pkt_used(struct tht_pkt_list *);
 
 /* fifos */
 
@@ -440,7 +442,9 @@ void			tht_link_state(struct tht_softc *);
 int			tht_ioctl(struct ifnet *, u_long, caddr_t);
 void			tht_watchdog(struct ifnet *);
 void			tht_start(struct ifnet *);
-void			tht_rx(struct tht_softc *, int);
+
+void			tht_rxf_fill(struct tht_softc *, int);
+void			tht_rxf_drain(struct tht_softc *);
 
 void			tht_up(struct tht_softc *);
 void			tht_down(struct tht_softc *);
@@ -800,7 +804,7 @@ tht_start(struct ifnet *ifp)
 
 
 void
-tht_rx(struct tht_softc *sc, int wait)
+tht_rxf_fill(struct tht_softc *sc, int wait)
 {
 	struct tht_rx_free		rxf;
 	struct tht_pbd			pbd;
@@ -875,6 +879,26 @@ put_pkt:
 	tht_pkt_put(&sc->sc_rx_list, pkt);
 done:
 	tht_fifo_post(sc, &sc->sc_txf);
+}
+
+void
+tht_rxf_drain(struct tht_softc *sc)
+{
+	bus_dma_tag_t			dmat = sc->sc_thtc->sc_dmat;
+	bus_dmamap_t			dmap;
+	struct tht_pkt			*pkt;
+
+	while ((pkt = tht_pkt_used(&sc->sc_rx_list)) != NULL) {
+		dmap = pkt->tp_dmap;
+
+		bus_dmamap_sync(dmat, dmap, 0, dmap->dm_mapsize,
+		BUS_DMASYNC_PREREAD);
+		bus_dmamap_unload(dmat, dmap);
+
+		m_freem(pkt->tp_m);
+
+		tht_pkt_put(&sc->sc_rx_list, pkt);
+	}
 }
 
 void
@@ -1274,7 +1298,8 @@ tht_pkt_alloc(struct tht_softc *sc, struct tht_pkt_list *tpl, int npkts,
 	    M_WAITOK);
 	bzero(tpl->tpl_pkts, sizeof(struct tht_pkt) * npkts);
 
-	TAILQ_INIT(&tpl->tpl_list);
+	TAILQ_INIT(&tpl->tpl_free);
+	TAILQ_INIT(&tpl->tpl_used);
 	for (i = 0; i < npkts; i++) {
 		pkt = &tpl->tpl_pkts[i];
 
@@ -1286,7 +1311,7 @@ tht_pkt_alloc(struct tht_softc *sc, struct tht_pkt_list *tpl, int npkts,
 			return (1);
 		}
 
-		tht_pkt_put(tpl, pkt);
+		TAILQ_INSERT_TAIL(&tpl->tpl_free, pkt, tp_link);
 	}
 
 	return (0);
@@ -1307,7 +1332,8 @@ tht_pkt_free(struct tht_softc *sc, struct tht_pkt_list *tpl)
 void
 tht_pkt_put(struct tht_pkt_list *tpl, struct tht_pkt *pkt)
 {
-	TAILQ_INSERT_TAIL(&tpl->tpl_list, pkt, tp_link);
+	TAILQ_REMOVE(&tpl->tpl_used, pkt, tp_link);
+	TAILQ_INSERT_TAIL(&tpl->tpl_free, pkt, tp_link);
 }
 
 struct tht_pkt *
@@ -1315,9 +1341,18 @@ tht_pkt_get(struct tht_pkt_list *tpl)
 {
 	struct tht_pkt			*pkt;
 
-	pkt = TAILQ_FIRST(&tpl->tpl_list);
-	if (pkt != NULL)
-		TAILQ_REMOVE(&tpl->tpl_list, pkt, tp_link);
+	pkt = TAILQ_FIRST(&tpl->tpl_free);
+	if (pkt != NULL) {
+		TAILQ_REMOVE(&tpl->tpl_free, pkt, tp_link);
+		TAILQ_INSERT_TAIL(&tpl->tpl_used, pkt, tp_link);
+
+	}
 
 	return (pkt);
+}
+
+struct tht_pkt *
+tht_pkt_used(struct tht_pkt_list *tpl)
+{
+	return (TAILQ_FIRST(&tpl->tpl_used));
 }
