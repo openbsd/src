@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.7 2007/04/12 20:22:58 art Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.8 2007/04/21 21:06:15 gwk Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _i386_INTRDEFS_H
@@ -115,13 +115,14 @@
 #define I386_IPI_MTRR		0x00000020
 #define I386_IPI_GDT		0x00000040
 #define I386_IPI_DDB		0x00000080	/* synchronize while in ddb */
+#define I386_IPI_SETPERF	0x00000100
 
-#define I386_NIPI	8
+#define I386_NIPI	9
 
 #define I386_IPI_NAMES { "halt IPI", "timeset IPI", "FPU flush IPI", \
 			 "FPU synch IPI", "TLB shootdown IPI", \
 			 "MTRR update IPI", "GDT update IPI", \
-			 "DDB IPI" }
+			 "DDB IPI", "setperf IPI" }
 
 #define IREENT_MAGIC	0x18041969
 

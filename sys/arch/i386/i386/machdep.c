@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.382 2007/04/12 20:22:58 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.383 2007/04/21 21:06:14 gwk Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1444,7 +1444,7 @@ amd_family6_setup(struct cpu_info *ci)
 #endif
 }
 
-#if !defined(SMALL_KERNEL) && defined(I686_CPU) && !defined(MULTIPROCESSOR)
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
 void
 intel686_setperf_setup(struct cpu_info *ci)
 {
@@ -1468,9 +1468,7 @@ intel686_common_cpu_setup(struct cpu_info *ci)
 {
 
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
-#if !defined(MULTIPROCESSOR)
 	setperf_setup = intel686_setperf_setup;
-#endif
 	{
 	extern void (*pagezero)(void *, size_t);
 	extern void sse2_pagezero(void *, size_t);

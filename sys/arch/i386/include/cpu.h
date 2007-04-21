@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.91 2007/04/12 20:22:58 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.92 2007/04/21 21:06:15 gwk Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@
 #define clockframe intrframe
 
 #include <sys/device.h>
-#include <sys/lock.h>                  /* will also get LOCKDEBUG */
+#include <sys/lock.h>			/* will also get LOCKDEBUG */
 #include <sys/sched.h>
 
 struct intrsource;
@@ -76,7 +76,7 @@ struct cpu_info {
 	struct cpu_info *ci_self;	/* pointer to this structure */
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 	struct cpu_info *ci_next;	/* next cpu */
-	
+
 	/* 
 	 * Public members. 
 	 */
@@ -113,7 +113,7 @@ struct cpu_info {
 	u_int32_t	ci_ipis; 	/* interprocessor interrupts pending */
 	int		sc_apic_version;/* local APIC version */
 	u_int64_t	ci_tscbase;
-	
+
 	u_int32_t	ci_level;
 	u_int32_t	ci_vendor[4];
 	u_int32_t	ci_signature;		/* X86 cpuid type */
@@ -135,6 +135,12 @@ struct cpu_info {
 #define CI_DDB_STOPPED		2
 #define CI_DDB_ENTERDDB		3
 #define CI_DDB_INDDB		4
+
+	volatile int ci_setperf_state;
+#define CI_SETPERF_READY	0
+#define CI_SETPERF_SHOULDSTOP	1
+#define CI_SETPERF_INTRANSIT	2
+#define CI_SETPERF_DONE		3
 };
 
 /*
@@ -401,6 +407,11 @@ void	pmap_bootstrap(vaddr_t);
 
 /* vm_machdep.c */
 int	kvtop(caddr_t);
+
+#ifdef MULTIPROCESSOR
+/* mp_setperf.c */
+void	mp_setperf_init(void);
+#endif
 
 #ifdef VM86
 /* vm86.c */

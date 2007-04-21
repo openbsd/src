@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.6 2006/05/29 09:54:16 mickey Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.7 2007/04/21 21:06:14 gwk Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -90,6 +90,7 @@ void (*ipifunc[I386_NIPI])(struct cpu_info *) =
 #else
 	0,
 #endif
+	i386_setperf_ipi,
 };
 
 void
@@ -169,7 +170,7 @@ i386_broadcast_ipi(int ipimask)
 	if (!count)
 		return;
 
-	i386_ipi(LAPIC_IPI_VECTOR, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);   
+	i386_ipi(LAPIC_IPI_VECTOR, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED); 
 }
 
 void

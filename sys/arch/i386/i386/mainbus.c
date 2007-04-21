@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.35 2007/03/19 14:33:28 dlg Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.36 2007/04/21 21:06:14 gwk Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -209,6 +209,10 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		if (setperf_setup != NULL)
 			setperf_setup(&cpu_info_primary);
 	}
+
+#ifdef MULTIPROCESSOR
+	mp_setperf_init();
+#endif
 
 #if NVESABIOS > 0
 	if (vbeprobe())	{
