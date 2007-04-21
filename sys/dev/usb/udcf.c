@@ -1,7 +1,7 @@
-/*	$OpenBSD: udcf.c,v 1.30 2007/03/22 16:55:31 deraadt Exp $ */
+/*	$OpenBSD: udcf.c,v 1.31 2007/04/21 08:50:14 mbalmer Exp $ */
 
 /*
- * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
+ * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,13 +19,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/select.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
-#include <sys/device.h>
-#include <sys/poll.h>
 #include <sys/time.h>
 #include <sys/sensors.h>
 
