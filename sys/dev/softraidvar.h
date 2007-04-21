@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.10 2007/04/21 23:05:19 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.11 2007/04/21 23:39:18 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -113,26 +113,27 @@ struct sr_workunit {
 
 TAILQ_HEAD(sr_wu_list, sr_workunit);
 
-#define SR_META_SIZE		32  /* save space at chunk beginning */
-#define SR_META_VERSION		1   /* bump when sr_metadata changes */
+#define SR_META_SIZE		32	/* save space at chunk beginning */
+#define SR_META_VERSION		2	/* bump when sr_metadata changes */
 struct sr_metadata {
-	/* do not change order of ssd_magic, ssd_version and ssd_big_endian */
+	/* do not change order of ssd_magic, ssd_version */
 	u_int64_t		ssd_magic;	/* magic id */
 #define	SR_MAGIC		0x4d4152436372616dllu
 	u_int8_t		ssd_version;	/* meta data version */
-	u_int8_t		ssd_big_endian;	/* set if big endian */
-	u_int8_t		ssd_pad[2];
+	u_int8_t		ssd_pad1[7];
 
 	/* meta-data */
 	u_int32_t		ssd_checksum;	/* xor of the structure */
 	u_int32_t		ssd_size;	/* sizeof(sr_metadata) */
 	u_int32_t		ssd_ondisk;	/* on disk version counter */
-	struct sr_uuid	ssd_uuid;	/* unique identifier */
+	u_int32_t		ssd_pad2;
+	struct sr_uuid		ssd_uuid;	/* unique identifier */
 
 	/* virtual disk data */
 	u_int32_t		ssd_vd_ver;	/* vd structure version */
 	u_int32_t		ssd_vd_size;	/* vd structure size */
 	u_int32_t		ssd_vd_chk;	/* vd structure xor */
+	u_int32_t		ssd_pad3;
 
 	/* chunk data */
 	u_int32_t		ssd_chunk_ver;	/* chunk structure version */
@@ -141,12 +142,13 @@ struct sr_metadata {
 	u_int32_t		ssd_chunk_chk;	/* chunk structure xor */
 } __packed;
 
-#define SR_CHUNK_VERSION	1	/* bump when sr_chunk_meta changes */
+#define SR_CHUNK_VERSION	2	/* bump when sr_chunk_meta changes */
 struct sr_chunk_meta {
-	int			scm_volid;	/* vd we belong to */
-	int			scm_chunk_id;	/* chunk id */
+	u_int32_t		scm_volid;	/* vd we belong to */
+	u_int32_t		scm_chunk_id;	/* chunk id */
+	u_int32_t		scm_status;	/* use bio bioc_disk status */
+	u_int32_t		scm_pad1;
 	char			scm_devname[32];/* /dev/XXXXX */
-	int			scm_status;	/* use bio bioc_disk status */
 	u_quad_t		scm_size;	/* size of partition */
 	u_quad_t		scm_coerced_size; /* coerced size of part */
 	struct sr_uuid		scm_uuid;	/* unique identifier */
@@ -164,20 +166,22 @@ struct sr_chunk {
 
 SLIST_HEAD(sr_chunk_head, sr_chunk);
 
-#define SR_VOL_VERSION	1	/* bump when sr_vol_meta changes */
+#define SR_VOL_VERSION	2	/* bump when sr_vol_meta changes */
 struct sr_vol_meta {
-	int			svm_volid;	/* volume id */
-	int			svm_status; 	/* use bioc_vol status */
-	int			svm_flags;	/* flags */
+	u_int32_t		svm_volid;	/* volume id */
+	u_int32_t		svm_status; 	/* use bioc_vol status */
+	u_int32_t		svm_flags;	/* flags */
+	u_int32_t		svm_level;	/* raid level */
+
 #define SR_VDF_DIRTY		0x01
 	u_quad_t		svm_size;	/* virtual disk size */
-	int			svm_level;	/* raid level */
+
+	char			svm_devname[32];/* /dev/XXXXX */
 	char			svm_vendor[8];	/* scsi vendor */
 	char			svm_product[16];/* scsi product */
 	char			svm_revision[4];/* scsi revision */
-	char			svm_pad[4];
-	char			svm_devname[32];/* /dev/XXXXX */
-	int			svm_no_chunk;	/* number of chunks */
+	u_int32_t		svm_no_chunk;	/* number of chunks */
+
 	struct sr_uuid 		svm_uuid;	/* volume unique identifier */
 } __packed;
 

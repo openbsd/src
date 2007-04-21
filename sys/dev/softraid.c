@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.27 2007/04/21 23:22:42 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.28 2007/04/21 23:39:18 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1793,10 +1793,6 @@ sr_save_metadata(struct sr_discipline *sd)
 		/* initial metadata */
 		sm->ssd_magic = SR_MAGIC;
 		sm->ssd_version = SR_META_VERSION;
-		if (_BYTE_ORDER == _LITTLE_ENDIAN)
-			sm->ssd_big_endian = 0;
-		else
-			sm->ssd_big_endian = 1;
 		sm->ssd_size = sizeof(struct sr_metadata);
 		sm->ssd_ondisk = 1;
 		sr_get_uuid(&sm->ssd_uuid);
@@ -1830,7 +1826,6 @@ sr_save_metadata(struct sr_discipline *sd)
 	/* metadata */
 	DNPRINTF(SR_D_META, "\tmagic 0x%llx\n", sm->ssd_magic);
 	DNPRINTF(SR_D_META, "\tversion %d\n", sm->ssd_version);
-	DNPRINTF(SR_D_META, "\tbig endian %d\n", sm->ssd_big_endian);
 	DNPRINTF(SR_D_META, "\tchecksum 0x%x\n", sm->ssd_checksum);
 	DNPRINTF(SR_D_META, "\tsize %d\n", sm->ssd_size);
 	DNPRINTF(SR_D_META, "\ton disk version %u\n", sm->ssd_ondisk);
