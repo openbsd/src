@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.265 2007/04/21 14:49:45 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.266 2007/04/21 14:50:26 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -220,7 +220,7 @@ static const char *debugopt_list[] = {
 };
 
 static const char *optiopt_list[] = {
-	"o", "none", "basic", "profile", NULL
+	"none", "basic", "profile", NULL
 };
 
 void
