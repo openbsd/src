@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.264 2007/04/20 07:30:16 jmc Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.265 2007/04/21 14:49:45 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -232,7 +232,7 @@ usage(void)
 	fprintf(stderr, "[-a anchor] [-D macro=value] [-F modifier]\n");
 	fprintf(stderr, "\t[-f file] [-i interface] [-K host | network] ");
 	fprintf(stderr, "[-k host | network]\n");
-	fprintf(stderr, "\t[-o[level]] [-p device] [-s modifier]\n");
+	fprintf(stderr, "\t[-o level] [-p device] [-s modifier]\n");
 	fprintf(stderr, "\t[-t table -T command [address ...]] [-x level]\n");
 	exit(1);
 }
@@ -1963,7 +1963,7 @@ main(int argc, char *argv[])
 		usage();
 
 	while ((ch = getopt(argc, argv,
-	    "a:AdD:eqf:F:ghi:k:K:mnNOo::p:rRs:t:T:vx:z")) != -1) {
+	    "a:AdD:eqf:F:ghi:k:K:mnNOo:p:rRs:t:T:vx:z")) != -1) {
 		switch (ch) {
 		case 'a':
 			anchoropt = optarg;
@@ -2039,24 +2039,11 @@ main(int argc, char *argv[])
 			loadopt |= PFCTL_FLAG_FILTER;
 			break;
 		case 'o':
-			if (optarg) {
-				optiopt = pfctl_lookup_option(optarg,
-				    optiopt_list);
-					if (optiopt == NULL) {
-					warnx("Unknown optimization '%s'",
-					    optarg);
-					usage();
-				}
+			optiopt = pfctl_lookup_option(optarg, optiopt_list);
+			if (optiopt == NULL) {
+				warnx("Unknown optimization '%s'", optarg);
+				usage();
 			}
-			if (opts & PF_OPT_OPTIMIZE) {
-				if (optiopt != NULL) {
-					warnx("Cannot specify -o multiple times"
-					    "with optimizer level");
-					usage();
-				}
-				optimize |= PF_OPTIMIZE_PROFILE;
-			}
-			optimize |= PF_OPTIMIZE_BASIC;
 			opts |= PF_OPT_OPTIMIZE;
 			break;
 		case 'O':
