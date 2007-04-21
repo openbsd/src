@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.26 2007/04/21 23:05:19 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.27 2007/04/21 23:22:42 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1081,8 +1081,9 @@ sr_raid1_alloc_resources(struct sr_discipline *sd)
 	sr_alloc_wu(sd);
 	sr_alloc_ccb(sd);
 
-	sd->sd_meta = malloc(SR_META_SIZE * 512 , M_DEVBUF, M_WAITOK);
-	bzero(sd->sd_meta, SR_META_SIZE * 512);
+	/* -2 because that includes mbr and partition table */
+	sd->sd_meta = malloc((SR_META_SIZE - 2) * 512 , M_DEVBUF, M_WAITOK);
+	bzero(sd->sd_meta, (SR_META_SIZE - 2) * 512);
 
 	rv = 0;
 	return (rv);
@@ -1775,7 +1776,7 @@ sr_save_metadata(struct sr_discipline *sd)
 	struct sr_chunk		*src;
 	struct buf		b;
 	int			i, rv = 1;
-	size_t			sz = SR_META_SIZE * 512;
+	size_t			sz = (SR_META_SIZE - 2) * 512;
 
 	DNPRINTF(SR_D_META, "%s: sr_save_metadata %s\n",
 	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
