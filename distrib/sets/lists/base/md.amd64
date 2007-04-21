@@ -35,6 +35,8 @@
 ./etc/firmware/ral-rt2661
 ./etc/firmware/rum-license
 ./etc/firmware/rum-rt2573
+./etc/firmware/tht
+./etc/firmware/tht-license
 ./etc/firmware/uyap
 ./etc/firmware/uyap-license
 ./etc/firmware/yds

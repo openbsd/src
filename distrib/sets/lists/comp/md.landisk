@@ -168,6 +168,7 @@
 ./usr/include/landisk/endian.h
 ./usr/include/landisk/exec.h
 ./usr/include/landisk/float.h
+./usr/include/landisk/fpu.h
 ./usr/include/landisk/frame.h
 ./usr/include/landisk/ieee.h
 ./usr/include/landisk/ieeefp.h
@@ -193,7 +194,6 @@
 ./usr/include/landisk/spinlock.h
 ./usr/include/landisk/stdarg.h
 ./usr/include/landisk/trap.h
-./usr/include/landisk/types.h
 ./usr/include/landisk/varargs.h
 ./usr/include/landisk/vmparam.h
 ./usr/include/sh

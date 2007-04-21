@@ -1555,6 +1555,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/endian.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/exec.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/float.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/landisk/fpu.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/frame.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/ieee.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/ieeefp.ph
@@ -1580,7 +1581,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/spinlock.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/stdarg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/trap.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/landisk/types.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/varargs.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/vmparam.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/langinfo.ph
