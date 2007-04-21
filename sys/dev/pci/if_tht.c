@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.41 2007/04/21 12:47:42 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.42 2007/04/21 13:10:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -438,8 +438,9 @@ void			tht_link_state(struct tht_softc *);
 
 /* interface operations */
 int			tht_ioctl(struct ifnet *, u_long, caddr_t);
-void			tht_start(struct ifnet *);
 void			tht_watchdog(struct ifnet *);
+void			tht_start(struct ifnet *);
+void			tht_rx(struct tht_softc *, int);
 
 void			tht_up(struct tht_softc *);
 void			tht_down(struct tht_softc *);
@@ -795,6 +796,85 @@ void
 tht_start(struct ifnet *ifp)
 {
 	/* do nothing */
+}
+
+
+void
+tht_rx(struct tht_softc *sc, int wait)
+{
+	struct tht_rx_free		rxf;
+	struct tht_pbd			pbd;
+	bus_dma_tag_t			dmat = sc->sc_thtc->sc_dmat;
+	bus_dmamap_t			dmap;
+	struct tht_pkt			*pkt;
+	struct mbuf			*m;
+	u_int64_t			dva;
+	int				bc;
+	int				i;
+
+	tht_fifo_pre(sc, &sc->sc_txf);
+
+	for (;;) {
+		if ((tht_fifo_ready(sc, &sc->sc_rxf) <= THT_FIFO_DESC_LEN) ||
+		    (pkt = tht_pkt_get(&sc->sc_rx_list)) == NULL)
+			goto done;
+
+new_m:
+		MGETHDR(m, wait ? M_WAIT : M_DONTWAIT, MT_DATA);
+		if (m == NULL)
+			goto put_pkt;
+
+		MCLGET(m, wait ? M_WAIT : M_DONTWAIT);
+		if (!ISSET(m->m_flags, M_EXT))
+			goto free_m;
+
+		m->m_len = m->m_pkthdr.len = MCLBYTES;
+
+		dmap = pkt->tp_dmap;
+		if (bus_dmamap_load_mbuf(dmat, dmap, m,
+		    wait ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) != 0)
+			goto free_m;
+
+		if (dmap->dm_segs[0].ds_len < THT_RXF_1ST_PDB_LEN) {
+			bus_dmamap_unload(dmat, dmap);
+			m_freem(m);
+			goto new_m;
+		}
+
+		bc = sizeof(rxf) + sizeof(pbd) * dmap->dm_nsegs;
+
+		rxf.bc = htole16(LWORDS(bc));
+		rxf.type = htole16(THT_RXF_TYPE);
+		rxf.uid = pkt->tp_id;
+
+		tht_fifo_write(sc, &sc->sc_rxf, &rxf, sizeof(rxf));
+
+		for (i = 0; i < dmap->dm_nsegs; i++) {
+			dva = dmap->dm_segs[i].ds_addr;
+
+			pbd.addr_lo = htole32(dva);
+			pbd.addr_hi = htole32(dva >> 32);
+			pbd.len = htole32(dmap->dm_segs[i].ds_len);
+
+			tht_fifo_write(sc, &sc->sc_rxf, &pbd, sizeof(pbd));
+		}
+
+		if (bc & 0x7) {
+			const static u_int32_t pad = 0x0;
+			tht_fifo_write(sc, &sc->sc_rxf, (void *)&pad,
+			    sizeof(pad));
+		}
+
+		bus_dmamap_sync(dmat, dmap, 0, dmap->dm_mapsize,
+		    BUS_DMASYNC_PREREAD);
+	}
+
+free_m:
+	m_freem(m);
+put_pkt:
+	tht_pkt_put(&sc->sc_rx_list, pkt);
+done:
+	tht_fifo_post(sc, &sc->sc_txf);
 }
 
 void
