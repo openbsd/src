@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.28 2007/04/21 23:39:18 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.29 2007/04/21 23:50:47 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1789,6 +1789,14 @@ sr_save_metadata(struct sr_discipline *sd)
 	im_sv = (struct sr_vol_meta *)(sm + 1);
 	im_sc = (struct sr_chunk_meta *)(im_sv + 1);
 
+	if (sizeof(struct sr_metadata) + sizeof(struct sr_vol_meta) +
+	    (sizeof(struct sr_chunk_meta) * sd->sd_vol.sv_meta.svm_no_chunk) >
+	    sz) {
+		printf("%s: too much metadata.  Metadata NOT written to disk\n",
+		    DEVNAME(sc));
+		goto bad;
+	}
+
 	if (sm->ssd_magic == 0) {
 		/* initial metadata */
 		sm->ssd_magic = SR_MAGIC;
@@ -1798,7 +1806,7 @@ sr_save_metadata(struct sr_discipline *sd)
 		sr_get_uuid(&sm->ssd_uuid);
 
 		/* volume */
-		bcopy(sv, im_sv, sizeof(struct sr_metadata));
+		bcopy(sv, im_sv, sizeof(struct sr_vol_meta));
 		bcopy(&sm->ssd_uuid, &im_sv->svm_uuid,
 		    sizeof(im_sv->svm_uuid));
 		sm->ssd_vd_ver = SR_VOL_VERSION;
@@ -1806,7 +1814,6 @@ sr_save_metadata(struct sr_discipline *sd)
 
 
 		/* chunk */
-		/* XXX do some sanity to prevent too many disks */
 		for (i = 0; i < sd->sd_vol.sv_meta.svm_no_chunk; i++) {
 			bcopy(&sm->ssd_uuid,
 			    &sd->sd_vol.sv_chunks[i]->src_meta.scm_uuid,
@@ -1861,7 +1868,7 @@ sr_save_metadata(struct sr_discipline *sd)
 		biowait(&b);
 
 		/* XXX do something smart here */
-		/* marck chunk offline and restart metadata write */
+		/* mark chunk offline and restart metadata write */
 		if (b.b_flags & B_ERROR) {
 			printf("%s: %s i/o error on block %d while writing "
 			    "metadata %d\n", DEVNAME(sc),
