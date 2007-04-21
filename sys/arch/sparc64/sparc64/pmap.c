@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.37 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.38 2007/04/21 13:43:38 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -189,18 +189,6 @@ void pmap_copy_phys(paddr_t src, paddr_t dst);
 #endif
 
 /*
- * For each struct vm_page, there is a list of all currently valid virtual
- * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
- * XXX really should do this as a part of the higher level code.
- */
-typedef struct pv_entry {
-	struct pv_entry	*pv_next;	/* next pv_entry */
-	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vaddr_t	pv_va;		/* virtual address for mapping */
-} *pv_entry_t;
-/* PV flags encoded in the low bits of the VA of the first pv_entry */
-
-/*
  * Diatribe on ref/mod counting:
  *
  * First of all, ref/mod info must be non-volatile.  Hence we need to keep it
@@ -262,13 +250,10 @@ u_int64_t first_phys_addr;
 pv_entry_t
 pa_to_pvh(paddr_t pa)
 {
-	int bank, pg;
+	struct vm_page *pg;
 
-	bank = vm_physseg_find(atop(pa), &pg);
-	if (bank == -1)
-		return (NULL);
-	else
-		return (pv_entry_t)&vm_physmem[bank].pmseg.pvent[pg];
+	pg = PHYS_TO_VM_PAGE(pa);
+	return pg ? &pg->mdpage.pvent : NULL;
 }
 
 
@@ -1471,61 +1456,10 @@ remap_data:
 void
 pmap_init()
 {
-	struct vm_page *m;
-	paddr_t pa;
-	psize_t size;
-	vaddr_t va;
-	struct pglist mlist;
-	vsize_t		s;
-	int		bank;
-	struct pv_entry	*pvh;
 
 	BDPRINTF(PDB_BOOT1, ("pmap_init()\r\n"));
 	if (PAGE_SIZE != NBPG)
 		panic("pmap_init: CLSIZE!=1");
-
-	size = sizeof(struct pv_entry) * physmem;
-	TAILQ_INIT(&mlist);
-	if (uvm_pglistalloc((psize_t)size, (paddr_t)0, (paddr_t)-1,
-		(paddr_t)NBPG, (paddr_t)0, &mlist, 1, 0) != 0)
-		panic("cpu_start: no memory");
-
-	va = uvm_km_valloc(kernel_map, size);
-	if (va == 0)
-		panic("cpu_start: no memory");
-
-	pv_table = (struct pv_entry *)va;
-	m = TAILQ_FIRST(&mlist);
-
-	/* Map the pages */
-	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
-		u_int64_t data;
-
-		pa = VM_PAGE_TO_PHYS(m);
-		pmap_zero_page(m);
-		data = TSB_DATA(0 /* global */, 
-			PGSZ_8K,
-			pa,
-			1 /* priv */,
-			1 /* Write */,
-			1 /* Cacheable */,
-			FORCE_ALIAS /* ALIAS -- Disable D$ */,
-			1 /* valid */,
-			0 /* IE */);
-		pmap_enter_kpage(va, data);
-		va += NBPG;
-	}
-
-	/*
-	 * Memory for the pv heads has already been allocated.
-	 * Initialize the physical memory segments.
-	 */
-	pvh = pv_table;
-	for (bank = 0; bank < vm_nphysseg; bank++) {
-		s = vm_physmem[bank].end - vm_physmem[bank].start;
-		vm_physmem[bank].pmseg.pvent = pvh;
-		pvh += s;
-	}
 
 	/* Setup a pool for additional pvlist structures */
 	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", NULL);
@@ -2818,10 +2752,8 @@ pmap_clear_modify(pg)
 }
 
 boolean_t
-pmap_clear_reference(pg)
-	struct vm_page* pg;
+pmap_clear_reference(struct vm_page *pg)
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int changed = 0;
 #ifdef DEBUG
 	int referenced = 0;
@@ -2831,15 +2763,16 @@ pmap_clear_reference(pg)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF))
-		printf("pmap_clear_reference(%llx)\n", (unsigned long long)pa);
+		printf("pmap_clear_reference(%llx)\n", VM_PAGE_TO_PHYS(pg));
 	referenced = pmap_is_referenced(pg);
 #endif
 	/* Clear all references */
 	s = splvm();
-	pv = pa_to_pvh(pa);
+	pv = &pg->mdpage.pvent;
 #ifdef NOT_DEBUG
 	if (pv->pv_va & PV_MOD)
-		printf("pmap_clear_reference(): pv %p still modified\n", (long)pa);
+		printf("pmap_clear_reference(): pv %p still modified\n",
+		    VM_PAGE_TO_PHYS(pg));
 #endif
 	if (pv->pv_va & PV_REF)
 		changed |= 1;
@@ -2886,7 +2819,7 @@ pmap_clear_reference(pg)
 		}
 	}
 	/* Stupid here will take a cache hit even on unmapped pages 8^( */
-	dcache_flush_page(pa);
+	dcache_flush_page(VM_PAGE_TO_PHYS(pg));
 	splx(s);
 	pv_check();
 #ifdef DEBUG
@@ -2895,8 +2828,9 @@ pmap_clear_reference(pg)
 		Debugger();
 	}
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF))
-		printf("pmap_clear_reference: page %lx %s\n", (long)pa, 
-		       (changed?"was referenced":"was not referenced"));
+		printf("pmap_clear_reference: page %lx %s\n",
+		    VM_PAGE_TO_PHYS(pg),
+		    (changed?"was referenced":"was not referenced"));
 	if (referenced != changed) {
 		printf("pmap_clear_reference: referenced %d changed %d\n", referenced, changed);
 		Debugger();
@@ -2906,16 +2840,14 @@ pmap_clear_reference(pg)
 }
 
 boolean_t
-pmap_is_modified(pg)
-	struct vm_page* pg;
+pmap_is_modified(struct vm_page *pg)
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	pv_entry_t pv, npv;
 	int i=0, s;
-	register pv_entry_t pv, npv;
 
 	/* Check if any mapping has been modified */
 	s = splvm();
-	pv = pa_to_pvh(pa);
+	pv = &pg->mdpage.pvent;
 	if (pv->pv_va&PV_MOD) i = 1;
 #ifdef DEBUG	
 	if (pv->pv_next && !pv->pv_pmap) {
@@ -2942,7 +2874,8 @@ pmap_is_modified(pg)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF)) {
-		printf("pmap_is_modified(%llx) = %d\n", (unsigned long long)pa, i);
+		printf("pmap_is_modified(%llx) = %d\n",
+		    (unsigned long long)VM_PAGE_TO_PHYS(pg), i);
 		/* if (i) Debugger(); */
 	}
 #endif
@@ -2951,16 +2884,14 @@ pmap_is_modified(pg)
 }
 
 boolean_t
-pmap_is_referenced(pg)
-	struct vm_page* pg;
+pmap_is_referenced(struct vm_page* pg)
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int i=0, s;
-	register pv_entry_t pv, npv;
+	pv_entry_t pv, npv;
 
 	/* Check if any mapping has been referenced */
 	s = splvm();
-	pv = pa_to_pvh(pa);
+	pv = &pg->mdpage.pvent;
 	if (pv->pv_va&PV_REF) i = 1;
 #ifdef DEBUG	
 	if (pv->pv_next && !pv->pv_pmap) {
@@ -2984,7 +2915,8 @@ pmap_is_referenced(pg)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF)) {
-		printf("pmap_is_referenced(%llx) = %d\n", (unsigned long long)pa, i);
+		printf("pmap_is_referenced(%llx) = %d\n",
+		    (unsigned long long)VM_PAGE_TO_PHYS(pg), i);
 		/* if (i) Debugger(); */
 	}
 #endif
