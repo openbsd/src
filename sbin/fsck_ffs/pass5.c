@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.27 2007/04/10 16:08:17 millert Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.28 2007/04/21 19:25:52 otto Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass5.c,v 1.27 2007/04/10 16:08:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pass5.c,v 1.28 2007/04/21 19:25:52 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -383,9 +383,11 @@ pass5(void)
 	info_fn = NULL;
 	if (fs->fs_postblformat == FS_42POSTBLFMT)
 		fs->fs_nrpos = savednrpos;
-	if (memcmp(&cstotal, &fs->fs_cstotal, sizeof *cs) != 0
+	
+	sumsize = sizeof(cstotal) - sizeof(cstotal.cs_spare);
+	if (memcmp(&cstotal, &fs->fs_cstotal, sumsize) != 0
 	    && dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
-		memcpy(&fs->fs_cstotal, &cstotal, sizeof *cs);
+		memcpy(&fs->fs_cstotal, &cstotal, sumsize);
 		fs->fs_ronly = 0;
 		fs->fs_fmod = 0;
 		sbdirty();
