@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.37 2007/04/21 12:25:42 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.38 2007/04/21 12:32:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -318,6 +318,20 @@ struct tht_fifo {
 	int			tf_wptr;
 };
 
+struct tht_pkt {
+	u_int64_t		tp_id;
+
+	bus_dmamap_t		tp_dmap;
+	struct mbuf		*tp_m;
+
+	TAILQ_ENTRY(tht_pkt)	tp_link;
+};
+
+struct tht_pkt_list {
+	struct tht_pkt		*tpl_pkts;
+	TAILQ_HEAD(, tht_pkt)	tpl_list;
+};
+
 struct tht_softc {
 	struct device		sc_dev;
 	struct thtc_softc	*sc_thtc;
@@ -351,6 +365,14 @@ struct cfattach tht_ca = {
 struct cfdriver tht_cd = {
 	NULL, "tht", DV_IFNET
 };
+
+/* pkts */
+int			tht_pkt_alloc(struct tht_softc *,
+			    struct tht_pkt_list *, int, int);
+void			tht_pkt_free(struct tht_softc *,
+			    struct tht_pkt_list *);
+void			tht_pkt_put(struct tht_pkt_list *, struct tht_pkt *);
+struct tht_pkt 		*tht_pkt_get(struct tht_pkt_list *);
 
 /* fifos */
 
@@ -1136,4 +1158,64 @@ tht_dmamem_free(struct tht_softc *sc, struct tht_dmamem *tdm)
 	bus_dmamem_free(dmat, &tdm->tdm_seg, 1);
 	bus_dmamap_destroy(dmat, tdm->tdm_map);
 	free(tdm, M_DEVBUF);
+}
+
+int
+tht_pkt_alloc(struct tht_softc *sc, struct tht_pkt_list *tpl, int npkts,
+    int nsegs)
+{
+	bus_dma_tag_t			dmat = sc->sc_thtc->sc_dmat;
+	struct tht_pkt			*pkt;
+	int				i;
+
+	tpl->tpl_pkts = malloc(sizeof(struct tht_pkt) * npkts, M_DEVBUF,
+	    M_WAITOK);
+	bzero(tpl->tpl_pkts, sizeof(struct tht_pkt) * npkts);
+
+	TAILQ_INIT(&tpl->tpl_list);
+	for (i = 0; i < npkts; i++) {
+		pkt = &tpl->tpl_pkts[i];
+
+		pkt->tp_id = i;
+		if (bus_dmamap_create(dmat, THT_PBD_PKTLEN, nsegs,
+		    THT_PBD_PKTLEN, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    &pkt->tp_dmap) != 0) {
+			tht_pkt_free(sc, tpl);
+			return (1);
+		}
+
+		tht_pkt_put(tpl, pkt);
+	}
+
+	return (0);
+}
+
+void
+tht_pkt_free(struct tht_softc *sc, struct tht_pkt_list *tpl)
+{
+	bus_dma_tag_t			dmat = sc->sc_thtc->sc_dmat;
+	struct tht_pkt			*pkt;
+
+	while ((pkt = tht_pkt_get(tpl)) != NULL)
+		bus_dmamap_destroy(dmat, pkt->tp_dmap);
+	free(tpl->tpl_pkts, M_DEVBUF);
+	tpl->tpl_pkts = NULL;
+}
+
+void
+tht_pkt_put(struct tht_pkt_list *tpl, struct tht_pkt *pkt)
+{
+	TAILQ_INSERT_TAIL(&tpl->tpl_list, pkt, tp_link);
+}
+
+struct tht_pkt *
+tht_pkt_get(struct tht_pkt_list *tpl)
+{
+	struct tht_pkt			*pkt;
+
+	pkt = TAILQ_FIRST(&tpl->tpl_list);
+	if (pkt != NULL)
+		TAILQ_REMOVE(&tpl->tpl_list, pkt, tp_link);
+
+	return (pkt);
 }
