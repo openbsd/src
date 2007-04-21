@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.20 2006/06/15 20:08:29 brad Exp $ */
+/* $OpenBSD: interrupt.c,v 1.21 2007/04/21 21:37:09 martin Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -528,9 +528,9 @@ softintr_init()
 
 	for (i = 0; i < IPL_NSOFT; i++) {
 		asi = &alpha_soft_intrs[i];
-		LIST_INIT(&asi->softintr_q);
+		TAILQ_INIT(&asi->softintr_q);
 		simple_lock_init(&asi->softintr_slock);
-		asi->softintr_ipl = i;
+		asi->softintr_siq = i;
 	}
 
 	/* XXX Establish legacy software interrupt handlers. */
@@ -556,24 +556,55 @@ softintr_dispatch()
 		for (i = 0; i < IPL_NSOFT; i++) {
 			if ((n & (1 << i)) == 0)
 				continue;
+	
 			asi = &alpha_soft_intrs[i];
 
-			/* Already at splsoft() */
-			simple_lock(&asi->softintr_slock);
+			for (;;) {
+				(void) alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH);
+				simple_lock(&asi->softintr_slock);
 
-			for (sih = LIST_FIRST(&asi->softintr_q);
-			     sih != NULL;
-			     sih = LIST_NEXT(sih, sih_q)) {
-				if (sih->sih_pending) {
-					uvmexp.softs++;
+				sih = TAILQ_FIRST(&asi->softintr_q);
+				if (sih != NULL) {
+					TAILQ_REMOVE(&asi->softintr_q, sih,
+					    sih_q);
 					sih->sih_pending = 0;
-					(*sih->sih_fn)(sih->sih_arg);
 				}
-			}
 
-			simple_unlock(&asi->softintr_slock);
+				simple_unlock(&asi->softintr_slock);
+				(void) alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT);
+
+				if (sih == NULL)
+					break;
+
+				uvmexp.softs++;
+				(*sih->sih_fn)(sih->sih_arg);
+			}
 		}
 	}
+}
+
+static int
+ipl2si(int ipl)
+{
+	int si;
+
+	switch (ipl) {
+	case IPL_SOFTSERIAL:
+		si = SI_SOFTSERIAL;
+		break;
+	case IPL_SOFTNET:
+		si = SI_SOFTNET;
+		break;
+	case IPL_SOFTCLOCK:
+		si = SI_SOFTCLOCK;
+		break;
+	case IPL_SOFT:
+		si = SI_SOFT;
+		break;
+	default:
+		panic("ipl2si: %d", ipl);
+	}
+	return si;
 }
 
 /*
@@ -586,12 +617,10 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 {
 	struct alpha_soft_intr *asi;
 	struct alpha_soft_intrhand *sih;
-	int s;
+	int si;
 
-	if (__predict_false(ipl >= IPL_NSOFT || ipl < 0))
-		panic("softintr_establish");
-
-	asi = &alpha_soft_intrs[ipl];
+	si = ipl2si(ipl);
+	asi = &alpha_soft_intrs[si];
 
 	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
 	if (__predict_true(sih != NULL)) {
@@ -599,11 +628,6 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 		sih->sih_fn = func;
 		sih->sih_arg = arg;
 		sih->sih_pending = 0;
-		s = splsoft();
-		simple_lock(&asi->softintr_slock);
-		LIST_INSERT_HEAD(&asi->softintr_q, sih, sih_q);
-		simple_unlock(&asi->softintr_slock);
-		splx(s);
 	}
 	return (sih);
 }
@@ -620,11 +644,12 @@ softintr_disestablish(void *arg)
 	struct alpha_soft_intr *asi = sih->sih_intrhead;
 	int s;
 
-	(void) asi;	/* XXX Unused if simple locks are noops. */
-
-	s = splsoft();
+	s = splhigh();
 	simple_lock(&asi->softintr_slock);
-	LIST_REMOVE(sih, sih_q);
+	if (sih->sih_pending) {
+		TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
+		sih->sih_pending = 0;
+	}
 	simple_unlock(&asi->softintr_slock);
 	splx(s);
 

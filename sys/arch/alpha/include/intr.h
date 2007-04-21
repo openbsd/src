@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.25 2007/04/13 08:31:50 martin Exp $ */
+/* $OpenBSD: intr.h,v 1.26 2007/04/21 21:37:09 martin Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -135,6 +135,11 @@ struct scbvec {
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
+#define SI_SOFTSERIAL	0
+#define SI_SOFTNET	1
+#define SI_SOFTCLOCK	2
+#define SI_SOFT		3
+
 #ifdef	_KERNEL
 
 /* SPL asserts */
@@ -223,9 +228,8 @@ extern unsigned long ssir;
 
 #define	setsoft(x)	atomic_setbits_ulong(&ssir, 1 << (x))
 
-#define	__GENERIC_SOFT_INTERRUPTS
 struct alpha_soft_intrhand {
-	LIST_ENTRY(alpha_soft_intrhand)
+	TAILQ_ENTRY(alpha_soft_intrhand)
 		sih_q;
 	struct alpha_soft_intr *sih_intrhead;
 	void	(*sih_fn)(void *);
@@ -234,10 +238,10 @@ struct alpha_soft_intrhand {
 };
 
 struct alpha_soft_intr {
-	LIST_HEAD(, alpha_soft_intrhand)
+	TAILQ_HEAD(, alpha_soft_intrhand)
 		softintr_q;
 	struct simplelock softintr_slock;
-	unsigned long softintr_ipl;
+	unsigned long softintr_siq;
 };
 
 void	*softintr_establish(int, void (*)(void *), void *);
@@ -248,8 +252,18 @@ void	softintr_dispatch(void);
 #define	softintr_schedule(arg)						\
 do {									\
 	struct alpha_soft_intrhand *__sih = (arg);			\
-	__sih->sih_pending = 1;						\
-	setsoft(__sih->sih_intrhead->softintr_ipl);			\
+	struct alpha_soft_intr *__si = __sih->sih_intrhead;		\
+	int __s;							\
+									\
+	__s = splhigh();						\
+	simple_lock(&__si->softintr_slock);				\
+	if (__sih->sih_pending == 0) {					\
+		TAILQ_INSERT_TAIL(&__si->softintr_q, __sih, sih_q);	\
+		__sih->sih_pending = 1;					\
+		setsoft(__si->softintr_siq);				\
+	}								\
+	simple_unlock(&__si->softintr_slock);				\
+	splx(__s);							\
 } while (0)
 
 /* XXX For legacy software interrupts. */
