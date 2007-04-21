@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6.c,v 1.14 2006/12/27 05:12:13 itojun Exp $	*/
+/*	$OpenBSD: route6.c,v 1.15 2007/04/21 16:47:42 itojun Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -44,7 +44,9 @@
 
 #include <netinet/icmp6.h>
 
+#if 0
 static int ip6_rthdr0(struct mbuf *, struct ip6_hdr *, struct ip6_rthdr0 *);
+#endif
 
 int
 route6_input(mp, offp, proto)
@@ -64,6 +66,7 @@ route6_input(mp, offp, proto)
 	}
 
 	switch (rh->ip6r_type) {
+#if 0
 	case IPV6_RTHDR_TYPE_0:
 		rhlen = (rh->ip6r_len + 1) << 3;
 		if (rh->ip6r_segleft == 0)
@@ -84,6 +87,7 @@ route6_input(mp, offp, proto)
 		if (ip6_rthdr0(m, ip6, (struct ip6_rthdr0 *)rh))
 			return (IPPROTO_DONE);
 		break;
+#endif
 	default:
 		/* unknown routing type */
 		if (rh->ip6r_segleft == 0) {
@@ -100,6 +104,7 @@ route6_input(mp, offp, proto)
 	return (rh->ip6r_nxt);
 }
 
+#if 0
 /*
  * Type0 routing header processing
  *
@@ -180,3 +185,4 @@ ip6_rthdr0(m, ip6, rh0)
 	m_freem(m);
 	return (-1);
 }
+#endif
