@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.38 2007/04/21 12:32:32 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.39 2007/04/21 12:36:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -470,6 +470,8 @@ int			tht_wait_ne(struct tht_softc *, bus_size_t, u_int32_t,
 /* misc */
 #define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
 #define sizeofa(_a)	(sizeof(_a) / sizeof((_a)[0]))
+#define LWORDS(_b)	(((_b) + 7) >> 3)
+
 
 struct thtc_device {
 	pci_vendor_id_t		td_vendor;
