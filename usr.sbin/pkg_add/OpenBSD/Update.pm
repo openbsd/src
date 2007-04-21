@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.65 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: Update.pm,v 1.66 2007/04/21 10:02:15 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -42,7 +42,11 @@ sub find
 
 	OpenBSD::ProgressMeter::set_header("Looking for updates");
 	for my $pkgname (@list) {
-		next if $pkgname =~ m/^\.libs-/;
+		if ($pkgname =~ m/^(?:\.libs|partial)\-/) {
+			OpenBSD::ProgressMeter::clear();
+			print "Not updating $pkgname, remember to clean it\n";
+			next;
+		}
 		my $stem = OpenBSD::PackageName::splitstem($pkgname);
 		my @l = $hash->findstem($stem);
 		if (@l == 0) {
