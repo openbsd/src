@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.39 2007/04/21 12:36:06 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.40 2007/04/21 12:40:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -344,6 +344,9 @@ struct tht_softc {
 	struct ifmedia		sc_media;
 
 	u_int16_t		sc_lladdr[3];
+
+	struct tht_pkt_list	sc_tx_list;
+	struct tht_pkt_list	sc_rx_list;
 
 	struct tht_fifo		sc_txt;
 	struct tht_fifo		sc_rxf;
@@ -721,14 +724,21 @@ tht_up(struct tht_softc *sc)
 		return;
 	}
 
-	if (tht_fifo_alloc(sc, &sc->sc_txt, &tht_txt_desc) != 0)
+	if (tht_pkt_alloc(sc, &sc->sc_tx_list, 64, THT_TXT_SGL_LEN) != 0)
 		return;
+	if (tht_pkt_alloc(sc, &sc->sc_rx_list, 64, THT_RXF_SGL_LEN) != 0)
+		goto free_tx_list;
+
+	if (tht_fifo_alloc(sc, &sc->sc_txt, &tht_txt_desc) != 0)
+		goto free_rx_list;
 	if (tht_fifo_alloc(sc, &sc->sc_rxf, &tht_rxf_desc) != 0)
 		goto free_txt;
 	if (tht_fifo_alloc(sc, &sc->sc_rxd, &tht_rxd_desc) != 0)
 		goto free_rxf;
 	if (tht_fifo_alloc(sc, &sc->sc_txf, &tht_txf_desc) != 0)
 		goto free_rxd;
+
+	/* populate rxf fifo */
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -745,6 +755,11 @@ free_txt:
 	tht_fifo_free(sc, &sc->sc_txt);
 
 	tht_sw_reset(sc);
+
+free_rx_list:
+	tht_pkt_free(sc, &sc->sc_rx_list);
+free_tx_list:
+	tht_pkt_free(sc, &sc->sc_tx_list);
 }
 
 void
@@ -769,6 +784,11 @@ tht_down(struct tht_softc *sc)
 	tht_fifo_free(sc, &sc->sc_rxd);
 	tht_fifo_free(sc, &sc->sc_rxf);
 	tht_fifo_free(sc, &sc->sc_txt);
+
+	/* free mbufs that were on the rxf fifo */
+
+	tht_pkt_free(sc, &sc->sc_rx_list);
+	tht_pkt_free(sc, &sc->sc_tx_list);
 }
 
 void
