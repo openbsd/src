@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.36 2007/04/21 12:22:57 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.37 2007/04/21 12:25:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -202,8 +202,7 @@ struct tht_rx_desc {
 	u_int16_t		len;
 	u_int16_t		vlan;
 
-	u_int32_t		uid_lo;
-	u_int32_t		uid_hi;
+	u_int64_t		uid;
 } __packed;
 
 /* rx decriptor type 3: data chain instruction */
@@ -234,8 +233,7 @@ struct tht_tx_task {
 	u_int16_t		mss_mtu;
 	u_int16_t		len;
 
-	u_int32_t		uid_lo;
-	u_int32_t		uid_hi;
+	u_int64_t		uid;
 
 	/* followed by a pbd list */
 } __packed;
@@ -247,8 +245,7 @@ struct tht_tx_task {
 struct tht_tx_free {
 	u_int32_t		status;
 
-	u_int32_t		uid_lo;
-	u_int32_t		uid_hi;
+	u_int64_t		uid;
 
 	u_int32_t		pad;
 } __packed;
