@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.35 2007/04/20 13:59:34 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.36 2007/04/21 12:22:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -169,6 +169,8 @@
 #define THT_FIFO_GAP		8 /* keep 8 bytes between ptrs */
 #define THT_FIFO_PTR_MASK	0x00007ff8 /* rptr/wptr mask */
 
+#define THT_FIFO_DESC_LEN	208 /* a descriptor cant be bigger than this */
+
 /* hardware structures (we're using the 64 bit variants) */
 
 /* physical buffer descriptor */
@@ -177,16 +179,22 @@ struct tht_pbd {
 	u_int32_t		addr_hi;
 	u_int32_t		len;
 } __packed;
+#define THT_PBD_PKTLEN		(64 * 1024)
 
 /* rx free fifo */
-struct tht_rxf {
-	u_int32_t		flags;
+struct tht_rx_free {
+	u_int16_t		bc; /* buffer count (0:4) */
+	u_int16_t		type;
 
-	u_int32_t		uid_lo;
-	u_int32_t		uid_hi;
+	u_int64_t		uid;
 
 	/* followed by a pdb list */
 } __packed;
+#define THT_RXF_TYPE		1
+#define THT_RXF_1ST_PDB_LEN	128
+#define THT_RXF_SGL_LEN		((THT_FIFO_DESC_LEN - \
+				    sizeof(struct tht_rx_free)) / \
+				    sizeof(struct tht_pbd))
 
 /* rx descriptor */
 struct tht_rx_desc {
@@ -208,7 +216,7 @@ struct tht_rx_desc_dc {
 	u_int8_t		data[4];
 } __packed;
 
-/* rx descriptor type 4: rss information */
+/* rx descriptor type 4: rss (recv side scaling) information */
 struct tht_rx_desc_rss {
 	/* preceded by tht_rx_desc */
 
@@ -220,7 +228,7 @@ struct tht_rx_desc_rss {
 	u_int32_t		rss_hash;
 } __packed;
 
-/* TX_TASK FIFO */
+/* tx task fifo */
 struct tht_tx_task {
 	u_int32_t		flags;
 	u_int16_t		mss_mtu;
@@ -231,8 +239,11 @@ struct tht_tx_task {
 
 	/* followed by a pbd list */
 } __packed;
+#define THT_TXT_SGL_LEN		((THT_FIFO_DESC_LEN - \
+				    sizeof(struct tht_tx_task)) / \
+				    sizeof(struct tht_pbd))
 
-/* TX_FREE FIFO */
+/* tx free fifo */
 struct tht_tx_free {
 	u_int32_t		status;
 
