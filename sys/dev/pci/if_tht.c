@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.43 2007/04/21 13:58:38 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.44 2007/04/21 14:46:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -816,14 +816,15 @@ tht_rxf_fill(struct tht_softc *sc, int wait)
 	int				bc;
 	int				i;
 
+	if (tht_fifo_ready(sc, &sc->sc_rxf) <= THT_FIFO_DESC_LEN)
+		return;
+
 	tht_fifo_pre(sc, &sc->sc_txf);
 
 	for (;;) {
-		if ((tht_fifo_ready(sc, &sc->sc_rxf) <= THT_FIFO_DESC_LEN) ||
-		    (pkt = tht_pkt_get(&sc->sc_rx_list)) == NULL)
+		if ((pkt = tht_pkt_get(&sc->sc_rx_list)) == NULL)
 			goto done;
 
-new_m:
 		MGETHDR(m, wait ? M_WAIT : M_DONTWAIT, MT_DATA);
 		if (m == NULL)
 			goto put_pkt;
@@ -838,12 +839,6 @@ new_m:
 		if (bus_dmamap_load_mbuf(dmat, dmap, m,
 		    wait ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) != 0)
 			goto free_m;
-
-		if (dmap->dm_segs[0].ds_len < THT_RXF_1ST_PDB_LEN) {
-			bus_dmamap_unload(dmat, dmap);
-			m_freem(m);
-			goto new_m;
-		}
 
 		bc = sizeof(rxf) + sizeof(pbd) * dmap->dm_nsegs;
 
@@ -871,6 +866,9 @@ new_m:
 
 		bus_dmamap_sync(dmat, dmap, 0, dmap->dm_mapsize,
 		    BUS_DMASYNC_PREREAD);
+
+		if (tht_fifo_ready(sc, &sc->sc_rxf) <= THT_FIFO_DESC_LEN)
+			goto done;
 	}
 
 free_m:
