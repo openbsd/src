@@ -1,4 +1,4 @@
-/* $OpenBSD: */
+/* $OpenBSD: i2sreg.h,v 1.2 2007/04/21 15:48:22 gwk Exp $ */
 /*-
  * Copyright (c) 2002 Tsubai Masanari.  All rights reserved.
  *
