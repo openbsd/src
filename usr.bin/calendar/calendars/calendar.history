@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.68 2007/04/13 17:14:44 miod Exp $
+ * $OpenBSD: calendar.history,v 1.69 2007/04/22 10:48:04 pedro Exp $
  */
 
 #ifndef _calendar_history_
@@ -147,6 +147,8 @@
 04/19	Warsaw Ghetto uprising, 1943
 04/20	In Bulgaria, the April Uprising takes place, 1876
 04/21	Rome is founded by Romulus and Remus, 753BC
+04/22	Portuguese navigator Pedro Alvares Cabral becomes the first European to
+	sight Brazil, 1500
 04/22	The first Earth Day is celebrated, 1970
 04/23	Bavarian co-rulers Duke Wilhelm IV and Duke Ludwig X proclaimed the
 	weighty and consequential Bavarian Beer Purity Law
