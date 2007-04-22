@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.113 2007/04/21 23:59:33 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.114 2007/04/22 03:49:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -654,7 +654,7 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		}
 
-		printf("%s: capabilities: 0x%b ports: %d ncmds: %d gen: %s\n",
+		printf("%s: capabilities 0x%b, %d ports, %d cmds, gen %s\n",
 		    DEVNAME(sc), cap, AHCI_FMT_CAP,
 		    AHCI_REG_CAP_NP(cap), sc->sc_ncmds, gen);
 	}
