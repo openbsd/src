@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.44 2007/04/21 19:24:59 deraadt Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.45 2007/04/22 13:17:55 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -771,9 +771,13 @@ vic_rx_proc(struct vic_softc *sc)
 			printf("%s: mbuf alloc failed\n", DEVNAME(sc));
 			break;
 		}
+		bus_dmamap_sync(sc->sc_dmat, rxb->rxb_dmamap, 0,
+		    rxb->rxb_m->m_pkthdr.len, BUS_DMASYNC_PREREAD);
+
 		rxd->rx_physaddr = rxb->rxb_dmamap->dm_segs[0].ds_addr;
 		rxd->rx_buflength = rxb->rxb_m->m_pkthdr.len;
 		rxd->rx_length = 0;
+		rxd->rx_owner = VIC_OWNER_DRIVER;
 
 		ifp->if_ipackets++;
 
