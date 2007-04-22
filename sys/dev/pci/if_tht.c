@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.46 2007/04/22 04:21:25 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.47 2007/04/22 04:24:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -917,7 +917,7 @@ tht_rxf_drain(struct tht_softc *sc)
 		dmap = pkt->tp_dmap;
 
 		bus_dmamap_sync(dmat, dmap, 0, dmap->dm_mapsize,
-		BUS_DMASYNC_PREREAD);
+		    BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(dmat, dmap);
 
 		m_freem(pkt->tp_m);
