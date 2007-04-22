@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.21 2006/03/25 22:41:41 djm Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.22 2007/04/22 22:31:14 deraadt Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -260,9 +260,9 @@ bmac_attach(struct device *parent, struct device *self, void *aux)
 		ether_sprintf(laddr));
 
 	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_NET,
-	    bmac_intr, sc, "bmac intr");
+	    bmac_intr, sc, sc->sc_dev.dv_xname);
 	mac_intr_establish(parent, ca->ca_intr[2], IST_LEVEL, IPL_NET,
-	    bmac_rint, sc, "bmac rint");
+	    bmac_rint, sc, sc->sc_dev.dv_xname);
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;

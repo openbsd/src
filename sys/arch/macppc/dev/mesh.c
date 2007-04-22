@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.17 2007/04/02 21:46:30 kettenis Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.18 2007/04/22 22:31:14 deraadt Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -365,7 +365,7 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 	config_found(&sc->sc_dev, &saa, scsiprint);
 
 	mac_intr_establish(parent, sc->sc_irq, IST_LEVEL, IPL_BIO, mesh_intr,
-	    sc, "mesh");
+	    sc, sc->sc_dev.dv_xname);
 
 	/* Reset SCSI bus when halt. */
 	shutdownhook_establish(mesh_shutdownhook, sc);

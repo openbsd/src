@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.7 2007/04/21 15:43:27 gwk Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.8 2007/04/22 22:31:14 deraadt Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -138,7 +138,7 @@ i2s_attach(struct device *parent, struct i2s_softc *sc, struct confargs *ca)
 
 	/* intr_establish(cirq, cirq_type, IPL_AUDIO, i2s_intr, sc); */
 	mac_intr_establish(parent, oirq, oirq_type, IPL_AUDIO, i2s_intr,
-	    sc, "i2s");
+	    sc, sc->sc_dev.dv_xname);
 	/* intr_establish(iirq, iirq_type, IPL_AUDIO, i2s_intr, sc); */
 
 	printf(": irq %d,%d,%d\n", cirq, oirq, iirq);
@@ -1164,11 +1164,11 @@ i2s_gpio_init(sc, node, parent)
 
 	if (headphone_detect_intr != -1)
 		mac_intr_establish(parent, headphone_detect_intr, IST_EDGE,
-		    IPL_AUDIO, i2s_cint, sc, "i2s_h");
+		    IPL_AUDIO, i2s_cint, sc, sc->sc_dev.dv_xname);
 
 	if (lineout_detect_intr != -1)
 		mac_intr_establish(parent, lineout_detect_intr, IST_EDGE,
-		    IPL_AUDIO, i2s_cint, sc, "i2s_l");
+		    IPL_AUDIO, i2s_cint, sc, sc->sc_dev.dv_xname);
 
 	/* Enable headphone interrupt? */
 	*headphone_detect |= 0x80;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macgpio.c,v 1.5 2006/06/19 22:42:33 miod Exp $	*/
+/*	$OpenBSD: macgpio.c,v 1.6 2007/04/22 22:31:14 deraadt Exp $	*/
 /*	$NetBSD: gpio.c,v 1.2 2001/02/27 05:16:33 matt Exp $	*/
 
 /*-
@@ -162,7 +162,7 @@ macgpio_gpio_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_port = ((struct gpio_softc *) parent)->sc_port;
 	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_HIGH,
-	    gpio_intr, sc, "gpio/adb");
+	    gpio_intr, sc, sc->sc_dev.dv_xname);
 
 	printf(" irq %d\n", ca->ca_intr[0]);
 }

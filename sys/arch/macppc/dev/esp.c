@@ -1,4 +1,4 @@
-/* $OpenBSD: esp.c,v 1.2 2006/12/31 21:10:37 gwk Exp $ */
+/* $OpenBSD: esp.c,v 1.3 2007/04/22 22:31:14 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -270,7 +270,7 @@ espattach(struct device *parent, struct device *self, void *aux)
 
 	/* and the interuppts */
 	mac_intr_establish(parent, esc->sc_intr, IST_LEVEL, IPL_BIO,
-	    ncr53c9x_intr, sc, "esp");
+	    ncr53c9x_intr, sc, sc->sc_dev.dv_xname);
 
 	/* Reset SCSI bus when halt. */
 	shutdownhook_establish(esp_shutdownhook, sc);

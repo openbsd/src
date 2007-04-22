@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.18 2005/11/17 02:58:03 brad Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.19 2007/04/22 22:31:14 deraadt Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -300,11 +300,11 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 		cirq_type = oirq_type = iirq_type = IST_LEVEL;
 	}
 	mac_intr_establish(parent, cirq, cirq_type, IPL_AUDIO, awacs_intr,
-	    sc, "awacs");
+	    sc, sc->sc_dev.dv_xname);
 	mac_intr_establish(parent, oirq, oirq_type, IPL_AUDIO, awacs_tx_intr,
-	    sc, "awacs/tx");
+	    sc, sc->sc_dev.dv_xname);
 	mac_intr_establish(parent, iirq, iirq_type, IPL_AUDIO, awacs_rx_intr,
-	    sc, "awacs/rx");
+	    sc, sc->sc_dev.dv_xname);
 
 	printf(": irq %d,%d,%d",
 		cirq, oirq, iirq);

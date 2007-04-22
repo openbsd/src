@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.25 2007/04/10 17:47:54 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.26 2007/04/22 22:31:14 deraadt Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -1668,7 +1668,7 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	adb_reinit();
 
 	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_HIGH,
-	    adb_intr, sc, "adb");
+	    adb_intr, sc, sc->sc_dev.dv_xname);
 
 	/* init powerpc globals which control RTC functionality */
 	time_read = adb_read_date_time;

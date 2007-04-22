@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.17 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: smu.c,v 1.18 2007/04/22 22:31:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -246,7 +246,7 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Establish smu-doorbell interrupt. */
 	mac_intr_establish(parent, intr, IST_EDGE, IPL_BIO,
-	    smu_intr, sc, "smu");
+	    smu_intr, sc, sc->sc_dev.dv_xname);
 
 	/* Initialize global variables that control RTC functionality. */
 	time_read = smu_time_read;
