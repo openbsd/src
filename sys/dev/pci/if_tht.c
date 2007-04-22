@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.50 2007/04/22 05:21:33 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.51 2007/04/22 09:25:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -261,6 +261,16 @@ struct tht_rx_desc_rss {
 /* tx task fifo */
 struct tht_tx_task {
 	u_int32_t		flags;
+#define THT_TXT_FLAGS_BC(_f)	(_f) /* buffer count */
+#define THT_TXT_FLAGS_UDPCS	(1<<5) /* udp checksum */
+#define THT_TXT_FLAGS_TCPCS	(1<<6) /* tcp checksum */
+#define THT_TXT_FLAGS_IPCS	(1<<7) /* ip checksum */
+#define THT_TXT_FLAGS_VTAG	(1<<8) /* insert vlan tag */
+#define THT_TXT_FLAGS_LGSND	(1<<9) /* tcp large send enabled */
+#define THT_TXT_FLAGS_FRAG	(1<<10) /* ip fragmentation enabled */
+#define THT_TXT_FLAGS_CFI	(1<<12) /* canonical format indicator */
+#define THT_TXT_FLAGS_PRIO(_f)	((_f)<<13) /* vlan priority */
+#define THT_TXT_FLAGS_VLAN(_f)	((_f)<<20) /* vlan id */
 	u_int16_t		mss_mtu;
 	u_int16_t		len;
 
@@ -268,6 +278,7 @@ struct tht_tx_task {
 
 	/* followed by a pbd list */
 } __packed;
+#define THT_TXT_TYPE		(3<<16)
 #define THT_TXT_SGL_LEN		((THT_FIFO_DESC_LEN - \
 				    sizeof(struct tht_tx_task)) / \
 				    sizeof(struct tht_pbd))
@@ -473,6 +484,8 @@ void			tht_link_state(struct tht_softc *);
 int			tht_ioctl(struct ifnet *, u_long, caddr_t);
 void			tht_watchdog(struct ifnet *);
 void			tht_start(struct ifnet *);
+int			tht_load_pkt(struct tht_softc *, struct tht_pkt *,
+			    struct mbuf *);
 
 void			tht_rxf_fill(struct tht_softc *, int);
 void			tht_rxf_drain(struct tht_softc *);
@@ -833,7 +846,137 @@ tht_down(struct tht_softc *sc)
 void
 tht_start(struct ifnet *ifp)
 {
-	/* do nothing */
+	struct tht_softc		*sc = ifp->if_softc;
+	struct tht_pkt			*pkt;
+	struct tht_tx_task		txt;
+	struct tht_pbd			pbd;
+	bus_dma_tag_t			dmat = sc->sc_thtc->sc_dmat;
+	bus_dmamap_t			dmap;
+	int				ready;
+	struct mbuf			*m;
+	u_int64_t			dva;
+	int				bc;
+	int				i;
+
+	if (!(ifp->if_flags & IFF_RUNNING))
+		return;
+	if (ifp->if_flags & IFF_OACTIVE)
+		return;
+	if (IFQ_IS_EMPTY(&ifp->if_snd))
+		return;
+
+	ready = tht_fifo_ready(sc, &sc->sc_txt);
+	if (ready <= THT_FIFO_DESC_LEN)
+		return;
+
+	bzero(&txt, sizeof(txt));
+
+	tht_fifo_pre(sc, &sc->sc_txt);
+
+	for (;;) {
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
+			goto done;
+
+		pkt = tht_pkt_get(&sc->sc_tx_list);
+		if (pkt == NULL) {
+			ifp->if_flags |= IFF_OACTIVE;
+			goto done;
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (tht_load_pkt(sc, pkt, m) != 0) {
+			m_freem(m);
+			ifp->if_oerrors++;
+			goto free_pkt;
+		}
+		/* though shalt not use m after tht_load_pkt */
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, pkt->tp_m, BPF_DIRECTION_OUT);
+#endif
+
+		dmap = pkt->tp_dmap;
+
+		bc = sizeof(txt) + sizeof(pbd) * dmap->dm_nsegs;
+
+		txt.flags = htole32(THT_TXT_TYPE | LWORDS(bc)); /* XXX */
+		txt.len = htole16(pkt->tp_m->m_pkthdr.len);
+		txt.uid = pkt->tp_id;
+
+		tht_fifo_write(sc, &sc->sc_txt, &txt, sizeof(txt));
+
+		for (i = 0; i < dmap->dm_nsegs; i++) {
+			dva = dmap->dm_segs[i].ds_addr;
+
+			pbd.addr_lo = htole32(dva);
+			pbd.addr_hi = htole32(dva >> 32);
+			pbd.len = htole32(dmap->dm_segs[i].ds_len);
+
+			tht_fifo_write(sc, &sc->sc_txt, &pbd, sizeof(pbd));
+			ready -= sizeof(pbd);
+		}
+
+		if (bc & 0x7) {
+			const static u_int32_t pad = 0x0;
+			tht_fifo_write(sc, &sc->sc_txt, (void *)&pad,
+			    sizeof(pad));
+			ready -= sizeof(pad);
+		}
+
+		bus_dmamap_sync(dmat, dmap, 0, dmap->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+
+		if (ready <= THT_FIFO_DESC_LEN)
+			goto done;
+	}
+
+free_pkt:
+	tht_pkt_put(&sc->sc_rx_list, pkt);
+done:
+	tht_fifo_post(sc, &sc->sc_txt);
+}
+
+int
+tht_load_pkt(struct tht_softc *sc, struct tht_pkt *pkt, struct mbuf *m)
+{
+	bus_dma_tag_t			dmat = sc->sc_thtc->sc_dmat;
+	bus_dmamap_t			dmap = pkt->tp_dmap;
+	struct mbuf			*m0 = NULL;
+
+	switch(bus_dmamap_load_mbuf(dmat, dmap, m, BUS_DMA_NOWAIT)) {
+	case 0:
+		pkt->tp_m = m;
+		break;
+
+	case EFBIG: /* mbuf chain is too fragmented */
+		MGETHDR(m0, M_DONTWAIT, MT_DATA);
+		if (m0 == NULL)
+			return (ENOBUFS);
+		if (m->m_pkthdr.len > MHLEN) {
+			MCLGET(m0, M_DONTWAIT);
+			if (!(m0->m_flags & M_EXT)) {
+				m_freem(m0);
+				return (ENOBUFS);
+			}
+		}
+		m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, caddr_t));
+		m0->m_pkthdr.len = m0->m_len = m->m_pkthdr.len;
+		if (bus_dmamap_load_mbuf(dmat, dmap, m0, BUS_DMA_NOWAIT)) {
+                        m_freem(m0);
+			return (ENOBUFS);
+                }
+
+		m_freem(m);
+		pkt->tp_m = m0;
+		break;
+
+	default:
+		return (ENOBUFS);
+	}
+
+	return (0);
 }
 
 void
