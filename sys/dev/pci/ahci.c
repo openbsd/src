@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.114 2007/04/22 03:49:31 deraadt Exp $ */
+/*	$OpenBSD: ahci.c,v 1.115 2007/04/22 05:03:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -2021,6 +2021,7 @@ err:
 	}
 
 	/* Done with the error CCB now. */
+	ahci_unload_prdt(ccb);
 	ahci_put_err_ccb(ccb);
 
 	/* Extract failed register set and tags from the scratch space. */
