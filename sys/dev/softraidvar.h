@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.12 2007/04/22 00:06:09 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.13 2007/04/22 00:41:31 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -20,7 +20,6 @@
 #include <sys/buf.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
-#include <ufs/ffs/fs.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
@@ -115,7 +114,7 @@ struct sr_workunit {
 TAILQ_HEAD(sr_wu_list, sr_workunit);
 
 #define SR_META_SIZE		32	/* save space at chunk beginning */
-#define SR_FFS_SKIP		(SBLOCK_UFS1 >> 9)
+#define SR_META_OFFSET		16	/* skip 8192 bytes at chunk beginning */
 #define SR_META_VERSION		2	/* bump when sr_metadata changes */
 struct sr_metadata {
 	/* do not change order of ssd_magic, ssd_version */

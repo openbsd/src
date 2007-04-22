@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.30 2007/04/22 00:06:09 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.31 2007/04/22 00:41:31 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1004,7 +1004,7 @@ sr_parse_chunks(struct sr_softc *sc, char *lst, struct sr_chunk_head *cl)
 		ss = name[strlen(name) - 1];
 		ch_entry->src_meta.scm_size =
 		    label.d_partitions[ss - 'a'].p_size - SR_META_SIZE -
-		    SR_FFS_SKIP;
+		    SR_META_OFFSET;
 		if (ch_entry->src_meta.scm_size <= 0) {
 			printf("%s: %s partition size = 0\n",
 			    DEVNAME(sc), name);
@@ -1305,7 +1305,7 @@ sr_raid1_rw(struct sr_workunit *wu)
 	else
 		ios = sd->sd_vol.sv_meta.svm_no_chunk;
 
-	blk += SR_META_SIZE + SR_FFS_SKIP;
+	blk += SR_META_SIZE + SR_META_OFFSET;
 
 	wu->swu_blk_start = blk;
 	wu->swu_blk_end = blk + xs->datalen - 1;
@@ -1853,7 +1853,7 @@ sr_save_metadata(struct sr_discipline *sd)
 			continue;
 
 		b.b_flags = B_WRITE;
-		b.b_blkno = SR_FFS_SKIP; /* skip past mbr and partition table */
+		b.b_blkno = SR_META_OFFSET;
 		b.b_bcount = sz;
 		b.b_bufsize = sz;
 		b.b_resid = sz;
