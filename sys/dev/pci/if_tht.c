@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.48 2007/04/22 04:38:31 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.49 2007/04/22 04:59:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -24,6 +24,8 @@
  * hardware and documentation. Thanks!
  */
 
+#include "bpfilter.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
@@ -46,6 +48,10 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -964,6 +970,11 @@ tht_rxd(struct tht_softc *sc)
 		m->m_pkthdr.len = m->m_len = letoh16(rxd.len);
 
 		/* XXX process type 3 rx descriptors */
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+#endif
 
 		ether_input_mbuf(ifp, m);
 
