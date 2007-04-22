@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.29 2007/04/21 23:50:47 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.30 2007/04/22 00:06:09 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1003,7 +1003,8 @@ sr_parse_chunks(struct sr_softc *sc, char *lst, struct sr_chunk_head *cl)
 		/* get partition size */
 		ss = name[strlen(name) - 1];
 		ch_entry->src_meta.scm_size =
-		    label.d_partitions[ss - 'a'].p_size - SR_META_SIZE;
+		    label.d_partitions[ss - 'a'].p_size - SR_META_SIZE -
+		    SR_FFS_SKIP;
 		if (ch_entry->src_meta.scm_size <= 0) {
 			printf("%s: %s partition size = 0\n",
 			    DEVNAME(sc), name);
@@ -1082,8 +1083,8 @@ sr_raid1_alloc_resources(struct sr_discipline *sd)
 	sr_alloc_ccb(sd);
 
 	/* -2 because that includes mbr and partition table */
-	sd->sd_meta = malloc((SR_META_SIZE - 2) * 512 , M_DEVBUF, M_WAITOK);
-	bzero(sd->sd_meta, (SR_META_SIZE - 2) * 512);
+	sd->sd_meta = malloc(SR_META_SIZE * 512 , M_DEVBUF, M_WAITOK);
+	bzero(sd->sd_meta, SR_META_SIZE  * 512);
 
 	rv = 0;
 	return (rv);
@@ -1304,7 +1305,7 @@ sr_raid1_rw(struct sr_workunit *wu)
 	else
 		ios = sd->sd_vol.sv_meta.svm_no_chunk;
 
-	blk += SR_META_SIZE;
+	blk += SR_META_SIZE + SR_FFS_SKIP;
 
 	wu->swu_blk_start = blk;
 	wu->swu_blk_end = blk + xs->datalen - 1;
@@ -1776,7 +1777,7 @@ sr_save_metadata(struct sr_discipline *sd)
 	struct sr_chunk		*src;
 	struct buf		b;
 	int			i, rv = 1;
-	size_t			sz = (SR_META_SIZE - 2) * 512;
+	size_t			sz = SR_META_SIZE * 512;
 
 	DNPRINTF(SR_D_META, "%s: sr_save_metadata %s\n",
 	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
@@ -1852,7 +1853,7 @@ sr_save_metadata(struct sr_discipline *sd)
 			continue;
 
 		b.b_flags = B_WRITE;
-		b.b_blkno = 2; /* skip past mbr and partition table */
+		b.b_blkno = SR_FFS_SKIP; /* skip past mbr and partition table */
 		b.b_bcount = sz;
 		b.b_bufsize = sz;
 		b.b_resid = sz;
