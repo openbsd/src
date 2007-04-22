@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.22 2007/04/22 20:52:27 mk Exp $ */
+/* $OpenBSD: acpidev.h,v 1.23 2007/04/22 21:05:29 mk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -286,12 +286,12 @@ struct acpibat_softc {
 };
 
 struct acpidock_softc {
-	struct device           sc_dev;
+	struct device		sc_dev;
 
-	bus_space_tag_t         sc_iot;
-	bus_space_handle_t      sc_ioh;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
 			 
-	struct acpi_softc       *sc_acpi;
+	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
 
 	TAILQ_HEAD(, aml_nodelist)	sc_deps_h;
