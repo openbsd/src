@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.51 2007/04/21 15:43:27 gwk Exp $
+#	$OpenBSD: files.macppc,v 1.52 2007/04/22 18:04:24 deraadt Exp $
 
 #
 # macppc-specific configuration info
@@ -194,9 +194,9 @@ define	i2s
 file	arch/macppc/dev/i2s.c				i2s
 
 # blinkenlights
-device blinkenlights
-attach blinkenlights at macobio
-file	arch/macppc/dev/blinkenlights.c			blinkenlights
+device	xlights
+attach	xlights at macobio
+file	arch/macppc/dev/xlights.c			xlights
 
 # snapper audio
 device	snapper: audio, auconv, mulaw, i2s

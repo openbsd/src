@@ -1,4 +1,4 @@
-/* $OpenBSD: blinkenlights.c,v 1.2 2007/04/21 15:48:22 gwk Exp $ */
+/* $OpenBSD: xlights.c,v 1.1 2007/04/22 18:04:23 deraadt Exp $ */
 /*
  * Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd,org>
  *
@@ -28,7 +28,7 @@
 #include <macppc/dev/dbdma.h>
 #include <macppc/dev/i2sreg.h>
 
-struct blinkenlights_softc {
+struct xlights_softc {
 	struct device 			sc_dev;
 	int				sc_node;
 	int				sc_intr;
@@ -48,31 +48,31 @@ struct blinkenlights_softc {
 	struct timeout 			sc_tmo;
 };
 
-int blinkenlights_match(struct device *, void *, void *);
-void blinkenlights_attach(struct device *, struct device *, void *);
-int blinkenlights_intr(void *);
-void blinkenlights_startdma(struct blinkenlights_softc *);
-void blinkenlights_deferred(void *);
-void blinkenlights_theosDOT(void *);
-void blinkenlights_timeout(void *);
-void blinkenlights_pwm(struct blinkenlights_softc *, u_char *, int);
+int xlights_match(struct device *, void *, void *);
+void xlights_attach(struct device *, struct device *, void *);
+int xlights_intr(void *);
+void xlights_startdma(struct xlights_softc *);
+void xlights_deferred(void *);
+void xlights_theosDOT(void *);
+void xlights_timeout(void *);
+void xlights_pwm(struct xlights_softc *, u_char *, int);
 extern void keylargo_fcr_enable(int, u_int32_t);
 extern void keylargo_fcr_disable(int, u_int32_t);
 
-struct cfattach blinkenlights_ca = {
-	sizeof(struct blinkenlights_softc), blinkenlights_match,
-	blinkenlights_attach
+struct cfattach xlights_ca = {
+	sizeof(struct xlights_softc), xlights_match,
+	xlights_attach
 };
 
-struct cfdriver blinkenlights_cd = {
-	NULL, "blinkenlights", DV_DULL
+struct cfdriver xlights_cd = {
+	NULL, "xlights", DV_DULL
 };
 
 #define BL_BUFSZ PAGE_SIZE
 #define BL_DBDMA_CMDS 2
 
 int
-blinkenlights_match(struct device *parent, void *arg, void *aux)
+xlights_match(struct device *parent, void *arg, void *aux)
 {
 	struct confargs *ca = aux;
 	int soundbus, soundchip, error;
@@ -103,9 +103,9 @@ blinkenlights_match(struct device *parent, void *arg, void *aux)
 }
 
 void
-blinkenlights_attach(struct device *parent, struct device *self, void *aux)
+xlights_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct blinkenlights_softc *sc = (struct blinkenlights_softc *)self;
+	struct xlights_softc *sc = (struct xlights_softc *)self;
 	struct confargs *ca = aux;
 	int nseg, error, intr[6];
 	u_int32_t reg[4];
@@ -166,7 +166,7 @@ blinkenlights_attach(struct device *parent, struct device *self, void *aux)
 	printf(": irq %d\n", sc->sc_intr);
 
 	mac_intr_establish(parent, sc->sc_intr, intr[3] ? IST_LEVEL :
-	    IST_EDGE, IPL_AUDIO, blinkenlights_intr, sc, "blinkenlights");
+	    IST_EDGE, IPL_AUDIO, xlights_intr, sc, sc->sc_dev.dv_xname);
 
 	out32rb(sc->sc_reg + I2S_INT, I2S_INT_CLKSTOPPEND);
 
@@ -186,8 +186,8 @@ blinkenlights_attach(struct device *parent, struct device *self, void *aux)
 	out32rb(sc->sc_reg + I2S_FORMAT, CLKSRC_VS);
 	keylargo_fcr_enable(I2SClockOffset, I2S0CLKEN);
 
-	kthread_create_deferred(blinkenlights_deferred, sc);
-	timeout_set(&sc->sc_tmo, blinkenlights_timeout, sc);
+	kthread_create_deferred(xlights_deferred, sc);
+	timeout_set(&sc->sc_tmo, xlights_timeout, sc);
 	return;
 nodmaload:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_bufmap);
@@ -204,15 +204,15 @@ nodma:
 }
 
 void
-blinkenlights_deferred(void *v)
+xlights_deferred(void *v)
 {
-	kthread_create(blinkenlights_theosDOT, v, NULL, "blinkenlights");
+	kthread_create(xlights_theosDOT, v, NULL, "xlights");
 }
 
 void
-blinkenlights_theosDOT(void *v)
+xlights_theosDOT(void *v)
 {
-	struct blinkenlights_softc *sc = (struct blinkenlights_softc *)v;
+	struct xlights_softc *sc = (struct xlights_softc *)v;
 	u_char leds[16];
 	int offset, i, s, speed;
 
@@ -228,7 +228,7 @@ blinkenlights_theosDOT(void *v)
 			for (i = offset; i >= s; i--)
 				leds[i] = 0xff / (offset + 1 - s);
 
-			blinkenlights_pwm(sc, leds, speed);
+			xlights_pwm(sc, leds, speed);
 			bzero(leds, sizeof(leds));
 		}
 		for (offset = 7; offset >= 0; offset--) {
@@ -240,14 +240,14 @@ blinkenlights_theosDOT(void *v)
 			}
 			for (i = offset; i <= s; i++)
 				leds[i] = 0xff  / (offset + 1) - s;
-			blinkenlights_pwm(sc, leds, speed);
+			xlights_pwm(sc, leds, speed);
 			bzero(leds, sizeof(leds));
 		}
 	}
 }
 
 void
-blinkenlights_pwm(struct blinkenlights_softc *sc, u_char *leds, int msecs)
+xlights_pwm(struct xlights_softc *sc, u_char *leds, int msecs)
 {
 	uint32_t *p;
 	int s, l, k, nsamp;
@@ -273,7 +273,7 @@ blinkenlights_pwm(struct blinkenlights_softc *sc, u_char *leds, int msecs)
 			k++;
 			sc->sc_bufpos++;
 		} else {
-			blinkenlights_startdma(sc);
+			xlights_startdma(sc);
 			while (sc->sc_dmasts)
 				tsleep(sc->sc_buf, PWAIT, "blinken", 0);
 			sc->sc_bufpos = p = sc->sc_buf;
@@ -282,7 +282,7 @@ blinkenlights_pwm(struct blinkenlights_softc *sc, u_char *leds, int msecs)
 }
 
 void
-blinkenlights_startdma(struct blinkenlights_softc *sc)
+xlights_startdma(struct xlights_softc *sc)
 {
 	dbdma_command_t *cmdp = sc->sc_dmacmd;
 
@@ -302,9 +302,9 @@ blinkenlights_startdma(struct blinkenlights_softc *sc)
 }
 
 void
-blinkenlights_timeout(void *v)
+xlights_timeout(void *v)
 {
-	struct blinkenlights_softc *sc = (struct blinkenlights_softc *)v;
+	struct xlights_softc *sc = (struct xlights_softc *)v;
 
 	dbdma_reset(sc->sc_dma);
 	timeout_del(&sc->sc_tmo);
@@ -313,9 +313,9 @@ blinkenlights_timeout(void *v)
 }
 
 int
-blinkenlights_intr(void *v)
+xlights_intr(void *v)
 {
-	struct blinkenlights_softc *sc = (struct blinkenlights_softc *)v;
+	struct xlights_softc *sc = (struct xlights_softc *)v;
 	int status;
 	dbdma_command_t *cmd;
 
