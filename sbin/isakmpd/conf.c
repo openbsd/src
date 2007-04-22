@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.94 2007/04/16 13:01:39 moritz Exp $	 */
+/* $OpenBSD: conf.c,v 1.95 2007/04/22 11:34:36 moritz Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -186,11 +186,9 @@ conf_set_now(char *section, char *tag, char *value, int override,
 	return 0;
 fail:
 	free(node->value);
-	node->value = NULL;
 	free(node->tag);
-	node->tag = NULL;
 	free(node->section);
-	node->section = NULL;
+	free(node);
 	return 1;
 }
 
