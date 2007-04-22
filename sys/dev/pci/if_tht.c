@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.45 2007/04/21 14:48:24 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.46 2007/04/22 04:21:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -199,11 +199,34 @@ struct tht_rx_free {
 /* rx descriptor */
 struct tht_rx_desc {
 	u_int32_t		flags;
+#define THT_RXD_FLAGS_BC(_f)		((_f) & 0x1f) /* buffer count */
+#define THT_RXD_FLAGS_RXFQ(_f)		(((_f)>>8) & 0x3) /* rxf queue id */
+#define THT_RXD_FLAGS_TO		(1<<15)
+#define THT_RXD_FLAGS_TYPE(_f)		(((_f)>>16) & 0xf) /* desc type */
+#define THT_RXD_FLAGS_OVF		(1<<21) /* overflow error */
+#define THT_RXD_FLAGS_RUNT		(1<<22) /* runt error */
+#define THT_RXD_FLAGS_CRC		(1<<23) /* crc error */
+#define THT_RXD_FLAGS_UDPCS		(1<<24) /* udp checksum error */
+#define THT_RXD_FLAGS_TCPCS		(1<<25) /* tcp checksum error */
+#define THT_RXD_FLAGS_IPCS		(1<<26) /* ip checksum error */
+#define THT_RXD_FLAGS_PKT_ID		0x70000000
+#define THT_RXD_FLAGS_PKT_ID_NONIP	0x00000000
+#define THT_RXD_FLAGS_PKT_ID_TCP4	0x10000000
+#define THT_RXD_FLAGS_PKT_ID_UDP4	0x20000000
+#define THT_RXD_FLAGS_PKT_ID_IPV4	0x30000000
+#define THT_RXD_FLAGS_PKT_ID_TCP6	0x50000000
+#define THT_RXD_FLAGS_PKT_ID_UDP6	0x60000000
+#define THT_RXD_FLAGS_PKT_ID_IPV6	0x70000000
+#define THT_RXD_FLAGS_VTAG		(1<<31)
 	u_int16_t		len;
 	u_int16_t		vlan;
+#define THT_RXD_VLAN_ID(_v)		((_v) & 0xfff)
+#define THT_RXD_VLAN_CFI		(1<<12)
+#define THT_RXD_VLAN_PRI(_v)		((_v) & 0x7) >> 13)
 
 	u_int64_t		uid;
 } __packed;
+#define THT_RXD_TYPE		2
 
 /* rx decriptor type 3: data chain instruction */
 struct tht_rx_desc_dc {
@@ -214,6 +237,7 @@ struct tht_rx_desc_dc {
 
 	u_int8_t		data[4];
 } __packed;
+#define THT_RXD_TYPE_DC		3
 
 /* rx descriptor type 4: rss (recv side scaling) information */
 struct tht_rx_desc_rss {
@@ -226,6 +250,7 @@ struct tht_rx_desc_rss {
 
 	u_int32_t		rss_hash;
 } __packed;
+#define THT_RXD_TYPE_RSS	4
 
 /* tx task fifo */
 struct tht_tx_task {
