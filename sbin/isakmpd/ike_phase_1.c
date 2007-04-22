@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.67 2007/04/16 13:01:39 moritz Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.68 2007/04/22 11:32:30 moritz Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -1312,8 +1312,10 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 	case IKE_ATTR_LIFE_DURATION:
 		life_conf = conf_get_list(xf->field, "Life");
 		if (life_conf &&
-		    !strcmp(conf_get_str(xf->field, "Life"), "ANY"))
+		    !strcmp(conf_get_str(xf->field, "Life"), "ANY")) {
+			conf_free_list(life_conf);
 			return 0;
+		}
 
 		rv = 1;
 		if (!life_conf) {
