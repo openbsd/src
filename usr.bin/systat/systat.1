@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.54 2007/02/23 23:36:36 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.55 2007/04/22 17:20:54 moritz Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -253,27 +253,19 @@ spaces.
 Display network addresses symbolically.
 .It Cm numbers
 Display network addresses numerically.
-.It Cm protocol
-Display only network connections using the indicated protocol
-(currently either
-.Dq tcp
-or
-.Dq udp ) .
 .It Cm reset
 Reset the port, host, and protocol matching mechanisms to the default
 (any protocol, port, or host).
-.It Cm show Op Ar ports\&|hosts
+.It Cm show Op Ar protos\&|ports\&|hosts
 Show, on the command line, the currently selected protocols,
 hosts, and ports.
-Hosts and ports which are being ignored are prefixed with a
+Protocols, hosts and ports which are being ignored are prefixed with a
 .Ql \&! .
-If
-.Ar ports
-or
-.Ar hosts
-is supplied as an argument to
+If an argument is supplied to
 .Cm show ,
 then only the requested information will be displayed.
+.It Cm tcp \*(Ba udp \*(Ba all
+Display only network connections using the indicated protocol.
 .El
 .It Ic pigs
 Display, in the lower window, those processes resident in main
