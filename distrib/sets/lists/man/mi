@@ -1340,7 +1340,6 @@
 ./usr/share/man/cat4/macppc/asms.0
 ./usr/share/man/cat4/macppc/autoconf.0
 ./usr/share/man/cat4/macppc/awacs.0
-./usr/share/man/cat4/macppc/blinkenlights.0
 ./usr/share/man/cat4/macppc/bm.0
 ./usr/share/man/cat4/macppc/daca.0
 ./usr/share/man/cat4/macppc/esp.0
@@ -1361,6 +1360,7 @@
 ./usr/share/man/cat4/macppc/snapper.0
 ./usr/share/man/cat4/macppc/tpms.0
 ./usr/share/man/cat4/macppc/tumbler.0
+./usr/share/man/cat4/macppc/xlights.0
 ./usr/share/man/cat4/macppc/zs.0
 ./usr/share/man/cat4/macppc/zsc.0
 ./usr/share/man/cat4/macppc/zstty.0
