@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.49 2007/04/22 04:59:07 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.50 2007/04/22 05:21:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -682,8 +682,8 @@ tht_mountroot(void *arg)
 	if (tht_fifo_alloc(sc, &sc->sc_txt, &tht_txt_desc) != 0)
 		return;
 
-	printf("%s: firmware load %s\n", DEVNAME(sc),
-	    (tht_fw_load(sc) == 0) ? "succeeded" : "failed");
+	if (tht_fw_load(sc) != 0)
+		printf("%s: firmware load failed\n", DEVNAME(sc));
 
 	tht_sw_reset(sc);
 
