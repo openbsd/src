@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.21 2007/04/22 20:52:27 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.22 2007/04/22 21:02:25 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -121,7 +121,7 @@ int
 acpidock_status(struct acpidock_softc *sc)
 {
 	struct aml_value	res;
-	int			rv, sta;
+	int			rv;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL,
 	    &res) != 0)
@@ -129,11 +129,9 @@ acpidock_status(struct acpidock_softc *sc)
 	else
 		rv = 1;
 	
-	sta = aml_val2int(&res);
-	sc->sc_sta = sta;
+	sc->sc_sta = aml_val2int(&res);
 
-	/* XXX: _STA bit defines */
-	sc->sc_docked = sta & 0x01;
+	sc->sc_docked = sc->sc_sta & STA_PRESENT;
 
 	aml_freevalue(&res);
 
