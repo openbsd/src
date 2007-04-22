@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.47 2007/04/22 04:24:40 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.48 2007/04/22 04:38:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -470,6 +470,7 @@ void			tht_start(struct ifnet *);
 
 void			tht_rxf_fill(struct tht_softc *, int);
 void			tht_rxf_drain(struct tht_softc *);
+void			tht_rxd(struct tht_softc *);
 
 void			tht_up(struct tht_softc *);
 void			tht_down(struct tht_softc *);
@@ -829,14 +830,13 @@ tht_start(struct ifnet *ifp)
 	/* do nothing */
 }
 
-
 void
 tht_rxf_fill(struct tht_softc *sc, int wait)
 {
-	struct tht_rx_free		rxf;
-	struct tht_pbd			pbd;
 	bus_dma_tag_t			dmat = sc->sc_thtc->sc_dmat;
 	bus_dmamap_t			dmap;
+	struct tht_rx_free		rxf;
+	struct tht_pbd			pbd;
 	struct tht_pkt			*pkt;
 	struct mbuf			*m;
 	u_int64_t			dva;
@@ -924,6 +924,62 @@ tht_rxf_drain(struct tht_softc *sc)
 
 		tht_pkt_put(&sc->sc_rx_list, pkt);
 	}
+}
+
+void
+tht_rxd(struct tht_softc *sc)
+{
+	struct ifnet			*ifp = &sc->sc_ac.ac_if;
+	bus_dma_tag_t			dmat = sc->sc_thtc->sc_dmat;
+	bus_dmamap_t			dmap;
+	struct tht_rx_desc		rxd;
+	struct tht_pkt			*pkt;
+	struct mbuf			*m;
+	int				ready, bc;
+	u_int32_t			flags;
+
+	ready = sc->sc_rxd.tf_len - tht_fifo_ready(sc, &sc->sc_rxd);
+	if (ready == 0)
+		return;
+
+	tht_fifo_pre(sc, &sc->sc_rxd);
+
+	do {
+		tht_fifo_read(sc, &sc->sc_rxd, &rxd, sizeof(rxd));
+		ready -= sizeof(rxd);
+
+		flags = letoh32(rxd.flags);
+		bc = THT_RXD_FLAGS_BC(flags) * 8;
+		bc -= sizeof(rxd);
+		pkt = &sc->sc_rx_list.tpl_pkts[rxd.uid];
+
+		dmap = pkt->tp_dmap;
+
+		bus_dmamap_sync(dmat, dmap, 0, dmap->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(dmat, dmap);
+
+		m = pkt->tp_m;
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.len = m->m_len = letoh16(rxd.len);
+
+		/* XXX process type 3 rx descriptors */
+
+		ether_input_mbuf(ifp, m);
+
+		tht_pkt_put(&sc->sc_rx_list, pkt);
+
+		while (bc > 0) {
+			static u_int32_t pad;
+
+			tht_fifo_read(sc, &sc->sc_rxd, &pad, sizeof(pad));
+			ready -= sizeof(pad);
+			bc -= sizeof(pad);
+		}
+
+	} while (ready > 0);
+
+	tht_fifo_post(sc, &sc->sc_rxd);
 }
 
 void
