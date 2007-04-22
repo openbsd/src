@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.32 2007/04/22 04:05:36 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.33 2007/04/22 13:02:56 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -54,7 +54,7 @@ uint32_t	sr_debug = 0
 		    /* | SR_D_IOCTL */
 		    /* | SR_D_CCB */
 		    /* | SR_D_WU */
-		    /* | SR_D_META */
+		    | SR_D_META
 		    /* | SR_D_DIS */
 		    /* | SR_D_STATE */
 		;
@@ -1776,7 +1776,7 @@ sr_save_metadata(struct sr_discipline *sd)
 	struct sr_chunk_meta	*im_sc;
 	struct sr_chunk		*src;
 	struct buf		b;
-	int			i, rv = 1;
+	int			i, rv = 1, ch = 0;
 	size_t			sz = SR_META_SIZE * 512;
 
 	DNPRINTF(SR_D_META, "%s: sr_save_metadata %s\n",
@@ -1832,6 +1832,11 @@ sr_save_metadata(struct sr_discipline *sd)
 	sm->ssd_vd_chk = sr_checksum(DEVNAME(sc),
 	    (u_int32_t *)im_sv, sm->ssd_vd_size);
 
+	sm->ssd_chunk_chk = 0;
+	for (ch = 0; ch < sm->ssd_chunk_no; ch++)
+		sm->ssd_chunk_chk ^= sr_checksum(DEVNAME(sc),
+		    (u_int32_t *)&im_sc[ch], sm->ssd_chunk_size);
+
 #ifdef SR_DEBUG
 	/* metadata */
 	DNPRINTF(SR_D_META, "\tmeta magic 0x%llx\n", sm->ssd_magic);
@@ -1865,8 +1870,26 @@ sr_save_metadata(struct sr_discipline *sd)
 	for (i = 0; i < SR_UUID_MAX; i++)
 		DNPRINTF(SR_D_META, "%x%s", im_sv->svm_uuid.sui_id[i],
 		    i < SR_UUID_MAX - 1 ? ":" : "\n");
-	//struct sr_uuid 		svm_uuid;	/* volume unique identifier */
 
+	for (ch = 0; ch < im_sv->svm_no_chunk; ch++) {
+		DNPRINTF(SR_D_META, "\t\t\tchunk vol id %d\n",
+		    im_sc[ch].scm_volid);
+		DNPRINTF(SR_D_META, "\t\t\tchunk id %d\n",
+		    im_sc[ch].scm_chunk_id);
+		DNPRINTF(SR_D_META, "\t\t\tchunk status %d\n",
+		    im_sc[ch].scm_status);
+		DNPRINTF(SR_D_META, "\t\t\tchunk name %s\n",
+		    im_sc[ch].scm_devname);
+		DNPRINTF(SR_D_META, "\t\t\tchunk size %llu\n",
+		    im_sc[ch].scm_size);
+		DNPRINTF(SR_D_META, "\t\t\tchunk coerced size %llu\n",
+		    im_sc[ch].scm_coerced_size);
+		DNPRINTF(SR_D_META, "\t\t\tchunk uuid ");
+		for (i = 0; i < SR_UUID_MAX; i++)
+			DNPRINTF(SR_D_META, "%x%s",
+			    im_sc[ch].scm_uuid.sui_id[i],
+			    i < SR_UUID_MAX - 1 ? ":" : "\n");
+	}
 #endif
 
 	for (i = 0; i < sm->ssd_chunk_no; i++) {
