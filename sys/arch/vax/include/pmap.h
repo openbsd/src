@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.27 2006/01/01 01:08:57 millert Exp $     */
+/*      $OpenBSD: pmap.h,v 1.28 2007/04/22 10:05:51 miod Exp $     */
 /*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
 
 /* 
@@ -74,14 +74,13 @@ typedef struct pmap {
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
- * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
+ * mappings of that page.  An entry is a pv_entry_t.
  */
 
 struct pv_entry {
 	struct pv_entry *pv_next;	/* next pv_entry */
 	pt_entry_t	*pv_pte;	/* pte for this physical page */
 	struct pmap	*pv_pmap;	/* pmap this entry belongs to */
-	int		 pv_attr;	/* write/modified bits */
 };
 
 /* ROUND_PAGE used before vm system is initialized */

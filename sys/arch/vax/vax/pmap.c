@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.38 2006/07/31 05:44:23 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.39 2007/04/22 10:05:52 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -40,6 +40,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/msgbuf.h>
+#include <sys/pool.h>
 
 #ifdef PMAPDEBUG
 #include <dev/cons.h>
@@ -56,7 +57,7 @@
 #include <machine/scb.h>
 #include <machine/rpb.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 /* QDSS console mapping hack */
 #include "qd.h"
@@ -68,8 +69,6 @@ vaddr_t	istack;
 struct pmap kernel_pmap_store;
 
 pt_entry_t *Sysmap;		/* System page table */
-struct	pv_entry *pv_table;	/* array of entries, one per LOGICAL page */
-int	pventries;
 void	*scratch;
 vaddr_t	iospace;
 
@@ -78,7 +77,8 @@ struct	extent *ptemap;
 #define	PTMAPSZ	EXTENT_FIXED_STORAGE_SIZE(100)
 char	ptmapstorage[PTMAPSZ];
 
-#define	IOSPACE(p)	(((u_long)(p)) & 0xe0000000)
+struct pool pmap_pmap_pool;
+struct pool pmap_pv_pool;
 
 #ifdef PMAPDEBUG
 volatile int recurse;
@@ -105,16 +105,13 @@ void pmap_decpteref(struct pmap *, pt_entry_t *);
 #ifndef PMAPDEBUG
 static inline
 #endif
-void rensa(int, pt_entry_t *);
+void rensa(pt_entry_t, pt_entry_t *);
 
 vaddr_t   avail_start, avail_end;
 vaddr_t   virtual_avail, virtual_end; /* Available virtual memory	*/
 
-void pmap_pinit(pmap_t);
-void pmap_release(pmap_t);
-struct pv_entry *get_pventry(void);
-void free_pventry(struct pv_entry *);
-void more_pventries(void);
+#define	get_pventry()    (struct pv_entry *)pool_get(&pmap_pv_pool, PR_NOWAIT)
+#define	free_pventry(pv) pool_put(&pmap_pv_pool, (void *)pv)
 
 /*
  * pmap_bootstrap().
@@ -185,12 +182,7 @@ pmap_bootstrap()
 
 	/* Some scratch pages */
 	scratch = (void *)((u_int)istack + ISTACK_SIZE);
-
-	/* Physical-to-virtual translation table */
-	(unsigned)pv_table = (u_int)scratch + 4 * VAX_NBPG;
-
-	avail_start = (unsigned)pv_table + (ROUND_PAGE(avail_end >> PGSHIFT)) *
-	    sizeof(struct pv_entry) - KERNBASE;
+	avail_start = (u_int)scratch + 4 * VAX_NBPG - KERNBASE;
 
 	/* Kernel message buffer */
 	avail_end -= MSGBUFSIZE;
@@ -232,8 +224,7 @@ pmap_bootstrap()
 	printf("Sysmap %p, istack %lx, scratch %p\n",Sysmap,istack,scratch);
 	printf("etext %p\n", &etext);
 	printf("SYSPTSIZE %x\n",sysptsize);
-	printf("pv_table %p, ptemapstart %lx ptemapend %lx\n",
-	    pv_table, ptemapstart, ptemapend);
+	printf("ptemapstart %lx ptemapend %lx\n", ptemapstart, ptemapend);
 	printf("avail_start %lx, avail_end %lx\n",avail_start,avail_end);
 	printf("virtual_avail %lx,virtual_end %lx\n",
 	    virtual_avail, virtual_end);
@@ -256,6 +247,12 @@ pmap_bootstrap()
 	mtpr(pcb->P0BR = pmap->pm_p0br, PR_P0BR);
 	mtpr(pcb->P1LR = pmap->pm_p1lr, PR_P1LR);
 	mtpr(pcb->P0LR = pmap->pm_p0lr, PR_P0LR);
+
+	/* Create the pmap and pv_entry pools. */
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0,
+	    "pmap_pool", NULL);
+	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0,
+	    "pv_pool", NULL);
 
 	/*
 	 * Now everything should be complete, start virtual memory.
@@ -380,21 +377,10 @@ struct pmap *
 pmap_create()
 {
 	struct pmap *pmap;
-
-	MALLOC(pmap, struct pmap *, sizeof(*pmap), M_VMPMAP, M_WAITOK);
-	bzero(pmap, sizeof(struct pmap));
-	pmap_pinit(pmap);
-	return(pmap);
-}
-
-/*
- * Initialize a preallocated an zeroed pmap structure,
- */
-void
-pmap_pinit(pmap)
-	pmap_t pmap;
-{
 	int bytesiz, res;
+
+	pmap =  pool_get(&pmap_pmap_pool, PR_WAITOK);
+	bzero(pmap, sizeof(struct pmap));
 
 	/*
 	 * Allocate PTEs and stash them away in the pmap.
@@ -404,57 +390,23 @@ pmap_pinit(pmap)
 	res = extent_alloc(ptemap, bytesiz, 4, 0, 0, EX_WAITSPACE|EX_WAITOK,
 	    (u_long *)&pmap->pm_p0br);
 	if (res)
-		panic("pmap_pinit");
+		panic("pmap_create");
 	pmap->pm_p0lr = vax_btoc(MAXTSIZ + 40*1024*1024) | AST_PCB;
 	(vaddr_t)pmap->pm_p1br = (vaddr_t)pmap->pm_p0br + bytesiz - 0x800000;
 	pmap->pm_p1lr = (0x200000 - vax_btoc(MAXSSIZ));
 	pmap->pm_stack = USRSTACK;
 
 #ifdef PMAPDEBUG
-if (startpmapdebug)
-	printf("pmap_pinit(%p): p0br=%p p0lr=0x%lx p1br=%p p1lr=0x%lx\n",
-	pmap, pmap->pm_p0br, pmap->pm_p0lr, pmap->pm_p1br, pmap->pm_p1lr);
+	if (startpmapdebug)
+		printf("pmap_create: pmap %p, "
+		    "p0br=%p p0lr=0x%lx p1br=%p p1lr=0x%lx\n",
+	    	    pmap, pmap->pm_p0br, pmap->pm_p0lr,
+		    pmap->pm_p1br, pmap->pm_p1lr);
 #endif
 
 	pmap->ref_count = 1;
-	pmap->pm_stats.resident_count = pmap->pm_stats.wired_count = 0;
-}
 
-/*
- * Release any resources held by the given physical map.
- * Called when a pmap initialized by pmap_pinit is being released.
- * Should only be called if the map contains no valid mappings.
- */
-void
-pmap_release(pmap)
-	struct pmap *pmap;
-{
-#ifdef DEBUG
-	vaddr_t saddr, eaddr;
-	int i;
-#endif
-
-#ifdef PMAPDEBUG
-if(startpmapdebug)printf("pmap_release: pmap %p\n",pmap);
-#endif
-
-	if (pmap->pm_p0br == 0)
-		return;
-
-#ifdef DEBUG
-	for (i = 0; i < NPTEPGS; i++)
-		if (pmap->pm_refcnt[i])
-			panic("pmap_release: refcnt %d index %d", 
-			    pmap->pm_refcnt[i], i);
-
-	saddr = (vaddr_t)pmap->pm_p0br;
-	eaddr = saddr + USRPTSIZE * sizeof(pt_entry_t);
-	for (; saddr < eaddr; saddr += NBPG)
-		if ((*kvtopte(saddr) & PG_FRAME) != 0)
-			panic("pmap_release: page mapped");
-#endif
-	extent_free(ptemap, (u_long)pmap->pm_p0br,
-	    USRPTSIZE * sizeof(pt_entry_t), EX_WAITOK);
+	return(pmap);
 }
 
 void
@@ -483,31 +435,48 @@ pmap_unwire(pmap, va)
 
 /*
  * pmap_destroy(pmap): Remove a reference from the pmap. 
- * If the pmap is NULL then just return else decrese pm_count.
- * If this was the last reference we call's pmap_relaese to release this pmap.
- * OBS! remember to set pm_lock
+ * If this was the last reference, release all its resources.
  */
-
 void
 pmap_destroy(pmap)
 	pmap_t pmap;
 {
 	int count;
+#ifdef DEBUG
+	vaddr_t saddr, eaddr;
+	int i;
+#endif
   
 #ifdef PMAPDEBUG
-if(startpmapdebug)printf("pmap_destroy: pmap %p\n",pmap);
+	if (startpmapdebug)
+		printf("pmap_destroy: pmap %p\n",pmap);
 #endif
-	if (pmap == NULL)
-		return;
 
 	simple_lock(&pmap->pm_lock);
 	count = --pmap->ref_count;
 	simple_unlock(&pmap->pm_lock);
   
-	if (count == 0) {
-		pmap_release(pmap);
-		FREE((caddr_t)pmap, M_VMPMAP);
+	if (count != 0)
+		return;
+
+	if (pmap->pm_p0br != 0) {
+#ifdef DEBUG
+		for (i = 0; i < NPTEPGS; i++)
+			if (pmap->pm_refcnt[i])
+				panic("pmap_release: refcnt %d index %d", 
+				    pmap->pm_refcnt[i], i);
+
+		saddr = (vaddr_t)pmap->pm_p0br;
+		eaddr = saddr + USRPTSIZE * sizeof(pt_entry_t);
+		for (; saddr < eaddr; saddr += NBPG)
+			if ((*kvtopte(saddr) & PG_FRAME) != 0)
+				panic("pmap_release: page mapped");
+#endif
+		extent_free(ptemap, (u_long)pmap->pm_p0br,
+		    USRPTSIZE * sizeof(pt_entry_t), EX_WAITOK);
 	}
+
+	pool_put(&pmap_pmap_pool, pmap);
 }
 
 /*
@@ -515,48 +484,59 @@ if(startpmapdebug)printf("pmap_destroy: pmap %p\n",pmap);
  * Arguments are physical clustering page and page table entry pointer.
  */
 void
-rensa(clp, ptp)
-	int clp;
+rensa(pte, ptp)
+	pt_entry_t pte;
 	pt_entry_t *ptp;
 {
-	struct	pv_entry *pf, *pl, *pv = pv_table + clp;
-	int	s, *g;
+	struct vm_page *pg;
+	struct pv_entry *pv, *npv, *ppv;
+	paddr_t pa;
+	int s, *g;
+
+	/*
+	 * Check that we are working on a managed page.
+	 */
+	pa = (pte & PG_FRAME) << VAX_PGSHIFT;
+	pg = PHYS_TO_VM_PAGE(pa);
+	if (pg == NULL)
+		return;
 
 #ifdef PMAPDEBUG
-if (startpmapdebug)
-	printf("rensa: pv %p clp 0x%x ptp %p\n", pv, clp, ptp);
+	if (startpmapdebug)
+		printf("rensa: pg %p ptp %p\n", pg, ptp);
 #endif
-	if (IOSPACE((*ptp & PG_FRAME) << VAX_PGSHIFT))
-		return;	/* Nothing in pv_table */
 	s = splvm();
 	RECURSESTART;
-	if (pv->pv_pte == ptp) {
-		g = (int *)pv->pv_pte;
-		if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
-			pv->pv_attr |= g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
-		pv->pv_pte = 0;
-		pv->pv_pmap->pm_stats.resident_count--;
-		pv->pv_pmap = 0;
-		splx(s);
-		RECURSEEND;
-		return;
-	}
-	for (pl = pv; pl->pv_next; pl = pl->pv_next) {
-		if (pl->pv_next->pv_pte == ptp) {
-			pf = pl->pv_next;
-			pl->pv_next = pl->pv_next->pv_next;
-			g = (int *)pf->pv_pte;
-			if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
-				pv->pv_attr |=
+	for (ppv = NULL, pv = pg->mdpage.pv_head; pv != NULL;
+	    ppv = pv, pv = npv) {
+		npv = pv->pv_next;
+		if (pv->pv_pte == ptp) {
+			g = (int *)pv->pv_pte;
+			if ((pg->mdpage.pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
+				pg->mdpage.pv_attr |=
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
-			pf->pv_pmap->pm_stats.resident_count--;
-			free_pventry(pf);
-			splx(s);
-			RECURSEEND;
-			return;
+			pv->pv_pmap->pm_stats.resident_count--;
+			if (npv != NULL) {
+				*pv = *npv;
+				free_pventry(npv);
+			} else {
+				if (ppv != NULL)
+					ppv->pv_next = pv->pv_next;
+				else
+					pg->mdpage.pv_head = NULL;
+				free_pventry(pv);
+			}
+			goto leave;
 		}
 	}
-	panic("rensa");
+
+#ifdef DIAGNOSTIC
+	panic("rensa(0x%x, %p) page %p: mapping not found", pte, ptp, pg);
+#endif
+
+leave:
+	splx(s);
+	RECURSEEND;
 }
 
 /*
@@ -609,8 +589,14 @@ if(startpmapdebug)
 	for (i = 0; i < len; i++) {
 		if ((*pte & PG_FRAME) == 0)
 			continue;
-		if ((*pte & PG_SREF) == 0)
-			rensa((*pte & PG_FRAME) >> LTOHPS, pte);
+#ifdef DIAGNOSTIC /* DEBUG */
+		if ((*pte & PG_SREF) == 0) {
+			printf("pmap_kremove(%p, %x): "
+			    "pte %x@%p does not have SREF set!\n", 
+			    va, len << PGSHIFT, *pte, pte);
+			rensa(*pte, pte);
+		}
+#endif
 		bzero(pte, LTOHPN * sizeof(pt_entry_t));
 		pte += LTOHPN;
 	}
@@ -629,7 +615,8 @@ pmap_enter(pmap, v, p, prot, flags)
 	vm_prot_t prot;
 	int flags;
 {
-	struct	pv_entry *pv, *tmp;
+	struct	vm_page *pg;
+	struct	pv_entry *pv;
 	int	i, s, newpte, oldpte, *patch, index = 0; /* XXX gcc */
 #ifdef PMAPDEBUG
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
@@ -716,10 +703,12 @@ if (startpmapdebug)
 			pmap_update(pmap_kernel());
 		}
 	}
+
 	/*
 	 * Do not keep track of anything if mapping IO space.
 	 */
-	if (IOSPACE(p)) {
+	pg = PHYS_TO_VM_PAGE(p);
+	if (pg == NULL) {
 		patch[i] = newpte;
 		patch[i+1] = newpte+1;
 		patch[i+2] = newpte+2;
@@ -738,8 +727,6 @@ if (startpmapdebug)
 
 	oldpte = patch[i] & ~(PG_V|PG_M);
 
-	pv = pv_table + (p >> PGSHIFT);
-
 	/* wiring change? */
 	if (newpte == (oldpte | PG_W)) {
 		patch[i] |= PG_W; /* Just wiring change */
@@ -755,30 +742,30 @@ if (startpmapdebug)
 
 	/* Changing mapping? */
 	if ((newpte & PG_FRAME) != (oldpte & PG_FRAME)) {
-
 		/*
 		 * Mapped before? Remove it then.
 		 */
 		if (oldpte & PG_FRAME) {
 			RECURSEEND;
 			if ((oldpte & PG_SREF) == 0)
-				rensa((oldpte & PG_FRAME) >> LTOHPS,
-				    (pt_entry_t *)&patch[i]);
+				rensa(oldpte, (pt_entry_t *)&patch[i]);
 			RECURSESTART;
 		} else if (pmap != pmap_kernel())
 				pmap->pm_refcnt[index]++; /* New mapping */
 
 		s = splvm();
-		if (pv->pv_pte == 0) {
-			pv->pv_pte = (pt_entry_t *) & patch[i];
-			pv->pv_pmap = pmap;
-		} else {
-			tmp = get_pventry();
-			tmp->pv_pte = (pt_entry_t *)&patch[i];
-			tmp->pv_pmap = pmap;
-			tmp->pv_next = pv->pv_next;
-			pv->pv_next = tmp;
+		pv = get_pventry();
+		if (pv == NULL) {
+			if (flags & PMAP_CANFAIL) {
+				RECURSEEND;
+				return (ENOMEM);
+			}
+			panic("pmap_enter: could not allocate pv_entry");
 		}
+		pv->pv_pte = (pt_entry_t *)&patch[i];
+		pv->pv_pmap = pmap;
+		pv->pv_next = pg->mdpage.pv_head;
+		pg->mdpage.pv_head = pv;
 		splx(s);
 		pmap->pm_stats.resident_count++;
 	} else {
@@ -787,11 +774,11 @@ if (startpmapdebug)
 	}
 
 	if (flags & VM_PROT_READ) {
-		pv->pv_attr |= PG_V;
+		pg->mdpage.pv_attr |= PG_V;
 		newpte |= PG_V;
 	}
 	if (flags & VM_PROT_WRITE)
-		pv->pv_attr |= PG_M;
+		pg->mdpage.pv_attr |= PG_M;
 
 	if (flags & PMAP_WIRED)
 		newpte |= PG_V; /* Not allowed to be invalid */
@@ -810,8 +797,6 @@ if (startpmapdebug)
 		if (pmap->pm_refcnt[index] > VAX_NBPG/sizeof(pt_entry_t))
 			panic("pmap_enter: refcnt %d", pmap->pm_refcnt[index]);
 #endif
-	if (pventries < 10)
-		more_pventries();
 
 	mtpr(0, PR_TBIA); /* Always; safety belt */
 	return (0);
@@ -960,7 +945,7 @@ if(startpmapdebug) printf("pmap_protect: pmap %p, start %lx, end %lx, prot %x\n"
 			if (prot == VM_PROT_NONE) {
 				RECURSEEND;
 				if ((*(int *)pts & PG_SREF) == 0)
-					rensa((*pts & PG_FRAME) >> LTOHPS, pts);
+					rensa(*pts, pts);
 				RECURSESTART;
 				bzero(pts, sizeof(pt_entry_t) * LTOHPN);
 				pmap_decpteref(pmap, pts);
@@ -991,7 +976,7 @@ int
 pmap_simulref(int bits, int addr)
 {
 	pt_entry_t *pte;
-	struct  pv_entry *pv;
+	struct vm_page *pg;
 	paddr_t	pa;
 
 #ifdef PMAPDEBUG
@@ -1031,11 +1016,13 @@ if (startpmapdebug)
 	pte[5] |= PG_V;
 	pte[6] |= PG_V;
 	pte[7] |= PG_V;
-	if (IOSPACE(pa) == 0) {	/* No pv_table fiddling in iospace */
-		pv = pv_table + (pa >> PGSHIFT);
-		pv->pv_attr |= PG_V; /* Referenced */
+
+	pa = trunc_page(pa);
+	pg = PHYS_TO_VM_PAGE(pa);
+	if (pg != NULL) {
+		pg->mdpage.pv_attr |= PG_V; /* Referenced */
 		if (bits & 4)	/* (will be) modified. XXX page tables  */
-			pv->pv_attr |= PG_M;
+			pg->mdpage.pv_attr |= PG_M;
 	}
 	return 0;
 }
@@ -1047,20 +1034,13 @@ boolean_t
 pmap_is_referenced(pg)
 	struct vm_page *pg;
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	struct	pv_entry *pv;
-
-#ifdef DEBUG
-	if (IOSPACE(pa))
-		panic("pmap_is_referenced: called for iospace");
-#endif
-	pv = pv_table + (pa >> PGSHIFT);
 #ifdef PMAPDEBUG
 	if (startpmapdebug)
-		printf("pmap_is_referenced: pa %lx pv_entry %p ", pa, pv);
+		printf("pmap_is_referenced: pg %p pv_attr %x\n",
+		    pg, pg->mdpage.pv_attr);
 #endif
 
-	if (pv->pv_attr & PG_V)
+	if (pg->mdpage.pv_attr & PG_V)
 		return 1;
 
 	return 0;
@@ -1073,38 +1053,21 @@ boolean_t
 pmap_clear_reference(pg)
 	struct vm_page *pg;
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	struct	pv_entry *pv;
-	int ref = 0;
+	struct pv_entry *pv;
+	boolean_t ref = FALSE;
 
-#ifdef DEBUG
-	if (IOSPACE(pa))
-		panic("pmap_clear_reference: called for iospace");
-#endif
-	pv = pv_table + (pa >> PGSHIFT);
 #ifdef PMAPDEBUG
 	if (startpmapdebug)
-		printf("pmap_clear_reference: pa %lx pv_entry %p\n", pa, pv);
+		printf("pmap_clear_reference: pg %p\n", pg);
 #endif
 
-	if (pv->pv_attr & PG_V)
-		ref++;
+	if (pg->mdpage.pv_attr & PG_V)
+		ref = TRUE;
 
-	pv->pv_attr &= ~PG_V;
+	pg->mdpage.pv_attr &= ~PG_V;
 
 	RECURSESTART;
-	if (pv->pv_pte && (pv->pv_pte[0] & PG_W) == 0) {
-		pv->pv_pte[0] &= ~PG_V;
-		pv->pv_pte[1] &= ~PG_V;
-		pv->pv_pte[2] &= ~PG_V;
-		pv->pv_pte[3] &= ~PG_V;
-		pv->pv_pte[4] &= ~PG_V;
-		pv->pv_pte[5] &= ~PG_V;
-		pv->pv_pte[6] &= ~PG_V;
-		pv->pv_pte[7] &= ~PG_V;
-	}
-
-	while ((pv = pv->pv_next))
+	for (pv = pg->mdpage.pv_head; pv != NULL; pv = pv->pv_next)
 		if ((pv->pv_pte[0] & PG_W) == 0) {
 			pv->pv_pte[0] &= ~PG_V;
 			pv->pv_pte[1] &= ~PG_V;
@@ -1115,6 +1078,7 @@ pmap_clear_reference(pg)
 			pv->pv_pte[6] &= ~PG_V;
 			pv->pv_pte[7] &= ~PG_V;
 		}
+
 	RECURSEEND;
 	return ref;
 }
@@ -1126,61 +1090,24 @@ boolean_t
 pmap_is_modified(pg)
 	struct vm_page *pg;
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	struct	pv_entry *pv;
+	struct pv_entry *pv;
 
-#ifdef DEBUG
-	if (IOSPACE(pa))
-		panic("pmap_is_modified: called for iospace");
-#endif
-	pv = pv_table + (pa >> PGSHIFT);
 #ifdef PMAPDEBUG
 	if (startpmapdebug)
-		printf("pmap_is_modified: pa %lx pv_entry %p ", pa, pv);
+		printf("pmap_is_modified: pg %p pv_attr %x\n",
+		    pg, pg->mdpage.pv_attr);
 #endif
 
-	if (pv->pv_attr & PG_M) {
-#ifdef PMAPDEBUG
-		if (startpmapdebug)
-			printf("Yes: (0)\n");
-#endif
-		return 1;
-	}
+	if (pg->mdpage.pv_attr & PG_M)
+		return TRUE;
 
-	if (pv->pv_pte)
-		if ((pv->pv_pte[0] & PG_M) != 0 ||
-		    (pv->pv_pte[1] & PG_M) != 0 ||
-		    (pv->pv_pte[2] & PG_M) != 0 ||
-		    (pv->pv_pte[3] & PG_M) != 0 ||
-		    (pv->pv_pte[4] & PG_M) != 0 ||
-		    (pv->pv_pte[5] & PG_M) != 0 ||
-		    (pv->pv_pte[6] & PG_M) != 0 ||
-		    (pv->pv_pte[7] & PG_M) != 0) {
-#ifdef PMAPDEBUG
-			if (startpmapdebug) printf("Yes: (1)\n");
-#endif
-			return 1;
-		}
+	for (pv = pg->mdpage.pv_head; pv != NULL; pv = pv->pv_next)
+		if ((pv->pv_pte[0] | pv->pv_pte[1] | pv->pv_pte[2] |
+		     pv->pv_pte[3] | pv->pv_pte[4] | pv->pv_pte[5] |
+		     pv->pv_pte[6] | pv->pv_pte[7]) & PG_M)
+			return TRUE;
 
-	while ((pv = pv->pv_next)) {
-		if ((pv->pv_pte[0] & PG_M) != 0 ||
-		    (pv->pv_pte[1] & PG_M) != 0 ||
-		    (pv->pv_pte[2] & PG_M) != 0 ||
-		    (pv->pv_pte[3] & PG_M) != 0 ||
-		    (pv->pv_pte[4] & PG_M) != 0 ||
-		    (pv->pv_pte[5] & PG_M) != 0 ||
-		    (pv->pv_pte[6] & PG_M) != 0 ||
-		    (pv->pv_pte[7] & PG_M) != 0) {
-#ifdef PMAPDEBUG
-			if (startpmapdebug) printf("Yes: (2)\n");
-#endif
-			return 1;
-		}
-	}
-#ifdef PMAPDEBUG
-	if (startpmapdebug) printf("No\n");
-#endif
-	return 0;
+	return FALSE;
 }
 
 /*
@@ -1190,55 +1117,33 @@ boolean_t
 pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	struct	pv_entry *pv;
+	struct pv_entry *pv;
 	boolean_t rv = FALSE;
-
-#ifdef DEBUG
-	if (IOSPACE(pa))
-		panic("pmap_clear_modify: called for iospace");
-#endif
-	pv = pv_table + (pa >> PGSHIFT);
 
 #ifdef PMAPDEBUG
 	if (startpmapdebug)
-		printf("pmap_clear_modify: pa %lx pv_entry %p\n", pa, pv);
+		printf("pmap_clear_modify: pg %p\n", pg);
 #endif
-	if (pv->pv_attr & PG_M)
+	if (pg->mdpage.pv_attr & PG_M)
 		rv = TRUE;
-	pv->pv_attr &= ~PG_M;
+	pg->mdpage.pv_attr &= ~PG_M;
 
-	if (pv->pv_pte) {
+	for (pv = pg->mdpage.pv_head; pv != NULL; pv = pv->pv_next)
 		if ((pv->pv_pte[0] | pv->pv_pte[1] | pv->pv_pte[2] |
-		    pv->pv_pte[3] | pv->pv_pte[4] | pv->pv_pte[5] |
-		    pv->pv_pte[6] | pv->pv_pte[7]) & PG_M)
+		     pv->pv_pte[3] | pv->pv_pte[4] | pv->pv_pte[5] |
+		     pv->pv_pte[6] | pv->pv_pte[7]) & PG_M) {
 			rv = TRUE;
 
-		pv->pv_pte[0] &= ~PG_M;
-		pv->pv_pte[1] &= ~PG_M;
-		pv->pv_pte[2] &= ~PG_M;
-		pv->pv_pte[3] &= ~PG_M;
-		pv->pv_pte[4] &= ~PG_M;
-		pv->pv_pte[5] &= ~PG_M;
-		pv->pv_pte[6] &= ~PG_M;
-		pv->pv_pte[7] &= ~PG_M;
-	}
+			pv->pv_pte[0] &= ~PG_M;
+			pv->pv_pte[1] &= ~PG_M;
+			pv->pv_pte[2] &= ~PG_M;
+			pv->pv_pte[3] &= ~PG_M;
+			pv->pv_pte[4] &= ~PG_M;
+			pv->pv_pte[5] &= ~PG_M;
+			pv->pv_pte[6] &= ~PG_M;
+			pv->pv_pte[7] &= ~PG_M;
+		}
 
-	while ((pv = pv->pv_next)) {
-		if ((pv->pv_pte[0] | pv->pv_pte[1] | pv->pv_pte[2] |
-		    pv->pv_pte[3] | pv->pv_pte[4] | pv->pv_pte[5] |
-		    pv->pv_pte[6] | pv->pv_pte[7]) & PG_M)
-			rv = TRUE;
-
-		pv->pv_pte[0] &= ~PG_M;
-		pv->pv_pte[1] &= ~PG_M;
-		pv->pv_pte[2] &= ~PG_M;
-		pv->pv_pte[3] &= ~PG_M;
-		pv->pv_pte[4] &= ~PG_M;
-		pv->pv_pte[5] &= ~PG_M;
-		pv->pv_pte[6] &= ~PG_M;
-		pv->pv_pte[7] &= ~PG_M;
-	}
 	return rv;
 }
 
@@ -1253,23 +1158,15 @@ pmap_page_protect(pg, prot)
 	vm_prot_t       prot;
 {
 	pt_entry_t *pt;
-	struct	pv_entry *pv, *opv, *pl;
+	struct	pv_entry *pv, *npv;
 	int	s, *g;
-	paddr_t	pa;
+
 #ifdef PMAPDEBUG
-if(startpmapdebug) printf("pmap_page_protect: pg %p, prot %x, ",pg, prot);
-#endif
-	pa = VM_PAGE_TO_PHYS(pg);
-#ifdef PMAPDEBUG
-if(startpmapdebug) printf("pa %lx\n",pa);
+	if (startpmapdebug)
+		printf("pmap_page_protect: pg %p, prot %x, ", pg, prot);
 #endif
 
-#ifdef DEBUG
-	if (IOSPACE(pa))
-		panic("pmap_page_protect: called for iospace");
-#endif
-	pv = pv_table + (pa >> PGSHIFT);
-	if (pv->pv_pte == 0 && pv->pv_next == 0)
+	if (pg->mdpage.pv_head == NULL)
 		return;
 
 	if (prot == VM_PROT_ALL) /* 'cannot happen' */
@@ -1278,40 +1175,25 @@ if(startpmapdebug) printf("pa %lx\n",pa);
 	RECURSESTART;
 	if (prot == VM_PROT_NONE) {
 		s = splvm();
-		g = (int *)pv->pv_pte;
-		if (g) {
-			if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
-				pv->pv_attr |= 
+		npv = pg->mdpage.pv_head;
+		pg->mdpage.pv_head = NULL;
+		while ((pv = npv) != NULL) {
+			npv = pv->pv_next;
+			g = (int *)pv->pv_pte;
+			if ((pg->mdpage.pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
+				pg->mdpage.pv_attr |= 
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
 			bzero(g, sizeof(pt_entry_t) * LTOHPN);
 			pv->pv_pmap->pm_stats.resident_count--;
 			pmap_decpteref(pv->pv_pmap, pv->pv_pte);
-			pv->pv_pte = 0;
+			free_pventry(pv);
 		}
-		pl = pv->pv_next;
-		pv->pv_pmap = 0;
-		pv->pv_next = 0;
-		while (pl) {
-			g = (int *)pl->pv_pte;
-			if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
-				pv->pv_attr |=
-				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
-			bzero(g, sizeof(pt_entry_t) * LTOHPN);
-			pl->pv_pmap->pm_stats.resident_count--;
-			pmap_decpteref(pl->pv_pmap, pl->pv_pte);
-			opv = pl;
-			pl = pl->pv_next;
-			free_pventry(opv);
-		} 
 		splx(s);
 	} else { /* read-only */
-		do {
+		for (pv = pg->mdpage.pv_head; pv != NULL; pv = pv->pv_next) {
 			pt_entry_t pr;
 
 			pt = pv->pv_pte;
-			if (pt == 0)
-				continue;
-
 			pr = (vaddr_t)pv->pv_pte < ptemapstart ? 
 			    PG_KR : PG_RO;
 
@@ -1323,7 +1205,7 @@ if(startpmapdebug) printf("pa %lx\n",pa);
 			pt[5] = (pt[5] & ~PG_PROT) | pr;
 			pt[6] = (pt[6] & ~PG_PROT) | pr;
 			pt[7] = (pt[7] & ~PG_PROT) | pr;
-		} while ((pv = pv->pv_next));
+		}
 	}
 	RECURSEEND;
 	mtpr(0, PR_TBIA);
@@ -1361,60 +1243,4 @@ if(startpmapdebug) printf("pmap_activate: p %p\n", p);
 		mtpr(pmap->pm_p1lr, PR_P1LR);
 	}
 	mtpr(0, PR_TBIA);
-}
-
-struct pv_entry *pv_list;
-
-struct pv_entry *
-get_pventry()
-{
-	struct pv_entry *tmp;
-	int s = splvm();
-
-	if (pventries == 0)
-		panic("get_pventry");
-
-	tmp = pv_list;
-	pv_list = tmp->pv_next;
-	pventries--;
-	splx(s);
-	return tmp;
-}
-
-void
-free_pventry(pv)
-	struct pv_entry *pv;
-{
-	int s = splvm();
-
-	pv->pv_next = pv_list;
-	pv_list = pv;
-	pventries++;
-	splx(s);
-}
-
-void
-more_pventries()
-{
-	struct vm_page *pg;
-	struct pv_entry *pv;
-	vaddr_t v;
-	int s, i, count;
-
-	pg = uvm_pagealloc(NULL, 0, NULL, 0);
-	if (pg == 0)
-		return;
-
-	v = VM_PAGE_TO_PHYS(pg) | KERNBASE;
-	pv = (struct pv_entry *)v;
-	count = NBPG/sizeof(struct pv_entry);
-
-	for (i = 0; i < count; i++)
-		pv[i].pv_next = &pv[i + 1];
-
-	s = splvm();
-	pv[count - 1].pv_next = pv_list;
-	pv_list = pv;
-	pventries += count;
-	splx(s);
 }
