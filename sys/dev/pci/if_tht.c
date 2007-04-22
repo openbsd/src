@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.51 2007/04/22 09:25:14 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.52 2007/04/22 13:14:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -486,6 +486,7 @@ void			tht_watchdog(struct ifnet *);
 void			tht_start(struct ifnet *);
 int			tht_load_pkt(struct tht_softc *, struct tht_pkt *,
 			    struct mbuf *);
+void			tht_txf(struct tht_softc *sc);
 
 void			tht_rxf_fill(struct tht_softc *, int);
 void			tht_rxf_drain(struct tht_softc *);
@@ -977,6 +978,40 @@ tht_load_pkt(struct tht_softc *sc, struct tht_pkt *pkt, struct mbuf *m)
 	}
 
 	return (0);
+}
+
+void
+tht_txf(struct tht_softc *sc)
+{
+	bus_dma_tag_t			dmat = sc->sc_thtc->sc_dmat;
+	bus_dmamap_t			dmap;
+	struct tht_tx_free		txf;
+	struct tht_pkt			*pkt;
+	int				ready;
+
+	ready = sc->sc_txf.tf_len - tht_fifo_ready(sc, &sc->sc_txf);
+	if (ready == 0)
+		return;
+
+	tht_fifo_pre(sc, &sc->sc_txf);
+
+	for (;;) {
+		tht_fifo_read(sc, &sc->sc_txf, &txf, sizeof(txf));
+		ready -= sizeof(txf);
+
+		pkt = &sc->sc_tx_list.tpl_pkts[txf.uid];
+		dmap = pkt->tp_dmap;
+
+		bus_dmamap_sync(dmat, dmap, 0, dmap->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(dmat, dmap);
+
+		m_freem(pkt->tp_m);
+
+		tht_pkt_put(&sc->sc_rx_list, pkt);
+	} while (ready > 0);
+
+	tht_fifo_post(sc, &sc->sc_txf);
 }
 
 void
