@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.31 2007/04/22 00:41:31 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.32 2007/04/22 04:05:36 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1829,18 +1829,44 @@ sr_save_metadata(struct sr_discipline *sd)
 
 	/* from here on out metadata is updated */
 	sm->ssd_ondisk++;
+	sm->ssd_vd_chk = sr_checksum(DEVNAME(sc),
+	    (u_int32_t *)im_sv, sm->ssd_vd_size);
 
 #ifdef SR_DEBUG
 	/* metadata */
-	DNPRINTF(SR_D_META, "\tmagic 0x%llx\n", sm->ssd_magic);
-	DNPRINTF(SR_D_META, "\tversion %d\n", sm->ssd_version);
-	DNPRINTF(SR_D_META, "\tchecksum 0x%x\n", sm->ssd_checksum);
-	DNPRINTF(SR_D_META, "\tsize %d\n", sm->ssd_size);
-	DNPRINTF(SR_D_META, "\ton disk version %u\n", sm->ssd_ondisk);
-	DNPRINTF(SR_D_META, "\tuuid ");
+	DNPRINTF(SR_D_META, "\tmeta magic 0x%llx\n", sm->ssd_magic);
+	DNPRINTF(SR_D_META, "\tmeta version %d\n", sm->ssd_version);
+	DNPRINTF(SR_D_META, "\tmeta checksum 0x%x\n", sm->ssd_checksum);
+	DNPRINTF(SR_D_META, "\tmeta size %d\n", sm->ssd_size);
+	DNPRINTF(SR_D_META, "\tmeta on disk version %u\n", sm->ssd_ondisk);
+	DNPRINTF(SR_D_META, "\tmeta uuid ");
 	for (i = 0; i < SR_UUID_MAX; i++)
 		DNPRINTF(SR_D_META, "%x%s", sm->ssd_uuid.sui_id[i],
 		    i < SR_UUID_MAX - 1 ? ":" : "\n");
+	DNPRINTF(SR_D_META, "\tvd version %d\n", sm->ssd_vd_ver);
+	DNPRINTF(SR_D_META, "\tvd size %lu\n", sm->ssd_vd_size);
+	DNPRINTF(SR_D_META, "\tvd checksum 0x%x\n", sm->ssd_vd_chk);
+	DNPRINTF(SR_D_META, "\tchunk version %d\n", sm->ssd_chunk_ver);
+	DNPRINTF(SR_D_META, "\tchunks %d\n", sm->ssd_chunk_no);
+	DNPRINTF(SR_D_META, "\tchunk size %u\n", sm->ssd_chunk_size);
+	DNPRINTF(SR_D_META, "\tchunk checksum 0x%x\n", sm->ssd_chunk_chk);
+
+	DNPRINTF(SR_D_META, "\t\tvol id %d\n", im_sv->svm_volid);
+	DNPRINTF(SR_D_META, "\t\tvol status %d\n", im_sv->svm_status);
+	DNPRINTF(SR_D_META, "\t\tvol flags 0x%x\n", im_sv->svm_flags);
+	DNPRINTF(SR_D_META, "\t\tvol level %d\n", im_sv->svm_level);
+	DNPRINTF(SR_D_META, "\t\tvol size %llu\n", im_sv->svm_size);
+	DNPRINTF(SR_D_META, "\t\tvol name %s\n", im_sv->svm_devname);
+	DNPRINTF(SR_D_META, "\t\tvol vendor %s\n", im_sv->svm_vendor);
+	DNPRINTF(SR_D_META, "\t\tvol prod %s\n", im_sv->svm_product);
+	DNPRINTF(SR_D_META, "\t\tvol rev %s\n", im_sv->svm_revision);
+	DNPRINTF(SR_D_META, "\t\tvol no chunks %d\n", im_sv->svm_no_chunk);
+	DNPRINTF(SR_D_META, "\t\tvol uuid ");
+	for (i = 0; i < SR_UUID_MAX; i++)
+		DNPRINTF(SR_D_META, "%x%s", im_sv->svm_uuid.sui_id[i],
+		    i < SR_UUID_MAX - 1 ? ":" : "\n");
+	//struct sr_uuid 		svm_uuid;	/* volume unique identifier */
+
 #endif
 
 	for (i = 0; i < sm->ssd_chunk_no; i++) {

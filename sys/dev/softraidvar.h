@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.13 2007/04/22 00:41:31 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.14 2007/04/22 04:05:36 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -173,16 +173,12 @@ struct sr_vol_meta {
 	u_int32_t		svm_status; 	/* use bioc_vol status */
 	u_int32_t		svm_flags;	/* flags */
 	u_int32_t		svm_level;	/* raid level */
-
-#define SR_VDF_DIRTY		0x01
 	u_quad_t		svm_size;	/* virtual disk size */
-
 	char			svm_devname[32];/* /dev/XXXXX */
 	char			svm_vendor[8];	/* scsi vendor */
 	char			svm_product[16];/* scsi product */
 	char			svm_revision[4];/* scsi revision */
 	u_int32_t		svm_no_chunk;	/* number of chunks */
-
 	struct sr_uuid 		svm_uuid;	/* volume unique identifier */
 } __packed;
 
