@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.20 2007/04/17 16:04:00 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.21 2007/04/22 20:52:27 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -29,6 +29,11 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
 
+struct aml_nodelist {
+	struct aml_node *node;
+	TAILQ_ENTRY(aml_nodelist) entries;
+};
+
 int	acpidock_match(struct device *, void *, void *);
 void	acpidock_attach(struct device *, struct device *, void *);
 
@@ -46,6 +51,8 @@ int	acpidock_dockctl(struct acpidock_softc *, int);
 int	acpidock_eject(struct acpidock_softc *, struct aml_node *);
 int	acpidock_notify(struct aml_node *, int, void *);
 int	acpidock_status(struct acpidock_softc *);
+
+void	acpidock_foundejd(struct aml_node *, void *);
 
 int
 acpidock_match(struct device *parent, void *match, void *aux)
@@ -67,6 +74,7 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpidock_softc	*sc = (struct acpidock_softc *)self;
 	struct acpi_attach_args *aa = aux;
+	extern struct aml_node	aml_root;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
@@ -100,6 +108,9 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sens[0].value = sc->sc_docked == ACPIDOCK_STATUS_DOCKED;
 	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[0]);
 	sensordev_install(&sc->sc_sensdev);
+
+	TAILQ_INIT(&sc->sc_deps_h);
+	aml_find_node(aml_root.child, "_EJD", acpidock_foundejd, sc);
 
 	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev, 
 	    acpidock_notify, sc, ACPIDEV_NOPOLL);
@@ -251,3 +262,30 @@ acpidock_notify(struct aml_node *node, int notify_type, void *arg)
 	return (0);
 }
 
+void
+acpidock_foundejd(struct aml_node *node, void *arg)
+{
+	struct acpidock_softc *sc = (struct acpidock_softc *)arg;
+	struct aml_value res;
+
+	dnprintf(15, "%s: %s", DEVNAME(sc), node->parent->name);
+
+	if (aml_evalnode(sc->sc_acpi, node, 0, NULL, &res) == -1) {
+		printf(": error\n");
+	} else {
+		struct aml_nodelist *n;
+
+		/* XXX debug */
+		dnprintf(10, "%s: %s depends on %s\n", DEVNAME(sc),
+		    node->parent->name, res.v_string);
+
+		/* XXX more than one dock? */
+		
+		n = malloc(sizeof(struct aml_nodelist), M_DEVBUF, M_WAITOK);
+		n->node = node;
+
+		TAILQ_INSERT_TAIL(&sc->sc_deps_h, n, entries);
+	}
+
+	aml_freevalue(&res);
+}
