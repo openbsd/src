@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.115 2007/04/22 05:03:04 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.116 2007/04/22 05:08:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -2419,5 +2419,5 @@ ret:
 void
 ahci_empty_done(struct ahci_ccb *ccb)
 {
-	/* do nothing */
+	ccb->ccb_xa.state = ATA_S_COMPLETE;
 }
