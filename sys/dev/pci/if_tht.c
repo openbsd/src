@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.53 2007/04/23 09:54:42 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.54 2007/04/23 09:59:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -854,14 +854,8 @@ tht_start(struct ifnet *ifp)
 	struct tht_softc		*sc = ifp->if_softc;
 	struct tht_pkt			*pkt;
 	struct tht_tx_task		txt;
-	struct tht_pbd			pbd;
-	bus_dma_tag_t			dmat = sc->sc_thtc->sc_dmat;
-	bus_dmamap_t			dmap;
-	int				ready;
 	struct mbuf			*m;
-	u_int64_t			dva;
 	int				bc;
-	int				i;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
@@ -870,76 +864,54 @@ tht_start(struct ifnet *ifp)
 	if (IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
 
-	ready = tht_fifo_ready(sc, &sc->sc_txt);
-	if (ready <= THT_FIFO_DESC_LEN)
+	if (tht_fifo_ready(sc, &sc->sc_txt) <= THT_FIFO_DESC_LEN)
 		return;
 
 	bzero(&txt, sizeof(txt));
 
 	tht_fifo_pre(sc, &sc->sc_txt);
 
-	for (;;) {
+	do {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
-			goto done;
+			break;
 
 		pkt = tht_pkt_get(&sc->sc_tx_list);
 		if (pkt == NULL) {
 			ifp->if_flags |= IFF_OACTIVE;
-			goto done;
+			break;
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (tht_load_pkt(sc, pkt, m) != 0) {
 			m_freem(m);
+			tht_pkt_put(&sc->sc_tx_list, pkt);
 			ifp->if_oerrors++;
-			goto free_pkt;
+			break;
 		}
-		/* though shalt not use m after tht_load_pkt */
+		/* though shalt not use m after this point, only pkt->tp_m */
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, pkt->tp_m, BPF_DIRECTION_OUT);
 #endif
 
-		dmap = pkt->tp_dmap;
-
-		bc = sizeof(txt) + sizeof(pbd) * dmap->dm_nsegs;
+		bc = sizeof(txt) +
+		    sizeof(struct tht_pbd) * pkt->tp_dmap->dm_nsegs;
 
 		txt.flags = htole32(THT_TXT_TYPE | LWORDS(bc)); /* XXX */
 		txt.len = htole16(pkt->tp_m->m_pkthdr.len);
 		txt.uid = pkt->tp_id;
 
 		tht_fifo_write(sc, &sc->sc_txt, &txt, sizeof(txt));
+		tht_fifo_write_dmap(sc, &sc->sc_txt, pkt->tp_dmap);
+		tht_fifo_write_pad(sc, &sc->sc_txt, bc);
 
-		for (i = 0; i < dmap->dm_nsegs; i++) {
-			dva = dmap->dm_segs[i].ds_addr;
+		bus_dmamap_sync(sc->sc_thtc->sc_dmat, pkt->tp_dmap, 0,
+		    pkt->tp_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
-			pbd.addr_lo = htole32(dva);
-			pbd.addr_hi = htole32(dva >> 32);
-			pbd.len = htole32(dmap->dm_segs[i].ds_len);
+	} while (tht_fifo_ready(sc, &sc->sc_txt) <= THT_FIFO_DESC_LEN);
 
-			tht_fifo_write(sc, &sc->sc_txt, &pbd, sizeof(pbd));
-			ready -= sizeof(pbd);
-		}
-
-		if (bc & 0x7) {
-			const static u_int32_t pad = 0x0;
-			tht_fifo_write(sc, &sc->sc_txt, (void *)&pad,
-			    sizeof(pad));
-			ready -= sizeof(pad);
-		}
-
-		bus_dmamap_sync(dmat, dmap, 0, dmap->dm_mapsize,
-		    BUS_DMASYNC_PREWRITE);
-
-		if (ready <= THT_FIFO_DESC_LEN)
-			goto done;
-	}
-
-free_pkt:
-	tht_pkt_put(&sc->sc_rx_list, pkt);
-done:
 	tht_fifo_post(sc, &sc->sc_txt);
 }
 
@@ -1024,12 +996,9 @@ tht_rxf_fill(struct tht_softc *sc, int wait)
 	bus_dma_tag_t			dmat = sc->sc_thtc->sc_dmat;
 	bus_dmamap_t			dmap;
 	struct tht_rx_free		rxf;
-	struct tht_pbd			pbd;
 	struct tht_pkt			*pkt;
 	struct mbuf			*m;
-	u_int64_t			dva;
 	int				bc;
-	int				i;
 
 	if (tht_fifo_ready(sc, &sc->sc_rxf) <= THT_FIFO_DESC_LEN)
 		return;
@@ -1055,29 +1024,16 @@ tht_rxf_fill(struct tht_softc *sc, int wait)
 		    wait ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) != 0)
 			goto free_m;
 
-		bc = sizeof(rxf) + sizeof(pbd) * dmap->dm_nsegs;
+		bc = sizeof(rxf) +
+		    sizeof(struct tht_pbd) * pkt->tp_dmap->dm_nsegs;
 
 		rxf.bc = htole16(LWORDS(bc));
 		rxf.type = htole16(THT_RXF_TYPE);
 		rxf.uid = pkt->tp_id;
 
 		tht_fifo_write(sc, &sc->sc_rxf, &rxf, sizeof(rxf));
-
-		for (i = 0; i < dmap->dm_nsegs; i++) {
-			dva = dmap->dm_segs[i].ds_addr;
-
-			pbd.addr_lo = htole32(dva);
-			pbd.addr_hi = htole32(dva >> 32);
-			pbd.len = htole32(dmap->dm_segs[i].ds_len);
-
-			tht_fifo_write(sc, &sc->sc_rxf, &pbd, sizeof(pbd));
-		}
-
-		if (bc & 0x7) {
-			const static u_int32_t pad = 0x0;
-			tht_fifo_write(sc, &sc->sc_rxf, (void *)&pad,
-			    sizeof(pad));
-		}
+		tht_fifo_write_dmap(sc, &sc->sc_rxf, dmap);
+		tht_fifo_write_pad(sc, &sc->sc_rxf, bc);
 
 		bus_dmamap_sync(dmat, dmap, 0, dmap->dm_mapsize,
 		    BUS_DMASYNC_PREREAD);
