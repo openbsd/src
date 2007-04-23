@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.52 2007/04/22 13:14:11 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.53 2007/04/23 09:54:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -471,6 +471,10 @@ void			tht_fifo_read(struct tht_softc *, struct tht_fifo *,
 			    void *, size_t);
 void			tht_fifo_write(struct tht_softc *, struct tht_fifo *,
 			    void *, size_t);
+void			tht_fifo_write_dmap(struct tht_softc *,
+			    struct tht_fifo *, bus_dmamap_t);
+void			tht_fifo_write_pad(struct tht_softc *,
+			    struct tht_fifo *, int);
 void			tht_fifo_post(struct tht_softc *,
 			    struct tht_fifo *);
 
@@ -1302,6 +1306,35 @@ tht_fifo_write(struct tht_softc *sc, struct tht_fifo *tf,
 
 	bcopy(desc, fifo + tf->tf_wptr, buflen);
 	tf->tf_wptr += buflen;
+}
+
+void
+tht_fifo_write_dmap(struct tht_softc *sc, struct tht_fifo *tf,
+    bus_dmamap_t dmap)
+{
+	struct tht_pbd			pbd;
+	u_int64_t			dva;
+	int				i;
+
+	for (i = 0; i < dmap->dm_nsegs; i++) {
+		dva = dmap->dm_segs[i].ds_addr;
+
+		pbd.addr_lo = htole32(dva);
+		pbd.addr_hi = htole32(dva >> 32);
+		pbd.len = htole32(dmap->dm_segs[i].ds_len);
+
+		tht_fifo_write(sc, tf, &pbd, sizeof(pbd));
+	}
+}
+
+void
+tht_fifo_write_pad(struct tht_softc *sc, struct tht_fifo *tf, int bc)
+{
+	const static u_int32_t pad = 0x0;
+
+	/* this assumes you'll only ever be writing multiples of 4 bytes */
+	if (bc % 8)
+		tht_fifo_write(sc, tf, (void *)&pad, sizeof(pad));
 }
 
 void
