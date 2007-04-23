@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.17 2007/03/19 13:27:47 pedro Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.18 2007/04/23 10:18:30 pedro Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -46,7 +46,7 @@ static const char copyright[] =
 Copyright (c) 1980, 1989, 1993 The Regents of the University of California.\n\
 All rights reserved.\n";
 
-static const char rcsid[] = "$OpenBSD: growfs.c,v 1.17 2007/03/19 13:27:47 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: growfs.c,v 1.18 2007/04/23 10:18:30 pedro Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -384,7 +384,7 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 	acg.cg_ndblk = dmax - cbase;
 	if (sblock.fs_contigsumsize > 0)
 		acg.cg_nclusterblks = acg.cg_ndblk / sblock.fs_frag;
-	acg.cg_btotoff = &acg.cg_space[0] - (u_char *)(&acg.cg_firstfield);
+	acg.cg_btotoff = sizeof(struct cg);
 	acg.cg_boff = acg.cg_btotoff + sblock.fs_cpg * sizeof(int32_t);
 	acg.cg_iusedoff = acg.cg_boff +
 	    sblock.fs_cpg * sblock.fs_nrpos * sizeof(u_int16_t);

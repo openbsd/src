@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.28 2007/04/21 19:25:52 otto Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.29 2007/04/23 10:18:30 pedro Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass5.c,v 1.28 2007/04/21 19:25:52 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pass5.c,v 1.29 2007/04/23 10:18:30 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,11 +138,9 @@ pass5(void)
 
 	case FS_DYNAMICPOSTBLFMT:
 		if (sblock.fs_magic == FS_UFS2_MAGIC) {
-			newcg->cg_iusedoff = &newcg->cg_space[0] -
-			    (u_char *)(&newcg->cg_firstfield);
+			newcg->cg_iusedoff = sizeof(struct cg);
 		} else {
-			newcg->cg_btotoff = &newcg->cg_space[0] -
-			    (u_char *)(&newcg->cg_firstfield);
+			newcg->cg_btotoff = sizeof(struct cg);
 			newcg->cg_boff = newcg->cg_btotoff +
 			    fs->fs_cpg * sizeof(int32_t);
 			newcg->cg_iusedoff = newcg->cg_boff + fs->fs_cpg *
@@ -165,8 +163,7 @@ pass5(void)
 			    howmany(fs->fs_cpg * fs->fs_spc / NSPB(fs), NBBY);
 		}
 		newcg->cg_magic = CG_MAGIC;
-		basesize = &newcg->cg_space[0] -
-		    (u_char *)(&newcg->cg_firstfield);
+		basesize = sizeof(struct cg);
 		sumsize = newcg->cg_iusedoff - newcg->cg_btotoff;
 		mapsize = newcg->cg_nextfreeoff - newcg->cg_iusedoff;
 		break;

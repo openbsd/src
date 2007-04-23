@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.57 2007/04/18 14:13:31 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.58 2007/04/23 10:18:30 pedro Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -640,7 +640,7 @@ initcg(int cylno, time_t utime)
 	    sblock.fs_ipg : 2 * INOPB(&sblock);
 	acg.cg_ndblk = dmax - cbase;
 
-	start = &acg.cg_space[0] - (u_char *)(&acg.cg_firstfield);
+	start = sizeof(struct cg);
 	if (Oflag <= 1) {
 		/* Hack to maintain compatibility with old fsck. */
 		if (cylno == sblock.fs_ncg - 1)

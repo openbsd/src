@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.28 2007/04/20 16:30:31 millert Exp $	*/
+/*	$OpenBSD: fs.h,v 1.29 2007/04/23 10:18:30 pedro Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -397,7 +397,6 @@ struct cg {
 	int32_t	 cg_sparecon32[3];	/* reserved for future use */
 	int64_t	 cg_ffs2_time;		/* time last written */
 	int64_t	 cg_sparecon64[3];	/* reserved for future use */
-	u_int8_t cg_space[1];		/* space for cylinder group maps */
 /* actually longer */
 };
 
