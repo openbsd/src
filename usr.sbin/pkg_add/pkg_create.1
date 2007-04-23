@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.32 2007/04/15 10:17:29 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.33 2007/04/23 11:13:07 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -250,6 +250,13 @@ may trip someone up later.
 Can also be used to comment out elements that update-plist
 .Pq see Xr bsd.port.mk 5
 will insist in inserting in a packing-list.
+.Pp
+The special comment
+.Li Cm @comment Ar "no checksum"
+can be used to tag the next file as special: even though its characteristics
+will be recorded in the package, it can be altered after installation, and
+.Xr pkg_delete 1
+will still delete it.
 .Pp
 .It Cm @conflict Ar pkgspec
 Declare a conflict with packages matching
