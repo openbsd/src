@@ -1347,7 +1347,7 @@
 ./usr/share/man/cat4/macppc/ht.0
 ./usr/share/man/cat4/macppc/intro.0
 ./usr/share/man/cat4/macppc/kauaiata.0
-./usr/share/man/cat4/macppc/ki2c.0
+./usr/share/man/cat4/macppc/kiic.0
 ./usr/share/man/cat4/macppc/kmem.0
 ./usr/share/man/cat4/macppc/macgpio.0
 ./usr/share/man/cat4/macppc/macobio.0
@@ -1356,7 +1356,7 @@
 ./usr/share/man/cat4/macppc/mem.0
 ./usr/share/man/cat4/macppc/mesh.0
 ./usr/share/man/cat4/macppc/onyx.0
-./usr/share/man/cat4/macppc/pi2c.0
+./usr/share/man/cat4/macppc/piic.0
 ./usr/share/man/cat4/macppc/smu.0
 ./usr/share/man/cat4/macppc/snapper.0
 ./usr/share/man/cat4/macppc/sysbutton.0
