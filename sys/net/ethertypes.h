@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethertypes.h,v 1.6 2007/03/23 04:10:59 tedu Exp $	*/
+/*	$OpenBSD: ethertypes.h,v 1.7 2007/04/23 19:19:22 reyk Exp $	*/
 /*	$NetBSD: ethertypes.h,v 1.13 2002/02/10 01:28:32 thorpej Exp $	*/
 
 /*
@@ -289,6 +289,7 @@
 #define	ETHERTYPE_IPAS		0x876C	/* IP Autonomous Systems (RFC1701) */
 #define	ETHERTYPE_SECUREDATA	0x876D	/* Secure Data (RFC1701) */
 #define	ETHERTYPE_FLOWCONTROL	0x8808	/* 802.3x flow control packet */
+#define ETHERTYPE_SLOW		0x8809	/* 803.3ad slow protocols (LACP/Marker) */
 #define	ETHERTYPE_PPP		0x880B	/* PPP (obsolete by PPPOE) */
 #define	ETHERTYPE_HITACHI	0x8820	/* Hitachi Cable (Optoelectronic Systems Laboratory) */
 #define	ETHERTYPE_MPLS		0x8847	/* MPLS Unicast */
