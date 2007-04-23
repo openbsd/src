@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.34 2007/04/23 17:06:10 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.35 2007/04/23 20:11:31 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -45,6 +45,8 @@
 
 #include <dev/softraidvar.h>
 #include <dev/rndvar.h>
+
+/* #define SR_FANCY_STATS */
 
 #ifdef SR_DEBUG
 uint32_t	sr_debug = 0
@@ -250,11 +252,13 @@ sr_get_ccb(struct sr_discipline *sd)
 	int			s;
 
 	s = splbio();
+
 	ccb = TAILQ_FIRST(&sd->sd_ccb_freeq);
 	if (ccb) {
 		TAILQ_REMOVE(&sd->sd_ccb_freeq, ccb, ccb_link);
 		ccb->ccb_state = SR_CCB_INPROGRESS;
 	}
+
 	splx(s);
 
 	DNPRINTF(SR_D_CCB, "%s: sr_get_ccb: %p\n", DEVNAME(sd->sd_sc),
@@ -279,6 +283,7 @@ sr_put_ccb(struct sr_ccb *ccb)
 	ccb->ccb_target = -1;
 
 	TAILQ_INSERT_TAIL(&sd->sd_ccb_freeq, ccb, ccb_link);
+
 	splx(s);
 }
 
@@ -363,6 +368,8 @@ sr_put_wu(struct sr_workunit *wu)
 	TAILQ_INIT(&wu->swu_ccb);
 
 	TAILQ_INSERT_TAIL(&sd->sd_wu_freeq, wu, swu_link);
+	sd->sd_wu_pending--;
+
 	splx(s);
 }
 
@@ -373,11 +380,14 @@ sr_get_wu(struct sr_discipline *sd)
 	int			s;
 
 	s = splbio();
+
 	wu = TAILQ_FIRST(&sd->sd_wu_freeq);
 	if (wu) {
 		TAILQ_REMOVE(&sd->sd_wu_freeq, wu, swu_link);
 		wu->swu_state = SR_WU_INPROGRESS;
 	}
+	sd->sd_wu_pending++;
+
 	splx(s);
 
 	DNPRINTF(SR_D_WU, "%s: sr_get_wu: %p\n", DEVNAME(sd->sd_sc), wu);
@@ -1437,6 +1447,7 @@ ragain:
 
 		wup->swu_collider = wu;
 		TAILQ_INSERT_TAIL(&sd->sd_wu_defq, wu, swu_link);
+		sd->sd_wu_collisions++;
 		goto queued;
 	}
 
@@ -2002,6 +2013,41 @@ sr_refresh_sensors(void *arg)
 			sv->sv_sensor.value = 0; /* unknown */
 			sv->sv_sensor.status = SENSOR_S_UNKNOWN;
 		}
-
 	}
 }
+
+#ifdef SR_FANCY_STATS
+void				sr_print_stats(void);
+
+void
+sr_print_stats(void)
+{
+	struct sr_softc		*sc;
+	struct sr_discipline	*sd;
+	int			i, vol;
+
+	for (i = 0; i < softraid_cd.cd_ndevs; i++)
+		if (softraid_cd.cd_devs[i]) {
+			sc = softraid_cd.cd_devs[i];
+			/* we'll only have one softc */
+			break;
+		}
+
+	if (!sc) {
+		printf("no softraid softc found\n");
+		return;
+	}
+
+	for (i = 0, vol = -1; i < SR_MAXSCSIBUS; i++) {
+		/* XXX this will not work when we stagger disciplines */
+		if (!sc->sc_dis[i])
+			continue;
+
+		sd = sc->sc_dis[i];
+		printf("%s: ios in flight: %d  collisions %llu\n",
+		    sd->sd_vol.sv_meta.svm_devname,
+		    sd->sd_wu_pending + sd->sd_max_wu,
+		    sd->sd_wu_collisions);
+	}
+}
+#endif

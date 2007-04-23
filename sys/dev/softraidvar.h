@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.14 2007/04/22 04:05:36 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.15 2007/04/23 20:11:31 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -233,6 +233,10 @@ struct sr_discipline {
 	struct sr_wu_list	sd_wu_freeq;	/* free wu queue */
 	struct sr_wu_list	sd_wu_pendq;	/* pending wu queue */
 	struct sr_wu_list	sd_wu_defq;	/* deferred wu queue */
+
+	/* discipline stats */
+	int			sd_wu_pending;
+	u_int64_t		sd_wu_collisions;
 
 	/* discipline functions */
 	int			(*sd_alloc_resources)(struct sr_discipline *);
