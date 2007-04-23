@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.54 2007/04/23 09:59:01 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.55 2007/04/23 11:24:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -358,6 +358,7 @@ struct tht_fifo {
 	int			tf_len;
 	int			tf_rptr;
 	int			tf_wptr;
+	int			tf_ready;
 };
 
 struct tht_pkt {
@@ -910,7 +911,7 @@ tht_start(struct ifnet *ifp)
 		bus_dmamap_sync(sc->sc_thtc->sc_dmat, pkt->tp_dmap, 0,
 		    pkt->tp_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
-	} while (tht_fifo_ready(sc, &sc->sc_txt) <= THT_FIFO_DESC_LEN);
+	} while (sc->sc_txt.tf_ready > THT_FIFO_DESC_LEN);
 
 	tht_fifo_post(sc, &sc->sc_txt);
 }
@@ -963,17 +964,14 @@ tht_txf(struct tht_softc *sc)
 	bus_dmamap_t			dmap;
 	struct tht_tx_free		txf;
 	struct tht_pkt			*pkt;
-	int				ready;
 
-	ready = sc->sc_txf.tf_len - tht_fifo_ready(sc, &sc->sc_txf);
-	if (ready == 0)
+	if (tht_fifo_ready(sc, &sc->sc_txf) <= sizeof(txf))
 		return;
 
 	tht_fifo_pre(sc, &sc->sc_txf);
 
 	for (;;) {
 		tht_fifo_read(sc, &sc->sc_txf, &txf, sizeof(txf));
-		ready -= sizeof(txf);
 
 		pkt = &sc->sc_tx_list.tpl_pkts[txf.uid];
 		dmap = pkt->tp_dmap;
@@ -985,7 +983,8 @@ tht_txf(struct tht_softc *sc)
 		m_freem(pkt->tp_m);
 
 		tht_pkt_put(&sc->sc_rx_list, pkt);
-	} while (ready > 0);
+
+	} while (sc->sc_txf.tf_ready > sizeof(txf));
 
 	tht_fifo_post(sc, &sc->sc_txf);
 }
@@ -1038,7 +1037,7 @@ tht_rxf_fill(struct tht_softc *sc, int wait)
 		bus_dmamap_sync(dmat, dmap, 0, dmap->dm_mapsize,
 		    BUS_DMASYNC_PREREAD);
 
-		if (tht_fifo_ready(sc, &sc->sc_rxf) <= THT_FIFO_DESC_LEN)
+		if (sc->sc_rxf.tf_ready <= THT_FIFO_DESC_LEN)
 			goto done;
 	}
 
@@ -1079,18 +1078,16 @@ tht_rxd(struct tht_softc *sc)
 	struct tht_rx_desc		rxd;
 	struct tht_pkt			*pkt;
 	struct mbuf			*m;
-	int				ready, bc;
+	int				bc;
 	u_int32_t			flags;
 
-	ready = sc->sc_rxd.tf_len - tht_fifo_ready(sc, &sc->sc_rxd);
-	if (ready == 0)
+	if (tht_fifo_ready(sc, &sc->sc_rxd) < sizeof(rxd))
 		return;
 
 	tht_fifo_pre(sc, &sc->sc_rxd);
 
 	do {
 		tht_fifo_read(sc, &sc->sc_rxd, &rxd, sizeof(rxd));
-		ready -= sizeof(rxd);
 
 		flags = letoh32(rxd.flags);
 		bc = THT_RXD_FLAGS_BC(flags) * 8;
@@ -1122,11 +1119,10 @@ tht_rxd(struct tht_softc *sc)
 			static u_int32_t pad;
 
 			tht_fifo_read(sc, &sc->sc_rxd, &pad, sizeof(pad));
-			ready -= sizeof(pad);
 			bc -= sizeof(pad);
 		}
 
-	} while (ready > 0);
+	} while (sc->sc_rxd.tf_ready >= sizeof(rxd));
 
 	tht_fifo_post(sc, &sc->sc_rxd);
 }
@@ -1193,22 +1189,20 @@ tht_fifo_free(struct tht_softc *sc, struct tht_fifo *tf)
 size_t
 tht_fifo_ready(struct tht_softc *sc, struct tht_fifo *tf)
 {
-	int				ready;
-
 	if (tf->tf_desc->tfd_write) {
 		tf->tf_rptr = tht_read(sc, tf->tf_desc->tfd_rptr);
 		tf->tf_rptr &= THT_FIFO_PTR_MASK;
-		ready = tf->tf_rptr - tf->tf_wptr;
+		tf->tf_ready = tf->tf_rptr - tf->tf_wptr;
 	} else {
 		tf->tf_wptr = tht_read(sc, tf->tf_desc->tfd_wptr);
 		tf->tf_wptr &= THT_FIFO_PTR_MASK;
-		ready = tf->tf_wptr - tf->tf_rptr;
+		tf->tf_ready = tf->tf_wptr - tf->tf_rptr;
 	}
 
-	if (ready <= 0)
-		ready += tf->tf_len;
+	if (tf->tf_ready <= 0)
+		tf->tf_ready += tf->tf_len;
 
-	return (ready);
+	return (tf->tf_ready);
 }
 
 void
@@ -1225,6 +1219,8 @@ tht_fifo_read(struct tht_softc *sc, struct tht_fifo *tf,
 	u_int8_t			*fifo = THT_DMA_KVA(tf->tf_mem);
 	u_int8_t			*desc = buf;
 	size_t				len;
+
+	tf->tf_ready -= buflen;
 
 	len = tf->tf_len - tf->tf_rptr;
 
@@ -1248,6 +1244,8 @@ tht_fifo_write(struct tht_softc *sc, struct tht_fifo *tf,
 	u_int8_t			*fifo = THT_DMA_KVA(tf->tf_mem);
 	u_int8_t			*desc = buf;
 	size_t				len;
+
+	tf->tf_ready -= buflen;
 
 	len = tf->tf_len - tf->tf_wptr;
 
