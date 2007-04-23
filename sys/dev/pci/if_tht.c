@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.55 2007/04/23 11:24:07 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.56 2007/04/23 11:27:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -890,7 +890,7 @@ tht_start(struct ifnet *ifp)
 			ifp->if_oerrors++;
 			break;
 		}
-		/* though shalt not use m after this point, only pkt->tp_m */
+		/* thou shalt not use m after this point, only pkt->tp_m */
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
