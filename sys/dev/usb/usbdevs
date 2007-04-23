@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.273 2007/04/16 20:27:39 claudio Exp $
+$OpenBSD: usbdevs,v 1.274 2007/04/23 15:34:31 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -506,6 +506,7 @@ vendor DELL		0x413c	Dell
 vendor ACEECA		0x4766	Aceeca
 vendor AVERATEC		0x50c2	Averatec
 vendor SWEEX		0x5173	Sweex
+vendor PROLIFIC2	0x5372	Prolific Technology
 vendor ONSPEC2		0x55aa	OnSpec
 vendor ZINWELL		0x5a57	Zinwell
 vendor SITECOM		0x6189	Sitecom
@@ -1871,6 +1872,7 @@ product PROLIFIC PL2301		0x0000	PL2301 Host-Host interface
 product PROLIFIC PL2302		0x0001	PL2302 Host-Host interface
 product PROLIFIC RSAQ2		0x04bb	PL2303 Serial
 product PROLIFIC PL2303		0x2303	PL2303 Serial
+product PROLIFIC2 PL2303	0x2303	PL2303 Serial
 product PROLIFIC PL2305		0x2305	Parallel printer
 product PROLIFIC ATAPI4		0x2307	ATAPI-4 Bridge Controller
 product PROLIFIC PL2501		0x2501	PL2501 Host-Host interface
