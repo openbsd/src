@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $       */
+/* $OpenBSD: bioctl.c,v 1.53 2007/04/23 16:38:55 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -63,7 +63,6 @@ void bio_blink(char *, int, int);
 void bio_createraid(u_int16_t, char *);
 
 int devh = -1;
-int debug;
 int human;
 int verbose;
 
@@ -78,13 +77,13 @@ main(int argc, char *argv[])
 	char *bioc_dev = NULL, *sd_dev = NULL;
 	char *realname = NULL, *al_arg = NULL;
 	char *bl_arg = NULL, *dev_list = NULL;
-	int ch, rv, blink;
-	u_int16_t cr_level;
+	int ch, rv, blink = 0;
+	u_int16_t cr_level = 0;
 
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "b:c:l:u:H:ha:Div")) != -1) {
+	while ((ch = getopt(argc, argv, "b:c:l:u:H:ha:iv")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
@@ -103,9 +102,6 @@ main(int argc, char *argv[])
 			func |= BIOC_BLINK;
 			blink = BIOC_SBUNBLINK;
 			bl_arg = optarg;
-			break;
-		case 'D': /* debug */
-			debug = 1;
 			break;
 		case 'H': /* set hotspare */
 			func |= BIOC_SETSTATE;
@@ -162,9 +158,6 @@ main(int argc, char *argv[])
 	} else
 		errx(1, "need -d or -f parameter");
 
-	if (debug)
-		warnx("cookie = %p", bl.bl_cookie);
-
 	if (func & BIOC_INQ) {
 		bio_inq(sd_dev);
 	} else if (func == BIOC_ALARM) {
@@ -192,7 +185,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-		"usage: %s [-Dhiv] [-a alarm-function] "
+		"usage: %s [-hiv] [-a alarm-function] "
 		"[-b channel:target[.lun]]\n"
 		"\t[-c raidlevel] [-H channel:target[.lun]]\n"
 		"\t[-l special[,special[,...]]] "
@@ -244,9 +237,6 @@ bio_inq(char *name)
 
 	memset(&bi, 0, sizeof(bi));
 
-	if (debug)
-		printf("bio_inq\n");
-
 	bi.bi_cookie = bl.bl_cookie;
 
 	rv = ioctl(devh, BIOCINQ, &bi);
@@ -254,13 +244,6 @@ bio_inq(char *name)
 		warn("BIOCINQ");
 		return;
 	}
-
-	if (debug)
-		printf("bio_inq { %p, %s, %d, %d }\n",
-		    bi.bi_cookie,
-		    bi.bi_dev,
-		    bi.bi_novol,
-		    bi.bi_nodisk);
 
 	volheader = 0;
 	for (i = 0; i < bi.bi_novol; i++) {
@@ -320,14 +303,13 @@ bio_inq(char *name)
 		snprintf(volname, sizeof volname, "%s %u",
 		    bi.bi_dev, bv.bv_volid);
 
+		unused = 0;
+		hotspare = 0;
 		if (bv.bv_level == -1 && bv.bv_nodisk == 1)
 			hotspare = 1;
 		else if (bv.bv_level == -2 && bv.bv_nodisk == 1)
 			unused = 1;
 		else {
-			unused = 0;
-			hotspare = 0;
-
 			if (human)
 				fmt_scaled(bv.bv_size, size);
 			else
@@ -593,13 +575,9 @@ bio_blink(char *enclosure, int target, int blinktype)
 void
 bio_createraid(u_int16_t level, char *dev_list)
 {
-	struct bio_locate	bio;
 	struct bioc_createraid	create;
 	int			rv;
 	u_int16_t		min_disks = 0;
-
-	if (debug)
-		printf("bio_createraid\n");
 
 	if (!dev_list)
 		errx(1, "no devices specified");
@@ -621,11 +599,7 @@ bio_createraid(u_int16_t level, char *dev_list)
 	    isdigit(dev_list[2])) {
 	    	if (strlen(dev_list) != 3)
 			errx(1, "only one device supported");
-
-		if (debug)
-			printf("bio_createraid: dev_list: %s\n", dev_list);
-	}
-	else
+	} else
 		errx(1, "no sd device specified");
 #endif
 

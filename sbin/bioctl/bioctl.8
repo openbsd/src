@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.43 2007/03/20 06:12:11 jmc Exp $
+.\"	$OpenBSD: bioctl.8,v 1.44 2007/04/23 16:38:55 deraadt Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -32,7 +32,7 @@
 .Sh SYNOPSIS
 .Nm bioctl
 .Bk -words
-.Op Fl Dhiv
+.Op Fl hiv
 .Op Fl a Ar alarm-function
 .Op Fl b Ar channel:target[.lun]
 .Op Fl c Ar raidlevel
@@ -88,8 +88,6 @@ device of level
 The device must begin with
 .Dq softraid
 followed by a number.
-.It Fl D
-Enable debug output.
 .It Fl H Ar channel:target[.lun]
 If the device at
 .Ar channel:target[.lun]
