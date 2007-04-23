@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.56 2007/04/23 11:27:32 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.57 2007/04/23 11:32:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -911,6 +911,8 @@ tht_start(struct ifnet *ifp)
 		bus_dmamap_sync(sc->sc_thtc->sc_dmat, pkt->tp_dmap, 0,
 		    pkt->tp_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
+		ifp->if_opackets++;
+
 	} while (sc->sc_txt.tf_ready > THT_FIFO_DESC_LEN);
 
 	tht_fifo_post(sc, &sc->sc_txt);
@@ -960,6 +962,7 @@ tht_load_pkt(struct tht_softc *sc, struct tht_pkt *pkt, struct mbuf *m)
 void
 tht_txf(struct tht_softc *sc)
 {
+	struct ifnet			*ifp = &sc->sc_ac.ac_if;
 	bus_dma_tag_t			dmat = sc->sc_thtc->sc_dmat;
 	bus_dmamap_t			dmap;
 	struct tht_tx_free		txf;
@@ -985,6 +988,8 @@ tht_txf(struct tht_softc *sc)
 		tht_pkt_put(&sc->sc_rx_list, pkt);
 
 	} while (sc->sc_txf.tf_ready > sizeof(txf));
+
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	tht_fifo_post(sc, &sc->sc_txf);
 }
@@ -1121,6 +1126,8 @@ tht_rxd(struct tht_softc *sc)
 			tht_fifo_read(sc, &sc->sc_rxd, &pad, sizeof(pad));
 			bc -= sizeof(pad);
 		}
+
+		ifp->if_ipackets++;
 
 	} while (sc->sc_rxd.tf_ready >= sizeof(rxd));
 
