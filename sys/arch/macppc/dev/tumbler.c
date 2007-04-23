@@ -1,4 +1,4 @@
-/*	$OpenBSD: tumbler.c,v 1.3 2005/11/05 04:26:22 brad Exp $	*/
+/*	$OpenBSD: tumbler.c,v 1.4 2007/04/23 16:27:20 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001,2003 Tsubai Masanari.  All rights reserved.
@@ -54,8 +54,8 @@
 #define tumbler_softc i2s_softc
 
 /* XXX */
-int ki2c_write(struct device *, int, int, const void *, int);
-int ki2c_writereg(struct device *, int, u_int);
+int kiic_write(struct device *, int, int, const void *, int);
+int kiic_writereg(struct device *, int, u_int);
 
 void tumbler_init(struct tumbler_softc *);
 int tumbler_getdev(void *, struct audio_device *);
@@ -300,7 +300,7 @@ tumbler_defer(struct device *dev)
 	struct device *dv;
 
 	TAILQ_FOREACH(dv, &alldevs, dv_list)
-		if (strncmp(dv->dv_xname, "ki2c", 4) == 0 &&
+		if (strncmp(dv->dv_xname, "kiic", 4) == 0 &&
 		    strncmp(dv->dv_parent->dv_xname, "macobio", 7) == 0)
 			sc->sc_i2c = dv;
 	if (sc->sc_i2c == NULL) {
@@ -423,7 +423,7 @@ tas3001_write(struct tumbler_softc *sc, u_int reg, const void *data)
 	size = tas3001_regsize[reg];
 	KASSERT(size > 0);
 
-	if (ki2c_write(sc->sc_i2c, DEQaddr, reg, data, size))
+	if (kiic_write(sc->sc_i2c, DEQaddr, reg, data, size))
 		return (-1);
 
 	return (0);
@@ -477,7 +477,7 @@ tumbler_init(struct tumbler_softc *sc)
 #define I2C_INT_DATA 0x01
 #define I2C_INT_ADDR 0x02
 #define I2C_INT_STOP 0x04
-	ki2c_writereg(sc->sc_i2c, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
+	kiic_writereg(sc->sc_i2c, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
 #endif
 
 	if (tas3001_init(sc))

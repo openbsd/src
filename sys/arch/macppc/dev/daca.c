@@ -1,5 +1,5 @@
-/*	$OpenBSD: daca.c,v 1.3 2005/11/20 19:54:05 brad Exp $	*/
-/*	$Id: daca.c,v 1.3 2005/11/20 19:54:05 brad Exp $	*/
+/*	$OpenBSD: daca.c,v 1.4 2007/04/23 16:27:20 deraadt Exp $	*/
+/*	$Id: daca.c,v 1.4 2007/04/23 16:27:20 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2002,2003 Tsubai Masanari.  All rights reserved.
@@ -55,8 +55,8 @@
 #define daca_softc i2s_softc
 
 /* XXX */
-int ki2c_write(struct device *, int, int, const void *, int);
-int ki2c_writereg(struct device *, int, u_int);
+int kiic_write(struct device *, int, int, const void *, int);
+int kiic_writereg(struct device *, int, u_int);
 
 int daca_getdev(void *, struct audio_device *);
 int daca_match(struct device *, void *, void *);
@@ -156,7 +156,7 @@ daca_defer(struct device *dev)
 	struct device *dv;
 
 	TAILQ_FOREACH(dv, &alldevs, dv_list)
-		if (strncmp(dv->dv_xname, "ki2c", 4) == 0 &&
+		if (strncmp(dv->dv_xname, "kiic", 4) == 0 &&
 		    strncmp(dv->dv_parent->dv_xname, "macobio", 7) == 0)
 			sc->sc_i2c = dv;
 	if (sc->sc_i2c == NULL) {
@@ -175,7 +175,7 @@ void
 daca_init(struct daca_softc *sc)
 {
 	i2s_set_rate(sc, 44100);
-	ki2c_writereg(sc->sc_i2c, 4, 0x01 | 0x02 | 0x04);
+	kiic_writereg(sc->sc_i2c, 4, 0x01 | 0x02 | 0x04);
 }
 
 int
@@ -196,5 +196,5 @@ daca_set_volume(struct daca_softc *sc, int left, int right)
 	left >>= 2;
 	right >>= 2;
 	data = left << 8 | right;
-	ki2c_write(sc->sc_i2c, DEQaddr, DEQ_AVOL, &data, 2);
+	kiic_write(sc->sc_i2c, DEQaddr, DEQ_AVOL, &data, 2);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ki2c.4,v 1.10 2006/09/07 10:42:25 jmc Exp $
+.\"	$OpenBSD: piic.4,v 1.1 2007/04/23 16:27:20 deraadt Exp $
 .\"
 .\" Copyright (c) 2004 Dale Rahn.
 .\" All rights reserved.
@@ -25,26 +25,23 @@
 .\"
 .\"
 .Dd November 19, 2005
-.Dt KI2C 4 macppc
+.Dt PIIC 4 macppc
 .Os
 .Sh NAME
-.Nm ki2c
-.Nd Apple Kauai I2C controller
+.Nm piic
+.Nd Apple via-pmu I2C controller
 .Sh SYNOPSIS
-.Cd "ki2c* at macobio?"
+.Cd "piic0 at adb?"
 .Sh DESCRIPTION
 The
 .Nm
-device is an interface to the Kauai I2C controller.
+device is an interface to the via-pmu I2C controller.
 .Sh SEE ALSO
+.Xr adb 4 ,
 .Xr iic 4 ,
-.Xr intro 4 ,
-.Xr macobio 4
+.Xr intro 4
 .Sh HISTORY
 The
 .Nm
 first appeared in
-.Nx
-and was imported in
-.Ox
-3.5.
+.Ox 3.9 .

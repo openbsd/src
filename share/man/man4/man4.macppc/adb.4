@@ -1,4 +1,4 @@
-.\" $OpenBSD: adb.4,v 1.16 2006/09/08 13:04:57 jmc Exp $
+.\" $OpenBSD: adb.4,v 1.17 2007/04/23 16:27:20 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Peter Philipp
 .\" Copyright (c) 1997 Colin Wood
@@ -42,7 +42,7 @@
 .Cd "akbd* at adb?"
 .Cd "ams* at adb?"
 .Cd "apm0 at adb?"
-.Cd "pi2c0 at adb?"
+.Cd "piic0 at adb?"
 .Sh DESCRIPTION
 The Apple Desktop Bus
 .Pq Tn ADB
@@ -74,7 +74,7 @@ devices such as the Apple Brightness / Volume Control Button
 some energy control
 .Pq Xr apm 4 ,
 and I2C controller
-.Pq Xr pi2c 4
+.Pq Xr piic 4
 were added to the PowerPC port later to complement the ADB system.
 .Pp
 .Ox
@@ -89,7 +89,7 @@ Apple Keyboard Device
 Apple Mouse Support
 .It Xr apm 4
 advanced power management device interface
-.It Xr pi2c 4
+.It Xr piic 4
 Apple via-pmu I2C controller
 .El
 .Sh SEE ALSO

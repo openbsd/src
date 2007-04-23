@@ -1,4 +1,4 @@
-/*	$OpenBSD: pi2c.c,v 1.5 2006/01/01 20:52:25 deraadt Exp $	*/
+/*	$OpenBSD: piic.c,v 1.1 2007/04/23 16:27:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -29,39 +29,39 @@
 #include <arch/macppc/dev/maci2cvar.h>
 #include <arch/macppc/dev/pm_direct.h>
 
-struct pi2c_softc {
+struct piic_softc {
 	struct device	sc_dev;
 
 	struct lock	sc_buslock;
 	struct i2c_controller sc_i2c_tag;
 };
 
-int     pi2c_match(struct device *, void *, void *);
-void    pi2c_attach(struct device *, struct device *, void *);
+int     piic_match(struct device *, void *, void *);
+void    piic_attach(struct device *, struct device *, void *);
 
-struct cfattach pi2c_ca = {
-	sizeof(struct pi2c_softc), pi2c_match, pi2c_attach
+struct cfattach piic_ca = {
+	sizeof(struct piic_softc), piic_match, piic_attach
 };
 
-struct cfdriver pi2c_cd = {
-        NULL, "pi2c", DV_DULL,
+struct cfdriver piic_cd = {
+        NULL, "piic", DV_DULL,
 };
 
-int	pi2c_i2c_acquire_bus(void *, int);
-void	pi2c_i2c_release_bus(void *, int);
-int	pi2c_i2c_exec(void *, i2c_op_t, i2c_addr_t,
+int	piic_i2c_acquire_bus(void *, int);
+void	piic_i2c_release_bus(void *, int);
+int	piic_i2c_exec(void *, i2c_op_t, i2c_addr_t,
 	    const void *, size_t, void *buf, size_t, int);
 
 int
-pi2c_match(struct device *parent, void *cf, void *aux)
+piic_match(struct device *parent, void *cf, void *aux)
 {
 	return (1);
 }
 
 void
-pi2c_attach(struct device *parent, struct device *self, void *aux)
+piic_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pi2c_softc *sc = (struct pi2c_softc *)self;
+	struct piic_softc *sc = (struct piic_softc *)self;
 	struct confargs *ca = aux;
 	struct i2cbus_attach_args iba;
 
@@ -70,9 +70,9 @@ pi2c_attach(struct device *parent, struct device *self, void *aux)
 	lockinit(&sc->sc_buslock, PZERO, sc->sc_dev.dv_xname, 0, 0);
 
 	sc->sc_i2c_tag.ic_cookie = sc;
-	sc->sc_i2c_tag.ic_acquire_bus = pi2c_i2c_acquire_bus;
-	sc->sc_i2c_tag.ic_release_bus = pi2c_i2c_release_bus;
-	sc->sc_i2c_tag.ic_exec = pi2c_i2c_exec;
+	sc->sc_i2c_tag.ic_acquire_bus = piic_i2c_acquire_bus;
+	sc->sc_i2c_tag.ic_release_bus = piic_i2c_release_bus;
+	sc->sc_i2c_tag.ic_exec = piic_i2c_exec;
 	
 	bzero(&iba, sizeof iba);
 	iba.iba_name = "iic";
@@ -83,23 +83,23 @@ pi2c_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-pi2c_i2c_acquire_bus(void *cookie, int flags)
+piic_i2c_acquire_bus(void *cookie, int flags)
 {
-	struct pi2c_softc *sc = cookie;
+	struct piic_softc *sc = cookie;
 
 	return (lockmgr(&sc->sc_buslock, LK_EXCLUSIVE, NULL));
 }
 
 void
-pi2c_i2c_release_bus(void *cookie, int flags)
+piic_i2c_release_bus(void *cookie, int flags)
 {
-	struct pi2c_softc *sc = cookie;
+	struct piic_softc *sc = cookie;
 
         lockmgr(&sc->sc_buslock, LK_RELEASE, NULL);
 }
 
 int
-pi2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
+piic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
     const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
 {
 	u_int8_t pmu_op = PMU_I2C_NORMAL;

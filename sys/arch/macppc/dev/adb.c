@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.26 2007/04/22 22:31:14 deraadt Exp $	*/
+/*	$OpenBSD: adb.c,v 1.27 2007/04/23 16:27:20 deraadt Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -1709,7 +1709,7 @@ adbattach(struct device *parent, struct device *self, void *aux)
 		if (OF_getprop(node, "name", name, sizeof name) <= 0)
 			continue;
 		if (strcmp(name, "pmu-i2c") == 0) {
-			nca.ca_name = "pi2c";
+			nca.ca_name = "piic";
 			nca.ca_node = node;
 			config_found(self, &nca, NULL);
 		}

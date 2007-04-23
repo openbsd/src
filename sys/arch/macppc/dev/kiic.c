@@ -1,5 +1,5 @@
-/*	$OpenBSD: ki2c.c,v 1.13 2006/06/19 22:42:33 miod Exp $	*/
-/*	$NetBSD: ki2c.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
+/*	$OpenBSD: kiic.c,v 1.1 2007/04/23 16:27:20 deraadt Exp $	*/
+/*	$NetBSD: kiic.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -35,43 +35,43 @@
 #include <uvm/uvm_extern.h>
 #include <machine/autoconf.h>
 
-#include <macppc/dev/ki2cvar.h>
+#include <macppc/dev/kiicvar.h>
 #include <macppc/dev/maci2cvar.h>
 
-int ki2c_match(struct device *, void *, void *);
-void ki2c_attach(struct device *, struct device *, void *);
-void ki2c_attach_bus(struct ki2c_softc *, struct ki2c_bus *, int);
-inline u_int ki2c_readreg(struct ki2c_softc *, int);
-inline void ki2c_writereg(struct ki2c_softc *, int, u_int);
-u_int ki2c_getmode(struct ki2c_softc *);
-void ki2c_setmode(struct ki2c_softc *, u_int, u_int);
-u_int ki2c_getspeed(struct ki2c_softc *);
-void ki2c_setspeed(struct ki2c_softc *, u_int);
-int ki2c_intr(struct ki2c_softc *);
-int ki2c_poll(struct ki2c_softc *, int);
-int ki2c_start(struct ki2c_softc *, int, int, void *, int);
-int ki2c_read(struct ki2c_softc *, int, int, void *, int);
-int ki2c_write(struct ki2c_softc *, int, int, const void *, int);
+int kiic_match(struct device *, void *, void *);
+void kiic_attach(struct device *, struct device *, void *);
+void kiic_attach_bus(struct kiic_softc *, struct kiic_bus *, int);
+inline u_int kiic_readreg(struct kiic_softc *, int);
+inline void kiic_writereg(struct kiic_softc *, int, u_int);
+u_int kiic_getmode(struct kiic_softc *);
+void kiic_setmode(struct kiic_softc *, u_int, u_int);
+u_int kiic_getspeed(struct kiic_softc *);
+void kiic_setspeed(struct kiic_softc *, u_int);
+int kiic_intr(struct kiic_softc *);
+int kiic_poll(struct kiic_softc *, int);
+int kiic_start(struct kiic_softc *, int, int, void *, int);
+int kiic_read(struct kiic_softc *, int, int, void *, int);
+int kiic_write(struct kiic_softc *, int, int, const void *, int);
 
 /* I2C glue */
-int ki2c_i2c_acquire_bus(void *, int);
-void ki2c_i2c_release_bus(void *, int);
-int ki2c_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
+int kiic_i2c_acquire_bus(void *, int);
+void kiic_i2c_release_bus(void *, int);
+int kiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
     void *, size_t, int);
 
-struct cfattach ki2c_ca = {
-	sizeof(struct ki2c_softc), ki2c_match, ki2c_attach
+struct cfattach kiic_ca = {
+	sizeof(struct kiic_softc), kiic_match, kiic_attach
 };
-struct cfattach ki2c_memc_ca = {
-	sizeof(struct ki2c_softc), ki2c_match, ki2c_attach
+struct cfattach kiic_memc_ca = {
+	sizeof(struct kiic_softc), kiic_match, kiic_attach
 };
 
-struct cfdriver ki2c_cd = {
-	NULL, "ki2c", DV_DULL
+struct cfdriver kiic_cd = {
+	NULL, "kiic", DV_DULL
 };
 
 int
-ki2c_match(struct device *parent, void *match, void *aux)
+kiic_match(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -83,9 +83,9 @@ ki2c_match(struct device *parent, void *match, void *aux)
 }
 
 void
-ki2c_attach(struct device *parent, struct device *self, void *aux)
+kiic_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ki2c_softc *sc = (struct ki2c_softc *)self;
+	struct kiic_softc *sc = (struct kiic_softc *)self;
 	struct confargs *ca = aux;
 	int node = ca->ca_node;
 	int rate, count = 0;
@@ -109,21 +109,21 @@ ki2c_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	ki2c_writereg(sc, STATUS, 0);
-	ki2c_writereg(sc, ISR, 0);
-	ki2c_writereg(sc, IER, 0);
+	kiic_writereg(sc, STATUS, 0);
+	kiic_writereg(sc, ISR, 0);
+	kiic_writereg(sc, IER, 0);
 
-	ki2c_setmode(sc, I2C_STDSUBMODE, 0);
-	ki2c_setspeed(sc, I2C_100kHz);		/* XXX rate */
+	kiic_setmode(sc, I2C_STDSUBMODE, 0);
+	kiic_setspeed(sc, I2C_100kHz);		/* XXX rate */
 
 	lockinit(&sc->sc_buslock, PZERO, sc->sc_dev.dv_xname, 0, 0);
-	ki2c_writereg(sc, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
+	kiic_writereg(sc, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
 
 	for (node = OF_child(ca->ca_node); node; node = OF_peer(node)) {
 		if (OF_getprop(node, "name", &name, sizeof name) > 0) {
 			if (strcmp(name, "i2c-bus") == 0) {
-				ki2c_attach_bus(sc, &sc->sc_bus[count], node);
-				if (++count >= KI2C_MAX_BUSSES)
+				kiic_attach_bus(sc, &sc->sc_bus[count], node);
+				if (++count >= KIIC_MAX_BUSSES)
 					break;
 			}
 		}
@@ -135,11 +135,11 @@ ki2c_attach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	if (count == 0)
-		ki2c_attach_bus(sc, &sc->sc_bus[0], ca->ca_node);
+		kiic_attach_bus(sc, &sc->sc_bus[0], ca->ca_node);
 }
 
 void
-ki2c_attach_bus(struct ki2c_softc *sc, struct ki2c_bus *bus, int node)
+kiic_attach_bus(struct kiic_softc *sc, struct kiic_bus *bus, int node)
 {
 	struct i2cbus_attach_args iba;
 	u_int32_t reg;
@@ -149,9 +149,9 @@ ki2c_attach_bus(struct ki2c_softc *sc, struct ki2c_bus *bus, int node)
 
 	bus->sc = sc;
 	bus->i2c_tag.ic_cookie = bus;
-	bus->i2c_tag.ic_acquire_bus = ki2c_i2c_acquire_bus;
-	bus->i2c_tag.ic_release_bus = ki2c_i2c_release_bus;
-	bus->i2c_tag.ic_exec = ki2c_i2c_exec;
+	bus->i2c_tag.ic_acquire_bus = kiic_i2c_acquire_bus;
+	bus->i2c_tag.ic_release_bus = kiic_i2c_release_bus;
+	bus->i2c_tag.ic_exec = kiic_i2c_exec;
 	bus->reg = reg;
 
 	bzero(&iba, sizeof iba);
@@ -163,7 +163,7 @@ ki2c_attach_bus(struct ki2c_softc *sc, struct ki2c_bus *bus, int node)
 }
 
 u_int
-ki2c_readreg(struct ki2c_softc *sc, int reg)
+kiic_readreg(struct kiic_softc *sc, int reg)
 {
 	u_char *addr = sc->sc_reg + sc->sc_regstep * reg;
 
@@ -171,7 +171,7 @@ ki2c_readreg(struct ki2c_softc *sc, int reg)
 }
 
 void
-ki2c_writereg(struct ki2c_softc *sc, int reg, u_int val)
+kiic_writereg(struct kiic_softc *sc, int reg, u_int val)
 {
 	u_char *addr = sc->sc_reg + sc->sc_regstep * reg;
 
@@ -181,54 +181,54 @@ ki2c_writereg(struct ki2c_softc *sc, int reg, u_int val)
 }
 
 u_int
-ki2c_getmode(struct ki2c_softc *sc)
+kiic_getmode(struct kiic_softc *sc)
 {
-	return ki2c_readreg(sc, MODE) & I2C_MODE;
+	return kiic_readreg(sc, MODE) & I2C_MODE;
 }
 
 void
-ki2c_setmode(struct ki2c_softc *sc, u_int mode, u_int bus)
+kiic_setmode(struct kiic_softc *sc, u_int mode, u_int bus)
 {
 	u_int x;
 
 	KASSERT((mode & ~I2C_MODE) == 0);
-	x = ki2c_readreg(sc, MODE);
+	x = kiic_readreg(sc, MODE);
 	x &= ~(I2C_MODE);
 	if (bus)
 		x |= I2C_BUS1;
 	else
 		x &= ~I2C_BUS1;
 	x |= mode;
-	ki2c_writereg(sc, MODE, x);
+	kiic_writereg(sc, MODE, x);
 }
 
 u_int
-ki2c_getspeed(struct ki2c_softc *sc)
+kiic_getspeed(struct kiic_softc *sc)
 {
-	return ki2c_readreg(sc, MODE) & I2C_SPEED;
+	return kiic_readreg(sc, MODE) & I2C_SPEED;
 }
 
 void
-ki2c_setspeed(struct ki2c_softc *sc, u_int speed)
+kiic_setspeed(struct kiic_softc *sc, u_int speed)
 {
 	u_int x;
 
 	KASSERT((speed & ~I2C_SPEED) == 0);
-	x = ki2c_readreg(sc, MODE);
+	x = kiic_readreg(sc, MODE);
 	x &= ~I2C_SPEED;
 	x |= speed;
-	ki2c_writereg(sc, MODE, x);
+	kiic_writereg(sc, MODE, x);
 }
 
 int
-ki2c_intr(struct ki2c_softc *sc)
+kiic_intr(struct kiic_softc *sc)
 {
 	u_int isr, x;
 
-	isr = ki2c_readreg(sc, ISR);
+	isr = kiic_readreg(sc, ISR);
 	if (isr & I2C_INT_ADDR) {
 #if 0
-		if ((ki2c_readreg(sc, STATUS) & I2C_ST_LASTAAK) == 0) {
+		if ((kiic_readreg(sc, STATUS) & I2C_ST_LASTAAK) == 0) {
 			/* No slave responded. */
 			sc->sc_flags |= I2C_ERROR;
 			goto out;
@@ -237,28 +237,28 @@ ki2c_intr(struct ki2c_softc *sc)
 
 		if (sc->sc_flags & I2C_READING) {
 			if (sc->sc_resid > 1) {
-				x = ki2c_readreg(sc, CONTROL);
+				x = kiic_readreg(sc, CONTROL);
 				x |= I2C_CT_AAK;
-				ki2c_writereg(sc, CONTROL, x);
+				kiic_writereg(sc, CONTROL, x);
 			}
 		} else {
-			ki2c_writereg(sc, DATA, *sc->sc_data++);
+			kiic_writereg(sc, DATA, *sc->sc_data++);
 			sc->sc_resid--;
 		}
 	}
 
 	if (isr & I2C_INT_DATA) {
 		if (sc->sc_flags & I2C_READING) {
-			*sc->sc_data++ = ki2c_readreg(sc, DATA);
+			*sc->sc_data++ = kiic_readreg(sc, DATA);
 			sc->sc_resid--;
 
 			if (sc->sc_resid == 0) {	/* Completed */
-				ki2c_writereg(sc, CONTROL, 0);
+				kiic_writereg(sc, CONTROL, 0);
 				goto out;
 			}
 		} else {
 #if 0
-			if ((ki2c_readreg(sc, STATUS) & I2C_ST_LASTAAK) == 0) {
+			if ((kiic_readreg(sc, STATUS) & I2C_ST_LASTAAK) == 0) {
 				/* No slave responded. */
 				sc->sc_flags |= I2C_ERROR;
 				goto out;
@@ -266,10 +266,10 @@ ki2c_intr(struct ki2c_softc *sc)
 #endif
 
 			if (sc->sc_resid == 0) {
-				x = ki2c_readreg(sc, CONTROL) | I2C_CT_STOP;
-				ki2c_writereg(sc, CONTROL, x);
+				x = kiic_readreg(sc, CONTROL) | I2C_CT_STOP;
+				kiic_writereg(sc, CONTROL, x);
 			} else {
-				ki2c_writereg(sc, DATA, *sc->sc_data++);
+				kiic_writereg(sc, DATA, *sc->sc_data++);
 				sc->sc_resid--;
 			}
 		}
@@ -277,21 +277,21 @@ ki2c_intr(struct ki2c_softc *sc)
 
 out:
 	if (isr & I2C_INT_STOP) {
-		ki2c_writereg(sc, CONTROL, 0);
+		kiic_writereg(sc, CONTROL, 0);
 		sc->sc_flags &= ~I2C_BUSY;
 	}
 
-	ki2c_writereg(sc, ISR, isr);
+	kiic_writereg(sc, ISR, isr);
 
 	return (1);
 }
 
 int
-ki2c_poll(struct ki2c_softc *sc, int timo)
+kiic_poll(struct kiic_softc *sc, int timo)
 {
 	while (sc->sc_flags & I2C_BUSY) {
-		if (ki2c_readreg(sc, ISR))
-			ki2c_intr(sc);
+		if (kiic_readreg(sc, ISR))
+			kiic_intr(sc);
 		timo -= 100;
 		if (timo < 0) {
 			printf("i2c_poll: timeout\n");
@@ -303,7 +303,7 @@ ki2c_poll(struct ki2c_softc *sc, int timo)
 }
 
 int
-ki2c_start(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
+kiic_start(struct kiic_softc *sc, int addr, int subaddr, void *data, int len)
 {
 	int rw = (sc->sc_flags & I2C_READING) ? 1 : 0;
 	int timo, x;
@@ -320,13 +320,13 @@ ki2c_start(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 	/* if (addr == 0x68) */
 		timo += 100000;
 
-	ki2c_writereg(sc, ADDR, addr | rw);
-	ki2c_writereg(sc, SUBADDR, subaddr);
+	kiic_writereg(sc, ADDR, addr | rw);
+	kiic_writereg(sc, SUBADDR, subaddr);
 
-	x = ki2c_readreg(sc, CONTROL) | I2C_CT_ADDR;
-	ki2c_writereg(sc, CONTROL, x);
+	x = kiic_readreg(sc, CONTROL) | I2C_CT_ADDR;
+	kiic_writereg(sc, CONTROL, x);
 
-	if (ki2c_poll(sc, timo))
+	if (kiic_poll(sc, timo))
 		return (-1);
 	if (sc->sc_flags & I2C_ERROR) {
 		printf("I2C_ERROR\n");
@@ -336,40 +336,40 @@ ki2c_start(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 }
 
 int
-ki2c_read(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
+kiic_read(struct kiic_softc *sc, int addr, int subaddr, void *data, int len)
 {
 	sc->sc_flags = I2C_READING;
-	return ki2c_start(sc, addr, subaddr, data, len);
+	return kiic_start(sc, addr, subaddr, data, len);
 }
 
 int
-ki2c_write(struct ki2c_softc *sc, int addr, int subaddr, const void *data, int len)
+kiic_write(struct kiic_softc *sc, int addr, int subaddr, const void *data, int len)
 {
 	sc->sc_flags = 0;
-	return ki2c_start(sc, addr, subaddr, (void *)data, len);
+	return kiic_start(sc, addr, subaddr, (void *)data, len);
 }
 
 int
-ki2c_i2c_acquire_bus(void *cookie, int flags)
+kiic_i2c_acquire_bus(void *cookie, int flags)
 {
-	struct ki2c_bus *bus = cookie;
+	struct kiic_bus *bus = cookie;
 
 	return (lockmgr(&bus->sc->sc_buslock, LK_EXCLUSIVE, NULL));
 }
 
 void
-ki2c_i2c_release_bus(void *cookie, int flags)
+kiic_i2c_release_bus(void *cookie, int flags)
 {
-	struct ki2c_bus *bus = cookie;
+	struct kiic_bus *bus = cookie;
 
 	(void) lockmgr(&bus->sc->sc_buslock, LK_RELEASE, NULL);
 }
 
 int
-ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
+kiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
     const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
 {
-	struct ki2c_bus *bus = cookie;
+	struct kiic_bus *bus = cookie;
 	u_int mode = I2C_STDSUBMODE;
 	u_int8_t cmd = 0;
 
@@ -384,14 +384,14 @@ ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (cmdlen > 0)
 		cmd = *(u_int8_t *)cmdbuf;
 
-	ki2c_setmode(bus->sc, mode, bus->reg || addr & 0x80);
+	kiic_setmode(bus->sc, mode, bus->reg || addr & 0x80);
 	addr &= 0x7f;
 
 	if (I2C_OP_READ_P(op)) {
-		if (ki2c_read(bus->sc, (addr << 1), cmd, buf, len) != 0)
+		if (kiic_read(bus->sc, (addr << 1), cmd, buf, len) != 0)
 			return (EIO);
 	} else {
-		if (ki2c_write(bus->sc, (addr << 1), cmd, buf, len) != 0)
+		if (kiic_write(bus->sc, (addr << 1), cmd, buf, len) != 0)
 			return (EIO);
 	}
 	return (0);

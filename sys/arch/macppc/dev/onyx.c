@@ -1,4 +1,4 @@
-/*	$OpenBSD: onyx.c,v 1.6 2005/12/28 10:08:07 kettenis Exp $	*/
+/*	$OpenBSD: onyx.c,v 1.7 2007/04/23 16:27:20 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -45,7 +45,7 @@
 #include <machine/autoconf.h>
 
 #include <macppc/dev/i2svar.h>
-#include <macppc/dev/ki2cvar.h>
+#include <macppc/dev/kiicvar.h>
 
 #ifdef ONYX_DEBUG
 # define DPRINTF printf
@@ -64,8 +64,8 @@
 #define onyx_softc i2s_softc
 
 /* XXX */
-void ki2c_setmode(struct ki2c_softc *, u_int, u_int);
-int ki2c_write(struct device *, int, int, const void *, int);
+void kiic_setmode(struct kiic_softc *, u_int, u_int);
+int kiic_write(struct device *, int, int, const void *, int);
 
 int onyx_getdev(void *, struct audio_device *);
 int onyx_match(struct device *, void *, void *);
@@ -166,7 +166,7 @@ onyx_defer(struct device *dev)
 	struct device *dv;
 
 	TAILQ_FOREACH(dv, &alldevs, dv_list)
-		if (strncmp(dv->dv_xname, "ki2c", 4) == 0 &&
+		if (strncmp(dv->dv_xname, "kiic", 4) == 0 &&
 		    strncmp(dv->dv_parent->dv_xname, "macobio", 7) == 0)
 			sc->sc_i2c = dv;
 	if (sc->sc_i2c == NULL) {
@@ -197,11 +197,11 @@ onyx_set_volume(struct onyx_softc *sc, int left, int right)
 	sc->sc_vol_l = left;
 	sc->sc_vol_r = right;
 
-	ki2c_setmode(sc->sc_i2c, I2C_STDSUBMODE, 0);
+	kiic_setmode(sc->sc_i2c, I2C_STDSUBMODE, 0);
 	data = 128 + (left >> 1);
-	ki2c_write(sc->sc_i2c, PCM3052_I2C_ADDR,
+	kiic_write(sc->sc_i2c, PCM3052_I2C_ADDR,
 	    PCM3052_REG_LEFT_VOLUME, &data, 1);
 	data = 128 + (right >> 1);
-	ki2c_write(sc->sc_i2c, PCM3052_I2C_ADDR,
+	kiic_write(sc->sc_i2c, PCM3052_I2C_ADDR,
 	    PCM3052_REG_RIGHT_VOLUME, &data, 1);
 }

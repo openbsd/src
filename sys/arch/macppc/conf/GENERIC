@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.165 2007/04/22 20:17:03 gwk Exp $g
+#	$OpenBSD: GENERIC,v 1.166 2007/04/23 16:27:20 deraadt Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -35,7 +35,7 @@ cpu*		at mainbus0
 mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
 memc*		at mainbus0
 openpic*	at memc?	# openpic interrupt controller
-ki2c*           at memc?        # Keywest I2C
+kiic*           at memc?        # Keywest I2C
 pchb*		at pci?
 ht*		at mainbus0
 smu*		at mainbus0
@@ -146,7 +146,7 @@ mesh*		at macobio? flags 0xffff # MESH SCSI
 #nvram*		at macobio?	# nvram
 adb*		at macobio?	# Apple Desktop Bus
 apm0		at adb?		# APM emulation
-pi2c0		at adb?		# PMU I2C
+piic0		at adb?		# PMU I2C
 wi*		at macobio?	# airport
 macgpio*	at macobio?	# GPIO, PMU interrupt router.
 macgpio*	at macgpio?	# GPIO, PMU interrupt router.
@@ -160,7 +160,7 @@ zsc*		at macobio?
 zstty*		at zsc?
 
 awacs*		at macobio?	# Apple audio device
-ki2c*		at macobio?	# Keywest I2C
+kiic*		at macobio?	# Keywest I2C
 snapper*	at macobio?	# Snapper audio device
 tumbler*	at macobio?	# Tumbler audio device
 onyx*		at macobio?	# Onyx audio device
@@ -282,8 +282,8 @@ uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
 
 # I2C bus support
-iic*		at ki2c?
-iic*		at pi2c?
+iic*		at kiic?
+iic*		at piic?
 iic*		at smu?
 
 # I2C devices

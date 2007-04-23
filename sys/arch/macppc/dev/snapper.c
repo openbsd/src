@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.27 2005/12/28 10:08:07 kettenis Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.28 2007/04/23 16:27:20 deraadt Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -55,8 +55,8 @@
 #define snapper_softc i2s_softc
 
 /* XXX */
-int ki2c_write(struct device *, int, int, const void *, int);
-int ki2c_writereg(struct device *, int, u_int);
+int kiic_write(struct device *, int, int, const void *, int);
+int kiic_writereg(struct device *, int, u_int);
 
 void snapper_init(struct snapper_softc *);
 int snapper_getdev(void *, struct audio_device *);
@@ -325,7 +325,7 @@ snapper_defer(struct device *dev)
 	struct device *dv;
 
 	TAILQ_FOREACH(dv, &alldevs, dv_list)
-		if (strncmp(dv->dv_xname, "ki2c", 4) == 0 &&
+		if (strncmp(dv->dv_xname, "kiic", 4) == 0 &&
 		    strncmp(dv->dv_parent->dv_xname, "macobio", 7) == 0)
 			sc->sc_i2c = dv;
 	if (sc->sc_i2c == NULL) {
@@ -337,7 +337,7 @@ snapper_defer(struct device *dev)
 
 	audio_attach_mi(&snapper_hw_if, sc, &sc->sc_dev);
 
-	/* ki2c_setmode(sc->sc_i2c, I2C_STDSUBMODE); */
+	/* kiic_setmode(sc->sc_i2c, I2C_STDSUBMODE); */
 	snapper_init(sc);
 }
 
@@ -470,7 +470,7 @@ tas3004_write(struct snapper_softc *sc, u_int reg, const void *data)
 	size = tas3004_regsize[reg];
 	KASSERT(size > 0);
 
-	if (ki2c_write(sc->sc_i2c, DEQaddr, reg, data, size))
+	if (kiic_write(sc->sc_i2c, DEQaddr, reg, data, size))
 		return (-1);
 
 	return (0);
@@ -531,7 +531,7 @@ snapper_init(struct snapper_softc *sc)
 #define I2C_INT_DATA 0x01
 #define I2C_INT_ADDR 0x02
 #define I2C_INT_STOP 0x04
-	ki2c_writereg(sc->sc_i2c, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
+	kiic_writereg(sc->sc_i2c, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
 #endif
 
 	if (tas3004_init(sc))

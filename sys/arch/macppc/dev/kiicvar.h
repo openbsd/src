@@ -1,4 +1,4 @@
-/*	$OpenBSD: ki2cvar.h,v 1.4 2005/12/13 19:21:45 kettenis Exp $	*/
+/*	$OpenBSD: kiicvar.h,v 1.1 2007/04/23 16:27:20 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -26,8 +26,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef KI2CVAR_H
-#define KI2CVAR_H
+#ifndef KIICVAR_H
+#define KIICVAR_H
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -82,20 +82,20 @@
 #define I2C_READING	0x02
 #define I2C_ERROR	0x04
 
-#define KI2C_MAX_BUSSES	2
+#define KIIC_MAX_BUSSES	2
 
-struct ki2c_softc {
+struct kiic_softc {
 	struct device sc_dev;
 	paddr_t sc_paddr;
 	u_char *sc_reg;
 	int sc_regstep;
 
 	struct lock sc_buslock;
-	struct ki2c_bus {
-		struct ki2c_softc *sc;
+	struct kiic_bus {
+		struct kiic_softc *sc;
 		struct i2c_controller i2c_tag;
 		u_int32_t reg;
-	} sc_bus[KI2C_MAX_BUSSES];
+	} sc_bus[KIIC_MAX_BUSSES];
 
 	int sc_flags;
 	u_char *sc_data;
