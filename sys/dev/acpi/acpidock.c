@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.23 2007/04/23 17:38:30 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.24 2007/04/23 18:34:42 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -280,7 +280,7 @@ acpidock_foundejd(struct aml_node *node, void *arg)
 		/* XXX more than one dock? */
 		
 		n = malloc(sizeof(struct aml_nodelist), M_DEVBUF, M_WAITOK);
-		n->node = node;
+		n->node = node->parent;
 
 		TAILQ_INSERT_TAIL(&sc->sc_deps_h, n, entries);
 	}
