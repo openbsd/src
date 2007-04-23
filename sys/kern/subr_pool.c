@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.50 2007/04/12 21:47:45 miod Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.51 2007/04/23 09:27:59 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1944,17 +1944,11 @@ sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
  *
  * Each pool has a backend allocator that handles allocation, deallocation
  */
-void	*pool_page_alloc_kmem(struct pool *, int);
-void	pool_page_free_kmem(struct pool *, void *);
 void	*pool_page_alloc_oldnointr(struct pool *, int);
 void	pool_page_free_oldnointr(struct pool *, void *);
 void	*pool_page_alloc(struct pool *, int);
 void	pool_page_free(struct pool *, void *);
 
-/* old default allocator, interrupt safe */
-struct pool_allocator pool_allocator_kmem = {
-	pool_page_alloc_kmem, pool_page_free_kmem, 0,
-};
 /* previous nointr.  handles large allocations safely */
 struct pool_allocator pool_allocator_oldnointr = {
 	pool_page_alloc_oldnointr, pool_page_free_oldnointr, 0,
@@ -2029,21 +2023,6 @@ pool_page_free(struct pool *pp, void *v)
 {
 
 	uvm_km_putpage(v);
-}
-
-void *
-pool_page_alloc_kmem(struct pool *pp, int flags)
-{
-	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
-
-	return ((void *)uvm_km_alloc_poolpage1(kmem_map, NULL, waitok));
-}
-
-void
-pool_page_free_kmem(struct pool *pp, void *v)
-{
-
-	uvm_km_free_poolpage1(kmem_map, (vaddr_t)v);
 }
 
 void *
