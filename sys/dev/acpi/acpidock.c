@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.24 2007/04/23 18:34:42 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.25 2007/04/23 19:29:03 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -233,7 +233,12 @@ acpidock_notify(struct aml_node *node, int notify_type, void *arg)
 		acpidock_dockctl(sc, 1);
 
 		break;
-	case ACPIDOCK_EVENT_EJECT:
+	case ACPIDOCK_EVENT_EJECT: {
+		struct aml_nodelist *n;
+
+		TAILQ_FOREACH(n, &sc->sc_deps_h, entries)
+			acpidock_eject(sc, n->node);
+
 		acpidock_dockctl(sc, 0);
 		acpidock_docklock(sc, 0);
 
@@ -243,6 +248,7 @@ acpidock_notify(struct aml_node *node, int notify_type, void *arg)
 		printf("%s: undock", DEVNAME(sc));
 		
 		break;
+		}
 	}
 
 	acpidock_status(sc);
