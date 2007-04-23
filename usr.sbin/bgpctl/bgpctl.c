@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.122 2007/04/06 18:36:32 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.123 2007/04/23 13:05:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -412,8 +412,8 @@ fmt_peer(const char *descr, const struct bgpd_addr *remote_addr,
 void
 show_summary_head(void)
 {
-	printf("%-20s %-5s %-10s %-10s %-5s %-8s %s\n", "Neighbor", "AS",
-	    "MsgRcvd", "MsgSent", "OutQ", "Up/Down", "State/PrefixRcvd");
+	printf("%-20s %-8s %-10s %-10s %-5s %-8s %s\n", "Neighbor", "AS",
+	    "MsgRcvd", "MsgSent", "OutQ", "Up/Down", "State/PrfRcvd");
 }
 
 int
@@ -429,8 +429,8 @@ show_summary_msg(struct imsg *imsg, int nodescr)
 		    p->conf.remote_masklen, nodescr);
 		if (strlen(s) >= 20)
 			s[20] = 0;
-		printf("%-20s %5u %10llu %10llu %5u %-8s ",
-		    s, p->conf.remote_as,
+		printf("%-20s %8s %10llu %10llu %5u %-8s ",
+		    s, log_as(p->conf.remote_as),
 		    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
 		    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive +
 		    p->stats.msg_rcvd_rrefresh,
@@ -470,7 +470,7 @@ show_summary_terse_msg(struct imsg *imsg, int nodescr)
 		p = imsg->data;
 		s = fmt_peer(p->conf.descr, &p->conf.remote_addr,
 		    p->conf.remote_masklen, nodescr);
-		printf("%s %u %s\n", s, p->conf.remote_as,
+		printf("%s %s %s\n", s, log_as(p->conf.remote_as),
 		    p->conf.template ? "Template" : statenames[p->state]);
 		free(s);
 		break;
@@ -542,7 +542,7 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 		if (p->conf.remote_as == 0 && p->conf.template)
 			printf("remote AS: accept any");
 		else
-			printf("remote AS %u", p->conf.remote_as);
+			printf("remote AS %s", log_as(p->conf.remote_as));
 		if (p->conf.template)
 			printf(", Template");
 		if (p->conf.cloned)
@@ -562,7 +562,8 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 		    fmt_timeframe(p->stats.last_read),
 		    p->holdtime, p->holdtime/3);
 		if (p->capa.peer.mp_v4 || p->capa.peer.mp_v6 ||
-		    p->capa.peer.refresh || p->capa.peer.restart) {
+		    p->capa.peer.refresh || p->capa.peer.restart ||
+		    p->capa.peer.as4byte) {
 			printf("  Neighbor capabilities:\n");
 			if (p->capa.peer.mp_v4) {
 				printf("    Multiprotocol extensions: IPv4");
@@ -576,6 +577,8 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 				printf("    Route Refresh\n");
 			if (p->capa.peer.restart)
 				printf("    Graceful Restart\n");
+			if (p->capa.peer.as4byte)
+				printf("    4-byte AS numbers\n");
 		}
 		printf("\n");
 		switch (nv) {

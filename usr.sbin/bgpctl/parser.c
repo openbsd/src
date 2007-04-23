@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.43 2007/04/06 18:36:32 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.44 2007/04/23 13:05:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -302,7 +302,7 @@ void			 show_valid_args(const struct token []);
 int			 parse_addr(const char *, struct bgpd_addr *);
 int			 parse_prefix(const char *, struct bgpd_addr *,
 			     u_int8_t *);
-int			 parse_asnum(const char *, u_int16_t *);
+int			 parse_asnum(const char *, u_int32_t *);
 int			 parse_number(const char *, struct parse_result *,
 			     enum token_type);
 int			 getcommunity(const char *);
@@ -636,19 +636,30 @@ parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
 }
 
 int
-parse_asnum(const char *word, u_int16_t *asnum)
+parse_asnum(const char *word, u_int32_t *asnum)
 {
 	const char	*errstr;
-	u_int16_t	 uval;
+	char		*dot;
+	u_int32_t	 uval, uvalh = 0;
 
 	if (word == NULL)
 		return (0);
 
-	uval = strtonum(word, 0, USHRT_MAX - 1, &errstr);
-	if (errstr)
-		errx(1, "AS number is %s: %s", errstr, word);
+	if ((dot = strchr(word,'.')) != NULL) {
+		*dot++ = '\0';
+		uvalh = strtonum(word, 0, USHRT_MAX, &errstr);
+		if (errstr)
+			errx(1, "AS number is %s: %s", errstr, word);
+		uval = strtonum(dot, 0, USHRT_MAX, &errstr);
+		if (errstr)
+			errx(1, "AS number is %s: %s", errstr, word);
+	} else {
+		uval = strtonum(word, 0, USHRT_MAX - 1, &errstr);
+		if (errstr)
+			errx(1, "AS number is %s: %s", errstr, word);
+	}
 
-	*asnum = uval;
+	*asnum = uval | (uvalh << 16);
 	return (1);
 }
 
