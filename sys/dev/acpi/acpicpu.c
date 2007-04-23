@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.20 2007/04/11 02:51:11 jordan Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.21 2007/04/23 04:34:30 gwk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -42,18 +42,18 @@ void	acpicpu_attach(struct device *, struct device *, void *);
 int	acpicpu_notify(struct aml_node *, int, void *);
 void	acpicpu_setperf(int);
 
-#define ACPI_STATE_C0     0x00
-#define ACPI_STATE_C1     0x01
-#define ACPI_STATE_C2     0x02
-#define ACPI_STATE_C3     0x03
+#define ACPI_STATE_C0     	0x00
+#define ACPI_STATE_C1     	0x01
+#define ACPI_STATE_C2     	0x02
+#define ACPI_STATE_C3     	0x03
 
-#define FLAGS_NO_C2       0x01
-#define FLAGS_NO_C3       0x02
-#define FLAGS_BMCHECK     0x04
-#define FLAGS_NOTHROTTLE  0x08
-#define FLAGS_NOPSS       0x10
+#define FLAGS_NO_C2       	0x01
+#define FLAGS_NO_C3       	0x02
+#define FLAGS_BMCHECK     	0x04
+#define FLAGS_NOTHROTTLE  	0x08
+#define FLAGS_NOPSS       	0x10
 
-#define CPU_THT_EN              (1L << 4)
+#define CPU_THT_EN		(1L << 4)
 #define CPU_MAXSTATE(sc)  	(1L << (sc)->sc_duty_wid)
 #define CPU_STATE(sc,pct)	((pct * CPU_MAXSTATE(sc) / 100) << (sc)->sc_duty_off)
 #define CPU_STATEMASK(sc)       ((CPU_MAXSTATE(sc) - 1) << (sc)->sc_duty_off)
@@ -82,7 +82,7 @@ struct acpicpu_softc {
 	int			sc_duty_off;
 	int			sc_pblk_addr;
 	int			sc_pblk_len;
-	int                     sc_flags;
+	int			sc_flags;
 
 	SLIST_HEAD(,acpi_cstate) sc_cstates;
 
@@ -145,14 +145,14 @@ acpicpu_find_cstate(struct acpicpu_softc *sc, int type)
 {
 	struct acpi_cstate *cx;
 
-	SLIST_FOREACH(cx, &sc->sc_cstates, link) 
+	SLIST_FOREACH(cx, &sc->sc_cstates, link)
 		if (cx->type == type)
 			return cx;
 	return NULL;
 }
 
 struct acpi_cstate *
-acpicpu_add_cstate(struct acpicpu_softc *sc, int type, 
+acpicpu_add_cstate(struct acpicpu_softc *sc, int type,
 		   int latency, int power, int address)
 {
 	struct acpi_cstate *cx;
@@ -162,11 +162,13 @@ acpicpu_add_cstate(struct acpicpu_softc *sc, int type,
 
 	switch (type) {
 	case ACPI_STATE_C2:
-		if (latency > ACPI_MAX_C2_LATENCY || !address || (sc->sc_flags & FLAGS_NO_C2))
+		if (latency > ACPI_MAX_C2_LATENCY || !address ||
+		    (sc->sc_flags & FLAGS_NO_C2))
 			goto bad;
 		break;
 	case ACPI_STATE_C3:
-		if (latency > ACPI_MAX_C3_LATENCY || !address || (sc->sc_flags & FLAGS_NO_C3))
+		if (latency > ACPI_MAX_C3_LATENCY || !address ||
+		    (sc->sc_flags & FLAGS_NO_C3))
 			goto bad;
 		break;
 	}
@@ -225,7 +227,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpicpu_softc	*sc = (struct acpicpu_softc *)self;
 	struct acpi_attach_args *aa = aux;
-	struct                  aml_value res;
+	struct			aml_value res;
 	int			i;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
@@ -246,7 +248,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_duty_off = sc->sc_acpi->sc_fadt->duty_offset;
 	sc->sc_duty_wid = sc->sc_acpi->sc_fadt->duty_width;
-	if (!valid_throttle(sc->sc_duty_off, sc->sc_duty_wid, sc->sc_pblk_addr)) 
+	if (!valid_throttle(sc->sc_duty_off, sc->sc_duty_wid, sc->sc_pblk_addr))
 		sc->sc_flags |= FLAGS_NOTHROTTLE;
 
 #ifdef ACPI_DEBUG
@@ -270,14 +272,16 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_flags |= FLAGS_NO_C2;
 		if (sc->sc_pblk_len < 6)
 			sc->sc_flags |= FLAGS_NO_C3;
-		acpicpu_add_cstate(sc, ACPI_STATE_C2, sc->sc_acpi->sc_fadt->p_lvl2_lat, 
-				   -1, sc->sc_pblk_addr + 4);
-		acpicpu_add_cstate(sc, ACPI_STATE_C3, sc->sc_acpi->sc_fadt->p_lvl3_lat, 
-				   -1, sc->sc_pblk_addr + 5);
+		acpicpu_add_cstate(sc, ACPI_STATE_C2,
+				   sc->sc_acpi->sc_fadt->p_lvl2_lat, -1,
+				   sc->sc_pblk_addr + 4);
+		acpicpu_add_cstate(sc, ACPI_STATE_C3,
+				   sc->sc_acpi->sc_fadt->p_lvl3_lat, -1,
+				   sc->sc_pblk_addr + 5);
 	}
 	if (acpicpu_getpss(sc)) {
 		/* XXX not the right test but has to do for now */
-	  	sc->sc_flags |= FLAGS_NOPSS;
+		sc->sc_flags |= FLAGS_NOPSS;
 		goto nopss;
 	}
 
@@ -299,7 +303,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Notify BIOS we are handing p-states */
 	if (sc->sc_acpi->sc_fadt->pstate_cnt)
-		acpi_write_pmreg(sc->sc_acpi, ACPIREG_SMICMD, 0, 
+		acpi_write_pmreg(sc->sc_acpi, ACPIREG_SMICMD, 0,
 		    sc->sc_acpi->sc_fadt->pstate_cnt);
 
 	for (i = 0; i < sc->sc_pss_len; i++)
