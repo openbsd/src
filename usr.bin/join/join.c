@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.18 2003/12/28 19:53:23 otto Exp $	*/
+/* $OpenBSD: join.c,v 1.19 2007/04/23 19:21:24 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@ static const char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)join.c	8.6 (Berkeley) 5/4/95"; */
-static const char rcsid[] = "$OpenBSD: join.c,v 1.18 2003/12/28 19:53:23 otto Exp $";
+static const char rcsid[] = "$OpenBSD: join.c,v 1.19 2007/04/23 19:21:24 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -338,7 +338,6 @@ slurpit(INPUT *F)
 		 * the two structures so that we don't lose space allocated to
 		 * either structure.  This could be avoided by doing another
 		 * level of indirection, but it's probably okay as is.
-		 * but it's probably okay as is.
 		 */
 		lp = &F->set[F->setcnt];
 		if (F->pushbool) {
@@ -601,21 +600,16 @@ obsolete(char **argv)
 			 */
 			switch(ap[2]) {
 			case '1':
-				if (ap[3] != '\0')
-					goto jbad;
-				ap[1] = '1';
-				ap[2] = '\0';
-				break;
 			case '2':
 				if (ap[3] != '\0')
 					goto jbad;
-				ap[1] = '2';
+				ap[1] = ap[2];
 				ap[2] = '\0';
 				break;
 			case '\0':
 				break;
 			default:
-jbad:				errx(1, "illegal option -- %s", ap);
+jbad:				warnx("unknown option -- %s", ap + 1);
 				usage();
 			}
 			break;
@@ -624,7 +618,7 @@ jbad:				errx(1, "illegal option -- %s", ap);
 			 * The original join allowed "-o arg arg".
 			 * Convert to "-o arg -o arg".
 			 */
-			if (ap[2] != '\0')
+			if (ap[2] != '\0' || argv[1] == NULL)
 				break;
 			for (p = argv + 2; *p != NULL; ++p) {
 				if (p[0][0] == '0' || ((p[0][0] != '1' &&
@@ -649,8 +643,13 @@ jbad:				errx(1, "illegal option -- %s", ap);
 void
 usage(void)
 {
-	(void)fprintf(stderr, "%s%s\n",
-	    "usage: join [-a fileno | -v fileno ] [-e string] [-1 field] ",
-	    "[-2 field]\n            [-o list] [-t char] file1 file2");
+	int len;
+	extern char *__progname;
+
+	len = strlen(__progname) + sizeof("usage: ");
+	(void)fprintf(stderr, "usage: %s [-1 field] [-2 field] "
+	    "[-a file_number | -v file_number] [-e string]\n"
+	    "%*s[-j file_number field] [-o list] [-t char] file1 file2\n",
+	    __progname, len, "");
 	exit(1);
 }
