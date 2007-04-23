@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.3 2007/04/21 21:37:09 martin Exp $	*/
+/*	$OpenBSD: _types.h,v 1.4 2007/04/23 10:07:43 art Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -122,5 +122,6 @@ typedef	void *			__wctype_t;
 #define __HAVE_DEVICE_REGISTER
 #define __HAVE_CPUINFO
 #define __HAVE_GENERIC_SOFT_INTERRUPTS
+#define __HAVE_TIMECOUNTER
 
 #endif	/* _ALPHA__TYPES_H_ */

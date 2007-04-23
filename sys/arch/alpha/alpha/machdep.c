@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.106 2007/04/18 16:53:19 martin Exp $ */
+/* $OpenBSD: machdep.c,v 1.107 2007/04/23 10:07:43 art Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -96,6 +96,7 @@
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
+#include <sys/timetc.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -2004,37 +2005,6 @@ remrunqueue(p)
 
 	if ((struct proc *)&sched_qs[bit] == sched_qs[bit].ph_link)
 		sched_whichqs &= ~(1 << bit);
-}
-
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  Unfortunately, we can't read the hardware registers.
- * We guarantee that the time will be greater than the value obtained by a
- * previous call.
- */
-void
-microtime(tvp)
-	register struct timeval *tvp;
-{
-	int s = splclock();
-	static struct timeval lasttime;
-
-	*tvp = time;
-#ifdef notdef
-	tvp->tv_usec += clkread();
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-#endif
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
 }
 
 /*
