@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.35 2007/04/23 20:11:31 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.36 2007/04/23 22:48:40 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -128,6 +128,7 @@ u_int32_t		sr_checksum(char *, u_int32_t *, u_int32_t);
 int			sr_save_metadata(struct sr_discipline *);
 void			sr_refresh_sensors(void *);
 int			sr_create_sensors(struct sr_discipline *);
+int			sr_meta_exists(struct sr_discipline *);
 
 struct scsi_adapter sr_switch = {
 	sr_scsi_cmd, sr_minphys, NULL, NULL, sr_scsi_ioctl
@@ -869,7 +870,13 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 			vol++;
 	sd->sd_vol.sv_meta.svm_volid = vol;
 
-	rv = sr_save_metadata(sd); /* save metadata to disk */
+	if (sr_meta_exists(sd) == no_chunk) {
+		printf("%s: chunks already contain metadata, not saving "
+		    "again\n",
+		    DEVNAME(sc));
+		rv = 0;
+	} else
+		rv = sr_save_metadata(sd); /* save metadata to disk */
 
 	if (sr_create_sensors(sd) != 0)
 		printf("%s: unable to create sensor for %s\n", DEVNAME(sc),
@@ -1779,6 +1786,68 @@ sr_get_uuid(struct sr_uuid *uuid)
 }
 
 int
+sr_meta_exists(struct sr_discipline *sd)
+{
+	struct sr_softc		*sc = sd->sd_sc;
+	struct sr_metadata	*sm;
+	struct sr_chunk		*src;
+	struct buf		b;
+	int			i, mc = 0;
+	size_t			sz = 512;
+
+	DNPRINTF(SR_D_META, "%s: sr_meta_exists %s\n",
+	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
+
+	sm = malloc(sz, M_DEVBUF, M_WAITOK);
+	bzero(sm, sz);
+
+	for (i = 0; i < sd->sd_vol.sv_meta.svm_no_chunk; i++) {
+		memset(&b, 0, sizeof(b));
+
+		src = sd->sd_vol.sv_chunks[i];
+
+		/* skip disks that are offline */
+		if (src->src_meta.scm_status == BIOC_SDOFFLINE)
+			continue;
+
+		b.b_flags = B_READ;
+		b.b_blkno = SR_META_OFFSET;
+		b.b_bcount = sz;
+		b.b_bufsize = sz;
+		b.b_resid = sz;
+		b.b_data = (void *)sm;
+		b.b_error = 0;
+		b.b_proc = curproc;
+		b.b_dev = src->src_dev_mm;
+		b.b_vp = src->src_dev_vn;
+		b.b_iodone = NULL;
+		LIST_INIT(&b.b_dep);
+		b.b_vp->v_numoutput++;
+		VOP_STRATEGY(&b);
+		biowait(&b);
+
+		/* XXX do something smart here */
+		/* mark chunk offline and restart metadata write */
+		if (b.b_flags & B_ERROR) {
+			printf("%s: %s i/o error on block %d while writing "
+			    "metadata %d\n", DEVNAME(sc),
+			    src->src_meta.scm_devname, b.b_blkno, b.b_error);
+			continue;
+		}
+
+		if (sm->ssd_magic == SR_MAGIC)
+			mc++;
+	}
+
+	free(sm, M_DEVBUF);
+
+	DNPRINTF(SR_D_META, "%s: sr_meta_exists %d\n", DEVNAME(sc), mc);
+
+	/* return nr of chunks that contain metadata */
+	return (mc);
+}
+
+int
 sr_save_metadata(struct sr_discipline *sd)
 {
 	struct sr_softc		*sc = sd->sd_sc;
@@ -1804,7 +1873,7 @@ sr_save_metadata(struct sr_discipline *sd)
 	if (sizeof(struct sr_metadata) + sizeof(struct sr_vol_meta) +
 	    (sizeof(struct sr_chunk_meta) * sd->sd_vol.sv_meta.svm_no_chunk) >
 	    sz) {
-		printf("%s: too much metadata.  Metadata NOT written to disk\n",
+		printf("%s: too much metadata; metadata NOT written\n",
 		    DEVNAME(sc));
 		goto bad;
 	}
@@ -1823,7 +1892,6 @@ sr_save_metadata(struct sr_discipline *sd)
 		    sizeof(im_sv->svm_uuid));
 		sm->ssd_vd_ver = SR_VOL_VERSION;
 		sm->ssd_vd_size = sizeof(struct sr_vol_meta);
-
 
 		/* chunk */
 		for (i = 0; i < sd->sd_vol.sv_meta.svm_no_chunk; i++) {
