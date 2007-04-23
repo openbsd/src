@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.33 2007/04/22 13:02:56 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.34 2007/04/23 17:06:10 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -54,7 +54,7 @@ uint32_t	sr_debug = 0
 		    /* | SR_D_IOCTL */
 		    /* | SR_D_CCB */
 		    /* | SR_D_WU */
-		    | SR_D_META
+		    /* | SR_D_META */
 		    /* | SR_D_DIS */
 		    /* | SR_D_STATE */
 		;
@@ -752,10 +752,12 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 		if (ch_entry->src_meta.scm_size < min_chunk_sz)
 			min_chunk_sz = ch_entry->src_meta.scm_size;
 	}
+	SLIST_FOREACH(ch_entry, cl, src_link)
+			ch_entry->src_meta.scm_coerced_size = min_chunk_sz;
 	/* whine if chunks are not the same size */
 	if (min_chunk_sz != max_chunk_sz)
-		printf("%s: chunk sizes are not equal.  Wasted blocks per "
-		    "chunk: %llu\n",
+		printf("%s: chunk sizes are not equal; up to %llu blocks "
+		    "wasted per chunk\n",
 		    DEVNAME(sc), max_chunk_sz - min_chunk_sz);
 
 	switch (bc->bc_level) {
@@ -769,8 +771,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 		sd->sd_max_wu = SR_RAID1_NOWU;
 		strlcpy(sd->sd_name, "RAID 1", sizeof(sd->sd_name));
 		vol_size = min_chunk_sz;
-
-		/* XXX coerce all chunks here */
 
 		/* setup pointers */
 		sd->sd_alloc_resources = sr_raid1_alloc_resources;
