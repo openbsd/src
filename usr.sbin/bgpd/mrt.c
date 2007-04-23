@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.52 2007/02/12 19:15:14 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.53 2007/04/23 13:04:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -120,10 +120,10 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 	}
 
 	if (!incoming)
-		DUMP_SHORT(buf, bgp->as);
-	DUMP_SHORT(buf, peer->conf.remote_as);
+		DUMP_SHORT(buf, bgp->short_as);
+	DUMP_SHORT(buf, peer->short_as);
 	if (incoming)
-		DUMP_SHORT(buf, bgp->as);
+		DUMP_SHORT(buf, bgp->short_as);
 	DUMP_SHORT(buf, /* ifindex */ 0);
 	switch (peer->sa_local.ss_family) {
 	case AF_INET:
@@ -206,8 +206,8 @@ mrt_dump_state(struct mrt *mrt, u_int16_t old_state, u_int16_t new_state,
 		return (-1);
 	}
 
-	DUMP_SHORT(buf, bgp->as);
-	DUMP_SHORT(buf, peer->conf.remote_as);
+	DUMP_SHORT(buf, bgp->short_as);
+	DUMP_SHORT(buf, peer->short_as);
 	DUMP_SHORT(buf, /* ifindex */ 0);
 	switch (peer->sa_local.ss_family) {
 	case AF_INET:
@@ -376,7 +376,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	}
 
 	DUMP_SHORT(buf, rde_local_as());
-	DUMP_SHORT(buf, peer->conf.remote_as);
+	DUMP_SHORT(buf, peer->short_as);
 	DUMP_SHORT(buf, /* ifindex */ 0);
 
 	switch (af) {
@@ -492,7 +492,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	DUMP_BYTE(buf, 1);		/* state */
 	DUMP_LONG(buf, p->lastchange);	/* originated */
 	DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
-	DUMP_SHORT(buf, peer->conf.remote_as);
+	DUMP_SHORT(buf, peer->short_as);
 
 	DUMP_SHORT(buf, attr_len);
 	if ((bptr = buf_reserve(buf, attr_len)) == NULL) {

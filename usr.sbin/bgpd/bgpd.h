@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.215 2007/03/28 12:33:32 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.216 2007/04/23 13:04:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -165,7 +165,8 @@ struct bgpd_config {
 	u_int					 rtableid;
 	u_int32_t				 bgpid;
 	u_int32_t				 clusterid;
-	u_int16_t				 as;
+	u_int32_t				 as;
+	u_int16_t				 short_as;
 	u_int16_t				 holdtime;
 	u_int16_t				 min_holdtime;
 };
@@ -224,6 +225,7 @@ struct capabilities {
 	u_int8_t	mp_v6;
 	u_int8_t	refresh;	/* route refresh, RFC 2918 */
 	u_int8_t	restart;	/* draft-ietf-idr-restart */
+	u_int8_t	as4byte;
 };
 
 struct peer_config {
@@ -237,12 +239,12 @@ struct peer_config {
 	char			 demote_group[IFNAMSIZ];
 	u_int32_t		 id;
 	u_int32_t		 groupid;
+	u_int32_t		 remote_as;
 	u_int32_t		 max_prefix;
 	enum announce_type	 announce_type;
 	enum enforce_as		 enforce_as;
 	enum reconf_action	 reconf_action;
 	u_int16_t		 max_prefix_restart;
-	u_int16_t		 remote_as;
 	u_int16_t		 holdtime;
 	u_int16_t		 min_holdtime;
 	u_int8_t		 template;
@@ -459,6 +461,7 @@ struct session_up {
 	struct capabilities	capa_announced;
 	struct capabilities	capa_received;
 	u_int32_t		remote_bgpid;
+	u_int16_t		short_as;
 };
 
 struct pftable_msg {
@@ -531,7 +534,7 @@ enum as_spec {
 
 struct filter_as {
 	enum as_spec	type;
-	u_int16_t	as;
+	u_int32_t	as;
 };
 
 struct filter_community {
@@ -696,6 +699,9 @@ struct rde_memstats {
 #define	SAFI_MULTICAST	0x02
 #define	SAFI_ALL	0xff
 
+/* 4-byte magic AS number */
+#define AS_TRANS	23456
+
 /* prototypes */
 /* bgpd.c */
 void		 send_nexthop_update(struct kroute_nexthop *);
@@ -798,7 +804,8 @@ const char	*filterset_name(enum action_types);
 /* util.c */
 const char	*log_addr(const struct bgpd_addr *);
 const char	*log_in6addr(const struct in6_addr *);
-const char *	 log_sockaddr(struct sockaddr *);
+const char	*log_sockaddr(struct sockaddr *);
+const char	*log_as(u_int32_t);
 int		 aspath_snprint(char *, size_t, void *, u_int16_t);
 int		 aspath_asprint(char **, void *, u_int16_t);
 size_t		 aspath_strlen(void *, u_int16_t);

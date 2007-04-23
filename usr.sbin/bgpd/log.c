@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.49 2007/02/25 12:02:40 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.50 2007/04/23 13:04:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,7 +33,6 @@
 
 int	debug;
 
-char	*log_fmt_peer(const struct peer_config *);
 void	 logit(int, const char *, ...);
 
 char *

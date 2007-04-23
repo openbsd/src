@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.56 2007/04/06 18:03:51 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.57 2007/04/23 13:04:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -610,12 +610,12 @@ int
 up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
     struct rde_aspath *a, sa_family_t af)
 {
-	struct aspath	*path;
 	struct attr	*oa;
-	u_int32_t	 tmp32;
+	u_char		*pdata;
+	u_int32_t	 tmp32, aggr_as;
 	in_addr_t	 nexthop;
-	int		 r, ismp = 0;
-	u_int16_t	 len = sizeof(up_attr_buf), wlen = 0;
+	int		 r, ismp = 0, neednewpath = 0, neednewaggr = 0;
+	u_int16_t	 len = sizeof(up_attr_buf), wlen = 0, plen;
 	u_int8_t	 l;
 
 	/* origin */
@@ -627,15 +627,18 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	/* aspath */
 	if (!peer->conf.ebgp ||
 	    rde_decisionflags() & BGPD_FLAG_DECISION_TRANS_AS)
-		path = aspath_prepend(a->aspath, rde_local_as(), 0);
+		pdata = aspath_prepend(a->aspath, rde_local_as(), 0, &plen);
 	else
-		path = aspath_prepend(a->aspath, rde_local_as(), 1);
+		pdata = aspath_prepend(a->aspath, rde_local_as(), 1, &plen);
+
+	if (!rde_as4byte(peer))
+		pdata = aspath_deflate(pdata, &plen, &neednewpath);
 
 	if ((r = attr_write(up_attr_buf + wlen, len, ATTR_WELL_KNOWN,
-	    ATTR_ASPATH, path->data, path->len)) == -1)
+	    ATTR_ASPATH, pdata, plen)) == -1)
 		return (-1);
-	aspath_put(path);
 	wlen += r; len -= r;
+	free(pdata);
 
 	switch (af) {
 	case AF_INET:
@@ -676,6 +679,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	 * dump all other path attributes. Following rules apply:
 	 *  1. well-known attrs: ATTR_ATOMIC_AGGREGATE and ATTR_AGGREGATOR
 	 *     pass unmodified (enforce flags to correct values)
+	 *     Actually ATTR_AGGREGATOR may be deflated for OLD 2-byte peers.
 	 *  2. non-transitive attrs: don't re-announce to ebgp peers
 	 *  3. transitive known attrs: announce unmodified
 	 *  4. transitive unknown attrs: set partial bit and re-announce
@@ -691,6 +695,34 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 				return (-1);
 			break;
 		case ATTR_AGGREGATOR:
+			if (!rde_as4byte(peer)) {
+				/* need to deflate the aggregator */
+				u_int8_t	t[6];
+				u_int16_t	tas;
+
+				if ((!(oa->flags & ATTR_TRANSITIVE)) &&
+				    peer->conf.ebgp != 0) {
+					r = 0;
+					break;
+				}
+
+				memcpy(&aggr_as, oa->data, sizeof(aggr_as));
+				if (htonl(aggr_as) > USHRT_MAX) {
+					tas = htons(AS_TRANS);
+					neednewaggr = 1;
+				} else
+					tas = htons(ntohl(aggr_as));
+
+				memcpy(t, &tas, sizeof(tas));
+				memcpy(t + sizeof(tas),
+				    oa->data + sizeof(aggr_as),
+				    oa->len - sizeof(aggr_as));
+				if ((r = attr_write(up_attr_buf + wlen, len,
+				    oa->flags, oa->type, &t, sizeof(t))) == -1)
+					return (-1);
+				break;
+			}
+			/* FALLTHROUGH */
 		case ATTR_COMMUNITIES:
 		case ATTR_ORIGINATOR_ID:
 		case ATTR_CLUSTER_LIST:
@@ -721,6 +753,32 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 				return (-1);
 			break;
 		}
+		wlen += r; len -= r;
+	}
+
+	/* NEW to OLD conversion when going sending stuff to a 2byte AS peer */
+	if (neednewpath) {
+		if (!peer->conf.ebgp ||
+		    rde_decisionflags() & BGPD_FLAG_DECISION_TRANS_AS)
+			pdata = aspath_prepend(a->aspath, rde_local_as(), 0,
+			    &plen);
+		else
+			pdata = aspath_prepend(a->aspath, rde_local_as(), 1,
+			    &plen);
+		if (plen == 0)
+			r = 0;
+		else if ((r = attr_write(up_attr_buf + wlen, len,
+		    ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_NEW_ASPATH,
+		    pdata, plen)) == -1)
+			return (-1);
+		wlen += r; len -= r;
+		free(pdata);
+	}
+	if (neednewaggr) {
+		if ((r = attr_write(up_attr_buf + wlen, len,
+		    ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_NEW_AGGREGATOR,
+		    &aggr_as, sizeof(aggr_as))) == -1)
+			return (-1);
 		wlen += r; len -= r;
 	}
 

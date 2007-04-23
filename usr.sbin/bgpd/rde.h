@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.98 2007/04/06 18:03:51 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.99 2007/04/23 13:04:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -73,6 +73,7 @@ struct rde_peer {
 	u_int32_t			 up_nlricnt;
 	u_int32_t			 up_wcnt;
 	enum peer_state			 state;
+	u_int16_t			 short_as;
 	u_int8_t			 reconf_in;	/* in filter changed */
 	u_int8_t			 reconf_out;	/* out filter changed */
 };
@@ -104,7 +105,9 @@ enum attrtypes {
 	ATTR_ORIGINATOR_ID,
 	ATTR_CLUSTER_LIST,
 	ATTR_MP_REACH_NLRI=14,
-	ATTR_MP_UNREACH_NLRI=15
+	ATTR_MP_UNREACH_NLRI=15,
+	ATTR_NEW_ASPATH=17,
+	ATTR_NEW_AGGREGATOR=18
 };
 
 /* attribute flags. 4 low order bits reserved */
@@ -142,22 +145,23 @@ struct path_table {
 
 LIST_HEAD(prefix_head, prefix);
 
-#define	F_ATTR_ORIGIN		0x0001
-#define	F_ATTR_ASPATH		0x0002
-#define	F_ATTR_NEXTHOP		0x0004
-#define	F_ATTR_LOCALPREF	0x0008
-#define	F_ATTR_MED		0x0010
-#define	F_ATTR_MED_ANNOUNCE	0x0020
-#define	F_ATTR_MP_REACH		0x0040
-#define	F_ATTR_MP_UNREACH	0x0080
-#define	F_PREFIX_ANNOUNCED	0x0100
-#define	F_NEXTHOP_REJECT	0x0200
-#define	F_NEXTHOP_BLACKHOLE	0x0400
-#define	F_NEXTHOP_NOMODIFY	0x0800
-#define	F_NEXTHOP_SELF		0x1000
-#define	F_ATTR_LINKED		0x2000
-#define	F_LOCAL			0x4000	/* Local-RIB */
-#define	F_ORIGINAL		0x8000	/* Adj-RIB-In */
+#define	F_ATTR_ORIGIN		0x00001
+#define	F_ATTR_ASPATH		0x00002
+#define	F_ATTR_NEXTHOP		0x00004
+#define	F_ATTR_LOCALPREF	0x00008
+#define	F_ATTR_MED		0x00010
+#define	F_ATTR_MED_ANNOUNCE	0x00020
+#define	F_ATTR_MP_REACH		0x00040
+#define	F_ATTR_MP_UNREACH	0x00080
+#define	F_ATTR_AS4BYTE_NEW	0x00100	/* NEW_ASPATH or NEW_AGGREGATOR */
+#define	F_PREFIX_ANNOUNCED	0x01000
+#define	F_NEXTHOP_REJECT	0x02000
+#define	F_NEXTHOP_BLACKHOLE	0x04000
+#define	F_NEXTHOP_NOMODIFY	0x08000
+#define	F_NEXTHOP_SELF		0x10000
+#define	F_ATTR_LINKED		0x20000
+#define	F_LOCAL			0x40000	/* Local-RIB */
+#define	F_ORIGINAL		0x80000	/* Adj-RIB-In */
 
 
 #define ORIGIN_IGP		0
@@ -179,9 +183,9 @@ struct rde_aspath {
 	u_int32_t			 prefix_cnt; /* # of prefixes */
 	u_int32_t			 active_cnt; /* # of active prefixes */
 	u_int32_t			 adjrib_cnt; /* # of p. in Adj-RIB-In */
+	u_int32_t			 flags;		/* internally used */
 	u_int16_t			 rtlabelid;	/* route label id */
 	u_int16_t			 pftableid;	/* pf table id */
-	u_int16_t			 flags;		/* internally used */
 	u_int8_t			 origin;
 	u_int8_t			 others_len;
 };
@@ -277,9 +281,10 @@ void		 rde_send_pftable(u_int16_t, struct bgpd_addr *,
 void		 rde_send_pftable_commit(void);
 
 void		 rde_generate_updates(struct prefix *, struct prefix *);
-u_int16_t	 rde_local_as(void);
+u_int32_t	 rde_local_as(void);
 int		 rde_noevaluate(void);
 int		 rde_decisionflags(void);
+int		 rde_as4byte(struct rde_peer *);
 
 /* rde_attr.c */
 int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,
@@ -296,7 +301,7 @@ void		 attr_free(struct rde_aspath *, struct attr *);
 #define		 attr_optlen(x)	\
     ((x)->len > 255 ? (x)->len + 4 : (x)->len + 3)
 
-int		 aspath_verify(void *, u_int16_t);
+int		 aspath_verify(void *, u_int16_t, int);
 #define		 AS_ERR_LEN	-1
 #define		 AS_ERR_TYPE	-2
 #define		 AS_ERR_BAD	-3
@@ -304,14 +309,17 @@ void		 aspath_init(u_int32_t);
 void		 aspath_shutdown(void);
 struct aspath	*aspath_get(void *, u_int16_t);
 void		 aspath_put(struct aspath *);
+u_char		*aspath_inflate(void *, u_int16_t, u_int16_t *);
+u_char		*aspath_deflate(u_char *, u_int16_t *, int *);
+void		 aspath_merge(struct rde_aspath *, struct attr *);
 u_char		*aspath_dump(struct aspath *);
 u_int16_t	 aspath_length(struct aspath *);
 u_int16_t	 aspath_count(const void *, u_int16_t);
-u_int16_t	 aspath_neighbor(struct aspath *);
-int		 aspath_loopfree(struct aspath *, u_int16_t);
+u_int32_t	 aspath_neighbor(struct aspath *);
+int		 aspath_loopfree(struct aspath *, u_int32_t);
 int		 aspath_compare(struct aspath *, struct aspath *);
-struct aspath	*aspath_prepend(struct aspath *, u_int16_t, int);
-int		 aspath_match(struct aspath *, enum as_spec, u_int16_t);
+u_char		*aspath_prepend(struct aspath *, u_int32_t, int, u_int16_t *);
+int		 aspath_match(struct aspath *, enum as_spec, u_int32_t);
 int		 community_match(void *, u_int16_t, int, int);
 int		 community_set(struct rde_aspath *, int, int);
 void		 community_delete(struct rde_aspath *, int, int);
@@ -403,6 +411,6 @@ int		 rde_filter_equal(struct filter_head *, struct filter_head *,
 		     struct rde_peer *, enum directions);
 
 /* util.c */
-u_int16_t	 aspath_extract(const void *, int);
+u_int32_t	 aspath_extract(const void *, int);
 
 #endif /* __RDE_H__ */

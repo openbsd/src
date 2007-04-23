@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.50 2006/05/28 23:24:15 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.51 2007/04/23 13:04:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -74,9 +74,10 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
     sa_family_t af, struct rde_peer *from, struct rde_peer *peer)
 {
 	struct filter_set	*set;
-	struct aspath		*new;
+	u_char			*np;
 	int			 as, type;
-	u_int16_t		 prep_as;
+	u_int32_t		 prep_as;
+	u_int16_t		 nl;
 	u_int8_t		 prepend;
 
 	if (asp == NULL)
@@ -141,20 +142,22 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 			}
 			break;
 		case ACTION_SET_PREPEND_SELF:
-			as = rde_local_as();
+			prep_as = rde_local_as();
 			prepend = set->action.prepend;
-			new = aspath_prepend(asp->aspath, as, prepend);
+			np = aspath_prepend(asp->aspath, prep_as, prepend, &nl);
 			aspath_put(asp->aspath);
-			asp->aspath = new;
+			asp->aspath = aspath_get(np, nl);
+			free(np);
 			break;
 		case ACTION_SET_PREPEND_PEER:
 			if (from == NULL)
 				break;
 			prep_as = from->conf.remote_as;
 			prepend = set->action.prepend;
-			new = aspath_prepend(asp->aspath, prep_as, prepend);
+			np = aspath_prepend(asp->aspath, prep_as, prepend, &nl);
 			aspath_put(asp->aspath);
-			asp->aspath = new;
+			asp->aspath = aspath_get(np, nl);
+			free(np);
 			break;
 		case ACTION_SET_NEXTHOP:
 		case ACTION_SET_NEXTHOP_REJECT:

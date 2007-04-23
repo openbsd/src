@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.91 2007/04/06 18:03:51 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.92 2007/04/23 13:04:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -104,7 +104,8 @@ enum capa_codes {
 	CAPA_NONE,
 	CAPA_MP,
 	CAPA_REFRESH,
-	CAPA_RESTART = 64
+	CAPA_RESTART = 64,
+	CAPA_AS4BYTE = 65
 };
 
 struct bgp_msg {
@@ -194,6 +195,7 @@ struct peer {
 	u_int32_t		 remote_bgpid;
 	enum session_state	 state;
 	enum session_state	 prev_state;
+	u_int16_t		 short_as;
 	u_int16_t		 holdtime;
 	u_int8_t		 depend_ok;
 	u_int8_t		 demoted;
@@ -215,6 +217,7 @@ int		 imsg_compose_parent(int, pid_t, void *, u_int16_t);
 int		 imsg_compose_rde(int, pid_t, void *, u_int16_t);
 
 /* log.c */
+char		*log_fmt_peer(const struct peer_config *);
 void		 log_statechange(struct peer *, enum session_state,
 		    enum session_events);
 void		 log_notification(const struct peer *, u_int8_t, u_int8_t,

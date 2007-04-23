@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.203 2007/04/17 17:17:45 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.204 2007/04/23 13:04:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -172,8 +172,8 @@ typedef struct {
 %token	IPV4 IPV6
 %token	QUALIFY VIA
 %token	<v.string>		STRING
-%type	<v.number>		number asnumber optnumber yesno inout espah
-%type	<v.number>		family restart
+%type	<v.number>		number asnumber as4number optnumber yesno inout
+%type	<v.number>		espah family restart
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
@@ -224,7 +224,44 @@ asnumber	: number			{
 			}
 		}
 
-string		: string STRING				{
+as4number	: STRING			{
+			const char	*errstr;
+			char		*dot;
+			u_int32_t	 uvalh = 0, uval;
+
+			if ((dot = strchr($1,'.')) != NULL) {
+				*dot++ = '\0';
+				uvalh = strtonum($1, 0, USHRT_MAX, &errstr);
+				if (errstr) {
+					yyerror("number %s is %s", $1, errstr);
+					free($1);
+					YYERROR;
+				}
+				uval = strtonum(dot, 0, USHRT_MAX, &errstr);
+				if (errstr) {
+					yyerror("number %s is %s", dot, errstr);
+					free($1);
+					YYERROR;
+				}
+				free($1);
+			} else {
+				uval = strtonum($1, 0, USHRT_MAX - 1, &errstr);
+				if (errstr) {
+					yyerror("number %s is %s", $1, errstr);
+					free($1);
+					YYERROR;
+				}
+				free($1);
+			}
+			if (uvalh == 0 && uval == AS_TRANS) {
+				yyerror("AS %u is reserved and may not be used",
+				    AS_TRANS);
+				YYERROR;
+			}
+			$$ = uval | (uvalh << 16);
+		}
+
+string		: string STRING			{
 			if (asprintf(&$$, "%s %s", $1, $2) == -1)
 				fatal("string: asprintf");
 			free($1);
@@ -233,7 +270,7 @@ string		: string STRING				{
 		| STRING
 		;
 
-yesno		:  STRING		{
+yesno		:  STRING			{
 			if (!strcmp($1, "yes"))
 				$$ = 1;
 			else if (!strcmp($1, "no"))
@@ -256,7 +293,7 @@ varset		: STRING '=' string		{
 		}
 		;
 
-include		: INCLUDE STRING	{
+include		: INCLUDE STRING		{
 			struct file	*nfile;
 
 			if ((nfile = include_file($2)) == NULL) {
@@ -271,8 +308,16 @@ include		: INCLUDE STRING	{
 		}
 		;
 
-conf_main	: AS asnumber		{
+conf_main	: AS as4number		{
 			conf->as = $2;
+			if ($2 > USHRT_MAX)
+				conf->short_as = AS_TRANS;
+			else
+				conf->short_as = $2;
+		}
+		| AS as4number asnumber {
+			conf->as = $2;
+			conf->short_as = $3;
 		}
 		| ROUTERID address		{
 			if ($2.af != AF_INET) {
@@ -654,7 +699,7 @@ peeroptsl	: peeropts nl
 		| error nl
 		;
 
-peeropts	: REMOTEAS asnumber	{
+peeropts	: REMOTEAS as4number	{
 			curpeer->conf.remote_as = $2;
 		}
 		| DESCR string		{
@@ -1214,7 +1259,7 @@ filter_as_l	: filter_as
 		}
 		;
 
-filter_as	: asnumber		{
+filter_as	: as4number		{
 			if (($$ = calloc(1, sizeof(struct filter_as_l))) ==
 			    NULL)
 				fatal(NULL);
@@ -2250,6 +2295,7 @@ alloc_peer(void)
 	p->conf.capabilities.mp_v6 = SAFI_NONE;
 	p->conf.capabilities.refresh = 1;
 	p->conf.capabilities.restart = 0;
+	p->conf.capabilities.as4byte = 0;
 	p->conf.softreconfig_in = 1;
 	p->conf.softreconfig_out = 1;
 
@@ -2510,6 +2556,10 @@ neighbor_consistent(struct peer *p)
 		yyerror("AS needs to be given before neighbor definitions");
 		return (-1);
 	}
+
+	/* for testing: enable 4-byte AS number capability if necessary */
+	if (conf->as > USHRT_MAX || p->conf.remote_as > USHRT_MAX)
+		p->conf.capabilities.as4byte = 1;
 
 	/* set default values if they where undefined */
 	p->conf.ebgp = (p->conf.remote_as != conf->as);

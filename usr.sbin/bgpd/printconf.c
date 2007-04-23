@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.61 2007/03/29 13:09:26 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.62 2007/04/23 13:04:24 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -176,9 +176,11 @@ print_mainconf(struct bgpd_config *conf)
 	struct in_addr		 ina;
 	struct listen_addr	*la;
 
-	printf("AS %u\n", conf->as);
+	printf("AS %s", log_as(conf->as));
+	if (conf->as > USHRT_MAX && conf->short_as != AS_TRANS)
+		printf(" %u", conf->short_as);
 	ina.s_addr = conf->bgpid;
-	printf("router-id %s\n", inet_ntoa(ina));
+	printf("\nrouter-id %s\n", inet_ntoa(ina));
 	if (conf->holdtime)
 		printf("holdtime %u\n", conf->holdtime);
 	if (conf->min_holdtime)
@@ -270,7 +272,7 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 	if (p->descr[0])
 		printf("%s\tdescr \"%s\"\n", c, p->descr);
 	if (p->remote_as)
-		printf("%s\tremote-as %u\n", c, p->remote_as);
+		printf("%s\tremote-as %s\n", c, log_as(p->remote_as));
 	if (p->distance > 1)
 		printf("%s\tmultihop %u\n", c, p->distance);
 	if (p->passive)
@@ -469,15 +471,15 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 
 	if (r->match.as.type) {
 		if (r->match.as.type == AS_ALL)
-			printf("AS %u ", r->match.as.as);
+			printf("AS %s ", log_as(r->match.as.as));
 		else if (r->match.as.type == AS_SOURCE)
-			printf("source-as %u ", r->match.as.as);
+			printf("source-as %s ", log_as(r->match.as.as));
 		else if (r->match.as.type == AS_TRANSIT)
-			printf("transit-as %u ", r->match.as.as);
+			printf("transit-as %s ", log_as(r->match.as.as));
 		else if (r->match.as.type == AS_PEER)
-			printf("peer-as %u ", r->match.as.as);
+			printf("peer-as %s ", log_as(r->match.as.as));
 		else
-			printf("unfluffy-as %u ", r->match.as.as);
+			printf("unfluffy-as %s ", log_as(r->match.as.as));
 	}
 
 	if (r->match.community.as != 0) {
