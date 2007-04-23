@@ -68,7 +68,7 @@ sysbutton_attach(struct device *parent, struct device *self, void *aux)
 	OF_getprop(sc->sc_node, "interrupts", intr, sizeof(intr));
 	sc->sc_intr = intr[0];
 
-	printf(": irg %d\n", sc->sc_intr);
+	printf(": irq %d\n", sc->sc_intr);
 
 	mac_intr_establish(parent, sc->sc_intr, IST_LEVEL,
 	    IPL_NONE, sysbutton_intr, sc, sc->sc_dev.dv_xname);
