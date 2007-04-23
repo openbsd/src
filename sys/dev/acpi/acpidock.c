@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.22 2007/04/22 21:02:25 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.23 2007/04/23 17:38:30 mk Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -98,15 +98,15 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensdev.xname));
 	if (sc->sc_docked)
-		strlcpy(sc->sc_sens[0].desc, "docked",
-		    sizeof(sc->sc_sens[0].desc));
+		strlcpy(sc->sc_sens.desc, "docked",
+		    sizeof(sc->sc_sens.desc));
 	else
-		strlcpy(sc->sc_sens[0].desc, "not docked",
-		    sizeof(sc->sc_sens[0].desc));
+		strlcpy(sc->sc_sens.desc, "not docked",
+		    sizeof(sc->sc_sens.desc));
 
-	sc->sc_sens[0].type = SENSOR_INDICATOR;
-	sc->sc_sens[0].value = sc->sc_docked == ACPIDOCK_STATUS_DOCKED;
-	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[0]);
+	sc->sc_sens.type = SENSOR_INDICATOR;
+	sc->sc_sens.value = sc->sc_docked == ACPIDOCK_STATUS_DOCKED;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens);
 	sensordev_install(&sc->sc_sensdev);
 
 	TAILQ_INIT(&sc->sc_deps_h);
@@ -246,13 +246,13 @@ acpidock_notify(struct aml_node *node, int notify_type, void *arg)
 	}
 
 	acpidock_status(sc);
-	sc->sc_sens[0].value = sc->sc_docked == ACPIDOCK_STATUS_DOCKED;
+	sc->sc_sens.value = sc->sc_docked == ACPIDOCK_STATUS_DOCKED;
 	if (sc->sc_docked)
-		strlcpy(sc->sc_sens[0].desc, "docked",
-		    sizeof(sc->sc_sens[0].desc));
+		strlcpy(sc->sc_sens.desc, "docked",
+		    sizeof(sc->sc_sens.desc));
 	else
-		strlcpy(sc->sc_sens[0].desc, "not docked",
-		    sizeof(sc->sc_sens[0].desc));
+		strlcpy(sc->sc_sens.desc, "not docked",
+		    sizeof(sc->sc_sens.desc));
 
 	printf(": status %s\n",
 	    sc->sc_docked == ACPIDOCK_STATUS_DOCKED ? "docked" : "undocked");
