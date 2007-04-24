@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.17 2007/04/07 23:59:58 krw Exp $ */
+/* $OpenBSD: if_bce.c,v 1.18 2007/04/24 10:04:58 reyk Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -164,27 +164,27 @@ do {									\
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);			\
 } while (/* CONSTCOND */ 0)
 
-static	int	bce_probe(struct device *, void *, void *);
-static	void	bce_attach(struct device *, struct device *, void *);
-static	int	bce_ioctl(struct ifnet *, u_long, caddr_t);
-static	void	bce_start(struct ifnet *);
-static	void	bce_watchdog(struct ifnet *);
-static	int	bce_intr(void *);
-static	void	bce_rxintr(struct bce_softc *);
-static	void	bce_txintr(struct bce_softc *);
-static	int	bce_init(struct ifnet *);
-static	void	bce_add_mac(struct bce_softc *, u_int8_t *, unsigned long);
-static	int	bce_add_rxbuf(struct bce_softc *, int);
-static	void	bce_rxdrain(struct bce_softc *);
-static	void	bce_stop(struct ifnet *, int);
-static	void	bce_reset(struct bce_softc *);
-static	void	bce_set_filter(struct ifnet *);
-static	int	bce_mii_read(struct device *, int, int);
-static	void	bce_mii_write(struct device *, int, int, int);
-static	void	bce_statchg(struct device *);
-static	int	bce_mediachange(struct ifnet *);
-static	void	bce_mediastatus(struct ifnet *, struct ifmediareq *);
-static	void	bce_tick(void *);
+int	bce_probe(struct device *, void *, void *);
+void	bce_attach(struct device *, struct device *, void *);
+int	bce_ioctl(struct ifnet *, u_long, caddr_t);
+void	bce_start(struct ifnet *);
+void	bce_watchdog(struct ifnet *);
+int	bce_intr(void *);
+void	bce_rxintr(struct bce_softc *);
+void	bce_txintr(struct bce_softc *);
+int	bce_init(struct ifnet *);
+void	bce_add_mac(struct bce_softc *, u_int8_t *, unsigned long);
+int	bce_add_rxbuf(struct bce_softc *, int);
+void	bce_rxdrain(struct bce_softc *);
+void	bce_stop(struct ifnet *, int);
+void	bce_reset(struct bce_softc *);
+void	bce_set_filter(struct ifnet *);
+int	bce_mii_read(struct device *, int, int);
+void	bce_mii_write(struct device *, int, int, int);
+void	bce_statchg(struct device *);
+int	bce_mediachange(struct ifnet *);
+void	bce_mediastatus(struct ifnet *, struct ifmediareq *);
+void	bce_tick(void *);
 
 #define BCE_DEBUG
 #ifdef BCE_DEBUG
@@ -431,7 +431,7 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 }
 
 /* handle media, and ethernet requests */
-static int
+int
 bce_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct bce_softc *sc = ifp->if_softc;
@@ -513,7 +513,7 @@ bce_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 /* Start packet transmission on the interface. */
-static void
+void
 bce_start(struct ifnet *ifp)
 {
 	struct bce_softc *sc = ifp->if_softc;
@@ -644,7 +644,7 @@ bce_start(struct ifnet *ifp)
 }
 
 /* Watchdog timer handler. */
-static void
+void
 bce_watchdog(struct ifnet *ifp)
 {
 	struct bce_softc *sc = ifp->if_softc;
@@ -888,7 +888,7 @@ bce_txintr(struct bce_softc *sc)
 }
 
 /* initialize the interface */
-static int
+int
 bce_init(struct ifnet *ifp)
 {
 	struct bce_softc *sc = ifp->if_softc;
@@ -1047,7 +1047,7 @@ bce_add_mac(struct bce_softc *sc, u_int8_t *mac, unsigned long idx)
 }
 
 /* Add a receive buffer to the indiciated descriptor. */
-static int
+int
 bce_add_rxbuf(struct bce_softc *sc, int idx)
 {
 	struct mbuf    *m;
@@ -1084,7 +1084,7 @@ bce_add_rxbuf(struct bce_softc *sc, int idx)
 }
 
 /* Drain the receive queue. */
-static void
+void
 bce_rxdrain(struct bce_softc *sc)
 {
 	int             i;
@@ -1100,7 +1100,7 @@ bce_rxdrain(struct bce_softc *sc)
 }
 
 /* Stop transmission on the interface */
-static void
+void
 bce_stop(struct ifnet *ifp, int disable)
 {
 	struct bce_softc *sc = ifp->if_softc;
@@ -1153,7 +1153,7 @@ bce_stop(struct ifnet *ifp, int disable)
 }
 
 /* reset the chip */
-static void
+void
 bce_reset(struct bce_softc *sc)
 {
 	u_int32_t val;
@@ -1475,7 +1475,7 @@ bce_mediachange(struct ifnet *ifp)
 }
 
 /* Get the current interface media status */
-static void
+void
 bce_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct bce_softc *sc = ifp->if_softc;
@@ -1486,7 +1486,7 @@ bce_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 /* One second timer, checks link status */
-static void
+void
 bce_tick(void *v)
 {
 	struct bce_softc *sc = v;
