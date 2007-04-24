@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.106 2007/04/14 13:34:44 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.107 2007/04/24 13:36:30 sobrado Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004-2007 Xavier Santolaria <xsa@openbsd.org>
@@ -225,7 +225,7 @@ command alone; the
 .Ic commit
 command is not necessary.
 .Bd -literal -offset indent
-Usage: cvs add [-k mode] [-m msg] file ...
+usage: cvs add [-k mode] [-m msg] file ...
 .Ed
 .Pp
 The
@@ -248,7 +248,7 @@ The
 .Ic admin
 command is used to directly modify the RCS files.
 .Bd -literal -offset indent
-Usage: cvs admin [-Iq] [-b branch] [-k mode] [-m rev:msg]
+usage: cvs admin [-Iq] [-b branch] [-k mode] [-m rev:msg]
                  [-N tag[:rev]] [-n tag[:rev]] [-o rev]
                  [-s state[:rev]] [-t file | str]
 .Ed
@@ -348,7 +348,7 @@ last revision.
 The information given is the last revision when a modification occurred,
 the author's name, and the date of the revision.
 .Bd -literal -offset indent
-Usage: cvs annotate [flR] [-D date | -r rev] [file ...]
+usage: cvs annotate [flR] [-D date | -r rev] [file ...]
 .Ed
 .Pp
 The
@@ -389,7 +389,7 @@ The
 command is used to create a local copy of one or more modules present on the
 target CVS repository.
 .Bd -literal -offset indent
-Usage: cvs checkout [-AcflNnPpRs] [-d dir] [-j rev] [-k mode]
+usage: cvs checkout [-AcflNnPpRs] [-d dir] [-j rev] [-k mode]
                     -D date | -r rev module ...
 .Ed
 .Pp
@@ -467,7 +467,7 @@ The
 command is used to send local changes back to the server and update the
 repository's information to reflect the changes.
 .Bd -literal -offset indent
-Usage: cvs commit [-flnR] [-F logfile | -m msg] [-r rev] [file ...]
+usage: cvs commit [-flnR] [-F logfile | -m msg] [-r rev] [file ...]
 .Ed
 .Pp
 The
@@ -507,7 +507,7 @@ command is very similar to the
 program, except that the differential comparisons that it generates are
 between local or remote revisions of files stored in the CVS repository.
 .Bd -literal -offset indent
-Usage: cvs diff [-cilNnpRu]
+usage: cvs diff [-cilNnpRu]
                 [[-D date1 | -r rev1] [-D date2 | -r rev2]]
                 [-k mode] [file ...]
 .Ed
@@ -591,7 +591,7 @@ Editing rights on the file can be given up using the
 .Ic unedit
 command, which terminates the temporary notifications.
 .Bd -literal -offset indent
-Usage: cvs edit [-lR] [-a action] [file ...]
+usage: cvs edit [-lR] [-a action] [file ...]
 .Ed
 .Pp
 The
@@ -641,7 +641,7 @@ The e-mail address of the user editing the file, the timestamp
 when the edition first started, the host from where the edition
 has been requested and the path to the edited file are listed.
 .Bd -literal -offset indent
-Usage: cvs editors [-lR] [file ...]
+usage: cvs editors [-lR] [file ...]
 .Ed
 .Pp
 The
@@ -670,7 +670,7 @@ options as the release.
 The checked out module's files will be placed in a directory
 bearing the same name as the checked out module, by default.
 .Bd -literal -offset indent
-Usage: cvs export [-flNnR] [-d dir] [-k mode]
+usage: cvs export [-flNnR] [-d dir] [-k mode]
                   -D date | -r rev module ...
 .Ed
 .Pp
@@ -745,7 +745,7 @@ and
 .Ic update
 commands are logged into this file.
 .Bd -literal -offset indent
-Usage: cvs history [-aceloTw] [-b str] [-D date] [-f file]
+usage: cvs history [-aceloTw] [-b str] [-D date] [-f file]
                    [-m module] [-n module] [-p path] [-r rev]
                    [-t tag] [-u user] [-x ACEFGMORTUW] [-z tz]
                    [file ...]
@@ -797,12 +797,12 @@ specified by the
 .Ar path .
 .It Fl r Ar rev
 Report for a particular revision (checks in the RCS file).
+.It Fl T
+Report on all tags.
 .It Fl t Ar tag
 Report since tag record placed in the
 .Pa CVSROOT/history
 file by any user.
-.It Fl T
-Report on all tags.
 .It Fl u Ar user
 Report for a specified
 .Ar user .
@@ -845,9 +845,8 @@ The file has been deleted from the directory because it does not
 exist anymore in the base repository.
 .El
 .It Fl z Ar tz
-Display records with time synchronized with the
-.Ar timezone
-passed as argument.
+Display records with the time synchronized with timezone
+.Ar tz .
 .El
 .Pp
 All records have the following five first columns:
@@ -916,7 +915,7 @@ is a tag for the entire branch;
 is used to identify the files you created with
 .Ic cvs import .
 .Bd -literal -offset indent
-Usage: cvs import [-d] [-b branch] [-I ign] [-k mode] [-m msg]
+usage: cvs import [-d] [-b branch] [-I ign] [-k mode] [-m msg]
                   [-W spec] module vendortag releasetag
 .Ed
 .Pp
@@ -963,7 +962,7 @@ By default, the
 command displays all the available information; the options are only
 used to restrict the displayed information.
 .Bd -literal -offset indent
-Usage: cvs log [-bhlNRt] [-d dates] [-r revs] [-s state]
+usage: cvs log [-bhlNRt] [-d dates] [-r revs] [-s state]
                [-w users] [file ...]
 .Ed
 .Pp
@@ -1014,34 +1013,34 @@ Print name of RCS file only.
 .It Fl r Ar revs
 Specify revision(s) to list:
 .Bl -tag -width Ds
-.It REV1,REV2,...,
+.It rev1,rev2,...
 A list of revisions is specified by separating names or numbers
 of revisions by the
 .Sq \&,
 character.
-.It REV1:REV2
+.It rev1:rev2
 List all revisions between
-.Ar REV1
+.Ar rev1
 and
-.Ar REV2
+.Ar rev2
 (they must be on the same branch).
-.It :REV
+.It :rev
 List all revisions since the beginning of the branch until
-.Ar REV
+.Ar rev
 included.
-.It REV:
+.It rev:
 List all revisions of the branch beginning with
-.Ar REV .
-.It BRANCH
+.Ar rev .
+.It branch
 List all revisions of a branch.
-.It BRANCH.
+.It branch.
 List the latest revision of the branch
-.Ar BRANCH .
-.It BRANCH1:BRANCH2
+.Ar branch .
+.It branch1:branch2
 List all revisions of branches between
-.Ar BRANCH1
+.Ar branch1
 and
-.Ar BRANCH2 .
+.Ar branch2 .
 .El
 .Pp
 Without argument, the
@@ -1075,7 +1074,7 @@ compatible format.
 This command does not need a local checkout of the repository
 to work.
 .Bd -literal -offset indent
-Usage: cvs rdiff [-flR] [-c | -u] [-s | -t] [-V ver]
+usage: cvs rdiff [-flR] [-c | -u] [-s | -t] [-V ver]
                  -D date | -r rev [-D date2 | -r rev2]
                  module ...
 .Ed
@@ -1148,7 +1147,7 @@ correct (see the
 .Ic history
 command).
 .Bd -literal -offset indent
-Usage: cvs release [-d] dir ...
+usage: cvs release [-d] dir ...
 .Ed
 .Pp
 The
@@ -1225,7 +1224,7 @@ option.
 .Ic export
 command always removes empty directories.)
 .Bd -literal -offset indent
-Usage: cvs remove [-flR] [file ...]
+usage: cvs remove [-flR] [file ...]
 .Ed
 .Pp
 The
@@ -1257,7 +1256,7 @@ It is often used to create a new branch using the
 .Fl b
 option.
 .Bd -literal -offset indent
-Usage: cvs rtag [-abdFflnR] [-D date | -r rev]
+usage: cvs rtag [-abdFflnR] [-D date | -r rev]
                 symbolic_tag module ...
 .Ed
 .Pp
@@ -1309,7 +1308,7 @@ The
 .Ic status
 command is used to display the state of checked out files.
 .Bd -literal -offset indent
-Usage: cvs status [-lRv] [file ...]
+usage: cvs status [-lRv] [file ...]
 .Ed
 .Pp
 The
@@ -1366,7 +1365,7 @@ The
 .Ic tag
 command adds a symbolic tag to a checked out version of one or more files.
 .Bd -literal -offset indent
-Usage: cvs tag [-bcdFflR] [-D date | -r rev] [symbolic_tag]
+usage: cvs tag [-bcdFflR] [-D date | -r rev] [symbolic_tag]
                [file ...]
 .Ed
 .Pp
@@ -1417,7 +1416,7 @@ command has been issued,
 will ask if you want to go back to the previous version, and lose the
 modifications done on the file, or stay in edition mode on it.
 .Bd -literal -offset indent
-Usage: cvs unedit [-lR] [file ...]
+usage: cvs unedit [-lR] [file ...]
 .Ed
 .Pp
 The
@@ -1437,7 +1436,7 @@ The
 command is used to merge any of the changes that have occurred on the remote
 repository into the local one where the command was run.
 .Bd -literal -offset indent
-Usage: cvs update [-ACdflPpR] [-D date | -r rev] [-I ign]
+usage: cvs update [-ACdflPpR] [-D date | -r rev] [-I ign]
                   [-j rev] [-k mode] [-W spec] [file ...]
 .Ed
 .Pp
@@ -1593,7 +1592,7 @@ made available with the
 .Ic edit
 command.
 .Bd -literal -offset indent
-Usage: cvs watch on | off | add | remove [-lR] [-a action]
+usage: cvs watch on | off | add | remove [-lR] [-a action]
                  [file ...]
 .Ed
 .Pp
@@ -1661,7 +1660,7 @@ or
 .Ic unedit
 command is issued on a file.
 .Bd -literal -offset indent
-Usage: cvs watchers [-lR] [file ...]
+usage: cvs watchers [-lR] [file ...]
 .Ed
 .Pp
 The
