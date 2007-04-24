@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.29 2006/09/24 20:29:52 krw Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.30 2007/04/24 23:14:00 krw Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ struct rd_softc {
 
 void rdattach(int);
 void rd_attach(struct device *, struct device *, void *);
-void rdgetdisklabel(struct rd_softc *sc);
+void rdgetdisklabel(dev_t, struct rd_softc *);
 
 /*
  * Some ports (like i386) use a swapgeneric that wants to
@@ -235,7 +235,7 @@ rdsize(dev_t dev)
 	if (sc->sc_type == RD_UNCONFIGURED)
 		return 0;
 
-	rdgetdisklabel(sc);
+	rdgetdisklabel(dev, sc);
 	part = DISKPART(dev);
 	if (part >= sc->sc_dkdev.dk_label->d_npartitions)
 		return 0;
@@ -407,7 +407,7 @@ rdioctl(dev, cmd, data, flag, proc)
 		if (sc->sc_type == RD_UNCONFIGURED) {
 			break;
 		}
-		rdgetdisklabel(sc);
+		rdgetdisklabel(dev, sc);
 		bcopy(sc->sc_dkdev.dk_label, data, sizeof(struct disklabel));
 		return 0;
 
@@ -472,7 +472,7 @@ rdioctl(dev, cmd, data, flag, proc)
 }
 
 void
-rdgetdisklabel(struct rd_softc *sc)
+rdgetdisklabel(dev_t dev, struct rd_softc *sc)
 {
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
 
@@ -508,8 +508,8 @@ rdgetdisklabel(struct rd_softc *sc)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	readdisklabel(DISKLABELDEV(sc->sc_dev.dv_unit), rdstrategy,
-	    sc->sc_dkdev.dk_label, sc->sc_dkdev.dk_cpulabel, 0);
+	readdisklabel(DISKLABELDEV(dev), rdstrategy, sc->sc_dkdev.dk_label,
+	    sc->sc_dkdev.dk_cpulabel, 0);
 }
 
 /*
