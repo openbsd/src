@@ -4496,6 +4496,7 @@
 ./usr/share/zoneinfo/right/Zulu
 ./usr/share/zoneinfo/zone.tab
 ./usr/src
+./usr/xobj
 ./var
 ./var/account
 ./var/audit
