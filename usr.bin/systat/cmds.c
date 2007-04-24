@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.14 2007/03/20 03:56:13 tedu Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.15 2007/04/24 06:32:08 tedu Exp $	*/
 /*	$NetBSD: cmds.c,v 1.4 1996/05/10 23:16:32 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.14 2007/03/20 03:56:13 tedu Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.15 2007/04/24 06:32:08 tedu Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -50,7 +50,7 @@ command(char *cmd)
 {
 	struct cmdtab *p;
 	char *cp;
-	int interval;
+	double interval;
 	sigset_t mask, omask;
 
 	sigemptyset(&mask);
@@ -93,16 +93,16 @@ command(char *cmd)
 		clrtoeol();
 		goto done;
 	}
-	interval = atoi(cmd);
-	if (interval <= 0 &&
+	interval = strtod(cmd, NULL);
+	if (interval < 0.09 &&
 	    (strcmp(cmd, "start") == 0 || strcmp(cmd, "interval") == 0)) {
-		interval = *cp ? atoi(cp) : naptime;
-		if (interval <= 0) {
+		interval = *cp ? strtod(cp, NULL) : naptime;
+		if (interval < 0.09) {
 			error("%d: bad interval.", interval);
 			goto done;
 		}
 	}
-	if (interval > 0) {
+	if (interval >= 0.09) {
 		alarm(0);
 		naptime = interval;
 		display();
@@ -179,7 +179,7 @@ void
 status(void)
 {
 
-	error("Showing %s, refresh every %d seconds.",
+	error("Showing %s, refresh every %f seconds.",
 	    curcmd->c_name, naptime);
 }
 

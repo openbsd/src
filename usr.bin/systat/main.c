@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.35 2007/02/25 18:21:24 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.36 2007/04/24 06:32:08 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.35 2007/02/25 18:21:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.36 2007/04/24 06:32:08 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,7 +67,7 @@ kvm_t	*kd;
 char	*nlistf = NULL;
 char	*memf = NULL;
 double	avenrun[3];
-u_int	naptime = 5;
+double	naptime = 5.0;
 int	verbose = 1;		/* to report kvm read errs */
 int	nflag = 0;
 int	ut, hz, stathz;
@@ -109,9 +109,10 @@ main(int argc, char *argv[])
 			nflag = 1;
 			break;
 		case 'w':
-			naptime = (u_int)strtonum(optarg, 1, 1000, &errstr);
-			if (errstr)
-				errx(1, "interval %s: %s", errstr, optarg);
+
+			naptime = strtod(optarg, NULL);
+			if (naptime < 0.09 || naptime > 1000.0)
+				errx(1, "invalid interval: %s", optarg);
 			break;
 		default:
 			usage();
@@ -121,9 +122,9 @@ main(int argc, char *argv[])
 
 	while (argc > 0) {
 		if (isdigit(argv[0][0])) {
-			naptime = (u_int)strtonum(argv[0], 1, 1000, &errstr);
-			if (errstr)
-				naptime = 5;
+			naptime = strtod(argv[0], NULL);
+			if (naptime < 0.09 || naptime > 1000.0)
+				naptime = 5.0;
 		} else {
 			struct cmdtab *p;
 
@@ -256,7 +257,7 @@ display(void)
 	wrefresh(wnd);
 	move(CMDLINE, 0);
 	refresh();
-	alarm(naptime);
+	ualarm(naptime * 1000000, 0);
 }
 
 void
