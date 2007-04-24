@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.3 2006/06/21 22:55:38 jason Exp $	*/
+/*	$OpenBSD: power.c,v 1.4 2007/04/24 17:46:41 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -54,8 +54,8 @@
 
 struct power_softc {
 	struct device		sc_dev;
-	bus_space_tag_t		sc_tag;
-	bus_space_handle_t	sc_handle;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
 	struct intrhand		*sc_ih;
 };
 
@@ -92,8 +92,6 @@ power_attach(parent, self, aux)
 	struct power_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
 
-	sc->sc_tag = ea->ea_memtag;
-
 	if (ea->ea_nregs < 1) {
 		printf(": no registers\n");
 		return;
@@ -101,20 +99,27 @@ power_attach(parent, self, aux)
 
 	/* Use prom address if available, otherwise map it. */
 	if (ea->ea_nvaddrs) {
-		if (bus_space_map(sc->sc_tag, ea->ea_vaddrs[0], 0,
-		    BUS_SPACE_MAP_PROMADDRESS, &sc->sc_handle)) {
+		if (bus_space_map(ea->ea_memtag, ea->ea_vaddrs[0], 0,
+		    BUS_SPACE_MAP_PROMADDRESS, &sc->sc_ioh)) {
 			printf(": can't map PROM register space\n");
 			return;
 		}
-	} else if (ebus_bus_map(sc->sc_tag, 0,
-	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), ea->ea_regs[0].size, 0, 0,
-	    &sc->sc_handle) != 0) {
-		printf(": can't map register space\n");
-                return;
+		sc->sc_iot = ea->ea_memtag;
+	} else if (ebus_bus_map(ea->ea_iotag, 0,
+	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+	    ea->ea_regs[0].size, 0, 0, &sc->sc_ioh) == 0) {
+		sc->sc_iot = ea->ea_iotag;
+	} else if (ebus_bus_map(ea->ea_memtag, 0,
+	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+	    ea->ea_regs[0].size, 0, 0, &sc->sc_ioh) == 0) {
+		sc->sc_iot = ea->ea_memtag;
+	} else {
+		printf("%s: can't map register space\n", self->dv_xname);
+		return;
 	}
 
 	if (ea->ea_nintrs > 0 && OF_getproplen(ea->ea_node, "button") >= 0) {
-	        sc->sc_ih = bus_intr_establish(sc->sc_tag, ea->ea_intrs[0],
+	        sc->sc_ih = bus_intr_establish(sc->sc_iot, ea->ea_intrs[0],
 		    IPL_BIO, 0, power_intr, sc, self->dv_xname);
 		if (sc->sc_ih == NULL) {
 			printf(": can't establish interrupt\n");
