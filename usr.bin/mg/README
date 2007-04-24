@@ -86,7 +86,7 @@ Cpm/68k support was dropped due to compiler bugs.  Eunice support was
 dropped because of lack of interest.  Mg 1b does support those
 systems.
 
-One change to late to make it into mg.tex is readding bsmap-mode (only
+One change too late to make it into mg.tex is readding bsmap-mode (only
 if BSMAP is #defined when compiling).  This is a toggle that controls
 input mapping to exchange the ^H (backspace) and DEL characters.  Like
 GNU emacs input keymaps, it is not displayed on the mode line and will

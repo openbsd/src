@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 2007/04/20 16:03:55 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.24 2007/04/24 16:48:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -190,7 +190,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 
 #ifdef DIAGNOSTIC
 	if (uvm.page_init_done) {
-		panic("pmap_steal_memory: to late, vm is running!");
+		panic("pmap_steal_memory: too late, vm is running!");
 	}
 #endif
 
