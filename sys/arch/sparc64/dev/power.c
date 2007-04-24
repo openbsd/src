@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.4 2007/04/24 17:46:41 kettenis Exp $	*/
+/*	$OpenBSD: power.c,v 1.5 2007/04/24 18:30:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -136,7 +136,7 @@ power_intr(void *vsc)
 
 	if (kbd_reset == 1) {
 		kbd_reset = 0;
-		psignal(initproc, SIGUSR1);
+		psignal(initproc, SIGUSR2);
 	}
 	return (1);
 }

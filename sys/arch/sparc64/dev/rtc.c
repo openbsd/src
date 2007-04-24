@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtc.c,v 1.2 2007/04/09 20:03:02 kettenis Exp $	*/
+/*	$OpenBSD: rtc.c,v 1.3 2007/04/24 18:30:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -182,7 +182,7 @@ rtc_intr(void *arg)
 
 	if (kbd_reset == 1) {
 		kbd_reset = 0;
-		psignal(initproc, SIGUSR1);
+		psignal(initproc, SIGUSR2);
 	}
 	return (1);
 }
