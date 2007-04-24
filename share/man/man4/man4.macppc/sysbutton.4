@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysbutton.4,v 1.4 2007/04/23 14:37:22 jmc Exp $
+.\"	$OpenBSD: sysbutton.4,v 1.5 2007/04/24 16:05:16 gwk Exp $
 .\"
 .\" Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd.org>
 .\"
@@ -39,10 +39,3 @@ button will cause the machine to enter
 .Xr intro 4 ,
 .Xr macgpio 4 ,
 .Xr sysctl 8
-.Sh BUGS
-If the
-.Va ddb.console
-.Xr sysctl 8
-is not set,
-holding the system identifier button
-down will impair system performance.
