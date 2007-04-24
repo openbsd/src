@@ -70,7 +70,7 @@ sysbutton_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": irq %d\n", sc->sc_intr);
 
-	mac_intr_establish(parent, sc->sc_intr, IST_LEVEL,
+	mac_intr_establish(parent, sc->sc_intr, IST_EDGE,
 	    IPL_NONE, sysbutton_intr, sc, sc->sc_dev.dv_xname);
 }
 
