@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.9 2007/03/23 21:07:38 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.10 2007/04/24 16:47:36 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -331,7 +331,7 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	sw	t2, (t1)
 
 	ori	t0, SR_EXL		# restoring to user mode.
-	mtc0	t0, COP_0_STATUS_REG	# must set exeption level bit.
+	mtc0	t0, COP_0_STATUS_REG	# must set exception level bit.
 
 	PTR_L	k0, curprocpaddr
 	RESTORE_REG(a3, CPL, k0, 0)
@@ -469,7 +469,7 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	ITLBNOPFIX
 
 	ori	t0, SR_EXL		# restoring to user mode.
-	mtc0	t0, COP_0_STATUS_REG	# must set exeption level bit.
+	mtc0	t0, COP_0_STATUS_REG	# must set exception level bit.
 	ITLBNOPFIX
 
 	PTR_L	k0, curprocpaddr
@@ -560,7 +560,7 @@ NNON_LEAF(u_syscall, FRAMESZ(CF_SZ), ra)
 	ITLBNOPFIX
 
 	ori	t0, SR_EXL
-	mtc0	t0, COP_0_STATUS_REG	# set exeption level
+	mtc0	t0, COP_0_STATUS_REG	# set exception level
 	ITLBNOPFIX
 
 #if 0
@@ -589,7 +589,7 @@ NNON_LEAF(u_syscall, FRAMESZ(CF_SZ), ra)
 	.set	noat
 
 	REG_L	a0, UADDR+PCB_REGS+(SR * REGSZ)
-	mtc0	a0, COP_0_STATUS_REG	# still exeption level
+	mtc0	a0, COP_0_STATUS_REG	# still exception level
 	REG_L	a0, UADDR+PCB_REGS+(PC * REGSZ)
 	REG_L	v0, UADDR+PCB_REGS+(V0 * REGSZ)
 	dmtc0	a0, COP_0_EXC_PC		# set return address
@@ -648,7 +648,7 @@ LEAF(proc_trampoline, 0)
 	ITLBNOPFIX
 
 	ori	t0, SR_EXL		# restoring to user mode.
-	mtc0	t0, COP_0_STATUS_REG	# must set exeption level bit.
+	mtc0	t0, COP_0_STATUS_REG	# must set exception level bit.
 	ITLBNOPFIX
 
 	.set	noat

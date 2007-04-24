@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.h,v 1.4 2004/09/16 07:25:24 miod Exp $ */
+/*	$OpenBSD: exception.h,v 1.5 2007/04/24 16:47:34 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -27,7 +27,7 @@
  */
 
 /*
- *  Definitions for exeption processing.
+ *  Definitions for exception processing.
  */
 
 #ifndef _MIPS_EXCEPTION_H_
