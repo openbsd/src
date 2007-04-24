@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.30 2006/12/20 17:50:40 gwk Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.31 2007/04/24 17:12:26 gwk Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -129,9 +129,6 @@ struct pst_s {
 struct k7pnow_cpu_state *k7pnow_current_state;
 extern int setperf_prio;
 
-/*
- * Prototypes
- */
 int k7pnow_decode_pst(struct k7pnow_cpu_state *, uint8_t *, int);
 int k7pnow_states(struct k7pnow_cpu_state *, uint32_t, unsigned int,
     unsigned int);
@@ -139,23 +136,18 @@ int k7pnow_states(struct k7pnow_cpu_state *, uint32_t, unsigned int,
 void
 k7_powernow_setperf(int level)
 {
-	unsigned int i, low, high, freq;
+	unsigned int i;
 	int cvid, cfid, vid = 0, fid = 0;
 	uint64_t status, ctl;
 	struct k7pnow_cpu_state * cstate;
 
 	cstate = k7pnow_current_state;
-	high = cstate->state_table[cstate->n_states - 1].freq;
-	low = cstate->state_table[0].freq;
-	freq = low + (high - low) * level / 100;
 
-	for (i = 0; i < cstate->n_states; i++) {
-		if (cstate->state_table[i].freq >= freq) {
-			fid = cstate->state_table[i].fid;
-			vid = cstate->state_table[i].vid;
-			break;
-		}
-	}
+	i = ((level * cstate->n_states) + 1) / 101;
+	if (i >= cstate->n_states)
+		i = cstate->n_states - 1;
+	fid = cstate->state_table[i].fid;
+	vid = cstate->state_table[i].vid;
 
 	if (fid == 0 || vid == 0)
 		return;
@@ -269,7 +261,7 @@ k7pnow_states(struct k7pnow_cpu_state *cstate, uint32_t cpusig,
 
 				if (cpusig == pst->signature && fid == pst->fid
 				    && vid == pst->vid) {
-					
+
 					if (abs(cstate->fsb - pst->fsb) > 5)
 						continue;
 					cstate->n_states = pst->n_states;
@@ -277,7 +269,8 @@ k7pnow_states(struct k7pnow_cpu_state *cstate, uint32_t cpusig,
 					    p + sizeof(struct pst_s),
 					    cstate->n_states));
 				}
-				p += sizeof(struct pst_s) + (2 * pst->n_states);
+				p += sizeof(struct pst_s) +
+				    (2 * pst->n_states);
 			}
 		}
 	}
@@ -317,7 +310,7 @@ k7_powernow_init(void)
 	if (!cstate)
 		return;
 
-	cstate->flags = cstate->n_states = 0;	
+	cstate->flags = cstate->n_states = 0;
 	if (ci->ci_signature == AMD_ERRATA_A0_CPUSIG)
 		cstate->flags |= PN7_FLAG_ERRATA_A0;
 
@@ -330,7 +323,7 @@ k7_powernow_init(void)
 
 	/* if the base CPUID signature fails to match try, the extended one */
 	if (!k7pnow_states(cstate, ci->ci_signature, maxfid, startvid))
-		k7pnow_states(cstate, regs[0], maxfid, startvid); 
+		k7pnow_states(cstate, regs[0], maxfid, startvid);
 	if (cstate->n_states) {
 		if (cstate->flags & PN7_FLAG_DESKTOP_VRM)
 			techname = "Cool'n'Quiet K7";
@@ -342,8 +335,8 @@ k7_powernow_init(void)
 			state = &cstate->state_table[i-1];
 			printf(" %d", state->freq);
 		}
-		printf(" MHz\n");	
-		
+		printf(" MHz\n");
+
 		k7pnow_current_state = cstate;
 		cpu_setperf = k7_powernow_setperf;
 		setperf_prio = 1;

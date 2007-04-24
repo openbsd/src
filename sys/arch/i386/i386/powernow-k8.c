@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.21 2006/12/20 17:50:40 gwk Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.22 2007/04/24 17:12:26 gwk Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -132,9 +132,6 @@ struct pst_s {
 struct k8pnow_cpu_state *k8pnow_current_state = NULL;
 extern int setperf_prio;
 
-/*
- * Prototypes
- */
 int k8pnow_read_pending_wait(uint64_t *);
 int k8pnow_decode_pst(struct k8pnow_cpu_state *, uint8_t *);
 int k8pnow_states(struct k8pnow_cpu_state *, uint32_t, unsigned int,
@@ -158,7 +155,7 @@ k8pnow_read_pending_wait(uint64_t *status)
 void
 k8_powernow_setperf(int level)
 {
-	unsigned int i, low, high, freq;
+	unsigned int i;
 	uint64_t status;
 	int cfid, cvid, fid = 0, vid = 0, rvo;
 	u_int val;
@@ -175,18 +172,12 @@ k8_powernow_setperf(int level)
 	cvid = PN8_STA_CVID(status);
 
 	cstate = k8pnow_current_state;
-	low = cstate->state_table[0].freq;
-	high = cstate->state_table[cstate->n_states-1].freq;
 
-	freq = low + (high - low) * level / 100;
-
-	for (i = 0; i < cstate->n_states; i++) {
-		if (cstate->state_table[i].freq >= freq) {
-			fid = cstate->state_table[i].fid;
-			vid = cstate->state_table[i].vid;
-			break;
-		}
-	}
+	i = ((level * cstate->n_states) + 1) / 101;
+	if (i >= cstate->n_states)
+		i = cstate->n_states - 1;
+	fid = cstate->state_table[i].fid;
+	vid = cstate->state_table[i].vid;
 
 	if (fid == cfid && vid == cvid)
 		return;
@@ -329,7 +320,8 @@ k8pnow_states(struct k8pnow_cpu_state *cstate, uint32_t cpusig,
 					return (k8pnow_decode_pst(cstate,
 					    p+= sizeof (struct pst_s)));
 				}
-				p += sizeof(struct pst_s) + 2 * cstate->n_states;
+				p += sizeof(struct pst_s) + 2
+				     * cstate->n_states;
 			}
 		}
 	}
@@ -360,11 +352,11 @@ k8_powernow_init(void)
 	cpuid(0x80000000, regs);
 	if (regs[0] < 0x80000007)
 		return;
-	
+
 	cpuid(0x80000007, regs);
 	if (!(regs[3] & AMD_PN_FID_VID))
 		return;
-	
+
 	/* Extended CPUID signature value */
 	cpuid(0x80000001, regs);
 

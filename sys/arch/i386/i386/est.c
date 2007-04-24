@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.27 2006/12/22 01:34:46 dim Exp $ */
+/*	$OpenBSD: est.c,v 1.28 2007/04/24 17:12:26 gwk Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -1076,19 +1076,17 @@ est_init(const char *cpu_device, int vendor)
 void
 est_setperf(int level)
 {
-	int low, high, i, fq;
+	int i;
 	uint64_t msr;
 
 	if (est_fqlist == NULL)
 		return;
 
-	low = MSR2MHZ(est_fqlist->table[est_fqlist->n - 1], bus_clock);
-	high = MSR2MHZ(est_fqlist->table[0], bus_clock);
-	fq = low + (high - low) * level / 100;
+	i = ((level * est_fqlist->n) + 1) / 101;
+	if (i >= est_fqlist->n)
+		i = est_fqlist->n - 1;
+	i = est_fqlist->n - 1 - i;
 
-	for (i = est_fqlist->n - 1; i > 0; i--)
-		if (MSR2MHZ(est_fqlist->table[i], bus_clock) >= fq)
-			break;
 	msr = rdmsr(MSR_PERF_CTL);
 	msr &= ~0xffffULL;
 	msr |= est_fqlist->table[i];
