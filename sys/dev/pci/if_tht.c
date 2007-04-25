@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.75 2007/04/25 12:50:29 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.76 2007/04/25 12:52:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1361,6 +1361,9 @@ tht_fifo_readable(struct tht_softc *sc, struct tht_fifo *tf)
 	if (tf->tf_ready < 0)
 		tf->tf_ready += tf->tf_len;
 
+	DPRINTF(THT_D_FIFO, "%s: fifo rdable wptr: %d rptr: %d ready: %d\n",
+	    DEVNAME(sc), tf->tf_wptr, tf->tf_rptr, tf->tf_ready);
+
 	return (tf->tf_ready);
 }
 
@@ -1372,6 +1375,9 @@ tht_fifo_writable(struct tht_softc *sc, struct tht_fifo *tf)
 	tf->tf_ready = tf->tf_rptr - tf->tf_wptr;
 	if (tf->tf_ready <= 0)
 		tf->tf_ready += tf->tf_len;
+
+	DPRINTF(THT_D_FIFO, "%s: fifo wrable wptr: %d rptr: %d ready: %d\n",
+	    DEVNAME(sc), tf->tf_wptr, tf->tf_rptr, tf->tf_ready);
 
 	return (tf->tf_ready);
 }
@@ -1406,6 +1412,9 @@ tht_fifo_read(struct tht_softc *sc, struct tht_fifo *tf,
 
 	bcopy(fifo + tf->tf_rptr, desc, buflen);
 	tf->tf_rptr += buflen;
+
+	DPRINTF(THT_D_FIFO, "%s: fifo rd wptr: %d rptr: %d ready: %d\n",
+	    DEVNAME(sc), tf->tf_wptr, tf->tf_rptr, tf->tf_ready);
 }
 
 void
@@ -1431,6 +1440,9 @@ tht_fifo_write(struct tht_softc *sc, struct tht_fifo *tf,
 
 	bcopy(desc, fifo + tf->tf_wptr, buflen);
 	tf->tf_wptr += buflen;
+
+	DPRINTF(THT_D_FIFO, "%s: fifo wr wptr: %d rptr: %d ready: %d\n",
+	    DEVNAME(sc), tf->tf_wptr, tf->tf_rptr, tf->tf_ready);
 }
 
 void
@@ -1471,6 +1483,9 @@ tht_fifo_post(struct tht_softc *sc, struct tht_fifo *tf)
 		tht_write(sc, tf->tf_desc->tfd_wptr, tf->tf_wptr);
 	else
 		tht_write(sc, tf->tf_desc->tfd_rptr, tf->tf_rptr);
+
+	DPRINTF(THT_D_FIFO, "%s: fifo post wptr: %d rptr: %d\n", DEVNAME(sc),
+	    tf->tf_wptr, tf->tf_rptr);
 }
 
 void
