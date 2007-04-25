@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.60 2007/04/25 04:18:05 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.61 2007/04/25 04:23:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -103,7 +103,14 @@ int thtdebug = THT_D_FIFO | THT_D_TX | THT_D_RX | THT_D_INTR;
 #define THT_REG_HTB_ADDR_HI	0x4110 /* High HTB Address */
 #define THT_REG_HTB_ST_TMR	0x3290 /* HTB Timer */
 #define THT_REG_RDINTCM(_q)	(0x0120 + _Q(_q)) /* RX DSC Intr Coalescing */
+#define  THT_REG_RDINTCM_PKT_TH(_c)	((_c)<<20) /* pkt count threshold */
+#define  THT_REG_RDINTCM_RXF_TH(_c)	((_c)<<16) /* rxf intr req thresh */
+#define  THT_REG_RDINTCM_COAL_RC	(1<<15) /* coalescing timer recharge */
+#define  THT_REG_RDINTCM_COAL(_c)	(_c) /* coalescing timer */
 #define THT_REG_TDINTCM(_q)	(0x0120 + _Q(_q)) /* TX DSC Intr Coalescing */
+#define  THT_REG_TDINTCM_PKT_TH(_c)	((_c)<<20) /* pkt count threshold */
+#define  THT_REG_TDINTCM_COAL_RC	(1<<15) /* coalescing timer recharge */
+#define  THT_REG_TDINTCM_COAL(_c)	(_c) /* coalescing timer */
 /* 10G Ethernet MAC */
 #define THT_REG_10G_REV		0x6000 /* Revision */
 #define THT_REG_10G_SCR		0x6004 /* Scratch */
@@ -129,8 +136,44 @@ int thtdebug = THT_D_FIFO | THT_D_TX | THT_D_RX | THT_D_INTR;
 #define  THT_REG_MAC_LNK_STAT_LOC_FAULT	(1<<0) /* Local Fault */
 /* Interrupt Registers */
 #define THT_REG_ISR		0x5100 /* Interrupt Status */
+#define THT_REG_ISR_LINKCHG(_p)		(1<<(27+(_p))) /* link changed */
+#define THT_REG_ISR_GPIO		(1<<26) /* GPIO */
+#define THT_REG_ISR_RFRSH		(1<<25) /* DDR Refresh */
+#define THT_REG_ISR_SWI			(1<<23) /* software interrupt */
+#define THT_REG_ISR_RXF(_q)		(1<<(19+(_q))) /* rx free fifo */
+#define THT_REG_ISR_TXF(_q)		(1<<(15+(_q))) /* tx free fifo */
+#define THT_REG_ISR_RXD(_q)		(1<<(11+(_q))) /* rx desc fifo */
+#define THT_REG_ISR_TMR(_t)		(1<<(6+(_t))) /* timer */
+#define THT_REG_ISR_VNT			(1<<5) /* optistrata */
+#define THT_REG_ISR_RxFL		(1<<4) /* RX Full */
+#define THT_REG_ISR_TR			(1<<2) /* table read */
+#define THT_REG_ISR_PCIE_LNK_INT	(1<<1) /* pcie link fail */
+#define THT_REG_ISR_GPLE_CLR		(1<<0) /* pcie timeout */
+#define THT_FMT_ISR		"\020" "\035LINKCHG1" "\034LINKCHG0" \
+				    "\033GPIO" "\032RFRSH" "\030SWI" \
+				    "\027RXF3" "\026RXF2" "\025RXF1" \
+				    "\024RXF0" "\023TXF3" "\022TXF2" \
+				    "\021TXF1" "\020TXF0" "\017RXD3" \
+				    "\016RXD2" "\015RXD1" "\014RXD0" \
+				    "\012TMR3" "\011TMR2" "\010TMR1" \
+				    "\007TMR0" "\006VNT" "\005RxFL" \
+				    "\003TR" "\002PCI_LNK_INT" \
+				    "\001GPLE_CLR"
 #define THT_REG_ISR_GTI		0x5080 /* GTI Interrupt Status */
 #define THT_REG_IMR		0x5110 /* Interrupt Mask */
+#define THT_REG_IMR_LINKCHG(_p)		(1<<(27+(_p))) /* link changed */
+#define THT_REG_IMR_GPIO		(1<<26) /* GPIO */
+#define THT_REG_IMR_RFRSH		(1<<25) /* DDR Refresh */
+#define THT_REG_IMR_SWI			(1<<23) /* software interrupt */
+#define THT_REG_IMR_RXF(_q)		(1<<(19+(_q))) /* rx free fifo */
+#define THT_REG_IMR_TXF(_q)		(1<<(15+(_q))) /* tx free fifo */
+#define THT_REG_IMR_RXD(_q)		(1<<(11+(_q))) /* rx desc fifo */
+#define THT_REG_IMR_TMR(_t)		(1<<(6+(_t))) /* timer */
+#define THT_REG_IMR_VNT			(1<<5) /* optistrata */
+#define THT_REG_IMR_RxFL		(1<<4) /* RX Full */
+#define THT_REG_IMR_TR			(1<<2) /* table read */
+#define THT_REG_IMR_PCIE_LNK_INT	(1<<1) /* pcie link fail */
+#define THT_REG_IMR_GPLE_CLR		(1<<0) /* pcie timeout */
 #define THT_REG_IMR_GTI		0x5090 /* GTI Interrupt Mask */
 #define THT_REG_ISR_MSK		0x5140 /* ISR Masked */
 /* Global Counters */
@@ -148,11 +191,11 @@ int thtdebug = THT_D_FIFO | THT_D_TX | THT_D_RX | THT_D_INTR;
 #define THT_REG_TXTSK_PR(_q)	(0x41b0 + _Q(_q)) /* TX Queue Priority */
 /* RX Part Registers */
 #define THT_REG_RX_FLT		0x1240 /* RX Filter Configuration */
-#define  THT_REG_RX_FLT_ATXER		(1<<15)
-#define  THT_REG_RX_FLT_ATRM		(1<<14)
-#define  THT_REG_RX_FLT_AFTSQ		(1<<13)
-#define  THT_REG_RX_FLT_OSEN		(1<<12)
-#define  THT_REG_RX_FLT_APHER		(1<<11)
+#define  THT_REG_RX_FLT_ATXER		(1<<15) /* accept with xfer err */
+#define  THT_REG_RX_FLT_ATRM		(1<<14) /* accept with term err */
+#define  THT_REG_RX_FLT_AFTSQ		(1<<13) /* accept with fault seq */
+#define  THT_REG_RX_FLT_OSEN		(1<<12) /* enable pkts */
+#define  THT_REG_RX_FLT_APHER		(1<<11) /* accept with phy err */
 #define  THT_REG_RX_FLT_TXFC		(1<<10) /* TX flow control */
 #define  THT_REG_RX_FLT_FDA		(1<<8) /* filter direct address */
 #define  THT_REG_RX_FLT_AOF		(1<<7) /* accept overflow frame */
@@ -168,6 +211,12 @@ int thtdebug = THT_D_FIFO | THT_D_TX | THT_D_RX | THT_D_INTR;
 #define THT_REG_RX_UNC_MAC0	0x1250 /* MAC Address low word */
 #define THT_REG_RX_UNC_MAC1	0x1260 /* MAC Address mid word */
 #define THT_REG_RX_UNC_MAC2	0x1270 /* MAC Address high word */
+/* OptiStrata Debug Registers */
+#define THT_REG_VPC		0x2300 /* Program Counter */
+#define THT_REG_VLI		0x2310 /* Last Interrupt */
+#define THT_REG_VIC		0x2320 /* Interrupts Count */
+#define THT_REG_VTMR		0x2330 /* Timer */
+#define THT_REG_VGLB		0x2340 /* Global */
 /* SW Reset Registers */
 #define THT_REG_RST_PRT		0x7000 /* Reset Port */
 #define  THT_REG_RST_PRT_ACTIVE		0x1 /* port reset is active */
