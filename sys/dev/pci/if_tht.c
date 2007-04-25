@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.76 2007/04/25 12:52:22 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.77 2007/04/25 13:27:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -260,7 +260,8 @@ int thtdebug = THT_D_FIFO | THT_D_TX | THT_D_RX | THT_D_INTR;
 
 #define THT_IMR_DOWN(_p)	(THT_REG_IMR_LINKCHG(_p))
 #define THT_IMR_UP(_p)		(THT_REG_IMR_LINKCHG(_p) | \
-				    THT_REG_IMR_TXF(0))
+				    THT_REG_IMR_RXF(0) | THT_REG_IMR_TXF(0) | \
+				    THT_REG_IMR_RXD(0))
 
 /* hardware structures (we're using the 64 bit variants) */
 
@@ -825,6 +826,12 @@ tht_intr(void *arg)
 
 	ifp = &sc->sc_ac.ac_if;
 	if (ifp->if_flags & IFF_RUNNING) {
+		if (ISSET(isr, THT_REG_ISR_RXD(0)))
+			tht_rxd(sc);
+
+		if (ISSET(isr, THT_REG_ISR_RXF(0)))
+			tht_rxf_fill(sc, 0);
+
 		if (ISSET(isr, THT_REG_ISR_TXF(0)))
 			tht_txf(sc);
 
@@ -1187,8 +1194,9 @@ tht_rxf_fill(struct tht_softc *sc, int wait)
 		    wait ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) != 0)
 			goto free_m;
 
-		bc = sizeof(rxf) +
-		    sizeof(struct tht_pbd) * pkt->tp_dmap->dm_nsegs;
+		pkt->tp_m = m;
+
+		bc = sizeof(rxf) + sizeof(struct tht_pbd) * dmap->dm_nsegs;
 
 		rxf.bc = htole16(LWORDS(bc));
 		rxf.type = htole16(THT_RXF_TYPE);
