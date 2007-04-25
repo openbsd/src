@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.59 2007/04/25 04:16:44 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.60 2007/04/25 04:18:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -988,7 +988,7 @@ tht_txf(struct tht_softc *sc)
 
 	tht_fifo_pre(sc, &sc->sc_txf);
 
-	for (;;) {
+	do {
 		tht_fifo_read(sc, &sc->sc_txf, &txf, sizeof(txf));
 
 		pkt = &sc->sc_tx_list.tpl_pkts[txf.uid];
