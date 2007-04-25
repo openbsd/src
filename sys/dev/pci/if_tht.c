@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.68 2007/04/25 08:10:27 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.69 2007/04/25 08:32:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -572,6 +572,7 @@ void			tht_fifo_post(struct tht_softc *,
 void			tht_read_lladdr(struct tht_softc *);
 int			tht_sw_reset(struct tht_softc *);
 int			tht_fw_load(struct tht_softc *);
+void			tht_fw_tick(void *arg);
 void			tht_link_state(struct tht_softc *);
 
 /* interface operations */
@@ -1546,6 +1547,8 @@ tht_sw_reset(struct tht_softc *sc)
 int
 tht_fw_load(struct tht_softc *sc)
 {
+	struct timeout			ticker;
+	volatile int			ok = 1;
 	u_int8_t			*fw, *buf;
 	size_t				fwlen, wrlen;
 	int				error = 1;
@@ -1572,16 +1575,32 @@ tht_fw_load(struct tht_softc *sc)
 		buf += wrlen;
 	}
 
-	while (tht_read(sc, THT_REG_INIT_STATUS)) {
+	timeout_set(&ticker, tht_fw_tick, &ticker);
+	timeout_add(&ticker, 2*hz);
+	while (ok) {
+		if (tht_read(sc, THT_REG_INIT_STATUS) != 0) {
+			error = 0;
+			break;
+		}
+
 		if (tsleep(sc, PCATCH, "thtinit", 1) == EINTR)
 			goto err;
 	}
+	timeout_del(&ticker);
 
-	error = 0;
+	tht_write(sc, THT_REG_INIT_SEMAPHORE, 0x1);
 
 err:
 	free(fw, M_DEVBUF);
 	return (error);
+}
+
+void
+tht_fw_tick(void *arg)
+{
+	volatile int			*ok = arg;
+
+	*ok = 0;
 }
 
 void
