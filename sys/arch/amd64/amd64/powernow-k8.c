@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.16 2007/02/17 11:51:21 tom Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.17 2007/04/25 00:27:43 gwk Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * Copyright (c) 2004-2005 Bruno Ducrot
@@ -114,7 +114,7 @@ struct psb_s {
 	char signature[10];     /* AMDK7PNOW! */
 	uint8_t version;
 	uint8_t flags;
-	uint16_t ttime;         /* Min Settling time */
+	uint16_t ttime;		/* Min Settling time */
 	uint8_t reserved;
 	uint8_t n_pst;
 };
@@ -129,9 +129,6 @@ struct pst_s {
 
 struct k8pnow_cpu_state *k8pnow_current_state;
 
-/*
- * Prototypes
- */
 int k8pnow_read_pending_wait(uint64_t *);
 int k8pnow_decode_pst(struct k8pnow_cpu_state *, uint8_t *);
 int k8pnow_states(struct k8pnow_cpu_state *, uint32_t, unsigned int,
@@ -155,7 +152,7 @@ k8pnow_read_pending_wait(uint64_t *status)
 void
 k8_powernow_setperf(int level)
 {
-	unsigned int i, low, high, freq;
+	unsigned int i;
 	uint64_t status;
 	int cfid, cvid, fid = 0, vid = 0;
 	int rvo;
@@ -173,18 +170,13 @@ k8_powernow_setperf(int level)
 	cvid = PN8_STA_CVID(status);
 
 	cstate = k8pnow_current_state;
-	low = cstate->state_table[0].freq;
-	high = cstate->state_table[cstate->n_states-1].freq;
 
-	freq = low + (high - low) * level / 100;
+	i = ((level * cstate->n_states) + 1) / 101;
+	if (i >= cstate->n_states)
+		i = cstate->n_states - 1;
 
-	for (i = 0; i < cstate->n_states; i++) {
-		if (cstate->state_table[i].freq >= freq) {
-			fid = cstate->state_table[i].fid;
-			vid = cstate->state_table[i].vid;
-			break;
-		}
-	}
+	fid = cstate->state_table[i].fid;
+	vid = cstate->state_table[i].vid;
 
 	if (fid == cfid && vid == cvid)
 		return;
@@ -271,7 +263,7 @@ k8pnow_decode_pst(struct k8pnow_cpu_state *cstate, uint8_t *p)
 	for (n = 0, i = 0; i < cstate->n_states; i++) {
 		state.fid = *p++;
 		state.vid = *p++;
-	
+
 		/*
 		 * The minimum supported frequency per the data sheet is 800MHz
 		 * The maximum supported frequency is 5000MHz.
@@ -324,7 +316,8 @@ k8pnow_states(struct k8pnow_cpu_state *cstate, uint32_t cpusig,
 					return (k8pnow_decode_pst(cstate,
 					    p+= sizeof (struct pst_s)));
 				}
-				p += sizeof(struct pst_s) + 2 * cstate->n_states;
+				p += sizeof(struct pst_s) + 2
+				    * cstate->n_states;
 			}
 		}
 	}
