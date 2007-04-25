@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.61 2007/04/25 04:23:05 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.62 2007/04/25 04:58:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -241,6 +241,9 @@ int thtdebug = THT_D_FIFO | THT_D_TX | THT_D_RX | THT_D_INTR;
 
 #define THT_FIFO_DESC_LEN	208 /* a descriptor cant be bigger than this */
 
+#define THT_IMR_DOWN(_p)	(THT_REG_IMR_LINKCHG(_p))
+#define THT_IMR_UP(_p)		(THT_REG_IMR_LINKCHG(_p))
+
 /* hardware structures (we're using the 64 bit variants) */
 
 /* physical buffer descriptor */
@@ -443,6 +446,7 @@ struct tht_pkt_list {
 struct tht_softc {
 	struct device		sc_dev;
 	struct thtc_softc	*sc_thtc;
+	int			sc_port;
 
 	void			*sc_ih;
 
@@ -460,6 +464,8 @@ struct tht_softc {
 	struct tht_fifo		sc_rxf;
 	struct tht_fifo		sc_rxd;
 	struct tht_fifo		sc_txf;
+
+	u_int32_t		sc_imr;
 
 	struct rwlock		sc_lock;
 };
@@ -707,10 +713,12 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet			*ifp;
 
 	sc->sc_thtc = csc;
+	sc->sc_port = taa->taa_port;
+	sc->sc_imr = THT_IMR_DOWN(sc->sc_port);
 	rw_init(&sc->sc_lock, "thtioc");
 
 	if (bus_space_subregion(csc->sc_memt, csc->sc_memh,
-	    THT_PORT_REGION(taa->taa_port), THT_PORT_SIZE,
+	    THT_PORT_REGION(sc->sc_port), THT_PORT_SIZE,
 	    &sc->sc_memh) != 0) {
 		printf(": unable to map port registers\n");
 		return;
@@ -771,12 +779,30 @@ tht_mountroot(void *arg)
 	tht_sw_reset(sc);
 
 	tht_fifo_free(sc, &sc->sc_txt);
+
+	tht_link_state(sc);
+	tht_write(sc, THT_REG_IMR, sc->sc_imr);
 }
 
 int
 tht_intr(void *arg)
 {
-	return (0);
+	struct tht_softc		*sc = arg;
+	u_int32_t			isr;
+
+	isr = tht_read(sc, THT_REG_ISR);
+	if (isr == 0x0) {
+		tht_write(sc, THT_REG_IMR, sc->sc_imr);
+		return (0);
+	}
+
+	DPRINTF(THT_D_INTR, "%s: isr: 0x%0b\n", DEVNAME(sc), isr, THT_FMT_ISR);
+
+	if (ISSET(isr, THT_REG_ISR_LINKCHG(0) | THT_REG_ISR_LINKCHG(1)))
+		tht_link_state(sc);
+
+	tht_write(sc, THT_REG_IMR, sc->sc_imr);
+	return (1);
 }
 
 int
