@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.74 2007/04/25 11:01:09 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.75 2007/04/25 12:50:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1166,7 +1166,7 @@ tht_rxf_fill(struct tht_softc *sc, int wait)
 	if (tht_fifo_writable(sc, &sc->sc_rxf) <= THT_FIFO_DESC_LEN)
 		return;
 
-	tht_fifo_pre(sc, &sc->sc_txf);
+	tht_fifo_pre(sc, &sc->sc_rxf);
 
 	for (;;) {
 		if ((pkt = tht_pkt_get(&sc->sc_rx_list)) == NULL)
@@ -1210,7 +1210,7 @@ free_m:
 put_pkt:
 	tht_pkt_put(&sc->sc_rx_list, pkt);
 done:
-	tht_fifo_post(sc, &sc->sc_txf);
+	tht_fifo_post(sc, &sc->sc_rxf);
 }
 
 void
