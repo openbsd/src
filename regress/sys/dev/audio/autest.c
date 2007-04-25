@@ -1,4 +1,4 @@
-/*	$OpenBSD: autest.c,v 1.11 2005/09/27 02:53:43 drahn Exp $	*/
+/*	$OpenBSD: autest.c,v 1.12 2007/04/25 15:27:54 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -37,6 +37,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <errno.h>
+#include <limits.h>
 
 /* XXX ADPCM is currently pretty broken... diagnosis and fix welcome */
 #undef	USE_ADPCM
@@ -69,11 +70,48 @@ void enc_adpcm_8(int, audio_encoding_t *, int, int);
 void audio_wait(int);
 void check_srate(struct ausrate *);
 void mark_time(struct timeval *);
+int get_int(const char *, int *);
+int get_double(const char *, double *);
 
 #define	PLAYFREQ	440.0
 #define	PLAYSECS	2
+double playfreq = PLAYFREQ;
 
 #define	DEFAULT_DEV	"/dev/sound"
+
+int
+get_double(const char *buf, double *d)
+{
+	char *ep;
+	long dd;
+
+	errno = 0;
+	dd = strtod(buf, &ep);
+	if (buf[0] == '\0' || *ep != '\0')
+		return (-1);
+	if (errno == ERANGE && (dd == -HUGE_VAL || dd == HUGE_VAL))
+		return (-1);
+	*d = dd;
+	return (0);
+}
+
+int
+get_int(const char *buf, int *i)
+{
+	char *ep;
+	long lv;
+
+	errno = 0;
+	lv = strtol(buf, &ep, 10);
+	if (buf[0] == '\0' || *ep != '\0')
+		return (-1);
+	if (errno == ERANGE && (lv == LONG_MAX || lv == LONG_MIN))
+		return (-1);
+	if (lv < INT_MIN || lv > INT_MAX)
+		return (-1);
+	*i = lv;
+	return (0);
+}
 
 int
 main(int argc, char **argv)
@@ -83,13 +121,24 @@ main(int argc, char **argv)
 	int fd, i, c;
 	int rate = 8000;
 
-	while ((c = getopt(argc, argv, "f:r:")) != -1) {
+	while ((c = getopt(argc, argv, "f:r:t:")) != -1) {
 		switch (c) {
 		case 'f':
 			fname = optarg;
 			break;
 		case 'r':
-			rate = atoi(optarg);
+			if (get_int(optarg, &rate) || rate <= 0) {
+				fprintf(stderr, "%s bad rate %s\n",
+				    argv[0], optarg);
+				return (1);
+			}
+			break;
+		case 't':
+			if (get_double(optarg, &playfreq) || playfreq <= 0.0) {
+				fprintf(stderr, "%s bad freq %s\n",
+				    argv[0], optarg);
+				return (1);
+			}
 			break;
 		case '?':
 		default:
@@ -314,7 +363,7 @@ enc_ulinear_8(int fd, audio_encoding_t *enc, int chans, int rate)
 		u_int8_t v;
 
 		d = 127.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * PLAYFREQ));
+		    (2 * M_PI * playfreq));
 		d = rintf(d + 127.0);
 		v = d;
 
@@ -375,7 +424,7 @@ enc_slinear_8(int fd, audio_encoding_t *enc, int chans, int rate)
 		int8_t v;
 
 		d = 127.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * PLAYFREQ));
+		    (2 * M_PI * playfreq));
 		d = rintf(d);
 		v = d;
 
@@ -436,7 +485,7 @@ enc_slinear_16(int fd, audio_encoding_t *enc, int chans, int order, int rate)
 		int16_t v;
 
 		d = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * PLAYFREQ));
+		    (2 * M_PI * playfreq));
 		d = rintf(d);
 		v = d;
 
@@ -506,7 +555,7 @@ enc_ulinear_16(int fd, audio_encoding_t *enc, int chans, int order, int rate)
 		u_int16_t v;
 
 		d = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * PLAYFREQ));
+		    (2 * M_PI * playfreq));
 		d = rintf(d + 32767.0);
 		v = d;
 
@@ -580,7 +629,7 @@ enc_adpcm_8(int fd, audio_encoding_t *enc, int chans, int rate)
 		float d;
 
 		d = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * PLAYFREQ));
+		    (2 * M_PI * playfreq));
 		samples[i] = rintf(d);
 	}
 
@@ -657,7 +706,7 @@ enc_ulaw_8(int fd, audio_encoding_t *enc, int chans, int rate)
 		float x;
 
 		x = 32765.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * PLAYFREQ));
+		    (2 * M_PI * playfreq));
 		samples[i] = x;
 	}
 
@@ -687,6 +736,7 @@ void
 enc_alaw_8(int fd, audio_encoding_t *enc, int chans, int rate)
 {
 	audio_info_t inf;
+	struct ausrate rt;
 	int16_t *samples = NULL;
 	int i, j;
 	u_int8_t *outbuf = NULL, *p;
@@ -706,6 +756,10 @@ enc_alaw_8(int fd, audio_encoding_t *enc, int chans, int rate)
 		printf("[getinfo: %s]", strerror(errno));
 		goto out;
 	}
+	rt.r_rate = inf.play.sample_rate;
+	rt.s_rate = inf.play.sample_rate;
+	rt.bps = 1* chans;
+	rt.bytes = inf.play.sample_rate * chans * PLAYSECS;
 
 	samples = (int16_t *)calloc(inf.play.sample_rate, sizeof(*samples));
 	if (samples == NULL) {
@@ -723,7 +777,7 @@ enc_alaw_8(int fd, audio_encoding_t *enc, int chans, int rate)
 		float x;
 
 		x = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * PLAYFREQ));
+		    (2 * M_PI * playfreq));
 		samples[i] = x;
 	}
 
@@ -734,10 +788,14 @@ enc_alaw_8(int fd, audio_encoding_t *enc, int chans, int rate)
 		}
 	}
 
+	mark_time(&rt.tv_begin);
 	for (i = 0; i < PLAYSECS; i++) {
 		write(fd, outbuf, inf.play.sample_rate * chans);
 	}
 	audio_wait(fd);
+	mark_time(&rt.tv_end);
+	check_srate(&rt);
+
 
 out:
 	if (samples != NULL)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: autest.1,v 1.8 2005/09/27 18:11:02 jmc Exp $
+.\"	$OpenBSD: autest.1,v 1.9 2007/04/25 15:27:54 jason Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -34,14 +34,15 @@
 .Nm autest
 .Op Fl f Ar device
 .Op Fl r Ar rate
+.Op Fl t Ar tone
 .Sh DESCRIPTION
 The
 .Nm
 utility opens an
 .Xr audio 4
 device and iterates through all of the encodings supported by the device,
-playing a 440Hz tone in the proper format.
-The tone should sound almost identical in each of the formats.
+playing a tone in the proper format.
+The tone should sound identical in each of the formats.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -59,6 +60,8 @@ to test.
 It will request the audio subsystem to play that Hz;
 however the audio device may return a different speed.
 This can be useful to test different speeds, e.g. 8000, 44100, 48000.
+.It Fl t Ar tone
+Specify the tone to be played (default 440Hz).
 .El
 .Pp
 .Nm
