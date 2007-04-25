@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.16 2007/04/25 09:07:02 art Exp $	*/
+/*	$OpenBSD: clock.c,v 1.17 2007/04/25 09:27:01 art Exp $	*/
 /*	$NetBSD: clock.c,v 1.29 2000/06/05 21:47:10 thorpej Exp $	*/
 
 /*
@@ -258,11 +258,10 @@ inittodr(time_t base)
 		deltat = ts.tv_sec - base;
 		if (deltat < 0)
 			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
-			return;
-		printf("WARNING: clock %s %ld days",
-		    ts.tv_sec < base ? "lost" : "gained",
-		    (long)deltat / SECDAY);
+		if (deltat >= 2 * SECDAY)
+			printf("WARNING: clock %s %ld days",
+			    ts.tv_sec < base ? "lost" : "gained",
+			    (long)deltat / SECDAY);
 	}
 bad:
 	tc_setclock(&ts);
