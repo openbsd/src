@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.416 2007/04/25 11:52:14 krw Exp $
+#	$OpenBSD: install.sub,v 1.417 2007/04/25 11:59:49 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -189,7 +189,7 @@ scan_disknames() {
 }
 
 get_ifdevs() {
-	ifconfig -a \
+	ifconfig \
 	    | egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|sl|tun|vlan)[[:digit:]]+:' \
 	    | sed -ne 's/^\(.*\):.*/\1/p'
 }
