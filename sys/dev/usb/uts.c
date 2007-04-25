@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.3 2007/04/10 22:37:17 miod Exp $ */
+/*	$OpenBSD: uts.c,v 1.4 2007/04/25 14:17:42 robert Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -40,6 +40,16 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
+#ifdef USB_DEBUG
+#define UTS_DEBUG
+#endif
+
+#ifdef UTS_DEBUG
+#define DPRINTF(x)		do { printf x; } while (0)
+#else
+#define DPRINTF(x)
+#endif
+
 #define UTS_CONFIG_INDEX 0
 
 struct uts_softc {
@@ -75,7 +85,7 @@ struct utsscale {
 	int	ts_resx;
 	int	ts_resy;
 } uts_scale = {
-	3800, 500, 450, 3800, 1, 1024, 768
+	67, 1931, 102, 1937, 0, 1024, 768
 };
 
 struct uts_pos {
@@ -325,21 +335,25 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 
 	switch (sc->sc_product) {
 	case USB_PRODUCT_FTDI_ITM_TOUCH:
-		down = (p[7] & 0x20);	
+		down = (~p[7] & 0x20);
 		x = ((p[0] & 0x1f) << 7) | (p[3] & 0x7f);  
 		y = ((p[1] & 0x1f) << 7) | (p[4] & 0x7f);
-		sc->sc_pkts = 8;
+		sc->sc_pkts = 0x8;
 		break;
 	case USB_PRODUCT_EGALAX_TPANEL:
 	case USB_PRODUCT_EGALAX_TPANEL2:
 		down = (p[0] & 0x01);
 		x = ((p[3] & 0x0f) << 7) | (p[4] & 0x7f);
 		y = ((p[1] & 0x0f) << 7) | (p[2] & 0x7f);
-		sc->sc_pkts = 5;
+		sc->sc_pkts = 0x5;
 		break;
 	}
 
-	if (!down) {
+	DPRINTF(("%s: down = 0x%x, sc->sc_pkts = 0x%x\n",
+	    USBDEVNAME(sc->sc_dev), down, sc->sc_pkts));
+
+	/* x/y values are not reliable if there is no pressure */
+	if (down) {
 		if (tsp->ts_swapxy) {	/* Swap X/Y-Axis */
 			tp.y = x;
 			tp.x = y;
@@ -357,7 +371,6 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 		}
 		tp.z = 1;
 	} else {
-		/* x/y values are not reliable if there is no pressure */
 		tp.x = sc->sc_oldx;
 		tp.y = sc->sc_oldy;
 		tp.z = 0;
@@ -390,10 +403,13 @@ uts_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 	tp = uts_get_pos(sc, tp);
 
 	if (len != sc->sc_pkts) {
-		printf("%s: bad input length %d != %d\n",
-			USBDEVNAME(sc->sc_dev), len, sc->sc_isize);
+		DPRINTF(("%s: bad input length %d != %d\n",
+			USBDEVNAME(sc->sc_dev), len, sc->sc_isize));
 		return;
 	}
+
+	DPRINTF(("%s: tp.z = %d, tp.x = %d, tp.y = %d\n",
+	    USBDEVNAME(sc->sc_dev), tp.z, tp.x, tp.y));
 
 	wsmouse_input(sc->sc_wsmousedev, tp.z, tp.x, tp.y, 0, 0,
 		WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
