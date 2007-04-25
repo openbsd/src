@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.58 2007/04/24 08:08:49 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.59 2007/04/25 04:16:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -56,6 +56,21 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#endif
+
+#define THT_DEBUG
+
+#ifdef THT_DEBUG
+#define THT_D_FIFO		(1<<0)
+#define THT_D_TX		(1<<1)
+#define THT_D_RX		(1<<2)
+#define THT_D_INTR		(1<<3)
+
+int thtdebug = THT_D_FIFO | THT_D_TX | THT_D_RX | THT_D_INTR;
+
+#define DPRINTF(l, f...)	do { if (thtdebug & (l)) printf(f); } while (0)
+#else
+#define DPRINTF(l, f...)
 #endif
 
 /* registers */
