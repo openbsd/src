@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.62 2007/04/25 04:58:08 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.63 2007/04/25 05:09:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -534,7 +534,9 @@ int			tht_fifo_alloc(struct tht_softc *, struct tht_fifo *,
 			    struct tht_fifo_desc *);
 void			tht_fifo_free(struct tht_softc *, struct tht_fifo *);
 
-size_t			tht_fifo_ready(struct tht_softc *,
+size_t			tht_fifo_readable(struct tht_softc *,
+			    struct tht_fifo *);
+size_t			tht_fifo_writable(struct tht_softc *,
 			    struct tht_fifo *);
 void			tht_fifo_pre(struct tht_softc *,
 			    struct tht_fifo *);
@@ -921,8 +923,8 @@ tht_down(struct tht_softc *sc)
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
-	while (tht_fifo_ready(sc, &sc->sc_txt) < sc->sc_txt.tf_len &&
-	    tht_fifo_ready(sc, &sc->sc_txf) < sc->sc_txf.tf_len)
+	while (tht_fifo_writable(sc, &sc->sc_txt) < sc->sc_txt.tf_len &&
+	    tht_fifo_readable(sc, &sc->sc_txf) > 0)
 		tsleep(sc, 0, "thtdown", hz);
 
 	tht_sw_reset(sc);
@@ -955,7 +957,7 @@ tht_start(struct ifnet *ifp)
 	if (IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
 
-	if (tht_fifo_ready(sc, &sc->sc_txt) <= THT_FIFO_DESC_LEN)
+	if (tht_fifo_writable(sc, &sc->sc_txt) <= THT_FIFO_DESC_LEN)
 		return;
 
 	bzero(&txt, sizeof(txt));
@@ -1058,7 +1060,7 @@ tht_txf(struct tht_softc *sc)
 	struct tht_tx_free		txf;
 	struct tht_pkt			*pkt;
 
-	if (tht_fifo_ready(sc, &sc->sc_txf) <= sizeof(txf))
+	if (tht_fifo_readable(sc, &sc->sc_txf) <= sizeof(txf))
 		return;
 
 	tht_fifo_pre(sc, &sc->sc_txf);
@@ -1094,7 +1096,7 @@ tht_rxf_fill(struct tht_softc *sc, int wait)
 	struct mbuf			*m;
 	int				bc;
 
-	if (tht_fifo_ready(sc, &sc->sc_rxf) <= THT_FIFO_DESC_LEN)
+	if (tht_fifo_writable(sc, &sc->sc_rxf) <= THT_FIFO_DESC_LEN)
 		return;
 
 	tht_fifo_pre(sc, &sc->sc_txf);
@@ -1176,7 +1178,7 @@ tht_rxd(struct tht_softc *sc)
 	int				bc;
 	u_int32_t			flags;
 
-	if (tht_fifo_ready(sc, &sc->sc_rxd) < sizeof(rxd))
+	if (tht_fifo_readable(sc, &sc->sc_rxd) < sizeof(rxd))
 		return;
 
 	tht_fifo_pre(sc, &sc->sc_rxd);
@@ -1284,18 +1286,23 @@ tht_fifo_free(struct tht_softc *sc, struct tht_fifo *tf)
 }
 
 size_t
-tht_fifo_ready(struct tht_softc *sc, struct tht_fifo *tf)
+tht_fifo_readable(struct tht_softc *sc, struct tht_fifo *tf)
 {
-	if (tf->tf_desc->tfd_write) {
-		tf->tf_rptr = tht_read(sc, tf->tf_desc->tfd_rptr);
-		tf->tf_rptr &= THT_FIFO_PTR_MASK;
-		tf->tf_ready = tf->tf_rptr - tf->tf_wptr;
-	} else {
-		tf->tf_wptr = tht_read(sc, tf->tf_desc->tfd_wptr);
-		tf->tf_wptr &= THT_FIFO_PTR_MASK;
-		tf->tf_ready = tf->tf_wptr - tf->tf_rptr;
-	}
+	tf->tf_wptr = tht_read(sc, tf->tf_desc->tfd_wptr);
+	tf->tf_wptr &= THT_FIFO_PTR_MASK;
+	tf->tf_ready = tf->tf_wptr - tf->tf_rptr;
+	if (tf->tf_ready < 0)
+		tf->tf_ready += tf->tf_len;
 
+	return (tf->tf_ready);
+}
+
+size_t
+tht_fifo_writable(struct tht_softc *sc, struct tht_fifo *tf)
+{
+	tf->tf_rptr = tht_read(sc, tf->tf_desc->tfd_rptr);
+	tf->tf_rptr &= THT_FIFO_PTR_MASK;
+	tf->tf_ready = tf->tf_rptr - tf->tf_wptr;
 	if (tf->tf_ready <= 0)
 		tf->tf_ready += tf->tf_len;
 
@@ -1497,7 +1504,7 @@ tht_fw_load(struct tht_softc *sc)
 
 	buf = fw;
 	while (fwlen > 0) {
-		while (tht_fifo_ready(sc, &sc->sc_txt) <= THT_FIFO_GAP) {
+		while (tht_fifo_writable(sc, &sc->sc_txt) <= THT_FIFO_GAP) {
 			if (tsleep(sc, PCATCH, "thtfw", 1) == EINTR)
 				goto err;
 		}
