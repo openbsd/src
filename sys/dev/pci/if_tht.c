@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.65 2007/04/25 05:40:57 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.66 2007/04/25 05:46:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -994,6 +994,7 @@ tht_start(struct ifnet *ifp)
 	struct tht_softc		*sc = ifp->if_softc;
 	struct tht_pkt			*pkt;
 	struct tht_tx_task		txt;
+	u_int32_t			flags;
 	struct mbuf			*m;
 	int				bc;
 
@@ -1039,9 +1040,13 @@ tht_start(struct ifnet *ifp)
 		bc = sizeof(txt) +
 		    sizeof(struct tht_pbd) * pkt->tp_dmap->dm_nsegs;
 
-		txt.flags = htole32(THT_TXT_TYPE | LWORDS(bc)); /* XXX */
+		flags = THT_TXT_TYPE | LWORDS(bc); /* XXX */
+		txt.flags = htole32(flags);
 		txt.len = htole16(pkt->tp_m->m_pkthdr.len);
 		txt.uid = pkt->tp_id;
+
+		DPRINTF(THT_D_TX, "%s: txt uid 0x%llx flags 0x%08x len %d\n",
+		    DEVNAME(sc), flags, pkt->tp_m->m_pkthdr.len, pkt->tp_id);
 
 		tht_fifo_write(sc, &sc->sc_txt, &txt, sizeof(txt));
 		tht_fifo_write_dmap(sc, &sc->sc_txt, pkt->tp_dmap);
@@ -1114,6 +1119,8 @@ tht_txf(struct tht_softc *sc)
 
 	do {
 		tht_fifo_read(sc, &sc->sc_txf, &txf, sizeof(txf));
+
+		DPRINTF(THT_D_TX, "%s: txf uid 0x%llx\n", DEVNAME(sc), txf.uid);
 
 		pkt = &sc->sc_tx_list.tpl_pkts[txf.uid];
 		dmap = pkt->tp_dmap;
