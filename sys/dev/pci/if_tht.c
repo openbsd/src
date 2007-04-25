@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.71 2007/04/25 09:52:45 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.72 2007/04/25 09:55:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -259,7 +259,8 @@ int thtdebug = THT_D_FIFO | THT_D_TX | THT_D_RX | THT_D_INTR;
 #define THT_FIFO_DESC_LEN	208 /* a descriptor cant be bigger than this */
 
 #define THT_IMR_DOWN(_p)	(THT_REG_IMR_LINKCHG(_p))
-#define THT_IMR_UP(_p)		(THT_REG_IMR_LINKCHG(_p))
+#define THT_IMR_UP(_p)		(THT_REG_IMR_LINKCHG(_p) | \
+				    THT_REG_IMR_TXF(0))
 
 /* hardware structures (we're using the 64 bit variants) */
 
@@ -808,6 +809,7 @@ int
 tht_intr(void *arg)
 {
 	struct tht_softc		*sc = arg;
+	struct ifnet			*ifp;
 	u_int32_t			isr;
 
 	isr = tht_read(sc, THT_REG_ISR);
@@ -820,6 +822,14 @@ tht_intr(void *arg)
 
 	if (ISSET(isr, THT_REG_ISR_LINKCHG(0) | THT_REG_ISR_LINKCHG(1)))
 		tht_link_state(sc);
+
+	ifp = &sc->sc_ac.ac_if;
+	if (ifp->if_flags & IFF_RUNNING) {
+		if (ISSET(isr, THT_REG_ISR_TXF(0)))
+			tht_txf(sc);
+
+		tht_start(ifp);
+	}
 
 	tht_write(sc, THT_REG_IMR, sc->sc_imr);
 	return (1);
@@ -989,6 +999,9 @@ tht_down(struct tht_softc *sc)
 
 	tht_pkt_free(sc, &sc->sc_rx_list);
 	tht_pkt_free(sc, &sc->sc_tx_list);
+
+	sc->sc_imr = THT_IMR_DOWN(sc->sc_port);
+	tht_write(sc, THT_REG_IMR, sc->sc_imr);
 }
 
 void
