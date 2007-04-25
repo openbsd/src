@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.64 2007/04/25 05:38:12 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.65 2007/04/25 05:40:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1107,7 +1107,7 @@ tht_txf(struct tht_softc *sc)
 	struct tht_tx_free		txf;
 	struct tht_pkt			*pkt;
 
-	if (tht_fifo_readable(sc, &sc->sc_txf) <= sizeof(txf))
+	if (tht_fifo_readable(sc, &sc->sc_txf) < sizeof(txf))
 		return;
 
 	tht_fifo_pre(sc, &sc->sc_txf);
@@ -1126,7 +1126,7 @@ tht_txf(struct tht_softc *sc)
 
 		tht_pkt_put(&sc->sc_rx_list, pkt);
 
-	} while (sc->sc_txf.tf_ready > sizeof(txf));
+	} while (sc->sc_txf.tf_ready >= sizeof(txf));
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 
