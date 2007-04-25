@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.63 2007/04/25 05:09:47 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.64 2007/04/25 05:38:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -115,12 +115,29 @@ int thtdebug = THT_D_FIFO | THT_D_TX | THT_D_RX | THT_D_INTR;
 #define THT_REG_10G_REV		0x6000 /* Revision */
 #define THT_REG_10G_SCR		0x6004 /* Scratch */
 #define THT_REG_10G_CTL		0x6008 /* Control/Status */
+#define  THT_REG_10G_CTL_CMD_FRAME_EN	(1<<13) /* cmd frame enable */
+#define  THT_REG_10G_CTL_SW_RESET	(1<<12) /* sw reset */
+#define  THT_REG_10G_CTL_STATS_AUTO_CLR	(1<<11) /* auto clear statistics */
+#define  THT_REG_10G_CTL_LOOPBACK	(1<<10) /* enable loopback */
+#define  THT_REG_10G_CTL_TX_ADDR_INS	(1<<9) /* set mac on tx */
+#define  THT_REG_10G_CTL_PAUSE_IGNORE	(1<<8) /* ignore pause */
+#define  THT_REG_10G_CTL_PAUSE_FWD	(1<<7) /* forward pause */
+#define  THT_REG_10G_CTL_CRC_FWD	(1<<6) /* crc forward */
+#define  THT_REG_10G_CTL_PAD		(1<<5) /* frame padding */
+#define  THT_REG_10G_CTL_PROMISC	(1<<4) /* promiscuous mode */
+#define  THT_REG_10G_CTL_WAN_MODE	(1<<3) /* WAN mode */
+#define  THT_REG_10G_CTL_RX_EN		(1<<1) /* RX enable */
+#define  THT_REG_10G_CTL_TX_EN		(1<<0) /* TX enable */
 #define THT_REG_10G_FRM_LEN	0x6014 /* Fram Length */
 #define THT_REG_10G_PAUSE	0x6018 /* Pause Quanta */
 #define THT_REG_10G_RX_SEC	0x601c /* RX Section */
 #define THT_REG_10G_TX_SEC	0x6020 /* TX Section */
+#define  THT_REG_10G_SEC_AVAIL(_t)	(_t) /* section available thresh*/
+#define  THT_REG_10G_SEC_EMPTY(_t)	(_t) /* section empty avail */
 #define THT_REG_10G_RFIFO_AEF	0x6024 /* RX FIFO Almost Empty/Full */
 #define THT_REG_10G_TFIFO_AEF	0x6028 /* TX FIFO Almost Empty/Full */
+#define  THT_REG_10G_FIFO_AE(_t)	(_t) /* almost empty */
+#define  THT_REG_10G_FIFO_AF(_t)	(_t) /* almost full */
 #define THT_REG_10G_SM_STAT	0x6030 /* MDIO Status */
 #define THT_REG_10G_SM_CMD	0x6034 /* MDIO Command */
 #define THT_REG_10G_SM_DAT	0x6038 /* MDIO Data */
@@ -886,6 +903,31 @@ tht_up(struct tht_softc *sc)
 	if (tht_fifo_alloc(sc, &sc->sc_txf, &tht_txf_desc) != 0)
 		goto free_rxd;
 
+	tht_write(sc, THT_REG_10G_FRM_LEN, MCLBYTES);
+	tht_write(sc, THT_REG_10G_PAUSE, 0x92);
+	tht_write(sc, THT_REG_10G_RX_SEC, THT_REG_10G_SEC_AVAIL(0x10) |
+	    THT_REG_10G_SEC_EMPTY(0x80));
+	tht_write(sc, THT_REG_10G_RX_SEC, THT_REG_10G_SEC_AVAIL(0x10) |
+	    THT_REG_10G_SEC_EMPTY(0xe0));
+	tht_write(sc, THT_REG_10G_RFIFO_AEF, THT_REG_10G_FIFO_AE(0x0) |
+	    THT_REG_10G_FIFO_AF(0x0));
+	tht_write(sc, THT_REG_10G_TFIFO_AEF, THT_REG_10G_FIFO_AE(0x0) |
+	    THT_REG_10G_FIFO_AF(0x0));
+	tht_write(sc, THT_REG_10G_CTL, THT_REG_10G_CTL_TX_EN |
+	    THT_REG_10G_CTL_RX_EN | THT_REG_10G_CTL_PAD |
+	    THT_REG_10G_CTL_PROMISC);
+
+	tht_write(sc, THT_REG_RX_MAX_FRAME, MCLBYTES);
+
+	tht_write(sc, THT_REG_RDINTCM(0), THT_REG_RDINTCM_PKT_TH(12) |
+	    THT_REG_RDINTCM_RXF_TH(4) | THT_REG_RDINTCM_COAL_RC |
+	    THT_REG_RDINTCM_COAL(0x20));
+	tht_write(sc, THT_REG_TDINTCM(0), THT_REG_TDINTCM_PKT_TH(12) |
+	    THT_REG_TDINTCM_COAL_RC | THT_REG_RDINTCM_COAL(0x20));
+
+	tht_write(sc, THT_REG_RX_FLT, THT_REG_RX_FLT_OSEN |
+	    THT_REG_RX_FLT_AM | THT_REG_RX_FLT_AB | THT_REG_RX_FLT_PRM_ALL);
+
 	/* populate rxf fifo */
 	tht_rxf_fill(sc, 1);
 
@@ -893,6 +935,8 @@ tht_up(struct tht_softc *sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	
 	/* enable interrupts */
+	sc->sc_imr = THT_IMR_UP(sc->sc_port);
+	tht_write(sc, THT_REG_IMR, sc->sc_imr);
 
 	return;
 
@@ -926,6 +970,9 @@ tht_down(struct tht_softc *sc)
 	while (tht_fifo_writable(sc, &sc->sc_txt) < sc->sc_txt.tf_len &&
 	    tht_fifo_readable(sc, &sc->sc_txf) > 0)
 		tsleep(sc, 0, "thtdown", hz);
+
+	sc->sc_imr = THT_IMR_DOWN(sc->sc_port);
+	tht_write(sc, THT_REG_IMR, sc->sc_imr);
 
 	tht_sw_reset(sc);
 
