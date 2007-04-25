@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.70 2007/04/25 09:33:25 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.71 2007/04/25 09:52:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1049,7 +1049,7 @@ tht_start(struct ifnet *ifp)
 		txt.uid = pkt->tp_id;
 
 		DPRINTF(THT_D_TX, "%s: txt uid 0x%llx flags 0x%08x len %d\n",
-		    DEVNAME(sc), flags, pkt->tp_m->m_pkthdr.len, pkt->tp_id);
+		    DEVNAME(sc), pkt->tp_id, flags, pkt->tp_m->m_pkthdr.len);
 
 		tht_fifo_write(sc, &sc->sc_txt, &txt, sizeof(txt));
 		tht_fifo_write_dmap(sc, &sc->sc_txt, pkt->tp_dmap);
