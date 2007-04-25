@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.67 2007/04/25 05:47:14 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.68 2007/04/25 08:10:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -133,11 +133,11 @@ int thtdebug = THT_D_FIFO | THT_D_TX | THT_D_RX | THT_D_INTR;
 #define THT_REG_10G_RX_SEC	0x601c /* RX Section */
 #define THT_REG_10G_TX_SEC	0x6020 /* TX Section */
 #define  THT_REG_10G_SEC_AVAIL(_t)	(_t) /* section available thresh*/
-#define  THT_REG_10G_SEC_EMPTY(_t)	(_t) /* section empty avail */
+#define  THT_REG_10G_SEC_EMPTY(_t)	((_t)<<16) /* section empty avail */
 #define THT_REG_10G_RFIFO_AEF	0x6024 /* RX FIFO Almost Empty/Full */
 #define THT_REG_10G_TFIFO_AEF	0x6028 /* TX FIFO Almost Empty/Full */
 #define  THT_REG_10G_FIFO_AE(_t)	(_t) /* almost empty */
-#define  THT_REG_10G_FIFO_AF(_t)	(_t) /* almost full */
+#define  THT_REG_10G_FIFO_AF(_t)	((_t)<<16) /* almost full */
 #define THT_REG_10G_SM_STAT	0x6030 /* MDIO Status */
 #define THT_REG_10G_SM_CMD	0x6034 /* MDIO Command */
 #define THT_REG_10G_SM_DAT	0x6038 /* MDIO Data */
