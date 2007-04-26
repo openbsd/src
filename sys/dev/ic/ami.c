@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.177 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: ami.c,v 1.178 2007/04/26 11:39:33 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -218,7 +218,7 @@ ami_read(struct ami_softc *sc, bus_size_t r)
 void
 ami_write(struct ami_softc *sc, bus_size_t r, u_int32_t v)
 {
-	AMI_DPRINTF(AMI_D_CMD, ("awo 0x%x 0x%08x", r, v));
+	AMI_DPRINTF(AMI_D_CMD, ("awo 0x%x 0x%08x ", r, v));
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
@@ -387,7 +387,8 @@ ami_attach(struct ami_softc *sc)
 	}
 	sc->sc_mbox = (volatile struct ami_iocmd *)AMIMEM_KVA(sc->sc_mbox_am);
 	sc->sc_mbox_pa = htole32(AMIMEM_DVA(sc->sc_mbox_am));
-	AMI_DPRINTF(AMI_D_CMD, ("mbox_pa=%llx ", sc->sc_mbox_pa));
+	AMI_DPRINTF(AMI_D_CMD, ("mbox=%p ", sc->sc_mbox));
+	AMI_DPRINTF(AMI_D_CMD, ("mbox_pa=0x%llx ", (long long)sc->sc_mbox_pa));
 
 	/* create a spartan ccb for use with ami_poll */
 	bzero(&iccb, sizeof(iccb));
@@ -2526,7 +2527,7 @@ ami_print_mbox(struct ami_iocmd *mbox)
 {
 	int i;
 
-	printf("acc_cmd: %d  aac_id: %d  acc_busy: %d  acc_nstat: %d",
+	printf("acc_cmd: %d  aac_id: %d  acc_busy: %d  acc_nstat: %d  ",
 	    mbox->acc_cmd, mbox->acc_id, mbox->acc_busy, mbox->acc_nstat);
 	printf("acc_status: %d  acc_poll: %d  acc_ack: %d\n",
 	    mbox->acc_status, mbox->acc_poll, mbox->acc_ack);
