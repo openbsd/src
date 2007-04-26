@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.69 2006/12/11 05:08:18 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.70 2007/04/26 20:28:25 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -132,7 +132,7 @@ int	db_console = 0;
 /*
  * panic on spl assertion failure?
  */
-int splassert_ctl = 0;
+int splassert_ctl = 1;
 
 /*
  * v_putc: routine to putc on virtual console
