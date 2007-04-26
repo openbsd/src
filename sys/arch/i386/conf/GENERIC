@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.554 2007/04/26 00:21:39 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.555 2007/04/26 01:43:13 gwk Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -53,6 +53,7 @@ esm0	at mainbus? 		# Dell Embedded Server Management
 isa0	at mainbus0
 isa0	at pcib?
 isa0	at ichpcib?
+isa0	at piixpcib?
 isa0	at gscpcib?
 eisa0	at mainbus0
 pci*	at mainbus0
@@ -82,6 +83,7 @@ pci*	at ppb?
 pci*	at pchb?
 pcib*	at pci?			# PCI-ISA bridge
 ichpcib* at pci?		# Intel ICHx/ICHx-M LPC bridges
+piixpcib* at pci?		# Intel PIIX4 PCI-ISA bridge
 gscpcib* at pci?		# NS Geode SC1100 PCI-ISA bridge
 gpio*	at gscpcib?
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.158 2007/04/21 21:06:15 gwk Exp $
+#	$OpenBSD: files.i386,v 1.159 2007/04/26 01:43:13 gwk Exp $
 #
 # new style config file for i386 architecture
 #
@@ -136,12 +136,17 @@ file	arch/i386/pci/gscpm.c		gscpm
 # PCI-ISA bridge chipsets
 device	pcib: isabus
 attach	pcib at pci
-file	arch/i386/pci/pcib.c		pcib | ichpcib | gscpcib
+file	arch/i386/pci/pcib.c		pcib | ichpcib | gscpcib | piixpcib
 
 # Intel ICHx/ICHx-M LPC bridges
 device	ichpcib: isabus
 attach	ichpcib at pci
 file	arch/i386/pci/ichpcib.c		ichpcib
+
+# Intel PIIX4 PCI-ISA bridge
+device	piixpcib: isabus
+attach	piixpcib at pci
+file	arch/i386/pci/piixpcib.c	piixpcib & i686_cpu
 
 # National Semiconductor Geode SC1100 PCI-ISA bridge
 device	gscpcib: isabus, gpiobus
