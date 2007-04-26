@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.6 2004/10/20 12:49:15 pefo Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.7 2007/04/26 17:02:38 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -370,6 +370,7 @@ typedef struct arc_param_blk_64
 #define ArcBios (ArcBiosBase->firmware_vect)
 
 extern int bios_is_32bit;
+extern char bios_enaddr[20];
 
 int  bios_getchar(void);
 void bios_putchar(char);

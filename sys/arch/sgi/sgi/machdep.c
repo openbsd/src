@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.35 2007/04/10 16:54:46 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.36 2007/04/26 17:02:40 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -295,6 +295,22 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 		cp = "unknown";
 	if (makebootdev(cp, bootdriveoffs))
 		bios_printf("Boot device unrecognized: '%s'\n", cp);
+
+	/*
+	 * Read platform-specific environment variables.
+	 */
+	switch (sys_config.system_type) {
+#if defined(TGT_O2)
+	case SGI_O2:
+		/* get ethernet address from ARCBIOS */
+		cp = Bios_GetEnvironmentVariable("eaddr");
+		if (cp != NULL && strlen(cp) > 0)
+			strlcpy(bios_enaddr, cp, sizeof bios_enaddr);
+		break;
+#endif
+	default:
+		break;
+	}
 
 	/*
 	 *  Set pagesize to enable use of page macros and functions.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.10 2006/03/25 22:41:41 djm Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.11 2007/04/26 17:02:40 miod Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -363,7 +363,6 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	struct confargs *ca = aux;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	uint32_t command;
-	char *macaddr;
 	struct mii_softc *child;
 	bus_dma_segment_t seg;
 	int i, err, rseg;
@@ -433,12 +432,8 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->sc_tick_ch, mec_tick, sc);
 
-	/* get ethernet address from ARCBIOS */
-	if ((macaddr = Bios_GetEnvironmentVariable("eaddr")) == NULL) {
-		printf(": unable to get MAC address!\n");
-		goto fail_4;
-	}
-	enaddr_aton(macaddr, sc->sc_ac.ac_enaddr);
+	/* use ethernet address from ARCBIOS */
+	enaddr_aton(bios_enaddr, sc->sc_ac.ac_enaddr);
 
 	/* reset device */
 	mec_reset(sc);
