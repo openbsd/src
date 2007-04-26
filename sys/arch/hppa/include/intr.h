@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.20 2006/03/12 03:14:36 brad Exp $	*/
+/*	$OpenBSD: intr.h,v 1.21 2007/04/26 20:52:48 miod Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -54,6 +54,8 @@
 #define	IST_LEVEL	3
 
 #if !defined(_LOCORE) && defined(_KERNEL)
+
+#include <machine/atomic.h>
 
 extern volatile int cpl;
 extern volatile u_long ipending, imask[NIPL];
@@ -116,16 +118,7 @@ splx(int ncpl)
 #define	splhigh()	splraise(IPL_HIGH)
 #define	spl0()		spllower(IPL_NONE)
 
-static __inline void
-softintr(u_long mask)
-{
-	register_t eiem;
-
-	__asm __volatile("mfctl	%%cr15, %0": "=r" (eiem));
-	__asm __volatile("mtctl	%r0, %cr15");
-	ipending |= mask;
-	__asm __volatile("mtctl	%0, %%cr15":: "r" (eiem));
-}
+#define	softintr(mask)	atomic_setbits_long(&ipending, mask)
 
 #define	SOFTINT_MASK ((1 << (IPL_SOFTCLOCK - 1)) | \
     (1 << (IPL_SOFTNET - 1)) | (1 << (IPL_SOFTTTY - 1)))
