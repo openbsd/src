@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.2 2007/03/23 21:27:37 miod Exp $	*/
+/*	$OpenBSD: power.c,v 1.3 2007/04/26 18:12:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Martin Reindl.
@@ -96,14 +96,16 @@ power_intr(void *arg)
 	}
 
 	status = ~status;
-	if ((status & BTN_POWER_BIT) && (kbd_reset == 1)) {
+	if (status & BTN_POWER_BIT) {
 #ifdef DEBUG
 		printf("%s switched\n", sc->sc_dev.dv_xname);
 		Debugger();
 #endif
-		kbd_reset = 0;
 		_reg_write_1(LANDISK_PWRSW_INTCLR, 1);
-		psignal(initproc, SIGUSR1);
+		if (kbd_reset == 1) {
+			kbd_reset = 0;
+			psignal(initproc, SIGUSR1);
+		}
 		return (1);
 	}
 	return (0);
