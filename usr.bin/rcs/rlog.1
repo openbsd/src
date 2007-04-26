@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rlog.1,v 1.19 2007/04/26 21:56:13 sobrado Exp $
+.\"	$OpenBSD: rlog.1,v 1.20 2007/04/26 21:59:22 sobrado Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -100,34 +100,34 @@ Print name of RCS file only.
 .It Fl r Ns Op Ar revs
 Specify revision(s) to list:
 .Bl -tag -width Ds
-.It REV1,REV2,...,
+.It rev1,rev2,...
 A list of revisions is specified by separating names or numbers
 of revisions by the
 .Sq \&,
 character.
-.It REV1:REV2
+.It rev1:rev2
 List all revisions between
-.Ar REV1
+.Ar rev1
 and
-.Ar REV2
+.Ar rev2
 (they must be on the same branch).
-.It :REV
+.It :rev
 List all revisions since the beginning of the branch until
-.Ar REV
+.Ar rev
 included.
-.It REV:
+.It rev:
 List all revisions of the branch beginning with
-.Ar REV .
-.It BRANCH
+.Ar rev .
+.It branch
 List all revisions of a branch.
-.It BRANCH.
+.It branch.
 List the latest revision of the branch
-.Ar BRANCH .
-.It BRANCH1:BRANCH2
+.Ar branch .
+.It branch1:branch2
 List all revisions of branches between
-.Ar BRANCH1
+.Ar branch1
 and
-.Ar BRANCH2 .
+.Ar branch2 .
 .El
 .Pp
 Without argument, the
