@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.5 2007/04/16 17:21:28 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.6 2007/04/26 18:24:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -19,6 +19,9 @@
 /*
  * Driver for the NetXen NX2031/NX2035 10Gb and Gigabit Ethernet chipsets,
  * see http://www.netxen.com/.
+ *
+ * This driver was made possible because NetXen Inc. provided hardware
+ * and documentation. Thanks!
  */
 
 #include "bpfilter.h"
