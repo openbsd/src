@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.553 2007/04/10 00:44:50 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.554 2007/04/26 00:21:39 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -519,6 +519,8 @@ nfe*	at pci?				# NVIDIA nForce Ethernet
 musycc*	at pci?				# Conexant HDLC controller
 art*	at musycc?			# Accoom Artery E1/T1 cards
 xge*	at pci?				# Neterion Xframe-I/II 10Gb ethernet
+thtc*	at pci?				# Tehuti Networks 10Gb ethernet
+tht*	at thtc?
 gem*	at pci?				# Sun 'gem' ethernet
 vic*	at pci?				# VMware VMXnet virtual interface
 
