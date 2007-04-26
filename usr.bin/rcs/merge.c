@@ -1,4 +1,4 @@
-/*	$OpenBSD: merge.c,v 1.5 2007/02/27 07:59:13 xsa Exp $	*/
+/*	$OpenBSD: merge.c,v 1.6 2007/04/26 21:49:33 sobrado Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -117,6 +117,5 @@ void
 merge_usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: merge [-AeEpqV] [-L lab [-L lab [-L lab]]] "
-	    "file1 file2 file3\n");
+	    "usage: merge [-EepqV] [-L label] file1 file2 file3\n");
 }
