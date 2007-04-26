@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_float.S,v 1.11 2005/12/20 07:06:26 miod Exp $ */
+/*	$OpenBSD: lcore_float.S,v 1.12 2007/04/26 17:04:32 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -62,7 +62,7 @@
  */
 LEAF(MipsSwitchFPState, 0)
 	mfc0	t1, COP_0_STATUS_REG	# Save old SR
-	li	t0, SR_COP_1_BIT|SR_FR_32	# enable the coprocessor
+	or	t0, t1, SR_COP_1_BIT|SR_FR_32	# enable the coprocessor
 	mtc0	t0, COP_0_STATUS_REG
 	ITLBNOPFIX
 
@@ -166,7 +166,7 @@ END(MipsSwitchFPState)
 
 LEAF(MipsSwitchFPState16, 0)
 	mfc0	t1, COP_0_STATUS_REG	# Save old SR
-	li	t0, SR_COP_1_BIT	# enable the coprocessor
+	or	t0, t1, SR_COP_1_BIT	# enable the coprocessor
 	mtc0	t0, COP_0_STATUS_REG
 	ITLBNOPFIX
 
@@ -288,7 +288,7 @@ END(MipsSwitchFPState16)
 LEAF(MipsSaveCurFPState, 0)
 	PTR_L	a0, P_ADDR(a0)			# get pointer to pcb for proc
 	mfc0	t1, COP_0_STATUS_REG	# Disable interrupts and
-	li	t0, SR_COP_1_BIT|SR_FR_32	# enable the coprocessor
+	or	t0, t1, SR_COP_1_BIT|SR_FR_32	# enable the coprocessor
 	mtc0	t0, COP_0_STATUS_REG
 	ITLBNOPFIX
 	PTR_S	zero, machFPCurProcPtr		# indicate state has been saved
@@ -348,7 +348,7 @@ END(MipsSaveCurFPState)
 LEAF(MipsSaveCurFPState16, 0)
 	PTR_L	a0, P_ADDR(a0)			# get pointer to pcb for proc
 	mfc0	t1, COP_0_STATUS_REG	# Disable interrupts and
-	li	t0, SR_COP_1_BIT	# enable the coprocessor
+	or	t0, t1, SR_COP_1_BIT	# enable the coprocessor
 	mtc0	t0, COP_0_STATUS_REG
 	ITLBNOPFIX
 	PTR_S	zero, machFPCurProcPtr		# indicate state has been saved

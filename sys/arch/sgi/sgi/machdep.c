@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.36 2007/04/26 17:02:40 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.37 2007/04/26 17:04:39 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -241,7 +241,7 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 		/* R12K O2's must run with DSD on */
 		switch ((cp0_get_prid() >> 8) & 0xff) {
 		case MIPS_R12000:
-			setsr(SR_DSD);
+			setsr(getsr() | SR_DSD);
 			break;
 		}
 		break;
@@ -531,6 +531,7 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 	 *  Turn off bootstrap exception vectors.
 	 */
 	setsr(getsr() & ~SR_BOOT_EXC_VEC);
+	proc0.p_md.md_regs->sr = getsr();
 
 	/*
 	 * Clear out the I and D caches.
