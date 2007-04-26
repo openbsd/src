@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.105 2007/02/24 03:33:27 ray Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.106 2007/04/26 02:43:29 ray Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.105 2007/02/24 03:33:27 ray Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.106 2007/04/26 02:43:29 ray Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -122,7 +122,7 @@ void	makelabel(char *, char *, struct disklabel *);
 int	writelabel(int, char *, struct disklabel *);
 void	l_perror(char *);
 int	edit(struct disklabel *, int);
-int	editit(void);
+int	editit(const char *);
 char	*skip(char *);
 char	*word(char *);
 int	getasciilabel(FILE *, struct disklabel *);
@@ -1123,7 +1123,7 @@ edit(struct disklabel *lp, int f)
 "# 4.2BSD filesystem (or '512 4096 16' except on alpha, sun4, ...)\n");
 	fclose(fp);
 	for (;;) {
-		if (!editit())
+		if (editit(tmpfil) == -1)
 			break;
 		fp = fopen(tmpfil, "r");
 		if (fp == NULL) {
@@ -1159,33 +1159,39 @@ edit(struct disklabel *lp, int f)
 }
 
 int
-editit(void)
+editit(const char *pathname)
 {
+	char *argp[] = {"sh", "-c", NULL, NULL}, *ed, *p;
+	sig_t sighup, sigint, sigquit;
 	pid_t pid;
-	int stat = 0;
-	char *argp[] = {"sh", "-c", NULL, NULL};
-	char *ed, *p;
+	int st;
 
-	if ((ed = getenv("EDITOR")) == NULL)
+	ed = getenv("VISUAL");
+	if (ed == NULL || ed[0] == '\0')
+		ed = getenv("EDITOR");
+	if (ed == NULL || ed[0] == '\0')
 		ed = _PATH_VI;
-	if (asprintf(&p, "%s %s", ed, tmpfil) == -1) {
-		warn("failed to start editor");
-		return (0);
-	}
+	if (asprintf(&p, "%s %s", ed, pathname) == -1)
+		return (-1);
 	argp[2] = p;
 
-	/* Turn off signals. */
-	(void)signal(SIGHUP, SIG_IGN);
-	(void)signal(SIGINT, SIG_IGN);
-	(void)signal(SIGQUIT, SIG_IGN);
-	while ((pid = fork()) < 0) {
-		if (errno != EAGAIN) {
-			warn("fork");
-			free(p);
-			stat = 1;
-			goto bail;
+ top:
+	sighup = signal(SIGHUP, SIG_IGN);
+	sigint = signal(SIGINT, SIG_IGN);
+	sigquit = signal(SIGQUIT, SIG_IGN);
+	if ((pid = fork()) == -1) {
+		int saved_errno = errno;
+
+		(void)signal(SIGHUP, sighup);
+		(void)signal(SIGINT, sigint);
+		(void)signal(SIGQUIT, sigquit);
+		if (saved_errno == EAGAIN) {
+			sleep(1);
+			goto top;
 		}
-		sleep(1);
+		free(p);
+		errno = saved_errno;
+		return (-1);
 	}
 	if (pid == 0) {
 		execv(_PATH_BSHELL, argp);
@@ -1193,23 +1199,20 @@ editit(void)
 	}
 	free(p);
 	for (;;) {
-		if (waitpid(pid, (int *)&stat, WUNTRACED) == -1) {
-			if (errno == EINTR)
-				continue;
-			if (errno == ECHILD)
-				stat = 1;
-			break;
-		}
-		if (WIFSTOPPED(stat))
-			raise(WSTOPSIG(stat));
-		else if (WIFEXITED(stat))
+		if (waitpid(pid, &st, 0) == -1) {
+			if (errno != EINTR)
+				return (-1);
+		} else
 			break;
 	}
-bail:
-	(void)signal(SIGHUP, SIG_DFL);
-	(void)signal(SIGINT, SIG_DFL);
-	(void)signal(SIGQUIT, SIG_DFL);
-	return (!stat);
+	(void)signal(SIGHUP, sighup);
+	(void)signal(SIGINT, sigint);
+	(void)signal(SIGQUIT, sigquit);
+	if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
+		errno = ECHILD;
+		return (-1);
+	}
+	return (0);
 }
 
 char *
