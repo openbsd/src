@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.4 2007/04/25 14:17:42 robert Exp $ */
+/*	$OpenBSD: uts.c,v 1.5 2007/04/26 17:00:28 miod Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -97,8 +97,7 @@ struct uts_pos {
 Static const struct usb_devno uts_devs[] = {
 	{ USB_VENDOR_FTDI,		USB_PRODUCT_FTDI_ITM_TOUCH },
 	{ USB_VENDOR_EGALAX,		USB_PRODUCT_EGALAX_TPANEL },
-	{ USB_VENDOR_EGALAX,		USB_PRODUCT_EGALAX_TPANEL2 },
-	{ 0, 0 }
+	{ USB_VENDOR_EGALAX,		USB_PRODUCT_EGALAX_TPANEL2 }
 };
 
 Static void uts_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);

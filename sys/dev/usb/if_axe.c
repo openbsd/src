@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.63 2007/04/09 08:57:51 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.64 2007/04/26 17:00:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -168,8 +168,7 @@ Static const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_PLANEX3, USB_PRODUCT_PLANEX3_GU1000T }, AX178 },
 	{ { USB_VENDOR_SYSTEMTALKS, USB_PRODUCT_SYSTEMTALKS_SGCX2UL}, 0 },
 	{ { USB_VENDOR_SITECOM, USB_PRODUCT_SITECOM_LN029}, 0 },
-	{ { USB_VENDOR_SITECOMEU, USB_PRODUCT_SITECOMEU_LN028 }, AX178 },
-	{ { 0, 0}, 0 }
+	{ { USB_VENDOR_SITECOMEU, USB_PRODUCT_SITECOMEU_LN028 }, AX178 }
 };
 
 #define axe_lookup(v, p) ((struct axe_type *)usb_lookup(axe_devs, v, p))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ubt.c,v 1.6 2005/11/24 14:31:40 grange Exp $	*/
+/*	$OpenBSD: if_ubt.c,v 1.7 2007/04/26 17:00:28 miod Exp $	*/
 
 /*
  * ng_ubt.c
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ubt.c,v 1.6 2005/11/24 14:31:40 grange Exp $
+ * $Id: if_ubt.c,v 1.7 2007/04/26 17:00:28 miod Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/drivers/ubt/ng_ubt.c,v 1.20 2004/10/12 23:33:46 emax Exp $
  */
 
@@ -102,6 +102,7 @@ Static void		ubt_if_watchdog(struct ifnet *);
 
 USB_MATCH(ubt)
 {
+#ifdef notyet
 	/*
 	 * If for some reason device should not be attached then put
 	 * VendorID/ProductID pair into the list below. Currently I
@@ -113,8 +114,8 @@ USB_MATCH(ubt)
 	 */
 
 	Static struct usb_devno const	ubt_ignored_devices[] = {
-		{ 0, 0 } /* This should be the last item in the list */
 	};
+#endif
 
 	/*
 	 * If device violates Bluetooth specification and has bDeviceClass,
@@ -124,17 +125,19 @@ USB_MATCH(ubt)
 
 	Static struct usb_devno const	ubt_broken_devices[] = {
 		{ USB_VENDOR_CSR, USB_PRODUCT_CSR_BLUECORE },
-		{ USB_VENDOR_MSI, USB_PRODUCT_MSI_BLUETOOTH },
-		{ 0, 0 } /* This should be the last item in the list */
+		{ USB_VENDOR_MSI, USB_PRODUCT_MSI_BLUETOOTH }
 	};
 
 	USB_MATCH_START(ubt, uaa);
 
 	usb_device_descriptor_t	*dd = usbd_get_device_descriptor(uaa->device);
 
-	if (uaa->iface == NULL ||
-	    usb_lookup(ubt_ignored_devices, uaa->vendor, uaa->product))
+	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
+#ifdef notyet
+	if (usb_lookup(ubt_ignored_devices, uaa->vendor, uaa->product))
+		return (UMATCH_NONE);
+#endif
 
 	if (dd->bDeviceClass == UDCLASS_WIRELESS &&
 	    dd->bDeviceSubClass == UDSUBCLASS_RF &&

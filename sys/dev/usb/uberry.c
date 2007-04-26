@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.2 2006/11/29 19:55:37 miod Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.3 2007/04/26 17:00:28 miod Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -46,8 +46,7 @@ struct uberry_softc {
 #define UBERRY_CONFIG_NO		0
 
 Static struct usb_devno const uberry_devices[] = {
-	{ USB_VENDOR_RIM, USB_PRODUCT_RIM_BLACKBERRY },
-	{ 0, 0 }
+	{ USB_VENDOR_RIM, USB_PRODUCT_RIM_BLACKBERRY }
 };
 
 USB_DECLARE_DRIVER(uberry);
