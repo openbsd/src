@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.44 2007/04/12 19:25:15 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.45 2007/04/26 11:31:52 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -286,19 +286,18 @@ struct pmap {
  * describes one mapping).
  */
 
-struct pv_entry;
-
-struct pv_head {
-	struct simplelock pvh_lock;	/* locks every pv on this list */
-	struct pv_entry *pvh_list;	/* head of list (locked by pvh_lock) */
-};
-
 struct pv_entry {			/* locked by its list's pvh_lock */
 	struct pv_entry *pv_next;	/* next entry */
 	struct pmap *pv_pmap;		/* the pmap */
 	vaddr_t pv_va;			/* the virtual address */
 	struct vm_page *pv_ptp;		/* the vm_page of the PTP */
 };
+
+/*
+ * We keep mod/ref flags in struct vm_page->pg_flags.
+ */
+#define PG_PMAP_MOD	PG_PMAP0
+#define	PG_PMAP_REF	PG_PMAP1
 
 /*
  * pv_entrys are dynamically allocated in chunks from a single page.
@@ -351,8 +350,8 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_update(pm)			/* nada */
 
-#define pmap_clear_modify(pg)		pmap_change_attrs(pg, 0, PG_M)
-#define pmap_clear_reference(pg)	pmap_change_attrs(pg, 0, PG_U)
+#define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
+#define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
 #define pmap_copy(DP,SP,D,L,S)
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
@@ -368,7 +367,7 @@ extern int pmap_pg_g;			/* do we support PG_G? */
  */
 
 void		pmap_bootstrap(vaddr_t);
-boolean_t	pmap_change_attrs(struct vm_page *, int, int);
+boolean_t	pmap_clear_attrs(struct vm_page *, int);
 static void	pmap_page_protect(struct vm_page *, vm_prot_t);
 void		pmap_page_remove(struct vm_page *);
 static void	pmap_protect(struct pmap *, vaddr_t,
@@ -440,7 +439,7 @@ pmap_update_2pg(va, vb)
  * pmap_page_protect: change the protection of all recorded mappings
  *	of a managed page
  *
- * => This function is a front end for pmap_page_remove/pmap_change_attrs
+ * => This function is a front end for pmap_page_remove/pmap_clear_attrs
  * => We only have to worry about making the page more protected.
  *	Unprotecting a page is done on-demand at fault time.
  */
@@ -452,7 +451,7 @@ pmap_page_protect(pg, prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
 		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
-			(void) pmap_change_attrs(pg, PG_RO, PG_RW);
+			(void) pmap_clear_attrs(pg, PG_RW);
 		} else {
 			pmap_page_remove(pg);
 		}
