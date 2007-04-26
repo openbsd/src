@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.46 2006/11/09 00:01:10 deraadt Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.47 2007/04/26 23:39:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -157,7 +157,7 @@ main(int argc, char *argv[])
 	if (mbrfile != NULL && (fd = open(mbrfile, O_RDONLY)) == -1) {
 		warn("%s", mbrfile);
 		warnx("using builtin MBR");
-		mbrfile == NULL;
+		mbrfile = NULL;
 	}
 	if (mbrfile == NULL) {
 		memcpy(mbr_buf, builtin_mbr, sizeof(mbr_buf));
