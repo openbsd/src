@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.11 2007/01/31 06:20:19 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.12 2007/04/26 08:57:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -33,7 +33,8 @@
 #define TRUNK_PORT_STACK	0x00000002	/* stacked trunk port */
 #define TRUNK_PORT_ACTIVE	0x00000004	/* port is active */
 #define TRUNK_PORT_GLOBAL	0x80000000	/* IOCTL: global flag */
-#define TRUNK_PORT_BITS		"\20\01MASTER\02STACK\03ACTIVE"
+#define TRUNK_PORT_BITS							\
+	"\20\01MASTER\02STACK\03ACTIVE"
 
 /* Supported trunk PROTOs */
 enum trunk_proto {
@@ -91,11 +92,12 @@ struct trunk_reqall {
 /*
  * Internal kernel part
  */
-
+struct trunk_softc;
 struct trunk_port {
 	struct ifnet			*tp_if;		/* physical interface */
-	caddr_t				tp_trunk;	/* parent trunk */
+	struct trunk_softc		*tp_trunk;	/* parent trunk */
 	u_int8_t			tp_lladdr[ETHER_ADDR_LEN];
+	caddr_t				tp_psc;		/* protocol data */
 
 	u_char				tp_iftype;	/* interface type */
 	u_int32_t			tp_prio;	/* port priority */
@@ -162,11 +164,16 @@ struct trunk_softc {
 		    struct ether_header *, struct mbuf *);
 	int	(*tr_port_create)(struct trunk_port *);
 	void	(*tr_port_destroy)(struct trunk_port *);
+	void	(*tr_linkstate)(struct trunk_port *);
+	void	(*tr_init)(struct trunk_softc *);
+	void	(*tr_stop)(struct trunk_softc *);
 };
 
 #define tr_ifflags		tr_ac.ac_if.if_flags		/* flags */
 #define tr_ifname		tr_ac.ac_if.if_xname		/* name */
 #define tr_capabilities		tr_ac.ac_if.if_capabilities	/* capabilities */
+#define tr_ifindex		tr_ac.ac_if.if_index		/* int index */
+#define tr_lladdr		tr_ac.ac_enaddr			/* lladdr */
 
 #define IFCAP_TRUNK_MASK	0xffff0000	/* private capabilities */
 #define IFCAP_TRUNK_FULLDUPLEX	0x00010000	/* full duplex with >1 ports */
@@ -178,8 +185,11 @@ struct trunk_lb {
 	struct trunk_port	*lb_ports[TRUNK_MAX_PORTS];
 };
 
-void	 trunk_port_ifdetach(struct ifnet *);
-int	 trunk_input(struct ifnet *, struct ether_header *, struct mbuf *);
+void	 	trunk_port_ifdetach(struct ifnet *);
+int	 	trunk_input(struct ifnet *, struct ether_header *,
+		    struct mbuf *);
+int		trunk_enqueue(struct ifnet *, struct mbuf *);
+u_int32_t	trunk_hashmbuf(struct mbuf *, u_int32_t);
 #endif /* _KERNEL */
 
 #endif /* _NET_TRUNK_H */
