@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rlog.1,v 1.18 2006/05/08 12:09:34 xsa Exp $
+.\"	$OpenBSD: rlog.1,v 1.19 2007/04/26 21:56:13 sobrado Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -52,20 +52,20 @@ Print information about revisions of the default branch only.
 Specify revisions with dates matching the specification.
 The specification might be as follows:
 .Bl -tag -width Ds
-.It D1>D2 or D2>D1
+.It date1<date2 or date2>date1
 Select all revisions between
-.Ar \&D1
+.Ar date1
 and
-.Ar D2 .
-.It <D or D>
+.Ar date2 .
+.It <date or date>
 Select all revisions before
-.Ar D .
-.It >D or D<
+.Ar date .
+.It >date or date<
 Select all revisions after
-.Ar D .
-.It D
+.Ar date .
+.It date
 Select the latest revision before or equal to
-.Ar D .
+.Ar date .
 .El
 .Pp
 The
