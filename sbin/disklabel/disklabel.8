@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.60 2006/05/16 05:41:25 stevesk Exp $
+.\"	$OpenBSD: disklabel.8,v 1.61 2007/04/26 22:42:11 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -380,12 +380,11 @@ total sectors, rpm, and interleave.
 .It Xo
 .Cm g
 .Sm off
-.Op Ar b | d | u
+.Op Ar d | u
 .Sm on
 .Xc
 Set disk geometry based on what the
-.Em BIOS ,
-.Em disk ,
+.Em disk
 or
 .Em user
 thinks (the

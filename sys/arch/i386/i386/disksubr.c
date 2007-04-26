@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.70 2007/02/18 13:49:22 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.71 2007/04/26 22:42:11 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -40,6 +40,10 @@
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 #include <sys/disk.h>
+#include <sys/reboot.h>
+#include <sys/conf.h>
+
+#include <machine/biosvar.h>
 
 /*
  * Attempt to read a disk label from a device
@@ -59,6 +63,8 @@
  *
  * Returns null on success and an error string on failure.
  */
+bios_diskinfo_t *bios_getdiskinfo(dev_t dev);
+
 char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
     struct cpu_disklabel *osdep, int spoofonly)
@@ -66,10 +72,12 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	struct dos_partition dp[NDOSPART], *dp2;
 	struct partition *pp;
 	struct disklabel *dlp;
+	bios_diskinfo_t *pdi;
 	unsigned long extoff = 0;
 	unsigned int fattest;
 	struct buf *bp = NULL;
 	daddr_t part_blkno = DOSBBSECTOR;
+	dev_t devno;
 	char *msg = NULL;
 	int dospartoff, cyl, i, ourpart = -1;
 	int wander = 1, n = 0, loop = 0;
@@ -89,6 +97,25 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	if (lp->d_partitions[i].p_size == 0)
 		lp->d_partitions[i].p_size = lp->d_secperunit;
 	lp->d_partitions[i].p_offset = 0;
+
+	/* Look for any BIOS geometry information we should honour. */
+	devno = chrtoblk(dev);
+	if (devno == NODEV)
+		devno = dev;
+	pdi = bios_getdiskinfo(MAKEBOOTDEV(major(devno), 0, 0, DISKUNIT(devno),
+	    RAW_PART));
+	if (pdi != NULL && pdi->bios_heads > 0 && pdi->bios_sectors > 0) {
+#ifdef DEBUG
+		printf("Disk GEOM %u/%u/%u -> BIOS GEOM %u/%u/%u\n",
+		    lp->d_ntracks, lp->d_nsectors, lp->d_ncylinders,
+		    pdi->bios_heads, pdi->bios_sectors,
+		    lp->d_secperunit / (pdi->bios_heads * pdi->bios_sectors));
+#endif
+		lp->d_ntracks = pdi->bios_heads;
+		lp->d_nsectors = pdi->bios_sectors;
+		lp->d_secpercyl = pdi->bios_sectors * pdi->bios_heads;
+		lp->d_ncylinders = lp->d_secperunit / lp->d_secpercyl;
+	}
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);

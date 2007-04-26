@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.109 2007/03/18 20:00:02 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.110 2007/04/26 22:42:11 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.109 2007/03/18 20:00:02 otto Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.110 2007/04/26 22:42:11 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -29,9 +29,6 @@ static char rcsid[] = "$OpenBSD: editor.c,v 1.109 2007/03/18 20:00:02 otto Exp $
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
-#ifdef CPU_BIOS
-#include <machine/biosvar.h>
-#endif
 
 #include <ufs/ffs/fs.h>
 
@@ -83,7 +80,7 @@ u_int32_t next_offset(struct disklabel *, u_int32_t *);
 int	partition_cmp(const void *, const void *);
 struct partition **sort_partitions(struct disklabel *, u_int16_t *);
 void	getdisktype(struct disklabel *, char *, char *);
-void	find_bounds(struct disklabel *, struct disklabel *);
+void	find_bounds(struct disklabel *);
 void	set_bounds(struct disklabel *, u_int32_t *);
 struct diskchunk *free_chunks(struct disklabel *);
 char **	mpcopy(char **, char **);
@@ -97,8 +94,9 @@ int	get_fstype(struct disklabel *, int);
 int	get_mp(struct disklabel *, char **, int);
 int	get_offset(struct disklabel *, int);
 int	get_size(struct disklabel *, int, u_int32_t *, int);
-void	get_geometry(int, struct disklabel **, struct disklabel **);
-void	set_geometry(struct disklabel *, struct disklabel *, struct disklabel *, struct disklabel *, char *);
+void	get_geometry(int, struct disklabel **);
+void	set_geometry(struct disklabel *, struct disklabel *, struct disklabel *,
+	    char *);
 void	zero_partitions(struct disklabel *, u_int32_t *);
 
 static u_int32_t starting_sector;
@@ -112,7 +110,7 @@ int
 editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 {
 	struct disklabel lastlabel, tmplabel, label = *lp;
-	struct disklabel *disk_geop, *bios_geop;
+	struct disklabel *disk_geop;
 	struct partition *pp;
 	u_int32_t freesectors;
 	FILE *fp;
@@ -130,11 +128,11 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 	/* Don't allow disk type of "unknown" */
 	getdisktype(&label, "You need to specify a type for this disk.", dev);
 
-	/* Get the on-disk and BIOS geometries if possible */
-	get_geometry(f, &disk_geop, &bios_geop);
+	/* Get the on-disk geometries if possible */
+	get_geometry(f, &disk_geop);
 
 	/* How big is the OpenBSD portion of the disk?  */
-	find_bounds(&label, bios_geop);
+	find_bounds(&label);
 
 	/* Set freesectors based on bounds and initial label */
 	editor_countfree(&label, &freesectors);
@@ -256,7 +254,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 		case 'g':
 			tmplabel = lastlabel;
 			lastlabel = label;
-			set_geometry(&label, disk_geop, bios_geop, lp, arg);
+			set_geometry(&label, disk_geop, lp, arg);
 			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
 				lastlabel = tmplabel;
 			break;
@@ -1618,7 +1616,7 @@ free_chunks(struct disklabel *lp)
  * What is the OpenBSD portion of the disk?  Uses the MBR if applicable.
  */
 void
-find_bounds(struct disklabel *lp, struct disklabel *bios_lp)
+find_bounds(struct disklabel *lp)
 {
 #ifdef DOSLABEL
 	struct partition *pp = &lp->d_partitions[RAW_PART];
@@ -1639,17 +1637,6 @@ find_bounds(struct disklabel *lp, struct disklabel *bios_lp)
 			/* Set start and end based on fdisk partition bounds */
 			starting_sector = letoh32(dosdp->dp_start);
 			ending_sector = starting_sector + letoh32(dosdp->dp_size);
-
-			/*
-			 * If the ending sector of the BSD fdisk partition
-			 * is equal to the ending sector of the BIOS geometry
-			 * but the real sector count > BIOS sector count,
-			 * adjust the bounds accordingly.  We do this because
-			 * the BIOS geometry is limited to disks of ~4gig.
-			 */
-			if (bios_lp && ending_sector == bios_lp->d_secperunit &&
-			    lp->d_secperunit > bios_lp->d_secperunit)
-				ending_sector = lp->d_secperunit;
 
 			/*
 			 * If there are any BSD or SWAP partitions beyond
@@ -1778,13 +1765,14 @@ editor_help(char *arg)
 		break;
 	case 'g':
 		puts(
-"The 'g' command is used select which disk geometry to use, the disk, BIOS, or\n"
-"user geometry.  It takes as an optional argument ``d'', ``b'', or ``u''.  If \n"
+"The 'g' command is used select which disk geometry to use, the disk or a\n"
+"user geometry.  It takes as an optional argument ``d'' or ``u''.  If \n"
 "you do not specify the type as an argument, you will be prompted for it.\n");
 		break;
 	case 'm':
 		puts(
-"The 'm' command is used to modify an existing partition.  It takes as an\n"    "optional argument the partition letter to change.  If you do not specify a\n"
+"The 'm' command is used to modify an existing partition.  It takes as an\n"
+"optional argument the partition letter to change.  If you do not specify a\n"
 "partition letter, you will be prompted for one.  This option allows the user\n"
 "to change the filesystem type, starting offset, partition size, block fragment\n"
 "size, block size, and cylinders per group for the specified partition (not all\n"
@@ -1850,7 +1838,7 @@ editor_help(char *arg)
 		puts("\tD         - set label to default.");
 		puts("\td [part]  - delete partition.");
 		puts("\te         - edit drive parameters.");
-		puts("\tg [b|d|u] - use [b]ios, [d]isk or [u]ser geometry.");
+		puts("\tg [d|u]   - use [d]isk or [u]ser geometry.");
 		puts("\tM         - show entire OpenBSD man page for disklabel.");
 		puts("\tm [part]  - modify existing partition.");
 		puts("\tn [part]  - set the mount point for a partition.");
@@ -2253,19 +2241,11 @@ micmp(const void *a1, const void *a2)
 }
 
 void
-get_geometry(int f, struct disklabel **dgpp, struct disklabel **bgpp)
+get_geometry(int f, struct disklabel **dgpp)
 {
-#ifdef CPU_BIOS
-	int mib[4];
-	size_t size;
-	dev_t devno;
-	bios_diskinfo_t di;
-#endif
 	struct stat st;
 	struct disklabel *disk_geop;
-#ifdef CPU_BIOS
-	struct disklabel *bios_geop;
-#endif
+
 	if (fstat(f, &st) == -1)
 		err(4, "Can't stat device");
 
@@ -2276,46 +2256,11 @@ get_geometry(int f, struct disklabel **dgpp, struct disklabel **bgpp)
 	    ioctl(f, DIOCGDINFO, disk_geop) < 0)
 		err(4, "ioctl DIOCGDINFO");
 	*dgpp = disk_geop;
-
-	/* Get BIOS geometry */
-	*bgpp = NULL;
-#ifdef CPU_BIOS
-	mib[0] = CTL_MACHDEP;
-	mib[1] = CPU_CHR2BLK;
-	mib[2] = st.st_rdev;
-	size = sizeof(devno);
-	if (sysctl(mib, 3, &devno, &size, NULL, 0) == -1) {
-		warn("sysctl(machdep.chr2blk)");
-		return;
-	}
-	devno = MAKEBOOTDEV(major(devno), 0, 0, DISKUNIT(devno), RAW_PART);
-
-	mib[0] = CTL_MACHDEP;
-	mib[1] = CPU_BIOS;
-	mib[2] = BIOS_DISKINFO;
-	mib[3] = devno;
-	size = sizeof(di);
-	if (sysctl(mib, 4, &di, &size, NULL, 0) == -1) {
-		warn("Can't get bios geometry");
-		return;
-	}
-	if ((bios_geop = calloc(1, sizeof(struct disklabel))) == NULL)
-		errx(4, "out of memory");
-
-	bios_geop->d_secsize = DEV_BSIZE;
-	bios_geop->d_nsectors = di.bios_sectors;
-	bios_geop->d_ntracks = di.bios_heads;
-	bios_geop->d_ncylinders = di.bios_cylinders;
-	bios_geop->d_secpercyl = di.bios_sectors * di.bios_heads;
-	bios_geop->d_secperunit = di.bios_cylinders *
-	    di.bios_heads * di.bios_sectors;
-	*bgpp = bios_geop;
-#endif
 }
 
 void
 set_geometry(struct disklabel *lp, struct disklabel *dgp,
-    struct disklabel *bgp, struct disklabel *ugp, char *p)
+    struct disklabel *ugp, char *p)
 {
 	if (p == NULL) {
 		p = getstring("[d]isk, [b]ios, or [u]ser geometry",
@@ -2329,19 +2274,6 @@ set_geometry(struct disklabel *lp, struct disklabel *dgp,
 		return;
 	}
 	switch (*p) {
-	case 'b':
-	case 'B':
-		if (bgp == NULL)
-			fputs("BIOS geometry not defined.\n", stderr);
-		else {
-			lp->d_secsize = bgp->d_secsize;
-			lp->d_nsectors = bgp->d_nsectors;
-			lp->d_ntracks = bgp->d_ntracks;
-			lp->d_ncylinders = bgp->d_ncylinders;
-			lp->d_secpercyl = bgp->d_secpercyl;
-			lp->d_secperunit = bgp->d_secperunit;
-		}
-		break;
 	case 'd':
 	case 'D':
 		if (dgp == NULL)

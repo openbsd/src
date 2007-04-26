@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.26 2006/12/10 19:19:32 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.27 2007/04/26 22:42:11 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Tobias Weingartner
@@ -39,14 +39,10 @@
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
-#ifdef CPU_BIOS
-#include <machine/biosvar.h>
-#endif
 #include "disk.h"
 #include "misc.h"
 
 DISK_metrics *DISK_getlabelmetrics(char *name);
-DISK_metrics *DISK_getbiosmetrics(char *name);
 
 int
 DISK_open(char *disk, int mode)
@@ -107,70 +103,6 @@ DISK_getlabelmetrics(char *name)
 	return (lm);
 }
 
-#ifdef CPU_BIOS
-/*
- * Routine to go after sysctl info for BIOS
- * geometry.  This should only really work on PC
- * type machines.  There is still a problem with
- * correlating the BIOS drive to the BSD drive.
- */
-DISK_metrics *
-DISK_getbiosmetrics(char *name)
-{
-	bios_diskinfo_t di;
-	DISK_metrics *bm;
-	struct stat st;
-	int mib[4], fd;
-	size_t size;
-	dev_t devno;
-
-	if ((fd = DISK_open(name, O_RDONLY)) == -1)
-		return (NULL);
-	fstat(fd, &st);
-	DISK_close(fd);
-
-	/* Get BIOS metrics */
-	mib[0] = CTL_MACHDEP;
-	mib[1] = CPU_CHR2BLK;
-	mib[2] = st.st_rdev;
-	size = sizeof(devno);
-	if (sysctl(mib, 3, &devno, &size, NULL, 0) == -1) {
-		warn("sysctl(machdep.chr2blk)");
-		return (NULL);
-	}
-	devno = MAKEBOOTDEV(major(devno), 0, 0, DISKUNIT(devno), RAW_PART);
-
-	mib[0] = CTL_MACHDEP;
-	mib[1] = CPU_BIOS;
-	mib[2] = BIOS_DISKINFO;
-	mib[3] = devno;
-	size = sizeof(di);
-	if (sysctl(mib, 4, &di, &size, NULL, 0) == -1) {
-		warn("sysctl(machdep.bios.diskinfo)");
-		return (NULL);
-	}
-
-	bm = malloc(sizeof(di));
-	if (bm == NULL)
-		err(1, NULL);
-	bm->cylinders = di.bios_cylinders;
-	bm->heads = di.bios_heads;
-	bm->sectors = di.bios_sectors;
-	bm->size = di.bios_cylinders * di.bios_heads * di.bios_sectors;
-	return (bm);
-}
-#else
-/*
- * We are not a PC, so we do not have BIOS metrics to contend
- * with.  Return NULL to indicate so.
- */
-DISK_metrics *
-DISK_getbiosmetrics(char *name)
-{
-	return (NULL);
-}
-#endif
-
 /* This is ugly, and convoluted.  All the magic
  * for disk geo/size happens here.  Basically,
  * the real size is the one we will use in the
@@ -185,30 +117,10 @@ DISK_getmetrics(disk_t *disk, DISK_metrics *user)
 {
 
 	disk->label = DISK_getlabelmetrics(disk->name);
-	disk->bios = DISK_getbiosmetrics(disk->name);
 
 	/* If user supplied, use that */
 	if (user) {
 		disk->real = user;
-		return (0);
-	}
-
-	/* Fixup bios metrics to include cylinders past 1023 boundary */
-	if(disk->label && disk->bios){
-		int cyls, secs;
-
-		cyls = disk->label->size / (disk->bios->heads * disk->bios->sectors);
-		secs = cyls * (disk->bios->heads * disk->bios->sectors);
-		if (secs > disk->label->size)
-			errx(1, "BIOS fixup botch (secs (%d) > size (%d))",
-			    secs, disk->label->size);
-		disk->bios->cylinders = cyls;
-		disk->bios->size = secs;
-	}
-
-	/* If we have a (fixed) BIOS geometry, use that */
-	if (disk->bios) {
-		disk->real = disk->bios;
 		return (0);
 	}
 

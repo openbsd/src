@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.106 2007/04/26 02:43:29 ray Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.107 2007/04/26 22:42:11 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.106 2007/04/26 02:43:29 ray Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.107 2007/04/26 22:42:11 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -602,9 +602,8 @@ readmbr(int f)
 	bcopy((char *)mbr+DOSPARTOFF, (char *)mbr, sizeof(*dp) * NDOSPART);
 
 	/*
-	 * Don't (yet) know disk geometry (BIOS), use
-	 * partition table to find OpenBSD partition, and obtain
-	 * disklabel from there.
+	 * Don't (yet) know disk geometry, use partition table to find OpenBSD
+	 * partition, and obtain disklabel from there.
 	 */
 	/* Check if table is valid. */
 	for (part = 0; part < NDOSPART; part++) {
@@ -1597,7 +1596,6 @@ checklabel(struct disklabel *lp)
 		errors++;
 		lp->d_secperunit = dosdp->dp_start + dosdp->dp_size;
 	}
-	/* XXX should also check geometry against BIOS's idea */
 #endif
 	if (lp->d_bbsize == 0) {
 		warnx("boot block size %d", lp->d_bbsize);
