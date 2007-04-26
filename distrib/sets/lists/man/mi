@@ -1243,6 +1243,7 @@
 ./usr/share/man/cat4/i386/pas.0
 ./usr/share/man/cat4/i386/pcibios.0
 ./usr/share/man/cat4/i386/pctr.0
+./usr/share/man/cat4/i386/piixpcib.0
 ./usr/share/man/cat4/i386/pss.0
 ./usr/share/man/cat4/i386/sb.0
 ./usr/share/man/cat4/i386/sea.0
