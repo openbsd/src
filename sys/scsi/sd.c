@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.125 2007/04/14 16:32:30 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.126 2007/04/26 11:18:54 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -81,13 +81,6 @@
 #include <ufs/ffs/fs.h>			/* for BBSIZE and SBSIZE */
 
 #include <sys/vnode.h>
-
-#define	SDUNIT(dev)			DISKUNIT(dev)
-#define	SDMINOR(unit, part)		DISKMINOR(unit, part)
-#define	SDPART(dev)			DISKPART(dev)
-#define	MAKESDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
-
-#define	SDLABELDEV(dev)	(MAKESDDEV(major(dev), SDUNIT(dev), RAW_PART))
 
 int	sdmatch(struct device *, void *, void *);
 void	sdattach(struct device *, struct device *, void *);
@@ -291,7 +284,7 @@ sddetach(struct device *self, int flags)
 	sd_kill_buffers(sd);
 
 	/* locate the minor number */
-	mn = SDMINOR(self->dv_unit, 0);
+	mn = DISKMINOR(self->dv_unit, 0);
 
 	for (bmaj = 0; bmaj < nblkdev; bmaj++)
 		if (bdevsw[bmaj].d_open == sdopen)
@@ -320,8 +313,8 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	struct sd_softc *sd;
 	int error = 0, part, rawopen, unit;
 
-	unit = SDUNIT(dev);
-	part = SDPART(dev);
+	unit = DISKUNIT(dev);
+	part = DISKPART(dev);
 
 	rawopen = (part == RAW_PART) && (fmt == S_IFCHR);
 
@@ -447,10 +440,10 @@ int
 sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct sd_softc *sd;
-	int part = SDPART(dev);
+	int part = DISKPART(dev);
 	int error;
 
-	sd = sdlookup(SDUNIT(dev));
+	sd = sdlookup(DISKUNIT(dev));
 	if (sd == NULL)
 		return ENXIO;
 
@@ -503,7 +496,7 @@ sdstrategy(struct buf *bp)
 	struct sd_softc *sd;
 	int s;
 
-	sd = sdlookup(SDUNIT(bp->b_dev));
+	sd = sdlookup(DISKUNIT(bp->b_dev));
 	if (sd == NULL) {
 		bp->b_error = ENXIO;
 		goto bad;
@@ -538,7 +531,7 @@ sdstrategy(struct buf *bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (SDPART(bp->b_dev) != RAW_PART &&
+	if (DISKPART(bp->b_dev) != RAW_PART &&
 	    bounds_check_with_label(bp, sd->sc_dk.dk_label,
 	    sd->sc_dk.dk_cpulabel,
 	    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
@@ -653,8 +646,8 @@ sdstart(void *v)
 		 */
 		blkno =
 		    bp->b_blkno / (sd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
-		if (SDPART(bp->b_dev) != RAW_PART) {
-			p = &sd->sc_dk.dk_label->d_partitions[SDPART(bp->b_dev)];
+		if (DISKPART(bp->b_dev) != RAW_PART) {
+			p = &sd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
 			blkno += p->p_offset;
 		}
 		nblks = howmany(bp->b_bcount, sd->sc_dk.dk_label->d_secsize);
@@ -759,7 +752,7 @@ sdminphys(struct buf *bp)
 	struct sd_softc *sd;
 	long max;
 
-	sd = sdlookup(SDUNIT(bp->b_dev));
+	sd = sdlookup(DISKUNIT(bp->b_dev));
 	if (sd == NULL)
 		return;  /* XXX - right way to fail this? */
 
@@ -807,9 +800,9 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct sd_softc *sd;
 	int error = 0;
-	int part = SDPART(dev);
+	int part = DISKPART(dev);
 
-	sd = sdlookup(SDUNIT(dev));
+	sd = sdlookup(DISKUNIT(dev));
 	if (sd == NULL)
 		return ENXIO;
 
@@ -860,7 +853,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = sd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		    &sd->sc_dk.dk_label->d_partitions[SDPART(dev)];
+		    &sd->sc_dk.dk_label->d_partitions[DISKPART(dev)];
 		goto exit;
 
 	case DIOCWDINFO:
@@ -879,7 +872,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		    sd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
-				error = writedisklabel(SDLABELDEV(dev),
+				error = writedisklabel(DISKLABELDEV(dev),
 				    sdstrategy, sd->sc_dk.dk_label,
 				    sd->sc_dk.dk_cpulabel);
 		}
@@ -1032,7 +1025,7 @@ sdgetdisklabel(dev_t dev, struct sd_softc *sd, struct disklabel *lp,
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(SDLABELDEV(dev), sdstrategy, lp, clp,
+	errstring = readdisklabel(DISKLABELDEV(dev), sdstrategy, lp, clp,
 	    spoofonly);
 	if (errstring) {
 		/*printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);*/
@@ -1131,11 +1124,11 @@ sdsize(dev_t dev)
 	int part, omask;
 	int size;
 
-	sd = sdlookup(SDUNIT(dev));
+	sd = sdlookup(DISKUNIT(dev));
 	if (sd == NULL)
 		return -1;
 
-	part = SDPART(dev);
+	part = DISKPART(dev);
 	omask = sd->sc_dk.dk_openmask & (1 << part);
 
 	if (omask == 0 && sdopen(dev, 0, S_IFBLK, NULL) != 0) {
@@ -1187,8 +1180,8 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	/* Mark as active early. */
 	sddoingadump = 1;
 
-	unit = SDUNIT(dev);	/* Decompose unit & partition. */
-	part = SDPART(dev);
+	unit = DISKUNIT(dev);	/* Decompose unit & partition. */
+	part = DISKPART(dev);
 
 	/* Check for acceptable drive number. */
 	if (unit >= sd_cd.cd_ndevs || (sd = sd_cd.cd_devs[unit]) == NULL)

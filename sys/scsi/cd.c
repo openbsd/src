@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.122 2007/04/12 11:33:13 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.123 2007/04/26 11:18:54 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -78,11 +78,6 @@
 
 #define	CDOUTSTANDING	4
 
-#define	CDUNIT(z)			DISKUNIT(z)
-#define	CDMINOR(unit, part)		DISKMINOR(unit, part)
-#define	CDPART(z)			DISKPART(z)
-#define	MAKECDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
-
 #define MAXTRACK	99
 #define CD_BLOCK_OFFSET	150
 #define CD_FRAMES	75
@@ -93,8 +88,6 @@ struct cd_toc {
 	struct cd_toc_entry entries[MAXTRACK+1]; /* One extra for the */
 						 /* leadout */
 };
-
-#define	CDLABELDEV(dev)	(MAKECDDEV(major(dev), CDUNIT(dev), RAW_PART))
 
 int	cdmatch(struct device *, void *, void *);
 void	cdattach(struct device *, struct device *, void *);
@@ -267,7 +260,7 @@ cddetach(self, flags)
 	cd_kill_buffers(cd);
 
 	/* locate the minor number */
-	mn = CDMINOR(self->dv_unit, 0);
+	mn = DISKMINOR(self->dv_unit, 0);
 
 	for (bmaj = 0; bmaj < nblkdev; bmaj++)
 		if (bdevsw[bmaj].d_open == cdopen)
@@ -299,8 +292,8 @@ cdopen(dev, flag, fmt, p)
 	struct cd_softc *cd;
 	int error = 0, part, rawopen, unit;
 
-	unit = CDUNIT(dev);
-	part = CDPART(dev);
+	unit = DISKUNIT(dev);
+	part = DISKPART(dev);
 
 	rawopen = (part == RAW_PART) && (fmt == S_IFCHR);
 
@@ -422,10 +415,10 @@ cdclose(dev, flag, fmt, p)
 	struct proc *p;
 {
 	struct cd_softc *cd;
-	int part = CDPART(dev);
+	int part = DISKPART(dev);
 	int error;
 
-	cd = cdlookup(CDUNIT(dev));
+	cd = cdlookup(DISKUNIT(dev));
 	if (cd == NULL)
 		return ENXIO;
 
@@ -478,7 +471,7 @@ cdstrategy(bp)
 	struct cd_softc *cd;
 	int s;
 
-	if ((cd = cdlookup(CDUNIT(bp->b_dev))) == NULL) {
+	if ((cd = cdlookup(DISKUNIT(bp->b_dev))) == NULL) {
 		bp->b_error = ENXIO;
 		goto bad;
 	}
@@ -510,7 +503,7 @@ cdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (CDPART(bp->b_dev) != RAW_PART &&
+	if (DISKPART(bp->b_dev) != RAW_PART &&
 	    bounds_check_with_label(bp, cd->sc_dk.dk_label,
 	    cd->sc_dk.dk_cpulabel,
 	    (cd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
@@ -624,8 +617,8 @@ cdstart(v)
 		 */
 		blkno =
 		    bp->b_blkno / (cd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
-		if (CDPART(bp->b_dev) != RAW_PART) {
-			p = &cd->sc_dk.dk_label->d_partitions[CDPART(bp->b_dev)];
+		if (DISKPART(bp->b_dev) != RAW_PART) {
+			p = &cd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
 			blkno += p->p_offset;
 		}
 		nblks = howmany(bp->b_bcount, cd->sc_dk.dk_label->d_secsize);
@@ -722,7 +715,7 @@ cdminphys(bp)
 	struct cd_softc *cd;
 	long max;
 
-	cd = cdlookup(CDUNIT(bp->b_dev));
+	cd = cdlookup(DISKUNIT(bp->b_dev));
 	if (cd == NULL)
 		return;
 
@@ -810,10 +803,10 @@ cdioctl(dev, cmd, addr, flag, p)
 	struct proc *p;
 {
 	struct cd_softc *cd;
-	int part = CDPART(dev);
+	int part = DISKPART(dev);
 	int error = 0;
 
-	cd = cdlookup(CDUNIT(dev));
+	cd = cdlookup(DISKUNIT(dev));
 	if (cd == NULL)
 		return ENXIO;
 
@@ -874,7 +867,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = cd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		    &cd->sc_dk.dk_label->d_partitions[CDPART(dev)];
+		    &cd->sc_dk.dk_label->d_partitions[DISKPART(dev)];
 		break;
 
 	case DIOCWDINFO:
@@ -1166,7 +1159,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		error = dvd_read_struct(cd, (union dvd_struct *)addr);
 		break;
 	default:
-		if (CDPART(dev) != RAW_PART) {
+		if (DISKPART(dev) != RAW_PART) {
 			error = ENOTTY;
 			break;
 		}
@@ -1254,8 +1247,8 @@ done:
 	free(toc, M_TEMP);
 
 	if (!audioonly) {
-		errstring = readdisklabel(CDLABELDEV(dev), cdstrategy, lp, clp,
-		    spoofonly);
+		errstring = readdisklabel(DISKLABELDEV(dev), cdstrategy, lp,
+		    clp, spoofonly);
 		/*if (errstring)
 			printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);*/
 	}
