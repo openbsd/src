@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.77 2007/04/01 09:29:27 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.78 2007/04/26 21:36:32 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -649,6 +649,12 @@ for (i = 0; i < errnum; i++) {
 		KERNEL_PROC_UNLOCK(p);
 		break;
 #endif
+
+	case EXC_VECAST|EXC_USER:
+		KERNEL_PROC_LOCK(p);
+		trapsignal(p, SIGFPE, 0, FPE_FLTRES, sv);
+		KERNEL_PROC_UNLOCK(p);
+		break;
 
 	case EXC_AST|EXC_USER:
 		uvmexp.softs++;
