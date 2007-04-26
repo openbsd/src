@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.11 2006/12/28 20:52:36 miod Exp $	*/
+/*	$OpenBSD: puc.c,v 1.12 2007/04/26 01:31:05 gwk Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -64,10 +64,10 @@
 #include <dev/pci/pcidevs.h>
 
 struct puc_pci_softc {
-	struct puc_softc sc_psc;
+	struct puc_softc	sc_psc;
 
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+	pci_chipset_tag_t	pc;
+	pci_intr_handle_t	ih;
 };
 
 int	puc_pci_match(struct device *, void *, void *);
@@ -87,9 +87,7 @@ struct cfdriver puc_cd = {
 const char *puc_port_type_name(int);
 
 int
-puc_pci_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+puc_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct puc_device_description *desc;
@@ -135,9 +133,7 @@ puc_pci_intr_establish(struct puc_attach_args *paa, int type,
 }
 
 void
-puc_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+puc_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct puc_pci_softc *psc = (struct puc_pci_softc *)self;
 	struct puc_softc *sc = &psc->sc_psc;
@@ -251,6 +247,10 @@ puc_common_attach(struct puc_softc *sc, struct puc_attach_args *paa)
 
 	/* Configure each port. */
 	for (i = 0; PUC_PORT_VALID(sc->sc_desc, i); i++) {
+		/* Skip unknown ports */
+		if (sc->sc_desc->ports[i].type != PUC_PORT_TYPE_COM &&
+		    sc->sc_desc->ports[i].type != PUC_PORT_TYPE_LPT)
+			continue;
 		/* make sure the base address register is mapped */
 		bar = PUC_PORT_BAR_INDEX(sc->sc_desc->ports[i].bar);
 		if (!sc->sc_bar_mappings[bar].mapped) {
@@ -292,12 +292,10 @@ puc_common_attach(struct puc_softc *sc, struct puc_attach_args *paa)
 }
 
 int
-puc_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+puc_print(void *aux, const char *pnp)
 {
 	struct puc_attach_args *paa = aux;
-        
+
 	if (pnp)
 		printf("%s at %s", puc_port_type_name(paa->type), pnp);
 	printf(" port %d", paa->port);
@@ -305,9 +303,7 @@ puc_print(aux, pnp)
 }
 
 int
-puc_submatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+puc_submatch(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = (struct cfdata *)vcf;
 	struct puc_attach_args *aa = aux;
@@ -318,8 +314,7 @@ puc_submatch(parent, vcf, aux)
 }
 
 const struct puc_device_description *
-puc_find_description(vend, prod, svend, sprod)
-	u_long vend, prod, svend, sprod;
+puc_find_description(u_long vend, u_long prod, u_long svend, u_long sprod)
 {
 	int i;
 
@@ -344,8 +339,7 @@ puc_find_description(vend, prod, svend, sprod)
 }
 
 const char *
-puc_port_type_name(type)
-	int type;
+puc_port_type_name(int type)
 {
 
 	switch (type) {
@@ -354,18 +348,35 @@ puc_port_type_name(type)
 	case PUC_PORT_TYPE_LPT:
 		return "lpt";
 	default:
-		panic("puc_port_type_name %d", type);
+		return "unknown";
 	}
 }
 
 void
 puc_print_ports(const struct puc_device_description *desc)
 {
-	int i;
+	int i, ncom, nlpt;
 
-	printf(": ");
-	for (i = 0; PUC_PORT_VALID(desc, i); i++)
-		printf("%s%s", i ? ", " : "",
-		    puc_port_type_name(desc->ports[i].type));
+	printf(": ports: ");
+	for (i = ncom = nlpt = 0; PUC_PORT_VALID(desc, i); i++) {
+		switch (desc->ports[i].type) {
+		case PUC_PORT_TYPE_COM:
+			ncom++;
+		break;
+		case PUC_PORT_TYPE_LPT:
+			nlpt++;
+		break;
+		default:
+			printf("port %d unknown type %d ", i,
+			    desc->ports[i].type);
+		}
+	}
+	if (ncom)
+		printf("%d com", ncom);
+	if (nlpt) {
+		if (ncom)
+			printf(", ");
+		printf("%d lpt", nlpt);
+	}
 	printf("\n");
 }
