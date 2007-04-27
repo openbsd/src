@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.33 2006/10/25 14:32:04 kurt Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.34 2007/04/27 12:59:24 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -704,7 +704,7 @@ _thread_kern_poll(int wait_reqd)
 				PTHREAD_WAITQ_SETACTIVE();
 			} else {
 				/* Limit number of polled files to table size: */
-				if (nfds < _thread_dtablesize) {
+				if (nfds < _thread_max_fdtsize) {
 					_thread_pfd_table[nfds].events = POLLRDNORM;
 					_thread_pfd_table[nfds].fd = pthread->data.fd.fd;
 					nfds++;
@@ -723,7 +723,7 @@ _thread_kern_poll(int wait_reqd)
 				PTHREAD_WAITQ_SETACTIVE();
 			} else {
 				/* Limit number of polled files to table size: */
-				if (nfds < _thread_dtablesize) {
+				if (nfds < _thread_max_fdtsize) {
 					_thread_pfd_table[nfds].events = POLLWRNORM;
 					_thread_pfd_table[nfds].fd = pthread->data.fd.fd;
 					nfds++;
@@ -736,7 +736,7 @@ _thread_kern_poll(int wait_reqd)
 		case PS_SELECT_WAIT:
 			/* Limit number of polled files to table size: */
 			if (pthread->data.poll_data->nfds + nfds <
-			    _thread_dtablesize) {
+			    _thread_max_fdtsize) {
 				for (i = 0; i < pthread->data.poll_data->nfds; i++) {
 					_thread_pfd_table[nfds + i].fd =
 					    pthread->data.poll_data->fds[i].fd;
@@ -825,7 +825,7 @@ _thread_kern_poll(int wait_reqd)
 
 			/* File descriptor read wait: */
 			case PS_FDR_WAIT:
-				if ((nfds < _thread_dtablesize) &&
+				if ((nfds < _thread_max_fdtsize) &&
 				    (_thread_pfd_table[nfds].revents
 				       & (POLLRDNORM|POLLERR|POLLHUP|POLLNVAL))
 				      != 0) {
@@ -839,7 +839,7 @@ _thread_kern_poll(int wait_reqd)
 
 			/* File descriptor write wait: */
 			case PS_FDW_WAIT:
-				if ((nfds < _thread_dtablesize) &&
+				if ((nfds < _thread_max_fdtsize) &&
 				    (_thread_pfd_table[nfds].revents
 				       & (POLLWRNORM|POLLERR|POLLHUP|POLLNVAL))
 				      != 0) {
@@ -855,7 +855,7 @@ _thread_kern_poll(int wait_reqd)
 			case PS_POLL_WAIT:
 			case PS_SELECT_WAIT:
 				if (pthread->data.poll_data->nfds + nfds <
-				    _thread_dtablesize) {
+				    _thread_max_fdtsize) {
 					/*
 					 * Enter a loop looking for I/O
 					 * readiness:

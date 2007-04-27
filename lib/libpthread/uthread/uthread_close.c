@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_close.c,v 1.13 2006/09/26 14:18:28 kurt Exp $	*/
+/*	$OpenBSD: uthread_close.c,v 1.14 2007/04/27 12:59:24 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -47,7 +47,7 @@ close(int fd)
 	/* This is a cancelation point: */
 	_thread_enter_cancellation_point();
 
-	if ((fd < 0) || (fd >= _thread_dtablesize) ||
+	if ((fd < 0) || (fd >= _thread_max_fdtsize) ||
 	    (fd == _thread_kern_pipe[0]) || (fd == _thread_kern_pipe[1])) {
 		errno = EBADF;
 		ret = -1;

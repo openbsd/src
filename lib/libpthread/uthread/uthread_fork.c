@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fork.c,v 1.16 2007/04/10 13:04:37 kurt Exp $	*/
+/*	$OpenBSD: uthread_fork.c,v 1.17 2007/04/27 12:59:24 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -173,7 +173,7 @@ fork(void)
 			_sched_switch_hook = NULL;
 
 			/* Clear out any locks in the file descriptor table: */
-			for (i = 0; i < _thread_dtablesize; i++) {
+			for (i = 0; i < _thread_max_fdtsize; i++) {
 				if (_thread_fd_table[i] != NULL) {
 					/* Initialise the file locks: */
 					_SPINLOCK_INIT(&_thread_fd_table[i]->lock);

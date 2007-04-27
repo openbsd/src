@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.60 2007/04/26 18:13:10 kurt Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.61 2007/04/27 12:59:24 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -986,7 +986,14 @@ SCLASS struct pollfd *_thread_pfd_table
 ;
 #endif
 
-SCLASS int    _thread_dtablesize	/* Descriptor table size.	*/
+SCLASS int    _thread_init_fdtsize	/* Initial fd/pfd table size.	*/
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= 0;
+#else
+;
+#endif
+
+SCLASS int    _thread_max_fdtsize	/* Max fd/pfd table size.	*/
 #ifdef GLOBAL_PTHREAD_PRIVATE
 = 0;
 #else

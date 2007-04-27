@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.27 2006/12/01 16:34:41 kurt Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.28 2007/04/27 12:59:24 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -201,12 +201,12 @@ _thread_fd_init(void)
 	struct fs_flags *status_flags;
 
 	saved_errno = errno;
-	flags = calloc(_thread_dtablesize, sizeof *flags);
+	flags = calloc(_thread_init_fdtsize, sizeof *flags);
 	if (flags == NULL)
 		PANIC("Cannot allocate memory for flags table");
 
 	/* read the current file flags */
-	for (fd = 0; fd < _thread_dtablesize; fd += 1)
+	for (fd = 0; fd < _thread_init_fdtsize; fd += 1)
 		flags[fd] = _thread_sys_fcntl(fd, F_GETFL, 0);
 
 	/*
@@ -219,7 +219,7 @@ _thread_fd_init(void)
 	 */
 
 	_SPINLOCK(&fd_table_lock);
-	for (fd = 0; fd < _thread_dtablesize; fd += 1) {
+	for (fd = 0; fd < _thread_init_fdtsize; fd += 1) {
 		if (flags[fd] == -1)
 			continue;
 		entry1 = _thread_fd_entry();
@@ -227,7 +227,7 @@ _thread_fd_init(void)
 		if (entry1 != NULL && status_flags != NULL) {
 			_thread_sys_fcntl(fd, F_SETFL,
 					  flags[fd] ^ O_SYNC);
-			for (fd2 = fd + 1; fd2 < _thread_dtablesize; fd2 += 1) {
+			for (fd2 = fd + 1; fd2 < _thread_init_fdtsize; fd2 += 1) {
 				if (flags[fd2] == -1)
 					continue;
 				flag = _thread_sys_fcntl(fd2, F_GETFL, 0);
@@ -266,7 +266,7 @@ _thread_fd_init(void)
 	   know to be duped have been modified so set the non-blocking'
 	   flag.  Other files will be set to non-blocking when the
 	   thread code is forced to take notice of the file. */
-	for (fd = 0; fd < _thread_dtablesize; fd += 1)
+	for (fd = 0; fd < _thread_init_fdtsize; fd += 1)
 		if (flags[fd] != -1)
 			_thread_sys_fcntl(fd, F_SETFL, flags[fd]);
 
@@ -290,7 +290,7 @@ _thread_fd_table_init(int fd, enum fd_entry_mode init_mode, struct fs_flags *sta
 	struct fd_table_entry *entry;
 	struct fs_flags *new_status_flags;
 
-	if (fd < 0 || fd >= _thread_dtablesize) {
+	if (fd < 0 || fd >= _thread_max_fdtsize) {
 		/*
 		 * file descriptor is out of range, Return a bad file
 		 * descriptor error:
@@ -499,7 +499,7 @@ _thread_fd_unlock_thread(struct pthread	*thread, int fd, int lock_type)
 	 * If file descriptor is out of range or uninitialized,
 	 * do nothing.
 	 */ 
-	if (fd >= 0 && fd < _thread_dtablesize && _thread_fd_table[fd] != NULL) {
+	if (fd >= 0 && fd < _thread_max_fdtsize && _thread_fd_table[fd] != NULL) {
 		entry = _thread_fd_table[fd];
 
 		/*
@@ -619,7 +619,7 @@ _thread_fd_unlock_owned(pthread_t pthread)
 	int do_unlock;
 	int fd;
 
-	for (fd = 0; fd < _thread_dtablesize; fd++) {
+	for (fd = 0; fd < _thread_max_fdtsize; fd++) {
 		entry = _thread_fd_table[fd];
 		if (entry) {
 			_SPINLOCK(&entry->lock);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.35 2006/04/09 02:57:41 krw Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.36 2007/04/27 12:59:24 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -49,6 +49,7 @@
 #include <sys/ttycom.h>
 #include <sys/user.h>
 #include <sys/wait.h>
+#include <sys/resource.h>
 
 #include <dlfcn.h>
 #include <dirent.h>
@@ -158,6 +159,7 @@ _thread_init(void)
 	int		mib[2];
 	struct clockinfo clockinfo;
 	struct sigaction act;
+	struct rlimit rl;
 
 	/* Check if this function has already been called: */
 	if (_thread_initial)
@@ -345,19 +347,22 @@ _thread_init(void)
 			clockinfo.tick : CLOCK_RES_USEC_MIN;
 
 	/* Get the table size: */
-	if ((_thread_dtablesize = getdtablesize()) < 0)
-		PANIC("Cannot get dtablesize");
+	if (getrlimit(RLIMIT_NOFILE, &rl) != 0)
+		PANIC("getrlimit failed");
+
+	_thread_init_fdtsize = rl.rlim_cur;
+	_thread_max_fdtsize = rl.rlim_max;
 
 	/* Allocate memory for the file descriptor table: */
-	_thread_fd_table = calloc(_thread_dtablesize,
+	_thread_fd_table = calloc(_thread_max_fdtsize,
 				  sizeof(struct fd_table_entry *));
 	if (_thread_fd_table == NULL) {
-		_thread_dtablesize = 0;
+		_thread_max_fdtsize = 0;
 		PANIC("Cannot allocate memory for file descriptor table");
 	}
 
 	/* Allocate memory for the pollfd table: */
-	_thread_pfd_table = calloc(_thread_dtablesize, sizeof(struct pollfd));
+	_thread_pfd_table = calloc(_thread_max_fdtsize, sizeof(struct pollfd));
 	if (_thread_pfd_table == NULL)
 		PANIC("Cannot allocate memory for pollfd table");
 

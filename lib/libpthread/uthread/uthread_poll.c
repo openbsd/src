@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_poll.c,v 1.13 2006/10/25 14:32:04 kurt Exp $	*/
+/*	$OpenBSD: uthread_poll.c,v 1.14 2007/04/27 12:59:24 kurt Exp $	*/
 /*
  * Copyright (c) 1999 Daniel Eischen <eischen@vigrid.com>
  * All rights reserved.
@@ -56,8 +56,8 @@ poll(struct pollfd fds[], nfds_t nfds, int timeout)
 	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
 
-	if (numfds > (nfds_t)_thread_dtablesize) {
-		numfds = _thread_dtablesize;
+	if (numfds > (nfds_t)_thread_max_fdtsize) {
+		numfds = _thread_max_fdtsize;
 	}
 	/* Check if a timeout was specified: */
 	if (timeout == INFTIM) {

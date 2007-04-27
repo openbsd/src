@@ -1,4 +1,4 @@
-/* $OpenBSD: uthread_closefrom.c,v 1.3 2006/09/26 14:18:28 kurt Exp $ */
+/* $OpenBSD: uthread_closefrom.c,v 1.4 2007/04/27 12:59:24 kurt Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -21,7 +21,7 @@ closefrom(int fd)
 
 	_thread_enter_cancellation_point();
 	
-	if (fd < 0 || fd >= _thread_dtablesize) {
+	if (fd < 0 || fd >= _thread_max_fdtsize) {
 		errno = EBADF;
 		ret = -1;
 	} else {
@@ -35,13 +35,13 @@ closefrom(int fd)
 		for (safe_fd++; fd < safe_fd; fd++)
 			close(fd);
 
-		flags = calloc((size_t)_thread_dtablesize, sizeof *flags);
+		flags = calloc((size_t)_thread_max_fdtsize, sizeof *flags);
 		if (flags == NULL) {
 			/* use calloc errno */
 			ret = -1;
 		} else {
 			/* Lock and record all fd entries */
-			for (lock_fd = fd; lock_fd < _thread_dtablesize; lock_fd++) {
+			for (lock_fd = fd; lock_fd < _thread_max_fdtsize; lock_fd++) {
 				if (_thread_fd_table[lock_fd] != NULL &&
 			   	 _thread_fd_table[lock_fd]->state != FD_ENTRY_CLOSED) {
 					ret = _FD_LOCK(lock_fd, FD_RDWR_CLOSE, NULL);
@@ -57,7 +57,7 @@ closefrom(int fd)
 				 * Close the entries and reset the non-bocking
 				 * flag when needed.
 				 */
-				for (lock_fd = fd; lock_fd < _thread_dtablesize; lock_fd++) {
+				for (lock_fd = fd; lock_fd < _thread_max_fdtsize; lock_fd++) {
 					if (flags[lock_fd] != NULL) {
 						_thread_fd_entry_close(lock_fd);
 					}
@@ -74,7 +74,7 @@ closefrom(int fd)
 			/*
 			 * Unlock any locked entries.
 			 */
-			for (lock_fd = fd; lock_fd < _thread_dtablesize; lock_fd++) {
+			for (lock_fd = fd; lock_fd < _thread_max_fdtsize; lock_fd++) {
 				if (flags[lock_fd] != NULL) {
 					_FD_UNLOCK(lock_fd, FD_RDWR_CLOSE);
 				}

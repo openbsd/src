@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_info_openbsd.c,v 1.11 2006/09/26 14:18:28 kurt Exp $	*/
+/*	$OpenBSD: uthread_info_openbsd.c,v 1.12 2007/04/27 12:59:24 kurt Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
@@ -345,7 +345,7 @@ _thread_dump_info(void)
 
 	/* Output a header for file descriptors: */
 	snprintf(s, sizeof(s), "file descriptor table, size %d:\n", 
-	    _thread_dtablesize);
+	    _thread_max_fdtsize);
 	_thread_sys_write(fd, s, strlen(s));
 
 	snprintf(s, sizeof s,
@@ -355,7 +355,7 @@ _thread_dump_info(void)
 	_thread_sys_write(fd, s, strlen(s));
 
 	/* Enter a loop to report file descriptor lock usage: */
-	for (i = 0; i < _thread_dtablesize; i++) {
+	for (i = 0; i < _thread_max_fdtsize; i++) {
 		/*
 		 * Check if memory is allocated for this file
 		 * descriptor: 

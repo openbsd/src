@@ -1,4 +1,4 @@
-/* $OpenBSD: uthread_dup2.c,v 1.10 2006/10/03 02:29:14 kurt Exp $ */
+/* $OpenBSD: uthread_dup2.c,v 1.11 2007/04/27 12:59:24 kurt Exp $ */
 /* PUBLIC DOMAIN <marc@snafu.org> */
 
 #include <errno.h>
@@ -13,7 +13,7 @@ dup2(int fd, int newfd)
 	int	ret;
 	int	saved_errno;
 
-	if (newfd >= 0 && newfd < _thread_dtablesize &&
+	if (newfd >= 0 && newfd < _thread_max_fdtsize &&
 	    newfd != _thread_kern_pipe[0] && newfd != _thread_kern_pipe[1]) {
 		ret = _FD_LOCK(fd, FD_RDWR, NULL);
 		if (ret == 0) {
