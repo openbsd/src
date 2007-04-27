@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.79 2007/04/27 06:45:34 cloder Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.80 2007/04/27 21:42:40 cloder Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -128,7 +128,7 @@ int thtdebug = THT_D_TX | THT_D_RX | THT_D_INTR;
 #define  THT_REG_10G_CTL_WAN_MODE	(1<<3) /* WAN mode */
 #define  THT_REG_10G_CTL_RX_EN		(1<<1) /* RX enable */
 #define  THT_REG_10G_CTL_TX_EN		(1<<0) /* TX enable */
-#define THT_REG_10G_FRM_LEN	0x6014 /* Fram Length */
+#define THT_REG_10G_FRM_LEN	0x6014 /* Frame Length */
 #define THT_REG_10G_PAUSE	0x6018 /* Pause Quanta */
 #define THT_REG_10G_RX_SEC	0x601c /* RX Section */
 #define THT_REG_10G_TX_SEC	0x6020 /* TX Section */
