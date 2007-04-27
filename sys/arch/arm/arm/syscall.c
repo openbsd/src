@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.8 2006/12/27 17:49:26 drahn Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.9 2007/04/27 18:45:00 drahn Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -117,6 +117,10 @@ swi_handler(trapframe_t *frame)
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
 
 	uvmexp.syscalls++;
+
+	/* Re-enable interrupts if they were enabled previously */
+	if (__predict_true((frame->tf_spsr & I32_bit) == 0))
+		enable_interrupts(I32_bit);
 
 	p->p_addr->u_pcb.pcb_tf = frame;
 
