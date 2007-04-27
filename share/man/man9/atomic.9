@@ -1,4 +1,4 @@
-.\" $OpenBSD: atomic.9,v 1.1 2007/04/27 10:06:56 art Exp $
+.\" $OpenBSD: atomic.9,v 1.2 2007/04/27 14:56:52 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -21,7 +21,7 @@
 .Sh NAME
 .Nm atomic ,
 .Nm atomic_setbits_int ,
-.Nm atomic_clearbits_int ,
+.Nm atomic_clearbits_int
 .Nd interface to perform atomic operations on data
 .Sh SYNOPSIS
 .Fd #include <machine/atomic.h>
@@ -56,7 +56,6 @@ It is equivalent to
 .Bd -literal -offset indent
 *p &= ~b;
 .Ed
-.Pp
 .Sh HISTORY
 The
 .Nm
