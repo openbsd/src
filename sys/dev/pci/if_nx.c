@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.7 2007/04/27 14:48:09 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.8 2007/04/27 14:50:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -94,9 +94,9 @@ struct nxb_softc {
 	pci_chipset_tag_t	 sc_pc;
 	pcitag_t		 sc_tag;
 
-	bus_space_tag_t		 sc_iot;
-	bus_space_handle_t	 sc_ioh;
-	bus_size_t		 sc_ios;
+	bus_space_tag_t		 sc_memt;
+	bus_space_handle_t	 sc_memh;
+	bus_size_t		 sc_mems;
 	bus_dma_tag_t		 sc_dmat;
 
 	pci_intr_handle_t	 sc_ih;
@@ -200,8 +200,8 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 		printf(": invalid memory type\n");
 		return;
 	}
-	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &sc->sc_iot,
-	    &sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
+	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &sc->sc_memt,
+	    &sc->sc_memh, NULL, &sc->sc_mems, 0) != 0) {
 		printf(": unable to map system interface register\n");
 		return;
 	}
@@ -222,8 +222,8 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
  unmap:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
-	sc->sc_ios = 0;
+	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
+	sc->sc_mems = 0;
 }
 
 int
