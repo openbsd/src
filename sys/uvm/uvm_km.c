@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.61 2007/04/15 12:54:08 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.62 2007/04/27 07:45:30 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -314,7 +314,7 @@ uvm_km_pgremove_intrsafe(vaddr_t start, vaddr_t end)
 
 	for (va = start; va < end; va += PAGE_SIZE) {
 		if (!pmap_extract(pmap_kernel(), va, &pa))
-			continue;			/* panic? */
+			continue;
 		pg = PHYS_TO_VM_PAGE(pa);
 		if (pg == NULL)
 			panic("uvm_km_pgremove_intrsafe: no page");
@@ -392,7 +392,7 @@ uvm_km_kmemalloc(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 	 */
 
 	loopva = kva;
-	while (size) {
+	while (loopva < kva + size) {
 		pg = uvm_pagealloc(obj, offset, NULL, 0);
 		if (pg) {
 			atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
@@ -427,7 +427,6 @@ uvm_km_kmemalloc(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 		}
 		loopva += PAGE_SIZE;
 		offset += PAGE_SIZE;
-		size -= PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
 
