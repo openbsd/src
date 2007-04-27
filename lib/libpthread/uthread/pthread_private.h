@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.61 2007/04/27 12:59:24 kurt Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.62 2007/04/27 18:04:08 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -1160,8 +1160,6 @@ void	_thread_fs_flags_replace(int, struct fs_flags *);
 void	_thread_fd_init(void);
 int     _thread_fd_table_init(int, enum fd_entry_mode, struct fs_flags *);
 void	_thread_fd_entry_close(int);
-void	_thread_fd_unlock_owned(pthread_t);
-void	_thread_fd_unlock_thread(struct pthread	*, int, int);
 pthread_addr_t _thread_gc(pthread_addr_t);
 void	_thread_enter_cancellation_point(void);
 void	_thread_leave_cancellation_point(void);

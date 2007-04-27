@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.28 2007/04/27 12:59:24 kurt Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.29 2007/04/27 18:04:08 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -488,11 +488,12 @@ _thread_fd_entry_close(int fd)
 }
 
 /*
- * Unlock the fd table entry for a given thread, fd, and lock type.
+ * Unlock an fd table entry for the given fd and lock type.
  */
 void
-_thread_fd_unlock_thread(struct pthread	*thread, int fd, int lock_type)
+_thread_fd_unlock(int fd, int lock_type)
 {
+	struct pthread *thread = _get_curthread();
 	struct fd_table_entry *entry;
 
 	/*
@@ -596,47 +597,6 @@ _thread_fd_unlock_thread(struct pthread	*thread, int fd, int lock_type)
 		 * necessary:
 		 */
 		_thread_kern_sig_undefer();
-	}
-}
-
-/*
- * Unlock an fd table entry for the given fd and lock type.
- */
-void
-_thread_fd_unlock(int fd, int lock_type)
-{
-	struct pthread	*curthread = _get_curthread();
-	_thread_fd_unlock_thread(curthread, fd, lock_type);
-}
-
-/*
- * Unlock all fd table entries owned by the given thread
- */
-void
-_thread_fd_unlock_owned(pthread_t pthread)
-{
-	struct fd_table_entry *entry;
-	int do_unlock;
-	int fd;
-
-	for (fd = 0; fd < _thread_max_fdtsize; fd++) {
-		entry = _thread_fd_table[fd];
-		if (entry) {
-			_SPINLOCK(&entry->lock);
-			do_unlock = 0;
-			/* force an unlock regardless of the recursion level */
-			if (entry->r_owner == pthread) {
-				entry->r_lockcount = 1;
-				do_unlock++;
-			}
-			if (entry->w_owner == pthread) {
-				entry->w_lockcount = 1;
-				do_unlock++;
-			}
-			_SPINUNLOCK(&entry->lock);
-			if (do_unlock)
-				_thread_fd_unlock_thread(pthread, fd, FD_RDWR);
-		}
 	}
 }
 
