@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.8 2007/04/27 14:50:31 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.9 2007/04/27 14:54:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -185,27 +185,51 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	pcireg_t		 memtype;
 	const char		*intrstr;
+	bus_size_t		 pcisize;
+	paddr_t			 pciaddr;
 	int			 i;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
-
+	
+	/*
+	 * The NetXen NICs can have different PCI memory layouts which
+	 * need some special handling in the driver. Support is limited
+	 * to 32bit 128MB memory for now (the chipset uses a configurable
+	 * window to access the complete memory range).
+	 */
 	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, PCI_MAPREG_START);
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 		break;
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 	default:
-		printf(": invalid memory type\n");
+		printf(": invalid memory type: 0x%x\n", memtype);
 		return;
 	}
+	if (pci_mapreg_info(sc->sc_pc, sc->sc_tag, PCI_MAPREG_START,
+	    memtype, &pciaddr, &pcisize, NULL)) {
+		printf(": failed to get pci info\n");
+		return;
+	}
+	switch (pcisize) {
+	case NXPCIMEM_SIZE_128MB:
+		break;
+	case NXPCIMEM_SIZE_32MB:
+	default:
+		printf(": invalid memory size: %ld\n", pcisize);
+		return;
+	}
+
+	/* Finally map the PCI memory space */
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &sc->sc_memt,
 	    &sc->sc_memh, NULL, &sc->sc_mems, 0) != 0) {
 		printf(": unable to map system interface register\n");
 		return;
 	}
 
+	/* Map the interrupt, the handlers will be attached later */
 	if (pci_intr_map(pa, &sc->sc_ih) != 0) {
 		printf(": unable to map interrupt\n");
 		goto unmap;
