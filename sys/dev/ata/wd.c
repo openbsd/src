@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.56 2007/04/26 22:42:11 krw Exp $ */
+/*	$OpenBSD: wd.c,v 1.57 2007/04/27 11:37:56 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -106,13 +106,6 @@
 #define	WDIORETRIES_SINGLE 4	/* number of retries before single-sector */
 #define	WDIORETRIES	5	/* number of retries before giving up */
 #define	RECOVERYTIME hz/2	/* time to wait before retrying a cmd */
-
-#define	WDUNIT(dev)		DISKUNIT(dev)
-#define	WDPART(dev)		DISKPART(dev)
-#define WDMINOR(unit, part)	DISKMINOR(unit, part)
-#define	MAKEWDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
-
-#define	WDLABELDEV(dev)	(MAKEWDDEV(major(dev), WDUNIT(dev), RAW_PART))
 
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02
@@ -398,7 +391,7 @@ wddetach(struct device *self, int flags)
 	splx(s);
 
 	/* locate the major number */
-	mn = WDMINOR(self->dv_unit, 0);
+	mn = DISKMINOR(self->dv_unit, 0);
 
 	for (bmaj = 0; bmaj < nblkdev; bmaj++)
 		if (bdevsw[bmaj].d_open == wdopen)
@@ -427,7 +420,7 @@ wdstrategy(struct buf *bp)
 	struct wd_softc *wd;
 	int s;
 
-	wd = wdlookup(WDUNIT(bp->b_dev));
+	wd = wdlookup(DISKUNIT(bp->b_dev));
 	if (wd == NULL) {
 		bp->b_error = ENXIO;
 		goto bad;
@@ -458,7 +451,7 @@ wdstrategy(struct buf *bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (WDPART(bp->b_dev) != RAW_PART &&
+	if (DISKPART(bp->b_dev) != RAW_PART &&
 	    bounds_check_with_label(bp, wd->sc_dk.dk_label, wd->sc_dk.dk_cpulabel,
 	    (wd->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
 		goto done;
@@ -516,9 +509,9 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 	daddr_t p_offset;
 	daddr_t nblks;
 
-	if (WDPART(bp->b_dev) != RAW_PART)
+	if (DISKPART(bp->b_dev) != RAW_PART)
 		p_offset =
-		    wd->sc_dk.dk_label->d_partitions[WDPART(bp->b_dev)].p_offset;
+		    wd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)].p_offset;
 	else
 		p_offset = 0;
 	wd->sc_wdc_bio.blkno = bp->b_blkno + p_offset;
@@ -668,7 +661,7 @@ wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 
 	WDCDEBUG_PRINT(("wdopen\n"), DEBUG_FUNCS);
 
-	unit = WDUNIT(dev);
+	unit = DISKUNIT(dev);
 	wd = wdlookup(unit);
 	if (wd == NULL)
 		return ENXIO;
@@ -702,7 +695,7 @@ wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		}
 	}
 
-	part = WDPART(dev);
+	part = DISKPART(dev);
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
@@ -743,10 +736,10 @@ int
 wdclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct wd_softc *wd;
-	int part = WDPART(dev);
+	int part = DISKPART(dev);
 	int error = 0;
 
-	wd = wdlookup(WDUNIT(dev));
+	wd = wdlookup(DISKUNIT(dev));
 	if (wd == NULL)
 		return ENXIO;
 
@@ -829,7 +822,7 @@ wdgetdisklabel(dev_t dev, struct wd_softc *wd, struct disklabel *lp,
 
 	if (wd->drvp->state > RECAL)
 		wd->drvp->drive_flags |= DRIVE_RESET;
-	errstring = readdisklabel(WDLABELDEV(dev),
+	errstring = readdisklabel(DISKLABELDEV(dev),
 	    wdstrategy, lp, clp, spoofonly);
 	if (errstring) {
 		/*
@@ -840,7 +833,7 @@ wdgetdisklabel(dev_t dev, struct wd_softc *wd, struct disklabel *lp,
 		 */
 		if (wd->drvp->state > RECAL)
 			wd->drvp->drive_flags |= DRIVE_RESET;
-		errstring = readdisklabel(WDLABELDEV(dev),
+		errstring = readdisklabel(DISKLABELDEV(dev),
 		    wdstrategy, lp, clp, spoofonly);
 	}
 	if (errstring) {
@@ -860,7 +853,7 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 
 	WDCDEBUG_PRINT(("wdioctl\n"), DEBUG_FUNCS);
 
-	wd = wdlookup(WDUNIT(dev));
+	wd = wdlookup(DISKUNIT(dev));
 	if (wd == NULL)
 		return ENXIO;
 
@@ -889,7 +882,7 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = wd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		    &wd->sc_dk.dk_label->d_partitions[WDPART(dev)];
+		    &wd->sc_dk.dk_label->d_partitions[DISKPART(dev)];
 		goto exit;
 
 	case DIOCWDINFO:
@@ -910,7 +903,7 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 			if (wd->drvp->state > RECAL)
 				wd->drvp->drive_flags |= DRIVE_RESET;
 			if (xfer == DIOCWDINFO)
-				error = writedisklabel(WDLABELDEV(dev),
+				error = writedisklabel(DISKLABELDEV(dev),
 				    wdstrategy, wd->sc_dk.dk_label,
 				    wd->sc_dk.dk_cpulabel);
 		}
@@ -992,11 +985,11 @@ wdsize(dev_t dev)
 
 	WDCDEBUG_PRINT(("wdsize\n"), DEBUG_FUNCS);
 
-	wd = wdlookup(WDUNIT(dev));
+	wd = wdlookup(DISKUNIT(dev));
 	if (wd == NULL)
 		return (-1);
 
-	part = WDPART(dev);
+	part = DISKPART(dev);
 	omask = wd->sc_dk.dk_openmask & (1 << part);
 
 	if (omask == 0 && wdopen(dev, 0, S_IFBLK, NULL) != 0) {
@@ -1037,12 +1030,12 @@ wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 		return EFAULT;
 	wddoingadump = 1;
 
-	unit = WDUNIT(dev);
+	unit = DISKUNIT(dev);
 	wd = wdlookup(unit);
 	if (wd == NULL)
 		return ENXIO;
 
-	part = WDPART(dev);
+	part = DISKPART(dev);
 
 	/* Make sure it was initialized. */
 	if (wd->drvp->state < READY)
