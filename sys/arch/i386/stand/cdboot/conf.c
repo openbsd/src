@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 2007/01/02 16:29:27 tom Exp $	*/
+/*	$OpenBSD: conf.c,v 1.8 2007/04/27 10:08:34 tom Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -43,7 +43,7 @@
 #include <dev/cons.h>
 #include "debug.h"
 
-const char version[] = "1.06";
+const char version[] = "1.07";
 int	debug = 1;
 
 #undef _TEST

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.44 2006/05/15 09:10:52 jmc Exp $
+.\"	$OpenBSD: boot.8,v 1.45 2007/04/27 10:08:34 tom Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -106,6 +106,11 @@ This file may contain any commands
 .Nm
 accepts at the interactive prompt.
 Though default settings usually suffice, they can be changed here.
+.Pp
+.Pa boot.conf
+processing can be skipped by holding down either Control key as
+.Nm
+starts.
 .It
 The header line
 .Pp

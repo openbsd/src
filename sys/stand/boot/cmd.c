@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.58 2007/02/21 13:17:12 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.59 2007/04/27 10:08:34 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -56,6 +56,10 @@ extern const struct cmd_table MACHINE_CMD[];
 extern int Xset(void);
 extern int Xenv(void);
 
+#ifdef CHECK_SKIP_CONF
+extern int CHECK_SKIP_CONF(void);
+#endif
+
 extern const struct cmd_table cmd_set[];
 const struct cmd_table cmd_table[] = {
 	{"#",      CMDT_CMD, Xnop},  /* XXX must be first */
@@ -100,6 +104,13 @@ read_conf(void)
 	struct stat sb;
 #endif
 	int fd, rc = 0;
+
+#ifdef CHECK_SKIP_CONF
+	if (CHECK_SKIP_CONF()) {
+		printf("boot.conf processing skipped at operator request\n");
+		return -1;		/* Pretend file wasn't found */
+	}
+#endif
 
 	if ((fd = open(qualify(cmd.conf), 0)) < 0) {
 		if (errno != ENOENT && errno != ENXIO) {
