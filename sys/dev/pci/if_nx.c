@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.6 2007/04/26 18:24:33 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.7 2007/04/27 14:48:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -61,6 +61,22 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_nxreg.h>
+
+#ifdef NX_DEBUG
+int nx_debug = 0;
+#define DPRINTF(_arg...)	do {					\
+	if (nx_debug)							\
+		printf(_arg);						\
+} while (0)
+#define DPRINTREG(_reg)		do {					\
+	if (nx_debug)							\
+		printf("%s: %08x: %08x\n", 				\
+		    #_reg, _reg, nxb_read(sc, _reg));			\
+} while (0)
+#else
+#define DPRINTREG(_reg)
+#define DPRINTF(arg...)
+#endif
 
 struct nx_softc;
 
