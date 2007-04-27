@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.11 2007/04/27 15:29:18 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.12 2007/04/27 19:37:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -70,7 +70,7 @@ int nx_debug = 0;
 } while (0)
 #define DPRINTREG(_reg)		do {					\
 	if (nx_debug)							\
-		printf("%s: %08x: %08x\n", 				\
+		printf("%s: 0x%08x: %08x\n", 				\
 		    #_reg, _reg, nxb_read(sc, _reg));			\
 } while (0)
 #else
@@ -94,10 +94,13 @@ struct nxb_softc {
 	pci_chipset_tag_t	 sc_pc;
 	pcitag_t		 sc_tag;
 
+	bus_dma_tag_t		 sc_dmat;
 	bus_space_tag_t		 sc_memt;
 	bus_space_handle_t	 sc_memh;
 	bus_size_t		 sc_mems;
-	bus_dma_tag_t		 sc_dmat;
+	bus_space_tag_t		 sc_dbmemt;
+	bus_space_handle_t	 sc_dbmemh;
+	bus_size_t		 sc_dbmems;
 
 	pci_intr_handle_t	 sc_ih;
 
@@ -202,7 +205,7 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 	 * to 32bit 128MB memory for now (the chipset uses a configurable
 	 * window to access the complete memory range).
 	 */
-	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, PCI_MAPREG_START);
+	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, NXBAR0);
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 		break;
@@ -211,7 +214,7 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 		printf(": invalid memory type: 0x%x\n", memtype);
 		return;
 	}
-	if (pci_mapreg_info(sc->sc_pc, sc->sc_tag, PCI_MAPREG_START,
+	if (pci_mapreg_info(sc->sc_pc, sc->sc_tag, NXBAR0,
 	    memtype, &pciaddr, &pcisize, NULL)) {
 		printf(": failed to get pci info\n");
 		return;
@@ -226,10 +229,15 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Finally map the PCI memory space */
-	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &sc->sc_memt,
+	if (pci_mapreg_map(pa, NXBAR0, memtype, 0, &sc->sc_memt,
 	    &sc->sc_memh, NULL, &sc->sc_mems, 0) != 0) {
-		printf(": unable to map system interface register\n");
+		printf(": unable to map register memory\n");
 		return;
+	}
+	if (pci_mapreg_map(pa, NXBAR4, memtype, 0, &sc->sc_dbmemt,
+	    &sc->sc_dbmemh, NULL, &sc->sc_dbmems, 0) != 0) {
+		printf(": unable to map doorbell memory\n");
+		goto unmap1;
 	}
 
 	/* Map the interrupt, the handlers will be attached later */
@@ -249,6 +257,9 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
  unmap:
+	bus_space_unmap(sc->sc_dbmemt, sc->sc_dbmemh, sc->sc_dbmems);
+	sc->sc_dbmems = 0;
+ unmap1:
 	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
 	sc->sc_mems = 0;
 }

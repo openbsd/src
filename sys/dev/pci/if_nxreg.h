@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.2 2007/04/27 14:46:25 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.3 2007/04/27 19:37:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -114,6 +114,9 @@ struct nx_statusdesc {
 /*
  * Memory layout
  */
+
+#define NXBAR0			PCI_MAPREG_START
+#define NXBAR4			(PCI_MAPREG_START + 16)
 
 #define NXPCIMEM_SIZE_128MB	0x08000000	/* 128MB size */
 #define NXPCIMEM_SIZE_32MB	0x02000000	/* 32MB size */
