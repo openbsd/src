@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.4 2007/04/27 19:44:47 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.5 2007/04/27 19:46:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -78,7 +78,7 @@ struct nx_txdesc {
 	u_int16_t		tx_buf4_length;	/* length of buffer 4 */
 	u_int32_t		tx_addr4_low;	/* low address of buffer 4 */
 	u_int32_t		tx_addr4_high;	/* high address of buffer 4 */
-} __packed;	
+} __packed;
 
 struct nx_rxdesc {
 	u_int16_t		rx_handle;	/* handle of the buffer */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.13 2007/04/27 19:44:47 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.14 2007/04/27 19:46:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -70,7 +70,7 @@ int nx_debug = 0;
 } while (0)
 #define DPRINTREG(_reg)		do {					\
 	if (nx_debug)							\
-		printf("%s: 0x%08x: %08x\n", 				\
+		printf("%s: 0x%08x: %08x\n",				\
 		    #_reg, _reg, nxb_read(sc, _reg));			\
 } while (0)
 #else
@@ -300,7 +300,7 @@ nxb_set_window(struct nxb_softc *sc, int window)
 
 	if (sc->sc_window == window)
 		return;
-	assert(window == 0 || window == 1);	
+	assert(window == 0 || window == 1);
 	val = nxb_read(sc, NXCRB_WINDOW(sc->sc_function));
 	if (window)
 		val |= NXCRB_WINDOW_1;
@@ -395,7 +395,7 @@ nx_print(void *aux, const char *parentname)
 
 	if (parentname)
 		printf("nx port %u at %s",
-		   nxp->nxp_id, parentname);
+		    nxp->nxp_id, parentname);
 	else
 		printf(" port %u", nxp->nxp_id);
 	return (UNCONF);
