@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.5 2007/04/27 19:46:47 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.6 2007/04/27 19:56:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 /*
- * NetXen NX2031 register definitions based on:
+ * NetXen NX2031/NX2035 register definitions partially based on:
  * http://www.netxen.com/products/downloads/
  *     Ethernet_Driver_Ref_Guide_Open_Source.pdf
  */
