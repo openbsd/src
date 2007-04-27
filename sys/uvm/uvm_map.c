@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.90 2007/04/14 14:11:13 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.91 2007/04/27 16:23:49 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -470,8 +470,8 @@ uvm_mapent_free(struct vm_map_entry *me)
 static __inline void
 uvm_mapent_copy(struct vm_map_entry *src, struct vm_map_entry *dst)
 {
-
-	memcpy(dst, src, ((char *)&src->uvm_map_entry_stop_copy) - ((char *)src));
+	memcpy(dst, src, ((char *)&src->uvm_map_entry_stop_copy) -
+	    ((char *)src));
 }
 
 /*
@@ -495,8 +495,8 @@ uvm_map_entry_unwire(struct vm_map *map, struct vm_map_entry *entry)
 static __inline void
 uvm_map_reference_amap(struct vm_map_entry *entry, int flags)
 {
-    amap_ref(entry->aref.ar_amap, entry->aref.ar_pageoff,
-	     (entry->end - entry->start) >> PAGE_SHIFT, flags);
+	amap_ref(entry->aref.ar_amap, entry->aref.ar_pageoff,
+	    (entry->end - entry->start) >> PAGE_SHIFT, flags);
 }
 
 
@@ -506,8 +506,8 @@ uvm_map_reference_amap(struct vm_map_entry *entry, int flags)
 static __inline void
 uvm_map_unreference_amap(struct vm_map_entry *entry, int flags)
 {
-    amap_unref(entry->aref.ar_amap, entry->aref.ar_pageoff,
-	     (entry->end - entry->start) >> PAGE_SHIFT, flags);
+	amap_unref(entry->aref.ar_amap, entry->aref.ar_pageoff,
+	    (entry->end - entry->start) >> PAGE_SHIFT, flags);
 }
 
 
