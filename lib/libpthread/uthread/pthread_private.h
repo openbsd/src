@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.63 2007/04/27 19:40:08 kurt Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.64 2007/04/27 20:44:43 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -782,7 +782,7 @@ struct pthread {
 	 * set thread priority and upon thread creation via a thread
 	 * attribute or default priority.
 	 */
-	char		base_priority;
+	int		base_priority;
 
 	/*
 	 * Inherited priority is the priority a thread inherits by
@@ -792,7 +792,7 @@ struct pthread {
 	 * that is being waited on by any other thread whose priority
 	 * is non-zero.
 	 */
-	char		inherited_priority;
+	int		inherited_priority;
 
 	/*
 	 * Active priority is always the maximum of the threads base
@@ -800,7 +800,7 @@ struct pthread {
 	 * in either the base or inherited priority, the active
 	 * priority must be recalculated.
 	 */
-	char		active_priority;
+	int		active_priority;
 
 	/* Number of priority ceiling or protection mutexes owned. */
 	int		priority_mutex_count;
