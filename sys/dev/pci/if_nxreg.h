@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.1 2007/04/16 16:21:11 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.2 2007/04/27 14:46:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -110,6 +110,16 @@ struct nx_statusdesc {
 #define  NX_STSDESC_PROTO_S	2		/* protocol type */
 #define  NX_STSDESC_PROTO_M	0x003c
 } __packed;
+
+/*
+ * Memory layout
+ */
+
+#define NXPCIMEM_SIZE_128MB	0x08000000	/* 128MB size */
+#define NXPCIMEM_SIZE_32MB	0x02000000	/* 32MB size */
+
+#define NXPCIMAP_DIRECT_CRB	0x04400000
+#define NXPCIMAP_CRB		0x06000000
 
 /*
  * PCI Express Registers
