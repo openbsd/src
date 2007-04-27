@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.25 2007/04/27 18:14:13 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.26 2007/04/27 18:17:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1237,7 +1237,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, u_int *npte)
 				    VM_PAGE_TO_PHYS(pg), npv->pv_va, va);
 #endif
 				pmap_page_cache(pg, PV_UNCACHED);
-				Mips_SyncCache();
+				Mips_SyncDCachePage(pv->pv_va);
 				*npte = (*npte & ~PG_CACHEMODE) | PG_UNCACHED;
 			}
 		}
