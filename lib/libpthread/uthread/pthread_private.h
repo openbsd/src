@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.62 2007/04/27 18:04:08 kurt Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.63 2007/04/27 19:40:08 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -581,7 +581,7 @@ struct stack {
  * Define a continuation routine that can be used to perform a
  * transfer of control:
  */
-typedef void	(*thread_continuation_t) (void *);
+typedef void	(*thread_continuation_t) (struct pthread *);
 
 typedef V_TAILQ_ENTRY(pthread) pthread_entry_t;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_suspend_np.c,v 1.9 2004/09/18 19:57:35 marc Exp $	*/
+/*	$OpenBSD: uthread_suspend_np.c,v 1.10 2007/04/27 19:40:08 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #include "pthread_private.h"
 
 static void	suspend_common(struct pthread *thread);
-static void	finish_suspension(void *arg);
+static void	finish_suspension(struct pthread *);
 
 /* Suspend a thread: */
 int
@@ -195,10 +195,8 @@ suspend_common(struct pthread *thread)
 }
 
 static void
-finish_suspension(void *arg)
+finish_suspension(struct pthread *curthread)
 {
-	struct pthread	*curthread = _get_curthread();
-
 	if (curthread->suspended != SUSP_NO)
 		_thread_kern_sched_state(PS_SUSPENDED, __FILE__, __LINE__);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cond.c,v 1.14 2003/12/23 19:31:05 brad Exp $	*/
+/*	$OpenBSD: uthread_cond.c,v 1.15 2007/04/27 19:40:08 kurt Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -314,7 +314,7 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 		}
 
 		if ((interrupted != 0) && (curthread->continuation != NULL))
-			curthread->continuation((void *) curthread);
+			curthread->continuation(curthread);
 	} while ((done == 0) && (rval == 0));
 
 	/* No longer in a cancellation point: */
@@ -494,7 +494,7 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 		}
 
 		if ((interrupted != 0) && (curthread->continuation != NULL))
-			curthread->continuation((void *) curthread);
+			curthread->continuation(curthread);
 	} while ((done == 0) && (rval == 0));
 
 	/* No longer in a cancellation point: */

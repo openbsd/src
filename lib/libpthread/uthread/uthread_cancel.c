@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cancel.c,v 1.14 2005/12/21 01:40:23 millert Exp $	*/
+/*	$OpenBSD: uthread_cancel.c,v 1.15 2007/04/27 19:40:08 kurt Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  */
@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include "pthread_private.h"
 
-static void	finish_cancellation(void *arg);
+static void	finish_cancellation(struct pthread *arg);
 
 int
 pthread_cancel(pthread_t pthread)
@@ -228,10 +228,8 @@ _thread_leave_cancellation_point(void)
 }
 
 static void
-finish_cancellation(void *arg)
+finish_cancellation(struct pthread *curthread)
 {
-	struct pthread	*curthread = _get_curthread();
-
 	curthread->continuation = NULL;
 	curthread->interrupted = 0;
 
