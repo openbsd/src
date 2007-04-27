@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.9 2007/04/27 14:54:10 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.10 2007/04/27 14:56:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -124,6 +124,9 @@ struct nx_softc {
 int	 nxb_match(struct device *, void *, void *);
 void	 nxb_attach(struct device *, struct device *, void *);
 int	 nxb_query(struct nxb_softc *sc);
+
+u_int32_t nxb_read(struct nxb_softc *, bus_size_t);
+void	 nxb_write(struct nxb_softc *, bus_size_t, u_int32_t);
 
 int	 nx_match(struct device *, void *, void *);
 void	 nx_attach(struct device *, struct device *, void *);
@@ -254,6 +257,22 @@ int
 nxb_query(struct nxb_softc *sc)
 {
 	return (0);
+}
+
+u_int32_t
+nxb_read(struct nxb_softc *sc, bus_size_t reg)
+{
+	bus_space_barrier(sc->sc_memt, sc->sc_memh, reg, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(sc->sc_memt, sc->sc_memh, reg));
+}
+
+void
+nxb_write(struct nxb_softc *sc, bus_size_t reg, u_int32_t val)
+{
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, reg, val);
+	bus_space_barrier(sc->sc_memt, sc->sc_memh, reg, 4,
+	    BUS_SPACE_BARRIER_WRITE);
 }
 
 /*
