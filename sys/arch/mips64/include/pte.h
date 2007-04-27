@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.4 2007/04/27 18:14:11 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.5 2007/04/27 18:15:55 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,12 +89,11 @@ typedef union pt_entry {
 #define	PG_IOPAGE	(PG_G | PG_V | PG_M | PG_UNCACHED)
 #define	PG_FRAME	0x3fffffc0
 #define PG_SHIFT	6
-#define vad_to_pfn(x) (((unsigned)(x) >> PG_SHIFT) & PG_FRAME)
-#define vad_to_pfn64(x) (((quad_t)(x) >> PG_SHIFT) & PG_FRAME)
-#define vad_to_vpn(x) ((int)((unsigned)(x) & PG_SVPN))
-#define vpn_to_vad(x) ((int)((x) & PG_SVPN))
+
+#define	pfn_to_pad(x)	(((vaddr_t)(x) & PG_FRAME) << PG_SHIFT)
+#define vad_to_pfn(x)	(((vaddr_t)(x) >> PG_SHIFT) & PG_FRAME)
 /* User virtual to pte page entry */
-#define uvtopte(adr) (((adr) >> PGSHIFT) & (NPTEPG -1))
+#define uvtopte(adr)	(((adr) >> PGSHIFT) & (NPTEPG -1))
 
 #define	PG_SIZE_4K	0x00000000
 #define	PG_SIZE_16K	0x00006000
@@ -106,22 +105,11 @@ typedef union pt_entry {
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
-static __inline vaddr_t
-pfn_to_pad(unsigned int pte)
-{
-	vaddr_t pa;
-
-	pa = (long)(int)(((pte & PG_FRAME) << PG_SHIFT));
-	return pa;
-}
-
 /*
  * Kernel virtual address to page table entry and visa versa.
  */
 #define	kvtopte(va) \
 	(Sysmap + (((vaddr_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT))
-#define	ptetokv(pte) \
-	((((pt_entry_t *)(pte) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
 
 extern	pt_entry_t *Sysmap;		/* kernel pte table */
 extern	u_int Sysmapsize;		/* number of pte's in Sysmap */
