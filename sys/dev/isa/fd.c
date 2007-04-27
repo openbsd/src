@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.60 2007/02/15 00:53:26 krw Exp $	*/
+/*	$OpenBSD: fd.c,v 1.61 2007/04/27 22:20:01 krw Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -995,7 +995,8 @@ fdioctl(dev, cmd, addr, flag, p)
 		lp->d_magic2 = DISKMAGIC;
 		lp->d_checksum = dkcksum(lp);
 
-		errstring = readdisklabel(dev, fdstrategy, lp, &cdl, 0);
+		errstring = readdisklabel(DISKLABELDEV(dev), fdstrategy, lp,
+		    &cdl, 0);
 		if (errstring) {
 			/*printf("%s: %s\n", fd->sc_dev.dv_xname, errstring);*/
 		}
@@ -1017,7 +1018,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		if (error)
 			return error;
 
-		error = writedisklabel(dev, fdstrategy, lp, NULL);
+		error = writedisklabel(DISKLABELDEV(dev), fdstrategy, lp, NULL);
 		return error;
 
         case FD_FORM:

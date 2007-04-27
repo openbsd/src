@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.47 2007/02/15 00:53:26 krw Exp $	*/
+/*	$OpenBSD: fd.c,v 1.48 2007/04/27 22:20:01 krw Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -1791,7 +1791,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		if (error)
 			return (error);
 
-		error = writedisklabel(dev, fdstrategy,
+		error = writedisklabel(DISKLABELDEV(dev), fdstrategy,
 				       fd->sc_dk.dk_label,
 				       fd->sc_dk.dk_cpulabel);
 		return (error);
@@ -1983,7 +1983,7 @@ fdgetdisklabel(dev)
 	/*
 	 * Call the generic disklabel extraction routine.
 	 */
-	errstring = readdisklabel(dev, fdstrategy, lp, clp, 0);
+	errstring = readdisklabel(DISKLABELDEV(dev), fdstrategy, lp, clp, 0);
 	if (errstring) {
 		/*printf("%s: %s\n", fd->sc_dv.dv_xname, errstring);*/
 	}
