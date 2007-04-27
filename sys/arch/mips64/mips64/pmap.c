@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.24 2007/04/24 16:48:45 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.25 2007/04/27 18:14:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -251,7 +251,7 @@ static pv_entry_t pg_to_pvh(struct vm_page *);
 static __inline pv_entry_t
 pg_to_pvh(struct vm_page *pg)
 {
-	return &pg->mdpage.pvent;
+	return &pg->mdpage.pv_ent;
 }
 
 /*
@@ -454,9 +454,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			if (!(entry & PG_V))
 				continue;
 			pmap->pm_stats.resident_count--;
-			if (!pfn_is_ext(entry)) {/* padr > 32 bits */
-				pmap_remove_pv(pmap, sva, pfn_to_pad(entry));
-			}
+			pmap_remove_pv(pmap, sva, pfn_to_pad(entry));
 			pte->pt_entry = PG_NV;
 			/*
 			 * Flush the TLB for the given address.
@@ -642,21 +640,17 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	pg = PHYS_TO_VM_PAGE(pa);
 
 	if (pg != NULL) {
-		pv_entry_t pv;
-
-		pv = pg_to_pvh(pg);
-
 		if (!(prot & VM_PROT_WRITE)) {
 			npte = PG_ROPAGE;
 		} else {
-			if ((int64_t)va < 0) {
+			if (pmap == pmap_kernel()) {
 				/*
 				 * Don't bother to trap on kernel writes,
 				 * just record page as dirty.
 				 */
 				npte = PG_RWPAGE;
 			} else {
-				if (pv->pv_flags & PV_ATTR_MOD) {
+				if (pg->pg_flags & PV_ATTR_MOD) {
 					npte = PG_RWPAGE;
 				} else {
 					npte = PG_CWPAGE;
@@ -666,9 +660,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 		/* Set page referenced/modified status based on flags */
 		if (flags & VM_PROT_WRITE)
-			pv->pv_flags |= PV_ATTR_MOD | PV_ATTR_REF;
+			atomic_setbits_int(&pg->pg_flags,
+			    PV_ATTR_MOD | PV_ATTR_REF);
 		else if (flags & VM_PROT_ALL)
-			pv->pv_flags |= PV_ATTR_REF;
+			atomic_setbits_int(&pg->pg_flags, PV_ATTR_REF);
 
 		stat_count(enter_stats.managed);
 	} else {
@@ -680,7 +675,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		if (prot & VM_PROT_WRITE) {
 			npte = PG_IOPAGE & ~PG_G;
 		} else {
-			npte = PG_IOPAGE & ~(PG_G | PG_M);
+			npte = (PG_IOPAGE | PG_RO) & ~(PG_G | PG_M);
 		}
 	}
 
@@ -694,7 +689,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		}
 
 		pte = kvtopte(va);
-		npte |= vad_to_pfn(pa) | PG_ROPAGE | PG_G;
+		npte |= vad_to_pfn(pa) | PG_G;
 		if (!(pte->pt_entry & PG_V)) {
 			pmap->pm_stats.resident_count++;
 		}
@@ -914,7 +909,7 @@ pmap_zero_page(struct vm_page *pg)
 
 	va = (vaddr_t)PHYS_TO_KSEG0(phys);
 	pv = pg_to_pvh(pg);
-	if ((pv->pv_flags & PV_CACHED) &&
+	if ((pg->pg_flags & PV_CACHED) &&
 	    ((pv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
 		Mips_SyncDCachePage(pv->pv_va);
 	}
@@ -946,12 +941,12 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	DPRINTF(PDB_FOLLOW, ("pmap_copy_page(%p, %p)\n", src, dst));
 
 	pv = pg_to_pvh(srcpg);
-	if ((pv->pv_flags & PV_CACHED) &&
+	if ((srcpg->pg_flags & PV_CACHED) &&
 	    (sf = ((pv->pv_va ^ (long)s) & CpuCacheAliasMask) != 0)) {
 		Mips_SyncDCachePage(pv->pv_va);
 	}
 	pv = pg_to_pvh(dstpg);
-	if ((pv->pv_flags & PV_CACHED) &&
+	if ((dstpg->pg_flags & PV_CACHED) &&
 	    (df = ((pv->pv_va ^ (long)d) & CpuCacheAliasMask) != 0)) {
 		Mips_SyncDCachePage(pv->pv_va);
 	}
@@ -961,13 +956,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	if (sf) {
 		Mips_HitSyncDCache(s, PAGE_SIZE);
 	}
-#if 0	/* XXX TODO: Why can't we trust the following? */
-	if (df || (pv->pv_pmap == NULL) || (pv->pv_flags & PV_EXEC)) {
-		Mips_SyncDCachePage(d);
-	}
-#else
 	Mips_SyncDCachePage(d);
-#endif
 }
 
 /*
@@ -985,11 +974,12 @@ pmap_clear_modify(struct vm_page *pg)
 	DPRINTF(PDB_FOLLOW, ("pmap_clear_modify(%p)\n", VM_PAGE_TO_PHYS(pg)));
 
 	pv = pg_to_pvh(pg);
-	if (pv->pv_flags & PV_ATTR_MOD) {
-		pv->pv_flags &= ~PV_ATTR_MOD;
+	if (pg->pg_flags & PV_ATTR_MOD) {
+		atomic_clearbits_int(&pg->pg_flags, PV_ATTR_MOD);
 		rv = TRUE;
 	}
-	Mips_SyncDCachePage(pv->pv_va);
+	if (pg->pg_flags & PV_CACHED)
+		Mips_SyncDCachePage(pv->pv_va);
 
 	for (; pv != NULL; pv = pv->pv_next) {
 		if (pv->pv_pmap == pmap_kernel()) {
@@ -1023,10 +1013,7 @@ pmap_clear_modify(struct vm_page *pg)
 void
 pmap_set_modify(struct vm_page *pg)
 {
-	pv_entry_t pv;
-
-	pv = pg_to_pvh(pg);
-	pv->pv_flags |= PV_ATTR_MOD | PV_ATTR_REF;
+	atomic_setbits_int(&pg->pg_flags, PV_ATTR_MOD | PV_ATTR_REF);
 }
 
 /*
@@ -1037,14 +1024,12 @@ pmap_set_modify(struct vm_page *pg)
 boolean_t
 pmap_clear_reference(struct vm_page *pg)
 {
-	pv_entry_t pv;
 	boolean_t rv;
 
 	DPRINTF(PDB_FOLLOW, ("pmap_clear_reference(%p)\n", VM_PAGE_TO_PHYS(pg)));
 
-	pv = pg_to_pvh(pg);
-	rv = (pv->pv_flags & PV_ATTR_REF) != 0;
-	pv->pv_flags &= ~PV_ATTR_REF;
+	rv = (pg->pg_flags & PV_ATTR_REF) != 0;
+	atomic_clearbits_int(&pg->pg_flags, PV_ATTR_REF);
 	return rv;
 }
 
@@ -1057,10 +1042,7 @@ pmap_clear_reference(struct vm_page *pg)
 boolean_t
 pmap_is_referenced(struct vm_page *pg)
 {
-	pv_entry_t pv;
-
-	pv = pg_to_pvh(pg);
-	return (pv->pv_flags & PV_ATTR_REF) != 0;
+	return (pg->pg_flags & PV_ATTR_REF) != 0;
 }
 
 /*
@@ -1072,10 +1054,7 @@ pmap_is_referenced(struct vm_page *pg)
 boolean_t
 pmap_is_modified(struct vm_page *pg)
 {
-	pv_entry_t pv;
-
-	pv = pg_to_pvh(pg);
-	return (pv->pv_flags & PV_ATTR_MOD) != 0;
+	return (pg->pg_flags & PV_ATTR_MOD) != 0;
 }
 
 /*
@@ -1108,7 +1087,8 @@ pmap_page_cache(vm_page_t pg, int mode)
 
 	newmode = mode & PV_UNCACHED ? PG_UNCACHED : PG_CACHED;
 	pv = pg_to_pvh(pg);
-	pv->pv_flags = (pv->pv_flags & ~(PV_CACHED|PV_UNCACHED)) | mode;
+	atomic_clearbits_int(&pg->pg_flags, PV_CACHED | PV_UNCACHED);
+	atomic_setbits_int(&pg->pg_flags, mode);
 
 	for (; pv != NULL; pv = pv->pv_next) {
 		if (pv->pv_pmap == pmap_kernel()) {
@@ -1230,14 +1210,14 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, u_int *npte)
 		stat_count(enter_stats.firstpv);
 
 		pv->pv_va = va;
-		pv->pv_flags = PV_CACHED;
+		atomic_setbits_int(&pg->pg_flags, PV_CACHED);
 		pv->pv_pmap = pmap;
 		pv->pv_next = NULL;
 	} else {
-		if (pv->pv_flags & PV_UNCACHED) {
+		if (pg->pg_flags & PV_UNCACHED) {
 			/*
 			 * If page is mapped uncached it's either because
-			 * an uncached mapping was requested of we have a
+			 * an uncached mapping was requested or we have a
 			 * VAC situation. Map this page uncached as well.
 			 */
 			*npte = (*npte & ~PG_CACHEMODE) | PG_UNCACHED;
@@ -1279,14 +1259,12 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, u_int *npte)
 			("pmap_enter: new pv: pmap %x va %x pg %p\n",
 			    pmap, va, VM_PAGE_TO_PHYS(pg)));
 
-		/* can this cause us to recurse forever? */
 		npv = pmap_pv_alloc();
 		if (npv == NULL)
 			return ENOMEM;
 		npv->pv_va = va;
 		npv->pv_pmap = pmap;
 		npv->pv_next = pv->pv_next;
-		npv->pv_flags = pv->pv_flags;
 		pv->pv_next = npv;
 
 		if (!npv->pv_next)
@@ -1324,12 +1302,13 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 	if (pmap == pv->pv_pmap && va == pv->pv_va) {
 		npv = pv->pv_next;
 		if (npv) {
-			npv->pv_flags = pv->pv_flags;
 			*pv = *npv;
 			pmap_pv_free(npv);
 		} else {
 			pv->pv_pmap = NULL;
-			pv->pv_flags &= PV_PRESERVE;
+			atomic_clearbits_int(&pg->pg_flags,
+			    (PG_PMAP0 | PG_PMAP1 | PG_PMAP2 | PG_PMAP3) &
+			    ~PV_PRESERVE);
 			Mips_SyncDCachePage(pv->pv_va);
 		}
 		stat_count(remove_stats.pvfirst);

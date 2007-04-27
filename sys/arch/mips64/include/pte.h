@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.3 2005/08/07 07:29:44 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.4 2007/04/27 18:14:11 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,7 +89,6 @@ typedef union pt_entry {
 #define	PG_IOPAGE	(PG_G | PG_V | PG_M | PG_UNCACHED)
 #define	PG_FRAME	0x3fffffc0
 #define PG_SHIFT	6
-#define pfn_is_ext(x) ((x) & 0x3c000000)
 #define vad_to_pfn(x) (((unsigned)(x) >> PG_SHIFT) & PG_FRAME)
 #define vad_to_pfn64(x) (((quad_t)(x) >> PG_SHIFT) & PG_FRAME)
 #define vad_to_vpn(x) ((int)((unsigned)(x) & PG_SVPN))

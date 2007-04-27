@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.11 2007/04/14 14:54:28 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.12 2007/04/27 18:14:11 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -123,20 +123,18 @@ typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
 	vaddr_t		pv_va;		/* virtual address for mapping */
-	int		pv_flags;	/* Some flags for the mapping */
 } *pv_entry_t;
 
 #define __HAVE_VM_PAGE_MD
 struct vm_page_md {
-	struct pv_entry pvent;		/* pv list of this seg */
+	struct pv_entry pv_ent;		/* pv list of this seg */
 };
 
 #define	VM_MDPAGE_INIT(pg) \
 	do { \
-		(pg)->mdpage.pvent.pv_next = NULL; \
-		(pg)->mdpage.pvent.pv_pmap = NULL; \
-		(pg)->mdpage.pvent.pv_va = 0; \
-		(pg)->mdpage.pvent.pv_flags = 0; \
+		(pg)->mdpage.pv_ent.pv_next = NULL; \
+		(pg)->mdpage.pv_ent.pv_pmap = NULL; \
+		(pg)->mdpage.pv_ent.pv_va = 0; \
 	} while (0)
 
 #endif	/* _KERNEL && !_LOCORE */
