@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.19 2006/08/24 12:00:56 mickey Exp $
+ * $OpenBSD: calendar.holiday,v 1.20 2007/04/27 00:49:45 deraadt Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -143,7 +143,7 @@
 04/25	National Flag Day in Swaziland
 04/26	Confederate Memorial Day in Florida & Georgia
 04/26	Union Day in Tanzania
-04/27	Day of Uprising Against Occupation in Slovena
+04/27	Day of Uprising Against Occupation in Slovenia
 04/27	Independence Day in Togo
 04/MonLast	Arbor Day in Wyoming (last Monday)
 04/MonLast	Confederate Memorial Day in Alabama & Mississippi (last Monday)
