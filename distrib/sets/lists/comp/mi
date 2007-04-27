@@ -5595,10 +5595,17 @@
 ./usr/share/man/cat9/addlog.0
 ./usr/share/man/cat9/allocbuf.0
 ./usr/share/man/cat9/altq.0
+./usr/share/man/cat9/aml_evalname.0
+./usr/share/man/cat9/aml_evalnode.0
+./usr/share/man/cat9/aml_find_node.0
+./usr/share/man/cat9/aml_freevalue.0
+./usr/share/man/cat9/aml_val2int.0
 ./usr/share/man/cat9/arc4random.0
 ./usr/share/man/cat9/arc4random_bytes.0
 ./usr/share/man/cat9/assert.0
 ./usr/share/man/cat9/atomic.0
+./usr/share/man/cat9/atomic_clearbits_int.0
+./usr/share/man/cat9/atomic_setbits_int.0
 ./usr/share/man/cat9/audio.0
 ./usr/share/man/cat9/autoconf.0
 ./usr/share/man/cat9/bawrite.0
