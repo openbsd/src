@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.77 2007/04/25 13:27:31 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.78 2007/04/27 04:21:28 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -66,7 +66,7 @@
 #define THT_D_RX		(1<<2)
 #define THT_D_INTR		(1<<3)
 
-int thtdebug = THT_D_FIFO | THT_D_TX | THT_D_RX | THT_D_INTR;
+int thtdebug = THT_D_TX | THT_D_RX | THT_D_INTR;
 
 #define DPRINTF(l, f...)	do { if (thtdebug & (l)) printf(f); } while (0)
 #else
@@ -1485,6 +1485,8 @@ tht_fifo_write_pad(struct tht_softc *sc, struct tht_fifo *tf, int bc)
 void
 tht_fifo_post(struct tht_softc *sc, struct tht_fifo *tf)
 {
+	delay(100); /* XXX this is dumb */
+
 	bus_dmamap_sync(sc->sc_thtc->sc_dmat, THT_DMA_MAP(tf->tf_mem),
 	    0, tf->tf_len, THT_FIFO_POST_SYNC(tf->tf_desc));
 	if (tf->tf_desc->tfd_write)
