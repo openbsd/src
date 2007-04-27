@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripd.8,v 1.2 2006/10/24 16:35:19 david Exp $
+.\"	$OpenBSD: ripd.8,v 1.3 2007/04/27 09:26:33 michele Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -30,9 +30,12 @@
 is the Routing Information Protocol
 .Pq RIP
 daemon which manages routers' routing tables.
-For RIPD to work,
-multicast routing must be enabled by setting multicast_router=YES in
-.Pa /etc/rc.conf.local .
+.Pp
+A running
+.Nm
+can be controlled with the
+.Xr ripctl 8
+utility.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
