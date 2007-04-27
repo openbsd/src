@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.78 2007/04/27 04:21:28 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.79 2007/04/27 06:45:34 cloder Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -107,7 +107,7 @@ int thtdebug = THT_D_TX | THT_D_RX | THT_D_INTR;
 #define  THT_REG_RDINTCM_RXF_TH(_c)	((_c)<<16) /* rxf intr req thresh */
 #define  THT_REG_RDINTCM_COAL_RC	(1<<15) /* coalescing timer recharge */
 #define  THT_REG_RDINTCM_COAL(_c)	(_c) /* coalescing timer */
-#define THT_REG_TDINTCM(_q)	(0x0120 + _Q(_q)) /* TX DSC Intr Coalescing */
+#define THT_REG_TDINTCM(_q)	(0x0130 + _Q(_q)) /* TX DSC Intr Coalescing */
 #define  THT_REG_TDINTCM_PKT_TH(_c)	((_c)<<20) /* pkt count threshold */
 #define  THT_REG_TDINTCM_COAL_RC	(1<<15) /* coalescing timer recharge */
 #define  THT_REG_TDINTCM_COAL(_c)	(_c) /* coalescing timer */
