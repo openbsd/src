@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.91 2007/04/27 16:23:49 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.92 2007/04/27 18:01:49 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -725,6 +725,9 @@ uvm_map_p(struct vm_map *map, vaddr_t *startp, vsize_t size,
 
 	uvm_tree_sanity(map, "map entry");
 
+	if ((map->flags & VM_MAP_INTRSAFE) == 0)
+		splassert(IPL_NONE);
+
 	/*
 	 * step 0: sanity check of protection code
 	 */
@@ -1380,6 +1383,9 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 	VM_MAP_RANGE_CHECK(map, start, end);
 
 	uvm_tree_sanity(map, "unmap_remove entry");
+
+	if ((map->flags & VM_MAP_INTRSAFE) == 0)
+		splassert(IPL_NONE);
 
 	/*
 	 * find first entry
