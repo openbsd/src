@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.3 2007/04/27 19:37:39 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.4 2007/04/27 19:44:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -124,12 +124,32 @@ struct nx_statusdesc {
 #define NXPCIMAP_DIRECT_CRB	0x04400000
 #define NXPCIMAP_CRB		0x06000000
 
+#define NXMEMMAP_WINDOW_SIZE	0x02000000
+#define NXMEMMAP_PCIE		0x00100000
+#define NXMEMMAP_NIU		0x00600000
+#define NXMEMMAP_SW		0x02200000	/* XXX 0x02400000? */
+#define NXMEMMAP_SIR		0x03200000
+#define NXMEMMAP_ROMUSB		0x03300000
+
+/* Window 0 register map  */
+#define NXPCIE(_x)		((_x) + 0x00100000)	/* PCI Express */
+#define NXPCIE_1(_x)		((_x) + 0x06100000)	/* PCI Express */
+#define NXNIU(_x)		((_x) + 0x06600000)	/* Network Int Unit */
+
+/* Window 1 register map */
+#define NXSW(_x)		((_x) + 0x06200000)	/* Software defined */
+#define NXSIR(_x)		((_x) + 0x07200000)	/* 2nd interrupt */
+#define NXROMUSB(_x)		((_x) + 0x07300000)	/* ROMUSB */
+
+/* The IMEZ/HMEZ NICs have multiple PCI functions with different registers */
+#define NXPCIE_FUNC(_r, _f)	(NXPCIE_1(_r) + ((_f) * 0x20))
+
 /*
  * PCI Express Registers
  */
 
 /* Interrupt Vector */
-#define NXISR_INT_VECTOR		0x00010100
+#define NXISR_INT_VECTOR		NXPCIE(0x00010100)
 #define  NXISR_INT_VECTOR_TARGET3	(1<<10)	/* interrupt for function 3 */
 #define  NXISR_INT_VECTOR_TARGET2	(1<<9)	/* interrupt for function 2 */
 #define  NXISR_INT_VECTOR_TARGET1	(1<<8)	/* interrupt for function 1 */
@@ -137,37 +157,41 @@ struct nx_statusdesc {
 #define  NXISR_INT_VECTOR_RC_INT	(1<<5)	/* root complex interrupt */
 
 /* Interrupt Mask */
-#define NXISR_INT_MASK			0x00010104
+#define NXISR_INT_MASK			NXPCIE(0x00010104)
 #define  NXISR_INT_MASK_TARGET3		(1<<10)	/* mask for function 3 */
 #define  NXISR_INT_MASK_TARGET2		(1<<9)	/* mask for function 2 */
 #define  NXISR_INT_MASK_TARGET1		(1<<8)	/* mask for function 1 */
 #define  NXISR_INT_MASK_TARGET0		(1<<7)	/* mask for function 0 */
 #define  NXISR_INT_MASK_RC_INT		(1<<5)	/* root complex mask */
 
+/* SW Window */
+#define NXCRB_WINDOW(_f)		NXPCIE_FUNC(0x00010210, _f)
+#define  NXCRB_WINDOW_1			(1<<25)
+
 /*
  * Network Interface Unit (NIU) registers
  */
 
 /* Mode Register (see also NXNIU_RESET_SYS_FIFOS) */
-#define NXNIU_MODE			0x00000000
+#define NXNIU_MODE			NXNIU(0x00000000)
 #define  NXNIU_MODE_XGE			(1<<2)	/* XGE interface enabled */
 #define  NXNIU_MODE_GBE			(1<<1)	/* 4 GbE interfaces enabled */
 #define  NXNIU_MODE_FC			(1<<0)	/* *Fibre Channel enabled */
 #define NXNIU_MODE_DEF			NUI_XGE_ENABLE
 
 /* 10G - 1G Mode Enable Register */
-#define NXNIU_XG_SINGLE_TERM		0x00000004
+#define NXNIU_XG_SINGLE_TERM		NXNIU(0x00000004)
 #define  NXNIU_XG_SINGLE_TERM_ENABLE	(1<<0)	/* Enable 10G + 1G mode */
 #define NXNIU_XG_SINGLE_TERM_DEF	0		/* Disabled */
 
 /* XGE Reset Register */
-#define NXNIU_XG_RESET			0x0000001c
+#define NXNIU_XG_RESET			NXNIU(0x0000001c)
 #define  NXNIU_XG_RESET_CD		(1<<1)	/* Reset channels CD */
 #define  NXNIU_XG_RESET_AB		(1<<0)	/* Reset channels AB */
 #define NXNIU_XG_RESET_DEF		(NXNIU_XG_RESET_AB|NXNIU_XG_RESET_CD)
 
 /* Interrupt Mask Register */
-#define NXNIU_INT_MASK			0x00000040
+#define NXNIU_INT_MASK			NXNIU(0x00000040)
 #define  NXNIU_INT_MASK_XG		(1<<6)	/* XGE Interrupt Mask */
 #define  NXNIU_INT_MASK_RES5		(1<<5)	/* Reserved bit */
 #define  NXNIU_INT_MASK_RES4		(1<<4)	/* Reserved bit */
@@ -181,13 +205,13 @@ struct nx_statusdesc {
 	NXNIU_INT_MASK_GB0)			/* Reserved bits enabled */
 
 /* Reset System FIFOs Register (needed before changing NXNIU_MODE) */
-#define NXNIU_RESET_SYS_FIFOS		0x00000088
+#define NXNIU_RESET_SYS_FIFOS		NXNIU(0x00000088)
 #define  NXNIU_RESET_SYS_FIFOS_RX	(1<<31)	/* Reset all Rx FIFOs */
 #define  NXNIU_RESET_SYS_FIFOS_TX	(1<<0)	/* Reset all Tx FIFOs */
 #define NXNIU_RESET_SYS_FIFOS_DEF	0	/* Disabled */
 
 /* XGE Configuration 0 Register */
-#define NXNIU_XGE_CONFIG0		0x00070000
+#define NXNIU_XGE_CONFIG0		NXNIU(0x00070000)
 #define  NXNIU_XGE_CONFIG0_SOFTRST_FIFO	(1<<31)	/* Soft reset FIFOs */
 #define  NXNIU_XGE_CONFIG0_SOFTRST_MAC	(1<<4)	/* Soft reset XGE MAC */
 #define  NXNIU_XGE_CONFIG0_RX_ENABLE	(1<<2)	/* Enable frame Rx */
@@ -195,7 +219,7 @@ struct nx_statusdesc {
 #define NXNIU_XGE_CONFIG0_DEF		0	/* Disabled */
 
 /* XGE Configuration 1 Register */
-#define NXNIU_XGE_CONFIG1		0x00070004
+#define NXNIU_XGE_CONFIG1		NXNIU(0x00070004)
 #define  NXNIU_XGE_CONFIG1_PROMISC	(1<<13)	/* Pass all Rx frames */
 #define  NXNIU_XGE_CONFIG1_MCAST_ENABLE	(1<<12) /* Rx all multicast frames */
 #define  NXNIU_XGE_CONFIG1_SEQ_ERROR	(1<<10) /* Sequence error detection */
@@ -212,50 +236,59 @@ struct nx_statusdesc {
  * Software defined registers (used by the firmware or the driver)
  */
 
-#define NXSW_CMD_PRODUCER_OFFSET	0x2208	/* Producer CMD ring index */
-#define NXSW_CMD_CONSUMER_OFFSET	0x220c	/* Consumer CMD ring index */
-#define NXSW_RCV_PRODUCER_OFFSET	0x2218	/* Producer Rx ring index */
-#define NXSW_RCV_CONSUMER_OFFSET	0x221c	/* Consumer Rx ring index */
-#define NXSW_RCV_GLOBAL_RING		0x2220	/* Address of Rx buffer */
-#define NXSW_RCV_STATUS_RING		0x2224	/* Address of Rx status ring */
-#define NXSW_RCV_STATUS_PRODUCER	0x2228	/* Producer Rx status index */
-#define NXSW_RCV_STATUS_CONSUMER	0x222c	/* Consumer Rx status index */
-#define NXSW_CMD_ADDR_HI		0x2230	/* CMD ring phys address */
-#define NXSW_CMD_ADDR_LO		0x2234	/* CMD ring phys address */
-#define NXSW_CMD_RING_SIZE		0x2238	/* Entries in the CMD ring */
-#define NXSW_RCV_RING_SIZE		0x223c	/* Entries in the Rx ring */
-#define NXSW_JRCV_RING_SIZE		0x2240	/* Entries in the jumbo ring */
-#define NXSW_RCVPEG_STATE		0x2248	/* State of the NX2031 */
-#define NXSW_CMDPEG_STATE		0x2250	/* State of the firmware */
-#define  NXSW_CMDPEG_STATE_INIT_START	0xff00	/* Start of initialization */
-#define  NXSW_CMDPEG_STATE_INIT_DONE	0xff01	/* Initialization complete */
-#define  NXSW_CMDPEG_STATE_INIT_FAILED	0xffff	/* Initialization failed */
-#define NXSW_GLOBAL_INT_COAL		0x2280	/* Interrupt coalescing */
-#define NXSW_INT_COAL_MODE		0x2284	/* Reserved */
-#define NXSW_MAX_RCV_BUFS		0x2288	/* Interrupt tuning register */
-#define NXSW_TX_INT_THRESHOLD		0x228c	/* Interrupt tuning register */
-#define NXSW_RX_PKT_TIMER		0x2290	/* Interrupt tuning register */
-#define NXSW_TX_PKT_TIMER		0x2294	/* Interrupt tuning register */
-#define NXSW_RX_PKT_CNT			0x2298	/* Rx packet count register */
-#define NXSW_RX_TMR_CNT			0x229c	/* Rx timer count register */
-#define NXSW_XG_STATE			0x22a0	/* PHY state register */
-#define  NXSW_XG_LINK_UP		(1<<4)	/* 10G PHY state up */
-#define  NXSW_XG_LINK_DOWN		(1<<5)	/* 10G PHY state down */
-#define NXSW_JRCV_PRODUCER_OFFSET	0x2300	/* Producer jumbo ring index */
-#define NXSW_JRCV_CONSUMER_OFFSET	0x2304	/* Consumer jumbo ring index */
-#define NXSW_JRCV_GLOBAL_RING		0x2220	/* Address of jumbo buffer */
+#define NXSW_ROM_LOCK_ID	NXSW(0x2100)	/* Used for locking the ROM */
+#define  NXSW_ROM_LOCK_DRV	0x0d417340	/* Driver ROM lock ID */
+#define NXSW_PHY_LOCK_ID	NXSW(0x2120)	/* Used for locking the PHY */
+#define  NXSW_PHY_LOCK_DRV	0x44524956	/* Driver PHY lock ID */
+
+#define NXSW_CMD_PRODUCER_OFF	NXSW(0x2208)	/* Producer CMD ring index */
+#define NXSW_CMD_CONSUMER_OFF	NXSW(0x220c)	/* Consumer CMD ring index */
+#define NXSW_RCV_PRODUCER_OFF	NXSW(0x2218)	/* Producer Rx ring index */
+#define NXSW_RCV_CONSUMER_OFF	NXSW(0x221c)	/* Consumer Rx ring index */
+#define NXSW_RCV_GLOBAL_RING	NXSW(0x2220)	/* Address of Rx buffer */
+#define NXSW_RCV_STATUS_RING	NXSW(0x2224)	/* Address of Rx status ring */
+#define NXSW_RCV_STATUS_PROD	NXSW(0x2228)	/* Producer Rx status index */
+#define NXSW_RCV_STATUS_CONS	NXSW(0x222c)	/* Consumer Rx status index */
+#define NXSW_CMD_ADDR_HI	NXSW(0x2230)	/* CMD ring phys address */
+#define NXSW_CMD_ADDR_LO	NXSW(0x2234)	/* CMD ring phys address */
+#define NXSW_CMD_RING_SIZE	NXSW(0x2238)	/* Entries in the CMD ring */
+#define NXSW_RCV_RING_SIZE	NXSW(0x223c)	/* Entries in the Rx ring */
+#define NXSW_JRCV_RING_SIZE	NXSW(0x2240)	/* Entries in the jumbo ring */
+#define NXSW_RCVPEG_STATE	NXSW(0x2248)	/* State of the NX2031 */
+#define NXSW_CMDPEG_STATE	NXSW(0x2250)	/* State of the firmware */
+#define  NXSW_CMDPEG_INIT_START	0xff00		/* Start of initialization */
+#define  NXSW_CMDPEG_INIT_DONE	0xff01		/* Initialization complete */
+#define  NXSW_CMDPEG_INIT_FAIL	0xffff		/* Initialization failed */
+#define NXSW_GLOBAL_INT_COAL	NXSW(0x2280)	/* Interrupt coalescing */
+#define NXSW_INT_COAL_MODE	NXSW(0x2284)	/* Reserved */
+#define NXSW_MAX_RCV_BUFS	NXSW(0x2288)	/* Interrupt tuning register */
+#define NXSW_TX_INT_THRESHOLD	NXSW(0x228c)	/* Interrupt tuning register */
+#define NXSW_RX_PKT_TIMER	NXSW(0x2290)	/* Interrupt tuning register */
+#define NXSW_TX_PKT_TIMER	NXSW(0x2294)	/* Interrupt tuning register */
+#define NXSW_RX_PKT_CNT		NXSW(0x2298)	/* Rx packet count register */
+#define NXSW_RX_TMR_CNT		NXSW(0x229c)	/* Rx timer count register */
+#define NXSW_XG_STATE		NXSW(0x22a0)	/* PHY state register */
+#define  NXSW_XG_LINK_UP	(1<<4)		/* 10G PHY state up */
+#define  NXSW_XG_LINK_DOWN	(1<<5)		/* 10G PHY state down */
+#define NXSW_JRCV_PRODUCER_OFF	NXSW(0x2300)	/* Producer jumbo ring index */
+#define NXSW_JRCV_CONSUMER_OFF	NXSW(0x2304)	/* Consumer jumbo ring index */
+#define NXSW_JRCV_GLOBAL_RING	NXSW(0x2220)	/* Address of jumbo buffer */
 
 /*
  * Secondary Interrupt Registers
  */
 
 /* I2Q Register */
-#define NXI2Q_CLR_PCI_HI		0x00000034
+#define NXI2Q_CLR_PCI_HI		NXSIR(0x00000034)
 #define  NXI2Q_CLR_PCI_HI_PHY		(1<<13)	/* PHY interrupt */
 #define NXI2Q_CLR_PCI_HI_DEF		0	/* Cleared */
 
+/*
+ * ROMUSB registers
+ */
+
 /* Reset Unit Register */
-#define NXROMUSB_GLB_SW_RESET		0x1a100008
+#define NXROMUSB_GLB_SW_RESET		NXROMUSB(0x00000008)
 #define  NXROMUSB_GLB_SW_RESET_EFC_SIU	(1<<30)	/* EFC_SIU reset */
 #define  NXROMUSB_GLB_SW_RESET_NIU	(1<<29)	/* NIU software reset */
 #define  NXROMUSB_GLB_SW_RESET_U0QMSQG	(1<<28)	/* Network side QM_SQG reset */
@@ -277,8 +310,21 @@ struct nx_statusdesc {
 #define NXROMUSB_GLB_SW_RESET_DEF	0xffffffff
 
 /* Casper Reset Register */
-#define NXROMUSB_GLB_CAS_RESET		0x1a100038
+#define NXROMUSB_GLB_CAS_RESET		NXROMUSB(0x00000038)
 #define  NXRUMUSB_GLB_CAS_RESET_ENABLE	(1<<0)	/* Enable Casper reset */
 #define NXROMUSB_GLB_CAS_RESET_DEF	0	/* Disabled */
+
+/* ROM Register */
+#define NXROMUSB_ROM_CONTROL		NXROMUSB(0x00010000)
+#define NXROMUSB_ROM_OPCODE		NXROMUSB(0x00010004)
+#define NXROMUSB_ROM_ADDR		NXROMUSB(0x00010008)
+#define NXROMUSB_ROM_WDATA		NXROMUSB(0x0001000c)
+#define NXROMUSB_ROM_ABYTE_CNT		NXROMUSB(0x00010010)
+#define NXROMUSB_ROM_DUMMY_BYTE_CNT	NXROMUSB(0x00010014)
+#define NXROMUSB_ROM_RDATA		NXROMUSB(0x00010018)
+#define NXROMUSB_ROM_AGT_TAG		NXROMUSB(0x0001001c)
+#define NXROMUSB_ROM_TIME_PARM		NXROMUSB(0x00010020)
+#define NXROMUSB_ROM_CLK_DIV		NXROMUSB(0x00010024)
+#define NXROMUSB_ROM_MISS_INSTR		NXROMUSB(0x00010028)
 
 #endif /* _NX_REG_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.12 2007/04/27 19:37:39 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.13 2007/04/27 19:44:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -93,6 +93,7 @@ struct nxb_softc {
 
 	pci_chipset_tag_t	 sc_pc;
 	pcitag_t		 sc_tag;
+	u_int			 sc_function;
 
 	bus_dma_tag_t		 sc_dmat;
 	bus_space_tag_t		 sc_memt;
@@ -103,6 +104,8 @@ struct nxb_softc {
 	bus_size_t		 sc_dbmems;
 
 	pci_intr_handle_t	 sc_ih;
+
+	int			 sc_window;
 
 	u_int32_t		 sc_nrxbuf;
 	u_int32_t		 sc_ntxbuf;
@@ -130,6 +133,7 @@ int	 nxb_query(struct nxb_softc *sc);
 
 u_int32_t nxb_read(struct nxb_softc *, bus_size_t);
 void	 nxb_write(struct nxb_softc *, bus_size_t, u_int32_t);
+void	 nxb_set_window(struct nxb_softc *, int);
 
 int	 nx_match(struct device *, void *, void *);
 void	 nx_attach(struct device *, struct device *, void *);
@@ -198,7 +202,9 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
-	
+	sc->sc_function = pa->pa_function;
+	sc->sc_window = -1;
+
 	/*
 	 * The NetXen NICs can have different PCI memory layouts which
 	 * need some special handling in the driver. Support is limited
@@ -267,6 +273,7 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 int
 nxb_query(struct nxb_softc *sc)
 {
+	nxb_set_window(sc, 1);
 	return (0);
 }
 
@@ -284,6 +291,23 @@ nxb_write(struct nxb_softc *sc, bus_size_t reg, u_int32_t val)
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, reg, val);
 	bus_space_barrier(sc->sc_memt, sc->sc_memh, reg, 4,
 	    BUS_SPACE_BARRIER_WRITE);
+}
+
+void
+nxb_set_window(struct nxb_softc *sc, int window)
+{
+	u_int32_t val;
+
+	if (sc->sc_window == window)
+		return;
+	assert(window == 0 || window == 1);	
+	val = nxb_read(sc, NXCRB_WINDOW(sc->sc_function));
+	if (window)
+		val |= NXCRB_WINDOW_1;
+	else
+		val &= ~NXCRB_WINDOW_1;
+	nxb_write(sc, NXCRB_WINDOW(sc->sc_function), val);
+	sc->sc_window = window;
 }
 
 /*
@@ -574,4 +598,3 @@ nx_intr(void *arg)
 {
 	return (0);
 }
-
