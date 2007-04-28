@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.7 2007/04/28 13:58:12 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.8 2007/04/28 15:59:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -357,7 +357,14 @@ struct nx_statusdesc {
 #define NXROMUSB_ROM_CLK_DIV		NXROMUSB(0x00010024)
 #define NXROMUSB_ROM_MISS_INSTR		NXROMUSB(0x00010028)
 
-/* Board information */
+/*
+ * Flash data structures
+ */
+
+#define NXB_VERSION	0x00000001		/* board information version */
+#define NXB_MAGIC	0x12345678		/* magic value */
+#define NXB_MAX_PORTS	NX_MAX_PORTS		/* max supported ports */
+
 struct nxb_info {
 	u_int32_t	ni_hdrver;		/* Board info version */
 
@@ -430,8 +437,24 @@ struct nxb_info {
 	u_int32_t	ni_mndll_override;
 } __packed;
 
-#define NXB_VERSION	0x00000001		/* board information version */
-#define NXB_MAGIC	0x12345678		/* magic value */
-#define NXB_MAX_PORTS	NX_MAX_PORTS		/* max supported ports */
+#define NXB_MAX_PORT_LLADDRS	32
+
+struct nxb_userinfo {
+	u_int8_t	nu_flash_md5[1024];
+
+	u_int32_t	nu_bootloader_ver;
+	u_int32_t	nu_bootloader_size;
+
+	u_int32_t	nu_image_ver;
+	u_int32_t	nu_image_size;
+
+	u_int32_t	nu_primary;
+	u_int32_t	nu_secondary;
+	u_int64_t	nu_lladdr[NXB_MAX_PORTS * NXB_MAX_PORT_LLADDRS];
+	u_int32_t	nu_subsys_id;
+	u_int8_t	nu_serial_num[32];
+
+	/* Followed by user-specific data */
+} __packed;
 
 #endif /* _NX_REG_H */

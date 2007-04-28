@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.16 2007/04/28 14:12:14 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.17 2007/04/28 15:59:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -83,7 +83,7 @@ struct nx_softc;
 struct nxb_port {
 	u_int8_t		 nxp_id;
 	u_int8_t		 nxp_mode;
-	u_int32_t		 nxp_lladdrid;
+	u_int8_t		 nxp_lladdr[ETHER_ADDR_LEN];
 
 	struct nx_softc		*nxp_nx;
 };
@@ -125,7 +125,6 @@ struct nx_softc {
 	void			*nx_ih;
 
 	struct timeout		 nx_tick;
-	u_int8_t		 nx_lladdr[ETHER_ADDR_LEN];
 };
 
 int	 nxb_match(struct device *, void *, void *);
@@ -142,7 +141,6 @@ int	 nxb_read_rom(struct nxb_softc *, u_int32_t, u_int32_t *);
 int	 nx_match(struct device *, void *, void *);
 void	 nx_attach(struct device *, struct device *, void *);
 int	 nx_print(void *, const char *);
-void	 nx_getlladdr(struct nx_softc *);
 int	 nx_media_change(struct ifnet *);
 void	 nx_media_status(struct ifnet *, struct ifmediareq *);
 void	 nx_link_state(struct nx_softc *);
@@ -278,15 +276,18 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 int
 nxb_query(struct nxb_softc *sc)
 {
-	struct nxb_info *ni = &sc->sc_nxbinfo;
-	u_int32_t *data, addr = NXFLASHMAP_INFO;
-	u_int i, len;
+	struct nxb_info		*ni = &sc->sc_nxbinfo;
+	struct nxb_userinfo	*nu;
+	u_int32_t		*data, addr;
+	u_int8_t		*ptr;
+	u_int			 i, j, len;
 
 	nxb_set_window(sc, 1);
 
 	/*
-	 * The the board information from flash memory
+	 * Get the board information from flash memory
 	 */
+	addr = NXFLASHMAP_INFO;
 	len = sizeof(*ni) / sizeof(u_int32_t);
 	data = (u_int32_t *)ni;
 	for (i = 0; i < len; i++) {
@@ -376,6 +377,59 @@ nxb_query(struct nxb_softc *sc)
 		return (-1);
 	}
 
+	/*
+	 * Get the user information from flash memory
+	 */
+	if ((nu = (struct nxb_userinfo *)
+	    malloc(sizeof(*nu), M_TEMP, M_NOWAIT)) == NULL) {
+		printf(": failed to allocate user info\n");
+		return (-1);
+	}
+	addr = NXFLASHMAP_USER;
+	len = sizeof(*nu) / sizeof(u_int32_t);
+	data = (u_int32_t *)nu;
+	for (i = 0; i < len; i++) {
+		if (nxb_read_rom(sc, addr, data) != 0) {
+			printf(": failed to get user info from flash\n");
+			goto done;
+		}
+		addr += sizeof(u_int32_t);
+		data++;
+	}
+
+	/* Copy the MAC addresses */
+	for (i = 0; i < NXB_MAX_PORTS; i++) {
+		ptr = (u_int8_t *)
+		   &nu->nu_lladdr[i * NXB_MAX_PORT_LLADDRS];
+		/* MAC address bytes are stored in a swapped order */
+		for (j = 0; j < ETHER_ADDR_LEN; j++)
+			sc->sc_nxp[i].nxp_lladdr[j] =
+			    ptr[ETHER_ADDR_LEN - (j + 1)];
+	}
+
+	/* Make sure that the serial number is a NUL-terminated string */
+	nu->nu_serial_num[31] = '\0';
+
+#ifdef NX_DEBUG
+#define _NXBUSER(_e)	do {						\
+	if (nx_debug)							\
+		printf("%s: %s: 0x%08x (%u)\n",				\
+		    sc->sc_dev.dv_xname, #_e, nu->_e, nu->_e);		\
+} while (0)
+	_NXBUSER(nu_bootloader_ver);
+	_NXBUSER(nu_bootloader_size);
+	_NXBUSER(nu_image_ver);
+	_NXBUSER(nu_image_size);
+	_NXBUSER(nu_primary);
+	_NXBUSER(nu_secondary);
+	_NXBUSER(nu_subsys_id);
+	DPRINTF("%s: nu_serial_num: %s\n",
+	    sc->sc_dev.dv_xname, nu->nu_serial_num);
+#undef _NXBUSER
+#endif
+
+ done:
+	free(nu, M_TEMP);
 	return (0);
 }
 
@@ -437,6 +491,7 @@ nxb_wait(struct nxb_softc *sc, bus_size_t reg, u_int32_t val,
 int
 nxb_read_rom(struct nxb_softc *sc, u_int32_t addr, u_int32_t *val)
 {
+	u_int32_t data;
 	int ret = 0;
 
 	/* Must be called from window 1 */
@@ -482,7 +537,10 @@ nxb_read_rom(struct nxb_softc *sc, u_int32_t addr, u_int32_t *val)
 	nxb_write(sc, NXROMUSB_ROM_DUMMY_BYTE_CNT, 0);
 
 	/* Finally get the value */
-	*val = nxb_read(sc, NXROMUSB_ROM_RDATA);
+	data = nxb_read(sc, NXROMUSB_ROM_RDATA);
+
+	/* Flash data is stored in little endian */
+	*val = letoh32(data);
 
  unlock:
 	/*
@@ -536,8 +594,7 @@ nx_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	nx_getlladdr(nx);
-	bcopy(nx->nx_lladdr, nx->nx_ac.ac_enaddr, ETHER_ADDR_LEN);
+	bcopy(nxp->nxp_lladdr, nx->nx_ac.ac_enaddr, ETHER_ADDR_LEN);
 	printf(" address %s\n", ether_sprintf(nx->nx_ac.ac_enaddr));
 
 	ifp = &nx->nx_ac.ac_if;
@@ -582,13 +639,6 @@ nx_print(void *aux, const char *parentname)
 	else
 		printf(" port %u", nxp->nxp_id);
 	return (UNCONF);
-}
-
-void
-nx_getlladdr(struct nx_softc *nx)
-{
-	/* XXX */
-	return;
 }
 
 int
