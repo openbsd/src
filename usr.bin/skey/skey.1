@@ -1,4 +1,4 @@
-.\" $OpenBSD: skey.1,v 1.30 2007/03/16 16:06:38 jmc Exp $
+.\" $OpenBSD: skey.1,v 1.31 2007/04/28 15:54:54 sobrado Exp $
 .\"	@(#)skey.1	1.1 	10/28/93
 .\"
 .Dd October 28, 1993
@@ -62,6 +62,10 @@ prints them capitalized.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl md4 | md5 | rmd160 | sha1
+Selects the hash algorithm:
+MD4, MD5, RMD-160 (160-bit Ripe Message Digest),
+or SHA1 (NIST Secure Hash Algorithm Revision 1).
 .It Fl n Ar count
 Prints out
 .Ar count
@@ -73,10 +77,6 @@ Uses
 as the secret passphrase.
 Use of this option is discouraged as
 your secret passphrase could be visible in a process listing.
-.It Fl md4 | md5 | rmd160 | sha1
-Selects the hash algorithm:
-MD4, MD5, RMD-160 (160-bit Ripe Message Digest),
-or SHA1 (NIST Secure Hash Algorithm Revision 1).
 .It Fl x
 Causes output to be in hexadecimal instead of ASCII.
 .El
