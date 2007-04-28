@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.37 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.38 2007/04/28 00:34:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -601,7 +601,7 @@ gdt_scsi_cmd(xs)
 	struct scsi_rw_big *rwb;
 	bus_dmamap_t xfer;
 	int error, retval = SUCCESSFULLY_QUEUED;
-	gdt_lock_t lock;
+	int s;
 
 	GDT_DPRINTF(GDT_D_CMD, ("gdt_scsi_cmd "));
 
@@ -619,7 +619,7 @@ gdt_scsi_cmd(xs)
 		return (COMPLETE);
 	}
 
-	lock = GDT_LOCK_GDT(lock);
+	s = splbio();
 
 	/* Don't double enqueue if we came from gdt_chain. */
 	if (xs != LIST_FIRST(&gdt->sc_queue))
@@ -721,7 +721,7 @@ gdt_scsi_cmd(xs)
 			 * We are out of commands, try again in a little while.
 			 */
 			if (ccb == NULL) {
-				GDT_UNLOCK_GDT(gdt, lock);
+				splx(s);
 				return (TRY_AGAIN_LATER);
 			}
 
@@ -767,7 +767,7 @@ gdt_scsi_cmd(xs)
 			/* XXX what if enqueue did not start a transfer? */
 			if (gdt_polling || (xs->flags & SCSI_POLL)) {
 				if (!gdt_wait(gdt, ccb, ccb->gc_timeout)) {
-					GDT_UNLOCK_GDT(gdt, lock);
+					splx(s);
 					printf("%s: command %d timed out\n",
 					    DEVNAME(gdt),
 					    ccb->gc_cmd_index);
@@ -788,7 +788,7 @@ gdt_scsi_cmd(xs)
 		}
 	}
 
-	GDT_UNLOCK_GDT(gdt, lock);
+	splx(s);
 	return (retval);
 }
 
@@ -1021,8 +1021,6 @@ gdt_raw_scsi_cmd(xs)
 
 	GDT_DPRINTF(GDT_D_CMD, ("gdt_raw_scsi_cmd "));
 
-	s = GDT_LOCK_GDT(gdt);
-
 	if (xs->cmdlen > 12 /* XXX create #define */) {
 		GDT_DPRINTF(GDT_D_CMD, ("CDB too big %p ", xs));
 		bzero(&xs->sense, sizeof(xs->sense));
@@ -1030,25 +1028,28 @@ gdt_raw_scsi_cmd(xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;
+		s = splbio();
 		scsi_done(xs);
-		GDT_UNLOCK_GDT(gdt, s);
+		splx(s);
 		return (COMPLETE);
 	}
 
 	if ((ccb = gdt_get_ccb(gdt, xs->flags)) == NULL) {
 		GDT_DPRINTF(GDT_D_CMD, ("no ccb available for %p ", xs));
 		xs->error = XS_DRIVER_STUFFUP;
+		s = splbio();
 		scsi_done(xs);
-		GDT_UNLOCK_GDT(gdt, s);
+		splx(s);
 		return (COMPLETE);
 	}
 
 	xs->error = XS_DRIVER_STUFFUP;
 	xs->flags |= ITSDONE;
+	s = splbio();
 	scsi_done(xs);
 	gdt_free_ccb(gdt, ccb);
 
-	GDT_UNLOCK_GDT(gdt, s);
+	splx(s);
 
 	return (COMPLETE);
 }
@@ -1124,7 +1125,7 @@ gdt_intr(arg)
 	struct scsi_xfer *xs;
 	int prev_cmd;
 	struct gdt_ccb *ccb;
-	gdt_lock_t lock;
+	int s;
 
 	GDT_DPRINTF(GDT_D_INTR, ("gdt_intr(%p) ", gdt));
 
@@ -1133,12 +1134,12 @@ gdt_intr(arg)
 		return (0);
 
 	if (!gdt_polling)
-		lock = GDT_LOCK_GDT(gdt);
+		s = splbio();
 
 	ctx.istatus = gdt->sc_get_status(gdt);
 	if (!ctx.istatus) {
 		if (!gdt_polling)
-			GDT_UNLOCK_GDT(gdt, lock);
+			splx(s);
 		gdt->sc_status = GDT_S_NO_STATUS;
 		return (0);
 	}
@@ -1198,7 +1199,7 @@ gdt_intr(arg)
 
  finish:
 	if (!gdt_polling)
-		GDT_UNLOCK_GDT(gdt, lock);
+		splx(s);
 
 	switch (sync_val) {
 	case 1:
@@ -1340,11 +1341,11 @@ gdt_get_ccb(gdt, flags)
 	int flags;
 {
 	struct gdt_ccb *ccb;
-	gdt_lock_t lock;
+	int s;
 
 	GDT_DPRINTF(GDT_D_QUEUE, ("gdt_get_ccb(%p, 0x%x) ", gdt, flags));
 
-	lock = GDT_LOCK_GDT(gdt);
+	s = splbio();
 
 	for (;;) {
 		ccb = TAILQ_FIRST(&gdt->sc_free_ccb);
@@ -1358,7 +1359,7 @@ gdt_get_ccb(gdt, flags)
 	TAILQ_REMOVE(&gdt->sc_free_ccb, ccb, gc_chain);
 
  bail_out:
-	GDT_UNLOCK_GDT(gdt, lock);
+	splx(s);
 	return (ccb);
 }
 
@@ -1367,11 +1368,11 @@ gdt_free_ccb(gdt, ccb)
 	struct gdt_softc *gdt;
 	struct gdt_ccb *ccb;
 {
-	gdt_lock_t lock;
+	int s;
 
 	GDT_DPRINTF(GDT_D_QUEUE, ("gdt_free_ccb(%p, %p) ", gdt, ccb));
 
-	lock = GDT_LOCK_GDT(gdt);
+	s = splbio();
 
 	TAILQ_INSERT_HEAD(&gdt->sc_free_ccb, ccb, gc_chain);
 
@@ -1379,7 +1380,7 @@ gdt_free_ccb(gdt, ccb)
 	if (TAILQ_NEXT(ccb, gc_chain) == NULL)
 		wakeup(&gdt->sc_free_ccb);
 
-	GDT_UNLOCK_GDT(gdt, lock);
+	splx(s);
 }
 
 void
@@ -1443,7 +1444,7 @@ gdt_timeout(arg)
 	struct gdt_ccb *ccb = arg;
 	struct scsi_link *link = ccb->gc_xs->sc_link;
 	struct gdt_softc *gdt = link->adapter_softc;
-	gdt_lock_t lock;
+	int s;
 
 	sc_print_addr(link);
 	printf("timed out\n");
@@ -1451,9 +1452,9 @@ gdt_timeout(arg)
 	/* XXX Test for multiple timeouts */
 
 	ccb->gc_xs->error = XS_TIMEOUT;
-	lock = GDT_LOCK_GDT(gdt);
+	s = splbio();
 	gdt_enqueue_ccb(gdt, ccb);
-	GDT_UNLOCK_GDT(gdt, lock);
+	splx(s);
 }
 
 void
@@ -1463,12 +1464,12 @@ gdt_watchdog(arg)
 	struct gdt_ccb *ccb = arg;
 	struct scsi_link *link = ccb->gc_xs->sc_link;
 	struct gdt_softc *gdt = link->adapter_softc;
-	gdt_lock_t lock;
+	int s;
 
-	lock = GDT_LOCK_GDT(gdt);
+	s = splbio();
 	ccb->gc_flags &= ~GDT_GCF_WATCHDOG;
 	gdt_start_ccbs(gdt);
-	GDT_UNLOCK_GDT(gdt, lock);
+	splx(s);
 }
 
 #if NBIO > 0
@@ -1568,13 +1569,13 @@ gdt_ioctl(dev, cmd, addr)
 	case GDT_IOCTL_GENERAL: {
 		gdt_ucmd_t *ucmd;
 		struct gdt_softc *gdt = (struct gdt_softc *)dev;
-		gdt_lock_t lock;
+		int s;
 
 		ucmd = (gdt_ucmd_t *)addr;
-		lock = GDT_LOCK_GDT(gdt);
+		s = splbio();
 		TAILQ_INSERT_TAIL(&gdt->sc_ucmdq, ucmd, links);
 		ucmd->complete_flag = FALSE;
-		GDT_UNLOCK_GDT(gdt, lock);
+		splx(s);
 		gdt_chain(gdt);
 		if (!ucmd->complete_flag)
 			(void)tsleep((void *)ucmd, PCATCH | PRIBIO, "gdtucw",
@@ -1628,7 +1629,7 @@ gdt_ioctl(dev, cmd, addr)
 #ifdef notyet
 	case GDT_IOCTL_EVENT: {
 		gdt_event_t *p;
-		gdt_lock_t lock;
+		int s;
 
 		p = (gdt_event_t *)addr;
 		if (p->erase == 0xff) {
@@ -1644,14 +1645,14 @@ gdt_ioctl(dev, cmd, addr)
 			else
 				p->dvr.event_data.size =
 				    sizeof(p->dvr.event_data.eu.async);
-			lock = GDT_LOCK_GDT(gdt);
+			s = splbio();
 			gdt_store_event(p->dvr.event_source, p->dvr.event_idx,
 			    &p->dvr.event_data);
-			GDT_UNLOCK_GDT(gdt, lock);
+			splx(s);
 		} else if (p->erase == 0xfe) {
-			lock = GDT_LOCK_GDT(gdt);
+			s = splbio();
 			gdt_clear_events();
-			GDT_UNLOCK_GDT(gdt, lock);
+			splx(s);
 		} else if (p->erase == 0) {
 			p->handle = gdt_read_event(p->handle, &p->dvr);
 		} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.12 2006/05/07 23:18:59 marco Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.13 2007/04/28 00:34:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -402,11 +402,6 @@ struct gdt_softc {
 	void (*sc_set_sema0)(struct gdt_softc *);
 	int (*sc_test_busy)(struct gdt_softc *);
 };
-
-/* XXX These have to become spinlocks in case of SMP */
-#define GDT_LOCK_GDT(gdt) splbio()
-#define GDT_UNLOCK_GDT(gdt, lock) splx(lock)
-typedef int gdt_lock_t;
 
 void	gdtminphys(struct buf *);
 int	gdt_attach(struct gdt_softc *);
