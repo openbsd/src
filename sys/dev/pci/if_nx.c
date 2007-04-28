@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.20 2007/04/28 18:07:29 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.21 2007/04/28 18:21:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -190,7 +190,7 @@ const struct nxb_board {
 } nxb_boards[] = {
 	{ NXB_BOARDTYPE_P2SB35_4G,	NXNIU_MODE_GBE, 4 },
 	{ NXB_BOARDTYPE_P2SB31_10G,	NXNIU_MODE_XGE, 1 },
-	{ NXB_BOARDTYPE_P2SB31_2G,	NXNIU_MODE_GBE, 2 },	
+	{ NXB_BOARDTYPE_P2SB31_2G,	NXNIU_MODE_GBE, 2 },
 	{ NXB_BOARDTYPE_P2SB31_10GIMEZ,	NXNIU_MODE_XGE, 2 },
 	{ NXB_BOARDTYPE_P2SB31_10GHMEZ,	NXNIU_MODE_XGE, 2 },
 	{ NXB_BOARDTYPE_P2SB31_10GCX4,	NXNIU_MODE_XGE, 1 }
@@ -362,7 +362,7 @@ nxb_query(struct nxb_softc *sc)
 	_NXBINFO(ni_mnrd_latency6);
 	_NXBINFO(ni_mnrd_latency7);
 	_NXBINFO(ni_mnrd_latency8);
-	_NXBINFO(ni_mndll[0]); 
+	_NXBINFO(ni_mndll[0]);
 	_NXBINFO(ni_mnddr_mode);
 	_NXBINFO(ni_mnddr_extmode);
 	_NXBINFO(ni_mntiming0);
@@ -441,7 +441,7 @@ nxb_query(struct nxb_softc *sc)
 	/* Copy the MAC addresses */
 	for (i = 0; i < sc->sc_nports; i++) {
 		ptr = (u_int8_t *)
-		   &nu->nu_lladdr[i * NXB_MAX_PORT_LLADDRS];
+		    &nu->nu_lladdr[i * NXB_MAX_PORT_LLADDRS];
 		/* MAC address bytes are stored in a swapped order */
 		for (j = 0; j < ETHER_ADDR_LEN; j++)
 			sc->sc_nxp[i].nxp_lladdr[j] =
@@ -487,7 +487,7 @@ nxb_query(struct nxb_softc *sc)
 		 * XXX from disk if the firmware image in the flash is not
 		 * XXX supported by the driver.
 		 */
-		printf(": requires fw%u.%u.xx (%u.%u.%u)\n", 
+		printf(": requires fw%u.%u.xx (%u.%u.%u)\n",
 		    NX_FIRMWARE_MAJOR, NX_FIRMWARE_MINOR,
 		    NX_FIRMWARE_MAJOR, NX_FIRMWARE_MINOR,
 		    NX_FIRMWARE_BUILD);
