@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.126 2007/04/26 11:18:54 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.127 2007/04/28 02:24:21 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -283,7 +283,7 @@ sddetach(struct device *self, int flags)
 
 	sd_kill_buffers(sd);
 
-	/* locate the minor number */
+	/* Locate the lowest minor number to be detached. */
 	mn = DISKMINOR(self->dv_unit, 0);
 
 	for (bmaj = 0; bmaj < nblkdev; bmaj++)

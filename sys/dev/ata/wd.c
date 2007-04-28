@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.57 2007/04/27 11:37:56 krw Exp $ */
+/*	$OpenBSD: wd.c,v 1.58 2007/04/28 02:24:21 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -390,7 +390,7 @@ wddetach(struct device *self, int flags)
 	}
 	splx(s);
 
-	/* locate the major number */
+	/* Locate the lowest minor number to be detached. */
 	mn = DISKMINOR(self->dv_unit, 0);
 
 	for (bmaj = 0; bmaj < nblkdev; bmaj++)
