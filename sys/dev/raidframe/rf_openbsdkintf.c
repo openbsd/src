@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.34 2007/02/15 00:53:26 krw Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.35 2007/04/28 12:32:13 krw Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -226,7 +226,6 @@ struct raid_softc {
 #define	RAIDF_WANTED	0x40	/* Someone is waiting to obtain a lock. */
 #define	RAIDF_LOCKED	0x80	/* Unit is locked. */
 
-#define	raidunit(x)	DISKUNIT(x)
 int numraid = 0;
 
 /*
@@ -264,9 +263,6 @@ struct cfattach raid_ca = {
 #ifndef	RAIDOUTSTANDING
 #define	RAIDOUTSTANDING		6
 #endif
-
-#define	RAIDLABELDEV(dev)						\
-	(MAKEDISKDEV(major((dev)), raidunit((dev)), RAW_PART))
 
 /* Declared here, and made public, for the benefit of KVM stuff... */
 struct raid_softc  *raid_softc;
@@ -586,7 +582,7 @@ raidsize(dev_t dev)
 	struct disklabel *lp;
 	int part, unit, omask, size;
 
-	unit = raidunit(dev);
+	unit = DISKUNIT(dev);
 	if (unit >= numraid)
 		return (-1);
 	rs = &raid_softc[unit];
@@ -625,7 +621,7 @@ raiddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 int
 raidopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
-	int unit = raidunit(dev);
+	int unit = DISKUNIT(dev);
 	struct raid_softc *rs;
 	struct disklabel *lp;
 	int part,pmask;
@@ -703,7 +699,7 @@ raidopen(dev_t dev, int flags, int fmt, struct proc *p)
 int
 raidclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
-	int unit = raidunit(dev);
+	int unit = DISKUNIT(dev);
 	struct raid_softc *rs;
 	int error = 0;
 	int part;
@@ -752,7 +748,7 @@ raidstrategy(struct buf *bp)
 {
 	int s;
 
-	unsigned int raidID = raidunit(bp->b_dev);
+	unsigned int raidID = DISKUNIT(bp->b_dev);
 	RF_Raid_t *raidPtr;
 	struct raid_softc *rs = &raid_softc[raidID];
 	struct disklabel *lp;
@@ -819,7 +815,7 @@ raidstrategy_end:
 int
 raidread(dev_t dev, struct uio *uio, int flags)
 {
-	int unit = raidunit(dev);
+	int unit = DISKUNIT(dev);
 	struct raid_softc *rs;
 	int part;
 
@@ -840,7 +836,7 @@ raidread(dev_t dev, struct uio *uio, int flags)
 int
 raidwrite(dev_t dev, struct uio *uio, int flags)
 {
-	int unit = raidunit(dev);
+	int unit = DISKUNIT(dev);
 	struct raid_softc *rs;
 
 	if (unit >= numraid)
@@ -856,7 +852,7 @@ raidwrite(dev_t dev, struct uio *uio, int flags)
 int
 raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	int unit = raidunit(dev);
+	int unit = DISKUNIT(dev);
 	int error = 0;
 	int part, pmask;
 	struct raid_softc *rs;
@@ -1584,7 +1580,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    lp, 0, rs->sc_dkdev.dk_cpulabel);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
-				error = writedisklabel(RAIDLABELDEV(dev),
+				error = writedisklabel(DISKLABELDEV(dev),
 				    raidstrategy, rs->sc_dkdev.dk_label,
 				    rs->sc_dkdev.dk_cpulabel);
 		}
@@ -2132,7 +2128,7 @@ raidgetdefaultlabel(RF_Raid_t *raidPtr, struct raid_softc *rs,
 void
 raidgetdisklabel(dev_t dev)
 {
-	int unit = raidunit(dev);
+	int unit = DISKUNIT(dev);
 	struct raid_softc *rs = &raid_softc[unit];
 	char *errstring;
 	struct disklabel *lp = rs->sc_dkdev.dk_label;
@@ -2152,7 +2148,7 @@ raidgetdisklabel(dev_t dev)
 	/*
 	 * Call the generic disklabel extraction routine.
 	 */
-	errstring = readdisklabel(RAIDLABELDEV(dev), raidstrategy, lp,
+	errstring = readdisklabel(DISKLABELDEV(dev), raidstrategy, lp,
 	    rs->sc_dkdev.dk_cpulabel, 0);
 	if (errstring) {
 		/*printf("%s: %s\n", rs->sc_xname, errstring);*/

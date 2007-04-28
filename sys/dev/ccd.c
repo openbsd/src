@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.71 2007/04/18 19:06:56 miod Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.72 2007/04/28 12:32:13 krw Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -156,10 +156,6 @@ int ccddebug = 0x00;
 #define CCD_DCALL(m,c)		/* m, c */
 #define CCD_DPRINTF(m,a)	/* m, a */
 #endif
-
-#define	ccdunit(x)	DISKUNIT(x)
-#define CCDLABELDEV(dev)	\
-	(MAKEDISKDEV(major((dev)), ccdunit((dev)), RAW_PART))
 
 struct ccdbuf {
 	struct buf	cb_buf;		/* new I/O buf */
@@ -568,7 +564,7 @@ ccdinterleave(struct ccd_softc *cs)
 int
 ccdopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
-	int unit = ccdunit(dev);
+	int unit = DISKUNIT(dev);
 	struct ccd_softc *cs;
 	struct disklabel *lp;
 	int error = 0, part, pmask;
@@ -627,7 +623,7 @@ ccdopen(dev_t dev, int flags, int fmt, struct proc *p)
 int
 ccdclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
-	int unit = ccdunit(dev);
+	int unit = DISKUNIT(dev);
 	struct ccd_softc *cs;
 	int error = 0, part;
 
@@ -662,7 +658,7 @@ ccdclose(dev_t dev, int flags, int fmt, struct proc *p)
 void
 ccdstrategy(struct buf *bp)
 {
-	int unit = ccdunit(bp->b_dev);
+	int unit = DISKUNIT(bp->b_dev);
 	struct ccd_softc *cs = &ccd_softc[unit];
 	int s;
 	int wlabel;
@@ -982,7 +978,7 @@ ccdiodone(struct buf *vbp)
 int
 ccdread(dev_t dev, struct uio *uio, int flags)
 {
-	int unit = ccdunit(dev);
+	int unit = DISKUNIT(dev);
 	struct ccd_softc *cs;
 
 	CCD_DPRINTF(CCDB_FOLLOW, ("ccdread(%x, %p)\n", dev, uio));
@@ -1006,7 +1002,7 @@ ccdread(dev_t dev, struct uio *uio, int flags)
 int
 ccdwrite(dev_t dev, struct uio *uio, int flags)
 {
-	int unit = ccdunit(dev);
+	int unit = DISKUNIT(dev);
 	struct ccd_softc *cs;
 
 	CCD_DPRINTF(CCDB_FOLLOW, ("ccdwrite(%x, %p)\n", dev, uio));
@@ -1029,7 +1025,7 @@ ccdwrite(dev_t dev, struct uio *uio, int flags)
 int
 ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	int unit = ccdunit(dev);
+	int unit = DISKUNIT(dev);
 	int i, j, lookedup = 0, error = 0;
 	int part, pmask, s;
 	struct ccd_softc *cs;
@@ -1246,7 +1242,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    (struct disklabel *)data, 0, cs->sc_dkdev.dk_cpulabel);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
-				error = writedisklabel(CCDLABELDEV(dev),
+				error = writedisklabel(DISKLABELDEV(dev),
 				    ccdstrategy, cs->sc_dkdev.dk_label,
 				    cs->sc_dkdev.dk_cpulabel);
 		}
@@ -1279,7 +1275,7 @@ ccdsize(dev_t dev)
 	struct ccd_softc *cs;
 	int part, size, unit;
 
-	unit = ccdunit(dev);
+	unit = DISKUNIT(dev);
 	if (unit >= numccd)
 		return (-1);
 
@@ -1401,7 +1397,7 @@ ccdgetdisklabel(dev_t dev, struct ccd_softc *cs, struct disklabel *lp,
 	/*
 	 * Call the generic disklabel extraction routine.
 	 */
-	errstring = readdisklabel(CCDLABELDEV(dev), ccdstrategy,
+	errstring = readdisklabel(DISKLABELDEV(dev), ccdstrategy,
 	    cs->sc_dkdev.dk_label, cs->sc_dkdev.dk_cpulabel, spoofonly);
 	/* It's actually extremely common to have unlabeled ccds. */
 	if (errstring != NULL)
