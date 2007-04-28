@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.2 2007/01/02 16:34:16 tom Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.3 2007/04/28 19:23:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -90,6 +90,17 @@ pc_getc(dev_t dev)
 
 	__asm __volatile(DOINT(0x16) : "=a" (rv) : "0" (0x000) :
 	    "%ecx", "%edx", "cc" );
+	return (rv & 0xff);
+}
+
+int
+pc_getshifts(dev_t dev)
+{
+	register int rv;
+
+	__asm __volatile(DOINT(0x16) : "=a" (rv) : "0" (0x200) :
+	    "%ecx", "%edx", "cc" );
+
 	return (rv & 0xff);
 }
 

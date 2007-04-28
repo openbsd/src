@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 2004/03/21 21:37:41 tom Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 2007/04/28 19:23:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -28,6 +28,7 @@
  */
 
 #include "libsa.h"
+#include "biosdev.h"
 #include <machine/apmvar.h>
 #include <machine/biosvar.h>
 
@@ -60,4 +61,10 @@ machdep(void)
 			printf("\n");
 		}
 	}
+}
+
+int check_skip_conf(void)
+{
+	/* Return non-zero (skip boot.conf) if Control "shift" key down */
+	return (pc_getshifts(0) & 0x04);
 }
