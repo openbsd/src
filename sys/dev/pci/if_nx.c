@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.14 2007/04/27 19:46:47 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.15 2007/04/28 13:58:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -106,6 +106,7 @@ struct nxb_softc {
 	pci_intr_handle_t	 sc_ih;
 
 	int			 sc_window;
+	struct nxb_info		 sc_nxbinfo;
 
 	u_int32_t		 sc_nrxbuf;
 	u_int32_t		 sc_ntxbuf;
@@ -134,6 +135,9 @@ int	 nxb_query(struct nxb_softc *sc);
 u_int32_t nxb_read(struct nxb_softc *, bus_size_t);
 void	 nxb_write(struct nxb_softc *, bus_size_t, u_int32_t);
 void	 nxb_set_window(struct nxb_softc *, int);
+int	 nxb_wait(struct nxb_softc *, bus_size_t, u_int32_t, u_int32_t,
+	    int, u_int);
+int	 nxb_read_rom(struct nxb_softc *, u_int32_t, u_int32_t *);
 
 int	 nx_match(struct device *, void *, void *);
 void	 nx_attach(struct device *, struct device *, void *);
@@ -273,7 +277,106 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 int
 nxb_query(struct nxb_softc *sc)
 {
+	struct nxb_info *ni = &sc->sc_nxbinfo;
+	u_int32_t *data, addr = NXFLASHMAP_INFO;
+	u_int i, len;
+
 	nxb_set_window(sc, 1);
+
+	/*
+	 * The the board information from flash memory
+	 */
+	len = sizeof(*ni) / sizeof(u_int32_t);
+	data = (u_int32_t *)ni;
+	for (i = 0; i < len; i++) {
+		if (nxb_read_rom(sc, addr, data) != 0) {
+			DPRINTF("%s(%s): failed after %d blocks\n",
+			    sc->sc_dev.dv_xname, __func__, i);
+			return (-1);
+		}
+		addr += sizeof(u_int32_t);
+		data++;
+	}
+
+#ifdef NX_DEBUG
+#define _NXBINFO(_e)	do {						\
+	if (nx_debug)							\
+		printf("%s: %s: 0x%08x (%u)\n",				\
+		    sc->sc_dev.dv_xname, #_e, ni->_e, ni->_e);		\
+} while (0)
+	_NXBINFO(ni_hdrver);
+	_NXBINFO(ni_board_mfg);
+	_NXBINFO(ni_board_type);
+	_NXBINFO(ni_board_num);
+	_NXBINFO(ni_chip_id);
+	_NXBINFO(ni_chip_minor);
+	_NXBINFO(ni_chip_major);
+	_NXBINFO(ni_chip_pkg);
+	_NXBINFO(ni_chip_lot);
+	_NXBINFO(ni_port_mask);
+	_NXBINFO(ni_peg_mask);
+	_NXBINFO(ni_icache);
+	_NXBINFO(ni_dcache);
+	_NXBINFO(ni_casper);
+	_NXBINFO(ni_lladdr0_low);
+	_NXBINFO(ni_lladdr1_low);
+	_NXBINFO(ni_lladdr2_low);
+	_NXBINFO(ni_lladdr3_low);
+	_NXBINFO(ni_mnsync_mode);
+	_NXBINFO(ni_mnsync_shift_cclk);
+	_NXBINFO(ni_mnsync_shift_mclk);
+	_NXBINFO(ni_mnwb_enable);
+	_NXBINFO(ni_mnfreq_crystal);
+	_NXBINFO(ni_mnfreq_speed);
+	_NXBINFO(ni_mnorg);
+	_NXBINFO(ni_mndepth);
+	_NXBINFO(ni_mnranks0);
+	_NXBINFO(ni_mnranks1);
+	_NXBINFO(ni_mnrd_latency0);
+	_NXBINFO(ni_mnrd_latency1);
+	_NXBINFO(ni_mnrd_latency2);
+	_NXBINFO(ni_mnrd_latency3);
+	_NXBINFO(ni_mnrd_latency4);
+	_NXBINFO(ni_mnrd_latency5);
+	_NXBINFO(ni_mnrd_latency6);
+	_NXBINFO(ni_mnrd_latency7);
+	_NXBINFO(ni_mnrd_latency8);
+	_NXBINFO(ni_mndll[0]); 
+	_NXBINFO(ni_mnddr_mode);
+	_NXBINFO(ni_mnddr_extmode);
+	_NXBINFO(ni_mntiming0);
+	_NXBINFO(ni_mntiming1);
+	_NXBINFO(ni_mntiming2);
+	_NXBINFO(ni_snsync_mode);
+	_NXBINFO(ni_snpt_mode);
+	_NXBINFO(ni_snecc_enable);
+	_NXBINFO(ni_snfreq_crystal);
+	_NXBINFO(ni_snfreq_speed);
+	_NXBINFO(ni_snorg);
+	_NXBINFO(ni_sndepth);
+	_NXBINFO(ni_sndll);
+	_NXBINFO(ni_snrd_latency);
+	_NXBINFO(ni_lladdr0_high);
+	_NXBINFO(ni_lladdr1_high);
+	_NXBINFO(ni_lladdr2_high);
+	_NXBINFO(ni_lladdr3_high);
+	_NXBINFO(ni_magic);
+	_NXBINFO(ni_mnrd_imm);
+	_NXBINFO(ni_mndll_override);
+#undef _NXBINFO
+#endif /* NX_DEBUG */
+
+	if (ni->ni_hdrver != NXB_VERSION) {
+		printf("%s: unsupported flash info header version %u\n",
+		    sc->sc_dev.dv_xname, ni->ni_hdrver);
+		return (-1);
+	}
+	if (ni->ni_magic != NXB_MAGIC) {
+		printf("%s: flash info magic value mismatch\n",
+		    sc->sc_dev.dv_xname);
+		return (-1);
+	}
+
 	return (0);
 }
 
@@ -308,6 +411,85 @@ nxb_set_window(struct nxb_softc *sc, int window)
 		val &= ~NXCRB_WINDOW_1;
 	nxb_write(sc, NXCRB_WINDOW(sc->sc_function), val);
 	sc->sc_window = window;
+}
+
+int
+nxb_wait(struct nxb_softc *sc, bus_size_t reg, u_int32_t val,
+    u_int32_t mask, int is_set, u_int timeout)
+{
+	u_int i;
+	u_int32_t data;
+
+	for (i = timeout; i > 0; i--) {
+		data = nxb_read(sc, reg) & mask;
+		if (is_set) {
+			if (data == val)
+				return (0);
+		} else {
+			if (data != val)
+				return (0);
+		}
+		delay(1);
+	}
+
+	return (-1);
+}
+
+int
+nxb_read_rom(struct nxb_softc *sc, u_int32_t addr, u_int32_t *val)
+{
+	int ret = 0;
+
+	/* Must be called from window 1 */
+	assert(sc->sc_window == 1);
+
+	/*
+	 * Need to set a lock and the lock ID to access the flash
+	 */
+	ret = nxb_wait(sc, NXSEM_FLASH_LOCK,
+	    NXSEM_FLASH_LOCKED, NXSEM_FLASH_LOCK_M, 1, 10000);
+	if (ret != 0) {
+		printf("%s: ROM lock timeout\n", sc->sc_dev.dv_xname);
+		return (-1);
+	}
+	nxb_write(sc, NXSW_ROM_LOCK_ID, NXSW_ROM_LOCK_DRV);
+
+	/*
+	 * Setup ROM data transfer
+	 */
+
+	/* Set the ROM address */
+	nxb_write(sc, NXROMUSB_ROM_ADDR, addr);
+
+	/* The delay is needed to prevent bursting on the chipset */
+	nxb_write(sc, NXROMUSB_ROM_ABYTE_CNT, 3);
+	delay(100);
+	nxb_write(sc, NXROMUSB_ROM_DUMMY_BYTE_CNT, 0);
+
+	/* Set opcode and wait for completion */
+	nxb_write(sc, NXROMUSB_ROM_OPCODE, NXROMUSB_ROM_OPCODE_READ);
+	ret = nxb_wait(sc, NXROMUSB_GLB_STATUS,
+	    NXROMUSB_GLB_STATUS_DONE, NXROMUSB_GLB_STATUS_DONE, 1, 100);
+	if (ret != 0) {
+		printf("%s: ROM operation timed out\n", sc->sc_dev.dv_xname);
+		goto unlock;
+	}
+
+	/* Reset counters */
+	nxb_write(sc, NXROMUSB_ROM_ABYTE_CNT, 0);
+	delay(100);
+	nxb_write(sc, NXROMUSB_ROM_DUMMY_BYTE_CNT, 0);
+
+	/* Finally get the value */
+	*val = nxb_read(sc, NXROMUSB_ROM_RDATA);
+
+ unlock:
+	/*
+	 * Release the lock
+	 */
+	(void)nxb_read(sc, NXSEM_FLASH_UNLOCK);
+
+	return (ret);
 }
 
 /*

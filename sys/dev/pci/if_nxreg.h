@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.6 2007/04/27 19:56:56 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.7 2007/04/28 13:58:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -118,12 +118,14 @@ struct nx_statusdesc {
 #define NXBAR0			PCI_MAPREG_START
 #define NXBAR4			(PCI_MAPREG_START + 16)
 
+/* PCI memory setup */
 #define NXPCIMEM_SIZE_128MB	0x08000000	/* 128MB size */
 #define NXPCIMEM_SIZE_32MB	0x02000000	/* 32MB size */
 
 #define NXPCIMAP_DIRECT_CRB	0x04400000
 #define NXPCIMAP_CRB		0x06000000
 
+/* Offsets inside NXPCIMAP_CRB */
 #define NXMEMMAP_WINDOW_SIZE	0x02000000
 #define NXMEMMAP_PCIE		0x00100000
 #define NXMEMMAP_NIU		0x00600000
@@ -132,17 +134,30 @@ struct nx_statusdesc {
 #define NXMEMMAP_ROMUSB		0x03300000
 
 /* Window 0 register map  */
-#define NXPCIE(_x)		((_x) + 0x00100000)	/* PCI Express */
-#define NXPCIE_1(_x)		((_x) + 0x06100000)	/* PCI Express */
+#define NXPCIE(_x)		((_x) + 0x06100000)	/* PCI Express */
 #define NXNIU(_x)		((_x) + 0x06600000)	/* Network Int Unit */
 
 /* Window 1 register map */
+#define NXPCIE_1(_x)		((_x) + 0x06100000)	/* PCI Express' */
 #define NXSW(_x)		((_x) + 0x06200000)	/* Software defined */
 #define NXSIR(_x)		((_x) + 0x07200000)	/* 2nd interrupt */
 #define NXROMUSB(_x)		((_x) + 0x07300000)	/* ROMUSB */
 
 /* The IMEZ/HMEZ NICs have multiple PCI functions with different registers */
-#define NXPCIE_FUNC(_r, _f)	(NXPCIE_1(_r) + ((_f) * 0x20))
+#define NXPCIE_FUNC(_r, _f)	(NXPCIE(_r) + ((_f) * 0x20))
+
+/* Flash layout */
+#define NXFLASHMAP_CRBINIT_0	0x00000000	/* CRBINIT */
+#define NXFLASHMAP_INFO		0x00004000	/* board configuration */
+#define NXFLASHMAP_INITCODE	0x00006000	/* chipset-specific code */
+#define NXFLASHMAP_BOOTLOADER	0x00010000	/* boot loader */
+#define NXFLASHMAP_FIRMWARE_0	0x00043000	/* compressed firmware image */
+#define NXFLASHMAP_FIRMWARE_1	0x00200000	/* backup firmware image */
+#define NXFLASHMAP_PXE		0x003d0000	/* PXE image */
+#define NXFLASHMAP_USER		0x003e8000	/* user-specific ares */
+#define NXFLASHMAP_VPD		0x003e8c00	/* vendor private data */
+#define NXFLASHMAP_LICENSE	0x003e9000	/* firmware license (?) */
+#define NXFLASHMAP_CRBINIT_1	0x003f0000	/* backup of CRBINIT */
 
 /*
  * PCI Express Registers
@@ -166,7 +181,17 @@ struct nx_statusdesc {
 
 /* SW Window */
 #define NXCRB_WINDOW(_f)		NXPCIE_FUNC(0x00010210, _f)
-#define  NXCRB_WINDOW_1			(1<<25)
+#define  NXCRB_WINDOW_1			(1<<25)	/* Set this flag for Win 1 */
+
+/* Lock registers (semaphores between chipset and driver) */
+#define NXSEM_FLASH_LOCK	NXPCIE(0x0001c010)	/* Flash lock */
+#define  NXSEM_FLASH_LOCK_M	0xffffffff
+#define  NXSEM_FLASH_LOCKED	(1<<0)			/* R/O: is locked */
+#define NXSEM_FLASH_UNLOCK	NXPCIE(0x0001c014)	/* Flash unlock */
+#define NXSEM_PHY_LOCK		NXPCIE(0x0001c018)	/* PHY lock */
+#define  NXSEM_PHY_LOCK_M	0xffffffff
+#define  NXSEM_PHY_LOCKED	(1<<0)			/* R/O: is locked */
+#define NXSEM_PHY_UNLOCK	PXPCIE(0x0001c01c)	/* PHY unlock */
 
 /*
  * Network Interface Unit (NIU) registers
@@ -287,6 +312,10 @@ struct nx_statusdesc {
  * ROMUSB registers
  */
 
+/* Status Register */
+#define NXROMUSB_GLB_STATUS		NXROMUSB(0x00000004)	/* ROM Status */
+#define  NXROMUSB_GLB_STATUS_DONE	(1<<1)			/* Ready */
+
 /* Reset Unit Register */
 #define NXROMUSB_GLB_SW_RESET		NXROMUSB(0x00000008)
 #define  NXROMUSB_GLB_SW_RESET_EFC_SIU	(1<<30)	/* EFC_SIU reset */
@@ -317,6 +346,7 @@ struct nx_statusdesc {
 /* ROM Register */
 #define NXROMUSB_ROM_CONTROL		NXROMUSB(0x00010000)
 #define NXROMUSB_ROM_OPCODE		NXROMUSB(0x00010004)
+#define  NXROMUSB_ROM_OPCODE_READ	0x0000000b
 #define NXROMUSB_ROM_ADDR		NXROMUSB(0x00010008)
 #define NXROMUSB_ROM_WDATA		NXROMUSB(0x0001000c)
 #define NXROMUSB_ROM_ABYTE_CNT		NXROMUSB(0x00010010)
@@ -326,5 +356,82 @@ struct nx_statusdesc {
 #define NXROMUSB_ROM_TIME_PARM		NXROMUSB(0x00010020)
 #define NXROMUSB_ROM_CLK_DIV		NXROMUSB(0x00010024)
 #define NXROMUSB_ROM_MISS_INSTR		NXROMUSB(0x00010028)
+
+/* Board information */
+struct nxb_info {
+	u_int32_t	ni_hdrver;		/* Board info version */
+
+	u_int32_t	ni_board_mfg;
+	u_int32_t	ni_board_type;
+	u_int32_t	ni_board_num;
+
+	u_int32_t	ni_chip_id;
+	u_int32_t	ni_chip_minor;
+	u_int32_t	ni_chip_major;
+	u_int32_t	ni_chip_pkg;
+	u_int32_t	ni_chip_lot;
+
+	u_int32_t	ni_port_mask;
+	u_int32_t	ni_peg_mask;
+	u_int32_t	ni_icache;
+	u_int32_t	ni_dcache;
+	u_int32_t	ni_casper;
+
+	u_int32_t	ni_lladdr0_low;
+	u_int32_t	ni_lladdr1_low;
+	u_int32_t	ni_lladdr2_low;
+	u_int32_t	ni_lladdr3_low;
+
+	u_int32_t	ni_mnsync_mode;
+	u_int32_t	ni_mnsync_shift_cclk;
+	u_int32_t	ni_mnsync_shift_mclk;
+	u_int32_t	ni_mnwb_enable;
+	u_int32_t	ni_mnfreq_crystal;
+	u_int32_t	ni_mnfreq_speed;
+	u_int32_t	ni_mnorg;
+	u_int32_t	ni_mndepth;
+	u_int32_t	ni_mnranks0;
+	u_int32_t	ni_mnranks1;
+	u_int32_t	ni_mnrd_latency0;
+	u_int32_t	ni_mnrd_latency1;
+	u_int32_t	ni_mnrd_latency2;
+	u_int32_t	ni_mnrd_latency3;
+	u_int32_t	ni_mnrd_latency4;
+	u_int32_t	ni_mnrd_latency5;
+	u_int32_t	ni_mnrd_latency6;
+	u_int32_t	ni_mnrd_latency7;
+	u_int32_t	ni_mnrd_latency8;
+	u_int32_t	ni_mndll[18];
+	u_int32_t	ni_mnddr_mode;
+	u_int32_t	ni_mnddr_extmode;
+	u_int32_t	ni_mntiming0;
+	u_int32_t	ni_mntiming1;
+	u_int32_t	ni_mntiming2;
+
+	u_int32_t	ni_snsync_mode;
+	u_int32_t	ni_snpt_mode;
+	u_int32_t	ni_snecc_enable;
+	u_int32_t	ni_snwb_enable;
+	u_int32_t	ni_snfreq_crystal;
+	u_int32_t	ni_snfreq_speed;
+	u_int32_t	ni_snorg;
+	u_int32_t	ni_sndepth;
+	u_int32_t	ni_sndll;
+	u_int32_t	ni_snrd_latency;
+
+	u_int32_t	ni_lladdr0_high;
+	u_int32_t	ni_lladdr1_high;
+	u_int32_t	ni_lladdr2_high;
+	u_int32_t	ni_lladdr3_high;
+
+	u_int32_t	ni_magic;
+
+	u_int32_t	ni_mnrd_imm;
+	u_int32_t	ni_mndll_override;
+} __packed;
+
+#define NXB_VERSION	0x00000001		/* board information version */
+#define NXB_MAGIC	0x12345678		/* magic value */
+#define NXB_MAX_PORTS	NX_MAX_PORTS		/* max supported ports */
 
 #endif /* _NX_REG_H */
