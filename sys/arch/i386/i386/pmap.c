@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.106 2007/04/26 11:31:51 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.107 2007/04/28 17:34:33 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1959,15 +1959,16 @@ pmap_deactivate(struct proc *p)
 boolean_t
 pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
-	paddr_t retval;
-	pt_entry_t *ptes;
+	pt_entry_t *ptes, pte;
 
-	if (pmap->pm_pdir[pdei(va)]) {
+	if (pmap_valid_entry(pmap->pm_pdir[pdei(va)])) {
 		ptes = pmap_map_ptes(pmap);
-		retval = (paddr_t)(ptes[atop(va)] & PG_FRAME);
+		pte = ptes[atop(va)];
 		pmap_unmap_ptes(pmap);
+		if (!pmap_valid_entry(pte))
+			return (FALSE);
 		if (pap != NULL)
-			*pap = retval | (va & ~PG_FRAME);
+			*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
 		return (TRUE);
 	}
 	return (FALSE);
