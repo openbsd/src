@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.10 2007/04/28 18:07:29 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.11 2007/04/28 19:10:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -293,6 +293,7 @@ struct nx_statusdesc {
 #define NXSW_JRCV_RING_SIZE	NXSW(0x2240)	/* Entries in the jumbo ring */
 #define NXSW_RCVPEG_STATE	NXSW(0x2248)	/* State of the NX2031 */
 #define NXSW_CMDPEG_STATE	NXSW(0x2250)	/* State of the firmware */
+#define  NXSW_CMDPEG_STATE_M	0xffff		/* State mask */
 #define  NXSW_CMDPEG_INIT_START	0xff00		/* Start of initialization */
 #define  NXSW_CMDPEG_INIT_DONE	0xff01		/* Initialization complete */
 #define  NXSW_CMDPEG_INIT_FAIL	0xffff		/* Initialization failed */
@@ -354,6 +355,10 @@ struct nx_statusdesc {
 #define NXROMUSB_GLB_CAS_RESET		NXROMUSB(0x00000038)
 #define  NXRUMUSB_GLB_CAS_RESET_ENABLE	(1<<0)	/* Enable Casper reset */
 #define NXROMUSB_GLB_CAS_RESET_DEF	0	/* Disabled */
+
+/* Reset register */
+#define NXROMUSB_GLB_PEGTUNE		NXROMUSB(0x0000005c)
+#define  NXROMUSB_GLB_PEGTUNE_DONE	(1<<0)
 
 /* ROM Register */
 #define NXROMUSB_ROM_CONTROL		NXROMUSB(0x00010000)
@@ -482,6 +487,7 @@ struct nxb_userinfo {
 	u_int64_t	nu_lladdr[NXB_MAX_PORTS * NXB_MAX_PORT_LLADDRS];
 	u_int32_t	nu_subsys_id;
 	u_int8_t	nu_serial_num[32];
+	u_int32_t	nu_bios_ver;
 
 	/* Followed by user-specific data */
 } __packed;

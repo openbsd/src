@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.21 2007/04/28 18:21:07 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.22 2007/04/28 19:10:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -371,6 +371,7 @@ nxb_query(struct nxb_softc *sc)
 	_NXBINFO(ni_snsync_mode);
 	_NXBINFO(ni_snpt_mode);
 	_NXBINFO(ni_snecc_enable);
+	_NXBINFO(ni_snwb_enable);
 	_NXBINFO(ni_snfreq_crystal);
 	_NXBINFO(ni_snfreq_speed);
 	_NXBINFO(ni_snorg);
@@ -466,12 +467,27 @@ nxb_query(struct nxb_softc *sc)
 	_NXBUSER(nu_subsys_id);
 	DPRINTF(NXDBG_FLASH, "%s: nu_serial_num: %s\n",
 	    sc->sc_dev.dv_xname, nu->nu_serial_num);
+	_NXBUSER(nu_bios_ver);
 #undef _NXBUSER
 #endif
 
 	free(nu, M_TEMP);
 
-#ifdef notyet
+	/*
+	 * Initialize and bootstrap the device
+	 */
+	nxb_write(sc, NXSW_CMD_PRODUCER_OFF, 0);
+	nxb_write(sc, NXSW_CMD_CONSUMER_OFF, 0);
+	nxb_write(sc, NXSW_CMD_ADDR_LO, 0);
+
+	nxb_write(sc, NXROMUSB_GLB_PEGTUNE, NXROMUSB_GLB_PEGTUNE_DONE);
+	if (nxb_wait(sc, NXSW_CMDPEG_STATE,
+	    NXSW_CMDPEG_INIT_DONE, NXSW_CMDPEG_STATE_M, 1, 2000000) != 0) {
+		printf(": bootstrap failed, code 0x%x\n",
+		    nxb_read(sc, NXSW_CMDPEG_STATE));
+		return (-1);
+	}
+
 	/*
 	 * Get and validate the loaded firmware version
 	 */
@@ -493,7 +509,6 @@ nxb_query(struct nxb_softc *sc)
 		    NX_FIRMWARE_BUILD);
 		return (-1);
 	}
-#endif
 
 	return (0);
 }
@@ -547,7 +562,7 @@ nxb_wait(struct nxb_softc *sc, bus_size_t reg, u_int32_t val,
 			if (data != val)
 				return (0);
 		}
-		delay(1);
+		delay(10);
 	}
 
 	return (-1);
