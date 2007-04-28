@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.19 2007/04/28 17:23:36 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.20 2007/04/28 18:07:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -118,6 +118,7 @@ struct nxb_softc {
 	volatile u_int		 sc_txpending;
 
 	struct nxb_port		 sc_nxp[NX_MAX_PORTS];	/* The nx ports */
+	int			 sc_nports;
 };
 
 struct nx_softc {
@@ -180,6 +181,19 @@ const struct pci_matchid nxb_devices[] = {
 	{ PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_HMEZ },
 	{ PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_IMEZ_2 },
 	{ PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_HMEZ_2 }
+};
+
+const struct nxb_board {
+	enum nxb_board_types	brd_type;
+	u_int			brd_mode;
+	u_int			brd_nports;
+} nxb_boards[] = {
+	{ NXB_BOARDTYPE_P2SB35_4G,	NXNIU_MODE_GBE, 4 },
+	{ NXB_BOARDTYPE_P2SB31_10G,	NXNIU_MODE_XGE, 1 },
+	{ NXB_BOARDTYPE_P2SB31_2G,	NXNIU_MODE_GBE, 2 },	
+	{ NXB_BOARDTYPE_P2SB31_10GIMEZ,	NXNIU_MODE_XGE, 2 },
+	{ NXB_BOARDTYPE_P2SB31_10GHMEZ,	NXNIU_MODE_XGE, 2 },
+	{ NXB_BOARDTYPE_P2SB31_10GCX4,	NXNIU_MODE_XGE, 1 }
 };
 
 extern int ifqmaxlen;
@@ -265,7 +279,7 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 	intrstr = pci_intr_string(pa->pa_pc, sc->sc_ih);
 	printf(": %s\n", intrstr);
 
-	for (i = 0; i < NX_MAX_PORTS; i++)
+	for (i = 0; i < sc->sc_nports; i++)
 		config_found(&sc->sc_dev, &sc->sc_nxp[i], nx_print);
 
 	return;
@@ -285,6 +299,7 @@ nxb_query(struct nxb_softc *sc)
 	struct nxb_userinfo	*nu;
 	u_int32_t		*data, addr;
 	u_int8_t		*ptr;
+	const struct nxb_board	*board = NULL;
 	u_int			 i, j, len;
 
 	nxb_set_window(sc, 1);
@@ -372,6 +387,7 @@ nxb_query(struct nxb_softc *sc)
 #undef _NXBINFO
 #endif /* NX_DEBUG */
 
+	/* Validate the board information from flash */
 	if (ni->ni_hdrver != NXB_VERSION) {
 		printf(": unsupported flash info header version %u\n",
 		    ni->ni_hdrver);
@@ -380,6 +396,25 @@ nxb_query(struct nxb_softc *sc)
 	if (ni->ni_magic != NXB_MAGIC) {
 		printf(": flash info magic value mismatch\n");
 		return (-1);
+	}
+
+	/* Lookup the board */
+	for (i = 0; i < (sizeof(nxb_boards) / sizeof(nxb_boards[0])); i++) {
+		if (ni->ni_board_type == nxb_boards[i].brd_type) {
+			board = &nxb_boards[i];
+			break;
+		}
+	}
+	if (board == NULL) {
+		printf(": unsupported board type %u\n", ni->ni_board_type);
+		return (-1);
+	}
+
+	/* Configure the ports */
+	sc->sc_nports = board->brd_nports;
+	for (i = 0; i < sc->sc_nports; i++) {
+		sc->sc_nxp[i].nxp_id = i;
+		sc->sc_nxp[i].nxp_mode = board->brd_mode;
 	}
 
 	/*
@@ -404,7 +439,7 @@ nxb_query(struct nxb_softc *sc)
 	}
 
 	/* Copy the MAC addresses */
-	for (i = 0; i < NXB_MAX_PORTS; i++) {
+	for (i = 0; i < sc->sc_nports; i++) {
 		ptr = (u_int8_t *)
 		   &nu->nu_lladdr[i * NXB_MAX_PORT_LLADDRS];
 		/* MAC address bytes are stored in a swapped order */
@@ -625,7 +660,7 @@ nx_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	bcopy(nxp->nxp_lladdr, nx->nx_ac.ac_enaddr, ETHER_ADDR_LEN);
-	printf(" address %s\n", ether_sprintf(nx->nx_ac.ac_enaddr));
+	printf(", address %s\n", ether_sprintf(nx->nx_ac.ac_enaddr));
 
 	ifp = &nx->nx_ac.ac_if;
 	ifp->if_softc = nx;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.9 2007/04/28 17:23:37 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.10 2007/04/28 18:07:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -372,6 +372,23 @@ struct nx_statusdesc {
 /*
  * Flash data structures
  */
+
+enum nxb_board_types {
+	NXB_BOARDTYPE_P1BD		= 0,
+	NXB_BOARDTYPE_P1SB		= 1,
+	NXB_BOARDTYPE_P1SMAX		= 2,
+	NXB_BOARDTYPE_P1SOCK		= 3,
+
+	NXB_BOARDTYPE_P2SOCK31		= 8,
+	NXB_BOARDTYPE_P2SOCK35		= 9,
+
+	NXB_BOARDTYPE_P2SB35_4G		= 10,
+	NXB_BOARDTYPE_P2SB31_10G	= 11,
+	NXB_BOARDTYPE_P2SB31_2G		= 12,
+	NXB_BOARDTYPE_P2SB31_10GIMEZ	= 13,
+	NXB_BOARDTYPE_P2SB31_10GHMEZ	= 14,
+	NXB_BOARDTYPE_P2SB31_10GCX4	= 15
+};
 
 #define NXB_VERSION	0x00000001		/* board information version */
 #define NXB_MAGIC	0x12345678		/* magic value */
