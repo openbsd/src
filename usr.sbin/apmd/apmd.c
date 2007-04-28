@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.45 2007/03/29 22:17:34 deraadt Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.46 2007/04/28 06:42:43 sturm Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -74,7 +74,9 @@ void usage(void);
 int power_status(int fd, int force, struct apm_power_info *pinfo);
 int bind_socket(const char *sn);
 enum apm_state handle_client(int sock_fd, int ctl_fd);
-void perf_status(struct apm_power_info *pinfo);
+int  get_avg_idle_mp(int ncpu);
+int  get_avg_idle_up(void);
+void perf_status(struct apm_power_info *pinfo, int ncpu);
 void suspend(int ctl_fd);
 void stand_by(int ctl_fd);
 void setperf(int new_perf);
@@ -191,19 +193,86 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 	return acon;
 }
 
-void
-perf_status(struct apm_power_info *pinfo)
+/* multi- and uni-processor case */
+int
+get_avg_idle_mp(int ncpu)
+{
+	static int64_t **cp_time_old;
+	static int64_t **cp_time;
+	static int *avg_idle;
+	int64_t change, sum, idle;
+	int i, cpu, min_avg_idle;
+	size_t cp_time_sz = CPUSTATES * sizeof(int64_t);
+
+	if (!cp_time_old)
+		if ((cp_time_old = calloc(sizeof(int64_t *), ncpu)) == NULL)
+			return -1;
+
+	if (!cp_time)
+		if ((cp_time = calloc(sizeof(int64_t *), ncpu)) == NULL)
+			return -1;
+
+	if (!avg_idle)
+		if ((avg_idle = calloc(sizeof(int), ncpu)) == NULL)
+			return -1;
+
+	min_avg_idle = 0;
+	for (cpu = 0; cpu < ncpu; cpu++) {
+		int cp_time_mib[] = {CTL_KERN, KERN_CPTIME2, cpu};
+
+		if (!cp_time_old[cpu])
+			if ((cp_time_old[cpu] =
+			    calloc(sizeof(int64_t), CPUSTATES)) == NULL)
+				return -1;
+
+		if (!cp_time[cpu])
+			if ((cp_time[cpu] =
+			    calloc(sizeof(int64_t), CPUSTATES)) == NULL)
+				return -1;
+
+		if (sysctl(cp_time_mib, 3, cp_time[cpu], &cp_time_sz, NULL, 0)
+		    < 0)
+			syslog(LOG_INFO, "cannot read kern.cp_time2");
+
+		sum = 0;
+		for (i = 0; i < CPUSTATES; i++) {
+			if ((change = cp_time[cpu][i] - cp_time_old[cpu][i])
+			    < 0) {
+				/* counter wrapped */
+				change = ((uint64_t)cp_time[cpu][i] -
+				    (uint64_t)cp_time_old[cpu][i]);
+			}
+			sum += change;
+			if (i == CP_IDLE)
+				idle = change;
+		}
+		if (sum == 0)
+			sum = 1;
+
+		/* smooth data */
+		avg_idle[cpu] = (avg_idle[cpu] + (100 * idle) / sum) / 2;
+
+		if (cpu == 0)
+			min_avg_idle = avg_idle[cpu];
+
+		if (avg_idle[cpu] < min_avg_idle)
+			min_avg_idle = avg_idle[cpu];
+
+		memcpy(cp_time_old[cpu], cp_time[cpu], cp_time_sz);
+	}
+
+	return min_avg_idle;
+}
+
+int
+get_avg_idle_up(void)
 {
 	static long cp_time_old[CPUSTATES];
 	static int avg_idle;
 	long change, cp_time[CPUSTATES];
 	int cp_time_mib[] = {CTL_KERN, KERN_CPTIME};
-	int hw_perf_mib[] = {CTL_HW, HW_SETPERF};
-	int i, idle, perf;
-	int forcehi = 0;
-	int sum = 0;
 	size_t cp_time_sz = sizeof(cp_time);
-	size_t perf_sz = sizeof(perf);
+	int i, idle, sum;
 
 	if (sysctl(cp_time_mib, 2, &cp_time, &cp_time_sz, NULL, 0) < 0)
 		syslog(LOG_INFO, "cannot read kern.cp_time");
@@ -223,6 +292,29 @@ perf_status(struct apm_power_info *pinfo)
 
 	/* smooth data */
 	avg_idle = (avg_idle + (100 * idle) / sum) / 2;
+
+	memcpy(cp_time_old, cp_time, sizeof(cp_time_old));
+
+	return avg_idle;
+}
+
+void
+perf_status(struct apm_power_info *pinfo, int ncpu)
+{
+	int avg_idle;
+	int hw_perf_mib[] = {CTL_HW, HW_SETPERF};
+	int perf;
+	int forcehi = 0;
+	size_t perf_sz = sizeof(perf);
+
+	if (ncpu > 1) {
+		avg_idle = get_avg_idle_mp(ncpu);
+	} else {
+		avg_idle = get_avg_idle_up();
+	}
+
+	if (avg_idle == -1)
+		return;
 
 	switch (doperf) {
 	case PERF_AUTO:
@@ -252,8 +344,6 @@ perf_status(struct apm_power_info *pinfo)
 			perf = PERFMIN;
 		setperf(perf);
 	}
-
-	memcpy(cp_time_old, cp_time, sizeof(cp_time_old));
 }
 
 char socketname[MAXPATHLEN];
@@ -414,6 +504,9 @@ main(int argc, char *argv[])
 	const char *sockname = sockfile;
 	int kq, nchanges;
 	struct kevent ev[2];
+	int ncpu_mib[2] = { CTL_HW, HW_NCPU };
+	int ncpu;
+	size_t ncpu_sz = sizeof(ncpu);
 
 	while ((ch = getopt(argc, argv, "aACdHLsepmf:t:S:")) != -1)
 		switch(ch) {
@@ -536,6 +629,9 @@ main(int argc, char *argv[])
 	if (kevent(kq, ev, nchanges, NULL, 0, &sts) < 0)
 		error("kevent", NULL);
 
+	if (sysctl(ncpu_mib, 2, &ncpu, &ncpu_sz, NULL, 0) < 0)
+		error("cannot read hw.ncpu", NULL);
+
 	for (;;) {
 		int rv;
 
@@ -543,7 +639,7 @@ main(int argc, char *argv[])
 
 		if (doperf == PERF_AUTO || doperf == PERF_COOL) {
 			sts.tv_sec = 1;
-			perf_status(&pinfo);
+			perf_status(&pinfo, ncpu);
 		}
 
 		apmtimeout += sts.tv_sec;
