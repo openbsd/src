@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.17 2007/04/28 15:59:05 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.18 2007/04/28 16:07:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -63,19 +63,21 @@
 #include <dev/pci/if_nxreg.h>
 
 #ifdef NX_DEBUG
+#define NXDBG_FLASH	(1<<0)	/* debug flash access through ROMUSB */
+#define NXDBG_ALL	0xffff	/* enable all debugging messages */
 int nx_debug = 0;
-#define DPRINTF(_arg...)	do {					\
-	if (nx_debug)							\
+#define DPRINTF(_lvl, _arg...)	do {					\
+	if (nx_debug & (_lvl))						\
 		printf(_arg);						\
 } while (0)
-#define DPRINTREG(_reg)		do {					\
-	if (nx_debug)							\
+#define DPRINTREG(_lvl, _reg)	do {					\
+	if (nx_debug & (_lvl))						\
 		printf("%s: 0x%08x: %08x\n",				\
 		    #_reg, _reg, nxb_read(sc, _reg));			\
 } while (0)
 #else
-#define DPRINTREG(_reg)
-#define DPRINTF(arg...)
+#define DPRINTREG(_lvl, _reg)
+#define DPRINTF(_lvl, arg...)
 #endif
 
 struct nx_softc;
@@ -301,7 +303,7 @@ nxb_query(struct nxb_softc *sc)
 
 #ifdef NX_DEBUG
 #define _NXBINFO(_e)	do {						\
-	if (nx_debug)							\
+	if (nx_debug & NXDBG_FLASH)					\
 		printf("%s: %s: 0x%08x (%u)\n",				\
 		    sc->sc_dev.dv_xname, #_e, ni->_e, ni->_e);		\
 } while (0)
@@ -412,7 +414,7 @@ nxb_query(struct nxb_softc *sc)
 
 #ifdef NX_DEBUG
 #define _NXBUSER(_e)	do {						\
-	if (nx_debug)							\
+	if (nx_debug & NXDBG_FLASH)					\
 		printf("%s: %s: 0x%08x (%u)\n",				\
 		    sc->sc_dev.dv_xname, #_e, nu->_e, nu->_e);		\
 } while (0)
@@ -423,7 +425,7 @@ nxb_query(struct nxb_softc *sc)
 	_NXBUSER(nu_primary);
 	_NXBUSER(nu_secondary);
 	_NXBUSER(nu_subsys_id);
-	DPRINTF("%s: nu_serial_num: %s\n",
+	DPRINTF(NXDBG_FLASH, "%s: nu_serial_num: %s\n",
 	    sc->sc_dev.dv_xname, nu->nu_serial_num);
 #undef _NXBUSER
 #endif
@@ -503,7 +505,7 @@ nxb_read_rom(struct nxb_softc *sc, u_int32_t addr, u_int32_t *val)
 	ret = nxb_wait(sc, NXSEM_FLASH_LOCK,
 	    NXSEM_FLASH_LOCKED, NXSEM_FLASH_LOCK_M, 1, 10000);
 	if (ret != 0) {
-		DPRINTF("%s(%s): ROM lock timeout\n",
+		DPRINTF(NXDBG_FLASH, "%s(%s): ROM lock timeout\n",
 		    sc->sc_dev.dv_xname, __func__);
 		return (-1);
 	}
@@ -526,7 +528,7 @@ nxb_read_rom(struct nxb_softc *sc, u_int32_t addr, u_int32_t *val)
 	ret = nxb_wait(sc, NXROMUSB_GLB_STATUS,
 	    NXROMUSB_GLB_STATUS_DONE, NXROMUSB_GLB_STATUS_DONE, 1, 100);
 	if (ret != 0) {
-		DPRINTF("%s(%s): ROM operation timeout\n",
+		DPRINTF(NXDBG_FLASH, "%s(%s): ROM operation timeout\n",
 		    sc->sc_dev.dv_xname, __func__);
 		goto unlock;
 	}
