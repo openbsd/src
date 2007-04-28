@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.18 2007/04/28 16:07:27 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.19 2007/04/28 17:23:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -109,6 +109,9 @@ struct nxb_softc {
 
 	int			 sc_window;
 	struct nxb_info		 sc_nxbinfo;
+	u_int32_t		 sc_fwmajor;
+	u_int32_t		 sc_fwminor;
+	u_int32_t		 sc_fwbuild;
 
 	u_int32_t		 sc_nrxbuf;
 	u_int32_t		 sc_ntxbuf;
@@ -393,7 +396,8 @@ nxb_query(struct nxb_softc *sc)
 	for (i = 0; i < len; i++) {
 		if (nxb_read_rom(sc, addr, data) != 0) {
 			printf(": failed to get user info from flash\n");
-			goto done;
+			free(nu, M_TEMP);
+			return (-1);
 		}
 		addr += sizeof(u_int32_t);
 		data++;
@@ -430,8 +434,32 @@ nxb_query(struct nxb_softc *sc)
 #undef _NXBUSER
 #endif
 
- done:
 	free(nu, M_TEMP);
+
+#ifdef notyet
+	/*
+	 * Get and validate the loaded firmware version
+	 */
+	sc->sc_fwmajor = nxb_read(sc, NXSW_FW_VERSION_MAJOR);
+	sc->sc_fwminor = nxb_read(sc, NXSW_FW_VERSION_MINOR);
+	sc->sc_fwbuild = nxb_read(sc, NXSW_FW_VERSION_BUILD);
+	printf(", fw%u.%u.%u",
+	    sc->sc_fwmajor, sc->sc_fwminor, sc->sc_fwbuild);
+	if (sc->sc_fwmajor != NX_FIRMWARE_MAJOR ||
+	    sc->sc_fwminor != NX_FIRMWARE_MINOR) {
+		/*
+		 * XXX The driver should load an alternative firmware image
+		 * XXX from disk if the firmware image in the flash is not
+		 * XXX supported by the driver.
+		 */
+		printf(": requires fw%u.%u.xx (%u.%u.%u)\n", 
+		    NX_FIRMWARE_MAJOR, NX_FIRMWARE_MINOR,
+		    NX_FIRMWARE_MAJOR, NX_FIRMWARE_MINOR,
+		    NX_FIRMWARE_BUILD);
+		return (-1);
+	}
+#endif
+
 	return (0);
 }
 

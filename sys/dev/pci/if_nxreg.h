@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.8 2007/04/28 15:59:05 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.9 2007/04/28 17:23:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -33,6 +33,11 @@
 
 #define NX_MAX_MTU	ETHER_MTU
 #define NX_JUMBO_MTU	8000			/* less than 9k */
+
+/* This driver supported the 3.4.31 (3.4.xx) NIC firmware */
+#define NX_FIRMWARE_MAJOR	3
+#define NX_FIRMWARE_MINOR	4
+#define NX_FIRMWARE_BUILD	31
 
 /*
  * Hardware descriptors
@@ -261,11 +266,18 @@ struct nx_statusdesc {
  * Software defined registers (used by the firmware or the driver)
  */
 
+/* Lock ID registers */
 #define NXSW_ROM_LOCK_ID	NXSW(0x2100)	/* Used for locking the ROM */
 #define  NXSW_ROM_LOCK_DRV	0x0d417340	/* Driver ROM lock ID */
 #define NXSW_PHY_LOCK_ID	NXSW(0x2120)	/* Used for locking the PHY */
 #define  NXSW_PHY_LOCK_DRV	0x44524956	/* Driver PHY lock ID */
 
+/* Version registers of the loaded firmware */
+#define NXSW_FW_VERSION_MAJOR	NXSW(0x2150)	/* Major f/w version */
+#define NXSW_FW_VERSION_MINOR	NXSW(0x2154)	/* Minor f/w version */
+#define NXSW_FW_VERSION_BUILD	NXSW(0x2158)	/* Build/Sub f/w version */
+
+/* Misc SW registers */
 #define NXSW_CMD_PRODUCER_OFF	NXSW(0x2208)	/* Producer CMD ring index */
 #define NXSW_CMD_CONSUMER_OFF	NXSW(0x220c)	/* Consumer CMD ring index */
 #define NXSW_RCV_PRODUCER_OFF	NXSW(0x2218)	/* Producer Rx ring index */
