@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.15 2007/04/28 13:58:12 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.16 2007/04/28 14:12:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -250,6 +250,10 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap1;
 	}
 
+	/* Get the board information and initialize the h/w */
+	if (nxb_query(sc) != 0)
+		goto unmap;
+
 	/* Map the interrupt, the handlers will be attached later */
 	if (pci_intr_map(pa, &sc->sc_ih) != 0) {
 		printf(": unable to map interrupt\n");
@@ -257,9 +261,6 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 	}
 	intrstr = pci_intr_string(pa->pa_pc, sc->sc_ih);
 	printf(": %s\n", intrstr);
-
-	if (nxb_query(sc) != 0)
-		goto unmap;
 
 	for (i = 0; i < NX_MAX_PORTS; i++)
 		config_found(&sc->sc_dev, &sc->sc_nxp[i], nx_print);
@@ -290,8 +291,7 @@ nxb_query(struct nxb_softc *sc)
 	data = (u_int32_t *)ni;
 	for (i = 0; i < len; i++) {
 		if (nxb_read_rom(sc, addr, data) != 0) {
-			DPRINTF("%s(%s): failed after %d blocks\n",
-			    sc->sc_dev.dv_xname, __func__, i);
+			printf(": failed to get board info from flash\n");
 			return (-1);
 		}
 		addr += sizeof(u_int32_t);
@@ -367,13 +367,12 @@ nxb_query(struct nxb_softc *sc)
 #endif /* NX_DEBUG */
 
 	if (ni->ni_hdrver != NXB_VERSION) {
-		printf("%s: unsupported flash info header version %u\n",
-		    sc->sc_dev.dv_xname, ni->ni_hdrver);
+		printf(": unsupported flash info header version %u\n",
+		    ni->ni_hdrver);
 		return (-1);
 	}
 	if (ni->ni_magic != NXB_MAGIC) {
-		printf("%s: flash info magic value mismatch\n",
-		    sc->sc_dev.dv_xname);
+		printf(": flash info magic value mismatch\n");
 		return (-1);
 	}
 
@@ -449,7 +448,8 @@ nxb_read_rom(struct nxb_softc *sc, u_int32_t addr, u_int32_t *val)
 	ret = nxb_wait(sc, NXSEM_FLASH_LOCK,
 	    NXSEM_FLASH_LOCKED, NXSEM_FLASH_LOCK_M, 1, 10000);
 	if (ret != 0) {
-		printf("%s: ROM lock timeout\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s(%s): ROM lock timeout\n",
+		    sc->sc_dev.dv_xname, __func__);
 		return (-1);
 	}
 	nxb_write(sc, NXSW_ROM_LOCK_ID, NXSW_ROM_LOCK_DRV);
@@ -471,7 +471,8 @@ nxb_read_rom(struct nxb_softc *sc, u_int32_t addr, u_int32_t *val)
 	ret = nxb_wait(sc, NXROMUSB_GLB_STATUS,
 	    NXROMUSB_GLB_STATUS_DONE, NXROMUSB_GLB_STATUS_DONE, 1, 100);
 	if (ret != 0) {
-		printf("%s: ROM operation timed out\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s(%s): ROM operation timeout\n",
+		    sc->sc_dev.dv_xname, __func__);
 		goto unlock;
 	}
 
