@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.38 2007/04/28 00:34:25 deraadt Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.39 2007/04/28 00:35:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -615,7 +615,9 @@ gdt_scsi_cmd(xs)
 		 */
 		xs->error = XS_DRIVER_STUFFUP;
 		xs->flags |= ITSDONE;
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 	}
 
