@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.23 2006/10/13 02:11:28 cloder Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.24 2007/04/28 01:06:18 ray Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -42,6 +42,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -642,24 +645,61 @@ edit_get(void *hook, char *name)
 	return arg;
 }
 
-static void
-edit_edit(void)
+int
+editit(const char *pathname)
 {
-	char *system_line;
-	char *editor = getenv("EDITOR");
-	if (!editor)
-		editor = _PATH_VI;
+	char *argp[] = {"sh", "-c", NULL, NULL}, *ed, *p;
+	sig_t sighup, sigint, sigquit;
+	pid_t pid;
+	int st;
 
-	fclose(edit_file);
+	ed = getenv("VISUAL");
+	if (ed == NULL || ed[0] == '\0')
+		ed = getenv("EDITOR");
+	if (ed == NULL || ed[0] == '\0')
+		ed = _PATH_VI;
+	if (asprintf(&p, "%s %s", ed, pathname) == -1)
+		return (-1);
+	argp[2] = p;
 
-	if (asprintf(&system_line, "%s %s", editor, edit_name) == -1)
-		err(1, NULL);
+ top:
+	sighup = signal(SIGHUP, SIG_IGN);
+	sigint = signal(SIGINT, SIG_IGN);
+	sigquit = signal(SIGQUIT, SIG_IGN);
+	if ((pid = fork()) == -1) {
+		int saved_errno = errno;
 
-	system(system_line);
-	free(system_line);
-
-	if ( (edit_file = fopen(edit_name, "r")) == 0)
-		err(errno, "open %s", edit_name);
+		(void)signal(SIGHUP, sighup);
+		(void)signal(SIGINT, sigint);
+		(void)signal(SIGQUIT, sigquit);
+		if (saved_errno == EAGAIN) {
+			sleep(1);
+			goto top;
+		}
+		free(p);
+		errno = saved_errno;
+		return (-1);
+	}
+	if (pid == 0) {
+		execv(_PATH_BSHELL, argp);
+		_exit(127);
+	}
+	free(p);
+	for (;;) {
+		if (waitpid(pid, &st, 0) == -1) {
+			if (errno != EINTR)
+				return (-1);
+		} else
+			break;
+	}
+	(void)signal(SIGHUP, sighup);
+	(void)signal(SIGINT, sigint);
+	(void)signal(SIGQUIT, sigquit);
+	if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
+		errno = ECHILD;
+		return (-1);
+	}
+	return (0);
 }
 
 static void
@@ -728,7 +768,11 @@ mode_edit(int fd, int page, int edit, int argc, char *argv[])
 		scsireq_buff_decode_visit(mode_pars, mh->mdl,
 		fmt, edit_report, 0);
 
-		edit_edit();
+		fclose(edit_file);
+		if (editit(edit_name) == -1 && errno != SIGCHLD)
+			err(1, "edit %s", edit_name);
+		if ((edit_file = fopen(edit_name, "r")) == NULL)
+			err(1, "open %s", edit_name);
 
 		edit_rewind();
 		scsireq_buff_encode_visit(mode_pars, mh->mdl,
