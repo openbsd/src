@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.57 2007/04/29 11:35:45 espie Exp $
+# $OpenBSD: pkg_create,v 1.58 2007/04/29 11:44:42 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -48,6 +48,18 @@ sub comment_create_package {}
 sub count_elements { ${$_[1]}++; }
 
 sub print_file {}
+
+sub avert_duplicates
+{
+	my ($self, $allfiles) = @_;
+	return unless $self->NoDuplicateNames();
+	my $n = $self->fullname();
+	if (defined $allfiles->{$n}) {
+		print STDERR "Error in packing-list: duplicate file $n\n";
+		$main::errors++;
+	}
+	$allfiles->{$n} = 1;
+}
 
 package OpenBSD::PackingElement::SpecialFile;
 sub archive
@@ -246,23 +258,6 @@ sub checksum
 		$item->verify_checksum($base, $stash);
 	}
 }
-
-sub avert_duplicates
-{
-	my ($self) = @_;
-	my $allfiles = {};
-	for my $item (@{$self->{items}}) {
-		if ($item->NoDuplicateNames()) {
-			my $n = $item->fullname();
-			if (defined $allfiles->{$n}) {
-				print STDERR "Error in packing-list: duplicate file $n\n";
-				$main::errors++;
-			}
-			$allfiles->{$n} = 1;
-		} 
-	}
-}
-
 
 package main;
 
@@ -573,7 +568,8 @@ unless (defined $opt_q && defined $opt_n) {
 		$plist->makesum($base);
 	}
 }
-$plist->avert_duplicates();
+$plist->avert_duplicates({});
+
 if (defined $plist->{pkgcfl}) {
 	print STDERR "Error: \@pkgcfl is obsolete, use \@conflict instead\n";
 	$errors++;
