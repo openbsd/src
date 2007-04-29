@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.59 2007/04/29 11:47:16 espie Exp $
+# $OpenBSD: pkg_create,v 1.60 2007/04/29 11:48:00 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -138,7 +138,7 @@ sub comment_create_package
 package OpenBSD::PackingElement::DirRm;
 my $warned;
 
-sub compute_checksum
+sub create_checksum
 {
 	if (!$warned) {
 		print STDERR "Error: \@dirrm is deprecated\n";
@@ -149,7 +149,7 @@ sub compute_checksum
 
 package OpenBSD::PackingElement;
 
-sub compute_checksum
+sub create_checksum
 {
 }
 
