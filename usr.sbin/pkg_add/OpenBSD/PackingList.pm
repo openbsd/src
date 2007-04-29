@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.55 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.56 2007/04/29 10:52:15 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -438,6 +438,29 @@ sub signature
 
 sub forget
 {
+}
+
+# convert call to $self->sub(@args) into $self->visit(sub, @args)
+
+sub AUTOLOAD 
+{
+	our $AUTOLOAD;
+	my $fullsub = $AUTOLOAD;
+	(my $sub = $fullsub) =~ s/.*:://;
+	return if $sub eq 'DESTROY'; # special case
+	# verify it makes sense
+	if (OpenBSD::PackingElement->can($sub)) {
+		no strict "refs";
+		# create the sub to avoid regenerating further calls
+		*$fullsub = sub {
+			my $self = shift;
+			$self->visit($sub, @_);
+		};
+		# and jump to it
+		goto &$fullsub;
+	} else {
+		die "Can't call $sub on ", __PACKAGE__;
+	}
 }
 
 1;
