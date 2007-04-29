@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.11 2007/03/13 19:30:38 miod Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.12 2007/04/29 17:53:37 miod Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -169,8 +169,6 @@ u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 u_int dumpsize;			/* pages */
 long dumplo;	 		/* blocks */
 cpu_kcore_hdr_t cpu_kcore_hdr;
-
-int kbd_reset;
 
 void
 sh_cpu_init(int arch, int product)
@@ -847,36 +845,5 @@ cpu_reset()
 #ifndef __lint__
 	goto *(void *)0xa0000000;
 #endif
-	/* NOTREACHED */
-}
-
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
-    size_t newlen, struct proc *p)
-{
-
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	case CPU_CONSDEV: {
-		dev_t consdev;
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
-	}
-
-	case CPU_KBDRESET:
-		if (securelevel > 0)
-			return (sysctl_rdint(oldp, oldlenp, newp, kbd_reset));
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &kbd_reset));
-
-	default:
-		return (EOPNOTSUPP);
-	}
 	/* NOTREACHED */
 }

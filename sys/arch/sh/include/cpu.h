@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.7 2007/03/15 10:22:29 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.8 2007/04/29 17:53:37 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -178,19 +178,6 @@ extern int want_resched;		/* need_resched() was called */
  * pull in #defines for kinds of processors
  */
 #include <machine/cputypes.h>
-
-/*
- * CTL_MACHDEP definitions.
- */
-#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_KBDRESET		2	/* keyboard reset */
-#define	CPU_MAXID		3	/* number of valid machdep ids */
-
-#define	CTL_MACHDEP_NAMES {						\
-	{ 0, 0 },							\
-	{ "console_device",	CTLTYPE_STRUCT },			\
-	{ "kbdreset",		CTLTYPE_INT },				\
-}
 
 #ifdef _KERNEL
 void sh_cpu_init(int, int);

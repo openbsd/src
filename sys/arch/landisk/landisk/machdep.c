@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.10 2007/03/13 19:30:36 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.11 2007/04/29 17:53:37 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -114,6 +114,10 @@ char machine[] = MACHINE;		/* landisk */
 __dead void landisk_startup(int, char *);
 __dead void main(void);
 void	cpu_init_kcore_hdr(void);
+void	blink_led(void *);
+
+int	kbd_reset;
+int	led_blink;
 
 extern u_int32_t getramsize(void);
 
@@ -446,4 +450,64 @@ cpu_init_kcore_hdr()
 		seg++;
 		physseg++;
 	}
+}
+
+int
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
+{
+	int oldval, ret;
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV: {
+		dev_t consdev;
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof consdev));
+	}
+
+	case CPU_KBDRESET:
+		if (securelevel > 0)
+			return (sysctl_rdint(oldp, oldlenp, newp, kbd_reset));
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &kbd_reset));
+
+	case CPU_LED_BLINK:
+		oldval = led_blink;
+		ret = sysctl_int(oldp, oldlenp, newp, newlen, &led_blink);
+		if (oldval != led_blink)
+			blink_led(NULL);
+		return (ret);
+
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
+}
+
+void
+blink_led(void *whatever)
+{
+	static struct timeout blink_tmo;
+	u_int8_t ledctrl;
+
+	if (led_blink == 0) {
+		_reg_write_1(LANDISK_LEDCTRL,
+		    LED_POWER_CHANGE | LED_POWER_VALUE);
+		return;
+	}
+
+	ledctrl = (u_int8_t)_reg_read_1(LANDISK_LEDCTRL) & LED_POWER_VALUE;
+	ledctrl ^= (LED_POWER_CHANGE | LED_POWER_VALUE);
+	_reg_write_1(LANDISK_LEDCTRL, ledctrl);
+
+	timeout_set(&blink_tmo, blink_led, NULL);
+	timeout_add(&blink_tmo,
+	    ((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 3));
 }

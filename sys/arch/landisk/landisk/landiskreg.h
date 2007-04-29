@@ -1,4 +1,4 @@
-/*	$OpenBSD: landiskreg.h,v 1.3 2007/01/15 22:22:19 martin Exp $	*/
+/*	$OpenBSD: landiskreg.h,v 1.4 2007/04/29 17:53:37 miod Exp $	*/
 /*	$NetBSD: landiskreg.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -30,10 +30,16 @@
 #ifndef	LANDISKREG_H__
 #define	LANDISKREG_H__
 
+#define	LANDISK_LEDCTRL		0xb0000001
 #define	LANDISK_BTNSTAT		0xb0000002
 #define	LANDISK_PWRMNG		0xb0000003	/* write-only */
 #define	LANDISK_INTEN		0xb0000005
 #define	LANDISK_PWRSW_INTCLR	0xb0000006
+
+#define	LED_POWER_VALUE		0x01
+#define	LED_ACCESS_VALUE	0x02
+#define	LED_POWER_CHANGE	0x04
+#define	LED_ACCESS_CHANGE	0x08
 
 #define	BTN_SELECT_BIT		(1 << 0)
 #define	BTN_COPY_BIT		(1 << 1)
