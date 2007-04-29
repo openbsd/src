@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.84 2007/04/29 11:39:15 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.85 2007/04/29 11:58:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1491,8 +1491,6 @@ tht_fifo_write_pad(struct tht_softc *sc, struct tht_fifo *tf, int bc)
 void
 tht_fifo_post(struct tht_softc *sc, struct tht_fifo *tf)
 {
-	delay(100); /* XXX this is dumb */
-
 	bus_dmamap_sync(sc->sc_thtc->sc_dmat, THT_DMA_MAP(tf->tf_mem),
 	    0, tf->tf_len, THT_FIFO_PRE_SYNC(tf->tf_desc));
 	if (tf->tf_desc->tfd_write)
