@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.17 2006/06/19 15:13:35 deraadt Exp $ */
+/*	$OpenBSD: clock.c,v 1.18 2007/04/29 17:35:27 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -252,6 +252,9 @@ void
 cpu_initclocks()
 {
 	struct clock_softc *sc = (struct clock_softc *)clock_cd.cd_devs[0];
+	struct tod_time ct;
+	u_int first_cp0, second_cp0, cycles_per_sec;
+	int first_sec;
 
 	hz = sc->sc_clock.clk_hz;
 	stathz = sc->sc_clock.clk_stathz;
@@ -262,6 +265,29 @@ cpu_initclocks()
 	/* Start the clock.  */
 	if (sc->sc_clock.clk_init != NULL)
 		(*sc->sc_clock.clk_init)(sc);
+
+	/*
+	 * Calibrate the cycle counter frequency.
+	 */
+	if (sc->sc_clock.clk_get != NULL) {
+		(*sc->sc_clock.clk_get)(sc, 0, &ct);
+		first_sec = ct.sec;
+
+		/* Let the clock tick one second. */
+		do {
+			first_cp0 = cp0_get_count();
+			(*sc->sc_clock.clk_get)(sc, 0, &ct);
+		} while (ct.sec == first_sec);
+		first_sec = ct.sec;
+		/* Let the clock tick one more second. */
+		do {
+			second_cp0 = cp0_get_count();
+			(*sc->sc_clock.clk_get)(sc, 0, &ct);
+		} while (ct.sec == first_sec);
+
+		cycles_per_sec = second_cp0 - first_cp0;
+		sys_config.cpu[0].clock = cycles_per_sec * 2;
+	}
 
 	tick = 1000000 / hz;	/* number of micro-seconds between interrupts */
 	tickadj = 240000 / (60 * hz);           /* can adjust 240ms in 60s */
