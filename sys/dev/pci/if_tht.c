@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.83 2007/04/29 11:31:29 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.84 2007/04/29 11:39:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -82,6 +82,12 @@ int thtdebug = THT_D_TX | THT_D_RX | THT_D_INTR;
 /* General Configuration */
 #define THT_REG_END_SEL		0x5448 /* PCI Endian Select */
 #define THT_REG_CLKPLL		0x5000
+#define  THT_REG_CLKPLL_PLLLK		(1<<9) /* PLL is locked */
+#define  THT_REG_CLKPLL_RSTEND		(1<<8) /* Reset ended */
+#define  THT_REG_CLKPLL_TXF_DIS		(1<<3) /* TX Free disabled */
+#define  THT_REG_CLKPLL_VNT_STOP	(1<<2) /* VENETO Stop */
+#define  THT_REG_CLKPLL_PLLRST		(1<<1) /* PLL Reset */
+#define  THT_REG_CLKPLL_SFTRST		(1<<0) /* Software Reset */
 /* Descriptors and FIFO Registers */
 #define THT_REG_TXT_CFG0(_q)	(0x4040 + _Q(_q)) /* CFG0 TX Task queues */
 #define THT_REG_RXF_CFG0(_q)	(0x4050 + _Q(_q)) /* CFG0 RX Free queues */
