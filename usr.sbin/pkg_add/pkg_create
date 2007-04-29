@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.63 2007/04/29 12:31:54 espie Exp $
+# $OpenBSD: pkg_create,v 1.64 2007/04/29 12:46:18 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -253,16 +253,6 @@ sub makesum
 		push @{$self->{items}}, $item;
 		$self->{state}->{cwd} = $item->{cwd} if defined $item->{cwd};
 		$item->create_checksum($self, $base, $stash);
-	}
-}
-
-sub checksum
-{
-	my ($self, $base) = @_;
-	my $stash = {};
-	for my $item (@{$self->{items}}) {
-		$self->{state}->{cwd} = $item->{cwd} if defined $item->{cwd};
-		$item->verify_checksum($base, $stash);
 	}
 }
 
@@ -570,7 +560,7 @@ if ($plist->{need_modules}) {
 
 unless (defined $opt_q && defined $opt_n) {
 	if ($regen_package) {
-		$plist->checksum($base);
+		$plist->verify_checksum($base, {});
 	} else {
 		$plist->makesum($base);
 	}
