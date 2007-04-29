@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 2007/04/29 17:53:37 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.12 2007/04/29 18:18:03 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -509,5 +509,5 @@ blink_led(void *whatever)
 
 	timeout_set(&blink_tmo, blink_led, NULL);
 	timeout_add(&blink_tmo,
-	    ((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 3));
+	    ((averunnable.ldavg[0] + FSCALE) * hz) >> FSHIFT);
 }
