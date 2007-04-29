@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.56 2007/04/29 11:13:27 espie Exp $
+# $OpenBSD: pkg_create,v 1.57 2007/04/29 11:35:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -45,9 +45,24 @@ sub create_package
 sub archive {}
 sub comment_create_package {}
 
-sub anything { ${$_[1]}++; }
+sub count_elements { ${$_[1]}++; }
 
 sub print_file {}
+
+package OpenBSD::PackingElement::SpecialFile;
+sub archive
+{
+	my ($self, $arc, $base) = @_;
+	my $o = $arc->prepare($self->{name});
+	$o->write();
+}
+
+sub comment_create_package
+{
+	my ($self) = @_;
+	print "Adding ", $self->{name}, "\n";
+}
+
 package OpenBSD::PackingElement::FileBase;
 use POSIX;
 
@@ -208,22 +223,6 @@ sub compute_checksum
 }
 
 package OpenBSD::PackingList;
-
-sub create_package
-{
-	my ($self, $wrarc, $base, $verbose) = @_;
-	for my $item (@{$self->{items}}) {
-		$item->create_package($wrarc, $base, $verbose);
-	}
-}
-
-sub comment_create_package
-{
-	my ($self) = @_;
-	for my $item (@{$self->{items}}) {
-		$item->comment_create_package();
-	}
-}
 
 sub makesum
 {
@@ -386,8 +385,6 @@ if (!@contents) {
 	Usage "Packing list required";
 }
 
-my @extra_files = ();
-
 if (defined $opt_q) {
 	for my $special (info_names()) {
 		if ($special eq DESC or
@@ -452,12 +449,12 @@ if (defined $opt_q) {
 
 	for my $special (info_names()) {
 	    next unless -f $dir.$special;
-	    push(@extra_files, $special);
 	    my $f = OpenBSD::PackingElement::File->add($plist, $special);
 	    $f->{ignore} = 1;
 	    $f->{md5} = OpenBSD::md5::fromfile($dir.$special);
 	    $f->{size} = (stat $dir.$special)[7];
 	}
+	OpenBSD::PackingElement::File->add($plist, CONTENTS);
 }
 
 if (defined $opt_p) {
@@ -476,7 +473,7 @@ if (defined $opt_L) {
 
 if ($regen_package) {
 	my $v = 0;
-	$plist->anything(\$v);
+	$plist->count_elements(\$v);
 	if ($v != 0 || @contents != 1) {
 		Usage "Exactly one single packing list is required";
 	}
@@ -610,12 +607,7 @@ if ($regen_package) {
 	$wname = $ARGV[0];
 }
 
-unshift(@extra_files, CONTENTS);
-
 if ($opt_n) {
-	for my $special (@extra_files) {
-		print "Adding $special\n" unless defined $opt_q;
-	}
 	$plist->comment_create_package();
 } else {
 	print "Creating gzip'd tar ball in '$wname'\n" if $opt_v;
@@ -633,11 +625,6 @@ if ($opt_n) {
 	local $SIG{'TERM'} = $h;
 	open(my $fh, "|gzip >$wname");
 	my $wrarc = OpenBSD::Ustar->new($fh, $dir);
-	for my $special (@extra_files) {
-		print "Adding $special\n" if $opt_v;
-		my $o = $wrarc->prepare($special);
-		$o->write();
-	}
 
 	$plist->create_package($wrarc, $base, $opt_v);
 	$wrarc->pad();
