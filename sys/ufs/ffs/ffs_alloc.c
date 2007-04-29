@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.71 2007/03/23 13:21:39 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.72 2007/04/29 17:58:09 deraadt Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -785,12 +785,14 @@ fail:
 int
 ffs_reallocblks(void *v)
 {
+#ifdef FFS2
+	struct vop_reallocblks_args *ap = v;
+#endif
+
 	if (!doreallocblks)
 		return (ENOSPC);
 
 #ifdef FFS2
-	struct vop_reallocblks_args *ap = v;
-
 	if (VTOI(ap->a_vp)->i_ump->um_fstype == UM_UFS2)
 		return (ffs2_reallocblks(v));
 #endif
