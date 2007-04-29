@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.111 2007/04/26 23:20:41 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.112 2007/04/29 18:31:35 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.111 2007/04/26 23:20:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.112 2007/04/29 18:31:35 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1997,9 +1997,9 @@ get_size(struct disklabel *lp, int partno, u_int32_t *freep, int new)
 
 	for (;;) {
 		ui = getuint(lp, partno, "size", "Size of the partition.",
-		    pp->p_size, *freep, pp->p_offset, DO_CONVERSIONS |
-		    ((pp->p_fstype == FS_BSDFFS || pp->p_fstype == FS_SWAP) ?
-		    DO_ROUNDING : 0));
+		    pp->p_size, *freep + new ? 0 : pp->p_size, pp->p_offset,
+		    DO_CONVERSIONS | ((pp->p_fstype == FS_BSDFFS ||
+		    pp->p_fstype == FS_SWAP) ?  DO_ROUNDING : 0));
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			return(1);
