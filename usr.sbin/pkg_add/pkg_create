@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.62 2007/04/29 12:26:32 espie Exp $
+# $OpenBSD: pkg_create,v 1.63 2007/04/29 12:31:54 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -179,31 +179,33 @@ sub verify_checksum
 package OpenBSD::PackingElement::FileBase;
 use OpenBSD::md5;
 
-sub create_checksum
+sub compute_checksum
 {
-	my ($self, $plist, $base, $stash) = @_;
+	my ($self, $result, $base, $stash) = @_;
+
 	my $fname = $self->fullname();
 	if (-l "$base/$fname") {
 		my $value = readlink "$base/$fname";
-		$self->make_symlink($value);
-		return if $base eq '/' or $base eq '';
-		if ($value =~ m/^\Q$base/) {
-			print STDERR "Error in package: symlink $base/$fname refers to $value\n";
-			$main::errors++;
-		}
+		$result->make_symlink($value);
 	} elsif (-f _) {
 		my ($dev, $ino, $size) = (stat _)[0,1,7];
 		if (defined $stash->{"$dev/$ino"}) {
-			$self->make_hardlink($stash->{"$dev/$ino"});
+			$result->make_hardlink($stash->{"$dev/$ino"});
 		} else {
 			$stash->{"$dev/$ino"} = $fname;
-			$self->add_md5(OpenBSD::md5::fromfile("$base/$fname"));
-			$self->add_size($size);
+			$result->add_md5(OpenBSD::md5::fromfile("$base/$fname"));
+			$result->add_size($size);
 		}
 	} else {
-		print STDERR "Error in package: \"$base/$fname\" does not exist\n";
+		print STDERR "Error in package: $base/$fname does not exist\n";
 		$main::errors++;
 	}
+}
+
+sub create_checksum
+{
+	my ($self, $plist, $base, $stash) = @_;
+	$self->compute_checksum($self, $base, $stash);
 }
 
 sub verify_checksum
@@ -211,22 +213,8 @@ sub verify_checksum
 	my ($self, $base, $stash) = @_;
 	my $fname = $self->fullname();
 	my $check = ref($self)->new($self->{name});
-	if (-l "$base/$fname") {
-		my $value = readlink "$base/$fname";
-		$check->make_symlink($value);
-	} elsif (-f _) {
-		my ($dev, $ino, $size) = (stat _)[0,1,7];
-		if (defined $stash->{"$dev/$ino"}) {
-			$check->make_hardlink($stash->{"$dev/$ino"});
-		} else {
-			$stash->{"$dev/$ino"} = $fname;
-			$check->add_md5(OpenBSD::md5::fromfile("$base/$fname"));
-			$check->add_size($size);
-		}
-	} else {
-		print STDERR "Error in package: $base/$fname does not exist\n";
-		$main::errors++;
-	}
+	$self->compute_checksum($check, $base, $stash);
+
 	for my $field (qw(symlink link md5 size)) {
 		if ((defined $check->{$field} && defined $self->{$field} &&
 		    $check->{$field} ne $self->{$field}) ||
