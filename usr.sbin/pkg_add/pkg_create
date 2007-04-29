@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.54 2007/04/29 11:09:29 espie Exp $
+# $OpenBSD: pkg_create,v 1.55 2007/04/29 11:12:07 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -32,7 +32,20 @@ use File::Basename;
 # Extra stuff needed to archive files
 package OpenBSD::PackingElement;
 
+sub create_package 
+{
+	my ($self, $arc, $base, $verbose) = @_;
+	if (defined $arc) {
+		$self->archive($arc, $base);
+	}
+	if ($verbose) {
+		$self->comment_create_package();
+	}
+}
+
 sub archive {}
+sub comment_create_package {}
+
 sub anything { ${$_[1]}++; }
 
 sub print_file {}
@@ -41,37 +54,38 @@ use POSIX;
 
 sub archive
 {
-	my ($self, $arc, $base, $verbose) = @_;
+	my ($self, $arc, $base) = @_;
 
-	if (defined $arc) {
-	    my $o = $arc->prepare_long($self);
-	    if (!defined $self->{owner} && !$o->isSymLink()) {
-		if ($o->{uname} ne 'root' && $o->{uname} ne 'bin') {
-			print STDERR "Error: no \@owner for ",
-			    $self->fullname(), " (", $o->{uname}, ")\n";
-			$main::errors++;
-		}
+	my $o = $arc->prepare_long($self);
+	if (!defined $self->{owner} && !$o->isSymLink()) {
+	    if ($o->{uname} ne 'root' && $o->{uname} ne 'bin') {
+		    print STDERR "Error: no \@owner for ",
+			$self->fullname(), " (", $o->{uname}, ")\n";
+		    $main::errors++;
 	    }
-	    if (!defined $self->{group} && !$o->isSymLink()) {
-		if ($o->{gname} ne 'bin' && $o->{gname} ne 'wheel') {
-			print STDERR "Warning: no \@group for ",
-			    $self->fullname(), " (", $o->{gname}, ")\n";
+	}
+	if (!defined $self->{group} && !$o->isSymLink()) {
+	    if ($o->{gname} ne 'bin' && $o->{gname} ne 'wheel') {
+		    print STDERR "Warning: no \@group for ",
+			$self->fullname(), " (", $o->{gname}, ")\n";
 #			$main::errors++;
-		}
 	    }
-	    if (!defined $self->{mode} && $o->isFile()) {
-		if (($o->{mode} & (S_ISUID | S_ISGID | S_IWOTH)) != 0) {
-			print STDERR "Error: weird mode for ", 
-			    $self->fullname(), ": ", 
-			    sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)), "\n";
-			$main::errors++;
-		}
+	}
+	if (!defined $self->{mode} && $o->isFile()) {
+	    if (($o->{mode} & (S_ISUID | S_ISGID | S_IWOTH)) != 0) {
+		    print STDERR "Error: weird mode for ", 
+			$self->fullname(), ": ", 
+			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)), "\n";
+		    $main::errors++;
 	    }
-	    $o->write() unless $main::errors;
 	}
-	if ($verbose) {
-		print "Adding ", $self->{name}, "\n";
-	}
+	$o->write() unless $main::errors;
+}
+
+sub comment_create_package
+{
+	my ($self) = @_;
+	print "Adding ", $self->{name}, "\n";
 }
 
 sub print_file
@@ -82,15 +96,17 @@ sub print_file
 
 package OpenBSD::PackingElement::Cwd;
 use OpenBSD::Temp;
+
 sub archive
 {
-	my ($self, $arc, $base, $verbose) = @_;
-	if (defined $arc) {
-	    $arc->destdir($base."/".$self->{name});
-	}
-	if ($verbose) {
-		print "Cwd: ", $self->{name}, "\n";
-	}
+	my ($self, $arc, $base) = @_;
+	$arc->destdir($base."/".$self->{name});
+}
+
+sub comment_create_package
+{
+	my ($self) = @_;
+	print "Cwd: ", $self->{name}, "\n";
 }
 
 package OpenBSD::PackingElement::DirRm;
@@ -194,11 +210,19 @@ sub compute_checksum
 
 package OpenBSD::PackingList;
 
-sub archive
+sub create_package
 {
 	my ($self, $wrarc, $base, $verbose) = @_;
 	for my $item (@{$self->{items}}) {
-		$item->archive($wrarc, $base, $verbose);
+		$item->create_package($wrarc, $base, $verbose);
+	}
+}
+
+sub comment_create_package
+{
+	my ($self) = @_;
+	for my $item (@{$self->{items}}) {
+		$item->comment_create_package();
 	}
 }
 
@@ -593,7 +617,7 @@ if ($opt_n) {
 	for my $special (@extra_files) {
 		print "Adding $special\n" unless defined $opt_q;
 	}
-	$plist->archive(undef, $base, 1);
+	$plist->comment_create_package();
 } else {
 	print "Creating gzip'd tar ball in '$wname'\n" if $opt_v;
 	my $h = sub { 
@@ -616,7 +640,7 @@ if ($opt_n) {
 		$o->write();
 	}
 
-	$plist->archive($wrarc, $base, $opt_v);
+	$plist->create_package($wrarc, $base, $opt_v);
 	$wrarc->pad();
 	close($fh);
 	if ($errors) {
