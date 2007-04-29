@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.41 2006/09/26 23:33:04 krw Exp $ */
+/*	$OpenBSD: mcd.c,v 1.42 2007/04/29 22:22:34 krw Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -87,12 +87,6 @@
 #else
 #define MCD_TRACE(fmt,a,b,c,d)	{if (sc->debug) {printf("%s: st=%02x: ", sc->sc_dev.dv_xname, sc->status); printf(fmt,a,b,c,d);}}
 #endif
-
-#define	MCDPART(dev)	DISKPART(dev)
-#define	MCDUNIT(dev)	DISKUNIT(dev)
-#define	MAKEMCDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
-
-#define	MCDLABELDEV(dev) (MAKEMCDDEV(major(dev), MCDUNIT(dev), RAW_PART))
 
 /* toc */
 #define MCD_MAXTOCS	104	/* from the Linux driver */
@@ -316,7 +310,7 @@ mcdopen(dev, flag, fmt, p)
 	int unit, part;
 	struct mcd_softc *sc;
 
-	unit = MCDUNIT(dev);
+	unit = DISKUNIT(dev);
 	if (unit >= mcd_cd.cd_ndevs)
 		return ENXIO;
 	sc = mcd_cd.cd_devs[unit];
@@ -373,7 +367,7 @@ mcdopen(dev, flag, fmt, p)
 	MCD_TRACE("open: partition=%d disksize=%d blksize=%d\n", part,
 	    sc->disksize, sc->blksize, 0);
 
-	part = MCDPART(dev);
+	part = DISKPART(dev);
 	
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
@@ -419,8 +413,8 @@ mcdclose(dev, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct mcd_softc *sc = mcd_cd.cd_devs[MCDUNIT(dev)];
-	int part = MCDPART(dev);
+	struct mcd_softc *sc = mcd_cd.cd_devs[DISKUNIT(dev)];
+	int part = DISKPART(dev);
 	int error;
 	
 	MCD_TRACE("close: partition=%d\n", part, 0, 0, 0);
@@ -458,7 +452,7 @@ void
 mcdstrategy(bp)
 	struct buf *bp;
 {
-	struct mcd_softc *sc = mcd_cd.cd_devs[MCDUNIT(bp->b_dev)];
+	struct mcd_softc *sc = mcd_cd.cd_devs[DISKUNIT(bp->b_dev)];
 	int s;
 	
 	/* Test validity. */
@@ -487,7 +481,7 @@ mcdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (MCDPART(bp->b_dev) != RAW_PART &&
+	if (DISKPART(bp->b_dev) != RAW_PART &&
 	    bounds_check_with_label(bp, sc->sc_dk.dk_label,
 	    sc->sc_dk.dk_cpulabel,
 	    (sc->flags & (MCDF_WLABEL|MCDF_LABELLING)) != 0) <= 0)
@@ -554,9 +548,9 @@ loop:
 	sc->mbx.retry = MCD_RDRETRIES;
 	sc->mbx.bp = bp;
 	sc->mbx.blkno = bp->b_blkno / (sc->blksize / DEV_BSIZE);
-	if (MCDPART(bp->b_dev) != RAW_PART) {
+	if (DISKPART(bp->b_dev) != RAW_PART) {
 		struct partition *p;
-		p = &sc->sc_dk.dk_label->d_partitions[MCDPART(bp->b_dev)];
+		p = &sc->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
 		sc->mbx.blkno += p->p_offset;
 	}
 	sc->mbx.nblk = bp->b_bcount / sc->blksize;
@@ -598,7 +592,7 @@ mcdioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct mcd_softc *sc = mcd_cd.cd_devs[MCDUNIT(dev)];
+	struct mcd_softc *sc = mcd_cd.cd_devs[DISKUNIT(dev)];
 	int error;
 	
 	MCD_TRACE("ioctl: cmd=0x%x\n", cmd, 0, 0, 0);
@@ -619,7 +613,7 @@ mcdioctl(dev, cmd, addr, flag, p)
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = sc->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		    &sc->sc_dk.dk_label->d_partitions[MCDPART(dev)];
+		    &sc->sc_dk.dk_label->d_partitions[DISKPART(dev)];
 		return 0;
 
 	case DIOCWDINFO:
@@ -748,7 +742,7 @@ mcdgetdisklabel(dev, sc, lp, clp, spoofonly)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(MCDLABELDEV(dev), mcdstrategy, lp, clp,
+	errstring = readdisklabel(DISKLABELDEV(dev), mcdstrategy, lp, clp,
 	    spoofonly);
 	if (errstring) {
 		/*printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);*/
