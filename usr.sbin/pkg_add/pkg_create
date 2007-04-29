@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.60 2007/04/29 11:48:00 espie Exp $
+# $OpenBSD: pkg_create,v 1.61 2007/04/29 12:06:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -49,16 +49,47 @@ sub count_elements { ${$_[1]}++; }
 
 sub print_file {}
 
-sub avert_duplicates
+sub avert_duplicates_and_other_checks
 {
 	my ($self, $allfiles) = @_;
 	return unless $self->NoDuplicateNames();
 	my $n = $self->fullname();
 	if (defined $allfiles->{$n}) {
-		print STDERR "Error in packing-list: duplicate file $n\n";
+		print STDERR "Error in packing-list: duplicate item $n\n";
 		$main::errors++;
 	}
 	$allfiles->{$n} = 1;
+}
+
+my $warned;
+
+sub warn_once
+{
+	my $self = shift;
+	my $k = $self->keyword;
+	if (!$warned->{$k}) {
+		print STDERR "Error: \@$k is deprecated\n";
+		$main::errors++;
+		$warned->{$k} = 1;
+	}
+}
+
+package OpenBSD::PackingElement::PkgConflict;
+sub avert_duplicates_and_other_checks
+{
+	shift->warn_once;
+}
+
+package OpenBSD::PackingElement::PkgDep;
+sub avert_duplicates_and_other_checks
+{
+	shift->warn_once;
+}
+
+package OpenBSD::PackingElement::DirRm;
+sub avert_duplicates_and_other_checks
+{
+	shift->warn_once;
 }
 
 package OpenBSD::PackingElement::SpecialFile;
@@ -133,18 +164,6 @@ sub comment_create_package
 {
 	my ($self) = @_;
 	print "Cwd: ", $self->{name}, "\n";
-}
-
-package OpenBSD::PackingElement::DirRm;
-my $warned;
-
-sub create_checksum
-{
-	if (!$warned) {
-		print STDERR "Error: \@dirrm is deprecated\n";
-		$warned=1;
-		$main::errors++;
-	}
 }
 
 package OpenBSD::PackingElement;
@@ -568,18 +587,10 @@ unless (defined $opt_q && defined $opt_n) {
 		$plist->makesum($base);
 	}
 }
-$plist->avert_duplicates({});
+$plist->avert_duplicates_and_other_checks({});
 
-if (defined $plist->{pkgcfl}) {
-	print STDERR "Error: \@pkgcfl is obsolete, use \@conflict instead\n";
-	$errors++;
-}
-if (defined $plist->{pkgdep}) {
-	print STDERR "\@pkgdep is obsolete, use \@depend instead\n";
-	$errors++;
-}
 if ($errors) {
-	exit(1);
+	exit 1;
 }
 
 if (!defined $plist->{name}) {
