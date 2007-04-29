@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.56 2007/04/29 10:52:15 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.57 2007/04/29 11:28:59 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -246,15 +246,6 @@ MAINLOOP:
 		&$cont($_);
 	}
 }
-
-sub write
-{
-	my ($self, $fh) = @_;
-
-	$self->visit('write', $fh);
-
-}
-
 
 sub fromfile
 {
