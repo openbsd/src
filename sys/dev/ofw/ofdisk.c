@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdisk.c,v 1.10 2006/03/15 20:20:41 miod Exp $	*/
+/*	$OpenBSD: ofdisk.c,v 1.11 2007/04/29 18:59:37 krw Exp $	*/
 /*	$NetBSD: ofdisk.c,v 1.3 1996/10/13 01:38:13 christos Exp $	*/
 
 /*
@@ -312,11 +312,8 @@ ofdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				     (struct disklabel *)data, /*of->sc_dk.dk_openmask */0,
 				     of->sc_dk.dk_cpulabel);
 		if (error == 0 && cmd == DIOCWDINFO)
-			error = writedisklabel(MAKEDISKDEV(major(dev),
-							   DISKUNIT(dev), RAW_PART),
-					       ofdstrategy,
-					       of->sc_dk.dk_label,
-					       of->sc_dk.dk_cpulabel);
+			error = writedisklabel(DISKLABELDEV(dev), ofdstrategy,
+			    of->sc_dk.dk_label, of->sc_dk.dk_cpulabel);
 
 		return error;
 	default:

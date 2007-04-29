@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.34 2007/02/15 00:53:26 krw Exp $	*/
+/*	$OpenBSD: xd.c,v 1.35 2007/04/29 18:59:37 krw Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -888,9 +888,8 @@ xdioctl(dev, command, addr, flag, p)
 
 			/* Simulate opening partition 0 so write succeeds. */
 			xd->sc_dk.dk_openmask |= (1 << 0);
-			error = writedisklabel(MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART),
-			    xdstrategy, xd->sc_dk.dk_label,
-			    xd->sc_dk.dk_cpulabel);
+			error = writedisklabel(DISKLABELDEV(dev), xdstrategy,
+			    xd->sc_dk.dk_label, xd->sc_dk.dk_cpulabel);
 			xd->sc_dk.dk_openmask =
 			    xd->sc_dk.dk_copenmask | xd->sc_dk.dk_bopenmask;
 		}

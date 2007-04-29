@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.30 2007/02/15 00:53:26 krw Exp $	*/
+/*	$OpenBSD: xy.c,v 1.31 2007/04/29 18:59:37 krw Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -849,9 +849,8 @@ xyioctl(dev, command, addr, flag, p)
 
 			/* Simulate opening partition 0 so write succeeds. */
 			xy->sc_dk.dk_openmask |= (1 << 0);
-			error = writedisklabel(MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART),
-			    xystrategy, xy->sc_dk.dk_label,
-			    xy->sc_dk.dk_cpulabel);
+			error = writedisklabel(DISKLABELDEV(dev), xystrategy,
+			    xy->sc_dk.dk_label, xy->sc_dk.dk_cpulabel);
 			xy->sc_dk.dk_openmask =
 			    xy->sc_dk.dk_copenmask | xy->sc_dk.dk_bopenmask;
 		}
