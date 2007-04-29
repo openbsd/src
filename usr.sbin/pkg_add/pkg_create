@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.61 2007/04/29 12:06:55 espie Exp $
+# $OpenBSD: pkg_create,v 1.62 2007/04/29 12:26:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -197,8 +197,8 @@ sub create_checksum
 			$self->make_hardlink($stash->{"$dev/$ino"});
 		} else {
 			$stash->{"$dev/$ino"} = $fname;
-			$self->{md5} = OpenBSD::md5::fromfile("$base/$fname");
-			$self->{size} = $size;
+			$self->add_md5(OpenBSD::md5::fromfile("$base/$fname"));
+			$self->add_size($size);
 		}
 	} else {
 		print STDERR "Error in package: \"$base/$fname\" does not exist\n";
@@ -210,18 +210,18 @@ sub verify_checksum
 {
 	my ($self, $base, $stash) = @_;
 	my $fname = $self->fullname();
-	my $check = {};
+	my $check = ref($self)->new($self->{name});
 	if (-l "$base/$fname") {
 		my $value = readlink "$base/$fname";
-		$check->{symlink} = $value;
+		$check->make_symlink($value);
 	} elsif (-f _) {
 		my ($dev, $ino, $size) = (stat _)[0,1,7];
 		if (defined $stash->{"$dev/$ino"}) {
-			$check->{link} = $stash->{"$dev/$ino"};
+			$check->make_hardlink($stash->{"$dev/$ino"});
 		} else {
 			$stash->{"$dev/$ino"} = $fname;
-			$check->{md5} = OpenBSD::md5::fromfile("$base/$fname");
-			$check->{size} = $size;
+			$check->add_md5(OpenBSD::md5::fromfile("$base/$fname"));
+			$check->add_size($size);
 		}
 	} else {
 		print STDERR "Error in package: $base/$fname does not exist\n";
@@ -488,7 +488,7 @@ if (defined $opt_L) {
 if ($regen_package) {
 	my $v = 0;
 	$plist->count_elements(\$v);
-	if ($v != 0 || @contents != 1) {
+	if ($v != 1 || @contents != 1) {
 		Usage "Exactly one single packing list is required";
 	}
 	$dir = dirname($contents[0]);
