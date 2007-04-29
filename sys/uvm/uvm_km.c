@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.62 2007/04/27 07:45:30 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.63 2007/04/29 15:46:42 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -392,7 +392,7 @@ uvm_km_kmemalloc(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 	 */
 
 	loopva = kva;
-	while (loopva < kva + size) {
+	while (loopva != kva + size) {
 		pg = uvm_pagealloc(obj, offset, NULL, 0);
 		if (pg) {
 			atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
