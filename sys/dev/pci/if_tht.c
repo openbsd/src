@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.85 2007/04/29 11:58:12 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.86 2007/04/29 21:44:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -909,7 +909,7 @@ tht_up(struct tht_softc *sc)
 	struct ifnet			*ifp = &sc->sc_ac.ac_if;
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-		printf("%s: interface is already up\n");
+		printf("%s: interface is already up\n", DEVNAME(sc));
 		return;
 	}
 
@@ -987,7 +987,7 @@ tht_down(struct tht_softc *sc)
 	struct ifnet			*ifp = &sc->sc_ac.ac_if;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING)) {
-		printf("%s: interface is already down\n");
+		printf("%s: interface is already down\n", DEVNAME(sc));
 		return;
 	}
 
