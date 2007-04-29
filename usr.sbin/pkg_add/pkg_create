@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.58 2007/04/29 11:44:42 espie Exp $
+# $OpenBSD: pkg_create,v 1.59 2007/04/29 11:47:16 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -160,7 +160,7 @@ sub verify_checksum
 package OpenBSD::PackingElement::FileBase;
 use OpenBSD::md5;
 
-sub compute_checksum
+sub create_checksum
 {
 	my ($self, $plist, $base, $stash) = @_;
 	my $fname = $self->fullname();
@@ -219,15 +219,15 @@ sub verify_checksum
 }
 
 package OpenBSD::PackingElement::InfoFile;
-sub compute_checksum
+sub create_checksum
 {
 	my ($self, $plist, $base, $stash) = @_;
-	$self->SUPER::compute_checksum($plist, $base, $stash);
+	$self->SUPER::create_checksum($plist, $base, $stash);
 	my $fname = $self->fullname();
 	for (my $i = 1; ; $i++) {
 		if (-e "$base/$fname-$i") {
 			my $file = OpenBSD::PackingElement::File->add($plist, $self->{name}."-".$i);
-			$file->compute_checksum($plist, $base, $stash);
+			$file->create_checksum($plist, $base, $stash);
 		} else {
 			last;
 		}
@@ -245,7 +245,7 @@ sub makesum
 	for my $item (@$oldlist) {
 		push @{$self->{items}}, $item;
 		$self->{state}->{cwd} = $item->{cwd} if defined $item->{cwd};
-		$item->compute_checksum($self, $base, $stash);
+		$item->create_checksum($self, $base, $stash);
 	}
 }
 
