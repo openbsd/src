@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.4 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: Replace.pm,v 1.5 2007/04/29 11:09:29 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -256,7 +256,7 @@ sub can_do
 		Fatal "Couldn't find packing-list for $toreplace\n";
 	}
 	$state->{journal} = [];
-	$plist->visit('can_update', 0, $state);
+	$plist->can_update(0, $state);
 	if ($state->{okay} == 0) {
 		Warn "Old package ", $plist->pkgname(), " contains potentially unsafe operations\n";
 		for my $i (@{$state->{journal}}) {
@@ -286,7 +286,7 @@ sub can_do
 			if (!defined $p2) {
 				Warn "Error: $wanting missing from installation\n"
 			} else {
-				$p2->visit('validate_depend', $state, $wanting, 
+				$p2->validate_depend($state, $wanting, 
 				    $toreplace, $replacement);
 			}
 		}
@@ -312,7 +312,7 @@ sub is_safe
 	my ($plist, $state) = @_;
 	$state->{okay} = 1;
 	$state->{journal} = [];
-	$plist->visit('can_update', 1, $state);
+	$plist->can_update(1, $state);
 	if ($state->{okay} == 0) {
 		Warn "New package ", $plist->pkgname(), 
 		    " contains potentially unsafe operations\n";
@@ -443,8 +443,8 @@ sub save_old_libraries
 
 		print "Looking for changes in shared libraries\n" 
 		    if $state->{beverbose};
-		$old_plist->visit('mark_lib', $libs, $p);
-		$new_plist->visit('unmark_lib', $libs, $p);
+		$old_plist->mark_lib($libs, $p);
+		$new_plist->unmark_lib($libs, $p);
 
 		if (%$libs) {
 			print "Libraries to keep: ", join(",", sort(keys %$libs)), "\n" 

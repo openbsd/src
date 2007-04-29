@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.53 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: pkg_create,v 1.54 2007/04/29 11:09:29 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -453,7 +453,7 @@ if (defined $opt_L) {
 
 if ($regen_package) {
 	my $v = 0;
-	$plist->visit('anything', \$v);
+	$plist->anything(\$v);
 	if ($v != 0 || @contents != 1) {
 		Usage "Exactly one single packing list is required";
 	}
@@ -573,7 +573,7 @@ if (!defined $plist->{name}) {
 
 if (defined $opt_q) {
 	if (defined $opt_Q) {
-		$plist->visit('print_file');
+		$plist->print_file;
 	} else {
 		$plist->write(\*STDOUT);
 	}

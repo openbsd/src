@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.35 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: Delete.pm,v 1.36 2007/04/29 11:09:29 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -102,7 +102,7 @@ sub validate_plist($$)
 	my $destdir = $state->{destdir};
 	$state->{problems} = 0;
 	$state->{totsize} = 0;
-	$plist->visit('prepare_for_deletion', $state);
+	$plist->prepare_for_deletion($state);
 	my $dir = installed_info($plist->pkgname());
 	for my $i (info_names()) {
 		my $fname = $dir.$i;
@@ -168,7 +168,7 @@ sub delete_plist
 	if ($plist->has(DEINSTALL)) {
 		$plist->get(DEINSTALL)->delete($state);
 	} 
-	$plist->visit('register_manpage', $state);
+	$plist->register_manpage($state);
 	manpages_unindex($state);
 	my $donesize = 0;
 	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {

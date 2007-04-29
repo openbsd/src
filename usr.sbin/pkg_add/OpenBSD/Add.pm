@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.51 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: Add.pm,v 1.52 2007/04/29 11:09:29 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -65,7 +65,7 @@ sub validate_plist($$)
 	my $totsize = 0;
 	my $colliding = [];
 
-	$plist->visit('validate', $state, \$problems, $colliding, \$totsize, $plist->pkgname());
+	$plist->validate($state, \$problems, $colliding, \$totsize, $plist->pkgname());
 	if (@$colliding > 0) {
 		require OpenBSD::CollisionReport;
 

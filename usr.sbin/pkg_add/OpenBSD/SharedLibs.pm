@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.9 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.10 2007/04/29 11:09:29 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -146,7 +146,7 @@ sub add_package_libs
 		}
 	}
 
-	$plist->visit('mark_available_lib', $pkgname);
+	$plist->mark_available_lib($pkgname);
 }
 
 sub add_bogus_package_libs
@@ -162,7 +162,7 @@ sub add_bogus_package_libs
 		Warn "Can't read plist for $pkgname\n";
 		return;
 	}
-	$plist->visit('mark_bogus_lib', $pkgname);
+	$plist->mark_bogus_lib($pkgname);
 }
 
 sub add_plist_libs
@@ -171,7 +171,7 @@ sub add_plist_libs
 	my $pkgname = $plist->pkgname();
 	return if $done_plist->{$pkgname};
 	$done_plist->{$pkgname} = 1;
-	$plist->visit('mark_available_lib', $pkgname);
+	$plist->mark_available_lib($pkgname);
 }
 
 sub _lookup_libspec

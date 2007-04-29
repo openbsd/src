@@ -162,7 +162,7 @@ for my $pkgname (@ARGV) {
 		};
 	my $e = OpenBSD::PackingElement::FCONTENTS->new(CONTENTS);
 	$e->copy_over($wrarc, $prefix, $true_package);
-	$plist->visit('mark_tocopy', $in->{tocopy});
+	$plist->mark_tocopy($in->{tocopy});
 	push(@tomerge, $in);
 	$prefix++;
 }

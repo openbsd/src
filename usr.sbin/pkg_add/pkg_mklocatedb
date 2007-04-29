@@ -152,7 +152,7 @@ if ($opt_p) {
 			$done = 1;
 		    });
 		if (defined $plist && defined $plist->pkgname()) {
-			$plist->visit('print_name', $fh, info($plist));
+			$plist->print_name($fh, info($plist));
 		}
 	}
 	close($in);
@@ -161,12 +161,12 @@ if ($opt_p) {
 elsif (@ARGV==0) {
 	for my $pkgname (installed_packages()) {
 		my $plist = OpenBSD::PackingList->from_installation($pkgname);
-		$plist->visit('print_name', $fh, info($plist));
+		$plist->print_name($fh, info($plist));
 	}
 } else {
 	for my $pkgname (@ARGV) {
 		my $plist = OpenBSD::PackageLocator->grabPlist($pkgname);
 		next unless $plist;
-		$plist->visit('print_name', $fh, info($plist));
+		$plist->print_name($fh, info($plist));
 	}
 }

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.7 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.8 2007/04/29 11:09:29 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -35,7 +35,7 @@ sub find_items_in_installed_packages
 		OpenBSD::ProgressMeter::show($done, $total);
 		my $plist = OpenBSD::PackingList->from_installation($e, 
 		    \&OpenBSD::PackingList::SharedItemsOnly) or next;
-		$plist->visit('record_shared_item', $e, $db);
+		$plist->record_shared_item($e, $db);
 		$done++;
 	}
 	return $db;
