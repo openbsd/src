@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.120 2007/04/30 07:00:02 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.121 2007/04/30 08:03:51 xsa Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -70,7 +70,7 @@ char	*cvs_tmpdir = CVS_TMPDIR_DEFAULT;
 struct cvsroot *current_cvsroot = NULL;
 
 int		cvs_getopt(int, char **);
-void		usage(void);
+__dead void	usage(void);
 static void	cvs_read_rcfile(void);
 
 struct cvs_wklhead temp_files;
@@ -113,12 +113,13 @@ cvs_cleanup(void)
 	}
 }
 
-void
+__dead void
 usage(void)
 {
-	fprintf(stderr,
+	(void)fprintf(stderr,
 	    "usage: %s [-flnQqRrtVvw] [-d root] [-e editor] [-s var=val]\n"
 	    "           [-T tmpdir] [-z level] command [...]\n", __progname);
+	exit(1);
 }
 
 int
@@ -168,10 +169,8 @@ main(int argc, char **argv)
 
 	argc -= ret;
 	argv += ret;
-	if (argc == 0) {
+	if (argc == 0)
 		usage();
-		exit(1);
-	}
 
 	cvs_command = argv[0];
 
@@ -378,7 +377,7 @@ cvs_getopt(int argc, char **argv)
 			break;
 		default:
 			usage();
-			exit(1);
+			/* NOTREACHED */
 		}
 	}
 
