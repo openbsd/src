@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.67 2007/04/30 09:30:03 espie Exp $
+# $OpenBSD: pkg_create,v 1.68 2007/04/30 09:31:25 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -78,6 +78,30 @@ sub makesum_plist
 {
 	my ($self, $plist, $base, $stash) = @_;
 	$self->add_object($plist);
+}
+
+use OpenBSD::md5;
+
+sub compute_checksum
+{
+	my ($self, $result, $fname, $stash) = @_;
+
+	if (-l $fname) {
+		my $value = readlink $fname;
+		$result->make_symlink($value);
+	} elsif (-f _) {
+		my ($dev, $ino, $size) = (stat _)[0,1,7];
+		if (defined $stash->{"$dev/$ino"}) {
+			$result->make_hardlink($stash->{"$dev/$ino"});
+		} else {
+			$stash->{"$dev/$ino"} = $fname;
+			$result->add_md5(OpenBSD::md5::fromfile($fname));
+			$result->add_size($size);
+		}
+	} else {
+		print STDERR "Error in package: $fname does not exist\n";
+		$main::errors++;
+	}
 }
 
 package OpenBSD::PackingElement::PkgConflict;
@@ -183,30 +207,6 @@ sub verify_checksum
 }
 
 package OpenBSD::PackingElement::FileBase;
-use OpenBSD::md5;
-
-sub compute_checksum
-{
-	my ($self, $result, $fname, $stash) = @_;
-
-	if (-l $fname) {
-		my $value = readlink $fname;
-		$result->make_symlink($value);
-	} elsif (-f _) {
-		my ($dev, $ino, $size) = (stat _)[0,1,7];
-		if (defined $stash->{"$dev/$ino"}) {
-			$result->make_hardlink($stash->{"$dev/$ino"});
-		} else {
-			$stash->{"$dev/$ino"} = $fname;
-			$result->add_md5(OpenBSD::md5::fromfile($fname));
-			$result->add_size($size);
-		}
-	} else {
-		print STDERR "Error in package: $fname does not exist\n";
-		$main::errors++;
-	}
-}
-
 sub makesum_plist
 {
 	my ($self, $plist, $base, $stash) = @_;
