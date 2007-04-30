@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.24 2007/04/30 11:13:11 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.25 2007/04/30 13:26:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -528,7 +528,7 @@ nxb_mountroot(void *arg)
 		 * XXX from disk if the firmware image in the flash is not
 		 * XXX supported by the driver.
 		 */
-		printf(", requires %u.%u.xx (%u.%u.%u)",
+		printf(", requires %u.%u.xx (%u.%u.%u)\n",
 		    NX_FIRMWARE_MAJOR, NX_FIRMWARE_MINOR,
 		    NX_FIRMWARE_MAJOR, NX_FIRMWARE_MINOR,
 		    NX_FIRMWARE_BUILD);
