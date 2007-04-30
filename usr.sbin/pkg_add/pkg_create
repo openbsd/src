@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.70 2007/04/30 09:37:36 espie Exp $
+# $OpenBSD: pkg_create,v 1.71 2007/04/30 09:53:41 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -74,6 +74,16 @@ sub warn_once
 	}
 }
 
+sub makesum_plist
+{
+	my ($self, $plist, $base, $stash, $infodir) = @_;
+	$self->add_object($plist);
+}
+
+sub verify_checksum
+{
+}
+
 use OpenBSD::md5;
 
 sub compute_checksum
@@ -98,14 +108,27 @@ sub compute_checksum
 	}
 }
 
-sub makesum_plist
+sub makesum_plist_filename
 {
-	my ($self, $plist, $base, $stash, $infodir) = @_;
+	my ($self, $plist, $fname, $stash) = @_;
+	$self->compute_checksum($self, $fname, $stash);
 	$self->add_object($plist);
 }
 
-sub verify_checksum
+sub verify_checksum_filename
 {
+	my ($self, $fname, $stash) = @_;
+	my $check = ref($self)->new($self->{name});
+	$self->compute_checksum($check, $fname, $stash);
+
+	for my $field (qw(symlink link md5 size)) {
+		if ((defined $check->{$field} && defined $self->{$field} &&
+		    $check->{$field} ne $self->{$field}) ||
+		    (defined $check->{$field} xor defined $self->{$field})) {
+			print STDERR "Error: $field inconsistency for $fname\n";
+			$main::errors++;
+		}
+	}
 }
 
 package OpenBSD::PackingElement::PkgConflict;
@@ -139,6 +162,33 @@ sub comment_create_package
 	my ($self) = @_;
 	print "Adding ", $self->{name}, "\n";
 }
+
+sub makesum_plist
+{
+	my ($self, $plist, $base, $stash, $infodir) = @_;
+	my $fname = $infodir.'/'.$self->{name};
+	$self->makesum_plist_filename($plist, $fname, $stash);
+}
+
+sub verify_checksum
+{
+	my ($self, $base, $stash, $infodir) = @_;
+	my $fname = $infodir.'/'.$self->{name};
+	$self->verify_checksum_filename($fname, $stash);
+}
+
+# override for CONTENTS: we cannot checksum this.
+package OpenBSD::PackingElement::FCONTENTS;
+sub makesum_plist
+{
+	my ($self, $plist, $base, $stash, $infodir) = @_;
+	$self->add_object($plist);
+}
+
+sub verify_checksum
+{
+}
+
 
 package OpenBSD::PackingElement::Cwd;
 use OpenBSD::Temp;
@@ -204,25 +254,14 @@ sub makesum_plist
 {
 	my ($self, $plist, $base, $stash, $infodir) = @_;
 	my $fname = $base.'/'.$self->fullname();
-	$self->compute_checksum($self, $fname, $stash);
-	$self->add_object($plist);
+	$self->makesum_plist_filename($plist, $fname, $stash);
 }
 
 sub verify_checksum
 {
 	my ($self, $base, $stash, $infodir) = @_;
 	my $fname = $base.'/'.$self->fullname();
-	my $check = ref($self)->new($self->{name});
-	$self->compute_checksum($check, $fname, $stash);
-
-	for my $field (qw(symlink link md5 size)) {
-		if ((defined $check->{$field} && defined $self->{$field} &&
-		    $check->{$field} ne $self->{$field}) ||
-		    (defined $check->{$field} xor defined $self->{$field})) {
-			print STDERR "Error: $field inconsistency for $fname\n";
-			$main::errors++;
-		}
-	}
+	$self->verify_checksum_filename($fname, $stash);
 }
 
 package OpenBSD::PackingElement::InfoFile;
@@ -427,9 +466,7 @@ if (defined $opt_q) {
 
 	for my $special (info_names()) {
 	    next unless -f $infodir.$special;
-	    my $f = OpenBSD::PackingElement::File->add($plist, $special);
-	    $f->add_md5(OpenBSD::md5::fromfile($infodir.$special));
-	    $f->add_size((stat $infodir.$special)[7]);
+	    OpenBSD::PackingElement::File->add($plist, $special);
 	}
 	OpenBSD::PackingElement::File->add($plist, CONTENTS);
 }
