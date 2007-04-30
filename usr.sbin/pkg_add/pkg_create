@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.75 2007/04/30 10:52:23 espie Exp $
+# $OpenBSD: pkg_create,v 1.76 2007/04/30 11:12:54 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -207,9 +207,9 @@ sub comment_create_package
 package OpenBSD::PackingElement::FileBase;
 use POSIX;
 
-sub archive
+sub prepare_item
 {
-	my ($self, $arc, $base) = @_;
+	my ($self, $arc) = @_;
 
 	my $o = $arc->prepare_long($self);
 	if (!defined $self->{owner} && !$o->isSymLink()) {
@@ -233,7 +233,16 @@ sub archive
 			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)), "\n";
 		    $main::errors++;
 	    }
+	return $o;
 	}
+}
+
+sub archive
+{
+	my ($self, $arc, $base) = @_;
+
+	my $o = $self->prepare_item($arc);
+
 	$o->write() unless $main::errors;
 }
 
