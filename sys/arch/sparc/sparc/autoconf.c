@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.75 2007/04/30 18:11:03 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.76 2007/04/30 18:37:00 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1936,6 +1936,8 @@ setroot()
 				strlcpy(buf, bootdv->dv_xname, sizeof buf);
 				len = strlen(buf);
 			}
+			if (len == 4 && strncmp(buf, "exit", 4) == 0)
+				boot(RB_USERREQ | RB_HALT);
 			if (len > 0 && buf[len - 1] == '*') {
 				buf[--len] = '\0';
 				dv = getdisk(buf, len, 1, &nrootdev);
@@ -1945,8 +1947,6 @@ setroot()
 					goto gotswap;
 				}
 			}
-			if (len == 4 && strncmp(buf, "exit", 4) == 0)
-				boot(RB_USERREQ | RB_HALT);
 			dv = getdisk(buf, len, bp?bp->val[2]:0, &nrootdev);
 			if (dv != NULL) {
 				bootdv = dv;
@@ -1969,6 +1969,8 @@ setroot()
 					bootdv->dv_class == DV_DISK?'b':' ');
 			printf(": ");
 			len = getstr(buf, sizeof(buf));
+			if (len == 4 && strncmp(buf, "exit", 4) == 0)
+				boot(RB_USERREQ | RB_HALT);
 			if (len == 0 && bootdv != NULL) {
 				switch (bootdv->dv_class) {
 				case DV_IFNET:
@@ -1986,8 +1988,6 @@ setroot()
 				}
 				break;
 			}
-			if (len == 4 && strncmp(buf, "exit", 4) == 0)
-				boot(RB_USERREQ | RB_HALT);
 			dv = getdisk(buf, len, 1, &nswapdev);
 			if (dv) {
 				if (dv->dv_class == DV_IFNET)
