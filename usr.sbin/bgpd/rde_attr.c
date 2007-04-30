@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.72 2007/04/30 11:37:15 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.73 2007/04/30 11:41:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -506,7 +506,7 @@ aspath_inflate(void *data, u_int16_t len, u_int16_t *newlen)
 		nlen += 2 + sizeof(u_int32_t) * seg_len;
 
 		if (seg_size > olen)
-			fatalx("aspath_inflate: bula bula");
+			fatalx("aspath_inflate: would overflow");
 	}
 
 	*newlen = nlen;
@@ -549,7 +549,7 @@ aspath_deflate(u_char *data, u_int16_t *len, int *flagnew)
 		nlen += 2 + sizeof(u_int16_t) * seg_len;
 
 		if (seg_size > olen)
-			fatalx("aspath_deflate: bula bula");
+			fatalx("aspath_deflate: would overflow");
 	}
 
 	if ((ndata = malloc(nlen)) == NULL)
@@ -650,7 +650,7 @@ aspath_count(const void *data, u_int16_t len)
 			cnt += seg_len;
 
 		if (seg_size > len)
-			fatalx("aspath_count: bula bula");
+			fatalx("aspath_count: would overflow");
 	}
 	return (cnt);
 }
@@ -682,7 +682,7 @@ aspath_countlength(struct aspath *aspath, u_int16_t cnt, int headcnt)
 		clen += seg_size;
 
 		if (seg_size > len)
-			fatalx("aspath_countlenght: bula bula");
+			fatalx("aspath_countlenght: would overflow");
 	}
 	if (headcnt > 0 && seg_type == AS_SEQUENCE && headcnt + seg_len < 256)
 		/* no need for additional header from the new aspath. */
@@ -768,7 +768,7 @@ aspath_loopfree(struct aspath *aspath, u_int32_t myAS)
 		}
 
 		if (seg_size > len)
-			fatalx("aspath_loopfree: bula bula");
+			fatalx("aspath_loopfree: would overflow");
 	}
 	return (1);
 }
@@ -823,7 +823,7 @@ aspath_prepend(struct aspath *asp, u_int32_t as, int quantum, u_int16_t *len)
 	/* first calculate new size */
 	if (asp->len > 0) {
 		if (asp->len < 2)
-			fatalx("aspath_prepend: bula bula");
+			fatalx("aspath_prepend: bad aspath length");
 		type = asp->data[0];
 		size = asp->data[1];
 	} else {
