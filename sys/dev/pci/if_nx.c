@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.23 2007/04/30 10:55:08 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.24 2007/04/30 11:13:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -64,6 +64,7 @@
 
 #ifdef NX_DEBUG
 #define NXDBG_FLASH	(1<<0)	/* debug flash access through ROMUSB */
+#define NXDBG_WAIT	(1<<1)	/* poll registers */
 #define NXDBG_ALL	0xffff	/* enable all debugging messages */
 int nx_debug = 0;
 #define DPRINTF(_lvl, _arg...)	do {					\
@@ -583,15 +584,20 @@ nxb_wait(struct nxb_softc *sc, bus_size_t reg, u_int32_t val,
 		data = nxb_read(sc, reg) & mask;
 		if (is_set) {
 			if (data == val)
-				return (0);
+				goto done;
 		} else {
 			if (data != val)
-				return (0);
+				goto done;
 		}
-		delay(10);
+		delay(1);
 	}
 
 	return (-1);
+ done:
+	DPRINTF(NXDBG_WAIT, "%s(%s) "
+	    "reg 0x%08x completed after %d/%d iterations\n",
+	    sc->sc_dev.dv_xname, __func__, reg, i, timeout);
+	return (0);
 }
 
 int
