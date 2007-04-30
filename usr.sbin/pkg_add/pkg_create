@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.79 2007/04/30 11:39:26 bernd Exp $
+# $OpenBSD: pkg_create,v 1.80 2007/04/30 12:11:51 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -366,6 +366,15 @@ sub deduce_name
 	return;
 }
 
+sub add_special_file
+{
+	my ($plist, $name, $infodir, $opt) = @_;
+	if (defined $opt) {
+	    OpenBSD::PackingElement::File->add($plist, $name);
+	    copy_subst($opt, '>', $infodir.$name) if defined $infodir;
+	}
+}
+
 sub add_special_files
 {
 	my ($plist, $infodir) = @_;
@@ -398,35 +407,12 @@ sub add_special_files
 		Usage "Description required";
 	}
 
-
-	if (defined $opt_i) {
-	    OpenBSD::PackingElement::File->add($plist, INSTALL);
-	    copy_subst($opt_i, '>', $infodir.INSTALL) if defined $infodir;
-	}
-		
-	if (defined $opt_k) {
-	    OpenBSD::PackingElement::File->add($plist, DEINSTALL);
-	    copy_subst($opt_k, '>', $infodir.DEINSTALL) if defined $infodir;
-	}
-
-	if (defined $opt_r) {
-	    OpenBSD::PackingElement::File->add($plist, REQUIRE);
-	    copy_subst($opt_r, '>', $infodir.REQUIRE) if defined $infodir;
-	}
-
-	if (defined $opt_M) {
-	    OpenBSD::PackingElement::File->add($plist, DISPLAY);
-	    copy_subst($opt_M, '>', $infodir.DISPLAY) if defined $infodir;
-	}
-
-	if (defined $opt_m) {
-	    OpenBSD::PackingElement::File->add($plist, MODULE);
-	    copy_subst($opt_m, '>', $infodir.MODULE) if defined $infodir;
-	}
-	if (defined $opt_U) {
-	    OpenBSD::PackingElement::File->add($plist, UNDISPLAY);
-	    copy_subst($opt_U, '>', $infodir.UNDISPLAY) if defined $infodir;
-	}
+	add_special_file($plist, INSTALL, $infodir, $opt_i);
+	add_special_file($plist, DEINSTALL, $infodir, $opt_k);
+	add_special_file($plist, REQUIRE, $infodir, $opt_r);
+	add_special_file($plist, DISPLAY, $infodir, $opt_M);
+	add_special_file($plist, MODULE, $infodir, $opt_m);
+	add_special_file($plist, UNDISPLAY, $infodir, $opt_U);
 }
 
 our $errors = 0;
