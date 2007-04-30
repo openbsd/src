@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.72 2007/04/30 10:00:50 espie Exp $
+# $OpenBSD: pkg_create,v 1.73 2007/04/30 10:26:43 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -336,6 +336,69 @@ sub deduce_name
 	return;
 }
 
+sub add_special_files
+{
+	my ($plist, $infodir) = @_;
+	OpenBSD::PackingElement::File->add($plist, DESC);
+	if (defined $opt_c) {
+	    if (defined $infodir) {
+		if ($opt_c =~ /^\-/) {
+		    open(my $fh, '>', $infodir.DESC) or die "Can't write COMMENT to DESC file: $!";
+		    print $fh $';
+		    close($fh);
+		} else {
+		    copy_subst($opt_c, '>', $infodir.DESC);
+		}
+	    }
+	} else {
+		Usage "Comment required";
+	}
+
+	if (defined $opt_d) {
+	    if (defined $infodir) {
+		if ($opt_d =~ /^\-/) {
+		    open(my $fh, '>>', $infodir.DESC) or die "Can't write to DESC: $!";
+		    print $fh $';
+		    close($fh);
+		} else {
+		    copy_subst($opt_d, '>>', $infodir.DESC);
+		}
+	    }
+	} else {
+		Usage "Description required";
+	}
+
+
+	if (defined $opt_i) {
+	    OpenBSD::PackingElement::File->add($plist, INSTALL);
+	    copy_subst($opt_i, '>', $infodir.INSTALL) if defined $infodir;
+	}
+		
+	if (defined $opt_k) {
+	    OpenBSD::PackingElement::File->add($plist, DEINSTALL);
+	    copy_subst($opt_k, '>', $infodir.DEINSTALL) if defined $infodir;
+	}
+
+	if (defined $opt_r) {
+	    OpenBSD::PackingElement::File->add($plist, REQUIRE);
+	    copy_subst($opt_r, '>', $infodir.REQUIRE) if defined $infodir;
+	}
+
+	if (defined $opt_M) {
+	    OpenBSD::PackingElement::File->add($plist, DISPLAY);
+	    copy_subst($opt_M, '>', $infodir.DISPLAY) if defined $infodir;
+	}
+
+	if (defined $opt_m) {
+	    OpenBSD::PackingElement::File->add($plist, MODULE);
+	    copy_subst($opt_m, '>', $infodir.MODULE) if defined $infodir;
+	}
+	if (defined $opt_U) {
+	    OpenBSD::PackingElement::File->add($plist, UNDISPLAY);
+	    copy_subst($opt_U, '>', $infodir.UNDISPLAY) if defined $infodir;
+	}
+}
+
 our $errors = 0;
 
 my @contents;
@@ -348,6 +411,7 @@ set_usage(
 '[-U undisplayfile] [-W wantedlib] -c desc -d desc -f packinglist pkg-name');
 
 my $plist = new OpenBSD::PackingList;
+OpenBSD::PackingElement::File->add($plist, CONTENTS);
 try { 
 	getopts('hp:f:c:d:vi:k:r:m:M:U:S:hs:OA:L:B:D:P:W:nqQ', 
 	{'D' => 
@@ -384,8 +448,6 @@ if (@ARGV == 0) {
 try {
 my $infodir;
 
-$infodir = OpenBSD::Temp::dir() unless $opt_q;
-
 if (defined $opt_s) {
 	Usage "Option s is no longer supported";
 }
@@ -402,100 +464,46 @@ if (!@contents) {
 	Usage "Packing list required";
 }
 
-if (defined $opt_q) {
-	for my $special (info_names()) {
-		if ($special eq DESC or
-		    $special eq INSTALL and (defined $opt_i) or
-		    $special eq DEINSTALL and (defined $opt_k) or
-		    $special eq REQUIRE and (defined $opt_r) or
-		    $special eq DISPLAY and (defined $opt_M) or
-		    $special eq MODULE and (defined $opt_m) or
-		    $special eq UNDISPLAY and (defined $opt_U)) {
-			OpenBSD::PackingElement::File->add($plist, $special);
-		}
-	}
-} else {
-	OpenBSD::PackingElement::File->add($plist, DESC);
-	if (defined $opt_c) {
-	    if ($opt_c =~ /^\-/) {
-		open(my $fh, '>', $infodir.DESC) or die "Can't write COMMENT to DESC file: $!";
-		print $fh $';
-		close($fh);
-	    } else {
-		copy_subst($opt_c, '>', $infodir.DESC);
-	    }
-	} else {
-		Usage "Comment required" unless $regen_package;
-	}
-
-	if (defined $opt_d) {
-	    if ($opt_d =~ /^\-/) {
-		open(my $fh, '>>', $infodir.DESC) or die "Can't write to DESC: $!";
-		print $fh $';
-		close($fh);
-	    } else {
-		copy_subst($opt_d, '>>', $infodir.DESC);
-	    }
-	} else {
-		Usage "Description required" unless $regen_package;
-	}
-
-	print "Creating package $ARGV[0]\n" if !(defined $opt_q) && $opt_v && !$regen_package;
-
-	if (defined $opt_i) {
-	    OpenBSD::PackingElement::File->add($plist, INSTALL);
-	    copy_subst($opt_i, '>', $infodir.INSTALL);
-	}
-		
-	if (defined $opt_k) {
-	    OpenBSD::PackingElement::File->add($plist, DEINSTALL);
-	    copy_subst($opt_k, '>', $infodir.DEINSTALL);
-	}
-
-	if (defined $opt_r) {
-	    OpenBSD::PackingElement::File->add($plist, REQUIRE);
-	    copy_subst($opt_r, '>', $infodir.REQUIRE);
-	}
-
-	if (defined $opt_M) {
-	    OpenBSD::PackingElement::File->add($plist, DISPLAY);
-	    copy_subst($opt_M, '>', $infodir.DISPLAY);
-	}
-
-	if (defined $opt_m) {
-	    OpenBSD::PackingElement::File->add($plist, MODULE);
-	    copy_subst($opt_m, '>', $infodir.MODULE);
-	}
-	if (defined $opt_U) {
-	    OpenBSD::PackingElement::File->add($plist, UNDISPLAY);
-	    copy_subst($opt_U, '>', $infodir.UNDISPLAY);
-	}
-
-	OpenBSD::PackingElement::File->add($plist, CONTENTS);
-}
-
-if (defined $opt_p) {
-	OpenBSD::PackingElement::Cwd->add($plist, $opt_p);
-} elsif (!$regen_package) {
-	Usage "Prefix required";
-}
-
-if (defined $opt_A) {
-	OpenBSD::PackingElement::Arch->add($plist, $opt_A);
-}
-
-if (defined $opt_L) {
-	OpenBSD::PackingElement::LocalBase->add($plist, $opt_L);
-}
-
 if ($regen_package) {
 	my $v = 0;
 	$plist->count_elements(\$v);
-	if ($v != 1 || @contents != 1) {
+	if ($v != 1 or @contents != 1) {
 		Usage "Exactly one single packing list is required";
 	}
 	$infodir = dirname($contents[0]);
-}
+} else {
+	print "Creating package $ARGV[0]\n" if !(defined $opt_q) && $opt_v;
+	$infodir = OpenBSD::Temp::dir() unless $opt_q;
+	add_special_files($plist, $infodir);
+	if (defined $opt_p) {
+		OpenBSD::PackingElement::Cwd->add($plist, $opt_p);
+	} else {
+		Usage "Prefix required";
+	}
+
+	if (defined $opt_A) {
+		OpenBSD::PackingElement::Arch->add($plist, $opt_A);
+	}
+
+	if (defined $opt_L) {
+		OpenBSD::PackingElement::LocalBase->add($plist, $opt_L);
+	}
+	if ($ARGV[0] =~ m|([^/]+)$|) {
+		my $pkgname = $1;
+		$pkgname =~ s/\.tgz$//;
+		OpenBSD::PackingElement::Name->add($plist, $pkgname);
+	}
+	my $fullpkgpath = $defines{'FULLPKGPATH'};
+	my $cdrom = $defines{'PERMIT_PACKAGE_CDROM'};
+	my $ftp = $defines{'PERMIT_PACKAGE_FTP'};
+	if (defined $fullpkgpath && defined $cdrom && defined $ftp) {
+		$cdrom = 'yes' if $cdrom =~ m/^yes$/i;
+		$ftp = 'yes' if $ftp =~ m/^yes$/i;
+
+		OpenBSD::PackingElement::ExtraInfo->add($plist, 
+		    $fullpkgpath, $cdrom, $ftp);
+	}
+} 
 
 for my $contentsfile (@contents) {
     $plist->fromfile($contentsfile,
@@ -549,12 +557,6 @@ for my $contentsfile (@contents) {
     ) or Fatal "Can't open packing list $contentsfile";
 }
 
-if (!$plist->has('name') && $ARGV[0] =~ m|([^/]+)$|) {
-	my $pkgname = $1;
-	$pkgname =~ s/\.tgz$//;
-	OpenBSD::PackingElement::Name->add($plist, $pkgname);
-} 
-
 
 my $base = '/';
 if (defined $opt_B) {
@@ -563,18 +565,6 @@ if (defined $opt_B) {
 	$base = $opt_S;
 } elsif (defined $ENV{'PKG_PREFIX'}) {
 	$base = $ENV{'PKG_PREFIX'};
-}
-
-my $fullpkgpath = $defines{'FULLPKGPATH'};
-my $cdrom = $defines{'PERMIT_PACKAGE_CDROM'};
-my $ftp = $defines{'PERMIT_PACKAGE_FTP'};
-if (!defined $plist->{extrainfo} && 
-    defined $fullpkgpath && defined $cdrom && defined $ftp) {
-	$cdrom = 'yes' if $cdrom =~ m/^yes$/i;
-	$ftp = 'yes' if $ftp =~ m/^yes$/i;
-
-	OpenBSD::PackingElement::ExtraInfo->add($plist, 
-	    $fullpkgpath, $cdrom, $ftp);
 }
 
 if ($plist->{need_modules}) {
