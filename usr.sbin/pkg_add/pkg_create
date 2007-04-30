@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.77 2007/04/30 11:23:22 espie Exp $
+# $OpenBSD: pkg_create,v 1.78 2007/04/30 11:38:30 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -40,6 +40,12 @@ sub create_package
 	if ($verbose) {
 		$self->comment_create_package();
 	}
+}
+
+sub pretend_to_archive
+{
+	my ($self, $arc, $base) = @_;
+	$self->comment_create_package();
 }
 
 sub archive {}
@@ -188,6 +194,11 @@ sub archive
 	&OpenBSD::PackingElement::FileBase::archive;
 }
 
+sub pretend_to_archive
+{
+	&OpenBSD::PackingElement::FileBase::pretend_to_archive;
+}
+
 sub comment_create_package
 {
 	my ($self) = @_;
@@ -228,6 +239,13 @@ sub archive
 	$arc->destdir($base."/".$self->{name});
 }
 
+sub pretend_to_archive
+{
+	my ($self, $arc, $base) = @_;
+	$arc->destdir($base."/".$self->{name});
+	$self->comment_create_package();
+}
+
 sub comment_create_package
 {
 	my ($self) = @_;
@@ -243,6 +261,14 @@ sub archive
 	my $o = $self->prepare_for_archival($arc);
 
 	$o->write() unless $main::errors;
+}
+
+sub pretend_to_archive
+{
+	my ($self, $arc, $base) = @_;
+
+	$self->prepare_for_archival($arc);
+	$self->comment_create_package();
 }
 
 sub comment_create_package
@@ -619,7 +645,8 @@ if ($regen_package) {
 }
 
 if ($opt_n) {
-	$plist->comment_create_package();
+	my $dummy = OpenBSD::Ustar->new(undef, $infodir);
+	$plist->pretend_to_archive($dummy, $base);
 } else {
 	print "Creating gzip'd tar ball in '$wname'\n" if $opt_v;
 	my $h = sub { 
