@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.25 2007/04/30 13:26:19 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.26 2007/04/30 21:22:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -81,6 +81,18 @@ int nx_debug = 0;
 #define DPRINTF(_lvl, arg...)
 #endif
 
+#ifdef notyet
+/*
+ * The NetXen firmware and bootloader is about 800k big, don't even try
+ * to load the alternative version from disk with small kernels used by
+ * the install media. The driver can still try to use the primary firmware
+ * and bootloader found in the controller's flash memory.
+ */
+#ifndef SMALL_KERNEL
+#define NXB_LOADFIRMWARE
+#endif
+#endif
+
 struct nx_softc;
 
 struct nxb_port {
@@ -108,12 +120,17 @@ struct nxb_softc {
 
 	pci_intr_handle_t	 sc_ih;
 
-	int			 sc_window;
-	int			 sc_state;
-	struct nxb_info		 sc_nxbinfo;
-	u_int32_t		 sc_fwmajor;
-	u_int32_t		 sc_fwminor;
-	u_int32_t		 sc_fwbuild;
+	u_int			 sc_flags;
+#define NXFLAG_FWINVALID	 (1<<0)		/* update firmware from disk */
+
+	struct nxb_info		 sc_nxbinfo;	/* Information from flash */
+	struct nxb_imageinfo	 sc_nxbimage;	/* Image info from flash */
+
+	int			 sc_window;	/* SW memory window */
+	int			 sc_state;	/* Firmware state */
+	u_int32_t		 sc_fwmajor;	/* Load image major rev */
+	u_int32_t		 sc_fwminor;	/* Load image minor rev */
+	u_int32_t		 sc_fwbuild;	/* Load image build rev */
 
 	u_int32_t		 sc_nrxbuf;
 	u_int32_t		 sc_ntxbuf;
@@ -138,7 +155,13 @@ struct nx_softc {
 int	 nxb_match(struct device *, void *, void *);
 void	 nxb_attach(struct device *, struct device *, void *);
 int	 nxb_query(struct nxb_softc *sc);
+int	 nxb_booted(struct nxb_softc *sc);
 void	 nxb_mountroot(void *);
+int	 nxb_loadfirmware(struct nxb_softc *, struct nxb_firmware_header *,
+	    u_int8_t **, size_t *);
+int	 nxb_reloadfirmware(struct nxb_softc *, struct nxb_firmware_header *,
+	    u_int8_t **, size_t *);
+void	 nxb_reset(struct nxb_softc *);
 
 u_int32_t nxb_read(struct nxb_softc *, bus_size_t);
 void	 nxb_write(struct nxb_softc *, bus_size_t, u_int32_t);
@@ -457,16 +480,19 @@ nxb_query(struct nxb_softc *sc)
 	/* Make sure that the serial number is a NUL-terminated string */
 	nu->nu_serial_num[31] = '\0';
 
+	/* Copy flash image information */
+	bcopy(&nu->nu_image, &sc->sc_nxbimage, sizeof(sc->sc_nxbimage));
+
 #ifdef NX_DEBUG
 #define _NXBUSER(_e)	do {						\
 	if (nx_debug & NXDBG_FLASH)					\
 		printf("%s: %s: 0x%08x (%u)\n",				\
 		    sc->sc_dev.dv_xname, #_e, nu->_e, nu->_e);		\
 } while (0)
-	_NXBUSER(nu_bootloader_ver);
-	_NXBUSER(nu_bootloader_size);
-	_NXBUSER(nu_image_ver);
-	_NXBUSER(nu_image_size);
+	_NXBUSER(nu_image.nim_bootld_ver);
+	_NXBUSER(nu_image.nim_bootld_size);
+	_NXBUSER(nu_image.nim_image_ver);
+	_NXBUSER(nu_image.nim_image_size);
 	_NXBUSER(nu_primary);
 	_NXBUSER(nu_secondary);
 	_NXBUSER(nu_subsys_id);
@@ -495,6 +521,18 @@ nxb_query(struct nxb_softc *sc)
 	return (0);
 }
 
+int
+nxb_booted(struct nxb_softc *sc)
+{
+	if (nxb_wait(sc, NXSW_CMDPEG_STATE,
+	    NXSW_CMDPEG_INIT_DONE, NXSW_CMDPEG_STATE_M, 1, 2000000) != 0) {
+		printf("%s: bootstrap failed, code 0x%x\n",
+		    sc->sc_dev.dv_xname, nxb_read(sc, NXSW_CMDPEG_STATE));
+		return (-1);
+	}
+	return (0);
+}
+
 void
 nxb_mountroot(void *arg)
 {
@@ -505,13 +543,8 @@ nxb_mountroot(void *arg)
 	/*
 	 * Poll the status of the running firmware.
 	 */
-	if (nxb_wait(sc, NXSW_CMDPEG_STATE,
-	    NXSW_CMDPEG_INIT_DONE, NXSW_CMDPEG_STATE_M, 1, 2000000) != 0) {
-		printf("%s: bootstrap failed, code 0x%x\n",
-		    sc->sc_dev.dv_xname,
-		    nxb_read(sc, NXSW_CMDPEG_STATE));
+	if (nxb_booted(sc) != 0)
 		return;
-	}
 
 	/*
 	 * Get and validate the loaded firmware version
@@ -523,21 +556,202 @@ nxb_mountroot(void *arg)
 	    sc->sc_fwmajor, sc->sc_fwminor, sc->sc_fwbuild);
 	if (sc->sc_fwmajor != NX_FIRMWARE_MAJOR ||
 	    sc->sc_fwminor != NX_FIRMWARE_MINOR) {
-		/*
-		 * XXX The driver should load an alternative firmware image
-		 * XXX from disk if the firmware image in the flash is not
-		 * XXX supported by the driver.
-		 */
 		printf(", requires %u.%u.xx (%u.%u.%u)\n",
 		    NX_FIRMWARE_MAJOR, NX_FIRMWARE_MINOR,
 		    NX_FIRMWARE_MAJOR, NX_FIRMWARE_MINOR,
 		    NX_FIRMWARE_BUILD);
+
+		sc->sc_flags |= NXFLAG_FWINVALID;
+		nxb_reset(sc);
 		return;
 	}
 	printf("\n");
 
 	/* Firmware is ready for operation, allow interrupts etc. */
 	sc->sc_state = NX_S_READY;
+}
+
+int
+nxb_loadfirmware(struct nxb_softc *sc, struct nxb_firmware_header *fh,
+    u_int8_t **fw, size_t *fwlen)
+{
+#ifdef NXB_LOADFIRMWARE
+	u_int8_t	*mem;
+	size_t		 memlen;
+
+	/*
+	 * Load a supported bootloader and firmware image from disk
+	 */
+	if (loadfirmware("nxb", &mem, &memlen) != 0)
+		return (-1);
+
+	if ((memlen) < sizeof(*fh))
+		goto fail;
+	bcopy(mem, fh, sizeof(*fh));
+	if (ntohl(fh->fw_hdrver) != NX_FIRMWARE_HDRVER)
+		goto fail;
+
+	*fw = mem;
+	*fwlen = memlen;
+
+	return (0);
+ fail:
+	free(mem, M_DEVBUF);
+#endif
+	return (-1);
+}
+
+int
+nxb_reloadfirmware(struct nxb_softc *sc, struct nxb_firmware_header *fh,
+    u_int8_t **fw, size_t *fwlen)
+{
+	u_int8_t	*mem;
+	size_t		 memlen;
+	u_int32_t	 addr, *data;
+	u_int		 i;
+
+	/*
+	 * Load the images from flash, setup a fake firmware header
+	 */
+	memlen = sc->sc_nxbimage.nim_bootld_size + sizeof(*fh);
+	mem = (u_int8_t *)malloc(memlen, M_DEVBUF, M_NOWAIT);
+	if (mem == NULL)
+		return (-1);
+
+	fh->fw_hdrver = htonl(NX_FIRMWARE_HDRVER);
+	fh->fw_image_ver = htonl(sc->sc_nxbimage.nim_image_ver);
+	fh->fw_image_size = 0;	/* Reload firmware image from flash */
+	fh->fw_bootld_ver = htonl(sc->sc_nxbimage.nim_bootld_ver);
+	fh->fw_bootld_size = htonl(sc->sc_nxbimage.nim_bootld_size);
+	bcopy(fh, mem, sizeof(*fh));
+
+	addr = NXFLASHMAP_BOOTLOADER;
+	data = (u_int32_t *)(mem + sizeof(*fh));
+	for (i = 0; i < (sc->sc_nxbimage.nim_bootld_size / 4); i++) {
+		if (nxb_read_rom(sc, addr, data) != 0)
+			goto fail;
+		addr += sizeof(u_int32_t);
+		data++;
+	}
+
+	*fw = mem;
+	*fwlen = memlen;
+
+	return (0);
+ fail:
+	free(mem, M_DEVBUF);
+	return (-1);
+}
+
+void
+nxb_reset(struct nxb_softc *sc)
+{
+	struct nxb_firmware_header	 fh;
+	u_int8_t			*fw = NULL;
+	size_t				 fwlen = 0;
+	int				 bootsz, imagesz;
+	u_int				 i;
+	u_int32_t			*data, addr, val;
+	bus_size_t			 reg;
+
+	bzero(&fh, sizeof(fh));
+	if (sc->sc_flags & NXFLAG_FWINVALID) {
+		if (nxb_loadfirmware(sc, &fh, &fw, &fwlen) != 0) {
+			printf("%s: failed to load firmware from disk\n",
+			    sc->sc_dev.dv_xname);
+			goto fail;
+		}
+	} else {
+		if (nxb_reloadfirmware(sc, &fh, &fw, &fwlen) != 0) {
+			printf("%s: failed to reload firmware from flash\n",
+			    sc->sc_dev.dv_xname);
+			goto fail;
+		}
+	}
+
+	/*
+	 * Validate the information found in the extra header
+	 */
+	val = ntohl(fh.fw_image_ver);
+	sc->sc_fwmajor = (val & NXB_IMAGE_MAJOR_M) >> NXB_IMAGE_MAJOR_S;
+	sc->sc_fwminor = (val & NXB_IMAGE_MINOR_M) >> NXB_IMAGE_MINOR_S;
+	sc->sc_fwbuild = (val & NXB_IMAGE_BUILD_M) >> NXB_IMAGE_BUILD_S;
+	if (sc->sc_flags & NXFLAG_FWINVALID)
+		printf("%s: using firmware %u.%u.%u\n", sc->sc_dev.dv_xname,
+		    sc->sc_fwmajor, sc->sc_fwminor, sc->sc_fwbuild);
+	if (sc->sc_fwmajor != NX_FIRMWARE_MAJOR ||
+	    sc->sc_fwminor != NX_FIRMWARE_MINOR) {
+		printf("%s: unsupported firmware version\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	bootsz = ntohl(fh.fw_bootld_size);
+	imagesz = ntohl(fh.fw_image_size);
+	if ((imagesz + bootsz) != (fwlen - sizeof(fh)) ||
+	    (imagesz % 4) || (bootsz % 4)) {
+		printf("%s: invalid firmware image\n", sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	/*
+	 * Initialize the SW registers
+	 */
+	addr = NXFLASHMAP_CRBINIT_0;
+	if (nxb_read_rom(sc, addr, &val) != 0)
+		goto fail1;
+
+	/* XXX */
+	DPRINTF(NXDBG_FLASH, "%s(%s): ncrb 0x%08x\n",
+	    sc->sc_dev.dv_xname, __func__, val);
+
+	/*
+	 * Load the images into RAM
+	 */
+
+	/* Reset casper boot chip */
+	nxb_write(sc, NXROMUSB_GLB_CAS_RESET, NXROMUSB_GLB_CAS_RESET_ENABLE);
+
+	reg = NXFLASHMAP_BOOTLOADER;
+	data = (u_int32_t *)(fw + sizeof(fh));
+	for (i = 0; i < (bootsz / 4); i++) {
+		nxb_write(sc, reg, *data);
+		addr += sizeof(u_int32_t);
+		data++;
+	}
+	if (imagesz) {
+		reg = NXFLASHMAP_FIRMWARE_0;
+		for (i = 0; i < (imagesz / 4); i++) {
+			nxb_write(sc, reg, *data);
+			addr += sizeof(u_int32_t);
+			data++;
+		}
+		/* tell the bootloader to load the firmware image from RAM */
+		nxb_write(sc, NXSW_BOOTLD_CONFIG, NXSW_BOOTLD_CONFIG_RAM);
+	}
+
+	/* Power on the clocks and unreset the casper boot chip */
+	nxb_write(sc, NXROMUSB_GLB_CHIPCLKCONTROL,
+	    NXROMUSB_GLB_CHIPCLKCONTROL_ON);
+	nxb_write(sc, NXROMUSB_GLB_CAS_RESET, NXROMUSB_GLB_CAS_RESET_DISABLE);
+
+	/*
+	 * bootstrap the newly loaded firmware and wait for completion
+	 */
+	nxb_write(sc, NXROMUSB_GLB_PEGTUNE, NXROMUSB_GLB_PEGTUNE_DONE);
+	if (nxb_booted(sc) != 0)
+		goto fail;
+
+	/* Firmware is ready for operation, allow interrupts etc. */
+	sc->sc_state = NX_S_READY;
+	goto done;
+ fail1:
+	printf("%s: failed to reset firmware\n", sc->sc_dev.dv_xname);
+ fail:
+	sc->sc_state = NX_S_FAIL;
+ done:
+	if (fw != NULL)
+		free(fw, M_DEVBUF);
 }
 
 u_int32_t

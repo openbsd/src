@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.12 2007/04/30 10:55:08 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.13 2007/04/30 21:22:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -41,6 +41,7 @@
 
 /* Used to indicate various states of the NIC and its firmware */
 enum nx_state {
+	NX_S_FAIL	= -1,	/* Failed to initialize the device */
 	NX_S_OFFLINE	= 0,	/* Firmware is not active yet */
 	NX_S_BOOTING	= 1,	/* Chipset is booting the firmware */
 	NX_S_READY	= 3	/* Device has been initialized and is ready */
@@ -134,6 +135,8 @@ struct nx_statusdesc {
 #define NXPCIMEM_SIZE_128MB	0x08000000	/* 128MB size */
 #define NXPCIMEM_SIZE_32MB	0x02000000	/* 32MB size */
 
+#define NXPCIMAP_DDR_NET	0x00000000
+#define NXPCIMAP_DDR_MD		0x02000000
 #define NXPCIMAP_DIRECT_CRB	0x04400000
 #define NXPCIMAP_CRB		0x06000000
 
@@ -279,6 +282,11 @@ struct nx_statusdesc {
 #define NXSW_PHY_LOCK_ID	NXSW(0x2120)	/* Used for locking the PHY */
 #define  NXSW_PHY_LOCK_DRV	0x44524956	/* Driver PHY lock ID */
 
+/* Boot loader configuration */
+#define NXSW_BOOTLD_CONFIG	NXSW(0x01fc)
+#define  NXSW_BOOTLD_CONFIG_ROM	0x00000000	/* Load firmware from flasg */
+#define  NXSW_BOOTLD_CONFIG_RAM	0x12345678	/* Load firmware from memory */
+
 /* Version registers of the loaded firmware */
 #define NXSW_FW_VERSION_MAJOR	NXSW(0x2150)	/* Major f/w version */
 #define NXSW_FW_VERSION_MINOR	NXSW(0x2154)	/* Minor f/w version */
@@ -360,12 +368,17 @@ struct nx_statusdesc {
 
 /* Casper Reset Register */
 #define NXROMUSB_GLB_CAS_RESET		NXROMUSB(0x00000038)
-#define  NXRUMUSB_GLB_CAS_RESET_ENABLE	(1<<0)	/* Enable Casper reset */
+#define  NXROMUSB_GLB_CAS_RESET_ENABLE	(1<<0)	/* Enable Casper reset */
+#define  NXROMUSB_GLB_CAS_RESET_DISABLE	0
 #define NXROMUSB_GLB_CAS_RESET_DEF	0	/* Disabled */
 
 /* Reset register */
 #define NXROMUSB_GLB_PEGTUNE		NXROMUSB(0x0000005c)
 #define  NXROMUSB_GLB_PEGTUNE_DONE	(1<<0)
+
+/* Chip clock control register */
+#define NXROMUSB_GLB_CHIPCLKCONTROL	NXROMUSB(0x000000a8)
+#define  NXROMUSB_GLB_CHIPCLKCONTROL_ON	0x00003fff
 
 /* ROM Register */
 #define NXROMUSB_ROM_CONTROL		NXROMUSB(0x00010000)
@@ -402,12 +415,11 @@ enum nxb_board_types {
 	NXB_BOARDTYPE_P2SB31_10GCX4	= 15
 };
 
-#define NXB_VERSION	0x00000001		/* board information version */
-#define NXB_MAGIC	0x12345678		/* magic value */
 #define NXB_MAX_PORTS	NX_MAX_PORTS		/* max supported ports */
 
 struct nxb_info {
 	u_int32_t	ni_hdrver;		/* Board info version */
+#define  NXB_VERSION	0x00000001		/* board information version */
 
 	u_int32_t	ni_board_mfg;
 	u_int32_t	ni_board_type;
@@ -473,6 +485,7 @@ struct nxb_info {
 	u_int32_t	ni_lladdr3_high;
 
 	u_int32_t	ni_magic;
+#define  NXB_MAGIC	0x12345678		/* magic value */
 
 	u_int32_t	ni_mnrd_imm;
 	u_int32_t	ni_mndll_override;
@@ -480,23 +493,43 @@ struct nxb_info {
 
 #define NXB_MAX_PORT_LLADDRS	32
 
+struct nxb_imageinfo {
+	u_int32_t	nim_bootld_ver;
+	u_int32_t	nim_bootld_size;
+	u_int32_t	nim_image_ver;
+#define  NXB_IMAGE_MAJOR_S	0
+#define  NXB_IMAGE_MAJOR_M	0x000000ff
+#define  NXB_IMAGE_MINOR_S	8
+#define  NXB_IMAGE_MINOR_M	0x0000ff00
+#define  NXB_IMAGE_BUILD_S	16
+#define  NXB_IMAGE_BUILD_M	0xffff0000
+	u_int32_t	nim_image_size;
+} __packed;
+
 struct nxb_userinfo {
-	u_int8_t	nu_flash_md5[1024];
+	u_int8_t		nu_flash_md5[1024];
 
-	u_int32_t	nu_bootloader_ver;
-	u_int32_t	nu_bootloader_size;
+	struct nxb_imageinfo	nu_image;
 
-	u_int32_t	nu_image_ver;
-	u_int32_t	nu_image_size;
-
-	u_int32_t	nu_primary;
-	u_int32_t	nu_secondary;
-	u_int64_t	nu_lladdr[NXB_MAX_PORTS * NXB_MAX_PORT_LLADDRS];
-	u_int32_t	nu_subsys_id;
-	u_int8_t	nu_serial_num[32];
-	u_int32_t	nu_bios_ver;
+	u_int32_t		nu_primary;
+	u_int32_t		nu_secondary;
+	u_int64_t		nu_lladdr[NXB_MAX_PORTS * NXB_MAX_PORT_LLADDRS];
+	u_int32_t		nu_subsys_id;
+	u_int8_t		nu_serial_num[32];
+	u_int32_t		nu_bios_ver;
 
 	/* Followed by user-specific data */
+} __packed;
+
+/* Appended to the on-disk firmware image, values in network byte order */
+struct nxb_firmware_header {
+	u_int32_t		 fw_hdrver;
+#define NX_FIRMWARE_HDRVER	 0	/* version of the firmware header */
+	struct nxb_imageinfo	 fw_image;
+#define fw_image_ver		 fw_image.nim_image_ver
+#define fw_image_size		 fw_image.nim_image_size
+#define fw_bootld_ver		 fw_image.nim_bootld_ver
+#define fw_bootld_size		 fw_image.nim_bootld_size
 } __packed;
 
 #endif /* _NX_REG_H */
