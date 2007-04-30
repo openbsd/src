@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.34 2007/04/23 14:47:37 jmc Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.35 2007/04/30 08:43:19 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -429,8 +429,8 @@ Use without an arg to set back to default (extraction)
 group ownership.
 .Pp
 .It Cm @ignore
-Used internally to tell extraction to ignore the next file (don't
-copy it anywhere), as it's used for some special purpose.
+Was used internally to tell extraction to ignore the next file.
+No longer needed.
 .Pp
 .It Cm @info Ar filename
 Specialized version of

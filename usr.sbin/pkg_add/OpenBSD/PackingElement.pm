@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.89 2007/04/29 11:28:59 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.90 2007/04/30 08:43:19 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -250,7 +250,6 @@ sub write
 {
 	my ($self, $fh) = @_;
 	return if defined $self->{zap};
-	print $fh "\@ignore\n" if defined $self->{ignore};
 	print $fh "\@comment no checksum\n" if defined $self->{nochecksum};
 	$self->SUPER::write($fh);
 	if (defined $self->{md5}) {
@@ -279,10 +278,6 @@ sub destate
 	if (defined $state->{nochecksum}) {
 		$self->{nochecksum} = 1;
 		undef $state->{nochecksum};
-	}
-	if (defined $state->{ignore}) {
-		$self->{ignore} = 1;
-		undef $state->{ignore};
 	}
 }
 
@@ -453,9 +448,6 @@ __PACKAGE__->setKeyword('ignore');
 
 sub add
 {
-	my ($class, $plist, @args) = @_;
-	$plist->{state}->{ignore} = 1;
-	return;
 }
 
 # Comment is very special
