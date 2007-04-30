@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.78 2007/04/30 11:38:30 espie Exp $
+# $OpenBSD: pkg_create,v 1.79 2007/04/30 11:39:26 bernd Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -166,8 +166,8 @@ sub prepare_for_archival
 			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)), "\n";
 		    $main::errors++;
 	    }
-	return $o;
 	}
+	return $o;
 }
 
 package OpenBSD::PackingElement::PkgConflict;
