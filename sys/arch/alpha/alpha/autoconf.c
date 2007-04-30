@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.27 2006/01/26 02:43:28 aaron Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.28 2007/04/30 17:35:23 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ getdisk(str, len, defpart, devp)
 	register struct device *dv;
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
-		printf("use one of:");
+		printf("use one of: exit");
 #ifdef RAMDISK_HOOKS
 		printf(" %s[a-p]", fakerdrootdev.dv_xname);
 #endif
@@ -186,7 +186,7 @@ getdisk(str, len, defpart, devp)
 				printf(" %s", dv->dv_xname);
 #endif
 		}
-		printf(" halt\n");
+		printf("\n");
 	}
 	return (dv);
 }
@@ -204,8 +204,8 @@ parsedisk(str, len, defpart, devp)
 	if (len == 0)
 		return (NULL);
 
-	if (len == 4 && !strcmp(str, "halt"))
-		boot(RB_HALT /* , NULL */);
+	if (len == 4 && !strcmp(str, "exit"))
+		boot(RB_USERREQ);
 
 	cp = str + len - 1;
 	c = *cp;
@@ -317,6 +317,8 @@ setroot()
 				strlcpy(buf, bootdv->dv_xname, sizeof buf);
 				len = strlen(buf);
 			}
+			if (len == 4 && !strcmp(buf, "exit"))
+				boot(RB_USERREQ);
 			if (len > 0 && buf[len - 1] == '*') {
 				buf[--len] = '\0';
 				dv = getdisk(buf, len, 1, &nrootdev);
@@ -364,6 +366,8 @@ setroot()
 				swapdv = rootdv;
 				break;
 			}
+			if (len == 4 && !strcmp(buf, "exit"))
+				boot(RB_USERREQ);
 			dv = getdisk(buf, len, 1, &nswapdev);
 			if (dv) {
 				if (dv->dv_class == DV_IFNET)
