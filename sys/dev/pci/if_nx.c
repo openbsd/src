@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.27 2007/04/30 21:41:02 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.28 2007/04/30 22:02:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -949,7 +949,8 @@ nx_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	timeout_set(&nx->nx_tick, nx_tick, sc);
+	timeout_set(&nx->nx_tick, nx_tick, nx);
+	timeout_add(&nx->nx_tick, hz);
 
 	return;
 }
@@ -1146,9 +1147,14 @@ void
 nx_tick(void *arg)
 {
 	struct nx_softc		*nx = (struct nx_softc *)arg;
+	struct nxb_softc	*sc = nx->nx_sc;
+
+	if (sc->sc_state != NX_S_READY)
+		goto done;
 
 	nx_link_state(nx);
 
+ done:
 	timeout_add(&nx->nx_tick, hz);
 }
 
