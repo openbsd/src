@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.73 2007/04/30 10:26:43 espie Exp $
+# $OpenBSD: pkg_create,v 1.74 2007/04/30 10:30:50 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -470,7 +470,12 @@ if ($regen_package) {
 	if ($v != 1 or @contents != 1) {
 		Usage "Exactly one single packing list is required";
 	}
-	$infodir = dirname($contents[0]);
+	if (-d $contents[0] && -f $contents[0].'/'.CONTENTS) {
+		$infodir = $contents[0];
+		$contents[0] .= '/'.CONTENTS;
+	} else {
+		$infodir = dirname($contents[0]);
+	}
 } else {
 	print "Creating package $ARGV[0]\n" if !(defined $opt_q) && $opt_v;
 	$infodir = OpenBSD::Temp::dir() unless $opt_q;
@@ -556,7 +561,6 @@ for my $contentsfile (@contents) {
 	}
     ) or Fatal "Can't open packing list $contentsfile";
 }
-
 
 my $base = '/';
 if (defined $opt_B) {
