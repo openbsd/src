@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.65 2007/04/30 08:43:19 espie Exp $
+# $OpenBSD: pkg_create,v 1.66 2007/04/30 09:07:16 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -72,6 +72,12 @@ sub warn_once
 		$main::errors++;
 		$warned->{$k} = 1;
 	}
+}
+
+sub makesum_plist
+{
+	my ($self, $plist, $base, $stash) = @_;
+	$self->add_object($plist);
 }
 
 package OpenBSD::PackingElement::PkgConflict;
@@ -202,10 +208,11 @@ sub compute_checksum
 	}
 }
 
-sub create_checksum
+sub makesum_plist
 {
 	my ($self, $plist, $base, $stash) = @_;
 	$self->compute_checksum($self, $base, $stash);
+	$self->add_object($plist);
 }
 
 sub verify_checksum
@@ -226,33 +233,18 @@ sub verify_checksum
 }
 
 package OpenBSD::PackingElement::InfoFile;
-sub create_checksum
+sub makesum_plist
 {
 	my ($self, $plist, $base, $stash) = @_;
-	$self->SUPER::create_checksum($plist, $base, $stash);
+	$self->SUPER::makesum_plist($plist, $base, $stash);
 	my $fname = $self->fullname();
 	for (my $i = 1; ; $i++) {
 		if (-e "$base/$fname-$i") {
-			my $file = OpenBSD::PackingElement::File->add($plist, $self->{name}."-".$i);
-			$file->create_checksum($plist, $base, $stash);
+			my $e = OpenBSD::PackingElement::File->add($plist, $self->{name}."-".$i);
+			$e->compute_checksum($e, $base, $stash);
 		} else {
 			last;
 		}
-	}
-}
-
-package OpenBSD::PackingList;
-
-sub makesum
-{
-	my ($self, $base) = @_;
-	my $stash = {};
-	my $oldlist = $self->{items};
-	$self->{items} = [];
-	for my $item (@$oldlist) {
-		push @{$self->{items}}, $item;
-		$self->{state}->{cwd} = $item->{cwd} if defined $item->{cwd};
-		$item->create_checksum($self, $base, $stash);
 	}
 }
 
@@ -561,9 +553,12 @@ unless (defined $opt_q && defined $opt_n) {
 	if ($regen_package) {
 		$plist->verify_checksum($base, {});
 	} else {
-		$plist->makesum($base);
+		my $p2 = OpenBSD::PackingList->new;
+		$plist->makesum_plist($p2, $base, {});
+		$plist = $p2;
 	}
 }
+
 $plist->avert_duplicates_and_other_checks({});
 
 if ($errors) {
