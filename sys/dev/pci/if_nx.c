@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.28 2007/04/30 22:02:23 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.29 2007/04/30 22:09:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1021,7 +1021,7 @@ nx_link_state(struct nx_softc *nx)
 
 	switch (nxp->nxp_mode) {
 	case NXNIU_MODE_XGE:
-		status = nxb_read(sc, NXSW_XG_STATE) >> nxp->nxp_id;
+		status = nxb_read(sc, NXSW_XG_STATE) >> (nxp->nxp_id * 8);
 		if (status & NXSW_XG_LINK_UP)
 			link_state = LINK_STATE_FULL_DUPLEX;
 		if (ifp->if_link_state != link_state) {
