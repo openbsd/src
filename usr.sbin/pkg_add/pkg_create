@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.81 2007/04/30 12:20:32 espie Exp $
+# $OpenBSD: pkg_create,v 1.82 2007/04/30 12:39:31 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -50,8 +50,6 @@ sub pretend_to_archive
 
 sub archive {}
 sub comment_create_package {}
-
-sub count_elements { ${$_[1]}++; }
 
 sub print_file {}
 
@@ -410,7 +408,8 @@ sub add_description
 
 our $errors = 0;
 
-my @contents;
+my (@contents, %dependencies, %wantlib);
+
 my $regen_package = 0;
 
 
@@ -439,10 +438,12 @@ try {
 		},
 	 'h' => sub {	Usage(); },
 	 'P' => sub {
-	 		OpenBSD::PackingElement::Dependency->add($plist, shift);
+	 		my $d = shift;
+	 		$dependencies{$d} = 1;
 		},
 	 'W' => sub {
-	 		OpenBSD::PackingElement::Wantlib->add($plist, shift);
+	 		my $w = shift;
+	 		$wantlib{$w} = 1;
 		}
 	}); 
 } catchall {
@@ -475,9 +476,7 @@ if (!@contents) {
 }
 
 if ($regen_package) {
-	my $v = 0;
-	$plist->count_elements(\$v);
-	if ($v != 1 or @contents != 1) {
+	if (@contents != 1) {
 		Usage "Exactly one single packing list is required";
 	}
 	if (-d $contents[0] && -f $contents[0].'/'.CONTENTS) {
@@ -500,6 +499,13 @@ if ($regen_package) {
 		OpenBSD::PackingElement::Cwd->add($plist, $opt_p);
 	} else {
 		Usage "Prefix required";
+	}
+	for my $d (sort keys %dependencies) {
+		OpenBSD::PackingElement::Dependency->add($plist, $d);
+	}
+
+	for my $w (sort keys %wantlib) {
+		OpenBSD::PackingElement::Wantlib->add($plist, $w);
 	}
 
 	if (defined $opt_A) {
