@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_df.c,v 1.11 2007/03/19 13:27:47 pedro Exp $	*/
+/*	$OpenBSD: ffs_df.c,v 1.12 2007/04/30 18:40:24 otto Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -66,22 +66,34 @@ ffs_df(int rfd, char *file, struct statfs *sfsp)
 {
 	char *mntpt;
 
-	if (bread(rfd, (off_t)SBOFF, &sblock, SBSIZE) == 0) {
+	if (!((bread(rfd, (off_t)SBLOCK_UFS1, &sblock, SBSIZE) == 1 &&
+	    sblock.fs_magic == FS_UFS1_MAGIC) ||
+	    (bread(rfd, (off_t)SBLOCK_UFS2, &sblock, SBSIZE) == 1 &&
+	    sblock.fs_magic == FS_UFS2_MAGIC))) {
 		return (-1);
 	}
-	if (sblock.fs_magic != FS_MAGIC) {
-		return (-1);
-	}
+
 	sfsp->f_flags = 0;
 	sfsp->f_bsize = sblock.fs_fsize;
 	sfsp->f_iosize = sblock.fs_bsize;
-	sfsp->f_blocks = sblock.fs_ffs1_dsize;
-	sfsp->f_bfree = sblock.fs_ffs1_cstotal.cs_nbfree * sblock.fs_frag +
-		sblock.fs_ffs1_cstotal.cs_nffree;
-	sfsp->f_bavail = ((int64_t)sblock.fs_ffs1_dsize * (100 -
-	    sblock.fs_minfree) / 100) - (sblock.fs_ffs1_dsize - sfsp->f_bfree);
-	sfsp->f_files = sblock.fs_ncg * sblock.fs_ipg - ROOTINO;
-	sfsp->f_ffree = sblock.fs_ffs1_cstotal.cs_nifree;
+	if (sblock.fs_magic == FS_UFS1_MAGIC) {
+		sfsp->f_blocks = sblock.fs_ffs1_dsize;
+		sfsp->f_bfree = sblock.fs_ffs1_cstotal.cs_nbfree *
+		    sblock.fs_frag + sblock.fs_ffs1_cstotal.cs_nffree;
+		sfsp->f_bavail = ((int64_t)sblock.fs_ffs1_dsize * (100 -
+		    sblock.fs_minfree) / 100) - (sblock.fs_ffs1_dsize -
+		    sfsp->f_bfree);
+		sfsp->f_files = sblock.fs_ncg * sblock.fs_ipg - ROOTINO;
+		sfsp->f_ffree = sblock.fs_ffs1_cstotal.cs_nifree;
+	} else {
+		sfsp->f_blocks = sblock.fs_dsize;
+		sfsp->f_bfree = sblock.fs_cstotal.cs_nbfree *
+		    sblock.fs_frag + sblock.fs_cstotal.cs_nffree;
+		sfsp->f_bavail = (sblock.fs_dsize * (100 - sblock.fs_minfree) /
+		    100) - (sblock.fs_dsize - sfsp->f_bfree);
+		sfsp->f_files = sblock.fs_ncg * sblock.fs_ipg - ROOTINO;
+		sfsp->f_ffree = sblock.fs_cstotal.cs_nifree;
+	}
 	sfsp->f_fsid.val[0] = 0;
 	sfsp->f_fsid.val[1] = 0;
 	if ((mntpt = getmntpt(file)) == 0)
