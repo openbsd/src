@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.80 2007/04/30 12:11:51 espie Exp $
+# $OpenBSD: pkg_create,v 1.81 2007/04/30 12:20:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -375,18 +375,18 @@ sub add_special_file
 	}
 }
 
-sub add_special_files
+sub add_description
 {
-	my ($plist, $infodir) = @_;
-	OpenBSD::PackingElement::File->add($plist, DESC);
+	my ($plist, $name, $infodir, $opt_c, $opt_d) = @_;
+	OpenBSD::PackingElement::File->add($plist, $name);
 	if (defined $opt_c) {
 	    if (defined $infodir) {
 		if ($opt_c =~ /^\-/) {
-		    open(my $fh, '>', $infodir.DESC) or die "Can't write COMMENT to DESC file: $!";
+		    open(my $fh, '>', $infodir.$name) or die "Can't write COMMENT to DESC file: $!";
 		    print $fh $';
 		    close($fh);
 		} else {
-		    copy_subst($opt_c, '>', $infodir.DESC);
+		    copy_subst($opt_c, '>', $infodir.$name);
 		}
 	    }
 	} else {
@@ -396,29 +396,23 @@ sub add_special_files
 	if (defined $opt_d) {
 	    if (defined $infodir) {
 		if ($opt_d =~ /^\-/) {
-		    open(my $fh, '>>', $infodir.DESC) or die "Can't write to DESC: $!";
+		    open(my $fh, '>>', $infodir.$name) or die "Can't write to DESC: $!";
 		    print $fh $';
 		    close($fh);
 		} else {
-		    copy_subst($opt_d, '>>', $infodir.DESC);
+		    copy_subst($opt_d, '>>', $infodir.$name);
 		}
 	    }
 	} else {
 		Usage "Description required";
 	}
-
-	add_special_file($plist, INSTALL, $infodir, $opt_i);
-	add_special_file($plist, DEINSTALL, $infodir, $opt_k);
-	add_special_file($plist, REQUIRE, $infodir, $opt_r);
-	add_special_file($plist, DISPLAY, $infodir, $opt_M);
-	add_special_file($plist, MODULE, $infodir, $opt_m);
-	add_special_file($plist, UNDISPLAY, $infodir, $opt_U);
 }
 
 our $errors = 0;
 
 my @contents;
 my $regen_package = 0;
+
 
 set_usage(
 'pkg_create [-hnQqv] [-A arches] [-B pkg-destdir] [-D name=value]',
@@ -495,7 +489,13 @@ if ($regen_package) {
 } else {
 	print "Creating package $ARGV[0]\n" if !(defined $opt_q) && $opt_v;
 	$infodir = OpenBSD::Temp::dir() unless $opt_q;
-	add_special_files($plist, $infodir);
+	add_description($plist, DESC, $infodir, $opt_c, $opt_d);
+	add_special_file($plist, INSTALL, $infodir, $opt_i);
+	add_special_file($plist, DEINSTALL, $infodir, $opt_k);
+	add_special_file($plist, REQUIRE, $infodir, $opt_r);
+	add_special_file($plist, DISPLAY, $infodir, $opt_M);
+	add_special_file($plist, MODULE, $infodir, $opt_m);
+	add_special_file($plist, UNDISPLAY, $infodir, $opt_U);
 	if (defined $opt_p) {
 		OpenBSD::PackingElement::Cwd->add($plist, $opt_p);
 	} else {
