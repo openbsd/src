@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.68 2007/04/30 09:31:25 espie Exp $
+# $OpenBSD: pkg_create,v 1.69 2007/04/30 09:34:06 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -76,7 +76,7 @@ sub warn_once
 
 sub makesum_plist
 {
-	my ($self, $plist, $base, $stash) = @_;
+	my ($self, $plist, $base, $stash, $infodir) = @_;
 	$self->add_object($plist);
 }
 
@@ -209,7 +209,7 @@ sub verify_checksum
 package OpenBSD::PackingElement::FileBase;
 sub makesum_plist
 {
-	my ($self, $plist, $base, $stash) = @_;
+	my ($self, $plist, $base, $stash, $infodir) = @_;
 	my $fname = $base.'/'.$self->fullname();
 	$self->compute_checksum($self, $fname, $stash);
 	$self->add_object($plist);
@@ -217,7 +217,7 @@ sub makesum_plist
 
 sub verify_checksum
 {
-	my ($self, $base, $stash) = @_;
+	my ($self, $base, $stash, $infodir) = @_;
 	my $fname = $base.'/'.$self->fullname();
 	my $check = ref($self)->new($self->{name});
 	$self->compute_checksum($check, $fname, $stash);
@@ -235,7 +235,7 @@ sub verify_checksum
 package OpenBSD::PackingElement::InfoFile;
 sub makesum_plist
 {
-	my ($self, $plist, $base, $stash) = @_;
+	my ($self, $plist, $base, $stash, $infodir) = @_;
 	$self->SUPER::makesum_plist($plist, $base, $stash);
 	my $fname = $self->fullname();
 	for (my $i = 1; ; $i++) {
@@ -350,9 +350,9 @@ if (@ARGV == 0) {
 }
 
 try {
-my $dir;
+my $infodir;
 
-$dir = OpenBSD::Temp::dir() unless $opt_q;
+$infodir = OpenBSD::Temp::dir() unless $opt_q;
 
 if (defined $opt_s) {
 	Usage "Option s is no longer supported";
@@ -385,11 +385,11 @@ if (defined $opt_q) {
 } else {
 	if (defined $opt_c) {
 	    if ($opt_c =~ /^\-/) {
-		open(my $fh, '>', $dir.DESC) or die "Can't write COMMENT to DESC file: $!";
+		open(my $fh, '>', $infodir.DESC) or die "Can't write COMMENT to DESC file: $!";
 		print $fh $';
 		close($fh);
 	    } else {
-		copy_subst($opt_c, '>', $dir.DESC);
+		copy_subst($opt_c, '>', $infodir.DESC);
 	    }
 	} else {
 		Usage "Comment required" unless $regen_package;
@@ -397,11 +397,11 @@ if (defined $opt_q) {
 
 	if (defined $opt_d) {
 	    if ($opt_d =~ /^\-/) {
-		open(my $fh, '>>', $dir.DESC) or die "Can't write to DESC: $!";
+		open(my $fh, '>>', $infodir.DESC) or die "Can't write to DESC: $!";
 		print $fh $';
 		close($fh);
 	    } else {
-		copy_subst($opt_d, '>>', $dir.DESC);
+		copy_subst($opt_d, '>>', $infodir.DESC);
 	    }
 	} else {
 		Usage "Description required" unless $regen_package;
@@ -410,33 +410,33 @@ if (defined $opt_q) {
 	print "Creating package $ARGV[0]\n" if $opt_v && !$regen_package;
 
 	if (defined $opt_i) {
-	    copy_subst($opt_i, '>', $dir.INSTALL);
+	    copy_subst($opt_i, '>', $infodir.INSTALL);
 	}
 		
 	if (defined $opt_k) {
-	    copy_subst($opt_k, '>', $dir.DEINSTALL);
+	    copy_subst($opt_k, '>', $infodir.DEINSTALL);
 	}
 
 	if (defined $opt_r) {
-	    copy_subst($opt_r, '>', $dir.REQUIRE);
+	    copy_subst($opt_r, '>', $infodir.REQUIRE);
 	}
 
 	if (defined $opt_M) {
-	    copy_subst($opt_M, '>', $dir.DISPLAY);
+	    copy_subst($opt_M, '>', $infodir.DISPLAY);
 	}
 
 	if (defined $opt_m) {
-	    copy_subst($opt_m, '>', $dir.MODULE);
+	    copy_subst($opt_m, '>', $infodir.MODULE);
 	}
 	if (defined $opt_U) {
-	    copy_subst($opt_U, '>', $dir.UNDISPLAY);
+	    copy_subst($opt_U, '>', $infodir.UNDISPLAY);
 	}
 
 	for my $special (info_names()) {
-	    next unless -f $dir.$special;
+	    next unless -f $infodir.$special;
 	    my $f = OpenBSD::PackingElement::File->add($plist, $special);
-	    $f->add_md5(OpenBSD::md5::fromfile($dir.$special));
-	    $f->add_size((stat $dir.$special)[7]);
+	    $f->add_md5(OpenBSD::md5::fromfile($infodir.$special));
+	    $f->add_size((stat $infodir.$special)[7]);
 	}
 	OpenBSD::PackingElement::File->add($plist, CONTENTS);
 }
@@ -461,7 +461,7 @@ if ($regen_package) {
 	if ($v != 1 || @contents != 1) {
 		Usage "Exactly one single packing list is required";
 	}
-	$dir = dirname($contents[0]);
+	$infodir = dirname($contents[0]);
 }
 
 for my $contentsfile (@contents) {
@@ -552,10 +552,10 @@ if ($plist->{need_modules}) {
 
 unless (defined $opt_q && defined $opt_n) {
 	if ($regen_package) {
-		$plist->verify_checksum($base, {});
+		$plist->verify_checksum($base, {}, $infodir);
 	} else {
 		my $p2 = OpenBSD::PackingList->new;
-		$plist->makesum_plist($p2, $base, {});
+		$plist->makesum_plist($p2, $base, {}, $infodir);
 		$plist = $p2;
 	}
 }
@@ -583,7 +583,7 @@ my $wname;
 if ($regen_package) {
 	$wname = $plist->pkgname().".tgz";
 } else {
-	$plist->tofile($dir.CONTENTS) or Fatal "Can't write packing list";
+	$plist->tofile($infodir.CONTENTS) or Fatal "Can't write packing list";
 	$wname = $ARGV[0];
 }
 
@@ -604,7 +604,7 @@ if ($opt_n) {
 	local $SIG{'KILL'} = $h;
 	local $SIG{'TERM'} = $h;
 	open(my $fh, "|gzip >$wname");
-	my $wrarc = OpenBSD::Ustar->new($fh, $dir);
+	my $wrarc = OpenBSD::Ustar->new($fh, $infodir);
 
 	$plist->create_package($wrarc, $base, $opt_v);
 	$wrarc->pad();
