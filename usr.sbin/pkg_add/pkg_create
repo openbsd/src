@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.69 2007/04/30 09:34:06 espie Exp $
+# $OpenBSD: pkg_create,v 1.70 2007/04/30 09:37:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -74,12 +74,6 @@ sub warn_once
 	}
 }
 
-sub makesum_plist
-{
-	my ($self, $plist, $base, $stash, $infodir) = @_;
-	$self->add_object($plist);
-}
-
 use OpenBSD::md5;
 
 sub compute_checksum
@@ -102,6 +96,16 @@ sub compute_checksum
 		print STDERR "Error in package: $fname does not exist\n";
 		$main::errors++;
 	}
+}
+
+sub makesum_plist
+{
+	my ($self, $plist, $base, $stash, $infodir) = @_;
+	$self->add_object($plist);
+}
+
+sub verify_checksum
+{
 }
 
 package OpenBSD::PackingElement::PkgConflict;
@@ -134,6 +138,21 @@ sub comment_create_package
 {
 	my ($self) = @_;
 	print "Adding ", $self->{name}, "\n";
+}
+
+package OpenBSD::PackingElement::Cwd;
+use OpenBSD::Temp;
+
+sub archive
+{
+	my ($self, $arc, $base) = @_;
+	$arc->destdir($base."/".$self->{name});
+}
+
+sub comment_create_package
+{
+	my ($self) = @_;
+	print "Cwd: ", $self->{name}, "\n";
 }
 
 package OpenBSD::PackingElement::FileBase;
@@ -181,32 +200,6 @@ sub print_file
 	print '@', $item->keyword(), " ", $item->fullname(), "\n";
 }
 
-package OpenBSD::PackingElement::Cwd;
-use OpenBSD::Temp;
-
-sub archive
-{
-	my ($self, $arc, $base) = @_;
-	$arc->destdir($base."/".$self->{name});
-}
-
-sub comment_create_package
-{
-	my ($self) = @_;
-	print "Cwd: ", $self->{name}, "\n";
-}
-
-package OpenBSD::PackingElement;
-
-sub create_checksum
-{
-}
-
-sub verify_checksum
-{
-}
-
-package OpenBSD::PackingElement::FileBase;
 sub makesum_plist
 {
 	my ($self, $plist, $base, $stash, $infodir) = @_;
