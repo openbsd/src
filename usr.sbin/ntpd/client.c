@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.74 2006/10/27 12:22:41 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.75 2007/04/30 01:33:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -268,8 +268,8 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 
 	if (p->trustlevel < TRUSTLEVEL_PATHETIC)
 		interval = scale_interval(INTERVAL_QUERY_PATHETIC);
-	else if (p->trustlevel < TRUSTLEVEL_AGRESSIVE)
-		interval = scale_interval(INTERVAL_QUERY_AGRESSIVE);
+	else if (p->trustlevel < TRUSTLEVEL_AGGRESSIVE)
+		interval = scale_interval(INTERVAL_QUERY_AGGRESSIVE);
 	else
 		interval = scale_interval(INTERVAL_QUERY_NORMAL);
 

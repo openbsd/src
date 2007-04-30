@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.83 2007/03/23 14:22:40 ckuethe Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.84 2007/04/30 01:33:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,11 +41,11 @@
 
 #define	INTERVAL_QUERY_NORMAL		30	/* sync to peers every n secs */
 #define	INTERVAL_QUERY_PATHETIC		60
-#define	INTERVAL_QUERY_AGRESSIVE	5
+#define	INTERVAL_QUERY_AGGRESSIVE	5
 
 #define	TRUSTLEVEL_BADPEER		6
 #define	TRUSTLEVEL_PATHETIC		2
-#define	TRUSTLEVEL_AGRESSIVE		8
+#define	TRUSTLEVEL_AGGRESSIVE		8
 #define	TRUSTLEVEL_MAX			10
 
 #define	MAX_SERVERS_DNS			8
