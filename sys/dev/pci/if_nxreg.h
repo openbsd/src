@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.13 2007/04/30 21:22:56 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.14 2007/04/30 22:53:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -43,7 +43,8 @@
 enum nx_state {
 	NX_S_FAIL	= -1,	/* Failed to initialize the device */
 	NX_S_OFFLINE	= 0,	/* Firmware is not active yet */
-	NX_S_BOOTING	= 1,	/* Chipset is booting the firmware */
+	NX_S_BOOT	= 1,	/* Chipset is booting the firmware */
+	NX_S_LOADED	= 2,	/* Firmware is loaded but not initialized */
 	NX_S_READY	= 3	/* Device has been initialized and is ready */
 };
 
@@ -276,13 +277,20 @@ struct nx_statusdesc {
  * Software defined registers (used by the firmware or the driver)
  */
 
-/* Lock ID registers */
+/* Chipset state registers */
 #define NXSW_ROM_LOCK_ID	NXSW(0x2100)	/* Used for locking the ROM */
 #define  NXSW_ROM_LOCK_DRV	0x0d417340	/* Driver ROM lock ID */
 #define NXSW_PHY_LOCK_ID	NXSW(0x2120)	/* Used for locking the PHY */
 #define  NXSW_PHY_LOCK_DRV	0x44524956	/* Driver PHY lock ID */
-
-/* Boot loader configuration */
+#define NXSW_TEMP		NXSW(0x01b4)	/* Temperature sensor */
+#define  NXSW_TEMP_STATE_M	0x0000ffff	/* Temp state mask */
+#define  NXSW_TEMP_STATE_S	0		/* Temp state shift */
+#define   NXSW_TEMP_STATE_NONE	0x0000		/* Temp state is UNSPEC */
+#define   NXSW_TEMP_STATE_OK	0x0001		/* Temp state is OK */
+#define   NXSW_TEMP_STATE_WARN	0x0002		/* Temp state is WARNING */
+#define   NXSW_TEMP_STATE_CRIT	0x0003		/* Temp state is CRITICAL */
+#define  NXSW_TEMP_VAL_M	0xffff0000	/* Temp deg celsius mask */
+#define  NXSW_TEMP_VAL_S	16		/* Temp deg celsius shift */
 #define NXSW_BOOTLD_CONFIG	NXSW(0x01fc)
 #define  NXSW_BOOTLD_CONFIG_ROM	0x00000000	/* Load firmware from flasg */
 #define  NXSW_BOOTLD_CONFIG_RAM	0x12345678	/* Load firmware from memory */

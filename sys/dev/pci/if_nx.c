@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.29 2007/04/30 22:09:16 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.30 2007/04/30 22:53:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -155,7 +155,7 @@ struct nx_softc {
 int	 nxb_match(struct device *, void *, void *);
 void	 nxb_attach(struct device *, struct device *, void *);
 int	 nxb_query(struct nxb_softc *sc);
-int	 nxb_booted(struct nxb_softc *sc);
+int	 nxb_newstate(struct nxb_softc *, int);
 void	 nxb_mountroot(void *);
 int	 nxb_loadfirmware(struct nxb_softc *, struct nxb_firmware_header *,
 	    u_int8_t **, size_t *);
@@ -505,31 +505,51 @@ nxb_query(struct nxb_softc *sc)
 	free(nu, M_TEMP);
 
 	/*
-	 * Initialize and bootstrap the device
-	 */
-	nxb_write(sc, NXSW_CMD_PRODUCER_OFF, 0);
-	nxb_write(sc, NXSW_CMD_CONSUMER_OFF, 0);
-	nxb_write(sc, NXSW_CMD_ADDR_LO, 0);
-
-	/*
 	 * bootstrap the firmware, the status will be polled in the
 	 * mountroot hook.
 	 */
-	nxb_write(sc, NXROMUSB_GLB_PEGTUNE, NXROMUSB_GLB_PEGTUNE_DONE);
-	sc->sc_state = NX_S_BOOTING;
+	nxb_newstate(sc, NX_S_BOOT);
 
 	return (0);
 }
 
 int
-nxb_booted(struct nxb_softc *sc)
+nxb_newstate(struct nxb_softc *sc, int newstate)
 {
-	if (nxb_wait(sc, NXSW_CMDPEG_STATE,
-	    NXSW_CMDPEG_INIT_DONE, NXSW_CMDPEG_STATE_M, 1, 2000000) != 0) {
-		printf("%s: bootstrap failed, code 0x%x\n",
-		    sc->sc_dev.dv_xname, nxb_read(sc, NXSW_CMDPEG_STATE));
-		return (-1);
+	int	 oldstate = sc->sc_state;
+
+	switch (newstate) {
+	case NX_S_BOOT:
+		/*
+		 * Initialize and bootstrap the device
+		 */
+		nxb_write(sc, NXSW_CMD_PRODUCER_OFF, 0);
+		nxb_write(sc, NXSW_CMD_CONSUMER_OFF, 0);
+		nxb_write(sc, NXSW_CMD_ADDR_LO, 0);
+		nxb_write(sc, NXROMUSB_GLB_PEGTUNE, NXROMUSB_GLB_PEGTUNE_DONE);
+		break;
+	case NX_S_LOADED:
+		/*
+		 * Wait for the device to become ready
+		 */
+		assert(oldstate == NX_S_BOOT);
+		if (nxb_wait(sc, NXSW_CMDPEG_STATE, NXSW_CMDPEG_INIT_DONE,
+		    NXSW_CMDPEG_STATE_M, 1, 2000000) != 0) {
+			printf("%s: bootstrap failed, code 0x%x\n",
+			    sc->sc_dev.dv_xname,
+			    nxb_read(sc, NXSW_CMDPEG_STATE));
+			sc->sc_state = NX_S_FAIL;
+			return (-1);
+		}
+		break;
+	case NX_S_READY:
+		break;
+	default:
+		/* no action */
+		break;
 	}
+	sc->sc_state = newstate;
+
 	return (0);
 }
 
@@ -538,12 +558,10 @@ nxb_mountroot(void *arg)
 {
 	struct nxb_softc	*sc = (struct nxb_softc *)arg;
 
-	assert(sc->sc_state == NX_S_BOOTING);
-
 	/*
 	 * Poll the status of the running firmware.
 	 */
-	if (nxb_booted(sc) != 0)
+	if (nxb_newstate(sc, NX_S_LOADED) != 0)
 		return;
 
 	/*
@@ -568,7 +586,7 @@ nxb_mountroot(void *arg)
 	printf("\n");
 
 	/* Firmware is ready for operation, allow interrupts etc. */
-	sc->sc_state = NX_S_READY;
+	nxb_newstate(sc, NX_S_READY);
 }
 
 int
@@ -738,17 +756,17 @@ nxb_reset(struct nxb_softc *sc)
 	/*
 	 * bootstrap the newly loaded firmware and wait for completion
 	 */
-	nxb_write(sc, NXROMUSB_GLB_PEGTUNE, NXROMUSB_GLB_PEGTUNE_DONE);
-	if (nxb_booted(sc) != 0)
+	nxb_newstate(sc, NX_S_BOOT);
+	if (nxb_newstate(sc, NX_S_LOADED) != 0)
 		goto fail;
 
 	/* Firmware is ready for operation, allow interrupts etc. */
-	sc->sc_state = NX_S_READY;
+	nxb_newstate(sc, NX_S_READY);
 	goto done;
  fail1:
 	printf("%s: failed to reset firmware\n", sc->sc_dev.dv_xname);
  fail:
-	sc->sc_state = NX_S_FAIL;
+	nxb_newstate(sc, NX_S_FAIL);
  done:
 	if (fw != NULL)
 		free(fw, M_DEVBUF);
