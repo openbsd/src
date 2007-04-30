@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.66 2007/04/30 09:07:16 espie Exp $
+# $OpenBSD: pkg_create,v 1.67 2007/04/30 09:30:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -187,11 +187,10 @@ use OpenBSD::md5;
 
 sub compute_checksum
 {
-	my ($self, $result, $base, $stash) = @_;
+	my ($self, $result, $fname, $stash) = @_;
 
-	my $fname = $self->fullname();
-	if (-l "$base/$fname") {
-		my $value = readlink "$base/$fname";
+	if (-l $fname) {
+		my $value = readlink $fname;
 		$result->make_symlink($value);
 	} elsif (-f _) {
 		my ($dev, $ino, $size) = (stat _)[0,1,7];
@@ -199,11 +198,11 @@ sub compute_checksum
 			$result->make_hardlink($stash->{"$dev/$ino"});
 		} else {
 			$stash->{"$dev/$ino"} = $fname;
-			$result->add_md5(OpenBSD::md5::fromfile("$base/$fname"));
+			$result->add_md5(OpenBSD::md5::fromfile($fname));
 			$result->add_size($size);
 		}
 	} else {
-		print STDERR "Error in package: $base/$fname does not exist\n";
+		print STDERR "Error in package: $fname does not exist\n";
 		$main::errors++;
 	}
 }
@@ -211,16 +210,17 @@ sub compute_checksum
 sub makesum_plist
 {
 	my ($self, $plist, $base, $stash) = @_;
-	$self->compute_checksum($self, $base, $stash);
+	my $fname = $base.'/'.$self->fullname();
+	$self->compute_checksum($self, $fname, $stash);
 	$self->add_object($plist);
 }
 
 sub verify_checksum
 {
 	my ($self, $base, $stash) = @_;
-	my $fname = $self->fullname();
+	my $fname = $base.'/'.$self->fullname();
 	my $check = ref($self)->new($self->{name});
-	$self->compute_checksum($check, $base, $stash);
+	$self->compute_checksum($check, $fname, $stash);
 
 	for my $field (qw(symlink link md5 size)) {
 		if ((defined $check->{$field} && defined $self->{$field} &&
@@ -239,9 +239,10 @@ sub makesum_plist
 	$self->SUPER::makesum_plist($plist, $base, $stash);
 	my $fname = $self->fullname();
 	for (my $i = 1; ; $i++) {
-		if (-e "$base/$fname-$i") {
+		my $n = "$base/$fname-$i";
+		if (-e $n) {
 			my $e = OpenBSD::PackingElement::File->add($plist, $self->{name}."-".$i);
-			$e->compute_checksum($e, $base, $stash);
+			$e->compute_checksum($e, $n, $stash);
 		} else {
 			last;
 		}
