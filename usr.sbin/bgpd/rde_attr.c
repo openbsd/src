@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.71 2007/04/23 13:04:24 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.72 2007/04/30 11:37:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -505,7 +505,7 @@ aspath_inflate(void *data, u_int16_t len, u_int16_t *newlen)
 		seg_size = 2 + sizeof(u_int16_t) * seg_len;
 		nlen += 2 + sizeof(u_int32_t) * seg_len;
 
-		if (seg_size > len)
+		if (seg_size > olen)
 			fatalx("aspath_inflate: bula bula");
 	}
 
