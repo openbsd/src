@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.11 2007/04/28 19:10:46 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.12 2007/04/30 10:55:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -38,6 +38,13 @@
 #define NX_FIRMWARE_MAJOR	3
 #define NX_FIRMWARE_MINOR	4
 #define NX_FIRMWARE_BUILD	31
+
+/* Used to indicate various states of the NIC and its firmware */
+enum nx_state {
+	NX_S_OFFLINE	= 0,	/* Firmware is not active yet */
+	NX_S_BOOTING	= 1,	/* Chipset is booting the firmware */
+	NX_S_READY	= 3	/* Device has been initialized and is ready */
+};
 
 /*
  * Hardware descriptors

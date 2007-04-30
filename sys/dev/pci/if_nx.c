@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.22 2007/04/28 19:10:46 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.23 2007/04/30 10:55:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -108,6 +108,7 @@ struct nxb_softc {
 	pci_intr_handle_t	 sc_ih;
 
 	int			 sc_window;
+	int			 sc_state;
 	struct nxb_info		 sc_nxbinfo;
 	u_int32_t		 sc_fwmajor;
 	u_int32_t		 sc_fwminor;
@@ -136,6 +137,7 @@ struct nx_softc {
 int	 nxb_match(struct device *, void *, void *);
 void	 nxb_attach(struct device *, struct device *, void *);
 int	 nxb_query(struct nxb_softc *sc);
+void	 nxb_mountroot(void *);
 
 u_int32_t nxb_read(struct nxb_softc *, bus_size_t);
 void	 nxb_write(struct nxb_softc *, bus_size_t, u_int32_t);
@@ -281,6 +283,8 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; i < sc->sc_nports; i++)
 		config_found(&sc->sc_dev, &sc->sc_nxp[i], nx_print);
+
+	mountroothook_establish(nxb_mountroot, sc);
 
 	return;
 
@@ -480,12 +484,32 @@ nxb_query(struct nxb_softc *sc)
 	nxb_write(sc, NXSW_CMD_CONSUMER_OFF, 0);
 	nxb_write(sc, NXSW_CMD_ADDR_LO, 0);
 
+	/*
+	 * bootstrap the firmware, the status will be polled in the
+	 * mountroot hook.
+	 */
 	nxb_write(sc, NXROMUSB_GLB_PEGTUNE, NXROMUSB_GLB_PEGTUNE_DONE);
+	sc->sc_state = NX_S_BOOTING;
+
+	return (0);
+}
+
+void
+nxb_mountroot(void *arg)
+{
+	struct nxb_softc	*sc = (struct nxb_softc *)arg;
+
+	assert(sc->sc_state == NX_S_BOOTING);
+
+	/*
+	 * Poll the status of the running firmware.
+	 */
 	if (nxb_wait(sc, NXSW_CMDPEG_STATE,
 	    NXSW_CMDPEG_INIT_DONE, NXSW_CMDPEG_STATE_M, 1, 2000000) != 0) {
-		printf(": bootstrap failed, code 0x%x\n",
+		printf("%s: bootstrap failed, code 0x%x\n",
+		    sc->sc_dev.dv_xname,
 		    nxb_read(sc, NXSW_CMDPEG_STATE));
-		return (-1);
+		return;
 	}
 
 	/*
@@ -494,7 +518,7 @@ nxb_query(struct nxb_softc *sc)
 	sc->sc_fwmajor = nxb_read(sc, NXSW_FW_VERSION_MAJOR);
 	sc->sc_fwminor = nxb_read(sc, NXSW_FW_VERSION_MINOR);
 	sc->sc_fwbuild = nxb_read(sc, NXSW_FW_VERSION_BUILD);
-	printf(", fw%u.%u.%u",
+	printf("%s: firmware %u.%u.%u", sc->sc_dev.dv_xname,
 	    sc->sc_fwmajor, sc->sc_fwminor, sc->sc_fwbuild);
 	if (sc->sc_fwmajor != NX_FIRMWARE_MAJOR ||
 	    sc->sc_fwminor != NX_FIRMWARE_MINOR) {
@@ -503,14 +527,16 @@ nxb_query(struct nxb_softc *sc)
 		 * XXX from disk if the firmware image in the flash is not
 		 * XXX supported by the driver.
 		 */
-		printf(": requires fw%u.%u.xx (%u.%u.%u)\n",
+		printf(", requires %u.%u.xx (%u.%u.%u)",
 		    NX_FIRMWARE_MAJOR, NX_FIRMWARE_MINOR,
 		    NX_FIRMWARE_MAJOR, NX_FIRMWARE_MINOR,
 		    NX_FIRMWARE_BUILD);
-		return (-1);
+		return;
 	}
+	printf("\n");
 
-	return (0);
+	/* Firmware is ready for operation, allow interrupts etc. */
+	sc->sc_state = NX_S_READY;
 }
 
 u_int32_t
@@ -909,5 +935,11 @@ nx_tick(void *arg)
 int
 nx_intr(void *arg)
 {
+	struct nx_softc		*nx = (struct nx_softc *)arg;
+	struct nxb_softc	*sc = nx->nx_sc;
+
+	if (sc->sc_state != NX_S_READY)
+		return (0);
+
 	return (0);
 }
