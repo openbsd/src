@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.71 2007/04/30 09:53:41 espie Exp $
+# $OpenBSD: pkg_create,v 1.72 2007/04/30 10:00:50 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -415,6 +415,7 @@ if (defined $opt_q) {
 		}
 	}
 } else {
+	OpenBSD::PackingElement::File->add($plist, DESC);
 	if (defined $opt_c) {
 	    if ($opt_c =~ /^\-/) {
 		open(my $fh, '>', $infodir.DESC) or die "Can't write COMMENT to DESC file: $!";
@@ -439,35 +440,37 @@ if (defined $opt_q) {
 		Usage "Description required" unless $regen_package;
 	}
 
-	print "Creating package $ARGV[0]\n" if $opt_v && !$regen_package;
+	print "Creating package $ARGV[0]\n" if !(defined $opt_q) && $opt_v && !$regen_package;
 
 	if (defined $opt_i) {
+	    OpenBSD::PackingElement::File->add($plist, INSTALL);
 	    copy_subst($opt_i, '>', $infodir.INSTALL);
 	}
 		
 	if (defined $opt_k) {
+	    OpenBSD::PackingElement::File->add($plist, DEINSTALL);
 	    copy_subst($opt_k, '>', $infodir.DEINSTALL);
 	}
 
 	if (defined $opt_r) {
+	    OpenBSD::PackingElement::File->add($plist, REQUIRE);
 	    copy_subst($opt_r, '>', $infodir.REQUIRE);
 	}
 
 	if (defined $opt_M) {
+	    OpenBSD::PackingElement::File->add($plist, DISPLAY);
 	    copy_subst($opt_M, '>', $infodir.DISPLAY);
 	}
 
 	if (defined $opt_m) {
+	    OpenBSD::PackingElement::File->add($plist, MODULE);
 	    copy_subst($opt_m, '>', $infodir.MODULE);
 	}
 	if (defined $opt_U) {
+	    OpenBSD::PackingElement::File->add($plist, UNDISPLAY);
 	    copy_subst($opt_U, '>', $infodir.UNDISPLAY);
 	}
 
-	for my $special (info_names()) {
-	    next unless -f $infodir.$special;
-	    OpenBSD::PackingElement::File->add($plist, $special);
-	}
 	OpenBSD::PackingElement::File->add($plist, CONTENTS);
 }
 
