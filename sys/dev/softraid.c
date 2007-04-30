@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.36 2007/04/23 22:48:40 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.37 2007/04/30 01:58:36 todd Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1852,7 +1852,7 @@ sr_save_metadata(struct sr_discipline *sd)
 {
 	struct sr_softc		*sc = sd->sd_sc;
 	struct sr_metadata	*sm = sd->sd_meta;
-	struct sr_vol_meta	*sv = &sd->sd_vol.sv_meta, *im_sv;;
+	struct sr_vol_meta	*sv = &sd->sd_vol.sv_meta, *im_sv;
 	struct sr_chunk_meta	*im_sc;
 	struct sr_chunk		*src;
 	struct buf		b;
