@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.108 2007/04/24 13:49:29 sobrado Exp $
+.\"	$OpenBSD: cvs.1,v 1.109 2007/04/30 16:09:43 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004-2007 Xavier Santolaria <xsa@openbsd.org>
@@ -106,6 +106,8 @@ Be quiet about reporting.
 This is the default.
 .It Fl R
 Permit checkout from a read-only repository.
+Implies
+.Fl l .
 See also
 .Ev CVSREADONLYFS ,
 below.
@@ -125,6 +127,13 @@ Trace program execution.
 .It Fl V
 Verbose mode.
 All messages will be displayed.
+.Fl V
+and
+.Fl Q
+are mutually exclusive.
+If both are specified,
+.Fl Q
+takes precedence.
 .It Fl v
 Display version information and exit.
 .It Fl w
@@ -1720,6 +1729,8 @@ If set,
 extracts files in read-only mode.
 .It Ev CVSREADONLYFS
 Permit checkout from a read-only repository.
+Implies
+.Fl l .
 See also
 .Fl R ,
 above.
