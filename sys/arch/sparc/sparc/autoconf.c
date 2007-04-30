@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.74 2006/11/28 16:56:50 dlg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.75 2007/04/30 18:11:03 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1795,7 +1795,7 @@ getdisk(str, len, defpart, devp)
 	register struct device *dv;
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
-		printf("use one of:");
+		printf("use one of: exit");
 #ifdef RAMDISK_HOOKS
 		printf(" %s[a-p]", fakerdrootdev.dv_xname);
 #endif
@@ -1910,6 +1910,8 @@ setroot()
 		if (len == -1 || len >= sizeof(buf))
 			panic("setroot: device name too long");
 
+		if (len == 4 && strncmp(buf, "exit", 4) == 0)
+			boot(RB_USERREQ | RB_HALT);
 		bootdv = getdisk(buf, len, part, &rootdev);
 	}
 
@@ -1943,6 +1945,8 @@ setroot()
 					goto gotswap;
 				}
 			}
+			if (len == 4 && strncmp(buf, "exit", 4) == 0)
+				boot(RB_USERREQ | RB_HALT);
 			dv = getdisk(buf, len, bp?bp->val[2]:0, &nrootdev);
 			if (dv != NULL) {
 				bootdv = dv;
@@ -1982,6 +1986,8 @@ setroot()
 				}
 				break;
 			}
+			if (len == 4 && strncmp(buf, "exit", 4) == 0)
+				boot(RB_USERREQ | RB_HALT);
 			dv = getdisk(buf, len, 1, &nswapdev);
 			if (dv) {
 				if (dv->dv_class == DV_IFNET)
