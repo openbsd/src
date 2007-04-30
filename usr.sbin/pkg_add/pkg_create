@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.82 2007/04/30 12:39:31 espie Exp $
+# $OpenBSD: pkg_create,v 1.83 2007/04/30 13:51:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -316,6 +316,7 @@ my %defines;
 sub dosubst
 {
 	local $_ = shift;
+	return $_ unless m/\$/;
 	while (my ($k, $v) = each %defines) {
 		s/\$\{\Q$k\E\}/$v/g;
 	}
