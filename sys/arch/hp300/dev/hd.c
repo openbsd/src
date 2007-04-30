@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.45 2007/02/28 20:19:05 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.46 2007/04/30 00:17:48 krw Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -68,10 +68,6 @@
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
 #endif
-
-#define	HDUNIT(x)	DISKUNIT(x)
-#define HDPART(x)	DISKPART(x)
-#define HDLABELDEV(d)	MAKEDISKDEV(major(d), HDUNIT(d), RAW_PART)
 
 #ifndef	HDRETRY
 #define	HDRETRY		5
@@ -534,7 +530,7 @@ hdgetdisklabel(dev, rs, lp, clp, spoofonly)
 	/*
 	 * Now try to read the disklabel
 	 */
-	errstring = readdisklabel(HDLABELDEV(dev), hdstrategy, lp, clp,
+	errstring = readdisklabel(DISKLABELDEV(dev), hdstrategy, lp, clp,
 	    spoofonly);
 	if (errstring) {
 		/* printf("%s: %s\n", rs->sc_dev.dv_xname, errstring); */
@@ -548,7 +544,7 @@ hdopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	int unit = HDUNIT(dev);
+	int unit = DISKUNIT(dev);
 	struct hd_softc *rs;
 	int mask, part;
 	int error;
@@ -574,7 +570,7 @@ hdopen(dev, flags, mode, p)
 		rs->sc_flags &= ~HDF_OPENING;
 	}
 
-	part = HDPART(dev);
+	part = DISKPART(dev);
 	mask = 1 << part;
 
 	/* Check that the partition exists. */
@@ -610,7 +606,7 @@ hdclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = HDUNIT(dev);
+	int unit = DISKUNIT(dev);
 	struct hd_softc *rs;
 	struct disk *dk;
 	int mask, s;
@@ -625,7 +621,7 @@ hdclose(dev, flag, mode, p)
 		return (error);
 	}
 
-	mask = 1 << HDPART(dev);
+	mask = 1 << DISKPART(dev);
  	dk = &rs->sc_dkdev;
 	switch (mode) {
 	case S_IFCHR:
@@ -663,7 +659,7 @@ void
 hdstrategy(bp)
 	struct buf *bp;
 {
-	int unit = HDUNIT(bp->b_dev);
+	int unit = DISKUNIT(bp->b_dev);
 	struct hd_softc *rs;
 	struct buf *dp;
 	int s;
@@ -703,7 +699,7 @@ hdstrategy(bp)
 
  	dp = &rs->sc_tab;
 
-	if (HDPART(bp->b_dev) == RAW_PART) {
+	if (DISKPART(bp->b_dev) == RAW_PART) {
 		/* valid regardless of the disklabel */
 		bp->b_cylinder = bp->b_blkno;
 	} else {
@@ -717,7 +713,7 @@ hdstrategy(bp)
 		 * XXX destroys the disksort ordering hint
 		 * XXX bounds_check_with_label() has put in there.
 		*/
-		pinfo = &rs->sc_dkdev.dk_label->d_partitions[HDPART(bp->b_dev)];
+		pinfo = &rs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
 		bp->b_cylinder = bp->b_blkno + pinfo->p_offset;
 	}
 
@@ -812,7 +808,7 @@ again:
 		printf("hdstart(%s): bp %p, %c\n", rs->sc_dev.dv_xname, bp,
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
-	part = HDPART(bp->b_dev);
+	part = DISKPART(bp->b_dev);
 	rs->sc_flags |= HDF_SEEK;
 	rs->sc_ioc.c_unit = C_SUNIT(rs->sc_punit);
 	rs->sc_ioc.c_volume = C_SVOL(0);
@@ -1074,7 +1070,7 @@ hderror(unit)
 	 * we just use b_blkno.
  	 */
 	bp = rs->sc_tab.b_actf;
-	pbn = rs->sc_dkdev.dk_label->d_partitions[HDPART(bp->b_dev)].p_offset;
+	pbn = rs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)].p_offset;
 	if ((sp->c_fef & FEF_CU) || (sp->c_fef & FEF_DR) ||
 	    (sp->c_ief & IEF_RRMASK)) {
 		hwbn = HDBTOS(pbn + bp->b_blkno);
@@ -1086,7 +1082,7 @@ hderror(unit)
 
 	diskerr(bp, hd_cd.cd_name, "hard error", LOG_PRINTF,
 	    pbn - bp->b_blkno, rs->sc_dkdev.dk_label);
-	printf("\n%s%c: ", rs->sc_dev.dv_xname, 'a' + HDPART(bp->b_dev));
+	printf("\n%s%c: ", rs->sc_dev.dv_xname, 'a' + DISKPART(bp->b_dev));
 	
 #ifdef DEBUG
 	if (hddebug & HDB_ERROR) {
@@ -1150,7 +1146,7 @@ hdioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int unit = HDUNIT(dev);
+	int unit = DISKUNIT(dev);
 	struct hd_softc *sc;
 	int error = 0;
 
@@ -1174,7 +1170,7 @@ hdioctl(dev, cmd, data, flag, p)
 	case DIOCGPART:
 		((struct partinfo *)data)->disklab = sc->sc_dkdev.dk_label;
 		((struct partinfo *)data)->part =
-			&sc->sc_dkdev.dk_label->d_partitions[HDPART(dev)];
+			&sc->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
 		goto exit;
 
 	case DIOCWLABEL:
@@ -1204,7 +1200,7 @@ hdioctl(dev, cmd, data, flag, p)
 		    sc->sc_dkdev.dk_cpulabel);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
-				error = writedisklabel(HDLABELDEV(dev),
+				error = writedisklabel(DISKLABELDEV(dev),
 				    hdstrategy, sc->sc_dkdev.dk_label,
 				    sc->sc_dkdev.dk_cpulabel);
 		}
@@ -1228,7 +1224,7 @@ hdsize(dev)
 	dev_t dev;
 {
 	struct hd_softc *rs;
-	int unit = HDUNIT(dev);
+	int unit = DISKUNIT(dev);
 	int part, omask;
 	int size;
 
@@ -1236,7 +1232,7 @@ hdsize(dev)
 	if (rs == NULL)
 		return (-1);
 
-	part = HDPART(dev);
+	part = DISKPART(dev);
 	omask = rs->sc_dkdev.dk_openmask & (1 << part);
 
 	/*
@@ -1313,8 +1309,8 @@ hddump(dev, blkno, va, size)
 	hddoingadump = 1;
 
 	/* Decompose unit and partition. */
-	unit = HDUNIT(dev);
-	part = HDPART(dev);
+	unit = DISKUNIT(dev);
+	part = DISKPART(dev);
 
 	/* Make sure dump device is ok. */
 	rs = hdlookup(unit);
