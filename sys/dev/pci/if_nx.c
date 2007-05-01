@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.34 2007/05/01 15:18:31 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.35 2007/05/01 16:25:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -36,6 +36,7 @@
 #include <sys/timeout.h>
 #include <sys/proc.h>
 #include <sys/device.h>
+#include <sys/sensors.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -144,6 +145,9 @@ struct nxb_softc {
 
 	struct timeout		 sc_reload;
 	int			 sc_reloaded;
+
+	struct ksensor		 sc_sensor;
+	struct ksensordev	 sc_sensordev;
 };
 
 struct nx_softc {
@@ -177,6 +181,8 @@ void	 nxb_set_window(struct nxb_softc *, int);
 int	 nxb_wait(struct nxb_softc *, bus_size_t, u_int32_t, u_int32_t,
 	    int, u_int);
 int	 nxb_read_rom(struct nxb_softc *, u_int32_t, u_int32_t *);
+
+void	 nxb_temp_sensor(void *);
 
 int	 nx_match(struct device *, void *, void *);
 void	 nx_attach(struct device *, struct device *, void *);
@@ -315,6 +321,13 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; i < sc->sc_nports; i++)
 		config_found(&sc->sc_dev, &sc->sc_nxp[i], nx_print);
+
+	/* Initialize sensor data */
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
+	sc->sc_sensor.type = SENSOR_TEMP;
+	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
+	sensordev_install(&sc->sc_sensordev);
 
 	timeout_set(&sc->sc_reload, nxb_reload, sc);
 	mountroothook_establish(nxb_mountroot, sc);
@@ -568,9 +581,7 @@ nxb_newstate(struct nxb_softc *sc, int newstate)
 		timeout_add(&sc->sc_reload, hz);
 		break;
 	case NX_S_READY:
-		/* XXX for state debugging */
-		printf("%s: temperature 0x%08x\n",
-		    sc->sc_dev.dv_xname, nxb_read(sc, NXSW_TEMP));
+		nxb_temp_sensor(sc);
 		break;
 	case NX_S_FAIL:
 		if (oldstate == NX_S_RELOADED)
@@ -616,6 +627,9 @@ nxb_mountroot(void *arg)
 	printf("\n");
 
 	nxb_newstate(sc, NX_S_RESET);
+
+	/* Start sensor */
+	sensor_task_register(sc, nxb_temp_sensor, NX_POLL_SENSOR);
 }
 
 void
@@ -1048,6 +1062,45 @@ nxb_read_rom(struct nxb_softc *sc, u_int32_t addr, u_int32_t *val)
 	(void)nxb_read(sc, NXSEM_FLASH_UNLOCK);
 
 	return (ret);
+}
+
+void
+nxb_temp_sensor(void *arg)
+{
+	struct nxb_softc	*sc = (struct nxb_softc *)arg;
+	u_int32_t		 data, val, state;
+	int			 window = sc->sc_window;
+
+	if (sc->sc_state != NX_S_READY) {
+		sc->sc_sensor.flags = SENSOR_FUNKNOWN;
+		return;
+	}
+
+	nxb_set_window(sc, 1);
+	data = nxb_read(sc, NXSW_TEMP);
+	nxb_set_window(sc, window);
+	state = (data & NXSW_TEMP_STATE_M) >> NXSW_TEMP_STATE_S;
+	val = (data & NXSW_TEMP_VAL_M) >> NXSW_TEMP_VAL_S;
+
+	switch (state) {
+	case NXSW_TEMP_STATE_NONE:
+		sc->sc_sensor.status = SENSOR_S_UNSPEC;
+		break;
+	case NXSW_TEMP_STATE_OK:
+		sc->sc_sensor.status = SENSOR_S_OK;
+		break;
+	case NXSW_TEMP_STATE_WARN:
+		sc->sc_sensor.status = SENSOR_S_WARN;
+		break;
+	case NXSW_TEMP_STATE_CRIT:
+		sc->sc_sensor.status = SENSOR_S_CRIT;
+		break;
+	default:
+		sc->sc_sensor.flags = SENSOR_FINVALID;
+		return;
+	}
+	sc->sc_sensor.value = val * 1000000 + 273150000; 
+	sc->sc_sensor.flags = 0;
 }
 
 /*

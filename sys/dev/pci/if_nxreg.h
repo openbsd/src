@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.17 2007/05/01 11:44:47 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.18 2007/05/01 16:25:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -32,7 +32,9 @@
 #define NX_MAX_PORTS	4
 
 #define NX_MAX_MTU	ETHER_MTU
-#define NX_JUMBO_MTU	8000			/* less than 9k */
+#define NX_JUMBO_MTU	8000		/* less than 9k */
+
+#define NX_POLL_SENSOR	10		/* read temp sensor every 10s */
 
 /* This driver supported the 3.4.31 (3.4.xx) NIC firmware */
 #define NX_FIRMWARE_MAJOR	3
