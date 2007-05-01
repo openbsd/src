@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingOld.pm,v 1.8 2007/05/01 17:54:46 espie Exp $
+# $OpenBSD: PackingOld.pm,v 1.9 2007/05/01 18:07:00 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -34,29 +34,26 @@ sub add
 package OpenBSD::PackingElement::Src;
 our @ISA=qw(OpenBSD::PackingElement::Old);
 
-__PACKAGE__->register_with_factory('src');
 
 sub keyword() { 'src' }
+__PACKAGE__->register_with_factory;
 
 package OpenBSD::PackingElement::Display;
 our @ISA=qw(OpenBSD::PackingElement::Old);
 
-__PACKAGE__->register_with_factory('display');
-
 sub keyword() { 'display' }
+__PACKAGE__->register_with_factory;
 
 package OpenBSD::PackingElement::Mtree;
 our @ISA=qw(OpenBSD::PackingElement::Old);
 
-__PACKAGE__->register_with_factory('mtree');
-
 sub keyword() { 'mtree' }
+__PACKAGE__->register_with_factory;
 
 package OpenBSD::PackingElement::ignore_inst;
 our @ISA=qw(OpenBSD::PackingElement::Old);
 
-__PACKAGE__->register_with_factory('ignore_inst');
-
 sub keyword() { 'ignore_inst' }
+__PACKAGE__->register_with_factory;
 
 1;
