@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.58 2007/05/01 19:54:55 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.59 2007/05/01 20:13:44 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -328,7 +328,7 @@ sub pkgbase($)
 }
 
 our @unique_categories =
-    (qw(name no-default-conflict manual-installation extrainfo arch));
+    (qw(name no-default-conflict manual-installation extrainfo localbase arch));
 
 our @list_categories =
     (qw(conflict pkgpath incompatibility updateset depend 
