@@ -2058,6 +2058,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/memconf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/mips_opcode.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/mutex.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/param.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/pcb.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/pio.ph
