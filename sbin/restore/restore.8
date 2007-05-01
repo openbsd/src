@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.31 2007/02/25 17:00:32 jmc Exp $
+.\"	$OpenBSD: restore.8,v 1.32 2007/05/01 17:09:53 jmc Exp $
 .\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -177,10 +177,10 @@ flag precludes an interactive file extraction and can be
 detrimental to one's health (not to mention the disk) if not used carefully.
 An example:
 .Bd -literal -offset indent
-# newfs /dev/rrp0g
-# mount /dev/rp0g /mnt
+# newfs /dev/rsd0g
+# mount /dev/sd0g /mnt
 # cd /mnt
-# restore rf /dev/rst8
+# restore rf /dev/rst0
 .Ed
 .Pp
 Note that
