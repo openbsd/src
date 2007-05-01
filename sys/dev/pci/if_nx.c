@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.30 2007/04/30 22:53:09 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.31 2007/05/01 02:20:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -65,6 +65,7 @@
 #ifdef NX_DEBUG
 #define NXDBG_FLASH	(1<<0)	/* debug flash access through ROMUSB */
 #define NXDBG_WAIT	(1<<1)	/* poll registers */
+#define NXDBG_CRBINIT	(1<<2)	/* SW register init from flash */
 #define NXDBG_ALL	0xffff	/* enable all debugging messages */
 int nx_debug = 0;
 #define DPRINTF(_lvl, _arg...)	do {					\
@@ -165,6 +166,7 @@ void	 nxb_reset(struct nxb_softc *);
 
 u_int32_t nxb_read(struct nxb_softc *, bus_size_t);
 void	 nxb_write(struct nxb_softc *, bus_size_t, u_int32_t);
+int	 nxb_writehw(struct nxb_softc *, u_int32_t, u_int32_t);
 void	 nxb_set_window(struct nxb_softc *, int);
 int	 nxb_wait(struct nxb_softc *, bus_size_t, u_int32_t, u_int32_t,
 	    int, u_int);
@@ -518,7 +520,12 @@ nxb_newstate(struct nxb_softc *sc, int newstate)
 {
 	int	 oldstate = sc->sc_state;
 
+	sc->sc_state = newstate;
+
 	switch (newstate) {
+	case NX_S_RESET:
+		nxb_reset(sc);
+		break;
 	case NX_S_BOOT:
 		/*
 		 * Initialize and bootstrap the device
@@ -526,6 +533,7 @@ nxb_newstate(struct nxb_softc *sc, int newstate)
 		nxb_write(sc, NXSW_CMD_PRODUCER_OFF, 0);
 		nxb_write(sc, NXSW_CMD_CONSUMER_OFF, 0);
 		nxb_write(sc, NXSW_CMD_ADDR_LO, 0);
+		nxb_write(sc, NXSW_DRIVER_VER, NX_FIRMWARE_VER);
 		nxb_write(sc, NXROMUSB_GLB_PEGTUNE, NXROMUSB_GLB_PEGTUNE_DONE);
 		break;
 	case NX_S_LOADED:
@@ -548,7 +556,6 @@ nxb_newstate(struct nxb_softc *sc, int newstate)
 		/* no action */
 		break;
 	}
-	sc->sc_state = newstate;
 
 	return (0);
 }
@@ -580,7 +587,7 @@ nxb_mountroot(void *arg)
 		    NX_FIRMWARE_BUILD);
 
 		sc->sc_flags |= NXFLAG_FWINVALID;
-		nxb_reset(sc);
+		nxb_newstate(sc, NX_S_RESET);
 		return;
 	}
 	printf("\n");
@@ -669,7 +676,7 @@ nxb_reset(struct nxb_softc *sc)
 	size_t				 fwlen = 0;
 	int				 bootsz, imagesz;
 	u_int				 i;
-	u_int32_t			*data, addr, val;
+	u_int32_t			*data, addr, val, ncrb;
 	bus_size_t			 reg;
 
 	bzero(&fh, sizeof(fh));
@@ -713,16 +720,56 @@ nxb_reset(struct nxb_softc *sc)
 	}
 
 	/*
-	 * Initialize the SW registers
+	 * Reset the SW registers
 	 */
+
+	/* 1. Halt the hardware */
+	nxb_write(sc, NXROMUSB_GLB_SW_RESET, NXROMUSB_GLB_SW_RESET_DEF);
+
+	/* 2. Read the CRBINIT area from flash memory */
 	addr = NXFLASHMAP_CRBINIT_0;
-	if (nxb_read_rom(sc, addr, &val) != 0)
+	if (nxb_read_rom(sc, addr, &ncrb) != 0)
 		goto fail1;
+	ncrb &= NXFLASHMAP_CRBINIT_M;
+	if (ncrb == 0 || ncrb > NXFLASHMAP_CRBINIT_MAX)
+		goto load;	/* ignore CRBINIT and skip step */
 
-	/* XXX */
-	DPRINTF(NXDBG_FLASH, "%s(%s): ncrb 0x%08x\n",
-	    sc->sc_dev.dv_xname, __func__, val);
+	/* 3. Write the CRBINIT are to PCI memory */
+	for (i = 0; i < ncrb; i++) {
+		reg = i * 8;
 
+		reg += 4;
+		nxb_read_rom(sc, reg, &val);
+		reg += 4;
+		nxb_read_rom(sc, reg, &addr);
+
+		if (nxb_writehw(sc, addr, val) != 0)
+			goto fail1;
+	}
+
+	/* 4. Reset the Protocol Processing Engine */
+	nxb_write(sc, NXROMUSB_GLB_SW_RESET,
+	    nxb_read(sc, NXROMUSB_GLB_SW_RESET) &
+	    ~NXROMUSB_GLB_SW_RESET_PPE);
+
+	/* 5. Reset the D & I caches */
+	nxb_set_window(sc, 0);
+	nxb_write(sc, NXPPE_D(0x0e), 0x1e);
+	nxb_write(sc, NXPPE_D(0x4c), 0x8);
+	nxb_write(sc, NXPPE_I(0x4c), 0x8);
+
+	/* 6. Clear the Protocol Processing Engine */
+	nxb_write(sc, NXPPE_0(0x8), 0);
+	nxb_write(sc, NXPPE_0(0xc), 0);
+	nxb_write(sc, NXPPE_1(0x8), 0);
+	nxb_write(sc, NXPPE_1(0xc), 0);
+	nxb_write(sc, NXPPE_2(0x8), 0);
+	nxb_write(sc, NXPPE_2(0xc), 0);
+	nxb_write(sc, NXPPE_3(0x8), 0);
+	nxb_write(sc, NXPPE_3(0xc), 0);
+	nxb_set_window(sc, 1);
+
+ load:
 	/*
 	 * Load the images into RAM
 	 */
@@ -786,6 +833,64 @@ nxb_write(struct nxb_softc *sc, bus_size_t reg, u_int32_t val)
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, reg, val);
 	bus_space_barrier(sc->sc_memt, sc->sc_memh, reg, 4,
 	    BUS_SPACE_BARRIER_WRITE);
+}
+
+int
+nxb_writehw(struct nxb_softc *sc, u_int32_t addr, u_int32_t val)
+{
+	/* Translation table of NIC addresses to PCI addresses */
+	static u_int16_t hwtrans[] = {
+	        0x29a0, 0x7730, 0x2950, 0x2a50, 0x0000, 0x0d00,
+		0x1b10, 0x0e60, 0x0e00, 0x0e10, 0x0e20, 0x0e30,
+	        0x7000, 0x7010, 0x7020, 0x7030, 0x7040, 0x3400,
+		0x3410, 0x3420, 0x3430, 0x3450, 0x3440, 0x3c00,
+	        0x3c10, 0x3c20, 0x3c30, 0x3c50, 0x3c40, 0x4100,
+		0x0000, 0x0d10, 0x0000, 0x0000, 0x4160, 0x0c60,
+	        0x0c70, 0x0c80, 0x7580, 0x7590, 0x4170, 0x0000,
+		0x0890, 0x70a0, 0x70b0, 0x70c0, 0x08d0, 0x08e0,
+	        0x70f0, 0x4050, 0x4200, 0x4210, 0x0000, 0x0880,
+		0x0000, 0x0000, 0x0000, 0x0000, 0x7180, 0x0000
+	};
+	u_int32_t base = (addr & NXMEMMAP_HWTRANS_M) >> 16;
+	bus_size_t reg = ~0;
+	u_int i, window = 0;
+
+	for (i = 0; i < (sizeof(hwtrans) / sizeof(hwtrans[0])); i++) {
+		if (hwtrans[i] == base) {
+			reg = i << 20;
+			break;
+		}
+	}
+	if (reg == ~0)
+		return (-1);		/* Invalid address */
+	reg += (addr & ~NXMEMMAP_HWTRANS_M);
+
+	/* Translate window addresst to PCI memory offset */
+	if (reg >= NXMEMMAP_WINDOW0_START && reg <= NXMEMMAP_WINDOW0_END)
+		window = 0;
+	else if (reg >= NXMEMMAP_WINDOW1_START && reg <= NXMEMMAP_WINDOW1_END) {
+		reg -= NXMEMMAP_WINDOW1_START;
+		window = 1;
+	} else
+		return (-1);
+	reg += NXPCIMAP_CRB;
+
+	/* Write value to the register, enable some workarounds */
+	if (reg == NXSW_BOOTLD_CONFIG)
+		return (0);
+	nxb_set_window(sc, window);
+	nxb_write(sc, reg, val);
+	nxb_set_window(sc, 1);
+	if (reg == NXROMUSB_GLB_SW_RESET)
+		delay(1000);
+	else
+		delay(1);
+
+	DPRINTF(NXDBG_CRBINIT, "%s(%s) addr 0x%08x -> reg 0x%08x, "
+	    "val 0x%08x, window %d\n",
+	    sc->sc_dev.dv_xname, __func__, addr, reg, val, window);
+
+	return (0);
 }
 
 void

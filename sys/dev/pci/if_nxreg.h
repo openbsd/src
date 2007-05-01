@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.14 2007/04/30 22:53:09 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.15 2007/05/01 02:20:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -38,14 +38,16 @@
 #define NX_FIRMWARE_MAJOR	3
 #define NX_FIRMWARE_MINOR	4
 #define NX_FIRMWARE_BUILD	31
+#define NX_FIRMWARE_VER		0x001f0403
 
 /* Used to indicate various states of the NIC and its firmware */
 enum nx_state {
 	NX_S_FAIL	= -1,	/* Failed to initialize the device */
 	NX_S_OFFLINE	= 0,	/* Firmware is not active yet */
-	NX_S_BOOT	= 1,	/* Chipset is booting the firmware */
-	NX_S_LOADED	= 2,	/* Firmware is loaded but not initialized */
-	NX_S_READY	= 3	/* Device has been initialized and is ready */
+	NX_S_RESET	= 1,	/* Firmware is in reset state */
+	NX_S_BOOT	= 2,	/* Chipset is booting the firmware */
+	NX_S_LOADED	= 3,	/* Firmware is loaded but not initialized */
+	NX_S_READY	= 4	/* Device has been initialized and is ready */
 };
 
 /*
@@ -142,16 +144,34 @@ struct nx_statusdesc {
 #define NXPCIMAP_CRB		0x06000000
 
 /* Offsets inside NXPCIMAP_CRB */
+#define NXMEMMAP_WINDOW0_START	0x00000000
+#define NXMEMMAP_WINDOW0_END	0x01ffffff
 #define NXMEMMAP_WINDOW_SIZE	0x02000000
 #define NXMEMMAP_PCIE		0x00100000
 #define NXMEMMAP_NIU		0x00600000
+#define NXMEMMAP_PPE_0		0x01100000
+#define NXMEMMAP_PPE_1		0x01200000
+#define NXMEMMAP_PPE_2		0x01300000
+#define NXMEMMAP_PPE_3		0x01400000
+#define NXMEMMAP_PPE_D		0x01500000
+#define NXMEMMAP_PPE_I		0x01600000
+#define NXMEMMAP_WINDOW1_START	0x02000000
+#define NXMEMMAP_WINDOW1_END	0x07ffffff
 #define NXMEMMAP_SW		0x02200000	/* XXX 0x02400000? */
 #define NXMEMMAP_SIR		0x03200000
 #define NXMEMMAP_ROMUSB		0x03300000
 
+#define NXMEMMAP_HWTRANS_M	0xfff00000
+
 /* Window 0 register map  */
 #define NXPCIE(_x)		((_x) + 0x06100000)	/* PCI Express */
 #define NXNIU(_x)		((_x) + 0x06600000)	/* Network Int Unit */
+#define NXPPE_0(_x)		((_x) + 0x07100000)	/* PEGNET 0 */
+#define NXPPE_1(_x)		((_x) + 0x07200000)	/* PEGNET 0 */
+#define NXPPE_2(_x)		((_x) + 0x07300000)	/* PEGNET 0 */
+#define NXPPE_3(_x)		((_x) + 0x07400000)	/* PEGNET 0 */
+#define NXPPE_D(_x)		((_x) + 0x07500000)	/* PEGNET D-Cache */
+#define NXPPE_I(_x)		((_x) + 0x07600000)	/* PEGNET I-Cache */
 
 /* Window 1 register map */
 #define NXPCIE_1(_x)		((_x) + 0x06100000)	/* PCI Express' */
@@ -164,6 +184,8 @@ struct nx_statusdesc {
 
 /* Flash layout */
 #define NXFLASHMAP_CRBINIT_0	0x00000000	/* CRBINIT */
+#define  NXFLASHMAP_CRBINIT_M	0x7fffffff	/* ROM memory barrier */
+#define  NXFLASHMAP_CRBINIT_MAX	1023		/* Max CRBINIT entries */
 #define NXFLASHMAP_INFO		0x00004000	/* board configuration */
 #define NXFLASHMAP_INITCODE	0x00006000	/* chipset-specific code */
 #define NXFLASHMAP_BOOTLOADER	0x00010000	/* boot loader */
@@ -334,6 +356,7 @@ struct nx_statusdesc {
 #define NXSW_JRCV_PRODUCER_OFF	NXSW(0x2300)	/* Producer jumbo ring index */
 #define NXSW_JRCV_CONSUMER_OFF	NXSW(0x2304)	/* Consumer jumbo ring index */
 #define NXSW_JRCV_GLOBAL_RING	NXSW(0x2220)	/* Address of jumbo buffer */
+#define NXSW_DRIVER_VER		NXSW(0x24a0)	/* Host driver version */
 
 /*
  * Secondary Interrupt Registers
@@ -372,6 +395,7 @@ struct nx_statusdesc {
 #define  NXROMUSB_GLB_SW_RESET_U0PEG2	(1<<8)	/* Network Pegasus2 reset */
 #define  NXROMUSB_GLB_SW_RESET_U0PEG1	(1<<7)	/* Network Pegasus1 reset */
 #define  NXROMUSB_GLB_SW_RESET_U0PEG0	(1<<6)	/* Network Pegasus0 reset */
+#define  NXROMUSB_GLB_SW_RESET_PPE	0xf0	/* Protocol Processing Engine */
 #define NXROMUSB_GLB_SW_RESET_DEF	0xffffffff
 
 /* Casper Reset Register */
