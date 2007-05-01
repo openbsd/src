@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.64 2007/04/27 20:44:43 kurt Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.65 2007/05/01 14:54:27 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -558,8 +558,8 @@ union pthread_wait_data {
 	pthread_cond_t	cond;
 	const sigset_t	*sigwait;	/* Waiting on a signal in sigwait */
 	struct {
-		short		fd;	/* Used when thread waiting on fd */
-		short		branch;	/* Line number, for debugging.    */
+		int		fd;	/* Used when thread waiting on fd */
+		int		branch;	/* Line number, for debugging.    */
 		const char	*fname;	/* Source file name for debugging.*/
 	} fd;
 	FILE		*fp;
