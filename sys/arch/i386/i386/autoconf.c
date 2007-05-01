@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.70 2007/02/20 21:15:01 tom Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.71 2007/05/01 17:35:56 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -406,6 +406,8 @@ rootconf(void)
 			cnpollc(FALSE);
 			if (*name == '\0')
 				break;
+			if (strcmp(name, "exit") == 0)
+				boot(RB_USERREQ);
 			for (gc = genericconf; gc->gc_driver; gc++)
 				if (gc->gc_driver->cd_ndevs &&
 				    strncmp(gc->gc_name, name,
@@ -454,11 +456,11 @@ rootconf(void)
 #endif
 			}
 
-			printf("use one of: ");
+			printf("use one of: exit");
 			for (gc = genericconf; gc->gc_driver; gc++) {
 				for (unit=0; unit < gc->gc_driver->cd_ndevs; unit++) {
 					if (gc->gc_driver->cd_devs[unit])
-						printf("%s%d[a-%c] ", gc->gc_name,
+						printf(" %s%d[a-%c]", gc->gc_name,
 						    unit, 'a'+MAXPARTITIONS-1);
 				}
 			}
@@ -466,7 +468,7 @@ rootconf(void)
 			for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 			    ifp = TAILQ_NEXT(ifp, if_list)) {
 				if ((ifp->if_flags & IFF_BROADCAST))
-					printf("%s ", ifp->if_xname);
+					printf(" %s", ifp->if_xname);
 			}
 #endif
 			printf("\n");
