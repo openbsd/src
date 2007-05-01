@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.15 2007/04/23 20:11:31 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.16 2007/05/01 22:53:51 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -115,7 +115,7 @@ TAILQ_HEAD(sr_wu_list, sr_workunit);
 
 #define SR_META_SIZE		32	/* save space at chunk beginning */
 #define SR_META_OFFSET		16	/* skip 8192 bytes at chunk beginning */
-#define SR_META_VERSION		2	/* bump when sr_metadata changes */
+#define SR_META_VERSION		1	/* bump when sr_metadata changes */
 struct sr_metadata {
 	/* do not change order of ssd_magic, ssd_version */
 	u_int64_t		ssd_magic;	/* magic id */
@@ -133,17 +133,19 @@ struct sr_metadata {
 	/* virtual disk data */
 	u_int32_t		ssd_vd_ver;	/* vd structure version */
 	u_int32_t		ssd_vd_size;	/* vd structure size */
+	u_int32_t		ssd_vd_volid;	/* volume id */
 	u_int32_t		ssd_vd_chk;	/* vd structure xor */
-	u_int32_t		ssd_pad3;
 
 	/* chunk data */
 	u_int32_t		ssd_chunk_ver;	/* chunk structure version */
 	u_int32_t		ssd_chunk_no;	/* number of chunks */
 	u_int32_t		ssd_chunk_size;	/* chunk structure size */
+	u_int32_t		ssd_chunk_id;	/* chunk identifier */
 	u_int32_t		ssd_chunk_chk;	/* chunk structure xor */
+	u_int32_t		ssd_pad3;
 } __packed;
 
-#define SR_CHUNK_VERSION	2	/* bump when sr_chunk_meta changes */
+#define SR_CHUNK_VERSION	1	/* bump when sr_chunk_meta changes */
 struct sr_chunk_meta {
 	u_int32_t		scm_volid;	/* vd we belong to */
 	u_int32_t		scm_chunk_id;	/* chunk id */
@@ -162,12 +164,17 @@ struct sr_chunk {
 	struct vnode		*src_dev_vn;	/* vnode */
 	dev_t			src_dev_mm;	/* major/minor */
 
+	/* helper members before metadata makes it onto the chunk  */
+	int			src_meta_ondisk;/* set when meta is on disk */
+	char			src_devname[32];
+	struct disklabel	src_label;
+
 	SLIST_ENTRY(sr_chunk)	src_link;
 };
 
 SLIST_HEAD(sr_chunk_head, sr_chunk);
 
-#define SR_VOL_VERSION	2	/* bump when sr_vol_meta changes */
+#define SR_VOL_VERSION	1	/* bump when sr_vol_meta changes */
 struct sr_vol_meta {
 	u_int32_t		svm_volid;	/* volume id */
 	u_int32_t		svm_status; 	/* use bioc_vol status */
