@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.35 2007/05/01 16:25:48 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.36 2007/05/01 21:56:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -102,6 +102,7 @@ struct nx_softc;
 struct nxb_port {
 	u_int8_t		 nxp_id;
 	u_int8_t		 nxp_mode;
+	u_int8_t		 nxp_phy;
 	u_int8_t		 nxp_lladdr[ETHER_ADDR_LEN];
 
 	struct nx_softc		*nxp_nx;
@@ -122,6 +123,10 @@ struct nxb_softc {
 	bus_space_handle_t	 sc_dbmemh;
 	bus_size_t		 sc_dbmems;
 
+	int			 sc_window;	/* SW memory window */
+	int			 sc_ddrwindow;	/* PCI DDR memory window */
+	int			 sc_qdrwindow;	/* PCI QDR memory window */
+
 	pci_intr_handle_t	 sc_ih;
 
 	u_int			 sc_flags;
@@ -130,7 +135,6 @@ struct nxb_softc {
 	struct nxb_info		 sc_nxbinfo;	/* Information from flash */
 	struct nxb_imageinfo	 sc_nxbimage;	/* Image info from flash */
 
-	int			 sc_window;	/* SW memory window */
 	int			 sc_state;	/* Firmware state */
 	u_int32_t		 sc_fwmajor;	/* Load image major rev */
 	u_int32_t		 sc_fwminor;	/* Load image minor rev */
@@ -178,6 +182,7 @@ u_int32_t nxb_read(struct nxb_softc *, bus_size_t);
 void	 nxb_write(struct nxb_softc *, bus_size_t, u_int32_t);
 int	 nxb_writehw(struct nxb_softc *, u_int32_t, u_int32_t);
 void	 nxb_set_window(struct nxb_softc *, int);
+bus_size_t nxb_set_pciwindow(struct nxb_softc *, bus_size_t);
 int	 nxb_wait(struct nxb_softc *, bus_size_t, u_int32_t, u_int32_t,
 	    int, u_int);
 int	 nxb_read_rom(struct nxb_softc *, u_int32_t, u_int32_t *);
@@ -227,13 +232,14 @@ const struct nxb_board {
 	enum nxb_board_types	brd_type;
 	u_int			brd_mode;
 	u_int			brd_nports;
+	u_int			brd_phy;	/* The default PHY */
 } nxb_boards[] = {
-	{ NXB_BOARDTYPE_P2SB35_4G,	NXNIU_MODE_GBE, 4 },
-	{ NXB_BOARDTYPE_P2SB31_10G,	NXNIU_MODE_XGE, 1 },
-	{ NXB_BOARDTYPE_P2SB31_2G,	NXNIU_MODE_GBE, 2 },
-	{ NXB_BOARDTYPE_P2SB31_10GIMEZ,	NXNIU_MODE_XGE, 2 },
-	{ NXB_BOARDTYPE_P2SB31_10GHMEZ,	NXNIU_MODE_XGE, 2 },
-	{ NXB_BOARDTYPE_P2SB31_10GCX4,	NXNIU_MODE_XGE, 1 }
+	{ NXB_BOARDTYPE_P2SB35_4G,	NXNIU_MODE_GBE, 4, IFM_1000_T },
+	{ NXB_BOARDTYPE_P2SB31_10G,	NXNIU_MODE_XGE, 1, IFM_10G_SR },
+	{ NXB_BOARDTYPE_P2SB31_2G,	NXNIU_MODE_GBE, 2, IFM_1000_T },
+	{ NXB_BOARDTYPE_P2SB31_10GIMEZ,	NXNIU_MODE_XGE, 2, IFM_10G_SR },
+	{ NXB_BOARDTYPE_P2SB31_10GHMEZ,	NXNIU_MODE_XGE, 2, IFM_10G_SR },
+	{ NXB_BOARDTYPE_P2SB31_10GCX4,	NXNIU_MODE_XGE, 1, IFM_10G_CX4 }
 };
 
 extern int ifqmaxlen;
@@ -265,6 +271,8 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_function = pa->pa_function;
 	sc->sc_window = -1;
+	sc->sc_ddrwindow = -1;
+	sc->sc_qdrwindow = -1;
 
 	/*
 	 * The NetXen NICs can have different PCI memory layouts which
@@ -466,6 +474,7 @@ nxb_query(struct nxb_softc *sc)
 	for (i = 0; i < sc->sc_nports; i++) {
 		sc->sc_nxp[i].nxp_id = i;
 		sc->sc_nxp[i].nxp_mode = board->brd_mode;
+		sc->sc_nxp[i].nxp_phy = board->brd_phy;
 	}
 
 	/*
@@ -552,6 +561,7 @@ nxb_newstate(struct nxb_softc *sc, int newstate)
 		/*
 		 * Initialize and bootstrap the device
 		 */
+		nxb_set_window(sc, 1);
 		nxb_write(sc, NXSW_CMD_PRODUCER_OFF, 0);
 		nxb_write(sc, NXSW_CMD_CONSUMER_OFF, 0);
 		nxb_write(sc, NXSW_CMD_ADDR_LO, 0);
@@ -573,10 +583,10 @@ nxb_newstate(struct nxb_softc *sc, int newstate)
 		}
 		break;
 	case NX_S_RELOADED:
+		assert(oldstate == NX_S_RESET || oldstate == NX_S_BOOT);
 		/*
 		 * Wait for the device to become ready
 		 */
-		assert(oldstate == NX_S_BOOT);
 		sc->sc_reloaded = 20;
 		timeout_add(&sc->sc_reload, hz);
 		break;
@@ -692,11 +702,12 @@ nxb_reloadfirmware(struct nxb_softc *sc, struct nxb_firmware_header *fh,
 	size_t		 memlen;
 	u_int32_t	 addr, *data;
 	u_int		 i;
+	size_t		 bsize = NXFLASHMAP_BOOTLDSIZE;
 
 	/*
 	 * Load the images from flash, setup a fake firmware header
 	 */
-	memlen = sc->sc_nxbimage.nim_bootld_size + sizeof(*fh);
+	memlen = bsize + sizeof(*fh);
 	mem = (u_int8_t *)malloc(memlen, M_DEVBUF, M_NOWAIT);
 	if (mem == NULL)
 		return (-1);
@@ -705,16 +716,16 @@ nxb_reloadfirmware(struct nxb_softc *sc, struct nxb_firmware_header *fh,
 	fh->fw_image_ver = htonl(sc->sc_nxbimage.nim_image_ver);
 	fh->fw_image_size = 0;	/* Reload firmware image from flash */
 	fh->fw_bootld_ver = htonl(sc->sc_nxbimage.nim_bootld_ver);
-	fh->fw_bootld_size = htonl(sc->sc_nxbimage.nim_bootld_size);
+	fh->fw_bootld_size = htonl(bsize);
 	bcopy(fh, mem, sizeof(*fh));
 
 	addr = NXFLASHMAP_BOOTLOADER;
 	data = (u_int32_t *)(mem + sizeof(*fh));
-	for (i = 0; i < (sc->sc_nxbimage.nim_bootld_size / 4); i++) {
+	for (i = 0; i < (bsize / 4); i++) {
 		if (nxb_read_rom(sc, addr, data) != 0)
 			goto fail;
 		addr += sizeof(u_int32_t);
-		data++;
+		*data++;
 	}
 
 	*fw = mem;
@@ -737,54 +748,8 @@ nxb_reset(struct nxb_softc *sc)
 	u_int32_t			*data, addr, addr1, val, ncrb;
 	bus_size_t			 reg;
 
-	/*
-	 * Reset the SW registers
-	 */
-
-	/* 1. Halt the hardware */
-	nxb_write(sc, NXROMUSB_GLB_SW_RESET, NXROMUSB_GLB_SW_RESET_DEF);
-
-	/* 2. Read the CRBINIT area from flash memory */
-	addr = NXFLASHMAP_CRBINIT_0;
-	if (nxb_read_rom(sc, addr, &ncrb) != 0)
-		goto fail1;
-	ncrb &= NXFLASHMAP_CRBINIT_M;
-	if (ncrb == 0 || ncrb > NXFLASHMAP_CRBINIT_MAX)
-		goto load;	/* ignore CRBINIT and skip step */
-
-	/* 3. Write the CRBINIT are to PCI memory */
-	for (i = 0; i < ncrb; i++) {
-		addr = NXFLASHMAP_CRBINIT_0 + (i * 8);
-		nxb_read_rom(sc, addr + 4, &val);
-		nxb_read_rom(sc, addr + 8, &addr1);
-
-		if (nxb_writehw(sc, addr1, val) != 0)
-			goto fail1;
-	}
-
-	/* 4. Reset the Protocol Processing Engine */
-	val = nxb_read(sc, NXROMUSB_GLB_SW_RESET) &
-	    ~NXROMUSB_GLB_SW_RESET_PPE;
-	nxb_write(sc, NXROMUSB_GLB_SW_RESET, val);
-
-	/* 5. Reset the D & I caches */
-	nxb_set_window(sc, 0);
-	nxb_write(sc, NXPPE_D(0x0e), 0x1e);
-	nxb_write(sc, NXPPE_D(0x4c), 0x8);
-	nxb_write(sc, NXPPE_I(0x4c), 0x8);
-
-	/* 6. Clear the Protocol Processing Engine */
-	nxb_write(sc, NXPPE_0(0x8), 0);
-	nxb_write(sc, NXPPE_0(0xc), 0);
-	nxb_write(sc, NXPPE_1(0x8), 0);
-	nxb_write(sc, NXPPE_1(0xc), 0);
-	nxb_write(sc, NXPPE_2(0x8), 0);
-	nxb_write(sc, NXPPE_2(0xc), 0);
-	nxb_write(sc, NXPPE_3(0x8), 0);
-	nxb_write(sc, NXPPE_3(0xc), 0);
 	nxb_set_window(sc, 1);
 
- load:
 	/*
 	 * Load the firmware from disk or from flash
 	 */
@@ -829,26 +794,77 @@ nxb_reset(struct nxb_softc *sc)
 	}
 
 	/*
+	 * Reset the SW registers
+	 */
+
+	/* 1. Halt the hardware */
+	nxb_write(sc, NXROMUSB_GLB_SW_RESET, NXROMUSB_GLB_SW_RESET_DEF);
+
+	/* 2. Read the CRBINIT area from flash memory */
+	addr = NXFLASHMAP_CRBINIT_0;
+	if (nxb_read_rom(sc, addr, &ncrb) != 0)
+		goto fail1;
+	ncrb &= NXFLASHMAP_CRBINIT_M;
+	if (ncrb == 0 || ncrb > NXFLASHMAP_CRBINIT_MAX)
+		goto fail1;	/* ignore CRBINIT and skip step */
+
+	/* 3. Write the CRBINIT are to PCI memory */
+	for (i = 0; i < ncrb; i++) {
+		addr = NXFLASHMAP_CRBINIT_0 + (i * 8);
+		nxb_read_rom(sc, addr + 4, &val);
+		nxb_read_rom(sc, addr + 8, &addr1);
+
+		if (nxb_writehw(sc, addr1, val) != 0)
+			goto fail1;
+	}
+
+	/* 4. Reset the Protocol Processing Engine */
+	val = nxb_read(sc, NXROMUSB_GLB_SW_RESET) &
+	    ~NXROMUSB_GLB_SW_RESET_PPE;
+	nxb_write(sc, NXROMUSB_GLB_SW_RESET, val);
+
+	/* 5. Reset the D & I caches */
+	nxb_set_window(sc, 0);
+	nxb_write(sc, NXPPE_D(0x0e), 0x1e);
+	nxb_write(sc, NXPPE_D(0x4c), 0x8);
+	nxb_write(sc, NXPPE_I(0x4c), 0x8);
+
+	/* 6. Clear the Protocol Processing Engine */
+	nxb_write(sc, NXPPE_0(0x8), 0);
+	nxb_write(sc, NXPPE_0(0xc), 0);
+	nxb_write(sc, NXPPE_1(0x8), 0);
+	nxb_write(sc, NXPPE_1(0xc), 0);
+	nxb_write(sc, NXPPE_2(0x8), 0);
+	nxb_write(sc, NXPPE_2(0xc), 0);
+	nxb_write(sc, NXPPE_3(0x8), 0);
+	nxb_write(sc, NXPPE_3(0xc), 0);
+	nxb_set_window(sc, 1);
+
+	/*
 	 * Load the images into RAM
 	 */
 
 	/* Reset casper boot chip */
 	nxb_write(sc, NXROMUSB_GLB_CAS_RESET, NXROMUSB_GLB_CAS_RESET_ENABLE);
 
-#if 0
-	reg = NXFLASHMAP_BOOTLOADER;
+	addr = NXFLASHMAP_BOOTLOADER;
 	data = (u_int32_t *)(fw + sizeof(fh));
 	for (i = 0; i < (bootsz / 4); i++) {
+		reg = nxb_set_pciwindow(sc, addr);
+		if (reg == ~0ULL)
+			goto fail1;
 		nxb_write(sc, reg, *data);
-		reg += sizeof(u_int32_t);
+		addr += sizeof(u_int32_t);
 		data++;
 	}
-#endif
 	if (imagesz) {
-		reg = NXFLASHMAP_FIRMWARE_0;
+		addr = NXFLASHMAP_FIRMWARE_0;
 		for (i = 0; i < (imagesz / 4); i++) {
+			reg = nxb_set_pciwindow(sc, addr);
+			if (reg == ~0ULL)
+				goto fail1;
 			nxb_write(sc, reg, *data);
-			reg += sizeof(u_int32_t);
+			addr += sizeof(u_int32_t);
 			data++;
 		}
 		/* tell the bootloader to load the firmware image from RAM */
@@ -901,15 +917,15 @@ nxb_writehw(struct nxb_softc *sc, u_int32_t addr, u_int32_t val)
 {
 	/* Translation table of NIC addresses to PCI addresses */
 	static u_int16_t hwtrans[] = {
-	        0x29a0, 0x7730, 0x2950, 0x2a50, 0x0000, 0x0d00,
+		0x29a0, 0x7730, 0x2950, 0x2a50, 0x0000, 0x0d00,
 		0x1b10, 0x0e60, 0x0e00, 0x0e10, 0x0e20, 0x0e30,
-	        0x7000, 0x7010, 0x7020, 0x7030, 0x7040, 0x3400,
+		0x7000, 0x7010, 0x7020, 0x7030, 0x7040, 0x3400,
 		0x3410, 0x3420, 0x3430, 0x3450, 0x3440, 0x3c00,
-	        0x3c10, 0x3c20, 0x3c30, 0x3c50, 0x3c40, 0x4100,
+		0x3c10, 0x3c20, 0x3c30, 0x3c50, 0x3c40, 0x4100,
 		0x0000, 0x0d10, 0x0000, 0x0000, 0x4160, 0x0c60,
-	        0x0c70, 0x0c80, 0x7580, 0x7590, 0x4170, 0x0000,
+		0x0c70, 0x0c80, 0x7580, 0x7590, 0x4170, 0x0000,
 		0x0890, 0x70a0, 0x70b0, 0x70c0, 0x08d0, 0x08e0,
-	        0x70f0, 0x4050, 0x4200, 0x4210, 0x0000, 0x0880,
+		0x70f0, 0x4050, 0x4200, 0x4210, 0x0000, 0x0880,
 		0x0000, 0x0000, 0x0000, 0x0000, 0x7180, 0x0000
 	};
 	u_int32_t base = (addr & NXMEMMAP_HWTRANS_M) >> 16;
@@ -940,21 +956,65 @@ nxb_writehw(struct nxb_softc *sc, u_int32_t addr, u_int32_t val)
 	if (reg == NXSW_BOOTLD_CONFIG)
 		return (0);
 	else if (reg == NXROMUSB_GLB_SW_RESET) {
-		val = 0x8000ff;
+		val = NXROMUSB_GLB_SW_RESET_XDMA;
 		timo = hz;
 	}
 	nxb_set_window(sc, window);
 	nxb_write(sc, reg, val);
 	nxb_set_window(sc, 1);
-
-	if (tsleep(sc, PCATCH, "nxbcrb", timo) == EINTR)
-		return (-1);
+	delay(timo);
 
 	DPRINTF(NXDBG_CRBINIT, "%s(%s) addr 0x%08x -> reg 0x%08x, "
 	    "val 0x%08x, window %d\n",
 	    sc->sc_dev.dv_xname, __func__, addr, reg, val, window);
 
 	return (0);
+}
+
+bus_size_t
+nxb_set_pciwindow(struct nxb_softc *sc, bus_size_t reg)
+{
+	int32_t		 window = -1;
+	bus_size_t	 wreg = ~0ULL;
+
+	/*
+	 * Get the correct offset in the mapped PCI space
+	 */
+	if (reg <= NXADDR_DDR_NET_END) {
+		window = (reg >> NXDDR_WINDOW_S) & NXDDR_WINDOW_M;
+		reg -= (window * NXDDR_WINDOW_SIZE);
+		if (sc->sc_ddrwindow != window) {
+			sc->sc_ddrwindow = window;
+			wreg = NXDDR_WINDOW(sc->sc_function);
+		}
+	} else if (reg >= NXADDR_OCM0 && reg <= NXADDR_OCM0_END) {
+		reg -= NXADDR_OCM0;
+		reg += NXPCIMAP_OCM0;
+	} else if (reg >= NXADDR_OCM1 && reg <= NXADDR_OCM1_END) {
+		reg -= NXADDR_OCM1;
+		reg += NXPCIMAP_OCM1;
+	} else if (reg >= NXADDR_QDR_NET && reg <= NXADDR_QDR_NET_END) {
+		reg -= NXADDR_QDR_NET;
+		window = (reg >> NXDDR_WINDOW_S) & NXDDR_WINDOW_M;
+		reg -= (window * NXQDR_WINDOW_SIZE);
+		reg += NXPCIMAP_QDR_NET;
+		if (sc->sc_qdrwindow != window) {
+			sc->sc_qdrwindow = window;
+			wreg = NXQDR_WINDOW(sc->sc_function);
+		}
+	} else
+		reg = ~0ULL;
+
+	/*
+	 * Update the PCI window
+	 */
+	if (wreg != ~0ULL) {
+		nxb_write(sc, wreg, window);
+		(void)nxb_read(sc, wreg);
+		delay(10);
+	}
+
+	return (reg);
 }
 
 void
@@ -1096,10 +1156,11 @@ nxb_temp_sensor(void *arg)
 		sc->sc_sensor.status = SENSOR_S_CRIT;
 		break;
 	default:
-		sc->sc_sensor.flags = SENSOR_FINVALID;
+		sc->sc_sensor.flags = SENSOR_FUNKNOWN;
+		sc->sc_sensor.status = SENSOR_S_UNSPEC;
 		return;
 	}
-	sc->sc_sensor.value = val * 1000000 + 273150000; 
+	sc->sc_sensor.value = val * 1000000 + 273150000;
 	sc->sc_sensor.flags = 0;
 }
 
@@ -1169,16 +1230,14 @@ nx_attach(struct device *parent, struct device *self, void *aux)
 
 	ifmedia_init(&nx->nx_mii.mii_media, 0,
 	    nx_media_change, nx_media_status);
-	ifmedia_add(&nx->nx_mii.mii_media, IFM_ETHER | IFM_AUTO, 0, NULL);
-	ifmedia_set(&nx->nx_mii.mii_media, IFM_ETHER | IFM_AUTO);
+	ifmedia_add(&nx->nx_mii.mii_media, IFM_ETHER|nxp->nxp_phy, 0, NULL);
+	ifmedia_set(&nx->nx_mii.mii_media, IFM_ETHER|nxp->nxp_phy);
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
 	timeout_set(&nx->nx_tick, nx_tick, nx);
 	timeout_add(&nx->nx_tick, hz);
-
-	return;
 }
 
 int
@@ -1220,11 +1279,10 @@ nx_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 
 	switch (nxp->nxp_mode) {
 	case NXNIU_MODE_XGE:
-		imr->ifm_active = IFM_ETHER | IFM_AUTO;
+		imr->ifm_active = IFM_ETHER | nxp->nxp_phy;
 		imr->ifm_status = IFM_AVALID;
 		nx_link_state(nx);
-		if (LINK_STATE_IS_UP(ifp->if_link_state) &&
-		    ifp->if_flags & IFF_UP)
+		if (LINK_STATE_IS_UP(ifp->if_link_state))
 			imr->ifm_status |= IFM_ACTIVE;
 		break;
 	case NXNIU_MODE_GBE:
@@ -1271,8 +1329,8 @@ int
 nx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct nx_softc		*nx = (struct nx_softc *)ifp->if_softc;
-	struct ifaddr		*ifa;
-	struct ifreq		*ifr;
+	struct ifaddr		*ifa = (struct ifaddr *)data;
+	struct ifreq		*ifr = (struct ifreq *)data;
 	int			 s, error = 0;
 
 	s = splnet();
@@ -1284,7 +1342,6 @@ nx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
@@ -1312,7 +1369,6 @@ nx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &nx->nx_ac) :
 		    ether_delmulti(ifr, &nx->nx_ac);

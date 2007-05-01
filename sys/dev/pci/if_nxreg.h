@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.18 2007/05/01 16:25:48 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.19 2007/05/01 21:56:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -40,7 +40,11 @@
 #define NX_FIRMWARE_MAJOR	3
 #define NX_FIRMWARE_MINOR	4
 #define NX_FIRMWARE_BUILD	31
-#define NX_FIRMWARE_VER		0x001f0403
+
+#define NX_FIRMWARE_VER		(					\
+	(NX_FIRMWARE_MAJOR << 16) | (NX_FIRMWARE_MINOR << 8) |		\
+	NX_FIRMWARE_BUILD						\
+)
 
 /* Used to indicate various states of the NIC and its firmware */
 enum nx_state {
@@ -141,9 +145,25 @@ struct nx_statusdesc {
 #define NXPCIMEM_SIZE_128MB	0x08000000	/* 128MB size */
 #define NXPCIMEM_SIZE_32MB	0x02000000	/* 32MB size */
 
+/* PCI memory address ranges */
+#define NXADDR_DDR_NET		0x0000000000000000
+#define NXADDR_DDR_NET_END	0x000000000fffffff
+#define NXADDR_PCIE		0x0000000800000000
+#define NXADDR_PCIE_END		0x0000000fffffffff
+#define NXADDR_OCM0		0x0000000200000000
+#define NXADDR_OCM0_END		0x00000002000fffff
+#define NXADDR_OCM1		0x0000000200400000
+#define NXADDR_OCM1_END		0x00000002004fffff
+#define NXADDR_QDR_NET		0x0000000300000000
+#define NXADDR_QDR_NET_END	0x00000003001fffff
+
+/* Memory mapping in the default PCI window */
 #define NXPCIMAP_DDR_NET	0x00000000
 #define NXPCIMAP_DDR_MD		0x02000000
+#define NXPCIMAP_QDR_NET	0x04000000
 #define NXPCIMAP_DIRECT_CRB	0x04400000
+#define NXPCIMAP_OCM0		0x05000000
+#define NXPCIMAP_OCM1		0x05100000
 #define NXPCIMAP_CRB		0x06000000
 
 /* Offsets inside NXPCIMAP_CRB */
@@ -192,7 +212,7 @@ struct nx_statusdesc {
 #define NXFLASHMAP_INFO		0x00004000	/* board configuration */
 #define NXFLASHMAP_INITCODE	0x00006000	/* chipset-specific code */
 #define NXFLASHMAP_BOOTLOADER	0x00010000	/* boot loader */
-#define  NXFLASHMAP_BOOTLDSIZE	1024		/* boot loader size */
+#define  NXFLASHMAP_BOOTLDSIZE	0x4000		/* boot loader size */
 #define NXFLASHMAP_FIRMWARE_0	0x00043000	/* compressed firmware image */
 #define NXFLASHMAP_FIRMWARE_1	0x00200000	/* backup firmware image */
 #define NXFLASHMAP_PXE		0x003d0000	/* PXE image */
@@ -221,7 +241,17 @@ struct nx_statusdesc {
 #define  NXISR_INT_MASK_TARGET0		(1<<7)	/* mask for function 0 */
 #define  NXISR_INT_MASK_RC_INT		(1<<5)	/* root complex mask */
 
-/* SW Window */
+/* Memory windows */
+#define NXDDR_WINDOW(_f)		NXPCIE_FUNC(0x00010200, _f)
+#define  NXDDR_WINDOW_1			(1<<25)	/* Set this flag for Win 1 */
+#define  NXDDR_WINDOW_S			25
+#define  NXDDR_WINDOW_M			0x000003ff
+#define  NXDDR_WINDOW_SIZE		0x02000000
+#define NXQDR_WINDOW(_f)		NXPCIE_FUNC(0x00010208, _f)
+#define  NXQDR_WINDOW_1			(1<<25)	/* Set this flag for Win 1 */
+#define  NXQDR_WINDOW_S			22
+#define  NXQDR_WINDOW_M			0x0000003f
+#define  NXQDR_WINDOW_SIZE		0x00400000
 #define NXCRB_WINDOW(_f)		NXPCIE_FUNC(0x00010210, _f)
 #define  NXCRB_WINDOW_1			(1<<25)	/* Set this flag for Win 1 */
 
@@ -318,37 +348,37 @@ struct nx_statusdesc {
 /* Misc SW registers */
 #define NXSW_CMD_PRODUCER_OFF	NXSW(0x2208)	/* Producer CMD ring index */
 #define NXSW_CMD_CONSUMER_OFF	NXSW(0x220c)	/* Consumer CMD ring index */
-#define NXSW_RCV_PRODUCER_OFF	NXSW(0x2218)	/* Producer Rx ring index */
-#define NXSW_RCV_CONSUMER_OFF	NXSW(0x221c)	/* Consumer Rx ring index */
-#define NXSW_RCV_GLOBAL_RING	NXSW(0x2220)	/* Address of Rx buffer */
-#define NXSW_RCV_STATUS_RING	NXSW(0x2224)	/* Address of Rx status ring */
-#define NXSW_RCV_STATUS_PROD	NXSW(0x2228)	/* Producer Rx status index */
-#define NXSW_RCV_STATUS_CONS	NXSW(0x222c)	/* Consumer Rx status index */
-#define NXSW_CMD_ADDR_HI	NXSW(0x2230)	/* CMD ring phys address */
-#define NXSW_CMD_ADDR_LO	NXSW(0x2234)	/* CMD ring phys address */
-#define NXSW_CMD_RING_SIZE	NXSW(0x2238)	/* Entries in the CMD ring */
-#define NXSW_RCV_RING_SIZE	NXSW(0x223c)	/* Entries in the Rx ring */
-#define NXSW_JRCV_RING_SIZE	NXSW(0x2240)	/* Entries in the jumbo ring */
-#define NXSW_RCVPEG_STATE	NXSW(0x2248)	/* State of the NX2031 */
+#define NXSW_RCV_PRODUCER_OFF	NXSW(0x2300)	/* Producer Rx ring index */
+#define NXSW_RCV_CONSUMER_OFF	NXSW(0x2304)	/* Consumer Rx ring index */
+#define NXSW_RCV_GLOBAL_RING	NXSW(0x2308)	/* Address of Rx buffer */
+#define NXSW_RCV_STATUS_RING	NXSW(0x2360)	/* Address of Rx status ring */
+#define NXSW_RCV_STATUS_PROD	NXSW(0x2364)	/* Producer Rx status index */
+#define NXSW_RCV_STATUS_CONS	NXSW(0x2368)	/* Consumer Rx status index */
+#define NXSW_CMD_ADDR_HI	NXSW(0x2218)	/* CMD ring phys address */
+#define NXSW_CMD_ADDR_LO	NXSW(0x221c)	/* CMD ring phys address */
+#define NXSW_CMD_RING_SIZE	NXSW(0x22c8)	/* Entries in the CMD ring */
+#define NXSW_RCV_RING_SIZE	NXSW(0x230c)	/* Entries in the Rx ring */
+#define NXSW_JRCV_RING_SIZE	NXSW(0x230c)	/* Entries in the jumbo ring */
+#define NXSW_RCVPEG_STATE	NXSW(0x236c)	/* State of the NX2031 */
 #define NXSW_CMDPEG_STATE	NXSW(0x2250)	/* State of the firmware */
 #define  NXSW_CMDPEG_STATE_M	0xffff		/* State mask */
 #define  NXSW_CMDPEG_INIT_START	0xff00		/* Start of initialization */
 #define  NXSW_CMDPEG_INIT_DONE	0xff01		/* Initialization complete */
 #define  NXSW_CMDPEG_INIT_FAIL	0xffff		/* Initialization failed */
-#define NXSW_GLOBAL_INT_COAL	NXSW(0x2280)	/* Interrupt coalescing */
-#define NXSW_INT_COAL_MODE	NXSW(0x2284)	/* Reserved */
-#define NXSW_MAX_RCV_BUFS	NXSW(0x2288)	/* Interrupt tuning register */
-#define NXSW_TX_INT_THRESHOLD	NXSW(0x228c)	/* Interrupt tuning register */
-#define NXSW_RX_PKT_TIMER	NXSW(0x2290)	/* Interrupt tuning register */
-#define NXSW_TX_PKT_TIMER	NXSW(0x2294)	/* Interrupt tuning register */
-#define NXSW_RX_PKT_CNT		NXSW(0x2298)	/* Rx packet count register */
-#define NXSW_RX_TMR_CNT		NXSW(0x229c)	/* Rx timer count register */
-#define NXSW_XG_STATE		NXSW(0x22a0)	/* PHY state register */
+#define NXSW_GLOBAL_INT_COAL	NXSW(0x2264)	/* Interrupt coalescing */
+#define NXSW_INT_COAL_MODE	NXSW(0x2268)	/* Reserved */
+#define NXSW_MAX_RCV_BUFS	NXSW(0x226c)	/* Interrupt tuning register */
+#define NXSW_TX_INT_THRESHOLD	NXSW(0x2270)	/* Interrupt tuning register */
+#define NXSW_RX_PKT_TIMER	NXSW(0x2274)	/* Interrupt tuning register */
+#define NXSW_TX_PKT_TIMER	NXSW(0x2278)	/* Interrupt tuning register */
+#define NXSW_RX_PKT_CNT		NXSW(0x227c)	/* Rx packet count register */
+#define NXSW_RX_TMR_CNT		NXSW(0x2280)	/* Rx timer count register */
+#define NXSW_XG_STATE		NXSW(0x2294)	/* PHY state register */
 #define  NXSW_XG_LINK_UP	(1<<4)		/* 10G PHY state up */
 #define  NXSW_XG_LINK_DOWN	(1<<5)		/* 10G PHY state down */
-#define NXSW_JRCV_PRODUCER_OFF	NXSW(0x2300)	/* Producer jumbo ring index */
-#define NXSW_JRCV_CONSUMER_OFF	NXSW(0x2304)	/* Consumer jumbo ring index */
-#define NXSW_JRCV_GLOBAL_RING	NXSW(0x2220)	/* Address of jumbo buffer */
+#define NXSW_JRCV_PRODUCER_OFF	NXSW(0x22f4)	/* Producer jumbo ring index */
+#define NXSW_JRCV_CONSUMER_OFF	NXSW(0x22f8)	/* Consumer jumbo ring index */
+#define NXSW_JRCV_GLOBAL_RING	NXSW(0x2308)	/* Address of jumbo buffer */
 #define NXSW_TEMP		NXSW(0x23b4)	/* Temperature sensor */
 #define  NXSW_TEMP_STATE_M	0x0000ffff	/* Temp state mask */
 #define  NXSW_TEMP_STATE_S	0		/* Temp state shift */
@@ -398,6 +428,7 @@ struct nx_statusdesc {
 #define  NXROMUSB_GLB_SW_RESET_U0PEG1	(1<<7)	/* Network Pegasus1 reset */
 #define  NXROMUSB_GLB_SW_RESET_U0PEG0	(1<<6)	/* Network Pegasus0 reset */
 #define  NXROMUSB_GLB_SW_RESET_PPE	0xf0	/* Protocol Processing Engine */
+#define  NXROMUSB_GLB_SW_RESET_XDMA	0x8000ff;
 #define NXROMUSB_GLB_SW_RESET_DEF	0xffffffff
 
 /* Casper Reset Register */
