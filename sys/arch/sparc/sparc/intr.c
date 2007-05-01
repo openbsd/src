@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.28 2005/08/14 10:58:36 miod Exp $ */
+/*	$OpenBSD: intr.c,v 1.29 2007/05/01 15:21:43 deraadt Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -249,10 +249,8 @@ static struct {
 	void *data;
 } fastvec_share[15];
 
-#ifdef DIAGNOSTIC
 extern int sparc_interrupt4m[];
 extern int sparc_interrupt44c[];
-#endif
 
 /*
  * Attach an interrupt handler to the vector chain for the given level.
