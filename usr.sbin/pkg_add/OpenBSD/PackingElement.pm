@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.95 2007/05/01 18:46:02 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.96 2007/05/01 19:48:30 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -234,6 +234,11 @@ sub add_object
 	$self->destate($plist->{state});
 	$plist->addunique($self);
 	return $self;
+}
+
+sub category
+{
+	return ref(shift);
 }
 
 # all dependency information
