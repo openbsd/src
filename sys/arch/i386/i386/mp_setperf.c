@@ -1,3 +1,4 @@
+/* $OpenBSD: mp_setperf.c,v 1.2 2007/05/01 04:18:32 gwk Exp $ */
 /*
  * Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd.org>
  *
