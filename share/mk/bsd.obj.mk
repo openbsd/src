@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.obj.mk,v 1.12 2003/10/28 17:09:33 espie Exp $
+#	$OpenBSD: bsd.obj.mk,v 1.13 2007/05/01 08:31:13 espie Exp $
 #	$NetBSD: bsd.obj.mk,v 1.9 1996/04/10 21:08:05 thorpej Exp $
 
 .if !target(obj)
@@ -45,10 +45,14 @@ obj! _SUBDIRUSE
 			if test -e ${__objdir}; then rm -rf ${__objdir}; fi; \
 			ln -sf $$dest ${__objdir}; \
 		fi; \
-		if test -d ${__usrobjdir} -a ! -d $$dest; then \
-			mkdir -p $$dest; \
+		if test -d ${__usrobjdir}; then \
+			test -d $$dest || mkdir -p $$dest; \
 		else \
-			true; \
+			if test -e ${__usrobjdir}; then \
+				echo "${__usrobjdir} is not a directory"; \
+			else \
+				echo "${__usrobjdir} does not exist"; \
+			fi; \
 		fi; \
 	else \
 		true ; \
