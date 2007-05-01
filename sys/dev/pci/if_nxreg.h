@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.16 2007/05/01 02:25:31 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.17 2007/05/01 11:44:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -44,10 +44,11 @@
 enum nx_state {
 	NX_S_FAIL	= -1,	/* Failed to initialize the device */
 	NX_S_OFFLINE	= 0,	/* Firmware is not active yet */
-	NX_S_RESET	= 1,	/* Firmware is in reset state */
-	NX_S_BOOT	= 2,	/* Chipset is booting the firmware */
-	NX_S_LOADED	= 3,	/* Firmware is loaded but not initialized */
-	NX_S_READY	= 4	/* Device has been initialized and is ready */
+	NX_S_RESET	= 2,	/* Firmware is in reset state */
+	NX_S_BOOT	= 3,	/* Chipset is booting the firmware */
+	NX_S_LOADED	= 4,	/* Firmware is loaded but not initialized */
+	NX_S_RELOADED	= 5,	/* Firmware is reloaded and initialized */
+	NX_S_READY	= 6	/* Device has been initialized and is ready */
 };
 
 /*
@@ -189,6 +190,7 @@ struct nx_statusdesc {
 #define NXFLASHMAP_INFO		0x00004000	/* board configuration */
 #define NXFLASHMAP_INITCODE	0x00006000	/* chipset-specific code */
 #define NXFLASHMAP_BOOTLOADER	0x00010000	/* boot loader */
+#define  NXFLASHMAP_BOOTLDSIZE	1024		/* boot loader size */
 #define NXFLASHMAP_FIRMWARE_0	0x00043000	/* compressed firmware image */
 #define NXFLASHMAP_FIRMWARE_1	0x00200000	/* backup firmware image */
 #define NXFLASHMAP_PXE		0x003d0000	/* PXE image */

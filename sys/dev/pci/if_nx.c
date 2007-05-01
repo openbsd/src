@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.32 2007/05/01 11:33:40 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.33 2007/05/01 11:44:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -63,10 +63,11 @@
 #include <dev/pci/if_nxreg.h>
 
 #ifdef NX_DEBUG
-#define NXDBG_FLASH	(1<<0)	/* debug flash access through ROMUSB */
-#define NXDBG_WAIT	(1<<1)	/* poll registers */
+#define NXDBG_WAIT	(1<<0)	/* poll registers */
+#define NXDBG_FLASH	(1<<1)	/* debug flash access through ROMUSB */
 #define NXDBG_CRBINIT	(1<<2)	/* SW register init from flash */
-#define NXDBG_ALL	0xffff	/* enable all debugging messages */
+#define NXDBG_STATE	(1<<3)	/* Fimrware states */
+#define NXDBG_ALL	0xfffe	/* enable nearly all debugging messages */
 int nx_debug = 0;
 #define DPRINTF(_lvl, _arg...)	do {					\
 	if (nx_debug & (_lvl))						\
@@ -139,6 +140,9 @@ struct nxb_softc {
 
 	struct nxb_port		 sc_nxp[NX_MAX_PORTS];	/* The nx ports */
 	int			 sc_nports;
+
+	struct timeout		 sc_reload;
+	int			 sc_reloaded;
 };
 
 struct nx_softc {
@@ -157,6 +161,7 @@ int	 nxb_match(struct device *, void *, void *);
 void	 nxb_attach(struct device *, struct device *, void *);
 int	 nxb_query(struct nxb_softc *sc);
 int	 nxb_newstate(struct nxb_softc *, int);
+void	 nxb_reload(void *);
 void	 nxb_mountroot(void *);
 int	 nxb_loadfirmware(struct nxb_softc *, struct nxb_firmware_header *,
 	    u_int8_t **, size_t *);
@@ -310,6 +315,7 @@ nxb_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < sc->sc_nports; i++)
 		config_found(&sc->sc_dev, &sc->sc_nxp[i], nx_print);
 
+	timeout_set(&sc->sc_reload, nxb_reload, sc);
 	mountroothook_establish(nxb_mountroot, sc);
 
 	return;
@@ -521,6 +527,8 @@ nxb_newstate(struct nxb_softc *sc, int newstate)
 	int	 oldstate = sc->sc_state;
 
 	sc->sc_state = newstate;
+	DPRINTF(NXDBG_STATE, "%s(%s) state %d -> %d\n",
+	    sc->sc_dev.dv_xname, __func__, oldstate, newstate);
 
 	switch (newstate) {
 	case NX_S_RESET:
@@ -538,7 +546,7 @@ nxb_newstate(struct nxb_softc *sc, int newstate)
 		break;
 	case NX_S_LOADED:
 		/*
-		 * Wait for the device to become ready
+		 * Initially wait for the device to become ready
 		 */
 		assert(oldstate == NX_S_BOOT);
 		if (nxb_wait(sc, NXSW_CMDPEG_STATE, NXSW_CMDPEG_INIT_DONE,
@@ -550,7 +558,24 @@ nxb_newstate(struct nxb_softc *sc, int newstate)
 			return (-1);
 		}
 		break;
+	case NX_S_RELOADED:
+		/*
+		 * Wait for the device to become ready
+		 */
+		assert(oldstate == NX_S_BOOT);
+		sc->sc_reloaded = 20;
+		timeout_add(&sc->sc_reload, hz);
+		break;
 	case NX_S_READY:
+		/* XXX for state debugging */
+		printf("%s: temperature 0x%08x\n",
+		    sc->sc_dev.dv_xname, nxb_read(sc, NXSW_TEMP));
+		break;
+	case NX_S_FAIL:
+		if (oldstate == NX_S_RELOADED)
+			printf("%s: failed to reset the firmware, "
+			    "code 0x%x\n", sc->sc_dev.dv_xname,
+			    nxb_read(sc, NXSW_CMDPEG_STATE));
 		break;
 	default:
 		/* no action */
@@ -581,16 +606,34 @@ nxb_mountroot(void *arg)
 	    sc->sc_fwmajor, sc->sc_fwminor, sc->sc_fwbuild);
 	if (sc->sc_fwmajor != NX_FIRMWARE_MAJOR ||
 	    sc->sc_fwminor != NX_FIRMWARE_MINOR) {
-		printf(", requires %u.%u.xx (%u.%u.%u)\n",
+		printf(", requires %u.%u.xx (%u.%u.%u)",
 		    NX_FIRMWARE_MAJOR, NX_FIRMWARE_MINOR,
 		    NX_FIRMWARE_MAJOR, NX_FIRMWARE_MINOR,
 		    NX_FIRMWARE_BUILD);
-
 		sc->sc_flags |= NXFLAG_FWINVALID;
-		nxb_newstate(sc, NX_S_RESET);
-		return;
 	}
 	printf("\n");
+
+	nxb_newstate(sc, NX_S_RESET);
+}
+
+void
+nxb_reload(void *arg)
+{
+	struct nxb_softc	*sc = (struct nxb_softc *)arg;
+	u_int32_t		 val;
+
+	/*
+	 * Check if the device is ready, other re-schedule or timeout
+	 */
+	val = nxb_read(sc, NXSW_CMDPEG_STATE);
+	if ((val & NXSW_CMDPEG_STATE_M) != NXSW_CMDPEG_INIT_DONE) {
+		if (!sc->sc_reloaded--)
+			nxb_newstate(sc, NX_S_FAIL);
+		else
+			timeout_add(&sc->sc_reload, hz);
+		return;
+	}
 
 	/* Firmware is ready for operation, allow interrupts etc. */
 	nxb_newstate(sc, NX_S_READY);
@@ -679,6 +722,62 @@ nxb_reset(struct nxb_softc *sc)
 	u_int32_t			*data, addr, val, ncrb;
 	bus_size_t			 reg;
 
+	/*
+	 * Reset the SW registers
+	 */
+
+	/* 1. Halt the hardware */
+	nxb_write(sc, NXROMUSB_GLB_SW_RESET, NXROMUSB_GLB_SW_RESET_DEF);
+
+	/* 2. Read the CRBINIT area from flash memory */
+	addr = NXFLASHMAP_CRBINIT_0;
+	if (nxb_read_rom(sc, addr, &ncrb) != 0)
+		goto fail1;
+	ncrb &= NXFLASHMAP_CRBINIT_M;
+	if (ncrb == 0 || ncrb > NXFLASHMAP_CRBINIT_MAX)
+		goto load;	/* ignore CRBINIT and skip step */
+
+#if 0
+	/* 3. Write the CRBINIT are to PCI memory */
+	for (i = 0; i < ncrb; i++) {
+		reg = i * 8;
+
+		reg += 4;
+		nxb_read_rom(sc, reg, &val);
+		reg += 4;
+		nxb_read_rom(sc, reg, &addr);
+
+		if (nxb_writehw(sc, addr, val) != 0)
+			goto fail1;
+	}
+#endif
+
+	/* 4. Reset the Protocol Processing Engine */
+	nxb_write(sc, NXROMUSB_GLB_SW_RESET,
+	    nxb_read(sc, NXROMUSB_GLB_SW_RESET) &
+	    ~NXROMUSB_GLB_SW_RESET_PPE);
+
+	/* 5. Reset the D & I caches */
+	nxb_set_window(sc, 0);
+	nxb_write(sc, NXPPE_D(0x0e), 0x1e);
+	nxb_write(sc, NXPPE_D(0x4c), 0x8);
+	nxb_write(sc, NXPPE_I(0x4c), 0x8);
+
+	/* 6. Clear the Protocol Processing Engine */
+	nxb_write(sc, NXPPE_0(0x8), 0);
+	nxb_write(sc, NXPPE_0(0xc), 0);
+	nxb_write(sc, NXPPE_1(0x8), 0);
+	nxb_write(sc, NXPPE_1(0xc), 0);
+	nxb_write(sc, NXPPE_2(0x8), 0);
+	nxb_write(sc, NXPPE_2(0xc), 0);
+	nxb_write(sc, NXPPE_3(0x8), 0);
+	nxb_write(sc, NXPPE_3(0xc), 0);
+	nxb_set_window(sc, 1);
+
+ load:
+	/*
+	 * Load the firmware from disk or from flash
+	 */
 	bzero(&fh, sizeof(fh));
 	if (sc->sc_flags & NXFLAG_FWINVALID) {
 		if (nxb_loadfirmware(sc, &fh, &fw, &fwlen) != 0) {
@@ -720,57 +819,6 @@ nxb_reset(struct nxb_softc *sc)
 	}
 
 	/*
-	 * Reset the SW registers
-	 */
-
-	/* 1. Halt the hardware */
-	nxb_write(sc, NXROMUSB_GLB_SW_RESET, NXROMUSB_GLB_SW_RESET_DEF);
-
-	/* 2. Read the CRBINIT area from flash memory */
-	addr = NXFLASHMAP_CRBINIT_0;
-	if (nxb_read_rom(sc, addr, &ncrb) != 0)
-		goto fail1;
-	ncrb &= NXFLASHMAP_CRBINIT_M;
-	if (ncrb == 0 || ncrb > NXFLASHMAP_CRBINIT_MAX)
-		goto load;	/* ignore CRBINIT and skip step */
-
-	/* 3. Write the CRBINIT are to PCI memory */
-	for (i = 0; i < ncrb; i++) {
-		reg = i * 8;
-
-		reg += 4;
-		nxb_read_rom(sc, reg, &val);
-		reg += 4;
-		nxb_read_rom(sc, reg, &addr);
-
-		if (nxb_writehw(sc, addr, val) != 0)
-			goto fail1;
-	}
-
-	/* 4. Reset the Protocol Processing Engine */
-	nxb_write(sc, NXROMUSB_GLB_SW_RESET,
-	    nxb_read(sc, NXROMUSB_GLB_SW_RESET) &
-	    ~NXROMUSB_GLB_SW_RESET_PPE);
-
-	/* 5. Reset the D & I caches */
-	nxb_set_window(sc, 0);
-	nxb_write(sc, NXPPE_D(0x0e), 0x1e);
-	nxb_write(sc, NXPPE_D(0x4c), 0x8);
-	nxb_write(sc, NXPPE_I(0x4c), 0x8);
-
-	/* 6. Clear the Protocol Processing Engine */
-	nxb_write(sc, NXPPE_0(0x8), 0);
-	nxb_write(sc, NXPPE_0(0xc), 0);
-	nxb_write(sc, NXPPE_1(0x8), 0);
-	nxb_write(sc, NXPPE_1(0xc), 0);
-	nxb_write(sc, NXPPE_2(0x8), 0);
-	nxb_write(sc, NXPPE_2(0xc), 0);
-	nxb_write(sc, NXPPE_3(0x8), 0);
-	nxb_write(sc, NXPPE_3(0xc), 0);
-	nxb_set_window(sc, 1);
-
- load:
-	/*
 	 * Load the images into RAM
 	 */
 
@@ -799,22 +847,20 @@ nxb_reset(struct nxb_softc *sc)
 	nxb_write(sc, NXROMUSB_GLB_CHIPCLKCONTROL,
 	    NXROMUSB_GLB_CHIPCLKCONTROL_ON);
 	nxb_write(sc, NXROMUSB_GLB_CAS_RESET, NXROMUSB_GLB_CAS_RESET_DISABLE);
+	free(fw, M_DEVBUF);
+	fw = NULL;
 
 	/*
 	 * bootstrap the newly loaded firmware and wait for completion
 	 */
 	nxb_newstate(sc, NX_S_BOOT);
-	if (nxb_newstate(sc, NX_S_LOADED) != 0)
+	if (nxb_newstate(sc, NX_S_RELOADED) != 0)
 		goto fail;
-
-	/* Firmware is ready for operation, allow interrupts etc. */
-	nxb_newstate(sc, NX_S_READY);
-	goto done;
+	return;
  fail1:
 	printf("%s: failed to reset firmware\n", sc->sc_dev.dv_xname);
  fail:
 	nxb_newstate(sc, NX_S_FAIL);
- done:
 	if (fw != NULL)
 		free(fw, M_DEVBUF);
 }
