@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.44 2004/04/07 14:09:35 aaron Exp $ */
+/*	$OpenBSD: lpd.c,v 1.45 2007/05/01 16:32:06 stevesk Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.44 2004/04/07 14:09:35 aaron Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.45 2007/05/01 16:32:06 stevesk Exp $";
 #endif
 #endif /* not lint */
 
@@ -310,9 +310,6 @@ main(int argc, char **argv)
 	memset(&un, 0, sizeof(un));
 	un.sun_family = AF_LOCAL;
 	strlcpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path));
-#ifndef SUN_LEN
-#define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
-#endif
 	PRIV_START;
 	if (bind(funix, (struct sockaddr *)&un, SUN_LEN(&un)) < 0) {
 		syslog(LOG_ERR, "ubind: %m");

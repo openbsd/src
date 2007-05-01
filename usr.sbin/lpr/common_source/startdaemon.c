@@ -1,4 +1,4 @@
-/*	$OpenBSD: startdaemon.c,v 1.11 2007/05/01 13:12:32 stevesk Exp $	*/
+/*	$OpenBSD: startdaemon.c,v 1.12 2007/05/01 16:32:06 stevesk Exp $	*/
 /*	$NetBSD: startdaemon.c,v 1.10 1998/07/18 05:04:39 lukem Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)startdaemon.c	8.2 (Berkeley) 4/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: startdaemon.c,v 1.11 2007/05/01 13:12:32 stevesk Exp $";
+static const char rcsid[] = "$OpenBSD: startdaemon.c,v 1.12 2007/05/01 16:32:06 stevesk Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,9 +72,6 @@ startdaemon(char *printer)
 	memset(&un, 0, sizeof(un));
 	un.sun_family = AF_LOCAL;
 	strlcpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path));
-#ifndef SUN_LEN
-#define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
-#endif
 	siginterrupt(SIGINT, 1);
 	PRIV_START;
 	if (connect(s, (struct sockaddr *)&un, SUN_LEN(&un)) < 0) {
