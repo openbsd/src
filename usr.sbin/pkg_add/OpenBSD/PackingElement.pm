@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.90 2007/04/30 08:43:19 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.91 2007/05/01 17:54:46 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -23,7 +23,7 @@ use OpenBSD::PackageInfo;
 require 5.008_000;
 
 # This is the basic class, which is mostly abstract, except for
-# setKeyword and Factory.
+# and Factory and register_with_factory.
 # It does provide base methods for stuff under it, though.
 package OpenBSD::PackingElement;
 our %keyword;
@@ -43,7 +43,7 @@ sub Factory
 	}
 }
 
-sub setKeyword 
+sub register_with_factory 
 {
 	my ($class, $k) = @_;
 	$keyword{$k} = $class;
@@ -321,7 +321,7 @@ package OpenBSD::PackingElement::File;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
 
 use OpenBSD::PackageInfo qw(is_info_name);
-__PACKAGE__->setKeyword('file');
+__PACKAGE__->register_with_factory('file');
 sub keyword() { "file" }
 
 sub dirclass() { "OpenBSD::PackingElement::Dir" }
@@ -350,7 +350,7 @@ sub add_object
 package OpenBSD::PackingElement::Sample;
 our @ISA=qw(OpenBSD::PackingElement::FileObject);
 
-__PACKAGE__->setKeyword('sample');
+__PACKAGE__->register_with_factory('sample');
 sub keyword() { "sample" }
 sub destate
 {
@@ -375,20 +375,20 @@ sub destate
 package OpenBSD::PackingElement::InfoFile;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
 
-__PACKAGE__->setKeyword('info');
+__PACKAGE__->register_with_factory('info');
 sub keyword() { "info" }
 sub dirclass() { "OpenBSD::PackingElement::Infodir" }
 
 package OpenBSD::PackingElement::Shell;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
 
-__PACKAGE__->setKeyword('shell');
+__PACKAGE__->register_with_factory('shell');
 sub keyword() { "shell" }
 
 package OpenBSD::PackingElement::Manpage;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
 
-__PACKAGE__->setKeyword('man');
+__PACKAGE__->register_with_factory('man');
 sub keyword() { "man" }
 
 sub register_manpage
@@ -409,7 +409,7 @@ our @ISA=qw(OpenBSD::PackingElement::FileBase);
 
 our $todo = 0;
 
-__PACKAGE__->setKeyword('lib');
+__PACKAGE__->register_with_factory('lib');
 sub keyword() { "lib" }
 
 sub mark_ldconfig_directory
@@ -433,18 +433,18 @@ sub ensure_ldconfig
 package OpenBSD::PackingElement::PkgConfig;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
 
-__PACKAGE__->setKeyword('pkgconfig');
+__PACKAGE__->register_with_factory('pkgconfig');
 sub keyword() { "pkgconfig" }
 
 package OpenBSD::PackingElement::LibtoolLib;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
 
-__PACKAGE__->setKeyword('ltlib');
+__PACKAGE__->register_with_factory('ltlib');
 sub keyword() { "ltlib" }
 
 package OpenBSD::PackingElement::Ignore;
 our @ISA=qw(OpenBSD::PackingElement::Annotation);
-__PACKAGE__->setKeyword('ignore');
+__PACKAGE__->register_with_factory('ignore');
 
 sub add
 {
@@ -454,7 +454,7 @@ sub add
 package OpenBSD::PackingElement::Comment;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
 
-__PACKAGE__->setKeyword('comment');
+__PACKAGE__->register_with_factory('comment');
 sub keyword() { "comment" }
 
 sub add
@@ -486,7 +486,7 @@ sub category() { 'cvstags'}
 package OpenBSD::PackingElement::md5;
 our @ISA=qw(OpenBSD::PackingElement::Annotation);
 
-__PACKAGE__->setKeyword('md5');
+__PACKAGE__->register_with_factory('md5');
 
 sub add
 {
@@ -499,7 +499,7 @@ sub add
 package OpenBSD::PackingElement::symlink;
 our @ISA=qw(OpenBSD::PackingElement::Annotation);
 
-__PACKAGE__->setKeyword('symlink');
+__PACKAGE__->register_with_factory('symlink');
 
 sub add
 {
@@ -512,7 +512,7 @@ sub add
 package OpenBSD::PackingElement::hardlink;
 our @ISA=qw(OpenBSD::PackingElement::Annotation);
 
-__PACKAGE__->setKeyword('link');
+__PACKAGE__->register_with_factory('link');
 
 sub add
 {
@@ -525,7 +525,7 @@ sub add
 package OpenBSD::PackingElement::temp;
 our @ISA=qw(OpenBSD::PackingElement::Annotation);
 
-__PACKAGE__->setKeyword('temp');
+__PACKAGE__->register_with_factory('temp');
 
 sub add
 {
@@ -537,7 +537,7 @@ sub add
 package OpenBSD::PackingElement::size;
 our @ISA=qw(OpenBSD::PackingElement::Annotation);
 
-__PACKAGE__->setKeyword('size');
+__PACKAGE__->register_with_factory('size');
 
 sub add
 {
@@ -550,7 +550,7 @@ sub add
 package OpenBSD::PackingElement::Option;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
 
-__PACKAGE__->setKeyword('option');
+__PACKAGE__->register_with_factory('option');
 sub keyword() { 'option' }
 
 sub new
@@ -620,28 +620,28 @@ package OpenBSD::PackingElement::Name;
 use File::Spec;
 our @ISA=qw(OpenBSD::PackingElement::Unique);
 
-__PACKAGE__->setKeyword('name');
+__PACKAGE__->register_with_factory('name');
 sub keyword() { "name" }
 sub category() { "name" }
 
 package OpenBSD::PackingElement::LocalBase;
 our @ISA=qw(OpenBSD::PackingElement::Unique);
 
-__PACKAGE__->setKeyword('localbase');
+__PACKAGE__->register_with_factory('localbase');
 sub keyword() { "localbase" }
 sub category() { "localbase" }
 
 package OpenBSD::PackingElement::Conflict;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
 
-__PACKAGE__->setKeyword('conflict');
+__PACKAGE__->register_with_factory('conflict');
 sub keyword() { "conflict" }
 sub category() { "conflict" }
 
 package OpenBSD::PackingElement::PkgConflict;
 our @ISA=qw(OpenBSD::PackingElement::Conflict);
 
-__PACKAGE__->setKeyword('pkgcfl');
+__PACKAGE__->register_with_factory('pkgcfl');
 sub keyword() { "pkgcfl" }
 sub category() { "pkgcfl" }
 
@@ -652,14 +652,14 @@ sub signature
 {
 }
 
-__PACKAGE__->setKeyword('pkgdep');
+__PACKAGE__->register_with_factory('pkgdep');
 sub keyword() { "pkgdep" }
 sub category() { "pkgdep" }
 
 package OpenBSD::PackingElement::NewDepend;
 our @ISA=qw(OpenBSD::PackingElement::Depend);
 
-__PACKAGE__->setKeyword('newdepend');
+__PACKAGE__->register_with_factory('newdepend');
 sub category() { "newdepend" }
 sub keyword() { "newdepend" }
 
@@ -687,7 +687,7 @@ sub stringize($)
 package OpenBSD::PackingElement::Dependency;
 our @ISA=qw(OpenBSD::PackingElement::Depend);
 
-__PACKAGE__->setKeyword('depend');
+__PACKAGE__->register_with_factory('depend');
 sub category() { "depend" }
 sub keyword() { "depend" }
 
@@ -707,7 +707,7 @@ sub stringize($)
 package OpenBSD::PackingElement::Wantlib;
 our @ISA=qw(OpenBSD::PackingElement::Depend);
 
-__PACKAGE__->setKeyword('wantlib');
+__PACKAGE__->register_with_factory('wantlib');
 sub category() { "wantlib" }
 sub keyword() { "wantlib" }
 
@@ -720,7 +720,7 @@ sub signature
 package OpenBSD::PackingElement::LibDepend;
 our @ISA=qw(OpenBSD::PackingElement::Depend);
 
-__PACKAGE__->setKeyword('libdepend');
+__PACKAGE__->register_with_factory('libdepend');
 sub category() { "libdepend" }
 sub keyword() { "libdepend" }
 
@@ -749,21 +749,21 @@ sub stringize($)
 package OpenBSD::PackingElement::PkgPath;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
 
-__PACKAGE__->setKeyword('pkgpath');
+__PACKAGE__->register_with_factory('pkgpath');
 sub keyword() { "pkgpath" }
 sub category() { "pkgpath" }
 
 package OpenBSD::PackingElement::Incompatibility;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
 
-__PACKAGE__->setKeyword('incompatibility');
+__PACKAGE__->register_with_factory('incompatibility');
 sub keyword() { "incompatibility" }
 sub category() { "incompatibility" }
 
 package OpenBSD::PackingElement::UpdateSet;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
 
-__PACKAGE__->setKeyword('updateset');
+__PACKAGE__->register_with_factory('updateset');
 sub keyword() { "updateset" }
 sub category() { "updateset" }
 
@@ -772,7 +772,7 @@ our @ISA=qw(OpenBSD::PackingElement::Meta);
 
 use OpenBSD::PackageInfo;
 
-__PACKAGE__->setKeyword('module');
+__PACKAGE__->register_with_factory('module');
 sub keyword() { "module" }
 sub category() { "module" }
 
@@ -808,7 +808,7 @@ our @ISA=qw(OpenBSD::PackingElement::Action);
 
 package OpenBSD::PackingElement::NewUser;
 our @ISA=qw(OpenBSD::PackingElement::NewAuth);
-__PACKAGE__->setKeyword("newuser");
+__PACKAGE__->register_with_factory("newuser");
 
 sub type() { "user" }
 sub category() { "users" }
@@ -867,7 +867,7 @@ sub stringize($)
 package OpenBSD::PackingElement::NewGroup;
 our @ISA=qw(OpenBSD::PackingElement::NewAuth);
 
-__PACKAGE__->setKeyword("newgroup");
+__PACKAGE__->register_with_factory("newgroup");
 
 sub type() { "group" }
 sub category() { "groups" }
@@ -901,7 +901,7 @@ package OpenBSD::PackingElement::Cwd;
 use File::Spec;
 our @ISA=qw(OpenBSD::PackingElement::State);
 
-__PACKAGE__->setKeyword('cwd');
+__PACKAGE__->register_with_factory('cwd');
 
 sub keyword() { 'cwd' }
 
@@ -914,7 +914,7 @@ sub destate
 package OpenBSD::PackingElement::EndFake;
 our @ISA=qw(OpenBSD::PackingElement::State);
 
-__PACKAGE__->setKeyword('endfake');
+__PACKAGE__->register_with_factory('endfake');
 
 sub keyword() { 'endfake' }
 
@@ -929,7 +929,7 @@ sub stringize() { '' }
 package OpenBSD::PackingElement::Owner;
 our @ISA=qw(OpenBSD::PackingElement::State);
 
-__PACKAGE__->setKeyword('owner');
+__PACKAGE__->register_with_factory('owner');
 sub keyword() { 'owner' }
 
 sub destate
@@ -946,7 +946,7 @@ sub destate
 package OpenBSD::PackingElement::Group;
 our @ISA=qw(OpenBSD::PackingElement::State);
 
-__PACKAGE__->setKeyword('group');
+__PACKAGE__->register_with_factory('group');
 sub keyword() { 'group' }
 
 sub destate
@@ -963,7 +963,7 @@ sub destate
 package OpenBSD::PackingElement::Mode;
 our @ISA=qw(OpenBSD::PackingElement::State);
 
-__PACKAGE__->setKeyword('mode');
+__PACKAGE__->register_with_factory('mode');
 sub keyword() { 'mode' }
 
 sub destate
@@ -980,7 +980,7 @@ sub destate
 package OpenBSD::PackingElement::Sysctl;
 our @ISA=qw(OpenBSD::PackingElement::Action);
 
-__PACKAGE__->setKeyword('sysctl');
+__PACKAGE__->register_with_factory('sysctl');
 sub keyword() { 'sysctl' }
 
 sub new
@@ -1046,20 +1046,20 @@ sub run
 package OpenBSD::PackingElement::Exec;
 our @ISA=qw(OpenBSD::PackingElement::ExeclikeAction);
 
-__PACKAGE__->setKeyword('exec');
+__PACKAGE__->register_with_factory('exec');
 
 sub keyword() { "exec" }
 
 package OpenBSD::PackingElement::Unexec;
 our @ISA=qw(OpenBSD::PackingElement::ExeclikeAction);
 
-__PACKAGE__->setKeyword('unexec');
+__PACKAGE__->register_with_factory('unexec');
 sub keyword() { "unexec" }
 
 package OpenBSD::PackingElement::ExtraUnexec;
 our @ISA=qw(OpenBSD::PackingElement::ExeclikeAction);
 
-__PACKAGE__->setKeyword('extraunexec');
+__PACKAGE__->register_with_factory('extraunexec');
 sub keyword() { "extraunexec" }
 
 package OpenBSD::PackingElement::DirlikeObject;
@@ -1068,7 +1068,7 @@ our @ISA=qw(OpenBSD::PackingElement::FileObject);
 package OpenBSD::PackingElement::DirRm;
 our @ISA=qw(OpenBSD::PackingElement::DirlikeObject);
 
-__PACKAGE__->setKeyword('dirrm');
+__PACKAGE__->register_with_factory('dirrm');
 sub keyword() { "dirrm" }
 
 package OpenBSD::PackingElement::DirBase;
@@ -1083,7 +1083,7 @@ sub stringize($)
 package OpenBSD::PackingElement::Dir;
 our @ISA=qw(OpenBSD::PackingElement::DirBase);
 
-__PACKAGE__->setKeyword('dir');
+__PACKAGE__->register_with_factory('dir');
 sub keyword() { "dir" }
 
 sub destate
@@ -1106,7 +1106,7 @@ sub needs_keyword() { 1 }
 
 package OpenBSD::PackingElement::Fontdir;
 our @ISA=qw(OpenBSD::PackingElement::Dir);
-__PACKAGE__->setKeyword('fontdir');
+__PACKAGE__->register_with_factory('fontdir');
 sub keyword() { "fontdir" }
 sub needs_keyword() { 1 }
 sub dirclass() { "OpenBSD::PackingElement::Fontdir" }
@@ -1180,7 +1180,7 @@ sub finish_fontdirs
 package OpenBSD::PackingElement::Mandir;
 our @ISA=qw(OpenBSD::PackingElement::Dir);
 
-__PACKAGE__->setKeyword('mandir');
+__PACKAGE__->register_with_factory('mandir');
 sub keyword() { "mandir" }
 sub needs_keyword() { 1 }
 sub dirclass() { "OpenBSD::PackingElement::Mandir" }
@@ -1188,7 +1188,7 @@ sub dirclass() { "OpenBSD::PackingElement::Mandir" }
 package OpenBSD::PackingElement::Extra;
 our @ISA=qw(OpenBSD::PackingElement::FileObject);
 
-__PACKAGE__->setKeyword('extra');
+__PACKAGE__->register_with_factory('extra');
 sub keyword() { 'extra' }
 
 sub destate
@@ -1333,7 +1333,7 @@ sub category() { OpenBSD::PackageInfo::MTREE_DIRS }
 package OpenBSD::PackingElement::Arch;
 our @ISA=qw(OpenBSD::PackingElement::Unique);
 
-__PACKAGE__->setKeyword('arch');
+__PACKAGE__->register_with_factory('arch');
 sub category() { 'arch' }
 sub keyword() { 'arch' }
 
