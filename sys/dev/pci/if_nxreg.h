@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.15 2007/05/01 02:20:14 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.16 2007/05/01 02:25:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -304,23 +304,12 @@ struct nx_statusdesc {
 #define  NXSW_ROM_LOCK_DRV	0x0d417340	/* Driver ROM lock ID */
 #define NXSW_PHY_LOCK_ID	NXSW(0x2120)	/* Used for locking the PHY */
 #define  NXSW_PHY_LOCK_DRV	0x44524956	/* Driver PHY lock ID */
-#define NXSW_TEMP		NXSW(0x01b4)	/* Temperature sensor */
-#define  NXSW_TEMP_STATE_M	0x0000ffff	/* Temp state mask */
-#define  NXSW_TEMP_STATE_S	0		/* Temp state shift */
-#define   NXSW_TEMP_STATE_NONE	0x0000		/* Temp state is UNSPEC */
-#define   NXSW_TEMP_STATE_OK	0x0001		/* Temp state is OK */
-#define   NXSW_TEMP_STATE_WARN	0x0002		/* Temp state is WARNING */
-#define   NXSW_TEMP_STATE_CRIT	0x0003		/* Temp state is CRITICAL */
-#define  NXSW_TEMP_VAL_M	0xffff0000	/* Temp deg celsius mask */
-#define  NXSW_TEMP_VAL_S	16		/* Temp deg celsius shift */
-#define NXSW_BOOTLD_CONFIG	NXSW(0x01fc)
-#define  NXSW_BOOTLD_CONFIG_ROM	0x00000000	/* Load firmware from flasg */
-#define  NXSW_BOOTLD_CONFIG_RAM	0x12345678	/* Load firmware from memory */
-
-/* Version registers of the loaded firmware */
 #define NXSW_FW_VERSION_MAJOR	NXSW(0x2150)	/* Major f/w version */
 #define NXSW_FW_VERSION_MINOR	NXSW(0x2154)	/* Minor f/w version */
 #define NXSW_FW_VERSION_BUILD	NXSW(0x2158)	/* Build/Sub f/w version */
+#define NXSW_BOOTLD_CONFIG	NXSW(0x21fc)
+#define  NXSW_BOOTLD_CONFIG_ROM	0x00000000	/* Load firmware from flasg */
+#define  NXSW_BOOTLD_CONFIG_RAM	0x12345678	/* Load firmware from memory */
 
 /* Misc SW registers */
 #define NXSW_CMD_PRODUCER_OFF	NXSW(0x2208)	/* Producer CMD ring index */
@@ -356,6 +345,15 @@ struct nx_statusdesc {
 #define NXSW_JRCV_PRODUCER_OFF	NXSW(0x2300)	/* Producer jumbo ring index */
 #define NXSW_JRCV_CONSUMER_OFF	NXSW(0x2304)	/* Consumer jumbo ring index */
 #define NXSW_JRCV_GLOBAL_RING	NXSW(0x2220)	/* Address of jumbo buffer */
+#define NXSW_TEMP		NXSW(0x23b4)	/* Temperature sensor */
+#define  NXSW_TEMP_STATE_M	0x0000ffff	/* Temp state mask */
+#define  NXSW_TEMP_STATE_S	0		/* Temp state shift */
+#define   NXSW_TEMP_STATE_NONE	0x0000		/* Temp state is UNSPEC */
+#define   NXSW_TEMP_STATE_OK	0x0001		/* Temp state is OK */
+#define   NXSW_TEMP_STATE_WARN	0x0002		/* Temp state is WARNING */
+#define   NXSW_TEMP_STATE_CRIT	0x0003		/* Temp state is CRITICAL */
+#define  NXSW_TEMP_VAL_M	0xffff0000	/* Temp deg celsius mask */
+#define  NXSW_TEMP_VAL_S	16		/* Temp deg celsius shift */
 #define NXSW_DRIVER_VER		NXSW(0x24a0)	/* Host driver version */
 
 /*
