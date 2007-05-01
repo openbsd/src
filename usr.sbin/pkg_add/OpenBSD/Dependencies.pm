@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.7 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.8 2007/05/01 19:41:37 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -40,17 +40,9 @@ sub solve
 	}
 	my @avail;
 
-	# do simple old style pkgdep first
-	my @deps = ();
-	for my $dep (@{$plist->{pkgdep}}) {
-		if (!is_installed($dep->{name})) {
-			push(@deps, $dep->{name});
-		}
-		$to_register->{$dep->{name}} = 1;
-	}
-	for my $dep (@{$plist->{depend}}, @{$plist->{newdepend}}, @{$plist->{libdepend}}) {
-	    next if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
+	my @deps;
 
+	for my $dep (@{$plist->{depend}}) {
 	    my @candidates;
 	    if ($state->{replace}) {
 		# try against list of packages to install
