@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.96 2007/05/01 19:48:30 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.97 2007/05/01 20:01:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -248,7 +248,7 @@ our @ISA=qw(OpenBSD::PackingElement::Meta);
 sub signature
 {
 	my ($self, $hash) = @_;
-	$hash->{$self->{def}} = 1;
+	$hash->{$self->{name}} = 1;
 }
 
 # Abstract class for all file-like elements
@@ -661,7 +661,8 @@ sub new
 {
 	my ($class, $args) = @_;
 	my ($pkgpath, $pattern, $def) = split /\:/, $args;
-	bless { pkgpath => $pkgpath, pattern => $pattern, def => $def }, $class;
+	bless { name => $def, pkgpath => $pkgpath, pattern => $pattern, 
+	    def => $def }, $class;
 }
 
 sub stringize($)
@@ -676,12 +677,6 @@ our @ISA=qw(OpenBSD::PackingElement::Depend);
 sub category() { "wantlib" }
 sub keyword() { "wantlib" }
 __PACKAGE__->register_with_factory;
-
-sub signature
-{
-	my ($self, $hash) = @_;
-	$hash->{$self->{name}} = 1;
-}
 
 package OpenBSD::PackingElement::PkgPath;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
