@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc.c,v 1.12 2004/10/01 18:18:49 jason Exp $	*/
+/*	$OpenBSD: fhc.c,v 1.13 2007/05/01 19:44:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -55,8 +55,6 @@ int _fhc_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t, bus_size_t,
 void *fhc_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
     int (*)(void *), void *, const char *);
 bus_space_handle_t *fhc_find_intr_handle(struct fhc_softc *, int);
-bus_space_handle_t *fhc_try_intr_handle(struct fhc_softc *,
-    bus_space_handle_t *, bus_size_t, int);
 void fhc_led_blink(void *, int);
 
 void
@@ -221,34 +219,21 @@ _fhc_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t addr,
 }
 
 bus_space_handle_t *
-fhc_try_intr_handle(struct fhc_softc *sc, bus_space_handle_t *hp,
-    bus_size_t off, int val)
+fhc_find_intr_handle(struct fhc_softc *sc, int ino)
 {
-	u_int64_t r;
+	switch (FHC_INO(ino)) {
+	case FHC_F_INO:
+		return &sc->sc_freg;
+	case FHC_S_INO:
+		return &sc->sc_sreg;
+	case FHC_U_INO:
+		return &sc->sc_ureg;
+	case FHC_T_INO:
+		return &sc->sc_treg;
+	default:
+		break;
+	}
 
-	r = bus_space_read_8(sc->sc_bt, *hp, off);
-	if (INTINO(r) == INTINO(val))
-		return (hp);
-	return (NULL);
-}
-
-bus_space_handle_t *
-fhc_find_intr_handle(struct fhc_softc *sc, int val)
-{
-	bus_space_handle_t *hp;
-
-	hp = fhc_try_intr_handle(sc, &sc->sc_freg, FHC_F_IMAP, val);
-	if (hp != NULL)
-		return (hp);
-	hp = fhc_try_intr_handle(sc, &sc->sc_sreg, FHC_S_IMAP, val);
-	if (hp != NULL)
-		return (hp);
-	hp = fhc_try_intr_handle(sc, &sc->sc_ureg, FHC_U_IMAP, val);
-	if (hp != NULL)
-		return (hp);
-	hp = fhc_try_intr_handle(sc, &sc->sc_treg, FHC_T_IMAP, val);
-	if (hp != NULL)
-		return (hp);
 	return (NULL);
 }
 
