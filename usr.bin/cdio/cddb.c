@@ -1,4 +1,4 @@
-/* $OpenBSD: cddb.c,v 1.11 2006/01/23 17:29:22 millert Exp $ */
+/* $OpenBSD: cddb.c,v 1.12 2007/05/01 01:26:12 jdixon Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -248,6 +248,7 @@ cddb(const char *host_port, int n, struct cd_toc_entry *e, char *arg)
 	char *line;
 	char **result = NULL;
 	int i;
+	const char *errstr;
 
 	s = parse_connect_to(host_port, "cddb");
 	if (s == -1)
@@ -293,7 +294,9 @@ cddb(const char *host_port, int n, struct cd_toc_entry *e, char *arg)
 		goto end;
 	}
 	if (strcmp(line, "211") == 0 || strcmp(line, "212") == 0) {
-		int number = atoi(arg);
+		int number = strtonum(arg, 0, INT_MAX, &errstr);
+		if (errstr != NULL)
+			errx(1, "%s: %s", errstr, arg);
 		if (number == 0) {
 			if (strcmp(line, "211") == 0)
 				printf("cddb: multiple matches\n");

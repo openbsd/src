@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.9 2003/06/10 22:20:45 deraadt Exp $	*/
+/*	$OpenBSD: col.c,v 1.10 2007/05/01 01:26:19 jdixon Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)col.c	8.5 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: col.c,v 1.9 2003/06/10 22:20:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: col.c,v 1.10 2007/05/01 01:26:19 jdixon Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -52,6 +52,7 @@ static char rcsid[] = "$OpenBSD: col.c,v 1.9 2003/06/10 22:20:45 deraadt Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 
 #define	BS	'\b'		/* backspace */
 #define	TAB	'\t'		/* tab */
@@ -125,6 +126,7 @@ main(int argc, char *argv[])
 	int this_line;			/* line l points to */
 	int nflushd_lines;		/* number of lines that were flushed */
 	int adjust, opt, warned;
+	const char *errstr;
 
 	max_bufd_lines = 128;
 	compress_spaces = 1;		/* compress spaces into tabs */
@@ -140,11 +142,10 @@ main(int argc, char *argv[])
 			compress_spaces = 1;
 			break;
 		case 'l':		/* buffered line count */
-			if ((max_bufd_lines = atoi(optarg)) <= 0) {
-				(void)fprintf(stderr,
-				    "col: bad -l argument %s.\n", optarg);
-				exit(1);
-			}
+			max_bufd_lines = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "bad -l argument, %s: %s", errstr, 
+					optarg);
 			break;
 		case 'x':		/* do not compress spaces into tabs */
 			compress_spaces = 0;

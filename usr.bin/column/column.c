@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.12 2007/03/20 03:50:39 tedu Exp $	*/
+/*	$OpenBSD: column.c,v 1.13 2007/05/01 01:26:23 jdixon Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: column.c,v 1.12 2007/03/20 03:50:39 tedu Exp $";
+static char rcsid[] = "$OpenBSD: column.c,v 1.13 2007/05/01 01:26:23 jdixon Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,10 +77,14 @@ main(int argc, char *argv[])
 	FILE *fp;
 	int ch, tflag, xflag;
 	char *p;
+	const char *errstr;
 
 	if (ioctl(1, TIOCGWINSZ, &win) == -1 || !win.ws_col) {
-		if ((p = getenv("COLUMNS")))
-			termwidth = atoi(p);
+		if ((p = getenv("COLUMNS")) && *p != '\0') {
+			termwidth = strtonum(p, 1, INT_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "%s: %s", errstr, p);
+		}
 	} else
 		termwidth = win.ws_col;
 
@@ -88,7 +92,9 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "c:s:tx")) != -1)
 		switch(ch) {
 		case 'c':
-			termwidth = atoi(optarg);
+			termwidth = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "%s: %s", errstr, optarg);
 			break;
 		case 's':
 			separator = optarg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.18 2005/04/11 16:31:20 deraadt Exp $	*/
+/*	$OpenBSD: jot.c,v 1.19 2007/05/01 01:26:30 jdixon Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: jot.c,v 1.18 2005/04/11 16:31:20 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: jot.c,v 1.19 2007/05/01 01:26:30 jdixon Exp $";
 #endif /* not lint */
 
 /*
@@ -94,6 +94,7 @@ main(int argc, char *argv[])
 	unsigned int	mask = 0;
 	int		n = 0;
 	int		ch;
+	const	char	*errstr;
 
 	while ((ch = getopt(argc, argv, "rb:w:cs:np:")) != -1)
 		switch (ch) {
@@ -123,9 +124,10 @@ main(int argc, char *argv[])
 				errx(1, "-s word too long");
 			break;
 		case 'p':
-			prec = atoi(optarg);
-			if (prec < 0)
-				errx(1, "bad precision value");
+			prec = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "bad precision value, %s: %s", errstr, 
+					optarg);
 			break;
 		default:
 			usage();
