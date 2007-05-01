@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.13 2006/03/04 19:33:21 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.14 2007/05/01 20:40:18 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -55,6 +55,7 @@
 /*****************************  Start of code copied to exception vector */
 	.globl	tlb_miss	/* 0xffffffff80000000 */
 	.set	noat
+	.ent	tlb_miss, 0
 tlb_miss:
 #ifdef TLB_TRACE
 	dmfc0	k0, COP_0_EXC_PC
@@ -127,6 +128,7 @@ tlb_load:
 	nop
 	nop
 	eret				# RM7000 need 4 for JTLB usage.
+	.end	tlb_miss
 
 	.globl	e_tlb_miss
 e_tlb_miss:
@@ -136,6 +138,7 @@ e_tlb_miss:
  */
 	.globl	xtlb_miss	/* 0xffffffff80000080 */
 	.set	noat
+	.ent	xtlb_miss, 0
 xtlb_miss:
 	dmfc0	k0, COP_0_BAD_VADDR
 	bltz	k0, _k_miss		# kernel address space
@@ -162,12 +165,15 @@ _inv_seg:
 _k_miss:
 	j	k_tlb_miss		# kernel tlbmiss.
 	dmfc0	k0, COP_0_BAD_VADDR	# must reload.
+	.end	xtlb_miss
 
 	.globl	e_xtlb_miss
 e_xtlb_miss:
 	.set	at
 /*****************************  End of code copied to exception vector */
 
+	.globl	tlb_miss_nopt
+	.ent	tlb_miss_nopt, 0
 tlb_miss_nopt:
 	.set	noat
 	mfc0	k0, COP_0_STATUS_REG
@@ -176,27 +182,32 @@ tlb_miss_nopt:
 	nop
 	j	k_general
 	nop
+	.end	tlb_miss_nopt
 	.set	at
 
 /*
  * Trampolines copied to exception vectors when code is too big.
  */
 	.globl	tlb_miss_tramp
+	.ent	tlb_miss_tramp, 0
 tlb_miss_tramp:
 	.set	noat
 	LA	k0, tlb_miss
 	jr	k0
 	nop
+	.end	tlb_miss_tramp
 	.set	at
 	.globl	e_tlb_miss_tramp
 e_tlb_miss_tramp:
 
 	.globl	xtlb_miss_tramp
+	.ent	xtlb_miss_tramp, 0
 xtlb_miss_tramp:
 	.set	noat
 	LA	k0, xtlb_miss
 	jr	k0
 	nop
+	.end	xtlb_miss_tramp
 	.set	at
 	.globl	e_xtlb_miss_tramp
 e_xtlb_miss_tramp:
