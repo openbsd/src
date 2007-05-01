@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.75 2007/04/30 01:33:33 deraadt Exp $ */
+/*	$OpenBSD: client.c,v 1.76 2007/05/01 07:40:45 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -99,6 +99,9 @@ client_nextaddr(struct ntp_peer *p)
 		p->query->fd = -1;
 	}
 
+	if (p->state == STATE_DNS_INPROGRESS)
+		return (-1);
+
 	if (p->addr_head.a == NULL) {
 		priv_host_dns(p->addr_head.name, p->id);
 		p->state = STATE_DNS_INPROGRESS;
@@ -120,7 +123,7 @@ client_query(struct ntp_peer *p)
 	int	tos = IPTOS_LOWDELAY;
 
 	if (p->addr == NULL && client_nextaddr(p) == -1) {
-		set_next(p, error_interval());
+		set_next(p, scale_interval(INTERVAL_QUERY_AGGRESSIVE));
 		return (0);
 	}
 
@@ -137,7 +140,8 @@ client_query(struct ntp_peer *p)
 			if (errno == ECONNREFUSED || errno == ENETUNREACH ||
 			    errno == EHOSTUNREACH || errno == EADDRNOTAVAIL) {
 				client_nextaddr(p);
-				set_next(p, error_interval());
+				set_next(p,
+				    scale_interval(INTERVAL_QUERY_AGGRESSIVE));
 				return (-1);
 			} else
 				fatal("client_query connect");
