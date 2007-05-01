@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.57 2007/04/29 11:28:59 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.58 2007/05/01 19:54:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -96,7 +96,7 @@ sub SharedItemsOnly
 	my ($fh, $cont) = @_;
 	local $_;
 	while (<$fh>) {
-		next unless m/^\@(?:cwd|dirrm|dir|fontdir|mandir|newuser|newgroup|name)\b/o || m/^\@(?:sample|extra)\b.*\/$/o || m/^[^\@].*\/$/o;
+		next unless m/^\@(?:cwd|dir|fontdir|mandir|newuser|newgroup|name)\b/o || m/^\@(?:sample|extra)\b.*\/$/o || m/^[^\@].*\/$/o;
 		&$cont($_);
 	}
 }
@@ -135,7 +135,7 @@ sub DependOnly
 		# XXX optimization
 		if (m/^\@arch\b/o) {
 			while (<$fh>) {
-			    if (m/^\@(?:depend|wantlib|pkgdep|newdepend|libdepend)\b/o) {
+			    if (m/^\@(?:depend|wantlib)\b/o) {
 				    &$cont($_);
 			    } elsif (m/^\@(?:groups|users|cwd)\b/o) {
 				    last;
@@ -143,7 +143,7 @@ sub DependOnly
 			}
 			return;
 		}
-		next unless m/^\@(?:depend|wantlib|pkgdep|newdepend|libdepend)\b/o;
+		next unless m/^\@(?:depend|wantlib)\b/o;
 		&$cont($_);
 	}
 }
@@ -177,7 +177,7 @@ sub UpdateInfoOnly
 		# XXX optimization
 		if (m/^\@arch\b/o) {
 			while (<$fh>) {
-			    if (m/^\@(?:depend|wantlib|pkgdep|newdepend|libdepend|pkgpath)\b/o) {
+			    if (m/^\@(?:depend|wantlib|pkgpath)\b/o) {
 				    &$cont($_);
 			    } elsif (m/^\@(?:groups|users|cwd)\b/o) {
 				    last;
@@ -185,7 +185,7 @@ sub UpdateInfoOnly
 			}
 			return;
 		}
-		next unless m/^\@(?:name\b|depend\b|wantlib\b|pkgdep\b|newdepend\b|libdepend\b|pkgpath\b|comment\s+subdir\=|arch\b)/o;
+		next unless m/^\@(?:name\b|depend\b|wantlib\b|pkgpath\b|comment\s+subdir\=|arch\b)/o;
 		&$cont($_);
 	}
 }
@@ -213,15 +213,15 @@ sub ConflictOnly
 		# XXX optimization
 		if (m/^\@arch\b/o) {
 			while (<$fh>) {
-			    if (m/^\@(?:pkgcfl|conflict|option|name)\b/o) {
+			    if (m/^\@(?:conflict|option|name)\b/o) {
 				    &$cont($_);
-			    } elsif (m/^\@(?:depend|wantlib|pkgdep|newdepend|libdepend|groups|users|cwd)\b/o) {
+			    } elsif (m/^\@(?:depend|wantlib|groups|users|cwd)\b/o) {
 				    last;
 			    }
 			}
 			return;
 		}
-	    	next unless m/^\@(?:pkgcfl|conflict|option|name)\b/o;
+	    	next unless m/^\@(?:conflict|option|name)\b/o;
 		&$cont($_);
 	}
 }
@@ -241,7 +241,7 @@ MAINLOOP:
 				&$cont($_);
 			}
 		} else {
-			next unless m/^\@(?:cwd|dirrm|name)\b/;
+			next unless m/^\@(?:cwd|name)\b/;
 		}
 		&$cont($_);
 	}
@@ -331,11 +331,11 @@ our @unique_categories =
     (qw(name no-default-conflict manual-installation extrainfo arch));
 
 our @list_categories =
-    (qw(pkgcfl conflict pkgpath incompatibility updateset depend 
-    	wantlib pkgdep newdepend libdepend module groups users items));
+    (qw(conflict pkgpath incompatibility updateset depend 
+    	wantlib module groups users items));
 
 our @cache_categories =
-    (qw(depend wantlib pkgdep newdepend libdepend));
+    (qw(depend wantlib));
 	
 sub visit
 {
