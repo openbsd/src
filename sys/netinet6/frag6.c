@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.23 2006/06/18 11:47:46 pascoe Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.24 2007/05/01 03:38:45 ray Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -463,7 +463,7 @@ frag6_input(mp, offp, proto)
 	}
 #else
 	/*
-	 * If the incoming framgent overlaps some existing fragments in
+	 * If the incoming fragment overlaps some existing fragments in
 	 * the reassembly queue, drop it, since it is dangerous to override
 	 * existing fragments from a security point of view.
 	 * We don't know which fragment is the bad guy - here we trust
