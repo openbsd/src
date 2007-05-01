@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.83 2007/04/30 13:51:32 espie Exp $
+# $OpenBSD: pkg_create,v 1.84 2007/05/01 18:46:02 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -63,19 +63,6 @@ sub avert_duplicates_and_other_checks
 		$main::errors++;
 	}
 	$allfiles->{$n} = 1;
-}
-
-my $warned;
-
-sub warn_once
-{
-	my $self = shift;
-	my $k = $self->keyword;
-	if (!$warned->{$k}) {
-		print STDERR "Error: \@$k is deprecated\n";
-		$main::errors++;
-		$warned->{$k} = 1;
-	}
 }
 
 sub makesum_plist
@@ -166,24 +153,6 @@ sub prepare_for_archival
 	    }
 	}
 	return $o;
-}
-
-package OpenBSD::PackingElement::PkgConflict;
-sub avert_duplicates_and_other_checks
-{
-	shift->warn_once;
-}
-
-package OpenBSD::PackingElement::PkgDep;
-sub avert_duplicates_and_other_checks
-{
-	shift->warn_once;
-}
-
-package OpenBSD::PackingElement::DirRm;
-sub avert_duplicates_and_other_checks
-{
-	shift->warn_once;
 }
 
 package OpenBSD::PackingElement::SpecialFile;
@@ -597,6 +566,10 @@ if (defined $opt_B) {
 if ($plist->{need_modules}) {
 	print STDERR "Error: some needed modules were not found\n";
 	$errors++;
+}
+if ($plist->{deprecated}) {
+	print STDERR "Error: found obsolete constructs\n";
+	exit 1;
 }
 	
 

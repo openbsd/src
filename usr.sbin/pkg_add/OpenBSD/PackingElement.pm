@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.94 2007/05/01 18:22:20 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.95 2007/05/01 18:46:02 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -645,52 +645,6 @@ sub keyword() { "conflict" }
 __PACKAGE__->register_with_factory;
 sub category() { "conflict" }
 
-package OpenBSD::PackingElement::PkgConflict;
-our @ISA=qw(OpenBSD::PackingElement::Conflict);
-
-sub keyword() { "pkgcfl" }
-__PACKAGE__->register_with_factory;
-sub category() { "pkgcfl" }
-
-package OpenBSD::PackingElement::PkgDep;
-our @ISA=qw(OpenBSD::PackingElement::Depend);
-
-sub signature
-{
-}
-
-sub keyword() { "pkgdep" }
-__PACKAGE__->register_with_factory;
-sub category() { "pkgdep" }
-
-package OpenBSD::PackingElement::NewDepend;
-our @ISA=qw(OpenBSD::PackingElement::Depend);
-
-sub keyword() { "newdepend" }
-__PACKAGE__->register_with_factory;
-sub category() { "newdepend" }
-
-sub new
-{
-	my ($class, $args) = @_;
-	my ($name, $pattern, $def) = split /\:/, $args;
-	my $self = bless { pattern => $pattern, def => $def }, $class;
-	# very old packages still work
-	if ($name =~ m|/|) {
-		$self->{pkgpath} = $name;
-	} else {
-		$self->{name} = $name;
-	}
-	return $self;
-}
-
-sub stringize($)
-{
-	my $self = $_[0];
-	return (defined $self->{name} ? $self->{name} : $self->{pkgpath}).
-	    ':'.$self->{pattern}.':'.$self->{def};
-}
-
 package OpenBSD::PackingElement::Dependency;
 our @ISA=qw(OpenBSD::PackingElement::Depend);
 
@@ -722,35 +676,6 @@ sub signature
 {
 	my ($self, $hash) = @_;
 	$hash->{$self->{name}} = 1;
-}
-
-package OpenBSD::PackingElement::LibDepend;
-our @ISA=qw(OpenBSD::PackingElement::Depend);
-
-sub category() { "libdepend" }
-sub keyword() { "libdepend" }
-__PACKAGE__->register_with_factory;
-
-sub new
-{
-	my ($class, $args) = @_;
-	my ($name, $libspec, $pattern, $def)  = split /\:/, $args;
-	my $self = bless { libspec => $libspec, pattern => $pattern, 
-	    def => $def }, $class;
-	# very old packages still work
-	if ($name =~ m|/|) {
-		$self->{pkgpath} = $name;
-	} else {
-		$self->{name} = $name;
-	}
-	return $self;
-}
-
-sub stringize($)
-{
-	my $self = $_[0];
-	return (defined $self->{name} ? $self->{name} : $self->{pkgpath}).
-	    ':'.$self->{libspec}.':'.$self->{pattern}.':'.$self->{def};
 }
 
 package OpenBSD::PackingElement::PkgPath;
@@ -1070,12 +995,6 @@ __PACKAGE__->register_with_factory;
 
 package OpenBSD::PackingElement::DirlikeObject;
 our @ISA=qw(OpenBSD::PackingElement::FileObject);
-
-package OpenBSD::PackingElement::DirRm;
-our @ISA=qw(OpenBSD::PackingElement::DirlikeObject);
-
-sub keyword() { "dirrm" }
-__PACKAGE__->register_with_factory;
 
 package OpenBSD::PackingElement::DirBase;
 our @ISA=qw(OpenBSD::PackingElement::DirlikeObject);
@@ -1404,7 +1323,8 @@ sub register_old_keyword
 	$class->register_with_factory($k, bless \$k, $class);
 }
 
-for my $k (qw(src display mtree ignore_inst)) {
+for my $k (qw(src display mtree ignore_inst dirrm pkgcfl pkgdep newdepend 
+    libdepend)) {
 	__PACKAGE__->register_old_keyword($k);
 }
 
