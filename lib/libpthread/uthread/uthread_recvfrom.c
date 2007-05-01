@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_recvfrom.c,v 1.8 2006/10/03 02:59:36 kurt Exp $	*/
+/*	$OpenBSD: uthread_recvfrom.c,v 1.9 2007/05/01 18:16:38 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -44,7 +44,7 @@ ssize_t
 recvfrom(int fd, void *buf, size_t len, int flags, struct sockaddr * from, socklen_t *from_len)
 {
 	struct pthread	*curthread = _get_curthread();
-	int             ret;
+	ssize_t		ret;
 
 	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();

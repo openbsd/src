@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_info_openbsd.c,v 1.12 2007/04/27 12:59:24 kurt Exp $	*/
+/*	$OpenBSD: uthread_info_openbsd.c,v 1.13 2007/05/01 18:16:37 kurt Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
@@ -439,7 +439,7 @@ _thread_dump_data(const void *addr, int len)
 				len = 0;
 				memset(data, ' ', DUMP_BUFLEN);
 			}
-			(char *) addr += 8;
+			addr = (char *)addr + 8;
 
 			snprintf(data, DUMP_BUFLEN, "%18p:   ", d);
 			while (count--) {

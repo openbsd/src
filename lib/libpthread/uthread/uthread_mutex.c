@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_mutex.c,v 1.19 2007/04/27 19:40:08 kurt Exp $	*/
+/*	$OpenBSD: uthread_mutex.c,v 1.20 2007/05/01 18:16:38 kurt Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -114,7 +114,7 @@ pthread_mutex_init(pthread_mutex_t * mutex,
 	enum pthread_mutextype	type = 0;
 	int		protocol = 0;
 	int		ceiling = 0;
-	int		flags = 0;
+	long		flags = 0;
 	int		ret = 0;
 
 	if (mutex == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sendmsg.c,v 1.7 2006/10/03 02:59:36 kurt Exp $	*/
+/*	$OpenBSD: uthread_sendmsg.c,v 1.8 2007/05/01 18:16:38 kurt Exp $	*/
 /*
  * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -44,7 +44,7 @@ ssize_t
 sendmsg(int fd, const struct msghdr *msg, int flags)
 {
 	struct pthread	*curthread = _get_curthread();
-	int             ret;
+	ssize_t		ret;
 
 	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
