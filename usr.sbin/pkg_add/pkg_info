@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.43 2007/04/29 11:09:29 espie Exp $
+# $OpenBSD: pkg_info,v 1.44 2007/05/01 18:22:20 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -146,7 +146,6 @@ sub find_by_spec
 
 sub filter_files
 {
-	require OpenBSD::PackingOld;
 	require OpenBSD::PackingList;
 
 	my $search = shift;
@@ -180,7 +179,6 @@ sub find_by_path
 	my $pat = shift;
 
 	if (!defined $path_info) {
-		require OpenBSD::PackingOld;
 		require OpenBSD::PackingList;
 
 		$path_info = {};
@@ -271,7 +269,6 @@ sub print_info
 		}
 		my $plist;
 		if ($opt_f || $opt_L || $opt_s || $opt_S) {
-			require OpenBSD::PackingOld;
 			require OpenBSD::PackingList;
 
 			if ($opt_f || $opt_s || $opt_S) {

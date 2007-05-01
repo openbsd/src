@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.93 2007/05/01 18:09:44 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.94 2007/05/01 18:22:20 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -1380,6 +1380,32 @@ sub check
 		return 1 if $ok eq $arch;
 	}
 	return;
+}
+
+package OpenBSD::PackingElement::Old;
+our @ISA=qw(OpenBSD::PackingElement);
+
+my $warned;
+
+sub add
+{
+	my ($o, $plist, @args) = @_;
+	my $keyword = $$o;
+	if (!$warned->{$keyword}) {
+		print STDERR "Warning: obsolete construct: \@$keyword @args\n";
+		$warned->{$keyword} = 1;
+	}
+	$plist->{deprecated} = 1;
+}
+
+sub register_old_keyword
+{
+	my ($class, $k) = @_;
+	$class->register_with_factory($k, bless \$k, $class);
+}
+
+for my $k (qw(src display mtree ignore_inst)) {
+	__PACKAGE__->register_old_keyword($k);
 }
 
 1;

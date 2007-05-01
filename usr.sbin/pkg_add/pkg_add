@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.227 2007/04/21 09:57:22 espie Exp $
+# $OpenBSD: pkg_add,v 1.228 2007/05/01 18:22:20 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -96,7 +96,6 @@ sub can_install($$$)
 	}
 
 	require OpenBSD::Replace;
-	require OpenBSD::PackingOld;
 
 	if (is_installed($plist->pkgname()) && !$state->{forced}->{installed}) {
 		if (!$plist->has_new_sig($state) && !$plist->uses_old_libs()) {
