@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingOld.pm,v 1.9 2007/05/01 18:07:00 espie Exp $
+# $OpenBSD: PackingOld.pm,v 1.10 2007/05/01 18:20:12 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -22,38 +22,27 @@ use OpenBSD::PackingElement;
 package OpenBSD::PackingElement::Old;
 our @ISA=qw(OpenBSD::PackingElement);
 
+my $warned;
+
 sub add
 {
-	my ($class, $plist, @args) = @_;
-
-	my $self = $class->new(@args);
-	print STDERR "Warning: obsolete construct: ", $self->fullstring(), "\n";
-	return $self->add_object($plist);
+	my ($o, $plist, @args) = @_;
+	my $keyword = $$o;
+	if (!$warned->{$keyword}) {
+		print STDERR "Warning: obsolete construct: \@$keyword @args\n";
+		$warned->{$keyword} = 1;
+	}
+	$plist->{deprecated} = 1;
 }
 
-package OpenBSD::PackingElement::Src;
-our @ISA=qw(OpenBSD::PackingElement::Old);
+sub register_old_keyword
+{
+	my ($class, $k) = @_;
+	$class->register_with_factory($k, bless \$k, $class);
+}
 
-
-sub keyword() { 'src' }
-__PACKAGE__->register_with_factory;
-
-package OpenBSD::PackingElement::Display;
-our @ISA=qw(OpenBSD::PackingElement::Old);
-
-sub keyword() { 'display' }
-__PACKAGE__->register_with_factory;
-
-package OpenBSD::PackingElement::Mtree;
-our @ISA=qw(OpenBSD::PackingElement::Old);
-
-sub keyword() { 'mtree' }
-__PACKAGE__->register_with_factory;
-
-package OpenBSD::PackingElement::ignore_inst;
-our @ISA=qw(OpenBSD::PackingElement::Old);
-
-sub keyword() { 'ignore_inst' }
-__PACKAGE__->register_with_factory;
+for my $k (qw(src display mtree ignore_inst)) {
+	__PACKAGE__->register_old_keyword($k);
+}
 
 1;
