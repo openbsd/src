@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.33 2007/05/01 11:44:47 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.34 2007/05/01 15:18:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 #include <sys/malloc.h>
 #include <sys/timeout.h>
+#include <sys/proc.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
@@ -719,7 +720,7 @@ nxb_reset(struct nxb_softc *sc)
 	size_t				 fwlen = 0;
 	int				 bootsz, imagesz;
 	u_int				 i;
-	u_int32_t			*data, addr, val, ncrb;
+	u_int32_t			*data, addr, addr1, val, ncrb;
 	bus_size_t			 reg;
 
 	/*
@@ -737,25 +738,20 @@ nxb_reset(struct nxb_softc *sc)
 	if (ncrb == 0 || ncrb > NXFLASHMAP_CRBINIT_MAX)
 		goto load;	/* ignore CRBINIT and skip step */
 
-#if 0
 	/* 3. Write the CRBINIT are to PCI memory */
 	for (i = 0; i < ncrb; i++) {
-		reg = i * 8;
+		addr = NXFLASHMAP_CRBINIT_0 + (i * 8);
+		nxb_read_rom(sc, addr + 4, &val);
+		nxb_read_rom(sc, addr + 8, &addr1);
 
-		reg += 4;
-		nxb_read_rom(sc, reg, &val);
-		reg += 4;
-		nxb_read_rom(sc, reg, &addr);
-
-		if (nxb_writehw(sc, addr, val) != 0)
+		if (nxb_writehw(sc, addr1, val) != 0)
 			goto fail1;
 	}
-#endif
 
 	/* 4. Reset the Protocol Processing Engine */
-	nxb_write(sc, NXROMUSB_GLB_SW_RESET,
-	    nxb_read(sc, NXROMUSB_GLB_SW_RESET) &
-	    ~NXROMUSB_GLB_SW_RESET_PPE);
+	val = nxb_read(sc, NXROMUSB_GLB_SW_RESET) &
+	    ~NXROMUSB_GLB_SW_RESET_PPE;
+	nxb_write(sc, NXROMUSB_GLB_SW_RESET, val);
 
 	/* 5. Reset the D & I caches */
 	nxb_set_window(sc, 0);
@@ -825,6 +821,7 @@ nxb_reset(struct nxb_softc *sc)
 	/* Reset casper boot chip */
 	nxb_write(sc, NXROMUSB_GLB_CAS_RESET, NXROMUSB_GLB_CAS_RESET_ENABLE);
 
+#if 0
 	reg = NXFLASHMAP_BOOTLOADER;
 	data = (u_int32_t *)(fw + sizeof(fh));
 	for (i = 0; i < (bootsz / 4); i++) {
@@ -832,6 +829,7 @@ nxb_reset(struct nxb_softc *sc)
 		reg += sizeof(u_int32_t);
 		data++;
 	}
+#endif
 	if (imagesz) {
 		reg = NXFLASHMAP_FIRMWARE_0;
 		for (i = 0; i < (imagesz / 4); i++) {
@@ -841,6 +839,9 @@ nxb_reset(struct nxb_softc *sc)
 		}
 		/* tell the bootloader to load the firmware image from RAM */
 		nxb_write(sc, NXSW_BOOTLD_CONFIG, NXSW_BOOTLD_CONFIG_RAM);
+	} else {
+		/* tell the bootloader to load the firmware image from flash */
+		nxb_write(sc, NXSW_BOOTLD_CONFIG, NXSW_BOOTLD_CONFIG_ROM);
 	}
 
 	/* Power on the clocks and unreset the casper boot chip */
@@ -899,7 +900,7 @@ nxb_writehw(struct nxb_softc *sc, u_int32_t addr, u_int32_t val)
 	};
 	u_int32_t base = (addr & NXMEMMAP_HWTRANS_M) >> 16;
 	bus_size_t reg = ~0;
-	u_int i, window = 0;
+	u_int i, window = 0, timo = 1;
 
 	for (i = 0; i < (sizeof(hwtrans) / sizeof(hwtrans[0])); i++) {
 		if (hwtrans[i] == base) {
@@ -924,13 +925,16 @@ nxb_writehw(struct nxb_softc *sc, u_int32_t addr, u_int32_t val)
 	/* Write value to the register, enable some workarounds */
 	if (reg == NXSW_BOOTLD_CONFIG)
 		return (0);
+	else if (reg == NXROMUSB_GLB_SW_RESET) {
+		val = 0x8000ff;
+		timo = hz;
+	}
 	nxb_set_window(sc, window);
 	nxb_write(sc, reg, val);
 	nxb_set_window(sc, 1);
-	if (reg == NXROMUSB_GLB_SW_RESET)
-		delay(1000);
-	else
-		delay(1);
+
+	if (tsleep(sc, PCATCH, "nxbcrb", timo) == EINTR)
+		return (-1);
 
 	DPRINTF(NXDBG_CRBINIT, "%s(%s) addr 0x%08x -> reg 0x%08x, "
 	    "val 0x%08x, window %d\n",
