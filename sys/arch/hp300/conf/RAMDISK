@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.28 2006/07/09 19:45:01 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.29 2007/05/01 15:22:23 deraadt Exp $
 #
 # Ram disk kernel.
 #
@@ -23,8 +23,6 @@ maxusers	32
 
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC
-
-option		DIAGNOSTIC	# internal consistency checks
 
 option		FFS		# UFS
 #option		EXT2FS		# Linux ext2fs
