@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.195 2006/11/28 17:03:03 henning Exp $
+# $OpenBSD: Makefile,v 1.196 2007/05/02 20:16:18 david Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -61,11 +61,11 @@ PFAIL_TARGETS+=pfail${n}
 PFAIL_UPDATES+=pfail${n}-update
 
 pfail${n}:
-	pfctl -nv -f - < ${.CURDIR}/pfail${n}.in 2>&1 | \
+	pfctl -o none -nv -f - < ${.CURDIR}/pfail${n}.in 2>&1 | \
 	    diff -u ${.CURDIR}/pfail${n}.ok /dev/stdin
 
 pfail${n}-update:
-	if pfctl -nv -f - < ${.CURDIR}/pfail${n}.in > \
+	if pfctl -o none -nv -f - < ${.CURDIR}/pfail${n}.in > \
 	    ${.CURDIR}/pfail${n}.ok 2>&1; then \
 		true; \
 	fi;
@@ -82,15 +82,15 @@ PF_TARGETS+=pf${n}
 PF_UPDATES+=pf${n}-update
 
 pf${n}:
-	pfctl -nv -f - < ${.CURDIR}/pf${n}.in | \
+	pfctl -o none -nv -f - < ${.CURDIR}/pf${n}.in | \
 	    diff -u ${.CURDIR}/pf${n}.ok /dev/stdin
 
 pf${n}-update:
-	pfctl -nv -f - < ${.CURDIR}/pf${n}.in > ${.CURDIR}/pf${n}.ok
+	pfctl -o none -nv -f - < ${.CURDIR}/pf${n}.in > ${.CURDIR}/pf${n}.ok
 
 SELFPF_TARGETS+=selfpf${n}
 selfpf${n}:
-	pfctl -nv -f - < ${.CURDIR}/pf${n}.ok | \
+	pfctl -o none -nv -f - < ${.CURDIR}/pf${n}.ok | \
 	    diff -u ${.CURDIR}/pf${n}.ok /dev/stdin
 
 .endfor
@@ -106,7 +106,7 @@ UPDATE_TARGETS+=pf-update
 PFSIMPLE_TARGETS+=pfsimple${n}
 
 pfsimple${n}:
-	pfctl -nf - < ${.CURDIR}/pfsimple${n}.in
+	pfctl -o none -nf - < ${.CURDIR}/pfsimple${n}.in
 
 .endfor
 
@@ -118,19 +118,19 @@ PFLOAD_TARGETS+=pfload${n}
 PFLOAD_UPDATES+=pfload${n}-update
 
 pfload${n}:
-	${SUDO} pfctl -a regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} pfctl -a 'regress/*' -gvvsn; \
-	${SUDO} pfctl -a 'regress/*' -gvvsr) | \
+	${SUDO} pfctl -o none -a regress -f - < ${.CURDIR}/pf${n}.in
+	(${SUDO} pfctl -o none -a 'regress/*' -gvvsn; \
+	${SUDO} pfctl -o none -a 'regress/*' -gvvsr) | \
 	    diff -u ${.CURDIR}/pf${n}.loaded /dev/stdin
-	${SUDO} pfctl -a regress -Fn >/dev/null 2>&1
-	${SUDO} pfctl -a regress -Fr >/dev/null 2>&1
+	${SUDO} pfctl -o none -a regress -Fn >/dev/null 2>&1
+	${SUDO} pfctl -o none -a regress -Fr >/dev/null 2>&1
 
 pfload${n}-update:
-	${SUDO} pfctl -a regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} pfctl -a 'regress/*' -gvvsn; \
-	${SUDO} pfctl -a 'regress/*' -gvvsr) > ${.CURDIR}/pf${n}.loaded
-	${SUDO} pfctl -a regress -Fn >/dev/null 2>&1
-	${SUDO} pfctl -a regress -Fr >/dev/null 2>&1
+	${SUDO} pfctl -o none -a regress -f - < ${.CURDIR}/pf${n}.in
+	(${SUDO} pfctl -o none -a 'regress/*' -gvvsn; \
+	${SUDO} pfctl -o none -a 'regress/*' -gvvsr) > ${.CURDIR}/pf${n}.loaded
+	${SUDO} pfctl -o none -a regress -Fn >/dev/null 2>&1
+	${SUDO} pfctl -o none -a regress -Fr >/dev/null 2>&1
 
 .endfor
 
@@ -145,19 +145,19 @@ PFOPTIMIZE_TARGETS+=pfoptimize${n}
 PFOPTIMIZE_UPDATES+=pfoptimize${n}-update
 
 pfoptimize${n}:
-	${SUDO} pfctl -o -a regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} pfctl -a regress -gvvsn; \
-	${SUDO} pfctl -a regress -gvvsr) | \
+	${SUDO} pfctl -obasic -a regress -f - < ${.CURDIR}/pf${n}.in
+	(${SUDO} pfctl -o none -a regress -gvvsn; \
+	${SUDO} pfctl -o none -a regress -gvvsr) | \
 	    diff -u ${.CURDIR}/pf${n}.optimized /dev/stdin
-	${SUDO} pfctl -a regress -Fn >/dev/null 2>&1
-	${SUDO} pfctl -a regress -Fr >/dev/null 2>&1
+	${SUDO} pfctl -o none -a regress -Fn >/dev/null 2>&1
+	${SUDO} pfctl -o none -a regress -Fr >/dev/null 2>&1
 
 pfoptimize${n}-update:
-	${SUDO} pfctl -o -a regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} pfctl -a regress -gvvsn; \
-	${SUDO} pfctl -a regress -gvvsr) > ${.CURDIR}/pf${n}.optimized
-	${SUDO} pfctl -a regress -Fn >/dev/null 2>&1
-	${SUDO} pfctl -a regress -Fr >/dev/null 2>&1
+	${SUDO} pfctl -obasic -a regress -f - < ${.CURDIR}/pf${n}.in
+	(${SUDO} pfctl -o none -a regress -gvvsn; \
+	${SUDO} pfctl -o none -a regress -gvvsr) > ${.CURDIR}/pf${n}.optimized
+	${SUDO} pfctl -o none -a regress -Fn >/dev/null 2>&1
+	${SUDO} pfctl -o none -a regress -Fr >/dev/null 2>&1
 
 .endfor
 
@@ -211,12 +211,12 @@ PFOPT_TARGETS+=pfopt${n}
 PFOPT_UPDATES+=pfopt${n}-update
 
 pfopt${n}:
-	pfctl -nv -f - `cat ${.CURDIR}/pfopt${n}.opts` \
+	pfctl -o none -nv -f - `cat ${.CURDIR}/pfopt${n}.opts` \
 	    < ${.CURDIR}/pfopt${n}.in | \
 	    diff -u ${.CURDIR}/pfopt${n}.ok /dev/stdin
 
 pfopt${n}-update:
-	pfctl -nv -f - `cat ${.CURDIR}/pfopt${n}.opts` \
+	pfctl -o none -nv -f - `cat ${.CURDIR}/pfopt${n}.opts` \
 	    < ${.CURDIR}/pfopt${n}.in > ${.CURDIR}/pfopt${n}.ok
 
 .endfor
@@ -232,13 +232,13 @@ PFSETUP_UPDATES+=pfsetup${n}-update
 
 pfsetup${n}:
 	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.setup
-	pfctl -nv -f - < ${.CURDIR}/pfsetup${n}.in | \
+	pfctl -o none -nv -f - < ${.CURDIR}/pfsetup${n}.in | \
 	    diff -u ${.CURDIR}/pfsetup${n}.ok /dev/stdin
 	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.clean
 
 pfsetup${n}-update:
 	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.setup
-	pfctl -nv -f - < ${.CURDIR}/pfsetup${n}.in \
+	pfctl -o none -nv -f - < ${.CURDIR}/pfsetup${n}.in \
 	    > ${.CURDIR}/pfsetup${n}.ok
 	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.clean
 
@@ -255,19 +255,19 @@ PFALTQ_TARGETS+=pfaltq${n}
 PFALTQ_UPDATES+=pfaltq${n}-update
 
 pfaltq${n}:
-	${SUDO} pfctl -Fa >/dev/null 2>&1
-	${SUDO} pfctl -f - < ${.CURDIR}/pfaltq${n}.in
-	( ${SUDO} pfctl -gsq; \
-	${SUDO} pfctl -gsr ) | \
+	${SUDO} pfctl -o none -Fa >/dev/null 2>&1
+	${SUDO} pfctl -o none -f - < ${.CURDIR}/pfaltq${n}.in
+	( ${SUDO} pfctl -o none -gsq; \
+	${SUDO} pfctl -o none -gsr ) | \
 	    diff -u ${.CURDIR}/pfaltq${n}.ok /dev/stdin
-	${SUDO} pfctl -Fa >/dev/null 2>&1
+	${SUDO} pfctl -o none -Fa >/dev/null 2>&1
 
 pfaltq${n}-update:
-	${SUDO} pfctl -Fa >/dev/null 2>&1
-	${SUDO} pfctl -f - < ${.CURDIR}/pfaltq${n}.in
-	( ${SUDO} pfctl -gsq; \
-	${SUDO} pfctl -gsr ) > ${.CURDIR}/pfaltq${n}.ok
-	${SUDO} pfctl -Fa >/dev/null 2>&1
+	${SUDO} pfctl -o none -Fa >/dev/null 2>&1
+	${SUDO} pfctl -o none -f - < ${.CURDIR}/pfaltq${n}.in
+	( ${SUDO} pfctl -o none -gsq; \
+	${SUDO} pfctl -o none -gsr ) > ${.CURDIR}/pfaltq${n}.ok
+	${SUDO} pfctl -o none -Fa >/dev/null 2>&1
 
 .endfor
 
@@ -282,17 +282,17 @@ PFCHKSUM_TARGETS+=pfchksum${n}
 PFCHKSUM_UPDATES+=pfchksum${n}-update
 
 pfchksum${n}:
-	${SUDO} pfctl -Fa >/dev/null 2>&1
-	${SUDO} pfctl -f - < ${.CURDIR}/pfchksum${n}.in
-	${SUDO} pfctl -vsi | grep '^Checksum:' | \
+	${SUDO} pfctl -o none -Fa >/dev/null 2>&1
+	${SUDO} pfctl -o none -f - < ${.CURDIR}/pfchksum${n}.in
+	${SUDO} pfctl -o none -vsi | grep '^Checksum:' | \
 		 diff -u ${.CURDIR}/pfchksum${n}.ok /dev/stdin
-	${SUDO} pfctl -Fa >/dev/null 2>&1
+	${SUDO} pfctl -o none -Fa >/dev/null 2>&1
 
 pfchksum${n}-update:
-	${SUDO} pfctl -Fa >/dev/null 2>&1
-	${SUDO} pfctl -f - < ${.CURDIR}/pfchksum${n}.in
-	${SUDO} pfctl -vsi | grep '^Checksum:' > ${.CURDIR}/pfchksum${n}.ok
-	${SUDO} pfctl -Fa >/dev/null 2>&1
+	${SUDO} pfctl -o none -Fa >/dev/null 2>&1
+	${SUDO} pfctl -o none -f - < ${.CURDIR}/pfchksum${n}.in
+	${SUDO} pfctl -o none -vsi | grep '^Checksum:' > ${.CURDIR}/pfchksum${n}.ok
+	${SUDO} pfctl -o none -Fa >/dev/null 2>&1
 
 .endfor
 
