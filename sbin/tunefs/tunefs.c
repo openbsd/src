@@ -254,30 +254,26 @@ main(int argc, char *argv[])
 static int
 getnum(const char *num, const char *desc, int min, int max)
 {
-	long	n;
-	char	*ep;
+	int		n;
+	const char	*errstr;
 
-	n = strtol(num, &ep, 10);
-	if (ep[0] != '\0')
-		errx(1, "Invalid number `%s' for %s", num, desc);
-	if ((int) n < min)
-		errx(1, "%s `%s' too small (minimum is %d)", desc, num, min);
-	if ((int) n > max)
-		errx(1, "%s `%s' too large (maximum is %d)", desc, num, max);
-	return ((int)n);
+	n = strtonum(num, min, max, &errstr);
+	if (errstr != NULL)
+		errx(1, "Invalid number `%s' for %s: %s", num, desc, errstr);
+	return (n);
 }
 
 static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: tunefs [-AFN] tuneup-options special-device\n");
-	fprintf(stderr, "where tuneup-options are:\n");
-	fprintf(stderr, "\t-e maximum blocks per file in a cylinder group\n");
-	fprintf(stderr, "\t-g average file size\n");
-	fprintf(stderr, "\t-h expected number of files per directory\n");
-	fprintf(stderr, "\t-m minimum percentage of free space\n");
-	fprintf(stderr, "\t-o optimization preference (`space' or `time')\n");
+	fprintf(stderr, "usage: tunefs [-AFN] tuneup-options special-device\n"
+		"where tuneup-options are:\n"
+		"\t-e maximum blocks per file in a cylinder group\n"
+		"\t-g average file size\n"
+		"\t-h expected number of files per directory\n"
+		"\t-m minimum percentage of free space\n"
+		"\t-o optimization preference (`space' or `time')\n");
 	exit(2);
 }
 
