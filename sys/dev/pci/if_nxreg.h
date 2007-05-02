@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.19 2007/05/01 21:56:21 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.20 2007/05/02 19:57:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -62,28 +62,30 @@ enum nx_state {
  */
 
 struct nx_txdesc {
-	u_int64_t		tx_next;	/* reserved */
+	u_int8_t		tx_tcpoff;	/* IP header offset for TSO */
+	u_int8_t		tx_ipoff;	/* TCP header offset for TSO */
+	u_int16_t		tx_flags;
+#define  NX_TXDESC_F_S		0		/* flags */
+#define  NX_TXDESC_F_M		0x007f
+#define   NX_TXDESC_F_VLAN	(1<<8)		/* VLAN tagged */
+#define   NX_TXDESC_F_TSO	(1<<1)		/* TSO enabled */
+#define   NX_TXDESC_F_CKSUM	(1<<0)		/* checksum enabled */
+#define  NX_TXDESC_OP_S		7		/* opcode */
+#define  NX_TXDESC_OP_M		0x1f80
+#define   NX_TXDESC_OP_STOPSTTS	(1<<9)		/* Stop statistics */
+#define   NX_TXDESC_OP_GETSTATS	(1<<8)		/* Get statistics */
+#define   NX_TXDESC_OP_TX_TSO	(1<<5)		/* TCP packet, do TSO */
+#define   NX_TXDESC_OP_TX_IP	(1<<4)		/* IP packet, compute cksum */
+#define   NX_TXDESC_OP_TX_UDP	(1<<3)		/* UDP packet, compute cksum */
+#define   NX_TXDESC_OP_TX_TCP	(1<<2)		/* TCP packet, compute cksum */
+#define   NX_TXDESC_OP_TX	(1<<1)		/* raw Ethernet packet */
+	u_int32_t		tx_length;
+#define  NX_TXDESC_NBUF_S	0		/* number of buffers */
+#define  NX_TXDESC_NBUG_M	0x000000ff
+#define  NX_TXDESC_LENGTH_S	8		/* length */
+#define  NX_TXDESC_LENGTH_M	0xffffff00
 	u_int32_t		tx_addr2_low;	/* low address of buffer 2 */
 	u_int32_t		tx_addr2_high;	/* high address of buffer 2 */
-	u_int32_t		tx_length;
-#define  NX_TXDESC_LENGTH_S	0		/* length */
-#define  NX_TXDESC_LENGTH_M	0x00ffffff
-#define  NX_TXDESC_TCPOFF_S	24		/* TCP header offset for TSO */
-#define  NX_TXDESC_TCPOFF_M	0xff000000
-	u_int8_t		tx_ipoff;	/* IP header offset for TSO */
-	u_int8_t		tx_nbuf;	/* number of buffers */
-	u_int8_t		tx_flags;
-#define  NX_TXDESC_F_VLAN	(1<<8)		/* VLAN tagged */
-#define  NX_TXDESC_F_TSO	(1<<1)		/* TSO enabled */
-#define  NX_TXDESC_F_CKSUM	(1<<0)		/* checksum enabled */
-	u_int8_t		tx_opcode;
-#define  NX_TXDESC_OP_STOPSTATS	(1<<9)		/* Stop statistics */
-#define  NX_TXDESC_OP_GETSTATS	(1<<8)		/* Get statistics */
-#define  NX_TXDESC_OP_TX_TSO	(1<<5)		/* TCP packet, do TSO */
-#define  NX_TXDESC_OP_TX_IP	(1<<4)		/* IP packet, compute cksum */
-#define  NX_TXDESC_OP_TX_UDP	(1<<3)		/* UDP packet, compute cksum */
-#define  NX_TXDESC_OP_TX_TCP	(1<<2)		/* TCP packet, compute cksum */
-#define  NX_TXDESC_OP_TX	(1<<1)		/* raw Ethernet packet */
 	u_int16_t		tx_handle;	/* handle of the buffer */
 	u_int16_t		tx_mss;		/* MSS for the packet */
 	u_int8_t		tx_port;	/* interface port */
@@ -101,6 +103,7 @@ struct nx_txdesc {
 	u_int16_t		tx_buf4_length;	/* length of buffer 4 */
 	u_int32_t		tx_addr4_low;	/* low address of buffer 4 */
 	u_int32_t		tx_addr4_high;	/* high address of buffer 4 */
+	u_int64_t		tx_reserved1;
 } __packed;
 
 struct nx_rxdesc {
@@ -167,10 +170,7 @@ struct nx_statusdesc {
 #define NXPCIMAP_CRB		0x06000000
 
 /* Offsets inside NXPCIMAP_CRB */
-#define NXMEMMAP_WINDOW0_START	0x00000000
-#define NXMEMMAP_WINDOW0_END	0x01ffffff
-#define NXMEMMAP_WINDOW_SIZE	0x02000000
-#define NXMEMMAP_PCIE		0x00100000
+#define NXMEMMAP_PCIE_0		0x00100000
 #define NXMEMMAP_NIU		0x00600000
 #define NXMEMMAP_PPE_0		0x01100000
 #define NXMEMMAP_PPE_1		0x01200000
@@ -178,11 +178,17 @@ struct nx_statusdesc {
 #define NXMEMMAP_PPE_3		0x01400000
 #define NXMEMMAP_PPE_D		0x01500000
 #define NXMEMMAP_PPE_I		0x01600000
-#define NXMEMMAP_WINDOW1_START	0x02000000
-#define NXMEMMAP_WINDOW1_END	0x07ffffff
-#define NXMEMMAP_SW		0x02200000	/* XXX 0x02400000? */
+#define NXMEMMAP_PCIE_1		0x02100000
+#define NXMEMMAP_SW		0x02200000
 #define NXMEMMAP_SIR		0x03200000
 #define NXMEMMAP_ROMUSB		0x03300000
+
+/* NXPCIMAP_CRB window (total offsets) */
+#define NXMEMMAP_WINDOW_SIZE	0x02000000
+#define NXMEMMAP_WINDOW0_START	0x06000000
+#define NXMEMMAP_WINDOW0_END	0x07ffffff
+#define NXMEMMAP_WINDOW1_START	0x08000000
+#define NXMEMMAP_WINDOW1_END	0x09ffffff
 
 #define NXMEMMAP_HWTRANS_M	0xfff00000
 
@@ -197,10 +203,10 @@ struct nx_statusdesc {
 #define NXPPE_I(_x)		((_x) + 0x07600000)	/* PEGNET I-Cache */
 
 /* Window 1 register map */
-#define NXPCIE_1(_x)		((_x) + 0x06100000)	/* PCI Express' */
-#define NXSW(_x)		((_x) + 0x06200000)	/* Software defined */
-#define NXSIR(_x)		((_x) + 0x07200000)	/* 2nd interrupt */
-#define NXROMUSB(_x)		((_x) + 0x07300000)	/* ROMUSB */
+#define NXPCIE_1(_x)		((_x) + 0x08100000)	/* PCI Express' */
+#define NXSW(_x)		((_x) + 0x08200000)	/* Software defined */
+#define NXSIR(_x)		((_x) + 0x09200000)	/* 2nd interrupt */
+#define NXROMUSB(_x)		((_x) + 0x09300000)	/* ROMUSB */
 
 /* The IMEZ/HMEZ NICs have multiple PCI functions with different registers */
 #define NXPCIE_FUNC(_r, _f)	(NXPCIE(_r) + ((_f) * 0x20))
@@ -254,16 +260,19 @@ struct nx_statusdesc {
 #define  NXQDR_WINDOW_SIZE		0x00400000
 #define NXCRB_WINDOW(_f)		NXPCIE_FUNC(0x00010210, _f)
 #define  NXCRB_WINDOW_1			(1<<25)	/* Set this flag for Win 1 */
+#define  NXCRB_WINDOW_S			25
+#define  NXCRB_WINDOW_M			0x00000004
+#define  NXCRB_WINDOW_SIZE		0x02000000
 
 /* Lock registers (semaphores between chipset and driver) */
-#define NXSEM_FLASH_LOCK	NXPCIE(0x0001c010)	/* Flash lock */
+#define NXSEM_FLASH_LOCK	NXPCIE_1(0x0001c010)	/* Flash lock */
 #define  NXSEM_FLASH_LOCK_M	0xffffffff
 #define  NXSEM_FLASH_LOCKED	(1<<0)			/* R/O: is locked */
-#define NXSEM_FLASH_UNLOCK	NXPCIE(0x0001c014)	/* Flash unlock */
-#define NXSEM_PHY_LOCK		NXPCIE(0x0001c018)	/* PHY lock */
+#define NXSEM_FLASH_UNLOCK	NXPCIE_1(0x0001c014)	/* Flash unlock */
+#define NXSEM_PHY_LOCK		NXPCIE_1(0x0001c018)	/* PHY lock */
 #define  NXSEM_PHY_LOCK_M	0xffffffff
 #define  NXSEM_PHY_LOCKED	(1<<0)			/* R/O: is locked */
-#define NXSEM_PHY_UNLOCK	PXPCIE(0x0001c01c)	/* PHY unlock */
+#define NXSEM_PHY_UNLOCK	PXPCIE_1(0x0001c01c)	/* PHY unlock */
 
 /*
  * Network Interface Unit (NIU) registers
@@ -307,8 +316,28 @@ struct nx_statusdesc {
 #define  NXNIU_RESET_SYS_FIFOS_TX	(1<<0)	/* Reset all Tx FIFOs */
 #define NXNIU_RESET_SYS_FIFOS_DEF	0	/* Disabled */
 
+/* Flow control registers */
+#define NXNIU_XGE_PAUSE_CONTROL		NXNIU(0x00000098)
+#define  NXNIU_XGE_PAUSE_S(_n)		((_n) * 3)
+#define  NXNIU_XGE_PAUSE_M		0x00000007
+#define  NXNIU_XGE_PAUSE_DISABLED	(1<<0)	/* Tx Pause (always Rx) */
+#define  NXNIU_XGE_PAUSE_REQUEST	(1<<1)	/* Request pause */
+#define  NXNIU_XGE_PAUSE_ONOFF		(1<<2)	/* Request pause on/off */
+#define NXNIU_XGE_PAUSE_LEVEL		NXNIU(0x000000dc)
+
+/*
+ * Port-specific NIU registers, will be mapped to a subregion
+ */
+
+#define NXNIU_PORT_SIZE			0x00010000
+#define NXNIU_PORT(_r, _n)		NXNIU((_r) + (_n) * NXNIU_PORT_SIZE)
+
+#define NXNIU_FC(_n)			NXNIU_PORT(0x00010000, _n)
+#define NXNIU_GBE(_n)			NXNIU_PORT(0x00030000, _n)
+#define NXNIU_XGE(_n)			NXNIU_PORT(0x00070000, _n)
+
 /* XGE Configuration 0 Register */
-#define NXNIU_XGE_CONFIG0		NXNIU(0x00070000)
+#define NX_XGE_CONFIG0			0x0000
 #define  NXNIU_XGE_CONFIG0_SOFTRST_FIFO	(1<<31)	/* Soft reset FIFOs */
 #define  NXNIU_XGE_CONFIG0_SOFTRST_MAC	(1<<4)	/* Soft reset XGE MAC */
 #define  NXNIU_XGE_CONFIG0_RX_ENABLE	(1<<2)	/* Enable frame Rx */
@@ -316,7 +345,7 @@ struct nx_statusdesc {
 #define NXNIU_XGE_CONFIG0_DEF		0	/* Disabled */
 
 /* XGE Configuration 1 Register */
-#define NXNIU_XGE_CONFIG1		NXNIU(0x00070004)
+#define NX_XGE_CONFIG1			0x0004
 #define  NXNIU_XGE_CONFIG1_PROMISC	(1<<13)	/* Pass all Rx frames */
 #define  NXNIU_XGE_CONFIG1_MCAST_ENABLE	(1<<12) /* Rx all multicast frames */
 #define  NXNIU_XGE_CONFIG1_SEQ_ERROR	(1<<10) /* Sequence error detection */
@@ -328,6 +357,10 @@ struct nx_statusdesc {
 #define  NXNIU_XGE_CONFIG1_CRC_TX	(1<<1)	/* Append CRC to Tx frames */
 #define  NXNIU_XGE_CONFIG1_CRC_RX	(1<<0)	/* Remove CRC from Rx frames */
 #define NXNIU_XGE_CONFIG1_DEF		0	/* Disabled */
+
+/* XGE Station Address (lladdr) Register */
+#define NX_XGE_STATION_ADDR_HI		0x000c	/* High lladdr */	
+#define NX_XGE_STATION_ADDR_LO		0x0010	/* low lladdr */
 
 /*
  * Software defined registers (used by the firmware or the driver)
@@ -364,6 +397,7 @@ struct nx_statusdesc {
 #define  NXSW_CMDPEG_STATE_M	0xffff		/* State mask */
 #define  NXSW_CMDPEG_INIT_START	0xff00		/* Start of initialization */
 #define  NXSW_CMDPEG_INIT_DONE	0xff01		/* Initialization complete */
+#define  NXSW_CMDPEG_INIT_ACK	0xf00f		/* Initialization ACKed */
 #define  NXSW_CMDPEG_INIT_FAIL	0xffff		/* Initialization failed */
 #define NXSW_GLOBAL_INT_COAL	NXSW(0x2264)	/* Interrupt coalescing */
 #define NXSW_INT_COAL_MODE	NXSW(0x2268)	/* Reserved */
