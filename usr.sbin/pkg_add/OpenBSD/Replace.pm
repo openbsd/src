@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.6 2007/05/02 15:05:30 espie Exp $
+# $OpenBSD: Replace.pm,v 1.7 2007/05/02 15:09:04 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -199,9 +199,9 @@ sub mark_lib
 	my ($self, $libs, $libpatterns) = @_;
 	my $libname = $self->fullname;
 	if ($libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/) {
-		$libpatterns->{"$1"} = [$2, $3, $libname];
+		$libpatterns->{$1} = [$2, $3, $libname];
 	}
-	$libs->{"$libname"} = 1;
+	$libs->{$libname} = 1;
 }
 
 sub unmark_lib
@@ -210,13 +210,13 @@ sub unmark_lib
 	my $libname = $self->fullname;
 	if ($libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/) {
 		my ($pat, $major, $minor) = ($1, $2, $3);
-		my $p = $libpatterns->{"$pat"};
+		my $p = $libpatterns->{$pat};
 		if (defined $p && $p->[0] == $major && $p->[1] <= $minor) {
 			my $n = $p->[2];
-			delete $libs->{"$n"};
+			delete $libs->{$n};
 		}
 	}
-	delete $libs->{"$libname"};
+	delete $libs->{$libname};
 }
 
 package OpenBSD::PackingElement::NewDepend;
