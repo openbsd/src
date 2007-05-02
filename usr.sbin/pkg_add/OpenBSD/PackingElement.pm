@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.98 2007/05/02 10:30:56 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.99 2007/05/02 15:05:30 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -101,10 +101,10 @@ sub needs_keyword() { 1 }
 sub write
 {
 	my ($self, $fh) = @_;
-	my $s = $self->stringize();
-	if ($self->needs_keyword()) {
+	my $s = $self->stringize;
+	if ($self->needs_keyword) {
 		$s = " $s" unless $s eq '';
-		print $fh "\@", $self->keyword(), "$s\n";
+		print $fh "\@", $self->keyword, "$s\n";
 	} else {
 		print $fh "$s\n";
 	}
@@ -114,10 +114,10 @@ sub write
 sub fullstring
 {
 	my ($self, $fh) = @_;
-	my $s = $self->stringize();
-	if ($self->needs_keyword()) {
+	my $s = $self->stringize;
+	if ($self->needs_keyword) {
 		$s = " $s" unless $s eq '';
-		return "\@".$self->keyword().$s;
+		return "\@".$self->keyword.$s;
 	} else {
 		return $s;
 	}
@@ -168,8 +168,8 @@ sub fullname($)
 {
 	my $self = $_[0];
 	my $fullname = $self->{name};
-	if ($fullname !~ m|^/| && $self->cwd() ne '.') {
-		$fullname = $self->cwd()."/".$fullname;
+	if ($fullname !~ m|^/| && $self->cwd ne '.') {
+		$fullname = $self->cwd."/".$fullname;
 	}
 	return $fullname;
 }
@@ -199,8 +199,8 @@ sub dirclass() { undef }
 sub new
 {
 	my ($class, $args) = @_;
-	if ($args =~ m|/+$| and defined $class->dirclass()) {
-		bless { name => $` }, $class->dirclass();
+	if ($args =~ m|/+$| and defined $class->dirclass) {
+		bless { name => $` }, $class->dirclass;
 	} else {
 		bless { name => $args }, $class;
 	}
@@ -340,7 +340,7 @@ sub dirclass() { "OpenBSD::PackingElement::Dir" }
 sub needs_keyword
 {
 	my $self = shift;
-	return $self->stringize() =~ m/\^@/;
+	return $self->stringize =~ m/\^@/;
 }
 
 sub add_object
@@ -348,7 +348,7 @@ sub add_object
 	my ($self, $plist) = @_;
 
 	$self->destate($plist->{state});
-	my $j = is_info_name($self->fullname());
+	my $j = is_info_name($self->fullname);
 	if ($j) {
 		bless $self, "OpenBSD::PackingElement::$j";
 		$plist->addunique($self);
@@ -405,7 +405,7 @@ __PACKAGE__->register_with_factory;
 sub register_manpage
 {
 	my ($self, $state) = @_;
-	my $fname = $self->fullname();
+	my $fname = $self->fullname;
 	if ($fname =~ m,^(.*/man)/(?:man|cat).*?/,) {
 		my $d = $1;
 		$state->{mandirs} = {} unless defined $state->{mandirs};
@@ -428,7 +428,7 @@ sub mark_ldconfig_directory
 	require OpenBSD::SharedLibs;
 
 	my ($self, $destdir) = @_;
-	OpenBSD::SharedLibs::mark_ldconfig_directory($self->fullname(), 
+	OpenBSD::SharedLibs::mark_ldconfig_directory($self->fullname, 
 	    $destdir);
 }
 
@@ -569,9 +569,9 @@ sub new
 {
 	my ($class, @args) = @_;
 	if ($args[0] eq 'no-default-conflict') {
-		return OpenBSD::PackingElement::NoDefaultConflict->new();
+		return OpenBSD::PackingElement::NoDefaultConflict->new;
 	} elsif ($args[0] eq 'manual-installation') {
-		return OpenBSD::PackingElement::ManualInstallation->new();
+		return OpenBSD::PackingElement::ManualInstallation->new;
 	} else {
 		die "Unknown option: $args[0]";
 	}
@@ -971,7 +971,7 @@ sub run
 	my ($self, $state) = @_;
 
 	OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
-	print $self->keyword(), " ", $self->{expanded}, "\n" if $state->{beverbose};
+	print $self->keyword, " ", $self->{expanded}, "\n" if $state->{beverbose};
 	$state->system('/bin/sh', '-c', $self->{expanded}) unless $state->{not};
 }
 
@@ -1021,7 +1021,7 @@ sub destate
 sub needs_keyword
 {
 	my $self = shift;
-	return $self->stringize() =~ m/\^@/;
+	return $self->stringize =~ m/\^@/;
 }
 
 package OpenBSD::PackingElement::Infodir;
@@ -1042,13 +1042,13 @@ sub install
 {
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
-	$fonts_todo{$state->{destdir}.$self->fullname()} = 1;
+	$fonts_todo{$state->{destdir}.$self->fullname} = 1;
 }
 
 sub reload
 {
 	my ($self, $state) = @_;
-	$fonts_todo{$state->{destdir}.$self->fullname()} = 1;
+	$fonts_todo{$state->{destdir}.$self->fullname} = 1;
 }
 
 sub update_fontalias
@@ -1187,14 +1187,14 @@ sub run
 	return if $state->{dont_run_scripts};
 
 	OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
-	print $self->beautify(), " script: $dir$name $pkgname ", join(' ', @args), "\n" if $state->{beverbose};
+	print $self->beautify, " script: $dir$name $pkgname ", join(' ', @args), "\n" if $state->{beverbose};
 	return if $not;
 	chmod 0755, $dir.$name;
 	return if $state->system($dir.$name, $pkgname, @args) == 0;
 	if ($state->{forced}->{scripts}) {
-		$state->warn($self->beautify(), " script failed\n");
+		$state->warn($self->beautify, " script failed\n");
 	} else {
-		$state->fatal($self->beautify()." script failed");
+		$state->fatal($self->beautify." script failed");
 	}
 }
 

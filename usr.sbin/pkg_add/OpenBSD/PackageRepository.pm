@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.15 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.16 2007/05/02 15:05:30 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -51,7 +51,7 @@ sub available
 {
 	my $self = shift;
 
-	return @{$self->list()};
+	return @{$self->list};
 }
 
 sub wipe_info
@@ -123,13 +123,13 @@ sub make_room
 	my $self = shift;
 
 	# kill old files if too many
-	my $already = $self->opened();
+	my $already = $self->opened;
 	if (defined $already) {
 		# gc old objects
-		if (@$already >= $self->maxcount()) {
+		if (@$already >= $self->maxcount) {
 			@$already = grep { defined $_->{fh} } @$already;
 		}
-		while (@$already >= $self->maxcount()) {
+		while (@$already >= $self->maxcount) {
 			my $o = shift @$already;
 			$self->close_now($o);
 		}
@@ -145,7 +145,7 @@ sub open
 	return unless $self->may_exist($object->{name});
 
 	# kill old files if too many
-	my $already = $self->make_room();
+	my $already = $self->make_room;
 	my $fh = $self->open_pipe($object);
 	if (!defined $fh) {
 		return;
@@ -162,7 +162,7 @@ sub find
 	my ($repository, $name, $arch, $srcpath) = @_;
 	my $self = OpenBSD::PackageLocation->new($repository, $name, $arch);
 
-	return $self->openPackage();
+	return $self->openPackage;
 }
 
 sub grabPlist
@@ -496,7 +496,7 @@ sub finish_and_close
 {
 	my ($self, $object) = @_;
 	if (defined $object->{cache_dir}) {
-		while (defined $object->intNext()) {
+		while (defined $object->intNext) {
 		}
 	}
 	$self->SUPER::finish_and_close($object);
@@ -553,7 +553,7 @@ sub list
 	my ($self) = @_;
 	if (!defined $self->{list}) {
 		my $error = OpenBSD::Temp::file();
-		$self->make_room();
+		$self->make_room;
 		my $fullname = $self->{baseurl};
 		my $l = $self->{list} = [];
 		local $_;
@@ -583,7 +583,7 @@ sub list
 		require OpenBSD::Temp;
 
 		my $error = OpenBSD::Temp::file();
-		$self->make_room();
+		$self->make_room;
 		my $fullname = $self->{baseurl};
 		$self->{list} = $self->_list("echo 'nlist *.tgz'|ftp -o - $fullname 2>$error");
 		$self->parse_problems($error);

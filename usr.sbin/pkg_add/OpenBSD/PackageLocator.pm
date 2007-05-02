@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.56 2007/04/29 11:09:29 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.57 2007/05/02 15:05:30 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -27,7 +27,7 @@ use OpenBSD::PackageRepository;
 # There is a cache available.
 
 my %packages;
-my $pkgpath = OpenBSD::PackageRepositoryList->new();
+my $pkgpath = OpenBSD::PackageRepositoryList->new;
 
 if (defined $ENV{PKG_PATH}) {
 	my $v = $ENV{PKG_PATH};
@@ -112,7 +112,7 @@ sub grabPlist
 
 sub cleanup
 {
-	$pkgpath->cleanup();
+	$pkgpath->cleanup;
 }
 
 sub match_spec

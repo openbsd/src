@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.5 2007/04/29 11:09:29 espie Exp $
+# $OpenBSD: Replace.pm,v 1.6 2007/05/02 15:05:30 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -72,7 +72,7 @@ sub extract
 	}
 	if ($state->{not}) {
 		print "extracting tempfile under $d\n" if $state->{very_verbose};
-		$state->{archive}->skip();
+		$state->{archive}->skip;
 	} else {
 		if (!-e _) {
 			File::Path::mkpath($d);
@@ -83,7 +83,7 @@ sub extract
 		print "extracting $tempname\n" if $state->{very_verbose};
 		$file->{name} = $tempname;
 		$self->{tempname} = $tempname;
-		$file->create();
+		$file->create;
 	}
 }
 
@@ -91,7 +91,7 @@ package OpenBSD::PackingElement::Dir;
 sub extract
 {
 	my ($self, $state) = @_;
-	my $fullname = $self->fullname();
+	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
 
 	return if -e $destdir.$fullname;
@@ -197,7 +197,7 @@ package OpenBSD::PackingElement::Lib;
 sub mark_lib
 {
 	my ($self, $libs, $libpatterns) = @_;
-	my $libname = $self->fullname();
+	my $libname = $self->fullname;
 	if ($libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/) {
 		$libpatterns->{"$1"} = [$2, $3, $libname];
 	}
@@ -207,7 +207,7 @@ sub mark_lib
 sub unmark_lib
 {
 	my ($self, $libs, $libpatterns) = @_;
-	my $libname = $self->fullname();
+	my $libname = $self->fullname;
 	if ($libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/) {
 		my ($pat, $major, $minor) = ($1, $2, $3);
 		my $p = $libpatterns->{"$pat"};
@@ -258,7 +258,7 @@ sub can_do
 	$state->{journal} = [];
 	$plist->can_update(0, $state);
 	if ($state->{okay} == 0) {
-		Warn "Old package ", $plist->pkgname(), " contains potentially unsafe operations\n";
+		Warn "Old package ", $plist->pkgname, " contains potentially unsafe operations\n";
 		for my $i (@{$state->{journal}}) {
 			Warn "\t$i\n";
 		}
@@ -272,7 +272,7 @@ sub can_do
 			}
 		}
 	}
-	my @wantlist = OpenBSD::RequiredBy->new($toreplace)->list();
+	my @wantlist = OpenBSD::RequiredBy->new($toreplace)->list;
 	my @r = ();
 	for my $wanting (@wantlist) {
 		push(@r, $wanting) if !defined $ignore->{$wanting};
@@ -314,7 +314,7 @@ sub is_safe
 	$state->{journal} = [];
 	$plist->can_update(1, $state);
 	if ($state->{okay} == 0) {
-		Warn "New package ", $plist->pkgname(), 
+		Warn "New package ", $plist->pkgname, 
 		    " contains potentially unsafe operations\n";
 		for my $i (@{$state->{journal}}) {
 			Warn "\t$i\n";
@@ -338,9 +338,9 @@ sub split_libs
 
 	my $items = [];
 
-	my $splitted = OpenBSD::PackingList->new();
+	my $splitted = OpenBSD::PackingList->new;
 
-	OpenBSD::PackingElement::Name->add($splitted, ".libs-".$plist->pkgname());
+	OpenBSD::PackingElement::Name->add($splitted, ".libs-".$plist->pkgname);
 	if (defined $plist->{conflict}) {
 		for my $item (@{$plist->{conflict}}) {
 			$item->clone()->add_object($splitted);
@@ -353,22 +353,22 @@ sub split_libs
 	}
 	if (defined $plist->{'no-default-conflict'}) {
 		# we conflict with the package we just removed...
-		OpenBSD::PackingElement::Conflict->add($splitted, $plist->pkgname());
+		OpenBSD::PackingElement::Conflict->add($splitted, $plist->pkgname);
 	} else {
 		require OpenBSD::PackageName;
 
-		my $stem = OpenBSD::PackageName::splitstem($plist->pkgname());
+		my $stem = OpenBSD::PackageName::splitstem($plist->pkgname);
 		OpenBSD::PackingElement::Conflict->add($splitted, $stem."-*");
 	}
 
 	for my $item (@{$plist->{items}}) {
 		if ($item->isa("OpenBSD::PackingElement::Lib") &&
-		    defined $to_split->{$item->fullname()}) {
-		    	$item->clone()->add_object($splitted);
+		    defined $to_split->{$item->fullname}) {
+		    	$item->clone->add_object($splitted);
 			next;
 		}
 		if ($item->isa("OpenBSD::PackingElement::Cwd")) {
-			$item->clone()->add_object($splitted);
+			$item->clone->add_object($splitted);
 		}
 		push(@$items, $item);
 	}
@@ -390,7 +390,7 @@ sub convert_to_requiring
 		$r->add($item->{name});
 	}
 	delete $plist->{pkgdep};
-	$plist->to_installation();
+	$plist->to_installation;
 }
 
 sub walk_depends_closure
@@ -399,7 +399,7 @@ sub walk_depends_closure
 	my @todo = ($start);
 	my $done = {};
 	my $depend = 0;
-	my $name = $plist->pkgname();
+	my $name = $plist->pkgname;
 
 	print "Packages that depend on those shared libraries:\n" 
 	    if $state->{beverbose};
@@ -408,14 +408,14 @@ sub walk_depends_closure
 
 	while (my $pkg = shift @todo) {
 		$done->{$pkg} = 1;
-		for my $pkg2 (OpenBSD::RequiredBy->new($pkg)->list()) {
+		for my $pkg2 (OpenBSD::RequiredBy->new($pkg)->list) {
 			next if $done->{$pkg2};
 			push(@todo, $pkg2);
 			print "\t$pkg2\n" if $state->{beverbose};
 			$done->{$pkg2} = 1;
 			$write->add($pkg2);
 			my $l = OpenBSD::Requiring->new($pkg2);
-			if (!$l->list()) {
+			if (!$l->list) {
 				convert_to_requiring($pkg2);
 			}
 			$l->add($name);
@@ -450,32 +450,32 @@ sub save_old_libraries
 			print "Libraries to keep: ", join(",", sort(keys %$libs)), "\n" 
 			    if $state->{beverbose};
 			my $stub_list = split_libs($old_plist, $libs);
-			my $stub_name = $stub_list->pkgname();
+			my $stub_name = $stub_list->pkgname;
 			my $dest = installed_info($stub_name);
 			print "Keeping them in $stub_name\n" if $state->{beverbose};
 			if ($state->{not}) {
-				$stub_list->to_cache();
-				$old_plist->to_cache();
+				$stub_list->to_cache;
+				$old_plist->to_cache;
 			} else {
 				require OpenBSD::md5;
 
 				mkdir($dest);
-				my $oldname = $old_plist->pkgname();
+				my $oldname = $old_plist->pkgname;
 				open my $descr, '>', $dest.DESC;
 				print $descr "Stub libraries for $oldname\n";
 				close $descr;
 				my $f = OpenBSD::PackingElement::FDESC->add($stub_list, DESC);
 				$f->{ignore} = 1;
 				$f->{md5} = OpenBSD::md5::fromfile($dest.DESC);
-				$stub_list->to_installation();
-				$old_plist->to_installation();
+				$stub_list->to_installation;
+				$old_plist->to_installation;
 			}
 			add_installed($stub_name);
 
 			require OpenBSD::PkgCfl;
 			OpenBSD::PkgCfl::register($stub_list, $state);
 
-			walk_depends_closure($old_plist->pkgname(), $stub_list, $state);
+			walk_depends_closure($old_plist->pkgname, $stub_list, $state);
 		} else {
 			print "No libraries to keep\n" if $state->{beverbose};
 		}
@@ -488,7 +488,7 @@ sub adjust_dependency
 	my ($dep, $from, $into) = @_;
 
 	my $l = OpenBSD::Requiring->new($dep);
-	if (!$l->list()) {
+	if (!$l->list) {
 		convert_to_requiring($dep);
 	}
 	$l->delete($from);
@@ -503,8 +503,8 @@ sub figure_out_libs
 	my $result = [];
 
 	for my $item (@{$plist->{items}}) {
-		next unless $item->IsFile();
-		$has->{$item->fullname()} = 1;
+		next unless $item->IsFile;
+		$has->{$item->fullname} = 1;
 	}
 
 	for my $oldlib (@libs) {
@@ -513,7 +513,7 @@ sub figure_out_libs
 
 #		require OpenBSD::RequiredBy;
 #
-#		if (OpenBSD::RequiredBy->new($oldlib)->list() == 0) {
+#		if (OpenBSD::RequiredBy->new($oldlib)->list == 0) {
 #			require OpenBSD::Delete;
 #
 #			OpenBSD::Delete::delete_package($oldlib, $state);
@@ -527,8 +527,8 @@ sub figure_out_libs
 		my $empty = 1;
 		my $doit = 0;
 		for my $file (@{$p->{items}}) {
-			if ($file->IsFile()) {
-				if ($has->{$file->fullname()}) {
+			if ($file->IsFile) {
+				if ($has->{$file->fullname}) {
 					$doit = 1;
 					push(@$delete, $file);
 					next;

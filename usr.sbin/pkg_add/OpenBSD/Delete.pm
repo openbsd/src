@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.36 2007/04/29 11:09:29 espie Exp $
+# $OpenBSD: Delete.pm,v 1.37 2007/05/02 15:05:29 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -38,7 +38,7 @@ sub keep_old_files
 			push(@{$p->{items}}, $i);
 			next;
 		}
-		next unless $i->IsFile();
+		next unless $i->IsFile;
 		if (defined $i->{stillaround}) {
 			delete $i->{stillaround};
 			if ($state->{replacing}) {
@@ -70,7 +70,7 @@ sub keep_old_files
 
 	File::Copy::copy($dir.COMMENT, $dest);
 	File::Copy::copy($dir.DESC, $dest);
-	$p->to_installation();
+	$p->to_installation;
 	return $borked;
 }
 
@@ -103,7 +103,7 @@ sub validate_plist($$)
 	$state->{problems} = 0;
 	$state->{totsize} = 0;
 	$plist->prepare_for_deletion($state);
-	my $dir = installed_info($plist->pkgname());
+	my $dir = installed_info($plist->pkgname);
 	for my $i (info_names()) {
 		my $fname = $dir.$i;
 		if (-e $fname) {
@@ -139,10 +139,10 @@ sub delete_package
 	OpenBSD::ProgressMeter::message("reading plist");
 	my $plist = OpenBSD::PackingList->from_installation($pkgname) or
 	    Fatal "Bad package";
-	if (!defined $plist->pkgname()) {
+	if (!defined $plist->pkgname) {
 		Fatal "Package $pkgname has no name";
 	}
-	if ($plist->pkgname() ne $pkgname) {
+	if ($plist->pkgname ne $pkgname) {
 		Fatal "Package $pkgname real name does not match";
 	}
 
@@ -157,11 +157,11 @@ sub delete_plist
 	my ($plist, $state) = @_;
 
 	my $totsize = $plist->{totsize};
-	my $pkgname = $plist->pkgname();
+	my $pkgname = $plist->pkgname;
 	$state->{pkgname} = $pkgname;
 	my $dir = installed_info($pkgname);
 	$state->{dir} = $dir;
-	$ENV{'PKG_PREFIX'} = $plist->pkgbase();
+	$ENV{'PKG_PREFIX'} = $plist->pkgbase;
 	if ($plist->has(REQUIRE)) {
 		$plist->get(REQUIRE)->delete($state);
 	}
@@ -255,7 +255,7 @@ sub realname
 {
 	my ($self, $state) = @_;
 
-	my $name = $self->fullname();
+	my $name = $self->fullname;
 	if (defined $self->{tempname}) {
 		$name = $self->{tempname};
 	}
@@ -288,7 +288,7 @@ package OpenBSD::PackingElement::DirlikeObject;
 sub mark_dir
 {
 	my ($self, $state) = @_;
-	$self->mark_directory($state, $self->fullname());
+	$self->mark_directory($state, $self->fullname);
 }
 
 package OpenBSD::PackingElement::NewUser;
@@ -330,7 +330,7 @@ sub delete
 {
 	my ($self, $state) = @_;
 
-	my $name = $self->fullname();
+	my $name = $self->fullname;
 
 	if ($state->{very_verbose}) {
 		print "dirrm: $name\n";
@@ -366,7 +366,7 @@ sub prepare_for_deletion
 {
 	my ($self, $state) = @_;
 
-	my $fname = $state->{destdir}.$self->fullname();
+	my $fname = $state->{destdir}.$self->fullname;
 	$state->{totsize} += $self->{size} if defined $self->{size};
 	my $s = OpenBSD::Vstat::remove($fname, $self->{size});
 	return unless defined $s;
@@ -420,7 +420,7 @@ sub delete
 				my $md5 = OpenBSD::md5::fromfile($realname);
 				if ($md5 ne $self->{md5}) {
 					print "Problem: md5 doesn't match for ",
-						$self->fullname(), "\n";
+						$self->fullname, "\n";
 					print "NOT deleting: $realname\n";
 					$state->print("Couldn't delete $realname (bad md5)\n");
 					$self->do_not_delete($state);
@@ -515,7 +515,7 @@ sub delete
 	my ($self, $state) = @_;
 	unless ($state->{not}) {
 		my $destdir = $state->{destdir};
-		my $fullname = $self->fullname();
+		my $fullname = $self->fullname;
 		my @l=();
 		if (open(my $shells, '<', $destdir.'/etc/shells')) {
 			local $_;

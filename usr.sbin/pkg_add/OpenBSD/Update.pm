@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.66 2007/04/21 10:02:15 espie Exp $
+# $OpenBSD: Update.pm,v 1.67 2007/05/02 15:05:30 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -96,7 +96,7 @@ sub find
 		}
 
 		if (defined $found && @l2 == 1 && $found eq  $l2[0]) {
-			if (!$plist->uses_old_libs()) {
+			if (!$plist->uses_old_libs) {
 				my $msg = "No need to update $pkgname";
 				OpenBSD::ProgressMeter::message($msg);
 				print "$msg\n" if $state->{beverbose};
@@ -112,7 +112,7 @@ sub find
 		}
 			
 		if (@l2 == 1) {
-			if (defined $found && $found eq  $l2[0] && !$plist->uses_old_libs()) {
+			if (defined $found && $found eq  $l2[0] && !$plist->uses_old_libs) {
 				my $msg = "No need to update $pkgname";
 				OpenBSD::ProgressMeter::message($msg);
 				print "$msg\n" if $state->{beverbose};
@@ -124,7 +124,7 @@ sub find
 		} else {
 			my $result = OpenBSD::Interactive::choose1($pkgname, $state->{interactive}, sort @l2);
 			if (defined $result) {
-				if (defined $found && $found eq  $result && !$plist->uses_old_libs()) {
+				if (defined $found && $found eq  $result && !$plist->uses_old_libs) {
 					print "No need to update $pkgname\n";
 				} else {
 					push(@$new, $result);

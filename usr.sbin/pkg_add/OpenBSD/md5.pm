@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: md5.pm,v 1.4 2004/11/12 19:42:01 espie Exp $
+# $OpenBSD: md5.pm,v 1.5 2007/05/02 15:05:30 espie Exp $
 #
-# Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,6 @@ sub fromfile
 
 	$md5->addfile($file);
 	close($file) or die "problem closing $fname: $!";
-	return $md5->digest();
+	return $md5->digest;
 }
 1;

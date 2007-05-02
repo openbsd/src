@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.6 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.7 2007/05/02 15:05:30 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -83,7 +83,7 @@ sub grabInfoFiles
 sub scanPackage
 {
 	my $self = shift;
-	while (my $e = $self->intNext()) {
+	while (my $e = $self->intNext) {
 		if ($e->isFile() && is_info_name($e->{name})) {
 			if ($e->{name} eq CONTENTS && !defined $self->{dir}) {
 				$self->{contents} = $e->contents();
@@ -93,7 +93,7 @@ sub scanPackage
 				$self->{dir} = OpenBSD::Temp::dir();
 			}
 			$e->{name}=$self->{dir}.$e->{name};
-			eval { $e->create(); };
+			eval { $e->create; };
 			if ($@) {
 				unlink($e->{name});
 				$@ =~ s/\s+at.*//;
@@ -101,7 +101,7 @@ sub scanPackage
 				return 0;
 			}
 		} else {
-			$self->unput();
+			$self->unput;
 			last;
 		}
 	}
@@ -112,11 +112,11 @@ sub grabPlist
 {
 	my ($self, $code) = @_;
 
-	my $pkg = $self->openPackage();
+	my $pkg = $self->openPackage;
 	if (defined $pkg) {
 		my $plist = $self->plist($code);
-		$pkg->wipe_info();
-		$pkg->close_now();
+		$pkg->wipe_info;
+		$pkg->close_now;
 		return $plist;
 	} else {
 		return;
@@ -127,28 +127,28 @@ sub openPackage
 {
 	my $self = shift;
 	my $arch = $self->{arch};
-	if (!$self->openArchive()) {
+	if (!$self->openArchive) {
 		return;
 	}
-	$self->scanPackage();
+	$self->scanPackage;
 
 	if (defined $self->{contents}) {
 		return $self;
 	} 
 
 	# maybe it's a fat package.
-	while (my $e = $self->intNext()) {
+	while (my $e = $self->intNext) {
 		unless ($e->{name} =~ m/\/\+CONTENTS$/) {
 			last;
 		}
 		my $prefix = $`;
-		my $contents = $e->contents();
+		my $contents = $e->contents;
 		require OpenBSD::PackingList;
 
 		my $plist = OpenBSD::PackingList->fromfile(\$contents, 
 		    \&OpenBSD::PackingList::FatOnly);
 		if (defined $self->{name}) {
-			next if $plist->pkgname() ne $self->{name};
+			next if $plist->pkgname ne $self->{name};
 		}
 		if ($plist->has('arch')) {
 			if ($plist->{arch}->check($arch)) {
@@ -160,8 +160,8 @@ sub openPackage
 		}
 	}
 	# hopeless
-	$self->close_with_client_error();
-	$self->wipe_info();
+	$self->close_with_client_error;
+	$self->wipe_info;
 	return;
 }
 
@@ -175,7 +175,7 @@ sub info
 {
 	my $self = shift;
 	if (!defined $self->{dir}) {
-		$self->grabInfoFiles();
+		$self->grabInfoFiles;
 	}
 	return $self->{dir};
 }
@@ -194,7 +194,7 @@ sub plist
 		    $code);
 	}
 	# hopeless
-	$self->close_with_client_error();
+	$self->close_with_client_error;
 
 	return;
 }
@@ -241,10 +241,10 @@ sub deref
 sub reopen
 {
 	my $self = shift;
-	if (!$self->openArchive()) {
+	if (!$self->openArchive) {
 		return;
 	}
-	while (my $e = $self->{_archive}->next()) {
+	while (my $e = $self->{_archive}->next) {
 		if ($e->{name} eq $self->{_current}->{name}) {
 			$self->{_current} = $e;
 			return $self;
@@ -259,9 +259,9 @@ sub next
 	my $self = shift;
 
 	if (!defined $self->{dir}) {
-		$self->grabInfoFiles();
+		$self->grabInfoFiles;
 	}
-	return $self->intNext();
+	return $self->intNext;
 }
 
 sub intNext
@@ -269,12 +269,12 @@ sub intNext
 	my $self = shift;
 
 	if (!defined $self->{fh}) {
-		if (!$self->reopen()) {
+		if (!$self->reopen) {
 			return;
 		}
 	}
 	if (!$self->{_unput}) {
-		$self->{_current} = $self->getNext();
+		$self->{_current} = $self->getNext;
 	}
 	$self->{_unput} = 0;
 	return $self->{_current};
@@ -290,13 +290,13 @@ sub getNext
 {
 	my $self = shift;
 
-	return $self->{_archive}->next();
+	return $self->{_archive}->next;
 }
 
 sub skip
 {
 	my $self = shift;
-	return $self->{_archive}->skip();
+	return $self->{_archive}->skip;
 }
 
 package OpenBSD::FatPackageLocation;
@@ -306,14 +306,14 @@ sub getNext
 {
 	my $self = shift;
 
-	my $e = $self->SUPER::getNext();
+	my $e = $self->SUPER::getNext;
 	if ($e->{name} =~ m/^(.*?)\/(.*)$/) {
 		my ($beg, $name) = ($1, $2);
 		if (index($beg, $self->{filter}) == -1) {
-			return $self->next();
+			return $self->next;
 		}
 		$e->{name} = $name;
-		if ($e->isHardLink()) {
+		if ($e->isHardLink) {
 			$e->{linkname} =~ s/^(.*?)\///;
 		}
 	}

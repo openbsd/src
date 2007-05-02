@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.46 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.47 2007/05/02 15:05:30 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -97,7 +97,7 @@ sub next
 {
     my $self = shift;
     # get rid of the current object
-    $self->skip();
+    $self->skip;
     my $header;
     my $n = read $self->{fh}, $header, 512;
     return if (defined $n) and $n == 0;
@@ -190,11 +190,11 @@ sub mkheader
 	my ($prefix, $name) = split_name($entry->{name});
 	my $linkname = $entry->{linkname};
 	my $size = $entry->{size};
-	if (!$entry->isFile()) {
+	if (!$entry->isFile) {
 		$size = 0;
 	}
 	my ($major, $minor);
-	if ($entry->isDevice()) {
+	if ($entry->isDevice) {
 		$major = $entry->{major};
 		$minor = $entry->{minor};
 	} else {
@@ -317,7 +317,7 @@ sub close
 {
 	my $self = shift;
 	if (defined $self->{padout}) {
-	    $self->pad();
+	    $self->pad;
 	}
 	close($self->{fh});
 }
@@ -431,7 +431,7 @@ sub create
 {
 	my $self = shift;
 	File::Path::mkpath($self->{destdir}.$self->{name});
-	$self->set_modes();
+	$self->set_modes;
 }
 
 sub isDir() { 1 }
@@ -497,7 +497,7 @@ sub create
 	require POSIX;
 	POSIX::mkfifo($self->{destdir}.$self->{name}, $self->{mode}) or
 	    die "Can't create fifo $self->{name}: $!";
-	$self->set_modes();
+	$self->set_modes;
 }
 
 sub isFifo() { 1 }
@@ -510,8 +510,8 @@ sub create
 {
 	my $self = shift;
 	$self->make_basedir($self->{name});
-	system('/sbin/mknod', 'mknod', '-m', $self->{mode}, $self->{destdir}.$self->{name}, $self->devicetype(), $self->{major}, $self->{minor});
-	$self->set_modes();
+	system('/sbin/mknod', 'mknod', '-m', $self->{mode}, $self->{destdir}.$self->{name}, $self->devicetype, $self->{major}, $self->{minor});
+	$self->set_modes;
 }
 
 sub isDevice() { 1 }
@@ -636,8 +636,8 @@ sub create
 			
 		$toread -= $actual;
 	}
-	$out->close() or die "Error closing $self->{destdir}$self->{name}: $!";
-	$self->set_modes();
+	$out->close or die "Error closing $self->{destdir}$self->{name}: $!";
+	$self->set_modes;
 }
 
 sub contents

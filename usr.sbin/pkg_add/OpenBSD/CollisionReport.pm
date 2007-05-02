@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.10 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.11 2007/05/02 15:05:29 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -26,7 +26,7 @@ use OpenBSD::Vstat;
 sub collision_report($$)
 {
 	my ($list, $state) = @_;
-	my %todo = map {($_->fullname(), $_->{md5})} @$list;
+	my %todo = map {($_->fullname, $_->{md5})} @$list;
 	my $bypkg = {};
 	my $clueless_bat = 0;
 	my $clueless_bat2 = 0;
@@ -49,8 +49,8 @@ sub collision_report($$)
 			my $plist = OpenBSD::PackingList->from_installation($pkg, 
 			    \&OpenBSD::PackingList::FilesOnly);
 			for my $item (@{$plist->{items}}) {
-				next unless $item->IsFile();
-				my $name = $item->fullname();
+				next unless $item->IsFile;
+				my $name = $item->fullname;
 				if (defined $todo{$name}) {
 					$bypkg->{$pkg} = [] unless defined $bypkg->{$pkg};
 					push(@{$bypkg->{$pkg}}, $name);

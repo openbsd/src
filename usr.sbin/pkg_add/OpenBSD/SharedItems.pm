@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.8 2007/04/29 11:09:29 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.9 2007/05/02 15:05:30 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -143,7 +143,7 @@ package OpenBSD::PackingElement::DirBase;
 sub record_shared_item
 {
 	my ($self, $pkgname, $db) = @_;
-	my $k = $self->fullname();
+	my $k = $self->fullname;
 	$db->{dirs}->{$k} = 1;
 }
 
@@ -157,7 +157,7 @@ package OpenBSD::PackingElement::Mandir;
 sub cleanup
 {
 	my ($self, $state) = @_;
-	my $fullname = $state->{destdir}.$self->fullname();
+	my $fullname = $state->{destdir}.$self->fullname;
 	$state->print("You may wish to remove ", $fullname, " from man.conf\n");
 	unlink("$fullname/whatis.db");
 }
@@ -166,7 +166,7 @@ package OpenBSD::PackingElement::Fontdir;
 sub cleanup
 {
 	my ($self, $state) = @_;
-	my $fullname = $state->{destdir}.$self->fullname();
+	my $fullname = $state->{destdir}.$self->fullname;
 	$state->print("You may wish to remove ", $fullname, " from your font path\n");
 	unlink("$fullname/fonts.alias");
 	unlink("$fullname/fonts.dir");
@@ -177,7 +177,7 @@ package OpenBSD::PackingElement::Infodir;
 sub cleanup
 {
 	my ($self, $state) = @_;
-	my $fullname = $state->{destdir}.$self->fullname();
+	my $fullname = $state->{destdir}.$self->fullname;
 	unlink("$fullname/dir");
 }
 

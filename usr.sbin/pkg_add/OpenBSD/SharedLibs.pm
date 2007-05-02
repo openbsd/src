@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.10 2007/04/29 11:09:29 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.11 2007/05/02 15:05:30 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -32,7 +32,7 @@ package OpenBSD::PackingElement::FileBase;
 sub mark_bogus_lib
 {
 	my ($self, $pkgname) = @_;
-	my $fname = $self->fullname();
+	my $fname = $self->fullname;
 	return unless $fname =~ m/\/lib[^\/]+\.so\.\d+\.\d+$/;
 	OpenBSD::SharedLibs::register_lib($fname, $pkgname);
 }
@@ -42,7 +42,7 @@ package OpenBSD::PackingElement::Lib;
 sub mark_available_lib
 {
 	my ($self, $pkgname) = @_;
-	OpenBSD::SharedLibs::register_lib($self->fullname(), $pkgname);
+	OpenBSD::SharedLibs::register_lib($self->fullname, $pkgname);
 }
 
 sub mark_bogus_lib
@@ -168,7 +168,7 @@ sub add_bogus_package_libs
 sub add_plist_libs
 {
 	my ($plist) = @_;
-	my $pkgname = $plist->pkgname();
+	my $pkgname = $plist->pkgname;
 	return if $done_plist->{$pkgname};
 	$done_plist->{$pkgname} = 1;
 	$plist->mark_available_lib($pkgname);

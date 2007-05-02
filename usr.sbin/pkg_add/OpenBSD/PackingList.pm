@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.59 2007/05/01 20:13:44 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.60 2007/05/02 15:05:30 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -54,7 +54,7 @@ sub new
 {
 	my $class = shift;
 	bless {state => 
-		OpenBSD::PackingList::State->new()
+		OpenBSD::PackingList::State->new
 	}, $class;
 }
 
@@ -268,14 +268,14 @@ sub tofile
 sub add2list
 {
 	my ($plist, $object) = @_;
-	my $category = $object->category();
+	my $category = $object->category;
 	push @{$plist->{$category}}, $object;
 }
 
 sub addunique
 {
 	my ($plist, $object) = @_;
-	my $category = $object->category();
+	my $category = $object->category;
 	if (defined $plist->{$category}) {
 		die "Duplicate $category in plist\n";
 	}
@@ -415,7 +415,7 @@ sub to_installation
 
 	return if $main::not;
 
-	$self->tofile(OpenBSD::PackageInfo::installed_contents($self->pkgname()));
+	$self->tofile(OpenBSD::PackageInfo::installed_contents($self->pkgname));
 }
 
 
@@ -424,7 +424,7 @@ sub signature
 	my $self = shift;
 	my $k = {};
 	$self->visit('signature', $k);
-	return join(',', $self->pkgname(), sort keys %$k);
+	return join(',', $self->pkgname, sort keys %$k);
 }
 
 sub forget

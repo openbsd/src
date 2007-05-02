@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.52 2007/04/29 11:09:29 espie Exp $
+# $OpenBSD: Add.pm,v 1.53 2007/05/02 15:05:29 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -52,7 +52,7 @@ sub register_installation
 	for my $i (info_names()) {
 		copy($dir.$i, $dest);
 	}
-	$plist->to_installation();
+	$plist->to_installation;
 }
 
 sub validate_plist($$)
@@ -61,11 +61,11 @@ sub validate_plist($$)
 
 	my $destdir = $state->{destdir};
 	my $problems = 0;
-	my $pkgname = $plist->pkgname();
+	my $pkgname = $plist->pkgname;
 	my $totsize = 0;
 	my $colliding = [];
 
-	$plist->validate($state, \$problems, $colliding, \$totsize, $plist->pkgname());
+	$plist->validate($state, \$problems, $colliding, \$totsize, $plist->pkgname);
 	if (@$colliding > 0) {
 		require OpenBSD::CollisionReport;
 
@@ -87,7 +87,7 @@ sub borked_installation
 	use OpenBSD::PackingElement;
 
 
-	my $borked = borked_package($plist->pkgname());
+	my $borked = borked_package($plist->pkgname);
 	# fix packing list for pkg_delete
 	$plist->{items} = $plist->{done};
 
@@ -101,7 +101,7 @@ sub borked_installation
 	    if (defined $last->{tempname}) {
 	    	$lastname = $last->{tempname};
 	    } else {
-	    	$lastname = $last->fullname();
+	    	$lastname = $last->fullname;
 	    }
 	    $last->{md5} = OpenBSD::md5::fromfile($lastname);
 	    if ($old ne $last->{md5}) {
@@ -110,7 +110,7 @@ sub borked_installation
 	    }
 	}
 	OpenBSD::PackingElement::Cwd->add($plist, '.');
-	my $pkgname = $plist->pkgname();
+	my $pkgname = $plist->pkgname;
 	$plist->{name}->{name} = $borked;
 	$plist->{pkgdep} = [];
 	my $dest = installed_info($borked);
@@ -140,8 +140,8 @@ sub set_modes
 		require OpenBSD::IdCache;
 
 		if (!defined $uidcache) {
-			$uidcache = OpenBSD::UidCache->new();
-			$gidcache = OpenBSD::GidCache->new();
+			$uidcache = OpenBSD::UidCache->new;
+			$gidcache = OpenBSD::GidCache->new;
 		}
 		my ($uid, $gid);
 		if (-l $name) {
@@ -209,7 +209,7 @@ sub validate
 	my $ok = $self->check();
 	if (defined $ok) {
 		if ($ok == 0) {
-			Warn $self->type(), " ",  $self->{name}, 
+			Warn $self->type, " ",  $self->{name}, 
 			    " does not match\n";
 			$$problems++;
 		}
@@ -221,13 +221,13 @@ sub install
 {
 	my ($self, $state) = @_;
 	my $auth = $self->{name};
-	print "adding ", $self->type(), " $auth\n" if $state->{verbose};
+	print "adding ", $self->type, " $auth\n" if $state->{verbose};
 	return if $state->{not};
 	return if defined $self->{okay};
 	my $l=[];
 	push(@$l, "-v") if $state->{very_verbose};
 	$self->build_args($l);
-	VSystem($state->{very_verbose}, $self->command(),, @$l, $auth);
+	VSystem($state->{very_verbose}, $self->command,, @$l, $auth);
 }
 
 package OpenBSD::PackingElement::NewUser;
@@ -291,7 +291,7 @@ use File::Path;
 sub validate
 {
 	my ($self, $state, $problems, $colliding, $totsize, $pkgname) = @_;
-	my $fname = $state->{destdir}.$self->fullname();
+	my $fname = $state->{destdir}.$self->fullname;
 	# check for collisions with existing stuff
 	if (OpenBSD::Vstat::vexists($fname)) {
 		push(@$colliding, $self);
@@ -314,7 +314,7 @@ sub validate
 	if ($state->{forced}->{kitchensink} && $state->{not}) {
 		return;
 	}
-	if ($s->avail() < 0) {
+	if ($s->avail < 0) {
 		if ($state->{very_verbose} or ++($s->{problems}) < 4) {
 			Warn "Error: ", $s->{dev}, 
 			    " is not large enough ($fname)\n";
@@ -330,7 +330,7 @@ sub validate
 sub install
 {
 	my ($self, $state) = @_;
-	my $fullname = $self->fullname();
+	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
 
 	if ($state->{replacing}) {
@@ -356,10 +356,10 @@ sub install
 
 		print "extracting $destdir$fullname\n" if $state->{very_verbose};
 		if ($state->{not}) {
-			$state->{archive}->skip();
+			$state->{archive}->skip;
 			return;
 		} else {
-			$file->create();
+			$file->create;
 		}
 	}
 	$self->set_modes($destdir.$fullname);
@@ -368,28 +368,28 @@ sub install
 sub prepare_to_extract
 {
 	my ($self, $state) = @_;
-	my $fullname = $self->fullname();
+	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
 
-	my $file=$state->{archive}->next();
+	my $file=$state->{archive}->next;
 	if (!defined $file) {
 		Fatal "Error: truncated archive\n";
 	}
-	$file->{cwd} = $self->cwd();
+	$file->{cwd} = $self->cwd;
 	if (!$file->check_name($self)) {
 		Fatal "Error: archive does not match ", $file->{name}, "!=",
 		$self->{name}, "\n";
 	}
-	if (defined $self->{symlink} || $file->isSymLink()) {
-		unless (defined $self->{symlink} && $file->isSymLink()) {
+	if (defined $self->{symlink} || $file->isSymLink) {
+		unless (defined $self->{symlink} && $file->isSymLink) {
 			Fatal "Error: bogus symlink ", $self->{name}, "\n";
 		}
 		if (!$file->check_linkname($self->{symlink})) {
 			Fatal "Error: archive sl does not match ", $file->{linkname}, "!=",
 			$self->{symlink}, "\n";
 		}
-	} elsif (defined $self->{link} || $file->isHardLink()) {
-		unless (defined $self->{link} && $file->isHardLink()) {
+	} elsif (defined $self->{link} || $file->isHardLink) {
+		unless (defined $self->{link} && $file->isHardLink) {
 			Fatal "Error: bogus hardlink ", $self->{name}, "\n";
 		}
 		if (!$file->check_linkname($self->{link})) {
@@ -447,7 +447,7 @@ sub validate
 	if ($state->{forced}->{kitchensink} && $state->{not}) {
 		return;
 	}
-	if ($s->avail() < 0) {
+	if ($s->avail < 0) {
 		if ($state->{very_verbose} or ++($s->{problems}) < 4) {
 			Warn "Error: ", $s->{dev}, 
 			    " is not large enough ($fname)\n";
@@ -465,9 +465,9 @@ sub install
 	my ($self, $state) = @_;
 
 	my $destdir = $state->{destdir};
-	my $filename = $destdir.$self->fullname();
+	my $filename = $destdir.$self->fullname;
 	my $orig = $self->{copyfrom};
-	my $origname = $destdir.$orig->fullname();
+	my $origname = $destdir.$orig->fullname;
 	if (-e $filename) {
 		if ($state->{verbose}) {
 		    print "The existing file $filename has NOT been changed\n";
@@ -511,7 +511,7 @@ sub install
 {
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
-	$state->print("You may wish to add ", $self->fullname(), " to /etc/man.conf\n");
+	$state->print("You may wish to add ", $self->fullname, " to /etc/man.conf\n");
 }
 
 package OpenBSD::PackingElement::Manpage;
@@ -532,7 +532,7 @@ sub install
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
 	return if $state->{not};
-	my $fullname = $state->{destdir}.$self->fullname();
+	my $fullname = $state->{destdir}.$self->fullname;
 	VSystem($state->{very_verbose}, 
 	    "install-info", "--info-dir=".dirname($fullname), $fullname);
 }
@@ -543,7 +543,7 @@ sub install
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
 	return if $state->{not};
-	my $fullname = $self->fullname();
+	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
 	# go append to /etc/shells if needed
 	open(my $shells, '<', $destdir.'/etc/shells') or return;
@@ -563,7 +563,7 @@ package OpenBSD::PackingElement::Dir;
 sub install
 {
 	my ($self, $state) = @_;
-	my $fullname = $self->fullname();
+	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
 
 	print "new directory ", $destdir, $fullname, "\n" if $state->{very_verbose};
@@ -626,7 +626,7 @@ sub validate
 	if ($state->{forced}->{kitchensink} && $state->{not}) {
 		return;
 	}
-	if ($s->avail() < 0) {
+	if ($s->avail < 0) {
 		Warn "Error: ", $s->{dev}, " is not large enough ($fname)\n";
 		$state->{overflow} = 1;
 		$$problems++;

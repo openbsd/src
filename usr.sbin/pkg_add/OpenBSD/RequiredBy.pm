@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.12 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.13 2007/05/02 15:05:30 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -76,7 +76,7 @@ sub list($)
 	my $self = shift;
 
 	if (wantarray) {
-		$self->fill_entries();
+		$self->fill_entries;
 		return keys %{$self->{entries}};
 	} else {
 		if (exists $self->{entries}) {
@@ -95,7 +95,7 @@ sub delete
 	for my $pkg (@pkgnames) {
 		delete $self->{entries}->{$pkg};
 	}
-	$self->synch();
+	$self->synch;
 }
 
 sub add
@@ -105,7 +105,7 @@ sub add
 	for my $pkg (@pkgnames) {
 		$self->{entries}->{$pkg} = 1;
 	}
-	$self->synch();
+	$self->synch;
 }
 
 my $cache = {};
@@ -113,7 +113,7 @@ my $cache = {};
 sub new
 {
 	my ($class, $pkgname) = @_;
-	my $f = installed_info($pkgname).$class->filename();
+	my $f = installed_info($pkgname).$class->filename;
 	if (!exists $cache->{$f}) {
 		return $cache->{$f} = bless { filename => $f }, $class;
 	}
@@ -123,7 +123,7 @@ sub new
 sub forget
 {
 	my ($class, $dir) = @_;
-	my $f = $dir.$class->filename();
+	my $f = $dir.$class->filename;
 	if (exists $cache->{$f}) {
 		$cache->{$f}->{entries} = {};
 		$cache->{$f}->{nonempty} = 0;
@@ -140,7 +140,7 @@ sub compute_closure
 	while (my $pkgname = pop @todo) {
 		next if $done{$pkgname};
 		$done{$pkgname} = 1;
-		for my $dep ($class->new($pkgname)->list()) {
+		for my $dep ($class->new($pkgname)->list) {
 			next if defined $done{$dep};
 			push(@todo, $dep);
 		}

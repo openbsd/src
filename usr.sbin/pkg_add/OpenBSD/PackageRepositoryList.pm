@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.4 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.5 2007/05/02 15:05:30 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -105,7 +105,7 @@ sub cleanup
 {
 	my $self = shift;
 	for my $repo (@{$self->{list}}) {
-		$repo->cleanup();
+		$repo->cleanup;
 	}
 }
 

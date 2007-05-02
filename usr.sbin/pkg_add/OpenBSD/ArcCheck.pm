@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.5 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.6 2007/05/02 15:05:29 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -41,13 +41,13 @@ sub check_linkname
 {
 	my ($self, $linkname) = @_;
 	my $c = $self->{linkname};
-	if ($self->isHardLink() && defined $self->{cwd}) {
+	if ($self->isHardLink && defined $self->{cwd}) {
 		$c = $self->{cwd}.'/'.$c;
 	}
 	return 1 if $c eq $linkname;
 	if ($self->{linkname} =~ m/^Long(?:Link|Name)\d+$/) {
 		$self->{linkname} = $linkname;
-		if ($self->isHardLink() && defined $self->{cwd}) {
+		if ($self->isHardLink && defined $self->{cwd}) {
 			$self->{linkname} =~ s|^$self->{cwd}/||;
 		}
 		return 1;
