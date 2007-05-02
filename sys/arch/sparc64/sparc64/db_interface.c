@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.22 2007/04/12 22:20:14 thib Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.23 2007/05/02 18:46:07 kettenis Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -833,11 +833,10 @@ db_dump_pcb(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	extern struct pcb *cpcb;
 	struct pcb *pcb;
 	int i;
 
-	pcb = cpcb;
+	pcb = curpcb;
 	if (have_addr) 
 		pcb = (struct pcb*) addr;
 
@@ -882,8 +881,6 @@ db_setpcb(addr, have_addr, count, modif)
 {
 	struct proc *p, *pp;
 
-	extern struct pcb *cpcb;
-
 	if (!have_addr) {
 		db_printf("What PID do you want to map in?\n");
 		return;
@@ -893,7 +890,7 @@ db_setpcb(addr, have_addr, count, modif)
 		pp = p->p_pptr;
 		if (p->p_stat && p->p_pid == addr) {
 			curproc = p;
-			cpcb = (struct pcb*)p->p_addr;
+			curpcb = (struct pcb*)p->p_addr;
 			if (p->p_vmspace->vm_map.pmap->pm_ctx) {
 				switchtoctx(p->p_vmspace->vm_map.pmap->pm_ctx);
 				return;

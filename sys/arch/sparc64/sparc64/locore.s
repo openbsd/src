@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.71 2007/03/20 12:47:46 todd Exp $	*/
+/*	$OpenBSD: locore.s,v 1.72 2007/05/02 18:46:07 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -82,15 +82,9 @@
 #undef	CURPROC
 #undef	CPCB
 #undef	FPPROC
-#ifndef MULTIPROCESSOR
-#define	CURPROC	_C_LABEL(curproc)
-#define CPCB	_C_LABEL(cpcb)
-#define	FPPROC	_C_LABEL(fpproc)
-#else	/* MULTIPROCESSOR */
 #define	CURPROC	(CPUINFO_VA+CI_CURPROC)
 #define CPCB	(CPUINFO_VA+CI_CPCB)
 #define	FPPROC	(CPUINFO_VA+CI_FPPROC)
-#endif	/* MULTIPROCESSOR */
 
 /* Let us use same syntax as C code */
 #define Debugger()	ta	1; nop
@@ -334,13 +328,6 @@ _C_LABEL(kgdb_stack):
 	.align	16
 panicstack:
 #endif	/* DEBUG */
-
-/*
- * _cpcb points to the current pcb (and hence u. area).
- * Initially this is the special one.
- */
-	.globl	_C_LABEL(cpcb)
-_C_LABEL(cpcb):	.xword	_C_LABEL(u0)
 
 /*
  * romp is the prom entry pointer

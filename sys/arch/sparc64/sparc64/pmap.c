@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.39 2007/04/22 18:13:04 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.40 2007/05/02 18:46:07 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1336,8 +1336,6 @@ remap_data:
 		paddr_t pa;
 
 		/* Initialize all the pointers to u0 */
-		cpcb = (struct pcb *)vmmap;
-		proc0paddr = cpcb;
 		u0[0] = vmmap;
 		/* Allocate some VAs for u0 */
 		u0[1] = vmmap + 2*USPACE;
@@ -1373,7 +1371,7 @@ remap_data:
 		if ((vmmap ^ INTSTACK) & VA_ALIAS_MASK) 
 			vmmap += NBPG; /* Matchup virtual color for D$ */
 		intstk = vmmap;
-		cpus = (struct cpu_info *)(intstk+CPUINFO_VA-INTSTACK);
+		cpus = (struct cpu_info *)(intstk + CPUINFO_VA - INTSTACK);
 
 		BDPRINTF(PDB_BOOT1,
 			("Inserting cpu_info into pmap_kernel() at %p\r\n",
@@ -1418,6 +1416,8 @@ remap_data:
 		cpus->ci_spinup = main; /* Call main when we're running. */
 		cpus->ci_initstack = (void *)u0[1];
 		cpus->ci_paddr = cpu0paddr;
+		proc0paddr = cpus->ci_cpcb;
+
 		/* The rest will be done at CPU attach time. */
 		BDPRINTF(PDB_BOOT1, 
 			 ("Done inserting cpu_info into pmap_kernel()\r\n"));

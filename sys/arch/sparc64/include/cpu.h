@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.38 2007/03/15 10:22:30 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.39 2007/05/02 18:46:06 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -116,13 +116,15 @@ struct cpu_info {
 };
 
 extern struct cpu_info *cpus;
-extern struct cpu_info cpu_info_store;
 
-#if 1
-#define	curcpu()	(&cpu_info_store)
-#else
 #define	curcpu()	((struct cpu_info *)CPUINFO_VA)
-#endif
+
+#define CPU_IS_PRIMARY(ci)	1
+#define CPU_INFO_ITERATOR	int
+#define CPU_INFO_FOREACH(cii, ci)					\
+	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
+
+#define curpcb		curcpu()->ci_cpcb
 
 /*
  * definitions of cpu-dependent requirements

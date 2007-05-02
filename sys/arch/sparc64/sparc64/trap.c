@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.48 2007/04/24 18:14:15 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.49 2007/05/02 18:46:07 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -347,11 +347,7 @@ userret(struct proc *p)
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
 
-#ifdef notyet
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
-#else
-	curpriority = p->p_priority = p->p_usrpri;
-#endif
 }
 
 /*
@@ -1222,18 +1218,15 @@ syscall(tf, code, pc)
 	int error = 0, new;
 	register_t args[8];
 	register_t rval[2];
-#ifdef DIAGNOSTIC
-	extern struct pcb *cpcb;
-#endif
 
 	uvmexp.syscalls++;
 	p = curproc;
 #ifdef DIAGNOSTIC
 	if (tf->tf_tstate & TSTATE_PRIV)
 		panic("syscall from kernel");
-	if (cpcb != &p->p_addr->u_pcb)
+	if (curpcb != &p->p_addr->u_pcb)
 		panic("syscall: cpcb/ppcb mismatch");
-	if (tf != (struct trapframe64 *)((caddr_t)cpcb + USPACE) - 1)
+	if (tf != (struct trapframe64 *)((caddr_t)curpcb + USPACE) - 1)
 		panic("syscall: trapframe");
 #endif
 	p->p_md.md_tf = tf;
