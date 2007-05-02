@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mount_vnd,v 1.1 2007/04/14 11:54:00 grunk Exp $
+# $OpenBSD: mount_vnd,v 1.2 2007/05/02 20:13:13 david Exp $
 #
 # Copyright (c) 2005, 2006, 2007 David Krause <david@openbsd.org>
 #
@@ -18,7 +18,7 @@
 
 progname=`basename "$0"`
 usage() {
-	cat <<-EOF
+	cat 1>&2 <<-EOF
 	usage: $progname [-k] [-K rounds] [-o options] [-S saltfile] image node
 	EOF
 	exit 1
@@ -70,7 +70,7 @@ elif [ -n "${SALTFILE}" -a ! -n "${ROUNDS}" ]; then
 	echo "$progname: -S only makes sense when used with -K" 1>&2
 	exit 1
 elif [ ! -b "${IMAGE}" -a ! -f "${IMAGE}" ]; then
-	echo "$progname: ${IMAGE}: No such file" 1>&2
+	echo "$progname: ${IMAGE}: No such file or block device" 1>&2
 	exit 1
 elif [ -n "${SALTFILE}" -a ! -f "${SALTFILE}" ]; then
 	echo "$progname: ${SALTFILE}: No such file" 1>&2
