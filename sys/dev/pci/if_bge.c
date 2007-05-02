@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.209 2007/04/03 22:12:59 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.210 2007/05/02 09:13:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -187,8 +187,8 @@ void bge_reset(struct bge_softc *);
 void bge_link_upd(struct bge_softc *);
 
 #ifdef BGE_DEBUG
-#define DPRINTF(x)	if (bgedebug) printf x
-#define DPRINTFN(n,x)	if (bgedebug >= (n)) printf x
+#define DPRINTF(x)	do { if (bgedebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (bgedebug >= (n)) printf x; } while (0)
 int	bgedebug = 0;
 #else
 #define DPRINTF(x)
