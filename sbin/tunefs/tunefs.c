@@ -266,14 +266,14 @@ getnum(const char *num, const char *desc, int min, int max)
 static void
 usage(void)
 {
+	extern char *__progname;
 
-	fprintf(stderr, "usage: tunefs [-AFN] tuneup-options special-device\n"
-		"where tuneup-options are:\n"
-		"\t-e maximum blocks per file in a cylinder group\n"
-		"\t-g average file size\n"
-		"\t-h expected number of files per directory\n"
-		"\t-m minimum percentage of free space\n"
-		"\t-o optimization preference (`space' or `time')\n");
+	fprintf(stderr,
+	    "usage: %s [-AFN] [-e maxbpg] [-g avgfilesize] "
+	    "[-h avgfpdir] [-m minfree]\n"
+	    "\t[-o optimize_preference] special | filesys\n",
+	    __progname);
+
 	exit(2);
 }
 
