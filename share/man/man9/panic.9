@@ -1,4 +1,4 @@
-.\"	$OpenBSD: panic.9,v 1.5 2000/10/12 18:06:01 aaron Exp $
+.\"	$OpenBSD: panic.9,v 1.6 2007/05/02 21:08:30 jcs Exp $
 .\"     $NetBSD: panic.9,v 1.2 1996/10/09 17:20:04 explorer Exp $
 .\"
 .\" Copyright (c) 1996 Michael Graff.
@@ -58,9 +58,9 @@ pointed to by the global char pointer
 is set to the address of the message text for retrieval from the OS
 core dump.
 .Pp
-If the kernel debugger is installed control is passed to it, otherwise
-an attempt to save a core dump of the OS to a configured dump device
-is made.
+If the kernel debugger is installed, control is passed to it.
+Otherwise, an attempt is made to save a core dump of the OS to a configured
+dump device.
 .Pp
 If
 .Fn panic
