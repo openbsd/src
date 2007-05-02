@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.39 2007/05/02 03:19:03 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.40 2007/05/02 03:51:26 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -94,8 +94,7 @@ int			sr_parse_chunks(struct sr_softc *, char *,
 			    struct sr_chunk_head *);
 int			sr_open_chunks(struct sr_softc *,
 			    struct sr_chunk_head *);
-int			sr_read_meta(struct sr_softc *,
-			    struct sr_chunk_head *);
+int			sr_read_meta(struct sr_discipline *);
 int			sr_create_chunk_meta(struct sr_softc *,
 			    struct sr_chunk_head *);
 void			sr_unwind_chunks(struct sr_softc *,
@@ -760,7 +759,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 	sd->sd_meta = malloc(SR_META_SIZE * 512 , M_DEVBUF, M_WAITOK);
 	bzero(sd->sd_meta, SR_META_SIZE  * 512);
 
-	if ((no_meta = sr_read_meta(sc, cl)) == 0) {
+	if ((no_meta = sr_read_meta(sd)) == 0) {
 		/* no metadata available */
 		switch (bc->bc_level) {
 		case 1:
@@ -1085,18 +1084,17 @@ unwind:
 }
 
 int
-sr_read_meta(struct sr_softc *sc, struct sr_chunk_head *cl)
+sr_read_meta(struct sr_discipline *sd)
 {
+	struct sr_softc		*sc = sd->sd_sc;
+	struct sr_chunk_head	*cl = &sd->sd_vol.sv_chunk_list;
+	struct sr_metadata	*sm = sd->sd_meta;
 	struct sr_chunk		*ch_entry;
-	struct sr_metadata	*sm;
 	struct buf		b;
 	int			mc = 0;
 	size_t			sz = SR_META_SIZE * 512;
 
 	DNPRINTF(SR_D_META, "%s: sr_read_meta\n", DEVNAME(sc));
-
-	sm = malloc(sz, M_DEVBUF, M_WAITOK);
-	bzero(sm, sz);
 
 	SLIST_FOREACH(ch_entry, cl, src_link) {
 		memset(&b, 0, sizeof(b));
@@ -1117,7 +1115,7 @@ sr_read_meta(struct sr_softc *sc, struct sr_chunk_head *cl)
 		VOP_STRATEGY(&b);
 		biowait(&b);
 
-		/* mark chunk offline and restart metadata write */
+		/* XXX mark chunk offline and restart metadata write */
 		if (b.b_flags & B_ERROR) {
 			printf("%s: %s i/o error on block %d while reading "
 			    "metadata %d\n", DEVNAME(sc),
@@ -1131,10 +1129,7 @@ sr_read_meta(struct sr_softc *sc, struct sr_chunk_head *cl)
 		/* we have meta data on disk */
 		mc++;
 		ch_entry->src_meta_ondisk = 1;
-		bcopy(sm, &ch_entry->src_meta, sizeof(ch_entry->src_meta));
 	}
-
-	free(sm, M_DEVBUF);
 
 	DNPRINTF(SR_D_META, "%s: sr_read_meta: found %d elements\n",
 	    DEVNAME(sc), mc);
