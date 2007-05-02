@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.h,v 1.17 2005/12/28 03:05:39 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.h,v 1.18 2007/05/02 02:20:37 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -198,69 +198,7 @@ ahc_flush_device_writes(struct ahc_softc *ahc)
 }
 
 /**************************** Locking Primitives ******************************/
-/* Lock protecting internal data structures */
-static __inline void ahc_lockinit(struct ahc_softc *);
-static __inline void ahc_lock(struct ahc_softc *, int *);
-static __inline void ahc_unlock(struct ahc_softc *, int *);
 
-/* Lock held during command completion to the upper layer */
-static __inline void ahc_done_lockinit(struct ahc_softc *);
-static __inline void ahc_done_lock(struct ahc_softc *, int *);
-static __inline void ahc_done_unlock(struct ahc_softc *, int *);
-
-/* Lock held during ahc_list manipulation and ahc softc frees */
-static __inline void ahc_list_lockinit(void);
-static __inline void ahc_list_lock(int *);
-static __inline void ahc_list_unlock(int *);
-
-static __inline void
-ahc_lockinit(struct ahc_softc *ahc)
-{
-}
-
-static __inline void
-ahc_lock(struct ahc_softc *ahc, int *flags)
-{
-	*flags = splbio();
-}
-
-static __inline void
-ahc_unlock(struct ahc_softc *ahc, int *flags)
-{
-	splx(*flags);
-}
-
-/* Lock held during command completion to the upper layer */
-static __inline void
-ahc_done_lockinit(struct ahc_softc *ahc)
-{
-}
-
-static __inline void
-ahc_done_lock(struct ahc_softc *ahc, int *flags)
-{
-}
-
-static __inline void
-ahc_done_unlock(struct ahc_softc *ahc, int *flags)
-{
-}
-
-/* Lock held during ahc_list manipulation and ahc softc frees */
-static __inline void
-ahc_list_lockinit()
-{
-}
-
-static __inline void
-ahc_list_lock(int *flags)
-{
-}
-
-static __inline void
-ahc_list_unlock(int *flags)
-{
-}
 /****************************** OS Primitives *********************************/
 
 /************************** Transaction Operations ****************************/
@@ -380,15 +318,15 @@ ahc_platform_scb_free(struct ahc_softc *ahc, struct scb *scb)
 {
 	int s;
 
-	ahc_lock(ahc, &s);
-	
+	s = splbio();
+
 	if ((ahc->flags & AHC_RESOURCE_SHORTAGE) != 0) {
 		ahc->flags &= ~AHC_RESOURCE_SHORTAGE;
 	}
-	
+
 	timeout_del(&scb->xs->stimeout);
-	
-	ahc_unlock(ahc, &s);
+
+	splx(s);
 }
 
 /********************************** PCI ***************************************/
