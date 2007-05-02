@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.38 2007/05/01 22:53:51 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.39 2007/05/02 03:19:03 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -100,6 +100,7 @@ int			sr_create_chunk_meta(struct sr_softc *,
 			    struct sr_chunk_head *);
 void			sr_unwind_chunks(struct sr_softc *,
 			    struct sr_chunk_head *);
+void			sr_free_discipline(struct sr_discipline *);
 
 /* work units & ccbs */
 int			sr_alloc_ccb(struct sr_discipline *);
@@ -755,6 +756,10 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 	if (sr_open_chunks(sc, cl))
 		goto unwind;
 
+	/* in memory copy of metadata */
+	sd->sd_meta = malloc(SR_META_SIZE * 512 , M_DEVBUF, M_WAITOK);
+	bzero(sd->sd_meta, SR_META_SIZE  * 512);
+
 	if ((no_meta = sr_read_meta(sc, cl)) == 0) {
 		/* no metadata available */
 		switch (bc->bc_level) {
@@ -907,13 +912,8 @@ unwind:
 	/* XXX free scsibus */
 
 	if (sd) {
-		if (sd->sd_free_resources)
-			sd->sd_free_resources(sd);
-		if (sd->sd_vol.sv_chunks)
-			free(sd->sd_vol.sv_chunks, M_DEVBUF);
-		free(sd, M_DEVBUF);
+		sr_free_discipline(sd);
 		sr_unwind_chunks(sc, cl);
-
 	}
 	return (rv);
 }
@@ -1217,6 +1217,21 @@ sr_unwind_chunks(struct sr_softc *sc, struct sr_chunk_head *cl)
 	SLIST_INIT(cl);
 }
 
+void
+sr_free_discipline(struct sr_discipline *sd)
+{
+	if (!sd)
+		return;
+
+	if (sd->sd_free_resources)
+		sd->sd_free_resources(sd);
+	if (sd->sd_vol.sv_chunks)
+		free(sd->sd_vol.sv_chunks, M_DEVBUF);
+	if (sd->sd_meta)
+		free(sd->sd_meta, M_DEVBUF);
+	free(sd, M_DEVBUF);
+}
+
 /* RAID 1 functions */
 int
 sr_raid1_alloc_resources(struct sr_discipline *sd)
@@ -1231,10 +1246,6 @@ sr_raid1_alloc_resources(struct sr_discipline *sd)
 
 	sr_alloc_wu(sd);
 	sr_alloc_ccb(sd);
-
-	/* -2 because that includes mbr and partition table */
-	sd->sd_meta = malloc(SR_META_SIZE * 512 , M_DEVBUF, M_WAITOK);
-	bzero(sd->sd_meta, SR_META_SIZE  * 512);
 
 	rv = 0;
 	return (rv);
@@ -1254,7 +1265,8 @@ sr_raid1_free_resources(struct sr_discipline *sd)
 	sr_free_wu(sd);
 	sr_free_ccb(sd);
 
-	free(sd->sd_meta, M_DEVBUF);
+	if (sd->sd_meta)
+		free(sd->sd_meta, M_DEVBUF);
 
 	rv = 0;
 	return (rv);
