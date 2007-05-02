@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.9 2007/05/02 12:23:59 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.10 2007/05/02 13:36:07 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -40,6 +40,17 @@ sub available
 	return @avail;
 }
 
+sub find_candidate
+{
+	    my $dep = shift;
+	    my @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, @_);
+	    if (@candidates >= 1) {
+		    return $candidates[0];
+	    } else {
+		    return undef;
+	    }
+}
+
 sub solve
 {
 	my ($state, $handle, @extra) = @_;
@@ -55,32 +66,30 @@ sub solve
 	my @deps;
 
 	for my $dep (@{$plist->{depend}}) {
-	    my @candidates;
 	    if ($state->{replace}) {
-		# try against list of packages to install
-		@candidates = OpenBSD::PkgSpec::match($dep->{pattern}, keys %{$to_install});
-		if (@candidates >= 1) {
-		    push(@deps, $to_install->{$candidates[0]});
-		    $to_register->{$candidates[0]} = 1;
+	    	my $v = find_candidate($dep, keys %{$to_install});
+		if ($v) {
+		    push(@deps, $to_install->{$v});
+		    $to_register->{$v} = 1;
 		    next;
 		}
 	    }
-	    @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, installed_packages());
-	    if (@candidates >= 1) {
-		    $to_register->{$candidates[0]} = 1;
+
+	    my $v = find_candidate($dep, installed_packages());
+	    if ($v) {
+		    $to_register->{$v} = 1;
 		    next;
 	    }
 	    if (!$state->{replace}) {
-		# try against list of packages to install
-		@candidates = OpenBSD::PkgSpec::match($dep->{pattern}, keys %{$to_install});
-		if (@candidates >= 1) {
-		    push(@deps, $to_install->{$candidates[0]});
-		    $to_register->{$candidates[0]} = 1;
+	    	my $v = find_candidate($dep, keys %{$to_install});
+		if ($v) {
+		    push(@deps, $to_install->{$v});
+		    $to_register->{$v} = 1;
 		    next;
 		}
 	    }
 	    # try with list of available packages
-	    @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, available());
+	    my @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, available());
 	    # one single choice
 	    if (@candidates == 1) {
 		push(@deps, $candidates[0]);
