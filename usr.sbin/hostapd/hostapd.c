@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.31 2007/02/08 11:15:55 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.32 2007/05/02 09:09:29 claudio Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -51,7 +51,7 @@
 
 void	 hostapd_usage(void);
 void	 hostapd_udp_init(struct hostapd_config *);
-void	 hostapd_sig_handler(int);
+void	 hostapd_sig_handler(int, short, void *);
 static __inline int
 	 hostapd_entry_cmp(struct hostapd_entry *, struct hostapd_entry *);
 
@@ -307,20 +307,16 @@ hostapd_udp_init(struct hostapd_config *cfg)
 	}
 }
 
+/* ARGSUSED */
 void
-hostapd_sig_handler(int sig)
+hostapd_sig_handler(int sig, short event, void *arg)
 {
-	struct timeval tv;
-
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-
 	switch (sig) {
 	case SIGALRM:
 	case SIGTERM:
 	case SIGQUIT:
 	case SIGINT:
-		(void)event_loopexit(&tv);
+		(void)event_loopexit(NULL);
 	}
 }
 
@@ -386,6 +382,10 @@ hostapd_cleanup(struct hostapd_config *cfg)
 int
 main(int argc, char *argv[])
 {
+	struct event ev_sigalrm;
+	struct event ev_sigterm;
+	struct event ev_sigquit;
+	struct event ev_sigint;
 	struct hostapd_config *cfg = &hostapd_cfg;
 	struct hostapd_iapp *iapp;
 	struct hostapd_apme *apme;
@@ -482,10 +482,14 @@ main(int argc, char *argv[])
 	/*
 	 * Set signal handlers
 	 */
-	signal(SIGALRM, hostapd_sig_handler);
-	signal(SIGTERM, hostapd_sig_handler);
-	signal(SIGQUIT, hostapd_sig_handler);
-	signal(SIGINT, hostapd_sig_handler);
+	signal_set(&ev_sigalrm, SIGALRM, hostapd_sig_handler, NULL);
+	signal_set(&ev_sigterm, SIGTERM, hostapd_sig_handler, NULL);
+	signal_set(&ev_sigquit, SIGQUIT, hostapd_sig_handler, NULL);
+	signal_set(&ev_sigint, SIGINT, hostapd_sig_handler, NULL);
+	signal_add(&ev_sigalrm, NULL);
+	signal_add(&ev_sigterm, NULL);
+	signal_add(&ev_sigquit, NULL);
+	signal_add(&ev_sigint, NULL);
 	signal(SIGHUP, SIG_IGN);
 	signal(SIGCHLD, SIG_IGN);
 

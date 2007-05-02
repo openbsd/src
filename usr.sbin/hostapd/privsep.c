@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.22 2007/02/08 11:15:55 reyk Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.23 2007/05/02 09:09:29 claudio Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -64,8 +64,8 @@ enum hostapd_cmd_types {
 
 void	 hostapd_priv(int, short, void *);
 struct hostapd_apme *hostapd_priv_getapme(int, struct hostapd_config *);
-void	 hostapd_sig_relay(int);
-void	 hostapd_sig_chld(int);
+void	 hostapd_sig_relay(int, short, void *);
+void	 hostapd_sig_chld(int, short, void *);
 int	 hostapd_may_read(int, void *, size_t);
 void	 hostapd_must_read(int, void *, size_t);
 void	 hostapd_must_write(int, void *, size_t);
@@ -80,6 +80,11 @@ static volatile pid_t child_pid = -1;
 void
 hostapd_priv_init(struct hostapd_config *cfg)
 {
+	struct event ev_sigalrm;
+	struct event ev_sigterm;
+	struct event ev_sigint;
+	struct event ev_sighup;
+	struct event ev_sigchld;
 	struct hostapd_iapp *iapp = &cfg->c_iapp;
 	struct hostapd_apme *apme;
 	int i, socks[2];
@@ -142,11 +147,16 @@ hostapd_priv_init(struct hostapd_config *cfg)
 	(void)event_init();
 
 	/* Pass ALRM/TERM/INT/HUP through to child, and accept CHLD */
-	signal(SIGALRM, hostapd_sig_relay);
-	signal(SIGTERM, hostapd_sig_relay);
-	signal(SIGINT, hostapd_sig_relay);
-	signal(SIGHUP, hostapd_sig_relay);
-	signal(SIGCHLD, hostapd_sig_chld);
+	signal_set(&ev_sigalrm, SIGALRM, hostapd_sig_relay, NULL);
+	signal_set(&ev_sigterm, SIGTERM, hostapd_sig_relay, NULL);
+	signal_set(&ev_sigint, SIGINT, hostapd_sig_relay, NULL);
+	signal_set(&ev_sighup, SIGHUP, hostapd_sig_relay, NULL);
+	signal_set(&ev_sigchld, SIGCHLD, hostapd_sig_chld, NULL);
+	signal_add(&ev_sigalrm, NULL);
+	signal_add(&ev_sigterm, NULL);
+	signal_add(&ev_sigint, NULL);
+	signal_add(&ev_sighup, NULL);
+	signal_add(&ev_sigchld, NULL);
 
 	(void)close(socks[1]);
 
@@ -449,8 +459,9 @@ hostapd_priv_roaming(struct hostapd_apme *apme, struct hostapd_node *node,
 /*
  * If priv parent gets a TERM or HUP, pass it through to child instead.
  */
+/* ARGSUSED */
 void
-hostapd_sig_relay(int sig)
+hostapd_sig_relay(int sig, short event, void *arg)
 {
 	int oerrno = errno;
 
@@ -461,20 +472,16 @@ hostapd_sig_relay(int sig)
 	errno = oerrno;
 }
 
+/* ARGSUSED */
 void
-hostapd_sig_chld(int sig)
+hostapd_sig_chld(int sig, short event, void *arg)
 {
-	struct timeval tv;
-
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-
 	/*
 	 * If parent gets a SIGCHLD, it will exit.
 	 */
 
 	if (sig == SIGCHLD)
-		(void)event_loopexit(&tv);
+		(void)event_loopexit(NULL);
 }
 
 /*
