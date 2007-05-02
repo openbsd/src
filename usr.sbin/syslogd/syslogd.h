@@ -50,7 +50,8 @@ extern int Startup;
 #define PFD_INET	1		/* Offset of inet socket entry */
 #define PFD_CTLSOCK	2		/* Offset of control socket entry */
 #define PFD_CTLCONN	3		/* Offset of control connection entry */
-#define PFD_UNIX_0	4		/* Start of Unix socket entries */
+#define PFD_INET6	4		/* Offset of inet6 socket entry */
+#define PFD_UNIX_0	5		/* Start of Unix socket entries */
 #define N_PFD		(PFD_UNIX_0 + MAXFUNIX)	/* # of pollfd entries */
 extern struct pollfd pfd[N_PFD];
 

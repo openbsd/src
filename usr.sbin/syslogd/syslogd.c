@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.97 2007/03/30 18:25:44 canacar Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.98 2007/05/02 15:17:11 jason Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.97 2007/03/30 18:25:44 canacar Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.98 2007/05/02 15:17:11 jason Exp $";
 #endif
 #endif /* not lint */
 
@@ -299,6 +299,7 @@ main(int argc, char *argv[])
 	char *p, *line;
 	char resolve[MAXHOSTNAMELEN];
 	int lockpipe[2], nullfd;
+	struct addrinfo hints, *res, *res0;
 	FILE *fp;
 
 	while ((ch = getopt(argc, argv, "dnuf:m:p:a:s:")) != -1)
@@ -376,35 +377,59 @@ main(int argc, char *argv[])
 		pfd[i].events = 0;
 	}
 
-	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) != -1) {
-		struct servent *sp;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = IPPROTO_UDP;
+	hints.ai_flags = AI_PASSIVE;
 
-		/* XXX use getaddrinfo */
-		sp = getservbyname("syslog", "udp");
-		if (sp == NULL) {
-			errno = 0;
-			logerror("syslog/udp: unknown service");
-			die(0);
+	i = getaddrinfo(NULL, "syslog", &hints, &res0);
+	if (i) {
+		errno = 0;
+		logerror("syslog/udp: unknown service");
+		die(0);
+	}
+
+	for (res = res0; res; res = res->ai_next) {
+		struct pollfd *pfdp;
+
+		if (res->ai_family == AF_INET)
+			pfdp = &pfd[PFD_INET];
+		else {
+			/*
+			 * XXX AF_INET6 is skipped on purpose, need to
+			 * fix '@' handling first.
+			 */
+			continue;
 		}
-		memset(&s_in, 0, sizeof(s_in));
-		s_in.sin_len = sizeof(s_in);
-		s_in.sin_family = AF_INET;
-		s_in.sin_port = LogPort = sp->s_port;
-		if (bind(fd, (struct sockaddr *)&s_in, sizeof(s_in)) < 0) {
+
+		if (pfdp->fd >= 0)
+			continue;
+
+		fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (fd < 0)
+			continue;
+
+		if (bind(fd, res->ai_addr, res->ai_addrlen) < 0) {
 			logerror("bind");
+			close(fd);
 			if (!Debug)
 				die(0);
-		} else {
-			InetInuse = 1;
-			pfd[PFD_INET].fd = fd;
-			if (SecureMode) {
-				shutdown(fd, SHUT_RD);
-			} else {
-				double_rbuf(fd);
-				pfd[PFD_INET].events = POLLIN;
-			}
+			fd = -1;
+			continue;
+		}
+
+		InetInuse = 1;
+		pfdp->fd = fd;
+		if (SecureMode)
+			shutdown(pfdp->fd, SHUT_RD);
+		else {
+			double_rbuf(pfdp->fd);
+			pfdp->events = POLLIN;
 		}
 	}
+
+	freeaddrinfo(res0);
 
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
