@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.26 2007/04/12 14:45:45 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.27 2007/05/02 09:07:28 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -131,17 +131,10 @@ int				 proc_id;
 void
 relay_sig_handler(int sig, short event, void *arg)
 {
-	struct timeval tv;
-
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-
 	switch (sig) {
-	case SIGALRM:
 	case SIGTERM:
-	case SIGQUIT:
 	case SIGINT:
-		event_loopexit(&tv);
+		(void)event_loopexit(NULL);
 	}
 }
 
