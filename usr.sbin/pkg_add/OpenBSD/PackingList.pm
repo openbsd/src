@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.61 2007/05/02 15:13:05 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.62 2007/05/02 15:17:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -294,13 +294,13 @@ sub get
 	return $plist->{$name};
 }
 
-sub pkgname($)
+sub pkgname
 {
 	my $self = shift;
 	return $self->{name}->{name};
 }
 
-sub pkgbase($)
+sub localbase
 {
 	my $self = shift;
 

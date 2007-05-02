@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.11 2007/05/02 15:05:29 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.12 2007/05/02 15:17:36 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -153,7 +153,7 @@ sub lookup_library
 {
 	my ($state, $lib, $plist, $dependencies, $harder, $done) = @_;
 
-	my $r = check_lib_spec($plist->pkgbase(), $lib, $dependencies);
+	my $r = check_lib_spec($plist->localbase, $lib, $dependencies);
 	if ($r) {
 	    print "found libspec $lib in $r\n" if $state->{very_verbose};
 	    return 1;
@@ -171,7 +171,7 @@ sub lookup_library
 		}
 	}
 	for my $dep (@{$plist->{depends}}) {
-		$r = find_old_lib($state, $plist->pkgbase, $dep->{pattern}, $lib, $dependencies);
+		$r = find_old_lib($state, $plist->localbase, $dep->{pattern}, $lib, $dependencies);
 		if ($r) {
 			print "found libspec $lib in old package $r\n" if $state->{verbose};
 			return 1;
@@ -190,7 +190,7 @@ sub lookup_library
 			}
 			next if $dependencies->{$dep};
 			OpenBSD::SharedLibs::add_package_libs($dep);
-			if (check_lib_spec($plist->pkgbase, $lib, {$dep => 1})) {
+			if (check_lib_spec($plist->localbase, $lib, {$dep => 1})) {
 				print "found libspec $lib in dependent package $dep\n" if $state->{verbose};
 				$dependencies->{$dep} = 1;
 				return 1;
@@ -210,7 +210,7 @@ sub lookup_library
 				push(@todo, $dep2) unless $done->{$dep2};
 			}
 			OpenBSD::SharedLibs::add_bogus_package_libs($dep);
-			if (check_lib_spec($plist->pkgbase(), $lib, {$dep => 1})) {
+			if (check_lib_spec($plist->localbase, $lib, {$dep => 1})) {
 				print "found libspec $lib in dependent package $dep (unmarked library)\n" if $state->{verbose};
 				$dependencies->{$dep} = 1;
 				return 1;

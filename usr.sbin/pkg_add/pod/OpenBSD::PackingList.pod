@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackingList.pod,v 1.6 2007/04/29 10:52:15 espie Exp $
+$OpenBSD: OpenBSD::PackingList.pod,v 1.7 2007/05/02 15:17:36 espie Exp $
 
 =head1 NAME
 
@@ -29,7 +29,7 @@ OpenBSD::PackingList - C<pkg_add(1)> packing-list manipulations
     $b = $p2->has($name);
     $b = $p2->get($name);
     # frequent accesses
-    print $p3->pkgname(), $p3->pkgbase(), "\n";
+    print $p3->pkgname, $p3->localbase, "\n";
 
     # processing packing-lists
     $p4->visit('method', @args);
@@ -38,7 +38,7 @@ OpenBSD::PackingList - C<pkg_add(1)> packing-list manipulations
     $p4->method(@args);
 
     # signatures
-    if ($p3->signature() eq $p4->signature()) {
+    if ($p3->signature eq $p4->signature) {
     }
 
 =head1 DESCRIPTION

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.229 2007/05/02 13:59:19 espie Exp $
+# $OpenBSD: pkg_add,v 1.230 2007/05/02 15:17:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -164,8 +164,8 @@ sub pre_add($$)
 		$errors++;
 		return;
 	}
-	if ($plist->pkgbase ne $state->{localbase}) {
-		print "Localbase mismatch: package has: ", $plist->pkgbase, " , user wants: ", $state->{localbase}, "\n";
+	if ($plist->localbase ne $state->{localbase}) {
+		print "Localbase mismatch: package has: ", $plist->localbase, " , user wants: ", $state->{localbase}, "\n";
 		$errors++;
 		return;
 	}
@@ -286,7 +286,7 @@ sub really_add($$)
 		Fatal "Archive in $pkgname broken";
 	}
 
-	$ENV{'PKG_PREFIX'} = $plist->pkgbase;
+	$ENV{'PKG_PREFIX'} = $plist->localbase;
 
 	my $interrupted;
 	my $handler = sub {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.37 2007/05/02 15:05:29 espie Exp $
+# $OpenBSD: Delete.pm,v 1.38 2007/05/02 15:17:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -161,7 +161,7 @@ sub delete_plist
 	$state->{pkgname} = $pkgname;
 	my $dir = installed_info($pkgname);
 	$state->{dir} = $dir;
-	$ENV{'PKG_PREFIX'} = $plist->pkgbase;
+	$ENV{'PKG_PREFIX'} = $plist->localbase;
 	if ($plist->has(REQUIRE)) {
 		$plist->get(REQUIRE)->delete($state);
 	}
