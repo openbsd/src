@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.9 2006/06/23 23:26:20 brad Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.10 2007/05/02 17:01:22 deanna Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@
 #define HDA_OUTPAY	0x004	/* 2 */
 #define HDA_INPAY	0x006	/* 2 */
 #define HDA_GCTL	0x008	/* 4 */
-#define		HDA_GCTL_UNSOL	0x00000080
+#define		HDA_GCTL_UNSOL	0x00000100
 #define		HDA_GCTL_FCNTRL	0x00000002
 #define		HDA_GCTL_CRST	0x00000001
 #define HDA_WAKEEN	0x00c	/* 2 */
@@ -342,7 +342,7 @@
 #define		CORB_UNSOL_ENABLE	0x80
 #define		CORB_UNSOL_TAG(x)	(x & 0x3f)
 #define CORB_GET_PIN_SENSE		0xf09
-#define		CORB_PS_PRESENSE	0x80000000
+#define		CORB_PS_PRESENCE	0x80000000
 #define		CORB_PS_IMPEDANCE(x)	(x & 0x7fffffff)
 #define CORB_EXECUTE_PIN_SENSE		0x709
 #define		CORB_PS_RIGHT		0x1
@@ -449,7 +449,9 @@ typedef uint32_t corb_entry_t;
 typedef struct {
 	uint32_t resp;
 	uint32_t resp_ex;
-#define RIRB_UNSOLICITED_RESPONSE	(1 << 4)
+#define RIRB_UNSOL_TAG(resp)   ((resp) >> 26)
+#define RIRB_RESP_UNSOL                (1 << 4)
+#define RIRB_RESP_CODEC(ex)    ((ex) & 0xf)
 } __packed rirb_entry_t;
 
 
@@ -505,9 +507,10 @@ typedef struct {
 #define MI_TARGET_CONNLIST	0x101
 #define MI_TARGET_PINDIR	0x102 /* for bidirectional pin */
 #define MI_TARGET_PINBOOST	0x103 /* for headphone pin */
-#define MI_TARGET_DAC		0x104
-#define MI_TARGET_ADC		0x105
-#define MI_TARGET_VOLUME	0x106
+#define MI_TARGET_PINCTRL	0x104 /* for enabling/disabling pins */
+#define MI_TARGET_DAC		0x105
+#define MI_TARGET_ADC		0x106
+#define MI_TARGET_VOLUME	0x107
 } mixer_item_t;
 
 #define VALID_WIDGET_NID(nid, codec)	(nid == (codec)->audiofunc || \
@@ -532,6 +535,7 @@ typedef struct codec_t {
 	int (*mixer_delete)(struct codec_t *);
 	int (*set_port)(struct codec_t *, mixer_ctrl_t *);
 	int (*get_port)(struct codec_t *, mixer_ctrl_t *);
+	int (*unsol_event)(struct codec_t *, int);
 
 	struct azalia_t *az;
 	uint32_t vid;		/* codec vendor/device ID */
@@ -556,6 +560,8 @@ typedef struct codec_t {
 	struct audio_format* formats;
 	int nformats;
 	struct audio_encoding_set *encodings;
+
+	uint32_t *extra;
 } codec_t;
 
 
