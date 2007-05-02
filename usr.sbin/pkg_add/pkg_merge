@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# Copyright (c) 2005 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 # 
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 use strict;
+use warnings;
 use OpenBSD::PackageLocator;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackingList;
@@ -74,7 +75,7 @@ sub copy_over
 		$wrarc->destdir($pkg->{dir});
 		my $e = $wrarc->prepare($self->{name});
 		$e->{name} = "$prefix/".$e->{name};
-		$e->write();
+		$e->write;
 	}
 }
 
@@ -150,7 +151,7 @@ my $wrarc = OpenBSD::Ustar->new($outfh, ".");
 for my $pkgname (@ARGV) {
 	my $true_package = OpenBSD::PackageLocator->find($pkgname);
 	die "No such package $pkgname" unless $true_package;
-	my $dir = $true_package->info();
+	my $dir = $true_package->info;
 	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
 
 	my $in = {
@@ -245,5 +246,5 @@ while(1) {
 		}
 	}
 }
-$wrarc->close();
+$wrarc->close;
 print "Shared $total_files files for $total_size bytes\n" if $opt_v;

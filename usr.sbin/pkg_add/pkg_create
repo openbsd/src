@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.84 2007/05/01 18:46:02 espie Exp $
+# $OpenBSD: pkg_create,v 1.85 2007/05/02 13:59:19 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -38,14 +38,14 @@ sub create_package
 
 	$self->archive($arc, $base);
 	if ($verbose) {
-		$self->comment_create_package();
+		$self->comment_create_package;
 	}
 }
 
 sub pretend_to_archive
 {
 	my ($self, $arc, $base) = @_;
-	$self->comment_create_package();
+	$self->comment_create_package;
 }
 
 sub archive {}
@@ -56,8 +56,8 @@ sub print_file {}
 sub avert_duplicates_and_other_checks
 {
 	my ($self, $allfiles) = @_;
-	return unless $self->NoDuplicateNames();
-	my $n = $self->fullname();
+	return unless $self->NoDuplicateNames;
+	my $n = $self->fullname;
 	if (defined $allfiles->{$n}) {
 		print STDERR "Error in packing-list: duplicate item $n\n";
 		$main::errors++;
@@ -130,24 +130,24 @@ sub prepare_for_archival
 	my ($self, $arc) = @_;
 
 	my $o = $arc->prepare_long($self);
-	if (!defined $self->{owner} && !$o->isSymLink()) {
+	if (!defined $self->{owner} && !$o->isSymLink) {
 	    if ($o->{uname} ne 'root' && $o->{uname} ne 'bin') {
 		    print STDERR "Error: no \@owner for ",
-			$self->fullname(), " (", $o->{uname}, ")\n";
+			$self->fullname, " (", $o->{uname}, ")\n";
 		    $main::errors++;
 	    }
 	}
-	if (!defined $self->{group} && !$o->isSymLink()) {
+	if (!defined $self->{group} && !$o->isSymLink) {
 	    if ($o->{gname} ne 'bin' && $o->{gname} ne 'wheel') {
 		    print STDERR "Warning: no \@group for ",
-			$self->fullname(), " (", $o->{gname}, ")\n";
+			$self->fullname, " (", $o->{gname}, ")\n";
 #			$main::errors++;
 	    }
 	}
-	if (!defined $self->{mode} && $o->isFile()) {
+	if (!defined $self->{mode} && $o->isFile) {
 	    if (($o->{mode} & (S_ISUID | S_ISGID | S_IWOTH)) != 0) {
 		    print STDERR "Error: weird mode for ", 
-			$self->fullname(), ": ", 
+			$self->fullname, ": ", 
 			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)), "\n";
 		    $main::errors++;
 	    }
@@ -210,7 +210,7 @@ sub pretend_to_archive
 {
 	my ($self, $arc, $base) = @_;
 	$arc->destdir($base."/".$self->{name});
-	$self->comment_create_package();
+	$self->comment_create_package;
 }
 
 sub comment_create_package
@@ -227,7 +227,7 @@ sub archive
 
 	my $o = $self->prepare_for_archival($arc);
 
-	$o->write() unless $main::errors;
+	$o->write unless $main::errors;
 }
 
 sub pretend_to_archive
@@ -235,7 +235,7 @@ sub pretend_to_archive
 	my ($self, $arc, $base) = @_;
 
 	$self->prepare_for_archival($arc);
-	$self->comment_create_package();
+	$self->comment_create_package;
 }
 
 sub comment_create_package
@@ -247,19 +247,19 @@ sub comment_create_package
 sub print_file
 {
 	my ($item) = @_;
-	print '@', $item->keyword(), " ", $item->fullname(), "\n";
+	print '@', $item->keyword, " ", $item->fullname, "\n";
 }
 
 sub makesum_plist
 {
 	my ($self, $plist, $base, $stash, $infodir) = @_;
-	$self->makesum_plist_filename($plist, $base, $self->fullname(), $stash);
+	$self->makesum_plist_filename($plist, $base, $self->fullname, $stash);
 }
 
 sub verify_checksum
 {
 	my ($self, $base, $stash, $infodir) = @_;
-	$self->verify_checksum_filename($base, $self->fullname(), $stash);
+	$self->verify_checksum_filename($base, $self->fullname, $stash);
 }
 
 package OpenBSD::PackingElement::InfoFile;
@@ -267,7 +267,7 @@ sub makesum_plist
 {
 	my ($self, $plist, $base, $stash, $infodir) = @_;
 	$self->SUPER::makesum_plist($plist, $base, $stash);
-	my $fname = $self->fullname();
+	my $fname = $self->fullname;
 	for (my $i = 1; ; $i++) {
 		if (-e "$base/$fname-$i") {
 			my $e = OpenBSD::PackingElement::File->add($plist, $self->{name}."-".$i);
@@ -604,7 +604,7 @@ if (defined $opt_q) {
 }
 my $wname;
 if ($regen_package) {
-	$wname = $plist->pkgname().".tgz";
+	$wname = $plist->pkgname.".tgz";
 } else {
 	$plist->tofile($infodir.CONTENTS) or Fatal "Can't write packing list";
 	$wname = $ARGV[0];
@@ -631,8 +631,7 @@ if ($opt_n) {
 	my $wrarc = OpenBSD::Ustar->new($fh, $infodir);
 
 	$plist->create_package($wrarc, $base, $opt_v);
-	$wrarc->pad();
-	close($fh);
+	$wrarc->close;
 	if ($errors) {
 		unlink($wname);
 		exit(1);

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.44 2007/05/01 18:22:20 espie Exp $
+# $OpenBSD: pkg_info,v 1.45 2007/05/02 13:59:19 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -45,15 +45,15 @@ sub dump_file
 {
 	my ($item, $opt_K) = @_;
 	if ($opt_K) {
-		print '@', $item->keyword(), " ";
+		print '@', $item->keyword, " ";
 	}
-	print $item->fullname(), "\n";
+	print $item->fullname, "\n";
 }
 
 sub hunt_file
 {
 	my ($item, $h, $pkgname, $l) = @_;
-	my $fname = $item->fullname();
+	my $fname = $item->fullname;
 	if (defined $h->{$fname}) {
 		push(@{$h->{$fname}}, $pkgname);
 		push(@$l, $pkgname);
@@ -90,8 +90,8 @@ sub find_pkg
 	$pkg = OpenBSD::PackageLocator->find($pkgname);
 	if (defined $pkg) {
 		&$code($pkgname, $pkg);
-		$pkg->close_now();
-		$pkg->wipe_info();
+		$pkg->close_now;
+		$pkg->wipe_info;
 	}
 }
 
@@ -220,7 +220,7 @@ sub print_info
 	if ($opt_I) {
 		my $l = 20 - length($pkg);
 		$l = 1 if $l <= 0;
-		print $pkg, " "x$l, get_comment($handle->info()), "\n";
+		print $pkg, " "x$l, get_comment($handle->info), "\n";
 	} else {
 		if ($terse) {
 			print $opt_l, $pkg, "\n" unless $opt_q;
@@ -229,42 +229,42 @@ sub print_info
 		}
 		if ($opt_c) {
 			print $opt_l, "Comment:\n" unless $opt_q;
-			print get_comment($handle->info()), "\n";
+			print get_comment($handle->info), "\n";
 			print "\n";
 		}
-		if ($opt_R && -f $handle->info().REQUIRED_BY) {
+		if ($opt_R && -f $handle->info.REQUIRED_BY) {
 			print $opt_l, "Required by:\n" unless $opt_q;
-			printfile($handle->info().REQUIRED_BY);
+			printfile($handle->info.REQUIRED_BY);
 			print "\n";
 		}
 		if ($opt_d) {
 			print $opt_l, "Description:\n" unless $opt_q;
-			print_description($handle->info());
+			print_description($handle->info);
 			print "\n";
 		}
-		if ($opt_M && -f $handle->info().DISPLAY) {
+		if ($opt_M && -f $handle->info.DISPLAY) {
 			print $opt_l, "Install notice:\n" unless $opt_q;
-			printfile($handle->info().DISPLAY);
+			printfile($handle->info.DISPLAY);
 			print "\n";
 		}
-		if ($opt_U && -f $handle->info().UNDISPLAY) {
+		if ($opt_U && -f $handle->info.UNDISPLAY) {
 			print $opt_l, "Deinstall notice:\n" unless $opt_q;
-			printfile($handle->info().UNDISPLAY);
+			printfile($handle->info.UNDISPLAY);
 			print "\n";
 		}
-		if ($opt_i && -f $handle->info().INSTALL) {
+		if ($opt_i && -f $handle->info.INSTALL) {
 			print $opt_l, "Install script:\n" unless $opt_q;
-			printfile($handle->info().INSTALL);
+			printfile($handle->info.INSTALL);
 			print "\n";
 		}
-		if ($opt_k && -f $handle->info().DEINSTALL) {
+		if ($opt_k && -f $handle->info.DEINSTALL) {
 			print $opt_l, "De-Install script:\n" unless $opt_q;
-			printfile($handle->info().DEINSTALL, \*STDOUT);
+			printfile($handle->info.DEINSTALL, \*STDOUT);
 			print "\n";
 		}
-		if ($opt_r && -f $handle->info().REQUIRE) {
+		if ($opt_r && -f $handle->info.REQUIRE) {
 			print $opt_l, "Require script:\n" unless $opt_q;
-			printfile($handle->info().REQUIRE, \*STDOUT);
+			printfile($handle->info.REQUIRE, \*STDOUT);
 			print "\n";
 		}
 		my $plist;
@@ -272,7 +272,7 @@ sub print_info
 			require OpenBSD::PackingList;
 
 			if ($opt_f || $opt_s || $opt_S) {
-				$plist = $handle->plist();
+				$plist = $handle->plist;
 			} else {
 				$plist = $handle->plist(\&OpenBSD::PackingList::FilesOnly);
 			}
@@ -293,7 +293,7 @@ sub print_info
 		}
 		if ($opt_S) {
 			print "Signature: " unless $opt_q;
-			print $plist->signature(), "\n";
+			print $plist->signature, "\n";
 		}
 		if ($opt_P) {
 			require OpenBSD::PackingList;

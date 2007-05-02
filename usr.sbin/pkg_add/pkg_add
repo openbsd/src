@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.228 2007/05/01 18:22:20 espie Exp $
+# $OpenBSD: pkg_add,v 1.229 2007/05/02 13:59:19 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -46,7 +46,7 @@ our $not;
 sub can_install($$$)
 {
 	my ($plist, $state, $handle) = @_;
-	my $pkgname = $plist->pkgname();
+	my $pkgname = $plist->pkgname;
 	$plist->{replacing} = [];
 	my @conflicts = OpenBSD::PkgCfl::find_all($plist, $state);
 	return 1 if @conflicts == 0;
@@ -55,7 +55,7 @@ sub can_install($$$)
 
 	if ((keys %conflicts) == 1 && (keys %conflicts)[0] eq $pkgname) {
 		if (!$state->{forced}->{installed} &&
-		    !$plist->has_new_sig($state) && !$plist->uses_old_libs()) {
+		    !$plist->has_new_sig($state) && !$plist->uses_old_libs) {
 			print "Already installed: $pkgname\n";
 			return 1;
 		}
@@ -72,11 +72,11 @@ sub can_install($$$)
 	}
 
 	if (!$state->{replace}) {
-		if (@conflicts == 1 && is_installed($plist->pkgname()) &&
+		if (@conflicts == 1 && is_installed($plist->pkgname) &&
 		    !$plist->has_new_sig($state) && 
-		    !$plist->uses_old_libs()) {
+		    !$plist->uses_old_libs) {
 			print "Not reinstalling $pkgname\n" if $state->{verbose};
-			OpenBSD::SharedLibs::add_package_libs($plist->pkgname());
+			OpenBSD::SharedLibs::add_package_libs($plist->pkgname);
 			$state->{installed}->{$pkgname} = 1;
 			return;
 		}
@@ -97,10 +97,10 @@ sub can_install($$$)
 
 	require OpenBSD::Replace;
 
-	if (is_installed($plist->pkgname()) && !$state->{forced}->{installed}) {
-		if (!$plist->has_new_sig($state) && !$plist->uses_old_libs()) {
+	if (is_installed($plist->pkgname) && !$state->{forced}->{installed}) {
+		if (!$plist->has_new_sig($state) && !$plist->uses_old_libs) {
 			    print "Not reinstalling $pkgname\n" if $state->{verbose};
-			    OpenBSD::SharedLibs::add_package_libs($plist->pkgname());
+			    OpenBSD::SharedLibs::add_package_libs($plist->pkgname);
 			    $state->{installed}->{$pkgname} = 1;
 			    return;
 			}
@@ -158,18 +158,18 @@ sub pre_add($$)
 	if ($handle->{finished}) {
 		return;
 	}
-    	my $plist = $handle->{plist} = $handle->plist();
+    	my $plist = $handle->{plist} = $handle->plist;
 	unless (defined $plist) {
 		print "Can't find CONTENTS from $pkg\n";
 		$errors++;
 		return;
 	}
-	if ($plist->pkgbase() ne $state->{localbase}) {
-		print "Localbase mismatch: package has: ", $plist->pkgbase(), " , user wants: ", $state->{localbase}, "\n";
+	if ($plist->pkgbase ne $state->{localbase}) {
+		print "Localbase mismatch: package has: ", $plist->pkgbase, " , user wants: ", $state->{localbase}, "\n";
 		$errors++;
 		return;
 	}
-	my $pkgname = $handle->{pkgname} = $plist->pkgname();
+	my $pkgname = $handle->{pkgname} = $plist->pkgname;
 	if ($pkg ne '-') {
 		if (!defined $pkgname or 
 		    OpenBSD::PackageName::url2pkgname($pkg) ne $pkgname) {
@@ -187,8 +187,8 @@ sub pre_add($$)
 	if (can_install($plist, $state, $handle)) {
 		return $handle;
 	} else {
-		$handle->close_with_client_error();
-		$handle->wipe_info();
+		$handle->close_with_client_error;
+		$handle->wipe_info;
 		delete $handle->{plist};
 		$handle->{finished} = 1;
 		if ($state->{forced}->{kitchensink}) {
@@ -210,7 +210,7 @@ sub thunderbird_special_case
 {
 	my $plist = shift;
 	for my $item (@{$plist->{items}}) {
-		next unless $item->IsFile();
+		next unless $item->IsFile;
 		my $t = $item->{tempname};
 		if (defined $t && $t =~ s/^(.*\/mozilla-thunderbird)\/extensions(.*)\/pkg\./$1\/pkg\./) {
 			rename $item->{tempname}, $t;
@@ -224,12 +224,12 @@ sub failed_install
 {
 	my ($handle, $not, $interrupted) = @_;
 	my $plist = $handle->{plist};
-	my $pkgname = $plist->pkgname();
+	my $pkgname = $plist->pkgname;
 	my $msg = "Installation of $pkgname failed";
 	if ($interrupted) {
 		$msg ="Caught SIG$interrupted. $msg";
 	}
-	OpenBSD::Add::borked_installation($plist, $handle->info(), $not, $msg);
+	OpenBSD::Add::borked_installation($plist, $handle->info, $not, $msg);
 }
 
 sub really_add($$)
@@ -237,8 +237,8 @@ sub really_add($$)
 	my ($handle, $state) = @_;
 	my $destdir = $state->{destdir};
 	my $plist = $handle->{plist};
-	my $dir = $handle->info();
-	my $pkgname = $plist->pkgname();
+	my $dir = $handle->info;
+	my $pkgname = $plist->pkgname;
 	$state->{archive} = $handle;
 	$plist->{dir} = $dir;
 	$state->{dir} = $plist->{dir};
@@ -249,7 +249,7 @@ sub really_add($$)
 	# are actually replacing.
 	my @toreplace = ();
 	for my $pl2 (@{$plist->{replacing}}) {
-		if (is_installed($pl2->pkgname())) {
+		if (is_installed($pl2->pkgname)) {
 			push(@toreplace, $pl2);
 		}
 	}
@@ -269,7 +269,7 @@ sub really_add($$)
 	    $header = $state->{deptree}->{$pkgname}.":".$header;
 	}
 	if (@toreplace) {
-		$header.=" (replacing ". join(', ', (map {$_->pkgname()}@toreplace)). ")";
+		$header.=" (replacing ". join(', ', (map {$_->pkgname} @toreplace)). ")";
 	}
 	if (!OpenBSD::ProgressMeter::set_header($header)) {
 	    print $state->{not} ? "Pretending to add " : "Adding ";
@@ -286,7 +286,7 @@ sub really_add($$)
 		Fatal "Archive in $pkgname broken";
 	}
 
-	$ENV{'PKG_PREFIX'} = $plist->pkgbase();
+	$ENV{'PKG_PREFIX'} = $plist->pkgbase;
 
 	my $interrupted;
 	my $handler = sub {
@@ -329,10 +329,10 @@ sub really_add($$)
 		}
 
 		for my $op (@toreplace) {
-			OpenBSD::ProgressMeter::set_header($op->pkgname()." (deleting)");
-			$state->set_pkgname($op->pkgname());
+			OpenBSD::ProgressMeter::set_header($op->pkgname." (deleting)");
+			$state->set_pkgname($op->pkgname);
 			if (OpenBSD::PkgSpec::match("mozilla-thunderbird-<=1.0.2p0",
-			    ($op->pkgname()))) {
+			    $op->pkgname)) {
 			    	thunderbird_special_case($plist);
 			}
 			require OpenBSD::Delete;
@@ -343,12 +343,12 @@ sub really_add($$)
 				OpenBSD::Add::borked_installation($plist, $dir, 
 				    $state->{not},
 				    "Deinstallation of ", 
-				    $op->pkgname(), " failed");
+				    $op->pkgname, " failed");
 			};
 
-			delete_installed($op->pkgname());
+			delete_installed($op->pkgname);
 			if (defined $state->{updatedepends}) {
-				delete $state->{updatedepends}->{$op->pkgname()};
+				delete $state->{updatedepends}->{$op->pkgname};
 			}
 			OpenBSD::PkgCfl::unregister($op, $state);
 		}
@@ -403,7 +403,7 @@ sub really_add($$)
 	}
 
 	try { 
-		$handle->finish_and_close(); }
+		$handle->finish_and_close; }
 	catchall {
 		Warn $_;
 		$errors++;
@@ -424,7 +424,7 @@ sub really_add($$)
 		failed_install($handle, $state->{not}, $interrupted);
 	}
 	OpenBSD::SharedLibs::add_plist_libs($plist);
-	$plist->to_cache();
+	$plist->to_cache;
 	my $dest = installed_info($pkgname);
 	OpenBSD::Add::register_installation($dir, $dest, $plist);
 	if (defined $handle->{solved_dependencies}) {
@@ -446,7 +446,7 @@ sub really_add($$)
 	for my $op (@toreplace) {
 		require OpenBSD::RequiredBy;
 		require OpenBSD::Replace;
-		my $opkgname = $op->pkgname();
+		my $opkgname = $op->pkgname;
 
 		print "Adjusting dependencies for $pkgname/$opkgname\n" 
 		    if $state->{beverbose};
@@ -505,7 +505,7 @@ sub install_package
 	}
 
 	if (defined $state->{installed}->{$handle->{pkgname}}) {
-		$handle->close_now();
+		$handle->close_now;
 		return ();
 	}
 
@@ -518,20 +518,20 @@ sub install_package
 			    return (@deps, $pkg);
 		    }
 	    } else {
-		    $plist = $handle->{plist} = $handle->plist();
+		    $plist = $handle->{plist} = $handle->plist;
 	    }
 	}
 
-	if (is_installed($plist->pkgname()) && !$state->{forced}->{installed}) {
+	if (is_installed($plist->pkgname) && !$state->{forced}->{installed}) {
 		if ($state->{replace}) {
-			if (!$plist->has_new_sig($state) && !$plist->uses_old_libs()) {
-				OpenBSD::SharedLibs::add_package_libs($plist->pkgname());
+			if (!$plist->has_new_sig($state) && !$plist->uses_old_libs) {
+				OpenBSD::SharedLibs::add_package_libs($plist->pkgname);
 				$state->{installed}->{$handle->{pkgname}} = 1;
-				$handle->close_now();
+				$handle->close_now;
 				return ();
 			}
 		} else {
-			$handle->close_now();
+			$handle->close_now;
 			return ();
 		}
 	}
@@ -554,7 +554,7 @@ sub install_package
 	for my $dep (keys %{$handle->{solved_dependencies}}) {
 		next if is_installed($dep);
 		print "Can't install $pkg: can't resolve $dep\n";
-		$handle->close_now();
+		$handle->close_now;
 		$bad++;
 		return ();
 	}
@@ -565,7 +565,7 @@ sub install_package
 	}
 	my $okay = 1;
 	for my $dep (@{$plist->{libdepend}}) {
-		return () if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
+		return () if defined $dep->{name} and $dep->{name} ne $plist->pkgname;
 		for my $spec (split(/,/, $dep->{libspec})) {
 		    if (!OpenBSD::Dependencies::lookup_library($state, $spec, $plist,
 			$handle->{solved_dependencies}, 0)) {
@@ -585,14 +585,14 @@ sub install_package
 		}
 	}
 	if (!$okay) {
-		$handle->close_now();
+		$handle->close_now;
 		if (!$forced{libdepends}) {
 			$bad++;
 			return ();
 		}
 	}
 	really_add($handle, $state);
-	$handle->wipe_info();
+	$handle->wipe_info;
 	delete $handle->{plist};
 	$state->{installed}->{$handle->{pkgname}} = 1;
 	return ();
@@ -844,7 +844,7 @@ sub uses_old_libs
 	my $plist = shift;
 	require OpenBSD::RequiredBy;
 
-	my $d = OpenBSD::Requiring->new($plist->pkgname());
+	my $d = OpenBSD::Requiring->new($plist->pkgname);
 	return  grep {/^\.libs\-/} $d->list();
 }
 
@@ -852,9 +852,9 @@ sub has_new_sig
 {
 	my ($plist, $state) = @_;
 	if (!defined $plist->{new_sig}) {
-		my $n = OpenBSD::PackingList->from_installation($plist->pkgname())->signature();
-		my $o = $plist->signature();
-		print "Comparing full signature for ", $plist->pkgname(), " \"$o\" vs. \"$n\": ", $n eq $o ? "equal\n" : "different\n" 
+		my $n = OpenBSD::PackingList->from_installation($plist->pkgname)->signature;
+		my $o = $plist->signature;
+		print "Comparing full signature for ", $plist->pkgname, " \"$o\" vs. \"$n\": ", $n eq $o ? "equal\n" : "different\n" 
 		    if $state->{very_verbose};
 		$plist->{new_sig} = $n ne $o;
 	}
