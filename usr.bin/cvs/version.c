@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.24 2007/02/22 06:42:10 otto Exp $	*/
+/*	$OpenBSD: version.c,v 1.25 2007/05/02 16:26:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -32,6 +32,9 @@ struct cvs_cmd cvs_cmd_version = {
 int
 cvs_version(int argc, char **argv)
 {
+	if (argc > 1)
+		fatal("version does not take any extra arguments");
+
 	if (current_cvsroot != NULL &&
 	    current_cvsroot->cr_method != CVS_METHOD_LOCAL)
 		cvs_printf("Client: ");
