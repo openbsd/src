@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.60 2007/05/02 15:05:30 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.61 2007/05/02 15:13:05 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -73,7 +73,7 @@ sub read
 			local $_ = shift;
 			return if m/^\s*$/;
 			chomp;
-			OpenBSD::PackingElement::Factory($_, $plist);
+			OpenBSD::PackingElement->create($_, $plist);
 			if ($plist->{need_modules}) {
 				close($fh);
 				open($fh, '<', '/dev/null');

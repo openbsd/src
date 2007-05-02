@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.99 2007/05/02 15:05:30 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.100 2007/05/02 15:13:04 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -23,23 +23,23 @@ use OpenBSD::PackageInfo;
 require 5.008_000;
 
 # This is the basic class, which is mostly abstract, except for
-# and Factory and register_with_factory.
+# create and register_with_factory.
 # It does provide base methods for stuff under it, though.
 package OpenBSD::PackingElement;
 our %keyword;
 
-sub Factory
+sub create
 {
-	local $_ = shift;
-	if (m/^\@(\S+)\s*/) {
+	my ($class, $line, $plist) = @_;
+	if ($line =~ m/^\@(\S+)\s*(.*)/) {
 		if (defined $keyword{$1}) {
-			$keyword{$1}->add(@_, $');
+			$keyword{$1}->add($plist, $2);
 		} else {
-			print STDERR "Unknown element: $_\n";
-			exit(1);
+			print STDERR "Unknown element: $line\n";
+			exit 1 ;
 		}
 	} else {
-		OpenBSD::PackingElement::File->add(@_, $_);
+		OpenBSD::PackingElement::File->add($plist, $line);
 	}
 }
 
