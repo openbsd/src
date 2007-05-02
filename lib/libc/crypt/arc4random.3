@@ -1,4 +1,4 @@
-.\" $OpenBSD: arc4random.3,v 1.19 2005/07/17 08:50:55 jaredy Exp $
+.\" $OpenBSD: arc4random.3,v 1.20 2007/05/02 09:20:59 pyr Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -87,6 +87,9 @@ before using
 since
 .Fn arc4random
 automatically initializes itself.
+Sh RETURN VALUES
+These functions are always successful, and no return value is
+reserved to indicate an error.
 .Sh SEE ALSO
 .Xr rand 3 ,
 .Xr rand48 3 ,

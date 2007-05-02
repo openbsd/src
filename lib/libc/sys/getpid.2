@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpid.2,v 1.9 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: getpid.2,v 1.10 2007/05/02 09:20:59 pyr Exp $
 .\"	$NetBSD: getpid.2,v 1.5 1995/02/27 12:33:12 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -55,13 +55,9 @@ instead.
 .Pp
 .Fn getppid
 returns the process ID of the parent of the calling process.
-.Sh ERRORS
-The
-.Fn getpid
-and
-.Fn getppid
-functions are always successful, and no return value is reserved to
-indicate an error.
+.Sh RETURN VALUES
+These functions are always successful, and no return value is
+reserved to indicate an error.
 .Sh SEE ALSO
 .Xr gethostid 3
 .Sh STANDARDS
