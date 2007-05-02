@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.100 2007/05/02 15:13:04 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.101 2007/05/02 15:27:49 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -123,7 +123,7 @@ sub fullstring
 	}
 }
 
-sub stringize($)
+sub stringize
 {
 	return $_[0]->{name};
 }
@@ -164,7 +164,7 @@ sub compute_fullname
 	}
 }
 
-sub fullname($)
+sub fullname
 {
 	my $self = $_[0];
 	my $fullname = $self->{name};
@@ -471,20 +471,20 @@ __PACKAGE__->register_with_factory;
 
 sub add
 {
-	my ($class, $plist, @args) = @_;
+	my ($class, $plist, $args) = @_;
 
-	if ($args[0] =~ m/^\$OpenBSD(.*)\$\s*$/) {
-		return OpenBSD::PackingElement::CVSTag->add($plist, @args);
-	} elsif ($args[0] =~ m/^MD5:\s*/) {
+	if ($args =~ m/^\$OpenBSD.*\$\s*$/) {
+		return OpenBSD::PackingElement::CVSTag->add($plist, $args);
+	} elsif ($args =~ m/^MD5:\s*/) {
 		$plist->{state}->{lastfile}->add_md5(pack('H*', $'));
 		return;
-	} elsif ($args[0] =~ m/^subdir\=(.*?)\s+cdrom\=(.*?)\s+ftp\=(.*?)\s*$/) {
+	} elsif ($args =~ m/^subdir\=(.*?)\s+cdrom\=(.*?)\s+ftp\=(.*?)\s*$/) {
 		return OpenBSD::PackingElement::ExtraInfo->add($plist, $1, $2, $3);
-	} elsif ($args[0] eq 'no checksum') {
+	} elsif ($args eq 'no checksum') {
 		$plist->{state}->{nochecksum} = 1;
 		return;
 	} else {
-		return $class->SUPER::add($plist, @args);
+		return $class->SUPER::add($plist, $args);
 	}
 }
 
@@ -502,9 +502,9 @@ __PACKAGE__->register_with_factory('md5');
 
 sub add
 {
-	my ($class, $plist, @args) = @_;
+	my ($class, $plist, $args) = @_;
 
-	$plist->{state}->{lastfile}->add_md5(pack('H*', $args[0]));
+	$plist->{state}->{lastfile}->add_md5(pack('H*', $args));
 	return;
 }
 
@@ -515,9 +515,9 @@ __PACKAGE__->register_with_factory('symlink');
 
 sub add
 {
-	my ($class, $plist, @args) = @_;
+	my ($class, $plist, $args) = @_;
 
-	$plist->{state}->{lastfile}->make_symlink(@args);
+	$plist->{state}->{lastfile}->make_symlink($args);
 	return;
 }
 
@@ -528,9 +528,9 @@ __PACKAGE__->register_with_factory('link');
 
 sub add
 {
-	my ($class, $plist, @args) = @_;
+	my ($class, $plist, $args) = @_;
 
-	$plist->{state}->{lastfile}->make_hardlink(@args);
+	$plist->{state}->{lastfile}->make_hardlink($args);
 	return;
 }
 
@@ -541,8 +541,8 @@ __PACKAGE__->register_with_factory('temp');
 
 sub add
 {
-	my ($class, $plist, @args) = @_;
-	$plist->{state}->{lastfile}->set_tempname(@args);
+	my ($class, $plist, $args) = @_;
+	$plist->{state}->{lastfile}->set_tempname($args);
 	return;
 }
 
@@ -553,9 +553,9 @@ __PACKAGE__->register_with_factory('size');
 
 sub add
 {
-	my ($class, $plist, @args) = @_;
+	my ($class, $plist, $args) = @_;
 
-	$plist->{state}->{lastfile}->add_size($args[0]);
+	$plist->{state}->{lastfile}->add_size($args);
 	return;
 }
 
@@ -567,13 +567,13 @@ __PACKAGE__->register_with_factory;
 
 sub new
 {
-	my ($class, @args) = @_;
-	if ($args[0] eq 'no-default-conflict') {
+	my ($class, $args) = @_;
+	if ($args eq 'no-default-conflict') {
 		return OpenBSD::PackingElement::NoDefaultConflict->new;
-	} elsif ($args[0] eq 'manual-installation') {
+	} elsif ($args eq 'manual-installation') {
 		return OpenBSD::PackingElement::ManualInstallation->new;
 	} else {
-		die "Unknown option: $args[0]";
+		die "Unknown option: $args";
 	}
 }
 
@@ -712,11 +712,11 @@ my $installed_modules = {};
 
 sub add
 {
-	my ($class, $plist, @args) = @_;
+	my ($class, $plist, $args) = @_;
 
 	require OpenBSD::PkgSpec;
 
-	my @candidates = OpenBSD::PkgSpec::match($args[0], installed_packages());
+	my @candidates = OpenBSD::PkgSpec::match($args, installed_packages());
 	if (@candidates == 1) {
 		if (!defined $installed_modules->{$candidates[0]}) {
 			# pull in the module right here and now;
@@ -729,10 +729,10 @@ sub add
 	} elsif (@candidates == 0) {
 		$plist->{need_modules} = 1;
 	} else {
-		die "Ambiguous module: ", $args[0];
+		die "Ambiguous module: ", $args;
 	}
 		
-	$class->SUPER::add($plist, @args);
+	$class->SUPER::add($plist, $args);
 }
 
 package OpenBSD::PackingElement::NewAuth;
@@ -1314,13 +1314,13 @@ sub new
 
 sub add
 {
-	my ($o, $plist, @args) = @_;
+	my ($o, $plist, $args) = @_;
 	my $keyword = $$o;
 	if (!$warned->{$keyword}) {
-		print STDERR "Warning: obsolete construct: \@$keyword @args\n";
+		print STDERR "Warning: obsolete construct: \@$keyword $args\n";
 		$warned->{$keyword} = 1;
 	}
-	my $o2 = OpenBSD::PackingElement::Old->new($keyword, @args);
+	my $o2 = OpenBSD::PackingElement::Old->new($keyword, $args);
 	$o2->add_object($plist);
 	$plist->{deprecated} = 1;
 }
