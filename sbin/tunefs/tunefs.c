@@ -91,13 +91,7 @@ static	void	usage(void);
 int
 main(int argc, char *argv[])
 {
-#define	OPTSTRINGBASE	"AFNe:g:h:m:o:"
-#ifdef TUNEFS_SOFTDEP
-	int		softdep;
-#define	OPTSTRING	OPTSTRINGBASE ## "n:"
-#else
-#define	OPTSTRING	OPTSTRINGBASE
-#endif
+#define	OPTSTRING	"AFNe:g:h:m:o:"
 	int		i, ch, Aflag, Fflag, Nflag, openflags;
 	const char	*special, *chg[2];
 	char		device[MAXPATHLEN];
@@ -107,9 +101,6 @@ main(int argc, char *argv[])
 	Aflag = Fflag = Nflag = 0;
 	maxbpg = minfree = optim = -1;
 	avgfilesize = avgfpdir = -1;
-#ifdef TUNEFS_SOFTDEP
-	softdep = -1;
-#endif
 	chg[FS_OPTSPACE] = "space";
 	chg[FS_OPTTIME] = "time";
 
@@ -149,19 +140,6 @@ main(int argc, char *argv[])
 			minfree = getnum(optarg,
 			    "minimum percentage of free space", 0, 99);
 			break;
-
-#ifdef TUNEFS_SOFTDEP
-		case 'n':
-			if (strcmp(optarg, "enable") == 0)
-				softdep = 1;
-			else if (strcmp(optarg, "disable") == 0)
-				softdep = 0;
-			else {
-				errx(10, "bad soft dependencies "
-					"(options are `enable' or `disable')");
-			}
-			break;
-#endif
 
 		case 'o':
 			if (strcmp(optarg, chg[FS_OPTSPACE]) == 0)
@@ -220,15 +198,6 @@ main(int argc, char *argv[])
 		    sblock.fs_optim == FS_OPTTIME)
 			warnx(OPTWARN, "space", "<", MINFREE);
 	}
-#ifdef TUNEFS_SOFTDEP
-	if (softdep == 1) {
-		sblock.fs_flags |= FS_DOSOFTDEP;
-		warnx("soft dependencies set");
-	} else if (softdep == 0) {
-		sblock.fs_flags &= ~FS_DOSOFTDEP;
-		warnx("soft dependencies cleared");
-	}
-#endif
 	if (optim != -1) {
 		if (sblock.fs_optim == optim) {
 			warnx("%s remains unchanged as %s",
@@ -261,10 +230,6 @@ main(int argc, char *argv[])
 		    sblock.fs_maxbpg);
 		fprintf(stdout, "\tminimum percentage of free space %d%%\n",
 		    sblock.fs_minfree);
-#ifdef TUNEFS_SOFTDEP
-		fprintf(stdout, "\tsoft dependencies: %s\n",
-		    (sblock.fs_flags & FS_DOSOFTDEP) ? "on" : "off");
-#endif
 		fprintf(stdout, "\toptimization preference: %s\n",
 		    chg[sblock.fs_optim]);
 		fprintf(stdout, "\taverage file size: %d\n",
@@ -312,9 +277,6 @@ usage(void)
 	fprintf(stderr, "\t-g average file size\n");
 	fprintf(stderr, "\t-h expected number of files per directory\n");
 	fprintf(stderr, "\t-m minimum percentage of free space\n");
-#ifdef TUNEFS_SOFTDEP
-	fprintf(stderr, "\t-n soft dependencies (`enable' or `disable')\n");
-#endif
 	fprintf(stderr, "\t-o optimization preference (`space' or `time')\n");
 	exit(2);
 }
