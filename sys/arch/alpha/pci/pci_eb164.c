@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb164.c,v 1.19 2006/06/15 20:08:29 brad Exp $ */
+/* $OpenBSD: pci_eb164.c,v 1.20 2007/05/02 21:50:14 martin Exp $ */
 /* $NetBSD: pci_eb164.c,v 1.27 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -338,7 +338,7 @@ dec_eb164_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 	irq = PCIIDE_COMPAT_IRQ(chan);
 #if NSIO
 	cookie = sio_intr_establish(NULL /*XXX*/, irq, IST_EDGE, IPL_BIO,
-	    func, arg, "eb164 irq");
+	    func, arg, dev->dv_xname);
 	if (cookie == NULL)
 		return (NULL);
 #endif

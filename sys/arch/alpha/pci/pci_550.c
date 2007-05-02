@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_550.c,v 1.16 2006/06/15 20:08:29 brad Exp $ */
+/* $OpenBSD: pci_550.c,v 1.17 2007/05/02 21:50:14 martin Exp $ */
 /* $NetBSD: pci_550.c,v 1.18 2000/06/29 08:58:48 mrg Exp $ */
 
 /*-
@@ -385,7 +385,7 @@ dec_550_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 	irq = PCIIDE_COMPAT_IRQ(chan);
 #if NSIO
 	cookie = sio_intr_establish(NULL /*XXX*/, irq, IST_EDGE, IPL_BIO,
-	    func, arg, "dec 550 irq");
+	    func, arg, dev->dv_xname);
 #endif
 	return (cookie);
 }

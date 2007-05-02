@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_up1000.c,v 1.11 2006/06/15 20:08:29 brad Exp $	*/
+/*	$OpenBSD: pci_up1000.c,v 1.12 2007/05/02 21:50:14 martin Exp $	*/
 /* $NetBSD: pci_up1000.c,v 1.6 2000/12/28 22:59:07 sommerfeld Exp $ */
 
 /*-
@@ -206,7 +206,7 @@ api_up1000_pciide_compat_intr_establish(void *icv, struct device *dev,
 	irq = PCIIDE_COMPAT_IRQ(chan);
 #if NSIO
 	cookie = sio_intr_establish(NULL /*XXX*/, irq, IST_EDGE, IPL_BIO,
-	    func, arg, "up 1000 irq");
+	    func, arg, dev->dv_xname);
 	if (cookie == NULL)
 		return (NULL);
 #endif
