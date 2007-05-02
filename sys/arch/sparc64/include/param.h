@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.23 2007/04/10 16:43:37 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.24 2007/05/02 14:05:39 tom Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -123,7 +123,7 @@ extern int nbpg, pgofset, pgshift;
  * 0x00000000f0100000.  It also uses some space around 0x00000000fff00000 to
  * map in device registers.  The rest is pretty much ours to play with.
  *
- * The kernel starts at KERNBASE.  Here's they layout.  We use macros to set
+ * The kernel starts at KERNBASE.  Here's the layout.  We use macros to set
  * the addresses so we can relocate everything easily.  We use 4MB locked TTEs
  * to map in the kernel text and data segments.  Any extra pages are recycled,
  * so they can potentially be double-mapped.  This shouldn't really be a
