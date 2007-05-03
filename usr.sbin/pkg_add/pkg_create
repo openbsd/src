@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.85 2007/05/02 13:59:19 espie Exp $
+# $OpenBSD: pkg_create,v 1.86 2007/05/03 12:14:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -334,6 +334,61 @@ sub deduce_name
 	return;
 }
 
+sub read_fragments
+{
+    my ($plist, $filename) = @_;
+
+    return $plist->fromfile($filename,
+	sub {
+		my ($fh, $cont) = @_;
+		local $_;
+		my (@fhstack, @namestack);
+		push(@fhstack, $fh);
+		push(@namestack, $filename);
+		while($fh = pop @fhstack) {
+			my $fname = pop @namestack;
+			GETLINE:
+			while (<$fh>) {
+				if (m/^(\!)?\%\%(.*)\%\%$/) {
+					my ($not, $frag) = ($1, $2);
+					my $def = $frag;
+					if ($frag eq 'SHARED') {
+						$def = 'SHARED_LIBS';
+						$frag = 'shared';
+					}
+					if (!defined $defines{$def}) {
+						die "Error: unknown fragment $frag";
+					} elsif ($defines{$def} == 1) {
+						next GETLINE if defined $not;
+					} elsif ($defines{$def} == 0) {
+						next GETLINE unless defined $not;
+					} else {
+						die "Incorrect define for $frag";
+					}
+					my $newname = deduce_name($fname, $frag, $not);
+					if (defined $newname) {
+						push(@fhstack, $fh);
+						push(@namestack, $fname);
+						$fname = $newname;
+						$fh = gensym;
+						open($fh, '<', $fname) or die "missing file $fname";
+					}
+					next GETLINE;
+				}
+				if (m/^(\@comment\s+\$(?:Open)BSD\$)$/) {
+					$_ = '@comment $'.'OpenBSD: '.basename($fname).',v$';
+				}
+				if (m,^\@lib\s+.*/lib[^/]+\.so\.\d+\.\d+$,) {
+					Warn "Shared library without SHARED_LIBS: $_";
+					$main::errors++;
+				}
+				&$cont(dosubst($_));
+			}
+		}
+	}
+	);
+}
+
 sub add_special_file
 {
 	my ($plist, $name, $infodir, $opt) = @_;
@@ -503,55 +558,8 @@ if ($regen_package) {
 } 
 
 for my $contentsfile (@contents) {
-    $plist->fromfile($contentsfile,
-	sub {
-		my ($fh, $cont) = @_;
-		local $_;
-		my (@fhstack, @namestack);
-		push(@fhstack, $fh);
-		push(@namestack, $contentsfile);
-		while($fh = pop @fhstack) {
-			my $fname = pop @namestack;
-			GETLINE:
-			while (<$fh>) {
-				if (m/^(\!)?\%\%(.*)\%\%$/) {
-					my ($not, $frag) = ($1, $2);
-					my $def = $frag;
-					if ($frag eq 'SHARED') {
-						$def = 'SHARED_LIBS';
-						$frag = 'shared';
-					}
-					if (!defined $defines{$def}) {
-						die "Error: unknown fragment $frag";
-					} elsif ($defines{$def} == 1) {
-						next GETLINE if defined $not;
-					} elsif ($defines{$def} == 0) {
-						next GETLINE unless defined $not;
-					} else {
-						die "Incorrect define for $frag";
-					}
-					my $newname = deduce_name($fname, $frag, $not);
-					if (defined $newname) {
-						push(@fhstack, $fh);
-						push(@namestack, $fname);
-						$fname = $newname;
-						$fh = gensym;
-						open($fh, '<', $fname) or die "missing file $fname";
-					}
-					next GETLINE;
-				}
-				if (m/^(\@comment\s+\$(?:Open)BSD\$)$/) {
-					$_ = '@comment $'.'OpenBSD: '.basename($fname).',v$';
-				}
-				if (m,^\@lib\s+.*/lib[^/]+\.so\.\d+\.\d+$,) {
-					Warn "Shared library without SHARED_LIBS: $_";
-					$main::errors++;
-				}
-				&$cont(dosubst($_));
-			}
-		}
-	}
-    ) or Fatal "Can't open packing list $contentsfile";
+    read_fragments($plist, $contentsfile) or 
+    	Fatal "Can't open packing list $contentsfile";
 }
 
 my $base = '/';
