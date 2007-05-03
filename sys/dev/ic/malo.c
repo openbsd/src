@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.66 2007/04/20 17:08:34 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.67 2007/05/03 15:06:09 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -974,6 +974,7 @@ malo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, error = 0;
+	uint8_t chan;
 
 	s = splnet();
 
@@ -1004,6 +1005,21 @@ malo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		if (error == ENETRESET)
 			error = 0;
+		break;
+	case SIOCS80211CHANNEL:
+		/* allow fast channel switching in monitor mode */
+		error = ieee80211_ioctl(ifp, cmd, data);
+		if (error == ENETRESET &&
+		    ic->ic_opmode == IEEE80211_M_MONITOR) {
+			if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+			    (IFF_UP | IFF_RUNNING)) {
+				ic->ic_bss->ni_chan = ic->ic_ibss_chan;
+				chan = ieee80211_chan2ieee(ic,
+				    ic->ic_bss->ni_chan);
+				malo_cmd_set_channel(sc, chan);
+			}
+			error = 0;
+		}
 		break;
 	default:
 		error = ieee80211_ioctl(ifp, cmd, data);
