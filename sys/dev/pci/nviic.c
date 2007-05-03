@@ -1,4 +1,4 @@
-/*	$OpenBSD: nviic.c,v 1.10 2007/05/03 01:38:15 dlg Exp $ */
+/*	$OpenBSD: nviic.c,v 1.11 2007/05/03 09:36:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -197,9 +197,7 @@ nviic_i2c_acquire_bus(void *arg, int flags)
 	if (cold || (flags & I2C_F_POLL))
 		return (0);
 
-	rw_enter_write(&nc->nc_lock);
-
-	return (0);
+	return (rw_enter(&nc->nc_lock, RW_WRITE | RW_INTR));
 }
 
 void
@@ -210,7 +208,7 @@ nviic_i2c_release_bus(void *arg, int flags)
 	if (cold || (flags & I2C_F_POLL))
 		return;
 
-	rw_exit_write(&nc->nc_lock);
+	rw_exit(&nc->nc_lock);
 }
 
 int

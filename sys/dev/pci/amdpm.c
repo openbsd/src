@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.20 2006/12/11 18:16:37 deraadt Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.21 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -56,7 +56,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/proc.h>
 #include <sys/timeout.h>
 #ifdef __HAVE_TIMECOUNTER
@@ -174,7 +174,7 @@ struct amdpm_softc {
 	struct timeout sc_rnd_ch;
 
 	struct i2c_controller sc_i2c_tag;
-	struct lock sc_i2c_lock;
+	struct rwlock sc_i2c_lock;
 	struct {
 		i2c_op_t op;
 		void *buf;
@@ -307,7 +307,7 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/* Attach I2C bus */
-	lockinit(&sc->sc_i2c_lock, PRIBIO | PCATCH, "iiclk", 0, 0);
+	rw_init(&sc->sc_i2c_lock, "iiclk");
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_acquire_bus = amdpm_i2c_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = amdpm_i2c_release_bus;
@@ -364,7 +364,7 @@ amdpm_i2c_acquire_bus(void *cookie, int flags)
 	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
 		return (0);
 
-	return (lockmgr(&sc->sc_i2c_lock, LK_EXCLUSIVE, NULL));
+	return (rw_enter(&sc->sc_i2c_lock, RW_WRITE | RW_INTR));
 }
 
 void
@@ -375,7 +375,7 @@ amdpm_i2c_release_bus(void *cookie, int flags)
 	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
 		return;
 
-	lockmgr(&sc->sc_i2c_lock, LK_RELEASE, NULL);
+	rw_exit(&sc->sc_i2c_lock);
 }
 
 int

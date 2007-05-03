@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.26 2007/04/29 05:51:51 jsg Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.27 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -24,7 +24,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/proc.h>
 
 #include <machine/bus.h>
@@ -55,7 +55,7 @@ struct piixpm_softc {
 	int			sc_poll;
 
 	struct i2c_controller	sc_i2c_tag;
-	struct lock		sc_i2c_lock;
+	struct rwlock		sc_i2c_lock;
 	struct {
 		i2c_op_t     op;
 		void *       buf;
@@ -160,7 +160,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/* Attach I2C bus */
-	lockinit(&sc->sc_i2c_lock, PRIBIO | PCATCH, "iiclk", 0, 0);
+	rw_init(&sc->sc_i2c_lock, "iiclk");
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_acquire_bus = piixpm_i2c_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = piixpm_i2c_release_bus;
@@ -182,7 +182,7 @@ piixpm_i2c_acquire_bus(void *cookie, int flags)
 	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
 		return (0);
 
-	return (lockmgr(&sc->sc_i2c_lock, LK_EXCLUSIVE, NULL));
+	return (rw_enter(&sc->sc_i2c_lock, RW_WRITE | RW_INTR));
 }
 
 void
@@ -193,7 +193,7 @@ piixpm_i2c_release_bus(void *cookie, int flags)
 	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
 		return;
 
-	lockmgr(&sc->sc_i2c_lock, LK_RELEASE, NULL);
+	rw_exit(&sc->sc_i2c_lock);
 }
 
 int
