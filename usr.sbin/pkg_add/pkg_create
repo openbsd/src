@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.86 2007/05/03 12:14:36 espie Exp $
+# $OpenBSD: pkg_create,v 1.87 2007/05/03 12:17:25 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -510,6 +510,8 @@ if ($regen_package) {
 	} else {
 		$infodir = dirname($contents[0]);
 	}
+	$plist->fromfile($contents[0]) or 
+	    Fatal "Can't read packing list $contents[0]";
 } else {
 	print "Creating package $ARGV[0]\n" if !(defined $opt_q) && $opt_v;
 	$infodir = OpenBSD::Temp::dir() unless $opt_q;
@@ -555,12 +557,12 @@ if ($regen_package) {
 		OpenBSD::PackingElement::ExtraInfo->add($plist, 
 		    $fullpkgpath, $cdrom, $ftp);
 	}
+	for my $contentsfile (@contents) {
+		read_fragments($plist, $contentsfile) or 
+		    Fatal "Can't read packing list $contentsfile";
+	}
 } 
 
-for my $contentsfile (@contents) {
-    read_fragments($plist, $contentsfile) or 
-    	Fatal "Can't open packing list $contentsfile";
-}
 
 my $base = '/';
 if (defined $opt_B) {
