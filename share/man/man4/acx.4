@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acx.4,v 1.24 2006/12/19 09:08:18 kettenis Exp $
+.\"	$OpenBSD: acx.4,v 1.25 2007/05/03 21:24:56 mglocker Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt.
 .\" Copyright (c) 2006 The DragonFly Project.  All rights reserved.
@@ -72,12 +72,12 @@ However, actual connections between stations are peer-to-peer.
 .It Host AP
 In this mode the driver acts as an access point (base station)
 for other cards.
-.\" .It monitor mode
-.\" In this mode the driver is able to receive packets without
-.\" associating with an access point.
-.\" This disables the internal receive filter and enables the card to
-.\" capture packets from networks which it wouldn't normally have access to,
-.\" or to scan for access points.
+.It monitor mode
+In this mode the driver is able to receive packets without
+associating with an access point.
+This disables the internal receive filter and enables the card to
+capture packets from networks which it wouldn't normally have access to,
+or to scan for access points.
 .El
 .Pp
 .Nm
@@ -161,8 +161,8 @@ driver supports the following media options:
 Select Host AP operation.
 .It Cm ibss
 Select IBSS operation.
-.\".It Cm monitor
-.\"Select monitor mode.
+.It Cm monitor
+Select monitor mode.
 .El
 .It Fl mediaopt Ar opts
 Disable the specified media options on the driver and return it to the
