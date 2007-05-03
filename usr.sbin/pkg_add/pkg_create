@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.87 2007/05/03 12:17:25 espie Exp $
+# $OpenBSD: pkg_create,v 1.88 2007/05/03 14:49:56 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -26,7 +26,6 @@ use OpenBSD::Temp;
 use OpenBSD::Error;
 use OpenBSD::Ustar;
 use OpenBSD::ArcCheck;
-use Symbol;
 use File::Basename;
 
 # Extra stuff needed to archive files
@@ -278,6 +277,35 @@ sub makesum_plist
 	}
 }
 
+# put together file and filename, in order to handle fragments simply
+package MyFile;
+sub new
+{
+	my ($class, $filename) = @_;
+
+	open(my $fh, '<', $filename) or die "Missing file $filename";
+
+	bless { fh => $fh, name => $filename }, $class;
+}
+
+sub readline
+{
+	my $self = shift;
+	return readline $self->{fh};
+}
+
+sub name
+{
+	my $self = shift;
+	return $self->{name};
+}
+
+sub close
+{
+	my $self = shift;
+	close($self->{fh});
+}
+
 package main;
 
 my %defines;
@@ -338,17 +366,16 @@ sub read_fragments
 {
     my ($plist, $filename) = @_;
 
-    return $plist->fromfile($filename,
+    my $stack = [];
+    push(@$stack, MyFile->new($filename));
+
+    return $plist->read($stack,
 	sub {
-		my ($fh, $cont) = @_;
+		my ($stack, $cont) = @_;
 		local $_;
-		my (@fhstack, @namestack);
-		push(@fhstack, $fh);
-		push(@namestack, $filename);
-		while($fh = pop @fhstack) {
-			my $fname = pop @namestack;
+		while(my $file = pop @$stack) {
 			GETLINE:
-			while (<$fh>) {
+			while ($_ = $file->readline) {
 				if (m/^(\!)?\%\%(.*)\%\%$/) {
 					my ($not, $frag) = ($1, $2);
 					my $def = $frag;
@@ -365,18 +392,15 @@ sub read_fragments
 					} else {
 						die "Incorrect define for $frag";
 					}
-					my $newname = deduce_name($fname, $frag, $not);
+					my $newname = deduce_name($file->name, $frag, $not);
 					if (defined $newname) {
-						push(@fhstack, $fh);
-						push(@namestack, $fname);
-						$fname = $newname;
-						$fh = gensym;
-						open($fh, '<', $fname) or die "missing file $fname";
+						push(@$stack, $file);
+						$file = MyFile->new($newname);
 					}
 					next GETLINE;
 				}
 				if (m/^(\@comment\s+\$(?:Open)BSD\$)$/) {
-					$_ = '@comment $'.'OpenBSD: '.basename($fname).',v$';
+					$_ = '@comment $'.'OpenBSD: '.basename($file->name).',v$';
 				}
 				if (m,^\@lib\s+.*/lib[^/]+\.so\.\d+\.\d+$,) {
 					Warn "Shared library without SHARED_LIBS: $_";
@@ -573,10 +597,6 @@ if (defined $opt_B) {
 	$base = $ENV{'PKG_PREFIX'};
 }
 
-if ($plist->{need_modules}) {
-	print STDERR "Error: some needed modules were not found\n";
-	$errors++;
-}
 if ($plist->{deprecated}) {
 	print STDERR "Error: found obsolete constructs\n";
 	exit 1;
