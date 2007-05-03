@@ -1,4 +1,4 @@
-/*	$OpenBSD: alipm.c,v 1.12 2007/05/03 09:36:26 dlg Exp $	*/
+/*	$OpenBSD: alipm.c,v 1.13 2007/05/03 12:19:01 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -104,7 +104,7 @@ struct alipm_softc {
 	bus_space_handle_t sc_ioh;
 
 	struct i2c_controller sc_smb_tag;
-	struct lock sc_smb_lock;
+	struct rwlock sc_smb_lock;
 };
 
 int	alipm_match(struct device *, void *, void *);
