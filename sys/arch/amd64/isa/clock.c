@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.11 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: clock.c,v 1.12 2007/05/03 18:51:08 grange Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -411,31 +411,6 @@ cmoscheck(void)
 			  + mc146818_read(NULL, 0x2f));
 }
 
-#if NMCA > 0
-/*
- * Check whether the CMOS layout is PS/2 like, to be called at splclock().
- */
-static int cmoscheckps2(void);
-static int
-cmoscheckps2(void)
-{
-#if 0
-	/* Disabled until I find out the CRC checksum algorithm IBM uses */
-	int i;
-	unsigned short cksum = 0;
-
-	for (i = 0x10; i <= 0x31; i++)
-		cksum += mc146818_read(NULL, i); /* XXX softc */
-
-	return (cksum == (mc146818_read(NULL, 0x32) << 8)
-			  + mc146818_read(NULL, 0x33));
-#else
-	/* Check 'incorrect checksum' bit of IBM PS/2 Diagnostic Status Byte */
-	return ((mc146818_read(NULL, NVRAM_DIAG) & (1<<6)) == 0);
-#endif
-}
-#endif /* NMCA > 0 */
-
 /*
  * patchable to control century byte handling:
  * 1: always update
@@ -465,10 +440,6 @@ clock_expandyear(int clockyear)
 	s = splclock();
 	if (cmoscheck())
 		cmoscentury = mc146818_read(NULL, NVRAM_CENTURY);
-#if NMCA > 0
-	else if (MCA_system && cmoscheckps2())
-		cmoscentury = mc146818_read(NULL, (centb = 0x37));
-#endif
 	else
 		cmoscentury = 0;
 	splx(s);

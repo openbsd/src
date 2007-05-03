@@ -1,4 +1,4 @@
-/*	$OpenBSD: i8259.c,v 1.4 2005/12/13 00:18:19 jsg Exp $	*/
+/*	$OpenBSD: i8259.c,v 1.5 2007/05/03 18:51:08 grange Exp $	*/
 /*	$NetBSD: i8259.c,v 1.2 2003/03/02 18:27:15 fvdl Exp $	*/
 
 /*
@@ -113,13 +113,7 @@ struct pic i8259_pic = {
 void
 i8259_default_setup(void)
 {
-#if NMCA > 0
-	/* level-triggered interrupts on MCA PS/2s */
-	if (MCA_system)
-		outb(IO_ICU1, 0x19);	/* reset; program device, four bytes */
-	else
-#endif
-		outb(IO_ICU1, 0x11);	/* reset; program device, four bytes */
+	outb(IO_ICU1, 0x11);		/* reset; program device, four bytes */
 
 	outb(IO_ICU1+1, ICU_OFFSET);	/* starting at this vector index */
 	outb(IO_ICU1+1, 1 << IRQ_SLAVE); /* slave on line 2 */
@@ -135,13 +129,7 @@ i8259_default_setup(void)
 	outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
 #endif
 
-#if NMCA > 0
-	/* level-triggered interrupts on MCA PS/2s */
-	if (MCA_system)
-		outb(IO_ICU2, 0x19);	/* reset; program device, four bytes */
-	else
-#endif	
-		outb(IO_ICU2, 0x11);	/* reset; program device, four bytes */
+	outb(IO_ICU2, 0x11);		/* reset; program device, four bytes */
 
 	outb(IO_ICU2+1, ICU_OFFSET+8);	/* staring at this vector index */
 	outb(IO_ICU2+1, IRQ_SLAVE);
