@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.98 2007/04/13 18:12:16 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.99 2007/05/03 18:40:21 miod Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn.
@@ -717,7 +717,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	}
 
 	if (cache == PMAP_CACHE_DEFAULT) {
-		if (pa < 0x80000000 || pmap_find_pvh(pa) != NULL)
+		if (pmap_find_pvh(pa) != NULL)
 			cache = PMAP_CACHE_WB; /* managed memory is cacheable */
 		else
 			cache = PMAP_CACHE_CI;
@@ -1465,6 +1465,72 @@ pmap_steal_avail(size_t size, int align)
 	    size, align);
 }
 
+/*
+ * Similar to pmap_steal_avail, but operating on vm_physmem since
+ * uvm_page_physload() has been called.
+ */
+vaddr_t
+pmap_steal_memory(vsize_t size, vaddr_t *start, vaddr_t *end)
+{
+	int segno;
+	u_int npg;
+	vaddr_t va;
+	paddr_t pa;
+	struct vm_physseg *seg;
+
+	size = round_page(size);
+	npg = atop(size);
+
+	for (segno = 0, seg = vm_physmem; segno < vm_nphysseg; segno++, seg++) {
+		if (seg->avail_end - seg->avail_start < npg)
+			continue;
+		/*
+		 * We can only steal at an ``unused'' segment boundary,
+		 * i.e. either at the start or at the end.
+		 */
+		if (seg->avail_start == seg->start ||
+		    seg->avail_end == seg->end)
+			break;
+	}
+	if (segno == vm_nphysseg)
+		va = 0;
+	else {
+		if (seg->avail_start == seg->start) {
+			pa = ptoa(seg->avail_start);
+			seg->avail_start += npg;
+			seg->start += npg;
+		} else {
+			pa = ptoa(seg->avail_end) - size;
+			seg->avail_end -= npg;
+			seg->end -= npg;
+		}
+		/*
+		 * If all the segment has been consumed now, remove it.
+		 * Note that the crash dump code still knows about it
+		 * and will dump it correctly.
+		 */
+		if (seg->start == seg->end) {
+			if (vm_nphysseg-- == 1)
+				panic("pmap_steal_memory: out of memory");
+			while (segno < vm_nphysseg) {
+				seg[0] = seg[1]; /* struct copy */
+				seg++;
+				segno++;
+			}
+		}
+
+		va = (vaddr_t)pa;	/* 1:1 mapping */
+		bzero((void *)va, size);
+	}
+
+	if (start != NULL)
+		*start = VM_MIN_KERNEL_ADDRESS;
+	if (end != NULL)
+		*end = VM_MAX_KERNEL_ADDRESS;
+
+	return (va);
+}
+
 void *msgbuf_addr;
 
 /*
@@ -1610,6 +1676,10 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	pmap_attrib = pmap_steal_avail(sizeof(char) * npgs, 1);
 	pmap_avail_fixup();
 	for (mp = pmap_avail; mp->size; mp++) {
+		if (mp->start > 0x80000000)
+			continue;
+		if (mp->start + mp->size > 0x80000000)
+			mp->size = 0x80000000 - mp->start;
 		uvm_page_physload(atop(mp->start), atop(mp->start+mp->size),
 		    atop(mp->start), atop(mp->start+mp->size),
 		    VM_FREELIST_DEFAULT);
@@ -2087,16 +2157,6 @@ pmap_real_memory(paddr_t *start, vsize_t *size)
 		}
 	}
 	*size = 0;
-}
-
-/*
- * How much virtual space is available to the kernel?
- */
-void
-pmap_virtual_space(vaddr_t *start, vaddr_t *end)
-{
-	*start = VM_MIN_KERNEL_ADDRESS;
-	*end = VM_MAX_KERNEL_ADDRESS;
 }
 
 void
