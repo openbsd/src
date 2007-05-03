@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.107 2007/04/28 17:34:33 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.108 2007/05/03 05:32:05 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -370,7 +370,7 @@ struct pv_entry	*pmap_add_pvpage(struct pv_page *, boolean_t);
 struct vm_page	*pmap_alloc_ptp(struct pmap *, int, boolean_t);
 struct pv_entry	*pmap_alloc_pv(struct pmap *, int); /* see codes below */
 #define ALLOCPV_NEED	0	/* need PV now */
-#define ALLOCPV_TRY	1	/* just try to allocate, don't steal */
+#define ALLOCPV_TRY	1	/* just try to allocate */
 #define ALLOCPV_NONEED	2	/* don't need PV, just growing cache */
 struct pv_entry	*pmap_alloc_pvpage(struct pmap *, int);
 void		 pmap_enter_pv(struct vm_page *, struct pv_entry *,
@@ -399,7 +399,6 @@ pt_entry_t	*pmap_tmpmap_pvepte(struct pv_entry *);
 void		 pmap_tmpunmap_pa(void);
 void		 pmap_tmpunmap_pvepte(struct pv_entry *);
 void		 pmap_apte_flush(struct pmap *);
-boolean_t	 pmap_try_steal_pv(struct pv_entry *, struct pv_entry **);
 void		pmap_unmap_ptes(struct pmap *);
 void		pmap_exec_account(struct pmap *, vaddr_t, pt_entry_t,
 		    pt_entry_t);
@@ -1100,8 +1099,8 @@ pmap_init(void)
  * => we lock pvalloc_lock
  * => if we fail, we call out to pmap_alloc_pvpage
  * => 3 modes:
- *    ALLOCPV_NEED   = we really need a pv_entry, even if we have to steal it
- *    ALLOCPV_TRY    = we want a pv_entry, but not enough to steal
+ *    ALLOCPV_NEED   = we really need a pv_entry
+ *    ALLOCPV_TRY    = we want a pv_entry
  *    ALLOCPV_NONEED = we are trying to grow our free list, don't really need
  *			one now
  *
@@ -1156,9 +1155,7 @@ pmap_alloc_pv(struct pmap *pmap, int mode)
  *
  * if need_entry is false: try and allocate a new pv_page
  * if need_entry is true: try and allocate a new pv_page and return a
- *	new pv_entry from it.   if we are unable to allocate a pv_page
- *	we make a last ditch effort to steal a pv_page from some other
- *	mapping.    if that fails, we panic...
+ *	new pv_entry from it.
  *
  * => we assume that the caller holds pvalloc_lock
  */
@@ -1168,8 +1165,8 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 {
 	struct vm_page *pg;
 	struct pv_page *pvpage;
-	int lcv, idx, npg, s;
 	struct pv_entry *pv;
+	int s;
 
 	/*
 	 * if we need_entry and we've got unused pv_pages, allocate from there
@@ -1207,11 +1204,11 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 	}
 	splx(s);
 	if (pv_cachedva == 0)
-		goto steal_one;
+		return (NULL);
 
 	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 	if (pg == NULL)
-		goto steal_one;
+		return (NULL);
 
 	atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
 
@@ -1226,113 +1223,7 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 	    VM_PROT_READ|VM_PROT_WRITE);
 	pvpage = (struct pv_page *) pv_cachedva;
 	pv_cachedva = 0;
-	return(pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
-
-steal_one:
-	/*
-	 * if we don't really need a pv_entry right now, we can just return.
-	 */
-
-	if (mode != ALLOCPV_NEED)
-		return(NULL);
-
-	/*
-	 * last ditch effort!   we couldn't allocate a free page to make
-	 * more pv_entrys so we try and steal one from someone else.
-	 */
-
-	pv = NULL;
-	for (lcv = 0 ; pv == NULL && lcv < vm_nphysseg ; lcv++) {
-		npg = vm_physmem[lcv].end - vm_physmem[lcv].start;
-		for (idx = 0 ; idx < npg ; idx++) {
-			struct vm_page *pg = &vm_physmem[lcv].pgs[idx];
-			struct pv_entry *cpv, **ppv;
-
-			if (pg->mdpage.pv_list == NULL)
-				continue;
-
-			ppv = &pg->mdpage.pv_list;
-			while ((cpv = *ppv) != NULL) {
-				if (pmap_try_steal_pv(cpv, ppv))
-					break;
-				ppv = &cpv->pv_next;
-			}
-			/* got one?  break out of the loop! */
-			if (cpv) {
-				pv = cpv;
-				break;
-			}
-		}
-	}
-
-	return(pv);
-}
-
-/*
- * pmap_try_steal_pv: try and steal a pv_entry from a pmap
- *
- * => return true if we did it!
- */
-
-boolean_t
-pmap_try_steal_pv(struct pv_entry *cpv, struct pv_entry **ppv)
-{
-	pt_entry_t *ptep, opte;
-#ifdef MULTIPROCESSOR
-	int32_t cpumask = 0;
-#endif
-
-	/*
-	 * we never steal kernel mappings or mappings from pmaps we can't lock
-	 */
-
-	if (cpv->pv_pmap == pmap_kernel() ||
-	    !simple_lock_try(&cpv->pv_pmap->pm_obj.vmobjlock))
-		return(FALSE);
-
-	/*
-	 * yes, we can try and steal it.   first we need to remove the
-	 * mapping from the pmap.
-	 */
-
-	ptep = pmap_tmpmap_pvepte(cpv);
-	if (*ptep & PG_W) {
-		ptep = NULL;	/* wired page, avoid stealing this one */
-	} else {
-		opte = i386_atomic_testset_ul(ptep, 0); /* zap! */
-#ifdef MULTIPROCESSOR
-		pmap_tlb_shootdown(cpv->pv_pmap, cpv->pv_va, opte, &cpumask);
-		pmap_tlb_shootnow(cpumask);
-#else
-		/* Don't bother deferring in the single CPU case. */
-		if (pmap_is_curpmap(cpv->pv_pmap))
-			pmap_update_pg(cpv->pv_va);
-#endif
-		pmap_tmpunmap_pvepte(cpv);
-	}
-	if (ptep == NULL) {
-		simple_unlock(&cpv->pv_pmap->pm_obj.vmobjlock);
-		return(FALSE);	/* wired page, abort! */
-	}
-	cpv->pv_pmap->pm_stats.resident_count--;
-	if (cpv->pv_ptp && cpv->pv_ptp->wire_count)
-		/* drop PTP's wired count */
-		cpv->pv_ptp->wire_count--;
-
-	/*
-	 * XXX: if wire_count goes to one the PTP could be freed, however,
-	 * we'd have to lock the page queues (etc.) to do that and it could
-	 * cause deadlock headaches.   besides, the pmap we just stole from
-	 * may want the mapping back anyway, so leave the PTP around.
-	 */
-
-	/*
-	 * now we need to remove the entry from the pvlist
-	 */
-
-	*ppv = cpv->pv_next;
-
-	return(TRUE);
+	return (pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
 }
 
 /*
