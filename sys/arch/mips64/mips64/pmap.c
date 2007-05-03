@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.26 2007/04/27 18:17:19 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.27 2007/05/03 19:34:00 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -154,7 +154,9 @@ pmap_bootstrap()
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
 	Sysmapsize = (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) /
-	    PAGE_SIZE + 1;	/* + 1 to be even */
+	    PAGE_SIZE;
+	if (Sysmapsize & 1)
+		Sysmapsize++;	/* force even number of pages */
 
 	Sysmap = (pt_entry_t *)
 	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
@@ -223,9 +225,17 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			*vstartp = round_page(virtual_start);
 		if (vendp)
 			*vendp = virtual_end;
-		va = PHYS_TO_KSEG0(pa);
+
+		/*
+		 * Prefer KSEG0 addresses for now, whenever possible.
+		 */
+		if (pa + size < KSEG_SIZE)
+			va = PHYS_TO_KSEG0(pa);
+		else
+			va = PHYS_TO_XKPHYS(pa, CCA_NONCOHERENT);
+
 		bzero((void *)va, size);
-		return(va);
+		return (va);
 	}
 
 	panic("pmap_steal_memory: no memory to steal");
@@ -824,24 +834,31 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
  *		with the given map/virtual_address pair.
  */
 boolean_t
-pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pa)
+pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	boolean_t rv = TRUE;
+	paddr_t pa;
 	pt_entry_t *pte;
 
 	if (pmap == pmap_kernel()) {
-		if (va >= (long)KSEG0_BASE &&
-		    va < (long)(KSEG0_BASE + KSEG_SIZE)) {
-			*pa = (long)KSEG0_TO_PHYS(va);
-		} else {
+		if (IS_XKPHYS(va))
+			pa = XKPHYS_TO_PHYS(va);
+		else if (va >= (vaddr_t)KSEG0_BASE &&
+		    va < (vaddr_t)KSEG0_BASE + KSEG_SIZE)
+			pa = KSEG0_TO_PHYS(va);
+		else if (va >= (vaddr_t)KSEG1_BASE &&
+		    va < (vaddr_t)KSEG1_BASE + KSEG_SIZE)
+			pa = KSEG1_TO_PHYS(va);
+		else {
 #ifdef DIAGNOSTIC
-			if (va < VM_MIN_KERNEL_ADDRESS) {
+			if (va < VM_MIN_KERNEL_ADDRESS ||
+			    va >= VM_MAX_KERNEL_ADDRESS)
 				panic("pmap_extract(%p, %p)", pmap, va);
-			}
 #endif
 			pte = kvtopte(va);
 			if (pte->pt_entry & PG_V)
-				*pa = pfn_to_pad(pte->pt_entry);
+				pa = pfn_to_pad(pte->pt_entry) |
+				    (va & PAGE_MASK);
 			else
 				rv = FALSE;
 		}
@@ -850,13 +867,13 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pa)
 			rv = FALSE;
 		else {
 			pte += uvtopte(va);
-			*pa = pfn_to_pad(pte->pt_entry);
+			pa = pfn_to_pad(pte->pt_entry) | (va & PAGE_MASK);
 		}
 	}
 	if (rv != FALSE)
-		*pa |= va & PGOFSET;
+		*pap = pa;
 
-	DPRINTF(PDB_FOLLOW, ("pmap_extract(%p, %p)=%p(%d)", pmap, va, *pa, rv));
+	DPRINTF(PDB_FOLLOW, ("pmap_extract(%p, %p)=%p(%d)", pmap, va, pa, rv));
 
 	return (rv);
 }
@@ -907,7 +924,7 @@ pmap_zero_page(struct vm_page *pg)
 
 	DPRINTF(PDB_FOLLOW, ("pmap_zero_page(%p)\n", phys));
 
-	va = (vaddr_t)PHYS_TO_KSEG0(phys);
+	va = (vaddr_t)PHYS_TO_XKPHYS(phys, CCA_NONCOHERENT);
 	pv = pg_to_pvh(pg);
 	if ((pg->pg_flags & PV_CACHED) &&
 	    ((pv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
@@ -935,8 +952,8 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 
 	src = VM_PAGE_TO_PHYS(srcpg);
 	dst = VM_PAGE_TO_PHYS(dstpg);
-	s = (vaddr_t)PHYS_TO_KSEG0(src);
-	d = (vaddr_t)PHYS_TO_KSEG0(dst);
+	s = (vaddr_t)PHYS_TO_XKPHYS(src, CCA_NONCOHERENT);
+	d = (vaddr_t)PHYS_TO_XKPHYS(dst, CCA_NONCOHERENT);
 
 	DPRINTF(PDB_FOLLOW, ("pmap_copy_page(%p, %p)\n", src, dst));
 
@@ -1118,7 +1135,7 @@ pmap_page_cache(vm_page_t pg, int mode)
 /*
  *  Use this function to allocate pages for the mapping tables.
  *  Mapping tables are walked by the TLB miss code and are mapped in
- *  KSEG0 to avoid additional page faults when servicing a TLB miss.
+ *  XKPHYS to avoid additional page faults when servicing a TLB miss.
  */
 int
 pmap_page_alloc(vaddr_t *ret)
@@ -1129,7 +1146,7 @@ pmap_page_alloc(vaddr_t *ret)
 	if (pg == NULL)
 		return ENOMEM;
 
-	*ret = PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg));
+	*ret = PHYS_TO_XKPHYS(VM_PAGE_TO_PHYS(pg), CCA_NONCOHERENT);
 	return 0;
 }
 
@@ -1138,7 +1155,7 @@ pmap_page_free(vaddr_t va)
 {
 	vm_page_t pg;
 
-	pg = PHYS_TO_VM_PAGE(KSEG0_TO_PHYS(va));
+	pg = PHYS_TO_VM_PAGE(XKPHYS_TO_PHYS(va));
 	uvm_pagefree(pg);
 }
 

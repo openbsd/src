@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mips64.c,v 1.5 2007/01/08 18:54:12 deraadt Exp $ */
+/*	$OpenBSD: kvm_mips64.c,v 1.6 2007/05/03 19:33:58 miod Exp $ */
 /*	$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_mips.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_mips64.c,v 1.5 2007/01/08 18:54:12 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm_mips64.c,v 1.6 2007/05/03 19:33:58 miod Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -117,40 +117,50 @@ int
 _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 {
 	struct vmstate *vm;
-	u_long pte, addr, offset;
+	u_long pte, idx, addr, offset;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
 		return((off_t)0);
 	}
 	vm = kd->vmst;
-	offset = va & PGOFSET;
+	offset = va & PAGE_MASK;
 	/*
 	 * If we are initializing (kernel segment table pointer not yet set)
 	 * then return pa == va to avoid infinite recursion.
 	 */
 	if (vm->Sysmap == 0) {
 		*pa = va;
-		return (NBPG - offset);
+		return (int)(PAGE_SIZE - offset);
 	}
-	if (va < KERNBASE ||
-	    va >= VM_MIN_KERNEL_ADDRESS + vm->Sysmapsize * NBPG)
-		goto invalid;
-	if (va < VM_MIN_KERNEL_ADDRESS) {
+	/*
+	 * Check for direct-mapped segments
+	 */
+	if (IS_XKPHYS(va)) {
+		*pa = XKPHYS_TO_PHYS(va);
+		return (int)(PAGE_SIZE - offset);
+	}
+	if (va >= (vaddr_t)KSEG0_BASE && va < (vaddr_t)KSSEG_BASE) {
 		*pa = KSEG0_TO_PHYS(va);
-		return (NBPG - offset);
+		return (int)(PAGE_SIZE - offset);
 	}
-	addr = (u_long)(vm->Sysmap + ((va - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT));
+	if (va < VM_MIN_KERNEL_ADDRESS)
+		goto invalid;
+	idx = (va - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT;
+	if (idx >= vm->Sysmapsize)
+		goto invalid;
+	addr = (u_long)(vm->Sysmap + idx);
 	/*
 	 * Can't use KREAD to read kernel segment table entries.
 	 * Fortunately it is 1-to-1 mapped so we don't have to.
 	 */
-	if (_kvm_pread(kd, kd->pmfd, (char *)&pte, sizeof(pte), (off_t)addr) < 0)
+	if (_kvm_pread(kd, kd->pmfd, (char *)&pte, sizeof(pte),
+	    (off_t)addr) < 0)
 		goto invalid;
 	if (!(pte & PG_V))
 		goto invalid;
 	*pa = (pte & PG_FRAME) | offset;
-	return (NBPG - offset);
+	return (int)(PAGE_SIZE - offset);
 
 invalid:
 	_kvm_err(kd, 0, "invalid address (%lx)", va);

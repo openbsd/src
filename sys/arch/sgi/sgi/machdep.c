@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.37 2007/04/26 17:04:39 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.38 2007/05/03 19:34:01 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -81,6 +81,7 @@
 #include <mips64/archtype.h>
 #include <machine/bus.h>
 
+#include <sgi/localbus/crimebus.h>
 #include <sgi/localbus/macebus.h>
 #if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
 #include <sgi/localbus/xbowmux.h>
@@ -142,6 +143,8 @@ caddr_t	ekern;
 
 struct phys_mem_desc mem_layout[MAXMEMSEGS];
 
+void crime_configure_memory(void);
+
 caddr_t mips_init(int, void *);
 void initcpu(void);
 void dumpsys(void);
@@ -159,6 +162,73 @@ int	my_endian = 1;
 int	my_endian = 0;
 #endif
 
+#if defined(TGT_O2)
+void
+crime_configure_memory(void)
+{
+	struct phys_mem_desc *m;
+	volatile u_int64_t *bank_ctrl;
+	paddr_t addr;
+	psize_t size;
+	u_int32_t first_page, last_page;
+	int bank, i;
+
+	bank_ctrl = (void *)PHYS_TO_KSEG1(CRIMEBUS_BASE + CRIME_MEM_BANK0_CONTROL);
+	for (bank = 0; bank < CRIME_MAX_BANKS; bank++) {
+		addr = (bank_ctrl[bank] & CRIME_MEM_BANK_ADDR) << 25;
+		size = (bank_ctrl[bank] & CRIME_MEM_BANK_128MB) ? 128 : 32;
+#ifdef DEBUG
+		bios_printf("crime: bank %d contains %ld MB at 0x%lx\n",
+		    bank, size, addr);
+#endif
+
+		/*
+		 * Do not report memory regions below 256MB, since
+		 * arcbios will do. Moreover, empty banks are reported
+		 * at address zero.
+		 */
+		if (addr < 256 * 1024 * 1024)
+			continue;
+
+		addr += 1024 * 1024 * 1024;
+		size *= 1024 * 1024;
+		first_page = atop(addr);
+		last_page = atop(addr + size);
+
+		/*
+		 * Try to coalesce with other memory segments if banks
+		 * are contiguous.
+		 */
+		m = NULL;
+		for (i = 0; i < MAXMEMSEGS; i++) {
+			if (mem_layout[i].mem_last_page == 0) {
+				if (m == NULL)
+					m = &mem_layout[i];
+			} else if (last_page == mem_layout[i].mem_first_page) {
+				m = &mem_layout[i];
+				m->mem_first_page = first_page;
+			} else if (mem_layout[i].mem_last_page == first_page) {
+				m = &mem_layout[i];
+				m->mem_last_page = last_page;
+			}
+		}
+		if (m != NULL && m->mem_last_page == 0) {
+			m->mem_first_page = first_page;
+			m->mem_last_page = last_page;
+		}
+		if (m != NULL)
+			physmem += atop(size);
+	}
+
+#ifdef DEBUG
+	for (i = 0; i < MAXMEMSEGS; i++)
+		if (mem_layout[i].mem_first_page)
+			bios_printf("MEM %d, 0x%x to  0x%x\n",i,
+				ptoa(mem_layout[i].mem_first_page),
+				ptoa(mem_layout[i].mem_last_page));
+#endif
+}
+#endif
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -170,7 +240,6 @@ mips_init(int argc, void *argv)
 {
 	char *cp;
 	int i;
-	unsigned firstaddr;
 	caddr_t sd;
 	extern char start[], edata[], end[];
 	extern char tlb_miss[], e_tlb_miss[];
@@ -180,9 +249,16 @@ mips_init(int argc, void *argv)
 	extern char exception[], e_exception[];
 
 	/*
+	 * Make sure we can access the extended address space.
+	 * Note that r10k and later do not allow XUSEG accesses
+	 * from kernel mode unless SR_UX is set.
+	 */
+	setsr(getsr() | SR_KX | SR_UX);
+
+	/*
 	 * Clear the compiled BSS segment in OpenBSD code
 	 */
-	bzero(edata, end-edata);
+	bzero(edata, end - edata);
 
 	/*
 	 *  Reserve symbol table space. If invalid pointers no table.
@@ -225,6 +301,8 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 		sys_config.pci_mem[0].bus_base_dma = 0x00000000;/*XXX*/
 		sys_config.pci_mem[0].bus_reverse = my_endian;
 		sys_config.cpu[0].tlbwired = 2;
+
+		crime_configure_memory();
 
 		sys_config.cpu[0].clock = 180000000;  /* Reasonable default */
 		cp = Bios_GetEnvironmentVariable("cpufreq");
@@ -321,10 +399,20 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 
 	for (i = 0; i < MAXMEMSEGS && mem_layout[i].mem_first_page != 0; i++) {
 		u_int32_t fp, lp;
-		u_int32_t firstkernpage =
-		    atop(trunc_page(KSEG0_TO_PHYS(start)));
-		u_int32_t lastkernpage =
-		    atop(round_page(KSEG0_TO_PHYS(ekern)));
+		u_int32_t firstkernpage, lastkernpage;
+		paddr_t firstkernpa, lastkernpa;
+
+		if (IS_XKPHYS((vaddr_t)start))
+			firstkernpa = XKPHYS_TO_PHYS((vaddr_t)start);
+		else
+			firstkernpa = KSEG0_TO_PHYS((vaddr_t)start);
+		if (IS_XKPHYS((vaddr_t)ekern))
+			lastkernpa = XKPHYS_TO_PHYS((vaddr_t)ekern);
+		else
+			lastkernpa = KSEG0_TO_PHYS((vaddr_t)ekern);
+
+		firstkernpage = atop(trunc_page(firstkernpa));
+		lastkernpage = atop(round_page(lastkernpa));
 
 		fp = mem_layout[i].mem_first_page;
 		lp = mem_layout[i].mem_last_page;
@@ -489,9 +577,8 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 	 * Allocate U page(s) for proc[0], pm_tlbpid 1.
 	 */
 	proc0.p_addr = proc0paddr = curprocpaddr =
-		(struct user *)pmap_steal_memory(USPACE, NULL,NULL);
+	    (struct user *)pmap_steal_memory(USPACE, NULL, NULL);
 	proc0.p_md.md_regs = (struct trap_frame *)&proc0paddr->u_pcb.pcb_regs;
-	firstaddr = KSEG0_TO_PHYS(proc0.p_addr);
 	tlb_set_pid(1);
 
 	/*
@@ -804,7 +891,8 @@ setregs(p, pack, stack, retval)
 	p->p_md.md_regs->pc = pack->ep_entry & ~3;
 	p->p_md.md_regs->t9 = pack->ep_entry & ~3; /* abicall req */
 #if defined(__LP64__)
-	p->p_md.md_regs->sr = SR_FR_32|SR_XX|SR_KSU_USER|SR_UX|SR_EXL|SR_INT_ENAB;
+	p->p_md.md_regs->sr = SR_FR_32 | SR_XX | SR_KSU_USER | SR_KX | SR_UX |
+	    SR_EXL | SR_INT_ENAB;
 	if (sys_config.cpu[0].type == MIPS_R12000 &&
 	    sys_config.system_type == SGI_O2)
 		p->p_md.md_regs->sr |= SR_DSD;

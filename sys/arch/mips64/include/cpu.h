@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.16 2007/04/10 21:44:56 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.17 2007/05/03 19:34:00 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,9 +52,6 @@
 #define KSEG1_BASE	0xffffffffa0000000
 #define KSSEG_BASE	0xffffffffc0000000
 #define KSEG3_BASE	0xffffffffe0000000
-/* Compatible between R5K and R1xK */
-#define	XKSEG0_BASE	0x9800000000000000
-#define	XKSEG1_BASE	0x9000000000000000
 #else
 #define KSEG0_BASE	0x80000000
 #define KSEG1_BASE	0xa0000000
@@ -68,6 +65,20 @@
 #define	PHYS_TO_KSEG0(x)	((u_long)(x) | KSEG0_BASE)
 #define	PHYS_TO_KSEG1(x)	((u_long)(x) | KSEG1_BASE)
 #define	PHYS_TO_KSEG3(x)	((u_long)(x) | KSEG3_BASE)
+
+/*
+ * Cache Coherency Attributes
+ * We only list values common to r4k and r5k.
+ */
+#define	CCA_NC			2UL	/* uncached, write-around */
+#define	CCA_NONCOHERENT		3UL	/* cached, non-coherent, write-back */
+
+#ifdef __LP64__
+#define	XKPHYS_BASE		0x8000000000000000UL
+#define	XKPHYS_TO_PHYS(x)	((paddr_t)(x) & 0x0000000fffffffffUL)
+#define	PHYS_TO_XKPHYS(x,c)	((paddr_t)(x) | XKPHYS_BASE | (c) << 59)
+#define	IS_XKPHYS(va)		(((va) >> 62) == 2)
+#endif
 
 #ifdef _KERNEL
 

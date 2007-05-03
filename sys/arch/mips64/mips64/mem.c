@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.6 2005/11/06 10:26:56 martin Exp $	*/
+/*	$OpenBSD: mem.c,v 1.7 2007/05/03 19:34:00 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -114,6 +114,7 @@ int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	struct iovec *iov;
+	boolean_t allowed;
 	int error = 0, c;
 	vaddr_t v;
 
@@ -134,7 +135,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			c = iov->iov_len;
 			if (v + c > ctob(physmem))
 				return (EFAULT);
-			v = (vaddr_t)PHYS_TO_KSEG0(v);
+			v = (vaddr_t)PHYS_TO_XKPHYS(v, CCA_NONCOHERENT);
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
@@ -142,9 +143,29 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if ((v > KSEG0_BASE && v + c <= KSEG0_BASE + ctob(physmem)) ||
-			    uvm_kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)) {
+
+			/* Allow access to RAM through XKPHYS... */
+			if (IS_XKPHYS(v) && IS_XKPHYS(v + (vsize_t)c) &&
+			    XKPHYS_TO_PHYS(v + (vsize_t)c) <= ptoa(physmem))
+				allowed = TRUE;
+			/* ...or through KSEG0... */
+			else if (v >= KSEG0_BASE &&
+			    v + (vsize_t)c < KSEG0_BASE + KSEG_SIZE &&
+			    (physmem >= atop(KSEG_SIZE) ||
+			     v + (vsize_t)c <= KSEG0_BASE + ptoa(physmem)))
+				allowed = TRUE;
+			/* ...or through KSEG1... */
+			else if (v >= KSEG1_BASE &&
+			    v + (vsize_t)c < KSEG1_BASE + KSEG_SIZE &&
+			    (physmem >= atop(KSEG_SIZE) ||
+			     v + c <= KSEG1_BASE + ptoa(physmem)))
+				allowed = TRUE;
+			/* ...otherwise, check it's within kernel kvm limits. */
+			else
+				allowed = uvm_kernacc((caddr_t)v, c,
+				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE);
+
+			if (allowed) {
 				error = uiomove((caddr_t)v, c, uio);
 				continue;
 			} else {

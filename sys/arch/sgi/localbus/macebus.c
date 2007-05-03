@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.19 2007/03/23 21:07:40 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.20 2007/05/03 19:34:01 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -211,7 +211,8 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 		printf(": cannot map CRIME control registers\n");
 		return;
 	}
-	hwmask_addr = (void *)(PHYS_TO_KSEG1(CRIMEBUS_BASE)+CRIME_INT_MASK);
+	hwmask_addr = (void *)(PHYS_TO_XKPHYS(CRIMEBUS_BASE, CCA_NC) +
+	    CRIME_INT_MASK);
 
 	creg = bus_space_read_8(&crimebus_tag, crime_h, CRIME_REVISION);
 	printf(": crime rev %d.%d\n", (creg & 0xf0) >> 4, creg & 0xf);
@@ -367,7 +368,7 @@ mace_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 	/* Handle special mapping separately */
 	if (bpa >= (MACEBUS_BASE + MACE_ISAX_OFFS) &&
 	    (bpa + size) < (MACEBUS_BASE + MACE_ISAX_OFFS + MACE_ISAX_SIZE)) {
-		*bshp = PHYS_TO_KSEG1(bpa);
+		*bshp = PHYS_TO_XKPHYS(bpa, CCA_NC);
 		return 0;
 	}
 
@@ -398,10 +399,13 @@ mace_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	off = bsh - sva;
 	len = size+off;
 
-	paddr = KSEG1_TO_PHYS(bsh);
-	if (paddr >= (MACEBUS_BASE + MACE_ISAX_OFFS) &&
-	    (paddr+size) <= (MACEBUS_BASE + MACE_ISAX_OFFS + MACE_ISAX_SIZE))
-		return;
+	if (IS_XKPHYS(bsh)) {
+		paddr = XKPHYS_TO_PHYS(bsh);
+		if (paddr >= (MACEBUS_BASE + MACE_ISAX_OFFS) &&
+		    (paddr + size) <=
+		    (MACEBUS_BASE + MACE_ISAX_OFFS + MACE_ISAX_SIZE))
+			return;
+	}
 
 	if (pmap_extract(pmap_kernel(), bsh, (void *)&paddr) == 0) {
 		printf("bus_space_unmap: no pa for va %p\n", bsh);

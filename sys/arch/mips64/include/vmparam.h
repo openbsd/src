@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.12 2007/04/27 18:14:11 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.13 2007/05/03 19:34:00 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -92,20 +92,12 @@
 #define VM_PHYSSEG_STRAT VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD
 
-
 /* user/kernel map constants */
-#ifdef __LP64__
 #define VM_MIN_ADDRESS		((vaddr_t)0x0000000000000000L)
 #define VM_MAXUSER_ADDRESS	((vaddr_t)0x0000000080000000L)
 #define VM_MAX_ADDRESS		((vaddr_t)0x0000000080000000L)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xffffffffc0000000L)
-#else
-#define VM_MIN_ADDRESS		((vaddr_t)0x00000000)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0x80000000)
-#define VM_MAX_ADDRESS		((vaddr_t)0x80000000)
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xc0000000)
-#endif
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)-PAGE_SIZE)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xfffffffffffff000L)
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0

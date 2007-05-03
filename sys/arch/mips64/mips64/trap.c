@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.32 2007/03/27 19:51:00 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.33 2007/05/03 19:34:00 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -1172,7 +1172,7 @@ loop:
 	}
 
 	/* check for bad SP: could foul up next frame */
-	if (sp & 3 || sp < KSEG0_BASE) {
+	if (sp & 3 || (!IS_XKPHYS((vaddr_t)sp) && sp < KSEG0_BASE)) {
 		(*printfn)("SP %p: not in kernel\n", sp);
 		ra = 0;
 		subr = 0;
