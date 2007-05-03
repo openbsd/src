@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.37 2007/05/02 19:57:44 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.38 2007/05/03 20:50:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -107,7 +107,7 @@ struct nxb_port {
 	u_int8_t		 nxp_mode;
 	u_int8_t		 nxp_phy;
 	u_int8_t		 nxp_lladdr[ETHER_ADDR_LEN];
-	bus_size_t		 nxp_region;
+	bus_size_t		 nxp_phyregion;
 
 	struct nx_softc		*nxp_nx;
 };
@@ -165,7 +165,7 @@ struct nx_softc {
 	struct mii_data		 nx_mii;
 
 	bus_space_tag_t		 nx_memt;		/* pointer to sc_memt */
-	bus_space_handle_t	 nx_memh;		/* port subregion */
+	bus_space_handle_t	 nx_memh;		/* port phy subregion */
 
 	struct nxb_softc	*nx_sc;			/* The nxb board */
 	struct nxb_port		*nx_port;		/* Port information */
@@ -214,8 +214,10 @@ void	 nx_iff(struct nx_softc *);
 void	 nx_tick(void *);
 int	 nx_intr(void *);
 void	 nx_setlladdr(struct nx_softc *, u_int8_t *);
-u_int32_t nx_read(struct nx_softc *, bus_size_t);
-void	 nx_write(struct nx_softc *, bus_size_t, u_int32_t);
+u_int32_t nx_readphy(struct nx_softc *, bus_size_t);
+void	 nx_writephy(struct nx_softc *, bus_size_t, u_int32_t);
+u_int32_t nx_readcrb(struct nx_softc *, enum nxsw_portreg);
+void	 nx_writecrb(struct nx_softc *, enum nxsw_portreg, u_int32_t);
 
 struct cfdriver nxb_cd = {
 	0, "nxb", DV_DULL
@@ -488,13 +490,13 @@ nxb_query(struct nxb_softc *sc)
 		sc->sc_nxp[i].nxp_phy = board->brd_phy;
 		switch (board->brd_mode) {
 		case NXNIU_MODE_XGE:
-			sc->sc_nxp[i].nxp_region = NXNIU_XGE(i);
+			sc->sc_nxp[i].nxp_phyregion = NXNIU_XGE(i);
 			break;
 		case NXNIU_MODE_GBE:
-			sc->sc_nxp[i].nxp_region = NXNIU_GBE(i);
+			sc->sc_nxp[i].nxp_phyregion = NXNIU_GBE(i);
 			break;
 		case NXNIU_MODE_FC:
-			sc->sc_nxp[i].nxp_region = NXNIU_FC(i);
+			sc->sc_nxp[i].nxp_phyregion = NXNIU_FC(i);
 			break;
 		}
 	}
@@ -961,7 +963,7 @@ int
 nxb_writehw(struct nxb_softc *sc, u_int32_t addr, u_int32_t val)
 {
 	/* Translation table of NIC addresses to PCI addresses */
-	static u_int16_t hwtrans[] = {
+	static const u_int16_t hwtrans[] = {
 		0x29a0, 0x7730, 0x2950, 0x2a50, 0x0000, 0x0d00,
 		0x1b10, 0x0e60, 0x0e00, 0x0e10, 0x0e20, 0x0e30,
 		0x7000, 0x7010, 0x7020, 0x7030, 0x7040, 0x3400,
@@ -1237,7 +1239,7 @@ nx_attach(struct device *parent, struct device *self, void *aux)
 	nxp->nxp_nx = nx;
 
 	if (bus_space_subregion(sc->sc_memt, sc->sc_memh,
-	    nxp->nxp_region, NXNIU_PORT_SIZE, &nx->nx_memh) != 0) {
+	    nxp->nxp_phyregion, NXNIU_PORT_SIZE, &nx->nx_memh) != 0) {
 		printf(": unable to map port subregion\n");
 		return;
 	}
@@ -1524,7 +1526,7 @@ nx_setlladdr(struct nx_softc *nx, u_int8_t *lladdr)
 }
 
 u_int32_t
-nx_read(struct nx_softc *nx, bus_size_t reg)
+nx_readphy(struct nx_softc *nx, bus_size_t reg)
 {
 	nxb_set_crbwindow(nx->nx_sc, NXMEMMAP_WINDOW0_START);
 	bus_space_barrier(nx->nx_memt, nx->nx_memh, reg, 4,
@@ -1533,7 +1535,7 @@ nx_read(struct nx_softc *nx, bus_size_t reg)
 }
 
 void
-nx_write(struct nx_softc *nx, bus_size_t reg, u_int32_t val)
+nx_writephy(struct nx_softc *nx, bus_size_t reg, u_int32_t val)
 {
 	nxb_set_crbwindow(nx->nx_sc, NXMEMMAP_WINDOW0_START);
 	bus_space_write_4(nx->nx_memt, nx->nx_memh, reg, val);
@@ -1541,3 +1543,31 @@ nx_write(struct nx_softc *nx, bus_size_t reg, u_int32_t val)
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
+/* Use mapping table, see if_nxreg.h for details */
+const u_int32_t nx_swportreg[NX_MAX_PORTS][NXSW_PORTREG_MAX] = NXSW_PORTREGS;
+
+u_int32_t
+nx_readcrb(struct nx_softc *nx, enum nxsw_portreg n)
+{
+	struct nxb_port		*nxp = nx->nx_port;
+	u_int32_t		 reg;
+
+	reg = nx_swportreg[nxp->nxp_id][n];
+	nxb_set_crbwindow(nx->nx_sc, NXMEMMAP_WINDOW1_START);
+	bus_space_barrier(nx->nx_memt, nx->nx_memh, reg, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(nx->nx_memt, nx->nx_memh, reg));
+}
+
+void
+nx_writecrb(struct nx_softc *nx, enum nxsw_portreg n, u_int32_t val)
+{
+	struct nxb_port		*nxp = nx->nx_port;
+	u_int32_t		 reg;
+
+	reg = nx_swportreg[nxp->nxp_id][n];
+	nxb_set_crbwindow(nx->nx_sc, NXMEMMAP_WINDOW1_START);
+	bus_space_write_4(nx->nx_memt, nx->nx_memh, reg, val);
+	bus_space_barrier(nx->nx_memt, nx->nx_memh, reg, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}

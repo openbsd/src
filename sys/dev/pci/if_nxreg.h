@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.20 2007/05/02 19:57:44 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.21 2007/05/03 20:50:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -381,18 +381,9 @@ struct nx_statusdesc {
 /* Misc SW registers */
 #define NXSW_CMD_PRODUCER_OFF	NXSW(0x2208)	/* Producer CMD ring index */
 #define NXSW_CMD_CONSUMER_OFF	NXSW(0x220c)	/* Consumer CMD ring index */
-#define NXSW_RCV_PRODUCER_OFF	NXSW(0x2300)	/* Producer Rx ring index */
-#define NXSW_RCV_CONSUMER_OFF	NXSW(0x2304)	/* Consumer Rx ring index */
-#define NXSW_RCV_GLOBAL_RING	NXSW(0x2308)	/* Address of Rx buffer */
-#define NXSW_RCV_STATUS_RING	NXSW(0x2360)	/* Address of Rx status ring */
-#define NXSW_RCV_STATUS_PROD	NXSW(0x2364)	/* Producer Rx status index */
-#define NXSW_RCV_STATUS_CONS	NXSW(0x2368)	/* Consumer Rx status index */
 #define NXSW_CMD_ADDR_HI	NXSW(0x2218)	/* CMD ring phys address */
 #define NXSW_CMD_ADDR_LO	NXSW(0x221c)	/* CMD ring phys address */
 #define NXSW_CMD_RING_SIZE	NXSW(0x22c8)	/* Entries in the CMD ring */
-#define NXSW_RCV_RING_SIZE	NXSW(0x230c)	/* Entries in the Rx ring */
-#define NXSW_JRCV_RING_SIZE	NXSW(0x230c)	/* Entries in the jumbo ring */
-#define NXSW_RCVPEG_STATE	NXSW(0x236c)	/* State of the NX2031 */
 #define NXSW_CMDPEG_STATE	NXSW(0x2250)	/* State of the firmware */
 #define  NXSW_CMDPEG_STATE_M	0xffff		/* State mask */
 #define  NXSW_CMDPEG_INIT_START	0xff00		/* Start of initialization */
@@ -410,9 +401,7 @@ struct nx_statusdesc {
 #define NXSW_XG_STATE		NXSW(0x2294)	/* PHY state register */
 #define  NXSW_XG_LINK_UP	(1<<4)		/* 10G PHY state up */
 #define  NXSW_XG_LINK_DOWN	(1<<5)		/* 10G PHY state down */
-#define NXSW_JRCV_PRODUCER_OFF	NXSW(0x22f4)	/* Producer jumbo ring index */
-#define NXSW_JRCV_CONSUMER_OFF	NXSW(0x22f8)	/* Consumer jumbo ring index */
-#define NXSW_JRCV_GLOBAL_RING	NXSW(0x2308)	/* Address of jumbo buffer */
+
 #define NXSW_TEMP		NXSW(0x23b4)	/* Temperature sensor */
 #define  NXSW_TEMP_STATE_M	0x0000ffff	/* Temp state mask */
 #define  NXSW_TEMP_STATE_S	0		/* Temp state shift */
@@ -423,6 +412,68 @@ struct nx_statusdesc {
 #define  NXSW_TEMP_VAL_M	0xffff0000	/* Temp deg celsius mask */
 #define  NXSW_TEMP_VAL_S	16		/* Temp deg celsius shift */
 #define NXSW_DRIVER_VER		NXSW(0x24a0)	/* Host driver version */
+
+/*
+ * Port-specific SW registers, cannot be mapped to a subregion because
+ * they're using different offsets between the registers. Ugh, we have to
+ * define a mapping table to avoid a ton of ugly if's in the code.
+ */
+
+enum nxsw_portreg {
+	NXSW_RCV_PRODUCER_OFF	= 0,		/* Producer Rx ring index */
+	NXSW_RCV_CONSUMER_OFF,			/* Consumer Rx ring index */
+	NXSW_GLOBALRCV_RING,			/* Address of Rx buffer */
+	NXSW_RCV_RING_SIZE,			/* Entries in the Rx ring */
+
+	NXSW_JRCV_PRODUCER_OFF,			/* Producer jumbo ring index */
+	NXSW_JRCV_CONSUMER_OFF,			/* Consumer jumbo ring index */
+	NXSW_GLOBALJRCV_RING,			/* Address of jumbo buffer */
+	NXSW_JRCV_RING_SIZE,			/* Entries in the jumbo ring */
+
+	NXSW_TSO_PRODUCER_OFF,			/* Producer TSO ring index */
+	NXSW_TSO_CONSUMER_OFF,			/* Consumer TSO ring index */
+	NXSW_GLOBALOTSO_RING,			/* Address of TSO buffer */
+	NXSW_TSO_RING_SIZE,			/* Entries in the TSO ring */
+
+	NXSW_STATUS_RING,			/* Address of status ring */
+	NXSW_STATUS_PROD,			/* Producer status index */
+	NXSW_STATUS_CONS,			/* Consumer status index */
+	NXSW_RCVPEG_STATE,			/* State of the NX2031 */
+	NXSW_STATUS_RING_SIZE,			/* Entries in the status ring */
+
+	NXSW_PORTREG_MAX
+};
+#define NXSW_PORTREGS		{					\
+	{								\
+	    NXSW(0x2300), NXSW(0x2304), NXSW(0x2308), NXSW(0x230c),	\
+	    NXSW(0x2310), NXSW(0x2314), NXSW(0x2318), NXSW(0x231c),	\
+	    NXSW(0x2320), NXSW(0x2324), NXSW(0x2328), NXSW(0x232c),	\
+	    NXSW(0x2320), NXSW(0x2324), NXSW(0x2328), NXSW(0x232c),	\
+	    NXSW(0x2340)						\
+	}, {								\
+	    NXSW(0x2344), NXSW(0x2348), NXSW(0x234c), NXSW(0x2350),	\
+	    NXSW(0x2354), NXSW(0x2358), NXSW(0x235c), NXSW(0x2360),	\
+	    NXSW(0x2364), NXSW(0x2368), NXSW(0x236c), NXSW(0x2370),	\
+	    NXSW(0x2374), NXSW(0x2378), NXSW(0x237c), NXSW(0x2380),	\
+	    NXSW(0x2384)						\
+	}, {								\
+	    NXSW(0x23d8), NXSW(0x23dc), NXSW(0x23f0), NXSW(0x23f4),	\
+	    NXSW(0x23f8), NXSW(0x23fc), NXSW(0x2400), NXSW(0x2404),	\
+	    NXSW(0x2408), NXSW(0x240c), NXSW(0x2410), NXSW(0x2414),	\
+	    NXSW(0x2418), NXSW(0x241c), NXSW(0x2420), NXSW(0x2424),	\
+	    NXSW(0x2428)						\
+	}, {								\
+	    NXSW(0x242c), NXSW(0x2430), NXSW(0x2434), NXSW(0x2438),	\
+	    NXSW(0x243c), NXSW(0x2440), NXSW(0x2444), NXSW(0x2448),	\
+	    NXSW(0x244c), NXSW(0x2450), NXSW(0x2454), NXSW(0x2458),	\
+	    NXSW(0x245c), NXSW(0x2460), NXSW(0x2464), NXSW(0x2468),	\
+	    NXSW(0x246c)						\
+	}								\
+}
+
+/*
+ * Port-specific SW registers, will be mapped to a subregion
+ */
 
 /*
  * Secondary Interrupt Registers
