@@ -1,4 +1,4 @@
-/*	$OpenBSD: getsn.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $	*/
+/*	$OpenBSD: getsn.c,v 1.5 2007/05/03 01:21:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt
@@ -33,12 +33,10 @@
 int
 getsn(char *cp, int size)
 {
-	int len, c;
-	char *lp;
+	int len = 0, c;
+	char *lp = cp;
 
-	lp = cp;
-	len = 0;
-	for (;;) {
+	while (1) {
 		c = cngetc();
 		switch (c) {
 		case '\n':
