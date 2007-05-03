@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.40 2007/03/31 09:44:21 kettenis Exp $ */
+/*	$OpenBSD: cpu.c,v 1.41 2007/05/03 21:03:06 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -532,3 +532,22 @@ config_l2cr(int cpu)
 	} else
 		printf(": L2 cache not enabled");
 }
+
+#ifdef MULTIPROCESSOR
+
+void cpu_hatch(void);
+void cpu_spinup_trampoline(void);
+
+volatile int cpu_hatch_stack;
+
+void
+cpu_boot_secondary_processors(void)
+{
+}
+
+void
+cpu_hatch(void)
+{
+}
+
+#endif
