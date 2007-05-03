@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.211 2007/05/02 10:03:42 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.212 2007/05/03 10:11:25 tom Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1384,16 +1384,21 @@ bge_blockinit(struct bge_softc *sc)
 	}
 
 	/*
-	 * Set the BD ring replentish thresholds. The recommended
+	 * Set the BD ring replenish thresholds. The recommended
 	 * values are 1/8th the number of descriptors allocated to
 	 * each ring.
 	 */
 	i = BGE_STD_RX_RING_CNT / 8;
 
-	/* Use a value of 8 for these chips to workaround HW errata */
+	/*
+	 * Use a value of 8 for the following chips to workaround HW errata.
+	 * Some of these chips have been added based on empirical
+	 * evidence (they don't work unless this is done).
+	 */
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755)
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
 		i = 8;
 
 	CSR_WRITE_4(sc, BGE_RBDI_STD_REPL_THRESH, i);
