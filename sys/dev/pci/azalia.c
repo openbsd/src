@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.25 2007/05/02 17:01:22 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.26 2007/05/03 14:49:31 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1072,7 +1072,7 @@ azalia_codec_init(codec_t *this)
 
 	printf("%s: codec:", XNAME(this->az));
 	if (this->name == NULL)
-		printf(" 0x04x/0x%04x", id >> 16, id & 0xffff);
+		printf(" 0x%04x/0x%04x", id >> 16, id & 0xffff);
 	else
 		printf(" %s", this->name);
 	printf(" (rev. %u.%u), HDA version %u.%u\n",
