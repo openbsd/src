@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.62 2007/05/02 15:17:36 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.63 2007/05/03 14:47:29 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -60,7 +60,7 @@ sub new
 
 sub read
 {
-	my ($a, $fh, $code) = @_;
+	my ($a, $u, $code) = @_;
 	my $plist;
 	$code = \&defaultCode if !defined $code;
 	if (ref $a) {
@@ -68,16 +68,12 @@ sub read
 	} else {
 		$plist = new $a;
 	}
-	&$code($fh,
+	&$code($u,
 		sub {
 			local $_ = shift;
 			return if m/^\s*$/;
 			chomp;
 			OpenBSD::PackingElement->create($_, $plist);
-			if ($plist->{need_modules}) {
-				close($fh);
-				open($fh, '<', '/dev/null');
-			}
 		});
 	return $plist;
 }
