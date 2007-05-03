@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.29 2007/04/23 10:18:30 pedro Exp $	*/
+/*	$OpenBSD: fs.h,v 1.30 2007/05/03 20:11:55 millert Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -357,10 +357,10 @@ struct fs {
     /* blktot size */	(fs)->fs_cpg * sizeof(int32_t) + \
     /* blks size */	(fs)->fs_cpg * (fs)->fs_nrpos * sizeof(int16_t) + \
     /* inode map */	howmany((fs)->fs_ipg, NBBY) + \
-    /* block map */	howmany((fs)->fs_cpg * (fs)->fs_spc / NSPF(fs), NBBY) +\
+    /* block map */	howmany((fs)->fs_fpg, NBBY) + \
     /* if present */	((fs)->fs_contigsumsize <= 0 ? 0 : \
     /* cluster sum */	(fs)->fs_contigsumsize * sizeof(int32_t) + \
-    /* cluster map */	howmany((fs)->fs_cpg * (fs)->fs_spc / NSPB(fs), NBBY)))
+    /* cluster map */	howmany(fragstoblks(fs, (fs)->fs_fpg), NBBY)))
 
 /*
  * Convert cylinder group to base address of its global summary info.
@@ -497,10 +497,11 @@ struct ocg {
 #define blkmap(fs, map, loc) \
     (((map)[(loc) / NBBY] >> ((loc) % NBBY)) & (0xff >> (NBBY - (fs)->fs_frag)))
 #define cbtocylno(fs, bno) \
-    ((bno) * NSPF(fs) / (fs)->fs_spc)
+    (fsbtodb(fs, bno) / (fs)->fs_spc)
 #define cbtorpos(fs, bno) \
-    (((bno) * NSPF(fs) % (fs)->fs_spc / (fs)->fs_nsect * (fs)->fs_trackskew + \
-     (bno) * NSPF(fs) % (fs)->fs_spc % (fs)->fs_nsect * (fs)->fs_interleave) % \
+    ((fs)->fs_nrpos <= 1 ? 0 : \
+     (fsbtodb(fs, bno) % (fs)->fs_spc / (fs)->fs_nsect * (fs)->fs_trackskew + \
+     fsbtodb(fs, bno) % (fs)->fs_spc % (fs)->fs_nsect * (fs)->fs_interleave) % \
      (fs)->fs_nsect * (fs)->fs_nrpos / (fs)->fs_npsect)
 
 /*

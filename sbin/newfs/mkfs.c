@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.58 2007/04/23 10:18:30 pedro Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.59 2007/05/03 20:11:55 millert Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -341,7 +341,6 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 		if (sblock.fs_fpg < minfpg)
 			sblock.fs_fpg = minfpg;
 
-		sblock.fs_spc = sblock.fs_fpg * sblock.fs_nspf;
 		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
 		    INOPB(&sblock));
 
@@ -371,9 +370,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	 * grow any larger, the number of cylinder groups drops below
 	 * mincylgrps, or we reach the requested size.
 	 */
-	for (; sblock.fs_fpg < maxblkspercg;
-	    sblock.fs_fpg += sblock.fs_frag,
-	    sblock.fs_spc = sblock.fs_fpg * sblock.fs_nspf) {
+	for (; sblock.fs_fpg < maxblkspercg; sblock.fs_fpg += sblock.fs_frag) {
 		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
 		    INOPB(&sblock));
 
@@ -387,7 +384,6 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 			break;
 
 		sblock.fs_fpg -= sblock.fs_frag;
-		sblock.fs_spc = sblock.fs_fpg * sblock.fs_nspf;
 		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
 		    INOPB(&sblock));
 
@@ -414,7 +410,6 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 			break;
 
 		sblock.fs_fpg -= sblock.fs_frag;
-		sblock.fs_spc = sblock.fs_fpg * sblock.fs_nspf;
 		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
 		    INOPB(&sblock));
 	}
@@ -428,6 +423,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	 * Back to filling superblock fields.
 	 */
 	if (Oflag <= 1) {
+		sblock.fs_spc = sblock.fs_fpg * sblock.fs_nspf;
 		sblock.fs_nsect = sblock.fs_spc;
 		sblock.fs_npsect = sblock.fs_spc;
 		sblock.fs_ncyl = sblock.fs_ncg;
