@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1233 2007/05/01 03:26:05 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1234 2007/05/03 10:12:02 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -10178,6 +10178,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RENDITION, PCI_PRODUCT_RENDITION_V2x00,
 	    "Verite V2x00",
+	},
+	{
+	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_OHCI,
+	    "ISP156x USB",
+	},
+	{
+	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_EHCI,
+	    "ISP156x USB",
 	},
 	{
 	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7130,

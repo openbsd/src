@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1233 2007/05/01 03:26:05 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1234 2007/05/03 10:12:02 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3235,6 +3235,8 @@
 #define	PCI_PRODUCT_RENDITION_V2x00	0x2000		/* Verite V2x00 */
 
 /* Philips products */
+#define	PCI_PRODUCT_PHILIPS_OHCI	0x1561		/* ISP156x USB */
+#define	PCI_PRODUCT_PHILIPS_EHCI	0x1562		/* ISP156x USB */
 #define	PCI_PRODUCT_PHILIPS_SAA7130	0x7130		/* SAA7130 TV */
 #define	PCI_PRODUCT_PHILIPS_SAA7133	0x7133		/* SAA7133 TV */
 #define	PCI_PRODUCT_PHILIPS_SAA7134	0x7134		/* SAA7134 TV */
