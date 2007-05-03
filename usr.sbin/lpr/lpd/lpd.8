@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpd.8,v 1.18 2007/02/16 13:39:06 jmc Exp $
+.\"	$OpenBSD: lpd.8,v 1.19 2007/05/03 13:11:34 millert Exp $
 .\"	$NetBSD: lpd.8,v 1.23 2002/02/08 01:38:50 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -38,7 +38,7 @@
 .Nd line printer spooler daemon
 .Sh SYNOPSIS
 .Nm lpd
-.Op Fl dlrsW
+.Op Fl dlrs
 .Op Fl b Ar bind-address
 .Op Fl n Ar maxchild
 .Op Fl w Ar maxwait
@@ -137,11 +137,6 @@ This is valuable when the machine on which
 runs is subject to attack over the network and it is desired that the
 machine be protected from attempts to remotely fill spools and similar
 attacks.
-.It Fl W
-The
-.Fl W
-option will instruct lpd not to verify a remote tcp connection
-comes from a reserved port (<1024).
 .It Fl w Ar maxwait
 The
 .Fl w
@@ -367,3 +362,10 @@ An
 .Nm
 daemon appeared in
 .At v6 .
+.Pp
+.Nm
+previously required that clients connected using a privileged port
+(below 1024).
+This restriction was removed because it does not provide additional
+security and also because many modern clients connect using an
+unprivileged port.
