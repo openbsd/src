@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.85 2007/02/21 13:24:55 claudio Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.86 2007/05/03 21:03:46 mpf Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -520,7 +520,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSIFFLAGS:
 		error = tun_switch(tp,
-		    ifr->ifr_flags & IFF_LINK0 ? TUN_LAYER2 : 0);
+		    ifp->if_flags & IFF_LINK0 ? TUN_LAYER2 : 0);
 		break;
 	default:
 		error = EINVAL;
