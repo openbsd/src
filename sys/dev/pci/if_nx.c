@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.38 2007/05/03 20:50:56 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.39 2007/05/03 21:05:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -167,6 +167,13 @@ struct nx_softc {
 	bus_space_tag_t		 nx_memt;		/* pointer to sc_memt */
 	bus_space_handle_t	 nx_memh;		/* port phy subregion */
 
+	bus_dmamap_t		 nx_dma_map;
+	bus_dma_segment_t	 nx_dma_seg;
+	size_t			 nx_dma_size;
+	caddr_t			 nx_dma_kva;
+
+	struct nx_ringcontext	*nx_rc;			/* Rx, Tx, Status */
+
 	struct nxb_softc	*nx_sc;			/* The nxb board */
 	struct nxb_port		*nx_port;		/* Port information */
 	void			*nx_ih;
@@ -218,6 +225,9 @@ u_int32_t nx_readphy(struct nx_softc *, bus_size_t);
 void	 nx_writephy(struct nx_softc *, bus_size_t, u_int32_t);
 u_int32_t nx_readcrb(struct nx_softc *, enum nxsw_portreg);
 void	 nx_writecrb(struct nx_softc *, enum nxsw_portreg, u_int32_t);
+
+int	 nx_dma_alloc(struct nx_softc *);
+void	 nx_dma_free(struct nx_softc *);
 
 struct cfdriver nxb_cd = {
 	0, "nxb", DV_DULL
@@ -1251,6 +1261,12 @@ nx_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	if (nx_dma_alloc(nx) != 0) {
+		printf(": unable to allocate dma memory\n");
+		pci_intr_disestablish(sc->sc_pc, nx->nx_ih);
+		return;
+	}
+
 	bcopy(nxp->nxp_lladdr, nx->nx_ac.ac_enaddr, ETHER_ADDR_LEN);
 	printf(", address %s\n", ether_sprintf(nx->nx_ac.ac_enaddr));
 
@@ -1570,4 +1586,59 @@ nx_writecrb(struct nx_softc *nx, enum nxsw_portreg n, u_int32_t val)
 	bus_space_write_4(nx->nx_memt, nx->nx_memh, reg, val);
 	bus_space_barrier(nx->nx_memt, nx->nx_memh, reg, 4,
 	    BUS_SPACE_BARRIER_WRITE);
+}
+
+int
+nx_dma_alloc(struct nx_softc *nx)
+{
+	struct nxb_softc	*sc = nx->nx_sc;
+	int			 nsegs;
+
+	/*
+	 * One DMA'ed ring context per virtual port
+	 */
+
+	nx->nx_dma_size = sizeof(struct nx_ringcontext);
+
+	if (bus_dmamap_create(sc->sc_dmat, nx->nx_dma_size, 1,
+	    nx->nx_dma_size, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+	    &nx->nx_dma_map) != 0)
+		goto err;
+
+	if (bus_dmamem_alloc(sc->sc_dmat, nx->nx_dma_size,
+	    NX_DMA_ALIGN, 0, &nx->nx_dma_seg, 1, &nsegs, BUS_DMA_NOWAIT) != 0)
+		goto destroy;
+
+	if (bus_dmamem_map(sc->sc_dmat, &nx->nx_dma_seg, nsegs,
+	    nx->nx_dma_size, &nx->nx_dma_kva, BUS_DMA_NOWAIT) != 0)
+		goto free;
+
+	if (bus_dmamap_load(sc->sc_dmat, nx->nx_dma_map, nx->nx_dma_kva,
+	    nx->nx_dma_size, NULL, BUS_DMA_NOWAIT) != 0)
+		goto unmap;
+
+	bzero(nx->nx_dma_kva, nx->nx_dma_size);
+	nx->nx_rc = (struct nx_ringcontext *)nx->nx_dma_kva;
+
+	return (0);
+
+ unmap:
+	bus_dmamem_unmap(sc->sc_dmat, nx->nx_dma_kva, nx->nx_dma_size);
+ free:
+	bus_dmamem_free(sc->sc_dmat, &nx->nx_dma_seg, 1);
+ destroy:
+	bus_dmamap_destroy(sc->sc_dmat, nx->nx_dma_map);
+ err:
+	return (1);
+}
+
+void
+nx_dma_free(struct nx_softc *nx)
+{
+	struct nxb_softc	*sc = nx->nx_sc;
+
+	bus_dmamap_unload(sc->sc_dmat, nx->nx_dma_map);
+	bus_dmamem_unmap(sc->sc_dmat, nx->nx_dma_kva, nx->nx_dma_size);
+	bus_dmamem_free(sc->sc_dmat, &nx->nx_dma_seg, 1);
+	bus_dmamap_destroy(sc->sc_dmat, nx->nx_dma_map);
 }
