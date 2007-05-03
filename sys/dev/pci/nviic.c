@@ -1,4 +1,4 @@
-/*	$OpenBSD: nviic.c,v 1.9 2006/12/11 18:16:37 deraadt Exp $ */
+/*	$OpenBSD: nviic.c,v 1.10 2007/05/03 01:38:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -20,7 +20,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/proc.h>
 
 #include <machine/bus.h>
@@ -85,7 +85,7 @@ struct nviic_softc;
 struct nviic_controller {
 	struct nviic_softc	*nc_sc;
 	bus_space_handle_t	nc_ioh;
-	struct lock		nc_lock;
+	struct rwlock		nc_lock;
 	struct i2c_controller	nc_i2c;
 };
 
@@ -176,7 +176,7 @@ nviic_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		nc->nc_sc = sc;
-		lockinit(&nc->nc_lock, PRIBIO | PCATCH, "iiclk", 0, 0);
+		rw_init(&nc->nc_lock, "nviic");
 		nc->nc_i2c.ic_cookie = nc;
 		nc->nc_i2c.ic_acquire_bus = nviic_i2c_acquire_bus;
 		nc->nc_i2c.ic_release_bus = nviic_i2c_release_bus;
@@ -197,7 +197,9 @@ nviic_i2c_acquire_bus(void *arg, int flags)
 	if (cold || (flags & I2C_F_POLL))
 		return (0);
 
-	return (lockmgr(&nc->nc_lock, LK_EXCLUSIVE, NULL));
+	rw_enter_write(&nc->nc_lock);
+
+	return (0);
 }
 
 void
@@ -208,7 +210,7 @@ nviic_i2c_release_bus(void *arg, int flags)
 	if (cold || (flags & I2C_F_POLL))
 		return;
 
-	lockmgr(&nc->nc_lock, LK_RELEASE, NULL);
+	rw_exit_write(&nc->nc_lock);
 }
 
 int
