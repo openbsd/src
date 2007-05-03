@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.274 2007/04/23 15:34:31 jsg Exp $
+$OpenBSD: usbdevs,v 1.275 2007/05/03 09:43:03 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1892,6 +1892,7 @@ product QTRONIX 980N		0x2011	Scorpion-980N
 /* Qualcomm products */
 product QUALCOMM MSM_MODEM	0x3196	CDMA MSM modem
 product QUALCOMM2 MSM_PHONE	0x6000	CDMA MSM phone
+product QUALCOMM MSM_HSDPA	0x6613	HSDPA MSM
 
 /* Quickshot products */
 product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
