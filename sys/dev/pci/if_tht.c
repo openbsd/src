@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.93 2007/05/04 22:39:55 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.94 2007/05/04 22:54:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1281,6 +1281,13 @@ tht_rxd(struct tht_softc *sc)
 		m = pkt->tp_m;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = letoh16(rxd.len);
+
+		if (!ISSET(flags, THT_RXD_FLAGS_IPCS))
+			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+		if (!ISSET(flags, THT_RXD_FLAGS_TCPCS))
+			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
+		if (!ISSET(flags, THT_RXD_FLAGS_UDPCS))
+			m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
 
 		/* XXX process type 3 rx descriptors */
 
