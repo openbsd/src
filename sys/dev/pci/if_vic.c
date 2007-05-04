@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.46 2007/05/04 01:52:51 reyk Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.47 2007/05/04 05:08:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1184,7 +1184,7 @@ vic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING))
-			vic_iff(ifp);
+			vic_iff(ifp->if_softc);
 		error = 0;
 	}
 
