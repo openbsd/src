@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.36 2007/05/04 19:30:55 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.37 2007/05/04 23:21:23 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -646,6 +646,7 @@ setroot(struct device *bootdv, int part, int exitflags)
 
 #ifdef RAMDISK_HOOKS
 	bootdv = &fakerdrootdev;
+	mountroot = NULL;
 	part = 0;
 #endif
 
