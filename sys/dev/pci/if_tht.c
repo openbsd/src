@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.88 2007/05/04 21:51:11 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.89 2007/05/04 21:54:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1305,6 +1305,9 @@ tht_rxd(struct tht_softc *sc)
 	} while (sc->sc_rxd.tf_ready >= sizeof(rxd));
 
 	tht_fifo_post(sc, &sc->sc_rxd);
+
+	/* put more pkts on the fifo */
+	tht_rxf(sc, 0);
 }
 
 void
