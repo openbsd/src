@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kern.9,v 1.10 2005/08/29 21:56:45 pedro Exp $
+.\"	$OpenBSD: kern.9,v 1.11 2007/05/04 22:20:48 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -111,8 +111,6 @@ enabled.
 .Sh BYTE STRINGS
 .nr nS 1
 .Ft int
-.Fn locc "int mask" "u_int size" "char *cp"
-.Ft int
 .Fn skpc "int mask" "size_t size" "u_char *cp"
 .Ft int
 .Fn scanc "u_int size" "const u_char *cp" "const u_char *table" "int mask"
@@ -127,12 +125,6 @@ enabled.
 .nr nS 0
 .Pp
 The
-.Fn locc
-function locates an integer of value
-.Fa mask
-inside the string
-.Fa cp .
-The
 .Fn skpc
 function locates the first unsigned character of value different than
 .Fa mask
@@ -146,7 +138,6 @@ function expects a string of indexes into the table
 Each table element is bitwise ANDed against
 .Fa mask .
 .Pp
-.Fn locc ,
 .Fn skpc
 and
 .Fn scanc
@@ -250,7 +241,6 @@ functions conform to
 .St -ansiC .
 .Sh HISTORY
 The
-.Fn locc ,
 .Fn skpc
 and
 .Fn scanc
