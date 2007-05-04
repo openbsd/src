@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.76 2006/12/03 16:23:41 grange Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.77 2007/05/04 12:12:53 art Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1132,6 +1132,8 @@ sis_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_2;
 	}
 
+	timeout_set(&sc->sis_timeout, sis_tick, sc);
+
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -1841,7 +1843,6 @@ sis_init(void *xsc)
 
 	splx(s);
 
-	timeout_set(&sc->sis_timeout, sis_tick, sc);
 	timeout_add(&sc->sis_timeout, hz);
 }
 
