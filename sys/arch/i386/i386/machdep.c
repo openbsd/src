@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.383 2007/04/21 21:06:14 gwk Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.384 2007/05/04 16:39:28 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2690,27 +2690,6 @@ dumpsys()
 
 	delay(5000000);		/* 5 seconds */
 }
-
-#ifdef HZ
-/*
- * If HZ is defined we use this code, otherwise the code in
- * /sys/arch/i386/i386/microtime.s is used.  The other code only works
- * for HZ=100.
- */
-void
-i8254_microtime(struct timeval *tvp)
-{
-	int s = splhigh();
-
-	*tvp = time;
-	tvp->tv_usec += tick;
-	splx(s);
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-}
-#endif /* HZ */
 
 /*
  * Clear registers on exec
