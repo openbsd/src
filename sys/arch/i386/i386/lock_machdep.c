@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.3 2006/09/19 11:06:33 jsg Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.4 2007/05/04 12:58:41 art Exp $	*/
 /* $NetBSD: lock_machdep.c,v 1.1.2.3 2000/05/03 14:40:30 sommerfeld Exp $ */
 
 /*-
@@ -50,6 +50,7 @@
 
 #include <machine/atomic.h>
 #include <machine/lock.h>
+#include <machine/cpufunc.h>
 
 #include <ddb/db_output.h>
 
@@ -106,3 +107,54 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 }
 
 #endif
+
+int rw_cas_386(volatile unsigned long *,  unsigned long, unsigned long);
+int rw_cas_486(volatile unsigned long *,  unsigned long, unsigned long);
+int rw_cas_choose(volatile unsigned long *,  unsigned long, unsigned long);
+
+int (*rw_cas_p)(volatile unsigned long *, unsigned long, unsigned long)
+    = rw_cas_choose;
+
+int
+rw_cas_choose(volatile unsigned long *p, unsigned long o, unsigned long n)
+{
+	if (cpu_class == CPUCLASS_386)
+		rw_cas_p = rw_cas_386;
+	else
+		rw_cas_p = rw_cas_486;
+
+	return (*rw_cas_p)(p, o, n);
+}
+
+int
+rw_cas_386(volatile unsigned long *p, unsigned long o, unsigned long n)
+{
+	u_int ef = read_eflags();
+
+	disable_intr();
+	if (*p != o) {
+		write_eflags(ef);
+		return (1);
+	}
+	*p = n;
+	write_eflags(ef);
+
+	return (0);
+}
+
+#ifdef MULTIPROCESSOR
+#define MPLOCK "lock "
+#else
+#define MPLOCK
+#endif
+
+int
+rw_cas_486(volatile unsigned long *p, unsigned long o, unsigned long n)
+{
+	int res;
+
+        __asm volatile(MPLOCK " cmpxchgl %2, %1" : "=a" (res), "=m" (*p)
+             : "r" (n), "a" (o), "m" (*p) : "memory");
+
+	return (res != o);
+}
