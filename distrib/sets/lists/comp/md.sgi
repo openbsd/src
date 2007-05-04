@@ -173,6 +173,7 @@
 ./usr/include/mips64/internal_types.h
 ./usr/include/mips64/kcore.h
 ./usr/include/mips64/limits.h
+./usr/include/mips64/lock.h
 ./usr/include/mips64/memconf.h
 ./usr/include/mips64/mips_opcode.h
 ./usr/include/mips64/param.h
@@ -217,6 +218,7 @@
 ./usr/include/sgi/kcore.h
 ./usr/include/sgi/limits.h
 ./usr/include/sgi/loadfile_machdep.h
+./usr/include/sgi/lock.h
 ./usr/include/sgi/memconf.h
 ./usr/include/sgi/mips_opcode.h
 ./usr/include/sgi/mutex.h

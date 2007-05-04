@@ -1683,6 +1683,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/internal_types.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/kcore.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/limits.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/lock.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/memconf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/mips_opcode.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/param.ph
@@ -2056,6 +2057,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/kcore.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/limits.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/loadfile_machdep.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/lock.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/memconf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/mips_opcode.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/mutex.ph

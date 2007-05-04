@@ -1460,6 +1460,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/ioctl_fd.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/kcore.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/limits.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/lock.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/mutex.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/oldmon.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/openpromio.ph

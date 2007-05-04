@@ -147,6 +147,7 @@
 ./usr/include/sparc/ioctl_fd.h
 ./usr/include/sparc/kcore.h
 ./usr/include/sparc/limits.h
+./usr/include/sparc/lock.h
 ./usr/include/sparc/mutex.h
 ./usr/include/sparc/oldmon.h
 ./usr/include/sparc/openpromio.h
