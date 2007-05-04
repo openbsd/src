@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.34 2007/03/30 00:38:56 dlg Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.35 2007/05/04 03:44:45 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -46,16 +46,20 @@
 #include <sys/buf.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
+#include <sys/device.h>
 #include <sys/time.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
 #include <sys/lock.h>
 #include <sys/disk.h>
+#include <sys/reboot.h>
 #include <sys/dkio.h>
 #include <sys/dkstat.h>		/* XXX */
 #include <sys/proc.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/rndvar.h>
+#include <dev/cons.h>
 
 /*
  * A global list of all disks attached to the system.  May grow or
@@ -547,4 +551,265 @@ bufq_default_get(struct bufq *bq)
 		return (NULL);
 	head->b_actf = bp->b_actf;
 	return (bp);
+}
+
+#ifdef RAMDISK_HOOKS
+static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };
+#endif
+
+struct device *
+getdisk(char *str, int len, int defpart, dev_t *devp)
+{
+	struct device *dv;
+
+	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
+		printf("use one of: exit");
+#ifdef RAMDISK_HOOKS
+		printf(" %s[a-p]", fakerdrootdev.dv_xname);
+#endif
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+			if (dv->dv_class == DV_DISK)
+				printf(" %s[a-p]", dv->dv_xname);
+#if defined(NFSCLIENT)
+			if (dv->dv_class == DV_IFNET)
+				printf(" %s", dv->dv_xname);
+#endif
+		}
+		printf("\n");
+	}
+	return (dv);
+}
+
+struct device *
+parsedisk(char *str, int len, int defpart, dev_t *devp)
+{
+	struct device *dv;
+	char *cp, c;
+	int majdev, part;
+
+	if (len == 0)
+		return (NULL);
+	cp = str + len - 1;
+	c = *cp;
+	if (c >= 'a' && (c - 'a') < MAXPARTITIONS) {
+		part = c - 'a';
+		*cp = '\0';
+	} else
+		part = defpart;
+
+#ifdef RAMDISK_HOOKS
+	if (strcmp(str, fakerdrootdev.dv_xname) == 0) {
+		dv = &fakerdrootdev;
+		goto gotdisk;
+	}
+#endif
+
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
+		if (dv->dv_class == DV_DISK &&
+		    strcmp(str, dv->dv_xname) == 0) {
+#ifdef RAMDISK_HOOKS
+gotdisk:
+#endif
+			majdev = findblkmajor(dv);
+			if (majdev < 0)
+				panic("parsedisk");
+			*devp = MAKEDISKDEV(majdev, dv->dv_unit, part);
+			break;
+		}
+#if defined(NFSCLIENT)
+		if (dv->dv_class == DV_IFNET &&
+		    strcmp(str, dv->dv_xname) == 0) {
+			*devp = NODEV;
+			break;
+		}
+#endif
+	}
+
+	*cp = c;
+	return (dv);
+}
+
+void
+setroot(struct device *bootdv, int part, int exitflags)
+{
+	int majdev, unit, len, s;
+	struct swdevt *swp;
+	struct device *rootdv, *dv;
+	dev_t nrootdev, nswapdev = NODEV, temp = NODEV;
+	char buf[128];
+#if defined(NFSCLIENT)
+	extern char *nfsbootdevname;
+#endif
+
+	if (boothowto & RB_DFLTROOT)
+		return;
+
+#ifdef RAMDISK_HOOKS
+	bootdv = &fakerdrootdev;
+	part = 0;
+#endif
+
+	/*
+	 * If `swap generic' and we couldn't determine boot device,
+	 * ask the user.
+	 */
+	if (mountroot == NULL && bootdv == NULL)
+		boothowto |= RB_ASKNAME;
+	if (boothowto & RB_ASKNAME) {
+		while (1) {
+			printf("root device");
+			if (bootdv != NULL) {
+				printf(" (default %s", bootdv->dv_xname);
+				if (bootdv->dv_class == DV_DISK)
+					printf("%c", 'a' + part);
+				printf(")");
+			}
+			printf(": ");
+			s = splhigh();
+			cnpollc(TRUE);
+			len = getsn(buf, sizeof(buf));
+			cnpollc(FALSE);
+			splx(s);
+			if (strcmp(buf, "exit") == 0)
+				boot(exitflags);
+			if (len == 0 && bootdv != NULL) {
+				strlcpy(buf, bootdv->dv_xname, sizeof buf);
+				len = strlen(buf);
+			}
+			if (len > 0 && buf[len - 1] == '*') {
+				buf[--len] = '\0';
+				dv = getdisk(buf, len, part, &nrootdev);
+				if (dv != NULL) {
+					rootdv = dv;
+					nswapdev = nrootdev;
+					goto gotswap;
+				}
+			}
+			dv = getdisk(buf, len, part, &nrootdev);
+			if (dv != NULL) {
+				rootdv = dv;
+				break;
+			}
+		}
+
+		if (rootdv->dv_class == DV_IFNET)
+			goto gotswap;
+
+		/* try to build swap device out of new root device */
+		while (1) {
+			printf("swap device");
+			if (rootdv != NULL)
+				printf(" (default %s%s)", rootdv->dv_xname,
+				    rootdv->dv_class == DV_DISK ? "b" : "");
+			printf(": ");
+			s = splhigh();
+			cnpollc(TRUE);
+			len = getsn(buf, sizeof(buf));
+			cnpollc(FALSE);
+			splx(s);
+			if (strcmp(buf, "exit") == 0)
+				boot(exitflags);
+			if (len == 0 && rootdv != NULL) {
+				switch (rootdv->dv_class) {
+				case DV_IFNET:
+					nswapdev = NODEV;
+					break;
+				case DV_DISK:
+					nswapdev = MAKEDISKDEV(major(nrootdev),
+					    DISKUNIT(nrootdev), 1);
+					if (nswapdev == nrootdev)
+						continue;
+					break;
+				default:
+					break;
+				}
+				break;
+			}
+			dv = getdisk(buf, len, 1, &nswapdev);
+			if (dv) {
+				if (dv->dv_class == DV_IFNET)
+					nswapdev = NODEV;
+				if (nswapdev == nrootdev)
+					continue;
+				break;
+			}
+		}
+gotswap:
+		rootdev = nrootdev;
+		dumpdev = nswapdev;
+		swdevt[0].sw_dev = nswapdev;
+		swdevt[1].sw_dev = NODEV;
+#if defined(NFSCLIENT)
+	} else if (mountroot == nfs_mountroot) {
+		rootdev = dumpdev = swapdev = NODEV;
+#endif
+	} else if (mountroot == NULL) {
+		/* `swap generic': Use the device the ROM told us to use */
+		rootdv = bootdv;
+		majdev = findblkmajor(rootdv);
+		if (majdev >= 0) {
+			/*
+			 * Root and swap are on the disk.
+			 * Assume swap is on partition b.
+			 */
+			rootdev = MAKEDISKDEV(majdev, rootdv->dv_unit, part);
+			nswapdev = MAKEDISKDEV(majdev, rootdv->dv_unit, 1);
+			dumpdev = nswapdev;
+		} else {
+			/*
+			 * Root and swap are on a net.
+			 */
+			nswapdev = dumpdev = NODEV;
+		}
+		swdevt[0].sw_dev = nswapdev;
+		/* swdevt[1].sw_dev = NODEV; */
+	} else {
+		/* Completely pre-configured, but we want rootdv .. */
+		majdev = major(rootdev);
+		if (findblkname(majdev) == NULL)
+			return;
+		unit = DISKUNIT(rootdev);
+		part = DISKPART(rootdev);
+		snprintf(buf, sizeof buf, "%s%d%c",
+		    findblkname(majdev), unit, 'a' + part);
+		rootdv = parsedisk(buf, strlen(buf), 0, &nrootdev);
+	}
+
+	switch (rootdv->dv_class) {
+#if defined(NFSCLIENT)
+	case DV_IFNET:
+		mountroot = nfs_mountroot;
+		nfsbootdevname = rootdv->dv_xname;
+		return;
+#endif
+	case DV_DISK:
+		mountroot = dk_mountroot;
+		part = DISKPART(rootdev);
+		printf("root on %s%c\n", rootdv->dv_xname, 'a' + part);
+		break;
+	default:
+		printf("can't figure root, hope your kernel is right\n");
+		return;
+	}
+
+	/*
+	 * Make the swap partition on the root drive the primary swap.
+	 */
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
+		if (major(rootdev) == major(swp->sw_dev) &&
+		    DISKUNIT(rootdev) == DISKUNIT(swp->sw_dev)) {
+			temp = swdevt[0].sw_dev;
+			swdevt[0].sw_dev = swp->sw_dev;
+			swp->sw_dev = temp;
+			break;
+		}
+	}
+	if (swp->sw_dev != NODEV) {
+		/*
+		 * If dumpdev was the same as the old primary swap device,
+		 * move it to the new primary swap device.
+		 */
+		if (temp == dumpdev)
+			dumpdev = swdevt[0].sw_dev;
+	}
 }

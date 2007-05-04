@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.71 2007/05/01 17:35:56 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.72 2007/05/04 03:44:44 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -76,11 +76,6 @@
 #include <machine/i82093var.h>
 #endif
 
-int findblkmajor(struct device *dv);
-char *findblkname(int);
-
-void rootconf(void);
-void setroot(void);
 void diskconf(void);
 
 /*
@@ -181,91 +176,31 @@ cpu_configure(void)
 void
 diskconf(void)
 {
-	/*
-	 * Configure root, swap, and dump area.  This is
-	 * currently done by running the same checksum
-	 * algorithm over all known disks, as was done in
-	 * /boot.  Then we basically fixup the *dev vars
-	 * from the info we gleaned from this.
-	 */
-	dkcsumattach();
-
-	rootconf();
-	dumpconf();
-}
-
-#define	DOSWAP			/* change swdevt and dumpdev */
-
-static struct {
-	char *name;
-	int maj;
-} nam2blk[] = {
-	{ "wd", 0 },
-	{ "sw", 1 },
-	{ "fd", 2 },
-	{ "wt", 3 },
-	{ "sd", 4 },
-	{ "cd", 6 },
-	{ "mcd", 7 },
-	{ "rd", 17 },
-	{ "raid", 19 }
-};
-
-int
-findblkmajor(struct device *dv)
-{
-	char *name = dv->dv_xname;
-	int i;
-
-	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); ++i)
-		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[i].name))
-		    == 0)
-			return (nam2blk[i].maj);
-	return (-1);
-}
-
-char *
-findblkname(int maj)
-{
-	int i;
-
-	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); ++i)
-		if (maj == nam2blk[i].maj)
-			return (nam2blk[i].name);
-	return (NULL);
-}
-
-dev_t	argdev = NODEV;
-int	nswap;
-
-/*
- * Attempt to find the device from which we were booted.
- * If we can do so, and not instructed not to do so,
- * change rootdev to correspond to the load device.
- */
-void
-setroot(void)
-{
-	int  majdev, mindev, unit, part, adaptor;
-	struct swdevt *swp;
-	dev_t orootdev;
+	int majdev, unit, part = 0;
+	struct device *bootdv = NULL;
+	dev_t tmpdev;
+	char buf[128];
 #if defined(NFSCLIENT)
 	extern bios_bootmac_t *bios_bootmac;
 #endif
-#ifdef DOSWAP
-	dev_t temp = 0;
-#endif
+
+	dkcsumattach();
+
+	if ((bootdev & B_MAGICMASK) == (u_int)B_DEVMAGIC) {
+		majdev = B_TYPE(bootdev);
+		unit = B_UNIT(bootdev);
+		part = B_PARTITION(bootdev);
+		snprintf(buf, sizeof buf, "%s%d%c", findblkname(majdev),
+		    unit, part + 'a');
+		bootdv = parsedisk(buf, strlen(buf), part, &tmpdev);
+	}
 
 #if defined(NFSCLIENT)
 	if (bios_bootmac) {
-		extern char *nfsbootdevname;
 		struct ifnet *ifp;
-		
-		mountroot = nfs_mountroot;
 
 		printf("PXE boot MAC address %s, ",
 		    ether_sprintf(bios_bootmac->mac));
-
 		for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 		    ifp = TAILQ_NEXT(ifp, if_list)) {
 			if ((ifp->if_type == IFT_ETHER ||
@@ -276,224 +211,52 @@ setroot(void)
 				break;
 		}
 		if (ifp) {
-			nfsbootdevname = ifp->if_xname;
-			printf("interface %s\n", nfsbootdevname);
+			printf("interface %s\n", ifp->if_xname);
+			mountroot = nfs_mountroot;	/* potentially */
+			bootdv = parsedisk(ifp->if_xname, strlen(ifp->if_xname),
+			    0, &tmpdev);
+			part = 0;
 		} else
-			printf("no interface selected\n");
-		return;
+			printf("unknown interface\n");
 	}
 #endif
 
-	if (boothowto & RB_DFLTROOT ||
-	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
-		return;
-
-	majdev = B_TYPE(bootdev);
-	if (findblkname(majdev) == NULL)
-		return;
-	adaptor = B_ADAPTOR(bootdev);
-	part = B_PARTITION(bootdev);
-	unit = B_UNIT(bootdev);
-	mindev = (unit * MAXPARTITIONS) + part;
-	orootdev = rootdev;
-	rootdev = makedev(majdev, mindev);
-	mountroot = dk_mountroot;
-
-	/*
-	 * If the original rootdev is the same as the one
-	 * just calculated, don't need to adjust the swap configuration.
-	 */
-	printf("root on %s%d%c\n", findblkname(majdev), unit, part + 'a');
-	if (rootdev == orootdev)
-		return;
-
-#ifdef DOSWAP
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		if (majdev == major(swp->sw_dev) &&
-		    mindev/MAXPARTITIONS == minor(swp->sw_dev)/MAXPARTITIONS) {
-			temp = swdevt[0].sw_dev;
-			swdevt[0].sw_dev = swp->sw_dev;
-			swp->sw_dev = temp;
-			break;
-		}
-	}
-	if (swp->sw_dev == NODEV)
-		return;
-
-	/*
-	 * If dumpdev was the same as the old primary swap device, move
-	 * it to the new primary swap device.
-	 */
-	if (temp == dumpdev)
-		dumpdev = swdevt[0].sw_dev;
-#endif
+	setroot(bootdv, part, RB_USERREQ);
+	dumpconf();
 }
 
-#include "wd.h"
-#if NWD > 0
-extern	struct cfdriver wd_cd;
-#endif
-#include "sd.h"
-#if NSD > 0
-extern	struct cfdriver sd_cd;
-#endif
-#include "cd.h"
-#if NCD > 0
-extern	struct cfdriver cd_cd;
-#endif
-#include "mcd.h"
-#if NMCD > 0
-extern	struct cfdriver mcd_cd;
-#endif
-#include "fd.h"
-#if NFD > 0
-extern	struct cfdriver fd_cd;
-#endif
-#include "rd.h"
-#if NRD > 0
-extern	struct cfdriver rd_cd;
-#endif
-#include "raid.h"
-#if NRAID > 0
-extern	struct cfdriver raid_cd;
-#endif
-
-struct	genericconf {
-	struct cfdriver *gc_driver;
-	char *gc_name;
-	dev_t gc_major;
-} genericconf[] = {
-#if NWD > 0
-	{ &wd_cd,  "wd",  0 },
-#endif
-#if NFD > 0
-	{ &fd_cd,  "fd",  2 },
-#endif
-#if NSD > 0
-	{ &sd_cd,  "sd",  4 },
-#endif
-#if NCD > 0
-	{ &cd_cd,  "cd",  6 },
-#endif
-#if NMCD > 0
-	{ &mcd_cd, "mcd", 7 },
-#endif
-#if NRD > 0
-	{ &rd_cd,  "rd",  17 },
-#endif
-#if NRAID > 0
-	{ &raid_cd,  "raid",  19 },
-#endif
-	{ 0 }
+static struct {
+	char	*name;
+	int	maj;
+} nam2blk[] = {
+	{ "wd",		0 },
+	{ "fd",		2 },
+	{ "sd",		4 },
+	{ "cd",		6 },
+	{ "mcd",	7 },
+	{ "rd",		17 },
+	{ "raid",	19 }
 };
 
-void
-rootconf(void)
+int
+findblkmajor(struct device *dv)
 {
-	struct genericconf *gc;
-	int unit, part = 0;
-#if defined(NFSCLIENT)
-	struct ifnet *ifp;
-#endif
-	char name[128];
-	char *num;
+	char *name = dv->dv_xname;
+	int i;
 
-	if (boothowto & RB_ASKNAME) {
-		while (1) {
-			printf("root device? ");
-			cnpollc(TRUE);
-			getsn(name, sizeof name);
-			cnpollc(FALSE);
-			if (*name == '\0')
-				break;
-			if (strcmp(name, "exit") == 0)
-				boot(RB_USERREQ);
-			for (gc = genericconf; gc->gc_driver; gc++)
-				if (gc->gc_driver->cd_ndevs &&
-				    strncmp(gc->gc_name, name,
-				    strlen(gc->gc_name)) == 0)
-					break;
-			if (gc->gc_driver) {
-				num = &name[strlen(gc->gc_name)];
+	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); i++)
+		if (!strncmp(name, nam2blk[i].name, strlen(nam2blk[i].name)))
+			return (nam2blk[i].maj);
+	return (-1);
+}
 
-				unit = -2;
-				do {
-					if (unit != -2 && *num >= 'a' &&
-					    *num <= 'a'+MAXPARTITIONS-1 &&
-					    num[1] == '\0') {
-						part = *num++ - 'a';
-						break;
-					}
-					if (unit == -2)
-						unit = 0;
-					unit = (unit * 10) + *num - '0';
-					if (*num < '0' || *num > '9')
-						unit = -1;
-				} while (unit != -1 && *++num);
-	
-				if (unit < 0) {
-					printf("%s: not a unit number\n",
-					    &name[strlen(gc->gc_name)]);
-				} else if (unit >= gc->gc_driver->cd_ndevs ||
-				    gc->gc_driver->cd_devs[unit] == NULL) {
-					printf("%d: no such unit\n", unit);
-				} else {
-					rootdev = makedev(gc->gc_major,
-					    unit * MAXPARTITIONS + part);
-					mountroot = dk_mountroot;
-					break;
-				}
-#if defined(NFSCLIENT)
-			} else {
-				ifp = ifunit(name);
-				if (ifp && (ifp->if_flags & IFF_BROADCAST)) {
-					extern char *nfsbootdevname;
-			
-					mountroot = nfs_mountroot;
-					nfsbootdevname = ifp->if_xname;
-					return;
-				}
-#endif
-			}
+char *
+findblkname(int maj)
+{
+	int i;
 
-			printf("use one of: exit");
-			for (gc = genericconf; gc->gc_driver; gc++) {
-				for (unit=0; unit < gc->gc_driver->cd_ndevs; unit++) {
-					if (gc->gc_driver->cd_devs[unit])
-						printf(" %s%d[a-%c]", gc->gc_name,
-						    unit, 'a'+MAXPARTITIONS-1);
-				}
-			}
-#if defined(NFSCLIENT)
-			for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
-			    ifp = TAILQ_NEXT(ifp, if_list)) {
-				if ((ifp->if_flags & IFF_BROADCAST))
-					printf(" %s", ifp->if_xname);
-			}
-#endif
-			printf("\n");
-		}
-	}
-
-	if (mountroot == NULL) {
-		/* `swap generic' */
-		setroot();
-#if defined(NFSCLIENT)
-	} else if (mountroot == nfs_mountroot) {
-		;
-#endif
-	} else {
-		/* preconfigured for disk */
-		int  majdev, unit, part;
-
-		majdev = major(rootdev);
-		if (findblkname(majdev) == NULL)
-			return;
-		part = minor(rootdev) % MAXPARTITIONS;
-		unit = minor(rootdev) / MAXPARTITIONS;
-		printf("root on %s%d%c\n", findblkname(majdev), unit, part + 'a');
-	}
-	if (mountroot == dk_mountroot)
-		swdevt[0].sw_dev = argdev = dumpdev =
-		    MAKEDISKDEV(major(rootdev), DISKUNIT(rootdev), 1);
+	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); i++)
+		if (nam2blk[i].maj == maj)
+			return (nam2blk[i].name);
+	return (NULL);
 }

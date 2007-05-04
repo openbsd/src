@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.13 2007/04/07 14:20:10 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.14 2007/05/04 03:44:44 deraadt Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.10 2001/07/24 19:32:11 eeh Exp $ */
 
 /*-
@@ -151,9 +151,6 @@ struct bootpath {
 	struct device *dev;	/* device that recognised this component */
 };
 struct bootpath	*bootpath_store(int, struct bootpath *);
-
-/* Parse a disk string into a dev_t, return device struct pointer */
-struct	device *parsedisk(char *, int, int, dev_t *);
 
 /* Establish a mountroot_hook, for benefit of floppy drive, mostly. */
 void	mountroot_hook_establish(void (*)(struct device *), struct device *);

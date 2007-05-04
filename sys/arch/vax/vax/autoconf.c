@@ -1,7 +1,9 @@
-/*	$OpenBSD: autoconf.c,v 1.24 2006/11/28 16:56:50 dlg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.25 2007/05/04 03:44:44 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
+ * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
@@ -36,6 +38,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+#include <sys/disklabel.h>
 #include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
@@ -52,6 +55,8 @@
 #include <machine/clock.h>
 #include <machine/rpb.h>
 
+#include <dev/cons.h>
+
 #include "led.h"
 
 #include <vax/vax/gencons.h>
@@ -60,12 +65,14 @@
 
 void	cpu_dumpconf(void);	/* machdep.c */
 void	gencnslask(void);
-void	setroot(void);		/* rootfil.c */
+void    diskconf(void);
 
 struct cpu_dep *dep_call;
-extern struct device *bootdv;
 
 int	mastercpu;	/* chief of the system */
+
+struct device *bootdv;
+int booted_partition;	/* defaults to 0 (aka 'a' partition */
 
 void
 cpu_configure()
@@ -73,7 +80,10 @@ cpu_configure()
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("mainbus not configured");
 
-	setroot();
+	printf("boot device: %s\n",
+	    bootdv ? bootdv->dv_xname : "<unknown>");
+
+	setroot(bootdv, booted_partition, RB_USERREQ);
 	cpu_dumpconf();
 
 	/*
@@ -438,3 +448,45 @@ booted_hd(struct device *dev, void *aux)
 	return 1;
 }
 #endif
+
+struct  ngcconf {
+        struct  cfdriver *ng_cf;
+        dev_t   ng_root;
+};
+
+struct nam2blk {
+        char *name;
+        int maj;
+} nam2blk[] = {
+        { "ra",          9 },
+        { "rx",         12 },
+        { "rl",         14 },
+	{ "hd",		19 },
+        { "sd",         20 },
+        { "rd",         23 },
+        { "raid",       25 },
+        { "cd",         61 },
+};
+
+int
+findblkmajor(struct device *dv)
+{
+	char *name = dv->dv_xname;
+	int i;
+
+	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); i++)
+		if (!strncmp(name, nam2blk[i].name, strlen(nam2blk[i].name)))
+			return (nam2blk[i].maj);
+	return (-1);
+}
+
+char *
+findblkname(int maj)
+{
+	int i;
+
+	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); i++)
+		if (nam2blk[i].maj == maj)
+			return (nam2blk[i].name);
+	return (NULL);
+}

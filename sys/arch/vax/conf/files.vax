@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.41 2007/02/05 05:46:13 miod Exp $
+#	$OpenBSD: files.vax,v 1.42 2007/05/04 03:44:44 deraadt Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -376,7 +376,6 @@ file	arch/vax/vax/sgmap.c
 file	arch/vax/vax/vm_machdep.c
 file	arch/vax/vax/findcpu.c
 file	arch/vax/vax/random.s
-file	arch/vax/vax/rootfil.c
 file	arch/vax/vax/autoconf.c
 file	arch/vax/vax/mutex.c
 file	arch/vax/vax/in_cksum.c			inet
