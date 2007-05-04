@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.45 2006/09/18 21:12:57 mpf Exp $	*/
+/*	$OpenBSD: stand.h,v 1.46 2007/05/04 21:44:07 reyk Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -147,7 +147,6 @@ __dead void	_rtt(void) __attribute__((noreturn));
 void	*memcpy(void *, const void *, size_t);
 int	memcmp(const void *, const void *, size_t);
 char	*strncpy(char *, const char *, size_t);
-char	*strcpy(char *, const char *);
 int	strncmp(const char *, const char *, size_t);
 int	strcmp(const char *, const char *);
 size_t	strlen(const char *);

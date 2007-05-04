@@ -5,8 +5,8 @@ SRCS+=	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
 	bcmp.S bcopy.S bzero.S ffs.S \
 	memchr.S memcmp.S memcpy.S memmove.S memset.S \
 	ovbcopy.S \
-	strcat.S strchr.S strcmp.S \
-	strcpy.S strlcpy.c strlcat.c strlen.S \
+	strchr.S strcmp.S \
+	strlcpy.c strlcat.c strlen.S \
 	strncasecmp.c strncmp.c strncpy.c strrchr.S \
 	scanc.S skpc.S random.c
 #	 bswap64.c strcasecmp.c strncasecmp.c \ strtoul.c \
