@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.22 2007/05/03 21:05:41 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.23 2007/05/04 04:18:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -167,7 +167,7 @@ struct nx_ringcontext {
 	/* d3 state register, dummy dma address */
 	u_int64_t		rc_reserved[2];
 
-	u_int32_t		rc_align;	/* 64bit aligned */
+	u_int32_t		rc_txconsumer;
 } __packed;
 
 /*
@@ -434,6 +434,10 @@ struct nx_ringcontext {
 #define NXSW_XG_STATE		NXSW(0x2294)	/* PHY state register */
 #define  NXSW_XG_LINK_UP	(1<<4)		/* 10G PHY state up */
 #define  NXSW_XG_LINK_DOWN	(1<<5)		/* 10G PHY state down */
+#define NXSW_MPORT_MODE		NXSW(0x22c4)	/* Multi port mode */
+#define  NXSW_MPORT_MODE_M	0xffff		/* Mode mask */
+#define  NXSW_MPORT_MODE_1FUNC	0x1111		/* Single function mode */
+#define  NXSW_MPORT_MODE_NFUNC	0x2222		/* Multi function mode */
 
 #define NXSW_TEMP		NXSW(0x23b4)	/* Temperature sensor */
 #define  NXSW_TEMP_STATE_M	0x0000ffff	/* Temp state mask */
@@ -451,7 +455,6 @@ struct nx_ringcontext {
  * they're using different offsets between the registers. Ugh, we have to
  * define a mapping table to avoid a ton of ugly if's in the code.
  */
-
 enum nxsw_portreg {
 	NXSW_RCV_PRODUCER_OFF	= 0,		/* Producer Rx ring index */
 	NXSW_RCV_CONSUMER_OFF,			/* Consumer Rx ring index */
@@ -472,36 +475,44 @@ enum nxsw_portreg {
 	NXSW_STATUS_PROD,			/* Producer status index */
 	NXSW_STATUS_CONS,			/* Consumer status index */
 	NXSW_RCVPEG_STATE,			/* State of the NX2031 */
+#define  NXSW_RCVPEG_STATE_M	0xffff		/* State mask */
+#define  NXSW_RCVPEG_INIT_START	0xff00		/* Start of initialization */
+#define  NXSW_RCVPEG_INIT_DONE	0xff01		/* Initialization complete */
+#define  NXSW_RCVPEG_INIT_ACK	0xf00f		/* Initialization ACKed */
+#define  NXSW_RCVPEG_INIT_FAIL	0xffff		/* Initialization failed */
 	NXSW_STATUS_RING_SIZE,			/* Entries in the status ring */
+
+	NXSW_CONTEXT_ADDR_LO,			/* Low address of context */
+	NXSW_CONTEXT_ADDR_HI,			/* High address of context */
+	NXSW_CONTEXT_SIG,			/* Context signature */
 
 	NXSW_PORTREG_MAX
 };
 #define NXSW_PORTREGS		{					\
-	{								\
-	    NXSW(0x2300), NXSW(0x2304), NXSW(0x2308), NXSW(0x230c),	\
-	    NXSW(0x2310), NXSW(0x2314), NXSW(0x2318), NXSW(0x231c),	\
-	    NXSW(0x2320), NXSW(0x2324), NXSW(0x2328), NXSW(0x232c),	\
-	    NXSW(0x2320), NXSW(0x2324), NXSW(0x2328), NXSW(0x232c),	\
-	    NXSW(0x2340)						\
-	}, {								\
-	    NXSW(0x2344), NXSW(0x2348), NXSW(0x234c), NXSW(0x2350),	\
-	    NXSW(0x2354), NXSW(0x2358), NXSW(0x235c), NXSW(0x2360),	\
-	    NXSW(0x2364), NXSW(0x2368), NXSW(0x236c), NXSW(0x2370),	\
-	    NXSW(0x2374), NXSW(0x2378), NXSW(0x237c), NXSW(0x2380),	\
-	    NXSW(0x2384)						\
-	}, {								\
-	    NXSW(0x23d8), NXSW(0x23dc), NXSW(0x23f0), NXSW(0x23f4),	\
-	    NXSW(0x23f8), NXSW(0x23fc), NXSW(0x2400), NXSW(0x2404),	\
-	    NXSW(0x2408), NXSW(0x240c), NXSW(0x2410), NXSW(0x2414),	\
-	    NXSW(0x2418), NXSW(0x241c), NXSW(0x2420), NXSW(0x2424),	\
-	    NXSW(0x2428)						\
-	}, {								\
-	    NXSW(0x242c), NXSW(0x2430), NXSW(0x2434), NXSW(0x2438),	\
-	    NXSW(0x243c), NXSW(0x2440), NXSW(0x2444), NXSW(0x2448),	\
-	    NXSW(0x244c), NXSW(0x2450), NXSW(0x2454), NXSW(0x2458),	\
-	    NXSW(0x245c), NXSW(0x2460), NXSW(0x2464), NXSW(0x2468),	\
-	    NXSW(0x246c)						\
-	}								\
+	{ NXSW(0x2300), NXSW(0x2344), NXSW(0x23d8), NXSW(0x242c) },	\
+	{ NXSW(0x2304), NXSW(0x2348), NXSW(0x23dc), NXSW(0x2430) },	\
+	{ NXSW(0x2308), NXSW(0x234c), NXSW(0x23f0), NXSW(0x2434) },	\
+	{ NXSW(0x230c), NXSW(0x2350), NXSW(0x23f4), NXSW(0x2438) },	\
+									\
+	{ NXSW(0x2310), NXSW(0x2354), NXSW(0x23f8), NXSW(0x243c) },	\
+	{ NXSW(0x2314), NXSW(0x2358), NXSW(0x23fc), NXSW(0x2440) },	\
+	{ NXSW(0x2318), NXSW(0x235c), NXSW(0x2400), NXSW(0x2444) },	\
+	{ NXSW(0x231c), NXSW(0x2360), NXSW(0x2404), NXSW(0x2448) },	\
+									\
+	{ NXSW(0x2320), NXSW(0x2364), NXSW(0x2408), NXSW(0x244c) },	\
+	{ NXSW(0x2324), NXSW(0x2368), NXSW(0x240c), NXSW(0x2450) },	\
+	{ NXSW(0x2328), NXSW(0x236c), NXSW(0x2410), NXSW(0x2454) },	\
+	{ NXSW(0x232c), NXSW(0x2370), NXSW(0x2414), NXSW(0x2458) },	\
+									\
+	{ NXSW(0x2330), NXSW(0x2374), NXSW(0x2418), NXSW(0x245c) },	\
+	{ NXSW(0x2334), NXSW(0x2378), NXSW(0x241c), NXSW(0x2460) },	\
+	{ NXSW(0x2338), NXSW(0x237c), NXSW(0x2420), NXSW(0x2464) },	\
+	{ NXSW(0x233c), NXSW(0x2380), NXSW(0x2424), NXSW(0x2468) },	\
+	{ NXSW(0x2340), NXSW(0x2384), NXSW(0x2428), NXSW(0x246c) },	\
+									\
+	{ NXSW(0x2388), NXSW(0x2390), NXSW(0x2398), NXSW(0x23a0) },	\
+	{ NXSW(0x238c), NXSW(0x2394), NXSW(0x239c), NXSW(0x23a4) },	\
+	{ NXSW(0x23c0), NXSW(0x23c4), NXSW(0x23c8), NXSW(0x23cc) }	\
 }
 
 /*

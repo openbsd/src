@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.39 2007/05/03 21:05:41 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.40 2007/05/04 04:18:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -79,7 +79,7 @@ int nx_debug = 0;
 #define DPRINTREG(_lvl, _reg)	do {					\
 	if (nx_debug & (_lvl))						\
 		printf("%s: 0x%08x: %08x\n",				\
-		    #_reg, _reg, nxb_readcrb(sc, _reg));			\
+		    #_reg, _reg, nxb_readcrb(sc, _reg));		\
 } while (0)
 #else
 #define DPRINTREG(_lvl, _reg)
@@ -266,6 +266,10 @@ const struct nxb_board {
 	{ NXB_BOARDTYPE_P2SB31_10GHMEZ,	NXNIU_MODE_XGE, 2, IFM_10G_SR },
 	{ NXB_BOARDTYPE_P2SB31_10GCX4,	NXNIU_MODE_XGE, 1, IFM_10G_CX4 }
 };
+
+/* Use mapping table, see if_nxreg.h for details */
+const u_int32_t nx_swportreg[NXSW_PORTREG_MAX][NX_MAX_PORTS] = NXSW_PORTREGS;
+#define NXSW_PORTREG(_p, _r)	(nx_swportreg[_r][nx->nx_port->nxp_id])
 
 extern int ifqmaxlen;
 
@@ -617,7 +621,6 @@ nxb_newstate(struct nxb_softc *sc, int newstate)
 			sc->sc_state = NX_S_FAIL;
 			return (-1);
 		}
-		nxb_writecrb(sc, NXSW_CMDPEG_STATE, NXSW_CMDPEG_INIT_ACK);
 		break;
 	case NX_S_RELOADED:
 		assert(oldstate == NX_S_RESET || oldstate == NX_S_BOOT);
@@ -697,6 +700,7 @@ nxb_reload(void *arg)
 			timeout_add(&sc->sc_reload, hz / 100);
 		return;
 	}
+	nxb_writecrb(sc, NXSW_MPORT_MODE, NXSW_MPORT_MODE_NFUNC);
 	nxb_writecrb(sc, NXSW_CMDPEG_STATE, NXSW_CMDPEG_INIT_ACK);
 
 	/* Firmware is ready for operation, allow interrupts etc. */
@@ -1446,12 +1450,6 @@ nx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &nx->nx_ac) :
 		    ether_delmulti(ifr, &nx->nx_ac);
-
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				nx_iff(nx);
-			error = 0;
-		}
 		break;
 
 	case SIOCGIFMEDIA:
@@ -1463,10 +1461,10 @@ nx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ENOTTY;
 	}
 
-	if (error == ENETRESET) {
+        if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING))
-			nx_init(ifp);
+			nx_iff(nx);
 		error = 0;
 	}
 
@@ -1479,9 +1477,22 @@ void
 nx_init(struct ifnet *ifp)
 {
 	struct nx_softc		*nx = (struct nx_softc *)ifp->if_softc;
+	struct nxb_softc	*sc = nx->nx_sc;
 
-	/* Update the station MAC address */
+	if (sc->sc_state != NX_S_READY)
+		return;
+
+	if (nxb_wait(sc, NXSW_PORTREG(nx, NXSW_RCVPEG_STATE),
+	    NXSW_RCVPEG_INIT_DONE, NXSW_RCVPEG_STATE_M, 1, 2000) != 0) {
+		printf("%s: receive engine not ready, code 0x%x\n",
+		    DEVNAME(nx), nx_readcrb(nx, NXSW_RCVPEG_STATE));
+		return;
+	}
+
 	nx_setlladdr(nx, LLADDR(ifp->if_sadl));
+
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	return;
 }
@@ -1495,6 +1506,7 @@ nx_start(struct ifnet *ifp)
 void
 nx_stop(struct ifnet *ifp)
 {
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	return;
 }
 
@@ -1559,16 +1571,12 @@ nx_writephy(struct nx_softc *nx, bus_size_t reg, u_int32_t val)
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
-/* Use mapping table, see if_nxreg.h for details */
-const u_int32_t nx_swportreg[NX_MAX_PORTS][NXSW_PORTREG_MAX] = NXSW_PORTREGS;
-
 u_int32_t
 nx_readcrb(struct nx_softc *nx, enum nxsw_portreg n)
 {
-	struct nxb_port		*nxp = nx->nx_port;
 	u_int32_t		 reg;
 
-	reg = nx_swportreg[nxp->nxp_id][n];
+	reg = NXSW_PORTREG(nx, n);
 	nxb_set_crbwindow(nx->nx_sc, NXMEMMAP_WINDOW1_START);
 	bus_space_barrier(nx->nx_memt, nx->nx_memh, reg, 4,
 	    BUS_SPACE_BARRIER_READ);
@@ -1578,10 +1586,9 @@ nx_readcrb(struct nx_softc *nx, enum nxsw_portreg n)
 void
 nx_writecrb(struct nx_softc *nx, enum nxsw_portreg n, u_int32_t val)
 {
-	struct nxb_port		*nxp = nx->nx_port;
 	u_int32_t		 reg;
 
-	reg = nx_swportreg[nxp->nxp_id][n];
+	reg = NXSW_PORTREG(nx, n);
 	nxb_set_crbwindow(nx->nx_sc, NXMEMMAP_WINDOW1_START);
 	bus_space_write_4(nx->nx_memt, nx->nx_memh, reg, val);
 	bus_space_barrier(nx->nx_memt, nx->nx_memh, reg, 4,
