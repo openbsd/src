@@ -139,6 +139,7 @@
 ./usr/include/vax/ka820.h
 ./usr/include/vax/kcore.h
 ./usr/include/vax/limits.h
+./usr/include/vax/lock.h
 ./usr/include/vax/macros.h
 ./usr/include/vax/mtpr.h
 ./usr/include/vax/mutex.h
