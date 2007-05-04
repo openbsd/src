@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.135 2007/03/27 21:58:16 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.136 2007/05/04 12:39:39 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -368,15 +368,18 @@ carp_setroute(struct carp_softc *sc, int cmd)
 	struct ifaddr *ifa;
 	int s;
 
+	/* XXX this mess needs fixing */
+
 	s = splsoftnet();
 	TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
 		switch (ifa->ifa_addr->sa_family) {
 		case AF_INET: {
-			int count = 0;
+			int count = 0, error;
 			struct sockaddr sa;
 			struct rtentry *rt;
 			struct radix_node_head *rnh;
 			struct radix_node *rn;
+			struct rt_addrinfo info;
 			int hr_otherif, nr_ourif;
 
 			/*
@@ -395,9 +398,15 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			}
 
 			/* Remove the existing host route, if any */
-			rtrequest(RTM_DELETE, ifa->ifa_addr,
-			    ifa->ifa_addr, ifa->ifa_netmask,
-			    RTF_HOST, NULL, 0);
+			bzero(&info, sizeof(info));
+			info.rti_info[RTAX_DST] = ifa->ifa_addr;
+			info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
+			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
+			info.rti_flags = RTF_HOST;
+			error = rtrequest1(RTM_DELETE, &info, NULL, 0);
+			rt_missmsg(RTM_DELETE, &info, info.rti_flags, NULL,
+			    error, 0);
+
 
 			/* Check for our address on another interface */
 			/* XXX cries for proper API */
@@ -420,26 +429,39 @@ carp_setroute(struct carp_softc *sc, int cmd)
 				if (hr_otherif) {
 					ifa->ifa_rtrequest = NULL;
 					ifa->ifa_flags &= ~RTF_CLONING;
-
-					rtrequest(RTM_ADD, ifa->ifa_addr,
-					    ifa->ifa_addr, ifa->ifa_netmask,
-					    RTF_UP | RTF_HOST, NULL, 0);
+					bzero(&info, sizeof(info));
+					info.rti_info[RTAX_DST] = ifa->ifa_addr;
+					info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
+					info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
+					info.rti_flags = RTF_UP | RTF_HOST;
+					error = rtrequest1(RTM_ADD, &info, NULL, 0);
+					rt_missmsg(RTM_ADD, &info, info.rti_flags, NULL,
+					    error, 0);
 				}
 				if (!hr_otherif || nr_ourif || !rt) {
 					if (nr_ourif && !(rt->rt_flags &
-					    RTF_CLONING))
-						rtrequest(RTM_DELETE, &sa,
-						    ifa->ifa_addr,
-						    ifa->ifa_netmask, 0, NULL,
-						    0);
+					    RTF_CLONING)) {
+						bzero(&info, sizeof(info));
+						info.rti_info[RTAX_DST] = &sa;
+						info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
+						info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
+						error = rtrequest1(RTM_DELETE, &info, NULL, 0);
+						rt_missmsg(RTM_DELETE, &info, info.rti_flags, NULL,
+						    error, 0);
+					}
 
 					ifa->ifa_rtrequest = arp_rtrequest;
 					ifa->ifa_flags |= RTF_CLONING;
 
-					if (rtrequest(RTM_ADD, ifa->ifa_addr,
-					    ifa->ifa_addr, ifa->ifa_netmask, 0,
-					    NULL, 0) == 0)
+					bzero(&info, sizeof(info));
+					info.rti_info[RTAX_DST] = ifa->ifa_addr;
+					info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
+					info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
+					error = rtrequest1(RTM_ADD, &info, NULL, 0);
+					if (error == 0)
 						ifa->ifa_flags |= IFA_ROUTE;
+					rt_missmsg(RTM_ADD, &info, info.rti_flags, NULL,
+					    error, 0);
 				}
 				break;
 			case RTM_DELETE:
