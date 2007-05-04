@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.88 2007/05/03 14:49:56 espie Exp $
+# $OpenBSD: pkg_create,v 1.89 2007/05/04 19:40:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -597,11 +597,6 @@ if (defined $opt_B) {
 	$base = $ENV{'PKG_PREFIX'};
 }
 
-if ($plist->{deprecated}) {
-	print STDERR "Error: found obsolete constructs\n";
-	exit 1;
-}
-	
 
 unless (defined $opt_q && defined $opt_n) {
 	if ($regen_package) {
@@ -611,12 +606,6 @@ unless (defined $opt_q && defined $opt_n) {
 		$plist->makesum_plist($p2, $base, {}, $infodir);
 		$plist = $p2;
 	}
-}
-
-$plist->avert_duplicates_and_other_checks({});
-
-if ($errors) {
-	exit 1;
 }
 
 if (!defined $plist->{name}) {
@@ -632,6 +621,19 @@ if (defined $opt_q) {
 	}
 	exit 0 if defined $opt_n;
 }
+
+if ($plist->{deprecated}) {
+	print STDERR "Error: found obsolete constructs\n";
+	exit 1;
+}
+
+$plist->avert_duplicates_and_other_checks({});
+
+if ($errors) {
+	exit 1;
+}
+
+	
 my $wname;
 if ($regen_package) {
 	$wname = $plist->pkgname.".tgz";
