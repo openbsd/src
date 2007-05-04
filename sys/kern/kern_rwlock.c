@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.11 2007/05/04 12:56:15 art Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.12 2007/05/04 13:21:03 art Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -190,11 +190,7 @@ rw_enter(struct rwlock *rwl, int flags)
 retry:
 	while (__predict_false(((o = rwl->rwl_owner) & op->check) != 0)) {
 		unsigned long set = o | op->wait_set;
-		int do_sleep, prio;
-
-		prio = op->wait_prio;
-		if (flags & RW_INTR)
-			prio |= PCATCH;
+		int do_sleep;
 
 		rw_enter_diag(rwl, flags);
 
