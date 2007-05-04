@@ -179,6 +179,7 @@
 ./usr/include/hppa/kcore.h
 ./usr/include/hppa/limits.h
 ./usr/include/hppa/loadfile_machdep.h
+./usr/include/hppa/lock.h
 ./usr/include/hppa/nvm.h
 ./usr/include/hppa/param.h
 ./usr/include/hppa/pcb.h
