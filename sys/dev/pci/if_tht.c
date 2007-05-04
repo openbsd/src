@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.87 2007/04/30 00:02:12 deraadt Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.88 2007/05/04 21:51:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1454,6 +1454,7 @@ tht_fifo_write(struct tht_softc *sc, struct tht_fifo *tf,
 
 	bcopy(desc, fifo + tf->tf_wptr, buflen);
 	tf->tf_wptr += buflen;
+	tf->tf_wptr %= tf->tf_len;
 
 	DPRINTF(THT_D_FIFO, "%s: fifo wr wptr: %d rptr: %d ready: %d\n",
 	    DEVNAME(sc), tf->tf_wptr, tf->tf_rptr, tf->tf_ready);
