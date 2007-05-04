@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.92 2007/05/04 22:20:06 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.93 2007/05/04 22:39:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -770,7 +770,8 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 	ifp = &sc->sc_ac.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
+	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 	ifp->if_ioctl = tht_ioctl;
 	ifp->if_start = tht_start;
 	ifp->if_watchdog = tht_watchdog;
@@ -1064,7 +1065,8 @@ tht_start(struct ifnet *ifp)
 		bc = sizeof(txt) +
 		    sizeof(struct tht_pbd) * pkt->tp_dmap->dm_nsegs;
 
-		flags = THT_TXT_TYPE | LWORDS(bc); /* XXX */
+		flags = THT_TXT_TYPE | THT_TXT_FLAGS_UDPCS |
+		    THT_TXT_FLAGS_TCPCS | THT_TXT_FLAGS_IPCS | LWORDS(bc);
 		txt.flags = htole32(flags);
 		txt.len = htole16(pkt->tp_m->m_pkthdr.len);
 		txt.uid = pkt->tp_id;
