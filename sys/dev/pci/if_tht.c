@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.89 2007/05/04 21:54:01 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.90 2007/05/04 21:56:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -57,8 +57,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #endif
-
-#define THT_DEBUG
 
 #ifdef THT_DEBUG
 #define THT_D_FIFO		(1<<0)
