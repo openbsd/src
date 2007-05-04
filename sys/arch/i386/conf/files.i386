@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.159 2007/04/26 01:43:13 gwk Exp $
+#	$OpenBSD: files.i386,v 1.160 2007/05/04 13:22:21 art Exp $
 #
 # new style config file for i386 architecture
 #
@@ -46,7 +46,7 @@ file	lib/libz/adler32.c		!ppp_deflate & !ipsec & !crypto
 file	dev/cninit.c
 file	arch/i386/i386/mptramp.s	multiprocessor
 file	arch/i386/i386/mp_setperf.c	multiprocessor
-file	arch/i386/i386/lock_machdep.c	multiprocessor
+file	arch/i386/i386/lock_machdep.c
 file	arch/i386/i386/ipifuncs.c	multiprocessor
 file	arch/i386/i386/db_mp.c		multiprocessor & ddb
 file	arch/i386/i386/wscons_machdep.c	wsdisplay
