@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.50 2007/04/13 08:31:50 martin Exp $ */
+/* $OpenBSD: pmap.c,v 1.51 2007/05/04 22:51:12 miod Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -2147,6 +2147,24 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_extract(%p, %lx) -> ", pmap, va);
 #endif
+
+	if (pmap == pmap_kernel()) {
+		if (va < ALPHA_K0SEG_BASE) {
+			/* nothing */
+		} else if (va <= ALPHA_K0SEG_END) {
+			pa = ALPHA_K0SEG_TO_PHYS(va);
+			rv = TRUE;
+		} else {
+			l3pte = PMAP_KERNEL_PTE(va);
+			if (pmap_pte_v(l3pte)) {
+				pa = pmap_pte_pa(l3pte) | (va & PGOFSET);
+				*pap = pa;
+				rv = TRUE;
+			}
+		}
+		goto out_nolock;
+	}
+
 	PMAP_LOCK(pmap);
 
 	l1pte = pmap_l1pte(pmap, va);
@@ -2166,6 +2184,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	rv = TRUE;
  out:
 	PMAP_UNLOCK(pmap);
+ out_nolock:
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		if (rv)
