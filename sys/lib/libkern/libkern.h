@@ -1,4 +1,4 @@
-/*	$OpenBSD: libkern.h,v 1.22 2004/08/07 00:38:32 deraadt Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.23 2007/05/04 22:14:37 deraadt Exp $	*/
 /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
 
 /*-
@@ -173,9 +173,5 @@ int	 strncasecmp(const char *, const char *, size_t);
 int	 getsn(char *, int);
 char	*strchr(const char *, int);
 char	*strrchr(const char *, int);
-
-extern u_int8_t const __bcd2bin[], __bin2bcd[];
-#define	bcd2bin(b)	(__bcd2bin[(b)&0xff])
-#define	bin2bcd(b)	(__bin2bcd[(b)&0xff])
 
 #endif /* __LIBKERN_H__ */

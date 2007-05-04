@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2004/11/28 07:20:25 mickey Exp $
+#	$OpenBSD: Makefile,v 1.19 2007/05/04 22:14:37 deraadt Exp $
 
 LIB=	kern
 NOPIC=
@@ -25,7 +25,7 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 .endif
 
 # Other stuff
-SRCS+=	getsn.c srandom.c bcd.c strchr.c
+SRCS+=	getsn.c srandom.c strchr.c
 
 # Files to clean up
 CLEANFILES+= lib${LIB}.o lib${LIB}.po
