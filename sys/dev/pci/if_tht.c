@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.91 2007/05/04 22:12:53 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.92 2007/05/04 22:20:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -911,9 +911,9 @@ tht_up(struct tht_softc *sc)
 		return;
 	}
 
-	if (tht_pkt_alloc(sc, &sc->sc_tx_list, 64, THT_TXT_SGL_LEN) != 0)
+	if (tht_pkt_alloc(sc, &sc->sc_tx_list, 128, THT_TXT_SGL_LEN) != 0)
 		return;
-	if (tht_pkt_alloc(sc, &sc->sc_rx_list, 64, THT_RXF_SGL_LEN) != 0)
+	if (tht_pkt_alloc(sc, &sc->sc_rx_list, 128, THT_RXF_SGL_LEN) != 0)
 		goto free_tx_list;
 
 	if (tht_fifo_alloc(sc, &sc->sc_txt, &tht_txt_desc) != 0)
