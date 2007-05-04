@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.29 2007/05/04 03:44:41 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.30 2007/05/04 19:30:53 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -206,38 +206,13 @@ device_register(dev, aux)
 		(*platform.device_register)(dev, aux);
 }
 
-static struct {
-	char	*name;
-	int	maj;
-} nam2blk[] = {
+struct nam2blk nam2blk[] = {
 	{ "st",		2 },
 	{ "cd",		3 },
 	{ "fd",		4 },
 	{ "rd",		6 },
 	{ "sd",		8 },
 	{ "wd",		0 },
-	{ "raid",	16 }
+	{ "raid",	16 },
+	{ NULL,		-1 }
 };
-
-int
-findblkmajor(struct device *dv)
-{
-	char *name = dv->dv_xname;
-	int i;
-
-	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); i++)
-		if (!strncmp(name, nam2blk[i].name, strlen(nam2blk[i].name)))
-			return (nam2blk[i].maj);
-	return (-1);
-}
-
-char *
-findblkname(int maj)
-{
-	int i;
-
-	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); i++)
-		if (nam2blk[i].maj == maj)
-			return (nam2blk[i].name);
-	return (NULL);
-}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.35 2007/05/04 03:44:45 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.36 2007/05/04 19:30:55 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -812,4 +812,29 @@ gotswap:
 		if (temp == dumpdev)
 			dumpdev = swdevt[0].sw_dev;
 	}
+}
+
+extern struct nam2blk nam2blk[];
+
+int
+findblkmajor(struct device *dv)
+{
+	char *name = dv->dv_xname;
+	int i;
+
+	for (i = 0; nam2blk[i].name; i++)
+		if (!strncmp(name, nam2blk[i].name, strlen(nam2blk[i].name)))
+			return (nam2blk[i].maj);
+	return (-1);
+}
+
+char *
+findblkname(int maj)
+{
+	int i;
+
+	for (i = 0; nam2blk[i].name; i++)
+		if (nam2blk[i].maj == maj)
+			return (nam2blk[i].name);
+	return (NULL);
 }

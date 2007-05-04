@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.33 2007/05/04 03:44:45 deraadt Exp $	*/
+/*	$OpenBSD: device.h,v 1.34 2007/05/04 19:30:55 deraadt Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -209,6 +209,11 @@ void config_pending_decr(void);
 struct device *device_lookup(struct cfdriver *, int unit);
 void device_ref(struct device *);
 void device_unref(struct device *);
+
+struct nam2blk {
+	char	*name;
+	int	maj;
+};
 
 int	findblkmajor(struct device *dv);
 char	*findblkname(int);
