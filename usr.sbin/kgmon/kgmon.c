@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgmon.c,v 1.12 2007/02/18 20:51:46 jmc Exp $	*/
+/*	$OpenBSD: kgmon.c,v 1.13 2007/05/04 04:06:06 ray Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: kgmon.c,v 1.12 2007/02/18 20:51:46 jmc Exp $";
+static char *rcsid = "$OpenBSD: kgmon.c,v 1.13 2007/05/04 04:06:06 ray Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,27 +71,25 @@ struct kvmvars {
 
 int	bflag, hflag, kflag, rflag, pflag;
 int	debug = 0;
-void	setprof(struct kvmvars *kvp, int state);
-void	dumpstate(struct kvmvars *kvp);
-void	reset(struct kvmvars *kvp);
+void	setprof(struct kvmvars *, int);
+void	dumpstate(struct kvmvars *);
+void	reset(struct kvmvars *);
 void	kern_readonly(int);
-int	getprof(struct kvmvars *kvp);
-int	getprofhz(struct kvmvars *kvp);
-int	openfiles(char *system, char *kmemf, struct kvmvars *kvp);
+int	getprof(struct kvmvars *);
+int	getprofhz(struct kvmvars *);
+int	openfiles(char *, char *, struct kvmvars *);
 
 int
 main(int argc, char **argv)
 {
 	extern char *__progname;
-	extern char *optarg;
-	extern int optind;
 	int ch, mode, disp, accessmode;
 	struct kvmvars kvmvars;
-	char *system, *kmemf;
+	char *sys, *kmemf;
 
 	seteuid(getuid());
 	kmemf = NULL;
-	system = NULL;
+	sys = NULL;
 	while ((ch = getopt(argc, argv, "M:N:bhpr")) != -1) {
 		switch((char)ch) {
 
@@ -101,7 +99,7 @@ main(int argc, char **argv)
 			break;
 
 		case 'N':
-			system = optarg;
+			sys = optarg;
 			break;
 
 		case 'b':
@@ -133,14 +131,14 @@ main(int argc, char **argv)
 #define BACKWARD_COMPATIBILITY
 #ifdef	BACKWARD_COMPATIBILITY
 	if (*argv) {
-		system = *argv;
+		sys = *argv;
 		if (*++argv) {
 			kmemf = *argv;
 			++kflag;
 		}
 	}
 #endif
-	accessmode = openfiles(system, kmemf, &kvmvars);
+	accessmode = openfiles(sys, kmemf, &kvmvars);
 	mode = getprof(&kvmvars);
 	if (hflag)
 		disp = GMON_PROF_OFF;
@@ -163,7 +161,7 @@ main(int argc, char **argv)
  * Check that profiling is enabled and open any ncessary files.
  */
 int
-openfiles(char *system, char *kmemf, struct kvmvars *kvp)
+openfiles(char *sys, char *kmemf, struct kvmvars *kvp)
 {
 	int mib[3], state, openmode;
 	size_t size;
@@ -187,11 +185,11 @@ openfiles(char *system, char *kmemf, struct kvmvars *kvp)
 		return (O_RDONLY);
 	}
 	openmode = (bflag || hflag || pflag || rflag) ? O_RDWR : O_RDONLY;
-	kvp->kd = kvm_openfiles(system, kmemf, NULL, openmode, errbuf);
+	kvp->kd = kvm_openfiles(sys, kmemf, NULL, openmode, errbuf);
 	if (kvp->kd == NULL) {
 		if (openmode == O_RDWR) {
 			openmode = O_RDONLY;
-			kvp->kd = kvm_openfiles(system, kmemf, NULL, O_RDONLY,
+			kvp->kd = kvm_openfiles(sys, kmemf, NULL, O_RDONLY,
 			    errbuf);
 		}
 		if (kvp->kd == NULL)
@@ -199,7 +197,7 @@ openfiles(char *system, char *kmemf, struct kvmvars *kvp)
 		kern_readonly(GMON_PROF_ON);
 	}
 	if (kvm_nlist(kvp->kd, nl) < 0)
-		errx(3, "%s: no namelist", system ? system : _PATH_UNIX);
+		errx(3, "%s: no namelist", sys ? sys : _PATH_UNIX);
 	if (!nl[N_GMONPARAM].n_value)
 		errx(20, "profiling not defined in kernel.");
 	return (openmode);
@@ -335,7 +333,7 @@ dumpstate(struct kvmvars *kvp)
 			i = 0;
 	}
 	if (i != kvp->gpm.kcountsize)
-		errx(6, "read ticks: read %lu, got %d: %s",
+		errx(6, "read ticks: read %lu, got %zu: %s",
 		    kvp->gpm.kcountsize, i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
 	if ((fwrite(tickbuf, kvp->gpm.kcountsize, 1, fp)) != 1)
@@ -357,7 +355,7 @@ dumpstate(struct kvmvars *kvp)
 			i = 0;
 	}
 	if (i != kvp->gpm.fromssize)
-		errx(9, "read froms: read %lu, got %d: %s",
+		errx(9, "read froms: read %lu, got %zu: %s",
 		    kvp->gpm.fromssize, i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
 	if ((tos = (struct tostruct *)malloc(kvp->gpm.tossize)) == NULL)
@@ -372,7 +370,7 @@ dumpstate(struct kvmvars *kvp)
 			i = 0;
 	}
 	if (i != kvp->gpm.tossize)
-		errx(11, "read tos: read %lu, got %d: %s",
+		errx(11, "read tos: read %lu, got %zu: %s",
 		    kvp->gpm.tossize, i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
 	if (debug)
