@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.250 2007/02/27 02:25:13 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.251 2007/05/04 03:49:17 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -275,9 +275,7 @@ release: distribution snap_pre snap_md
 		*.iso *.gz *.tgz > MD5
 	-cd ${RELEASEDIR}; \
 		cksum *bsd!(*.gz) *boot* cdbr *BOOT* INSTALL.* Packages *.fs \
-		*.iso *.gz *.tgz > CKSUM
 	-cd ${RELEASEDIR} && sort -o MD5 MD5
-	-cd ${RELEASEDIR} && sort -o CKSUM -k 3 CKSUM
 
 snap_pre:
 	${SUDO} /bin/rm -rf ${DESTDIR}/snapshot

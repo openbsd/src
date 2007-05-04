@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.71 2007/03/01 19:24:43 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.72 2007/05/04 03:49:18 deraadt Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -51,9 +51,8 @@ out as follows:
 
 	INSTALL.MACHINE	Installation notes; this file.
 
-	CKSUM, MD5	Output of the cksum(1) and md5(1) programs,
-			usable for verification of the correctness of
-			downloaded files.')dnl
+	MD5		Output of the md5(1) program, usable for verification
+			of the correctness of downloaded files.')dnl
 dnl
 dnl Change the quote.  There were too many `word' situations that would
 dnl have to have been changed to ``word''.  The quote gets changed to
@@ -773,9 +772,9 @@ define({:-OpenBSDXferFloppyFromUNIX-:},
 {:-Creating a bootable floppy disk using SunOS, Solaris or other Un*x-like system:
 
 	First, you will need obtain a local copy of the bootable filesystem
-	image as described above.  If possible use the cksum(1) or md5(1)
-	commands to verify the checksums of the images vs. the values in
-	the CKSUM or MD5 files on the mirror site.
+	image as described above.  If possible use the md5(1) command to
+	verify the checksums of the images vs. the values in the MD5 file
+	on the mirror site.
 
 	Next, use the dd(1) utility to copy the file to the floppy drive.
 	The command would likely be, under SunOS:
