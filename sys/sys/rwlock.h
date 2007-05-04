@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.9 2007/04/04 18:01:57 art Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.10 2007/05/04 12:56:15 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -106,6 +106,8 @@ void rw_exit(struct rwlock *);
 #define RW_SLEEPFAIL	0x20UL		/* fail if we slept for the lock */
 #define RW_NOSLEEP	0x40UL		/* don't wait for the lock */
 
-int rw_test_and_set(volatile unsigned long *, unsigned long, unsigned long);
+#ifndef rw_cas
+int rw_cas(volatile unsigned long *, unsigned long, unsigned long);
+#endif
 
 #endif
