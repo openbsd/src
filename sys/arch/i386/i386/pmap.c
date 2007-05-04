@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.108 2007/05/03 05:32:05 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.109 2007/05/04 05:52:28 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -644,6 +644,9 @@ void
 pmap_exec_account(struct pmap *pm, vaddr_t va,
     pt_entry_t opte, pt_entry_t npte)
 {
+	if (pm == pmap_kernel())
+		return;
+
 	if (curproc == NULL || curproc->p_vmspace == NULL ||
 	    pm != vm_map_pmap(&curproc->p_vmspace->vm_map))
 		return;
