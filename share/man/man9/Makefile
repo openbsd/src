@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.125 2007/05/05 12:46:32 art Exp $
+#	$OpenBSD: Makefile,v 1.126 2007/05/05 12:57:06 art Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -316,7 +316,7 @@ MLINKS+=vfs_cache.9 cache_enter.9 vfs_cache.9 cache_lookup.9 \
 	vfs_cache.9 cache_purge.9 vfs_cache.9 cache_purgevfs.9 \
 	vfs_cache.9 cache_revlookup.9
 MLINKS+=vgone.9 vgonel.9
-MLINKS+=vnsubr.9 vn_access.9 vnsubr.9 vn_close.9 vnsubr.9 vn_default_error.9 \
+MLINKS+=vnsubr.9 vn_close.9 vnsubr.9 vn_default_error.9 \
 	vnsubr.9 vn_isunder.9 vnsubr.9 vn_lock.9 vnsubr.9 vn_open.9 \
 	vnsubr.9 vn_rdwr.9 vnsubr.9 vn_stat.9 vnsubr.9 vn_writechk.9 \
 	vnsubr.9 vn_marktext.9
