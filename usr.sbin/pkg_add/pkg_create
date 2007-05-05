@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.90 2007/05/05 10:40:44 espie Exp $
+# $OpenBSD: pkg_create,v 1.91 2007/05/05 10:47:06 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -431,32 +431,27 @@ sub add_description
 {
 	my ($plist, $name, $infodir, $opt_c, $opt_d) = @_;
 	OpenBSD::PackingElement::File->add($plist, $name);
-	if (defined $opt_c) {
-	    if (defined $infodir) {
-		if ($opt_c =~ /^\-/) {
-		    open(my $fh, '>', $infodir.$name) or die "Can't write COMMENT to DESC file: $!";
-		    print $fh $';
-		    close($fh);
-		} else {
-		    copy_subst($opt_c, '>', $infodir.$name);
-		}
-	    }
-	} else {
+	if (!defined $opt_c) {
 		Usage "Comment required";
 	}
-
-	if (defined $opt_d) {
-	    if (defined $infodir) {
-		if ($opt_d =~ /^\-/) {
-		    open(my $fh, '>>', $infodir.$name) or die "Can't write to DESC: $!";
-		    print $fh $';
-		    close($fh);
-		} else {
-		    copy_subst($opt_d, '>>', $infodir.$name);
-		}
-	    }
-	} else {
+	if (!defined $opt_d) {
 		Usage "Description required";
+	}
+	if (defined $infodir) {
+	    if ($opt_c =~ /^\-/) {
+		open(my $fh, '>', $infodir.$name) or die "Can't write COMMENT to DESC file: $!";
+		print $fh $';
+		close($fh);
+	    } else {
+		copy_subst($opt_c, '>', $infodir.$name);
+	    }
+	    if ($opt_d =~ /^\-/) {
+		open(my $fh, '>>', $infodir.$name) or die "Can't write to DESC: $!";
+		print $fh $';
+		close($fh);
+	    } else {
+		copy_subst($opt_d, '>>', $infodir.$name);
+	    }
 	}
 }
 
