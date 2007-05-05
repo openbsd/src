@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.69 2007/03/02 17:49:51 krw Exp $	*/
+/*	$OpenBSD: re.c,v 1.70 2007/05/05 12:10:57 jsg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -151,8 +151,12 @@
 #include <dev/ic/rtl81x9reg.h>
 #include <dev/ic/revar.h>
 
+#ifdef RE_DEBUG
 int redebug = 0;
-#define DPRINTF(x)	if (redebug) printf x
+#define DPRINTF(x)	do { if (redebug) printf x; } while (0)
+#else
+#define DPRINTF(x)
+#endif
 
 inline void re_set_bufaddr(struct rl_desc *, bus_addr_t);
 

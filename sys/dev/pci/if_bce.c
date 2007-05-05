@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.18 2007/04/24 10:04:58 reyk Exp $ */
+/* $OpenBSD: if_bce.c,v 1.19 2007/05/05 12:10:57 jsg Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -186,7 +186,6 @@ int	bce_mediachange(struct ifnet *);
 void	bce_mediastatus(struct ifnet *, struct ifmediareq *);
 void	bce_tick(void *);
 
-#define BCE_DEBUG
 #ifdef BCE_DEBUG
 #define DPRINTF(x)	do {		\
 	if (bcedebug)			\
