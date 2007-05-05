@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.24 2007/05/05 01:54:02 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.25 2007/05/05 02:12:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -295,11 +295,13 @@ struct nx_ringcontext {
 #define   NXISR_INT_MASK_PORT(_n)	(NXISR_INT_MASK_TARGET0 << (_n))
 #define  NXISR_INT_MASK_RC_INT		(1<<5)	/* root complex mask */
 #define NXISR_INT_MASK_ENABLE		0x0000077f
+#define NXISR_INT_MASK_DISABLE		0x00000000
 
 /* Interrupt target mask and status */
 #define NXISR_TARGET_STATUS		NXPCIE(0x00010118)
 #define NXISR_TARGET_MASK		NXPCIE(0x00010128)
 #define  NXISR_TARGET_MASK_ENABLE	0x00000bff
+#define  NXISR_TARGET_MASK_DISABLE	0x00000000
 
 /* Memory windows */
 #define NXDDR_WINDOW(_f)		NXPCIE_FUNC(0x00010200, _f)

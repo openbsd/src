@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.41 2007/05/05 01:54:02 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.42 2007/05/05 02:12:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1569,9 +1569,9 @@ nx_init(struct ifnet *ifp)
 		goto done;
 
 	/* Set and enable interrupts */
-	nxb_write(sc, NXISR_INT_MASK, NXISR_INT_MASK_ENABLE);
-	nxb_write(sc, NXISR_INT_VECTOR, 0);
-	nxb_write(sc, NXISR_TARGET_MASK, NXISR_TARGET_MASK_ENABLE);
+	nxb_writecrb(sc, NXISR_INT_MASK, NXISR_INT_MASK_ENABLE);
+	nxb_writecrb(sc, NXISR_INT_VECTOR, 0);
+	nxb_writecrb(sc, NXISR_TARGET_MASK, NXISR_TARGET_MASK_ENABLE);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1584,10 +1584,17 @@ void
 nx_stop(struct ifnet *ifp)
 {
 	struct nx_softc		*nx = (struct nx_softc *)ifp->if_softc;
+	struct nxb_softc	*sc = nx->nx_sc;
 	int			 s;
 
 	s = splnet();
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	/* Disable interrupts */
+	nxb_writecrb(sc, NXISR_INT_MASK, NXISR_INT_MASK_DISABLE);
+	nxb_writecrb(sc, NXISR_INT_VECTOR, 0);
+	nxb_writecrb(sc, NXISR_TARGET_MASK, NXISR_TARGET_MASK_DISABLE);
+
 	nx_free_rings(nx);
 	splx(s);
 }
