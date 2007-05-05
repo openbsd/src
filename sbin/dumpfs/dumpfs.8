@@ -1,5 +1,4 @@
-.\"	$OpenBSD: dumpfs.8,v 1.8 2004/07/28 21:27:52 jmc Exp $
-.\"	$NetBSD: dumpfs.8,v 1.8 1997/05/07 23:19:03 lukem Exp $
+.\"	$OpenBSD: dumpfs.8,v 1.9 2007/05/05 22:11:56 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,7 +29,7 @@
 .\"
 .\"     @(#)dumpfs.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 5, 1993
+.Dd May 4, 2007
 .Dt DUMPFS 8
 .Os
 .Sh NAME
@@ -38,11 +37,14 @@
 .Nd dump file system information
 .Sh SYNOPSIS
 .Nm dumpfs
-.Op Ar filesys No \&| Ar device
+.Op Fl m
+.Ar filesys | device
 .Sh DESCRIPTION
 .Nm
 prints out the super block and cylinder group information
-for the file system or special device specified.
+for the file system or special device specified, unless
+.Fl m
+is specified.
 The listing is very long and detailed.
 .Pp
 .Nm
@@ -55,6 +57,13 @@ option of
 .Xr fsck_ffs 8 .
 All of this information can be found within the first twenty
 lines of the output.
+.Pp
+If
+.Fl m
+is specified, a
+.Xr newfs 8
+command is output that can be used to generate a new file system
+with equivalent settings.
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr fs 5 ,

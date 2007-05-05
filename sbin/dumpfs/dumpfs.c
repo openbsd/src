@@ -1,7 +1,15 @@
-/*	$OpenBSD: dumpfs.c,v 1.21 2007/04/19 10:53:36 otto Exp $	*/
-/*	$NetBSD: dumpfs.c,v 1.12 1997/04/26 05:41:33 lukem Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.22 2007/05/05 22:11:56 millert Exp $	*/
 
 /*
+ * Copyright (c) 2002 Networks Associates Technology, Inc.
+ * All rights reserved.
+ *
+ * This software was developed for the FreeBSD Project by Marshall
+ * Kirk McKusick and Network Associates Laboratories, the Security
+ * Research Division of Network Associates, Inc. under DARPA/SPAWAR
+ * contract N66001-01-C-8035 ("CBOSS"), as part of the DARPA CHATS
+ * research program.
+ *
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -31,16 +39,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1983, 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
+static const char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.21 2007/04/19 10:53:36 otto Exp $";
+static const char rcsid[] = "$OpenBSD: dumpfs.c,v 1.22 2007/05/05 22:11:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,164 +62,250 @@ static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.21 2007/04/19 10:53:36 otto Exp $"
 #include <errno.h>
 #include <fcntl.h>
 #include <fstab.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 union {
 	struct fs fs;
 	char pad[MAXBSIZE];
 } fsun;
-#define	afs	fsun.fs
-
+#define afs	fsun.fs
+ 
 union {
 	struct cg cg;
 	char pad[MAXBSIZE];
 } cgun;
-#define	acg	cgun.cg
+#define acg	cgun.cg
 
-long	dev_bsize = 1;
+long	dev_bsize;
 
-int	dumpfs(char *);
-int	dumpcg(char *, int, int);
+int	dumpfs(int, const char *);
+int	dumpcg(const char *, int, int);
+int	marshal(const char *);
+int	open_disk(const char *name);
 void	pbits(void *, int);
-void	usage(void);
+__dead void	usage(void);
 
 int
 main(int argc, char *argv[])
 {
 	struct fstab *fs;
-	int ch, eval;
+	const char *name;
+	int ch, domarshal, eval, fd;
 
-	while ((ch = getopt(argc, argv, "")) != -1)
-		switch(ch) {
+	domarshal = eval = 0;
+
+	while ((ch = getopt(argc, argv, "m")) != -1) {
+		switch (ch) {
+		case 'm':
+			domarshal = 1;
+			break;
 		case '?':
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
 	if (argc < 1)
 		usage();
 
-	for (eval = 0; *argv; ++argv)
-		if ((fs = getfsfile(*argv)) == NULL)
-			eval |= dumpfs(*argv);
+	for (; *argv != NULL; argv++) {
+		if ((fs = getfsfile(*argv)) != NULL)
+			name = fs->fs_spec;
 		else
-			eval |= dumpfs(fs->fs_spec);
+			name = *argv;
+		if ((fd = open_disk(name)) == -1) {
+			eval |= 1;
+			continue;
+		}
+		if (domarshal)
+			eval |= marshal(name);
+		else
+			eval |= dumpfs(fd, name);
+		close(fd);
+	}
 	exit(eval);
 }
 
 int
-dumpfs(char *name)
+open_disk(const char *name)
 {
+	int fd;
 	ssize_t n;
-	int fd, i, j, size;
 
-	if ((fd = open(name, O_RDONLY, 0)) < 0)
-		goto err;
-	if (lseek(fd, (off_t)SBOFF, SEEK_SET) == (off_t)-1)
-		goto err;
-	if ((n = read(fd, &afs, SBSIZE)) == -1)
-		goto err;
-
-	if (n != SBSIZE) {
-		warnx("%s: non-existent or truncated superblock, skipped",
-		    name);
-		(void)close(fd);
- 		return (1);
+	/* XXX - should retry w/raw device on failure */
+	if ((fd = open(name, O_RDONLY, 0)) < 0) {
+		warn("%s", name);
+		return(-1);
 	}
- 	if (afs.fs_magic != FS_MAGIC) {
-		warnx("%s: superblock has bad magic number, skipping.", name);
-		(void) close(fd);
- 		return (1);
- 	}
 
-	if (afs.fs_postblformat == FS_42POSTBLFMT)
-		afs.fs_nrpos = 8;
-	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
-	printf("magic\t%x\ttime\t%s", afs.fs_magic,
-	    ctime(&afs.fs_ffs1_time));
-	i = 0;
-	if (afs.fs_postblformat != FS_42POSTBLFMT) {
-		i++;
-		if (afs.fs_inodefmt >= FS_44INODEFMT) {
-			int max;
-
-			i++;
-			max = afs.fs_maxcontig;
-			size = afs.fs_contigsumsize;
-			if ((max < 2 && size == 0)
-			    || (max > 1 && size >= MIN(max, FS_MAXCONTIG)))
-				i++;
+	/* Read superblock, could be UFS1 or UFS2. */
+	if (((n = pread(fd, &afs, SBSIZE, (off_t)SBLOCK_UFS1) != SBSIZE) ||
+	    afs.fs_magic != FS_UFS1_MAGIC) &&
+	    ((n = pread(fd, &afs, SBSIZE, (off_t)SBLOCK_UFS2) != SBSIZE) ||
+	    afs.fs_magic != FS_UFS2_MAGIC)) {
+		switch (n) {
+		case -1:
+			warn("%s", name);
+			break;
+		case SBSIZE:
+			warnx("%s: non-existent or truncated superblock, "
+			    "skipped", name);
+			break;
+		default:
+			warnx("%s: superblock has bad magic number, skipping.",
+			    name);
 		}
+		return (-1);
 	}
-	printf("cylgrp\t%s\tinodes\t%s\tfslevel %d%s\n",
-	    i < 1 ? "static" : "dynamic", i < 2 ? "4.2/4.3BSD" : "4.4BSD", i,
-	    (afs.fs_ffs1_flags & FS_DOSOFTDEP) ? "\tsoft updates" : "");
-	printf("nbfree\t%d\tndir\t%d\tnifree\t%d\tnffree\t%d\n",
-	    afs.fs_ffs1_cstotal.cs_nbfree, afs.fs_ffs1_cstotal.cs_ndir,
-	    afs.fs_ffs1_cstotal.cs_nifree, afs.fs_ffs1_cstotal.cs_nffree);
-	printf("ncg\t%d\tncyl\t%d\tsize\t%d\tblocks\t%d\n",
-	    afs.fs_ncg, afs.fs_ncyl, afs.fs_ffs1_size, afs.fs_ffs1_dsize);
+
+	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
+	return (fd);
+}
+
+int
+dumpfs(int fd, const char *name)
+{
+	time_t fstime;
+	int64_t fssize;
+	int32_t fsflags;
+	size_t size;
+	off_t off;
+	int i, j;
+
+	switch (afs.fs_magic) {
+	case FS_UFS2_MAGIC:
+		fssize = afs.fs_size;
+		fstime = afs.fs_time;
+		printf("magic\t%x (FFS2)\ttime\t%s",
+		    afs.fs_magic, ctime(&fstime));
+		printf("superblock location\t%jd\tid\t[ %x %x ]\n",
+		    (intmax_t)afs.fs_sblockloc, afs.fs_id[0], afs.fs_id[1]);
+		printf("ncg\t%d\tsize\t%jd\tblocks\t%jd\n",
+		    afs.fs_ncg, (intmax_t)fssize, (intmax_t)afs.fs_dsize);
+		break;
+	case FS_UFS1_MAGIC:
+		fssize = afs.fs_ffs1_size;
+		fstime = afs.fs_ffs1_time;
+		printf("magic\t%x (FFS1)\ttime\t%s",
+		    afs.fs_magic, ctime(&fstime));
+		printf("id\t[ %x %x ]\n", afs.fs_id[0], afs.fs_id[1]);
+		i = 0;
+		if (afs.fs_postblformat != FS_42POSTBLFMT) {
+			i++;
+			if (afs.fs_inodefmt >= FS_44INODEFMT) {
+				size_t max;
+
+				i++;
+				max = afs.fs_maxcontig;
+				size = afs.fs_contigsumsize;
+				if ((max < 2 && size == 0) ||
+				    (max > 1 && size >= MIN(max, FS_MAXCONTIG)))
+					i++;
+			}
+		}
+		printf("cylgrp\t%s\tinodes\t%s\tfslevel %d\n",
+		    i < 1 ? "static" : "dynamic",
+		    i < 2 ? "4.2/4.3BSD" : "4.4BSD", i);
+		printf("ncg\t%d\tncyl\t%d\tsize\t%d\tblocks\t%d\n",
+		    afs.fs_ncg, afs.fs_ncyl, afs.fs_ffs1_size, afs.fs_ffs1_dsize);
+		break;
+	default:
+		goto err;
+	}
 	printf("bsize\t%d\tshift\t%d\tmask\t0x%08x\n",
 	    afs.fs_bsize, afs.fs_bshift, afs.fs_bmask);
 	printf("fsize\t%d\tshift\t%d\tmask\t0x%08x\n",
 	    afs.fs_fsize, afs.fs_fshift, afs.fs_fmask);
 	printf("frag\t%d\tshift\t%d\tfsbtodb\t%d\n",
 	    afs.fs_frag, afs.fs_fragshift, afs.fs_fsbtodb);
-	printf("cpg\t%d\tbpg\t%d\tfpg\t%d\tipg\t%d\n",
-	    afs.fs_cpg, afs.fs_fpg / afs.fs_frag, afs.fs_fpg, afs.fs_ipg);
-	printf("minfree\t%d%%\toptim\t%s\tmaxcontig %d\tmaxbpg\t%d\n",
+	printf("minfree\t%d%%\toptim\t%s\tsymlinklen %d\n",
 	    afs.fs_minfree, afs.fs_optim == FS_OPTSPACE ? "space" : "time",
-	    afs.fs_maxcontig, afs.fs_maxbpg);
-	printf("rotdelay %dms\trps\t%d\n", afs.fs_rotdelay, afs.fs_rps);
-	printf("ntrak\t%d\tnsect\t%d\tnpsect\t%d\tspc\t%d\n",
-	    afs.fs_ntrak, afs.fs_nsect, afs.fs_npsect, afs.fs_spc);
-	printf("symlinklen %d\ttrackskew %d\tinterleave %d\tcontigsumsize %d\n",
-	    afs.fs_maxsymlinklen, afs.fs_trackskew, afs.fs_interleave,
-	    afs.fs_contigsumsize);
-	printf("nindir\t%d\tinopb\t%d\tnspf\t%d\tmaxfilesize\t%qu\n",
-	    afs.fs_nindir, afs.fs_inopb, afs.fs_nspf, afs.fs_maxfilesize);
+	    afs.fs_maxsymlinklen);
+	switch (afs.fs_magic) {
+	case FS_UFS2_MAGIC:
+		printf("%s %d\tmaxbpg\t%d\tmaxcontig %d\tcontigsumsize %d\n",
+		    "maxbsize", afs.fs_maxbsize, afs.fs_maxbpg,
+		    afs.fs_maxcontig, afs.fs_contigsumsize);
+		printf("nbfree\t%jd\tndir\t%jd\tnifree\t%jd\tnffree\t%jd\n",
+		    (intmax_t)afs.fs_cstotal.cs_nbfree, 
+		    (intmax_t)afs.fs_cstotal.cs_ndir,
+		    (intmax_t)afs.fs_cstotal.cs_nifree, 
+		    (intmax_t)afs.fs_cstotal.cs_nffree);
+		printf("bpg\t%d\tfpg\t%d\tipg\t%d\n",
+		    afs.fs_fpg / afs.fs_frag, afs.fs_fpg, afs.fs_ipg);
+		printf("nindir\t%d\tinopb\t%d\tmaxfilesize\t%ju\n",
+		    afs.fs_nindir, afs.fs_inopb, 
+		    (uintmax_t)afs.fs_maxfilesize);
+		printf("sbsize\t%d\tcgsize\t%d\tcsaddr\t%jd\tcssize\t%d\n",
+		    afs.fs_sbsize, afs.fs_cgsize, (intmax_t)afs.fs_csaddr,
+		    afs.fs_cssize);
+		break;
+	case FS_UFS1_MAGIC:
+		printf("maxbpg\t%d\tmaxcontig %d\tcontigsumsize %d\n",
+		    afs.fs_maxbpg, afs.fs_maxcontig, afs.fs_contigsumsize);
+		printf("nbfree\t%d\tndir\t%d\tnifree\t%d\tnffree\t%d\n",
+		    afs.fs_ffs1_cstotal.cs_nbfree, afs.fs_ffs1_cstotal.cs_ndir,
+		    afs.fs_ffs1_cstotal.cs_nifree, afs.fs_ffs1_cstotal.cs_nffree);
+		printf("cpg\t%d\tbpg\t%d\tfpg\t%d\tipg\t%d\n",
+		    afs.fs_cpg, afs.fs_fpg / afs.fs_frag, afs.fs_fpg,
+		    afs.fs_ipg);
+		printf("nindir\t%d\tinopb\t%d\tnspf\t%d\tmaxfilesize\t%ju\n",
+		    afs.fs_nindir, afs.fs_inopb, afs.fs_nspf,
+		    (uintmax_t)afs.fs_maxfilesize);
+		printf("sbsize\t%d\tcgsize\t%d\tcgoffset %d\tcgmask\t0x%08x\n",
+		    afs.fs_sbsize, afs.fs_cgsize, afs.fs_cgoffset,
+		    afs.fs_cgmask);
+		printf("csaddr\t%d\tcssize\t%d\n",
+		    afs.fs_ffs1_csaddr, afs.fs_cssize);
+		printf("rotdelay %dms\trps\t%d\tinterleave %d\n",
+		    afs.fs_rotdelay, afs.fs_rps, afs.fs_interleave);
+		printf("nsect\t%d\tnpsect\t%d\tspc\t%d\n",
+		    afs.fs_nsect, afs.fs_npsect, afs.fs_spc);
+		break;
+	default:
+		goto err;
+	}
 	printf("sblkno\t%d\tcblkno\t%d\tiblkno\t%d\tdblkno\t%d\n",
 	    afs.fs_sblkno, afs.fs_cblkno, afs.fs_iblkno, afs.fs_dblkno);
-	printf("sbsize\t%d\tcgsize\t%d\tcgoffset %d\tcgmask\t0x%08x\n",
-	    afs.fs_sbsize, afs.fs_cgsize, afs.fs_cgoffset, afs.fs_cgmask);
-	printf("csaddr\t%d\tcssize\t%d\tshift\t%d\tmask\t0x%08x\n",
-	    afs.fs_ffs1_csaddr, afs.fs_cssize, afs.fs_csshift, afs.fs_csmask);
-	printf("cgrotor\t%d\tfmod\t%d\tronly\t%d\tclean\t0x%02x\n",
+	printf("cgrotor\t%d\tfmod\t%d\tronly\t%d\tclean\t%d\n",
 	    afs.fs_cgrotor, afs.fs_fmod, afs.fs_ronly, afs.fs_clean);
+	printf("avgfpdir %d\tavgfilesize %d\n",
+	    afs.fs_avgfpdir, afs.fs_avgfilesize);
 	printf("flags\t");
-	if (afs.fs_ffs1_flags == 0)
-		printf("none");
-	if (afs.fs_ffs1_flags & FS_UNCLEAN)
-		printf("unclean ");
-	if (afs.fs_ffs1_flags & FS_DOSOFTDEP)
-		printf("soft-updates ");
 	if (afs.fs_ffs1_flags & FS_FLAGS_UPDATED)
-		printf("updated ");
-	if (afs.fs_ffs1_flags &
-	    ~(FS_UNCLEAN | FS_DOSOFTDEP | FS_FLAGS_UPDATED) != 0)
-		printf("unknown flags (%#x)", afs.fs_ffs1_flags &
-		    ~(FS_UNCLEAN | FS_DOSOFTDEP | FS_FLAGS_UPDATED));
-	printf("\n");
-	if (afs.fs_cpc != 0)
-		printf("blocks available in each of %d rotational positions",
-		     afs.fs_nrpos);
+		fsflags = afs.fs_flags;
 	else
-		printf("insufficient space to maintain rotational tables\n");
+		fsflags = afs.fs_ffs1_flags;
+	if (fsflags == 0)
+		printf("none");
+	if (fsflags & FS_UNCLEAN)
+		printf("unclean ");
+	if (fsflags & FS_DOSOFTDEP)
+		printf("soft-updates ");
+	if (fsflags & FS_FLAGS_UPDATED)
+		printf("updated ");
+#if 0
+	fsflags &= ~(FS_UNCLEAN | FS_DOSOFTDEP | FS_FLAGS_UPDATED);
+	if (fsflags != 0)
+		printf("unknown flags (%#x)", fsflags);
+#endif
+	putchar('\n');
+	printf("fsmnt\t%s\n", afs.fs_fsmnt);
+	printf("volname\t%s\tswuid\t%ju\n",
+		afs.fs_volname, (uintmax_t)afs.fs_swuid);
 	printf("\ncs[].cs_(nbfree,ndir,nifree,nffree):\n\t");
 	afs.fs_csp = calloc(1, afs.fs_cssize);
 	for (i = 0, j = 0; i < afs.fs_cssize; i += afs.fs_bsize, j++) {
 		size = afs.fs_cssize - i < afs.fs_bsize ?
 		    afs.fs_cssize - i : afs.fs_bsize;
-		if (lseek(fd,
-		    (off_t)(fsbtodb(&afs, (afs.fs_ffs1_csaddr + j * afs.fs_frag))) *
-		    dev_bsize, SEEK_SET) == (off_t)-1)
-			goto err;
-		if (read(fd, (char *)afs.fs_csp + i, size) != size)
+		off = (off_t)(fsbtodb(&afs, (afs.fs_ffs1_csaddr + j *
+		    afs.fs_frag))) * dev_bsize;
+		if (pread(fd, (char *)afs.fs_csp + i, size, off) != size)
 			goto err;
 	}
 	for (i = 0; i < afs.fs_ncg; i++) {
@@ -222,45 +316,57 @@ dumpfs(char *name)
 		    cs->cs_nbfree, cs->cs_ndir, cs->cs_nifree, cs->cs_nffree);
 	}
 	printf("\n");
-	if (afs.fs_ncyl % afs.fs_cpg) {
-		printf("cylinders in last group %d\n",
-		    i = afs.fs_ncyl % afs.fs_cpg);
-		printf("blocks in last group %d\n",
-		    i * afs.fs_spc / NSPB(&afs));
+	if (fssize % afs.fs_fpg) {
+		if (afs.fs_magic == FS_UFS1_MAGIC)
+			printf("cylinders in last group %d\n",
+			    howmany(afs.fs_ffs1_size % afs.fs_fpg,
+			    afs.fs_spc / afs.fs_nspf));
+		printf("blocks in last group %ld\n\n",
+		    (long)((fssize % afs.fs_fpg) / afs.fs_frag));
 	}
-	printf("\n");
 	for (i = 0; i < afs.fs_ncg; i++)
 		if (dumpcg(name, fd, i))
 			goto err;
-	(void)close(fd);
 	return (0);
 
-err:	if (fd != -1)
-		(void)close(fd);
-	warn("%s", name);
+err:	warn("%s", name);
 	return (1);
 }
 
 int
-dumpcg(char *name, int fd, int c)
+dumpcg(const char *name, int fd, int c)
 {
+	time_t cgtime;
 	off_t cur;
 	int i, j;
 
 	printf("\ncg %d:\n", c);
-	if ((cur = lseek(fd, (off_t)(fsbtodb(&afs, cgtod(&afs, c))) * dev_bsize,
-	    SEEK_SET)) == (off_t)-1)
-		return (1);
-	if (read(fd, &acg, afs.fs_bsize) != afs.fs_bsize) {
-		warnx("%s: error reading cg", name);
-		return (1);
+	cur = (off_t)fsbtodb(&afs, cgtod(&afs, c)) * dev_bsize;
+	if (pread(fd, &acg, afs.fs_bsize, cur) != afs.fs_bsize) {
+		warn("%s: error reading cg", name);
+		return(1);
 	}
-	printf("magic\t%x\ttell\t%qx\ttime\t%s",
-	    afs.fs_postblformat == FS_42POSTBLFMT ?
-	    ((struct ocg *)&acg)->cg_magic : acg.cg_magic,
-	    cur, ctime(&acg.cg_time));
-	printf("cgx\t%d\tncyl\t%d\tniblk\t%d\tndblk\t%d\n",
-	    acg.cg_cgx, acg.cg_ncyl, acg.cg_niblk, acg.cg_ndblk);
+	switch (afs.fs_magic) {
+	case FS_UFS2_MAGIC:
+		cgtime = acg.cg_ffs2_time;
+		printf("magic\t%x\ttell\t%jx\ttime\t%s",
+		    acg.cg_magic, (intmax_t)cur, ctime(&cgtime));
+		printf("cgx\t%d\tndblk\t%d\tniblk\t%d\tinitiblk %d\n",
+		    acg.cg_cgx, acg.cg_ndblk, acg.cg_ffs2_niblk,
+		    acg.cg_initediblk);
+		break;
+	case FS_UFS1_MAGIC:
+		cgtime = acg.cg_time;
+		printf("magic\t%x\ttell\t%jx\ttime\t%s",
+		    afs.fs_postblformat == FS_42POSTBLFMT ?
+		    ((struct ocg *)&acg)->cg_magic : acg.cg_magic,
+		    (intmax_t)cur, ctime(&acg.cg_time));
+		printf("cgx\t%d\tncyl\t%d\tniblk\t%d\tndblk\t%d\n",
+		    acg.cg_cgx, acg.cg_ncyl, acg.cg_niblk, acg.cg_ndblk);
+		break;
+	default:
+		break;
+	}
 	printf("nbfree\t%d\tndir\t%d\tnifree\t%d\tnffree\t%d\n",
 	    acg.cg_cs.cs_nbfree, acg.cg_cs.cs_ndir,
 	    acg.cg_cs.cs_nifree, acg.cg_cs.cs_nffree);
@@ -286,18 +392,64 @@ dumpcg(char *name, int fd, int c)
 		pbits(cg_clustersfree(&acg), acg.cg_nclusterblks);
 	} else
 		printf("\n");
-	printf("iused:\t");
+	printf("inodes used:\t");
 	pbits(cg_inosused(&acg), afs.fs_ipg);
-	printf("free:\t");
+	printf("blks free:\t");
 	pbits(cg_blksfree(&acg), afs.fs_fpg);
-	printf("b:\n");
-	for (i = 0; i < afs.fs_cpg; i++) {
-		if (cg_blktot(&acg)[i] == 0)
-			continue;
-		printf("   c%d:\t(%d)\t", i, cg_blktot(&acg)[i]);
-		printf("\n");
+#if 0
+	/* XXX - keep this? */
+	if (afs.fs_magic == FS_UFS1_MAGIC) {
+		printf("b:\n");
+		for (i = 0; i < afs.fs_cpg; i++) {
+			if (cg_blktot(&acg)[i] == 0)
+				continue;
+			printf("   c%d:\t(%d)\t", i, cg_blktot(&acg)[i]);
+			printf("\n");
+		}
 	}
+#endif
 	return (0);
+}
+
+int
+marshal(const char *name)
+{
+	int Oflag;
+
+	printf("# newfs command for %s\n", name);
+	printf("newfs ");
+	if (afs.fs_volname[0] != '\0')
+		printf("-L %s ", afs.fs_volname);
+
+	Oflag = (afs.fs_magic == FS_UFS2_MAGIC) +
+	    (afs.fs_inodefmt == FS_44INODEFMT);
+	printf("-O %d ", Oflag);
+	printf("-b %d ", afs.fs_bsize);
+	/* -c unimplemented */
+	printf("-e %d ", afs.fs_maxbpg);
+	printf("-f %d ", afs.fs_fsize);
+	printf("-g %d ", afs.fs_avgfilesize);
+	printf("-h %d ", afs.fs_avgfpdir);
+	/* -i unimplemented */
+	printf("-m %d ", afs.fs_minfree);
+	printf("-o ");
+	switch (afs.fs_optim) {
+	case FS_OPTSPACE:
+		printf("space ");
+		break;
+	case FS_OPTTIME:
+		printf("time ");
+		break;
+	default:
+		printf("unknown ");
+		break;
+	}
+	/* -S unimplemented */
+	printf("-s %jd ", (intmax_t)afs.fs_size);
+	printf("%s ", name);
+	printf("\n");
+
+	return 0;
 }
 
 void
@@ -322,10 +474,9 @@ pbits(void *vp, int max)
 	printf("\n");
 }
 
-void
+__dead void
 usage(void)
 {
-
-	(void)fprintf(stderr, "usage: dumpfs filesys | device\n");
+	(void)fprintf(stderr, "usage: dumpfs [-m] filesys | device\n");
 	exit(1);
 }
