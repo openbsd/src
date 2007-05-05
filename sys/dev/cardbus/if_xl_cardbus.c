@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.18 2006/10/12 16:35:52 grange Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.19 2007/05/05 13:24:03 deraadt Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -301,6 +301,35 @@ xl_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_write_4(csc->sc_funct, csc->sc_funch,
 		    XL_CARDBUS_INTR, XL_CARDBUS_INTR_ACK);
 
+}
+
+int
+xl_detach(struct xl_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	extern void xl_freetxrx(struct xl_softc *);
+
+	/* Unhook our tick handler. */
+	timeout_del(&sc->xl_stsup_tmo);
+
+	xl_freetxrx(sc);
+
+	/* Detach all PHYs */
+	if (sc->xl_hasmii)
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete all remaining media. */
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
+	if (sc->sc_pwrhook != NULL)
+		powerhook_disestablish(sc->sc_pwrhook);
+
+	return (0);
 }
 
 int

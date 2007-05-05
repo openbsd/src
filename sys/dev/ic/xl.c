@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.76 2006/08/10 20:10:18 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.77 2007/05/05 13:24:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2740,34 +2740,6 @@ xl_attach(struct xl_softc *sc)
 
 	sc->sc_sdhook = shutdownhook_establish(xl_shutdown, sc);
 	sc->sc_pwrhook = powerhook_establish(xl_power, sc);
-}
-
-int
-xl_detach(struct xl_softc *sc)
-{
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	/* Unhook our tick handler. */
-	timeout_del(&sc->xl_stsup_tmo);
-
-	xl_freetxrx(sc);
-
-	/* Detach all PHYs */
-	if (sc->xl_hasmii)
-		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
-
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
-	ether_ifdetach(ifp);
-	if_detach(ifp);
-
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
-	if (sc->sc_pwrhook != NULL)
-		powerhook_disestablish(sc->sc_pwrhook);
-
-	return (0);
 }
 
 void
