@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.21 2007/04/21 21:37:09 martin Exp $ */
+/* $OpenBSD: interrupt.c,v 1.22 2007/05/05 20:46:34 miod Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -510,7 +510,7 @@ netintr()
 #undef DONETISR
 }
 
-struct alpha_soft_intr alpha_soft_intrs[IPL_NSOFT];
+struct alpha_soft_intr alpha_soft_intrs[SI_NSOFT];
 
 /* XXX For legacy software interrupts. */
 struct alpha_soft_intrhand *softnet_intrhand, *softclock_intrhand;
@@ -526,7 +526,7 @@ softintr_init()
 	struct alpha_soft_intr *asi;
 	int i;
 
-	for (i = 0; i < IPL_NSOFT; i++) {
+	for (i = 0; i < SI_NSOFT; i++) {
 		asi = &alpha_soft_intrs[i];
 		TAILQ_INIT(&asi->softintr_q);
 		simple_lock_init(&asi->softintr_slock);
@@ -553,7 +553,7 @@ softintr_dispatch()
 	u_int64_t n, i;
 
 	while ((n = atomic_loadlatch_ulong(&ssir, 0)) != 0) {
-		for (i = 0; i < IPL_NSOFT; i++) {
+		for (i = 0; i < SI_NSOFT; i++) {
 			if ((n & (1 << i)) == 0)
 				continue;
 	
@@ -589,6 +589,7 @@ ipl2si(int ipl)
 	int si;
 
 	switch (ipl) {
+	case IPL_TTY:			/* XXX */
 	case IPL_SOFTSERIAL:
 		si = SI_SOFTSERIAL;
 		break;
@@ -662,3 +663,26 @@ _splraise(int s)
 	int cur = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;
 	return (s > cur ? alpha_pal_swpipl(s) : cur);
 }
+
+#ifdef DIAGNOSTIC
+void
+splassert_check(int wantipl, const char *func)
+{
+	int curipl = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;
+
+	/*
+	 * Tell soft interrupts apart from regular levels.
+	 */
+	if (wantipl < 0)
+		wantipl = IPL_SOFTINT;
+
+	if (curipl < wantipl) {
+		splassert_fail(wantipl, curipl, func);
+		/*
+		 * If splassert_ctl is set to not panic, raise the ipl
+		 * in a feeble attempt to reduce damage.
+		 */
+		alpha_pal_swpipl(wantipl);
+	}
+}
+#endif
