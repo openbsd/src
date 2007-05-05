@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.91 2007/05/05 10:47:06 espie Exp $
+# $OpenBSD: pkg_create,v 1.92 2007/05/05 10:48:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -438,20 +438,18 @@ sub add_description
 		Usage "Description required";
 	}
 	if (defined $infodir) {
+	    open(my $fh, '>', $infodir.$name) or die "Can't write to DESC: $!";
 	    if ($opt_c =~ /^\-/) {
-		open(my $fh, '>', $infodir.$name) or die "Can't write COMMENT to DESC file: $!";
-		print $fh $';
-		close($fh);
+		print $fh $', "\n";
 	    } else {
-		copy_subst($opt_c, '>', $infodir.$name);
+		copy_subst_fh($opt_c, $fh);
 	    }
 	    if ($opt_d =~ /^\-/) {
-		open(my $fh, '>>', $infodir.$name) or die "Can't write to DESC: $!";
-		print $fh $';
-		close($fh);
+		print $fh $', "\n";
 	    } else {
-		copy_subst($opt_d, '>>', $infodir.$name);
+		copy_subst_fh($opt_d, $fh);
 	    }
+	    close($fh);
 	}
 }
 
