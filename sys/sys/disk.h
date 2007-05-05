@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.14 2007/03/30 00:38:56 dlg Exp $	*/
+/*	$OpenBSD: disk.h,v 1.15 2007/05/05 12:43:35 art Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -162,8 +162,6 @@ void	disk_attach(struct disk *);
 void	disk_detach(struct disk *);
 void	disk_busy(struct disk *);
 void	disk_unbusy(struct disk *, long, int);
-void	disk_resetstat(struct disk *);
-struct	disk *disk_find(char *);
 
 int	disk_lock(struct disk *);
 void    disk_unlock(struct disk *);

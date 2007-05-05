@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.37 2007/05/04 23:21:23 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.38 2007/05/05 12:43:35 art Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -243,25 +243,6 @@ disk_init(void)
 	disk_count = disk_change = 0;
 }
 
-/*
- * Searches the disklist for the disk corresponding to the
- * name provided.
- */
-struct disk *
-disk_find(char *name)
-{
-	struct disk *diskp;
-
-	if ((name == NULL) || (disk_count <= 0))
-		return (NULL);
-
-	TAILQ_FOREACH(diskp, &disklist, dk_link)
-		if (strcmp(diskp->dk_name, name) == 0)
-			return (diskp);
-
-	return (NULL);
-}
-
 int
 disk_construct(struct disk *diskp, char *lockname)
 {
@@ -395,31 +376,6 @@ disk_unlock(struct disk *dk)
 {
 	rw_exit(&dk->dk_lock);
 }
-
-/*
- * Reset the metrics counters on the given disk.  Note that we cannot
- * reset the busy counter, as it may case a panic in disk_unbusy().
- * We also must avoid playing with the timestamp information, as it
- * may skew any pending transfer results.
- */
-void
-disk_resetstat(struct disk *diskp)
-{
-	int s = splbio();
-
-	diskp->dk_rxfer = 0;
-	diskp->dk_rbytes = 0;
-	diskp->dk_wxfer = 0;
-	diskp->dk_wbytes = 0;
-	diskp->dk_seek = 0;
-
-	microuptime(&diskp->dk_attachtime);
-
-	timerclear(&diskp->dk_time);
-
-	splx(s);
-}
-
 
 int
 dk_mountroot(void)
