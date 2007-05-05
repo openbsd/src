@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.79 2007/04/13 08:31:50 martin Exp $
+#	$OpenBSD: files.alpha,v 1.80 2007/05/05 21:05:43 martin Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -305,6 +305,7 @@ file	arch/alpha/alpha/fp_complete.c		!no_ieee
 file	arch/alpha/alpha/vm_machdep.c
 file	arch/alpha/alpha/disksubr.c
 file	arch/alpha/dev/bus_dma.c
+file	arch/alpha/alpha/mutex.c
 
 #
 # Network protocol checksum routines
