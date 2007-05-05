@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.64 2007/04/26 17:00:28 miod Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.65 2007/05/05 13:43:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -183,7 +183,6 @@ Static void axe_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void axe_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void axe_tick(void *);
 Static void axe_tick_task(void *);
-Static void axe_rxstart(struct ifnet *);
 Static void axe_start(struct ifnet *);
 Static int axe_ioctl(struct ifnet *, u_long, caddr_t);
 Static void axe_init(void *);
@@ -894,29 +893,6 @@ axe_tx_list_init(struct axe_softc *sc)
 	}
 
 	return (0);
-}
-
-Static void
-axe_rxstart(struct ifnet *ifp)
-{
-	struct axe_softc	*sc;
-	struct axe_chain	*c;
-
-	sc = ifp->if_softc;
-	axe_lock_mii(sc);
-	c = &sc->axe_cdata.axe_rx_chain[sc->axe_cdata.axe_rx_prod];
-
-	memset(c->axe_buf, 0, sc->axe_bufsz);
-
-	/* Setup new transfer. */
-	usbd_setup_xfer(c->axe_xfer, sc->axe_ep[AXE_ENDPT_RX],
-	    c, c->axe_buf, sc->axe_bufsz,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY,
-	    USBD_NO_TIMEOUT, axe_rxeof);
-	usbd_transfer(c->axe_xfer);
-	axe_unlock_mii(sc);
-
-	return;
 }
 
 /*
