@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.74 2007/04/03 14:33:07 jason Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.75 2007/05/05 15:21:21 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -43,6 +43,7 @@ int _dl_errno;
 
 int _dl_real_close(void *handle);
 void (*_dl_thread_fnc)(int) = NULL;
+void (*_dl_bind_lock_f)(int) = NULL;
 static elf_object_t *obj_from_addr(const void *addr);
 
 void *
@@ -193,6 +194,11 @@ dlctl(void *handle, int command, void *data)
 	case DL_SETTHREADLCK:
 		DL_DEB(("dlctl: _dl_thread_fnc set to %p\n", data));
 		_dl_thread_fnc = data;
+		retval = 0;
+		break;
+	case DL_SETBINDLCK:
+		DL_DEB(("dlctl: _dl_bind_lock_f set to %p\n", data));
+		_dl_bind_lock_f = data;
 		retval = 0;
 		break;
 	case 0x20:
@@ -488,6 +494,13 @@ _dl_show_objects(void)
 		    _dl_symcachestat_lookups, _dl_symcachestat_hits,
 		    (_dl_symcachestat_hits * 100) /
 		    _dl_symcachestat_lookups));
+}
+
+void
+_dl_thread_bind_lock(int what)
+{
+	if (_dl_bind_lock_f != NULL)
+		(*_dl_bind_lock_f)(what);
 }
 
 void

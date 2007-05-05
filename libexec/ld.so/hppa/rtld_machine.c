@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.12 2006/05/03 16:10:52 drahn Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.13 2007/05/05 15:21:21 drahn Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -380,6 +380,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	if (object->got_size != 0) {
 		sigfillset(&nmask);
 		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
+		_dl_thread_bind_lock(0);
 		/* mprotect the actual modified region, not the whole plt */
 		_dl_mprotect((void*)addr, sizeof (Elf_Addr) * 2,
 		    PROT_READ|PROT_WRITE);
@@ -393,6 +394,7 @@ _dl_bind(elf_object_t *object, int reloff)
 		/* mprotect the actual modified region, not the whole plt */
 		_dl_mprotect((void*)addr, sizeof (Elf_Addr) * 3,
 		    PROT_READ);
+		_dl_thread_bind_lock(1);
 		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
 	}
 

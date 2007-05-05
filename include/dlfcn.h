@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.h,v 1.9 2004/08/11 19:14:56 drahn Exp $	*/
+/*	$OpenBSD: dlfcn.h,v 1.10 2007/05/05 15:21:21 drahn Exp $	*/
 /*	$NetBSD: dlfcn.h,v 1.2 1995/06/05 19:38:00 pk Exp $	*/
 
 /*
@@ -81,5 +81,6 @@ __END_DECLS
 #define DL_GETREFCNT	x
 #define DL_GETLOADADDR	x
 #define DL_SETTHREADLCK	2
+#define DL_SETBINDLCK	3
 
 #endif /* _DLFCN_H_ */

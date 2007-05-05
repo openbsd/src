@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.53 2007/04/03 14:33:07 jason Exp $ */
+/*	$OpenBSD: resolve.h,v 1.54 2007/05/05 15:21:21 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -221,6 +221,8 @@ void	_dl_load_list_free(struct load_list *load_list);
 
 void	_dl_thread_kern_go(void);
 void	_dl_thread_kern_stop(void);
+
+void	_dl_thread_bind_lock(int);
 
 extern elf_object_t *_dl_objects;
 extern elf_object_t *_dl_last_object;

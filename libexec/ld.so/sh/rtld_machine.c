@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.7 2007/03/07 18:50:02 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.8 2007/05/05 15:21:21 drahn Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -858,6 +858,7 @@ _dl_bind(elf_object_t *object, int relidx)
 	if (object->got_size != 0) {
 		sigfillset(&nmask);
 		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
+		_dl_thread_bind_lock(0);
 		_dl_mprotect((void*)object->got_start, object->got_size,
 		    PROT_READ|PROT_WRITE);
 	}
@@ -870,6 +871,7 @@ _dl_bind(elf_object_t *object, int relidx)
 		_dl_mprotect((void*)object->got_start, object->got_size,
 		    PROT_READ);
 		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
+		_dl_thread_bind_lock(1);
 	}
 	return newval;
 }
