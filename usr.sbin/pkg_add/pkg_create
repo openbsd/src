@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.93 2007/05/05 10:50:04 espie Exp $
+# $OpenBSD: pkg_create,v 1.94 2007/05/05 11:18:18 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -431,7 +431,17 @@ sub add_description
 {
 	my ($plist, $name, $infodir, $opt_c, $opt_d) = @_;
 	OpenBSD::PackingElement::File->add($plist, $name);
-	if (!defined $opt_c) {
+	my $comment = $defines{COMMENT};
+	if (defined $comment) {
+		$comment =~ s/^\"(.*)\"$/$1/ or
+		$comment =~ s/^\'(.*)\'$/$1/;
+		if (length $comment > 60) {
+			print STDERR "Error: comment is too long\n";
+			print STDERR $comment, "\n";
+			print STDERR ' 'x60, "^"x (length($comment)-60), "\n";
+			exit 1;
+		}
+	} elsif (!defined $opt_c) {
 		Usage "Comment required";
 	}
 	if (!defined $opt_d) {
@@ -439,15 +449,25 @@ sub add_description
 	}
 	if (defined $infodir) {
 	    open(my $fh, '>', $infodir.$name) or die "Can't write to DESC: $!";
-	    if ($opt_c =~ /^\-/) {
-		print $fh $', "\n";
+	    if (defined $comment) {
+	    	print $fh dosubst($comment), "\n";
 	    } else {
-		copy_subst_fh($opt_c, $fh);
+		if ($opt_c =~ /^\-/) {
+		    print $fh $', "\n";
+		} else {
+		    copy_subst_fh($opt_c, $fh);
+		}
 	    }
 	    if ($opt_d =~ /^\-/) {
 		print $fh $', "\n";
 	    } else {
 		copy_subst_fh($opt_d, $fh);
+	    }
+	    if (defined $comment) {
+	    	print $fh "\n", dosubst('Maintainer: ${MAINTAINER}'), "\n\n";
+	    	if (defined $defines{HOMEPAGE}) {
+			print $fh dosubst('WWW: ${HOMEPAGE}'), "\n";
+		}
 	    }
 	    close($fh);
 	}
